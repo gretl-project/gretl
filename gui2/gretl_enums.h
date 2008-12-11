@@ -106,6 +106,7 @@ enum extra_cmds {
     PWE,
     AFR, /* actual, fitted, residual */
     GPT_ADDLINE,
+    SYS_RESPEC,
     GUI_CMD_MAX
 };
 

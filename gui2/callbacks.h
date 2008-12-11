@@ -41,6 +41,8 @@ void model_genr_callback (GtkAction *action, gpointer data);
 
 void revise_nl_model (MODEL *pmod);
 
+void revise_system_model (void *ptr);
+
 void newdata_callback (void);
 
 void xcorrgm_callback (void);

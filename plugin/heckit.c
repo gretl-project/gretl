@@ -29,40 +29,40 @@
 typedef struct h_container_ h_container;
 
 struct h_container_ {
-    int kmain;			/* no. of params in the main eq. */
-    int ksel;			/* no. of params in the selection eq. */
-    double ll;			/* log-likelihood */
+    const int *list;         /* incoming model specification */
+    int kmain;		     /* no. of params in the main eq. */
+    int ksel;		     /* no. of params in the selection eq. */
+    double ll;		     /* log-likelihood */
 
-    int ntot, nunc;		/* total & uncensored obs */
-    int depvar;			/* location of y in array Z */
-    int selvar;			/* location of selection variable in array Z */
-    int *Xlist;			/* regressor list for the main eq. */
-    int *Zlist;			/* regressor list for the selection eq. */
+    int ntot, nunc;	     /* total & uncensored obs */
+    int depvar;		     /* location of y in array Z */
+    int selvar;		     /* location of selection variable in array Z */
+    int *Xlist;		     /* regressor list for the main eq. */
+    int *Zlist;		     /* regressor list for the selection eq. */
 
-    gretl_matrix *y;		/* dependent var */
-    gretl_matrix *reg;		/* main eq. regressors */
-    gretl_matrix *mills;	/* Mills ratios from selection eq */
-    gretl_matrix *delta;	/* used in 2-step vcv calculations */
-    gretl_matrix *d;		/* selection dummy variable */
-    gretl_matrix *selreg;	/* selection eq. regressors */ 
-    gretl_matrix *selreg_u;	/* selection eq. regressors (subsample d==1) */
+    gretl_matrix *y;	     /* dependent var */
+    gretl_matrix *reg;	     /* main eq. regressors */
+    gretl_matrix *mills;     /* Mills ratios from selection eq */
+    gretl_matrix *delta;     /* used in 2-step vcv calculations */
+    gretl_matrix *d;	     /* selection dummy variable */
+    gretl_matrix *selreg;    /* selection eq. regressors */ 
+    gretl_matrix *selreg_u;  /* selection eq. regressors (subsample d==1) */
     gretl_vector *fitted;
     gretl_vector *u;
     gretl_vector *ndx;
 
-    gretl_vector *beta;		/* main eq. parameters */
-    gretl_vector *gama;		/* selection eq. parameters */
+    gretl_vector *beta;	     /* main eq. parameters */
+    gretl_vector *gama;	     /* selection eq. parameters */
     double sigma;
     double rho;
-    double lambda;		/* rho*sigma by definition */
+    double lambda;	     /* rho*sigma by definition */
 
-    gretl_matrix *vcv;		/* Variance-covariance matrix */
-    gretl_matrix *VProbit;	/* 1st stage probit covariance matrix */
+    gretl_matrix *vcv;	     /* Variance-covariance matrix */
+    gretl_matrix *VProbit;   /* 1st stage probit covariance matrix */
 
-    char *probmask;		/* mask NAs for initial probit */
-    char *fullmask;		/* mask NAs */
-    char *uncmask;		/* mask NAs and (d==0) */
-
+    char *probmask;	     /* mask NAs for initial probit */
+    char *fullmask;	     /* mask NAs */
+    char *uncmask;	     /* mask NAs and (d==0) */
 };
 
 static void h_container_destroy (h_container *HC)
@@ -98,7 +98,7 @@ static void h_container_destroy (h_container *HC)
     free(HC);
 }
 
-static h_container *h_container_new (void)
+static h_container *h_container_new (const int *list)
 {
     h_container *HC = malloc(sizeof *HC);
 
@@ -106,6 +106,7 @@ static h_container *h_container_new (void)
 	return NULL;
     }
 
+    HC->list = list;
     HC->ll = NADBL;
 
     HC->Xlist = NULL;
@@ -274,7 +275,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
     int v, i, err = 0;
 
     /* it is assumed that the Mills ratios have just been added to the dataset;
-       hence, they're the last variable
+       hence they're the last variable
     */
     v = pdinfo->v - 1;
 
@@ -380,7 +381,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
     }
 
     if (err) {
-	goto bailout;
+	return err;
     }
 
     for (i=1; i<=HC->Xlist[0]; i++) {
@@ -405,7 +406,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
     }
 
     if (err) {
-	goto bailout;
+	return err;
     }    
 
     tmp = gretl_matrix_multiply_new(HC->selreg_u, HC->gama, &err);
@@ -443,8 +444,6 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	    err = E_ALLOC;
 	}
     }
-
- bailout:
 
     return err;
 }
@@ -649,12 +648,13 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
     hm->rho = HC->rho;
 
     if (!err) {
+	free(hm->list);
+	hm->list = gretl_list_copy(HC->list);
 	free(hm->coeff);
 	hm->coeff = fullcoeff;
 	hm->ncoeff = k;
 	gretl_model_set_coeff_separator(hm, N_("Selection equation"), ko + 1);
 	gretl_model_set_int(hm, "base-coeffs", ko);
-	hm->list[0] -= 1;
     }
     
     return err;
@@ -958,8 +958,7 @@ static int transcribe_ml_vcv (MODEL *pmod, h_container *HC)
     return 0;
 }
 
-static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
-			  h_container *HC) 
+static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
 {
 #if HDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
@@ -975,7 +974,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&hm);
     gretl_model_init(&probmod);
 
-    err = gretl_list_split_on_separator(list, &Xlist, &Zlist);
+    err = gretl_list_split_on_separator(HC->list, &Xlist, &Zlist);
     if (err) {
 	goto bailout;
     } 
@@ -1037,10 +1036,6 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 	/* fill the container with all the relevant data */
 	err = h_container_fill(HC, Xlist, Zlist, (const double **) *pZ, 
 			       pdinfo, &probmod, &hm);
-	if (!err) {
-	    gretl_model_set_list_as_data(&hm, "zlist", Zlist);
-	    Zlist = NULL;
-	}
     }
 
  bailout:
@@ -1066,7 +1061,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
    ML.
 */
 
-MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn) 
 {
     h_container *HC = NULL;
@@ -1076,13 +1071,13 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&hm);
 
-    HC = h_container_new();
+    HC = h_container_new(list);
     if (HC == NULL) {
 	hm.errcode = E_ALLOC;
 	return hm;
     }
 
-    hm = heckit_init(list, pZ, pdinfo, HC);
+    hm = heckit_init(HC, pZ, pdinfo);
     if (hm.errcode) {
 	h_container_destroy(HC);
 	return hm;

@@ -607,6 +607,9 @@ static int gretl_callback_code (const gchar *s)
     return 0;
 }
 
+/* callback for menu items, where we want to prepare an "edit dialog"
+   for handle the request */
+
 void gretl_callback (GtkAction *action, gpointer data)
 {
     const char *title = NULL;
@@ -728,6 +731,21 @@ void revise_nl_model (MODEL *pmod)
 
     edit_dialog(_(title), _(query), defstr, okfunc, pmod, 
 		pmod->ci, VARCLICK_INSERT_TEXT, &cancel);   
+}
+
+void revise_system_model (void *ptr)
+{
+    equation_system *sys = (equation_system *) ptr;
+    int cancel = 0;
+
+    edit_dialog(_("gretl: simultaneous equations system"), 
+		_("Specify simultaneous equations:"),
+		NULL,
+		do_eqn_system,
+		sys,
+		SYS_RESPEC,
+		VARCLICK_INSERT_TEXT,
+		&cancel);
 }
 
 void genr_callback (void)

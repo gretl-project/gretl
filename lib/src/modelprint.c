@@ -1197,6 +1197,22 @@ static void godfrey_test_string (int ci, int order, PRN *prn)
     pputc(prn, '\n');
 }
 
+/* The selection variable should be the first variable following
+   the list separator */
+
+static const char *heckit_selvar_name (const MODEL *pmod,
+				       const DATAINFO *pdinfo)
+{
+    const int *list = pmod->list;
+    int pos = gretl_list_separator_position(list);
+
+    if (pos > 0 && pos < list[0] && list[pos+1] < pdinfo->v) {
+	return pdinfo->varname[list[pos+1]];
+    } else {
+	return NULL;
+    }
+}
+
 static void print_intreg_depvar (const MODEL *pmod,
 				 const DATAINFO *pdinfo,
 				 PRN *prn)
@@ -1438,17 +1454,15 @@ static void print_model_heading (const MODEL *pmod,
 
     /* supplementary strings below the estimator and sample info */
 
-    /* list of instruments for TSLS */
     if (pmod->ci == TSLS) {
+	/* list of instruments for TSLS */
 	int method = gretl_model_get_int(pmod, "method");
 
 	if (method != SYS_METHOD_FIML && method != SYS_METHOD_LIML) {
 	    print_tsls_instruments(pmod->list, pdinfo, prn);
 	}
-    }
-
-    /* tau for quantile regression */
-    else if (pmod->ci == LAD) {
+    } else if (pmod->ci == LAD) {
+	/* tau for quantile regression */
 	double tau = gretl_model_get_double(pmod, "tau");
 
 	if (!na(tau)) {
@@ -1464,8 +1478,8 @@ static void print_model_heading (const MODEL *pmod,
     /* VCV variants */
     print_model_vcv_info(pmod, prn);
 
-    /* WLS on panel data */
     if ((pmod->opt & OPT_W) && !pmod->aux) {
+	/* WLS on panel data */
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	}
@@ -1475,10 +1489,8 @@ static void print_model_heading (const MODEL *pmod,
 	    pprintf(prn, I_("Weights based on per-unit error variances"));
 	}
 	pputc(prn, '\n');
-    }
-
-    /* weight variable for WLS */
-    else if ((pmod->ci == WLS && !pmod->aux)) {
+    } else if (pmod->ci == WLS && !pmod->aux) {
+	/* weight variable for WLS */
 	if (tex) {
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
 	}
@@ -1487,27 +1499,35 @@ static void print_model_heading (const MODEL *pmod,
 		(tex)? vname : pdinfo->varname[pmod->nwt]);
 	if (csv) pputc(prn, '"');
 	pputc(prn, '\n');
-    }
-
-    /* weight variable for ARCH */
-    else if (pmod->ci == ARCH) {
+    } else if (pmod->ci == ARCH) {
+	/* weight variable for ARCH */
 	if (csv) pputc(prn, '"');
 	pprintf(prn, "%s: %s", I_("Variable used as weight"), 
 		(tex)? "$1/\\hat{\\sigma}_t$" : "1/sigma");
 	if (csv) pputc(prn, '"');
 	pputc(prn, '\n');
-    }    
+    } else if (pmod->ci == HECKIT) {
+	/* selection variable for Heckit */
+	const char *selvar = heckit_selvar_name(pmod, pdinfo);
 
-    /* rhohat for AR1 (TeX) */
-    else if (pmod->ci == AR1) {
+	if (selvar != NULL) {
+	    if (csv) pputc(prn, '"');
+	    if (tex) {
+		tex_escape(vname, selvar);
+	    }
+	    pprintf(prn, "%s: %s", I_("Selection variable"), 
+		    (tex)? vname : selvar);
+	    if (csv) pputc(prn, '"');
+	    pputc(prn, '\n');	    
+	}	
+    } else if (pmod->ci == AR1) {
+	/* rhohat for AR1 (TeX only) */
 	if (tex) {
 	    pprintf(prn, "$\\hat{\\rho}$ = %g\n", 
 		    gretl_model_get_double(pmod, "rho_in"));
 	}
-    } 
-
-    /* y-hat formula for logistic regression */
-    else if (pmod->ci == LOGISTIC) {
+    } else if (pmod->ci == LOGISTIC) {
+	/* y-hat formula for logistic regression */
 	if (tex) {
 	    pprintf(prn, "$\\hat{y} = %g / (1 + e^{-X\\hat{\\beta}})$\n", 
 		    gretl_model_get_double(pmod, "lmax"));  
@@ -1588,16 +1608,18 @@ static void model_format_start (PRN *prn)
                        "\\cellx5700\\cellx7100\n\\intbl"
 
 /* below: this is used when we're doing something other than a plain
-   text print of a model */
+   text print of a model. When using TeX, returns the number of
+   columsn in the table, otherwise just returns 0.
+*/
 
-static void alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
+static int alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
 {
     const char *tlabel;
     int use_param = 0;
     int slopes = 0;
     int intervals = 0;
     int seqcols = 0;
-    int mp = 0;
+    int mp = 0, ret = 0;
 
     if (ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
 	tlabel = (tex_format(prn))? N_("$z$-stat") : N_("z-stat");
@@ -1609,7 +1631,7 @@ static void alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
 	gretl_matrix *m;
 
 	use_param = nonlin_model(pmod);
-	slopes = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
+	slopes = binary_model(pmod) && !(pmod->opt & OPT_P);
 	intervals = gretl_model_get_data(pmod, "coeff_intervals") != NULL;
 	m = gretl_model_get_data(pmod, "rq_sequence");
 	seqcols = gretl_matrix_cols(m);
@@ -1678,11 +1700,8 @@ static void alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
 	    if (mp) {
 		tabopt |= OPT_M; /* multiple precision */
 	    }	    
-	    tex_coeff_table_start(cols, tabopt, prn);
-	    return;
-	}   
-
-	if (rtf_format(prn)) {
+	    ret = tex_coeff_table_start(cols, tabopt, prn);
+	} else if (rtf_format(prn)) {
 	    pputc(prn, '{');
 	    if (intervals) {
 		pputs(prn, RTF_INTVL_ROW);
@@ -1704,6 +1723,8 @@ static void alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
 	    pputs(prn, " \\intbl \\row\n");
 	} 
     }
+
+    return ret;
 }
 
 static void print_coeff_table_end (const MODEL *pmod, PRN *prn)
@@ -2351,9 +2372,17 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	for (i=4; i<8; i++) {
 	    val[i] = NADBL;
 	}
-    } else if (panel_ML_model(pmod) || 
-	       pmod->ci == GARCH ||
-	       pmod->ci == HECKIT) {
+    } else if (pmod->ci == HECKIT) {
+	key[2] = (tex)? "$\\hat{\\sigma}$" : N_("sigma");
+	val[2] = pmod->sigma;
+	key[3] = (tex)? "$\\hat{\\rho}$" : N_("rho");
+	val[2] = pmod->rho;
+	for (i=4; i<MID_STATS; i++) {
+	    if (i < 8 || i > 11) {
+		val[i] = NADBL;
+	    }
+	}	
+    } else if (panel_ML_model(pmod) || pmod->ci == GARCH) {
 	for (i=2; i<MID_STATS; i++) {
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;
@@ -2669,7 +2698,7 @@ prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
 
     model_coeff_init(mc);
 
-    mc->show_pval = !binary_model(pmod) || gretl_model_get_int(pmod, "show-pvals");
+    mc->show_pval = !binary_model(pmod) || (pmod->opt & OPT_P);
 
     if (tex_format(prn)) {
 	make_tex_coeff_name(pmod, pdinfo, i, mc->name);
@@ -2860,19 +2889,29 @@ static void alt_print_coeff (const model_coeff *mc, PRN *prn)
     }
 }
 
-static void print_coeff_separator (const char *s, PRN *prn)
+static void print_coeff_separator (const char *s, int n, PRN *prn)
 {
-    if (tex_format(prn)) {
-	/* FIXME */
+    int havestr = (s != NULL && *s != '\0');
+
+    if (plain_format(prn)) {
+	if (havestr) {
+	    pputs(prn, "\n  "); 
+	    print_centered(_(s), n, prn);
+	} 
+	pputs(prn, "\n\n");
+    } else if (tex_format(prn)) {
+	if (havestr) {
+	    pprintf(prn, "\\multicolumn{%d}{c}{%s}", n, I_(s));
+	} 
 	pputs(prn, "\\\\ \n");
-    } else {
-	if (s != NULL && *s != '\0') {
-	    pputc(prn, '\n');
-	    /* FIXME RTF */
-	    print_centered((rtf_format(prn))? I_(s) : _(s), 78, prn);
-	    pputc(prn, '\n');
+    } else if (rtf_format(prn)) {
+	pputs(prn, "\\par \n"); /* FIXME */
+    } else if (csv_format(prn)) {
+	if (havestr) {
+	    pprintf(prn, "\n\"%s\"\n", I_(s));
+	} else {
+	    pputs(prn, "\n\n");
 	}
-	pputc(prn, '\n');
     }
 }
 
@@ -3210,8 +3249,8 @@ static void figure_colsep (int namelen, int ncols, int *w,
     }
 }
 
-static void print_sep_row (int namelen, int ncols, int *w,
-			   int colsep, PRN *prn)
+static int print_sep_row (int namelen, int ncols, int *w,
+			  int colsep, PRN *prn)
 {
     int j, n;
 
@@ -3225,6 +3264,8 @@ static void print_sep_row (int namelen, int ncols, int *w,
 	pputc(prn, '-');
     }
     pputc(prn, '\n');
+
+    return n;
 }
 
 static void put_asts (double pv, PRN *prn)
@@ -3617,7 +3658,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     int dfd = pmod->dfd;
     int show_slope, adfnum = -1;
     int intervals = 0;
-    int namelen = 0;
+    int dotlen, namelen = 0;
     int colsep = 2;
     int ncols = 4;
     int i, j;
@@ -3663,7 +3704,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 	goto bailout;
     }
 
-    show_slope = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
+    show_slope = binary_model(pmod) && !(pmod->opt & OPT_P);
     if (show_slope) {
 	slopes = gretl_model_get_data(pmod, "slopes");
     }
@@ -3766,13 +3807,13 @@ static int plain_print_coeffs (const MODEL *pmod,
     }
 
     /* separator row */
-    print_sep_row(namelen, ncols, w, colsep, prn);
+    dotlen = print_sep_row(namelen, ncols, w, colsep, prn);
 
     /* print row values */
 
     for (i=0; i<nc; i++) {
 	if (i == seppos) {
-	    print_coeff_separator(sepstr, prn);
+	    print_coeff_separator(sepstr, dotlen, prn);
 	}
 	pprintf(prn, "  %-*s", namelen, names[i]);
 	bufspace(colsep, prn);
@@ -3888,14 +3929,15 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     model_coeff mc;
     int adfnum = -1;
     int nc = pmod->ncoeff;
-    int i, err = 0, gotnan = 0;
+    int cols, gotnan = 0;
+    int i, err = 0;
 
     if (gretl_model_get_data(pmod, "rq_sequence") != NULL) {
 	pputs(prn, "Sorry, not implemented yet!\n");
 	return 1;
     }
 
-    alt_print_coeff_table_start(pmod, pmod->ci, prn);
+    cols = alt_print_coeff_table_start(pmod, pmod->ci, prn);
 
     if (pmod->ci == PANEL) {
 	nc = pmod->list[0] - 1;
@@ -3920,7 +3962,7 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	if (err) gotnan = 1;
 
 	if (i == seppos) {
-	    print_coeff_separator(sepstr, prn);
+	    print_coeff_separator(sepstr, cols, prn);
 	}
 
 	if (intervals != NULL) {
@@ -4187,33 +4229,15 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s: %d\n", _("Total observations"), totobs);
 	pprintf(prn, "%s: %d (%.1f%%)\n", _("Censored observations"), 
 		cenobs, cenpc);
-	pprintf(prn, "%s = %.*g, ", _("sigma"), GRETL_DIGITS, pmod->sigma);
-	if (na(pmod->rho)) {
-	    pprintf(prn, "%s = NA\n", _("rho"));
-	} else {
-	    pprintf(prn, "%s = %.*g\n", _("rho"), GRETL_DIGITS, pmod->rho);
-	}
 	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s: %d\n", I_("Total observations"), totobs);
 	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), 
 		cenobs, cenpc);
-	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
-	if (!na(pmod->rho)) {
-	    pprintf(prn, RTFTAB "%s = %g\n", I_("rho"), pmod->rho);
-	}
     } else if (tex_format(prn)) {
-	char xstr[32];
-
 	pprintf(prn, "%s: %d \\\\\n", _("Total observations"), totobs);
 	pprintf(prn, "%s: %d (%.1f\\%%) \\\\\n", _("Censored observations"), 
 		cenobs, cenpc);
-	pprintf(prn, "$\\hat{\\sigma}$ = %s \\\\\n", 
-		tex_sprint_double(pmod->sigma, xstr));
-	if (!na(pmod->rho)) {
-	    pprintf(prn, "$\\hat{\\rho}$ = %s \\\\\n", 
-		    tex_sprint_double(pmod->rho, xstr));
-	}
     }
 }
 
@@ -4252,7 +4276,7 @@ static void print_binary_statistics (const MODEL *pmod,
 				     const DATAINFO *pdinfo,
 				     PRN *prn)
 {
-    int slopes = !gretl_model_get_int(pmod, "show-pvals");
+    int slopes = !(pmod->opt & OPT_P);
     const int *act_pred;
     int correct = -1;
     double pc_correct = NADBL;

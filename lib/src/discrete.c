@@ -764,7 +764,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (opt & OPT_P) {
-	gretl_model_set_int(&dmod, "show-pvals", 1);
+	dmod.opt |= OPT_P;
     } else if (add_slopes_to_model(&dmod, fbx)) {
 	dmod.errcode = E_ALLOC;
 	goto bailout;

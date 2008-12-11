@@ -471,26 +471,17 @@ static void retrieve_AR_lags_info (MODEL *pmod)
 
 static void retrieve_heckit_info (MODEL *pmod)
 {
-    int *zlist = (int *) gretl_model_get_data(pmod, "zlist");
-    int i, j;
+    int *zlist = gretl_model_get_secondary_list(pmod);
 
     if (zlist != NULL) {
 	selvar = zlist[1];
 	free(instlist);
-	instlist = gretl_list_new(zlist[0] - 1);
-	if (instlist != NULL) {
-	    j = 1;
-	    for (i=2; i<=zlist[0]; i++) {
-		if (zlist[i] < datainfo->v) {
-		    instlist[j++] = zlist[i];
-		} else {
-		    instlist[0] -= 1;
-		}
-	    }	
-	}
+	instlist = gretl_list_copy_from_pos(zlist, 2);
+	free(zlist);
     }
 
     if (pmod->opt & OPT_T) {
+	/* two-step estimation */
 	model_opt |= OPT_T;
     }    
 }
@@ -535,7 +526,7 @@ void selector_from_model (void *ptr, int ci)
 	    offvar = gretl_model_get_int(pmod, "offset_var");
 	} else if (pmod->ci == TSLS) {
 	    free(instlist);
-	    instlist = tsls_model_get_instrument_list(pmod);
+	    instlist = gretl_model_get_secondary_list(pmod);
 	} else if (pmod->ci == ARCH) {
 	    default_order = gretl_model_get_int(pmod, "arch_order");
 	} else if (pmod->ci == AR) {
@@ -593,7 +584,7 @@ void selector_from_model (void *ptr, int ci)
 	selection_dialog((ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
 			 do_vector_model, ci);
     } else if (ci == SYSTEM) {
-	dummy_call(); /* FIXME */
+	revise_system_model(ptr);
     }
 
     model_opt = OPT_NONE;
@@ -3214,7 +3205,9 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
     if (USE_ZLIST(sr->code) && instlist != NULL) {
 	for (i=1; i<=instlist[0]; i++) {
-	    list_append_var(mod, &iter, instlist[i], sr, SR_RVARS2);
+	    if (instlist[i] < datainfo->v) {
+		list_append_var(mod, &iter, instlist[i], sr, SR_RVARS2);
+	    }
 	}
     } else if (USE_VECXLIST(sr->code) && vecxlist != NULL) {
 	set_varflag(UNRESTRICTED);

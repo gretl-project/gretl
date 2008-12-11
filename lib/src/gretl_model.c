@@ -1530,16 +1530,6 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
-    } else if (pmod->ci == HECKIT) {
-	nx = gretl_model_get_int(pmod, "base-coeffs");
-	if (nx > 0) {
-	    list = gretl_list_new(nx);
-	    if (list != NULL) {
-		for (i=1; i<=list[0]; i++) {
-		    list[i] = pmod->list[i + 1];
-		}
-	    }
-	}
     } else if (ordered_model(pmod)) {
 	nx = pmod->list[0] - 1;
 	list = gretl_list_new(nx);
@@ -1549,13 +1539,44 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 	    }
 	}	
     } else if (pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM) {
-	nx = pmod->ncoeff;
-	list = gretl_list_new(nx);
-	if (list != NULL) {
-	    for (i=1; i<=list[0]; i++) {
-		list[i] = pmod->list[i + 1];
+	if (pmod->ci == HECKIT) {
+	    nx = gretl_model_get_int(pmod, "base-coeffs");
+	} else {
+	    nx = pmod->ncoeff;
+	}
+	if (nx > 0) {
+	    list = gretl_list_new(nx);
+	    if (list != NULL) {
+		for (i=1; i<=list[0]; i++) {
+		    list[i] = pmod->list[i + 1];
+		}
 	    }
 	}
+    }
+
+    return list;
+}
+
+/**
+ * gretl_model_get_secondary_list:
+ * @pmod: model to examine.
+ *
+ * Retrieve an allocated copy of the secondary list from
+ * @pmod: e.g. the list of instruments in the case of %TSLS, or
+ * the selection equation list for %HECKIT.
+ * 
+ * Returns: allocated list or %NULL on error.
+ */
+
+int *gretl_model_get_secondary_list (const MODEL *pmod)
+{
+    int *list = NULL;
+    int pos;
+
+    pos = gretl_list_separator_position(pmod->list);
+
+    if (pos > 0) {
+	list = gretl_list_copy_from_pos(pmod->list, pos + 1);
     }
 
     return list;
@@ -3665,6 +3686,10 @@ static int gretl_model_set_int_compat (MODEL *pmod,
 	if (!strcmp(key, "two-step")) {
 	    pmod->opt |= OPT_T;
 	}
+    } else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	if (!strcmp(key, "show-pvals")) {
+	    pmod->opt |= OPT_P;
+	}
     }
 
     if (!strcmp(key, "robust")) {
@@ -4349,7 +4374,7 @@ int highest_numbered_var_in_model (const MODEL *pmod,
     } else if (pmod->ci == POISSON) {
 	v = gretl_model_get_int(pmod, "offset_var");
 	if (v > vmax) vmax = v;
-    }
+    } 
 
     return vmax;
 }

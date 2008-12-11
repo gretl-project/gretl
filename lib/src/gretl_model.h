@@ -217,6 +217,8 @@ const char *gretl_model_get_depvar_name (const MODEL *pmod,
 
 int *gretl_model_get_x_list (const MODEL *pmod);
 
+int *gretl_model_get_secondary_list (const MODEL *pmod);
+
 int arma_model_nonseasonal_AR_order (const MODEL *pmod);
 
 int arma_model_nonseasonal_MA_order (const MODEL *pmod);

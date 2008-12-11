@@ -36,6 +36,8 @@ int *gretl_consecutive_list_new (int lmin, int lmax);
 
 int *gretl_list_copy (const int *src);
 
+int *gretl_list_copy_from_pos (const int *src, int pos);
+
 int *gretl_list_from_string (const char *liststr);
 
 char *gretl_list_to_string (const int *list);

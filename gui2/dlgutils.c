@@ -674,7 +674,7 @@ static GtkWidget *build_edit_popup (dialog_t *d)
 	    continue;
 	} else if (d->code == MLE && (i != ADD_DERIV)) {
 	    continue;
-	} else if (d->code == SYSTEM) {
+	} else if (d->code == SYSTEM || d->code == SYS_RESPEC) {
 	    if (i == ADD_DERIV) continue;
 	    if ((i == ADD_ENDO_LIST || i == ADD_INSTR_LIST) &&
 		edit_has_list(d->edit, i)) {
@@ -1023,16 +1023,20 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
 static void dlg_display_sys (dialog_t *d)
 {
     equation_system *sys = d->data;
+    gboolean respec = (d->code == SYS_RESPEC);
     GtkWidget *w;
     int hsize = 62;
 
-    w = gtk_label_new(sys->name);
-    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
-		       w, TRUE, TRUE, 10);
-    gtk_widget_show(w);
+    if (!respec) {
+	/* displaying an existing system, not editing */
+	w = gtk_label_new(sys->name);
+	gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
+			   w, TRUE, TRUE, 10);
+	gtk_widget_show(w);
+    }
 
-    d->edit = dlg_text_edit_new(&hsize, FALSE);
+    d->edit = dlg_text_edit_new(&hsize, respec);
     dialog_table_setup(d, hsize);
     dlg_text_set_from_sys(sys, d); 
     gretl_dialog_set_resizeable(d->dialog, TRUE);
@@ -1054,6 +1058,8 @@ static int edit_dialog_help_code (int ci, void *p)
 
     if (ci == SYSTEM && p != NULL) {
 	hc = 0;
+    } else if (ci == SYS_RESPEC) {
+	hc = SYSTEM;
     } else if (ci == PRINT || ci == CREATE_DATASET || ci == MINIBUF) {
 	hc = 0;
     } else if (ci == RESTRICT) {
@@ -1109,6 +1115,19 @@ static int vecm_model_window (windata_t *vwin)
     return vwin->role == VECM;
 }
 
+static void edit_dialog_add_note (const char *s, GtkWidget *vbox)
+{
+    GtkWidget *w;
+    gchar *lbl;
+
+    lbl = g_strdup_printf("%s\n%s", s, _("(Please refer to Help for guidance)"));
+    w = gtk_label_new(lbl);
+    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
+    gtk_box_pack_start(GTK_BOX(vbox), w, TRUE, TRUE, 10);
+    gtk_widget_show(w);
+    g_free(lbl);
+}
+
 void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr, guint ci, 
 		  guint varclick, int *canceled)
@@ -1138,28 +1157,25 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
 			      GTK_BUTTONBOX_END);
 
-    if (ci == SYSTEM && d->data != NULL) {
+    if (ci == SYS_RESPEC) {
+	/* repecifying equation system */
+	edit_dialog_add_note(info, top_vbox);
+	dlg_display_sys(d);
+	clear = 1;
+    } else if (ci == SYSTEM && d->data != NULL) {
 	/* revisiting saved equation system */
 	dlg_display_sys(d);
-    } else if (ci == NLS || ci == MLE || 
-	       ci == SYSTEM || ci == RESTRICT ||
-	       ci == GMM) {
+    } else if (ci == NLS || ci == MLE || ci == GMM ||
+	       ci == SYSTEM || ci == RESTRICT) {
 	int hsize = 62;
-	gchar *lbl;
 
-	lbl = g_strdup_printf("%s\n%s", info,
-			      _("(Please refer to Help for guidance)"));
-	w = gtk_label_new(lbl);
-	gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
-	gtk_box_pack_start(GTK_BOX(top_vbox), w, TRUE, TRUE, 10);
-	gtk_widget_show(w);
-	g_free(lbl);
-
+	edit_dialog_add_note(info, top_vbox);
 	d->edit = dlg_text_edit_new(&hsize, TRUE);
 	dialog_table_setup(d, hsize);
 	gretl_dialog_set_resizeable(d->dialog, TRUE);
 
 	if (ci != RESTRICT && deflt != NULL) {
+	    /* re-specifying a nonlinear model */
 	    textview_set_text(d->edit, deflt);
 	    if (ci == NLS || ci == MLE || ci == GMM) {
 		pmod = okptr;
@@ -1180,7 +1196,6 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     } else {
 	if (info != NULL) {
 	    w = gtk_label_new(info);
-	    /* GTK_JUSTIFY_CENTER? */
 	    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_LEFT);
 	    gtk_box_pack_start(GTK_BOX(top_vbox), w, TRUE, TRUE, 5);
 	    gtk_widget_show(w);
@@ -1208,7 +1223,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 
     if (ci == SMPLBOOL && dataset_is_restricted()) {
 	sample_replace_buttons(top_vbox, d);
-    } else if (ci == SYSTEM) {
+    } else if (ci == SYSTEM || ci == SYS_RESPEC) {
 	GtkWidget *bt, *bv;
 
 	bt = dialog_option_switch(top_vbox, d, OPT_T, NULL);

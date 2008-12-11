@@ -957,41 +957,6 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 }
 
 /**
- * tsls_get_instrument_list:
- * @pmod: model to examine.
- *
- * Retrieve an allocate copy of th list of instruments from @pmod.
- * 
- * Returns: allocated list or %NULL on error.
- */
-
-int *tsls_model_get_instrument_list (const MODEL *pmod)
-{
-    int *ilist = NULL;
-    int i, pos, ninst;
-
-    pos = gretl_list_separator_position(pmod->list);
-
-    if (pos == 0) {
-	return NULL;
-    }
-
-    ninst = pmod->list[0] - pos;
-
-    if (ninst > 0) {
-	ilist = gretl_list_new(ninst);
-    }
-
-    if (ilist != NULL) {
-	for (i=1; i<=ninst; i++) {
-	    ilist[i] = pmod->list[pos+i];
-	}
-    }
-
-    return ilist;
-}
-
-/**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
  * @ci: %TSLS for regular two-stage least squares, or

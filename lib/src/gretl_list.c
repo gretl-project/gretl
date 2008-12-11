@@ -957,6 +957,32 @@ int *gretl_list_copy (const int *src)
 }
 
 /**
+ * gretl_list_copy_from_pos:
+ * @src: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ *
+ * Returns: an allocated copy @src from position @pos onward
+ * (or %NULL on failure).
+ */
+
+int *gretl_list_copy_from_pos (const int *src, int pos)
+{
+    int *targ = NULL;
+    int i, n;
+
+    if (src != NULL && ((n = src[0] - pos + 1) > 0)) {
+	targ = gretl_list_new(n);
+	if (targ != NULL) {
+	    for (i=1; i<=n; i++) {
+		targ[i] = src[i+pos-1];
+	    }
+	}
+    }
+
+    return targ;
+}
+
+/**
  * gretl_list_from_string:
  * @liststr: string representation of list of integers.
  *
@@ -1852,9 +1878,11 @@ int gretl_list_separator_position (const int *list)
 {
     int i;
 
-    for (i=1; i<=list[0]; i++) {
-        if (list[i] == LISTSEP) {
-	    return i;
+    if (list != NULL) {
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		return i;
+	    }
 	}
     }
 

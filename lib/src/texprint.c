@@ -768,13 +768,15 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
     }	
 }
 
-static void 
+static int
 tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 {
     int i, ncols = 0;
 
     for (i=0; i<4; i++) {
-	if (colspec[i][0]) ncols++;
+	if (colspec[i][0]) {
+	    ncols++;
+	}
     }
 
     if (!(opt & OPT_U)) {
@@ -798,7 +800,7 @@ tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 
     if (!colspec[1][0] && !colspec[2][0] && !colspec[3][0]) {
 	pputs(prn, " \\\\\n");
-	return;
+	return ncols;
     }
 
     if (colspec[1][0]) {
@@ -810,7 +812,7 @@ tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 
     if (!colspec[2][0] && !colspec[3][0]) {
 	pputs(prn, " \\\\\n");
-	return;
+	return ncols;
     }
 
     if (colspec[2][0]) {
@@ -828,16 +830,20 @@ tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
     }
 
     pputs(prn, " \\\\\n");
+
+    return ncols;
 }
 
-void tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
+/* returns the number of columns in the coeff table */
+
+int tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 {
     char pt = get_local_decpoint();
     int i, mcols, binary = (opt & OPT_B);
+    int ncols = 0;
 
     if (use_custom) {
-	tex_custom_coeff_table_start(cols, opt, prn);
-	return;
+	return tex_custom_coeff_table_start(cols, opt, prn);
     }
 
     if (!(opt & OPT_U)) {
@@ -853,6 +859,7 @@ void tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 	} else {
 	    pprintf(prn, "r@{%c}l", pt);
 	}
+	ncols++;
     }
 
     pprintf(prn, "}\n%s &\n", I_(cols[0]));
@@ -865,6 +872,8 @@ void tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 		(cols[i+1] == NULL && binary)? "$^*$" : "",
 		(cols[i+1] == NULL)? "\\\\[1ex]" : "&");
     }
+
+    return ncols;
 }
 
 void tex_coeff_table_end (PRN *prn)
