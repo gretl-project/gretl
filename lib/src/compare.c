@@ -607,7 +607,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	} else if (orig->opt & OPT_W) {
 	    myopt |= OPT_W;
 	    if (gretl_model_get_int(orig, "iters")) {
-		myopt |= OPT_T;
+		myopt |= OPT_I;
 	    }
 	}
     } else if (orig->ci == LAD && gretl_model_get_int(orig, "rq")) {
