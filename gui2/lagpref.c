@@ -4,7 +4,7 @@
    destroy the stacked preferences when we switch data sets.
 */
 
-#define LDEBUG 2
+#define LDEBUG 0
 
 enum {
     LAGS_NONE,    /* no lags specified */
@@ -434,7 +434,7 @@ static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
     int *list;
     char cbase, context;
     int i, j, vi, lag, pv;
-    int err, nset = 0;
+    int err = 0, nset = 0;
 
     for (j=0; j<2 && !err; j++) {
 	list = (j == 0)? xlist : zlist;
