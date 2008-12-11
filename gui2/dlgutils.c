@@ -855,7 +855,7 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Iterated estimation"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_t_callback), dlg);
-	if (pmod != NULL && gretl_model_get_int(pmod, "iterated")) {
+	if (pmod != NULL && (pmod->opt & OPT_I)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
 	}
     } else if (opt == OPT_V) {
@@ -866,7 +866,7 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Robust standard errors"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_r_callback), dlg);
-	if (pmod != NULL && gretl_model_get_int(pmod, "robust")) {
+	if (pmod != NULL && (pmod->opt & OPT_R)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
 	}
     } else if (opt == OPT_B) {
@@ -959,9 +959,9 @@ static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
     gmm_opts.optp = &d->opt;
 
     if (pmod != NULL) {
-	if (gretl_model_get_int(pmod, "two-step")) {
+	if (pmod->opt & OPT_T) {
 	    deflt = 1;
-	} else if (gretl_model_get_int(pmod, "iterated")) {
+	} else if (pmod->opt & OPT_I) {
 	    deflt = 2;
 	}
     }

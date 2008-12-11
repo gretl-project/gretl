@@ -1704,9 +1704,6 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	gretl_model_set_int(&gnr, "iters", iters);
 	gretl_model_set_double(&gnr, "tol", spec->tol);
 	transcribe_nls_function(&gnr, spec->nlfunc);
-	if (spec->opt & OPT_R) {
-	    gretl_model_set_int(&gnr, "robust", 1);
-	}
     }
 
     destroy_dataset(gZ, gdinfo);

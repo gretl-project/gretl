@@ -308,7 +308,7 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 {
     int i, t, yno = pmod->list[1];
-    int pwe = gretl_model_get_int(pmod, "pwe");
+    int pwe = (pmod->opt & OPT_P);
     double x, pw1 = 0.0;
 
     if (gretl_model_add_arinfo(pmod, 1)) {
@@ -750,9 +750,9 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (ci == AR1) {
 	if (opt & OPT_P) {
-	    gretl_model_set_int(&mdl, "pwe", 1);
+	    mdl.opt |= OPT_P;
 	} else if (opt & OPT_H) {
-	    gretl_model_set_int(&mdl, "hilu", 1);
+	    mdl.opt |= OPT_H;
 	}
     } 
 
@@ -874,7 +874,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* if df correction is not wanted, record this fact */
     if (opt & OPT_N) {
-	gretl_model_set_int(&mdl, "no-df-corr", 1);
+	mdl.opt |= OPT_N;
     }
 
     if (dataset_is_time_series(pdinfo)) {
@@ -1349,7 +1349,8 @@ static void regress (MODEL *pmod, double *xpy, const double **Z,
 	pmod->sigma = 0.0;
 	pmod->adjrsq = NADBL;
     } else {
-	if (gretl_model_get_int(pmod, "no-df-corr")) {
+	if (pmod->opt & OPT_N) {
+	    /* no-df-corr */
 	    sgmasq = pmod->ess / pmod->nobs;
 	} else {
 	    sgmasq = pmod->ess / pmod->dfd;
@@ -2545,7 +2546,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 	pmod->fstt = robust_omit_F(NULL, pmod);
     }
 
-    gretl_model_set_int(pmod, "robust", 1);
+    pmod->opt |= OPT_R;
     gretl_model_set_int(pmod, "hc", 1);
     gretl_model_set_int(pmod, "hc_version", 4);
 
@@ -2800,7 +2801,7 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
 	    *err = E_DATA;
 	} else {
 	    if (opt & OPT_R) {
-		gretl_model_set_int(aux, "robust", 1);
+		aux->opt |= OPT_R;
 		LM = RSS / V;
 	    } else {
 		LM = .5 * RSS;

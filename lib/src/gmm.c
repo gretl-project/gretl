@@ -1332,9 +1332,9 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	}
 
 	if (s->opt & OPT_T) {
-	    gretl_model_set_int(pmod, "two-step", 1);
+	    pmod->opt |= OPT_T;
 	} else if (s->opt & OPT_I) {
-	    gretl_model_set_int(pmod, "iterated", 1);
+	    pmod->opt |= OPT_I;
 	}
     }
 

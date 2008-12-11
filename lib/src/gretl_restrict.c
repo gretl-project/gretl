@@ -1813,7 +1813,7 @@ restriction_set_print_result (gretl_restriction *rset,
     MODEL *pmod = rset->obj;
     int robust, asym;
 
-    robust = gretl_model_get_int(pmod, "robust");
+    robust = (pmod->opt & OPT_R);
     asym = ASYMPTOTIC_MODEL(pmod->ci);
 
     if (asym) {

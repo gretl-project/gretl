@@ -231,7 +231,7 @@ struct _cmplx {
 };
 #endif
 
-typedef unsigned long gretlopt;
+typedef unsigned int gretlopt;
 
 typedef struct VARINFO_ VARINFO;
 typedef struct PANINFO_ PANINFO;
@@ -347,6 +347,8 @@ struct ARINFO_ {
 struct MODEL_ {
     int ID;                      /* ID number for model */
     int refcount;                /* for saving/deleting */
+    int ci;                      /* "command index" -- estimation method */
+    gretlopt opt;                /* record of options */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
     char *submask;               /* keep track of sub-sample in force
@@ -360,8 +362,6 @@ struct MODEL_ {
     int *list;                   /* list of variables by ID number */
     int ifc;                     /* = 1 if the equation includes a constant,
 				    else = 0 */
-    int ci;                      /* "command index" -- depends on 
-				    estimation method */
     int nwt;                     /* ID number of the weight variable (WLS) */
     int aux;                     /* code representing the sort of
 				    auxiliary regression this is (or not) */

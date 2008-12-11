@@ -601,10 +601,10 @@ static const char *simple_estimator_string (int ci, PRN *prn)
 const char *estimator_string (const MODEL *pmod, PRN *prn)
 {
     if (pmod->ci == AR1) {
-	if (gretl_model_get_int(pmod, "hilu")) {
+	if (pmod->opt & OPT_H) {
 	    if (tex_format(prn)) return N_("Hildreth--Lu");
 	    else return N_("Hildreth-Lu");
-	} else if (gretl_model_get_int(pmod, "pwe")) {
+	} else if (pmod->opt & OPT_P) {
 	    if (tex_format(prn)) return N_("Prais--Winsten");
 	    else return N_("Prais-Winsten");
 	} else {
@@ -623,11 +623,11 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
     } else if (POOLED_MODEL(pmod)) {
 	return N_("Pooled OLS");
     } else if (pmod->ci == PANEL) {
-	if (gretl_model_get_int(pmod, "fixed-effects")) {
+	if (pmod->opt & OPT_F) {
 	    return N_("Fixed-effects");
-	} else if (gretl_model_get_int(pmod, "random-effects")) {
+	} else if (pmod->opt & OPT_U) {
 	    return N_("Random-effects (GLS)");
-	} else if (gretl_model_get_int(pmod, "unit-weights")) {
+	} else if (pmod->opt & OPT_W) {
 	    if (gretl_model_get_int(pmod, "iters")) {
 		return N_("Maximum Likelihood");
 	    } else {
@@ -643,9 +643,9 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("1-step Arellano-Bond");
 	}
     } else if (pmod->ci == GMM) {
-	if (gretl_model_get_int(pmod, "two-step")) {
+	if (pmod->opt & OPT_T) {
 	    return N_("2-step GMM");
-	} else if (gretl_model_get_int(pmod, "iterated")) {
+	} else if (pmod->opt & OPT_I) {
 	    return N_("Iterated GMM");
 	} else if (gretl_model_get_int(pmod, "step") == 2) {
 	    return N_("2-step GMM");
@@ -667,7 +667,7 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Probit");
 	}
     } else if (pmod->ci == HECKIT) {
-	if (gretl_model_get_int(pmod, "two-step")) {
+	if (pmod->opt & OPT_T) {
 	    return N_("Two-step Heckit");
 	} else {
 	    return N_("ML Heckit");
@@ -1058,7 +1058,7 @@ static void print_model_zerolist (const MODEL *pmod,
     const int *zlist = gretl_model_get_data(pmod, "zerolist");
     const char *tag = N_("Omitted because all values were zero:");
 
-    if (pmod->ci == PANEL && gretl_model_get_int(pmod, "between")) {
+    if (pmod->ci == PANEL && (pmod->opt & OPT_B)) {
 	return;
     }
 
@@ -1384,7 +1384,7 @@ static void print_model_heading (const MODEL *pmod,
     } else if (pmod->aux == AUX_BP) {
 	const char *fmt;
 
-	if (gretl_model_get_int(pmod, "robust")) {
+	if (pmod->opt & OPT_R) {
 	    fmt = N_("scaled %s (Koenker robust variant)");
 	} else {
 	    fmt = N_("scaled %s");
@@ -1465,7 +1465,7 @@ static void print_model_heading (const MODEL *pmod,
     print_model_vcv_info(pmod, prn);
 
     /* WLS on panel data */
-    if (gretl_model_get_int(pmod, "unit-weights") && !pmod->aux) {
+    if ((pmod->opt & OPT_W) && !pmod->aux) {
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	}
@@ -1879,25 +1879,21 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
     }
 }
 
-#define fixed_effects_model(m) (m->ci == PANEL && \
-                                gretl_model_get_int(m, "fixed-effects"))
+#define fixed_effects_model(m) (m->ci == PANEL && (m->opt & OPT_F))
 
-#define random_effects_model(m) (m->ci == PANEL && \
-                                 gretl_model_get_int(m, "random-effects"))
+#define random_effects_model(m) (m->ci == PANEL && (m->opt & OPT_U))
 
-#define between_model(m) (m->ci == PANEL && \
-                          gretl_model_get_int(m, "between"))
+#define between_model(m) (m->ci == PANEL && (m->opt & OPT_B))
 
 #define weighted_model(m) (m->ci == HSK || m->ci == ARCH || \
 			   (m->ci == WLS && !gretl_model_get_int(m, "wt_dummy")) || \
-                           (m->ci == PANEL && gretl_model_get_int(m, "unit-weights")))
+                           (m->ci == PANEL && (m->opt & OPT_W)))
 
-#define panel_ML_model(m) (m->ci == PANEL && \
-                           gretl_model_get_int(m, "unit-weights") && \
+#define panel_ML_model(m) (m->ci == PANEL && (m->opt & OPT_W) && \
 			   gretl_model_get_int(m, "iters"))
 
-#define non_weighted_panel(m) (m->ci == PANEL && \
-			       !gretl_model_get_int(m, "unit-weights"))
+#define non_weighted_panel(m) (m->ci == PANEL && !(m->opt & OPT_W))
+
 #define MID_STATS 14
 
 struct middletab {

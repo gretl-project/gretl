@@ -490,7 +490,7 @@ static void retrieve_heckit_info (MODEL *pmod)
 	}
     }
 
-    if (gretl_model_get_int(pmod, "two-step")) {
+    if (pmod->opt & OPT_T) {
 	model_opt |= OPT_T;
     }    
 }
@@ -541,21 +541,21 @@ void selector_from_model (void *ptr, int ci)
 	} else if (pmod->ci == AR) {
 	    retrieve_AR_lags_info(pmod);
 	} else if (pmod->ci == PANEL) {
-	    if (gretl_model_get_int(pmod, "fixed-effects")) {
+	    if (pmod->opt & OPT_F) {
 		model_opt |= OPT_F;
-	    } else if (gretl_model_get_int(pmod, "random-effects")) {
+	    } else if (pmod->opt & OPT_U) {
 		model_opt |= OPT_U;
-	    } else if (gretl_model_get_int(pmod, "unit-weights")) {
+	    } else if (pmod->opt & OPT_W) {
 		sel_ci = PANEL_WLS;
-	    } else if (gretl_model_get_int(pmod, "between")) {
+	    } else if (pmod->opt & OPT_B) {
 		sel_ci = PANEL_B;
 	    }
-	    if (gretl_model_get_int(pmod, "time-dummies")) {
+	    if (pmod->opt & OPT_D) {
 		model_opt |= OPT_D;
 	    }
 	}
 
-	if (gretl_model_get_int(pmod, "robust")) {
+	if (pmod->opt & OPT_R) {
 	    model_opt |= OPT_R;
 	}
 

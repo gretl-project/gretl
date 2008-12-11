@@ -710,7 +710,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[j]], targ);
-	} else if (gretl_model_get_int(pmod, "unit-weights")) {
+	} else if (pmod->ci == PANEL && (pmod->opt & OPT_W)) {
 	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
 	} else if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
 		   pmod->ci == ARMA || pmod->ci == PANEL ||
@@ -2058,6 +2058,8 @@ void gretl_model_init (MODEL *pmod)
 
     pmod->ID = 0;
     pmod->refcount = 0;
+    pmod->ci = 0;
+    pmod->opt = OPT_NONE;
     pmod->full_n = 0;
     pmod->t1 = 0;
     pmod->t2 = 0;
@@ -2070,7 +2072,6 @@ void gretl_model_init (MODEL *pmod)
     pmod->ntests = 0;
     pmod->nparams = 0;
     pmod->errcode = 0;
-    pmod->ci = 0;
     pmod->ifc = 0;
     pmod->aux = AUX_NONE;
 
@@ -3485,8 +3486,9 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 	    pmod->t1, pmod->t2, pmod->nobs);
     fprintf(fp, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ", 
 	    pmod->full_n, pmod->ncoeff, pmod->dfn, pmod->dfd);
-    fprintf(fp, "ifc=\"%d\" ci=\"%s\" nwt=\"%d\" aux=\"%d\" ", 
-	    pmod->ifc, gretl_command_word(pmod->ci), pmod->nwt, pmod->aux);
+    fprintf(fp, "ifc=\"%d\" ci=\"%s\" opt=\"%u\" nwt=\"%d\" aux=\"%d\" ", 
+	    pmod->ifc, gretl_command_word(pmod->ci), pmod->opt,
+	    pmod->nwt, pmod->aux);
 
     gretl_push_c_numeric_locale();
 
@@ -3622,8 +3624,67 @@ retrieve_model_coeff_separator (xmlNodePtr cur, MODEL *pmod)
     return err;
 }
 
+/* backward compatibility: transcribe old-style "gretl_set_int"
+   settings to bits in pmod->opt
+*/
+
+static int gretl_model_set_int_compat (MODEL *pmod, 
+				       const char *key, 
+				       int ival)
+{
+    gretlopt opt = pmod->opt;
+    int err = 0;
+
+    if (ival == 0) {
+	return 0;
+    }
+
+    if (pmod->ci == PANEL) {
+	if (!strcmp(key, "between")) {
+	    pmod->opt |= OPT_B;
+	} else if (!strcmp(key, "fixed-effects")) {
+	    pmod->opt |= OPT_F;
+	} else if (!strcmp(key, "random-effects")) {
+	    pmod->opt |= OPT_U;
+	} else if (!strcmp(key, "unit-weights")) {
+	    pmod->opt |= OPT_W;
+	}
+    } else if (pmod->ci == AR1) {
+	if (!strcmp(key, "hilu")) {
+	    pmod->opt |= OPT_H;
+	} else if (!strcmp(key, "pwe")) {
+	    pmod->opt |= OPT_P;
+	}
+    } else if (pmod->ci == GMM) {
+	if (!strcmp(key, "iterated")) {
+	    pmod->opt |= OPT_I;
+	} else if (!strcmp(key, "two-step")) {
+	    pmod->opt |= OPT_T;
+	}
+    } else if (pmod->ci == HECKIT) {
+	if (!strcmp(key, "two-step")) {
+	    pmod->opt |= OPT_T;
+	}
+    }
+
+    if (!strcmp(key, "robust")) {
+	pmod->opt |= OPT_R;
+    } else if (!strcmp(key, "time-dummies")) {
+	pmod->opt |= OPT_D;
+    } else if (!strcmp(key, "no-df-corr")) {
+	pmod->opt |= OPT_N;
+    }
+
+    if (pmod->opt == opt) {
+	/* not handled above */
+	err = gretl_model_set_int(pmod, key,ival);
+    }
+
+    return err;
+}
+
 static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
-				      MODEL *pmod)
+				      MODEL *pmod, int fixopt)
 {
     xmlNodePtr cur;
     int n_items;
@@ -3656,6 +3717,8 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 
 	    if (!gretl_xml_node_get_int(cur, doc, &ival)) {
 		err = 1;
+	    } else if (fixopt) {
+		err = gretl_model_set_int_compat(pmod, key, ival);
 	    } else {
 		err = gretl_model_set_int(pmod, key, ival);
 	    }
@@ -3774,6 +3837,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     char *buf = NULL;
     char *modname = NULL;
     xmlNodePtr cur;
+    int fixopt = 0;
     int n, got = 0;
 
     pmod = gretl_model_new();
@@ -3803,6 +3867,13 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	}
 	*err = E_DATA;
 	goto bailout;
+    }
+
+    if (gretl_xml_get_prop_as_int(node, "opt", &n)) {
+	pmod->opt = (unsigned) n;
+    } else {
+	/* backward compat may be needed */
+	fixopt = 1;
     }
 
     if (isdigit(*buf)) {
@@ -3869,7 +3940,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	} else if (!xmlStrcmp(cur->name, (XUC) "arinfo")) {
 	    *err = arinfo_from_xml(cur, doc, pmod);
 	} else if (!xmlStrcmp(cur->name, (XUC) "data-items")) {
-	    *err = model_data_items_from_xml(cur, doc, pmod);
+	    *err = model_data_items_from_xml(cur, doc, pmod, fixopt);
 	}
 	if (*err) {
 	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d on %s\n", *err, cur->name);

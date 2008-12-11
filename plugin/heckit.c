@@ -1111,7 +1111,7 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (hm.errcode == 0 && (opt & OPT_T)) {
-	gretl_model_set_int(&hm, "two-step", 1);
+	hm.opt |= OPT_T;
     }
 
     if (pdinfo->v > oldv) {

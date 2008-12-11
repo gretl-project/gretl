@@ -416,7 +416,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     if (flag == OMIT_WALD || flag == ADD_WALD) {
 	cmp.err = wald_test(testvars, umod, &cmp.chisq, &cmp.F);
-    } else if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
+    } else if ((pmodA->opt & OPT_R) || pmodA->ci == HCCM) {
 	cmp.F = robust_omit_F(testvars, umod);
 	cmp.robust = 1;
     } else if (LIMDEP(cmp.ci)) {
@@ -507,7 +507,7 @@ static gretlopt retrieve_arbond_opts (const MODEL *pmod)
 {
     gretlopt opt = OPT_NONE;
 
-    if (gretl_model_get_int(pmod, "time-dummies")) {
+    if (pmod->opt & OPT_D) {
 	opt |= OPT_D;
     }
 
@@ -562,17 +562,17 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
     /* recreate options and auxiliary vars, if required */
 
-    if (gretl_model_get_int(orig, "time-dummies")) {
+    if (orig->opt & OPT_D) {
 	myopt |= OPT_D;
     }
 
     if (orig->ci == AR1) {
-	if (gretl_model_get_int(orig, "hilu")) {
+	if (orig->opt & OPT_H) {
 	    myopt |= OPT_H;
 	    if (gretl_model_get_int(orig, "no-corc")) {
 		myopt |= OPT_B;
 	    }
-	} else if (gretl_model_get_int(orig, "pwe")) {
+	} else if (orig->opt & OPT_P) {
 	    myopt |= OPT_P;
 	}
 	rho = estimate_rho(list, pZ, pdinfo, myopt, prn, &rep.errcode);
@@ -592,7 +592,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     } else if (orig->ci == ARCH) {
 	order = gretl_model_get_int(orig, "arch_order");
     } else if (orig->ci == LOGIT || orig->ci == PROBIT) {
-	if (gretl_model_get_int(orig, "robust")) {
+	if (orig->opt & OPT_R) {
 	    myopt |= OPT_R;
 	} else if (gretl_model_get_int(orig, "ordered")) {
 	    myopt |= OPT_D;
@@ -602,9 +602,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "pooled")) {
 	    myopt |= OPT_P;
-	} else if (gretl_model_get_int(orig, "random-effects")) {
+	} else if (orig->opt & OPT_U) {
 	    myopt |= OPT_U;
-	} else if (gretl_model_get_int(orig, "unit-weights")) {
+	} else if (orig->opt & OPT_W) {
 	    myopt |= OPT_W;
 	    if (gretl_model_get_int(orig, "iters")) {
 		myopt |= OPT_T;
@@ -681,7 +681,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	break;
     default:
 	/* handles OLS, AR1, WLS, HSK, HCCM, etc. */
-	if (gretl_model_get_int(orig, "robust")) {
+	if (orig->opt & OPT_R) {
 	    myopt |= OPT_R;
 	}
 	if (gretl_model_get_int(orig, "hc_version") == 4) {
@@ -2296,7 +2296,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	}
     } else {
 	/* regular (or robust) Chow test */
-	int robust = gretl_model_get_int(pmod, "robust");
+	int robust = (pmod->opt & OPT_R);
 	gretlopt lsqopt = OPT_A;
 
 	if (robust) {

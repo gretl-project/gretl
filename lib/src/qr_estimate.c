@@ -45,7 +45,7 @@ enum {
 static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
 			  int *yconst)
 {
-    int pwe = gretl_model_get_int(pmod, "pwe");
+    int pwe = (pmod->opt & OPT_P);
     double y0 = 0.0, ymean = 0.0;
     double x, tss = 0.0;
     double ctss = 0.0;
@@ -213,7 +213,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     int t, i = 0;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
     int qdiff = (pmod->rho != 0.0);
-    int pwe = gretl_model_get_int(pmod, "pwe");
+    int pwe = (pmod->opt & OPT_P);
     int yvar = pmod->list[1];
     double y;
 
@@ -742,7 +742,7 @@ static void get_model_data (MODEL *pmod, const double **Z,
     double x;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
     int qdiff = (pmod->rho != 0.0);
-    int pwe = gretl_model_get_int(pmod, "pwe");
+    int pwe = (pmod->opt & OPT_P);
     double pw1 = 0.0;
 
     if (pwe) {
@@ -983,7 +983,8 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 
     /* standard error of regression */
     if (T - k > 0) {
-	if (gretl_model_get_int(pmod, "no-df-corr")) {
+	if (pmod->opt & OPT_N) {
+	    /* no-df-corr */
 	    pmod->sigma = sqrt(pmod->ess / T);
 	} else {
 	    pmod->sigma = sqrt(pmod->ess / (T - k));
@@ -999,7 +1000,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 
     /* VCV and standard errors */
     if (opt & OPT_R) { 
-	gretl_model_set_int(pmod, "robust", 1);
+	pmod->opt |= OPT_R;
 	if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
 	    qr_make_hac(pmod, Z, V);
 	} else {
@@ -1072,10 +1073,10 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 	    }
 	} else if (dataset_is_time_series(pdinfo) && 
 		   !libset_get_bool(FORCE_HC)) {
-	    gretl_model_set_int(pmod, "robust", 1);
+	    pmod->opt |= OPT_R;
 	    err = qr_make_hac(pmod, Z, V);
 	} else {
-	    gretl_model_set_int(pmod, "robust", 1);
+	    pmod->opt |= OPT_R;
 	    err = qr_make_hccme(pmod, Z, Q, V);
 	}
     } else {

@@ -1588,7 +1588,7 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
 	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
 	}
 	if (ab->flags & DPD_TIMEDUM) {
-	    gretl_model_set_int(pmod, "time-dummies", 1);
+	    pmod->opt |= OPT_D;
 	}
 	if ((ab->flags & DPD_TWOSTEP) && (ab->flags & DPD_ASYERRS)) {
 	    gretl_model_set_int(pmod, "asy", 1);

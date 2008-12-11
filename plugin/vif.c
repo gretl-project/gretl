@@ -106,7 +106,7 @@ static int XTX_properties (const MODEL *pmod, const double **Z,
 	return E_ALLOC;
     }
 
-    if (gretl_model_get_int(pmod, "pwe")) {
+    if (pmod->ci == AR1 && (pmod->opt & OPT_P)) {
 	pwe = 1;
     }
 

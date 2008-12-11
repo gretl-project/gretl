@@ -369,17 +369,17 @@ static const char *short_estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("WLS");
 	}
     } else if (pmod->ci == PANEL) {
-	if (gretl_model_get_int(pmod, "fixed-effects")) {
+	if (pmod->opt & OPT_F) {
 	    return N_("Within");
-	} else if (gretl_model_get_int(pmod, "random-effects")) {
+	} else if (pmod->opt & OPT_U) {
 	    return N_("GLS");
 	} else {
 	    return N_("Between");
 	}
     } else if (pmod->ci == AR1) {
-	if (gretl_model_get_int(pmod, "hilu")) {
+	if (pmod->opt & OPT_H) {
 	    return N_("HILU");
-	} else if (gretl_model_get_int(pmod, "pwe")) {
+	} else if (pmod->opt & OPT_P) {
 	    return N_("PWE");
 	} else {
 	    return N_("CORC");

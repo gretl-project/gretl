@@ -1359,7 +1359,7 @@ static int save_between_model (MODEL *pmod, const int *blist,
     int err = 0;
 
     pmod->ci = PANEL;
-    gretl_model_set_int(pmod, "between", 1);
+    pmod->opt |= OPT_B;
     pmod->dw = NADBL;
 
     gretl_model_add_panel_varnames(pmod, ginfo, NULL);
@@ -2072,7 +2072,7 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
     int ndrop = 0;
     int j, vj, i = 1;
 
-    if (gretl_model_get_int(pmod, "fixed-effects")) {
+    if (pmod->opt & OPT_F) {
 	ndrop = pan->pooled->list[0] - pan->vlist[0];
     }
 
@@ -2126,8 +2126,8 @@ static int save_fixed_effects_model (MODEL *pmod, panelmod_t *pan,
     int err = 0;
 
     pmod->ci = PANEL;
-    gretl_model_set_int(pmod, "fixed-effects", 1);
-
+    pmod->opt |= OPT_F;
+ 
     err = fix_within_stats(pmod, pan);
     if (err) {
 	return err;
@@ -2251,8 +2251,8 @@ static void save_random_effects_model (MODEL *pmod, panelmod_t *pan,
 				       const DATAINFO *reinfo)
 {
     pmod->ci = PANEL;
+    pmod->opt |= OPT_U;
 
-    gretl_model_set_int(pmod, "random-effects", 1);
     gretl_model_set_double(pmod, "within-variance", pan->s2e);
     gretl_model_set_double(pmod, "between-variance", pan->between_s2);
 
@@ -2868,8 +2868,7 @@ process_time_dummies (MODEL *pmod, const DATAINFO *pdinfo, int v)
     /* Record the fact that the model used time dummies, in case
        the user wants to add/omit variables or something.
     */
-
-    gretl_model_set_int(pmod, "time-dummies", 1);
+    pmod->opt |= OPT_D;
 
     return 0;
 }
@@ -3449,7 +3448,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_error_clear();
     panelmod_init(&pan);
 
-    if (opt & OPT_T) {
+    if (opt & OPT_I) {
 	/* iterating: no degrees-of-freedom correction */
 	wlsopt |= OPT_N; 
     } 
@@ -3476,18 +3475,18 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mdl;
     }  
 
-    if (opt & OPT_T) {
+    if (opt & OPT_I) {
 	if (singleton_check(pan.unit_obs, pan.nunits)) {
 	    pprintf(prn, _("Can't produce ML estimates: "
 			   "some units have only one observation"));
 	    pputc(prn, '\n');
-	    opt ^= OPT_T;
+	    opt ^= OPT_I;
 	}
     }
 
     s2 = mdl.ess / mdl.nobs;
 
-    if ((opt & OPT_V) && (opt & OPT_T)) {
+    if ((opt & OPT_V) && (opt & OPT_I)) {
 	pprintf(prn, "\nOLS error variance = %g\n", s2);
 	pprintf(prn, "log-likelihood = %g\n", pooled_ll(&mdl));
     }
@@ -3497,7 +3496,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (opt & OPT_T) {
+    if (opt & OPT_I) {
 	bvec = malloc(mdl.ncoeff * sizeof *bvec);
 	if (bvec == NULL) {
 	    mdl.errcode = E_ALLOC;
@@ -3529,7 +3528,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	unit_error_variances(uvar, &mdl, pdinfo, &pan);
 
 	if (opt & OPT_V) {
-	    if (opt & OPT_T) {
+	    if (opt & OPT_I) {
 		pprintf(prn, "\n*** %s %d ***\n", _("iteration"), 
 			iter);
 	    } else {
@@ -3545,13 +3544,13 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	if ((opt & OPT_T) && iter == 2) {
+	if ((opt & OPT_I) && iter == 2) {
 	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, &pan);
 	}
 
 	write_weights_to_dataset(uvar, pan.nunits, pan.T, *pZ, pdinfo);
 
-	if (opt & OPT_T) {
+	if (opt & OPT_I) {
 	    /* save coefficients for comparison */
 	    for (i=0; i<mdl.ncoeff; i++) {
 		bvec[i] = mdl.coeff[i];
@@ -3569,7 +3568,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    break;
 	}
 
-	if (opt & OPT_T) {
+	if (opt & OPT_I) {
 	    diff = max_coeff_diff(&mdl, bvec);
 	    if ((opt & OPT_V) && iter == 1) {
 		pprintf(prn, "\nFGLS pooled error variance = %g\n",
@@ -3587,10 +3586,10 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    set_model_id(&mdl);
 	}
 	gretl_model_set_int(&mdl, "n_included_units", pan.effn);
-	gretl_model_set_int(&mdl, "unit-weights", 1);
+	mdl.opt |= OPT_W;
 	mdl.nwt = 0;
 
-	if (opt & OPT_T) {
+	if (opt & OPT_I) {
 	    gretl_model_set_int(&mdl, "iters", iter);
 	    ml_hetero_test(&mdl, s2, uvar, pan.nunits, pan.unit_obs);
 	    unit_error_variances(uvar, &mdl, pdinfo, &pan);
@@ -4679,7 +4678,7 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
 	}
     }
 
-    if (gretl_model_get_int(orig, "fixed-effects")) {
+    if (orig->opt & OPT_F) {
 	int *panlist;
 
 	/* fixed-effects lists have the constant removed, 
@@ -4768,7 +4767,7 @@ int *panel_list_add (const MODEL *orig, const int *add, int *err)
 	return arbond_list_add(orig, add, err);
     }
 
-    if (gretl_model_get_int(orig, "fixed-effects")) {
+    if (orig->opt & OPT_F) {
 	int *panlist;
 
 	/* fixed-effects lists have the constant removed, 

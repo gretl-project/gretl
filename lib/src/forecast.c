@@ -1478,7 +1478,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	set_up_ar_fcast_variance(fc, pmod, pmax, npsi, &phi, &psi, &errphi);
     }
 
-    pwe = gretl_model_get_int(pmod, "pwe");
+    pwe = (pmod->opt & OPT_P);
 
     for (t=fc->t1; t<=fc->t2; t++) {
 	miss = 0;

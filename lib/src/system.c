@@ -648,7 +648,7 @@ static int get_estimation_method_from_line (const char *s)
 static void 
 system_set_flags (equation_system *sys, const char *s, gretlopt opt)
 {
-    if (opt & OPT_T) {
+    if (opt & OPT_I) {
 	sys->flags |= SYSTEM_ITERATE;
     }
 
@@ -671,7 +671,7 @@ system_set_flags (equation_system *sys, const char *s, gretlopt opt)
 /**
  * equation_system_start:
  * @line: command line.
- * @opt: may include %OPT_T for iterative estimation, if the
+ * @opt: may include %OPT_I for iterative estimation, if the
  * estimation method supports this.
  * 
  * Start compiling an equation system: @line must specify a "method" 
@@ -992,7 +992,7 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 
     /* the iterate option is available for WLS, SUR or 3SLS */
 
-    if (opt & OPT_T) {
+    if (opt & OPT_I) {
 	if (sys->method == SYS_METHOD_WLS || 
 	    sys->method == SYS_METHOD_SUR ||
 	    sys->method == SYS_METHOD_3SLS) {
