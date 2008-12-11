@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-10 15:48-0500\n"
-"PO-Revision-Date: 2008-12-08 23:00-0500\n"
+"PO-Revision-Date: 2008-12-10 23:45-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -25,26 +25,26 @@ msgid ""
 "Dickey-Fuller test for %s\n"
 msgstr ""
 "\n"
-"Test Dickeya-Fullera dla zmiennej %s\n"
+"Test Dickeya-Fullera dla procesu %s\n"
 
 #: lib/src/adf_kpss.c:253
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Augmented Dickey-Fuller test for %s\n"
 msgstr ""
 "\n"
-"Rozszerzony test Dickeya-Fullera dla rzędu opóźnienia %d, dla zmiennej %s\n"
+"Rozszerzony test Dickeya-Fullera dla procesu %s\n"
 
 #: lib/src/adf_kpss.c:255
 #, c-format
 msgid "including one lag of (1-L)%s"
-msgstr ""
+msgstr "dla opóźnienia pierwszego rzędu procesu (1-L)%s"
 
 #: lib/src/adf_kpss.c:257
 #, c-format
 msgid "including %d lags of (1-L)%s"
-msgstr ""
+msgstr "dla opóźnienia rzędu %d procesu (1-L)%s"
 
 #: lib/src/adf_kpss.c:282 gui2/library.c:919 gui2/selector.c:4335
 msgid "test without constant"
@@ -3916,24 +3916,20 @@ msgid "Unconditional error variance"
 msgstr "Bezwarunkowa wariancja błędu modelu"
 
 #: lib/src/modelprint.c:159
-#, fuzzy
 msgid "Left-unbounded observations"
-msgstr "Cenzurowane obserwacje"
+msgstr "Lewostronie nieograniczone obserwacje"
 
 #: lib/src/modelprint.c:160
-#, fuzzy
 msgid "Right-unbounded observations"
-msgstr "Cenzurowane obserwacje"
+msgstr "Prawostronie nieograniczone obserwacje"
 
 #: lib/src/modelprint.c:161
-#, fuzzy
 msgid "Bounded observations"
-msgstr "Dodaj obserwacje"
+msgstr "Ograniczone obserwacje"
 
 #: lib/src/modelprint.c:162
-#, fuzzy
 msgid "Point observations"
-msgstr "Liczba obserwacji"
+msgstr "Punktowe obserwacje"
 
 #: lib/src/modelprint.c:172 lib/src/modelprint.c:179 lib/src/modelprint.c:193
 #: lib/src/modelprint.c:4194 lib/src/modelprint.c:4205
@@ -5106,9 +5102,9 @@ msgid "No function has been specified"
 msgstr "Niewyspecyfikowana funkcja"
 
 #: lib/src/nls.c:2747
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no parameters were specified"
-msgstr "Niewyspecyfikowane parametry"
+msgstr "%s: niewyspecyfikowane parametry"
 
 #: lib/src/nls.c:2797
 msgid "Using numerical derivatives\n"
@@ -10085,9 +10081,8 @@ msgid "_Nonlinear Least Squares..."
 msgstr "_Nieliniowa metoda najmniejszych kwadratów..."
 
 #: gui2/gretl.c:1476
-#, fuzzy
 msgid "_Interval regression..."
-msgstr "Regresja kwantylowa..."
+msgstr "Regresja przedziałowa..."
 
 #: gui2/gretl.c:1477
 msgid "_Robust estimation"
@@ -10402,9 +10397,8 @@ msgid "_Copy"
 msgstr "_Kopiuj"
 
 #: gui2/gui_utils.c:149 gui2/gui_utils.c:272
-#, fuzzy
 msgid "_Revise specification..."
-msgstr "Test RESET na specyfikację"
+msgstr "Korekta _specyfikacji..."
 
 #: gui2/gui_utils.c:151 gui2/gui_utils.c:275
 msgid "_Tests"
@@ -10512,9 +10506,8 @@ msgid "_Autocorrelation"
 msgstr "testy autokorelacji (LMF, LM, Q)"
 
 #: gui2/gui_utils.c:182
-#, fuzzy
 msgid "_Durbin-Watson p-value"
-msgstr "Test Durbina-Watsona (wartoć p)"
+msgstr "test Durbina-Watsona (wartość p)"
 
 #: gui2/gui_utils.c:183 gui2/gui_utils.c:3198
 msgid "A_RCH"
@@ -11278,11 +11271,11 @@ msgstr "gretl: wyniki testu Chowa"
 
 #: gui2/library.c:2211
 msgid "gretl: QLR test output"
-msgstr "gretl: wyniki testu QLR (ilorazu wiarygodnoci Quandta)"
+msgstr "gretl: wyniki testu QLR (ilorazu wiarygodności Quandta)"
 
 #: gui2/library.c:2213
 msgid "gretl: CUSUM test output"
-msgstr "gretl: wyniki testu CUSUM"
+msgstr "gretl: wyniki testu CUSUM (CUmulated SUM of residual)"
 
 #: gui2/library.c:2214
 msgid "gretl: CUSUMSQ test output"
@@ -11294,18 +11287,17 @@ msgstr "wszystkie warianty"
 
 #: gui2/library.c:2239 gui2/library.c:2282
 msgid "gretl: RESET test"
-msgstr "gretl: test RESET"
+msgstr "gretl: test RESET (Regression Equation Specification Error Test)"
 
 #: gui2/library.c:2240
 msgid "RESET specification test"
-msgstr "Test RESET na specyfikację"
+msgstr "Test RESET na specyfikację - test Ramsey's"
 
 #: gui2/library.c:2314
 msgid "gretl: LM test (autocorrelation)"
 msgstr "gretl: test mnożnika Lagrange'a (LM) na autokorelację"
 
 #: gui2/library.c:2354
-#, fuzzy
 msgid "Durbin-Watson statistic"
 msgstr "Stat. Durbina-Watsona"
 
@@ -12026,9 +12018,8 @@ msgid "You must specify a public interface"
 msgstr "Należy wyspecyfikować publiczny interfejs"
 
 #: gui2/selector.c:1787
-#, fuzzy
 msgid "You must select a lower bound variable"
-msgstr "Należy wyspecyfikować zmienną - kontrolną"
+msgstr "Należy wybrać dolną granicę zmiennej"
 
 #: gui2/selector.c:1790
 msgid "You must select a dependent variable"
@@ -12055,9 +12046,8 @@ msgid "You must specify a selection variable"
 msgstr "Należy wyspecyfikować zmienne - instrumenty"
 
 #: gui2/selector.c:2367
-#, fuzzy
 msgid "You must specify an upper bound variable"
-msgstr "Należy wyspecyfikować zmienne - instrumenty"
+msgstr "Należy wybrać górną granicę zmiennej"
 
 #: gui2/selector.c:2471
 msgid "You must select a Z-axis variable"
@@ -12128,9 +12118,8 @@ msgid "Quantile regression"
 msgstr "Regresja kwantylowa"
 
 #: gui2/selector.c:2746
-#, fuzzy
 msgid "Interval regression"
-msgstr "Regresja kwantylowa"
+msgstr "Regresja przedziałowa"
 
 #: gui2/selector.c:2749
 msgid "Cointegration"
@@ -12161,9 +12150,8 @@ msgid "Desired quantile(s)"
 msgstr "Specyfikacja kwantyli"
 
 #: gui2/selector.c:2773
-#, fuzzy
 msgid "Upper bound variable"
-msgstr "Wykorzystaj indeksy jednostek i czasu"
+msgstr "Górna granica zmiennej"
 
 #: gui2/selector.c:2777 gui2/selector.c:2802
 msgid "Y-axis variable"
@@ -12182,9 +12170,8 @@ msgid "Choose->"
 msgstr "Wybór->"
 
 #: gui2/selector.c:2900
-#, fuzzy
 msgid "Lower bound variable"
-msgstr "zmienna czasowa t"
+msgstr "Dolna granica zmiennej"
 
 #: gui2/selector.c:2909 gui2/selector.c:2956
 msgid "Choose ->"
@@ -14470,39 +14457,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid ""
-#~ "\n"
-#~ "Augmented Dickey-Fuller tests, order %d, for %s\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rozszerzony test Dickeya-Fullera dla rzędu opóźnienia %d, dla zmiennej %"
-#~ "s\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Dickey-Fuller tests for %s\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Test Dickeya-Fullera dla zmiennej %s\n"
-
-#~ msgid "P-value(DW)"
-#~ msgstr "Wartość p dla testu DW"
-
-#~ msgid "Failed to compute numerical Hessian"
-#~ msgstr "Błąd w wyznaczaniu wartości Hessiana"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "*** User-specified starting values:\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "*** Użyj-wyspecyfikowanej wartości startowej:\n"
-
-#~ msgid "BFGS: initial value of objective function is not finite"
-#~ msgstr "BFGS: initial value of objective function is not finite"
-
-#~ msgid "stopped after %d iterations\n"
-#~ msgstr "Zatrzymano po %d iteracjach\n"
