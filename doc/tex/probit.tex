@@ -486,7 +486,7 @@ An important difference between the Tobit estimator and OLS is that
 the consequences of non-normality of the disturbance term are much
 more severe: non-normality implies inconsistency for the Tobit
 estimator. For this reason, the output for the tobit model includes
-the Chesher--Irish (1987) test for normality by default.
+the Chesher--Irish (1987) normality test by default.
 
 \section{Interval regression}
 \label{sec:intreg}
@@ -609,7 +609,11 @@ an estimate of $\epsilon_i$: more precisely, it equals $y_i - x_i
 \hat{\beta}$ for point observations and $E(\epsilon_i| m_i, M_i, x_i)$
 otherwise. Note that it is possible to compute an unbiased predictor
 of $y^*_i$ by summing this estimate to $x_i \hat{\beta}$. Script
-\ref{ex:interval} shows an example. 
+\ref{ex:interval} shows an example. As a further similarity with
+Tobit, the interval regression model may deliver inconsistent
+estimates if the disturbances are non-normal; hence, the
+Chesher--Irish (1987) test for normality is included by default here
+too.
 
 
 \section{Sample selection model}
