@@ -3826,7 +3826,7 @@ MODEL single_equation_liml (const int *list, double ***pZ,
 			    DATAINFO *pdinfo, gretlopt opt)
 {
     int *mlist = NULL, *ilist = NULL;
-    equation_system *sys;
+    equation_system *sys = NULL;
     MODEL model;
     int err = 0;
 
@@ -3854,7 +3854,6 @@ MODEL single_equation_liml (const int *list, double ***pZ,
 	free(sys->models[0]);
 	free(sys->models);
 	sys->models = NULL;
-	equation_system_destroy(sys);
 	gretl_model_set_int(&model, "method", 0);
 	model.opt |= OPT_L;
 	model.aux = AUX_NONE;
@@ -3863,6 +3862,7 @@ MODEL single_equation_liml (const int *list, double ***pZ,
 	set_model_id(&model);
     }
 
+    equation_system_destroy(sys);
     free(mlist);
 
     return model;
