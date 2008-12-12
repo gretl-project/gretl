@@ -1591,6 +1591,9 @@ static void model_format_start (PRN *prn)
     }
 }
 
+#define RTF_MULTICOL  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+                      "\\cellx8000\n\\intbl"
+
 #define RTF_COEFF_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                        "\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                        "\\cellx7500\\cellx8000\n\\intbl"
@@ -2445,11 +2448,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    pputs(prn, "\\begin{tabular}{lrlr}\n");
 	}
     } else if (rtf) {
-	if (mtab.multi) {
-	    pprintf(prn, "\\par\n{%s", RTF_MULTI_ROW);
-	} else {
-	    pprintf(prn, "\\par\n{%s", RTF_MT_ROW);
-	}
+	pputs(prn, "\\par\n{");
     } else if (csv) {
 	mtab.d = prn_delim(prn);
     }
@@ -2902,8 +2901,9 @@ static void print_coeff_separator (const char *s, int n, PRN *prn)
 	if (havestr) {
 	    pputs(prn, "\n  "); 
 	    print_centered(_(s), n, prn);
+	    pputc(prn, '\n'); 
 	} 
-	pputs(prn, "\n\n");
+	pputc(prn, '\n');
     } else if (tex_format(prn)) {
 	if (havestr) {
 	    pputs(prn, "\\\\ [-8pt]\n");
@@ -2912,15 +2912,16 @@ static void print_coeff_separator (const char *s, int n, PRN *prn)
 	    pputs(prn, "\\\\ \n");
 	}
     } else if (rtf_format(prn)) {
+	pputs(prn, RTF_MULTICOL);
 	if (havestr) {
-	    pprintf(prn, "%s ", I_(s));
+	    pprintf(prn, "\\qc %s", I_(s));
 	}
-	pputs(prn, "\\par \n"); /* FIXME */
+	pputs(prn, "\\cell\\intbl\\row\n");
     } else if (csv_format(prn)) {
 	if (havestr) {
 	    pprintf(prn, "\n\"%s\"\n", I_(s));
 	} else {
-	    pputs(prn, "\n\n");
+	    pputc(prn, '\n');
 	}
     }
 }

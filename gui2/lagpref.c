@@ -35,6 +35,22 @@ struct lagpref_ {
 static lagpref **lprefs;
 static int n_prefs;
 
+static void destroy_lag_preferences (void)
+{
+    int i;
+    
+    for (i=0; i<n_prefs; i++) {
+	if (lprefs[i]->spectype == LAGS_LIST) {
+	    free(lprefs[i]->lspec.laglist);
+	}
+	free(lprefs[i]);
+    } 
+
+    free(lprefs);
+    lprefs = NULL;
+    n_prefs = 0;
+}
+
 static int add_lpref_to_stack (lagpref *lpref)
 {
     lagpref **tmp;
@@ -409,7 +425,7 @@ static int set_lag_pref_from_lag (int v, int lag, char context)
 
     if (lpref == NULL) {
 	lpref = lpref_add(v, context, LAGS_LIST);
-    }
+    } 
 
     if (lpref == NULL) {
 	err = E_ALLOC;
@@ -435,6 +451,9 @@ static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
     char cbase, context;
     int i, j, vi, lag, pv;
     int err = 0, nset = 0;
+
+    /* start with a clean slate */
+    destroy_lag_preferences();
 
     for (j=0; j<2 && !err; j++) {
 	list = (j == 0)? xlist : zlist;
@@ -575,20 +594,4 @@ static int *get_lag_pref_as_list (int v, char context)
     }
 
     return list;
-}
-
-static void destroy_lag_preferences (void)
-{
-    int i;
-    
-    for (i=0; i<n_prefs; i++) {
-	if (lprefs[i]->spectype == LAGS_LIST) {
-	    free(lprefs[i]->lspec.laglist);
-	}
-	free(lprefs[i]);
-    } 
-
-    free(lprefs);
-    lprefs = NULL;
-    n_prefs = 0;
 }
