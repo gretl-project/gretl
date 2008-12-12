@@ -854,10 +854,37 @@ static int loop_list_refresh (LOOPSET *loop, const DATAINFO *pdinfo)
     return err;
 }
 
-/* Identify the named list, if any, but do not yet fill out the
-   variable-name (or variable-number) strings: these will be set when
-   the loop is actually run, since the list may have changed in the
-   meantime.
+static int find_list_in_parentage (LOOPSET *loop, const char *s)
+{
+    char lname[VNAMELEN];
+    int i;
+
+    while ((loop = loop->parent) != NULL) {
+	for (i=0; i<loop->n_cmds; i++) {
+	    if (sscanf(loop->lines[i], "list %15[^ =]", lname)) {
+		if (!strcmp(lname, s)) {
+		    return 1;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/* We're looking at a "foreach" loop with just one field after the
+   index variable, so it's most likely a loop over a list.
+
+   We begin by looking for an existent named list, but if this fails
+   we don't give up immediately: if we're working on an embedded loop,
+   the list may be created within a parent loop whose commands have
+   not yet been executed, so we search upward among the ancestors
+   of this loop (if any) for a relevant list-creation command.
+
+   Even if we find an already-existing list, we do not yet fill out
+   the variable-name (or variable-number) strings: these will be set
+   when the loop is actually run, since the list may have changed in
+   the meantime.
 */
 
 static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
@@ -874,12 +901,14 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
     printlist(list, "list, in list_loop_setup");
 #endif
 
-    if (list == NULL) {
+    if (list == NULL && !find_list_in_parentage(loop, s)) {
 	err = E_UNKVAR;
-    } else {
+    }
+
+    if (!err) {
 	*loop->listname = '\0';
 	strncat(loop->listname, s, VNAMELEN - 1);
-	*nf = list[0];
+	*nf = (list != NULL)? list[0] : 0;
     } 
 
     return err;

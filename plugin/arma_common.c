@@ -376,6 +376,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 {
     const double *y = NULL;
     double mean_error;
+    int do_criteria = 1;
     int t;
 
     pmod->ci = ARMA;
@@ -422,7 +423,15 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
     pmod->rsq = pmod->adjrsq = pmod->fstt = NADBL;
     pmod->tss = NADBL;
 
-    if (!arma_by_x12a(ainfo) && !arma_least_squares(ainfo)) {
+    if (arma_least_squares(ainfo)) {
+	/* not applicable */
+	do_criteria = 0;
+    } else if (arma_by_x12a(ainfo) && !na(pmod->criterion[C_AIC])) {
+	/* already given by x12a */
+	do_criteria = 0;
+    }
+
+    if (do_criteria) {
 	mle_criteria(pmod, 1);
     }
 

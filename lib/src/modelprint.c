@@ -2000,20 +2000,22 @@ enum {
 
 #define RSQ_POS 4
 
-static void mtab_numstart (char *s, double x, int minus)
+static void mtab_numstart (char *s, double x, int d7, int minus)
 {
     if (x < 0) {
 	if (minus == MINUS_UTF) {
-	    strcpy(s, "−"); /* U+2212: minus */
+	    strcpy(s, (d7)? " −" : "−"); /* U+2212: minus */
 	} else if (minus == MINUS_TEX) {
 	    strcpy(s, "$-$");
 	} else {
-	    strcpy(s, "-"); /* ASCII: use hyphen */
+	    strcpy(s, (d7)? " -" : "-"); /* ASCII: use hyphen */
 	}
     } else {
 	strcpy(s, " "); 
     }
 }
+
+#define seven_digits(x) (x > 999999 && x < 1.0e8)
 
 /* Try to pack as much as we can of a given number into a fixed width
    of 8 characters (a leading minus, if needed, is a ninth).
@@ -2022,6 +2024,7 @@ static void mtab_numstart (char *s, double x, int minus)
 static char *print_eight (char *s, struct middletab *mt, int i)
 {
     double ax, x = mt->val[i];
+    int d7 = (x < 0 && seven_digits(-x));
     char tmp[16];
 
     if (mt->ipos[i]) {
@@ -2040,11 +2043,13 @@ static char *print_eight (char *s, struct middletab *mt, int i)
 	return s;
     }
 
-    mtab_numstart(s, x, mt->minus);
+    mtab_numstart(s, x, d7, mt->minus);
 
     ax = fabs(x);
 
-    if (ax < 0.00001 || ax > 99999999) {
+    if (d7) {
+	sprintf(tmp, "%.0f", ax);
+    } else if (ax < 0.00001 || ax > 99999999) {
 	char *p;
 
 	sprintf(tmp, "%#.3g", ax);

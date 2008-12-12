@@ -146,7 +146,7 @@ static GtkActionEntry model_items[] = {
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
     { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },    
     { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) },
-    { "Revise", GTK_STOCK_EDIT, N_("_Revise specification..."), NULL, NULL, 
+    { "Revise", GTK_STOCK_EDIT, N_("_Modify model..."), NULL, NULL, 
       G_CALLBACK(model_revise_callback) },
     { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
     { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    

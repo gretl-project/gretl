@@ -739,7 +739,11 @@ count_panel_units (const char *mask, const DATAINFO *pdinfo)
     return n;
 }
 
-/* construct mask for taking random sub-sample from dataset */
+/* construct mask for taking random sub-sample from dataset:
+   we're selecting 'subn' cases without replacement, and
+   there may or may not be an existing mask in place that
+   has to be respected.
+*/
 
 static int make_random_mask (const char *s, const char *oldmask, 
 			     double ***pZ, DATAINFO *pdinfo,
@@ -750,6 +754,7 @@ static int make_random_mask (const char *s, const char *oldmask,
     int i, subn, cases, rejn;
     int err = 0;
 
+    /* how many cases are requested? */
     subn = smpl_get_int(s, pZ, pdinfo, &err);
 
     if (subn <= 0 || subn >= pdinfo->n) {
@@ -772,9 +777,9 @@ static int make_random_mask (const char *s, const char *oldmask,
 	return err;
     }	
 
-    /* Which is smaller: the number of cases to be selected, or
-       the number to be discarded?  We'll randomize in search of
-       the smaller value.
+    /* Which is smaller: the number of cases to be selected or the
+       complement, the number to be discarded?  For the sake of
+       efficiency we'll go for the smaller value.
     */
     rejn = oldn - subn;
     if (rejn < subn) {
