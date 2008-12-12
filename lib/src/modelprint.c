@@ -2901,10 +2901,15 @@ static void print_coeff_separator (const char *s, int n, PRN *prn)
 	pputs(prn, "\n\n");
     } else if (tex_format(prn)) {
 	if (havestr) {
-	    pprintf(prn, "\\multicolumn{%d}{c}{%s}", n, I_(s));
-	} 
-	pputs(prn, "\\\\ \n");
+	    pputs(prn, "\\\\ [-8pt]\n");
+	    pprintf(prn, "\\multicolumn{%d}{c}{%s} \\\\[1ex]\n", n, I_(s));
+	} else {
+	    pputs(prn, "\\\\ \n");
+	}
     } else if (rtf_format(prn)) {
+	if (havestr) {
+	    pprintf(prn, "%s ", I_(s));
+	}
 	pputs(prn, "\\par \n"); /* FIXME */
     } else if (csv_format(prn)) {
 	if (havestr) {

@@ -2141,6 +2141,7 @@ static void add_model_tex_items (windata_t *vwin)
     int imod = 0;
 
     gtk_ui_manager_add_ui_from_string(vwin->ui, model_tex_ui, -1, &err);
+
     if (err != NULL) {
 	g_message("building LaTeX menu failed: %s", err->message);
 	g_error_free(err);

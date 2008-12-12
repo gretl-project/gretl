@@ -4114,9 +4114,9 @@ int is_quiet_model_test (int ci, gretlopt opt)
 
 /**
  * command_ok_for_model:
- * @test_ci:  index of command to be tested.
+ * @test_ci: index of command to be tested.
  * @opt: option for command to be tested.
- * @model_ci: command index of a gretl model (for example,
+ * @mci: command index of a gretl model (for example,
  * %OLS, %WLS or %AR1).
  *
  * Returns: 1 if the model-related command in question is
@@ -4124,11 +4124,11 @@ int is_quiet_model_test (int ci, gretlopt opt)
  * sort of model indentified by @model_ci, otherwise 0.
  */
 
-int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
+int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 {
     int ok = 1;
 
-    if (model_ci == NLS || model_ci == MLE || model_ci == GMM) {
+    if (mci == NLS || mci == MLE || mci == GMM) {
 	return (test_ci == RESTRICT ||
 		test_ci == TABPRINT ||
 		test_ci == TESTUHAT);
@@ -4138,28 +4138,29 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
 
     case ADD:
     case ADDTO:
-	if (model_ci == ARMA || model_ci == GARCH || 
-	    model_ci == HECKIT || model_ci == INTREG) {
+	if (mci == ARMA || mci == GARCH || 
+	    mci == HECKIT || mci == INTREG) {
 	    ok = 0;
 	}
 	break;
 
     case OMIT:
     case OMITFROM:
-	if (model_ci == ARMA || model_ci == GARCH || model_ci == INTREG) {
+	if (mci == ARMA || mci == GARCH || mci == INTREG) {
 	    ok = 0;
 	}
 	break;
 
     case VIF:
-	if (model_ci == TSLS || model_ci == ARMA || model_ci == GARCH ||
-	    model_ci == PANEL || model_ci == ARBOND) {
+	if (mci == TSLS || mci == ARMA || mci == GARCH ||
+	    mci == PANEL || mci == ARBOND) {
 	    ok = 0;
 	}
 	break;
 
     case EQNPRINT:
-	if (model_ci == ARMA || model_ci == ARBOND) {
+	if (mci == ARMA || mci == ARBOND || mci == HECKIT ||
+	    mci == INTREG) {
 	    ok = 0; 
 	}
 	break;
@@ -4167,9 +4168,9 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
     case LMTEST:
 	if (opt & OPT_H) {
 	    /* ARCH */
-	    ok = (model_ci != ARCH);
-	} else if (model_ci != OLS) {
-	    if ((model_ci == TSLS) && (opt & (OPT_A | OPT_W))) {
+	    ok = (mci != ARCH);
+	} else if (mci != OLS) {
+	    if ((mci == TSLS) && (opt & (OPT_A | OPT_W))) {
 		/* Autocorr. and H'sked. supported for TSLS */
 		ok = 1; 
 	    } else {
@@ -4185,20 +4186,20 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
     case RESET:
     case HAUSMAN:
 	/* OLS-only tests */
-	ok = (model_ci == OLS);
+	ok = (mci == OLS);
 	break;
 
     case RESTRICT:
-	if (model_ci == LAD || model_ci == QUANTREG) {
+	if (mci == LAD || mci == QUANTREG) {
 	    ok = 0;
 	}
 	break;
 
     case TESTUHAT:
 	/* do we really need to exclude garch? */
-	if (model_ci == TOBIT || model_ci == PROBIT ||
-	    model_ci == LOGIT || model_ci == GARCH ||
-	    model_ci == INTREG) {
+	if (mci == TOBIT || mci == PROBIT ||
+	    mci == LOGIT || mci == GARCH ||
+	    mci == INTREG) {
 	    ok = 0;
 	}
 	break;

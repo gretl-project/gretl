@@ -420,29 +420,6 @@ static int tex_greek_param (char *targ, const char *src)
     }
 }
 
-static void tex_arbond_coeff_name (char *targ, const char *src,
-				   int inmath)
-{
-    char vname[VNAMELEN], vnesc[16];
-    int lag;
-
-    if (sscanf(src, "D%10[^(](%d)", vname, &lag) == 2) {
-	tex_escape(vnesc, vname);
-	if (!inmath) {
-	    sprintf(targ, "$\\Delta \\mbox{\\rm %s}_{%d}$", vnesc, lag);
-	} else {
-	    sprintf(targ, "\\Delta \\mbox{\\rm %s}_{%d}", vnesc, lag);
-	}
-    } else {
-	tex_escape(vnesc, src);
-	if (inmath) {
-	    sprintf(targ, "\\mbox{%s}", vnesc);
-	} else {
-	    strcpy(targ, vnesc);
-	}
-    }
-}
-
 static void tex_garch_coeff_name (char *targ, const char *src,
 				  int inmath)
 {
@@ -645,33 +622,28 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
 			  char *name)
 {
-    int j = i + 2;
+    char pname[VNAMELEN];
+
+    gretl_model_get_param_name(pmod, pdinfo, i, pname);    
 
     if (pmod->aux == AUX_ARCH) {
-	tex_make_cname(name, pdinfo->varname[pmod->list[j]]);
+	tex_make_cname(name, pname);
     } else if (pmod->ci == NLS) {
-	if (!tex_greek_param(name, pmod->params[i])) {
-	    tex_escape(name, pmod->params[i]);
+	if (!tex_greek_param(name, pname)) {
+	    tex_escape(name, pname);
 	}
     } else if (pmod->ci == ARMA) {
-	tex_arma_coeff_name(name, pmod->params[i], 0);
+	tex_arma_coeff_name(name, pname, 0);
     } else if (pmod->ci == GARCH) {
-	tex_garch_coeff_name(name, pmod->params[i], 0);
+	tex_garch_coeff_name(name, pname, 0);
     } else if (pmod->ci == VAR) {
 	tex_VAR_varname(name, pmod, pdinfo, i);
     } else if (pmod->aux == AUX_VECM) {
 	tex_VECM_varname(name, pmod, pdinfo, i);
-    } else if (pmod->ci == MPOLS && pmod->params != NULL) {
-	tex_mp_coeff_name(name, pmod->params[i], 0);
-    } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT || pmod->ci == HECKIT) &&
-	       pmod->params != NULL) {
-	tex_escape(name, pmod->params[i]);
-    } else if (pmod->ci == PANEL || pmod->ci == MLE || pmod->ci == GMM) {
-	tex_escape(name, pmod->params[i]);
-    } else if (pmod->ci == ARBOND) {
-	tex_arbond_coeff_name(name, pmod->params[i], 0);
+    } else if (pmod->ci == MPOLS) {
+	tex_mp_coeff_name(name, pname, 0);
     } else {
-	tex_escape(name, pdinfo->varname[pmod->list[j]]);
+	tex_escape(name, pname);
     }
 }
 
@@ -780,7 +752,7 @@ tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
     }
 
     if (!(opt & OPT_U)) {
-	/* not user-defined model */
+	/* not a user-defined model */
 	pputs(prn, "\\vspace{1em}\n\n");
     }
 
@@ -840,7 +812,7 @@ int tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 {
     char pt = get_local_decpoint();
     int i, mcols, binary = (opt & OPT_B);
-    int ncols = 0;
+    int ncols = 1;
 
     if (use_custom) {
 	return tex_custom_coeff_table_start(cols, opt, prn);
@@ -859,7 +831,7 @@ int tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 	} else {
 	    pprintf(prn, "r@{%c}l", pt);
 	}
-	ncols++;
+	ncols += 2;
     }
 
     pprintf(prn, "}\n%s &\n", I_(cols[0]));
@@ -1323,11 +1295,15 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 			gretlopt opt, PRN *prn)
 {
     double x;
-    char tmp[48];
+    char tmp[48], vname[32];
     int i, nc = pmod->ncoeff;
     int split = 0, offvar = 0;
     int cchars = 0, ccount = 0;
     int sderr_ok = 1;
+
+    if (pmod->ci == HECKIT) {
+	return E_NOTIMP;
+    }
 
     if (pmod->ci == POISSON) {
 	offvar = gretl_model_get_int(pmod, "offset_var");
@@ -1355,8 +1331,6 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     if (pmod->depvar != NULL) {
 	tex_escape(tmp, pmod->depvar);
     } else if (pmod->ci == POISSON) {
-	char vname[32];
-
 	tex_escape(vname, pdinfo->varname[pmod->list[1]]);
 	sprintf(tmp, "log(%s)", vname);
     } else {
@@ -1404,41 +1378,27 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
 
 	if (i > 0 || pmod->ifc == 0) {
+	    /* regular coefficient, not const */
+	    if (offvar > 0 && i == nc - 1) {
+		strcpy(vname, pdinfo->varname[offvar]);
+	    } else {
+		gretl_model_get_param_name(pmod, pdinfo, i, vname);
+	    }
+	    cchars += strlen(vname);
+
 	    pputs(prn, "\\,");
+
 	    if (pmod->ci == ARMA) {
-		cchars += strlen(pmod->params[i]);
-		tex_arma_coeff_name(tmp, pmod->params[i], 1);
+		tex_arma_coeff_name(tmp, vname, 1);
 		pputs(prn, tmp);
 	    } else if (pmod->ci == GARCH) {
-		cchars += strlen(pmod->params[i]);
-		tex_garch_coeff_name(tmp, pmod->params[i], 1);
+		tex_garch_coeff_name(tmp, vname, 1);
 		pputs(prn, tmp);
-	    } else if (pmod->ci == PANEL) {
-		cchars += strlen(pmod->params[i]);
-		tex_escape(tmp, pmod->params[i]);
-		pprintf(prn, "\\mbox{%s}", tmp);
-	    } else if (pmod->ci == ARBOND) {
-		if (strcmp(pmod->params[i], "const")) {
-		    cchars += strlen(pmod->params[i]);
-		    tex_arbond_coeff_name(tmp, pmod->params[i], 1);
-		    pputs(prn, tmp);
-		}
-	    } else if (pmod->ci == MPOLS && pmod->params != NULL) {
-		cchars += strlen(pmod->params[i]);
-		tex_mp_coeff_name(tmp, pmod->params[i], 1);
+	    } else if (pmod->ci == MPOLS) {
+		tex_mp_coeff_name(tmp, vname, 1);
 		pputs(prn, tmp);
-	    } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT) &&
-		       pmod->params != NULL) {
-		cchars += strlen(pmod->params[i]);
-		tex_escape(tmp, pmod->params[i]);
-		pprintf(prn, "\\mbox{%s}", tmp);
-	    } else if (offvar > 0 && i == nc - 1) {
-		cchars += strlen(pdinfo->varname[offvar]);
-		tex_escape(tmp, pdinfo->varname[offvar]);
-		pprintf(prn, "\\mbox{%s}", tmp);
 	    } else {
-		cchars += strlen(pdinfo->varname[pmod->list[i+2]]);
-		tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
+		tex_escape(tmp, vname);
 		pprintf(prn, "\\mbox{%s}", tmp);
 	    }
 	}
