@@ -234,7 +234,7 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 	    llist[i+1] = pmod->list[pmod->ifc + 3 + i];
 	}
 
-	F = robust_omit_F(llist, pmod);
+	F = wald_omit_F(llist, pmod);
 
 	if (!na(F)) {
 	    pprintf(prn, "   lagged differences: F(%d, %d) = %.3f [%.4f]\n",

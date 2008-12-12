@@ -159,7 +159,7 @@ static void qr_compute_stats (MODEL *pmod, const double *y, int n,
 
     if (pmod->dfd > 0 && pmod->dfn > 0) {
 	if (opt & OPT_R) {
-	    pmod->fstt = robust_omit_F(NULL, pmod);
+	    pmod->fstt = wald_omit_F(NULL, pmod);
 	} else if (pmod->rsq == 1.0) {
 	    pmod->fstt = NADBL;
 	} else {

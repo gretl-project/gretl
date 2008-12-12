@@ -244,4 +244,7 @@ int system_autocorrelation_test (equation_system *sys, int order,
 
 int system_arch_test (equation_system *sys, int order, PRN *prn);
 
+MODEL single_equation_liml (const int *list, double ***pZ,
+			    DATAINFO *pdinfo, gretlopt opt);
+
 #endif /* EQUATION_SYSTEM_H */

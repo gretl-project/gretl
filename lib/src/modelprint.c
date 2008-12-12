@@ -678,6 +678,8 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("LAD");
 	}
+    } else if (pmod->ci == TSLS && (pmod->opt & OPT_L)) {
+	return N_("LIML");
     } else {
 	return simple_estimator_string(pmod->ci, prn);
     }

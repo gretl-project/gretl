@@ -24,6 +24,7 @@
 #include "libset.h"
 #include "estim_private.h"
 #include "matrix_extra.h"
+#include "system.h"
 
 #define TDEBUG 0
 
@@ -31,10 +32,10 @@ static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
 {
     int i, v;
 
-    for (i=2; i<=list[0]; i++) {
+    for (i=list[0]; i>1; i--) {
         v = list[i];
         if (gretl_iszero(t1, t2, Z[v])) {
-	    gretl_list_delete_at_pos(list, i--);
+	    gretl_list_delete_at_pos(list, i);
 	}
     }
 }
@@ -722,7 +723,7 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
     }
 }
 
-static void tsls_extra_stats (MODEL *pmod, const double **Z,
+static void tsls_extra_stats (MODEL *pmod, int overid, const double **Z,
 			      const DATAINFO *pdinfo)
 {
     int yno = pmod->list[1];
@@ -733,10 +734,21 @@ static void tsls_extra_stats (MODEL *pmod, const double **Z,
 
     pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1.0) / pmod->dfd);
 
-    pmod->fstt = pmod->rsq * pmod->dfd / (pmod->dfn * r);
+#if 1
+    pmod->fstt = wald_omit_F(NULL, pmod);
     pmod->chisq = NADBL;
-
-    ls_criteria(pmod);
+#else
+    pmod->fstt = NADBL;
+    pmod->chisq = wald_omit_chisq(NULL, pmod);
+#endif
+    
+    if (overid) {
+	/* tsls is not a ML estimator unless it's exactly identified */
+	pmod->lnL = NADBL;
+	mle_criteria(pmod, 0);
+    } else {
+	ls_criteria(pmod);
+    }
 
     if (dataset_is_time_series(pdinfo) && pmod->missmask == NULL) {
 	/* time series, no missing obs within sample range */
@@ -837,7 +849,7 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
     }
 
     if (!err) {
-	F = robust_omit_F(flist, &mod1);
+	F = wald_omit_F(flist, &mod1);
 	if (na(F)) {
 	    err = 1;
 	}
@@ -965,7 +977,8 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: may contain %OPT_O for printing covariance matrix, 
- * %OPT_R for robust VCV, %OPT_N for no df correction.
+ * %OPT_R for robust VCV, %OPT_N for no df correction, %OPT_A
+ * if this is an auxiliary reression.
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.  If @ci is %SYSTEM, fitted values from the first-stage
@@ -977,6 +990,7 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
+    MODEL tsls;
     gretl_matrix *Q = NULL;
     char *missmask = NULL;
     int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
@@ -990,7 +1004,9 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     int OverIdRank = 0;
     int i;
 
-    MODEL tsls;
+    if (opt & OPT_L) {
+	return single_equation_liml(list, pZ, pdinfo, opt);
+    }
 
     /* initialize model in case we bail out early on error */
     gretl_model_init(&tsls);
@@ -1151,7 +1167,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     } 
 
     if (tsls.list[0] < s2list[0]) {
-	/* collinear regressors dropped? If so, adjustments are needed */
+	/* Were collinear regressors dropped? If so, adjustments are needed */
 	OverIdRank += s2list[0] - tsls.list[0];
 	reglist_remove_redundant_vars(&tsls, s2list, reglist);
     }
@@ -1160,7 +1176,6 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
        residuals and associated statistics */
     tsls_residuals(&tsls, reglist, (const double **) *pZ, opt);
 
-    /* compute standard errors */
     if ((opt & OPT_R) || libset_get_bool(USE_QR)) {
 	/* QR decomp in force, or robust standard errors called for */
 	qr_tsls_vcv(&tsls, (const double **) *pZ, pdinfo, opt);
@@ -1170,7 +1185,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* compute additional statistics (R^2, F, etc.) */
-    tsls_extra_stats(&tsls, (const double **) *pZ, pdinfo);
+    tsls_extra_stats(&tsls, OverIdRank, (const double **) *pZ, pdinfo);
 
     if (ci == TSLS) {
 	tsls_hausman_test(&tsls, reglist, hatlist, pZ, pdinfo);
@@ -1217,7 +1232,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     free(exolist);
     free(s2list);
 
-    if (tsls.errcode) {
+    if ((opt & OPT_A) || tsls.errcode) {
 	model_count_minus();
     }
 

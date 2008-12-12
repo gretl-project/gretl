@@ -390,12 +390,14 @@ system_model_list (equation_system *sys, int i, int *freeit)
 	sys->method == SYS_METHOD_3SLS ||
 	sys->method == SYS_METHOD_OLS || 
 	sys->method == SYS_METHOD_TSLS ||
+	sys->method == SYS_METHOD_LIML ||
 	sys->method == SYS_METHOD_WLS) {
 	list = system_get_list(sys, i);
     }
 
     if (sys->method == SYS_METHOD_3SLS || 
-	sys->method == SYS_METHOD_TSLS) {
+	sys->method == SYS_METHOD_TSLS ||
+	sys->method == SYS_METHOD_LIML) {
 	/* is list already in tsls form? */
 	if (list != NULL && !in_list(list, LISTSEP)) {
 	    list = NULL;
@@ -716,11 +718,15 @@ static void clean_up_models (equation_system *sys)
 	    sys->method == SYS_METHOD_LIML) {
 	    tsls_free_data(sys->models[i]);
 	}
-	gretl_model_free(sys->models[i]);
+	if (sys->neqns > 1) {
+	    gretl_model_free(sys->models[i]);
+	}
     }
 
-    free(sys->models);
-    sys->models = NULL;
+    if (sys->neqns > 1) {
+	free(sys->models);
+	sys->models = NULL;
+    }
 
     sys->ess = ess;
 }
@@ -764,14 +770,12 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     int v, l, mk, krow, nr;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
     gretl_matrix *Xi = NULL;
     gretl_matrix *Xj = NULL;
     gretl_matrix *M = NULL;
     MODEL **models = NULL;
-
     int method = sys->method;
     double llbak = -1.0e9;
     int single_equation = 0;
@@ -854,9 +858,9 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	} else if (method == SYS_METHOD_3SLS || 
 		   method == SYS_METHOD_FIML || 
 		   method == SYS_METHOD_TSLS) {
-	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_NONE);
+	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_A);
 	} else if (method == SYS_METHOD_LIML) {
-	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_N);
+	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_A | OPT_N);
 	}
 
 	if (freeit) {
@@ -1123,7 +1127,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_free(X);
     gretl_matrix_free(y);
 
-    if (models != NULL) {
+    if (sys->models != NULL) {
 	clean_up_models(sys);
     }
 

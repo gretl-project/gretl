@@ -209,7 +209,7 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 }
 
 /**
- * robust_omit_F:
+ * wald_omit_F:
  * @list: list of variables to omit (or NULL).
  * @pmod: model to be tested.
  *
@@ -219,15 +219,35 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
  * all variables in @pmod except for the constant.
  *
  * Returns: Calculated F-value, or #NADBL on failure.
- * 
  */
 
-double robust_omit_F (const int *list, MODEL *pmod)
+double wald_omit_F (const int *list, MODEL *pmod)
 {
     double F = NADBL;
 
     wald_test(list, pmod, NULL, &F);
     return F;
+}
+
+/**
+ * wald_omit_chisq:
+ * @list: list of variables to omit (or NULL).
+ * @pmod: model to be tested.
+ *
+ * Simple form of Wald chi-square for omission of variables.  If @list
+ * is non-NULL, do the test for the omission of the variables in
+ * @list from the model @pmod.  Otherwise test for omission of
+ * all variables in @pmod except for the constant.
+ *
+ * Returns: Calculated chi-square value, or #NADBL on failure.
+ */
+
+double wald_omit_chisq (const int *list, MODEL *pmod)
+{
+    double X = NADBL;
+
+    wald_test(list, pmod, &X, NULL);
+    return X;
 }
 
 /* ----------------------------------------------------- */
@@ -417,7 +437,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
     if (flag == OMIT_WALD || flag == ADD_WALD) {
 	cmp.err = wald_test(testvars, umod, &cmp.chisq, &cmp.F);
     } else if ((pmodA->opt & OPT_R) || pmodA->ci == HCCM) {
-	cmp.F = robust_omit_F(testvars, umod);
+	cmp.F = wald_omit_F(testvars, umod);
 	cmp.robust = 1;
     } else if (LIMDEP(cmp.ci)) {
 	cmp.chisq = 2.0 * (umod->lnL - rmod->lnL);
@@ -2153,7 +2173,7 @@ static double robust_chow_test (MODEL *pmod, const int *list,
     if (tlist == NULL) {
 	*err = E_ALLOC;
     } else {
-	test = robust_omit_F(tlist, pmod);
+	test = wald_omit_F(tlist, pmod);
 	if (!na(test)) {
 	    test *= tlist[0]; /* chi-square form */
 	}

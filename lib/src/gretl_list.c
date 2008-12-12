@@ -1108,17 +1108,17 @@ char *gretl_list_to_string (const int *list)
 
 int in_gretl_list (const int *list, int k)
 {
-    int i, ret = 0;
+    int i;
 
     if (list != NULL) {
-	for (i=1; i<=list[0] && !ret; i++) {
+	for (i=1; i<=list[0]; i++) {
 	    if (list[i] == k) {
-		ret = i;
+		return i;
 	    }
 	}
     }
 
-    return ret;
+    return 0;
 }
 
 static void reglist_move_const (int *list, int k)

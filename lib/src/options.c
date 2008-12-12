@@ -321,6 +321,7 @@ struct gretl_option gretl_opts[] = {
     { SYSTEM,   OPT_I, "iterate" },
     { SYSTEM,   OPT_V, "verbose" },
     { TOBIT,    OPT_V, "verbose" },
+    { TSLS,     OPT_L, "liml" },
     { TSLS,     OPT_Q, "quiet" },
     { TSLS,     OPT_R, "robust" },  
     { TSLS,     OPT_S, "save" },

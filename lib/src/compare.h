@@ -60,7 +60,9 @@ typedef enum {
 
 /* functions follow */
  
-double robust_omit_F (const int *list, MODEL *pmod);
+double wald_omit_F (const int *list, MODEL *pmod);
+
+double wald_omit_chisq (const int *list, MODEL *pmod);
 
 int add_test (const int *addvars,  MODEL *orig, MODEL *new,
 	      double ***pZ, DATAINFO *pdinfo, 

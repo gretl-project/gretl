@@ -24,17 +24,6 @@
 
 #define LDEBUG 0
 
-static int on_exo_list (const int *exlist, int v)
-{
-    int i;
-
-    for (i=1; i<=exlist[0]; i++) {
-	if (exlist[i] == v) return 1;
-    }
-
-    return 0;
-}
-
 /* Note: it sort-of seems that to produce proper restricted LIML
    estimates one would somehow have to impose appropriate restrictions
    at the stage of the computations below, i.e. where the matrices of
@@ -65,23 +54,24 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 			const int *exlist, const int *list, int T,
 			double ***pZ, DATAINFO *pdinfo)
 {
-    int i, j, t;
+    int i, vi, j, t;
     int t1 = pdinfo->t1;
     int err = 0;
 
     j = 0;
     for (i=1; i<=list[0]; i++) {
+	vi = list[i];
 
 	/* skip predetermined vars */
-	if (on_exo_list(exlist, list[i])) {
+	if (in_gretl_list(exlist, vi)) {
 	    continue;
 	}
 
-	reglist[1] = list[i];
+	reglist[1] = vi;
 
 	/* regress the given endogenous var on the specified
 	   set of exogenous vars */
-	*lmod = lsq(reglist, pZ, pdinfo, OLS, OPT_NONE);
+	*lmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A);
 	if ((err = lmod->errcode)) {
 	    clear_model(lmod);
 	    break;
@@ -91,11 +81,10 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 	for (t=0; t<T; t++) {
 	    gretl_matrix_set(E, t, j, lmod->uhat[t + t1]);
 	}
+	/* and increment the column of E */
+	j++;
 
 	clear_model(lmod);
-
-	/* increment the column of E */
-	j++;
     }
 
     return err;
@@ -129,7 +118,7 @@ liml_make_reglist (const equation_system *sys, const int *list,
     int *reglist;
     int i, j;
 
-    reglist = malloc((nexo + 2) * sizeof *reglist);
+    reglist = gretl_list_new(nexo + 1);
     if (reglist == NULL) {
 	return NULL;
     }
@@ -145,7 +134,7 @@ liml_make_reglist (const equation_system *sys, const int *list,
     reglist[1] = 0;
     j = 2;
     for (i=2; i<=list[0]; i++) {
-	if (on_exo_list(exlist, list[i])) {
+	if (in_gretl_list(exlist, list[i])) {
 	    reglist[0] += 1;
 	    reglist[j++] = list[i];
 	} else {
@@ -172,7 +161,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     double *ymod = NULL;
     double yt, xit, eit;
     int m = list[0] - 1;
-    int i, j, t;
+    int i, vi, j, s, t;
     int err = 0;
 
     ymod = malloc(n * sizeof *ymod);
@@ -185,12 +174,14 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     }
 
     for (t=0; t<T; t++) {
-	yt = Z[list[1]][t + t1];
+	s = t + t1;
+	yt = Z[list[1]][s];
 	eit = gretl_matrix_get(E, t, 0);
 	ymod[t + t1] = yt - lmin * eit;
 	j = 1;
 	for (i=0; i<m; i++) {
-	    if (on_exo_list(exlist, list[i+2])) {
+	    vi = list[i+2];
+	    if (in_gretl_list(exlist, vi)) {
 		continue;
 	    }
 	    Xi = tsls_get_Xi(pmod, Z, i);
@@ -198,9 +189,9 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 		err = 1;
 		break;
 	    }
-	    xit = Z[list[i+2]][t + t1];
+	    xit = Z[vi][s];
 	    eit = gretl_matrix_get(E, t, j++);
-	    Xi[t + t1] = xit - lmin * eit;
+	    Xi[s] = xit - lmin * eit;
 	}
 	if (err) break;
     }
@@ -224,18 +215,13 @@ static int liml_do_equation (equation_system *sys, int eq,
 {
     const int *exlist = system_get_instr_vars(sys);
     const int *list = system_get_list(sys, eq);
-
     gretl_matrix *E = NULL;
     gretl_matrix *W0 = NULL;
     gretl_matrix *W1 = NULL;
     gretl_matrix *W2 = NULL;
     gretl_matrix *Inv = NULL;
-    gretl_matrix *g = NULL;
-    gretl_matrix *V = NULL;
     gretl_matrix *lambda = NULL;
-
-    double lmin = 1.0;
-    double ll = 0.0;
+    double ll = 0.0, lmin = 1.0;
     MODEL *pmod;
     MODEL lmod;
     int *reglist;
@@ -289,73 +275,76 @@ static int liml_do_equation (equation_system *sys, int eq,
 
     err = resids_to_E(E, &lmod, reglist, exlist, list, 
 		      T, pZ, pdinfo);
-    if (err) goto bailout;
 
-    err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
-				    E, GRETL_MOD_NONE,
-				    W0, GRETL_MOD_NONE);
-    if (err) goto bailout;
-
-#if LDEBUG
-    gretl_matrix_print(W0, "W0", NULL);
-#endif
-
-    /* now re-make the regression list using all exogenous vars */
-    reglist[0] = 1 + exlist[0];
-    for (i=2; i<=reglist[0]; i++) {
-	reglist[i] = exlist[i-1];
-    }
-
-    err = resids_to_E(E, &lmod, reglist, exlist, list, 
-		      T, pZ, pdinfo);
-    if (err) {
-	goto bailout;
-    }
-    
-    err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
-				    E, GRETL_MOD_NONE,
-				    W1, GRETL_MOD_NONE);
-    if (err) {
-	goto bailout;
+    if (!err) {
+	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+					E, GRETL_MOD_NONE,
+					W0, GRETL_MOD_NONE);
     }
 
 #if LDEBUG
-    gretl_matrix_print(W1, "W1", NULL);
+    gretl_matrix_print(W0, "W0");
 #endif
 
-    gretl_matrix_copy_values(Inv, W1);
-
-    err = gretl_invert_symmetric_matrix(Inv);
-    if (err) goto bailout;
-
-    err = gretl_matrix_multiply(Inv, W0, W2);
-    if (err) goto bailout;
-    
-    lambda = gretl_general_matrix_eigenvals(W2, 0, &err);
-    if (err) {
-	goto bailout;
+    if (!err) {
+	/* re-make the regression list using all exogenous vars */
+	reglist[0] = 1 + exlist[0];
+	for (i=2; i<=reglist[0]; i++) {
+	    reglist[i] = exlist[i-1];
+	}
+	err = resids_to_E(E, &lmod, reglist, exlist, list, 
+			  T, pZ, pdinfo);
     }
 
-    lmin = lambda_min(lambda, k);
-    gretl_matrix_free(lambda);
-    gretl_model_set_double(pmod, "lmin", lmin);
-    gretl_model_set_int(pmod, "idf", idf);
-
-    err = liml_set_model_data(pmod, E, exlist, list, T, pdinfo->t1, 
-			      pdinfo->n, lmin, *pZ);
-    if (err) {
-	fprintf(stderr, "error in liml_set_model_data()\n");
-	goto bailout;
+    if (!err) {
+	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+					E, GRETL_MOD_NONE,
+					W1, GRETL_MOD_NONE);
     }
 
-    /* compute and set log-likelihood, etc */
-    ll = sys->neqns * LN_2_PI;
-    ll += log(lmin);
-    ll += gretl_matrix_log_determinant(W1, &err);
-    ll *= -(T / 2.0);
-    pmod->lnL = ll;
+#if LDEBUG
+    gretl_matrix_print(W1, "W1");
+#endif
 
-    mle_criteria(pmod, 0); /* check the "0" (additional params) here */
+    if (!err) {
+	gretl_matrix_copy_values(Inv, W1);
+	err = gretl_invert_symmetric_matrix(Inv);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply(Inv, W0, W2);
+    }
+
+    if (!err) {
+	lambda = gretl_general_matrix_eigenvals(W2, 0, &err);
+    }
+
+    if (!err) {
+	lmin = lambda_min(lambda, k);
+	gretl_model_set_double(pmod, "lmin", lmin);
+	gretl_model_set_int(pmod, "idf", idf);
+
+#if LDEBUG
+	fprintf(stderr, "lmin = %g, idf = %d\n", lmin, idf);
+#endif
+
+	err = liml_set_model_data(pmod, E, exlist, list, T, pdinfo->t1, 
+				  pdinfo->n, lmin, *pZ);
+	if (err) {
+	    fprintf(stderr, "error in liml_set_model_data()\n");
+	}
+    }
+
+    if (!err) {
+	/* compute and set log-likelihood, etc */
+	ll = sys->neqns * LN_2_PI + log(lmin);
+	ll += gretl_matrix_log_determinant(W1, &err);
+	if (!err) {
+	    ll *= -(T / 2.0);
+	    pmod->lnL = ll; 
+	    mle_criteria(pmod, 0); /* check the "0" (additional params) here */
+	}
+    }
 
  bailout:
 
@@ -365,8 +354,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     gretl_matrix_free(W1);
     gretl_matrix_free(W2);
     gretl_matrix_free(Inv);
-    gretl_matrix_free(g);
-    gretl_matrix_free(V);
+    gretl_matrix_free(lambda);
 
     return err;
 }
@@ -380,6 +368,10 @@ int liml_driver (equation_system *sys, double ***pZ,
 		 DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0;
+
+#if LDEBUG
+    fprintf(stderr, "\n *** liml driver called\n");
+#endif
 
     for (i=0; i<sys->neqns && !err; i++) {
 #if LDEBUG > 1

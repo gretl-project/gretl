@@ -1105,7 +1105,7 @@ equation_system_estimate (equation_system *sys,
 	close_plugin(handle);
     }
 
-    if (!err) {
+    if (!err && sys->neqns >= 2) {
 	set_as_last_model(sys, GRETL_OBJ_SYS);
     } 
 
@@ -1298,7 +1298,6 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     /* If the user gave a list of instruments, check that it does
        not contain anything that is in fact clearly endogenous.
      */
-
     if (sys->ilist != NULL) {
 	for (j=1; j<=sys->ilist[0]; j++) {
 	    vj = sys->ilist[j];
@@ -1313,7 +1312,6 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     /* If the user did not give a list of instruments, use the
        one we computed above.
     */
-
     if (!err && sys->ilist == NULL) {
 	sys->ilist = gretl_list_copy(xplist);
 	if (sys->ilist == NULL) {
@@ -1325,7 +1323,6 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
        lags of endogenous variables (and recording them as such): this
        should leave a list of truly exogenous variables.
     */
-
     for (j=1; j<=xplist[0] && !err; j++) {
 	vj = xplist[j];
 	lag = pdinfo->varinfo[vj]->lag;
@@ -1376,6 +1373,7 @@ int equation_system_finalize (equation_system *sys,
 			      double ***pZ, DATAINFO *pdinfo,
 			      gretlopt opt, PRN *prn)
 {
+    int mineq = (sys->method == SYS_METHOD_LIML)? 1 : 2;
     int err = 0;
 
     gretl_error_clear();
@@ -1385,7 +1383,7 @@ int equation_system_finalize (equation_system *sys,
 	return 1;
     }
 
-    if (sys->neqns < 2) {
+    if (sys->neqns < mineq) {
 	strcpy(gretl_errmsg, _(toofew));
 	equation_system_destroy(sys);
 	return 1;
@@ -3820,4 +3818,52 @@ int system_arch_test (equation_system *sys, int order, PRN *prn)
     }
 
     return err;
+}
+
+/* experimental!! */
+
+MODEL single_equation_liml (const int *list, double ***pZ,
+			    DATAINFO *pdinfo, gretlopt opt)
+{
+    int *mlist = NULL, *ilist = NULL;
+    equation_system *sys;
+    MODEL model;
+    int err = 0;
+
+    gretl_model_init(&model);
+
+    err = gretl_list_split_on_separator(list, &mlist, &ilist);
+
+    if (!err) {
+	sys = equation_system_new(SYS_METHOD_LIML, NULL, &err);
+    }
+
+    if (!err) {
+	err = equation_system_append(sys, mlist);
+    }
+
+    if (!err) {
+	sys->ilist = ilist;
+	err = equation_system_finalize(sys, pZ, pdinfo, opt, NULL);
+    }
+
+    if (err) {
+	model.errcode = err;
+    } else {
+	model = *sys->models[0];
+	free(sys->models[0]);
+	free(sys->models);
+	sys->models = NULL;
+	equation_system_destroy(sys);
+	gretl_model_set_int(&model, "method", 0);
+	model.opt |= OPT_L;
+	model.aux = AUX_NONE;
+	model.rsq = model.adjrsq = NADBL;
+	model.fstt = NADBL;
+	set_model_id(&model);
+    }
+
+    free(mlist);
+
+    return model;
 }

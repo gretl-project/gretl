@@ -2543,7 +2543,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 
     /* substitute robust F stat */
     if (pmod->dfd > 0 && pmod->dfn > 1) {
-	pmod->fstt = robust_omit_F(NULL, pmod);
+	pmod->fstt = wald_omit_F(NULL, pmod);
     }
 
     pmod->opt |= OPT_R;
