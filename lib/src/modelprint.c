@@ -53,6 +53,10 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
 #define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
 
+#define tsls_model(m) (m->ci == IVREG && !(m->opt & OPT_L) && !m->aux)
+
+#define liml_model(m) (m->ci == IVREG && (m->opt & OPT_L))
+
 void model_coeff_init (model_coeff *mc)
 {
     mc->b = NADBL;
@@ -577,7 +581,6 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     if (ci == OLS || ci == VAR) return N_("OLS");
     else if (ci == WLS)  return N_("WLS"); 
     else if (ci == ARCH) return N_("WLS (ARCH)");
-    else if (ci == TSLS) return N_("TSLS");
 #if 1
     else if (ci == HSK)  return N_("WLS"); 
 #else
@@ -685,8 +688,12 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("LAD");
 	}
-    } else if (pmod->ci == TSLS && (pmod->opt & OPT_L)) {
-	return N_("LIML");
+    } else if (pmod->ci == IVREG) {
+	if (pmod->opt & OPT_L) {
+	    return N_("LIML");
+	} else {
+	    return N_("TSLS");
+	}
     } else {
 	return simple_estimator_string(pmod->ci, prn);
     }
@@ -698,7 +705,7 @@ static int any_tests (const MODEL *pmod)
 	return 1;
     }
 
-    if (pmod->ci == TSLS && gretl_model_get_int(pmod, "stage1-dfn")) {
+    if (pmod->ci == IVREG && gretl_model_get_int(pmod, "stage1-dfn")) {
 	return 1;
     }
 
@@ -762,31 +769,53 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 }
 
 static int 
-print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
+print_ivreg_instruments (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
-    int i, gotsep = 0;
-    int ccount = 0;
-    int ninst = 0;
+    const char *strs[] = {
+	N_("Endogenous"),
+	N_("Instruments")
+    };
+    const int *list;
     char vname[16];
     int tex = tex_format(prn);
+    int i, j, imin, jmin, vi;
 
-    pprintf(prn, "%s: ", I_("Instruments"));
+    jmin = (pmod->aux)? 1 : 0;
 
-    ccount += char_len(_("Instruments") + 2);
+    for (j=jmin; j<2; j++) {
+	int ccount, nv = 0;
 
-    for (i=2; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    gotsep = 1;
+	if (j == 0) {
+	    list = (const int *) gretl_model_get_data(pmod, "endolist");
+	    imin = (list == NULL)? -1 : 1;
+	} else {
+	    list = pmod->list;
+	    imin = gretl_list_separator_position(list);
+	    if (imin > 0) {
+		imin++;
+	    } else {
+		imin = -1;
+	    }
+	}
+
+	if (imin < 0) {
 	    continue;
 	}
-	if (gotsep) {
-	    if (tex) {
-		tex_escape(vname, pdinfo->varname[list[i]]);
-	    } else {
-		strcpy(vname, pdinfo->varname[list[i]]);
+
+	ccount = pprintf(prn, "%s: ", I_(strs[j]));
+    
+	for (i=imin; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi >= pdinfo->v) {
+		fprintf(stderr, "print_ivreg_instruments: bad varnum %d\n", vi);
+		continue;
 	    }
-	    pprintf(prn, "%s ", vname);
-	    ccount += char_len(vname) + 1;
+	    if (tex) {
+		tex_escape(vname, pdinfo->varname[vi]);
+	    } else {
+		strcpy(vname, pdinfo->varname[vi]);
+	    }
+	    ccount += pprintf(prn, "%s ", vname);
 	    if (ccount >= 64) {
 		if (tex) {
 		    pputs(prn, "\\\\\n");
@@ -797,15 +826,13 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 		}
 		ccount = 0;
 	    }
-	    ninst++;
+	    nv++;
 	}
-    }
+    
+	if (nv == 0) {
+	    pputs(prn, "none??");
+	}
 
-    if (ninst == 0) {
-	pputs(prn, I_("none"));
-    }
-
-    if (ccount > 0) {
 	gretl_prn_newline(prn);
     }
 
@@ -1084,9 +1111,9 @@ static void print_model_droplist (const MODEL *pmod,
     print_extra_list(tag, dlist, pdinfo, prn);
 }
 
-static void print_tsls_droplist (const MODEL *pmod, 
-				 const DATAINFO *pdinfo,
-				 PRN *prn)
+static void print_ivreg_droplist (const MODEL *pmod, 
+				  const DATAINFO *pdinfo,
+				  PRN *prn)
 {
     const int *dlist = gretl_model_get_data(pmod, "inst_droplist");
     int i, v;
@@ -1187,7 +1214,7 @@ static void godfrey_test_string (int ci, int order, PRN *prn)
 {
     pputc(prn, '\n');
 
-    if (ci == TSLS) {
+    if (ci == IVREG) {
 	if (order > 1) {
 	    pprintf(prn, I_("Godfrey (1994) test for autocorrelation up to order %d"), 
 		    order);
@@ -1463,12 +1490,12 @@ static void print_model_heading (const MODEL *pmod,
 
     /* supplementary strings below the estimator and sample info */
 
-    if (pmod->ci == TSLS) {
-	/* list of instruments for TSLS */
+    if (pmod->ci == IVREG) {
+	/* list of instruments for IV estimation */
 	int method = gretl_model_get_int(pmod, "method");
 
 	if (method != SYS_METHOD_FIML && method != SYS_METHOD_LIML) {
-	    print_tsls_instruments(pmod->list, pdinfo, prn);
+	    print_ivreg_instruments(pmod, pdinfo, prn);
 	}
     } else if (pmod->ci == LAD) {
 	/* tau for quantile regression */
@@ -1546,10 +1573,10 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    /* TSLS: message about redundant instruments */
-    if (plain_format(prn) && pmod->ci == TSLS &&
+    /* IVREG: message about redundant instruments */
+    if (plain_format(prn) && pmod->ci == IVREG &&
 	gretl_model_get_data(pmod, "inst_droplist") != NULL) {
-	print_tsls_droplist(pmod, pdinfo, prn);
+	print_ivreg_droplist(pmod, pdinfo, prn);
     }  
 
     /* messages about collinear and/or zero regressors */
@@ -2628,8 +2655,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     /* additional stats/info for some cases */
-    if ((pmod->aux == AUX_SYS && liml_equation(pmod)) ||
-	(pmod->ci == TSLS && (pmod->opt & OPT_L))) {
+    if ((pmod->aux == AUX_SYS && liml_equation(pmod)) || 
+	liml_model(pmod)) {
 	print_liml_equation_data(pmod, prn);
     } else if (pmod->ci == ARMA) {
 	print_arma_roots(pmod, prn);
@@ -2645,7 +2672,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_DPD_stats(pmod, prn);
     } else if (binary) {
 	print_binary_statistics(pmod, pdinfo, prn);
-    } else if (pmod->ci == TSLS && plain_format(prn)) {
+    } else if (tsls_model(pmod) && plain_format(prn)) {
 	addconst_message(pmod, prn);
 	r_squared_message(pmod, prn);
     } else if (pmod->ci == INTREG) {

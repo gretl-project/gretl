@@ -75,7 +75,7 @@ struct _selector {
 #ifdef ENABLE_GMP
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == HCCM || c == HSK || c == ARMA || c == ARCH || \
-                       c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
+                       c == IVREG || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
                        c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
@@ -83,7 +83,7 @@ struct _selector {
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == HCCM || c == HSK || c == ARMA || c == ARCH || \
-                       c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
+                       c == IVREG || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
                        c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
@@ -116,6 +116,7 @@ struct _selector {
                          c == HECKIT || \
                          c == HILU || \
                          c == INTREG || \
+                         c == IVREG || \
                          c == LOGIT || \
                          c == OLS || \
                          c == PANEL || \
@@ -125,7 +126,6 @@ struct _selector {
 	                 c == QUANTREG || \
 			 c == SPEARMAN || \
                          c == TOBIT || \
-                         c == TSLS || \
                          c == VAR || \
                          c == VECM || \
                          c == VLAGSEL || \
@@ -137,14 +137,14 @@ struct _selector {
 
 #define USE_RXLIST(c) (c == VECM || c == COINT2)
 
-#define AUX_LAST(c) (c == TSLS || \
+#define AUX_LAST(c) (c == IVREG || \
                      c == HECKIT || \
                      c == VAR || \
                      c == VLAGSEL || \
                      c == VECM || \
                      c == COINT2)
 
-#define USE_ZLIST(c) (c == TSLS || c == HECKIT)
+#define USE_ZLIST(c) (c == IVREG || c == HECKIT)
 
 #define RHS_PREFILL(c) (c == CORR || \
 	                c == MAHAL || \
@@ -166,7 +166,7 @@ struct _selector {
    Unrestricted/Restricted option flag */
 
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || \
-                            c == TSLS || c == HECKIT)
+                            c == IVREG || c == HECKIT)
 
 /* static state variables */
 
@@ -532,7 +532,7 @@ void selector_from_model (void *ptr, int ci)
 	    retrieve_heckit_info(pmod, &gotinst);
 	} else if (pmod->ci == POISSON) {
 	    offvar = gretl_model_get_int(pmod, "offset_var");
-	} else if (pmod->ci == TSLS) {
+	} else if (pmod->ci == IVREG) {
 	    free(instlist);
 	    instlist = gretl_model_get_secondary_list(pmod);
 	    if (instlist != NULL) {
@@ -2255,7 +2255,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
 	gtk_tree_model_get(model, &iter, 0, &exog, 1, &lag, -1);
 
-	if (sr->code == TSLS && exog == ynum && lag == 0) { /* HECKIT? */
+	if (sr->code == IVREG && exog == ynum && lag == 0) { /* HECKIT? */
 	    errbox("You can't use the dependent variable as an instrument");
 	    err = 1;
 	    break;
@@ -2610,7 +2610,7 @@ static void compose_cmdlist (selector *sr)
 	    }
 
 	    sr->error = get_rvars2_data(sr, rows, context);
-	} else if (sr->code == TSLS) {
+	} else if (sr->code == IVREG) {
 	    warnbox(_("You must specify a set of instrumental variables"));
 	    sr->error = 1;
 	} else if (sr->code == HECKIT) {
@@ -2732,8 +2732,8 @@ static char *est_str (int cmdnum)
 	return N_("Dynamic panel model");
     case WLS:
 	return N_("Weighted least squares");
-    case TSLS:
-	return N_("Two-stage least squares");
+    case IVREG:
+	return N_("Two-stage least squares"); /* FIXME */
     case AR:
 	return N_("Autoregressive model");
     case ARMA:
@@ -3182,7 +3182,7 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
     if (USE_VECXLIST(sr->code)) {
 	tmp = gtk_label_new(_("Exogenous variables"));
-    } else if (sr->code == TSLS) {
+    } else if (sr->code == IVREG) {
 	tmp = gtk_label_new(_("Instruments"));
     } else if (sr->code == HECKIT) {
 	tmp = gtk_label_new(_("Selection equation regressors"));
@@ -3351,7 +3351,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 	dlgy += 30;
     } else if (code == HECKIT) {
 	dlgy += 80;
-    } else if (code == TSLS) {
+    } else if (code == IVREG) {
 	dlgy += 60;
     } else if (VEC_CODE(code)) {
 	dlgy = 450;
@@ -3791,7 +3791,7 @@ static void build_selector_switches (selector *sr)
     GtkWidget *hbox, *tmp;
 
     if (sr->code == OLS || sr->code == WLS || sr->code == INTREG ||
-	sr->code == GARCH || sr->code == TSLS || sr->code == VAR || 
+	sr->code == GARCH || sr->code == IVREG || sr->code == VAR || 
 	sr->code == LOGIT || sr->code == PROBIT ||
 	sr->code == PANEL || sr->code == QUANTREG) {
 	GtkWidget *b1;

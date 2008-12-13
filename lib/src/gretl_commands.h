@@ -76,6 +76,7 @@ typedef enum {
     INCLUDE,
     INFO,
     INTREG,
+    IVREG,
     KPSS,
     LABELS, 
     LAD,
@@ -138,7 +139,6 @@ typedef enum {
     TABPRINT,
     TESTUHAT,
     TOBIT,
-    TSLS,    
     VAR,
     VARLIST,
     VARTEST,
@@ -154,7 +154,7 @@ typedef enum {
                             (c) == AR1 || (c) == CORR || (c) == HCCM || \
                             (c) == HSK || (c) == LOGIT || (c) == PROBIT || \
                             (c) == SPEARMAN || (c) == OLS || \
-                            (c) == TSLS || (c) == VAR || (c) == WLS || \
+                            (c) == IVREG || (c) == VAR || (c) == WLS || \
 			    (c) == XTAB)
 
 #define TEXTSAVE_OK(c) (c == ADD || \

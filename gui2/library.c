@@ -1580,7 +1580,7 @@ int do_add_omit (selector *sr)
 
     orig = vwin->data;
 
-    if (orig->ci == TSLS) {
+    if (orig->ci == IVREG) {
 	/* this is a bit of a fudge */
 	opt |= OPT_B;
     }
@@ -3072,8 +3072,8 @@ static int real_do_model (int action)
 	err = model_output(pmod, prn);
 	break;
 
-    case TSLS:
-	*pmod = tsls_func(libcmd.list, TSLS, &Z, datainfo, libcmd.opt);
+    case IVREG:
+	*pmod = ivreg(libcmd.list, &Z, datainfo, libcmd.opt);
 	err = model_output(pmod, prn);
 	break;
 

@@ -1457,7 +1457,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
     return equation_system_estimate(sys, pZ, pdinfo, opt, prn);
 }
 
-/* effective list length, allowance made for TSLS-style lists */
+/* effective list length, allowance made for IVREG-style lists */
 
 static int get_real_list_length (const int *list)
 {
@@ -1550,7 +1550,7 @@ int system_adjust_t1t2 (equation_system *sys,
     return err;
 }
 
-int *compose_tsls_list (const equation_system *sys, int i)
+int *compose_ivreg_list (const equation_system *sys, int i)
 {
     int *list;
     int j, k1, k2;
@@ -3567,7 +3567,7 @@ static int sys_print_reconstituted_models (const equation_system *sys,
 	sys->method == SYS_METHOD_3SLS ||
 	sys->method == SYS_METHOD_FIML ||
 	sys->method == SYS_METHOD_LIML) {
-	mod.ci = TSLS;
+	mod.ci = IVREG;
     } else {
 	mod.ci = OLS;
     }
@@ -3582,7 +3582,7 @@ static int sys_print_reconstituted_models (const equation_system *sys,
 	mod.ID = i;
 
 	if (print_insts && !gretl_list_has_separator(mlist)) {
-	    mod.list = compose_tsls_list(sys, i);
+	    mod.list = compose_ivreg_list(sys, i);
 	    if (mod.list == NULL) {
 		err = E_ALLOC;
 	    } else {
@@ -3820,7 +3820,33 @@ int system_arch_test (equation_system *sys, int order, PRN *prn)
     return err;
 }
 
-/* experimental!! */
+static void finalize_liml_model (MODEL *pmod, equation_system *sys)
+{
+    *pmod = *sys->models[0];
+
+#if 0
+    display_model_data_items(pmod);
+#endif
+
+    gretl_model_destroy_data_item(pmod, "tslsX");
+    gretl_model_destroy_data_item(pmod, "endog");
+    gretl_model_destroy_data_item(pmod, "method");
+    gretl_model_destroy_data_item(pmod, "liml_y");
+
+#if 0
+    display_model_data_items(pmod);
+#endif
+
+    free(sys->models[0]);
+    free(sys->models);
+    sys->models = NULL;
+
+    pmod->aux = AUX_NONE;
+    pmod->opt |= OPT_L;
+    pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->fstt = NADBL;
+    set_model_id(pmod);
+}
 
 MODEL single_equation_liml (const int *list, double ***pZ,
 			    DATAINFO *pdinfo, gretlopt opt)
@@ -3850,16 +3876,7 @@ MODEL single_equation_liml (const int *list, double ***pZ,
     if (err) {
 	model.errcode = err;
     } else {
-	model = *sys->models[0];
-	free(sys->models[0]);
-	free(sys->models);
-	sys->models = NULL;
-	model.aux = AUX_NONE;
-	gretl_model_set_int(&model, "method", 0);
-	model.opt |= OPT_L;
-	model.rsq = model.adjrsq = NADBL;
-	model.fstt = NADBL;
-	set_model_id(&model);
+	finalize_liml_model(&model, sys);
     }
 
     equation_system_destroy(sys);

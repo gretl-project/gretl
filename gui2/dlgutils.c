@@ -674,7 +674,7 @@ static GtkWidget *build_edit_popup (dialog_t *d)
 	    continue;
 	} else if (d->code == MLE && (i != ADD_DERIV)) {
 	    continue;
-	} else if (d->code == SYSTEM || d->code == SYS_RESPEC) {
+	} else if (d->code == SYSTEM) {
 	    if (i == ADD_DERIV) continue;
 	    if ((i == ADD_ENDO_LIST || i == ADD_INSTR_LIST) &&
 		edit_has_list(d->edit, i)) {
@@ -1023,12 +1023,11 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
 static void dlg_display_sys (dialog_t *d)
 {
     equation_system *sys = d->data;
-    gboolean respec = (d->code == SYS_RESPEC);
     GtkWidget *w;
     int hsize = 62;
 
-    if (!respec) {
-	/* displaying an existing system, not editing */
+    if (d->code == ESTIMATE) {
+	/* estimating an existing system, not editing */
 	w = gtk_label_new(sys->name);
 	gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
@@ -1036,7 +1035,7 @@ static void dlg_display_sys (dialog_t *d)
 	gtk_widget_show(w);
     }
 
-    d->edit = dlg_text_edit_new(&hsize, respec);
+    d->edit = dlg_text_edit_new(&hsize, d->code == SYSTEM);
     dialog_table_setup(d, hsize);
     dlg_text_set_from_sys(sys, d); 
     gretl_dialog_set_resizeable(d->dialog, TRUE);
@@ -1056,11 +1055,8 @@ static int edit_dialog_help_code (int ci, void *p)
 {
     int hc = ci;
 
-    if (ci == SYSTEM && p != NULL) {
-	hc = 0;
-    } else if (ci == SYS_RESPEC) {
-	hc = SYSTEM;
-    } else if (ci == PRINT || ci == CREATE_DATASET || ci == MINIBUF) {
+    if (ci == ESTIMATE || ci == CREATE_DATASET ||
+	ci == PRINT || ci == MINIBUF) {
 	hc = 0;
     } else if (ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) p;
@@ -1157,14 +1153,14 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
 			      GTK_BUTTONBOX_END);
 
-    if (ci == SYS_RESPEC) {
+    if (ci == ESTIMATE) {
+	/* estimating saved equation system */
+	dlg_display_sys(d);
+    } else if (ci == SYSTEM && d->data != NULL) {
 	/* repecifying equation system */
 	edit_dialog_add_note(info, top_vbox);
 	dlg_display_sys(d);
 	clear = 1;
-    } else if (ci == SYSTEM && d->data != NULL) {
-	/* revisiting saved equation system */
-	dlg_display_sys(d);
     } else if (ci == NLS || ci == MLE || ci == GMM ||
 	       ci == SYSTEM || ci == RESTRICT) {
 	int hsize = 62;
@@ -1223,7 +1219,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 
     if (ci == SMPLBOOL && dataset_is_restricted()) {
 	sample_replace_buttons(top_vbox, d);
-    } else if (ci == SYSTEM || ci == SYS_RESPEC) {
+    } else if (ci == SYSTEM || ci == ESTIMATE) {
 	GtkWidget *bt, *bv;
 
 	bt = dialog_option_switch(top_vbox, d, OPT_T, NULL);
@@ -1247,7 +1243,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	active_edit_name = d->edit;
     } else if (varclick == VARCLICK_INSERT_TEXT) { 
 	active_edit_text = d->edit;
-    } else if (ci != SYSTEM) {
+    } else if (ci != ESTIMATE) {
 	modal = 1;
     }
 

@@ -340,7 +340,8 @@ int gretl_model_set_matrix_as_data (MODEL *pmod, const char *key,
  * @list: list to attach.
  *
  * Attaches @list to @pmod as data, recoverable via the key @key 
- * using gretl_model_get_data().
+ * using gretl_model_get_data().  Note that the model takes
+ * ownership of the supplied list.
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -1562,7 +1563,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
  * @pmod: model to examine.
  *
  * Retrieve an allocated copy of the secondary list from
- * @pmod: e.g. the list of instruments in the case of %TSLS, or
+ * @pmod: e.g. the list of instruments in the case of %IVREG, or
  * the selection equation list for %HECKIT.
  * 
  * Returns: allocated list or %NULL on error.
@@ -2786,7 +2787,7 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_SARGAN,
       N_("Sargan over-identification test"),
       N_("all instruments are valid") },
-    { GRETL_TEST_TSLS_HAUSMAN,
+    { GRETL_TEST_IV_HAUSMAN,
       N_("Hausman test"),
       N_("OLS estimates are consistent") },
     { GRETL_TEST_PANEL_HAUSMAN,
@@ -3365,6 +3366,26 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
     return err;
 }
 
+void display_model_data_items (const MODEL *pmod)
+{
+    model_data_item *item;
+    int i, n = pmod->n_data_items;
+
+    fprintf(stderr, "model has %d data items\n", n);
+
+    for (i=0; i<n; i++) {
+	item = pmod->data_items[i];
+	fprintf(stderr, "%d '%s': ", i, item->key);
+	if (item->type == GRETL_TYPE_INT) {
+	    fprintf(stderr, "%d\n", *(int *) item->ptr);
+	} else if (item->type == GRETL_TYPE_DOUBLE) {
+	    fprintf(stderr, "%.15g\n", *(double *) item->ptr);
+	} else {
+	    fprintf(stderr, "%p\n", (void *) item->ptr);
+	}
+    }
+}
+
 static char *copy_missmask (const MODEL *pmod)
 {
     char *mask;
@@ -3646,7 +3667,7 @@ retrieve_model_coeff_separator (xmlNodePtr cur, MODEL *pmod)
 }
 
 /* backward compatibility: transcribe old-style "gretl_set_int"
-   settings to bits in pmod->opt
+   settings to bits in pmod->opt, where applicable
 */
 
 static int gretl_model_set_int_compat (MODEL *pmod, 
@@ -3850,8 +3871,8 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
  * @doc: pointer to XML document.
  * @err: location to receive error code.
  *
- * Reads info on a gretl model from the given XML node
- * and doc, and reconstitutes the model in memory.
+ * Reads info on a gretl model from the given XML @node
+ * and @doc, and reconstitutes the model in memory.
  *
  * Returns: allocated model, or %NULL on failure.
  */
@@ -3902,7 +3923,8 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     }
 
     if (isdigit(*buf)) {
-	/* backward compatibility */
+	/* backward compatibility: the model command is given
+	   as a number, not a string */
 	pmod->ci = atoi(buf);
     } else {
 	pmod->ci = gretl_command_number(buf);
@@ -4079,6 +4101,7 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "hccm") ||
 	!strcmp(s, "heckit")  ||
 	!strcmp(s, "intreg")  ||
+	!strcmp(s, "ivreg")  ||
 	!strcmp(s, "hsk")  ||
 	!strcmp(s, "lad")  ||
 	!strcmp(s, "logistic") ||
@@ -4152,7 +4175,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	break;
 
     case VIF:
-	if (mci == TSLS || mci == ARMA || mci == GARCH ||
+	if (mci == IVREG || mci == ARMA || mci == GARCH ||
 	    mci == PANEL || mci == ARBOND) {
 	    ok = 0;
 	}
@@ -4170,8 +4193,8 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	    /* ARCH */
 	    ok = (mci != ARCH);
 	} else if (mci != OLS) {
-	    if ((mci == TSLS) && (opt & (OPT_A | OPT_W))) {
-		/* Autocorr. and H'sked. supported for TSLS */
+	    if ((mci == IVREG) && (opt & (OPT_A | OPT_W))) {
+		/* Autocorr. and H'sked. supported for IVREG */
 		ok = 1; 
 	    } else {
 		ok = 0; /* FIXME */
@@ -5209,7 +5232,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	M = model_get_rhovec(pmod, err);
 	break;
     case M_HAUSMAN:
-	M = model_get_special_test(pmod, GRETL_TEST_TSLS_HAUSMAN, err);
+	M = model_get_special_test(pmod, GRETL_TEST_IV_HAUSMAN, err);
 	break;	
     case M_SARGAN:	
 	M = model_get_special_test(pmod, GRETL_TEST_SARGAN, err);

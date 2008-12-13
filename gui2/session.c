@@ -1735,7 +1735,7 @@ static int display_session_model (SESSION_MODEL *sm)
 	int cancel = 0;
 
 	edit_dialog(sm->name, NULL, NULL, do_saved_eqn_system, sys, 
-		    SYSTEM, VARCLICK_NONE, &cancel); 
+		    ESTIMATE, VARCLICK_NONE, &cancel); 
     }
 
     return 0;

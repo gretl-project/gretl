@@ -405,7 +405,7 @@ system_model_list (equation_system *sys, int i, int *freeit)
 	 sys->method == SYS_METHOD_3SLS || 
 	 sys->method == SYS_METHOD_TSLS) 
 	&& list == NULL) {
-	list = compose_tsls_list(sys, i);
+	list = compose_ivreg_list(sys, i);
 	*freeit = 1;
     }
 
@@ -727,7 +727,7 @@ static void clean_up_models (equation_system *sys)
     }
 
     if (sys->neqns == 1) {
-	/* liml */
+	/* ivreg (LIML) */
 	sys->models[0]->rho = sys->models[0]->dw = NADBL;
     } else {
 	free(sys->models);
@@ -859,9 +859,9 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	} else if (method == SYS_METHOD_3SLS || 
 		   method == SYS_METHOD_FIML || 
 		   method == SYS_METHOD_TSLS) {
-	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_A);
+	    *pmod = tsls(list, pZ, pdinfo, OPT_E | OPT_A);
 	} else if (method == SYS_METHOD_LIML) {
-	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_A | OPT_N);
+	    *pmod = tsls(list, pZ, pdinfo, OPT_E | OPT_A | OPT_N);
 	}
 
 	if (freeit) {

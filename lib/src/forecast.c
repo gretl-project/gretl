@@ -342,7 +342,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 
 /* local shortcut to get a model's list of regressors */
 
-static int *model_xlist (MODEL *pmod)
+static const int *model_xlist (MODEL *pmod)
 {
     int *xlist = (int *) gretl_model_get_data(pmod, "xlist");
 
@@ -364,7 +364,7 @@ static int
 has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
 {
     const char *yname;
-    int *xlist;
+    const int *xlist;
     int i, vi;
 
     xlist = model_xlist(pmod);
@@ -399,7 +399,7 @@ static int process_lagged_depvar (MODEL *pmod,
 				  const DATAINFO *pdinfo,
 				  int **depvar_lags)
 {
-    int *xlist = NULL;
+    const int *xlist = NULL;
     int *dvlags = NULL;
     int anylags;
     int err = 0;
@@ -450,7 +450,7 @@ static int
 has_real_exog_regressors (MODEL *pmod, const int *dvlags,
 			  const double **Z, const DATAINFO *pdinfo)
 {
-    int *xlist = model_xlist(pmod);
+    const int *xlist = model_xlist(pmod);
     int i, xi, ret = 0;
 
     if (xlist != NULL) {
@@ -900,7 +900,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 {
     double xval;
     int xvars, yno;
-    int *xlist = NULL;
+    const int *xlist = NULL;
     double *h = NULL;
     double *mh = NULL;
     double *phi = NULL;
@@ -1033,7 +1033,7 @@ static double arma_variance (const double *phi, int p,
 */
 
 static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
-				 const double *beta, int *xlist, 
+				 const double *beta, const int *xlist, 
 				 const double **Z)
 {
     double *Xb;
@@ -1102,7 +1102,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     double xval, yval, vl;
     double mu = NADBL;
     int xvars, yno;
-    int *xlist = NULL;
+    const int *xlist = NULL;
     int p, q, px = 0, npsi = 0;
     int fcstart = fc->t1;
     int ar_smax, ma_smax;
@@ -2911,7 +2911,7 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
     } 
 
     if (exo) {
-	int *xlist = model_xlist(pmod);
+	const int *xlist = model_xlist(pmod);
 
 	if (xlist != NULL) {
 	    *dt2max = fcast_get_t2max(xlist, dvlags, pmod, Z, pdinfo, FC_DYNAMIC);

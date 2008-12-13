@@ -24,12 +24,11 @@ double *tsls_get_Xi (const MODEL *pmod, double **Z, int i);
 
 void tsls_free_data (const MODEL *pmod);
 
-int *tsls_list_omit (const int *orig, const int *drop, gretlopt opt, int *err);
+int *ivreg_list_omit (const int *orig, const int *drop, gretlopt opt, int *err);
 
-int *tsls_list_add (const int *orig, const int *add, gretlopt opt, int *err);
+int *ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err);
 
-MODEL tsls_func (const int *list, int ci, 
-		 double ***pZ, DATAINFO *pdinfo,
-		 gretlopt opt);
+MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
+	    gretlopt opt);
 
 #endif /* TSLS_H */

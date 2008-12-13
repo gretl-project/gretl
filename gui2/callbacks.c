@@ -743,7 +743,7 @@ void revise_system_model (void *ptr)
 		NULL,
 		do_eqn_system,
 		sys,
-		SYS_RESPEC,
+		SYSTEM,
 		VARCLICK_INSERT_TEXT,
 		&cancel);
 }

@@ -285,6 +285,8 @@ static int catch_command_alias (char *line, CMD *cmd)
 	strcpy(s, "ar1");
 	cmd->ci = AR1;
 	cmd->opt |= OPT_P;
+    } else if (!strcmp(s, "tsls")) {
+	cmd->ci = IVREG;
     }	
 
     return cmd->ci;
@@ -365,13 +367,13 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == ARMA || \
                          c == COINT2 || \
                          c == EQUATION || \
-                         c == HECKIT || \
                          c == GARCH || \
+                         c == HECKIT || \
+                         c == IVREG || \
                          c == MPOLS || \
                          c == POISSON || \
                          c == PRINT || \
                          c == SCATTERS || \
-                         c == TSLS || \
                          c == VAR || \
                          c == VECM || \
                          c == XTAB)
@@ -384,9 +386,9 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define NEEDS_LISTSEP(c) (c == AR || \
                           c == ARBOND || \
                           c == ARMA || \
-                          c == HECKIT || \
                           c == GARCH || \
-                          c == TSLS)
+                          c == HECKIT || \
+                          c == IVREG)
 
 #define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \
                                   c == DIFF || \
@@ -3240,7 +3242,7 @@ static int effective_ci (const CMD *cmd)
 
 #define listsep_switch(c) (c == AR || c == MPOLS)
 
-#define hold_param(c) (c == TSLS || c == AR || c == ARBOND || c == ARMA || \
+#define hold_param(c) (c == IVREG || c == AR || c == ARBOND || c == ARMA || \
                        c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
                        c == EQUATION || c == POISSON || c == XCORRGM || \
@@ -4379,6 +4381,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case HECKIT:
     case HSK:
     case INTREG:
+    case IVREG:
     case LAD:
     case LOGISTIC:
     case LOGIT:
@@ -4386,7 +4389,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case PROBIT:
     case QUANTREG:
     case TOBIT:
-    case TSLS:
 	clear_model(models[0]);
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
 	    *models[0] = logit_probit(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, prn);
@@ -4403,8 +4405,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == HECKIT) {
 	    *models[0] = heckit_model(cmd->list, pZ, pdinfo, cmd->opt, 
 				     (cmd->opt & OPT_V)? prn : NULL);
-	} else if (cmd->ci == TSLS) {
-	    *models[0] = tsls_func(cmd->list, TSLS, pZ, pdinfo, cmd->opt);
+	} else if (cmd->ci == IVREG) {
+	    *models[0] = ivreg(cmd->list, pZ, pdinfo, cmd->opt);
 	} else if (cmd->ci == LAD) {
 	    *models[0] = lad(cmd->list, pZ, pdinfo);
 	} else if (cmd->ci == QUANTREG) {

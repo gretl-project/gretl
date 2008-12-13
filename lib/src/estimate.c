@@ -26,6 +26,7 @@
 #include "compat.h"
 #include "missing_private.h"
 #include "estim_private.h"
+#include "system.h"
 
 /* Comment on 'TINY': It's the minimum value for 'test' (see below)
    that libgretl's Cholesky decomposition routine will accept before
@@ -2841,7 +2842,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL white;
     int err = 0;
 
-    if (pmod->ci == TSLS) {
+    if (pmod->ci == IVREG) {
 	return tsls_hetero_test(pmod, pZ, pdinfo, opt, prn);
     }
 
@@ -4169,6 +4170,35 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	mod = panel_wls_by_unit(list, pZ, pdinfo, opt, prn);
     } else {
 	mod = real_panel_model(list, pZ, pdinfo, opt, prn);
+    }
+
+    return mod;
+}
+
+/**
+ * ivreg:
+ * @list: regression list, as per ivreg documentation.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the (panel) data set.
+ * @opt: can include %OPT_Q (quiet estimation), %OPT_L
+ * (LIML), ... (FIXME)
+ *
+ * Calculate IV estimates using either 2sls or LIML.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
+	     gretlopt opt)
+{
+    MODEL mod;
+
+    gretl_error_clear();
+
+    if (opt & OPT_L) {
+	mod = single_equation_liml(list, pZ, pdinfo, opt);
+    } else {
+	mod = tsls(list, pZ, pdinfo, opt);
     }
 
     return mod;

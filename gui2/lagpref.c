@@ -454,6 +454,8 @@ static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
 
     /* start with a clean slate */
     destroy_lag_preferences();
+    y_x_lags_enabled = 0;
+    y_w_lags_enabled = 0;
 
     for (j=0; j<2 && !err; j++) {
 	list = (j == 0)? xlist : zlist;

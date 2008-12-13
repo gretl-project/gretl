@@ -1388,7 +1388,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case HCCM:
 	*tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt);
 	break;
-    case TSLS:
+    case IVREG: /* ?? */
 	break;
     default:
 	break;

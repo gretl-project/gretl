@@ -432,7 +432,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     cmp.dfd = umod->dfd;
 
-    /* FIXME TSLS (use F or chi-square?) */
+    /* FIXME IVREG (use F or chi-square?) */
 
     if (flag == OMIT_WALD || flag == ADD_WALD) {
 	cmp.err = wald_test(testvars, umod, &cmp.chisq, &cmp.F);
@@ -683,8 +683,8 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     case HECKIT:
 	rep = heckit_model(list, pZ, pdinfo, myopt, NULL);
 	break;
-    case TSLS:
-	rep = tsls_func(list, TSLS, pZ, pdinfo, myopt);
+    case IVREG:
+	rep = ivreg(list, pZ, pdinfo, myopt);
 	break;
     case LOGISTIC: 
 	{
@@ -974,8 +974,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     }
 
     /* create augmented regression list */
-    if (orig->ci == TSLS) {
-	tmplist = tsls_list_add(orig->list, addvars, opt, &err);
+    if (orig->ci == IVREG) {
+	tmplist = ivreg_list_add(orig->list, addvars, opt, &err);
     } else if (orig->ci == PANEL || orig->ci == ARBOND) {
 	tmplist = panel_list_add(orig, addvars, &err);
     } else {
@@ -1047,8 +1047,8 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 
     /* test validity of omissions */
 
-    if (pmod->ci == TSLS) {
-	test = tsls_list_omit(pmod->list, list, opt, &err);
+    if (pmod->ci == IVREG) {
+	test = ivreg_list_omit(pmod->list, list, opt, &err);
     } else if (pmod->ci == PANEL || pmod->ci == ARBOND) {
 	test = panel_list_omit(pmod, list, &err);
     } else {
@@ -1195,15 +1195,15 @@ static int make_short_list (MODEL *orig, const int *omitvars,
     int err = 0;
 
     if (omitvars == NULL || omitvars[0] == 0) {
-	if (orig->ci == TSLS) {
+	if (orig->ci == IVREG) {
 	    return E_PARSE;
 	} else {
 	    *omitlast = 1;
 	}
     }
 
-    if (orig->ci == TSLS) {
-	list = tsls_list_omit(orig->list, omitvars, opt, &err);
+    if (orig->ci == IVREG) {
+	list = ivreg_list_omit(orig->list, omitvars, opt, &err);
     } else if (orig->ci == PANEL || orig->ci == ARBOND) {
 	list = panel_list_omit(orig, omitvars, &err);
     } else if (*omitlast) {
@@ -1596,9 +1596,9 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static void bg_test_header (int order, PRN *prn, int tsls)
+static void bg_test_header (int order, PRN *prn, int ivreg)
 {
-    if (tsls) {
+    if (ivreg) {
 	pprintf(prn, "\n%s ", _("Godfrey (1994) test for"));
     } else {
 	pprintf(prn, "\n%s ", _("Breusch-Godfrey test for")); 
@@ -1615,7 +1615,7 @@ static void bg_test_header (int order, PRN *prn, int tsls)
 }
 
 /**
- * tsls_autocorr_test:
+ * ivreg_autocorr_test:
  * @pmod: pointer to model to be tested.
  * @order: lag order for test.
  * @pZ: pointer to data matrix.
@@ -1624,7 +1624,7 @@ static void bg_test_header (int order, PRN *prn, int tsls)
  * if %OPT_Q, be less verbose.
  * @prn: gretl printing struct.
  *
- * Tests the given two-stage model for autocorrelation of order equal
+ * Tests the given IV model for autocorrelation of order equal
  * to the specified value, or equal to the frequency of the data if
  * the supplied @order is zero, as per Godfrey (1999), "Testing for
  * Serial Correlation by Variable Addition in Dynamic Models Estimated
@@ -1638,9 +1638,9 @@ static void bg_test_header (int order, PRN *prn, int tsls)
  * Returns: 0 on successful completion, error code on error.
  */
 
-static int tsls_autocorr_test (MODEL *pmod, int order, 
-			       double ***pZ, DATAINFO *pdinfo, 
-			       gretlopt opt, PRN *prn)
+static int ivreg_autocorr_test (MODEL *pmod, int order, 
+				double ***pZ, DATAINFO *pdinfo, 
+				gretlopt opt, PRN *prn)
 {
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
@@ -1710,8 +1710,8 @@ static int tsls_autocorr_test (MODEL *pmod, int order,
     }
 
     if (!err) {
-	testlist = tsls_list_add(pmod->list, addlist, OPT_B, &err);
-	aux = tsls_func(testlist, TSLS, pZ, pdinfo, OPT_NONE);
+	testlist = ivreg_list_add(pmod->list, addlist, OPT_B, &err);
+	aux = ivreg(testlist, pZ, pdinfo, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -1824,8 +1824,8 @@ int autocorr_test (MODEL *pmod, int order,
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
 
-    if (pmod->ci == TSLS) {
-	return tsls_autocorr_test(pmod, order, pZ, pdinfo, opt, prn);
+    if (pmod->ci == IVREG) {
+	return ivreg_autocorr_test(pmod, order, pZ, pdinfo, opt, prn);
     }
 
     if (pmod->ci != OLS && pmod->ci != VAR) { 

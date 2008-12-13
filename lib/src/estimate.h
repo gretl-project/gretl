@@ -58,6 +58,9 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo);
 MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn);
 
+MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
+	     gretlopt opt);
+
 MODEL arbond_model (const int *list, const char *istr, const double **Z, 
 		    const DATAINFO *pdinfo, gretlopt opt, 
 		    PRN *prn);

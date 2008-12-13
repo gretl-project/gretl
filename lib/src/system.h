@@ -140,7 +140,7 @@ int *system_get_list (const equation_system *sys, int i);
 
 int system_get_list_length (const equation_system *sys, int i);
 
-int *compose_tsls_list (const equation_system *sys, int i);
+int *compose_ivreg_list (const equation_system *sys, int i);
 
 int system_get_depvar (const equation_system *sys, int i);
 

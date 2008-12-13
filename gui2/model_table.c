@@ -155,9 +155,9 @@ static int model_table_precheck (MODEL *pmod, int add_mode)
 	return 1;
     }    
 
-    /* NLS, MLE and GMM models won't work, nor INTREG */
+    /* NLS, MLE and GMM models won't work, nor INTREG, IVREG */
     if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
-	pmod->ci == ARBOND || pmod->ci == INTREG) {
+	pmod->ci == ARBOND || pmod->ci == INTREG || pmod->ci == IVREG) {
 	mtable_errmsg(_("Sorry, this model can't be put in the model table"),
 		      gui);
 	return 1;
@@ -169,13 +169,6 @@ static int model_table_precheck (MODEL *pmod, int add_mode)
 		      gui);
 	return 1;
     }
-
-    /* nor TSLS */
-    if (pmod->ci == TSLS) {
-	mtable_errmsg(_("Sorry, TSLS models can't be put in the model table"),
-		      gui);
-	return 1;
-    }    
 
     if (n_models > 0) {
 	int dv = model_table_depvar();

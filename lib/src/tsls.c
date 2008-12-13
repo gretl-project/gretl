@@ -24,7 +24,6 @@
 #include "libset.h"
 #include "estim_private.h"
 #include "matrix_extra.h"
-#include "system.h"
 
 #define TDEBUG 0
 
@@ -237,7 +236,7 @@ static void delete_tsls_var (int *list, int v, gretlopt opt)
     }
 }
 
-static int in_tsls_list (const int *list, int v, gretlopt opt)
+static int in_ivreg_list (const int *list, int v, gretlopt opt)
 {
     int pos = gretl_list_separator_position(list);
     int i, imin, imax;
@@ -267,22 +266,22 @@ static int in_tsls_list (const int *list, int v, gretlopt opt)
 }
 
 /**
- * tsls_list_omit:
- * @orig: list specifying original TSLS model.
+ * ivreg_list_omit:
+ * @orig: list specifying original IV model.
  * @drop: list of variables to be omitted.
  * @opt: may include %OPT_T (omit variable only as instrument)
  * or %OPT_B (omit both as regressor and instrument).  The default
  * is to omit (only) as regressor.
  * @err: pointer to receive error code.
  *
- * Creates a new TSLS specification list, by first copying @orig
+ * Creates a new IVREG specification list, by first copying @orig
  * then deleting from the copy the variables found in @drop.
  *
  * Returns: the new, reduced list or %NULL on error.
  */
 
 int *
-tsls_list_omit (const int *orig, const int *drop, gretlopt opt, int *err)
+ivreg_list_omit (const int *orig, const int *drop, gretlopt opt, int *err)
 {
     int *newlist;
     int i;
@@ -296,7 +295,7 @@ tsls_list_omit (const int *orig, const int *drop, gretlopt opt, int *err)
     newlist = gretl_list_copy(orig);
 
     for (i=1; i<=drop[0]; i++) {
-	if (in_tsls_list(orig, drop[i], opt)) {
+	if (in_ivreg_list(orig, drop[i], opt)) {
 	    delete_tsls_var(newlist, drop[i], opt);
 	} else {
 	    *err = E_UNSPEC;
@@ -312,22 +311,22 @@ tsls_list_omit (const int *orig, const int *drop, gretlopt opt, int *err)
 }
 
 /**
- * tsls_list_add:
- * @orig: list specifying original TSLS model.
+ * ivreg_list_add:
+ * @orig: list specifying original IV model.
  * @add: list of variables to be added.
  * @opt: may include %OPT_T (add variable only as instrument)
  * or %OPT_B (add both as regressor and instrument).  The default
  * is to add as an endogenous regressor.
  * @err: pointer to receive error code.
  *
- * Creates a new TSLS specification list, by copying @orig
+ * Creates a new IVREG specification list, by copying @orig
  * and adding the variables found in @add.
  *
  * Returns: the new, augmented list or %NULL on error.
  */
 
 int *
-tsls_list_add (const int *orig, const int *add, gretlopt opt, int *err)
+ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err)
 {
     int norig = orig[0];
     int nadd = add[0];
@@ -351,7 +350,7 @@ tsls_list_add (const int *orig, const int *add, gretlopt opt, int *err)
     }
 
     for (i=1; i<=add[0]; i++) {
-	if (in_tsls_list(orig, add[i], opt)) {
+	if (in_ivreg_list(orig, add[i], opt)) {
 	    *err = E_ADDDUP;
 	} else {
 	    add_tsls_var(newlist, add[i], opt);
@@ -372,54 +371,50 @@ tsls_list_add (const int *orig, const int *add, gretlopt opt, int *err)
   need to be instrumented, and populates hatlist accordingly
 */
 
-static int 
-tsls_make_hatlist (const int *reglist, int *instlist, int *hatlist)
+static int *
+tsls_make_hatlist (const int *reglist, int **instlist, int *addconst,
+		   int *err)
 {
-    int i, j, k = 0;
-    int endog, addconst = 0;
+    int *hatlist = gretl_null_list();
+    int i, vi;
 
-    for (i=2; i<=reglist[0]; i++) {  
-	endog = 1;
-	for (j=1; j<=instlist[0]; j++) {
-	    if (instlist[j] == reglist[i]) {
-		endog = 0;
-		break;
-	    }
-	}
-	if (endog) {
-	    if (reglist[i] == 0) {
+    for (i=2; i<=reglist[0]; i++) {
+	vi = reglist[i];
+	if (!in_gretl_list(*instlist, vi)) {
+	    if (vi == 0) {
 		/* found const in reglist but not instlist: 
 		   needs fixing -- or is this debatable? */
-		addconst = 1;
+		*addconst = 1;
 	    } else {
-		hatlist[++k] = reglist[i];
+		hatlist = gretl_list_append_term(&hatlist, vi);
+		if (hatlist == NULL) {
+		    *err = E_ALLOC;
+		    return NULL;
+		}
 	    }
 	} 
     }
 
-    hatlist[0] = k;
-
-    if (addconst) {
+    if (hatlist == NULL) {
+	*err = E_DATA;
+    } else if (*addconst) {
 	/* add constant to list of instruments */
-	instlist[0] += 1;
-	for (i=instlist[0]; i>=2; i--) {
-	    instlist[i] = instlist[i - 1];
-	}
-	instlist[1] = 0;
+	int clist[2] = {1, 0};
+
+	*err = gretl_list_insert_list(instlist, clist, 1);
     }
 
-    return addconst;
+    return hatlist;
 }
 
-/* perform the Sargan overidentification test for a model
-   estimated via TSLS */
+/* perform the Sargan overidentification test for an IV model */
 
 static int 
-tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist, 
-		  double ***pZ, DATAINFO *pdinfo)
+ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist, 
+		   double ***pZ, DATAINFO *pdinfo)
 {
-    int t1 = tsls_model->t1;
-    int t2 = tsls_model->t2;
+    int t1 = pmod->t1;
+    int t2 = pmod->t2;
     int ninst = instlist[0];
     int i, t, err = 0;
 
@@ -431,7 +426,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 	return 0;
     }
 
-    if (tsls_model->list[0] == 2 && tsls_model->list[2] == 0) {
+    if (pmod->list[0] == 2 && pmod->list[2] == 0) {
 	/* degenerate model with const only */
 	return 0;
     }
@@ -442,7 +437,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
     }
 
     for (t=t1; t<=t2; t++) {
-	(*pZ)[nv][t] = tsls_model->uhat[t];
+	(*pZ)[nv][t] = pmod->uhat[t];
     }
 
     OT_list = gretl_list_new(ninst + 1);
@@ -458,7 +453,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 
     smod = lsq(OT_list, pZ, pdinfo, OLS, OPT_A);
     if (smod.errcode) {
-	fprintf(stderr, "tsls_sargan_test: smod.errcode = %d\n", smod.errcode);
+	fprintf(stderr, "ivreg_sargan_test: smod.errcode = %d\n", smod.errcode);
 	err = smod.errcode;
     } else {
 	ModelTest *test = model_test_new(GRETL_TEST_SARGAN);
@@ -469,7 +464,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 	    model_test_set_dfn(test, Orank);
 	    model_test_set_value(test, OTest);
 	    model_test_set_pvalue(test, chisq_cdf_comp(Orank, OTest));
-	    maybe_add_test_to_model(tsls_model, test);
+	    maybe_add_test_to_model(pmod, test);
 	}	
     }
 
@@ -524,7 +519,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	*/
 	double URSS = hmod.ess;
 	double HTest = (RRSS/URSS - 1) * hmod.nobs;
-	ModelTest *test = model_test_new(GRETL_TEST_TSLS_HAUSMAN);
+	ModelTest *test = model_test_new(GRETL_TEST_IV_HAUSMAN);
 
 	if (test != NULL) {
 	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
@@ -969,26 +964,23 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 }
 
 /**
- * tsls_func:
+ * tsls:
  * @list: dependent variable plus list of regressors.
- * @ci: %TSLS for regular two-stage least squares, or
- * %SYSTEM if the 2SLS estimates are wanted in the context of
- * estimation of a system of equations.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: may contain %OPT_O for printing covariance matrix, 
- * %OPT_R for robust VCV, %OPT_N for no df correction, %OPT_A
- * if this is an auxiliary reression.
+ * @opt: may contain %OPT_R for robust VCV, %OPT_N for no df correction, 
+ * %OPT_A if this is an auxiliary reression, %OPT_E is we're
+ * estimating one equation within a system.
  *
  * Estimate the model given in @list by means of Two-Stage Least
- * Squares.  If @ci is %SYSTEM, fitted values from the first-stage
+ * Squares.  If %OPT_E is given, fitted values from the first-stage
  * regressions are saved with the model: see tsls_get_Xi().
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
-		 gretlopt opt)
+MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
+	    gretlopt opt)
 {
     MODEL tsls;
     gretl_matrix *Q = NULL;
@@ -996,86 +988,63 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
     int *reglist = NULL, *instlist = NULL;
     int *hatlist = NULL, *s2list = NULL;
-    int *exolist = NULL;
+    int *exolist = NULL, *endolist = NULL;
     int *droplist = NULL;
     int addconst = 0;
-    int pos, orig_nvar = pdinfo->v;
-    int rlen, ninst, ev = 0;
+    int orig_nvar = pdinfo->v;
+    int nendo, ev = 0;
     int OverIdRank = 0;
-    int i;
+    int i, err = 0;
 
-    if (opt & OPT_L) {
-	return single_equation_liml(list, pZ, pdinfo, opt);
-    }
+#if TDEBUG
+    printlist(list, "tsls: incoming list");
+#endif
 
     /* initialize model in case we bail out early on error */
     gretl_model_init(&tsls);
 
     gretl_error_clear();
 
-    pos = gretl_list_separator_position(list);
-    if (pos == 0) {
-	tsls.errcode = E_PARSE;
-	return tsls;
-    }
-
-    /* number of elements in regression list (vars preceding the
-       separator at "pos") */
-    rlen = pos - 1;
-
-    /* number of instruments (vars following the separator at
-       "pos") */
-    ninst = list[0] - pos;
-
-    if (rlen < 2 || ninst <= 0) {
-	tsls.errcode = E_ARGS;
-	return tsls;
-    }
-
-    /* adjust sample range for missing observations */
-    tsls.errcode = tsls_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-				      (const double **) *pZ, &missmask); 
-    if (tsls.errcode) {
-	return tsls;
-    }
-
-    /* 
-       reglist: dependent var plus list of regressors
+    /* reglist: dependent var plus list of regressors
        instlist: list of instruments
-       s2list: regression list for second-stage regression
-       hatlist: list of vars to be replaced by fitted values
-                for the second-stage regression
     */
-    reglist = gretl_list_new(rlen);
-    instlist = gretl_list_new(ninst + 1); /* allow for adding const */
-    s2list = gretl_list_new(rlen);
-    hatlist = gretl_list_new(rlen);
-
-    if (reglist == NULL || instlist == NULL || 
-	s2list == NULL || hatlist == NULL) {
-	tsls.errcode = E_ALLOC;
-	goto bailout;
+    tsls.errcode = gretl_list_split_on_separator(list, &reglist, &instlist);
+    if (tsls.errcode) {
+	fprintf(stderr, "tsls: failed at gretl_list_split_on_separator\n");
+	return tsls;
     }
 
-    /* dependent variable plus regressors: first portion of input
-       list */
-    for (i=1; i<=rlen; i++) {
-	reglist[i] = list[i];
-    }    
-
-    /* list of instruments: second portion of input list */
-    instlist[0] = ninst;
+    /* check instruments list */
     for (i=1; i<=instlist[0]; i++) {
-	instlist[i] = list[i + pos];
 	if (instlist[i] == list[1]) {
 	    strcpy(gretl_errmsg, "You can't use the dependent variable as an instrument");
-	    tsls.errcode = E_DATA;
+	    err = E_DATA;
 	    goto bailout;
 	}
     }	
 
+    if (reglist[0] < 2 || instlist[0] < 1) {
+	err = E_ARGS;
+    } else {
+	/* adjust sample range for missing observations */
+	err = tsls_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+				 (const double **) *pZ, &missmask); 
+    }
+
+    if (!err) {
+	/* allocate second stage regression list */
+	s2list = gretl_list_copy(reglist);
+	if (s2list == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	goto bailout;
+    }  
+
     /* in case we drop any instruments as redundant */
-    if (ci == SYSTEM) {
+    if (opt & OPT_E) {
 	exolist = gretl_list_copy(instlist);
     }
 
@@ -1086,61 +1055,66 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     reglist_check_for_const(reglist, (const double **) *pZ, pdinfo);
     tsls_omitzero(instlist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
 
-    /* determine the list of variables (hatlist) for which we need to
+    /* determine the list of variables (endolist) for which we need to
        obtain fitted values in the first stage 
     */
-    addconst = tsls_make_hatlist(reglist, instlist, hatlist);
+    endolist = tsls_make_hatlist(reglist, &instlist, &addconst, &err);
+    if (err) {
+	goto bailout;
+    }
 
-    Q = tsls_Q(instlist, reglist, &droplist,
-	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
-	       missmask, &tsls.errcode);
-    if (tsls.errcode) {
+    hatlist = gretl_list_copy(endolist);
+    if (hatlist == NULL) {
+	err = E_ALLOC;
+    } else {
+	nendo = endolist[0];
+	Q = tsls_Q(instlist, reglist, &droplist,
+		   (const double **) *pZ, pdinfo->t1, pdinfo->t2,
+		   missmask, &err);
+    }
+
+    if (err) {
 	goto bailout;
     } 
 
-    /* check for order condition */
+    /* check for order condition (we do this after tsls_Q in case
+       any vars get dropped at that stage) 
+    */
     OverIdRank = instlist[0] - reglist[0] + 1;
     if (OverIdRank < 0) {
         sprintf(gretl_errmsg, 
 		_("The order condition for identification is not satisfied.\n"
 		  "At least %d more instruments are needed."), -OverIdRank);
-	tsls.errcode = E_UNSPEC; 
+	err = E_DATA; 
 	goto bailout;
     }
 
-    /* hatlist[0] holds the number of fitted vars to create */
-    if (dataset_add_series(hatlist[0], pZ, pdinfo)) {
-	tsls.errcode = E_ALLOC;
+    /* allocate storage for fitted vars */
+    err = dataset_add_series(nendo, pZ, pdinfo);
+    if (err) {
 	goto bailout;
     } 
 
-    /* initial composition of second-stage regression list (will be
-       modified in the loop below) 
-    */
-    for (i=0; i<=reglist[0]; i++) {
-	s2list[i] = reglist[i];
-    }
-
     /* 
        Deal with the variables for which instruments are needed: loop
-       across the list of variables to be instrumented (hatlist),
+       across the list of variables to be instrumented (endolist),
        form the fitted values as QQ'x_i, and add these fitted values
        into the data matrix Z.
     */
 
     /* prepare for first-stage F-test, if only one endogenous regressor */
-    if (hatlist[0] == 1) {
-	ev = hatlist[1];
-    }    
+    if (nendo == 1) {
+	ev = endolist[1];
+    }  
 
-    for (i=1; i<=hatlist[0]; i++) {
-	int orig = hatlist[i];
+    for (i=1; i<=endolist[0]; i++) {
+	int orig = endolist[i];
 	int newv = orig_nvar + i - 1;
 
 	/* form xhat_i = QQ'x_i */
-	tsls.errcode = tsls_form_xhat(Q, (*pZ)[orig], (*pZ)[newv], pdinfo, 
-				      missmask);
-	if (tsls.errcode) {
+	err = tsls_form_xhat(Q, (*pZ)[orig], (*pZ)[newv], pdinfo, 
+			     missmask);
+	if (err) {
 	    goto bailout;
 	}
 
@@ -1156,13 +1130,13 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* second-stage regression */
-    tsls = lsq(s2list, pZ, pdinfo, OLS, (ci == TSLS)? OPT_NONE : OPT_Z);
+    tsls = lsq(s2list, pZ, pdinfo, OLS, (opt & OPT_E)? OPT_Z : OPT_NONE);
     if (tsls.errcode) {
 	fprintf(stderr, "tsls_func, stage 2: tsls.errcode = %d\n", tsls.errcode);
 	goto bailout;
     }
 
-    if (ci == TSLS && hatlist[0] == 1) {
+    if (!(opt & OPT_E) && nendo == 1) {
 	compute_first_stage_F(&tsls, ev, reglist, instlist, pZ, pdinfo, opt);
     } 
 
@@ -1187,15 +1161,15 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* compute additional statistics (R^2, F, etc.) */
     tsls_extra_stats(&tsls, OverIdRank, (const double **) *pZ, pdinfo);
 
-    if (ci == TSLS) {
+    if (!(opt & OPT_E)) {
 	tsls_hausman_test(&tsls, reglist, hatlist, pZ, pdinfo);
 	if (OverIdRank > 0) {
-	    tsls_sargan_test(&tsls, OverIdRank, instlist, pZ, pdinfo);
+	    ivreg_sargan_test(&tsls, OverIdRank, instlist, pZ, pdinfo);
 	}
     }
 
     /* set command code on the model */
-    tsls.ci = TSLS;
+    tsls.ci = IVREG;
 
     /* write the full 2SLS list (dep. var. and regressors, followed by
        instruments, possibly purged of redundant elements) into the model
@@ -1218,17 +1192,27 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_free(Q);
     free(missmask);
 
-    /* save first-stage fitted values, if wanted */
-    if (ci == SYSTEM && tsls.errcode == 0) {
-	tsls_save_data(&tsls, hatlist, exolist, *pZ, pdinfo);
+    if (err && !tsls.errcode) {
+	tsls.errcode = err;
+    }
+
+    if (!tsls.errcode) {
+	if (opt & OPT_E) {
+	    /* save first-stage fitted values */
+	    tsls_save_data(&tsls, hatlist, exolist, *pZ, pdinfo);
+	}
+	gretl_model_set_list_as_data(&tsls, "endolist", endolist);
+	endolist = NULL; /* model takes ownership */
+    } else {
+	free(endolist);
     }
 
     /* delete first-stage fitted values from dataset */
     dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
 
-    free(hatlist);
     free(reglist); 
     free(instlist);
+    free(hatlist);
     free(exolist);
     free(s2list);
 

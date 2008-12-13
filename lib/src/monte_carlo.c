@@ -345,6 +345,7 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 			   c == HECKIT ||	\
 			   c == HSK ||		\
                            c == INTREG ||       \
+                           c == IVREG ||        \
 			   c == LAD ||		\
 			   c == LOGISTIC ||	\
 			   c == LOGIT ||	\
@@ -354,7 +355,6 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 			   c == POISSON ||	\
 			   c == PROBIT ||	\
 			   c == TOBIT ||	\
-			   c == TSLS ||		\
 			   c == WLS)
 
 /**

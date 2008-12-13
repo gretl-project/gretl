@@ -2068,7 +2068,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 		break;
 	    }
 	}
-    } else if (ci == TSLS || ci == HECKIT || ci == EQUATION) {
+    } else if (ci == IVREG || ci == HECKIT || ci == EQUATION) {
 	multi = 1;
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {

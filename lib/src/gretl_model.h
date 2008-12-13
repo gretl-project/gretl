@@ -81,12 +81,12 @@ struct CoeffIntervals_ {
                              c == GMM || \
                              c == HECKIT || \
                              c == INTREG || \
+                             c == IVREG || \
                              c == LOGIT || \
                              c == MLE || \
                              c == POISSON || \
                              c == PROBIT || \
-                             c == TOBIT || \
-                             c == TSLS)
+                             c == TOBIT)
 
 #define is_model_ref_cmd(c) (c == ADD || \
 	                     c == ARCH || \
@@ -121,7 +121,7 @@ typedef enum {
     GRETL_TEST_SQUARES,
     GRETL_TEST_WHITES,
     GRETL_TEST_SARGAN,
-    GRETL_TEST_TSLS_HAUSMAN,
+    GRETL_TEST_IV_HAUSMAN,
     GRETL_TEST_PANEL_HAUSMAN,
     GRETL_TEST_PANEL_F,
     GRETL_TEST_PANEL_BP,
@@ -160,6 +160,8 @@ void clear_model (MODEL *pmod);
 void gretl_model_free (MODEL *pmod);
 
 void gretl_model_free_on_exit (MODEL *pmod);
+
+void display_model_data_items (const MODEL *pmod);
 
 int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
 					  GretlType type, size_t size, 

@@ -26,12 +26,13 @@
 		       c == AR1 || \
                        c == ARBOND || \
                        c == ARMA || \
-                       c == HECKIT || \
-                       c == INTREG || \
                        c == GARCH || \
                        c == GMM || \
                        c == HCCM || \
+	               c == HECKIT || \
                        c == HSK || \
+                       c == INTREG || \
+                       c == IVREG || \
                        c == LAD || \
                        c == LOGISTIC || \
                        c == LOGIT || \
@@ -45,7 +46,6 @@
                        c == PROBIT || \
 		       c == QUANTREG || \
                        c == TOBIT || \
-                       c == TSLS || \
                        c == WLS)
 
 struct gretl_option {
@@ -174,6 +174,10 @@ struct gretl_option gretl_opts[] = {
     { INTREG,   OPT_Q, "quiet" },
     { INTREG,   OPT_R, "robust" },
     { INTREG,   OPT_V, "verbose" },
+    { IVREG,    OPT_L, "liml" },
+    { IVREG,    OPT_Q, "quiet" },
+    { IVREG,    OPT_R, "robust" },  
+    { IVREG,    OPT_S, "save" },
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
     { KPSS,     OPT_Q, "quiet" },
@@ -321,10 +325,6 @@ struct gretl_option gretl_opts[] = {
     { SYSTEM,   OPT_I, "iterate" },
     { SYSTEM,   OPT_V, "verbose" },
     { TOBIT,    OPT_V, "verbose" },
-    { TSLS,     OPT_L, "liml" },
-    { TSLS,     OPT_Q, "quiet" },
-    { TSLS,     OPT_R, "robust" },  
-    { TSLS,     OPT_S, "save" },
     { VAR,      OPT_D, "seasonals" },
     { VAR,      OPT_F, "variance-decomp" },
     { VAR,      OPT_I, "impulse-responses" },
@@ -749,6 +749,8 @@ static void tail_strip (char *s)
 
 #define smpl_alias(s) (!strcmp(s, "sample"))
 
+#define ivreg_alias(s) (!strcmp(s, "tsls"))
+
 /**
  * get_gretl_options:
  * @line: command line to parse.
@@ -801,6 +803,8 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = AR1;
     } else if (smpl_alias(cmdword)) {
 	ci = SMPL;
+    } else if (ivreg_alias(cmdword)) {
+	ci = IVREG;
     } else {
 	ci = gretl_command_number(cmdword);
     }
