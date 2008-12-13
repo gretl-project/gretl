@@ -157,11 +157,12 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     m = malloc(sizeof *m);
     if (m == NULL) {
 	set_gretl_matrix_err(E_ALLOC);
-	return m;
+	return NULL;
     }
 
     m->val = malloc(rows * cols * sizeof *m->val);
     if (m->val == NULL) {
+	set_gretl_matrix_err(E_ALLOC);
 	free(m);
 	return NULL;
     }

@@ -215,11 +215,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 {
     const int *exlist = system_get_instr_vars(sys);
     const int *list = system_get_list(sys, eq);
-    gretl_matrix *E = NULL;
-    gretl_matrix *W0 = NULL;
-    gretl_matrix *W1 = NULL;
-    gretl_matrix *W2 = NULL;
-    gretl_matrix *Inv = NULL;
+    gretl_matrix *E, *W0, *W1, *W2, *Inv;
     gretl_matrix *lambda = NULL;
     double ll = 0.0, lmin = 1.0;
     MODEL *pmod;

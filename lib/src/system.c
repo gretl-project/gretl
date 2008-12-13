@@ -1357,7 +1357,7 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
  * @sys: pre-defined equation system.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: may include %OPT_V for verbose operaton.
+ * @opt: may include %OPT_V for verbose operation.
  * @prn: printing struct.
  * 
  * Finalize an equation system, e.g. in response to "end system".
@@ -1373,7 +1373,7 @@ int equation_system_finalize (equation_system *sys,
 			      double ***pZ, DATAINFO *pdinfo,
 			      gretlopt opt, PRN *prn)
 {
-    int mineq = (sys->method == SYS_METHOD_LIML)? 1 : 2;
+    int mineq = (opt & OPT_S)? 1 : 2;
     int err = 0;
 
     gretl_error_clear();
@@ -3844,7 +3844,7 @@ MODEL single_equation_liml (const int *list, double ***pZ,
 
     if (!err) {
 	sys->ilist = ilist;
-	err = equation_system_finalize(sys, pZ, pdinfo, opt, NULL);
+	err = equation_system_finalize(sys, pZ, pdinfo, OPT_S, NULL);
     }
 
     if (err) {
@@ -3854,9 +3854,9 @@ MODEL single_equation_liml (const int *list, double ***pZ,
 	free(sys->models[0]);
 	free(sys->models);
 	sys->models = NULL;
+	model.aux = AUX_NONE;
 	gretl_model_set_int(&model, "method", 0);
 	model.opt |= OPT_L;
-	model.aux = AUX_NONE;
 	model.rsq = model.adjrsq = NADBL;
 	model.fstt = NADBL;
 	set_model_id(&model);

@@ -386,28 +386,25 @@ system_model_list (equation_system *sys, int i, int *freeit)
 
     *freeit = 0;
 
-    if (sys->method == SYS_METHOD_SUR || 
-	sys->method == SYS_METHOD_3SLS ||
-	sys->method == SYS_METHOD_OLS || 
-	sys->method == SYS_METHOD_TSLS ||
-	sys->method == SYS_METHOD_LIML ||
-	sys->method == SYS_METHOD_WLS) {
+    if (sys->method != SYS_METHOD_FIML) {
 	list = system_get_list(sys, i);
     }
 
     if (sys->method == SYS_METHOD_3SLS || 
 	sys->method == SYS_METHOD_TSLS ||
 	sys->method == SYS_METHOD_LIML) {
-	/* is list already in tsls form? */
+	/* Is the list already in tsls form? 
+	   If not, ignore it. */
 	if (list != NULL && !in_list(list, LISTSEP)) {
 	    list = NULL;
 	}
     }
 
-    if (sys->method == SYS_METHOD_FIML || 
-	sys->method == SYS_METHOD_LIML ||
-	((sys->method == SYS_METHOD_3SLS || 
-	  sys->method == SYS_METHOD_TSLS) && list == NULL)) {
+    if ((sys->method == SYS_METHOD_FIML || 
+	 sys->method == SYS_METHOD_LIML ||
+	 sys->method == SYS_METHOD_3SLS || 
+	 sys->method == SYS_METHOD_TSLS) 
+	&& list == NULL) {
 	list = compose_tsls_list(sys, i);
 	*freeit = 1;
     }
@@ -707,11 +704,17 @@ static int sys_converged (equation_system *sys,
 
 static void clean_up_models (equation_system *sys)
 {
-    double ess = 0.0;
     int i;
 
+    if (sys->models == NULL) {
+	/* "can't happen" */
+	return;
+    }
+
+    sys->ess = 0.0;
+
     for (i=0; i<sys->neqns; i++) {
-	ess += sys->models[i]->ess;
+	sys->ess += sys->models[i]->ess;
 	if (sys->method == SYS_METHOD_3SLS || 
 	    sys->method == SYS_METHOD_FIML || 
 	    sys->method == SYS_METHOD_TSLS || 
@@ -723,12 +726,13 @@ static void clean_up_models (equation_system *sys)
 	}
     }
 
-    if (sys->neqns > 1) {
+    if (sys->neqns == 1) {
+	/* liml */
+	sys->models[0]->rho = sys->models[0]->dw = NADBL;
+    } else {
 	free(sys->models);
 	sys->models = NULL;
     }
-
-    sys->ess = ess;
 }
 
 static int drop_redundant_instruments (equation_system *sys,
@@ -766,7 +770,7 @@ static int drop_redundant_instruments (equation_system *sys,
 int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn)
 {
-    int i, j, k, T, t, m = 0;
+    int i, j, k, T, t;
     int v, l, mk, krow, nr;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
@@ -809,9 +813,6 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	goto cleanup;
     } 
 
-    /* number of equations */
-    m = sys->neqns;
-
     /* max indep vars per equation */
     k = system_max_indep_vars(sys);
 
@@ -840,7 +841,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
        straight equation-by-equation estimation.
     */
 
-    for (i=0; i<m; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	int freeit = 0;
 	int *list = system_model_list(sys, i, &freeit);
 	const int *droplist = NULL;
@@ -957,12 +958,12 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     */
 
     krow = 0;
-    for (i=0; i<m && !err; i++) {
+    for (i=0; i<sys->neqns && !err; i++) {
 	int kcol = 0;
 
 	err = make_sys_X_block(Xi, models[i], *pZ, sys->t1, method);
 
-	for (j=0; j<m && !err; j++) { 
+	for (j=0; j<sys->neqns && !err; j++) { 
 	    const gretl_matrix *Xk;
 	    double sij;
 
@@ -1021,7 +1022,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     /* form stacked Y column vector (m x k) */
 
     v = 0;
-    for (i=0; i<m; i++) { 
+    for (i=0; i<sys->neqns; i++) { 
 
 	/* loop over the m vertically-arranged blocks */
 
@@ -1030,7 +1031,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	for (j=0; j<models[i]->ncoeff; j++) { 
 	    /* loop over the rows within each of the m blocks */
 	    double yv = 0.0;
-	    int lmin = 0, lmax = m;
+	    int lmin = 0, lmax = sys->neqns;
 
 	    if (single_equation || rtsls) {
 		/* no cross terms wanted */
@@ -1127,9 +1128,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_free(X);
     gretl_matrix_free(y);
 
-    if (sys->models != NULL) {
-	clean_up_models(sys);
-    }
+    clean_up_models(sys);
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
