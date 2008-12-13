@@ -222,6 +222,13 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 
     if (!na(lmin)) {
 	ensure_vsep(prn);
+	if (!pmod->aux) {
+	    if (tex_format(prn)) {
+		pprintf(prn, "%s = %g\\\\\n", I_("Smallest eigenvalue"), lmin);
+	    } else {
+		pprintf(prn, "%s = %g\n", _("Smallest eigenvalue"), lmin);
+	    }
+	}
 	if (idf > 0) {
 	    double X2 = pmod->nobs * log(lmin);
 	    double pv = chisq_cdf_comp(idf, X2);
@@ -2621,10 +2628,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     /* additional stats/info for some cases */
-    if (pmod->aux == AUX_SYS) {
-	if (liml_equation(pmod)) {
-	    print_liml_equation_data(pmod, prn);
-	}
+    if ((pmod->aux == AUX_SYS && liml_equation(pmod)) ||
+	(pmod->ci == TSLS && (pmod->opt & OPT_L))) {
+	print_liml_equation_data(pmod, prn);
     } else if (pmod->ci == ARMA) {
 	print_arma_roots(pmod, prn);
     } else if (pmod->ci == GARCH) {
