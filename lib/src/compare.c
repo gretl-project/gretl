@@ -644,7 +644,11 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	    myopt |= OPT_I;
 	    set_optval_double(QUANTREG, OPT_I, x);
 	}
-    } 
+    } else if (orig->ci == IVREG) {
+	if (orig->opt & OPT_L) {
+	    myopt |= OPT_L;
+	}
+    }
 
     if (rep.errcode) {
 	return rep;
