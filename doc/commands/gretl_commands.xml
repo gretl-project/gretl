@@ -26,11 +26,11 @@
 	</option>
 	<option>
 	  <flag>--inst</flag>
-	  <effect>add as instrument, TSLS only</effect>
+	  <effect>add as instrument, ivreg only</effect>
 	</option>
 	<option>
 	  <flag>--both</flag>
-	  <effect>add as both regressor and instrument, TSLS only</effect>
+	  <effect>add as both regressor and instrument, ivreg only</effect>
 	</option>
       </options>
       <examples>
@@ -2250,7 +2250,7 @@
 	Squares system you may either (a) give an OLS-type equation
 	specification and provide a common list of instruments using the
 	<cmd>instr</cmd> keyword (again, see <cmdref targ="system"/>),
-	or (b) use the same equation syntax as for <cmdref targ="tsls"/>.
+	or (b) use the same equation syntax as for <cmdref targ="ivreg"/>.
       </para>
     </description>
 
@@ -2296,7 +2296,7 @@
 	command.  The name of the system should be given first,
 	surrounded by double quotes if the name contains spaces.  The
 	estimator, which must be one of <cmd>ols</cmd>,
-	<cmd>tsls</cmd>, <cmd>sur</cmd>, <cmd>3sls</cmd>,
+	<cmd>ivreg</cmd>, <cmd>sur</cmd>, <cmd>3sls</cmd>,
 	<cmd>fiml</cmd> or <cmd>liml</cmd>, is preceded by the string
 	<lit>method=</lit>.
       </para>
@@ -2315,7 +2315,7 @@
 	estimation.  
       </para>
       <para>If the equation-by-equation estimators <cmd>ols</cmd> or
-	<cmd>tsls</cmd> are chosen, the default is to apply a degrees
+	<cmd>ivreg</cmd> are chosen, the default is to apply a degrees
 	of freedom correction when calculating standard errors. This
 	can be suppressed using the <lit>--no-df-corr</lit> flag. This
 	flag has no effect with the other estimators; no degrees of
@@ -4652,7 +4652,7 @@
       </para>
       <para>
 	When a model has been estimated by two-stage least squares (see
-	<cmdref targ="tsls"/>), the LM principle breaks down and gretl offers
+	<cmdref targ="ivreg"/>), the LM principle breaks down and gretl offers
 	some equivalents: the <flag>--autocorr</flag> option computes
 	Godfrey's test for autocorrelation (Godfrey, 1994) while the
 	<flag>--white</flag> option yields the HET1 heteroskedasticity test
@@ -5836,11 +5836,11 @@
 	</option>
 	<option>
 	  <flag>--inst</flag>
-	  <effect>omit as instrument, TSLS only</effect>
+	  <effect>omit as instrument, ivreg only</effect>
 	</option>
 	<option>
 	  <flag>--both</flag>
-	  <effect>omit as both regressor and instrument, TSLS only</effect>
+	  <effect>omit as both regressor and instrument, ivreg only</effect>
 	</option>
       </options>
       <examples>
@@ -8717,15 +8717,15 @@
       </para>
 
       <para context="cli">
-	Alternatively you can specify an estimator for the system
-	using <lit>method=</lit> followed by a string identifying one
-	of the supported estimators: <cmd>ols</cmd> (Ordinary Least
-	Squares), <cmd>tsls</cmd> (Two-Stage Least Squares)
-	<cmd>sur</cmd> (Seemingly Unrelated Regressions),
-	<cmd>3sls</cmd> (Three-Stage Least Squares), <cmd>fiml</cmd>
-	(Full Information Maximum Likelihood) or <cmd>liml</cmd>
-	(Limited Information Maximum Likelihood).  In this case the
-	system is estimated once its definition is complete.  
+	Alternatively you can specify an estimator for the system using
+	<lit>method=</lit> followed by a string identifying one of the
+	supported estimators: <cmd>ols</cmd> (Ordinary Least Squares),
+	<cmd>ivreg</cmd> (Instrumental Variables regression)
+	<cmd>sur</cmd> (Seemingly Unrelated Regressions), <cmd>3sls</cmd>
+	(Three-Stage Least Squares), <cmd>fiml</cmd> (Full Information
+	Maximum Likelihood) or <cmd>liml</cmd> (Limited Information
+	Maximum Likelihood).  In this case the system is estimated once
+	its definition is complete.  
       </para>
 
       <para context="cli">
@@ -8742,7 +8742,7 @@
 	    Three-Stage Least Squares, a list of instruments (by
 	    variable name or number). Alternatively, you can put this
 	    information into the <cmd>equation</cmd> line using the
-	    same syntax as in the <cmdref targ="tsls"/>
+	    same syntax as in the <cmdref targ="ivreg"/>
 	    command.</para>
 	</li>
 	<li><para><cmd>endog</cmd>: for a system of simultaneous
@@ -8994,16 +8994,20 @@
 
   </command>
 
-  <command name="tsls" section="Estimation"
-    label="Two-Stage Least Squares">
+  <command name="ivreg" section="Estimation"
+    label="Instrumental Variables regression">
 
     <usage>
       <arguments>
         <argument>depvar</argument>
-        <argument>indepvars</argument>
+        <argument>regressors</argument>
 	<argument separated="true">instruments</argument>
       </arguments>
       <options>
+        <option>
+	  <flag>--liml</flag>
+	  <effect> use Limited Information Maximum Likelihood</effect>
+        </option>
         <option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
@@ -9014,21 +9018,19 @@
         </option>
       </options>      
       <examples>
-        <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
+        <example>ivreg y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
       </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Computes two-stage least squares (TSLS or IV) estimates:
-	<repl>depvar</repl> is the dependent variable,
-	<repl>indepvars</repl> is the list of independent variables
-	(including right-hand side endogenous variables) in the
-	structural equation for which TSLS estimates are needed; and
-	<repl>instruments</repl> is the combined list of exogenous and
-	predetermined variables in all the equations. If the
-	<repl>instruments</repl> list is not at least as long as
-	<repl>indepvars</repl>, the model is not identified.</para>
+	Computes IV estimates: <repl>depvar</repl> is the dependent
+	variable, <repl>regressors</repl> is the list of regressors (some
+	of which are presumed to be endogenous); and
+	<repl>instruments</repl> is the list of instruments. Exogenous and
+	predetermined regressors should be repeated in the instrument
+	list; if the latter is not at least as long as the
+	<repl>regressors</repl> list, the model is not identified.</para>
 
       <para context="cli">
 	In the above example, the <lit>y</lit>s are the endogenous
@@ -9037,17 +9039,15 @@
       </para>
 
       <para context="gui">
-	This command requires the selection of two lists of variables:
-	the independent variables to appear in the given model and a
-	set of "instruments".  The latter comprises the exogenous
-	and/or predetermined variables that may be used as regressors
-	to derive fitted values for the right-hand side endogenous
-	variables.
+	This command requires the selection of two lists of variables: the
+	regressors to appear in the given model and a set of instruments.
+	If some of the right-hand side variables for the model are
+	exogenous, they should appear in both lists.
       </para>
 
-      <para context="gui">If some of the right-hand side variables for
-	the model are exogenous, they should be referenced in both
-	lists.
+      <para>
+	Estimation is by two-stage least squares unless the option to use
+	LIML is selected.
       </para>
 
       <para>

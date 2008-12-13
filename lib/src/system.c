@@ -3809,6 +3809,17 @@ int gretl_system_print (equation_system *sys,
     return 0;
 }
 
+static void ensure_asy_printout (equation_system *sys)
+{
+    int i;
+
+    if (sys->models != NULL) {
+	for (i=0; i<sys->neqns; i++) {
+	    sys->models[i]->ci = IVREG;
+	}
+    }
+}
+
 int 
 system_save_and_print_results (equation_system *sys,
 			       double ***pZ, DATAINFO *pdinfo,
@@ -3835,6 +3846,9 @@ system_save_and_print_results (equation_system *sys,
     } 
 
     if (!(opt & OPT_Q)) {
+	if (sys->method == SYS_METHOD_FIML) {
+	    ensure_asy_printout(sys);
+	}
 	gretl_system_print(sys, (const double **) *pZ, pdinfo, opt, prn);
     }
 
