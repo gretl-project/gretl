@@ -184,7 +184,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 	    if (in_gretl_list(exlist, vi)) {
 		continue;
 	    }
-	    Xi = tsls_get_Xi(pmod, Z, i);
+	    Xi = model_get_Xi(pmod, Z, i);
 	    if (Xi == NULL) {
 		err = 1;
 		break;

@@ -29,6 +29,7 @@
 #include "missing_private.h"
 #include "matrix_extra.h"
 #include "plotspec.h"
+#include "tsls.h"
 
 #define WDEBUG 0
 

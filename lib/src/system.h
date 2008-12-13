@@ -62,6 +62,7 @@ struct equation_system_ {
     int method;                 /* estimation method */
     int neqns;                  /* number of stochastic equations */
     int nidents;                /* number of identities */
+    int endox;                  /* any exogenous regressors? 1/0 */
     int order;                  /* max lag of endogenous variable */
     int iters;                  /* number of iterations taken */
     char flags;                 /* to record options (e.g. save residuals) */

@@ -20,8 +20,6 @@
 #ifndef TSLS_H
 #define TSLS_H
 
-double *tsls_get_Xi (const MODEL *pmod, double **Z, int i);
-
 void tsls_free_data (const MODEL *pmod);
 
 int *ivreg_list_omit (const int *orig, const int *drop, gretlopt opt, int *err);

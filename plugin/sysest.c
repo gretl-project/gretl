@@ -20,10 +20,16 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "system.h"
+#include "tsls.h"
 #include "sysml.h"
 
 #define SDEBUG 0
 #define SYS_USE_SVD 0
+
+#define sys_ols_ok(s) (s->method == SYS_METHOD_SUR || \
+                       s->method == SYS_METHOD_OLS || \
+                       s->method == SYS_METHOD_WLS || \
+                       s->endox == 0)
 
 /* insert the elements of sub-matrix M, multuplied by scale, in the
    appropriate position within the big matrix X */
@@ -46,6 +52,34 @@ kronecker_place (gretl_matrix *X, const gretl_matrix *M,
     }
 }
 
+double *model_get_Xi (const MODEL *pmod, double **Z, int i)
+{
+    const char *endog = gretl_model_get_data(pmod, "endog");
+    double **X;
+    double *ret;
+
+    if (endog == NULL) {
+	return Z[pmod->list[i+2]];
+    }
+
+    X = gretl_model_get_data(pmod, "tslsX");
+
+    if (!endog[i]) {
+	ret = Z[pmod->list[i+2]];
+    } else if (X == NULL) {
+	ret = NULL;
+    } else {
+	int j, k = 0;
+
+	for (j=0; j<i; j++) {
+	    if (endog[j]) k++;
+	}
+	ret = X[k];
+    }
+
+    return ret;
+}
+
 /* retrieve the special k-class transformed data wanted for LIML
    estimation */
 
@@ -58,7 +92,7 @@ static int make_liml_X_block (gretl_matrix *X, const MODEL *pmod,
     X->cols = pmod->ncoeff;
 
     for (i=0; i<X->cols; i++) {
-	Xi = tsls_get_Xi(pmod, Z, i);
+	Xi = model_get_Xi(pmod, Z, i);
 	if (Xi == NULL) {
 	    return 1;
 	}
@@ -87,7 +121,7 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 	if (method == SYS_METHOD_3SLS || 
 	    method == SYS_METHOD_FIML || 
 	    method == SYS_METHOD_TSLS) {
-	    Xi = tsls_get_Xi(pmod, Z, i);
+	    Xi = model_get_Xi(pmod, Z, i);
 	} else {
 	    Xi = Z[pmod->list[i+2]];
 	}
@@ -385,6 +419,10 @@ system_model_list (equation_system *sys, int i, int *freeit)
     int *list = NULL;
 
     *freeit = 0;
+
+    if (sys_ols_ok(sys)) {
+	return system_get_list(sys, i);
+    }
 
     if (sys->method != SYS_METHOD_FIML) {
 	list = system_get_list(sys, i);
@@ -852,16 +890,15 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    break;
 	}
 
-	if (method == SYS_METHOD_SUR || 
-	    method == SYS_METHOD_OLS || 
-	    method == SYS_METHOD_WLS) {
+	if (sys_ols_ok(sys)) {
 	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
-	} else if (method == SYS_METHOD_3SLS || 
-		   method == SYS_METHOD_FIML || 
-		   method == SYS_METHOD_TSLS) {
-	    *pmod = tsls(list, pZ, pdinfo, OPT_E | OPT_A);
-	} else if (method == SYS_METHOD_LIML) {
-	    *pmod = tsls(list, pZ, pdinfo, OPT_E | OPT_A | OPT_N);
+	} else {
+	    gretlopt tslsopt = (OPT_E | OPT_A);
+
+	    if (method == SYS_METHOD_LIML) {
+		tslsopt |= OPT_N; /* ML: no df correction */
+	    }
+	    *pmod = tsls(list, pZ, pdinfo, tslsopt);
 	}
 
 	if (freeit) {

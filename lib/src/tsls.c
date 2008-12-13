@@ -61,8 +61,8 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 {
     double **X = NULL;
     char *endog = NULL;
-    int i, j, v, err = 0;
-    size_t Xsize, esize;
+    int i, v, err = 0;
+    size_t esize, Xsize;
     size_t xs_old, es_old;
     int recycle_X = 0;
     int recycle_e = 0;
@@ -119,54 +119,20 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 
     for (i=0; i<pmod->ncoeff; i++) {
 	v = pmod->list[i+2];
-	endog[i] = 1;
-	for (j=1; j<=exolist[0]; j++) {
-	    if (exolist[j] == v) {
-		endog[i] = 0;
-		break;
-	    }
-	}
+	endog[i] = !in_gretl_list(exolist, v);
     }
 
-    /* now attach X and endog to the model */
-    if (!recycle_X) {
+     /* now attach X and endog to the model */
+    if (!recycle_X && X != NULL) {
 	gretl_model_set_data(pmod, "tslsX", X, GRETL_TYPE_DOUBLE_ARRAY,
 			     Xsize);
     }
-    if (!recycle_e) {
+    if (!recycle_e && endog != NULL) {
 	gretl_model_set_data(pmod, "endog", endog, GRETL_TYPE_CHAR_ARRAY,
 			     esize);
     }
 
     return err;
-}
-
-double *tsls_get_Xi (const MODEL *pmod, double **Z, int i)
-{
-    const char *endog = gretl_model_get_data(pmod, "endog");
-    double **X;
-    double *ret;
-
-    if (endog == NULL) {
-	return NULL;
-    }
-
-    X = gretl_model_get_data(pmod, "tslsX");
-
-    if (!endog[i]) {
-	ret = Z[pmod->list[i+2]];
-    } else if (X == NULL) {
-	ret = NULL;
-    } else {
-	int j, k = 0;
-
-	for (j=0; j<i; j++) {
-	    if (endog[j]) k++;
-	}
-	ret = X[k];
-    }
-
-    return ret;
 }
 
 static void add_tsls_var (int *list, int v, gretlopt opt)
@@ -375,7 +341,7 @@ static int *
 tsls_make_hatlist (const int *reglist, int **instlist, int *addconst,
 		   int *err)
 {
-    int *hatlist = gretl_null_list();
+    int *hatlist = NULL;
     int i, vi;
 
     for (i=2; i<=reglist[0]; i++) {
@@ -395,9 +361,7 @@ tsls_make_hatlist (const int *reglist, int **instlist, int *addconst,
 	} 
     }
 
-    if (hatlist == NULL) {
-	*err = E_DATA;
-    } else if (*addconst) {
+    if (*addconst) {
 	/* add constant to list of instruments */
 	int clist[2] = {1, 0};
 
@@ -974,7 +938,7 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.  If %OPT_E is given, fitted values from the first-stage
- * regressions are saved with the model: see tsls_get_Xi().
+ * regressions are saved with the model.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -992,6 +956,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     int *droplist = NULL;
     int addconst = 0;
     int orig_nvar = pdinfo->v;
+    int sysest = (opt & OPT_E);
     int nendo, ev = 0;
     int OverIdRank = 0;
     int i, err = 0;
@@ -1044,7 +1009,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     }  
 
     /* in case we drop any instruments as redundant */
-    if (opt & OPT_E) {
+    if (sysest) {
 	exolist = gretl_list_copy(instlist);
     }
 
@@ -1063,11 +1028,17 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    hatlist = gretl_list_copy(endolist);
-    if (hatlist == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (endolist != NULL) {
 	nendo = endolist[0];
+	hatlist = gretl_list_copy(endolist);
+	if (hatlist == NULL) {
+	    err = E_ALLOC;
+	}
+    } else {
+	nendo = 0;
+    }
+
+    if (!err) {
 	Q = tsls_Q(instlist, reglist, &droplist,
 		   (const double **) *pZ, pdinfo->t1, pdinfo->t2,
 		   missmask, &err);
@@ -1090,9 +1061,11 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* allocate storage for fitted vars */
-    err = dataset_add_series(nendo, pZ, pdinfo);
-    if (err) {
-	goto bailout;
+    if (nendo > 0) {
+	err = dataset_add_series(nendo, pZ, pdinfo);
+	if (err) {
+	    goto bailout;
+	}
     } 
 
     /* 
@@ -1107,36 +1080,36 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	ev = endolist[1];
     }  
 
-    for (i=1; i<=endolist[0]; i++) {
-	int orig = endolist[i];
-	int newv = orig_nvar + i - 1;
+    for (i=0; i<nendo; i++) {
+	int v0 = endolist[i+1];
+	int v1 = orig_nvar + i;
 
 	/* form xhat_i = QQ'x_i */
-	err = tsls_form_xhat(Q, (*pZ)[orig], (*pZ)[newv], pdinfo, 
+	err = tsls_form_xhat(Q, (*pZ)[v0], (*pZ)[v1], pdinfo, 
 			     missmask);
 	if (err) {
 	    goto bailout;
 	}
 
 	/* give the fitted series the same name as the original */
-	strcpy(pdinfo->varname[newv], pdinfo->varname[orig]);
+	strcpy(pdinfo->varname[v1], pdinfo->varname[v0]);
 
-	/* substitute newv into the right place in the second-stage
+	/* substitute v1 into the right place in the second-stage
 	   regression list */
-	replace_list_element(s2list, orig, newv);
+	replace_list_element(s2list, v0, v1);
 
 	/* update hatlist */
-	hatlist[i] = newv;
+	hatlist[i+1] = v1;
     }
 
     /* second-stage regression */
-    tsls = lsq(s2list, pZ, pdinfo, OLS, (opt & OPT_E)? OPT_Z : OPT_NONE);
+    tsls = lsq(s2list, pZ, pdinfo, OLS, (sysest)? OPT_Z : OPT_NONE);
     if (tsls.errcode) {
 	fprintf(stderr, "tsls_func, stage 2: tsls.errcode = %d\n", tsls.errcode);
 	goto bailout;
     }
 
-    if (!(opt & OPT_E) && nendo == 1) {
+    if (nendo == 1 && !sysest) {
 	compute_first_stage_F(&tsls, ev, reglist, instlist, pZ, pdinfo, opt);
     } 
 
@@ -1161,8 +1134,10 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* compute additional statistics (R^2, F, etc.) */
     tsls_extra_stats(&tsls, OverIdRank, (const double **) *pZ, pdinfo);
 
-    if (!(opt & OPT_E)) {
-	tsls_hausman_test(&tsls, reglist, hatlist, pZ, pdinfo);
+    if (!sysest) {
+	if (hatlist != NULL) {
+	    tsls_hausman_test(&tsls, reglist, hatlist, pZ, pdinfo);
+	}
 	if (OverIdRank > 0) {
 	    ivreg_sargan_test(&tsls, OverIdRank, instlist, pZ, pdinfo);
 	}
@@ -1196,16 +1171,16 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	tsls.errcode = err;
     }
 
-    if (!tsls.errcode) {
-	if (opt & OPT_E) {
+    if (!tsls.errcode && endolist != NULL) {
+	if (sysest) {
 	    /* save first-stage fitted values */
 	    tsls_save_data(&tsls, hatlist, exolist, *pZ, pdinfo);
+	} else {
+	    /* save list of endogenous regressors */
+	    gretl_model_set_list_as_data(&tsls, "endolist", endolist);
+	    endolist = NULL; /* model takes ownership */
 	}
-	gretl_model_set_list_as_data(&tsls, "endolist", endolist);
-	endolist = NULL; /* model takes ownership */
-    } else {
-	free(endolist);
-    }
+    } 
 
     /* delete first-stage fitted values from dataset */
     dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
@@ -1214,6 +1189,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     free(instlist);
     free(hatlist);
     free(exolist);
+    free(endolist);
     free(s2list);
 
     if ((opt & OPT_A) || tsls.errcode) {

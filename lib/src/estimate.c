@@ -27,6 +27,7 @@
 #include "missing_private.h"
 #include "estim_private.h"
 #include "system.h"
+#include "tsls.h"
 
 /* Comment on 'TINY': It's the minimum value for 'test' (see below)
    that libgretl's Cholesky decomposition routine will accept before

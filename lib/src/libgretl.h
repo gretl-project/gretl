@@ -436,7 +436,6 @@ struct MODEL_ {
 #include "nls.h"
 #include "missing.h"
 #include "transforms.h"
-#include "tsls.h"
 #ifdef WIN32
 # include "gretl_win32.h"
 #endif

@@ -318,6 +318,7 @@ equation_system_new (int method, const char *name, int *err)
 
     sys->neqns = 0;
     sys->nidents = 0;
+    sys->endox = 1;
 
     sys->R = NULL;
     sys->q = NULL;
@@ -1112,6 +1113,37 @@ equation_system_estimate (equation_system *sys,
     return err;
 }
 
+/* check a "tsls-style" list: are there are regressors
+   in the first part of the list which do not appear
+   as instruments, in the second part of the list?
+*/
+
+static int endox_in_ivreg_list (const int *list)
+{
+    int pos = gretl_list_separator_position(list);
+    int i, j, vi, vj;
+    int ret = 0;
+
+    if (pos == 0) {
+	return 0;
+    }
+
+    for (i=2; i<pos && !ret; i++) {
+	vi = list[i];
+	ret = 1;
+	for (j=pos+1; j<=list[0]; j++) {
+	    vj = list[j];
+	    if (vj == vi) {
+		/* appears as inst: not endogenous */
+		ret = 0;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* prior to system estimation, get all the required lists of variables
    in order 
 */
@@ -1126,8 +1158,11 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     int *ylist = NULL;
     int *xplist = NULL;
     int src, lag;
+    int endox = 0;
+    int gotsep = 0;
     int nxp, bign = 0;
-    int i, j, k, vj;
+    int vi, vj, vk;
+    int i, j, k;
     int err = 0;
 
     /* start an empty list for predetermined variables */
@@ -1342,6 +1377,32 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
 
     sys->xlist = xplist;
     xplist = NULL;
+
+    /* Determine if we have any endogenous regressors */
+    for (i=1; i<=sys->ylist[0] && !endox; i++) {
+	vi = sys->ylist[i];
+	for (j=0; j<sys->neqns && !endox; j++) {
+	    slist = sys->lists[j];
+	    for (k=2; k<=slist[0] && !endox; k++) {
+		vk = slist[k];
+		if (vk == LISTSEP) {
+		    gotsep = 1;
+		    break;
+		} else if (vk == vi) {
+		    endox = 1;
+		}
+	    }
+	}
+    }
+
+    if (!endox && gotsep) {
+	/* check "tsls-style" lists */
+	for (j=0; j<sys->neqns && !endox; j++) {
+	    endox = endox_in_ivreg_list(sys->lists[j]);
+	}
+    }	
+
+    sys->endox = endox;
 
  bailout:
 
