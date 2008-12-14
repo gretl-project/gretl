@@ -1570,11 +1570,11 @@ int do_add_omit (selector *sr)
     }
 
     if (ci == ADD) {
-        gretl_command_sprintf("addto %d %s%s", orig->ID, buf, print_flags(opt, ci));
+        gretl_command_sprintf("add %s%s", buf, print_flags(opt, ci));
     } else if (auto_omit) {
-	gretl_command_sprintf("omitfrom %d %s", orig->ID, print_flags(opt, ci));
+	gretl_command_sprintf("omit %s", print_flags(opt, ci));
     } else {
-        gretl_command_sprintf("omitfrom %d %s%s", orig->ID, buf, print_flags(opt, ci));
+        gretl_command_sprintf("omit %s%s", buf, print_flags(opt, ci));
     }
 
     if (check_lib_command() || bufopen(&prn)) {
