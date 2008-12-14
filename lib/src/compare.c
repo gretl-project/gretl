@@ -183,11 +183,18 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 	gretl_matrix_print(b, "Wald coeff vector");
 #endif
 	err = gretl_invert_symmetric_matrix(C);
+#if WDEBUG
+	gretl_matrix_print(C, "VCV-inverse");
+#endif
     }
 
     if (!err) {
 	wX = gretl_scalar_qform(b, C, &err);
     }
+
+#if WDEBUG
+    fprintf(stderr, "wX (quad form) = %g\n", wX);
+#endif
 
     if (!err) {
 	wF = wX / gretl_vector_get_length(b);

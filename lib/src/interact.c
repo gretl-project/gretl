@@ -3137,28 +3137,13 @@ static int print_command_param (const char *s, PRN *prn)
     return ret;
 }
 
-static int is_real_model_cmd (const CMD *cmd)
-{
-    if (is_model_cmd(cmd->word) &&
-	strcmp(cmd->word, "omit") &&
-	strcmp(cmd->word, "add")) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 static int 
 cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
 		    int gotsep, PRN *prn)
 {
     int src, v = cmd->list[i];
-    int imin = 0;
+    int imin = (MODEL_COMMAND(cmd->ci))? 1 : 0;
     int bytes = 0;
-
-    if (is_real_model_cmd(cmd)) {
-	imin = 1;
-    }
 
     if (v > 0 && i > imin && is_auto_generated_lag(i, cmd->list, cmd->linfo)) {
 	if (is_first_lag(i, cmd->list, gotsep, cmd->linfo, &src)) {
@@ -3791,10 +3776,17 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 }
 
 static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
-			      PRN *prn, gretlopt opt)
+			      PRN *prn, ExecState *s)
 {
     if (pmod->errcode == 0 && !gretl_looping()) {
-	printmodel(pmod, pdinfo, opt, prn);
+	printmodel(pmod, pdinfo, s->cmd->opt, prn);
+	if (pmod->errcode == 0) {
+	    /* register the fact that we successfully estimated
+	       a model; this is handled separately inside a
+	       loop
+	    */
+	    s->pmod = pmod;
+	}
     }
 
     return pmod->errcode;
@@ -3948,6 +3940,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     int order = 0;
     int err = 0;
 
+    s->pmod = NULL;
+
     if (NEEDS_MODEL_CHECK(cmd->ci)) {
 	err = model_test_check(cmd, pdinfo, prn);
 	if (err) {
@@ -3975,8 +3969,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     gretl_error_clear();
-
-    s->alt_model = 0;
 
     switch (cmd->ci) {
 
@@ -4321,14 +4313,14 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case HCCM:
 	clear_model(models[0]);
 	*models[0] = lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
-	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
+	err = maybe_print_model(models[0], pdinfo, prn, s);
 	break;
 	
 #ifdef ENABLE_GMP
     case MPOLS:
 	clear_model(models[0]);
 	*models[0] = mp_ols(cmd->list, (const double **) *pZ, pdinfo);
-	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
+	err = maybe_print_model(models[0], pdinfo, prn, s);
 	break;
 #endif
 
@@ -4345,7 +4337,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,
 				    cmd->opt, prn);
 	}
-	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
+	err = maybe_print_model(models[0], pdinfo, prn, s);
 	break;
 
     case AR1:
@@ -4353,7 +4345,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (!err) {
 	    clear_model(models[0]);
 	    *models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);
-	    err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
+	    err = maybe_print_model(models[0], pdinfo, prn, s);
 	}
 	break;
 
@@ -4413,7 +4405,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 1;
 	    break;
 	}
-	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
+	err = maybe_print_model(models[0], pdinfo, prn, s);
 	break;
 
     case GMM:
@@ -4454,6 +4446,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if ((cmd->opt & OPT_A) && err == E_NOOMIT) {
 	    /* auto-omit was a no-op */
 	    err = 0;
+	} else if (!err && !(cmd->opt & OPT_Q) && !(cmd->opt & OPT_W)) {
+	    s->pmod = models[0];
 	}
 	break;	
 
@@ -4578,10 +4572,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(models[0]);
 	    *models[0] = nl_model(pZ, pdinfo, cmd->opt, prn);
-	    err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
-	    if (!err) {
-		s->alt_model = 1;
-	    }
+	    err = maybe_print_model(models[0], pdinfo, prn, s);
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, pZ, pdinfo);
 	} else if (!strcmp(cmd->param, "foreign")) {
@@ -4716,12 +4707,11 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = gretl_cmd_exec(s, pZ, pdinfo);
     }
 
-    /* FIXME: problem with "set_as_last_model" below */
+    /* FIXME: problem with "set_as_last_model" below (?) */
 
-    if (!err && (is_model_cmd(s->cmd->word) || s->alt_model)
-	&& !is_quiet_model_test(s->cmd->ci, s->cmd->opt)) {
-	attach_subsample_to_model(s->models[0], pdinfo);
-	set_as_last_model(s->models[0], GRETL_OBJ_EQN);
+    if (s->pmod != NULL) {
+	attach_subsample_to_model(s->pmod, pdinfo);
+	set_as_last_model(s->pmod, GRETL_OBJ_EQN);
     }
 
     if (system_save_flag_is_set(s->sys)) {
@@ -5037,10 +5027,10 @@ void gretl_exec_state_init (ExecState *s,
     s->models = models;
     s->prn = prn;
 
+    s->pmod = NULL;
     s->sys = NULL;
     s->rset = NULL;
     s->var = NULL;
-    s->alt_model = 0;
     s->in_comment = 0;
     s->funcerr = 0;
 
@@ -5050,6 +5040,12 @@ void gretl_exec_state_init (ExecState *s,
 
     s->submask = NULL;
     s->callback = NULL;
+}
+
+void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback)
+{
+    s->callback = callback;
+    s->pmod = NULL;
 }
 
 void gretl_exec_state_clear (ExecState *s)

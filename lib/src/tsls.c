@@ -693,13 +693,15 @@ static void tsls_extra_stats (MODEL *pmod, int overid, const double **Z,
 
     pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1.0) / pmod->dfd);
 
-#if 1
-    pmod->fstt = wald_omit_F(NULL, pmod);
-    pmod->chisq = NADBL;
-#else
-    pmod->fstt = NADBL;
-    pmod->chisq = wald_omit_chisq(NULL, pmod);
-#endif
+    pmod->fstt = pmod->chisq = NADBL;
+
+    if (pmod->ncoeff > 1) {
+	if (overid && pmod->ncoeff == 2) {
+	    pmod->chisq = wald_omit_chisq(NULL, pmod);
+	} else {	
+	    pmod->fstt = wald_omit_F(NULL, pmod);
+	}
+    } 
     
     if (overid) {
 	/* tsls is not a ML estimator unless it's exactly identified */

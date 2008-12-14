@@ -4078,60 +4078,6 @@ void swap_models (MODEL *targ, MODEL *src)
     *src = tmp;
 }
 
-int is_model_cmd (const char *s)
-{
-    int ret = 0;
-
-    /* FIXME mle?  Also add "ivreg" when ready */
-
-    if (s == NULL || *s == '\0') {
-	return 0;
-    }
-
-    if (!strcmp(s, "add")  ||
-	!strcmp(s, "ar") ||
-	!strcmp(s, "ar1") ||
-	!strcmp(s, "arbond") ||
-	!strcmp(s, "arch") ||
-	!strcmp(s, "arima") ||
-	!strcmp(s, "arma") ||
-	!strcmp(s, "endnls") ||
-	!strcmp(s, "garch") ||
-	!strcmp(s, "hccm") ||
-	!strcmp(s, "heckit")  ||
-	!strcmp(s, "intreg")  ||
-	!strcmp(s, "hsk")  ||
-	!strcmp(s, "lad")  ||
-	!strcmp(s, "logistic") ||
-	!strcmp(s, "logit")  ||
-	!strcmp(s, "mpols")  ||
-	!strcmp(s, "ols") ||   
-	!strcmp(s, "omit") ||
-	!strcmp(s, "panel") ||
-	!strcmp(s, "poisson") ||
-	!strcmp(s, "pooled") ||
-	!strcmp(s, "probit") ||
-	!strcmp(s, "quantreg") ||
-	!strcmp(s, "tobit") ||
-	!strcmp(s, "tsls") ||
-	!strcmp(s, "wls")) {
-	ret = 1;
-    }
-
-    return ret;
-}
-
-int is_quiet_model_test (int ci, gretlopt opt)
-{
-    int ret = 0;
-
-    if ((opt & OPT_Q) && (ci == OMIT || ci == ADD)) {
-	ret = 1;
-    }
-
-    return ret;
-}
-
 /**
  * command_ok_for_model:
  * @test_ci: index of command to be tested.

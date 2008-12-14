@@ -72,23 +72,9 @@ struct _selector {
     int (*callback)();
 };
 
-#ifdef ENABLE_GMP
-#define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
-                       c == HCCM || c == HSK || c == ARMA || c == ARCH || \
-                       c == IVREG || c == LOGIT || c == PROBIT || c == GARCH || \
-                       c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
-                       c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
-		       c == HECKIT || c == QUANTREG || c == INTREG)
-#else
-#define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
-                       c == HCCM || c == HSK || c == ARMA || c == ARCH || \
-                       c == IVREG || c == LOGIT || c == PROBIT || c == GARCH || \
-                       c == AR || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
-                       c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
-                       c == HECKIT || c == QUANTREG || c == INTREG)
-#endif
+/* single-equation estimation commands plus some GUI extensions */
+#define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
+                       c == PWE || c == PANEL_WLS || c == PANEL_B)
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
 

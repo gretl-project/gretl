@@ -740,6 +740,15 @@ static gretlopt plot_opt (gretlopt opt, int batch)
 
 #define ENDRUN (NC + 1)
 
+/* exec_line: this is called to execute both interactive and script
+   commands.  Note that most commands get passed on to the libgretl
+   function gretl_cmd_exec(), but some commands that require special
+   action are dealt with here.  All estimation commands are passed on
+   to libgretl.
+
+   see also gui_exec_line() in gui2/library.c
+*/
+
 static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
     char *line = s->line;
@@ -852,7 +861,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
 
-    s->callback = cli_exec_callback;
+    gretl_exec_state_set_callback(s, cli_exec_callback);
 
     switch (cmd->ci) {
 
@@ -1034,14 +1043,13 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
     }
 
-    if (!err && (is_model_cmd(cmd->word) || s->alt_model)
-	&& !is_quiet_model_test(cmd->ci, cmd->opt)) { 
-	attach_subsample_to_model(models[0], pdinfo);
+    if (s->pmod != NULL) { 
+	attach_subsample_to_model(s->pmod, pdinfo);
 #if MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
-		(models[0])->ID, get_model_count());
+		s->pmod->ID, get_model_count());
 #endif
-	maybe_stack_model(models[0], cmd, prn);
+	maybe_stack_model(s->pmod, cmd, prn);
     }
 
     if (system_save_flag_is_set(s->sys)) {

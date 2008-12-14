@@ -772,7 +772,7 @@ static int
 print_ivreg_instruments (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     const char *strs[] = {
-	N_("Endogenous"),
+	N_("Instrumented"),
 	N_("Instruments")
     };
     const int *list;
@@ -2272,7 +2272,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     int rtf = rtf_format(prn);
     int tex = tex_format(prn);
     int csv = csv_format(prn);
-    char fstr[32], chistr[32];
+    char teststr[32];
     const char *key[] = {
 	N_("Mean dependent var"),  /* 22: Mean of dependent variable */
 	N_("S.D. dependent var"),  /* 22: Standard deviation of dependent var */
@@ -2344,12 +2344,19 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     } else if (!na(pmod->fstt)) {
 	/* format F-stat and get its p-value */
 	if (tex) {
-	    sprintf(fstr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);
+	    sprintf(teststr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);
 	} else {
-	    sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
+	    sprintf(teststr, "F(%d, %d)", pmod->dfn, pmod->dfd);
 	}
-	key[6] = fstr;
+	key[6] = teststr;
 	val[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
+    } else if (!na(pmod->chisq)) {
+	/* alternative: chi-square its p-value */
+	sprintf(teststr, "%s(%d)", _("Chi-square"), pmod->dfn);
+	key[6] = teststr;  
+	val[6] = pmod->chisq;
+	key[7] = N_("p-value");  
+	val[7] = chisq_cdf_comp(pmod->dfn, val[6]);
     }
 
     /* special variants of R-squared */
@@ -2449,15 +2456,6 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    val[13] = h;
 	}
     } else if (pmod->ci == INTREG) {
-	if (na(pmod->chisq)) {
-	    val[6] = val[7] = NADBL;
-	} else {
-	    sprintf(chistr, "%s(%d)", _("Chi-square"), pmod->dfn);
-	    key[6] = chistr;  
-	    val[6] = pmod->chisq;
-	    key[7] = N_("p-value");  
-	    val[7] = chisq_cdf_comp(pmod->dfn, val[6]);
-	}
 	for (i=0; i<MID_STATS; i++) {
 	    if (i < 6 || i > 11) {
 		val[i] = NADBL;

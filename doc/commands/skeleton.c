@@ -48,7 +48,7 @@ void print_skel_for_command (int ci)
        valid for the given command */
     opts = get_opts_for_command(ci, &nopt);
 
-    if (is_model_cmd(cmdword)) {
+    if (MODEL_COMMAND(ci)) {
 	strcpy(section, "Estimation");
     } else if (is_model_ref_cmd(ci)) {
 	strcpy(section, "Tests");

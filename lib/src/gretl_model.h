@@ -47,6 +47,34 @@ struct CoeffIntervals_ {
     int ifc;
 };
 
+/* single-equation model commands */
+
+#define MODEL_COMMAND(c) (c == AR || \
+                          c == AR1 || \
+                          c == ARBOND || \
+                          c == ARCH || \
+                          c == ARMA || \
+                          c == GARCH || \
+                          c == GMM || \
+                          c == HCCM || \
+		          c == HECKIT || \
+                          c == HSK || \
+                          c == INTREG || \
+                          c == IVREG || \
+                          c == LAD || \
+                          c == LOGISTIC || \
+                          c == LOGIT || \
+                          c == MLE || \
+                          c == MPOLS || \
+                          c == NLS || \
+                          c == OLS || \
+                          c == PANEL || \
+                          c == POISSON || \
+                          c == PROBIT || \
+                          c == QUANTREG || \
+                          c == TOBIT || \
+                          c == WLS)
+
 #define AR_MODEL(c) (c == AR || \
 		     c == AR1 || \
                      c == ARMA || \
@@ -258,10 +286,6 @@ int gretl_model_add_arinfo (MODEL *pmod, int nterms);
 MODEL *gretl_model_copy (const MODEL *pmod);
 
 void swap_models (MODEL *targ, MODEL *src);
-
-int is_model_cmd (const char *line);
-
-int is_quiet_model_test (int ci, gretlopt opt);
 
 int command_ok_for_model (int test_ci, gretlopt opt, int mci);
 

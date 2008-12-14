@@ -3422,6 +3422,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     /* actions we can't/won't handle here (should be more) */
     if (ci == LOOP || ci == RESTRICT || ci == SYSTEM || 
 	ci == EQUATION || ci == VAR || ci == VECM ||
+	ci == NLS || ci == MLE || ci == GMM ||
 	is_model_ref_cmd(ci)) {
 	dummy_call();
 	return;
@@ -3433,7 +3434,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
 	close_dialog(dlg);
     }
 
-    if (is_model_cmd(cword)) {
+    if (MODEL_COMMAND(ci)) {
 	real_do_model(ci);
 	return;
     }
@@ -7045,12 +7046,20 @@ static int script_open_append (ExecState *s, double ***pZ,
     return err;
 }
 
+/* gui_exec_line: this is called from the gretl console, from the
+   command "minibuffer", from execute_script(), and when initiating a
+   call to a function package (fncall.c).  Note that most commands get
+   passed on to the libgretl function gretl_cmd_exec(), but some GUI
+   specials are dealt with here, as are some commands that require
+   special action when called in a GUI context.  All estimation
+   commands are passed on to libgretl.
+*/
+
 int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
-    MODEL **models = s->models;
     gretlopt gopt = OPT_NONE;
     char runfile[MAXLEN];
     int console_run = 0;
@@ -7154,7 +7163,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	gopt |= OPT_B; /* do graphs in batch mode */
     }
 
-    s->callback = gui_exec_callback;
+    gretl_exec_state_set_callback(s, gui_exec_callback);
 
     switch (cmd->ci) {
 
@@ -7387,12 +7396,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (!err && (is_model_cmd(cmd->word) || s->alt_model)
-	&& !is_quiet_model_test(cmd->ci, cmd->opt)) {
-	if (is_model_cmd(cmd->word)) {
-	    attach_subsample_to_model(models[0], pdinfo);
-	}
-	maybe_save_model(cmd, models[0], prn);
+    if (s->pmod != NULL) {
+	attach_subsample_to_model(s->pmod, pdinfo);
+	maybe_save_model(cmd, s->pmod, prn);
     }
 
     if (system_save_flag_is_set(s->sys)) {

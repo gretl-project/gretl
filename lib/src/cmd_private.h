@@ -45,14 +45,14 @@ struct ExecState_ {
     PRN *prn;
     char *line;
     char runfile[MAXLEN];
-    MODEL **models;
+    MODEL **models;        /* "workspace" models */
+    MODEL *pmod;           /* set if new model is estimated */
     equation_system *sys;
     gretl_restriction *rset;
     GRETL_VAR *var;
     void *prev_model;
     GretlObjType prev_type;
-    char *submask; /* record of incoming sub-sample for functions */
-    int alt_model;
+    char *submask;        /* record of incoming sub-sample for functions */
     int in_comment;
     int funcerr;
     EXEC_CALLBACK callback;
@@ -64,6 +64,8 @@ void gretl_exec_state_init (ExecState *s,
 			    CMD *cmd,
 			    MODEL **models, 
 			    PRN *prn);
+
+void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback);
 
 void gretl_exec_state_clear (ExecState *s);
 
