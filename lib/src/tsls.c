@@ -928,6 +928,66 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 }
 
 /**
+ * ivreg_process_lists:
+ * @list: original specification list.
+ * @reglist: location to receive regression list.
+ * @instlist: location to receive list of instruments.
+ *
+ * Split the incoming list into its two components and perform
+ * some basic checks; if the checks fail the two created
+ * lists are destroyed.
+ *
+ * Returns: 0, on success, non-zero error code on failure.
+ */
+
+int ivreg_process_lists (const int *list, int **reglist, int **instlist)
+{
+    int *rlist, *zlist;
+    int i, err, oid;
+
+    err = gretl_list_split_on_separator(list, reglist, instlist);
+    if (err) {
+	fprintf(stderr, "gretl_list_split_on_separator: failed\n");
+	return err;
+    }
+
+    rlist = *reglist;
+    zlist = *instlist;
+
+    if (rlist[0] < 2 || zlist[0] < 1) {
+	err = E_ARGS;
+    } else {
+	for (i=1; i<=zlist[0]; i++) {
+	    if (zlist[i] == list[1]) {
+		strcpy(gretl_errmsg, 
+		       "You can't use the dependent variable as an instrument");
+		err = E_DATA;
+		break;
+	    }
+	}
+    }
+    
+    if (!err) {
+	oid = zlist[0] - rlist[0] + 1;
+	if (oid < 0) {
+	    sprintf(gretl_errmsg, 
+		    _("The order condition for identification is not satisfied.\n"
+		      "At least %d more instruments are needed."), -oid);
+	    err = E_DATA; 
+	}
+    }
+
+    if (err) {
+	free(*reglist);
+	free(*instlist);
+	*reglist = NULL;
+	*instlist = NULL;
+    }
+
+    return err;
+}
+
+/**
  * tsls:
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
@@ -973,28 +1033,14 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* reglist: dependent var plus list of regressors
        instlist: list of instruments
     */
-    tsls.errcode = gretl_list_split_on_separator(list, &reglist, &instlist);
+    tsls.errcode = ivreg_process_lists(list, &reglist, &instlist);
     if (tsls.errcode) {
-	fprintf(stderr, "tsls: failed at gretl_list_split_on_separator\n");
 	return tsls;
     }
 
-    /* check instruments list */
-    for (i=1; i<=instlist[0]; i++) {
-	if (instlist[i] == list[1]) {
-	    strcpy(gretl_errmsg, "You can't use the dependent variable as an instrument");
-	    err = E_DATA;
-	    goto bailout;
-	}
-    }	
-
-    if (reglist[0] < 2 || instlist[0] < 1) {
-	err = E_ARGS;
-    } else {
-	/* adjust sample range for missing observations */
-	err = tsls_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-				 (const double **) *pZ, &missmask); 
-    }
+    /* adjust sample range for missing observations */
+    err = tsls_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+			     (const double **) *pZ, &missmask); 
 
     if (!err) {
 	/* allocate second stage regression list */
@@ -1020,8 +1066,11 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     reglist_check_for_const(reglist, (const double **) *pZ, pdinfo);
     tsls_omitzero(instlist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
 
-    /* determine the list of variables (endolist) for which we need to
-       obtain fitted values in the first stage 
+    /* Determine the list of variables (endolist) for which we need to
+       obtain fitted values in the first stage.  Note that we accept
+       the condition where there are no such variables (and hence
+       TSLS is in fact redundant); this may sometimes be required
+       when tsls is called in the context of system estimation.
     */
     endolist = tsls_make_hatlist(reglist, &instlist, &addconst, &err);
     if (err) {
@@ -1035,6 +1084,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    err = E_ALLOC;
 	}
     } else {
+	/* no endogenous regressors */
 	nendo = 0;
     }
 
@@ -1048,8 +1098,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     } 
 
-    /* check for order condition (we do this after tsls_Q in case
-       any vars get dropped at that stage) 
+    /* check (again) for order condition: we do this after tsls_Q in case
+       any vars get dropped at that stage
     */
     OverIdRank = instlist[0] - reglist[0] + 1;
     if (OverIdRank < 0) {
@@ -1060,7 +1110,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* allocate storage for fitted vars */
+    /* allocate storage for fitted vars, if needed */
     if (nendo > 0) {
 	err = dataset_add_series(nendo, pZ, pdinfo);
 	if (err) {
@@ -1068,17 +1118,17 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
+    /* prepare for first-stage F-test, if just one endogenous regressor */
+    if (nendo == 1) {
+	ev = endolist[1];
+    }      
+
     /* 
        Deal with the variables for which instruments are needed: loop
        across the list of variables to be instrumented (endolist),
        form the fitted values as QQ'x_i, and add these fitted values
        into the data matrix Z.
     */
-
-    /* prepare for first-stage F-test, if only one endogenous regressor */
-    if (nendo == 1) {
-	ev = endolist[1];
-    }  
 
     for (i=0; i<nendo; i++) {
 	int v0 = endolist[i+1];
@@ -1105,7 +1155,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* second-stage regression */
     tsls = lsq(s2list, pZ, pdinfo, OLS, (sysest)? OPT_Z : OPT_NONE);
     if (tsls.errcode) {
-	fprintf(stderr, "tsls_func, stage 2: tsls.errcode = %d\n", tsls.errcode);
+	fprintf(stderr, "tsls, stage 2: tsls.errcode = %d\n", tsls.errcode);
 	goto bailout;
     }
 
@@ -1176,13 +1226,13 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    /* save first-stage fitted values */
 	    tsls_save_data(&tsls, hatlist, exolist, *pZ, pdinfo);
 	} else {
-	    /* save list of endogenous regressors */
+	    /* save list of endogenous regressors on model */
 	    gretl_model_set_list_as_data(&tsls, "endolist", endolist);
 	    endolist = NULL; /* model takes ownership */
 	}
     } 
 
-    /* delete first-stage fitted values from dataset */
+    /* delete any first-stage fitted values from dataset */
     dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     free(reglist); 

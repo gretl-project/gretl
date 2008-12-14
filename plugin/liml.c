@@ -234,10 +234,10 @@ static int liml_do_equation (equation_system *sys, int eq,
     /* get pointer to model (initialized via TSLS) */
     pmod = system_get_model(sys, eq);
 
-    /* degrees of freedom for over-identification test: total exog
-       vars minus number of params in equation (unless we're
-       estimating subject to specified restrictions, in which
-       case we'll skip the usual over-id test)
+    /* degrees of freedom for over-identification test: total
+       exogenous vars minus the number of parameters in the equation
+       (unless we're estimating subject to specified restrictions, in
+       which case we skip the usual over-id test)
     */
     if (system_n_restrictions(sys) == 0) {
 	idf = exlist[0] - (list[0] - 1);

@@ -1925,9 +1925,10 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
     int i, n = 0;
     int err = 0;
 
-    for (i=1; i<=list[0] && n==0; i++) {
+    for (i=1; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
 	    n = i;
+	    break;
 	}
     }
 

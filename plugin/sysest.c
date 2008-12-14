@@ -28,11 +28,10 @@
 
 #define sys_ols_ok(s) (s->method == SYS_METHOD_SUR || \
                        s->method == SYS_METHOD_OLS || \
-                       s->method == SYS_METHOD_WLS || \
-                       s->endox == 0)
+                       s->method == SYS_METHOD_WLS)
 
-/* insert the elements of sub-matrix M, multuplied by scale, in the
-   appropriate position within the big matrix X */
+/* insert the elements of sub-matrix @M, multiplied by @scale, in the
+   appropriate position within the big matrix @X */
 
 static void 
 kronecker_place (gretl_matrix *X, const gretl_matrix *M,
@@ -52,36 +51,44 @@ kronecker_place (gretl_matrix *X, const gretl_matrix *M,
     }
 }
 
+/* Retrieve the data placed on @pmod in the course of 2sls estimation:
+   for endogenous regressors these values are the first-stage fitted
+   values, otherwise they're just the original data.  Note that @endog
+   is a mask with nonzero values identifying the endogenous
+   regressors, and the special array @X contains a column for each
+   endogenous variable.
+*/
+
 double *model_get_Xi (const MODEL *pmod, double **Z, int i)
 {
     const char *endog = gretl_model_get_data(pmod, "endog");
     double **X;
-    double *ret;
+    double *xi = NULL;
 
-    if (endog == NULL) {
+    if (endog == NULL || !endog[i]) {
+	/* return the original data */
 	return Z[pmod->list[i+2]];
     }
 
     X = gretl_model_get_data(pmod, "tslsX");
 
-    if (!endog[i]) {
-	ret = Z[pmod->list[i+2]];
-    } else if (X == NULL) {
-	ret = NULL;
-    } else {
+    if (X != NULL) {
+	/* find and return the correct column */
 	int j, k = 0;
 
 	for (j=0; j<i; j++) {
 	    if (endog[j]) k++;
 	}
-	ret = X[k];
+	xi = X[k];
     }
 
-    return ret;
+    return xi;
 }
 
-/* retrieve the special k-class transformed data wanted for LIML
-   estimation */
+/* retrieve the special k-class data wanted for LIML estimation: these
+   represent a further transformation of the data placed on the model
+   via 2sls estimation.
+*/
 
 static int make_liml_X_block (gretl_matrix *X, const MODEL *pmod,
 			      double **Z, int t1)
@@ -402,17 +409,6 @@ calculate_sys_coeffs (equation_system *sys,
     return err;
 }
 
-static int in_list (const int *list, int k)
-{
-    int i;
-
-    for (i=1; i<=list[0]; i++) {
-	if (k == list[i]) return 1;
-    }
-
-    return 0;
-}
-
 static int *
 system_model_list (equation_system *sys, int i, int *freeit)
 {
@@ -431,9 +427,9 @@ system_model_list (equation_system *sys, int i, int *freeit)
     if (sys->method == SYS_METHOD_3SLS || 
 	sys->method == SYS_METHOD_TSLS ||
 	sys->method == SYS_METHOD_LIML) {
-	/* Is the list already in tsls form? 
+	/* Is the list already in ivreg form? 
 	   If not, ignore it. */
-	if (list != NULL && !in_list(list, LISTSEP)) {
+	if (list != NULL && !gretl_list_has_separator(list)) {
 	    list = NULL;
 	}
     }
@@ -462,17 +458,14 @@ static int hansen_sargan_test (equation_system *sys,
 			       const double **Z)
 {
     const int *exlist = system_get_instr_vars(sys);
+    const double *Wi, *Wj;
     int nx = exlist[0];
     int m = sys->neqns;
     int T = sys->T;
     int df = system_get_overid_df(sys);
-
-    const double *Wi, *Wj;
-
     gretl_matrix *WTW = NULL;
     gretl_matrix *eW = NULL;
     gretl_matrix *tmp = NULL;
-
     double x, X2;
     int i, j, t;
     int err = 0;
@@ -608,14 +601,16 @@ double sur_ll (equation_system *sys)
 {
     int m = sys->neqns;
     int T = sys->T;
-    gretl_matrix *sigtmp;
+    gretl_matrix *tmp;
     double ldet;
 
-    sigtmp = gretl_matrix_alloc(m, m);
-    if (sigtmp == NULL) return NADBL;
+    tmp = gretl_matrix_alloc(m, m);
+    if (tmp == NULL) {
+	return NADBL;
+    }
 
-    gls_sigma_from_uhat(sys, sigtmp);
-    ldet = gretl_vcv_log_determinant(sigtmp);
+    gls_sigma_from_uhat(sys, tmp);
+    ldet = gretl_vcv_log_determinant(tmp);
 
     if (na(ldet)) {
 	sys->ll = NADBL;
@@ -624,7 +619,7 @@ double sur_ll (equation_system *sys)
 	sys->ll -= (T / 2.0) * ldet;
     }
 
-    gretl_matrix_free(sigtmp);
+    gretl_matrix_free(tmp);
 
     return sys->ll;
 }
@@ -675,7 +670,9 @@ augment_y_with_restrictions (gretl_matrix *y, int mk, int nr,
 {
     int i;
 
-    if (sys->q == NULL) return 1;
+    if (sys->q == NULL) {
+	return 1;
+    }
 
     for (i=0; i<nr; i++) {
 	gretl_vector_set(y, mk + i, gretl_vector_get(sys->q, i));
@@ -940,7 +937,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (method == SYS_METHOD_LIML) {
 	/* compute the minimum eigenvalues and generate the
-	   suitably transformed data matrices */
+	   k-class data matrices */
 	err = liml_driver(sys, pZ, pdinfo, prn);
 	if (err) goto cleanup;
     }

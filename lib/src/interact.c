@@ -285,9 +285,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 	strcpy(s, "ar1");
 	cmd->ci = AR1;
 	cmd->opt |= OPT_P;
-    } else if (!strcmp(s, "tsls")) {
-	cmd->ci = IVREG;
-    }	
+    } 
 
     return cmd->ci;
 }

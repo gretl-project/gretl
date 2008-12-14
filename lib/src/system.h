@@ -62,7 +62,6 @@ struct equation_system_ {
     int method;                 /* estimation method */
     int neqns;                  /* number of stochastic equations */
     int nidents;                /* number of identities */
-    int endox;                  /* any exogenous regressors? 1/0 */
     int order;                  /* max lag of endogenous variable */
     int iters;                  /* number of iterations taken */
     char flags;                 /* to record options (e.g. save residuals) */
@@ -92,10 +91,7 @@ struct equation_system_ {
     gretl_matrix *A;            /* structural form A matrix (lagged endogenous) */
     gretl_matrix *F;            /* forecast matrix */
     gretl_matrix *Sr;           /* reduced-form error covariance matrix */
-    MODEL **models;             /* set of pointers to per-equation models: just
-				   convenience pointers -- these should NOT be
-				   freed as part of sys cleanup
-				*/
+    MODEL **models;             /* set of pointers to per-equation models */
     liml_data *ldata;           /* extra info from LIML estimation */
 };
 
