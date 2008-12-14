@@ -4083,7 +4083,7 @@ int is_model_cmd (const char *s)
 {
     int ret = 0;
 
-    /* FIXME mle? */
+    /* FIXME mle?  Also add "ivreg" when ready */
 
     if (s == NULL || *s == '\0') {
 	return 0;
@@ -4101,7 +4101,6 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "hccm") ||
 	!strcmp(s, "heckit")  ||
 	!strcmp(s, "intreg")  ||
-	!strcmp(s, "ivreg")  ||
 	!strcmp(s, "hsk")  ||
 	!strcmp(s, "lad")  ||
 	!strcmp(s, "logistic") ||

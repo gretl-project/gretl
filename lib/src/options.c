@@ -749,8 +749,6 @@ static void tail_strip (char *s)
 
 #define smpl_alias(s) (!strcmp(s, "sample"))
 
-#define ivreg_alias(s) (!strcmp(s, "tsls"))
-
 /**
  * get_gretl_options:
  * @line: command line to parse.
@@ -803,8 +801,6 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = AR1;
     } else if (smpl_alias(cmdword)) {
 	ci = SMPL;
-    } else if (ivreg_alias(cmdword)) {
-	ci = IVREG;
     } else {
 	ci = gretl_command_number(cmdword);
     }

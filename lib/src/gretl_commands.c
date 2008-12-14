@@ -86,7 +86,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { INCLUDE,  "include" },
     { INFO,     "info" }, 
     { INTREG,   "intreg" }, 
-    { IVREG,    "ivreg" }, 
+    { IVREG,    "tsls" }, 
     { KPSS,     "kpss" },
     { LABELS,   "labels" },
     { LAD,      "lad" },
