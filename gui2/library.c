@@ -1577,7 +1577,7 @@ int do_add_omit (selector *sr)
         gretl_command_sprintf("omit %s%s", buf, print_flags(opt, ci));
     }
 
-    if (check_lib_command() || bufopen(&prn)) {
+    if (model_command_init(orig->ID) || bufopen(&prn)) {
 	return 1;
     }
 
