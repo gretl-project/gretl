@@ -185,7 +185,6 @@ LIBSRC = adf_kpss.c \
 	matrix_extra.c \
 	missing.c \
 	modelprint.c \
-	modelspec.c \
 	monte_carlo.c \
 	nls.c \
 	nonparam.c \

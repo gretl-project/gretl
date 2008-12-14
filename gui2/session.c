@@ -44,7 +44,6 @@
 #include "system.h"
 #include "gretl_xml.h"
 #include "gretl_func.h"
-#include "modelspec.h"
 #include "matrix_extra.h"
 #include "cmd_private.h"
 #include "gretl_scalar.h"
@@ -1369,7 +1368,6 @@ session_clear_data (double ***pZ, DATAINFO *pdinfo, int realclean)
 	free_command_stack(); 
     }
 
-    free_modelspec();
     reset_model_count();
 
     lib_cmd_destroy_context();

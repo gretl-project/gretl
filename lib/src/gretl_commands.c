@@ -33,7 +33,6 @@ struct gretl_cmd {
 static struct gretl_cmd gretl_cmds[] = {
     { SEMIC,    ";" },     
     { ADD,      "add" },
-    { ADDTO,    "addto" },
     { ADF,      "adf" }, 
     { APPEND,   "append" },
     { AR,       "ar" },  
@@ -109,7 +108,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { NULLDATA, "nulldata" },
     { OLS,      "ols" },     
     { OMIT,     "omit" },
-    { OMITFROM, "omitfrom" },
     { OPEN,     "open" },
     { ORTHDEV,  "orthdev" },
     { OUTFILE,  "outfile" },

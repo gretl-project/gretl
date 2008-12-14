@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "modelspec.h"
 #include "gretl_xml.h"
 #include "matrix_extra.h"
 
@@ -4126,8 +4125,7 @@ int is_quiet_model_test (int ci, gretlopt opt)
 {
     int ret = 0;
 
-    if ((opt & OPT_Q) && (ci == OMIT || ci == ADD ||
-			  ci == OMITFROM || ci == ADDTO)) {
+    if ((opt & OPT_Q) && (ci == OMIT || ci == ADD)) {
 	ret = 1;
     }
 
@@ -4159,7 +4157,6 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
     switch (test_ci) {
 
     case ADD:
-    case ADDTO:
 	if (mci == ARMA || mci == GARCH || 
 	    mci == HECKIT || mci == INTREG) {
 	    ok = 0;
@@ -4167,7 +4164,6 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	break;
 
     case OMIT:
-    case OMITFROM:
 	if (mci == ARMA || mci == GARCH || mci == INTREG) {
 	    ok = 0;
 	}
@@ -4262,7 +4258,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
     if (ok && pmod->ncoeff == 1) {
-	if (ci == OMIT || ci == OMITFROM || ci == COEFFSUM) {
+	if (ci == OMIT || ci == COEFFSUM) {
 	    ok = 0;
 	} else if (pmod->ifc && ci == LMTEST) {
 	    /* const only: rule out squares, logs, h'sked */

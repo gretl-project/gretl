@@ -23,7 +23,6 @@
 typedef enum {
     SEMIC = 0,    
     ADD,
-    ADDTO,
     ADF,
     APPEND,
     AR,  
@@ -99,7 +98,6 @@ typedef enum {
     NULLDATA,
     OLS,     
     OMIT,
-    OMITFROM,
     OPEN,
     ORTHDEV,
     OUTFILE,
@@ -158,7 +156,6 @@ typedef enum {
 			    (c) == XTAB)
 
 #define TEXTSAVE_OK(c) (c == ADD || \
-                        c == ADDTO || \
                         c == ADF || \
                         c == CHOW || \
                         c == COEFFSUM || \
@@ -179,7 +176,6 @@ typedef enum {
                         c == MPOLS || \
 			c == NORMTEST || \
                         c == OMIT || \
-                        c == OMITFROM || \
                         c == PCA || \
                         c == PERGM || \
                         c == PLOT || \

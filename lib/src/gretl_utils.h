@@ -98,9 +98,6 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo);
 
 GretlType gretl_type_from_name (const char *s, const DATAINFO *pdinfo);
 
-int re_estimate (char *model_spec, MODEL *tmpmod, 
-		 double ***pZ, DATAINFO *pdinfo);
-
 double *copyvec (const double *src, int n);
 
 void doubles_array_free (double **X, int m);

@@ -811,13 +811,6 @@ gretlopt get_gretl_options (char *line, int *err)
 	return oflags;
     }
 
-    /* some commands are basically aliases */
-    if (ci == OMITFROM) {
-	ci = OMIT;
-    } else if (ci == ADDTO) {
-	ci = ADD;
-    }
-
     /* smpl: in some contexts options don't make sense */
     if (ci == SMPL && strchr(line, ';')) {
 	return oflags;
@@ -874,12 +867,6 @@ const char *print_flags (gretlopt oflags, int ci)
     if (ci == QUIT || ci == GENR) {
 	/* any option flags are "hidden" */
 	return flagstr;
-    }
-
-    if (ci == OMITFROM) {
-	ci = OMIT;
-    } else if (ci == ADDTO) {
-	ci = ADD;
     }
 
     /* special: -o (--vcv) can be used with several model

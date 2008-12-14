@@ -288,7 +288,7 @@ static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
     int err;
 
     logfile = g_strdup_printf("%ssession.inp", paths.dotdir);
-    err = dump_command_stack(logfile, 0);
+    err = dump_command_stack(logfile);
 
     if (!err) {
 	err = gretl_file_get_contents(logfile, &newtext);

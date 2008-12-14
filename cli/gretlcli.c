@@ -32,7 +32,6 @@
 #include "system.h"
 #include "gretl_restrict.h"
 #include "gretl_func.h"
-#include "modelspec.h"
 #include "libset.h"
 #include "forecast.h"
 #include "cmd_private.h"
@@ -214,8 +213,6 @@ static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 
     clear_model(models[0]);
     clear_model(models[1]);
-
-    free_modelspec();
 
     if (cmd->opt & OPT_P) {
 	libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
@@ -623,7 +620,6 @@ int main (int argc, char *argv[])
 
     free(line);
 
-    free_modelspec();
     gretl_print_destroy(prn);
     gretl_cmd_free(&cmd);
     libgretl_cleanup();
@@ -1045,9 +1041,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
 		(models[0])->ID, get_model_count());
 #endif
-	if (is_model_cmd(cmd->word)) {
-	    err = modelspec_save(models[0]);
-	}
 	maybe_stack_model(models[0], cmd, prn);
     }
 

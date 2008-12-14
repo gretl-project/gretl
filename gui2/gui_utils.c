@@ -21,7 +21,6 @@
 #include "var.h"
 #include "johansen.h"
 #include "varprint.h"
-#include "modelspec.h"
 #include "forecast.h"
 #include "objstack.h"
 #include "gretl_xml.h"

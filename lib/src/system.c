@@ -3871,8 +3871,6 @@ MODEL single_equation_liml (const int *list, double ***pZ,
     MODEL model;
     int err = 0;
 
-    fprintf(stderr, "*** single_equation_liml\n");
-
     gretl_model_init(&model);
 
     err = ivreg_process_lists(list, &mlist, &ilist);

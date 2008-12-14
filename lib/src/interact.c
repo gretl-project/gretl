@@ -30,7 +30,6 @@
 #include "cmd_private.h"
 #include "libset.h"
 #include "usermat.h"
-#include "modelspec.h"
 #include "gretl_panel.h"
 #include "texprint.h"
 #include "gretl_xml.h"
@@ -290,14 +289,12 @@ static int catch_command_alias (char *line, CMD *cmd)
     return cmd->ci;
 }
 
-#define REQUIRES_PARAM(c) (c == ADDTO || \
-                           c == DATAMOD || \
+#define REQUIRES_PARAM(c) (c == DATAMOD || \
                            c == FUNC || \
                            c == LOOP ||  \
 			   c == MODPRINT || \
 			   c == NORMTEST || \
                            c == NULLDATA || \
-                           c == OMITFROM || \
                            c == SETMISS)
 
 #define REQUIRES_ORDER(c) (c == ADF || \
@@ -2475,14 +2472,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* 
-       "omitfrom" and "addto" take the ID of a previous model;
        "setmiss" takes a value to be interpreted as missing;
-       these are captured in cmd->param
+       this are captured in cmd->param, as is the 'order' for
+       a command that needs same
     */
-    if (REQUIRES_ORDER(cmd->ci) ||
-	cmd->ci == ADDTO ||
-	cmd->ci == OMITFROM ||
-	cmd->ci == SETMISS) {
+    if (REQUIRES_ORDER(cmd->ci) || cmd->ci == SETMISS) {
 	capture_param(line, cmd, &nf, (const double **) *pZ, pdinfo);
 	if (cmd->err) {
 	    goto cmd_exit;
@@ -2509,11 +2503,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    linelen = strlen(line);
 	} 
     }    
-
-    if (cmd->ci == OMITFROM && nf == 0) {
-	cmd_set_nolist(cmd);
-	return cmd->err;
-    }
 
     if (cmd->ci == VECM) { 
 	free(cmd->extra);
@@ -3956,7 +3945,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     double rho;
     char runfile[MAXLEN];
     int *listcpy = NULL;
-    int k, order = 0;
+    int order = 0;
     int err = 0;
 
     if (NEEDS_MODEL_CHECK(cmd->ci)) {
@@ -4446,9 +4435,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case ADD:
     case OMIT:
-    plain_add_omit:
 	clear_model(models[1]);
-	if (cmd->ci == ADD || cmd->ci == ADDTO) {
+	if (cmd->ci == ADD) {
 	    err = add_test(cmd->list, models[0], models[1], 
 			   pZ, pdinfo, cmd->opt, prn);
 	} else {
@@ -4468,45 +4456,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 0;
 	}
 	break;	
-
-    case ADDTO:
-    case OMITFROM:
-	k = atoi(cmd->param);
-	if ((err = modelspec_test_check(cmd->ci, 0, k, pdinfo, prn))) {
-	    break;
-	}
-	if (k == (models[0])->ID) {
-	    goto plain_add_omit;
-	} else {
-	    MODEL tmpmod;
-
-	    err = re_estimate(modelspec_get_command_by_id(k), 
-			      &tmpmod, pZ, pdinfo);
-	    if (err) {
-		pprintf(prn, _("Failed to reconstruct model %d\n"), k);
-		break;
-	    } 
-	    clear_model(models[1]);
-	    tmpmod.ID = k;
-	    if (cmd->ci == ADDTO) {
-		err = add_test(cmd->list, &tmpmod, models[1], 
-			       pZ, pdinfo, cmd->opt, prn);
-	    } else {
-		err = omit_test(cmd->list, &tmpmod, models[1],
-				pZ, pdinfo, cmd->opt, prn);
-	    }
-	    if (err) {
-		clear_model(models[1]);
-		break;
-	    } else {
-		if (!(cmd->opt & OPT_Q)) {
-		    swap_models(models[0], models[1]);
-		}
-		clear_model(models[1]);
-	    }
-	    clear_model(&tmpmod);
-	}
-	break;
 
     case COEFFSUM:
     case CUSUM:

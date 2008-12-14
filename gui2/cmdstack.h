@@ -22,15 +22,13 @@
 
 void free_command_stack (void);
 
-int add_command_to_stack (const char *str);
+int add_command_to_stack (const char *s);
 
 void delete_last_command (void);
 
-void model_command_delete (int model_ID);
-
 int model_command_init (int model_ID);
 
-int dump_command_stack (const char *fname, int insert_open_data);
+int dump_command_stack (const char *fname);
 
 void view_command_log (void);
 

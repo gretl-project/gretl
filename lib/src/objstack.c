@@ -24,7 +24,6 @@
 #include "system.h"
 #include "objstack.h"
 #include "usermat.h"
-#include "modelspec.h"
 #include "forecast.h"
 
 #define ODEBUG 0
@@ -743,14 +742,14 @@ int gretl_stack_object_as (void *ptr, GretlObjType type, const char *name)
 
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
 {
-    char vname[MAXSAVENAME];
+    char name[MAXSAVENAME];
     int ret = 0;
 
     if (var == NULL) {
 	return 0;
     }
 
-    gretl_cmd_get_savename(vname);
+    gretl_cmd_get_savename(name);
 
 #if ODEBUG
     fprintf(stderr, "\nmaybe_stack_var: initial refcount = %d\n", var->refcount);
@@ -763,8 +762,8 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
 	    (void *) var, var->refcount);
 #endif
 
-    if (*vname) {
-	ret = real_stack_object(var, GRETL_OBJ_VAR, vname, NULL);
+    if (*name) {
+	ret = real_stack_object(var, GRETL_OBJ_VAR, name, NULL);
     } 
 
     return ret;
@@ -787,25 +786,15 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
 
 int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
 {
-    char mname[MAXSAVENAME];
+    char name[MAXSAVENAME];
     MODEL *cpy = NULL;
     int err = 0;
 
-    gretl_cmd_get_savename(mname);
-
-#if ODEBUG
-    fprintf(stderr, "\nmaybe_stack_model: initial refcount = %d\n", 
-	    pmod->refcount);
-#endif
+    gretl_cmd_get_savename(name);
 
     set_as_last_model(pmod, GRETL_OBJ_EQN);
 
-#if ODEBUG
-    fprintf(stderr, "maybe_stack_model: set %p as last model, refcount %d\n",
-	    (void *) pmod, pmod->refcount);
-#endif
-
-    if (*mname == 0) {
+    if (*name == 0) {
 	return 0;
     }
 
@@ -815,11 +804,11 @@ int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
     }
 
     if (!err) {
-	err = real_stack_object(cpy, GRETL_OBJ_EQN, mname, NULL);
+	err = real_stack_object(cpy, GRETL_OBJ_EQN, name, NULL);
     }
 
     if (!err) {
-	pprintf(prn, _("%s saved\n"), mname);
+	pprintf(prn, _("%s saved\n"), name);
     }
 
     return err;

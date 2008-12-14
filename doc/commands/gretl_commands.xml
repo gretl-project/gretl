@@ -9020,33 +9020,27 @@
 
     <description>
       <para context="cli">
-	Computes two-stage least squares (TSLS or IV) estimates:
-	<repl>depvar</repl> is the dependent variable,
-	<repl>indepvars</repl> is the list of independent variables
-	(including right-hand side endogenous variables) in the
-	structural equation for which TSLS estimates are needed; and
+	Computes Instrumental Variables estimates using two-stage least
+	squares (TSLS): <repl>depvar</repl> is the dependent variable,
+	<repl>indepvars</repl> is the list of independent variables (which is
+	presumed to include some endogenous regressors); and
 	<repl>instruments</repl> is the combined list of exogenous and
-	predetermined variables in all the equations. If the
-	<repl>instruments</repl> list is not at least as long as
-	<repl>indepvars</repl>, the model is not identified.</para>
+	predetermined variables. If the <repl>instruments</repl> list is not
+	at least as long as <repl>indepvars</repl>, the model is not
+	identified.</para>
 
       <para context="cli">
-	In the above example, the <lit>y</lit>s are the endogenous
-	variables and the <lit>x</lit>s are the exogenous and
-	predetermined variables.  
+	In the above example, the <lit>y</lit>s are the endogenous variables
+	and the <lit>x</lit>s are the exogenous and predetermined variables.
+	Note that any exogenous regressors should appear in both lists.
       </para>
 
       <para context="gui">
-	This command requires the selection of two lists of variables:
-	the independent variables to appear in the given model and a
-	set of "instruments".  The latter comprises the exogenous
-	and/or predetermined variables that may be used as regressors
-	to derive fitted values for the right-hand side endogenous
-	variables.
-      </para>
-
-      <para context="gui">If some of the right-hand side variables for
-	the model are exogenous, they should be referenced in both
+	This command requires the selection of two lists of variables: the
+	independent variables to appear in the given model and a set of
+	instruments.  The latter contains the exogenous and/or predetermined
+	variables that will be used to derive fitted values for the endogenous
+	regressors.  Note that any exogenous regressors should appear in both
 	lists.
       </para>
 
@@ -9064,6 +9058,12 @@
 	this hypothesis if the auxiliary regression has a significant
 	degree of explanatory power.  Davidson and MacKinnon (2004,
 	chapter 8) give a good explanation of both tests.
+      </para>
+
+      <para>
+	The R-squared value printed for this sort of model is the
+	square of the correlation between the dependent variable
+	and the fitted values.
       </para>
 
     </description>

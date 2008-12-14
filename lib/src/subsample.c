@@ -1699,3 +1699,58 @@ void free_model_dataset (MODEL *pmod)
 	pmod->dataset = NULL;
     }
 }
+
+static int submask_match (const char *s1, const char *s2, int n)
+{
+    int t;
+
+    if (s1 == RESAMPLED || s2 == RESAMPLED) {
+	return s1 == RESAMPLED && s2 == RESAMPLED;
+    }
+
+    for (t=0; t<n; t++) {
+	if (s1[t] != s2[t]) return 0;
+    }
+
+    return 1;
+}
+
+/* check the subsample mask from a model (or modelspec) against 
+   datainfo to see if it may have been estimated on a different
+   (subsampled) data set from the current one
+*/
+
+int model_sample_problem (const MODEL *pmod, const DATAINFO *pdinfo)
+{
+    int n = pdinfo->n;
+
+    /* case: model has no sub-sampling info recorded */
+    if (pmod->submask == NULL) {
+	/* if data set is not sub-sampled either, we're OK */
+	if (pdinfo->submask == NULL) {
+	    return 0;
+	} else {
+	    fputs(I_("dataset is subsampled, model is not\n"), stderr);
+	    strcpy(gretl_errmsg, _("dataset is subsampled, model is not\n"));
+	    return 1;
+	}
+    }
+
+    /* case: model (or modelspec) has sub-sampling info recorded */
+    if (pdinfo->submask == NULL) {
+	fputs(I_("model is subsampled, dataset is not\n"), stderr);
+	strcpy(gretl_errmsg, _("model is subsampled, dataset is not\n"));
+	return 1;
+    } else { 
+	/* do the subsamples (model and current data set) agree? */
+	if (submask_match(pdinfo->submask, pmod->submask, n)) {
+	    return 0;
+	} else {
+	    strcpy(gretl_errmsg, _("model and dataset subsamples not the same\n"));
+	    return 1;
+	}
+    }
+
+    /* not reached */
+    return 1;
+}

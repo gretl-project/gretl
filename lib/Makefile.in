@@ -113,7 +113,6 @@ PUBLIC_HDRS = \
 	matrix_extra.h \
 	missing.h \
 	modelprint.h \
-	modelspec.h \
 	monte_carlo.h \
 	nls.h \
 	nonparam.h \
@@ -185,7 +184,6 @@ SRCS = adf_kpss.c \
 	matrix_extra.c \
 	missing.c \
 	modelprint.c \
-	modelspec.c \
 	monte_carlo.c \
 	nls.c \
 	nonparam.c \

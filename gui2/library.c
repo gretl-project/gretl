@@ -30,7 +30,6 @@
 #include "gretl_restrict.h"
 #include "gretl_func.h"
 #include "monte_carlo.h"
-#include "modelspec.h"
 #include "forecast.h"
 #include "dbwrite.h"
 #include "menustate.h"
@@ -449,21 +448,6 @@ static int gui_exact_fit_check (MODEL *pmod)
     }
 
     return 0;
-}
-
-/* Model estimated via console or script: unlike a gui model, which is
-   kept in memory so long as its window is open, these models are
-   immediately discarded.  So if we want to be able to refer back to
-   them later we need to record their specification */
-
-static gint stack_script_modelspec (MODEL *pmod, DATAINFO *pdinfo)
-{
-    int err;
-
-    attach_subsample_to_model(models[0], pdinfo);
-    err = modelspec_save(models[0]);
-
-    return err;
 }
 
 void add_mahalanobis_data (windata_t *vwin)
@@ -3570,11 +3554,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 
     if (err) {
 	errmsg_plus(err, gretl_print_get_buffer(prn));
-	if (pmod != NULL) {
-	    model_command_delete(pmod->ID);
-	} else {
-	    delete_last_command();
-	}
+	delete_last_command();
     } else {
 	if (dlg != NULL) {
 	    close_dialog(dlg);
@@ -7410,7 +7390,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (!err && (is_model_cmd(cmd->word) || s->alt_model)
 	&& !is_quiet_model_test(cmd->ci, cmd->opt)) {
 	if (is_model_cmd(cmd->word)) {
-	    stack_script_modelspec(models[0], pdinfo);
+	    attach_subsample_to_model(models[0], pdinfo);
 	}
 	maybe_save_model(cmd, models[0], prn);
     }
