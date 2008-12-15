@@ -283,16 +283,10 @@ static void script_index (GtkWidget *w, windata_t *vwin)
 
 static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
 {
-    gchar *logfile = NULL;
-    gchar *newtext = NULL;
+    gchar *newtext;
     int err;
 
-    logfile = g_strdup_printf("%ssession.inp", paths.dotdir);
-    err = dump_command_stack(logfile);
-
-    if (!err) {
-	err = gretl_file_get_contents(logfile, &newtext);
-    }
+    newtext = get_logfile_content(&err);
 
     if (!err) {
 	GtkTextBuffer *buf;
@@ -302,8 +296,6 @@ static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
 	textview_set_text(vwin->text, newtext);
 	g_free(newtext);
     }
-
-    g_free(logfile);
 }
 
 static void matrix_savename (GtkWidget *w, dialog_t *dlg)

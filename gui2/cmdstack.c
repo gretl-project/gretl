@@ -22,7 +22,7 @@
 #include "lib_private.h"
 #include "session.h"
 
-#define CMD_DEBUG 0
+#define CMD_DEBUG 1
 
 static char **cmd_stack;
 static int n_cmds;
@@ -101,24 +101,25 @@ int model_command_init (int model_ID)
     return err;
 }
 
+static char logname[FILENAME_MAX];
+static time_t logtime;
+
 /* ship out the stack of commands entered in the current session */
 
-int dump_command_stack (const char *fname)
+static int update_logfile (void)
 {
     const char *s;
     FILE *fp;
     int i, n;
 
-    if (fname == NULL || *fname == '\0') {
-	return 0;
-    }
-
-    fp = gretl_fopen(fname, "w"); 
+    fp = gretl_fopen(logname, "w"); 
     
     if (fp == NULL) {
-	file_write_errbox(fname);
+	file_write_errbox(logname);
 	return 1;
     }
+
+    fprintf(fp, "Record started %s\n", print_time(&logtime));
 
     fputs("# Record of commands issued in the current session.  Please note\n"
 	  "# that this may require editing if it is to be run as a script.\n", 
@@ -138,23 +139,35 @@ int dump_command_stack (const char *fname)
     return 0;
 }
 
+gchar *get_logfile_content (int *err)
+{
+    gchar *s = NULL;
+
+    *err = update_logfile();
+
+    if (!*err) {
+	*err = gretl_file_get_contents(logname, &s);
+    }
+
+    return s;
+}
+
 void view_command_log (void)
 {
-    char logfile[MAXLEN];
-
     if (n_cmds == 0) {
 	warnbox(_("The command log is empty"));
 	return;
     }
 
-    strcpy(logfile, paths.dotdir);
-    strcat(logfile, "session.inp");
+    if (*logname == '\0') {
+	strcpy(logname, paths.dotdir);
+	strcat(logname, "session.inp");
+	logtime = time(NULL);
+    }
 
-    if (dump_command_stack(logfile)) {
+    if (update_logfile()) {
 	return;
     }
 
-    view_file(logfile, 0, 0, 78, 370, VIEW_LOG);
+    view_file(logname, 0, 0, 78, 370, VIEW_LOG);
 }
-
-

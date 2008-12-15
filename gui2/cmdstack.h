@@ -28,7 +28,7 @@ void delete_last_command (void);
 
 int model_command_init (int model_ID);
 
-int dump_command_stack (const char *fname);
+gchar *get_logfile_content (int *err);
 
 void view_command_log (void);
 

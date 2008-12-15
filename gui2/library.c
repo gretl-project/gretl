@@ -1608,11 +1608,6 @@ int do_add_omit (selector *sr)
 
     update_model_tests(vwin);
 
-    if (lib_cmd_init()) {
-	errbox(_("Error saving model information"));
-	return 0;
-    }
-
     if (pmod != NULL) {
 	/* record sub-sample info (if any) with the model */
 	attach_subsample_to_model(pmod, datainfo);
