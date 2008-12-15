@@ -25,7 +25,8 @@ typedef enum {
     GRETL_PRINT_STDERR,
     GRETL_PRINT_FILE,
     GRETL_PRINT_BUFFER,
-    GRETL_PRINT_TEMPFILE
+    GRETL_PRINT_TEMPFILE,
+    GRETL_PRINT_STREAM
 } PrnType;
 
 typedef enum {
@@ -57,7 +58,12 @@ int gretl_print_has_tempfile (PRN *prn);
 
 PRN *gretl_print_new_with_buffer (char *buf);
 
+PRN *gretl_print_new_with_stream (FILE *fp);
+
 int gretl_print_reset_buffer (PRN *prn);
+
+int gretl_print_rename_file (PRN *prn, const char *oldpath, 
+			     const char *newpath);
 
 const char *gretl_print_get_buffer (PRN *prn);
 

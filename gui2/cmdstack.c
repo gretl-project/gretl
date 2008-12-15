@@ -30,6 +30,37 @@ static char *logline;
 static PRN *logprn;
 static int n_cmds;
 static int prev_ID;
+static int session_open;
+
+/* For use with existing session log file */
+
+static int logfile_reinit (void)
+{
+    FILE *fp;
+
+    fp = gretl_fopen(logname, "a");
+    if (fp == NULL) {
+	file_write_errbox(logname);
+	return 1;
+    }
+    
+    logprn = gretl_print_new_with_stream(fp); 
+    if (logprn == NULL) {
+	file_write_errbox(logname);
+	return 1;
+    }
+
+    prev_ID = 0;
+    logtime = time(NULL);
+    
+#if CMD_DEBUG
+    fprintf(stderr, "logfile_reinit: open prn for '%s'\n", logname);
+#endif
+
+    pprintf(logprn, "Log re-started %s\n", print_time(&logtime));
+
+    return 0;
+}
 
 /* make the name of the logfile, open a stream for writing, 
    and write header text */
@@ -37,11 +68,18 @@ static int prev_ID;
 static int logfile_init (void)
 {
     int err = 0;
+
+    if (session_open && *logname != '\0') {
+	return logfile_reinit();
+    }
     
     n_cmds = prev_ID = 0;
 
-    strcpy(logname, paths.dotdir);
-    strcat(logname, "session.inp");
+    if (*logname == '\0') {
+	strcpy(logname, paths.dotdir);
+	strcat(logname, "session.inp");
+    }
+
     logtime = time(NULL);
 
     logprn = gretl_print_new_with_filename(logname, &err); 
@@ -73,7 +111,8 @@ void free_command_stack (void)
     }
 
     if (logprn != NULL) {
-	gretl_print_destroy(logprn); /* ?? */
+	/* close but do not remove file */
+	gretl_print_destroy(logprn);
 	logprn = NULL;
     }
 
@@ -86,6 +125,11 @@ void free_command_stack (void)
 static int flush_logfile (void)
 {
     int err;
+
+    if (n_cmds == 0) {
+	/* nothing to be done */
+	return 0;
+    }
 
     if (logprn == NULL) {
 	err = logfile_init();
@@ -204,6 +248,10 @@ gchar *get_logfile_content (int *err)
 {
     gchar *s = NULL;
 
+    if (n_cmds == 0) {
+	return NULL;
+    }
+
     *err = flush_logfile();
 
     if (!*err) {
@@ -215,13 +263,59 @@ gchar *get_logfile_content (int *err)
 
 void view_command_log (void)
 {
-    int err = flush_logfile();
+    if (!session_open && n_cmds == 0) {
+	warnbox(_("The command log is empty"));
+    } else {
+	int err = flush_logfile();
 
-    if (!err) {
-	if (n_cmds == 0) {
-	    warnbox(_("The command log is empty"));
-	} else {
+	if (!err) {
 	    view_file(logname, 0, 0, 78, 370, VIEW_LOG);
+	}
+    }
+}
+
+/* 
+   This function gets called when when saving a session, opening a
+   session file, or closing a session.
+
+   On saving, we shift the logfile into the session directory so it'll
+   get saved along with the other materials.  On opening a session, we
+   set the logfile name so the re-opened log can be displayed.  On
+   closing a session, we redirect the log to the default location in
+   the user's "dotdir"; this is signalled by a NULL value for the
+   dirname argument.
+*/
+
+void set_session_log (const char *dirname, int code)
+{
+    char tmp[FILENAME_MAX];
+    int err;
+
+    flush_logfile();
+
+    if (code == SAVE_SESSION) {
+	strcpy(tmp, dirname);
+	strcat(tmp, "session.inp");
+	if (strcmp(logname, tmp)) {
+	    err = gretl_print_rename_file(logprn, logname, tmp);
+	    if (err) {
+		free_command_stack();
+	    }
+	    strcpy(logname, tmp);
+	    session_open = 1;
+	}
+    } else {
+	/* closing or opening session */
+	free_command_stack();
+	if (dirname != NULL) {
+	    /* opening */
+	    strcpy(logname, dirname);
+	    strcat(logname, "session.inp");
+	    session_open = 1;
+	} else {
+	    /* closing session */
+	    *logname = '\0';
+	    session_open = 0;
 	}
     }
 }

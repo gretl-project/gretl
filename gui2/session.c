@@ -209,7 +209,7 @@ static char *matrix_items[] = {
 
 SESSION session;            /* hold models, graphs */
 
-static int session_file_open;
+static char sessionfile[MAXLEN];
 
 static GtkWidget *iconview;
 static GtkWidget *icon_table;
@@ -416,6 +416,16 @@ session_append_graph (const char *grname,
     }
 
     return graph;
+}
+
+static void session_switch_log_location (int code)
+{
+    gchar *fullpath;
+
+    fullpath = g_strdup_printf("%s%s%c", paths.dotdir, 
+			       session.dirname, SLASH);
+    set_session_log(fullpath, code);
+    g_free(fullpath);
 }
 
 /* first arg should be a MAXLEN string */
@@ -1049,6 +1059,9 @@ static int set_session_dirname (const char *zdirname)
     return err;
 }
 
+/* note: the name of the file to be opened is in the global var
+   'tryfile' */
+
 void do_open_session (void)
 {
     struct sample_info sinfo;
@@ -1072,20 +1085,19 @@ void do_open_session (void)
     /* close existing session, if any, and initialize */
     close_session(NULL, &Z, datainfo, OPT_NONE);
 
-    strcpy(sessionfile, tryfile);
-    fprintf(stderr, I_("\nReading session file %s\n"), sessionfile);
+    fprintf(stderr, I_("\nReading session file %s\n"), tryfile);
 
     chdir(paths.dotdir);
-    err = unzip_session_file(sessionfile, &zdirname);
+    err = unzip_session_file(tryfile, &zdirname);
 
     if (err) {
 	/* FIXME more explicit error message */
 	g_free(zdirname);
-	file_read_errbox(sessionfile);
-	return;
+	file_read_errbox(tryfile);
+	goto bailout;
     } 
 
-    session_name_from_session_file(sname, sessionfile);
+    session_name_from_session_file(sname, tryfile);
     strcpy(session.name, sname);
 
     err = set_session_dirname(zdirname);
@@ -1093,7 +1105,7 @@ void do_open_session (void)
 	g_free(zdirname);
 	fprintf(stderr, "Failed on set_session_dirname\n");
 	file_read_errbox("session.xml");
-	return;
+	goto bailout;
     }
 
     g_free(zdirname);
@@ -1104,7 +1116,7 @@ void do_open_session (void)
 	/* FIXME more explicit error message */
 	fprintf(stderr, "Failed on read_session_xml: err = %d\n", err);
 	file_read_errbox("session.xml");
-	return;
+	goto bailout;
     }
 
     session_file_make_path(paths.datfile, sinfo.datafile);
@@ -1127,7 +1139,7 @@ void do_open_session (void)
     if (err) {
 	/* FIXME more explicit error message */
 	file_read_errbox(sinfo.datafile);
-	return;
+	goto bailout;
     } else {
 	fprintf(stderr, "Opened session datafile '%s'\n", fname);
     }
@@ -1153,7 +1165,7 @@ void do_open_session (void)
 
     if (err) {
 	errbox(_("Couldn't set sample"));
-	return;
+	goto bailout;
     }
 
     datainfo->t1 = sinfo.t1;
@@ -1166,14 +1178,21 @@ void do_open_session (void)
 	free(sinfo.mask);
     }
 
-    mkfilelist(FILE_LIST_SESSION, sessionfile);
+ bailout:
 
-    /* sync gui with session */
-    session_file_open = 1;
-    session_menu_state(TRUE);
+    if (err) {
+	delete_from_filelist(FILE_LIST_SESSION, tryfile);
+    } else {
+	strcpy(sessionfile, tryfile);
+	mkfilelist(FILE_LIST_SESSION, sessionfile);
 
-    view_session();
-    mark_session_saved();
+	/* sync gui with session */
+	session_menu_state(TRUE);
+
+	view_session();
+	mark_session_saved();
+	session_switch_log_location(OPEN_SESSION);
+    }
 }
 
 int is_session_file (const char *fname)
@@ -1331,7 +1350,7 @@ int highest_numbered_variable_in_session (void)
 
 int session_file_is_open (void)
 {
-    return (session_file_open && *sessionfile != '\0');
+    return (*sessionfile != '\0');
 }
 
 void gui_clear_dataset (void)
@@ -1382,7 +1401,6 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     clear_graph_page();
 
     session_menu_state(FALSE);
-    session_file_open = 0;
     *scriptfile = '\0';
     *sessionfile = '\0';
 
@@ -1406,6 +1424,8 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     session_bplot_count = 0;
 
     reset_plot_count();
+
+    set_session_log(NULL, 0);
 }
 
 static int session_overwrite_check (const char *fname)
@@ -1520,7 +1540,10 @@ int save_session (char *fname)
     int len, err = 0;
     GError *gerr = NULL;
 
-    if (session_overwrite_check(fname)) {
+    if (fname == NULL) {
+	/* saving session 'as is' */
+	fname = sessionfile;
+    } else if (session_overwrite_check(fname)) {
 	return 0;
     }
 
@@ -1550,6 +1573,10 @@ int save_session (char *fname)
     make_session_dataname(datname);
     write_session_xml(datname);
     err = save_session_dataset(datname);
+
+    if (!err) {
+	session_switch_log_location(SAVE_SESSION);
+    }
     
     if (!err) {
 	gretl_make_zipfile = gui_get_plugin_function("gretl_make_zipfile", 
@@ -1569,6 +1596,9 @@ int save_session (char *fname)
     } else {
 	mkfilelist(FILE_LIST_SESSION, fname);
 	mark_session_saved();
+	if (fname != sessionfile) {
+	    strcpy(sessionfile, fname);
+	}
     }
 
     return err;
@@ -2487,9 +2517,9 @@ static void global_popup_activated (GtkWidget *widget, gpointer data)
     gchar *item = (gchar *) data;
 
     if (!strcmp(item, _("Save session"))) {
-	if (session_file_open && sessionfile[0]) {
+	if (sessionfile[0]) {
 	    if (session.status == SESSION_CHANGED) {
-		save_session(sessionfile);
+		save_session(NULL);
 	    } else {
 		mark_session_saved();
 	    }

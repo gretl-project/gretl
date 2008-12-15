@@ -1394,6 +1394,9 @@ static int nl_model_add_gui_info (MODEL *pmod, nlspec *spec)
 	pprintf(prn, "%s\n", pmod->depvar);
     }
 
+    /* FIXME the following is not always right for the number
+       of 'auxiliary' genrs in a model */
+
     ng = spec->ngenrs - spec->nparam - (spec->nlfunc != NULL);
 	
     for (i=0; i<ng; i++) {

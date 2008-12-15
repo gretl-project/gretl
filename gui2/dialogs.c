@@ -137,7 +137,7 @@ gboolean exit_check (void)
 
 	if (resp == GRETL_YES) {
 	    if (as_is) {
-		save_session(sessionfile);
+		save_session(NULL);
 	    } else {
 		save_session_callback(NULL);
 	    }

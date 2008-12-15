@@ -56,7 +56,7 @@ struct ocset_ {
     int noc;              /* total number of orthogonality conds. */
     int step;             /* number of estimation steps */
     hac_info hinfo;       /* HAC characteristics */
-    char Wname[VNAMELEN]; /* name of weigting matrix */
+    char Wname[VNAMELEN]; /* name of weighting matrix */
     char **lnames;        /* names of LHS terms in O.C.s */
     char **rnames;        /* names of RHS terms in O.C.s */
     int n_lnames;         /* number of lnames */
@@ -600,7 +600,7 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     if (!err && gretl_in_gui_mode()) {
 	strings_array_add(&s->oc->lnames, &s->oc->n_lnames, lname);
 	strings_array_add(&s->oc->rnames, &s->oc->n_rnames, rname);
-    }
+    } 
 
     if (err) {
 	nlspec_destroy_arrays(s);
@@ -765,7 +765,7 @@ void nlspec_print_gmm_info (nlspec *spec, PRN *prn)
 	return;
     }
 
-    for (i=0; i<spec->oc->noc; i++) {
+    for (i=0; i<spec->oc->n_lnames; i++) {
 	pprintf(prn, "orthog %s ; %s\n", spec->oc->lnames[i], 
 		spec->oc->rnames[i]);
     }

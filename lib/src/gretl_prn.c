@@ -120,6 +120,7 @@ static int prn_add_tempfile (PRN *prn)
 static PRN *real_gretl_print_new (PrnType ptype, 
 				  const char *fname,
 				  char *buf,
+				  FILE *fp,
 				  int *perr)
 {
     PRN *prn = malloc(sizeof *prn);
@@ -133,8 +134,8 @@ static PRN *real_gretl_print_new (PrnType ptype,
     }
 
 #if PRN_DEBUG
-    fprintf(stderr, "real_gretl_print_new: type=%d, fname='%s', buf=%p\n",
-	    ptype, fname, (void *) buf);
+    fprintf(stderr, "real_gretl_print_new: type=%d, fname='%s', buf=%p, fp=%d\n",
+	    ptype, fname, (void *) buf, (void *) fp);
 #endif    
 
     prn->fp = NULL;
@@ -148,7 +149,9 @@ static PRN *real_gretl_print_new (PrnType ptype,
     prn->delim = ',';
     prn->fname = NULL;
 
-    if (ptype == GRETL_PRINT_FILE) {
+    if (ptype == GRETL_PRINT_STREAM) {
+	prn->fp = fp;
+    } else if (ptype == GRETL_PRINT_FILE) {
 	prn->fp = gretl_fopen(fname, "w");
 	if (prn->fp == NULL) {
 	    err = E_FOPEN;
@@ -225,7 +228,7 @@ PRN *gretl_print_new (PrnType ptype, int *err)
     fprintf(stderr, "gretl_print_new() called, type = %d\n", ptype);
 #endif
 
-    return real_gretl_print_new(ptype, NULL, NULL, err);
+    return real_gretl_print_new(ptype, NULL, NULL, NULL, err);
 }
 
 /**
@@ -246,7 +249,7 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 	return NULL;
     }
 
-    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL, err);
+    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL, NULL, err);
 }
 
 /**
@@ -262,7 +265,7 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 
 PRN *gretl_print_new_with_tempfile (int *err)
 {
-    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL, err);
+    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL, NULL, err);
 }
 
 /**
@@ -297,8 +300,63 @@ PRN *gretl_print_new_with_buffer (char *buf)
     if (buf == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL);
+	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, NULL);
     }
+}
+
+/**
+ * gretl_print_new_with_stream:
+ * @fp: pre-opened stream.
+ * 
+ * Creates and initializes a gretl printing struct, with
+ * printing to @fp.
+ *
+ * Note that @fp will be closed if and when #gretl_print_destroy
+ * is called on the #PRN pointer obtained.
+ *
+ * Returns: pointer to newly created struct, or %NULL on failure.
+ */
+
+PRN *gretl_print_new_with_stream (FILE *fp)
+{
+    if (fp == NULL) {
+	return NULL;
+    } else {
+	return real_gretl_print_new(GRETL_PRINT_FILE, NULL, NULL, fp, NULL);
+    }
+}  
+
+/**
+ * gretl_print_rename_file:
+ * @prn: printing struct to operate on.
+ * @oldpath: name of current file.
+ * @newpath: new name for file.
+ * 
+ * If @prn is printing to a %FILE pointer, rename the
+ * file to which it's printing and switch the stream
+ * to the new file.
+ *
+ * Returns: 0 on success, 1 on error.
+ */
+
+int gretl_print_rename_file (PRN *prn, const char *oldpath,
+			     const char *newpath)
+{
+    int err = 0;
+
+    if (prn->fp == NULL || prn->fpaux != NULL) {
+	return E_DATA;
+    }
+
+    fclose(prn->fp);
+
+    err = gretl_rename(oldpath, newpath);
+
+    if (!err) {
+	prn->fp = gretl_fopen(newpath, "a");
+    }
+
+    return err;
 }
 
 /**

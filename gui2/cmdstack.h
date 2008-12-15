@@ -32,4 +32,6 @@ gchar *get_logfile_content (int *err);
 
 void view_command_log (void);
 
+void set_session_log (const char *dirname, int code);
+
 #endif /* CMDSTACK_H */

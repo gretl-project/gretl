@@ -113,7 +113,6 @@ windata_t *mdata;
 DATAINFO *datainfo;
 
 char scriptfile[MAXLEN];
-char sessionfile[MAXLEN];
 char tryfile[MAXLEN];
 
 PATHS paths;                /* useful paths */

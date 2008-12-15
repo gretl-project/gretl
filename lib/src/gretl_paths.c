@@ -170,6 +170,67 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 }
 
 /**
+ * gretl_rename:
+ * @oldpath: name of file to be opened.
+ * @newpath: new name to give the file.
+ *
+ * A wrapper for the C library's rename(): provides a guard
+ * against the situation where a filename is UTF-8 encoded, 
+ * but on the current platform we should be using locale
+ * encoding for the stdio functions.
+ *
+ * Returns: 0 on success, non-zero pn failure.
+ */
+
+int gretl_rename (const char *oldpath, const char *newpath)
+{
+    int err = 0;
+
+    errno = 0;
+
+    if (fopen_use_utf8) {
+	err = rename(oldpath, newpath);
+    } else {
+	int u1 = string_is_utf8((unsigned char *) oldpath);
+	int u2 = string_is_utf8((unsigned char *) newpath);
+
+	if (!u1 && !u2) {
+	    err = rename(oldpath, newpath);
+	} else {
+	    gchar *oldconv = NULL, *newconv = NULL;
+	    gsize wrote;
+
+	    if (u1) {
+		oldconv = g_locale_from_utf8(oldpath, -1, NULL, &wrote, NULL);
+		if (oldconv == NULL) {
+		    err = 1;
+		} else if (!u2) {
+		    err = rename(oldconv, newpath);
+		}
+	    }
+	    if (u2 && !err) {
+		newconv = g_locale_from_utf8(newpath, -1, NULL, &wrote, NULL);
+		if (newconv == NULL) {
+		    err = 1;
+		} else if (oldconv != NULL) {
+		    err = rename(oldconv, newconv);
+		} else {
+		    err = rename(oldpath, newconv);
+		}
+	    }
+ 	    g_free(oldconv);
+	    g_free(newconv);
+	}
+    }
+
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno(NULL);
+    }
+
+    return err;
+}
+
+/**
  * gretl_gzopen:
  * @fname: name of gzipped file to be opened.
  * @mode: mode in which to open the file.

@@ -284,7 +284,7 @@ static void script_index (GtkWidget *w, windata_t *vwin)
 static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
 {
     gchar *newtext;
-    int err;
+    int err = 0;
 
     newtext = get_logfile_content(&err);
 
@@ -293,8 +293,10 @@ static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
 
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	gtk_text_buffer_set_text(buf, "", -1);
-	textview_set_text(vwin->text, newtext);
-	g_free(newtext);
+	if (newtext != NULL) {
+	    textview_set_text(vwin->text, newtext);
+	    g_free(newtext);
+	}
     }
 }
 
