@@ -78,6 +78,7 @@ struct equation_system_ {
     int *ilist;                 /* list of instruments */
     int *xlist;                 /* list of truly exogenous variables */
     int *plist;                 /* list of predetermined variables */
+    int *biglist;               /* list of all variables, for data checking */
     predet *pre_vars;           /* array of info on predetermined regressors */
     identity **idents;          /* set of identities */
     gretl_matrix *b;            /* coefficient estimates */
@@ -130,9 +131,6 @@ int system_n_restrictions (const equation_system *sys);
 
 int system_max_indep_vars (const equation_system *sys);
 int system_n_indep_vars (const equation_system *sys);
-
-int system_adjust_t1t2 (equation_system *sys,
-			int *t1, int *t2, const double **Z);
 
 int *system_get_list (const equation_system *sys, int i);
 
@@ -224,6 +222,9 @@ gretl_matrix *sys_get_fitted_values (equation_system *sys,
 				     const double **Z, 
 				     const DATAINFO *pdinfo,
 				     int *err);
+
+int system_adjust_t1t2 (equation_system *sys, const double **Z, 
+			const DATAINFO *pdinfo);
 
 #ifndef GRETLCLI
 

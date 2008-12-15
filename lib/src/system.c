@@ -108,7 +108,8 @@ static void destroy_ident (identity *ident);
 static int 
 add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
 		   int id, int src, int lag);
-static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo);
+static int sys_check_lists (equation_system *sys, const double **Z, 
+			    const DATAINFO *pdinfo);
 
 static void 
 print_system_equation (const int *list, const DATAINFO *pdinfo, 
@@ -350,6 +351,8 @@ equation_system_new (int method, const char *name, int *err)
     sys->ilist = NULL;
     sys->xlist = NULL;
     sys->plist = NULL;
+    sys->biglist = NULL;
+
     sys->pre_vars = NULL;
     sys->idents = NULL;
 
@@ -479,6 +482,8 @@ void equation_system_destroy (equation_system *sys)
     free(sys->ilist);
     free(sys->xlist);
     free(sys->plist);
+    free(sys->biglist);
+
     free(sys->pre_vars);
 
     free(sys->name);
@@ -1057,10 +1062,10 @@ equation_system_estimate (equation_system *sys,
 
     gretl_error_clear();
 
-    if (sys->xlist == NULL) {
+    if (sys->xlist == NULL || sys->biglist == NULL) {
 	/* allow for the possibility that we're looking at a
 	   system restored from a session file */
-	err = sys_check_lists(sys, pdinfo);
+	err = sys_check_lists(sys, (const double **) *pZ, pdinfo);
 	if (err) {
 	    return err;
 	}
@@ -1118,21 +1123,125 @@ equation_system_estimate (equation_system *sys,
     return err;
 }
 
+int system_adjust_t1t2 (equation_system *sys, const double **Z, 
+			const DATAINFO *pdinfo)
+{
+    int err = 0;
+
+    if (sys->biglist == NULL) {
+	fprintf(stderr, "system_adjust_t1t2: no 'biglist' present!\n");
+	return E_DATA;
+    }
+
+    sys->t1 = pdinfo->t1;
+    sys->t2 = pdinfo->t2;
+
+    err = check_for_missing_obs(sys->biglist, &sys->t1, &sys->t2, Z, NULL);
+
+    if (!err) {
+	sys->T = sys->t2 - sys->t1 + 1;
+    }
+
+    return err;
+}
+
+/* construct a list containing all the variables referenced in the
+   system */
+
+static int sys_make_biglist (equation_system *sys)
+{
+    int *biglist;
+    const int *slist;
+    const identity *ident;
+    int bign = 0;
+    int i, j, vj, k;
+
+    for (i=0; i<sys->neqns; i++) {
+	bign += sys->lists[i][0] - gretl_list_has_separator(sys->lists[i]);
+    }
+
+    for (i=0; i<sys->nidents; i++) {
+	bign += 1 + sys->idents[i]->n_atoms;
+    }   
+
+    if (sys->ilist != NULL) {
+	bign += sys->ilist[0];
+    }
+
+    biglist = gretl_list_new(bign);
+    if (biglist == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=1; i<=bign; i++) {
+	/* invalidate all elements */
+	biglist[i] = -1;
+    }
+
+    k = 0;    
+
+    /* system equations */
+    for (i=0; i<sys->neqns; i++) {
+	slist = sys->lists[i];
+	for (j=1; j<=slist[0]; j++) {
+	    vj = slist[j];
+	    if (vj != LISTSEP && !in_gretl_list(biglist, vj)) {
+		biglist[++k] = vj;
+	    }
+	}
+    }
+
+    /* system identities */
+    for (i=0; i<sys->nidents; i++) {
+	ident = sys->idents[i];
+	for (j=0; j<=ident->n_atoms; j++) {
+	    if (j == 0) {
+		vj = ident->depvar;
+	    } else {
+		vj = ident->atoms[j-1].varnum;
+	    }
+	    if (!in_gretl_list(biglist, vj)) {
+		biglist[++k] = vj;
+	    }
+	}
+    }    
+
+    if (sys->ilist != NULL) {
+	/* system instruments */
+	for (j=1; j<=sys->ilist[0]; j++) {
+	    vj = sys->ilist[j];
+	    if (!in_gretl_list(biglist, vj)) {
+		biglist[++k] = vj;
+	    }
+	}
+    }
+
+    biglist[0] = k;
+
+#if SYSDEBUG
+    printlist(biglist, "system biglist (all vars)");
+#endif
+
+    free(sys->biglist);
+    sys->biglist = biglist;
+
+    return 0;
+}
+
 /* prior to system estimation, get all the required lists of variables
-   in order 
+   in order
 */
 
-static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
+static int sys_check_lists (equation_system *sys, const double **Z, 
+			    const DATAINFO *pdinfo)
 {
     const int *slist;
     const char *vname;
     const identity *ident;
     int user_ylist = (sys->ylist != NULL);
-    int *biglist = NULL;
     int *ylist = NULL;
     int *xplist = NULL;
-    int src, lag;
-    int nxp, bign = 0;
+    int src, lag, nxp;
     int i, j, k, vj;
     int err = 0;
 
@@ -1145,10 +1254,7 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
 
     /* Compose a minimal (and possibly incomplete) list of endogenous
        variables, including all vars that appear on the left-hand side
-       of structural equations or identities.  While we're at it, get
-       an upper bound to the grand total number of variables that
-       appear in the system ("bign" may be an overstatement due to
-       double-counting).
+       of structural equations or identities.
     */
 
     ylist = gretl_list_new(sys->neqns + sys->nidents);
@@ -1160,7 +1266,6 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
 
     for (i=0; i<sys->neqns; i++) {
 	slist = sys->lists[i];
-	bign += slist[0] - gretl_list_has_separator(slist);
 	vj = slist[1];
 	if (!in_gretl_list(ylist, vj)) {
 	    ylist[++k] = vj;
@@ -1169,7 +1274,6 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
 
     for (i=0; i<sys->nidents; i++) {
 	ident = sys->idents[i];
-	bign += 1 + ident->n_atoms;
 	vj = ident->depvar;
 	if (!in_gretl_list(ylist, vj)) {
 	    ylist[++k] = vj;
@@ -1206,83 +1310,42 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     /* If the user did not give an endogenous list, use the one we
        computed above.
     */
-
     if (sys->ylist == NULL) {
 	sys->ylist = ylist;
 	ylist = NULL;
     }
 
-    /* Now, for reference, compose a big list of all the variables in
-       the system (referenced in structural equations or identities).
+    /* Now compose a big list of all the variables in the system
+       (referenced in structural equations or identities, or specified
+       as instruments).
     */
-
-    biglist = gretl_list_new(bign);
-    if (biglist == NULL) {
-	err = E_ALLOC;
+    err = sys_make_biglist(sys);
+    if (err) {
 	goto bailout;
-    }
-
-    for (i=1; i<=bign; i++) {
-	biglist[i] = -1;
-    }
-
-    k = 0;
-
-    for (i=0; i<sys->neqns; i++) {
-	slist = sys->lists[i];
-	for (j=1; j<=slist[0]; j++) {
-	    vj = slist[j];
-	    if (vj != LISTSEP && !in_gretl_list(biglist, vj)) {
-		biglist[++k] = vj;
-	    }
-	}
-    }
-
-    for (i=0; i<sys->nidents; i++) {
-	ident = sys->idents[i];
-	for (j=0; j<=ident->n_atoms; j++) {
-	    if (j == 0) {
-		vj = ident->depvar;
-	    } else {
-		vj = ident->atoms[j-1].varnum;
-	    }
-	    if (!in_gretl_list(biglist, vj)) {
-		biglist[++k] = vj;
-	    }
-	}
     }    
-
-    biglist[0] = k;
-
-#if SYSDEBUG
-    printlist(biglist, "system biglist (all vars)");
-#endif
 
     /* If the user gave an endogenous list, check that it doesn't
        contain any variables that are not actually present in the
        system.
      */
-
     if (user_ylist) {
 	for (j=1; j<=sys->ylist[0]; j++) {
 	    vj = sys->ylist[j];
-	    if (!in_gretl_list(biglist, vj)) {
+	    if (!in_gretl_list(sys->biglist, vj)) {
 		sprintf(gretl_errmsg, "%s is marked as endogenous but is "
 			"not present in the system", pdinfo->varname[vj]);
 		err = E_DATA;
+		goto bailout;
 	    }
 	}
     }
 
-    if (err) {
-	goto bailout;
-    }
 
     /* By elimination from biglist, using ylist, compose a maximal
        list of exogenous and predetermined variables, "xplist".
     */
 
-    nxp = biglist[0] - sys->ylist[0];
+    nxp = sys->biglist[0] - sys->ylist[0];
     xplist = gretl_list_new(nxp);
     if (xplist == NULL) {
 	err = E_ALLOC;
@@ -1290,8 +1353,8 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     }
 
     k = 0;
-    for (j=1; j<=biglist[0]; j++) {
-	vj = biglist[j];
+    for (j=1; j<=sys->biglist[0]; j++) {
+	vj = sys->biglist[j];
 	if (!in_gretl_list(sys->ylist, vj)) {
 	    xplist[++k] = vj;
 	}
@@ -1346,12 +1409,14 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     printlist(xplist, "final system exog list");
 #endif
 
-    sys->xlist = xplist;
-    xplist = NULL;
+    if (!err) {
+	free(sys->xlist);
+	sys->xlist = xplist;
+	xplist = NULL;
+    }
 
  bailout:
 
-    free(biglist);
     free(ylist);
     free(xplist);
 
@@ -1402,7 +1467,7 @@ int equation_system_finalize (equation_system *sys,
 	return 1;
     } 
 
-    err = sys_check_lists(sys, pdinfo);
+    err = sys_check_lists(sys, (const double **) *pZ, pdinfo);
 
     if (!err && sys->name != NULL && *sys->name != '\0') {
 	/* save the system for subsequent estimation */
@@ -1537,24 +1602,6 @@ void equation_system_set_name (equation_system *sys, const char *name)
 	*sys->name = '\0';
 	strncat(sys->name, name, MAXSAVENAME - 1);
     }
-}
-
-int system_adjust_t1t2 (equation_system *sys,
-			int *t1, int *t2, const double **Z)
-{
-    int i, err = 0;
-
-    for (i=0; i<sys->neqns && !err; i++) {
-	err = check_for_missing_obs(sys->lists[i], t1, t2, Z, NULL);
-    }
-
-    if (!err) {
-	sys->t1 = *t1;
-	sys->t2 = *t2;
-	sys->T = *t2 - *t1 + 1;
-    }
-
-    return err;
 }
 
 int *compose_ivreg_list (const equation_system *sys, int i)
@@ -2341,15 +2388,25 @@ int highest_numbered_var_in_system (const equation_system *sys,
 {
     int i, j, v, vmax = 0;
 
-    for (i=0; i<sys->neqns; i++) {
-	for (j=1; j<=sys->lists[i][0]; j++) {
-	    v = sys->lists[i][j];
-	    if (v == LISTSEP || v >= pdinfo->v) {
-		/* temporary variables, already gone? */
-		continue;
-	    }
+    if (sys->biglist != NULL) {
+	for (j=1; j<=sys->biglist[0]; j++) {
+	    v = sys->biglist[j];
 	    if (v > vmax) {
 		vmax = v;
+	    }
+	}
+    } else {
+	/* should not happen */
+	for (i=0; i<sys->neqns; i++) {
+	    for (j=1; j<=sys->lists[i][0]; j++) {
+		v = sys->lists[i][j];
+		if (v == LISTSEP || v >= pdinfo->v) {
+		    /* temporary variables, already gone? */
+		    continue;
+		}
+		if (v > vmax) {
+		    vmax = v;
+		}
 	    }
 	}
     }

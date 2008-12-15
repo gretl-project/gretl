@@ -598,6 +598,10 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	myopt |= OPT_J;
     }
 
+    if (orig->opt & OPT_R) {
+	myopt |= OPT_R;
+    }
+
     if (orig->ci == AR1) {
 	if (orig->opt & OPT_H) {
 	    myopt |= OPT_H;
@@ -624,13 +628,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     } else if (orig->ci == ARCH) {
 	order = gretl_model_get_int(orig, "arch_order");
     } else if (orig->ci == LOGIT || orig->ci == PROBIT) {
-	if (orig->opt & OPT_R) {
-	    myopt |= OPT_R;
-	} else if (gretl_model_get_int(orig, "ordered")) {
+	if (gretl_model_get_int(orig, "ordered")) {
 	    myopt |= OPT_D;
-	} else {
-	    myopt = OPT_NONE; /* ?? */
-	}
+	} 
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "pooled")) {
 	    myopt |= OPT_P;
@@ -717,9 +717,6 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	break;
     default:
 	/* handles OLS, AR1, WLS, HSK, etc. */
-	if (orig->opt & OPT_R) {
-	    myopt |= OPT_R;
-	}
 	if (rho != 0.0) {
 	    rep = ar1_lsq(list, pZ, pdinfo, repci, myopt, rho);
 	} else if (gretl_model_get_int(orig, "pooled")) {

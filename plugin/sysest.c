@@ -858,18 +858,26 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	rtsls = 1;
     }
 
-    /* get uniform sample starting and ending points */
-    if (system_adjust_t1t2(sys, &pdinfo->t1, &pdinfo->t2, 
-			   (const double **) *pZ)) {
-	err = E_DATA;
-	goto cleanup;
+    /* get uniform sample starting and ending points and check for
+       missing data */
+    err = system_adjust_t1t2(sys, (const double **) *pZ, pdinfo);
+    if (err) {
+	return err;
     } 
+
+    /* set sample for auxiliary regressions */
+    pdinfo->t1 = sys->t1;
+    pdinfo->t2 = sys->t2;
 
     /* max indep vars per equation */
     k = system_max_indep_vars(sys);
 
     /* total indep vars, all equations */
     mk = system_n_indep_vars(sys);
+
+    /* set sample for auxiliary regressions */
+    pdinfo->t1 = sys->t1;
+    pdinfo->t2 = sys->t2;
 
     /* number of observations per series */
     T = sys->T;
