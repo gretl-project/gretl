@@ -235,8 +235,7 @@ model_vif_vector (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 }
 
 #define xtx_ok(c) (c == OLS || c == AR1 || \
-		   c == WLS || c == HCCM || \
-		   c == HSK) 
+		   c == WLS || c == HSK) 
 
 int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		PRN *prn)

@@ -21,32 +21,7 @@
 #include <errno.h>
 
 /* model commands plus ADD and OMIT */
-#define vcv_opt_ok(c) (c == ADD || \
-                       c == AR || \
-		       c == AR1 || \
-                       c == ARBOND || \
-                       c == ARMA || \
-                       c == GARCH || \
-                       c == GMM || \
-                       c == HCCM || \
-	               c == HECKIT || \
-                       c == HSK || \
-                       c == INTREG || \
-                       c == IVREG || \
-                       c == LAD || \
-                       c == LOGISTIC || \
-                       c == LOGIT || \
-                       c == MPOLS || \
-                       c == OLS || \
-                       c == OMIT || \
-                       c == MLE || \
-                       c == NLS || \
-                       c == PANEL || \
-                       c == POISSON || \
-                       c == PROBIT || \
-		       c == QUANTREG || \
-                       c == TOBIT || \
-                       c == WLS)
+#define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
 
 struct gretl_option {
     int ci;              /* command index (gives context) */
@@ -228,6 +203,7 @@ struct gretl_option gretl_opts[] = {
     { NORMTEST, OPT_Q, "quiet" },
     { NULLDATA, OPT_P, "preserve" },
     { OLS,      OPT_F, "print-final" },
+    { OLS,      OPT_J, "jackknife" },
     { OLS,      OPT_N, "no-df-corr" },
     { OLS,      OPT_O, "vcv" }, 
     { OLS,      OPT_R, "robust" },
@@ -747,6 +723,8 @@ static void tail_strip (char *s)
 		      !strcmp(s, "hilu") || \
 		      !strcmp(s, "pwe"))
 
+#define ols_alias(s) (!strcmp(s, "hccm"))
+
 #define smpl_alias(s) (!strcmp(s, "sample"))
 
 /**
@@ -801,6 +779,8 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = AR1;
     } else if (smpl_alias(cmdword)) {
 	ci = SMPL;
+    } else if (ols_alias(cmdword)) {
+	ci = OLS;
     } else {
 	ci = gretl_command_number(cmdword);
     }

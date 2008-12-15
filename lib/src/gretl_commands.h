@@ -66,7 +66,6 @@ typedef enum {
     GNUPLOT, 
     GRAPH,
     HAUSMAN,
-    HCCM,    
     HECKIT,
     HELP,    
     HSK,
@@ -75,7 +74,6 @@ typedef enum {
     INCLUDE,
     INFO,
     INTREG,
-    IVREG,
     KPSS,
     LABELS, 
     LAD,
@@ -137,6 +135,7 @@ typedef enum {
     TABPRINT,
     TESTUHAT,
     TOBIT,
+    IVREG,
     VAR,
     VARLIST,
     VARTEST,
@@ -149,8 +148,8 @@ typedef enum {
 } GretlCmdIndex;
 
 #define NEEDS_TWO_VARS(c)  ((c) == AR || (c) == ARCH || (c) == COINT || \
-                            (c) == AR1 || (c) == CORR || (c) == HCCM || \
-                            (c) == HSK || (c) == LOGIT || (c) == PROBIT || \
+                            (c) == AR1 || (c) == CORR || (c) == HSK || \
+                            (c) == LOGIT || (c) == PROBIT || \
                             (c) == SPEARMAN || (c) == OLS || \
                             (c) == IVREG || (c) == VAR || (c) == WLS || \
 			    (c) == XTAB)

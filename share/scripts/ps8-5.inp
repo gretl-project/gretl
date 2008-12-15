@@ -2,5 +2,5 @@
 open data8-1
 genr LNSALARY=ln(SALARY)
 genr YRS2 = YEARS*YEARS
-ols LNSALARY const YEARS YRS2 -o
-hccm LNSALARY const YEARS YRS2 -o
+ols LNSALARY const YEARS YRS2 --vcv
+ols LNSALARY const YEARS YRS2 --vcv --jackknife

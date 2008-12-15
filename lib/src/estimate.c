@@ -888,7 +888,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	opt &= ~OPT_I;
     }
 
-    if (mdl.ci == HCCM || ((opt & OPT_R) && libset_get_int(HC_VERSION) == 4)) {
+    if ((opt & OPT_J) || ((opt & OPT_R) && libset_get_int(HC_VERSION) == 4)) {
 	jackknife = 1;
     }
 
@@ -2464,8 +2464,6 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 	pmod->vcv = NULL;
     }
 
-    pmod->ci = HCCM;
-
     if (makevcv(pmod, 1.0)) {
 	err = E_ALLOC;
 	goto bailout;
@@ -2548,13 +2546,11 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 	pmod->fstt = wald_omit_F(NULL, pmod);
     }
 
-    pmod->opt |= OPT_R;
+    pmod->opt |= (OPT_R | OPT_J);
     gretl_model_set_int(pmod, "hc", 1);
     gretl_model_set_int(pmod, "hc_version", 4);
 
  bailout:
-
-    pmod->ci = OLS;
 
     free(st);
     free(ustar);

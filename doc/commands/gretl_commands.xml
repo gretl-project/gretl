@@ -3754,35 +3754,6 @@
 
   </command>
 
-  <command name="hccm" section="Estimation" context="cli"
-    label="HCCM estimation">
-
-    <usage>
-      <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Heteroskedasticity-Consistent Covariance Matrix: this command
-	runs a regression where the coefficients are estimated via the
-	standard OLS procedure, but the standard errors of the
-	coefficient estimates are computed in a manner that is robust
-	in the face of heteroskedasticity, namely using the
-	MacKinnon&ndash;White <quote>jackknife</quote> procedure.
-      </para>
-    </description>
-
-  </command>
-
   <command name="hccme" section="Estimation" context="gui"
     label="Robust standard errors">
 
@@ -5721,6 +5692,10 @@
 	  <effect>robust standard errors</effect>
         </option>
         <option>
+	  <flag>--jackknife</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
 	  <flag>--simple-print</flag>
 	  <effect>do not print auxiliary statistics</effect>
         </option>
@@ -5796,6 +5771,9 @@
       <para context="cli">The specific formula used for generating
 	robust standard errors (when the <lit>--robust</lit> option is
 	given) can be adjusted via the <cmdref targ="set"/> command.
+	The <lit>--jackknife</lit> option has the effect of
+	selecting an <lit>hc_version</lit> of <lit>3a</lit>; it is
+	provided to emulate the old <lit>hccm</lit> command.
       </para>
     </description>
 
@@ -7872,13 +7850,14 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>hc_version</lit>: 0 (the default), 1, 2 or 3. Sets the
+	    <lit>hc_version</lit>: 0 (the default), 1, 2, 3 or 3a. Sets the
 	    variant used when calculating Heteroskedasticity Consistent
-	    standard errors with cross-sectional data.  The options
-	    correspond to the HC0, HC1, HC2 and HC3 discussed by Davidson
-	    and MacKinnon in <book>Econometric Theory and Methods</book>,
-	    chapter 5.  HC0 produces what are usually called
-	    <quote>White's standard errors</quote>.
+	    standard errors with cross-sectional data.  The first four options
+	    correspond to the HC0, HC1, HC2 and HC3 discussed by
+	    Davidson and MacKinnon in <book>Econometric Theory and
+	      Methods</book>, chapter 5.  HC0 produces what are usually called
+	    <quote>White's standard errors</quote>.  Variant 3a is
+	    the MacKinnon&ndash;White <quote>jackknife</quote> procedure.
 	  </para>
 	</li>
 	<li>

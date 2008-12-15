@@ -4,6 +4,6 @@ genr inc2 = income*income
 # exclude obs where expenditure is zero
 smpl expend > 0 --restrict
 ols expend 0 age ownrent income inc2 --vcv
-# gretl's "hccm" procedure is more conservative than White
-hccm expend 0 age ownrent income inc2 --vcv
+# gretl's "jackknife" procedure is more conservative than White
+ols expend 0 age ownrent income inc2 --vcv --jackknife
 

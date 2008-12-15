@@ -335,27 +335,10 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
     }
 }
 
-#define plain_model_ci(c) (c == AR ||		\
-			   c == AR1 ||          \
-			   c == ARBOND ||	\
-			   c == ARCH ||		\
-			   c == ARMA ||		\
-			   c == GARCH ||	\
-			   c == HCCM ||		\
-			   c == HECKIT ||	\
-			   c == HSK ||		\
-                           c == INTREG ||       \
-                           c == IVREG ||        \
-			   c == LAD ||		\
-			   c == LOGISTIC ||	\
-			   c == LOGIT ||	\
-			   c == MPOLS ||	\
-			   c == OLS ||		\
-			   c == PANEL ||	\
-			   c == POISSON ||	\
-			   c == PROBIT ||	\
-			   c == TOBIT ||	\
-			   c == WLS)
+#define plain_model_ci(c) (MODEL_COMMAND(c) && \
+                           c != NLS && \
+                           c != MLE && \
+                           c != GMM)
 
 /**
  * ok_in_loop:

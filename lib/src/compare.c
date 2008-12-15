@@ -444,7 +444,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     if (flag == OMIT_WALD || flag == ADD_WALD) {
 	cmp.err = wald_test(testvars, umod, &cmp.chisq, &cmp.F);
-    } else if ((pmodA->opt & OPT_R) || pmodA->ci == HCCM) {
+    } else if (pmodA->opt & OPT_R) {
 	cmp.F = wald_omit_F(testvars, umod);
 	cmp.robust = 1;
     } else if (LIMDEP(cmp.ci)) {
@@ -594,6 +594,10 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	myopt |= OPT_D;
     }
 
+    if (orig->opt & OPT_J) {
+	myopt |= OPT_J;
+    }
+
     if (orig->ci == AR1) {
 	if (orig->opt & OPT_H) {
 	    myopt |= OPT_H;
@@ -712,12 +716,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	rep = panel_model(list, pZ, pdinfo, myopt, prn);
 	break;
     default:
-	/* handles OLS, AR1, WLS, HSK, HCCM, etc. */
+	/* handles OLS, AR1, WLS, HSK, etc. */
 	if (orig->opt & OPT_R) {
 	    myopt |= OPT_R;
-	}
-	if (gretl_model_get_int(orig, "hc_version") == 4) {
-	    repci = HCCM;
 	}
 	if (rho != 0.0) {
 	    rep = ar1_lsq(list, pZ, pdinfo, repci, myopt, rho);

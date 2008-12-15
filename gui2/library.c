@@ -325,7 +325,7 @@ gint bufopen (PRN **pprn)
     return err;
 }
 
-static int cmd_init (char *s)
+static int cmd_init (char *s, int flag)
 {
     PRN *echo;
     int err = 0;
@@ -348,6 +348,9 @@ static int cmd_init (char *s)
     } else {
 	const char *buf;
 
+	if (flag == CONSOLE_EXEC) {
+	    pputs(echo, "# via console\n");
+	}
 	echo_cmd(&libcmd, datainfo, s, CMD_RECORDING, echo);
 	buf = gretl_print_get_buffer(echo);
 #if CMD_DEBUG
@@ -362,7 +365,7 @@ static int cmd_init (char *s)
 
 static int lib_cmd_init (void)
 {
-    return cmd_init(cmdline);
+    return cmd_init(cmdline, 0);
 }
 
 static int console_cmd_init (char *s, int *crun)
@@ -374,10 +377,10 @@ static int console_cmd_init (char *s, int *crun)
 	libcmd.param[0] = 0;
 	libcmd.extra[0] = 0;
 	libcmd.opt = OPT_NONE;
-	ret = cmd_init(s);
+	ret = cmd_init(s, CONSOLE_EXEC);
 	*crun = 0;
     } else {
-	ret = cmd_init(s);
+	ret = cmd_init(s, CONSOLE_EXEC);
     }
 
     return ret;
@@ -410,7 +413,7 @@ static int check_lib_command (void)
 
 int check_and_record_command (void)
 {
-    return (check_specific_command(cmdline) || cmd_init(cmdline));
+    return (check_lib_command() || lib_cmd_init());
 }
 
 /* checks command for errors, and if OK returns an allocated
@@ -3030,7 +3033,6 @@ static int real_do_model (int action)
 
     case OLS:
     case WLS:
-    case HCCM:
 	*pmod = lsq(libcmd.list, &Z, datainfo, action, libcmd.opt);
 	err = model_output(pmod, prn);
 	break;
@@ -3412,7 +3414,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     sscanf(buf, "%8s", cword);
     ci = gretl_command_number(cword);
 
-    /* actions we can't/won't handle here (should be more) */
+    /* actions we can't/won't handle here (should be more?) */
     if (ci == LOOP || ci == RESTRICT || ci == SYSTEM || 
 	ci == EQUATION || ci == VAR || ci == VECM ||
 	ci == NLS || ci == MLE || ci == GMM ||
@@ -5713,9 +5715,8 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
     return 0;
 }
 
-/* Execute a script from the buffer in a viewer window.  This may be a
-   regular script, or part of one, or it may be the "command log" from
-   a GUI session. */
+/* Execute a script from the buffer in a viewer window.  The script
+   may be executed in full or in part (if sel is non-zero) */
 
 static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 {
@@ -5727,23 +5728,20 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     gint x, y;
     PRN *prn;
     int shown = 0;
-    int code, err;
+    int err;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    if (vwin->role == VIEW_LOG && !sel) {
-	code = SESSION_EXEC;
-    } else if (sel) {
+    if (sel) {
+	/* doing selected portion of script */
 	if (vwin_first_child(vwin) != NULL) {
 	    suppress_logo = 1;
 	}
-	code = SCRIPT_EXEC;
     } else {
 	gretl_command_sprintf("run %s", vwin->fname);
 	check_and_record_command();
-	code = SCRIPT_EXEC;
     } 
 
     if (busy_cursor == NULL) {
@@ -5762,7 +5760,7 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 
     gdk_flush();
 
-    err = execute_script(NULL, buf, prn, code);
+    err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
 
     if (wcurr != NULL) {
 	gdk_window_set_cursor(wcurr, NULL);
@@ -5784,8 +5782,7 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 	view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, vp);
     }
 
-    if (!err && !sel && code == SCRIPT_EXEC &&
-	*vwin->fname != '\0' && 
+    if (!err && !sel && *vwin->fname != '\0' && 
 	strstr(vwin->fname, "script_tmp") == NULL) {
 	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
     }
@@ -6316,7 +6313,7 @@ int do_store (char *savename, gretlopt opt)
     if (err) goto store_get_out;
 
     if (!WRITING_DB(opt)) {
-	err = cmd_init(tmp);
+	err = cmd_init(tmp, 0);
 	if (err) goto store_get_out;
     }
 
@@ -6800,11 +6797,6 @@ static int execute_script (const char *runfile, const char *buf,
 	bufread = 1;
     }
 
-    /* reset model count to 0 if saving session output */
-    if (exec_code == SESSION_EXEC) {
-	reset_model_count();
-    }
-
     if (!including && !suppress_logo) {
 	gui_script_logo(prn);
     }
@@ -7140,7 +7132,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    return 1;
 	}
 	if (s->flags == CONSOLE_EXEC) {
-	    cmd_init(line);
+	    cmd_init(line, CONSOLE_EXEC);
 	}
 	return 0;
     } 

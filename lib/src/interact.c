@@ -284,7 +284,11 @@ static int catch_command_alias (char *line, CMD *cmd)
 	strcpy(s, "ar1");
 	cmd->ci = AR1;
 	cmd->opt |= OPT_P;
-    } 
+    } else if (!strcmp(s, "hccm")) {
+	strcpy(s, "ols");
+	cmd->ci = OLS;
+	cmd->opt |= OPT_J;
+    }	
 
     return cmd->ci;
 }
@@ -4310,7 +4314,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case OLS:
     case WLS:
-    case HCCM:
 	clear_model(models[0]);
 	*models[0] = lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
 	err = maybe_print_model(models[0], pdinfo, prn, s);
@@ -4700,6 +4703,8 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} 
 	return 0;
     } 
+
+    s->pmod = NULL; /* be on the safe side */
 
     if (s->cmd->ci == FUNCERR) {
 	s->funcerr = err = 1;

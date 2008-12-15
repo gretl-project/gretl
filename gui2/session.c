@@ -1353,8 +1353,7 @@ void gui_clear_dataset (void)
     main_menubar_state(FALSE);
 }
 
-static void 
-session_clear_data (double ***pZ, DATAINFO *pdinfo, int realclean)
+static void session_clear_data (double ***pZ, DATAINFO *pdinfo)
 {
     gui_restore_sample(pZ, pdinfo);
     gui_clear_dataset();
@@ -1364,59 +1363,43 @@ session_clear_data (double ***pZ, DATAINFO *pdinfo, int realclean)
     clear_model(models[1]);
     clear_model(models[2]);
 
-    if (realclean) {
-	free_command_stack(); 
-    }
-
+    free_command_stack(); 
     reset_model_count();
-
     lib_cmd_destroy_context();
 }
 
 void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 		    gretlopt opt)
 {
-    int realclean = 1;
-
-    /* if we're running the "command log" to get text output
-       (SESSION_EXEC), then don't destroy saved stuff */
-    if (s != NULL && (s->flags & SESSION_EXEC)) {
-	realclean = 0;
-    }
-
 #if SESSION_DEBUG
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
-    session_clear_data(pZ, pdinfo, realclean); 
+    session_clear_data(pZ, pdinfo); 
 
-    if (realclean) {
-	free_session();
+    free_session();
 
-	clear_model_table(NULL);
-	clear_graph_page();
+    clear_model_table(NULL);
+    clear_graph_page();
 
-	session_menu_state(FALSE);
-	session_file_open = 0;
-	*scriptfile = '\0';
-	*sessionfile = '\0';
+    session_menu_state(FALSE);
+    session_file_open = 0;
+    *scriptfile = '\0';
+    *sessionfile = '\0';
 
-	if (iconview != NULL) {
-	    gtk_widget_destroy(iconview);
-	}
-
-	session.status = 0;
+    if (iconview != NULL) {
+	gtk_widget_destroy(iconview);
     }
+
+    session.status = 0;
 
     winstack_destroy();
     clear_selector();
     edit_dialog_special_get_text(NULL);
 
-    if (realclean) {
-	if (opt & OPT_P) {
-	    libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
-	} else {
-	    libgretl_session_cleanup(SESSION_CLEAR_FULL);
-	}
+    if (opt & OPT_P) {
+	libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
+    } else {
+	libgretl_session_cleanup(SESSION_CLEAR_FULL);
     }
 
     session_graph_count = 0;

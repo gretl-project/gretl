@@ -56,7 +56,6 @@ struct CoeffIntervals_ {
                           c == ARMA || \
                           c == GARCH || \
                           c == GMM || \
-                          c == HCCM || \
 		          c == HECKIT || \
                           c == HSK || \
                           c == INTREG || \
@@ -98,7 +97,6 @@ struct CoeffIntervals_ {
                    c == TOBIT)
 
 #define LSQ_MODEL(c) (c == AR1 || \
-                      c == HCCM || \
                       c == HSK || \
                       c == OLS || \
                       c == WLS)

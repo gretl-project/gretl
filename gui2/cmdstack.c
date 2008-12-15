@@ -24,30 +24,128 @@
 
 #define CMD_DEBUG 0
 
-static char **cmd_stack;
+static char logname[FILENAME_MAX];
+static time_t logtime;
+static char *logline;
+static PRN *logprn;
 static int n_cmds;
+static int prev_ID;
+
+/* make the name of the logfile, open a stream for writing, 
+   and write header text */
+
+static int logfile_init (void)
+{
+    int err = 0;
+    
+    n_cmds = prev_ID = 0;
+
+    strcpy(logname, paths.dotdir);
+    strcat(logname, "session.inp");
+    logtime = time(NULL);
+
+    logprn = gretl_print_new_with_filename(logname, &err); 
+    
+    if (err) {
+	file_write_errbox(logname);
+	return err;
+    }
+
+#if CMD_DEBUG
+    fprintf(stderr, "logfile_init: open prn for '%s'\n", logname);
+#endif
+
+    pprintf(logprn, "Log started %s\n", print_time(&logtime));
+
+    pputs(logprn, "# Record of commands issued in the current session.  Please note\n"
+	  "# that this may require editing if it is to be run as a script.\n");
+
+    return 0;
+}
+
+/* close down the logfile writing apparatus */
 
 void free_command_stack (void)
 {
-    free_strings_array(cmd_stack, n_cmds);
-    cmd_stack = NULL;
-    n_cmds = 0;
+    if (logline != NULL) {
+	free(logline);
+	logline = NULL;
+    }
+
+    if (logprn != NULL) {
+	gretl_print_destroy(logprn); /* ?? */
+	logprn = NULL;
+    }
+
+    n_cmds = prev_ID = 0;
+}
+
+/* write out the last stacked command line, if any, and
+   flush the log stream */
+
+static int flush_logfile (void)
+{
+    int err;
+
+    if (logprn == NULL) {
+	err = logfile_init();
+	if (err) {
+	    return err;
+	}
+    }
+
+    if (logline != NULL) {
+	int n = strlen(logline);
+
+	pputs(logprn, logline);
+	if (logline[n-1] != '\n') {
+	    pputc(logprn, '\n');
+	}
+	free(logline);
+	logline = NULL;
+    }
+
+    gretl_print_flush_stream(logprn);
+
+    return 0;
 }
 
 int add_command_to_stack (const char *s)
 {
-    int err = 0;
+    int err;
 
     if (s == NULL || *s == '\0') {
 	return 1;
     }
 
-    err = strings_array_add(&cmd_stack, &n_cmds, s);
+#if 0
+    fprintf(stderr, "session dir = '%s'\n", get_session_dirname());
+#endif
+
+    /* not a model command, so delete record of
+       previous model ID number */
+    prev_ID = 0;
+
+    /* is there a previous stacked command? if so, send it to
+       the logfile first */
+    if (logline != NULL) {
+	err = flush_logfile();
+	if (err) {
+	    return err;
+	}
+    }
+
+    /* buffer the current line in case we need to delete it */
+    logline = gretl_strdup(s);
+    if (logline == NULL) {
+	return E_ALLOC;
+    }
 
 #if CMD_DEBUG
     fprintf(stderr, "Added to stack: '%s'\n", s);
-    fprintf(stderr, "err = %d, n_cmds = %d\n", err, n_cmds);    
-#endif    
+#endif 
+
+    n_cmds++;
 
     if (strlen(s) > 2 && 
 	strncmp(s, "help", 4) &&
@@ -58,92 +156,55 @@ int add_command_to_stack (const char *s)
 	mark_session_changed();
     }
 
-    return err;
+    return 0;
 }
 
 void delete_last_command (void)
 {
-    if (n_cmds > 0) {
-	free(cmd_stack[n_cmds - 1]);
-	n_cmds--;
+    if (logline != NULL) {
+	free(logline);
+	logline = NULL;
     }
 }
 
-/* print to the command log a command associated with a 
+/* save to the command log a command associated with a 
    particular model */
 
 int model_command_init (int model_ID)
 {
-    char *line;
-    CMD *libcmd;
-    PRN *prn;
+    char *line = get_lib_cmdline();
+    CMD *libcmd = get_lib_cmd();
     int err = 0;
 
-    line = get_lib_cmdline();
-    libcmd = get_lib_cmd();
+#if CMD_DEBUG
+    fprintf(stderr, "model_command_init: line='%s'\n", line);
+#endif
 
     /* pre-process the line */
     if (check_specific_command(line)) {
 	return 1;
     }
 
-    if (bufopen(&prn)) {
-	return 1;
+    err = flush_logfile();
+
+    if (!err) {
+	if (model_ID != prev_ID) {
+	    pprintf(logprn, "# model %d\n", model_ID);
+	    prev_ID = model_ID;
+	}
+	echo_cmd(libcmd, datainfo, line, CMD_RECORDING, logprn);
+	mark_session_changed();
+	n_cmds++;
     }
-
-    pprintf(prn, "# model %d\n", model_ID);
-    echo_cmd(libcmd, datainfo, line, CMD_RECORDING, prn);
-
-    err = add_command_to_stack(gretl_print_get_buffer(prn));
-    
-    gretl_print_destroy(prn);
 
     return err;
-}
-
-static char logname[FILENAME_MAX];
-static time_t logtime;
-
-/* ship out the stack of commands entered in the current session */
-
-static int update_logfile (void)
-{
-    const char *s;
-    FILE *fp;
-    int i, n;
-
-    fp = gretl_fopen(logname, "w"); 
-    
-    if (fp == NULL) {
-	file_write_errbox(logname);
-	return 1;
-    }
-
-    fprintf(fp, "Record started %s\n", print_time(&logtime));
-
-    fputs("# Record of commands issued in the current session.  Please note\n"
-	  "# that this may require editing if it is to be run as a script.\n", 
-	  fp);
-
-    for (i=0; i<n_cmds; i++) {
-	s = cmd_stack[i];
-	n = strlen(s);
-	fputs(s, fp);
-	if (s[n-1] != '\n') {
-	    fputc('\n', fp);
-	}
-    }
-
-    fclose(fp);
-
-    return 0;
 }
 
 gchar *get_logfile_content (int *err)
 {
     gchar *s = NULL;
 
-    *err = update_logfile();
+    *err = flush_logfile();
 
     if (!*err) {
 	*err = gretl_file_get_contents(logname, &s);
@@ -154,20 +215,13 @@ gchar *get_logfile_content (int *err)
 
 void view_command_log (void)
 {
-    if (n_cmds == 0) {
-	warnbox(_("The command log is empty"));
-	return;
-    }
+    int err = flush_logfile();
 
-    if (*logname == '\0') {
-	strcpy(logname, paths.dotdir);
-	strcat(logname, "session.inp");
-	logtime = time(NULL);
+    if (!err) {
+	if (n_cmds == 0) {
+	    warnbox(_("The command log is empty"));
+	} else {
+	    view_file(logname, 0, 0, 78, 370, VIEW_LOG);
+	}
     }
-
-    if (update_logfile()) {
-	return;
-    }
-
-    view_file(logname, 0, 0, 78, 370, VIEW_LOG);
 }

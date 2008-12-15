@@ -2686,8 +2686,6 @@ static char *est_str (int cmdnum)
     switch (cmdnum) {
     case OLS:
 	return N_("OLS");
-    case HCCM:
-	return N_("HCCM");
     case HSK:
 	return N_("Heteroskedasticity corrected");
     case CORC:
