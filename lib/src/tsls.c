@@ -996,7 +996,8 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
  * @pdinfo: information on the data set.
  * @opt: may contain %OPT_R for robust VCV, %OPT_N for no df correction, 
  * %OPT_A if this is an auxiliary reression, %OPT_E is we're
- * estimating one equation within a system.
+ * estimating one equation within a system; and %OPT_H to
+ * add "hatlist" to model even under %OPT_E.
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.  If %OPT_E is given, fitted values from the first-stage
@@ -1227,7 +1228,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (sysest) {
 	    /* save first-stage fitted values */
 	    tsls_save_data(&tsls, hatlist, exolist, *pZ, pdinfo);
-	} else {
+	}
+	if (!sysest || (opt & OPT_H)) {
 	    /* save list of endogenous regressors on model */
 	    gretl_model_set_list_as_data(&tsls, "endolist", endolist);
 	    endolist = NULL; /* model takes ownership */

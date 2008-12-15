@@ -799,6 +799,23 @@ static int drop_redundant_instruments (equation_system *sys,
     return err;
 }
 
+/* options to be passed in running initial 2sls */
+
+static gretlopt sys_tsls_opt (const equation_system *sys)
+{
+    gretlopt opt = (OPT_E | OPT_A);
+
+    if (sys->method == SYS_METHOD_LIML) {
+	opt |= OPT_N; /* ML: no df correction */
+    }
+
+    if (sys->flags & SYSTEM_SINGLE) {
+	opt |= OPT_H; /* add "hatlist" of instrumented vars */
+    }
+
+    return opt;
+}
+
 /* general function that forms the basis for all specific system
    estimators */
 
@@ -890,12 +907,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	if (sys_ols_ok(sys)) {
 	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 	} else {
-	    gretlopt tslsopt = (OPT_E | OPT_A);
-
-	    if (method == SYS_METHOD_LIML) {
-		tslsopt |= OPT_N; /* ML: no df correction */
-	    }
-	    *pmod = tsls(list, pZ, pdinfo, tslsopt);
+	    *pmod = tsls(list, pZ, pdinfo, sys_tsls_opt(sys));
 	}
 
 	if (freeit) {
@@ -1149,7 +1161,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	err = fiml_driver(sys, pZ, pdinfo, opt, prn);
     }
 
-    if (!err) {
+    if (!err && !(sys->flags & SYSTEM_SINGLE)) {
 	err = system_save_and_print_results(sys, pZ, pdinfo, 
 					    opt, prn);
     }

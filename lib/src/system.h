@@ -38,7 +38,8 @@ enum {
     SYSTEM_VCV_GEOMEAN = 1 << 3,
     SYSTEM_RESTRICT    = 1 << 4,
     SYSTEM_ITERATE     = 1 << 5,
-    SYSTEM_SAVEIT      = 1 << 6
+    SYSTEM_SAVEIT      = 1 << 6,
+    SYSTEM_SINGLE      = 1 << 7
 };
 
 enum {

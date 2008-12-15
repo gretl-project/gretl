@@ -1016,6 +1016,11 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 	sys->flags |= SYSTEM_VCV_GEOMEAN;
     } 
 
+    if (opt & OPT_S) {
+	/* estimating single equation */
+	sys->flags |= SYSTEM_SINGLE;
+    }
+
     if (oldflags & SYSTEM_SAVE_UHAT) {
 	sys->flags |= SYSTEM_SAVE_UHAT;
     }
@@ -1358,7 +1363,8 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
  * @sys: pre-defined equation system.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: may include %OPT_V for verbose operation.
+ * @opt: may include %OPT_V for verbose operation, %OPT_S
+ * to permit estimation of a single equation.
  * @prn: printing struct.
  * 
  * Finalize an equation system, e.g. in response to "end system".
