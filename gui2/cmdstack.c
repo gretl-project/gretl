@@ -22,7 +22,7 @@
 #include "lib_private.h"
 #include "session.h"
 
-#define CMD_DEBUG 1
+#define CMD_DEBUG 0
 
 static char **cmd_stack;
 static int n_cmds;

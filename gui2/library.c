@@ -2872,6 +2872,8 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	}
 
 	if (started && !strncmp(realline, endstr, 7)) {
+	    gretl_command_strcpy(endstr);
+	    lib_cmd_init();
 	    break;
 	}
 
@@ -2908,7 +2910,6 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     }
 
     bufgets_finalize(buf);
-
     g_free(buf);
 
     if (err) {
@@ -3152,10 +3153,7 @@ static int real_do_model (int action)
 	return err;
     }
 
-    if (lib_cmd_init()) {
-	errbox(_("Error saving model information"));
-	return 0;
-    }
+    model_command_init(pmod->ID);
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
