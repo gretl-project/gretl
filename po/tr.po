@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-10 15:48-0500\n"
-"PO-Revision-Date: 2008-12-04 17:05+0200\n"
+"PO-Revision-Date: 2008-12-16 15:51+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -28,23 +28,23 @@ msgstr ""
 "%s için Dickey-Fuller sınaması\n"
 
 #: lib/src/adf_kpss.c:253
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Augmented Dickey-Fuller test for %s\n"
 msgstr ""
 "\n"
-"%2$s için %1$d. dereceden Genişletilmiş Dickey-Fuller sınaması\n"
+"%s için Genişletilmiş Dickey-Fuller sınaması\n"
 
 #: lib/src/adf_kpss.c:255
 #, c-format
 msgid "including one lag of (1-L)%s"
-msgstr ""
+msgstr "(1-L)%s için bir gecikme eklendi"
 
 #: lib/src/adf_kpss.c:257
 #, c-format
 msgid "including %d lags of (1-L)%s"
-msgstr ""
+msgstr "(1-L)%2$s için %1$d gecikme eklendi"
 
 #: lib/src/adf_kpss.c:282 gui2/library.c:919 gui2/selector.c:4335
 msgid "test without constant"
@@ -177,7 +177,7 @@ msgstr "Adım %d: %s birim kök için sınanıyor\n"
 #: lib/src/adf_kpss.c:1142
 #, c-format
 msgid "Step %d: cointegrating regression\n"
-msgstr "Adım %d: eştümlevleyen bağlanım\n"
+msgstr "Adım %d: eştümleyen bağlanım\n"
 
 #: lib/src/adf_kpss.c:1170
 #, c-format
@@ -195,7 +195,7 @@ msgstr ""
 "\n"
 "Eğer:\n"
 "(a) Her bir değişken için birim kök varsayımı reddedilmezse ve\n"
-"(b) Eştümlevleyen bağlanım kalıntıları için birim kök önsavı reddedilirse\n"
+"(b) Eştümleyen bağlanım kalıntıları için birim kök önsavı reddedilirse\n"
 "Eştümlevleyen bir ilişkinin varlığı için elde delil var demektir.\n"
 
 #: lib/src/bootstrap.c:408
@@ -393,7 +393,7 @@ msgstr "doğrusal-dışılık"
 #: lib/src/compare.c:1088
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr "Sıralı eleme (iki-taraflı alpha = %.2f kullanılarak)"
+msgstr "Sırayla eleme (iki-taraflı alpha = %.2f kullanılarak)"
 
 #: lib/src/compare.c:1094
 #, c-format
@@ -606,14 +606,13 @@ msgid ""
 "for each cross-sectional unit"
 msgstr ""
 "Üzgünüm, bu sınama dengelenmemiş bir panel üstünde\n"
-" yapılamıyor. Her bir kesit birimi için aynı sayıda\n"
+" yapılamıyor. Her bir yatay-kesitsel birim için aynı sayıda\n"
 "gözleminiz olmalıdır"
 
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -706,8 +705,7 @@ msgstr "   dört basamaklı yıl olmadığı kesin\n"
 #: lib/src/csvdata.c:925 lib/src/dataio.c:2598
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+msgstr "İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
 
 #: lib/src/csvdata.c:944 lib/src/dataio.c:2609
 msgid "Data file is empty\n"
@@ -728,10 +726,8 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1085
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1094
 #, c-format
@@ -760,7 +756,7 @@ msgstr ""
 "içerebilir:\n"
 "- bu durumda ilk satır değeri boş bırakılmalı veya 'obs' veya 'date' "
 "demelidir.\n"
-"- Dosyanın geri kalan bölümü dikdörtgen biçimli bir veri dizisi olmalıdır.\n"
+"- Dosyanın geri kalan bölümü dikdörtgen biçimli bir veri dizgesi olmalıdır.\n"
 
 #: lib/src/csvdata.c:1338
 #, c-format
@@ -1000,7 +996,7 @@ msgstr "Etiketler dosyasına yazma başarısız"
 
 #: lib/src/dataio.c:1538
 msgid "time series"
-msgstr "zaman dizileri"
+msgstr "zaman serileri"
 
 #: lib/src/dataio.c:1540
 msgid "panel"
@@ -1114,11 +1110,11 @@ msgstr ""
 
 #: lib/src/dataio.c:1936
 msgid "time-series"
-msgstr "zaman-dizileri"
+msgstr "zaman-serileri"
 
 #: lib/src/dataio.c:1936
 msgid "cross-sectional"
-msgstr "kesit"
+msgstr "yatay-kesitsel"
 
 #: lib/src/dataio.c:1937
 msgid " datafile"
@@ -1213,7 +1209,7 @@ msgstr "Değiştirildi"
 
 #: lib/src/dataset.c:2420
 msgid "series"
-msgstr "dizi"
+msgstr "seri"
 
 #: lib/src/dataset.c:2603 gui2/library.c:4436
 msgid "The data set is currently sub-sampled.\n"
@@ -1251,12 +1247,12 @@ msgstr "Veritabanı ikili dosyası açılamadı"
 #: lib/src/dbread.c:432 lib/src/dbread.c:442 lib/src/dbread.c:505
 #: gui2/database.c:1467
 msgid "Failed to parse series information"
-msgstr "Dizi bilgisini çözümleme başarısız"
+msgstr "Seri bilgisini çözümleme başarısız"
 
 #: lib/src/dbread.c:453 lib/src/dbread.c:519 lib/src/dbread.c:638
 #, c-format
 msgid "Series not found, '%s'"
-msgstr "Bulunamayan dizi '%s'"
+msgstr "Bulunamayan seri '%s'"
 
 #: lib/src/dbread.c:682 lib/src/dbread.c:1114 lib/src/dbread.c:1269
 msgid "This is not a valid RATS 4.0 database"
@@ -1274,7 +1270,7 @@ msgstr "sıklık %d desteklenmiyor"
 
 #: lib/src/dbread.c:1058
 msgid "No valid series found"
-msgstr "Bulunan geçerli bir dizi yok"
+msgstr "Bulunan geçerli bir seri yok"
 
 #: lib/src/dbread.c:1070 lib/src/dbread.c:1122 lib/src/dbread.c:1137
 #: lib/src/dbread.c:2089 lib/src/dbread.c:2450 lib/src/dbread.c:2454
@@ -1309,11 +1305,11 @@ msgstr "Açılmış bir veritabanı yok"
 
 #: lib/src/dbread.c:1927
 msgid "No series length has been defined"
-msgstr "Tanımlanmış bir dizi uzunluğu yok"
+msgstr "Tanımlanmış bir seri uzunluğu yok"
 
 #: lib/src/dbread.c:2127
 msgid "Series imported OK"
-msgstr "Dizi içe aktarma başarılı"
+msgstr "Seri içe aktarma başarılı"
 
 #: lib/src/dbread.c:2152 lib/src/gretl_func.c:1495 lib/src/gretl_utils.c:1499
 #: lib/src/interact.c:3860 gui2/dialogs.c:3890 plugin/tramo-x12a.c:411
@@ -1357,8 +1353,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
 
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
@@ -1441,11 +1436,11 @@ msgstr "  GECİK    XCF"
 
 #: lib/src/describe.c:2945
 msgid "GPH test for fractional integration"
-msgstr "Kesirli tümlevleme için GPH sınaması"
+msgstr "Kesirli tümleme için GPH sınaması"
 
 #: lib/src/describe.c:2946 lib/src/describe.c:3173
 msgid "Estimated degree of integration"
-msgstr "Tahmin edilen tümlevleme derecesi"
+msgstr "Tahmin edilen tümleme derecesi"
 
 #: lib/src/describe.c:3172
 msgid "Local Whittle Estimator"
@@ -1533,7 +1528,7 @@ msgstr "'%s' bir sabit"
 
 #: lib/src/describe.c:3409
 msgid "Fractional integration test failed"
-msgstr "Kesirli tümlevleme sınaması başarısız"
+msgstr "Kesirli tümleme sınaması başarısız"
 
 #: lib/src/describe.c:3415
 msgid ""
@@ -2015,12 +2010,12 @@ msgstr "kestirilen değerler"
 #: lib/src/forecast.c:2427 lib/src/genmain.c:67
 #, c-format
 msgid "Replaced series %s (ID %d)"
-msgstr "%s dizisi (Kimlik# %d) değiştirildi"
+msgstr "%s serisi (Kimlik# %d) değiştirildi"
 
 #: lib/src/forecast.c:2430 lib/src/genmain.c:70
 #, c-format
 msgid "Generated series %s (ID %d)"
-msgstr "%s dizisi (Kimlik# %d) oluşturuldu"
+msgstr "%s serisi (Kimlik# %d) oluşturuldu"
 
 #: lib/src/geneval.c:2808 lib/src/interact.c:1412
 #, c-format
@@ -2131,7 +2126,7 @@ msgstr "birim"
 
 #: lib/src/genfuncs.c:1347
 msgid "cross-sectional unit index"
-msgstr "kesit birim endeksi"
+msgstr "yatay-kesitsel birim endeksi"
 
 #: lib/src/genfuncs.c:1428 lib/src/transforms.c:1635
 msgid "time trend variable"
@@ -2216,7 +2211,7 @@ msgstr "%s adlı sayıl oluşturuldu"
 #: lib/src/genmain.c:60
 #, c-format
 msgid "Modified series %s (ID %d)"
-msgstr "%s dizisi (Kimlik# %d) değiştirildi"
+msgstr "%s serisi (Kimlik# %d) değiştirildi"
 
 #: lib/src/genmain.c:76
 #, c-format
@@ -2381,7 +2376,7 @@ msgstr "loess yakıştırma, d = %d, q = %g"
 
 #: lib/src/graphing.c:2341
 msgid "time series by group"
-msgstr "kümelere göre zaman dizisi"
+msgstr "kümelere göre zaman serileri"
 
 #: lib/src/graphing.c:2442 lib/src/plotspec.c:500 lib/src/plotspec.c:980
 #: gui2/gpt_dialog.c:744 gui2/gpt_dialog.c:1015 gui2/gpt_dialog.c:2112
@@ -2444,7 +2439,7 @@ msgstr "%s katsayısı"
 #: lib/src/graphing.c:3394
 #, c-format
 msgid "Quantile estimates with %g%% band"
-msgstr "%% %g kuşağı kantil tahminleri"
+msgstr "%% %g kuşağı bölüt tahminleri"
 
 #: lib/src/graphing.c:3402
 #, c-format
@@ -2462,8 +2457,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:3739
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
 
 #: lib/src/graphing.c:3744
 #, c-format
@@ -2476,7 +2470,7 @@ msgstr "nokta tahmini"
 
 #: lib/src/graphing.c:3756
 msgid "0.025 and 0.975 quantiles"
-msgstr "0.025 ve 0.975 kantilleri"
+msgstr "0.025 ve 0.975 bölütleri"
 
 #: lib/src/graphing.c:3925
 msgid "VAR residuals"
@@ -2902,7 +2896,7 @@ msgstr "ht alınamıyor: veri seti değişmiş"
 
 #: lib/src/gretl_model.c:4808
 msgid "Can't retrieve series: data set has changed"
-msgstr "Dizi alınamıyor: veri seti değişmiş"
+msgstr "Seri alınamıyor: veri seti değişmiş"
 
 #: lib/src/gretl_model.c:4822
 msgid "Can't retrieve intercepts"
@@ -2934,7 +2928,7 @@ msgid ""
 "slope standard errors in parentheses, p-values in brackets\n"
 msgstr ""
 "Sabit etkiler tahmincisi\n"
-"kesit birime göre farklılık gösteren sabit terimlere izin verir\n"
+"yatay-kesitsel birime göre farklılık gösteren sabit terimlere izin verir\n"
 "eğim ölçünlü hataları parantez, p-değerleri köşeli ayraç içerisindedir\n"
 
 #: lib/src/gretl_panel.c:1587
@@ -3018,7 +3012,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Kesit birimler için karma SEK kalıntı ortalamaları:\n"
+"Yatay-kesitsel birimler için karma SEK kalıntı ortalamaları:\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2501
@@ -3059,8 +3053,8 @@ msgid ""
 "                         observed over %d periods\n"
 "\n"
 msgstr ""
-"      Tanılar: %2$d dönem üzerinde gözlenen ve %1$d kesit birimden oluşan\n"
-"                         dengeli bir panel varsayılarak\n"
+"      Tanılar: %2$d dönem üzerinde gözlenen ve %1$d yatay-kesitsel "
+"                         birimden oluşan dengeli bir panel varsayılarak\n"
 
 #: lib/src/gretl_panel.c:2784 lib/src/gretl_panel.c:3132
 msgid "Couldn't estimate group means regression\n"
@@ -3146,8 +3140,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
@@ -3355,7 +3348,7 @@ msgstr "'%s' başlangıç gözlemi, sıklık ile uyumlu değil"
 
 #: lib/src/gretl_utils.c:805
 msgid "cross-sectional data: frequency must be 1"
-msgstr "kesit veriler: sıklık 1 olmalıdır"
+msgstr "yatay-kesitsel veriler: sıklık 1 olmalıdır"
 
 #: lib/src/gretl_utils.c:809
 #, c-format
@@ -3597,7 +3590,7 @@ msgstr "gecikme değişkeni oluşturma başarısız"
 #: lib/src/interact.c:1428 gui2/gui_utils.c:3432 gui2/library.c:3675
 #, c-format
 msgid "A series named %s already exists"
-msgstr "%s adında bir dizi zaten var"
+msgstr "%s adında bir seri zaten var"
 
 #: lib/src/interact.c:1568
 #, c-format
@@ -3864,7 +3857,7 @@ msgstr "Süzme"
 
 #: lib/src/libset.c:1228 gui2/datawiz.c:482 gui2/menustate.c:465
 msgid "Time series"
-msgstr "Zaman dizileri"
+msgstr "Zaman serileri"
 
 #: lib/src/libset.c:1382
 #, c-format
@@ -3895,24 +3888,20 @@ msgid "Unconditional error variance"
 msgstr "Koşulsuz hata varyansı"
 
 #: lib/src/modelprint.c:159
-#, fuzzy
 msgid "Left-unbounded observations"
-msgstr "Sansürlü gözlemler"
+msgstr "Sol-sınırlamasız gözlemler"
 
 #: lib/src/modelprint.c:160
-#, fuzzy
 msgid "Right-unbounded observations"
-msgstr "Sansürlü gözlemler"
+msgstr "Sağ-sınırlamasız gözlemler"
 
 #: lib/src/modelprint.c:161
-#, fuzzy
 msgid "Bounded observations"
-msgstr "Gözlem ekle"
+msgstr "Sınırlamalı gözlemler"
 
 #: lib/src/modelprint.c:162
-#, fuzzy
 msgid "Point observations"
-msgstr "Gözlem toplamı"
+msgstr "Nokta gözlemler"
 
 #: lib/src/modelprint.c:172 lib/src/modelprint.c:179 lib/src/modelprint.c:193
 #: lib/src/modelprint.c:4194 lib/src/modelprint.c:4205
@@ -3972,7 +3961,7 @@ msgstr "Varyans 'arası'"
 
 #: lib/src/modelprint.c:430 lib/src/modelprint.c:448 lib/src/modelprint.c:456
 msgid "theta used for quasi-demeaning"
-msgstr "benzeri-ortalamadan-arındırma için kullanılacak teta"
+msgstr "sözde-ortalamasızlaştırma için kullanılacak teta"
 
 #: lib/src/modelprint.c:522
 #, c-format
@@ -3998,11 +3987,11 @@ msgstr "Chow sınaması için genişletilmiş bağlanım"
 
 #: lib/src/modelprint.c:549
 msgid "Cointegrating regression -- "
-msgstr "Eştümlevleyen bağlanım -- "
+msgstr "Eştümleyen bağlanım -- "
 
 #: lib/src/modelprint.c:550
 msgid "Cointegrating regression - "
-msgstr "Eştümlevleyen bağlanım - "
+msgstr "Eştümleyen bağlanım - "
 
 #: lib/src/modelprint.c:552
 msgid "Augmented Dickey--Fuller regression"
@@ -4148,7 +4137,7 @@ msgstr "ÖBHOD (ARMAX)"
 
 #: lib/src/modelprint.c:619 gui2/selector.c:2730 plugin/tramo_options.c:734
 msgid "ARIMA"
-msgstr "ÖBBHO (ARIMA)"
+msgstr "ÖBTHO (ARIMA)"
 
 #: lib/src/modelprint.c:621
 msgid "ARMA"
@@ -4212,7 +4201,7 @@ msgstr "EYO Heckbirim"
 
 #: lib/src/modelprint.c:677
 msgid "Quantile"
-msgstr "kantil"
+msgstr "bölüt"
 
 #: lib/src/modelprint.c:716 lib/src/modelprint.c:725
 msgid "First-stage F-statistic"
@@ -4435,17 +4424,17 @@ msgstr "%2$d gözlem kullanılarak bulunan %1$s tahminleri"
 #: lib/src/modelprint.c:1352
 #, c-format
 msgid "Included %d cross-sectional units"
-msgstr "%d kesit birim kapsandı"
+msgstr "%d yatay-kesitsel birim kapsandı"
 
 #: lib/src/modelprint.c:1357
 #, c-format
 msgid "Time-series length = %d"
-msgstr "Zaman-dizisi uzunluğu = %d"
+msgstr "Zaman-serisi uzunluğu = %d"
 
 #: lib/src/modelprint.c:1359
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
-msgstr "Zaman-dizisi uzunluğu: enaz %d, ençok %d"
+msgstr "Zaman-serisi uzunluğu: enaz %d, ençok %d"
 
 #: lib/src/modelprint.c:1388
 #, c-format
@@ -5079,9 +5068,9 @@ msgid "No function has been specified"
 msgstr "Belirtilmiş bir işlev yok"
 
 #: lib/src/nls.c:2747
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no parameters were specified"
-msgstr "Belirtilmiş değiştirge yok"
+msgstr "%s: Belirtilmiş değiştirge yok"
 
 #: lib/src/nls.c:2797
 msgid "Using numerical derivatives\n"
@@ -5140,10 +5129,8 @@ msgid "not significant at the 10% level\n"
 msgstr "% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
 
 #: lib/src/nonparam.c:761
 msgid ""
@@ -5172,8 +5159,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:809
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:813
 #, c-format
@@ -5353,10 +5339,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5433,8 +5417,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:442
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:450
 msgid "TOT."
@@ -5465,10 +5448,8 @@ msgstr "Pearson ki-kare sınaması = %g (%d sd p-değeri = %g)"
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
-msgstr ""
-"Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgstr "Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
 #, c-format
@@ -5812,10 +5793,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1525
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
 
 #: lib/src/system.c:81
 msgid "SUR"
@@ -5983,7 +5962,7 @@ msgstr "belirleyen"
 
 #: lib/src/texprint.c:953 plugin/jrestrict.c:2773
 msgid "Cointegrating vectors"
-msgstr "Eştümlevleyen yöneyler"
+msgstr "Eştümleyen yöneyler"
 
 #: lib/src/texprint.c:955 lib/src/texprint.c:1011 lib/src/texprint.c:1540
 #: lib/src/varprint.c:620 lib/src/varprint.c:621 lib/src/varprint.c:678
@@ -6174,7 +6153,7 @@ msgstr "Durum 5: Kısıtlamasız eğilim ve sabit terim"
 
 #: lib/src/varprint.c:617 lib/src/varprint.c:618
 msgid "cointegrating vectors"
-msgstr "eştümlevleyen yöneyler"
+msgstr "eştümleyen yöneyler"
 
 #: lib/src/varprint.c:675 lib/src/varprint.c:676
 msgid "adjustment vectors"
@@ -6219,7 +6198,7 @@ msgstr "Kısıtlamalı log-olabilirlik  (lr) = %.8g"
 
 #: lib/src/varprint.c:918
 msgid "Cointegration rank"
-msgstr "Eştümlevleme sırası"
+msgstr "Eştümleme sırası"
 
 #: lib/src/varprint.c:949 lib/src/varprint.c:953 lib/src/varprint.c:957
 msgid "Portmanteau test"
@@ -6420,7 +6399,7 @@ msgstr "%s yazıldı\n"
 
 #: cli/gretlcli.c:929 gui2/library.c:7311
 msgid "Data series length count missing or invalid\n"
-msgstr "Veri dizisi uzunluk sayısı eksik veya geçersiz\n"
+msgstr "Veri serisi uzunluk sayısı eksik veya geçersiz\n"
 
 #: cli/gretlcli.c:948
 msgid "Done\n"
@@ -6434,8 +6413,7 @@ msgstr "komutlar %s olarak kaydedildi\n"
 #: cli/gretlcli.c:961
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
+msgstr "Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
 
 #: cli/gretlcli.c:969
 #, c-format
@@ -6685,8 +6663,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7146,7 +7123,7 @@ msgstr "Yeni değişken için formül giriniz:"
 
 #: gui2/callbacks.c:529 gui2/library.c:890
 msgid "gretl: cointegration test"
-msgstr "gretl: eştümlevleme sınaması"
+msgstr "gretl: eştümleme sınaması"
 
 #: gui2/callbacks.c:531 gui2/selector.c:593
 msgid "gretl: VAR"
@@ -7314,7 +7291,7 @@ msgstr "Veriler alınıyor..."
 
 #: gui2/database.c:188
 msgid "gretl: display database series"
-msgstr "gretl: veritabanı dizisini göster"
+msgstr "gretl: veritabanı serisini göster"
 
 #: gui2/database.c:223
 #, c-format
@@ -7326,7 +7303,7 @@ msgid ""
 "repeating each value %d times.  In general, this is\n"
 "not a valid thing to do."
 msgstr ""
-"Yüksek sıklıklı bir veri setine, düşük sıklıklı bir dizi\n"
+"Yüksek sıklıklı bir veri setine, düşük sıklıklı bir seri\n"
 "eklemek istediğinize emin misiniz?\n"
 "\n"
 "Eğer 'evet' derseniz, kaynak veriler, tüm değerlerin ,\n"
@@ -7347,11 +7324,11 @@ msgstr ""
 
 #: gui2/database.c:477
 msgid "Really delete the selected series?"
-msgstr "Seçilen dizi gerçekten silinsin mi?"
+msgstr "Seçilen seri gerçekten silinsin mi?"
 
 #: gui2/database.c:634
 msgid "Warning: series has missing observations"
-msgstr "Uyarı: dizide eksik gözlemler var"
+msgstr "Uyarı: seride eksik gözlemler var"
 
 #: gui2/database.c:638
 msgid "Couldn't access binary datafile"
@@ -7399,7 +7376,7 @@ msgstr "_Kapat"
 
 #: gui2/database.c:752
 msgid "_Series"
-msgstr "_Diziler"
+msgstr "_Seriler"
 
 #: gui2/database.c:753
 msgid "_Display"
@@ -7552,7 +7529,7 @@ msgstr "Yükle"
 
 #: gui2/datafiles.c:1015 gui2/datafiles.c:1022 gui2/datafiles.c:1076
 msgid "List series"
-msgstr "Diziyi listele"
+msgstr "Seriyi listele"
 
 #: gui2/datafiles.c:1080
 msgid "Look on server"
@@ -7664,7 +7641,7 @@ msgstr "Veri seti yapısı"
 
 #: gui2/datawiz.c:96
 msgid "Time series frequency"
-msgstr "Zaman dizisi sıklığı"
+msgstr "Zaman serisi sıklığı"
 
 #: gui2/datawiz.c:97
 msgid "Daily date to represent week"
@@ -7762,11 +7739,11 @@ msgstr "Diğer"
 
 #: gui2/datawiz.c:397
 msgid "Stacked time series"
-msgstr "İstiflenmiş zaman dizileri"
+msgstr "İstifli zaman dizileri"
 
 #: gui2/datawiz.c:398
 msgid "Stacked cross sections"
-msgstr "İstiflenmiş kesitler"
+msgstr "İstifli yatay-kesitler"
 
 #: gui2/datawiz.c:399
 msgid "Use index variables"
@@ -7778,7 +7755,7 @@ msgstr "Ölçünlü-dışı sıklık"
 
 #: gui2/datawiz.c:481
 msgid "Cross-sectional"
-msgstr "Kesit"
+msgstr "Yatay-kesitsel"
 
 #: gui2/datawiz.c:483 gui2/menustate.c:488
 msgid "Panel"
@@ -7823,7 +7800,7 @@ msgstr "%s, 1 ile %d arası gözlemler"
 
 #: gui2/datawiz.c:537
 msgid "Cross-sectional data"
-msgstr "Kesit verileri"
+msgstr "Yatay-kesitsel veriler"
 
 #: gui2/datawiz.c:553
 #, c-format
@@ -7837,15 +7814,15 @@ msgid ""
 "%d cross-sectional units observed over %d periods"
 msgstr ""
 "Panel verileri (%1$s)\n"
-"%3$d dönem üzerinde %2$d kesit birim gözlendi"
+"%3$d dönem üzerinde %2$d yatay-kesitsel birim gözlendi"
 
 #: gui2/datawiz.c:557 gui2/datawiz.c:565
 msgid "stacked time series"
-msgstr "istiflenmiş zaman dizileri"
+msgstr "istifli zaman serileri"
 
 #: gui2/datawiz.c:565
 msgid "stacked cross sections"
-msgstr "istiflenmiş kesitler"
+msgstr "istifli yatay-kesitler"
 
 #: gui2/datawiz.c:571
 msgid "(dropping missing observations)"
@@ -7873,7 +7850,7 @@ msgstr "Zaman endeksi değişkeni"
 
 #: gui2/datawiz.c:1218
 msgid "Number of cross-sectional units"
-msgstr "Kesit birim sayısı"
+msgstr "Yatay-kesitsel birim sayısı"
 
 #: gui2/datawiz.c:1219
 msgid "Number of time periods"
@@ -8225,7 +8202,7 @@ msgstr "gretl: veri setini daralt"
 #: gui2/dialogs.c:2942
 #, c-format
 msgid "You are adding a %s series to %s dataset"
-msgstr "%s adlı bir diziyi %s veri setine ekliyorsunuz"
+msgstr "%s serisini %s veri setine ekliyorsunuz"
 
 #: gui2/dialogs.c:2944
 msgid "a quarterly"
@@ -8262,7 +8239,7 @@ msgstr "gretl: veri setini genişlet"
 #: gui2/dialogs.c:3103
 #, c-format
 msgid "Adding %s series to %s dataset"
-msgstr "%s dizisi %s veri setine ekleniyor"
+msgstr "%s serisi %s veri setine ekleniyor"
 
 #: gui2/dialogs.c:3109
 msgid "Expand annual data to:"
@@ -8599,11 +8576,11 @@ msgstr "Çakışan değişken adları"
 
 #: gui2/filters.c:345
 msgid "Save smoothed series as"
-msgstr "Düzleştirilmiş diziyi farklı kaydet"
+msgstr "Düzleştirilmiş seriyi farklı kaydet"
 
 #: gui2/filters.c:346
 msgid "Save cyclical component as"
-msgstr "Döngüsel bileşeni şu adla kaydet"
+msgstr "Çevrimsel bileşeni şu adla kaydet"
 
 #: gui2/filters.c:379
 msgid "Lower frequency bound:"
@@ -8619,7 +8596,7 @@ msgstr "İlk ÜHO değeri şu:"
 
 #: gui2/filters.c:428
 msgid "the mean of the whole series"
-msgstr "Tüm dizilerin ortalaması"
+msgstr "Tüm serinin ortalaması"
 
 #: gui2/filters.c:433
 msgid "the mean of the first n observations"
@@ -8627,7 +8604,7 @@ msgstr "ilk n gözlem ortalaması"
 
 #: gui2/filters.c:455
 msgid "gretl: time-series filter"
-msgstr "gretl: zaman-dizisi süzgeci"
+msgstr "gretl: zaman-serisi süzgeci"
 
 #: gui2/filters.c:472
 msgid "Number of observations in average:"
@@ -8651,19 +8628,19 @@ msgstr "k (yüksek değerler -> daha iyi yaklaştırma):"
 
 #: gui2/filters.c:536
 msgid "Graph filtered series"
-msgstr "Süzülmüş diziyi çiz"
+msgstr "Süzülmüş seriyi çiz"
 
 #: gui2/filters.c:540
 msgid "Save cyclical series as"
-msgstr "Döngüsel diziyi farklı kaydet"
+msgstr "Çevrimsel seriyi farklı kaydet"
 
 #: gui2/filters.c:554
 msgid "Graph original and smoothed series"
-msgstr "Özgün ve düzleştirilmiş dizileri çiz"
+msgstr "Özgün ve düzleştirilmiş serileri çiz"
 
 #: gui2/filters.c:556
 msgid "Graph residual or cycle series"
-msgstr "Kalıntı veya döngü dizilerini çiz"
+msgstr "Kalıntı veya çevrim serilerini çiz"
 
 #: gui2/filters.c:649 gui2/filters.c:670
 #, c-format
@@ -8678,7 +8655,7 @@ msgstr "%s (düzleştirilmiş)"
 #: gui2/filters.c:661 gui2/filters.c:683
 #, c-format
 msgid "Cyclical component of %s"
-msgstr "%s döngüsel bileşeni"
+msgstr "%s çevrimsel bileşeni"
 
 #: gui2/filters.c:680
 #, c-format
@@ -8761,7 +8738,7 @@ msgstr "Özel bir gereksinim yok"
 
 #: gui2/fnsave.c:602
 msgid "Time-series data"
-msgstr "Zaman-dizisi verileri"
+msgstr "Zaman-serisi verileri"
 
 #: gui2/fnsave.c:603
 msgid "Quarterly or monthly data"
@@ -9647,7 +9624,7 @@ msgstr "_Değişken çizimleri"
 
 #: gui2/gretl.c:1350
 msgid "_Time series plot..."
-msgstr "Zaman _dizisi çizimi..."
+msgstr "Zaman _serisi çizimi..."
 
 #: gui2/gretl.c:1351
 msgid "X-Y _scatter..."
@@ -9687,7 +9664,7 @@ msgstr "X-Y _serpilme çizimi..."
 
 #: gui2/gretl.c:1360
 msgid "_Time series..."
-msgstr "Zaman _dizileri..."
+msgstr "Zaman _serileri..."
 
 #: gui2/gretl.c:1361 gui2/gretl.c:1408
 msgid "_Summary statistics"
@@ -9847,7 +9824,7 @@ msgstr "_Aralık-ortalama çizimi"
 
 #: gui2/gretl.c:1415
 msgid "_Time series plot"
-msgstr "_Zaman dizisi çizimi"
+msgstr "_Zaman serisi çizimi"
 
 #: gui2/gretl.c:1416
 msgid "_Correlogram"
@@ -9947,7 +9924,7 @@ msgstr "_Yüksek kesinlikli SEK..."
 
 #: gui2/gretl.c:1449
 msgid "_Time series"
-msgstr "_Zaman dizileri"
+msgstr "_Zaman serileri"
 
 #: gui2/gretl.c:1450
 msgid "_Cochrane-Orcutt..."
@@ -9991,7 +9968,7 @@ msgstr "YHDM (VECM)..."
 
 #: gui2/gretl.c:1460
 msgid "_Cointegration test"
-msgstr "_Eştümlevleme sınaması"
+msgstr "_Eştümleme sınaması"
 
 #: gui2/gretl.c:1461
 msgid "_Engle-Granger..."
@@ -10054,9 +10031,8 @@ msgid "_Nonlinear Least Squares..."
 msgstr "_Doğrusal-dışı en küçük kareler..."
 
 #: gui2/gretl.c:1476
-#, fuzzy
 msgid "_Interval regression..."
-msgstr "_Kantil bağlanım..."
+msgstr "_Aralık bağlanımı..."
 
 #: gui2/gretl.c:1477
 msgid "_Robust estimation"
@@ -10068,7 +10044,7 @@ msgstr "_En küçük Mutlak Sapma..."
 
 #: gui2/gretl.c:1479
 msgid "_Quantile regression..."
-msgstr "_Kantil bağlanım..."
+msgstr "_Bölüt bağlanımı..."
 
 #: gui2/gretl.c:1480
 msgid "_Rank correlation..."
@@ -10367,9 +10343,8 @@ msgid "_Copy"
 msgstr "_Kopyala"
 
 #: gui2/gui_utils.c:149 gui2/gui_utils.c:272
-#, fuzzy
 msgid "_Revise specification..."
-msgstr "RESET belirtim sınaması"
+msgstr "_Belirtimi gözden geçir"
 
 #: gui2/gui_utils.c:151 gui2/gui_utils.c:275
 msgid "_Tests"
@@ -10477,9 +10452,8 @@ msgid "_Autocorrelation"
 msgstr "Öz_ilinti"
 
 #: gui2/gui_utils.c:182
-#, fuzzy
 msgid "_Durbin-Watson p-value"
-msgstr "Durbin-Watson p-değerini hesapla"
+msgstr "_Durbin-Watson p-değeri"
 
 #: gui2/gui_utils.c:183 gui2/gui_utils.c:3198
 msgid "A_RCH"
@@ -10555,9 +10529,9 @@ msgid ""
 "(cross-sectional).  Do you want to give the data a\n"
 "time-series or panel interpretation?"
 msgstr ""
-"İçe aktarılan veriler tarihlendirmesiz (kesit) olarak\n"
-"yorumlandı. Verilere bir zaman dizisi veya panel\n"
-"yorumu vermek ister misiniz?"
+"İçe aktarılan veriler tarihlendirmesiz (yatay-kesitsel) "
+"olarak yorumlandı. Verilere bir zaman serisi veya "
+"panel yorumu vermek ister misiniz?"
 
 #: gui2/gui_utils.c:854 gui2/gui_utils.c:857
 #, c-format
@@ -10738,7 +10712,7 @@ msgstr "%s ile"
 
 #: gui2/gui_utils.c:2442
 msgid "tau sequence"
-msgstr "Tau düzeni"
+msgstr "Tau dizisi"
 
 #: gui2/gui_utils.c:2656
 msgid "gretl: VAR covariance matrix"
@@ -11063,7 +11037,7 @@ msgstr "normallik sınaması"
 
 #: gui2/library.c:866
 msgid "Couldn't read cointegration order"
-msgstr "Eştümlevleme derecesi okunamadı"
+msgstr "Eştümleme derecesi okunamadı"
 
 #: gui2/library.c:920
 msgid "with constant"
@@ -11270,9 +11244,8 @@ msgid "gretl: LM test (autocorrelation)"
 msgstr "gretl: LÇ sınaması (özilinti)"
 
 #: gui2/library.c:2354
-#, fuzzy
 msgid "Durbin-Watson statistic"
-msgstr "Durbin-Watson"
+msgstr "Durbin-Watson istatistiği"
 
 #: gui2/library.c:2376
 msgid "Lag order for ARCH test:"
@@ -11328,7 +11301,7 @@ msgstr "Veriler eksi değerler içeriyor: gamma dağılımı uygun değil"
 
 #: gui2/library.c:3971
 msgid "This analysis is applicable only to seasonal time series"
-msgstr "Bu çözümleme yalnız mevsimsel zaman dizilerine uygulanabilir"
+msgstr "Bu çözümleme yalnız mevsimsel zaman serilerine uygulanabilir"
 
 #: gui2/library.c:4008
 msgid "gretl: TRAMO analysis"
@@ -11510,7 +11483,7 @@ msgstr "çoklu çizimler dikey düzenlenmiş"
 
 #: gui2/library.c:5268
 msgid "Panel time-series graph"
-msgstr "Panel zaman dizisi çizimi"
+msgstr "Panel zaman serisi çizimi"
 
 #: gui2/library.c:5407
 msgid ""
@@ -11542,7 +11515,7 @@ msgstr "Ayrı küçük çizimler içinde"
 
 #: gui2/library.c:5619
 msgid "Plot the series"
-msgstr "Diziyi çiz"
+msgstr "Seriyi çiz"
 
 #: gui2/library.c:5826
 msgid "Non-interactive (just get output)"
@@ -11697,7 +11670,7 @@ msgstr "Betimleyici istatistikler"
 #: gui2/menustate.c:287 gui2/menustate.c:346 gui2/menustate.c:368
 #: gui2/menustate.c:410
 msgid "Time series plot"
-msgstr "Zaman dizisi çizimi"
+msgstr "Zaman serisi çizimi"
 
 #: gui2/menustate.c:289
 msgid "Frequency distribution"
@@ -11717,7 +11690,7 @@ msgstr "İzge"
 
 #: gui2/menustate.c:301
 msgid "ARIMA model"
-msgstr "ÖBBHO modeli"
+msgstr "ÖBTHO modeli"
 
 #: gui2/menustate.c:304
 msgid "Dickey-Fuller test"
@@ -11804,8 +11777,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Üzgünüm, 2AEK modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:192
@@ -11914,8 +11886,7 @@ msgstr "Logbirim ve olabirim için, McFadden sözde-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1068
 msgid "No model is available"
@@ -11985,9 +11956,8 @@ msgid "You must specify a public interface"
 msgstr "Bir ortak arayüz belirtmelisiniz"
 
 #: gui2/selector.c:1787
-#, fuzzy
 msgid "You must select a lower bound variable"
-msgstr "Bir denetim değişkeni seçmelisiniz"
+msgstr "Bir alt sınır değişkeni seçmelisiniz"
 
 #: gui2/selector.c:1790
 msgid "You must select a dependent variable"
@@ -11995,11 +11965,11 @@ msgstr "Bir bağımlı değişken seçmelisiniz"
 
 #: gui2/selector.c:2284
 msgid "You must specify a quantile"
-msgstr "Bir kantil belirtmelisiniz"
+msgstr "Bir bölüt belirtmelisiniz"
 
 #: gui2/selector.c:2297
 msgid "Invalid quantile specification"
-msgstr "Geçersiz kantil belirtimi"
+msgstr "Geçersiz bölüt belirtimi"
 
 #: gui2/selector.c:2358
 msgid "You must select a weight variable"
@@ -12014,9 +11984,8 @@ msgid "You must specify a selection variable"
 msgstr "Bir seçim değişkeni belirtmelisiniz"
 
 #: gui2/selector.c:2367
-#, fuzzy
 msgid "You must specify an upper bound variable"
-msgstr "Bir seçim değişkeni belirtmelisiniz"
+msgstr "Bir üst sınır değişkeni belirtmelisiniz"
 
 #: gui2/selector.c:2471
 msgid "You must select a Z-axis variable"
@@ -12084,16 +12053,15 @@ msgstr "YÖB gecikme seçimi"
 
 #: gui2/selector.c:2744
 msgid "Quantile regression"
-msgstr "Kantil bağlanım"
+msgstr "Bölüt bağlanımı"
 
 #: gui2/selector.c:2746
-#, fuzzy
 msgid "Interval regression"
-msgstr "Kantil bağlanım"
+msgstr "Aralık bağlanımı"
 
 #: gui2/selector.c:2749
 msgid "Cointegration"
-msgstr "Eştümlevleme"
+msgstr "Eştümleme"
 
 #: gui2/selector.c:2752
 msgid "Multiple precision OLS"
@@ -12117,12 +12085,11 @@ msgstr "ÖB gecikme listesi"
 
 #: gui2/selector.c:2771
 msgid "Desired quantile(s)"
-msgstr "İstenilen kantil(ler)"
+msgstr "Arzulanan bölüt(ler)"
 
 #: gui2/selector.c:2773
-#, fuzzy
 msgid "Upper bound variable"
-msgstr "Endeks değişkenleri kullan"
+msgstr "Üst sınır değişkeni"
 
 #: gui2/selector.c:2777 gui2/selector.c:2802
 msgid "Y-axis variable"
@@ -12141,9 +12108,8 @@ msgid "Choose->"
 msgstr "Seçiniz ->"
 
 #: gui2/selector.c:2900
-#, fuzzy
 msgid "Lower bound variable"
-msgstr "zaman eğilimi değişkeni"
+msgstr "Alt sınır değişkeni"
 
 #: gui2/selector.c:2909 gui2/selector.c:2956
 msgid "Choose ->"
@@ -12159,7 +12125,7 @@ msgstr "Ortak arayüz"
 
 #: gui2/selector.c:2989
 msgid "cointegration rank:"
-msgstr "Eştümlevleme sırası:"
+msgstr "Eştümleme sırası:"
 
 #: gui2/selector.c:3014
 msgid "maximum lag:"
@@ -12443,7 +12409,7 @@ msgstr "Çoklu serpilme çizimleri"
 
 #: gui2/selector.c:4549
 msgid "factorized plot"
-msgstr "Ayrıştırılmış çizim"
+msgstr "çarpanlamalı çizim"
 
 #: gui2/selector.c:4551
 msgid "scatterplot with control"
@@ -12965,11 +12931,11 @@ msgstr "Sağlam kovaryans dizeyini öntanımlı kullan"
 
 #: gui2/settings.c:250
 msgid "For cross-sectional data"
-msgstr "Kesit veriler için"
+msgstr "Yatay-kesitsel veriler için"
 
 #: gui2/settings.c:252
 msgid "For time-series data"
-msgstr "Zaman-dizisi verileri için"
+msgstr "Zaman-serisi verileri için"
 
 #: gui2/settings.c:254
 msgid "For panel data"
@@ -13217,12 +13183,12 @@ msgstr "Bir ad giriniz"
 
 #: gui2/ssheet.c:2275
 msgid "No series to edit"
-msgstr "Düzenleyecek dizi yok"
+msgstr "Düzenleyecek seri yok"
 
 #: gui2/ssheet.c:2363
 #, c-format
 msgid "Warning: series %s is empty"
-msgstr "Uyarı: %s dizisi boş"
+msgstr "Uyarı: %s serisi boş"
 
 #: gui2/ssheet.c:2593
 msgid "gretl: edit matrix"
@@ -13282,7 +13248,7 @@ msgstr "Ad:"
 
 #: gui2/ssheet.c:3012
 msgid "Build from series"
-msgstr "Diziden oluştur"
+msgstr "Seriden oluştur"
 
 #: gui2/ssheet.c:3021
 msgid "Build numerically"
@@ -13848,7 +13814,7 @@ msgstr "yeniden normalleştirilmiş alfa"
 
 #: plugin/johansen.c:206
 msgid "beta (cointegrating vectors)"
-msgstr "beta (eştümlevleyen yöneyler)"
+msgstr "beta (eştümleyen yöneyler)"
 
 #: plugin/johansen.c:207 plugin/jrestrict.c:2806
 msgid "alpha (adjustment vectors)"
@@ -14070,7 +14036,7 @@ msgstr "Kovaryans dizeyinin özdeğer çözümlemesi"
 
 #: plugin/pca.c:180
 msgid "Component  Eigenvalue  Proportion   Cumulative\n"
-msgstr " Bileşen    Özdeğer      Orantı       Yığınlı\n"
+msgstr " Bileşen    Özdeğer      Orantı       Yığınsal\n"
 
 #: plugin/pca.c:203
 msgid "Eigenvectors (component loadings)"
@@ -14183,11 +14149,11 @@ msgstr "üst kuyruk"
 
 #: plugin/tramo_options.c:337
 msgid "Time-series model plus seasonal adjustment"
-msgstr "Zaman-dizileri modeli artı mevsimsel düzeltme"
+msgstr "Zaman-serileri modeli artı mevsimsel düzeltme"
 
 #: plugin/tramo_options.c:338
 msgid "Time-series model only"
-msgstr "Yalnız zaman-dizileri modeli"
+msgstr "Yalnız zaman-serileri modeli"
 
 #: plugin/tramo_options.c:344
 msgid "Standard automatic analysis"
@@ -14215,11 +14181,11 @@ msgstr "Veri setine kaydet:"
 
 #: plugin/tramo_options.c:449 plugin/tramo-x12a.c:188
 msgid "Seasonally adjusted series"
-msgstr "Mevsimsel düzeltilmiş dizi"
+msgstr "Mevsimsel düzeltilmiş seri"
 
 #: plugin/tramo_options.c:459 plugin/tramo-x12a.c:194
 msgid "Trend/cycle"
-msgstr "Eğilim/döngü"
+msgstr "Eğilim/çevrim"
 
 #: plugin/tramo_options.c:466 plugin/tramo-x12a.c:200
 msgid "Irregular"
@@ -14264,7 +14230,7 @@ msgstr "Toplanır dışadüşenler dışında şuna izin ver:"
 
 #: plugin/tramo_options.c:622
 msgid "transitory changes"
-msgstr "geçici değişiklikler"
+msgstr "geçişli değişiklikler"
 
 #: plugin/tramo_options.c:634
 msgid "shifts of level"
@@ -14310,7 +14276,7 @@ msgstr "mevsimsel düzeltilmiş %s"
 #: plugin/tramo-x12a.c:50
 #, c-format
 msgid "trend/cycle for %s"
-msgstr "%s için eğilim/döngü"
+msgstr "%s için eğilim/çevrim"
 
 #: plugin/tramo-x12a.c:51
 #, c-format
@@ -14323,7 +14289,7 @@ msgstr "düzensiz"
 
 #: plugin/tramo-x12a.c:302
 msgid "trend/cycle"
-msgstr "eğilim/döngü"
+msgstr "eğilim/çevrim"
 
 #: plugin/tramo-x12a.c:319
 msgid "adjusted"
@@ -14379,8 +14345,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+msgstr "Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14426,37 +14391,3 @@ msgstr "Dizgiler"
 msgid "Accessors"
 msgstr "Erişiciler"
 
-#~ msgid ""
-#~ "\n"
-#~ "Augmented Dickey-Fuller tests, order %d, for %s\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%2$s için %1$d. dereceden Genişletilmiş Dickey-Fuller sınamaları\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Dickey-Fuller tests for %s\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s için Dickey-Fuller sınamaları\n"
-
-#~ msgid "P-value(DW)"
-#~ msgstr "P-değeri(DW)"
-
-#~ msgid "Failed to compute numerical Hessian"
-#~ msgstr "Sayısal Hessegil hesaplama başarısız"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "*** User-specified starting values:\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "*** Kullanıcı-tanımlı başlangıç noktaları:\n"
-
-#~ msgid "BFGS: initial value of objective function is not finite"
-#~ msgstr "BFGS: hedef işlev başlangıç değeri sonlu değil"
-
-#~ msgid "stopped after %d iterations\n"
-#~ msgstr "%d yinelemeden sonra durduruldu\n"
