@@ -329,7 +329,8 @@ PRN *gretl_print_new_with_stream (FILE *fp)
 /**
  * gretl_print_rename_file:
  * @prn: printing struct to operate on.
- * @oldpath: name of current file.
+ * @oldpath: name of current file (or %NULL if @prn was
+ * set up using #gretl_print_new_with_tempfile).
  * @newpath: new name for file.
  * 
  * If @prn is printing to a %FILE pointer, rename the
@@ -350,10 +351,20 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 
     fclose(prn->fp);
 
-    err = gretl_rename(oldpath, newpath);
+    if (oldpath == NULL && prn->fname != NULL) {
+	/* renaming from tempfile */
+	err = gretl_rename(prn->fname, newpath);
+    } else {
+	err = gretl_rename(oldpath, newpath);
+    }
 
     if (!err) {
 	prn->fp = gretl_fopen(newpath, "a");
+	if (prn->fname != NULL) {
+	    /* @prn originally used a tempfile */
+	    free(prn->fname);
+	    prn->fname = NULL;
+	}
     }
 
     return err;

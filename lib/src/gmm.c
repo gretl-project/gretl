@@ -59,8 +59,7 @@ struct ocset_ {
     char Wname[VNAMELEN]; /* name of weighting matrix */
     char **lnames;        /* names of LHS terms in O.C.s */
     char **rnames;        /* names of RHS terms in O.C.s */
-    int n_lnames;         /* number of lnames */
-    int n_rnames;         /* number of rnames */
+    int n_names;          /* number of right/left name pairs */
 };
 
 #define using_HAC(s) (s->oc->hinfo.kern >= KERNEL_BARTLETT)
@@ -82,11 +81,11 @@ void oc_set_destroy (ocset *oc)
     free(oc->ecols);
 
     if (oc->lnames != NULL) {
-	free_strings_array(oc->lnames, oc->n_lnames);
+	free_strings_array(oc->lnames, oc->n_names);
     }
 
     if (oc->rnames != NULL) {
-	free_strings_array(oc->rnames, oc->n_rnames);
+	free_strings_array(oc->rnames, oc->n_names);
     }
 	
     free(oc);
@@ -111,8 +110,7 @@ static ocset *oc_set_new (void)
 	*oc->Wname = '\0';
 	oc->lnames = NULL;
 	oc->rnames = NULL;
-	oc->n_lnames = 0;
-	oc->n_rnames = 0;
+	oc->n_names = 0;
     }
 
     return oc;
@@ -557,7 +555,7 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 {
     char lname[VNAMELEN], rname[VNAMELEN];
     int ltype = GRETL_TYPE_NONE, rtype = GRETL_TYPE_NONE;
-    int err = 0;
+    int n, err = 0;
 
     if (s->ci != GMM) {
 	return E_TYPES;
@@ -598,8 +596,9 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     }
 
     if (!err && gretl_in_gui_mode()) {
-	strings_array_add(&s->oc->lnames, &s->oc->n_lnames, lname);
-	strings_array_add(&s->oc->rnames, &s->oc->n_rnames, rname);
+	n = s->oc->n_names;
+	strings_array_add(&s->oc->lnames, &s->oc->n_names, lname);
+	strings_array_add(&s->oc->rnames, &n, rname);
     } 
 
     if (err) {
@@ -765,7 +764,7 @@ void nlspec_print_gmm_info (nlspec *spec, PRN *prn)
 	return;
     }
 
-    for (i=0; i<spec->oc->n_lnames; i++) {
+    for (i=0; i<spec->oc->n_names; i++) {
 	pprintf(prn, "orthog %s ; %s\n", spec->oc->lnames[i], 
 		spec->oc->rnames[i]);
     }

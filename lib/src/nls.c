@@ -1381,25 +1381,25 @@ static void adjust_saved_nlfunc (char *s)
 
 static int nl_model_add_gui_info (MODEL *pmod, nlspec *spec)
 {
+    const char *cmd = gretl_command_word(spec->ci);
     PRN *prn;
     char *buf;
-    int i, ng, err = 0;
+    int i, err = 0;
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
 	return err;
     }
 
+    pputs(prn, cmd);
+
     if (pmod->depvar != NULL) {
-	pprintf(prn, "%s\n", pmod->depvar);
+	pprintf(prn, " %s\n", pmod->depvar);
+    } else {
+	pputc(prn, '\n');
     }
 
-    /* FIXME the following is not always right for the number
-       of 'auxiliary' genrs in a model */
-
-    ng = spec->ngenrs - spec->nparam - (spec->nlfunc != NULL);
-	
-    for (i=0; i<ng; i++) {
+    for (i=0; i<spec->naux; i++) {
 	pprintf(prn, "%s\n", genr_get_formula(spec->genrs[i]));
     }
 
@@ -1420,6 +1420,8 @@ static int nl_model_add_gui_info (MODEL *pmod, nlspec *spec)
 		    spec->params[i].deriv);
 	}
     }
+
+    pprintf(prn, "end %s\n", cmd);
 
     buf = gretl_print_steal_buffer(prn);
     gretl_model_set_string_as_data(pmod, "nlinfo", buf);
