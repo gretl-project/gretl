@@ -1907,8 +1907,8 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
     const gchar *s;
     int i, n, ci;
 
-    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == MPOLS) {
-	/* can we relax this later? */
+    if (pmod->ci == MPOLS) {
+	/* can we relax this? */
 	flip(ui, "/MenuBar/Tests", FALSE);
 	return;
     }
@@ -1974,14 +1974,16 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     }
 
     if (pmod->ci == MLE || pmod->ci == GMM) {
-	/* can we relax this later? */
-	flip(vwin->ui, "/MenuBar/Analysis", FALSE);
+	/* can we relax some of this later? */
+	flip(vwin->ui, "/MenuBar/Analysis/DisplayAFR", FALSE);
+	flip(vwin->ui, "/MenuBar/Analysis/Forecasts", FALSE);
 	flip(vwin->ui, "/MenuBar/Graphs", FALSE);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
     } 
 
     if (pmod->ci == GMM) {
+	/* FIXME */
 	flip(vwin->ui, "/MenuBar/Save", FALSE);
     }
 
@@ -1993,8 +1995,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ui, "/MenuBar/Analysis/Forecasts", FALSE);
     }
 
-    if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) ||
-	na(pmod->tss)) {
+    if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) || na(pmod->tss)) {
 	flip(vwin->ui, "/MenuBar/Analysis/ANOVA", FALSE);
     }
 

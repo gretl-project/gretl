@@ -281,6 +281,23 @@ int gretl_print_has_tempfile (PRN *prn)
 }
 
 /**
+ * gretl_print_get_tempfile_name:
+ * @prn: printing struct to test.
+ * 
+ * Returns: if @prn has a tempfile attached, return the name
+ * of that file, otherwise return %NULL.
+ */
+
+const char * gretl_print_get_tempfile_name (PRN *prn)
+{
+    if (prn != NULL) {
+	return prn->fname;
+    } else {
+	return NULL;
+    }
+}
+
+/**
  * gretl_print_new_with_buffer:
  * @buf: pre-allocated text buffer.
  * 
@@ -322,7 +339,7 @@ PRN *gretl_print_new_with_stream (FILE *fp)
     if (fp == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_FILE, NULL, NULL, fp, NULL);
+	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL, NULL, fp, NULL);
     }
 }  
 
@@ -361,7 +378,9 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
     if (!err) {
 	prn->fp = gretl_fopen(newpath, "a");
 	if (prn->fname != NULL) {
-	    /* @prn originally used a tempfile */
+	    /* @prn originally used a tempfile: the record of
+	       the temporary filename should be deleted 
+	    */
 	    free(prn->fname);
 	    prn->fname = NULL;
 	}

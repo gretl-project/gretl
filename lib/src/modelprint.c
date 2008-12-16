@@ -49,8 +49,6 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 #define binary_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
                          !gretl_model_get_int(m, "ordered"))
 
-#define nonlin_model(m) (m->ci == NLS || m->ci == MLE || m->ci == GMM)
-
 #define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
 
 #define tsls_model(m) (m->ci == IVREG && !(m->opt & OPT_L) && !m->aux)
@@ -321,7 +319,7 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 
     if (tex_format(prn)) {
 	pprintf(prn, "%s: ", I_(texstrs[j]));
-	pprintf(prn, " & $\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
+	pprintf(prn, " $\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
 	if (pmod->ci == GMM) {
 	    pputs(prn, "  ");
@@ -373,8 +371,10 @@ static void print_GMM_stats (const MODEL *pmod, PRN *prn)
     if (!na(x)) {
 	print_GMM_chi2_test(pmod, x, J_TEST, prn);
     }
-
-    gretl_prn_newline(prn);
+    
+    if (!tex_format(prn)) {
+	gretl_prn_newline(prn);
+    }
 }
 
 static void print_DPD_stats (const MODEL *pmod, PRN *prn)
@@ -1669,7 +1669,7 @@ static int alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
     if (pmod != NULL) {
 	gretl_matrix *m;
 
-	use_param = nonlin_model(pmod);
+	use_param = NONLIST_MODEL(pmod->ci);
 	slopes = binary_model(pmod) && !(pmod->opt & OPT_P);
 	intervals = gretl_model_get_data(pmod, "coeff_intervals") != NULL;
 	m = gretl_model_get_data(pmod, "rq_sequence");
@@ -3730,7 +3730,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 	    intervals = 1;
 	    ncols = 3;
 	}
-    } else if (nonlin_model(pmod)) {
+    } else if (NONLIST_MODEL(pmod->ci)) {
 	headings[0] = N_("estimate");
     }
 

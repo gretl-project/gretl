@@ -1123,7 +1123,11 @@ static void print_restriction (const gretl_restriction *rset,
 	    MODEL *pmod = rset->obj;
 
 	    gretl_model_get_param_name(pmod, pdinfo, k, vname);
-	    pprintf(prn, "b[%s]", vname);
+	    if (NONLIST_MODEL(pmod->ci)) {
+		pputs(prn, vname);
+	    } else {
+		pprintf(prn, "b[%s]", vname);
+	    }
 	}
     }
 

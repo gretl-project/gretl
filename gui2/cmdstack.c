@@ -25,17 +25,18 @@
 #define CMD_DEBUG 0
 
 static char logname[FILENAME_MAX];
-static time_t logtime;
 static char *logline;
 static PRN *logprn;
 static int n_cmds;
 static int prev_ID;
 static int session_open;
 
-/* For use with existing session log file */
+/* For use with an existing session log file, whose name is registered
+   in 'logname' */
 
-static int logfile_reinit (void)
+static int session_logfile_init (void)
 {
+    time_t logtime;
     FILE *fp;
 
     fp = gretl_fopen(logname, "a");
@@ -51,72 +52,89 @@ static int logfile_reinit (void)
     }
 
     prev_ID = 0;
-    logtime = time(NULL);
     
 #if CMD_DEBUG
-    fprintf(stderr, "logfile_reinit: open prn for '%s'\n", logname);
+    fprintf(stderr, "session_logfile_init: open prn for '%s'\n", logname);
 #endif
 
-    pprintf(logprn, "Log re-started %s\n", print_time(&logtime));
+    logtime = time(NULL);
+    pprintf(logprn, "# Log re-started %s\n", print_time(&logtime));
 
     return 0;
 }
 
-/* make the name of the logfile, open a stream for writing, 
-   and write header text */
+/* For use when the current gretl session is not associated
+   with a session file (starting from scratch): we use a
+   PRN with a temporary file */
 
-static int logfile_init (void)
+static int scratch_logfile_init (void)
 {
+    const char *fname;
+    time_t logtime;
     int err = 0;
 
-    if (session_open && *logname != '\0') {
-	return logfile_reinit();
-    }
-    
     n_cmds = prev_ID = 0;
 
-    if (*logname == '\0') {
-	strcpy(logname, paths.dotdir);
-	strcat(logname, "session.inp");
-    }
+    *logname = '\0';
 
-    logtime = time(NULL);
-
-    logprn = gretl_print_new_with_filename(logname, &err); 
+    logprn = gretl_print_new_with_tempfile(&err); 
     
     if (err) {
-	file_write_errbox(logname);
+	gui_errmsg(err);
 	return err;
+    }
+
+    fname = gretl_print_get_tempfile_name(logprn);
+    if (fname != NULL) {
+	strcpy(logname, fname);
     }
 
 #if CMD_DEBUG
     fprintf(stderr, "logfile_init: open prn for '%s'\n", logname);
 #endif
 
-    pprintf(logprn, "Log started %s\n", print_time(&logtime));
+    logtime = time(NULL);
+    pprintf(logprn, "# Log started %s\n", print_time(&logtime));
 
-    pputs(logprn, "# Record of commands issued in the current session.  Please note\n"
-	  "# that this may require editing if it is to be run as a script.\n");
+    pputs(logprn, "# Record of session commands.  Please note that this will\n"
+	  "# likely require editing if it is to be run as a script.\n");
 
     return 0;
 }
 
-/* close down the logfile writing apparatus */
+static int logfile_init (void)
+{
+    if (session_open && *logname != '\0') {
+	return session_logfile_init();
+    } else {
+	return scratch_logfile_init();
+    }
+}
+
+/* Close down the logfile writing apparatus.  If we were writing to a
+   temporary file, this will be deleted by gretl_print_destroy.
+   Designed so that it doesn't hurt to call this function more
+   times than is strictly necessary (to ensure cleanup).
+*/
 
 void free_command_stack (void)
 {
+#if CMD_DEBUG
+    fprintf(stderr, "free_command_stack\n");
+#endif
     if (logline != NULL) {
 	free(logline);
 	logline = NULL;
     }
 
     if (logprn != NULL) {
-	/* close but do not remove file */
 	gretl_print_destroy(logprn);
 	logprn = NULL;
     }
 
     n_cmds = prev_ID = 0;
+
+    *logname = '\0';
 }
 
 /* write out the last stacked command line, if any, and
@@ -130,6 +148,13 @@ static int flush_logfile (void)
 	/* nothing to be done */
 	return 0;
     }
+
+    gretl_error_clear();
+
+#if CMD_DEBUG
+    fprintf(stderr, "flush_logfile: logname='%s', logprn=%p\n",
+	    logname, (void *) logprn);
+#endif
 
     if (logprn == NULL) {
 	err = logfile_init();
@@ -161,10 +186,6 @@ int add_command_to_stack (const char *s)
     if (s == NULL || *s == '\0') {
 	return 1;
     }
-
-#if 0
-    fprintf(stderr, "session dir = '%s'\n", get_session_dirname());
-#endif
 
     /* not a model command, so delete record of
        previous model ID number */
@@ -208,6 +229,7 @@ void delete_last_command (void)
     if (logline != NULL) {
 	free(logline);
 	logline = NULL;
+	n_cmds--;
     }
 }
 
@@ -229,6 +251,8 @@ int model_command_init (int model_ID)
 	return 1;
     }
 
+    n_cmds++;
+
     err = flush_logfile();
 
     if (!err) {
@@ -238,11 +262,15 @@ int model_command_init (int model_ID)
 	}
 	echo_cmd(libcmd, datainfo, line, CMD_RECORDING, logprn);
 	mark_session_changed();
-	n_cmds++;
+    } else {
+	n_cmds--;
     }
 
     return err;
 }
+
+/* called in response to the refresh/reload button in the
+   viewer window for the command log */
 
 gchar *get_logfile_content (int *err)
 {
@@ -261,6 +289,8 @@ gchar *get_logfile_content (int *err)
     return s;
 }
 
+/* called from main menu under Tools */
+
 void view_command_log (void)
 {
     if (!session_open && n_cmds == 0) {
@@ -278,18 +308,27 @@ void view_command_log (void)
    This function gets called when when saving a session, opening a
    session file, or closing a session.
 
-   On saving, we shift the logfile into the session directory so it'll
-   get saved along with the other materials.  On opening a session, we
-   set the logfile name so the re-opened log can be displayed.  On
-   closing a session, we redirect the log to the default location in
-   the user's "dotdir"; this is signalled by a NULL value for the
-   dirname argument.
+   On saving, we shift the existing logfile into the session directory
+   so it'll get saved along with the other materials -- if required.
+   (But if the save is of a session that has already been saved to
+   file, the logfile location will already be correct.)
+
+   On opening a session file, we set the logfile name so the re-opened
+   log can be displayed and added to.
+
+   On closing a session, we close the current session logfile and
+   redirect the log to a tempfile in the user's "dotdir"; this is
+   signalled by a NULL value for the dirname argument.
 */
 
 void set_session_log (const char *dirname, int code)
 {
     char tmp[FILENAME_MAX];
     int err;
+
+#if CMD_DEBUG
+    fprintf(stderr, "set_session_log: dirname = '%s'\n", dirname);
+#endif
 
     flush_logfile();
 
@@ -314,7 +353,6 @@ void set_session_log (const char *dirname, int code)
 	    session_open = 1;
 	} else {
 	    /* closing session */
-	    *logname = '\0';
 	    session_open = 0;
 	}
     }

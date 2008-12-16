@@ -712,7 +712,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	    make_cname(pdinfo->varname[pmod->list[j]], targ);
 	} else if (pmod->ci == PANEL && (pmod->opt & OPT_W)) {
 	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
-	} else if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
+	} else if (NONLIST_MODEL(pmod->ci) ||
 		   pmod->ci == ARMA || pmod->ci == PANEL ||
 		   pmod->ci == ARBOND || pmod->ci == GARCH) {
 	    k = i;
@@ -1538,7 +1538,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		list[i] = pmod->list[i + 1];
 	    }
 	}	
-    } else if (pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM) {
+    } else if (!NONLIST_MODEL(pmod->ci)) {
 	if (pmod->ci == HECKIT) {
 	    nx = gretl_model_get_int(pmod, "base-coeffs");
 	} else {
@@ -4094,7 +4094,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 {
     int ok = 1;
 
-    if (mci == NLS || mci == MLE || mci == GMM) {
+    if (NONLIST_MODEL(mci)) {
 	return (test_ci == RESTRICT ||
 		test_ci == TABPRINT ||
 		test_ci == TESTUHAT);
@@ -5033,7 +5033,7 @@ static gretl_matrix *model_get_rhovec (const MODEL *pmod, int *err)
 {
     gretl_matrix *r = NULL;
 
-    if (AR1_MODEL(pmod->ci)) {
+    if (pmod->ci == AR1) {
 	double x = gretl_model_get_double(pmod, "rho_in");
 
 	r = gretl_matrix_from_scalar(x);
@@ -5272,7 +5272,7 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
     if (idx == M_RHO) {
 	if (!(numeric_string(s))) {
 	    *err = E_INVARG;
-	} else if (dot_atof(s) == 1 && AR1_MODEL(pmod->ci)) {
+	} else if (dot_atof(s) == 1 && pmod->ci == AR1) {
 	    x = gretl_model_get_double(pmod, "rho_in");
 	} else if (pmod->ci != AR && dot_atof(s) == 1) {
 	    x = pmod->rho;

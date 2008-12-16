@@ -79,8 +79,6 @@ struct CoeffIntervals_ {
                      c == ARMA || \
                      c == GARCH)
 
-#define AR1_MODEL(c) (c == AR1)
-
 #define SIMPLE_AR_MODEL(c) (c == AR || c == AR1)
 
 #define ML_ESTIMATOR(c) (c == ARMA || \
@@ -113,6 +111,10 @@ struct CoeffIntervals_ {
                              c == POISSON || \
                              c == PROBIT || \
                              c == TOBIT)
+
+/* model where the specification is not based on a list
+   of variables */
+#define NONLIST_MODEL(c) (c == NLS || c == MLE || c == GMM)
 
 #define is_model_ref_cmd(c) (c == ADD || \
 	                     c == ARCH || \

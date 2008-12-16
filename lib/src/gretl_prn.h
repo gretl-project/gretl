@@ -56,6 +56,8 @@ PRN *gretl_print_new_with_tempfile (int *err);
 
 int gretl_print_has_tempfile (PRN *prn);
 
+const char *gretl_print_get_tempfile_name (PRN *prn);
+
 PRN *gretl_print_new_with_buffer (char *buf);
 
 PRN *gretl_print_new_with_stream (FILE *fp);

@@ -664,6 +664,7 @@ int main (int argc, char *argv[])
     }
 
     destroy_file_collections();
+    free_command_stack();
 
     return EXIT_SUCCESS;
 }
