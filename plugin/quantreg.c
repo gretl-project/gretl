@@ -1422,7 +1422,10 @@ int rq_driver (const char *parm, MODEL *pmod,
 	gretl_model_set_int(pmod, "rq", 1);
 	if (opt & OPT_R) {
 	    gretl_model_set_int(pmod, "rq_nid", 1);
+	    pmod->opt |= OPT_R;
 	}
+	gretl_model_set_vcv_info(pmod, VCV_RQ, (opt & OPT_R)?
+				 RQ_NID : RQ_ASY);
     }
 
     gretl_matrix_free(y);

@@ -1159,7 +1159,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 	    err = 0;
 	    do_hess = 1;
 	} else {
-	    gretl_model_set_int(pmod, "ml_vcv", VCV_OP);
+	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
 	    pmod->opt |= OPT_G;
 	}
     }	
@@ -1173,7 +1173,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 	if (!err) {
 	    maybe_rescale_hessian(kopt, vcv, k, T);
 	    arma_hessian_vcv(pmod, vcv, k);
-	    gretl_model_set_int(pmod, "ml_vcv", VCV_HESSIAN);
+	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
 	}
     }
 

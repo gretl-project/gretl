@@ -1302,15 +1302,14 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     }
 
     if (!err && using_HAC(s)) {
-	gretl_model_set_int(pmod, "using_hac", 1);
-	gretl_model_set_int(pmod, "hac_kernel", s->oc->hinfo.kern);
 	if (s->oc->hinfo.kern == KERNEL_QS) {
-	    gretl_model_set_double(pmod, "qs_bandwidth", s->oc->hinfo.bt);
+	    gretl_model_set_full_vcv_info(pmod, VCV_HAC, s->oc->hinfo.kern,
+					  0, s->oc->hinfo.whiten, 
+					  s->oc->hinfo.bt);
 	} else {
-	    gretl_model_set_int(pmod, "hac_lag", s->oc->hinfo.h);
-	}
-	if (s->oc->hinfo.whiten) {
-	    gretl_model_set_int(pmod, "hac_prewhiten", 1);
+	    gretl_model_set_full_vcv_info(pmod, VCV_HAC, s->oc->hinfo.kern,
+					  s->oc->hinfo.h, s->oc->hinfo.whiten, 
+					  NADBL);
 	}
     }
 

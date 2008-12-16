@@ -773,7 +773,8 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     gretl_model_set_int(pmod, "n_point", IC->typecount[3]);
 
     if (opt & OPT_R) {
-	gretl_model_set_int(pmod, "ml_vcv", VCV_QML);
+	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+	pmod->opt |= OPT_R;
     }
 
     if (IC->pmod->ifc) {

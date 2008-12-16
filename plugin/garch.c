@@ -448,7 +448,7 @@ garch_driver (const int *list, double **Z, double scale,
 	    gretl_model_set_int(pmod, "fncount", fnc);
 	    gretl_model_set_int(pmod, "grcount", grc);
 	}
-	gretl_model_set_int(pmod, "ml_vcv", vopt);
+	gretl_model_set_vcv_info(pmod, VCV_ML, vopt);
     }
 
  bailout:

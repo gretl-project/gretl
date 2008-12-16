@@ -47,6 +47,52 @@ struct CoeffIntervals_ {
     int ifc;
 };
 
+typedef enum {
+    VCV_CLASSICAL,
+    VCV_HC,
+    VCV_HAC,
+    VCV_ML,
+    VCV_PANEL,
+    VCV_RQ
+} VCVMajorType;
+
+typedef enum {
+    VCV_UNSET,
+    VCV_HESSIAN,
+    VCV_IM,
+    VCV_OP,
+    VCV_QML,
+    VCV_BW,
+    VCV_MAX
+} MLVCVType;
+
+typedef enum {
+    KERNEL_BARTLETT,
+    KERNEL_PARZEN,
+    KERNEL_QS,
+    KERNEL_MAX
+} HACKernel;
+
+typedef enum {
+    PANEL_HAC,
+    PANEL_BK   /* Beck-Katz */
+} PanelVCVType;
+
+typedef enum {
+    RQ_ASY,
+    RQ_NID    /* sandwich */
+} RQVCVType;
+
+typedef struct VCVInfo_ VCVInfo;
+
+struct VCVInfo_ {
+    int vmaj;
+    int vmin;
+    int order;
+    int flags;
+    double bw;
+};
+
 /* single-equation model commands */
 
 #define MODEL_COMMAND(c) (c == AR || \
@@ -212,6 +258,11 @@ int gretl_model_detach_data_item (MODEL *pmod, const char *key);
 int gretl_model_set_int (MODEL *pmod, const char *key, int val);
 
 int gretl_model_set_double (MODEL *pmod, const char *key, double val);
+
+int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
+				   int order, int flags, double bw);
+
+int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin);
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key);
 

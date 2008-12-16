@@ -460,10 +460,7 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
     gretl_matrix_qform(var->XTX, GRETL_MOD_TRANSPOSE, XOX,
 		       V, GRETL_MOD_NONE);
 
-    gretl_model_set_int(pmod, "hc", 1);
-    if (hcv > 0) {
-	gretl_model_set_int(pmod, "hc_version", 1);
-    }
+    gretl_model_set_vcv_info(pmod, VCV_HC, hcv);
 
     gretl_matrix_free(XOX);
 

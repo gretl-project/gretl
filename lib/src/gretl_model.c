@@ -448,6 +448,73 @@ int gretl_model_set_double (MODEL *pmod, const char *key, double val)
     return err;
 }
 
+static VCVInfo *vcv_info_new (void)
+{
+    VCVInfo *vi;
+
+    vi = malloc(sizeof *vi);
+
+    if (vi != NULL) {
+	vi->vmaj = vi->vmin = 0;
+	vi->order = vi->flags = 0;
+	vi->bw = NADBL;
+    }
+
+    return vi;
+}
+
+/**
+ * gretl_model_set_full_vcv_info:
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
+				   int order, int flags, double bw)
+{
+    VCVInfo *vi;
+    int prev = 0;
+    int err = 0;
+
+    vi = gretl_model_get_data(pmod, "vcv_info");
+    
+    if (vi == NULL) {
+	vi = vcv_info_new();
+	if (vi == NULL) {
+	    return E_ALLOC;
+	}
+    } else {
+	prev = 1;
+    }
+
+    vi->vmaj = vmaj;
+    vi->vmin = vmin;
+    vi->order = order;
+    vi->flags = flags;
+    vi->bw = bw;
+
+    if (!prev) {
+	err = gretl_model_set_data(pmod, "vcv_info", vi, 
+				   GRETL_TYPE_STRUCT,
+				   sizeof *vi);
+    }
+
+    return err;
+}
+
+/**
+ * gretl_model_set_vcv_info:
+ * @pmod: pointer to model.
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin)
+{
+    return gretl_model_set_full_vcv_info(pmod, vmaj, vmin, 
+					 0, 0, 0);
+}
+
 /**
  * gretl_model_get_data_and_size:
  * @pmod: pointer to model.
@@ -3182,7 +3249,7 @@ static int copy_model_params (MODEL *targ, const MODEL *src)
     return 0;
 }
 
-static void print_model_coeff_sep (model_data_item *item, FILE *fp)
+static void serialize_coeff_sep (model_data_item *item, FILE *fp)
 {
     CoeffSep *cs = (CoeffSep *) item->ptr;
 
@@ -3191,6 +3258,24 @@ static void print_model_coeff_sep (model_data_item *item, FILE *fp)
 	fputs(" string=\"", fp);
 	gretl_xml_put_raw_string(cs->str, fp);
 	fputc('"', fp);
+    }
+    fputs("/>\n", fp);
+}
+
+static void serialize_vcv_info (model_data_item *item, FILE *fp)
+{
+    VCVInfo *vi = (VCVInfo *) item->ptr;
+
+    fprintf(fp, " vmaj=\"%d\"", vi->vmaj);
+    fprintf(fp, " vmin=\"%d\"", vi->vmin);
+    if (vi->order > 0) {
+	fprintf(fp, " order=\"%d\"", vi->order);
+    }
+    if (vi->flags > 0) {
+	fprintf(fp, " flags=\"%d\"", vi->flags);
+    }
+    if (vi->bw > 0 && !na(vi->bw)) {
+	fprintf(fp, " bw=\"%.12g\"", vi->bw);
     }
     fputs("/>\n", fp);
 }
@@ -3267,9 +3352,12 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 		item->key, gretl_type_name(item->type));
 
 	if (!strcmp(item->key, "coeffsep")) {
-	    print_model_coeff_sep(item, fp);
+	    serialize_coeff_sep(item, fp);
 	    continue;
-	}
+	} else if (!strcmp(item->key, "vcv_info")) {
+	    serialize_vcv_info(item, fp);
+	    continue;
+	}	    
 
 	if (item->type == GRETL_TYPE_INT_ARRAY) {
 	    nelem = item->size / sizeof(int);
@@ -3665,6 +3753,35 @@ retrieve_model_coeff_separator (xmlNodePtr cur, MODEL *pmod)
     return err;
 }
 
+static int 
+retrieve_model_vcv_info (xmlNodePtr cur, MODEL *pmod)
+{
+    VCVInfo *vi = vcv_info_new();
+    int err = 0;
+
+    if (vi != NULL) {
+	int ival;
+	double x;
+
+	gretl_xml_get_prop_as_int(cur, "vmaj", &vi->vmaj);
+	gretl_xml_get_prop_as_int(cur, "vmin", &vi->vmin);
+	if (gretl_xml_get_prop_as_int(cur, "order", &ival)) {
+	    vi->order = ival;
+	}
+	if (gretl_xml_get_prop_as_int(cur, "flags", &ival)) {
+	    vi->flags = ival;
+	}
+	if (gretl_xml_get_prop_as_double(cur, "bw", &x)) {
+	    vi->bw = x;
+	}
+	err = gretl_model_set_data(pmod, "vcv_info", vi, 
+				   GRETL_TYPE_STRUCT, 
+				   sizeof *vi);
+    }
+
+    return err;
+}
+
 /* backward compatibility: transcribe old-style "gretl_set_int"
    settings to bits in pmod->opt, where applicable
 */
@@ -3728,11 +3845,64 @@ static int gretl_model_set_int_compat (MODEL *pmod,
     return err;
 }
 
+/* backward compat: convert ad hoc settings to VCVInfo */
+
+static void compat_compose_vcv_info (MODEL *pmod)
+{
+    VCVInfo vi = { 0, 0, 0, 0, NADBL };
+    int ival;
+
+    if (gretl_model_get_int(pmod, "hc")) {
+	vi.vmaj = VCV_HC;
+	vi.vmin = gretl_model_get_int(pmod, "hc_version");
+    } else if ((ival = gretl_model_get_int(pmod, "ml_vcv"))) {
+	vi.vmaj = VCV_ML;
+	vi.vmin = ival;
+    } else if (gretl_model_get_int(pmod, "panel_hac")) {
+	vi.vmaj = VCV_PANEL;
+	vi.vmin = PANEL_HAC;
+    } else if (gretl_model_get_int(pmod, "panel_bk")) {
+	vi.vmaj = VCV_PANEL;
+	vi.vmin = PANEL_BK;
+    } else if (gretl_model_get_int(pmod, "using_hac") ||
+	       gretl_model_get_int(pmod, "hac_kernel") ||
+	       gretl_model_get_int(pmod, "hac_lag")) {
+	vi.vmaj = VCV_HAC;
+	vi.vmin = gretl_model_get_int(pmod, "hac_kernel");
+	vi.order = gretl_model_get_int(pmod, "hac_lag");
+	vi.flags = gretl_model_get_int(pmod, "hac_prewhiten");
+	if (vi.vmin == KERNEL_QS) {
+	    vi.bw = gretl_model_get_double(pmod, "qs_bandwidth");
+	}
+    } else if (pmod->ci == LAD && gretl_model_get_int(pmod, "rq")) {
+	double a = gretl_model_get_double(pmod, "rq_alpha");
+
+	if (na(a)) {
+	    /* doing VCV, not confidence intervals */
+	    vi.vmaj = VCV_RQ;
+	    vi.vmin = (gretl_model_get_int(pmod, "rq_nid"))?
+		RQ_NID : RQ_ASY;
+	}
+    }
+
+    if (vi.vmaj > 0) {
+	VCVInfo *pvi = vcv_info_new();
+	
+	if (pvi != NULL) {
+	    *pvi = vi;
+	    gretl_model_set_data(pmod, "vcv_info", pvi, 
+				 GRETL_TYPE_STRUCT, 
+				 sizeof *pvi);
+	}
+    }
+}
+
 static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 				      MODEL *pmod, int fixopt)
 {
     xmlNodePtr cur;
     int n_items;
+    int got_vcv = 0;
     int err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "count", &n_items)) {
@@ -3757,6 +3927,11 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	if (!strcmp(key, "coeffsep") || !strcmp(key, "10")) {
 	    /* special, with backward compatibility */
 	    err = retrieve_model_coeff_separator(cur, pmod);
+	} else if (!strcmp(key, "vcv_info")) {
+	    err = retrieve_model_vcv_info(cur, pmod);
+	    if (!err) {
+		got_vcv = 1;
+	    }
 	} else if (t == GRETL_TYPE_INT) {
 	    int ival;
 
@@ -3833,6 +4008,10 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	xmlFree(typestr);
 
 	cur = cur->next;
+    }
+
+    if (!err && !got_vcv) {
+	compat_compose_vcv_info(pmod);
     }
 
     return err;

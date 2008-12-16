@@ -541,12 +541,12 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 	p = get_hac_lag(T);
     }
 
-    gretl_model_set_int(pmod, "hac_kernel", kern);
-    gretl_model_set_int(pmod, "hac_prewhiten", prewhiten);
     if (kern == KERNEL_QS) {
-	gretl_model_set_double(pmod, "qs_bandwidth", bt);
+	gretl_model_set_full_vcv_info(pmod, VCV_HAC, kern, 0, 
+				      prewhiten, bt);
     } else {
-	gretl_model_set_int(pmod, "hac_lag", p);
+	gretl_model_set_full_vcv_info(pmod, VCV_HAC, kern, p, 
+				      prewhiten, NADBL);
     }
 
     gretl_matrix_zero(vcv);
@@ -660,10 +660,7 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     }  
 
     hc_version = libset_get_int(HC_VERSION);
-    gretl_model_set_int(pmod, "hc", 1);
-    if (hc_version > 0) {
-	gretl_model_set_int(pmod, "hc_version", hc_version);
-    }
+    gretl_model_set_vcv_info(pmod, VCV_HC, hc_version);
 
     if (hc_version == 1) {
 	for (t=0; t<T; t++) {

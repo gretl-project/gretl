@@ -852,32 +852,29 @@ static void arbond_asy_vcv_line (const MODEL *pmod, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void panel_robust_vcv_line (PRN *prn)
+static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 {
-    if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"", I_("Robust (HAC) standard errors"));
-    } else if (plain_format(prn)) {
-	pputs(prn, _("Robust (HAC) standard errors"));
-    } else {
-	pputs(prn, I_("Robust (HAC) standard errors"));
-    } 
-
-    pputc(prn, '\n');
-}
-
-static void beck_katz_vcv_line (PRN *prn)
-{
-    if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"", I_("Beck-Katz standard errors"));
-    } else if (plain_format(prn)) {
-	pputs(prn, _("Beck-Katz standard errors"));
-    } else if (tex_format(prn)) {
-	pputs(prn, I_("Beck--Katz standard errors"));
-    } else {
-	pputs(prn, I_("Beck-Katz standard errors"));
-    } 
-
-    pputc(prn, '\n');
+    if (vi->vmin == PANEL_HAC) {
+	if (csv_format(prn)) {
+	    pprintf(prn, "\"%s\"", I_("Robust (HAC) standard errors"));
+	} else if (plain_format(prn)) {
+	    pputs(prn, _("Robust (HAC) standard errors"));
+	} else {
+	    pputs(prn, I_("Robust (HAC) standard errors"));
+	} 
+	pputc(prn, '\n');
+    } else if (vi->vmin == PANEL_BK) {
+	if (csv_format(prn)) {
+	    pprintf(prn, "\"%s\"", I_("Beck-Katz standard errors"));
+	} else if (plain_format(prn)) {
+	    pputs(prn, _("Beck-Katz standard errors"));
+	} else if (tex_format(prn)) {
+	    pputs(prn, I_("Beck--Katz standard errors"));
+	} else {
+	    pputs(prn, I_("Beck-Katz standard errors"));
+	} 	
+	pputc(prn, '\n');
+    }
 }
 
 static void beck_katz_failed_line (PRN *prn)
@@ -888,42 +885,37 @@ static void beck_katz_failed_line (PRN *prn)
     }
 }
 
-static void hac_vcv_line (const MODEL *pmod, PRN *prn)
+static void hac_vcv_line (const VCVInfo *vi, PRN *prn)
 {
     const char *kstrs[] = {
 	N_("Bartlett kernel"),
 	N_("Parzen kernel"),
 	N_("QS kernel")
     };
-    int k = gretl_model_get_int(pmod, "hac_kernel");
-    int h = gretl_model_get_int(pmod, "hac_lag");
-    int white = gretl_model_get_int(pmod, "hac_prewhiten");
-    double bt;
 
-    if (k == KERNEL_QS) {
-	bt = gretl_model_get_double(pmod, "qs_bandwidth");
+    if (vi->vmin == KERNEL_QS) {
 	pprintf(prn, I_("HAC standard errors, "
-			"bandwidth %.2f"), bt);
+			"bandwidth %.2f"), vi->bw);
     } else {
 	pprintf(prn, I_("HAC standard errors, "
-			"bandwidth %d"), h);
+			"bandwidth %d"), vi->order);
     }
 
-    pprintf(prn, " (%s", I_(kstrs[k]));
+    pprintf(prn, " (%s", I_(kstrs[vi->vmin]));
 		    
-    if (white) {
+    if (vi->flags) {
 	pprintf(prn, ", %s", I_("prewhitened"));
     }
 
     pputs(prn, ")\n");
 }
 
-static void hc_vcv_line (const MODEL *pmod, PRN *prn)
+static void hc_vcv_line (const VCVInfo *vi, PRN *prn)
 {
-    int hcv = gretl_model_get_int(pmod, "hc_version");
+    int hcv = vi->vmin;
     int jack = 0;
 
-    if (hcv == 4) {
+    if (vi->vmin == 4) {
 	jack = 1;
 	hcv--;
     }
@@ -941,13 +933,12 @@ static void hc_vcv_line (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void ml_vcv_line (const MODEL *pmod, PRN *prn)
+static void ml_vcv_line (const VCVInfo *vi, PRN *prn)
 {
-    int v = gretl_model_get_int(pmod, "ml_vcv");
     int tex = tex_format(prn);
     const char *s = NULL;
 
-    switch (v) {
+    switch (vi->vmin) {
     case VCV_HESSIAN:
 	s = N_("Standard errors based on Hessian");
 	break;
@@ -1043,25 +1034,36 @@ static void tex_arbond_depvar_name (char *s, const char *vname)
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 {
+    VCVInfo *vi = NULL;
+
     if (pmod->ci == LAD && gretl_model_get_int(pmod, "rq")) {
 	rq_vcv_line(pmod, prn);
-    } else if (gretl_model_get_int(pmod, "using_hac") ||
-	gretl_model_get_int(pmod, "hac_kernel") ||
-	gretl_model_get_int(pmod, "hac_lag")) {
-	hac_vcv_line(pmod, prn);
-    } else if (gretl_model_get_int(pmod, "hc")) {
-	hc_vcv_line(pmod, prn);
-    } else if (gretl_model_get_int(pmod, "ml_vcv")) {
-	ml_vcv_line(pmod, prn);
-    } else if (gretl_model_get_int(pmod, "panel_hac")) {
-	panel_robust_vcv_line(prn);
-    } else if (gretl_model_get_int(pmod, "panel_bk")) {
-	beck_katz_vcv_line(prn);
     } else if (gretl_model_get_int(pmod, "panel_bk_failed")) {
 	beck_katz_failed_line(prn);
     } else if (pmod->ci == ARBOND && gretl_model_get_int(pmod, "asy")) {
 	arbond_asy_vcv_line(pmod, prn);
-    } 
+    } else {
+	vi = gretl_model_get_data(pmod, "vcv_info");
+    }
+
+    if (vi != NULL) {
+	switch (vi->vmaj) {
+	case VCV_HC:
+	    hc_vcv_line(vi, prn);
+	    break;
+	case VCV_HAC:
+	    hac_vcv_line(vi, prn);
+	    break;
+	case VCV_ML:
+	    ml_vcv_line(vi, prn);
+	    break;
+	case VCV_PANEL:
+	    panel_vcv_line(vi, prn);
+	    break;
+	default:
+	    break;
+	}
+    }
 }
 
 static void print_extra_list (const char *tag, const int *list, 

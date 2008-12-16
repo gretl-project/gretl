@@ -426,7 +426,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
 
-    gretl_model_set_int(pmod, "panel_bk", 1);
+    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_BK);
 
  bailout:
 
@@ -513,7 +513,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     gretl_matrix_print(V, "V");
 #endif
 
-    gretl_model_set_int(pmod, "panel_hac", 1);
+    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_HAC);
 
  bailout:
 

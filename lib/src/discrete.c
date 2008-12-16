@@ -309,7 +309,8 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
 	}
     }
 
-    gretl_model_set_int(pmod, "ml_vcv", VCV_QML);
+    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+    pmod->opt |= OPT_R;
 
  bailout:
 

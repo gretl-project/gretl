@@ -593,7 +593,8 @@ static void fill_model (MODEL *pmod, const int *list,
     }
 
     if (OC->opt & OPT_R) {
-	gretl_model_set_int(pmod, "ml_vcv", VCV_QML);
+	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+	pmod->opt |= OPT_R;
     }
 
     s = 0;

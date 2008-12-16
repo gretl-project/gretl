@@ -2547,8 +2547,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
     }
 
     pmod->opt |= (OPT_R | OPT_J);
-    gretl_model_set_int(pmod, "hc", 1);
-    gretl_model_set_int(pmod, "hc_version", 4);
+    gretl_model_set_vcv_info(pmod, VCV_HC, 4);
 
  bailout:
 

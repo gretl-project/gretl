@@ -1313,7 +1313,7 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
     }
 
     if (!err) {
-	gretl_model_set_int(pmod, "ml_vcv", vcvopt);
+	gretl_model_set_vcv_info(pmod, VCV_ML, vcvopt);
     }    
 
     return err;

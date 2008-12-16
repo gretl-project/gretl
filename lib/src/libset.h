@@ -21,23 +21,6 @@
 #define LIBSET_H
 
 typedef enum {
-    VCV_UNSET,
-    VCV_HESSIAN,
-    VCV_IM,
-    VCV_OP,
-    VCV_QML,
-    VCV_BW,
-    VCV_MAX
-} VcvType;
-
-typedef enum {
-    KERNEL_BARTLETT,
-    KERNEL_PARZEN,
-    KERNEL_QS,
-    KERNEL_MAX
-} HACKernel;
-
-typedef enum {
     NORM_PHILLIPS,
     NORM_DIAG,
     NORM_FIRST,
