@@ -2905,11 +2905,10 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
  * Solves Tx = b for the unknown vector x, where T is a Toeplitz
  * matrix, that is (zero-based)
  *
- * T_{ij} = c_{i-j} for i<=j  
- * T_{ij} = r_{i-j} for i>j  
+ * T_{ij} = c_{i-j} for i <= j  
+ * T_{ij} = r_{i-j} for i > j   
  *
- * Note that c[0] should equal r[0]. Based on code from Press et
- * al. (2007) "Numerical Recipes", 3rd edition, with adaptations.
+ * Note that c[0] should equal r[0]. 
  *
  * Returns: 0 on successful completion, or non-zero code on error.
  */
@@ -2918,149 +2917,11 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c, 
 				    const gretl_vector *r, 
-				    const gretl_vector *b, int *err)
+				    const gretl_vector *b, 
+				    int *err)
 {
-
-    int i,j,k,m,m1,m2;
-    double x,pp,pt1,pt2,qq,qt1,qt2,sd,sgd,sgn,shn,sxn;
-    double *tmp = NULL;
-    double *g = NULL;
-    double *h = NULL;
-    gretl_matrix *sol = NULL;
-    int dim = gretl_vector_get_length(c);
-
-    /* various checks */
-
-    if (dim == 0 ||
-	dim != gretl_vector_get_length(r) || 
-	dim != gretl_vector_get_length(b)) {
-	*err = E_NONCONF;
-	return NULL;
-    }
-
-    if (r->val[0] != c->val[0]) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    sol = gretl_zero_matrix_new(dim, 1);
-
-    int dim2 = 2*dim - 1;
-    int center = dim - 1;
-
-    tmp = malloc(dim2 * sizeof *tmp);
-    if (tmp == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    } else {
-	for(i=0; i<dim; i++) {
-	    tmp[i] = r->val[center-i];
-	}
-	for(i=dim; i<dim2; i++) {
-	    tmp[i] = c->val[i-center];
-	}
-    }
-    
-#if 0
-    gretl_matrix_print(c, "c");
-    gretl_matrix_print(r, "r");
-    for (i=0; i<dim2; i++) {
-	fprintf(stderr, "%g\n", tmp[i]);
-    }
-#endif
-
-    x = tmp[center];
-    if (fabs(x) < TOEPLITZ_SMALL) {
-	*err = E_SINGULAR;
-	return NULL;
-    }
-
-    g = malloc(dim * sizeof *g);
-    h = malloc(dim * sizeof *h);
-    if (g == NULL || h == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    sol->val[0] = gretl_vector_get(b, 0) / x;
-
-    g[0] = tmp[center-1]/x;
-    h[0] = tmp[center+1]/x;
-
-    /* Main loop over the recursion. */
-    for (i=1; i<dim; i++) {
-	sxn = -gretl_vector_get(b, i);
-	sd = -tmp[center];
-#if 0
-	fprintf(stderr, "i = %d, sd = %g\n", i, sd);
-#endif
-	
-	for (j=0; j<i; j++) {
-	    x = tmp[center+i-j];
-	    sxn += x * gretl_vector_get(sol, j);
-	    sd += x * g[i-1-j];
-#if 0
-	    fprintf(stderr, "\tj = %d, x = %g, sd = %g\n", j, x, sd);
-#endif
-	}
-	
-	if (fabs(sd) < TOEPLITZ_SMALL) {
-	    *err = E_SINGULAR;
-	    return NULL;
-	}
-	
-#if 0
-	fprintf(stderr, "\tsxn = %g, sd = %g\n", sxn, sd);
-#endif
-	sol->val[i] = sxn/sd;
-	
-	for (j=0; j<i; j++) {
-	    sol->val[j] -= sol->val[i] * g[i-1-j];
-	}
-	
-	if (i < dim) {
-	    /* Not done yet: compute numerator and denominator 
-	       for G and H 
-	    */
-	    sgn = -tmp[center-i-1];
-	    shn = -tmp[center+i+1];
-	    sgd = -tmp[center];
-	    for (j=0; j<i; j++) {
-		sgn += tmp[center+j-i]*g[j];
-		shn += tmp[center+i-j]*h[j];
-		sgd += tmp[center+j-i]*h[i-1-j];
-	    }
-	    
-	    if (fabs(sgd) < TOEPLITZ_SMALL) {
-		*err = E_SINGULAR;
-		 return NULL;
-	    }
-#if 0
-	    fprintf(stderr, "\tsgd = %g\n", sd, sgd);
-#endif
-	    g[i] = pp = sgn/sgd;
-	    h[i] = qq = shn/sd;
-	    k = i-1;
-	    m2 = (i+1) >> 1;
-
-	    for (j=0; j<m2; j++) {
-		pt1 = g[j];
-		pt2 = g[k];
-		qt1 = h[j];
-		qt2 = h[k];
-		g[j] = pt1-pp*qt2;
-		g[k] = pt2-pp*qt1;
-		h[j] = qt1-qq*pt2;
-		h[k--] = qt2-qq*pt1;
-	    }
-	}   
-    }
-
-    free(g);
-    free(h);
-    free(tmp);
-
-    return sol;
+    *err = E_DATA;
+    return NULL;
 } 
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
