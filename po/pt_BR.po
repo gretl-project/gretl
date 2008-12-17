@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-10 15:48-0500\n"
-"PO-Revision-Date: 2008-12-15 21:31+0200\n"
-"Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
+"PO-Revision-Date: 2008-12-17 20:01-0300\n"
+"Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
@@ -113,7 +113,7 @@ msgstr "hipótese nula de raiz unitária: a = 1"
 
 #: lib/src/adf_kpss.c:336
 msgid "plus seasonal dummies"
-msgstr "variáveis auxiliares (dummies) de sazonalidade aditiva"
+msgstr "variáveis dummy de sazonalidade aditiva"
 
 #: lib/src/adf_kpss.c:341
 msgid "model"
@@ -337,7 +337,7 @@ msgid ""
 "boxplots: generation of dummy variable failed\n"
 "%s"
 msgstr ""
-"gráfico caixa com bigodes: falhou a criação de variável auxiliar (dummy)\n"
+"gráfico caixa com bigodes: a criação de variável dummy falhou\n"
 "%s"
 
 #: lib/src/boxplots.c:1005
@@ -585,7 +585,7 @@ msgstr "Estatística alternativa"
 
 #: lib/src/compare.c:1995
 msgid "dummy variable for Chow test"
-msgstr "variável auxiliar (dummy) para o teste de Chow"
+msgstr "dummy para o teste de Chow"
 
 #: lib/src/compare.c:2067
 msgid "Chow F-test for break"
@@ -2594,16 +2594,16 @@ msgstr "'%s' refere-se a %s e não pode ser usada como nome de variável"
 
 #: lib/src/genmain.c:467
 msgid "Periodic dummy variables generated.\n"
-msgstr "Geradas variáveis periódicas auxiliares (dummies).\n"
+msgstr "Variáveis dummy periódicas geradas.\n"
 
 #: lib/src/genmain.c:469
 msgid "Periodic dummy variables already present.\n"
-msgstr "Variáveis periódicas auxiliares (dummies) já existentes.\n"
+msgstr "Variáveis dummy periódicas já existentes.\n"
 
 #: lib/src/genmain.c:475
 #: lib/src/genmain.c:480
 msgid "Panel dummy variables generated.\n"
-msgstr "Geradas variáveis de painel auxiliares (dummies).\n"
+msgstr "Geradas variáveis dummy de painel.\n"
 
 #: lib/src/gensyntax.c:255
 #, c-format
@@ -3228,7 +3228,7 @@ msgstr "Variância do erro de unidade-específica = 0"
 
 #: lib/src/gretl_model.c:2780
 msgid "Wald test for joint significance of time dummies"
-msgstr "Teste de Wald para a significância conjunta das variáveis auxiliares (dummies) temporais"
+msgstr "Teste de Wald para a significância conjunta das dummies temporais"
 
 #: lib/src/gretl_model.c:2942
 #, c-format
@@ -3930,7 +3930,7 @@ msgstr "Falha no processamento da observação final"
 #: lib/src/gretl_xml.c:2196
 #, c-format
 msgid "dummy for %s = %lf"
-msgstr "auxiliar (dummy) para %s = %lf"
+msgstr "dummy para %s = %lf"
 
 #: lib/src/gretl_xml.c:2233
 #, c-format
@@ -4944,7 +4944,7 @@ msgstr "Variável usada como peso"
 
 #: lib/src/modelprint.c:1543
 msgid "Weight var is a dummy variable, effective obs ="
-msgstr "A variável peso é uma variável auxiliar (dummy), observação efetiva ="
+msgstr "A variável peso é uma variável dummy, observação efetiva ="
 
 #: lib/src/modelprint.c:1603
 msgid "$z$-stat"
@@ -5073,7 +5073,8 @@ msgid ""
 msgstr ""
 "AVISO: A constante estava presente nos regressores mas não entre os\n"
 "instrumentos, como tal ela foi automaticamente acrescentada à lista de instrumentos.\n"
-"Este comportamento pode ser modificado em versões futuras, por isso recomendamos que ajuste os seus scripts para prevenir isto.\n"
+"Este comportamento pode ser modificado em versões futuras, por isso recomendamos\n"
+"que ajuste os seus scripts para prevenir isto.\n"
 
 #: lib/src/modelprint.c:1760
 msgid ""
@@ -5140,7 +5141,7 @@ msgstr "Critério Bayesiano de Schwarz"
 
 #: lib/src/modelprint.c:2208
 msgid "note on model statistics abbreviations here"
-msgstr "aqui fica uma nota sobre abreviaturas de estatísticas do modelo"
+msgstr ""
 
 #: lib/src/modelprint.c:2214
 msgid "Mean dependent var"
@@ -6345,7 +6346,7 @@ msgstr "Falta informação de sub-amostragem; não se pode fundir os dados\n"
 #: lib/src/subsample.c:692
 #, c-format
 msgid "'%s' is not a dummy variable"
-msgstr "'%s' não é uma variável auxiliar (dummy)"
+msgstr "'%s' não é uma variável dummy"
 
 #: lib/src/subsample.c:687
 #, c-format
@@ -6659,7 +6660,7 @@ msgstr "= %s vezes %s"
 #: lib/src/transforms.c:631
 #, c-format
 msgid "dummy for %s = %g"
-msgstr "auxiliar (dummy) para %s = %g"
+msgstr "dummy para %s = %g"
 
 #: lib/src/transforms.c:697
 #: lib/src/transforms.c:1153
@@ -7066,7 +7067,7 @@ msgid ""
 "You must supply three variables, the last of which is a dummy variable\n"
 "(with values 1 or 0)\n"
 msgstr ""
-"Deve fornecer três variáveis, sendo a última delas uma variável auxiliar (dummy)\n"
+"Deve fornecer três variáveis, sendo a última delas uma variável dummy\n"
 "(com valores 1 ou 0)\n"
 
 #: cli/gretlcli.c:910
@@ -7140,7 +7141,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <ch.andrade@gmail.com>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 15 de Dezembro de 2008."
+"Tradução de 17 de Dezembro de 2008."
 
 #: gui2/about.c:163
 msgid "License"
@@ -8922,11 +8923,11 @@ msgstr "Fim:"
 
 #: gui2/dialogs.c:2054
 msgid "There are no dummy variables in the current sample"
-msgstr "Não existem variáveis auxiliares (dummies) na amostra atual"
+msgstr "Não existem variáveis dummy na amostra atual"
 
 #: gui2/dialogs.c:2056
 msgid "There are no dummy variables in the dataset"
-msgstr "Não existem variáveis auxiliares (dummies) no conjunto de dados"
+msgstr "Não existem variáveis dummy no conjunto de dados"
 
 #: gui2/dialogs.c:2062
 msgid "gretl: set sample"
@@ -8934,7 +8935,7 @@ msgstr "gretl: definir amostra"
 
 #: gui2/dialogs.c:2068
 msgid "Name of dummy variable to use:"
-msgstr "Nome da variável auxiliar (dummy) a usar:"
+msgstr "Nome da variável dummy a usar:"
 
 #: gui2/dialogs.c:2095
 #, c-format
@@ -10681,19 +10682,19 @@ msgstr "Variável _aleatória"
 
 #: gui2/gretl.c:1382
 msgid "_Periodic dummies"
-msgstr "Variáveis auxiliares (dummies) _periódicas"
+msgstr "Dummies _periódicas"
 
 #: gui2/gretl.c:1383
 msgid "_Unit dummies"
-msgstr "Variáveis auxiliares (dummies) de raiz _unitária"
+msgstr "Dummies _unitárias"
 
 #: gui2/gretl.c:1384
 msgid "_Time dummies"
-msgstr "Variáveis auxiliares (dummies) _temporais"
+msgstr "Dummies _temporais"
 
 #: gui2/gretl.c:1385
 msgid "Dummies for selected _discrete variables"
-msgstr "Variáveis auxiliares (dummies) para as variáveis _discretas selecionadas"
+msgstr "Dummies para as variáveis _discretas selecionadas"
 
 #: gui2/gretl.c:1387
 msgid "_Define matrix..."
@@ -10713,7 +10714,7 @@ msgstr "_Restaurar intervalo completo"
 
 #: gui2/gretl.c:1393
 msgid "_Define, based on dummy..."
-msgstr "Definir, baseado em simuladas..."
+msgstr "_Definir, baseado em dummy..."
 
 #: gui2/gretl.c:1394
 msgid "_Restrict, based on criterion..."
@@ -10994,7 +10995,7 @@ msgstr "Estimação _robusta"
 
 #: gui2/gretl.c:1478
 msgid "Least _Absolute Deviation..."
-msgstr "Mínimo desvio absoluto (MAD)..."
+msgstr "Mínimo desvio absoluto (LAD)..."
 
 #: gui2/gretl.c:1479
 msgid "_Quantile regression..."
@@ -12073,7 +12074,7 @@ msgstr "com constante, tendência e quadrado da tendência"
 
 #: gui2/library.c:923
 msgid "include seasonal dummies"
-msgstr "incluir auxiliares (dummies) de sazonalidade"
+msgstr "incluir dummies sazonais"
 
 #: gui2/library.c:924
 #: gui2/library.c:936
@@ -12439,11 +12440,11 @@ msgstr "Ignorar o valor mais alto"
 
 #: gui2/library.c:4476
 msgid "gretl: create dummy variables"
-msgstr "gretl: criar variáveis auxiliares (dummies)"
+msgstr "gretl: criar variáveis dummy"
 
 #: gui2/library.c:4477
 msgid "Encoding variables as dummies"
-msgstr "Codificando as variáveis como sendo auxiliares (dummies)"
+msgstr "Codificando as variáveis como sendo dummies"
 
 #: gui2/library.c:4524
 msgid "gretl: generate lags"
@@ -12531,8 +12532,8 @@ msgid ""
 "You must supply three variables, the last\n"
 "of which is a dummy variable (values 1 or 0)"
 msgstr ""
-"Você deve fornecer 3 variáveis, sendo\n"
-"a última delas uma auxiliar (valores 1 ou 0)"
+"Você deve fornecer 3 variáveis, sendo a\n"
+"última delas uma dummy (valores 1 ou 0)"
 
 #: gui2/library.c:5440
 msgid "You must supply three variables"
@@ -13208,7 +13209,7 @@ msgstr "Escolher ->"
 
 #: gui2/selector.c:2933
 msgid "Set as default"
-msgstr "Definir por omissão"
+msgstr "Definir como padrão"
 
 #: gui2/selector.c:2950
 msgid "Public interface"
@@ -13237,7 +13238,7 @@ msgstr "Variável do eixo Z"
 
 #: gui2/selector.c:3086
 msgid "Factor (dummy)"
-msgstr "Fator (auxiliar (\"dummy\"))"
+msgstr "Fator (dummy)"
 
 #: gui2/selector.c:3088
 msgid "Control variable"
@@ -13321,7 +13322,7 @@ msgstr "Mostrar detalhes das regressões"
 
 #: gui2/selector.c:3864
 msgid "Include seasonal dummies"
-msgstr "Incluir auxiliares (dummies) sazonais"
+msgstr "Incluir dummies sazonais"
 
 #: gui2/selector.c:3872
 msgid "Fine-tune using Cochrane-Orcutt"
@@ -13341,7 +13342,7 @@ msgstr "Mínimos quadrados ponderados iterados"
 
 #: gui2/selector.c:3883
 msgid "Include time dummies"
-msgstr "Incluir auxiliares (dummies) temporais"
+msgstr "Incluir dummies temporais"
 
 #: gui2/selector.c:3886
 msgid "Show zeros explicitly"
@@ -14055,7 +14056,7 @@ msgstr "Cores do gnuplot"
 
 #: gui2/settings.c:248
 msgid "Use robust covariance matrix by default"
-msgstr "Usar por omissão a matriz de covariância robusta"
+msgstr "Usar por padrão a matriz de covariância robusta"
 
 #: gui2/settings.c:250
 msgid "For cross-sectional data"
@@ -14757,7 +14758,7 @@ msgstr "Não se encontrou dados.\n"
 #: plugin/excel_import.c:1415
 #: plugin/gnumeric_import.c:635
 msgid "Failed to get workbook info"
-msgstr "Falhou a obtenção de informação no arquivo de trabalho (workbook)"
+msgstr "A obtenção de informação na pasta de trabalho falhou"
 
 #: plugin/excel_import.c:1418
 #: plugin/gnumeric_import.c:643
@@ -15512,7 +15513,7 @@ msgstr ""
 
 #: plugin/workbook.c:546
 msgid "Password protected workbooks are not supported yet."
-msgstr "Ainda não é suportado livros de trabalho (workbooks) protegidos com palavra-chave"
+msgstr "Ainda não são suportadas pastas de trabalho protegidos por senha."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
