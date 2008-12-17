@@ -289,6 +289,7 @@ enum {
     F_MOLS,
     F_FILTER,
     F_TRIMR,
+    F_TOEPSOLV,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

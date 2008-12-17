@@ -300,6 +300,7 @@ struct str_table funcs[] = {
     { F_MSORTBY,  "msortby" },
     { F_LINCOMB,  "lincomb" },
     { F_IMHOF,    "imhof" },
+    { F_TOEPSOLV, "toepsolv" },
     { 0,          NULL }
 };
 

@@ -4406,6 +4406,42 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = filter_series(x, ret->v.xvec, p->dinfo, A, C, y0);
 	    }
 	}
+    } else if (t->t == F_TOEPSOLV) {
+	gretl_vector *c = NULL;
+	gretl_vector *r = NULL;
+	gretl_vector *b = NULL;
+
+	if (k != 3) {
+	    n_args_error(k, 3, "toepsolv", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else {
+		if (e->t != MAT) {
+		    p->err = E_TYPES;
+		} else {
+		    switch (i) {
+		    case 0: 
+			c = e->v.m;
+			break;
+		    case 1: 
+			r = e->v.m;
+			break;
+		    case 2: 
+			b = e->v.m;
+			break;
+		    }
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    m = gretl_toeplitz_solve(c, r, b, &p->err);
+	} 
+	
     } 
 
     if (t->t != F_FILTER) {
@@ -5836,6 +5872,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MOLS:
     case F_FILTER:
     case F_TRIMR:
+    case F_TOEPSOLV:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;
