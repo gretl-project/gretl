@@ -3719,7 +3719,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 	rinfo = datainfo;
     }
 
-    err = genr_fit_resid(pmod, rZ, rinfo, GENR_RESID, 1);
+    err = genr_fit_resid(pmod, rZ, rinfo, M_UHAT, 1);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -4137,7 +4137,7 @@ void residual_correlogram (GtkAction *action, gpointer p)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
-    if (add_fit_resid(pmod, GENR_RESID, 1)) {
+    if (add_fit_resid(pmod, M_UHAT, 1)) {
 	return;
     }
 
@@ -4237,7 +4237,7 @@ void residual_periodogram (GtkAction *action, gpointer p)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
-    if (add_fit_resid(pmod, GENR_RESID, 1)) return;
+    if (add_fit_resid(pmod, M_UHAT, 1)) return;
 
     /* handle model estimated on different subsample */
     if (pmod->dataset != NULL) {
@@ -4608,15 +4608,15 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 
 	populate_varlist();
 
-	if (code == GENR_RESID) {
+	if (code == M_UHAT) {
 	    gretl_command_sprintf("genr %s = $uhat", datainfo->varname[v]);
-	} else if (code == GENR_FITTED) {
+	} else if (code == M_YHAT) {
 	    gretl_command_sprintf("genr %s = $yhat", datainfo->varname[v]);
-	} else if (code == GENR_RESID2) {
+	} else if (code == M_UHAT2) {
 	    gretl_command_sprintf("genr %s = $uhat*$uhat", datainfo->varname[v]);
-	} else if (code == GENR_H) {
+	} else if (code == M_H) {
 	    gretl_command_sprintf("genr %s = $h", datainfo->varname[v]);
-	} else if (code == GENR_AHAT) {
+	} else if (code == M_AHAT) {
 	    gretl_command_sprintf("genr %s = $ahat", datainfo->varname[v]);
 	}
 
@@ -4690,47 +4690,47 @@ void add_model_stat (MODEL *pmod, int which)
     int cancel = 0;
 
     switch (which) {
-    case ESS:
-	descrip = N_("error sum of squares"); 
+    case M_ESS:
+	descrip = N_("Sum of squared residuals"); 
 	val = pmod->ess;
 	statname = "$ess";
 	break;
-    case R2:
-	descrip = N_("R-squared");
+    case M_RSQ:
+	descrip = N_("Unadjusted R-squared");
 	val = pmod->rsq;
 	statname = "$rsq";
 	break;
-    case TR2:
+    case M_TRSQ:
 	descrip = N_("T*R-squared");
 	val = pmod->nobs * pmod->rsq;
 	statname = "$trsq";
 	break;
-    case DF:
+    case M_DF:
 	descrip = N_("degrees of freedom"); 
 	val = (double) pmod->dfd;
 	statname = "$df";
 	break;
-    case SIGMA:
-	descrip = N_("standard error of residuals"); 
+    case M_SIGMA:
+	descrip = N_("Standard error of the regression"); 
 	val = pmod->sigma;
 	statname = "$sigma";
 	break;
-    case LNL:
-	descrip = N_("log likelihood");
+    case M_LNL:
+	descrip = N_("Log-likelihood");
 	val = pmod->lnL;
 	statname = "$lnl";
 	break;	
-    case AIC:
+    case M_AIC:
 	descrip = N_("Akaike Information Criterion"); 
 	val = pmod->criterion[C_AIC];
 	statname = "$aic";
 	break;
-    case BIC:
-	descrip = N_("Bayesian Information Criterion"); 
+    case M_BIC:
+	descrip = N_("Schwarz Bayesian criterion"); 
 	val = pmod->criterion[C_BIC];
 	statname = "$bic";
 	break;
-    case HQC:
+    case M_HQC:
 	descrip = N_("Hannan-Quinn Information Criterion"); 
 	val = pmod->criterion[C_HQC];
 	statname = "$hqc";
@@ -4801,7 +4801,7 @@ void resid_plot (GtkAction *action, gpointer p)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
-    if (add_fit_resid(pmod, GENR_RESID, 1)) {
+    if (add_fit_resid(pmod, M_UHAT, 1)) {
 	return;
     }
 
@@ -4908,7 +4908,7 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     origv = ginfo->v;
 
     /* add fitted values to data set temporarily */
-    if (add_fit_resid(pmod, GENR_FITTED, 1)) {
+    if (add_fit_resid(pmod, M_YHAT, 1)) {
 	return;
     }
 

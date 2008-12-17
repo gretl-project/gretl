@@ -133,14 +133,6 @@ enum ts_codes {
     STRUCTURE_UNKNOWN
 };
 
-enum auto_genr {
-    GENR_RESID,
-    GENR_FITTED,
-    GENR_RESID2,
-    GENR_H,
-    GENR_AHAT
-};
-
 enum progress_flags {
     SP_NONE, 
     SP_LOAD_INIT,

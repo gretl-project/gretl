@@ -1654,10 +1654,10 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     const double *x = NULL;
     int i, t;
 
-    if (code == GENR_H) {
+    if (code == M_H) {
 	x = gretl_model_get_data(pmod, "garch_h");
 	if (x == NULL) return E_DATA;
-    } else if (code == GENR_AHAT) {
+    } else if (code == M_AHAT) {
 	x = gretl_model_get_data(pmod, "ahat");
 	if (x == NULL) return E_DATA;
     }	
@@ -1672,19 +1672,19 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	(*pZ)[i][t] = NADBL;
     }
 
-    if (code == GENR_RESID) {
+    if (code == M_UHAT) {
 	sprintf(vname, "uhat%d", pmod->ID);
 	sprintf(vlabel, _("residual from model %d"), pmod->ID);
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    (*pZ)[i][t] = pmod->uhat[t];
 	}
-    } else if (code == GENR_FITTED) {
+    } else if (code == M_YHAT) {
 	sprintf(vname, "yhat%d", pmod->ID);
 	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    (*pZ)[i][t] = pmod->yhat[t];
 	}
-    } else if (code == GENR_RESID2) { 
+    } else if (code == M_UHAT2) { 
 	/* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
 	sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
@@ -1695,14 +1695,14 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		(*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
 	    }
 	}
-    } else if (code == GENR_H) { 
+    } else if (code == M_H) { 
 	/* garch variance */
 	sprintf(vname, "h%d", pmod->ID);
 	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    (*pZ)[i][t] = x[t];
 	}
-    } else if (code == GENR_AHAT) { 
+    } else if (code == M_AHAT) { 
 	/* fixed-effects constants */
 	sprintf(vname, "ahat%d", pmod->ID);
 	sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);

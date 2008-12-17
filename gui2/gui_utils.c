@@ -2034,7 +2034,7 @@ static GtkActionEntry model_data_base_items[] = {
 static GtkActionEntry ess_items[] = {
     { "ess", NULL, N_("_Error sum of squares"), NULL, NULL, 
       G_CALLBACK(model_stat_callback) },
-    { "se", NULL, N_("_Standard error of residuals"), NULL, NULL, 
+    { "se", NULL, N_("_Standard error of the regression"), NULL, NULL, 
       G_CALLBACK(model_stat_callback) }
 }; 
 

@@ -414,48 +414,50 @@ void fit_resid_callback (GtkAction *action, gpointer data)
     const gchar *s = gtk_action_get_name(action);
     windata_t *mydata = (windata_t *) data; 
     MODEL *pmod = mydata->data;
-    int code = GENR_RESID; 
+    int code = M_UHAT; 
 
     if (!strcmp(s, "yhat")) {
-	code = GENR_FITTED;
+	code = M_YHAT;
     } else if (!strcmp(s, "uhat")) {
-	code = GENR_RESID;
+	code = M_UHAT;
     } else if (!strcmp(s, "uhat2")) {
-	code = GENR_RESID2;
+	code = M_UHAT2;
     } else if (!strcmp(s, "h")) {
-	code = GENR_H;
+	code = M_H;
     } else if (!strcmp(s, "ahat")) {
-	code = GENR_AHAT;
+	code = M_AHAT;
     }
 
     add_fit_resid(pmod, code, 0);
 }
+
+/* callback for adding a scalar from a model */
 
 void model_stat_callback (GtkAction *action, gpointer data)
 {
     const gchar *s = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) data; 
     MODEL *pmod = vwin->data;
-    int code = ESS; 
+    int code = M_ESS; 
 
     if (!strcmp(s, "ess")) {
-	code = ESS;
+	code = M_ESS;
     } else if (!strcmp(s, "se")) {
-	code = SIGMA;
+	code = M_SIGMA;
     } else if (!strcmp(s, "rsq")) {
-	code = R2;
+	code = M_RSQ;
     } else if (!strcmp(s, "trsq")) {
-	code = TR2;
+	code = M_TRSQ;
     } else if (!strcmp(s, "df")) {
-	code = DF;
+	code = M_DF;
     } else if (!strcmp(s, "lnL")) {
-	code = LNL;
+	code = M_LNL;
     } else if (!strcmp(s, "AIC")) {
-	code = AIC;
+	code = M_AIC;
     } else if (!strcmp(s, "BIC")) {
-	code = BIC;
+	code = M_BIC;
     } else if (!strcmp(s, "HQC")) {
-	code = HQC;
+	code = M_HQC;
     }
 
     add_model_stat(pmod, code);

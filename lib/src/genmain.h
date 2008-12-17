@@ -65,6 +65,7 @@ typedef enum {
     M_AHAT,       /* per-unit intercepts in panel model */
     M_H,          /* GARCH predicted variances */
     M_SAMPLE,     /* observations used in estimation */
+    M_UHAT2,      /* squared residuals */
     M_SERIES_MAX, /* -- separator, series/matrices -- */
     M_COEFF,      /* parameter estimates */
     M_SE,         /* parameter standard errors */

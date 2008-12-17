@@ -410,16 +410,6 @@ dialog_data_new (gpointer p, gint code, const char *title,
     g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
 
-#if 0
-    g_signal_connect(G_OBJECT(d->dialog), "show", 
-		     G_CALLBACK(dialog_set_destruction), mdata->main);
-#endif
-
-    if (d->blocking) {
-	g_signal_connect(G_OBJECT(d->dialog), "show", 
-			 G_CALLBACK(gtk_main), NULL);
-    }
-
     return d;
 }
 
@@ -1290,11 +1280,17 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 			 NULL);
     } 
 
-    gtk_widget_show(d->dialog); 
-
     if (modal) {
-	gretl_set_window_modal(d->dialog);
+	g_signal_connect(G_OBJECT(d->dialog), "show", 
+			 G_CALLBACK(gretl_set_window_modal), NULL);
+    }    
+
+    if (d->blocking) {
+	g_signal_connect(G_OBJECT(d->dialog), "show", 
+			 G_CALLBACK(gtk_main), NULL);
     }
+
+    gtk_widget_show(d->dialog); 
 }
 
 char *entry_box_get_trimmed_text (GtkWidget *w)

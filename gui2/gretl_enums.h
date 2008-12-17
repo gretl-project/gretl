@@ -193,18 +193,6 @@ enum pref_tabs {
     TAB_MAX
 };
 
-enum stat_codes {
-    ESS = 1,
-    R2,
-    TR2,
-    DF,
-    SIGMA,
-    LNL,
-    AIC,
-    BIC,
-    HQC
-};
-
 enum clipstuff {
     TARGET_UTF8_STRING,
     TARGET_STRING,

@@ -2259,7 +2259,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 	return 0;
     }
 
-    if (genr_fit_resid(pmod, pZ, pdinfo, GENR_RESID, 1)) {
+    if (genr_fit_resid(pmod, pZ, pdinfo, M_UHAT, 1)) {
 	return E_ALLOC;
     }
 
