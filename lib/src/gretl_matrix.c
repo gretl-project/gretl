@@ -2902,7 +2902,7 @@ static void tsld1 (double *a1, double *a2, double *b,
 		   double *x, double *c1, double *c2, 
 		   int m)
 {
-    int n, i, j, n1, n2;
+    int n, i, n1, n2;
     double r1, r2, r3, r5, r6;
 
     /* ugh fortran indexing FIXME */
@@ -2934,14 +2934,13 @@ static void tsld1 (double *a1, double *a2, double *b,
 	*/
 
 	n1 = n - 1;
-	n2 = n - 2;
 	r5 = a2[n1];
 	r6 = a1[n];
 	if (n > 2) {
+	    n2 = n - 2;
 	    c1[n1] = r2;
 	    for (i=1; i<=n2; i++) {
-		j = n - i;
-		r5 += a2[i] * c1[j];
+		r5 += a2[i] * c1[n-i];
 		r6 += a1[i + 1] * c2[i];
 	    }
 	}
@@ -2966,8 +2965,7 @@ static void tsld1 (double *a1, double *a2, double *b,
 
 	r5 = 0.0;
 	for (i=1; i<=n1; i++) {
-	    j = n - i;
-	    r5 += a2[i] * x[j];
+	    r5 += a2[i] * x[n-i];
 	}
 	r6 = (b[n] - r5) / r1;
 	for (i=1; i<=n1; i++) {
