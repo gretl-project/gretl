@@ -2896,6 +2896,87 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
     return 0;
 } 
 
+/* translation of tsld1.f in the netlib toeplitz directory */
+
+static void tsld1 (double *a1, double *a2, double *b, 
+		   double *x, double *c1, double *c2, 
+		   int m)
+{
+    int n, i, j, n1, n2;
+    double r1, r2, r3, r5, r6;
+
+    /* ugh fortran indexing FIXME */
+    a1--;
+    a2--;
+    b--;
+    x--;
+    c1--;
+    c2--;
+
+    /* solve the system with principal minor of order 1 */
+
+    r1 = a1[1];
+    x[1] = b[1] / r1;
+    if (m == 1) {
+	return;
+    }
+
+    r2 = 0.0;
+
+    /* recurrent process for solving the system
+       with the toeplitz matrix for n = 2, m 
+    */
+
+    for (n=2; n<=m; n++) {
+
+        /* compute multiples of the first and last columns of
+           the inverse of the principal minor of order n 
+	*/
+
+	n1 = n - 1;
+	n2 = n - 2;
+	r5 = a2[n1];
+	r6 = a1[n];
+	if (n > 2) {
+	    c1[n1] = r2;
+	    for (i=1; i<=n2; i++) {
+		j = n - i;
+		r5 += a2[i] * c1[j];
+		r6 += a1[i + 1] * c2[i];
+	    }
+	}
+	r2 = -r5 / r1;
+	r3 = -r6 / r1;
+	r1 += r5 * r3;
+	if (n > 2) {
+	    r6 = c2[1];
+	    c2[n1] = 0.0;
+	    for (i=2; i<=n1; i++) {
+		r5 = c2[i];
+		c2[i] = c1[i] * r3 + r6;
+		c1[i] += r6 * r2;
+		r6 = r5;
+	    }
+	}
+	c2[1] = r3;
+
+        /* compute the solution of the system with
+           principal minor of order n 
+	*/
+
+	r5 = 0.0;
+	for (i=1; i<=n1; i++) {
+	    j = n - i;
+	    r5 += a2[i] * x[j];
+	}
+	r6 = (b[n] - r5) / r1;
+	for (i=1; i<=n1; i++) {
+	    x[i] += c2[i] * r6;
+	}
+	x[n] = r6;
+    }
+} 
+
 /**
  * gretl_toeplitz_solve:
  * @c: Toeplitz column.
@@ -2913,15 +2994,51 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
  * Returns: 0 on successful completion, or non-zero code on error.
  */
 
-#define TOEPLITZ_SMALL 1.0e-20 
-
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c, 
 				    const gretl_vector *r, 
 				    const gretl_vector *b, 
 				    int *err)
 {
-    *err = E_DATA;
-    return NULL;
+    int m = gretl_vector_get_length(c);
+    double *c1 = NULL, *c2 = NULL;
+    gretl_matrix *y = NULL;
+
+    if (m == 0 ||
+	m != gretl_vector_get_length(r) || 
+	m != gretl_vector_get_length(b)) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (r->val[0] != c->val[0]) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (m > 1) {
+	c1 = malloc((m-1) * sizeof *c1);
+	c2 = malloc((m-1) * sizeof *c2);
+	if (c1 == NULL || c2 == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    y = gretl_column_vector_alloc(m);
+
+    if (y == NULL) {
+	*err = E_ALLOC;
+    } else {
+	tsld1(r->val, c->val + 1, b->val, y->val, 
+	      c1, c2, m);
+    }
+
+ bailout:
+
+    free(c1);
+    free(c2);
+
+    return y;
 } 
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
