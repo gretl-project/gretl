@@ -386,6 +386,69 @@ push_column_source (nlspec *s, int v, const char *mname)
     return 0;
 }
 
+int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
+			 const double **Z)
+{
+    gretl_matrix *e = NULL;
+    gretl_matrix *M = NULL;
+    int i, k, t, v;
+    double x;
+    int err = 0;
+
+    s->oc = oc_set_new();
+    if (s->oc == NULL) {
+	return E_ALLOC;
+    }
+
+    /* the left-hand side: series -> vector */
+
+    e = gretl_column_vector_alloc(s->nobs);
+    if (e == NULL) {
+	err = E_ALLOC;
+    } else {
+	e->t1 = s->t1;
+	e->t2 = s->t2;
+	for (t=0; t<s->nobs; t++) {
+	    x = Z[lhv][t + s->t1];
+	    gretl_vector_set(e, t, x);
+	}
+	err = push_column_source(s, lhv, NULL);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    /* the right-hand side: list -> matrix */
+
+    k = rlist[0];
+    M = gretl_matrix_alloc(s->nobs, k);
+    if (M == NULL) {
+	err = E_ALLOC;
+    } else {
+	M->t1 = s->t1;
+	M->t2 = s->t2;
+	for (i=0; i<k && !err; i++) {
+	    v = rlist[i + 1];
+	    for (t=0; t<s->nobs; t++) {
+		x = Z[v][t + s->t1];
+		gretl_matrix_set(M, t, i, x);
+	    }
+	}
+    }
+
+    if (!err) {
+	s->oc->e = e;
+	s->oc->Z = M;
+	s->oc->noc = k;
+    } else {
+	oc_set_destroy(s->oc);
+	s->oc = NULL;
+    } 
+
+    return err;
+}
+
 static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 			    int rtype, const char *rname,
 			    const double **Z, const DATAINFO *pdinfo)

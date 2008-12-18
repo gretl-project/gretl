@@ -88,30 +88,31 @@ int string_is_utf8 (const unsigned char *s)
     return ret;
 }
 
-static int fopen_use_utf8;
+static int stdio_use_utf8;
 
 /**
- * set_fopen_use_utf8:
+ * set_stdio_use_utf8:
  *
  * Sets gretl's internal state so as to ensure that filenames
- * are given in UTF-8 when passed to the C library's fopen().
+ * are given in UTF-8 when passed to functions such as the C 
+ * library's fopen().
  */
 
-void set_fopen_use_utf8 (void)
+void set_stdio_use_utf8 (void)
 {
-    fopen_use_utf8 = 1;
+    stdio_use_utf8 = 1;
 }
 
 /**
- * get_fopen_use_utf8:
+ * get_stdio_use_utf8:
  *
  * Returns: 1 if fienames should be in UTF-8 when passed to the C
- * library's fopen(), otherwise 0.
+ * library's fopen() and friends, otherwise 0.
  */
 
-int get_fopen_use_utf8 (void)
+int get_stdio_use_utf8 (void)
 {
-    return fopen_use_utf8;
+    return stdio_use_utf8;
 }
 
 /**
@@ -138,7 +139,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     if (mode != NULL && *mode == 'r') {
 	/* opening for reading */
 	fp = fopen(fname, mode);
-	if (fp == NULL && !fopen_use_utf8 && 
+	if (fp == NULL && !stdio_use_utf8 && 
 	    string_is_utf8((unsigned char *) fname)) {
 	    int save_errno = errno;
 
@@ -151,7 +152,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 	}
     } else {
 	/* opening for appending/writing */
-	if (!fopen_use_utf8 && string_is_utf8((unsigned char *) fname)) {
+	if (!stdio_use_utf8 && string_is_utf8((unsigned char *) fname)) {
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
 	    if (fconv != NULL) {
 		fp = fopen(fconv, mode);
@@ -188,7 +189,7 @@ int gretl_rename (const char *oldpath, const char *newpath)
 
     errno = 0;
 
-    if (fopen_use_utf8) {
+    if (stdio_use_utf8) {
 	err = rename(oldpath, newpath);
     } else {
 	int u1 = string_is_utf8((unsigned char *) oldpath);
@@ -252,7 +253,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
     if (mode != NULL && *mode == 'r') {
 	/* opening for reading */
 	fz = gzopen(fname, mode);
-	if (fz == NULL && !fopen_use_utf8 && 
+	if (fz == NULL && !stdio_use_utf8 && 
 	    string_is_utf8((unsigned char *) fname)) {
 	    int save_errno = errno;
 
@@ -265,7 +266,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 	}
     } else {
 	/* opening for writing */
-	if (!fopen_use_utf8 && string_is_utf8((unsigned char *) fname)) {
+	if (!stdio_use_utf8 && string_is_utf8((unsigned char *) fname)) {
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
 	    if (fconv != NULL) {
 		fz = gzopen(fconv, mode);

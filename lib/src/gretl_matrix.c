@@ -2917,6 +2917,8 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
       m     integer, order of the matrix A
 
+     (c1 and c2 are internalized here)
+
    on exit:
 
       x     double precision(m), the solution vector
@@ -2945,17 +2947,18 @@ static int tsld1 (const double *a1, const double *a2,
 	return 0;
     }
 
+    c1 = malloc((m-1) * sizeof *c1);
+    c2 = malloc((m-1) * sizeof *c2);
+
+    if (c1 == NULL || c2 == NULL) {
+	return E_ALLOC;
+    }
+
     r2 = 0.0;
 
     /* recurrent process for solving the system for
        order = 2 to m
     */
-
-    c1 = malloc((m-1) * sizeof *c1);
-    c2 = malloc((m-1) * sizeof *c2);
-    if (c1 == NULL || c2 == NULL) {
-	return E_ALLOC;
-    }
 
     for (n=1; n<m; n++) {
 
@@ -3056,22 +3059,20 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 	return NULL;
     }
 
-    if (!*err) {
-	y = gretl_column_vector_alloc(m);
-	if (y == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    /* invoke gretlized netlib routine */
-	    *err = tsld1(r->val, c->val + 1, b->val, y->val, m);
+    y = gretl_column_vector_alloc(m);
+
+    if (y == NULL) {
+	*err = E_ALLOC;
+    } else {
+	/* invoke gretlized netlib routine */
+	*err = tsld1(r->val, c->val + 1, b->val, y->val, m);
+	if (*err) {
+	    gretl_matrix_free(y);
+	    y = NULL;
 	}
     }
 
-    if (!*err) {
-	return y;
-    } else {
-	return NULL;
-    }
-
+    return y;
 } 
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)

@@ -262,7 +262,7 @@ char *internal_to_external (const char *iname)
 {
     char *xname = NULL;
 
-    if (!get_fopen_use_utf8() && string_is_utf8((unsigned char *) iname)) {
+    if (!get_stdio_use_utf8() && string_is_utf8((unsigned char *) iname)) {
 	gsize b;
 
 	xname = g_locale_from_utf8(iname, -1, NULL, &b, NULL);

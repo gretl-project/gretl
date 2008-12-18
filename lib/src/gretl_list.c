@@ -345,8 +345,8 @@ static int real_remember_list (const int *list, const char *name,
  * @name: name to be given to the list.
  * @prn: printing struct.
  *
- * Adds @list to the stack of saved lists and associates it
- * with @name, unless there is already a list with the given
+ * Adds a copy of @list to the stack of saved lists and associates
+ * it with @name, unless there is already a list with the given
  * name in which case the original list is replaced.  A status
  * message is printed to @prn.
  *

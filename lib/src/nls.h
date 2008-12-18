@@ -58,6 +58,9 @@ MODEL model_from_nlspec (nlspec *spec, double ***pZ,
 			 DATAINFO *pdinfo, gretlopt opt, 
 			 PRN *prn);
 
+MODEL ivreg_via_gmm (const int *list, double ***pZ,
+		     DATAINFO *pdinfo, gretlopt opt);
+
 double get_default_nls_toler (void);
 
 #endif /* GRETL_NLS_H */

@@ -36,9 +36,9 @@ int gretl_path_prepend (char *file, const char *path);
 
 int gretl_normalize_path (char *path);
 
-void set_fopen_use_utf8 (void);
+void set_stdio_use_utf8 (void);
 
-int get_fopen_use_utf8 (void);
+int get_stdio_use_utf8 (void);
 
 int string_is_utf8 (const unsigned char *s);
 

@@ -31,6 +31,7 @@
 #include "cmd_private.h"
 #include "gretl_scalar.h"
 #include "gretl_bfgs.h"
+#include "tsls.h"
 
 #include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
@@ -1744,7 +1745,8 @@ static int nl_model_allocate (MODEL *pmod, nlspec *spec)
 */
 
 static int make_nl_model (MODEL *pmod, nlspec *spec, 
-			  const DATAINFO *pdinfo)
+			  const DATAINFO *pdinfo,
+			  gretlopt opt)
 {
     nl_model_allocate(pmod, spec);
     if (pmod->errcode) {
@@ -1763,12 +1765,19 @@ static int make_nl_model (MODEL *pmod, nlspec *spec,
 
     if (spec->ci == MLE) {
 	pmod->lnL = spec->crit;
-	mle_criteria(pmod, 0);
+    } else {
+	/* GMM */
+	pmod->lnL = NADBL;
     }
+
+    mle_criteria(pmod, 0);
 
     add_coeffs_to_model(pmod, spec->coeff);
 
-    pmod->errcode = add_param_names_to_model(pmod, spec, pdinfo);
+    if (!(opt & OPT_G)) {
+	/* not IVREG via GMM */
+	pmod->errcode = add_param_names_to_model(pmod, spec, pdinfo);
+    }
 
     if (!pmod->errcode) {
 	if (pmod->ci == MLE) {
@@ -1783,6 +1792,12 @@ static int make_nl_model (MODEL *pmod, nlspec *spec,
 	gretl_model_set_int(pmod, "grcount", spec->grcount);
 	gretl_model_set_double(pmod, "tol", spec->tol);
     }
+
+    /* mask invalid stats */
+    pmod->sigma = NADBL;
+    pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->fstt = pmod->chisq = NADBL;
+    pmod->rho = pmod->dw = NADBL;
 
     return pmod->errcode;
 }
@@ -2832,7 +2847,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else {
 	    /* MLE, GMM */
-	    make_nl_model(&nlmod, spec, pdinfo);
+	    make_nl_model(&nlmod, spec, pdinfo, opt);
 	}
     } else if (nlmod.errcode == 0) { 
 	/* supply an error code */
@@ -3005,3 +3020,226 @@ void nlspec_destroy (nlspec *spec)
     free(spec);
 }
 
+/* below: apparatus for etimating a "tsls" model via GMM */
+
+#define IVREG_RESIDNAME  "gmm___e"
+#define IVREG_WEIGHTNAME "gmm___V"
+
+static int ivreg_nlfunc_setup (nlspec *spec, MODEL *pmod,
+			       DATAINFO *pdinfo)
+{
+    PRN *prn;
+    int v = pmod->list[1];
+    int k = pmod->ncoeff;
+    const char *buf;
+    int i, err = 0;
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    if (err) {
+	return err;
+    }
+
+    pprintf(prn, "gmm %s = %s-(", IVREG_RESIDNAME, pdinfo->varname[v]);
+    for (i=0; i<k; i++) {
+	if (i == 0 && pmod->ifc) {
+	    pputs(prn, "b0");
+	} else {
+	    v = pmod->list[i+2];
+	    pprintf(prn, "+b%d*%s", i, pdinfo->varname[v]);
+	}
+    }
+    pputc(prn, ')');
+
+    buf = gretl_print_get_buffer(prn);
+    err = nlspec_set_regression_function(spec, buf, pdinfo);
+    gretl_print_destroy(prn);
+
+    return err;
+}
+
+static int ivreg_oc_setup (nlspec *spec, const int *ilist, 
+			   MODEL *pmod, double ***pZ, 
+			   DATAINFO *pdinfo, int *rv)
+{
+    int v = pdinfo->v;
+    int i, err;
+
+    /* add GMM residual */
+    err = dataset_add_series(1, pZ, pdinfo);
+
+    if (!err) {
+	*rv = v;
+	strcpy(pdinfo->varname[v], IVREG_RESIDNAME);
+	for (i=0; i<pdinfo->n; i++) {
+	    (*pZ)[v][i] = pmod->uhat[i];
+	}
+	err = nlspec_add_ivreg_oc(spec, v, ilist, (const double **) *pZ);
+    }
+    
+    return err;
+}
+
+static int ivreg_weights_setup (nlspec *spec, const int *ilist)
+{
+    int k = ilist[0];
+    gretl_matrix *V;
+    int err;
+
+    V = gretl_identity_matrix_new(k);
+    if (V == NULL) {
+	return E_ALLOC;
+    }
+
+    err = user_matrix_add(V, IVREG_WEIGHTNAME);
+
+    if (err) {
+	gretl_matrix_free(V);
+    } else {
+	err = nlspec_add_weights(spec, IVREG_WEIGHTNAME);
+    }
+
+    return err;
+}
+
+static int ivreg_set_params (nlspec *spec, MODEL *pmod, 
+			     double ***pZ, DATAINFO *pdinfo)
+{
+    int np = pmod->ncoeff;
+    char **names;
+    int i, err;
+
+    names = strings_array_new_with_length(np, 8);
+    if (names == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<np; i++) {
+	sprintf(names[i], "b%d", i);
+    }
+
+    err = nlspec_add_param_list(spec, np, pmod->coeff, names, pZ, pdinfo);
+
+    free_strings_array(names, np);
+
+    return err;
+}
+
+static int finalize_ivreg_model (MODEL *pmod, MODEL *ols, 
+				 const int *biglist,
+				 const int *mlist,
+				 int **ilist,
+				 const double **Z,
+				 int rv)
+{
+    int *endolist;
+    int yno = mlist[1];
+    int t, err = 0;
+
+    pmod->ci = IVREG;
+    pmod->opt = OPT_G;
+
+    /* attach tsls-style list */
+    pmod->list = gretl_list_copy(biglist);
+    if (pmod->list == NULL) {
+	return E_ALLOC;
+    }
+
+    /* get dep. var. info from OLS model */
+    pmod->ybar = ols->ybar;
+    pmod->sdy = ols->sdy;
+
+    /* and steal uhat, yhat */
+    pmod->uhat = ols->uhat;
+    pmod->yhat = ols->yhat;
+    ols->uhat = ols->yhat = NULL;
+
+    /* insert residuals and fitted */
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->uhat[t] = Z[rv][t];
+	pmod->yhat[t] = Z[yno][t] - Z[rv][t];
+    }
+    
+    endolist = tsls_make_endolist(mlist, ilist, NULL, &err);
+
+    if (!err) {
+	gretl_model_set_list_as_data(pmod, "endolist", endolist);
+    }
+
+    return err;
+}
+
+MODEL ivreg_via_gmm (const int *list, double ***pZ,
+		     DATAINFO *pdinfo, gretlopt opt)
+{
+    int orig_v = pdinfo->v;
+    int *mlist = NULL, *ilist = NULL;
+    nlspec *spec = NULL;
+    MODEL olsmod, model;
+    int rv = 0;
+    int err = 0;
+
+    gretl_model_init(&olsmod);
+    gretl_model_init(&model);
+
+    err = ivreg_process_lists(list, &mlist, &ilist);
+
+    if (!err) {
+	spec = nlspec_new(GMM, pdinfo);
+	if (spec == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	/* OLS baseline and check */
+	olsmod = lsq(mlist, pZ, pdinfo, OLS, OPT_A | OPT_M | OPT_Z);
+	err = olsmod.errcode;
+    }
+
+    if (!err) {
+	/* add the definition of the GMM residual */
+	err = ivreg_nlfunc_setup(spec, &olsmod, pdinfo);
+    }    
+
+    if (!err) {
+	/* add the orthogonality conditions */
+	err = ivreg_oc_setup(spec, ilist, &olsmod, pZ, pdinfo, &rv);
+    }
+
+    if (!err) {
+	/* add the weights matrix (FIXME allow user choice?) */
+	err = ivreg_weights_setup(spec, ilist);
+    }
+
+    set_auxiliary_scalars();
+
+    if (!err) {
+	/* add the scalar parameters */
+	err = ivreg_set_params(spec, &olsmod, pZ, pdinfo);
+    }
+
+    if (!err) {
+	/* call the GMM estimation routine */
+	model = model_from_nlspec(spec, pZ, pdinfo, opt | OPT_G, NULL);
+    }
+
+    unset_auxiliary_scalars();
+
+    if (err) {
+	model.errcode = err;
+    } else {
+	/* turn the output model into an "ivreg" type */
+	finalize_ivreg_model(&model, &olsmod, list, mlist, &ilist,
+			     (const double **) *pZ, rv);
+    }
+
+    nlspec_destroy(spec);
+    free(mlist);
+    free(ilist);
+    clear_model(&olsmod);
+
+    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+    user_matrix_destroy_by_name(IVREG_WEIGHTNAME, NULL);
+
+    return model;
+}

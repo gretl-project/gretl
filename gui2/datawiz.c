@@ -68,7 +68,8 @@ enum {
     DW_N_PRIME    = 1 << 2,
     DW_VLIST_DONE = 1 << 3,
     DW_NP_DONE    = 1 << 4,
-    DW_NO_PANEL   = 1 << 5
+    DW_NO_PANEL   = 1 << 5,
+    DW_SSHEET     = 1 << 6
 };
 
 #define dw_n_is_prime(o) (o->flags & DW_N_PRIME)
@@ -163,22 +164,15 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
 static void maybe_start_editing (void)
 {
     int cancel = 0;
-    int resp;
 
-    resp = yes_no_dialog(_("gretl: new dataset"), 
-			 _("Do you want to start entering data values\n"
-			 "using gretl's spreadsheet?"), 0);
+    edit_dialog(_("gretl: name variable"), 
+		_("Enter name for first variable\n"
+		  "(max. 15 characters)"),
+		NULL, prep_spreadsheet, NULL, 
+		CREATE_DATASET, VARCLICK_NONE, 
+		&cancel);
 
-    if (resp == GRETL_YES) {
-	edit_dialog(_("gretl: name variable"), 
-		    _("Enter name for first variable\n"
-		      "(max. 15 characters)"),
-		    NULL, prep_spreadsheet, NULL, 
-		    CREATE_DATASET, VARCLICK_NONE, 
-		    &cancel);
-    } 
-
-    if (resp == GRETL_NO || cancel) {
+    if (cancel) {
 	/* accept the default blank dataset */
 	register_data(NULLDATA_STARTED);
     }	
@@ -249,7 +243,8 @@ static void maybe_unrestrict_dataset (void)
 
 /* respond to the "Apply" button in the wizard */
 
-static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts)
+static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
+			      GtkWidget *dlg)
 {
     char setline[32];
     gretlopt opt = OPT_NONE;
@@ -348,7 +343,8 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts)
     if (err) {
 	gui_errmsg(err);
     } else if (create) {
-	if (datainfo->n < 1001) {
+	if (opts->flags & DW_SSHEET) {
+	    gtk_widget_hide(dlg);
 	    maybe_start_editing();
 	} else {
 	    register_data(NULLDATA_STARTED);
@@ -1577,6 +1573,27 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
     }
 }
 
+static void set_edit_values (GtkWidget *w, int *flags)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	*flags |= DW_SSHEET;
+    } else {
+	*flags &= ~DW_SSHEET;
+    }	
+}
+
+static void add_editing_option (GtkWidget *vbox, int *flags)
+{
+    GtkWidget *hbox, *b;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    b = gtk_check_button_new_with_label(_("start entering data values"));
+    g_signal_connect(G_OBJECT(b), "toggled",
+		     G_CALLBACK(set_edit_values), flags);
+    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);    
+}
+
 /* build the appropriate notebook page for the given step */
 
 static void dwiz_prepare_page (GtkNotebook *nb,
@@ -1598,6 +1615,9 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 
 	make_confirmation_text(ctxt, dwinfo, &opts->flags);
 	gtk_label_set_text(GTK_LABEL(w), ctxt);
+	if ((opts->flags & DW_CREATE) && datainfo->n < 1001) {
+	    add_editing_option(page, &opts->flags);
+	}
     } else {
 	/* all other pages */
 	set_up_dw_opts(opts, step, dwinfo);
@@ -1629,7 +1649,7 @@ static void dwiz_finalize (GtkWidget *dlg, DATAINFO *dwinfo,
     dw_opts *opts = g_object_get_data(G_OBJECT(dlg), "opts");
 
     if (!cancel) {
-	dwiz_make_changes(dwinfo, opts);
+	dwiz_make_changes(dwinfo, opts, dlg);
     } else if (opts->flags & DW_CREATE) {
 	/* aborting creation of new dataset */
 	gui_clear_dataset();
@@ -1862,7 +1882,9 @@ static void data_structure_wizard (int create)
 
     for (i=0; i<=DW_CONFIRM; i++) {
 	n = g_utf8_strlen(_(wizcode_string(i)), -1);
-	if (n > smax) smax = n;
+	if (n > smax) {
+	    smax = n;
+	}
     }
 
     /* make all the notebook pages */

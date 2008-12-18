@@ -51,9 +51,14 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
 #define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
 
-#define tsls_model(m) (m->ci == IVREG && !(m->opt & OPT_L) && !m->aux)
+#define tsls_model(m) (m->ci == IVREG && \
+                       !(m->opt & OPT_L) && \
+	               !(m->opt & OPT_G) && \
+                       !m->aux)
 
 #define liml_model(m) (m->ci == IVREG && (m->opt & OPT_L))
+
+#define gmm_model(m) (m->ci == GMM || (m->ci == IVREG && (m->opt & OPT_G)))
 
 void model_coeff_init (model_coeff *mc)
 {
@@ -321,7 +326,7 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 	pprintf(prn, "%s: ", I_(texstrs[j]));
 	pprintf(prn, " $\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
-	if (pmod->ci == GMM) {
+	if (gmm_model(pmod)) {
 	    pputs(prn, "  ");
 	}
 	pprintf(prn, "%s: ", _(strs[j]));
@@ -652,7 +657,7 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("1-step Arellano-Bond");
 	}
-    } else if (pmod->ci == GMM) {
+    } else if (gmm_model(pmod)) {
 	if (pmod->opt & OPT_T) {
 	    return N_("2-step GMM");
 	} else if (pmod->opt & OPT_I) {
@@ -2378,6 +2383,11 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    if (i < 2 || i > 3) {
 		val[i] = NADBL;
 	    }
+	}
+    } else if (pmod->ci == IVREG && (pmod->opt & OPT_G)) {
+	/* IVREG via GMM */
+	for (i=2; i<MID_STATS; i++) {
+	    val[i] = NADBL;
 	}	
     } else if (pmod->aux == AUX_SYS) {
 	/* only dep. var. stats, SSR and SE, unless LIML */
@@ -2668,7 +2678,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_heckit_stats(pmod, prn);
     } else if (random_effects_model(pmod)) {
 	panel_variance_lines(pmod, prn);
-    } else if (pmod->ci == GMM) {
+    } else if (gmm_model(pmod)) {
 	print_GMM_stats(pmod, prn);
     } else if (pmod->ci == ARBOND) {
 	print_DPD_stats(pmod, prn);

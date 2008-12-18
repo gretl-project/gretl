@@ -82,9 +82,11 @@ int update_coeff_values (const double *x, nlspec *s);
 
 int check_gmm_requirements (nlspec *spec);
 
-int 
-nlspec_add_orthcond (nlspec *s, const char *str,
-		     const double **Z, const DATAINFO *pdinfo);
+int nlspec_add_orthcond (nlspec *s, const char *str,
+			 const double **Z, const DATAINFO *pdinfo);
+
+int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
+			 const double **Z);
 
 int nlspec_add_weights (nlspec *s, const char *str);
 

@@ -22,14 +22,59 @@
 #include "lib_private.h"
 #include "session.h"
 
+/* This module contains apparatus for handling a log of commands
+   generated via point-and-click, or via the GUI console.  If
+   the user is working in the context of a saved session file, the
+   log goes to "session.inp" inside the session directory,
+   otherwise it goes to a temporary file in the user's personal
+   "dotdir".
+
+   The command log may well be unusable as a script without
+   modification, due to possible "nonlinearities" in the GUI (e.g.
+   having several model windows open at once and performing
+   tests on the models out of the order of estimation), but
+   nonetheless it may be useful as a record and for pedagogical
+   purposes.
+
+   We flag errors via the GUI only in response to specific requests
+   to view or update the log.
+*/
+
 #define CMD_DEBUG 0
 
-static char logname[FILENAME_MAX];
-static char *logline;
-static PRN *logprn;
-static int n_cmds;
-static int prev_ID;
-static int session_open;
+static char logname[FILENAME_MAX]; /* filename for log */
+static char *logline;              /* buffered command line */
+static PRN *logprn;                /* log printer */
+static int n_cmds;                 /* number of commands logged */
+static int prev_ID;                /* keep track of model ID */
+static int session_open;           /* are we doing the session file
+				      thing? (0/1) */
+
+/* Close down the logfile writing apparatus.  If we were writing to a
+   temporary file, this will be deleted by gretl_print_destroy.
+   Designed so that it doesn't hurt to call this function more
+   times than is strictly necessary (to ensure cleanup).
+*/
+
+void free_command_stack (void)
+{
+#if CMD_DEBUG
+    fprintf(stderr, "free_command_stack\n");
+#endif
+    if (logline != NULL) {
+	free(logline);
+	logline = NULL;
+    }
+
+    if (logprn != NULL) {
+	gretl_print_destroy(logprn);
+	logprn = NULL;
+    }
+
+    n_cmds = prev_ID = 0;
+
+    *logname = '\0';
+}
 
 /* For use with an existing session log file, whose name is registered
    in 'logname' */
@@ -41,14 +86,13 @@ static int session_logfile_init (void)
 
     fp = gretl_fopen(logname, "a");
     if (fp == NULL) {
-	file_write_errbox(logname);
-	return 1;
+	return E_FOPEN;
     }
     
     logprn = gretl_print_new_with_stream(fp); 
     if (logprn == NULL) {
-	file_write_errbox(logname);
-	return 1;
+	fclose(fp);
+	return E_FOPEN;
     }
 
     prev_ID = 0;
@@ -80,14 +124,18 @@ static int scratch_logfile_init (void)
     logprn = gretl_print_new_with_tempfile(&err); 
     
     if (err) {
-	gui_errmsg(err);
 	return err;
     }
 
     fname = gretl_print_get_tempfile_name(logprn);
-    if (fname != NULL) {
-	strcpy(logname, fname);
+
+    if (fname == NULL) {
+	gretl_print_destroy(logprn);
+	logprn = NULL;
+	return E_FOPEN; /* a bit vague */
     }
+
+    strcpy(logname, fname);
 
 #if CMD_DEBUG
     fprintf(stderr, "logfile_init: open prn for '%s'\n", logname);
@@ -109,32 +157,6 @@ static int logfile_init (void)
     } else {
 	return scratch_logfile_init();
     }
-}
-
-/* Close down the logfile writing apparatus.  If we were writing to a
-   temporary file, this will be deleted by gretl_print_destroy.
-   Designed so that it doesn't hurt to call this function more
-   times than is strictly necessary (to ensure cleanup).
-*/
-
-void free_command_stack (void)
-{
-#if CMD_DEBUG
-    fprintf(stderr, "free_command_stack\n");
-#endif
-    if (logline != NULL) {
-	free(logline);
-	logline = NULL;
-    }
-
-    if (logprn != NULL) {
-	gretl_print_destroy(logprn);
-	logprn = NULL;
-    }
-
-    n_cmds = prev_ID = 0;
-
-    *logname = '\0';
 }
 
 /* write out the last stacked command line, if any, and
@@ -179,6 +201,21 @@ static int flush_logfile (void)
     return 0;
 }
 
+/* in case an error was discovered after buffering a given command,
+   strike it from the record */
+
+void delete_last_command (void)
+{
+    if (logline != NULL) {
+	free(logline);
+	logline = NULL;
+	n_cmds--;
+    }
+}
+
+/* for a given GUI command (not associated with a model): place it in
+   the log buffer */
+
 int add_command_to_stack (const char *s)
 {
     int err;
@@ -191,7 +228,7 @@ int add_command_to_stack (const char *s)
        previous model ID number */
     prev_ID = 0;
 
-    /* is there a previous stacked command? if so, send it to
+    /* is there a previous buffered command? if so, send it to
        the logfile first */
     if (logline != NULL) {
 	err = flush_logfile();
@@ -224,17 +261,8 @@ int add_command_to_stack (const char *s)
     return 0;
 }
 
-void delete_last_command (void)
-{
-    if (logline != NULL) {
-	free(logline);
-	logline = NULL;
-	n_cmds--;
-    }
-}
-
-/* save to the command log a command associated with a 
-   particular model */
+/* save to the command log a command associated with a particular
+   model */
 
 int model_command_init (int model_ID)
 {
@@ -269,8 +297,10 @@ int model_command_init (int model_ID)
     return err;
 }
 
-/* called in response to the refresh/reload button in the
-   viewer window for the command log */
+/* Called in response to the refresh/reload button in the viewer
+   window for the command log: retrieve the updated log content.
+   Display of any error messages is handled by the caller.
+*/
 
 gchar *get_logfile_content (int *err)
 {
@@ -289,7 +319,7 @@ gchar *get_logfile_content (int *err)
     return s;
 }
 
-/* called from main menu under Tools */
+/* called from main menu: /Tools/View command log */
 
 void view_command_log (void)
 {
@@ -298,15 +328,17 @@ void view_command_log (void)
     } else {
 	int err = flush_logfile();
 
-	if (!err) {
+	if (err) {
+	    gui_errmsg(err);
+	} else {
 	    view_file(logname, 0, 0, 78, 370, VIEW_LOG);
 	}
     }
 }
 
 /* 
-   This function gets called when when saving a session, opening a
-   session file, or closing a session.
+   This function gets called from session.c when when saving a
+   session, opening a session file, or closing a session.
 
    On saving, we shift the existing logfile into the session directory
    so it'll get saved along with the other materials -- if required.
@@ -314,7 +346,7 @@ void view_command_log (void)
    file, the logfile location will already be correct.)
 
    On opening a session file, we set the logfile name so the re-opened
-   log can be displayed and added to.
+   session log can be displayed and added to.
 
    On closing a session, we close the current session logfile and
    redirect the log to a tempfile in the user's "dotdir"; this is

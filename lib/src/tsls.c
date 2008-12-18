@@ -332,14 +332,14 @@ ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err)
 }
 
 /*
-  tsls_make_hatlist: determines which variables in reglist, when
+  tsls_make_endolist: determines which variables in reglist, when
   checked against the predetermined and exogenous vars in instlist,
-  need to be instrumented, and populates hatlist accordingly
+  need to be instrumented, and populates the returned list 
+  accordingly
 */
 
-static int *
-tsls_make_hatlist (const int *reglist, int **instlist, int *addconst,
-		   int *err)
+int *tsls_make_endolist (const int *reglist, int **instlist, 
+			 int *addconst, int *err)
 {
     int *hatlist = NULL;
     int i, vi;
@@ -350,7 +350,9 @@ tsls_make_hatlist (const int *reglist, int **instlist, int *addconst,
 	    if (vi == 0) {
 		/* found const in reglist but not instlist: 
 		   needs fixing -- or is this debatable? */
-		*addconst = 1;
+		if (addconst != NULL) {
+		    *addconst = 1;
+		}
 	    } else {
 		hatlist = gretl_list_append_term(&hatlist, vi);
 		if (hatlist == NULL) {
@@ -361,7 +363,7 @@ tsls_make_hatlist (const int *reglist, int **instlist, int *addconst,
 	} 
     }
 
-    if (*addconst) {
+    if (addconst != NULL && *addconst) {
 	/* add constant to list of instruments */
 	int clist[2] = {1, 0};
 
@@ -1075,7 +1077,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
        TSLS is in fact redundant); this may sometimes be required
        when tsls is called in the context of system estimation.
     */
-    endolist = tsls_make_hatlist(reglist, &instlist, &addconst, &err);
+    endolist = tsls_make_endolist(reglist, &instlist, &addconst, &err);
     if (err) {
 	goto bailout;
     }

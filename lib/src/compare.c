@@ -658,6 +658,8 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     } else if (orig->ci == IVREG) {
 	if (orig->opt & OPT_L) {
 	    myopt |= OPT_L;
+	} else if (orig->opt & OPT_G) {
+	    myopt |= OPT_G;
 	}
     }
 

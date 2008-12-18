@@ -288,7 +288,9 @@ static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
 
     newtext = get_logfile_content(&err);
 
-    if (!err) {
+    if (err) {
+	gui_errmsg(err);
+    } else {
 	GtkTextBuffer *buf;
 
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));

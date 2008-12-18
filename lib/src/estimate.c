@@ -28,6 +28,7 @@
 #include "estim_private.h"
 #include "system.h"
 #include "tsls.h"
+#include "nls.h"
 
 /* Comment on 'TINY': It's the minimum value for 'test' (see below)
    that libgretl's Cholesky decomposition routine will accept before
@@ -4191,8 +4192,17 @@ MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_error_clear();
 
+    if ((opt & (OPT_T | OPT_I)) && !(opt & OPT_G)) {
+	/* two-step and iterate options are GMM-only */
+	gretl_model_init(&mod);
+	mod.errcode = E_BADOPT;
+	return mod;
+    }
+
     if (opt & OPT_L) {
 	mod = single_equation_liml(list, pZ, pdinfo, opt);
+    } else if (opt & OPT_G) {
+	mod = ivreg_via_gmm(list, pZ, pdinfo, opt);
     } else {
 	mod = tsls(list, pZ, pdinfo, opt);
     }
