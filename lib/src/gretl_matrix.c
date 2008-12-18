@@ -2896,7 +2896,7 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
     return 0;
 } 
 
-/* translation of tsld1.f in the netlib toeplitz directory */
+/* translation to C of tsld1.f in the netlib toeplitz directory */
 
 static void tsld1 (double *a1, double *a2, double *b, 
 		   double *x, double *c1, double *c2, 
@@ -2905,18 +2905,10 @@ static void tsld1 (double *a1, double *a2, double *b,
     int n, i, n1, n2;
     double r1, r2, r3, r5, r6;
 
-    /* ugh fortran indexing FIXME */
-    a1--;
-    a2--;
-    b--;
-    x--;
-    c1--;
-    c2--;
-
     /* solve the system with principal minor of order 1 */
 
-    r1 = a1[1];
-    x[1] = b[1] / r1;
+    r1 = a1[0];
+    x[0] = b[0] / r1;
     if (m == 1) {
 	return;
     }
@@ -2924,10 +2916,10 @@ static void tsld1 (double *a1, double *a2, double *b,
     r2 = 0.0;
 
     /* recurrent process for solving the system
-       with the toeplitz matrix for n = 2, m 
+       with the toeplitz matrix for order = 2 to m
     */
 
-    for (n=2; n<=m; n++) {
+    for (n=1; n<m; n++) {
 
         /* compute multiples of the first and last columns of
            the inverse of the principal minor of order n 
@@ -2936,39 +2928,39 @@ static void tsld1 (double *a1, double *a2, double *b,
 	n1 = n - 1;
 	r5 = a2[n1];
 	r6 = a1[n];
-	if (n > 2) {
+	if (n > 1) {
 	    n2 = n - 2;
 	    c1[n1] = r2;
-	    for (i=1; i<=n2; i++) {
-		r5 += a2[i] * c1[n-i];
+	    for (i=0; i<=n2; i++) {
+		r5 += a2[i] * c1[n-i-1];
 		r6 += a1[i + 1] * c2[i];
 	    }
 	}
 	r2 = -r5 / r1;
 	r3 = -r6 / r1;
 	r1 += r5 * r3;
-	if (n > 2) {
-	    r6 = c2[1];
+	if (n > 1) {
+	    r6 = c2[0];
 	    c2[n1] = 0.0;
-	    for (i=2; i<=n1; i++) {
+	    for (i=1; i<=n1; i++) {
 		r5 = c2[i];
 		c2[i] = c1[i] * r3 + r6;
 		c1[i] += r6 * r2;
 		r6 = r5;
 	    }
 	}
-	c2[1] = r3;
+	c2[0] = r3;
 
         /* compute the solution of the system with
            principal minor of order n 
 	*/
 
 	r5 = 0.0;
-	for (i=1; i<=n1; i++) {
-	    r5 += a2[i] * x[n-i];
+	for (i=0; i<=n1; i++) {
+	    r5 += a2[i] * x[n-i-1];
 	}
 	r6 = (b[n] - r5) / r1;
-	for (i=1; i<=n1; i++) {
+	for (i=0; i<=n1; i++) {
 	    x[i] += c2[i] * r6;
 	}
 	x[n] = r6;
