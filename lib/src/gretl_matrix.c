@@ -2922,18 +2922,27 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
       x     double precision(m), the solution vector
 */
 
-static void tsld1 (const double *a1, const double *a2, 
-		   const double *b, double *x, 
-		   double *c1, double *c2, int m)
+#define TOEPLITZ_SMALL 1.0e-20
+
+static int tsld1 (const double *a1, const double *a2, 
+		  const double *b, double *x, int m)
 {
     double r1, r2, r3, r5, r6;
     int n, i, n1;
+    double *c1 = NULL;
+    double *c2 = NULL;  
 
     /* solve the system with principal minor of order 1 */
+
     r1 = a1[0];
+
+    if (fabs(r1) < TOEPLITZ_SMALL) {
+	return E_SINGULAR;
+    } 
+
     x[0] = b[0] / r1;
     if (m == 1) {
-	return;
+	return 0;
     }
 
     r2 = 0.0;
@@ -2941,6 +2950,12 @@ static void tsld1 (const double *a1, const double *a2,
     /* recurrent process for solving the system for
        order = 2 to m
     */
+
+    c1 = malloc((m-1) * sizeof *c1);
+    c2 = malloc((m-1) * sizeof *c2);
+    if (c1 == NULL || c2 == NULL) {
+	return E_ALLOC;
+    }
 
     for (n=1; n<m; n++) {
 
@@ -2957,9 +2972,17 @@ static void tsld1 (const double *a1, const double *a2,
 		r6 += a1[i+1] * c2[i];
 	    }
 	}
+
 	r2 = -r5 / r1;
 	r3 = -r6 / r1;
 	r1 += r5 * r3;
+
+	if (fabs(r1) < TOEPLITZ_SMALL) {
+	    free(c1);
+	    free(c2);
+	    return E_SINGULAR;
+	} 
+
 	if (n > 1) {
 	    r6 = c2[0];
 	    c2[n1] = 0.0;
@@ -2985,6 +3008,11 @@ static void tsld1 (const double *a1, const double *a2,
 	}
 	x[n] = r6;
     }
+
+    free(c1);
+    free(c2);
+
+    return 0;
 } 
 
 /**
@@ -2992,6 +3020,7 @@ static void tsld1 (const double *a1, const double *a2,
  * @c: Toeplitz column.
  * @r: Toeplitz row.
  * @x: vector 'x'.
+ * @err: error code.
  *
  * Solves Tx = b for the unknown vector x, where T is a Toeplitz
  * matrix, that is (zero-based)
@@ -3001,7 +3030,8 @@ static void tsld1 (const double *a1, const double *a2,
  *
  * Note that c[0] should equal r[0]. 
  *
- * Returns: 0 on successful completion, or non-zero code on error.
+ * Returns: a newly allocated vector, containing the solution.
+ *
  */
 
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c, 
@@ -3010,8 +3040,9 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 				    int *err)
 {
     int m = gretl_vector_get_length(c);
-    double *c1 = NULL, *c2 = NULL;
     gretl_matrix *y = NULL;
+
+    /* a few sanity checks */
 
     if (m == 0 ||
 	m != gretl_vector_get_length(r) || 
@@ -3025,29 +3056,22 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 	return NULL;
     }
 
-    if (m > 1) {
-	/* allocate workspace */
-	c1 = malloc((m-1) * sizeof *c1);
-	c2 = malloc((m-1) * sizeof *c2);
-	if (c1 == NULL || c2 == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
     if (!*err) {
 	y = gretl_column_vector_alloc(m);
 	if (y == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    tsld1(r->val, c->val + 1, b->val, y->val, 
-		  c1, c2, m);
+	    /* invoke gretlized netlib routine */
+	    *err = tsld1(r->val, c->val + 1, b->val, y->val, m);
 	}
     }
 
-    free(c1);
-    free(c2);
+    if (!*err) {
+	return y;
+    } else {
+	return NULL;
+    }
 
-    return y;
 } 
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
