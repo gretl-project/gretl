@@ -2896,17 +2896,19 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
     return 0;
 } 
 
-/* translation to C of tsld1.f in the netlib toeplitz directory */
+/* translation to C of tsld1.f in the netlib toeplitz directory:
+   http://www.netlib.org/toeplitz/
+*/
 
 static void tsld1 (double *a1, double *a2, double *b, 
 		   double *x, double *c1, double *c2, 
 		   int m)
 {
-    int n, i, n1, n2;
     double r1, r2, r3, r5, r6;
+    int n, i, n1;
+    
 
     /* solve the system with principal minor of order 1 */
-
     r1 = a1[0];
     x[0] = b[0] / r1;
     if (m == 1) {
@@ -2922,17 +2924,15 @@ static void tsld1 (double *a1, double *a2, double *b,
     for (n=1; n<m; n++) {
 
         /* compute multiples of the first and last columns of
-           the inverse of the principal minor of order n 
+           the inverse of the principal minor of order n + 1 
 	*/
-
 	n1 = n - 1;
 	r5 = a2[n1];
 	r6 = a1[n];
 	if (n > 1) {
-	    n2 = n - 2;
 	    c1[n1] = r2;
-	    for (i=0; i<=n2; i++) {
-		r5 += a2[i] * c1[n-i-1];
+	    for (i=0; i<n1; i++) {
+		r5 += a2[i] * c1[n1-i];
 		r6 += a1[i + 1] * c2[i];
 	    }
 	}
@@ -2942,7 +2942,7 @@ static void tsld1 (double *a1, double *a2, double *b,
 	if (n > 1) {
 	    r6 = c2[0];
 	    c2[n1] = 0.0;
-	    for (i=1; i<=n1; i++) {
+	    for (i=1; i<n; i++) {
 		r5 = c2[i];
 		c2[i] = c1[i] * r3 + r6;
 		c1[i] += r6 * r2;
@@ -2952,15 +2952,14 @@ static void tsld1 (double *a1, double *a2, double *b,
 	c2[0] = r3;
 
         /* compute the solution of the system with
-           principal minor of order n 
+           principal minor of order n + 1
 	*/
-
 	r5 = 0.0;
-	for (i=0; i<=n1; i++) {
-	    r5 += a2[i] * x[n-i-1];
+	for (i=0; i<n; i++) {
+	    r5 += a2[i] * x[n1-i];
 	}
 	r6 = (b[n] - r5) / r1;
-	for (i=0; i<=n1; i++) {
+	for (i=0; i<n; i++) {
 	    x[i] += c2[i] * r6;
 	}
 	x[n] = r6;
@@ -3006,6 +3005,7 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
     }
 
     if (m > 1) {
+	/* allocate workspace */
 	c1 = malloc((m-1) * sizeof *c1);
 	c2 = malloc((m-1) * sizeof *c2);
 	if (c1 == NULL || c2 == NULL) {
