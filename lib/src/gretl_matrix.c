@@ -2896,17 +2896,43 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
     return 0;
 } 
 
-/* translation to C of tsld1.f in the netlib toeplitz directory:
+/* translation to C of tsld1.f in the netlib toeplitz package,
+   code as of 07/23/82; see
+
    http://www.netlib.org/toeplitz/
+
+   tsld1 solves the double precision linear system
+   a * x = b
+   with the t - matrix a
+
+   on entry:
+
+     a1     double precision(m)
+            the first row of the t - matrix a
+
+     a2     double precision(m - 1)
+            the first column of the t - matrix a
+            beginning with the second element
+
+      b     double precision(m), the right hand side vector
+
+     c1     double precision(m - 1), workspace
+
+     c2     double precision(m - 1), workspace
+
+      m     order of the matrix a
+
+   on exit:
+
+      x     double precision(m), the solution vector
 */
 
-static void tsld1 (double *a1, double *a2, double *b, 
-		   double *x, double *c1, double *c2, 
-		   int m)
+static void tsld1 (const double *a1, const double *a2, 
+		   const double *b, double *x, 
+		   double *c1, double *c2, int m)
 {
     double r1, r2, r3, r5, r6;
     int n, i, n1;
-    
 
     /* solve the system with principal minor of order 1 */
     r1 = a1[0];
@@ -2933,7 +2959,7 @@ static void tsld1 (double *a1, double *a2, double *b,
 	    c1[n1] = r2;
 	    for (i=0; i<n1; i++) {
 		r5 += a2[i] * c1[n1-i];
-		r6 += a1[i + 1] * c2[i];
+		r6 += a1[i+1] * c2[i];
 	    }
 	}
 	r2 = -r5 / r1;
