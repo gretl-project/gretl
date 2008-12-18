@@ -2897,21 +2897,16 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 } 
 
 /* translation to C of tsld1.f in the netlib toeplitz package,
-   code as of 07/23/82; see
-
-   http://www.netlib.org/toeplitz/
+   code as of 07/23/82; see http://www.netlib.org/toeplitz/
 
    tsld1 solves the double precision linear system
-   a * x = b
-   with the t - matrix a
+   A * x = b for Toeplitz matrix A
 
    on entry:
 
-     a1     double precision(m)
-            the first row of the t - matrix a
+     a1     double precision(m), the first row of A
 
-     a2     double precision(m - 1)
-            the first column of the t - matrix a
+     a2     double precision(m - 1), the first column of A
             beginning with the second element
 
       b     double precision(m), the right hand side vector
@@ -2920,7 +2915,7 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
      c2     double precision(m - 1), workspace
 
-      m     order of the matrix a
+      m     integer, order of the matrix A
 
    on exit:
 
@@ -2943,8 +2938,8 @@ static void tsld1 (const double *a1, const double *a2,
 
     r2 = 0.0;
 
-    /* recurrent process for solving the system
-       with the toeplitz matrix for order = 2 to m
+    /* recurrent process for solving the system for
+       order = 2 to m
     */
 
     for (n=1; n<m; n++) {
@@ -3036,20 +3031,18 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 	c2 = malloc((m-1) * sizeof *c2);
 	if (c1 == NULL || c2 == NULL) {
 	    *err = E_ALLOC;
-	    goto bailout;
 	}
     }
 
-    y = gretl_column_vector_alloc(m);
-
-    if (y == NULL) {
-	*err = E_ALLOC;
-    } else {
-	tsld1(r->val, c->val + 1, b->val, y->val, 
-	      c1, c2, m);
+    if (!*err) {
+	y = gretl_column_vector_alloc(m);
+	if (y == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    tsld1(r->val, c->val + 1, b->val, y->val, 
+		  c1, c2, m);
+	}
     }
-
- bailout:
 
     free(c1);
     free(c2);
