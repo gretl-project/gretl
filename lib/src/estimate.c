@@ -2652,6 +2652,11 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     double x;
     int err = 0;
 
+    if (pmod->opt & (OPT_G | OPT_L)) {
+	/* FIXME gmm, liml */
+	return E_NOTIMP;
+    }
+
     pos = gretl_list_separator_position(pmod->list);
     h = pmod->list[0] - pos;
 

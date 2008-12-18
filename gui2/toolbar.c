@@ -563,7 +563,7 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!plot_ok(r) && f == PLOT_ITEM) {
 	return NULL;
-    } else if (!format_ok(r) && f == FORMAT_ITEM) {
+    } else if (!format_ok(r) && !sortby_ok && f == FORMAT_ITEM) {
 	return NULL;
     } else if (r != EDIT_SCRIPT && r != EDIT_FUNC_CODE && f == EDIT_SCRIPT_ITEM) {
 	return NULL;

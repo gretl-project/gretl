@@ -51,7 +51,6 @@ struct series_view_t {
     int npoints;
     int digits;
     char format;    
-    GtkWidget *digit_spin;
     data_point *points;
 };
 
@@ -59,6 +58,8 @@ struct multi_series_view_t {
     int *list;
     int sortvar;
     int npoints;
+    int digits;
+    char format;    
     multi_point *points;
 };
 
@@ -178,12 +179,14 @@ static PRN *series_view_print_csv (windata_t *vwin)
 static void series_view_print (windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
-    const char *pbuf;
+    char num_format[32];
     int obslen = 8;
     PRN *prn;
     int t, len;
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) {
+	return;
+    }
 
     for (t=0; t<sview->npoints; t++) {
 	len = strlen(sview->points[t].label);
@@ -191,39 +194,27 @@ static void series_view_print (windata_t *vwin)
 	    obslen = len;
 	}
     }
+
+    if (sview->format == 'G') {
+	sprintf(num_format, "%%%ds %%#13.%dg\n", obslen, sview->digits);
+    } else {
+	sprintf(num_format, "%%%ds %%13.%df\n", obslen, sview->digits);
+    }
 	
     /* print formatted data to buffer */
 
-    if (1) { /* FIXME scalars */
-	pprintf(prn, "\n%*s ", obslen, _("Obs"));
-	pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
-	for (t=0; t<sview->npoints; t++) {
-	    if (na(sview->points[t].val)) {
-		pprintf(prn, "%*s\n", obslen, sview->points[t].label);
-	    } else if (sview->format == 'G') {
-		pprintf(prn, "%*s %#13.*g\n", obslen,
-			sview->points[t].label,
-			sview->digits, sview->points[t].val);
-	    } else {
-		pprintf(prn, "%*s %13.*f\n", obslen,
-			sview->points[t].label,
-			sview->digits, sview->points[t].val);
-	    }
-	}
-    } else {
-	if (sview->format == 'G') {
-	    pprintf(prn, "\n%s = %#13.*g", 
-		    datainfo->varname[sview->varnum], 
-		    sview->digits, Z[sview->varnum][0]);
+    pprintf(prn, "\n%*s ", obslen, _("Obs"));
+    pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
+
+    for (t=0; t<sview->npoints; t++) {
+	if (na(sview->points[t].val)) {
+	    pprintf(prn, "%*s\n", obslen, sview->points[t].label);
 	} else {
-	    pprintf(prn, "\n%s = %13.*f", 
-		    datainfo->varname[sview->varnum], 
-		    sview->digits, Z[sview->varnum][0]);
-	}
+	    pprintf(prn, num_format, sview->points[t].label, sview->points[t].val);
+	} 
     }
 
-    pbuf = gretl_print_get_buffer(prn);
-    textview_set_text(vwin->text, pbuf);
+    textview_set_text(vwin->text, gretl_print_get_buffer(prn));
 
     gretl_print_destroy(prn);
 }
@@ -234,6 +225,7 @@ static int *make_obsvec (multi_series_view *mview)
     int t;
 
     ov = mymalloc((mview->npoints + 1) * sizeof *ov);
+
     if (ov != NULL) {
 	ov[0] = mview->npoints;
 	for (t=0; t<mview->npoints; t++) {
@@ -272,6 +264,103 @@ static void multi_series_view_print_sorted (windata_t *vwin)
     }
 
     free(obsvec);
+    gretl_print_destroy(prn);
+}
+
+/* FIXME this should be in libgretl */
+
+static int get_obslen (char *s)
+{
+    int t, n, nmax = 0;
+
+    if (datainfo->S == NULL) {
+	if (dataset_is_time_series(datainfo)) {
+	    switch (datainfo->pd) {
+	    case 1:
+	    case 10:
+		nmax = 4; break;
+	    case 4:
+		nmax = 6; break;
+	    case 12:
+		nmax = 7; break;
+	    default:
+		break;
+	    }
+	} 
+	if (nmax == 0) {
+	    get_obs_string(s, datainfo->t2, datainfo);
+	    nmax = strlen(s);
+	}
+    } else {
+	for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	    get_obs_string(s, t, datainfo);
+	    n = strlen(s);
+	    if (n > nmax) {
+		nmax = n;
+	    }
+	}
+    }
+
+    return nmax;
+}
+
+static void multi_series_view_print_formatted (windata_t *vwin)
+{
+    multi_series_view *mview = (multi_series_view *) vwin->data;
+    const int *list = mview->list;
+    char num_format[16];
+    char obslabel[OBSLEN];
+    double xit;
+    PRN *prn;
+    int colwidth, obslen;
+    int i, vi, t;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    colwidth = 2 * mview->digits;
+    if (colwidth < 10) {
+	colwidth = 10;
+    }
+
+    obslen = get_obslen(obslabel) + 1;
+
+    if (mview->format == 'G') {
+	sprintf(num_format, "%%#%d.%dg", colwidth, mview->digits);
+    } else {
+	sprintf(num_format, "%%%d.%df", colwidth, mview->digits);
+    }
+
+    pprintf(prn, "%*s", obslen, "");
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi >= datainfo->v) {
+	    continue;
+	}
+	pprintf(prn, "%*s ", colwidth - 1, datainfo->varname[vi]);
+    }
+    pputs(prn, "\n\n");
+
+    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	get_obs_string(obslabel, t, datainfo);
+	pprintf(prn, "%*s", obslen, obslabel);
+	for (i=1; i<=list[0]; i++) {
+	    if (vi >= datainfo->v) {
+		continue;
+	    }
+	    xit = Z[vi][t];
+	    if (na(xit)) {
+		pprintf(prn, "%*s", colwidth, "");
+	    } else {
+		pprintf(prn, num_format, xit);
+	    }
+	}
+	pputc(prn, '\n');
+    }
+
+    textview_set_text(vwin->text, gretl_print_get_buffer(prn));
     gretl_print_destroy(prn);
 }
 
@@ -447,7 +536,6 @@ void series_view_connect (windata_t *vwin, int varnum)
 	sview->npoints = 0;
 	sview->points = NULL;
 	sview->digits = 6;
-	sview->digit_spin = NULL;
 	sview->format = 'G';
 	vwin->data = sview;
     }
@@ -484,6 +572,8 @@ multi_series_view *multi_series_view_new (const int *list)
 	} else {
 	    mview->sortvar = 0;
 	    mview->npoints = 0;
+	    mview->digits = 6;
+	    mview->format = 'G';
 	    mview->points = NULL;
 	}
     } 
@@ -491,36 +581,29 @@ multi_series_view *multi_series_view_new (const int *list)
     return mview;
 }
 
-static 
-void series_view_get_figures (GtkWidget *w, series_view *sview)
+static void series_view_set_digits (GtkSpinButton *b, int *digits)
 {
-    sview->digits = gtk_spin_button_get_value_as_int
-	(GTK_SPIN_BUTTON(sview->digit_spin));
+    *digits = gtk_spin_button_get_value_as_int(b);
 }
 
-static void 
-set_series_float_format (GtkWidget *w, gpointer p)
+static void series_view_set_format (GtkWidget *w, char *format)
 {
     gint i;
-    series_view *sview = (series_view *) p;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
         i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-        sview->format = i;
+        *format = i;
     }
 }
 
-void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
+static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
+				     char *format, int *digits,
+				     int multi)
 {
     GtkWidget *dlg;
-    GtkWidget *tmp, *hbox; 
+    GtkWidget *tmp, *hbox, *spin;
     GtkObject *adj;
     GSList *group;
-    series_view *sview = (series_view *) vwin->data;
-
-    if (series_view_allocate(sview)) {
-	return;
-    }
 
     dlg = gretl_dialog_new(_("gretl: data format"), NULL,
 			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
@@ -534,12 +617,13 @@ void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     /* spinner for number of digits */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Show"));
-    adj = gtk_adjustment_new(sview->digits, 1, 10, 1, 1, 0);
-    sview->digit_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-    g_signal_connect (adj, "value-changed",
-		      G_CALLBACK(series_view_get_figures), sview);
+    adj = gtk_adjustment_new(*digits, 1, 10, 1, 1, 0);
+    spin = gtk_spin_button_new_with_range(1, 10, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), *digits);
+    g_signal_connect(G_OBJECT(spin), "value-changed",
+		     G_CALLBACK(series_view_set_digits), digits);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), sview->digit_spin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show_all(hbox);
 
@@ -547,11 +631,11 @@ void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_radio_button_new_with_label(NULL, _("significant figures"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    if (sview->format == 'G') {
+    if (*format == 'G') {
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
     }
     g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(set_series_float_format), sview);
+                     G_CALLBACK(series_view_set_format), format);
     g_object_set_data(G_OBJECT(tmp), "action", GINT_TO_POINTER('G'));
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 0);
     gtk_widget_show_all(hbox);
@@ -560,18 +644,17 @@ void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
     tmp = gtk_radio_button_new_with_label(group, _("decimal places"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    if (sview->format == 'f') {
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
+    if (*format == 'f') {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (tmp), TRUE);
     }
     g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(set_series_float_format), sview);
+                     G_CALLBACK(series_view_set_format), format);
     g_object_set_data(G_OBJECT(tmp), "action", GINT_TO_POINTER('f'));
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 0);
     gtk_widget_show_all(hbox);
 
     /* Cancel button */
-    cancel_options_button(GTK_DIALOG(dlg)->action_area, dlg, 
-			  &sview->digits);
+    cancel_options_button(GTK_DIALOG(dlg)->action_area, dlg, digits);
    
     /* OK button */
     tmp = ok_button(GTK_DIALOG(dlg)->action_area);
@@ -582,11 +665,32 @@ void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 
     gtk_widget_show(dlg);
 
-    if (sview->digits > 0) {
-	series_view_print(vwin);
+    if (*digits > 0) {
+	if (multi) {
+	    multi_series_view_print_formatted(vwin);
+	} else {
+	    series_view_print(vwin);
+	}
     } else { 
 	/* canceled */
-	sview->digits = 6;
+	*digits = 6;
+    }
+}
+
+void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
+{
+    if (vwin->role == VIEW_SERIES) {
+	series_view *sview = (series_view *) vwin->data;
+
+	if (series_view_allocate(sview)) {
+	    return;
+	} else {
+	    real_view_format_dialog(src, vwin, &sview->format, &sview->digits, 0);
+	}
+    } else {
+	multi_series_view *mview = (multi_series_view *) vwin->data;
+    
+	real_view_format_dialog(src, vwin, &mview->format, &mview->digits, 1);
     }
 }
 

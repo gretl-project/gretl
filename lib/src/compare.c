@@ -1667,6 +1667,11 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	return E_NOTIMP;
     }
 
+    if (pmod->opt & (OPT_G | OPT_L)) { 
+	/* FIXME gmm, liml */
+	return E_NOTIMP;
+    }
+
     if (pmod->missmask != NULL) {
 	return E_DATA;
     }
