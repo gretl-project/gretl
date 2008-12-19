@@ -217,7 +217,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     const int *list = system_get_list(sys, eq);
     gretl_matrix *E, *W0, *W1, *W2, *Inv;
     gretl_matrix *lambda = NULL;
-    double ll = 0.0, lmin = 1.0;
+    double lmin = 1.0;
     MODEL *pmod;
     MODEL lmod;
     int *reglist;
@@ -332,14 +332,17 @@ static int liml_do_equation (equation_system *sys, int eq,
     }
 
     if (!err) {
-	/* compute and set log-likelihood, etc */
-	ll = sys->neqns * LN_2_PI + log(lmin);
-	ll += gretl_matrix_log_determinant(W1, &err);
-	if (!err) {
-	    ll *= -(T / 2.0);
-	    pmod->lnL = ll; 
-	    mle_criteria(pmod, 0); /* check the "0" (additional params) here */
+	/* compute and set log-likelihood, etc. */
+	double ldet = gretl_matrix_log_determinant(W1, &err);
+	int g = sys->neqns;
+
+	if (err) {
+	    pmod->lnL = NADBL;
+	} else {
+	    /* Davidson and MacKinnon, ETM, p. 538 */
+	    pmod->lnL = -(T / 2.0) * (g * LN_2_PI + log(lmin) + ldet);
 	}
+	mle_criteria(pmod, 0); /* check the "0" (additional params) here */
     }
 
  bailout:

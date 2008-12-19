@@ -5653,7 +5653,6 @@ void display_var (void)
     PRN *prn;
     windata_t *vwin;
     int height = 400;
-    int vec = 1;
     int n = datainfo->t2 - datainfo->t1 + 1;
     int v = mdata_active_var();
 
@@ -5690,10 +5689,8 @@ void display_var (void)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	vwin = view_buffer(prn, 36, height, 
-			   datainfo->varname[v], 
-			   (vec)? VIEW_SERIES : VIEW_SCALAR, 
-			   NULL);
+	vwin = view_buffer(prn, 36, height, datainfo->varname[v], 
+			   VIEW_SERIES, NULL);
 	series_view_connect(vwin, v);
     }
 }

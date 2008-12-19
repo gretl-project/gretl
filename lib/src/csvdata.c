@@ -1606,6 +1606,11 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     long datapos;
     int i, err = 0;
 
+    if (opt & OPT_Q) {
+	/* quiet */
+	prn = NULL;
+    }
+
 #ifdef ENABLE_NLS
     if (prn != NULL) {
 	check_for_console(prn);

@@ -231,8 +231,6 @@ static void text_copy_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin_selection_present(vwin)) {
 	window_copy(vwin, GRETL_FORMAT_SELECTION);
-    } else if (vwin->role == VIEW_SCALAR) {
-	scalar_to_clipboard(vwin);
     } else if (!script_role(vwin->role) && !editor_role(vwin->role)) {
 	copy_format_dialog(vwin, W_COPY);
     } else {
@@ -507,8 +505,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define save_as_ok(r) (r != EDIT_HEADER && \
 	               r != EDIT_NOTES && \
-	               r != EDIT_FUNC_CODE && \
-		       r != VIEW_SCALAR)
+	               r != EDIT_FUNC_CODE)
 
 #define help_ok(r) (r == LEVERAGE || \
 		    r == COINT2 || \
@@ -521,7 +518,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == VIEW_LOG)
 
 #define sort_ok(r)    (r == VIEW_SERIES)
-#define format_ok(r)  (r == VIEW_SERIES || r == VIEW_SCALAR)
+#define format_ok(r)  (r == VIEW_SERIES)
 #define plot_ok(r)    (r == VIEW_SERIES)
 
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
@@ -548,8 +545,6 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (r != EDIT_SCRIPT && f == MAIL_ITEM) {
 	return NULL;
     } else if (!help_ok(r) && f == HELP_ITEM) {
-	return NULL;
-    } else if (r == VIEW_SCALAR && f == 0) {
 	return NULL;
     } else if ((!latex_ok || !MULTI_FORMAT_ENABLED(r)) && f == TEX_ITEM) {
 	return NULL;

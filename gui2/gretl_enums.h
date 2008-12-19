@@ -36,7 +36,6 @@ enum extra_cmds {
     TRAMO,
     X12A,
     VIEW_SERIES,
-    VIEW_SCALAR,
     VIEW_MODEL,
     VIEW_LOG,
     VIEW_DATA,
