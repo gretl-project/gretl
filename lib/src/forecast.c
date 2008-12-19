@@ -2884,6 +2884,13 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
     int *dvlags = NULL;
     int exo = 1;
 
+    if (pmod->ci == NLS) {
+	/* we'll try winging it! */
+	*dyn_ok = 0;
+	*add_obs_ok = 1;
+	return;
+    }
+
     *dyn_ok = 0;
     *add_obs_ok = 0;
     *dt2max = pmod->t2;

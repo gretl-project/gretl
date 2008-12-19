@@ -1236,8 +1236,6 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
     void *ptr;
     int err = 0;
 
-    /* FIXME error messages are not getting out of here? */
-
     ptr = get_last_model(&type);  
     if (ptr == NULL) {
 	pputs(prn, _("Can't do this: no model has been estimated yet\n"));

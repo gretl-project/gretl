@@ -3948,12 +3948,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (NEEDS_MODEL_CHECK(cmd->ci)) {
 	err = model_test_check(cmd, pdinfo, prn);
-	if (err) {
-	    return err;
-	}
-    }
-
-    if (MODIFIES_LIST(cmd->ci)) {
+    } else if (MODIFIES_LIST(cmd->ci)) {
 	if (cmd->list[0] == 0) {
 	    /* no-op */
 	    return 0;
@@ -3961,9 +3956,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    /* list is potentially modified -> make a copy */
 	    listcpy = gretl_list_copy(cmd->list);
 	    if (listcpy == NULL) {
-		return E_ALLOC;
+		err = E_ALLOC;
 	    }
 	}
+    }
+
+    if (err) {
+	goto bailout;
     }
 
     if (cmd->ci == OLS && dataset_is_panel(pdinfo)) {
@@ -4650,6 +4649,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (err == E_OK) {
 	err = 0;
     }
+
+ bailout:
 
     if (err) {
 	gretl_cmd_destroy_context(cmd);
