@@ -2489,7 +2489,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     free_fit_resid(fr);
-    
+
     return err;
 }
 

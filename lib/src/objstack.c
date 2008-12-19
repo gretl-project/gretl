@@ -1236,10 +1236,12 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
     void *ptr;
     int err = 0;
 
+    /* FIXME error messages are not getting out of here? */
+
     ptr = get_last_model(&type);  
     if (ptr == NULL) {
 	pputs(prn, _("Can't do this: no model has been estimated yet\n"));
-	return 1;
+	return E_DATA;
     }
 
     if (type == GRETL_OBJ_EQN) {
@@ -1251,7 +1253,8 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	if (model_sample_problem(pmod, pdinfo)) {
 	    pputs(prn, _("Can't do: the current data set is different from "
 			 "the one on which\nthe reference model was estimated\n"));
-	    err = 1;
+	    fprintf(stderr, "bad 3\n");
+	    err = E_DATA;
 	}
     } else if (type == GRETL_OBJ_SYS) {
 	err = E_NOTIMP;
@@ -1274,13 +1277,6 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	    err = 0;
 	} 
     }
-
-#if 0
-    if (err == E_NOTIMP) {
-	pputs(prn, _("Sorry, command not available for this estimator"));
-	pputc(prn, '\n');
-    }
-#endif
 
     return err;
 }

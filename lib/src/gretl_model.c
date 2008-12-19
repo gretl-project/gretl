@@ -4273,6 +4273,10 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 {
     int ok = 1;
 
+    if (mci == NLS && test_ci == FCAST) {
+	return 1;
+    }
+
     if (NONLIST_MODEL(mci)) {
 	return (test_ci == RESTRICT ||
 		test_ci == TABPRINT ||
