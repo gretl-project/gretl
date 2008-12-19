@@ -931,7 +931,7 @@ double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
 }
 
 /* we're supposing a variance smaller than this is just noise */
-#define TINYVAR 1.0e-16 
+#define TINYVAR 1.0e-32
 
 /**
  * gretl_moments:
@@ -1029,7 +1029,9 @@ int gretl_moments (int t1, int t2, const double *x,
 	return 1;
     }
 
-     if (var > TINYVAR) {
+    
+
+    if (var > TINYVAR) {
 	*std = sqrt(var);
     } else {
 	/* screen out minuscule variance */

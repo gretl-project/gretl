@@ -29,7 +29,7 @@
 
 #include <time.h>
 
-#define PRN_DEBUG 0
+#define PDEBUG 0
 
 void bufspace (int n, PRN *prn)
 {
@@ -150,6 +150,8 @@ void gui_script_logo (PRN *prn)
     pprintf(prn, _("gretl version %s\n"), GRETL_VERSION);
     pprintf(prn, "%s: %s\n", _("Current session"), print_time(&runtime));
 }
+
+/* ----------------------------------------------------- */
 
 static void 
 print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
@@ -1151,8 +1153,9 @@ static void fit_resid_head (const FITRESID *fr,
 
 /* prints names of variables in @list, positions v1 to v2 */
 
-static void varheading (const int *list, int v1, int v2, int wid,
-			const DATAINFO *pdinfo, PRN *prn)
+static void varheading (const int *list, int v1, int v2, 
+			int leader, int wid, const DATAINFO *pdinfo, 
+			PRN *prn)
 {
     int i;
 
@@ -1167,7 +1170,8 @@ static void varheading (const int *list, int v1, int v2, int wid,
 	}
 	pputc(prn, '\n');
     } else {
-	pputs(prn, "\n         ");
+	pputc(prn, '\n');
+	bufspace(leader, prn);
 	for (i=v1; i<=v2; i++) { 
 	    pprintf(prn, "%*s", wid, pdinfo->varname[list[i]]);
 	}
@@ -1357,7 +1361,7 @@ static int get_signif (const double *x, int n)
 	    smax = s;
 	}
 
-#if PRN_DEBUG
+#if PDEBUG
 	fprintf(stderr, "get_signif: set smax = %d\n", smax);
 #endif
 
@@ -1385,7 +1389,7 @@ static int get_signif (const double *x, int n)
     if (trailmax > 0 && (leadmax + trailmax <= SMAX)) {
 	smax = -trailmax;
     } else if ((leadmin < leadmax) && (leadmax < smax)) {
-#if PRN_DEBUG
+#if PDEBUG
 	fprintf(stderr, "get_signif: setting smax = -(%d - %d)\n", 
 		smax, leadmax);
 #endif	
@@ -1393,7 +1397,7 @@ static int get_signif (const double *x, int n)
     } else if (leadmax == smax) {
 	smax = 0;
     } else if (leadmax == 0 && !allfrac) {
-#if PRN_DEBUG
+#if PDEBUG
 	fprintf(stderr, "get_signif: setting smax = -(%d - 1)\n", smax);
 #endif
 	smax = -1 * (smax - 1);
@@ -1424,13 +1428,13 @@ static int bufprintnum (char *buf, double x, int signif, int width)
     }
 
     if (signif < 0) {
-#if PRN_DEBUG
+#if PDEBUG
 	    fprintf(stderr, "got %d for signif: "
 		    "printing with %%.%df\n", signif, -signif);
 #endif
 	sprintf(numstr, "%.*f", -signif, x);
     } else if (signif == 0) {
-#if PRN_DEBUG
+#if PDEBUG
 	    fprintf(stderr, "got 0 for signif: "
 		    "printing with %%.0f\n");
 #endif
@@ -1450,7 +1454,7 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 	if (l == 6 && signif < 6) {
 	   sprintf(numstr, "%.0f", x); 
 	} else if (l >= signif) { 
-#if PRN_DEBUG
+#if PDEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%.%dG\n", l, signif, signif);
 #endif
@@ -1460,14 +1464,14 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 		sprintf(numstr, "%.*G", signif, x);
 	    }
 	} else if (z >= .10) {
-#if PRN_DEBUG
+#if PDEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%.%df\n", l, signif, signif-l);
 #endif
 	    sprintf(numstr, "%.*f", signif - l, x);
 	} else {
 	    if (signif > 4) signif = 4;
-#if PRN_DEBUG
+#if PDEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%#.%dG\n", l, signif, signif);
 #endif
@@ -1729,6 +1733,14 @@ static int adjust_print_list (int *list, int *screenvar,
     return 0;
 }
 
+static int obslen_from_t (int t)
+{
+    char s[OBSLEN];
+
+    sprintf(s, "%d", t + 1);
+    return strlen(s);
+}
+
 /**
  * printdata:
  * @list: list of variables to print.
@@ -1755,7 +1767,7 @@ int printdata (const int *list, const char *mstr,
     int j, v, v1, v2, jc, nvjc, lineno, ncol;
     int screenvar = 0;
     int sortvar = 0;
-    int maxlen = 0, bplen = 13;
+    int maxlen = 0, bplen = 13, obslen = 0;
     int *plist = NULL;
     int *pmax = NULL; 
     int t, nsamp;
@@ -1857,6 +1869,12 @@ int printdata (const int *list, const char *mstr,
 	ncol = 5;
     }
 
+    if (opt & OPT_N) {
+	obslen = obslen_from_t(pdinfo->t2);
+    } else {
+	obslen = max_obs_label_length(pdinfo);
+    }
+
     /* main block: print data by observations */
 
     for (j=0; j<=plist[0]/ncol; j++) {
@@ -1871,7 +1889,7 @@ int printdata (const int *list, const char *mstr,
 	    v2 = (ncol > nvjc)? nvjc : ncol;
 	    v2 += jc;
 
-	    varheading(plist, v1, v2, bplen, pdinfo, prn);
+	    varheading(plist, v1, v2, obslen, bplen, pdinfo, prn);
 	    printdata_blocks++;
 
 	    if (pause && j > 0 && takenotes(1)) {
@@ -1895,7 +1913,7 @@ int printdata (const int *list, const char *mstr,
 		    get_obs_string(obs_string, t, pdinfo);
 		}
 
-		sprintf(line, "%8s ", obs_string);
+		sprintf(line, "%*s", obslen, obs_string);
 		
 		for (v=v1; v<=v2; v++) {
 		    double xx = Z[plist[v]][t];
@@ -1911,7 +1929,7 @@ int printdata (const int *list, const char *mstr,
 		}
 
 		if (sortvar && plist[0] > 1) {
-		    sprintf(obs_string, "%8s", SORTED_MARKER(pdinfo, sortvar, t));
+		    sprintf(obs_string, "%*s", obslen, SORTED_MARKER(pdinfo, sortvar, t));
 		    strcat(line, obs_string);
 		}
 
@@ -1976,12 +1994,12 @@ int print_data_sorted (const int *list, const int *obsvec,
     double xx;
     char obs_string[OBSLEN];
     char line[128];
-    int bplen = 16;
+    int bplen = 16, obslen = 0;
     int T = obsvec[0];
     int i, s, t;
 
     /* must have a list of up to 4 variables... */
-    if (list == NULL || list[0] > 4) {
+    if (list == NULL || list[0] < 1 || list[0] > 4) {
 	return E_DATA;
     }
 
@@ -2006,11 +2024,13 @@ int print_data_sorted (const int *list, const int *obsvec,
 	pmax[i-1] = get_signif(Z[list[i]] + pdinfo->t1, T);
     }
 
-    varheading(list, 1, list[0], bplen, pdinfo, prn);
-
     if (csv) {
 	sdelim[0] = pdinfo->delim;
+    } else {
+	obslen = max_obs_label_length(pdinfo);
     }
+
+    varheading(list, 1, list[0], obslen, bplen, pdinfo, prn);
 
     /* print data by observations */
     for (s=0; s<T; s++) {
@@ -2020,10 +2040,9 @@ int print_data_sorted (const int *list, const int *obsvec,
 	}
 	get_obs_string(obs_string, t, pdinfo);
 	if (csv) {
-	    sprintf(line, "%s", obs_string);
-	    strcat(line, sdelim);
+	    sprintf(line, "%s%c", obs_string, pdinfo->delim);
 	} else {
-	    sprintf(line, "%8s ", obs_string);
+	    sprintf(line, "%*s", obslen, obs_string);
 	}
 	for (i=1; i<=list[0]; i++) {
 	    xx = Z[list[i]][t];

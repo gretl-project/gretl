@@ -5304,7 +5304,7 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err)
 	goto bailout;
     }
 
-    if (rcond < QR_RCOND_MIN) {
+    if (rcond < 1.0e-7) { /* was QR_RCOND_MIN */
 	fprintf(stderr, "gretl_matrix_QR_rank: rcond = %g\n", rcond);
 	rank = get_R_rank(R);
     }
@@ -8042,6 +8042,10 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	return E_DATA;
     }
 
+    if (getenv("MOLS_USE_SVD")) {
+	return gretl_matrix_svd_ols(y, X, b, vcv, uhat, s2);
+    }
+
     k = X->cols;
 
     if (gretl_vector_get_length(b) != k) {
@@ -8109,13 +8113,19 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
-			    gretl_matrix *B, gretl_matrix *E,
+int gretl_matrix_multi_ols (const gretl_matrix *Y, 
+			    const gretl_matrix *X,
+			    gretl_matrix *B, 
+			    gretl_matrix *E,
 			    gretl_matrix **XTXi)
 {
     gretl_matrix *XTX = NULL;
     int g, T, k;
     int err = 0;
+
+    if (getenv("MOLS_USE_SVD")) {
+	return gretl_matrix_multi_SVD_ols(Y, X, B, E, XTXi);
+    }
 
     if (gretl_is_null_matrix(Y) ||
 	gretl_is_null_matrix(X) ||

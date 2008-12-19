@@ -3902,9 +3902,6 @@ static void finalize_liml_model (MODEL *pmod, equation_system *sys)
 {
     *pmod = *sys->models[0];
 
-    fprintf(stderr, "finalize: ess = %g, ll = %g\n", 
-	    pmod->ess, pmod->lnL);
-
 #if SYSDEBUG
     display_model_data_items(pmod);
 #endif

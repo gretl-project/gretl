@@ -144,7 +144,7 @@ static double printf_get_scalar (char *s, double ***pZ,
 #endif
 
     if (numeric_string(s)) {
-	x = atof(s);
+	x = dot_atof(s);
     } else if (gretl_is_scalar(s)) {
 	x = gretl_scalar_get_value(s);
     } else {
@@ -601,6 +601,11 @@ static int real_do_printf (const char *line, double ***pZ,
 		pputc(prn, *p);
 		p++;
 	    }
+	}
+
+	if (q != NULL && *q != '\0') {
+	    pprintf(prn, "\nunmatched argument '%s'", q);
+	    err = E_PARSE;
 	}
     }
 

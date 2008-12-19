@@ -173,14 +173,14 @@ static PRN *series_view_print_csv (windata_t *vwin)
     return prn;
 }
 
-/* for printing sorted or reformatted data, window with a
-   single series */
+/* for printing sorted or reformatted data, for a window displaying
+   a single series */
 
 static void series_view_print (windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
     char num_format[32];
-    int obslen = 8;
+    int obslen = 0;
     PRN *prn;
     int t, len;
 
@@ -203,7 +203,7 @@ static void series_view_print (windata_t *vwin)
 	
     /* print formatted data to buffer */
 
-    pprintf(prn, "\n%*s ", obslen, _("Obs"));
+    pprintf(prn, "\n%*s ", obslen, "");
     pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
 
     for (t=0; t<sview->npoints; t++) {
@@ -239,12 +239,10 @@ static int *make_obsvec (multi_series_view *mview)
 static void multi_series_view_print_sorted (windata_t *vwin)
 {
     multi_series_view *mview = (multi_series_view *) vwin->data;
-    const char *pbuf;
-    int *obsvec;
+    int *obsvec = make_obsvec(mview);
     PRN *prn;
     int err = 0;
 
-    obsvec = make_obsvec(mview);
     if (obsvec == NULL) {
 	return;
     }
@@ -259,8 +257,7 @@ static void multi_series_view_print_sorted (windata_t *vwin)
     if (err) {
 	gui_errmsg(err);
     } else {
-	pbuf = gretl_print_get_buffer(prn);
-	textview_set_text(vwin->text, pbuf);
+	textview_set_text(vwin->text, gretl_print_get_buffer(prn));
     }
 
     free(obsvec);
@@ -287,7 +284,10 @@ static void multi_series_view_print_formatted (windata_t *vwin)
 	colwidth = 10;
     }
 
-    obslen = max_obs_label_length(datainfo) + 1;
+    obslen = max_obs_label_length(datainfo);
+    if (obslen < 2) {
+	obslen = -2;
+    }
 
     if (mview->format == 'G') {
 	sprintf(num_format, "%%#%d.%dg", colwidth, mview->digits);
@@ -343,6 +343,7 @@ PRN *vwin_print_sorted_as_csv (windata_t *vwin)
     int err = 0;
 
     if (vwin->role == VIEW_SERIES) {
+	/* a single series */
 	return series_view_print_csv(vwin);
     }
 

@@ -1475,6 +1475,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 {
     gretl_matrix *B = NULL;
     gretl_matrix *U = NULL;
+    int g, k, T;
     int newU = 0;
 
     if (gretl_is_null_matrix(X) || gretl_is_null_matrix(X)) {
@@ -1482,7 +1483,11 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	return NULL;
     }
 
-    if (X->rows != Y->rows) {
+    T = Y->rows;
+    k = X->cols;
+    g = Y->cols;
+
+    if (X->rows != T) {
 	*err = E_NONCONF;
 	return NULL;
     }
@@ -1493,26 +1498,30 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	    *err = E_UNKVAR;
 	    return NULL;
 	} 
-	if (U->rows != Y->rows || U->cols != Y->cols) {
+	if (U->rows != T || U->cols != g) {
 	    newU = 1;
 	}
     }
 
     if (newU) {
-	U = gretl_matrix_alloc(Y->rows, Y->cols);
+	U = gretl_matrix_alloc(T, g);
 	if (U == NULL) {
 	    *err = E_ALLOC;
 	    return NULL;
 	}
     }
 
-    B = gretl_matrix_alloc(X->cols, Y->cols);
+    B = gretl_matrix_alloc(k, g);
     if (B == NULL) {
 	*err = E_ALLOC;
     }
 
     if (!*err) {
-	*err = gretl_matrix_multi_ols(Y, X, B, U, NULL);
+	if (g == 1) {
+	    *err = gretl_matrix_ols(Y, X, B, NULL, U, NULL);
+	} else {
+	    *err = gretl_matrix_multi_ols(Y, X, B, U, NULL);
+	}
     }
 
     if (*err) {

@@ -1470,7 +1470,11 @@ static int get_fitted_line (gnuplot_info *gi,
     }
 
     if (!err) {
-	err = gretl_matrix_ols(y, X, b, V, NULL, ps2);
+	/* Note: changed from gretl_matrix_ols, 2008-12-19.
+	   An inaccurate fit can look very bad in a graph,
+	   though that only happens on very weird data. 
+	*/
+	err = gretl_matrix_svd_ols(y, X, b, V, NULL, ps2);
     }
 
     if (!err) {
@@ -1581,11 +1585,18 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 	}
 		    
 	gi->xrange = xmax - xmin0;
-	xmin = xmin0 - gi->xrange * .025;
-	if (xmin0 >= 0.0 && xmin < 0.0) {
-	    xmin = 0.0;
+
+	if (gi->xrange == 0.0) {
+	    xmin = xmin0 - 0.5;
+	    xmax = xmin0 + 0.5;
+	} else {
+	    xmin = xmin0 - gi->xrange * .025;
+	    if (xmin0 >= 0.0 && xmin < 0.0) {
+		xmin = 0.0;
+	    }
+	    xmax += gi->xrange * .025;
 	}
-	xmax += gi->xrange * .025;
+
 	fprintf(gi->fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
     }

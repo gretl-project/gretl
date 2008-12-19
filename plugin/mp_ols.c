@@ -576,27 +576,32 @@ static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
 
     pmod->lnL = mpfr_get_d(mll, GMP_RNDN);
 
-    mpfr_set_d(mx1, -2.0, GMP_RNDN);
-    mpfr_mul(ll2, mx1, mll, GMP_RNDN);    /* -2.0 * ll */
+    if (xna(pmod->lnL)) {
+	pmod->lnL = NADBL;
+	mle_criteria(pmod, 0);
+    } else {
+	mpfr_set_d(mx1, -2.0, GMP_RNDN);
+	mpfr_mul(ll2, mx1, mll, GMP_RNDN);    /* -2.0 * ll */
 
-    mpfr_set_d(mx1, 2.0, GMP_RNDN);
-    mpfr_set_d(mx2, k, GMP_RNDN);
-    mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k */
+	mpfr_set_d(mx1, 2.0, GMP_RNDN);
+	mpfr_set_d(mx2, k, GMP_RNDN);
+	mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k */
 
-    mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + 2 * k */
-    pmod->criterion[C_AIC] = mpfr_get_d(crit, GMP_RNDN);
+	mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + 2 * k */
+	pmod->criterion[C_AIC] = mpfr_get_d(crit, GMP_RNDN);
 
-    mpfr_mul(mx1, mx2, mln, GMP_RNDN);    /* k * log(n) */
-    mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + k * log(n) */
-    pmod->criterion[C_BIC] = mpfr_get_d(crit, GMP_RNDN);
+	mpfr_mul(mx1, mx2, mln, GMP_RNDN);    /* k * log(n) */
+	mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + k * log(n) */
+	pmod->criterion[C_BIC] = mpfr_get_d(crit, GMP_RNDN);
 
-    mpfr_set_d(mx1, 2.0, GMP_RNDN);
-    mpfr_set_d(mx2, (double) k, GMP_RNDN);
-    mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k, again */
-    mpfr_log(mx2, mln, GMP_RNDN);         /* log(log(n)) */
-    mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k * log(log(n) */
-    mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + 2 * k * log(log(n)) */
-    pmod->criterion[C_HQC] = mpfr_get_d(crit, GMP_RNDN);
+	mpfr_set_d(mx1, 2.0, GMP_RNDN);
+	mpfr_set_d(mx2, (double) k, GMP_RNDN);
+	mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k, again */
+	mpfr_log(mx2, mln, GMP_RNDN);         /* log(log(n)) */
+	mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k * log(log(n) */
+	mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + 2 * k * log(log(n)) */
+	pmod->criterion[C_HQC] = mpfr_get_d(crit, GMP_RNDN);
+    }
 
     mpfr_clear(mll);
     mpfr_clear(mln);
