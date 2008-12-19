@@ -30,6 +30,39 @@
 
 #define PSDEBUG 0
 
+static void print_series_with_format (int v, const double **Z,
+				      const DATAINFO *pdinfo,
+				      const char *fmt, 
+				      int wid, int prec, 
+				      int wstar, int pstar,
+				      PRN *prn)
+{
+    char label[OBSLEN];
+    double x;
+    int n, t;
+
+    n = max_obs_label_length(pdinfo) + 1;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	get_obs_string(label, t, pdinfo);
+	pprintf(prn, "%*s ", n, label);
+	x = Z[v][t];
+	if (na(x)) {
+	    pputc(prn, '\n');
+	    continue;
+	}
+	if (wstar && pstar) {
+	    pprintf(prn, fmt, wid, prec, x);
+	} else if (wstar || pstar) {
+	    wid = (wstar)? wid : prec;
+	    pprintf(prn, fmt, wid, x);
+	} else {
+	    pprintf(prn, fmt, x);
+	}
+	pputc(prn, '\n');
+    }
+}
+
 static int printf_escape (int c, PRN *prn)
 {
     switch (c) {
@@ -296,6 +329,7 @@ static int print_arg (char **pfmt, char **pargs,
     char *arg = NULL;
     char *str = NULL;
     gretl_matrix *m = NULL;
+    int series_v = -1;
     double x = NADBL;
     int flen = 0, alen = 0;
     int wstar = 0, pstar = 0;
@@ -353,10 +387,14 @@ static int print_arg (char **pfmt, char **pargs,
     /* get next substantive arg */
     arg = get_next_arg(*pargs, &alen, &err);
     if (!err) {
+	int v;
+
 	if (fc == 's') {
 	    str = printf_get_string(arg, pZ, pdinfo, t, &err);
 	} else if ((m = get_matrix_by_name(arg)) != NULL) {
 	    ; /* OK, we'll print the matrix */
+	} else if ((v = series_index(pdinfo, arg)) < pdinfo->v) {
+	    series_v = v; /* OK, we'll print the series */
 	} else {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
 	    if (!err && na(x)) {
@@ -378,6 +416,10 @@ static int print_arg (char **pfmt, char **pargs,
 	if (!wstar) wid = -1;
 	if (!pstar) prec = -1;
 	gretl_matrix_print_with_format(m, fmt, wid, prec, prn);
+    } else if (series_v > 0) {
+	print_series_with_format(series_v, (const double **)*pZ,
+				 pdinfo, fmt, wid, prec, 
+				 wstar, pstar, prn);
     } else if (fc == 's') {
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, str);

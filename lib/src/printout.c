@@ -205,6 +205,53 @@ void print_centered (const char *s, int width, PRN *prn)
 }
 
 /**
+ * max_obs_label_length:
+ * @pdinfo: dataset information.
+ *
+ * Returns: the length of the longest observation label
+ * within the current sample range.
+ */
+
+int max_obs_label_length (const DATAINFO *pdinfo)
+{
+    char s[OBSLEN];
+    int t, n, nmax = 0;
+
+    if (pdinfo->S == NULL) {
+	if (dataset_is_time_series(pdinfo)) {
+	    switch (pdinfo->pd) {
+	    case 1:
+	    case 10:
+		nmax = 4; break;
+	    case 4:
+		nmax = 6; break;
+	    case 12:
+		nmax = 7; break;
+	    default:
+		break;
+	    }
+	} 
+	if (nmax == 0) {
+	    get_obs_string(s, pdinfo->t2, pdinfo);
+	    nmax = strlen(s);
+	}
+    } else if (dated_daily_data(pdinfo)) {
+	get_obs_string(s, pdinfo->t2, pdinfo);
+	nmax = strlen(s);
+    } else {
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    get_obs_string(s, t, pdinfo);
+	    n = strlen(s);
+	    if (n > nmax) {
+		nmax = n;
+	    }
+	}
+    }
+
+    return nmax;
+}
+
+/**
  * text_print_model_confints:
  * @cf: pointer to confidence intervals.
  * @prn: gretl printing struct.
@@ -1090,7 +1137,7 @@ static void fit_resid_head (const FITRESID *fr,
 	}
     }
     
-    pprintf(prn, "\n     %s ", _("Obs"));
+    pputs(prn, "\n         ");
 
     for (i=1; i<4; i++) {
 	if (i == 1) strcpy(label, fr->depvar);
@@ -1110,7 +1157,7 @@ static void varheading (const int *list, int v1, int v2, int wid,
     int i;
 
     if (csv_format(prn)) {
-	pputs(prn, "Obs");
+	pputs(prn, "   ");
 	pputc(prn, pdinfo->delim);
 	for (i=v1; i<=v2; i++) { 
 	    pprintf(prn, "%s", pdinfo->varname[list[i]]);
@@ -1120,7 +1167,7 @@ static void varheading (const int *list, int v1, int v2, int wid,
 	}
 	pputc(prn, '\n');
     } else {
-	pputs(prn, "\n     Obs ");
+	pputs(prn, "\n         ");
 	for (i=v1; i<=v2; i++) { 
 	    pprintf(prn, "%*s", wid, pdinfo->varname[list[i]]);
 	}

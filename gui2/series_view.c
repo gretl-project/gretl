@@ -267,43 +267,6 @@ static void multi_series_view_print_sorted (windata_t *vwin)
     gretl_print_destroy(prn);
 }
 
-/* FIXME this should be in libgretl */
-
-static int get_obslen (char *s)
-{
-    int t, n, nmax = 0;
-
-    if (datainfo->S == NULL) {
-	if (dataset_is_time_series(datainfo)) {
-	    switch (datainfo->pd) {
-	    case 1:
-	    case 10:
-		nmax = 4; break;
-	    case 4:
-		nmax = 6; break;
-	    case 12:
-		nmax = 7; break;
-	    default:
-		break;
-	    }
-	} 
-	if (nmax == 0) {
-	    get_obs_string(s, datainfo->t2, datainfo);
-	    nmax = strlen(s);
-	}
-    } else {
-	for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	    get_obs_string(s, t, datainfo);
-	    n = strlen(s);
-	    if (n > nmax) {
-		nmax = n;
-	    }
-	}
-    }
-
-    return nmax;
-}
-
 static void multi_series_view_print_formatted (windata_t *vwin)
 {
     multi_series_view *mview = (multi_series_view *) vwin->data;
@@ -324,7 +287,7 @@ static void multi_series_view_print_formatted (windata_t *vwin)
 	colwidth = 10;
     }
 
-    obslen = get_obslen(obslabel) + 1;
+    obslen = max_obs_label_length(datainfo) + 1;
 
     if (mview->format == 'G') {
 	sprintf(num_format, "%%#%d.%dg", colwidth, mview->digits);
@@ -347,6 +310,7 @@ static void multi_series_view_print_formatted (windata_t *vwin)
 	get_obs_string(obslabel, t, datainfo);
 	pprintf(prn, "%*s", obslen, obslabel);
 	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
 	    if (vi >= datainfo->v) {
 		continue;
 	    }
