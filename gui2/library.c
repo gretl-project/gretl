@@ -1369,8 +1369,6 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     PRN *prn;
     int resp, err = 0;
 
-    fprintf(stderr, "0: st2=%d, dt2=%d\n", st2, dt2);
-
     /* try to figure which options might be applicable */
     forecast_options_for_model(pmod, (const double **) Z, datainfo, &dyn_ok, 
 			       &add_obs_ok, &dt2, &st2);
@@ -1380,8 +1378,6 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     } else {
 	t2 = st2;
     }
-
-    fprintf(stderr, "1: st2=%d, dt2=%d\n", st2, dt2);
 
     /* if no out-of-sample obs are available in case of time-
        series data, alert the user */
