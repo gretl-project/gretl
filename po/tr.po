@@ -1,4 +1,3 @@
-# translation of tr.po to Turkish
 # translation of tr.po to
 # Copyright (C) 2008 Free Software Foundation, Inc.
 # This file is distributed under the same license as the PACKAGE package.
@@ -9,9 +8,9 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-10 15:48-0500\n"
-"PO-Revision-Date: 2008-12-16 15:51+0200\n"
-"Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
-"Language-Team: Turkish <tr@li.org>\n"
+"PO-Revision-Date: 2008-12-19 16:02+0200\n"
+"Last-Translator: \n"
+"Language-Team:  <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -78,7 +77,7 @@ msgstr "bilinmeyen"
 
 #: lib/src/adf_kpss.c:304
 msgid "asymptotic p-value"
-msgstr "kavuşmaz p-değeri"
+msgstr "kavuşmazsal p-değeri"
 
 #: lib/src/adf_kpss.c:311
 #, c-format
@@ -232,15 +231,15 @@ msgstr "geciktirilmiş bağımlı değişken tanındı"
 
 #: lib/src/bootstrap.c:471
 msgid "bootstrap F-test"
-msgstr "bootstrap F-sınaması"
+msgstr "özyetinim F-sınaması"
 
 #: lib/src/bootstrap.c:473
 msgid "bootstrap t-ratio"
-msgstr "bootstrap t-oranı"
+msgstr "özyetinim t-oranı"
 
 #: lib/src/bootstrap.c:475
 msgid "bootstrap coefficient"
-msgstr "bootstrap katsayısı"
+msgstr "özyetinim katsayısı"
 
 #: lib/src/boxplots.c:159 gui2/gpt_control.c:2867 gui2/gpt_control.c:2940
 msgid "Numerical summary"
@@ -259,7 +258,7 @@ msgstr "ortanca"
 
 #: lib/src/boxplots.c:174
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr "Sayısal özet (ortanca için bootstrap'li güven aralıkları ile)"
+msgstr "Sayısal özet (ortanca için özyetinimli güven aralıkları ile)"
 
 #: lib/src/boxplots.c:180
 #, no-c-format
@@ -311,7 +310,7 @@ msgstr ""
 
 #: lib/src/compare.c:315 lib/src/gretl_model.c:3051
 msgid "Asymptotic test statistic"
-msgstr "Kavuşmaz sınama istatistiği"
+msgstr "Kavuşmazsal sınama istatistiği"
 
 #: lib/src/compare.c:317 lib/src/compare.c:1922 lib/src/compare.c:1927
 #: lib/src/compare.c:2337 lib/src/estimate.c:2590 lib/src/estimate.c:3369
@@ -606,7 +605,7 @@ msgid ""
 "for each cross-sectional unit"
 msgstr ""
 "Üzgünüm, bu sınama dengelenmemiş bir panel üstünde\n"
-" yapılamıyor. Her bir yatay-kesitsel birim için aynı sayıda\n"
+" yapılamıyor. Her bir yatay-kesit birimi için aynı sayıda\n"
 "gözleminiz olmalıdır"
 
 #: lib/src/compat.c:224
@@ -996,7 +995,7 @@ msgstr "Etiketler dosyasına yazma başarısız"
 
 #: lib/src/dataio.c:1538
 msgid "time series"
-msgstr "zaman serileri"
+msgstr "zaman serisi"
 
 #: lib/src/dataio.c:1540
 msgid "panel"
@@ -1110,7 +1109,7 @@ msgstr ""
 
 #: lib/src/dataio.c:1936
 msgid "time-series"
-msgstr "zaman-serileri"
+msgstr "zaman-serisi"
 
 #: lib/src/dataio.c:1936
 msgid "cross-sectional"
@@ -2001,7 +2000,7 @@ msgstr ""
 
 #: lib/src/estimate.c:4245
 msgid "This test is only available for panel data"
-msgstr "Bu sınama yalnız panel veriler için bulunmaktadır"
+msgstr "Bu sınama yalnız panel verileri için bulunmaktadır"
 
 #: lib/src/forecast.c:2423
 msgid "predicted values"
@@ -2126,7 +2125,7 @@ msgstr "birim"
 
 #: lib/src/genfuncs.c:1347
 msgid "cross-sectional unit index"
-msgstr "yatay-kesitsel birim endeksi"
+msgstr "yatay-kesit birim endeksi"
 
 #: lib/src/genfuncs.c:1428 lib/src/transforms.c:1635
 msgid "time trend variable"
@@ -2299,11 +2298,11 @@ msgstr "Bilinmeyen değişken '%s'"
 
 #: lib/src/gmm.c:567
 msgid "Orthogonality conditions must come before the weights matrix"
-msgstr "Dikeylik koşulları, ağırlıklar dizeyinden önce gelmelidir"
+msgstr "Dikeysellik koşulları, ağırlıklar dizeyinden önce gelmelidir"
 
 #: lib/src/gmm.c:701
 msgid "Weights must come after orthogonality conditions"
-msgstr "Ağırlıklar, dikeylik koşullarından sonra gelmelidir"
+msgstr "Ağırlıklar, dikeysellik koşullarından sonra gelmelidir"
 
 #: lib/src/gmm.c:706
 msgid "Weights are already defined"
@@ -2316,7 +2315,7 @@ msgstr "Ağırlık dizeyinin boyutu yanlış: %d x %d olmalıdır"
 
 #: lib/src/gmm.c:781
 msgid "No orthogonality conditions have been specified"
-msgstr "Belirtilmiş dikeylik koşulu yok"
+msgstr "Belirtilmiş dikeysellik koşulu yok"
 
 #: lib/src/gmm.c:786
 msgid "No weights have been specified"
@@ -2324,7 +2323,7 @@ msgstr "Belirtilmiş ağırlık yok"
 
 #: lib/src/gmm.c:1412
 msgid "Orthogonality conditions - descriptive statistics"
-msgstr "Dikeylik koşulları - betimleyici istatistikler"
+msgstr "Dikeysellik koşulları - betimleyici istatistikler"
 
 #: lib/src/gmm.c:1413
 msgid "OC"
@@ -2457,7 +2456,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:3739
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (özyetinim güven aralıkları ile)"
 
 #: lib/src/graphing.c:3744
 #, c-format
@@ -2917,7 +2916,7 @@ msgid ""
 "           (standard errors in parentheses, p-values in brackets)\n"
 "\n"
 msgstr ""
-"                  Rassal etkiler tahmincisi\n"
+"                  Rastsal etkiler tahmincisi\n"
 "       hata teriminde birime özel bir bileşene izin verir\n"
 "(ölçünlü hatalar parantez, p-değerleri köşeli ayraç içerisindedir)\n"
 
@@ -2928,7 +2927,7 @@ msgid ""
 "slope standard errors in parentheses, p-values in brackets\n"
 msgstr ""
 "Sabit etkiler tahmincisi\n"
-"yatay-kesitsel birime göre farklılık gösteren sabit terimlere izin verir\n"
+"yatay-kesit birimine göre farklılık gösteren sabit terimlere izin verir\n"
 "eğim ölçünlü hataları parantez, p-değerleri köşeli ayraç içerisindedir\n"
 
 #: lib/src/gretl_panel.c:1587
@@ -2976,7 +2975,7 @@ msgid ""
 "\"fail to reject\" the random effects specification).\n"
 msgstr ""
 "\n"
-"Hausman sınama dizeyi artı tanımlı değil (bu sonuç, rassal etkiler "
+"Hausman sınama dizeyi artı tanımlı değil (bu sonuç, rastsal etkiler "
 "belirtiminin\n"
 "\"reddedilemediği\" yönünde değerlendirilebilir).\n"
 
@@ -2996,14 +2995,14 @@ msgid ""
 "(A low p-value counts against the null hypothesis that the random effects\n"
 "model is consistent, in favor of the fixed effects model.)\n"
 msgstr ""
-"(Düşük bir p-değeri, rassal etkiler modelinin tutarlı olduğu sıfır önsavına "
+"(Düşük bir p-değeri, rastsal etkiler modelinin tutarlı olduğu sıfır önsavına "
 "karşı\n"
 "olup, sabit etkiler karşı savını desteklemektedir.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2401
 msgid "Error estimating random effects model\n"
-msgstr "Rassal etkiler modeli tahmin hatası\n"
+msgstr "Rastsal etkiler modeli tahmin hatası\n"
 
 #: lib/src/gretl_panel.c:2484
 msgid ""
@@ -3012,7 +3011,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Yatay-kesitsel birimler için karma SEK kalıntı ortalamaları:\n"
+"Yatay-kesit birimleri için karma SEK kalıntı ortalamaları:\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2501
@@ -3039,7 +3038,7 @@ msgid ""
 msgstr ""
 "(Düşük bir p-değeri, karma OLS modelinin yeterli olduğu sıfır önsavına "
 "karşı\n"
-"olup, rassal etkiler karşı savını desteklemektedir.)\n"
+"olup, rastsal etkiler karşı savını desteklemektedir.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2538
@@ -3053,8 +3052,8 @@ msgid ""
 "                         observed over %d periods\n"
 "\n"
 msgstr ""
-"      Tanılar: %2$d dönem üzerinde gözlenen ve %1$d yatay-kesitsel "
-"                         birimden oluşan dengeli bir panel varsayılarak\n"
+"      Tanılar: %2$d dönem üzerinde gözlenen ve %1$d yatay-kesit"
+"                         biriminden oluşan dengeli bir panel varsayılarak\n"
 
 #: lib/src/gretl_panel.c:2784 lib/src/gretl_panel.c:3132
 msgid "Couldn't estimate group means regression\n"
@@ -3335,7 +3334,7 @@ msgstr "sıklık 1 olduğunda, başlangıç gözleminde ':' için izin yok"
 
 #: lib/src/gretl_utils.c:791
 msgid "panel data must have frequency > 1"
-msgstr "panel verilerin sıklığı > 1 olmalıdır"
+msgstr "panel verilerinin sıklığı > 1 olmalıdır"
 
 #: lib/src/gretl_utils.c:796
 msgid "starting obs must contain a ':' with frequency > 1"
@@ -3348,7 +3347,7 @@ msgstr "'%s' başlangıç gözlemi, sıklık ile uyumlu değil"
 
 #: lib/src/gretl_utils.c:805
 msgid "cross-sectional data: frequency must be 1"
-msgstr "yatay-kesitsel veriler: sıklık 1 olmalıdır"
+msgstr "yatay-kesit verileri: sıklık 1 olmalıdır"
 
 #: lib/src/gretl_utils.c:809
 #, c-format
@@ -3845,7 +3844,7 @@ msgstr "Sayısal yöntemler"
 
 #: lib/src/libset.c:1197
 msgid "Random number generation"
-msgstr "Rassal sayı üretimi"
+msgstr "Rastsal sayı üretimi"
 
 #: lib/src/libset.c:1201
 msgid "Robust estimation"
@@ -3857,12 +3856,12 @@ msgstr "Süzme"
 
 #: lib/src/libset.c:1228 gui2/datawiz.c:482 gui2/menustate.c:465
 msgid "Time series"
-msgstr "Zaman serileri"
+msgstr "Zaman serisi"
 
 #: lib/src/libset.c:1382
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
-msgstr "Sözde-rassal sayı üreteci %d ile tohumlandı\n"
+msgstr "Sözde-rastsal sayı üreteci %d ile tohumlandı\n"
 
 #: lib/src/missing.c:816
 #, c-format
@@ -4153,7 +4152,7 @@ msgstr "sabit-etki"
 
 #: lib/src/modelprint.c:629
 msgid "Random-effects (GLS)"
-msgstr "GEK (GLS) rassal-etki"
+msgstr "GEK (GLS) rastsal-etki"
 
 #: lib/src/modelprint.c:632
 msgid "Maximum Likelihood"
@@ -4223,7 +4222,7 @@ msgstr "hiçbiri"
 
 #: lib/src/modelprint.c:809 lib/src/modelprint.c:811 lib/src/modelprint.c:813
 msgid "Asymptotic standard errors (unreliable)"
-msgstr "Kavuşmazlık ölçünlü hataları (güvenilmez)"
+msgstr "Kavuşmazsal ölçünlü hatalar (güvenilir değil)"
 
 #: lib/src/modelprint.c:822 lib/src/modelprint.c:824 lib/src/modelprint.c:826
 msgid "Robust (HAC) standard errors"
@@ -4315,7 +4314,7 @@ msgstr "Sağlam (sandviç) ölçünlü hatalar"
 
 #: lib/src/modelprint.c:966
 msgid "Asymptotic standard errors assuming IID errors"
-msgstr "BÖD (IIE) varsayımı altında kavuşmaz ölçünlü hataları"
+msgstr "BÖD (IIE) varsayımı altında kavuşmazsal ölçünlü hatalar"
 
 #: lib/src/modelprint.c:1059
 msgid "Omitted because all values were zero:"
@@ -4424,7 +4423,7 @@ msgstr "%2$d gözlem kullanılarak bulunan %1$s tahminleri"
 #: lib/src/modelprint.c:1352
 #, c-format
 msgid "Included %d cross-sectional units"
-msgstr "%d yatay-kesitsel birim kapsandı"
+msgstr "%d yatay-kesit birimi kapsandı"
 
 #: lib/src/modelprint.c:1357
 #, c-format
@@ -5518,7 +5517,7 @@ msgid ""
 "This is truly a forecast only if all the stochastic regressors\n"
 "are in fact lagged values."
 msgstr ""
-"Bu, ancak tüm olasılıklı açıklayıcılar geciktirilmiş değerlerden\n"
+"Bu, ancak tüm olasılıksal açıklayıcılar geciktirilmiş değerlerden\n"
 "oluşuyorsa gerçek bir yordama olabilir."
 
 #: lib/src/printout.c:1084
@@ -6663,7 +6662,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr "Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazsal yaklaştırma yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7007,7 +7006,7 @@ msgstr "gretl: dağılım çizimleri"
 
 #: gui2/calculator.c:2936
 msgid "gretl: add random variable"
-msgstr "gretl: rassal değişken ekle"
+msgstr "gretl: rastsal değişken ekle"
 
 #: gui2/calculator.c:2958 gui2/selector.c:5244 gui2/selector.c:5247
 msgid "No suitable data are available"
@@ -7739,7 +7738,7 @@ msgstr "Diğer"
 
 #: gui2/datawiz.c:397
 msgid "Stacked time series"
-msgstr "İstifli zaman dizileri"
+msgstr "İstifli zaman serileri"
 
 #: gui2/datawiz.c:398
 msgid "Stacked cross sections"
@@ -7800,7 +7799,7 @@ msgstr "%s, 1 ile %d arası gözlemler"
 
 #: gui2/datawiz.c:537
 msgid "Cross-sectional data"
-msgstr "Yatay-kesitsel veriler"
+msgstr "Yatay-kesit verileri"
 
 #: gui2/datawiz.c:553
 #, c-format
@@ -7814,7 +7813,7 @@ msgid ""
 "%d cross-sectional units observed over %d periods"
 msgstr ""
 "Panel verileri (%1$s)\n"
-"%3$d dönem üzerinde %2$d yatay-kesitsel birim gözlendi"
+"%3$d dönem üzerinde %2$d yatay-kesit birimi gözlendi"
 
 #: gui2/datawiz.c:557 gui2/datawiz.c:565
 msgid "stacked time series"
@@ -7830,7 +7829,7 @@ msgstr "(eksik gözlemler çıkartılıyor)"
 
 #: gui2/datawiz.c:784
 msgid "The unit and time index variables must be distinct"
-msgstr "birim ve zaman endeks değişkenleri ayrı olmalıdır"
+msgstr "birim ve zaman endeksi değişkenleri ayrı olmalıdır"
 
 #: gui2/datawiz.c:821
 msgid "The selected index variables do not represent a panel structure"
@@ -7850,7 +7849,7 @@ msgstr "Zaman endeksi değişkeni"
 
 #: gui2/datawiz.c:1218
 msgid "Number of cross-sectional units"
-msgstr "Yatay-kesitsel birim sayısı"
+msgstr "Yatay-kesit birim sayısı"
 
 #: gui2/datawiz.c:1219
 msgid "Number of time periods"
@@ -7950,7 +7949,7 @@ msgstr "Farklı kaydet"
 
 #: gui2/dialogs.c:859 gui2/library.c:1515
 msgid "gretl: bootstrap analysis"
-msgstr "gretl: bootstrap çözümlemesi"
+msgstr "gretl: özyetinim çözümlemesi"
 
 #: gui2/dialogs.c:890
 msgid "Confidence interval"
@@ -7978,7 +7977,7 @@ msgstr "Çoğaltma sayısı:"
 
 #: gui2/dialogs.c:970 gui2/library.c:1521
 msgid "Save bootstrap data to file"
-msgstr "Bootstrap verilerini dosyaya kaydet"
+msgstr "Özyetinim verilerini dosyaya kaydet"
 
 #: gui2/dialogs.c:1159
 msgid "The display name for a variable cannot contain double quotes"
@@ -8046,7 +8045,7 @@ msgstr "betimleme:"
 
 #: gui2/dialogs.c:1588
 msgid "gretl: seed for random numbers"
-msgstr "gretl: rassal sayı tohumu"
+msgstr "gretl: rastsal sayı tohumu"
 
 #: gui2/dialogs.c:1593
 msgid "Seed for generator:"
@@ -8380,7 +8379,7 @@ msgstr "Sağlam ölçünlü hatalar"
 
 #: gui2/dlgutils.c:873 gui2/selector.c:3969
 msgid "Use bootstrap"
-msgstr "Bootstrap kullan"
+msgstr "Özyetinim kullan"
 
 #: gui2/dlgutils.c:877
 msgid "Show full restricted estimates"
@@ -9479,7 +9478,7 @@ msgstr "De_ğiştirgesel-dışı sınamalar"
 
 #: gui2/gretl.c:1305
 msgid "_Seed for random numbers"
-msgstr "Rassal sayılar _tohumu"
+msgstr "Rastsal sayılar _tohumu"
 
 #: gui2/gretl.c:1306
 msgid "_Command log"
@@ -9664,7 +9663,7 @@ msgstr "X-Y _serpilme çizimi..."
 
 #: gui2/gretl.c:1360
 msgid "_Time series..."
-msgstr "Zaman _serileri..."
+msgstr "Zaman _serisi..."
 
 #: gui2/gretl.c:1361 gui2/gretl.c:1408
 msgid "_Summary statistics"
@@ -9728,7 +9727,7 @@ msgstr "Zaman _eğilimi"
 
 #: gui2/gretl.c:1381
 msgid "_Random variable..."
-msgstr "_Rassal değişken..."
+msgstr "_Rastsal değişken..."
 
 #: gui2/gretl.c:1382
 msgid "_Periodic dummies"
@@ -9772,7 +9771,7 @@ msgstr "_Kısıtla, ölçüte dayalı..."
 
 #: gui2/gretl.c:1396
 msgid "R_andom sub-sample..."
-msgstr "_Rassal altörnekle..."
+msgstr "_Rastsal altörnekle..."
 
 #: gui2/gretl.c:1397
 msgid "_Resample with replacement..."
@@ -9924,7 +9923,7 @@ msgstr "_Yüksek kesinlikli SEK..."
 
 #: gui2/gretl.c:1449
 msgid "_Time series"
-msgstr "_Zaman serileri"
+msgstr "_Zaman serisi"
 
 #: gui2/gretl.c:1450
 msgid "_Cochrane-Orcutt..."
@@ -9984,7 +9983,7 @@ msgstr "_Panel"
 
 #: gui2/gretl.c:1464
 msgid "_Fixed or random effects..."
-msgstr "_Sabit veya rassal etkiler..."
+msgstr "_Sabit veya rastsal etkiler..."
 
 #: gui2/gretl.c:1465
 msgid "_Weighted least squares..."
@@ -10397,7 +10396,7 @@ msgstr "_VARÇÖZ"
 
 #: gui2/gui_utils.c:165
 msgid "_Bootstrap..."
-msgstr "_Bootstrap..."
+msgstr "_Özyetinim..."
 
 #: gui2/gui_utils.c:169
 msgid "_Omit variables"
@@ -10752,7 +10751,7 @@ msgstr "X-12-ARIMA çıktılarını göster"
 
 #: gui2/gui_utils.c:2806
 msgid "include bootstrap confidence interval"
-msgstr "bootstrap güven aralığını ekle"
+msgstr "özyetinim güven aralığını ekle"
 
 #: gui2/gui_utils.c:2997 gui2/library.c:1485
 msgid "gretl: forecasts"
@@ -12341,7 +12340,7 @@ msgstr "Sabit etkiler"
 
 #: gui2/selector.c:4214
 msgid "Random effects"
-msgstr "Rassal etkiler"
+msgstr "Rastsal etkiler"
 
 #: gui2/selector.c:4226
 msgid "1-step estimation"
@@ -12931,7 +12930,7 @@ msgstr "Sağlam kovaryans dizeyini öntanımlı kullan"
 
 #: gui2/settings.c:250
 msgid "For cross-sectional data"
-msgstr "Yatay-kesitsel veriler için"
+msgstr "Yatay-kesit verileri için"
 
 #: gui2/settings.c:252
 msgid "For time-series data"
@@ -12939,7 +12938,7 @@ msgstr "Zaman-serisi verileri için"
 
 #: gui2/settings.c:254
 msgid "For panel data"
-msgstr "Panel veriler için"
+msgstr "Panel verileri için"
 
 #: gui2/settings.c:256
 msgid "For GARCH estimation"
@@ -13069,11 +13068,11 @@ msgstr "_Birim dizey"
 
 #: gui2/ssheet.c:158
 msgid "_Uniform random"
-msgstr "_Tekbiçim rassal"
+msgstr "_Tekbiçim rastsal"
 
 #: gui2/ssheet.c:159
 msgid "_Normal random"
-msgstr "_Normal rassal"
+msgstr "_Normal rastsal"
 
 #: gui2/ssheet.c:160
 msgid "_Properties"
@@ -14149,11 +14148,11 @@ msgstr "üst kuyruk"
 
 #: plugin/tramo_options.c:337
 msgid "Time-series model plus seasonal adjustment"
-msgstr "Zaman-serileri modeli artı mevsimsel düzeltme"
+msgstr "Zaman-serisi modeli artı mevsimsel düzeltme"
 
 #: plugin/tramo_options.c:338
 msgid "Time-series model only"
-msgstr "Yalnız zaman-serileri modeli"
+msgstr "Yalnız zaman-serisi modeli"
 
 #: plugin/tramo_options.c:344
 msgid "Standard automatic analysis"
