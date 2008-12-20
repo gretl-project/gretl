@@ -3845,6 +3845,38 @@
       </description>
     </function>
 
+    <function name="toepsolv" section="linalg" output="cvec">
+      <fnargs>
+	<fnarg type="vector">c</fnarg>
+	<fnarg type="vector">r</fnarg>
+	<fnarg type="vector">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solves a Toeplitz system of linear equations, that is
+	  <math>Tx = b</math> where <math>T</math> is a square matrix
+	  whose element <math>T</math><sub>i,j</sub> equals
+	  <math>c</math><sub>i-j</sub> for <equation status="inline"
+	  ascii="i&gt;=j" tex="$i\ge j$"/> and
+	  <math>r</math><sub>j-i</sub> for <equation status="inline"
+	  ascii="i&lt;=j" tex="$i\le j$"/>. Note that the first
+	  elements of <math>c</math> and <math>r</math> must be equal,
+	  otherwise an error is returned. Upon successful completion,
+	  the function returns the vector <math>x</math>.
+	</para>
+	<para>
+	  The algorithm used here takes advantage of the special
+	  structure of the matrix <math>T</math>, which makes it much
+	  more efficient than other unspecialized algorithms,
+	  especially for large problems. Warning: in certain cases,
+	  the function may spuriously issue a singularity error when
+	  in fact the matrix <math>T</math> is nonsingular; this
+	  problem, however, cannot arise when <math>T</math> is
+	  positive definite.
+	</para>
+      </description>
+    </function>
+
     <function name="tr" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
