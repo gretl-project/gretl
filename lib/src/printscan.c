@@ -413,14 +413,17 @@ static int print_arg (char **pfmt, char **pargs,
     /* do the actual printing */
 
     if (m != NULL) {
+	/* printing a matrix */
 	if (!wstar) wid = -1;
 	if (!pstar) prec = -1;
 	gretl_matrix_print_with_format(m, fmt, wid, prec, prn);
     } else if (series_v > 0) {
+	/* printing a series */
 	print_series_with_format(series_v, (const double **)*pZ,
 				 pdinfo, fmt, wid, prec, 
 				 wstar, pstar, prn);
     } else if (fc == 's') {
+	/* printing a string */
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, str);
 	} else if (wstar || pstar) {
@@ -430,6 +433,7 @@ static int print_arg (char **pfmt, char **pargs,
 	    pprintf(prn, fmt, str);
 	}
     } else if (strchr(intconv, fc)) {
+	/* printing a scalar as int */
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, (int) x);
 	} else if (wstar || pstar) {
@@ -439,6 +443,7 @@ static int print_arg (char **pfmt, char **pargs,
 	    pprintf(prn, fmt, (int) x);
 	}
     } else {
+	/* printing a scalar value */
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, x);
 	} else if (wstar || pstar) {
