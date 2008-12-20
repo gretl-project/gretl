@@ -22,6 +22,7 @@
  <gentext key="scalar-or-series" text="scalar or series"/>
  <gentext key="scalar-or-list" text="scalar or list"/>
  <gentext key="series-or-list" text="series or list"/>
+ <gentext key="scalar-or-vec" text="scalar or vector"/>
  <gentext key="anyfloat-or-list" text="scalar, series, matrix or list"/>
  <gentext key="list-or-string" text="named list or string"/>
  <gentext key="asinput"       text="same type as input"/>

@@ -7304,34 +7304,41 @@ gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
  * to @missval.
  */
 
-gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, int k, 
+gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, 
+				const gretl_vector *k, 
 				double missval)
 {
     gretl_matrix *a;
     double x;
-    int s, t, i;
+    int l = gretl_vector_get_length(k);
+    int s, t, i, j, n, kj;
 
-    if (gretl_is_null_matrix(m)) {
+    if (gretl_is_null_matrix(m) || l==0) {
 	return NULL;
     }
 
-    a = gretl_matrix_alloc(m->rows, m->cols);
+    a = gretl_matrix_alloc(m->rows, m->cols * l);
     if (a == NULL) {
 	return NULL;
     }
 
-    for (t=0; t<m->rows; t++) {
-	s = t - k;
-	if (s < 0 || s >= m->rows) {
-	    for (i=0; i<m->cols; i++) {
-		gretl_matrix_set(a, t, i, missval);
-	    }
-	} else {
-	    for (i=0; i<m->cols; i++) {
-		x = gretl_matrix_get(m, s, i);
-		gretl_matrix_set(a, t, i, x);
+    n = 0;
+    for (j=0; j<l; j++) {
+	kj = gretl_vector_get(k, j);
+	for (t=0; t<m->rows; t++) {
+	    s = t - kj;
+	    if (s < 0 || s >= m->rows) {
+		for (i=0; i<m->cols; i++) {
+		    gretl_matrix_set(a, t, n+i, missval);
+		}
+	    } else {
+		for (i=0; i<m->cols; i++) {
+		    x = gretl_matrix_get(m, s, i);
+		    gretl_matrix_set(a, t, n+i, x);
+		}
 	    }
 	}
+	n += m->cols;
     }
 
     return a;

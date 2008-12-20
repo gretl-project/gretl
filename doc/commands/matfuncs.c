@@ -261,6 +261,7 @@ static int ok_matrix_arg (char *atype)
 	    !strcmp(atype, "anyfloat") ||
 	    !strcmp(atype, "series-or-vec") ||
 	    !strcmp(atype, "series-or-mat") ||
+	    !strcmp(atype, "scalar-or-vec") ||
 	    !strcmp(atype, "anyfloat-or-list")) {
 	    ret = 1;
 	}

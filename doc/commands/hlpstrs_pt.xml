@@ -20,6 +20,7 @@
  <gentext key="scalar-or-series" text="escalar ou série"/>
  <gentext key="scalar-or-list" text="escalar ou lista"/>
  <gentext key="series-or-list" text="série ou lista"/>
+ <gentext key="scalar-or-vec" text="escalar ou vector"/>
  <gentext key="anyfloat-or-list" text="escalar, série, matriz ou lista"/>
  <gentext key="list-or-string" text="lista ou texto"/>
  <gentext key="asinput"       text="o mesmo tipo que o argumento"/>

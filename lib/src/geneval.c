@@ -1418,6 +1418,9 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case F_MCSEL:
 	C = gretl_matrix_bool_sel(A, B, 0, err);
 	break;
+    case F_MLAG:
+	C = gretl_matrix_lag(A, B, 0);
+	break;
     default:
 	*err = E_TYPES;
 	break;
@@ -1723,9 +1726,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	    return NULL;
 	}
 
-	if (f == F_MLAG) {
-	    ret->v.m = gretl_matrix_lag(m, k, 0.0);
-	} else if (f == F_MSORTBY) {
+	if (f == F_MSORTBY) {
 	    ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
 	}
     } else {
@@ -5463,6 +5464,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CDIV:
     case F_MRSEL:
     case F_MCSEL:
+    case F_MLAG:
 	/* matrix-only binary operators (but promote scalars) */
 	if ((l->t == MAT || l->t == NUM) && 
 	    (r->t == MAT || r->t == NUM)) {
@@ -5474,7 +5476,6 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
 	}
 	break;
-    case F_MLAG:
     case F_MSORTBY:
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && scalar_node(r)) {

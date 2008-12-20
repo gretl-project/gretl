@@ -2412,26 +2412,39 @@
     <function name="mlag" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="scalar-or-vec">p</fnarg>
       </fnargs>
       <description>
 	<para context="notex">
-	  For <argname>p</argname> &gt; 0, returns a matrix in which the
-	  columns of <argname>X</argname> are shifted down by
-	  <argname>p</argname> rows and the first <argname>p</argname>
-	  rows are filled with zeros. If <argname>p</argname> is a
-	  negative number, <argname>X</argname> is shifted up and the last
-	  rows are filled with zeros.
+	  Shifts up or down the rows of <argname>X</argname>. 
+	  If <argname>p</argname> is a positive scalar, returns a
+	  matrix in which the columns of <argname>X</argname> are
+	  shifted down by <argname>p</argname> rows and the first
+	  <argname>p</argname> rows are filled with zeros. If
+	  <argname>p</argname> is a negative number,
+	  <argname>X</argname> is shifted up and the last rows are
+	  filled with zeros.
 	</para>
 	<para context="tex">
-	  Shifts up or down the elements of <argname>X</argname>. If $p
-	  &gt; 0$ the returned matrix $Y$ has typical element $Y_{i,j} =
-	  X_{i-p,j}$ for $i \ge p$ and zero otherwise. In other words, the
-	  columns of <argname>X</argname> are shifted down by
+	  Shifts up or down the rows of <argname>X</argname>. If $p$
+	  is a positive scalar, the returned matrix $Y$ has typical
+	  element $Y_{i,j} = X_{i-p,j}$ for $i \ge p$ and zero
+	  otherwise. In other words, the columns of
+	  <argname>X</argname> are shifted down by
 	  <argname>p</argname> rows and the first <argname>p</argname>
 	  rows are filled with zeros. If <argname>p</argname> is a
-	  negative number, <argname>X</argname> is shifted up and the last
-	  rows are filled with zeros.
+	  negative number, <argname>X</argname> is shifted up and the
+	  last rows are filled with zeros.
+	</para>
+	<para context="notex">
+	  If <argname>p</argname> is a vector, the above operation is
+	  carried out for each element in <argname>p</argname>,
+	  joining the resulting matrices horizontally.
+	</para>
+	<para context="tex">
+	  If $p$ is a vector, the above operation is carried out for
+	  each element in $p$, joining the resulting matrices
+	  horizontally.
 	</para>
       </description>
     </function>
