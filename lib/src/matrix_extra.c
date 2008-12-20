@@ -1390,3 +1390,49 @@ char *gretl_matrix_rank_mask (const gretl_matrix *m, int *err)
     return mask;
 }
 
+/**
+ * gretl_matrix_mp_ols:
+ * @y: dependent variable vector.
+ * @X: matrix of independent variables.
+ * @b: vector to hold coefficient estimates.
+ * @vcv: matrix to hold the covariance matrix of the coefficients,
+ * or %NULL if this is not needed.
+ * @uhat: vector to hold the regression residuals, or %NULL if 
+ * these are not needed.
+ * @s2: pointer to receive residual variance, or %NULL.  Note:
+ * if @s2 is %NULL, the "vcv" estimate will be plain (X'X)^{-1}.
+ *
+ * Computes OLS estimates using Cholesky factorization, via
+ * the GMP multiple-precision library, and puts the
+ * coefficient estimates in @b.  Optionally, calculates the
+ * covariance matrix in @vcv and the residuals in @uhat.
+ * 
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
+			 gretl_vector *b, gretl_matrix *vcv, 
+			 gretl_vector *uhat, double *s2)
+{
+    void *handle = NULL;
+    int (*matrix_mp_ols) (const gretl_vector *,
+			  const gretl_matrix *,
+			  gretl_vector *,
+			  gretl_matrix *,
+			  gretl_vector *,
+			  double *);
+    int err;
+
+    matrix_mp_ols = get_plugin_function("matrix_mp_ols", &handle);
+    if (matrix_mp_ols == NULL) {
+	return 1;
+    }
+
+    err = (*matrix_mp_ols)(y, X, b, vcv, uhat, s2);
+
+    close_plugin(handle);
+
+    return err;
+}
+
+

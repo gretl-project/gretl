@@ -51,18 +51,17 @@
 */
 
 static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
-			const int *exlist, const int *list, int T,
+			const int *exlist, const int *list, 
 			double ***pZ, DATAINFO *pdinfo)
 {
-    int i, vi, j, t;
+    int i, vi, t, j = 0;
+    int T = E->rows;
     int t1 = pdinfo->t1;
     int err = 0;
 
-    j = 0;
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
 
-	/* skip predetermined vars */
 	if (in_gretl_list(exlist, vi)) {
 	    continue;
 	}
@@ -70,18 +69,18 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 	reglist[1] = vi;
 
 	/* regress the given endogenous var on the specified
-	   set of exogenous vars */
+	   set of instruments */
 	*lmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A);
 	if ((err = lmod->errcode)) {
 	    clear_model(lmod);
 	    break;
 	}
 
-	/* put residuals into appropriate column of E */
+	/* put residuals into appropriate column of E and
+	   increment the column */
 	for (t=0; t<T; t++) {
 	    gretl_matrix_set(E, t, j, lmod->uhat[t + t1]);
 	}
-	/* and increment the column of E */
 	j++;
 
 	clear_model(lmod);
@@ -246,7 +245,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 	gretl_model_set_int(pmod, "restricted", 1);
     }
 
-    /* make regression list using only included exogenous vars */
+    /* first make regression list using only included instruments */
     reglist = liml_make_reglist(sys, list, &k);
     if (reglist == NULL) {
 	return E_ALLOC;
@@ -270,7 +269,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     }
 
     err = resids_to_E(E, &lmod, reglist, exlist, list, 
-		      T, pZ, pdinfo);
+		      pZ, pdinfo);
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
@@ -283,13 +282,13 @@ static int liml_do_equation (equation_system *sys, int eq,
 #endif
 
     if (!err) {
-	/* re-make the regression list using all exogenous vars */
+	/* re-make the regression list using all instruments */
 	reglist[0] = 1 + exlist[0];
 	for (i=2; i<=reglist[0]; i++) {
 	    reglist[i] = exlist[i-1];
 	}
 	err = resids_to_E(E, &lmod, reglist, exlist, list, 
-			  T, pZ, pdinfo);
+			  pZ, pdinfo);
     }
 
     if (!err) {

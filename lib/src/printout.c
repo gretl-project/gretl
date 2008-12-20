@@ -1225,7 +1225,7 @@ static void printstr_long (PRN *prn, double xx, int d, int *ls)
 	strcpy(str, "NA  ");
 	n = 4;
     } else {
-	sprintf(str, "%#.*E  ", d, xx);
+	sprintf(str, "% .*E  ", d, xx);
 	n = strlen(str);
     }
     if (*ls + n > 78) {
@@ -1238,20 +1238,19 @@ static void printstr_long (PRN *prn, double xx, int d, int *ls)
 
 /* prints series z from current sample t1 to t2 */
 
-static void printz (const double *z, const DATAINFO *pdinfo, 
-		    PRN *prn, gretlopt opt)
+static void print_by_var (const double *z, const DATAINFO *pdinfo, 
+			  gretlopt opt, PRN *prn)
 {
     int t, dig = 10, ls = 0;
     double xx;
 
     if (opt & OPT_L) {
 	dig = libset_get_int(LONGDIGITS);
-	opt = OPT_T;
     }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xx = z[t];
-	if (opt & OPT_T) {
+	if (opt & OPT_L) {
 	    printstr_long(prn, xx, dig, &ls);
 	} else {
 	    char str[32];
@@ -1748,9 +1747,9 @@ static int obslen_from_t (int t)
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @opt: if %OPT_O, print the data by observation (series in columns);
- * if %OPT_N, use simple obs numbers, not dates; if %OPT_T, print the 
- * data to 10 significant digits; if %OPT_L, print the data to a number 
- * of digits set by "set longdigits" (default 10).
+ * if %OPT_N, use simple obs numbers, not dates; if %OPT_L, print the 
+ * data to a number of digits set by "set longdigits" (default 10).
+ * Note that %OPT_L nullifies %OPT_O.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list, from observations t1 to
@@ -1773,6 +1772,11 @@ int printdata (const int *list, const char *mstr,
     int t, nsamp;
     char line[128];
     int err = 0;
+
+    if (opt & OPT_L) {
+	/* can't do both --long and --byobs */
+	opt &= ~OPT_O;
+    }
 
     printdata_blocks = 0;
 
@@ -1842,7 +1846,7 @@ int printdata (const int *list, const char *mstr,
 	    }
 	    print_var_smpl(vj, Z, pdinfo, prn);
 	    pputc(prn, '\n');
-	    printz(Z[vj], pdinfo, prn, opt);
+	    print_by_var(Z[vj], pdinfo, opt, prn);
 	    pputc(prn, '\n');
 	}
 	goto endprint;

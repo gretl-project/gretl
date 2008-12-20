@@ -252,7 +252,6 @@ struct gretl_option gretl_opts[] = {
     { PRINT,    OPT_O, "byobs" },
     { PRINT,    OPT_L, "long" },
     { PRINT,    OPT_N, "no-dates" },
-    { PRINT,    OPT_T, "ten" },
     { PROBIT,   OPT_P, "p-values" },
     { PROBIT,   OPT_Q, "quiet" },
     { PROBIT,   OPT_R, "robust" },

@@ -4316,7 +4316,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    m = user_matrix_SVD(A, lname, rname, &p->err);
 	}
-    } else if (t->t == F_MOLS) {
+    } else if (t->t == F_MOLS || t->t == F_MPOLS) {
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
 	const char *Uname = NULL;
@@ -4354,7 +4354,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    m = user_matrix_ols(Y, X, Uname, &p->err);
+	    gretlopt opt = (t->t == F_MOLS)? OPT_NONE : OPT_M;
+
+	    m = user_matrix_ols(Y, X, Uname, opt, &p->err);
 	}
     } else if (t->t == F_FILTER) {
 	const double *x = NULL;
@@ -5871,6 +5873,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MSHAPE:
     case F_SVD:
     case F_MOLS:
+    case F_MPOLS:
     case F_FILTER:
     case F_TRIMR:
     case F_TOEPSOLV:

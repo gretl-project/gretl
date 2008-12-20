@@ -144,6 +144,7 @@ struct plugin_function plugin_functions[] = {
 
     /* GMP (multiple precision) */
     { "mplsq",                    P_MP_OLS },
+    { "matrix_mp_ols",            P_MP_OLS },
     { "mp_vector_raise_to_power", P_MP_OLS },
 #ifdef HAVE_MPFR
     { "mp_vector_ln",             P_MP_OLS },

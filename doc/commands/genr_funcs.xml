@@ -2514,6 +2514,21 @@
     </description>
     </function>
 
+    <function name="mpols" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Y</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Works exactly as <fncref targ="mols"/>, except that the calculations
+	  are done in multiple precision using the GMP library (assuming this
+	  is available).
+	</para>
+      </description>
+    </function>
+
     <function name="mread" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="string">s</fnarg>

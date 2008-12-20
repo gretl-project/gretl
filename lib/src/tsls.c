@@ -373,6 +373,111 @@ int *tsls_make_endolist (const int *reglist, int **instlist,
     return hatlist;
 }
 
+/* fill the residuals matrix for tsls likelihood calculation */
+
+static int fill_E_matrix (gretl_matrix *E, MODEL *pmod, 
+			  const int *reglist, const int *instlist,
+			  double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL emod;
+    int *elist;
+    int nx = instlist[0];
+    int i, vi, t, j = 0;
+    int T = E->rows;
+    int t1 = pmod->t1;
+    int err = 0;
+
+    elist = gretl_list_new(nx + 1);
+    if (elist == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=2; i<=elist[0]; i++) {
+	elist[i] = instlist[i-1];
+    }
+
+    for (i=1; i<=reglist[0]; i++) {
+	vi = reglist[i];
+
+	if (in_gretl_list(instlist, vi)) {
+	    continue;
+	}
+
+	elist[1] = vi;
+
+	/* regress the given endogenous var on all the instruments */
+	emod = lsq(elist, pZ, pdinfo, OLS, OPT_A);
+	if ((err = emod.errcode)) {
+	    clear_model(&emod);
+	    break;
+	}
+
+	/* put residuals into appropriate column of E and
+	   increment the column */
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(E, t, j, emod.uhat[t + t1]);
+	}
+	j++;
+
+	clear_model(&emod);
+    }
+
+    free(elist);
+
+    return err;
+}
+
+/* calculate the maximized log-likelihood for a just-identified
+   model */
+
+static int tsls_loglik (MODEL *pmod, 
+			int nendo,
+			const int *reglist,
+			const int *instlist,
+			double ***pZ, 
+			DATAINFO *pdinfo)
+{
+    gretl_matrix *E, *W;
+    int T = pmod->nobs;
+    int k = 1 + nendo;
+    int err = 0;
+
+    pmod->lnL = NADBL;
+
+    E = gretl_matrix_alloc(T, k);
+    W = gretl_matrix_alloc(k, k); 
+
+    if (E == NULL || W == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	err = fill_E_matrix(E, pmod, reglist, instlist, pZ, pdinfo);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+					E, GRETL_MOD_NONE,
+					W, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	double ldet = gretl_matrix_log_determinant(W, &err);
+
+	if (!err) {
+	    /* Davidson and MacKinnon, ETM, p. 538 */
+	    pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
+	}
+    }
+
+    mle_criteria(pmod, 0);
+
+    gretl_matrix_free(E);
+    gretl_matrix_free(W);
+
+    return err;
+}
+
 /* perform the Sargan overidentification test for an IV model */
 
 static int 
@@ -1195,6 +1300,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 	if (OverIdRank > 0) {
 	    ivreg_sargan_test(&tsls, OverIdRank, instlist, pZ, pdinfo);
+	} else {
+	    tsls_loglik(&tsls, nendo, reglist, instlist, pZ, pdinfo);
 	}
     }
 

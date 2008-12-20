@@ -287,6 +287,7 @@ enum {
     F_MSHAPE,
     F_SVD,
     F_MOLS,
+    F_MPOLS,
     F_FILTER,
     F_TRIMR,
     F_TOEPSOLV,

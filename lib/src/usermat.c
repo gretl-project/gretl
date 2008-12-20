@@ -1471,6 +1471,7 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 gretl_matrix *user_matrix_ols (const gretl_matrix *Y, 
 			       const gretl_matrix *X, 
 			       const char *Uname, 
+			       gretlopt opt,
 			       int *err)
 {
     gretl_matrix *B = NULL;
@@ -1489,6 +1490,12 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 
     if (X->rows != T) {
 	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (g > 1 && (opt & OPT_M)) {
+	/* multiple precision: only one y var wanted */
+	*err = E_DATA;
 	return NULL;
     }
 
@@ -1518,7 +1525,11 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 
     if (!*err) {
 	if (g == 1) {
-	    *err = gretl_matrix_ols(Y, X, B, NULL, U, NULL);
+	    if (opt & OPT_M) {
+		*err = gretl_matrix_mp_ols(Y, X, B, NULL, U, NULL);
+	    } else {
+		*err = gretl_matrix_ols(Y, X, B, NULL, U, NULL);
+	    }
 	} else {
 	    *err = gretl_matrix_multi_ols(Y, X, B, U, NULL);
 	}

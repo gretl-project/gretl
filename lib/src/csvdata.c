@@ -802,8 +802,11 @@ static int dates_maybe_reversed (const char *s1, const char *s2,
     char d1[5], d2[5];
     int ret = 0;
 
-    strncpy(d1, s1, 4);
-    strncpy(d2, s2, 4);
+    *d1 = *d2 = '\0';
+
+    strncat(d1, s1, 4);
+    strncat(d2, s2, 4);
+
     ret = atoi(d1) > atoi(d2);
 
     if (ret) {
