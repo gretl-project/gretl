@@ -7296,7 +7296,7 @@ gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
 /**
  * gretl_matrix_lag:
  * @m: source matrix.
- * @k: lag order (> 0 for lags, < 0 for leads).
+ * @k: vector of lag orders (> 0 for lags, < 0 for leads).
  * @missval: value to represent missing observations.
  * 
  * Returns: A matrix of the same dimensions as @m, containing lags
@@ -7313,7 +7313,7 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
     int l = gretl_vector_get_length(k);
     int s, t, i, j, n, kj;
 
-    if (gretl_is_null_matrix(m) || l==0) {
+    if (gretl_is_null_matrix(m) || l == 0) {
 	return NULL;
     }
 
