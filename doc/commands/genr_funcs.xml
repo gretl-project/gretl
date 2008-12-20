@@ -2526,6 +2526,11 @@
 	  are done in multiple precision using the GMP library (assuming this
 	  is available).
 	</para>
+	<para>
+	  By default GMP uses 256 bits for each floating point number, but
+	  you can adjust this using the environment variable
+	  <lit>GRETL_MP_BITS</lit>, &eg; <lit>GRETL_MP_BITS=1024</lit>.
+	</para>
       </description>
     </function>
 

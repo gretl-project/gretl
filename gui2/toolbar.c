@@ -530,7 +530,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 */
 
 static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin, 
-				    int latex_ok, int sortby_ok)
+				    int latex_ok, int sortby_ok,
+				    int format_ok)
 {
     GCallback func = item->func;
     int f = item->flag;
@@ -558,7 +559,7 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!plot_ok(r) && f == PLOT_ITEM) {
 	return NULL;
-    } else if (!format_ok(r) && !sortby_ok && f == FORMAT_ITEM) {
+    } else if (!format_ok && f == FORMAT_ITEM) {
 	return NULL;
     } else if (r != EDIT_SCRIPT && r != EDIT_FUNC_CODE && f == EDIT_SCRIPT_ITEM) {
 	return NULL;
@@ -664,6 +665,7 @@ void vwin_add_viewbar (windata_t *vwin, int text_out)
     GretlToolItem *item;
     GCallback func;
     int sortby_ok = has_sortable_data(vwin);
+    int format_ok = can_format_data(vwin);
     int latex_ok = latex_is_ok();
     int i;
 
@@ -683,7 +685,8 @@ void vwin_add_viewbar (windata_t *vwin, int text_out)
     for (i=0; i<n_viewbar_items; i++) {
 	item = &viewbar_items[i];
 
-	func = item_get_callback(item, vwin, latex_ok, sortby_ok);
+	func = item_get_callback(item, vwin, latex_ok, sortby_ok,
+				 format_ok);
 	if (func == NULL) {
 	    continue;
 	}
@@ -757,7 +760,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 		func = NULL;
 	    }
 	} else {
-	    func = item_get_callback(item, vwin, 0, 0);
+	    func = item_get_callback(item, vwin, 0, 0, 0);
 	}
 	if (func != G_CALLBACK(NULL)) {
 	    if (func == G_CALLBACK(text_paste)) {

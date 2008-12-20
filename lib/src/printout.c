@@ -1241,7 +1241,7 @@ static void printstr_long (PRN *prn, double xx, int d, int *ls)
 static void print_by_var (const double *z, const DATAINFO *pdinfo, 
 			  gretlopt opt, PRN *prn)
 {
-    int t, dig = 10, ls = 0;
+    int t, dig = 11, ls = 0;
     double xx;
 
     if (opt & OPT_L) {
@@ -1841,8 +1841,12 @@ int printdata (const int *list, const char *mstr,
 	for (j=1; j<=plist[0]; j++) {
 	    int vj = plist[j];
 
+	    if (vj > pdinfo->v) {
+		continue;
+	    }
+
 	    if (plist[0] > 1) {
-		pprintf(prn, _("Varname: %s\n"), pdinfo->varname[vj]);
+		pprintf(prn, "%s:\n", pdinfo->varname[vj]);
 	    }
 	    print_var_smpl(vj, Z, pdinfo, prn);
 	    pputc(prn, '\n');

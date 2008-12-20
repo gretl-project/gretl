@@ -264,6 +264,31 @@ static void multi_series_view_print_sorted (windata_t *vwin)
     gretl_print_destroy(prn);
 }
 
+static void multi_series_view_print (windata_t *vwin)
+{
+    multi_series_view *mview = (multi_series_view *) vwin->data;
+    gretlopt opt;
+    PRN *prn;
+    int err;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    opt = (mview->digits == 10)? OPT_L : OPT_O;
+
+    err = printdata(mview->list, NULL, (const double **) Z, 
+		    datainfo, opt, prn);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	textview_set_text(vwin->text, gretl_print_get_buffer(prn));
+    }
+
+    gretl_print_destroy(prn);
+}
+
 static void multi_series_view_print_formatted (windata_t *vwin)
 {
     multi_series_view *mview = (multi_series_view *) vwin->data;
@@ -516,7 +541,20 @@ int has_sortable_data (windata_t *vwin)
 
     mview = vwin->data;
 
-    return mview->list != NULL && mview->list[0] <= 5;
+    return (mview->list != NULL && mview->list[0] <= 5);
+}
+
+int can_format_data (windata_t *vwin)
+{
+    if (vwin->role == VIEW_SERIES) {
+	return 1;
+    } else if (vwin->role == PRINT && vwin->data != NULL) {
+	multi_series_view *mview = vwin->data;
+
+	return (mview->list != NULL);
+    } else {
+	return 0;
+    }
 }
 
 multi_series_view *multi_series_view_new (const int *list)
@@ -650,12 +688,20 @@ void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 	if (series_view_allocate(sview)) {
 	    return;
 	} else {
-	    real_view_format_dialog(src, vwin, &sview->format, &sview->digits, 0);
+	    real_view_format_dialog(src, vwin, &sview->format, 
+				    &sview->digits, 0);
 	}
     } else {
 	multi_series_view *mview = (multi_series_view *) vwin->data;
-    
-	real_view_format_dialog(src, vwin, &mview->format, &mview->digits, 1);
+
+	if (mview->list[0] > 4) {
+	    /* simple toggle */
+	    mview->digits = (mview->digits == 6)? 10 : 6;
+	    multi_series_view_print(vwin);
+	} else {
+	    real_view_format_dialog(src, vwin, &mview->format, 
+				    &mview->digits, 1);
+	}
     }
 }
 

@@ -50,5 +50,7 @@ void scalar_to_clipboard (windata_t *vwin);
 
 int has_sortable_data (windata_t *vwin);
 
+int can_format_data (windata_t *vwin);
+
 #endif
 
