@@ -45,7 +45,8 @@ static int hl, hlmax, hlines;
 static gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d);
 static gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
 				   gpointer p);
-static gint console_paste_handler (GtkWidget *w, GdkEventButton *event,
+static void console_paste_handler (GtkTextView *w, gpointer p);
+static gint console_click_handler (GtkWidget *w, GdkEventButton *event,
 				   gpointer p);
 
 static int gretl_console_init (void)
@@ -352,8 +353,10 @@ void show_gretl_console (void)
     vwin = view_file(fname, 1, 1, 78, 400, CONSOLE);
     console_view = vwin->text;
 
-    g_signal_connect(G_OBJECT(console_view), "button-press-event",
+    g_signal_connect(G_OBJECT(console_view), "paste-clipboard",
 		     G_CALLBACK(console_paste_handler), NULL);
+    g_signal_connect(G_OBJECT(console_view), "button-press-event",
+		     G_CALLBACK(console_click_handler), NULL);
     g_signal_connect(G_OBJECT(console_view), "button-release-event",
 		     G_CALLBACK(console_mouse_handler), NULL);
     g_signal_connect(G_OBJECT(console_view), "key-press-event",
@@ -572,30 +575,60 @@ static gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
     return FALSE;
 }
 
-static gint console_paste_handler (GtkWidget *w, GdkEventButton *event,
+static gint console_paste_text (GtkTextView *w, GdkAtom atom)
+{
+    GtkClipboard *cb;
+    gchar *ctext;
+
+    cb = gtk_clipboard_get(atom);
+    ctext = gtk_clipboard_wait_for_text(cb);
+
+    if (ctext != NULL) {
+	GtkTextBuffer *buf;
+	GtkTextIter iter;
+	char *p;
+
+	p = strchr(ctext, '\n');
+	if (p != NULL) {
+	    *p = '\0';
+	}
+
+#if 0
+	fprintf(stderr, "ctext: '%s'\n", ctext);
+#endif
+
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+	gtk_text_buffer_get_end_iter(buf, &iter);
+	gtk_text_buffer_insert(buf, &iter, ctext, -1);
+
+	g_free(ctext);
+    }
+
+    return TRUE;
+}
+
+/* paste from clipboard: only accept plain text, and 
+   automatically paste onto the command line
+*/
+
+static void console_paste_handler (GtkTextView *w, gpointer p)
+{
+#if 0
+    return console_paste_text(w, GDK_SELECTION_CLIPBOARD);
+#endif
+}
+
+static gint console_click_handler (GtkWidget *w, 
+				   GdkEventButton *event,
 				   gpointer p)
 {
     GdkModifierType mods;
 
-    /* middle-mouse paste: last line only */
-
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
 
-    if ((mods & GDK_BUTTON2_MASK)) {
-	GtkTextBuffer *buf;
-	GtkTextIter iter;
-	gint bx, by;
-
-	gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(w),
-					      GTK_TEXT_WINDOW_WIDGET,
-					      event->x, event->y, 
-					      &bx, &by);
-	gtk_text_view_get_line_at_y(GTK_TEXT_VIEW(w), &iter, by, NULL);
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-	if (gtk_text_iter_get_line(&iter) != 
-	    gtk_text_buffer_get_line_count(buf) - 1) {
-	    return TRUE;
-	}
+    if (mods & GDK_BUTTON2_MASK) {
+	return console_paste_text(GTK_TEXT_VIEW(w), 
+				  GDK_SELECTION_PRIMARY);
     }
 
     return FALSE;
