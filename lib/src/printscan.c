@@ -30,6 +30,11 @@
 
 #define PSDEBUG 0
 
+/* For the point of "x *= (1 + 0x1p-52)" below, see
+   http://sourceware.org/bugzilla/show_bug.cgi?id=4943 ,
+   contribution from Eric Postpischil, 2007-10-05.
+*/
+
 static void print_series_with_format (int v, const double **Z,
 				      const DATAINFO *pdinfo,
 				      const char *fmt, 
@@ -51,6 +56,7 @@ static void print_series_with_format (int v, const double **Z,
 	    pputc(prn, '\n');
 	    continue;
 	}
+	x *= (1 + 0x1p-52);
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, x);
 	} else if (wstar || pstar) {
@@ -444,6 +450,7 @@ static int print_arg (char **pfmt, char **pargs,
 	}
     } else {
 	/* printing a scalar value */
+	x *= (1 + 0x1p-52);
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, x);
 	} else if (wstar || pstar) {
