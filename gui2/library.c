@@ -5027,7 +5027,7 @@ void display_selected (void)
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { 
 	/* use buffer */
-	multi_series_view *mview = NULL;
+	series_view *sview = NULL;
 
 	if (bufopen(&prn)) {
 	    goto display_exit;
@@ -5036,8 +5036,8 @@ void display_selected (void)
 	    nomem();
 	    gretl_print_destroy(prn);
 	} else {
-	    mview = multi_series_view_new(list);
-	    view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, mview);
+	    sview = multi_series_view_new(list);
+	    view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, sview);
 	}
     }
 

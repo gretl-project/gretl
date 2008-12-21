@@ -1238,7 +1238,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (vwin->role == SYSTEM) {
 	    gretl_object_unref(vwin->data, GRETL_OBJ_SYS);
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
-	    free_multi_series_view(vwin->data);
+	    free_series_view(vwin->data);
 	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_EN) {
 	    free(vwin->data); /* help file text */
 	}

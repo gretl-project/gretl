@@ -1561,7 +1561,7 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 1;
 	*var = &state->horizon;
     } else if (!strcmp(s, LONGDIGITS)) {
-	*min = 5;
+	*min = 1;
 	*max = 21;
 	*var = &state->longdigits;
     } else if (!strcmp(s, LOOP_MAXITER)) {

@@ -26,42 +26,39 @@
 #include "textbuf.h"
 #include "series_view.h"
 
+#include "libset.h"
+
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
 #else
 # include "clipboard.h"
 #endif
 
-typedef struct data_point_t data_point;
-typedef struct multi_point_t multi_point;
-typedef struct series_view_t series_view;
-
-struct data_point_t {
-    char label[OBSLEN];
-    double val;
+enum {
+    VIEW_STANDARD,
+    VIEW_CUSTOM
 };
 
-struct multi_point_t {
+typedef struct data_point_t data_point;
+
+struct data_point_t {
     int obsnum;
     double val;
-};  
+};
 
 struct series_view_t {
     int varnum;
-    int npoints;
-    int digits;
-    char format;    
-    data_point *points;
-};
-
-struct multi_series_view_t {
     int *list;
     int sortvar;
     int npoints;
+    char view;
     int digits;
-    char format;    
-    multi_point *points;
+    char format; 
+    char sorted;
+    data_point *points;
 };
+
+static void series_view_unsort (series_view *sview);
 
 void free_series_view (gpointer p)
 {
@@ -73,100 +70,74 @@ void free_series_view (gpointer p)
 	free(sview->points);
     }
 
+    if (sview->list != NULL) {
+	free(sview->list);
+    }
+
     free(sview);
 }
 
-void free_multi_series_view (gpointer p)
+static void series_view_fill_points (series_view *sview)
 {
-    multi_series_view *mview = (multi_series_view *) p;
+    int v, t, s = 0;
 
-    if (mview == NULL) return;
+    v = (sview->varnum > 0)? sview->varnum : sview->sortvar;
 
-    if (mview->list != NULL) free(mview->list);
-    if (mview->points != NULL) free(mview->points);
-
-    free(mview);
+    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	sview->points[s].obsnum = t;
+	sview->points[s].val = Z[v][t];
+	s++;
+    }
 }
 
 static int series_view_allocate (series_view *sview)
 {
     int err = 0;
 
-    if (sview->npoints != 0) {
-	/* already allocated */
-	return 0;
-    } else {
-	int t, tp, T = datainfo->t2 - datainfo->t1 + 1;
-	int v = sview->varnum;
-
-	sview->points = malloc(T * sizeof *sview->points);
-	if (sview->points == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    sview->npoints = T;
-	    /* populate from data set */
-	    for (t=datainfo->t1; t<=datainfo->t2; t++) {
-		tp = t - datainfo->t1; 
-		sview->points[tp].val = Z[v][t];
-		if (datainfo->markers) {
-		    strcpy(sview->points[tp].label, datainfo->S[t]);
-		} else {
-		    ntodate(sview->points[tp].label, t, datainfo);
-		}
-	    }
-	}
-    }
-
-    return err;
-}
-
-static int multi_series_view_allocate (multi_series_view *mview)
-{
-    if (mview->npoints != 0) {
+    if (sview->points != NULL) {
 	/* already allocated */
 	return 0;
     } else {
 	int T = datainfo->t2 - datainfo->t1 + 1;
 
-	mview->points = mymalloc(T * sizeof *mview->points);
-	if (mview->points == NULL) {
-	    return 1;
-	} 
-	mview->npoints = T;
+	sview->points = mymalloc(T * sizeof *sview->points);
+	if (sview->points == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    sview->npoints = T;
+	}
     }
 
-    return 0;
-}
-
-static void mview_fill_points (multi_series_view *mview)
-{
-    int t, tp = 0;
-
-    for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	mview->points[tp].obsnum = t;
-	mview->points[tp].val = Z[mview->sortvar][t];
-	tp++;
+    if (sview->varnum > 0) {
+	/* single series view */
+	series_view_fill_points(sview);
     }
+
+    return err;
 }
 
-static PRN *series_view_print_csv (windata_t *vwin)
+static PRN *single_series_view_print_csv (windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
+    char obslabel[OBSLEN];
     char dchar = datainfo->delim;
+    double x;
     PRN *prn;
-    int t;
+    int i;
 
     if (bufopen(&prn)) {
 	return NULL;
     }
     
     pprintf(prn, "obs%c%s\n", dchar, datainfo->varname[sview->varnum]);
-    for (t=0; t<sview->npoints; t++) {
-	if (na(sview->points[t].val)) {
-	    pprintf(prn, "%s%cNA\n", sview->points[t].label, dchar);
+
+    for (i=0; i<sview->npoints; i++) {
+	get_obs_string(obslabel, sview->points[i].obsnum, datainfo);
+	x = sview->points[i].val;
+	if (na(x)) {
+	    pprintf(prn, "%s%cNA\n", obslabel, dchar);
 	} else {
-	    pprintf(prn, "\"%s\"%c%.8g\n", sview->points[t].label, dchar,
-		    sview->points[t].val);
+	    pprintf(prn, "\"%s\"%c%.8g\n", obslabel, dchar, x);
 	}
     }
 
@@ -176,23 +147,39 @@ static PRN *series_view_print_csv (windata_t *vwin)
 /* for printing sorted or reformatted data, for a window displaying
    a single series */
 
-static void series_view_print (windata_t *vwin)
+static void single_series_view_print (windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
     char num_format[32];
+    char obslabel[OBSLEN];
     int obslen = 0;
+    double x;
     PRN *prn;
-    int t, len;
+    int i, err = 0;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    for (t=0; t<sview->npoints; t++) {
-	len = strlen(sview->points[t].label);
-	if (len > obslen) {
-	    obslen = len;
+    if (sview->view == VIEW_STANDARD) {
+	int list[2] = { 1, sview->varnum };
+
+	/* regular printout: unsort if need be */
+	if (sview->sorted) {
+	    series_view_unsort(sview);
 	}
+	
+	err = printdata(list, NULL, (const double **) Z, 
+			datainfo, OPT_O, prn);
+	if (err) {
+	    gui_errmsg(err);
+	} 
+	goto finalize;
+    }
+
+    obslen = max_obs_label_length(datainfo);
+    if (obslen < 2) {
+	obslen = -2;
     }
 
     if (sview->format == 'G') {
@@ -201,35 +188,39 @@ static void series_view_print (windata_t *vwin)
 	sprintf(num_format, "%%%ds %%13.%df\n", obslen, sview->digits);
     }
 	
-    /* print formatted data to buffer */
-
     pprintf(prn, "\n%*s ", obslen, "");
     pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
 
-    for (t=0; t<sview->npoints; t++) {
-	if (na(sview->points[t].val)) {
-	    pprintf(prn, "%*s\n", obslen, sview->points[t].label);
+    for (i=0; i<sview->npoints; i++) {
+	get_obs_string(obslabel, sview->points[i].obsnum, datainfo);
+	x = sview->points[i].val;
+	if (na(x)) {
+	    pprintf(prn, "%*s\n", obslen, obslabel);
 	} else {
-	    pprintf(prn, num_format, sview->points[t].label, sview->points[t].val);
+	    pprintf(prn, num_format, obslabel, x);
 	} 
     }
 
-    textview_set_text(vwin->text, gretl_print_get_buffer(prn));
+ finalize:
+
+    if (!err) {
+	textview_set_text(vwin->text, gretl_print_get_buffer(prn));
+    }
 
     gretl_print_destroy(prn);
 }
 
-static int *make_obsvec (multi_series_view *mview)
+static int *make_obsvec (series_view *sview)
 {
     int *ov;
     int t;
 
-    ov = mymalloc((mview->npoints + 1) * sizeof *ov);
+    ov = mymalloc((sview->npoints + 1) * sizeof *ov);
 
     if (ov != NULL) {
-	ov[0] = mview->npoints;
-	for (t=0; t<mview->npoints; t++) {
-	    ov[t+1] = mview->points[t].obsnum;
+	ov[0] = sview->npoints;
+	for (t=0; t<sview->npoints; t++) {
+	    ov[t+1] = sview->points[t].obsnum;
 	}
     }
 
@@ -238,8 +229,8 @@ static int *make_obsvec (multi_series_view *mview)
 
 static void multi_series_view_print_sorted (windata_t *vwin)
 {
-    multi_series_view *mview = (multi_series_view *) vwin->data;
-    int *obsvec = make_obsvec(mview);
+    series_view *sview = (series_view *) vwin->data;
+    int *obsvec = make_obsvec(sview);
     PRN *prn;
     int err = 0;
 
@@ -252,7 +243,7 @@ static void multi_series_view_print_sorted (windata_t *vwin)
 	return;
     }
 
-    err = print_data_sorted(mview->list, obsvec, (const double **) Z, 
+    err = print_data_sorted(sview->list, obsvec, (const double **) Z, 
 			    datainfo, prn);
     if (err) {
 	gui_errmsg(err);
@@ -264,47 +255,16 @@ static void multi_series_view_print_sorted (windata_t *vwin)
     gretl_print_destroy(prn);
 }
 
-static void multi_series_view_print (windata_t *vwin)
+static void mview_print_special (series_view *sview, PRN *prn)
 {
-    multi_series_view *mview = (multi_series_view *) vwin->data;
-    gretlopt opt;
-    PRN *prn;
-    int err;
-
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    opt = (mview->digits == 10)? OPT_L : OPT_O;
-
-    err = printdata(mview->list, NULL, (const double **) Z, 
-		    datainfo, opt, prn);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	textview_set_text(vwin->text, gretl_print_get_buffer(prn));
-    }
-
-    gretl_print_destroy(prn);
-}
-
-static void multi_series_view_print_formatted (windata_t *vwin)
-{
-    multi_series_view *mview = (multi_series_view *) vwin->data;
-    const int *list = mview->list;
+    const int *list = sview->list;
     char num_format[16];
     char obslabel[OBSLEN];
     double xit;
-    PRN *prn;
     int colwidth, obslen;
     int i, vi, t;
 
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    colwidth = 2 * mview->digits;
+    colwidth = 2 * sview->digits;
     if (colwidth < 10) {
 	colwidth = 10;
     }
@@ -314,10 +274,10 @@ static void multi_series_view_print_formatted (windata_t *vwin)
 	obslen = -2;
     }
 
-    if (mview->format == 'G') {
-	sprintf(num_format, "%%#%d.%dg", colwidth, mview->digits);
+    if (sview->format == 'G') {
+	sprintf(num_format, "%%#%d.%dg", colwidth, sview->digits);
     } else {
-	sprintf(num_format, "%%%d.%df", colwidth, mview->digits);
+	sprintf(num_format, "%%%d.%df", colwidth, sview->digits);
     }
 
     pprintf(prn, "%*s", obslen, "");
@@ -348,33 +308,67 @@ static void multi_series_view_print_formatted (windata_t *vwin)
 	}
 	pputc(prn, '\n');
     }
+}
 
-    textview_set_text(vwin->text, gretl_print_get_buffer(prn));
+static void multi_series_view_print (windata_t *vwin)
+{
+    series_view *sview = (series_view *) vwin->data;
+    PRN *prn;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (sview->view == VIEW_STANDARD) {
+	err = printdata(sview->list, NULL, (const double **) Z, 
+			datainfo, OPT_O, prn);
+    } else if (sview->list[0] > 4) {
+	int ldig = libset_get_int(LONGDIGITS);
+
+	libset_set_int(LONGDIGITS, sview->digits);
+	err = printdata(sview->list, NULL, (const double **) Z, 
+			datainfo, OPT_L, prn);
+	libset_set_int(LONGDIGITS, ldig);
+    } else {
+	mview_print_special(sview, prn);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	textview_set_text(vwin->text, gretl_print_get_buffer(prn));
+    }
+
     gretl_print_destroy(prn);
 }
 
 int series_view_is_sorted (windata_t *vwin)
 {
-    multi_series_view *mview = (multi_series_view *) vwin->data;
+    series_view *sview = (series_view *) vwin->data;
 
-    return mview->sortvar != 0;
+    if (sview != NULL) {
+	return sview->sorted;
+    } else {
+	return 0;
+    }
 }
 
 PRN *vwin_print_sorted_as_csv (windata_t *vwin)
 {
-    multi_series_view *mview;
+    series_view *sview;
     int *obsvec;
     PRN *prn;
     int err = 0;
 
     if (vwin->role == VIEW_SERIES) {
 	/* a single series */
-	return series_view_print_csv(vwin);
+	return single_series_view_print_csv(vwin);
     }
 
-    mview = (multi_series_view *) vwin->data;
+    sview = (series_view *) vwin->data;
 
-    obsvec = make_obsvec(mview);
+    obsvec = make_obsvec(sview);
     if (obsvec == NULL) {
 	return NULL;
     }
@@ -385,7 +379,7 @@ PRN *vwin_print_sorted_as_csv (windata_t *vwin)
     }
 
     gretl_print_set_format(prn, GRETL_FORMAT_CSV);
-    err = print_data_sorted(mview->list, obsvec, (const double **) Z, 
+    err = print_data_sorted(sview->list, obsvec, (const double **) Z, 
 			    datainfo, prn);
     if (err) {
 	gui_errmsg(err);
@@ -398,7 +392,7 @@ PRN *vwin_print_sorted_as_csv (windata_t *vwin)
     return prn;
 }
 
-static int compare_points (const void *a, const void *b)
+static int sort_points (const void *a, const void *b)
 {
     const data_point *pa = (const data_point *) a;
     const data_point *pb = (const data_point *) b;
@@ -406,15 +400,22 @@ static int compare_points (const void *a, const void *b)
     return (pa->val > pb->val) - (pa->val < pb->val);
 }
 
-static int compare_mpoints (const void *a, const void *b)
+static int unsort_points (const void *a, const void *b)
 {
-    const multi_point *pa = (const multi_point *) a;
-    const multi_point *pb = (const multi_point *) b;
+    const data_point *pa = (const data_point *) a;
+    const data_point *pb = (const data_point *) b;
      
-    return (pa->val > pb->val) - (pa->val < pb->val);
+    return (pa->obsnum > pb->obsnum) - (pa->obsnum < pb->obsnum);
 }
 
-void series_view_sort (GtkWidget *w, windata_t *vwin)
+static void series_view_unsort (series_view *sview)
+{
+    qsort(sview->points, sview->npoints, 
+	  sizeof sview->points[0], unsort_points);
+    sview->sorted = 0;
+}
+
+void series_view_toggle_sort (GtkWidget *w, windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
     
@@ -422,42 +423,67 @@ void series_view_sort (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    qsort(sview->points, sview->npoints, 
-	  sizeof sview->points[0], compare_points);
+    if (!sview->sorted) {
+	qsort(sview->points, sview->npoints, 
+	      sizeof sview->points[0], sort_points);
+	sview->sorted = 1;
+	sview->view = VIEW_CUSTOM;
+    } else {
+	qsort(sview->points, sview->npoints, 
+	      sizeof sview->points[0], unsort_points);
+	sview->sorted = 0;
+	sview->view = VIEW_STANDARD;
+    }	
 
-    series_view_print(vwin);
+    single_series_view_print(vwin);
 }
 
-void series_view_sort_by (GtkWidget *w, windata_t *vwin)
+void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin)
 {
-    multi_series_view *mview = (multi_series_view *) vwin->data;
+    series_view *sview = (series_view *) vwin->data;
     int v;
 
-    if (mview == NULL || mview->list == NULL) {
+    if (sview == NULL || sview->list == NULL) {
 	return;
     }
 
-    if (multi_series_view_allocate(mview)) {
+    if (sview->sorted && sview->points != NULL) {
+	/* toggle back to unsorted */
+	qsort(sview->points, sview->npoints, 
+	      sizeof sview->points[0], unsort_points);
+	sview->sorted = 0;
+	sview->view = VIEW_STANDARD;
+	multi_series_view_print(vwin);
 	return;
     }
 
-    v = select_var_from_list(mview->list, _("Variable to sort by"));
+    if (series_view_allocate(sview)) {
+	return;
+    }
+
+    v = select_var_from_list(sview->list, _("Variable to sort by"));
     if (v < 0) {
+	/* canceled */
 	return;
     }
 
-    mview->sortvar = v;
-    mview_fill_points(mview);
+    sview->sortvar = v;
+    series_view_fill_points(sview);
 
-    qsort(mview->points, mview->npoints, 
-	  sizeof mview->points[0], compare_mpoints);
-
+    qsort(sview->points, sview->npoints, 
+	  sizeof sview->points[0], sort_points);
+    sview->sorted = 1;
+    sview->view = VIEW_CUSTOM;
     multi_series_view_print_sorted(vwin);
 }
 
 void series_view_graph (GtkWidget *w, windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
+
+    if (sview == NULL || sview->varnum == 0) {
+	return;
+    }
 
     if (dataset_is_time_series(datainfo)) {
 	do_graph_var(sview->varnum);
@@ -466,82 +492,38 @@ void series_view_graph (GtkWidget *w, windata_t *vwin)
     }
 }
 
-void scalar_to_clipboard (windata_t *vwin)
-{
-    series_view *sview = (series_view *) vwin->data;
-    double val;
-    gchar *buf;
-
-    val = Z[sview->varnum][0];
-
-    if (sview->format == 'G') {
-	buf = g_strdup_printf("%#.*g", sview->digits, val);
-    } else {
-	buf = g_strdup_printf("%.*f", sview->digits, val);
-    }
-
-#ifdef G_OS_WIN32
-    win_buf_to_clipboard(buf);
-#else
-    buf_to_clipboard(buf);
-#endif
-
-    g_free(buf);
-}
-
 int *series_view_get_list (windata_t *vwin)
 {
+    series_view *sview = vwin->data;
     int *list = NULL;
 
-    if (vwin->role == VIEW_SERIES) {
-	series_view *sview = vwin->data;
+    if (sview == NULL) {
+	return NULL;
+    }
 
-	if (sview != NULL) {
-	    list = gretl_list_new(1);
-	    if (list != NULL) {
-		list[1] = sview->varnum;
-	    }
+    if (vwin->role == VIEW_SERIES) {
+	list = gretl_list_new(1);
+	if (list != NULL) {
+	    list[1] = sview->varnum;
 	}
     } else {
-	multi_series_view *mview = (multi_series_view *) vwin->data;
-
-	if (mview != NULL) {
-	    list = gretl_list_copy(mview->list);
-	}
+	list = gretl_list_copy(sview->list);
     }
 
     return list;
 }
 
-void series_view_connect (windata_t *vwin, int varnum)
-{
-    series_view *sview;
-
-    sview = malloc(sizeof *sview);
-
-    if (sview == NULL) {
-	vwin->data = NULL;
-    } else {
-	sview->varnum = varnum;
-	sview->npoints = 0;
-	sview->points = NULL;
-	sview->digits = 6;
-	sview->format = 'G';
-	vwin->data = sview;
-    }
-}
-
 int has_sortable_data (windata_t *vwin)
 {
-    multi_series_view *mview;
+    series_view *sview;
 
     if (vwin == NULL || vwin->role != PRINT || vwin->data == NULL) {
 	return 0;
     }
 
-    mview = vwin->data;
+    sview = vwin->data;
 
-    return (mview->list != NULL && mview->list[0] <= 5);
+    return (sview->list != NULL && sview->list[0] < 5);
 }
 
 int can_format_data (windata_t *vwin)
@@ -549,39 +531,82 @@ int can_format_data (windata_t *vwin)
     if (vwin->role == VIEW_SERIES) {
 	return 1;
     } else if (vwin->role == PRINT && vwin->data != NULL) {
-	multi_series_view *mview = vwin->data;
+	series_view *sview = vwin->data;
 
-	return (mview->list != NULL);
+	return (sview->list != NULL);
     } else {
 	return 0;
     }
 }
 
-multi_series_view *multi_series_view_new (const int *list)
+static series_view *series_view_new (int varnum, const int *list)
 {
-    multi_series_view *mview = NULL;
+    series_view *sview = NULL;
 
-    if (list == NULL) {
+    if (varnum == 0 && list == NULL) {
 	return NULL;
     } 
 
-    mview = malloc(sizeof *mview);
+    sview = malloc(sizeof *sview);
+    if (sview == NULL) {
+	return NULL;
+    }
 
-    if (mview != NULL) {
-	mview->list = gretl_list_copy(list);
-	if (mview->list == NULL) {
-	    free(mview);
-	    mview = NULL;
-	} else {
-	    mview->sortvar = 0;
-	    mview->npoints = 0;
-	    mview->digits = 6;
-	    mview->format = 'G';
-	    mview->points = NULL;
+    if (list == NULL) {
+	sview->list = NULL;
+    } else {
+	sview->list = gretl_list_copy(list);
+	if (sview->list == NULL) {
+	    free(sview);
+	    sview = NULL;
 	}
     } 
 
-    return mview;
+    if (sview != NULL) {
+	sview->varnum = varnum;
+	sview->sortvar = 0;
+	sview->npoints = 0;
+	sview->view = VIEW_STANDARD;
+	sview->digits = 6;
+	sview->format = 'G';
+	sview->sorted = 0;
+	sview->points = NULL;
+    }
+
+    return sview;
+}
+
+void series_view_connect (windata_t *vwin, int varnum)
+{
+    series_view *sview = series_view_new(varnum, NULL);
+
+    vwin->data = sview;
+}
+
+series_view *multi_series_view_new (const int *list)
+{
+    return series_view_new(0, list);
+}
+
+struct view_toggler {
+    char *view;
+    GtkWidget *spin;
+    GtkWidget *combo;
+};
+
+/* toggle between standard and custom views */
+
+static void series_view_toggle_view (GtkWidget *w, struct view_toggler *vt)
+{
+    gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "view"));
+
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+        *vt->view = i;
+	gtk_widget_set_sensitive(vt->spin, i == VIEW_CUSTOM);
+	if (vt->combo != NULL) {
+	    gtk_widget_set_sensitive(vt->combo, i == VIEW_CUSTOM);
+	}
+    }
 }
 
 static void series_view_set_digits (GtkSpinButton *b, int *digits)
@@ -589,75 +614,94 @@ static void series_view_set_digits (GtkSpinButton *b, int *digits)
     *digits = gtk_spin_button_get_value_as_int(b);
 }
 
-static void series_view_set_format (GtkWidget *w, char *format)
+static void series_view_set_fmt (GtkComboBox *cb, char *format)
 {
-    gint i;
+    gint i = gtk_combo_box_get_active(cb);
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
-        i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-        *format = i;
-    }
+    *format = (i == 0)? 'G' : 'f';
 }
 
 static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
-				     char *format, int *digits,
-				     int multi)
+				     series_view *sview)
 {
-    GtkWidget *dlg;
-    GtkWidget *tmp, *hbox, *spin;
-    GtkObject *adj;
+    struct view_toggler vt;
+    GtkWidget *dlg, *vbox;
+    GtkWidget *tmp, *hbox;
+    GtkWidget *b1, *b2;
     GSList *group;
+    int std;
 
     dlg = gretl_dialog_new(_("gretl: data format"), NULL,
 			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
 
+    vbox = GTK_DIALOG(dlg)->vbox;
+
+    std = (sview->view == VIEW_STANDARD);
+    vt.view = &sview->view;
+
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Select data format"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show_all(hbox);
 
-    /* spinner for number of digits */
+    /* standard format radio option */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new(_("Show"));
-    adj = gtk_adjustment_new(*digits, 1, 10, 1, 1, 0);
-    spin = gtk_spin_button_new_with_range(1, 10, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), *digits);
-    g_signal_connect(G_OBJECT(spin), "value-changed",
-		     G_CALLBACK(series_view_set_digits), digits);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 5);
+    b1 = gtk_radio_button_new_with_label(NULL, _("Standard format"));
+    g_object_set_data(G_OBJECT(b1), "view", GINT_TO_POINTER(VIEW_STANDARD));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), std);
+    gtk_box_pack_start(GTK_BOX(hbox), b1, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show_all(hbox);
 
-    /* select decimal places versus significant figures */
+    /* custom format radio option */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_radio_button_new_with_label(NULL, _("significant figures"));
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    if (*format == 'G') {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Show"));
+    g_object_set_data(G_OBJECT(b2), "view", GINT_TO_POINTER(VIEW_CUSTOM));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), !std);
+    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
+
+    /* with spinner for number of digits */
+    vt.spin = gtk_spin_button_new_with_range(1, 15, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vt.spin), sview->digits);
+    g_signal_connect(G_OBJECT(vt.spin), "value-changed",
+		     G_CALLBACK(series_view_set_digits), &sview->digits);
+    gtk_widget_set_sensitive(vt.spin, !std);
+    gtk_box_pack_start(GTK_BOX(hbox), vt.spin, FALSE, FALSE, 0);
+
+    /* and selector for digits / decimal places? */
+    if (sview->list != NULL && sview->list[0] > 4) {
+	vt.combo = NULL;
+	tmp = gtk_label_new(_("significant figures"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    } else {
+	vt.combo = gtk_combo_box_new_text();
+	gtk_combo_box_append_text(GTK_COMBO_BOX(vt.combo), _("significant figures"));
+	gtk_combo_box_append_text(GTK_COMBO_BOX(vt.combo), _("decimal places"));
+	if (sview->format == 'G') {
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(vt.combo), 0);
+	} else {
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(vt.combo), 1);
+	}
+	g_signal_connect(G_OBJECT(GTK_COMBO_BOX(vt.combo)), "changed",
+			 G_CALLBACK(series_view_set_fmt), &sview->format);
+	gtk_widget_set_sensitive(vt.combo, !std);
+	gtk_box_pack_start(GTK_BOX(hbox), vt.combo, FALSE, FALSE, 5);
     }
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(series_view_set_format), format);
-    g_object_set_data(G_OBJECT(tmp), "action", GINT_TO_POINTER('G'));
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 0);
-    gtk_widget_show_all(hbox);
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-    tmp = gtk_radio_button_new_with_label(group, _("decimal places"));
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    if (*format == 'f') {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (tmp), TRUE);
-    }
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(series_view_set_format), format);
-    g_object_set_data(G_OBJECT(tmp), "action", GINT_TO_POINTER('f'));
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 0);
+    /* connect toggle signals */
+    g_signal_connect(G_OBJECT(b1), "toggled",
+                     G_CALLBACK(series_view_toggle_view), &vt);
+    g_signal_connect(G_OBJECT(b2), "toggled",
+                     G_CALLBACK(series_view_toggle_view), &vt);
+
+    /* pack the custom line */
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show_all(hbox);
 
     /* Cancel button */
-    cancel_options_button(GTK_DIALOG(dlg)->action_area, dlg, digits);
+    cancel_options_button(GTK_DIALOG(dlg)->action_area, dlg, &sview->digits);
    
     /* OK button */
     tmp = ok_button(GTK_DIALOG(dlg)->action_area);
@@ -668,40 +712,26 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
 
     gtk_widget_show(dlg);
 
-    if (*digits > 0) {
-	if (multi) {
-	    multi_series_view_print_formatted(vwin);
+    if (sview->digits > 0) {
+	if (sview->list != NULL) {
+	    multi_series_view_print(vwin);
 	} else {
-	    series_view_print(vwin);
+	    single_series_view_print(vwin);
 	}
     } else { 
 	/* canceled */
-	*digits = 6;
+	sview->digits = 6;
     }
 }
 
 void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 {
-    if (vwin->role == VIEW_SERIES) {
-	series_view *sview = (series_view *) vwin->data;
+    series_view *sview = (series_view *) vwin->data;
 
-	if (series_view_allocate(sview)) {
-	    return;
-	} else {
-	    real_view_format_dialog(src, vwin, &sview->format, 
-				    &sview->digits, 0);
-	}
-    } else {
-	multi_series_view *mview = (multi_series_view *) vwin->data;
-
-	if (mview->list[0] > 4) {
-	    /* simple toggle */
-	    mview->digits = (mview->digits == 6)? 10 : 6;
-	    multi_series_view_print(vwin);
-	} else {
-	    real_view_format_dialog(src, vwin, &mview->format, 
-				    &mview->digits, 1);
-	}
+    if (vwin->role == VIEW_SERIES && series_view_allocate(sview)) {
+	return;
     }
+
+    real_view_format_dialog(src, vwin, sview);
 }
 

@@ -22,7 +22,7 @@
 
 #include "gretl.h"
 
-typedef struct multi_series_view_t multi_series_view;
+typedef struct series_view_t series_view;
 
 void free_series_view (gpointer p);
 
@@ -30,15 +30,15 @@ void free_multi_series_view (gpointer p);
 
 void series_view_connect (windata_t *vwin, int varnum);
 
-multi_series_view *multi_series_view_new (const int *list);
+series_view *multi_series_view_new (const int *list);
 
 void series_view_graph (GtkWidget *w, windata_t *vwin);
 
 void series_view_format_dialog (GtkWidget *src, windata_t *vwin);
 
-void series_view_sort (GtkWidget *w, windata_t *vwin);
+void series_view_toggle_sort (GtkWidget *w, windata_t *vwin);
 
-void series_view_sort_by (GtkWidget *w, windata_t *vwin);
+void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin);
 
 int *series_view_get_list (windata_t *vwin);
 
