@@ -1777,6 +1777,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	    printmodel(&aux, pdinfo, OPT_S, prn);
 	} 
 
+	pputc(prn, '\n');
 	pprintf(prn, "%s: Pseudo-LMF = %f,\n", _("Test statistic"), x);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
 		order, aux.nobs - pmod->ncoeff, x, pval);

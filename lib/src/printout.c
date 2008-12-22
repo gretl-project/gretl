@@ -1179,7 +1179,7 @@ static void varheading (const int *list, int leader, int wid,
     int i;
 
     if (csv_format(prn)) {
-	pprintf("obs%c", delim);
+	pprintf(prn, "obs%c", delim);
 	for (i=1; i<=list[0]; i++) { 
 	    pputs(prn, pdinfo->varname[list[i]]);
 	    if (i < list[0]) {
