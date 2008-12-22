@@ -35,12 +35,12 @@
    contribution from Eric Postpischil, 2007-10-05.
 */
 
-static void print_series_with_format (int v, const double **Z,
-				      const DATAINFO *pdinfo,
-				      const char *fmt, 
-				      int wid, int prec, 
-				      int wstar, int pstar,
-				      PRN *prn)
+static void printf_series (int v, const double **Z,
+			   const DATAINFO *pdinfo,
+			   const char *fmt, 
+			   int wid, int prec, 
+			   int wstar, int pstar,
+			   PRN *prn)
 {
     char label[OBSLEN];
     double x;
@@ -425,9 +425,9 @@ static int print_arg (char **pfmt, char **pargs,
 	gretl_matrix_print_with_format(m, fmt, wid, prec, prn);
     } else if (series_v > 0) {
 	/* printing a series */
-	print_series_with_format(series_v, (const double **)*pZ,
-				 pdinfo, fmt, wid, prec, 
-				 wstar, pstar, prn);
+	printf_series(series_v, (const double **)*pZ,
+		      pdinfo, fmt, wid, prec, 
+		      wstar, pstar, prn);
     } else if (fc == 's') {
 	/* printing a string */
 	if (wstar && pstar) {

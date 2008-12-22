@@ -228,7 +228,6 @@ static int varprint_namelen (const GRETL_VAR *var, const DATAINFO *pdinfo,
  * @shock: index number of the "shock" variable.
  * @periods: number of periods over which to print response.
  * @pdinfo: dataset information.
- * @pause: if non-zero, pause between sections of output.
  * @prn: gretl printing object.
  *
  * Prints to @prn the estimated responses of the endogenous
@@ -244,7 +243,7 @@ static int varprint_namelen (const GRETL_VAR *var, const DATAINFO *pdinfo,
 int 
 gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
-				  int pause, PRN *prn)
+				  PRN *prn)
 {
     gretl_matrix *rtmp, *ctmp;
     int rows = var->neqns * effective_order(var);
@@ -345,10 +344,6 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	}
 
 	VAR_info_end_table(prn);
-
-	if (pause && block < blockmax - 1) {
-	    scroll_pause();
-	}
     }
 
     if (rtmp != NULL) gretl_matrix_free(rtmp);
@@ -360,21 +355,19 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATAINFO *pdinfo, 
 					   int horizon, PRN *prn)
 {
-    int i, pause = 0, err = 0;
+    int i, err = 0;
 
     if (horizon <= 0) {
 	horizon = default_VAR_horizon(pdinfo);
     }
 
-    if (plain_format(prn)) {
-	pause = gretl_get_text_pause();
-    } else if (rtf_format(prn)) {
+    if (rtf_format(prn)) {
 	pputs(prn, "{\\rtf1\\par\n\\qc ");
     }
 
     for (i=0; i<var->neqns && !err; i++) {
 	err = gretl_VAR_print_impulse_response(var, i, horizon, pdinfo, 
-					       pause, prn);
+					       prn);
     }
 
     if (rtf_format(prn)) {
@@ -390,7 +383,6 @@ int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATAINFO *pdinf
  * @targ:
  * @periods: number of periods over which to print decomposition.
  * @pdinfo: dataset information.
- * @pause: if non-zero, pause between sections of output.
  * @prn: gretl printing struct.
  *
  *
@@ -400,7 +392,7 @@ int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATAINFO *pdinf
 int 
 gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 			      int periods, const DATAINFO *pdinfo, 
-			      int pause, PRN *prn)
+			      PRN *prn)
 {
     int i, t;
     int vtarg;
@@ -504,10 +496,6 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 	}
 
 	VAR_info_end_table(prn);
-
-	if (pause && block < blockmax - 1) {
-	    scroll_pause();
-	}
     }
 
     if (vd != NULL) {
@@ -520,21 +508,19 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 int gretl_VAR_print_all_fcast_decomps (GRETL_VAR *var, const DATAINFO *pdinfo, 
 				       int horizon, PRN *prn)
 {
-    int i, pause = 0, err = 0;
+    int i, err = 0;
 
     if (horizon <= 0) {
 	horizon = default_VAR_horizon(pdinfo);
     }
 
-    if (plain_format(prn)) {
-	pause = gretl_get_text_pause();
-    } else if (rtf_format(prn)) {
+    if (rtf_format(prn)) {
 	pputs(prn, "{\\rtf1\\par\n\\qc ");
     }
 
     for (i=0; i<var->neqns && !err; i++) {
 	err = gretl_VAR_print_fcast_decomp(var, i, horizon, pdinfo, 
-					   pause, prn);
+					   prn);
     }
 
     if (rtf_format(prn)) {
@@ -985,7 +971,6 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     int rtf = rtf_format(prn);
     int quiet = (opt & OPT_Q);
     int lldone = 0;
-    int pause = 0;
     double pv;
     int i, j, k, v;
 
@@ -1033,7 +1018,6 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	}	
 	pputs(prn, "\\par\n\n");
     } else {
-	pause = gretl_get_text_pause();
 	pprintf(prn, "\n%s\n", Vstr);
 	pprintf(prn, _("%s estimates, observations %s-%s (T = %d)"),
 		(vecm)? _("Maximum likelihood") : _("OLS"), startdate, enddate, var->T);
@@ -1105,10 +1089,6 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    }
 	}
 
-	if (pause) {
-	    scroll_pause();
-	}
-
 	if (vecm) {
 	    continue;
 	}
@@ -1168,9 +1148,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		  "\\clearpage\n\n");
 	} else if (rtf) {
 	    pputs(prn, "\\par\\n\n");
-	} else if (pause) {
-	    scroll_pause();
-	}
+	} 
     }
 
     /* global LR test on max lag */

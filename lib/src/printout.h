@@ -22,8 +22,6 @@
 #define GRETL_DIGITS 6
 #define GRETL_MP_DIGITS 12
 
-#define PAGELINES 21
-
 /* functions follow */
  
 void session_time (PRN *prn);
@@ -61,8 +59,6 @@ void varlist (const DATAINFO *pdinfo, PRN *prn);
 
 void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn);
 
-int get_printdata_blocks (void);
-
 int printdata (const int *list, const char *mstr,
 	       const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
@@ -70,6 +66,10 @@ int printdata (const int *list, const char *mstr,
 int print_data_sorted (const int *list, const int *obsvec, 
 		       const double **Z, const DATAINFO *pdinfo, 
 		       PRN *prn);
+
+int print_series_with_format (const int *list, const double **Z, 
+			      const DATAINFO *pdinfo, 
+			      char fmt, int digits, PRN *prn);
 
 int text_print_fit_resid (const FITRESID *fr, 
 			  const DATAINFO *pdinfo, 
@@ -115,7 +115,3 @@ void buf_rewind (const char *buf);
 int bufseek (const char *buf, long offset);
 
 long buftell (const char *buf);
-
-void scroll_pause (void);
-
-int scroll_pause_or_quit (void);

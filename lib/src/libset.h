@@ -99,8 +99,6 @@ int set_bkbp_periods (int bkl, int bku);
 void unset_bkbp_k (void);
 void unset_bkbp_periods (void);
 
-int gretl_get_text_pause (void);
-
 const gretl_matrix *get_init_vals (void);
 int n_init_vals (void);
 void free_init_vals (void);

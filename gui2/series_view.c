@@ -182,7 +182,7 @@ static void single_series_view_print (windata_t *vwin)
 	obslen = -2;
     }
 
-    if (sview->format == 'G') {
+    if (sview->format == 'g') {
 	sprintf(num_format, "%%%ds %%#13.%dg\n", obslen, sview->digits);
     } else {
 	sprintf(num_format, "%%%ds %%13.%df\n", obslen, sview->digits);
@@ -255,61 +255,6 @@ static void multi_series_view_print_sorted (windata_t *vwin)
     gretl_print_destroy(prn);
 }
 
-static void mview_print_special (series_view *sview, PRN *prn)
-{
-    const int *list = sview->list;
-    char num_format[16];
-    char obslabel[OBSLEN];
-    double xit;
-    int colwidth, obslen;
-    int i, vi, t;
-
-    colwidth = 2 * sview->digits;
-    if (colwidth < 10) {
-	colwidth = 10;
-    }
-
-    obslen = max_obs_label_length(datainfo);
-    if (obslen < 2) {
-	obslen = -2;
-    }
-
-    if (sview->format == 'G') {
-	sprintf(num_format, "%%#%d.%dg", colwidth, sview->digits);
-    } else {
-	sprintf(num_format, "%%%d.%df", colwidth, sview->digits);
-    }
-
-    pprintf(prn, "%*s", obslen, "");
-
-    for (i=1; i<=list[0]; i++) {
-	vi = list[i];
-	if (vi >= datainfo->v) {
-	    continue;
-	}
-	pprintf(prn, "%*s ", colwidth - 1, datainfo->varname[vi]);
-    }
-    pputs(prn, "\n\n");
-
-    for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	get_obs_string(obslabel, t, datainfo);
-	pprintf(prn, "%*s", obslen, obslabel);
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (vi >= datainfo->v) {
-		continue;
-	    }
-	    xit = Z[vi][t];
-	    if (na(xit)) {
-		pprintf(prn, "%*s", colwidth, "");
-	    } else {
-		pprintf(prn, num_format, xit);
-	    }
-	}
-	pputc(prn, '\n');
-    }
-}
-
 static void multi_series_view_print (windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
@@ -323,16 +268,11 @@ static void multi_series_view_print (windata_t *vwin)
     if (sview->view == VIEW_STANDARD) {
 	err = printdata(sview->list, NULL, (const double **) Z, 
 			datainfo, OPT_O, prn);
-    } else if (sview->list[0] > 4) {
-	int ldig = libset_get_int(LONGDIGITS);
-
-	libset_set_int(LONGDIGITS, sview->digits);
-	err = printdata(sview->list, NULL, (const double **) Z, 
-			datainfo, OPT_L, prn);
-	libset_set_int(LONGDIGITS, ldig);
     } else {
-	mview_print_special(sview, prn);
-    }
+	err = print_series_with_format(sview->list, (const double **) Z, 
+				       datainfo, sview->format, 
+				       sview->digits, prn);
+    } 
 
     if (err) {
 	gui_errmsg(err);
@@ -568,7 +508,7 @@ static series_view *series_view_new (int varnum, const int *list)
 	sview->npoints = 0;
 	sview->view = VIEW_STANDARD;
 	sview->digits = 6;
-	sview->format = 'G';
+	sview->format = 'g';
 	sview->sorted = 0;
 	sview->points = NULL;
     }
@@ -618,7 +558,7 @@ static void series_view_set_fmt (GtkComboBox *cb, char *format)
 {
     gint i = gtk_combo_box_get_active(cb);
 
-    *format = (i == 0)? 'G' : 'f';
+    *format = (i == 0)? 'g' : 'f';
 }
 
 static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
@@ -670,25 +610,19 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     gtk_widget_set_sensitive(vt.spin, !std);
     gtk_box_pack_start(GTK_BOX(hbox), vt.spin, FALSE, FALSE, 0);
 
-    /* and selector for digits / decimal places? */
-    if (sview->list != NULL && sview->list[0] > 4) {
-	vt.combo = NULL;
-	tmp = gtk_label_new(_("significant figures"));
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    /* and selector for digits / decimal places */
+    vt.combo = gtk_combo_box_new_text();
+    gtk_combo_box_append_text(GTK_COMBO_BOX(vt.combo), _("significant figures"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(vt.combo), _("decimal places"));
+    if (sview->format == 'g') {
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vt.combo), 0);
     } else {
-	vt.combo = gtk_combo_box_new_text();
-	gtk_combo_box_append_text(GTK_COMBO_BOX(vt.combo), _("significant figures"));
-	gtk_combo_box_append_text(GTK_COMBO_BOX(vt.combo), _("decimal places"));
-	if (sview->format == 'G') {
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(vt.combo), 0);
-	} else {
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(vt.combo), 1);
-	}
-	g_signal_connect(G_OBJECT(GTK_COMBO_BOX(vt.combo)), "changed",
-			 G_CALLBACK(series_view_set_fmt), &sview->format);
-	gtk_widget_set_sensitive(vt.combo, !std);
-	gtk_box_pack_start(GTK_BOX(hbox), vt.combo, FALSE, FALSE, 5);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vt.combo), 1);
     }
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(vt.combo)), "changed",
+		     G_CALLBACK(series_view_set_fmt), &sview->format);
+    gtk_widget_set_sensitive(vt.combo, !std);
+    gtk_box_pack_start(GTK_BOX(hbox), vt.combo, FALSE, FALSE, 5);
 
     /* connect toggle signals */
     g_signal_connect(G_OBJECT(b1), "toggled",

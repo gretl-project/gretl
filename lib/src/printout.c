@@ -685,6 +685,74 @@ char *gretl_fix_exponent (char *s)
     return s;
 }
 
+/* determine the max number of characters that will be output when
+   printing Z[v] over the current sample range using format %.*f 
+   or %#.*g, with precision 'digits'
+*/
+
+static int max_number_length (int v, const double **Z, 
+			      const DATAINFO *pdinfo,
+			      char fmt, int digits)
+{
+    double a, x, amax = 0.0, amin = 1.0e300;
+    int t, n, maxsgn = 0, minsgn = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	x = Z[v][t];
+	if (!na(x)) {
+	    a = fabs(x);
+	    if (a > amax) {
+		amax = a;
+		maxsgn = (x < 0);
+	    }
+	    if (fmt == 'g' && a < amin) {
+		amin = a;
+		minsgn = (x < 0);
+	    }
+	}
+    }
+
+    if (fmt == 'f') {
+	if (amax <= 1.0) {
+	    n = 1;
+	} else {
+	    n = ceil(log10(amax)) + (fmod(amax, 10) == 0);
+	}
+	n += digits + 1 + maxsgn;
+    } else {
+	double l10 = log10(amax);
+	int amaxn = digits + 1, aminn = digits + 1;
+
+	if (l10 >= digits) {
+	    amaxn += 5 + maxsgn;
+	} 
+	l10 = log10(amin);
+	if (l10 < -4) {
+	    aminn += 5 + minsgn;
+	} else if (l10 < 0) {
+	    aminn += (int) ceil(-l10) + minsgn;
+	}
+	n = (amaxn > aminn)? amaxn : aminn;
+#if 0
+	fprintf(stderr, "var %d, amax=%g, amin=%g, n=%d\n",
+		v, amax, amin, n);
+#endif
+    }
+
+    return n;
+}
+
+static int series_column_width (int v, const double **Z, 
+				const DATAINFO *pdinfo,
+				char fmt, int digits)
+{
+    int namelen = strlen(pdinfo->varname[v]);
+    int numlen = max_number_length(v, Z, pdinfo, fmt, digits);
+
+    return (namelen > numlen)? namelen : numlen;
+}
+
+
 /* For some reason sprintf using "%#G" seems to stick an extra
    zero on the end of some numbers -- i.e. when using a precision
    of 6 you can get a result of "1.000000", with 6 trailing
@@ -955,52 +1023,6 @@ static void outxx (double x, int ci, int wid, PRN *prn)
     }
 }
 
-static int takenotes (int quit_opt)
-{
-    char resp[4];
-
-    if (quit_opt) {
-	puts(_("\nTake notes then press return key to continue (or q to quit)"));
-    } else {
-	puts(_("\nTake notes then press return key to continue"));
-    }
-
-    fflush(stdout);
-
-    fgets(resp, sizeof resp, stdin);
-
-    if (quit_opt && *resp == 'q') {
-	return 1;
-    }
-
-    return 0;
-}
-
-/**
- * scroll_pause:
- * 
- * Pause after a "page" of text at the console.
- */
-
-void scroll_pause (void)
-{
-    takenotes(0);
-}
-
-/**
- * scroll_pause_or_quit:
- * 
- * Pause after a "page" of text, and give the user the option of
- * breaking out of the printing routine.
- * 
- * Returns: 1 if the user chose to quit, otherwise 0.
- */
-
-int scroll_pause_or_quit (void)
-{
-    return takenotes(1);
-}
-
 static int vmat_maxlen (VMatrix *vmat)
 {
     int len, maxlen = 0;
@@ -1031,8 +1053,7 @@ static int vmat_maxlen (VMatrix *vmat)
 void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 {
     register int i, j;
-    int nf, li2, p, k, m, idx, ij2, lineno = 0;
-    int pause = gretl_get_text_pause();
+    int nf, li2, p, k, m, idx, ij2;
     int maxlen = 0;
     int fwidth = 14;
     int fields = 5;
@@ -1056,10 +1077,6 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 	p = (li2 > fields) ? fields : li2;
 	if (p == 0) break;
 
-	if (pause && i > 0) {
-	    takenotes(0);
-	}
-
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
 	    s = vmat->names[j + nf - 1];
@@ -1068,31 +1085,18 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 	}
 	pputc(prn, '\n');
 
-	lineno += 2;
-
 	/* print rectangular part, if any, of matrix */
-	lineno = 1;
 	for (j=0; j<nf; j++) {
-	    if (pause && (lineno % PAGELINES == 0)) {
-		takenotes(0);
-		lineno = 1;
-	    }
 	    for (k=0; k<p; k++) {
 		idx = ijton(j, nf+k, vmat->dim);
 		outxx(vmat->vec[idx], vmat->ci, fwidth, prn);
 	    }
 	    if (fwidth < 15) pputc(prn, ' ');
 	    pprintf(prn, " %s\n", vmat->names[j]);
-	    lineno++;
 	}
 
 	/* print upper triangular part of matrix */
-	lineno = 1;
 	for (j=0; j<p; ++j) {
-	    if (pause && (lineno % PAGELINES == 0)) {
-		takenotes(0);
-		lineno = 1;
-	    }
 	    ij2 = nf + j;
 	    bufspace(fwidth * j, prn);
 	    for (k=j; k<p; k++) {
@@ -1101,7 +1105,6 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 	    }
 	    if (fwidth < 15) pputc(prn, ' ');
 	    pprintf(prn, " %s\n", vmat->names[ij2]);
-	    lineno++;
 	}
 	pputc(prn, '\n');
     }
@@ -1427,52 +1430,48 @@ static int bufprintnum (char *buf, double x, int signif, int width)
     }
 
     if (signif < 0) {
-#if PDEBUG
-	    fprintf(stderr, "got %d for signif: "
-		    "printing with %%.%df\n", signif, -signif);
-#endif
 	sprintf(numstr, "%.*f", -signif, x);
     } else if (signif == 0) {
-#if PDEBUG
-	    fprintf(stderr, "got 0 for signif: "
-		    "printing with %%.0f\n");
-#endif
 	sprintf(numstr, "%.0f", x);
     } else {
-	double z = fabs(x);
+	double a = fabs(x);
 
-	if (z < 1) l = 0;
-	else if (z < 10) l = 1;
-	else if (z < 100) l = 2;
-	else if (z < 1000) l = 3;
-	else if (z < 10000) l = 4;
-	else if (z < 100000) l = 5;
-	else if (z < 1000000) l = 6;
+	if (a < 1) l = 0;
+	else if (a < 10) l = 1;
+	else if (a < 100) l = 2;
+	else if (a < 1000) l = 3;
+	else if (a < 10000) l = 4;
+	else if (a < 100000) l = 5;
+	else if (a < 1000000) l = 6;
 	else l = 7;
+
+#if PDEBUG
+	fprintf(stderr, "%g: got %d for leftvals, %d for signif\n",
+		x, l, signif);
+#endif
 
 	if (l == 6 && signif < 6) {
 	   sprintf(numstr, "%.0f", x); 
 	} else if (l >= signif) { 
 #if PDEBUG
-	    fprintf(stderr, "got %d for leftvals, %d for signif: "
-		    "printing with %%.%dG\n", l, signif, signif);
+	    fprintf(stderr, " printing with '%%.%dG'\n", signif);
 #endif
 	    if (g_too_long(x, signif)) {
 		sprintf(numstr, "%.0f", x);
 	    } else {
 		sprintf(numstr, "%.*G", signif, x);
 	    }
-	} else if (z >= .10) {
+	} else if (a >= .10) {
 #if PDEBUG
-	    fprintf(stderr, "got %d for leftvals, %d for signif: "
-		    "printing with %%.%df\n", l, signif, signif-l);
+	    fprintf(stderr, " printing with '%%.%df'\n", signif-l);
 #endif
 	    sprintf(numstr, "%.*f", signif - l, x);
 	} else {
-	    if (signif > 4) signif = 4;
+	    if (signif > 4) {
+		signif = 4;
+	    }
 #if PDEBUG
-	    fprintf(stderr, "got %d for leftvals, %d for signif: "
-		    "printing with %%#.%dG\n", l, signif, signif);
+	    fprintf(stderr, " printing with '%%#.%dG'\n", signif);
 #endif
 	    sprintf(numstr, "%#.*G", signif, x); /* # wanted? */
 	}
@@ -1480,6 +1479,7 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 
  finish:
 
+    /* pad on left as needed */
     l = width - strlen(numstr);
     for (i=0; i<l; i++) {
 	strcat(buf, " ");
@@ -1704,13 +1704,6 @@ print_listed_objects (const char *s, const DATAINFO *pdinfo,
     }
 }
 
-static int printdata_blocks;
-
-int get_printdata_blocks (void)
-{
-    return printdata_blocks;
-}
-
 static int adjust_print_list (int *list, int *screenvar,
 			      gretlopt opt)
 {
@@ -1740,6 +1733,116 @@ static int obslen_from_t (int t)
     return strlen(s);
 }
 
+/* print the series referenced in 'list' by observation */
+
+static int print_by_obs (int *list, const double **Z, 
+			 const DATAINFO *pdinfo, 
+			 gretlopt opt, int screenvar,
+			 PRN *prn)
+{
+    int j, t, v, v1, v2, jc, nvjc, ncol;
+    int jmax, maxlen = 0, bplen = 13;
+    int sortvar, obslen, T;
+    int *pmax = NULL;
+    char obslabel[OBSLEN];
+    char line[256];
+    double x;
+    int err = 0;
+
+    pmax = malloc(list[0] * sizeof *pmax);
+    if (pmax == NULL) {
+	return E_ALLOC;
+    }
+
+    T = pdinfo->t2 - pdinfo->t1 + 1;
+    for (j=1; j<=list[0]; j++) {
+	/* this runs fairly quickly, even for large dataset */
+	pmax[j-1] = get_signif(Z[list[j]] + pdinfo->t1, T);
+    }
+
+    sortvar = check_for_sorted_var(list, pdinfo);
+
+    if (maxlen > 13) {
+	ncol = 4;
+	bplen = 16;
+    } else {
+	ncol = 5;
+    }
+
+    if (opt & OPT_N) {
+	obslen = obslen_from_t(pdinfo->t2);
+    } else {
+	obslen = max_obs_label_length(pdinfo);
+    }
+
+    jmax = list[0] / ncol;
+
+    for (j=0; j<=jmax; j++) {
+	jc = j * ncol;
+	nvjc = list[0] - jc;
+	v1 = jc + 1;
+
+	if (nvjc) {
+	    /* starting a new block of variables */
+	    v2 = (ncol > nvjc)? nvjc : ncol;
+	    v2 += jc;
+
+	    varheading(list, v1, v2, obslen, bplen, pdinfo, prn);
+
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+
+		if (screenvar && Z[screenvar][t] == 0.0) {
+		    /* screened out by boolean */
+		    continue;
+		}
+
+		if (sortvar && list[0] == 1) {
+		    strcpy(obslabel, SORTED_MARKER(pdinfo, sortvar, t));
+		} else if (opt & OPT_N) {
+		    sprintf(obslabel, "%d", t + 1);
+		} else {
+		    get_obs_string(obslabel, t, pdinfo);
+		}
+
+		sprintf(line, "%*s", obslen, obslabel);
+		
+		for (v=v1; v<=v2; v++) {
+		    x = Z[list[v]][t];
+		    if (na(x)) {
+			strcat(line, "             ");
+			if (bplen == 16) {
+			    strcat(line, "   ");
+			}
+		    } else { 
+			bufprintnum(line, x, pmax[v-1], bplen);
+		    }
+		}
+
+		if (sortvar && list[0] > 1) {
+		    sprintf(obslabel, "%*s", obslen, 
+			    SORTED_MARKER(pdinfo, sortvar, t));
+		    strcat(line, obslabel);
+		}
+
+		strcat(line, "\n");
+
+		if (pputs(prn, line) < 0) {
+		    err = E_ALLOC;
+		    goto bailout;
+		}
+	    } /* end of printing obs (t) loop */
+	} /* end if nvjc */
+    } /* end for j loop */
+
+    pputc(prn, '\n');
+
+ bailout:
+
+    free(pmax);
+
+    return err;
+}
+
 /**
  * printdata:
  * @list: list of variables to print.
@@ -1762,23 +1865,14 @@ int printdata (const int *list, const char *mstr,
 	       const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
-    int pause = gretl_get_text_pause();
-    int j, v, v1, v2, jc, nvjc, lineno, ncol;
     int screenvar = 0;
-    int sortvar = 0;
-    int maxlen = 0, bplen = 13, obslen = 0;
     int *plist = NULL;
-    int *pmax = NULL; 
-    int t, nsamp;
-    char line[128];
     int err = 0;
 
     if (opt & OPT_L) {
 	/* can't do both --long and --byobs */
 	opt &= ~OPT_O;
     }
-
-    printdata_blocks = 0;
 
     if (list != NULL && list[0] == 0) {
 	/* explicitly empty list given */
@@ -1817,8 +1911,6 @@ int printdata (const int *list, const char *mstr,
 	}
     }
 
-    lineno = 1;
-
     if (plist[0] == 0) {
 	/* no series */
 	pputc(prn, '\n');
@@ -1832,144 +1924,157 @@ int printdata (const int *list, const char *mstr,
 
 	if (nx > 1000) {
 	    err = gretl_print_alloc(prn, nx * 12);
-	}
-    }
-
-    if (!(opt & OPT_O)) { 
-	/* not by observations, but by variable */
-	pputc(prn, '\n');
-	for (j=1; j<=plist[0]; j++) {
-	    int vj = plist[j];
-
-	    if (vj > pdinfo->v) {
-		continue;
-	    }
-
-	    if (plist[0] > 1) {
-		pprintf(prn, "%s:\n", pdinfo->varname[vj]);
-	    }
-	    print_var_smpl(vj, Z, pdinfo, prn);
-	    pputc(prn, '\n');
-	    print_by_var(Z[vj], pdinfo, opt, prn);
-	    pputc(prn, '\n');
-	}
-	goto endprint;
-    }
-
-    pmax = malloc(plist[0] * sizeof *pmax);
-    if (pmax == NULL) {
-	err = E_ALLOC;
-	goto endprint;
-    }
-
-    nsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    for (j=1; j<=plist[0]; j++) {
-	/* this runs fairly quickly, even for large dataset */
-	pmax[j-1] = get_signif(Z[plist[j]] + pdinfo->t1, nsamp);
-    }
-
-    sortvar = check_for_sorted_var(plist, pdinfo);
-
-    if (maxlen > 13) {
-	ncol = 4;
-	bplen = 16;
-    } else {
-	ncol = 5;
-    }
-
-    if (opt & OPT_N) {
-	obslen = obslen_from_t(pdinfo->t2);
-    } else {
-	obslen = max_obs_label_length(pdinfo);
-    }
-
-    /* main block: print data by observations */
-
-    for (j=0; j<=plist[0]/ncol; j++) {
-	char obs_string[OBSLEN];
-
-	jc = j * ncol;
-	nvjc = plist[0] - jc;
-	v1 = jc + 1;
-
-	if (nvjc) {
-	    /* starting a new block of variables */
-	    v2 = (ncol > nvjc)? nvjc : ncol;
-	    v2 += jc;
-
-	    varheading(plist, v1, v2, obslen, bplen, pdinfo, prn);
-	    printdata_blocks++;
-
-	    if (pause && j > 0 && takenotes(1)) {
+	    if (err) {
 		goto endprint;
 	    }
+	}
+    }
 
-	    lineno = 1;
+    if (opt & OPT_O) {
+	err = print_by_obs(plist, Z, pdinfo, opt, screenvar, prn);
+    } else {
+	/* not by observations, but by variable */
+	int i, vi;
 
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-
-		if (screenvar && Z[screenvar][t] == 0.0) {
-		    /* screened out by boolean */
-		    continue;
-		}
-
-		if (sortvar && plist[0] == 1) {
-		    strcpy(obs_string, SORTED_MARKER(pdinfo, sortvar, t));
-		} else if (opt & OPT_N) {
-		    sprintf(obs_string, "%d", t + 1);
-		} else {
-		    get_obs_string(obs_string, t, pdinfo);
-		}
-
-		sprintf(line, "%*s", obslen, obs_string);
-		
-		for (v=v1; v<=v2; v++) {
-		    double xx = Z[plist[v]][t];
-
-		    if (na(xx)) {
-			strcat(line, "             ");
-			if (bplen == 16) {
-			    strcat(line, "   ");
-			}
-		    } else { 
-			bufprintnum(line, xx, pmax[v-1], bplen);
-		    }
-		}
-
-		if (sortvar && plist[0] > 1) {
-		    sprintf(obs_string, "%*s", obslen, SORTED_MARKER(pdinfo, sortvar, t));
-		    strcat(line, obs_string);
-		}
-
-		strcat(line, "\n");
-
-		if (pputs(prn, line) < 0) {
-		    err = E_ALLOC;
-		    goto endprint;
-		}
-
-		if (pause && (lineno % PAGELINES == 0)) {
-		    if (takenotes(1)) {
-			goto endprint;
-		    }
-		    lineno = 1;
-		}
-
-		lineno++;
-	    } /* end of printing obs (t) loop */
-	} /* end if nvjc */
-    } /* end for j loop */
-
-    pputc(prn, '\n');
+	pputc(prn, '\n');
+	for (i=1; i<=plist[0]; i++) {
+	    vi = plist[i];
+	    if (vi > pdinfo->v) {
+		continue;
+	    }
+	    if (plist[0] > 1) {
+		pprintf(prn, "%s:\n", pdinfo->varname[vi]);
+	    }
+	    print_var_smpl(vi, Z, pdinfo, prn);
+	    pputc(prn, '\n');
+	    print_by_var(Z[vi], pdinfo, opt, prn);
+	    pputc(prn, '\n');
+	}
+    }
 
  endprint:
 
-    if (mstr != NULL) {
+    if (!err && mstr != NULL) {
 	print_listed_objects(mstr, pdinfo, opt, prn);
     }
 
     free(plist);
-    free(pmax);
+
+    return err;
+}
+
+#define BMAX 5
+
+int print_series_with_format (const int *list, const double **Z, 
+			      const DATAINFO *pdinfo, 
+			      char fmt, int digits, PRN *prn)
+{
+    int i, j, j0, v, t, k, nrem = 0;
+    int *colwidths, blist[BMAX+1];
+    char obslabel[OBSLEN];
+    char format[16];
+    char *buf = NULL;
+    int buflen, obslen;
+    double x;
+    int err = 0;
+
+    if (list == NULL || list[0] == 0) {
+	return 0;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] >= pdinfo->v) {
+	    return E_DATA;
+	}
+    }
+
+    colwidths = gretl_list_new(list[0]);
+    if (colwidths == NULL) {
+	return E_ALLOC;
+    }
+
+    nrem = list[0];
+
+    buflen = 0;
+    for (i=1; i<=list[0]; i++) {
+	colwidths[i] = series_column_width(list[i], Z, pdinfo, fmt, digits);
+	colwidths[i] += 3;
+	if (colwidths[i] > buflen) {
+	    buflen = colwidths[i];
+	}
+    }
+
+    buf = malloc(buflen);
+    if (buf == NULL) {
+	free(colwidths);
+	return E_ALLOC;
+    }
+
+    if (gretl_print_has_buffer(prn)) {
+	/* how big a job do we have? */
+	int T = pdinfo->t2 - pdinfo->t1 + 1;
+	int nx = nrem * T;
+
+	if (nx > 1000 && gretl_print_alloc(prn, nx * 12)) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    if (fmt == 'f') {
+	sprintf(format, "%%.%df", digits);
+    } else {
+	sprintf(format, "%%#.%dg", digits);
+    }
+
+    obslen = max_obs_label_length(pdinfo);
+
+    k = 1;
+
+    while (nrem > 0) {
+	/* fill the "block" list */
+	j0 = k;
+	blist[0] = 0;
+	for (i=1; i<=BMAX && nrem>0; i++) {
+	    blist[i] = list[k++];
+	    blist[0] += 1;
+	    nrem--;
+	}
+
+	/* print block heading */
+	bufspace(obslen, prn);
+	j = j0;
+	for (i=1; i<=blist[0]; i++) {
+	    v = blist[i];
+	    pprintf(prn, "%*s", colwidths[j++], pdinfo->varname[v]);
+	}
+	pputs(prn, "\n\n");
+
+	/* print block observations */
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    get_obs_string(obslabel, t, pdinfo);
+	    pprintf(prn, "%*s", obslen, obslabel);
+	    j = j0;
+	    for (i=1; i<=blist[0]; i++) {
+		v = blist[i];
+		x = Z[v][t];
+		if (na(x)) {
+		    bufspace(colwidths[j], prn);
+		} else { 
+		    sprintf(buf, format, x);
+		    pprintf(prn, "%*s", colwidths[j], buf);
+		}
+		j++;
+	    }
+	    pputc(prn, '\n');
+	}
+	pputc(prn, '\n');
+    }
+
+ bailout:
+
+    free(colwidths);
+    free(buf);
 
     return err;
 }
@@ -2001,7 +2106,7 @@ int print_data_sorted (const int *list, const int *obsvec,
     int *pmax = NULL; 
     double xx;
     char obs_string[OBSLEN];
-    char line[128];
+    char line[256];
     int bplen = 16, obslen = 0;
     int T = obsvec[0];
     int i, s, t;

@@ -3562,9 +3562,8 @@ void print_summary (const Summary *summ,
 		    const DATAINFO *pdinfo,
 		    PRN *prn)
 {
-    int pause = gretl_get_text_pause();
     int len, maxlen = 0;
-    int i, vi, lineno;
+    int i, vi;
 
     if (summ->list == NULL || summ->list[0] == 0) {
 	return;
@@ -3599,42 +3598,25 @@ void print_summary (const Summary *summ,
     pputs(prn, _("      MEAN           MEDIAN           MIN"
             "             MAX\n\n"));
 
-    lineno = 1;
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
-	if (pause && (lineno % PAGELINES == 0)) {
-	    scroll_pause();
-	    lineno = 1;
-	}
 	pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
 	printf15(summ->mean[i], prn);
 	printf15(summ->median[i], prn);
 	printf15(summ->low[i], prn);
 	printf15(summ->high[i], prn);
 	pputc(prn, '\n');
-	lineno++;
     }
     pputc(prn, '\n');
-
-    if (pause) {
-	scroll_pause();
-    }
 
     pprintf(prn, "\n%s  ", _("Variable"));
     pputs(prn, _("      S.D.            C.V.           "
 	 " SKEW          EXCSKURT\n\n"));
 
-    lineno = 1;
     for (i=0; i<summ->list[0]; i++) {
 	double cv;
 
 	vi = summ->list[i + 1];
-
-	if (pause && (lineno % PAGELINES == 0)) {
-	    scroll_pause();
-	    lineno = 1;
-	}
-
 	pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
 
 	if (floateq(summ->mean[i], 0.0)) {
@@ -3650,7 +3632,6 @@ void print_summary (const Summary *summ,
 	printf15(summ->skew[i], prn);
 	printf15(summ->xkurt[i], prn);
 	pputc(prn, '\n');
-	lineno++;
     }
     pputc(prn, '\n');
 }

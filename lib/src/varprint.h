@@ -28,7 +28,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 int 
 gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
-				  int pause, PRN *prn);
+				  PRN *prn);
 
 int gretl_VAR_print_all_fcast_decomps (GRETL_VAR *var, const DATAINFO *pdinfo, 
 				       int horizon, PRN *prn);
@@ -36,7 +36,7 @@ int gretl_VAR_print_all_fcast_decomps (GRETL_VAR *var, const DATAINFO *pdinfo,
 int 
 gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 			      int periods, const DATAINFO *pdinfo, 
-			      int pause, PRN *prn);
+			      PRN *prn);
 
 int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATAINFO *pdinfo, 
 					   int horizon, PRN *prn);

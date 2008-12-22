@@ -1936,28 +1936,18 @@ enum {
     LOOPING_QUIETLY
 };
 
-static int gretl_text_pause;
 static int loop_on;
 static int batch_mode;
 static int gui_mode;
 
-int gretl_get_text_pause (void)
-{
-    return gretl_text_pause;
-}
-
 void set_loop_on (int quiet)
 {
     loop_on = (quiet)? LOOPING_QUIETLY : LOOPING;
-    gretl_text_pause = 0;
 }
 
 void set_loop_off (void)
 {
     loop_on = 0;
-    if (!batch_mode && !gui_mode) {
-	gretl_text_pause = 1;
-    }
 }
 
 int gretl_looping (void)
@@ -1973,9 +1963,6 @@ int gretl_looping_quietly (void)
 void gretl_set_batch_mode (int b)
 {
     batch_mode = b;
-    if (batch_mode) {
-	gretl_text_pause = 0;
-    }	
 }
 
 int gretl_in_batch_mode (void)

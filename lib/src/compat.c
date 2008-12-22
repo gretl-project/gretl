@@ -310,14 +310,12 @@ static int ascii_plot (const int *list, const double **Z,
     int i, nc2, vy, vz, cntrline;
     int ix = 0, iy = 0, iz = 0, n = 0;
     int ncols = 70;
-    int ls, lineno, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int ls, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     char word[32], px[132];
     char s1[10], s2[10];
     double xmin, xmax, xrange, ymin, ymax, yrange, xymin, xymax; 
     double xyrange, xx, yy;
     double *x, *y;
-
-    int pause = gretl_get_text_pause();
 
     x = malloc(pdinfo->n * sizeof *x);
     y = malloc(pdinfo->n * sizeof *y);
@@ -361,15 +359,10 @@ static int ascii_plot (const int *list, const double **Z,
 
 	gretl_push_c_numeric_locale();
 
-	lineno = 1;
 	for (t=t1; t<=t2; ++t) {
 	    xx = Z[vy][t];
 	    if (na(xx)) {
 		continue;
-	    }
-	    if (pause && (lineno % PAGELINES == 0)) {
-		scroll_pause();
-		lineno = 1;
 	    }
 	    prntdate(t, n, pdinfo, prn);
 	    ix = (floatneq(xrange, 0.0))? ((xx-xmin)/xrange) * ncols : nc2;
@@ -384,7 +377,6 @@ static int ascii_plot (const int *list, const double **Z,
 	    if (ix == ncols) {
 		pputc(prn, '\n');
 	    }
-	    lineno++;
 	}
 
 	gretl_pop_c_numeric_locale();
@@ -414,7 +406,6 @@ static int ascii_plot (const int *list, const double **Z,
     /* print headings for the two variables */
     pprintf(prn, _("%17cNOTE: o stands for %s,   x stands for %s\n%17c+ means %s "
 	   "and %s are equal when scaled\n"), ' ', s1, s2, ' ', s1, s2);
-    lineno = 6;
 
     if (opt & OPT_O) {
 	pprintf(prn, _("%20c%s and %s are plotted on same scale\n\n%8c"),
@@ -470,13 +461,7 @@ static int ascii_plot (const int *list, const double **Z,
 
     gretl_push_c_numeric_locale();
 
-    lineno = 1;
-
     for (t=t1; t<=t2; ++t) {
-	if (pause && (lineno % PAGELINES == 0)) {
-	    scroll_pause();
-	    lineno = 1;
-	}
 
 	xx = Z[vy][t];
 	yy = Z[vz][t];
@@ -515,8 +500,6 @@ static int ascii_plot (const int *list, const double **Z,
 	if (ix == ncols || iy == ncols) {
 	    pputc(prn, '\n');
 	}
-
-	lineno++;
     }
 
     gretl_pop_c_numeric_locale();
