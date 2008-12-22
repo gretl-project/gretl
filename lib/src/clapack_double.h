@@ -1433,5 +1433,9 @@ void dsyrk_ (const char *UPLO, const char *TRANS, const integer *N,
 	     const integer *K, const double *ALPHA, const double *A, 
 	     const integer *LDA, const double *BETA, double *C, 
 	     const integer *LDC);
+
+double dnrm2_ (const integer *n, double *X, const integer *incx);
+
+double dlamch_ (char *cmach);
  
 #endif /* __CLAPACK_DOUBLE_H */

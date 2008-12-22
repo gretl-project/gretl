@@ -7565,6 +7565,75 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
     }
 }
 
+#define SVD_CHECK_BOUND 0
+
+#if SVD_CHECK_BOUND
+
+/* Euclidean norm of vector x of length n; fancy stuff
+   courtesy of BLAS */
+
+static double vecnorm2 (int n, const double *x)
+{
+    if (n < 1) {
+	return 0;
+    } else if (n == 1) {
+	return fabs(x[0]);
+    } else {
+	double absxi, scale = 0.0;
+	double xs, ssq = 1.0;
+	int i;
+
+	for (i=0; i<n; i++) {
+	    if (x[i] != 0.0) {
+		absxi = fabs(x[i]);
+		if (scale < absxi) {
+		    xs = scale / absxi;
+		    ssq = 1 + ssq * xs * xs;
+		    scale = absxi;
+		} else {
+		    xs = absxi / scale;
+		    ssq += xs * xs;
+		}
+	    }
+	}
+	
+	return scale * sqrt(ssq);
+    }
+}
+
+#define ERRBD_MAX 0.5 /* ?? */
+
+/* http://www.netlib.org/lapack/lug/node82.html */
+
+static int svd_bound_check (const gretl_matrix *y,
+			    const gretl_matrix *B,
+			    double bnorm, int T, int k,
+			    const double *s)
+{
+    char E = 'E';
+    double bnorm = vecnorm2(T, y->val);
+    double rnorm = vecnorm2(T - k, B->val + k);
+    double epsmch = dlamch_(&E);
+    double sint, cost, tant, errbd;
+
+    rcond = s[k-1] / s[0];
+    rcond = max(rcond, epsmch);
+    sint = (bnorm > 0.0)? rnorm / bnorm : 0.0;
+    cost = sqrt((1.0 - sint)*(1.0 + sint));
+    cost = max(cost, epsmch);
+    tant = sint / cost;
+    errbd = epsmch * (2.0/(rcond*cost) + tant / (rcond*rcond));
+    if (errbd > ERRBD_MAX) {
+	fprintf(stderr, "dgelss: bnorm = %g, rnorm = %g, rcond = %g\n", 
+		bnorm, rnorm, rcond);
+	fprintf(stderr, " Error Bound = %g\n", errbd);
+    }
+
+    return 0;
+}
+
+#endif /* SVD_CHECK_BOUND */
+
 /**
  * gretl_matrix_svd_ols:
  * @y: dependent variable vector.
@@ -7597,7 +7666,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
     integer lwork = -1L;
     integer rank;
     integer info;
-    double rcond = -1.0;
+    double rcond = 0.0;
     double *work = NULL;
     double *work2 = NULL;
     double *s = NULL;
@@ -7673,7 +7742,13 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 	fprintf(stderr, "gretl_matrix_svd_ols:\n"
 		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
 		(int) rank, X->rows, X->cols);
+    } 
+
+#if SVD_CHECK_BOUND
+    if (!err && rank == k) {
+	err = svd_bound_check(y, B, bnorm, T, k, s);
     }
+#endif
 
     if (!err) {
 	int i;
