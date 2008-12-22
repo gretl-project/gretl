@@ -118,7 +118,9 @@ void gui_logo (PRN *prn)
 	
     pprintf(prn, _("gretl: gui client for gretl version %s,\n"), GRETL_VERSION);
     pputs(prn, _("Copyright Allin Cottrell and Riccardo \"Jack\" Lucchetti"));
-    pputs(prn, _("This is free software with ABSOLUTELY NO WARRANTY.\n"));
+    pputc(prn, '\n');
+    pputs(prn, _("This is free software with ABSOLUTELY NO WARRANTY"));
+    pputc(prn, '\n');
 
     if (myprn != NULL) {
 	gretl_print_destroy(myprn);
@@ -757,16 +759,30 @@ static int series_column_width (int v, const double **Z,
    zero on the end of some numbers -- i.e. when using a precision
    of 6 you can get a result of "1.000000", with 6 trailing
    zeros.  The following function checks for this and lops it
-   off if need be. */
+   off if need be.
+*/
 
-static void cut_extra_zero (char *numstr, int digits)
+static char *cut_extra_zero (char *s, int digits)
 {
-    if (strchr(numstr, 'E') == NULL && strchr(numstr, 'e') == NULL) {
-	int s = strspn(numstr, "-.,0");
-	int p = (strchr(numstr + s, '.') || strchr(numstr + s, ','));
+    if (strchr(s, 'E') == NULL && strchr(s, 'e') == NULL) {
+	int n = strspn(s, "-.,0");
+	int m = (strchr(s + n, '.') || strchr(s + n, ','));
 
-	numstr[s + p + digits] = '\0';
+	s[n + m + digits] = '\0';
     }
+
+    return s;
+}
+
+static char *cut_trailing_point (char *s)
+{
+    int n = strlen(s);
+
+    if (s[n-1] == '.' || s[n-1] == ',') {
+	s[n-1] = '\0';
+    }
+
+    return s;
 }
 
 /* below: targ should be 36 bytes long */
@@ -1154,20 +1170,19 @@ static void fit_resid_head (const FITRESID *fr,
     pputs(prn, "\n\n");
 }
 
-/* prints names of variables in @list, positions v1 to v2 */
+/* prints a heading with the names of the variables in @list */
 
-static void varheading (const int *list, int v1, int v2, 
-			int leader, int wid, const DATAINFO *pdinfo, 
+static void varheading (const int *list, int leader, int wid, 
+			const DATAINFO *pdinfo, char delim, 
 			PRN *prn)
 {
     int i;
 
     if (csv_format(prn)) {
-	pputs(prn, "   ");
-	pputc(prn, pdinfo->delim);
-	for (i=v1; i<=v2; i++) { 
-	    pprintf(prn, "%s", pdinfo->varname[list[i]]);
-	    if (i < v2) {
+	pprintf("obs%c", delim);
+	for (i=1; i<=list[0]; i++) { 
+	    pputs(prn, pdinfo->varname[list[i]]);
+	    if (i < list[0]) {
 		pputc(prn, pdinfo->delim);
 	    } 
 	}
@@ -1175,7 +1190,7 @@ static void varheading (const int *list, int v1, int v2,
     } else {
 	pputc(prn, '\n');
 	bufspace(leader, prn);
-	for (i=v1; i<=v2; i++) { 
+	for (i=1; i<=list[0]; i++) { 
 	    pprintf(prn, "%*s", wid, pdinfo->varname[list[i]]);
 	}
 	pputs(prn, "\n\n");
@@ -1241,14 +1256,28 @@ static void printstr_long (PRN *prn, double xx, int d, int *ls)
 
 /* prints series z from current sample t1 to t2 */
 
-static void print_by_var (const double *z, const DATAINFO *pdinfo, 
-			  gretlopt opt, PRN *prn)
+static void print_series_by_var (const double *z, const DATAINFO *pdinfo, 
+				 gretlopt opt, PRN *prn)
 {
+    char format[12];
     int t, dig = 11, ls = 0;
+    int anyneg = 0;
     double xx;
 
     if (opt & OPT_L) {
 	dig = libset_get_int(LONGDIGITS);
+    } else {
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    if (z[t] < 0) {
+		anyneg = 1;
+		break;
+	    }
+	}
+	if (anyneg) {
+	    sprintf(format, "%% #.%dg  ", GRETL_DIGITS);
+	} else {
+	    sprintf(format, "%%#.%dg  ", GRETL_DIGITS);
+	}
     }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -1260,12 +1289,11 @@ static void print_by_var (const double *z, const DATAINFO *pdinfo,
 	    int n;
 
 	    if (na(xx)) {
-		strcpy(str, "NA  ");
-		n = 4;
+		sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, "NA");
 	    } else {
-		sprintf(str, "%#.*g  ", GRETL_DIGITS, xx);
-		n = strlen(str);
+		sprintf(str, format, xx);
 	    }
+	    n = strlen(str);
 	    if (ls + n > 78) {
 		pputc(prn, '\n');
 		ls = 0;
@@ -1418,10 +1446,12 @@ static int g_too_long (double x, int signif)
     return (strlen(n1) > strlen(n2));
 }
 
-static int bufprintnum (char *buf, double x, int signif, int width)
+static char *bufprintnum (char *buf, double x, int signif, int width)
 {
     static char numstr[32];
     int i, l;
+
+    *buf = '\0';
 
     /* guard against monster numbers that will smash the stack */
     if (fabs(x) > 1.0e20 || signif == PMAX_NOT_AVAILABLE) {
@@ -1486,7 +1516,7 @@ static int bufprintnum (char *buf, double x, int signif, int width)
     }
     strcat(buf, numstr);
 
-    return 0;
+    return buf;
 }
 
 /**
@@ -1733,6 +1763,45 @@ static int obslen_from_t (int t)
     return strlen(s);
 }
 
+/* in case we're printing a lot of data to a PRN that uses a
+   buffer, pre-allocate a relatively big chunk of memory
+*/
+
+static int check_prn_size (const int *list, const DATAINFO *pdinfo,
+			   PRN *prn)
+{
+    int nx = list[0] * (pdinfo->t2 - pdinfo->t1 + 1);
+    int err = 0;
+
+    if (nx > 1000) {
+	err = gretl_print_alloc(prn, nx * 12);
+    }
+
+    return err;
+}
+
+static int *get_pmax_array (const int *list, const double **Z,
+			    const DATAINFO *pdinfo)
+{
+    int *pmax = malloc(list[0] * sizeof *pmax);
+    int i, vi, T = pdinfo->t2 - pdinfo->t1 + 1;
+
+    if (pmax == NULL) {
+	return NULL;
+    }
+
+    /* this runs fairly quickly, even for large dataset */
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	pmax[i-1] = get_signif(Z[vi] + pdinfo->t1, T);
+    }
+
+    return pmax;
+}
+
+#define BMAX 5
+
 /* print the series referenced in 'list' by observation */
 
 static int print_by_obs (int *list, const double **Z, 
@@ -1740,34 +1809,22 @@ static int print_by_obs (int *list, const double **Z,
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
-    int j, t, v, v1, v2, jc, nvjc, ncol;
-    int jmax, maxlen = 0, bplen = 13;
-    int sortvar, obslen, T;
+    int i, j, j0, k, t, nrem;
+    int colwidth = 13;
+    int sortvar, obslen;
     int *pmax = NULL;
     char obslabel[OBSLEN];
-    char line[256];
+    char buf[128];
+    int blist[BMAX+1];
     double x;
     int err = 0;
 
-    pmax = malloc(list[0] * sizeof *pmax);
+    pmax = get_pmax_array(list, Z, pdinfo);
     if (pmax == NULL) {
 	return E_ALLOC;
     }
 
-    T = pdinfo->t2 - pdinfo->t1 + 1;
-    for (j=1; j<=list[0]; j++) {
-	/* this runs fairly quickly, even for large dataset */
-	pmax[j-1] = get_signif(Z[list[j]] + pdinfo->t1, T);
-    }
-
     sortvar = check_for_sorted_var(list, pdinfo);
-
-    if (maxlen > 13) {
-	ncol = 4;
-	bplen = 16;
-    } else {
-	ncol = 5;
-    }
 
     if (opt & OPT_N) {
 	obslen = obslen_from_t(pdinfo->t2);
@@ -1775,72 +1832,86 @@ static int print_by_obs (int *list, const double **Z,
 	obslen = max_obs_label_length(pdinfo);
     }
 
-    jmax = list[0] / ncol;
+    nrem = list[0];
+    k = 1;
 
-    for (j=0; j<=jmax; j++) {
-	jc = j * ncol;
-	nvjc = list[0] - jc;
-	v1 = jc + 1;
+    while (nrem > 0) {
+	/* fill the "block" list */
+	j0 = k;
+	blist[0] = 0;
+	for (i=1; i<=BMAX && nrem>0; i++) {
+	    blist[i] = list[k++];
+	    blist[0] += 1;
+	    nrem--;
+	}
 
-	if (nvjc) {
-	    /* starting a new block of variables */
-	    v2 = (ncol > nvjc)? nvjc : ncol;
-	    v2 += jc;
+	varheading(blist, obslen, colwidth, pdinfo, pdinfo->delim, prn);
+	
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 
-	    varheading(list, v1, v2, obslen, bplen, pdinfo, prn);
+	    if (screenvar && Z[screenvar][t] == 0.0) {
+		/* screened out by boolean */
+		continue;
+	    }
 
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    if (sortvar && list[0] == 1) {
+		strcpy(obslabel, SORTED_MARKER(pdinfo, sortvar, t));
+	    } else if (opt & OPT_N) {
+		sprintf(obslabel, "%d", t + 1);
+	    } else {
+		get_obs_string(obslabel, t, pdinfo);
+	    }
 
-		if (screenvar && Z[screenvar][t] == 0.0) {
-		    /* screened out by boolean */
-		    continue;
+	    pprintf(prn, "%*s", obslen, obslabel);
+
+	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
+		x = Z[blist[i]][t];
+		if (na(x)) {
+		    bufspace(colwidth, prn);
+		} else { 
+		    bufprintnum(buf, x, pmax[j-1], colwidth);
+		    pputs(prn, buf);
 		}
+	    }
 
-		if (sortvar && list[0] == 1) {
-		    strcpy(obslabel, SORTED_MARKER(pdinfo, sortvar, t));
-		} else if (opt & OPT_N) {
-		    sprintf(obslabel, "%d", t + 1);
-		} else {
-		    get_obs_string(obslabel, t, pdinfo);
-		}
+	    if (sortvar && list[0] > 1) {
+		pprintf(prn, "%*s", obslen, SORTED_MARKER(pdinfo, sortvar, t));
+	    }
 
-		sprintf(line, "%*s", obslen, obslabel);
-		
-		for (v=v1; v<=v2; v++) {
-		    x = Z[list[v]][t];
-		    if (na(x)) {
-			strcat(line, "             ");
-			if (bplen == 16) {
-			    strcat(line, "   ");
-			}
-		    } else { 
-			bufprintnum(line, x, pmax[v-1], bplen);
-		    }
-		}
-
-		if (sortvar && list[0] > 1) {
-		    sprintf(obslabel, "%*s", obslen, 
-			    SORTED_MARKER(pdinfo, sortvar, t));
-		    strcat(line, obslabel);
-		}
-
-		strcat(line, "\n");
-
-		if (pputs(prn, line) < 0) {
-		    err = E_ALLOC;
-		    goto bailout;
-		}
-	    } /* end of printing obs (t) loop */
-	} /* end if nvjc */
-    } /* end for j loop */
+	    pputc(prn, '\n');
+	} 
+    } 
 
     pputc(prn, '\n');
-
- bailout:
 
     free(pmax);
 
     return err;
+}
+
+static int print_by_var (const int *list, const double **Z,
+			 const DATAINFO *pdinfo, gretlopt opt,
+			 PRN *prn)
+{
+    int i, vi;
+
+    pputc(prn, '\n');
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi > pdinfo->v) {
+	    continue;
+	}
+	if (list[0] > 1) {
+	    pprintf(prn, "%s:\n", pdinfo->varname[vi]);
+	}
+	print_var_smpl(vi, Z, pdinfo, prn);
+	pputc(prn, '\n');
+	print_series_by_var(Z[vi], pdinfo, opt, prn);
+	pputc(prn, '\n');
+    }
+
+    return 0;
 }
 
 /**
@@ -1918,38 +1989,16 @@ int printdata (const int *list, const char *mstr,
     }
 
     if (gretl_print_has_buffer(prn)) {
-	/* how big a job do we have? */
-	int T = pdinfo->t2 - pdinfo->t1 + 1;
-	int nx = plist[0] * T;
-
-	if (nx > 1000) {
-	    err = gretl_print_alloc(prn, nx * 12);
-	    if (err) {
-		goto endprint;
-	    }
+	err = check_prn_size(plist, pdinfo, prn);
+	if (err) {
+	    goto endprint;
 	}
     }
 
     if (opt & OPT_O) {
 	err = print_by_obs(plist, Z, pdinfo, opt, screenvar, prn);
     } else {
-	/* not by observations, but by variable */
-	int i, vi;
-
-	pputc(prn, '\n');
-	for (i=1; i<=plist[0]; i++) {
-	    vi = plist[i];
-	    if (vi > pdinfo->v) {
-		continue;
-	    }
-	    if (plist[0] > 1) {
-		pprintf(prn, "%s:\n", pdinfo->varname[vi]);
-	    }
-	    print_var_smpl(vi, Z, pdinfo, prn);
-	    pputc(prn, '\n');
-	    print_by_var(Z[vi], pdinfo, opt, prn);
-	    pputc(prn, '\n');
-	}
+	err = print_by_var(plist, Z, pdinfo, opt, prn);
     }
 
  endprint:
@@ -1962,8 +2011,6 @@ int printdata (const int *list, const char *mstr,
 
     return err;
 }
-
-#define BMAX 5
 
 int print_series_with_format (const int *list, const double **Z, 
 			      const DATAINFO *pdinfo, 
@@ -2011,12 +2058,8 @@ int print_series_with_format (const int *list, const double **Z,
     }
 
     if (gretl_print_has_buffer(prn)) {
-	/* how big a job do we have? */
-	int T = pdinfo->t2 - pdinfo->t1 + 1;
-	int nx = nrem * T;
-
-	if (nx > 1000 && gretl_print_alloc(prn, nx * 12)) {
-	    err = E_ALLOC;
+	err = check_prn_size(list, pdinfo, prn);
+	if (err) {
 	    goto bailout;
 	}
     }
@@ -2043,10 +2086,9 @@ int print_series_with_format (const int *list, const double **Z,
 
 	/* print block heading */
 	bufspace(obslen, prn);
-	j = j0;
-	for (i=1; i<=blist[0]; i++) {
+	for (i=1, j=j0; i<=blist[0]; i++, j++) {
 	    v = blist[i];
-	    pprintf(prn, "%*s", colwidths[j++], pdinfo->varname[v]);
+	    pprintf(prn, "%*s", colwidths[j], pdinfo->varname[v]);
 	}
 	pputs(prn, "\n\n");
 
@@ -2054,17 +2096,19 @@ int print_series_with_format (const int *list, const double **Z,
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    get_obs_string(obslabel, t, pdinfo);
 	    pprintf(prn, "%*s", obslen, obslabel);
-	    j = j0;
-	    for (i=1; i<=blist[0]; i++) {
+	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
 		v = blist[i];
 		x = Z[v][t];
 		if (na(x)) {
 		    bufspace(colwidths[j], prn);
 		} else { 
 		    sprintf(buf, format, x);
+		    if (fmt == 'g') {
+			/* post-process ugliness */
+			cut_trailing_point(cut_extra_zero(buf, digits));
+		    }
 		    pprintf(prn, "%*s", colwidths[j], buf);
 		}
-		j++;
 	    }
 	    pputc(prn, '\n');
 	}
@@ -2101,17 +2145,17 @@ int print_data_sorted (const int *list, const int *obsvec,
 		       const double **Z, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
-    char sdelim[2] = {0};
     int csv = csv_format(prn);
+    char delim = pdinfo->delim;
     int *pmax = NULL; 
     double xx;
     char obs_string[OBSLEN];
-    char line[256];
-    int bplen = 16, obslen = 0;
+    char buf[128];
+    int colwidth = 16, obslen = 0;
     int T = obsvec[0];
     int i, s, t;
 
-    /* must have a list of up to 4 variables... */
+    /* must have a list of not more than 4 variables... */
     if (list == NULL || list[0] < 1 || list[0] > 4) {
 	return E_DATA;
     }
@@ -2128,22 +2172,19 @@ int print_data_sorted (const int *list, const int *obsvec,
 	return E_DATA;
     }
 
-    pmax = malloc(list[0] * sizeof *pmax);
-    if (pmax == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	pmax[i-1] = get_signif(Z[list[i]] + pdinfo->t1, T);
-    }
-
     if (csv) {
-	sdelim[0] = pdinfo->delim;
+	if (get_local_decpoint() == ',' && delim == ',') {
+	    delim = ';';
+	}
     } else {
+	pmax = get_pmax_array(list, Z, pdinfo);
+	if (pmax == NULL) {
+	    return E_ALLOC;
+	}
 	obslen = max_obs_label_length(pdinfo);
     }
 
-    varheading(list, 1, list[0], obslen, bplen, pdinfo, prn);
+    varheading(list, obslen, colwidth, pdinfo, delim, prn);
 
     /* print data by observations */
     for (s=0; s<T; s++) {
@@ -2153,35 +2194,38 @@ int print_data_sorted (const int *list, const int *obsvec,
 	}
 	get_obs_string(obs_string, t, pdinfo);
 	if (csv) {
-	    sprintf(line, "%s%c", obs_string, pdinfo->delim);
+	    pprintf(prn, "%s%c", obs_string, delim);
 	} else {
-	    sprintf(line, "%*s", obslen, obs_string);
+	    pprintf(prn, "%*s", obslen, obs_string);
 	}
 	for (i=1; i<=list[0]; i++) {
 	    xx = Z[list[i]][t];
 	    if (na(xx)) {
 		if (csv) {
-		    strcat(line, "NA");
+		    pputs(prn, "NA");
 		} else {
-		    strcat(line, "                ");
+		    bufspace(colwidth, prn);
 		}
 	    } else { 
 		if (csv) {
-		    bufprintnum(line, xx, pmax[i-1], 0);
+		    pprintf(prn, "%.15g", xx);
 		} else {
-		    bufprintnum(line, xx, pmax[i-1], bplen);
+		    bufprintnum(buf, xx, pmax[i-1], colwidth);
+		    pputs(prn, buf);
 		}
 	    }
 	    if (csv && i < list[0]) {
-		strcat(line, sdelim);
+		pputc(prn, delim);
 	    }
 	}
-	pputs(prn, line);
 	pputc(prn, '\n');
     } 
 
     pputc(prn, '\n');
-    free(pmax);
+
+    if (!csv) {
+	free(pmax);
+    }
 
     return 0;
 }

@@ -800,6 +800,7 @@ int pprintf (PRN *prn, const char *template, ...)
     }
 
     if (prn->fp != NULL) {
+	/* printing to stream: straightforward */
 	va_start(args, template);
 	plen = vfprintf(prn->fp, template, args);
 	va_end(args);
@@ -824,6 +825,7 @@ int pprintf (PRN *prn, const char *template, ...)
     fprintf(stderr, "printing at %p\n", (void *) (prn->buf + prn->blen));
 #endif
 
+    /* printing to buffer: be careful not to overrun */
     rem = prn->bufsize - prn->blen - 1;
     va_start(args, template);
     plen = vsnprintf(prn->buf + prn->blen, rem, template, args);

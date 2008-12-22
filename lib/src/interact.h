@@ -44,7 +44,8 @@ typedef enum {
     OPT_DBOPEN  = 1 << 4,
     OPT_WEBDB   = 1 << 5,
     OPT_DUMP    = 1 << 6,
-    OPT_DEBUG   = 1 << 7
+    OPT_DEBUG   = 1 << 7,
+    OPT_ERROR   = 1 << 8
 } ProgramOptions;
 
 typedef enum {

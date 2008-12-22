@@ -83,9 +83,10 @@ static int saved_object_action (const char *line, double ***pZ,
 				DATAINFO *pdinfo, MODEL **models,
 				PRN *prn);
 
-static void usage(void)
+static void usage (int err)
 {
     logo();
+
     printf(_("\nYou may supply the name of a data file on the command line.\n"
 	     "Options:\n"
 	     " -b or --batch     Process a command script and exit.\n"
@@ -98,7 +99,12 @@ static void usage(void)
 	     " gretlcli -b myfile.inp >myfile.out\n"
 	     "Example of run mode usage:\n"
 	     " gretlcli -r myfile.inp\n"));
-    exit(EXIT_SUCCESS);
+
+    if (err) {
+	exit(EXIT_FAILURE);
+    } else {
+	exit(EXIT_SUCCESS);
+    }
 }
 
 static int cli_workdir_callback (const char *s)
@@ -372,17 +378,23 @@ int main (int argc, char *argv[])
 	int force_lang = 0;
 	int opt = parseopt((const char **) argv, argc, filearg, &force_lang);
 
+	if (opt & OPT_ERROR) {
+	    usage(1);
+	}
+
 	switch (opt) {
 	case OPT_BATCH:
 	    batch = 1;
-	    if (*filearg == '\0') usage();
+	    if (*filearg == '\0') usage(1);
 	    strcpy(runfile, filearg);
 	    cli_get_data = 1;
 	    break;
 	case OPT_HELP:
+	    usage(0);
+	    break;
 	case OPT_DBOPEN:
 	case OPT_WEBDB:
-	    usage();
+	    usage(1);
 	    break;
 	case OPT_VERSION:
 	    logo();
@@ -391,7 +403,7 @@ int main (int argc, char *argv[])
 	case OPT_RUNIT:
 	    runit = 1;
 	    if (*filearg == '\0') {
-		usage();
+		usage(1);
 	    }
 	    strcpy(runfile, filearg); 
 	    cli_get_data = 1;

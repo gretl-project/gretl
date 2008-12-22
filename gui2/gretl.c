@@ -182,7 +182,7 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
 #endif
 
 
-static void gui_usage (void)
+static void gui_usage (int err)
 {
     gui_logo(NULL);
 
@@ -197,7 +197,11 @@ static void gui_usage (void)
 	      " -h or --help      Print this info and exit.\n"
 	      " -v or --version   Print version info and exit.\n"));
 
-    exit(EXIT_SUCCESS);
+    if (err) {
+	exit(EXIT_FAILURE);
+    } else {
+	exit(EXIT_SUCCESS);
+    }
 }
 
 static void noalloc (void)
@@ -428,6 +432,10 @@ int main (int argc, char *argv[])
 
 	opt = parseopt((const char **) argv, argc, filearg, &force_lang);
 
+	if (opt & OPT_ERROR) {
+	    gui_usage(1);
+	}
+
 #ifdef G_OS_WIN32
 	if (opt & OPT_DEBUG) {
 	    debug = 1;
@@ -436,7 +444,7 @@ int main (int argc, char *argv[])
 
 	switch (opt) {
 	case OPT_HELP:
-	    gui_usage();
+	    gui_usage(0);
 	    break;
 	case OPT_VERSION:
 	    gui_logo(NULL);
@@ -447,7 +455,7 @@ int main (int argc, char *argv[])
 	    get_runfile(optrun);
 #else
 	    if (*filearg == '\0') {
-		gui_usage();
+		gui_usage(1);
 	    }
 	    get_runfile(filearg);
 #endif
@@ -458,7 +466,7 @@ int main (int argc, char *argv[])
 	    strncpy(dbname, optdb, MAXLEN - 1);
 #else
 	    if (*filearg == '\0') {
-		gui_usage();
+		gui_usage(1);
 	    }
 	    strcpy(dbname, filearg);
 #endif
@@ -563,7 +571,7 @@ int main (int argc, char *argv[])
 	    opt = OPT_DBOPEN;
 	    break;
 	case GRETL_UNRECOGNIZED:
-	    gui_usage();
+	    gui_usage(1);
 	default:
 	    fprintf(stderr, "%s: unrecognized file type", tryfile);
 	    exit(EXIT_FAILURE);

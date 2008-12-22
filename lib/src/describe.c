@@ -931,7 +931,7 @@ double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
 }
 
 /* we're supposing a variance smaller than this is just noise */
-#define TINYVAR 1.0e-32
+#define TINYVAR 1.0e-28
 
 /**
  * gretl_moments:
@@ -1028,8 +1028,6 @@ int gretl_moments (int t1, int t2, const double *x,
 	}
 	return 1;
     }
-
-    
 
     if (var > TINYVAR) {
 	*std = sqrt(var);
@@ -3633,6 +3631,7 @@ void print_summary (const Summary *summ,
 	printf15(summ->xkurt[i], prn);
 	pputc(prn, '\n');
     }
+
     pputc(prn, '\n');
 }
 
@@ -3756,11 +3755,13 @@ Summary *get_summary (const int *list, const double **Z,
 		      &s->skew[i], 
 		      &s->xkurt[i], 1);
 
-	if (!floateq(s->mean[i], 0.0)) {
-	    s->cv[i] = fabs(s->sd[i] / s->mean[i]);
-	} else {
+	if (floateq(s->mean[i], 0.0)) {
 	    s->cv[i] = NADBL;
-	}
+	} else if (floateq(s->sd[i], 0.0)) {
+	    s->cv[i] = 0.0;
+	} else {
+	    s->cv[i] = fabs(s->sd[i] / s->mean[i]);
+	} 
 
 	s->median[i] = gretl_median(pdinfo->t1, pdinfo->t2, Z[vi]);
     } 
