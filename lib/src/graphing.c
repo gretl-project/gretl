@@ -1429,6 +1429,28 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
     return err;
 } 
 
+#define reldiff(x,y) ((y==0)? 1 : fabs(x-y)/fabs(y))
+#define RDIFFMIN 1e-15
+
+/* check for y ~ x, with a little floating-point slop */
+
+static double simple_slope (const gretl_matrix *y,
+			    const gretl_matrix *X)
+{
+    double bt, b = y->val[0] / gretl_matrix_get(X, 0, 1);
+    int t;
+
+    for (t=1; t<y->rows; t++) {
+	bt = y->val[t] / gretl_matrix_get(X, t, 1);
+	if (reldiff(bt, b) > RDIFFMIN) {
+	    b = NADBL;
+	    break;
+	}
+    }
+
+    return b;
+}
+
 static int get_fitted_line (gnuplot_info *gi, 
 			    const double **Z, const DATAINFO *pdinfo, 
 			    char *targ)
@@ -1440,13 +1462,20 @@ static int get_fitted_line (gnuplot_info *gi,
     int yno = gi->list[1];
     int xno = gi->list[2];
     double s2, *ps2 = NULL;
+    double slope = NADBL;
     FitType f = gi->fit;
     char title[72];
     int k, err;
 
     if (gi->fit == PLOT_FIT_NONE) {
-	f = PLOT_FIT_OLS;
+	/* doing automatic OLS: need to check for statistical 
+	   significance of slope coefficient */
+	V = gretl_matrix_alloc(2, 2);
+	if (V == NULL) {
+	    return E_ALLOC;
+	}
 	ps2 = &s2;
+	f = PLOT_FIT_OLS;
     }
 
     k = (f == PLOT_FIT_QUADRATIC)? 3 : 2;
@@ -1461,29 +1490,35 @@ static int get_fitted_line (gnuplot_info *gi,
 	    err = E_ALLOC;
 	}
     }
-
+    
     if (f == PLOT_FIT_OLS) {
-	V = gretl_matrix_alloc(2, 2);
-	if (V == NULL) {
-	    err = E_ALLOC;
+	slope = simple_slope(y, X);
+	if (!na(slope)) {
+	    b->val[0] = 0;
+	    b->val[1] = slope;
+	    if (V != NULL) {
+		gretl_matrix_zero(V);
+	    }
 	}
     }
 
-    if (!err) {
-	/* Note: changed from gretl_matrix_ols, 2008-12-19.
-	   An inaccurate fit can look very bad in a graph,
-	   though that only happens on very weird data. 
-	*/
-	err = gretl_matrix_svd_ols(y, X, b, V, NULL, ps2);
+    if (!err && na(slope)) {
+	err = gretl_matrix_ols(y, X, b, V, NULL, ps2);
     }
 
     if (!err) {
 	double *c = b->val;
 
 	if (gi->fit == PLOT_FIT_NONE) {
-	    double v = gretl_matrix_get(V, 1, 1);
-	    int T = gretl_vector_get_length(y);
-	    double pv = student_pvalue_2(T - k, c[1] / sqrt(v));
+	    double pv, v = gretl_matrix_get(V, 1, 1);
+	    int T;
+
+	    if (v == 0.0) {
+		pv = 0.0;
+	    } else {
+		T = gretl_vector_get_length(y);
+		pv = student_pvalue_2(T - k, c[1] / sqrt(v));
+	    }
 
 	    if (pv < .10) {
 		sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
