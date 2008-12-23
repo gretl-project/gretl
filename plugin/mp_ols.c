@@ -20,6 +20,7 @@
 /* mp_ols.c - gretl least squares with multiple precision (GMP) */
 
 #include "libgretl.h"
+#include "libset.h"
 
 #include <float.h>
 #include <gmp.h>
@@ -29,8 +30,6 @@
 #endif
 
 #define MP_DEBUG 0
-
-#define DEFAULT_GRETL_MP_BITS 256   /* min. bits of precision for GMP */
 
 static mpf_t MPF_ONE;
 static mpf_t MPF_ZERO;
@@ -560,12 +559,13 @@ static int *poly_copy_list (const int *list, const int *poly)
 static void set_gretl_mp_bits (void)
 {
     char *user_bits = getenv("GRETL_MP_BITS");
-    unsigned long bits = DEFAULT_GRETL_MP_BITS;
+    unsigned long bits = get_mp_bits();
     
     if (user_bits != NULL) {
 	bits = strtoul(user_bits, NULL, 10);
-	fprintf(stderr, "GMP: using %d bits\n", (int) bits);
     }
+
+    fprintf(stderr, "GMP: using %d bits\n", (int) bits);
 
     mpf_set_default_prec(bits);
 }
@@ -575,11 +575,10 @@ static void set_gretl_mp_bits (void)
 static void set_gretl_mpfr_bits (void)
 {
     char *user_bits = getenv("GRETL_MP_BITS");
-    unsigned long bits = DEFAULT_GRETL_MP_BITS;
+    unsigned long bits = get_mp_bits();
     
     if (user_bits != NULL) {
 	bits = strtoul(user_bits, NULL, 10);
-	fprintf(stderr, "MPFR: using %d bits\n", (int) bits);
     }
 
     mpfr_set_default_prec(bits);
@@ -681,40 +680,32 @@ static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
 
 static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
 {
-    double ess = mpf_get_d(mpmod->ess);
     int k = mpmod->ncoeff;
     int n = mpmod->nobs;
-    double ll;
-    double c[3];
-    int err = 0;
 
-    fprintf(stderr, "mp_ll_stats: non-MPFR version\n");
+    pmod->ess = mpf_get_d(mpmod->ess);
 
-    if (na(ess) || ess <= 0.0) {
-	err = 1;
+    if (pmod->ess < 0 || xna(pmod->ess)) {
+	pmod->ess = pmod->lnL = NADBL;
     } else {
 	const double ln2pi1 = 2.837877066409345;
 
 	errno = 0;
 
-	ll = -.5 * n * log(ess);
+	pmod->lnL = -.5 * n * log(pmod->ess);
 
 	if (errno == EDOM || errno == ERANGE) {
-	    err = 1;
+	    pmod->lnL = NADBL;
+	    errno = 0;
 	} else {
-	    ll += -.5 * n * (ln2pi1 - log((double) n));
-	    c[0] = -2.0 * ll + 2 * k;
-	    c[1] = -2.0 * ll + k * log(n);
-	    c[2] = -2.0 * ll + 2 * k * log(log(n));
+	    pmod->lnL += -.5 * n * (ln2pi1 - log((double) n));
 	}
     }
 
-    if (!err) {
-	pmod->lnL = ll;
-	pmod->criterion[C_AIC] = c[0];
-	pmod->criterion[C_BIC] = c[1];
-	pmod->criterion[C_HQC] = c[2];
-    }	
+    pmod->ncoeff = k;
+    pmod->nobs = n;
+
+    mle_criteria(pmod, 0);
 }
 
 #endif

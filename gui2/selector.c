@@ -104,6 +104,7 @@ struct _selector {
                          c == INTREG || \
                          c == IVREG || \
                          c == LOGIT || \
+                         c == MPOLS || \
                          c == OLS || \
                          c == PANEL || \
                          c == PANEL_WLS || \
@@ -3768,6 +3769,49 @@ static gboolean x12a_vs_hessian (GtkWidget *w, selector *sr)
 
 #endif
 
+static void gui_set_mp_bits (GtkComboBox *cb, gpointer p)
+{
+    gint i = gtk_combo_box_get_active(cb);
+    int j, b = 256;
+
+    for (j=0; j<i; j++) {
+	b *= 2;
+    }
+
+    set_mp_bits(b);
+}
+
+static GtkWidget *mpols_bits_selector (void)
+{
+    GtkWidget *w, *hbox, *combo;
+    char bstr[8];
+    int bits = get_mp_bits();
+    int b, i, deflt = 0;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("Bits per floating-point value"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+
+    combo = gtk_combo_box_new_text();
+
+    i = 0;
+    for (b=256; b<=4096; b*=2) {
+	sprintf(bstr, "%d", b);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), bstr);
+	if (b == bits) {
+	    deflt = i;
+	}
+	i++;
+    }
+
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(combo)), "changed",
+		     G_CALLBACK(gui_set_mp_bits), NULL);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+
+    return hbox;
+}
+
 #define robust_conf(c) (c != LOGIT && c != PROBIT && c != QUANTREG && c != INTREG)
 
 static void build_selector_switches (selector *sr) 
@@ -3902,11 +3946,13 @@ static void build_selector_switches (selector *sr)
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->x12a_button), TRUE);
 	}
 #endif
-    }    
-
-    if (sr->code == GARCH) {
+    } else if (sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Use Fiorentini et al algorithm"));
 	pack_switch(tmp, sr, libset_get_bool(USE_FCP), FALSE, OPT_F, 0);
+    } else if (sr->code == MPOLS) {
+	hbox = mpols_bits_selector();
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+	gtk_widget_show_all(hbox);
     }
 } 
 

@@ -514,6 +514,7 @@ int lists_protected (void)
     return protect_lists;
 }
 
+#define DEFAULT_MP_BITS 256
 #define mp_bits_ok(b) (b >= 256 && b <= 8192)
 
 void set_mp_bits (int b)
@@ -537,7 +538,7 @@ int get_mp_bits (void)
 		return b;
 	    }
 	}
-	return 256;
+	return DEFAULT_MP_BITS;
     }
 }
 
