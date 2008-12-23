@@ -1682,7 +1682,7 @@ print_x_range (gnuplot_info *gi, const double *x)
 	    xmin = 0.0;
 	}
 	xmax += gi->xrange * .025;
-	fprintf(gi->fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
+	fprintf(gi->fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
     }
 }
@@ -3114,14 +3114,14 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    plotmax = freq->midpt[K-1];
 	}
 
-	fprintf(fp, "set xrange [%.7g:%.7g]\n", plotmin, plotmax);
+	fprintf(fp, "set xrange [%.10g:%.10g]\n", plotmin, plotmax);
 	fputs("set key right top\n", fp);
     } else { 
 	/* plain frequency plot (no theoretical distribution shown) */
 	lambda = 1.0 / freq->n;
 	plotmin = freq->midpt[0] - barwidth;
 	plotmax = freq->midpt[K-1] + barwidth;
-	fprintf(fp, "set xrange [%.7g:%.7g]\n", plotmin, plotmax);
+	fprintf(fp, "set xrange [%.10g:%.10g]\n", plotmin, plotmax);
 	maybe_set_yrange(freq, lambda, fp);
 	fputs("set nokey\n", fp);
     }
@@ -3283,7 +3283,7 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     xmax += xrange * .025;
 
     gretl_push_c_numeric_locale();
-    fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
+    fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
     gretl_pop_c_numeric_locale();
 
     gnuplot_missval_string(fp);
@@ -4102,7 +4102,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo)
     xrange = xmax - xmin;
     xmin -= xrange * .025;
     xmax += xrange * .025;
-    fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);	
+    fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);	
 
     for (i=0; i<nvars; i++) { 
 
