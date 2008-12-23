@@ -7469,7 +7469,7 @@ int gretl_matrix_get_t2 (const gretl_matrix *m)
 }
 
 static int
-get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
+get_SVD_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
 		 const double *s, gretl_matrix *V, double *s2)
 {
     double aik, ajk, vij;
@@ -7650,7 +7650,7 @@ static int svd_bound_check (const gretl_matrix *y,
 #endif /* SVD_CHECK_BOUND */
 
 /**
- * gretl_matrix_svd_ols:
+ * gretl_matrix_SVD_ols:
  * @y: dependent variable vector.
  * @X: matrix of independent variables.
  * @b: vector to hold coefficient estimates.
@@ -7668,7 +7668,7 @@ static int svd_bound_check (const gretl_matrix *y,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
+int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 			  gretl_vector *b, gretl_matrix *vcv,
 			  gretl_vector *uhat, double *s2)
 {
@@ -7754,7 +7754,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (rank < k) {
-	fprintf(stderr, "gretl_matrix_svd_ols:\n"
+	fprintf(stderr, "gretl_matrix_SVD_ols:\n"
 		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
 		(int) rank, X->rows, X->cols);
     } 
@@ -7772,7 +7772,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 	    b->val[i] = B->val[i];
 	}
 	if (vcv != NULL) {
-	    err = get_svd_ols_vcv(A, B, s, vcv, s2);
+	    err = get_SVD_ols_vcv(A, B, s, vcv, s2);
 	}
 	if (uhat != NULL) {
 	    get_ols_uhat(y, X, b, uhat);
@@ -7898,7 +7898,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     }
 
     if (rank < k) {
-	fprintf(stderr, "gretl_matrix_svd_ols:\n"
+	fprintf(stderr, "gretl_matrix_multi_SCD_ols:\n"
 		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
 		(int) rank, T, k);
     }
@@ -7932,7 +7932,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 	if (*XTXi == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = get_svd_ols_vcv(A, C, s, *XTXi, NULL);
+	    err = get_SVD_ols_vcv(A, C, s, *XTXi, NULL);
 	}
     }
 
@@ -8140,7 +8140,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (getenv("MOLS_USE_SVD")) {
-	return gretl_matrix_svd_ols(y, X, b, vcv, uhat, s2);
+	return gretl_matrix_SVD_ols(y, X, b, vcv, uhat, s2);
     }
 
     k = X->cols;
@@ -8169,11 +8169,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err) {
-#if 0
-	err = gretl_cholesky_decomp_solve(XTX, b);
-#else
 	err = gretl_LU_solve(XTX, b);
-#endif
     }
 
     if (!err) {
@@ -8188,7 +8184,9 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	}
     }
 
-    if (XTX != NULL) gretl_matrix_free(XTX);
+    if (XTX != NULL) {
+	gretl_matrix_free(XTX);
+    }
 
     return err;
 }

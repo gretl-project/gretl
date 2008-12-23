@@ -858,7 +858,7 @@ fiml_get_std_errs (fiml_system *fsys, const gretl_matrix *R)
 	err = gretl_matrix_restricted_ols(fsys->arty, fsys->artx, R, NULL,
 					  fsys->artb, vcv, NULL, NULL);
     } else {
-	err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 
+	err = gretl_matrix_SVD_ols(fsys->arty, fsys->artx, fsys->artb, 
 				   vcv, NULL, NULL);
     }
 

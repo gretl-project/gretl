@@ -273,7 +273,7 @@ static void printvars (FILE *fp, int t, const int *list, const double **Z,
 
     if (x != NULL) {
 	xt = x[t] + offset;
-	fprintf(fp, "%.8g ", xt);
+	fprintf(fp, "%.10g ", xt);
     }
 
     for (i=1; i<=list[0]; i++) {
@@ -285,7 +285,7 @@ static void printvars (FILE *fp, int t, const int *list, const double **Z,
 		/* the x variable */
 		xt += offset;
 	    }
-	    fprintf(fp, "%.8g ", xt);
+	    fprintf(fp, "%.10g ", xt);
 	}
     }
 
@@ -1402,12 +1402,12 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
     gretl_push_c_numeric_locale();
 
     for (t=0; t<T; t++) {
-	fprintf(fp, "%.8g %.8g\n", x->val[t], y->val[t]);
+	fprintf(fp, "%.10g %.10g\n", x->val[t], y->val[t]);
     }
     fputs("e\n", fp);
 
     for (t=0; t<T; t++) {
-	fprintf(fp, "%.8g %.8g\n", x->val[t], yh->val[t]);
+	fprintf(fp, "%.10g %.10g\n", x->val[t], yh->val[t]);
     }
     fputs("e\n", fp);
 
@@ -1660,7 +1660,7 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 	    xmax += gi->xrange * .025;
 	}
 
-	fprintf(gi->fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
+	fprintf(gi->fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
     }
 }
@@ -1754,9 +1754,9 @@ static int print_gp_dummy_data (gnuplot_info *gi,
 	    }
 	    yy = (i > 0)? gi->yvar2[s] : gi->yvar1[s];
 	    if (na(yy)) {
-		fprintf(gi->fp, "%.8g ?\n", xx);
+		fprintf(gi->fp, "%.10g ?\n", xx);
 	    } else {
-		fprintf(gi->fp, "%.8g %.8g", xx, yy);
+		fprintf(gi->fp, "%.10g %.10g", xx, yy);
 		if (!(gi->flags & GPT_TS)) {
 		    if (pdinfo->markers) {
 			fprintf(gi->fp, " # %s", pdinfo->S[t]);
@@ -2184,14 +2184,14 @@ static void make_named_month_tics (const gnuplot_info *gi, double yrs,
 	    if (notfirst) {
 		pputs(prn, ", ");
 	    }
-	    pprintf(prn, "\"%4.0f\" %.8g", x, x);
+	    pprintf(prn, "\"%4.0f\" %.10g", x, x);
 	    notfirst = 1;
 	} else if ((scale == 1) || (m % scale == 1)) {
 	    graph_month_name(mname, m);
 	    if (notfirst) {
 		pputs(prn, ", ");
 	    }
-	    pprintf(prn, "\"%s\" %.8g", mname, x);
+	    pprintf(prn, "\"%s\" %.10g", mname, x);
 	    notfirst = 1;
 	}
 	m++;
@@ -2233,7 +2233,7 @@ static void make_panel_unit_tics (const DATAINFO *pdinfo,
 	u = pdinfo->paninfo->unit[t];
 	if (t == gi->t1 || u != pdinfo->paninfo->unit[t-1]) {
 	    if (n % ticskip == 0) {
-		pprintf(prn, "\"%d\" %.8g", u + 1, gi->x[t]);
+		pprintf(prn, "\"%d\" %.10g", u + 1, gi->x[t]);
 		if (++printed < ntics) {
 		    pputs(prn, ", ");
 		}
@@ -2737,7 +2737,7 @@ int multi_scatters (const int *list, const double **Z,
 	    if (na(xx)) {
 		fputs("? ", fp);
 	    } else {
-		fprintf(fp, "%.8g ", xx);
+		fprintf(fp, "%.10g ", xx);
 	    }
 
 	    xx = (yvar)? Z[yvar][t] : Z[pv][t];
@@ -2745,7 +2745,7 @@ int multi_scatters (const int *list, const double **Z,
 	    if (na(xx)) {
 		fputs("?\n", fp);
 	    } else {
-		fprintf(fp, "%.8g\n", xx);
+		fprintf(fp, "%.10g\n", xx);
 	    }
 	}
 
@@ -3169,7 +3169,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     }
 
     for (i=0; i<K; i++) { 
-	fprintf(fp, "%.8g %.8g\n", freq->midpt[i], lambda * freq->f[i]);
+	fprintf(fp, "%.10g %.10g\n", freq->midpt[i], lambda * freq->f[i]);
     }
 
     fputs("e\n", fp);
@@ -3190,9 +3190,9 @@ static void print_y_data (const double *x, const double *y,
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t])) {
-	    fprintf(fp, "%.8g ?\n", x[t]);
+	    fprintf(fp, "%.10g ?\n", x[t]);
 	} else {
-	    fprintf(fp, "%.8g %.8g\n", x[t], y[t]);
+	    fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
 	}
     }
     fputs("e\n", fp);
@@ -3213,15 +3213,15 @@ static void print_confband_data (const double *x, const double *y,
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t]) || na(e[t])) {
-	    fprintf(fp, "%.8g ? ?\n", x[t]);
+	    fprintf(fp, "%.10g ? ?\n", x[t]);
 	} else if (mode == CONF_FILL) {
-	    fprintf(fp, "%.8g %.8g %.8g\n", x[t], y[t] - e[t], y[t] + e[t]);
+	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], y[t] - e[t], y[t] + e[t]);
 	} else if (mode == CONF_LOW) {
-	    fprintf(fp, "%.8g %.8g\n", x[t], y[t] - e[t]);
+	    fprintf(fp, "%.10g %.10g\n", x[t], y[t] - e[t]);
 	} else if (mode == CONF_HIGH) {
-	    fprintf(fp, "%.8g %.8g\n", x[t], y[t] + e[t]);
+	    fprintf(fp, "%.10g %.10g\n", x[t], y[t] + e[t]);
 	} else {
-	    fprintf(fp, "%.8g %.8g %.8g\n", x[t], y[t], e[t]);
+	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], y[t], e[t]);
 	} 
     }
     fputs("e\n", fp);
@@ -3498,14 +3498,14 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 	    blo = bi - tcrit * se;
 	    bhi = bi + tcrit * se;
 	}
-	fprintf(fp, "%.8g %.8g %.8g\n", tau_i, blo, bhi);
+	fprintf(fp, "%.10g %.10g %.10g\n", tau_i, blo, bhi);
     }
     fputs("e\n", fp);
 
     for (i=0, j=k*ntau; i<ntau; i++, j++) {
 	tau_i = gretl_vector_get(tau, i);
 	bi = gretl_matrix_get(B, j, 0);
-	fprintf(fp, "%.8g %.8g\n", tau_i, bi);
+	fprintf(fp, "%.10g %.10g\n", tau_i, bi);
     }
     fputs("e\n", fp);
 
@@ -3548,19 +3548,19 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
     gretl_push_c_numeric_locale();
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	fprintf(fp, "%.8g %.8g\n", obs[t], pmod->uhat[t]);
+	fprintf(fp, "%.10g %.10g\n", obs[t], pmod->uhat[t]);
     }
     fputs("e\n", fp);
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	sd2 = -sqrt(h[t]);
-	fprintf(fp, "%.8g %.8g\n", obs[t], sd2);
+	fprintf(fp, "%.10g %.10g\n", obs[t], sd2);
     }
     fputs("e\n", fp);
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	sd2 = sqrt(h[t]);
-	fprintf(fp, "%.8g %.8g\n", obs[t], sd2);
+	fprintf(fp, "%.10g %.10g\n", obs[t], sd2);
     }
     fputs("e\n", fp);
 
@@ -3754,7 +3754,7 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
 		if (na(yt)) {
 		    fprintf(fp, "%d ?\n", t+1);
 		} else {
-		    fprintf(fp, "%d %.8g\n", t+1, yt);
+		    fprintf(fp, "%d %.10g\n", t+1, yt);
 		}
 	    }
 	    fputs("e\n", fp);
@@ -3841,13 +3841,13 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     gretl_push_c_numeric_locale();
 
     for (t=0; t<periods; t++) {
-	fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 0));
+	fprintf(fp, "%d %.10g\n", t+1, gretl_matrix_get(resp, t, 0));
     }
     fputs("e\n", fp);
 
     if (confint) {
 	for (t=0; t<periods; t++) {
-	    fprintf(fp, "%d %.8g %.8g %.8g\n", t+1, 
+	    fprintf(fp, "%d %.10g %.10g %.10g\n", t+1, 
 		    gretl_matrix_get(resp, t, 0),
 		    gretl_matrix_get(resp, t, 1),
 		    gretl_matrix_get(resp, t, 2));
@@ -3935,13 +3935,13 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	    }
 
 	    for (t=0; t<periods; t++) {
-		fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 0));
+		fprintf(fp, "%d %.10g\n", t+1, gretl_matrix_get(resp, t, 0));
 	    }
 	    fputs("e\n", fp);
 
 	    if (confint) {
 		for (t=0; t<periods; t++) {
-		    fprintf(fp, "%d %.8g %.8g %.8g\n", t+1, 
+		    fprintf(fp, "%d %.10g %.10g %.10g\n", t+1, 
 			    gretl_matrix_get(resp, t, 0),
 			    gretl_matrix_get(resp, t, 1),
 			    gretl_matrix_get(resp, t, 2));
@@ -4029,9 +4029,9 @@ int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
 	    double eti = gretl_matrix_get(E, t, i);
 
 	    if (obs != NULL) {
-		fprintf(fp, "%g %.8g\n", obs[t+t1], eti);
+		fprintf(fp, "%g %.10g\n", obs[t+t1], eti);
 	    } else {
-		fprintf(fp, "%d %.8g\n", t+1, eti);
+		fprintf(fp, "%d %.10g\n", t+1, eti);
 	    }
 	}
 	fputs("e\n", fp);
@@ -4138,12 +4138,12 @@ int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo)
 	for (t=0; t<nobs; t++) {
 	    double xx;
 
-	    fprintf(fp, "%.8g\t", obs[t+t1]);
+	    fprintf(fp, "%.10g\t", obs[t+t1]);
 	    xx = gretl_matrix_get(E, t, i);
 	    if (na(xx)) {
 		fputs("?\n", fp);
 	    } else {
-		fprintf(fp, "%.8g\n", xx);
+		fprintf(fp, "%.10g\n", xx);
 	    }
 	}
 
