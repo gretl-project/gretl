@@ -2,7 +2,7 @@ version 1.8.0, in progress
 - Fix bug: crash in "Add random variable" dialog
 - Translation fixes
 - Add new command: "modprint"
-- Remove obsolete command: "rhodiff"
+- Remove obsolete commands: "rhodiff" and "hccm"
 - Speed-ups for the pdf() function as applied to a
   series argument
 - New option --numeric for the nls and mle commands,
@@ -22,12 +22,16 @@ version 1.8.0, in progress
 - Fix encoding issue when copying to clipboard as plain
   text or RTF
 - Boxplots: hand the production of these over to gnuplot
-- New function: urcpval, gives user access to James
+- New function: urcpval(), gives user access to James
   MacKinnon's p-values for unit root and cointegration test
   statistics (tau)
+- New function: mpols(), enables multiple-precision OLS for
+  user-defined matrices
+- New function: toepsolv(), solves a Toeplitz system of
+  linear equations
 - Improve error-reporting in relation to GUI genr dialog
 - Make parsing of input from GUI ARMA dialog more robust
-- Add importer for SPSS .sav files
+- New feature: add importer for SPSS .sav files
 - CSV importer: try to handle time-series data in reverse
   chronological order
 - "fcast": allow variables for the startobs and endobs
@@ -42,8 +46,9 @@ version 1.8.0, in progress
 - Add accessors $Fstat and $chisq for the overall F-statistic
   or chi-square test from the last model
 - Make the "restrict" command available for nls, mle and gmm
-- Add model menu item: "Revise specification", under the Edit
-  menu -- provides a clone of the model specification
+- Improve forecasting options for nls models
+- Add model menu item: "Modify model", under the Edit menu,
+  provides a clone of the model specification
 - New command "intreg": implements interval regression
 - Several updates to the documentation
 
