@@ -28,7 +28,6 @@
 #include "gretl_f2c.h"
 #include "clapack_double.h"
 
-#define QR_RCOND_MIN 1e-15 /* experiment with this? */
 #define ESSZERO      1e-22 /* SSR less than this counts as zero */
 
 enum {

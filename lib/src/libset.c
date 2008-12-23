@@ -145,6 +145,7 @@ struct set_vars_ {
 set_vars *state;
 static int gretl_debug;
 static int protect_lists = 1;
+static int user_mp_bits;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -511,6 +512,33 @@ int gretl_debugging_on (void)
 int lists_protected (void)
 {
     return protect_lists;
+}
+
+#define mp_bits_ok(b) (b >= 256 && b <= 8192)
+
+void set_mp_bits (int b)
+{
+    if (mp_bits_ok(b)) {
+	user_mp_bits = b;
+    }
+}
+
+int get_mp_bits (void)
+{
+    if (user_mp_bits >= 256) {
+	return user_mp_bits;
+    } else {
+	char *s = getenv("GRETL_MP_BITS");
+	int b;
+
+	if (s != NULL) {
+	    b = atoi(s);
+	    if (mp_bits_ok(b)) {
+		return b;
+	    }
+	}
+	return 256;
+    }
 }
 
 char get_csv_delim (const DATAINFO *pdinfo)
@@ -1926,9 +1954,8 @@ void libset_cleanup (void)
     n_states = 0;
 }
 
-/* switches for looping, batch mode, and pausing between screens of
-   output: these depend on the state of the program calling libgretl,
-   but are not user-settable
+/* switches for looping and batch mode: output: these depend on the
+   state of the program calling libgretl, but are not user-settable
 */
 
 enum {

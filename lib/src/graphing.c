@@ -1432,23 +1432,41 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
 #define reldiff(x,y) ((y==0)? 1 : fabs(x-y)/fabs(y))
 #define RDIFFMIN 1e-15
 
-/* check for y ~ x, with a little floating-point slop */
+/* Check for y ~ x, with a little floating-point slop: we do this to
+   avoid displaying an inaccurate fitted line for the case where y is
+   in fact proportional to x yet the regression is horrendously
+   difficult, as in Leland Wilkinson's weird data test.  We return the
+   ratio b0 = y / x if it's finite and essentially constant, otherwise
+   NADBL.
+*/
 
 static double simple_slope (const gretl_matrix *y,
 			    const gretl_matrix *X)
 {
-    double bt, b = y->val[0] / gretl_matrix_get(X, 0, 1);
+    double xt = gretl_matrix_get(X, 0, 1);
+    double b0, bt;
     int t;
 
+    if (xt == 0.0) {
+	return NADBL;
+    }
+
+    b0 = y->val[0] / xt;
+
     for (t=1; t<y->rows; t++) {
-	bt = y->val[t] / gretl_matrix_get(X, t, 1);
-	if (reldiff(bt, b) > RDIFFMIN) {
-	    b = NADBL;
+	xt = gretl_matrix_get(X, t, 1);
+	if (xt == 0.0) {
+	    b0 = NADBL;
+	    break;
+	}
+	bt = y->val[t] / xt;
+	if (reldiff(bt, b0) > RDIFFMIN) {
+	    b0 = NADBL;
 	    break;
 	}
     }
 
-    return b;
+    return b0;
 }
 
 static int get_fitted_line (gnuplot_info *gi, 
@@ -1468,8 +1486,12 @@ static int get_fitted_line (gnuplot_info *gi,
     int k, err;
 
     if (gi->fit == PLOT_FIT_NONE) {
-	/* doing automatic OLS: need to check for statistical 
-	   significance of slope coefficient */
+	/* Doing first-time automatic OLS: we want to check for
+	   statistical significance of the slope coefficient
+	   to see if it's worth drawing the fitted line, so
+	   we have to allocate the variance matrix; otherwise
+	   we only need the coefficients.
+	*/
 	V = gretl_matrix_alloc(2, 2);
 	if (V == NULL) {
 	    return E_ALLOC;
@@ -1478,6 +1500,7 @@ static int get_fitted_line (gnuplot_info *gi,
 	f = PLOT_FIT_OLS;
     }
 
+    /* columns needed in X matrix */
     k = (f == PLOT_FIT_QUADRATIC)? 3 : 2;
 
     err = gretl_plotfit_matrices(yno, xno, f, Z,
@@ -1491,7 +1514,7 @@ static int get_fitted_line (gnuplot_info *gi,
 	}
     }
     
-    if (f == PLOT_FIT_OLS) {
+    if (!err && f == PLOT_FIT_OLS) {
 	slope = simple_slope(y, X);
 	if (!na(slope)) {
 	    b->val[0] = 0;
@@ -1510,6 +1533,7 @@ static int get_fitted_line (gnuplot_info *gi,
 	double *c = b->val;
 
 	if (gi->fit == PLOT_FIT_NONE) {
+	    /* the "automatic" case */
 	    double pv, v = gretl_matrix_get(V, 1, 1);
 	    int T;
 
@@ -1520,6 +1544,8 @@ static int get_fitted_line (gnuplot_info *gi,
 		pv = student_pvalue_2(T - k, c[1] / sqrt(v));
 	    }
 
+	    /* show the line if the p-value for the slope coeff is
+	       less than 0.1, otherwise discard it */
 	    if (pv < .10) {
 		sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
 			(c[1] > 0)? '+' : '-', fabs(c[1]));
@@ -1569,7 +1595,8 @@ static int get_fitted_line (gnuplot_info *gi,
 /* Find the minimum and maximum x-axis values and construct the gnuplot
    x-range.  We have to be a bit careful here to include only values
    that will actually display on the plot, i.e. x-values that are
-   accompanied by at least one non-missing y-axis value.
+   accompanied by at least one non-missing y-axis value.  We also have
+   to avoid creating an "empty x range" that will choke gnuplot.
 */
 
 static void 
@@ -1622,6 +1649,7 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 	gi->xrange = xmax - xmin0;
 
 	if (gi->xrange == 0.0) {
+	    /* construct a non-empty range */
 	    xmin = xmin0 - 0.5;
 	    xmax = xmin0 + 0.5;
 	} else {
@@ -1748,6 +1776,9 @@ static int print_gp_dummy_data (gnuplot_info *gi,
     return 0;
 }
 
+/* for printing panel time-series graph: insert a discontinuity
+   between the panel units */
+
 static void 
 maybe_print_panel_jot (int t, const DATAINFO *pdinfo, FILE *fp)
 {
@@ -1761,7 +1792,10 @@ maybe_print_panel_jot (int t, const DATAINFO *pdinfo, FILE *fp)
     }
 }
 
-static int all_graph_data_missing (const int *list, int t, const double **Z)
+/* sanity check for totally empty graph */
+
+static int 
+all_graph_data_missing (const int *list, int t, const double **Z)
 {
     int i;
 

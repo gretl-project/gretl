@@ -308,6 +308,12 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), pdinfo->varname[vx],
 	    pdinfo->varname[vy]);
+
+    if (na(rho)) {
+	pputs(prn, _("Spearman's rank correlation is undefined\n"));
+	return err;
+    }
+
     pprintf(prn, _("Spearman's rank correlation coefficient (rho) = %.8f\n"), rho);
 
     if (rho == 0.0) {

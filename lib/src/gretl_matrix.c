@@ -2917,7 +2917,7 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
       m     integer, order of the matrix A
 
-     (c1 and c2 are internalized here)
+     (c1 and c2 are internalized below)
 
    on exit:
 
@@ -2951,14 +2951,15 @@ static int tsld1 (const double *a1, const double *a2,
     c2 = malloc((m-1) * sizeof *c2);
 
     if (c1 == NULL || c2 == NULL) {
+	free(c1);
+	free(c2);
 	return E_ALLOC;
     }
 
     r2 = 0.0;
 
     /* recurrent process for solving the system for
-       order = 2 to m
-    */
+       order = 2 to m */
 
     for (n=1; n<m; n++) {
 
@@ -2999,8 +3000,7 @@ static int tsld1 (const double *a1, const double *a2,
 	c2[0] = r3;
 
         /* compute the solution of the system with
-           principal minor of order n + 1
-	*/
+           principal minor of order n + 1 */
 	r5 = 0.0;
 	for (i=0; i<n; i++) {
 	    r5 += a2[i] * x[n1-i];
@@ -5236,8 +5236,6 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     return err;
 }
 
-#define QR_RCOND_MIN 1e-15 /* experiment with this? */
-
 static int get_R_rank (const gretl_matrix *R)
 {
     double d;
@@ -5256,6 +5254,11 @@ static int get_R_rank (const gretl_matrix *R)
 
     return rank;
 }
+
+/* experiment with these? */
+
+#define QR_RCOND_MIN  1.0e-14
+#define QR_RCOND_WARN 1.0e-07
 
 /**
  * gretl_check_QR_rank:
@@ -5304,9 +5307,11 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err)
 	goto bailout;
     }
 
-    if (rcond < 1.0e-7) { /* was QR_RCOND_MIN */
+    if (rcond < QR_RCOND_MIN) { 
 	fprintf(stderr, "gretl_matrix_QR_rank: rcond = %g\n", rcond);
 	rank = get_R_rank(R);
+    } else if (rcond < QR_RCOND_WARN) {
+	fprintf(stderr, "QR warning: rcond = %g\n", rcond);
     }
 
  bailout:
@@ -7569,8 +7574,8 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
 
 #if SVD_CHECK_BOUND
 
-/* Euclidean norm of vector x of length n; fancy stuff
-   courtesy of BLAS */
+/* Euclidean norm of vector x of length n; fancy scaling stuff
+   courtesy of dnrm2 in BLAS */
 
 static double vecnorm2 (int n, const double *x)
 {
@@ -7596,33 +7601,43 @@ static double vecnorm2 (int n, const double *x)
 		}
 	    }
 	}
-	
 	return scale * sqrt(ssq);
     }
 }
 
-#define ERRBD_MAX 0.5 /* ?? */
+#define ERRBD_MAX 0.01 /* ?? */
 
-/* http://www.netlib.org/lapack/lug/node82.html */
+/* What's going on here?  Trying to implement error-bound checking as
+   discussed on netlib:
+
+   http://www.netlib.org/lapack/lug/node82.html
+
+   This is for the case where the SVD code has not diagnosed outright
+   rank deficiency, yet we're concerned that the results may not be
+   sufficiently accurate.  However, I'm not sure I have it right yet
+   -- or don't really know what to do with the error bound once it's
+   calculated.
+*/
 
 static int svd_bound_check (const gretl_matrix *y,
 			    const gretl_matrix *B,
-			    double bnorm, int T, int k,
+			    int T, int k,
 			    const double *s)
 {
     char E = 'E';
     double bnorm = vecnorm2(T, y->val);
     double rnorm = vecnorm2(T - k, B->val + k);
-    double epsmch = dlamch_(&E);
-    double sint, cost, tant, errbd;
+    double epsmch = dlamch_(&E); /* is this always available? */
+    double rcond, sint, cost, tant, errbd;
 
+    /* ratio of smallest to largest singular value */
     rcond = s[k-1] / s[0];
     rcond = max(rcond, epsmch);
     sint = (bnorm > 0.0)? rnorm / bnorm : 0.0;
-    cost = sqrt((1.0 - sint)*(1.0 + sint));
+    cost = sqrt((1.0 - sint) * (1.0 + sint));
     cost = max(cost, epsmch);
     tant = sint / cost;
-    errbd = epsmch * (2.0/(rcond*cost) + tant / (rcond*rcond));
+    errbd = epsmch * (2.0/(rcond * cost) + tant / (rcond * rcond));
     if (errbd > ERRBD_MAX) {
 	fprintf(stderr, "dgelss: bnorm = %g, rnorm = %g, rcond = %g\n", 
 		bnorm, rnorm, rcond);
@@ -7746,7 +7761,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 
 #if SVD_CHECK_BOUND
     if (!err && rank == k) {
-	err = svd_bound_check(y, B, bnorm, T, k, s);
+	err = svd_bound_check(y, B, T, k, s);
     }
 #endif
 
