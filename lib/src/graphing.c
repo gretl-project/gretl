@@ -1627,11 +1627,11 @@ static void check_y_tics (gnuplot_info *gi, const double **Z,
 {
     double ymin, ymax;
 
-    gretl_minmax(gi->t1, gi->t2, Z[gi->list[1]], &ymin, &ymax);
-    fprintf(stderr, "ymin=%g, ymax=%g\n", ymin, ymax);
     *gi->fmt = '\0';
-    *gi->xtics = '\0';
+
+    gretl_minmax(gi->t1, gi->t2, Z[gi->list[1]], &ymin, &ymax);
     check_tic_labels(ymin, ymax, gi);
+
     if (*gi->fmt != '\0') {
 	fprintf(fp, "set format y \"%s\"\n", gi->fmt);
     }
