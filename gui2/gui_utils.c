@@ -173,7 +173,7 @@ static GtkActionEntry model_test_items[] = {
     { "lmtest:l", NULL, N_("Non-linearity (_logs)"), NULL, NULL, G_CALLBACK(do_lmtest) },
     { "reset", NULL, N_("_Ramsey's RESET"), NULL, NULL, G_CALLBACK(do_reset) },
     { "Hsk", NULL, N_("_Heteroskedasticity"), NULL, NULL, NULL },    
-    { "normtest", NULL, N_("_Normality of residual"), NULL, NULL, G_CALLBACK(do_resid_freq) },
+    { "testuhat", NULL, N_("_Normality of residual"), NULL, NULL, G_CALLBACK(do_resid_freq) },
     { "leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
     { "chow", NULL, N_("_Chow test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },    
     { "vif", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
@@ -1983,7 +1983,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     } 
 
     if (pmod->ci == GMM) {
-	/* FIXME */
+	/* FIXME? */
 	flip(vwin->ui, "/MenuBar/Save", FALSE);
     }
 
@@ -2505,7 +2505,7 @@ static const gchar *model_ui =
     "   <menuitem action='reset'/>"
     "   <separator/>"
     "   <menu action='Hsk'/>"
-    "   <menuitem action='normtest'/>"
+    "   <menuitem action='testuhat'/>"
     "   <menuitem action='leverage'/>"
     "   <menuitem action='vif'/>"
     "   <menuitem action='chow'/>"
@@ -3014,7 +3014,7 @@ static int sys_test_code (GtkAction *action)
 	return SYS_AUTOCORR_TEST;
     } else if (!strcmp(s, "ARCH")) {
 	return SYS_ARCH_TEST;
-    } else if (!strcmp(s, "normtest")) {
+    } else if (!strcmp(s, "testuhat")) {
 	return SYS_NORMALITY_TEST;
     } else if (!strcmp(s, "restrict")) {
 	return SYS_RESTRICT;
@@ -3201,7 +3201,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     }
 
     /* multivariate normality test */
-    item.name = "normtest";
+    item.name = "testuhat";
     item.label = N_("_Normality of residuals");
     vwin_menu_add_item(vwin, tests, &item);
 
