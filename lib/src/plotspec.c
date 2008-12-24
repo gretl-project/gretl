@@ -49,6 +49,7 @@ GPT_SPEC *plotspec_new (void)
     spec->xfmt[0] = 0;
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
+    spec->yfmt[0] = 0;
     spec->fname[0] = 0;
     spec->keyspec = GP_KEY_LEFT_TOP;
 
@@ -663,7 +664,6 @@ static int blank_user_line (const GPT_SPEC *spec, int i)
 {
     return ((spec->lines[i].flags & GP_LINE_USER) && 
 	    spec->lines[i].formula[0] == '\0');
-
 }
 
 static void print_user_lines_info (const GPT_SPEC *spec, FILE *fp)
@@ -840,9 +840,12 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     print_plot_ranges_etc(spec, fp);
 
-    /* special x format? */
+    /* special x and/or y format? */
     if (*spec->xfmt != '\0') {
 	fprintf(fp, "set format x \"%s\"\n", spec->xfmt);
+    }
+    if (*spec->yfmt != '\0') {
+	fprintf(fp, "set format y \"%s\"\n", spec->yfmt);
     }
 
     /* customized xtics? */

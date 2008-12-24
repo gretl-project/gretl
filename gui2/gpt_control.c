@@ -1401,9 +1401,9 @@ static int read_plot_format (const char *s, GPT_SPEC *spec)
     } else if (axis == 'x') {
 	*spec->xfmt = '\0';
 	strncat(spec->xfmt, fmt, 15);
-#if GPDEBUG
-	fprintf(stderr, "Got x format = '%s'\n", spec->xfmt);
-#endif
+    } else if (axis == 'y') {
+	*spec->yfmt = '\0';
+	strncat(spec->yfmt, fmt, 15);
     }
 
     return err;

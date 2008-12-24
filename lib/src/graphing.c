@@ -59,7 +59,7 @@ struct gnuplot_info_ {
     int t2;
     double xrange;
     char xtics[64];
-    char xfmt[16];
+    char fmt[16];
     FILE *fp;
     const char *yformula;
     const double *x;
@@ -1614,12 +1614,27 @@ static int check_tic_labels (double vmin, double vmax,
     }
 
     if (d > 6) {
-	sprintf(gi->xfmt, "%% .%dg", d+1);
+	sprintf(gi->fmt, "%% .%dg", d+1);
 	sprintf(gi->xtics, "%.*g %#.6g", d+1, vmin, 
 		(vmax - vmin)/ 4.0);
     }
 
     return err;
+}
+
+static void check_y_tics (gnuplot_info *gi, const double **Z,
+			  FILE *fp)
+{
+    double ymin, ymax;
+
+    gretl_minmax(gi->t1, gi->t2, Z[gi->list[1]], &ymin, &ymax);
+    fprintf(stderr, "ymin=%g, ymax=%g\n", ymin, ymax);
+    *gi->fmt = '\0';
+    *gi->xtics = '\0';
+    check_tic_labels(ymin, ymax, gi);
+    if (*gi->fmt != '\0') {
+	fprintf(fp, "set format y \"%s\"\n", gi->fmt);
+    }
 }
 
 /* Find the minimum and maximum x-axis values and construct the gnuplot
@@ -1914,7 +1929,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->t2 = t2;
     gi->xrange = 0.0;
     gi->xtics[0] = '\0';
-    gi->xfmt[0] = '\0';
+    gi->fmt[0] = '\0';
     gi->yformula = NULL;
     gi->fp = NULL;
 
@@ -2521,9 +2536,9 @@ int gnuplot (const int *plotlist, const char *literal,
 	print_x_range_from_list(&gi, Z, list);
     }
 
-    if (*gi.xfmt != '\0' && *gi.xtics != '\0') {
+    if (*gi.fmt != '\0' && *gi.xtics != '\0') {
 	/* remedial handling of broken tics */
-	fprintf(fp, "set format x \"%s\"\n", gi.xfmt);
+	fprintf(fp, "set format x \"%s\"\n", gi.fmt);
 	fprintf(fp, "set xtics %s\n", gi.xtics); 
     }
 
@@ -2533,6 +2548,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	    fputs("set ytics nomirror\n", fp);
 	    fputs("set y2tics\n", fp);
 	}
+    } else if (gi.yformula == NULL && list[0] == 2) {
+	check_y_tics(&gi, Z, fp);
     }
 
 #if GP_DEBUG    
@@ -2996,8 +3013,8 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
 
 static void maybe_set_yrange (FreqDist *freq, double lambda, FILE *fp)
 {
-    double ymin = 1.0e+20;
-    double ymax = -1.0e+20;
+    double ymin = 1.0e+200;
+    double ymax = -1.0e+200;
     int i;
 
     for (i=0; i<freq->numbins; i++) { 
@@ -3010,10 +3027,10 @@ static void maybe_set_yrange (FreqDist *freq, double lambda, FILE *fp)
     }
 
     if (ymax == ymin) {
-	fprintf(fp, "set yrange [%g:%g]\n", ymax * lambda * 0.99, 
+	fprintf(fp, "set yrange [%.10g:%.10g]\n", ymax * lambda * 0.99, 
 		ymax * lambda * 1.01);
     } else {
-	fprintf(fp, "set yrange [0.0:%g]\n", ymax * lambda * 1.1);
+	fprintf(fp, "set yrange [0.0:%.10g]\n", ymax * lambda * 1.1);
     }	
 }
 
