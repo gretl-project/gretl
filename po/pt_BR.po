@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-10 15:48-0500\n"
-"PO-Revision-Date: 2008-12-17 20:01-0300\n"
+"PO-Revision-Date: 2008-12-24 16:36-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -7141,7 +7141,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <ch.andrade@gmail.com>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 17 de Dezembro de 2008."
+"Tradução de 24 de dezembro de 2008."
 
 #: gui2/about.c:163
 msgid "License"
@@ -15513,7 +15513,7 @@ msgstr ""
 
 #: plugin/workbook.c:546
 msgid "Password protected workbooks are not supported yet."
-msgstr "Ainda não são suportadas pastas de trabalho protegidos por senha."
+msgstr "Ainda não são suportadas pastas de trabalho protegidas por senha."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
