@@ -3079,23 +3079,40 @@ static int ivreg_oc_setup (nlspec *spec, const int *ilist,
     return err;
 }
 
-static int ivreg_weights_setup (nlspec *spec, const int *ilist)
+static int ivreg_weights_setup (nlspec *spec, const int *ilist,
+				gretlopt opt)
 {
+    const char *mname = NULL;
     int k = ilist[0];
     gretl_matrix *V;
     int err;
 
-    V = gretl_identity_matrix_new(k);
-    if (V == NULL) {
-	return E_ALLOC;
+    if (opt & OPT_W) {
+	mname = get_optval_string(IVREG, OPT_W);
     }
 
-    err = user_matrix_add(V, IVREG_WEIGHTNAME);
-
-    if (err) {
-	gretl_matrix_free(V);
+    if (mname != NULL) {
+	/* the user requested a specific weights matrix */
+	V = get_matrix_by_name(mname);
+	if (V == NULL) {
+	    err = E_UNKVAR;
+	} else if (V->rows != k || V->cols != k) {
+	    err = E_NONCONF;
+	} else {
+	    err = nlspec_add_weights(spec, mname);
+	}
     } else {
-	err = nlspec_add_weights(spec, IVREG_WEIGHTNAME);
+	/* use generic weights */
+	V = gretl_identity_matrix_new(k);
+	if (V == NULL) {
+	    return E_ALLOC;
+	}
+	err = user_matrix_add(V, IVREG_WEIGHTNAME);
+	if (err) {
+	    gretl_matrix_free(V);
+	} else {
+	    err = nlspec_add_weights(spec, IVREG_WEIGHTNAME);
+	}
     }
 
     return err;
@@ -3207,8 +3224,8 @@ MODEL ivreg_via_gmm (const int *list, double ***pZ,
     }
 
     if (!err) {
-	/* add the weights matrix (FIXME allow user choice?) */
-	err = ivreg_weights_setup(spec, ilist);
+	/* add the weights matrix */
+	err = ivreg_weights_setup(spec, ilist, opt);
     }
 
     set_auxiliary_scalars();

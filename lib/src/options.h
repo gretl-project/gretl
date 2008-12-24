@@ -38,6 +38,8 @@ double get_optval_double (int ci, gretlopt opt);
 
 void set_optval_double (int ci, gretlopt opt, double x);
 
+const char *get_optval_string (int ci, gretlopt opt);
+
 void clear_option_params (void);
 
 #endif /* OPTIONS_H */

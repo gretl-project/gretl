@@ -156,6 +156,7 @@ struct gretl_option gretl_opts[] = {
     { IVREG,    OPT_R, "robust" },  
     { IVREG,    OPT_S, "save" },
     { IVREG,    OPT_T, "two-step" },
+    { IVREG,    OPT_W, "weights" },
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
     { KPSS,     OPT_Q, "quiet" },
@@ -603,7 +604,7 @@ static int valid_long_opt (int ci, const char *lopt)
    present per command; that could be generalized later.
 */
 
-#define OPDEBUG 1
+#define OPDEBUG 0
 
 typedef struct optparm_ optparm;
 
@@ -683,7 +684,7 @@ static int push_optparm (int ci, gretlopt opt, const char *val)
     return 0;
 }
 
-static const char *get_optparm_string (int ci, gretlopt opt)
+const char *get_optval_string (int ci, gretlopt opt)
 {
     optparm *op = matching_optparm(ci, opt);
 
@@ -694,7 +695,8 @@ double get_optval_double (int ci, gretlopt opt)
 {
     optparm *op = matching_optparm(ci, opt);
 
-    return (op != NULL)? dot_atof(op->val) : NADBL;
+    return (op != NULL && op->val != NULL)? 
+	dot_atof(op->val) : NADBL;
 }
 
 /* called via GUI */
@@ -719,6 +721,9 @@ static int valid_optval (int ci, gretlopt opt, const char *val)
 	    push_optparm(ci, opt, val);
 	    return 1;
 	}
+    } else if (ci == IVREG && opt == OPT_W) {
+	push_optparm(ci, opt, val);
+	return 1;
     }
 
     return 0;
@@ -928,7 +933,7 @@ const char *print_flags (gretlopt oflags, int ci)
 	if (ci == gretl_opts[i].ci && (oflags & opt)) {
 	    sprintf(fbit, " --%s", gretl_opts[i].longopt);
 	    strcat(flagstr, fbit);
-	    parm = get_optparm_string(ci, opt);
+	    parm = get_optval_string(ci, opt);
 	    if (parm != NULL && *parm != '\0') {
 		sprintf(fbit, "=%s", parm);
 		strcat(flagstr, fbit);
