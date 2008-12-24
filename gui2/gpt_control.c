@@ -1389,6 +1389,26 @@ static int read_plot_logscale (const char *s, GPT_SPEC *spec)
     return err;
 }
 
+static int read_plot_format (const char *s, GPT_SPEC *spec)
+{
+    char axis, fmt[16];
+    int n, err = 0;
+
+    n = sscanf(s, "%c \"%15[^\"]", &axis, fmt);
+
+    if (n < 2) {
+	err = 1;
+    } else if (axis == 'x') {
+	*spec->xfmt = '\0';
+	strncat(spec->xfmt, fmt, 15);
+#if GPDEBUG
+	fprintf(stderr, "Got x format = '%s'\n", spec->xfmt);
+#endif
+    }
+
+    return err;
+}
+
 static int catch_value (char *targ, const char *src, int maxlen)
 {
     int i, n;
@@ -1502,6 +1522,12 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	    errbox(_("Failed to parse gnuplot file"));
 	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
 	    return 1;
+	}
+    } else if (!strcmp(key, "format")) {
+	if (read_plot_format(val, spec)) {
+	    errbox(_("Failed to parse gnuplot file"));
+	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
+	    return 1;
 	}	
     } else if (!strcmp(key, "title")) {
 	strcpy(spec->titles[0], val);
@@ -1518,9 +1544,9 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "key")) {
 	spec->keyspec = gp_keypos_from_string(val);
     } else if (!strcmp(key, "xtics")) { 
-	safecpy(spec->xtics, val, 15);
+	safecpy(spec->xtics, val, sizeof(spec->xtics) - 1);
     } else if (!strcmp(key, "mxtics")) { 
-	safecpy(spec->mxtics, val, 3);
+	safecpy(spec->mxtics, val, sizeof(spec->mxtics) - 1);
     } else if (!strcmp(key, "border")) {
 	spec->border = atoi(val);
     } else if (!strcmp(key, "bmargin")) {

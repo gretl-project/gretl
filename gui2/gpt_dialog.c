@@ -574,7 +574,7 @@ static void double_to_gp_entry (double x, GtkWidget *w)
 	if (na(x)) {
 	    numstr = g_strdup("*");
 	} else {
-	    numstr = g_strdup_printf("%g", x);
+	    numstr = g_strdup_printf("%.10g", x);
 	}
 	gtk_entry_set_text(GTK_ENTRY(w), numstr);
 	g_free(numstr);
@@ -2196,7 +2196,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 static void label_pos_to_entry (double *pos, GtkWidget *w)
 {
     if (!na(pos[0]) && !na(pos[1])) {
-	gchar *s = g_strdup_printf("%g %g", pos[0], pos[1]);
+	gchar *s = g_strdup_printf("%.10g %.10g", pos[0], pos[1]);
 
 	gtk_entry_set_text(GTK_ENTRY(w), s);
 	g_free(s);

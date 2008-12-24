@@ -58,6 +58,8 @@ struct gnuplot_info_ {
     int t1;
     int t2;
     double xrange;
+    char xtics[64];
+    char xfmt[16];
     FILE *fp;
     const char *yformula;
     const double *x;
@@ -574,7 +576,6 @@ int gnuplot_has_bbox (void)
 	err = gnuplot_test_command("set term png ; "
 				   "set output '/dev/null' ; "
 				   "plot x ; print GPVAL_TERM_XMIN");
-	fprintf(stderr, "has_bbox: err = %d\n", err);
     }
 
     return !err;    
@@ -1598,6 +1599,29 @@ static int get_fitted_line (gnuplot_info *gi,
     return err;
 }
 
+static int check_tic_labels (double vmin, double vmax,
+			     gnuplot_info *gi)
+{
+    char s1[32], s2[32];
+    int d, err = 0;
+
+    for (d=6; d<12; d++) {
+	sprintf(s1, "%.*g", d, vmin);
+	sprintf(s2, "%.*g", d, vmax);
+	if (strcmp(s1, s2)) {
+	    break;
+	}
+    }
+
+    if (d > 6) {
+	sprintf(gi->xfmt, "%% .%dg", d+1);
+	sprintf(gi->xtics, "%.*g %#.6g", d+1, vmin, 
+		(vmax - vmin)/ 4.0);
+    }
+
+    return err;
+}
+
 /* Find the minimum and maximum x-axis values and construct the gnuplot
    x-range.  We have to be a bit careful here to include only values
    that will actually display on the plot, i.e. x-values that are
@@ -1627,7 +1651,7 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 	gi->xrange = 3;
     } else {
 	double xmin, xmin0 = NADBL;
-	double xmax = NADBL;
+	double xmax, xmax0 = NADBL;
 	int t, i, vy, obs_ok;
 
 	for (t=gi->t1; t<=gi->t2; t++) {
@@ -1646,13 +1670,13 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 		if (na(xmin0) || x[t] < xmin0) {
 		    xmin0 = x[t];
 		}
-		if (na(xmax) || x[t] > xmax) {
-		    xmax = x[t];
+		if (na(xmax0) || x[t] > xmax0) {
+		    xmax0 = x[t];
 		}
 	    }
 	}
 		    
-	gi->xrange = xmax - xmin0;
+	gi->xrange = xmax0 - xmin0;
 
 	if (gi->xrange == 0.0) {
 	    /* construct a non-empty range */
@@ -1663,11 +1687,12 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 	    if (xmin0 >= 0.0 && xmin < 0.0) {
 		xmin = 0.0;
 	    }
-	    xmax += gi->xrange * .025;
+	    xmax = xmax0 + gi->xrange * .025;
 	}
 
 	fprintf(gi->fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
+	check_tic_labels(xmin0, xmax0, gi);
     }
 }
 
@@ -1679,15 +1704,15 @@ print_x_range (gnuplot_info *gi, const double *x)
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gi->fp);
 	gi->xrange = 3;
     } else {
-	double xmin0, xmin, xmax;
+	double xmin0, xmin, xmax0, xmax;
 
-	gretl_minmax(gi->t1, gi->t2, x, &xmin0, &xmax);
-	gi->xrange = xmax - xmin0;
+	gretl_minmax(gi->t1, gi->t2, x, &xmin0, &xmax0);
+	gi->xrange = xmax0 - xmin0;
 	xmin = xmin0 - gi->xrange * .025;
 	if (xmin0 >= 0.0 && xmin < 0.0) {
 	    xmin = 0.0;
 	}
-	xmax += gi->xrange * .025;
+	xmax = xmax0 + gi->xrange * .025;
 	fprintf(gi->fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
     }
@@ -1888,6 +1913,8 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->t1 = t1;
     gi->t2 = t2;
     gi->xrange = 0.0;
+    gi->xtics[0] = '\0';
+    gi->xfmt[0] = '\0';
     gi->yformula = NULL;
     gi->fp = NULL;
 
@@ -2426,7 +2453,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    make_panel_unit_tics(pdinfo, &gi, prn);
 	    strcpy(xlabel, _("time series by group"));
 	}
-    } 
+    }
 
     /* open file and dump the prn into it: we delaying writing
        the file header till we know a bit more about the plot
@@ -2492,6 +2519,12 @@ int gnuplot (const int *plotlist, const char *literal,
 	print_x_range(&gi, gi.x);
     } else {
 	print_x_range_from_list(&gi, Z, list);
+    }
+
+    if (*gi.xfmt != '\0' && *gi.xtics != '\0') {
+	/* remedial handling of broken tics */
+	fprintf(fp, "set format x \"%s\"\n", gi.xfmt);
+	fprintf(fp, "set xtics %s\n", gi.xtics); 
     }
 
     if (gi.flags & GPT_Y2AXIS) { 

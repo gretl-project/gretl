@@ -109,7 +109,8 @@ typedef struct {
     double range[4][2];        /* axis range specifiers */
     double logbase[3];         /* axis log-scales base (0 for linear) */
     int keyspec;               /* position of key (or none) */
-    char xtics[16];            /* x-axis tic marks */
+    char xfmt[16];             /* x-axis tic marks */
+    char xtics[64];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
     int termtype;              /* gnuplot "terminal" code */
     int n_lines;               /* number of lines */

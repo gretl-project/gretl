@@ -46,6 +46,7 @@ GPT_SPEC *plotspec_new (void)
     *spec->xvarname = '\0';
     *spec->yvarname = '\0';
 
+    spec->xfmt[0] = 0;
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
     spec->fname[0] = 0;
@@ -639,7 +640,7 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
 	    continue;
 	}
 
-	fprintf(fp, "set %srange [%.7g:%.7g]\n", rstrs[i], 
+	fprintf(fp, "set %srange [%.10g:%.10g]\n", rstrs[i], 
 		spec->range[i][0], spec->range[i][1]);
 
 	if (i == 4 && spec->code == PLOT_PROB_DIST && spec->samples == 0) {
@@ -838,6 +839,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     }
 
     print_plot_ranges_etc(spec, fp);
+
+    /* special x format? */
+    if (*spec->xfmt != '\0') {
+	fprintf(fp, "set format x \"%s\"\n", spec->xfmt);
+    }
 
     /* customized xtics? */
     if (!strcmp(spec->xtics, "none")) {
@@ -1038,7 +1044,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 		fputs("? ", fp);
 		miss = 1;
 	    } else {
-		fprintf(fp, "%.8g ", x[0][t]);
+		fprintf(fp, "%.10g ", x[0][t]);
 	    }
 
 	    /* conversion, if needed, between (y, ydelta) and
@@ -1068,7 +1074,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 		    fputs("? ", fp);
 		    miss = 1;
 		} else {
-		    fprintf(fp, "%.8g ",  x[j][t]);
+		    fprintf(fp, "%.10g ",  x[j][t]);
 		}
 	    }
 
