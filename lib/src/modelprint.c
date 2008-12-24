@@ -2400,7 +2400,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    key[9] = N_("Smallest eigenvalue"); /* 22: */
 	    val[9] = gretl_model_get_double(pmod, "lmin");
 	} else {
-	    for (i=4; i<MID_STATS; i++) {
+	    for (i=6; i<MID_STATS; i++) {
 		val[i] = NADBL;
 	    }
 	}

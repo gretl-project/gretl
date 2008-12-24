@@ -220,6 +220,17 @@ sys_resids (equation_system *sys, int eq, const double **Z)
     } else {
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
     }
+
+     if (pmod->ifc && pmod->tss > 0) {
+	/* R-squared */
+	double den;
+
+	pmod->rsq = 1 - (pmod->ess / pmod->tss);
+	den = pmod->tss * pmod->dfd;
+	pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
+     } else {
+	 pmod->rsq = pmod->adjrsq = NADBL;
+     }
 }
 
 static void
