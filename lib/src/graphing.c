@@ -117,7 +117,7 @@ static void clear_gpinfo (gnuplot_info *gi);
     
 #ifndef WIN32
 
-#define SPAWN_DEBUG 0  /* define != 0 for debugging statements */
+#define SPAWN_DEBUG 0
 
 /**
  * gnuplot_test_command:
@@ -133,7 +133,6 @@ static void clear_gpinfo (gnuplot_info *gi);
 int gnuplot_test_command (const char *cmd)
 {
     int ok, ret = 1;
-    char errbuf[32];
     int child_pid = 0, sinp = 0, serr = 0;
     GError *error = NULL;
     gchar *argv[] = {
@@ -170,6 +169,7 @@ int gnuplot_test_command (const char *cmd)
 # endif
 
     if (ok) {
+	char errbuf[128];
 	int test, status;
 	int errbytes;
 
@@ -189,7 +189,12 @@ int gnuplot_test_command (const char *cmd)
 	if (errbytes > 0) {
 	    errbuf[errbytes] = '\0';
 	    if (strstr(errbuf, "not find/open font")) {
-		ret = 1;
+# if SPAWN_DEBUG
+		fprintf(stderr, "%s\n", errbuf);
+#endif
+		if (strstr(cmd, "font") != NULL) {
+		    ret = 1;
+		}
 	    }
 	} 
 	close(serr);
@@ -569,6 +574,7 @@ int gnuplot_has_bbox (void)
 	err = gnuplot_test_command("set term png ; "
 				   "set output '/dev/null' ; "
 				   "plot x ; print GPVAL_TERM_XMIN");
+	fprintf(stderr, "has_bbox: err = %d\n", err);
     }
 
     return !err;    
