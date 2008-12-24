@@ -597,64 +597,127 @@ static int valid_long_opt (int ci, const char *lopt)
     return opt;
 }
 
-/* The following apparatus is rather funky, and will probably have to
-   be completely redone at some point.  For now, it allows passing a
-   numerical value (two-sided p-value) in connection with the --auto
-   option to the omit command.  We may want to make this mechanism
-   available in connection with other option flags for other commands:
-   in that case a redesign will be needed.  AC, 2008-01-08.
+/* Apparatus for setting and retrieving parameters associated
+   with command options, as in --opt=val.  For the present
+   we're assuming that at most one such item will be 
+   present per command; that could be generalized later.
 */
 
-static int optval_ci;
-static gretlopt optval_opt;
-static double optval_double = NADBL;
-static char optval_str[32];
+#define OPDEBUG 1
+
+typedef struct optparm_ optparm;
+
+struct optparm_ {
+    int ci;
+    gretlopt opt;
+    char *val;
+};
+
+static optparm *optparms;
+static int n_parms;
+
+/* Note: the following is called at the start of parse_command_line(),
+   via gretl_cmd_clear().  Hopefully this ensures that we won't get an
+   accumulation of stale data.
+*/
+
+void clear_option_params (void)
+{
+    int i;
+
+#if OPDEBUG 
+    fprintf(stderr, "clearing option params\n");
+#endif
+
+    for (i=0; i<n_parms; i++) {
+	free(optparms[i].val);
+    }
+    free(optparms);
+    optparms = NULL;
+    n_parms = 0;
+}
+
+static optparm *matching_optparm (int ci, gretlopt opt)
+{
+    int i;
+
+    for (i=0; i<n_parms; i++) {
+	if (optparms[i].ci == ci && optparms[i].opt == opt) {
+	    return &optparms[i];
+	}
+    }
+
+    return NULL;
+}
+
+static int push_optparm (int ci, gretlopt opt, const char *val)
+{
+    optparm *op;
+    int n = n_parms + 1;
+
+    op = matching_optparm(ci, opt);
+    if (op != NULL) {
+	/* got a match for the ci, opt pair already */
+	free(op->val);
+	op->val = gretl_strdup(val);
+	return 0;
+    }
+
+    op = realloc(optparms, n * sizeof *op);
+    if (op == NULL) {
+	return E_ALLOC;
+    }
+ 
+    optparms = op;
+    op = &optparms[n-1];
+    op->ci = ci;
+    op->opt = opt;
+    op->val = gretl_strdup(val);
+    n_parms = n;
+
+#if OPDEBUG 
+    fprintf(stderr, "push_optparm: val='%s', n_parms=%d\n",
+	    op->val, n_parms);
+#endif
+
+    return 0;
+}
+
+static const char *get_optparm_string (int ci, gretlopt opt)
+{
+    optparm *op = matching_optparm(ci, opt);
+
+    return (op != NULL)? op->val : NULL;
+}
 
 double get_optval_double (int ci, gretlopt opt)
 {
-    double x = NADBL;
+    optparm *op = matching_optparm(ci, opt);
 
-    if (ci == optval_ci && optval_opt == opt) {
-	x = optval_double;
-    }
-
-    optval_double = NADBL;
-
-    return x;
+    return (op != NULL)? dot_atof(op->val) : NADBL;
 }
+
+/* called via GUI */
 
 void set_optval_double (int ci, gretlopt opt, double x)
 {
-    optval_ci = ci;
-    optval_opt = opt;
-    optval_double = x;
+    char s[32];
+
     gretl_push_c_numeric_locale();
-    sprintf(optval_str, "%g", x);
+    sprintf(s, "%g", x);
     gretl_pop_c_numeric_locale();
+    push_optparm(ci, opt, s);
 }
 
-static void unset_optval_double (void)
-{
-    optval_ci = 0;
-    optval_opt = OPT_NONE;
-    optval_double = NADBL;
-    *optval_str = '\0';
-}
+/* FIXME generalize this */
 
 static int valid_optval (int ci, gretlopt opt, const char *val)
 {
-    double x;
-
     if ((ci == OMIT && opt == OPT_A) ||
 	(ci == QUANTREG && opt == OPT_I)) {
 	if (numeric_string(val)) {
-	    x = dot_atof(val);
-	    if (x > 0.0 && x < 1.0) {
-		set_optval_double(ci, opt, x);
-		return 1;
-	    } else {
-		unset_optval_double();
-	    }
+	    push_optparm(ci, opt, val);
+	    return 1;
 	}
     }
 
@@ -837,7 +900,9 @@ gretlopt get_gretl_options (char *line, int *err)
 const char *print_flags (gretlopt oflags, int ci)
 {
     static char flagstr[512];
+    const char *parm;
     char fbit[32];
+    gretlopt opt;
     int i;
 
     flagstr[0] = '\0';
@@ -859,14 +924,14 @@ const char *print_flags (gretlopt oflags, int ci)
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (ci == gretl_opts[i].ci && (oflags & gretl_opts[i].o)) {
+	opt = gretl_opts[i].o;
+	if (ci == gretl_opts[i].ci && (oflags & opt)) {
 	    sprintf(fbit, " --%s", gretl_opts[i].longopt);
 	    strcat(flagstr, fbit);
-	    if (*optval_str != '\0' && gretl_opts[i].o == optval_opt 
-		&& ci == optval_ci) {
-		sprintf(fbit, "=%s", optval_str);
+	    parm = get_optparm_string(ci, opt);
+	    if (parm != NULL && *parm != '\0') {
+		sprintf(fbit, "=%s", parm);
 		strcat(flagstr, fbit);
-		*optval_str = '\0';
 	    }
 	}
     }

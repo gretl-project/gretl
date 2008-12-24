@@ -1891,6 +1891,7 @@ static int gretl_cmd_clear (CMD *cmd)
     }
 
     cmd_lag_info_destroy(cmd);
+    clear_option_params();
 
     return cmd->err;
 }

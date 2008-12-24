@@ -110,8 +110,12 @@ static void free_mpZ (mpf_t **mpZ, int v, int n)
     free(mpZ);
 }
 
+/* somewhat arbitrary */
+
+#define eqzero(x) (fabs(x) < 1.0e-300)
+
 /* reject the incoming data (a) if any values are missing, (b) if any
-   vars are all zero */
+   vars are all "zero" */
 
 static int data_problems (const int *list, const double **Z, 
 			  const DATAINFO *pdinfo, char *errbuf)
@@ -124,7 +128,7 @@ static int data_problems (const int *list, const double **Z,
 	}
 	allzero = 1;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	    if (!floateq(Z[list[i]][t], 0.0)) {
+	    if (!eqzero(Z[list[i]][t])) {
 		allzero = 0;
 	    }
 	}

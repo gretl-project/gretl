@@ -1161,7 +1161,7 @@ static int auto_omit (MODEL *orig, MODEL *new,
     }
 
     amax = get_optval_double(OMIT, OPT_A);
-    if (na(amax)) {
+    if (na(amax) || amax <= 0.0 || amax >= 1.0) {
 	amax = 0.10;
     }
 
