@@ -684,12 +684,8 @@ int bhhh_max (LL_FUNC loglik,
 	    gretl_matrix_free(G);
 	}
 	if (minfo->opts & PRESERVE_OPG_MODEL) {
-	    int qr_bak = libset_get_bool(USE_QR);
-
-	    /* run OPG once more using QR, to get packed VCV */
-	    libset_set_bool(USE_QR, 1);
-	    *bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A);
-	    libset_set_bool(USE_QR, qr_bak);
+	    /* run OPG once more using QR decomp, to get packed VCV */
+	    *bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A | OPT_Q);
 	    minfo->pmod = bmod;
 	    gretl_model_set_int(bmod, "iters", iters);
 	    if (minfo->bign > minfo->t2) {

@@ -44,7 +44,7 @@ enum {
     STATE_MSGS_ON         = 1 << 2,  /* emitting non-error messages or not */
     STATE_FORCE_DECPOINT  = 1 << 3,  /* override locale decimal separator */
     STATE_USE_PCSE        = 1 << 4,  /* Beck-Katz panel-corrected std errs */
-    STATE_USE_QR          = 1 << 5,  /* QR decomposition is OLS default */
+    STATE_USE_SVD         = 1 << 5,  /* SVD decomposition is matrix OLS default */
     STATE_PREWHITEN       = 1 << 6,  /* HAC pre-whitening? */
     STATE_FORCE_HC        = 1 << 7,  /* don't use HAC for time series */
     STATE_HALT_ON_ERR     = 1 << 8,  /* errors fatal in batch mode */
@@ -114,7 +114,7 @@ struct set_vars_ {
 			   !strcmp(s, USE_LBFGS) || \
 			   !strcmp(s, PCSE) || \
 			   !strcmp(s, PREWHITEN) || \
-			   !strcmp(s, USE_QR) || \
+			   !strcmp(s, USE_SVD) || \
 			   !strcmp(s, SHELL_OK) || \
 			   !strcmp(s, USE_CWD) || \
 			   !strcmp(s, USE_FCP) || \
@@ -1220,7 +1220,7 @@ static int display_settings (PRN *prn)
     print_initvals(state->initvals, prn);
     libset_print_bool(USE_LBFGS, prn);
     libset_print_double(NLS_TOLER, prn);
-    libset_print_bool(USE_QR, prn);
+    libset_print_bool(USE_SVD, prn);
     libset_print_bool(USE_FCP, prn);
 
     libset_header(_("Random number generation"), prn);
@@ -1667,8 +1667,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_MSGS_ON;
     } else if (!strcmp(s, WARNINGS)) {
 	return STATE_WARN_ON;
-    } else if (!strcmp(s, USE_QR)) {
-	return STATE_USE_QR;
+    } else if (!strcmp(s, USE_SVD)) {
+	return STATE_USE_SVD;
     } else if (!strcmp(s, USE_LBFGS)) {
 	return STATE_USE_LBFGS;
     } else if (!strcmp(s, FORCE_DECP)) {
@@ -1720,8 +1720,8 @@ static void set_flag_from_env (int flag, const char *s, int neg)
 
 static void maybe_check_env (const char *s)
 {
-    if (!strcmp(s, USE_QR)) {
-	set_flag_from_env(STATE_USE_QR, "GRETL_USE_QR", 0);
+    if (!strcmp(s, USE_SVD)) {
+	set_flag_from_env(STATE_USE_SVD, "GRETL_USE_SVD", 0);
     } else if (!strcmp(s, USE_LBFGS)) {
 	set_flag_from_env(STATE_USE_LBFGS, "GRETL_USE_LBFGS", 0);
     } else if (!strcmp(s, HALT_ON_ERR)) {

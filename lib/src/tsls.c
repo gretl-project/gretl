@@ -1283,8 +1283,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
        residuals and associated statistics */
     tsls_residuals(&tsls, reglist, (const double **) *pZ, opt);
 
-    if ((opt & OPT_R) || libset_get_bool(USE_QR)) {
-	/* QR decomp in force, or robust standard errors called for */
+    if (opt & OPT_R) {
+	/* robust standard errors called for */
 	qr_tsls_vcv(&tsls, (const double **) *pZ, pdinfo, opt);
 	if (tsls.errcode) {
 	    goto bailout;

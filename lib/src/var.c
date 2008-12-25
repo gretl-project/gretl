@@ -175,7 +175,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->t1 = var->t2 = var->T = var->df = 0;
     var->ifc = var->ncoeff = 0;
     var->detflags = 0;
-    var->robust = var->qr = 0;
+    var->robust = 0;
     var->LBs = 0;
 
     var->ylist = NULL;
@@ -618,7 +618,6 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     var->ci = ci;
     var->order = order;
 
-    var->qr = libset_get_bool(USE_QR);
     if (ci == VAR && (opt & OPT_R)) {
 	var->robust = 1;
     }
@@ -2036,16 +2035,10 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 	return NULL;
     }
 
-    /* run the regressions: use QR or Cholesky */
-    if (var->qr) {
-	err = gretl_matrix_QR_ols(var->Y, var->X, 
-				  var->B, var->E,
-				  &var->XTX, NULL);
-    } else {
-	err = gretl_matrix_multi_ols(var->Y, var->X, 
-				     var->B, var->E,
-				     &var->XTX);
-    }
+    /* run the regressions, usint Cholesky or QR */
+    err = gretl_matrix_multi_ols(var->Y, var->X, 
+				 var->B, var->E,
+				 &var->XTX);
 
     if (!err) {
 	if (code == VAR_LAGSEL) {
@@ -2281,13 +2274,8 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
     err = gretl_matrix_multi_SVD_ols(jvar->Y, jvar->X, jvar->B, 
 				     jvar->jinfo->R0, NULL);
 #else
-    if (jvar->qr) {
-	err = gretl_matrix_QR_ols(jvar->Y, jvar->X, jvar->B, 
-				  jvar->jinfo->R0, NULL, NULL);
-    } else {
-	err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
-				     jvar->jinfo->R0, NULL);
-    }
+    err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
+				 jvar->jinfo->R0, NULL);
 #endif
 
     if (nr > 0) {
@@ -2306,13 +2294,8 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
     err = gretl_matrix_multi_SVD_ols(jvar->Y, jvar->X, jvar->B, 
 				     jvar->jinfo->R1, NULL);
 #else
-    if (jvar->qr) {
-	err = gretl_matrix_QR_ols(jvar->Y, jvar->X, jvar->B, 
-				  jvar->jinfo->R1, NULL, NULL);
-    } else {
-	err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
-				     jvar->jinfo->R1, NULL);
-    } 
+    err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
+				 jvar->jinfo->R1, NULL);
 #endif 
 
     if (nr > 0) {

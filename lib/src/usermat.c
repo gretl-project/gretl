@@ -1526,6 +1526,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     if (!*err) {
 	if (g == 1) {
 	    if (opt & OPT_M) {
+		/* use multiple precision */
 		*err = gretl_matrix_mp_ols(Y, X, B, NULL, U, NULL);
 	    } else {
 		*err = gretl_matrix_ols(Y, X, B, NULL, U, NULL);

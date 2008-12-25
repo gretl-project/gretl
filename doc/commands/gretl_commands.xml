@@ -7545,7 +7545,7 @@
         <argument>value</argument>
       </arguments>
       <examples>
-        <example>set qr on</example>
+        <example>set svd on</example>
         <example>set csv_delim tab</example>
 	<example>set horizon 10</example>
       </examples>    
@@ -7752,9 +7752,13 @@
 	</para>
 	</li>
 	<li>
-	  <para><lit>qr</lit>: <lit>on</lit> or <lit>off</lit> (the
-	    default). Use QR rather than Cholesky decomposition in calculating
-	    OLS estimates.</para>
+	  <para>
+	    <lit>svd</lit>: <lit>on</lit> or <lit>off</lit> (the default). Use
+	    SVD rather than Cholesky or QR decomposition in least squares
+	    calculations.  This option applies to the <lit>mols</lit> function
+	    as well as various internal calculations, but not to the regular
+	    <cmdref targ="ols"/> command.
+	  </para>
 	</li>
 	<li>
 	  <para><lit>fcp</lit>: <lit>on</lit> or <lit>off</lit> (the

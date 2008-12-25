@@ -729,7 +729,6 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     int effobs = 0;
     int missv = 0, misst = 0;
     int jackknife = 0;
-    int use_qr = libset_get_bool(USE_QR);
     int pwe = (opt & OPT_P);
     int nullmod = 0, ldv = 0;
     int yno, i;
@@ -895,7 +894,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (nullmod) {
 	gretl_null_regress(&mdl, (const double **) *pZ);
-    } else if (!jackknife && ((opt & OPT_R) || (opt & OPT_I) || use_qr)) { 
+    } else if (!jackknife && (opt & (OPT_R | OPT_I | OPT_Q))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
     } else {
@@ -998,6 +997,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  *   %OPT_X: compute "variance matrix" as just (X'X)^{-1}
  *   %OPT_B: don't compute R^2.
  *   %OPT_I: compute Durbin-Watson p-value.
+ *   %OPT_Q: use QR decomposition (but not robust VCV).
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
@@ -2919,11 +2919,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (BP) {
 	    LM = get_BP_LM(pmod, list, &white, pZ, pdinfo, opt, &err);
 	} else {
-	    int qrbak = libset_get_bool(USE_QR);
-
-	    libset_set_bool(USE_QR, 1);
-	    white = lsq(list, pZ, pdinfo, OLS, OPT_A);
-	    libset_set_bool(USE_QR, qrbak);
+	    white = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Q);
 	    err = white.errcode;
 	    if (!err) {
 		LM = white.rsq * white.nobs;

@@ -48,7 +48,6 @@ struct GRETL_VAR_ {
     int *rlist;          /* restricted exogenous variables (VECM only) */
     int detflags;        /* record of automatic deterministic vars added */
     int robust;          /* computing robust std errors? */
-    int qr;              /* using QR decomposition? */
     gretl_matrix *Y;     /* matrix of dependent variables */
     gretl_matrix *X;     /* matrix of independent variables */
     gretl_matrix *B;     /* basic coefficient matrix */

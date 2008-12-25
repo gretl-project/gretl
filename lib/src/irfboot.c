@@ -270,13 +270,7 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
 {
     int err;
 
-    if (v->qr) {
-	err = gretl_matrix_QR_ols(v->Y, v->X, v->B, v->E,
-				  NULL, NULL);
-    } else {
-	err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E,
-				     NULL);
-    }
+    err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, NULL);
 
     if (!err) {
 	VAR_write_A_matrix(v);

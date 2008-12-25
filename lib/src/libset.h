@@ -57,7 +57,7 @@ typedef enum {
 #define QS_BANDWIDTH     "qs_bandwidth"
 #define SHELL_OK         "shell_ok"
 #define USE_CWD          "use_cwd"
-#define USE_QR           "qr"
+#define USE_SVD          "svd"
 #define USE_FCP          "fcp"
 #define VECM_NORM        "vecm_norm"
 #define ARMA_VCV         "arma_vcv"

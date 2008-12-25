@@ -20,6 +20,7 @@
 /* Matrix routines for gretl, several of which are LAPACK-related */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "gretl_matrix.h"
 
 #include <errno.h>
@@ -2819,12 +2820,117 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     return err;
 }
 
+#define CHOL_TINY  8.0e-09
+#define CHOL_SMALL 1.0e-08
+
+/* Native Cholesky decomposition and back-solution, with a check for
+   excessively small diagonal elements.  The matrix @a is the vech
+   of X'X, and b is the right-hand side on entry, the solution on
+   successful exit.  This may not be as efficient as lapack's
+   dpotrf/dpotrs, but the advantage is that this function flags
+   near-singularity whereas the lapack functions generate an error
+   condition only on outright singularity.
+
+   Note that the matrix @a is overwritten.
+*/
+
+static int native_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
+{
+    double *xtx = a->val;
+    double *xty = b->val;
+    int i, j, k, kk, l, jm1;
+    double e, d, d1, d2, test, xx;
+    int nc = b->rows;
+
+    if (xtx[0] <= 0.0) {
+	fprintf(stderr, "%s %d: xtx <= 0.0\n", __FILE__, __LINE__);
+	return E_NAN;
+    }
+
+    e = 1.0 / sqrt(xtx[0]);
+    xtx[0] = e;
+    xty[0] *= e;
+    for (i=1; i<nc; i++) {
+	xtx[i] *= e;
+    }
+
+    kk = nc;
+
+    for (j=1; j<nc; j++) {
+	/* diagonal elements */
+        d = d1 = 0.0;
+        k = jm1 = j;
+
+        for (l=1; l<=jm1; l++) {
+            xx = xtx[k];
+            d1 += xx * xty[l-1];
+            d += xx * xx;
+            k += nc-l;
+        }
+
+        d2 = xtx[kk] - d;
+	test = d2 / xtx[kk];
+
+	/* check for effective singularity */
+        if (test < CHOL_TINY) {
+	    fprintf(stderr, "cholesky: test[%d] = %g\n", j, test);
+	    return E_SINGULAR;
+        } else if (test < CHOL_SMALL) {
+	    fprintf(stderr, "cholesky: test[%d] = %g\n", j, test);
+	} 
+
+        e = 1 / sqrt(d2);
+        xtx[kk] = e;
+        xty[j] = (xty[j] - d1) * e;
+
+	/* off-diagonal elements */
+        for (i=j+1; i<nc; i++) {
+            kk++;
+            d = 0.0;
+            k = j;
+            for (l=1; l<=jm1; l++) {
+                d += xtx[k] * xtx[k-j+i];
+                k += nc - l;
+            }
+            xtx[kk] = (xtx[kk] - d) * e;
+        }
+        kk++;
+    }
+
+    kk--;
+
+    /* back-solve for the coefficients, into b */
+
+    xty[nc-1] *= xtx[kk];
+
+    for (j=nc-2; j>=0; j--) {
+	d = xty[j];
+	for (i=nc-1; i>j; i--) {
+	    d -= xty[i] * xtx[--kk];
+	}
+	xty[j] = d * xtx[--kk];
+    }
+
+    for (j=0; j<nc; j++) {
+	if (isnan(xty[j])) {
+	    fprintf(stderr, "%s %d: coeff %d is NaN\n", __FILE__, __LINE__, j);
+	    return E_NAN;
+	} 
+    }
+
+    return 0; 
+}
+
+#define CHOL_RCOND_MIN 1.0e-6
+
 /**
  * gretl_cholesky_decomp_solve:
  * @a: symmetric positive-definite matrix.
  * @b: vector 'x'.
  *
- * Solves ax = b for the unknown vector x, using Cholesky decomposition.
+ * Solves ax = b for the unknown vector x, using Cholesky decomposition
+ * via the lapack functions dpotrf and dpotrs.
+ * 
  * On exit, @b is replaced by the solution and @a is replaced by its 
  * Cholesky decomposition.
  * 
@@ -2834,7 +2940,13 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
 int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 {
     integer n, m, info = 0;
+    double rcond;
+    double *work = NULL;
+    integer *iwork = NULL;
+    char diag = 'N';
+    char norm = '1';
     char uplo = 'L';
+    int err = 0;
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	return E_DATA;
@@ -2845,22 +2957,44 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 
     dpotrf_(&uplo, &n, a->val, &n, &info);   
     if (info != 0) {
-	fprintf(stderr, "gretl_cholesky_solve:\n"
+	fprintf(stderr, "gretl_cholesky_decomp_solve:\n"
 		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	if (info > 0) {
 	    fputs(" matrix is not positive definite\n", stderr);
 	}
-	return E_SINGULAR;
+	err = E_SINGULAR;
     } 
 
-    dpotrs_(&uplo, &n, &m, a->val, &n, b->val, &n, &info);
-    if (info != 0) {
-	fprintf(stderr, "gretl_cholesky_solve:\n"
-		" dpotrs failed with info = %d (n = %d)\n", (int) info, (int) n);
-	return E_SINGULAR;
-    }     
+    if (!err) {
+	work = malloc(3 * n * sizeof *work);
+	iwork = malloc(n * sizeof *iwork);
+	if (work == NULL || iwork == NULL) {
+	    err = E_ALLOC;
+	}
+    }
 
-    return 0;
+    if (!err) {
+	dtrcon_(&norm, &uplo, &diag, &n, a->val, &n, &rcond, work, iwork, &info);
+	if (rcond < CHOL_RCOND_MIN) {
+	    fprintf(stderr, "gretl_cholesky_decomp_solve: rcond = %g (info = %d)\n",
+		    rcond, (int) info);
+	    err = E_SINGULAR;
+	}
+    }
+
+    if (!err) {
+	dpotrs_(&uplo, &n, &m, a->val, &n, b->val, &n, &info);
+	if (info != 0) {
+	    fprintf(stderr, "gretl_cholesky_decomp_solve:\n"
+		    " dpotrs failed with info = %d (n = %d)\n", (int) info, (int) n);
+	    err = E_SINGULAR;
+	}  
+    }  
+
+    free(work);
+    free(iwork);
+
+    return err;
 }
 
 /**
@@ -3233,6 +3367,54 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
     if (XTX != NULL) {
 	matrix_multiply_self_transpose(X, 1, XTX, GRETL_MOD_NONE);
     }
+
+    return XTX;
+}
+
+/**
+ * gretl_matrix_packed_XTX_new:
+ * @X: matrix to process.
+ *
+ * Performs the multiplication X'X producing a packed result,
+ * that is, the vech() of the full solution.
+ *
+ * Returns: a newly allocated column vector containing the
+ * unique elements of X'X, or %NULL on error.
+*/
+
+gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X)
+{
+    gretl_matrix *XTX = NULL;
+    double x;
+    int idx1, idx2;
+    int i, j, k, nc, nr, n;
+
+    if (gretl_is_null_matrix(X)) {
+	return NULL;
+    }
+
+    nc = X->cols;
+    nr = X->rows;
+    n = (nc * nc + nc) / 2;
+    XTX = gretl_matrix_alloc(n, 1);
+
+    if (XTX == NULL) {
+	return NULL;
+    }
+
+    n = 0;
+
+    for (i=0; i<nc; i++) {
+	for (j=i; j<nc; j++) {
+	    idx1 = i * nr;
+	    idx2 = j * nr;
+	    x = 0.0;
+	    for (k=0; k<nr; k++) {
+		x += X->val[idx1++] * X->val[idx2++];
+	    }
+	    XTX->val[n++] = x;
+	}
+    } 
 
     return XTX;
 }
@@ -7898,7 +8080,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     }
 
     if (rank < k) {
-	fprintf(stderr, "gretl_matrix_multi_SCD_ols:\n"
+	fprintf(stderr, "gretl_matrix_multi_SVD_ols:\n"
 		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
 		(int) rank, T, k);
     }
@@ -8107,6 +8289,8 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     return err;
 }
 
+#define MOLS_USE_CHOLESKY 1
+
 /**
  * gretl_matrix_ols:
  * @y: dependent variable vector.
@@ -8119,9 +8303,11 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
  * @s2: pointer to receive residual variance, or %NULL.  Note:
  * if @s2 is %NULL, the "vcv" estimate will be plain (X'X)^{-1}.
  *
- * Computes OLS estimates using LU factorization, and puts the
- * coefficient estimates in @b.  Optionally, calculates the
- * covariance matrix in @vcv and the residuals in @uhat.
+ * Computes OLS estimates using Cholesky factorization by default, 
+ * but with a fallback to QR decomposition if the data are highly
+ * ill-conditioned, and puts the coefficient estimates in @b.  
+ * Optionally, calculates the covariance matrix in @vcv and the 
+ * residuals in @uhat.
  * 
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -8139,7 +8325,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	return E_DATA;
     }
 
-    if (getenv("MOLS_USE_SVD")) {
+    if (libset_get_bool(USE_SVD)) {
 	return gretl_matrix_SVD_ols(y, X, b, vcv, uhat, s2);
     }
 
@@ -8154,7 +8340,11 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }    
 
     if (!err) {
+#if MOLS_USE_CHOLESKY
+	XTX = gretl_matrix_packed_XTX_new(X);
+#else
 	XTX = gretl_matrix_XTX_new(X);
+#endif
 	if (XTX == NULL) err = E_ALLOC;
     }
 
@@ -8165,11 +8355,23 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err && vcv != NULL) {
+#if MOLS_USE_CHOLESKY
+	err = gretl_matrix_unvectorize_h(vcv, XTX);
+#else
 	err = gretl_matrix_copy_values(vcv, XTX);
+#endif
     }
 
     if (!err) {
+#if MOLS_USE_CHOLESKY
+	err = native_cholesky_decomp_solve(XTX, b);
+	if (err == E_SINGULAR) {
+	    fprintf(stderr, "gretl_matrix_ols: switching to QR decomp\n");
+	    err = gretl_matrix_QR_ols(y, X, b, NULL, NULL, NULL);
+	}
+#else
 	err = gretl_LU_solve(XTX, b);
+#endif
     }
 
     if (!err) {
@@ -8201,9 +8403,10 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  * @XTXi: location to receive (X'X)^{-1} on output, or %NULL if this is not
  * needed.
  *
- * Computes OLS estimates using Cholesky decomposition, and puts the
- * coefficient estimates in @B.  Optionally, calculates the
- * residuals in @E.
+ * Computes OLS estimates using Cholesky decomposition by default, but
+ * with a fallback to QR decomposition if the data are highly
+ * ill-conditioned, and puts the coefficient estimates in @B.  
+ * Optionally, calculates the residuals in @E.
  * 
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -8216,9 +8419,10 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
 {
     gretl_matrix *XTX = NULL;
     int g, T, k;
+    int nasty = 0;
     int err = 0;
 
-    if (getenv("MOLS_USE_SVD")) {
+    if (libset_get_bool(USE_SVD)) {
 	return gretl_matrix_multi_SVD_ols(Y, X, B, E, XTXi);
     }
 
@@ -8256,16 +8460,21 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     }
 
     if (!err) {
-	err = gretl_cholesky_decomp_solve(XTX, B);
+	err = nasty = gretl_cholesky_decomp_solve(XTX, B);
+	if (err == E_SINGULAR) {
+	    fprintf(stderr, "gretl_matrix_multi_ols: switching to QR decomp\n");
+	    err = gretl_matrix_QR_ols(Y, X, B, E, XTXi, NULL);
+	}
     }
 
-    if (!err && E != NULL) {
-	gretl_matrix_multiply(X, B, E);
-	gretl_matrix_switch_sign(E);
-	gretl_matrix_add_to(E, Y);
+    if (!err && !nasty && E != NULL) {
+	gretl_matrix_copy_values(E, Y);
+	gretl_matrix_multiply_mod(X, GRETL_MOD_NONE,
+				  B, GRETL_MOD_NONE,
+				  E, GRETL_MOD_DECUMULATE);
     }
 
-    if (!err && XTXi != NULL) {
+    if (!err && !nasty && XTXi != NULL) {
 	integer info = 0, ik = k;
 	char uplo = 'L';
 
@@ -8384,7 +8593,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err) {
-	err = gretl_LU_solve(W, V);
+	err = gretl_LU_solve(W, V); /* FIXME ? */
     }
 
     if (!err) {
