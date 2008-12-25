@@ -8289,8 +8289,6 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     return err;
 }
 
-#define MOLS_USE_CHOLESKY 1
-
 /**
  * gretl_matrix_ols:
  * @y: dependent variable vector.
@@ -8340,11 +8338,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }    
 
     if (!err) {
-#if MOLS_USE_CHOLESKY
 	XTX = gretl_matrix_packed_XTX_new(X);
-#else
-	XTX = gretl_matrix_XTX_new(X);
-#endif
 	if (XTX == NULL) err = E_ALLOC;
     }
 
@@ -8355,23 +8349,15 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err && vcv != NULL) {
-#if MOLS_USE_CHOLESKY
 	err = gretl_matrix_unvectorize_h(vcv, XTX);
-#else
-	err = gretl_matrix_copy_values(vcv, XTX);
-#endif
     }
 
     if (!err) {
-#if MOLS_USE_CHOLESKY
 	err = native_cholesky_decomp_solve(XTX, b);
 	if (err == E_SINGULAR) {
 	    fprintf(stderr, "gretl_matrix_ols: switching to QR decomp\n");
 	    err = gretl_matrix_QR_ols(y, X, b, NULL, NULL, NULL);
 	}
-#else
-	err = gretl_LU_solve(XTX, b);
-#endif
     }
 
     if (!err) {

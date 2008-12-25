@@ -1436,46 +1436,6 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
     return err;
 } 
 
-#define reldiff(x,y) ((y==0)? 1 : fabs(x-y)/fabs(y))
-#define RDIFFMIN 1e-15
-
-/* Check for y ~ x, with a little floating-point slop: we do this to
-   avoid displaying an inaccurate fitted line for the case where y is
-   in fact proportional to x yet the regression is horrendously
-   difficult, as in Leland Wilkinson's weird data test.  We return the
-   ratio b0 = y / x if it's finite and essentially constant, otherwise
-   NADBL.
-*/
-
-static double simple_slope (const gretl_matrix *y,
-			    const gretl_matrix *X)
-{
-    double xt = gretl_matrix_get(X, 0, 1);
-    double b0, bt;
-    int t;
-
-    if (xt == 0.0) {
-	return NADBL;
-    }
-
-    b0 = y->val[0] / xt;
-
-    for (t=1; t<y->rows; t++) {
-	xt = gretl_matrix_get(X, t, 1);
-	if (xt == 0.0) {
-	    b0 = NADBL;
-	    break;
-	}
-	bt = y->val[t] / xt;
-	if (reldiff(bt, b0) > RDIFFMIN) {
-	    b0 = NADBL;
-	    break;
-	}
-    }
-
-    return b0;
-}
-
 static int get_fitted_line (gnuplot_info *gi, 
 			    const double **Z, const DATAINFO *pdinfo, 
 			    char *targ)
@@ -1487,7 +1447,6 @@ static int get_fitted_line (gnuplot_info *gi,
     int yno = gi->list[1];
     int xno = gi->list[2];
     double s2, *ps2 = NULL;
-    double slope = NADBL;
     FitType f = gi->fit;
     char title[72];
     int k, err;
@@ -1521,18 +1480,7 @@ static int get_fitted_line (gnuplot_info *gi,
 	}
     }
     
-    if (!err && f == PLOT_FIT_OLS) {
-	slope = simple_slope(y, X);
-	if (!na(slope)) {
-	    b->val[0] = 0;
-	    b->val[1] = slope;
-	    if (V != NULL) {
-		gretl_matrix_zero(V);
-	    }
-	}
-    }
-
-    if (!err && na(slope)) {
+    if (!err) {
 	err = gretl_matrix_ols(y, X, b, V, NULL, ps2);
     }
 
@@ -1542,22 +1490,16 @@ static int get_fitted_line (gnuplot_info *gi,
 	if (gi->fit == PLOT_FIT_NONE) {
 	    /* the "automatic" case */
 	    double pv, v = gretl_matrix_get(V, 1, 1);
-	    int T;
+	    int T = gretl_vector_get_length(y);
 
-	    if (v == 0.0) {
-		pv = 0.0;
-	    } else {
-		T = gretl_vector_get_length(y);
-		pv = student_pvalue_2(T - k, c[1] / sqrt(v));
-	    }
-
+	    pv = student_pvalue_2(T - k, c[1] / sqrt(v));
 	    /* show the line if the p-value for the slope coeff is
 	       less than 0.1, otherwise discard it */
 	    if (pv < .10) {
 		sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
 			(c[1] > 0)? '+' : '-', fabs(c[1]));
 		gretl_push_c_numeric_locale();
-		sprintf(targ, "%g + %g*x title '%s' w lines\n", 
+		sprintf(targ, "%.10g + %.10g*x title '%s' w lines\n", 
 			c[0], c[1], title);
 		gretl_pop_c_numeric_locale();
 		gi->fit = PLOT_FIT_OLS;
@@ -1566,14 +1508,14 @@ static int get_fitted_line (gnuplot_info *gi,
 	    sprintf(title, "Y = %#.3g %c %#.3gX", c[0],
 		    (c[1] > 0)? '+' : '-', fabs(c[1]));
 	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%g + %g*x title '%s' w lines\n", 
+	    sprintf(targ, "%.10g + %.10g*x title '%s' w lines\n", 
 		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
 	    sprintf(title, "Y = %#.3g %c %#.3g/X", c[0],
 		    (c[1] > 0)? '+' : '-', fabs(c[1]));
 	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%g + %g/x title '%s' w lines\n", 
+	    sprintf(targ, "%.10g + %.10g/x title '%s' w lines\n", 
 		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();
 	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
@@ -1581,7 +1523,7 @@ static int get_fitted_line (gnuplot_info *gi,
 		    (c[1] > 0)? '+' : '-', fabs(c[1]),
 		    (c[2] > 0)? '+' : '-', fabs(c[2])),
 	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%g + %g*x + %g*x**2 title '%s' w lines\n", 
+	    sprintf(targ, "%.10g + %.10g*x + %.10g*x**2 title '%s' w lines\n", 
 		    c[0], c[1], c[2], title);
 	    gretl_pop_c_numeric_locale();
 	}
