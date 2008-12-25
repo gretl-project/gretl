@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-10 15:48-0500\n"
-"PO-Revision-Date: 2008-12-04 21:17+0100\n"
+"PO-Revision-Date: 2008-12-25 20:30+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -26,23 +26,23 @@ msgstr ""
 "Test Dickey-Fuller per %s\n"
 
 #: lib/src/adf_kpss.c:253
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Augmented Dickey-Fuller test for %s\n"
 msgstr ""
 "\n"
-"Test Dickey-Fuller aumentato, ordine %d, per %s\n"
+"Test Dickey-Fuller aumentato per %s\n"
 
 #: lib/src/adf_kpss.c:255
 #, c-format
 msgid "including one lag of (1-L)%s"
-msgstr ""
+msgstr "incluso un ritardo di (1-L)%s"
 
 #: lib/src/adf_kpss.c:257
 #, c-format
 msgid "including %d lags of (1-L)%s"
-msgstr ""
+msgstr "inclusi %d ritardi di (1-L)%s"
 
 #: lib/src/adf_kpss.c:282 gui2/library.c:919 gui2/selector.c:4335
 msgid "test without constant"
@@ -3931,24 +3931,20 @@ msgid "Unconditional error variance"
 msgstr "Varianza dell'errore non condizionale"
 
 #: lib/src/modelprint.c:159
-#, fuzzy
 msgid "Left-unbounded observations"
-msgstr "Osservazioni censurate"
+msgstr "Osservazioni non limitate a sinistra"
 
 #: lib/src/modelprint.c:160
-#, fuzzy
 msgid "Right-unbounded observations"
-msgstr "Osservazioni censurate"
+msgstr "Osservazioni non limitate a destra"
 
 #: lib/src/modelprint.c:161
-#, fuzzy
 msgid "Bounded observations"
-msgstr "Aggiungi osservazioni"
+msgstr "Osservazioni limitate"
 
 #: lib/src/modelprint.c:162
-#, fuzzy
 msgid "Point observations"
-msgstr "Totale osservazioni"
+msgstr "Osservazioni puntuali"
 
 #: lib/src/modelprint.c:172 lib/src/modelprint.c:179 lib/src/modelprint.c:193
 #: lib/src/modelprint.c:4194 lib/src/modelprint.c:4205
@@ -5129,9 +5125,9 @@ msgid "No function has been specified"
 msgstr "Non è stata specificata alcuna funzione"
 
 #: lib/src/nls.c:2747
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no parameters were specified"
-msgstr "Non è stato specificato alcun parametro"
+msgstr "%s: non è stato specificato alcun parametro"
 
 #: lib/src/nls.c:2797
 msgid "Using numerical derivatives\n"
@@ -10120,9 +10116,8 @@ msgid "_Nonlinear Least Squares..."
 msgstr "_NLS - Minimi quadrati non lineari..."
 
 #: gui2/gretl.c:1476
-#, fuzzy
 msgid "_Interval regression..."
-msgstr "Regressione _Quantile..."
+msgstr "Regressione per _intervalli..."
 
 #: gui2/gretl.c:1477
 msgid "_Robust estimation"
@@ -10437,9 +10432,8 @@ msgid "_Copy"
 msgstr "_Copia"
 
 #: gui2/gui_utils.c:149 gui2/gui_utils.c:272
-#, fuzzy
 msgid "_Revise specification..."
-msgstr "Test RESET di specificazione"
+msgstr "_Revisione specificazione"
 
 #: gui2/gui_utils.c:151 gui2/gui_utils.c:275
 msgid "_Tests"
@@ -10547,9 +10541,8 @@ msgid "_Autocorrelation"
 msgstr "LMTEST - _Autocorrelazione"
 
 #: gui2/gui_utils.c:182
-#, fuzzy
 msgid "_Durbin-Watson p-value"
-msgstr "Calcola p-value di Durbin-Watson"
+msgstr "P-value di _Durbin-Watson"
 
 #: gui2/gui_utils.c:183 gui2/gui_utils.c:3198
 msgid "A_RCH"
@@ -12072,9 +12065,8 @@ msgid "You must specify a public interface"
 msgstr "Occorre specificare un'interfaccia pubblica"
 
 #: gui2/selector.c:1787
-#, fuzzy
 msgid "You must select a lower bound variable"
-msgstr "Occorre scegliere una variabile di controllo"
+msgstr "Occorre scegliere una variabile limite inferiore"
 
 #: gui2/selector.c:1790
 msgid "You must select a dependent variable"
@@ -12101,9 +12093,8 @@ msgid "You must specify a selection variable"
 msgstr "Occorre specificare una variabile di selezione"
 
 #: gui2/selector.c:2367
-#, fuzzy
 msgid "You must specify an upper bound variable"
-msgstr "Occorre specificare una variabile di selezione"
+msgstr "Occorre specificare una variabile limite superiore"
 
 #: gui2/selector.c:2471
 msgid "You must select a Z-axis variable"
@@ -12174,9 +12165,8 @@ msgid "Quantile regression"
 msgstr "Regressione quantile"
 
 #: gui2/selector.c:2746
-#, fuzzy
 msgid "Interval regression"
-msgstr "Regressione quantile"
+msgstr "Regressione per intervalli"
 
 #: gui2/selector.c:2749
 msgid "Cointegration"
@@ -12207,9 +12197,8 @@ msgid "Desired quantile(s)"
 msgstr "Quantili desiderati"
 
 #: gui2/selector.c:2773
-#, fuzzy
 msgid "Upper bound variable"
-msgstr "Usa variabili indice"
+msgstr "Variabile limite superiore"
 
 #: gui2/selector.c:2777 gui2/selector.c:2802
 msgid "Y-axis variable"
@@ -12228,9 +12217,8 @@ msgid "Choose->"
 msgstr "Scegli->"
 
 #: gui2/selector.c:2900
-#, fuzzy
 msgid "Lower bound variable"
-msgstr "Trend temporale"
+msgstr "Variabile limite inferiore"
 
 #: gui2/selector.c:2909 gui2/selector.c:2956
 msgid "Choose ->"
