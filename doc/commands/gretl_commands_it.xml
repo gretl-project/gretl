@@ -1541,12 +1541,12 @@
 
     <description>
       <para>
-	Calcola il criterio di informazione di Akaike (AIC) e il criterio
-        di informazione bayesiana di Schwarz (BIC), dati <repl>ess</repl> (somma
-        dei quadrati degli errori), il numero delle osservazioni
-	(<math>T</math>) e quello dei coefficienti (<math>k</math>).
-	<math>T</math>, <math>k</math> e
-	<repl>ess</repl> possono essere valori numerici o nomi di
+	Calcola il criterio di informazione di Akaike (AIC), il criterio
+        di informazione bayesiana di Schwarz (BIC) e il criterio di
+        Hannan&ndash;Quinn, dati <repl>ess</repl> (somma dei quadrati degli
+        errori), il numero delle osservazioni (<math>T</math>) e quello dei
+        coefficienti (<math>k</math>).  <math>T</math>, <math>k</math> e
+        <repl>ess</repl> possono essere valori numerici o nomi di
         variabili definite in precedenza.
       </para>
       <para>
@@ -1564,6 +1564,11 @@
 	  tex="\[{\rm BIC} = -2 \ell + k \log T\]"
 	  ascii="BIC = -2L + k log T"
           graphic="bic_orig"/>
+	Il HQC è calcolato come
+	<equation status="display"
+	  tex="\[{\rm HQC} = -2 \ell + 2k \log \log T\]"
+	  ascii="HQC = -2L + 2k log log T"
+          graphic="hqc"/>
 	Si veda la <guideref targ="select-criteria"/> per ulteriori dettagli.
       </para>
     </description>
@@ -3732,38 +3737,6 @@
 
   </command>
 
-  <command name="hccm" section="Estimation" context="cli" label="Stima HCCM">
-
-    <usage>
-      <arguments>
-        <argument>variabile-dipendente</argument>
-        <argument>variabili-indipendenti</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-        Matrice di covarianza coerente con l'eteroschedasticità (HCCM:
-        Heteroskedasticity-Consistent Covariance Matrix); questo comando
-        esegue una regressione dove i coefficienti sono stimati con la
-        procedura OLS standard, ma gli errori standard delle stime dei
-	coefficienti sono calcolati in modo da essere robusti rispetto
-        all'eteroschedasticità, ossia usando la procedura <quote>jackknife</quote>
-        di MacKinnon&ndash;White.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modello/HCCM</menu-path>
-    </gui-access>
-
-  </command>
 
   <command name="hccme" section="Estimation" context="gui"
     label="Errori standard robusti">
@@ -4107,6 +4080,89 @@
     </gui-access>
 
   </command>
+
+  <command name="intreg" section="Estimation" label="Modello di regressione per intervalli">
+
+    <usage>
+      <arguments>
+        <argument></argument>
+        <argument>var-min</argument>
+        <argument>var-max</argument>
+        <argument>var-indip</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i dettagli delle iterazioni</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+        </option>	
+      </options>
+      <examples>
+	<example>intreg lo hi const x1 x2</example>
+	<demos>
+	  <demo>wtp.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Stima un modello di regressione per intervallo. Questo modello è adatto
+        al caso in cui la variabile dipendente è osservata in modo imperfetto
+        per alcune osservazioni (o anche tutte). In altre parole, si ipotizza
+        che il processo generatore dei dati sia
+	<equation status="display"
+	tex="\[y^*_t = x_t \beta+\epsilon_t\]" ascii="y* = x b + u"/> ma che
+        solo
+	<equation status="inline" tex="\[m_t \le
+	y_t \le M_t\]" ascii="m &lt;= y* &lt;= M"/> sia osservato (l'intervallo
+        può essere limitato a destra o a sinistra). Si noti che per alcune
+        osservazioni <math>m</math> può essere uguale a <math>M</math>. Le variabili
+        <repl>var-min</repl> e <repl>var-max</repl> devono contenere valori <lit>NA</lit>
+        nel caso di osservazioni non limitate a sinistra o a destra.
+      </para>
+
+      <para context="gui">
+	Nella finestra di specificazione del modello, <repl>var-min</repl> e
+	<repl>var-max</repl> sono identificate come la variabile limite
+        inferiore e la variabile limite superiore.
+      </para>
+
+      <para>
+	Il modello è stimato per massima verosimiglianza, ipotizzando la
+        normalità del termine di disturbo.
+      </para>
+
+      <para context="cli">
+	Per impostazione predefinita, gli errori standard sono calcolati usando
+        l'inversa dell'Hessiana. Se si usa l'opzione <lit>--robust</lit>, vengono
+        calcolati invece gli errori standard QML o Huber&ndash;White. In questo caso
+        la matrice di covarianza stimata è un <quote>sandwich</quote>
+        dell'inversa dell'Hessiana stimata e del prodotto esterno del gradiente.
+      </para>
+      <para context="gui">
+	Per impostazione predefinita, gli errori standard sono calcolati usando
+        l'inversa dell'Hessiana. Se si abilita la casella "Errori standard robusti", vengono
+        calcolati invece gli errori standard QML o Huber&ndash;White. In questo caso
+        la matrice di covarianza stimata è un <quote>sandwich</quote>
+        dell'inversa dell'Hessiana stimata e del prodotto esterno del gradiente.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Modelli non lineari/Regressione per intervalli</menu-path>
+    </gui-access>
+
+  </command>
+
 
   <command name="irfboot" section="Graphs" context="gui"
     label="Bootstrap impulso-risposta">
@@ -5598,6 +5654,10 @@
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
         </option>
+         <option>
+	  <flag>--jackknife</flag>
+	  <effect>vedi sotto</effect>
+        </option>
         <option>
 	  <flag>--simple-print</flag>
 	  <effect>non mostra le statistiche ausiliarie</effect>
@@ -5672,7 +5732,11 @@
       <para context="cli">La formula usata per generare gli errori
       standard robusti (quando viene usata l'opzione
       <lit>--robust</lit>) può essere modificata con il comando <cmdref
-      targ="set"/>.  </para>
+      targ="set"/>.
+      L'opzione <lit>--jackknife</lit> equivale a impostare
+      <lit>hc_version</lit> a <lit>3a</lit>, in modo da emulare il vecchio
+      comando <lit>hccm</lit>.
+      </para>
     </description>
 
     <gui-access>
@@ -6416,7 +6480,7 @@
 	</option>
 	<option>
 	  <flag>--long</flag>
-	  <effect>usa 10 cifre significative, o più</effect>
+	  <effect>usa più cifre significative</effect>
 	</option>
  	<option>
  	  <flag>--no-dates</flag>
@@ -6439,9 +6503,11 @@
       </para>
       <para>
         Usando l'opzione <lit>--long</lit> i dati vengono stampati per variabile
-        con una precisione superiore al normale; in modalità predefinita,
-        vengono mostrate 10 cifre significative, ma è possibile modificare
-        questo numero con il comando  <cmdref targ="set"/>.
+        in notazione scientifica, con una precisione superiore al normale.  In
+        questo caso di solito vengono mostrate 10 cifre significative, ma è
+        possibile modificare questo numero con il comando  <cmdref targ="set"/>
+        e l'argomento <lit>longdigits</lit>. Per avere maggiore controllo sul
+        formato di stampa, si veda <cmdref targ="printf"/>.
       </para>
 
       <para>
@@ -6496,7 +6562,7 @@
 
     <description>
       <para>
-        Stampa valori scalari e/o stringhe formattandoli secondo le indicazioni
+        Stampa valori scalari, serie, matrici o stringhe formattandoli secondo le indicazioni
         di una stringa di formato (che supporta un piccolo sottoinsieme del
         comando <lit>printf()</lit> del linguaggio di programmazione C). I
         formati numerici riconosciuti sono <lit>%e</lit>, <lit>%E</lit>,
@@ -6508,13 +6574,15 @@
         di formato <lit>%s</lit>.
       </para>  
 
-      <para>La stringa di formato deve essere racchiusa tra virgolette
+      <para>
+        La stringa di formato deve essere racchiusa tra virgolette
         doppie, i valori da stampare devono seguire la stringa di
         formato, separati da virgole. I valori possono avere tre forme:
-	a) i nomi di variabili nel dataset; b) espressioni valide per
+	a) nomi di variabili; b) espressioni valide per
         il comando <cmd>genr</cmd>; c) le funzioni speciali <lit>varname()</lit>
         o <lit>date()</lit>. L'esempio seguente stampa i valori
-        di due variabili e quello di un'espressione calcolata:</para>
+        di due variabili e quello di un'espressione calcolata:
+      </para>
 
       <code>
 	ols 1 0 2 3
@@ -6535,7 +6603,9 @@
       <para>
 	Se si usa un argomento matrice insieme a un formato numerico, l'intera
         matrice verrà stampata usando per ogni elemento il formato numerico
-        indicato.
+        indicato. La stessa cosa vale per le serie, tranne per il fatto che
+        l'intervallo di valori stampato è controllato dall'impostazione del
+        campione corrente.
       </para>
       <para>
 	La lunghezza massima di una stringa di formato è di 127
@@ -7407,7 +7477,7 @@
         <argument>valore</argument>
       </arguments>
       <examples>
-        <example>set qr on</example>
+        <example>set svd on</example>
         <example>set csv_delim tab</example>
 	<example>set horizon 10</example>
       </examples>    
@@ -7615,10 +7685,13 @@
 	</para>
         </li>
 	<li>
-	  <para><lit>qr</lit>:
+	  <para><lit>svd</lit>:
 	  <lit>on</lit> o <lit>off</lit> (valore predefinito).
-	    Usa la decomposizione QR invece di quella di Cholesky nel
-            calcolo delle stime OLS.</para>
+	    Usa la decomposizione SVD invece di quella di Cholesky o della QR nel
+            calcolo delle stime OLS. Questa opzione si applica alla funzione
+            <lit>mols</lit> e a vari altri calcoli eseguiti internamente, ma non
+            al comando <cmdref targ="ols"/>.
+          </para>
 	</li>
 	<li>
           <para><lit>fcp</lit>: <lit>on</lit> o <lit>off</lit> (valore
@@ -7722,14 +7795,16 @@
 	</li>
 	<li>
 	  <para><lit>hc_version</lit>:
-	  0 (valore predefinito), 1, 2 o 3. Imposta la
+	  0 (valore predefinito), 1, 2, 3 o 3a. Imposta la
           variante da usare nel calcolo degli errori standard HAC
           (Heteroskedasticity and Autocorrelation Consistent) con dati
-          di tipo cross section. Le opzioni corrispondono alle HC0, HC1,
+          di tipo cross section. Le prime 4 opzioni corrispondono alle HC0, HC1,
           HC2 e HC3 discusse da Davidson e MacKinnon nel capitolo 5 di
           <book>Econometric Theory and Methods</book>.  HC0 produce
           quelli che di solito vengono chiamati <quote>errori standard di
-          White</quote>.</para>
+          White</quote>. La variante 3a è la procedura <quote>jackknife</quote>
+          di MacKinnon&ndash;White.
+          </para>
         </li>
 	<li>
 	  <para><lit>pcse</lit>: <lit>off</lit> (impostazione predefinita) o
@@ -8876,33 +8951,30 @@
 
     <description>
       <para context="cli">
-	Calcola le stime minimi quadrati a due stadi (TSLS o IV), date
-        la <repl>variabile-dipendente</repl> e la lista di
-	<repl>variabili-indipendenti</repl> (incluse le variabili
-        esogene) nell'equazione strutturale per cui sono richieste le
-        stime TSLS; <repl>strumenti</repl> è la lista completa delle
-        variabili esogene e predeterminate in tutte le equazioni. Se la
-        lista degli <repl>strumenti</repl> non è lunga almeno quanto
-        quella delle <repl>variabili-indipendenti</repl>, il modello non
-        è identificato.</para>
+        Calcola le stime con variabili strumentali, usando i minimi quadrati a
+        due stadi (TSLS), date la <repl>variabile-dipendente</repl> e la lista
+        di <repl>variabili-indipendenti</repl> (che si intende includere alcuni
+        regressori endogeni); <repl>strumenti</repl> è la lista completa delle
+        variabili esogene e predeterminate. Se la lista degli
+        <repl>strumenti</repl> non è lunga almeno quanto quella delle
+        <repl>variabili-indipendenti</repl>, il modello non è
+        identificato.
+      </para>
 
       <para context="cli">
 	Nell'esempio precedente, le <lit>y</lit> sono le variabili
         endogene e le <lit>x</lit> sono le variabili esogene e
-        predeterminate.
+        predeterminate. Si noti che eventuali regressori esogeni devono essere
+        inclusi in entrambe le liste.
       </para>
 
       <para context="gui">
 	Questo comando richiede la scelta di due liste di variabili; le
         variabili indipendenti che appaiono nel modello e un elenco di
-        "strumenti". Questi ultimi comprendono le variabili esogene e/o
-        altre variabili predeterminate che possono essere usate come
-        regressori per derivare valori stimati delle variabili endogene
-        del modello.
-      </para>
-
-      <para context="gui">Se alcune delle variabili del modello sono
-        esogene, vanno incluse in entrambe le liste.
+        strumenti. Questi ultimi comprendono le variabili esogene e/o
+        altre variabili predeterminate che possono essere usate per
+        derivare valori stimati dei regressori endogeni. Si noti che eventuali
+        regressori esogeni devono essere inclusi in entrambe le liste.
       </para>
       
       <para>
@@ -8918,6 +8990,11 @@
         se la regressione ausiliaria ha un significativo potere esplicativo.
 	Davidson e MacKinnon (2004, capitolo 8) forniscono una buona spiegazione di
         entrambi i test.
+      </para>
+
+      <para>
+	Il valore R-quadro mostrato per questo tipo di modello è il quadrato
+        della correlazione tra la variabile dipendente e i valori stimati.
       </para>
 
     </description>
