@@ -2569,7 +2569,9 @@ static gint
 motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 {
     GdkModifierType state;
-    gchar label[32], label_y[16];
+    gchar label[48], label_y[24];
+    const char *xfmt = NULL;
+    const char *yfmt = NULL;
     int x, y;
 
     if (plot->err) {
@@ -2582,6 +2584,14 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
         x = event->x;
         y = event->y;
         state = event->state;
+    }
+
+    if (plot->spec->xfmt[0] != '\0') {
+	xfmt = plot->spec->xfmt;
+    }
+
+    if (plot->spec->yfmt[0] != '\0') {
+	yfmt = plot->spec->yfmt;
     }
 
     *label = 0;
@@ -2603,19 +2613,25 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 
 	if (plot->pd == 4 || plot->pd == 12) {
 	    x_to_date(data_x, plot->pd, label);
+	} else if (xfmt != NULL) {
+	    sprintf(label, xfmt, data_x);
 	} else {
 	    sprintf(label, (float_fmt(plot->xint, data_x))? "%7.0f" : 
-		    "%7.4g", data_x);
+		    "%#7.4g", data_x);
 	}
 
 	if (!na(data_y)) {
 	    if (plot_has_png_coords(plot)) {
-		sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
-			" %-7.4g", data_y);
+		if (yfmt != NULL) {
+		    sprintf(label_y, yfmt, data_y);
+		} else {
+		    sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
+			    " %#-7.4g", data_y);
+		}
 	    } else {
 		/* pretty much guessing at y coordinate here */
 		sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
-				  " %-6.3g", data_y);
+				  " %#-6.3g", data_y);
 	    }
 	    strcat(label, label_y);
 	}
@@ -2623,7 +2639,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
 	    draw_selection_rectangle(plot, x, y);
 	}
-    } 
+    }
 
     gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
   
@@ -3964,7 +3980,7 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     if (plot_has_xrange(plot)) {
 	gtk_widget_realize(plot->cursor_label);
-	gtk_widget_set_size_request(plot->cursor_label, 140, -1);
+	gtk_widget_set_size_request(plot->cursor_label, 160, -1);
     }
 
     gtk_widget_show(vbox);
