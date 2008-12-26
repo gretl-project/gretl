@@ -1656,11 +1656,15 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (code == M_H) {
 	x = gretl_model_get_data(pmod, "garch_h");
-	if (x == NULL) return E_DATA;
+	if (x == NULL) return E_BADSTAT;
     } else if (code == M_AHAT) {
 	x = gretl_model_get_data(pmod, "ahat");
-	if (x == NULL) return E_DATA;
-    }	
+	if (x == NULL) return E_BADSTAT;
+    } else if (code == M_UHAT || code == M_UHAT2) {
+	if (pmod->uhat == NULL) return E_BADSTAT;
+    } else if (code == M_YHAT) {
+	if (pmod->yhat == NULL) return E_BADSTAT;
+    }
 
     if (dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;

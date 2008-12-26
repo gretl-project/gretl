@@ -809,6 +809,8 @@ int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
 
     if (!err) {
 	pprintf(prn, _("%s saved\n"), name);
+    } else {
+	errmsg(err, prn);
     }
 
     return err;

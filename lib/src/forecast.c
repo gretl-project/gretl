@@ -584,9 +584,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 	}
 
 	/* forecast value */
-	fc->yhat[t] = gretl_matrix_dot_product(Xs, GRETL_MOD_NONE,
-					       b, GRETL_MOD_NONE,
-					       NULL);
+	fc->yhat[t] = gretl_vector_dot_product(Xs, b, NULL);
 
 	/* forecast variance */
 	vyh = gretl_scalar_qform(Xs, V, &err);

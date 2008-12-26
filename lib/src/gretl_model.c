@@ -4280,7 +4280,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
     if (NONLIST_MODEL(mci)) {
 	return (test_ci == RESTRICT ||
 		test_ci == TABPRINT ||
-		test_ci == TESTUHAT);
+		(mci != MLE && test_ci == TESTUHAT));
     }
 
     switch (test_ci) {

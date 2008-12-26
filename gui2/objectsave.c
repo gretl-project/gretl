@@ -111,6 +111,8 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
 	}
 	if (!err) {
 	    set_as_last_model(cpy, GRETL_OBJ_EQN);
+	} else {
+	    errmsg(err, prn);
 	}
     } else {
 	set_as_last_model(pmod, GRETL_OBJ_EQN);

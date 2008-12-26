@@ -1787,6 +1787,10 @@ static int make_nl_model (MODEL *pmod, nlspec *spec,
 	}
     }
 
+    if (!pmod->errcode && pmod->ci == GMM) {
+	maybe_add_gmm_residual(pmod, spec, pdinfo);
+    }
+
     if (!pmod->errcode) {
 	gretl_model_set_int(pmod, "fncount", spec->fncount);
 	gretl_model_set_int(pmod, "grcount", spec->grcount);
@@ -2850,7 +2854,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    make_nl_model(&nlmod, spec, pdinfo, opt);
 	}
     } else if (nlmod.errcode == 0) { 
-	/* supply an error code */
+	/* error code missing: supply one */
 	if (spec->generr != 0) {
 	    nlmod.errcode = spec->generr;
 	} else {

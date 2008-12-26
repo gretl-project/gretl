@@ -1055,13 +1055,9 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
     }
 
-    if (s->pmod != NULL) { 
+    if (!err && s->pmod != NULL) { 
 	attach_subsample_to_model(s->pmod, pdinfo);
-#if MSPEC_DEBUG
-	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
-		s->pmod->ID, get_model_count());
-#endif
-	maybe_stack_model(s->pmod, cmd, prn);
+	err = maybe_stack_model(s->pmod, cmd, prn);
     }
 
     if (system_save_flag_is_set(s->sys)) {

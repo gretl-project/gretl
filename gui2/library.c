@@ -7383,13 +7383,15 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (s->pmod != NULL) {
+    if (!err && s->pmod != NULL) {
 	attach_subsample_to_model(s->pmod, pdinfo);
-	maybe_save_model(cmd, s->pmod, prn);
+	err = maybe_save_model(cmd, s->pmod, prn);
     }
 
     if (system_save_flag_is_set(s->sys)) {
-	maybe_add_model_to_session(s->sys, GRETL_OBJ_SYS);
+	if (!err) {
+	    maybe_add_model_to_session(s->sys, GRETL_OBJ_SYS);
+	}
 	system_unset_save_flag(s->sys);
 	s->sys = NULL;
     }

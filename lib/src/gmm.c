@@ -818,7 +818,28 @@ int nlspec_add_weights (nlspec *s, const char *str)
     return err;
 }
 
-void nlspec_print_gmm_info (nlspec *spec, PRN *prn)
+void maybe_add_gmm_residual (MODEL *pmod, const nlspec *spec, 
+			     const DATAINFO *pdinfo)
+{
+    if (spec->oc != NULL && spec->oc->e != NULL && spec->oc->e->cols == 1) {
+	int t, s = 0;
+
+	pmod->uhat = malloc(pdinfo->n * sizeof *pmod->uhat);
+
+	if (pmod->uhat != NULL) {
+	    for (t=0; t<pdinfo->n; t++) {
+		if (t >= spec->t1 && t <= spec->t2) {
+		    pmod->uhat[t] = spec->oc->e->val[s++];
+		} else {
+		    pmod->uhat[t] = NADBL;
+		}
+	    }
+	    pmod->full_n = pdinfo->n;
+	}
+    }
+}
+
+void nlspec_print_gmm_info (const nlspec *spec, PRN *prn)
 {
     int i;
 

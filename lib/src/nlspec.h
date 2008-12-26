@@ -90,7 +90,10 @@ int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
 
 int nlspec_add_weights (nlspec *s, const char *str);
 
-void nlspec_print_gmm_info (nlspec *spec, PRN *prn);
+void nlspec_print_gmm_info (const nlspec *spec, PRN *prn);
+
+void maybe_add_gmm_residual (MODEL *pmod, const nlspec *spec, 
+			     const DATAINFO *pdinfo);
 
 int gmm_add_vcv (MODEL *pmod, nlspec *spec);
 
