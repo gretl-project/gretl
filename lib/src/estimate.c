@@ -188,14 +188,11 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 {
     MODEL emod;
     const double *x;
-
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-
     double rho = gretl_model_get_double(pmod, "rho_in");
     int origv = pdinfo->v;
     int vnew = pmod->list[0] + 1 - pmod->ifc;
-
     int *list;
     int vi, vm;
     int i, t;
@@ -997,7 +994,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  *   %OPT_X: compute "variance matrix" as just (X'X)^{-1}
  *   %OPT_B: don't compute R^2.
  *   %OPT_I: compute Durbin-Watson p-value.
- *   %OPT_Q: use QR decomposition (but not robust VCV).
+ *   %OPT_Q: use QR decomposition (not necessarily robust VCV).
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
