@@ -675,6 +675,10 @@ set_logscale_from_entry (GPT_SPEC *spec, int i, GtkWidget *entry)
 	errbox("bad base");
     } else {
 	spec->logbase[i] = base;
+	if (i == 0) {
+	    *spec->xfmt = '\0';
+	    *spec->xtics = '\0';
+	} 
     }
 
     return err;

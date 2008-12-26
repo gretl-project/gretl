@@ -5445,15 +5445,17 @@ static int get_R_rank (const gretl_matrix *R)
 /**
  * gretl_check_QR_rank:
  * @R: matrix R from QR decomposition.
- * @err: pointer to receive error code.
+ * @err: location to receive error code.
+ * @rcnd: location to receive reciprocal condition number.
  * 
  * Checks the reciprocal condition number of R and calculates 
- * the rank of the matrix QR.
+ * the rank of the matrix QR.  If @rcnd is not %NULL it receives
+ * the reciprocal condition number.
  *
  * Returns: on success, the rank of QR.
  */
 
-int gretl_check_QR_rank (const gretl_matrix *R, int *err)
+int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
 {
     integer *iwork = NULL;
     doublereal *work = NULL;
@@ -5494,6 +5496,10 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err)
 	rank = get_R_rank(R);
     } else if (rcond < QR_RCOND_WARN) {
 	fprintf(stderr, "QR warning: rcond = %g\n", rcond);
+    }
+
+    if (rcnd != NULL) {
+	*rcnd = rcond;
     }
 
  bailout:
@@ -8627,7 +8633,7 @@ static int QR_OLS_work (gretl_matrix *Q, gretl_matrix *R)
     }
 
     /* check rank of QR */
-    r = gretl_check_QR_rank(R, &err);
+    r = gretl_check_QR_rank(R, &err, NULL);
     if (err) {
 	return err;
     }

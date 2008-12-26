@@ -641,7 +641,7 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 	goto bailout;
     }
 
-    rank = gretl_check_QR_rank(R, err);
+    rank = gretl_check_QR_rank(R, err, NULL);
 
 #if TDEBUG
     fprintf(stderr, "tsls_Q: k = Q->cols = %d, rank = %d\n", k, rank);

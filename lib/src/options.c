@@ -599,9 +599,7 @@ static int valid_long_opt (int ci, const char *lopt)
 }
 
 /* Apparatus for setting and retrieving parameters associated
-   with command options, as in --opt=val.  For the present
-   we're assuming that at most one such item will be 
-   present per command; that could be generalized later.
+   with command options, as in --opt=val.  
 */
 
 #define OPDEBUG 0

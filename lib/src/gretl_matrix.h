@@ -506,7 +506,7 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
 int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R);
 
-int gretl_check_QR_rank (const gretl_matrix *R, int *err);
+int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd);
 
 int gretl_matrix_rank (const gretl_matrix *a, int *err);
 

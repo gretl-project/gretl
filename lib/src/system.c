@@ -44,6 +44,11 @@ enum {
     SYS_TEST_NOTIMP
 } system_test_types;
 
+enum {
+    SYS_UHAT,
+    SYS_YHAT
+};
+
 struct id_atom_ {
     int op;         /* operator (plus or minus) */
     int varnum;     /* ID number of variable to right of operator */
@@ -651,29 +656,6 @@ static int get_estimation_method_from_line (const char *s)
     return method;
 }
 
-static void 
-system_set_flags (equation_system *sys, const char *s, gretlopt opt)
-{
-    if (opt & OPT_I) {
-	sys->flags |= SYSTEM_ITERATE;
-    }
-
-    s = strstr(s, " save");
-
-    if (s != NULL) {
-	s += 5;
-	if (*s != ' ' && *s != '=') {
-	    return;
-	}
-	if (strstr(s, "resids") || strstr(s, "uhat")) {
-	    sys->flags |= SYSTEM_SAVE_UHAT;
-	}
-	if (strstr(s, "fitted") || strstr(s, "yhat")) {
-	    sys->flags |= SYSTEM_SAVE_YHAT;
-	}
-    }
-}
-
 /**
  * equation_system_start:
  * @line: command line.
@@ -716,12 +698,17 @@ equation_system *equation_system_start (const char *line,
 	*err = E_DATA;
     }
 
+    if (strstr(line, "save=")) {
+	/* obsolete: e.g. "save=fitted" */
+	*err = E_PARSE;
+    }
+
     if (!*err) {
 	sys = equation_system_new(method, sysname, err);
     }
 
-    if (sys != NULL) {
-	system_set_flags(sys, line, opt);
+    if (sys != NULL && (opt & OPT_I)) {
+	sys->flags |= SYSTEM_ITERATE;
     }
 
     if (sysname != NULL) {
@@ -992,8 +979,6 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
 static void 
 set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 {
-    char oldflags = sys->flags;
-
     sys->flags = 0;
 
     /* the iterate option is available for WLS, SUR or 3SLS */
@@ -1024,14 +1009,6 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
     if (opt & OPT_S) {
 	/* estimating single equation */
 	sys->flags |= SYSTEM_SINGLE;
-    }
-
-    if (oldflags & SYSTEM_SAVE_UHAT) {
-	sys->flags |= SYSTEM_SAVE_UHAT;
-    }
-
-    if (oldflags & SYSTEM_SAVE_YHAT) {
-	sys->flags |= SYSTEM_SAVE_YHAT;
     }
 }
 
@@ -1655,24 +1632,12 @@ add_system_var_info (equation_system *sys, int i,
 {
     char *label = VARLABEL(pdinfo, v);
 
-    if (code == SYSTEM_SAVE_UHAT) {
+    if (code == SYS_UHAT) {
 	sprintf(pdinfo->varname[v], "uhat_s%02d", i);
-	if (sys->method == SYS_METHOD_SUR) {
-	    sprintf(label, _("SUR residual, equation %d"), i);
-	} else if (sys->method == SYS_METHOD_3SLS) {
-	    sprintf(label, _("3SLS residual, equation %d"), i);
-	} else {
-	    sprintf(label, _("system residual, equation %d"), i);
-	}
-    } else if (code == SYSTEM_SAVE_YHAT) {
+	sprintf(label, _("system residual, equation %d"), i);
+    } else if (code == SYS_YHAT) {
 	sprintf(pdinfo->varname[v], "yhat_s%02d", i);
-	if (sys->method == SYS_METHOD_SUR) {
-	    sprintf(label, _("SUR fitted value, equation %d"), i);
-	} else if (sys->method == SYS_METHOD_3SLS) {
-	    sprintf(label, _("3SLS fitted value, equation %d"), i);
-	} else {
-	    sprintf(label, _("system fitted value, equation %d"), i);
-	}
+	sprintf(label, _("system fitted value, equation %d"), i);
     }
 }
 
@@ -1701,7 +1666,7 @@ system_add_resids_to_dataset (equation_system *sys,
 	}
     }
 
-    add_system_var_info(sys, eqnum + 1, pdinfo, v, SYSTEM_SAVE_UHAT);
+    add_system_var_info(sys, eqnum + 1, pdinfo, v, SYS_UHAT);
 
     return 0;
 }
@@ -3498,65 +3463,6 @@ system_get_forecast_matrix (equation_system *sys, int t1, int t2,
     return sys->F;
 }
 
-/* respond to "save=..." in system command: add residuals and/or
-   fitted values to dataset as series
-*/
-
-static int sys_save_uhat_yhat (equation_system *sys, double ***pZ,
-			       DATAINFO *pdinfo)
-{
-    int v = pdinfo->v;
-    int addvars = 0;
-    int err;
-
-    if (sys->flags & SYSTEM_SAVE_UHAT) {
-	addvars += sys->neqns;
-    } 
-
-    if (sys->flags & SYSTEM_SAVE_YHAT) {
-	addvars += sys->neqns;
-    }
-
-    if (addvars == 0) {
-	return 0;
-    }
-
-    err = dataset_add_series(addvars, pZ, pdinfo);
-
-    if (!err) {
-	const MODEL *pmod;
-	int i, t;
-
-	for (i=0; i<sys->neqns; i++) {
-	    pmod = sys->models[i];
-
-	    if (sys->flags & SYSTEM_SAVE_UHAT) {
-		for (t=0; t<pdinfo->n; t++) {
-		    if (t < pmod->t1 || t > pmod->t2) {
-			(*pZ)[v][t] = NADBL;
-		    } else {
-			(*pZ)[v][t] = pmod->uhat[t];
-		    }
-		}
-		add_system_var_info(sys, i + 1, pdinfo, v++, SYSTEM_SAVE_UHAT);
-	    }
-
-	    if (sys->flags & SYSTEM_SAVE_YHAT) {
-		for (t=0; t<pdinfo->n; t++) {
-		    if (t < pmod->t1 || t > pmod->t2) {
-			(*pZ)[v][t] = NADBL;
-		    } else {
-			(*pZ)[v][t] = pmod->yhat[t];
-		    }
-		}
-		add_system_var_info(sys, i + 1, pdinfo, v++, SYSTEM_SAVE_YHAT);
-	    }
-	}
-    }
-    
-    return err;
-}
-
 /* attach to the system some extra statistics generated in the course
    of estimation via LIML */
 
@@ -3853,12 +3759,6 @@ system_save_and_print_results (equation_system *sys,
 	    ensure_asy_printout(sys);
 	}
 	gretl_system_print(sys, (const double **) *pZ, pdinfo, opt, prn);
-    }
-
-    if (!err) {
-	if (sys->flags & (SYSTEM_SAVE_UHAT | SYSTEM_SAVE_YHAT)) {
-	    err = sys_save_uhat_yhat(sys, pZ, pdinfo);
-	}
     }
 
     return err;

@@ -7,7 +7,7 @@ version 1.8.0, in progress
   series argument
 - New option --numeric for the nls and mle commands,
   to force the use of numerical derivatives
-- Various small graphing and GUI fixes
+- Numerous small graphing and GUI fixes
 - MS Windows: fix for opening graphs in old session files
 - Graphs: "display PDF" option: fix possible encoding issue
 - GUI graph controller: new facility to add a line, defined

@@ -32,8 +32,7 @@ typedef enum {
 } GretlSystemMethods;
 
 enum {
-    SYSTEM_SAVE_UHAT   = 1 << 0,
-    SYSTEM_SAVE_YHAT   = 1 << 1,
+    /* allow for obsoleted flags */
     SYSTEM_DFCORR      = 1 << 2,
     SYSTEM_VCV_GEOMEAN = 1 << 3,
     SYSTEM_RESTRICT    = 1 << 4,

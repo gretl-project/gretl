@@ -816,12 +816,20 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
     return 0;
 }
 
+#define RCOND_WARN 1.0e-07
+
 /* perform QR decomposition plus some additional tasks */
 
-static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank)
+static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank,
+			   int *warn)
 {
     integer k = gretl_matrix_rows(R);
+    double rcond = 0;
     int r, err;
+
+    if (warn != NULL) {
+	*warn = 0;
+    }
 
     /* basic decomposition */
     err = gretl_matrix_QR_decomp(Q, R);
@@ -830,7 +838,7 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank)
     }
 
     /* check rank of QR */
-    r = gretl_check_QR_rank(R, &err);
+    r = gretl_check_QR_rank(R, &err, &rcond);
     if (err) {
 	return err;
     }
@@ -847,6 +855,8 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank)
 	if (info != 0) {
 	    fprintf(stderr, "dtrtri: info = %d\n", (int) info);
 	    err = 1;
+	} else if (rcond < RCOND_WARN && warn != NULL) {
+	    *warn = 1;
 	}
     }
 
@@ -910,7 +920,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
     gretl_matrix *Q = NULL, *y = NULL;
     gretl_matrix *R = NULL, *g = NULL, *b = NULL;
     gretl_matrix *V = NULL;
-    int rank, err = 0;
+    int rank, warn = 0, err = 0;
 
     T = pmod->nobs;               /* # of rows (observations) */
     k = pmod->list[0] - 1;        /* # of cols (variables) */
@@ -929,7 +939,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
     }
 
     get_model_data(pmod, Z, Q, y);
-    err = QR_decomp_plus(Q, R, &rank);
+    err = QR_decomp_plus(Q, R, &rank, &warn);
 
     /* handling of (near-)perfect collinearity */
     if (err == E_SINGULAR && !(opt & OPT_Z)) {
@@ -939,7 +949,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 	gretl_matrix_reuse(R, k, k);
 	gretl_matrix_reuse(V, k, k);
 	get_model_data(pmod, Z, Q, y);
-	err = QR_decomp_plus(Q, R, NULL);
+	err = QR_decomp_plus(Q, R, NULL, &warn);
 	if (!err) {
 	    maybe_shift_ldepvar(pmod, Z, pdinfo);
 	}
@@ -1012,7 +1022,12 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
     /* D-W stat and p-value */
     if ((opt & OPT_I) && pmod->missmask == NULL) {
 	qr_dw_stats(pmod, Z, Q, y);
-    }	
+    }
+
+    /* near-singularity? */
+    if (warn) {
+	gretl_model_set_int(pmod, "near-singular", 1);
+    }
 
  qr_cleanup:
 
@@ -1050,7 +1065,7 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 	goto qr_cleanup;
     }
 
-    err = QR_decomp_plus(Q, R, NULL);
+    err = QR_decomp_plus(Q, R, NULL, NULL);
     if (err) {
 	goto qr_cleanup;
     }
