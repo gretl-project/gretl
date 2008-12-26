@@ -634,8 +634,8 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
     }
 
     /* calculate regression results, Cholesky style */
-    gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
-		  rho, pwe, pmod->xpx, xpy, pmod->missmask);
+    pmod->errcode = gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
+				  rho, pwe, pmod->xpx, xpy, pmod->missmask);
 
 #if XPX_DEBUG
     for (i=0; i<=l0; i++) {
@@ -647,7 +647,10 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
     fputc('\n', stderr);
 #endif
 
-    regress(pmod, xpy, Z, rho, opt);
+    if (!pmod->errcode) {
+	regress(pmod, xpy, Z, rho, opt);
+    }
+
     free(xpy);
 
     return pmod->errcode;
@@ -700,7 +703,7 @@ static int gretl_null_regress (MODEL *pmod, const double **Z)
 }
 
 /* limited freeing of elements before passing a model
-   on for QR estimation in the case of singularity 
+   on for QR estimation in the case of (near-)singularity 
 */
 
 static void model_free_storage (MODEL *pmod)
@@ -1090,8 +1093,8 @@ int gretl_XTX_XTy (const int *list, int t1, int t2,
 			    (Z[lj][t] - rho * Z[lj][t-1]);
 		    }
 		}
-		if (floateq(x, 0.0) && li == lj)  {
-		    return li;
+		if (li == lj && x < DBL_EPSILON)  {
+		    return E_SINGULAR;
 		}
 		xpx[m++] = x;
 	    }
@@ -1120,8 +1123,8 @@ int gretl_XTX_XTy (const int *list, int t1, int t2,
 			x += Z[nwt][t] * Z[li][t] * Z[lj][t];
 		    }
 		}
-		if (floateq(x, 0.0) && li == lj)  {
-		    return li;
+		if (li == lj && x < DBL_EPSILON) {
+		    return E_SINGULAR;
 		}   
 		xpx[m++] = x;
 	    }
@@ -1147,8 +1150,8 @@ int gretl_XTX_XTy (const int *list, int t1, int t2,
 			x += Z[li][t] * Z[lj][t];
 		    }
 		}
-		if (floateq(x, 0.0) && li == lj)  {
-		    return li;
+		if (li == lj && x < DBL_EPSILON) {
+		    return E_SINGULAR;
 		}
 		xpx[m++] = x;
 	    }
@@ -1358,7 +1361,7 @@ static void regress (MODEL *pmod, double *xpy, const double **Z,
 	pmod->sigma = sqrt(sgmasq);
     }
 
-    if (floatlt(pmod->tss, 0.0) || floateq(pmod->tss, 0.0)) {
+    if (pmod->tss < DBL_EPSILON) {
 	pmod->rsq = pmod->adjrsq = NADBL;
     } 
 
@@ -1775,7 +1778,7 @@ double rhohat (int order, int t1, int t2, const double *uhat)
         xx += u1 * u1;
     }
 
-    if (floateq(xx, 0.0)) {
+    if (xx < DBL_EPSILON) {
 	return NADBL;
     }
 

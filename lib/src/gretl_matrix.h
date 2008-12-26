@@ -414,8 +414,6 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 
 gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X);
 
-gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X);
-
 int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ, 
 					const gretl_matrix *src);
 

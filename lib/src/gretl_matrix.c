@@ -3374,6 +3374,8 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
 /**
  * gretl_matrix_packed_XTX_new:
  * @X: matrix to process.
+ * @nasty: location to receive warning if any diagonal element
+ * is less than %DBL_EPSILON.
  *
  * Performs the multiplication X'X producing a packed result,
  * that is, the vech() of the full solution.
@@ -3382,7 +3384,8 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
  * unique elements of X'X, or %NULL on error.
 */
 
-gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X)
+static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
+						  int *nasty)
 {
     gretl_matrix *XTX = NULL;
     double x;
@@ -3411,6 +3414,9 @@ gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X)
 	    x = 0.0;
 	    for (k=0; k<nr; k++) {
 		x += X->val[idx1++] * X->val[idx2++];
+	    }
+	    if (i == j && x < DBL_EPSILON) {
+		*nasty = 1;
 	    }
 	    XTX->val[n++] = x;
 	}
@@ -8321,6 +8327,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *uhat, double *s2)
 {
     gretl_matrix *XTX = NULL;
+    int nasty = 0;
     int k, err = 0;
 
     if (gretl_is_null_matrix(y) ||
@@ -8344,11 +8351,11 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }    
 
     if (!err) {
-	XTX = gretl_matrix_packed_XTX_new(X);
+	XTX = gretl_matrix_packed_XTX_new(X, &nasty);
 	if (XTX == NULL) err = E_ALLOC;
     }
 
-    if (!err) {
+    if (!err && !nasty) {
 	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					y, GRETL_MOD_NONE,
 					b, GRETL_MOD_NONE);
@@ -8359,8 +8366,10 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err) {
-	err = native_cholesky_decomp_solve(XTX, b);
-	if (err == E_SINGULAR) {
+	if (!nasty) {
+	    err = native_cholesky_decomp_solve(XTX, b);
+	}
+	if (nasty || err == E_SINGULAR) {
 	    fprintf(stderr, "gretl_matrix_ols: switching to QR decomp\n");
 	    err = gretl_matrix_QR_ols(y, X, b, NULL, NULL, NULL);
 	}
