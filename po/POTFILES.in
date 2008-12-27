@@ -21,6 +21,7 @@ lib/src/genmain.c
 lib/src/gensyntax.c
 lib/src/gmm.c
 lib/src/graphing.c
+lib/src/gretl_bfgs.c
 lib/src/gretl_commands.c
 lib/src/gretl_errors.c
 lib/src/gretl_fft.c
@@ -48,7 +49,6 @@ lib/src/libset.c
 lib/src/matrix_extra.c
 lib/src/missing.c
 lib/src/modelprint.c
-lib/src/modelspec.c
 lib/src/monte_carlo.c
 lib/src/nls.c
 lib/src/nonparam.c
@@ -135,6 +135,7 @@ plugin/gnumeric_import.c
 plugin/gretlzip.c
 plugin/heckit.c
 plugin/import_common.c
+plugin/interval.c
 plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c
