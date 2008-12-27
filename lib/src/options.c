@@ -140,6 +140,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_T, "time-series" },
     { GNUPLOT,  OPT_Z, "dummy" },
     { GNUPLOT,  OPT_C, "control" },
+    { GNUPLOT,  OPT_F, "filename" },
     { GRAPH,    OPT_O, "tall" },
     { HECKIT,   OPT_M, "ml" },
     { HECKIT,   OPT_T, "two-step" },
@@ -722,6 +723,9 @@ static int valid_optval (int ci, gretlopt opt, const char *val)
     } else if (ci == IVREG && opt == OPT_W) {
 	push_optparm(ci, opt, val);
 	return 1;
+    } else if (ci == GNUPLOT && opt == OPT_F) {
+	push_optparm(ci, opt, val);
+	return 1;
     }
 
     return 0;
@@ -731,7 +735,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 {
     char *s = line;
     char longopt[32];
-    char optval[32];
+    char optval[64];
     gretlopt match, ret = 0L;
 
     while ((s = strstr(s, "--")) != NULL) {
@@ -739,7 +743,6 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	*longopt = '\0';
 	if (maybe_opt_start(line, s)) {
 	    sscanf(s + 2, "%31[^ =]", longopt);
-	    /* sscanf(s + 2, "%31s", longopt); */
 	    match = valid_long_opt(ci, longopt);
 	    if (match > 0) {
 		/* recognized an acceptable option flag */
@@ -755,7 +758,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 
 	if (match > 0) {
 	    gretl_delete(s, 0, 2 + strlen(longopt));
-	    if (*s == '=' && sscanf(s + 1, "%31[^ =]", optval) == 1) {
+	    if (*s == '=' && sscanf(s + 1, "%63[^ =]", optval) == 1) {
 		if (valid_optval(ci, match, optval)) {
 		    gretl_delete(s, 0, 1 + strlen(optval));
 		}

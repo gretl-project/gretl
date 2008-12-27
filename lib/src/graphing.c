@@ -218,7 +218,7 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 {
     GptFlags flags = 0;
 
-    if (opt & OPT_B) {
+    if (opt & (OPT_B | OPT_F)) {
 	flags |= GPT_BATCH;
     }
 
@@ -1329,13 +1329,20 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	    err = E_FOPEN;
 	}
     } else if (flags & GPT_BATCH) {
-	char fname[FILENAME_MAX];
+	const char *optname = get_optval_string(GNUPLOT, OPT_F);
 
-	if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
-	    sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(), 
-		    ++gretl_plot_count);
-	    set_gretl_plotfile(fname);
-	} 
+	if (optname != NULL && *optname != '\0') {
+	    /* user gave --filename=<value> */
+	    set_gretl_plotfile(optname);
+	} else {
+	    char fname[FILENAME_MAX];
+
+	    if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
+		sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(), 
+			++gretl_plot_count);
+		set_gretl_plotfile(fname);
+	    } 
+	}
 	plotfile = gretl_plotfile();
 	*fpp = gretl_fopen(plotfile, "w");
 	if (*fpp == NULL) {
