@@ -2367,7 +2367,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_adjustment_value_changed(GTK_ADJUSTMENT(rset->adj1));
 
     /* graph style selection */
-    if (1) {
+    if (pmod->ci != NLS) {
 	static const char *strs[] = {
 	    N_("error bars"),
 	    N_("low and high lines"),

@@ -986,6 +986,11 @@ int genr_is_print (const parser *p)
     return (p->flags & P_PRINT);
 }
 
+int genr_is_autoregressive (const parser *p)
+{
+    return (p->flags & P_AUTOREG);
+}
+
 void genr_set_na_check (parser *p)
 {
     p->flags |= P_NATEST;

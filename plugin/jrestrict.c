@@ -755,7 +755,7 @@ enum {
     S_{00} - S_{01} \beta\alpha' - \alpha\beta' S_{10} +
        \alpha\beta' S_{11} \beta\alpha'
 
-    then invert into iOmega.
+    then invert into iOmega if wanted.
  */
 
 static int make_Omega (Jwrap *J, int code)

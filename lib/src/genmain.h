@@ -162,6 +162,8 @@ int genr_function_word (const char *s);
 
 int genr_is_print (const GENERATOR *p);
 
+int genr_is_autoregressive (const GENERATOR *p);
+
 void genr_set_na_check (GENERATOR *genr);
 
 void genr_unset_na_check (GENERATOR *genr);

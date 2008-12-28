@@ -2507,6 +2507,7 @@ nlspec_set_regression_function (nlspec *spec, const char *fnstr,
 	    flen = strlen(vname) + strlen(rhs) + 6;
 	    spec->nlfunc = malloc(flen);
 	    if (spec->nlfunc != NULL) {
+		/* the equation defining the NLS residual */
 		sprintf(spec->nlfunc, "%s - (%s)", vname, rhs);
 	    }
 	}
