@@ -296,7 +296,14 @@ static void maybe_set_utf_flag (PRN *prn)
     static int utf_font = -1;
 
     if (utf_font < 0) {
-	utf_font = font_has_minus(fixed_font);
+	const gchar *cset;
+
+	if (!g_get_charset(&cset)) {
+	    /* system does not use UTF-8 */
+	    utf_font = 0;
+	} else {
+	    utf_font = font_has_minus(fixed_font);
+	}
     }
 
     if (utf_font > 0) {

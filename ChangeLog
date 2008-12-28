@@ -51,6 +51,7 @@ version 1.8.0, in progress
   provides a clone of the model specification
 - New command "intreg": implements interval regression
 - Several updates to the documentation
+- Fix bug 2472732
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
