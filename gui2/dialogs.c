@@ -2268,6 +2268,8 @@ static void adjust_fcast_k (GtkSpinButton *spin, int *pk)
     *pk = gtk_spin_button_get_value(spin);
 }
 
+#define fcast_errs_ok(m) (m->ci != NLS || !gretl_model_get_int(m, "dynamic"))
+
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
 		     int *k, int pmin, int pmax, int *p,
@@ -2402,7 +2404,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     G_CALLBACK(toggle_show_fitvals), optp);
 
     /* graph style selection */
-    if (pmod->ci != NLS) {
+    if (fcast_errs_ok(pmod)) {
 	static const char *strs[] = {
 	    N_("error bars"),
 	    N_("low and high lines"),
