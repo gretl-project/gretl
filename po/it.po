@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-27 11:59-0500\n"
-"PO-Revision-Date: 2008-12-25 20:30+0100\n"
+"PO-Revision-Date: 2008-12-29 15:47+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4292,9 +4292,8 @@ msgid "A value < 10 may indicate weak instruments"
 msgstr "Un valore inferiore a 10 può indicare strumenti deboli"
 
 #: lib/src/modelprint.c:780
-#, fuzzy
 msgid "Instrumented"
-msgstr "Strumenti"
+msgstr "Con strumenti"
 
 #: lib/src/modelprint.c:781 gui2/selector.c:3171 gui2/selector.c:5756
 msgid "Instruments"
@@ -5159,9 +5158,8 @@ msgstr ""
 "Per le variabili '%s' e '%s'\n"
 
 #: lib/src/nonparam.c:313
-#, fuzzy
 msgid "Spearman's rank correlation is undefined\n"
-msgstr "Coefficiente di correlazione di rango di Spearman (rho) = %.8f\n"
+msgstr "Il coefficiente di correlazione di rango di Spearman non è definito\n"
 
 #: lib/src/nonparam.c:317
 #, c-format
@@ -7897,9 +7895,8 @@ msgid "The data set contains no suitable index variables"
 msgstr "Il dataset non contiene adeguate variabili indice"
 
 #: gui2/datawiz.c:1590
-#, fuzzy
 msgid "start entering data values"
-msgstr "Ci sono valori mancanti nei dati"
+msgstr "Inizia a inserire valori dati"
 
 #: gui2/datawiz.c:1861
 msgid "Data structure wizard"
@@ -10395,9 +10392,8 @@ msgid "_Copy"
 msgstr "_Copia"
 
 #: gui2/gui_utils.c:148
-#, fuzzy
 msgid "_Modify model..."
-msgstr "Modello _between"
+msgstr "_Modifica modello..."
 
 #: gui2/gui_utils.c:150 gui2/gui_utils.c:274
 msgid "_Tests"
@@ -10697,9 +10693,8 @@ msgid "_Error sum of squares"
 msgstr "_Somma dei quadrati degli errori"
 
 #: gui2/gui_utils.c:2037
-#, fuzzy
 msgid "_Standard error of the regression"
-msgstr "Errore standard della regressione"
+msgstr "_Errore standard della regressione"
 
 #: gui2/gui_utils.c:2042
 msgid "_R-squared"
@@ -12251,7 +12246,7 @@ msgstr "o ritardi specifici"
 
 #: gui2/selector.c:3792
 msgid "Bits per floating-point value"
-msgstr ""
+msgstr "Bit per i valori in virgola mobile"
 
 #: gui2/selector.c:3832
 msgid "Robust standard errors/intervals"
@@ -13865,7 +13860,7 @@ msgstr "Genera output di debug"
 #: plugin/interval.c:216
 #, c-format
 msgid "Obs %d: lower bound (%g) exceeds upper (%g)"
-msgstr ""
+msgstr "Oss. %d: il limite inferiore (%g) eccede quello superiore (%g)"
 
 #: plugin/johansen.c:202
 msgid "renormalized beta"
