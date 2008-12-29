@@ -27,6 +27,12 @@ typedef enum {
     FC_KSTEP
 } ForecastMethod;
 
+typedef enum {
+    FC_AUTO_OK    = 1 << 0,
+    FC_DYNAMIC_OK = 1 << 1,
+    FC_ADDOBS_OK  = 1 << 2
+} ForecastFlags;
+
 struct FITRESID_ {
     int model_ID;
     int asymp;
@@ -64,8 +70,7 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt, PRN *prn);
 
 void forecast_options_for_model (MODEL *pmod, const double **Z,
-				 const DATAINFO *pdinfo,
-				 int *dyn_ok, int *add_obs_ok,
+				 const DATAINFO *pdinfo, int *flags,
 				 int *dt2max, int *st2max);
 
 gretl_matrix *get_forecast_matrix (int idx, int *err);

@@ -2317,7 +2317,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
 	if (obs == NULL) {
 	    err = 1;
 	} else {
-	    err = plot_fcast_errs(t0, fr->t2, obs, 
+	    err = plot_fcast_errs(t0, fr->t2, t0, obs, 
 				  fr->actual, fr->fitted, NULL, 
 				  fr->depvar, (ts)? pdinfo->pd : 0,
 				  OPT_NONE);
@@ -2435,7 +2435,10 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 	if (obs == NULL) {
 	    err = 1;
 	} else {
-	    err = plot_fcast_errs(fr->t0, fr->t2, obs, 
+	    /* yhmin is the first obs at which to start plotting y-hat */
+	    int yhmin = (opt & OPT_H)? fr->t0 : fr->t1;
+
+	    err = plot_fcast_errs(fr->t0, fr->t2, yhmin, obs, 
 				  fr->actual, fr->fitted, maxerr, 
 				  fr->depvar, (ts)? pdinfo->pd : 0,
 				  opt);

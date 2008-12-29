@@ -1360,12 +1360,12 @@ int out_of_sample_info (int add_ok, int *t2)
 
 void gui_do_forecast (GtkAction *action, gpointer p) 
 {
-    static gretlopt gopt = OPT_P;
+    static gretlopt gopt = OPT_P | OPT_H;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
     int t2, t1 = 0;
-    int dyn_ok, add_obs_ok;
+    int flags = 0;
     int premax, pre_n = 0;
     int t1min = 0;
     int rolling = 0, k = 1;
@@ -1377,10 +1377,10 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     int resp, err = 0;
 
     /* try to figure which options might be applicable */
-    forecast_options_for_model(pmod, (const double **) Z, datainfo, &dyn_ok, 
-			       &add_obs_ok, &dt2, &st2);
+    forecast_options_for_model(pmod, (const double **) Z, datainfo, 
+			       &flags, &dt2, &st2);
 
-    if (dyn_ok) {
+    if (flags & (FC_DYNAMIC_OK | FC_AUTO_OK)) {
 	t2 = dt2;
     } else {
 	t2 = st2;
@@ -1389,7 +1389,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     /* if no out-of-sample obs are available in case of time-
        series data, alert the user */
     if (t2 <= pmod->t2 && dataset_is_time_series(datainfo)) {
-	err = out_of_sample_info(add_obs_ok, &t2);
+	err = out_of_sample_info(flags & FC_ADDOBS_OK, &t2);
 	if (err) {
 	    return;
 	}
@@ -1418,7 +1418,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     resp = forecast_dialog(t1min, t2, &t1,
 			   0, t2, &t2, &k,
 			   0, premax, &pre_n,
-			   dyn_ok, &gopt, pmod);
+			   flags, &gopt, pmod);
     unset_window_busy(vwin);
 
     if (resp < 0) {

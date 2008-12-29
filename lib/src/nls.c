@@ -40,9 +40,9 @@
 #define ML_DEBUG 0
 
 enum {
-    NUMERIC_DERIVS,
-    ANALYTIC_DERIVS
-} nls_modes;
+    ANALYTIC_DERIVS = 1 << 0,
+    NLS_AUTOREG     = 1 << 1
+} nls_flags;
 
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter */
@@ -61,12 +61,25 @@ struct parm_ {
 #define matrix_deriv(s,i) (s->params[i].dmat != NULL)
 #define scalar_deriv(s,i) (gretl_is_scalar(s->params[i].dname))
 
-#define numeric_mode(s) (s->mode == NUMERIC_DERIVS)
+#define numeric_mode(s) (!(s->flags & ANALYTIC_DERIVS))
+#define analytic_mode(s) (s->flags & ANALYTIC_DERIVS)
 
 /* file-scope global variables */
 
 static nlspec private_spec;
 static integer one = 1;
+
+static char *adjust_saved_nlfunc (char *s);
+
+static void set_numeric_mode (nlspec *s)
+{
+    s->flags &= ~ANALYTIC_DERIVS;
+}
+
+static void set_analytic_mode (nlspec *s)
+{
+    s->flags |= ANALYTIC_DERIVS;
+}
 
 static void destroy_genrs_array (GENERATOR **genrs, int n)
 {
@@ -117,6 +130,40 @@ static int check_derivative_matrix (int i, gretl_matrix *m,
     return 0;
 }
 
+static int nls_dynamic_check (nlspec *s, char *formula)
+{
+    GENERATOR *genr;
+    double *y;
+    int t, err = 0;
+
+    /* back up the dependent variable */
+    y = copyvec((*s->Z)[s->dv], s->dinfo->n);
+    if (y == NULL) {
+	return E_ALLOC;
+    }
+
+    /* compile the formula for the dependent variable and see
+       if it is autoregressive */
+    strcpy(formula, s->nlfunc);
+    adjust_saved_nlfunc(formula);
+
+    genr = genr_compile(formula, s->Z, s->dinfo, OPT_P, &err);
+
+    if (!err && genr_is_autoregressive(genr)) {
+	s->flags |= NLS_AUTOREG;
+    }
+
+    /* restore the dependent variable */
+    for (t=0; t<s->dinfo->n; t++) {
+	(*s->Z)[s->dv][t] = y[t];
+    }    
+
+    destroy_genr(genr);
+    free(y);
+
+    return err;
+}
+
 /* we "compile" the required equations first, so we can subsequently
    execute the compiled versions for maximum efficiency 
 */
@@ -130,7 +177,7 @@ static int nls_genr_setup (nlspec *s)
     int v, err = 0;
 
     s->ngenrs = 0;
-    np = (s->mode == ANALYTIC_DERIVS)? s->nparam : 0;
+    np = (analytic_mode(s))? s->nparam : 0;
     ngen = s->naux + np;
     if (s->nlfunc != NULL) {
 	ngen++;
@@ -163,6 +210,9 @@ static int nls_genr_setup (nlspec *s)
 	    if (*s->lhname != '\0') {
 		sprintf(formula, "%s = %s", s->lhname, s->nlfunc);
 	    } else {
+		if (s->ci == NLS && dataset_is_time_series(s->dinfo)) {
+		    err = nls_dynamic_check(s, formula);
+		}
 		sprintf(formula, "$nl_y = %s", s->nlfunc);
 	    }
 	} else {
@@ -178,8 +228,10 @@ static int nls_genr_setup (nlspec *s)
 	    dname = s->params[j].dname;
 	    j++;
 	}
-	
-	genrs[i] = genr_compile(formula, s->Z, s->dinfo, OPT_P, &err);
+
+	if (!err) {
+	    genrs[i] = genr_compile(formula, s->Z, s->dinfo, OPT_P, &err);
+	}
 
 	if (err) {
 	    fprintf(stderr, "genr_compile: genrs[%d] = %p, err = %d\n", i, 
@@ -1358,7 +1410,7 @@ static void add_coeffs_to_model (MODEL *pmod, double *coeff)
 
 /* convert (back) from '%s - (%s)' to '%s = %s' */
 
-static void adjust_saved_nlfunc (char *s)
+static char *adjust_saved_nlfunc (char *s)
 {
     char *p = strchr(s, '-');
 
@@ -1374,7 +1426,9 @@ static void adjust_saved_nlfunc (char *s)
     p = strrchr(s, ')');
     if (p != NULL) {
 	*p = '\0';
-    }    
+    }  
+
+    return s;
 }
 
  /* attach some additional info to make it possible to
@@ -1631,7 +1685,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	sprintf(gdinfo->varname[v], "gnr_x%d", i + 1);
     }
 
-    if (spec->mode == ANALYTIC_DERIVS) {
+    if (analytic_mode(spec)) {
 	for (i=0; i<spec->ncoeff; i++) {
 	    v = i + 2;
 	    for (t=0; t<gdinfo->t1; t++) {
@@ -1710,6 +1764,9 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	gretl_model_set_int(&gnr, "iters", iters);
 	gretl_model_set_double(&gnr, "tol", spec->tol);
 	transcribe_nls_function(&gnr, spec->nlfunc);
+	if (spec->flags & NLS_AUTOREG) {
+	    gretl_model_set_int(&gnr, "dynamic", 1);
+	}
     }
 
     destroy_dataset(gZ, gdinfo);
@@ -1871,7 +1928,7 @@ static void clear_nlspec (nlspec *spec)
     free(spec->hessvec);
     spec->hessvec = NULL;
 
-    spec->mode = NUMERIC_DERIVS;
+    spec->flags = 0;
     spec->opt = OPT_NONE;
 
     spec->dv = 0;
@@ -2066,7 +2123,7 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 {
     int err = 0;
 
-    if (s->mode == ANALYTIC_DERIVS) {
+    if (analytic_mode(s)) {
 	integer m = s->nobs;
 	integer n = s->ncoeff;
 	integer ldjac = m; 
@@ -2076,7 +2133,7 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     }
 
     if (!err) {
-	BFGS_GRAD_FUNC gradfun = (s->mode == ANALYTIC_DERIVS)?
+	BFGS_GRAD_FUNC gradfun = (analytic_mode(s))?
 	    get_mle_gradient : NULL;
 	int maxit = 500;
 
@@ -2346,7 +2403,7 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
     free(name);
 
     if (!err) {
-	spec->mode = ANALYTIC_DERIVS;
+	set_analytic_mode(spec);
     }
 
     return err;
@@ -2596,7 +2653,7 @@ int nl_parse_line (int ci, const char *line, const double **Z,
 	    err = E_PARSE;
 	} else {
 	    if (!strncmp(line, "deriv", 5)) {
-		if (s->mode != ANALYTIC_DERIVS && s->params != NULL) {
+		if (numeric_mode(s) && s->params != NULL) {
 		    strcpy(gretl_errmsg, _("You cannot supply both a \"params\" "
 					   "line and analytical derivatives"));
 		    err = E_PARSE;
@@ -2604,7 +2661,7 @@ int nl_parse_line (int ci, const char *line, const double **Z,
 		    err = nlspec_add_param_with_deriv(s, line, Z, pdinfo);
 		}
 	    } else if (!strncmp(line, "params", 6)) {
-		if (s->mode != ANALYTIC_DERIVS) {
+		if (numeric_mode(s)) {
 		    err = nlspec_add_params_from_line(s, line + 6, Z, pdinfo);
 		} else {
 		    pprintf(prn, _("Analytical derivatives supplied: "
@@ -2762,7 +2819,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 
     if (opt & OPT_N) {
 	/* ignore any analytical derivs */
-	spec->mode = NUMERIC_DERIVS;
+	set_numeric_mode(spec);
     }
 
     if (numeric_mode(spec) && spec->nparam == 0 && spec->ci != GMM) {
@@ -2868,7 +2925,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     free(fvec);
     free(jac);
 
-    if (spec->nvec > 0 && spec->mode == ANALYTIC_DERIVS) {
+    if (spec->nvec > 0 && analytic_mode(spec)) {
 	destroy_private_matrices();
     }
 
@@ -2985,7 +3042,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->hessvec = NULL;
 
     spec->ci = ci;
-    spec->mode = NUMERIC_DERIVS;
+    spec->flags = 0;
     spec->opt = OPT_NONE;
 
     spec->dv = 0;

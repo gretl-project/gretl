@@ -31,6 +31,7 @@
 #include "selector.h"
 #include "gretl_panel.h"
 #include "texprint.h"
+#include "forecast.h"
 
 #include <errno.h>
 
@@ -2243,6 +2244,20 @@ static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
     }
 }
 
+static void toggle_activate_fitvals (GtkAdjustment *adj, GtkWidget *w)
+{
+    gtk_widget_set_sensitive(w, gtk_adjustment_get_value(adj) > 0);
+}
+
+static void toggle_show_fitvals (GtkToggleButton *b, gretlopt *opt)
+{
+    if (gtk_toggle_button_get_active(b)) {
+	*opt |= OPT_H;
+    } else {
+	*opt &= ~OPT_H;
+    }
+}
+
 static void fcast_k_sensitivity (GtkToggleButton *button, GtkWidget *w)
 {
     gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(button));
@@ -2256,7 +2271,7 @@ static void adjust_fcast_k (GtkSpinButton *spin, int *pk)
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
 		     int *k, int pmin, int pmax, int *p,
-		     int dyn, gretlopt *optp,
+		     int flags, gretlopt *optp,
 		     MODEL *pmod)
 {
     const char *pre_txt = N_("Number of pre-forecast observations "
@@ -2300,15 +2315,14 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       tmp, TRUE, TRUE, 0);
     
-    if (dyn == DYNAMIC_NA) {
+    if (!flags & (FC_AUTO_OK | FC_DYNAMIC_OK)) {
 	deflt = 2;
-    } else if (dyn == DYNAMIC_FORCED) {
-	deflt = 1;
-    }
+    } 
 
     /* forecast-type options */
     for (i=0; i<nopts; i++) {
 	GSList *group;
+	int opt_ok = 1;
 
 	if (button != NULL) {
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
@@ -2334,14 +2348,20 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, TRUE, TRUE, 0);
 
-	if (deflt == i) {
+	if (i == deflt) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	    ret = i;
 	}
 
-	if (dyn != DYNAMIC_OK && i < 2) {
-	    gtk_widget_set_sensitive(button, FALSE);
-	} else {
+	if (i < 2 && !(flags & FC_DYNAMIC_OK)) {
+	    opt_ok = 0;
+	}
+
+	if (i == 0 && (flags & FC_AUTO_OK)) {
+	    opt_ok = 1;
+	}
+	    
+	if (opt_ok) {
 	    if (i >= 2) {
 		g_signal_connect(G_OBJECT(button), "clicked",
 				 G_CALLBACK(adjust_fcast_t1), 
@@ -2351,6 +2371,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 			     G_CALLBACK(set_radio_opt), &ret);
 	    g_object_set_data(G_OBJECT(button), "action", 
 			      GINT_TO_POINTER(i));
+	} else {
+	    gtk_widget_set_sensitive(button, FALSE);
 	}
     }
 
@@ -2365,6 +2387,19 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		       hbox, TRUE, TRUE, 5);
     /* get the max pre-forecast obs right */
     gtk_adjustment_value_changed(GTK_ADJUSTMENT(rset->adj1));
+
+    /* show fitted values, pre-forecast? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_check_button_new_with_label(_("Show fitted values for pre-forecast range"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+		       hbox, TRUE, TRUE, 5);
+    gtk_widget_set_sensitive(tmp, *p > 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (*optp & OPT_H));
+    g_signal_connect(GTK_ADJUSTMENT(rset->p), "value-changed",
+		     G_CALLBACK(toggle_activate_fitvals), tmp);
+    g_signal_connect(G_OBJECT(tmp), "toggled",
+		     G_CALLBACK(toggle_show_fitvals), optp);
 
     /* graph style selection */
     if (pmod->ci != NLS) {

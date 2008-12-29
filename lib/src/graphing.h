@@ -188,7 +188,7 @@ int
 gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
 		     gretlopt opt);
 
-int plot_fcast_errs (int t1, int t2, const double *obs, 
+int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
 		     int tsfreq, gretlopt opt);

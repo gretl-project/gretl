@@ -27,7 +27,7 @@ typedef struct ocset_ ocset;
 struct _nlspec {
     int ci;             /* NLS, MLE or GMM */
     int generr;         /* error from genr */
-    int mode;           /* derivatives: numeric or analytic */
+    int flags;          /* numeric or analytic derivatives, etc. */
     gretlopt opt;       /* can include OPT_V for verbose output; if ci = MLE
 			   can also include OPT_H (Hessian) or OPT_R (QML)
 			   to control the estimator of the variance matrix;

@@ -263,12 +263,6 @@ enum auto_dummies {
     PANEL_TIME_DUMMIES
 };
 
-enum dynamic_forecast_status {
-    DYNAMIC_NA,
-    DYNAMIC_OK,
-    DYNAMIC_FORCED
-};
-
 #define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
                                  c == ALL_SUMMARY || c == AFR || \
 	                         c == CORR || c == ALL_CORR || \

@@ -610,10 +610,13 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
     return err;
 }
 
-/* Generate forecasts from nonlinear least squares model, using
-   the string specification of the regression function that
-   was saved as data on the model (see nls.c).  For now we don't
-   attempt to calculate forecast error variance.
+/* Generate forecasts from nonlinear least squares model, using the
+   string specification of the regression function that was saved as
+   data on the model (see nls.c).  If the NLS formula is dynamic and
+   the user has not requested a static forecast, we do an
+   autoregressive genr out of sample.  If we're doing a static
+   forecast we add a simple-minded forecast error, namely the standard
+   error of the NLS regression.
 */
 
 static int nls_fcast (Forecast *fc, const MODEL *pmod, 
@@ -621,33 +624,78 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 {
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
-    const char *nlfunc;    
+    int fcv = pdinfo->v;
+    int yno = 0;
+    const char *nlfunc;   
+    double *y = NULL;
     char formula[MAXLINE];
-    int t, oldv = pdinfo->v;
-    int err = 0;
+    int t, err = 0;
 
     nlfunc = gretl_model_get_data(pmod, "nl_regfunc");
     if (nlfunc == NULL) {
 	err = E_DATA;
     }
 
-    if (!err) {
-	pdinfo->t1 = fc->t1;
-	pdinfo->t2 = fc->t2;
-	sprintf(formula, "$nl_y = %s", nlfunc);
-	err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+    if (fc->method == FC_AUTO) {
+	yno = pmod->list[1];
+	y = copyvec((*pZ)[yno], pdinfo->n);
+	if (y == NULL) {
+	    err = E_ALLOC;
+	} 
     }
 
     if (!err) {
-	/* transcribe values from last generated var to target */
-	for (t=fc->t1; t<=fc->t2; t++) {
-	    fc->yhat[t] = (*pZ)[oldv][t];
+	/* upper limit of static forecast */
+	int t2 = (fc->method == FC_STATIC)? fc->t2 : pmod->t2;
+
+	if (t2 >= fc->t1) {
+	    /* non-null static range */
+	    pdinfo->t1 = fc->t1;
+	    pdinfo->t2 = t2;
+	    sprintf(formula, "$nl_y = %s", nlfunc);
+	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+	    if (!err) {
+		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		    fc->yhat[t] = (*pZ)[fcv][t];
+		}
+	    }
 	}
-	err = dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
+
+	if (!err && fc->method == FC_AUTO && fc->t2 > pmod->t2) {
+	    /* dynamic forecast out of sample */
+	    pdinfo->t1 = pmod->t2 + 1;
+	    pdinfo->t2 = fc->t2;
+	    strcpy(formula, pmod->depvar);
+	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+	    if (!err) {
+		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		    fc->yhat[t] = (*pZ)[yno][t];
+		}
+	    }
+	}
+    }
+
+    if (pdinfo->v > fcv) {
+	err = dataset_drop_last_variables(pdinfo->v - fcv, pZ, pdinfo);
     }
 
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
+
+    if (y != NULL) {
+	/* restore original dependent variable */
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[yno][t] = y[t];
+	}
+	free(y);
+    }
+
+    if (!err && fc->method == FC_STATIC && fc->sderr != NULL) {
+	/* by request, but is it a good idea? */
+	for (t=fc->t1; t<=fc->t2; t++) {
+	    fc->sderr[t] = pmod->sigma;
+	}
+    }
 
     return err;
 }
@@ -1670,6 +1718,8 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod,
     return 0;
 }
 
+#define dynamic_nls(m) (m->ci == NLS && gretl_model_get_int(m, "dynamic"))
+
 static int get_forecast_method (Forecast *fc,
 				MODEL *pmod, 
 				const DATAINFO *pdinfo,
@@ -1677,18 +1727,15 @@ static int get_forecast_method (Forecast *fc,
 {
     int dyn_ok = 0;
     int dyn_errs_ok = 0;
-    int err = 0;
+    int err;
+
+    err = incompatible_options(opt, OPT_D | OPT_S);
+    if (err) {
+	return err;
+    }
 
     fc->dvlags = NULL;
     fc->method = FC_STATIC;
-
-    if ((opt & OPT_D) && (opt & OPT_S)) {
-	/* conflicting options: remove them */
-	fputs("got conflicting options, static and dynamic\n", stderr);
-	opt &= ~OPT_D;
-	opt &= ~OPT_S;
-	err = 1;
-    }
 
     /* do setup for possible lags of the dependent variable,
        unless OPT_S for "static" has been given */
@@ -1698,21 +1745,27 @@ static int get_forecast_method (Forecast *fc,
     }
 
     if (!(opt & OPT_S)) {
-	if (pmod->ci == ARMA || fc->dvlags != NULL) {
-	    /* dynamic forecast is possible, and not ruled out by 
-	       "static" option */
+	/* user didn't give the "static" option */
+	if (pmod->ci == ARMA || fc->dvlags != NULL || dynamic_nls(pmod)) {
+	    /* dynamic forecast is possible */
 	    dyn_ok = 1;
 	}
 	if (SIMPLE_AR_MODEL(pmod->ci) || pmod->ci == GARCH) {
 	    dyn_errs_ok = 1;
 	}
-    }    
+    } 
 
     if (!dyn_ok && (opt & OPT_D)) {
 	/* "dynamic" option given, but can't be honored */
 	fputs("requested dynamic option, but it is not applicable\n", stderr);
-	opt &= ~OPT_D;
-	err = 1;
+	return E_NOTIMP;
+    }
+
+    /* NLS: we can only do dynamic out of sample (fc->t1 > pmod->t2) */
+    if (pmod->ci == NLS && dyn_ok && (opt & OPT_D)) {
+	if (fc->t1 <= pmod->t2) {
+	    return E_NOTIMP;
+	}
     }
 
     if (opt & OPT_D) {
@@ -1781,9 +1834,9 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     int dummy_AR = 0;
     int DM_errs = 0;
     int dyn_errs = 0;
-    int tdyn = 0;
+    int asy_errs = 0;
     int nf = 0;
-    int t, err = 0;
+    int t, err;
 
     forecast_init(&fc);
 
@@ -1791,7 +1844,14 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     fc.t2 = fr->t2;
     fc.model_t2 = pmod->t2;
 
-    get_forecast_method(&fc, pmod, pdinfo, opt);
+    err = get_forecast_method(&fc, pmod, pdinfo, opt);
+    if (err) {
+	return err;
+    }
+
+    if (pmod->ci == NLS && fc.method == FC_STATIC) {
+	asy_errs = 1;
+    }
 
     if (!FCAST_SPECIAL(pmod->ci)) {
 	if (!AR_MODEL(pmod->ci) && fc.dvlags == NULL) {
@@ -1818,7 +1878,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	}
     }
 
-    if (DM_errs || dyn_errs) {
+    if (DM_errs || dyn_errs || asy_errs) {
 	err = fit_resid_add_sderr(fr);
     }
 
@@ -1833,6 +1893,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	fc_add_eps(&fc, pdinfo->n);
     }
 
+    /* compute the actual forecast */
     if (DM_errs) {
 	err = static_fcast_with_errs(&fc, pmod, Z, pdinfo);
     } else if (pmod->ci == NLS) {
@@ -1847,15 +1908,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = linear_fcast(&fc, pmod, Z, pdinfo);
     }
 
-    /* start of dynamic range */
-    if (fc.method == FC_DYNAMIC) {
-	tdyn = fr->t1;
-    } else if (fc.method == FC_STATIC) {
-	tdyn = fr->t2 + 1;
-    } else {
-	tdyn = pmod->t2 + 1;
-    }
-
+    /* free any auxiliary info */
     forecast_free(&fc);
 
     if (dummy_AR) {
@@ -1887,7 +1940,6 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	}
 
 	fit_resid_set_dec_places(fr);
-
 	strcpy(fr->depvar, pdinfo->varname[yno]);
 	fr->df = pmod->dfd;
     }
@@ -2861,10 +2913,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
  * @pmod: the model from which forecasts are wanted.
  * @Z: data array.
  * @pdinfo: dataset information.
- * @dyn_ok: location to receive 1 if the "dynamic" option is
- * applicable, 0 otherwise.
- * @add_obs_ok: location to receive 1 if it looks as if we can
- * extend the forecast by adding blank observations, 0 otherwise.
+ * @flags: location to receive flags from among #ForecastFlags.
  * @dt2max: location to receive the last observation that can
  * be supported for a dynamic forecast.
  * @st2max: location to receive the last observation that can
@@ -2875,42 +2924,42 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
  */
 
 void forecast_options_for_model (MODEL *pmod, const double **Z,
-				 const DATAINFO *pdinfo,
-				 int *dyn_ok, int *add_obs_ok,
+				 const DATAINFO *pdinfo, int *flags, 
 				 int *dt2max, int *st2max)
 {
     int *dvlags = NULL;
     int exo = 1;
 
+    *flags = 0;
+
     if (pmod->ci == NLS) {
 	/* we'll try winging it! */
-	*dyn_ok = 0;
-	*add_obs_ok = 1;
+	if (gretl_model_get_int(pmod, "dynamic") && pmod->t2 < pdinfo->n - 1) {
+	    *flags |= FC_AUTO_OK;
+	}
 	return;
     }
 
-    *dyn_ok = 0;
-    *add_obs_ok = 0;
     *dt2max = pmod->t2;
     *st2max = pmod->t2;
 
     if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	*dyn_ok = 1;
+	*flags |= FC_DYNAMIC_OK;
     } else if (AR_MODEL(pmod->ci)) {
-	*dyn_ok = 1;
+	*flags |= FC_DYNAMIC_OK;
     } else if (dataset_is_time_series(pdinfo) &&
 	       has_depvar_lags(pmod, pdinfo)) {
-	*dyn_ok = 1;
+	*flags |= FC_DYNAMIC_OK;
     }
 
-    if (*dyn_ok) {
+    if (*flags & FC_DYNAMIC_OK) {
 	int err = process_lagged_depvar(pmod, pdinfo, &dvlags);
 
 	if (!err) {
 	    exo = has_real_exog_regressors(pmod, dvlags, Z, pdinfo);
 	}
 	if (!exo) {
-	    *add_obs_ok = 1;
+	    *flags |= FC_ADDOBS_OK;
 	    *dt2max = pdinfo->n - 1;
 	}
     } 

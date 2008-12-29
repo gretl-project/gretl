@@ -3232,7 +3232,7 @@ static void print_confband_data (const double *x, const double *y,
     fputs("e\n", fp);
 }
 
-int plot_fcast_errs (int t1, int t2, const double *obs, 
+int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
 		     int tsfreq, gretlopt opt)
@@ -3348,23 +3348,23 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 
     if (use_fill) {
 	if (do_errs) {
-	    print_confband_data(obs, yhat, maxerr, t1, t2, CONF_FILL, fp);
+	    print_confband_data(obs, yhat, maxerr, yhmin, t2, CONF_FILL, fp);
 	}
 	if (depvar_present) {
 	    print_y_data(obs, depvar, t1, t2, fp);
 	}
-	print_y_data(obs, yhat, t1, t2, fp);
+	print_y_data(obs, yhat, yhmin, t2, fp);
     } else {
 	if (depvar_present) {
 	    print_y_data(obs, depvar, t1, t2, fp);
 	}
-	print_y_data(obs, yhat, t1, t2, fp);
+	print_y_data(obs, yhat, yhmin, t2, fp);
 	if (do_errs) {
 	    if (use_lines) {
-		print_confband_data(obs, yhat, maxerr, t1, t2, CONF_LOW, fp);
-		print_confband_data(obs, yhat, maxerr, t1, t2, CONF_HIGH, fp);
+		print_confband_data(obs, yhat, maxerr, yhmin, t2, CONF_LOW, fp);
+		print_confband_data(obs, yhat, maxerr, yhmin, t2, CONF_HIGH, fp);
 	    } else {
-		print_confband_data(obs, yhat, maxerr, t1, t2, CONF_BARS, fp);
+		print_confband_data(obs, yhat, maxerr, yhmin, t2, CONF_BARS, fp);
 	    }
 	}	
     }
