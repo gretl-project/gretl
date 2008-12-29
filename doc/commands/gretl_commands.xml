@@ -2631,7 +2631,8 @@
 	the <lit>--gamma</lit> option is given, the test for normality is
 	replaced by Locke's nonparametric test for the null hypothesis
 	that the variable follows the gamma distribution; see Locke
-	(1976), Shapiro and Chen (2001).
+	(1976), Shapiro and Chen (2001).  Note that the parameterization
+	of the gamma distribution used in gretl is (shape, scale).
       </para>
       <para>
 	In interactive mode a graph of the distribution is displayed by
@@ -2669,6 +2670,15 @@
 	the left-most bin start at 100 and impose a bin width of 200).
 	Then make a second pass where you specify the left-hand limit and
 	bin width.
+      </para>
+      <para>
+	This dialog also allows you to select a theoretical distribution to be
+	plotted against the data: either the normal or the gamma.  If the
+	normal option is selected the Doornik&ndash;Hansen test for normality
+	is computed.  If the gamma option is selected, gretl computes Locke's
+	nonparametric test for the null hypothesis that the variable follows
+	the gamma distribution.  Note that the parameterization of the gamma
+	distribution used in gretl is (shape, scale).
       </para>
     </description>
 
@@ -8999,6 +9009,14 @@
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
         </option>
+	<option>
+	  <flag>--liml</flag>
+	  <effect>use Limited Information Maximum Likelihood</effect>
+        </option>
+	<option>
+	  <flag>--gmm</flag>
+	  <effect>use the Generalized Method of Moments</effect>
+        </option>
       </options>      
       <examples>
         <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
@@ -9007,14 +9025,14 @@
 
     <description>
       <para context="cli">
-	Computes Instrumental Variables estimates using two-stage least
-	squares (TSLS): <repl>depvar</repl> is the dependent variable,
-	<repl>indepvars</repl> is the list of independent variables (which is
-	presumed to include some endogenous regressors); and
-	<repl>instruments</repl> is the combined list of exogenous and
-	predetermined variables. If the <repl>instruments</repl> list is not
-	at least as long as <repl>indepvars</repl>, the model is not
-	identified.</para>
+	Computes Instrumental Variables estimates, by default using two-stage
+	least squares (TSLS) but see below for further options.  The dependent
+	variable is <repl>depvar</repl>, <repl>indepvars</repl> is the list of
+	independent variables (which is presumed to include some endogenous
+	regressors); and <repl>instruments</repl> is the combined list of
+	exogenous and predetermined variables. If the <repl>instruments</repl>
+	list is not at least as long as <repl>indepvars</repl>, the model is
+	not identified.</para>
 
       <para context="cli">
 	In the above example, the <lit>y</lit>s are the endogenous variables
@@ -9032,31 +9050,66 @@
       </para>
 
       <para>
-	Output includes the Hausman test and, if the model is
-	over-identified, the Sargan over-identification test.  In the
+	Output for TSLS estimates includes the Hausman test and, if the model
+	is over-identified, the Sargan over-identification test.  In the
 	Hausman test, the null hypothesis is that OLS estimates are
-	consistent, or in other words estimation by means of
-	instrumental variables is not required.  A model of this sort
-	is over-identified if there are more instruments than are
-	strictly required.  The Sargan test is based on an auxiliary
-	regression of the residuals from the two-stage least squares
-	model on the full list of instruments.  The null hypothesis is
-	that all the instruments are valid, and suspicion is thrown on
-	this hypothesis if the auxiliary regression has a significant
-	degree of explanatory power.  Davidson and MacKinnon (2004,
-	chapter 8) give a good explanation of both tests.
+	consistent, or in other words estimation by means of instrumental
+	variables is not required.  A model of this sort is over-identified if
+	there are more instruments than are strictly required.  The Sargan
+	test is based on an auxiliary regression of the residuals from the
+	two-stage least squares model on the full list of instruments.  The
+	null hypothesis is that all the instruments are valid, and suspicion
+	is thrown on this hypothesis if the auxiliary regression has a
+	significant degree of explanatory power.  Davidson and MacKinnon
+	(2004, chapter 8) give a good explanation of both tests.
       </para>
 
       <para>
-	The R-squared value printed for this sort of model is the
-	square of the correlation between the dependent variable
-	and the fitted values.
+	The R-squared value printed for models estimated via two-stage least
+	squares is the square of the correlation between the dependent
+	variable and the fitted values.
       </para>
+
+      <para context="cli">
+	As alternatives to TSLS, the model may be estimated via Limited
+	Information Maximum Likelihood (the <lit>--liml</lit> option) or via
+	the Generalized Method of Moments (<lit>--gmm</lit> option). Note that
+	if the model is just identified these methods should produce the same
+	results as TSLS, but if it is over-identified the results will differ
+	in general.
+      </para>
+
+      <para context="cli">
+	If GMM estimation is selected, the following additional options become
+	available:
+      </para>
+
+      <ilist>
+	<li>
+	  <para>
+	    <lit>--two-step</lit>: perform two-step GMM rather than the
+	    default of one-step.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>--iterate</lit>: Iterate GMM to convergence.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>--weights=</lit><repl>Wmat</repl>: specify a square matrix of
+	    weights to be used when computing the GMM criterion function. The
+	    dimension of this matrix must equal the number of instruments. The
+	    default is an appropriately sized identity matrix.
+	  </para>
+	</li>	
+      </ilist>
 
     </description>
 
     <gui-access>
-      <menu-path>/Model/Other linear models/Two-Stage least Squares</menu-path>
+      <menu-path>/Model/Other linear models/Two-Stage Least Squares</menu-path>
     </gui-access>
 
   </command>
