@@ -140,7 +140,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_T, "time-series" },
     { GNUPLOT,  OPT_Z, "dummy" },
     { GNUPLOT,  OPT_C, "control" },
-    { GNUPLOT,  OPT_F, "filename" },
+    { GNUPLOT,  OPT_B, "filename" },
     { GRAPH,    OPT_O, "tall" },
     { HECKIT,   OPT_M, "ml" },
     { HECKIT,   OPT_T, "two-step" },
@@ -723,7 +723,7 @@ static int valid_optval (int ci, gretlopt opt, const char *val)
     } else if (ci == IVREG && opt == OPT_W) {
 	push_optparm(ci, opt, val);
 	return 1;
-    } else if (ci == GNUPLOT && opt == OPT_F) {
+    } else if (ci == GNUPLOT && opt == OPT_B) {
 	push_optparm(ci, opt, val);
 	return 1;
     }

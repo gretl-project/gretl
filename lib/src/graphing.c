@@ -218,7 +218,7 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 {
     GptFlags flags = 0;
 
-    if (opt & (OPT_B | OPT_F)) {
+    if (opt & OPT_B) {
 	flags |= GPT_BATCH;
     }
 
@@ -247,7 +247,6 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 	    flags |= GPT_FIT_OMIT;
 	}
 	if (opt & OPT_T) {
-	    fprintf(stderr, "setting GPT_IDX\n");
 	    flags |= GPT_IDX;
 	}
     }
@@ -1329,7 +1328,7 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	    err = E_FOPEN;
 	}
     } else if (flags & GPT_BATCH) {
-	const char *optname = get_optval_string(GNUPLOT, OPT_F);
+	const char *optname = get_optval_string(GNUPLOT, OPT_B);
 
 	if (optname != NULL && *optname != '\0') {
 	    /* user gave --filename=<value> */
@@ -1352,6 +1351,10 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	/* note: gnuplot_init not used in batch mode */
 	err = real_gnuplot_init(code, flags, fpp);
     }
+
+#if GPDEBUG
+    fprintf(stderr, "get_gnuplot_output_file: '%s'\n", gretl_plotfile());
+#endif
 
     return err;
 }

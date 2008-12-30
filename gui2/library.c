@@ -4930,11 +4930,9 @@ void fit_actual_plot (GtkAction *action, gpointer p)
 	plotlist[3] = xvar;
     } else { 
 	/* plot against obs */
-	int ts = dataset_is_time_series(ginfo);
-
 	plotlist[0] -= 1;
 	opt |= OPT_T;
-	if (ts) {
+	if (dataset_is_time_series(ginfo)) {
 	    opt |= OPT_O; /* use lines */
 	}
     } 
