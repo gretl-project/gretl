@@ -3866,17 +3866,6 @@ static NODE *string_var_node (NODE *t, parser *p)
     return ret;
 }
 
-static NODE *loop_index_node (NODE *t, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL && starting(p)) {
-	ret->v.xval = loop_scalar_read(*t->v.str);
-    }
-
-    return ret;
-}
-
 static gretl_matrix *matrix_from_scalars (NODE *t, int m,
 					  int nsep, int seppos,
 					  parser *p)
@@ -5962,9 +5951,6 @@ static NODE *eval (NODE *t, parser *p)
     case MDEF:
 	/* matrix definition */
 	ret = matrix_def_node(t, p);
-	break;
-    case LOOPIDX:
-	ret = loop_index_node(t, p);
 	break;
     case F_OBSNUM:
     case F_ISSERIES:

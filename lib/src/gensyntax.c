@@ -75,8 +75,7 @@ static NODE *newref (parser *p, int t)
 	    n->v.xvec = (*p->Z)[n->vnum];
 	} else {
 	    n->t = t;
-	    if (t == USCALAR || t == UMAT || t == UOBJ || 
-		t == LOOPIDX || t == LIST) {
+	    if (t == USCALAR || t == UMAT || t == UOBJ || t == LIST) {
 		n->v.str = p->idstr;
 	    } else {
 		n->v.idnum = p->idnum;
@@ -324,7 +323,6 @@ static NODE *base (parser *p, NODE *up)
     case MVAR:
     case OBS:
     case LIST:
-    case LOOPIDX:
 	t = newref(p, p->sym);
 	if (matrix_ref_node(p) && unary_apost(p)) {
 	    set_transpose(t);

@@ -10071,8 +10071,8 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 
 /* Calculate X(t)-transpose * X(t-lag) */
 
-static void xtxl (gretl_matrix *wt, const gretl_matrix *X, 
-		 int n, int t, int lag)
+static void xtxlag (gretl_matrix *wt, const gretl_matrix *X, 
+		    int n, int t, int lag)
 {
     double xi, xj;
     int i, j;
@@ -10086,18 +10086,36 @@ static void xtxl (gretl_matrix *wt, const gretl_matrix *X,
     }
 }
 
+/**
+ * gretl_matrix_covariogram:
+ * @X: T x k matrix (typically containing regressors).
+ * @u: T-vector (typically containing residuals), or %NULL.
+ * @w: (p+1)-vector of weights, or %NULL.
+ * @p: lag order >= 0.
+ * @err: location to receive error code.
+ *
+ * Produces the matrix covariogram,
+ *
+ * \sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j}) 
+ *
+ * If @u is not given the u terms are omitted, and if @w
+ * is not given, all the weights are 1.0.
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
+
 gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X, 
 					const gretl_matrix *u,
-					const gretl_matrix *h,
+					const gretl_matrix *w,
 					int p, int *err)
 {
     gretl_matrix *V;
     gretl_matrix *G;
     gretl_matrix *xtj;
-    double uu, hj;
+    double uu;
     int j, k, t, T;
 
-    if (gretl_is_null_matrix(X) || gretl_is_null_matrix(h)) {
+    if (gretl_is_null_matrix(X)) {
 	return NULL;
     }
 
@@ -10109,7 +10127,12 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 	return NULL;
     }
 
-    if (p < 0 || p > T || gretl_vector_get_length(h) != p) {
+    if (p < 0 || p > T) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (w != NULL && gretl_vector_get_length(w) != p + 1) {
 	*err = E_NONCONF;
 	return NULL;
     }
@@ -10126,20 +10149,19 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
     for (j=0; j<=p; j++) {
 	gretl_matrix_zero(G);
 	for (t=j; t<T; t++) {
-	    xtxl(xtj, X, k, t, j);
+	    xtxlag(xtj, X, k, t, j);
 	    if (u != NULL) {
 		uu = u->val[t] * u->val[t-j];
 		gretl_matrix_multiply_by_scalar(xtj, uu);
 	    }
 	    gretl_matrix_add_to(G, xtj);
 	}
-
 	if (j > 0) {
 	    gretl_matrix_add_self_transpose(G);
-	    hj = h->val[j-1];
-	    gretl_matrix_multiply_by_scalar(G, hj);
 	}
-
+	if (w != NULL) {
+	    gretl_matrix_multiply_by_scalar(G, w->val[j]);
+	}
 	gretl_matrix_add_to(V, G);
     }
 

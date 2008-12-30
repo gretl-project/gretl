@@ -1824,12 +1824,7 @@ int get_t_from_obs_string (const char *s, const double **Z,
 	} else {
 	    if (gretl_is_scalar(s)) {
 		t = gretl_scalar_get_value(s);
-	    } else if (strlen(s) == 1) {
-		t = loop_scalar_read(s[0]);
-#if OBS_DEBUG
-		fprintf(stderr, " loop_scalar_read gave t = %d\n", t);
-#endif
-	    }
+	    } 
 
 	    if (t > pdinfo->n) {
 		char try[16];

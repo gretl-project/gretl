@@ -21,7 +21,6 @@
 
 #include "libgretl.h" 
 #include "monte_carlo.h"
-#include "loop_private.h"
 #include "libset.h"
 #include "compat.h"
 #include "cmd_private.h"
@@ -107,7 +106,8 @@ typedef struct {
 enum loop_flags {
     LOOP_PROGRESSIVE = 1 << 0,
     LOOP_VERBOSE     = 1 << 1,
-    LOOP_QUIET       = 1 << 2
+    LOOP_QUIET       = 1 << 2,
+    LOOP_DELVAR      = 1 << 3
 };
 
 struct controller_ {
@@ -134,7 +134,7 @@ struct LOOPSET_ {
     int index;
 
     /* control variables */
-    char ichar;
+    char iname[2];
     int ival;
     char brk;
     char listname[VNAMELEN];
@@ -186,7 +186,6 @@ static void loop_print_free (LOOP_PRINT *lprn);
 static void loop_store_free (LOOP_STORE *lstore);
 static int extend_loop_dataset (LOOP_STORE *lstore);
 static void controller_free (controller *clr);
-static void set_active_loop (LOOPSET *loop);
 
 #define LOOP_BLOCK 32
 
@@ -428,7 +427,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->itermax = 0;
     loop->iter = 0;
     loop->err = 0;
-    loop->ichar = 0;
+    loop->iname[0] = loop->iname[1] = 0;
     loop->ival = 0;
     loop->brk = 0;
     *loop->listname = '\0';
@@ -554,6 +553,10 @@ static void gretl_loop_destroy (LOOPSET *loop)
 	free(loop->children);
     }
 
+    if (loop->flags & LOOP_DELVAR) {
+	gretl_scalar_delete(loop->iname, NULL);
+    }
+
     free(loop);
 }
 
@@ -578,31 +581,33 @@ static int parse_as_while_loop (LOOPSET *loop,
     return 0;
 }
 
-static const char *ichars = "ijklmpqrs"; 
-
-static int loop_index_char_pos (int c)
+static int bad_ichar (char c)
 {
-    int i;
+    const char *ok = "abcdefghijklmnopqrstuvwxyz";
+    char test[2] = {c, 0};
 
-    for (i=0; ichars[i] != '\0'; i++) {
-	if (c == ichars[i]) {
-	    return i;
-	}
+    if (strpbrk(test, ok) == NULL) {
+	sprintf(gretl_errmsg, _("The index in a 'for' loop must be a "
+				"single character from the set '%s'"),
+		ok);
+	return E_DATA;
     }
 
-    return -1;
+    return 0;
 }
 
-static int bad_ichar (char c)
+static int loop_attach_index_var (LOOPSET *loop, char ichar)
 {
     int err = 0;
 
-    if (loop_index_char_pos(c) < 0) {
-	sprintf(gretl_errmsg, _("The index in a 'for' loop must be a "
-				"single character from the set '%s'"),
-		ichars);
-	err = E_DATA;
-    }
+    loop->iname[0] = ichar;
+
+    if (!gretl_is_scalar(loop->iname)) {
+	err = gretl_scalar_add(loop->iname, loop->init.val);
+	if (!err) {
+	    loop->flags |= LOOP_DELVAR;
+	}
+    } 
 
     return err;
 }
@@ -661,7 +666,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     if (lvar != NULL) {
 	if (strlen(lvar) > 1) {
 	    /* deliberately set invalid ichar */
-	    ichar = 'x';
+	    ichar = '@';
 	} else {
 	    ichar = *lvar;
 	}
@@ -699,7 +704,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     }
 
     if (!err) {
-	loop->ichar = ichar;
+	err = loop_attach_index_var(loop, ichar);
     }
 
 #if LOOP_DEBUG
@@ -986,8 +991,6 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 	return E_PARSE;
     }
 
-    loop->ichar = ichar;
-    
     if (nf <= 3 && strstr(s, "..") != NULL) {
 	/* range of values, foo..quux */
 	err = each_strings_from_list_of_vars(loop, pdinfo, s, &nf);
@@ -1025,6 +1028,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 	loop->type = EACH_LOOP;
 	loop->init.val = 1;
 	loop->final.val = nf;
+	err = loop_attach_index_var(loop, ichar);
     }   
 
 #if LOOP_DEBUG
@@ -2336,7 +2340,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	targlen = strlen(targ);
     } else if (indexed_loop(loop)) {
 	targ[0] = '$';
-	targ[1] = loop->ichar;
+	targ[1] = loop->iname[0];
 	targlen = 2;
 	idx = loop->init.val + loop->iter;
     } else {
@@ -2482,6 +2486,7 @@ top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
     if (!err) {
 	if (indexed_loop(loop)) {
 	    loop->ival = loop->init.val;
+	    gretl_scalar_set_value(loop->iname, loop->ival);
 	}
 
 	/* initialization in case this loop is being run more than
@@ -2494,8 +2499,6 @@ top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 	    loop->models = NULL;
 	    loop->n_models = 0;
 	}
-
-	set_active_loop(loop);
     }
 
     return err;
@@ -2508,12 +2511,12 @@ print_loop_progress (const LOOPSET *loop, const DATAINFO *pdinfo,
     int i = loop->init.val + loop->iter;
 
     if (loop->type == INDEX_LOOP) {
-	pprintf(prn, "loop: %c = %d\n\n", loop->ichar, i);
+	pprintf(prn, "loop: %c = %d\n\n", loop->iname[0], i);
     } else if (loop->type == DATED_LOOP) {
 	char obs[OBSLEN];
 
 	ntodate(obs, i, pdinfo);
-	pprintf(prn, "loop: %c = %s\n\n", loop->ichar, obs);
+	pprintf(prn, "loop: %c = %s\n\n", loop->iname[0], obs);
     }
 }
 
@@ -2720,7 +2723,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	while (!err && next_command(line, loop, &j)) {
-	    set_active_loop(loop);
 #if LOOP_DEBUG
 	    fprintf(stderr, " j=%d, line='%s'\n", j, line);
 #endif
@@ -2868,6 +2870,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    loop->iter += 1;
 	    if (indexed_loop(loop)) {
 		loop->ival += 1;
+		gretl_scalar_set_value(loop->iname, loop->ival);
 	    } else if (lrefresh) {
 		/* added 2008-01-11, AC */
 		loop_list_refresh(loop, pdinfo);
@@ -2909,7 +2912,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	*line = '\0';
     } 
 
-    set_active_loop(loop->parent);
     set_loop_off();
 
     if (loop->parent == NULL) {
@@ -2925,11 +2927,12 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 }
 
-static const LOOPSET *
-parent_with_ichar (const LOOPSET *loop, int c)
+#if 0
+
+static const LOOPSET *parent_with_ichar (const LOOPSET *loop, int c)
 {
     while ((loop = loop->parent) != NULL) {
-	if (indexed_loop(loop) && loop->ichar == c) {
+	if (indexed_loop(loop) && loop->iname[0] == c) {
 	    return loop;
 	}
     }
@@ -2937,48 +2940,6 @@ parent_with_ichar (const LOOPSET *loop, int c)
     return NULL;
 }
 
-static const LOOPSET *
-indexed_loop_set_or_get (LOOPSET *loop, int set, int c)
-{
-    static LOOPSET *active_loop;
-    const LOOPSET *ret = NULL;
-
-    if (set) {
-	active_loop = loop;
-    } else if (active_loop != NULL) {
-	if (indexed_loop(active_loop) && active_loop->ichar == c) {
-	    ret = active_loop;
-	} else {
-	    ret = parent_with_ichar(active_loop, c);
-	}
-    }
-
-#if IDX_DEBUG > 1
-    if (set) {
-	fprintf(stderr, "indexed_loop_record: set active_loop = %p\n",
-		(void *) loop);
-    } else {
-	fprintf(stderr, "indexed_loop_record: returning %p for c='%c'\n",
-		(void *) ret, c);
-    }	
 #endif
 
-    return ret;
-}
 
-static void set_active_loop (LOOPSET *loop)
-{
-    indexed_loop_set_or_get(loop, 1, 0);
-}
-
-int is_active_index_loop_char (int c)
-{
-    return indexed_loop_set_or_get(NULL, 0, c) != NULL;
-}
-
-int loop_scalar_read (int c)
-{
-    const LOOPSET *loop = indexed_loop_set_or_get(NULL, 0, c);
-
-    return (loop == NULL)? -1 : loop->ival;
-}

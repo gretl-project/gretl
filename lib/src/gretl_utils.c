@@ -25,7 +25,6 @@
 #include "libset.h"
 #include "usermat.h"
 #include "gretl_panel.h"
-#include "loop_private.h"
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "forecast.h"
@@ -1077,8 +1076,6 @@ int gretl_int_from_string (const char *s, int *err)
 
     if (*test == '\0') {
 	return n;
-    } else if (s[1] == '\0' && is_active_index_loop_char(*s)) {
-	n = loop_scalar_read(*s);
     } else if (gretl_is_scalar(s)) {
 	x = gretl_scalar_get_value(s);
 	if (na(x)) {

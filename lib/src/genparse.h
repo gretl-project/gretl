@@ -98,8 +98,7 @@ enum {
 	      DVAR,	  /* $ dataset variable (scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      OVAR,	  /* object variable: variable "under" an object */
-  /* 70 */    LOOPIDX,	  /* loop index variable */
-	      LIST,	  /* reference to named list */
+  /* 70 */    LIST,	  /* reference to named list */
 	      LISTVAR,    /* variable in list */
 	      STR,	  /* string */
 	      FARGS,	  /* set of n function arguments */
@@ -108,8 +107,8 @@ enum {
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
-  /* 80 */    VSTR,       /* string variable */
-	      INC,   
+              VSTR,       /* string variable */
+  /* 80 */    INC,   
 	      DEC,
 	      QUERY,
 	      EOT,	  /* end of transmission */
@@ -348,7 +347,7 @@ enum {
 #define bnsym(s) (s == MDEF || s == FARGS)
 
 #define freestr(s) (s == STR || s == USCALAR || s == UMAT || s == UOBJ || \
-                    s == LOOPIDX || s == LIST || s == VSTR)
+                    s == LIST || s == VSTR)
 
 #define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
 

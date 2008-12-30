@@ -22,8 +22,6 @@
 
 #include <stdarg.h>
 
-/* #define LDEBUG 1 */
-
 /* minimum value of diagonal element of R (as in X = QR) that counts
    as non-zero for the purpose of determining the rank of X */
 
@@ -628,7 +626,7 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 
 gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X, 
 					const gretl_matrix *u,
-					const gretl_matrix *h,
+					const gretl_matrix *w,
 					int p, int *err);
 
 void lapack_mem_free (void);

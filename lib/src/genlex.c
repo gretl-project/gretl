@@ -21,7 +21,6 @@
 
 #include "genparse.h"
 #include "usermat.h"
-#include "loop_private.h"
 #include "gretl_func.h"
 #include "gretl_string_table.h"
 
@@ -916,13 +915,6 @@ static void getword (parser *p)
 	return;
     }
 
-    /* handle loop index scalar */
-    if (word[1] == '\0' && is_active_index_loop_char(word[0])) {
-	p->sym = LOOPIDX;
-	p->idstr = gretl_strdup(word);
-	return;
-    }
-
     if ((*word == '$' && word[1]) || !strcmp(word, "t") || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
     } else if (*word == '@') {
@@ -1344,8 +1336,7 @@ const char *getsymb (int t, const parser *p)
 	    return p->dinfo->varname[p->idnum];
 	} else if (t == USCALAR) {
 	    return p->idstr;
-	} else if (t == UMAT || t == UOBJ ||
-		   t == LOOPIDX) {
+	} else if (t == UMAT || t == UOBJ) {
 	    return p->idstr;
 	} else if (t == CON) {
 	    return constname(p->idnum);
