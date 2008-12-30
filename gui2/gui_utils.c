@@ -1610,7 +1610,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     /* editing script or graph: grab the "changed" signal and
        set up alert for unsaved changes on exit */
     if (editing_script(role)) {
-	attach_content_changed_signal(vwin);	
+	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
     }

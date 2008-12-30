@@ -4250,6 +4250,48 @@
       </description>
     </function>
 
+    <function name="xmax" section="math" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">x</fnarg>
+	<fnarg type="scalar">y</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns the greater of <argname>x</argname> and
+	  <argname>y</argname>, or <lit>NA</lit> if either value
+	  is missing.  
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="xmin"/>
+	    <fncref targ="max"/>
+	    <fncref targ="min"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
+    <function name="xmin" section="math" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">x</fnarg>
+	<fnarg type="scalar">y</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns the lesser of <argname>x</argname> and
+	  <argname>y</argname>, or <lit>NA</lit> if either value
+	  is missing.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="xmax"/>
+	    <fncref targ="max"/>
+	    <fncref targ="min"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
     <function name="xpx" section="transforms" output="list">
       <fnargs>
 	<fnarg type="list">L</fnarg>

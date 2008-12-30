@@ -32,7 +32,6 @@
 #include "gretl_scalar.h"
 #include "gretl_bfgs.h"
 #include "tsls.h"
-#include "estim_private.h"
 
 #include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
@@ -1569,10 +1568,8 @@ add_fit_resid_to_model (MODEL *pmod, nlspec *spec, double *uhat,
 	}
     }
 
-    if (!perfect && !(spec->flags & NLS_AUTOREG) &&
-	dataset_is_time_series(pdinfo)) {
-	pmod->rho = rhohat(1, pmod->t1, pmod->t2, pmod->uhat);
-	pmod->dw = dwstat(1, pmod, Z);
+    if (perfect || (spec->flags & NLS_AUTOREG)) {
+	pmod->rho = pmod->dw = NADBL;
     }
 }
 

@@ -4422,30 +4422,54 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    e = eval(n->v.bn.n[i], p);
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-	    } else {
-		if (e->t != MAT) {
-		    p->err = E_TYPES;
-		} else {
-		    switch (i) {
-		    case 0: 
-			c = e->v.m;
-			break;
-		    case 1: 
-			r = e->v.m;
-			break;
-		    case 2: 
-			b = e->v.m;
-			break;
-		    }
-		}
+	    } else if (e->t != MAT) {
+		p->err = E_TYPES;
+	    } else if (i == 0) {
+		c = e->v.m;
+	    } else if (i == 1) {
+		r = e->v.m;
+	    } else if (i == 2) {
+		b = e->v.m;
 	    }
 	}
 
 	if (!p->err) {
 	    m = gretl_toeplitz_solve(c, r, b, &p->err);
 	} 
-	
-    } 
+    } else if (t->t == F_MCOVG) {
+	gretl_matrix *X = NULL;
+	gretl_vector *u = NULL;
+	gretl_vector *h = NULL;
+	int targ, maxlag = 0;
+
+	if (k != 4) {
+	    n_args_error(k, 4, "mcovg", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    targ = (i == 3)? NUM : MAT;
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 1 && e->t == EMPTY) {
+		; /* u == NULL is OK */
+	    } else if (e->t != targ) {
+		p->err = E_TYPES;
+	    } else if (i == 0) {
+		X = e->v.m;
+	    } else if (i == 1) {
+		u = e->v.m;
+	    } else if (i == 2) {
+		h = e->v.m;
+	    } else if (i == 3) {
+		maxlag = e->v.xval;
+	    }
+	}
+
+	if (!p->err) {
+	    m = gretl_matrix_covariogram(X, u, h, maxlag, &p->err);
+	} 
+    }	
 
     if (t->t != F_FILTER) {
 	if (!p->err) {
@@ -5226,6 +5250,26 @@ static NODE *wildlist_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *scalar_minmax (NODE *l, NODE *r, int t, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	double xl = l->v.xval;
+	double xr = r->v.xval;
+
+	if (!na(xl) && !na(xr)) {
+	    if (t == F_XMIN) {
+		ret->v.xval = (xl < xr)? xl : xr;
+	    } else if (t == F_XMAX) {
+		ret->v.xval = (xl > xr)? xl : xr;
+	    }
+	}
+    }
+
+    return ret;    
+}
+
 static void transpose_matrix_result (NODE *n, parser *p)
 {
     if (n == NULL || p->err) {
@@ -5870,6 +5914,15 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	} 
 	break;
+    case F_XMIN:
+    case F_XMAX:
+	/* two scalars */
+	if (l->t == NUM && r->t == NUM) {
+	    ret = scalar_minmax(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	} 
+	break;	
     case F_MSHAPE:
     case F_SVD:
     case F_MOLS:
@@ -5877,6 +5930,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_FILTER:
     case F_TRIMR:
     case F_TOEPSOLV:
+    case F_MCOVG:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;

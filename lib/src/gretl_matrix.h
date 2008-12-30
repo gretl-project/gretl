@@ -626,6 +626,11 @@ gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A,
 gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m, 
 					   int k, int *err);
 
+gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X, 
+					const gretl_matrix *u,
+					const gretl_matrix *h,
+					int p, int *err);
+
 void lapack_mem_free (void);
 
 void set_blas_nmk_min (int n);

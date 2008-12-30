@@ -283,6 +283,8 @@ enum {
     F_MSORTBY,
     F_LINCOMB,
     F_IMHOF,
+    F_XMIN,
+    F_XMAX,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,
@@ -291,6 +293,7 @@ enum {
     F_FILTER,
     F_TRIMR,
     F_TOEPSOLV,
+    F_MCOVG,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
