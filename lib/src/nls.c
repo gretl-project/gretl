@@ -32,6 +32,7 @@
 #include "gretl_scalar.h"
 #include "gretl_bfgs.h"
 #include "tsls.h"
+#include "estim_private.h"
 
 #include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
@@ -1550,7 +1551,8 @@ add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
 
 static void 
 add_fit_resid_to_model (MODEL *pmod, nlspec *spec, double *uhat, 
-			const double **Z, int perfect)
+			const double **Z, const DATAINFO *pdinfo,
+			int perfect)
 {
     int t, j = 0;
 
@@ -1565,6 +1567,12 @@ add_fit_resid_to_model (MODEL *pmod, nlspec *spec, double *uhat,
 	    pmod->yhat[t] = Z[spec->dv][t] - uhat[j];
 	    j++;
 	}
+    }
+
+    if (!perfect && !(spec->flags & NLS_AUTOREG) &&
+	dataset_is_time_series(pdinfo)) {
+	pmod->rho = rhohat(1, pmod->t1, pmod->t2, pmod->uhat);
+	pmod->dw = dwstat(1, pmod, Z);
     }
 }
 
@@ -1655,6 +1663,8 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
     /* transcribe sample info */
     gdinfo->t1 = spec->t1;
     gdinfo->t2 = spec->t2;
+    gdinfo->pd = pdinfo->pd;
+    gdinfo->structure = pdinfo->structure;
 
     glist = gretl_list_new(spec->ncoeff + 1);
 
@@ -1757,7 +1767,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	gnr.fstt = gnr.chisq = NADBL;
 	add_coeffs_to_model(&gnr, spec->coeff);
 	add_param_names_to_model(&gnr, spec, pdinfo);
-	add_fit_resid_to_model(&gnr, spec, uhat, Z, perfect);
+	add_fit_resid_to_model(&gnr, spec, uhat, Z, pdinfo, perfect);
 	gnr.list[1] = spec->dv;
 
 	/* set relevant data on model to be shipped out */
