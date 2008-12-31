@@ -2166,6 +2166,13 @@
 	  elements is the maximum of the values of the listed variables at
 	  the given observation.
 	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="min"/>
+	    <fncref targ="xmax"/>
+	    <fncref targ="xmin"/>
+	  </seelist>
+	</para>	
       </description>
     </function>
 
@@ -2335,6 +2342,13 @@
 	  elements is the minimum of the values of the listed variables at
 	  the given observation.
 	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="max"/>
+	    <fncref targ="xmax"/>
+	    <fncref targ="xmin"/>
+	  </seelist>
+	</para>	
       </description>
     </function>
 
