@@ -4428,7 +4428,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_MCOVG) {
 	gretl_matrix *X = NULL;
 	gretl_vector *u = NULL;
-	gretl_vector *h = NULL;
+	gretl_vector *w = NULL;
 	int targ, maxlag = 0;
 
 	if (k != 4) {
@@ -4440,8 +4440,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    e = eval(n->v.bn.n[i], p);
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-	    } else if (i == 1 && e->t == EMPTY) {
-		; /* u == NULL is OK */
+	    } else if ((i == 1 || i == 2) && e->t == EMPTY) {
+		; /* for u or w, NULL is acceptable */
 	    } else if (e->t != targ) {
 		p->err = E_TYPES;
 	    } else if (i == 0) {
@@ -4449,14 +4449,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 1) {
 		u = e->v.m;
 	    } else if (i == 2) {
-		h = e->v.m;
+		w = e->v.m;
 	    } else if (i == 3) {
 		maxlag = e->v.xval;
 	    }
 	}
 
 	if (!p->err) {
-	    m = gretl_matrix_covariogram(X, u, h, maxlag, &p->err);
+	    m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
 	} 
     }	
 
