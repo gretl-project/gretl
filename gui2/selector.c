@@ -529,6 +529,14 @@ void selector_from_model (void *ptr, int ci)
 	    default_order = gretl_model_get_int(pmod, "arch_order");
 	} else if (pmod->ci == AR) {
 	    retrieve_AR_lags_info(pmod);
+	} else if (pmod->ci == AR1) {
+	    if (pmod->opt & OPT_P) {
+		sel_ci = PWE;
+	    } else if (pmod->opt & OPT_H) {
+		sel_ci = HILU;
+	    } else {
+		sel_ci = CORC;
+	    }
 	} else if (pmod->ci == PANEL) {
 	    if (pmod->opt & OPT_F) {
 		model_opt |= OPT_F;
