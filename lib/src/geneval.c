@@ -1547,7 +1547,8 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	n = m->rows * m->cols;
 
 	/* special: raising a matrix to an integer power */
-	if (op == B_POW && matrix_pow_check(l->t, x, m, p)) {
+	if (n > 1 && op == B_POW && matrix_pow_check(l->t, x, m, p)) {
+	    fprintf(stderr, "matrix_pow_check failed\n");
 	    return NULL;
 	}
 
@@ -1557,7 +1558,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    return NULL;
 	}
 
-	if (comp) {
+	if (comp || (op == B_POW && n == 1)) {
 	    ret = aux_scalar_node(p);
 	} else {
 	    ret = aux_matrix_node(p);
@@ -1568,7 +1569,13 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	}
 
 	if (op == B_POW) {
-	    ret->v.m = gretl_matrix_pow(m, (int) x, &p->err);
+	    if (n > 1) {
+		ret->v.m = gretl_matrix_pow(m, (int) x, &p->err);
+	    } else if (l->t == NUM) {
+		ret->v.xval = xy_calc(x, m->val[0], op, p);
+	    } else {
+		ret->v.xval = xy_calc(m->val[0], x, op, p);
+	    }
 	    return ret;
 	}
 
