@@ -4878,7 +4878,7 @@
 	The parameter <repl quote="true">control</repl> may take any of
 	five forms, as shown in the examples: an integer number of times to
 	repeat the commands within the loop; <quote><lit>while</lit></quote>
-	plus a boolean condition; a range of values for an integer index
+	plus a boolean condition; a range of integer values for index
 	variable; <quote><lit>for</lit></quote> plus three expressions in
 	parentheses, separated by semicolons (which emulates the
 	<lit>for</lit> statement in the C programming language); or

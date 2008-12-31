@@ -91,13 +91,17 @@ a different value via the \cmd{set} command (see the \GCR).
 \subsection{Index loop}
 \label{loop-index}
 
-A third form of loop control uses the special internal index variable
-\verb+i+.  In this case you specify starting and ending values for
-\verb+i+, which is incremented by one each time round the loop.  The
+A third form of loop control uses an index variable, for example
+\verb+i+.  In this case you specify starting and ending values for the
+index, which is incremented by one each time round the loop.  The
 syntax looks like this: \cmd{loop i=1..20}.
 
-The index variable may be used within the loop body in one or both of
-two ways: you can access the integer value of \verb+i+ (see Example
+The index variable may be a pre-existing scalar; if this is not the
+case, the variable is created automatically and is destroyed on exit
+from the loop.
+
+The index may be used within the loop body in either of two ways: you
+can access the integer value of \verb+i+ (see Example
 \ref{loop-panel-script}) or you can use its string representation,
 \dollar{i} (see Example \ref{loop-string-script}).
 
@@ -106,7 +110,7 @@ form, or by reference to predefined scalar variables.  In the latter
 case the variables are evaluated once, when the loop is set up.  In
 addition, with time series data you can give the starting and ending
 values in the form of dates, as in \cmd{loop i=1950:1..1999:4}.
-      
+
 This form of loop is particularly useful in conjunction with the
 \texttt{values()} matrix function when some operation must be carried
 out for each value of some discrete variable (see chapter
@@ -117,7 +121,6 @@ open greene22_2
 open greene22_2
 discrete Z8
 v8 = values(Z8)
-n = rows(v8)
 n = rows(v8)
 loop i=1..n
   scalar xi = v8[$i]
@@ -133,11 +136,11 @@ of the variable \texttt{Y} for each value of \texttt{Z8}.
 \subsection{Foreach loop}
 \label{loop-each}
 
-The fourth form of loop control also uses the internal variable
-\verb+i+, but in this case the variable ranges over a specified list
-of strings.  The loop is executed once for each string in the list.
-This can be useful for performing repetitive operations on a list of
-variables.  Here is an example of the syntax:
+The fourth form of loop control also uses an index variable, in this
+case to index a specified list of strings.  The loop is executed once
+for each string in the list.  This can be useful for performing
+repetitive operations on a list of variables.  Here is an example of
+the syntax:
       
 \begin{code}
 loop foreach i peach pear plum
@@ -146,7 +149,8 @@ endloop
 \end{code}
 
 This loop will execute three times, printing out ``peach'', ``pear''
-and ``plum'' on the respective iterations.  
+and ``plum'' on the respective iterations.  The numerical value of
+the index starts at 1 and is incremented by 1 at each iteration.
 
 If you wish to loop across a list of variables that are contiguous in
 the dataset, you can give the names of the first and last variables in
@@ -318,7 +322,7 @@ The command \cmd{nulldata} is useful for Monte Carlo work.  Instead of
 opening a ``real'' data set, \cmd{nulldata 50} (for instance) opens a
 dummy data set, containing just a constant and an index variable, with
 a series length of 50. Constructed variables can then be added using
-the \cmd{genr} command.See the \cmd{set} command for information on
+the \cmd{genr} command.  See the \cmd{set} command for information on
 generating repeatable pseudo-random series.
 
 \subsection{Iterated least squares}
