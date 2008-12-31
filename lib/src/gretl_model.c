@@ -53,72 +53,6 @@ struct CoeffSep_ {
     int pos;
 };
 
-#if 0 /* not ready yet: this apparatus may be used for printing
-	 "matrix models" at some future point */
-
-typedef struct gretl_matrix_model_ gretl_matrix_model;
-
-struct gretl_matrix_model_ {
-    gretl_matrix *b;
-    gretl_matrix *se;
-    char **bnames;
-    int nobs;
-    double R2;
-};
-
-gretl_matrix_model *gretl_matrix_model_new (void)
-{
-    gretl_matrix_model *m = malloc(sizeof *m);
-    
-    if (m != NULL) {
-	m->b = NULL;
-	m->se = NULL;
-	m->bnames = NULL;
-	m->nobs = 0;
-	m->R2 = NADBL;
-    }
-
-    return m;
-}
-
-void gretl_matrix_model_destroy (gretl_matrix_model *m)
-{
-    if (m != NULL) {
-	if (m->b != NULL) {
-	    int k = gretl_vector_get_length(m->b);
-
-	    free_strings_array(m->bnames, k);
-	    gretl_matrix_free(m->b);
-	}
-	gretl_matrix_free(m->se);
-	free(m);
-    }
-}
-
-void gretl_matrix_model_set_data (gretl_matrix_model *m, gretl_matrix *b,
-				  gretl_matrix *se, char **bnames,
-				  int nobs, double R2)
-{
-    m->b = b;
-    m->se = se;
-    m->bnames = bnames;
-    m->nobs = nobs;
-    m->R2 = R2;
-}
-
-void gretl_matrix_model_get_data (gretl_matrix_model *m, gretl_matrix **b,
-				  gretl_matrix **se, char ***bnames,
-				  int *nobs, double *R2)
-{
-    *b = m->b;
-    *se = m->se;
-    *bnames = m->bnames;
-    *nobs = m->nobs;
-    *R2 = m->R2;
-}
-
-#endif
-
 static void gretl_test_init (ModelTest *test, ModelTestType ttype)
 {
     test->type = ttype;
@@ -1228,9 +1162,6 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 	const double *theta = NULL, *Theta = NULL;
 	const char *pmask = gretl_model_get_data(pmod, "pmask");
 	const char *qmask = gretl_model_get_data(pmod, "qmask");
-
-	double x, y;
-
 	int p = arma_model_nonseasonal_AR_order(pmod);
 	int q = arma_model_nonseasonal_MA_order(pmod);
 	int np = arma_included_lags(p, pmask);
@@ -1241,6 +1172,7 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 	int D = gretl_model_get_int(pmod, "arima_D");
 	int s = gretl_model_get_int(pmod, "arma_pd");
 	int pmax, pstar, qmax;
+	double x, y;
 	int i, j, k, ii;
 
 	pmax = p + s * P;
@@ -4538,10 +4470,11 @@ int mle_criteria (MODEL *pmod, int addk)
 	err = 1;
     } else {
 	int k = pmod->ncoeff + addk;
+	int n = pmod->nobs;
 
 	pmod->criterion[C_AIC] = -2.0 * pmod->lnL + 2.0 * k;
-	pmod->criterion[C_BIC] = -2.0 * pmod->lnL + k * log(pmod->nobs);
-	pmod->criterion[C_HQC] = -2.0 * pmod->lnL + 2 * k * log(log(pmod->nobs));
+	pmod->criterion[C_BIC] = -2.0 * pmod->lnL + k * log(n);
+	pmod->criterion[C_HQC] = -2.0 * pmod->lnL + 2 * k * log(log(n));
     }
 
     return err;
