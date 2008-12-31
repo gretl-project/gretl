@@ -415,9 +415,9 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 	/* put residuals into appropriate column of E and
 	   increment the column */
 	s = 0;
-	for (t=pmod->t1; t<=pmod->t2 && s<T; t++) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    uit = emod.uhat[t];
-	    if (!na(uit)) {
+	    if (!na(uit) && s < T) {
 		gretl_matrix_set(E, s++, j, uit);
 	    }
 	}
