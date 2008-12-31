@@ -23,7 +23,9 @@
 #include "qr_estimate.h"
 #include "libset.h"
 #include "estim_private.h"
+#include "missing_private.h"
 #include "matrix_extra.h"
+#include "tsls.h"
 
 #define TDEBUG 0
 
@@ -405,6 +407,10 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 
 	elist[1] = vi;
 
+	if (pmod->missmask != NULL) {
+	    set_reference_missmask_from_model(pmod);
+	}
+
 	/* regress the given endogenous var on all the instruments */
 	emod = lsq(elist, pZ, pdinfo, OLS, OPT_A);
 	if ((err = emod.errcode)) {
@@ -413,24 +419,22 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 	}
 
 	/* put residuals into appropriate column of E and
-	   increment the column */
+	   increment the column: we should get exactly the same
+	   count of non-NA values as for the original model
+	*/
 	s = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    uit = emod.uhat[t];
-	    if (!na(uit) && s < T) {
-		gretl_matrix_set(E, s++, j, uit);
+	    if (!na(uit)) {
+		if (s < T) {
+		    gretl_matrix_set(E, s, j, uit);
+		}
+		s++;
 	    }
 	}
 	j++;
 
-	/* allow for the possibility of NAs -- but if there any
-	   there should the same number in each column */
-	if (i == 1) {
-	    T = s;
-	    if (T < E->rows) {
-		gretl_matrix_reuse(E, T, -1);
-	    }
-	} else if (s != T) {
+	if (s != T) {
 	    err = E_DATA;
 	}
 
@@ -480,7 +484,6 @@ static int tsls_loglik (MODEL *pmod,
 	double ldet = gretl_matrix_log_determinant(W, &err);
 
 	if (!err) {
-	    T = E->rows; /* may be corrected for NAs */
 	    /* Davidson and MacKinnon, ETM, p. 538 */
 	    pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
 	} 
