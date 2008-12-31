@@ -36,6 +36,9 @@ void gretl_scalar_set_value (const char *name, double val);
 
 int gretl_scalar_add (const char *name, double val);
 
+int gretl_scalar_add_with_check (const char *name, double val,
+				 const DATAINFO *pdinfo);
+
 int gretl_scalar_add_as_arg (const char *name, double val);
 
 int gretl_scalar_set_local_name (int i, const char *name);

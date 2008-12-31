@@ -1732,7 +1732,7 @@ void unescape_url (char *url)
  * @v: the ID number for the new variable.
  * @pdinfo: dataset information.
  *
- * Given a tenative name for a new variable, check that it
+ * Given a tentative name for a new variable, check that it
  * is not a duplicate of an existing varname.  If it is,
  * modify the new name so that it becomes unique. The ID
  * number @v is required so that, if the variable has already

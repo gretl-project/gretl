@@ -21,6 +21,7 @@
 #include "gretl_func.h"
 #include "libset.h"
 #include "gretl_xml.h"
+#include "gretl_string_table.h"
 #include "gretl_scalar.h"
 
 #define SDEBUG 0
@@ -234,13 +235,34 @@ void gretl_scalar_set_value (const char *name, double val)
 #endif
 }
 
+/* check that we're not colliding with a pre-existing object of
+   different type */
+
+static int gretl_scalar_check_name (const char *s, const DATAINFO *pdinfo)
+{
+    int v, err = 0;
+
+    if ((v = series_index(pdinfo, s)) < pdinfo->v) {
+	err = E_TYPES;
+    } else if (get_matrix_by_name(s)) {
+	err = E_TYPES;
+    } else if (get_list_by_name(s)) {
+	err = E_TYPES;
+    } else if (get_string_by_name(s)) {
+	err = E_TYPES;
+    } else {
+	err = check_varname(s);
+    }
+
+    return err;
+}	
+
 int gretl_scalar_add (const char *name, double val)
 {
     int level = gretl_function_depth();
     gretl_scalar *s;
     int err;
 
-#if 1
     s = get_scalar_pointer(name, level);
     if (s != NULL) {
 	fprintf(stderr, "*** gretl_scalar_add: there's already a '%s' at level %d (%.15g)\n", 
@@ -248,7 +270,6 @@ int gretl_scalar_add (const char *name, double val)
 	s->val = val;
 	return 0;
     }
-#endif    
 
     s = malloc(sizeof *s);
     if (s == NULL) {
@@ -264,6 +285,18 @@ int gretl_scalar_add (const char *name, double val)
 #if SDEBUG
     debug_print_scalars("gretl_scalar_add");
 #endif
+
+    return err;
+}
+
+int gretl_scalar_add_with_check (const char *name, double val,
+				 const DATAINFO *pdinfo)
+{
+    int err = gretl_scalar_check_name(name, pdinfo);
+
+    if (!err) {
+	err = gretl_scalar_add(name, val);
+    }
 
     return err;
 }

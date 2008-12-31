@@ -1024,6 +1024,11 @@ static int cmd_full_list (const DATAINFO *pdinfo, CMD *cmd)
 	return 0;
     }
 
+    if (gretl_looping()) {
+	/* could generate serious overflow */
+	return 0;
+    }
+
     list = full_var_list(pdinfo, &nv);
 
     if (list == NULL) {
@@ -2597,7 +2602,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* commands that can take a specified list, but where if the
        list is null or just ";" we want to operate on all variables
     */    
-    if (DEFAULTS_TO_FULL_LIST(cmd->ci) && !gretl_looping()) {
+    if (DEFAULTS_TO_FULL_LIST(cmd->ci)) {
 	if (cmd->list[0] == 0) {
 	    cmd_full_list(pdinfo, cmd);
 	    /* suppress echo of the list -- may be too long */
@@ -3360,8 +3365,8 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 #if ECHO_DEBUG
     fprintf(stderr, "echo_cmd:\n line='%s'\n param='%s'\n extra='%s'\n", 
 	    line, cmd->param, cmd->extra);
-    fprintf(stderr, " cmd->opt=%ld, batch=%d, nolist=%d\n",
-	    cmd->opt, flags & CMD_BATCH_MODE, cmd_nolist(cmd));
+    fprintf(stderr, " cmd->opt=%d, batch=%d, recording=%d, nolist=%d\n",
+	    cmd->opt, batch, recording, cmd_nolist(cmd));
     fprintf(stderr, " prn=%p\n", (void *) prn);
     fprintf(stderr, " cmd->word='%s'\n", cmd->word);
     fprintf(stderr, " cmd->savename='%s'\n", cmd->savename);
@@ -4774,6 +4779,7 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 
     cmd->ci = 0;
     cmd->opt = OPT_NONE;
+    *cmd->extra = *cmd->param = '\0';
 
     while (isspace(*line)) {
 	line++;

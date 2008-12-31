@@ -34,7 +34,6 @@
 
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
-#define IDX_DEBUG 0
 
 #define GENCOMPILE 1
 
@@ -134,8 +133,8 @@ struct LOOPSET_ {
     int index;
 
     /* control variables */
-    char iname[2];
-    int ival;
+    char idxname[VNAMELEN];
+    int idxval;
     char brk;
     char listname[VNAMELEN];
 
@@ -427,8 +426,8 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->itermax = 0;
     loop->iter = 0;
     loop->err = 0;
-    loop->iname[0] = loop->iname[1] = 0;
-    loop->ival = 0;
+    *loop->idxname = 0;
+    loop->idxval = 0;
     loop->brk = 0;
     *loop->listname = '\0';
 
@@ -554,7 +553,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
     }
 
     if (loop->flags & LOOP_DELVAR) {
-	gretl_scalar_delete(loop->iname, NULL);
+	gretl_scalar_delete(loop->idxname, NULL);
     }
 
     free(loop);
@@ -564,47 +563,37 @@ static int parse_as_while_loop (LOOPSET *loop,
 				double ***pZ, DATAINFO *pdinfo,
 				const char *s)
 {
+    int err = 0;
+
 #if LOOP_DEBUG
     fprintf(stderr, "parse_as_while_loop: cond = '%s'\n", s);
 #endif
 
     if (s == NULL || *s == '\0') {
-	return E_PARSE;
+	err = E_PARSE;
+    } else {
+	loop->type = WHILE_LOOP;
+	loop->test.expr = gretl_strdup(s);
+	if (loop->test.expr == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    loop->type = WHILE_LOOP;
-    loop->test.expr = gretl_strdup(s);
-    if (loop->test.expr == NULL) {
-	return E_ALLOC;
-    }
-
-    return 0;
+    return err;
 }
 
-static int bad_ichar (char c)
-{
-    const char *ok = "abcdefghijklmnopqrstuvwxyz";
-    char test[2] = {c, 0};
-
-    if (strpbrk(test, ok) == NULL) {
-	sprintf(gretl_errmsg, _("The index in a 'for' loop must be a "
-				"single character from the set '%s'"),
-		ok);
-	return E_DATA;
-    }
-
-    return 0;
-}
-
-static int loop_attach_index_var (LOOPSET *loop, char ichar)
+static int loop_attach_index_var (LOOPSET *loop, const char *vname,
+				  const DATAINFO *pdinfo)
 {
     int err = 0;
 
-    loop->iname[0] = ichar;
-
-    if (!gretl_is_scalar(loop->iname)) {
-	err = gretl_scalar_add(loop->iname, loop->init.val);
+    if (gretl_is_scalar(vname)) {
+	strcpy(loop->idxname, vname);
+	gretl_scalar_set_value(vname, loop->init.val);
+    } else {
+	err = gretl_scalar_add_with_check(vname, loop->init.val, pdinfo);
 	if (!err) {
+	    strcpy(loop->idxname, vname);
 	    loop->flags |= LOOP_DELVAR;
 	}
     } 
@@ -656,23 +645,11 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 static int parse_as_indexed_loop (LOOPSET *loop,
 				  const double **Z,
 				  const DATAINFO *pdinfo,
-				  char ichar,
 				  const char *lvar, 
 				  const char *start,
 				  const char *end)
 {
-    int err;
-
-    if (lvar != NULL) {
-	if (strlen(lvar) > 1) {
-	    /* deliberately set invalid ichar */
-	    ichar = '@';
-	} else {
-	    ichar = *lvar;
-	}
-    }
-
-    err = bad_ichar(ichar);
+    int err = 0;
 
     /* starting and ending values: try for dates first, then
        numeric constants, then variables */
@@ -681,7 +658,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     fprintf(stderr, "parse_as_indexed_loop: start='%s', end='%s'\n", start, end);
 #endif
 
-    if (!err && maybe_date(start)) {
+    if (maybe_date(start)) {
 	loop->init.val = dateton(start, pdinfo);
 	if (loop->init.val < 0) {
 	    err = E_DATA;
@@ -693,7 +670,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 		loop->type = DATED_LOOP;
 	    }
 	}
-    } else if (!err) { 
+    } else {
 	err = index_get_limit(loop, &loop->init, start, Z, pdinfo);
 	if (!err) {
 	    err = index_get_limit(loop, &loop->final, end, Z, pdinfo);
@@ -704,7 +681,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     }
 
     if (!err) {
-	err = loop_attach_index_var(loop, ichar);
+	err = loop_attach_index_var(loop, lvar, pdinfo);
     }
 
 #if LOOP_DEBUG
@@ -904,13 +881,11 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 
 static int
 each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo, 
-				char *s, int *nf)
+				char *s, int *pnf)
 {
     char vn1[VNAMELEN], vn2[VNAMELEN];
-    int v1, v2;
-    int err = 0;
-
-    *nf = 0;
+    int v1, v2, nf = 0;
+    int i, err = 0;
 
     delchar(' ', s);
 
@@ -920,41 +895,40 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 	v1 = series_index(pdinfo, vn1);
 	v2 = series_index(pdinfo, vn2);
 
-	if (v1 < 0 || v2 < 0 || v1 >= pdinfo->v || v2 >= pdinfo->v) {
+	if (v1 >= pdinfo->v || v2 >= pdinfo->v) {
 	    err = 1;
 	} else {
-	    *nf = v2 - v1 + 1;
-	    if (*nf <= 0) {
+	    nf = v2 - v1 + 1;
+	    if (nf <= 0) {
 		err = 1;
 	    }
 	}
 
 	if (!err) {
-	    err = allocate_each_strings(loop, *nf);
+	    err = allocate_each_strings(loop, nf);
 	}
 
 	if (!err) {
-	    int i;
-
-	    for (i=v1; i<=v2 && !err; i++) {
-		loop->eachstrs[i-v1] = gretl_strdup(pdinfo->varname[i]);
-		if (loop->eachstrs[i-v1] == NULL) {
-		    free_strings_array(loop->eachstrs, *nf);
+	    for (i=0; i<nf && !err; i++) {
+		loop->eachstrs[i] = gretl_strdup(pdinfo->varname[v1+i]);
+		if (loop->eachstrs[i] == NULL) {
+		    free_strings_array(loop->eachstrs, nf);
 		    loop->eachstrs = NULL;
 		    err = E_ALLOC;
 		}
 	    }
 	}
     }
-    
+
+    *pnf = nf;
+
     return err;
 }
 
 static int
 parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 {
-    char ivar[8] = {0};
-    char ichar = 0;
+    char ivar[VNAMELEN] = {0};
     int done = 0;
     int i, nf, err = 0;
 
@@ -970,19 +944,9 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     fprintf(stderr, "parse_as_each_loop: s = '%s'\n", s);
 #endif 
 
-    /* should be something like "i " */
-    if (sscanf(s, "%7s", ivar) != 1) {
-	err = E_PARSE;
-    } else if (strlen(ivar) > 1) {
-	err = E_PARSE;
-    } else {
-	ichar = *ivar;
-	err = bad_ichar(ichar);
-    }
-
-    if (err) {
-	return err;
-    }
+    if (sscanf(s, "%15s", ivar) != 1) {
+	return E_PARSE;
+    } 
 
     s += strlen(ivar);
     nf = count_fields(s);
@@ -1028,7 +992,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 	loop->type = EACH_LOOP;
 	loop->init.val = 1;
 	loop->final.val = nf;
-	err = loop_attach_index_var(loop, ichar);
+	err = loop_attach_index_var(loop, ivar, pdinfo);
     }   
 
 #if LOOP_DEBUG
@@ -1105,7 +1069,6 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 				 double ***pZ, DATAINFO *pdinfo)
 {
     char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
-    char ichar;
     int err = 0;
 
     /* skip preliminary string */
@@ -1119,12 +1082,10 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     fprintf(stderr, "parse_first_loopline: '%s'\n", s);
 #endif
 
-    if (sscanf(s, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
+    if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3 ||
+	sscanf(s, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo, 
-				    ichar, NULL, op, rvar);
-    } else if (sscanf(s, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo, 
-				    0, lvar, op, rvar);
+				    lvar, op, rvar);
     } else if (!strncmp(s, "foreach", 7)) {
 	err = parse_as_each_loop(loop, pdinfo, s + 7);
     } else if (!strncmp(s, "for", 3)) {
@@ -1194,7 +1155,6 @@ start_new_loop (char *s, LOOPSET *inloop,
     *err = parse_first_loopline(s, loop, pZ, pdinfo);
 
     if (!*err) {
-	/* allocate loop->lines, loop->ci */
 	*err = gretl_loop_prepare(loop);
     }
 
@@ -1261,11 +1221,6 @@ loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, int *err)
 	loop->brk = 0;
 	ok = 0;
     } else if (loop->type == COUNT_LOOP || indexed_loop(loop)) {
-#if LOOP_DEBUG
-	fprintf(stderr, "** count or indexed loop: iter = %d, itermax = %d\n",
-		loop->iter, loop->itermax);
-#endif
-	/* simple count loop or indexed loop */
 	if (loop->iter < loop->itermax) {
 	    ok = 1;
 	}
@@ -2339,9 +2294,8 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	sprintf(targ, "$%s", loop->init.vname);
 	targlen = strlen(targ);
     } else if (indexed_loop(loop)) {
-	targ[0] = '$';
-	targ[1] = loop->iname[0];
-	targlen = 2;
+	sprintf(targ, "$%s", loop->idxname);
+	targlen = strlen(targ);
 	idx = loop->init.val + loop->iter;
     } else {
 	return 1;
@@ -2485,8 +2439,8 @@ top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 
     if (!err) {
 	if (indexed_loop(loop)) {
-	    loop->ival = loop->init.val;
-	    gretl_scalar_set_value(loop->iname, loop->ival);
+	    loop->idxval = loop->init.val;
+	    gretl_scalar_set_value(loop->idxname, loop->idxval);
 	}
 
 	/* initialization in case this loop is being run more than
@@ -2511,12 +2465,12 @@ print_loop_progress (const LOOPSET *loop, const DATAINFO *pdinfo,
     int i = loop->init.val + loop->iter;
 
     if (loop->type == INDEX_LOOP) {
-	pprintf(prn, "loop: %c = %d\n\n", loop->iname[0], i);
+	pprintf(prn, "loop: %s = %d\n\n", loop->idxname, i);
     } else if (loop->type == DATED_LOOP) {
 	char obs[OBSLEN];
 
 	ntodate(obs, i, pdinfo);
-	pprintf(prn, "loop: %c = %s\n\n", loop->iname[0], obs);
+	pprintf(prn, "loop: %s = %s\n\n", loop->idxname, obs);
     }
 }
 
@@ -2760,7 +2714,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		if (s->cmd->ci == ENDLOOP) {
 		    pputc(prn, '\n');
 		} else if (!loop_is_quiet(loop)) {
-		    echo_cmd(cmd, pdinfo, line, 0, prn);
+		    echo_cmd(cmd, pdinfo, line, CMD_BATCH_MODE, prn);
 		}
 	    }
 
@@ -2869,8 +2823,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (!err) {
 	    loop->iter += 1;
 	    if (indexed_loop(loop)) {
-		loop->ival += 1;
-		gretl_scalar_set_value(loop->iname, loop->ival);
+		loop->idxval += 1;
+		gretl_scalar_set_value(loop->idxname, loop->idxval);
 	    } else if (lrefresh) {
 		/* added 2008-01-11, AC */
 		loop_list_refresh(loop, pdinfo);
@@ -2927,19 +2881,5 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 }
 
-#if 0
-
-static const LOOPSET *parent_with_ichar (const LOOPSET *loop, int c)
-{
-    while ((loop = loop->parent) != NULL) {
-	if (indexed_loop(loop) && loop->iname[0] == c) {
-	    return loop;
-	}
-    }
-
-    return NULL;
-}
-
-#endif
 
 
