@@ -381,10 +381,10 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 {
     MODEL emod;
     int *elist;
+    double uit;
     int nx = instlist[0];
-    int i, vi, t, j = 0;
+    int i, vi, s, t, j = 0;
     int T = E->rows;
-    int t1 = pmod->t1;
     int err = 0;
 
     elist = gretl_list_new(nx + 1);
@@ -396,7 +396,7 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 	elist[i] = instlist[i-1];
     }
 
-    for (i=1; i<=reglist[0]; i++) {
+    for (i=1; i<=reglist[0] && !err; i++) {
 	vi = reglist[i];
 
 	if (in_gretl_list(instlist, vi)) {
@@ -414,10 +414,25 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 
 	/* put residuals into appropriate column of E and
 	   increment the column */
-	for (t=0; t<T; t++) {
-	    gretl_matrix_set(E, t, j, emod.uhat[t + t1]);
+	s = 0;
+	for (t=pmod->t1; t<=pmod->t2 && s<T; t++) {
+	    uit = emod.uhat[t];
+	    if (!na(uit)) {
+		gretl_matrix_set(E, s++, j, uit);
+	    }
 	}
 	j++;
+
+	/* allow for the possibility of NAs -- but if there any
+	   there should the same number in each column */
+	if (i == 1) {
+	    T = s;
+	    if (T < E->rows) {
+		gretl_matrix_reuse(E, T, -1);
+	    }
+	} else if (s != T) {
+	    err = E_DATA;
+	}
 
 	clear_model(&emod);
     }
@@ -465,9 +480,10 @@ static int tsls_loglik (MODEL *pmod,
 	double ldet = gretl_matrix_log_determinant(W, &err);
 
 	if (!err) {
+	    T = E->rows; /* may be corrected for NAs */
 	    /* Davidson and MacKinnon, ETM, p. 538 */
 	    pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
-	}
+	} 
     }
 
     mle_criteria(pmod, 0);
@@ -809,16 +825,15 @@ static void tsls_extra_stats (MODEL *pmod, int overid, const double **Z,
 	    pmod->fstt = wald_omit_F(NULL, pmod);
 	}
     } 
-    
-    if (overid) {
-	/* tsls is not a ML estimator unless it's exactly identified */
-	pmod->lnL = NADBL;
-	mle_criteria(pmod, 0);
-    } else {
-	ls_criteria(pmod);
-    }
 
-    if (dataset_is_time_series(pdinfo) && pmod->missmask == NULL) {
+    /* tsls is not a ML estimator unless it's exactly identified, 
+       and in that case we require a special calculation */
+    pmod->lnL = NADBL;
+    pmod->criterion[C_AIC] = NADBL;
+    pmod->criterion[C_BIC] = NADBL;
+    pmod->criterion[C_HQC] = NADBL;
+    
+     if (dataset_is_time_series(pdinfo) && pmod->missmask == NULL) {
 	/* time series, no missing obs within sample range */
 	pmod->rho = rhohat(1, pmod->t1, pmod->t2, pmod->uhat);
 	pmod->dw = dwstat(1, pmod, Z);

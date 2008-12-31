@@ -2621,6 +2621,11 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	}
     }
 
+    if (!*err && xna(det)) {
+	det = NADBL;
+	*err = E_NAN;
+    }
+
     free(ipiv);
 
     return det;
