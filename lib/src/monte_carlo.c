@@ -1058,18 +1058,22 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 	while (isspace(*s)) s++;
     }
 
+    /* syntactic slop: "for i=lo..hi" -> "i=lo..hi" */
+    if (!strncmp(s, "for ", 4) && !strstr(s, ";")) {
+	s += 4;
+    }
+
 #if LOOP_DEBUG
     fprintf(stderr, "parse_first_loopline: '%s'\n", s);
 #endif
 
-    if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3 ||
-	sscanf(s, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
+    if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo, 
 				    lvar, op, rvar);
-    } else if (!strncmp(s, "foreach", 7)) {
-	err = parse_as_each_loop(loop, pdinfo, s + 7);
+    } else if (!strncmp(s, "foreach ", 8)) {
+	err = parse_as_each_loop(loop, pdinfo, s + 8);
     } else if (!strncmp(s, "for", 3)) {
-	err = parse_as_for_loop(loop, pZ, pdinfo, s + 3);
+	err = parse_as_for_loop(loop, pZ, pdinfo, s + 4);
     } else if (!strncmp(s, "while", 5)) {
 	err = parse_as_while_loop(loop, pZ, pdinfo, s + 6);
     } else if (sscanf(s, "%15s", lvar) == 1) {
