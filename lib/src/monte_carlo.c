@@ -205,11 +205,14 @@ int gretl_execute_loop (void)
     return loop_execute;
 }
 
-/* get a value from a loop "limit" element, either a specified
-   scalar variable or a numeric constant */
+/* Get a value from a loop "limit" element (lower or upper).  If we
+   got the name of a scalar variable at setup time, look up its
+   current value (and modify the sign if wanted).  Otherwise we should
+   have got a numerical constant at setup, in which case we just
+   return that value.
+*/
 
-static double 
-controller_get_value (controller *clr, double ***pZ, DATAINFO *pdinfo)
+static double controller_get_val (controller *clr)
 {
     double x = NADBL;
 
@@ -225,27 +228,11 @@ controller_get_value (controller *clr, double ***pZ, DATAINFO *pdinfo)
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "controller_get_value: vname='%s', returning %g\n", 
+    fprintf(stderr, "controller_get_val: vname='%s', returning %g\n", 
 	    clr->vname, x);
 #endif
 
     return x;
-}
-
-static double loop_get_initval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
-{
-#if LOOP_DEBUG
-    fprintf(stderr, "getting loop initval...\n");
-#endif
-    return controller_get_value(&loop->init, pZ, pdinfo);
-}
-
-static double loop_get_finalval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
-{
-#if LOOP_DEBUG
-    fprintf(stderr, "getting loop finalval...\n");
-#endif
-    return controller_get_value(&loop->final, pZ, pdinfo);
 }
 
 /* apply initialization in case of for-loop */
@@ -2418,21 +2405,20 @@ top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
     if (is_list_loop(loop)) {
 	err = loop_list_refresh(loop, pdinfo);
     } else if (loop->type == INDEX_LOOP) {
-	loop->init.val = loop_get_initval(loop, pZ, pdinfo);
+	loop->init.val = controller_get_val(&loop->init);
     } else if (loop->type == FOR_LOOP) {
 	forloop_init(loop, pZ, pdinfo, &err);
     }
 
     if (!err && (loop->type == COUNT_LOOP || indexed_loop(loop))) {
-	double maxval = loop_get_finalval(loop, pZ, pdinfo);
-
-	if (na(loop->init.val) || na(maxval)) {
+	loop->final.val = controller_get_val(&loop->final);
+	if (na(loop->init.val) || na(loop->final.val)) {
 	    err = 1;
 	} else {
-	    loop->itermax = maxval - loop->init.val + 1;
+	    loop->itermax = loop->final.val - loop->init.val + 1;
 #if LOOP_DEBUG
 	    fprintf(stderr, "*** itermax = %g - %g + 1 = %d\n",
-		    maxval, loop->init.val, loop->itermax);
+		    loop->final.val, loop->init.val, loop->itermax);
 #endif
 	}
     }
