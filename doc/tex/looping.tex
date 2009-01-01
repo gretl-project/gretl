@@ -92,9 +92,13 @@ a different value via the \cmd{set} command (see the \GCR).
 \label{loop-index}
 
 A third form of loop control uses an index variable, for example
-\verb+i+.  In this case you specify starting and ending values for the
-index, which is incremented by one each time round the loop.  The
-syntax looks like this: \cmd{loop i=1..20}.
+\verb+i+.\footnote{It is common programming practice to use simple,
+  one-character names for such variables.  However, you may use any
+  name that is acceptable by gretl: up to 15 characters, starting with
+  a letter, and containing nothing but letters, numerals and the
+  underscore character.}  In this case you specify starting and ending
+values for the index, which is incremented by one each time round the
+loop.  The syntax looks like this: \cmd{loop i=1..20}.
 
 The index variable may be a pre-existing scalar; if this is not the
 case, the variable is created automatically and is destroyed on exit
@@ -107,11 +111,35 @@ can access the integer value of \verb+i+ (see Example
 
 The starting and ending values for the index can be given in numerical
 form, or by reference to predefined scalar variables.  In the latter
-case the variables are evaluated once, when the loop is set up.  In
+case the variables are evaluated once, at the start of the loop.  In
 addition, with time series data you can give the starting and ending
 values in the form of dates, as in \cmd{loop i=1950:1..1999:4}.
 
-This form of loop is particularly useful in conjunction with the
+This form of loop control is intended to be quick and easy, and as
+such it is subject to certain limitations.  You cannot do arithmetic
+within the loop control expression, as in
+\begin{code}
+loop i=k..2*k # won't work
+\end{code}
+But one extension is permitted for convenience: you can inflect a loop
+control variable with a minus sign, as in
+\begin{code}
+loop k=-lag..lag # OK
+\end{code}
+
+Also note that in this sort of loop the index variable is always
+incremented by one at each iteration.  If, for example, you have
+\begin{code}
+loop i=m..n
+\end{code}
+where \texttt{m} and \texttt{n} are scalar variables with values
+\texttt{m} $>$ \texttt{n} at the time of execution, the index will not
+be decremented; rather, the loop will simply be bypassed.
+
+If you need more complex loop control, see the ``\texttt{for}'' form
+below.
+
+The index loop is particularly useful in conjunction with the
 \texttt{values()} matrix function when some operation must be carried
 out for each value of some discrete variable (see chapter
 \ref{chap:discrete}). Consider the following example:

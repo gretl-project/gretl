@@ -66,7 +66,7 @@ enum loop_types {
 			 l->type == EACH_LOOP)
 
 typedef struct {
-    int loopline;  /* location: line number in loop */
+    int linenum;   /* location: line number in loop */
     int n;         /* number of repetitions */
     int *list;     /* list of vars to print */
     bigval *sum;   /* running sum of values */
@@ -78,7 +78,7 @@ typedef struct {
 /* below: used for special "progressive" loop */ 
 
 typedef struct {
-    int loopline;           /* location: line number in loop */
+    int linenum;            /* location: line number in loop */
     int n;                  /* number of repetitions */
     int nc;                 /* number of coefficients */
     MODEL *model0;          /* copy of initial model */
@@ -94,7 +94,7 @@ typedef struct {
 } LOOP_MODEL;
 
 typedef struct {
-    int loopline;     /* location: line number in loop */ 
+    int linenum;      /* location: line number in loop */ 
     int n;            /* number of observations */
     char *fname;      /* filename for output */
     gretlopt opt;     /* formatting option */
@@ -110,10 +110,10 @@ enum loop_flags {
 };
 
 struct controller_ {
-    double val;
-    char vname[VNAMELEN];
-    int vsign;
-    char *expr;
+    double val;            /* evaluated value */
+    char vname[VNAMELEN];  /* name of (scalar) variable, if used */
+    int vsign;             /* 1 or -1, if vname is used */
+    char *expr;            /* expression to pass to genr, if used */
 };
 
 typedef struct controller_ controller;
@@ -132,12 +132,15 @@ struct LOOPSET_ {
     int iter;
     int index;
 
-    /* control variables */
+    /* index/foreach control variables */
     char idxname[VNAMELEN];
     int idxval;
-    char brk;
     char listname[VNAMELEN];
 
+    /* break signal */
+    char brk;
+
+    /* control structures */
     controller init;
     controller test;
     controller delta;
@@ -148,14 +151,14 @@ struct LOOPSET_ {
     int n_models;
     int n_loop_models;
     int n_prints;
-#if GENCOMPILE
     int n_genrs;
-    GENERATOR **genrs;
-#endif
+    int n_children;
 
+    /* subsidiary objects */
     char **lines;
     int *ci;
     char **eachstrs;
+    GENERATOR **genrs;
     MODEL **models;
     int *model_lines;
     LOOP_MODEL *lmodels;
@@ -163,7 +166,6 @@ struct LOOPSET_ {
     LOOP_STORE store;
     LOOPSET *parent;
     LOOPSET **children;
-    int n_children;
     int parent_line;
 };
 
@@ -205,34 +207,29 @@ int gretl_execute_loop (void)
     return loop_execute;
 }
 
-/* Get a value from a loop "limit" element (lower or upper).  If we
-   got the name of a scalar variable at setup time, look up its
-   current value (and modify the sign if wanted).  Otherwise we should
-   have got a numerical constant at setup, in which case we just
-   return that value.
+/* For indexed loops: get a value from a loop "limit" element (lower
+   or upper).  If we got the name of a scalar variable at setup time,
+   look up its current value (and modify the sign if wanted).
+   Otherwise we should have got a numerical constant at setup, in
+   which case we just return that value.
 */
 
 static double controller_get_val (controller *clr)
 {
-    double x = NADBL;
-
     if (clr->vname[0] != '\0') {
 	if (gretl_is_scalar(clr->vname)) {
-	    x = gretl_scalar_get_value(clr->vname) * clr->vsign;
+	    clr->val = gretl_scalar_get_value(clr->vname) * clr->vsign;
 	} else {
-	   gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
+	    gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
 	} 
-    } else {
-	/* numerical constant? */
-	x = clr->val;
-    }
+    } 
 
 #if LOOP_DEBUG
     fprintf(stderr, "controller_get_val: vname='%s', returning %g\n", 
-	    clr->vname, x);
+	    clr->vname, clr->val);
 #endif
 
-    return x;
+    return clr->val;
 }
 
 /* apply initialization in case of for-loop */
@@ -393,7 +390,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
 
 static void loop_store_init (LOOP_STORE *lstore)
 {
-    lstore->loopline = -1;
+    lstore->linenum = -1;
     lstore->n = 0;
     lstore->fname = NULL;
     lstore->opt = OPT_NONE;
@@ -428,10 +425,8 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->n_loop_models = 0;
     loop->n_prints = 0;
 
-#if GENCOMPILE
     loop->n_genrs = 0;
     loop->genrs = NULL;
-#endif
 
     loop->lines = NULL;
     loop->ci = NULL;
@@ -528,12 +523,10 @@ static void gretl_loop_destroy (LOOPSET *loop)
 
     loop_store_free(&loop->store);
 
-#if GENCOMPILE
     for (i=0; i<loop->n_genrs; i++) {
 	destroy_genr(loop->genrs[i]);
     }
     free(loop->genrs);    
-#endif
 
     if (loop->children != NULL) {
 	free(loop->children);
@@ -1313,7 +1306,7 @@ static void loop_model_zero (LOOP_MODEL *lmod)
 
 static void loop_model_init (LOOP_MODEL *lmod, int lno)
 {
-    lmod->loopline = lno;
+    lmod->linenum = lno;
     lmod->nc = 0;
     lmod->model0 = NULL;
     lmod->bigarray = NULL;
@@ -1416,7 +1409,7 @@ static void loop_print_zero (LOOP_PRINT *lprn)
 
 static void loop_print_init (LOOP_PRINT *lprn, int lno)
 {
-    lprn->loopline = lno;
+    lprn->linenum = lno;
     lprn->list = NULL;
     lprn->sum = NULL;
     lprn->ssq = NULL;
@@ -1467,7 +1460,7 @@ static LOOP_PRINT *get_loop_print_by_line (LOOPSET *loop, int lno, int *err)
     int i, np = loop->n_prints;
 
     for (i=0; i<np; i++) {
-	if (loop->prns[i].loopline == lno) {
+	if (loop->prns[i].linenum == lno) {
 	    return &loop->prns[i];
 	}
     }
@@ -1494,7 +1487,7 @@ static void loop_store_free (LOOP_STORE *lstore)
     free(lstore->fname);
     lstore->fname = NULL;
 
-    lstore->loopline = -1;
+    lstore->linenum = -1;
     lstore->n = 0;
     lstore->opt = OPT_NONE;
 }
@@ -1570,7 +1563,7 @@ static int loop_store_update (LOOPSET *loop, int lno,
 {
     int i, t, err = 0;
 
-    if (loop->store.loopline >= 0 && loop->store.loopline != lno) {
+    if (loop->store.linenum >= 0 && loop->store.linenum != lno) {
 	strcpy(gretl_errmsg, "Only one 'store' command is allowed in a "
 	       "progressive loop");
 	return E_DATA;
@@ -1584,7 +1577,7 @@ static int loop_store_update (LOOPSET *loop, int lno,
 	}
     }
 
-    loop->store.loopline = lno;
+    loop->store.linenum = lno;
     t = loop->store.n;
 
     if (t >= loop->store.dinfo->n) {
@@ -1685,7 +1678,7 @@ get_loop_model_by_line (LOOPSET *loop, int lno, int *err)
 #endif
 
     for (i=0; i<nlm; i++) {
-	if (loop->lmodels[i].loopline == lno) {
+	if (loop->lmodels[i].linenum == lno) {
 	    return &loop->lmodels[i];
 	}
     }
@@ -2535,8 +2528,6 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
     return NULL;
 }
 
-#if GENCOMPILE
-
 static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno)
 {
     GENERATOR **genrs;
@@ -2579,8 +2570,6 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
     return genr;
 }
 
-#endif
-
 /* get the next command for a loop by pulling a line off the
    stack of loop commands.
 */
@@ -2621,9 +2610,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     MODEL *pmod;
     LOOP_MODEL *lmod;
     LOOP_PRINT *lprn;
-#if GENCOMPILE
     GENERATOR *genr;
-#endif
     char errline[MAXLINE];
     int indent0, mod_id = 0;
     int subst, lrefresh;
