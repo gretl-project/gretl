@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-29 14:23-0500\n"
-"PO-Revision-Date: 2008-12-29 15:47+0100\n"
+"PO-Revision-Date: 2009-01-02 10:45+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -8171,7 +8171,7 @@ msgstr "Fine"
 
 #: gui2/dialogs.c:2393
 msgid "Show fitted values for pre-forecast range"
-msgstr ""
+msgstr "Mostra i valori stimati nell'intervallo precedente alla previsione"
 
 #: gui2/dialogs.c:2407
 msgid "error bars"
