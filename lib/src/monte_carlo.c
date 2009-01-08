@@ -820,11 +820,12 @@ static int find_list_in_parentage (LOOPSET *loop, const char *s)
 /* We're looking at a "foreach" loop with just one field after the
    index variable, so it's most likely a loop over a list.
 
-   We begin by looking for an existent named list, but if this fails
-   we don't give up immediately: if we're working on an embedded loop,
-   the list may be created within a parent loop whose commands have
-   not yet been executed, so we search upward among the ancestors
-   of this loop (if any) for a relevant list-creation command.
+   We begin by looking for a currently existing named list, but if
+   this fails we don't give up immediately.  If we're working on an
+   embedded loop, the list may be created within a parent loop whose
+   commands have not yet been executed, so we search upward among the
+   ancestors of this loop (if any) for a relevant list-creation
+   command.
 
    Even if we find an already-existing list, we do not yet fill out
    the variable-name (or variable-number) strings: these will be set
@@ -843,14 +844,13 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
     list = get_list_by_name(s);
 
 #if LOOP_DEBUG
-    printlist(list, "list, in list_loop_setup");
+    fprintf(stderr, "list_loop_setup: s = '%s'\n", s);
+    printlist(list, "get_list_by_name");
 #endif
 
     if (list == NULL && !find_list_in_parentage(loop, s)) {
 	err = E_UNKVAR;
-    }
-
-    if (!err) {
+    } else {
 	*loop->listname = '\0';
 	strncat(loop->listname, s, VNAMELEN - 1);
 	*nf = (list != NULL)? list[0] : 0;
@@ -912,13 +912,12 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     int done = 0;
     int i, nf, err = 0;
 
+    /* we're looking at the string that follows "loop foreach" */
     if (*s == '\0') {
 	return E_PARSE;
     }
-
-    /* we're looking at the string that follows "loop foreach" */
-
-    s++; /* skip space */
+    
+    s += strspn(s, " "); /* skip space */
 
 #if LOOP_DEBUG
     fprintf(stderr, "parse_as_each_loop: s = '%s'\n", s);
@@ -1067,11 +1066,11 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     fprintf(stderr, "parse_first_loopline: '%s'\n", s);
 #endif
 
-    if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
+    if (!strncmp(s, "foreach", 7)) {
+	err = parse_as_each_loop(loop, pdinfo, s + 7);
+    } else if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo, 
 				    lvar, op, rvar);
-    } else if (!strncmp(s, "foreach ", 8)) {
-	err = parse_as_each_loop(loop, pdinfo, s + 8);
     } else if (!strncmp(s, "for", 3)) {
 	err = parse_as_for_loop(loop, pZ, pdinfo, s + 4);
     } else if (!strncmp(s, "while", 5)) {
