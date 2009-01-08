@@ -43,9 +43,6 @@ struct _tx_request {
     void *opts;
     int savevars;
     int pd;
-#if GTK_MAJOR_VERSION == 1
-    int ret;
-#endif
 };
 
 int show_tramo_options (tx_request *request, GtkWidget *vbox);

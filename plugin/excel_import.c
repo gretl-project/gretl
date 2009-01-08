@@ -461,6 +461,60 @@ static int wbook_find_format (wbook *book, int xfref)
     return fmt;
 }
 
+static int func_is_date (guint8 *data, int version)
+{
+    /* check for built-in DATE function */
+    if (version < MS_BIFF_V4) {
+	return MS_OLE_GET_GUINT8(data) == 65;
+    } else {
+	return MS_OLE_GET_GUINT16(data) == 65;
+    }
+}
+
+#define t_func_size(v) ((v < MS_BIFF_V4)? 2 : 3)
+#define t_ref_size(v)  ((v < MS_BIFF_V8)? 4 : 5)
+
+/* Could be a date formula?  If so, it should have 3 cell reference fields
+   and the trailing function ID should equal 65 */
+
+static void check_for_date_formula (BiffQuery *q, wbook *book)
+{
+    int version = book->version;
+    int offset = (version < MS_BIFF_V5)? 16 : 20;
+    guint8 *fdata = q->data + offset;    
+    guint8 u1;
+    guint16 sz;
+    int i;
+
+    if (version < MS_BIFF_V3) {
+	sz = MS_OLE_GET_GUINT8(fdata);
+	fdata += 1;
+    } else {
+	sz = MS_OLE_GET_GUINT16(fdata);
+	fdata += 2;
+    }
+
+    if (sz != 3 * t_ref_size(version) + t_func_size(version)) {
+	return;
+    }
+
+    for (i=0; i<3; i++) {
+	/* token ID */
+	u1 = MS_OLE_GET_GUINT8(fdata);
+	if (u1 != 0x44) { /* 0x44 = tRef */
+	    return;
+	}
+	fdata += t_ref_size(version);
+    }
+
+    u1 = MS_OLE_GET_GUINT8(fdata);
+
+    if (u1 == 0x41 && func_is_date(fdata + 1, version)) { /* tFunc, DATE */
+	fprintf(stderr, "Got DATE formula in first column\n");
+	book_set_numeric_dates(book);
+    }
+}
+
 #undef FORMAT_INFO
 
 static int process_item (BiffQuery *q, wbook *book, PRN *prn) 
@@ -493,7 +547,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 			i, j, fmt);
 		book_set_numeric_dates(book);
 	    }
-	}
+	} 
     }
 
     switch (q->ls_op) {
@@ -682,6 +736,10 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		    prow->cells[j] = g_strdup("-999");
 		} else {
 		    prow->cells[j] = g_strdup_printf("%.15g", val);
+		    if (i == book->row_offset + 1 && j == book->col_offset) {
+			/* could be a date formula? */
+			check_for_date_formula(q, book);
+		    }
 		}
 	    }
 	}

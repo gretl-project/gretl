@@ -57,7 +57,6 @@ typedef enum {
     MS_BIFF_TYPE_Unknown 
 } MsBiffFileType;
 
-
 /* Cell / XF types */
 typedef enum { 
     MS_BIFF_H_VISIBLE, 

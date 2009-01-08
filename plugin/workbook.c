@@ -348,8 +348,7 @@ ms_biff_bof_data_destroy (MsBiffBofData *data)
 }
 
 static void
-ms_excel_read_bof (BiffQuery *q,
-		   MsBiffBofData **version)
+ms_excel_read_bof (BiffQuery *q, MsBiffBofData **version)
 {
     /* The first BOF seems to be OK, the rest lie? */
     MsBiffVersion vv = MS_BIFF_V_UNKNOWN;
