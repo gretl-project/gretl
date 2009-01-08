@@ -54,12 +54,12 @@
 
 #ifndef MAP_FAILED
 /* Someone needs their head examining - BSD ? */
-#	define MAP_FAILED ((void *)-1)
+# define MAP_FAILED ((void *)-1)
 #endif
 
 #if !defined(MAP_SHARED) || !defined(HAVE_MMAP)
 /* Only define this where mmap() is not supported */
-#	define MAP_SHARED 0
+# define MAP_SHARED 0
 #endif
 
 /* Implementational detail - not for global header */
@@ -99,75 +99,65 @@ struct _MsOle {
     /* end if memory mapped */
 };
 
-
 #define BLOCK_COUNT(f) (((f)->length + BB_BLOCK_SIZE - 1) / BB_BLOCK_SIZE)
-
 
 /**
  * Default system calls wrappers
  **/
 
-static int
-open2_wrap (const char *pathname, int flags)
+static int open2_wrap (const char *pathname, int flags)
 {
 #ifdef O_BINARY
-    return open (pathname, flags | O_BINARY);
+    return open(pathname, flags | O_BINARY);
 #else
-    return open (pathname, flags);
+    return open(pathname, flags);
 #endif
 }
 
-static int
-open3_wrap (const char *pathname, int flags, mode_t mode)
+static int open3_wrap (const char *pathname, int flags, mode_t mode)
 {
 #ifdef O_BINARY
-    return open (pathname, flags | O_BINARY, mode);
+    return open(pathname, flags | O_BINARY, mode);
 #else
-    return open (pathname, flags, mode);
+    return open(pathname, flags, mode);
 #endif
 }
 
-static ssize_t
-read_wrap (int fd, void *buf, size_t count)
+static ssize_t read_wrap (int fd, void *buf, size_t count)
 {
-    return read (fd, buf, count);
+    return read(fd, buf, count);
 }
 
-static int
-close_wrap (int fd)
+static int close_wrap (int fd)
 {
-    return close (fd);
+    return close(fd);
 }
 
-static ssize_t
-write_wrap (int fd, const void *buf, size_t count)
+static ssize_t write_wrap (int fd, const void *buf, size_t count)
 {
-    return write (fd, (void *)buf, count);
+    return write(fd, (void *) buf, count);
 }
 
-static off_t
-lseek_wrap (int fd, off_t offset, int whence)
+static off_t lseek_wrap (int fd, off_t offset, int whence)
 {
-    return lseek (fd, offset, whence);
+    return lseek(fd, offset, whence);
 }
 
-static int
-isregfile_wrap (int fd)
+static int isregfile_wrap (int fd)
 {
     struct stat st;
 
-    if (fstat (fd, &st))
+    if (fstat(fd, &st))
 	return 0;
 
-    return S_ISREG (st.st_mode);
+    return S_ISREG(st.st_mode);
 }
 
-static int
-getfilesize_wrap (int fd, guint32 *size)
+static int getfilesize_wrap (int fd, guint32 *size)
 {
     struct stat st;
 
-    if (fstat (fd, &st))
+    if (fstat(fd, &st))
 	return -1;
 
     *size = st.st_size;
@@ -175,17 +165,15 @@ getfilesize_wrap (int fd, guint32 *size)
 }
 
 #ifdef HAVE_MMAP
-static void *
-mmap_wrap (void *start, size_t length, int prot,
-	   int flags, int fd, off_t offset)
+static void *mmap_wrap (void *start, size_t length, int prot,
+			int flags, int fd, off_t offset)
 {
-    return mmap (start, length, prot, flags, fd, offset);
+    return mmap(start, length, prot, flags, fd, offset);
 }
 
-static int
-munmap_wrap (void *start, size_t length)
+static int munmap_wrap (void *start, size_t length)
 {
-    return munmap (start, length);
+    return munmap(start, length);
 }
 #endif
 
@@ -198,7 +186,6 @@ static MsOleSysWrappers ms_ole_default_wrappers = {
     lseek_wrap,
     isregfile_wrap,
     getfilesize_wrap,
-
 #ifdef HAVE_MMAP
     mmap_wrap,
     munmap_wrap
@@ -211,17 +198,18 @@ static MsOleSysWrappers ms_ole_default_wrappers = {
 static void
 take_wrapper_functions (MsOle *f, MsOleSysWrappers *wrappers)
 {
-    if (wrappers == NULL)
+    if (wrappers == NULL) {
 	f->syswrap = &ms_ole_default_wrappers;
-    else
+    } else {
 	f->syswrap = wrappers;
+    }
 }
 
-typedef guint32 PPS_IDX ;
+typedef guint32 PPS_IDX;
 
 #if OLE_DEBUG > 0
 /* Very grim, but quite necessary */
-#       define ms_array_index(a,b,c) (b)my_array_hack ((a), sizeof(b), (c))
+# define ms_array_index(a,b,c) (b)my_array_hack ((a), sizeof(b), (c))
 
 static guint32
 my_array_hack (GArray *a, guint s, guint32 idx)
@@ -239,7 +227,6 @@ my_array_hack (GArray *a, guint s, guint32 idx)
 
 
 typedef guint32 BLP;	/* Block pointer */
-
 
 #define BB_THRESHOLD   0x1000
 
@@ -328,9 +315,9 @@ get_block_ptr (MsOle *f, BLP b, gboolean forwrite)
     if (blks < MAX_CACHED_BLOCKS)
 	min = 0;
 
-    g_assert (!attr->data);
+    g_assert(!attr->data);
     if (min) {
-	g_assert (min->data);
+	g_assert(min->data);
 #if OLE_DEBUG > 2
 	g_print ("Replacing cache block %d with %d\n", min->blk, b);
 #endif
@@ -341,14 +328,13 @@ get_block_ptr (MsOle *f, BLP b, gboolean forwrite)
 	attr->data = g_new (guint8, BB_BLOCK_SIZE);
 
     offset = (b+1)*BB_BLOCK_SIZE;
-    f->syswrap->lseek (f->file_des, offset, SEEK_SET);
-    f->syswrap->read (f->file_des, attr->data, BB_BLOCK_SIZE);
+    f->syswrap->lseek(f->file_des, offset, SEEK_SET);
+    f->syswrap->read(f->file_des, attr->data, BB_BLOCK_SIZE);
     attr->usage = 1;
     attr->dirty = forwrite;
 
     return attr->data;
 }
-
 
 /* This is a list of big blocks which contain a flat description of all blocks
    in the file. Effectively inside these blocks is a FAT of chains of other BBs,
@@ -415,8 +401,7 @@ get_block_ptr (MsOle *f, BLP b, gboolean forwrite)
 /* FIXME: This needs proper unicode support ! current support is a guess */
 /* Length is in bytes == 1/2 the final text length */
 /* NB. Different from biff_get_text, looks like a bug ! */
-static char *
-pps_get_text (guint8 *ptr, int length)
+static char *pps_get_text (guint8 *ptr, int length)
 {
     int lp;
     char *ans;
@@ -453,8 +438,7 @@ pps_get_text (guint8 *ptr, int length)
  *
  * Return value: the block index of the BBD block.
  */
-static BLP
-get_next_block (MsOle *f, BLP blk, gboolean *err)
+static BLP get_next_block (MsOle *f, BLP blk, gboolean *err)
 {
     BLP bbd = GET_BBD_LIST (f, blk / (BB_BLOCK_SIZE / 4));
 
@@ -469,10 +453,8 @@ get_next_block (MsOle *f, BLP blk, gboolean *err)
 }
 
 /* Builds the FAT */
-static int
-read_bb (MsOle *f)
+static int read_bb (MsOle *f)
 {
-    /* FIXME tenix may be later we wish to split this function */
     guint32  numbbd;
     BLP      lp;
     guint32  num_add_bbd_lists;
@@ -570,11 +552,10 @@ read_bb (MsOle *f)
     return 1;
 }
 
-static guint8 *
-get_pps_ptr (MsOle *f, PPS_IDX i, gboolean forwrite)
+static guint8 *get_pps_ptr (MsOle *f, PPS_IDX i, gboolean forwrite)
 {
     int lp;
-    BLP blk = GET_ROOT_STARTBLOCK (f);
+    BLP blk = GET_ROOT_STARTBLOCK(f);
 
     lp = i/(BB_BLOCK_SIZE/PPS_BLOCK_SIZE);
     while (lp && blk != END_OF_CHAIN) {
@@ -601,12 +582,12 @@ get_pps_ptr (MsOle *f, PPS_IDX i, gboolean forwrite)
 static gint
 pps_compare_func (PPS *a, PPS *b)
 {
-    g_return_val_if_fail (a, 0);
-    g_return_val_if_fail (b, 0);
-    g_return_val_if_fail (a->name, 0);
-    g_return_val_if_fail (b->name, 0);
+    g_return_val_if_fail(a, 0);
+    g_return_val_if_fail(b, 0);
+    g_return_val_if_fail(a->name, 0);
+    g_return_val_if_fail(b->name, 0);
 
-    return g_strcasecmp (b->name, a->name);
+    return g_strcasecmp(b->name, a->name);
 }
 
 static void
@@ -837,8 +818,7 @@ ms_ole_setup (MsOle *f)
     return 0;
 }
 
-static MsOle *
-ms_ole_new ()
+static MsOle *ms_ole_new ()
 {
     MsOle *f = g_new0 (MsOle, 1);
 
@@ -855,20 +835,17 @@ ms_ole_new ()
     return f;
 }
 
-
 /**
  * ms_ole_ref:
  * @fs: filesystem object.
  *
  * Increment by one the count of references to the filesystem.
  **/
-void
-ms_ole_ref (MsOle *fs)
+void ms_ole_ref (MsOle *fs)
 {
-    g_return_if_fail (fs != NULL);
+    g_return_if_fail(fs != NULL);
     fs->ref_count++;
 }
-
 
 /**
  * ms_ole_unref:
@@ -876,13 +853,11 @@ ms_ole_ref (MsOle *fs)
  *
  * Decrement by one the count of references to the filesystem.
  **/
-void
-ms_ole_unref (MsOle *fs)
+void ms_ole_unref (MsOle *fs)
 {
-    g_return_if_fail (fs != NULL);
+    g_return_if_fail(fs != NULL);
     fs->ref_count--;
 }
-
 
 /**
  * ms_ole_open_vfs:
@@ -896,10 +871,9 @@ ms_ole_unref (MsOle *fs)
  *
  * Return value: a #MsOleErr code.
  **/
-MsOleErr
-ms_ole_open_vfs (MsOle **fs, const char *name,
-		 gboolean try_mmap,
-		 MsOleSysWrappers *wrappers)
+MsOleErr ms_ole_open_vfs (MsOle **fs, const char *name,
+			  gboolean try_mmap,
+			  MsOleSysWrappers *wrappers)
 {
     int prot = PROT_READ | PROT_WRITE;
     MsOle *f;
@@ -912,26 +886,26 @@ ms_ole_open_vfs (MsOle **fs, const char *name,
     g_print ("New OLE file '%s'\n", name);
 #endif
 
-    f = *fs = ms_ole_new ();
-    take_wrapper_functions (f, wrappers);
+    f = *fs = ms_ole_new();
+    take_wrapper_functions(f, wrappers);
 
     /* Allin Cottrell modification: we only need to read */
 
-    f->file_des = file = f->syswrap->open2 (name, O_RDONLY);
+    f->file_des = file = f->syswrap->open2(name, O_RDONLY);
     f->ref_count = 0;
     f->mode = 'r';
 	
-    if ((file == -1) || !(f->syswrap->isregfile (file))) {
-	g_warning ("No such file '%s'\n", name);
-	g_free (f) ;
+    if ((file == -1) || !(f->syswrap->isregfile(file))) {
+	g_warning("No such file '%s'\n", name);
+	g_free(f);
 	*fs = NULL;
 	return MS_OLE_ERR_EXIST;
     }
 
-    if (f->syswrap->getfilesize (file, &(f->length) )) {
-	g_warning ("Couldn't get the size of file '%s'\n", name);
-	f->syswrap->close (file) ;
-	g_free (f);
+    if (f->syswrap->getfilesize(file, &(f->length) )) {
+	g_warning("Couldn't get the size of file '%s'\n", name);
+	f->syswrap->close(file);
+	g_free(f);
 	*fs = NULL;
 	return MS_OLE_ERR_EXIST;
     }
@@ -940,8 +914,8 @@ ms_ole_open_vfs (MsOle **fs, const char *name,
 #if OLE_DEBUG > 0
 	g_warning ("File '%s' too short\n", name);
 #endif
-	f->syswrap->close (file) ;
-	g_free (f) ;
+	f->syswrap->close(file);
+	g_free(f);
 	*fs = NULL;
 	return MS_OLE_ERR_FORMAT;
     }
@@ -963,13 +937,13 @@ ms_ole_open_vfs (MsOle **fs, const char *name,
 
     if (f->mem == NULL) {
 	f->ole_mmap = FALSE;
-	f->mem = g_new (guint8, BB_BLOCK_SIZE);
+	f->mem = g_new(guint8, BB_BLOCK_SIZE);
 
 	if (!f->mem ||
-	    f->syswrap->read (file, f->mem, BB_BLOCK_SIZE) == -1) {
-	    g_warning ("Error reading header\n");
-	    f->syswrap->close (file) ;
-	    g_free (f);
+	    f->syswrap->read(file, f->mem, BB_BLOCK_SIZE) == -1) {
+	    g_warning("Error reading header\n");
+	    f->syswrap->close(file);
+	    g_free(f);
 	    *fs = NULL;
 	    return MS_OLE_ERR_EXIST;
 	}
@@ -1000,21 +974,20 @@ ms_ole_open_vfs (MsOle **fs, const char *name,
 		   name, f->length);
 #endif
 
-    if (!ms_ole_setup (f)) {
-	g_warning ("'%s' : duff file !\n", name);
-	ms_ole_destroy (fs);
+    if (!ms_ole_setup(f)) {
+	g_warning("'%s' : duff file !\n", name);
+	ms_ole_destroy(fs);
 	return MS_OLE_ERR_FORMAT;
     }
 
-    g_assert (f->bb->len < BLOCK_COUNT (f));
+    g_assert(f->bb->len < BLOCK_COUNT (f));
 
 #if OLE_DEBUG > 0
-    g_print ("New OLE file '%s'\n", name);
+    g_print("New OLE file '%s'\n", name);
 #endif
     /* If writing then when destroy commit it */
     return MS_OLE_ERR_OK;
 }
-
 
 /**
  * ms_ole_destroy:
@@ -1022,8 +995,7 @@ ms_ole_open_vfs (MsOle **fs, const char *name,
  *
  * Closes the filesystem @fs and truncates any free blocks.
  **/
-void
-ms_ole_destroy (MsOle **ptr)
+void ms_ole_destroy (MsOle **ptr)
 {
     MsOle *f = *ptr;
 
@@ -1034,9 +1006,9 @@ ms_ole_destroy (MsOle **ptr)
 	if (f->ref_count != 0)
 	    g_warning ("Unclosed files exist on this OLE stream\n");
 
-	if (f->mem == (void *)0xdeadbeef)
+	if (f->mem == (void *) 0xdeadbeef) {
 	    f->mem = NULL;
-	else if (f->ole_mmap) {
+	} else if (f->ole_mmap) {
 #ifdef HAVE_MMAP
 	    munmap (f->mem, f->length);
 #else
@@ -1045,8 +1017,10 @@ ms_ole_destroy (MsOle **ptr)
 	} else {
 	    if (f->bbattr) {
 		guint32 i;
+
 		for (i = 0; i < f->bbattr->len; i++) {
-		    BBBlkAttr *attr = g_ptr_array_index (f->bbattr, i);
+		    BBBlkAttr *attr = g_ptr_array_index(f->bbattr, i);
+
 		    g_free (attr->data);
 		    attr->data = NULL;
 		    g_free (attr);
@@ -1055,18 +1029,18 @@ ms_ole_destroy (MsOle **ptr)
 	    }
 
 	    if (f->dirty) {
-		f->syswrap->lseek (f->file_des, 0, SEEK_SET);
-		f->syswrap->write (f->file_des, f->mem,
+		f->syswrap->lseek(f->file_des, 0, SEEK_SET);
+		f->syswrap->write(f->file_des, f->mem,
 				   BB_BLOCK_SIZE);
 	    }
-	    g_free (f->mem);
+	    g_free(f->mem);
 	    f->mem = NULL;
 	}
 
-	destroy_pps (f->pps);
+	destroy_pps(f->pps);
 	f->pps = NULL;
 
-	f->syswrap->close (f->file_des);
+	f->syswrap->close(f->file_des);
 	g_free (f);
 
 #if OLE_DEBUG > 0
@@ -1076,8 +1050,7 @@ ms_ole_destroy (MsOle **ptr)
     *ptr = NULL;
 }
 
-static MsOlePos
-tell_pos (MsOleStream *s)
+static MsOlePos tell_pos (MsOleStream *s)
 {
     return s->position;
 }
@@ -1115,13 +1088,7 @@ ms_ole_lseek (MsOleStream *s, MsOleSPos bytes, MsOleSeek type)
     return newpos;
 }
 
-
-/*
- *  Returns:
- *  NULL    - on error
- */
-static guint8*
-ms_ole_read_ptr_bb (MsOleStream *s, MsOlePos length)
+static guint8 *ms_ole_read_ptr_bb (MsOleStream *s, MsOlePos length)
 {
     int blklen;
     guint8 *ans;
@@ -1158,13 +1125,7 @@ ms_ole_read_ptr_bb (MsOleStream *s, MsOlePos length)
     return ans;
 }
 
-
-/*
- *  Returns:
- *  NULL    - on error
- */
-static guint8*
-ms_ole_read_ptr_sb (MsOleStream *s, MsOlePos length)
+static guint8 *ms_ole_read_ptr_sb (MsOleStream *s, MsOlePos length)
 {
     int blklen;
     guint8 *ans;
@@ -1225,6 +1186,7 @@ ms_ole_read_copy_bb (MsOleStream *s, guint8 *ptr, MsOlePos length)
     while (length > 0) {
 	BLP block;
 	int cpylen = BB_BLOCK_SIZE - offset;
+
 	if (cpylen > length)
 	    cpylen = length;
 
@@ -1252,7 +1214,6 @@ ms_ole_read_copy_bb (MsOleStream *s, guint8 *ptr, MsOlePos length)
 
     return 1;
 }
-
 
 /*
  *  Returns:
@@ -1348,7 +1309,6 @@ pps_create (MsOle *f, GList **p, GList *parent, const char *name,
     return MS_OLE_ERR_OK;
 }
 
-
 /**
  * find_in_pps:
  * @l: the parent storage chain element.
@@ -1358,8 +1318,7 @@ pps_create (MsOle *f, GList **p, GList *parent, const char *name,
  *
  * Return value: %NULL if not found or pointer to the child list
  **/
-static GList *
-find_in_pps (GList *l, const char *name)
+static GList *find_in_pps (GList *l, const char *name)
 {
     PPS   *pps;
     GList *cur;
@@ -1390,7 +1349,6 @@ find_in_pps (GList *l, const char *name)
     }
     return NULL;
 }
-
 
 /**
  * path_to_pps:
@@ -1479,7 +1437,6 @@ path_to_pps (PPS **pps, MsOle *f, const char *path,
     return MS_OLE_ERR_EXIST;
 }
 
-
 /**
  * ms_ole_directory:
  * @names: array where the names are storesd, it's %NULL ended.
@@ -1490,8 +1447,7 @@ path_to_pps (PPS **pps, MsOle *f, const char *path,
  *
  * Returns: a #MsOleErr code.
  **/
-MsOleErr
-ms_ole_directory (char ***names, MsOle *f, const char *path)
+MsOleErr ms_ole_directory (char ***names, MsOle *f, const char *path)
 {
     char    **ans;
     PPS      *pps;
@@ -1698,17 +1654,16 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
  *
  * Return value: a #MsOleErr code.
  **/
-MsOleErr
-ms_ole_stream_close (MsOleStream ** const s)
+MsOleErr ms_ole_stream_close (MsOleStream ** const s)
 {
     if (*s) {
 	if ((*s)->file && (*s)->file->mode == 'w')
 	    ((PPS *)(*s)->pps)->size = (*s)->size;
 
 	if ((*s)->blocks)
-	    g_array_free ((*s)->blocks, TRUE);
+	    g_array_free((*s)->blocks, TRUE);
 
-	ms_ole_unref ((*s)->file);
+	ms_ole_unref((*s)->file);
 
 	g_free (*s);
 	*s = NULL;

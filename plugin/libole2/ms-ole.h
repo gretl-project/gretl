@@ -19,11 +19,6 @@
 # include <sys/types.h>
 #else
 # include <sys/types.h>
-# if 0
- typedef unsigned long mode_t;
- typedef /* signed */ long off_t;
- typedef size_t ssize_t;
-# endif
 typedef /* unsigned */ long caddr_t;
 #endif
 
@@ -56,17 +51,6 @@ typedef enum  {
 typedef guint32 MsOlePos;
 typedef gint32  MsOleSPos;
 
-/*
-#ifdef G_HAVE_GINT64
-	typedef guint64 MsOlePos;
-	typedef gint64  MsOleSPos;
-#else
-	typedef guint32 MsOlePos;
-	typedef gint32  MsOleSPos;
-#endif
-*/
-
-
 typedef struct _MsOle             MsOle;
 typedef struct _MsOleStat         MsOleStat;
 typedef struct _MsOleStream       MsOleStream;
@@ -82,7 +66,7 @@ struct _MsOleSysWrappers {
 	int     (*isregfile)	(int fd);
 	int     (*getfilesize)	(int fd, guint32 *size);
 
-	/* Optionaly implementable */
+	/* Optionally implementable */
 	void   *(*mmap)         (void *start, size_t length, int prot,
 				 int flags, int fd, off_t offset);
 	int     (*munmap)       (void *start, size_t length);
@@ -93,7 +77,7 @@ struct _MsOleStat {
 	MsOlePos  size;
 };
 
-#define                 ms_ole_open(fs,path)     ms_ole_open_vfs ((fs), (path), TRUE, NULL)
+#define                 ms_ole_open(fs,path)     ms_ole_open_vfs((fs), (path), TRUE, NULL)
 extern MsOleErr		ms_ole_open_vfs		(MsOle **fs,
 						 const char *path,
 						 gboolean try_mmap,

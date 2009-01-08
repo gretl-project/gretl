@@ -1046,6 +1046,8 @@ static int set_session_dirname (const char *zdirname)
     FILE *fp;
     int err = 0;
 
+    g_return_val_if_fail(zdirname != NULL, 1);
+
     strcpy(session.dirname, zdirname);
     sprintf(test, "%s%csession.xml", session.dirname, SLASH);
     fp = gretl_fopen(test, "r");

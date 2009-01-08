@@ -917,7 +917,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 	return E_PARSE;
     }
     
-    s += strspn(s, " "); /* skip space */
+    s += strspn(s, " "); /* skip any spaces */
 
 #if LOOP_DEBUG
     fprintf(stderr, "parse_as_each_loop: s = '%s'\n", s);
@@ -1031,7 +1031,7 @@ parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
     }  
 
     if (!err && (sc != 2 || s != q)) {
-	/* must have two semi-colons; must have reached righmost ')' */
+	/* must have two semi-colons; must have reached rightmost ')' */
 	err = E_PARSE;
     }
 
@@ -1057,7 +1057,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 	while (isspace(*s)) s++;
     }
 
-    /* syntactic slop: "for i=lo..hi" -> "i=lo..hi" */
+    /* syntactic slop: accept "for i=lo..hi" -> "i=lo..hi" */
     if (!strncmp(s, "for ", 4) && !strstr(s, ";")) {
 	s += 4;
     }
@@ -1066,8 +1066,8 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     fprintf(stderr, "parse_first_loopline: '%s'\n", s);
 #endif
 
-    if (!strncmp(s, "foreach", 7)) {
-	err = parse_as_each_loop(loop, pdinfo, s + 7);
+    if (!strncmp(s, "foreach ", 8)) {
+	err = parse_as_each_loop(loop, pdinfo, s + 8);
     } else if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo, 
 				    lvar, op, rvar);

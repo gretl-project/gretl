@@ -612,13 +612,14 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 		      char *skipstr, PRN *prn)
 {
     int d1[3], d2[3];
-    char sep1[2], sep2[2];
+    char s1, s2;
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[pdinfo->n - 1];
     int dorder = 0;
 
-    if (sscanf(lbl1, "%d%1[/-.]%d%1[/-.]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
-	sscanf(lbl2, "%d%1[/-.]%d%1[/-.]%d", &d2[0], sep1, &d2[1], sep2, &d2[2]) == 5) {
+    if (sscanf(lbl1, "%d%c%d%c%d", &d1[0], &s1, &d1[1], &s2, &d1[2]) == 5 &&
+	sscanf(lbl2, "%d%c%d%c%d", &d2[0], &s1, &d2[1], &s2, &d2[2]) == 5 &&
+	s1 == s2 && ispunct(s1)) {
 	int yr1, mon1, day1;
 	int yr2, mon2, day2;
 	int pd, ret = 0;
@@ -658,7 +659,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 	    day1 > 0 && day1 < 32 &&
 	    day2 > 0 && day2 < 32) {
 	    /* looks promising for calendar dates */
-	    if (dorder != YYYYMMDD || *sep1 != '/' || *sep2 != '/') {
+	    if (dorder != YYYYMMDD || s1 != '/' || s2 != '/') {
 		if (transform_daily_dates(pdinfo, dorder)) {
 		    return -1;
 		}
@@ -687,7 +688,9 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 	    } 
 	    return ret;
 	}
-    } 
+    } else {
+	pprintf(prn, "'%s' and '%s': couldn't get dates\n", lbl1, lbl2);
+    }
 
     return -1;
 }

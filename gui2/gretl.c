@@ -1746,7 +1746,7 @@ mdata_handle_drag  (GtkWidget *widget,
 
     strcpy(tryfile, tmp);
 
-    if (gretl_is_pkzip_file(tmp)) {
+    if (has_suffix(tmp, ".gretl") && gretl_is_pkzip_file(tmp)) {
 	verify_open_session();
     } else if (has_suffix(tmp, ".inp")) {
 	do_open_script(EDIT_SCRIPT);
