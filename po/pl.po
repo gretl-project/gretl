@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-29 14:23-0500\n"
-"PO-Revision-Date: 2008-12-10 23:45-0500\n"
+"PO-Revision-Date: 2009-01-07 10:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2522,9 +2522,8 @@ msgid "with least squares fit"
 msgstr "z wyrównanymi wartościami"
 
 #: lib/src/gretl_bfgs.c:259
-#, fuzzy
 msgid "Failed to compute numerical Hessian"
-msgstr "Błąd w wyznaczaniu wartości krytycznej"
+msgstr "Błąd w wyznaczaniu Hessianu"
 
 #: lib/src/gretl_bfgs.c:393
 msgid ""
@@ -2532,13 +2531,16 @@ msgid ""
 "\n"
 "*** User-specified starting values:\n"
 msgstr ""
+"\n"
+"\n"
+"*** Specifikowana wartość startowa:\n"
 
 #: lib/src/gretl_bfgs.c:458
 msgid "BFGS: initial value of objective function is not finite"
-msgstr ""
+msgstr "BFGS: wartość początkowa dla nieskończonej funkcji"
 
 #: lib/src/gretl_bfgs.c:632
-#, fuzzy, c-format
+#, c-format
 msgid "stopped after %d iterations\n"
 msgstr "Zbieżność osiągnięta po %d iteracjach\n"
 
@@ -4275,7 +4277,6 @@ msgid "A value < 10 may indicate weak instruments"
 msgstr "Wartości < 10.0 mogą wskazywać na słabe instrumenty"
 
 #: lib/src/modelprint.c:780
-#, fuzzy
 msgid "Instrumented"
 msgstr "Instrumenty"
 
@@ -5133,9 +5134,8 @@ msgstr ""
 "Korelacja pomiędzy zmiennymi '%s' i '%s'\n"
 
 #: lib/src/nonparam.c:313
-#, fuzzy
 msgid "Spearman's rank correlation is undefined\n"
-msgstr "Współczynnik korelacji kolejnościowej (rang) Spearmana (rho) = %.8f\n"
+msgstr "Współczynnik korelacji kolejnościowej Spearmana niezdefiniowany\n"
 
 #: lib/src/nonparam.c:317
 #, c-format
@@ -7867,9 +7867,8 @@ msgid "The data set contains no suitable index variables"
 msgstr "Baza danych nie zawiera odpowiednich indeksów jednostek i czasu"
 
 #: gui2/datawiz.c:1590
-#, fuzzy
 msgid "start entering data values"
-msgstr "Znajdują się brakujące dane w próbie"
+msgstr "Rozpocznij wprowadzanie danych"
 
 #: gui2/datawiz.c:1861
 msgid "Data structure wizard"
@@ -8144,7 +8143,7 @@ msgstr "Końcowa obs.:"
 
 #: gui2/dialogs.c:2393
 msgid "Show fitted values for pre-forecast range"
-msgstr ""
+msgstr "Pokaż wartości wyrównane przed prognozą na wykesie"
 
 #: gui2/dialogs.c:2407
 msgid "error bars"
@@ -10362,9 +10361,8 @@ msgid "_Copy"
 msgstr "_Kopiuj"
 
 #: gui2/gui_utils.c:148
-#, fuzzy
 msgid "_Modify model..."
-msgstr "_Między-grupowy model..."
+msgstr "_Modyfikacja specyfikacji modelu..."
 
 #: gui2/gui_utils.c:150 gui2/gui_utils.c:274
 msgid "_Tests"
@@ -10649,32 +10647,31 @@ msgstr "Zapisać zmiany?"
 
 #: gui2/gui_utils.c:2026
 msgid "_Fitted values"
-msgstr "_wartości wyrównane"
+msgstr "_Wartości wyrównane"
 
 #: gui2/gui_utils.c:2028
 msgid "_Residuals"
-msgstr "_reszty"
+msgstr "_Reszty"
 
 #: gui2/gui_utils.c:2030
 msgid "_Squared residuals"
-msgstr "_kwadraty reszt"
+msgstr "_Kwadraty reszt"
 
 #: gui2/gui_utils.c:2035
 msgid "_Error sum of squares"
-msgstr "_wariancję resztową"
+msgstr "_Wariancję resztową"
 
 #: gui2/gui_utils.c:2037
-#, fuzzy
 msgid "_Standard error of the regression"
-msgstr "Błąd standardowy reszt"
+msgstr "_Błąd standardowy reszt"
 
 #: gui2/gui_utils.c:2042
 msgid "_R-squared"
-msgstr "R-_kwadrat"
+msgstr "_R-kwadrat"
 
 #: gui2/gui_utils.c:2043
 msgid "_T*R-squared"
-msgstr "T*R-kwadra_t"
+msgstr "_T*R-kwadrat"
 
 #: gui2/gui_utils.c:2047
 msgid "_Log likelihood"
@@ -12206,7 +12203,7 @@ msgstr "albo wybrane opóźnienia"
 
 #: gui2/selector.c:3792
 msgid "Bits per floating-point value"
-msgstr ""
+msgstr "Bits per floating-point value"
 
 #: gui2/selector.c:3832
 msgid "Robust standard errors/intervals"
@@ -13816,7 +13813,7 @@ msgstr "Wyniki procedury 'debug' (śledzenia błędów)"
 #: plugin/interval.c:216
 #, c-format
 msgid "Obs %d: lower bound (%g) exceeds upper (%g)"
-msgstr ""
+msgstr "Obserwacja %d: poniżej granicy (%g), powyżej granicy (%g)"
 
 #: plugin/johansen.c:202
 msgid "renormalized beta"
@@ -14197,7 +14194,7 @@ msgstr "Zapisz do bazy danych:"
 
 #: plugin/tramo_options.c:449 plugin/tramo-x12a.c:188
 msgid "Seasonally adjusted series"
-msgstr "składnik sezonowy"
+msgstr "składnik wyrównany sezonowo"
 
 #: plugin/tramo_options.c:459 plugin/tramo-x12a.c:194
 msgid "Trend/cycle"
@@ -14409,78 +14406,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "Failed to reconstruct model %d\n"
-#~ msgstr "Błędna konstrukcja modelu %d\n"
-
-#~ msgid "Can't do this: there is no model %d\n"
-#~ msgstr "Tego nie można wykonać; nie ma modelu %d\n"
-
-#~ msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
-#~ msgstr "To jest oprogramowanie z Powszechną Licencją Publiczną GNU.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Take notes then press return key to continue (or q to quit)"
-#~ msgstr ""
-#~ "\n"
-#~ "Naciśnij ENTER aby kontynuować (lub q aby wyjść)"
-
-#~ msgid ""
-#~ "\n"
-#~ "Take notes then press return key to continue"
-#~ msgstr ""
-#~ "\n"
-#~ "Naciśnij ENTER aby kontynuować"
-
-#~ msgid "Varname: %s\n"
-#~ msgstr "Nazwa zmiennej: %s\n"
-
-#~ msgid "SUR residual, equation %d"
-#~ msgstr "reszty SUR, równania %d"
-
-#~ msgid "3SLS residual, equation %d"
-#~ msgstr "reszty 3MNK, równania %d"
-
-#~ msgid "SUR fitted value, equation %d"
-#~ msgstr "teoretyczne wartości SUR, równanie %d"
-
-#~ msgid "3SLS fitted value, equation %d"
-#~ msgstr "teoretyczne wartości 3MNK, równanie %d"
-
-#~ msgid "Please give the current dataset a name"
-#~ msgstr "Proszę podać nazwę bieżącej bazy danych"
-
-#~ msgid "Couldn't open command file for writing"
-#~ msgstr "Niemożliwe otwarcie pliku polecień skryptowych do zapisu"
-
-#~ msgid "gretl: new dataset"
-#~ msgstr "gretl: tworzenie zbioru danych"
-
-#~ msgid ""
-#~ "Do you want to start entering data values\n"
-#~ "using gretl's spreadsheet?"
-#~ msgstr ""
-#~ "Czy chcesz rozpocząć wprowadzanie\n"
-#~ "danych za pomocą arkusza gretl'a?"
-
-#~ msgid "_Standard error of residuals"
-#~ msgstr "Błąd standardowy reszt"
-
-#~ msgid "error sum of squares"
-#~ msgstr "suma kwadratów reszt"
-
-#~ msgid "standard error of residuals"
-#~ msgstr "błąd standardowy reszt"
-
-#~ msgid "log likelihood"
-#~ msgstr "logarytm wiarygodności"
-
-#~ msgid "Bayesian Information Criterion"
-#~ msgstr "Bayesowskie Kryterium Informacyjne"
-
-#~ msgid "Sorry, TSLS models can't be put in the model table"
-#~ msgstr "Tabela modeli nie może zawierać modeli estymowanych 2MNK"
-
-#~ msgid "HCCM"
-#~ msgstr "HCCM"
