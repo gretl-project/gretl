@@ -475,7 +475,7 @@ static int func_is_date (guint8 *data, int version)
 #define t_ref_size(v)  ((v < MS_BIFF_V8)? 4 : 5)
 
 /* Could be a date formula?  If so, it should have 3 cell reference fields
-   and the trailing function ID should equal 65 */
+   and a trailing function ID == 65 */
 
 static void check_for_date_formula (BiffQuery *q, wbook *book)
 {
@@ -509,7 +509,7 @@ static void check_for_date_formula (BiffQuery *q, wbook *book)
 
     u1 = MS_OLE_GET_GUINT8(fdata);
 
-    if (u1 == 0x41 && func_is_date(fdata + 1, version)) { /* tFunc, DATE */
+    if (u1 == 0x41 && func_is_date(fdata + 1, version)) { /* 0x41 = tFunc */
 	fprintf(stderr, "Got DATE formula in first column\n");
 	book_set_numeric_dates(book);
     }
