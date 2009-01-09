@@ -46,7 +46,7 @@ BiffQuery *ms_biff_query_new (MsOleStream *ptr)
 
     if (ptr == NULL) return NULL;
 
-    bq = g_new0 (BiffQuery, 1);
+    bq = g_new0(BiffQuery, 1);
     bq->opcode        = 0;
     bq->length        = 0;
     bq->data_malloced = 0;
@@ -63,7 +63,7 @@ int ms_biff_query_next (BiffQuery *bq)
     guint8 tmp[4];
     int ans = 1;
 
-    if (!bq || bq->pos->position >= bq->pos->size) {
+    if (bq == NULL || bq->pos->position >= bq->pos->size) {
 	return 0;
     }
 
@@ -74,7 +74,7 @@ int ms_biff_query_next (BiffQuery *bq)
     }
 
     bq->streamPos = bq->pos->position;
-    if (!bq->pos->read_copy (bq->pos, tmp, 4)) {
+    if (!bq->pos->read_copy(bq->pos, tmp, 4)) {
 	return 0;
     }
 
@@ -433,13 +433,13 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
     char *problem_loading = NULL;
     int excel_version = MS_BIFF_V_UNKNOWN;
 
-    result = ms_ole_stream_open (&stream, file, "/", "workbook", 'r');
+    result = ms_ole_stream_open(&stream, file, "/", "workbook");
     if (result != MS_OLE_ERR_OK) {
-	ms_ole_stream_close (&stream);
+	ms_ole_stream_close(&stream);
 
-	result = ms_ole_stream_open (&stream, file, "/", "book", 'r');
+	result = ms_ole_stream_open(&stream, file, "/", "book");
 	if (result != MS_OLE_ERR_OK) {
-	    ms_ole_stream_close (&stream);
+	    ms_ole_stream_close(&stream);
 	    fputs("No book or workbook streams found\n", stderr);
 	    return excel_version;
 	}

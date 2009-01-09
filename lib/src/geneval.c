@@ -7630,8 +7630,7 @@ static void parser_init (parser *p, const char *str,
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags)
 {
-    p->input = gretl_strdup(str);
-    p->point = p->rhs = p->input;
+    p->point = p->rhs = p->input = str;
     p->Z = pZ;
     p->dinfo = dinfo;
     p->prn = prn;
@@ -7664,7 +7663,7 @@ static void parser_init (parser *p, const char *str,
     *p->warning = '\0';
 
     if (p->input == NULL) {
-	p->err = E_ALLOC;
+	p->err = E_DATA;
 	return;
     }
 
@@ -7745,7 +7744,6 @@ void gen_cleanup (parser *p)
 	free_tree(p->ret, p, "p->ret");
 	free(p->lh.substr);
 	free(p->lh.mspec);
-	free(p->input);
     }
 }
 

@@ -60,6 +60,8 @@ struct _nlspec {
     double tol;         /* tolerance for stopping iteration */
     parm *params;       /* array of information on function parameters
 			   (see the parm_ struct above) */
+    double *fvec;       /* function vector */
+    double *jac;        /* Jacobian array */
     double *coeff;      /* coefficient estimates */
     double *hessvec;    /* vech representation of negative inverse of
 			   Hessian */
@@ -97,6 +99,6 @@ void maybe_add_gmm_residual (MODEL *pmod, const nlspec *spec,
 
 int gmm_add_vcv (MODEL *pmod, nlspec *spec);
 
-int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn);
+int gmm_calculate (nlspec *s, PRN *prn);
 
 int gmm_missval_check_etc (nlspec *s);

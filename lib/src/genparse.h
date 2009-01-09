@@ -453,7 +453,7 @@ struct lhinfo {
 typedef struct parser_ parser;
 
 struct parser_ {
-    char *input;       /* complete input string */
+    const char *input; /* complete input string */
     const char *point; /* remaining unprocessed input */
     const char *rhs;   /* for use in labelling */
     double ***Z;       /* convenience pointer to data array */

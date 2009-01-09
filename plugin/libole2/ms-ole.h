@@ -53,17 +53,14 @@ typedef enum  {
 typedef guint32 MsOlePos;
 typedef gint32  MsOleSPos;
 
-typedef struct _MsOle             MsOle;
-typedef struct _MsOleStat         MsOleStat;
-typedef struct _MsOleStream       MsOleStream;
+typedef struct _MsOle       MsOle;
+typedef struct _MsOleStat   MsOleStat;
+typedef struct _MsOleStream MsOleStream;
 
 struct _MsOleStat {
     MsOleType type;
     MsOlePos  size;
 };
-
-MsOleErr ms_ole_open    (MsOle **fs, const char *path);
-void     ms_ole_destroy (MsOle **fs);
 
 struct _MsOleStream {
     MsOlePos size;
@@ -94,6 +91,9 @@ struct _MsOleStream {
                            Points to the next byte to read */
 };
 
+MsOleErr ms_ole_open    (MsOle **fs, const char *path);
+void     ms_ole_destroy (MsOle **fs);
+
 #define MS_OLE_GET_GUINT8(p)  (*((const guint8 *)(p) + 0))
 #define MS_OLE_GET_GUINT16(p) (guint16)(*((const guint8 *)(p)+0) |        \
 					(*((const guint8 *)(p)+1)<<8))
@@ -104,11 +104,13 @@ struct _MsOleStream {
 #define MS_OLE_GET_GUINT64(p) (MS_OLE_GET_GUINT32(p) | \
 			       (((guint32)MS_OLE_GET_GUINT32((const guint8 *)(p)+4))<<32))
 
-extern MsOleErr  ms_ole_stream_open (MsOleStream ** const stream,
-				     MsOle *fs,
-				     const char *dirpath,
-				     const char *name,
-				     char mode);
-extern MsOleErr  ms_ole_stream_close (MsOleStream ** const stream);
+MsOleErr ms_ole_stream_open (MsOleStream ** const stream,
+			     MsOle *fs,
+			     const char *dirpath,
+			     const char *name);
+
+MsOleErr ms_ole_stream_close (MsOleStream ** const stream);
+
+MsOlePos ms_ole_stream_position (const MsOleStream *s);
 
 #endif	/* MS_OLE_H */

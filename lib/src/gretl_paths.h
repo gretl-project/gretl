@@ -44,6 +44,8 @@ int string_is_utf8 (const unsigned char *s);
 
 FILE *gretl_fopen (const char *fname, const char *mode);
 
+int gretl_open (const char *pathname, int flags);
+
 int gretl_rename (const char *oldpath, const char *newpath);
 
 gzFile gretl_gzopen (const char *fname, const char *mode);

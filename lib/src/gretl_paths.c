@@ -36,6 +36,8 @@
 # include <errno.h>
 #endif
 
+#include <fcntl.h> /* for 'open' */
+
 #include <glib.h>
 
 struct INTERNAL_PATHS {
@@ -168,6 +170,44 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     }
 
     return fp;
+}
+
+/**
+ * gretl_open:
+ * @pathname: name of file to be opened.
+ * @flags: flags to pass to the system open().
+ *
+ * A wrapper for the C library's open(): provides a guard
+ * against the situation where a filename is UTF-8 encoded, 
+ * but on the current platform we should be using locale
+ * encoding for the stdio functions.
+ *
+ * Returns: new file descriptor, or -1 on error.
+ */
+
+int gretl_open (const char *pathname, int flags)
+{
+    gchar *pconv;
+    gsize wrote;
+    int fd = -1;
+
+    errno = 0;
+
+    if (!stdio_use_utf8 && string_is_utf8((unsigned char *) pathname)) {
+	pconv = g_locale_from_utf8(pathname, -1, NULL, &wrote, NULL);
+	if (pconv != NULL) {
+	    fd = open(pconv, flags);
+	    g_free(pconv);
+	}
+    } else {
+	fd = open(pathname, flags);
+    }
+
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno(pathname);
+    }
+
+    return fd;
 }
 
 /**

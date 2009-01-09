@@ -347,7 +347,6 @@ static int nls_auto_genr (nlspec *s, int i)
 #if NLS_DEBUG
     fprintf(stderr, " j = naux+i = %d+%d = %d: executing genr[%d] at %p:\n", 
 	    s->naux, i, j, j, (void *) s->genrs[j]);
-    fprintf(stderr, " %s\n", genr_get_formula(s->genrs[j]));
     fprintf(stderr, " Z[%d] = %p\n", s->dinfo->v-1, (void *) (*s->Z)[s->dinfo->v-1]);
 #endif
     s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, OPT_S, s->prn);
@@ -1455,7 +1454,7 @@ static int nl_model_add_gui_info (MODEL *pmod, nlspec *spec)
     }
 
     for (i=0; i<spec->naux; i++) {
-	pprintf(prn, "%s\n", genr_get_formula(spec->genrs[i]));
+	pprintf(prn, "%s\n", spec->aux[i]);
     }
 
     if (spec->ci == GMM) {
@@ -1617,9 +1616,10 @@ print_GNR_dataset (const int *list, double **gZ, DATAINFO *gdinfo)
    which is why we make the artificial dataset, gZ, full length.
 */
 
-static MODEL GNR (double *uhat, double *jac, nlspec *spec, 
-		  const double **Z, DATAINFO *pdinfo, PRN *prn)
+static MODEL GNR (nlspec *spec, const double **Z, DATAINFO *pdinfo, 
+		  PRN *prn)
 {
+    double *uhat = spec->fvec;
     double **gZ = NULL;
     DATAINFO *gdinfo;
     int *glist;
@@ -1715,7 +1715,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 		if (t < gdinfo->t1 || t > gdinfo->t2) {
 		    gZ[v][t] = NADBL;
 		} else {
-		    gZ[v][t] = jac[j++];
+		    gZ[v][t] = spec->jac[j++];
 		}
 	    }
 	}
@@ -1904,6 +1904,12 @@ static void clear_nlspec (nlspec *spec)
 	spec->params = NULL;
     }
     spec->nparam = 0;
+
+    free(spec->fvec);
+    spec->fvec = NULL;
+
+    free(spec->jac);
+    spec->jac = NULL;
 
     free(spec->coeff);
     spec->coeff = NULL;
@@ -2126,7 +2132,7 @@ static int check_derivatives (integer m, integer n, double *x,
 
 /* drivers for BFGS code below, first for MLE */
 
-static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
+static int mle_calculate (nlspec *s, PRN *prn)
 {
     int err = 0;
 
@@ -2135,7 +2141,7 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	integer n = s->ncoeff;
 	integer ldjac = m; 
 
-	err = check_derivatives(m, n, s->coeff, fvec, jac, ldjac, 
+	err = check_derivatives(m, n, s->coeff, s->fvec, s->jac, ldjac, 
 				prn, s);
     }
 
@@ -2161,8 +2167,7 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 /* Minpack driver for the case where analytical derivatives have been
    supplied */
 
-static int lm_calculate (nlspec *spec, double *fvec, double *jac, 
-			 PRN *prn)
+static int lm_calculate (nlspec *spec, PRN *prn)
 {
     integer info, lwa;
     integer m, n, ldjac;
@@ -2183,8 +2188,8 @@ static int lm_calculate (nlspec *spec, double *fvec, double *jac,
 	goto nls_cleanup;
     }
 
-    err = check_derivatives(m, n, spec->coeff, fvec, jac, ldjac, 
-			    prn, spec);
+    err = check_derivatives(m, n, spec->coeff, spec->fvec, spec->jac, 
+			    ldjac, prn, spec);
     if (err) {
 	goto nls_cleanup; 
     }
@@ -2192,8 +2197,8 @@ static int lm_calculate (nlspec *spec, double *fvec, double *jac,
     /* note: maxfev is automatically set to 100*(n + 1) */
 
     /* call minpack */
-    lmder1_(nls_calc, &m, &n, spec->coeff, fvec, jac, &ldjac, &spec->tol, 
-	    &info, ipvt, wa, &lwa, spec);
+    lmder1_(nls_calc, &m, &n, spec->coeff, spec->fvec, spec->jac, &ldjac, 
+	    &spec->tol, &info, ipvt, wa, &lwa, spec);
 
     switch ((int) info) {
     case -1: 
@@ -2258,8 +2263,7 @@ nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
 /* Minpack driver for the case where the Jacobian must be approximated
    numerically */
 
-static int 
-lm_approximate (nlspec *spec, double *fvec, double *jac, PRN *prn)
+static int lm_approximate (nlspec *spec, PRN *prn)
 {
     integer info, m, n, ldjac;
     integer maxfev, mode = 1, nprint = 0, nfev = 0;
@@ -2293,9 +2297,9 @@ lm_approximate (nlspec *spec, double *fvec, double *jac, PRN *prn)
     wa4 = wa3 + n;
 
     /* call minpack */
-    lmdif_(nls_calc_approx, &m, &n, spec->coeff, fvec, 
+    lmdif_(nls_calc_approx, &m, &n, spec->coeff, spec->fvec, 
 	   &spec->tol, &spec->tol, &gtol, &maxfev, &epsfcn, diag, 
-	   &mode, &factor, &nprint, &info, &nfev, jac, &ldjac, 
+	   &mode, &factor, &nprint, &info, &nfev, spec->jac, &ldjac, 
 	   ipvt, qtf, wa1, wa2, wa3, wa4, spec);
 
     spec->iters = nfev;
@@ -2334,8 +2338,8 @@ lm_approximate (nlspec *spec, double *fvec, double *jac, PRN *prn)
 	spec->opt = OPT_NONE;
 
 	/* call minpack again */
-	fdjac2_(nls_calc_approx, &m, &n, spec->coeff, fvec, jac, 
-		&ldjac, &iflag, &epsfcn, wa4, spec);
+	fdjac2_(nls_calc_approx, &m, &n, spec->coeff, spec->fvec, 
+		spec->jac, &ldjac, &iflag, &epsfcn, wa4, spec);
 	spec->crit = ess;
 	spec->iters = iters;
 	spec->opt = opt;
@@ -2416,9 +2420,11 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
     return err;
 }
 
-static void get_aux_command_word (char *word, const char *line)
+static int screen_bad_aux (const char *line, const DATAINFO *pdinfo)
 {
     int n = gretl_namechar_spn(line);
+    char word[FN_NAMELEN];
+    int ci, err = E_DATA;
 
     *word = '\0';
 
@@ -2428,14 +2434,7 @@ static void get_aux_command_word (char *word, const char *line)
 	}
 	strncat(word, line, n);
     } 
-}
 
-static int screen_bad_aux (const char *line, const DATAINFO *pdinfo)
-{
-    char word[FN_NAMELEN];
-    int ci, err = E_DATA;
-
-    get_aux_command_word(word, line);
     ci = gretl_command_number(word);
 
     if (ci == GENR || ci == PRINT) {
@@ -2468,37 +2467,16 @@ static int screen_bad_aux (const char *line, const DATAINFO *pdinfo)
 
 int nlspec_add_aux (nlspec *spec, const char *s, const DATAINFO *pdinfo)
 {
-    char **aux;
-    char *this;
-    int nx = spec->naux + 1;
-    int err = 0;
+    int err;
 
 #if NLS_DEBUG
     fprintf(stderr, "nlspec_add_aux: s = '%s'\n", s);
 #endif
 
     err = screen_bad_aux(s, pdinfo);
-    if (err) {
-	return err;
-    }
-
-    this = gretl_strdup(s);
-    if (this == NULL) {
-	err = E_ALLOC;
-    }
 
     if (!err) {
-	aux = realloc(spec->aux, nx * sizeof *spec->aux);
-	if (aux == NULL) {
-	    free(this);
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	spec->aux = aux;
-	spec->aux[nx - 1] = this;
-	spec->naux += 1;
+	err = strings_array_add(&spec->aux, &spec->naux, s);
     }
 
     return err;
@@ -2794,8 +2772,6 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 			    gretlopt opt, PRN *prn)
 {
     MODEL nlmod;
-    double *fvec = NULL;
-    double *jac = NULL;
     int origv = pdinfo->v;
     int i, t, err = 0;
 
@@ -2853,22 +2829,22 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* allocate arrays to be passed to minpack */
-    fvec = malloc(spec->nobs * sizeof *fvec);
-    jac = malloc(spec->nobs * spec->ncoeff * sizeof *jac);
+    spec->fvec = malloc(spec->nobs * sizeof *spec->fvec);
+    spec->jac = malloc(spec->nobs * spec->ncoeff * sizeof *spec->jac);
 
-    if (fvec == NULL || jac == NULL) {
+    if (spec->fvec == NULL || spec->jac == NULL) {
 	nlmod.errcode = E_ALLOC;
 	goto bailout;
     }
 
     if (spec->lvec != NULL) {
 	for (t=0; t<spec->nobs; t++) {
-	    fvec[t] = spec->lvec->val[t];
+	    spec->fvec[t] = spec->lvec->val[t];
 	}
     } else {
 	i = 0;
 	for (t=spec->t1; t<=spec->t2; t++) {
-	    fvec[i++] = (*spec->Z)[spec->lhv][t];
+	    spec->fvec[i++] = (*spec->Z)[spec->lhv][t];
 	}
     }
 
@@ -2886,15 +2862,15 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     /* now start the actual calculations */
 
     if (spec->ci == MLE) {
-	err = mle_calculate(spec, fvec, jac, prn);
+	err = mle_calculate(spec, prn);
     } else if (spec->ci == GMM) {
-	err = gmm_calculate(spec, fvec, jac, prn);
+	err = gmm_calculate(spec, prn);
     } else {
 	/* NLS: invoke the appropriate minpack driver function */
 	if (numeric_mode(spec)) {
-	    err = lm_approximate(spec, fvec, jac, prn);
+	    err = lm_approximate(spec, prn);
 	} else {
-	    err = lm_calculate(spec, fvec, jac, prn);
+	    err = lm_calculate(spec, prn);
 	    if (err) {
 		fprintf(stderr, "lm_calculate returned %d\n", err);
 	    }
@@ -2911,7 +2887,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    } else {
 		/* Use Gauss-Newton Regression for covariance matrix,
 		   standard errors */
-		nlmod = GNR(fvec, jac, spec, (const double **) *spec->Z, 
+		nlmod = GNR(spec, (const double **) *spec->Z, 
 			    spec->dinfo, prn);
 	    }
 	} else {
@@ -2928,9 +2904,6 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
  bailout:
-
-    free(fvec);
-    free(jac);
 
     if (spec->nvec > 0 && analytic_mode(spec)) {
 	destroy_private_matrices();
@@ -3041,6 +3014,9 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->genrs = NULL;
     spec->ngenrs = 0;
     spec->generr = 0;
+
+    spec->fvec = NULL;
+    spec->jac = NULL;
     
     spec->coeff = NULL;
     spec->ncoeff = 0;

@@ -7,17 +7,11 @@
  *
  * Copyright 1998-2000 Helix Code, Inc., Arturo Tena
  *
- * Adapted for gretl by Allin Cottrell
+ * Adapted and stripped down for gretl by Allin Cottrell
  *
  **/
 
-#include <stdio.h>
-
-#if defined(WIN32)
-# include "winconfig.h"
-#elif defined (HAVE_CONFIG_H)
-# include "config.h"
-#endif
+#include "libgretl.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -86,23 +80,17 @@ struct _MsOle {
     guint32   num_pps;  /* Count of number of property sets */
     GList     *pps;     /* Property Storage -> struct _PPS, 
                            always 1 valid entry or NULL */
-    /* if memory mapped */
-    GPtrArray *bbattr;  /* Pointers to block structures */
-    /* end if memory mapped */
+    GPtrArray *bbattr;  /* Pointers to block structures, if mmapped */
 };
 
 #define BLOCK_COUNT(f) (((f)->length + BB_BLOCK_SIZE - 1) / BB_BLOCK_SIZE)
 
-/**
- * Default system calls wrappers
- **/
-
 static int open_wrap (const char *pathname, int flags)
 {
 #ifdef O_BINARY
-    return open(pathname, flags | O_BINARY);
+    return gretl_open(pathname, flags | O_BINARY);
 #else
-    return open(pathname, flags);
+    return gretl_open(pathname, flags);
 #endif
 }
 
@@ -131,9 +119,6 @@ static int getfilesize (int fd, guint32 *size)
 }
 
 typedef guint32 PPS_IDX;
-
-#define ms_array_index(a,b,c) g_array_index (a, b, c)
-
 typedef guint32 BLP;	/* Block pointer */
 
 #define BB_THRESHOLD   0x1000
@@ -174,7 +159,8 @@ typedef struct {
 
 static BBBlkAttr *bb_blk_attr_new (guint32 blk)
 {
-    BBBlkAttr *attr = g_new (BBBlkAttr, 1);
+    BBBlkAttr *attr = g_new(BBBlkAttr, 1);
+
     attr->blk   = blk;
     attr->usage = 0;
     attr->data  = 0;
@@ -323,7 +309,7 @@ static char *pps_get_text (guint8 *ptr, int length)
  */
 static BLP get_next_block (MsOle *f, BLP blk, gboolean *err)
 {
-    BLP bbd = GET_BBD_LIST (f, blk / (BB_BLOCK_SIZE / 4));
+    BLP bbd = GET_BBD_LIST(f, blk / (BB_BLOCK_SIZE / 4));
 
     if (bbd > BLOCK_COUNT (f)) {
 	*err = TRUE;
@@ -331,8 +317,8 @@ static BLP get_next_block (MsOle *f, BLP blk, gboolean *err)
     } else
 	*err = FALSE;
 
-    return MS_OLE_GET_GUINT32 (BB_R_PTR (f, bbd) +
-			       4 * (blk % (BB_BLOCK_SIZE / 4)));
+    return MS_OLE_GET_GUINT32(BB_R_PTR (f, bbd) +
+			      4 * (blk % (BB_BLOCK_SIZE / 4)));
 }
 
 /* Builds the FAT */
@@ -347,22 +333,22 @@ static int read_bb (MsOle *f)
     BLP tmp;
     BLP bbd;
 
-    g_return_val_if_fail (f, 0);
-    g_return_val_if_fail (f->mem, 0);
+    g_return_val_if_fail(f, 0);
+    g_return_val_if_fail(f->mem, 0);
 
-    f->bb   = g_array_new (FALSE, FALSE, sizeof(BLP));
-    numbbd  = GET_NUM_BBD_BLOCKS  (f);
+    f->bb   = g_array_new(FALSE, FALSE, sizeof(BLP));
+    numbbd  = GET_NUM_BBD_BLOCKS (f);
 
     /* Add BBD's that live in the BBD list */
     for (lp = 0; (lp < BLOCK_COUNT (f) - 1) &&
 	     (lp < MAX_SIZE_BBD_LIST * BB_BLOCK_SIZE / 4); lp++) {
 	gboolean err;
 
-	tmp = get_next_block (f, lp, &err);
+	tmp = get_next_block(f, lp, &err);
 	if (err)
 	    return 0;
 
-	g_array_append_val (f->bb, tmp);
+	g_array_append_val(f->bb, tmp);
     }
 
     /* Add BBD's that live in the additional BBD lists */
@@ -425,22 +411,21 @@ static int read_bb (MsOle *f)
 				       ADD_BBD_LIST_BLOCK);
 	    }
 
-	    bbd = MS_OLE_GET_GUINT32 (BB_R_PTR(f, visited_add_bbd_list) + 4*(lp%MAX_SIZE_ADD_BBD_LIST));
-	    TRY_MARK_UNUSED_BLOCK (f->bb, bbd, SPECIAL_BLOCK);
+	    bbd = MS_OLE_GET_GUINT32(BB_R_PTR(f, visited_add_bbd_list) + 4*(lp%MAX_SIZE_ADD_BBD_LIST));
+	    TRY_MARK_UNUSED_BLOCK(f->bb, bbd, SPECIAL_BLOCK);
 	}
     }
 
-    g_assert (f->bb->len < BLOCK_COUNT (f));
+    g_assert(f->bb->len < BLOCK_COUNT (f));
 
     return 1;
 }
 
 static guint8 *get_pps_ptr (MsOle *f, PPS_IDX i)
 {
-    int lp;
     BLP blk = GET_ROOT_STARTBLOCK(f);
+    int lp = i/(BB_BLOCK_SIZE/PPS_BLOCK_SIZE);
 
-    lp = i/(BB_BLOCK_SIZE/PPS_BLOCK_SIZE);
     while (lp && blk != END_OF_CHAIN) {
 	if (blk == SPECIAL_BLOCK ||
 	    blk == UNUSED_BLOCK) {
@@ -450,6 +435,7 @@ static guint8 *get_pps_ptr (MsOle *f, PPS_IDX i)
 	lp--;
 	blk = NEXT_BB(f, blk);
     }
+
     if (blk == END_OF_CHAIN) {
 	g_warning ("Serious error finding pps %d\n", i);
 	return 0;
@@ -484,6 +470,7 @@ static void pps_decode_tree (MsOle *f, PPS_IDX p, PPS *parent)
 	f->pps = NULL;
 	return;
     }
+
     pps->name     = pps_get_text(mem, PPS_GET_NAME_LEN(mem));
     pps->type     = PPS_GET_TYPE(mem);
     pps->size     = PPS_GET_SIZE(mem);
@@ -746,7 +733,6 @@ MsOleErr ms_ole_open (MsOle **fs, const char *name)
 
     f->file_des = file = open_wrap(name, O_RDONLY);
     f->ref_count = 0;
-    f->mode = 'r';
 	
     if ((file == -1) || !isregfile(file)) {
 	g_warning("No such file '%s'\n", name);
@@ -855,9 +841,9 @@ void ms_ole_destroy (MsOle **ptr)
 		for (i = 0; i < f->bbattr->len; i++) {
 		    BBBlkAttr *attr = g_ptr_array_index(f->bbattr, i);
 
-		    g_free (attr->data);
+		    g_free(attr->data);
 		    attr->data = NULL;
-		    g_free (attr);
+		    g_free(attr);
 		}
 		f->bbattr = NULL;
 	    }
@@ -896,7 +882,7 @@ ms_ole_lseek (MsOleStream *s, MsOleSPos bytes, MsOleSeek type)
 {
     MsOleSPos newpos;
 
-    g_return_val_if_fail (s, -1);
+    g_return_val_if_fail(s, -1);
 
     if (type == MsOleSeekSet)
 	newpos = bytes;
@@ -909,7 +895,9 @@ ms_ole_lseek (MsOleStream *s, MsOleSPos bytes, MsOleSeek type)
 	g_warning ("Invalid seek");
 	return -1;
     }
+
     s->position = newpos;
+
     return newpos;
 }
 
@@ -937,15 +925,15 @@ static guint8 *ms_ole_read_ptr_bb (MsOleStream *s, MsOlePos length)
 	len -= blklen;
 	blklen = BB_BLOCK_SIZE;
 	if (blockidx >= (s->blocks->len - 1)
-	    || (ms_array_index (s->blocks, BLP, blockidx)
+	    || (g_array_index(s->blocks, BLP, blockidx)
 		!= blockidx + 1))
 	    return NULL;
 	blockidx++;
     }
 
     /* Straight map, simply return a pointer */
-    ans = BB_R_PTR(s->file, ms_array_index(s->blocks, BLP,
-					   s->position / BB_BLOCK_SIZE))
+    ans = BB_R_PTR(s->file, g_array_index(s->blocks, BLP,
+					  s->position / BB_BLOCK_SIZE))
 	+ s->position % BB_BLOCK_SIZE;
     ms_ole_lseek(s, length, MsOleSeekCur);
 
@@ -976,15 +964,15 @@ static guint8 *ms_ole_read_ptr_sb (MsOleStream *s, MsOlePos length)
 	len -= blklen;
 	blklen = SB_BLOCK_SIZE;
 	if (blockidx >= (s->blocks->len - 1)
-	    || (ms_array_index (s->blocks, BLP, blockidx)
+	    || (g_array_index(s->blocks, BLP, blockidx)
 		!= blockidx + 1))
 	    return NULL;
 	blockidx++;
     }
 
     /* Straight map, simply return a pointer */
-    ans = GET_SB_R_PTR(s->file, ms_array_index(s->blocks, BLP,
-					       s->position / SB_BLOCK_SIZE))
+    ans = GET_SB_R_PTR(s->file, g_array_index(s->blocks, BLP,
+					      s->position / SB_BLOCK_SIZE))
 	+ s->position%SB_BLOCK_SIZE;
     ms_ole_lseek (s, length, MsOleSeekCur);
 
@@ -1003,8 +991,8 @@ ms_ole_read_copy_bb (MsOleStream *s, guint8 *ptr, MsOlePos length)
     int offset = s->position % BB_BLOCK_SIZE;
     int blkidx = s->position / BB_BLOCK_SIZE;
 
-    g_return_val_if_fail (s, 0);
-    g_return_val_if_fail (ptr, 0);
+    g_return_val_if_fail(s, 0);
+    g_return_val_if_fail(ptr, 0);
 
     if (!s->blocks) {
 	g_warning ("Reading from NULL file\n");
@@ -1021,11 +1009,11 @@ ms_ole_read_copy_bb (MsOleStream *s, guint8 *ptr, MsOlePos length)
 	if (s->position + cpylen > s->size || blkidx == s->blocks->len) {
 	    return 0;
 	}
-	g_assert (blkidx < s->blocks->len);
-	block = ms_array_index (s->blocks, BLP, blkidx);
-	src = BB_R_PTR (s->file, block) + offset;
+	g_assert(blkidx < s->blocks->len);
+	block = g_array_index(s->blocks, BLP, blkidx);
+	src = BB_R_PTR(s->file, block) + offset;
 
-	memcpy (ptr, src, cpylen);
+	memcpy(ptr, src, cpylen);
 	ptr    += cpylen;
 	length -= cpylen;
 
@@ -1068,7 +1056,7 @@ ms_ole_read_copy_sb (MsOleStream *s, guint8 *ptr, MsOlePos length)
 	    return 0;
 	}
 	g_assert(blkidx < s->blocks->len);
-	block = ms_array_index(s->blocks, BLP, blkidx);
+	block = g_array_index(s->blocks, BLP, blkidx);
 	src = GET_SB_R_PTR(s->file, block) + offset;
 
 	memcpy(ptr, src, cpylen);
@@ -1082,51 +1070,6 @@ ms_ole_read_copy_sb (MsOleStream *s, guint8 *ptr, MsOlePos length)
     }
 
     return 1;
-}
-
-/**
- * pps_create:
- * @f: ole file handle.
- * @p: returned pps.
- * @parent: parent pps.
- * @name: its name.
- * @type: the type.
- *
- * Creates a storage or stream.
- *
- * Return value: error status.
- **/
-static MsOleErr
-pps_create (MsOle *f, GList **p, GList *parent, const char *name,
-	    MsOleType type)
-{
-    PPS *pps, *par;
-
-    if (!p || !parent || !parent->data || !name) {
-	g_warning("duff arguments to pps_create");
-	return MS_OLE_ERR_BADARG;
-    }
-
-    pps  = g_new(PPS, 1);
-    if (!pps) {
-	return MS_OLE_ERR_MEM;
-    }
-
-    pps->sig      = PPS_SIG;
-    pps->name     = g_strdup (name);
-    pps->type     = type;
-    pps->size     = 0;
-    pps->start    = END_OF_CHAIN;
-    pps->children = NULL;
-    pps->parent   = parent->data;
-
-    par = (PPS *) parent->data;
-    par->children = g_list_insert_sorted(par->children, pps,
-					 (GCompareFunc)pps_compare_func);
-    *p = g_list_find(par->children, pps);
-    f->num_pps++;
-
-    return MS_OLE_ERR_OK;
 }
 
 /**
@@ -1146,7 +1089,7 @@ static GList *find_in_pps (GList *l, const char *name)
     g_return_val_if_fail(l != NULL, NULL);
     g_return_val_if_fail(l->data != NULL, NULL);
     pps = l->data;
-    g_return_val_if_fail(IS_PPS (pps), NULL);
+    g_return_val_if_fail(IS_PPS(pps), NULL);
 
     if (pps->type == MsOleStorageT ||
 	pps->type == MsOleRootT) {
@@ -1159,12 +1102,13 @@ static GList *find_in_pps (GList *l, const char *name)
 
     for ( ; cur; cur = g_list_next(cur)) {
 	PPS *pps = cur->data;
+
 	g_return_val_if_fail (IS_PPS (pps), NULL);
 
 	if (!pps->name)
 	    continue;
 
-	if (!g_strcasecmp (pps->name, name))
+	if (!g_strcasecmp(pps->name, name))
 	    return cur;
     }
 
@@ -1177,16 +1121,13 @@ static GList *find_in_pps (GList *l, const char *name)
  * @f:    ole file hande.
  * @path: path to find.
  * @file: file to find in path.
- * @create_if_not_found: create the pps with the given path if not found.
  *
  * Locates a stream or storage with the given path.
  *
  * Return value: a #MsOleErr code.
  **/
 static MsOleErr
-path_to_pps (PPS **pps, MsOle *f, const char *path,
-	     const char *file,
-	     gboolean create_if_not_found)
+path_to_pps (PPS **pps, MsOle *f, const char *path, const char *file)
 {
     guint     lp;
     gchar   **dirs;
@@ -1210,12 +1151,6 @@ path_to_pps (PPS **pps, MsOle *f, const char *path,
 
 	cur = find_in_pps(parent, dirs[lp]);
 
-	if (!cur && create_if_not_found &&
-	    pps_create(f, &cur, parent, dirs[lp], MsOleStorageT) !=
-	    MS_OLE_ERR_OK)
-	    cur = NULL;
-	/* else carry on not finding them before dropping out */
-
 	g_free(dirs[lp]);
     }
 
@@ -1235,19 +1170,6 @@ path_to_pps (PPS **pps, MsOle *f, const char *path,
 
     /* now the file */
     if (!cur) {
-	if (create_if_not_found) {
-	    MsOleErr result;
-
-	    result = pps_create(f, &cur, parent, file,
-				MsOleStreamT);
-	    if (result == MS_OLE_ERR_OK) {
-		*pps = cur->data;
-		g_return_val_if_fail(IS_PPS (cur->data),
-				     MS_OLE_ERR_INVALID);
-		return MS_OLE_ERR_OK;
-	    } else
-		return result;
-	}
 	return MS_OLE_ERR_EXIST;
     }
 
@@ -1266,17 +1188,15 @@ path_to_pps (PPS **pps, MsOle *f, const char *path,
  * @fs: filesystem object.
  * @dirpath: directory of the stream.
  * @name: stream name.
- * @mode: mode of opening stream.
  *
  * Opens the stream in @dirpath with the name @name and creates the stream
- * object @stream. If @mode is '%r' it opens read only, and if it is '%w'
- * it opens for write only.
+ * object @stream.  The open is read-only.
  *
  * Return value: a #MsOleErr code.
  **/
 MsOleErr
 ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
-		    const char *path, const char *fname, char mode)
+		    const char *path, const char *fname) 
 {
     PPS         *p;
     MsOleStream *s;
@@ -1291,20 +1211,13 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
     if (!path || !f)
 	return MS_OLE_ERR_BADARG;
 
-    if (mode == 'w' && f->mode != 'w') {
-	g_print("Opening stream '%c' when file is '%c' only\n",
-		mode, f->mode);
-	return MS_OLE_ERR_PERM;
-    }
-
-    if ((result = path_to_pps(&p, f, path, fname, (mode == 'w'))) !=
-	MS_OLE_ERR_OK)
+    if ((result = path_to_pps(&p, f, path, fname)) != MS_OLE_ERR_OK)
 	return result;
 
     if (p->type != MsOleStreamT)
 	return MS_OLE_ERR_INVALID;
 
-    s           = g_new0 (MsOleStream, 1);
+    s           = g_new0(MsOleStream, 1);
     s->file     = f;
     s->pps      = p;
     s->position = 0;
@@ -1359,7 +1272,7 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
 	s->write     = NULL;
 
 	if (s->size > 0)
-	    s->blocks = g_array_new (FALSE, FALSE, sizeof(BLP));
+	    s->blocks = g_array_new(FALSE, FALSE, sizeof(BLP));
 	else
 	    s->blocks = NULL;
 
@@ -1372,7 +1285,7 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
 		b == UNUSED_BLOCK) {
 
 		g_warning ("Panic: broken stream, truncating to block %d\n", lp);
-		s->size = (lp-1)*SB_BLOCK_SIZE;
+		s->size = (lp-1) * SB_BLOCK_SIZE;
 		panic   = 1;
 	    } else {
 		b = NEXT_SB(f, b);
@@ -1386,12 +1299,12 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
 		   b != UNUSED_BLOCK &&
 		   b != SPECIAL_BLOCK &&
 		   b < f->sb->len) {
-		next = NEXT_SB (f, b);
-		g_array_index (f->sb, BLP, b) = END_OF_CHAIN;
+		next = NEXT_SB(f, b);
+		g_array_index(f->sb, BLP, b) = END_OF_CHAIN;
 		b = next;
 	    }
 	    if (b != END_OF_CHAIN)
-		g_warning ("Panic: even more serious block error\n");
+		g_warning("Panic: even more serious block error\n");
 	}
     }
 
@@ -1422,11 +1335,16 @@ MsOleErr ms_ole_stream_close (MsOleStream ** const s)
 
 	ms_ole_unref((*s)->file);
 
-	g_free (*s);
+	g_free(*s);
 	*s = NULL;
 
 	return MS_OLE_ERR_OK;
     }
 
     return MS_OLE_ERR_BADARG;
+}
+
+MsOlePos ms_ole_stream_position (const MsOleStream *s)
+{
+    return s->position;
 }

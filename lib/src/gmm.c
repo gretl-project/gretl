@@ -1514,7 +1514,7 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
    weights matrix.
 */
 
-int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
+int gmm_calculate (nlspec *s, PRN *prn)
 {
     int full_fncount = 0;
     int full_grcount = 0;

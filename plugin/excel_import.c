@@ -482,9 +482,11 @@ static void check_for_date_formula (BiffQuery *q, wbook *book)
     int version = book->version;
     int offset = (version < MS_BIFF_V5)? 16 : 20;
     guint8 *fdata = q->data + offset;    
+    guint16 sz, targ;
     guint8 u1;
-    guint16 sz;
     int i;
+
+    targ = 3 * t_ref_size(version) + t_func_size(version);
 
     if (version < MS_BIFF_V3) {
 	sz = MS_OLE_GET_GUINT8(fdata);
@@ -494,7 +496,12 @@ static void check_for_date_formula (BiffQuery *q, wbook *book)
 	fdata += 2;
     }
 
-    if (sz != 3 * t_ref_size(version) + t_func_size(version)) {
+    /* There's a one-byte ambiguity over the size of the
+       function ID field in the OpenOffice.org doc for
+       BIFF, so we'll allow sz to be one byte bigger than
+       targ.
+    */
+    if (sz != targ && sz != targ + 1) {
 	return;
     }
 
@@ -861,11 +868,11 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 	return 1;
     }
 
-    result = ms_ole_stream_open(&stream, file, "/", "workbook", 'r');
+    result = ms_ole_stream_open(&stream, file, "/", "workbook");
 
     if (result != MS_OLE_ERR_OK) {
 	ms_ole_stream_close(&stream);
-	result = ms_ole_stream_open(&stream, file, "/", "book", 'r');
+	result = ms_ole_stream_open(&stream, file, "/", "book");
 	if (result != MS_OLE_ERR_OK) {
 	    ms_ole_stream_close(&stream);
 	    fputs("No book or workbook streams found\n", stderr);
@@ -891,18 +898,18 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
     while (!err && ms_biff_query_next(q)) {
 	dprintf("At %lu: q->opcode=0x%02x\n", (unsigned long) q->streamPos, q->opcode);
 	if (q->opcode == BIFF_EOF) {
-	    dprintf("got MSEOF at %lu\n", (unsigned long) stream->position);
+	    dprintf("got MSEOF at %lu\n", (unsigned long) ms_ole_stream_position(stream));
 	    eofcount++;
 
 	    if (eofcount == 1) {
-		if (stream->position < offset) {
+		if (ms_ole_stream_position(stream) < offset) {
 		    /* skip to the worksheet we want? */
 		    while (q->streamPos < offset && ms_biff_query_next(q)) ;
 		    fprintf(stderr, "skipped forward to %lu\n", 
 			    (unsigned long) q->streamPos);
 		} else {
 		    fprintf(stderr, "reading worksheet at %lu\n", 
-			    (unsigned long) stream->position);
+			    (unsigned long) ms_ole_stream_position(stream));
 		}
 	    }
 
