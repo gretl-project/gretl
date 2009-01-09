@@ -80,6 +80,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have byteswap.h */
 #undef HAVE_BYTESWAP_H
 
+/* Do we have mmap */
+#undef HAVE_MMAP
+
 /* Do we have the stuff needed for SMTP? */
 #undef HAVE_SYS_SOCKET_H
 #undef HAVE_NETDB_H

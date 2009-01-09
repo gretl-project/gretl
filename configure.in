@@ -300,6 +300,29 @@ fi
 AC_SUBST(INETLIB)
 
 dnl
+dnl Is MMAP available?
+dnl
+AC_MSG_CHECKING([for mmap])
+AC_CACHE_VAL(ac_cv_func_mmap_ok,
+ [AC_TRY_LINK(
+ changequote(<<, >>)dnl
+ <<
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+ >>,
+ changequote([, ])dnl
+ [mmap((void *)0, 0, PROT_READ, 0, 0, 0);],
+ ac_cv_func_mmap_ok=yes,
+ ac_cv_func_mmap_ok=no)] )
+AC_MSG_RESULT($ac_cv_func_mmap_ok)
+if test $ac_cv_func_mmap_ok = yes
+then
+ AC_DEFINE(HAVE_MMAP)
+fi
+
+dnl
 dnl Check for zlib
 dnl
 AC_CHECK_LIB(z, gzopen,have_zlib="yes" ; \
