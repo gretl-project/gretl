@@ -2246,6 +2246,40 @@
       </description>
     </function>
 
+    <function name="mcovg" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="vector">u</fnarg>
+	<fnarg optional="true" type="vector">w</fnarg>
+	<fnarg type="scalar">p</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the matrix covariogram for a <by r="T" c="k"/> matrix
+	  <argname>X</argname> (typically containing regressors), an
+	  (optional) <math>T</math>-vector <argname>u</argname> (typically
+	  containing residuals), an (optional) (<math>p</math>+1)-vector
+	  of weights <argname>w</argname>, and a scalar lag order
+	  <argname>p</argname>, which must be greater than or equal to 0.
+	</para>
+	<para context="tex">
+	  The returned matrix is given by
+	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t
+	  u_{t-j} X_{t-j})\]
+	</para>
+	<para context="notex">
+	  The returned matrix is given by
+	  sum_{j=-p}^{p} sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
+	</para>
+	<para>
+	  If <argname>u</argname> is given as <lit>null</lit> the
+	  <math>u</math> terms are omitted, and if
+	  <argname>w</argname> is given as <lit>null</lit> all the weights
+	  are taken to be 1.0.
+	</para>
+      </description>
+    </function>
+
     <function name="mean" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
