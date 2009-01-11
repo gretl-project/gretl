@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-29 14:23-0500\n"
-"PO-Revision-Date: 2009-01-04 20:57+0200\n"
+"PO-Revision-Date: 2009-01-11 04:12+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1595,7 +1595,7 @@ msgstr "Описательная статистика"
 #: lib/src/describe.c:3508
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
-msgstr "для переменной '%s' (%d действительных наблюдений)"
+msgstr "для переменной '%s' (использовано %d наблюдений)"
 
 #: lib/src/describe.c:3595 lib/src/describe.c:3610 gui2/calculator.c:2306
 #: gui2/guiprint.c:1068 gui2/guiprint.c:1091 gui2/guiprint.c:1166
@@ -2913,7 +2913,7 @@ msgstr ""
 
 #: lib/src/gretl_model.c:5497 gui2/library.c:456
 msgid "The model exhibits an exact linear fit"
-msgstr ""
+msgstr "В модели идеальная линейная подгонка"
 
 #: lib/src/gretl_panel.c:1018
 msgid ""
@@ -2941,6 +2941,8 @@ msgid ""
 "\n"
 "Residual variance: %g/(%d - %d) = %g\n"
 msgstr ""
+"\n"
+"Дисперсия остатков: %g/(%d - %d) = %g\n"
 
 #: lib/src/gretl_panel.c:1594
 msgid "Joint significance of differing group means:\n"
@@ -3065,7 +3067,7 @@ msgstr ""
 
 #: lib/src/gretl_paths.c:1304
 msgid "User directory is not set"
-msgstr "Используемая папка не указана"
+msgstr "Не указана пользовательская директория"
 
 #: lib/src/gretl_paths.c:1310
 #, c-format
@@ -3122,7 +3124,7 @@ msgstr ""
 #: lib/src/gretl_restrict.c:772
 #, c-format
 msgid "%s: not a valid parameter name"
-msgstr ""
+msgstr "%s: не является допустимым названием параметра"
 
 #: lib/src/gretl_restrict.c:864
 #, c-format
@@ -3177,7 +3179,7 @@ msgstr "Стандартная ошибка регрессии"
 
 #: lib/src/gretl_restrict.c:1827
 msgid "Robust chi^2"
-msgstr ""
+msgstr "Робастный Хи-квадрат"
 
 #: lib/src/gretl_restrict.c:1842
 msgid "restriction"
@@ -3208,7 +3210,7 @@ msgstr "Стандартная ошибка"
 
 #: lib/src/gretl_restrict.c:2227 lib/src/gretl_restrict.c:2237
 msgid "sum"
-msgstr ""
+msgstr "сумма"
 
 #: lib/src/gretl_scalar.c:332
 #, c-format
@@ -3784,7 +3786,7 @@ msgstr ""
 #: lib/src/libset.c:967
 #, c-format
 msgid "'%s': no such matrix\n"
-msgstr ""
+msgstr "'%s': матрица с таким названием отсутствует\n"
 
 #: lib/src/libset.c:1182
 msgid "Variables that can be set using \"set\""
@@ -4246,7 +4248,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:951
 msgid "Standard errors based on Information Matrix"
-msgstr ""
+msgstr "Стандартные ошибки, основанные на информационной матрице"
 
 #: lib/src/modelprint.c:954
 msgid "Standard errors based on Outer Products matrix"
@@ -4519,7 +4521,7 @@ msgstr "Угл. коэф."
 
 #: lib/src/modelprint.c:1787
 msgid "Warning: data matrix close to singularity!"
-msgstr ""
+msgstr "ВНИМАНИЕ: матрица данных близка к сингулярной!"
 
 #: lib/src/modelprint.c:1813
 msgid ""
@@ -4538,6 +4540,8 @@ msgid ""
 "R-squared is computed as the square of the correlation between observed and\n"
 "fitted values of the dependent variable"
 msgstr ""
+"R-квадрат равен квадрату корреляции между наблюдаемыми\n"
+"и рассчетными значениями зависимой переменной"
 
 #: lib/src/modelprint.c:1843
 msgid "Statistics based on the original data"
@@ -5963,7 +5967,7 @@ msgstr "Матрица %s удалена"
 
 #: lib/src/usermat.c:1329
 msgid "Matrix decomposition failed"
-msgstr ""
+msgstr "Ошибка в декомпозиции матрицы"
 
 #: lib/src/var.c:628 lib/src/var.c:2598
 #, c-format
@@ -7934,7 +7938,7 @@ msgstr "gretl: установить диапазон"
 
 #: gui2/dialogs.c:2069
 msgid "Name of dummy variable to use:"
-msgstr ""
+msgstr "Название фиктивной переменной:"
 
 #: gui2/dialogs.c:2096
 #, c-format
@@ -9607,7 +9611,7 @@ msgstr "_Случайная выборка..."
 
 #: gui2/gretl.c:1405
 msgid "_Resample with replacement..."
-msgstr "_Изменить с заменой..."
+msgstr "_Повторная выборка (ремэмплирование)..."
 
 #: gui2/gretl.c:1407
 msgid "Drop all obs with _missing values"
@@ -10863,11 +10867,11 @@ msgstr "статистика"
 
 #: gui2/library.c:703
 msgid "summary stats: "
-msgstr "Описательная статистика:"
+msgstr "опис. статистика: "
 
 #: gui2/library.c:710
 msgid "normality test"
-msgstr "Тест на нормальность"
+msgstr "Тест на нормальное распределение"
 
 #: gui2/library.c:860
 msgid "Couldn't read cointegration order"
@@ -11211,7 +11215,7 @@ msgstr "Нет дополнительных наблюдений для искл
 
 #: gui2/library.c:4453
 msgid "Encode all values"
-msgstr ""
+msgstr "Использовать все значения"
 
 #: gui2/library.c:4454
 msgid "Skip the lowest value"
@@ -11355,7 +11359,7 @@ msgstr ""
 
 #: gui2/library.c:6002
 msgid "gretl: Compact data"
-msgstr ""
+msgstr "gretl: снижение частоты"
 
 #: gui2/library.c:6003
 msgid ""
@@ -11363,10 +11367,13 @@ msgid ""
 "You must restore the full range before compacting.\n"
 "Restore the full range now?"
 msgstr ""
+"В настоящий момент на выборку наложены ограничения.\n"
+"Необходимо восстановить полный диапазон перед снижением частоты данных.\n"
+"Хотите восстановить полный диапазон сейчас?"
 
 #: gui2/library.c:6007
 msgid "gretl: Expand data"
-msgstr ""
+msgstr "gretl: увеличение частоты"
 
 #: gui2/library.c:6008
 msgid ""
@@ -11374,6 +11381,9 @@ msgid ""
 "You must restore the full range before expanding.\n"
 "Restore the full range now?"
 msgstr ""
+"В настоящий момент на выборку наложены ограничения.\n"
+"Необходимо восстановить полный диапазон перед увеличением частоты данных.\n"
+"Хотите восстановить полный диапазон сейчас?"
 
 #: gui2/library.c:6027
 msgid "gretl: transpose data"
@@ -11385,6 +11395,9 @@ msgid ""
 "as an observation, and each observation as a variable.\n"
 "Do you want to proceed?"
 msgstr ""
+"Транспонирование означает, что каждая переменная станет\n"
+"наблюдением, а каждое наблюдение - переменной.\n"
+"Хотите продолжить?"
 
 #: gui2/library.c:6040
 msgid "Data transposed"
@@ -11400,15 +11413,15 @@ msgstr "По убыванию"
 
 #: gui2/library.c:6096
 msgid "resample dataset"
-msgstr ""
+msgstr "ресэмплирование выборки"
 
 #: gui2/library.c:6098
 msgid "Resampling with replacement"
-msgstr ""
+msgstr "Повторная выборка (ресэмплирование)"
 
 #: gui2/library.c:6099
 msgid "Number of cases"
-msgstr ""
+msgstr "Количество наблюдений"
 
 #: gui2/library.c:6125
 msgid "OK to overwrite?"
@@ -11453,7 +11466,7 @@ msgstr "Скрипт выполнен\n"
 #: gui2/menustate.c:54
 #, c-format
 msgid "Failed to flip state of \"%s\"\n"
-msgstr ""
+msgstr "Не удалось выяснить статус для \"%s\"\n"
 
 #: gui2/menustate.c:283 gui2/menustate.c:342 gui2/menustate.c:366
 #: gui2/menustate.c:406
@@ -11809,7 +11822,7 @@ msgstr "Вы должны указать набор инструментальн
 
 #: gui2/selector.c:2604
 msgid "You must specify regressors for the selection equation"
-msgstr ""
+msgstr "Вы должны указать регрессоры для выбранного уравнения"
 
 #: gui2/selector.c:2691
 msgid "Heteroskedasticity corrected"
@@ -12065,7 +12078,7 @@ msgstr ""
 
 #: gui2/selector.c:3950
 msgid "Use Fiorentini et al algorithm"
-msgstr ""
+msgstr "Использовать алгоритм Фиорентини (Fiorentini et al)"
 
 #: gui2/selector.c:3983
 msgid "Show lagged variables"
@@ -12085,11 +12098,11 @@ msgstr "Доверительный уровень"
 
 #: gui2/selector.c:4127
 msgid "Spearman's rho"
-msgstr ""
+msgstr "Корреляция Спирмена (rho)"
 
 #: gui2/selector.c:4131
 msgid "Kendall's tau"
-msgstr ""
+msgstr "Корреляция Кендалла (tau)"
 
 #: gui2/selector.c:4143
 msgid "Use correlation matrix"
@@ -12466,12 +12479,12 @@ msgstr ""
 
 #: gui2/session.c:1945 gui2/session.c:1982
 msgid "Please close this object's window first"
-msgstr ""
+msgstr "Пожалуйста, вначале закройте окно объекта"
 
 #: gui2/session.c:2063
 #, c-format
 msgid "'%s': there is already an object of this name"
-msgstr ""
+msgstr "'%s': объект с таким именем уже существует"
 
 #: gui2/session.c:2099
 msgid "gretl: rename object"
@@ -12525,17 +12538,17 @@ msgstr "Свойства матрицы %s"
 #: gui2/session.c:3217
 #, c-format
 msgid "Scalar matrix, value %g\n"
-msgstr ""
+msgstr "Скалярная матрица, значение = %g\n"
 
 #: gui2/session.c:3220
 #, c-format
 msgid "Identity matrix, order %d\n"
-msgstr ""
+msgstr "Единичная матрица порядка %d\n"
 
 #: gui2/session.c:3223
 #, c-format
 msgid "Null matrix, %d x %d\n"
-msgstr ""
+msgstr "Нулевая матрица %d x %d\n"
 
 #: gui2/session.c:3227
 msgid "Rows"
@@ -12551,39 +12564,39 @@ msgstr "Ранг"
 
 #: gui2/session.c:3234
 msgid "Square"
-msgstr ""
+msgstr "Квадратная"
 
 #: gui2/session.c:3238
 msgid "Diagonal"
-msgstr ""
+msgstr "Диагональная"
 
 #: gui2/session.c:3240
 msgid "Lower triangular"
-msgstr ""
+msgstr "Нижнетреугольная матрица"
 
 #: gui2/session.c:3242
 msgid "Upper triangular"
-msgstr ""
+msgstr "Верхнетреугольная матрица"
 
 #: gui2/session.c:3244
 msgid "Symmetric"
-msgstr ""
+msgstr "Симметричная"
 
 #: gui2/session.c:3249
 msgid "Positive definite"
-msgstr ""
+msgstr "Положительно определенная"
 
 #: gui2/session.c:3251
 msgid "Not positive definite"
-msgstr ""
+msgstr "Не является положительно определенной"
 
 #: gui2/session.c:3267
 msgid "Idempotent"
-msgstr ""
+msgstr "Идемпотентная"
 
 #: gui2/session.c:3269
 msgid "Not idempotent"
-msgstr ""
+msgstr "Не является идемпотентной"
 
 #: gui2/session.c:3275 plugin/vif.c:125
 msgid "1-norm"
@@ -12591,7 +12604,7 @@ msgstr "1-я норма"
 
 #: gui2/session.c:3276
 msgid "Infinity-norm"
-msgstr ""
+msgstr "Бесконечная норма"
 
 #: gui2/session.c:3281
 msgid "Trace"
@@ -12863,11 +12876,11 @@ msgstr "_Единичная матрица"
 
 #: gui2/ssheet.c:158
 msgid "_Uniform random"
-msgstr ""
+msgstr "_Равномерное распределение"
 
 #: gui2/ssheet.c:159
 msgid "_Normal random"
-msgstr ""
+msgstr "_Нормальное распределение"
 
 #: gui2/ssheet.c:160
 msgid "_Properties"
@@ -12875,31 +12888,31 @@ msgstr "_Свойства"
 
 #: gui2/ssheet.c:162
 msgid "_Transform"
-msgstr ""
+msgstr "_Преобразовать"
 
 #: gui2/ssheet.c:163
 msgid "_X'X"
-msgstr ""
+msgstr "_X'X"
 
 #: gui2/ssheet.c:164
 msgid "_Transpose"
-msgstr ""
+msgstr "_Транспонировать"
 
 #: gui2/ssheet.c:165
 msgid "_Cholesky"
-msgstr ""
+msgstr "_Декомпозиция Чолески (Cholesky)"
 
 #: gui2/ssheet.c:166
 msgid "_Invert"
-msgstr ""
+msgstr "_Обратная матрица"
 
 #: gui2/ssheet.c:167
 msgid "_Multiply by scalar"
-msgstr ""
+msgstr "_Умножить на скалярную величину"
 
 #: gui2/ssheet.c:168
 msgid "_Divide by scalar"
-msgstr ""
+msgstr "_Разделить на скалярную величину"
 
 #: gui2/ssheet.c:841
 msgid ""
@@ -13030,7 +13043,7 @@ msgstr "Необходимо назвать матрицу"
 
 #: gui2/ssheet.c:2909
 msgid "The matrix formula is empty"
-msgstr ""
+msgstr "Формула для значений матрицы пустая"
 
 #: gui2/ssheet.c:2986
 msgid "New matrix"
@@ -13042,11 +13055,11 @@ msgstr "Название:"
 
 #: gui2/ssheet.c:3012
 msgid "Build from series"
-msgstr ""
+msgstr "Получить из данных"
 
 #: gui2/ssheet.c:3021
 msgid "Build numerically"
-msgstr ""
+msgstr "Получить численно"
 
 #: gui2/ssheet.c:3030
 msgid "Number of rows:"
@@ -13058,15 +13071,15 @@ msgstr "Количество столбцов:"
 
 #: gui2/ssheet.c:3048
 msgid "Initial fill value:"
-msgstr ""
+msgstr "Начальное значение:"
 
 #: gui2/ssheet.c:3071
 msgid "Build from formula"
-msgstr ""
+msgstr "Получить по формуле:"
 
 #: gui2/ssheet.c:3257
 msgid "Define matrix"
-msgstr ""
+msgstr "Определение матрицы"
 
 #: gui2/ssheet.c:3296
 #, c-format
@@ -13192,7 +13205,7 @@ msgstr "gretl: сохранение текста"
 
 #: gui2/toolbar.c:244
 msgid "Nothing to send"
-msgstr ""
+msgstr "Текст отсутствует"
 
 #: gui2/toolbar.c:340
 #, c-format
@@ -13611,11 +13624,11 @@ msgstr ""
 
 #: plugin/johansen.c:992
 msgid "eigenvalue"
-msgstr ""
+msgstr "собственное значение"
 
 #: plugin/johansen.c:1443
 msgid "Eigenvalue"
-msgstr ""
+msgstr "Собственное значение"
 
 #: plugin/johansen.c:1444
 msgid "Trace test"
@@ -13627,12 +13640,12 @@ msgstr ""
 
 #: plugin/johansen.c:1530
 msgid "Failed to find eigenvalues\n"
-msgstr ""
+msgstr "Не удалось найти собственные значения\n"
 
 #: plugin/johansen.c:1582
 #, c-format
 msgid "eigenvalue %d = %g\n"
-msgstr ""
+msgstr "собственное значение %d = %g\n"
 
 #: plugin/johansen.c:1606 plugin/jrestrict.c:2747
 #, c-format
