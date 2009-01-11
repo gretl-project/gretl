@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-29 14:23-0500\n"
-"PO-Revision-Date: 2009-01-11 04:12+0200\n"
+"PO-Revision-Date: 2009-01-11 04:29+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3506,7 +3506,7 @@ msgstr ""
 #: lib/src/gretl_xml.c:2196
 #, c-format
 msgid "dummy for %s = %lf"
-msgstr ""
+msgstr "фиктивная переменная для %s = %lf"
 
 #: lib/src/gretl_xml.c:2233
 #, c-format
@@ -3546,12 +3546,12 @@ msgstr "Наблюдения не были найдены"
 
 #: lib/src/interact.c:1050 lib/src/interact.c:1912
 msgid "Memory allocation failed for command list"
-msgstr ""
+msgstr "Ошибка памяти для коммандного списка"
 
 #: lib/src/interact.c:1146
 #, c-format
 msgid "generation of lag variable failed"
-msgstr ""
+msgstr "Ошибка при создании лаговой переменной"
 
 #: lib/src/interact.c:1429 gui2/gui_utils.c:3433 gui2/library.c:3658
 #, c-format
@@ -3601,7 +3601,7 @@ msgstr "Использование аргумента '%s' в данной ко�
 #: lib/src/interact.c:2631
 #, c-format
 msgid "var number %d duplicated in the command list."
-msgstr ""
+msgstr "Переменная номер %d повторяется в коммандном списке"
 
 #: lib/src/interact.c:2698 lib/src/interact.c:2808
 #, c-format
@@ -3706,7 +3706,7 @@ msgstr "Вывод добавляется в '%s'\n"
 
 #: lib/src/interact.c:3785
 msgid "No data information is available.\n"
-msgstr ""
+msgstr "Информация о данных недоступна.\n"
 
 #: lib/src/interact.c:3874 lib/src/interact.c:5144 lib/src/interact.c:5268
 #, c-format
@@ -3715,7 +3715,7 @@ msgstr ""
 
 #: lib/src/interact.c:4044
 msgid "You can't end a loop here, you haven't started one\n"
-msgstr ""
+msgstr "Невозможно закончить цикл, т.к. он не был начат.\n"
 
 #: lib/src/interact.c:4165
 msgid "This command requires one variable.\n"
@@ -3724,7 +3724,7 @@ msgstr "Эта команда требует одной переменной.\n"
 #: lib/src/interact.c:4283
 #, c-format
 msgid "setting data frequency = %d\n"
-msgstr ""
+msgstr "установить частоту данных = %d\n"
 
 #: lib/src/interact.c:4304
 msgid "store: no filename given\n"
@@ -3745,12 +3745,12 @@ msgstr "Эта функция оценка требует панельных д�
 
 #: lib/src/interact.c:4510
 msgid "Couldn't format model\n"
-msgstr ""
+msgstr "Невозможно отформатировать модель\n"
 
 #: lib/src/interact.c:4524
 #, c-format
 msgid "Model printed to %s\n"
-msgstr ""
+msgstr "Модель напечатана в %s\n"
 
 #: lib/src/interact.c:4625 cli/gretlcli.c:1021 gui2/library.c:7328
 msgid "Infinite loop detected in script\n"
@@ -3763,7 +3763,7 @@ msgstr "Вы не можете удалять переменные здесь\n"
 #: lib/src/interact.c:4646
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
-msgstr "Простите, команда %s еще не реализована в libgretl\n"
+msgstr "Команда %s еще не реализована в libgretl\n"
 
 #: lib/src/interact.c:5110
 msgid "error evaluating 'if'"
@@ -3776,7 +3776,7 @@ msgstr ""
 #: lib/src/libset.c:913
 #, c-format
 msgid "Line width for %s = %d\n"
-msgstr ""
+msgstr "Толщина линии для %s = %d\n"
 
 #: lib/src/libset.c:944
 #, c-format
@@ -5899,42 +5899,42 @@ msgstr "в скобках указаны $t$-статистики"
 #: lib/src/transforms.c:134
 #, c-format
 msgid "= first difference of %s"
-msgstr ""
+msgstr "= первая разность для %s"
 
 #: lib/src/transforms.c:136
 #, c-format
 msgid "= log difference of %s"
-msgstr ""
+msgstr "= логарифмическая разность для %s"
 
 #: lib/src/transforms.c:138
 #, c-format
 msgid "= seasonal difference of %s"
-msgstr ""
+msgstr "= сезонная разность для %s"
 
 #: lib/src/transforms.c:140
 #, c-format
 msgid "= log of %s"
-msgstr ""
+msgstr "= логарифм для %s"
 
 #: lib/src/transforms.c:142
 #, c-format
 msgid "= %s squared"
-msgstr ""
+msgstr "= квадрат %s"
 
 #: lib/src/transforms.c:632
 #, c-format
 msgid "= %s times %s"
-msgstr ""
+msgstr "= %s раз %s"
 
 #: lib/src/transforms.c:635
 #, c-format
 msgid "dummy for %s = %g"
-msgstr ""
+msgstr "фиктивная переменная для %s = %g"
 
 #: lib/src/transforms.c:701 lib/src/transforms.c:1157 lib/src/var.c:605
 #, c-format
 msgid "Invalid lag order %d"
-msgstr ""
+msgstr "Неверный порядок лага %d"
 
 #: lib/src/transforms.c:1511
 msgid "dummify: no suitable variables were found"
@@ -13088,7 +13088,7 @@ msgstr "Невозможно открыть '%s'"
 
 #: gui2/ssheet.c:3317
 msgid "You can't do this while editing the dataset"
-msgstr ""
+msgstr "Невозможно выполнить во время редактирования данных"
 
 #: gui2/textbuf.c:233 gui2/textbuf.c:241
 msgid "No undo information available"
