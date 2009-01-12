@@ -794,8 +794,8 @@ static void get_ovar_ref (NODE *t, parser *p)
 
     if (p->idnum == 0) {
 	p->err = E_PARSE;
-    } else if (p->sym == DMSL) {
-	/* followed by '[' slice mechanism? */
+    } else if (p->sym == DMSL || p->sym == DMSTR) {
+	/* followed by '[' or '(' matrix subspec? */
 	t->v.b2.r = powterm(p);
     } else {
 	t->v.b2.r = newref(p, p->sym);

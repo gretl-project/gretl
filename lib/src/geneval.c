@@ -5136,6 +5136,39 @@ static GretlType object_var_type (int idx, const char *oname)
     return vtype;
 }
 
+/* For example, $coeff(sqft); or model1.$coeff(const) */
+
+static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	NODE *l = t->v.b2.l;
+	NODE *r = t->v.b2.r;
+
+	ret->v.xval = gretl_model_get_data_element(pmod, l->v.idnum, r->v.str, 
+						   p->dinfo, &p->err);
+
+	if (na(ret->v.xval)) {
+	    const char *s = get_string_by_name(r->v.str);
+
+	    if (s != NULL) {
+		p->err = 0;
+		ret->v.xval = gretl_model_get_data_element(pmod, l->v.idnum, s, 
+							   p->dinfo, &p->err);
+	    }
+	}
+
+	if (na(ret->v.xval)) {
+	    p->err = 1;
+	    pprintf(p->prn, _("'%s': invalid argument for %s()\n"), 
+		    r->v.str, mvarname(l->v.idnum));
+	}
+    }
+
+    return ret;
+}
+
 /* the left-hand subnode holds the name of the object in
    question; on the right is a specification of what we
    want from that object 
@@ -5145,10 +5178,13 @@ static NODE *object_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
+#if EDEBUG
+    fprintf(stderr, "object_var_node: t->t = %d\n", t->t);
+#endif
+
     if (starting(p)) {
-	NODE *r = (t->t == MVAR || t->t == DMSL)? t : t->v.b2.r;
-	const char *oname = (t->t == MVAR || t->t == DMSL)?
-	    NULL : t->v.b2.l->v.str;
+	NODE *r = (t->t == OVAR)? t->v.b2.r : t;
+	const char *oname = (t->t == OVAR)? t->v.b2.l->v.str : NULL;
 	int mslice = r->t == DMSL;
 	GretlType vtype;
 
@@ -5156,6 +5192,17 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    gretl_errmsg_sprintf(_("%s: no such object\n"), oname);
 	    p->err = E_UNKVAR;
 	    return NULL;
+	}
+
+	if (oname != NULL && r->t == DMSTR) {
+	    MODEL *pmod = get_model_by_name(oname);
+	    
+	    if (pmod == NULL) {
+		p->err = E_INVARG;
+		return NULL;
+	    } else {
+		return dollar_str_node(r, pmod, p);
+	    }
 	}
 		
 	vtype = object_var_type(r->v.idnum, oname);
@@ -5196,40 +5243,6 @@ static NODE *object_var_node (NODE *t, parser *p)
 	ret = aux_any_node(p);
     }
     
-    return ret;
-}
-
-/* FIXME below: hook this into OVAR, to allow for, e.g.
-   "m1.coeff(sqft)" ? */
-
-static NODE *dollar_str_node (NODE *t, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL && starting(p)) {
-	NODE *l = t->v.b2.l;
-	NODE *r = t->v.b2.r;
-
-	ret->v.xval = gretl_model_get_data_element(NULL, l->v.idnum, r->v.str, 
-						   p->dinfo, &p->err);
-
-	if (na(ret->v.xval)) {
-	    const char *s = get_string_by_name(r->v.str);
-
-	    if (s != NULL) {
-		p->err = 0;
-		ret->v.xval = gretl_model_get_data_element(NULL, l->v.idnum, s, 
-							   p->dinfo, &p->err);
-	    }
-	}
-
-	if (na(ret->v.xval)) {
-	    p->err = 1;
-	    pprintf(p->prn, _("'%s': invalid argument for %s()\n"), 
-		    r->v.str, mvarname(l->v.idnum));
-	}
-    }
-
     return ret;
 }
 
@@ -5949,7 +5962,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = object_var_node(t, p);
 	break;
     case DMSTR:
-	ret = dollar_str_node(t, p);
+	ret = dollar_str_node(t, NULL, p);
 	break;
     case DVAR: 
 	/* dataset "dollar" variable */

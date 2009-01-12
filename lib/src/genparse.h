@@ -89,7 +89,7 @@ enum {
 	      OBS,	  /* observation from a series */
 	      MSL,	  /* matrix plus subspec */
   /* 60 */    DMSL,	  /* "dollar" matrix plus subspec */
-	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
+	      DMSTR,	  /* "dollar" matrix plus string subspec */
 	      MSL2,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
