@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-29 14:23-0500\n"
-"PO-Revision-Date: 2009-01-11 04:29+0200\n"
+"PO-Revision-Date: 2009-01-12 02:48+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -51,12 +51,12 @@ msgstr ""
 #: lib/src/adf_kpss.c:255
 #, c-format
 msgid "including one lag of (1-L)%s"
-msgstr ""
+msgstr "включая один лаг для (1-L)%s"
 
 #: lib/src/adf_kpss.c:257
 #, c-format
 msgid "including %d lags of (1-L)%s"
-msgstr ""
+msgstr "включая %d лагов для (1-L)%s"
 
 #: lib/src/adf_kpss.c:282 gui2/library.c:913 gui2/selector.c:4377
 msgid "test without constant"
@@ -134,7 +134,7 @@ msgstr "тестовая статистика"
 #: lib/src/adf_kpss.c:371 lib/src/adf_kpss.c:374 lib/src/adf_kpss.c:913
 #: lib/src/adf_kpss.c:917 lib/src/adf_kpss.c:920 plugin/stats_tables.c:238
 msgid "Critical values"
-msgstr "Критические значения"
+msgstr "Крит. значения"
 
 #: lib/src/adf_kpss.c:903
 msgid "Robust estimate of variance"
@@ -142,7 +142,7 @@ msgstr "Робастная оценка дисперсии"
 
 #: lib/src/adf_kpss.c:904
 msgid "Sum of squares of cumulated residuals"
-msgstr ""
+msgstr "Cумма квадратов кумулятивных ошибок"
 
 #: lib/src/adf_kpss.c:909
 #, c-format
@@ -151,6 +151,9 @@ msgid ""
 "KPSS test for %s %s\n"
 "\n"
 msgstr ""
+"\n"
+"KPSS тест для %s %s\n"
+"\n"
 
 #: lib/src/adf_kpss.c:910
 msgid "(including trend)"
@@ -163,7 +166,7 @@ msgstr "(без тренда)"
 #: lib/src/adf_kpss.c:911
 #, c-format
 msgid "Lag truncation parameter = %d\n"
-msgstr ""
+msgstr "Параметр для усечения лагов = %d\n"
 
 #: lib/src/adf_kpss.c:912 lib/src/compare.c:343 lib/src/compare.c:370
 #: lib/src/compare.c:813 lib/src/compare.c:1576 lib/src/compare.c:1781
@@ -182,12 +185,12 @@ msgstr "Тестовая статистика"
 #: lib/src/adf_kpss.c:1135
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
-msgstr ""
+msgstr "Шаг %d: тестирование единичного корня для %s\n"
 
 #: lib/src/adf_kpss.c:1142
 #, c-format
 msgid "Step %d: cointegrating regression\n"
-msgstr ""
+msgstr "Шаг %d: коинтеграционная регрессия\n"
 
 #: lib/src/adf_kpss.c:1170
 #, c-format
@@ -202,6 +205,12 @@ msgid ""
 "(b) The unit-root hypothesis is rejected for the residuals (uhat) from the \n"
 "    cointegrating regression.\n"
 msgstr ""
+"\n"
+"Коинтеграционная связь присутствует если:\n"
+"(а) Гипотеза единичного корня не может быть отвергнута для отдельных\n"
+"    переменных.\n"
+"(б) Гипотеза единичного корня отвергается для остатков (uhat) \n"
+"    коинтеграционной регрессии.\n"
 
 #: lib/src/bootstrap.c:408
 #, c-format
@@ -233,7 +242,7 @@ msgstr "использованы сымитированые нормальные
 
 #: lib/src/bootstrap.c:455
 msgid "recognized lagged dependent variable"
-msgstr ""
+msgstr "обнаружена лаговая зависимая переменная"
 
 #: lib/src/bootstrap.c:471
 msgid "bootstrap F-test"
@@ -249,7 +258,7 @@ msgstr "бутстреп коэффициента"
 
 #: lib/src/boxplots.c:159 gui2/gpt_control.c:2909 gui2/gpt_control.c:2982
 msgid "Numerical summary"
-msgstr ""
+msgstr "Числовая статистика"
 
 #: lib/src/boxplots.c:162 lib/src/gmm.c:1496 gui2/calculator.c:1957
 #: gui2/calculator.c:1982 gui2/calculator.c:2589 gui2/gpt_dialog.c:1717
@@ -260,11 +269,11 @@ msgstr "Среднее"
 #: lib/src/boxplots.c:163 lib/src/boxplots.c:166 lib/src/boxplots.c:178
 #: gui2/gpt_dialog.c:1715
 msgid "median"
-msgstr "медиана"
+msgstr "Медиана"
 
 #: lib/src/boxplots.c:174
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
+msgstr "Числовая статистика для бутстреп доверительного интервала для медианы"
 
 #: lib/src/boxplots.c:180
 #, no-c-format
@@ -1083,6 +1092,8 @@ msgid ""
 "\n"
 "Reading header file %s\n"
 msgstr ""
+"\n"
+"Чтение заголовка файла %s\n"
 
 #: lib/src/dataio.c:1930 lib/src/dataio.c:2013 lib/src/gretl_xml.c:2234
 #, c-format
@@ -1346,7 +1357,7 @@ msgstr "Невозможно открыть %s для записи"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
+msgstr "Из всех переменных для сохранения, %d уже присутствуют в базе данных."
 
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
@@ -1472,7 +1483,7 @@ msgstr "Спектр для %s"
 #: lib/src/describe.c:3235
 #, c-format
 msgid "Bartlett window, length %d"
-msgstr ""
+msgstr "окно Бартлета, ширина %d"
 
 #: lib/src/describe.c:3241 gui2/library.c:4172
 msgid "log scale"
@@ -1503,10 +1514,12 @@ msgid ""
 "Using Bartlett lag window, length %d\n"
 "\n"
 msgstr ""
+"Использовано окно Бартлета, ширина %d\n"
+"\n"
 
 #: lib/src/describe.c:3326
 msgid "Missing values within sample -- can't do periodogram"
-msgstr ""
+msgstr "Невозможно построить периодограмму -- в выборке есть пропущенные наблюдения"
 
 #: lib/src/describe.c:3332
 msgid "Insufficient observations for periodogram"
@@ -1526,17 +1539,21 @@ msgid ""
 " omega  scaled frequency  periods  log spectral density\n"
 "\n"
 msgstr ""
+" Омега  Масштаб. Частота  Периоды  Лог. спектрал. частота\n"
+"\n"
 
 #: lib/src/describe.c:3417
 msgid ""
 " omega  scaled frequency  periods  spectral density\n"
 "\n"
 msgstr ""
+" Омега  Масштаб. Частота  Периоды  Спектрал. частота\n"
+"\n"
 
 #: lib/src/describe.c:3447 lib/src/describe.c:3448 lib/src/printout.c:1020
 #: lib/src/printout.c:1021
 msgid "NA"
-msgstr ""
+msgstr "Н/Д"
 
 #: lib/src/describe.c:3475 lib/src/describe.c:4169
 #, c-format
@@ -1582,11 +1599,11 @@ msgstr "Эксцесс"
 
 #: lib/src/describe.c:3500
 msgid "Within s.d."
-msgstr ""
+msgstr "Внутригрупповое ст. отклонение"
 
 #: lib/src/describe.c:3501
 msgid "Between s.d."
-msgstr ""
+msgstr "Межгрупповое ст. отклонение"
 
 #: lib/src/describe.c:3507 lib/src/describe.c:3593
 msgid "Summary Statistics"
@@ -1623,7 +1640,7 @@ msgstr ""
 #: lib/src/describe.c:3737
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
-msgstr ""
+msgstr "Исключение %s: выборка не содержит достоверных наблюдений\n"
 
 #: lib/src/describe.c:4129 lib/src/modelprint.c:2823 lib/src/modelprint.c:2835
 #: lib/src/modelprint.c:2836 lib/src/modelprint.c:2837
@@ -1678,6 +1695,9 @@ msgid ""
 "Equality of means test (assuming %s variances)\n"
 "\n"
 msgstr ""
+"\n"
+"Тест на равенство средних (предполагая %s дисперсий)\n"
+"\n"
 
 #: lib/src/describe.c:4300
 msgid "unequal"
@@ -1690,7 +1710,7 @@ msgstr "равная"
 #: lib/src/describe.c:4305
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
-msgstr ""
+msgstr "   Разница между выборочными средними = %g - %g = %g\n"
 
 #: lib/src/describe.c:4307
 msgid "   Null hypothesis: The two population means are the same.\n"
@@ -1733,11 +1753,14 @@ msgid ""
 "Equality of variances test\n"
 "\n"
 msgstr ""
+"\n"
+"Тест на равенство дисперсий\n"
+"\n"
 
 #: lib/src/describe.c:4385
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
-msgstr ""
+msgstr "   Отношение выборочных дисперсий = %g\n"
 
 #: lib/src/describe.c:4386 lib/src/gretl_model.c:2994
 #: lib/src/gretl_model.c:2997 lib/src/gretl_model.c:3000
@@ -1778,7 +1801,7 @@ msgstr "используя переменные:"
 #: lib/src/describe.c:4587
 #, c-format
 msgid "Distances saved as '%s'"
-msgstr ""
+msgstr "Расстояния сохранены как '%s'"
 
 #: lib/src/describe.c:4656
 msgid "illegal negative value"
@@ -1786,7 +1809,7 @@ msgstr "запрещенное отрицательное значение"
 
 #: lib/src/describe.c:4736
 msgid "Lorenz curve"
-msgstr ""
+msgstr "Кривая Лоренца"
 
 #: lib/src/describe.c:4795 plugin/excel_import.c:1515
 #: plugin/gnumeric_import.c:791
@@ -1970,8 +1993,8 @@ msgid ""
 "X-12-ARIMA can't handle more than 720 observations.\n"
 "Please select a smaller sample."
 msgstr ""
-"X-12-ARIMA не может обработать более 720 наблюдений.\n"
-"Выберите меньшую выборку."
+"X-12-ARIMA предусматривает не более 720 наблюдений.\n"
+"Задайте меньшую выборку."
 
 #: lib/src/estimate.c:4283
 msgid "This test is only available for panel data"
@@ -1998,7 +2021,7 @@ msgstr "Номер переменной %d выходит за границы"
 
 #: lib/src/geneval.c:3910
 msgid "Matrix specification is not coherent"
-msgstr ""
+msgstr "Неверное описание матрицы"
 
 #: lib/src/geneval.c:4047 lib/src/geneval.c:4229
 #, c-format
@@ -2022,7 +2045,7 @@ msgstr "%s: нет такого объекта\n"
 #: lib/src/geneval.c:5208
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
-msgstr ""
+msgstr "'%s': неверный аргумент для %s()\n"
 
 #: lib/src/geneval.c:5286
 #, c-format
@@ -2048,7 +2071,7 @@ msgstr "'%s' : нельзя применить к матрицам"
 #: lib/src/geneval.c:6804
 #, c-format
 msgid "'%s' : not implemented for lists"
-msgstr "'%s' : нельзя применить к массивам (lists)"
+msgstr "'%s' : нельзя применить к спискам"
 
 #: lib/src/geneval.c:6811
 #, c-format
@@ -2151,7 +2174,7 @@ msgstr "Символ '%s' не определен\n"
 #: lib/src/genlex.c:590 lib/src/genlex.c:591
 #, c-format
 msgid "'%s': no argument was given\n"
-msgstr ""
+msgstr "'%s': не были указаны аргументы\n"
 
 #: lib/src/genlex.c:599
 #, c-format
@@ -2466,7 +2489,7 @@ msgstr "%g%% доверительный эллипс и %g%% доверител�
 #: lib/src/graphing.c:4387 lib/src/graphing.c:4388
 #, c-format
 msgid "adjusted %s"
-msgstr ""
+msgstr "исправлен. %s"
 
 #: lib/src/graphing.c:4450 plugin/range-mean.c:66
 msgid "with least squares fit"
@@ -2482,6 +2505,9 @@ msgid ""
 "\n"
 "*** User-specified starting values:\n"
 msgstr ""
+"\n"
+"\n"
+"*** Пользовательские начальные значения:\n"
 
 #: lib/src/gretl_bfgs.c:458
 msgid "BFGS: initial value of objective function is not finite"
@@ -2508,7 +2534,7 @@ msgstr "Ошибка в данных"
 
 #: lib/src/gretl_errors.c:30
 msgid "Exact or near collinearity encountered"
-msgstr ""
+msgstr "Обнаружена точная коллинеарность или ее приближение"
 
 #: lib/src/gretl_errors.c:31 gui2/library.c:3270
 msgid "Insufficient degrees of freedom for regression"
@@ -2726,12 +2752,12 @@ msgstr "_Открыть"
 #: lib/src/gretl_list.c:297
 #, c-format
 msgid "Replaced list '%s'\n"
-msgstr ""
+msgstr "Изменен список '%s'\n"
 
 #: lib/src/gretl_list.c:321
 #, c-format
 msgid "Added list '%s'\n"
-msgstr ""
+msgstr "Добавлен список '%s'\n"
 
 #: lib/src/gretl_list.c:324
 #, c-format
@@ -3781,7 +3807,7 @@ msgstr "Толщина линии для %s = %d\n"
 #: lib/src/libset.c:944
 #, c-format
 msgid "Baxter-King band = %d-%d periods\n"
-msgstr ""
+msgstr "Полоса Бакстера-Кинга = %d-%d периодов\n"
 
 #: lib/src/libset.c:967
 #, c-format
@@ -3814,7 +3840,7 @@ msgstr ""
 
 #: lib/src/libset.c:1243
 msgid "Filtering"
-msgstr ""
+msgstr "Фильтрация"
 
 #: lib/src/libset.c:1257 gui2/datawiz.c:478 gui2/menustate.c:465
 msgid "Time series"
@@ -3952,11 +3978,11 @@ msgstr "Расширенная регрессия для теста Чоу"
 
 #: lib/src/modelprint.c:565
 msgid "Cointegrating regression -- "
-msgstr ""
+msgstr "Коинтеграционная регрессия -- "
 
 #: lib/src/modelprint.c:566
 msgid "Cointegrating regression - "
-msgstr ""
+msgstr "Коинтеграционная регрессия - "
 
 #: lib/src/modelprint.c:568
 msgid "Augmented Dickey--Fuller regression"
@@ -3976,7 +4002,7 @@ msgstr "Регрессия теста Дики-Фуллера"
 
 #: lib/src/modelprint.c:574
 msgid "KPSS regression"
-msgstr ""
+msgstr "KPSS регрессия"
 
 #: lib/src/modelprint.c:576
 msgid "Auxiliary regression for RESET specification test"
@@ -5083,7 +5109,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:815
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
+msgstr "Тестовая статистика не может быть рассчитана. Попробуйте использовать отклонение от медианы.\n"
 
 #: lib/src/nonparam.c:819
 #, c-format
@@ -7295,7 +7321,7 @@ msgstr ""
 
 #: gui2/database.c:1947 gui2/database.c:1963 gui2/database.c:2176
 msgid "Up to date"
-msgstr ""
+msgstr "Установлен"
 
 #: gui2/database.c:1958
 msgid "Error unzipping compressed data"
@@ -8408,15 +8434,15 @@ msgstr "Простое скользящее среднее"
 
 #: gui2/filters.c:75
 msgid "Exponential moving average"
-msgstr ""
+msgstr "Экспоненциальное скользящее среднее"
 
 #: gui2/filters.c:77
 msgid "Hodrick-Prescott filter"
-msgstr ""
+msgstr "Фильтр Годрика-Прескотта (Hodrick-Prescott)"
 
 #: gui2/filters.c:79
 msgid "Baxter-King Band-pass filter"
-msgstr ""
+msgstr "Фильтр Бакстера-Кинга (Baxter-King)"
 
 #: gui2/filters.c:270
 msgid "Variable name is missing"
@@ -8436,15 +8462,15 @@ msgstr "Сохранить циклическую компоненту как"
 
 #: gui2/filters.c:379
 msgid "Lower frequency bound:"
-msgstr ""
+msgstr "Нижняя граница частоты:"
 
 #: gui2/filters.c:388
 msgid "Upper frequency bound:"
-msgstr ""
+msgstr "Верхняя граница частоты:"
 
 #: gui2/filters.c:419
 msgid "The first EMA value is"
-msgstr ""
+msgstr "Рассчитать первое значение для сглаженного ряда как:"
 
 #: gui2/filters.c:428
 msgid "the mean of the whole series"
@@ -8456,72 +8482,72 @@ msgstr "среднее первых n наблюдений"
 
 #: gui2/filters.c:455
 msgid "gretl: time-series filter"
-msgstr ""
+msgstr "gretl: фильтр для временного ряда"
 
 #: gui2/filters.c:472
 msgid "Number of observations in average:"
-msgstr ""
+msgstr "Количество наблюдений для усреднения:"
 
 #: gui2/filters.c:483
 msgid "Centered"
-msgstr ""
+msgstr "Центрирование"
 
 #: gui2/filters.c:494
 msgid "Weight on current observation:"
-msgstr ""
+msgstr "Вес текущего наблюдения:"
 
 #: gui2/filters.c:508
 msgid "lambda (higher values -> smoother trend):"
-msgstr ""
+msgstr "Лямбда (больше значение -> сильнее сглаживание):"
 
 #: gui2/filters.c:519
 msgid "k (higher values -> better approximation):"
-msgstr ""
+msgstr "k (больше значение -> лучше аппроксимация):"
 
 #: gui2/filters.c:536
 msgid "Graph filtered series"
-msgstr ""
+msgstr "График сглаженного ряда"
 
 #: gui2/filters.c:540
 msgid "Save cyclical series as"
-msgstr ""
+msgstr "Сохранить циклическую компоненту как:"
 
 #: gui2/filters.c:554
 msgid "Graph original and smoothed series"
-msgstr ""
+msgstr "График для исходного и сглаженного ряда"
 
 #: gui2/filters.c:556
 msgid "Graph residual or cycle series"
-msgstr ""
+msgstr "График для остатков или циклической компоненты"
 
 #: gui2/filters.c:649 gui2/filters.c:670
 #, c-format
 msgid "%s (original data)"
-msgstr ""
+msgstr "%s (исходный ряд)"
 
 #: gui2/filters.c:650 gui2/filters.c:671
 #, c-format
 msgid "%s (smoothed)"
-msgstr ""
+msgstr "%s (сглаженный ряд)"
 
 #: gui2/filters.c:661 gui2/filters.c:683
 #, c-format
 msgid "Cyclical component of %s"
-msgstr "Циклическая компонента %s"
+msgstr "Циклическая компонента для %s"
 
 #: gui2/filters.c:680
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
-msgstr ""
+msgstr "Составляющая Бакстера-Кинга для %s с частотой от %d до %d"
 
 #: gui2/fncall.c:146
 #, c-format
 msgid "Argument %d (%s) is missing"
-msgstr ""
+msgstr "Не указан аргумент %d (%s)"
 
 #: gui2/fncall.c:430
 msgid "No name was given for the list"
-msgstr ""
+msgstr "Не задано имя списка"
 
 #: gui2/fncall.c:437
 msgid "Really create an empty list?"
@@ -8529,16 +8555,16 @@ msgstr "Действительно создать пустой список?"
 
 #: gui2/fncall.c:475
 msgid "Define list"
-msgstr ""
+msgstr "Создать список"
 
 #: gui2/fncall.c:591
 msgid "gretl: function call"
-msgstr ""
+msgstr "gretl: вызов функции"
 
 #: gui2/fncall.c:595
 #, c-format
 msgid "Call to function %s"
-msgstr ""
+msgstr "Вызвать функцию %s"
 
 #: gui2/fncall.c:604
 msgid "Arguments:"
@@ -8546,27 +8572,27 @@ msgstr "Аргументы:"
 
 #: gui2/fncall.c:611
 msgid "selection"
-msgstr ""
+msgstr "Выбрать из списка:"
 
 #: gui2/fncall.c:648
 msgid "More..."
-msgstr ""
+msgstr "Обзор..."
 
 #: gui2/fncall.c:657
 msgid "New..."
-msgstr ""
+msgstr "Создать..."
 
 #: gui2/fncall.c:684
 msgid "Assign return value (optional):"
-msgstr ""
+msgstr "Возвращаемое значение (опционально):"
 
 #: gui2/fncall.c:696
 msgid "selection (or new variable)"
-msgstr ""
+msgstr "Выбрать из списка (или новая переменная)"
 
 #: gui2/fncall.c:961
 msgid "Function package is broken"
-msgstr ""
+msgstr "Пакет функций поврежден"
 
 #: gui2/fncall.c:976 gui2/fncall.c:991
 msgid "Couldn't get function package information"
@@ -9595,7 +9621,7 @@ msgstr "_Установить диапазон..."
 
 #: gui2/gretl.c:1400
 msgid "_Restore full range"
-msgstr "_Восстановить полный диапазон"
+msgstr "_Восстановить исходный диапазон"
 
 #: gui2/gretl.c:1401
 msgid "_Define, based on dummy..."
@@ -10574,7 +10600,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:2754 gui2/gui_utils.c:2823
 msgid "forecast horizon (periods):"
-msgstr ""
+msgstr "горизонт прогнозирования (периодов):"
 
 #: gui2/gui_utils.c:2764
 msgid "gretl: VAR impulse responses"
@@ -10586,7 +10612,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:2796
 msgid "View X-12-ARIMA output"
-msgstr ""
+msgstr "Просмотр вывода для X-12-ARIMA"
 
 #: gui2/gui_utils.c:2807
 msgid "include bootstrap confidence interval"
@@ -10623,7 +10649,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:3227
 msgid "Residuals from equation"
-msgstr ""
+msgstr "Остатки из уравнения"
 
 #: gui2/gui_utils.c:3236
 msgid "Display residuals, all equations"
@@ -10643,7 +10669,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:3269
 msgid "Residual plots"
-msgstr ""
+msgstr "Графики остатков"
 
 #: gui2/gui_utils.c:3277
 msgid "Combined residual plot"
@@ -10728,7 +10754,7 @@ msgstr "Не было дано команды для запуска R"
 
 #: gui2/gui_utils.c:3666
 msgid "Couldn't fork"
-msgstr ""
+msgstr "Невозможно создать форк"
 
 #: gui2/gui_utils.c:3736
 msgid "R output"
@@ -10919,7 +10945,7 @@ msgstr "gretl: ADF-GLS тест"
 
 #: gui2/library.c:937
 msgid "gretl: KPSS test"
-msgstr "gretl: KPSS-тест"
+msgstr "gretl: KPSS тест"
 
 #: gui2/library.c:938
 msgid "Lag order for ADF test:"
@@ -11318,15 +11344,15 @@ msgstr "Ось X"
 
 #: gui2/library.c:5597
 msgid "on a single graph"
-msgstr ""
+msgstr "На одном графике"
 
 #: gui2/library.c:5598
 msgid "in separate small graphs"
-msgstr ""
+msgstr "На нескольких графиках"
 
 #: gui2/library.c:5602
 msgid "Plot the series"
-msgstr ""
+msgstr "Отобразить временные ряды"
 
 #: gui2/library.c:5801
 msgid "Non-interactive (just get output)"
@@ -11355,7 +11381,7 @@ msgid ""
 "Would you like to restore the full range?"
 msgstr ""
 "В настоящий момент на выборку наложены ограничения.\n"
-"Хотите восстановить полный диапазон?"
+"Хотите восстановить исходный диапазон?"
 
 #: gui2/library.c:6002
 msgid "gretl: Compact data"
@@ -11368,8 +11394,8 @@ msgid ""
 "Restore the full range now?"
 msgstr ""
 "В настоящий момент на выборку наложены ограничения.\n"
-"Необходимо восстановить полный диапазон перед снижением частоты данных.\n"
-"Хотите восстановить полный диапазон сейчас?"
+"Необходимо восстановить исходный диапазон перед снижением частоты данных.\n"
+"Хотите восстановить исходный диапазон сейчас?"
 
 #: gui2/library.c:6007
 msgid "gretl: Expand data"
@@ -11382,8 +11408,8 @@ msgid ""
 "Restore the full range now?"
 msgstr ""
 "В настоящий момент на выборку наложены ограничения.\n"
-"Необходимо восстановить полный диапазон перед увеличением частоты данных.\n"
-"Хотите восстановить полный диапазон сейчас?"
+"Необходимо восстановить исходный диапазон перед увеличением частоты данных.\n"
+"Хотите восстановить исходный диапазон сейчас?"
 
 #: gui2/library.c:6027
 msgid "gretl: transpose data"
@@ -12042,11 +12068,11 @@ msgstr ""
 
 #: gui2/selector.c:3915
 msgid "Test down from maximum lag order"
-msgstr ""
+msgstr "Автоматическое определение порядка лага"
 
 #: gui2/selector.c:3917
 msgid "Skip initial DF tests"
-msgstr ""
+msgstr "Пропустить ADF-тесты для отдельных переменных"
 
 #: gui2/selector.c:3920
 msgid "Iterated weighted least squares"
@@ -12074,7 +12100,7 @@ msgstr ""
 
 #: gui2/selector.c:3941
 msgid "Use X-12-ARIMA"
-msgstr ""
+msgstr "Использовать X-12-ARIMA"
 
 #: gui2/selector.c:3950
 msgid "Use Fiorentini et al algorithm"
@@ -12230,7 +12256,7 @@ msgstr ""
 
 #: gui2/selector.c:4614
 msgid "Variables to test"
-msgstr ""
+msgstr "Переменные для тестирования"
 
 #: gui2/selector.c:4616
 msgid "Endogenous variables"
@@ -12298,11 +12324,11 @@ msgstr "Выберите переменные для сохранения"
 
 #: gui2/selector.c:4867
 msgid "Select variables to copy"
-msgstr ""
+msgstr "Выберите переменные для копирования"
 
 #: gui2/selector.c:4869
 msgid "Define named list"
-msgstr ""
+msgstr "Создать новый список"
 
 #: gui2/selector.c:5154
 msgid "Available vars"
@@ -13392,7 +13418,7 @@ msgstr ""
 
 #: plugin/eviews_import.c:308
 msgid "Error reading workfile header\n"
-msgstr ""
+msgstr "Ошибка чтения заголовка файла\n"
 
 #: plugin/excel_import.c:78
 msgid "Perhaps you need to adjust the starting column or row?"
@@ -13945,39 +13971,39 @@ msgstr ""
 
 #: plugin/tramo_options.c:337
 msgid "Time-series model plus seasonal adjustment"
-msgstr ""
+msgstr "Модель временного ряда с поправкой на сезонность"
 
 #: plugin/tramo_options.c:338
 msgid "Time-series model only"
-msgstr ""
+msgstr "Только модель временного ряда"
 
 #: plugin/tramo_options.c:344
 msgid "Standard automatic analysis"
-msgstr ""
+msgstr "Стандартный автоматический анализ"
 
 #: plugin/tramo_options.c:402
 msgid "Output"
-msgstr ""
+msgstr "Результаты"
 
 #: plugin/tramo_options.c:405
 msgid "Output window:"
-msgstr ""
+msgstr "Окно результатов:"
 
 #: plugin/tramo_options.c:411
 msgid "Full details"
-msgstr ""
+msgstr "Полный отчет"
 
 #: plugin/tramo_options.c:425
 msgid "Reduced output"
-msgstr ""
+msgstr "Сокращенный отчет"
 
 #: plugin/tramo_options.c:443
 msgid "Save to data set:"
-msgstr ""
+msgstr "Сохранить как переменные:"
 
 #: plugin/tramo_options.c:449 plugin/tramo-x12a.c:188
 msgid "Seasonally adjusted series"
-msgstr ""
+msgstr "Скорректированные на сезонность ряды"
 
 #: plugin/tramo_options.c:459 plugin/tramo-x12a.c:194
 msgid "Trend/cycle"
@@ -13985,7 +14011,7 @@ msgstr "Тренд/цикл"
 
 #: plugin/tramo_options.c:466 plugin/tramo-x12a.c:200
 msgid "Irregular"
-msgstr ""
+msgstr "Нерегулярные данные"
 
 #: plugin/tramo_options.c:479 plugin/tramo-x12a.c:210
 msgid "Generate graph"
@@ -13993,11 +14019,11 @@ msgstr "Сгенерировать график"
 
 #: plugin/tramo_options.c:500
 msgid "Log transformation"
-msgstr ""
+msgstr "Логарифмирование"
 
 #: plugin/tramo_options.c:513
 msgid "No log transformation"
-msgstr ""
+msgstr "Без логарифмирования"
 
 #: plugin/tramo_options.c:526 plugin/tramo_options.c:672
 #: plugin/tramo_options.c:738
@@ -14006,11 +14032,11 @@ msgstr "Авто"
 
 #: plugin/tramo_options.c:553
 msgid "Mean correction"
-msgstr ""
+msgstr "Коррекция среднего"
 
 #: plugin/tramo_options.c:565
 msgid "No mean correction"
-msgstr ""
+msgstr "Без коррекции среднего"
 
 #: plugin/tramo_options.c:594
 msgid "Outliers"
@@ -14018,56 +14044,56 @@ msgstr "Выбросы"
 
 #: plugin/tramo_options.c:597
 msgid "Detect and correct for outliers"
-msgstr ""
+msgstr "Корректировать выбросы"
 
 #: plugin/tramo_options.c:615
 msgid "Besides additive outliers, allow for:"
-msgstr ""
+msgstr "Разрешить (помимо аддитивных выбросов):"
 
 #: plugin/tramo_options.c:622
 msgid "transitory changes"
-msgstr ""
+msgstr "Временные изменения"
 
 #: plugin/tramo_options.c:634
 msgid "shifts of level"
-msgstr ""
+msgstr "Сдвиги уровня"
 
 #: plugin/tramo_options.c:646
 msgid "innovational outliers"
-msgstr ""
+msgstr "Инновационные выбросы"
 
 #: plugin/tramo_options.c:665
 msgid "Critical value for outliers:"
-msgstr ""
+msgstr "Критическое значение для выбросов:"
 
 #: plugin/tramo_options.c:749
 msgid "Non-seasonal differences:"
-msgstr ""
+msgstr "Несезонные разности:"
 
 #: plugin/tramo_options.c:753
 msgid "Seasonal differences:"
-msgstr ""
+msgstr "Сезонные разности:"
 
 #: plugin/tramo_options.c:766
 msgid "Non-seasonal AR terms:"
-msgstr ""
+msgstr "Несезонные AR компоненты:"
 
 #: plugin/tramo_options.c:770
 msgid "Seasonal AR terms:"
-msgstr ""
+msgstr "Сезонные AR компоненты:"
 
 #: plugin/tramo_options.c:783
 msgid "Non-seasonal MA terms:"
-msgstr ""
+msgstr "Несезонные MA компоненты:"
 
 #: plugin/tramo_options.c:787
 msgid "Seasonal MA terms:"
-msgstr ""
+msgstr "Сезонные MA компоненты:"
 
 #: plugin/tramo-x12a.c:49
 #, c-format
 msgid "seasonally adjusted %s"
-msgstr ""
+msgstr "%s с поправкой на сезонность"
 
 #: plugin/tramo-x12a.c:50
 #, c-format
@@ -14077,11 +14103,11 @@ msgstr "тренд/цикл для %s"
 #: plugin/tramo-x12a.c:51
 #, c-format
 msgid "irregular component of %s"
-msgstr ""
+msgstr "нерегулярная составляющая %s"
 
 #: plugin/tramo-x12a.c:279 plugin/tramo-x12a.c:281
 msgid "irregular"
-msgstr ""
+msgstr "нерегуляр."
 
 #: plugin/tramo-x12a.c:302
 msgid "trend/cycle"
@@ -14089,7 +14115,7 @@ msgstr "тренд/цикл"
 
 #: plugin/tramo-x12a.c:319
 msgid "adjusted"
-msgstr ""
+msgstr "корректировка"
 
 #: plugin/tramo-x12a.c:676
 msgid "Failed to allocate memory for new data"
@@ -14100,6 +14126,8 @@ msgid ""
 "TRAMO can't handle more than 600 observations.\n"
 "Please select a smaller sample."
 msgstr ""
+"TRAMO анализ предусматривает не более 600 наблюдений.\n"
+"Задайте меньшую выборку."
 
 #: plugin/vif.c:124
 msgid "Properties of matrix X'X"
@@ -14136,11 +14164,11 @@ msgstr ""
 
 #: plugin/workbook.c:546
 msgid "Password protected workbooks are not supported yet."
-msgstr ""
+msgstr "Защищенные паролем книги не поддерживаются."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
+msgstr "Данный файл не является 'OLE' файлом -- возможно он сохранен в устаревшем формате\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14164,11 +14192,11 @@ msgstr "Матричная алгебра"
 
 #: doc/commands/matfuncs.c:54
 msgid "Statistics/transformations"
-msgstr ""
+msgstr "Статистика/преобразования"
 
 #: doc/commands/matfuncs.c:55
 msgid "Data utilities"
-msgstr ""
+msgstr "Утилиты"
 
 #: doc/commands/matfuncs.c:56
 msgid "Filters"
