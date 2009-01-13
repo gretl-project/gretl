@@ -558,23 +558,22 @@ static void retransform_daily_dates (DATAINFO *pdinfo)
 
 static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
 {
+    char *label;
     int t, yr, mon, day;
-    char sep1[2], sep2[2];
-    int sret, err = 0;
+    char s1, s2;
+    int n, err = 0;
 
     for (t=0; t<pdinfo->n && !err; t++) {
+	label = pdinfo->S[t];
 	if (dorder == YYYYMMDD) {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-.]%d%1[/-.]%d", 
-			  &yr, sep1, &mon, sep2, &day);
+	    n = sscanf(label, "%d%c%d%c%d", &yr, &s1, &mon, &s2, &day);
 	} else if (dorder == DDMMYYYY) {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-.]%d%1[/-.]%d", 
-			  &day, sep1, &mon, sep2, &yr);
+	    n = sscanf(label, "%d%c%d%c%d", &day, &s1, &mon, &s2, &yr);
 	} else {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-.]%d%1[/-.]%d", 
-			  &mon, sep1, &day, sep2, &yr);
+	    n = sscanf(label, "%d%c%d%c%d", &mon, &s1, &day, &s2, &yr);
 	}
-	if (sret == 5) {
-	    sprintf(pdinfo->S[t], "%02d/%02d/%02d", yr, mon, day);
+	if (n == 5) {
+	    sprintf(label, "%02d/%02d/%02d", yr, mon, day);
 	} else {
 	    err = 1;
 	}
