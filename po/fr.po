@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-29 14:23-0500\n"
-"PO-Revision-Date: 2009-01-13 16:50+0100\n"
+"PO-Revision-Date: 2009-01-14 10:19+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -1818,7 +1818,7 @@ msgstr "Maximum"
 
 #: lib/src/describe.c:3495
 msgid "Standard deviation"
-msgstr "Écart-type"
+msgstr "Écart type"
 
 #: lib/src/describe.c:3496
 #: gui2/guiprint.c:1099
@@ -1839,11 +1839,11 @@ msgstr "Ex. aplatissement"
 
 #: lib/src/describe.c:3500
 msgid "Within s.d."
-msgstr "Ec.-type intra"
+msgstr "Ecart type intra"
 
 #: lib/src/describe.c:3501
 msgid "Between s.d."
-msgstr "Ec.-type inter"
+msgstr "Ecart type inter"
 
 #: lib/src/describe.c:3507
 #: lib/src/describe.c:3593
@@ -1994,7 +1994,7 @@ msgstr "   Hypothèse nulle : les deux moyennes des populations sont identiques.\
 #: lib/src/describe.c:4308
 #, c-format
 msgid "   Estimated standard error = %g\n"
-msgstr "   Erreur standard estimée = %g\n"
+msgstr "   Écart type estimé = %g\n"
 
 #: lib/src/describe.c:4309
 #, c-format
@@ -2656,7 +2656,7 @@ msgstr "OC"
 
 #: lib/src/gmm.c:1496
 msgid "std. dev"
-msgstr "écart-type"
+msgstr "éc. type"
 
 #: lib/src/graphing.c:1226
 #: gui2/gpt_dialog.c:520
@@ -3022,7 +3022,7 @@ msgstr "Matrice non conforme pour l'opération"
 
 #: lib/src/gretl_errors.c:65
 msgid "Data types not conformable for operation"
-msgstr "Types de données non conforme pour l'opération"
+msgstr "Types de données non conformes pour l'opération"
 
 #: lib/src/gretl_errors.c:66
 msgid "Wrong data type"
@@ -3314,7 +3314,7 @@ msgid ""
 msgstr ""
 "                         Estimateur des effets aléatoires\n"
 "           ajoute une composante individuelle dans le terme d'erreur\n"
-"          (erreurs type entre parenthèses, valeur de P entre crochets)\n"
+"           (écarts type entre parenthèses, p. critiques entre crochets)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:1574
@@ -3325,7 +3325,7 @@ msgid ""
 msgstr ""
 "Estimateur des effets fixes\n"
 "permet de différencier les constantes par unité de coupe transversales\n"
-"erreur standard des pentes entre parenthèses, valeur de P entre crochets\n"
+"écarts type des pentes entre parenthèses, p. critiques entre crochets\n"
 
 #: lib/src/gretl_panel.c:1587
 #, c-format
@@ -3607,7 +3607,7 @@ msgstr "Estimations contraintes"
 #: lib/src/printout.c:1156
 #: gui2/library.c:4721
 msgid "Standard error of the regression"
-msgstr "Erreur standard de la régression"
+msgstr "Écart type de la régression"
 
 #: lib/src/gretl_restrict.c:1827
 msgid "Robust chi^2"
@@ -3642,7 +3642,7 @@ msgstr "Somme des coefficients"
 #: lib/src/gretl_restrict.c:2229
 #: gui2/dialogs.c:4127
 msgid "Standard error"
-msgstr "Erreur standard"
+msgstr "Écart type"
 
 #: lib/src/gretl_restrict.c:2227
 #: lib/src/gretl_restrict.c:2237
@@ -4083,7 +4083,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Pour l'aide relative à une commande spécifique, taper : help nomdefunction"
+"Pour l'aide relative à une commande spécifique, taper : help nom_de_function"
 
 #: lib/src/interact.c:2727
 msgid " (e.g. help qrdecomp)\n"
@@ -4431,7 +4431,7 @@ msgstr "theta used for quasi-demeaning"
 #: lib/src/modelprint.c:538
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr "Constante mise à part, la probabilité critique était la plus forte pour la variable %d (%s)"
+msgstr "Constante mise à part, la probabilité critique est la plus élevée pour la variable %d (%s)"
 
 #: lib/src/modelprint.c:541
 #, c-format
@@ -4723,27 +4723,27 @@ msgstr "Instruments"
 #: lib/src/modelprint.c:852
 #: lib/src/modelprint.c:854
 msgid "Asymptotic standard errors (unreliable)"
-msgstr "Ecarts-types asymptotiques (non fiables)"
+msgstr "Écarts type asymptotiques (non fiables)"
 
 #: lib/src/modelprint.c:864
 #: lib/src/modelprint.c:866
 #: lib/src/modelprint.c:868
 msgid "Robust (HAC) standard errors"
-msgstr "Erreurs standard robustes (HAC)"
+msgstr "Écarts type robustes (HAC)"
 
 #: lib/src/modelprint.c:873
 #: lib/src/modelprint.c:875
 #: lib/src/modelprint.c:879
 msgid "Beck-Katz standard errors"
-msgstr "Erreurs standards Beck-Katz"
+msgstr "Écarts type Beck-Katz"
 
 #: lib/src/modelprint.c:877
 msgid "Beck--Katz standard errors"
-msgstr "Erreurs standards Beck--Katz"
+msgstr "Écarts type Beck--Katz"
 
 #: lib/src/modelprint.c:888
 msgid "Could not compute Beck-Katz standard errors"
-msgstr "Ne peut pas calculer les erreurs standards Beck-Katz"
+msgstr "Ne peut pas calculer les écarts type Beck-Katz"
 
 #: lib/src/modelprint.c:896
 msgid "Bartlett kernel"
@@ -4760,12 +4760,12 @@ msgstr "Kernel QS"
 #: lib/src/modelprint.c:902
 #, c-format
 msgid "HAC standard errors, bandwidth %.2f"
-msgstr "HAC standard errors, bandwidth %.2f"
+msgstr "écarts type HAC, largeur de bande %.2f"
 
 #: lib/src/modelprint.c:905
 #, c-format
 msgid "HAC standard errors, bandwidth %d"
-msgstr "HAC standard errors, bandwidth %d"
+msgstr "écarts type HAC, largeur de bande %d"
 
 #: lib/src/modelprint.c:912
 msgid "prewhitened"
@@ -4773,7 +4773,7 @@ msgstr "prewhitened"
 
 #: lib/src/modelprint.c:929
 msgid "Heteroskedasticity-robust standard errors"
-msgstr "Erreurs standards robustes (hétéroscédasticité)"
+msgstr "Écarts type robustes (hétéroscédasticité)"
 
 #: lib/src/modelprint.c:930
 msgid "variant"
@@ -4781,27 +4781,27 @@ msgstr "variante"
 
 #: lib/src/modelprint.c:948
 msgid "Standard errors based on Hessian"
-msgstr "Erreurs standards basées sur la matrice hessienne"
+msgstr "Écarts type basés sur la matrice hessienne"
 
 #: lib/src/modelprint.c:951
 msgid "Standard errors based on Information Matrix"
-msgstr "Erreurs standards basées sur la matrice d'information"
+msgstr "Écarts type basés sur la matrice d'information"
 
 #: lib/src/modelprint.c:954
 msgid "Standard errors based on Outer Products matrix"
-msgstr "Erreurs standards basés sur la matrice des produits externes"
+msgstr "Écarts type basés sur la matrice des produits externes"
 
 #: lib/src/modelprint.c:957
 msgid "QML standard errors"
-msgstr "Erreurs standards QML"
+msgstr "Écarts type QML"
 
 #: lib/src/modelprint.c:961
 msgid "Bollerslev--Wooldridge standard errors"
-msgstr "Erreurs standard de Bollerslev-Wooldridge"
+msgstr "Écarts type de Bollerslev--Wooldridge"
 
 #: lib/src/modelprint.c:963
 msgid "Bollerslev-Wooldridge standard errors"
-msgstr "Erreurs standards de Bollerslev-Wooldridge"
+msgstr "Écarts type de Bollerslev-Wooldridge"
 
 #: lib/src/modelprint.c:988
 #, c-format
@@ -4819,7 +4819,7 @@ msgstr "Écarts type robustes (sandwich)"
 
 #: lib/src/modelprint.c:998
 msgid "Asymptotic standard errors assuming IID errors"
-msgstr "Écarts-types asymptotiques sous l'hypothèse d'erreurs IID"
+msgstr "Écarts type asymptotiques sous l'hypothèse d'erreurs IID"
 
 #: lib/src/modelprint.c:1102
 msgid "Omitted because all values were zero:"
@@ -4827,7 +4827,7 @@ msgstr "Omis parce que toutes les observations sont nulles."
 
 #: lib/src/modelprint.c:1116
 msgid "Omitted due to exact collinearity:"
-msgstr "Omis pour cause de multicollinéarité parfaite"
+msgstr "Omis pour cause de multicollinéarité parfaite :"
 
 #: lib/src/modelprint.c:1128
 msgid "Redundant instruments:"
@@ -5152,7 +5152,7 @@ msgstr "Moyenne de la variable dépendante"
 
 #: lib/src/modelprint.c:2246
 msgid "Standard deviation of dep. var."
-msgstr "Écart-type de la var. dép."
+msgstr "Écart type de la var. dép."
 
 #: lib/src/modelprint.c:2247
 #: gui2/library.c:4701
@@ -5195,7 +5195,7 @@ msgstr "Moy. var. dép."
 
 #: lib/src/modelprint.c:2285
 msgid "S.D. dependent var"
-msgstr "Éc.-type var. dép."
+msgstr "Éc. type var. dép."
 
 #: lib/src/modelprint.c:2286
 #: lib/src/modelprint.c:2421
@@ -5204,7 +5204,7 @@ msgstr "Somme carrés résidus"
 
 #: lib/src/modelprint.c:2287
 msgid "S.E. of regression"
-msgstr "Éc.-type de régression"
+msgstr "Éc. type de régression"
 
 #: lib/src/modelprint.c:2288
 #: gui2/model_table.c:628
@@ -5275,7 +5275,7 @@ msgstr "Moyenne des innovations"
 
 #: lib/src/modelprint.c:2410
 msgid "S.D. of innovations"
-msgstr "Ec.-type des innovations"
+msgstr "Ec. type des innovations"
 
 #: lib/src/modelprint.c:2417
 msgid "Median depend. var"
@@ -5503,14 +5503,14 @@ msgid ""
 "      Variable     coefficients   coefficients   std. errors    std. errors\n"
 "\n"
 msgstr ""
-"                    moyenne des   écart-type des   moyenne des     écart-type\n"
-"                   coefficients    coefficients    erreur std    des erreurs std\n"
-"      Variable       estimés         estimés        estimées       estimées\n"
+"                      moy. des   éc. type des   moy. des     éc. type\n"
+"                   coefficients    coefficients   éc. type    des éc type\n"
+"     Variable     estimés         estimés      estimés      estimés\n"
 "\n"
 
 #: lib/src/monte_carlo.c:2175
 msgid "   Variable     mean         std. dev.\n"
-msgstr "   Variable     moyenne      écart-type\n"
+msgstr "   Variable     moyenne      éc. type\n"
 
 #: lib/src/monte_carlo.c:2244
 msgid "write of data file failed\n"
@@ -5986,7 +5986,7 @@ msgstr ""
 #: lib/src/printout.c:378
 #, c-format
 msgid "number of bins = %d, mean = %g, sd = %g\n"
-msgstr "nombre de classes = %d, moyenne %g, écart-type = %g\n"
+msgstr "nombre de classes = %d, moyenne %g, éc. type = %g\n"
 
 #: lib/src/printout.c:381
 msgid ""
@@ -6120,11 +6120,11 @@ msgstr "liste vide"
 
 #: lib/src/printout.c:2301
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
-msgstr "Note : * indique un résidu supérieur à 2.5 fois l'erreur standard\n"
+msgstr "Note : * indique un résidu supérieur à 2,5 fois l'écart type\n"
 
 #: lib/src/printout.c:2307
 msgid "Mean Squared Error"
-msgstr "Erreur standard moyenne"
+msgstr "Moy. Carrés des Résid."
 
 #: lib/src/printout.c:2308
 msgid "Root Mean Squared Error"
@@ -6575,7 +6575,7 @@ msgstr "Vecteurs cointégrants"
 #: plugin/jrestrict.c:2775
 #: plugin/jrestrict.c:2808
 msgid "standard errors in parentheses"
-msgstr "Erreur standard entre parenthèses"
+msgstr "écarts type entre parenthèses"
 
 #: lib/src/texprint.c:990
 msgid "Adjustment vectors"
@@ -6743,7 +6743,7 @@ msgstr "résidus du système VECM, équation %d"
 #: lib/src/varprint.c:121
 #, c-format
 msgid "Responses to a one-standard error shock in %s"
-msgstr "Réponses à un choc d'un écart-type de %s"
+msgstr "Réponses à un choc d'un écart type de %s"
 
 #: lib/src/varprint.c:93
 #: lib/src/varprint.c:109
@@ -7183,7 +7183,7 @@ msgstr "Weibull(%g, %g)"
 
 #: gui2/calculator.c:401
 msgid "Standard errors"
-msgstr "Erreurs standard"
+msgstr "Écarts type"
 
 #: gui2/calculator.c:590
 #: gui2/calculator.c:689
@@ -7253,7 +7253,7 @@ msgstr "Taille de l'échantillon: n = %d\n"
 #: gui2/calculator.c:1529
 #, c-format
 msgid "Sample mean = %g, std. deviation = %g\n"
-msgstr "Moyenne de l'échantillon = %g, écart-type = %g\n"
+msgstr "Moyenne de l'échantillon = %g, écart type = %g\n"
 
 #: gui2/calculator.c:1533
 #: gui2/calculator.c:1581
@@ -7305,13 +7305,13 @@ msgid ""
 " n = %d, mean = %g, s.d. = %g\n"
 msgstr ""
 "Échantillon 1 :\n"
-" n = %d, moyenne = %g, écart-type = %g\n"
+" n = %d, moyenne = %g, écart type = %g\n"
 
 #: gui2/calculator.c:1601
 #: gui2/calculator.c:1612
 #, c-format
 msgid " standard error of mean = %g\n"
-msgstr " erreur standard des résidus = %g\n"
+msgstr " écart type des résidus = %g\n"
 
 #: gui2/calculator.c:1603
 #: gui2/calculator.c:1614
@@ -7326,7 +7326,7 @@ msgid ""
 " n = %d, mean = %g, s.d. = %g\n"
 msgstr ""
 "Échantillon 2 :\n"
-" n = %d, moyenne = %g, écart-type = %g\n"
+" n = %d, moyenne = %g, écart type = %g\n"
 
 #: gui2/calculator.c:1655
 #, c-format
@@ -7462,7 +7462,7 @@ msgstr "maximum"
 #: gui2/calculator.c:1959
 #: gui2/calculator.c:2636
 msgid "std. deviation"
-msgstr "écart-type"
+msgstr "écart type"
 
 #: gui2/calculator.c:1969
 msgid "dfn"
@@ -7591,7 +7591,7 @@ msgstr "H0 : moyenne ="
 
 #: gui2/calculator.c:2639
 msgid "Assume standard deviation is population value"
-msgstr "Supposer que l'écart-type a pour valeur celui de la population"
+msgstr "Supposer que l'écart type a pour valeur celui de la population"
 
 #: gui2/calculator.c:2644
 msgid "sample variance"
@@ -7615,7 +7615,7 @@ msgstr "moyenne de l'échantillon 1"
 
 #: gui2/calculator.c:2657
 msgid "std. deviation, sample 1"
-msgstr "écart-type, échantillon 1"
+msgstr "écart type, échantillon 1"
 
 #: gui2/calculator.c:2658
 #: gui2/calculator.c:2673
@@ -7629,7 +7629,7 @@ msgstr "moyenne de l'échantillon 2"
 
 #: gui2/calculator.c:2663
 msgid "std. deviation, sample 2"
-msgstr "écart-type, échantillon 2"
+msgstr "écart type, échantillon 2"
 
 #: gui2/calculator.c:2664
 #: gui2/calculator.c:2678
@@ -7643,7 +7643,7 @@ msgstr "H0 : Différences des moyennes ="
 
 #: gui2/calculator.c:2667
 msgid "Assume common population standard deviation"
-msgstr "Supposer que l'écart-type de chaque population est identique"
+msgstr "Supposer que l'écart type de chaque population est identique"
 
 #: gui2/calculator.c:2672
 msgid "variance of sample 1"
@@ -9628,7 +9628,7 @@ msgstr "Aide pour %s :"
 
 #: gui2/fnsave.c:824
 msgid "Edit function code"
-msgstr "Editer le code de la fonction"
+msgstr "Éditer le code de la fonction"
 
 #: gui2/fnsave.c:838
 msgid "Save as script"
@@ -10738,7 +10738,7 @@ msgstr "Coefficient de _Gini"
 
 #: gui2/gretl.c:1422
 msgid "_Range-mean graph"
-msgstr "Graphique étendue-_moyenne"
+msgstr "Graphique étendue-moyenne"
 
 #: gui2/gretl.c:1423
 msgid "_Time series plot"
@@ -11149,7 +11149,7 @@ msgstr "pour la variable %s (%d observations valides)"
 
 #: gui2/guiprint.c:1099
 msgid "Std. Dev."
-msgstr "Écart-type"
+msgstr "Écart type"
 
 #: gui2/guiprint.c:1146
 #, c-format
@@ -11158,7 +11158,7 @@ msgstr "Statistiques descriptives, utilisant les observations %s - %s"
 
 #: gui2/guiprint.c:1200
 msgid "Std.\\ Dev."
-msgstr "Écart-type\\"
+msgstr "Écart type\\"
 
 #: gui2/guiprint.c:1200
 msgid "Ex.\\ kurtosis"
@@ -11280,7 +11280,7 @@ msgstr "_Imprimer..."
 #: gui2/gui_utils.c:146
 #: gui2/gui_utils.c:269
 msgid "_Edit"
-msgstr "_Editer"
+msgstr "_Édition"
 
 #: gui2/gui_utils.c:147
 #: gui2/gui_utils.c:240
@@ -11308,7 +11308,7 @@ msgstr "_Sauvegarder"
 #: gui2/gui_utils.c:152
 #: gui2/gui_utils.c:275
 msgid "_Graphs"
-msgstr "_Graphes"
+msgstr "_Graphiques"
 
 #: gui2/gui_utils.c:153
 msgid "_Residual plot"
@@ -11470,7 +11470,7 @@ msgstr "Options de _Tableau"
 
 #: gui2/gui_utils.c:251
 msgid "Show _standard errors"
-msgstr "Montrer les écarts-type"
+msgstr "Montrer les écarts type"
 
 #: gui2/gui_utils.c:252
 msgid "Show _t-ratios"
@@ -11615,7 +11615,7 @@ msgstr "_Somme des carrés des résidus"
 
 #: gui2/gui_utils.c:2037
 msgid "_Standard error of the regression"
-msgstr "Ecart-type de la régression"
+msgstr "Ecart type de la régression"
 
 #: gui2/gui_utils.c:2042
 msgid "_R-squared"
@@ -13242,7 +13242,7 @@ msgstr "Bits per floating-point value"
 
 #: gui2/selector.c:3832
 msgid "Robust standard errors/intervals"
-msgstr "Écarts types / intervalles robustes"
+msgstr "Écarts type / intervalles robustes"
 
 #: gui2/selector.c:3858
 msgid "configure"
@@ -13698,7 +13698,7 @@ msgstr "Propriétés"
 #: gui2/session.c:788
 #: gui2/session.c:799
 msgid "Failed to copy graph file"
-msgstr "Échec de copie du fichier grahique"
+msgstr "Échec de copie du fichier graphique"
 
 #: gui2/session.c:906
 msgid "Model is already saved"
@@ -14279,7 +14279,7 @@ msgstr "gretl : éditer les scalaires"
 
 #: gui2/ssheet.c:2598
 msgid "gretl: edit data"
-msgstr "gretl: éditer les données"
+msgstr "gretl : éditer les données"
 
 #: gui2/ssheet.c:2755
 msgid "Please add a variable to the dataset first"
