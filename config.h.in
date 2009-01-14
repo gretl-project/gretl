@@ -115,6 +115,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Use flite for speech synthesis */
 #undef HAVE_FLITE
 
+/* Have Jacobi SVD in Lapack 3.2 or higher */
+#undef HAVE_LAPACK_3_2
+
 /* Building for Mac OS X? */
 #undef OSX_BUILD
 

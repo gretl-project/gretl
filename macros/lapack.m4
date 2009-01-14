@@ -8,6 +8,7 @@ AC_DEFUN([AM_PATH_LAPACK],
 [dnl 
 AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is installed (optional)],
             lapack_config_prefix="$withval", lapack_config_prefix="")
+AC_ARG_VAR([LAPACK_LIBS],[linker flags for lapack, overriding auto-detection])
 
   if test x$lapack_config_prefix = x ; then
      lapack_config_prefix="/usr"

@@ -1437,5 +1437,13 @@ void dsyrk_ (const char *UPLO, const char *TRANS, const integer *N,
 double dnrm2_ (const integer *n, double *X, const integer *incx);
 
 double dlamch_ (char *cmach);
+
+/* lapack 3.2 functions */
+void dgejsv_ (const char *joba, const char *jobu, const char *jobv, 
+	      const char *jobr, const char *jobt, const char *jobp,
+	      integer *m, integer *n, double *a, integer *lda, double *sva, 
+	      double *u, integer *ldu, double *vv, integer *ldv,
+	      double *work, integer *lwork, integer *iwork, 
+	      integer *info);
  
 #endif /* __CLAPACK_DOUBLE_H */

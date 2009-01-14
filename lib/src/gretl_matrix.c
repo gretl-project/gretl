@@ -30,6 +30,12 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
+#ifdef HAVE_LAPACK_3_2
+# define USE_JACOBI 0 /* not just yet */
+#else
+# define USE_JACOBI 0
+#endif
+
 #define BLOCKT -666
 
 struct _gretl_matrix_block {
@@ -6745,7 +6751,7 @@ enum {
  * @pvt: location for matrix V (transposed), or %NULL if not wanted.
  * 
  * Computes SVD factorization of a general matrix using the lapack
- * function %dgesvd. A = u * diag(s) * vt.
+ * function %dgesvd or %dgejsv. A = u * diag(s) * vt.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -6765,8 +6771,15 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     gretl_matrix *vt = NULL;
     double xu, xvt;
     char jobu = 'N', jobvt = 'N';
+#if USE_JACOBI
+    char joba = 'C', jobr = 'R';
+    char jobt = 'N', jobp = 'N';
+    integer *iwork = NULL;
+#else
+    double *work2 = NULL;
+#endif
     double *uval = &xu, *vtval = &xvt;
-    double *work = NULL, *work2 = NULL;
+    double *work = NULL;
     int k, err = 0;
 
     if (pu == NULL && ps == NULL && pvt == NULL) {
@@ -6812,7 +6825,11 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	} else {
 	    ldu = m;
 	    uval = u->val;
+#if USE_JACOBI
+	    jobu = (smod == SVD_FULL)? 'F' : 'U';
+#else
 	    jobu = (smod == SVD_FULL)? 'A' : 'S';
+#endif
 	}
     } 
 
@@ -6824,17 +6841,48 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	} else {
 	    ldvt = n;
 	    vtval = vt->val;
+#if USE_JACOBI
+	    jobvt = 'V';
+#else
 	    jobvt = 'A';
+#endif
 	}
     }
 
-    work = lapack_malloc(sizeof *work);
+#if USE_JACOBI
+    if (jobu == 'N' && jobvt == 'N') { 
+	lwork = max(2 * m + n, 4 * n + 1);
+	lwork = max(lwork, 7);
+    } else if (jobvt != 'N') {
+	if (jobu == 'N') {
+	    lwork = max(2 * n + m, 7);
+	} else {
+	    lwork = 6 * n + 2 * n * n;
+	}
+    }
+#else
+    lwork = 1;
+#endif
+
+    work = lapack_malloc(lwork * sizeof *work);
     if (work == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
-    }	
+    }
 
+#if USE_JACOBI
+    iwork = malloc((m + 3 * n) * sizeof *iwork);
+    if (iwork == NULL) {
+	err = E_ALLOC; 
+	goto bailout;
+    }    
+
+    dgejsv_(&joba, &jobu, &jobvt, &jobr, &jobt, &jobp,
+	    &m, &n, b->val, &lda, s->val, uval, &ldu,
+	    vtval, &ldvt, work, &lwork, iwork, &info);
+#else
     /* workspace query */
+    lwork = -1;
     dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
 	    vtval, &ldvt, work, &lwork, &info);
 
@@ -6855,6 +6903,8 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     /* actual computation */
     dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
 	    vtval, &ldvt, work, &lwork, &info);
+#endif
+
     if (info != 0) {
 	fprintf(stderr, "gretl_matrix_SVD: info = %d\n", (int) info);
 	err = 1;
@@ -6883,6 +6933,10 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     gretl_matrix_free(s);
     gretl_matrix_free(u);
     gretl_matrix_free(vt);
+
+#if USE_JACOBI
+    free(iwork);
+#endif
 
     return err;
 }
