@@ -2119,7 +2119,8 @@ read_db_files_in_dir (DIR *dir, int dbtype, const char *dbdir,
     return ndb;
 }
 
-static void get_local_object_status (char *fname, int role, char *status, 
+static void get_local_object_status (const char *fname, int role, 
+				     const char **status, 
 				     time_t remtime)
 {
     char fndir[MAXLEN];
@@ -2137,7 +2138,7 @@ static void get_local_object_status (char *fname, int role, char *status,
     if ((err = stat(fullname, &fbuf)) == -1) {
 	if (errno == ENOENT) {
 #ifdef G_OS_WIN32
-	    strcpy(status, _("Not installed"));
+	    *status = N_("Not installed");
 #else
 	    /* try user dir too, if not on Windows */
 	    if (role == REMOTE_DB) {
@@ -2160,20 +2161,20 @@ static void get_local_object_status (char *fname, int role, char *status,
 		    }
 		}
 		if (err == -1) {
-		    strcpy(status, _("Not installed"));
+		    *status = N_("Not installed");
 		}
 	    } 
 #endif
 	} else {
-	    strcpy(status, _("Unknown: access error"));
+	    *status = N_("Unknown: access error");
 	}
     }
 
     if (!err) {
 	if (difftime(remtime, fbuf.st_ctime) > 360) {
-	    strcpy(status, _("Not up to date"));
+	    *status = N_("Not up to date");
 	} else {
-	    strcpy(status, _("Up to date"));
+	    *status = N_("Up to date");
 	}
     }
 }
@@ -2300,8 +2301,9 @@ gint populate_remote_db_list (windata_t *vwin)
     GtkTreeIter iter, child_iter; 
     char *getbuf = NULL;
     char line[1024];
-    char fname[32], status[20];
+    char fname[32];
     char src[96], srcbak[96];
+    const char *status = "";
     gchar *row[3];
     time_t remtime;
     int start, parent, kids;
@@ -2374,9 +2376,9 @@ gint populate_remote_db_list (windata_t *vwin)
 	    continue;
 	}
 
-	get_local_object_status(fname, vwin->role, status, remtime);
+	get_local_object_status(fname, vwin->role, &status, remtime);
 	row[0] = strip_extension(fname);
-	row[2] = status;
+	row[2] = _(status);
 
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
@@ -2437,7 +2439,8 @@ gint populate_remote_func_list (windata_t *vwin)
     GtkTreeIter iter;  
     char *getbuf = NULL;
     char line[1024];
-    char fname[32], status[20];
+    char fname[32];
+    const char *status = "";
     char *basename;
     char *descrip;
     char *version;
@@ -2467,7 +2470,7 @@ gint populate_remote_func_list (windata_t *vwin)
 	    continue;
 	}
 
-	get_local_object_status(fname, vwin->role, status, remtime);
+	get_local_object_status(fname, vwin->role, &status, remtime);
 	basename = strip_extension(fname);
 
 	if (bufgets(line, sizeof line, getbuf)) {
@@ -2491,7 +2494,7 @@ gint populate_remote_func_list (windata_t *vwin)
 			   0, basename, 
 			   1, version,
 			   2, descrip, 
-			   3, status,
+			   3, _(status),
 			   -1);
 
 	free(descrip);
