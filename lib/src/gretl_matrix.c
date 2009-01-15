@@ -1823,17 +1823,17 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 
     memcpy(val, m->val, n);
 
+    m->rows = c;
+    m->cols = r;
+
     for (j=0; j<c; j++) {
 	for (i=0; i<r; i++) {
-	    x = m->val[k++];
+	    x = val[k++];
 	    gretl_matrix_set(m, j, i, x);
 	}
     }
 
     lapack_free(val);
-
-    m->rows = c;
-    m->cols = r;
 
     return 0;
 }
@@ -6743,6 +6743,34 @@ enum {
     SVD_FULL
 };
 
+#if USE_JACOBI
+
+/* Note: these are minimal workspace sizes; we might be
+   better trying for optimal size: see dgejsv.f */
+
+static int dgejsv_workspace_size (integer m, integer n,
+				  char jobu, char jobv)
+{
+    int sz = 0;
+
+    if (jobu == 'N' && jobv == 'N') { 
+	/* no singular vectors wanted */
+	sz = max(2 * m + n, 4 * n + 1);
+	if (sz < 7) sz = 7;
+    } else if (jobv == 'N' || jobu == 'N') {
+	/* one set of singular vectors wanted */
+	sz = max(2 * n + m, 5 * n + 1);
+	if (sz < 7) sz = 7;
+    } else {
+	/* both sets wanted */
+	sz = 6 * n + 2 * n * n;
+    }
+
+    return sz;
+}
+
+#endif
+
 /**
  * gretl_matrix_SVD:
  * @a: matrix to decompose.
@@ -6755,6 +6783,142 @@ enum {
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
+
+#if USE_JACOBI
+
+static int 
+real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
+		       gretl_vector **ps, gretl_matrix **pv,
+		       int smod)
+{
+    integer m, n, lda;
+    integer ldu = 1, ldv = 1;
+    integer lwork, info;
+    gretl_matrix *b = NULL;
+    gretl_matrix *s = NULL;
+    gretl_matrix *u = NULL;
+    gretl_matrix *v = NULL;
+    char jobu = 'N', jobv = 'N';
+    char joba = 'C', jobr = 'R';
+    char jobt = 'N', jobp = 'N';
+    integer *iwork = NULL;
+    double xu, xv;
+    double *uval = &xu, *vval = &xv;
+    double *work = NULL;
+    int k, err = 0;
+
+    if (pu == NULL && ps == NULL && pv == NULL) {
+	/* no-op */
+	return 0;
+    }
+
+    if (gretl_is_null_matrix(a)) {
+	return E_DATA;
+    }
+
+    lda = m = a->rows;
+    n = a->cols;
+
+    if (smod == SVD_THIN && m < n) {
+	fprintf(stderr, "real_gretl_matrix_SVD: a is %d x %d, should be 'thin'\n",
+		a->rows, a->cols);
+	return E_NONCONF;
+    }
+
+    b = gretl_matrix_copy(a);
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    k = (m < n)? m : n;
+
+    s = gretl_vector_alloc(k);
+    if (s == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+    
+    if (pu != NULL) {
+	if (smod == SVD_FULL) {
+	    u = gretl_matrix_alloc(m, m);
+	} else {
+	    u = gretl_matrix_alloc(m, n);
+	}
+	if (u == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    ldu = m;
+	    uval = u->val;
+	    jobu = (smod == SVD_FULL)? 'F' : 'U';
+	}
+    } 
+
+    if (pv != NULL) {
+	v = gretl_matrix_alloc(n, n);
+	if (v == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    ldv = n;
+	    vval = v->val;
+	    jobv = 'V';
+	}
+    }
+
+    lwork = dgejsv_workspace_size(m, n, jobu, jobv);
+
+    work = lapack_malloc(lwork * sizeof *work);
+    if (work == NULL) {
+	err = E_ALLOC; 
+	goto bailout;
+    }
+
+    iwork = malloc((m + 3 * n) * sizeof *iwork);
+    if (iwork == NULL) {
+	err = E_ALLOC; 
+	goto bailout;
+    }    
+
+    /* Jacobi computation */
+    dgejsv_(&joba, &jobu, &jobv, &jobr, &jobt, &jobp,
+	    &m, &n, b->val, &lda, s->val, uval, &ldu,
+	    vval, &ldv, work, &lwork, iwork, &info);
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_matrix_SVD: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
+    }
+
+    if (ps != NULL) {
+	*ps = s;
+	s = NULL;
+    }
+
+    if (pu != NULL) {
+	*pu = u;
+	u = NULL;
+    }
+
+    if (pv != NULL) {
+	*pv = v;
+	v = NULL;
+    }
+
+ bailout:
+    
+    lapack_free(work);
+    gretl_matrix_free(b);
+    gretl_matrix_free(s);
+    gretl_matrix_free(u);
+    gretl_matrix_free(v);
+    free(iwork);
+
+    return err;
+}
+
+#else
 
 static int 
 real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
@@ -6771,13 +6935,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     gretl_matrix *vt = NULL;
     double xu, xvt;
     char jobu = 'N', jobvt = 'N';
-#if USE_JACOBI
-    char joba = 'C', jobr = 'R';
-    char jobt = 'N', jobp = 'N';
-    integer *iwork = NULL;
-#else
     double *work2 = NULL;
-#endif
     double *uval = &xu, *vtval = &xvt;
     double *work = NULL;
     int k, err = 0;
@@ -6812,7 +6970,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	err = E_ALLOC;
 	goto bailout;
     }
-
+    
     if (pu != NULL) {
 	if (smod == SVD_FULL) {
 	    u = gretl_matrix_alloc(m, m);
@@ -6825,11 +6983,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	} else {
 	    ldu = m;
 	    uval = u->val;
-#if USE_JACOBI
-	    jobu = (smod == SVD_FULL)? 'F' : 'U';
-#else
 	    jobu = (smod == SVD_FULL)? 'A' : 'S';
-#endif
 	}
     } 
 
@@ -6841,46 +6995,16 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	} else {
 	    ldvt = n;
 	    vtval = vt->val;
-#if USE_JACOBI
-	    jobvt = 'V';
-#else
 	    jobvt = 'A';
-#endif
 	}
     }
 
-#if USE_JACOBI
-    if (jobu == 'N' && jobvt == 'N') { 
-	lwork = max(2 * m + n, 4 * n + 1);
-	lwork = max(lwork, 7);
-    } else if (jobvt != 'N') {
-	if (jobu == 'N') {
-	    lwork = max(2 * n + m, 7);
-	} else {
-	    lwork = 6 * n + 2 * n * n;
-	}
-    }
-#else
-    lwork = 1;
-#endif
-
-    work = lapack_malloc(lwork * sizeof *work);
+    work = lapack_malloc(sizeof *work);
     if (work == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
     }
 
-#if USE_JACOBI
-    iwork = malloc((m + 3 * n) * sizeof *iwork);
-    if (iwork == NULL) {
-	err = E_ALLOC; 
-	goto bailout;
-    }    
-
-    dgejsv_(&joba, &jobu, &jobvt, &jobr, &jobt, &jobp,
-	    &m, &n, b->val, &lda, s->val, uval, &ldu,
-	    vtval, &ldvt, work, &lwork, iwork, &info);
-#else
     /* workspace query */
     lwork = -1;
     dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
@@ -6903,7 +7027,6 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     /* actual computation */
     dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
 	    vtval, &ldvt, work, &lwork, &info);
-#endif
 
     if (info != 0) {
 	fprintf(stderr, "gretl_matrix_SVD: info = %d\n", (int) info);
@@ -6934,12 +7057,10 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     gretl_matrix_free(u);
     gretl_matrix_free(vt);
 
-#if USE_JACOBI
-    free(iwork);
-#endif
-
     return err;
 }
+
+#endif
 
 /**
  * gretl_matrix_SVD:
@@ -7183,7 +7304,6 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
     int i, j, k;
 
     if (gretl_is_null_matrix(M)) {
-	
 	*err = E_DATA;
 	return NULL;
     }
@@ -7220,7 +7340,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 	    }
 	    normalize_nullspace(R);
 	}
-    }
+    } 
 
 #if 0
     gretl_matrix_print(V, "V'");
@@ -8220,6 +8340,9 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
     double x;
     int m, n;
     int i, j;
+#if USE_JACOBI
+    int tr = 0;
+#endif
     int err = 0;
 
     if (gretl_is_null_matrix(A)) {
@@ -8228,6 +8351,19 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 
     m = A->rows;
     n = A->cols;
+
+#if USE_JACOBI
+    /* requires m >= n */
+    if (m < n) {
+	err = gretl_matrix_transpose_in_place(A);
+	if (err) {
+	    return err;
+	}
+	tr = 1;
+	m = A->rows;
+	n = A->cols;
+    }
+#endif
 
     err = gretl_matrix_SVD(A, &U, &S, &Vt);
 
@@ -8253,9 +8389,23 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 	/* A^{+} = VS^{-1}U' */
 	A->rows = n;
 	A->cols = m;
+#if USE_JACOBI
+	if (tr) {
+	    A->rows = m;
+	    A->cols = n;
+	    err = gretl_matrix_multiply_mod(SUt, GRETL_MOD_TRANSPOSE,
+					    Vt, GRETL_MOD_TRANSPOSE,
+					    A, GRETL_MOD_NONE);
+	} else {
+	    err = gretl_matrix_multiply_mod(Vt, GRETL_MOD_NONE,
+					    SUt, GRETL_MOD_NONE,
+					    A, GRETL_MOD_NONE);
+	}
+#else
 	err = gretl_matrix_multiply_mod(Vt, GRETL_MOD_TRANSPOSE,
 					SUt, GRETL_MOD_NONE,
 					A, GRETL_MOD_NONE);
+#endif
     }
 
  bailout:
