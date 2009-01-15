@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-15 11:54-0500\n"
-"PO-Revision-Date: 2009-01-15 03:06+0200\n"
+"PO-Revision-Date: 2009-01-16 01:11+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -31,9 +31,8 @@ msgstr ""
 "X-Generator: KBabel 1.11.4\n"
 
 #: lib/src/adf_kpss.c:241
-#, fuzzy
 msgid "lagged differences"
-msgstr "= логарифмическая разность для %s"
+msgstr "лаг для разностей"
 
 #: lib/src/adf_kpss.c:252
 #, c-format
@@ -61,7 +60,7 @@ msgstr "включая один лаг для (1-L)%s"
 #: lib/src/adf_kpss.c:258
 #, c-format
 msgid "including %d lags of (1-L)%s"
-msgstr "включая %d лагов для (1-L)%s"
+msgstr "включая %d лага(-ов) для (1-L)%s"
 
 #: lib/src/adf_kpss.c:283 gui2/library.c:913 gui2/selector.c:4385
 msgid "test without constant"
@@ -410,8 +409,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1120
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1126
 #, c-format
@@ -611,8 +609,7 @@ msgstr "Интегральная сумма масштабированных о�
 #: lib/src/compare.c:2690
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
-msgstr ""
-"('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
+msgstr "('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
 
 #: lib/src/compare.c:2750
 msgid "This test is only relevant for pooled models\n"
@@ -740,8 +737,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:1090
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1099
@@ -780,8 +776,7 @@ msgstr "   количество столбцов данных = %d\n"
 #: lib/src/csvdata.c:1345
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr ""
-"   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
+msgstr "   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
 
 #: lib/src/csvdata.c:1390
 msgid "scanning for variable names...\n"
@@ -1371,8 +1366,7 @@ msgstr "Из всех переменных для сохранения, %d уж�
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1487 lib/src/describe.c:2588 lib/src/describe.c:2833
 #: lib/src/describe.c:2836
@@ -1529,8 +1523,7 @@ msgstr ""
 
 #: lib/src/describe.c:3326
 msgid "Missing values within sample -- can't do periodogram"
-msgstr ""
-"Невозможно построить периодограмму -- в выборке есть пропущенные наблюдения"
+msgstr "Невозможно построить периодограмму -- в выборке есть пропущенные наблюдения"
 
 #: lib/src/describe.c:3332
 msgid "Insufficient observations for periodogram"
@@ -1833,7 +1826,7 @@ msgstr "Простой коэффицент Джини (Gini)"
 
 #: lib/src/describe.c:4801
 msgid "Estimate of population value"
-msgstr ""
+msgstr "Оценка для генеральной совокупности"
 
 #: lib/src/describe.c:5277
 msgid "Shapiro-Wilk W"
@@ -1903,7 +1896,7 @@ msgstr "Весовые переменные содержат отрицател�
 #: lib/src/estimate.c:816 lib/src/estimate.c:1933 plugin/arma_common.c:544
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
-msgstr ""
+msgstr "Обнаружено пропущенное значение для переменной %d (наблюдение %d)"
 
 #: lib/src/estimate.c:1346
 #, c-format
@@ -3968,8 +3961,7 @@ msgstr ""
 #: lib/src/modelprint.c:538
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:541
 #, c-format
@@ -4274,8 +4266,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:929
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
-"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:930
 msgid "variant"
@@ -4379,8 +4370,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1233
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1236
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -5088,10 +5078,8 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:344
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Выборка слишком мала для расчета р-значения для нормального распределения\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Выборка слишком мала для расчета р-значения для нормального распределения\n"
 
 #: lib/src/nonparam.c:767
 msgid ""
@@ -5321,8 +5309,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99 lib/src/printout.c:122
@@ -5429,8 +5416,7 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:581
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:607 lib/src/printout.c:615
@@ -5749,8 +5735,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1530
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Общее количество пропущенных значений = %d (%.2f%% всех данных)\n"
 
 #: lib/src/subsample.c:1733 lib/src/subsample.c:1734
@@ -5879,8 +5864,7 @@ msgstr ""
 
 #: lib/src/system.c:2708
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr ""
-"Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
+msgstr "Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:3654 lib/src/system.c:3658 lib/src/system.c:3664
 #: lib/src/system.c:3668
@@ -6488,9 +6472,8 @@ msgstr ""
 "(одностороннее = %.4g)\n"
 
 #: gui2/calculator.c:1503
-#, fuzzy
 msgid "nonparametric test"
-msgstr "_Непараметрические тесты"
+msgstr "непараметрический тест"
 
 #: gui2/calculator.c:1529
 #, c-format
@@ -6620,8 +6603,7 @@ msgstr "Тестовая статистика: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:1709
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr ""
-"Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
+msgstr "Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
 
 #: gui2/calculator.c:1712
 #, c-format
@@ -7131,8 +7113,7 @@ msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:674 gui2/callbacks.c:727
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr ""
-"Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
+msgstr "Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
 
 #: gui2/callbacks.c:680 gui2/callbacks.c:743 gui2/library.c:2757
 msgid "gretl: simultaneous equations system"
@@ -7177,18 +7158,20 @@ msgstr "кросс-коррелограмма"
 #: gui2/cmdstack.c:105
 #, c-format
 msgid "# Log re-started %s\n"
-msgstr ""
+msgstr "# Запись истории команд начата заново %s\n"
 
 #: gui2/cmdstack.c:145
 #, c-format
 msgid "# Log started %s\n"
-msgstr ""
+msgstr "# Запись истории команд начата %s\n"
 
 #: gui2/cmdstack.c:147
 msgid ""
 "# Record of session commands.  Please note that this will\n"
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
+"# Запись истории команд текущей сессии.  Учтите, что для запуска\n"
+"# этих команд в скрипте, возможно, придется внести некоторые изменения.\n"
 
 #: gui2/cmdstack.c:327
 msgid "The command log is empty"
@@ -7196,7 +7179,7 @@ msgstr "История команд пуста"
 
 #: gui2/console.c:106
 msgid "Closing redirected output file"
-msgstr ""
+msgstr "Закрытие перенаправленного выходного файла"
 
 #: gui2/console.c:334
 msgid ""
@@ -7221,7 +7204,7 @@ msgstr "Получение данных..."
 
 #: gui2/database.c:188
 msgid "gretl: display database series"
-msgstr ""
+msgstr "gretl: переменные из базы данных"
 
 #: gui2/database.c:223
 #, c-format
@@ -7403,7 +7386,7 @@ msgstr "Не удалось получить описание данных"
 #: gui2/datafiles.c:658
 #, c-format
 msgid "didn't get description from %s\n"
-msgstr ""
+msgstr "не удалось получить описание с %s\n"
 
 #: gui2/datafiles.c:724 gui2/library.c:5144 gui2/library.c:5152
 #: gui2/session.c:1951
@@ -8105,15 +8088,15 @@ msgstr "Сгладить суммированием"
 
 #: gui2/dialogs.c:2875
 msgid "Use end-of-period values"
-msgstr ""
+msgstr "Использовать значение для конца периода"
 
 #: gui2/dialogs.c:2885
 msgid "Use start-of-period values"
-msgstr ""
+msgstr "Использовать значение для начала периода"
 
 #: gui2/dialogs.c:2900
 msgid "Use representative day"
-msgstr ""
+msgstr "Использовать репрезентативный день"
 
 #: gui2/dialogs.c:2965
 msgid "gretl: compact data"
@@ -8122,7 +8105,7 @@ msgstr "gretl: снижение частоты ряда"
 #: gui2/dialogs.c:2979
 #, c-format
 msgid "You are adding a %s series to %s dataset"
-msgstr ""
+msgstr "Добавляются %s ряды в %s набор данных"
 
 #: gui2/dialogs.c:2981
 msgid "a quarterly"
@@ -8154,20 +8137,20 @@ msgstr "Преобразовать еженедельные данные в еж
 
 #: gui2/dialogs.c:3136
 msgid "gretl: expand data"
-msgstr ""
+msgstr "gretl: увеличение частоты ряда"
 
 #: gui2/dialogs.c:3140
 #, c-format
 msgid "Adding %s series to %s dataset"
-msgstr ""
+msgstr "Добавление %s рядов в %s набор данных"
 
 #: gui2/dialogs.c:3146
 msgid "Expand annual data to:"
-msgstr ""
+msgstr "Преобразовать годовые данные в:"
 
 #: gui2/dialogs.c:3151
 msgid "Expand quarterly data to monthly"
-msgstr ""
+msgstr "Преобразовать квартальные данные до ежемесячных"
 
 #: gui2/dialogs.c:3322
 msgid "density estimation options"
@@ -8466,7 +8449,7 @@ msgstr "Файлы GNU R (*.*)"
 
 #: gui2/fileselect.c:837
 msgid "File dialog box error"
-msgstr ""
+msgstr "Ошибка диалога открытия файлов"
 
 #: gui2/filters.c:73
 msgid "Simple moving average"
@@ -8487,42 +8470,42 @@ msgstr "Фильтр Бакстера-Кинга (Baxter-King)"
 #: gui2/filters.c:161
 #, c-format
 msgid "Centered %d-period moving average of %s"
-msgstr ""
+msgstr "Центрированное %d-периодное скользящее среднее для %s"
 
 #: gui2/filters.c:164
-#, fuzzy, c-format
+#, c-format
 msgid "%d-period moving average of %s"
-msgstr "Простое скользящее среднее"
+msgstr "%d-периодное скользящее среднее для %s"
 
 #: gui2/filters.c:168
-#, fuzzy, c-format
+#, c-format
 msgid "Residual from %d-period MA of %s"
-msgstr "Ошибки из модели %d"
+msgstr "Остатки %d-периодного скользящего среднего для %s"
 
 #: gui2/filters.c:173
-#, fuzzy, c-format
+#, c-format
 msgid "Exponential moving average of %s (current weight %g)"
-msgstr "Экспоненциальное скользящее среднее"
+msgstr "Экспоненциальное скользящее среднее для %s (фактор затухания = %g)"
 
 #: gui2/filters.c:176
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
-msgstr ""
+msgstr "Остатки экспоненциального скользящего среднего для %s (фактор затухания = %g)"
 
 #: gui2/filters.c:181
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
-msgstr ""
+msgstr "Сглаженный ряд %s: тренд Годрика-Прескотта (лямбда = %g)"
 
 #: gui2/filters.c:184
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
-msgstr ""
+msgstr "Сглаженный ряд %s: цикл Годрика-Прескотта (лямбда = %g)"
 
 #: gui2/filters.c:188
 #, c-format
 msgid "Filtered %s: Baxter-King cycle"
-msgstr ""
+msgstr "Сглаженный ряд %s: цикл Бакстера-Кинга"
 
 #: gui2/filters.c:273
 msgid "Variable name is missing"
@@ -8618,7 +8601,7 @@ msgstr "Циклическая компонента для %s"
 #: gui2/filters.c:683
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
-msgstr "Составляющая Бакстера-Кинга для %s с частотой от %d до %d"
+msgstr "Цикл Бакстера-Кинга для %s с частотой от %d до %d"
 
 #: gui2/fncall.c:146
 #, c-format
@@ -11690,8 +11673,7 @@ msgid "Sorry, ARMA models can't be put in the model table"
 msgstr "Модели ARMA не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:178
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -11800,8 +11782,7 @@ msgstr "gretl: список моделей"
 
 #: gui2/model_table.c:929
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr ""
-"Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
+msgstr "Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
 
 #: gui2/model_table.c:1033
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
@@ -12413,9 +12394,8 @@ msgid "Define named list"
 msgstr "Создать новый список"
 
 #: gui2/selector.c:5073
-#, fuzzy
 msgid "Name for list:"
-msgstr "Количество столбцов:"
+msgstr "Название списка:"
 
 #: gui2/selector.c:5162
 msgid "Available vars"
@@ -13473,8 +13453,7 @@ msgstr ""
 #: gui2/update.c:148
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
-"Этот файл является частью системы gretl для автоматичесгого обновления\n"
+msgstr "Этот файл является частью системы gretl для автоматичесгого обновления\n"
 
 #: gui2/update.c:210
 msgid "No new files"
@@ -14304,6 +14283,3 @@ msgstr "Строки"
 msgid "Accessors"
 msgstr ""
 
-#~ msgid ""
-#~ "The index in a 'for' loop must be a single character from the set '%s'"
-#~ msgstr "Индекс цикла  'for' должен быть одним символом из набора '%s'"
