@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-29 14:23-0500\n"
-"PO-Revision-Date: 2009-01-08 12:49+0200\n"
+"PO-Revision-Date: 2009-01-15 09:59+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1843,7 +1843,7 @@ msgstr "%s için normallik sınaması"
 
 #: lib/src/discrete.c:368
 msgid "Failed to construct Hessian matrix"
-msgstr "Hessegil dizeyi oluşturulamadı"
+msgstr "Hesseyen dizeyi oluşturulamadı"
 
 #: lib/src/discrete.c:515
 #, c-format
@@ -2500,7 +2500,7 @@ msgstr "en küçük kareler yakıştırması ile"
 
 #: lib/src/gretl_bfgs.c:259
 msgid "Failed to compute numerical Hessian"
-msgstr "Sayısal Hessyen hesaplama başarısız"
+msgstr "Sayısal Hesseyen hesaplama başarısız"
 
 #: lib/src/gretl_bfgs.c:393
 msgid ""
@@ -4311,7 +4311,7 @@ msgstr "değişke"
 
 #: lib/src/modelprint.c:948
 msgid "Standard errors based on Hessian"
-msgstr "Hessegil'e dayalı ölçünlü hatalar"
+msgstr "Hesseyen'e dayalı ölçünlü hatalar"
 
 #: lib/src/modelprint.c:951
 msgid "Standard errors based on Information Matrix"
@@ -4659,7 +4659,7 @@ msgstr "Akaike bilgi ölçütü"
 
 #: lib/src/modelprint.c:2255 gui2/library.c:4736
 msgid "Schwarz Bayesian criterion"
-msgstr "Schwarz Bayesgil ölçütü"
+msgstr "Schwarz Bayesçi ölçüt"
 
 #: lib/src/modelprint.c:2278
 msgid "note on model statistics abbreviations here"
@@ -4997,7 +4997,7 @@ msgstr "Gauss-Newton Bağlanımı'nda:\n"
 
 #: lib/src/nls.c:1743
 msgid "Failed to calculate Jacobian"
-msgstr "Jacobgil hesaplaması başarısız"
+msgstr "Jacobyen hesaplaması başarısız"
 
 #: lib/src/nls.c:2103
 msgid "NLS: The supplied derivatives seem to be incorrect"
@@ -6259,7 +6259,7 @@ msgid ""
 msgstr ""
 "Aşağıdaki yıldız imleri, bağlı oldukları bilgi ölçütüne ait en iyi (yani\n"
 "enazlaştırılmış) değerleri göstermektedir. ABÖ = Akaike bilgi ölçütü,\n"
-"BBÖ = Schwartz Bayesgil bilgi ölçütü, HQÖ = Hannan-Quinn ölçütü."
+"BBÖ = Schwartz Bayesçi bilgi ölçütü, HQÖ = Hannan-Quinn ölçütü."
 
 #: lib/src/vartest.c:284
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
@@ -6442,7 +6442,7 @@ msgstr "_Lisans"
 
 #: gui2/calculator.c:163
 msgid "Gaussian sampling distribution"
-msgstr "Gaussgil örneklem dağılımı"
+msgstr "Gaussçu örneklem dağılımı"
 
 #: gui2/calculator.c:165
 #, c-format
@@ -7135,7 +7135,7 @@ msgstr "gretl: örneklemi kısıtla"
 
 #: gui2/callbacks.c:629
 msgid "Enter boolean condition for selecting cases:"
-msgstr "Seçilme durumu için Boolegil koşul giriniz:"
+msgstr "Seçilme durumu için Booleyen koşul giriniz:"
 
 #: gui2/callbacks.c:635 gui2/callbacks.c:756
 msgid ""
@@ -8216,7 +8216,7 @@ msgstr "yoğunluk tahmin seçenekleri"
 
 #: gui2/dialogs.c:3325 plugin/kernel.c:130
 msgid "Gaussian kernel"
-msgstr "Gaussgil çekirdek"
+msgstr "Gaussçu çekirdek"
 
 #: gui2/dialogs.c:3337 plugin/kernel.c:131
 msgid "Epanechnikov kernel"
@@ -10629,7 +10629,7 @@ msgstr "_Akaike Bilgi Ölçütü"
 
 #: gui2/gui_utils.c:2054
 msgid "_Bayesian Information Criterion"
-msgstr "_Bayesgil Bilgi Ölçütü"
+msgstr "_Bayesçi Bilgi Ölçütü"
 
 #: gui2/gui_utils.c:2056
 msgid "_Hannan-Quinn Information Criterion"
@@ -12205,7 +12205,7 @@ msgstr "Tekbiçim örneklem büyüklüğü sağla"
 
 #: gui2/selector.c:3938
 msgid "Parameter covariance matrix via Hessian"
-msgstr "Hessegil yolu ile değiştirge kovaryans dizeyi"
+msgstr "Hesseyen yolu ile değiştirge kovaryans dizeyi"
 
 #: gui2/selector.c:3941
 msgid "Use X-12-ARIMA"
@@ -13596,7 +13596,7 @@ msgstr ""
 
 #: plugin/fcp.c:246
 msgid " (using Hessian)"
-msgstr " (Hessegil kullanılarak)"
+msgstr " (Hesseyen kullanılarak)"
 
 #: plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
@@ -13830,7 +13830,7 @@ msgstr "kullanıcı tarafından sağlanmış başlangıç değerleri"
 #: plugin/jrestrict.c:1817
 #, c-format
 msgid "Rank of Jacobian = %d, number of free parameters = %d\n"
-msgstr "Jacobgil sırası = %d, serbest değiştirge sayısı = %d\n"
+msgstr "Jacobyen sırası = %d, serbest değiştirge sayısı = %d\n"
 
 #: plugin/jrestrict.c:1820
 msgid "Model is not fully identified\n"
@@ -13843,7 +13843,7 @@ msgstr "Model tamamen özdeşlenmiş\n"
 #: plugin/jrestrict.c:1829
 #, c-format
 msgid "Based on Jacobian, df = %d\n"
-msgstr "Jocobgil'e dayalı, sd = %d\n"
+msgstr "Jocobyen'e dayalı, sd = %d\n"
 
 #: plugin/jrestrict.c:2752
 msgid "loglikelihood"
