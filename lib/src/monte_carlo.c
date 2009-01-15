@@ -2625,6 +2625,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (loop == NULL) {
 	pputs(prn, "Got a NULL loop\n");
+	set_loop_off();
 	return 1;
     }
 
@@ -2842,12 +2843,11 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	*line = '\0';
     } 
 
-    set_loop_off();
-
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */
 	gretl_loop_destroy(loop);
 	currloop = NULL;
+	set_loop_off();
     }
 
     if (libset_get_bool(HALT_ON_ERR)) {

@@ -3791,6 +3791,11 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
     }
 }
 
+/* print a model that was just estimated, provided it's not carrying
+   an error code, and provided we're not in looping mode, if which
+   case the printing or not of models requires special handling
+*/
+
 static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 			      PRN *prn, ExecState *s)
 {
