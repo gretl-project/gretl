@@ -157,32 +157,35 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
 
     if (finfo->ftype == FILTER_SMA) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(targ, "%s%d-period moving average of %s", 
-		    finfo->center? "Centered " : "",
-		    finfo->nobs, datainfo->varname[finfo->vnum]);
+	    if (finfo->center) {
+		sprintf(targ, _("Centered %d-period moving average of %s"), 
+			finfo->nobs, datainfo->varname[finfo->vnum]);
+	    } else {
+		sprintf(targ, _("%d-period moving average of %s"), 
+			finfo->nobs, datainfo->varname[finfo->vnum]);
+	    }
 	} else {
-	    sprintf(targ, "Residual from %s%d-period MA of %s", 
-		    finfo->center? "Centered " : "",
+	    sprintf(targ, _("Residual from %d-period MA of %s"), 
 		    finfo->nobs, datainfo->varname[finfo->vnum]);
 	}
     } else if (finfo->ftype == FILTER_EMA) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(targ, "Exponential moving average of %s (current weight %g)",
+	    sprintf(targ, _("Exponential moving average of %s (current weight %g)"),
 		    datainfo->varname[finfo->vnum], 1.0 - finfo->lambda);
 	} else {
-	    sprintf(targ, "Residual from EMA of %s (current weight %g)",
+	    sprintf(targ, _("Residual from EMA of %s (current weight %g)"),
 		    datainfo->varname[finfo->vnum], 1.0 - finfo->lambda);
 	}	    
     } else if (finfo->ftype == FILTER_HP) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(targ, "Filtered %s: Hodrick-Prescott trend (lambda = %g)", 
+	    sprintf(targ, _("Filtered %s: Hodrick-Prescott trend (lambda = %g)"), 
 		    datainfo->varname[finfo->vnum], finfo->lambda);
 	} else {
-	    sprintf(targ, "Filtered %s: Hodrick-Prescott cycle (lambda = %g)", 
+	    sprintf(targ, _("Filtered %s: Hodrick-Prescott cycle (lambda = %g)"), 
 		    datainfo->varname[finfo->vnum], finfo->lambda);
 	}	    
     } else if (finfo->ftype == FILTER_BK) {
-	sprintf(targ, "Filtered %s: Baxter-King cycle", 
+	sprintf(targ, _("Filtered %s: Baxter-King cycle"), 
 		datainfo->varname[finfo->vnum]);
     }
 }

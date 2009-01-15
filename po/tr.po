@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 10:19-0500\n"
+"POT-Creation-Date: 2009-01-15 11:54-0500\n"
 "PO-Revision-Date: 2009-01-15 09:59+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -6517,7 +6517,7 @@ msgid "Standard errors"
 msgstr "Ölçünlü hatalar"
 
 #: gui2/calculator.c:590 gui2/calculator.c:689 gui2/database.c:211
-#: gui2/filters.c:697 gui2/gpt_control.c:989
+#: gui2/filters.c:700 gui2/gpt_control.c:989
 msgid "gnuplot command failed"
 msgstr "gnuplot komutu başarısız"
 
@@ -8567,98 +8567,138 @@ msgstr "Hodrick-Prescott süzgeci"
 msgid "Baxter-King Band-pass filter"
 msgstr "Baxter-King kuşak-geçiş süzgeci"
 
-#: gui2/filters.c:270
+#: gui2/filters.c:161
+#, c-format
+msgid "Centered %d-period moving average of %s"
+msgstr ""
+
+#: gui2/filters.c:164
+#, fuzzy, c-format
+msgid "%d-period moving average of %s"
+msgstr "Basit hareketli ortalama"
+
+#: gui2/filters.c:168
+#, fuzzy, c-format
+msgid "Residual from %d-period MA of %s"
+msgstr "model %d kalıntılar"
+
+#: gui2/filters.c:173
+#, fuzzy, c-format
+msgid "Exponential moving average of %s (current weight %g)"
+msgstr "Üstel hareketli ortalama"
+
+#: gui2/filters.c:176
+#, c-format
+msgid "Residual from EMA of %s (current weight %g)"
+msgstr ""
+
+#: gui2/filters.c:181
+#, c-format
+msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
+msgstr ""
+
+#: gui2/filters.c:184
+#, c-format
+msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
+msgstr ""
+
+#: gui2/filters.c:188
+#, c-format
+msgid "Filtered %s: Baxter-King cycle"
+msgstr ""
+
+#: gui2/filters.c:273
 msgid "Variable name is missing"
 msgstr "Değişken adı eksik"
 
-#: gui2/filters.c:276
+#: gui2/filters.c:279
 msgid "Conflicting variable names"
 msgstr "Çakışan değişken adları"
 
-#: gui2/filters.c:345
+#: gui2/filters.c:348
 msgid "Save smoothed series as"
 msgstr "Düzleştirilmiş seriyi farklı kaydet"
 
-#: gui2/filters.c:346
+#: gui2/filters.c:349
 msgid "Save cyclical component as"
 msgstr "Çevrimsel bileşeni şu adla kaydet"
 
-#: gui2/filters.c:379
+#: gui2/filters.c:382
 msgid "Lower frequency bound:"
 msgstr "Alt sıklık sınırı:"
 
-#: gui2/filters.c:388
+#: gui2/filters.c:391
 msgid "Upper frequency bound:"
 msgstr "Üst sıklık sınırı:"
 
-#: gui2/filters.c:419
+#: gui2/filters.c:422
 msgid "The first EMA value is"
 msgstr "İlk ÜHO değeri şu:"
 
-#: gui2/filters.c:428
+#: gui2/filters.c:431
 msgid "the mean of the whole series"
 msgstr "Tüm serinin ortalaması"
 
-#: gui2/filters.c:433
+#: gui2/filters.c:436
 msgid "the mean of the first n observations"
 msgstr "ilk n gözlem ortalaması"
 
-#: gui2/filters.c:455
+#: gui2/filters.c:458
 msgid "gretl: time-series filter"
 msgstr "gretl: zaman-serisi süzgeci"
 
-#: gui2/filters.c:472
+#: gui2/filters.c:475
 msgid "Number of observations in average:"
 msgstr "Ortalama gözlem sayısı:"
 
-#: gui2/filters.c:483
+#: gui2/filters.c:486
 msgid "Centered"
 msgstr "Ortala"
 
-#: gui2/filters.c:494
+#: gui2/filters.c:497
 msgid "Weight on current observation:"
 msgstr "Şu anki gözlemin ağırlığı:"
 
-#: gui2/filters.c:508
+#: gui2/filters.c:511
 msgid "lambda (higher values -> smoother trend):"
 msgstr "lambda (yüksek değerler -> daha düzgün eğilim):"
 
-#: gui2/filters.c:519
+#: gui2/filters.c:522
 msgid "k (higher values -> better approximation):"
 msgstr "k (yüksek değerler -> daha iyi yaklaştırma):"
 
-#: gui2/filters.c:536
+#: gui2/filters.c:539
 msgid "Graph filtered series"
 msgstr "Süzülmüş seriyi çiz"
 
-#: gui2/filters.c:540
+#: gui2/filters.c:543
 msgid "Save cyclical series as"
 msgstr "Çevrimsel seriyi farklı kaydet"
 
-#: gui2/filters.c:554
+#: gui2/filters.c:557
 msgid "Graph original and smoothed series"
 msgstr "Özgün ve düzleştirilmiş serileri çiz"
 
-#: gui2/filters.c:556
+#: gui2/filters.c:559
 msgid "Graph residual or cycle series"
 msgstr "Kalıntı veya çevrim serilerini çiz"
 
-#: gui2/filters.c:649 gui2/filters.c:670
+#: gui2/filters.c:652 gui2/filters.c:673
 #, c-format
 msgid "%s (original data)"
 msgstr "%s (özgün veriler)"
 
-#: gui2/filters.c:650 gui2/filters.c:671
+#: gui2/filters.c:653 gui2/filters.c:674
 #, c-format
 msgid "%s (smoothed)"
 msgstr "%s (düzleştirilmiş)"
 
-#: gui2/filters.c:661 gui2/filters.c:683
+#: gui2/filters.c:664 gui2/filters.c:686
 #, c-format
 msgid "Cyclical component of %s"
 msgstr "%s çevrimsel bileşeni"
 
-#: gui2/filters.c:680
+#: gui2/filters.c:683
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr "%1$s Baxter-King bileşeni, sıklık %2$d ve %3$d arası"

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 10:19-0500\n"
+"POT-Creation-Date: 2009-01-15 11:54-0500\n"
 "PO-Revision-Date: 2009-01-15 03:06+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -6441,7 +6441,7 @@ msgid "Standard errors"
 msgstr "Стандартные ошибки"
 
 #: gui2/calculator.c:590 gui2/calculator.c:689 gui2/database.c:211
-#: gui2/filters.c:697 gui2/gpt_control.c:989
+#: gui2/filters.c:700 gui2/gpt_control.c:989
 msgid "gnuplot command failed"
 msgstr "команда для gnuplot не выполнена"
 
@@ -8484,98 +8484,138 @@ msgstr "Фильтр Годрика-Прескотта (Hodrick-Prescott)"
 msgid "Baxter-King Band-pass filter"
 msgstr "Фильтр Бакстера-Кинга (Baxter-King)"
 
-#: gui2/filters.c:270
+#: gui2/filters.c:161
+#, c-format
+msgid "Centered %d-period moving average of %s"
+msgstr ""
+
+#: gui2/filters.c:164
+#, fuzzy, c-format
+msgid "%d-period moving average of %s"
+msgstr "Простое скользящее среднее"
+
+#: gui2/filters.c:168
+#, fuzzy, c-format
+msgid "Residual from %d-period MA of %s"
+msgstr "Ошибки из модели %d"
+
+#: gui2/filters.c:173
+#, fuzzy, c-format
+msgid "Exponential moving average of %s (current weight %g)"
+msgstr "Экспоненциальное скользящее среднее"
+
+#: gui2/filters.c:176
+#, c-format
+msgid "Residual from EMA of %s (current weight %g)"
+msgstr ""
+
+#: gui2/filters.c:181
+#, c-format
+msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
+msgstr ""
+
+#: gui2/filters.c:184
+#, c-format
+msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
+msgstr ""
+
+#: gui2/filters.c:188
+#, c-format
+msgid "Filtered %s: Baxter-King cycle"
+msgstr ""
+
+#: gui2/filters.c:273
 msgid "Variable name is missing"
 msgstr "Отсуствует имя переменной"
 
-#: gui2/filters.c:276
+#: gui2/filters.c:279
 msgid "Conflicting variable names"
 msgstr "Конфликтующие имена переменных"
 
-#: gui2/filters.c:345
+#: gui2/filters.c:348
 msgid "Save smoothed series as"
 msgstr "Сохранить сглаженный ряд как"
 
-#: gui2/filters.c:346
+#: gui2/filters.c:349
 msgid "Save cyclical component as"
 msgstr "Сохранить циклическую компоненту как"
 
-#: gui2/filters.c:379
+#: gui2/filters.c:382
 msgid "Lower frequency bound:"
 msgstr "Нижняя граница частоты:"
 
-#: gui2/filters.c:388
+#: gui2/filters.c:391
 msgid "Upper frequency bound:"
 msgstr "Верхняя граница частоты:"
 
-#: gui2/filters.c:419
+#: gui2/filters.c:422
 msgid "The first EMA value is"
 msgstr "Рассчитать первое значение для сглаженного ряда как:"
 
-#: gui2/filters.c:428
+#: gui2/filters.c:431
 msgid "the mean of the whole series"
 msgstr "среднее всего ряда"
 
-#: gui2/filters.c:433
+#: gui2/filters.c:436
 msgid "the mean of the first n observations"
 msgstr "среднее первых n наблюдений"
 
-#: gui2/filters.c:455
+#: gui2/filters.c:458
 msgid "gretl: time-series filter"
 msgstr "gretl: фильтр для временного ряда"
 
-#: gui2/filters.c:472
+#: gui2/filters.c:475
 msgid "Number of observations in average:"
 msgstr "Количество наблюдений для усреднения:"
 
-#: gui2/filters.c:483
+#: gui2/filters.c:486
 msgid "Centered"
 msgstr "Центрирование"
 
-#: gui2/filters.c:494
+#: gui2/filters.c:497
 msgid "Weight on current observation:"
 msgstr "Вес текущего наблюдения:"
 
-#: gui2/filters.c:508
+#: gui2/filters.c:511
 msgid "lambda (higher values -> smoother trend):"
 msgstr "Лямбда (больше значение -> сильнее сглаживание):"
 
-#: gui2/filters.c:519
+#: gui2/filters.c:522
 msgid "k (higher values -> better approximation):"
 msgstr "k (больше значение -> лучше аппроксимация):"
 
-#: gui2/filters.c:536
+#: gui2/filters.c:539
 msgid "Graph filtered series"
 msgstr "График сглаженного ряда"
 
-#: gui2/filters.c:540
+#: gui2/filters.c:543
 msgid "Save cyclical series as"
 msgstr "Сохранить циклическую компоненту как:"
 
-#: gui2/filters.c:554
+#: gui2/filters.c:557
 msgid "Graph original and smoothed series"
 msgstr "График для исходного и сглаженного ряда"
 
-#: gui2/filters.c:556
+#: gui2/filters.c:559
 msgid "Graph residual or cycle series"
 msgstr "График для остатков или циклической компоненты"
 
-#: gui2/filters.c:649 gui2/filters.c:670
+#: gui2/filters.c:652 gui2/filters.c:673
 #, c-format
 msgid "%s (original data)"
 msgstr "%s (исходный ряд)"
 
-#: gui2/filters.c:650 gui2/filters.c:671
+#: gui2/filters.c:653 gui2/filters.c:674
 #, c-format
 msgid "%s (smoothed)"
 msgstr "%s (сглаженный ряд)"
 
-#: gui2/filters.c:661 gui2/filters.c:683
+#: gui2/filters.c:664 gui2/filters.c:686
 #, c-format
 msgid "Cyclical component of %s"
 msgstr "Циклическая компонента для %s"
 
-#: gui2/filters.c:680
+#: gui2/filters.c:683
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr "Составляющая Бакстера-Кинга для %s с частотой от %d до %d"

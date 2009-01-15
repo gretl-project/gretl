@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 10:19-0500\n"
+"POT-Creation-Date: 2009-01-15 11:54-0500\n"
 "PO-Revision-Date: 2009-01-14 10:19+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -6568,7 +6568,7 @@ msgid "Standard errors"
 msgstr "Écarts type"
 
 #: gui2/calculator.c:590 gui2/calculator.c:689 gui2/database.c:211
-#: gui2/filters.c:697 gui2/gpt_control.c:989
+#: gui2/filters.c:700 gui2/gpt_control.c:989
 msgid "gnuplot command failed"
 msgstr "échec de la commande GnuPlot"
 
@@ -8622,98 +8622,138 @@ msgstr "filtre de Hodrick-Prescott"
 msgid "Baxter-King Band-pass filter"
 msgstr "Filtre Baxter-King Band-pass"
 
-#: gui2/filters.c:270
+#: gui2/filters.c:161
+#, c-format
+msgid "Centered %d-period moving average of %s"
+msgstr ""
+
+#: gui2/filters.c:164
+#, fuzzy, c-format
+msgid "%d-period moving average of %s"
+msgstr "Moyenne mobile simple"
+
+#: gui2/filters.c:168
+#, fuzzy, c-format
+msgid "Residual from %d-period MA of %s"
+msgstr "résidu du modèle %d"
+
+#: gui2/filters.c:173
+#, fuzzy, c-format
+msgid "Exponential moving average of %s (current weight %g)"
+msgstr "Moyenne mobile exponentielle"
+
+#: gui2/filters.c:176
+#, c-format
+msgid "Residual from EMA of %s (current weight %g)"
+msgstr ""
+
+#: gui2/filters.c:181
+#, c-format
+msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
+msgstr ""
+
+#: gui2/filters.c:184
+#, c-format
+msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
+msgstr ""
+
+#: gui2/filters.c:188
+#, c-format
+msgid "Filtered %s: Baxter-King cycle"
+msgstr ""
+
+#: gui2/filters.c:273
 msgid "Variable name is missing"
 msgstr "Nom de la variable manquant"
 
-#: gui2/filters.c:276
+#: gui2/filters.c:279
 msgid "Conflicting variable names"
 msgstr "Nom de variable conflictuel"
 
-#: gui2/filters.c:345
+#: gui2/filters.c:348
 msgid "Save smoothed series as"
 msgstr "Enregistrement de la série lissée comme"
 
-#: gui2/filters.c:346
+#: gui2/filters.c:349
 msgid "Save cyclical component as"
 msgstr "Sauvegarder l'élément cyclique comme"
 
-#: gui2/filters.c:379
+#: gui2/filters.c:382
 msgid "Lower frequency bound:"
 msgstr "Borne inférieure de fréquence :"
 
-#: gui2/filters.c:388
+#: gui2/filters.c:391
 msgid "Upper frequency bound:"
 msgstr "Borne supérieure de fréquence :"
 
-#: gui2/filters.c:419
+#: gui2/filters.c:422
 msgid "The first EMA value is"
 msgstr "La première valeur EMA est"
 
-#: gui2/filters.c:428
+#: gui2/filters.c:431
 msgid "the mean of the whole series"
 msgstr "la moyenne de l'ensemble de la série"
 
-#: gui2/filters.c:433
+#: gui2/filters.c:436
 msgid "the mean of the first n observations"
 msgstr "la moyenne des n premières observations"
 
-#: gui2/filters.c:455
+#: gui2/filters.c:458
 msgid "gretl: time-series filter"
 msgstr "gretl :filtre de séries temporelles"
 
-#: gui2/filters.c:472
+#: gui2/filters.c:475
 msgid "Number of observations in average:"
 msgstr "Nombre d'observations à la moyenne :"
 
-#: gui2/filters.c:483
+#: gui2/filters.c:486
 msgid "Centered"
 msgstr "Centré"
 
-#: gui2/filters.c:494
+#: gui2/filters.c:497
 msgid "Weight on current observation:"
 msgstr "Pondération de l'observation courante"
 
-#: gui2/filters.c:508
+#: gui2/filters.c:511
 msgid "lambda (higher values -> smoother trend):"
 msgstr "lambda (valeur plus forte -> tendance plus lissée) :"
 
-#: gui2/filters.c:519
+#: gui2/filters.c:522
 msgid "k (higher values -> better approximation):"
 msgstr "k (valeur plus forte -> meilleure approximation) :"
 
-#: gui2/filters.c:536
+#: gui2/filters.c:539
 msgid "Graph filtered series"
 msgstr "Tracer les séries filtrées"
 
-#: gui2/filters.c:540
+#: gui2/filters.c:543
 msgid "Save cyclical series as"
 msgstr "Enregistrer les séries cycliques comme"
 
-#: gui2/filters.c:554
+#: gui2/filters.c:557
 msgid "Graph original and smoothed series"
 msgstr "Tracer les séries initiales et lissées"
 
-#: gui2/filters.c:556
+#: gui2/filters.c:559
 msgid "Graph residual or cycle series"
 msgstr "Tracer les séries de résidus ou de cycles"
 
-#: gui2/filters.c:649 gui2/filters.c:670
+#: gui2/filters.c:652 gui2/filters.c:673
 #, c-format
 msgid "%s (original data)"
 msgstr "%s (données initiales)"
 
-#: gui2/filters.c:650 gui2/filters.c:671
+#: gui2/filters.c:653 gui2/filters.c:674
 #, c-format
 msgid "%s (smoothed)"
 msgstr "%s (avec lissage)"
 
-#: gui2/filters.c:661 gui2/filters.c:683
+#: gui2/filters.c:664 gui2/filters.c:686
 #, c-format
 msgid "Cyclical component of %s"
 msgstr "Elément cyclique de %s"
 
-#: gui2/filters.c:680
+#: gui2/filters.c:683
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr "Baxter-King component of %s at frequency %d to %d"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.6.6.pre3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 10:19-0500\n"
+"POT-Creation-Date: 2009-01-15 11:54-0500\n"
 "PO-Revision-Date: 2007-12-19 16:02+0100\n"
 "Last-Translator: susan orbe <susan.orbe@ehu.es>\n"
 "Language-Team: Basque <translation-team-eu@lists.sourceforge.net>\n"
@@ -6625,7 +6625,7 @@ msgid "Standard errors"
 msgstr "Desbideratze tipikoak"
 
 #: gui2/calculator.c:590 gui2/calculator.c:689 gui2/database.c:211
-#: gui2/filters.c:697 gui2/gpt_control.c:989
+#: gui2/filters.c:700 gui2/gpt_control.c:989
 msgid "gnuplot command failed"
 msgstr "gnuplot komandoak huts egin du"
 
@@ -8703,98 +8703,138 @@ msgstr "Hodrick-Prescott irazkia"
 msgid "Baxter-King Band-pass filter"
 msgstr "Baxter-King Band-pass irazkia"
 
-#: gui2/filters.c:270
+#: gui2/filters.c:161
+#, c-format
+msgid "Centered %d-period moving average of %s"
+msgstr ""
+
+#: gui2/filters.c:164
+#, fuzzy, c-format
+msgid "%d-period moving average of %s"
+msgstr "Batezbesteko higikor bakuna"
+
+#: gui2/filters.c:168
+#, fuzzy, c-format
+msgid "Residual from %d-period MA of %s"
+msgstr "%d ereduaren hondarrak"
+
+#: gui2/filters.c:173
+#, fuzzy, c-format
+msgid "Exponential moving average of %s (current weight %g)"
+msgstr "Batezbesteko higikor exponentziala"
+
+#: gui2/filters.c:176
+#, c-format
+msgid "Residual from EMA of %s (current weight %g)"
+msgstr ""
+
+#: gui2/filters.c:181
+#, c-format
+msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
+msgstr ""
+
+#: gui2/filters.c:184
+#, c-format
+msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
+msgstr ""
+
+#: gui2/filters.c:188
+#, c-format
+msgid "Filtered %s: Baxter-King cycle"
+msgstr ""
+
+#: gui2/filters.c:273
 msgid "Variable name is missing"
 msgstr "Aldagaiaren izena galduta"
 
-#: gui2/filters.c:276
+#: gui2/filters.c:279
 msgid "Conflicting variable names"
 msgstr "Aldagaien izenak elkarren kontrakoak dira"
 
-#: gui2/filters.c:345
+#: gui2/filters.c:348
 msgid "Save smoothed series as"
 msgstr "Gorde leundutako segida honela"
 
-#: gui2/filters.c:346
+#: gui2/filters.c:349
 msgid "Save cyclical component as"
 msgstr "Gorde osagai ziklikoa honela"
 
-#: gui2/filters.c:379
+#: gui2/filters.c:382
 msgid "Lower frequency bound:"
 msgstr "Maiztasunen behe kota:"
 
-#: gui2/filters.c:388
+#: gui2/filters.c:391
 msgid "Upper frequency bound:"
 msgstr "Maiztasunen goi kota:"
 
-#: gui2/filters.c:419
+#: gui2/filters.c:422
 msgid "The first EMA value is"
 msgstr "Lehen EMA balioa"
 
-#: gui2/filters.c:428
+#: gui2/filters.c:431
 msgid "the mean of the whole series"
 msgstr "segida osoaren batezbestekoa"
 
-#: gui2/filters.c:433
+#: gui2/filters.c:436
 msgid "the mean of the first n observations"
 msgstr "lehen n behaketen batezbestekoa"
 
-#: gui2/filters.c:455
+#: gui2/filters.c:458
 msgid "gretl: time-series filter"
 msgstr "gretl: denbora-segiden irazkia"
 
-#: gui2/filters.c:472
+#: gui2/filters.c:475
 msgid "Number of observations in average:"
 msgstr "Behaketen kopurua batezbestekoz:"
 
-#: gui2/filters.c:483
+#: gui2/filters.c:486
 msgid "Centered"
 msgstr "Zentratuta"
 
-#: gui2/filters.c:494
+#: gui2/filters.c:497
 msgid "Weight on current observation:"
 msgstr "Ponderatu ezazu honako behaketan:"
 
-#: gui2/filters.c:508
+#: gui2/filters.c:511
 msgid "lambda (higher values -> smoother trend):"
 msgstr "lambda (balio gorenak - > joera leunagoa):"
 
-#: gui2/filters.c:519
+#: gui2/filters.c:522
 msgid "k (higher values -> better approximation):"
 msgstr "k (balio gorenak - > hurbilketa hoberena):"
 
-#: gui2/filters.c:536
+#: gui2/filters.c:539
 msgid "Graph filtered series"
 msgstr "Irazitako segidaren grafikoa"
 
-#: gui2/filters.c:540
+#: gui2/filters.c:543
 msgid "Save cyclical series as"
 msgstr "Gorde segida ziklikoa honela"
 
-#: gui2/filters.c:554
+#: gui2/filters.c:557
 msgid "Graph original and smoothed series"
 msgstr "Marraztu jatorrizko eta leundutako segidak"
 
-#: gui2/filters.c:556
+#: gui2/filters.c:559
 msgid "Graph residual or cycle series"
 msgstr "Marraztu hondarrak edo zikloen segidak"
 
-#: gui2/filters.c:649 gui2/filters.c:670
+#: gui2/filters.c:652 gui2/filters.c:673
 #, c-format
 msgid "%s (original data)"
 msgstr "%s (jatorrizko datuak)"
 
-#: gui2/filters.c:650 gui2/filters.c:671
+#: gui2/filters.c:653 gui2/filters.c:674
 #, c-format
 msgid "%s (smoothed)"
 msgstr "%s (leundutakoa)"
 
-#: gui2/filters.c:661 gui2/filters.c:683
+#: gui2/filters.c:664 gui2/filters.c:686
 #, c-format
 msgid "Cyclical component of %s"
 msgstr "%s -ren osagai ziklikoa"
 
-#: gui2/filters.c:680
+#: gui2/filters.c:683
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr "%s -ren Baxter-King osagaia %d maiztasunetik %d -ra"
