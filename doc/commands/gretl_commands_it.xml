@@ -2617,7 +2617,8 @@
        Usando l'opzione <lit>--gamma</lit>, al posto del test di normalità
        viene eseguito il test non parametrico di Locke per l'ipotesi nulla che la
        variabile segua la distribuzione gamma; si veda Locke (1976), Shapiro e
-       Chen (2001).
+       Chen (2001). Si noti che la parametrizzazione della distribuzione gamma
+       in gretl è (forma, scala).
       </para>
       <para>
         In modalità interattiva viene mostrato anche un grafico della distribuzione,
@@ -2654,6 +2655,15 @@
         modifiche da fare (ad esempio impostare l'inizio del primo intervallo al
         valore 100 e la larghezza pari a 200), quindi ricreare il grafico
         specificando i valori scelti.
+      </para>
+      <para>
+	Questa finestra permette inoltre di scegliere una distribuzione teorica
+        da sovrapporre ai dati: la normale o la gamma. Se si sceglie la
+        distribuzione normale, viene calcolato il test di normalità di
+	Doornik&ndash;Hansen. Se si sceglie la gamma, gretl calcola il test
+        non parametrico di Locke per l'ipotesi nulla che la variabile segua
+        questa distribuzione. Si noti che la parametrizzazione della
+        distribuzione gamma in gretl è (forma, scala).
       </para>
     </description>
 
@@ -4842,8 +4852,8 @@
       <para>Il parametro <repl quote="true">controllo</repl> deve
         assumere uno dei cinque valori mostrati negli esempi: un numero di volte
         per cui ripetere i comandi all'interno del loop;
-        <quote><lit>while</lit></quote> seguito da una condizione numerica;
-        un intervallo di valori per una variabile indice;
+        <quote><lit>while</lit></quote> seguito da una condizione booleana;
+        un intervallo di valori interi per una variabile indice;
         <quote><lit>for</lit></quote> seguito
         da tre espressioni tra parentesi, separate da punti e virgola
         (in modo simile all'istruzione <lit>for</lit> nel
@@ -8943,6 +8953,14 @@
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
         </option>
+ 	<option>
+ 	  <flag>--liml</flag>
+ 	  <effect>usa massima verosimiglianza a informazione limitata</effect>
+         </option>
+ 	<option>
+ 	  <flag>--gmm</flag>
+ 	  <effect>usa il metodo generalizzato dei momenti</effect>
+         </option>
       </options>      
       <examples>
         <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
@@ -8951,11 +8969,12 @@
 
     <description>
       <para context="cli">
-        Calcola le stime con variabili strumentali, usando i minimi quadrati a
-        due stadi (TSLS), date la <repl>variabile-dipendente</repl> e la lista
-        di <repl>variabili-indipendenti</repl> (che si intende includere alcuni
-        regressori endogeni); <repl>strumenti</repl> è la lista completa delle
-        variabili esogene e predeterminate. Se la lista degli
+        Calcola le stime con variabili strumentali, per impostazione predefinita
+        usando i minimi quadrati a due stadi (TSLS), ma è possibile scegliere
+        altre opzioni. Occorre specificare la <repl>variabile-dipendente</repl>,
+        la lista di <repl>variabili-indipendenti</repl> (che si intende includere
+        alcuni regressori endogeni), e infine gli <repl>strumenti</repl>, la lista
+        completa delle variabili esogene e predeterminate. Se la lista degli
         <repl>strumenti</repl> non è lunga almeno quanto quella delle
         <repl>variabili-indipendenti</repl>, il modello non è
         identificato.
@@ -8978,7 +8997,7 @@
       </para>
       
       <para>
-	L'output del comando comprende il test di Hausman e, se il modello è
+	L'output delle stime TSLS comprende il test di Hausman e, se il modello è
         sovra-identificato, il test di Sargan per la sovra-identificazione. Nel
         test di Hausman, l'ipotesi nulla è che le stime OLS siano consistenti, o
         in altre parole che non sia richiesta la stima per mezzo di variabili
@@ -8993,9 +9012,46 @@
       </para>
 
       <para>
-	Il valore R-quadro mostrato per questo tipo di modello è il quadrato
-        della correlazione tra la variabile dipendente e i valori stimati.
+	Il valore R-quadro mostrato i modelli stimati con i minimi quadrati a
+        due stadi è il quadrato della correlazione tra la variabile dipendente
+        e i valori stimati.
       </para>
+
+      <para context="cli">
+	In alternativa al metodo TSLS, il modello può essere stimato usando la
+        massima verosimiglianza a informazione limitata (opzione <lit>--liml</lit>)
+        o il metodo generalizzato dei momenti (opzione <lit>--gmm</lit>). Si noti che
+        se il modello è esattamente identificato, questi metodi dovrebbero
+        produrre gli stessi risultati del metodo TSLS, ma se il modello è
+        sovraidentificato, i risultati saranno in genere diversi.
+      </para>
+
+      <para context="cli">
+	Se si usa la stima GMM, è possibile usare le seguenti opzioni aggiuntive:
+      </para>
+
+      <ilist>
+	<li>
+	  <para>
+	    <lit>--two-step</lit>: esegue la stima GMM in due passi, invece che
+            in un passo solo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>--iterate</lit>: itera il GMM fino alla convergenza.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>--weights=</lit><repl>Pesi</repl>: specifica una matrice
+            quadrata di pesi da usare nel calcolo della funzione criterio del
+            GMM. La dimensione di questa matrice deve essere pari al numero di
+            strumenti. L'impostazione predefinita consiste nell'usare una
+            matrice identità di dimensione opportuna.
+ 	  </para>
+ 	</li>	
+       </ilist>
 
     </description>
 
