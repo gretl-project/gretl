@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-29 14:23-0500\n"
-"PO-Revision-Date: 2009-01-12 02:48+0200\n"
+"PO-Revision-Date: 2009-01-15 03:06+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -7247,7 +7247,7 @@ msgstr "Найти..."
 
 #: gui2/database.c:731
 msgid "Codebook"
-msgstr ""
+msgstr "Справочник"
 
 #: gui2/database.c:750 gui2/gretl.c:1232 gui2/gui_utils.c:138
 #: gui2/gui_utils.c:261
@@ -7288,7 +7288,7 @@ msgstr "_Найти в окне"
 
 #: gui2/database.c:761
 msgid "_Codebook"
-msgstr ""
+msgstr "_Справочник"
 
 #: gui2/database.c:762
 msgid "_Open"
@@ -7301,7 +7301,7 @@ msgstr "Статус сетевого соединения: ОК"
 #: gui2/database.c:1014
 #, c-format
 msgid "Database parse error at variable '%s'"
-msgstr ""
+msgstr "Ошибка обработки переменной '%s' из базы данных"
 
 #: gui2/database.c:1347 gui2/ssheet.c:2131
 msgid "Name"
@@ -7325,23 +7325,23 @@ msgstr "Установлен"
 
 #: gui2/database.c:1958
 msgid "Error unzipping compressed data"
-msgstr "Ошибка разархивирования сжатых данных"
+msgstr "Ошибка распаковки сжатых данных"
 
 #: gui2/database.c:2140 gui2/database.c:2163
 msgid "Not installed"
-msgstr "Не установлен(а)"
+msgstr "Не установлен"
 
 #: gui2/database.c:2168
 msgid "Unknown: access error"
-msgstr ""
+msgstr "Ошибка доступа"
 
 #: gui2/database.c:2174
 msgid "Not up to date"
-msgstr ""
+msgstr "Устаревший"
 
 #: gui2/database.c:2351 gui2/database.c:2572
 msgid "No database files found"
-msgstr ""
+msgstr "Файлы баз данных не найдены"
 
 #: gui2/database.c:2505
 msgid "No function packages found"
