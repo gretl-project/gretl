@@ -62,6 +62,12 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
     double *tmp = NULL;
     fftw_complex *out;
     int r = gretl_matrix_rows(y);
+
+    if (r<2) {
+	*err = E_DATA;
+	return NULL;
+    }
+
     int c = gretl_matrix_cols(y);
     int m = r / 2;
     int odd = r % 2;
@@ -125,6 +131,12 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
     double *tmp = NULL;
     fftw_complex *in;
     int r = gretl_matrix_rows(y);
+
+    if (r<2) {
+	*err = E_DATA;
+	return NULL;
+    }
+
     int c = gretl_matrix_cols(y) / 2;
     int m = r / 2;
     int odd = r % 2;
