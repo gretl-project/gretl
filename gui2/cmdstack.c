@@ -102,7 +102,7 @@ static int session_logfile_init (void)
 #endif
 
     logtime = time(NULL);
-    pprintf(logprn, "# Log re-started %s\n", print_time(&logtime));
+    pprintf(logprn, _("# Log re-started %s\n"), print_time(&logtime));
 
     return 0;
 }
@@ -142,10 +142,10 @@ static int scratch_logfile_init (void)
 #endif
 
     logtime = time(NULL);
-    pprintf(logprn, "# Log started %s\n", print_time(&logtime));
+    pprintf(logprn, _("# Log started %s\n"), print_time(&logtime));
 
-    pputs(logprn, "# Record of session commands.  Please note that this will\n"
-	  "# likely require editing if it is to be run as a script.\n");
+    pputs(logprn, _("# Record of session commands.  Please note that this will\n"
+		    "# likely require editing if it is to be run as a script.\n"));
 
     return 0;
 }
@@ -285,7 +285,7 @@ int model_command_init (int model_ID)
 
     if (!err) {
 	if (model_ID != prev_ID) {
-	    pprintf(logprn, "# model %d\n", model_ID);
+	    pprintf(logprn, "# %s %d\n", _("model"), model_ID);
 	    prev_ID = model_ID;
 	}
 	echo_cmd(libcmd, datainfo, line, CMD_RECORDING, logprn);

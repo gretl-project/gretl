@@ -1500,8 +1500,10 @@ static void np_test (GtkWidget *w, test_t *test)
     if (err) {
 	gui_errmsg(err);
     } else {
-	view_buffer(prn, 78, 380, "gretl: nonparametric test", 
-		    PRINT, NULL);
+	gchar *title = g_strdup_printf("gretl: %s", _("nonparametric test"));
+
+	view_buffer(prn, 78, 380, title, PRINT, NULL);
+	g_free(title);			       
     }
 }
 

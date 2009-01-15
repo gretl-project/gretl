@@ -5070,7 +5070,7 @@ static void selector_add_top_entry (selector *sr)
     lname = gtk_entry_get_text(GTK_ENTRY(src));
 
     hbox = gtk_hbox_new(FALSE, 0);
-    label = gtk_label_new("Name for list:");
+    label = gtk_label_new(_("Name for list:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(entry), 31);

@@ -237,8 +237,9 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 	F = wald_omit_F(llist, pmod);
 
 	if (!na(F)) {
-	    pprintf(prn, "   lagged differences: F(%d, %d) = %.3f [%.4f]\n",
-		    order, pmod->dfd, F, snedecor_cdf_comp(order, pmod->dfd, F));
+	    pprintf(prn, "   %s: F(%d, %d) = %.3f [%.4f]\n",
+		    _("lagged differences"), order, pmod->dfd, F, 
+		    snedecor_cdf_comp(order, pmod->dfd, F));
 	}
 
 	free(llist);

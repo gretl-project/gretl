@@ -2303,7 +2303,7 @@ gint populate_remote_db_list (windata_t *vwin)
     char line[1024];
     char fname[32];
     char src[96], srcbak[96];
-    const char *status = "";
+    const char *status;
     gchar *row[3];
     time_t remtime;
     int start, parent, kids;
@@ -2376,8 +2376,10 @@ gint populate_remote_db_list (windata_t *vwin)
 	    continue;
 	}
 
+	status = "";
 	get_local_object_status(fname, vwin->role, &status, remtime);
 	row[0] = strip_extension(fname);
+	row[1] = NULL;
 	row[2] = _(status);
 
 	if (bufgets(line, sizeof line, getbuf)) {
@@ -2390,9 +2392,7 @@ gint populate_remote_db_list (windata_t *vwin)
 		parent = 1;
 		kids = ndb;
 	    }	
-	} else {
-	    row[1] = NULL;
-	}
+	} 
 
 	if (parent) {
 	    /* header for child databases */
@@ -2440,7 +2440,7 @@ gint populate_remote_func_list (windata_t *vwin)
     char *getbuf = NULL;
     char line[1024];
     char fname[32];
-    const char *status = "";
+    const char *status;
     char *basename;
     char *descrip;
     char *version;
@@ -2470,6 +2470,7 @@ gint populate_remote_func_list (windata_t *vwin)
 	    continue;
 	}
 
+	status = "";
 	get_local_object_status(fname, vwin->role, &status, remtime);
 	basename = strip_extension(fname);
 
