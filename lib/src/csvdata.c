@@ -697,7 +697,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 static int pd_from_date_label (const char *lbl, char *year, char *subp,
 			       char *format, PRN *prn)
 {
-    const char *subchars = ".:QqMmPp";
+    const char *subchars = ".:QqMmPp-";
     int len = strlen(lbl);
     int try, pd = -1;
 
