@@ -164,6 +164,7 @@ static int logfile_init (void)
 
 static int flush_logfile (void)
 {
+    int n_cmds_save;
     int err;
 
     if (n_cmds == 0) {
@@ -172,6 +173,7 @@ static int flush_logfile (void)
     }
 
     gretl_error_clear();
+    n_cmds_save = n_cmds;
 
 #if CMD_DEBUG
     fprintf(stderr, "flush_logfile: logname='%s', logprn=%p\n",
@@ -184,6 +186,8 @@ static int flush_logfile (void)
 	    return err;
 	}
     }
+
+    n_cmds = n_cmds_save;
 
     if (logline != NULL) {
 	int n = strlen(logline);
@@ -283,16 +287,16 @@ int model_command_init (int model_ID)
 
     err = flush_logfile();
 
-    if (!err) {
+    if (err) {
+	n_cmds--;
+    } else {
 	if (model_ID != prev_ID) {
 	    pprintf(logprn, "# %s %d\n", _("model"), model_ID);
 	    prev_ID = model_ID;
 	}
 	echo_cmd(libcmd, datainfo, line, CMD_RECORDING, logprn);
 	mark_session_changed();
-    } else {
-	n_cmds--;
-    }
+    } 
 
     return err;
 }

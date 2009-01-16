@@ -550,6 +550,11 @@ void selector_from_model (void *ptr, int ci)
 	    if (pmod->opt & OPT_D) {
 		model_opt |= OPT_D;
 	    }
+	} else if (pmod->ci == LAD) {
+	    if (gretl_model_get_int(pmod, "rq")) {
+		sel_ci = QUANTREG;
+	    }
+	    /* FIXME replicate rq_tauvec? */
 	}
 
 	if (pmod->opt & OPT_R) {

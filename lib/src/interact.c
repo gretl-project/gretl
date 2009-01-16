@@ -2508,7 +2508,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    strcpy(rem, line + pos + 1 + strlen(cmd->param));
 	    pos = 0;
-	    strcpy(line, rem);
+	    strcpy(line, rem); /* note */
 	    nf = count_free_fields(line);
 	    linelen = strlen(line);
 	} 

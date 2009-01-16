@@ -3002,6 +3002,7 @@ static int logistic_model_get_lmax (CMD *cmd)
 
 static int real_do_model (int action) 
 {
+    char *linecpy;
     PRN *prn;
     MODEL *pmod;
     char title[26];
@@ -3012,13 +3013,17 @@ static int real_do_model (int action)
     fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
 #endif
 
-    if (check_model_cmd() || bufopen(&prn)) {
+    /* parsing may modify cmdline, so keep a backup */
+    linecpy = gretl_strdup(cmdline);
+
+    if (linecpy == NULL || check_model_cmd() || bufopen(&prn)) {
 	return 1;
     }
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
 	nomem();
+	free(linecpy);
 	return 1;
     }
 
@@ -3159,23 +3164,20 @@ static int real_do_model (int action)
 	} else {
 	    gretl_print_destroy(prn);
 	}
-	return err;
+    } else {
+	strcpy(cmdline, linecpy);
+	model_command_init(pmod->ID);
+
+	/* record sub-sample info (if any) with the model */
+	attach_subsample_to_model(pmod, datainfo);
+
+	sprintf(title, _("gretl: model %d"), pmod->ID);
+	view_model(prn, pmod, 78, 420, title); 
     }
 
-    model_command_init(pmod->ID);
+    free(linecpy);
 
-    /* record sub-sample info (if any) with the model */
-    attach_subsample_to_model(pmod, datainfo);
-
-#if 0 /* 2007-09-28: this is wrong (will leak), because the viewer 
-	 window will take out a ref to the model? */
-    gretl_object_ref(pmod, GRETL_OBJ_EQN);
-#endif
-
-    sprintf(title, _("gretl: model %d"), pmod->ID);
-    view_model(prn, pmod, 78, 420, title); 
-
-    return 0;
+    return err;
 }
 
 #define ar1_code(c) (c == CORC || c == HILU || c == PWE)
