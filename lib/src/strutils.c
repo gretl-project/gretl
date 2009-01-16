@@ -1314,9 +1314,11 @@ char **strings_array_new_with_length (int nstrs, int len)
  * @newn: new number of strings in array.
  * @len: number of bytes per string.
  *
- * Adjusts the storage in @pS to accommodate @newn
+ * Adjusts the storage in @pS to a size of @newn
  * strings, each of them @len bytes long.  The first 
  * byte of any additional strings is initialized to 0.
+ * This function may be used either to expand or to
+ * shrink an existing array of strings.
  * 
  * Returns: the new array, or %NULL on failure.
  */
@@ -1330,6 +1332,7 @@ char **strings_array_realloc_with_length (char ***pS,
     int i, j;
 
     if (pS == NULL) {
+	/* huh? */
 	return NULL;
     }
 
@@ -1341,7 +1344,7 @@ char **strings_array_realloc_with_length (char ***pS,
     if (newn <= 0) {
 	free_strings_array(*pS, oldn);
 	*pS = NULL;
-	return *pS;
+	return NULL;
     }
 
     /* in case we're shrinking the array */

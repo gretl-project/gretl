@@ -88,6 +88,9 @@ static int show_list (void)
 
 #endif /* DSN_LIST */
 
+/* we got more data that we initially allocated space for; so
+   expand the space available */
+
 static int expand_catchment (ODBC_info *odinfo, SQLINTEGER *nrows)
 {
     double *x;
@@ -286,17 +289,18 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
-    /* SQLRowCount can give nrows = -1, even while returning
-       SQL_SUCCESS, if the ODBC server is too lazy to pre-compute the
-       number of rows in the result (e.g. Microsoft).
-    */
-
     ret = SQLRowCount(stmt, &nrows);
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLRowCount");
 	err = 1;
 	goto bailout;
     }
+
+    /* Note that SQLRowCount can give nrows = -1, even while returning
+       SQL_SUCCESS, if the ODBC driver is too lazy to compute the
+       number of rows in the result before actually fetching the data
+       (e.g. Microsoft but maybe also others).
+    */
 
     printf("Number of Rows (from SQLRowCount) = %d\n", (int) nrows);
 
