@@ -79,6 +79,10 @@ static lagpref *lpref_new (int v, char context, int type)
     lpref->v = v;
     lpref->context = context;
 
+#if LDEBUG > 1
+    fprintf(stderr, "lpref_new: added lpref for var %d\n", v);
+#endif
+
     if (type == LAGS_LIST) {
 	lpref->spectype = type;
 	lpref->lspec.laglist = NULL;
@@ -125,6 +129,9 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 
     if (spectype == LAGS_TMP) {
 	gretl_list_append_term(&lpref->lspec.laglist, lmin);
+#if LDEBUG > 1
+	fprintf(stderr, "modify_lpref: added lag %d\n", lmin);
+#endif
 	return 1;
     }
 
@@ -151,7 +158,7 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 	return mod;
     }
 
-#if LDEBUG == 1
+#if LDEBUG 
     fprintf(stderr, "modify_lpref: lmin=%d, lmax=%d, laglist=%p\n",
 	    lmin, lmax, (void *) laglist);
 #endif
@@ -439,6 +446,19 @@ static int set_lag_pref_from_lag (int v, int lag, char context)
     return err;
 }
 
+static int parent_in_list (const int *list, int p)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == p || list[i] == -p) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* Read the lists of regressors and instruments from a saved model,
    parse the lags info in these lists and convert to saved
    "lagpref" form.
@@ -463,13 +483,19 @@ static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
 	    cbase = (j == 0)? LAG_X : LAG_W;
 	    for (i=1; i<=list[0] && !err; i++) {
 		vi = list[i];
-		lag = is_standard_lag(vi, datainfo, &pv);
+		pv = 0;
+		lag = (vi == 0)? 0 : is_standard_lag(vi, datainfo, &pv);
 		if (lag != 0) {
 		    context = (pv == dv)? cbase + 1 : cbase;
 		    err = set_lag_pref_from_lag(pv, lag, context);
 		    if (!err) {
-			/* delete lagvar from list to avoid duplication */
-			gretl_list_delete_at_pos(list, i--);
+			if (pv != dv && !parent_in_list(list, pv)) {
+			    /* convert to "ghost" list entry for parent variable */
+			    list[i] = -pv;
+			} else {
+			    /* delete lagged var from list to avoid duplication */
+			    gretl_list_delete_at_pos(list, i--);
+			}
 			if (context == LAG_Y_X) {
 			    y_x_lags_enabled = 1;
 			} else if (context == LAG_Y_W) {
@@ -485,7 +511,11 @@ static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
     /* Now check whether any lagged vars were also present in
        contemporaneous form.  Note that recognizable lags have been
        removed by now, and also that we don't need to bother about the
-       dependent variable.
+       dependent variable.  Also note that negative variable numbers
+       below mark positions in the list where a "ghost" entry has
+       been inserted for a parent variable that is present only in
+       lagged form: at this point we restore the correct variable
+       number. 
     */
 
     if (nset > 0) {
@@ -495,9 +525,15 @@ static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
 		context = (j == 0)? LAG_X : LAG_W;
 		for (i=1; i<=list[0]; i++) {
 		    vi = list[i];
-		    lpref = get_saved_lpref(vi, context);
-		    if (lpref != NULL) {
-			set_lag_pref_from_lag(vi, 0, context);
+		    if (vi < 0) {
+			/* fix "ghosted" contemporaneous var */
+			list[i] = -vi;
+		    } else {
+			/* genuine contemporaneous var */
+			lpref = get_saved_lpref(vi, context);
+			if (lpref != NULL) {
+			    set_lag_pref_from_lag(vi, 0, context);
+			}
 		    }
 		}
 	    }
@@ -572,6 +608,10 @@ static int *get_lag_pref_as_list (int v, char context)
     lagpref *lpref = get_saved_lpref(v, context);
     int *list = NULL;
 
+#if LDEBUG
+    fprintf(stderr, "get_lag_pref_as_list: var = %d, context = %d\n", v, context);
+#endif
+
     if ((context == LAG_Y_X && !y_x_lags_enabled) ||
 	(context == LAG_Y_W && !y_w_lags_enabled)) {
 	return NULL;
@@ -594,6 +634,10 @@ static int *get_lag_pref_as_list (int v, char context)
 					      lpref->lspec.lminmax[1]);
 	}
     }
+
+#if LDEBUG
+    printlist(list, "returned list");
+#endif
 
     return list;
 }

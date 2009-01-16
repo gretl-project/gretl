@@ -486,6 +486,7 @@ void selector_from_model (void *ptr, int ci)
     model_opt = OPT_NONE;
 
     if (ci == VIEW_MODEL) {
+	/* single-equation model */
 	MODEL *pmod = (MODEL *) ptr;
 	int sel_ci = pmod->ci;
 	int dv = -1, gotinst = 0;
@@ -4674,7 +4675,7 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
     if (MODEL_CODE(sr->code)) {
 	if (sr->code != ARMA) {
-	    /* stick the constant in by default */
+	    /* stick the constant in by default (FIXME "Modify model") */
 	    list_append_var(mod, &iter, 0, sr, SR_RVARS1);
 	} else {
 	    g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
