@@ -1816,7 +1816,7 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
     double x, *val;
     size_t n = r * c * sizeof *val;
 
-    val = lapack_malloc(n);
+    val = malloc(n);
     if (val == NULL) {
 	return E_ALLOC;
     }
@@ -1833,7 +1833,7 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 	}
     }
 
-    lapack_free(val);
+    free(val);
 
     return 0;
 }
@@ -6786,12 +6786,24 @@ static int dgejsv_workspace_size (integer m, integer n,
 
 #if USE_JACOBI
 
-/* There are a few complications below stemming from the fact that the
-   new lapack 3.2 function dgejsv (SVD via Jacobi), while it's
-   saidq to be very accurate and fast, is incompatible in more than
-   one way with dgesvd.  Here we have to create a compatibility layer.
-   It'll be some time before we can assume lapack 3.2 is avaailable on
-   all systems.
+/* There are complications below stemming from the fact that the new
+   lapack 3.2 function dgejsv (SVD via Jacobi), while it's said to be
+   very accurate and fast, is incompatible in more than one way with
+   dgesvd.  Here we have to create a compatibility layer.  It'll be
+   some time before we can assume lapack 3.2 is avaailable on all
+   systems.
+
+   The first incompatibility is that, when the right-hand singular
+   vectors are wanted, the 'traditional' lapack function dgesvd
+   produces V' (the transpose) while dgejsv produces the actual V, so
+   for backward compatibility we need to transpose the V produced
+   here.
+
+   Second, dgesvd can handle the case of m < n (for m x n input matrix
+   A) but dgejsv cannot.  So if we're given m < n we need to transpose
+   the input matrix then sort everything out on output.  This means
+   that U and V have to be swapped, and it's U, not V, that needs
+   transposing.  Clear enough? ;-)
 */
 
 static int 
@@ -6851,7 +6863,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	goto bailout;
     }
     
-    if (pu != NULL) {
+    if ((!tr && pu != NULL) || (tr && pv != NULL)) {
 	if (smod == SVD_FULL) {
 	    u = gretl_matrix_alloc(m, m);
 	} else {
@@ -6867,7 +6879,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	}
     } 
 
-    if (pv != NULL) {
+    if ((!tr && pv != NULL) || (tr && pu != NULL)) {
 	v = gretl_matrix_alloc(n, n);
 	if (v == NULL) {
 	    err = E_ALLOC;
@@ -6904,35 +6916,39 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	goto bailout;
     }
 
-    /* Note: the 'traditional' dgesvd produces v', not v, so for
-       compatibility we'll transpose the v produced here if necessary.
-       But if had to tranpose the input matrix 'a' then all is
-       reversed: we need to transpose u, if it's wanted, while the
-       non-transposed v already == v'.  Clear enough? ;-)
-    */
-
     if (ps != NULL) {
 	*ps = s;
 	s = NULL;
     }
 
     if (pu != NULL) {
+	/* left-hand singular vectors wanted */
 	if (tr) {
-	    err = gretl_matrix_transpose_in_place(u);
-	}
-	if (!err) {
+	    /* U <- V' */
+	    err = gretl_matrix_transpose_in_place(v);
+	    if (!err) {
+		*pu = v;
+		v = NULL;
+	    }	    
+	} else {
+	    /* phew! */
 	    *pu = u;
 	    u = NULL;
 	}
     }
 
     if (pv != NULL && !err) {
+	/* right-hand singular vectors wanted */
 	if (!tr) {
+	    /* V' <- V */
 	    err = gretl_matrix_transpose_in_place(v);
-	}
-	if (!err) {
-	    *pv = v;
-	    v = NULL;
+	    if (!err) {
+		*pv = v;
+		v = NULL;
+	    }
+	} else {
+	    *pv = u;
+	    u = NULL;
 	}
     }
 

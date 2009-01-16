@@ -2268,7 +2268,8 @@ static void adjust_fcast_k (GtkSpinButton *spin, int *pk)
     *pk = gtk_spin_button_get_value(spin);
 }
 
-#define fcast_errs_ok(m) (m->ci != NLS || !gretl_model_get_int(m, "dynamic"))
+#define fcast_errs_ok(m) (m == NULL || m->ci != NLS || \
+			  !gretl_model_get_int(m, "dynamic"))
 
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
