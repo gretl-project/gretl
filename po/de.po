@@ -9,17 +9,19 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 19:42-0500\n"
-"PO-Revision-Date: 2009-01-15 16:28+0100\n"
+"POT-Creation-Date: 2009-01-16 08:50-0500\n"
+"PO-Revision-Date: 2009-01-04 14:53+0100\n"
 "Last-Translator: Sven Schreiber <svetosch --- gmx  ... net>\n"
-"Language-Team: \n"
+"Language-Team: German\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
 #: lib/src/adf_kpss.c:241
+#, fuzzy
 msgid "lagged differences"
-msgstr "verz�gerte Differenzen"
+msgstr "= log-Differenzen von %s"
 
 #: lib/src/adf_kpss.c:252
 #, c-format
@@ -88,54 +90,50 @@ msgstr "asymptotischer p-Wert"
 msgid "lag order %d\n"
 msgstr "Lagordnung %d\n"
 
-#: lib/src/adf_kpss.c:325
+#: lib/src/adf_kpss.c:316
 #, c-format
 msgid "sample size %d\n"
 msgstr "Stichprobengröße %d\n"
 
-#: lib/src/adf_kpss.c:326
+#: lib/src/adf_kpss.c:317
 msgid "unit-root null hypothesis: a = 1"
 msgstr "Nullhypothese Einheitswurzel: a = 1"
 
-#: lib/src/adf_kpss.c:337
+#: lib/src/adf_kpss.c:328
 msgid "plus seasonal dummies"
 msgstr "plus Saisondummies"
 
-#: lib/src/adf_kpss.c:342 gui2/cmdstack.c:288
+#: lib/src/adf_kpss.c:333 gui2/cmdstack.c:288
 msgid "model"
 msgstr "Modell"
 
-#: lib/src/adf_kpss.c:346 gui2/selector.c:2991
-msgid "lag order:"
-msgstr "Lagordnung:"
-
-#: lib/src/adf_kpss.c:350
+#: lib/src/adf_kpss.c:337
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "Autokorrelationskoeff. 1. Ordnung für e"
 
-#: lib/src/adf_kpss.c:366
+#: lib/src/adf_kpss.c:353
 msgid "estimated value of (a - 1)"
 msgstr "geschätzter Wert für (a - 1)"
 
-#: lib/src/adf_kpss.c:367 lib/src/describe.c:2947 lib/src/describe.c:3174
+#: lib/src/adf_kpss.c:354 lib/src/describe.c:2947 lib/src/describe.c:3174
 #: gui2/calculator.c:580
 msgid "test statistic"
 msgstr "Teststatistik"
 
-#: lib/src/adf_kpss.c:372 lib/src/adf_kpss.c:375 lib/src/adf_kpss.c:914
-#: lib/src/adf_kpss.c:918 lib/src/adf_kpss.c:921 plugin/stats_tables.c:238
+#: lib/src/adf_kpss.c:359 lib/src/adf_kpss.c:362 lib/src/adf_kpss.c:901
+#: lib/src/adf_kpss.c:905 lib/src/adf_kpss.c:908 plugin/stats_tables.c:238
 msgid "Critical values"
 msgstr "Kritische Werte"
 
-#: lib/src/adf_kpss.c:904
+#: lib/src/adf_kpss.c:891
 msgid "Robust estimate of variance"
 msgstr "Robuste Schätzung der Varianz"
 
-#: lib/src/adf_kpss.c:905
+#: lib/src/adf_kpss.c:892
 msgid "Sum of squares of cumulated residuals"
 msgstr "Quadratsumme der kumulierten Residuen"
 
-#: lib/src/adf_kpss.c:910
+#: lib/src/adf_kpss.c:897
 #, c-format
 msgid ""
 "\n"
@@ -146,20 +144,20 @@ msgstr ""
 "KPSS-Test für %s %s\n"
 "\n"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(including trend)"
 msgstr "(inklusive Trend)"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(without trend)"
 msgstr "(ohne Trend)"
 
-#: lib/src/adf_kpss.c:912
+#: lib/src/adf_kpss.c:899
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "Lag-Berücksichtigungsschwelle = %d\n"
 
-#: lib/src/adf_kpss.c:913 lib/src/compare.c:343 lib/src/compare.c:370
+#: lib/src/adf_kpss.c:900 lib/src/compare.c:343 lib/src/compare.c:370
 #: lib/src/compare.c:813 lib/src/compare.c:1576 lib/src/compare.c:1781
 #: lib/src/compare.c:1953 lib/src/describe.c:4388 lib/src/estimate.c:2565
 #: lib/src/estimate.c:2578 lib/src/estimate.c:2585 lib/src/estimate.c:3367
@@ -173,22 +171,22 @@ msgstr "Lag-Berücksichtigungsschwelle = %d\n"
 msgid "Test statistic"
 msgstr "Teststatistik"
 
-#: lib/src/adf_kpss.c:1136
+#: lib/src/adf_kpss.c:1123
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Schritt %d: Test auf Einheitswurzel in %s\n"
 
-#: lib/src/adf_kpss.c:1143
+#: lib/src/adf_kpss.c:1130
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Schritt %d: Kointegrationsregression\n"
 
-#: lib/src/adf_kpss.c:1171
+#: lib/src/adf_kpss.c:1158
 #, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
 msgstr "Schritt %d: Dickey-Fuller-Test der Residuen\n"
 
-#: lib/src/adf_kpss.c:1180
+#: lib/src/adf_kpss.c:1167
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -198,10 +196,10 @@ msgid ""
 msgstr ""
 "\n"
 "Es gibt Evidenz für eine Kointegrationsbeziehung, falls:\n"
-"(a) die Einheitswurzel-Hypothese für die einzelnen Variablen nicht "
-"verworfen wird.\n"
-"(b) die Einheitswurzel-Hypothese aber verworfen wird für die Residuen "
-"(uhat) der \n"
+"(a) die Einheitswurzel-Hypothese für die einzelnen Variablen nicht verworfen "
+"wird.\n"
+"(b) die Einheitswurzel-Hypothese aber verworfen wird für die Residuen (uhat) "
+"der \n"
 "    Kointegrationsregression.\n"
 
 #: lib/src/bootstrap.c:408
@@ -1108,7 +1106,7 @@ msgid ""
 "periodicity: %d, maxobs: %d,\n"
 "observations range: %s-%s\n"
 msgstr ""
-"Periodizität: %d, max-Beob.: %d,\n"
+"Frequenz: %d, max-Beob.: %d,\n"
 "Beobachtungsbereich: %s-%s\n"
 
 #: lib/src/dataio.c:1934
@@ -1648,8 +1646,7 @@ msgstr ""
 #: lib/src/describe.c:3737
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
-msgstr ""
-"%s entfernt: Stichprobenbereich enthält keine gültigen Beobachtungen\n"
+msgstr "%s entfernt: Stichprobenbereich enthält keine gültigen Beobachtungen\n"
 
 #: lib/src/describe.c:4129 lib/src/modelprint.c:2823 lib/src/modelprint.c:2835
 #: lib/src/modelprint.c:2836 lib/src/modelprint.c:2837
@@ -2131,7 +2128,7 @@ msgstr "%s = 1 wenn %s %d ist, 0 sonst"
 #: lib/src/genfuncs.c:1281 lib/src/varprint.c:136 lib/src/varprint.c:138
 #: lib/src/varprint.c:140
 msgid "period"
-msgstr "Punkt"
+msgstr "Periode"
 
 #: lib/src/genfuncs.c:1308
 msgid "unit"
@@ -3102,7 +3099,7 @@ msgid ""
 "                         observed over %d periods\n"
 "\n"
 msgstr ""
-"      Diagnostik: nehme balanciertes Panel mit %d Querschnittseinheiten an\n"
+"      Diagnostik: nehme an balanciertes Panel mit %d Querschnittseinheiten\n"
 "                         beobachtet über %d Perioden\n"
 "\n"
 
@@ -3241,8 +3238,7 @@ msgstr "Restriktion"
 #: lib/src/gretl_restrict.c:1345
 #, c-format
 msgid "Coefficient number (%d) out of range for equation %d"
-msgstr ""
-"Anzahl Koeffizienten (%d) nicht im zulässigen Bereich für Gleichung %d"
+msgstr "Anzahl Koeffizienten (%d) nicht im zulässigen Bereich für Gleichung %d"
 
 #: lib/src/gretl_restrict.c:1547
 #, c-format
@@ -5753,7 +5749,7 @@ msgstr ""
 "\n"
 "Weibull (Form = %g, Skala = %g): "
 
-#: lib/src/strutils.c:1597
+#: lib/src/strutils.c:1666
 #, c-format
 msgid "out of memory in XML encoding"
 msgstr "Zu wenig Speicher beim XML-Encoden"
@@ -6578,8 +6574,9 @@ msgstr ""
 "(einseitig = %.4g)\n"
 
 #: gui2/calculator.c:1503
+#, fuzzy
 msgid "nonparametric test"
-msgstr "nichtparametrischer Test"
+msgstr "_Nichtparametrische Tests"
 
 #: gui2/calculator.c:1529
 #, c-format
@@ -7266,20 +7263,18 @@ msgstr "Kreuzkorrelogramm"
 #: gui2/cmdstack.c:105
 #, c-format
 msgid "# Log re-started %s\n"
-msgstr "# Log neu gestartet %s\n"
+msgstr ""
 
 #: gui2/cmdstack.c:145
 #, c-format
 msgid "# Log started %s\n"
-msgstr "# Log gestartet %s\n"
+msgstr ""
 
 #: gui2/cmdstack.c:147
 msgid ""
 "# Record of session commands.  Please note that this will\n"
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
-"# Aufzeichnung der Sitzungs-Befehle. Bitte beachten, dass diese\n"
-"# vor Ausf�hren als Skript wohl �berarbeitet werden muss.\n"
 
 #: gui2/cmdstack.c:327
 msgid "The command log is empty"
@@ -7325,8 +7320,8 @@ msgid ""
 "not a valid thing to do."
 msgstr ""
 "Möchten Sie wirklich eine Reihe niedriger Frequenz\n"
-"zu einem Datensatz hoher Frequenz hinzufügen?\\nFalls sie 'Ja' wählen, "
-"wird die Frequenz der Quelldaten\n"
+"zu einem Datensatz hoher Frequenz hinzufügen?\\nFalls sie 'Ja' wählen, wird "
+"die Frequenz der Quelldaten\n"
 "durch %d-fache Wiederholung jedes Werts erhöht. Im allg.\n"
 "ist dies nicht zulässig."
 
@@ -7914,7 +7909,7 @@ msgstr "Komma (,)"
 
 #: gui2/dialogs.c:312
 msgid "space"
-msgstr "Leerzeichen"
+msgstr "Space"
 
 #: gui2/dialogs.c:325
 msgid "tab"
@@ -7930,7 +7925,7 @@ msgstr "Dezimalseparator:"
 
 #: gui2/dialogs.c:363
 msgid "period (.)"
-msgstr "Punkt (.)"
+msgstr "Periode (.)"
 
 #: gui2/dialogs.c:392
 msgid "include observations column"
@@ -9616,7 +9611,7 @@ msgstr "Beobachtungen _hinzufügen..."
 
 #: gui2/gretl.c:1340
 msgid "_Remove extra observations"
-msgstr "Zusätzliche (out-of-sample) Beob. entfernen"
+msgstr "Zusätzliche (out-of-sample) Perioden entfernen"
 
 #: gui2/gretl.c:1341
 msgid "_Read info"
@@ -12168,6 +12163,10 @@ msgstr "als Voreinstellung"
 msgid "Public interface"
 msgstr "Öffentliche Schnittstellen"
 
+#: gui2/selector.c:2991
+msgid "lag order:"
+msgstr "Lagordnung:"
+
 #: gui2/selector.c:2992
 msgid "cointegration rank:"
 msgstr "Kointegrationsrang:"
@@ -12545,8 +12544,9 @@ msgid "Define named list"
 msgstr "Definiere benannte Liste"
 
 #: gui2/selector.c:5073
+#, fuzzy
 msgid "Name for list:"
-msgstr "Name f�r Liste:"
+msgstr "Anzahl Klassen:"
 
 #: gui2/selector.c:5162
 msgid "Available vars"
@@ -14380,8 +14380,7 @@ msgstr "Kehrwert der Konditionszahl"
 
 #: plugin/vif.c:189
 msgid "The statistic you requested is not meaningful for this model"
-msgstr ""
-"Die angeforderte Statistik ist für dieses Modell nicht aussagekräftig"
+msgstr "Die angeforderte Statistik ist für dieses Modell nicht aussagekräftig"
 
 #: plugin/vif.c:252
 msgid "Variance Inflation Factors"
@@ -15145,8 +15144,8 @@ msgstr "Zugriffsvariablen"
 #~ "An econometrics program for the gnome desktop issued under the GNU "
 #~ "General Public License.  http://gretl.sourceforge.net/"
 #~ msgstr ""
-#~ "Ein Ãkonometrieprogramm fÃ¼r den Gnome-Desktop, erschienen unter der "
-#~ "GNU General Public License. http://gretl.sourceforge.net/"
+#~ "Ein Ãkonometrieprogramm fÃ¼r den Gnome-Desktop, erschienen unter der GNU "
+#~ "General Public License. http://gretl.sourceforge.net/"
 
 #~ msgid ""
 #~ "Cannot find the license agreement file COPYING. Please make sure it's in %"

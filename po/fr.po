@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 19:42-0500\n"
+"POT-Creation-Date: 2009-01-16 08:50-0500\n"
 "PO-Revision-Date: 2009-01-14 10:19+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -87,54 +87,50 @@ msgstr "p. critique asymptotique"
 msgid "lag order %d\n"
 msgstr "ordre des retards %d\n"
 
-#: lib/src/adf_kpss.c:325
+#: lib/src/adf_kpss.c:316
 #, c-format
 msgid "sample size %d\n"
 msgstr "taille de l'échantillon %d\n"
 
-#: lib/src/adf_kpss.c:326
+#: lib/src/adf_kpss.c:317
 msgid "unit-root null hypothesis: a = 1"
 msgstr "hypothèse nulle de racine unitaire : a = 1"
 
-#: lib/src/adf_kpss.c:337
+#: lib/src/adf_kpss.c:328
 msgid "plus seasonal dummies"
 msgstr "avec des variables muettes saisonnières"
 
-#: lib/src/adf_kpss.c:342 gui2/cmdstack.c:288
+#: lib/src/adf_kpss.c:333 gui2/cmdstack.c:288
 msgid "model"
 msgstr "modèle"
 
-#: lib/src/adf_kpss.c:346 gui2/selector.c:2991
-msgid "lag order:"
-msgstr "ordre des retards :"
-
-#: lib/src/adf_kpss.c:350
+#: lib/src/adf_kpss.c:337
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "Coeff. d'autocorrélation du 1er ordre pour e"
 
-#: lib/src/adf_kpss.c:366
+#: lib/src/adf_kpss.c:353
 msgid "estimated value of (a - 1)"
 msgstr "valeur estimée de (a - 1)"
 
-#: lib/src/adf_kpss.c:367 lib/src/describe.c:2947 lib/src/describe.c:3174
+#: lib/src/adf_kpss.c:354 lib/src/describe.c:2947 lib/src/describe.c:3174
 #: gui2/calculator.c:580
 msgid "test statistic"
 msgstr "statistique de test"
 
-#: lib/src/adf_kpss.c:372 lib/src/adf_kpss.c:375 lib/src/adf_kpss.c:914
-#: lib/src/adf_kpss.c:918 lib/src/adf_kpss.c:921 plugin/stats_tables.c:238
+#: lib/src/adf_kpss.c:359 lib/src/adf_kpss.c:362 lib/src/adf_kpss.c:901
+#: lib/src/adf_kpss.c:905 lib/src/adf_kpss.c:908 plugin/stats_tables.c:238
 msgid "Critical values"
 msgstr "Valeurs critiques"
 
-#: lib/src/adf_kpss.c:904
+#: lib/src/adf_kpss.c:891
 msgid "Robust estimate of variance"
 msgstr "Estimation robuste de la variance"
 
-#: lib/src/adf_kpss.c:905
+#: lib/src/adf_kpss.c:892
 msgid "Sum of squares of cumulated residuals"
 msgstr "Somme des carrés des résidus cumulés"
 
-#: lib/src/adf_kpss.c:910
+#: lib/src/adf_kpss.c:897
 #, c-format
 msgid ""
 "\n"
@@ -145,20 +141,20 @@ msgstr ""
 "Test KPSS pour %s %s\n"
 "\n"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(including trend)"
 msgstr "(avec tendance)"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(without trend)"
 msgstr "(sans la tendance)"
 
-#: lib/src/adf_kpss.c:912
+#: lib/src/adf_kpss.c:899
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "Paramètre du délai de troncation = %d\n"
 
-#: lib/src/adf_kpss.c:913 lib/src/compare.c:343 lib/src/compare.c:370
+#: lib/src/adf_kpss.c:900 lib/src/compare.c:343 lib/src/compare.c:370
 #: lib/src/compare.c:813 lib/src/compare.c:1576 lib/src/compare.c:1781
 #: lib/src/compare.c:1953 lib/src/describe.c:4388 lib/src/estimate.c:2565
 #: lib/src/estimate.c:2578 lib/src/estimate.c:2585 lib/src/estimate.c:3367
@@ -172,22 +168,22 @@ msgstr "Paramètre du délai de troncation = %d\n"
 msgid "Test statistic"
 msgstr "Statistique de test"
 
-#: lib/src/adf_kpss.c:1136
+#: lib/src/adf_kpss.c:1123
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Étape %d : test d'une racine unitaire dans %s\n"
 
-#: lib/src/adf_kpss.c:1143
+#: lib/src/adf_kpss.c:1130
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Étape %d : cointégration\n"
 
-#: lib/src/adf_kpss.c:1171
+#: lib/src/adf_kpss.c:1158
 #, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
 msgstr "Étape %d : Régression de Dickey-Fuller\n"
 
-#: lib/src/adf_kpss.c:1180
+#: lib/src/adf_kpss.c:1167
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -5784,7 +5780,7 @@ msgstr ""
 "\n"
 "Weibull (shape = %g, scale = %g): "
 
-#: lib/src/strutils.c:1597
+#: lib/src/strutils.c:1666
 #, c-format
 msgid "out of memory in XML encoding"
 msgstr "hors mémoire dans l'encodage XML"
@@ -12204,6 +12200,10 @@ msgstr "Choisir par défaut"
 #: gui2/selector.c:2953
 msgid "Public interface"
 msgstr "Interface publique"
+
+#: gui2/selector.c:2991
+msgid "lag order:"
+msgstr "ordre des retards :"
 
 #: gui2/selector.c:2992
 msgid "cointegration rank:"

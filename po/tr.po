@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 19:42-0500\n"
+"POT-Creation-Date: 2009-01-16 08:50-0500\n"
 "PO-Revision-Date: 2009-01-15 09:59+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -90,54 +90,50 @@ msgstr "kavuşmazsal p-değeri"
 msgid "lag order %d\n"
 msgstr "gecikme derecesi %d\n"
 
-#: lib/src/adf_kpss.c:325
+#: lib/src/adf_kpss.c:316
 #, c-format
 msgid "sample size %d\n"
 msgstr "örneklem büyüklüğü %d\n"
 
-#: lib/src/adf_kpss.c:326
+#: lib/src/adf_kpss.c:317
 msgid "unit-root null hypothesis: a = 1"
 msgstr "birim kök sıfır önsavı: a = 1"
 
-#: lib/src/adf_kpss.c:337
+#: lib/src/adf_kpss.c:328
 msgid "plus seasonal dummies"
 msgstr "artı mevsimsel kuklalar"
 
-#: lib/src/adf_kpss.c:342 gui2/cmdstack.c:288
+#: lib/src/adf_kpss.c:333 gui2/cmdstack.c:288
 msgid "model"
 msgstr "model"
 
-#: lib/src/adf_kpss.c:346 gui2/selector.c:2991
-msgid "lag order:"
-msgstr "gecikme derecesi:"
-
-#: lib/src/adf_kpss.c:350
+#: lib/src/adf_kpss.c:337
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "e için birinci dereceden özilinti katsayısı"
 
-#: lib/src/adf_kpss.c:366
+#: lib/src/adf_kpss.c:353
 msgid "estimated value of (a - 1)"
 msgstr "(a - 1)'in tahmin edilen değeri"
 
-#: lib/src/adf_kpss.c:367 lib/src/describe.c:2947 lib/src/describe.c:3174
+#: lib/src/adf_kpss.c:354 lib/src/describe.c:2947 lib/src/describe.c:3174
 #: gui2/calculator.c:580
 msgid "test statistic"
 msgstr "sınama istatistiği"
 
-#: lib/src/adf_kpss.c:372 lib/src/adf_kpss.c:375 lib/src/adf_kpss.c:914
-#: lib/src/adf_kpss.c:918 lib/src/adf_kpss.c:921 plugin/stats_tables.c:238
+#: lib/src/adf_kpss.c:359 lib/src/adf_kpss.c:362 lib/src/adf_kpss.c:901
+#: lib/src/adf_kpss.c:905 lib/src/adf_kpss.c:908 plugin/stats_tables.c:238
 msgid "Critical values"
 msgstr "Eşik değerleri"
 
-#: lib/src/adf_kpss.c:904
+#: lib/src/adf_kpss.c:891
 msgid "Robust estimate of variance"
 msgstr "Sağlam varyans tahmini"
 
-#: lib/src/adf_kpss.c:905
+#: lib/src/adf_kpss.c:892
 msgid "Sum of squares of cumulated residuals"
 msgstr "Yığınlı kalıntı kareleri toplamı"
 
-#: lib/src/adf_kpss.c:910
+#: lib/src/adf_kpss.c:897
 #, c-format
 msgid ""
 "\n"
@@ -147,20 +143,20 @@ msgstr ""
 "\n"
 "%s %s için KPSS sınaması\n"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(including trend)"
 msgstr "(eğilim ile)"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(without trend)"
 msgstr "(eğilimsiz)"
 
-#: lib/src/adf_kpss.c:912
+#: lib/src/adf_kpss.c:899
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "Gecikme budama değiştirgesi = %d\n"
 
-#: lib/src/adf_kpss.c:913 lib/src/compare.c:343 lib/src/compare.c:370
+#: lib/src/adf_kpss.c:900 lib/src/compare.c:343 lib/src/compare.c:370
 #: lib/src/compare.c:813 lib/src/compare.c:1576 lib/src/compare.c:1781
 #: lib/src/compare.c:1953 lib/src/describe.c:4388 lib/src/estimate.c:2565
 #: lib/src/estimate.c:2578 lib/src/estimate.c:2585 lib/src/estimate.c:3367
@@ -174,22 +170,22 @@ msgstr "Gecikme budama değiştirgesi = %d\n"
 msgid "Test statistic"
 msgstr "Sınama istatistiği"
 
-#: lib/src/adf_kpss.c:1136
+#: lib/src/adf_kpss.c:1123
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Adım %d: %s birim kök için sınanıyor\n"
 
-#: lib/src/adf_kpss.c:1143
+#: lib/src/adf_kpss.c:1130
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Adım %d: eştümleyen bağlanım\n"
 
-#: lib/src/adf_kpss.c:1171
+#: lib/src/adf_kpss.c:1158
 #, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
 msgstr "Adım %d: kalıntılar üzerinde Dickey-Fuller sınaması\n"
 
-#: lib/src/adf_kpss.c:1180
+#: lib/src/adf_kpss.c:1167
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -5737,7 +5733,7 @@ msgstr ""
 "\n"
 "Weibull (şekil = %g, ölçek = %g): "
 
-#: lib/src/strutils.c:1597
+#: lib/src/strutils.c:1666
 #, c-format
 msgid "out of memory in XML encoding"
 msgstr "XML kodlaması için bellek yetersiz"
@@ -12144,6 +12140,10 @@ msgstr "Öntanımlı olarak sapta"
 #: gui2/selector.c:2953
 msgid "Public interface"
 msgstr "Ortak arayüz"
+
+#: gui2/selector.c:2991
+msgid "lag order:"
+msgstr "gecikme derecesi:"
 
 #: gui2/selector.c:2992
 msgid "cointegration rank:"

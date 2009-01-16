@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 19:42-0500\n"
+"POT-Creation-Date: 2009-01-16 08:50-0500\n"
 "PO-Revision-Date: 2009-01-16 01:11+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -101,54 +101,50 @@ msgstr "асимпт. р-значение"
 msgid "lag order %d\n"
 msgstr "лаг %d-го порядка\n"
 
-#: lib/src/adf_kpss.c:325
+#: lib/src/adf_kpss.c:316
 #, c-format
 msgid "sample size %d\n"
 msgstr "объем выборки %d\n"
 
-#: lib/src/adf_kpss.c:326
+#: lib/src/adf_kpss.c:317
 msgid "unit-root null hypothesis: a = 1"
 msgstr "нулевая гипотеза единичного корня: a = 1"
 
-#: lib/src/adf_kpss.c:337
+#: lib/src/adf_kpss.c:328
 msgid "plus seasonal dummies"
 msgstr "включая сезонные фиктивные переменные"
 
-#: lib/src/adf_kpss.c:342 gui2/cmdstack.c:288
+#: lib/src/adf_kpss.c:333 gui2/cmdstack.c:288
 msgid "model"
 msgstr "модель"
 
-#: lib/src/adf_kpss.c:346 gui2/selector.c:2991
-msgid "lag order:"
-msgstr "порядок лага:"
-
-#: lib/src/adf_kpss.c:350
+#: lib/src/adf_kpss.c:337
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "коэф. автокорреляции 1-го порядка для e"
 
-#: lib/src/adf_kpss.c:366
+#: lib/src/adf_kpss.c:353
 msgid "estimated value of (a - 1)"
 msgstr "оценка для (a - 1)"
 
-#: lib/src/adf_kpss.c:367 lib/src/describe.c:2947 lib/src/describe.c:3174
+#: lib/src/adf_kpss.c:354 lib/src/describe.c:2947 lib/src/describe.c:3174
 #: gui2/calculator.c:580
 msgid "test statistic"
 msgstr "тестовая статистика"
 
-#: lib/src/adf_kpss.c:372 lib/src/adf_kpss.c:375 lib/src/adf_kpss.c:914
-#: lib/src/adf_kpss.c:918 lib/src/adf_kpss.c:921 plugin/stats_tables.c:238
+#: lib/src/adf_kpss.c:359 lib/src/adf_kpss.c:362 lib/src/adf_kpss.c:901
+#: lib/src/adf_kpss.c:905 lib/src/adf_kpss.c:908 plugin/stats_tables.c:238
 msgid "Critical values"
 msgstr "Крит. значения"
 
-#: lib/src/adf_kpss.c:904
+#: lib/src/adf_kpss.c:891
 msgid "Robust estimate of variance"
 msgstr "Робастная оценка дисперсии"
 
-#: lib/src/adf_kpss.c:905
+#: lib/src/adf_kpss.c:892
 msgid "Sum of squares of cumulated residuals"
 msgstr "Cумма квадратов кумулятивных ошибок"
 
-#: lib/src/adf_kpss.c:910
+#: lib/src/adf_kpss.c:897
 #, c-format
 msgid ""
 "\n"
@@ -159,20 +155,20 @@ msgstr ""
 "KPSS тест для %s %s\n"
 "\n"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(including trend)"
 msgstr "(включая тренд)"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(without trend)"
 msgstr "(без тренда)"
 
-#: lib/src/adf_kpss.c:912
+#: lib/src/adf_kpss.c:899
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "Параметр для усечения лагов = %d\n"
 
-#: lib/src/adf_kpss.c:913 lib/src/compare.c:343 lib/src/compare.c:370
+#: lib/src/adf_kpss.c:900 lib/src/compare.c:343 lib/src/compare.c:370
 #: lib/src/compare.c:813 lib/src/compare.c:1576 lib/src/compare.c:1781
 #: lib/src/compare.c:1953 lib/src/describe.c:4388 lib/src/estimate.c:2565
 #: lib/src/estimate.c:2578 lib/src/estimate.c:2585 lib/src/estimate.c:3367
@@ -186,22 +182,22 @@ msgstr "Параметр для усечения лагов = %d\n"
 msgid "Test statistic"
 msgstr "Тестовая статистика"
 
-#: lib/src/adf_kpss.c:1136
+#: lib/src/adf_kpss.c:1123
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Шаг %d: тестирование единичного корня для %s\n"
 
-#: lib/src/adf_kpss.c:1143
+#: lib/src/adf_kpss.c:1130
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Шаг %d: коинтеграционная регрессия\n"
 
-#: lib/src/adf_kpss.c:1171
+#: lib/src/adf_kpss.c:1158
 #, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
 msgstr "Этап %d: Тест Дики-Фуллера для остатков\n"
 
-#: lib/src/adf_kpss.c:1180
+#: lib/src/adf_kpss.c:1167
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -5688,7 +5684,7 @@ msgstr ""
 "\n"
 "Вейбулл (форма = %g, масштаб = %g): "
 
-#: lib/src/strutils.c:1597
+#: lib/src/strutils.c:1666
 #, c-format
 msgid "out of memory in XML encoding"
 msgstr ""
@@ -12036,6 +12032,10 @@ msgstr "Установить по умолчанию"
 #: gui2/selector.c:2953
 msgid "Public interface"
 msgstr "Публичный интерфейс"
+
+#: gui2/selector.c:2991
+msgid "lag order:"
+msgstr "порядок лага:"
 
 #: gui2/selector.c:2992
 msgid "cointegration rank:"

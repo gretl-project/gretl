@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 19:42-0500\n"
+"POT-Creation-Date: 2009-01-16 08:50-0500\n"
 "PO-Revision-Date: 2008-12-30 00:55+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
@@ -93,54 +93,50 @@ msgstr "valor p assimptótico"
 msgid "lag order %d\n"
 msgstr "ordem de desfasamento %d\n"
 
-#: lib/src/adf_kpss.c:325
+#: lib/src/adf_kpss.c:316
 #, c-format
 msgid "sample size %d\n"
 msgstr "dimensão de amostragem %d\n"
 
-#: lib/src/adf_kpss.c:326
+#: lib/src/adf_kpss.c:317
 msgid "unit-root null hypothesis: a = 1"
 msgstr "hipótese nula de raiz unitária: a = 1"
 
-#: lib/src/adf_kpss.c:337
+#: lib/src/adf_kpss.c:328
 msgid "plus seasonal dummies"
 msgstr "variáveis auxiliares de sazonalidade aditiva"
 
-#: lib/src/adf_kpss.c:342 gui2/cmdstack.c:288
+#: lib/src/adf_kpss.c:333 gui2/cmdstack.c:288
 msgid "model"
 msgstr "modelo"
 
-#: lib/src/adf_kpss.c:346 gui2/selector.c:2991
-msgid "lag order:"
-msgstr "ordem de desfasamento:"
-
-#: lib/src/adf_kpss.c:350
+#: lib/src/adf_kpss.c:337
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "coeficiente de 1ª-ordem para e"
 
-#: lib/src/adf_kpss.c:366
+#: lib/src/adf_kpss.c:353
 msgid "estimated value of (a - 1)"
 msgstr "valor estimado de (a - 1)"
 
-#: lib/src/adf_kpss.c:367 lib/src/describe.c:2947 lib/src/describe.c:3174
+#: lib/src/adf_kpss.c:354 lib/src/describe.c:2947 lib/src/describe.c:3174
 #: gui2/calculator.c:580
 msgid "test statistic"
 msgstr "estatística de teste"
 
-#: lib/src/adf_kpss.c:372 lib/src/adf_kpss.c:375 lib/src/adf_kpss.c:914
-#: lib/src/adf_kpss.c:918 lib/src/adf_kpss.c:921 plugin/stats_tables.c:238
+#: lib/src/adf_kpss.c:359 lib/src/adf_kpss.c:362 lib/src/adf_kpss.c:901
+#: lib/src/adf_kpss.c:905 lib/src/adf_kpss.c:908 plugin/stats_tables.c:238
 msgid "Critical values"
 msgstr "Valores críticos"
 
-#: lib/src/adf_kpss.c:904
+#: lib/src/adf_kpss.c:891
 msgid "Robust estimate of variance"
 msgstr "Estimação robusta da variância"
 
-#: lib/src/adf_kpss.c:905
+#: lib/src/adf_kpss.c:892
 msgid "Sum of squares of cumulated residuals"
 msgstr "Soma dos quadrados dos resíduos acumulados"
 
-#: lib/src/adf_kpss.c:910
+#: lib/src/adf_kpss.c:897
 #, c-format
 msgid ""
 "\n"
@@ -151,20 +147,20 @@ msgstr ""
 "teste KPSS para %s %s\n"
 "\n"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(including trend)"
 msgstr "(incluindo tendência)"
 
-#: lib/src/adf_kpss.c:911
+#: lib/src/adf_kpss.c:898
 msgid "(without trend)"
 msgstr "(sem tendência)"
 
-#: lib/src/adf_kpss.c:912
+#: lib/src/adf_kpss.c:899
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "Parâmetro de truncagem do desfasamento = %d\n"
 
-#: lib/src/adf_kpss.c:913 lib/src/compare.c:343 lib/src/compare.c:370
+#: lib/src/adf_kpss.c:900 lib/src/compare.c:343 lib/src/compare.c:370
 #: lib/src/compare.c:813 lib/src/compare.c:1576 lib/src/compare.c:1781
 #: lib/src/compare.c:1953 lib/src/describe.c:4388 lib/src/estimate.c:2565
 #: lib/src/estimate.c:2578 lib/src/estimate.c:2585 lib/src/estimate.c:3367
@@ -178,22 +174,22 @@ msgstr "Parâmetro de truncagem do desfasamento = %d\n"
 msgid "Test statistic"
 msgstr "Estatística de teste"
 
-#: lib/src/adf_kpss.c:1136
+#: lib/src/adf_kpss.c:1123
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Passo %d: teste para uma raiz unitária em %s\n"
 
-#: lib/src/adf_kpss.c:1143
+#: lib/src/adf_kpss.c:1130
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Passo %d: regressão de cointegração\n"
 
-#: lib/src/adf_kpss.c:1171
+#: lib/src/adf_kpss.c:1158
 #, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
 msgstr "Passo %d: teste Dickey-Fuller nos resíduos\n"
 
-#: lib/src/adf_kpss.c:1180
+#: lib/src/adf_kpss.c:1167
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -5784,7 +5780,7 @@ msgstr ""
 "\n"
 "Weibull (forma = %g, escala = %g): "
 
-#: lib/src/strutils.c:1597
+#: lib/src/strutils.c:1666
 #, c-format
 msgid "out of memory in XML encoding"
 msgstr "memória esgotada durante codificação em XML"
@@ -12206,6 +12202,10 @@ msgstr "Definir por omissão"
 #: gui2/selector.c:2953
 msgid "Public interface"
 msgstr "Interface público"
+
+#: gui2/selector.c:2991
+msgid "lag order:"
+msgstr "ordem de desfasamento:"
 
 #: gui2/selector.c:2992
 msgid "cointegration rank:"
