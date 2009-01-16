@@ -1308,6 +1308,75 @@ char **strings_array_new_with_length (int nstrs, int len)
 }
 
 /**
+ * strings_array_realloc_with_length:
+ * @pS: existing array to reallocate.
+ * @oldn: original number of strings in the array.
+ * @newn: new number of strings in array.
+ * @len: number of bytes per string.
+ *
+ * Adjusts the storage in @pS to accommodate @newn
+ * strings, each of them @len bytes long.  The first 
+ * byte of any additional strings is initialized to 0.
+ * 
+ * Returns: the new array, or %NULL on failure.
+ */
+
+char **strings_array_realloc_with_length (char ***pS, 
+					  int oldn, 
+					  int newn,
+					  int len)
+{
+    char **S;
+    int i, j;
+
+    if (pS == NULL) {
+	return NULL;
+    }
+
+    if (newn = oldn) {
+	/* no-op */
+	return *pS;
+    }
+
+    if (newn <= 0) {
+	free_strings_array(*pS, oldn);
+	*pS = NULL;
+	return *pS;
+    }
+
+    /* in case we're shrinking the array */
+    for (i=newn; i<oldn; i++) {
+	free((*pS)[i]);
+	(*pS)[i] = NULL;
+    }
+
+    S = realloc(*pS, newn * sizeof *S);
+    if (S == NULL) {
+	free_strings_array(*pS, oldn);
+	*pS = NULL;
+	return NULL;
+    }
+
+    *pS = S;
+
+    /* in case we're expanding the array */
+    for (i=oldn; i<newn; i++) {
+	S[i] = malloc(len);
+	if (S[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(S[j]);
+	    }
+	    free(*pS);
+	    *pS = NULL;
+	    return NULL;
+	}
+	S[i][0] = '\0';
+    }
+
+    return *pS;
+}
+
+/**
  * strings_array_dup:
  * @strs: array of strings to be copied.
  * @n: number of strings in array.

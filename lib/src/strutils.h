@@ -111,6 +111,11 @@ char *safecpy (char *targ, const char *src, int n);
 
 char **strings_array_new (int nstrs);
 
+char **strings_array_realloc_with_length (char ***pS, 
+					  int oldn, 
+					  int newn,
+					  int len);
+
 int strings_array_add (char ***pS, int *n, const char *p);
 
 char **strings_array_new_with_length (int nstrs, int len);

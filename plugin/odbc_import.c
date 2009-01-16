@@ -24,6 +24,8 @@
 #include <sqlext.h>
 #include <sqltypes.h>
 
+#define ODBC_INIT_ROWS 256
+
 #define OD_error(r) (r != SQL_SUCCESS && r != SQL_SUCCESS_WITH_INFO)
 
 #define DSN_LIST 0 /* maybe later */
@@ -85,6 +87,32 @@ static int show_list (void)
 }
 
 #endif /* DSN_LIST */
+
+static int expand_catchment (ODBC_info *odinfo, SQLINTEGER *nrows)
+{
+    double *x;
+    int n = 2 * *nrows;
+
+    x = realloc(odinfo->x, n * sizeof *x);
+    if (x == NULL) {
+	return E_ALLOC;
+    }
+
+    odinfo->x = x;
+
+    if (odinfo->S != NULL) {
+	odinfo->S = strings_array_realloc_with_length(&odinfo->S,
+						      *nrows, n,
+						      OBSLEN);
+	if (odinfo->S == NULL) {
+	    return E_ALLOC;
+	}
+    }
+    
+    *nrows = n;
+
+    return 0;
+}
 
 /* Try connecting to data source.  If penv is NULL we're just checking
    that it can be opened OK, otherwise we return a connection.
@@ -184,7 +212,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     unsigned char status[10];    /* SQL status */
     SQLINTEGER OD_err, nrows;
     SQLSMALLINT mlen, ncols;
-    double xt, *x = NULL;
+    double xt;
     unsigned char msg[200];
     SQLINTEGER colbytes[ODBC_MAXCOLS+1];
     long grabint[ODBC_MAXCOLS];
@@ -192,7 +220,11 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     char grabstr[ODBC_MAXCOLS][16];
     char obsbit[16];
     int i, j, k, p;
-    int err = 0;
+    int t = 0, err = 0;
+
+    odinfo->x = NULL;
+    odinfo->S = NULL;
+    odinfo->nrows = 0;
 
     dbc = gretl_odbc_connect_to_dsn(odinfo, &OD_env, &err);
     if (err) {
@@ -254,6 +286,11 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
+    /* SQLRowCount can give nrows = -1, even while returning
+       SQL_SUCCESS, if the ODBC server is too lazy to pre-compute the
+       number of rows in the result (e.g. Microsoft).
+    */
+
     ret = SQLRowCount(stmt, &nrows);
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLRowCount");
@@ -261,16 +298,19 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
-    printf("Number of Rows = %d\n", (int) nrows);
+    printf("Number of Rows (from SQLRowCount) = %d\n", (int) nrows);
 
-    if (ncols <= 0 || nrows <= 0) {
+    if (ncols <= 0) {
 	gretl_errmsg_set("Didn't get any data");
 	err = E_DATA;
     } 
 
     if (!err) {
-	x = malloc(nrows * sizeof *x);
-	if (x == NULL) {
+	if (nrows <= 0) {
+	    nrows = ODBC_INIT_ROWS;
+	}
+	odinfo->x = malloc(nrows * sizeof *odinfo->x);
+	if (odinfo->x == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -284,10 +324,9 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 
     if (!err) {
 	double xtgot;
-	int t = 0;
 
 	ret = SQLFetch(stmt);  
-	while (ret != SQL_NO_DATA && t < nrows) {
+	while (ret != SQL_NO_DATA && !err) {
 	    xtgot = NADBL;
 	    j = k = p = 0;
 	    fprintf(stderr, "SQLFetch, row %d:\n", t);
@@ -320,17 +359,36 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	    if (odinfo->S != NULL) {
 		fprintf(stderr, " obs = '%s'\n", odinfo->S[t]);
 	    }
-	    x[t++] = xtgot;
-	    ret = SQLFetch(stmt);  
+	    odinfo->x[t++] = xtgot;
+	    ret = SQLFetch(stmt);
+	    if (ret != SQL_NO_DATA && t >= nrows) {
+		err = expand_catchment(odinfo, &nrows);
+	    }
 	}
     }
 
  bailout:
 
-    if (!err) {
-	odinfo->x = x;
-	odinfo->nrows = nrows;
-    } 
+    if (err) {
+	if (odinfo->x != NULL) {
+	    free(odinfo->x);
+	    odinfo->x = NULL;
+	}
+	if (odinfo->S != NULL) {
+	    free_strings_array(odinfo->S, nrows);
+	    odinfo->S = NULL;
+	}
+    } else {
+	if (t < nrows && odinfo->S != NULL) {
+	    odinfo->S = strings_array_realloc_with_length(&odinfo->S,
+							  nrows, t,
+							  OBSLEN);
+	    if (odinfo->S == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	odinfo->nrows = t;
+    }
 
     if (stmt != NULL) {
 	SQLFreeHandle(SQL_HANDLE_STMT, stmt);
