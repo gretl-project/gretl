@@ -248,7 +248,7 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 
 static void DF_header (const char *s, int p, PRN *prn)
 {
-    if (p == 0) {
+    if (p <= 0) {
 	pprintf(prn, _("\nDickey-Fuller test for %s\n"), s);	
     } else {
 	pprintf(prn, _("\nAugmented Dickey-Fuller test for %s\n"), s);
@@ -311,16 +311,7 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	    pputc(prn, '\n');
 	    pprintf(prn, _("lag order %d\n"), order);
 	} else {
-	    int p = 0;
-
-	    if (flags & ADF_EG_TEST) {
-		if (order > 0) {
-		    p = order;
-		}
-	    } else if (order > 0 && !auto_order) {
-		p = order;
-	    }
-	    DF_header(vname, p, prn);
+	    DF_header(vname, order, prn);
 	}
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
 	pputs(prn, _("unit-root null hypothesis: a = 1"));
@@ -341,10 +332,6 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 
     pprintf(prn, "   %s: %s\n", _("model"), 
 	    (order > 0)? aug_models[i] : models[i]);
-
-    if (auto_order) {
-	pprintf(prn, "   %s %d\n", _("lag order:"), order);
-    }
 
     if (!na(dfmod->rho)) {
 	pprintf(prn, "   %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
