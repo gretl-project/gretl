@@ -1333,7 +1333,7 @@ char **strings_array_realloc_with_length (char ***pS,
 	return NULL;
     }
 
-    if (newn = oldn) {
+    if (newn == oldn) {
 	/* no-op */
 	return *pS;
     }
