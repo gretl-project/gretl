@@ -342,5 +342,3 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 
     return err;
 }
-
-
