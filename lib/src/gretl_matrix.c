@@ -6786,6 +6786,14 @@ static int dgejsv_workspace_size (integer m, integer n,
 
 #if USE_JACOBI
 
+/* There are a few complications below stemming from the fact that the
+   new lapack 3.2 function dgejsv (SVD via Jacobi), while it's
+   saidq to be very accurate and fast, is incompatible in more than
+   one way with dgesvd.  Here we have to create a compatibility layer.
+   It'll be some time before we can assume lapack 3.2 is avaailable on
+   all systems.
+*/
+
 static int 
 real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
 		       gretl_vector **ps, gretl_matrix **pv,
@@ -6805,7 +6813,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     double xu, xv;
     double *uval = &xu, *vval = &xv;
     double *work = NULL;
-    int k, err = 0;
+    int k, tr = 0, err = 0;
 
     if (pu == NULL && ps == NULL && pv == NULL) {
 	/* no-op */
@@ -6816,16 +6824,21 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	return E_DATA;
     }
 
-    lda = m = a->rows;
-    n = a->cols;
-
-    if (smod == SVD_THIN && m < n) {
-	fprintf(stderr, "real_gretl_matrix_SVD: a is %d x %d, should be 'thin'\n",
-		a->rows, a->cols);
-	return E_NONCONF;
+    if (a->rows < a->cols) {
+	if (smod == SVD_THIN) {
+	    fprintf(stderr, "real_gretl_matrix_SVD: a is %d x %d, should be 'thin'\n",
+		    a->rows, a->cols);
+	    return E_NONCONF;
+	} else {
+	    tr = 1;
+	}
     }
 
-    b = gretl_matrix_copy(a);
+    m = (tr)? a->cols : a->rows;
+    n = (tr)? a->rows : a->cols;
+    lda = m;
+
+    b = (tr)? gretl_matrix_copy_transpose(a) : gretl_matrix_copy(a);
     if (b == NULL) {
 	return E_ALLOC;
     }
@@ -6891,19 +6904,36 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	goto bailout;
     }
 
+    /* Note: the 'traditional' dgesvd produces v', not v, so for
+       compatibility we'll transpose the v produced here if necessary.
+       But if had to tranpose the input matrix 'a' then all is
+       reversed: we need to transpose u, if it's wanted, while the
+       non-transposed v already == v'.  Clear enough? ;-)
+    */
+
     if (ps != NULL) {
 	*ps = s;
 	s = NULL;
     }
 
     if (pu != NULL) {
-	*pu = u;
-	u = NULL;
+	if (tr) {
+	    err = gretl_matrix_transpose_in_place(u);
+	}
+	if (!err) {
+	    *pu = u;
+	    u = NULL;
+	}
     }
 
-    if (pv != NULL) {
-	*pv = v;
-	v = NULL;
+    if (pv != NULL && !err) {
+	if (!tr) {
+	    err = gretl_matrix_transpose_in_place(v);
+	}
+	if (!err) {
+	    *pv = v;
+	    v = NULL;
+	}
     }
 
  bailout:
@@ -8340,9 +8370,6 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
     double x;
     int m, n;
     int i, j;
-#if USE_JACOBI
-    int tr = 0;
-#endif
     int err = 0;
 
     if (gretl_is_null_matrix(A)) {
@@ -8351,19 +8378,6 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 
     m = A->rows;
     n = A->cols;
-
-#if USE_JACOBI
-    /* requires m >= n */
-    if (m < n) {
-	err = gretl_matrix_transpose_in_place(A);
-	if (err) {
-	    return err;
-	}
-	tr = 1;
-	m = A->rows;
-	n = A->cols;
-    }
-#endif
 
     err = gretl_matrix_SVD(A, &U, &S, &Vt);
 
@@ -8389,23 +8403,9 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 	/* A^{+} = VS^{-1}U' */
 	A->rows = n;
 	A->cols = m;
-#if USE_JACOBI
-	if (tr) {
-	    A->rows = m;
-	    A->cols = n;
-	    err = gretl_matrix_multiply_mod(SUt, GRETL_MOD_TRANSPOSE,
-					    Vt, GRETL_MOD_TRANSPOSE,
-					    A, GRETL_MOD_NONE);
-	} else {
-	    err = gretl_matrix_multiply_mod(Vt, GRETL_MOD_NONE,
-					    SUt, GRETL_MOD_NONE,
-					    A, GRETL_MOD_NONE);
-	}
-#else
 	err = gretl_matrix_multiply_mod(Vt, GRETL_MOD_TRANSPOSE,
 					SUt, GRETL_MOD_NONE,
 					A, GRETL_MOD_NONE);
-#endif
     }
 
  bailout:
