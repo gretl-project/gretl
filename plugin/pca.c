@@ -321,8 +321,9 @@ static int pca_save_components (VMatrix *cmat,
 	    vi = v + i - 1;
 	    sprintf(pdinfo->varname[vi], "PC%d", i);
 	    make_varname_unique(pdinfo->varname[vi], vi, pdinfo);
-	    sprintf(VARLABEL(pdinfo, vi), "Component with "
-		    "eigenvalue = %.4f", E->val[pi]);
+	    sprintf(VARLABEL(pdinfo, vi), 
+		    _("Component with eigenvalue = %.4f"), 
+		    E->val[pi]);
 
 	    for (t=0; t<pdinfo->n; t++) {
 		(*pZ)[vi][t] = 0.0;

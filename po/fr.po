@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 11:54-0500\n"
+"POT-Creation-Date: 2009-01-15 19:42-0500\n"
 "PO-Revision-Date: 2009-01-14 10:19+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -1243,7 +1243,7 @@ msgstr "Jeu de données augmenté de %d observations"
 msgid "The 'dataset' command is not available within functions"
 msgstr "La commande 'dataset' n'est pas disponible dans les fonctions"
 
-#: lib/src/dataset.c:2863 lib/src/interact.c:4709 gui2/library.c:7133
+#: lib/src/dataset.c:2863 lib/src/interact.c:4714 gui2/library.c:7133
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Désolé, cette commande n'est pas disponibles en mode boucle\n"
 
@@ -1332,7 +1332,7 @@ msgid "Series imported OK"
 msgstr "Séries importées avec succès"
 
 #: lib/src/dbread.c:2152 lib/src/gretl_func.c:1495 lib/src/gretl_utils.c:1418
-#: lib/src/interact.c:3857 gui2/dialogs.c:3927 plugin/tramo-x12a.c:411
+#: lib/src/interact.c:3862 gui2/dialogs.c:3927 plugin/tramo-x12a.c:411
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Ne peut ouvrir %s"
@@ -3390,7 +3390,7 @@ msgstr "Chaîne %s générée\n"
 msgid "Replaced string %s\n"
 msgstr "Chaîne %s remplacée\n"
 
-#: lib/src/gretl_string_table.c:890 lib/src/interact.c:3833
+#: lib/src/gretl_string_table.c:890 lib/src/interact.c:3838
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Longueur maximale de la ligne de commande (%d octets) dépassée\n"
@@ -3699,7 +3699,7 @@ msgstr "%d n'est pas un numéro de variable valide"
 msgid "'%s' is not the name of a variable"
 msgstr "« %s » n'est pas le nom de la variable"
 
-#: lib/src/interact.c:2312 lib/src/interact.c:4849 cli/cli_object.c:59
+#: lib/src/interact.c:2312 lib/src/interact.c:4854 cli/cli_object.c:59
 #: gui2/objectsave.c:67
 #, c-format
 msgid "command '%s' not recognized"
@@ -3822,68 +3822,68 @@ msgstr "Écriture en cours à la fin du fichier '%s'\n"
 msgid "No data information is available.\n"
 msgstr "Aucune information disponible sur les données.\n"
 
-#: lib/src/interact.c:3879 lib/src/interact.c:5150 lib/src/interact.c:5274
+#: lib/src/interact.c:3884 lib/src/interact.c:5155 lib/src/interact.c:5279
 #, c-format
 msgid "Unmatched \"%s\""
 msgstr "Unmatched \"%s\""
 
-#: lib/src/interact.c:4049
+#: lib/src/interact.c:4054
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "Vous ne pouvez terminer une boucle ici, vous n'en avez débuté aucune\n"
 
-#: lib/src/interact.c:4170
+#: lib/src/interact.c:4175
 msgid "This command requires one variable.\n"
 msgstr "Cette commande requiert une variable.\n"
 
-#: lib/src/interact.c:4288
+#: lib/src/interact.c:4293
 #, c-format
 msgid "setting data frequency = %d\n"
 msgstr "Paramétrage de la fréquence des données = %d\n"
 
-#: lib/src/interact.c:4309
+#: lib/src/interact.c:4314
 msgid "store: no filename given\n"
 msgstr "conservation : aucun nom de fichier fourni\n"
 
-#: lib/src/interact.c:4313 lib/src/monte_carlo.c:2178
+#: lib/src/interact.c:4318 lib/src/monte_carlo.c:2178
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "conservation : utilisation du fichier nom %s\n"
 
-#: lib/src/interact.c:4318 lib/src/monte_carlo.c:2184
+#: lib/src/interact.c:4323 lib/src/monte_carlo.c:2184
 msgid "Data written OK.\n"
 msgstr "Écriture des données complétée.\n"
 
-#: lib/src/interact.c:4369
+#: lib/src/interact.c:4374
 msgid "This estimator requires panel data"
 msgstr "Cet estimateur exige des données en panel"
 
-#: lib/src/interact.c:4515
+#: lib/src/interact.c:4520
 msgid "Couldn't format model\n"
 msgstr "Ne peut formatter le modèle\n"
 
-#: lib/src/interact.c:4529
+#: lib/src/interact.c:4534
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Modèle imprimé vers %s\n"
 
-#: lib/src/interact.c:4630 cli/gretlcli.c:1021 gui2/library.c:7326
+#: lib/src/interact.c:4635 cli/gretlcli.c:1021 gui2/library.c:7326
 msgid "Infinite loop detected in script\n"
 msgstr "Boucle infinie détectée dans le script\n"
 
-#: lib/src/interact.c:4642
+#: lib/src/interact.c:4647
 msgid "You cannot delete variables in this context\n"
 msgstr "Ne peut détruire les variables dans ce contexte\n"
 
-#: lib/src/interact.c:4651
+#: lib/src/interact.c:4656
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Désolé, la commande %s n'est pas encore implantée dans libgretl\n"
 
-#: lib/src/interact.c:5116
+#: lib/src/interact.c:5121
 msgid "error evaluating 'if'"
 msgstr "erreur pour l'évaluation 'if'"
 
-#: lib/src/interact.c:5119
+#: lib/src/interact.c:5124
 msgid "indeterminate condition for 'if'"
 msgstr "condition indéterminée pour 'if'"
 
@@ -5025,7 +5025,7 @@ msgstr ""
 "Nombre d'itérations : %d\n"
 "\n"
 
-#: lib/src/monte_carlo.c:2758
+#: lib/src/monte_carlo.c:2759
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
 msgstr "%s : non implémenté dans les boucles 'progressives'"
@@ -14141,6 +14141,11 @@ msgstr "Composant  ValeurEigen Proportion   Cumulatif\n"
 #: plugin/pca.c:203
 msgid "Eigenvectors (component loadings)"
 msgstr "Vecteurs de Eigen (chargement des composants)"
+
+#: plugin/pca.c:325
+#, fuzzy, c-format
+msgid "Component with eigenvalue = %.4f"
+msgstr "Composant avec valeurs de Eigen > moyenne"
 
 #: plugin/poisson.c:381
 msgid "poisson: the dependent variable must be count data"

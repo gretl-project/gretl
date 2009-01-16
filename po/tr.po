@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 11:54-0500\n"
+"POT-Creation-Date: 2009-01-15 19:42-0500\n"
 "PO-Revision-Date: 2009-01-15 09:59+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -1233,7 +1233,7 @@ msgstr "Veri seti %d gözlem ile genişletildi"
 msgid "The 'dataset' command is not available within functions"
 msgstr "'dataset' komutu işlevler arasında bulunmuyor"
 
-#: lib/src/dataset.c:2863 lib/src/interact.c:4709 gui2/library.c:7133
+#: lib/src/dataset.c:2863 lib/src/interact.c:4714 gui2/library.c:7133
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Üzgünüm, bu komut döngü kipinde bulunmuyor\n"
 
@@ -1321,7 +1321,7 @@ msgid "Series imported OK"
 msgstr "Seri içe aktarma başarılı"
 
 #: lib/src/dbread.c:2152 lib/src/gretl_func.c:1495 lib/src/gretl_utils.c:1418
-#: lib/src/interact.c:3857 gui2/dialogs.c:3927 plugin/tramo-x12a.c:411
+#: lib/src/interact.c:3862 gui2/dialogs.c:3927 plugin/tramo-x12a.c:411
 #, c-format
 msgid "Couldn't open %s"
 msgstr "%s açılamadı"
@@ -3360,7 +3360,7 @@ msgstr "%s dizgisi oluşturuldu\n"
 msgid "Replaced string %s\n"
 msgstr "%s dizgisi değiştirildi\n"
 
-#: lib/src/gretl_string_table.c:890 lib/src/interact.c:3833
+#: lib/src/gretl_string_table.c:890 lib/src/interact.c:3838
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Komut satırı için en büyük uzunluk (%d byte) aşıldı\n"
@@ -3666,7 +3666,7 @@ msgstr "%d geçerli bir değişken adı değildir"
 msgid "'%s' is not the name of a variable"
 msgstr "'%s' bir değişken adı değil"
 
-#: lib/src/interact.c:2312 lib/src/interact.c:4849 cli/cli_object.c:59
+#: lib/src/interact.c:2312 lib/src/interact.c:4854 cli/cli_object.c:59
 #: gui2/objectsave.c:67
 #, c-format
 msgid "command '%s' not recognized"
@@ -3787,68 +3787,68 @@ msgstr "Şimdi çıktılar '%s' dosyasına iliştiriliyor\n"
 msgid "No data information is available.\n"
 msgstr "Elde veri bilgileri yok.\n"
 
-#: lib/src/interact.c:3879 lib/src/interact.c:5150 lib/src/interact.c:5274
+#: lib/src/interact.c:3884 lib/src/interact.c:5155 lib/src/interact.c:5279
 #, c-format
 msgid "Unmatched \"%s\""
 msgstr "\"%s\" uyuşmadı"
 
-#: lib/src/interact.c:4049
+#: lib/src/interact.c:4054
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "Burada bir döngü bitiremezsiniz, daha başlamış değilsiniz\n"
 
-#: lib/src/interact.c:4170
+#: lib/src/interact.c:4175
 msgid "This command requires one variable.\n"
 msgstr "Bu komut bir tane değişken gerektirir.\n"
 
-#: lib/src/interact.c:4288
+#: lib/src/interact.c:4293
 #, c-format
 msgid "setting data frequency = %d\n"
 msgstr "veri sıklığı = %d olarak saptanıyor\n"
 
-#: lib/src/interact.c:4309
+#: lib/src/interact.c:4314
 msgid "store: no filename given\n"
 msgstr "store: verilmiş bir dosya adı yok\n"
 
-#: lib/src/interact.c:4313 lib/src/monte_carlo.c:2178
+#: lib/src/interact.c:4318 lib/src/monte_carlo.c:2178
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "store: %s dosya adı kullanılarak\n"
 
-#: lib/src/interact.c:4318 lib/src/monte_carlo.c:2184
+#: lib/src/interact.c:4323 lib/src/monte_carlo.c:2184
 msgid "Data written OK.\n"
 msgstr "Verileri yazma başarılı.\n"
 
-#: lib/src/interact.c:4369
+#: lib/src/interact.c:4374
 msgid "This estimator requires panel data"
 msgstr "Bu tahminci panel verileri gerektirir"
 
-#: lib/src/interact.c:4515
+#: lib/src/interact.c:4520
 msgid "Couldn't format model\n"
 msgstr "Model biçimlendirilemedi\n"
 
-#: lib/src/interact.c:4529
+#: lib/src/interact.c:4534
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Model %s dosyasına kaydedildi\n"
 
-#: lib/src/interact.c:4630 cli/gretlcli.c:1021 gui2/library.c:7326
+#: lib/src/interact.c:4635 cli/gretlcli.c:1021 gui2/library.c:7326
 msgid "Infinite loop detected in script\n"
 msgstr "Betikte sonsuz döngü bulundu\n"
 
-#: lib/src/interact.c:4642
+#: lib/src/interact.c:4647
 msgid "You cannot delete variables in this context\n"
 msgstr "Bu bağlamda değişken silemezsiniz\n"
 
-#: lib/src/interact.c:4651
+#: lib/src/interact.c:4656
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Üzgünüm, %s komutu daha libgretl'a eklenmedi\n"
 
-#: lib/src/interact.c:5116
+#: lib/src/interact.c:5121
 msgid "error evaluating 'if'"
 msgstr "'if' değerlendirme hatası"
 
-#: lib/src/interact.c:5119
+#: lib/src/interact.c:5124
 msgid "indeterminate condition for 'if'"
 msgstr "'if' için belirsizlik koşulu"
 
@@ -4984,7 +4984,7 @@ msgstr ""
 "Yineleme sayısı: %d\n"
 "\n"
 
-#: lib/src/monte_carlo.c:2758
+#: lib/src/monte_carlo.c:2759
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
 msgstr "%s: 'ilerlemeli' döngülerde eklenmedi"
@@ -14077,6 +14077,11 @@ msgstr " Bileşen    Özdeğer      Orantı       Yığınsal\n"
 #: plugin/pca.c:203
 msgid "Eigenvectors (component loadings)"
 msgstr "Özyöneyler (bileşen yüklemeleri)"
+
+#: plugin/pca.c:325
+#, fuzzy, c-format
+msgid "Component with eigenvalue = %.4f"
+msgstr "Özdeğer > ortalama olan bileşenler"
 
 #: plugin/poisson.c:381
 msgid "poisson: the dependent variable must be count data"
