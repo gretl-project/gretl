@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-01-17 15:24+0200\n"
+"PO-Revision-Date: 2009-01-17 19:01+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -220,7 +220,7 @@ msgstr "%d çoğaltmaya dayalı"
 
 #: lib/src/bootstrap.c:448
 msgid "using resampled residuals"
-msgstr "yeniden örneklenmiş kalıntılar kullanıldı"
+msgstr "yeniden örneklemeli kalıntılar kullanıldı"
 
 #: lib/src/bootstrap.c:450
 msgid "with simulated normal errors"
@@ -520,7 +520,7 @@ msgid ""
 "critical values are from Stock and Watson (2003)."
 msgstr ""
 "Bu istatistik ölçünlü F dağılımına uymamaktadır.\n"
-"Eşik değerleri Stock ve Watson (2003)'ten alınmıştır."
+"Eşik değerleri Stock ve Watson (2003)'ten alınmadır."
 
 #: lib/src/compare.c:2274
 msgid "Invalid sample split for Chow test"
@@ -605,7 +605,7 @@ msgid ""
 "You need to have the same number of observations\n"
 "for each cross-sectional unit"
 msgstr ""
-"Üzgünüm, bu sınama dengelenmemiş bir panel üstünde\n"
+"Üzgünüm, bu sınama dengesiz bir panel üstünde\n"
 " yapılamıyor. Her bir yatay-kesit birimi için aynı sayıda\n"
 "gözleminiz olmalıdır"
 
@@ -641,7 +641,7 @@ msgid ""
 "\n"
 "%8c"
 msgstr ""
-"%20c%s ve %s aynı ölçekte çizilmiştir\n"
+"%20c%s ve %s aynı ölçekte çizilidir\n"
 "\n"
 "%8c"
 
@@ -1213,7 +1213,7 @@ msgstr "seri"
 
 #: lib/src/dataset.c:2603 gui2/library.c:4419
 msgid "The data set is currently sub-sampled.\n"
-msgstr "Veri seti şu an altörneklenmiş durumda.\n"
+msgstr "Veri seti şu an altörneklemeli durumda.\n"
 
 #: lib/src/dataset.c:2610
 #, c-format
@@ -1230,11 +1230,11 @@ msgstr "Üzgünüm, bu komut döngü kipinde bulunmuyor\n"
 
 #: lib/src/dataset.c:2878
 msgid "The data set is currently sub-sampled"
-msgstr "Veri seti şu an altörneklenmiş durumda"
+msgstr "Veri seti şu an altörneklemeli durumda"
 
 #: lib/src/dataset.c:2912
 msgid "dataset restore: dataset is not resampled\n"
-msgstr "Veri seti geri yerleştirildi: altörneklenmiş değil\n"
+msgstr "Veri seti geri yerleştirme: yeniden örneklemeli değil\n"
 
 #: lib/src/dbread.c:352 lib/src/dbread.c:593
 msgid "Couldn't open database index file"
@@ -1342,7 +1342,7 @@ msgstr "%s: kullanılan öntanımlı daraltma yöntemi: ortalama alma"
 
 #: lib/src/dbread.c:3203 lib/src/dbread.c:3269 lib/src/dbread.c:3476
 msgid "Compacted dataset would be empty"
-msgstr "Daraltılmış veri seti boş olurdu"
+msgstr "Daraltmalı veri seti boş olur!"
 
 #: lib/src/dbwrite.c:466 lib/src/dbwrite.c:475 lib/src/gretl_xml.c:1288
 #: lib/src/gretl_xml.c:1411
@@ -2307,7 +2307,7 @@ msgstr "Ağırlıklar, dikeysellik koşullarından sonra gelmelidir"
 
 #: lib/src/gmm.c:768
 msgid "Weights are already defined"
-msgstr "Ağırlıklar zaten tanımlanmış"
+msgstr "Ağırlıklar zaten tanımlı"
 
 #: lib/src/gmm.c:789
 #, c-format
@@ -2681,7 +2681,7 @@ msgstr "Seçenekler uyumsuz"
 
 #: lib/src/gretl_errors.c:68
 msgid "The restrictions do not identify the parameters"
-msgstr "Kısıtlamalar değiştirgeleri tanımlamıyor"
+msgstr "Kısıtlamalar değiştirgeleri özdeşlemiyor"
 
 #: lib/src/gretl_errors.c:69
 msgid "External command failed"
@@ -2865,7 +2865,7 @@ msgstr "çoktürelserpilim yok"
 
 #: lib/src/gretl_model.c:2786 lib/src/modelprint.c:299
 msgid "Sargan over-identification test"
-msgstr "Sargan aşırı-tanımlama sınaması"
+msgstr "Sargan aşırı-özdeşleme sınaması"
 
 #: lib/src/gretl_model.c:2787
 msgid "all instruments are valid"
@@ -3125,7 +3125,7 @@ msgstr "Hata: birim %g, dönem %g: tekrarlı gözlem"
 
 #: lib/src/gretl_paths.c:1344
 msgid "User directory is not set"
-msgstr "Kullanıcı klasörü saptanmamış"
+msgstr "Kullanıcı klasörü saptanmış değil"
 
 #: lib/src/gretl_paths.c:1350
 #, c-format
@@ -3795,7 +3795,7 @@ msgstr "veri sıklığı = %d olarak saptanıyor\n"
 
 #: lib/src/interact.c:4314
 msgid "store: no filename given\n"
-msgstr "store: verilmiş bir dosya adı yok\n"
+msgstr "store: verili bir dosya adı yok\n"
 
 #: lib/src/interact.c:4318 lib/src/monte_carlo.c:2178
 #, c-format
@@ -3951,11 +3951,11 @@ msgstr "En küçük özdeğer"
 #: lib/src/modelprint.c:245 lib/src/modelprint.c:247 lib/src/modelprint.c:251
 #: lib/src/system.c:2620 lib/src/system.c:2635
 msgid "LR over-identification test"
-msgstr "LR aşırı tanımlama sınaması"
+msgstr "LR aşırı-özdeşleme sınaması"
 
 #: lib/src/modelprint.c:257 lib/src/modelprint.c:258
 msgid "Equation is just identified"
-msgstr "Denklem tam özdeşlenmiş"
+msgstr "Denklem tam-özdeşlemeli"
 
 #: lib/src/modelprint.c:272 lib/src/modelprint.c:274
 #, c-format
@@ -4299,7 +4299,7 @@ msgstr "ÇÖT (HAC) ölçünlü hatalar, kuşakgenişliği %d"
 
 #: lib/src/modelprint.c:912
 msgid "prewhitened"
-msgstr "ön-beyazlatılmış"
+msgstr "önbeyazlatmalı"
 
 #: lib/src/modelprint.c:929
 msgid "Heteroskedasticity-robust standard errors"
@@ -4620,7 +4620,7 @@ msgstr "Ağırlıklı verilere dayalı istatistikler"
 
 #: lib/src/modelprint.c:1845
 msgid "Statistics based on the rho-differenced data"
-msgstr "Rho-farkı alınmış verilere dayalı istatistikler"
+msgstr "Rho-farkı alınan verilere dayalı istatistikler"
 
 #: lib/src/modelprint.c:1846
 msgid "Statistics based on the transformed data"
@@ -4835,7 +4835,7 @@ msgstr "Kestirilen"
 
 #: lib/src/modelprint.c:4353 lib/src/modelprint.c:4377
 msgid "Number of cases 'correctly predicted'"
-msgstr "'Doğru kestirilmiş' durum sayısı"
+msgstr "'Doğru kestirilen' durum sayısı"
 
 #: lib/src/modelprint.c:4356 lib/src/modelprint.c:4380
 msgid "at mean of independent vars"
@@ -4849,11 +4849,11 @@ msgstr "Olabilirlik oranı sınaması"
 
 #: lib/src/modelprint.c:4373 lib/src/modelprint.c:4392
 msgid "Evaluated at the mean"
-msgstr "Ortalamada değerlendirmiş"
+msgstr "Ortalamada değerlendirmeli"
 
 #: lib/src/modelprint.c:4398
 msgid "Number of cases `correctly predicted'"
-msgstr "`Doğru şekilde kestirilmiş' durum sayısı"
+msgstr "`Doğru şekilde kestirilen' durum sayısı"
 
 #: lib/src/modelprint.c:4420
 msgid "Analysis of Variance"
@@ -5782,11 +5782,11 @@ msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %
 
 #: lib/src/subsample.c:1733 lib/src/subsample.c:1734
 msgid "dataset is subsampled, model is not\n"
-msgstr "veri seti altörneklenmiş, model değil\n"
+msgstr "veri seti altörneklemeli, model değil\n"
 
 #: lib/src/subsample.c:1741 lib/src/subsample.c:1742
 msgid "model is subsampled, dataset is not\n"
-msgstr "model altörneklenmiş, veri seti değil\n"
+msgstr "model altörneklemeli, veri seti değil\n"
 
 #: lib/src/subsample.c:1749
 msgid "model and dataset subsamples not the same\n"
@@ -5887,16 +5887,16 @@ msgid ""
 "Warning: the Hansen-Sargan over-identification test failed.\n"
 "This probably indicates that the estimation problem is ill-conditioned.\n"
 msgstr ""
-"Uyarı: Hansen-Sargan aşırı-tanımlama sınaması başarısız.\n"
+"Uyarı: Hansen-Sargan aşırı-özdeşleme sınaması başarısız.\n"
 "Bu, büyük olasılıkla tahmin sorununun uygun olmadığını gösteriyor.\n"
 
 #: lib/src/system.c:2656
 msgid "Hansen--Sargan over-identification test"
-msgstr "Hansen--Sargan aşırı-tanımlama sınaması"
+msgstr "Hansen--Sargan aşırı-özdeşleme sınaması"
 
 #: lib/src/system.c:2659
 msgid "Hansen-Sargan over-identification test"
-msgstr "Hansen-Sargan aşırı-tanımlama sınaması"
+msgstr "Hansen-Sargan aşırı-özdeşleme sınaması"
 
 #: lib/src/system.c:2686 lib/src/system.c:2690
 msgid "LR test for diagonal covariance matrix"
@@ -6117,7 +6117,7 @@ msgstr "Durum 3: Kısıtlamasız sabit terim"
 
 #: lib/src/varprint.c:539
 msgid "Case 4: Restricted trend, unrestricted constant"
-msgstr "Durum 4: Kısıtlamalı eğilim, kısıtlanmamış sabit terim"
+msgstr "Durum 4: Kısıtlamalı eğilim, kısıtlamasız sabit terim"
 
 #: lib/src/varprint.c:540
 msgid "Case 5: Unrestricted trend and constant"
@@ -6253,7 +6253,7 @@ msgid ""
 "BIC = Schwartz Bayesian criterion and HQC = Hannan-Quinn criterion."
 msgstr ""
 "Aşağıdaki yıldız imleri, bağlı oldukları bilgi ölçütüne ait en iyi (yani\n"
-"enazlaştırılmış) değerleri göstermektedir. ABÖ = Akaike bilgi ölçütü,\n"
+"enazlamalı) değerleri göstermektedir. ABÖ = Akaike bilgi ölçütü,\n"
 "BBÖ = Schwartz Bayesçi bilgi ölçütü, HQÖ = Hannan-Quinn ölçütü."
 
 #: lib/src/vartest.c:284
@@ -7306,7 +7306,7 @@ msgstr ""
 
 #: gui2/database.c:477
 msgid "Really delete the selected series?"
-msgstr "Seçilen seri gerçekten silinsin mi?"
+msgstr "Seçili seri gerçekten silinsin mi?"
 
 #: gui2/database.c:634
 msgid "Warning: series has missing observations"
@@ -7419,15 +7419,15 @@ msgstr ""
 
 #: gui2/database.c:1947 gui2/database.c:1963 gui2/database.c:2177
 msgid "Up to date"
-msgstr "Güncellenmiş"
+msgstr "Güncel"
 
 #: gui2/database.c:1958
 msgid "Error unzipping compressed data"
-msgstr "Sıkıştırılmış dosya açılırken bir hata oluştu"
+msgstr "Sıkıştırmalı dosya açılırken bir hata oluştu"
 
 #: gui2/database.c:2141 gui2/database.c:2164
 msgid "Not installed"
-msgstr "Yüklenmemiş"
+msgstr "Yüklü değil"
 
 #: gui2/database.c:2169
 msgid "Unknown: access error"
@@ -7435,7 +7435,7 @@ msgstr "Bilinmiyor: erişim hatası"
 
 #: gui2/database.c:2175
 msgid "Not up to date"
-msgstr "Güncellenmiş değil"
+msgstr "Güncel değil"
 
 #: gui2/database.c:2353 gui2/database.c:2576
 msgid "No database files found"
@@ -7804,7 +7804,7 @@ msgstr "birim ve zaman endeksi değişkenleri ayrı olmalıdır"
 
 #: gui2/datawiz.c:817
 msgid "The selected index variables do not represent a panel structure"
-msgstr "Seçilen endeks değişkenleri bir panel yapısı göstermiyor"
+msgstr "Seçili endeks değişkenleri bir panel yapısı göstermiyor"
 
 #: gui2/datawiz.c:908
 msgid "This dataset cannot be interpreted as a panel"
@@ -7851,7 +7851,7 @@ msgid ""
 "Do you want to save the changes you made\n"
 "to this session?"
 msgstr ""
-"Bu oturuma yapmış olduğunuz değişiklikleri\n"
+"Bu oturuma yaptığınız değişiklikleri\n"
 "kaydetmek ister misiniz?"
 
 #: gui2/dialogs.c:155 gui2/ssheet.c:2400
@@ -7859,7 +7859,7 @@ msgid ""
 "Do you want to save changes you have\n"
 "made to the current data set?"
 msgstr ""
-"Şu anki veri setine yapmış olduğunuz değişiklikleri\n"
+"Şu anki veri setine yaptığınız değişiklikleri\n"
 "kaydetmek ister misiniz?"
 
 #: gui2/dialogs.c:285
@@ -7900,7 +7900,7 @@ msgstr "gözlem (obs) sütununu ekle"
 
 #: gui2/dialogs.c:545
 msgid "Tab separated"
-msgstr "Sekme ile ayırılmış"
+msgstr "Sekme ile ayrılmış"
 
 #: gui2/dialogs.c:565
 msgid "Comma separated"
@@ -7932,7 +7932,7 @@ msgstr "Güven aralığı"
 
 #: gui2/dialogs.c:900
 msgid "Studentized confidence interval"
-msgstr "Student'leştirilmiş güven aralığı"
+msgstr "Student'leştirili güven aralığı"
 
 #: gui2/dialogs.c:909
 msgid "P-value"
@@ -7960,7 +7960,7 @@ msgstr "Bir değişkenin görüntüleme adı çift tırnak içeremez"
 
 #: gui2/dialogs.c:1247 gui2/dialogs.c:1252
 msgid "not set"
-msgstr "saptanmamış"
+msgstr "saptanmış değil"
 
 #: gui2/dialogs.c:1248
 msgid "average of observations"
@@ -8381,7 +8381,7 @@ msgid ""
 "The suffix you selected should be used\n"
 "only for gretl datafiles"
 msgstr ""
-"Seçtiğniz sonek yalnız gretl veri dosyaları\n"
+"Seçtiğiniz son ek yalnız gretl veri dosyaları\n"
 "için kullanılmalıdır"
 
 #: gui2/fileselect.c:578
@@ -8594,7 +8594,7 @@ msgstr "Çakışan değişken adları"
 
 #: gui2/filters.c:348
 msgid "Save smoothed series as"
-msgstr "Düzleştirilmiş seriyi farklı kaydet"
+msgstr "Düzleştirmeli seriyi farklı kaydet"
 
 #: gui2/filters.c:349
 msgid "Save cyclical component as"
@@ -8654,7 +8654,7 @@ msgstr "Çevrimsel seriyi farklı kaydet"
 
 #: gui2/filters.c:557
 msgid "Graph original and smoothed series"
-msgstr "Özgün ve düzleştirilmiş serileri çiz"
+msgstr "Özgün ve düzleştirmeli serileri çiz"
 
 #: gui2/filters.c:559
 msgid "Graph residual or cycle series"
@@ -8668,7 +8668,7 @@ msgstr "%s (özgün veriler)"
 #: gui2/filters.c:653 gui2/filters.c:674
 #, c-format
 msgid "%s (smoothed)"
-msgstr "%s (düzleştirilmiş)"
+msgstr "%s (düzleştirmeli)"
 
 #: gui2/filters.c:664 gui2/filters.c:686
 #, c-format
@@ -9830,7 +9830,7 @@ msgstr "Sıklık _çizimi"
 
 #: gui2/gretl.c:1420
 msgid "Estimated _density plot..."
-msgstr "Tahmin edilmiş _yoğunluk çizimi..."
+msgstr "Tahmin edilen _yoğunluk çizimi..."
 
 #: gui2/gretl.c:1421
 msgid "_Gini coefficient"
@@ -10333,7 +10333,7 @@ msgstr "\\%% %g güven aralığı"
 
 #: gui2/guiprint.c:2149
 msgid "No scalar variables are currently defined"
-msgstr "Şu an, tanımlanmış sayıl değişken yok"
+msgstr "Şu an, tanımlı sayıl değişken yok"
 
 #: gui2/guiprint.c:2213 gui2/selector.c:5413 plugin/tramo-x12a.c:184
 msgid "Save data"
@@ -10570,7 +10570,7 @@ msgid ""
 "will be lost.  Proceed to open data file?"
 msgstr ""
 "Yeni bir veri dosyası açmak, şu ankini kendiliğinden\n"
-"kapatacaktır. Kayıt edilmemiş tüm işler kaybolacak.\n"
+"kapatacaktır. Kayıt edilmeyen tüm işler kaybolacak.\n"
 "Veri dosyası açmaya devam edilsin mi?"
 
 #: gui2/gui_utils.c:999
@@ -10584,7 +10584,7 @@ msgid ""
 "will be lost.  Proceed to open session file?"
 msgstr ""
 "Yeni bir oturum dosyası açmak, şu ankini kendiliğinden\n"
-"kapatacaktır. Kayıt edilmemiş tüm işler kaybolacak.\n"
+"kapatacaktır. Kayıt edilmeyen tüm işler kaybolacak.\n"
 "Veri dosyası açmaya devam edilsin mi?"
 
 #: gui2/gui_utils.c:1046
@@ -11439,7 +11439,7 @@ msgstr "Üretilecek gecikme sayısı:"
 
 #: gui2/library.c:4535
 msgid "No discrete variables were selected"
-msgstr "Seçilmiş kesikli değişken yok"
+msgstr "Seçili kesikli değişken yok"
 
 #: gui2/library.c:4711
 msgid "T*R-squared"
@@ -11488,7 +11488,7 @@ msgstr "çoklu çizimler ızgara üzerinde"
 
 #: gui2/library.c:5245
 msgid "multiple plots arranged vertically"
-msgstr "çoklu çizimler dikey düzenlenmiş"
+msgstr "çoklu çizimler dikey düzenli"
 
 #: gui2/library.c:5249
 msgid "Panel time-series graph"
@@ -11552,7 +11552,7 @@ msgid ""
 "The data set is currently sub-sampled.\n"
 "Would you like to restore the full range?"
 msgstr ""
-"Veri seti şu an altörneklenmiş durumda.\n"
+"Veri seti şu an altörneklemeli durumda.\n"
 "Tam aralığı geri getirmek ister misiniz?"
 
 #: gui2/library.c:6000
@@ -11565,7 +11565,7 @@ msgid ""
 "You must restore the full range before compacting.\n"
 "Restore the full range now?"
 msgstr ""
-"Veri seti şu an altörneklenmiş durumda.\n"
+"Veri seti şu an altörneklemeli durumda.\n"
 "Daraltmadan önce tam aralığı geri getirmelisiniz.\n"
 "Tam aralığı şimdi geri getirmek ister misiniz?"
 
@@ -11579,7 +11579,7 @@ msgid ""
 "You must restore the full range before expanding.\n"
 "Restore the full range now?"
 msgstr ""
-"Veri seti şu an altörneklenmiş durumda.\n"
+"Veri seti şu an altörneklemeli durumda.\n"
 "Genişletmeden önce tam aralığı geri getirmelisiniz.\n"
 "Tam aralığı şimdi geri getirmek ister misiniz?"
 
@@ -11635,7 +11635,7 @@ msgid ""
 "Do you want to switch to the reduced version now?"
 msgstr ""
 "Şu anki veri setinin indirgenmiş bir sürümünü kaydettiniz.\n"
-"Şimdi indirgenmiş sürüme geçmek ister misiniz?"
+"Şimdi indirgemeli sürüme geçmek ister misiniz?"
 
 #: gui2/library.c:6306
 msgid ""
@@ -11763,7 +11763,7 @@ msgstr "%s; örneklem %s - %s"
 
 #: gui2/menustate.c:542
 msgid " Unsaved data "
-msgstr "Kaydedilmemiş veriler"
+msgstr " Veriler kayıtlı değil "
 
 #: gui2/model_table.c:68
 msgid "Model table is full"
@@ -12326,7 +12326,7 @@ msgstr "Çizgi kullan"
 
 #: gui2/selector.c:4221
 msgid "Estimate reduced model"
-msgstr "İndirgenmiş modeli tahmin et"
+msgstr "İndirgemeli modeli tahmin et"
 
 #: gui2/selector.c:4226
 msgid "Wald test, based on covariance matrix"
@@ -12642,7 +12642,7 @@ msgstr "Çizim dosyasını kopyalama başarısız"
 
 #: gui2/session.c:906
 msgid "Model is already saved"
-msgstr "Model zaten kaydedilmiş"
+msgstr "Model zaten kayıtlı"
 
 #: gui2/session.c:1090
 #, c-format
@@ -13046,11 +13046,11 @@ msgstr "gretl açılışta şunu kullansın:"
 
 #: gui2/settings.c:2225
 msgid "the directory selected above"
-msgstr "yukarıda seçili dizin"
+msgstr "yukarıdaki seçili dizin"
 
 #: gui2/settings.c:2233
 msgid "the current directory as determined via the shell"
-msgstr "kabuk tarafından belirlenmiş, şu anki dizin"
+msgstr "kabuk tarafından belirli, şu anki dizin"
 
 #: gui2/settings.c:2281
 msgid "gretl: working directory"
@@ -13673,7 +13673,7 @@ msgstr "Son yinelemedeki düşümler"
 
 #: plugin/fractals.c:40
 msgid "Rescaled-range plot for"
-msgstr "Yeniden ölçeklenmiş aralık çizimi:"
+msgstr "Yeniden ölçekli aralık çizimi:"
 
 #: plugin/fractals.c:41
 msgid "log(sample size)"
@@ -13706,7 +13706,7 @@ msgstr "Örneklem Hurst üstü için aşırı küçük"
 #: plugin/fractals.c:234
 #, c-format
 msgid "Rescaled range figures for %s"
-msgstr "Aralık değerleri, %s için yeniden ölçeklenmiş"
+msgstr "%s için yeniden ölçekli aralık değerleri"
 
 #: plugin/fractals.c:237
 msgid "(logs are to base 2)"
@@ -13820,11 +13820,11 @@ msgstr "Gözlem %d: Alt sınır (%g), üst sınırı (%g) aşıyor"
 
 #: plugin/johansen.c:202
 msgid "renormalized beta"
-msgstr "yeniden normalleştirilmiş beta"
+msgstr "yeniden normalleştirmeli beta"
 
 #: plugin/johansen.c:203
 msgid "renormalized alpha"
-msgstr "yeniden normalleştirilmiş alfa"
+msgstr "yeniden normalleştirmeli alfa"
 
 #: plugin/johansen.c:206
 msgid "beta (cointegrating vectors)"
@@ -13890,7 +13890,7 @@ msgstr "Değiştirilen çözüm yolu: %d yineleme"
 
 #: plugin/jrestrict.c:1240
 msgid "user-supplied initial values"
-msgstr "kullanıcı tarafından sağlanmış başlangıç değerleri"
+msgstr "kullanıcının sağladığı başlangıç değerleri"
 
 #: plugin/jrestrict.c:1817
 #, c-format
@@ -13899,11 +13899,11 @@ msgstr "Jacobyen sırası = %d, serbest değiştirge sayısı = %d\n"
 
 #: plugin/jrestrict.c:1820
 msgid "Model is not fully identified\n"
-msgstr "Model tamamen özdeşlenmemiş\n"
+msgstr "Model tam-özdeşlemeli değil\n"
 
 #: plugin/jrestrict.c:1825
 msgid "Model is fully identified\n"
-msgstr "Model tamamen özdeşlenmiş\n"
+msgstr "Model tam-özdeşlemeli\n"
 
 #: plugin/jrestrict.c:1829
 #, c-format
@@ -14192,7 +14192,7 @@ msgstr "Tüm ayrıntılar"
 
 #: plugin/tramo_options.c:425
 msgid "Reduced output"
-msgstr "Azaltılmış çıktı"
+msgstr "Azaltmalı çıktı"
 
 #: plugin/tramo_options.c:443
 msgid "Save to data set:"
@@ -14336,7 +14336,7 @@ msgstr "Karşıt koşul sayısı"
 
 #: plugin/vif.c:189
 msgid "The statistic you requested is not meaningful for this model"
-msgstr "İstemiş olduğunuz istatistik bu model model için uygun değildir"
+msgstr "İstediğiniz istatistik bu model model için uygun değildir"
 
 #: plugin/vif.c:252
 msgid "Variance Inflation Factors"
