@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-01-17 02:38+0200\n"
+"PO-Revision-Date: 2009-01-17 23:26+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -729,7 +729,7 @@ msgstr "   первое поле: '%s'\n"
 
 #: lib/src/csvdata.c:1078
 msgid "   seems to be observation label\n"
-msgstr ""
+msgstr "   похоже на заголовок столбца данных\n"
 
 #: lib/src/csvdata.c:1090
 #, c-format
@@ -3381,7 +3381,7 @@ msgstr ""
 #: lib/src/gretl_utils.c:1555
 #, c-format
 msgid "%s test"
-msgstr ""
+msgstr "Тест %s"
 
 #: lib/src/gretl_utils.c:1557
 #, c-format
@@ -3396,7 +3396,7 @@ msgstr "Логарифмическое правдоподобие для тес�
 #: lib/src/gretl_win32.c:49
 #, c-format
 msgid "Couldn't open registry\n"
-msgstr ""
+msgstr "Невозможно открыть реестр\n"
 
 #: lib/src/gretl_www.c:711
 msgid "Host not found"
@@ -3440,7 +3440,7 @@ msgstr ""
 #: plugin/gnumeric_import.c:496
 #, c-format
 msgid "%s: empty document"
-msgstr ""
+msgstr "%s: документ пустой"
 
 #: lib/src/gretl_xml.c:95
 #, c-format
@@ -3450,7 +3450,7 @@ msgstr "Файл неверного типа, корневой узел не %s"
 #: lib/src/gretl_xml.c:1294 lib/src/gretl_xml.c:1429
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
-msgstr ""
+msgstr "Запись %ld Кбайт данных\n"
 
 #: lib/src/gretl_xml.c:1690
 #, c-format
@@ -3475,12 +3475,12 @@ msgstr "Число переменных не соответствует заяв
 #: lib/src/gretl_xml.c:1840
 #, c-format
 msgid "Failed to parse data values at obs %d"
-msgstr ""
+msgstr "Не удалось прочитать значение данных для наблюдения %d"
 
 #: lib/src/gretl_xml.c:1867
 #, c-format
 msgid "Failed to parse number of observations"
-msgstr ""
+msgstr "Не удалось прочитать количество наблюдений"
 
 #: lib/src/gretl_xml.c:1886
 #, c-format
@@ -3519,15 +3519,15 @@ msgstr ""
 
 #: lib/src/gretl_xml.c:2089
 msgid "Failed to parse data frequency"
-msgstr ""
+msgstr "Не удалось прочитать частоту данных"
 
 #: lib/src/gretl_xml.c:2130
 msgid "Failed to parse startobs"
-msgstr ""
+msgstr "Не удалось прочитать первое наблюдение"
 
 #: lib/src/gretl_xml.c:2162
 msgid "Failed to parse endobs"
-msgstr ""
+msgstr "Не удалось прочитать последнее наблюдение"
 
 #: lib/src/gretl_xml.c:2196
 #, c-format
@@ -3545,7 +3545,7 @@ msgstr ""
 
 #: lib/src/gretl_xml.c:2283
 msgid "Uncompressing"
-msgstr ""
+msgstr "Декомпрессия"
 
 #: lib/src/gretl_xml.c:2283
 msgid "Reading"
@@ -3553,7 +3553,7 @@ msgstr "Чтение"
 
 #: lib/src/gretl_xml.c:2284
 msgid "of data"
-msgstr ""
+msgstr "данных"
 
 #: lib/src/gretl_xml.c:2313 lib/src/gretl_xml.c:2475
 #, c-format
@@ -3587,7 +3587,7 @@ msgstr "Ряд с именем %s уже существует"
 #: lib/src/interact.c:1574
 #, c-format
 msgid "Parse error in '%s'"
-msgstr ""
+msgstr "Ошибка чтения в '%s'"
 
 #: lib/src/interact.c:1764
 #, c-format
@@ -3695,7 +3695,7 @@ msgstr "%s: отрицательное значение выходит за до
 
 #: lib/src/interact.c:3637
 msgid "Listing labels for variables:\n"
-msgstr ""
+msgstr "Вывод меток для переменных:\n"
 
 #: lib/src/interact.c:3682
 msgid "Output is not currently diverted to file\n"
@@ -3704,7 +3704,7 @@ msgstr "В данный момент вывод не направляется в
 #: lib/src/interact.c:3687
 #, c-format
 msgid "Closed output file '%s'\n"
-msgstr ""
+msgstr "Выходной файл '%s' закрыт\n"
 
 #: lib/src/interact.c:3695
 #, c-format
@@ -3737,7 +3737,7 @@ msgstr "Информация о данных недоступна.\n"
 #: lib/src/interact.c:3884 lib/src/interact.c:5155 lib/src/interact.c:5279
 #, c-format
 msgid "Unmatched \"%s\""
-msgstr ""
+msgstr "Несоответствие в \"%s\""
 
 #: lib/src/interact.c:4054
 msgid "You can't end a loop here, you haven't started one\n"
@@ -3836,7 +3836,7 @@ msgstr ""
 
 #: lib/src/libset.c:1230
 msgid "Robust estimation"
-msgstr ""
+msgstr "Робастная оценка"
 
 #: lib/src/libset.c:1243
 msgid "Filtering"
@@ -3849,26 +3849,26 @@ msgstr "Временные ряды"
 #: lib/src/libset.c:1411
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
-msgstr ""
+msgstr "Датчик псевдослучайных чисел инициализирован значением  %d\n"
 
 #: lib/src/missing.c:816
 #, c-format
 msgid "Set %d values to \"missing\"\n"
-msgstr ""
+msgstr "%d значения отмечены как \"пропуски\"\n"
 
 #: lib/src/missing.c:819
 msgid "Didn't find any matching observations\n"
-msgstr ""
+msgstr "Указанное значение не найдено\n"
 
 #: lib/src/missing.c:825
 #, c-format
 msgid "%s: set %d observations to \"missing\"\n"
-msgstr ""
+msgstr "%s: %d наблюдений отмечены как \"пропуски\"\n"
 
 #: lib/src/missing.c:829
 #, c-format
 msgid "%s: Didn't find any matching observations\n"
-msgstr ""
+msgstr "%s: Указанное значение не найдено\n"
 
 #: lib/src/modelprint.c:147
 msgid "Unconditional error variance"
@@ -10956,11 +10956,11 @@ msgstr "опис. статистика: "
 
 #: gui2/library.c:710
 msgid "normality test"
-msgstr "Тест на нормальное распределение"
+msgstr "тест на нормальность"
 
 #: gui2/library.c:860
 msgid "Couldn't read cointegration order"
-msgstr ""
+msgstr "Невозможно получить порядок коинтеграции"
 
 #: gui2/library.c:914
 msgid "with constant"
@@ -11182,16 +11182,16 @@ msgstr "Ошибка при сохранении информации о мод�
 #: gui2/library.c:3618
 #, c-format
 msgid "Set %d values to \"missing\""
-msgstr ""
+msgstr "%d значения отмечены как \"пропуски\""
 
 #: gui2/library.c:3621 gui2/library.c:3649
 msgid "Didn't find any matching observations"
-msgstr ""
+msgstr "Указанное значение не найдено"
 
 #: gui2/library.c:3646
 #, c-format
 msgid "Set %d observations to \"missing\""
-msgstr ""
+msgstr "%d значения отмечены как \"пропуски\""
 
 #: gui2/library.c:3757
 msgid "gretl: residual dist."
@@ -11213,7 +11213,7 @@ msgstr "распределение частот"
 
 #: gui2/library.c:3873
 msgid "Data contain negative values: gamma distribution not appropriate"
-msgstr ""
+msgstr "Гамма распределение не подходит, т.к. данные содержат отрицательные значения"
 
 #: gui2/library.c:3954
 msgid "This analysis is applicable only to seasonal time series"
@@ -12335,23 +12335,23 @@ msgstr ""
 
 #: gui2/selector.c:4840
 msgid "Select variables for logging"
-msgstr ""
+msgstr "Выберите переменные для логарифмирования"
 
 #: gui2/selector.c:4842
 msgid "Select variables for lagging"
-msgstr ""
+msgstr "Выберите переменные для рассчета лагов"
 
 #: gui2/selector.c:4844
 msgid "Select variables to square"
-msgstr ""
+msgstr "Выберите переменные для рассчета квадратов"
 
 #: gui2/selector.c:4846
 msgid "Select variables to difference"
-msgstr ""
+msgstr "Выберите переменные для рассчета разности"
 
 #: gui2/selector.c:4848
 msgid "Select variables to log-difference"
-msgstr ""
+msgstr "Выберите переменные для рассчета логарифмической разности"
 
 #: gui2/selector.c:4850
 msgid "Select variables to add"
@@ -13039,7 +13039,7 @@ msgstr ""
 
 #: gui2/ssheet.c:901
 msgid "gretl: name column"
-msgstr ""
+msgstr "gretl: название столбца"
 
 #: gui2/ssheet.c:902
 msgid ""
@@ -13083,12 +13083,12 @@ msgstr "Введите название:"
 
 #: gui2/ssheet.c:2275
 msgid "No series to edit"
-msgstr ""
+msgstr "Нет переменных для редактирования"
 
 #: gui2/ssheet.c:2363
 #, c-format
 msgid "Warning: series %s is empty"
-msgstr ""
+msgstr "ВНИМАНИЕ: ряд %s пустой"
 
 #: gui2/ssheet.c:2593
 msgid "gretl: edit matrix"
@@ -13104,7 +13104,7 @@ msgstr "gretl: редактирование данных"
 
 #: gui2/ssheet.c:2755
 msgid "Please add a variable to the dataset first"
-msgstr ""
+msgstr "Вначале необходимо добавить переменную в набор данных"
 
 #: gui2/ssheet.c:2796
 msgid "gretl: scalars"
@@ -13867,7 +13867,7 @@ msgstr "SMTP сервер:"
 
 #: plugin/mailer.c:715
 msgid "port:"
-msgstr "порт:"
+msgstr "Порт:"
 
 #: plugin/mailer.c:761
 msgid "POP server:"
