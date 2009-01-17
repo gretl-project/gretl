@@ -48,11 +48,10 @@
       </fnargs>
       <description>
 	<para>
-	The <lit>$coeff</lit> accessor can be used in two ways: with no
-	  arguments, it returns a column vector containing the estimated
-	  coefficients for the last model. With the optional argument, it
-	  returns a scalar, which is the estimated parameter named
-	  <argname>s</argname>.
+	  With no arguments, <lit>$coeff</lit> returns a column vector
+	  containing the estimated coefficients for the last model. With
+	  the optional string argument it returns a scalar, namely the
+	  estimated parameter named <argname>s</argname>.
 	  <seelist>
 	    <fncref targ="$stderr"/>
 	    <fncref targ="$vcv"/>
@@ -64,8 +63,8 @@
 	<code>
 	  open bjg
 	  arima 0 1 1 ; 0 1 1 ; lg 
-	  b = $coeff 
-	  macoef = $coeff(theta_1)
+	  b = $coeff               # gets a vector
+	  macoef = $coeff(theta_1) # gets a scalar
 	</code>
 	<para>
 	  If the <quote>model</quote> in question is actually a system (a
@@ -361,11 +360,15 @@
       </description>
     </function>
 
-    <function name="$sigma" section="access" output="scalar">
+    <function name="$sigma" section="access" output="scalar-or-matrix">
       <description>
 	<para>
-	  Returns the standard error of the residuals (or Standard Error
-	  of Estimate) from the last model.
+	  Requires that a model has been estimated.  If the last model was
+	  a single equation, returns the (scalar) Standard Error of the
+	  Regression (or in other words, the standard deviation of the
+	  residuals, with an appropriate degrees of freedom correction).
+	  If the last model was a system of equations, returns the
+	  cross-equation covariance matrix of the residuals.
 	</para>
       </description>
     </function>
@@ -376,11 +379,11 @@
       </fnargs>
       <description>
 	<para>
-	  The <lit>$stderr</lit> accessor can be used in two ways: with no
-          arguments, it returns a column vector containing the standard error of
-          the coefficients for the last model.  With the optional argument, it
-          returns a scalar, namely the standard error of the parameter called
-	  <argname>s</argname>.  
+	  With no arguments, <lit>$stderr</lit> returns a column vector
+          containing the standard error of the coefficients for the last
+          model.  With the optional string argument it returns a scalar,
+          namely the standard error of the parameter named
+          <argname>s</argname>.
 	  <seelist>
 	    <fncref targ="$coeff"/> 
 	    <fncref targ="$vcv"/>
@@ -501,7 +504,7 @@
 	  If the <quote>model</quote> in question is actually a system (a
 	  VAR or VECM, or system of simultaneous equations),
 	  <lit>$vcv</lit> with no parameters returns the cross-equation
-	  covariance matrix.
+	  covariance matrix. FIXME outdated.
 	</para>
       </description>
     </function>
