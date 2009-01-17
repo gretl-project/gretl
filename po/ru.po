@@ -1,13 +1,13 @@
-# translation of ru2.po to Russian
+# translation of ru.po to Russian
 # Alexander B. Gedranovich <gedranovich@gmail.com>, 2008, 2009.
 # moradan, 2008.
 # #-#-#-#-#  ru.po (ru)  #-#-#-#-#
 msgid ""
 msgstr ""
-"Project-Id-Version: ru2\n"
+"Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-01-17 02:21+0200\n"
+"PO-Revision-Date: 2009-01-17 02:38+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4036,7 +4036,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:595 lib/src/modelprint.c:694 gui2/selector.c:2745
 msgid "LAD"
-msgstr ""
+msgstr "Наименьшие абсолютные отклонения"
 
 #: lib/src/modelprint.c:596
 msgid "High-Precision OLS"
@@ -4188,7 +4188,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:692
 msgid "Quantile"
-msgstr ""
+msgstr "Квантильная регрессия"
 
 #: lib/src/modelprint.c:698 lib/src/system.c:90
 msgid "LIML"
@@ -4216,7 +4216,7 @@ msgstr "Инструменты"
 
 #: lib/src/modelprint.c:850 lib/src/modelprint.c:852 lib/src/modelprint.c:854
 msgid "Asymptotic standard errors (unreliable)"
-msgstr ""
+msgstr "Асимптотические стандартные ошибки (ненадежные)"
 
 #: lib/src/modelprint.c:864 lib/src/modelprint.c:866 lib/src/modelprint.c:868
 msgid "Robust (HAC) standard errors"
@@ -4270,7 +4270,7 @@ msgstr "вариант"
 
 #: lib/src/modelprint.c:948
 msgid "Standard errors based on Hessian"
-msgstr ""
+msgstr "Стандартные ошибки, рассчитанные на основе гессиана"
 
 #: lib/src/modelprint.c:951
 msgid "Standard errors based on Information Matrix"
@@ -4286,16 +4286,16 @@ msgstr "Стандартные ошибки - QML"
 
 #: lib/src/modelprint.c:961
 msgid "Bollerslev--Wooldridge standard errors"
-msgstr ""
+msgstr "Стандартные ошибки Боллерслева--Вулдриджа (Bollerslev--Wooldridge)"
 
 #: lib/src/modelprint.c:963
 msgid "Bollerslev-Wooldridge standard errors"
-msgstr ""
+msgstr "Стандартные ошибки Боллерслева-Вулдриджа (Bollerslev-Wooldridge)"
 
 #: lib/src/modelprint.c:988
 #, c-format
 msgid "With robust %g percent confidence intervals"
-msgstr ""
+msgstr "С %g-процентными робастными доверительными интервалами"
 
 #: lib/src/modelprint.c:991
 #, c-format
@@ -4304,11 +4304,11 @@ msgstr "С %g-процентными доверительными интерва
 
 #: lib/src/modelprint.c:996
 msgid "Robust (sandwich) standard errors"
-msgstr ""
+msgstr "Робастные стандартные ошибки (sandwich)"
 
 #: lib/src/modelprint.c:998
 msgid "Asymptotic standard errors assuming IID errors"
-msgstr ""
+msgstr "Асимптотические стандартные ошибки считаются независимыми и одинаково распределенными"
 
 #: lib/src/modelprint.c:1102
 msgid "Omitted because all values were zero:"
@@ -12151,7 +12151,7 @@ msgstr "Показывать нулевые значения"
 
 #: gui2/selector.c:3937
 msgid "Show rankings"
-msgstr ""
+msgstr "Показать ранги переменных"
 
 #: gui2/selector.c:3940
 msgid "Ensure uniform sample size"
