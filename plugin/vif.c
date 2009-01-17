@@ -115,10 +115,12 @@ static int XTX_properties (const MODEL *pmod, const double **Z,
 	rho = 0.0;
     }
 
-    gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
-		  rho, pwe, xpx, NULL, pmod->missmask);
+    err = gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
+			rho, pwe, xpx, NULL, NULL, NULL, pmod->missmask);
 
-    err = decomp_etc(xpx, k, &xnorm, &det, &rcond);
+    if (!err) {
+	err = decomp_etc(xpx, k, &xnorm, &det, &rcond);
+    }
 
     if (!err) {
 	pprintf(prn, "\n%s:\n\n", _("Properties of matrix X'X"));

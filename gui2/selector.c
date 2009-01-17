@@ -4613,6 +4613,19 @@ static GtkWidget *selection_dialog_top_label (int ci)
     return gtk_label_new(s);
 }
 
+static int has_0 (const int *list)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 {
     GtkTreeModel *mod;
@@ -4674,12 +4687,12 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     gtk_tree_model_get_iter_first(mod, &iter);
 
     if (MODEL_CODE(sr->code)) {
-	if (sr->code != ARMA) {
-	    /* stick the constant in by default (FIXME "Modify model") */
-	    list_append_var(mod, &iter, 0, sr, SR_RVARS1);
-	} else {
+	if (sr->code == ARMA) {
 	    g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
-	}
+	} else if (xlist == NULL || has_0(xlist)) {
+	    /* stick the constant in by default */
+	    list_append_var(mod, &iter, 0, sr, SR_RVARS1);
+	} 
 	if (xlist != NULL) {
 	    int nx = 0;
 

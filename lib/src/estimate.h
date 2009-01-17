@@ -95,7 +95,9 @@ int *augment_regression_list (const int *orig, int aux,
 
 int gretl_XTX_XTy (const int *list, int t1, int t2, 
 		   const double **Z, int nwt, double rho, int pwe,
-		   double *xpx, double *xpy, const char *mask);
+		   double *xpx, double *xpy, 
+		   double *ysum, double *ypy,
+		   const char *mask);
 
 #endif /* ESTIMATE_H */
 

@@ -53,10 +53,12 @@
 
 #define XPX_DEBUG 0
 
-static void regress (MODEL *pmod, double *xpy, const double **Z, 
+static void regress (MODEL *pmod, double *xpy, 
+		     double ysum, double ypy, 
+		     const double **Z, 
 		     double rho, gretlopt opt);
 static int cholbeta (MODEL *pmod, double *xpy,  double *rss);
-static void diaginv (double *xpx, double *xpy, double *diag, int nv);
+static void diaginv (const double *xpx, double *tmp, double *diag, int nv);
 
 static int hatvar (MODEL *pmod, int n, const double **Z);
 static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
@@ -595,6 +597,7 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
 				   double rho, int pwe, gretlopt opt)
 {
     double *xpy = NULL;
+    double ysum = 0.0, ypy = 0.0;
     int l0 = pmod->list[0];
     int i, k, nxpx;
 
@@ -607,7 +610,7 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
 	return pmod->errcode;
     }
 
-    xpy = malloc((l0 + 1) * sizeof *xpy);
+    xpy = malloc(k * sizeof *xpy);
     pmod->xpx = malloc(nxpx * sizeof *pmod->xpx);
     pmod->coeff = malloc(pmod->ncoeff * sizeof *pmod->coeff);
     pmod->sderr = malloc(pmod->ncoeff * sizeof *pmod->sderr);
@@ -626,7 +629,7 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
 	return pmod->errcode;
     }
 
-    for (i=0; i<=l0; i++) {
+    for (i=0; i<k; i++) {
 	xpy[i] = 0.0;
     }
     for (i=0; i<nxpx; i++) {
@@ -635,10 +638,11 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
 
     /* calculate regression results, Cholesky style */
     pmod->errcode = gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
-				  rho, pwe, pmod->xpx, xpy, pmod->missmask);
+				  rho, pwe, pmod->xpx, xpy, 
+				  &ysum, &ypy, pmod->missmask);
 
 #if XPX_DEBUG
-    for (i=0; i<=l0; i++) {
+    for (i=0; i<k; i++) {
 	fprintf(stderr, "xpy[%d] = %g\n", i, xpy[i]);
     }
     for (i=0; i<nxpx; i++) {
@@ -648,7 +652,7 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
 #endif
 
     if (!pmod->errcode) {
-	regress(pmod, xpy, Z, rho, opt);
+	regress(pmod, xpy, ysum, ypy, Z, rho, opt);
     }
 
     free(xpy);
@@ -1022,19 +1026,26 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  * @pwe: if non-zero, use Prais-Winsten for first observation.
  * @xpx: on output, X'X matrix as lower triangle, stacked by columns.
  * @xpy: on output, X'y vector (but see below).
+ * @ysum: location to recieve \sum y_i, or %NULL.
+ * @ypy: location to recieve (scalar) y'y, or %NULL.
  * @mask: missing observations mask, or %NULL.
  *
  * Calculates X'X and X'y, with various possible transformations
  * of the original data, depending on @nwt, @rho and @pwe.
- * xpy[0] holds the sum of y (that is, Z[list[1]]) and xpy[list[0]]
- * holds y'y.  If X'y is not required, @xpy can be given as %NULL.
+ * If X'y is not required, @xpy can be given as %NULL.
+ *
+ * Note: the y-related pointer arguments @xpy, @ysum, and @ypy 
+ * form a "package": either all should be given, or all should 
+ * be %NULL.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
 int gretl_XTX_XTy (const int *list, int t1, int t2, 
 		   const double **Z, int nwt, double rho, int pwe,
-		   double *xpx, double *xpy, const char *mask)
+		   double *xpx, double *xpy, 
+		   double *ysum, double *ypy,
+		   const char *mask)
 {
     int l0 = list[0], yno = list[1];
     int qdiff = (rho != 0.0);
@@ -1051,7 +1062,7 @@ int gretl_XTX_XTy (const int *list, int t1, int t2,
     }
 
     if (xpy != NULL) {
-	xpy[0] = xpy[l0] = 0.0;
+	*ysum = *ypy = 0.0;
 
 	for (t=t1; t<=t2; t++) {
 	    if (masked(mask, t)) {
@@ -1067,11 +1078,11 @@ int gretl_XTX_XTy (const int *list, int t1, int t2,
 	    } else if (nwt) {
 		x *= sqrt(Z[nwt][t]);
 	    }
-	    xpy[0] += x;
-	    xpy[l0] += x * x;
+	    *ysum += x;
+	    *ypy += x * x;
 	}
 
-	if (xpy[l0] <= 0.0) {
+	if (*ypy <= 0.0) {
 	    return yno; 
 	} 
     }   
@@ -1108,7 +1119,7 @@ int gretl_XTX_XTy (const int *list, int t1, int t2,
 			    (Z[li][t] - rho * Z[li][t-1]);
 		    }
 		}
-		xpy[i-1] = x;
+		xpy[i-2] = x;
 	    }
 	}
     } else if (nwt) {
@@ -1135,7 +1146,7 @@ int gretl_XTX_XTy (const int *list, int t1, int t2,
 			x += Z[nwt][t] * Z[yno][t] * Z[li][t];
 		    }
 		}
-		xpy[i-1] = x;
+		xpy[i-2] = x;
 	    }
 	}
     } else {
@@ -1162,7 +1173,7 @@ int gretl_XTX_XTy (const int *list, int t1, int t2,
 			x += Z[yno][t] * Z[li][t];
 		    }
 		}
-		xpy[i-1] = x;
+		xpy[i-2] = x;
 	    }
 	}
     }
@@ -1306,13 +1317,15 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
   sderr = corresponding array of standard errors
 */
 
-static void regress (MODEL *pmod, double *xpy, const double **Z, 
+static void regress (MODEL *pmod, double *xpy, 
+		     double ysum, double ypy,
+		     const double **Z, 
 		     double rho, gretlopt opt)
 {
     int v, yno = pmod->list[1];
     int ifc = pmod->ifc;
     int n = pmod->full_n;
-    double ysum, ypy, zz, rss = 0.0;
+    double zz, rss = 0.0;
     double sgmasq = 0.0;
     double *diag = NULL;
     int i, err = 0;
@@ -1321,8 +1334,6 @@ static void regress (MODEL *pmod, double *xpy, const double **Z,
 	pmod->yhat[i] = pmod->yhat[i] = NADBL;
     }    
 
-    ysum = xpy[0];
-    ypy = xpy[pmod->ncoeff + 1];
     zz = ysum * ysum / pmod->nobs;
     pmod->tss = ypy - zz;
 
@@ -1401,6 +1412,11 @@ static void regress (MODEL *pmod, double *xpy, const double **Z,
 	return;
     }
 
+    /* Note: 'xpy' is used purely as workspace in diaginv() below, as
+       a matter on economy/convenience; no values in this array are
+       used before they are written 
+    */
+
     diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
 
     for (v=0; v<pmod->ncoeff; v++) {
@@ -1444,7 +1460,7 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
 
     e = 1.0 / sqrt(xpx[0]);
     xpx[0] = e;
-    xpy[1] *= e;
+    xpy[0] *= e;
     for (i=1; i<nc; i++) {
 	xpx[i] *= e;
     }
@@ -1458,9 +1474,9 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
 
         for (l=1; l<=jm1; l++) {
             xx = xpx[k];
-            d1 += xx * xpy[l];
+            d1 += xx * xpy[l-1];
             d += xx * xx;
-            k += nc-l;
+            k += nc - l;
         }
 
         d2 = xpx[kk] - d;
@@ -1477,7 +1493,7 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
 
         e = 1 / sqrt(d2);
         xpx[kk] = e;
-        xpy[j+1] = (xpy[j+1] - d1) * e;
+        xpy[j] = (xpy[j] - d1) * e;
 
 	/* off-diagonal elements */
         for (i=j+1; i<nc; i++) {
@@ -1498,17 +1514,17 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
     /* calculate regression sum of squares */
 
     d = 0.0;
-    for (j=1; j<=nc; j++) {
+    for (j=0; j<nc; j++) {
 	d += xpy[j] * xpy[j];
     }
     *rss = d;
 
     /* back-solve for the coefficients */
 
-    coeff[nc-1] = xpy[nc] * xpx[kk];
+    coeff[nc-1] = xpy[nc-1] * xpx[kk];
 
     for (j=nc-2; j>=0; j--) {
-	d = xpy[j+1];
+	d = xpy[j];
 	for (i=nc-1; i>j; i--) {
 	    d -= coeff[i] * xpx[--kk];
 	}
@@ -1528,46 +1544,46 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
 /*
   diaginv: solves for the diagonal elements of the X'X inverse matrix.
 
-  xpx = Cholesky-decomposed X'X matrix (input)
-  xpy = X'y vector (input) used as work array
+  xpx = Cholesky-decomposed X'X matrix
+  tmp = work array, length = nv
   diag = diagonal elements of X'X (output)
-  nv = number of regression coefficients
+  nv = number of regression coefficients = length of diag
 */
 
-static void diaginv (double *xpx, double *xpy, double *diag, int nv)
+static void diaginv (const double *xpx, double *tmp, double *diag, 
+		     int nv)
 {
     int kk, l, m, k, i, j;
-    const int nxpx = nv * (nv + 1) / 2;
     double d, e;
 
     kk = 0;
 
-    for (l=1; l<=nv-1; l++) {
+    for (l=0; l<nv-1; l++) {
         d = xpx[kk];
-        xpy[l] = d;
+        tmp[l] = d;
         e = d * d;
         m = 0;
-        if (l > 1) {
-	    for (j=1; j<=l-1; j++) {
+        if (l > 0) {
+	    for (j=1; j<=l; j++) {
 		m += nv - j;
 	    }
 	}
-        for (i=l+1; i<=nv; i++) {
+        for (i=l+1; i<nv; i++) {
             d = 0.0;
-            k = i + m - 1;
-            for (j=l; j<=i-1; j++) {
-                d += xpy[j] * xpx[k];
-                k += nv - j;
+            k = i + m;
+            for (j=l; j<i; j++) {
+                d += tmp[j] * xpx[k];
+                k += nv - (j+1);
             }
             d = -d * xpx[k];
-            xpy[i] = d;
+            tmp[i] = d;
             e += d * d;
         }
-        kk += nv + 1 - l;
-        diag[l-1] = e;
+	kk += nv - l;
+        diag[l] = e;
     }
 
-    diag[nv-1] = xpx[nxpx-1] * xpx[nxpx-1];
+    diag[nv-1] = xpx[kk] * xpx[kk];
 }
 
 /**
