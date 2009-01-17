@@ -93,11 +93,7 @@ int makevcv (MODEL *pmod, double sigma);
 int *augment_regression_list (const int *orig, int aux, 
 			      double ***pZ, DATAINFO *pdinfo);
 
-int gretl_XTX_XTy (const int *list, int t1, int t2, 
-		   const double **Z, int nwt, double rho, int pwe,
-		   double *xpx, double *xpy, 
-		   double *ysum, double *ypy,
-		   const char *mask);
+double *gretl_XTX (const MODEL *pmod, const double **Z, int *err);
 
 #endif /* ESTIMATE_H */
 

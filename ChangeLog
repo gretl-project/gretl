@@ -29,6 +29,7 @@ version 1.8.0, in progress
   user-defined matrices
 - New function: toepsolv(), solves a Toeplitz system of
   linear equations
+- New function: mcovg(), matrix covariogram
 - Improve error-reporting in relation to GUI genr dialog
 - Make parsing of input from GUI ARMA dialog more robust
 - New feature: add importer for SPSS .sav files
@@ -49,6 +50,8 @@ version 1.8.0, in progress
 - Improve forecasting options for nls models
 - Add model menu item: "Modify model", under the Edit menu,
   provides a clone of the model specification
+- Loops: allow the "gnuplot" command, operating strictly
+  in batch mode 
 - New command "intreg": implements interval regression
 - Several updates to the documentation
 - Fix bugs 2042328, 2472732, 2510727, 2510759

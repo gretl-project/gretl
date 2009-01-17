@@ -57,16 +57,11 @@ static void regress (MODEL *pmod, double *xpy,
 		     double ysum, double ypy, 
 		     const double **Z, 
 		     double rho, gretlopt opt);
-static int cholbeta (MODEL *pmod, double *xpy,  double *rss);
-static void diaginv (const double *xpx, double *tmp, double *diag, int nv);
-
 static int hatvar (MODEL *pmod, int n, const double **Z);
 static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt);
-static int depvar_zero (MODEL *pmod, int yno, const double **Z);
 static int lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo); 
 static int jackknife_vcv (MODEL *pmod, const double **Z);
-
 
 /* compute statistics for the dependent variable in a model */
 
@@ -593,27 +588,241 @@ maybe_shift_ldepvar (MODEL *pmod, const double **Z, DATAINFO *pdinfo)
     }
 }
 
+/**
+ * XTX_XTy:
+ * @list: list of variables in model.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @Z: data array.
+ * @nwt: ID number of variable used as weight, or 0.
+ * @rho: quasi-differencing coefficent, or 0.0;
+ * @pwe: if non-zero, use Prais-Winsten for first observation.
+ * @xpx: on output, X'X matrix as lower triangle, stacked by columns.
+ * @xpy: on output, X'y vector (but see below).
+ * @ysum: location to recieve \sum y_i, or %NULL.
+ * @ypy: location to recieve (scalar) y'y, or %NULL.
+ * @mask: missing observations mask, or %NULL.
+ *
+ * Calculates X'X and X'y, with various possible transformations
+ * of the original data, depending on @nwt, @rho and @pwe.
+ * If X'y is not required, @xpy can be given as %NULL.
+ *
+ * Note: the y-related pointer arguments @xpy, @ysum, and @ypy 
+ * form a "package": either all should be given, or all should 
+ * be %NULL.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+static int XTX_XTy (const int *list, int t1, int t2, 
+		    const double **Z, int nwt, double rho, int pwe,
+		    double *xpx, double *xpy, 
+		    double *ysum, double *ypy,
+		    const char *mask)
+{
+    int l0 = list[0], yno = list[1];
+    int qdiff = (rho != 0.0);
+    double x, pw1;
+    int li, lj, m;
+    int i, j, t;
+
+    /* Prais-Winsten term */
+    if (qdiff && pwe) {
+	pw1 = sqrt(1.0 - rho * rho);
+    } else {
+	pwe = 0;
+	pw1 = 0.0;
+    }
+
+    if (xpy != NULL) {
+	*ysum = *ypy = 0.0;
+
+	for (t=t1; t<=t2; t++) {
+	    if (masked(mask, t)) {
+		continue;
+	    }
+	    x = Z[yno][t]; 
+	    if (qdiff) {
+		if (pwe && t == t1) {
+		    x = pw1 * Z[yno][t];
+		} else {
+		    x -= rho * Z[yno][t-1];
+		}
+	    } else if (nwt) {
+		x *= sqrt(Z[nwt][t]);
+	    }
+	    *ysum += x;
+	    *ypy += x * x;
+	}
+
+	if (*ypy <= 0.0) {
+	    /* error condition */
+	    return yno; 
+	} 
+    }   
+
+    m = 0;
+
+    if (qdiff) {
+	/* quasi-difference the data */
+	for (i=2; i<=l0; i++) {
+	    li = list[i];
+	    for (j=i; j<=l0; j++) {
+		lj = list[j];
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (pwe && t == t1) {
+			x += pw1 * Z[li][t1] * pw1 * Z[lj][t];
+		    } else {
+			x += (Z[li][t] - rho * Z[li][t-1]) * 
+			    (Z[lj][t] - rho * Z[lj][t-1]);
+		    }
+		}
+		if (li == lj && x < DBL_EPSILON)  {
+		    return E_SINGULAR;
+		}
+		xpx[m++] = x;
+	    }
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (pwe && t == t1) {
+			x += pw1 * Z[yno][t] * pw1 * Z[li][t];
+		    } else {
+			x += (Z[yno][t] - rho * Z[yno][t-1]) *
+			    (Z[li][t] - rho * Z[li][t-1]);
+		    }
+		}
+		xpy[i-2] = x;
+	    }
+	}
+    } else if (nwt) {
+	/* weight the data */
+	for (i=2; i<=l0; i++) {
+	    li = list[i];
+	    for (j=i; j<=l0; j++) {
+		lj = list[j];
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (!masked(mask, t)) {
+			x += Z[nwt][t] * Z[li][t] * Z[lj][t];
+		    }
+		}
+		if (li == lj && x < DBL_EPSILON) {
+		    return E_SINGULAR;
+		}   
+		xpx[m++] = x;
+	    }
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (!masked(mask, t)) {
+			x += Z[nwt][t] * Z[yno][t] * Z[li][t];
+		    }
+		}
+		xpy[i-2] = x;
+	    }
+	}
+    } else {
+	/* no quasi-differencing or weighting wanted */
+	for (i=2; i<=l0; i++) {
+	    li = list[i];
+	    for (j=i; j<=l0; j++) {
+		lj = list[j];
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (!masked(mask, t)) {
+			x += Z[li][t] * Z[lj][t];
+		    }
+		}
+		if (li == lj && x < DBL_EPSILON) {
+		    return E_SINGULAR;
+		}
+		xpx[m++] = x;
+	    }
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (!masked(mask, t)) {
+			x += Z[yno][t] * Z[li][t];
+		    }
+		}
+		xpy[i-2] = x;
+	    }
+	}
+    }
+
+    return 0; 
+}
+
+/**
+ * gretl_XTX:
+ * @pmod: reference model.
+ * @Z: data array.
+ * @err: location to receive error code.
+ *
+ * (Re-)calculates X'X, with various possible transformations
+ * of the original data depending on whether estimation of 
+ * @pmod involved weighting or quasi-differencing.
+ *
+ * Returns: The vech of X'X or %NULL on error.
+ */
+
+double *gretl_XTX (const MODEL *pmod, const double **Z, int *err)
+{
+    double *xpx;
+    double rho;
+    int pwe = 0;
+    int k = pmod->ncoeff;
+    int m = k * (k + 1) / 2;
+    
+    *err = 0;
+
+    xpx = malloc(m * sizeof *xpx);
+    if (xpx == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (pmod->ci == AR1 && (pmod->opt & OPT_P)) {
+	pwe = 1;
+    }
+
+    rho = gretl_model_get_double(pmod, "rho_in");
+    if (na(rho)) {
+	rho = 0.0;
+    }
+
+    *err = XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
+		   rho, pwe, xpx, NULL, NULL, NULL, pmod->missmask);
+
+    return xpx;
+}
+
 static int gretl_choleski_regress (MODEL *pmod, const double **Z, 
 				   double rho, int pwe, gretlopt opt)
 {
-    double *xpy = NULL;
     double ysum = 0.0, ypy = 0.0;
-    int l0 = pmod->list[0];
-    int i, k, nxpx;
-
-    k = l0 - 1;
-    nxpx = k * (k + 1) / 2;
+    double *xpy;
+    int k = pmod->ncoeff;
+    int nxpx = k * (k + 1) / 2;
+    int i;
 
     if (nxpx == 0) {
-	fprintf(stderr, "problem: nxpx = 0 (l0 = %d)\n", l0);
+	fprintf(stderr, "problem: nxpx = 0\n");
 	pmod->errcode = E_DATA;
 	return pmod->errcode;
     }
 
     xpy = malloc(k * sizeof *xpy);
+    if (xpy == NULL) {
+	pmod->errcode = E_ALLOC;
+	return pmod->errcode;
+    }
+
     pmod->xpx = malloc(nxpx * sizeof *pmod->xpx);
-    pmod->coeff = malloc(pmod->ncoeff * sizeof *pmod->coeff);
-    pmod->sderr = malloc(pmod->ncoeff * sizeof *pmod->sderr);
+    pmod->coeff = malloc(k * sizeof *pmod->coeff);
+    pmod->sderr = malloc(k * sizeof *pmod->sderr);
 
     if (pmod->yhat == NULL) {
 	pmod->yhat = malloc(pmod->full_n * sizeof *pmod->yhat);
@@ -623,8 +832,10 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
 	pmod->uhat = malloc(pmod->full_n * sizeof *pmod->uhat);
     }
 
-    if (xpy == NULL || pmod->xpx == NULL || pmod->coeff == NULL ||
-	pmod->sderr == NULL || pmod->yhat == NULL || pmod->uhat == NULL) {
+    if (pmod->xpx == NULL || pmod->coeff == NULL ||
+	pmod->sderr == NULL || pmod->yhat == NULL || 
+	pmod->uhat == NULL) {
+	free(xpy);
 	pmod->errcode = E_ALLOC;
 	return pmod->errcode;
     }
@@ -637,9 +848,9 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
     }
 
     /* calculate regression results, Cholesky style */
-    pmod->errcode = gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
-				  rho, pwe, pmod->xpx, xpy, 
-				  &ysum, &ypy, pmod->missmask);
+    pmod->errcode = XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
+			    rho, pwe, pmod->xpx, xpy, 
+			    &ysum, &ypy, pmod->missmask);
 
 #if XPX_DEBUG
     for (i=0; i<k; i++) {
@@ -704,6 +915,31 @@ static int gretl_null_regress (MODEL *pmod, const double **Z)
     }
 
     return pmod->errcode;
+}
+
+/* check whether the variable with ID @yno is all zeros;
+   return 1 if so, otherwise return 0 */
+
+static int depvar_zero (const MODEL *pmod, int yno, const double **Z)
+{
+    double yt;
+    int t, ret = 1;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (model_missing(pmod, t)) {
+	    continue;
+	}
+	yt = Z[yno][t];
+	if (pmod->nwt) {
+	    yt *= Z[pmod->nwt][t];
+	}
+	if (yt != 0.0) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
 }
 
 /* limited freeing of elements before passing a model
@@ -1015,171 +1251,6 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     return ar1_lsq(list, pZ, pdinfo, ci, opt, 0.0);
 }
 
-/**
- * gretl_XTX_XTy:
- * @list: list of variables in model.
- * @t1: starting observation.
- * @t2: ending observation.
- * @Z: data array.
- * @nwt: ID number of variable used as weight.
- * @rho: quasi-differencing coefficent.
- * @pwe: if non-zero, use Prais-Winsten for first observation.
- * @xpx: on output, X'X matrix as lower triangle, stacked by columns.
- * @xpy: on output, X'y vector (but see below).
- * @ysum: location to recieve \sum y_i, or %NULL.
- * @ypy: location to recieve (scalar) y'y, or %NULL.
- * @mask: missing observations mask, or %NULL.
- *
- * Calculates X'X and X'y, with various possible transformations
- * of the original data, depending on @nwt, @rho and @pwe.
- * If X'y is not required, @xpy can be given as %NULL.
- *
- * Note: the y-related pointer arguments @xpy, @ysum, and @ypy 
- * form a "package": either all should be given, or all should 
- * be %NULL.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int gretl_XTX_XTy (const int *list, int t1, int t2, 
-		   const double **Z, int nwt, double rho, int pwe,
-		   double *xpx, double *xpy, 
-		   double *ysum, double *ypy,
-		   const char *mask)
-{
-    int l0 = list[0], yno = list[1];
-    int qdiff = (rho != 0.0);
-    double x, pw1;
-    int li, lj, m;
-    int i, j, t;
-
-    /* Prais-Winsten term */
-    if (qdiff && pwe) {
-	pw1 = sqrt(1.0 - rho * rho);
-    } else {
-	pwe = 0;
-	pw1 = 0.0;
-    }
-
-    if (xpy != NULL) {
-	*ysum = *ypy = 0.0;
-
-	for (t=t1; t<=t2; t++) {
-	    if (masked(mask, t)) {
-		continue;
-	    }
-	    x = Z[yno][t]; 
-	    if (qdiff) {
-		if (pwe && t == t1) {
-		    x = pw1 * Z[yno][t];
-		} else {
-		    x -= rho * Z[yno][t-1];
-		}
-	    } else if (nwt) {
-		x *= sqrt(Z[nwt][t]);
-	    }
-	    *ysum += x;
-	    *ypy += x * x;
-	}
-
-	if (*ypy <= 0.0) {
-	    return yno; 
-	} 
-    }   
-
-    m = 0;
-
-    if (qdiff) {
-	/* quasi-difference the data */
-	for (i=2; i<=l0; i++) {
-	    li = list[i];
-	    for (j=i; j<=l0; j++) {
-		lj = list[j];
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    if (pwe && t == t1) {
-			x += pw1 * Z[li][t1] * pw1 * Z[lj][t];
-		    } else {
-			x += (Z[li][t] - rho * Z[li][t-1]) * 
-			    (Z[lj][t] - rho * Z[lj][t-1]);
-		    }
-		}
-		if (li == lj && x < DBL_EPSILON)  {
-		    return E_SINGULAR;
-		}
-		xpx[m++] = x;
-	    }
-	    if (xpy != NULL) {
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    if (pwe && t == t1) {
-			x += pw1 * Z[yno][t] * pw1 * Z[li][t];
-		    } else {
-			x += (Z[yno][t] - rho * Z[yno][t-1]) *
-			    (Z[li][t] - rho * Z[li][t-1]);
-		    }
-		}
-		xpy[i-2] = x;
-	    }
-	}
-    } else if (nwt) {
-	/* weight the data */
-	for (i=2; i<=l0; i++) {
-	    li = list[i];
-	    for (j=i; j<=l0; j++) {
-		lj = list[j];
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    if (!masked(mask, t)) {
-			x += Z[nwt][t] * Z[li][t] * Z[lj][t];
-		    }
-		}
-		if (li == lj && x < DBL_EPSILON) {
-		    return E_SINGULAR;
-		}   
-		xpx[m++] = x;
-	    }
-	    if (xpy != NULL) {
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    if (!masked(mask, t)) {
-			x += Z[nwt][t] * Z[yno][t] * Z[li][t];
-		    }
-		}
-		xpy[i-2] = x;
-	    }
-	}
-    } else {
-	/* no quasi-differencing or weighting wanted */
-	for (i=2; i<=l0; i++) {
-	    li = list[i];
-	    for (j=i; j<=l0; j++) {
-		lj = list[j];
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    if (!masked(mask, t)) {
-			x += Z[li][t] * Z[lj][t];
-		    }
-		}
-		if (li == lj && x < DBL_EPSILON) {
-		    return E_SINGULAR;
-		}
-		xpx[m++] = x;
-	    }
-	    if (xpy != NULL) {
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    if (!masked(mask, t)) {
-			x += Z[yno][t] * Z[li][t];
-		    }
-		}
-		xpy[i-2] = x;
-	    }
-	}
-    }
-
-    return 0; 
-}
 
 static int make_ess (MODEL *pmod, const double **Z)
 {
@@ -1304,135 +1375,53 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 }
 
 /*
-  regress: takes X'X (pmod->xpx) and X'y (@xpy) and
-  computes OLS estimates and associated statistics.
+  diaginv: solves for the diagonal elements of X'X inverse.
 
-  n = total number of observations per series in data set
-  pmod->ifc = 1 if constant is present in model, else = 0
-
-  ess = error sum of squares
-  sigma = standard error of regression
-  fstt = F-statistic
-  pmod->coeff = array of regression coefficients
-  pmod->sderr = corresponding array of standard errors
+  xpx = Cholesky-decomposed X'X
+  tmp = work array, length >= nv
+  diag = diagonal elements of {X'X}^{-1} (output)
+  nv = number of regression coefficients = length of diag
 */
 
-static void regress (MODEL *pmod, double *xpy, 
-		     double ysum, double ypy,
-		     const double **Z, 
-		     double rho, gretlopt opt)
+static void diaginv (const double *xpx, double *tmp, double *diag, 
+		     int nv)
 {
-    int v, yno = pmod->list[1];
-    int ifc = pmod->ifc;
-    int n = pmod->full_n;
-    double zz, rss = 0.0;
-    double sgmasq = 0.0;
-    double *diag = NULL;
-    int i, err = 0;
+    int kk, l, m, k, i, j;
+    double d, e;
 
-    for (i=0; i<n; i++) {
-	pmod->yhat[i] = pmod->yhat[i] = NADBL;
-    }    
+    kk = 0;
 
-    zz = ysum * ysum / pmod->nobs;
-    pmod->tss = ypy - zz;
-
-    /*  Cholesky-decompose X'X and find the coefficients */
-    err = cholbeta(pmod, xpy, &rss);
-    if (err) {
-        pmod->errcode = err;
-        return;
-    }   
-    
-    if (rho != 0.0) {
-	pmod->ess = ypy - rss;
-    } else {
-	make_ess(pmod, Z);
-	rss = ypy - pmod->ess;
-    }
-
-    if (fabs(pmod->ess) < ESSZERO) {
-	pmod->ess = 0.0;
-    } else if (pmod->ess < 0.0) { 
-	sprintf(gretl_errmsg, _("Error sum of squares (%g) is not > 0"),
-		pmod->ess);
-        return; 
-    }
-
-    if (pmod->dfd == 0) {
-	pmod->sigma = 0.0;
-	pmod->adjrsq = NADBL;
-    } else {
-	if (pmod->opt & OPT_N) {
-	    /* no-df-corr */
-	    sgmasq = pmod->ess / pmod->nobs;
-	} else {
-	    sgmasq = pmod->ess / pmod->dfd;
+    for (l=0; l<nv-1; l++) {
+        d = xpx[kk];
+        tmp[l] = d;
+        e = d * d;
+        m = 0;
+        if (l > 0) {
+	    for (j=1; j<=l; j++) {
+		m += nv - j;
+	    }
 	}
-	pmod->sigma = sqrt(sgmasq);
+        for (i=l+1; i<nv; i++) {
+            d = 0.0;
+            k = i + m;
+            for (j=l; j<i; j++) {
+                d += tmp[j] * xpx[k];
+                k += nv - (j+1);
+            }
+            d = -d * xpx[k];
+            tmp[i] = d;
+            e += d * d;
+        }
+	kk += nv - l;
+        diag[l] = e;
     }
 
-    if (pmod->tss < DBL_EPSILON) {
-	pmod->rsq = pmod->adjrsq = NADBL;
-    } 
-
-    hatvar(pmod, n, Z); 
-    if (pmod->errcode) return;
-
-    if (!(opt & OPT_B)) {
-	/* changed 2008-09-25 */
-	if (pmod->tss > 0.0) {
-	    compute_r_squared(pmod, Z[yno], &ifc);
-	} else if (pmod->tss == 0.0) {
-	    uncentered_r_squared(pmod, Z[yno]);
-	}
-    }
-
-#if 0
-    if (pmod->ifc && pmod->ncoeff == 1) {
-        zz = 0.0;
-        pmod->dfn = 1;
-    }
-#endif
-
-    if (sgmasq <= 0.0 || pmod->dfd == 0 || pmod->dfn == 0) {
-	pmod->fstt = NADBL;
-    } else if (pmod->rsq == 1.0) {
-	pmod->fstt = NADBL;
-    } else {
-	pmod->fstt = (rss - zz * ifc) / (sgmasq * pmod->dfn);
-	if (pmod->fstt < 0.0) {
-	    pmod->fstt = 0.0;
-	}
-    }
-
-    diag = malloc(pmod->ncoeff * sizeof *diag); 
-    if (diag == NULL) {
-	pmod->errcode = E_ALLOC;
-	return;
-    }
-
-    /* Note: 'xpy' is used purely as workspace in diaginv() below, as
-       a matter on economy/convenience; no values in this array are
-       used before they are written 
-    */
-
-    diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
-
-    for (v=0; v<pmod->ncoeff; v++) {
-	if (diag[v] >= 0.0) {
-	    pmod->sderr[v] = pmod->sigma * sqrt(diag[v]);
-	} else {
-	    pmod->sderr[v] = 0.0;
-	}
-    }
-
-    free(diag); 
+    diag[nv-1] = xpx[kk] * xpx[kk];
 }
 
 /*
-  cholbeta: does an in-place Cholesky decomposition of pmod->xpx 
-  (lower triangular matrix stacked in columns) and solves for the
+  cholbeta: in-place Cholesky decomposition of X'X (pmod->xpx) (lower
+  triangular matrix stacked in columns) plus solution for the
   least-squares coefficient estimates.
 
   pmod->xpx = X'X on input and Cholesky decomposition on output
@@ -1444,8 +1433,7 @@ static void regress (MODEL *pmod, double *xpy,
   plus (nv^3) / 3.
 */
 
-static int 
-cholbeta (MODEL *pmod, double *xpy, double *rss)
+static int cholbeta (MODEL *pmod, double *xpy, double *rss)
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, d2, test, xx;
@@ -1512,7 +1500,6 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
     kk--;
 
     /* calculate regression sum of squares */
-
     d = 0.0;
     for (j=0; j<nc; j++) {
 	d += xpy[j] * xpy[j];
@@ -1542,48 +1529,123 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
 }
 
 /*
-  diaginv: solves for the diagonal elements of the X'X inverse matrix.
+  regress: takes X'X (pmod->xpx) and X'y (@xpy) and
+  computes OLS estimates and associated statistics.
 
-  xpx = Cholesky-decomposed X'X matrix
-  tmp = work array, length = nv
-  diag = diagonal elements of X'X (output)
-  nv = number of regression coefficients = length of diag
+  n = total number of observations per series in data set
+  pmod->ifc = 1 if constant is present in model, else = 0
+
+  ess = error sum of squares
+  sigma = standard error of regression
+  fstt = F-statistic
+  pmod->coeff = array of regression coefficients
+  pmod->sderr = corresponding array of standard errors
 */
 
-static void diaginv (const double *xpx, double *tmp, double *diag, 
-		     int nv)
+static void regress (MODEL *pmod, double *xpy, 
+		     double ysum, double ypy,
+		     const double **Z, 
+		     double rho, gretlopt opt)
 {
-    int kk, l, m, k, i, j;
-    double d, e;
+    int yno = pmod->list[1];
+    int ifc = pmod->ifc;
+    int n = pmod->full_n;
+    double zz, rss = 0.0;
+    double s2 = 0.0;
+    double *diag = NULL;
+    int i, err = 0;
 
-    kk = 0;
+    for (i=0; i<n; i++) {
+	pmod->yhat[i] = pmod->yhat[i] = NADBL;
+    }    
 
-    for (l=0; l<nv-1; l++) {
-        d = xpx[kk];
-        tmp[l] = d;
-        e = d * d;
-        m = 0;
-        if (l > 0) {
-	    for (j=1; j<=l; j++) {
-		m += nv - j;
-	    }
-	}
-        for (i=l+1; i<nv; i++) {
-            d = 0.0;
-            k = i + m;
-            for (j=l; j<i; j++) {
-                d += tmp[j] * xpx[k];
-                k += nv - (j+1);
-            }
-            d = -d * xpx[k];
-            tmp[i] = d;
-            e += d * d;
-        }
-	kk += nv - l;
-        diag[l] = e;
+    zz = ysum * ysum / pmod->nobs;
+    pmod->tss = ypy - zz;
+
+    /*  Cholesky-decompose X'X and find the coefficients */
+    err = cholbeta(pmod, xpy, &rss);
+    if (err) {
+        pmod->errcode = err;
+        return;
+    }   
+    
+    if (rho != 0.0) {
+	pmod->ess = ypy - rss;
+    } else {
+	make_ess(pmod, Z);
+	rss = ypy - pmod->ess;
     }
 
-    diag[nv-1] = xpx[kk] * xpx[kk];
+    if (fabs(pmod->ess) < ESSZERO) {
+	pmod->ess = 0.0;
+    } else if (pmod->ess < 0.0) { 
+	sprintf(gretl_errmsg, _("Error sum of squares (%g) is not > 0"),
+		pmod->ess);
+        return; 
+    }
+
+    if (pmod->dfd == 0) {
+	pmod->sigma = 0.0;
+	pmod->adjrsq = NADBL;
+    } else {
+	if (pmod->opt & OPT_N) {
+	    /* no-df-corr */
+	    s2 = pmod->ess / pmod->nobs;
+	} else {
+	    s2 = pmod->ess / pmod->dfd;
+	}
+	pmod->sigma = sqrt(s2);
+    }
+
+    if (pmod->tss < DBL_EPSILON) {
+	pmod->rsq = pmod->adjrsq = NADBL;
+    } 
+
+    hatvar(pmod, n, Z); 
+    if (pmod->errcode) return;
+
+    if (!(opt & OPT_B)) {
+	/* changed 2008-09-25 */
+	if (pmod->tss > 0.0) {
+	    compute_r_squared(pmod, Z[yno], &ifc);
+	} else if (pmod->tss == 0.0) {
+	    uncentered_r_squared(pmod, Z[yno]);
+	}
+    }
+
+    if (s2 <= 0.0 || pmod->dfd == 0 || pmod->dfn == 0) {
+	pmod->fstt = NADBL;
+    } else if (pmod->rsq == 1.0) {
+	pmod->fstt = NADBL;
+    } else {
+	pmod->fstt = (rss - zz * ifc) / (s2 * pmod->dfn);
+	if (pmod->fstt < 0.0) {
+	    pmod->fstt = 0.0;
+	}
+    }
+
+    diag = malloc(pmod->ncoeff * sizeof *diag); 
+    if (diag == NULL) {
+	pmod->errcode = E_ALLOC;
+	return;
+    }
+
+    /* Note: 'xpy' is used purely as workspace in diaginv() below, as
+       a matter on economy/convenience; no values in this array are
+       used before they are written. 
+    */
+
+    diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	if (diag[i] >= 0.0) {
+	    pmod->sderr[i] = pmod->sigma * sqrt(diag[i]);
+	} else {
+	    pmod->sderr[i] = 0.0;
+	}
+    }
+
+    free(diag); 
 }
 
 /**
@@ -1592,7 +1654,7 @@ static void diaginv (const double *xpx, double *tmp, double *diag,
  * @sigma: square root of error variance, or 1.0 to
  * produce just X'X^{-1}.
  *
- * Inverts the Cholesky-decomposed X'X matrix and computes the 
+ * Inverts the Cholesky-decomposed X'X and computes the 
  * coefficient covariance matrix.
  * 
  * Returns: 0 on successful completion, non-zero code on error.
@@ -3251,8 +3313,8 @@ static int modelvar_iszero (const MODEL *pmod, const double *x)
     return 1;
 }
 
-/* From 2 to end of list, omits variables with all zero observations
-   and re-packs the rest of them */
+/* From position 2 to end of list, omits variables with all zero
+   observations and re-packs the rest of them */
 
 static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt)
@@ -3307,28 +3369,6 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 	    free(zlist);
 	}
     }
-}
-
-static int depvar_zero (MODEL *pmod, int yno, const double **Z)
-{
-    double yt;
-    int t, ret = 1;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (model_missing(pmod, t)) {
-	    continue;
-	}
-	yt = Z[yno][t];
-	if (pmod->nwt) {
-	    yt *= Z[pmod->nwt][t];
-	}
-	if (yt != 0.0) {
-	    ret = 0;
-	    break;
-	}
-    }
-
-    return ret;
 }
 
 /* lagdepvar: attempt to detect presence of a lagged dependent

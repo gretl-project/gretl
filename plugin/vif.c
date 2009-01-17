@@ -92,38 +92,12 @@ decomp_etc (double *xpx, int k, double *xnorm, double *det, double *rcond)
 static int XTX_properties (const MODEL *pmod, const double **Z,
 			   PRN *prn)
 {
-    int k = pmod->list[0] - 1;
     double *xpx = NULL;
-    double xnorm, det = 1, rcond;
-    double rho = 0.0;
-    int pwe = 0;
-    int nxpx;
+    int k = pmod->ncoeff;
+    double xnorm, rcond, det = 1;
     int err = 0;
 
-    nxpx = k * (k + 1) / 2;
-    xpx = malloc(nxpx * sizeof *xpx);
-    if (xpx == NULL) {
-	return E_ALLOC;
-    }
-
-#if 0 /* needs a little more checking (what about models
-         estimated using QR decomp -- do they have a suitable
-         xpx element?)
-      */
-    err = gretl_cholesky_undecomp(pmod->xpx, k, xpx);
-#else
-    if (pmod->ci == AR1 && (pmod->opt & OPT_P)) {
-	pwe = 1;
-    }
-
-    rho = gretl_model_get_double(pmod, "rho_in");
-    if (na(rho)) {
-	rho = 0.0;
-    }
-
-    err = gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
-			rho, pwe, xpx, NULL, NULL, NULL, pmod->missmask);
-#endif
+    xpx = gretl_XTX(pmod, Z, &err);
 
     if (!err) {
 	err = decomp_etc(xpx, k, &xnorm, &det, &rcond);

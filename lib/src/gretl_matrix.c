@@ -5214,57 +5214,6 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     return (info == 0)? 0 : 1;
 }
 
-/* Given the Cholesky lower triangle, L, reconstitute the lower
-   triangle of the matrix of which this is the factor.  That is,
-   produce the lower triangle of A = LL', in the array @A.  But
-   there's something idiosyncratic here: we assume, as per gretl's
-   built-in Cholesky routine, that the diagonal elements of L have
-   been inverted, and so have to be uninverted when rebuilding A.
-*/
-
-int gretl_cholesky_undecomp (const double *L, int k, double *A)
-{
-    int c, r, i, j, i0, m, kk = 0;
-    int *diag, di, dj;
-    double x, xi, xj;
-
-    diag = gretl_list_new(k);
-    if (diag == NULL) {
-	return E_ALLOC;
-    }
-
-    r = k;
-    for (i=2; i<=k; i++) {
-	diag[i] = diag[i-1] + r--;
-    }
-
-    for (c=0; c<k; c++) {
-	/* columns of output */
-	i0 = c;
-	for (r=c; r<k; r++) {
-	    /* rows in this output column */
-	    x = 0.0;
-	    i = i0;
-	    j = c;
-	    for (m=0; m<=c; m++) {
-		di = in_gretl_list(diag, i);
-		dj = ((di && j == i) || in_gretl_list(diag, j));
-		xi = (di)? (1.0 / L[i]) : L[i];
-		xj = (dj)? (1.0 / L[j]) : L[j];
-		x += xi * xj;
-		i += (i0 > 0 && i == i0)? (k-1) : 1;
-		j += (c > 0 && j == c)? (k-1) : 1;
-	    }
-	    i0++;
-	    A[kk++] = x;
-	}
-    }
-
-    free(diag);
-
-    return 0;
-}
-
 #if 0 /* experimental */
 
 int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,

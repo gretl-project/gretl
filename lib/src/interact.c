@@ -4652,6 +4652,15 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = do_modprint(line, cmd->opt, prn);
 	break;
 
+    case GNUPLOT:
+	/* in this context we only do plots in batch mode (OPT_B) */
+	err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
+		      pdinfo, cmd->opt | OPT_B);
+	if (!err) {
+	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+	}
+	break;
+
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
 		       "in libgretl\n"), cmd->word);

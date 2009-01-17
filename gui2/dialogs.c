@@ -2271,6 +2271,9 @@ static void adjust_fcast_k (GtkSpinButton *spin, int *pk)
 #define fcast_errs_ok(m) (m == NULL || m->ci != NLS || \
 			  !gretl_model_get_int(m, "dynamic"))
 
+/* Note: the @pmod argument may be NULL, if this dialog is
+   called in relarion to a system of equations */
+
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
 		     int *k, int pmin, int pmax, int *p,

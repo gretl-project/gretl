@@ -340,7 +340,6 @@ int ok_in_loop (int c)
 	c == DELEET ||
 	c == EQNPRINT ||
 	c == FUNC ||
-	c == GNUPLOT ||
 	c == HURST ||
 	c == INCLUDE ||
 	c == LEVERAGE ||
