@@ -1,9 +1,6 @@
 \chapter{The command line interface}
 \label{cli}
 
-\section{Gretl at the console}
-\label{cli-console}
-
 The \app{gretl} package includes the command-line program
 \app{gretlcli}.  On Linux it can be run from a terminal window (xterm,
 rxvt, or similar), or at the text console.  Under MS Windows it can be
@@ -43,9 +40,6 @@ complete the command name for you.  If there's a unique completion it
 will be put in place automatically.  If there's more than one
 completion, pressing Tab a second time brings up a list.
 
-\section{CLI syntax}
-\label{cli-syntax}
-
 Probably the most useful mode for heavy-duty work with \app{gretlcli}
 is batch (non-interactive) mode, in which the program reads and
 processes a script, and sends the output to file.  For example
@@ -53,10 +47,11 @@ processes a script, and sends the output to file.  For example
 gretlcli -b scriptfile > outputfile
 \end{code}
 
-The \textsl{scriptfile} is treated as a program argument; it should
-specify a data file to use internally, using the syntax \cmd{open
-  datafile}.  Don't forget the \texttt{-b} (batch) switch, otherwise
-the program will wait for user input after executing the script.
+Note that \textsl{scriptfile} is treated as a program argument; only
+the output file requires redirection (\verb|>|).  Don't forget the
+\texttt{-b} (batch) switch, otherwise the program will wait for user
+input after executing the script (and if output is redirected, the
+program will appear to ``hang'').
 
     
 %%% Local Variables: 
