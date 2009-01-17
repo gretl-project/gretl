@@ -106,6 +106,12 @@ static int XTX_properties (const MODEL *pmod, const double **Z,
 	return E_ALLOC;
     }
 
+#if 0 /* needs a little more checking (what about models
+         estimated using QR decomp -- do they have a suitable
+         xpx element?)
+      */
+    err = gretl_cholesky_undecomp(pmod->xpx, k, xpx);
+#else
     if (pmod->ci == AR1 && (pmod->opt & OPT_P)) {
 	pwe = 1;
     }
@@ -117,6 +123,7 @@ static int XTX_properties (const MODEL *pmod, const double **Z,
 
     err = gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
 			rho, pwe, xpx, NULL, NULL, NULL, pmod->missmask);
+#endif
 
     if (!err) {
 	err = decomp_etc(xpx, k, &xnorm, &det, &rcond);

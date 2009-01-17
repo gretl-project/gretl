@@ -500,6 +500,8 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
+int gretl_cholesky_undecomp (const double *L, int k, double *A);
+
 int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R);
 
 int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd);

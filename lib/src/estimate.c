@@ -1304,17 +1304,17 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 }
 
 /*
-  regress: takes xpx, the X'X matrix produced by gretl_XTX_XTy(), and
-  xpy (X'y), and computes ols estimates and associated statistics.
+  regress: takes X'X (pmod->xpx) and X'y (@xpy) and
+  computes OLS estimates and associated statistics.
 
   n = total number of observations per series in data set
-  ifc = 1 if constant is present in model, else = 0
+  pmod->ifc = 1 if constant is present in model, else = 0
 
   ess = error sum of squares
   sigma = standard error of regression
   fstt = F-statistic
-  coeff = array of regression coefficients
-  sderr = corresponding array of standard errors
+  pmod->coeff = array of regression coefficients
+  pmod->sderr = corresponding array of standard errors
 */
 
 static void regress (MODEL *pmod, double *xpy, 
@@ -1536,7 +1536,7 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
 	    fprintf(stderr, "%s %d: coeff %d is NaN\n", __FILE__, __LINE__, j);
 	    return E_NAN;
 	}
-    }	
+    }
 
     return 0; 
 }
