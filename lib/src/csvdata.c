@@ -33,12 +33,13 @@ enum {
     CSV_HAVEDATA = 1 << 0,
     CSV_GOTDELIM = 1 << 1,
     CSV_GOTTAB   = 1 << 2,
-    CSV_BLANK1   = 1 << 3,
-    CSV_OBS1     = 1 << 4,
-    CSV_TRAIL    = 1 << 5,
-    CSV_AUTONAME = 1 << 6,
-    CSV_NONNUM   = 1 << 7,
-    CSV_REVERSED = 1 << 8
+    CSV_GOTSEMI  = 1 << 3,
+    CSV_BLANK1   = 1 << 4,
+    CSV_OBS1     = 1 << 5,
+    CSV_TRAIL    = 1 << 6,
+    CSV_AUTONAME = 1 << 7,
+    CSV_NONNUM   = 1 << 8,
+    CSV_REVERSED = 1 << 9
 };
 
 typedef struct csvdata_ csvdata;
@@ -64,6 +65,7 @@ struct csvdata_ {
 #define csv_has_obs_column(c)     (c->flags & CSV_OBS1)
 #define csv_has_blank_column(c)   (c->flags & CSV_BLANK1)
 #define csv_got_tab(c)            (c->flags & CSV_GOTTAB)
+#define csv_got_semi(c)           (c->flags & CSV_GOTSEMI)
 #define csv_got_delim(c)          (c->flags & CSV_GOTDELIM)
 #define csv_autoname(c)           (c->flags & CSV_AUTONAME)
 #define csv_skip_column(c)        (c->flags & (CSV_OBS1 | CSV_BLANK1))
@@ -76,6 +78,7 @@ struct csvdata_ {
 #define csv_set_obs_column(c)       (c->flags |= CSV_OBS1)
 #define csv_set_blank_column(c)     (c->flags |= CSV_BLANK1)
 #define csv_set_got_tab(c)          (c->flags |= CSV_GOTTAB)
+#define csv_set_got_semi(c)         (c->flags |= CSV_GOTSEMI)
 #define csv_set_got_delim(c)        (c->flags |= CSV_GOTDELIM)
 #define csv_set_autoname(c)         (c->flags |= CSV_AUTONAME)
 #define csv_set_force_nonnum(c)     (c->flags |= CSV_NONNUM)
@@ -938,6 +941,9 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	    if (c == '\t') {
 		csv_set_got_tab(cdata);
 	    }
+	    if (c == ';') {
+		csv_set_got_semi(cdata);
+	    }
 	    if (c == cdata->delim) {
 		csv_set_got_delim(cdata);
 	    }
@@ -959,19 +965,27 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
     return maxlen;
 }
 
-static int count_csv_fields (const char *line, char delim)
+#define nonspace_delim(d) (d != ',' && d != ';')
+
+static int count_csv_fields (const char *s, char delim)
 {
     int cbak, nf = 0;
-    const char *p = line;
 
-    if (*p == delim && *p == ' ') p++;
+    if (*s == delim && *s == ' ') {
+	s++;
+    }
 
-    while (*p) {
-	if (*p == delim) nf++;
-	cbak = *p;
-	p++;
-	/* Problem: (when) should trailing delimiter be read as implicit "NA"? */
-	if (*p == '\0' && cbak == delim && cbak != ',') {
+    while (*s) {
+	if (*s == delim) {
+	    nf++;
+	}
+	cbak = *s;
+	s++;
+	/* Problem: (when) should a trailing delimiter be read as an
+	   implicit NA?  For now we'll so treat it if the delimiter
+	   is not white space.
+	*/
+	if (*s == '\0' && cbak == delim && nonspace_delim(delim)) {
 	    nf--;
 	}
     }
@@ -1654,6 +1668,8 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	/* set default delimiter */
 	if (csv_got_tab(c)) {
 	    c->delim = c->dinfo->delim = '\t';
+	} else if (csv_got_semi(c)) {
+	    c->delim = c->dinfo->delim = ';';
 	} else {
 	    c->delim = c->dinfo->delim = ' ';
 	}
