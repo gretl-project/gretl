@@ -486,7 +486,7 @@
       </fnargs>
       <description>
 	<para>
-	  The <lit>$stderr</lit> accessor can be used in two ways: with no
+	  The <lit>$vcv</lit> accessor can be used in two ways: with no
 	  arguments, it returns a square matrix containing the estimated
 	  covariance matrix for the coefficients of the last model. With
 	  the optional arguments, it returns a scalar, which is the
@@ -3766,6 +3766,12 @@
 	<para>
 	  Square root of <argname>x</argname>; produces <lit>NA</lit> for
 	  negative values.
+	</para>
+	<para>
+	  Note that if the argument is a matrix the operation is performed
+	  element by element and, since matrices cannot contain <lit>NA</lit>,
+	  negative values generate an error.  For the <quote>matrix square
+	    root</quote> see <fncref targ="cholesky"/>.
 	</para>
       </description>
     </function>
