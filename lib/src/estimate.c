@@ -620,10 +620,12 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		    double *ysum, double *ypy,
 		    const char *mask)
 {
-    int l0 = list[0], yno = list[1];
+    int yno = list[1];
+    int lmin = (xpy != NULL)? 2 : 1;
+    int lmax = list[0];
     int qdiff = (rho != 0.0);
     double x, pw1;
-    int li, lj, m;
+    int vi, vj, m;
     int i, j, t;
 
     /* Prais-Winsten term */
@@ -665,20 +667,20 @@ static int XTX_XTy (const int *list, int t1, int t2,
 
     if (qdiff) {
 	/* quasi-difference the data */
-	for (i=2; i<=l0; i++) {
-	    li = list[i];
-	    for (j=i; j<=l0; j++) {
-		lj = list[j];
+	for (i=lmin; i<=lmax; i++) {
+	    vi = list[i];
+	    for (j=i; j<=lmax; j++) {
+		vj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (pwe && t == t1) {
-			x += pw1 * Z[li][t1] * pw1 * Z[lj][t];
+			x += pw1 * Z[vi][t1] * pw1 * Z[vj][t];
 		    } else {
-			x += (Z[li][t] - rho * Z[li][t-1]) * 
-			    (Z[lj][t] - rho * Z[lj][t-1]);
+			x += (Z[vi][t] - rho * Z[vi][t-1]) * 
+			    (Z[vj][t] - rho * Z[vj][t-1]);
 		    }
 		}
-		if (li == lj && x < DBL_EPSILON)  {
+		if (vi == vj && x < DBL_EPSILON)  {
 		    return E_SINGULAR;
 		}
 		xpx[m++] = x;
@@ -687,10 +689,10 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (pwe && t == t1) {
-			x += pw1 * Z[yno][t] * pw1 * Z[li][t];
+			x += pw1 * Z[yno][t] * pw1 * Z[vi][t];
 		    } else {
 			x += (Z[yno][t] - rho * Z[yno][t-1]) *
-			    (Z[li][t] - rho * Z[li][t-1]);
+			    (Z[vi][t] - rho * Z[vi][t-1]);
 		    }
 		}
 		xpy[i-2] = x;
@@ -698,17 +700,17 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	}
     } else if (nwt) {
 	/* weight the data */
-	for (i=2; i<=l0; i++) {
-	    li = list[i];
-	    for (j=i; j<=l0; j++) {
-		lj = list[j];
+	for (i=lmin; i<=lmax; i++) {
+	    vi = list[i];
+	    for (j=i; j<=lmax; j++) {
+		vj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
-			x += Z[nwt][t] * Z[li][t] * Z[lj][t];
+			x += Z[nwt][t] * Z[vi][t] * Z[vj][t];
 		    }
 		}
-		if (li == lj && x < DBL_EPSILON) {
+		if (vi == vj && x < DBL_EPSILON) {
 		    return E_SINGULAR;
 		}   
 		xpx[m++] = x;
@@ -717,7 +719,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
-			x += Z[nwt][t] * Z[yno][t] * Z[li][t];
+			x += Z[nwt][t] * Z[yno][t] * Z[vi][t];
 		    }
 		}
 		xpy[i-2] = x;
@@ -725,17 +727,17 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	}
     } else {
 	/* no quasi-differencing or weighting wanted */
-	for (i=2; i<=l0; i++) {
-	    li = list[i];
-	    for (j=i; j<=l0; j++) {
-		lj = list[j];
+	for (i=lmin; i<=lmax; i++) {
+	    vi = list[i];
+	    for (j=i; j<=lmax; j++) {
+		vj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
-			x += Z[li][t] * Z[lj][t];
+			x += Z[vi][t] * Z[vj][t];
 		    }
 		}
-		if (li == lj && x < DBL_EPSILON) {
+		if (vi == vj && x < DBL_EPSILON) {
 		    return E_SINGULAR;
 		}
 		xpx[m++] = x;
@@ -744,7 +746,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
-			x += Z[yno][t] * Z[li][t];
+			x += Z[yno][t] * Z[vi][t];
 		    }
 		}
 		xpy[i-2] = x;
@@ -770,17 +772,27 @@ static int XTX_XTy (const int *list, int t1, int t2,
 
 double *gretl_XTX (const MODEL *pmod, const double **Z, int *err)
 {
+    int *xlist;
     double *xpx;
     double rho;
     int pwe = 0;
-    int k = pmod->ncoeff;
-    int m = k * (k + 1) / 2;
+    int k, m;
     
     *err = 0;
+
+    xlist = gretl_model_get_x_list(pmod);
+    if (xlist == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    k = xlist[0];
+    m = k * (k + 1) / 2;
 
     xpx = malloc(m * sizeof *xpx);
     if (xpx == NULL) {
 	*err = E_ALLOC;
+	free(xlist);
 	return NULL;
     }
 
@@ -793,8 +805,10 @@ double *gretl_XTX (const MODEL *pmod, const double **Z, int *err)
 	rho = 0.0;
     }
 
-    *err = XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
+    *err = XTX_XTy(xlist, pmod->t1, pmod->t2, Z, pmod->nwt, 
 		   rho, pwe, xpx, NULL, NULL, NULL, pmod->missmask);
+
+    free(xlist);
 
     return xpx;
 }

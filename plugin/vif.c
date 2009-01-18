@@ -116,66 +116,54 @@ static int XTX_properties (const MODEL *pmod, const double **Z,
     return err;
 }
 
-static double get_vif (const MODEL *pmod, double ***pZ, 
-		       DATAINFO *pdinfo, int *vlist, int k,
+/* run the vif regression for regressor k */
+
+static double get_vif (MODEL *mod, const int *xlist, 
+		       int *vlist, int k,
+		       double ***pZ, DATAINFO *pdinfo,
 		       int *err)
 {
-    MODEL tmpmod;
-    double x = NADBL;
+    double vk = NADBL;
     int i, j;
 
-    vlist[1] = pmod->list[k];
-    j = 2;
-    for (i=2; i<=pmod->list[0]; i++) {
+    vlist[1] = xlist[k]; /* dep. var. is regressor k */
+    /* position 2 in vlist holds 0 = const */
+    j = 3;
+    for (i=1; i<=xlist[0]; i++) {
 	if (i != k) {
-	    vlist[j++] = pmod->list[i];
+	    vlist[j++] = xlist[i];
 	}
     }
 
-    tmpmod = lsq(vlist, pZ, pdinfo, OLS, OPT_A); 
-    *err = tmpmod.errcode;
+    *mod = lsq(vlist, pZ, pdinfo, OLS, OPT_A); 
+    *err = mod->errcode;
 
-    if (!*err && !na(tmpmod.rsq) && tmpmod.rsq != 1.0) {
-	x = 1.0 / (1.0 - tmpmod.rsq);
+    if (!*err && !xna(mod->rsq) && mod->rsq != 1.0) {
+	vk = 1.0 / (1.0 - mod->rsq);
     }
 
-    clear_model(&tmpmod);
+    clear_model(mod);
 
-    return x;
+    return vk;
 }
 
-static int testlist (const int *list)
+/* run regressions of each x_i on the other x_j's */
+
+static double *model_vif_vector (MODEL *pmod, const int *xlist,
+				 double ***pZ, DATAINFO *pdinfo,
+				 int *err)
 {
-    int i;
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static double *
-model_vif_vector (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		  int *err)
-{
+    MODEL tmpmod;
     double *vif = NULL;
     int *vlist = NULL;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int nvif = pmod->ncoeff - pmod->ifc;
-    int m = pmod->list[0] - 1;
-    int i, j;
+    int nvif = xlist[0];
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
+    int i;
 
     if (nvif <= 1) {
 	gretl_errmsg_set(_("The statistic you requested is not meaningful "
 			   "for this model"));
-	return NULL;
-    }
-
-    if (testlist(pmod->list)) {
-	*err = E_DATA;
 	return NULL;
     }
 
@@ -185,7 +173,9 @@ model_vif_vector (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return NULL;
     }
 
-    vlist = gretl_list_new(m);
+    /* vlist is the list for the vif regressions:
+       allow space for the constant */
+    vlist = gretl_list_new(nvif + 1);
     if (vlist == NULL) {
 	*err = E_ALLOC;
 	free(vif);
@@ -196,16 +186,13 @@ model_vif_vector (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
 
-    j = 0;
-    for (i=2; i<=pmod->list[0] && !*err; i++) {
-	if (pmod->list[i] != 0) {
-	    vif[j++] = get_vif(pmod, pZ, pdinfo, vlist, i, err);
-	}
+    for (i=1; i<=xlist[0] && !*err; i++) {
+	vif[i-1] = get_vif(&tmpmod, xlist, vlist, i, pZ, pdinfo, err);
     }
 
     /* reinstate sample */
-    pdinfo->t1 = t1;
-    pdinfo->t2 = t2;
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
 
     free(vlist);
 
@@ -224,25 +211,42 @@ int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		PRN *prn)
 {
     double *vif = NULL;
-    int v, i, j;
+    int *xlist;
+    double vj;
+    int vi, i, j;
     int err = 0;
 
-    vif = model_vif_vector(pmod, pZ, pdinfo, &err);
+    /* fetch list of regressors */
+    xlist = gretl_model_get_x_list(pmod);
+    if (xlist == NULL) {
+	return E_DATA;
+    }
+
+    /* drop the constant if present in xlist */
+    for (i=1; i<=xlist[0]; i++) {
+	if (xlist[i] == 0) {
+	    gretl_list_delete_at_pos(xlist, i);
+	    break;
+	}
+    }
+
+    vif = model_vif_vector(pmod, xlist, pZ, pdinfo, &err);
     if (err) {
 	return err;
     }
 
     pprintf(prn, "%s\n\n", _("Variance Inflation Factors"));
 
-    pprintf(prn, " %s\n", _("Minimum possible value = 1.0"));
-    pprintf(prn, " %s\n", _("Values > 10.0 may indicate a collinearity problem"));
+    pprintf(prn, "%s\n", _("Minimum possible value = 1.0"));
+    pprintf(prn, "%s\n", _("Values > 10.0 may indicate a collinearity problem"));
     pputc(prn, '\n');
 
     j = 0;
-    for (i=2; i<=pmod->list[0]; i++) {
-	v = pmod->list[i];
-	if (v != 0) {
-	    pprintf(prn, " %3d) %15s %8.3f\n", v, pdinfo->varname[v], vif[j++]);
+    for (i=1; i<=xlist[0]; i++) {
+	vi = xlist[i];
+	vj = vif[j++];
+	if (!na(vj)) {
+	    pprintf(prn, "%15s %8.3f\n", pdinfo->varname[vi], vj);
 	}
     }
     pputc(prn, '\n');
@@ -257,6 +261,7 @@ int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     free(vif);
+    free(xlist);
 
     return 0;
 }
