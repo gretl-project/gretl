@@ -501,10 +501,9 @@
 	  </seelist>
 	</para>
 	<para>
-	  If the <quote>model</quote> in question is actually a system (a
-	  VAR or VECM, or system of simultaneous equations),
-	  <lit>$vcv</lit> with no parameters returns the cross-equation
-	  covariance matrix. FIXME outdated.
+	  The option of supplying parameter names as arguments does
+	  not apply if the covariance matrix is for a system of
+	  equations.
 	</para>
       </description>
     </function>

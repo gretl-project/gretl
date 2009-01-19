@@ -3024,15 +3024,19 @@ double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo,
     return x;    
 }
 
-static gretl_matrix *VAR_get_coeff_matrix (const GRETL_VAR *var,
-					   int *err)
+/* get coefficients or standard errors from the models
+   in the VAR */
+
+static gretl_matrix *
+VAR_matrix_from_models (const GRETL_VAR *var, int idx, int *err)
 {
-    gretl_matrix *B = NULL;
+    gretl_matrix *m = NULL;
     const MODEL *pmod;
+    double x;
     int i, j;
 
-    B = gretl_matrix_alloc(var->models[0]->ncoeff, var->neqns);
-    if (B == NULL) {
+    m = gretl_matrix_alloc(var->models[0]->ncoeff, var->neqns);
+    if (m == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
@@ -3040,11 +3044,16 @@ static gretl_matrix *VAR_get_coeff_matrix (const GRETL_VAR *var,
     for (j=0; j<var->neqns; j++) {
 	pmod = var->models[j];
 	for (i=0; i<pmod->ncoeff; i++) {
-	    gretl_matrix_set(B, i, j, pmod->coeff[i]);
+	    if (idx == M_COEFF) {
+		x = pmod->coeff[i];
+	    } else {
+		x = pmod->sderr[i];
+	    }
+	    gretl_matrix_set(m, i, j, x);
 	}
     }
 
-    return B;
+    return m;
 }
 
 #define vecm_matrix(i) (i == M_JALPHA || i == M_JBETA || \
@@ -3067,8 +3076,8 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	src = gretl_VAR_get_residual_matrix(var);
     } else if (idx == M_COMPAN) {
 	src = var->A;
-    } else if (idx == M_COEFF) {
-	M = VAR_get_coeff_matrix(var, err);
+    } else if (idx == M_COEFF || idx == M_SE) {
+	M = VAR_matrix_from_models(var, idx, err);
 	copy = 0;
     } else if (idx == M_VCV) {
 	src = var->vcv;
