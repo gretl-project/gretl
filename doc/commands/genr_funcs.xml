@@ -9,8 +9,8 @@
       <description>
 	<para>
 	  Must follow the estimation of a fixed-effect panel data model.
-	  Returns the estimates of individual fixed effects (per-unit
-	  intercepts).
+	  Returns a series containing the estimates of the individual fixed
+	  effects (per-unit intercepts).
 	</para>
       </description>
     </function>
@@ -19,7 +19,7 @@
       <description>
 	<para>
 	  Returns the Akaike Information Criterion for the last estimated
-	  model. 
+	  model, if available.
 	</para>
       </description>
     </function>
@@ -28,7 +28,7 @@
       <description>
 	<para>
 	  Returns Schwarz's Bayesian Information Criterion for the last
-	  estimated model.
+	  estimated model, if available.
 	</para>
       </description>
     </function>
@@ -42,7 +42,7 @@
       </description>
     </function>
 
-    <function name="$coeff" section="access" output="scalar" altout="matrix">
+    <function name="$coeff" section="access" output="matrix" altout="scalar">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
@@ -115,7 +115,8 @@
     <function name="$ess" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the error sum of squares of the last estimated model.
+	  Returns the error sum of squares of the last estimated model,
+	  if available.
 	</para>
       </description>
     </function>
@@ -142,7 +143,7 @@
       <description>
 	<para>
 	  Must follow a <lit>garch</lit> command. Returns the estimated
-	  conditional variance.
+	  conditional variance series.
 	</para>
       </description>
     </function>
@@ -162,7 +163,7 @@
       <description>
 	<para>
 	  Returns the Hannan-Quinn Information Criterion for the last
-	  estimated model.
+	  estimated model, if available.
 	</para>
       </description>
     </function>
@@ -196,15 +197,15 @@
 	  covariance matrix for the elements of the cointegration vectors.
 	</para>
 	<para>
-	  In the case of unrestricted estimation, it has a number of rows
-	  equal to the unrestricted elements of the cointegration space
-	  after the Phillips normalization. If, however, a restricted
-	  system is estimated via the <lit>restrict</lit> command with the
+	  In the case of unrestricted estimation, this matrix has a number of
+	  rows equal to the unrestricted elements of the cointegration space
+	  after the Phillips normalization. If, however, a restricted system
+	  is estimated via the <lit>restrict</lit> command with the
 	  <lit>--full</lit> option, a singular matrix with <math>(n+m)r</math>
-	  rows will be returned (<math>n</math> being the number of
-	  endogenous variables, <math>m</math> the number of exogenous
-          variables that are restricted to the cointegration space,
-          and <math>r</math> the cointegration rank).
+	  rows will be returned (<math>n</math> being the number of endogenous
+	  variables, <math>m</math> the number of exogenous variables that are
+	  restricted to the cointegration space, and <math>r</math> the
+	  cointegration rank).
 	</para>
 	<para>
 	  Example: the code
@@ -258,7 +259,8 @@
     <function name="$ncoeff" section="access" output="scalar">
       <description>
 	<para>
-	  Total number of coefficients estimated in the last model.
+	  Returns the total number of coefficients estimated in the last
+	  model.
 	</para>
       </description>
     </function>
@@ -323,7 +325,7 @@
       <description>
 	<para>
 	  Returns the unadjusted <math>R</math><sup>2</sup> from the
-	  last estimated model.
+	  last estimated model, if available.
 	</para>
       </description>
     </function>
@@ -373,7 +375,7 @@
       </description>
     </function>
 
-    <function name="$stderr" section="access" output="scalar" altout="matrix">
+    <function name="$stderr" section="access" output="matrix" altout="scalar">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
@@ -449,7 +451,7 @@
       <description>
 	<para>
 	  Returns <math>TR</math><sup>2</sup> (sample size times
-	  R-squared) from the last model.
+	  R-squared) from the last model, if available.
 	</para>
       </description>
     </function>
@@ -482,28 +484,23 @@
       </description>
     </function>
 
-    <function name="$vcv" section="access" output="scalar" altout="matrix">
+    <function name="$vcv" section="access" output="matrix" altout="scalar">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s1</fnarg>
 	<fnarg optional="true" type="coeffname">s2</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The <lit>$vcv</lit> accessor can be used in two ways: with no
-	  arguments, it returns a square matrix containing the estimated
-	  covariance matrix for the coefficients of the last model. With
-	  the optional arguments, it returns a scalar, which is the
-	  estimated covariance between the parameters named
-	  <argname>s1</argname> and <argname>s2</argname>.  
+	  With no arguments, <lit>$vcv</lit> returns a square matrix
+	  containing the estimated covariance matrix for the coefficients of
+	  the last model.  If the last model was a single equation, then you
+	  may supply the names of two parameters in parentheses to retrieve
+	  the estimated covariance between the parameters named
+	  <argname>s1</argname> and <argname>s2</argname>.
 	  <seelist>
 	    <fncref targ="$coeff"/> 
 	    <fncref targ="$stderr"/>
 	  </seelist>
-	</para>
-	<para>
-	  The option of supplying parameter names as arguments does
-	  not apply if the covariance matrix is for a system of
-	  equations.
 	</para>
       </description>
     </function>
