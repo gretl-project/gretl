@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-01-07 10:00-0500\n"
+"PO-Revision-Date: 2009-01-20 01:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -19,9 +19,8 @@ msgstr ""
 "|| n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:241
-#, fuzzy
 msgid "lagged differences"
-msgstr "= pierwsze różnice logarytmu(%s)"
+msgstr "opóźnione różnice"
 
 #: lib/src/adf_kpss.c:252
 #, c-format
@@ -6591,9 +6590,8 @@ msgstr ""
 "(jednostronny obszar krytyczny = %.4g)\n"
 
 #: gui2/calculator.c:1503
-#, fuzzy
 msgid "nonparametric test"
-msgstr "Testy _nieparametryczne"
+msgstr "Test nieparametryczny"
 
 #: gui2/calculator.c:1529
 #, c-format
@@ -7278,18 +7276,20 @@ msgstr "korelogram wzajemny"
 #: gui2/cmdstack.c:105
 #, c-format
 msgid "# Log re-started %s\n"
-msgstr ""
+msgstr "# Log re-started %s\n"
 
 #: gui2/cmdstack.c:145
 #, c-format
 msgid "# Log started %s\n"
-msgstr ""
+msgstr "# Log started %s\n"
 
 #: gui2/cmdstack.c:147
 msgid ""
 "# Record of session commands.  Please note that this will\n"
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
+"# Record of session commands.  Please note that this will\n"
+"# likely require editing if it is to be run as a script.\n"
 
 #: gui2/cmdstack.c:327
 msgid "The command log is empty"
@@ -8596,42 +8596,42 @@ msgstr "Pasmo filtru Baxtera-Kinga"
 #: gui2/filters.c:161
 #, c-format
 msgid "Centered %d-period moving average of %s"
-msgstr ""
+msgstr "Scentrowana %d-wyrazowa średnia ruchoma dla %s"
 
 #: gui2/filters.c:164
-#, fuzzy, c-format
+#, c-format
 msgid "%d-period moving average of %s"
-msgstr "Prosta średnia ruchoma"
+msgstr "%d-wyrazowa średnia ruchoma dla %s"
 
 #: gui2/filters.c:168
-#, fuzzy, c-format
+#, c-format
 msgid "Residual from %d-period MA of %s"
-msgstr "reszty z modelu %d"
+msgstr "reszty z %d-wyrazowej MA dla %s"
 
 #: gui2/filters.c:173
-#, fuzzy, c-format
+#, c-format
 msgid "Exponential moving average of %s (current weight %g)"
-msgstr "Wygładzanie wykładnicze"
+msgstr "Wykładnicza średnia ruchoma dla %s (bieżące wagi %g)"
 
 #: gui2/filters.c:176
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
-msgstr ""
+msgstr "Reszty z EMA dla %s (bieżące wagi %g)"
 
 #: gui2/filters.c:181
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
-msgstr ""
+msgstr "Przefiltrowany %s: trend Hodricka-Prescotta (lambda = %g)"
 
 #: gui2/filters.c:184
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
-msgstr ""
+msgstr "Przefiltrowany %s: cykl Hodricka-Prescotta (lambda = %g)"
 
 #: gui2/filters.c:188
 #, c-format
 msgid "Filtered %s: Baxter-King cycle"
-msgstr ""
+msgstr "Przefiltrowany %s: cykl Baxtera-Kinga"
 
 #: gui2/filters.c:273
 msgid "Variable name is missing"
@@ -12563,9 +12563,8 @@ msgid "Define named list"
 msgstr "Definiowanie listy"
 
 #: gui2/selector.c:5073
-#, fuzzy
 msgid "Name for list:"
-msgstr "Liczba przedziałów:"
+msgstr "Nazwy list:"
 
 #: gui2/selector.c:5162
 msgid "Available vars"
@@ -14121,14 +14120,13 @@ msgid "Eigenvectors (component loadings)"
 msgstr "Wektory wartości własnych (ładunki składowej)"
 
 #: plugin/pca.c:325
-#, fuzzy, c-format
+#, c-format
 msgid "Component with eigenvalue = %.4f"
-msgstr "Składowe z wartością własną > średniej"
+msgstr "Składowe z wartością własną = %.4f"
 
 #: plugin/poisson.c:381
 msgid "poisson: the dependent variable must be count data"
-msgstr ""
-"Poisson: zmienna zależna musi być licznikiem zdarzeń (liczby naturalne)"
+msgstr "Poisson: zmienna zależna musi być licznikiem zdarzeń (liczby naturalne)"
 
 #: plugin/progress_bar.c:65
 msgid "gretl: loading data"
