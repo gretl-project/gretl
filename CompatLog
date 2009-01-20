@@ -8,6 +8,9 @@ The obsolete mechanism "save=" for saving residuals and/or
 fitted values from system estimation has been removed; please
 use the accessors $uhat and $yhat for this purpose.
 
+The covariance matrix returned by the accessor $vcv for VAR
+systems now has a degrees of freedom correction.
+
 9/28/2008 version 1.7.9
 
 The "values" function no longer automatically truncates its 

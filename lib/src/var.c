@@ -1738,7 +1738,7 @@ double gretl_VAR_ldet (GRETL_VAR *var, int *err)
 	gretl_matrix_multiply_mod(var->F, GRETL_MOD_TRANSPOSE,
 				  var->F, GRETL_MOD_NONE,
 				  S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(S, var->T);
+	gretl_matrix_divide_by_scalar(S, var->df); /* was var->T */
 	ldet = gretl_vcv_log_determinant(S);
 	if (na(ldet)) {
 	    *err = 1;
@@ -1762,7 +1762,7 @@ static int VAR_add_variance_matrix (GRETL_VAR *var)
 	gretl_matrix_multiply_mod(var->E, GRETL_MOD_TRANSPOSE,
 				  var->E, GRETL_MOD_NONE,
 				  var->S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(var->S, var->T);
+	gretl_matrix_divide_by_scalar(var->S, var->df); /* was var->T */
     }
 
     return err;
@@ -1878,10 +1878,7 @@ void VAR_write_A_matrix (GRETL_VAR *v)
 static void VAR_write_vcv_matrix (GRETL_VAR *v)
 {
     if (v->S != NULL && v->XTX != NULL && v->vcv != NULL) {
-	double corrfac = (double) v->T / v->df;
-
 	gretl_matrix_kronecker_product(v->S, v->XTX, v->vcv);
-	gretl_matrix_multiply_by_scalar(v->vcv, corrfac);
     }
 }
 
