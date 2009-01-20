@@ -1878,7 +1878,10 @@ void VAR_write_A_matrix (GRETL_VAR *v)
 static void VAR_write_vcv_matrix (GRETL_VAR *v)
 {
     if (v->S != NULL && v->XTX != NULL && v->vcv != NULL) {
+	double corrfac = (double) v->T / v->df;
+
 	gretl_matrix_kronecker_product(v->S, v->XTX, v->vcv);
+	gretl_matrix_multiply_by_scalar(v->vcv, corrfac);
     }
 }
 
