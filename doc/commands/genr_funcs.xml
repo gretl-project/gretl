@@ -407,6 +407,39 @@
       </description>
     </function>
 
+    <function name="$sysA" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow estimation of a simultaneous equations system.
+	  Returns the matrix of coefficients on the lagged endogenous
+	  variables, if any, in the structural form of the system.  See
+	  the <cmdref targ="system"/> command.
+	</para>
+      </description>
+    </function>
+
+    <function name="$sysB" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow estimation of a simultaneous equations system.
+	  Returns the matrix of coefficients on the exogenous variables in
+	  the structural form of the system.  See the <cmdref
+	  targ="system"/> command.
+	</para>
+      </description>
+    </function>
+
+    <function name="$sysGamma" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow estimation of a simultaneous equations system.
+	  Returns the matrix of coefficients on the contemporaneous
+	  endogenous variables in the structural form of the system.
+	  See the <cmdref targ="system"/> command.
+	</para>
+      </description>
+    </function>
+
     <function name="$T" section="access" output="scalar">
       <description>
 	<para>

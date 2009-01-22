@@ -5,6 +5,9 @@
 <texequation fileref="arlags">
 \[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} + e_t\]
 </texequation>
+<texequation fileref="arlags">
+\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} + e_t\]
+</texequation>
 <texequation fileref="aic">
 \[\mbox{AIC}=-2\ell + 2k\]
 </texequation>
@@ -44,11 +47,20 @@ $\ell$
 <texequation fileref="garch_h">
 \[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p \beta_j h_{t-j}\]
 </texequation>
+<texequation fileref="garch_h">
+\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p \beta_i h_{t-j}\]
+</texequation>
 <texequation fileref="cumulate">
 $y_t = \sum_{\tau=1}^t x_{\tau}$
 </texequation>
 <texequation fileref="hurst">
 \[\mathrm{RS}(x) = an^H\]
+</texequation>
+<texequation fileref="">
+\[y^*_t = x_t \beta+\epsilon_t\]
+</texequation>
+<texequation fileref="">
+\[m_t \le y_t \le M_t\]
 </texequation>
 <texequation fileref="influence">
 $uh/(1 - h)$

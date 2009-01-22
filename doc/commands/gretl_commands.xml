@@ -6887,6 +6887,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
+        </option>
       </options>
       <examples>
 	<example>quantreg 0.25 y 0 xlist</example>
