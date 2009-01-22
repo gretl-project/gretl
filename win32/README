@@ -1,18 +1,17 @@
 This directory contains materials for building the win32 version of
 gretl.  The files are set up for cross-compilation under Linux using
-the mingw C compiler -- it should be possible to modify them for a
+the mingw C compiler.  It should be possible to modify them for a
 native mingw build on the win32 platform.
 
 If you want to build gretl for win32 yourself you will need to get
 some additional files, and to modify the scripts here to suit your own
 setup.
 
+
 A. Additional files:
 
 1. GTK+ for win32 (with iconv and libintl): glib version 2.0 and also
-   gdk/gtk version 2.0.  See http://www.gimp.org/~tml/gimp/win32/ The
-   glib/gdk/gtk DLLs should be placed in a subdirectory named "dlls"
-   of this directory.
+   gdk/gtk version 2.0.  See http://www.gtk.org/download-windows.html .
 
 2. libxml, libreadline, libpng, zlib and gmp
 
@@ -22,18 +21,18 @@ headers.  See
 http://gnuwin32.sourceforge.net/
 http://mingwrep.sourceforge.net/ 
 
-for repositories of such packages.  For convenience, I have assembled a
-zip archive, gretl-win32-build.zip, which contains all that is needed
+for repositories of such packages.  For convenience, I have assembled an
+archive, misc-dll.tgz, which contains all that is needed
 in regard to libxml, libreadline, zlib and gmp. See
 
-  ftp://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
+  http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
 
 3. The Inno Setup compiler for making a self-installing executable
    See http://www.jrsoftware.org/
 
 4. The gnuplot for win32 distribution.  
-   See ftp://ricardo.ecn.wfu.edu/pub/gretl/winbuild/ (preferable)
-   or ftp://ftp.gnuplot.info/pub/gnuplot/
+   See http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/ (preferable)
+   or http://gnuplot.info/
 
 
 B. Modifications to scripts:
@@ -58,4 +57,4 @@ of gretl actually on win32 (or even using the MS C compiler), please
 do so and and I'll add them to this directory.
 
 Allin Cottrell
-August, 2002
+last updated January 2009
