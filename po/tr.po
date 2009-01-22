@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-01-22 09:26+0200\n"
+"PO-Revision-Date: 2009-01-22 10:55+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -206,7 +206,7 @@ msgstr "%s katsayısı için (%g nokta tahmini)"
 #: lib/src/bootstrap.c:436
 #, c-format
 msgid "Studentized %g%% confidence interval = %g to %g"
-msgstr "Student'leştirmeli %% %g güven aralığı =%g - %g"
+msgstr "Studentleştirmeli %% %g güven aralığı =%g - %g"
 
 #: lib/src/bootstrap.c:439
 #, c-format
@@ -2492,7 +2492,7 @@ msgstr "%% %g güven elipsi ve %% %g marjinal aralıkları"
 #: lib/src/graphing.c:4390 lib/src/graphing.c:4391
 #, c-format
 msgid "adjusted %s"
-msgstr "düzeltmeli %s"
+msgstr "ayarlamalı %s"
 
 #: lib/src/graphing.c:4453 plugin/range-mean.c:66
 msgid "with least squares fit"
@@ -3938,7 +3938,7 @@ msgstr "sigma"
 
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:2249 gui2/library.c:4706
 msgid "Unadjusted R-squared"
-msgstr "Düzeltmesiz R-kare"
+msgstr "Ayarlamasız R-kare"
 
 #: lib/src/modelprint.c:219
 msgid "Explained sum of squares"
@@ -4600,7 +4600,7 @@ msgstr ""
 "UYARI: Sabit terim bağlayanlar arasında vardı ama araçlar arasında\n"
 "bulunmuyordu; bu yüzden araç listesine kendiliğinden eklendi.\n"
 "Bu davranış gelecekteki sürümlerde değişebilir. Bu yüzden betiklerinizi\n"
-"buna uygun şekilde düzeltmek isteyebilirsiniz.\n"
+"buna uygun şekilde ayarlamak isteyebilirsiniz.\n"
 
 #: lib/src/modelprint.c:1828
 msgid ""
@@ -4645,7 +4645,7 @@ msgstr "Kalıntı kareleri toplamı"
 
 #: lib/src/modelprint.c:2250 lib/src/modelprint.c:2289
 msgid "Adjusted R-squared"
-msgstr "Düzeltmeli R-kare"
+msgstr "Ayarlamalı R-kare"
 
 #: lib/src/modelprint.c:2253 lib/src/modelprint.c:2292 lib/src/printout.c:2516
 #: lib/src/system.c:3684 lib/src/system.c:3691 lib/src/texprint.c:1047
@@ -4711,7 +4711,7 @@ msgstr "Durbin-Watson"
 
 #: lib/src/modelprint.c:2338
 msgid "Adjusted $R^2$"
-msgstr "Düzeltmeli $R^2$"
+msgstr "Ayarlamalı $R^2$"
 
 #: lib/src/modelprint.c:2339
 msgid "P-value($F$)"
@@ -4853,7 +4853,7 @@ msgstr "Ortalamada değerlendirmeli"
 
 #: lib/src/modelprint.c:4398
 msgid "Number of cases `correctly predicted'"
-msgstr "`Doğru şekilde kestirilen' durum sayısı"
+msgstr "`Doğru kestirilen' durum sayısı"
 
 #: lib/src/modelprint.c:4420
 msgid "Analysis of Variance"
@@ -4996,7 +4996,7 @@ msgstr "Jacobyen hesaplaması başarısız"
 
 #: lib/src/nls.c:2116
 msgid "NLS: The supplied derivatives seem to be incorrect"
-msgstr "DDEK: Sağlanmış olan türevler hatalı gibi görünüyor"
+msgstr "DDEK: Sağlanmış olan türevler doğru değil gibi görünüyor"
 
 #: lib/src/nls.c:2117
 #, c-format
@@ -5008,8 +5008,8 @@ msgid ""
 "Warning: The supplied derivatives may be incorrect, or perhaps\n"
 "the data are ill-conditioned for this function.\n"
 msgstr ""
-"Uyarı: Sağlanmış olan türevler hatalı olabilir, veya, belki de\n"
-"veriler bu işlev için uygun değil.\n"
+"Uyarı: Sağlanmış olan türevler doğru olmayabilir, veya, belki de\n"
+"veriler bu işlev için uygun değildir.\n"
 
 #: lib/src/nls.c:2121
 #, c-format
@@ -5945,7 +5945,7 @@ msgstr "ölçünlü hatalar parantez içerisindedir"
 
 #: lib/src/texprint.c:990
 msgid "Adjustment vectors"
-msgstr "Düzeltme yöneyleri"
+msgstr "Ayarlama yöneyleri"
 
 #: lib/src/texprint.c:1051 lib/src/varprint.c:1044 lib/src/varprint.c:1053
 msgid "Determinant of covariance matrix"
@@ -6129,7 +6129,7 @@ msgstr "eştümleyen yöneyler"
 
 #: lib/src/varprint.c:661 lib/src/varprint.c:662
 msgid "adjustment vectors"
-msgstr "düzeltme yöneyleri"
+msgstr "ayarlama yöneyleri"
 
 #: lib/src/varprint.c:805
 msgid "Restrictions on beta:"
@@ -7932,7 +7932,7 @@ msgstr "Güven aralığı"
 
 #: gui2/dialogs.c:900
 msgid "Studentized confidence interval"
-msgstr "Student'leştirili güven aralığı"
+msgstr "Studentleştirmeli güven aralığı"
 
 #: gui2/dialogs.c:909
 msgid "P-value"
@@ -8241,7 +8241,7 @@ msgstr "Epanechnikov çekirdek"
 
 #: gui2/dialogs.c:3358
 msgid "bandwidth adjustment factor:"
-msgstr "kuşakgenişliği düzeltme çarpanı:"
+msgstr "kuşakgenişliği ayarlama çarpanı:"
 
 #: gui2/dialogs.c:3665
 msgid "Number of bins:"
@@ -13606,7 +13606,7 @@ msgstr "Çalışmadosyası başlığı okuma hatası\n"
 
 #: plugin/excel_import.c:78
 msgid "Perhaps you need to adjust the starting column or row?"
-msgstr "Belki de başlangıç sütun veya satırını düzeltmeniz gerekiyor?"
+msgstr "Başlangıç sütun veya satırını ayarlamanız gerekiyor olabilir mi?"
 
 #: plugin/excel_import.c:659
 msgid "String index too large"
@@ -13832,7 +13832,7 @@ msgstr "beta (eştümleyen yöneyler)"
 
 #: plugin/johansen.c:207 plugin/jrestrict.c:2806
 msgid "alpha (adjustment vectors)"
-msgstr "alpha (düzeltme yöneyleri)"
+msgstr "alpha (ayarlama yöneyleri)"
 
 #: plugin/johansen.c:303
 msgid "long-run matrix (alpha * beta')"
@@ -14168,7 +14168,7 @@ msgstr "üst kuyruk"
 
 #: plugin/tramo_options.c:337
 msgid "Time-series model plus seasonal adjustment"
-msgstr "Zaman-serisi modeli artı mevsimsel düzeltme"
+msgstr "Zaman-serisi modeli artı mevsimsel ayarlama"
 
 #: plugin/tramo_options.c:338
 msgid "Time-series model only"
@@ -14200,7 +14200,7 @@ msgstr "Veri setine kaydet:"
 
 #: plugin/tramo_options.c:449 plugin/tramo-x12a.c:188
 msgid "Seasonally adjusted series"
-msgstr "Mevsimsel düzeltmeli seri"
+msgstr "Mevsimsel ayarlamalı seri"
 
 #: plugin/tramo_options.c:459 plugin/tramo-x12a.c:194
 msgid "Trend/cycle"
@@ -14233,7 +14233,7 @@ msgstr "Ortalama düzeltmeli"
 
 #: plugin/tramo_options.c:565
 msgid "No mean correction"
-msgstr "Ortalama düzeltmesiz"
+msgstr "Ortalama düzeltmeli değil"
 
 #: plugin/tramo_options.c:594
 msgid "Outliers"
@@ -14290,7 +14290,7 @@ msgstr "Mevsimsel HO terimleri:"
 #: plugin/tramo-x12a.c:49
 #, c-format
 msgid "seasonally adjusted %s"
-msgstr "mevsimsel düzeltmeli %s"
+msgstr "mevsimsel ayarlamalı %s"
 
 #: plugin/tramo-x12a.c:50
 #, c-format
@@ -14312,7 +14312,7 @@ msgstr "eğilim/çevrim"
 
 #: plugin/tramo-x12a.c:319
 msgid "adjusted"
-msgstr "düzeltmeli"
+msgstr "ayarlamalı"
 
 #: plugin/tramo-x12a.c:676
 msgid "Failed to allocate memory for new data"
