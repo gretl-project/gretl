@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-01-17 19:01+0200\n"
+"PO-Revision-Date: 2009-01-22 09:26+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -402,11 +402,11 @@ msgstr "%-16s çıkarılıyor (p-değeri %.3f)\n"
 
 #: lib/src/compare.c:1497 lib/src/gretl_model.c:2813 gui2/library.c:2215
 msgid "squares only"
-msgstr "yalnız kareler"
+msgstr "yalnızca kareler"
 
 #: lib/src/compare.c:1500 lib/src/gretl_model.c:2815 gui2/library.c:2216
 msgid "cubes only"
-msgstr "yalnız küpler"
+msgstr "yalnızca küpler"
 
 #: lib/src/compare.c:1503 gui2/library.c:2214
 msgid "squares and cubes"
@@ -593,7 +593,7 @@ msgstr "('*' % 95 güven kuşağı dışındaki bir değeri göstermektedir)"
 
 #: lib/src/compare.c:2750
 msgid "This test is only relevant for pooled models\n"
-msgstr "Bu sınama yalnız karma modeller için uygundur\n"
+msgstr "Bu sınama yalnızca karma modeller için uygundur\n"
 
 #: lib/src/compare.c:2755
 msgid "This test requires that the model contains a constant\n"
@@ -647,7 +647,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:592
 msgid "reversing the data!\n"
-msgstr "Veriler tersten okunuyor!\n"
+msgstr "Veriler tersine çevriliyor!\n"
 
 #: lib/src/csvdata.c:709
 #, c-format
@@ -665,7 +665,7 @@ msgstr "   ama fazlalık bit'e bir anlam veremiyorum\n"
 
 #: lib/src/csvdata.c:717
 msgid "and just a year\n"
-msgstr "ve sadece bir yıl\n"
+msgstr "ve tek bir yıl\n"
 
 #: lib/src/csvdata.c:732
 #, c-format
@@ -899,7 +899,7 @@ msgid ""
 "Use only letters, digits and underscore"
 msgstr ""
 "Değişken ismi geçersiz simge '%c' içeriyor.\n"
-"Yalnız harf, rakam veya altçizgi kullanabilirsiniz"
+"Yalnızca harf, rakam veya altçizgi kullanınız"
 
 #: lib/src/dataio.c:409
 #, c-format
@@ -917,7 +917,7 @@ msgid ""
 "Use only letters, digits and underscore"
 msgstr ""
 "Değişken ismi geçersiz simge 0x%x içeriyor.\n"
-"Yalnız harf, rakam veya altçizgi kullanabilirsiniz"
+"Yalnızca harf, rakam veya altçizgi kullanınız"
 
 #: lib/src/dataio.c:434 lib/src/dataio.c:1841
 #, c-format
@@ -1682,7 +1682,7 @@ msgstr "Örneklem aralığında geçerli gözlem yok."
 
 #: lib/src/describe.c:4272 lib/src/describe.c:4358
 msgid "Sample range has only one observation."
-msgstr "Örneklem aralığında sadece bir gözlem var."
+msgstr "Örneklem aralığında yalnızca bir gözlem var."
 
 #: lib/src/describe.c:4299
 #, c-format
@@ -1784,7 +1784,7 @@ msgstr "Kovaryans dizeyi"
 
 #: lib/src/describe.c:4528
 msgid "Inverse of covariance matrix"
-msgstr "Kovaryans dizeyi tersi"
+msgstr "Kovaryans dizeyi evriği"
 
 #: lib/src/describe.c:4544
 msgid "Mahalanobis distances from the centroid"
@@ -1938,11 +1938,11 @@ msgstr "               YİNELEME     RHO        HKT"
 
 #: lib/src/estimate.c:2564 lib/src/gretl_model.c:2804 lib/src/modelprint.c:561
 msgid "Pesaran-Taylor test for heteroskedasticity"
-msgstr "Peseran-Taylor çoktürelserpilim sınaması"
+msgstr "Peseran-Taylor çokluserpilim sınaması"
 
 #: lib/src/estimate.c:2574 lib/src/gretl_model.c:2783 lib/src/modelprint.c:559
 msgid "Breusch-Pagan test for heteroskedasticity"
-msgstr "Breusch-Pagan çoktürelserpilim sınaması"
+msgstr "Breusch-Pagan çokluserpilim sınaması"
 
 #: lib/src/estimate.c:2576
 msgid "with Koenker robust variance estimator"
@@ -1950,11 +1950,11 @@ msgstr "Koenker sağlam varyans tahmincisi ile"
 
 #: lib/src/estimate.c:2581
 msgid "White's test for heteroskedasticity (no cross products)"
-msgstr "White çoktürelserpilim sınaması (çapraz-çarpım yok)"
+msgstr "White çokluserpilim sınaması (çapraz-çarpım yok)"
 
 #: lib/src/estimate.c:2583 lib/src/gretl_model.c:2780 lib/src/modelprint.c:557
 msgid "White's test for heteroskedasticity"
-msgstr "White çoktürelserpilim sınaması"
+msgstr "White çokluserpilim sınaması"
 
 #: lib/src/estimate.c:2745
 msgid "HET_1"
@@ -2001,7 +2001,7 @@ msgstr ""
 
 #: lib/src/estimate.c:4283
 msgid "This test is only available for panel data"
-msgstr "Bu sınama yalnız panel verileri için bulunmaktadır"
+msgstr "Bu sınama yalnızca panel verileri için bulunmaktadır"
 
 #: lib/src/forecast.c:2473
 msgid "predicted values"
@@ -2084,7 +2084,7 @@ msgstr "'%s': dizgiler için eklenmedi"
 #: lib/src/geneval.c:6878
 #, c-format
 msgid "'%s' : only defined for matrices"
-msgstr "'%s': yalnız dizeyler için tanımlandı"
+msgstr "'%s': yalnızca dizeyler için tanımlı"
 
 #: lib/src/geneval.c:6885
 #, c-format
@@ -2342,7 +2342,7 @@ msgstr "%s ve %s (en küçük kareler yakıştırması ile)"
 #: lib/src/graphing.c:1228 gui2/gpt_dialog.c:526
 #, c-format
 msgid "%s versus %s (with inverse fit)"
-msgstr "%s ve %s (ters yakıştırma ile)"
+msgstr "%s ve %s (evrik yakıştırma ile)"
 
 #: lib/src/graphing.c:1231 gui2/gpt_dialog.c:523
 #, c-format
@@ -2482,7 +2482,7 @@ msgstr "Sistem kalıntıları"
 
 #: lib/src/graphing.c:4189
 msgid "VAR inverse roots in relation to the unit circle"
-msgstr "YÖB ters kökleri, birim çembere göre"
+msgstr "YÖB evrik kökleri, birim çembere göre"
 
 #: lib/src/graphing.c:4278
 #, c-format
@@ -2585,7 +2585,7 @@ msgstr "Komut argümanları yetersiz"
 
 #: lib/src/gretl_errors.c:44
 msgid "This command is implemented only for OLS models"
-msgstr "Bu komut yalnız SEK modelleri için bulunmaktadır"
+msgstr "Bu komut yalnızca SEK modelleri için bulunmaktadır"
 
 #: lib/src/gretl_errors.c:45
 msgid "Invalid argument for function"
@@ -2824,7 +2824,7 @@ msgstr "QOO (QLR)yapısal kırılma sınaması"
 
 #: lib/src/gretl_model.c:2762
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
-msgstr "Kümeli çoktürelserpilim için olabilirlik oranı sınaması"
+msgstr "Kümeli çokluserpilim için olabilirlik oranı sınaması"
 
 #: lib/src/gretl_model.c:2763
 msgid "the units have a common error variance"
@@ -2861,7 +2861,7 @@ msgstr "Doğrusal-dışılık sınaması (kareler)"
 #: lib/src/gretl_model.c:2781 lib/src/gretl_model.c:2784
 #: lib/src/gretl_model.c:2805
 msgid "heteroskedasticity not present"
-msgstr "çoktürelserpilim yok"
+msgstr "çokluserpilim yok"
 
 #: lib/src/gretl_model.c:2786 lib/src/modelprint.c:299
 msgid "Sargan over-identification test"
@@ -3076,7 +3076,7 @@ msgstr ""
 
 #: lib/src/gretl_panel.c:2538
 msgid "Error attempting to invert vcv difference matrix\n"
-msgstr "vcv fark dizeyi tersi alınmaya çalışılırken hata oluştu\n"
+msgstr "vcv fark dizey evriği alınmaya çalışılırken hata oluştu\n"
 
 #: lib/src/gretl_panel.c:2752
 #, c-format
@@ -3095,7 +3095,7 @@ msgstr "Küme ortalamaları bağlanımı tahmin edilemedi\n"
 
 #: lib/src/gretl_panel.c:3268
 msgid "Distribution free Wald test for heteroskedasticity"
-msgstr "Çoktürelserpilim için dağılımdan bağımsız Wald sınaması"
+msgstr "Çokluserpilim için dağılımdan bağımsız Wald sınaması"
 
 #: lib/src/gretl_panel.c:3269
 msgid "based on the FGLS residuals"
@@ -3112,7 +3112,7 @@ msgstr ""
 
 #: lib/src/gretl_panel.c:3480
 msgid "Can't produce ML estimates: some units have only one observation"
-msgstr "EYO tahminleri üretilemedi: Bazı birimlerin yalnız bir gözlemi var"
+msgstr "EYO tahminleri üretilemedi: Bazı birimlerde yalnızca bir gözlem var"
 
 #: lib/src/gretl_panel.c:3532 plugin/poisson.c:327
 msgid "iteration"
@@ -3173,7 +3173,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr "Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey evriği alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
@@ -3248,7 +3248,7 @@ msgid ""
 "Matrix inversion failed:\n"
 " restrictions may be inconsistent or redundant\n"
 msgstr ""
-"Dizey tersi alma başarısız:\n"
+"Dizey evriği alma başarısız:\n"
 "Kısıtlamalar tutarsız veya fazla gelmiş olabilir\n"
 
 #: lib/src/gretl_restrict.c:2164
@@ -4051,7 +4051,7 @@ msgstr "RESET belirtim sınaması için yan bağlanım"
 
 #: lib/src/modelprint.c:578
 msgid "Groupwise heteroskedasticity"
-msgstr "kümeli çoktürelserpilim"
+msgstr "kümeli çokluserpilim"
 
 #: lib/src/modelprint.c:586 lib/src/system.c:91 lib/src/varprint.c:1006
 #: lib/src/varprint.c:1015 lib/src/varprint.c:1023 gui2/selector.c:2697
@@ -4069,7 +4069,7 @@ msgstr "AEK - ÖBKÇ (WLS - ARCH)"
 
 #: lib/src/modelprint.c:592
 msgid "Heteroskedasticity-corrected"
-msgstr "çoktürelserpilim-düzeltmeli bağlanım"
+msgstr "çokluserpilim-düzeltmeli bağlanım"
 
 #: lib/src/modelprint.c:594 lib/src/modelprint.c:4189
 msgid "AR"
@@ -4303,7 +4303,7 @@ msgstr "önbeyazlatmalı"
 
 #: lib/src/modelprint.c:929
 msgid "Heteroskedasticity-robust standard errors"
-msgstr "Çoktürelserpilim-sağlam ölçünlü hatalar"
+msgstr "Çokluserpilim-sağlam ölçünlü hatalar"
 
 #: lib/src/modelprint.c:930
 msgid "variant"
@@ -4311,15 +4311,15 @@ msgstr "değişke"
 
 #: lib/src/modelprint.c:948
 msgid "Standard errors based on Hessian"
-msgstr "Hesseyen'e dayalı ölçünlü hatalar"
+msgstr "Ölçünlü hatalar, Hesseyen'e dayalı"
 
 #: lib/src/modelprint.c:951
 msgid "Standard errors based on Information Matrix"
-msgstr "Bilgi Dizeyi'ne dayalı ölçünlü hatalar"
+msgstr "Ölçünlü hatalar, Bilgi Dizeyi'ne dayalı"
 
 #: lib/src/modelprint.c:954
 msgid "Standard errors based on Outer Products matrix"
-msgstr "Dış Çarpanlar Dizeyi'ne dayalı ölçünlü hatalar"
+msgstr "Ölçünlü hatalar, Dış Çarpanlar dizeyine dayalı"
 
 #: lib/src/modelprint.c:957
 msgid "QML standard errors"
@@ -4482,11 +4482,11 @@ msgstr "ölçekli %s"
 
 #: lib/src/modelprint.c:1530
 msgid "Allowing for groupwise heteroskedasticity"
-msgstr "Kümeli çoktürelserpilim göz önüne alındı"
+msgstr "Kümeli çokluserpilim göz önüne alındı"
 
 #: lib/src/modelprint.c:1532
 msgid "Weights based on per-unit error variances"
-msgstr "birim-başı hata varyanslarına dayalı ağırlıklar"
+msgstr "Ağırlıklar, birim-başı hata varyanslarına dayalı"
 
 #: lib/src/modelprint.c:1541 lib/src/modelprint.c:1548
 msgid "Variable used as weight"
@@ -4612,19 +4612,19 @@ msgstr ""
 
 #: lib/src/modelprint.c:1843
 msgid "Statistics based on the original data"
-msgstr "Özgün verilere dayalı istatistikler"
+msgstr "İstatistikler, özgün verilere dayalı"
 
 #: lib/src/modelprint.c:1844
 msgid "Statistics based on the weighted data"
-msgstr "Ağırlıklı verilere dayalı istatistikler"
+msgstr "İstatistikler, ağırlıklı verilere dayalı"
 
 #: lib/src/modelprint.c:1845
 msgid "Statistics based on the rho-differenced data"
-msgstr "Rho-farkı alınan verilere dayalı istatistikler"
+msgstr "İstatistikler, rho-farkı alınan verilere dayalı"
 
 #: lib/src/modelprint.c:1846
 msgid "Statistics based on the transformed data"
-msgstr "Dönüştürülmüş verilere dayalı istatistikler"
+msgstr "İstatistikler, dönüştürülmüş verilere dayalı"
 
 #: lib/src/modelprint.c:1939
 #, c-format
@@ -5122,7 +5122,7 @@ msgstr "% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:344
 msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr "Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
+msgstr "Örneklem, normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük\n"
 
 #: lib/src/nonparam.c:767
 msgid ""
@@ -5498,8 +5498,8 @@ msgid ""
 "estimating the model over the sample %s to t-%d, and (b) the\n"
 "regressors evaluated at time t."
 msgstr ""
-"t zamanına ait yordama şunlara dayanır: (a) modelin %s ve\n"
-"t-%d arası örneklem üzerinden tahmini sonucu elde edilen\n"
+"t zamanına ait yordama şunlara dayalıdır: (a) modelin %s\n"
+"ve t-%d arası örneklem üzerinden tahmini sonucu elde edilen\n"
 "katsayılara ve (b) t zamanı için değerlendirilen bağlayanlara."
 
 #: lib/src/printout.c:1146
@@ -5507,7 +5507,7 @@ msgid ""
 "This is truly a forecast only if all the stochastic regressors\n"
 "are in fact lagged values."
 msgstr ""
-"Bu, ancak tüm olasılıksal açıklayıcılar gecikmeli değerlerden\n"
+"Bu, yalnızca tüm olasılıksal açıklayıcılar gecikmeli değerlerden\n"
 "oluşuyorsa gerçek bir yordama olabilir."
 
 #: lib/src/printout.c:1152
@@ -7142,7 +7142,7 @@ msgid ""
 "(or just a name, to enter data manually)"
 msgstr ""
 "Yeni değişken için formül giriniz\n"
-"(veya, verileri elle girmek için, yalnız bir ad giriniz)"
+"(veya, verileri elle girmek için, bir tek ad giriniz)"
 
 #: gui2/callbacks.c:641 gui2/callbacks.c:646
 msgid "gretl: missing code"
@@ -8257,7 +8257,7 @@ msgstr "Kap genişliği:"
 
 #: gui2/dialogs.c:3670 gui2/dialogs.c:3675
 msgid "Show data only"
-msgstr "Yalnız verileri göster"
+msgstr "Yalnızca verileri göster"
 
 #: gui2/dialogs.c:3671
 msgid "Show normal distribution"
@@ -8330,7 +8330,7 @@ msgstr "Özdeşlik ekle"
 
 #: gui2/dlgutils.c:652
 msgid "Add list of endogenous variables"
-msgstr "İçsel değişken listesi ekle"
+msgstr "İçtürel değişken listesi ekle"
 
 #: gui2/dlgutils.c:653
 msgid "Add list of instruments"
@@ -8381,7 +8381,7 @@ msgid ""
 "The suffix you selected should be used\n"
 "only for gretl datafiles"
 msgstr ""
-"Seçtiğiniz son ek yalnız gretl veri dosyaları\n"
+"Seçtiğiniz son ek yalnızca gretl veri dosyaları\n"
 "için kullanılmalıdır"
 
 #: gui2/fileselect.c:578
@@ -8744,7 +8744,7 @@ msgstr "Gerekli bazı bilgiler eksik"
 
 #: gui2/fnsave.c:271
 msgid "Invalid version string: use numbers and '.' only"
-msgstr "Geçersiz sürüm dizgisi: yalnız sayılar ve '.' kullanınız"
+msgstr "Geçersiz sürüm dizgisi: yalnızca sayı ve '.' kullanınız"
 
 #: gui2/fnsave.c:286 gui2/fnsave.c:521
 msgid "Save function package"
@@ -8998,7 +8998,7 @@ msgstr "ikinci dereceden: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:113
 msgid "inverse: y = a + b*(1/x)"
-msgstr "ters: y = a + b*(1/x)"
+msgstr "evrik: y = a + b*(1/x)"
 
 #: gui2/gpt_dialog.c:114
 msgid "loess (locally weighted fit)"
@@ -9047,7 +9047,7 @@ msgstr "Tam çerçeveyi göster"
 
 #: gui2/gpt_dialog.c:1290
 msgid "Use only one y axis"
-msgstr "Tek bir y ekseni kullan"
+msgstr "Yalnızca bir y ekseni kullan"
 
 #: gui2/gpt_dialog.c:1304
 msgid "Show all data labels"
@@ -9930,7 +9930,7 @@ msgstr "_Ağırlıklı En küçük Kareler"
 
 #: gui2/gretl.c:1452
 msgid "H_eteroskedasticity corrected..."
-msgstr "_Çoktürelserpilim düzeltmeli..."
+msgstr "_Çokluserpilim düzeltmeli..."
 
 #: gui2/gretl.c:1453
 msgid "_Two-Stage Least Squares..."
@@ -10451,7 +10451,7 @@ msgstr "Ramsey _RESET"
 
 #: gui2/gui_utils.c:175
 msgid "_Heteroskedasticity"
-msgstr "_Çoktürelserpilim"
+msgstr "_Çokluserpilim"
 
 #: gui2/gui_utils.c:176
 msgid "_Normality of residual"
@@ -10503,7 +10503,7 @@ msgstr "White sınaması"
 
 #: gui2/gui_utils.c:191
 msgid "White's test (squares only)"
-msgstr "White sınaması (yalnız kareler)"
+msgstr "White sınaması (yalnızca kareler)"
 
 #: gui2/gui_utils.c:198
 msgid "_groupwise"
@@ -10806,7 +10806,7 @@ msgstr "Doğrusal kısıtlamalar"
 
 #: gui2/gui_utils.c:3218
 msgid "Omit exogenous variables..."
-msgstr "Dışsal değişkenleri çıkar..."
+msgstr "Dıştürel değişkenleri çıkar..."
 
 #: gui2/gui_utils.c:3227
 msgid "Residuals from equation"
@@ -10838,7 +10838,7 @@ msgstr "Birleşik kalıntı çizimi"
 
 #: gui2/gui_utils.c:3284
 msgid "VAR inverse roots"
-msgstr "YÖB ters kökleri"
+msgstr "YÖB evrik kökleri"
 
 #: gui2/gui_utils.c:3292
 msgid "Impulse responses (combined)"
@@ -10907,7 +10907,7 @@ msgid ""
 "Use only unaccented letters, digits and underscore"
 msgstr ""
 "Ad, geçersiz bir simge (%d. sıra) içeriyor.\n"
-"Yalnız vurgusuz harf, rakam veya altçizgi kullanabilirsiniz"
+"Yalnızca vurgusuz harf, rakam veya altçizgi kullanınız"
 
 #: gui2/gui_utils.c:3658
 msgid "No command was supplied to start R"
@@ -11142,7 +11142,7 @@ msgstr "Belirlenemeyen hata"
 
 #: gui2/library.c:1240
 msgid "Sample now includes only complete observations"
-msgstr "Örneklem şimdi yalnız tam gözlemlerden oluşuyor"
+msgstr "Örneklem şimdi yalnızca tam gözlemlerden oluşuyor"
 
 #: gui2/library.c:1298
 msgid "gretl: missing values info"
@@ -11194,11 +11194,11 @@ msgstr "gretl: LÇ sınaması "
 
 #: gui2/library.c:1820 gui2/library.c:1829 gui2/library.c:1842
 msgid "(heteroskedasticity)"
-msgstr "(çoktürelserpilim)"
+msgstr "(çokluserpilim)"
 
 #: gui2/library.c:1851
 msgid "gretl: groupwise heteroskedasticity"
-msgstr "gretl: kümeli çoktürelserpilim"
+msgstr "gretl: kümeli çokluserpilim"
 
 #: gui2/library.c:1867
 msgid "(non-linearity)"
@@ -11222,7 +11222,7 @@ msgstr "Gini katsayısı"
 
 #: gui2/library.c:2135
 msgid "This test only implemented for OLS models"
-msgstr "Bu sınama yalnız SEK modelleri için bulunmaktadır"
+msgstr "Bu sınama yalnızca SEK modelleri için bulunmaktadır"
 
 #: gui2/library.c:2150
 msgid "gretl: Chow test"
@@ -11326,7 +11326,7 @@ msgstr "Veriler eksi değerler içeriyor: gamma dağılımı uygun değil"
 
 #: gui2/library.c:3954
 msgid "This analysis is applicable only to seasonal time series"
-msgstr "Bu çözümleme yalnız mevsimsel zaman serilerine uygulanabilir"
+msgstr "Bu çözümleme yalnızca mevsimsel zaman serilerine uygulanabilir"
 
 #: gui2/library.c:3991
 msgid "gretl: TRAMO analysis"
@@ -11528,7 +11528,7 @@ msgstr "Seriyi çiz"
 
 #: gui2/library.c:5799
 msgid "Non-interactive (just get output)"
-msgstr "Etkileşim-dışı (yalnız çıktıları al)"
+msgstr "Etkileşim-dışı (bir tek çıktıları al)"
 
 #: gui2/library.c:5800
 msgid "Interactive R session"
@@ -11941,7 +11941,7 @@ msgstr "Kısıtlamalı"
 
 #: gui2/selector.c:1292
 msgid "add exogenous variable"
-msgstr "dışsal değişken ekle"
+msgstr "dıştürel değişken ekle"
 
 #: gui2/selector.c:1293
 #, c-format
@@ -12006,7 +12006,7 @@ msgstr "Bir denetim değişkeni seçmelisiniz"
 
 #: gui2/selector.c:2571
 msgid "You must select two or more endogenous variables"
-msgstr "İki veya daha fazla içsel değişken seçmelisiniz"
+msgstr "İki veya daha fazla içtürel değişken seçmelisiniz"
 
 #: gui2/selector.c:2609
 msgid "You must specify a set of instrumental variables"
@@ -12018,7 +12018,7 @@ msgstr "Seçim denklemi için bağımlı değişkenler belirtmelisiniz"
 
 #: gui2/selector.c:2699
 msgid "Heteroskedasticity corrected"
-msgstr "Çoktürelserpilim-düzeltmeli"
+msgstr "Çokluserpilim-düzeltmeli"
 
 #: gui2/selector.c:2719
 msgid "Panel model"
@@ -12162,7 +12162,7 @@ msgstr "<- Çıkar"
 
 #: gui2/selector.c:3177
 msgid "Exogenous variables"
-msgstr "Dışsal değişkenler"
+msgstr "Dıştürel değişkenler"
 
 #: gui2/selector.c:3181
 msgid "Selection equation regressors"
@@ -12430,7 +12430,7 @@ msgstr "Sınanacak değişkenler"
 
 #: gui2/selector.c:4624
 msgid "Endogenous variables"
-msgstr "İçsel değişkenler"
+msgstr "İçtürel değişkenler"
 
 #: gui2/selector.c:4626
 msgid "Independent variables"
@@ -13106,7 +13106,7 @@ msgstr "_Cholesky"
 
 #: gui2/ssheet.c:166
 msgid "_Invert"
-msgstr "_Tersini al"
+msgstr "_Evriğini al"
 
 #: gui2/ssheet.c:167
 msgid "_Multiply by scalar"
@@ -13665,7 +13665,7 @@ msgstr " (Hesseyen kullanılarak)"
 
 #: plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
-msgstr "Verilmiş bir içsel değişken listesi yok"
+msgstr "Verilmiş bir içtürel değişken listesi yok"
 
 #: plugin/fiml.c:892
 msgid "Gradients at last iteration"
@@ -13908,7 +13908,7 @@ msgstr "Model tam-özdeşlemeli\n"
 #: plugin/jrestrict.c:1829
 #, c-format
 msgid "Based on Jacobian, df = %d\n"
-msgstr "Jocobyen'e dayalı, sd = %d\n"
+msgstr "Jacobyen'e dayalı, sd = %d\n"
 
 #: plugin/jrestrict.c:2752
 msgid "loglikelihood"
@@ -14172,7 +14172,7 @@ msgstr "Zaman-serisi modeli artı mevsimsel düzeltme"
 
 #: plugin/tramo_options.c:338
 msgid "Time-series model only"
-msgstr "Yalnız zaman-serisi modeli"
+msgstr "Yalnızca zaman-serisi modeli"
 
 #: plugin/tramo_options.c:344
 msgid "Standard automatic analysis"
@@ -14332,7 +14332,7 @@ msgstr "X'X dizeyinin özellikleri"
 
 #: plugin/vif.c:127
 msgid "Reciprocal condition number"
-msgstr "Karşıt koşul sayısı"
+msgstr "Ters koşul sayısı"
 
 #: plugin/vif.c:189
 msgid "The statistic you requested is not meaningful for this model"
