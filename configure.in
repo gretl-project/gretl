@@ -9,7 +9,7 @@ AC_CONFIG_AUX_DIR($srcdir/tools)
 
 PACKAGE=gretl
 
-VERSION=`grep GRETL_VERSION[^_] $srcdir/lib/src/version.h | sed -e 's/^.*"\(.*\)";$/\1/'`
+VERSION=`grep GRETL_VERSION $srcdir/lib/src/version.h | awk '{ print $NF }' | sed -e 's/\"//g'`
 LIBGRETL_CURRENT=`grep LIBGRETL_CURRENT $srcdir/lib/src/version.h | awk '{ print $NF }'`
 LIBGRETL_REVISION=`grep LIBGRETL_REVISION $srcdir/lib/src/version.h | awk '{ print $NF }'`
 LIBGRETL_AGE=`grep LIBGRETL_AGE $srcdir/lib/src/version.h | awk '{ print $NF }'`
