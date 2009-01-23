@@ -62,6 +62,8 @@ void set_gui_native_printing (void);
 
 void unset_gui_native_printing (void);
 
+int chinese_locale (void);
+
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)
 

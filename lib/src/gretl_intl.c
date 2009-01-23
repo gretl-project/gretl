@@ -295,6 +295,17 @@ int iso_latin_version (void)
     return 1;
 }
 
+int chinese_locale (void)
+{
+# ifdef WIN32
+    return (gretl_cpage == 950);
+# else
+    char *lang = getenv("LANG");
+
+    return (lang != NULL && !strncmp(lang, "zh", 2));
+#endif
+}
+
 static int gui_native_printing;
 
 void set_gui_native_printing (void)

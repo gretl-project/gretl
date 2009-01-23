@@ -1760,6 +1760,10 @@ void read_rc (void)
     char *strvar;
     int i;
 
+    if (chinese_locale()) {
+	strcpy(fixedfontname, "MS Gothic 10");
+    }
+
     if (get_network_settings() && *paths.workdir != '\0') {
 	int err = set_gretl_work_dir(paths.workdir, &paths);
 
