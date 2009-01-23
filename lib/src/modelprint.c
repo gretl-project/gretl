@@ -2247,13 +2247,13 @@ static void maybe_remedy_translations (const char **S, int n)
 	N_("Sum of squared residuals"),
 	N_("Standard error of the regression"),
 	N_("Unadjusted R-squared"),
-	N_("Adjusted R-squared"),
 	NULL,
 	NULL,
-	N_("Log-likelihood"),
+	NULL,
+	NULL,
 	N_("Akaike information criterion"),
 	N_("Schwarz Bayesian criterion"),
-	NULL,
+	N_("Hannan-Quinn Information Criterion"),
 	NULL,
 	NULL
     };
@@ -2261,8 +2261,11 @@ static void maybe_remedy_translations (const char **S, int n)
 
     for (i=0; i<n; i++) {
 	if (old_key[i] != NULL && !strcmp(S[i], _(S[i]))) {
-	    fprintf(stderr, "untranslated: %s -> %s\n", S[i], old_key[i]);
-	    S[i] = old_key[i];
+	    /* new-style string is not translated */
+	    if (strcmp(old_key[i], _(old_key[i]))) {
+		/* but the old-style one is, so we'll use it */
+		S[i] = old_key[i];
+	    }
 	}
     }
 }
