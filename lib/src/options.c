@@ -260,6 +260,7 @@ struct gretl_option gretl_opts[] = {
     { PROBIT,   OPT_V, "verbose" },
     { QUANTREG, OPT_I, "intervals" },
     { QUANTREG, OPT_N, "no-df-corr" },
+    { QUANTREG, OPT_Q, "quiet" },
     { QUANTREG, OPT_R, "robust" },
     { QUIT,     OPT_X, "exit" },
     { RESET,    OPT_C, "cubes-only" },

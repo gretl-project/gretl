@@ -1,4 +1,4 @@
-version 1.8.0, in progress
+1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
 - Translation fixes
 - Add new command: "modprint"
