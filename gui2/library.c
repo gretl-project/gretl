@@ -834,18 +834,14 @@ int do_coint (selector *sr)
     int action = selector_code(sr);
     GRETL_VAR *jvar = NULL;
     PRN *prn;
-    int auto_order = 0;
-    int err = 0, order = 0;
+    int order = 0;
+    int err = 0;
 
     if (buf == NULL) return 1;
 
     libcmd.opt = selector_get_opts(sr);
 
     if (action == COINT) {
-	if (libcmd.opt & OPT_A) {
-	    auto_order = 1;
-	    libcmd.opt &= ~OPT_A;
-	}
 	gretl_command_sprintf("coint %s%s", buf, print_flags(libcmd.opt, action));
     } else {
 	gretl_command_sprintf("coint2 %s%s", buf, print_flags(libcmd.opt, action));
@@ -856,21 +852,15 @@ int do_coint (selector *sr)
     }
 
     order = atoi(libcmd.param);
-    if (!order) {
-	errbox(_("Couldn't read cointegration order"));
-	gretl_print_destroy(prn);
-	return 1;
-    }
 
     if (action == COINT) {
-	if (auto_order) {
-	    order = -order;
-	}
 	err = coint(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
     } else {
 	jvar = johansen_test(order, libcmd.list, (const double **) Z, 
 			     datainfo, libcmd.opt, prn);
-	if ((err = jvar->err)) {
+	if (jvar == NULL) {
+	    err = E_DATA;
+	} else if ((err = jvar->err)) {
 	    gretl_VAR_free(jvar);
 	}
     }

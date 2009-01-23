@@ -3000,7 +3000,7 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
     int i, nspin = (code == LAG_AND_RANK)? 2 : 1;
 
     maxlag = (datainfo->n < 72)? (datainfo->n / 2) : 36;
-    minlag = 1;
+    minlag = (sr->code == COINT)? 0 : 1;
 
     if (default_order > 0 && default_order <= maxlag) {
 	lag = default_order;
@@ -3927,7 +3927,7 @@ static void build_selector_switches (selector *sr)
 	pack_switch(tmp, sr, TRUE, TRUE, OPT_B, 0);
     } else if (sr->code == COINT) {
 	tmp = gtk_check_button_new_with_label(_("Test down from maximum lag order"));
-	pack_switch(tmp, sr, FALSE, FALSE, OPT_A, 0);
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_E, 0);
 	tmp = gtk_check_button_new_with_label(_("Skip initial DF tests"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_S, 0);
     } else if (sr->code == PANEL_WLS) {
@@ -4401,7 +4401,7 @@ static void build_coint_combo (selector *sr)
 	OPT_R, 
     };
     static combo_opts coint_opts;
-    int deflt = 0;
+    int deflt = 1;
 
     coint_opts.strs = opt_strs;
     coint_opts.vals = opts;

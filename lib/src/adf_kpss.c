@@ -307,12 +307,7 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
     } 
 
     if (*blurb_done == 0) {
-	if (flags & ADF_EG_RESIDS) {
-	    pputc(prn, '\n');
-	    pprintf(prn, _("lag order %d\n"), order);
-	} else {
-	    DF_header(vname, order, prn);
-	}
+	DF_header(vname, order, prn);
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
 	pputs(prn, _("unit-root null hypothesis: a = 1"));
 	pputs(prn, "\n\n");
@@ -378,8 +373,9 @@ static int auto_adjust_order (int *list, int order_max,
 	kmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 
 	if (kmod.errcode) {
+	    fprintf(stderr, "auto_adjust_order: k = %d, err = %d\n", k,
+		    kmod.errcode);
 	    clear_model(&kmod);
-	    fprintf(stderr, "adf: model failed in auto_adjust_order()\n");
 	    k = -1;
 	    break;
 	}
@@ -531,6 +527,23 @@ static int real_adf_test (int varno, int order, int niv,
     fprintf(stderr, "real_adf_test: got order = %d\n", order);
 #endif
 
+    if (opt & OPT_E) {
+	/* testing down */
+	auto_order = 1;
+    }
+
+    if (order < 0) {
+	/* testing down: backward compatibility */
+	auto_order = 1;
+	order = -order;
+    }
+
+    order_max = order;
+
+#if ADF_DEBUG
+    fprintf(stderr, "real_adf_test: order = %d, auto_order = %d\n", order, auto_order);
+#endif
+
     if (flags & ADF_EG_RESIDS) {
 	/* final step of Engle-Granger test: the (A)DF test regression
 	   will contain no deterministic terms, but the selection of the
@@ -553,22 +566,8 @@ static int real_adf_test (int varno, int order, int niv,
 	}
     }
 
-    if (opt & OPT_E) {
-	auto_order = 1;
-    }
-
-    if (order < 0) {
-	auto_order = 1;
-	order = -order;
-    }
-
-    order_max = order;
-
-#if ADF_DEBUG
-    fprintf(stderr, "real_adf_test: order = %d, auto_order = %d\n", order, auto_order);
-#endif
-
     if ((opt & OPT_D) && pdinfo->pd > 1) {
+	/* add seasonal dummies */
 	nseas = pdinfo->pd - 1;
     }
 
@@ -1028,6 +1027,10 @@ coint_check_opts (gretlopt opt, int *detcode, gretlopt *adf_opt)
 	*adf_opt = OPT_R;
     }
 
+    if (opt & OPT_E) {
+	*adf_opt |= OPT_E;
+    }
+
     return 0;
 }
 
@@ -1080,9 +1083,10 @@ static int coint_set_sample (const int *list, int nv, int order,
  * @list: specifies the variables to use.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: if OPT_N, do not an include a constant in the
- *       cointegrating regression, if OPT_S, skip
- *       DF tests for individual variables.
+ * @opt: if %OPT_N, do not an include a constant in the
+ *       cointegrating regression, if %OPT_S, skip
+ *       DF tests for individual variables; if %OPT_E,
+ *       test down from maximum lag order.
  * @prn: gretl printing struct.
  *
  * Carries out the Engle-Granger test for cointegration.  
@@ -1114,12 +1118,22 @@ int coint (int order, const int *list, double ***pZ,
 	return err;
     }
 
+    /* backward compatibility: let a negative lag order
+       indicate that we should test down */
+    if (order < 0) {
+	order = -order;
+	adf_opt |= OPT_E;
+    }
+
     gretl_model_init(&cmod);
 
     if (!(opt & OPT_S)) {
 	/* test all candidate vars for unit root */
 	coint_set_sample(clist, nv, order, *pZ, pdinfo);
 	for (i=1; i<=nv; i++) {
+	    if (step == 1) {
+		pputc(prn, '\n');
+	    }
 	    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		    step++, pdinfo->varname[clist[i]]);
 	    real_adf_test(clist[i], order, 1, pZ, pdinfo, adf_opt, 
@@ -1127,6 +1141,9 @@ int coint (int order, const int *list, double ***pZ,
 	}
     }
 
+    if (step == 1) {
+	pputc(prn, '\n');
+    }
     pprintf(prn, _("Step %d: cointegrating regression\n"), step++);
 
     test_t1 = pdinfo->t1;
@@ -1154,8 +1171,8 @@ int coint (int order, const int *list, double ***pZ,
     strcpy(pdinfo->varname[k], "uhat");
     cmod.uhat = NULL;
 
-    pputc(prn, '\n');
-    pprintf(prn, _("Step %d: Dickey-Fuller test on residuals\n"), step);
+    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
+	    step, pdinfo->varname[k]);
 
     pdinfo->t1 = test_t1;
     pdinfo->t2 = test_t2;

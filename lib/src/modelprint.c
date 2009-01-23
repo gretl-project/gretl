@@ -2692,7 +2692,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     /* FIXME alternate R^2 measures (within, centered) */
 
-    if (plain_format(prn)) {
+    if (plain_format(prn) && !pmod->aux) {
 	maybe_print_jll(pmod, 0, prn);
     }
 

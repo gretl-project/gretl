@@ -1052,6 +1052,10 @@
 	  <flag>--skip-df</flag>
 	  <effect>no DF tests on individual variables</effect>
 	</option>
+	<option>
+	  <flag>--test-down</flag>
+	  <effect>automatic lag order</effect>
+	</option>
       </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
@@ -1069,11 +1073,12 @@
 	<lit>--skip-df</lit> flag is given, step (1) is omitted.
       </para>
       <para context="cli">
-	If the specified lag order is positive, all the
-	Dickey&ndash;Fuller tests use that order.  If the order is
-	prefaced with a minus sign, it is taken as the maximum lag and the
-	actual lag order used in each case is obtained by testing down:
-	see the <cmdref targ="adf"/> command for details.
+	If the specified lag order is positive all the Dickey&ndash;Fuller
+	tests use that order, with this qualification: if the
+	<lit>--test-down</lit> option is given, the given value is taken as
+	the maximum and the actual lag order used in each case is obtained
+	by testing down.  See the <cmdref targ="adf"/> command for
+	details of this procedure.
       </para>
       <para context="cli">
 	By default, the cointegrating regression contains a constant. If
