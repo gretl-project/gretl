@@ -237,6 +237,7 @@ static int nls_genr_setup (nlspec *s)
 	    fprintf(stderr, "genr_compile: genrs[%d] = %p, err = %d\n", i, 
 		    (void *) genrs[i], err);
 	    fprintf(stderr, "formula: '%s'\n", formula);
+	    fprintf(stderr, "%s\n", gretl_errmsg_get());
 	    break;
 	}
 
@@ -3308,3 +3309,181 @@ MODEL ivreg_via_gmm (const int *list, double ***pZ,
 
     return model;
 }
+
+#if 1
+
+/* apparatus for bootstrapping NLS forecast errors */
+
+/* reconstitute the nlspec based on the information saved in @pmod */
+
+static int set_nlspec_from_model (const MODEL *pmod, const double **Z,
+				  const DATAINFO *pdinfo)
+{
+    char line[MAXLEN];
+    const char *buf;
+    int err = 0;
+
+    buf = gretl_model_get_data(pmod, "nlinfo");
+    if (buf == NULL) {
+	return E_DATA;
+    }
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf) && !err) {
+	tailstrip(line);
+	if (!strcmp(line, "end nls")) {
+	    break;
+	}
+	err = nl_parse_line(NLS, line, Z, pdinfo, NULL);
+    }
+
+    bufgets_finalize(buf);
+
+    if (err) {
+	clear_nlspec(&private_spec);
+    } 
+
+    return err;
+}
+
+/* Given an NLS model @pmod, fill out the forecast error series
+   @fcerr from @ft1 to @ft2 using the bootstrap, based on
+   resampling the original residuals.
+*/
+
+int nls_boot_calc (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		   int ft1, int ft2, double *fcerr) 
+{
+    nlspec *spec;
+    gretl_matrix *fcmat = NULL;
+    double *orig_y = NULL;
+    double *resu = NULL;
+    int origv = pdinfo->v;
+    int yno = pmod->list[1];
+    int iters = 100; /* just testing */
+    int i, s, t, fT;
+    int err = 0;
+
+    /* build the 'private' spec, based on pmod */
+    err = set_nlspec_from_model(pmod, (const double **) *pZ, pdinfo);
+    if (err) {
+	return err;
+    }
+
+    spec = &private_spec;
+
+    spec->t1 = spec->real_t1 = pmod->t1;
+    spec->t2 = spec->real_t2 = pmod->t2;
+    spec->nobs = spec->t2 - spec->t1 + 1;
+
+    /* back up the original dependent variable */
+    orig_y = copyvec((*pZ)[yno], pdinfo->n);
+
+    /* allocate storage for resampled residuals */
+    resu = malloc(pdinfo->n * sizeof *resu);
+
+    /* allocate forecast matrix */
+    fT = ft2 - ft1 + 1;
+    fcmat = gretl_matrix_alloc(iters, fT);
+
+    if (orig_y == NULL || resu == NULL || fcmat == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* allocate arrays to be passed to minpack */
+    spec->fvec = malloc(spec->nobs * sizeof *spec->fvec);
+    spec->jac = malloc(spec->nobs * spec->ncoeff * sizeof *spec->jac);
+
+    if (spec->fvec == NULL || spec->jac == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    spec->Z = pZ;
+    spec->dinfo = pdinfo;
+
+    for (i=0; i<iters && !err; i++) {
+
+	/* resample from pmod->uhat into resu */
+	resample_series(pmod->uhat, resu, pdinfo);
+
+	/* construct y^* = \hat{y} + u^* */
+	for (t=spec->t1; t<=spec->t2; t++) {
+	    /* FIXME rescale the residuals */
+	    (*pZ)[yno][t] = pmod->yhat[t] + resu[t];
+	}
+
+#if 0
+	for (t=spec->t1; t<=spec->t2; t++) {
+	    fprintf(stderr, "%d: y = %g, y* = %g\n", 
+		    t, orig_y[t], (*pZ)[yno][t]);
+	}
+#endif	
+
+	for (t=spec->t1, s=0; t<=spec->t2; t++, s++) {
+	    spec->fvec[s] = resu[s];
+	}
+
+	/* re-estimate the model on the resampled data */
+	if (numeric_mode(spec)) {
+	    err = lm_approximate(spec, NULL);
+	} else {
+	    err = lm_calculate(spec, NULL);
+	}
+
+	if (!err) {
+	    /* generate and record the forecast */
+	    err = generate(pmod->depvar, pZ, pdinfo, OPT_P, NULL);
+	    for (t=ft1, s=0; t<=ft2; t++, s++) {
+		gretl_matrix_set(fcmat, i, s, (*pZ)[yno][t]);
+	    }
+	}
+    }
+
+    if (!err) {
+	/* compute and record the standard deviations of the forecasts:
+	   should we add the square root of the residual variance here? 
+	*/
+	gretl_matrix *sd;
+
+#if 0
+	gretl_matrix_print(fcmat, "Forecast matrix");
+#endif
+	sd = gretl_matrix_column_sd(fcmat, &err);
+	if (!err) {
+	    double cfac = sqrt((double) iters / (iters - 1));
+
+	    for (t=ft1, s=0; t<=ft2; t++, s++) {
+		fcerr[t] = sd->val[s] * cfac;
+	    }
+	    gretl_matrix_free(sd);
+	}
+    }
+
+    if (spec->nvec > 0 && analytic_mode(spec)) {
+	destroy_private_matrices();
+    }
+
+ bailout:
+
+    clear_nlspec(spec);
+
+    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
+
+    /* restore original y */
+    if (orig_y != NULL) {
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[yno][t] = orig_y[t];
+	}
+    }
+
+    free(orig_y);
+    free(resu);
+    gretl_matrix_free(fcmat);
+
+    return err;
+}
+
+#endif

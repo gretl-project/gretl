@@ -61,6 +61,9 @@ MODEL model_from_nlspec (nlspec *spec, double ***pZ,
 MODEL ivreg_via_gmm (const int *list, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt opt);
 
+int nls_boot_calc (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		   int ft1, int ft2, double *fcerr); 
+
 double get_default_nls_toler (void);
 
 #endif /* GRETL_NLS_H */

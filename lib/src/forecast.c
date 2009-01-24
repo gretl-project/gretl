@@ -691,10 +691,14 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     }
 
     if (!err && fc->method == FC_STATIC && fc->sderr != NULL) {
+#if 0   /* not quite yet */
+	nls_boot_calc(pmod, pZ, pdinfo, fc->t1, fc->t2, fc->sderr);
+#else
 	/* by request, but is it a good idea? */
 	for (t=fc->t1; t<=fc->t2; t++) {
 	    fc->sderr[t] = pmod->sigma;
 	}
+#endif
     }
 
     return err;
