@@ -1775,9 +1775,16 @@ static int get_writable_path (char *path, const char *fname)
 {
     static int sysdoc_writable = -1;
     static int userdoc_writable = -1;
-
     FILE *fp;
     int err = 0;
+
+    if (sysdoc_writable == 1) {
+	sprintf(path, "%sdoc%c%s", paths.gretldir, SLASH, fname);
+	return 0;
+    } else if (userdoc_writable == 1) {
+	sprintf(path, "%sdoc%c%s", paths.dotdir, SLASH, fname);
+	return 0;
+    }
 
     if (sysdoc_writable < 0) {
 	sysdoc_writable = 0;
@@ -1794,6 +1801,7 @@ static int get_writable_path (char *path, const char *fname)
     }
 
     if (!sysdoc_writable && userdoc_writable < 0) {
+	/* can't write to 'sys' dir, user dir not tested yet */
 	userdoc_writable = 0;
 	sprintf(path, "%sdoc", paths.dotdir);
 	if (gretl_mkdir(path) == 0) {

@@ -1430,10 +1430,13 @@ static char *adjust_saved_nlfunc (char *s)
     return s;
 }
 
- /* attach some additional info to make it possible to
-    reconstruct the model from the saved state */
+ /* Attach additional spcification info to make it possible to
+    reconstruct the model from the saved state.  We need this
+    for the "Modify model" option in the gretl GUI, and may
+    also make use of it for bootstrapping NLS models.
+ */
 
-static int nl_model_add_gui_info (MODEL *pmod, nlspec *spec)
+static int nl_model_add_spec_info (MODEL *pmod, nlspec *spec)
 {
     const char *cmd = gretl_command_word(spec->ci);
     PRN *prn;
@@ -1540,8 +1543,8 @@ add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
 	}
     }
 
-    if (gretl_in_gui_mode()) {
-	err = nl_model_add_gui_info(pmod, spec);
+    if (spec->ci == NLS || gretl_in_gui_mode()) {
+	err = nl_model_add_spec_info(pmod, spec);
     }
 
     return err;
@@ -3065,7 +3068,7 @@ void nlspec_destroy (nlspec *spec)
     free(spec);
 }
 
-/* below: apparatus for etimating a "tsls" model via GMM */
+/* below: apparatus for estimating a "tsls" model via GMM */
 
 #define IVREG_RESIDNAME  "gmm___e"
 #define IVREG_WEIGHTNAME "gmm___V"
