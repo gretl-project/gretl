@@ -324,16 +324,34 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 
 int gretl_mkdir (const char *path)
 {
+    gchar *pconv = NULL;
     DIR *test;
-    int done;
+    int done = 0;
 
-    test = win32_opendir(path);
-    if (test != NULL) {
-	closedir(test);
-	return 0;
+    if (string_is_utf8((unsigned char *) path)) {
+	gsize wrote;
+
+	pconv = g_locale_from_utf8(path, -1, NULL, &wrote, NULL);
     }
 
-    done = CreateDirectory(path, NULL);
+    if (pconv != NULL) {
+	test = win32_opendir(pconv);
+	if (test != NULL) {
+	    closedir(test);
+	    done = 1;
+	} else {
+	    done = CreateDirectory(pconv, NULL);
+	}
+	g_free(pconv);
+    } else {
+	test = win32_opendir(path);
+	if (test != NULL) {
+	    closedir(test);
+	    done = 1;
+	} else {
+	    done = CreateDirectory(path, NULL);
+	}
+    }
     
     return !done;
 }
