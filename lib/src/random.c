@@ -158,6 +158,37 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 }
 
 /**
+ * gretl_rand_int_minmax:
+ * @a: target array.
+ * @n: length of array.
+ * @min: lower closed bound of range.
+ * @max: upper closed bound of range.
+ *
+ * Fill array @a of length @n with pseudo-random drawings
+ * from the uniform distribution on @min to @max, using the
+ * Mersenne Twister.
+ *
+ * Returns: 0 on success, 1 on invalid input.
+ */
+
+int gretl_rand_int_minmax (int *a, int n, int min, int max) 
+{
+    int i;
+
+    if (max < min) {
+	return E_INVARG;
+    }
+
+    /* note: in g_rand_int_range the upper bound is open */
+
+    for (i=0; i<n; i++) {
+	a[i] = g_rand_int_range(gretl_rand, min, max + 1);
+    }
+
+    return 0;
+}
+
+/**
  * gretl_rand_uniform:
  * @a: target array
  * @t1: start of the fill range
@@ -226,9 +257,8 @@ void gretl_rand_normal (double *a, int t1, int t2)
  * Returns: 0 on success, 1 on invalid input.
  */
 
-int
-gretl_rand_normal_full (double *a, int t1, int t2,
-			double mean, double sd) 
+int gretl_rand_normal_full (double *a, int t1, int t2,
+			    double mean, double sd) 
 {
     int t;
 

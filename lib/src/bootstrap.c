@@ -294,27 +294,20 @@ static void make_normal_y (boot *bs)
 }
 
 static void 
-resample_vector (const gretl_matrix *u0, gretl_matrix *u,
-		 double *z)
+resample_vector (const gretl_matrix *u0, gretl_matrix *u, int *z)
 {
-    int T = u->rows;
-    int i, t;
+    int t, T = u->rows;
 
-    /* generate uniform random series */
-    gretl_rand_uniform(z, 0, T - 1);
+    /* generate T uniform drawings from [0 .. T-1] */
+    gretl_rand_int_minmax(z, T, 0, T-1);
 
     /* sample from source vector based on indices */
     for (t=0; t<T; t++) {
-	i = T * z[t];
-	if (i > T - 1) {
-	    i = T - 1;
-	}
-	u->val[t] = u0->val[i];
+	u->val[t] = u0->val[z[t]];
     }
 }
 
-static void 
-make_resampled_y (boot *bs, double *z)
+static void make_resampled_y (boot *bs, int *z)
 {
     double xti;
     int i, t;
@@ -699,7 +692,7 @@ static int real_bootstrap (boot *bs, PRN *prn)
     gretl_matrix *b = NULL;     /* re-estimated coeffs */
     gretl_matrix *yh = NULL;    /* fitted values */
     gretl_matrix *V = NULL;     /* covariance matrix */
-    double *z = NULL;
+    int *z = NULL;
     double *xi = NULL;
     int k = bs->k;
     int p = bs->p;

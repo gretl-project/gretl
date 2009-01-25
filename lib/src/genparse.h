@@ -166,7 +166,6 @@ enum {
     F_LNGAMMA,
     F_HPFILT,
     F_BKFILT,
-    F_RESAMPLE,
     F_PNOBS,
     F_PMIN,
     F_PMAX,
@@ -285,6 +284,7 @@ enum {
     F_XMIN,
     F_XMAX,
     F_ACF,
+    F_RESAMPLE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,

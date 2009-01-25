@@ -3553,6 +3553,7 @@
     <function name="resample" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
+	<fnarg optional="true" type="scalar">b</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -3563,6 +3564,17 @@
 	  a matrix argument is given, each row of the returned matrix
 	  is drawn from the rows of <argname>x</argname> with equal
 	  probability.
+	</para>
+	<para>
+	  The optional argument <argname>b</argname> represents the block
+	  length for resampling by moving blocks.  If this argument is given
+	  it should be a positive integer greater than or equal to 2. The
+	  effect is that the output is composed by random selection with
+	  replacement from among all the possible contiguous sequences of
+	  length <argname>b</argname> in the input.  (In the case of matrix
+	  input, this means contiguous rows.) If the length of the data is not
+	  an integer multiple of the block length, the last selected block is
+	  truncated to fit.
 	</para>
       </description>
     </function>

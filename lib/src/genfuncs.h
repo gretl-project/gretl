@@ -40,6 +40,9 @@ int cum_series (const double *x, double *y,
 int resample_series (const double *x, double *y, 
 		     const DATAINFO *pdinfo);
 
+int block_resample_series (const double *x, double *y, int blocklen,
+			   const DATAINFO *pdinfo);
+
 int fracdiff_series (const double *x, double *y, double d,
 		     const DATAINFO *pdinfo);
 

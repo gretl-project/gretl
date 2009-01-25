@@ -68,7 +68,8 @@ static void printnode (const NODE *t, const parser *p);
 
 static NODE *eval (NODE *t, parser *p);
 
-static void node_type_error (int ntype, int goodt, NODE *bad, parser *p);
+static void node_type_error (int ntype, int argnum, int goodt, 
+			     NODE *bad, parser *p);
 
 static int *node_get_list (NODE *n, parser *p);
 
@@ -1961,7 +1962,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
     *idx = (f == F_IMINR || f == F_IMINC || f == F_IMAXR || f == F_IMAXC);
 }
 
-static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
+static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
@@ -1971,6 +1972,11 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 
 	if (gretl_is_null_matrix(m) && !nullmat_ok(f)) {
 	    p->err = E_DATA;
+	    goto finalize;
+	}
+
+	if (f == F_RESAMPLE && r != NULL && r->t != EMPTY && r->t != NUM) {
+	    node_type_error(f, 2, NUM, r, p);
 	    goto finalize;
 	}
 
@@ -2006,7 +2012,11 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	    ret->v.m = gretl_matrix_diffcol(m, 0, &p->err);
 	    break;
 	case F_RESAMPLE:
-	    ret->v.m = gretl_matrix_resample(m, 0, &p->err);
+	    if (r != NULL && r->t == NUM) {
+		ret->v.m = gretl_matrix_block_resample(m, r->v.xval, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_resample(m, &p->err);
+	    }
 	    break;
 	case F_CDEMEAN:
 	case F_CHOL:
@@ -3166,7 +3176,7 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
 	} else if (scalar_matrix_node(n)) {
 	    i = n->v.m->val[0];
 	} else {
-	    node_type_error(f, NUM, n, p);
+	    node_type_error(f, 1, NUM, n, p);
 	    return NULL;
 	}
 
@@ -3349,7 +3359,7 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp, parser *p)
 	if (series_cast_optional(f)) {
 	    p->err = 1;
 	} else {
-	    node_type_error(f, VEC, n, p);
+	    node_type_error(f, 1, VEC, n, p);
 	}
     } else {
 	*tmp = m;
@@ -3374,7 +3384,7 @@ series_scalar_func (NODE *n, int f, parser *p)
 		if (f == F_SD) {
 		    /* offer column s.d. instead */
 		    p->err = 0;
-		    return matrix_to_matrix_func(n, f, p);
+		    return matrix_to_matrix_func(n, NULL, f, p);
 		} else {
 		    return NULL;
 		}
@@ -3733,7 +3743,10 @@ static NODE *vector_values (NODE *l, parser *p)
     return ret;
 }
 
-/* functions taking a series as argument and returning a series */
+/* functions taking a series as argument and returning a series:
+   note that the 'r' node may contain an auxiliary scalar 
+   parameter 
+*/
 
 static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 {
@@ -3741,6 +3754,9 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
     if (f == F_SDIFF && !dataset_is_seasonal(p->dinfo)) {
 	p->err = E_PDWRONG;
+	return NULL;
+    } else if (r != NULL && r->t != EMPTY && r->t != NUM) {
+	node_type_error(f, 2, NUM, r, p);
 	return NULL;
     } else {
 	ret = aux_vec_node(p, p->dinfo->n);
@@ -3786,7 +3802,11 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = cum_series(x, y, p->dinfo); 
 	    break;
 	case F_RESAMPLE:
-	    p->err = resample_series(x, y, p->dinfo); 
+	    if (r != NULL && r->t == NUM) {
+		p->err = block_resample_series(x, y, r->v.xval, p->dinfo); 
+	    } else {
+		p->err = resample_series(x, y, p->dinfo); 
+	    }
 	    break;
 	case F_PNOBS:
 	case F_PMIN:
@@ -5340,7 +5360,8 @@ static void reattach_data_series (NODE *n, parser *p)
     }
 }
 
-static void node_type_error (int ntype, int goodt, NODE *bad, parser *p)
+static void node_type_error (int ntype, int argnum, int goodt, 
+			     NODE *bad, parser *p)
 {
     const char *nstr;
 
@@ -5350,8 +5371,13 @@ static void node_type_error (int ntype, int goodt, NODE *bad, parser *p)
 	nstr = getsymb(ntype, NULL);
     }
 
-    pprintf(p->prn, _("Wrong type argument for \"%s\": should be %s"),
-	    nstr, typestr(goodt));
+    if (argnum <= 0) {
+	pprintf(p->prn, _("%s: argument should be %s"),
+		nstr, typestr(goodt));
+    } else {
+	pprintf(p->prn, _("%s: argument %d should be %s"),
+		nstr, argnum, typestr(goodt));
+    }
 
     if (bad != NULL) {
 	pprintf(p->prn, ", is %s\n", typestr(bad->t));
@@ -5522,7 +5548,8 @@ static NODE *eval (NODE *t, parser *p)
 		   (l->t == VEC && r->t == MAT)) {
 	    ret = matrix_series_calc(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
+	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
+			    MAT, (l->t == MAT)? r : l, p);
 	}
 	break;
     case B_KRON:
@@ -5542,7 +5569,8 @@ static NODE *eval (NODE *t, parser *p)
 	    /* exception: string concatenation */
 	    ret = two_string_func(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
+	    node_type_error(t->t, MAT, (l->t == MAT)? 2 : 1,
+			    (l->t == MAT)? r : l, p);
 	}
 	break;
     case F_MSORTBY:
@@ -5614,7 +5642,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	}
 	break;
     case F_DATAOK:
@@ -5626,7 +5654,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (ok_list_node(l)) {
 	    ret = list_ok_func(l, p);
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	}
 	break;
     case F_MAKEMASK:
@@ -5634,7 +5662,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == VEC) {
 	    ret = make_series_mask(l, p);
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	}
 	break;
     case LAG:
@@ -5649,9 +5677,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_ACF:
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	} else if (!scalar_node(r)) {
-	    node_type_error(t->t, NUM, r, p);
+	    node_type_error(t->t, 2, NUM, r, p);
 	} else if (t->t == LAG) {
 	    ret = series_lag(l, r, p); 
 	} else if (t->t == OBS) {
@@ -5685,7 +5713,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (ok_list_node(l)) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	} 
 	break;
     case F_HPFILT:
@@ -5702,7 +5730,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	} 
 	break;
     case F_CUM:
@@ -5712,11 +5740,11 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == VEC) {
 	    ret = series_series_func(l, r, t->t, p);
 	} else if (l->t == MAT) {
-	    ret = matrix_to_matrix_func(l, t->t, p);
-	} else if (ok_list_node(l) && t->t == F_DIFF) {
+	    ret = matrix_to_matrix_func(l, r, t->t, p);
+	} else if (t->t == F_DIFF && ok_list_node(l)) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	}
 	break;
     case F_SORT:
@@ -5730,7 +5758,7 @@ static NODE *eval (NODE *t, parser *p)
 		ret = vector_sort(l, t->t, p);
 	    }
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	} 
 	break;
     case F_SUM:
@@ -5754,7 +5782,7 @@ static NODE *eval (NODE *t, parser *p)
 	    /* list -> series also acceptable for these cases */
 	    ret = list_to_series_func(l, t->t, p);
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	} 
 	break;	
     case F_LRVAR:
@@ -5764,10 +5792,10 @@ static NODE *eval (NODE *t, parser *p)
 	    if (scalar_node(r)) {
 		ret = series_scalar_scalar_func(l, r, t->t, p);
 	    } else {
-		node_type_error(t->t, NUM, r, p);
+		node_type_error(t->t, 2, NUM, r, p);
 	    } 
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	}
 	break;
     case F_RUNIFORM:
@@ -5778,7 +5806,8 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (l->t == EMPTY && r->t == EMPTY) {
 	    ret = series_fill_func(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, NUM, (l->t == NUM)? r : l, p);
+	    node_type_error(t->t, (l->t == NUM)? 2 : 1,
+			    NUM, (l->t == NUM)? r : l, p);
 	} 
 	break;
     case F_RPOISSON:
@@ -5786,7 +5815,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (scalar_node(l) || l->t == VEC) {
 	    ret = series_fill_func(l, NULL, t->t, p);
 	} else {
-	    node_type_error(t->t, VEC, l, p);
+	    node_type_error(t->t, 1, VEC, l, p);
 	} 
 	break;
     case F_COR:
@@ -5795,7 +5824,8 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == VEC && r->t == VEC) {
 	    ret = series_2_func(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
+	    node_type_error(t->t, (l->t == VEC)? 2 : 1,
+			    VEC, (l->t == VEC)? r : l, p);
 	} 
 	break;
     case F_MXTAB:
@@ -5804,7 +5834,8 @@ static NODE *eval (NODE *t, parser *p)
 	if ((l->t == VEC && r->t == VEC) || (l->t == MAT && r->t == MAT)) {
 	    ret = mxtab_func(l, r, p);
 	} else {
-	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
+	    node_type_error(t->t, (l->t == VEC)? 2 : 1,
+			    VEC, (l->t == VEC)? r : l, p);
 	} 
 	break;
     case F_SORTBY:
@@ -5812,7 +5843,8 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == VEC && r->t == VEC) {
 	    ret = series_sort_by(l, r, p);
 	} else {
-	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
+	    node_type_error(t->t, VEC, (l->t == VEC)? 2 : 1,
+			    (l->t == VEC)? r : l, p);
 	} 
 	break;	
     case F_IMAT:
@@ -5824,9 +5856,11 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix-creation functions */
 	if (scalar_node(l) && (r == NULL || scalar_node(r))) {
 	    ret = matrix_fill_func(l, r, t->t, p);
+	} else if (!scalar_node(l)) {
+	    node_type_error(t->t, 1, NUM, l, p);
 	} else {
-	    node_type_error(t->t, NUM, NULL, p);
-	} 
+	    node_type_error(t->t, 2, NUM, r, p);
+	}
 	break;
     case F_SUMC:
     case F_SUMR:
@@ -5862,9 +5896,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_POLROOTS:
 	/* matrix -> matrix functions */
 	if (l->t == MAT) {
-	    ret = matrix_to_matrix_func(l, t->t, p);
+	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, MAT, l, p);
+	    node_type_error(t->t, 1, MAT, l, p);
 	}
 	break;
     case F_ROWS:
@@ -5880,7 +5914,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == MAT) {
 	    ret = matrix_to_scalar_func(l, t->t, p);
 	} else {
-	    node_type_error(t->t, MAT, l, p);
+	    node_type_error(t->t, 1, MAT, l, p);
 	}
 	break;
     case F_MREAD:
@@ -5896,9 +5930,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_EIGGEN:
 	/* matrix -> matrix functions, with indirect return */
 	if (l->t != MAT) {
-	    node_type_error(t->t, MAT, l, p);
+	    node_type_error(t->t, 1, MAT, l, p);
 	} else if (r->t != U_ADDR && r->t != EMPTY) {
-	    node_type_error(t->t, U_ADDR, r, p);
+	    node_type_error(t->t, 2, U_ADDR, r, p);
 	} else {
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}
@@ -6000,7 +6034,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == STR) {
 	    ret = object_status(l, t->t, p);
 	} else {
-	    node_type_error(t->t, STR, l, p);
+	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
     case F_PDF:
@@ -6017,7 +6051,7 @@ static NODE *eval (NODE *t, parser *p)
 		ret = eval_pdist(t, p);
 	    }
 	} else {
-	    node_type_error(t->t, FARGS, t->v.b1.b, p);
+	    node_type_error(t->t, 0, FARGS, t->v.b1.b, p);
 	}
 	break;	
     case CON: 
@@ -6075,14 +6109,14 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {
 	    ret = argname_from_uvar(l, p);
 	} else {
-	    node_type_error(t->t, STR, l, p);
+	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
     case F_OBSLABEL:
 	if (l->t == NUM || l->t == MAT) {
 	    ret = int_to_string_func(l, t->t, p);
 	} else {
-	    node_type_error(t->t, NUM, l, p);
+	    node_type_error(t->t, 1, NUM, l, p);
 	}
 	break;
     case F_VARNAME:
@@ -6091,21 +6125,22 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (l->t == LIST) {
 	    ret = list_to_string_func(l, t->t, p);
 	} else {
-	    node_type_error(t->t, NUM, l, p);
+	    node_type_error(t->t, 1, NUM, l, p);
 	}
 	break;
     case F_VARNUM:
 	if (l->t == STR) {
 	    ret = varnum_node(l, t->t, p);
 	} else {
-	    node_type_error(t->t, STR, l, p);
+	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
     case F_STRSTR:
 	if (l->t == STR && r->t == STR) {
 	    ret = two_string_func(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, STR, (l->t == STR)? r : l, p);
+	    node_type_error(t->t, STR, (l->t == STR)? 2 : 1,
+			    (l->t == STR)? r : l, p);
 	}
 	break;	
     default: 

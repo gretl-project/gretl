@@ -1,5 +1,7 @@
 1.8.1, in progress
 - Fix bug 2533543
+- resample() function: add a second, optional parameter,
+  namely a block length for resampling by moving blocks
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

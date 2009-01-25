@@ -473,7 +473,7 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
 {
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
-    double *z = NULL;
+    int *z = NULL;
     int i, t, n;
 
     array_adjust_t1t2(x, &t1, &t2);
@@ -488,14 +488,80 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
 	return E_ALLOC;
     }
 
-    /* generate uniform random series */
-    gretl_rand_uniform(z, 0, n - 1);
+    /* generate n uniform drawings from [t1 .. t2] */
+    gretl_rand_int_minmax(z, n, t1, t2);
 
-    /* sample from source series based on indices */
-    for (t=t1; t<=t2; t++) {
-	i = t1 + n * z[t-t1];
-	i = (i > t2)? t2 : i;
-	y[t] = x[i];
+    /* sample from source series x based on indices z */
+    for (t=t1, i=0; t<=t2; t++, i++) {
+	y[t] = x[z[i]];
+    }
+
+    free(z);
+
+    return 0;
+}
+
+int block_resample_series (const double *x, double *y, int blocklen,
+			   const DATAINFO *pdinfo)
+{
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int *z = NULL;
+    int m, rem, bt2, x0;
+    int i, s, t, n;
+
+    if (blocklen <= 0) {
+	return E_DATA;
+    }
+
+    if (blocklen == 1) {
+	return resample_series(x, y, pdinfo);
+    }    
+
+    array_adjust_t1t2(x, &t1, &t2);
+
+    n = t2 - t1 + 1;
+
+    m = n / blocklen;
+    rem = n % blocklen;
+
+    /* Let n now represent the number of blocks of @blocklen
+       contiguous observations which we need to select; the
+       last of these may not be fully used.
+    */     
+    n = m + (rem > 0);
+
+    /* the last selectable starting point for a block */
+    bt2 = t2 - blocklen + 1;
+
+    if (bt2 < t1) {
+	return E_DATA;
+    }
+
+    z = malloc(n * sizeof *z);
+    if (z == NULL) {
+	return E_ALLOC;
+    }
+
+    /* Generate uniform random series: we want n drawings from the
+       range [t1 .. t2 - blocklen + 1], each of which will be
+       interpreted as the starting point of a block to be used.
+    */
+    gretl_rand_int_minmax(z, n, t1, bt2);
+
+    /* Sample from the source series using blocks given by the random
+       indices: note that the last block will be incomplete if rem > 0
+    */
+    t = t1;
+    for (i=0; i<n; i++) {
+	x0 = z[i];
+	for (s=0; s<blocklen; s++) {
+	    if (t <= t2) {
+		y[t++] = x[x0+s];
+	    } else {
+		break;
+	    }
+	}
     }
 
     free(z);

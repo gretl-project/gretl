@@ -1064,7 +1064,6 @@ double gretl_vector_variance (const gretl_vector *v)
 /**
  * gretl_matrix_resample:
  * @m: input matrix.
- * @r: number of rows in output.
  * @err: location to receive error code.
  *
  * Returns: a new matrix consisting of a random re-sampling
@@ -1072,22 +1071,20 @@ double gretl_vector_variance (const gretl_vector *v)
  * failure.
  */
 
-gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, int r,
+gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, 
 				     int *err)
 {
     gretl_matrix *R = NULL;
-    double x, *z = NULL;
-    int i, j, k, r0;
+    int *z = NULL;
+    double x;
+    int i, j, k, r;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (r <= 0) {
-	r = m->rows;
-    }
-
+    r = m->rows;
     R = gretl_matrix_alloc(r, m->cols);
     z = malloc(r * sizeof *z);
 
@@ -1098,20 +1095,95 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, int r,
 	return NULL;
     }
 
-    r0 = m->rows;
-
-    /* generate uniform random series */
-    gretl_rand_uniform(z, 0, r - 1);
+    /* generate r drawings from [0 .. r-1] */
+    gretl_rand_int_minmax(z, r, 0, r - 1);
 
     /* sample from source matrix based on row indices */
     for (i=0; i<r; i++) {
-	k = (int) (r0 * z[i]);
-	if (k > r0 - 1) {
-	    k = r0 - 1;
-	}
+	k = z[i];
 	for (j=0; j<m->cols; j++) {
 	    x = gretl_matrix_get(m, k, j);
 	    gretl_matrix_set(R, i, j, x);
+	}
+    }
+
+    free(z);
+
+    return R;
+}
+
+/**
+ * gretl_matrix_block_resample:
+ * @m: input matrix.
+ * @blocklen: length of moving blocks.
+ * @err: location to receive error code.
+ *
+ * Returns: a new matrix consisting of a random re-sampling
+ * (with replacement) of the rows of @m, using blocks of
+ * contiguous rows of length @blocklen, or %NULL on
+ * failure.
+ */
+
+gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m, 
+					   int blocklen, 
+					   int *err)
+{
+    gretl_matrix *R = NULL;
+    int *z = NULL;
+    double x;
+    int b, n, s, r, rmax;
+    int i, j, k;
+
+    if (gretl_is_null_matrix(m) || blocklen <= 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (blocklen == 1) {
+	return gretl_matrix_resample(m, err);
+    }    
+
+    r = m->rows;
+
+    /* Let n represent the number of blocks of @blocklen
+       contiguous rows which we need to select; the
+       last of these may not be fully used.
+    */   
+    n = r / blocklen + (r % blocklen > 0);
+
+    rmax = r - blocklen;
+    if (rmax < 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    R = gretl_matrix_alloc(r, m->cols);
+    z = malloc(n * sizeof *z);
+
+    if (R == NULL || z == NULL) {
+	gretl_matrix_free(R);
+	free(z);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* generate n drawings from [0 .. rmax] */
+    gretl_rand_int_minmax(z, n, 0, rmax);
+
+    /* sample from source matrix based on block indices */
+    i = 0;
+    for (b=0; b<n; b++) {
+	for (s=0; s<blocklen; s++) {
+	    if (i < r) {
+		k = z[b] + s;
+		for (j=0; j<m->cols; j++) {
+		    x = gretl_matrix_get(m, k, j);
+		    gretl_matrix_set(R, i, j, x);
+		}
+		i++;
+	    } else {
+		break;
+	    }
 	}
     }
 

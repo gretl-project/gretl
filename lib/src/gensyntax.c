@@ -825,7 +825,7 @@ static NODE *powterm (parser *p)
 	opt = BOTH_OPT;
     } else if (sym == F_FDJAC || sym == F_BFGSMAX) {
 	opt = RIGHT_STR;
-    } else if (sym == F_DUMIFY) {
+    } else if (sym == F_DUMIFY || sym == F_RESAMPLE) {
 	opt = RIGHT_OPT;
     }
 
