@@ -3542,6 +3542,20 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *series_acf (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const double *x = l->v.xvec;
+	int k = (int) node_get_scalar(r, p);
+	
+	ret->v.m = acf_vec(x, k, p->dinfo, &p->err);
+    }
+
+    return ret;
+}
+
 static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
@@ -5632,6 +5646,7 @@ static NODE *eval (NODE *t, parser *p)
     case OBS:
     case F_MOVAVG:
     case F_LJUNGBOX:
+    case F_ACF:
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, VEC, l, p);
@@ -5645,6 +5660,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_movavg(l, r, p); 
 	} else if (t->t == F_LJUNGBOX) {
 	    ret = series_ljung_box(l, r, p); 
+	} else if (t->t == F_ACF) {
+	    ret = series_acf(l, r, p); 
 	}
 	break;
     case MSL:

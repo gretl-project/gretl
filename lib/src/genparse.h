@@ -284,6 +284,7 @@ enum {
     F_IMHOF,
     F_XMIN,
     F_XMAX,
+    F_ACF,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,

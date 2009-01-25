@@ -2699,6 +2699,83 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     return err;
 }
 
+/**
+ * acf_vec:
+ * @x: series to analyse.
+ * @order: maximum lag for autocorrelation function.
+ * @pdinfo: information on the data set.
+ * @err: location to receive error code.
+ *
+ * Computes the autocorrelation function for series @x with
+ * maximum lag @order.
+ *
+ * Returns: column vector containing the values of the
+ * autocorrelation function at the successive lags, or %NULL
+ * on error.
+ */
+
+gretl_matrix *acf_vec (const double *x, int order,
+		       const DATAINFO *pdinfo,
+		       int *err)
+{
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    gretl_matrix *acf = NULL;
+    int m, k, t, T;
+
+    while (na(x[t1])) t1++;
+    while (na(x[t2])) t2--;
+
+    T = t2 - t1 + 1;
+
+    if (T < 4) {
+	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
+	*err = E_DATA;
+	return NULL;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    strcpy(gretl_errmsg, 
+		   _("Missing values within sample -- can't do correlogram"));
+	    *err = E_MISSDATA;
+	    return NULL;
+	}
+    }
+
+    if (gretl_isconst(t1, t2, x)) {
+	sprintf(gretl_errmsg, _("Argument is a constant"));
+	*err = E_DATA;
+	return NULL;
+    }
+
+    /* lag order for acf */
+    m = order;
+    if (m == 0) {
+	m = auto_acf_order(pdinfo->pd, T);
+    } else if (m > T - pdinfo->pd) {
+	int nmax = T - 1; 
+
+	if (nmax < m) {
+	    m = nmax; /* ?? */
+	}
+    }
+
+    acf = gretl_matrix_alloc(m, 1);
+
+    if (acf == NULL) {
+	*err = E_ALLOC;   
+	return NULL;
+    }
+
+    /* calculate acf up to order m */
+    for (k=1; k<=m; k++) {
+	acf->val[k-1] = gretl_acf(k, t1, t2, x);
+    }
+
+    return acf;
+}
+
 static int xcorrgm_graph (const char *xname, const char *yname,
 			  double *xcf, int xcf_m, double *pm,
 			  int allpos)
