@@ -721,8 +721,7 @@ static void get_slice_parts (NODE *t, parser *p)
     set_matrix_slice_off();
 }
 
-/* get up to two comma-separated arguments 
-   (possibly optional) */
+/* get up to two comma-separated arguments (possibly optional) */
 
 static void get_args (NODE *t, parser *p, int opt)
 {
@@ -733,6 +732,7 @@ static void get_args (NODE *t, parser *p, int opt)
 #endif    
 
     if (p->sym == G_LPR) {
+	/* get the first argument */
 	lex(p);
 	if (p->sym == G_RPR && opt == BOTH_OPT) {
 	    /* no args, but it's OK */

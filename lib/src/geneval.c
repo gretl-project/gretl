@@ -4499,7 +4499,49 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
 	} 
-    }	
+    } 
+
+#if 0
+    else if (t->t == F_ACF) {
+	int *list = NULL;
+	const double *x = NULL;
+	const gretl_matrix *X = NULL;
+	int order = -1;
+
+	if (k != 3) {
+	    n_args_error(k, 3, "acf", p);
+	}
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		if (e->t == VEC) {
+		    x = e->v.xvec;
+		} else {
+		    node_type_error(t->t, i+1, VEC, e, p);
+		}
+	    } else if (i == 1) {
+		if (e->t == NUM) {
+		    order = e->v.xval;
+		} else {
+		    node_type_error(t->t, i+1, NUM, e, p);
+		}
+	    } else {
+		if (e->t == STR) {
+		    ;
+		} else {
+		    node_type_error(t->t, i+1, STR, e, p);
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    ;
+	}
+    }
+#endif
 
     if (t->t != F_FILTER) {
 	if (!p->err) {
@@ -5394,6 +5436,9 @@ static void node_type_error (int ntype, int argnum, int goodt,
     p->err = E_TYPES;
 }
 
+#define eval_left(t) (evalb1(t) || evalb2(t))
+#define eval_right(t) (evalb2(t))
+
 /* core function: evaluate the parsed syntax tree */
 
 static NODE *eval (NODE *t, parser *p)
@@ -5407,26 +5452,27 @@ static NODE *eval (NODE *t, parser *p)
 	return NULL;
     }
 
-    if (evalb2(t->t)) {
-	l = eval(t->v.b2.l, p);
+    if (eval_left(t->t)) {
+	if (evalb1(t->t)) {
+	    l = eval(t->v.b1.b, p);
+	} else {
+	    l = eval(t->v.b2.l, p);
+	}
 	if (l == NULL && p->err == 0) {
 	    p->err = 1;
+	}	
+    }
+
+    if (!p->err && eval_right(t->t)) {
+	if (r_return(t->t)) {
+	    r = t->v.b2.r;
 	} else {
-	    if (r_return(t->t)) {
-		r = t->v.b2.r;
-	    } else {
-		r = eval(t->v.b2.r, p);
-		if (r == NULL && p->err == 0) {
-		    p->err = 1;
-		}
+	    r = eval(t->v.b2.r, p);
+	    if (r == NULL && p->err == 0) {
+		p->err = 1;
 	    }
 	}
-    } else if (evalb1(t->t)) {
-	l = eval(t->v.b1.b, p);
-	if (l == NULL && p->err == 0) {
-	    p->err = 1;
-	}
-    } 
+    }	
 
     if (p->err) {
 	goto bailout;
