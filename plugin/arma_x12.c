@@ -121,7 +121,7 @@ static int add_unique_output_file (MODEL *pmod, const char *path)
     sprintf(unique, "%s.XXXXXX", fname);
     if (mktemp(unique) == NULL) return 1;
 
-    err = rename(fname, unique);
+    err = gretl_rename(fname, unique);
     if (!err) {
 	gretl_model_set_data(pmod, "x12a_output", g_strdup(unique),
 			     GRETL_TYPE_STRING, strlen(fname) + 1);
@@ -795,7 +795,7 @@ static void delete_old_files (const char *path)
 	*old = '\0';
 	strncat(old, path, n - 3);
 	strcat(old, exts[i]);
-	remove(old);
+	gretl_remove(old);
     }
 }
 

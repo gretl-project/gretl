@@ -1795,7 +1795,7 @@ static int get_writable_path (char *path, const char *fname)
 	    if (fp != NULL) {
 		sysdoc_writable = 1;
 		fclose(fp);
-		remove(path);
+		gretl_remove(path);
 	    } 
 	} 
     }
@@ -1810,7 +1810,7 @@ static int get_writable_path (char *path, const char *fname)
 	    if (fp != NULL) {
 		userdoc_writable = 1;
 		fclose(fp);
-		remove(path);
+		gretl_remove(path);
 	    } 
 	} 
     }

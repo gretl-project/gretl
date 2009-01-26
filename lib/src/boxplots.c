@@ -996,9 +996,9 @@ int gnuplot_from_boxplot (const char *fname)
 	if (!err) {
 	    const char *pname = gretl_plotfile();
 
-	    remove(fname);
+	    gretl_remove(fname);
 	    gretl_copy_file(pname, fname);
-	    remove(pname);
+	    gretl_remove(pname);
 	    set_gretl_plotfile("");
 	}
     } else if (err == E_DATA) {

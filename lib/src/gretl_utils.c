@@ -1513,7 +1513,7 @@ void libgretl_cleanup (void)
 	int pnum;
 
 	if (!sscanf(p, "gpttmp%d.plt", &pnum)) {
-	    remove(gretl_plotfile());
+	    gretl_remove(gretl_plotfile());
 	}
     }
 }

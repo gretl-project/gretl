@@ -79,7 +79,7 @@ static void normalize_graph_filename (char *fname, int *gnum, int *pnum)
 	}
 
 	if (tmp != NULL) {
-	    rename(oldname, newname);
+	    gretl_rename(oldname, newname);
 	    strcpy(fname, tmp);
 	    g_free(tmp);
 	}
@@ -617,7 +617,7 @@ static int write_session_xml (const char *datname)
     int i, modnum;
     int err = 0;
 
-    chdir(paths.dotdir);
+    gretl_chdir(paths.dotdir);
 
     sprintf(fname, "%s%csession.xml", session.dirname, SLASH);
     fp = gretl_fopen(fname, "w");
@@ -707,7 +707,7 @@ static int write_session_xml (const char *datname)
 
     if (err) {
 	fclose(fp);
-	remove(fname);
+	gretl_remove(fname);
 	return err;
     }
 

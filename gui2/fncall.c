@@ -799,7 +799,7 @@ static int temp_install_remote_fnpkg (const char *fname, char *target)
     }
 
     if (err) {
-	remove(target);
+	gretl_remove(target);
     }
 
     return err;
@@ -954,7 +954,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 				    &minver);
 
     if (*tmpfile) {
-	remove(tmpfile);
+	gretl_remove(tmpfile);
     }
 
     if (cinfo->iface < 0) {

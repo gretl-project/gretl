@@ -351,7 +351,7 @@ FILE *gretl_tempfile_open (char *fname)
 
     strcat(fname, ".XXXXXX");
 #ifdef G_OS_WIN32
-    fd = g_mkstemp(fname);
+    fd = gretl_mkstemp(fname);
 #else
     fd = mkstemp(fname);
 #endif
@@ -360,7 +360,7 @@ FILE *gretl_tempfile_open (char *fname)
 	if (fp == NULL) {
 	    file_write_errbox(fname);
 	    close(fd);
-	    remove(fname);
+	    gretl_remove(fname);
 	}
     }
 
@@ -373,7 +373,7 @@ int gretl_tempname (char *fname)
 
     strcat(fname, ".XXXXXX");
 #ifdef G_OS_WIN32
-    fd = g_mkstemp(fname);
+    fd = gretl_mkstemp(fname);
 #else
     fd = mkstemp(fname);
 #endif
@@ -382,7 +382,7 @@ int gretl_tempname (char *fname)
 	err = 1;
     } else {
 	close(fd);
-	remove(fname);
+	gretl_remove(fname);
     }
 
     return err;
@@ -390,7 +390,7 @@ int gretl_tempname (char *fname)
 
 static void delete_file (GtkWidget *widget, char *fname) 
 {
-    remove(fname);
+    gretl_remove(fname);
     g_free(fname);
 }
 
@@ -1248,11 +1248,11 @@ void free_windata (GtkWidget *w, gpointer data)
 		windata_t *child = vwin_first_child(vwin);
 
 		if (child == NULL) {
-		    remove(vwin->fname);
+		    gretl_remove(vwin->fname);
 		}
 	    }
 	} else if (vwin->role == EDIT_FUNC_CODE) {
-	    remove(vwin->fname);
+	    gretl_remove(vwin->fname);
 	}
 
 	winstack_remove(vwin->main);
@@ -2471,7 +2471,7 @@ static void x12_output_callback (GtkAction *action, gpointer p)
 	    gchar *tmp = g_strdup(fname);
 
 	    sprintf(p, ".%d", pmod->ID);
-	    rename(tmp, fname);
+	    gretl_rename(tmp, fname);
 	    g_free(tmp);
 	}
 	view_file(fname, 0, 0, 78, 350, VIEW_FILE);

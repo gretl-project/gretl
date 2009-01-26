@@ -350,14 +350,14 @@ static void record_shell_opt (void)
     sprintf(shellstamp, "%s.gretl_shell_stamp", paths.dotdir);
 
     if (shellok) {
-	FILE *fp = fopen(shellstamp, "w");
+	FILE *fp = gretl_fopen(shellstamp, "w");
 
 	if (fp != NULL) {
 	    fputs("ok\n", fp);
 	    fclose(fp);
 	}
     } else {
-	remove(shellstamp);
+	gretl_remove(shellstamp);
     }
 }
 
@@ -427,7 +427,7 @@ static void get_functions_dir (char *dirname)
 	    if (fp != NULL) {
 		ok = 1;
 		fclose(fp);
-		remove(target);
+		gretl_remove(target);
 	    }
 	    free(target);
 	}
@@ -444,7 +444,7 @@ static void get_functions_dir (char *dirname)
 	    if (fp != NULL) {
 		ok = 1;
 		fclose(fp);
-		remove(target);
+		gretl_remove(target);
 	    }
 	    free(target);
 	}

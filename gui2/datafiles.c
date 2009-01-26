@@ -728,7 +728,8 @@ static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
         return 0;
     }
 
-    err = remove(fname);
+    err = gretl_remove(fname);
+
     if (err) {
 	file_write_errbox(fname);
     } else {

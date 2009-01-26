@@ -407,9 +407,9 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 
     fclose(fsrc);
     fclose(ftmp);
-    remove(fname);
+    gretl_remove(fname);
 
-    return rename(temp, fname);
+    return gretl_rename(temp, fname);
 }
 
 static int add_png_term_to_plotfile (const char *fname)
@@ -812,7 +812,7 @@ void save_graph_to_file (gpointer data, const char *fname)
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  pltname);
 	err = gretl_spawn(plotcmd);
-	remove(pltname);
+	gretl_remove(pltname);
 	g_free(plotcmd);
 	if (err) {
 	    gui_errmsg(err);
@@ -851,7 +851,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
 
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, plttmp);
     err = gretl_spawn(plotcmd);
-    remove(plttmp);
+    gretl_remove(plttmp);
     g_free(plotcmd);
 
     if (err) {
@@ -1042,7 +1042,7 @@ void run_gp_script (gchar *buf)
 	real_send_to_gp(tmpfile);
     }   
 
-    remove(tmpfile);
+    gretl_remove(tmpfile);
     g_free(tmpfile);
 }
 
@@ -1074,7 +1074,7 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, plttmp);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
     g_free(plotcmd);
-    remove(plttmp);
+    gretl_remove(plttmp);
     
     if (err) {
         errbox(_("Gnuplot error creating graph"));
@@ -1084,7 +1084,7 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
 	err = winprint_graph(emfname);
     }
 
-    remove(emfname);
+    gretl_remove(emfname);
 }
 
 #endif
@@ -3186,7 +3186,7 @@ static int zoom_unzoom_png (png_plot *plot, int view)
     g_free(plotcmd);  
 
     if (view == PNG_ZOOM) {
-	remove(zoomname);
+	gretl_remove(zoomname);
     }
 
     if (err) {
@@ -3382,7 +3382,7 @@ static int render_pngfile (png_plot *plot, int view)
     pbuf = gretl_pixbuf_new_from_file(pngname);
 
     if (pbuf == NULL) {
-	remove(pngname);
+	gretl_remove(pngname);
 	return 1;
     }
 
@@ -3392,7 +3392,7 @@ static int render_pngfile (png_plot *plot, int view)
     if (width == 0 || height == 0) {
 	errbox(_("Malformed PNG file for graph"));
 	g_object_unref(pbuf);
-	remove(pngname);
+	gretl_remove(pngname);
 	return 1;
     }
 
@@ -3409,7 +3409,7 @@ static int render_pngfile (png_plot *plot, int view)
 		    GDK_RGB_DITHER_NONE, 0, 0);
 
     g_object_unref(pbuf);
-    remove(pngname);
+    gretl_remove(pngname);
     
     if (view != PNG_START) { 
 	/* we're changing the view, so refresh the whole canvas */
@@ -3434,7 +3434,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     /* delete temporary plot source file? */
     if (!plot_is_saved(plot)) {
-	remove(plot->spec->fname);
+	gretl_remove(plot->spec->fname);
     }
 
 #if GPDEBUG
@@ -3549,7 +3549,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
 
-    remove(dumbgp);
+    gretl_remove(dumbgp);
 
     if (err) {
 #if POINTS_DEBUG
@@ -3609,7 +3609,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
 
 	fclose(fpin);
 #if (POINTS_DEBUG == 0)
-	remove(dumbtxt);
+	gretl_remove(dumbtxt);
 #endif
 
 	imin = (x2axis)? 1 : 0;
@@ -4147,7 +4147,7 @@ static int get_png_bounds_info (png_bounds *bounds)
     }
 
     fclose(fp);
-    remove(bbname);
+    gretl_remove(bbname);
 
     return ret;
 }

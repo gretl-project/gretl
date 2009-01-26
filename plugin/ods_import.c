@@ -40,11 +40,11 @@ static void remove_temp_dir (char *dname)
 #ifdef G_OS_WIN32
     char *fullpath = g_strdup_printf("%s%s", udir, dname);
 
-    chdir(udir);
+    gretl_chdir(udir);
     win32_delete_dir(fullpath);
     g_free(fullpath);
 #else
-    chdir(udir);
+    gretl_chdir(udir);
     gretl_deltree(dname);
 #endif
 }
@@ -1264,16 +1264,16 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
     }
 
     /* cd to user dir */
-    if (chdir(udir)) {
+    if (gretl_chdir(udir)) {
 	gretl_errmsg_set_from_errno(udir);
 	return E_FOPEN;
     }
 
     err = gretl_make_tempdir(dname);
     if (!err) {
-	err = chdir(dname);
+	err = gretl_chdir(dname);
 	if (err) {
-	    remove(dname);
+	    gretl_remove(dname);
 	}
     }
     
@@ -1284,7 +1284,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
     gretl_unzip_file = get_plugin_function("gretl_unzip_file", 
 					   &handle);
     if (gretl_unzip_file == NULL) {
-	remove(dname);
+	gretl_remove(dname);
         return E_FOPEN;
     }
 

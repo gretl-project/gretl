@@ -314,6 +314,10 @@ int gretl_spawn (char *cmdline)
     return winfork(cmdline, NULL, SW_SHOWMINIMIZED, 0);
 }
 
+/* Retrieve various special paths from the bowels of MS
+   Windows.  Note that these paths will be in the locale
+   encoding, not UTF-8 */
+
 static char *win_special_path (int folder)
 {
     TCHAR dpath[MAX_PATH];
@@ -641,22 +645,6 @@ int win32_write_access (char *path)
     }
 
     return ok;
-}
-
-int win32_rename (const char *oldpath, const char *newpath)
-{
-    int err = 0;
-
-    if (strcmp(oldpath, newpath)) {
-	if (CopyFile(oldpath, newpath, FALSE) == 0) {
-	    err = 1;
-	    win_show_last_error();
-	} else {
-	    DeleteFile(oldpath);
-	}
-    }
-
-    return err;
 }
 
 int win32_delete_dir (const char *path)

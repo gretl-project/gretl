@@ -2141,7 +2141,11 @@ static FILE *tempfile_open (char *fname, int *err)
     int fd;
 
     strcat(fname, ".XXXXXX");
-    fd = g_mkstemp(fname);
+#ifdef WIN32
+    fd = gretl_mkstemp(fname);
+#else
+    fd = mkstemp(fname);
+#endif
 
     if (fd < 0) {
 	*err = E_FOPEN;
@@ -2151,7 +2155,7 @@ static FILE *tempfile_open (char *fname, int *err)
 	    *err = E_FOPEN;
 	    sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
 	    close(fd);
-	    remove(fname);
+	    gretl_remove(fname);
 	}
     } 
 
@@ -2308,23 +2312,13 @@ static int db_delete_series (char *line, const int *list,
     maybe_fclose(f2);
 
     if (!err && ndel > 0) {
-#ifdef G_OS_WIN32
-	err = win32_rename(tmp1, src1);
+	err = gretl_rename(tmp1, src1);
 	if (!err) {
-	    err = win32_rename(tmp2, src2);
+	    err = gretl_rename(tmp2, src2);
 	}
-#else
-	err = rename(tmp1, src1);
-	if (!err) {
-	    err = rename(tmp2, src2);
-	}
-	if (err) {
-	    gretl_errmsg_set_from_errno("db_delete_series");
-	}
-#endif
     } else {
-	remove(tmp1);
-	remove(tmp2);
+	gretl_remove(tmp1);
+	gretl_remove(tmp2);
     }
 
     if (!err && prn != NULL) {

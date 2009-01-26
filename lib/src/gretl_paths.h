@@ -48,9 +48,13 @@ int gretl_open (const char *pathname, int flags);
 
 int gretl_rename (const char *oldpath, const char *newpath);
 
+int gretl_remove (const char *path);
+
 gzFile gretl_gzopen (const char *fname, const char *mode);
 
 int gretl_mkdir (const char *path);
+
+int gretl_chdir (const char *path);
 
 int gretl_deltree (const char *path);
 
@@ -100,7 +104,11 @@ const char *gretl_png_font (void);
 
 void set_gretl_png_font (const char *s, PATHS *ppaths);
 
-#ifndef WIN32
+#ifdef WIN32
+
+int gretl_mkstemp (char *tmpl);
+
+#else
 
 int cli_read_rc (PATHS *paths);
 

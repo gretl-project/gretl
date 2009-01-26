@@ -60,7 +60,7 @@ void gretl_print_destroy (PRN *prn)
     }
 
     if (prn->fname != NULL) {
-	remove(prn->fname);
+	gretl_remove(prn->fname);
 	free(prn->fname);
     }
 
@@ -90,7 +90,7 @@ static int prn_add_tempfile (PRN *prn)
     sprintf(fname, "%sprntmp.XXXXXX", gretl_dot_dir());
 
 #ifdef WIN32
-    fd = g_mkstemp(fname);
+    fd = gretl_mkstemp(fname);
 #else
     fd = mkstemp(fname);
 #endif
@@ -111,7 +111,6 @@ static int prn_add_tempfile (PRN *prn)
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno("prn_add_tempfile");
-	
     }
 
     return err;

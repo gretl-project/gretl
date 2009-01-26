@@ -40,6 +40,10 @@
 
 #include <glib.h>
 
+#if (GLIB_MAJOR_VERSION > 2 || GLIB_MINOR_VERSION >= 6)
+#include <glib/gstdio.h>
+#endif
+
 struct INTERNAL_PATHS {
     char dotdir[MAXLEN];
     char workdir[MAXLEN];
@@ -108,7 +112,7 @@ void set_stdio_use_utf8 (void)
 /**
  * get_stdio_use_utf8:
  *
- * Returns: 1 if fienames should be in UTF-8 when passed to the C
+ * Returns: 1 if filenames should be in UTF-8 when passed to the C
  * library's fopen() and friends, otherwise 0.
  */
 
@@ -117,49 +121,74 @@ int get_stdio_use_utf8 (void)
     return stdio_use_utf8;
 }
 
+/* Try to handle both possible 'cases of need': we should be using 
+   UTF-8 but the path is not in UTF-8, or the path is in UTF-8
+   but should be in locale encoding.
+*/
+
+static int maybe_recode_path (const char *path, int want_utf8, char **pconv)
+{
+    int err = 0;
+
+    if (want_utf8) {
+	if (!g_utf8_validate(path, -1, NULL)) {
+	    /* need to convert from locale to UTF-8 */
+	    GError *gerr = NULL;
+	    gsize sz;
+	    
+	    *pconv = g_locale_to_utf8(path, -1, NULL, &sz, &gerr);
+	    if (*pconv == NULL) {
+		if (gerr != NULL) {
+		    gretl_errmsg_set(gerr->message);
+		    g_error_free(gerr);
+		}
+		err = 1;
+	    }
+	}
+    } else if (string_is_utf8((unsigned char *) path)) {
+	/* need to convert from UTF-8 to locale */
+	GError *gerr = NULL;
+	gsize sz;
+
+	*pconv = g_locale_from_utf8(path, -1, NULL, &sz, &gerr);
+	if (*pconv == NULL) {
+	    if (gerr != NULL) {
+		gretl_errmsg_set(gerr->message);
+		g_error_free(gerr);
+	    }
+	    err = 1;
+	}	
+    }	    
+
+    return err;
+}
+
 /**
  * gretl_fopen:
  * @fname: name of file to be opened.
  * @mode: mode in which to open the file.
  *
- * A wrapper for the C library's fopen(): provides a guard
- * against the situation where a filename is UTF-8 encoded, 
- * but on the current platform we should be using locale
- * encoding for the stdio functions.
+ * A wrapper for  the C library's fopen(), making allowance for
+ * the possibility that @fname has to be converted from
+ * UTF-8 to the locale encoding or vice versa.
  *
  * Returns: file pointer, or %NULL on failure.
  */
 
 FILE *gretl_fopen (const char *fname, const char *mode)
 {
-    gchar *fconv;
-    gsize wrote;
+    gchar *fconv = NULL;
     FILE *fp = NULL;
+    int err;
 
-    errno = 0;
+    gretl_error_clear();
 
-    if (mode != NULL && *mode == 'r') {
-	/* opening for reading */
-	fp = fopen(fname, mode);
-	if (fp == NULL && !stdio_use_utf8 && 
-	    string_is_utf8((unsigned char *) fname)) {
-	    int save_errno = errno;
+    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
 
-	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
-	    if (fconv != NULL) {
-		fp = fopen(fconv, mode);
-		g_free(fconv);
-	    }
-	    errno = save_errno;
-	}
-    } else {
-	/* opening for appending/writing */
-	if (!stdio_use_utf8 && string_is_utf8((unsigned char *) fname)) {
-	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
-	    if (fconv != NULL) {
-		fp = fopen(fconv, mode);
-		g_free(fconv);
-	    }
+    if (!err) {
+	if (fconv != NULL) {
+	    fp = fopen(fconv, mode);
+	    g_free(fconv);
 	} else {
 	    fp = fopen(fname, mode);
 	}
@@ -177,30 +206,30 @@ FILE *gretl_fopen (const char *fname, const char *mode)
  * @pathname: name of file to be opened.
  * @flags: flags to pass to the system open().
  *
- * A wrapper for the C library's open(): provides a guard
- * against the situation where a filename is UTF-8 encoded, 
- * but on the current platform we should be using locale
- * encoding for the stdio functions.
+ * A wrapper for the C library's open(), making allowance for
+ * the possibility that @pathname has to be converted from
+ * UTF-8 to the locale encoding or vice versa.
  *
  * Returns: new file descriptor, or -1 on error.
  */
 
 int gretl_open (const char *pathname, int flags)
 {
-    gchar *pconv;
-    gsize wrote;
+    gchar *pconv = NULL;
     int fd = -1;
+    int err = 0;
 
-    errno = 0;
+    gretl_error_clear();
 
-    if (!stdio_use_utf8 && string_is_utf8((unsigned char *) pathname)) {
-	pconv = g_locale_from_utf8(pathname, -1, NULL, &wrote, NULL);
+    err = maybe_recode_path(pathname, stdio_use_utf8, &pconv);
+
+    if (!err) {
 	if (pconv != NULL) {
 	    fd = open(pconv, flags);
 	    g_free(pconv);
+	} else {
+	    fd = open(pathname, flags);
 	}
-    } else {
-	fd = open(pathname, flags);
     }
 
     if (errno != 0) {
@@ -215,60 +244,95 @@ int gretl_open (const char *pathname, int flags)
  * @oldpath: name of file to be opened.
  * @newpath: new name to give the file.
  *
- * A wrapper for the C library's rename(): provides a guard
- * against the situation where a filename is UTF-8 encoded, 
- * but on the current platform we should be using locale
- * encoding for the stdio functions.
+ * A wrapper for the C library's rename(), making allowance for
+ * the possibility that @oldpath and/or @newpath have to be 
+ * converted from UTF-8 to the locale encoding or vice versa.
  *
- * Returns: 0 on success, non-zero pn failure.
+ * Returns: 0 on success, non-zero on failure.
  */
 
 int gretl_rename (const char *oldpath, const char *newpath)
 {
-    int err = 0;
+    gchar *oldconv = NULL, *newconv = NULL;
+    int err;
 
-    errno = 0;
+    gretl_error_clear();
 
-    if (stdio_use_utf8) {
-	err = rename(oldpath, newpath);
-    } else {
-	int u1 = string_is_utf8((unsigned char *) oldpath);
-	int u2 = string_is_utf8((unsigned char *) newpath);
+    err = maybe_recode_path(oldpath, stdio_use_utf8, &oldconv);
 
-	if (!u1 && !u2) {
+    if (!err) {
+	err = maybe_recode_path(newpath, stdio_use_utf8, &newconv);
+    }
+
+    if (!err) {
+	if (oldconv == NULL && newconv == NULL) {
 	    err = rename(oldpath, newpath);
-	} else {
-	    gchar *oldconv = NULL, *newconv = NULL;
-	    gsize wrote;
-
-	    if (u1) {
-		oldconv = g_locale_from_utf8(oldpath, -1, NULL, &wrote, NULL);
-		if (oldconv == NULL) {
-		    err = 1;
-		} else if (!u2) {
-		    err = rename(oldconv, newpath);
-		}
-	    }
-	    if (u2 && !err) {
-		newconv = g_locale_from_utf8(newpath, -1, NULL, &wrote, NULL);
-		if (newconv == NULL) {
-		    err = 1;
-		} else if (oldconv != NULL) {
-		    err = rename(oldconv, newconv);
-		} else {
-		    err = rename(oldpath, newconv);
-		}
-	    }
- 	    g_free(oldconv);
-	    g_free(newconv);
+	} else if (oldconv != NULL && newconv != NULL) {
+	    err = rename(oldconv, newconv);
+	} else if (oldconv != NULL) {
+	    err = rename(oldconv, newpath);
+	} else if (newconv != NULL) {
+	    err = rename(oldpath, newconv);
 	}
     }
 
+    if (oldconv != NULL || newconv != NULL) {
+	g_free(oldconv);
+	g_free(newconv);
+    }
+
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(NULL);
+	gretl_errmsg_set_from_errno("gretl_rename");
     }
 
     return err;
+}
+
+/**
+ * gretl_remove:
+ * @path: name of file or directory to remove.
+ *
+ * A wrapper for remove(), making allowance for
+ * the possibility that @path has to be converted from
+ * UTF-8 to the locale encoding or vice versa.
+ *
+ * Returns: 0 on sucess, non-zero on failure.
+ */
+
+int gretl_remove (const char *path)
+{
+    gchar *pconv = NULL;
+    int ret = -1;
+    int err;
+
+    err = maybe_recode_path(path, stdio_use_utf8, &pconv);
+
+    if (!err) {
+	if (pconv != NULL) {
+	    ret = remove(pconv);
+	    g_free(pconv);
+	} else {
+	    ret = remove(path);
+	}
+    }
+
+#ifdef WIN32
+    /* allow for the possibility that we're trying to remove a
+       directory on win32 -> use g_remove */
+    if (ret == -1) {
+	err = maybe_recode_path(path, 1, &pconv);
+	if (!err) {
+	    if (pconv != NULL) {
+		ret = g_remove(pconv);
+		g_free(pconv);
+	    } else {
+		ret = g_remove(path);
+	    }
+	}	    
+    }
+#endif
+
+    return ret;
 }
 
 /**
@@ -276,48 +340,73 @@ int gretl_rename (const char *oldpath, const char *newpath)
  * @fname: name of gzipped file to be opened.
  * @mode: mode in which to open the file.
  *
- * A wrapper for zlib's gzopen(): provides a guard
- * against the situation where a filename is UTF-8 encoded, 
- * but on the current platform we should be using local
- * encoding for the stdio functions.
+ * A wrapper for zlib's gzopen(), making allowance for
+ * the possibility that @fname has to be converted from
+ * UTF-8 to the locale encoding or vice versa. 
  *
  * Returns: pointer to gzip stream, or %NULL on failure.
  */
 
 gzFile gretl_gzopen (const char *fname, const char *mode)
 {
-    gchar *fconv;
-    gsize wrote;
+    gchar *fconv = NULL;
     gzFile fz = NULL;
+    int err;
 
-    if (mode != NULL && *mode == 'r') {
-	/* opening for reading */
-	fz = gzopen(fname, mode);
-	if (fz == NULL && !stdio_use_utf8 && 
-	    string_is_utf8((unsigned char *) fname)) {
-	    int save_errno = errno;
+    gretl_error_clear();
 
-	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
-	    if (fconv != NULL) {
-		fz = gzopen(fconv, mode);
-		g_free(fconv);
-	    }
-	    errno = save_errno;
-	}
-    } else {
-	/* opening for writing */
-	if (!stdio_use_utf8 && string_is_utf8((unsigned char *) fname)) {
-	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
-	    if (fconv != NULL) {
-		fz = gzopen(fconv, mode);
-		g_free(fconv);
-	    }
+    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+
+    if (!err) {
+	if (fconv != NULL) {
+	    fz = gzopen(fconv, mode);
+	    g_free(fconv);
 	} else {
 	    fz = gzopen(fname, mode);
 	}
     }
 
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno("gzopen");
+    }
+
     return fz;
+}
+
+/**
+ * gretl_chdir:
+ * @path: name of directory.
+ *
+ * A wrapper for POSIX chdir(), making allowance for
+ * the possibility that @path has to be converted from
+ * UTF-8 to the locale encoding or vice versa.
+ *
+ * Returns: 0 on sucess, non-zero on failure.
+ */
+
+int gretl_chdir (const char *path)
+{
+    gchar *pconv = NULL;
+    int err;
+
+    gretl_error_clear();
+
+    err = maybe_recode_path(path, stdio_use_utf8, &pconv);
+
+    if (!err) {
+	if (pconv != NULL) {
+	    err = chdir(pconv);
+	    g_free(pconv);
+	} else {
+	    err = chdir(path);
+	}
+    }
+
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno("chdir");
+    }
+    
+    return err;
 }
 
 #ifdef WIN32
@@ -356,7 +445,42 @@ int gretl_mkdir (const char *path)
     return !done;
 }
 
-#else
+/**
+ * gretl_mkstemp:
+ * @tmpl: template filename.
+ *
+ * Returns: A file handle (as from open()) to the file opened for 
+ * reading and writing, or -1 on failure.
+ */
+
+int gretl_mkstemp (char *tmpl)
+{
+    int fd = -1;
+
+    if (!g_utf8_validate(tmpl, -1, NULL)) {
+	/* g_mkstemp requires UTF-8 input */
+	gchar *pconv;
+	gsize bytes;
+
+	pconv = g_locale_to_utf8(tmpl, -1, NULL, &bytes, NULL);
+	if (pconv != NULL) {
+	    strcpy(tmpl, pconv);
+	    fd = g_mkstemp(tmpl);
+	    g_free(pconv);
+	    pconv = g_locale_from_utf8(tmpl, -1, NULL, &bytes, NULL);
+	    if (pconv != NULL) {
+		strcpy(tmpl, pconv);
+		g_free(pconv);
+	    }
+	}	
+    } else {
+	fd = g_mkstemp(tmpl);
+    }
+
+    return fd;
+}
+
+#else /* !win32 */
 
 /**
  * gretl_mkdir:
@@ -434,14 +558,14 @@ int gretl_deltree (const char *path)
 		if (gretl_isdir(fname)) {
 		    err = gretl_deltree(fname);
 		} else {
-		    err = remove(fname);
+		    err = gretl_remove(fname);
 		}
 	    }
 	}
 	if (!err) {
 	    closedir(dir);
 	    chdir("..");
-	    err = remove(path);
+	    err = gretl_remove(path);
 	}
     }
 
@@ -465,17 +589,36 @@ int gretl_deltree (const char *path)
 
 int gretl_write_access (char *fname)
 {
-    int err = 0;
+    gchar *fconv = NULL;
+    int err;
 
-#ifdef WIN32
-    err = !win32_write_access(fname);
-#else
-    err = access(fname, W_OK);
-#endif
+    gretl_error_clear();
 
+    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
     if (err) {
-	sprintf(gretl_errmsg, "Can't write to %s", fname);
+	return err;
     }
+
+    if (fconv != NULL) {
+#ifdef WIN32
+	err = !win32_write_access(fconv);
+#else
+	err = access(fconv, W_OK);
+#endif
+	g_free(fconv);
+    } else {
+#ifdef WIN32
+	err = !win32_write_access(fname);
+#else
+	err = access(fname, W_OK);
+#endif
+    }
+
+#ifndef WIN32
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno(fname);
+    }
+#endif
 
     return err;
 }
@@ -1383,7 +1526,7 @@ static int validate_writedir (const char *dirname)
 		err = 1;
 	    } else {
 		fclose(fp);
-		remove(testname);
+		gretl_remove(testname);
 	    }
 	    g_free(testname);
 	}
@@ -1777,10 +1920,10 @@ const char *gretl_maybe_switch_dir (const char *fname)
 	    char *sdir = get_shelldir();
 
 	    if (sdir != NULL && *sdir != '\0') {
-		chdir(sdir);
+		gretl_chdir(sdir);
 	    }
 	} else {
-	    chdir(gretl_paths.workdir);
+	    gretl_chdir(gretl_paths.workdir);
 	}
     }
 

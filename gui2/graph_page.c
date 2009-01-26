@@ -499,7 +499,7 @@ static int latex_compile_graph_page (void)
 	fname = gpage_fname(".pdf", 0);
     }
 
-    remove(fname);
+    gretl_remove(fname);
 
     err = latex_compile(gpage_tex_base);
 
@@ -534,7 +534,7 @@ static int make_gp_output (void)
     }
 
     fname = gpage_fname(".plt", 0);
-    remove(fname);
+    gretl_remove(fname);
 
     return err;
 }
@@ -576,17 +576,17 @@ static void gpage_cleanup (void)
 	} else {
 	    fname = gpage_fname(".ps", i + 1);
 	}
-	remove(fname);
+	gretl_remove(fname);
     }
 
     fname = gpage_fname(".tex", 0);
-    remove(fname);
+    gretl_remove(fname);
     fname = gpage_fname(".dvi", 0);
-    remove(fname);
+    gretl_remove(fname);
     fname = gpage_fname(".log", 0);
-    remove(fname);
+    gretl_remove(fname);
     fname = gpage_fname(".aux", 0);
-    remove(fname);
+    gretl_remove(fname);
 }
 
 int display_graph_page (void)
@@ -612,7 +612,7 @@ int display_graph_page (void)
 
     gpage.mono = (resp == 1);
 
-    chdir(sdir);
+    gretl_chdir(sdir);
 
     gpage_filenames_init(NULL);
 
@@ -683,7 +683,7 @@ int save_graph_page (const char *fname)
     char *latex_orig = NULL;
     int err = 0;
 
-    chdir(sdir);
+    gretl_chdir(sdir);
 
     gpage_filenames_init(fname);
 

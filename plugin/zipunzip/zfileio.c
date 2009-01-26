@@ -286,20 +286,20 @@ int replace_file (char *dest, char *src)
 
 #ifdef WIN32
     if (d_exists) {
-	remove(dest);
+	gretl_remove(dest);
     }
 #else
     if (d_exists) {
 	if (t.st_nlink > 1 || (t.st_mode & S_IFMT) == S_IFLNK) {
 	    copy = 1;
-	} else if (remove(dest)) {
+	} else if (gretl_remove(dest)) {
 	    return ZE_CREAT;
 	}
     }
 #endif
 
     if (!copy) {
-	if (rename(src, dest)) { 
+	if (gretl_rename(src, dest)) { 
 	    copy = 1;
 	    if (errno != EXDEV) {
 		return ZE_CREAT;
@@ -319,13 +319,13 @@ int replace_file (char *dest, char *src)
 	    fclose(fs);
 	    return ZE_CREAT;
 	}
-	err = fcopy(fs, fd, (guint32)-1L);
+	err = fcopy(fs, fd, (guint32) -1L);
 	fclose(fs);
 	if (fclose(fd) || err != ZE_OK) {
-	    remove(dest);
+	    gretl_remove(dest);
 	    return err ? (err == ZE_TEMP ? ZE_WRITE : err) : ZE_WRITE;
 	}
-	remove(src);
+	gretl_remove(src);
     }
 
     return ZE_OK;

@@ -229,6 +229,10 @@ typedef enum {
 # endif
 #endif /* WIN32 */
 
+#ifdef STANDALONE
+# define gretl_remove(p) remove(p)
+#endif
+
 struct proto {
     char *name;
     uerr_t ind;
@@ -1321,7 +1325,7 @@ static void urlinfo_destroy (urlinfo *u, int delfile)
 	    fclose(u->fp);
 	}
 	if (delfile) {
-	    remove(u->localfile);
+	    gretl_remove(u->localfile);
 	}
 	free(u->localfile);
     }

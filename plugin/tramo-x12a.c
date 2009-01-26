@@ -358,11 +358,11 @@ static void clear_tramo_files (const char *tpath, const char *varname)
     for (i=D11; i<=TRIGRAPH; i++) {
 	sprintf(tfname, "%s%cgraph%cseries%c%s", tpath, SLASH, SLASH, SLASH,
 		tramo_series_strings[i]);
-	remove(tfname);
+	gretl_remove(tfname);
     }
 
     sprintf(tfname, "%s%coutput%c%s.out", tpath, SLASH, SLASH, varname);
-    remove(tfname);
+    gretl_remove(tfname);
 }
 
 static int add_series_from_file (const char *fname, int code,

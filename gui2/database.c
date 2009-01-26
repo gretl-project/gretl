@@ -1810,10 +1810,10 @@ static int ggz_extract (char *ggzname)
     if (fcbk != NULL) fclose(fcbk);
 
     if (cblen == 0) {
-	remove(cbname);
+	gretl_remove(cbname);
     }
 
-    remove(ggzname);
+    gretl_remove(ggzname);
 
     return err;
 }
@@ -2086,7 +2086,7 @@ int write_db_description (const char *binname, const char *descrip)
 	}
 	fclose(fnew);
 	fclose(fbak);
-	remove(idxtmp);
+	gretl_remove(idxtmp);
     }
 
     return err;

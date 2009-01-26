@@ -253,7 +253,7 @@ int maybe_recode_gp_file_to_utf8 (const char *fname)
 	err = copyfile(trname, fname);
     }
 
-    remove(trname);
+    gretl_remove(trname);
     g_free(trname);
 
     return err;

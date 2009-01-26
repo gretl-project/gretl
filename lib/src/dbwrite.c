@@ -394,8 +394,8 @@ append_db_data_with_replacement (const char *idxname, const char *binname,
 	    if (fq != NULL) fclose(fq);
 	}
 
-	remove(idxcpy);
-	remove(bincpy);
+	gretl_remove(idxcpy);
+	gretl_remove(bincpy);
     } else {
 	/* no variables to be replaced */
 	fidx = gretl_fopen(idxname, "a");
@@ -475,7 +475,7 @@ open_db_files (const char *fname, char *idxname, char *binname,
 	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), binname);
 	fclose(*fidx);
 	if (*append == 0) {
-	    remove(idxname);
+	    gretl_remove(idxname);
 	}
 	return 1;
     }

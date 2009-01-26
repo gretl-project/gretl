@@ -371,7 +371,7 @@ static int zipfile_write_check (zfile *zf, int task, int *attr)
 
     if (task != ZIP_DO_NEW && zfiles == NULL && zf->zstart == 0) {
 	trace(2, "removing old file '%s'\n", zf->fname);
-	remove(zf->fname);
+	gretl_remove(zf->fname);
     }
 
     return err;
@@ -686,7 +686,7 @@ static int real_archive_files (const char *targ, const char **filenames,
 
     if (err && tempzip != NULL) {
 	/* clean up */
-	remove(tempzip);
+	gretl_remove(tempzip);
     }
 
     free(tempath);
@@ -1116,7 +1116,7 @@ static int real_delete_files (zfile *zf)
 
     if (err && tempzip != NULL) {
 	/* clean up */
-	remove(tempzip);
+	gretl_remove(tempzip);
     }
 
     free(tempath);

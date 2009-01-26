@@ -1221,7 +1221,7 @@ static int pack_and_mail (const char *fname, struct msg_info *msg,
     }
 #endif
 
-    remove(tmpfname);
+    gretl_remove(tmpfname);
 
     return err;
 }

@@ -6625,19 +6625,19 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 #ifdef KILL_DVI_FILE
     sleep(2); /* let forked xdvi get the DVI file */
     sprintf(tmp, "%s.dvi", texbase);
-    remove(tmp);
+    gretl_remove(tmp);
 #endif
 
     sprintf(tmp, "%s.log", texbase);
     if (err == LATEX_ERROR) {
 	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
-	remove(texfile);
-	remove(tmp);
+	gretl_remove(texfile);
+	gretl_remove(tmp);
     }
 
     sprintf(tmp, "%s.aux", texbase);
-    remove(tmp);
+    gretl_remove(tmp);
 }
 
 void view_latex (PRN *prn)

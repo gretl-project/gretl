@@ -932,7 +932,7 @@ int delete_input_files (void)
     for (z = zfiles; z != NULL; z = z->nxt) {
 	if (z->mark == MARK_ZIP) {
 	    if (!z_is_dir(z)) { 
-		remove(z->name);
+		gretl_remove(z->name);
 	    } else {
 		nd++;
 	    }

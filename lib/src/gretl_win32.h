@@ -64,8 +64,6 @@ char *mydocs_path (void);
 
 int win32_write_access (char *path);
 
-int win32_rename (const char *oldpath, const char *newpath);
-
 int win32_delete_dir (const char *path);
 
 char *R_path_from_registry (void);

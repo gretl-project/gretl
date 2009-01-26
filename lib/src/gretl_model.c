@@ -1850,7 +1850,9 @@ static void maybe_delete_x12_file (const MODEL *pmod)
     char *fname = NULL;
 
     fname = gretl_model_get_data(pmod, "x12a_output");
-    if (fname != NULL) remove(fname);
+    if (fname != NULL) {
+	gretl_remove(fname);
+    }
 }
 
 #endif

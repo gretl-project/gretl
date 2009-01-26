@@ -391,8 +391,8 @@ void delete_gretl_R_files (void)
     Rprofile = g_strdup_printf("%sgretl.Rprofile", dotdir);
     Rsrc = g_strdup_printf("%sRsrc", dotdir);
 
-    remove(Rprofile);
-    remove(Rsrc);
+    gretl_remove(Rprofile);
+    gretl_remove(Rsrc);
 
     g_free(Rprofile);
     g_free(Rsrc);

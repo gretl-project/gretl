@@ -637,7 +637,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     fsrc = gretl_fopen(fname, "r");
     if (fsrc == NULL) {
 	fclose(ftmp);
-	remove(temp);
+	gretl_remove(temp);
 	return NULL;
     }
 
@@ -658,15 +658,15 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     /* run gnuplot on the temp plotfile */
     sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
     if (system(cmd)) {
-	remove(temp);
+	gretl_remove(temp);
 	return NULL;
     }
 
-    remove(temp);
+    gretl_remove(temp);
 
     build_path(temp, paths.dotdir, GRETL_PBM_TMP, NULL);
     pbuf = gdk_pixbuf_new_from_file(temp, NULL);
-    remove(temp);
+    gretl_remove(temp);
 
     return pbuf;
 }
@@ -867,7 +867,7 @@ static int make_png_file (const char *fname,
     fsrc = gretl_fopen(fname, "r");
     if (fsrc == NULL) {
 	fclose(ftmp);
-	remove(temp);
+	gretl_remove(temp);
 	return 1;
     }
 
@@ -887,11 +887,11 @@ static int make_png_file (const char *fname,
     /* run gnuplot on the temp plotfile */
     sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
     if (system(cmd)) {
-	remove(temp);
+	gretl_remove(temp);
 	return 1;
     }
 
-    remove(temp);
+    gretl_remove(temp);
 
     return 0;
 }

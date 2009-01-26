@@ -691,7 +691,7 @@ static int zip_relink (FILE *src, const char *targ, guint32 usize)
     if (fread(lname, 1, usize, src) != usize) {
 	err = ZE_READ;
     } else {
-	remove(targ);
+	gretl_remove(targ);
 	if (symlink(lname, targ)) {
 	    err = ziperr(ZE_CREAT, targ);
 	}
