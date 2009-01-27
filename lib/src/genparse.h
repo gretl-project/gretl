@@ -283,16 +283,17 @@ enum {
     F_IMHOF,
     F_XMIN,
     F_XMAX,
-    F_ACF,
     F_RESAMPLE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,
     F_MOLS,
     F_MPOLS,
-    F_FILTER,
     F_TRIMR,
     F_TOEPSOLV,
+    F_ACF,
+    F3_MAX,       /* SEPARATOR: end of three-arg functions */
+    F_FILTER,
     F_MCOVG,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
@@ -316,7 +317,8 @@ enum {
 
 #define func1_symb(s) (s > F1_MIN && s < F1_MAX)
 #define func2_symb(s) (s > F1_MAX && s < F2_MAX)
-#define funcn_symb(s) (s > F2_MAX && s < FN_MAX)
+#define func3_symb(s) (s > F2_MAX && s < F3_MAX)
+#define funcn_symb(s) (s > F3_MAX && s < FN_MAX)
 
 #define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
 			    s == F_ISLIST || s == F_LISTLEN || \
@@ -326,9 +328,11 @@ enum {
 #define string0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
                          s == F_CRIT || s == F_RANDGEN || s == F_PDF)
 
-#define unary_op(s) (s >= 1 && s < U_MAX)
+#define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
 #define bool_comp(s) (s >= B_EQ && s <= B_OR)
+
+#define evalb3(s) (func3_symb(s)) /* plus ternary op? */
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL || s == LAG || \
@@ -343,7 +347,7 @@ enum {
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == DMSL || \
                   s == OVAR || s == UFUN || s == LISTVAR)
 
-#define b3sym(s) (s == QUERY)
+#define b3sym(s) (s == QUERY || func3_symb(s))
 
 #define bnsym(s) (s == MDEF || s == FARGS)
 
@@ -355,9 +359,14 @@ enum {
 #define closing_sym(s) (s == G_RPR || s == G_RBR || s == G_RCB)
 
 
-/* functions where the right-hand "argument" is actually a return
+/* functions where the right-hand argument is actually a return
    location */
-#define r_return(s) (s == F_QR || s == F_EIGSYM || s == F_EIGGEN)
+#define r_return(s) (s == F_QR || s == F_EIGSYM || s == F_EIGGEN || \
+                     s == F_MOLS || s == F_MPOLS || s == F_SVD)
+
+/* functions where the middle argument is actually a return
+   location */
+#define m_return(s) (s == F_SVD)
 
 #define dollar_node(n) (n->t == DVAR || n->t == MVAR || \
                         (n->t == MSL && n->v.b2.l->v.str[0] == '$'))

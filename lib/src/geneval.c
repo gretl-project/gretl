@@ -984,7 +984,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    sprintf(code, "%d", (int) s->v.xval);
 	    dist = code;
 	} else {
-	    p->err = E_INVARG;
+	    node_type_error(n->t, 0, STR, s, p);
 	    goto disterr;
 	}
 
@@ -1033,6 +1033,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		    bmat = e->v.m;
 		} else {
 		    p->err = E_INVARG;
+		    fprintf(stderr, "eval_pdist: arg %d, bad type %d\n", i+1, e->t);
 		    goto disterr;
 		}
 		if (!reusable(p)) {
@@ -3552,20 +3553,6 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *series_acf (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_matrix_node(p);
-
-    if (ret != NULL && starting(p)) {
-	const double *x = l->v.xvec;
-	int k = (int) node_get_scalar(r, p);
-	
-	ret->v.m = acf_vec(x, k, p->dinfo, &p->err);
-    }
-
-    return ret;
-}
-
 static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
@@ -4254,6 +4241,92 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     return ret;
 }
 
+/* evaluate a built-in function that has three arguments */
+
+static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
+{
+    NODE *ret = NULL;
+    gretl_matrix *A = NULL;
+
+    if (f == F_MSHAPE || f == F_TRIMR) {
+	if (l->t != MAT) {
+	    node_type_error(f, 0, MAT, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 1, NUM, m, p);
+	} else if (r->t != NUM) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else if (f == F_MSHAPE) {
+	    A = gretl_matrix_shape(l->v.m, m->v.xval, r->v.xval);
+	} else {
+	    A = gretl_matrix_trim_rows(l->v.m, m->v.xval, r->v.xval, &p->err);
+	}
+    } else if (f == F_SVD) {
+	if (l->t != MAT) {
+	    node_type_error(f, 0, MAT, l, p);
+	} else if (m->t != U_ADDR && m->t != EMPTY) {
+	    node_type_error(f, 1, U_ADDR, m, p);
+	} else if (r->t != U_ADDR && r->t != EMPTY) {
+	    node_type_error(f, 2, U_ADDR, r, p);
+	} else {
+	    const char *lname, *rname;
+
+	    lname = (m->t == U_ADDR)? m->v.b1.b->v.str : NULL;
+	    rname = (r->t == U_ADDR)? r->v.b1.b->v.str : NULL;
+	    A = user_matrix_SVD(l->v.m, lname, rname, &p->err);
+	}
+    } else if (f == F_MOLS || f == F_MPOLS) {
+	if (l->t != MAT) {
+	    node_type_error(f, 0, MAT, l, p);
+	} else if (m->t != MAT) {
+	    node_type_error(f, 1, MAT, m, p);
+	} else if (r->t != U_ADDR && r->t != EMPTY) {
+	    node_type_error(f, 2, U_ADDR, r, p);
+	} else {
+	    gretlopt opt = (f == F_MOLS)? OPT_NONE : OPT_M;
+	    const char *Uname;
+
+	    Uname = (r->t == EMPTY)? "null" : r->v.str;
+	    A = user_matrix_ols(l->v.m, m->v.m, Uname, opt, &p->err);
+	}
+    } else if (f == F_TOEPSOLV) {
+	if (l->t != MAT) {
+	    node_type_error(f, 0, MAT, l, p);
+	} else if (m->t != MAT) {
+	    node_type_error(f, 1, MAT, m, p);
+	} else if (r->t != MAT) {
+	    node_type_error(f, 2, MAT, r, p);
+	} else {
+	    A = gretl_toeplitz_solve(l->v.m, m->v.m, r->v.m, &p->err);
+	} 
+    } else if (f == F_ACF) {
+	if (l->t != VEC) {
+	    node_type_error(f, 0, VEC, l, p);
+	} else if (!scalar_node(m)) {
+	    node_type_error(f, 1, NUM, m, p);
+	} else if (r->t != STR && r->t != EMPTY) {
+	    node_type_error(f, 2, STR, r, p);
+	} else {
+	    /* FIXME hook up the 3rd arg and make more flexible */
+	    int k = (int) node_get_scalar(m, p);
+
+	    A = acf_vec(l->v.xvec, k, p->dinfo, &p->err);
+	}
+    }
+
+    if (!p->err) {
+	ret = aux_matrix_node(p);
+    }
+
+    if (!p->err) {
+	if (ret->v.m != NULL) {
+	    gretl_matrix_free(ret->v.m);
+	}
+	ret->v.m = A;
+    }
+
+    return ret;
+}
+
 static void n_args_error (int k, int n, const char *s, parser *p)
 {
     pprintf(p->prn, _("Number of arguments (%d) does not "
@@ -4263,132 +4336,15 @@ static void n_args_error (int k, int n, const char *s, parser *p)
     p->err = 1;
 }
 
-/* evaluate a built-in function that has more than two arguments */
+/* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
 {
     NODE *e, *n = t->v.b1.b;
     NODE *ret = NULL;
-    gretl_matrix *m = NULL;
     int i, k = n->v.bn.n_nodes;
 
-    if (t->t == F_MSHAPE || t->t == F_TRIMR) {
-	gretl_matrix *A = NULL;
-	int r = 0, c = 0;
-
-	if (k != 3) {
-	    n_args_error(k, 3, (t->t == F_MSHAPE)? "mshape" : "trimr", p);
-	} 
-
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (e == NULL) {
-		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i); 
-	    } else if (i == 0) {
-		if (e->t != MAT) {
-		    p->err = E_TYPES;
-		} else {
-		    A = e->v.m;
-		}
-	    } else if (e->t != NUM) {
-		p->err = E_TYPES;
-	    } else if (i == 1) {
-		r = e->v.xval;
-	    } else {
-		c = e->v.xval;
-	    }
-	}
-
-	if (!p->err) {
-	    if (t->t == F_MSHAPE) {
-		m = gretl_matrix_shape(A, r, c);
-	    } else {
-		m = gretl_matrix_trim_rows(A, r, c, &p->err);
-	    }
-	}
-    } else if (t->t == F_SVD) {
-	gretl_matrix *A = NULL;
-	const char *lname = NULL;
-	const char *rname = NULL;
-	const char **name;
-
-	if (k != 3) {
-	    n_args_error(k, 3, "svd", p);
-	} 
-
-	for (i=0; i<k && !p->err; i++) {
-	    if (i == 0) {
-		e = eval(n->v.bn.n[i], p);
-		if (e == NULL) {
-		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-		} else {
-		    A = e->v.m;
-		}
-	    } else {
-		name = (i == 1)? &lname : &rname;
-		e = n->v.bn.n[i];
-		if (e->t == EMPTY) {
-		    *name = "null";
-		} else if (e->t == U_ADDR) {
-		    e = e->v.b1.b;
-		    if (e->t == UMAT) {
-			*name = e->v.str;
-		    } else {
-			p->err = E_TYPES;
-			strcpy(gretl_errmsg, "Expected the address of a matrix");
-		    }
-		} else {
-		    p->err = E_TYPES;
-		}
-	    }
-	}
-
-	if (!p->err) {
-	    m = user_matrix_SVD(A, lname, rname, &p->err);
-	}
-    } else if (t->t == F_MOLS || t->t == F_MPOLS) {
-	gretl_matrix *Y = NULL;
-	gretl_matrix *X = NULL;
-	const char *Uname = NULL;
-
-	if (k != 3) {
-	    n_args_error(k, 3, "mols", p);
-	} 
-
-	for (i=0; i<k && !p->err; i++) {
-	    if (i < 2) {
-		e = eval(n->v.bn.n[i], p);
-		if (e == NULL) {
-		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-		} else if (i == 0) {
-		    Y = e->v.m;
-		} else {
-		    X = e->v.m;
-		}
-	    } else {
-		e = n->v.bn.n[i];
-		if (e->t == EMPTY) {
-		    Uname = "null";
-		} else if (e->t == U_ADDR) {
-		    e = e->v.b1.b;
-		    if (e->t == UMAT) {
-			Uname = e->v.str;
-		    } else {
-			p->err = E_TYPES;
-			strcpy(gretl_errmsg, "Expected the address of a matrix");
-		    }
-		} else {
-		    p->err = E_TYPES;
-		}
-	    }
-	}
-
-	if (!p->err) {
-	    gretlopt opt = (t->t == F_MOLS)? OPT_NONE : OPT_M;
-
-	    m = user_matrix_ols(Y, X, Uname, opt, &p->err);
-	}
-    } else if (t->t == F_FILTER) {
+    if (t->t == F_FILTER) {
 	const double *x = NULL;
 	gretl_matrix *A = NULL;
 	gretl_matrix *C = NULL;
@@ -4402,7 +4358,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", 0);
 		p->err = E_DATA;
 	    } else if (e->t != VEC) {
-		p->err = E_TYPES;
+		node_type_error(t->t, 0, VEC, e, p);
 	    } else {
 		x = e->v.xvec;
 	    }
@@ -4414,19 +4370,19 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 1) {
 		if (e->t != MAT) {
-		    p->err = E_TYPES;
+		    node_type_error(t->t, i, MAT, e, p);
 		} else {
 		    A = e->v.m;
 		}
 	    } else if (i == 2) {
 		if (e->t != MAT) {
-		    p->err = E_TYPES;
+		    node_type_error(t->t, i, MAT, e, p);
 		} else {
 		    C = e->v.m;
 		}
 	    } else if (i == 3) {
 		if (e->t != NUM) {
-		    p->err = E_TYPES;
+		    node_type_error(t->t, i, NUM, e, p);
 		} else {
 		    y0 = e->v.xval;
 		}
@@ -4439,33 +4395,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = filter_series(x, ret->v.xvec, p->dinfo, A, C, y0);
 	    }
 	}
-    } else if (t->t == F_TOEPSOLV) {
-	gretl_vector *c = NULL;
-	gretl_vector *r = NULL;
-	gretl_vector *b = NULL;
-
-	if (k != 3) {
-	    n_args_error(k, 3, "toepsolv", p);
-	} 
-
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (e == NULL) {
-		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-	    } else if (e->t != MAT) {
-		p->err = E_TYPES;
-	    } else if (i == 0) {
-		c = e->v.m;
-	    } else if (i == 1) {
-		r = e->v.m;
-	    } else if (i == 2) {
-		b = e->v.m;
-	    }
-	}
-
-	if (!p->err) {
-	    m = gretl_toeplitz_solve(c, r, b, &p->err);
-	} 
     } else if (t->t == F_MCOVG) {
 	gretl_matrix *X = NULL;
 	gretl_vector *u = NULL;
@@ -4484,7 +4413,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if ((i == 1 || i == 2) && e->t == EMPTY) {
 		; /* for u or w, NULL is acceptable */
 	    } else if (e->t != targ) {
-		p->err = E_TYPES;
+		node_type_error(t->t, i, targ, e, p);
 	    } else if (i == 0) {
 		X = e->v.m;
 	    } else if (i == 1) {
@@ -4497,63 +4426,16 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
-	} 
-    } 
-
-#if 0
-    else if (t->t == F_ACF) {
-	int *list = NULL;
-	const double *x = NULL;
-	const gretl_matrix *X = NULL;
-	int order = -1;
-
-	if (k != 3) {
-	    n_args_error(k, 3, "acf", p);
-	}
-
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (e == NULL) {
-		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-	    } else if (i == 0) {
-		if (e->t == VEC) {
-		    x = e->v.xvec;
-		} else {
-		    node_type_error(t->t, i+1, VEC, e, p);
-		}
-	    } else if (i == 1) {
-		if (e->t == NUM) {
-		    order = e->v.xval;
-		} else {
-		    node_type_error(t->t, i+1, NUM, e, p);
-		}
-	    } else {
-		if (e->t == STR) {
-		    ;
-		} else {
-		    node_type_error(t->t, i+1, STR, e, p);
-		}
-	    }
-	}
-
-	if (!p->err) {
-	    ;
-	}
-    }
-#endif
-
-    if (t->t != F_FILTER) {
-	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
+
 	if (!p->err) {
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
-	    }
-	    ret->v.m = m;
-	}
-    }
+	    }	    
+	    ret->v.m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
+	} 
+    } 
 
     return ret;
 }
@@ -5436,14 +5318,27 @@ static void node_type_error (int ntype, int argnum, int goodt,
     p->err = E_TYPES;
 }
 
-#define eval_left(t) (evalb1(t) || evalb2(t))
-#define eval_right(t) (evalb2(t))
+#define eval_left(t)   (evalb1(t) || evalb2(t) || evalb3(t))
+#define eval_middle(t) (evalb3(t))
+#define eval_right(t)  (evalb2(t) || evalb3(t))
+
+static NODE *raw_node (NODE *t, int i)
+{
+    if (evalb1(t->t)) {
+	return t->v.b1.b;
+    } else if (evalb2(t->t)) {
+	return (i==0)? t->v.b2.l : t->v.b2.r;
+    } else {
+	/* 3-place node */
+	return (i==0)? t->v.b3.l : (i==1)? t->v.b3.m : t->v.b3.r;
+    }
+}
 
 /* core function: evaluate the parsed syntax tree */
 
 static NODE *eval (NODE *t, parser *p)
 {  
-    NODE *l = NULL, *r = NULL;
+    NODE *l = NULL, *m = NULL, *r = NULL;
     NODE *ret = NULL;
 
     if (t == NULL) {
@@ -5453,22 +5348,29 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (eval_left(t->t)) {
-	if (evalb1(t->t)) {
-	    l = eval(t->v.b1.b, p);
-	} else {
-	    l = eval(t->v.b2.l, p);
-	}
-	if (l == NULL && p->err == 0) {
+	l = eval(raw_node(t, 0), p);
+	if (l == NULL && !p->err) {
 	    p->err = 1;
-	}	
+	}
     }
+
+    if (!p->err && eval_middle(t->t)) {
+	if (m_return(t->t)) {
+	    m = t->v.b3.m;
+	} else {
+	    m = eval(t->v.b3.m, p);
+	    if (m == NULL && !p->err) {
+		p->err = 1;
+	    }
+	}
+    }	    
 
     if (!p->err && eval_right(t->t)) {
 	if (r_return(t->t)) {
-	    r = t->v.b2.r;
+	    r = raw_node(t, 2);
 	} else {
-	    r = eval(t->v.b2.r, p);
-	    if (r == NULL && p->err == 0) {
+	    r = eval(raw_node(t, 2), p);
+	    if (r == NULL && !p->err) {
 		p->err = 1;
 	    }
 	}
@@ -5720,7 +5622,6 @@ static NODE *eval (NODE *t, parser *p)
     case OBS:
     case F_MOVAVG:
     case F_LJUNGBOX:
-    case F_ACF:
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, 1, VEC, l, p);
@@ -5734,9 +5635,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_movavg(l, r, p); 
 	} else if (t->t == F_LJUNGBOX) {
 	    ret = series_ljung_box(l, r, p); 
-	} else if (t->t == F_ACF) {
-	    ret = series_acf(l, r, p); 
-	}
+	} 
 	break;
     case MSL:
 	/* user matrix plus subspec */
@@ -6033,11 +5932,15 @@ static NODE *eval (NODE *t, parser *p)
     case F_SVD:
     case F_MOLS:
     case F_MPOLS:
-    case F_FILTER:
     case F_TRIMR:
     case F_TOEPSOLV:
+    case F_ACF:
+	/* built-in functions taking three args */
+	ret = eval_3args_func(l, m, r, t->t, p);
+	break;
+    case F_FILTER:	
     case F_MCOVG:
-	/* built-in functions taking more than two args */
+	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;
     case UMAT:

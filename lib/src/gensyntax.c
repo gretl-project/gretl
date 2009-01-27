@@ -180,7 +180,7 @@ static NODE *newb2 (int t, NODE *l, NODE *r)
 
 /* node for ternary operator */
 
-static NODE *newb3 (int t, NODE *l, NODE *m, NODE *r)
+static NODE *newb3 (int t, NODE *l)
 {  
     NODE *n = malloc(sizeof *n);
 
@@ -192,8 +192,8 @@ static NODE *newb3 (int t, NODE *l, NODE *m, NODE *r)
     if (n != NULL) {
 	n->t = t;
 	n->v.b3.l = l;
-	n->v.b3.m = m;
-	n->v.b3.r = r;
+	n->v.b3.m = NULL;
+	n->v.b3.r = NULL;
 	n->flags = 0;
 	n->vnum = NO_VNUM;
     }
@@ -539,9 +539,7 @@ static NODE *get_string_arg (parser *p)
 }
 
 enum {
-    BOTH_OPT = 1,
-    RIGHT_OPT,
-    RIGHT_STR
+    RIGHT_STR = 1
 };
 
 static void get_matrix_def (NODE *t, parser *p, int *sub)
@@ -674,107 +672,113 @@ static void get_slice_parts (NODE *t, parser *p)
     set_matrix_slice_off();
 }
 
-/* gather an unknown number of comma-separated arguments
-   for a (possibly user-defined) function */
-
-static void get_multi_args (NODE *t, parser *p)
+static void attach_child (NODE *parent, NODE *child, int k, int i,
+			  parser *p)
 {
-    NODE *n;
-    char cexp = 0;
-
 #if SDEBUG
-    fprintf(stderr, "get_multi_args, p->sym = %d\n", p->sym);
-#endif    
+    fprintf(stderr, "attach_child: i=%d, type = %d\n", i, child->t);
+#endif
 
-    if (p->sym == G_LPR) {
-	lex(p);
-	while (p->ch != 0 && !p->err) {
-	    n = expr(p);
-	    if (p->err) {
-		break;
-	    } else {
-		p->err = push_bn_node(t, n);
-	    }
-	    if (p->sym == P_COM) {
-		/* in case acceptance of plain strings was set,
-		   turn it off after the first arg */
-		p->flags &= ~P_GETSTR;
-		lex(p);
-	    } else if (p->sym == G_RPR) {
-		break;
-	    }
+    if (p->err) {
+	return;
+    }
+
+    if (k == 2) {
+	/* 2-place node */
+	if (i == 0) {
+	    parent->v.b2.l = child;
+	} else {
+	    parent->v.b2.r = child;
+	}
+    } else if (k == 3) {
+	/* 3-place node */
+	if (i == 0) {
+	    parent->v.b3.l = child;
+	} else if (i == 1) {
+	    parent->v.b3.m = child;
+	} else {
+	    parent->v.b3.r = child;
 	}
     } else {
-	cexp = '(';
-    }
-
-    if (cexp == 0 && !p->err) {
-	if (p->sym == G_RPR) {
-	    lex(p);
-	} else {
-	    unmatched_symbol_error('(', p);
-	}
-    }
-	    
-    if (cexp && p->err == 0) {
-	expected_symbol_error(cexp, p);
+	/* n-place node */
+	p->err = push_bn_node(parent, child);
     }
 }
 
-/* get up to two comma-separated arguments (possibly optional) */
-
-static void get_args (NODE *t, parser *p, int opt)
+static void pad_parent (NODE *parent, int k, int i, parser *p)
 {
+    NODE *n;
+    int j;
+
+    for (j=i; j<k; j++) {
+	n = newempty(EMPTY);
+	attach_child(parent, n, k, j, p);
+    }
+}
+
+/* Get up to k comma-separated arguments (possibly optional).
+   However, if k < 0 this is a signal for get as many arguments as we
+   can find (the number is unknown in advance).
+*/
+
+static void get_args (NODE *t, parser *p, int k, int opt)
+{
+    NODE *child;
     char cexp = 0;
+    int i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args...\n");
+    fprintf(stderr, "get_args: k = %d...\n", k);
 #endif    
 
-    if (p->sym == G_LPR) {
-	/* get the first argument */
-	lex(p);
-	if (p->sym == G_RPR && opt == BOTH_OPT) {
-	    /* no args, but it's OK */
-	    t->v.b2.l = newempty(EMPTY);
-	    t->v.b2.r = newempty(EMPTY);
-	    lex(p);
-	    return;
+    if (p->sym != G_LPR) {
+	expected_symbol_error('(', p);
+	return;
+    }	
+
+    lex(p);
+
+    while (((k > 0 && i < k) || p->ch) && !p->err) {
+	if (p->sym == G_RPR) {
+	    break;
 	}
-	t->v.b2.l = expr(p);
-	if (p->sym == G_RPR && opt == RIGHT_OPT) {
-	    /* no second arg, but it's OK */
-	    t->v.b2.r = newempty(EMPTY);
-	    lex(p);
-	    return;
-	}	    
-	if (p->sym == P_COM) {
-	    if (opt == RIGHT_STR) {
-		/* the second arg must be a literal string */
-		t->v.b2.r = get_string_arg(p);
+	child = expr(p);
+	attach_child(t, child, k, i++, p);
+	if (p->err) {
+	    break;
+	}
+	if (p->sym == G_RPR) {
+	    break;
+	} else if (p->sym == P_COM) {
+	    /* turn off flag for accepting string as first arg */
+	    p->flags &= ~P_GETSTR;
+	    /* and handle final string arg if relevant */
+	    if (i == k - 1 && opt == RIGHT_STR) {
+		child = get_string_arg(p);
+		attach_child(t, child, k, i++, p);
 	    } else {
 		lex(p);
-		t->v.b2.r = expr(p);
-		if (p->sym == G_RPR) {
-		    if (p->ch == '\'') {
-			set_transpose(t);
-			parser_getc(p);
-		    }
-		    lex(p);
-		} else {
-		    cexp = ')';
-		}
 	    }
 	} else {
 	    cexp = ',';
 	}
-    } else {
-	cexp = '(';
     }
-	    
-    if (cexp && p->err == 0) {
-	expected_symbol_error(cexp, p);
-    }
+
+    if (!p->err) {
+	if (cexp) {
+	    expected_symbol_error(cexp, p);
+	} else if (p->sym == G_RPR) {
+	    if (i < k) {
+		pad_parent(t, k, i, p);
+	    } 
+	    /* handle trailing transpose */
+	    if (p->ch == '\'') {
+		set_transpose(t);
+		parser_getc(p);
+	    }
+	    lex(p);
+	}
+    }	
 }
 
 static void get_ovar_ref (NODE *t, parser *p)
@@ -821,13 +825,9 @@ static NODE *powterm (parser *p)
 	    p->sym, p->ch? p->ch : '0', p->ch);
 #endif
 
-    if (sym == F_RUNIFORM || sym == F_RNORMAL) {
-	opt = BOTH_OPT;
-    } else if (sym == F_FDJAC || sym == F_BFGSMAX) {
+    if (sym == F_FDJAC || sym == F_BFGSMAX || sym == F_ACF) {
 	opt = RIGHT_STR;
-    } else if (sym == F_DUMIFY || sym == F_RESAMPLE) {
-	opt = RIGHT_OPT;
-    }
+    } 
 
     if (unary_op(sym)) {
 	if (p->ch == 0) {
@@ -843,7 +843,13 @@ static NODE *powterm (parser *p)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    get_args(t, p, opt);
+	    get_args(t, p, 2, opt);
+	}
+    } else if (func3_symb(sym)) {
+	t = newb3(sym, NULL);
+	if (t != NULL) {
+	    lex(p);
+	    get_args(t, p, 3, opt);
 	}
     } else if (string0_func(sym)) {
 	t = newb1(sym, NULL);
@@ -852,7 +858,7 @@ static NODE *powterm (parser *p)
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
 		p->flags |= P_GETSTR;
-		get_multi_args(t->v.b1.b, p);
+		get_args(t->v.b1.b, p, -1, opt);
 	    }
 	}
     } else if (sym == F_URCPVAL) {
@@ -861,7 +867,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		get_multi_args(t->v.b1.b, p);
+		get_args(t->v.b1.b, p, -1, opt);
 	    }
 	}	
     } else if (string_arg_func(sym)) {
@@ -882,12 +888,6 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newref(p, USERIES); 
 	    lex(p);
 	    t->v.b2.r = base(p, t);
-	}
-    } else if (func2_symb(sym)) {
-	t = newb2(sym, NULL, NULL);
-	if (t != NULL) {
-	    lex(p);
-	    get_args(t, p, opt);
 	}
     } else if (sym == MSL || sym == DMSL) {
 	t = newb2(sym, NULL, NULL);
@@ -961,7 +961,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b2.r = newbn(FARGS);
 	    if (t != NULL) {
-		get_multi_args(t->v.b2.r, p);
+		get_args(t->v.b2.r, p, -1, opt);
 	    }
 	}
     } else if (funcn_symb(sym)) {
@@ -970,7 +970,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		get_multi_args(t->v.b1.b, p);
+		get_args(t->v.b1.b, p, -1, opt);
 	    }
 	}
     } else if (sym == STR || sym == VSTR) {
@@ -1190,7 +1190,7 @@ NODE *expr (parser *p)
     }
 
     while (!p->err && p->sym == QUERY) {
-	t = newb3(p->sym, t, NULL, NULL);
+	t = newb3(p->sym, t);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b3.m = expr(p);

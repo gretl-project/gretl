@@ -831,8 +831,11 @@ static void word_check_next_char (const char *s, parser *p)
 	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
 	    /* old-style "$coeff(x1)" etc. */
 	    p->sym = DMSTR;
-	} else if (!func1_symb(p->sym) && !func2_symb(p->sym) &&
-		   !funcn_symb(p->sym) && p->sym != UFUN) {
+	} else if (!func1_symb(p->sym) && 
+		   !func2_symb(p->sym) &&
+		   !func3_symb(p->sym) &&
+		   !funcn_symb(p->sym) && 
+		   p->sym != UFUN) {
 	    p->err = 1;
 	} 
     } else if (p->ch == '[') {
