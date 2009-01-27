@@ -544,53 +544,6 @@ enum {
     RIGHT_STR
 };
 
-/* gather an unknown number of comma-separated arguments
-   for a (possibly user-defined) function */
-
-static void get_multi_args (NODE *t, parser *p)
-{
-    NODE *n;
-    char cexp = 0;
-
-#if SDEBUG
-    fprintf(stderr, "get_multi_args, p->sym = %d\n", p->sym);
-#endif    
-
-    if (p->sym == G_LPR) {
-	lex(p);
-	while (p->ch != 0 && !p->err) {
-	    n = expr(p);
-	    if (p->err) {
-		break;
-	    } else {
-		p->err = push_bn_node(t, n);
-	    }
-	    if (p->sym == P_COM) {
-		/* in case acceptance of plain strings was set,
-		   turn it off after the first arg */
-		p->flags &= ~P_GETSTR;
-		lex(p);
-	    } else if (p->sym == G_RPR) {
-		break;
-	    }
-	}
-    } else {
-	cexp = '(';
-    }
-
-    if (cexp == 0 && !p->err) {
-	if (p->sym == G_RPR) {
-	    lex(p);
-	} else {
-	    unmatched_symbol_error('(', p);
-	}
-    }
-	    
-    if (cexp && p->err == 0) {
-	expected_symbol_error(cexp, p);
-    }
-}
-
 static void get_matrix_def (NODE *t, parser *p, int *sub)
 {
     NODE *n;
@@ -719,6 +672,53 @@ static void get_slice_parts (NODE *t, parser *p)
     }
 
     set_matrix_slice_off();
+}
+
+/* gather an unknown number of comma-separated arguments
+   for a (possibly user-defined) function */
+
+static void get_multi_args (NODE *t, parser *p)
+{
+    NODE *n;
+    char cexp = 0;
+
+#if SDEBUG
+    fprintf(stderr, "get_multi_args, p->sym = %d\n", p->sym);
+#endif    
+
+    if (p->sym == G_LPR) {
+	lex(p);
+	while (p->ch != 0 && !p->err) {
+	    n = expr(p);
+	    if (p->err) {
+		break;
+	    } else {
+		p->err = push_bn_node(t, n);
+	    }
+	    if (p->sym == P_COM) {
+		/* in case acceptance of plain strings was set,
+		   turn it off after the first arg */
+		p->flags &= ~P_GETSTR;
+		lex(p);
+	    } else if (p->sym == G_RPR) {
+		break;
+	    }
+	}
+    } else {
+	cexp = '(';
+    }
+
+    if (cexp == 0 && !p->err) {
+	if (p->sym == G_RPR) {
+	    lex(p);
+	} else {
+	    unmatched_symbol_error('(', p);
+	}
+    }
+	    
+    if (cexp && p->err == 0) {
+	expected_symbol_error(cexp, p);
+    }
 }
 
 /* get up to two comma-separated arguments (possibly optional) */
