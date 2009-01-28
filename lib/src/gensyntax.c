@@ -251,15 +251,20 @@ static void expected_symbol_error (int c, parser *p)
     const char *found = getsymb(p->sym, p);
 
     parser_print_input(p);
-    pprintf(p->prn, _("Expected '%c' but found '%s'\n"), c, 
-	    found);
-    if (found != NULL) {
-	if (!strcmp(found, "&")) {
-	    pputs(p->prn, "(for logical AND, please use \"&&\")\n");
-	} else if (!strcmp(found, "|")) {
-	    pputs(p->prn, "(for logical OR, please use \"||\")\n");
-	}
-    }   
+
+    if (*found == '\0') {
+	pprintf(p->prn, _("Expected '%c' but formula ended\n"), c);
+    } else {
+	pprintf(p->prn, _("Expected '%c' but found '%s'\n"), c, 
+		found);
+    }
+
+    if (!strcmp(found, "&")) {
+	pputs(p->prn, "(for logical AND, please use \"&&\")\n");
+    } else if (!strcmp(found, "|")) {
+	pputs(p->prn, "(for logical OR, please use \"||\")\n");
+    }
+
     p->err = 1;
 }
 
@@ -589,7 +594,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 	}
     }
 	    
-    if (cexp && p->err == 0) {
+    if (cexp && !p->err) {
 	expected_symbol_error(cexp, p);
     }
 }	
@@ -665,7 +670,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	cexp = '[';
     }
 	    
-    if (cexp && p->err == 0) {
+    if (cexp && !p->err) {
 	expected_symbol_error(cexp, p);
     }
 

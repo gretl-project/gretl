@@ -579,33 +579,43 @@ int genr_function_word (const char *s)
 static void undefined_symbol_error (const char *s, parser *p)
 {
     parser_print_input(p);
+
     if (p->ch == '.') {
 	sprintf(gretl_errmsg, _("%s: no such object\n"), s);
     } else {
 	sprintf(gretl_errmsg, _("The symbol '%s' is undefined\n"), s);
     }
+
     p->err = E_UNKVAR;
 }
 
 static void function_noargs_error (const char *s, parser *p)
 {
     parser_print_input(p);
+
     pprintf(p->prn, _("'%s': no argument was given\n"), s);
     sprintf(gretl_errmsg, _("'%s': no argument was given\n"), s);
+
     p->err = 1;
 }
 
 void context_error (int c, parser *p)
 {
-    parser_print_input(p);
     if (c != 0) {
+	parser_print_input(p);
 	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
+	
     } else {
-	pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"), 
-		getsymb(p->sym, p));
+	const char *s = getsymb(p->sym, p);
+
+	if (s != NULL && *s != '\0') {
+	    pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"), 
+		    getsymb(p->sym, p));
+	}
     }
-    if (p->err == 0) {
-	p->err = 1;
+
+    if (!p->err) {
+	p->err = E_PARSE;
     }
 }
 

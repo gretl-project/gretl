@@ -4306,10 +4306,16 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else if (r->t != STR && r->t != EMPTY) {
 	    node_type_error(f, 2, STR, r, p);
 	} else {
-	    /* FIXME hook up the 3rd arg and make more flexible */
+	    /* FIXME make this more flexible */
 	    int k = (int) node_get_scalar(m, p);
+	    gretlopt opt = OPT_NONE;
 
-	    A = acf_vec(l->v.xvec, k, p->dinfo, &p->err);
+	    if (r->t == STR) { 
+		if (!strncmp(r->v.str, "partial", strlen(r->v.str))) {
+		    opt = OPT_P;
+		}
+	    }
+	    A = acf_vec(l->v.xvec, k, p->dinfo, opt, &p->err);
 	}
     }
 

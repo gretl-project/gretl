@@ -247,7 +247,7 @@ int gretl_normality_test (const char *param,
 
 gretl_matrix *acf_vec (const double *x, int order,
 		       const DATAINFO *pdinfo,
-		       int *err);
+		       gretlopt opt, int *err);
 
 
 #endif /* DESCRIBE_H */

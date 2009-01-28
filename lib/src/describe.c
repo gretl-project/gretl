@@ -2704,6 +2704,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
  * @x: series to analyse.
  * @order: maximum lag for autocorrelation function.
  * @pdinfo: information on the data set.
+ * @opt: %OPT_P gets PACF rather than ACF.
  * @err: location to receive error code.
  *
  * Computes the autocorrelation function for series @x with
@@ -2716,11 +2717,12 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 
 gretl_matrix *acf_vec (const double *x, int order,
 		       const DATAINFO *pdinfo,
-		       int *err)
+		       gretlopt opt, int *err)
 {
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
     gretl_matrix *acf = NULL;
+    gretl_matrix *pacf = NULL;
     int m, k, t, T;
 
     while (na(x[t1])) t1++;
@@ -2771,6 +2773,32 @@ gretl_matrix *acf_vec (const double *x, int order,
     /* calculate acf up to order m */
     for (k=1; k<=m; k++) {
 	acf->val[k-1] = gretl_acf(k, t1, t2, x);
+    }
+
+    if (opt & OPT_P) {
+	/* actually it's the PACF that's wanted */
+	int pacf_m;
+
+	if (m > T / 2 - 1) {
+	    pacf_m = T / 2 - 1;
+	} else {
+	    pacf_m = m;
+	}
+
+	pacf = gretl_column_vector_alloc(pacf_m);
+	if (pacf == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = get_pacf(pacf->val, acf->val, pacf_m);
+	}
+
+	gretl_matrix_free(acf);
+	if (*err) {
+	    gretl_matrix_free(pacf);
+	    acf = NULL;
+	} else {
+	    acf = pacf;
+	}
     }
 
     return acf;
