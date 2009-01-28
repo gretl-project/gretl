@@ -49,6 +49,7 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var);
 
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
 			     int targ, int shock, int periods,
+			     double alpha,
 			     const double **Z, 
 			     const DATAINFO *pdinfo);
 

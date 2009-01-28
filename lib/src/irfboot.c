@@ -663,9 +663,8 @@ static void resample_resids (irfboot *b, const GRETL_VAR *vbak)
     }
 }
 
-static int irf_boot_quantiles (irfboot *b, gretl_matrix *R)
+static int irf_boot_quantiles (irfboot *b, gretl_matrix *R, double alpha)
 {
-    double alpha = 0.05;
     double *rk;
     int k, ilo, ihi;
 
@@ -817,6 +816,7 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
 
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
 			     int targ, int shock, int periods,
+			     double alpha,
 			     const double **Z, 
 			     const DATAINFO *pdinfo)
 {
@@ -892,7 +892,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
     }
 
     if (!err) {
-	err = irf_boot_quantiles(boot, R);
+	err = irf_boot_quantiles(boot, R, alpha);
     }
 
     irf_boot_free(boot);

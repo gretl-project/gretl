@@ -1449,6 +1449,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 gretl_matrix *
 gretl_VAR_get_impulse_response (GRETL_VAR *var, 
 				int targ, int shock, int periods,
+				double alpha,
 				const double **Z,
 				const DATAINFO *pdinfo)
 {
@@ -1463,7 +1464,7 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 	/* no data matrix provided: just return point estimate */
 	ret = point;
     } else if (point != NULL) {
-	full = irf_bootstrap(var, targ, shock, periods, Z, pdinfo);
+	full = irf_bootstrap(var, targ, shock, periods, alpha, Z, pdinfo);
 	if (full != NULL) {
 	    double p;
 
@@ -2792,6 +2793,7 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 {
     int targ = -1, shock = 1;
     int h = 0, boot = 0;
+    double alpha = 0.05; /* FIXME */
     int err = 0;
     char *s;
 
@@ -2824,10 +2826,10 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
     if (targ >= 0 && shock >= 0 && h > 0) {
         if (boot) {
 	    err = gretl_VAR_plot_impulse_response(var, targ, shock, h,
-						  Z, pdinfo);
+						  alpha, Z, pdinfo);
 	} else {
 	    err = gretl_VAR_plot_impulse_response(var, targ, shock, h, 
-						  NULL, pdinfo);
+						  0, NULL, pdinfo);
 	}
     }
 

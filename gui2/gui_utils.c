@@ -2799,7 +2799,8 @@ static void add_x12_output_menu_item (windata_t *vwin)
 }
 
 static int 
-impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap)
+impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
+			double *alpha)
 {
     gchar *title;
     int h = default_VAR_horizon(datainfo);
@@ -2814,6 +2815,8 @@ impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap)
     }
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
+
+    /* FIXME add alpha selector */
 
     err = checks_dialog(title, NULL,
 			impulse_opts, 
@@ -2850,12 +2853,13 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int horizon, bootstrap;
     gint shock, targ;
+    double alpha = 0.05;
     const double **vZ = NULL;
     int err;
 
     impulse_params_from_action(action, &targ, &shock);
 
-    if (impulse_response_setup(var, &horizon, &bootstrap) < 0) {
+    if (impulse_response_setup(var, &horizon, &bootstrap, &alpha) < 0) {
 	return;
     }
 
@@ -2864,7 +2868,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     }
 
     err = gretl_VAR_plot_impulse_response(var, targ, shock, horizon,
-					  vZ, datainfo);
+					  alpha, vZ, datainfo);
 
     if (err) {
 	gui_errmsg(err);
@@ -2878,10 +2882,11 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int horizon, bootstrap;
+    double alpha = 0.05;
     const double **vZ = NULL;
     int err;
 
-    if (impulse_response_setup(var, &horizon, &bootstrap) < 0) {
+    if (impulse_response_setup(var, &horizon, &bootstrap, &alpha) < 0) {
 	return;
     }
 
@@ -2889,7 +2894,7 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 	vZ = (const double **) Z;
     }    
 
-    err = gretl_VAR_plot_multiple_irf(var, horizon, vZ, datainfo);
+    err = gretl_VAR_plot_multiple_irf(var, horizon, alpha, vZ, datainfo);
 
     if (err) {
 	gui_errmsg(err);

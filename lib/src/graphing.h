@@ -199,11 +199,13 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
+				 double alpha,
 				 const double **Z,
 				 const DATAINFO *pdinfo);
 
 int 
 gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
+			     double alpha,
 			     const double **Z,
 			     const DATAINFO *pdinfo);
 
