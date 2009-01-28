@@ -4285,7 +4285,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    gretlopt opt = (f == F_MOLS)? OPT_NONE : OPT_M;
 	    const char *Uname;
 
-	    Uname = (r->t == EMPTY)? "null" : r->v.str;
+	    Uname = (r->t == U_ADDR)? r->v.b1.b->v.str : NULL;
 	    A = user_matrix_ols(l->v.m, m->v.m, Uname, opt, &p->err);
 	}
     } else if (f == F_TOEPSOLV) {
