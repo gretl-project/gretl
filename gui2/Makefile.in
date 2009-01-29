@@ -172,7 +172,7 @@ $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 mklang: mklang.o
 	$(LIBTOOL) --mode=link $(CC) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
-mklang.o: mklang.c $(topsrc)/lib/src/options.c $(topsrc)/lib/src/genlex.c
+mklang.o: mklang.c $(topsrc)/lib/src/options.c $(topsrc)/lib/src/genlex.c $(topsrc)/lib/src/gretl_commands.c
 	$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
 
 $(GRETL_LANG): mklang
