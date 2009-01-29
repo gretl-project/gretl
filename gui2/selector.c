@@ -152,7 +152,7 @@ struct _selector {
    complicated (for now) to combine this with an 
    Unrestricted/Restricted option flag */
 
-#define select_lags_aux(c) (c == VAR || c == VLAGSEL || \
+#define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
                             c == IVREG || c == HECKIT)
 
 /* static state variables */
@@ -646,6 +646,42 @@ static int selector_get_depvar_number (selector *sr)
 static gint dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, 
 				selector *sr); 
 
+/* when adding a lag to the exogenous vars box for a VECM,
+   see if we can find a previously added lag (or non-lag) of
+   this variable, and if so use that to set the Restricted/
+   Unrestricted flag on the newly added lag
+*/
+
+static void set_varflag_from_parent (int v, int lag, GtkTreeModel *mod, 
+				     GtkTreeIter *iter)
+{
+    GtkTreeIter piter;
+    gchar *flag;
+    gint pv, plag;
+    int done = 0;
+
+    if (gtk_tree_model_get_iter_first(mod, &piter)) {
+	while (1) {
+	    gtk_tree_model_get(mod, &piter, 0, &pv, 1, &plag, -1);
+	    if (pv == v && plag != lag) {
+		gtk_tree_model_get(mod, &piter, 3, &flag, -1);
+		gtk_list_store_set(GTK_LIST_STORE(mod), iter, 3, flag, -1);
+		done = 1;
+		g_free(flag);
+		break;
+		
+	    }
+	    if (!gtk_tree_model_iter_next(mod, &piter)) {  
+		break;
+	    }
+	}
+    }
+
+    if (!done) {
+	gtk_list_store_set(GTK_LIST_STORE(mod), iter, 3, varflag, -1);
+    }
+}
+
 static void 
 real_varlist_set_var (int v, int lag, GtkTreeModel *mod, GtkTreeIter *iter)
 {
@@ -653,21 +689,23 @@ real_varlist_set_var (int v, int lag, GtkTreeModel *mod, GtkTreeIter *iter)
     GtkListStore *store = GTK_LIST_STORE(mod);
 
     if (lag == 0) {
-	if (ncols == 4) {
-	    gtk_list_store_set(store, iter, 0, v, 1, 0, 
-			       2, datainfo->varname[v], 
-			       3, varflag, -1);
-	} else {
-	    gtk_list_store_set(store, iter, 0, v, 1, 0, 
-			       2, datainfo->varname[v], 
-			       -1);
-	}
+	gtk_list_store_set(store, iter, 0, v, 1, 0, 
+			   2, datainfo->varname[v], 
+			   -1);
     } else {
 	char vstr[VNAMELEN + 8];
 
 	sprintf(vstr, "%s(-%d)", datainfo->varname[v], lag);
 	gtk_list_store_set(store, iter, 0, v, 1, lag, 
 			   2, vstr, -1);
+    }
+
+    if (ncols == 4) {
+	if (lag == 0) {
+	    gtk_list_store_set(store, iter, 3, varflag, -1);
+	} else {
+	    set_varflag_from_parent(v, lag, mod, iter);
+	}
     }
 } 
 
@@ -2153,17 +2191,27 @@ static int get_vecm_exog_list (selector *sr, int rows,
     int *xlist = NULL, *zlist = NULL;
     gchar *flag = NULL;
     gchar *tmp = NULL;
-    int i, j = 1;
+    int lag, i, j = 1;
     int v, err = 0;
 
     gtk_tree_model_get_iter_first(mod, &iter);
 
     for (i=0; i<rows && !err; i++) {
 	flag = NULL;
+	lag = 0;
 
-	gtk_tree_model_get(mod, &iter, 0, &v, 3, &flag, -1);
+	gtk_tree_model_get(mod, &iter, 0, &v, 1, &lag, 3, &flag, -1);
 
-	if (flag != NULL) {
+	if (flag == NULL) {
+	    err = E_DATA;
+	} else if (lag != 0) {
+	    v = laggenr(v, lag, &Z, datainfo);
+	    if (v < 0) {
+		err = E_DATA;
+	    }
+	}
+
+	if (!err) {
 	    if (*flag == 'U') {
 		gretl_list_append_term(&xlist, v);
 		if (xlist == NULL) {
@@ -2178,9 +2226,7 @@ static int get_vecm_exog_list (selector *sr, int rows,
 		err = E_DATA;
 	    }
 	    g_free(flag);
-	} else {
-	    err = E_DATA;
-	}
+	} 
 
 	gtk_tree_model_iter_next(mod, &iter);
     }
@@ -3199,7 +3245,7 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
     remove = remove_button(sr, bvbox);
 
     /* this may need more work (VECM?) */
-    if (sr->code == VAR || sr->code == VLAGSEL) {
+    if (sr->code == VAR || sr->code == VECM || sr->code == VLAGSEL) {
 	sr->lags_button = gtk_button_new_with_label(_("lags..."));
 	gtk_box_pack_start(GTK_BOX(bvbox), sr->lags_button, TRUE, FALSE, 0);
 	g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 

@@ -2354,18 +2354,17 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
     }
 
     if (do_errs) {
-	if (fr->asymp) {
-	    tval = normal_critval(fr->alpha / 2);
-	} else {
-	    tval = student_critval(fr->df, fr->alpha / 2);
-	}
+	double a2 = fr->alpha / 2;
+
+	tval = (fr->asymp)? normal_critval(a2) : student_critval(fr->df, a2);
+
 	if (!(opt & OPT_Q)) {
 	    if (fr->asymp) {
 		pprintf(prn, _(" For %g%% confidence intervals, z(%g) = %.2f\n"), 
-			conf, fr->alpha / 2, tval);
+			conf, a2, tval);
 	    } else {
 		pprintf(prn, _(" For %g%% confidence intervals, t(%d, %g) = %.3f\n"), 
-			conf, fr->df, fr->alpha / 2, tval);
+			conf, fr->df, a2, tval);
 	    }
 	}
     }
