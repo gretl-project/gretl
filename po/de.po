@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-01-16 22:27+0100\n"
+"PO-Revision-Date: 2009-01-29 18:46+0100\n"
 "Last-Translator: Sven Schreiber <svetosch --- gmx  ... net>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -3105,7 +3105,7 @@ msgstr "\"%s\" ist nicht definiert.\n"
 #: lib/src/gretl_intl.c:103
 #: gui2/gretl.c:1233
 msgid "_Open data"
-msgstr "Öffne Daten"
+msgstr "_Öffne Daten"
 
 #: lib/src/gretl_list.c:297
 #, c-format
@@ -7109,7 +7109,7 @@ msgstr "\"Von Ökonometrikern für Ökonometriker.\""
 
 #: gui2/about.c:88
 msgid "About gretl"
-msgstr "Über gretl"
+msgstr "_Über gretl"
 
 #: gui2/about.c:150
 #: gui2/about.c:153
@@ -8153,12 +8153,12 @@ msgstr "_Löschen"
 #: gui2/database.c:757
 #: gui2/helpfiles.c:94
 msgid "_Find"
-msgstr "Suchen"
+msgstr "_Suchen"
 
 #: gui2/database.c:758
 #: gui2/helpfiles.c:95
 msgid "_Find in window"
-msgstr "Suchen in Fenster"
+msgstr "_Suchen in Fenster"
 
 #: gui2/database.c:761
 msgid "_Codebook"
@@ -10263,12 +10263,12 @@ msgstr "_Gnumeric..."
 #: gui2/gretl.c:1241
 #: gui2/gretl.c:1254
 msgid "_Excel..."
-msgstr "_Excel..."
+msgstr "E_xcel..."
 
 #: gui2/gretl.c:1242
 #: gui2/gretl.c:1255
 msgid "_Open Document..."
-msgstr "_OpenDocument..."
+msgstr "Open_Document..."
 
 #: gui2/gretl.c:1243
 #: gui2/gretl.c:1256
@@ -10283,7 +10283,7 @@ msgstr "_Stata..."
 #: gui2/gretl.c:1245
 #: gui2/gretl.c:1258
 msgid "_SPSS..."
-msgstr "_SPSS..."
+msgstr "S_PSS..."
 
 #: gui2/gretl.c:1246
 #: gui2/gretl.c:1259
@@ -10293,7 +10293,7 @@ msgstr "_JMulTi..."
 
 #: gui2/gretl.c:1248
 msgid "_Append data"
-msgstr "Daten anhängen"
+msgstr "Daten an_hängen"
 
 #: gui2/gretl.c:1249
 #: gui2/gretl.c:1263
@@ -10314,7 +10314,7 @@ msgstr "_Datenbank..."
 
 #: gui2/gretl.c:1266
 msgid "_Export data"
-msgstr "Daten _exportieren"
+msgstr "Daten e_xportieren"
 
 #: gui2/gretl.c:1268
 msgid "GNU _R..."
@@ -10344,7 +10344,7 @@ msgstr "_Arbeitsverzeichnis..."
 
 #: gui2/gretl.c:1278
 msgid "_Script files"
-msgstr "Datei/_Skriptdateien"
+msgstr "S_kriptdateien"
 
 #: gui2/gretl.c:1280
 msgid "_Practice file..."
@@ -10360,7 +10360,7 @@ msgstr "_gretl-Skript"
 
 #: gui2/gretl.c:1283
 msgid "gnuplot script"
-msgstr "gnuplot-Skript"
+msgstr "gnu_plot-Skript"
 
 #: gui2/gretl.c:1284
 msgid "R script"
@@ -10368,7 +10368,7 @@ msgstr "_R-Skript"
 
 #: gui2/gretl.c:1286
 msgid "_Session files"
-msgstr "_Sitzungsdateien"
+msgstr "Sit_zungsdateien"
 
 #: gui2/gretl.c:1287
 msgid "_Open session..."
@@ -10416,7 +10416,7 @@ msgstr "_Neues Paket"
 
 #: gui2/gretl.c:1304
 msgid "E_xit"
-msgstr "Be_enden"
+msgstr "_Beenden"
 
 #: gui2/gretl.c:1307
 msgid "_Tools"
@@ -10444,7 +10444,7 @@ msgstr "_Nichtparametrische Tests"
 
 #: gui2/gretl.c:1313
 msgid "_Seed for random numbers"
-msgstr "_Saat für Zufallszahlen"
+msgstr "Saat für _Zufallszahlen"
 
 #: gui2/gretl.c:1314
 msgid "_Command log"
@@ -10460,7 +10460,7 @@ msgstr "Starte GNU _R"
 
 #: gui2/gretl.c:1317
 msgid "_Sort variables"
-msgstr "Sortiere _Variablen"
+msgstr "S_ortiere Variablen"
 
 #: gui2/gretl.c:1318
 msgid "By _ID number"
@@ -10526,7 +10526,7 @@ msgstr "Beobachtungen _hinzufügen..."
 
 #: gui2/gretl.c:1340
 msgid "_Remove extra observations"
-msgstr "Zusätzliche (out-of-sample) Perioden entfernen"
+msgstr "_Zusätzliche (out-of-sample) Perioden entfernen"
 
 #: gui2/gretl.c:1341
 msgid "_Read info"
@@ -10542,7 +10542,7 @@ msgstr "Beschreibungs_ausgabe"
 
 #: gui2/gretl.c:1344
 msgid "Add _case markers..."
-msgstr "_Füge Beobachtungsbezeichner hinzu..."
+msgstr "F_üge Beobachtungsbezeichner hinzu..."
 
 #: gui2/gretl.c:1345
 msgid "Remove case _markers"
@@ -10550,7 +10550,7 @@ msgstr "_Entferne Beobachtungsbezeichner"
 
 #: gui2/gretl.c:1346
 msgid "Dataset _structure..."
-msgstr "Datensatz_struktur..."
+msgstr "_Datensatzstruktur..."
 
 #: gui2/gretl.c:1347
 msgid "_Compact data..."
@@ -10558,7 +10558,7 @@ msgstr "_Verringere Datenfrequenz..."
 
 #: gui2/gretl.c:1348
 msgid "_Expand data..."
-msgstr "Er_höhe Datenfrequenz..."
+msgstr "Erh_öhe Datenfrequenz..."
 
 #: gui2/gretl.c:1349
 msgid "_Transpose data..."
@@ -10593,7 +10593,7 @@ msgstr "_Plotte spezifizierte Variablen"
 
 #: gui2/gretl.c:1358
 msgid "_Time series plot..."
-msgstr "_Zeitreihenplot..."
+msgstr "Zeit_reihenplot..."
 
 #: gui2/gretl.c:1359
 msgid "X-Y _scatter..."
@@ -10638,7 +10638,7 @@ msgstr "_Zeitreihen..."
 #: gui2/gretl.c:1369
 #: gui2/gretl.c:1416
 msgid "_Summary statistics"
-msgstr "_Grundlegende Statistiken"
+msgstr "Grundlegende _Statistiken"
 
 #: gui2/gretl.c:1370
 msgid "_Correlation matrix"
@@ -10654,11 +10654,11 @@ msgstr "_Hauptkomponenten"
 
 #: gui2/gretl.c:1373
 msgid "_Mahalanobis distances"
-msgstr "_Mahalanobis-Distanzen"
+msgstr "Mahalanobis-_Distanzen"
 
 #: gui2/gretl.c:1374
 msgid "C_ross-correlogram"
-msgstr "_Kreuzkorrelogramm"
+msgstr "Kreu_zkorrelogramm"
 
 #: gui2/gretl.c:1377
 #: gui2/ssheet.c:130
@@ -10711,7 +10711,7 @@ msgstr "Einheits-_Dummies"
 
 #: gui2/gretl.c:1392
 msgid "_Time dummies"
-msgstr "Zeitdummies"
+msgstr "_Zeitdummies"
 
 #: gui2/gretl.c:1393
 msgid "Dummies for selected _discrete variables"
@@ -10719,7 +10719,7 @@ msgstr "_Dummies für gewählte diskrete Variablen"
 
 #: gui2/gretl.c:1395
 msgid "_Define matrix..."
-msgstr "_Definiere Matrix..."
+msgstr "Definiere _Matrix..."
 
 #: gui2/gretl.c:1398
 msgid "_Sample"
@@ -10727,7 +10727,7 @@ msgstr "_Stichprobe"
 
 #: gui2/gretl.c:1399
 msgid "_Set range..."
-msgstr "Bereich wählen..."
+msgstr "_Bereich wählen..."
 
 #: gui2/gretl.c:1400
 msgid "_Restore full range"
@@ -10739,7 +10739,7 @@ msgstr "_Definieren durch Dummy..."
 
 #: gui2/gretl.c:1402
 msgid "_Restrict, based on criterion..."
-msgstr "Restringiere durch _Bedingung..."
+msgstr "_Restringiere durch Bedingung..."
 
 #: gui2/gretl.c:1404
 msgid "R_andom sub-sample..."
@@ -10747,11 +10747,11 @@ msgstr "_Zufalls-Teilstichprobe..."
 
 #: gui2/gretl.c:1405
 msgid "_Resample with replacement..."
-msgstr "_Ziehen mit zurück legen..."
+msgstr "Ziehen mit zurück _legen..."
 
 #: gui2/gretl.c:1407
 msgid "Drop all obs with _missing values"
-msgstr "Entferne Beobachtungen mit Fehlwerten"
+msgstr "_Entferne Beobachtungen mit Fehlwerten"
 
 #: gui2/gretl.c:1409
 msgid "_Count missing values"
@@ -10781,7 +10781,7 @@ msgstr "_Häufigkeitsverteilung"
 
 #: gui2/gretl.c:1419
 msgid "Frequency _plot"
-msgstr "_Histogramm"
+msgstr "Histogram_m"
 
 #: gui2/gretl.c:1420
 msgid "Estimated _density plot..."
@@ -10793,11 +10793,11 @@ msgstr "_Gini-Koeffizient"
 
 #: gui2/gretl.c:1422
 msgid "_Range-mean graph"
-msgstr "_Spanne-vs.-Mittel-Graph"
+msgstr "S_panne-vs.-Mittel-Graph"
 
 #: gui2/gretl.c:1423
 msgid "_Time series plot"
-msgstr "_Zeitreihenplot"
+msgstr "Zeit_reihenplot"
 
 #: gui2/gretl.c:1424
 msgid "_Correlogram"
@@ -10817,7 +10817,7 @@ msgstr "_Bartlett Lag-Fenster"
 
 #: gui2/gretl.c:1428
 msgid "_Augmented Dickey-Fuller test"
-msgstr "_Erweiterter Dickey-Fuller Test"
+msgstr "_Erweiterter Dickey-Fuller-Test"
 
 #: gui2/gretl.c:1429
 msgid "ADF-GLS test"
@@ -10868,7 +10868,7 @@ msgstr "_Bearbeite Attribute"
 #: gui2/gretl.c:1445
 #: gui2/gui_utils.c:2074
 msgid "Define _new variable..."
-msgstr "Definiere neue Variable..."
+msgstr "Definiere neue _Variable..."
 
 #: gui2/gretl.c:1448
 msgid "_Model"
@@ -10880,7 +10880,7 @@ msgstr "_Kleinste Quadrate..."
 
 #: gui2/gretl.c:1450
 msgid "Other _linear models"
-msgstr "Andere _lineare Modelle"
+msgstr "_Andere lineare Modelle"
 
 #: gui2/gretl.c:1451
 msgid "_Weighted Least Squares..."
@@ -10888,7 +10888,7 @@ msgstr "_Gewichtete Kleinste Quadrate..."
 
 #: gui2/gretl.c:1452
 msgid "H_eteroskedasticity corrected..."
-msgstr "H_eteroskedastizitäts-korrigiert..."
+msgstr "_Heteroskedastizitätskorrigiert..."
 
 #: gui2/gretl.c:1453
 msgid "_Two-Stage Least Squares..."
@@ -10896,7 +10896,7 @@ msgstr "_Zweistufige Kleinste Quadrate..."
 
 #: gui2/gretl.c:1455
 msgid "High _precision OLS..."
-msgstr "KQ mit hoher _Präzision..."
+msgstr "_KQ mit hoher Präzision..."
 
 #: gui2/gretl.c:1457
 msgid "_Time series"
@@ -10924,11 +10924,11 @@ msgstr "ARI_MA..."
 
 #: gui2/gretl.c:1463
 msgid "_ARCH..."
-msgstr "ARCH..."
+msgstr "_ARCH..."
 
 #: gui2/gretl.c:1464
 msgid "_GARCH..."
-msgstr "GARCH..."
+msgstr "_GARCH..."
 
 #: gui2/gretl.c:1465
 msgid "_Vector Autoregression..."
@@ -11056,7 +11056,7 @@ msgstr "_PDF"
 
 #: gui2/gretl.c:1498
 msgid "Function reference"
-msgstr "Funktionsdokumentation"
+msgstr "_Funktionsdokumentation"
 
 #: gui2/gretl.c:1499
 msgid "_User's guide"
@@ -11141,19 +11141,19 @@ msgstr "Der Filter für akzeptierbare Schriftarten."
 
 #: gui2/gtkfontselhack.c:358
 msgid "_Family:"
-msgstr "Familie:"
+msgstr "_Familie:"
 
 #: gui2/gtkfontselhack.c:364
 msgid "_Style:"
-msgstr "Style:"
+msgstr "_Stil:"
 
 #: gui2/gtkfontselhack.c:370
 msgid "Si_ze:"
-msgstr "Größe:"
+msgstr "_Größe:"
 
 #: gui2/gtkfontselhack.c:499
 msgid "_Preview:"
-msgstr "Vorschau:"
+msgstr "_Vorschau:"
 
 #: gui2/gtkfontselhack.c:1541
 msgid "Font Selection"
@@ -11319,7 +11319,7 @@ msgstr "Daten speichern"
 #: gui2/gui_utils.c:139
 #: gui2/gui_utils.c:262
 msgid "_Save as..."
-msgstr "Speichern unter..."
+msgstr "_Speichern unter..."
 
 #: gui2/gui_utils.c:140
 #: gui2/gui_utils.c:263
@@ -11339,14 +11339,14 @@ msgstr "_Drucken..."
 #: gui2/gui_utils.c:146
 #: gui2/gui_utils.c:269
 msgid "_Edit"
-msgstr "Bearbeiten"
+msgstr "_Bearbeiten"
 
 #: gui2/gui_utils.c:147
 #: gui2/gui_utils.c:240
 #: gui2/gui_utils.c:270
 #: gui2/gui_utils.c:284
 msgid "_Copy"
-msgstr "Kopieren"
+msgstr "_Kopieren"
 
 #: gui2/gui_utils.c:148
 msgid "_Modify model..."
@@ -11355,7 +11355,7 @@ msgstr "_Modifiziere Modell..."
 #: gui2/gui_utils.c:150
 #: gui2/gui_utils.c:274
 msgid "_Tests"
-msgstr "Tests"
+msgstr "_Tests"
 
 #: gui2/gui_utils.c:151
 #: gui2/gui_utils.c:243
@@ -11367,7 +11367,7 @@ msgstr "_Speichern"
 #: gui2/gui_utils.c:152
 #: gui2/gui_utils.c:275
 msgid "_Graphs"
-msgstr "Graphen"
+msgstr "_Graphen"
 
 #: gui2/gui_utils.c:153
 msgid "_Residual plot"
@@ -11424,7 +11424,7 @@ msgstr "_Summe der Koeffizienten"
 
 #: gui2/gui_utils.c:171
 msgid "_Linear restrictions"
-msgstr "_lineare Restriktionen"
+msgstr "_Lineare Restriktionen"
 
 #: gui2/gui_utils.c:172
 msgid "Non-linearity (s_quares)"
@@ -11505,19 +11505,19 @@ msgstr "_gruppenweise"
 #: gui2/gui_utils.c:256
 #: gui2/gui_utils.c:282
 msgid "_LaTeX"
-msgstr "LaTeX"
+msgstr "_LaTeX"
 
 #: gui2/gui_utils.c:238
 #: gui2/gui_utils.c:241
 #: gui2/gui_utils.c:244
 msgid "_Tabular"
-msgstr "Tabellarisch"
+msgstr "_Tabellarisch"
 
 #: gui2/gui_utils.c:239
 #: gui2/gui_utils.c:242
 #: gui2/gui_utils.c:245
 msgid "_Equation"
-msgstr "Gleichung"
+msgstr "_Gleichung"
 
 #: gui2/gui_utils.c:246
 msgid "_Equation options"
@@ -11821,7 +11821,7 @@ msgstr "_Normalität der Residuen"
 
 #: gui2/gui_utils.c:3211
 msgid "Linear restrictions"
-msgstr "lineare Restriktionen"
+msgstr "_Lineare Restriktionen"
 
 #: gui2/gui_utils.c:3218
 msgid "Omit exogenous variables..."
@@ -12790,7 +12790,7 @@ msgstr "Bearbeite Werte"
 #: gui2/menustate.c:318
 #: gui2/menustate.c:377
 msgid "Define new variable..."
-msgstr "Definiere neue Variable..."
+msgstr "Definiere neue _Variable..."
 
 #: gui2/menustate.c:333
 #: gui2/menustate.c:408
