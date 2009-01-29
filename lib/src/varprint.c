@@ -827,6 +827,10 @@ static void print_LR_stat (double x, int df, PRN *prn)
 {
     double pv = chisq_cdf_comp(df, x);
 
+    if (na(pv)) {
+	return;
+    }
+
     if (tex_format(prn)) {
 	pprintf(prn, "$2 (l_u - l_r) = %g$", x);
 	gretl_prn_newline(prn);

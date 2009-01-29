@@ -24,6 +24,7 @@
 #include "system.h"
 #include "libset.h"
 #include "matrix_extra.h"
+#include "forecast.h"
 #include "plotspec.h"
 
 #include <unistd.h>
@@ -3235,21 +3236,32 @@ static void print_confband_data (const double *x, const double *y,
     fputs("e\n", fp);
 }
 
-int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs, 
-		     const double *depvar, const double *yhat, 
-		     const double *maxerr, const char *varname, 
-		     int tsfreq, gretlopt opt)
+int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
+		     const DATAINFO *pdinfo, gretlopt opt)
 {
     FILE *fp = NULL;
+    const double *obs = NULL;
     double xmin, xmax, xrange;
     int depvar_present = 0;
     int use_fill = 0, use_lines = 0;
     int do_errs = (maxerr != NULL);
+    char cistr[64];
+    int t2 = fr->t2;
+    int t1, yhmin;
     int t, n, err;
 
-    /* don't graph empty portion of forecast */
-    for (t=t2; t>=t1; t--) {
-	if (na(depvar[t]) && na(yhat[t])) {
+    /* note: yhmin is the first obs at which to start plotting y-hat */
+    if (do_errs) {
+	t1 = fr->t0;
+	yhmin = (opt & OPT_H)? fr->t0 : fr->t1;
+    } else {
+	t1 = (fr->t0 >= 0)? fr->t0 : 0;
+	yhmin = t1;
+    }
+
+    /* don't graph empty trailing portion of forecast */
+    for (t=fr->t2; t>=t1; t--) {
+	if (na(fr->actual[t]) && na(fr->fitted[t])) {
 	    t2--;
 	} else {
 	    break;
@@ -3263,13 +3275,18 @@ int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs,
 	return 1;
     }
 
+    obs = gretl_plotx(pdinfo);
+    if (obs == NULL) {
+	return E_ALLOC;
+    }
+
     if ((err = gnuplot_init(PLOT_FORECAST, &fp))) {
 	return err;
     }    
 
     /* check that we have any values for the actual var */
     for (t=t1; t<=t2; t++) {
-	if (!na(depvar[t])) {
+	if (!na(fr->actual[t])) {
 	    depvar_present = 1;
 	    break;
 	}
@@ -3283,8 +3300,6 @@ int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs,
 	}
     }
 
-    fputs("# forecasts with 95 pc conf. interval\n", fp);
-
     gretl_minmax(t1, t2, obs, &xmin, &xmax);
     xrange = xmax - xmin;
     xmin -= xrange * .025;
@@ -3296,8 +3311,8 @@ int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs,
 
     gnuplot_missval_string(fp);
 
-    if (tsfreq > 0) {
-	fprintf(fp, "# timeseries %d\n", tsfreq);
+    if (dataset_is_time_series(pdinfo)) {
+	fprintf(fp, "# timeseries %d\n", pdinfo->pd);
     } else if (n < 33) {
 	fputs("set xtics 1\n", fp);
     }
@@ -3309,33 +3324,37 @@ int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs,
     fputs("set key left top\n", fp);
     fputs("plot \\\n", fp);
 
+    if (do_errs) {
+	sprintf(cistr, _("%g percent interval"), 100 * (1 - fr->alpha));
+    }
+
     if (use_fill) {
 	/* plot the confidence bands first so the other lines
 	   come out on top */
 	if (do_errs) {
 	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 3 , \\\n",
-		    _("95 percent confidence interval"));
+		    cistr);
 	} 
 	if (depvar_present) {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1 , \\\n",
-		    varname);
+		    fr->depvar);
 	}
 	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 2\n", _("forecast"));
     } else {
 	/* plot confidence bands last */
 	if (depvar_present) {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
-		    varname);
+		    fr->depvar);
 	}
 	fprintf(fp, "'-' using 1:2 title '%s' w lines", _("forecast"));
 	if (do_errs) {
 	    if (use_lines) {
 		fprintf(fp, " , \\\n'-' using 1:2 title '%s' w lines , \\\n",
-			_("95 percent confidence interval"));
+			cistr);
 		fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
 	    } else {
 		fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
-			_("95 percent confidence interval"));
+			cistr);
 	    }
 	} else {
 	    fputc('\n', fp);
@@ -3351,23 +3370,23 @@ int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs,
 
     if (use_fill) {
 	if (do_errs) {
-	    print_confband_data(obs, yhat, maxerr, yhmin, t2, CONF_FILL, fp);
+	    print_confband_data(obs, fr->fitted, maxerr, yhmin, t2, CONF_FILL, fp);
 	}
 	if (depvar_present) {
-	    print_y_data(obs, depvar, t1, t2, fp);
+	    print_y_data(obs, fr->actual, t1, t2, fp);
 	}
-	print_y_data(obs, yhat, yhmin, t2, fp);
+	print_y_data(obs, fr->fitted, yhmin, t2, fp);
     } else {
 	if (depvar_present) {
-	    print_y_data(obs, depvar, t1, t2, fp);
+	    print_y_data(obs, fr->actual, t1, t2, fp);
 	}
-	print_y_data(obs, yhat, yhmin, t2, fp);
+	print_y_data(obs, fr->fitted, yhmin, t2, fp);
 	if (do_errs) {
 	    if (use_lines) {
-		print_confband_data(obs, yhat, maxerr, yhmin, t2, CONF_LOW, fp);
-		print_confband_data(obs, yhat, maxerr, yhmin, t2, CONF_HIGH, fp);
+		print_confband_data(obs, fr->fitted, maxerr, yhmin, t2, CONF_LOW, fp);
+		print_confband_data(obs, fr->fitted, maxerr, yhmin, t2, CONF_HIGH, fp);
 	    } else {
-		print_confband_data(obs, yhat, maxerr, yhmin, t2, CONF_BARS, fp);
+		print_confband_data(obs, fr->fitted, maxerr, yhmin, t2, CONF_BARS, fp);
 	    }
 	}	
     }
@@ -3800,6 +3819,10 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     char title[128];
     int t, err;
 
+    if (alpha < 0.01 || alpha > 0.5) {
+	return E_DATA;
+    }
+
     resp = gretl_VAR_get_impulse_response(var, targ, shock, periods,
 					  alpha, Z, pdinfo);
     if (resp == NULL) {
@@ -3826,7 +3849,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     if (confint) {
 	fputs("set key left top\n", fp);
 	sprintf(title, _("response of %s to a shock in %s, "
-			  "with bootstrap confidence interval"),
+			 "with bootstrap confidence interval"),
 		pdinfo->varname[vtarg], pdinfo->varname[vshock]);
     } else {
 	fputs("set nokey\n", fp);
@@ -3839,10 +3862,13 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     fprintf(fp, "set title '%s'\n", title);
 
     if (confint) {
+	double ql = alpha / 2;
+	double qh = 1.0 - ql;
+
 	fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines, \\\n", 
 		_("point estimate"));
-	fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n",
-		_("0.025 and 0.975 quantiles"));
+	sprintf(title, _("%g and %g quantiles"), ql, qh);
+	fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n", title);
     } else {
 	fputs("plot \\\n'-' using 1:2 w lines\n", fp);
     }

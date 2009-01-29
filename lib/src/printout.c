@@ -2310,20 +2310,8 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
     }
 
     if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
-	const double *obs = gretl_plotx(pdinfo);
-	int ts = dataset_is_time_series(pdinfo);
-	int t0 = (fr->t0 >= 0)? fr->t0 : 0;
-
-	if (obs == NULL) {
-	    err = 1;
-	} else {
-	    err = plot_fcast_errs(t0, fr->t2, t0, obs, 
-				  fr->actual, fr->fitted, NULL, 
-				  fr->depvar, (ts)? pdinfo->pd : 0,
-				  OPT_NONE);
-	}
+	err = plot_fcast_errs(fr, NULL, pdinfo, OPT_NONE);
     }
-
 
     return err;
 }
@@ -2350,6 +2338,8 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
     int pmax = fr->pmax;
     int errpmax = fr->pmax;
     double *maxerr = NULL;
+    double conf = 100 * (1 - fr->alpha);
+    double tval = 0;
     int t, err = 0;
 
     if (do_errs) {
@@ -2363,13 +2353,20 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 	pputc(prn, '\n');
     }
 
-    if (do_errs && !(opt & OPT_Q)) {
+    if (do_errs) {
 	if (fr->asymp) {
-	    pprintf(prn, _(" For 95%% confidence intervals, z(.025) = %.2f\n"), 
-		    1.96);
+	    tval = normal_critval(fr->alpha / 2);
 	} else {
-	    pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
-		    fr->df, fr->tval);
+	    tval = student_critval(fr->df, fr->alpha / 2);
+	}
+	if (!(opt & OPT_Q)) {
+	    if (fr->asymp) {
+		pprintf(prn, _(" For %g%% confidence intervals, z(%g) = %.2f\n"), 
+			conf, fr->alpha / 2, tval);
+	    } else {
+		pprintf(prn, _(" For %g%% confidence intervals, t(%d, %g) = %.3f\n"), 
+			conf, fr->df, fr->alpha / 2, tval);
+	    }
 	}
     }
 
@@ -2379,7 +2376,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 
     if (do_errs) {
 	pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
-	pprintf(prn, _("   95%% confidence interval\n"));
+	pprintf(prn, _("        %g%% interval\n"), conf);
     } else {
 	pputc(prn, '\n');
     }
@@ -2413,7 +2410,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 		maxerr[t] = NADBL;
 	    } else {
 		fcast_print_x(fr->sderr[t], 15, errpmax, prn);
-		maxerr[t] = fr->tval * fr->sderr[t];
+		maxerr[t] = tval * fr->sderr[t];
 		fcast_print_x(fr->fitted[t] - maxerr[t], 15, pmax, prn);
 		pputs(prn, " - ");
 		fcast_print_x(fr->fitted[t] + maxerr[t], 10, pmax, prn);
@@ -2427,22 +2424,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
     /* do we really want a plot for non-time series? */
 
     if ((opt & OPT_P) && fr->nobs > 0) {
-	const double *obs = gretl_plotx(pdinfo);
-	int ts = dataset_is_time_series(pdinfo);
-
-	/* FIXME daily data x-axis */
-
-	if (obs == NULL) {
-	    err = 1;
-	} else {
-	    /* yhmin is the first obs at which to start plotting y-hat */
-	    int yhmin = (opt & OPT_H)? fr->t0 : fr->t1;
-
-	    err = plot_fcast_errs(fr->t0, fr->t2, yhmin, obs, 
-				  fr->actual, fr->fitted, maxerr, 
-				  fr->depvar, (ts)? pdinfo->pd : 0,
-				  opt);
-	}
+	err = plot_fcast_errs(fr, maxerr, pdinfo, opt);
     }
 
     if (maxerr != NULL) {

@@ -58,6 +58,8 @@ double normal_pdf (double x);
 
 double normal_critval (double a);
 
+double student_critval (double df, double a);
+
 double log_normal_pdf (double x);
 
 double bvnorm_cdf (double a, double b, double rho);

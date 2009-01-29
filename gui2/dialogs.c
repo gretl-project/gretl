@@ -228,7 +228,7 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
 {
     gint i;
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 	csv->delim = i;
 	if (csv->point_button != NULL && 
@@ -237,16 +237,6 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(csv->point_button), 
 					 TRUE);
 	}
-    }
-}
-
-static void set_obscol (GtkWidget *w, gretlopt *optp)
-{
-    if (GTK_TOGGLE_BUTTON(w)->active) {
-	*optp = OPT_NONE;
-    } else {
-	/* omit-obs option to "store" command */
-	*optp = OPT_X;
     }
 }
 
@@ -389,8 +379,8 @@ int delimiter_dialog (gretlopt *optp)
 
     if (optp != NULL) {
 	vbox_add_hsep(myvbox);
-	tmp = gtk_check_button_new_with_label(_("include observations column"));
-	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(set_obscol), optp);
+	tmp = gretl_option_check_button_switched(_("include observations column"),
+						 optp, OPT_X);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
 	gtk_box_pack_start(GTK_BOX(myvbox), tmp, TRUE, TRUE, 0);
 	gtk_widget_show(tmp);
@@ -743,24 +733,6 @@ static void set_bs_opt (GtkWidget *w, gretlopt *opt)
     }
 }
 
-static void set_bs_graph (GtkWidget *w, gretlopt *opt)
-{
-    if (GTK_TOGGLE_BUTTON(w)->active) {
-	*opt |= OPT_G;
-    } else {
-	*opt &= ~OPT_G;
-    }
-}
-
-static void set_bs_save (GtkWidget *w, gretlopt *opt)
-{
-    if (GTK_TOGGLE_BUTTON(w)->active) {
-	*opt |= OPT_S;
-    } else {
-	*opt &= ~OPT_S;
-    }
-}
-
 static void bs_select_coeff (GtkComboBox *b, int *p)
 {
     *p = gtk_combo_box_get_active(b);
@@ -959,18 +931,16 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
     if (!htest) {
 	/* graph check box */
-	button = gtk_check_button_new_with_label(_("Show graph of sampling "
-						   "distribution"));
-	g_signal_connect(G_OBJECT(button), "toggled",
-			 G_CALLBACK(set_bs_graph), popt);
+	button = gretl_option_check_button(_("Show graph of sampling "
+					     "distribution"),
+					   popt, OPT_G);
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
 	gtk_widget_show(button);
     }
 
     /* save output switch */
-    button = gtk_check_button_new_with_label(_("Save bootstrap data to file"));
-    g_signal_connect(G_OBJECT(button), "toggled",
-		     G_CALLBACK(set_bs_save), popt);
+    button = gretl_option_check_button(_("Save bootstrap data to file"),
+				       popt, OPT_S);
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
     gtk_widget_show(button);    
 
@@ -2249,23 +2219,32 @@ static void toggle_activate_fitvals (GtkAdjustment *adj, GtkWidget *w)
     gtk_widget_set_sensitive(w, gtk_adjustment_get_value(adj) > 0);
 }
 
-static void toggle_show_fitvals (GtkToggleButton *b, gretlopt *opt)
+void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
 {
-    if (gtk_toggle_button_get_active(b)) {
-	*opt |= OPT_H;
-    } else {
-	*opt &= ~OPT_H;
-    }
-}
+    GtkWidget *spin, *hbox, *lbl, *cb;
+    GtkObject *adj;
 
-static void fcast_k_sensitivity (GtkToggleButton *button, GtkWidget *w)
-{
-    gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(button));
-}
+    lbl = gtk_label_new("1 - α =");
+    adj = gtk_adjustment_new(*conf, 0.70, 0.99, 0.01, 0.1, 0);
+    spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+    g_signal_connect(GTK_SPIN_BUTTON(spin), "value-changed",
+		     G_CALLBACK(set_double_from_spinner), conf);
 
-static void adjust_fcast_k (GtkSpinButton *spin, int *pk)
-{
-    *pk = gtk_spin_button_get_value(spin);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
+    gtk_box_pack_end(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_show_all(hbox);
+
+    cb = g_object_get_data(G_OBJECT(dlg), "checkbox");
+    if (cb != NULL) {
+	gboolean ok = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(cb));
+
+	gtk_widget_set_sensitive(hbox, ok);
+	g_signal_connect(G_OBJECT(cb), "toggled", 
+			 G_CALLBACK(sensitize_widget_from_check), 
+			 hbox);
+    }    
 }
 
 #define fcast_errs_ok(m) (m == NULL || m->ci != NLS || \
@@ -2278,7 +2257,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     int t2min, int t2max, int *t2,
 		     int *k, int pmin, int pmax, int *p,
 		     int flags, gretlopt *optp,
-		     MODEL *pmod)
+		     double *conf, MODEL *pmod)
 {
     const char *pre_txt = N_("Number of pre-forecast observations "
 			     "to graph");
@@ -2344,11 +2323,12 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	    GtkWidget *spin = gtk_spin_button_new_with_range(1, 50, 1);
 
 	    g_signal_connect(G_OBJECT(spin), "value-changed",
-			     G_CALLBACK(adjust_fcast_k), k);
+			     G_CALLBACK(set_int_from_spinner), k);
 	    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
 	    gtk_widget_set_sensitive(spin, deflt == 3);
 	    g_signal_connect(G_OBJECT(button), "clicked",
-			     G_CALLBACK(fcast_k_sensitivity), spin);
+			     G_CALLBACK(sensitize_widget_from_check), 
+			     spin);
 	}
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
@@ -2396,7 +2376,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
     /* show fitted values, pre-forecast? */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_check_button_new_with_label(_("Show fitted values for pre-forecast range"));
+    tmp = gretl_option_check_button(_("Show fitted values for pre-forecast range"),
+				    optp, OPT_H);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       hbox, TRUE, TRUE, 5);
@@ -2404,8 +2385,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (*optp & OPT_H));
     g_signal_connect(GTK_ADJUSTMENT(rset->p), "value-changed",
 		     G_CALLBACK(toggle_activate_fitvals), tmp);
-    g_signal_connect(G_OBJECT(tmp), "toggled",
-		     G_CALLBACK(toggle_show_fitvals), optp);
 
     /* graph style selection */
     if (fcast_errs_ok(pmod)) {
@@ -2441,6 +2420,10 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, TRUE, TRUE, 5);
+
+	if (conf != NULL) {
+	    dialog_add_confidence_selector(rset->dlg, conf);
+	}
     }
 
     /* Cancel button */
@@ -2545,20 +2528,18 @@ static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
     g_free(vname);
 }
 
-static void 
-dialog_option_callback (GtkWidget *w, dialog_opts *opts)
+static void dialog_option_callback (GtkWidget *w, dialog_opts *opts)
 {
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "i"));
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	*opts->optp |= opts->vals[i];
     } else {
 	*opts->optp &= ~(opts->vals[i]);
     }
 }
 
-static void dialog_add_opts (dialog_opts *opts, 
-			     GtkWidget *vbox)
+static void dialog_add_opts (dialog_opts *opts, GtkWidget *vbox)
 {
     if (opts->type == OPT_TYPE_RADIO) {
 	GSList *group = NULL;
@@ -2570,7 +2551,6 @@ static void dialog_add_opts (dialog_opts *opts,
 	for (i=0; i<opts->n; i++) {
 	    b = gtk_radio_button_new_with_label(group, _(opts->strs[i]));
 	    gtk_box_pack_start(GTK_BOX(v2), b, TRUE, TRUE, 0);
-	    /* gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE); */
 	    g_object_set_data(G_OBJECT(b), "i", GINT_TO_POINTER(i));
 	    g_signal_connect(G_OBJECT(b), "clicked",
 			     G_CALLBACK(dialog_option_callback), opts);
@@ -2683,13 +2663,6 @@ static void set_compact_type (GtkWidget *w, gpointer data)
 
     if (GTK_TOGGLE_BUTTON (w)->active) {
         *method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-    }
-}
-
-static void sensitize_daylist (GtkWidget *w, GtkWidget *c)
-{
-    if (c != NULL) {
-	gtk_widget_set_sensitive(c, GTK_TOGGLE_BUTTON(w)->active);
     }
 }
 
@@ -2873,7 +2846,9 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_SUM));
     gtk_widget_show(button);
-    if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
+    if (current_pd == 52) {
+	gtk_widget_set_sensitive(button, FALSE);
+    }
 
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("Use end-of-period values"));
@@ -2883,7 +2858,9 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_EOP));
     gtk_widget_show(button);
-    if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
+    if (current_pd == 52) {
+	gtk_widget_set_sensitive(button, FALSE);
+    }
 
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("Use start-of-period values"));
@@ -2893,7 +2870,9 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_SOP));
     gtk_widget_show(button);
-    if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
+    if (current_pd == 52) {
+	gtk_widget_set_sensitive(button, FALSE);
+    }
 
     if (dated_daily_data(datainfo) && cinfo->repday != NULL) {
 	GtkWidget *hbox, *daymenu;
@@ -2924,9 +2903,8 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	if (*method != COMPACT_WDAY) {
 	    gtk_widget_set_sensitive(daymenu, FALSE);
 	}
-	
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(sensitize_daylist), daymenu);
+
+	sensitize_widget_from_check(button, daymenu);
 	g_object_set_data(G_OBJECT(button), "daymenu", daymenu);
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
@@ -3473,23 +3451,21 @@ static void set_checks_opt (GtkWidget *w, int *active)
     active[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 }
 
-/* general purpose dialog offering check-button options and/or
-   a spinner with numerical values */
-
-int checks_dialog (const char *title, const char *blurb,
-		   const char **opts, int nopts,
-		   int *active, int nradios, int *rvar, int *spinvar, 
-		   const char *spintxt, int spinmin, int spinmax, 
-		   int hcode)
+GtkWidget *
+build_checks_dialog (const char *title, const char *blurb,
+		     const char **opts, int nopts,
+		     int *active, int nradios, int *rvar, int *spinvar, 
+		     const char *spintxt, int spinmin, int spinmax, 
+		     int hcode, int *ret)
 {
     GtkWidget *dialog;
     GtkWidget *tmp, *okb;
     GtkWidget *button = NULL;
     GtkWidget *spin = NULL;
-    int i, ret = 0;
+    int i;
 
     if (maybe_raise_dialog()) {
-	return -1;
+	return NULL;
     }
 
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
@@ -3530,6 +3506,10 @@ int checks_dialog (const char *title, const char *blurb,
 	gtk_widget_show(button);
     }
 
+    if (nopts == 1) {
+	g_object_set_data(G_OBJECT(dialog), "checkbox", button);
+    }    
+
     /* create radio buttons, if any */
     for (i=0; i<nradios; i++) {
 	int j = nopts + i;
@@ -3555,7 +3535,7 @@ int checks_dialog (const char *title, const char *blurb,
     }
 
     /* Cancel button */
-    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, ret);
 
     /* "OK" button */
     okb = ok_button(GTK_DIALOG(dialog)->action_area);
@@ -3570,7 +3550,30 @@ int checks_dialog (const char *title, const char *blurb,
 	context_help_button(GTK_DIALOG(dialog)->action_area, hcode);
     }
 
-    gtk_widget_show(dialog);
+    return dialog;
+}
+
+/* general purpose dialog offering check-button options and/or
+   a spinner with numerical values */
+
+int checks_dialog (const char *title, const char *blurb,
+		   const char **opts, int nopts,
+		   int *active, int nradios, int *rvar, int *spinvar, 
+		   const char *spintxt, int spinmin, int spinmax, 
+		   int hcode)
+{
+    GtkWidget *dlg;
+    int ret = 0;
+
+    dlg = build_checks_dialog(title, blurb, opts, nopts, active,
+			      nradios, rvar, spinvar, spintxt,
+			      spinmin, spinmax, hcode, &ret);
+
+    if (dlg == NULL) {
+	return -1;
+    }
+
+    gtk_widget_show(dlg);
 
     return ret;
 }

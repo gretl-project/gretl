@@ -2421,19 +2421,16 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
 static void vec_get_spinner_data (selector *sr, int *order)
 {
-    GtkAdjustment *adj;
     char numstr[8];
 
     /* lag order */
-    adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[0]));
-    *order = (int) adj->value;
+    *order = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[0]));
     sprintf(numstr, "%d ", *order);
     add_to_cmdlist(sr, numstr);
 
     if (sr->code == VECM) {
 	/* cointegration rank */
-	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
-	jrank = (int) adj->value;
+	jrank = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[1]));
 	sprintf(numstr, "%d", jrank);
 	add_to_cmdlist(sr, numstr);
     }
@@ -2464,7 +2461,7 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 	    }
 	}
 	if (sr->default_check != NULL && 
-	    GTK_TOGGLE_BUTTON(sr->default_check)->active) {
+	    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sr->default_check))) {
 	    default_y = ynum;
 	} else if (sr->code == INTREG) {
 	    lovar = ynum;
@@ -3493,15 +3490,6 @@ static void reverse_option_callback (GtkWidget *w, selector *sr)
     }    
 }
 
-static void robust_config_button (GtkWidget *w, GtkWidget *b)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	gtk_widget_set_sensitive(b, TRUE);
-    } else {
-	gtk_widget_set_sensitive(b, FALSE);
-    }
-}
-
 static void garch_spin_check (GtkSpinButton *b, selector *sr)
 {
     int p = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
@@ -3875,7 +3863,8 @@ static void build_selector_switches (selector *sr)
 	    gtk_widget_set_sensitive(b2, using_hc_by_default());
 
 	    g_signal_connect(G_OBJECT(b1), "toggled",
-			     G_CALLBACK(robust_config_button), b2);	
+			     G_CALLBACK(sensitize_widget_from_check), 
+			     b2);	
 
 	    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
 	    gtk_widget_show(b2);
@@ -3972,13 +3961,15 @@ static void build_selector_switches (selector *sr)
 
 static void unhide_lags_callback (GtkWidget *w, selector *sr)
 {
-    int i, show_lags = GTK_TOGGLE_BUTTON(w)->active;
+    int i, show_lags;
     GtkListStore *store;
     GtkTreeIter iter;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    show_lags = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
     for (i=1; i<datainfo->v; i++) {
 	if (list_show_var(i, sr->code, show_lags)) {
@@ -4008,7 +3999,7 @@ static void unhide_lags_switch (selector *sr)
 
 static void boot_switch_callback (GtkWidget *w, selector *sr)
 {
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (get_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)) {
 	sr->opts |= OPT_P;
     } else {
 	sr->opts &= ~OPT_P;
@@ -4072,15 +4063,6 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
 
-static void rq_ci_callback (GtkWidget *w, selector *sr)
-{
-    if (sr->extra[1] != NULL) {
-	gboolean s = GTK_TOGGLE_BUTTON(w)->active;
-
-	gtk_widget_set_sensitive(sr->extra[1], s);
-    }
-}
-
 static GtkWidget *alpha_spinner (double deflt, double minval)
 {
     GtkObject *adj;
@@ -4100,11 +4082,10 @@ static void build_quantreg_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, 
 					 _("Compute confidence intervals"));
-    g_signal_connect(G_OBJECT(b2), "toggled",
-		     G_CALLBACK(rq_ci_callback), sr);
     sr->extra[1] = alpha_spinner(0.90, 0.70);
     pack_switch_with_extra(b2, sr, FALSE, OPT_I, 0, sr->extra[1], "1 - α =");
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
+    sensitize_widget_from_check(b2, sr->extra[1]);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
@@ -4199,7 +4180,7 @@ static void build_scatters_radios (selector *sr)
 
 static void auto_omit_callback (GtkWidget *w, selector *sr)
 {
-    gboolean s = GTK_TOGGLE_BUTTON(w)->active;
+    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
     if (sr->extra[0] != NULL) {
 	gtk_widget_set_sensitive(sr->extra[0], s);
@@ -4337,7 +4318,7 @@ static gboolean arma_estimator_switch (GtkComboBox *box, selector *sr)
     if (sr->hess_button != NULL) {
 	GtkWidget *xb = sr->x12a_button;
 
-	if (xb == NULL || !GTK_TOGGLE_BUTTON(xb)->active) {
+	if (xb == NULL || !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(xb))) {
 	    gchar *s = gtk_combo_box_get_active_text(box);
 
 	    gtk_widget_set_sensitive(sr->hess_button, 
@@ -5579,7 +5560,7 @@ static void lag_entry_callback (GtkWidget *w, gpointer p)
 
 static int spinner_get_int (GtkWidget *w)
 {
-    return (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+    return gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
 }
 
 /* retrieve the min or max lag from a spinner and process

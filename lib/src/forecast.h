@@ -43,7 +43,7 @@ struct FITRESID_ {
     double *resid;
     double *sderr;
     double sigma;
-    double tval;
+    double alpha;
     int pmax;
     int df;
     int t0, t1, t2;

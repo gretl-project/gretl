@@ -323,6 +323,98 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     return d;
 }
 
+/* make the sensitivity of widget @w positively dependent on the state
+   of check button @check */
+
+void sensitize_widget_from_check (GtkWidget *check, GtkWidget *w)
+{
+    gboolean s;
+
+    s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check));
+    gtk_widget_set_sensitive(w, s);
+}
+
+/* make the sensitivity of widget @w negatively dependent on the state
+   of check button @check */
+
+void desensitize_widget_from_check (GtkWidget *check, GtkWidget *w)
+{
+    gboolean s;
+
+    s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check));
+    gtk_widget_set_sensitive(w, !s);
+}
+
+void set_double_from_spinner (GtkSpinButton *b, double *x)
+{
+    *x = gtk_spin_button_get_value(b);
+}
+
+void set_int_from_spinner (GtkSpinButton *b, int *k)
+{
+    *k = gtk_spin_button_get_value_as_int(b);
+}
+
+static void toggle_gretl_option (GtkToggleButton *b, gretlopt *popt)
+{
+    gretlopt val = 
+	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(b), "optval"));
+
+    if (gtk_toggle_button_get_active(b)) {
+	*popt |= val;
+    } else {
+	*popt &= ~val;
+    }
+}
+
+/* Create a check button which sets @val in @popt when
+   activated, and unsets the flag when deactivated */
+
+GtkWidget *gretl_option_check_button (const char *label,
+				      gretlopt *popt,
+				      gretlopt val)
+{
+    GtkWidget *button;
+
+    button = gtk_check_button_new_with_label(label);
+    g_object_set_data(G_OBJECT(button), "optval",
+		      GINT_TO_POINTER(val));
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(toggle_gretl_option), popt); 
+
+    return button;
+}
+
+static void toggle_gretl_option_switched (GtkToggleButton *b, gretlopt *popt)
+{
+    gretlopt val = 
+	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(b), "optval"));
+
+    if (gtk_toggle_button_get_active(b)) {
+	*popt &= ~val;
+    } else {
+	*popt |= val;
+    }
+}
+
+/* Create a check button which unsets @val in @popt when
+   activated, and sets the flag when deactivated */
+
+GtkWidget *gretl_option_check_button_switched (const char *label,
+					       gretlopt *popt,
+					       gretlopt val)
+{
+    GtkWidget *button;
+
+    button = gtk_check_button_new_with_label(label);
+    g_object_set_data(G_OBJECT(button), "optval",
+		      GINT_TO_POINTER(val));
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(toggle_gretl_option_switched), popt); 
+
+    return button;
+}
+
 /* "edit dialog" apparatus */
 
 GtkWidget *active_edit_id;
@@ -781,92 +873,32 @@ static void set_sys_method (GtkComboBox *box, dialog_t *d)
     g_free(str);
 }
 
-static gboolean opt_t_callback (GtkWidget *w, dialog_t *dlg)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	dlg->opt |= OPT_T;
-    } else {
-	dlg->opt &= ~OPT_T;
-    }
-
-    return FALSE;
-}
-
-static gboolean opt_v_callback (GtkWidget *w, dialog_t *dlg)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	dlg->opt |= OPT_V;
-    } else {
-	dlg->opt &= ~OPT_V;
-    }
-
-    return FALSE;
-}
-
-static gboolean opt_r_callback (GtkWidget *w, dialog_t *dlg)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	dlg->opt |= OPT_R;
-    } else {
-	dlg->opt &= ~OPT_R;
-    }
-
-    return FALSE;
-}
-
-static gboolean opt_b_callback (GtkWidget *w, dialog_t *dlg)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	dlg->opt |= OPT_B;
-    } else {
-	dlg->opt &= ~OPT_B;
-    }
-
-    return FALSE;
-}
-
-static gboolean opt_f_callback (GtkWidget *w, dialog_t *dlg)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	dlg->opt |= OPT_F;
-    } else {
-	dlg->opt &= ~OPT_F;
-    }
-
-    return FALSE;
-}
-
 static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 					gretlopt opt, MODEL *pmod)
 {
     GtkWidget *b = NULL;
 
     if (opt == OPT_T) {
-	b = gtk_check_button_new_with_label(_("Iterated estimation"));
-	g_signal_connect(G_OBJECT(b), "toggled", 
-			 G_CALLBACK(opt_t_callback), dlg);
+	b = gretl_option_check_button(_("Iterated estimation"),
+				      &dlg->opt, OPT_T); /* OPT_T vs OPT_I?? */
 	if (pmod != NULL && (pmod->opt & OPT_I)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
 	}
     } else if (opt == OPT_V) {
-	b = gtk_check_button_new_with_label(_("Show details of iterations"));
-	g_signal_connect(G_OBJECT(b), "toggled", 
-			 G_CALLBACK(opt_v_callback), dlg);
+	b = gretl_option_check_button(_("Show details of iterations"),
+				      &dlg->opt, OPT_V);
     } else if (opt == OPT_R) {
-	b = gtk_check_button_new_with_label(_("Robust standard errors"));
-	g_signal_connect(G_OBJECT(b), "toggled", 
-			 G_CALLBACK(opt_r_callback), dlg);
+	b = gretl_option_check_button(_("Robust standard errors"),
+				      &dlg->opt, OPT_R);
 	if (pmod != NULL && (pmod->opt & OPT_R)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
 	}
     } else if (opt == OPT_B) {
-	b = gtk_check_button_new_with_label(_("Use bootstrap"));
-	g_signal_connect(G_OBJECT(b), "toggled", 
-			 G_CALLBACK(opt_b_callback), dlg);
+	b = gretl_option_check_button(_("Use bootstrap"),
+				      &dlg->opt, OPT_B);
     } else if (opt == OPT_F) {
-	b = gtk_check_button_new_with_label(_("Show full restricted estimates"));
-	g_signal_connect(G_OBJECT(b), "toggled", 
-			 G_CALLBACK(opt_f_callback), dlg);
+	b = gretl_option_check_button(_("Show full restricted estimates"),
+				      &dlg->opt, OPT_F);
     } 
 
     if (b != NULL) {

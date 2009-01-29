@@ -1689,7 +1689,8 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 				      const DATAINFO *pdinfo, 
 				      PRN *prn)
 {
-    double maxerr;
+    double maxerr, tval = 0;
+    double conf = 100 * (1 - fr->alpha);
     int pmax = fr->pmax;
     int errpmax = fr->pmax;
     char actual[32], fitted[32], sderr[32], lo[32], hi[32];
@@ -1698,13 +1699,17 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     int t;
 
     pputs(prn, "\\begin{center}\n");
+
     if (fr->asymp) {
-	pprintf(prn, I_("For 95\\%% confidence intervals, $z(.025) = %.2f$\n\n"), 
-		1.96);
+	tval = normal_critval(fr->alpha / 2);
+	pprintf(prn, I_("For %g\\%% confidence intervals, $z(%g) = %.2f$\n\n"), 
+		conf, fr->alpha / 2, tval);
     } else {
-	pprintf(prn, I_("For 95\\%% confidence intervals, $t(%d, .025) = %.3f$\n\n"), 
-		fr->df, fr->tval);
+	tval = student_critval(fr->df, fr->alpha / 2);
+	pprintf(prn, I_("For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n\n"), 
+		conf, fr->df, fr->alpha / 2, tval);
     }
+
     pputs(prn, "\\end{center}\n");
 
     pputs(prn, "%% The table below needs the "
@@ -1721,6 +1726,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    pt, pt, pt, pt, pt);
 
     tex_escape(vname, fr->depvar);
+    sprintf(hi, I_("%g\\%% interval"), conf);
 
     pprintf(prn, "%s & \\multicolumn{2}{c}{%s} "
 	    " & \\multicolumn{2}{c}{%s}\n"
@@ -1728,8 +1734,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    "   & \\multicolumn{4}{c}{%s} \\\\[1ex]\n",
 	    I_("Obs"), vname,
 	    I_("prediction"), I_("std. error"),
-	    /* xgettext:no-c-format */
-	    I_("95\\% confidence interval"));
+	    hi);
 
     if (pmax < 4) {
 	errpmax = pmax + 1;
@@ -1741,7 +1746,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	if (na(fr->sderr[t])) {
 	    xlo = xhi = NADBL;
 	} else {
-	    maxerr = fr->tval * fr->sderr[t];
+	    maxerr = tval * fr->sderr[t];
 	    xlo = fr->fitted[t] - maxerr;
 	    xhi = fr->fitted[t] + maxerr;
 	}
@@ -1795,18 +1800,23 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 				      const DATAINFO *pdinfo, 
 				      PRN *prn)
 {
-    int t;
-    double maxerr;
+    double maxerr, tval = 0;
+    double conf = 100 * (1 - fr->alpha);
     char tmp[128];
+    int t;
 
     if (fr->asymp) {
-	sprintf(tmp, I_("For 95%% confidence intervals, z(.025) = %.2f"), 
-		1.96);
+	tval = normal_critval(fr->alpha / 2);
+	sprintf(tmp, I_("For %g%% confidence intervals, z(%g) = %.2f"), 
+		conf, fr->alpha / 2, tval);
     } else {
-	sprintf(tmp, I_("For 95%% confidence intervals, t(%d, .025) = %.3f"), 
-		fr->df, fr->tval);
+	tval = student_critval(fr->df, fr->alpha / 2);
+	sprintf(tmp, I_("For %g%% confidence intervals, t(%d, %g) = %.3f"), 
+		conf, fr->df, fr->alpha / 2, tval);
     }
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n", tmp);
+
+    sprintf(tmp, I_("%g%% interval"), conf);
 
     pputs(prn, "{" FCE_ROW "\\intbl ");
     pprintf(prn, 
@@ -1818,19 +1828,18 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    " \\intbl \\row\n", 
 	    I_("Obs"), fr->depvar, I_("prediction"), 
 	    I_("std. error"),
-	    /* xgettext:no-c-format */
-	    I_("95% confidence interval"));
+	    tmp);
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	rtf_print_obs_marker(t, pdinfo, prn);
-	maxerr = fr->tval * fr->sderr[t];
+	maxerr = tval * fr->sderr[t];
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);
 	printfrtf(fr->sderr[t], prn, 0);
 	if (na(fr->sderr[t])) {
 	    pputs(prn, "\\qc \\cell \\intbl \\row\n");
 	} else {
-	    maxerr = fr->tval * fr->sderr[t];
+	    maxerr = tval * fr->sderr[t];
 	    pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell \\intbl \\row\n", 
 		    GRETL_DIGITS, fr->fitted[t] - maxerr, 
 		    GRETL_DIGITS, fr->fitted[t] + maxerr);
@@ -1885,6 +1894,7 @@ texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 	tex_rl_double(cf->coeff[i] + cf->maxerr[i], hi);
 	pprintf(prn, "%s & %s", lo, hi);
     }
+
     pputs(prn, "\\\\\n");
 }
 

@@ -188,10 +188,8 @@ int
 gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
 		     gretlopt opt);
 
-int plot_fcast_errs (int t1, int t2, int yhmin, const double *obs, 
-		     const double *depvar, const double *yhat, 
-		     const double *maxerr, const char *varname, 
-		     int tsfreq, gretlopt opt);
+int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
+		     const DATAINFO *pdinfo, gretlopt opt);
 
 int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 		       int k);

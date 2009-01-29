@@ -152,7 +152,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
     f->pmax = PMAX_NOT_AVAILABLE;
 
     f->sigma = NADBL;
-    f->tval = NADBL;
+    f->alpha = 0.05;
 
     f->actual = NULL;
     f->fitted = NULL;
@@ -1936,13 +1936,6 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     if (nf == 0) {
 	err = E_MISSDATA;
     } else {
-	if (pmod->ci == ARMA) {
-	    /* asymptotic normal */
-	    fr->tval = 1.96;
-	} else {
-	    fr->tval = tcrit95(pmod->dfd);
-	}
-
 	fit_resid_set_dec_places(fr);
 	strcpy(fr->depvar, pdinfo->varname[yno]);
 	fr->df = pmod->dfd;
@@ -2703,10 +2696,8 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     	if (asy) {
 	    /* asymptotic normal */
 	    fr->df = var->T;
-	    fr->tval = 1.96;
 	} else {
 	    fr->df = df;
-	    fr->tval = tcrit95(fr->df);
 	}
     
 	for (i=imin; i<=imax && !err; i++) {
@@ -2895,10 +2886,8 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     if (asy) {
 	/* asymptotic normal */
 	fr->df = var->T;
-	fr->tval = 1.96;
     } else {
 	fr->df = df;
-	fr->tval = tcrit95(fr->df);
     }
 
     *err = fill_system_forecast(fr, i, yno, var, sys, 

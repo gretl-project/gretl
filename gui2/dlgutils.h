@@ -72,6 +72,22 @@ GtkWidget *back_button (GtkWidget *hbox);
 gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
 			   gpointer unused);
 
+void sensitize_widget_from_check (GtkWidget *check, GtkWidget *w);
+
+void desensitize_widget_from_check (GtkWidget *check, GtkWidget *w);
+
+void set_double_from_spinner (GtkSpinButton *b, double *x);
+
+void set_int_from_spinner (GtkSpinButton *b, int *k);
+
+GtkWidget *gretl_option_check_button (const char *label,
+				      gretlopt *popt,
+				      gretlopt val);
+
+GtkWidget *gretl_option_check_button_switched (const char *label,
+					       gretlopt *popt,
+					       gretlopt val);
+
 void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr,
 		  guint hlpcode, guint varclick,

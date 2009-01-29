@@ -441,7 +441,7 @@ double student_pvalue_2 (int df, double x)
  * probability @a, or #NADBL on failure.
  */
 
-static double student_critval (double df, double a)
+double student_critval (double df, double a)
 {
     double x;
 

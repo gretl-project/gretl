@@ -2253,7 +2253,7 @@ static void add_vars_to_combo (GtkWidget *w, int code, int pos)
 
 static void toggle_combo_ok (GtkWidget *toggle, gpointer p)
 {
-    if (GTK_TOGGLE_BUTTON(toggle)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(toggle))) {
 	gtk_widget_set_sensitive(GTK_WIDGET(p), TRUE);
 	populate_stats(NULL, p);
     } else {
@@ -2465,17 +2465,6 @@ static int n_ok_dummies (void)
     return nv;
 }
 
-static gint toggle_verbose_state (GtkWidget *w, GtkWidget *b)
-{
-    if (GTK_TOGGLE_BUTTON(w)->active) {
-	gtk_widget_set_sensitive(b, FALSE);
-    } else {
-	gtk_widget_set_sensitive(b, TRUE);
-    }
-
-    return FALSE;
-}
-
 static void make_nptest_tab (CalcChild *child, int idx) 
 {
     test_t **tests = child->calcp;
@@ -2572,9 +2561,7 @@ static void make_nptest_tab (CalcChild *child, int idx)
 
     if (idx == NP_DIFF) {
 	gtk_widget_set_sensitive(tmp, FALSE);
-	g_signal_connect(G_OBJECT(test->radio[0]), "toggled",
-			 G_CALLBACK(toggle_verbose_state),
-			 tmp);
+	desensitize_widget_from_check(test->radio[0], tmp);
     }
 }
 

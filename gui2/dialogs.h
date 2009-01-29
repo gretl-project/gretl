@@ -95,6 +95,13 @@ int radio_dialog_with_check (const char *title, const char *label,
 			     const char **opts, int nopts, int deflt, int hcode,
 			     int *checkvar, const char *checktxt);
 
+GtkWidget *
+build_checks_dialog (const char *title, const char *blurb,
+		     const char **opts, int nopts,
+		     int *active, int nradios, int *rvar, int *spinvar, 
+		     const char *spintxt, int spinmin, int spinmax, 
+		     int hcode, int *ret);
+
 int checks_dialog (const char *title, const char *blurb,
 		   const char **opts, int nopts, 
 		   int *active, int nradios, int *rvar,
@@ -116,7 +123,9 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     int t2min, int t2max, int *t2,
 		     int *k, int pmin, int pmax, int *p,
 		     int dyn, gretlopt *optp,
-		     MODEL *pmod);
+		     double *conf, MODEL *pmod);
+
+void dialog_add_confidence_selector (GtkWidget *dlg, double *conf);
 
 int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,

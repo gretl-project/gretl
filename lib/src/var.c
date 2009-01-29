@@ -1739,7 +1739,7 @@ double gretl_VAR_ldet (GRETL_VAR *var, int *err)
 	gretl_matrix_multiply_mod(var->F, GRETL_MOD_TRANSPOSE,
 				  var->F, GRETL_MOD_NONE,
 				  S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(S, var->df); /* was var->T */
+	gretl_matrix_divide_by_scalar(S, var->T); /* or var->df? */
 	ldet = gretl_vcv_log_determinant(S);
 	if (na(ldet)) {
 	    *err = 1;
@@ -1750,7 +1750,7 @@ double gretl_VAR_ldet (GRETL_VAR *var, int *err)
     return ldet;
 }
 
-static int VAR_add_variance_matrix (GRETL_VAR *var)
+static int VAR_add_stats (GRETL_VAR *var)
 {
     int err = 0;
 
@@ -1763,23 +1763,15 @@ static int VAR_add_variance_matrix (GRETL_VAR *var)
 	gretl_matrix_multiply_mod(var->E, GRETL_MOD_TRANSPOSE,
 				  var->E, GRETL_MOD_NONE,
 				  var->S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(var->S, var->df); /* was var->T */
+	gretl_matrix_divide_by_scalar(var->S, var->T); /* OK, for ldet? */
     }
-
-    return err;
-}
-
-static int VAR_add_stats (GRETL_VAR *var)
-{
-    int err;
-
-    err = VAR_add_variance_matrix(var);
 
     if (!err) {
 	var->ldet = gretl_vcv_log_determinant(var->S);
 	if (na(var->ldet)) {
 	    err = 1;
 	}
+	gretl_matrix_multiply_by_scalar(var->S, var->T / var->df);
     }    
 
     if (!err) {

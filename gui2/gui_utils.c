@@ -2808,7 +2808,9 @@ impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
 	N_("include bootstrap confidence interval")
     };
     static int active[] = { 0 };
-    int err;
+    GtkWidget *dlg;
+    double conf = 1 - *alpha;
+    int resp = 0;
 
     if (restricted_VECM(var)) {
 	active[0] = -1;
@@ -2816,26 +2818,34 @@ impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
-    /* FIXME add alpha selector */
+    dlg = build_checks_dialog(title, NULL,
+			      impulse_opts, 
+			      1, 
+			      active,
+			      0, NULL,
+			      &h, _("forecast horizon (periods):"),
+			      2, datainfo->n / 2, IRF_BOOT,
+			      &resp);
 
-    err = checks_dialog(title, NULL,
-			impulse_opts, 
-			1, 
-			active,
-			0, NULL,
-			&h, _("forecast horizon (periods):"),
-			2, datainfo->n / 2, IRF_BOOT);
     g_free(title);
 
-    if (err < 0) {
+    if (dlg == NULL) {
+	return -1;
+    }
+
+    dialog_add_confidence_selector(dlg, &conf);
+    gtk_widget_show(dlg);
+
+    if (resp < 0) {
 	/* cancelled */
 	*horizon = 0;
     } else {
 	*horizon = h;
 	*bootstrap = (active[0] > 0);
+	*alpha = 1 - conf;
     }
 
-    return err;
+    return resp;
 }
 
 static void impulse_params_from_action (GtkAction *action, 
@@ -2915,6 +2925,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     int premax, pre_n, dyn_ok;
     int static_model = 0;
     gretlopt opt = OPT_NONE;
+    double conf = 0.95;
     int i, err = 0;
 
     varnum_from_action(action, &i);
@@ -2968,7 +2979,8 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     resp = forecast_dialog(t1, t1, &t1,
 			   t1, t2, &t2, NULL,
 			   0, premax, &pre_n,
-			   dyn_ok, &gopt, NULL);
+			   dyn_ok, &gopt, &conf, 
+			   NULL);
     if (resp < 0) {
 	return;
     }
@@ -2993,6 +3005,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	    return;
 	}
 
+	fr->alpha = 1 - conf;
 	err = text_print_forecast(fr, datainfo, gopt, prn);
 	if (!err) {
 	    register_graph();

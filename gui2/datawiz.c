@@ -78,7 +78,7 @@ enum {
 typedef struct dw_opts_ dw_opts;
 
 struct dw_opts_ {
-    int flags;          /* state bit-flags */
+    gretlopt flags;     /* state bit-flags */
     int n_radios;       /* number of radio-button options */
     int deflt;          /* default setting for current radio variable */ 
     int plf;            /* panel: least factor > 1 of # of observations */
@@ -527,7 +527,7 @@ static void dwiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
     *opts->setvar = val;
 }
 
-static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo, int *flags)
+static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo, gretlopt *flags)
 {
     if (dwinfo->structure == CROSS_SECTION) {
 	sprintf(ctxt, _("%s, observations 1 to %d"), _("Cross-sectional data"), 
@@ -1255,16 +1255,7 @@ static void dwiz_make_panel_spinners (dw_opts *opts,
     gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 5);
 }
 
-static void set_purge_missobs (GtkWidget *w, int *flags)
-{
-    if (GTK_TOGGLE_BUTTON(w)->active) {
-	*flags |= DW_DROPMISS;
-    } else {
-	*flags &= ~DW_DROPMISS;
-    }    
-}
-
-static void maybe_add_missobs_purger (GtkWidget *vbox, int *flags)
+static void maybe_add_missobs_purger (GtkWidget *vbox, gretlopt *flags)
 {
     double missfrac = 0.0;
     int active = 0;
@@ -1278,16 +1269,15 @@ static void maybe_add_missobs_purger (GtkWidget *vbox, int *flags)
 
     if (active || (missfrac > 0 && missfrac < 0.12)) {
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-	GtkWidget *chk = gtk_check_button_new_with_label
-	    (N_("purge missing observations"));
+	GtkWidget *chk;
 
+	chk = gretl_option_check_button(_("purge missing observations"),
+					flags, DW_DROPMISS);
 	gtk_box_pack_start(GTK_BOX(hbox), chk, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	if (active) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), TRUE);
 	}
-	g_signal_connect(G_OBJECT(chk), "toggled", 
-			 G_CALLBACK(set_purge_missobs), flags);
 	gtk_widget_show_all(hbox);
     }
 }
@@ -1573,23 +1563,13 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
     }
 }
 
-static void set_edit_values (GtkWidget *w, int *flags)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	*flags |= DW_SSHEET;
-    } else {
-	*flags &= ~DW_SSHEET;
-    }	
-}
-
-static void add_editing_option (GtkWidget *vbox, int *flags)
+static void add_editing_option (GtkWidget *vbox, gretlopt *flags)
 {
     GtkWidget *hbox, *b;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    b = gtk_check_button_new_with_label(_("start entering data values"));
-    g_signal_connect(G_OBJECT(b), "toggled",
-		     G_CALLBACK(set_edit_values), flags);
+    b = gretl_option_check_button(_("start entering data values"),
+				  flags, DW_SSHEET);
     gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);    
 }

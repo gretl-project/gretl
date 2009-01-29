@@ -433,20 +433,6 @@ static void flip_manual_range (GtkWidget *widget, plot_editor *ed)
     gtk_widget_set_sensitive(ed->axis_range[i].max, !s);
 }
 
-static void disable_lbase (GtkWidget *b, GtkWidget *entry)
-{
-    gboolean s = GTK_TOGGLE_BUTTON(b)->active;
-
-    gtk_widget_set_sensitive(entry, !s);
-}
-
-static void enable_lbase (GtkWidget *b, GtkWidget *entry)
-{
-    gboolean s = GTK_TOGGLE_BUTTON(b)->active;
-
-    gtk_widget_set_sensitive(entry, s);
-}
-
 /* Take text from a gtkentry and write to gnuplot spec string */
 
 static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
@@ -1026,7 +1012,7 @@ static void strip_lr (gchar *txt)
 
 static void toggle_axis_selection (GtkWidget *w, plot_editor *ed)
 {
-    int no_y2 = GTK_TOGGLE_BUTTON(w)->active;
+    int no_y2 = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
     int i;
 
     for (i=0; i<ed->gui_nlines; i++) {
@@ -2534,10 +2520,8 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 	    gtk_widget_set_sensitive(entry, FALSE);
 	}
 
-	g_signal_connect(G_OBJECT(b1), "clicked", G_CALLBACK(disable_lbase), 
-			 entry);
-	g_signal_connect(G_OBJECT(b2), "clicked", G_CALLBACK(enable_lbase), 
-			 entry);
+	desensitize_widget_from_check(b1, entry);
+	sensitize_widget_from_check(b2, entry);
     }
 }
 
