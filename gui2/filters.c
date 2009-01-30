@@ -57,8 +57,8 @@ struct filter_info_ {
     int k;
     int bkl;
     int bku;
-    int graph_opt;
-    int save_opt;
+    gretlopt graph_opt;
+    gretlopt save_opt;
     char save1[VNAMELEN];
     char save2[VNAMELEN];
     GtkWidget *dlg;
@@ -190,11 +190,6 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
     }
 }
 
-static void spinner_set_int (GtkWidget *s, int *n)
-{
-    *n = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(s));
-}
-
 static void check_bk_limits1 (GtkWidget *s1, GtkWidget *s2)
 {
     int n1, n2;
@@ -219,50 +214,9 @@ static void check_bk_limits2 (GtkWidget *s2, GtkWidget *s1)
     }
 }
 
-static void spinner_set_double (GtkWidget *b, double *a)
-{
-    *a = gtk_spin_button_get_value(GTK_SPIN_BUTTON(b));
-}
-
 static void sma_center_callback (GtkWidget *w, int *c)
 {
     *c = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
-}
-
-static void set_trend_graph (GtkWidget *w, int *opt)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	*opt |= FILTER_GRAPH_TREND;
-    } else {
-	*opt &= ~FILTER_GRAPH_TREND;
-    }
-}
-
-static void set_cycle_graph (GtkWidget *w, int *opt)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	*opt |= FILTER_GRAPH_CYCLE;
-    } else {
-	*opt &= ~FILTER_GRAPH_CYCLE;
-    }
-}
-
-static void set_trend_save (GtkWidget *w, int *opt)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	*opt |= FILTER_SAVE_TREND;
-    } else {
-	*opt &= ~FILTER_SAVE_TREND;
-    }
-}
-
-static void set_cycle_save (GtkWidget *w, int *opt)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	*opt |= FILTER_SAVE_CYCLE;
-    } else {
-	*opt &= ~FILTER_SAVE_CYCLE;
-    }
 }
 
 static int varname_error (filter_info *finfo, int i) 
@@ -321,15 +275,12 @@ static void filter_dialog_hsep (GtkWidget *dlg)
 }
 
 static void filter_graph_check_button (GtkWidget *dlg, filter_info *finfo,
-				       const char *txt, int g)
+				       const char *txt, gretlopt g)
 {
     GtkWidget *hbox, *w;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_check_button_new_with_label(txt);
-    g_signal_connect(G_OBJECT(w), "toggled", 
-		     (g == FILTER_GRAPH_TREND)? G_CALLBACK(set_trend_graph) :
-		     G_CALLBACK(set_cycle_graph), &finfo->graph_opt);
+    w = gretl_option_check_button(txt, &finfo->graph_opt, g);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), finfo->graph_opt & g);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
@@ -345,11 +296,15 @@ static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
     gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
 
     for (i=0; i<2; i++) {
-	w = gtk_check_button_new_with_label((i == 0)? _("Save smoothed series as") : 
-					    _("Save cyclical component as"));
-	g_signal_connect(G_OBJECT(w), "toggled", 
-			 (i == 0)? G_CALLBACK(set_trend_save) :
-			 G_CALLBACK(set_cycle_save), &finfo->save_opt);
+	if (i == 0) {
+	    w = gretl_option_check_button(_("Save smoothed series as"),
+					  &finfo->save_opt, 
+					  FILTER_SAVE_TREND);
+	} else {
+	    w = gretl_option_check_button(_("Save cyclical component as"),
+					  &finfo->save_opt, 
+					  FILTER_SAVE_CYCLE);
+	}
 	gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, i, i+1);
 
 	w = gtk_entry_new();
@@ -384,7 +339,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     s1 = gtk_spin_button_new_with_range(1, 64, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s1), finfo->bkl);
     g_signal_connect(G_OBJECT(s1), "value-changed",
-		     G_CALLBACK(spinner_set_int), &finfo->bkl);
+		     G_CALLBACK(set_int_from_spinner), &finfo->bkl);
     gtk_table_attach_defaults(GTK_TABLE(tab), s1, 1, 2, 0, 1);
 	
     /* upper limit */
@@ -393,7 +348,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     s2 = gtk_spin_button_new_with_range(2, 128, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s2), finfo->bku);
     g_signal_connect(G_OBJECT(s2), "value-changed",
-		     G_CALLBACK(spinner_set_int), &finfo->bku);
+		     G_CALLBACK(set_int_from_spinner), &finfo->bku);
     gtk_table_attach_defaults(GTK_TABLE(tab), s2, 1, 2, 1, 2);
 
     /* inter-connect the lower and upper spinners */
@@ -477,7 +432,7 @@ static int filter_dialog (filter_info *finfo)
 	nspin = gtk_spin_button_new_with_range(2, (gdouble) nmax, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(nspin), (gdouble) finfo->nobs);
 	g_signal_connect(G_OBJECT(nspin), "value-changed",
-			 G_CALLBACK(spinner_set_int), &finfo->nobs);
+			 G_CALLBACK(set_int_from_spinner), &finfo->nobs);
 	gtk_box_pack_start(GTK_BOX(hbox), nspin, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
 
@@ -499,7 +454,7 @@ static int filter_dialog (filter_info *finfo)
 	w = gtk_spin_button_new_with_range(0.001, 0.999, 0.001);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(spinner_set_double), &finfo->lambda);
+			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
 
@@ -513,7 +468,7 @@ static int filter_dialog (filter_info *finfo)
 	w = gtk_spin_button_new_with_range(1.0, 999999, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(spinner_set_double), &finfo->lambda);
+			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_BK) {
@@ -524,7 +479,7 @@ static int filter_dialog (filter_info *finfo)
 	w = gtk_spin_button_new_with_range(1.0, 4 * finfo->k, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->k);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(spinner_set_int), &finfo->k);
+			 G_CALLBACK(set_int_from_spinner), &finfo->k);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
 
@@ -540,9 +495,8 @@ static int filter_dialog (filter_info *finfo)
 				  FILTER_GRAPH_CYCLE);
 	/* save to dataset? */
 	hbox = gtk_hbox_new(FALSE, 5);
-	w = gtk_check_button_new_with_label(_("Save cyclical series as"));
-	g_signal_connect(G_OBJECT(w), "toggled", 
-			 G_CALLBACK(set_cycle_save), &finfo->save_opt);
+	w = gretl_option_check_button(_("Save cyclical series as"),
+				      &finfo->save_opt, FILTER_SAVE_CYCLE);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN - 1);
@@ -878,6 +832,7 @@ static int calculate_filter (filter_info *finfo)
 
     if (saved) {
 	populate_varlist();
+	mark_dataset_as_modified();
     }
 
     return err;
