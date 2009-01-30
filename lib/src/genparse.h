@@ -292,6 +292,7 @@ enum {
     F_TRIMR,
     F_TOEPSOLV,
     F_ACF,
+    F_XCF,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_FILTER,
     F_MCOVG,

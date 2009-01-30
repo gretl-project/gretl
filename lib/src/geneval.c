@@ -4241,6 +4241,23 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     return ret;
 }
 
+static gretlopt get_string_opt (NODE *n, gretlopt o, const char *targ,
+				parser *p)
+{
+    gretlopt opt = OPT_NONE;
+
+    if (n->t == STR) { 
+	if (!strncmp(n->v.str, targ, strlen(n->v.str))) {
+	    opt = o;
+	} else {
+	    gretl_errmsg_sprintf("%s: invalid option", n->v.str);
+	    p->err = E_DATA;
+	}
+    }
+
+    return opt;
+}
+
 /* evaluate a built-in function that has three arguments */
 
 static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
@@ -4299,25 +4316,49 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    A = gretl_toeplitz_solve(l->v.m, m->v.m, r->v.m, &p->err);
 	} 
     } else if (f == F_ACF) {
-	if (l->t != VEC) {
+	if (l->t != VEC && l->t != MAT) {
 	    node_type_error(f, 0, VEC, l, p);
 	} else if (!scalar_node(m)) {
 	    node_type_error(f, 1, NUM, m, p);
 	} else if (r->t != STR && r->t != EMPTY) {
 	    node_type_error(f, 2, STR, r, p);
 	} else {
-	    /* FIXME make this more flexible */
+	    gretlopt opt = get_string_opt(r, OPT_P, "partial", p);
 	    int k = (int) node_get_scalar(m, p);
-	    gretlopt opt = OPT_NONE;
 
-	    if (r->t == STR) { 
-		if (!strncmp(r->v.str, "partial", strlen(r->v.str))) {
-		    opt = OPT_P;
+	    if (!p->err) {
+		if (l->t == VEC) {
+		    A = acf_vec(l->v.xvec, k, p->dinfo, 0, opt, &p->err);
+		} else {
+		    A = matrix_acf(l->v.m, k, opt, &p->err);
 		}
 	    }
-	    A = acf_vec(l->v.xvec, k, p->dinfo, opt, &p->err);
 	}
-    }
+    } else if (f == F_XCF) {
+	if (l->t != VEC && l->t != MAT) {
+	    node_type_error(f, 0, VEC, l, p);
+	} else if (m->t != l->t) {
+	    node_type_error(f, 1, VEC, m, p);
+	} else if (!scalar_node(r)) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else {
+	    int k = (int) node_get_scalar(r, p);
+
+	    if (l->t == VEC) {
+		A = xcf_vec(l->v.xvec, m->v.xvec, k, p->dinfo, 0, &p->err);
+	    } else {
+		const gretl_matrix *x = l->v.m;
+		const gretl_matrix *y = m->v.m;
+		int n = x->rows;
+
+		if (y->rows != n || x->cols != 1 || y->cols != 1) {
+		    p->err = E_NONCONF;
+		} else {
+		    A = xcf_vec(l->v.m->val, m->v.m->val, k, NULL, n, &p->err);
+		}
+	    }
+	}
+    }	
 
     if (!p->err) {
 	ret = aux_matrix_node(p);
@@ -5941,6 +5982,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_TRIMR:
     case F_TOEPSOLV:
     case F_ACF:
+    case F_XCF:
 	/* built-in functions taking three args */
 	ret = eval_3args_func(l, m, r, t->t, p);
 	break;

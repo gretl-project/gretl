@@ -2703,7 +2703,8 @@ int corrgram (int varno, int order, int nparam, const double **Z,
  * acf_vec:
  * @x: series to analyse.
  * @order: maximum lag for autocorrelation function.
- * @pdinfo: information on the data set.
+ * @pdinfo: information on the data set, or %NULL.
+ * @n: length of series (required if @pdinfo is %NULL).
  * @opt: %OPT_P gets PACF rather than ACF.
  * @err: location to receive error code.
  *
@@ -2716,19 +2717,27 @@ int corrgram (int varno, int order, int nparam, const double **Z,
  */
 
 gretl_matrix *acf_vec (const double *x, int order,
-		       const DATAINFO *pdinfo,
+		       const DATAINFO *pdinfo, int n,
 		       gretlopt opt, int *err)
 {
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t1, t2;
     gretl_matrix *acf = NULL;
     gretl_matrix *pacf = NULL;
     int m, k, t, T;
 
-    while (na(x[t1])) t1++;
-    while (na(x[t2])) t2--;
+    if (pdinfo != NULL) {
+	t1 = pdinfo->t1;
+	t2 = pdinfo->t2;
 
-    T = t2 - t1 + 1;
+	while (na(x[t1])) t1++;
+	while (na(x[t2])) t2--;
+
+	T = t2 - t1 + 1;
+    } else {
+	t1 = 0;
+	t2 = n - 1;
+	T = n;
+    }
 
     if (T < 4) {
 	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
@@ -2751,19 +2760,26 @@ gretl_matrix *acf_vec (const double *x, int order,
 	return NULL;
     }
 
-    /* lag order for acf */
     m = order;
-    if (m == 0) {
-	m = auto_acf_order(pdinfo->pd, T);
-    } else if (m > T - pdinfo->pd) {
-	int nmax = T - 1; 
 
-	if (nmax < m) {
-	    m = nmax; /* ?? */
+    if (pdinfo == NULL) {
+	if (m < 1 || m > T) {
+	    *err = E_DATA;
+	    return NULL;
+	}
+    } else {
+	if (m == 0) {
+	    m = auto_acf_order(pdinfo->pd, T);
+	} else if (m > T - pdinfo->pd) {
+	    int nmax = T - 1; 
+
+	    if (nmax < m) {
+		m = nmax; /* ?? */
+	    }
 	}
     }
 
-    acf = gretl_matrix_alloc(m, 1);
+    acf = gretl_column_vector_alloc(m);
 
     if (acf == NULL) {
 	*err = E_ALLOC;   
@@ -2879,6 +2895,144 @@ static int xcorrgm_ascii_plot (double *xcf, int xcf_m, PRN *prn)
     return 0;
 }
 
+/* We assume here that all data issues have already been
+   assessed (lag length, missing values etc.) and we just
+   get on with the job.
+*/
+
+static gretl_matrix *real_xcf_vec (const double *x, const double *y,
+				   int p, int T, int *err)
+{
+    gretl_matrix *xcf;
+    int i;
+
+    xcf = gretl_column_vector_alloc(p * 2 + 1);
+    if (xcf == NULL) {
+	*err = E_ALLOC;  
+	return NULL;
+    }
+
+    for (i=-p; i<=p; i++) {
+	xcf->val[i+p] = gretl_xcf(i, 0, T - 1, x, y);
+    }
+
+    return xcf;
+}
+
+/* for arrays @x and @y, check that there are no missing values
+   and that neither series has a constant value 
+*/
+
+static int xcf_data_check (const double *x, const double *y, int T,
+			   int *badvar)
+{
+    int xconst = 1, yconst = 1;
+    int t;
+
+    if (T < 5) {
+	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
+	return E_DATA;
+    }
+
+    for (t=0; t<T; t++) {
+	if (na(x[t]) || na(y[t])) {
+	    strcpy(gretl_errmsg, 
+		   _("Missing values within sample -- can't do correlogram"));
+	    return E_MISSDATA;
+	}
+	if (t > 0 && x[t] != x[0]) {
+	    xconst = 0;
+	}
+	if (t > 0 && y[t] != y[0]) {
+	    yconst = 0;
+	}	
+    }
+
+    if (xconst) {
+	*badvar = 1;
+	return E_DATA;
+    } else if (yconst) {
+	*badvar = 2;
+	return E_DATA;
+    }
+
+    return 0;
+}
+
+/**
+ * xcf_vec:
+ * @x: first series.
+ * @y: second series.
+ * @p: maximum lag for cross-correlation function.
+ * @pdinfo: information on the data set, or %NULL.
+ * @n; length of series (required if @pdinfo is %NULL).
+ * @err: location to receive error code.
+ *
+ * Computes the cross-correlation function for series @x with
+ * series @y up to maximum lag @order.
+ *
+ * Returns: column vector containing the values of the
+ * cross-correlation function, or %NULL on error.
+ */
+
+gretl_matrix *xcf_vec (const double *x, const double *y,
+		       int p, const DATAINFO *pdinfo,
+		       int n, int *err)
+{
+    gretl_matrix *xcf = NULL;
+    int t1, t2;
+    int T, badvar = 0;
+
+    if (p <= 0) {
+	*err = E_DATA;
+	return NULL;
+    }	
+
+    if (pdinfo != NULL) {
+	int yt1, yt2;
+
+	t1 = yt1 = pdinfo->t1;
+	t2 = yt2 = pdinfo->t2;
+
+	while (na(x[t1])) t1++;
+	while (na(y[yt1])) yt1++;
+
+	while (na(x[t2])) t2--;
+	while (na(y[yt2])) yt2--;
+
+	t1 = (yt1 > t1)? yt1 : t1;
+	t2 = (yt2 < t2)? yt2 : t2;
+
+	T = t2 - t1 + 1;
+    } else {
+	t1 = 0;
+	t2 = n - 1;
+	T = n;
+    }
+
+    if (pdinfo != NULL) {
+	if (2 * p > T - pdinfo->pd) { /* ?? */
+	    *err = E_DATA;
+	}
+    } else if (2 * p > T) {
+	*err = E_DATA;
+    }
+
+    if (!*err) { 
+	*err = xcf_data_check(x + t1, y + t1, T, &badvar);
+	if (badvar) {
+	    sprintf(gretl_errmsg, _("xcf: argument %d is a constant"), 
+		    badvar);
+	}
+    }
+
+    if (!*err) {
+	xcf = real_xcf_vec(x + t1, y + t1, p, T, err);
+    }
+
+    return xcf;
+}
+
 /**
  * xcorrgram:
  * @list: should contain ID numbers of two variables.
@@ -2898,13 +3052,13 @@ static int xcorrgm_ascii_plot (double *xcf, int xcf_m, PRN *prn)
 int xcorrgram (const int *list, int order, const double **Z, 
 	       DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
-    double *xcf = NULL;
+    gretl_matrix *xcf = NULL;
     double pm[3];
     const char *xname, *yname;
-    int allpos = 1;
-    int k, xcf_m;
+    const double *x, *y;
+    int k, p;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int xno, yno;
+    int badvar = 0;
     int T, err = 0;
 
     gretl_error_clear();
@@ -2913,58 +3067,40 @@ int xcorrgram (const int *list, int order, const double **Z,
 	return E_DATA;
     }
 
-    xno = list[1];
-    yno = list[2];
+    x = Z[list[1]];
+    y = Z[list[2]];
     
     varlist_adjust_sample(list, &t1, &t2, Z);
     T = t2 - t1 + 1;
 
-    if (missvals(Z[xno] + t1, T) ||
-	missvals(Z[yno] + t1, T)) {
-	strcpy(gretl_errmsg, 
-		_("Missing values within sample -- can't do correlogram"));
-	return E_MISSDATA;
-    }
+    err = xcf_data_check(x + t1, y + t1, T, &badvar);
 
-    if (T < 5) {
-	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
-	return 1;
-    }
-
-    xname = pdinfo->varname[xno];
-    yname = pdinfo->varname[yno];
-
-    if (gretl_isconst(t1, t2, Z[xno])) {
-	sprintf(gretl_errmsg, _("%s is a constant"), xname);
-	return E_DATA;
-    } else if (gretl_isconst(t1, t2, Z[yno])) {
-	sprintf(gretl_errmsg, _("%s is a constant"), yname);
-	return E_DATA;
-    }	
-
-    xcf_m = order;
-    if (xcf_m == 0) {
-	xcf_m = auto_acf_order(pdinfo->pd, T) / 2;
-    } else if (2 * xcf_m > T - pdinfo->pd) {
-	xcf_m = (T - 1) / 2; /* ?? */
-    }
-
-    xcf = malloc((xcf_m * 2 + 1) * sizeof *xcf);
-    if (xcf == NULL) {
-	return E_ALLOC;    
-    }
-
-    /* calculate xcf up to order m */
-    for (k=-xcf_m; k<=xcf_m; k++) {
-	xcf[k+xcf_m] = gretl_xcf(k, t1, t2, Z[xno], Z[yno]);
-	if (xcf[k+xcf_m] < 0) {
-	    allpos = 0;
+    if (err) {
+	if (badvar) {
+	    sprintf(gretl_errmsg, _("%s is a constant"), 
+		    pdinfo->varname[list[badvar]]);
 	}
+	return err;
+    }
+
+    xname = pdinfo->varname[list[1]];
+    yname = pdinfo->varname[list[2]];
+
+    p = order;
+    if (p == 0) {
+	p = auto_acf_order(pdinfo->pd, T) / 2;
+    } else if (2 * p > T - pdinfo->pd) {
+	p = (T - 1) / 2; /* ?? */
+    }
+
+    xcf = real_xcf_vec(x + t1, y + t1, p, T, &err);
+    if (err) {
+	return err;    
     }
 
     if ((opt & OPT_A) && !(opt & OPT_Q)) { 
 	/* use ASCII graphics, not gnuplot */
-	xcorrgm_ascii_plot(xcf, xcf_m, prn);
+	xcorrgm_ascii_plot(xcf->val, p, prn);
     } 
 
     /* for confidence bands */
@@ -2979,8 +3115,8 @@ int xcorrgram (const int *list, int order, const double **Z,
     pputs(prn, _("  LAG      XCF"));
     pputs(prn, "\n\n");
 
-    for (k=-xcf_m; k<=xcf_m; k++) {
-	double x = xcf[k + xcf_m];
+    for (k=-p; k<=p; k++) {
+	double x = xcf->val[k + p];
 
 	pprintf(prn, "%5d%9.4f", k, x);
 	if (fabs(x) > pm[2]) {
@@ -2995,10 +3131,18 @@ int xcorrgram (const int *list, int order, const double **Z,
     pputc(prn, '\n');
 
     if (!(opt & OPT_A) && !(opt & OPT_Q)) {
-	err = xcorrgm_graph(xname, yname, xcf, xcf_m, pm, allpos);
+	int allpos = 1;
+
+	for (k=-p; k<=p; k++) {
+	    if (xcf->val[k+p] < 0) {
+		allpos = 0;
+		break;
+	    }
+	}
+	err = xcorrgm_graph(xname, yname, xcf->val, p, pm, allpos);
     }
 
-    free(xcf);
+    gretl_matrix_free(xcf);
 
     return err;
 }

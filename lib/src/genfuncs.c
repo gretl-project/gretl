@@ -2587,3 +2587,44 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     return pv;
 }
 
+/* create a matrix containing ACF or PACF values for each
+   column of the input matrix, @m, with lag order @p.
+*/
+
+gretl_matrix *matrix_acf (const gretl_matrix *m, int p, gretlopt opt, 
+			  int *err)
+{
+    gretl_matrix *a, *A = NULL;
+    const double *x;
+    int i, j;
+    
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    A = gretl_matrix_alloc(p, m->cols);
+    if (A == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    x = m->val;
+
+    for (j=0; j<m->cols; j++) {
+	a = acf_vec(x, p, NULL, m->rows, opt, err);
+	if (*err) {
+	    gretl_matrix_free(a);
+	    gretl_matrix_free(A);
+	    return NULL;
+	}
+	for (i=0; i<p; i++) {
+	    gretl_matrix_set(A, i, j, a->val[i]);
+	}
+	gretl_matrix_free(a);
+	x += m->rows;
+    }
+
+    return A;
+}
+

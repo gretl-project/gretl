@@ -344,6 +344,9 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 		    (asy)? "\n    " : " ",
 		    _("Chi-square"), cmp->dfn, cmp->chisq);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
+	    if (verbosity <= 1) {
+		pputc(prn, '\n');
+	    }
 	}
 
 	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
@@ -371,6 +374,9 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 		    (cmp->robust)? _("Robust F") : "F",
 		    cmp->dfn, cmp->dfd, cmp->F);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
+	    if (verbosity <= 1) {
+		pputc(prn, '\n');
+	    }
 	}
 
 	record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));

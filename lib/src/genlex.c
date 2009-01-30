@@ -304,6 +304,7 @@ struct str_table funcs[] = {
     { F_XMIN,     "xmin" },
     { F_XMAX,     "xmax" },
     { F_ACF,      "acf" },
+    { F_XCF,      "xcf" },
     { F_MCOVG,    "mcovg" },
     { 0,          NULL }
 };

@@ -3334,7 +3334,10 @@ static int command_is_silent (const CMD *cmd, const char *line)
 
 #define print_param_last(c) (c == ARBOND || \
 			     c == DELEET || \
-			     c == LOGISTIC)
+			     c == LOGISTIC || \
+	                     c == CORRGM || \
+                             c == PERGM || \
+                             c == XCORRGM)
 
 /**
  * echo_cmd:
