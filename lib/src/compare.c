@@ -1430,32 +1430,6 @@ double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return pv;
 }
 
-double ljung_box (int m, int t1, int t2, const double *y, int *err)
-{
-    double acf, LB = 0.0;
-    int k, n = t2 - t1 + 1;
-
-    *err = 0;
-
-    /* calculate acf up to lag m, cumulating LB */
-    for (k=1; k<=m; k++) {
-	acf = gretl_acf(k, t1, t2, y);
-	if (na(acf)) {
-	    *err = E_MISSDATA;
-	    break;
-	}
-	LB += acf * acf / (n - k);
-    }
-
-    if (*err) {
-	LB = NADBL;
-    } else {
-	LB *= n * (n + 2.0);
-    }
-
-    return LB;
-}
-
 /**
  * reset_test:
  * @pmod: pointer to model to be tested.

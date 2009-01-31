@@ -2354,23 +2354,16 @@ int auto_acf_order (int pd, int n)
  * the range @t1 to @t2, or #NADBL on failure.
  */
 
-double gretl_acf (int k, int t1, int t2, const double *y)
+static double gretl_acf (int k, int t1, int t2, const double *y)
 {
-    double z, ybar, num, den;
-    int n, t;
-
-    n = t2 - t1 + 1;
-
-    if (n == 0 || gretl_isconst(t1, t2, y)) { 
-	return NADBL;
-    }
+    double z, ybar, num = 0, den = 0;
+    int t;
 
     ybar = gretl_mean(t1, t2, y);
+
     if (na(ybar)) {
 	return NADBL;
     }
-
-    num = den = 0.0;
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t])) {
@@ -2387,6 +2380,50 @@ double gretl_acf (int k, int t1, int t2, const double *y)
 }
 
 /**
+ * ljung_box:
+ * @m: maximum lag.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @y: data series.
+ * @err: location to receive erro code.
+ *
+ * Returns: the Ljung-Box statistic for lag order @m for
+ * the series @y over the sample @t1 to @t2, or #NADBL 
+ * on failure.
+ */
+
+double ljung_box (int m, int t1, int t2, const double *y, int *err)
+{
+    double acf, LB = 0.0;
+    int k, n = t2 - t1 + 1;
+
+    *err = 0;
+
+    if (n == 0 || gretl_isconst(t1, t2, y)) {
+	*err = E_DATA;
+	return NADBL;
+    }    
+
+    /* calculate acf up to lag m, cumulating LB */
+    for (k=1; k<=m; k++) {
+	acf = gretl_acf(k, t1, t2, y);
+	if (na(acf)) {
+	    *err = E_MISSDATA;
+	    break;
+	}
+	LB += acf * acf / (n - k);
+    }
+
+    if (*err) {
+	LB = NADBL;
+    } else {
+	LB *= n * (n + 2.0);
+    }
+
+    return LB;
+}
+
+/**
  * gretl_xcf:
  * @k: lag order (or lead order if < 0).
  * @t1: starting observation.
@@ -2398,7 +2435,8 @@ double gretl_acf (int k, int t1, int t2, const double *y)
  * series @x and @y over the range @t1 to @t2, or #NADBL on failure.
  */
 
-double gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
+static double 
+gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
 {
     double zx, zy, xbar, ybar, num, den1, den2;
     int n, t;

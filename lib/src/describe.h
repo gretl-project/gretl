@@ -120,10 +120,6 @@ double gretl_corr (int t1, int t2, const double *x, const double *y,
 
 double gretl_corr_rsq (int t1, int t2, const double *x, const double *y);
 
-double gretl_acf (int k, int t1, int t2, const double *y);
-
-double gretl_xcf (int k, int t1, int t2, const double *x, const double *y);
-
 int gretl_moments (int t1, int t2, const double *x, 
 		   double *xbar, double *sd, 
 		   double *skew, double *kurt, int k);
@@ -252,5 +248,7 @@ gretl_matrix *acf_vec (const double *x, int order,
 gretl_matrix *xcf_vec (const double *x, const double *y,
 		       int p, const DATAINFO *pdinfo,
 		       int n, int *err);
+
+double ljung_box (int m, int t1, int t2, const double *y, int *err);
 
 #endif /* DESCRIBE_H */
