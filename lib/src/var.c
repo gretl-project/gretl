@@ -923,6 +923,9 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
 	    for (j=0; j<var->neqns; j++) {
 		vj = var->ylist[j+1];
 		for (lag=1; lag<=var->order; lag++) {
+		    if (!lag_wanted(var, lag)) {
+			continue;
+		    }
 		    xtid = NADBL;
 		    if (t < tdyn || s - lag < 0) {
 			/* pre-forecast value */

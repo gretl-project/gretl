@@ -597,6 +597,7 @@ static void compute_VAR_dataset (irfboot *b, GRETL_VAR *v,
 {
     double x;
     int i, j, k, t;
+    int nl = var_n_lags(v);
 
     for (t=0; t<v->T; t++) {
 	/* extract "X" at t */
@@ -618,7 +619,7 @@ static void compute_VAR_dataset (irfboot *b, GRETL_VAR *v,
 	k = v->ifc;
 	for (i=0; i<v->neqns; i++) {
 	    x = b->Yt->val[i];
-	    for (j=1; j<=v->order && t+j < v->T; j++) {
+	    for (j=1; j<=nl && t+j < v->T; j++) {
 		gretl_matrix_set(v->X, t+j, k++, x);
 	    }
 	}
