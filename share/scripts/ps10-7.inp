@@ -11,4 +11,4 @@ list
 # suppress two observations 
 smpl 1973.03 ;
 # estimate unrestricted model 
-ols dxchrate const exchrat1 dxchrat2  ;
+ols dxchrate const exchrat1 dxchrat2

@@ -831,13 +831,6 @@ gretlopt get_gretl_options (char *line, int *err)
 	return oflags;
     }
 
-    /* to enable reading of trad. ESL input files */
-    if (line[n-2] == ';' && isspace(line[n-1])) {
-	line[n-2] = '\0';
-    } else if (line[n-1] == ';') {
-	line[n-1] = '\0';
-    }
-
     get_cmdword(line, cmdword);
 
     if (strstr(line, "end nls")) {

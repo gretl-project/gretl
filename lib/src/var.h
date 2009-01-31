@@ -36,13 +36,14 @@ struct GRETL_VAR_ {
     int refcount;        /* for saving/deleting */
     int err;             /* error code */
     int neqns;           /* number of equations in system */
-    int order;           /* lag order */
+    int order;           /* maximum lag order */
     int t1;              /* starting observation */
     int t2;              /* ending observation */
     int T;               /* number of observations */
     int df;              /* T - average coeffs per equation */
     int ifc;             /* equations include a constant (1) or not (0) */
     int ncoeff;          /* total coefficients per equation */
+    int *lags;           /* list of specific lags */
     int *ylist;          /* list of stochastic vars */
     int *xlist;          /* list of exogenous variables */
     int *rlist;          /* restricted exogenous variables (VECM only) */
@@ -73,6 +74,9 @@ struct GRETL_VAR_ {
     JohansenInfo *jinfo; /* extra information for VECMs */
     char *name;          /* for use in session management */
 };
+
+#define var_n_lags(v) ((v->lags != NULL)? v->lags[0] : v->order)
+#define var_max_lag(v) ((v->lags != NULL)? v->lags[v->lags[0]] : v->order)
 
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 

@@ -16,7 +16,7 @@ genr sgmasqr = $ess/$T
 # Suppress the first observation 
 smpl 1949 1989
 # Model B - General dynamic model with no restrictions 
-ols Cons 0 C1 DI DI1 ;
+ols Cons 0 C1 DI DI1
 # Save uhat for LM test for AR(1) and generate uhat(t-1) 
 genr ut = $uhat
 genr ut1=ut(-1)

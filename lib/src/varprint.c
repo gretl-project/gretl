@@ -974,12 +974,22 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
     int quiet = (opt & OPT_Q);
+    int nlags, maxlag, nextlag;
     int lldone = 0;
     double pv;
     int i, j, k, v;
 
     if (prn == NULL) {
 	return 0;
+    }
+
+    nlags = var_n_lags(var);
+    maxlag = var_max_lag(var);
+    
+    if (var->lags != NULL) {
+	nextlag = var->lags[nlags - 1];
+    } else {
+	nextlag = maxlag - 1;
     }
 
     ntodate(startdate, var->t1, pdinfo);
@@ -1108,20 +1118,20 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	}
 
 	for (j=0; j<var->neqns; j++) {
-	    pv = snedecor_cdf_comp(var->order, dfd, var->Fvals[k]);
+	    pv = snedecor_cdf_comp(nlags, dfd, var->Fvals[k]);
 	    v = (var->models[j])->list[1];
 	    if (tex) {
 		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
 		pputs(prn, "& ");
-		pprintf(prn, "$F(%d, %d) = %g$ & ", var->order, dfd, var->Fvals[k]);
+		pprintf(prn, "$F(%d, %d) = %g$ & ", nlags, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\\\\n", pv);
 	    } else if (rtf) {
 		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
-		pprintf(prn, "F(%d, %d) = %8.5g ", var->order, dfd, var->Fvals[k]);
+		pprintf(prn, "F(%d, %d) = %8.5g ", nlags, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\par\n", pv);
 	    } else {
 		pprintf(prn, _("All lags of %-15s "), pdinfo->varname[v]);
-		sprintf(Fstr, "F(%d, %d)", var->order, dfd);
+		sprintf(Fstr, "F(%d, %d)", nlags, dfd);
 		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k], pv);
 	    }
 	    k++;
@@ -1130,16 +1140,16 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	if (var->order > 1) {
 	    pv = snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]);
 	    if (tex) {
-		pprintf(prn, I_("All vars, lag %-13d "), var->order);
+		pprintf(prn, I_("All vars, lag %-13d "), maxlag);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\\\\n", pv);
 	    } else if (rtf) {
-		pprintf(prn, I_("All vars, lag %-13d "), var->order);
+		pprintf(prn, I_("All vars, lag %-13d "), maxlag);
 		pprintf(prn, "F(%d, %d) = %8.5g ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\par\n", pv);
 	    } else {
-		pprintf(prn, _("All vars, lag %-13d "), var->order);
+		pprintf(prn, _("All vars, lag %-13d "), maxlag);
 		sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
 		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k], pv);
 	    } 
@@ -1164,11 +1174,11 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pputc(prn, '\n');
 
 	if (rtf || tex) {
-	    sprintf(h0str, I_("the longest lag is %d"), var->order - 1);
-	    sprintf(h1str, I_("the longest lag is %d"), var->order);
+	    sprintf(h0str, I_("the longest lag is %d"), nextlag);
+	    sprintf(h1str, I_("the longest lag is %d"), maxlag);
 	} else {
-	    sprintf(h0str, _("the longest lag is %d"), var->order - 1);
-	    sprintf(h1str, _("the longest lag is %d"), var->order);
+	    sprintf(h0str, _("the longest lag is %d"), nextlag);
+	    sprintf(h1str, _("the longest lag is %d"), maxlag);
 	}
 
 	pv = chisq_cdf_comp(df, var->LR);

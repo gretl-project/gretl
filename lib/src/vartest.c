@@ -182,6 +182,18 @@ int VAR_portmanteau_test (GRETL_VAR *var)
     return err;
 }
 
+/* identify columns of the VAR X matrix that contain the final
+   lag of an endogenous variable */
+
+static int omit_column (GRETL_VAR *var, int ifc, int nl, int j)
+{
+    if (ifc) {
+	return j % nl == 0 && j < 1 + var->neqns * nl;
+    } else {
+	return (j+1) % nl == 0 && j < var->neqns * nl;
+    }
+}
+
 /* make and record residuals for LR test on last lag */
 
 int last_lag_LR_prep (GRETL_VAR *var, int ifc)
@@ -189,9 +201,9 @@ int last_lag_LR_prep (GRETL_VAR *var, int ifc)
     gretl_matrix *X = NULL;
     gretl_matrix *B = NULL;
     double x;
-    int g = var->ncoeff - var->neqns;
-    int lag, lmax;
-    int i, t, k, err = 0;
+    int g = var->ncoeff - var->neqns; /* removing one lag from each eqn */
+    int j, t, k, nl;
+    int err = 0;
 
     if (var->F == NULL) {
 	var->F = gretl_matrix_alloc(var->T, var->neqns);
@@ -207,19 +219,19 @@ int last_lag_LR_prep (GRETL_VAR *var, int ifc)
 	goto bailout;
     }
 
-    lag = (ifc)? 0 : 1;
-    lmax = ifc + var->neqns * var->order;
-    k = 0;
+    nl = var_n_lags(var);
 
-    for (i=0; i<var->ncoeff; i++) {
-	if (lag != var->order) {
-	    for (t=0; t<var->T; t++) {
-		x = gretl_matrix_get(var->X, t, i);
-		gretl_matrix_set(X, t, k, x);
-	    }
-	    k++;
+    k = 0;
+    for (j=0; j<var->ncoeff; j++) {
+	/* loop across the cols of var->X */
+	if (j > 0 && omit_column(var, ifc, nl, j)) {
+	    continue;
 	}
-	lag = (i >= lmax)? 0 : (lag < var->order)? lag + 1 : 1;
+	for (t=0; t<var->T; t++) {
+	    x = gretl_matrix_get(var->X, t, j);
+	    gretl_matrix_set(X, t, k, x);
+	}
+	k++;
     }
 
     err = gretl_matrix_multi_ols(var->Y, X, B, var->F, NULL);
@@ -479,7 +491,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
     gretl_matrix *C = NULL;
     gretl_vector *b = NULL;
     int hcv = libset_get_int(HC_VERSION);
-    int p = var->order;
+    int p = (var->lags != NULL)? var->lags[0] : var->order;
     int n = var->neqns;
     int g = var->ncoeff;
     int dim = (p > n)? p : n;
@@ -499,7 +511,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
 	return E_ALLOC;
     }     
 
-    for (i=0; i<n && !err; i++) {
+    for (i=0; i<var->neqns && !err; i++) {
 	MODEL *pmod = var->models[i];
 	int ii, jj, jpos, ipos = ifc;
 	double w, vij;
@@ -526,7 +538,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
 	gretl_matrix_reuse(C, p, p);
 	gretl_matrix_reuse(b, p, 1);
 
-	for (j=0; j<n && !err; j++) {
+	for (j=0; j<var->neqns && !err; j++) {
 	    double w = NADBL;
 
 	    gretl_matrix_extract_matrix(C, V, ipos, ipos, GRETL_MOD_NONE);

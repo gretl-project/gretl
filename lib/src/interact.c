@@ -380,6 +380,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define DOUBLE_SEP_OK(c) (c == ARBOND || \
                           c == ARMA || \
                           c == COINT2 || \
+                          c == VAR || \
 			  c == VECM) 
 
 #define NEEDS_LISTSEP(c) (c == AR || \
@@ -2009,6 +2010,8 @@ static int process_cmd_extra (CMD *cmd, const double **Z,
     return cmd->err;
 }
 
+#define semi_special(c) (c == ARBOND || c == VAR)
+
 static int handle_semicolon (int *k, int *ints_ok, int *poly, 
 			     int *sepcount, CMD *cmd)
 {
@@ -2019,7 +2022,7 @@ static int handle_semicolon (int *k, int *ints_ok, int *poly,
 	*k += 1;
 	*sepcount -= 1;
 	if (*ints_ok) {
-	    if (*sepcount == 0 || (cmd->ci == ARBOND && *sepcount == 1)) {
+	    if (*sepcount == 0 || (*sepcount == 1 && semi_special(cmd->ci))) {
 		*ints_ok = 0;
 	    }
 	}	
@@ -2533,8 +2536,13 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	goto cmd_exit;
     }
 
+#if CMD_DEBUG
+    fprintf(stderr, "sepcount = %d\n", sepcount);
+#endif
+
     if (cmd->ci == AR || cmd->ci == ARBOND ||
-	cmd->ci == ARMA || cmd->ci == GARCH) {
+	cmd->ci == ARMA || cmd->ci == GARCH ||
+	(cmd->ci == VAR && sepcount == 2)) {
 	/* flag acceptance of plain ints in list */
 	ints_ok = 1;
     }
@@ -3198,7 +3206,7 @@ static int n_separators (const int *list)
 {
     int i, nsep = 0;
 
-    for (i=2; i<list[0]; i++) {
+    for (i=2; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
 	    nsep++;
 	}
@@ -3253,6 +3261,11 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 
     nsep = n_separators(cmd->list);
 
+    if (nsep == 2 && cmd->ci == VAR) {
+	/* VAR with specific lags list */
+	use_varnames = 0;
+    }
+
     if (cmd->ci == LAGS) {
 	if (cmd->param[0] != '\0') {
 	    *plen += pprintf(prn, " %s;", cmd->param);
@@ -3274,6 +3287,8 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 	    gotsep++;
 	    if (listsep_switch(cmd->ci) && gotsep == nsep) {
 		use_varnames = !use_varnames;
+	    } else if (cmd->ci == VAR && gotsep == 1) {
+		use_varnames = 1;
 	    }
 	    continue;
 	}

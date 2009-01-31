@@ -23,7 +23,7 @@ fcast 1990 1994 yhata --static
 # reset sample range
 smpl 1990 1994
 # regress actual against predicted
-ols calwage 0 yhata;
+ols calwage 0 yhata
 # compute prediction error, error sum of squares, and selection criteria
 genr uhata = calwage - yhata
 genr mapea = mean(100*abs(uhata)/calwage)

@@ -178,6 +178,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->robust = 0;
     var->LBs = 0;
 
+    var->lags = NULL;
     var->ylist = NULL;
     var->xlist = NULL;
     var->rlist = NULL;
@@ -206,6 +207,8 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->name = NULL;
 }
 
+#define lag_wanted(v, i) (v->lags == NULL || in_gretl_list(v->lags, i))
+
 /* Construct the common X matrix (composed of lags of the core
    variables plus other terms if applicable)
 */
@@ -232,6 +235,9 @@ void VAR_fill_X (GRETL_VAR *v, int p, const double **Z,
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];
 	for (j=1; j<=p; j++) {
+	    if (!lag_wanted(v, j)) {
+		continue;
+	    }
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
 		if (diff) {
@@ -509,10 +515,12 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
 			     gretlopt opt)
 {
-    int err = 0;
+    int nl, err = 0;
 
     v->T = v->t2 - v->t1 + 1;
-    v->ncoeff = v->order * v->neqns;
+
+    nl = var_n_lags(v);
+    v->ncoeff = nl * v->neqns;
 
     if (v->xlist != NULL) {
 	/* user-specified exogenous vars */
@@ -591,6 +599,7 @@ static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
    auxiliary tasks */
 
 static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
+				 const int *lags,
 				 const int *list,
 				 const double **Z,
 				 const DATAINFO *pdinfo,
@@ -617,6 +626,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
 
     var->ci = ci;
     var->order = order;
+    var->lags = gretl_list_copy(lags);
 
     if (ci == VAR && (opt & OPT_R)) {
 	var->robust = 1;
@@ -745,6 +755,7 @@ void gretl_VAR_free (GRETL_VAR *var)
 	return;
     }
 
+    free(var->lags);
     free(var->ylist);
     free(var->xlist);
     free(var->rlist);
@@ -1809,6 +1820,9 @@ void gretl_VAR_param_names (GRETL_VAR *v, char **params,
 
     for (i=1; i<=v->ylist[0]; i++) {
 	for (j=1; j<=v->order; j++) {
+	    if (!lag_wanted(v, j)) {
+		continue;
+	    }
 	    sprintf(lagstr, "_%d", j);
 	    n = strlen(lagstr);
 	    if (v->ci == VECM) {
@@ -1849,14 +1863,19 @@ void gretl_VAR_param_names (GRETL_VAR *v, char **params,
 
 void VAR_write_A_matrix (GRETL_VAR *v)
 {
-    int i, j, k, lag;
+    int i, ii, j, k, lag;
     int dim = v->neqns * v->order;
     double bij;
 
     for (j=0; j<v->neqns; j++) {
-	k = lag = 0;
+	k = lag = ii = 0;
 	for (i=0; i<dim; i++) {
-	    bij = gretl_matrix_get(v->B, i + v->ifc, j);
+	    if (lag_wanted(v, lag+1)) {
+		bij = gretl_matrix_get(v->B, ii + v->ifc, j);
+		ii++;
+	    } else {
+		bij = 0;
+	    }
 	    gretl_matrix_set(v->A, j, v->neqns * lag + k, bij);
 	    if (lag < v->order - 1) {
 		lag++;
@@ -1866,6 +1885,10 @@ void VAR_write_A_matrix (GRETL_VAR *v)
 	    }
 	}
     }
+
+#if 0
+    gretl_matrix_print(v->A, "v->A");
+#endif
 }
 
 static void VAR_write_vcv_matrix (GRETL_VAR *v)
@@ -1990,6 +2013,56 @@ int transcribe_VAR_models (GRETL_VAR *var,
     return err;
 }
 
+/* for testing: support a hidden mechanism for creating a
+   gappy VAR, from the command, e.g.
+
+   var 1 2 4 ; y1 y2 y3 ; x
+
+   Note that even if there's no exogenous 'x', the second semicolon
+   must be given, as in "var 1 2 4 ; y1 y2 y3 ;".  
+
+   What we do below is take the first parameter ('order') and
+   combine it with the list elements (here 2 and 4) which precede
+   the first separator, to create a list of lags.  We then
+   remove these elements from the real regression list, leaving
+   "y1 y2 y3 ; x".  And we redefine 'order' as the maximum lag.
+*/
+
+static int *maybe_get_lags_list (int *list, int *order, int *err)
+{
+    int *lags = NULL;
+    int i, sep = 0, pos1 = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    if (sep == 0) {
+		pos1 = i;
+	    }
+	    sep++;
+	}
+    }
+
+    if (sep == 2) {
+	/* interpret the first separator as marking off lags */
+	lags = gretl_list_new(pos1);
+	if (lags == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    lags[1] = *order;
+	    for (i=1; i<pos1; i++) {
+		lags[i+1] = list[i];
+	    }
+	    for (i=pos1; i>=1; i--) {
+		gretl_list_delete_at_pos(list, i);
+	    }
+	    gretl_list_sort(lags);
+	    *order = lags[lags[0]];
+	}
+    }
+
+    return lags;
+}
+
 /**
  * gretl_VAR:
  * @order: lag order for the VAR
@@ -2020,9 +2093,15 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 {
     GRETL_VAR *var = NULL;
     int code = (opt & OPT_L)? VAR_LAGSEL : VAR_ESTIMATE;
+    int *lags = NULL;
     int err = 0;
 
-    var = gretl_VAR_new(code, order, 0, list, Z, pdinfo, 
+    lags = maybe_get_lags_list(list, &order, &err);
+    if (err) {
+	return NULL;
+    }
+
+    var = gretl_VAR_new(code, order, 0, lags, list, Z, pdinfo, 
 			opt, &err);
     if (var == NULL) {
 	return NULL;
@@ -2487,7 +2566,7 @@ johansen_wrapper (int code, int order, int rank,
 {
     GRETL_VAR *jvar;
 
-    jvar = gretl_VAR_new(code, order - 1, rank, list, Z, pdinfo,
+    jvar = gretl_VAR_new(code, order - 1, rank, NULL, list, Z, pdinfo,
 			 opt, err);
     if (jvar == NULL) {
 	return NULL;
