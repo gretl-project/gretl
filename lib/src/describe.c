@@ -1961,6 +1961,8 @@ static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
     return 0;
 }
 
+/* also used in gretl_matrix.c */
+
 int compare_xtab_rows (const void *a, const void *b) 
 {
     const double **da = (const double **) a;
@@ -2287,7 +2289,9 @@ static int get_pacf (double *pacf, const double *acf, int m)
     int i, j;
 
     phi = gretl_matrix_alloc(m, m);
-    if (phi == NULL) return E_ALLOC;
+    if (phi == NULL) {
+	return E_ALLOC;
+    }
 
     pacf[0] = acf[0];
     gretl_matrix_set(phi, 0, 0, acf[0]);
@@ -2314,6 +2318,8 @@ static int get_pacf (double *pacf, const double *acf, int m)
 
     return 0;
 }
+
+/* also used in GUI, library.c */
 
 int auto_acf_order (int pd, int n)
 {
@@ -2371,7 +2377,7 @@ static double gretl_acf (int k, int t1, int t2, const double *y)
 	}
 	z = y[t] - ybar;
 	den += z * z;
-	if (t - t1 >= k) {
+	if (t - k >= t1) {
 	    num += z * (y[t-k] - ybar);
 	}
     }
@@ -2438,14 +2444,9 @@ double ljung_box (int m, int t1, int t2, const double *y, int *err)
 static double 
 gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
 {
-    double zx, zy, xbar, ybar, num, den1, den2;
-    int n, t;
-
-    n = t2 - t1 + 1;
-
-    if (n == 0 || gretl_isconst(t1, t2, x) || gretl_isconst(t1, t2, y)) { 
-	return NADBL;
-    }
+    double num = 0, den1 = 0, den2 = 0;
+    double zx, zy, xbar, ybar;
+    int t;
 
     xbar = gretl_mean(t1, t2, x);
     if (na(xbar)) {
@@ -2456,8 +2457,6 @@ gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
     if (na(ybar)) {
 	return NADBL;
     }
-
-    num = den1 = den2 = 0.0;
 
     for (t=t1; t<=t2; t++) {
 	if (na(x[t]) || na(y[t])) {
