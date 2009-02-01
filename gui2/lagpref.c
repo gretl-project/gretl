@@ -6,7 +6,9 @@
 
 #define LDEBUG 0
 
-#define VDEFLT -1 
+#include "gretl.h"
+#include "selector.h"
+#include "lagpref.h"
 
 enum {
     LAGS_NONE,    /* no lags specified */
@@ -14,14 +16,6 @@ enum {
     LAGS_LIST,    /* list of lags specific given */
     LAGS_TMP      /* provisional list when working from model */
 } SpecType;
-
-enum {
-    LAG_X = 1,    /* lags set for regular variable context */
-    LAG_Y_X,      /* lags for dependent variable */
-    LAG_W,        /* lags set for variable as instrument */
-    LAG_Y_W,      /* lags for dependent var as instrument */
-    LAG_Y_V       /* lags of endoenous vars in VAR */
-} LagContext;
 
 typedef struct lagpref_ lagpref;
 
@@ -38,7 +32,7 @@ struct lagpref_ {
 static lagpref **lprefs;
 static int n_prefs;
 
-static void destroy_lag_preferences (void)
+void destroy_lag_preferences (void)
 {
     int i;
     
@@ -227,7 +221,7 @@ static lagpref *get_saved_lpref (int v, char context)
     return lpref;
 }
 
-static const int *get_VAR_lags_list (void)
+const int *get_VAR_lags_list (void)
 {
     lagpref *lp = get_saved_lpref(VDEFLT, LAG_Y_V);
 
@@ -238,7 +232,7 @@ static const int *get_VAR_lags_list (void)
     }
 }
 
-static void set_VAR_max_lag (int lmax)
+void set_VAR_max_lag (int lmax)
 {
     lagpref *lp = get_saved_lpref(VDEFLT, LAG_Y_V);
 
@@ -250,7 +244,7 @@ static void set_VAR_max_lag (int lmax)
 /* determine if a variable in a listbox is just a "dummy" lag
    entry or not */
 
-static int is_lag_dummy (int v, int lag, char context)
+int is_lag_dummy (int v, int lag, char context)
 {
     lagpref *lpref = get_saved_lpref(v, context);
     int ynum = selector_get_depvar_number(open_selector);
@@ -297,7 +291,7 @@ static void maybe_destroy_depvar_lags (lagpref *lpref, char context)
 /* called when a specific lag, e.g. foo(-3), is removed from
    a list of selected variables with the mouse */
 
-static int remove_specific_lag (int v, int lag, char context)
+int remove_specific_lag (int v, int lag, char context)
 {
     int ynum = selector_get_depvar_number(open_selector);
     lagpref *lpref;
@@ -393,8 +387,8 @@ static lagpref *lpref_add (int v, char context, int type)
     return lpref;
 }
 
-static int set_lag_prefs_from_list (int v, int *llist, char context,
-				    int *changed)
+int set_lag_prefs_from_list (int v, int *llist, char context,
+			     int *changed)
 {
     lagpref *lpref = get_saved_lpref(v, context);
     int mod, err = 0;
@@ -433,8 +427,8 @@ static int minmax_defaults (int lmin, int lmax, char context)
     return 0;
 }
 
-static int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
-				      char context, int *changed)
+int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
+			       char context, int *changed)
 {
     lagpref *lpref = get_saved_lpref(v, context);
     int mod, err = 0;
@@ -605,7 +599,7 @@ static void clean_up_model_prefs (void)
    "lagpref" form.
 */
 
-static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
+int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
 {
     int n, nset = 0;
     int err = 0;
@@ -634,7 +628,7 @@ static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
     return err;
 }
 
-static int set_lag_prefs_from_VAR (const int *lags, int *xlist)
+int set_lag_prefs_from_VAR (const int *lags, int *xlist)
 {
     int err = 0;    
 
@@ -667,7 +661,7 @@ static int set_lag_prefs_from_VAR (const int *lags, int *xlist)
     return err;
 }
 
-static void set_null_lagpref (int v, char context, int *changed)
+void set_null_lagpref (int v, char context, int *changed)
 {
     lagpref *lpref = get_saved_lpref(v, context);
 
@@ -678,7 +672,7 @@ static void set_null_lagpref (int v, char context, int *changed)
     }
 }
 
-static void
+void
 get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
 		    char context, selector *sr)
 {
@@ -690,7 +684,7 @@ get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
     if (context == LAG_Y_V && lpref == NULL) {
 	*lmin = 1;
 	if (sr != NULL) {
-	    set_int_from_spinner(GTK_SPIN_BUTTON(sr->extra[0]), lmax);
+	    *lmax = selector_get_VAR_order(sr);
 	}
 	return;
     }
@@ -717,7 +711,7 @@ get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
     } 
 }
 
-static int *get_lag_pref_as_list (int v, char context)
+int *get_lag_pref_as_list (int v, char context)
 {
     lagpref *lpref = get_saved_lpref(v, context);
     int *list = NULL;

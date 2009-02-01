@@ -239,6 +239,7 @@ GUISRC = about.c \
 	gui_recode.c \
 	gui_utils.c \
 	helpfiles.c \
+	lagpref.c \
 	library.c \
 	menustate.c \
 	model_table.c \

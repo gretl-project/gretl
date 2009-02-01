@@ -362,24 +362,31 @@ static void gretl_matrix_I (gretl_matrix *A, int n)
     }
 }
 
+#define lag_wanted(v, i) (v->lags == NULL || in_gretl_list(v->lags, i))
+
 /* After doing OLS estimation of the VECM conditional on \beta: copy
    the coefficients on the lagged differences (i.e. form the \Gamma
    matrices) so we can compute the VAR representation */
 
 static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_matrix **G)
 {
+    int nl = var_n_lags(vecm);
     int i, j, k, h;
     double x;
 
     for (i=0; i<vecm->neqns; i++) {
 	for (k=0; k<vecm->order; k++) {
+	    if (!lag_wanted(vecm, k+1)) {
+		gretl_matrix_zero(G[k]);
+		continue;
+	    }
 	    h = k + vecm->ifc;
 	    /* successive lags (distinct \Gamma_i matrices) */
 	    for (j=0; j<vecm->neqns; j++) {
 		/* successive \Delta x_j */
 		x = gretl_matrix_get(vecm->B, h, i);
 		gretl_matrix_set(G[k], i, j, x);
-		h += vecm->order;
+		h += nl;
 	    }
 	}
     }
@@ -773,7 +780,7 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
     double c;
 
     /* lagged differences */
-    K += v->order * p;
+    K += var_n_lags(v) * p;
 
     /* deterministic stuff */
     K += v->jinfo->seasonals + v->ifc;
@@ -1377,7 +1384,7 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     gretl_matrix *S;
     int T = vecm->T;
     int g = vecm->neqns;
-    int k = g * (vecm->order + 1);
+    int k = g * (vecm->order + 1); /* FIXME gappy */
 
     S = gretl_matrix_copy(vecm->S);
     if (S == NULL) {

@@ -26,6 +26,7 @@
 #include "fileselect.h"
 #include "fnsave.h"
 #include "treeutils.h"
+#include "lagpref.h"
 
 #include "var.h"
 #include "gretl_func.h"
@@ -157,6 +158,10 @@ struct _selector {
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
                             c == IVREG || c == HECKIT)
 
+/* shared state */
+int y_x_lags_enabled;
+int y_w_lags_enabled;
+
 /* static state variables */
 
 static int default_y = -1;
@@ -165,8 +170,6 @@ static int default_order;
 static int vartrend = 0;
 static int varconst = 1;
 static int lags_hidden;
-static int y_x_lags_enabled;
-static int y_w_lags_enabled;
 static int arma_p = 1;
 static int arma_P = 0;
 static int arima_d = 0;
@@ -200,7 +203,7 @@ static gretlopt model_opt;
 static GtkWidget *multiplot_label;
 static GtkWidget *multiplot_menu;
 
-static selector *open_selector;
+selector *open_selector;
 
 static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data);
@@ -208,13 +211,10 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 			       selector *sr);
 static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data);
-static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static int list_show_var (int v, int ci, int show_lags);
-static int selector_get_depvar_number(selector *sr);
 static int functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
-static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist);
-
+static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 
 #define spinner_get_int(b) (gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(b)))
 
@@ -249,8 +249,6 @@ static int want_radios (selector *sr)
 
     return 0;
 }
-
-#include "lagpref.c"
 
 static int selection_at_max (selector *sr, int nsel)
 {
@@ -627,7 +625,7 @@ static void set_varflag (const char *s)
     strncat(varflag, s, 7);
 }
 
-static int selector_get_depvar_number (selector *sr)
+int selector_get_depvar_number (const selector *sr)
 {
     int ynum = -1;
 
@@ -2048,6 +2046,11 @@ discrete_lags_string (const char *vname, const int *laglist,
 
     return s;
 }  
+
+int selector_get_VAR_order (const selector *sr)
+{
+    return gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[0]));
+}
 
 /* for use in constructing command list, possibly with
    embedded lags */
@@ -6317,30 +6320,24 @@ static int set_lags_for_var (var_lag_info *vlinfo, int yxlags, int ywlags)
 static void sync_lag_order_spinner (var_lag_info *vlinfo,
 				    selector *sr)
 {
-    lagpref *lpref = get_saved_lpref(vlinfo->v, vlinfo->context);
+    const int *list = NULL;
     int lmin = 0, lmax = 0;
 
-    if (lpref == NULL) {
-	return;
-    }
+    get_lag_preference(vlinfo->v, &lmin, &lmax, &list,
+		       vlinfo->context, sr);
 
-    if (lpref->spectype == LAGS_MINMAX) {
-	lmin = lpref->lspec.lminmax[0];
-	lmax = lpref->lspec.lminmax[1];
-    } else if (lpref->spectype == LAGS_LIST) {
-	const int *list = lpref->lspec.laglist;
-
+    if (list != NULL) {
 	lmin = list[1];
 	lmax = list[list[0]];
     }
 
-    if (lmax != 0) {
+    if (lmax != 0 && lmax != spinner_get_int(sr->extra[0])) {
 	/* update max lag as shown by spinner */
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[0]),
 				  lmax);
     }
 
-    if (lmin > 1 || lpref->spectype == LAGS_LIST) {
+    if (lmin > 1 || list != NULL) {
 	/* not 1-based consecutive lags: so disable spinner */
 	gtk_widget_set_sensitive(sr->extra[0], FALSE);
     } else {
