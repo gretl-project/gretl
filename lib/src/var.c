@@ -1314,17 +1314,17 @@ int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k)
 
 int gretl_VAR_get_n_equations (const GRETL_VAR *var)
 {
-    return var->neqns;
+    return (var == NULL)? 0 : var->neqns;
 }
 
 int gretl_VAR_get_t1 (const GRETL_VAR *var)
 {
-    return var->t1;
+    return (var == NULL)? 0 : var->t1;
 }
 
 int gretl_VAR_get_t2 (const GRETL_VAR *var)
 {
-    return var->t2;
+    return (var == NULL)? 0 : var->t2;
 }
 
 const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i)
@@ -3565,7 +3565,9 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     cur = node->xmlChildrenNode;
 
     while (cur != NULL && !*err) {
-	if (!xmlStrcmp(cur->name, (XUC) "ylist")) {
+	if (!xmlStrcmp(cur->name, (XUC) "lags")) {
+	    var->lags = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "ylist")) {
 	    var->ylist = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "xlist")) {
 	    var->xlist = gretl_xml_node_get_list(cur, doc, err);
@@ -3700,6 +3702,7 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 
     fputs(">\n", fp);
 
+    gretl_xml_put_tagged_list("lags", var->lags, fp);
     gretl_xml_put_tagged_list("ylist", var->ylist, fp);
     gretl_xml_put_tagged_list("xlist", var->xlist, fp);
     gretl_xml_put_tagged_list("rlist", var->rlist, fp);
