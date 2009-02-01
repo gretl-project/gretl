@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-01-17 23:26+0200\n"
+"PO-Revision-Date: 2009-02-01 15:47+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4846,11 +4846,11 @@ msgstr "ВСЕГО"
 #: lib/src/modelprint.c:4485
 #, c-format
 msgid "modprint: expected %d names"
-msgstr ""
+msgstr "modprint: ожидалось %d названий"
 
 #: lib/src/modelprint.c:4591
 msgid "modprint: the first matrix argument must have 2 columns"
-msgstr ""
+msgstr "modprint: в первой матрице должно быть два столбца"
 
 #: lib/src/monte_carlo.c:223 lib/src/monte_carlo.c:609
 #, c-format
@@ -4884,7 +4884,7 @@ msgstr "ВНИМАНИЕ: после %d итераций сходимость н
 #: lib/src/monte_carlo.c:2080
 #, c-format
 msgid "%s estimates using the %d observations %s-%s\n"
-msgstr ""
+msgstr "Метод оценки - %s, использовано наблюдений - %d (%s-%s)\n"
 
 #: lib/src/monte_carlo.c:2084 lib/src/monte_carlo.c:2115
 #, c-format
@@ -4956,7 +4956,7 @@ msgstr "Нелинейный МНК: производные указаны не�
 #: lib/src/nls.c:2117
 #, c-format
 msgid "%d out of %d tests gave zero\n"
-msgstr ""
+msgstr "в %d из %d тестов получен ноль\n"
 
 #: lib/src/nls.c:2119
 msgid ""
@@ -4987,7 +4987,7 @@ msgstr ""
 #: lib/src/nls.c:2447
 #, c-format
 msgid "command '%s' not valid in this context"
-msgstr ""
+msgstr "команда '%s' недопустима в данном контексте"
 
 #: lib/src/nls.c:2637 plugin/heckit.c:290
 msgid "No regression function has been specified"
@@ -5003,7 +5003,7 @@ msgstr ""
 
 #: lib/src/nls.c:2695
 msgid "No parameters have been specified"
-msgstr ""
+msgstr "Не был указан ни один параметр"
 
 #: lib/src/nls.c:2791
 msgid "No function has been specified"
@@ -5071,7 +5071,7 @@ msgstr "значим на %g%%-процентном уровне (двухсто
 #: lib/src/nonparam.c:341
 #, no-c-format
 msgid "not significant at the 10% level\n"
-msgstr ""
+msgstr "не значим на 10% уровне\n"
 
 #: lib/src/nonparam.c:344
 msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
@@ -5201,7 +5201,7 @@ msgstr ""
 #: gui2/objectsave.c:194
 #, c-format
 msgid "%s saved\n"
-msgstr ""
+msgstr "%s сохранена\n"
 
 #: lib/src/objstack.c:1243 gui2/library.c:86
 msgid "Can't do this: no model has been estimated yet\n"
@@ -5218,7 +5218,7 @@ msgstr ""
 #: lib/src/options.c:955
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
-msgstr ""
+msgstr "ВНИМАНИЕ: опция %s игнорируется вне циклов"
 
 #: lib/src/plotspec.c:133 lib/src/plotspec.c:156
 msgid "lines"
@@ -5710,11 +5710,11 @@ msgstr "Ни одно наблюдение не было исключено!"
 
 #: lib/src/subsample.c:1439 lib/src/subsample.c:1457
 msgid "error in new starting obs"
-msgstr ""
+msgstr "Ошибка в первом наблюдении"
 
 #: lib/src/subsample.c:1465
 msgid "error in new ending obs"
-msgstr ""
+msgstr "Ошибка в последнем наблюдении"
 
 #: lib/src/subsample.c:1515 lib/src/subsample.c:1521 lib/src/subsample.c:1538
 msgid "missing values"
@@ -5764,7 +5764,7 @@ msgstr ""
 
 #: lib/src/system.c:99
 msgid "Three-Stage Least Squares"
-msgstr ""
+msgstr "Трехшаговый метод наименьших квадратов"
 
 #: lib/src/system.c:100
 msgid "Full Information Maximum Likelihood"
@@ -5780,7 +5780,7 @@ msgstr "Метод наименьших квадратов"
 
 #: lib/src/system.c:103
 msgid "Two-Stage Least Squares"
-msgstr ""
+msgstr "Двухшаговый метод наименьших квадратов"
 
 #: lib/src/system.c:104
 msgid "Weighted Least Squares"
@@ -5819,7 +5819,7 @@ msgstr ""
 #: lib/src/system.c:1487
 #, c-format
 msgid "'%s': unrecognized name"
-msgstr ""
+msgstr "'%s': неизвестное название"
 
 #: lib/src/system.c:1637
 #, c-format
@@ -5856,7 +5856,7 @@ msgstr ""
 
 #: lib/src/system.c:2702
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr ""
+msgstr "Тест Бриша--Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:2708
 msgid "Breusch-Pagan test for diagonal covariance matrix"
@@ -5905,15 +5905,15 @@ msgstr ""
 
 #: lib/src/texprint.c:1055 lib/src/varprint.c:1046 lib/src/varprint.c:1054
 msgid "AIC"
-msgstr ""
+msgstr "Крит. Акаике"
 
 #: lib/src/texprint.c:1056 lib/src/varprint.c:1047 lib/src/varprint.c:1055
 msgid "BIC"
-msgstr ""
+msgstr "Крит. Шварца"
 
 #: lib/src/texprint.c:1057 lib/src/varprint.c:1048 lib/src/varprint.c:1056
 msgid "HQC"
-msgstr ""
+msgstr "Крит. Хеннана-Куинна"
 
 #: lib/src/texprint.c:1508 gui2/model_table.c:918
 msgid "$t$-statistics in parentheses"
@@ -6015,7 +6015,7 @@ msgstr ""
 
 #: lib/src/var.c:2418
 msgid "Johansen test"
-msgstr ""
+msgstr "Тест Йохансена"
 
 #: lib/src/var.c:2419
 msgid "Number of equations"
@@ -6120,7 +6120,7 @@ msgstr ""
 
 #: lib/src/varprint.c:904
 msgid "Cointegration rank"
-msgstr ""
+msgstr "Ранг коинтеграции"
 
 #: lib/src/varprint.c:935 lib/src/varprint.c:939 lib/src/varprint.c:943
 msgid "Portmanteau test"
@@ -6180,7 +6180,7 @@ msgstr ""
 
 #: lib/src/varprint.c:1175 lib/src/varprint.c:1181 lib/src/varprint.c:1189
 msgid "Alternative hypothesis"
-msgstr ""
+msgstr "Альтернативная гипотеза"
 
 #: lib/src/varprint.c:1193
 msgid "Comparison of information criteria"
@@ -6236,6 +6236,8 @@ msgid ""
 "\n"
 "gretlcli: error executing script: halting\n"
 msgstr ""
+"\n"
+"gretlcli: ошибка исполнения скрипта: завершение работы\n"
 
 #: cli/gretlcli.c:551
 #, c-format
@@ -6243,6 +6245,8 @@ msgid ""
 "\n"
 "\"help\" gives a list of commands\n"
 msgstr ""
+"\n"
+"\"help\" выдает список команд\n"
 
 #: cli/gretlcli.c:554 gui2/helpfiles.c:553
 #, c-format
@@ -6252,7 +6256,7 @@ msgstr "файл справки %s не доступен\n"
 #: cli/gretlcli.c:566
 #, c-format
 msgid "Type \"open filename\" to open a data set\n"
-msgstr ""
+msgstr "Введите \"open имя_файла\" для открытия набора данных\n"
 
 #: cli/gretlcli.c:695
 #, c-format
@@ -11056,6 +11060,8 @@ msgid ""
 "out of sample.  You can add some observations now\n"
 "if you wish."
 msgstr ""
+"В данной выборке наблюдения для прогнозирования\n"
+"отсутствуют. Вы можете добавить несколько наблюдений."
 
 #: gui2/library.c:1352
 msgid ""
@@ -11064,6 +11070,11 @@ msgid ""
 "(Data menu, Edit data), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
 msgstr ""
+"В данной выборке наблюдения для прогнозирования\n"
+"Отсутствуют.  Вы можете добавить наблюдения\n"
+"(Меню: Данные -> Изменить значения), или ограничить\n"
+"выборку для которой оценивается модель\n"
+"(Меню: Выборка -> Установить диапазон)."
 
 #: gui2/library.c:1625 gui2/library.c:2953 gui2/library.c:3175
 #: gui2/library.c:3407
@@ -11738,7 +11749,7 @@ msgstr "Список моделей пуст"
 #: gui2/model_table.c:770 gui2/model_table.c:860 gui2/model_table.c:974
 #, c-format
 msgid "%s estimates"
-msgstr ""
+msgstr "Метод оценки - %s"
 
 #: gui2/model_table.c:775
 #, c-format
@@ -12123,7 +12134,7 @@ msgstr ""
 
 #: gui2/selector.c:3912
 msgid "Include seasonal dummies"
-msgstr ""
+msgstr "Добавить сезонные фиктивные переменные"
 
 #: gui2/selector.c:3920
 msgid "Fine-tune using Cochrane-Orcutt"
@@ -12143,7 +12154,7 @@ msgstr ""
 
 #: gui2/selector.c:3931
 msgid "Include time dummies"
-msgstr ""
+msgstr "Добавить фиктивные переменные для временных периодов"
 
 #: gui2/selector.c:3934
 msgid "Show zeros explicitly"
@@ -12159,7 +12170,7 @@ msgstr "Обеспечить одинаковый размер выборки"
 
 #: gui2/selector.c:3946
 msgid "Parameter covariance matrix via Hessian"
-msgstr ""
+msgstr "Оценивать матрицу ковариаций с помощью Гессиана"
 
 #: gui2/selector.c:3949
 msgid "Use X-12-ARIMA"
@@ -13051,7 +13062,7 @@ msgstr ""
 
 #: gui2/ssheet.c:1020
 msgid "gretl: specify scalar"
-msgstr ""
+msgstr "gretl: скалярная перменная"
 
 #: gui2/ssheet.c:1021
 msgid "Enter a numerical value"
