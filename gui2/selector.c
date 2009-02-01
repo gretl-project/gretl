@@ -72,6 +72,8 @@ struct _selector {
     int (*callback)();
 };
 
+#define EXTRA_LAGS (N_EXTRA - 1)
+
 /* single-equation estimation commands plus some GUI extensions */
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
                        c == PWE || c == PANEL_WLS || c == PANEL_B)
@@ -148,9 +150,7 @@ struct _selector {
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && c != ARBOND) 
 
 /* Should we have a lags button associated with auxiliary
-   variable selector?  VECM was on this list, but it's too
-   complicated (for now) to combine this with an 
-   Unrestricted/Restricted option flag */
+   variable selector? */
 
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
                             c == IVREG || c == HECKIT)
@@ -1430,8 +1430,13 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	gtk_widget_set_sensitive(sr->add_button, FALSE);
     }
 
-    if (nvars > 0 && lags_button_relevant(sr, locus)) {
-	gtk_widget_set_sensitive(sr->lags_button, TRUE);
+    if (nvars > 0) {
+	if (lags_button_relevant(sr, locus)) {
+	    gtk_widget_set_sensitive(sr->lags_button, TRUE);
+	} else if (sr->code == VAR && locus == SR_RVARS1 &&
+		   sr->extra[EXTRA_LAGS] != NULL) {
+	    gtk_widget_set_sensitive(sr->extra[EXTRA_LAGS], TRUE);
+	}
     }
 
     if (USE_VECXLIST(sr->code)) {
@@ -2036,7 +2041,8 @@ discrete_lags_string (const char *vname, const int *laglist,
 /* for use in constructing command list, possibly with
    embedded lags */
 
-static char *get_lagpref_string (int v, char context)
+static char *get_lagpref_string (int v, char context,
+				 selector *sr)
 {
     const char *vname = datainfo->varname[v];
     const int *laglist;
@@ -2053,7 +2059,7 @@ static char *get_lagpref_string (int v, char context)
 	}
     }
 
-    get_lag_preference(v, &lmin, &lmax, &laglist, context);
+    get_lag_preference(v, &lmin, &lmax, &laglist, context, sr);
 
     if (laglist != NULL) {
 	s = discrete_lags_string(vname, laglist, context);
@@ -2143,7 +2149,7 @@ static void get_rvars1_data (selector *sr, int rows, int context)
 	}
 
 	if (context) {
-	    rvstr = get_lagpref_string(rvar, context);
+	    rvstr = get_lagpref_string(rvar, context, sr);
 	} else {
 	    rvstr = g_strdup_printf(" %d", rvar);
 	}
@@ -2314,7 +2320,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 	}
 
 	if (context) {
-	    tmp = get_lagpref_string(exog, context);
+	    tmp = get_lagpref_string(exog, context, sr);
 	} else {
 	    tmp = g_strdup_printf(" %d", exog);
 	}
@@ -2501,9 +2507,9 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 	}
 	if (dataset_lags_ok(datainfo) && 
 	    select_lags_depvar(sr->code)) {
-	    *dvlags = get_lagpref_string(ynum, LAG_Y_X);
+	    *dvlags = get_lagpref_string(ynum, LAG_Y_X, NULL);
 	    if (USE_ZLIST(sr->code)) {
-		*idvlags = get_lagpref_string(ynum, LAG_Y_W);
+		*idvlags = get_lagpref_string(ynum, LAG_Y_W, NULL);
 	    }
 	}
 	if (sr->default_check != NULL && 
@@ -3244,8 +3250,8 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
     
     remove = remove_button(sr, bvbox);
 
-    /* this may need more work (VECM?) */
     if (sr->code == VAR || sr->code == VECM || sr->code == VLAGSEL) {
+	/* select lags of exogenous variables */
 	sr->lags_button = gtk_button_new_with_label(_("lags..."));
 	gtk_box_pack_start(GTK_BOX(bvbox), sr->lags_button, TRUE, FALSE, 0);
 	g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
@@ -4694,12 +4700,17 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     
     remove = remove_button(sr, bvbox);
 
-    if (sr->code == ARMA) {
-	sr->lags_button = gtk_button_new_with_label(_("lags..."));
-	gtk_box_pack_start(GTK_BOX(bvbox), sr->lags_button, TRUE, FALSE, 0);
-	g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
+    if (sr->code == ARMA || sr->code == VAR) {
+	tmp = gtk_button_new_with_label(_("lags..."));
+	gtk_box_pack_start(GTK_BOX(bvbox), tmp, TRUE, FALSE, 0);
+	g_signal_connect(G_OBJECT(tmp), "clicked", 
 			 G_CALLBACK(lags_dialog_driver), sr);
-	gtk_widget_set_sensitive(sr->lags_button, FALSE);
+	gtk_widget_set_sensitive(tmp, FALSE);
+	if (sr->code == ARMA) {
+	    sr->lags_button = tmp;
+	} else {
+	    sr->extra[EXTRA_LAGS] = tmp;
+	}
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), bvbox, TRUE, TRUE, 0);
@@ -5874,7 +5885,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 	}
 
 	/* set sensitivity of dependent variable lags apparatus */
-	if (depvar_row(vlinfo[j].context)) {
+	if (y_check != NULL && depvar_row(vlinfo[j].context)) {
 	    g_signal_connect(G_OBJECT(y_check), "toggled", 
 			     G_CALLBACK(activate_y_lags), &vlinfo[j]);
 	    if ((vlinfo[j].context == LAG_Y_X && y_x_lags_enabled) ||
@@ -6222,6 +6233,31 @@ static int set_lags_for_var (var_lag_info *vlinfo, int yxlags, int ywlags)
     return changed;
 }
 
+static void sync_lag_order_spinner (var_lag_info *vlinfo,
+				    selector *sr)
+{
+    lagpref *lpref = get_saved_lpref(vlinfo->v, vlinfo->context);
+    int lmax = 0;
+
+    if (lpref == NULL) {
+	return;
+    }
+
+    if (lpref->spectype == LAGS_MINMAX) {
+	lmax = lpref->lspec.lminmax[1];
+    } else if (lpref->spectype == LAGS_LIST) {
+	const int *list = lpref->lspec.laglist;
+
+	lmax = list[list[0]];
+    }
+
+    if (lmax != 0) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[0]),
+				  lmax);
+	gtk_widget_set_sensitive(sr->extra[0], FALSE);
+    }
+}
+
 #if LDEBUG > 2
 static void print_vlinfo (var_lag_info *vlinfo)
 {
@@ -6256,10 +6292,21 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     int i, j, resp, nvl;
     int *list;
 
-    /* get the list of stochastic (laggable) variables */
-    list = sr_get_stoch_list(sr, &nvl, &context);
-    if (list == NULL) {
-	return FALSE;
+    if (w == sr->extra[EXTRA_LAGS]) {
+	/* VAR: use a dummy for all endogenous vars */
+	list = gretl_list_new(1);
+	if (list == NULL) {
+	    return FALSE;
+	}
+	list[1] = VDEFLT;
+	nvl = 1;
+	context = LAG_Y_V;
+    } else {
+	/* get the list of stochastic (laggable) variables */
+	list = sr_get_stoch_list(sr, &nvl, &context);
+	if (list == NULL) {
+	    return FALSE;
+	}
     }
 
 #if LDEBUG
@@ -6291,7 +6338,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 
 	/* pick up any saved preferences (including saved defaults) */
 	get_lag_preference(vi, &vlinfo[j].lmin, &vlinfo[j].lmax, 
-			   &laglist, context);
+			   &laglist, context, sr);
 
 	if (laglist != NULL) {
 	    /* we got a list of specific lags for var vi: convert to a
@@ -6327,6 +6374,9 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	    if (vlinfo[j].v != VDEFLT && changed) {
 		maybe_revise_var_string(&vlinfo[j], sr);
 	    }
+	}
+	if (context == LAG_Y_V) {
+	    sync_lag_order_spinner(&vlinfo[0], sr);
 	}
     }
 

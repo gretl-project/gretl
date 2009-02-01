@@ -17,7 +17,8 @@ enum {
     LAG_X = 1,    /* lags set for regular variable context */
     LAG_Y_X,      /* lags for dependent variable */
     LAG_W,        /* lags set for variable as instrument */
-    LAG_Y_W       /* lags for dependent var as instrument */
+    LAG_Y_W,      /* lags for dependent var as instrument */
+    LAG_Y_V       /* lags of endo vars in VAR */
 } LagContext;
 
 typedef struct lagpref_ lagpref;
@@ -374,7 +375,7 @@ static int set_lag_prefs_from_list (int v, int *llist, char context,
 	if (!*changed && mod) {
 	    *changed = 1;
 	}
-    } 
+    }
 
     return err;
 }
@@ -574,12 +575,20 @@ static void set_null_lagpref (int v, char context, int *changed)
 
 static void
 get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
-		    char context)
+		    char context, selector *sr)
 {
     lagpref *lpref = get_saved_lpref(v, context);
 
     *lmin = *lmax = 0;
     *laglist = NULL;
+
+    if (context == LAG_Y_V && lpref == NULL) {
+	*lmin = 1;
+	if (sr != NULL) {
+	    set_int_from_spinner(GTK_SPIN_BUTTON(sr->extra[0]), lmax);
+	}
+	return;
+    }
 
     if ((context == LAG_Y_X && !y_x_lags_enabled) ||
 	(context == LAG_Y_W && !y_w_lags_enabled)) {
