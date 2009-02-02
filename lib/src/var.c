@@ -2016,7 +2016,7 @@ int transcribe_VAR_models (GRETL_VAR *var,
     return err;
 }
 
-static int *maybe_get_lags_list (int *list, int *order, int *err)
+static int *maybe_get_lags_list (int *list, int order, int *err)
 {
     int *lags = NULL;
     const char *s;
@@ -2024,14 +2024,24 @@ static int *maybe_get_lags_list (int *list, int *order, int *err)
     s = get_optval_string(VAR, OPT_S);
 
     if (s == NULL) {
+	*err = E_ARGS;
 	return NULL;
     }
 
     lags = gretl_list_from_string(s, err);
     
     if (lags != NULL) {
+	int i;
+
 	gretl_list_sort(lags);
-	*order = lags[lags[0]];
+	for (i=lags[0]; i>1; i--) {
+	    if (lags[i] > order) {
+		gretl_list_delete_at_pos(lags, i);
+	    }
+	}
+	if (lags[0] == 0) {
+	    *err = E_DATA;
+	}
     }
 
     return lags;
@@ -2051,6 +2061,7 @@ static int *maybe_get_lags_list (int *list, int *order, int *err)
  *       if includes %OPT_Q, do not show individual regressions.
  *       if includes %OPT_T, include a linear trend.
  *       if includes %OPT_L, test for optimal lag length (only).
+ *       if includes %OPT_S, look for a specific set of lags
  * @prn: gretl printing struct.
  * @errp: location to receive error code.
  *
@@ -2063,52 +2074,51 @@ static int *maybe_get_lags_list (int *list, int *order, int *err)
 GRETL_VAR *gretl_VAR (int order, int *list, 
 		      const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn, 
-		      int *errp)
+		      int *err)
 {
     GRETL_VAR *var = NULL;
     int code = (opt & OPT_L)? VAR_LAGSEL : VAR_ESTIMATE;
     int *lags = NULL;
-    int err = 0;
 
-    lags = maybe_get_lags_list(list, &order, &err);
-    if (err) {
-	return NULL;
+    if (opt & OPT_S) {
+	lags = maybe_get_lags_list(list, order, err);
+	if (*err) {
+	    return NULL;
+	}
     }
 
     var = gretl_VAR_new(code, order, 0, lags, list, Z, pdinfo, 
-			opt, &err);
+			opt, err);
     if (var == NULL) {
 	return NULL;
     }
 
-    /* run the regressions, usint Cholesky or QR */
-    err = gretl_matrix_multi_ols(var->Y, var->X, 
-				 var->B, var->E,
-				 &var->XTX);
+    /* run the regressions, using Cholesky or QR */
+    *err = gretl_matrix_multi_ols(var->Y, var->X, 
+				  var->B, var->E,
+				  &var->XTX);
 
-    if (!err) {
+    if (!*err) {
 	if (code == VAR_LAGSEL) {
-	    err = VAR_add_stats(var);
-	    if (!err) {
-		err = VAR_do_lagsel(var, Z, pdinfo, prn);
+	    *err = VAR_add_stats(var);
+	    if (!*err) {
+		*err = VAR_do_lagsel(var, Z, pdinfo, prn);
 	    }
 	} else {
-	    err = transcribe_VAR_models(var, Z, pdinfo, NULL);
-	    if (!err) {
-		err = VAR_finalize(var);
+	    *err = transcribe_VAR_models(var, Z, pdinfo, NULL);
+	    if (!*err) {
+		*err = VAR_finalize(var);
 	    }
-	    if (!err) {
+	    if (!*err) {
 		gretl_VAR_print(var, pdinfo, opt, prn);
 	    }
 	}
     }
 
-    if (code == VAR_LAGSEL || (err && var != NULL)) {
+    if (code == VAR_LAGSEL || (*err && var != NULL)) {
 	gretl_VAR_free(var);
 	var = NULL;
     }
-
-    *errp = err;
 
     return var;
 }
