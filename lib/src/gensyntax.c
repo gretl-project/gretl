@@ -824,7 +824,7 @@ static NODE *powterm (parser *p)
 	return NULL;
     }
 
-#if 1 || SDEBUG
+#if SDEBUG
     fprintf(stderr, "powterm: p->sym = %d, p->ch = '%c' (%d)\n",
 	    p->sym, p->ch? p->ch : '0', p->ch);
 #endif
@@ -988,7 +988,7 @@ static NODE *powterm (parser *p)
     notify("powterm", t, p);
 #endif
 
-#if 1
+#if 0
     fprintf(stderr, "powterm: returning node type %d\n", t->t);
 #endif
 
