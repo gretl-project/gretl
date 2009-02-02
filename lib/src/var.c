@@ -2016,51 +2016,21 @@ int transcribe_VAR_models (GRETL_VAR *var,
     return err;
 }
 
-/* for testing: support a hidden mechanism for creating a
-   gappy VAR, from the command, e.g.
-
-   var 1 2 4 ; y1 y2 y3 ; x
-
-   Note that even if there's no exogenous 'x', the second semicolon
-   must be given, as in "var 1 2 4 ; y1 y2 y3 ;".  
-
-   What we do below is take the first parameter ('order') and
-   combine it with the list elements (here 2 and 4) which precede
-   the first separator, to create a list of lags.  We then
-   remove these elements from the real regression list, leaving
-   "y1 y2 y3 ; x".  And we redefine 'order' as the maximum lag.
-*/
-
 static int *maybe_get_lags_list (int *list, int *order, int *err)
 {
     int *lags = NULL;
-    int i, sep = 0, pos1 = 0;
+    const char *s;
 
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    if (sep == 0) {
-		pos1 = i;
-	    }
-	    sep++;
-	}
+    s = get_optval_string(VAR, OPT_S);
+
+    if (s == NULL) {
+	return NULL;
     }
 
-    if (sep == 2) {
-	/* interpret the first separator as marking off lags */
-	lags = gretl_list_new(pos1);
-	if (lags == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    lags[1] = *order;
-	    for (i=1; i<pos1; i++) {
-		lags[i+1] = list[i];
-	    }
-	    for (i=pos1; i>=1; i--) {
-		gretl_list_delete_at_pos(list, i);
-	    }
-	    gretl_list_sort(lags);
-	    *order = lags[lags[0]];
-	}
+    lags = gretl_list_from_string(s, err);
+    
+    if (lags != NULL) {
+	gretl_list_sort(lags);
     }
 
     return lags;

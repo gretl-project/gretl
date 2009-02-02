@@ -3109,12 +3109,12 @@ static int matrix_from_list (selector *sr)
 	errbox("No variables are selected");
 	return 1;
     } else {
-	list = gretl_list_from_string(buf);
+	list = gretl_list_from_string(buf, &err);
     }
 
-    if (list == NULL) {
-	nomem();
-	return 1;
+    if (err) {
+	gui_errmsg(err);
+	return err;
     }
 
     s->m = gretl_matrix_data_subset_skip_missing(list, (const double **) Z, 

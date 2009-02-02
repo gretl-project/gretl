@@ -2122,8 +2122,8 @@ int csv_to_clipboard (void)
     data_save_selection_wrapper(COPY_CSV, GINT_TO_POINTER(opt));
 
     if (storelist != NULL && *storelist != 0) {
-	list = gretl_list_from_string(storelist);	
-	if (list != NULL) {
+	list = gretl_list_from_string(storelist, &err);	
+	if (!err && list != NULL) {
 	    err = real_csv_to_clipboard(list);
 	    free(list);
 	}

@@ -1902,6 +1902,8 @@ static int add_to_cmdlist (selector *sr, const char *add)
 	strcat(sr->cmdlist, add);
     }
 
+    fprintf(stderr, "cmdlist: '%s'\n", sr->cmdlist);
+
     return err;
 }
 
@@ -2493,24 +2495,20 @@ static void vec_get_spinner_data (selector *sr, int *order)
 
     /* lag order from global spinner */
     lmax = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[0]));
+    sprintf(numstr, "%d ", lmax);
+    add_to_cmdlist(sr, numstr);
+    *order = lmax;
 
     /* possible list of specific lags */
     llist = get_VAR_lags_list();
 
     if (llist != NULL) {
 	/* "gappy" lag specification */
-	char *lstr = gretl_list_to_string(llist);
-	
+	char *lstr = gretl_list_to_lags_string(llist);
+
+	add_to_cmdlist(sr, " --lags=");
 	add_to_cmdlist(sr, lstr);
-	add_to_cmdlist(sr, " ;");
-	free(lstr);
-	*order = -lmax; /* flag specialness */
-    } else {
-	/* standard '1 to max' lag specification */
-	sprintf(numstr, "%d ", lmax);
-	add_to_cmdlist(sr, numstr);
-	*order = lmax;
-    }
+    } 
 
     if (sr->ci == VECM) {
 	/* cointegration rank */
@@ -2700,12 +2698,7 @@ static void compose_cmdlist (selector *sr)
 	} else if (sr->ci == HECKIT) {
 	    warnbox(_("You must specify regressors for the selection equation"));
 	    sr->error = 1;
-	} else if (VECLAGS_CODE(sr->ci) && order < 0) {
-	    /* VAR: if we got a list of specific lags, but we got no
-	       exogenous variables, we need to add a trailing
-	       semicolon to disambiguate the specification */
-	    add_to_cmdlist(sr, " ;");
-	}
+	} 
     }
 
     /* deal with any trailing strings */
@@ -6288,11 +6281,13 @@ static int set_lags_for_var (var_lag_info *vlinfo, int yxlags, int ywlags)
 
     if (vlinfo->lspec != NULL && *vlinfo->lspec != 0) {
 	charsub(vlinfo->lspec, ',', ' ');
-	llist = gretl_list_from_string(vlinfo->lspec);
-	err = set_lag_prefs_from_list(vlinfo->v, llist, vlinfo->context,
-				      &changed);
-	if (err) {
-	    free(llist);
+	llist = gretl_list_from_string(vlinfo->lspec, &err);
+	if (!err) {
+	    err = set_lag_prefs_from_list(vlinfo->v, llist, vlinfo->context,
+					  &changed);
+	    if (err) {
+		free(llist);
+	    }
 	}
     } else if (vlinfo->lmin != NOT_LAG && vlinfo->lmax != NOT_LAG) {
 	set_lag_prefs_from_minmax(vlinfo->v, vlinfo->lmin, vlinfo->lmax, 

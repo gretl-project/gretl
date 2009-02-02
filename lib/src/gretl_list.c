@@ -23,6 +23,8 @@
 #include "libset.h"
 #include "gretl_xml.h"
 
+#include <errno.h>
+
 #define LDEBUG 0
 
 typedef struct saved_list_ saved_list;
@@ -984,7 +986,8 @@ int *gretl_list_copy_from_pos (const int *src, int pos)
 
 /**
  * gretl_list_from_string:
- * @liststr: string representation of list of integers.
+ * @str: string representation of list of integers.
+ * @err: location to receive error code.
  *
  * Reads a string containing a list of integers, separated by
  * spaces and/or commas and possibly wrapped in parentheses,
@@ -994,47 +997,105 @@ int *gretl_list_copy_from_pos (const int *src, int pos)
  * Returns: the allocated array, or %NULL on failure.
  */
 
-int *gretl_list_from_string (const char *liststr)
+int *gretl_list_from_string (const char *str, int *err)
 {
-    const char *s = liststr;
-    char numstr[8];
+    char *p, *q, *s, *next;
+    int i, r1, r2, rg;
     int *list;
     int n = 0;
 
-    if (liststr == NULL) {
+    if (str == NULL) {
+	*err = E_DATA;
 	return NULL;
     }
 
-    while (*s) {
-	s += strspn(s, " ,()");
-	if (*s && sscanf(s, "%7[^ ,()]", numstr)) {
-	    n++;
-	    s += strlen(numstr);
+    /* 'p' marks the memory to be freed */
+    p = s = gretl_strdup(str);
+    if (s == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* strip white space at both ends */
+    while(isspace(*s)) s++;
+    tailstrip(s);
+
+    /* strip parentheses, if present */
+    if (*s == '(') {
+	n = strlen(s);
+	if (s[n-1] != ')') {
+	    /* got opening paren but no close */
+	    *err = E_PARSE;
+	    return NULL;
+	}
+	s[n-1] = '\0';
+	s++;
+	while(isspace(*s)) s++;
+	tailstrip(s);
+    }
+
+    q = s; /* copy relevant starting point */
+
+    charsub(s, ',', ' ');
+
+    errno = 0;
+
+    n = 0;
+    while (*s && !*err) {
+	r1 = strtol(s, &next, 10);
+	if (errno || next == s) {
+	    *err = E_PARSE;
+	} else {
+	    s = next;
+	    if (*s == '-') {
+		/* hyphen indicating range? */
+		s++;
+		r2 = strtol(s, &next, 10);
+		if (errno) {
+		    *err = E_PARSE;
+		} else if (r2 <= r1) {
+		    *err = E_PARSE;
+		} else {
+		    n += r2 - r1 + 1;
+		}
+		s = next;
+	    } else {
+		/* single numerical value */
+		n++;
+	    }
 	}
     }
 
-    if (n == 0) {
+    if (*err || n == 0) {
+	free(p);
 	return NULL;
     }
 
     list = gretl_list_new(n);
     if (list == NULL) {
+	*err = E_ALLOC;
+	free(p);
 	return NULL;
     }
 
-    s = liststr;
+    s = q;
     n = 1;
+
     while (*s) {
-	s += strspn(s, " ,()");
-	if (*s && sscanf(s, "%7[^ ,()]", numstr)) {
-	    if (*numstr == ';') {
-		list[n++] = LISTSEP;
-	    } else {
-		list[n++] = atoi(numstr);
+	r1 = strtol(s, &s, 10);
+	if (*s == '-') {
+	    s++;
+	    r2 = strtol(s, &s, 10);
+	    rg = r2 - r1 + 1;
+	    for (i=0; i<rg; i++) {
+		list[n++] = r1 + i;
 	    }
-	    s += strlen(numstr);
+	} else {
+	    list[n++] = r1;
 	}
-    }    
+    } 
+
+    free(p);
 
     return list;
 }
@@ -1081,6 +1142,57 @@ char *gretl_list_to_string (const int *list)
 	    strcat(buf, " ;");
 	} else {
 	    sprintf(numstr, " %d", list[i]);
+	    strcat(buf, numstr);
+	}
+    }
+
+    if (err) {
+	free(buf);
+	buf = NULL;
+    }
+
+    return buf;
+}
+
+/**
+ * gretl_list_to_lags_string:
+ * @list: array of integers.
+ * 
+ * Prints the given @list of integers into a newly
+ * allocated string, separated by commas.  Will fail
+ * if the list contains any numbers greater than 998.
+ *
+ * Returns: The string representation of the list on success,
+ * or %NULL on failure.
+ */
+
+char *gretl_list_to_lags_string (const int *list)
+{
+    char *buf;
+    char numstr[8];
+    int len, i, err = 0;
+
+    len = 4 * (list[0] + 1);
+    if (len > MAXLINE - 32) {
+	return NULL;
+    }
+
+    buf = malloc(len);
+    if (buf == NULL) {
+	return NULL;
+    }
+
+    *buf = '\0';
+    for (i=1; i<=list[0]; i++) {
+	if (abs(list[i] >= 999)) {
+	    err = 1;
+	    break;
+	} else {
+	    if (i == 1) {
+		sprintf(numstr, "%d", list[i]);
+	    } else {
+		sprintf(numstr, ",%d", list[i]);
+	    }
 	    strcat(buf, numstr);
 	}
     }

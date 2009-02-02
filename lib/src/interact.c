@@ -380,7 +380,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define DOUBLE_SEP_OK(c) (c == ARBOND || \
                           c == ARMA || \
                           c == COINT2 || \
-                          c == VAR || \
 			  c == VECM) 
 
 #define NEEDS_LISTSEP(c) (c == AR || \
@@ -984,7 +983,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	       l1str, l2str) == 3) {
 	err = get_contiguous_lags(lv, l1str, l2str, Z, pdinfo);
     } else if (strchr(l1str, ',') != NULL) {
-	lv->laglist = gretl_list_from_string(strchr(s, '(') + 1);
+	lv->laglist = gretl_list_from_string(strchr(s, '('), &err);
 	if (lv->laglist != NULL) {
 	    for (i=1; i<=lv->laglist[0]; i++) {
 		lv->laglist[i] = -lv->laglist[i];
@@ -2010,7 +2009,7 @@ static int process_cmd_extra (CMD *cmd, const double **Z,
     return cmd->err;
 }
 
-#define semi_special(c) (c == ARBOND || c == VAR)
+#define semi_special(c) (c == ARBOND)
 
 static int handle_semicolon (int *k, int *ints_ok, int *poly, 
 			     int *sepcount, CMD *cmd)
@@ -2541,8 +2540,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (cmd->ci == AR || cmd->ci == ARBOND ||
-	cmd->ci == ARMA || cmd->ci == GARCH ||
-	(cmd->ci == VAR && sepcount == 2)) {
+	cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of plain ints in list */
 	ints_ok = 1;
     }
@@ -3261,11 +3259,6 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 
     nsep = n_separators(cmd->list);
 
-    if (nsep == 2 && cmd->ci == VAR) {
-	/* VAR with specific lags list */
-	use_varnames = 0;
-    }
-
     if (cmd->ci == LAGS) {
 	if (cmd->param[0] != '\0') {
 	    *plen += pprintf(prn, " %s;", cmd->param);
@@ -3287,9 +3280,7 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 	    gotsep++;
 	    if (listsep_switch(cmd->ci) && gotsep == nsep) {
 		use_varnames = !use_varnames;
-	    } else if (cmd->ci == VAR && gotsep == 1) {
-		use_varnames = 1;
-	    }
+	    } 
 	    continue;
 	}
 

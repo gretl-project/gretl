@@ -315,6 +315,7 @@ struct gretl_option gretl_opts[] = {
     { VAR,      OPT_Q, "quiet" }, 
     { VAR,      OPT_R, "robust" }, 
     { VAR,      OPT_T, "trend" }, 
+    { VAR,      OPT_S, "lags" },
     { VECM,     OPT_A, "crt" },
     { VECM,     OPT_D, "seasonals" },
     { VECM,     OPT_F, "variance-decomp" },
@@ -728,7 +729,10 @@ static int valid_optval (int ci, gretlopt opt, const char *val)
     } else if (ci == GNUPLOT && opt == OPT_B) {
 	push_optparm(ci, opt, val);
 	return 1;
-    }
+    } else if (ci == VAR && opt == OPT_S) {
+	push_optparm(ci, opt, val);
+	return 1;
+    }	
 
     return 0;
 }

@@ -1251,7 +1251,7 @@ void prepare_functions_save (void)
 {
     function_info *finfo;
     int *list = NULL;
-    int i;
+    int i, err = 0;
 
     if (storelist == NULL) {
 	return;
@@ -1262,9 +1262,9 @@ void prepare_functions_save (void)
 	return;
     }
 
-    list = gretl_list_from_string(storelist);
-    if (list == NULL) {
-	nomem();
+    list = gretl_list_from_string(storelist, &err);
+    if (err) {
+	gui_errmsg(err);
 	free(finfo);
 	return;
     }

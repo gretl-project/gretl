@@ -1633,7 +1633,7 @@ int do_VAR_omit (selector *sr)
     GRETL_VAR *orig;
     GRETL_VAR *var = NULL;
     PRN *prn;
-    gint err;
+    gint err = 0;
 
     if (buf == NULL) {
 	return 1;
@@ -1645,10 +1645,9 @@ int do_VAR_omit (selector *sr)
 	return 1;
     }
 
-    omitlist = gretl_list_from_string(buf);
-    if (omitlist == NULL) {
-	err = E_ALLOC;
-    } else {
+    omitlist = gretl_list_from_string(buf, &err);
+
+    if (!err) {
 	var = gretl_VAR_omit_test(omitlist, orig, (const double **) Z, 
 				  datainfo, prn, &err);
     }
@@ -2698,8 +2697,6 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	if (!strncmp(bufline, "equation", 8)) {
 	    slist = command_list_from_string(bufline);
 	    if (slist == NULL) {
-		/* error message should be emitted by selector in this
-		   case? */
 		err = 1;
 	    } else {
 		err = equation_system_append(my_sys, slist);
@@ -4512,15 +4509,23 @@ void add_logs_etc (GtkAction *action)
 	    gretl_command_sprintf("lags%s", liststr);
 	}
     } else if (ci == DUMMIFY) {
-	int *list = gretl_list_from_string(liststr);
 	gretlopt opt = OPT_NONE;
+	int *list = NULL;
 	int i, resp, quit = 0;
+
+	list = gretl_list_from_string(liststr, &err);
+	if (err) {
+	    gui_errmsg(err);
+	    free(liststr);
+	    return;
+	}
 
 	for (i=1; i<=list[0]; i++) {
 	    if (!var_is_discrete(datainfo, list[i])) {
 		err++; 
 	    }
 	}
+
 	if (err < list[0]) {
 	    resp = dummify_dialog(&opt);
 	    if (resp < 0) {
@@ -5536,10 +5541,13 @@ static int list_position (int v, const int *list)
 static int maybe_reorder_list (char *liststr)
 {
     const char *query = _("X-axis variable");
-    int *list = gretl_list_from_string(liststr);
+    int *list;
+    int err = 0;
 
-    if (list == NULL) {
-	return 1;
+    list = gretl_list_from_string(liststr, &err);
+
+    if (err) {
+	return err;
     } else {
 	int xvar = select_var_from_list(list, query);
 
@@ -6151,7 +6159,8 @@ static int set_auto_overwrite (const char *fname, gretlopt opt,
 		ret = 1;
 	    }
 	} else {
-	    int *test = gretl_list_from_string(storelist);
+	    int err = 0;
+	    int *test = gretl_list_from_string(storelist, &err);
 
 	    if (test != NULL) {
 		int i, nv = 0;
@@ -6204,7 +6213,12 @@ static int shrink_dataset_to_sublist (void)
 	return 0;
     }
 
-    sublist = gretl_list_from_string(storelist);
+    sublist = gretl_list_from_string(storelist, &err);
+    if (err) {
+	gui_errmsg(err);
+	return err;
+    }
+
     full_list = full_var_list(datainfo, NULL);
     droplist = gretl_list_diff_new(full_list, sublist, 1);
     

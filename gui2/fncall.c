@@ -424,7 +424,7 @@ int do_make_list (selector *sr)
     const char *msg;
     PRN *prn;
     int *list;
-    int err;
+    int err = 0;
 
     if (lname == NULL || *lname == 0) {
 	errbox(_("No name was given for the list"));
@@ -437,16 +437,19 @@ int do_make_list (selector *sr)
 	resp = yes_no_dialog("gretl", _("Really create an empty list?"), 0);
 	if (resp == GRETL_YES) {
 	    list = gretl_null_list();
+	    if (list == NULL) {
+		err = E_ALLOC;
+	    }
 	} else {
 	    return 0;
 	}
     } else {
-	list = gretl_list_from_string(buf);
+	list = gretl_list_from_string(buf, &err);
     }
 
-    if (list == NULL) {
-	nomem();
-	return 1;
+    if (err) {
+	gui_errmsg(err);
+	return err;
     }
 
     if (bufopen(&prn)) {
