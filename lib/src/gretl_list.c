@@ -993,6 +993,9 @@ int *gretl_list_copy_from_pos (const int *src, int pos)
  * spaces and/or commas and possibly wrapped in parentheses,
  * and constructs an array of these integers.  The first 
  * element is the number of integers that follow.
+ * This function supports an abbreviation for consecutive
+ * (increasing) integers in the list, using the notation, e.g., 
+ * "1-4" as shorthand for "1 2 3 4".
  *
  * Returns: the allocated array, or %NULL on failure.
  */
@@ -1017,7 +1020,7 @@ int *gretl_list_from_string (const char *str, int *err)
     }
 
     /* strip white space at both ends */
-    while(isspace(*s)) s++;
+    while (isspace(*s)) s++;
     tailstrip(s);
 
     /* strip parentheses, if present */
@@ -1030,7 +1033,7 @@ int *gretl_list_from_string (const char *str, int *err)
 	}
 	s[n-1] = '\0';
 	s++;
-	while(isspace(*s)) s++;
+	while (isspace(*s)) s++;
 	tailstrip(s);
     }
 
@@ -1040,7 +1043,12 @@ int *gretl_list_from_string (const char *str, int *err)
 
     errno = 0;
 
-    n = 0;
+    /* first pass: figure out the number of values
+       in the list, checking for errors as we go
+    */
+
+    n = 0; /* value counter */
+
     while (*s && !*err) {
 	r1 = strtol(s, &next, 10);
 	if (errno || next == s) {
@@ -1051,9 +1059,9 @@ int *gretl_list_from_string (const char *str, int *err)
 		/* hyphen indicating range? */
 		s++;
 		r2 = strtol(s, &next, 10);
-		if (errno) {
+		if (errno || next == s) {
 		    *err = E_PARSE;
-		} else if (r2 <= r1) {
+		} else if (r2 < r1) {
 		    *err = E_PARSE;
 		} else {
 		    n += r2 - r1 + 1;
@@ -1078,8 +1086,12 @@ int *gretl_list_from_string (const char *str, int *err)
 	return NULL;
     }
 
-    s = q;
-    n = 1;
+    /* second pass: fill out the list (no error
+       checking should be needed at this stage) 
+    */
+
+    s = q; /* back to start of string */
+    n = 1; /* list position indicator */
 
     while (*s) {
 	r1 = strtol(s, &s, 10);

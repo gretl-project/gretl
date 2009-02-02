@@ -816,8 +816,7 @@ static NODE *powterm (parser *p)
 { 
     /* watch out for unary operators */
     int sym = p->sym == B_SUB ? U_NEG : 
-	p->sym == B_ADD ? U_POS :
-	p->sym;
+	p->sym == B_ADD ? U_POS : p->sym;
     int opt = OPT_NONE;
     NODE *t;
 
@@ -825,7 +824,7 @@ static NODE *powterm (parser *p)
 	return NULL;
     }
 
-#if SDEBUG
+#if 1 || SDEBUG
     fprintf(stderr, "powterm: p->sym = %d, p->ch = '%c' (%d)\n",
 	    p->sym, p->ch? p->ch : '0', p->ch);
 #endif
@@ -989,14 +988,19 @@ static NODE *powterm (parser *p)
     notify("powterm", t, p);
 #endif
 
+#if 1
+    fprintf(stderr, "powterm: returning node type %d\n", t->t);
+#endif
+
     return t;
 }
+
+static NODE *term (parser *p);
 
 static NODE *factor (parser *p)
 {  
     int sym = p->sym == B_SUB ? U_NEG : 
-	p->sym == B_ADD ? U_POS : 
-	p->sym;
+	p->sym == B_ADD ? U_POS : p->sym;
     NODE *t;
 
     if (p->err) {
@@ -1014,6 +1018,7 @@ static NODE *factor (parser *p)
             t->v.b1.b = factor(p);
         }
     } else {
+	/* FIXME: how to make B_POW right-associative? */
 	t = powterm(p);
 	if (t != NULL) {
 	    if (p->sym == B_TRMUL && p->ch == 0) {

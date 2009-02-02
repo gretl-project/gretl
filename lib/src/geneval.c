@@ -5394,7 +5394,7 @@ static NODE *eval (NODE *t, parser *p)
 	return NULL;
     }
 
-    if (eval_left(t->t)) {
+    if (!p->err && eval_left(t->t)) {
 	l = eval(raw_node(t, 0), p);
 	if (l == NULL && !p->err) {
 	    p->err = 1;
