@@ -24,7 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_scalar.h"
 
-#define GENDEBUG 1
+#define GENDEBUG 0
 
 /* operators, types, punctuation */
 
