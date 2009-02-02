@@ -2031,6 +2031,7 @@ static int *maybe_get_lags_list (int *list, int *order, int *err)
     
     if (lags != NULL) {
 	gretl_list_sort(lags);
+	*order = lags[lags[0]];
     }
 
     return lags;
