@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-16 08:50-0500\n"
-"PO-Revision-Date: 2009-02-01 15:47+0200\n"
+"PO-Revision-Date: 2009-02-03 01:23+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1101,8 +1101,8 @@ msgid ""
 "periodicity: %d, maxobs: %d,\n"
 "observations range: %s-%s\n"
 msgstr ""
-"периодов: %d, всего наблюдений: %d,\n"
-"диапазон наблюдений: %s-%s\n"
+"Периодов: %d, всего наблюдений: %d,\n"
+"Диапазон наблюдений: %s-%s\n"
 
 #: lib/src/dataio.c:1934
 msgid ""
@@ -1553,7 +1553,7 @@ msgstr ""
 #: lib/src/describe.c:3447 lib/src/describe.c:3448 lib/src/printout.c:1020
 #: lib/src/printout.c:1021
 msgid "NA"
-msgstr "Н/Д"
+msgstr "#Н/Д"
 
 #: lib/src/describe.c:3475 lib/src/describe.c:4169
 #, c-format
@@ -1852,7 +1852,7 @@ msgstr "Не получилось построить матрицу Хессиа
 #: lib/src/discrete.c:515
 #, c-format
 msgid "Iteration %d: log likelihood = NA"
-msgstr "Итерация %d: логарифмическое правдоподобие = NA"
+msgstr "Итерация %d: логарифмическое правдоподобие = #Н/Д"
 
 #: lib/src/discrete.c:517
 #, c-format
@@ -1901,7 +1901,7 @@ msgstr "Cумма квадратов ошибок (%g) меньше 0"
 
 #: lib/src/estimate.c:1841 lib/src/estimate.c:1963
 msgid "ESS"
-msgstr ""
+msgstr "ESS"
 
 #: lib/src/estimate.c:2023
 #, c-format
@@ -1911,6 +1911,10 @@ msgid ""
 "ESS is minimum for rho = %g\n"
 "\n"
 msgstr ""
+"\n"
+"\n"
+"Сумма квадратов ошибок минимальна для rho = %g\n"
+"\n"
 
 #: lib/src/estimate.c:2054
 msgid ""
@@ -1918,6 +1922,9 @@ msgid ""
 "Fine-tune rho using the CORC procedure...\n"
 "\n"
 msgstr ""
+"\n"
+"Точная подгонка rho с помощью процедуры Кохрана-Оркатта...\n"
+"\n"
 
 #: lib/src/estimate.c:2056
 msgid ""
@@ -1968,7 +1975,7 @@ msgstr "Обобщенная оценка Кохрана-Оркатта (Cochran
 #: lib/src/estimate.c:3073
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
-msgstr ""
+msgstr "Итерация        ESS           Проц. измен."
 
 #: lib/src/estimate.c:3366
 msgid "Test for ARCH of order"
@@ -3872,7 +3879,7 @@ msgstr "%s: Указанное значение не найдено\n"
 
 #: lib/src/modelprint.c:147
 msgid "Unconditional error variance"
-msgstr ""
+msgstr "Безусловная дисперсия ошибок"
 
 #: lib/src/modelprint.c:166
 msgid "Left-unbounded observations"
@@ -4096,19 +4103,19 @@ msgstr ""
 
 #: lib/src/modelprint.c:620
 msgid "Hildreth--Lu"
-msgstr ""
+msgstr "Метод Хилдрета--Лу"
 
 #: lib/src/modelprint.c:621 gui2/selector.c:2703
 msgid "Hildreth-Lu"
-msgstr ""
+msgstr "Метод Хилдрета-Лу"
 
 #: lib/src/modelprint.c:623
 msgid "Prais--Winsten"
-msgstr ""
+msgstr "Поправка Прейса--Винстена"
 
 #: lib/src/modelprint.c:624 gui2/selector.c:2705
 msgid "Prais-Winsten"
-msgstr ""
+msgstr "Поправка Прейса-Винстена"
 
 #: lib/src/modelprint.c:626
 msgid "Cochrane--Orcutt"
@@ -4270,7 +4277,7 @@ msgstr "вариант"
 
 #: lib/src/modelprint.c:948
 msgid "Standard errors based on Hessian"
-msgstr "Стандартные ошибки, рассчитанные на основе гессиана"
+msgstr "Стандартные ошибки, рассчитанные на основе Гессиана"
 
 #: lib/src/modelprint.c:951
 msgid "Standard errors based on Information Matrix"
@@ -4335,12 +4342,12 @@ msgstr "Оценено при помощи X-12-ARIMA"
 
 #: lib/src/modelprint.c:1200 lib/src/modelprint.c:1205
 msgid "exact ML"
-msgstr ""
+msgstr "точный метод МП"
 
 #: lib/src/modelprint.c:1200 lib/src/modelprint.c:1210
 #: lib/src/modelprint.c:1215
 msgid "conditional ML"
-msgstr ""
+msgstr "условный метод МП"
 
 #: lib/src/modelprint.c:1203
 msgid "Estimated using Kalman filter"
@@ -4702,11 +4709,11 @@ msgstr "R-квадрат Макфаддена"
 
 #: lib/src/modelprint.c:2408
 msgid "Mean of innovations"
-msgstr ""
+msgstr "Среднее инноваций"
 
 #: lib/src/modelprint.c:2410
 msgid "S.D. of innovations"
-msgstr ""
+msgstr "Ст. откл. инноваций"
 
 #: lib/src/modelprint.c:2417
 msgid "Median depend. var"
@@ -4735,7 +4742,7 @@ msgstr "Сходимость достигнута после %d итераций
 
 #: lib/src/modelprint.c:3682
 msgid "Sum of AR coefficients"
-msgstr ""
+msgstr "Сумма AR-коэффициентов"
 
 #: lib/src/modelprint.c:3696
 msgid "slope"
@@ -4743,28 +4750,28 @@ msgstr "угл. коэф."
 
 #: lib/src/modelprint.c:4115
 msgid "                        Real  Imaginary    Modulus  Frequency"
-msgstr ""
+msgstr "               Действ. часть  Мним. часть  Модуль   Частота"
 
 #: lib/src/modelprint.c:4125 lib/src/modelprint.c:4128
 #: lib/src/modelprint.c:4141
 msgid "Root"
-msgstr ""
+msgstr "Корень"
 
 #: lib/src/modelprint.c:4176 lib/src/modelprint.c:4184
 msgid "Real"
-msgstr ""
+msgstr "Действительная часть"
 
 #: lib/src/modelprint.c:4176 lib/src/modelprint.c:4184
 msgid "Imaginary"
-msgstr ""
+msgstr "Мнимая часть"
 
 #: lib/src/modelprint.c:4176 lib/src/modelprint.c:4184
 msgid "Modulus"
-msgstr ""
+msgstr "Модуль"
 
 #: lib/src/modelprint.c:4209
 msgid "AR (seasonal)"
-msgstr ""
+msgstr "AR (сезонные)"
 
 #: lib/src/modelprint.c:4229
 msgid "MA"
@@ -4772,7 +4779,7 @@ msgstr "MA"
 
 #: lib/src/modelprint.c:4249
 msgid "MA (seasonal)"
-msgstr ""
+msgstr "MA (сезонные)"
 
 #: lib/src/modelprint.c:4286 lib/src/modelprint.c:4291
 #: lib/src/modelprint.c:4295
@@ -5592,7 +5599,7 @@ msgstr "Критическое значение = %g"
 #: lib/src/pvalues.c:1696
 #, c-format
 msgid "area to the right of %g: NA\n"
-msgstr "площадь правее %g: NA\n"
+msgstr "площадь правее %g: #Н/Д\n"
 
 #: lib/src/pvalues.c:1703
 #, c-format
@@ -9860,7 +9867,7 @@ msgstr "_Хилдрета-Лу (Hildreth-Lu)..."
 
 #: gui2/gretl.c:1460
 msgid "_Prais-Winsten..."
-msgstr "_Прейза-Винстена (Prais-Winsten)..."
+msgstr "_Прейса-Винстена (Prais-Winsten)..."
 
 #: gui2/gretl.c:1461
 msgid "_Autoregressive estimation..."
@@ -11228,7 +11235,7 @@ msgstr "Гамма распределение не подходит, т.к. да
 
 #: gui2/library.c:3954
 msgid "This analysis is applicable only to seasonal time series"
-msgstr "Этот инстремент применим только к временным рядам с сезонностью"
+msgstr "Этот инструмент применим только к временным рядам с сезонностью"
 
 #: gui2/library.c:3991
 msgid "gretl: TRAMO analysis"
@@ -12074,7 +12081,7 @@ msgstr ""
 
 #: gui2/selector.c:3200 gui2/selector.c:4488 gui2/selector.c:4652
 msgid "lags..."
-msgstr "лаги..."
+msgstr "Лаги..."
 
 #: gui2/selector.c:3526
 msgid "GARCH p:"
@@ -12086,11 +12093,11 @@ msgstr "ARCH q:"
 
 #: gui2/selector.c:3553
 msgid "Non-seasonal"
-msgstr ""
+msgstr "Несезонные компоненты"
 
 #: gui2/selector.c:3554
 msgid "Seasonal"
-msgstr ""
+msgstr "Сезонные компоненты"
 
 #: gui2/selector.c:3596
 msgid "Difference:"
@@ -12102,7 +12109,7 @@ msgstr "Порядок MA:"
 
 #: gui2/selector.c:3618 gui2/selector.c:3644
 msgid "or specific lags"
-msgstr ""
+msgstr "или отдельные лаги"
 
 #: gui2/selector.c:3800
 msgid "Bits per floating-point value"
@@ -12130,7 +12137,7 @@ msgstr "Включить тренд"
 
 #: gui2/selector.c:3909
 msgid "Show details of regressions"
-msgstr ""
+msgstr "Показать отчет о регрессии"
 
 #: gui2/selector.c:3912
 msgid "Include seasonal dummies"
@@ -12138,7 +12145,7 @@ msgstr "Добавить сезонные фиктивные переменны�
 
 #: gui2/selector.c:3920
 msgid "Fine-tune using Cochrane-Orcutt"
-msgstr ""
+msgstr "Точная подгонка с помощью метода Кохрана-Оркатта"
 
 #: gui2/selector.c:3923
 msgid "Test down from maximum lag order"
@@ -12278,11 +12285,11 @@ msgstr "Проценты по столбцам"
 
 #: gui2/selector.c:4338 gui2/selector.c:4350
 msgid "Exact Maximum Likelihood"
-msgstr ""
+msgstr "Точный метод максимального правдоподобия"
 
 #: gui2/selector.c:4351
 msgid "Conditional Maximum Likelihood"
-msgstr ""
+msgstr "Условный метод максимального правдоподобия"
 
 #: gui2/selector.c:4418
 msgid "No constant"
