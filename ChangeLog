@@ -9,6 +9,7 @@
   confidence bands on impulse response plots)
 - VECMs: add a GUI selector for lags of any exogenous 
   variables
+- genr: make '^' (exponentiation) associate rightwards
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

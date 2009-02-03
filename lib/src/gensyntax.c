@@ -995,7 +995,7 @@ static NODE *powterm (parser *p)
     return t;
 }
 
-/* convert to B_POW to right associativity: that is,
+/* convert B_POW to right associativity: that is,
    
        pow           pow
       L   R         L   R
