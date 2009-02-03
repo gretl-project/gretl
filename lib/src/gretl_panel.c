@@ -1533,6 +1533,7 @@ static int bXb (panelmod_t *pan)
 	    pan->H += x[i] * pan->bdiff[i];
 	}
 	if (pan->H < 0.0) {
+	    fprintf(stderr, "Hausman stat = %g < 0\n", pan->H);
 	    pan->H = NADBL;
 	}
     }
@@ -1540,7 +1541,7 @@ static int bXb (panelmod_t *pan)
     free(x);
     free(ipiv);
 
-    return info != 0;
+    return na(pan->H);
 }
 
 static void panel_df_correction (MODEL *pmod, int k)
@@ -2305,7 +2306,7 @@ static void save_hausman_result (panelmod_t *pan)
 {
     ModelTest *test;
 
-    if (pan->realmod == NULL || na(pan->H)) {
+    if (pan->realmod == NULL) {
 	return;
     }
 
@@ -2315,7 +2316,11 @@ static void save_hausman_result (panelmod_t *pan)
 	model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
 	model_test_set_dfn(test, pan->nbeta);
 	model_test_set_value(test, pan->H);
-	model_test_set_pvalue(test, chisq_cdf_comp(pan->nbeta, pan->H));
+	if (na(pan->H)) {
+	    model_test_set_pvalue(test, NADBL);
+	} else {
+	    model_test_set_pvalue(test, chisq_cdf_comp(pan->nbeta, pan->H));
+	}
 	maybe_add_test_to_model(pan->realmod, test);
     }	    
 }
@@ -2539,7 +2544,7 @@ static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 	} else {
 	    print_hausman_result(pan, prn);
 	}
-    } else if (!err) {
+    } else {
 	save_hausman_result(pan);
     }
 

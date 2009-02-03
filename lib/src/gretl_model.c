@@ -2986,9 +2986,18 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_LR:
     case GRETL_STAT_WALD_CHISQ:
 	if (tex) {
-	    sprintf(str, "$\\chi^2(%d)$ = %g", test->dfn, test->value); 
+	    if (na(test->value)) {
+		sprintf(str, "$\\chi^2(%d)$ = NA (%s)", test->dfn, I_("failed"));
+	    } else {
+		sprintf(str, "$\\chi^2(%d)$ = %g", test->dfn, test->value);
+	    } 
 	} else {
-	    sprintf(str, "%s(%d) = %g", _("Chi-square"), test->dfn, test->value);
+	    if (na(test->value)) {
+		sprintf(str, "%s(%d) = NA (%s)", _("Chi-square"), test->dfn,
+			_("failed"));
+	    } else {
+		sprintf(str, "%s(%d) = %g", _("Chi-square"), test->dfn, test->value);
+	    }
 	}
 	break;
     case GRETL_STAT_Z:
@@ -3047,10 +3056,14 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_LR:
     case GRETL_STAT_WALD_CHISQ:
     case GRETL_STAT_Z:
-	sprintf(str, "%g", test->pvalue);
+	if (na(test->pvalue)) {
+	    strcpy(str, "NA");
+	} else {
+	    sprintf(str, "%g", test->pvalue);
+	}
 	break;
     default:
-	*str = 0;
+	*str = '\0';
     }
 }
 
@@ -3112,11 +3125,8 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 {
-    const ModelTest *test;
-
     if (i >= 0 && i < pmod->ntests) {
-	test = &pmod->tests[i];
-	gretl_model_test_print_direct(test, 1, prn);
+	gretl_model_test_print_direct(&pmod->tests[i], 1, prn);
     }
 }
 
