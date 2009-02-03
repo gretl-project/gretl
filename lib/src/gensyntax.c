@@ -995,7 +995,29 @@ static NODE *powterm (parser *p)
     return t;
 }
 
-static NODE *term (parser *p);
+/* convert to B_POW to right associativity: that is,
+   
+       pow           pow
+      L   R         L   R
+      |   |   ->    |   |
+     pow  c         a  pow
+     | |               | |
+     a b               b c
+
+*/
+
+static void convert_pow_term (NODE *n)
+{
+    NODE *L = n->v.b2.l;
+    NODE *a = L->v.b2.l;
+    NODE *b = L->v.b2.r;
+    NODE *c = n->v.b2.r;
+
+    n->v.b2.l = a;
+    n->v.b2.r = L;
+    L->v.b2.l = b;
+    L->v.b2.r = c;
+}
 
 static NODE *factor (parser *p)
 {  
@@ -1018,7 +1040,6 @@ static NODE *factor (parser *p)
             t->v.b1.b = factor(p);
         }
     } else {
-	/* FIXME: how to make B_POW right-associative? */
 	t = powterm(p);
 	if (t != NULL) {
 	    if (p->sym == B_TRMUL && p->ch == 0) {
@@ -1032,6 +1053,10 @@ static NODE *factor (parser *p)
 		    if (t != NULL) {
 			lex(p);
 			t->v.b2.r = powterm(p);
+		    }
+		    if (t->t == B_POW && t->v.b2.l->t == B_POW) {
+			/* make B_POW associate rightward */
+			convert_pow_term(t);
 		    }
 		}
 	    }
