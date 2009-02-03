@@ -726,7 +726,7 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
    can find (the number is unknown in advance).
 */
 
-static void get_args (NODE *t, parser *p, int k, int opt)
+static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 {
     NODE *child;
     char cexp = 0;
@@ -782,6 +782,9 @@ static void get_args (NODE *t, parser *p, int k, int opt)
 		parser_getc(p);
 	    }
 	    lex(p);
+	    if (p->sym == G_LBR) {
+		*next = G_LBR;
+	    }
 	}
     }	
 }
@@ -818,6 +821,7 @@ static NODE *powterm (parser *p)
     int sym = p->sym == B_SUB ? U_NEG : 
 	p->sym == B_ADD ? U_POS : p->sym;
     int opt = OPT_NONE;
+    int next = 0;
     NODE *t;
 
     if (p->err) {
@@ -847,13 +851,13 @@ static NODE *powterm (parser *p)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    get_args(t, p, 2, opt);
+	    get_args(t, p, 2, opt, &next);
 	}
     } else if (func3_symb(sym)) {
 	t = newb3(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    get_args(t, p, 3, opt);
+	    get_args(t, p, 3, opt, &next);
 	}
     } else if (string0_func(sym)) {
 	t = newb1(sym, NULL);
@@ -862,7 +866,7 @@ static NODE *powterm (parser *p)
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
 		p->flags |= P_GETSTR;
-		get_args(t->v.b1.b, p, -1, opt);
+		get_args(t->v.b1.b, p, -1, opt, &next);
 	    }
 	}
     } else if (sym == F_URCPVAL) {
@@ -871,7 +875,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b1.b, p, -1, opt);
+		get_args(t->v.b1.b, p, -1, opt, &next);
 	    }
 	}	
     } else if (string_arg_func(sym)) {
@@ -885,6 +889,9 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = base(p, t);
+	    if (p->sym == G_LBR) {
+		next = G_LBR;
+	    }
 	}
     } else if (sym == LAG || sym == OBS) {
 	t = newb2(sym, NULL, NULL);
@@ -965,7 +972,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b2.r = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b2.r, p, -1, opt);
+		get_args(t->v.b2.r, p, -1, opt, &next);
 	    }
 	}
     } else if (funcn_symb(sym)) {
@@ -974,7 +981,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b1.b, p, -1, opt);
+		get_args(t->v.b1.b, p, -1, opt, &next);
 	    }
 	}
     } else if (sym == STR || sym == VSTR) {
@@ -984,11 +991,19 @@ static NODE *powterm (parser *p)
 	t = base(p, NULL);
     }
 
+    if (next == G_LBR) {
+	/* support foo(args)[slice] */
+	t = newb2(MSL, t, NULL);
+	if (t != NULL) {
+	    t->v.b2.r = newb2(MSL2, NULL, NULL);
+	    if (t->v.b2.r != NULL) {
+		get_slice_parts(t->v.b2.r, p);
+	    }
+	}	
+    }
+
 #if SDEBUG
     notify("powterm", t, p);
-#endif
-
-#if 0
     fprintf(stderr, "powterm: returning node type %d\n", t->t);
 #endif
 
@@ -1018,6 +1033,9 @@ static void convert_pow_term (NODE *n)
     L->v.b2.l = b;
     L->v.b2.r = c;
 }
+
+#define pow_sym(t)     (t == B_POW || t == B_DOTPOW)
+#define pow_pow_node(n) (pow_sym(n->t) && pow_sym(n->v.b2.l->t))
 
 static NODE *factor (parser *p)
 {  
@@ -1054,8 +1072,8 @@ static NODE *factor (parser *p)
 			lex(p);
 			t->v.b2.r = powterm(p);
 		    }
-		    if (t->t == B_POW && t->v.b2.l->t == B_POW) {
-			/* make B_POW associate rightward */
+		    if (!p->err && pow_pow_node(t)) {
+			/* make exponentiation associate rightward */
 			convert_pow_term(t);
 		    }
 		}
