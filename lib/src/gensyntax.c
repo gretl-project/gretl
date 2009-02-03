@@ -992,7 +992,7 @@ static NODE *powterm (parser *p)
     }
 
     if (next == G_LBR) {
-	/* support foo(args)[slice] */
+	/* support func(args)[slice] */
 	t = newb2(MSL, t, NULL);
 	if (t != NULL) {
 	    t->v.b2.r = newb2(MSL2, NULL, NULL);

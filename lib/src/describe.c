@@ -2323,23 +2323,7 @@ static int get_pacf (double *pacf, const double *acf, int m)
 
 int auto_acf_order (int pd, int n)
 {
-    int m;
-
-    switch (pd) {
-    case 4: 
-	m = (n <= 20)? n - 5 : 14; 
-	break;
-    case 12: 
-    case 52: 
-	m = (n <= 40)? n - 13 : 28;
-	break;
-    case 24: 
-	m = (n <= 100)? n - 25 : 96;
-	break;
-    default:  
-	m = (n <= 18)? n - 5 : 14;
-	break;
-    }
+    int m = 10 * log10(n);
 
     if (m > n / 5) {
 	/* restrict to 20 percent of data (Tadeusz) */
@@ -2355,21 +2339,17 @@ int auto_acf_order (int pd, int n)
  * @t1: starting observation.
  * @t2: ending observation.
  * @y: data series.
+ * @ybar: mean of @y over range @t1 to @t2.
  *
  * Returns: the autocorrelation at lag @k for the series @y over
  * the range @t1 to @t2, or #NADBL on failure.
  */
 
-static double gretl_acf (int k, int t1, int t2, const double *y)
+static double gretl_acf (int k, int t1, int t2, const double *y,
+			 double ybar)
 {
-    double z, ybar, num = 0, den = 0;
-    int t;
-
-    ybar = gretl_mean(t1, t2, y);
-
-    if (na(ybar)) {
-	return NADBL;
-    }
+    double z, num = 0, den = 0;
+    int t, n = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t])) {
@@ -2378,8 +2358,16 @@ static double gretl_acf (int k, int t1, int t2, const double *y)
 	z = y[t] - ybar;
 	den += z * z;
 	if (t - k >= t1) {
+	    if (na(y[t-k])) {
+		return NADBL;
+	    }
 	    num += z * (y[t-k] - ybar);
+	    n++;
 	}
+    }
+
+    if (n == 0) {
+	return NADBL;
     }
 
     return num / den;
@@ -2400,7 +2388,7 @@ static double gretl_acf (int k, int t1, int t2, const double *y)
 
 double ljung_box (int m, int t1, int t2, const double *y, int *err)
 {
-    double acf, LB = 0.0;
+    double ybar, acf, LB = 0.0;
     int k, n = t2 - t1 + 1;
 
     *err = 0;
@@ -2408,11 +2396,17 @@ double ljung_box (int m, int t1, int t2, const double *y, int *err)
     if (n == 0 || gretl_isconst(t1, t2, y)) {
 	*err = E_DATA;
 	return NADBL;
-    }    
+    }  
+
+    ybar = gretl_mean(t1, t2, y);
+    if (na(ybar)) {
+	*err = E_DATA;
+	return NADBL;
+    }
 
     /* calculate acf up to lag m, cumulating LB */
     for (k=1; k<=m; k++) {
-	acf = gretl_acf(k, t1, t2, y);
+	acf = gretl_acf(k, t1, t2, y, ybar);
 	if (na(acf)) {
 	    *err = E_MISSDATA;
 	    break;
@@ -2436,27 +2430,20 @@ double ljung_box (int m, int t1, int t2, const double *y, int *err)
  * @t2: ending observation.
  * @x: first data series.
  * @y: second data series.
+ * @xbar: mean of first series.
+ * @ybar: mean of second series.
  *
  * Returns: the cross-correlation at lag (or lead) @k for the 
  * series @x and @y over the range @t1 to @t2, or #NADBL on failure.
  */
 
 static double 
-gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
+gretl_xcf (int k, int t1, int t2, const double *x, const double *y,
+	   double xbar, double ybar)
 {
     double num = 0, den1 = 0, den2 = 0;
-    double zx, zy, xbar, ybar;
+    double zx, zy;
     int t;
-
-    xbar = gretl_mean(t1, t2, x);
-    if (na(xbar)) {
-	return NADBL;
-    }
-
-    ybar = gretl_mean(t1, t2, y);
-    if (na(ybar)) {
-	return NADBL;
-    }
 
     for (t=t1; t<=t2; t++) {
 	if (na(x[t]) || na(y[t])) {
@@ -2474,9 +2461,8 @@ gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
     return num / sqrt(den1 * den2);
 }
 
-static int corrgram_graph (const char *vname, double *acf, int acf_m,
-			   double *pacf, int pacf_m, double *pm,
-			   gretlopt opt)
+static int corrgram_graph (const char *vname, double *acf, int m,
+			   double *pacf, double *pm, gretlopt opt)
 {
     char crit_string[16];
     FILE *fp = NULL;
@@ -2509,12 +2495,12 @@ static int corrgram_graph (const char *vname, double *acf, int acf_m,
     } else {
 	fprintf(fp, "set title '%s %s'\n", _("ACF for"), vname);
     }
-    fprintf(fp, "set xrange [0:%d]\n", acf_m + 1);
+    fprintf(fp, "set xrange [0:%d]\n", m + 1);
     fprintf(fp, "plot \\\n"
 	    "'-' using 1:2 notitle w impulses lw 5, \\\n"
 	    "%g title '+- %s' lt 2, \\\n"
 	    "%g notitle lt 2\n", pm[1], crit_string, -pm[1]);
-    for (k=0; k<acf_m; k++) {
+    for (k=0; k<m; k++) {
 	fprintf(fp, "%d %g\n", k + 1, acf[k]);
     }
     fputs("e\n", fp);
@@ -2527,12 +2513,12 @@ static int corrgram_graph (const char *vname, double *acf, int acf_m,
 	} else {
 	    fprintf(fp, "set title '%s %s'\n", _("PACF for"), vname);
 	}
-	fprintf(fp, "set xrange [0:%d]\n", pacf_m + 1);
+	fprintf(fp, "set xrange [0:%d]\n", m + 1);
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
 		"%g title '+- %s' lt 2, \\\n"
 		"%g notitle lt 2\n", pm[1], crit_string, -pm[1]);
-	for (k=0; k<pacf_m; k++) {
+	for (k=0; k<m; k++) {
 	    fprintf(fp, "%d %g\n", k + 1, pacf[k]);
 	}
 	fputs("e\n", fp);
@@ -2550,22 +2536,22 @@ static int corrgram_graph (const char *vname, double *acf, int acf_m,
 }
 
 static int corrgm_ascii_plot (const char *vname,
-			      const double *acf, int acf_m,
+			      const double *acf, int m,
 			      PRN *prn)
 {
-    double *xk = malloc(acf_m * sizeof *xk);
+    double *xk = malloc(m * sizeof *xk);
     int k;
 
     if (xk == NULL) {
 	return E_ALLOC;
     }
 
-    for (k=0; k<acf_m; k++) {
+    for (k=0; k<m; k++) {
 	xk[k] = k + 1.0;
     }
 
     pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-    graphyx(acf, xk, acf_m, vname, _("lag"), prn);
+    graphyx(acf, xk, m, vname, _("lag"), prn);
 
     free(xk);
 
@@ -2595,12 +2581,11 @@ static int corrgm_ascii_plot (const char *vname,
 int corrgram (int varno, int order, int nparam, const double **Z, 
 	      DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
-    double box, pm[3];
+    double ybar, box, pm[3];
     double *acf = NULL;
     double *pacf = NULL;
     const char *vname;
-    int k, acf_m, pacf_m; 
-    int T, dfQ;
+    int k, m, T, dfQ;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2] = { 1, varno };
     int err = 0, pacf_err = 0;
@@ -2626,42 +2611,40 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	return E_DATA;
     }
 
+    ybar = gretl_mean(t1, t2, Z[varno]);
+    if (na(ybar)) {
+	return E_DATA;
+    }
+
     vname = var_get_graph_name(pdinfo, varno);
 
     /* lag order for acf */
-    acf_m = order;
-    if (acf_m == 0) {
-	acf_m = auto_acf_order(pdinfo->pd, T);
-    } else if (acf_m > T - pdinfo->pd) {
-	int nmax = T - 1; 
+    m = order;
+    if (m == 0) {
+	m = auto_acf_order(pdinfo->pd, T);
+    } else if (m > T - pdinfo->pd) {
+	int mmax = T - 1; 
 
-	if (nmax < acf_m) {
-	    acf_m = nmax; /* ?? */
+	if (m > mmax) {
+	    m = mmax;
 	}
     }
 
-    /* lag order for pacf (may have to be shorter than acf) */
-    if (acf_m > T / 2 - 1) {
-	pacf_m = T / 2 - 1;
-    } else {
-	pacf_m = acf_m;
-    }
-
-    acf = malloc(acf_m * sizeof *acf);
-    pacf = malloc(pacf_m * sizeof *pacf); 
+    acf = malloc(m * sizeof *acf);
+    pacf = malloc(m * sizeof *pacf); 
     if (acf == NULL || pacf == NULL) {
 	err = E_ALLOC;   
 	goto bailout;
     }
 
-    /* calculate acf up to order m */
-    for (k=1; k<=acf_m; k++) {
-	acf[k-1] = gretl_acf(k, t1, t2, Z[varno]);
+    /* calculate acf up to order acf_m */
+    for (k=1; k<=m; k++) {
+	acf[k-1] = gretl_acf(k, t1, t2, Z[varno], ybar);
     }
 
     if ((opt & OPT_A) && !(opt & OPT_Q)) { 
 	/* use ASCII graphics, not gnuplot */
-	corrgm_ascii_plot(vname, acf, acf_m, prn);
+	corrgm_ascii_plot(vname, acf, m, prn);
     } 
 
     if (opt & OPT_R) {
@@ -2680,7 +2663,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     /* generate (and if not in batch mode) plot partial 
        autocorrelation function */
 
-    err = pacf_err = get_pacf(pacf, acf, pacf_m);
+    err = pacf_err = get_pacf(pacf, acf, m);
 
     pputs(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
     pputs(prn, "\n\n");
@@ -2688,8 +2671,14 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     box = 0.0;
     dfQ = 1;
 
-    for (k=0; k<acf_m; k++) {
+    for (k=0; k<m; k++) {
+	if (na(acf[k])) {
+	    pprintf(prn, "%5d\n", k + 1);
+	    continue;
+	}
+
 	pprintf(prn, "%5d%9.4f ", k + 1, acf[k]);
+
 	if (fabs(acf[k]) > pm[2]) {
 	    pputs(prn, " ***");
 	} else if (fabs(acf[k]) > pm[1]) {
@@ -2700,7 +2689,9 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	    pputs(prn, "    ");
 	}
 
-	if (k < pacf_m) {
+	if (na(pacf[k])) {
+	    bufspace(13, prn);
+	} else {
 	    pprintf(prn, "%9.4f", pacf[k]);
 	    if (fabs(pacf[k]) > pm[2]) {
 		pputs(prn, " ***");
@@ -2711,7 +2702,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	    } else {
 		pputs(prn, "    ");
 	    }
-	}
+	} 
 
 	box += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
 	pprintf(prn, "%12.4f", box);
@@ -2723,9 +2714,8 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     pputc(prn, '\n');
 
     if (!(opt & OPT_A) && !(opt & OPT_Q)) {
-	err = corrgram_graph(vname, acf, acf_m, 
-			     (pacf_err)? NULL : pacf, 
-			     pacf_m, pm, opt);
+	err = corrgram_graph(vname, acf, m, (pacf_err)? NULL : pacf, 
+			     pm, opt);
     }
 
  bailout:
@@ -2760,6 +2750,7 @@ gretl_matrix *acf_vec (const double *x, int order,
     int t1, t2;
     gretl_matrix *acf = NULL;
     gretl_matrix *pacf = NULL;
+    double xbar;
     int m, k, t, T;
 
     if (pdinfo != NULL) {
@@ -2797,6 +2788,12 @@ gretl_matrix *acf_vec (const double *x, int order,
 	return NULL;
     }
 
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	*err = E_DATA;
+	return NULL;
+    }	
+
     m = order;
 
     if (pdinfo == NULL) {
@@ -2825,24 +2822,16 @@ gretl_matrix *acf_vec (const double *x, int order,
 
     /* calculate acf up to order m */
     for (k=1; k<=m; k++) {
-	acf->val[k-1] = gretl_acf(k, t1, t2, x);
+	acf->val[k-1] = gretl_acf(k, t1, t2, x, xbar);
     }
 
     if (opt & OPT_P) {
 	/* actually it's the PACF that's wanted */
-	int pacf_m;
-
-	if (m > T / 2 - 1) {
-	    pacf_m = T / 2 - 1;
-	} else {
-	    pacf_m = m;
-	}
-
-	pacf = gretl_column_vector_alloc(pacf_m);
+	pacf = gretl_column_vector_alloc(m);
 	if (pacf == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    *err = get_pacf(pacf->val, acf->val, pacf_m);
+	    *err = get_pacf(pacf->val, acf->val, m);
 	}
 
 	gretl_matrix_free(acf);
@@ -2858,7 +2847,7 @@ gretl_matrix *acf_vec (const double *x, int order,
 }
 
 static int xcorrgm_graph (const char *xname, const char *yname,
-			  double *xcf, int xcf_m, double *pm,
+			  double *xcf, int m, double *pm,
 			  int allpos)
 {
     char crit_string[16];
@@ -2887,7 +2876,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
     sprintf(title, _("Correlations of %s and lagged %s"),
 	    xname, yname);
     fprintf(fp, "set title '%s'\n", title);
-    fprintf(fp, "set xrange [%d:%d]\n", -(xcf_m + 1), xcf_m + 1);
+    fprintf(fp, "set xrange [%d:%d]\n", -(m + 1), m + 1);
     if (allpos) {
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
@@ -2899,8 +2888,8 @@ static int xcorrgm_graph (const char *xname, const char *yname,
 		"%g notitle lt 2\n", pm[1], crit_string, -pm[1]);
     }	
 
-    for (k=-xcf_m; k<=xcf_m; k++) {
-	fprintf(fp, "%d %g\n", k, xcf[k+xcf_m]);
+    for (k=-m; k<=m; k++) {
+	fprintf(fp, "%d %g\n", k, xcf[k+m]);
     }
     fputs("e\n", fp);
 
@@ -2941,7 +2930,20 @@ static gretl_matrix *real_xcf_vec (const double *x, const double *y,
 				   int p, int T, int *err)
 {
     gretl_matrix *xcf;
+    double xbar, ybar;
     int i;
+
+    xbar = gretl_mean(0, T-1, x);
+    if (na(xbar)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    ybar = gretl_mean(0, T-1, y);
+    if (na(ybar)) {
+	*err = E_DATA;
+	return NULL;
+    }
 
     xcf = gretl_column_vector_alloc(p * 2 + 1);
     if (xcf == NULL) {
@@ -2950,7 +2952,7 @@ static gretl_matrix *real_xcf_vec (const double *x, const double *y,
     }
 
     for (i=-p; i<=p; i++) {
-	xcf->val[i+p] = gretl_xcf(i, 0, T - 1, x, y);
+	xcf->val[i+p] = gretl_xcf(i, 0, T - 1, x, y, xbar, ybar);
     }
 
     return xcf;
