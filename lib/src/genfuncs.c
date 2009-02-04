@@ -2650,13 +2650,111 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 	gretl_matrix_free(a);
 
 	/* move to next data read position */
-	if (m != NULL) {
-	    x += m->rows;
-	} else {
-	    x = Z[list[j+2]] + pdinfo->t1;
+	if (j < nv - 1) {
+	    if (m != NULL) {
+		x += m->rows;
+	    } else {
+		x = Z[list[j+2]] + pdinfo->t1;
+	    }
 	}
     }
 
     return A;
+}
+
+gretl_matrix *multi_xcf (const void *px, int xtype,
+			 const void *py, int ytype,
+			 const double **Z,
+			 const DATAINFO *pdinfo,
+			 int p, int *err)
+{
+    const int *xlist = NULL;
+    const gretl_matrix *Xmat = NULL;
+    const double *xvec = NULL;
+    const double *yvec = NULL;
+    gretl_matrix *xj, *XCF = NULL;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int np = 2 * p + 1;
+    int Ty, nx = 1;
+    int i, j;
+
+    if (xtype == LVEC) {
+	xlist = px;
+	nx = xlist[0];
+	if (nx < 1) {
+	    *err = E_DATA;
+	    return NULL;
+	}	    
+	xvec = Z[xlist[1]] + pdinfo->t1; 
+    } else if (xtype == MAT) {
+	Xmat = px;
+	if (gretl_is_null_matrix(Xmat)) {
+	    *err = E_DATA;
+	    return NULL;
+	}
+	nx = Xmat->cols;
+	T = Xmat->rows;
+	xvec = Xmat->val;
+    } else {
+	xvec = px;
+    }
+
+    if (ytype == MAT) {
+	const gretl_matrix *ymat = py;
+
+	if (ymat->cols != 1) {
+	    *err = E_NONCONF;
+	    return NULL;
+	}	  
+	yvec = ymat->val;
+	Ty = ymat->rows;
+    } else {
+	yvec = (const double *) py + pdinfo->t1;
+	Ty = pdinfo->t2 - pdinfo->t1 + 1;
+    }
+
+    if (Ty != T) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (nx > 1) {
+	XCF = gretl_matrix_alloc(np, nx);
+	if (XCF == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+    }
+
+    for (j=0; j<nx; j++) {
+	/* get XCF for left-hand column/series and y */
+	xj = xcf_vec(xvec, yvec, p, NULL, T, err);
+	if (*err) {
+	    gretl_matrix_free(XCF);
+	    return NULL;
+	}
+
+	if (nx == 1) {
+	    XCF = xj;
+	    break;
+	} 
+
+	/* transcribe into big XCF matrix and free */
+	for (i=0; i<np; i++) {
+	    gretl_matrix_set(XCF, i, j, xj->val[i]);
+	}
+	gretl_matrix_free(xj);
+
+	/* move to next data read position */
+	if (j < nx - 1) {
+	    if (Xmat != NULL) {
+		xvec += Xmat->rows;
+	    } else {
+		xvec = Z[xlist[j+2]] + pdinfo->t1;
+	    }
+	}
+    }
+
+    return XCF;
 }
 

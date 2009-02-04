@@ -1902,8 +1902,6 @@ static int add_to_cmdlist (selector *sr, const char *add)
 	strcat(sr->cmdlist, add);
     }
 
-    fprintf(stderr, "cmdlist: '%s'\n", sr->cmdlist);
-
     return err;
 }
 
@@ -2487,7 +2485,26 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } 
 }
 
-static void vec_get_spinner_data (selector *sr, int *order)
+static char *VAR_dv_lags_string (const int *list, int *err)
+{
+    char *s = gretl_list_to_lags_string(list, err);
+    char *ret = NULL;
+
+    if (s != NULL) {
+	ret = malloc(strlen(s) + 9);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    sprintf(ret, " --lags=%s", s);
+	}
+	free(s);
+    }
+
+    return ret;
+}
+
+static void vec_get_spinner_data (selector *sr, int *order,
+				  char **dvlags)
 {
     const int *llist;
     int lmax;
@@ -2495,7 +2512,7 @@ static void vec_get_spinner_data (selector *sr, int *order)
 
     /* lag order from global spinner */
     lmax = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[0]));
-    sprintf(numstr, "%d ", lmax);
+    sprintf(numstr, "%d", lmax);
     add_to_cmdlist(sr, numstr);
     *order = lmax;
 
@@ -2504,16 +2521,13 @@ static void vec_get_spinner_data (selector *sr, int *order)
 
     if (llist != NULL) {
 	/* "gappy" lag specification */
-	char *lstr = gretl_list_to_lags_string(llist);
-
-	add_to_cmdlist(sr, " --lags=");
-	add_to_cmdlist(sr, lstr);
+	*dvlags = VAR_dv_lags_string(llist, &sr->error);
     } 
 
     if (sr->ci == VECM) {
 	/* cointegration rank */
 	jrank = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[1]));
-	sprintf(numstr, "%d", jrank);
+	sprintf(numstr, " %d", jrank);
 	add_to_cmdlist(sr, numstr);
     }
 }
@@ -2618,7 +2632,7 @@ static void compose_cmdlist (selector *sr)
 	       sr->ci == ARBOND) {
 	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->ci)) {
-	vec_get_spinner_data(sr, &order);
+	vec_get_spinner_data(sr, &order, &dvlags);
     } else {
 	parse_extra_widgets(sr, endbit);
     }

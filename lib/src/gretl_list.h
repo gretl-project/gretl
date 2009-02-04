@@ -42,7 +42,7 @@ int *gretl_list_from_string (const char *str, int *err);
 
 char *gretl_list_to_string (const int *list);
 
-char *gretl_list_to_lags_string (const int *list);
+char *gretl_list_to_lags_string (const int *list, int *err);
 
 int in_gretl_list (const int *list, int k);
 

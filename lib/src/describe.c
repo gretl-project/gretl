@@ -2747,7 +2747,6 @@ gretl_matrix *acf_vec (const double *x, int order,
 {
     int t1, t2;
     gretl_matrix *acf = NULL;
-    gretl_matrix *pacf = NULL;
     double xbar;
     int m, k, t, T;
 

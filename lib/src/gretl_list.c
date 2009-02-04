@@ -1169,6 +1169,7 @@ char *gretl_list_to_string (const int *list)
 /**
  * gretl_list_to_lags_string:
  * @list: array of integers.
+ * @err: location to receive error code.
  * 
  * Prints the given @list of integers into a newly
  * allocated string, separated by commas.  Will fail
@@ -1178,26 +1179,30 @@ char *gretl_list_to_string (const int *list)
  * or %NULL on failure.
  */
 
-char *gretl_list_to_lags_string (const int *list)
+char *gretl_list_to_lags_string (const int *list, int *err)
 {
     char *buf;
     char numstr[8];
-    int len, i, err = 0;
+    int len, i;
 
     len = 4 * (list[0] + 1);
+
     if (len > MAXLINE - 32) {
+	*err = E_DATA;
 	return NULL;
     }
 
     buf = malloc(len);
     if (buf == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
     *buf = '\0';
+
     for (i=1; i<=list[0]; i++) {
 	if (abs(list[i] >= 999)) {
-	    err = 1;
+	    *err = E_DATA;
 	    break;
 	} else {
 	    if (i == 1) {
@@ -1209,7 +1214,7 @@ char *gretl_list_to_lags_string (const int *list)
 	}
     }
 
-    if (err) {
+    if (*err) {
 	free(buf);
 	buf = NULL;
     }

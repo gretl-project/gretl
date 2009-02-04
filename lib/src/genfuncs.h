@@ -100,5 +100,10 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 			 const DATAINFO *pdinfo,
 			 int p, int *err);
 
+gretl_matrix *multi_xcf (const void *px, int xtype,
+			 const void *py, int ytype,
+			 const double **Z,
+			 const DATAINFO *pdinfo,
+			 int p, int *err);
 
 #endif /* GENFUNCS_H */

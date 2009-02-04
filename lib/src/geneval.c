@@ -4287,24 +4287,22 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 	}
     } else {
 	/* cross-correlogram */
-	if (l->t == VEC && r->t == VEC) {
-	    /* got two series, easy */
-	    A = xcf_vec(l->v.xvec, r->v.xvec, k, p->dinfo, 0, &p->err);
-	} else if (l->t == MAT && l->v.m->cols == 1 && r->t == MAT) {
-	    /* got two column vectors, fairly easy */
-	    const gretl_matrix *x = l->v.m;
-	    const gretl_matrix *y = r->v.m;
-	    int n = x->rows;
-
-	    if (y->rows != n) {
-		p->err = E_NONCONF;
-	    } else {
-		A = xcf_vec(x->val, y->val, k, NULL, n, &p->err);
-	    }
+	void *px = NULL, *py = NULL;
+	int xtype = VEC;
+	
+	if (list != NULL) {
+	    px = list;
+	    xtype = LVEC;
+	} else if (l->t == MAT) {
+	    px = l->v.m;
+	    xtype = MAT;
 	} else {
-	    /* oof! not done */
-	    p->err = E_NONCONF;
-	}
+	    px = l->v.xvec;
+	} 
+
+	py = (r->t == MAT)? (void *) r->v.m : (void *) r->v.xvec;
+	A = multi_xcf(px, xtype, py, r->t, (const double **) *p->Z, 
+		      p->dinfo, k, &p->err);
     }
 
     free(list);
