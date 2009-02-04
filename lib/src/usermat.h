@@ -44,6 +44,8 @@ struct matrix_subspec_ {
     union msel sel[2];
 };
 
+#define gretl_is_matrix(s) (get_matrix_by_name(s) != NULL)
+
 int n_user_matrices (void);
 
 const char *get_matrix_name_by_index (int idx);

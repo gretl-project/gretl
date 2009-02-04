@@ -87,7 +87,7 @@
 #define LN_2_PI       1.837877066409345
 #define LN_SQRT_2_PI  0.9189385332056725
 
-#define LISTSEP            999
+#define LISTSEP            9999
 #define PMAX_NOT_AVAILABLE 666
 
 /* numbers smaller than the given limit will print as zero */

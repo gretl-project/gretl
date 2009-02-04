@@ -6270,10 +6270,10 @@ static void maybe_shrink_dataset (const char *savename, int sublist)
 
 int do_store (char *savename, gretlopt opt)
 {
+    const char *mylist;
     gchar *tmp = NULL;
     FILE *fp;
     int overwrite_ok;
-    int showlist = 1;
     int sublist = 0;
     int err = 0;
 
@@ -6286,25 +6286,20 @@ int do_store (char *savename, gretlopt opt)
     }
 
     /* "storelist" is a global string */
-    if (storelist == NULL) {
-	showlist = 0;
-    }
+    mylist = (storelist == NULL)? "" : storelist;
 
     if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
 	const char *flagstr = print_flags(opt, STORE);
 
-	tmp = g_strdup_printf("store '%s' %s%s", savename, 
-			      (showlist)? storelist : "", flagstr);
+	tmp = g_strdup_printf("store '%s' %s%s", savename, mylist, flagstr);
     } else if (has_suffix(savename, ".dat")) { 
 	/* saving in "traditional" mode as ".dat" */
-	tmp = g_strdup_printf("store '%s' %s -t", savename, 
-			      (showlist)? storelist : "");
+	tmp = g_strdup_printf("store '%s' %s -t", savename, mylist);
 	opt = OPT_T;
     } else {
 	/* standard data save */
-	tmp = g_strdup_printf("store '%s' %s", savename, 
-			      (showlist)? storelist : ""); 
+	tmp = g_strdup_printf("store '%s' %s", savename, mylist);
     }
 
     if (!overwrite_ok) {

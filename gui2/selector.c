@@ -67,6 +67,7 @@ struct _selector {
     int ci;
     int active_var;
     int error;
+    int n_left;
     gretlopt opts;
     char *cmdlist;
     gpointer data;
@@ -2147,6 +2148,14 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     int gotconst = 0;
     int i, j = 1;
 
+    if (SAVE_DATA_ACTION(sr->ci) && sr->ci != COPY_CSV && rows == sr->n_left) {
+	/* saving/exporting all available series: leave the list blank
+	   in case it overflows */
+	return;
+    }    
+
+    sr->n_left = 0;
+
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
     gtk_tree_model_get_iter_first(model, &iter);
 
@@ -3532,6 +3541,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 
     sr->active_var = 0;
     sr->error = 0;
+    sr->n_left = 0;
 
     sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     open_selector = sr;
@@ -5331,6 +5341,8 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 	}
     }
 
+    sr->n_left = nleft;
+
     gtk_box_pack_start(GTK_BOX(big_hbox), left_vbox, TRUE, TRUE, 0);
     gtk_widget_show(left_vbox);
     
@@ -5508,7 +5520,8 @@ static int data_save_selection_callback (selector *sr)
     gpointer data = sr->data;
     int ci = sr->ci;
 
-    if (sr->cmdlist == NULL || *sr->cmdlist == 0) {
+    if ((sr->cmdlist == NULL || *sr->cmdlist == 0) && sr->n_left == 0) {
+	/* nothing selected */
 	return 0;
     }
 
@@ -5517,7 +5530,10 @@ static int data_save_selection_callback (selector *sr)
 	storelist = NULL;
     }
 
-    storelist = g_strdup(sr->cmdlist);
+    if (sr->cmdlist != NULL && *sr->cmdlist != '\0') {
+	storelist = g_strdup(sr->cmdlist);
+    }
+
     gtk_widget_destroy(sr->dlg);
 
     if (ci == SAVE_FUNCTIONS) {

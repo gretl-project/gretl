@@ -2600,8 +2600,8 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
     gretl_matrix *a, *A = NULL;
     const double *x;
     double xa;
-    int nv, T, Acol;
-    int i, j, k;
+    int nv, T, acol, pcol;
+    int i, j;
     
     if (list == NULL && gretl_is_null_matrix(m)) {
 	*err = E_DATA;
@@ -2628,7 +2628,8 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 	T = pdinfo->t2 - pdinfo->t1 + 1;
     }
 
-    Acol = 0;
+    acol = 0;
+    pcol = nv;
 
     for (j=0; j<nv; j++) {
 	/* get ACF/PACF for column/series */
@@ -2640,13 +2641,15 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 	}
 
 	/* transcribe into A matrix and free */
-	for (k=0; k<2; k++) {
-	    for (i=0; i<p; i++) {
-		xa = gretl_matrix_get(a, i, k);
-		gretl_matrix_set(A, i, Acol, xa);
-	    }
-	    Acol++;
+	for (i=0; i<p; i++) {
+	    xa = gretl_matrix_get(a, i, 0);
+	    gretl_matrix_set(A, i, acol, xa);
+	    xa = gretl_matrix_get(a, i, 1);
+	    gretl_matrix_set(A, i, pcol, xa);
 	}
+	acol++;
+	pcol++;
+
 	gretl_matrix_free(a);
 
 	/* move to next data read position */

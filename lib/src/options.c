@@ -551,20 +551,6 @@ static gretlopt get_short_opts (char *line, int ci, int *err)
     return ret;
 }
 
-static int is_long_opt (const char *lopt)
-{
-    int i, ret = 0;
-
-    for (i=0; gretl_opts[i].o != 0; i++) {
-	if (!strcmp(lopt, gretl_opts[i].longopt)) {
-	    ret = 1;
-	    break;
-	}
-    }
-
-    return ret;
-}
-
 static int valid_long_opt (int ci, const char *lopt)
 {
     int opt = OPT_NONE;
@@ -753,9 +739,9 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	    if (match > 0) {
 		/* recognized an acceptable option flag */
 		ret |= match;
-	    } else if (is_long_opt(longopt)) {
-		/* recognized option, but not valid for the command */
-		sprintf(gretl_errmsg, "Invalid option '--%s'", longopt);
+	    } else {
+		/* not a flag, or not applicable in context */
+		sprintf(gretl_errmsg, _("Invalid option '--%s'"), longopt);
 		fprintf(stderr, " line='%s', ci = %d\n", line, ci);
 		*err = 1;
 		return 0L;

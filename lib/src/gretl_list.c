@@ -1122,7 +1122,7 @@ int *gretl_list_from_string (const char *str, int *err)
  * positive integers in a range that is sensible for ID 
  * numbers of variables, typically with three digits or less, 
  * and will fail if the list contains any numbers greater 
- * than 999.
+ * than 9998.
  *
  * Returns: The string representation of the list on success,
  * or %NULL on failure.
@@ -1134,7 +1134,7 @@ char *gretl_list_to_string (const int *list)
     char numstr[8];
     int len, i, err = 0;
 
-    len = 4 * (list[0] + 1);
+    len = 5 * (list[0] + 1);
     if (len > MAXLINE - 32) {
 	return NULL;
     }
@@ -1145,8 +1145,9 @@ char *gretl_list_to_string (const int *list)
     }
 
     *buf = '\0';
+
     for (i=1; i<=list[0]; i++) {
-	if (abs(list[i] > 999)) {
+	if (abs(list[i] > 9998)) {
 	    err = 1;
 	    break;
 	}

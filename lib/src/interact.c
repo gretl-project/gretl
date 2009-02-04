@@ -597,7 +597,7 @@ static int arma_special_field (const char *s)
 
     if (*s == '{') {
 	ret = 1;
-    } else if (isalpha(*s) && get_matrix_by_name(s)) {
+    } else if (isalpha(*s) && gretl_is_matrix(s)) {
 	ret = 1;
     }
 
@@ -1385,7 +1385,7 @@ static int print_name_ok (const char *s, CMD *cmd)
     int ok = 0;
 
     if (cmd->ci == PRINT) {
-	if (get_matrix_by_name(s) || gretl_is_scalar(s) || 
+	if (gretl_is_matrix(s) || gretl_is_scalar(s) || 
 	    !strcmp(s, "scalars")) {
 	    cmd->extra = gretl_str_expand(&cmd->extra, s, " ");
 	    cmd->list[0] -= 1;
@@ -1677,7 +1677,7 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 	ret = 1;
     } else if (gretl_is_scalar(s)) {
 	ret = 1;
-    } else if (get_matrix_by_name(s)) {
+    } else if (gretl_is_matrix(s)) {
 	ret = 1;
     } else if (get_list_by_name(s)) {
 	ret = 1;
@@ -2052,6 +2052,8 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
     return ok;
 }
 
+/* for use with "progressive" loops, when scalars in effect
+   turn into series */
 #define make_scalars_list(c) ((c->flags & CMD_PROG) && \
                               (cmd->ci == PRINT || \
 			       cmd->ci == STORE))
@@ -2118,8 +2120,13 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
     *pk = k;
 
     if (!ok && cmd->err == 0) {
-	sprintf(gretl_errmsg, _("'%s' is not the name of a variable"), s);
-	cmd->err = E_UNKVAR;
+	if (gretl_is_scalar(s) || gretl_is_matrix(s)) {
+	    sprintf(gretl_errmsg, _("'%s' is not the name of a series"), s);
+	    cmd->err = E_DATATYPE;
+	} else {
+	    sprintf(gretl_errmsg, _("'%s' is not the name of a variable"), s);
+	    cmd->err = E_UNKVAR;
+	}
     }
 
     return ok;
@@ -2446,7 +2453,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == DELEET) {
 	if (nf == 1 && (gretl_is_scalar(rem) ||
-			get_matrix_by_name(rem) || 
+			gretl_is_matrix(rem) || 
 			get_string_by_name(rem))) {
 	    /* special for deleting a named matrix or string */
 	    cmd_param_grab_string(cmd, rem);
