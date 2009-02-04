@@ -2732,20 +2732,18 @@ int corrgram (int varno, int order, int nparam, const double **Z,
  * @order: maximum lag for autocorrelation function.
  * @pdinfo: information on the data set, or %NULL.
  * @n: length of series (required if @pdinfo is %NULL).
- * @opt: %OPT_P gets PACF rather than ACF.
  * @err: location to receive error code.
  *
  * Computes the autocorrelation function for series @x with
  * maximum lag @order.
  *
- * Returns: column vector containing the values of the
- * autocorrelation function at the successive lags, or %NULL
- * on error.
+ * Returns: two-column matrix containing the values of the
+ * ACF and PACF at the successive lags, or %NULL on error.
  */
 
 gretl_matrix *acf_vec (const double *x, int order,
 		       const DATAINFO *pdinfo, int n,
-		       gretlopt opt, int *err)
+		       int *err)
 {
     int t1, t2;
     gretl_matrix *acf = NULL;
@@ -2805,42 +2803,38 @@ gretl_matrix *acf_vec (const double *x, int order,
 	if (m == 0) {
 	    m = auto_acf_order(pdinfo->pd, T);
 	} else if (m > T - pdinfo->pd) {
-	    int nmax = T - 1; 
+	    int mmax = T - 1; 
 
-	    if (nmax < m) {
-		m = nmax; /* ?? */
+	    if (m > mmax) {
+		m = mmax;
 	    }
 	}
     }
 
-    acf = gretl_column_vector_alloc(m);
+    acf = gretl_matrix_alloc(m, 2);
 
     if (acf == NULL) {
 	*err = E_ALLOC;   
 	return NULL;
     }
 
-    /* calculate acf up to order m */
-    for (k=1; k<=m; k++) {
+    /* calculate ACF up to order m */
+    for (k=1; k<=m && !*err; k++) {
 	acf->val[k-1] = gretl_acf(k, t1, t2, x, xbar);
+	if (na(acf->val[k-1])) {
+	    *err = E_DATA;
+	}
     }
 
-    if (opt & OPT_P) {
-	/* actually it's the PACF that's wanted */
-	pacf = gretl_column_vector_alloc(m);
-	if (pacf == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    *err = get_pacf(pacf->val, acf->val, m);
-	}
+    /* add PACF */
+    if (!*err) {
+	*err = get_pacf(acf->val + m, acf->val, m);
+    }
+    
 
+    if (*err) {
 	gretl_matrix_free(acf);
-	if (*err) {
-	    gretl_matrix_free(pacf);
-	    acf = NULL;
-	} else {
-	    acf = pacf;
-	}
+	acf = NULL;
     }
 
     return acf;

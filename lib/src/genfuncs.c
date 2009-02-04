@@ -2587,42 +2587,74 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     return pv;
 }
 
-/* create a matrix containing ACF or PACF values for each
+/* create a matrix containing ACF and PACF values for each
    column of the input matrix, @m, with lag order @p.
 */
 
-gretl_matrix *matrix_acf (const gretl_matrix *m, int p, gretlopt opt, 
-			  int *err)
+gretl_matrix *multi_acf (const gretl_matrix *m, 
+			 const int *list,
+			 const double **Z,
+			 const DATAINFO *pdinfo,
+			 int p, int *err)
 {
     gretl_matrix *a, *A = NULL;
     const double *x;
-    int i, j;
+    double xa;
+    int nv, T, Acol;
+    int i, j, k;
     
-    if (gretl_is_null_matrix(m)) {
+    if (list == NULL && gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    A = gretl_matrix_alloc(p, m->cols);
+    if (m != NULL) {
+	nv = m->cols;
+    } else {
+	nv = list[0];
+    }
+
+    A = gretl_matrix_alloc(p, 2 * nv);
     if (A == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    x = m->val;
+    if (m != NULL) {
+	x = m->val;
+	T = m->rows;
+    } else {
+	x = Z[list[1]] + pdinfo->t1;
+	T = pdinfo->t2 - pdinfo->t1 + 1;
+    }
 
-    for (j=0; j<m->cols; j++) {
-	a = acf_vec(x, p, NULL, m->rows, opt, err);
+    Acol = 0;
+
+    for (j=0; j<nv; j++) {
+	/* get ACF/PACF for column/series */
+	a = acf_vec(x, p, NULL, T, err);
 	if (*err) {
 	    gretl_matrix_free(a);
 	    gretl_matrix_free(A);
 	    return NULL;
 	}
-	for (i=0; i<p; i++) {
-	    gretl_matrix_set(A, i, j, a->val[i]);
+
+	/* transcribe into A matrix and free */
+	for (k=0; k<2; k++) {
+	    for (i=0; i<p; i++) {
+		xa = gretl_matrix_get(a, i, k);
+		gretl_matrix_set(A, i, Acol, xa);
+	    }
+	    Acol++;
 	}
 	gretl_matrix_free(a);
-	x += m->rows;
+
+	/* move to next data read position */
+	if (m != NULL) {
+	    x += m->rows;
+	} else {
+	    x = Z[list[j+2]] + pdinfo->t1;
+	}
     }
 
     return A;

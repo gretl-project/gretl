@@ -94,8 +94,11 @@ double imhof (const gretl_matrix *m, double arg, int *err);
 double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 
 		double *pDW, int *err);
 
-gretl_matrix *matrix_acf (const gretl_matrix *m, int p, gretlopt opt, 
-			  int *err);
+gretl_matrix *multi_acf (const gretl_matrix *m, 
+			 const int *list, 
+			 const double **Z,
+			 const DATAINFO *pdinfo,
+			 int p, int *err);
 
 
 #endif /* GENFUNCS_H */

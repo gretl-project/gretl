@@ -833,7 +833,7 @@ static NODE *powterm (parser *p)
 	    p->sym, p->ch? p->ch : '0', p->ch);
 #endif
 
-    if (sym == F_FDJAC || sym == F_BFGSMAX || sym == F_ACF) {
+    if (sym == F_FDJAC || sym == F_BFGSMAX) {
 	opt = RIGHT_STR;
     } 
 

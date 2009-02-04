@@ -4241,21 +4241,75 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     return ret;
 }
 
-static gretlopt get_string_opt (NODE *n, gretlopt o, const char *targ,
-				parser *p)
+static gretl_matrix *get_corrgm_matrix (NODE *l,
+					NODE *m,
+					NODE *r,
+					parser *p)
 {
-    gretlopt opt = OPT_NONE;
+    int xcf = (r->t != EMPTY);
+    int *list = NULL;
+    gretl_matrix *A = NULL;
+    int k;
 
-    if (n->t == STR) { 
-	if (!strncmp(n->v.str, targ, strlen(n->v.str))) {
-	    opt = o;
-	} else {
-	    gretl_errmsg_sprintf("%s: invalid option", n->v.str);
-	    p->err = E_DATA;
+    /* ensure we've got an order */
+    k = (int) node_get_scalar(m, p);
+    if (p->err) {
+	return NULL;
+    }
+
+    /* if we're supposed to have a list, check that we
+       actually have one */
+    if (l->t != VEC && l->t != MAT) {
+	list = node_get_list(l, p);
+	if (p->err) {
+	    return NULL;
 	}
     }
 
-    return opt;
+    /* if third node is matrix, must be col vector */
+    if (r->t == MAT) {
+	if (r->v.m->cols != 1) {
+	    p->err = E_NONCONF;
+	    return NULL;
+	}
+    }
+
+    if (!xcf) {
+	/* acf/pacf */
+	if (l->t == VEC) {
+	    A = acf_vec(l->v.xvec, k, p->dinfo, 0, &p->err);
+	} else if (l->t == MAT) {
+	    A = multi_acf(l->v.m, NULL, NULL, NULL, k, &p->err);
+	} else {
+	    /* must be a list */
+	    A = multi_acf(NULL, list, (const double **) *p->Z, 
+			  p->dinfo, k, &p->err);
+	}
+    } else {
+	/* cross-correlogram */
+	if (l->t == VEC && r->t == VEC) {
+	    /* got two series, easy */
+	    A = xcf_vec(l->v.xvec, r->v.xvec, k, p->dinfo, 0, &p->err);
+	} else if (l->t == MAT && l->v.m->cols == 1 && r->t == MAT) {
+	    /* got two column vectors, fairly easy */
+	    const gretl_matrix *x = l->v.m;
+	    const gretl_matrix *y = r->v.m;
+	    int n = x->rows;
+
+	    if (y->rows != n) {
+		p->err = E_NONCONF;
+	    } else {
+		A = xcf_vec(x->val, y->val, k, NULL, n, &p->err);
+	    }
+	} else {
+	    /* oof! */
+	    ;
+	}
+    }
+
+    free(list);
+
+    return A;
 }
 
 /* evaluate a built-in function that has three arguments */
@@ -4315,50 +4369,17 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    A = gretl_toeplitz_solve(l->v.m, m->v.m, r->v.m, &p->err);
 	} 
-    } else if (f == F_ACF) {
-	if (l->t != VEC && l->t != MAT) {
+    } else if (f == F_CORRGM) {
+	if (l->t != VEC && l->t != MAT && !ok_list_node(l)) {
 	    node_type_error(f, 0, VEC, l, p);
 	} else if (!scalar_node(m)) {
 	    node_type_error(f, 1, NUM, m, p);
-	} else if (r->t != STR && r->t != EMPTY) {
-	    node_type_error(f, 2, STR, r, p);
+	} else if (r->t != EMPTY && r->t != VEC && r->t != MAT) {
+	    node_type_error(f, 2, VEC, r, p);
 	} else {
-	    gretlopt opt = get_string_opt(r, OPT_P, "partial", p);
-	    int k = (int) node_get_scalar(m, p);
-
-	    if (!p->err) {
-		if (l->t == VEC) {
-		    A = acf_vec(l->v.xvec, k, p->dinfo, 0, opt, &p->err);
-		} else {
-		    A = matrix_acf(l->v.m, k, opt, &p->err);
-		}
-	    }
+	    A = get_corrgm_matrix(l, m, r, p);
 	}
-    } else if (f == F_XCF) {
-	if (l->t != VEC && l->t != MAT) {
-	    node_type_error(f, 0, VEC, l, p);
-	} else if (m->t != l->t) {
-	    node_type_error(f, 1, VEC, m, p);
-	} else if (!scalar_node(r)) {
-	    node_type_error(f, 2, NUM, r, p);
-	} else {
-	    int k = (int) node_get_scalar(r, p);
-
-	    if (l->t == VEC) {
-		A = xcf_vec(l->v.xvec, m->v.xvec, k, p->dinfo, 0, &p->err);
-	    } else {
-		const gretl_matrix *x = l->v.m;
-		const gretl_matrix *y = m->v.m;
-		int n = x->rows;
-
-		if (y->rows != n || x->cols != 1 || y->cols != 1) {
-		    p->err = E_NONCONF;
-		} else {
-		    A = xcf_vec(l->v.m->val, m->v.m->val, k, NULL, n, &p->err);
-		}
-	    }
-	}
-    }	
+    } 
 
     if (!p->err) {
 	ret = aux_matrix_node(p);
@@ -5981,8 +6002,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MPOLS:
     case F_TRIMR:
     case F_TOEPSOLV:
-    case F_ACF:
-    case F_XCF:
+    case F_CORRGM:
 	/* built-in functions taking three args */
 	ret = eval_3args_func(l, m, r, t->t, p);
 	break;
