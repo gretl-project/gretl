@@ -4302,8 +4302,8 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 		A = xcf_vec(x->val, y->val, k, NULL, n, &p->err);
 	    }
 	} else {
-	    /* oof! */
-	    ;
+	    /* oof! not done */
+	    p->err = E_NONCONF;
 	}
     }
 
