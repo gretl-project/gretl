@@ -10,6 +10,13 @@
 - VECMs: add a GUI selector for lags of any exogenous 
   variables
 - genr: make '^' (exponentiation) associate rightwards
+- genr: support the syntax "func(args)[slice]" to select
+  directly a submatrix from a function call that returns a
+  matrix
+- panel, random effects estimator, Hausman test: notify the 
+  user if the matrix-difference version of the Hausman test 
+  fails; also document the --hausman-reg option in the help 
+  entry for the "panel" command
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
