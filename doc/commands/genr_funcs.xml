@@ -976,6 +976,38 @@
       </description>
     </function>
 
+    <function name="corrgm" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="smlist">x</fnarg>
+	<fnarg type="scalar">p</fnarg>
+	<fnarg optional="true" type="series-or-vec">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  If only the first two arguments are given, computes the correlogram
+	  for <argname>x</argname> for lags 1 to <argname>p</argname>.  Let
+	  <math>k</math> represent the number of elements in
+	  <argname>x</argname> (1 if <argname>x</argname> is a series, the
+	  number of columns if <argname>x</argname> is a matrix, or the number
+	  of list-members is <argname>x</argname> is a list).  The return
+	  value is a matrix with <argname>p</argname> rows and 2<math>k</math>
+	  columns, the first <math>k</math> columns holding the respective
+	  autocorrelations and the remainder the respective partial
+	  autocorrelations.
+	</para>
+	<para>
+	  If a third argument is given, this function computes the
+	  cross-correlogram for each of the <math>k</math> elements in
+	  <argname>x</argname> and <argname>y</argname>, from lead
+	  <argname>p</argname> to lag <argname>p</argname>. The returned
+	  matrix has 2<math>p</math> + 1 rows and <math>k</math> columns.
+          If <argname>x</argname> is series or list and <argname>y</argname>
+          is a vector, the vector must have just as many rows as there
+          are observations in the current sample range.
+	</para>
+      </description>
+    </function>
+
     <function name="cos" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>

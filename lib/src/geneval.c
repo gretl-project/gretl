@@ -2514,6 +2514,23 @@ static NODE *apply_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+const double *get_colvec_as_series (NODE *n, int f, parser *p)
+{
+    if (n->t != MAT) {
+	node_type_error(f, 1, VEC, n, p);
+	return NULL;
+    } else {	
+	const gretl_matrix *m = n->v.m;
+
+	if (m->rows == p->dinfo->n && m->cols == 1) {
+	    return m->val;
+	} else {
+	    node_type_error(f, 1, VEC, n, p);
+	    return NULL;
+	}
+    } 
+}
+
 static NODE *apply_series_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_vec_node(p, p->dinfo->n);
@@ -2521,10 +2538,20 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 
     if (ret != NULL) {
 	/* AC: changed for autoreg case, 2007/7/1 */
-	t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-	t2 = (autoreg(p))? p->obs : p->dinfo->t2;
-	for (t=t1; t<=t2; t++) {
-	    ret->v.xvec[t] = real_apply_func(n->v.xvec[t], f, p);
+	const double *x;
+
+	if (n->t == VEC) {
+	    x = ret->v.xvec;
+	} else {
+	    x = get_colvec_as_series(n, f, p);
+	}
+
+	if (!p->err) {
+	    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+	    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+	    for (t=t1; t<=t2; t++) {
+		ret->v.xvec[t] = real_apply_func(x[t], f, p);
+	    }
 	}
     }
 
@@ -5651,7 +5678,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MISSZERO:
     case F_ZEROMISS:
 	/* one series or scalar argument needed */
-	if (l->t == VEC) {
+	if (l->t == VEC || l->t == MAT) {
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
