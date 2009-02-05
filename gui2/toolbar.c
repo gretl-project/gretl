@@ -364,35 +364,59 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
     }	
 }
 
-#define xround(x) (((x-floor(x))>.5)? ceil(x) : floor(x))
-
 static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 {
     CoeffIntervals *cf = vwin->data;
-    GtkTextBuffer *buf;
-    const char *newtext;
-    double alpha, x = 100 * (1 - cf->alpha);
-    int cval = (int) xround(x);
+    GtkWidget *dialog, *tmp, *hbox;
+    GtkObject *adj;
+    double x = 1.0 - cf->alpha;
     PRN *prn;
-    int resp;
+    int cancel = 0;
 
-    resp = spin_dialog("gretl: alpha", NULL,
-		       &cval, _("Confidence level, percent"),
-		       60, 99, 0);
-
-    if (resp < 0 || bufopen(&prn)) {
+    if (maybe_raise_dialog()) {
 	return;
     }
 
-    alpha = (100.0 - cval) / 100.0;
-    reset_coeff_intervals(cf, alpha);
-    text_print_model_confints(cf, prn);
-    newtext = gretl_print_get_buffer(prn);
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    dialog = gretl_dialog_new(_("gretl: coefficient confidence intervals"), 
+			      NULL, GRETL_DLG_BLOCK);
 
-    gtk_text_buffer_set_text(buf, "", -1);
-    textview_set_text(vwin->text, newtext);
-    gretl_print_destroy(prn);
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Confidence level"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tmp = gtk_label_new("1 - α =");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    adj = gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.01, 2);
+    g_signal_connect(tmp, "value-changed", 
+		     G_CALLBACK(set_double_from_spinner), &x);
+    gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &cancel);
+
+    /* "OK" button */
+    tmp = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), dialog);
+    gtk_widget_grab_default(tmp);
+
+    gtk_widget_show_all(dialog);
+
+    if (!cancel && bufopen(&prn) == 0) {
+	GtkTextBuffer *buf;
+	const char *newtext;
+
+	reset_coeff_intervals(cf, 1.0 - x);
+	text_print_model_confints(cf, prn);
+	newtext = gretl_print_get_buffer(prn);
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+	gtk_text_buffer_set_text(buf, "", -1);
+	textview_set_text(vwin->text, newtext);
+	gretl_print_destroy(prn);
+    }
 }
 
 static void set_output_sticky (GtkWidget *w, windata_t *vwin)

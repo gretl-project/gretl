@@ -17,6 +17,9 @@
   user if the matrix-difference version of the Hausman test 
   fails; also document the --hausman-reg option in the help 
   entry for the "panel" command
+- VARs: support gaps in the lag structure
+- New GUI graph option: "Plot curve" under the tools menu,
+  for quick plotting of a formula
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
