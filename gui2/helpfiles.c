@@ -152,7 +152,8 @@ static struct gui_help_item gui_help_items[] = {
     { DATASORT,       "datasort" },
     { WORKDIR,        "working-dir" },
     { DFGLS,          "dfgls" },
-    { GPT_ADDLINE,    "addline" },          
+    { GPT_ADDLINE,    "addline" }, 
+    { GPT_CURVE  ,    "curve" }, 
     { -1,             NULL },
 };
 

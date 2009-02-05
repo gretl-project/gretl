@@ -3011,6 +3011,162 @@ static void real_stats_calculator (int code, gpointer data)
     gtk_widget_show(child->dlg);
 }
 
+/* for gnuplot: convert '^' to '**' for exonentiation */
+
+static gchar *formula_mod (const gchar *s)
+{
+    const gchar *p = s;
+    int n = strlen(s) + 1;
+    gchar *q, *ret;
+
+    while (*p) {
+	if (*p == '^') n++;
+	p++;
+    }
+
+    ret = g_malloc(n);
+    q = ret;
+
+    while (*s) {
+	if (*s == '^') {
+	    *q++ = '*';
+	    *q++ = '*';
+	    s++;
+	} else {
+	    *q++ = *s++;
+	}
+    }  
+
+    *q = '\0';
+
+    return ret;
+}
+
+struct curve_plotter {
+    GtkWidget *dlg;
+    GtkWidget *entry;
+    gchar *formula;
+    double xmin;
+    double xrange;
+};
+
+static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
+{
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(p->entry));
+    FILE *fp = NULL;
+    int err = 0;
+
+    if (s == NULL || *s == '\0') {
+	return;
+    }
+
+    g_free(p->formula);
+
+    if (strchr(s, '^')) {
+	p->formula = formula_mod(s);
+    } else {
+	p->formula = g_strdup(s);
+    }
+
+    if (gnuplot_init(PLOT_FORMULA, &fp)) { 
+	return;
+    }
+
+    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    
+    gretl_push_c_numeric_locale();
+
+    fprintf(fp, "set xrange [%g:%g]\n", p->xmin, p->xmin + p->xrange);
+    fprintf(fp, "plot \\\n");
+    fprintf(fp, "%s notitle w lines\n", p->formula);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    err = gnuplot_make_graph();
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph();
+	gtk_widget_destroy(p->dlg);
+    }
+}
+
+/* plot a curve specified via formula (no data required) */
+
+static void plot_curve (void)
+{
+    static struct curve_plotter plotter;
+    GtkWidget *dialog, *hbox, *vbox;
+    GtkWidget *button, *tmp;
+    GtkObject *adj;
+
+    if (plotter.dlg != NULL) {
+	gtk_window_present(GTK_WINDOW(plotter.dlg));
+	return;
+    }
+
+    plotter.dlg = dialog = 
+	gretl_dialog_new(_("gretl: plot a curve"), mdata->main, 0);
+
+    g_signal_connect(G_OBJECT(dialog), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed), &plotter.dlg);
+
+    if (plotter.xrange == 0) {
+	plotter.xrange = 10;
+    }
+
+    vbox = GTK_DIALOG(dialog)->vbox;
+
+    /* gnuplot formula entry box */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("formula"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    plotter.entry = tmp = gtk_entry_new();
+    gtk_entry_set_width_chars(GTK_ENTRY(tmp), 32);
+    if (plotter.formula != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(tmp), plotter.formula);
+    }
+    gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* x-axis spinners (min and range) */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("x minimum"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    adj = gtk_adjustment_new(plotter.xmin, -100, 100, 1, 0, 0);
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    g_signal_connect(tmp, "value-changed", 
+		     G_CALLBACK(set_double_from_spinner), &plotter.xmin);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+    tmp = gtk_label_new("  ");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tmp = gtk_label_new(_("x range"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    adj = gtk_adjustment_new(plotter.xrange, 1, 1000, 1, 0, 0);
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    g_signal_connect(tmp, "value-changed", 
+		     G_CALLBACK(set_double_from_spinner), &plotter.xrange);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0); 
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    
+    /* "Cancel" button */
+    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
+
+    /* "OK" button */
+    button = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(do_plot_curve), &plotter);
+    gtk_widget_grab_default(button);
+
+    /* Help button */
+    context_help_button(GTK_DIALOG(dialog)->action_area, GPT_CURVE);
+
+    gtk_widget_show_all(dialog);
+}
+
 static int stats_calculator_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -3027,6 +3183,8 @@ static int stats_calculator_code (GtkAction *action)
 	return CALC_GRAPH;
     else if (!strcmp(s, "AddRandom"))
 	return CALC_RAND;
+    else if (!strcmp(s, "PlotCurve"))
+	return CALC_PLOT;
     else
 	return 0;
 }
@@ -3040,9 +3198,14 @@ void stats_calculator (GtkAction *action, gpointer data)
 		     code == CALC_TEST ||
 		     code == CALC_NPTEST ||
 		     code == CALC_GRAPH ||
-		     code == CALC_RAND);
+		     code == CALC_RAND ||
+		     code == CALC_PLOT);
 
-    real_stats_calculator(code, data);
+    if (code == CALC_PLOT) {
+	plot_curve();
+    } else {
+	real_stats_calculator(code, data);
+    }
 }
 
 void dist_graph_add (gpointer p)

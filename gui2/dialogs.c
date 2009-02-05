@@ -3854,6 +3854,12 @@ static void msgbox (const char *msg, int msgtype)
 
 static void msgbox (const char *msg, int msgtype)
 {
+    const gchar *titles[] = {
+	N_("gretl: error"),
+	N_("gretl: warning"),
+	N_("gretl: information")
+    };
+    const gchar *title;
     gchar *trmsg = NULL;
     GtkWidget *dialog;
 
@@ -3870,6 +3876,11 @@ static void msgbox (const char *msg, int msgtype)
 				    msgtype,
 				    GTK_BUTTONS_CLOSE,
 				    (trmsg != NULL)? trmsg : msg);
+
+    title = (msgtype == GTK_MESSAGE_ERROR)? titles[0] :
+	(msgtype == GTK_MESSAGE_WARNING)? titles[0] : titles[2];
+
+    gtk_window_set_title(GTK_WINDOW(dialog), _(title));
 
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);

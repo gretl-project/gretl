@@ -87,6 +87,7 @@
       <menuitem action='StatsTables'/>
       <menuitem action='PValues'/>
       <menuitem action='DistGraphs'/>
+      <menuitem action='PlotCurve'/>
       <menuitem action='TestStats'/>
       <menuitem action='NonparamTests'/>
       <menuitem action='SetSeed'/>

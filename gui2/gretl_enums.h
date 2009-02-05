@@ -105,6 +105,7 @@ enum extra_cmds {
     PWE,
     AFR, /* actual, fitted, residual */
     GPT_ADDLINE,
+    GPT_CURVE,
     GUI_CMD_MAX
 };
 
@@ -254,6 +255,7 @@ enum calc_functions {
     CALC_GRAPH,
     CALC_GRAPH_ADD,
     CALC_RAND,
+    CALC_PLOT,
     CALC_MAX
 };
 

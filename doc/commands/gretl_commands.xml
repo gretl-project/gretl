@@ -1587,6 +1587,33 @@
 
   </command>
 
+  <command name="curve" section="Graphs" label="Plot a curve"
+    context="gui">
+
+    <description>
+      <para>
+	This dialog box allows you to create a gnuplot graph by specifying a
+	formula. This must be an expression acceptable to gnuplot.  Use
+	<lit>x</lit> to denote the value of the variable on the x-axis.
+	Please note that gnuplot uses <lit>**</lit> for exponentiation
+	(raising to a power), and that the decimal character must be given as
+	<quote>.</quote>.  Examples:
+      </para>
+      <code>
+	10+0.35*x
+	100+5.3*x-0.12*x**2
+	sin(x)
+	exp(sqrt(pi*x))
+      </code>
+      <para>
+	To put an additional line onto a graph created in this way, click
+	on the graph and select <quote>Edit</quote>, select the
+	<quote>Lines</quote> tab in the graph editing dialog, and use
+	the <quote>Add line</quote> button.
+      </para>
+    </description>
+  </command>
+
   <command name="cusum" section="Tests" label="CUSUM test">
 
     <usage>
