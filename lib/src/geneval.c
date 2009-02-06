@@ -2541,7 +2541,7 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 	const double *x;
 
 	if (n->t == VEC) {
-	    x = ret->v.xvec;
+	    x = n->v.xvec;
 	} else {
 	    x = get_colvec_as_series(n, f, p);
 	}
