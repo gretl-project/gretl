@@ -636,6 +636,38 @@ static int get_dot_pos (const char *s)
 
 #define DATES_DEBUG 0
 
+static int match_obs_marker (const char *s, const DATAINFO *pdinfo)
+{
+    char test[OBSLEN];
+    int t;
+
+#if DATES_DEBUG
+    fprintf(stderr, "dateton: checking marker strings\n");
+#endif
+
+    maybe_unquote_label(test, s);
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (!strcmp(test, pdinfo->S[t])) {
+	    /* handled */
+	    return t;
+	}
+    }
+
+    if (isalpha(*s)) {
+	/* try harder */
+	int k = strlen(test);
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!strncmp(test, pdinfo->S[t], k)) {
+		return t;
+	    }
+	}
+    }
+
+    return -1;
+}
+
 static int 
 real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 {
@@ -692,17 +724,9 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	    handled = 1;
 	}	
     } else if (pdinfo->markers && pdinfo->S != NULL) {
-	char test[OBSLEN];
-
-#if DATES_DEBUG
-	fprintf(stderr, "dateton: checking marker strings\n");
-#endif
-	maybe_unquote_label(test, date);
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!strcmp(test, pdinfo->S[t])) {
-		/* handled */
-		return t;
-	    }
+	t = match_obs_marker(date, pdinfo);
+	if (t >= 0) {
+	    return t;
 	}
 	/* else maybe just a straight obs number */
 	t = positive_int_from_string(date);

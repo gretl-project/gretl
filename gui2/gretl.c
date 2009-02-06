@@ -1397,7 +1397,7 @@ GtkActionEntry main_entries[] = {
     /* View */
     { "View", NULL, N_("_View"), NULL, NULL, NULL },
     { "IconView", NULL, N_("_Icon view"), NULL, NULL, G_CALLBACK(iconview_callback) },
-    { "EditScalars", NULL, N_("_Scalars..."), NULL, NULL, G_CALLBACK(edit_scalars) },
+    { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },
     { "GraphVars", NULL, N_("_Graph specified vars"), NULL, NULL, NULL },
     { "TSPlot", NULL, N_("_Time series plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "ScatterPlot", NULL, N_("X-Y _scatter..."), NULL, NULL, G_CALLBACK(selector_callback) },

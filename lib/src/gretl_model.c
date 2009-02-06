@@ -4801,8 +4801,8 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     const DATAINFO *mdinfo;
     char *ret = NULL;
 
-    /* only OLS and logistic are handled */
-    if (xvar == 0 || (pmod->ci != OLS && pmod->ci != LOGISTIC)) {
+    /* only OLS, WLS and logistic are handled */
+    if (xvar == 0 || (pmod->ci != OLS && pmod->ci != WLS && pmod->ci != LOGISTIC)) {
 	return NULL;
     }
 
