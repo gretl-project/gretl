@@ -2167,8 +2167,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	gtk_widget_show(sep);
     }
 
-    if ((spec->code == PLOT_REGULAR || spec->code == PLOT_FORMULA) && 
-	spec->n_lines < 8) {
+    if (spec->code == PLOT_REGULAR && spec->n_lines < 8) {
 	/* button for adding a line (formula) */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);

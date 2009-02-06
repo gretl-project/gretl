@@ -1173,6 +1173,8 @@ static GtkWidget *make_main_window (void)
     gtk_box_pack_start(GTK_BOX(main_vbox), mdata->mbar, FALSE, TRUE, 0);
     gtk_widget_show(mdata->mbar);
 
+    /* insert notebook level here? */
+
     dlabel = gtk_label_new(_(" No datafile loaded ")); 
     gtk_widget_show(dlabel);
 

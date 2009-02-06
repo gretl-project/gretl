@@ -3551,12 +3551,31 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	errmsg_plus(err, gretl_print_get_buffer(prn));
 	delete_last_command();
     } else {
+	int n, gentype = genr_get_last_output_type();
+	const char *name;
+	double val;
+	gchar *txt;
+
 	if (dlg != NULL) {
 	    close_dialog(dlg);
 	}
-	if (genr_get_last_output_type() == GRETL_TYPE_SERIES) {
+	if (gentype == GRETL_TYPE_SERIES) {
 	    populate_varlist();
 	    mark_dataset_as_modified();
+	} else if (gentype == GRETL_TYPE_DOUBLE) {
+	    n = n_saved_scalars();
+	    name = gretl_scalar_get_name(n-1);
+	    val = gretl_scalar_get_value_by_index(n-1);
+	    txt = g_strdup_printf(_("Added scalar %s = %g"),
+				  name, val);
+	    infobox(txt);
+	    g_free(txt);
+	} else if (gentype == GRETL_TYPE_MATRIX) {
+	    n = n_user_matrices();
+	    name = get_matrix_name_by_index(n-1);
+	    txt = g_strdup_printf(_("Added matrix %s"), name);
+	    infobox(txt);
+	    g_free(txt);
 	}
     }
 

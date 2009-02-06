@@ -3068,7 +3068,7 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 	p->formula = g_strdup(s);
     }
 
-    if (gnuplot_init(PLOT_FORMULA, &fp)) { 
+    if (gnuplot_init(PLOT_REGULAR, &fp)) { 
 	return;
     }
 
