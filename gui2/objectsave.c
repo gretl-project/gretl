@@ -307,7 +307,7 @@ int saved_object_action (const char *line, PRN *prn)
     /* special: display icon view window */
     if (!strncmp(line, "iconview", 8)) {
 	if (data_status) {
-	    view_session();
+	    view_session(NULL);
 	    return 1;
 	} else {
 	    return -1;

@@ -88,7 +88,7 @@ int is_session_file (const char *fname);
 
 int is_session_model (void *p);
 
-void view_session (void);
+void view_session (GtkWidget *parent);
 
 void save_session_callback (GtkAction *action);
 

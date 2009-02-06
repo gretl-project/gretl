@@ -131,11 +131,10 @@
       <menuitem action='DataSort'/>
       <separator/>
       <menuitem action='DataRefresh'/>
-      <separator/>
-      <menuitem action='EditScalars'/>
     </menu>
     <menu action='View'>
       <menuitem action='IconView'/>
+      <menuitem action='EditScalars'/>
       <separator/>
       <menu action='GraphVars'>
 	<menuitem action='TSPlot'/>

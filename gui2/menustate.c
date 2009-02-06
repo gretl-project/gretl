@@ -237,7 +237,11 @@ void session_menu_state (gboolean s)
 	flip(mdata->ui, "/MenuBar/View/IconView", s);
 	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", s);
 	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSessionAs", s);
-    }	
+    }
+
+    if (!s && mdata->main != NULL) {
+	set_main_window_title(NULL, FALSE);
+    }
 }
 
 void restore_sample_state (gboolean s)
@@ -443,6 +447,25 @@ void clear_sample_label (void)
 
     gtk_label_set_text(GTK_LABEL(mdata->status), "");
     gtk_label_set_text(GTK_LABEL(dlabel), _(" No datafile loaded "));
+}
+
+void set_main_window_title (const char *name, gboolean modified)
+{
+    if (name == NULL) {
+	gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
+    } else {
+	/* FIXME encoding on Windows? */
+	gchar *title;
+
+	if (modified) {
+	    title = g_strdup_printf("gretl: %s *", name);
+	} else {
+	    title = g_strdup_printf("gretl: %s", name);
+	}
+
+	gtk_window_set_title(GTK_WINDOW(mdata->main), title);
+	g_free(title);
+    }
 }
 
 void set_sample_label (DATAINFO *pdinfo)

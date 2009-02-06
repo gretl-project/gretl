@@ -27,6 +27,7 @@ GtkWidget *build_selection_popup (void);
 
 void clear_sample_label (void);
 void set_sample_label (DATAINFO *pdinfo);
+void set_main_window_title (const char *name, gboolean modified);
 
 void action_entry_init (GtkActionEntry *entry);
 

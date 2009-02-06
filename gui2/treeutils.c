@@ -509,7 +509,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller),
-					GTK_SHADOW_IN);    
+					GTK_SHADOW_IN);
 
     gtk_container_add(GTK_CONTAINER(scroller), view);
     gtk_box_pack_start(box, scroller, TRUE, TRUE, TRUE);

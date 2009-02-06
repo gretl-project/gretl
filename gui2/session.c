@@ -82,8 +82,9 @@ typedef struct SESSION_GRAPH_ SESSION_GRAPH;
 typedef struct gui_obj_ gui_obj;
 
 enum {
-    SESSION_CHANGED = 1 << 0,
-    SESSION_SAVED   = 1 << 1
+    SESSION_CHANGED  = 1 << 0,
+    SESSION_SAVED    = 1 << 1,
+    SESSION_EMBEDDED = 1 << 2
 };
 
 struct SESSION_ {
@@ -264,6 +265,9 @@ void mark_session_changed (void)
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, TRUE);
 	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", TRUE);
+	if (*session.name != '\0') {
+	    set_main_window_title(session.name, TRUE);
+	}
     }
 }
 
@@ -273,6 +277,7 @@ static void mark_session_saved (void)
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, FALSE);
 	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", FALSE);
+	set_main_window_title(session.name, FALSE);
     }
 }
 
@@ -1180,6 +1185,8 @@ void do_open_session (void)
 	free(sinfo.mask);
     }
 
+    set_main_window_title(session.name, FALSE);
+
  bailout:
 
     if (err) {
@@ -1191,7 +1198,7 @@ void do_open_session (void)
 	/* sync gui with session */
 	session_menu_state(TRUE);
 
-	view_session();
+	view_session(NULL);
 	mark_session_saved();
 	session_switch_log_location(OPEN_SESSION);
     }
@@ -2878,8 +2885,8 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     return obj;
 }
 
-static GtkWidget *create_popup_item (GtkWidget *popup, char *str, 
-				     GtkCallback callback)
+static GtkWidget *create_pop_item (GtkWidget *popup, char *str, 
+				   GtkCallback callback)
 {
     GtkWidget *item;
 
@@ -2899,95 +2906,98 @@ static GtkWidget *create_popup_item (GtkWidget *popup, char *str,
 
 static void session_build_popups (void)
 {
-    size_t i;
+    size_t i, n;
 
     if (global_popup == NULL) {
 	global_popup = gtk_menu_new();
-	for (i=0; i<sizeof global_items / sizeof global_items[0]; i++) {
-	    create_popup_item(global_popup, 
-			      _(global_items[i]), 
-			      global_popup_activated);
+	n = G_N_ELEMENTS(global_items);
+	if (session.status & SESSION_EMBEDDED) {
+	    n--;
+	}
+	for (i=0; i<n; i++) {
+	    create_pop_item(global_popup, _(global_items[i]), 
+			    global_popup_activated);
 	}
     }
 
     if (model_popup == NULL) {
 	model_popup = gtk_menu_new();
-	for (i=0; i<sizeof model_items / sizeof model_items[0]; i++) {
-	    create_popup_item(model_popup, 
-			      _(model_items[i]), 
-			      object_popup_activated);
+	n = G_N_ELEMENTS(model_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(model_popup, _(model_items[i]), 
+			    object_popup_activated);
 	}
     }
 
     if (model_table_popup == NULL) {
 	model_table_popup = gtk_menu_new();
-	for (i=0; i<sizeof model_table_items / sizeof model_table_items[0]; i++) {
-	    create_popup_item(model_table_popup, 
-			      _(model_table_items[i]), 
-			      object_popup_activated);
+	n = G_N_ELEMENTS(model_table_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(model_table_popup, _(model_table_items[i]), 
+			    object_popup_activated);
 	}
     }
 
     if (generic_popup == NULL) {
 	generic_popup = gtk_menu_new();
-	for (i=0; i<sizeof generic_items / sizeof generic_items[0]; i++) {
-	    create_popup_item(generic_popup, 
-			      _(generic_items[i]), 
-			      object_popup_activated);
+	n = G_N_ELEMENTS(generic_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(generic_popup, _(generic_items[i]), 
+			    object_popup_activated);
 	}
     }
 
     if (graph_popup == NULL) {
 	graph_popup = gtk_menu_new();
-	for (i=0; i<sizeof graph_items / sizeof graph_items[0]; i++) {
-	    create_popup_item(graph_popup, 
-			      _(graph_items[i]), 
-			      object_popup_activated);
+	n = G_N_ELEMENTS(graph_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(graph_popup, _(graph_items[i]), 
+			    object_popup_activated);
 	}
     }
 
     if (graph_page_popup == NULL) {
 	graph_page_popup = gtk_menu_new();
-	for (i=0; i<sizeof graph_page_items / sizeof graph_page_items[0]; i++) {
-	    create_popup_item(graph_page_popup, 
-			      _(graph_page_items[i]), 
-			      object_popup_activated);
+	n = G_N_ELEMENTS(graph_page_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(graph_page_popup, _(graph_page_items[i]), 
+			    object_popup_activated);
 	}
     }
 
     if (data_popup == NULL) {
 	data_popup = gtk_menu_new();
-	for (i=0; i<sizeof dataset_items / sizeof dataset_items[0]; i++) {
-	    create_popup_item(data_popup, 
-			      _(dataset_items[i]), 
-			      data_popup_activated);	    
+	n = G_N_ELEMENTS(dataset_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(data_popup, _(dataset_items[i]), 
+			    data_popup_activated);	    
 	}
     }
 
     if (scalars_popup == NULL) {
 	scalars_popup = gtk_menu_new();
-	for (i=0; i<sizeof scalars_items / sizeof scalars_items[0]; i++) {
-	    create_popup_item(scalars_popup, 
-			      _(scalars_items[i]), 
-			      scalars_popup_activated);	    
+	n = G_N_ELEMENTS(scalars_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(scalars_popup, _(scalars_items[i]), 
+			    scalars_popup_activated);	    
 	}
     }
 
     if (info_popup == NULL) {
 	info_popup = gtk_menu_new();
-	for (i=0; i<sizeof info_items / sizeof info_items[0]; i++) {
-	    create_popup_item(info_popup, 
-			      _(info_items[i]), 
-			      info_popup_activated);	    
+	n = G_N_ELEMENTS(info_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(info_popup, _(info_items[i]), 
+			    info_popup_activated);	    
 	}
     }
 
     if (matrix_popup == NULL) {
 	matrix_popup = gtk_menu_new();
-	for (i=0; i<sizeof matrix_items / sizeof matrix_items[0]; i++) {
-	    create_popup_item(matrix_popup, 
-			      _(matrix_items[i]), 
-			      matrix_popup_activated);	    
+	n = G_N_ELEMENTS(matrix_items);
+	for (i=0; i<n; i++) {
+	    create_pop_item(matrix_popup, _(matrix_items[i]), 
+			    matrix_popup_activated);	    
 	}
     }
 }
@@ -3020,29 +3030,35 @@ static void iconview_connect_signals (GtkWidget *iconview)
 		     G_CALLBACK(iconview_resize_callback), NULL);
 }
 
-void view_session (void)
+void view_session (GtkWidget *parent)
 {
     GtkWidget *hbox, *scroller;
     gchar *title;
 
     if (iconview != NULL) {
-	gdk_window_show(iconview->window);
-	gdk_window_raise(iconview->window);
+	if (parent == NULL) {
+	    gdk_window_show(iconview->window);
+	    gdk_window_raise(iconview->window);
+	}
 	return;
     }
 
     session_view_init();
 
-    title = g_strdup_printf("gretl: %s", 
-			    (session.name[0])? session.name : 
-			    _("current session"));
-    
-    iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(iconview), title);
-    g_free(title);
-    gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
-    gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
+    if (parent == NULL) {
+	iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	title = g_strdup_printf("gretl: %s", _("icon view"));
+	gtk_window_set_title(GTK_WINDOW(iconview), title);
+	g_free(title);
+	gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
+	session.status &= ~SESSION_EMBEDDED;
+    } else {
+	iconview = gtk_vbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(parent), iconview, TRUE, TRUE, 0);
+	session.status |= SESSION_EMBEDDED;
+    }
 
+    gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
     iconview_connect_signals(iconview);
 
     session_build_popups();
