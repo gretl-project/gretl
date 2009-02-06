@@ -1669,13 +1669,13 @@ static double fcast_transform (double xb, int ci, int t,
    version without computation of forecast standard errors
 */
 
-static int linear_fcast (Forecast *fc, const MODEL *pmod, 
-			 const double **Z, const DATAINFO *pdinfo)
+static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
+			 const double **Z, const DATAINFO *pdinfo,
+			 gretlopt opt)
 {
     const double *offvar = NULL;
-    int yno = pmod->list[1];
     double lmax = NADBL;
-    double xval;
+    double xval, yht;
     int i, vi, t;
 
     if (pmod->ci == POISSON) {
@@ -1689,9 +1689,17 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod,
 	lmax = gretl_model_get_double(pmod, "lmax");
     }
 
+    if (opt & OPT_I) {
+	yht = Z[yno][fc->t1 - 1];
+    }
+
     for (t=fc->t1; t<=fc->t2; t++) {
 	int miss = 0;
-	double yh = 0.0;
+
+	if (!(opt & OPT_I)) {
+	    /* not integrating forecast */
+	    yht = 0.0;
+	}
 
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    int lag;
@@ -1705,17 +1713,27 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod,
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
-		yh += xval * pmod->coeff[i];
+		yht += xval * pmod->coeff[i];
 	    }
 	}
 
 	if (miss) {
-	    fc->yhat[t] = NADBL;
+	    if (opt & OPT_I) {
+		/* integrating: all subsequent values are NA */
+		int s;
+
+		for (s=t; s<=fc->t2; s++) {
+		    fc->yhat[s] = NADBL;
+		}
+		break;
+	    } else {
+		fc->yhat[t] = NADBL;
+	    }
 	} else if (FCAST_SPECIAL(pmod->ci)) {
 	    /* special handling for LOGIT and others */
-	    fc->yhat[t] = fcast_transform(yh, pmod->ci, t, offvar, lmax);
+	    fc->yhat[t] = fcast_transform(yht, pmod->ci, t, offvar, lmax);
 	} else {
-	    fc->yhat[t] = yh;
+	    fc->yhat[t] = yht;
 	}
     }
 
@@ -1853,6 +1871,17 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	return err;
     }
 
+    if (opt & OPT_I) {
+	/* integrated forecast wanted */
+	int d, parent;
+
+	d = is_standard_diff(yno, pdinfo, &parent);
+	if (d == 0) {
+	    return E_DATA;
+	} 
+	yno = parent;
+    }
+
     if (pmod->ci == NLS && fc.method == FC_STATIC) {
 	asy_errs = 1;
     }
@@ -1868,6 +1897,11 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	    /* do dynamic forecast errors out of sample */
 	    dyn_errs = 1;
 	}
+    }
+
+    /* FIXME temporary */
+    if (DM_errs && (opt & OPT_I)) {
+	DM_errs = 0;
     }
 
     if (dyn_errs && !AR_MODEL(pmod->ci) && fc.dvlags != NULL) {
@@ -1909,7 +1943,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     } else if (pmod->ci == GARCH) {
 	err = garch_fcast(&fc, pmod, Z, pdinfo);
     } else {
-	err = linear_fcast(&fc, pmod, Z, pdinfo);
+	err = linear_fcast(&fc, pmod, yno, Z, pdinfo, opt);
     }
 
     /* free any auxiliary info */
@@ -1921,14 +1955,26 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	pmod->arinfo = NULL;
     }
 
+    if (opt & OPT_I) {
+	t = fr->t0 - 1;
+	fprintf(stderr, "t-prior = %d\n", t);
+	fr->fitted[t] = (*pZ)[yno][t];
+	fr->resid[t] = 0.0;
+    }
+
     for (t=0; t<fr->nobs; t++) {
 	if (t >= fr->t1 && t <= fr->t2) {
 	    if (!na(fr->fitted[t])) {
 		nf++;
 	    }	    
 	} else if (t >= fr->t0 && t >= pmod->t1 && t <= pmod->t2) {
-	    fr->fitted[t] = pmod->yhat[t];
-	    fr->resid[t] = pmod->uhat[t];
+	    if (opt & OPT_I) {
+		fr->fitted[t] = fr->fitted[t-1] + pmod->yhat[t];
+		fr->resid[t] = fr->resid[t-1] + pmod->uhat[t];
+	    } else {
+		fr->fitted[t] = pmod->yhat[t];
+		fr->resid[t] = pmod->uhat[t];
+	    }
 	}	    
 	fr->actual[t] = (*pZ)[yno][t];
     }
@@ -2921,9 +2967,15 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 				 int *dt2max, int *st2max)
 {
     int *dvlags = NULL;
-    int exo = 1;
+    int dv, exo = 1;
 
     *flags = 0;
+
+    dv = gretl_model_get_depvar(pmod);
+
+    if (is_standard_diff(dv, pdinfo, NULL)) {
+	*flags |= FC_INTEGRATE_OK;
+    }
 
     if (pmod->ci == NLS) {
 	/* we'll try winging it! */

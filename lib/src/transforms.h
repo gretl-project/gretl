@@ -24,6 +24,8 @@ int default_lag_order (const DATAINFO *pdinfo);
 
 int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent);
 
+int is_standard_diff (int v, const DATAINFO *pdinfo, int *parent);
+
 int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent);
 
 int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo);

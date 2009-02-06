@@ -1377,6 +1377,10 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	t2 = st2;
     }
 
+    if (flags & FC_INTEGRATE_OK) {
+	fprintf(stderr, "OK to integrate forecast\n");
+    }
+
     /* if no out-of-sample obs are available in case of time-
        series data, alert the user */
     if (t2 <= pmod->t2 && dataset_is_time_series(datainfo)) {
@@ -1438,6 +1442,12 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	if (check_and_record_command()) {
 	    return;
 	}
+
+#if 0 /* experimental */
+	if (flags & FC_INTEGRATE_OK) {
+	    opt |= OPT_I;
+	}
+#endif
 
 	fr = get_forecast(pmod, t1, t2, pre_n, &Z, datainfo, 
 			  opt, &err);

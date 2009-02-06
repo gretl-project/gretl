@@ -186,6 +186,28 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
     return ret;
 }
 
+int is_standard_diff (int v, const DATAINFO *pdinfo, int *parent)
+{
+    int pv = 0, ret = 0;
+
+    if (v <= 0 || v >= pdinfo->v) {
+	return 0;
+    }
+
+    if (pdinfo->varinfo[v]->transform == DIFF) {
+	pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
+	pv = (pv < pdinfo->v)? pv : 0;
+	if (pv > 0) {
+	    if (parent != NULL) {
+		*parent = pv;
+	    }
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
 {
     int pv = pdinfo->v;
