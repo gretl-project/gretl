@@ -941,6 +941,24 @@ static void remove_special_flags (gretlopt *popt)
     *popt = opt;
 }
 
+static int add_vars_missing (const MODEL *pmod, const int *list,
+			     const double **Z)
+{
+    int i, t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!model_missing(pmod, t)) {
+	    for (i=1; i<=list[0]; i++) {
+		if (na(Z[list[i]][t])) {
+		    return E_MISSDATA;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /**
  * add_test:
  * @addvars: list of variables to add to original model.
@@ -987,6 +1005,12 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 
     /* check for changes in original list members */
     err = list_members_replaced(orig->list, pdinfo, orig->ID);
+    if (err) {
+	return err;
+    }
+
+    /* check for NAs in add list relative to model */
+    err = add_vars_missing(orig, addvars, (const double **) *pZ);
     if (err) {
 	return err;
     }

@@ -236,12 +236,12 @@ static gint in_icon;
 static gui_obj *gui_object_new (gchar *name, int sort, gpointer data);
 static gui_obj *session_add_icon (gpointer data, int sort, int mode);
 static void session_build_popups (void);
-static void global_popup_activated (GtkWidget *widget, gpointer data);
-static void object_popup_activated (GtkWidget *widget, gpointer data);
-static void data_popup_activated (GtkWidget *widget, gpointer data);
-static void scalars_popup_activated (GtkWidget *widget, gpointer data);
-static void info_popup_activated (GtkWidget *widget, gpointer data);
-static void matrix_popup_activated (GtkWidget *widget, gpointer data);
+static void global_popup_callback (GtkWidget *widget, gpointer data);
+static void object_popup_callback (GtkWidget *widget, gpointer data);
+static void data_popup_callback (GtkWidget *widget, gpointer data);
+static void scalars_popup_callback (GtkWidget *widget, gpointer data);
+static void info_popup_callback (GtkWidget *widget, gpointer data);
+static void matrix_popup_callback (GtkWidget *widget, gpointer data);
 static void session_delete_icon (gui_obj *obj);
 static void open_gui_graph (gui_obj *obj);
 static gboolean session_view_click (GtkWidget *widget, 
@@ -2521,7 +2521,7 @@ static gboolean session_view_click (GtkWidget *widget,
     return FALSE;
 }
 
-static void global_popup_activated (GtkWidget *widget, gpointer data)
+static void global_popup_callback (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
@@ -2542,7 +2542,7 @@ static void global_popup_activated (GtkWidget *widget, gpointer data)
     }
 }
 
-static void info_popup_activated (GtkWidget *widget, gpointer data)
+static void info_popup_callback (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
@@ -2553,7 +2553,7 @@ static void info_popup_activated (GtkWidget *widget, gpointer data)
     }
 }
 
-static void matrix_popup_activated (GtkWidget *widget, gpointer data)
+static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
     gui_obj *obj = active_object;
@@ -2581,7 +2581,7 @@ static void matrix_popup_activated (GtkWidget *widget, gpointer data)
     }
 }
 
-static void data_popup_activated (GtkWidget *widget, gpointer data)
+static void data_popup_callback (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
@@ -2596,7 +2596,7 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
     }
 }
 
-static void scalars_popup_activated (GtkWidget *widget, gpointer data)
+static void scalars_popup_callback (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
@@ -2607,7 +2607,17 @@ static void scalars_popup_activated (GtkWidget *widget, gpointer data)
     }
 }
 
-static void object_popup_activated (GtkWidget *widget, gpointer data)
+static void object_set_window_title (windata_t *vwin, gui_obj *obj)
+{
+    if (vwin != NULL && obj != NULL) {
+	gchar *title = g_strdup_printf("gretl: %s", obj->name);
+
+	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+	g_free(title);	
+    }
+}
+
+static void object_popup_callback (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
     gui_obj *obj = active_object;
@@ -2631,11 +2641,13 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
 	    char fullname[MAXLEN];
+	    windata_t *vwin;
 
 	    gretl_chdir(paths.dotdir);
 	    session_file_make_path(fullname, graph->fname);
 	    remove_png_term_from_plotfile_by_name(fullname);
-	    view_file(fullname, 1, 0, 78, 400, EDIT_GP);
+	    vwin = view_file(fullname, 1, 0, 78, 400, EDIT_GP);
+	    object_set_window_title(vwin, obj);
 	}
     } else if (!strcmp(item, _("Rename"))) {
 	rename_object_dialog(obj);
@@ -2916,7 +2928,7 @@ static void session_build_popups (void)
 	}
 	for (i=0; i<n; i++) {
 	    create_pop_item(global_popup, _(global_items[i]), 
-			    global_popup_activated);
+			    global_popup_callback);
 	}
     }
 
@@ -2925,7 +2937,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(model_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(model_popup, _(model_items[i]), 
-			    object_popup_activated);
+			    object_popup_callback);
 	}
     }
 
@@ -2934,7 +2946,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(model_table_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(model_table_popup, _(model_table_items[i]), 
-			    object_popup_activated);
+			    object_popup_callback);
 	}
     }
 
@@ -2943,7 +2955,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(generic_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(generic_popup, _(generic_items[i]), 
-			    object_popup_activated);
+			    object_popup_callback);
 	}
     }
 
@@ -2952,7 +2964,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(graph_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(graph_popup, _(graph_items[i]), 
-			    object_popup_activated);
+			    object_popup_callback);
 	}
     }
 
@@ -2961,7 +2973,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(graph_page_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(graph_page_popup, _(graph_page_items[i]), 
-			    object_popup_activated);
+			    object_popup_callback);
 	}
     }
 
@@ -2970,7 +2982,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(dataset_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(data_popup, _(dataset_items[i]), 
-			    data_popup_activated);	    
+			    data_popup_callback);	    
 	}
     }
 
@@ -2979,7 +2991,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(scalars_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(scalars_popup, _(scalars_items[i]), 
-			    scalars_popup_activated);	    
+			    scalars_popup_callback);	    
 	}
     }
 
@@ -2988,7 +3000,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(info_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(info_popup, _(info_items[i]), 
-			    info_popup_activated);	    
+			    info_popup_callback);	    
 	}
     }
 
@@ -2997,7 +3009,7 @@ static void session_build_popups (void)
 	n = G_N_ELEMENTS(matrix_items);
 	for (i=0; i<n; i++) {
 	    create_pop_item(matrix_popup, _(matrix_items[i]), 
-			    matrix_popup_activated);	    
+			    matrix_popup_callback);	    
 	}
     }
 }
