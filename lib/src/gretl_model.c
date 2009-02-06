@@ -4757,23 +4757,20 @@ int gretl_model_add_y_median (MODEL *pmod, const double *y)
 /* try to tell if an OLS model with two independent variables is
    actually a quadratic model (x_2 = x_1^2). */
 
-static int model_is_quadratic (const MODEL *pmod, const double **Z,
-			       const DATAINFO *pdinfo)
+static int model_is_quadratic (const MODEL *pmod, const int *xlist,
+			       const double **Z, const DATAINFO *pdinfo)
 {
-    const double *x1, *x2;
-    int t, ret = 1;
-
-    x1 = Z[pmod->list[3]];
-    x2 = Z[pmod->list[4]];
+    const double *x1 = Z[xlist[2]];
+    const double *x2 = Z[xlist[3]];
+    int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(x1[t]) && x2[t] != x1[t] * x1[t]) {
-	    ret = 0;
-	    break;
+	    return 0;
 	}
     }
 
-    return ret;
+    return 1;
 }
 
 /**
@@ -4799,12 +4796,17 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 {
     const double **mZ;
     const DATAINFO *mdinfo;
+    int *xlist = NULL;
     char *ret = NULL;
 
-    /* only OLS, WLS and logistic are handled */
-    if (xvar == 0 || (pmod->ci != OLS && pmod->ci != WLS && pmod->ci != LOGISTIC)) {
+    if (xvar == 0 || NONLIST_MODEL(pmod->ci) || pmod->ncoeff > 3) {
 	return NULL;
     }
+
+    xlist = gretl_model_get_x_list(pmod);
+    if (xlist == NULL) {
+	return NULL;
+    }    
 
     if (pmod->dataset != NULL) {
 	mZ = (const double **) pmod->dataset->Z;
@@ -4827,14 +4829,14 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 					  pmod->coeff[1]);
 	    }
 	}
-    } else if (!pmod->ifc && pmod->ncoeff == 1 && xvar == pmod->list[2]) {
+    } else if (!pmod->ifc && pmod->ncoeff == 1 && xvar == xlist[1]) {
 	ret = gretl_strdup_printf("yformula: %g*x", pmod->coeff[0]);
-    } else if (pmod->ifc && pmod->ncoeff == 2 && xvar == pmod->list[3]) {
+    } else if (pmod->ifc && pmod->ncoeff == 2 && xvar == xlist[2]) {
 	ret = gretl_strdup_printf("yformula: %g%s%g*x", pmod->coeff[0], 
 				  (pmod->coeff[1] >= 0)? "+" : "",
 				  pmod->coeff[1]);
-    } else if (pmod->ifc && pmod->ncoeff == 3 && xvar == pmod->list[3]) {
-	if (model_is_quadratic(pmod, mZ, mdinfo)) {
+    } else if (pmod->ifc && pmod->ncoeff == 3 && xvar == xlist[2]) {
+	if (model_is_quadratic(pmod, xlist, mZ, mdinfo)) {
 	    ret = gretl_strdup_printf("yformula: %g%s%g*x%s%g*x**2", pmod->coeff[0], 
 				      (pmod->coeff[1] >= 0)? "+" : "",
 				      pmod->coeff[1], 
@@ -4844,6 +4846,8 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     }
 
     gretl_pop_c_numeric_locale();
+
+    free(xlist);
 	
     return ret;
 }
