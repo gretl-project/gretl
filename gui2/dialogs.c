@@ -2251,7 +2251,7 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
 			  !gretl_model_get_int(m, "dynamic"))
 
 /* Note: the @pmod argument may be NULL, if this dialog is
-   called in relarion to a system of equations */
+   called in relation to a system of equations */
 
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
@@ -2273,6 +2273,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     GtkWidget *hbox;
     GtkWidget *button = NULL;
     struct range_setting *rset;
+    GSList *group;
     int i, ret = 0;
 
     rset = rset_new(0, NULL, pmod, t1, t2, _("gretl: forecast"));
@@ -2299,15 +2300,30 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       tmp, TRUE, TRUE, 0);
-    
-    if (!flags & (FC_AUTO_OK | FC_DYNAMIC_OK)) {
+
+#if 0
+    if (flags & FC_INTEGRATE_OK) {
+	char s[32];
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	button = gtk_radio_button_new_with_label(NULL, _(s[i]));
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	button = gtk_radio_button_new_with_label(group, _(s[i]));
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, TRUE, TRUE, 0);
+	button = NULL;
+    }
+#endif
+
+    if (!(flags & (FC_AUTO_OK | FC_DYNAMIC_OK))) {
 	deflt = 2;
     } 
 
     /* forecast-type options */
     for (i=0; i<nopts; i++) {
-	GSList *group;
-	int opt_ok = 1;
+	gboolean opt_ok = TRUE;
 
 	if (button != NULL) {
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
@@ -2340,11 +2356,11 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	}
 
 	if (i < 2 && !(flags & FC_DYNAMIC_OK)) {
-	    opt_ok = 0;
+	    opt_ok = FALSE;
 	}
 
 	if (i == 0 && (flags & FC_AUTO_OK)) {
-	    opt_ok = 1;
+	    opt_ok = TRUE;
 	}
 	    
 	if (opt_ok) {

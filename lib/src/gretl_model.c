@@ -4773,6 +4773,13 @@ static int model_is_quadratic (const MODEL *pmod, const int *xlist,
     return 1;
 }
 
+/* we'll be a bit conservative here so as not to make
+   fools of ourselves */
+
+#define fitted_formula_ok(c) (c == OLS || c == WLS || \
+                              c == HSK || c == IVREG || \
+                              c == LAD || c == LOGISTIC) 
+
 /**
  * gretl_model_get_fitted_formula:
  * @pmod: pointer to target model.
@@ -4799,7 +4806,8 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     int *xlist = NULL;
     char *ret = NULL;
 
-    if (xvar == 0 || NONLIST_MODEL(pmod->ci) || pmod->ncoeff > 3) {
+    if (xvar == 0 || pmod->ncoeff > 3 || 
+	!fitted_formula_ok(pmod->ci)) {
 	return NULL;
     }
 
