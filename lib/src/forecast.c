@@ -1675,7 +1675,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 {
     const double *offvar = NULL;
     double lmax = NADBL;
-    double xval, yht;
+    double xval, yht = 0.0;
     int i, vi, t;
 
     if (pmod->ci == POISSON) {
@@ -1956,9 +1956,17 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     if (opt & OPT_I) {
+	if (fr->t0 < 1) {
+	    fr->t0 = 1;
+	}
+	if (fr->t1 < fr->t0) {
+	    fr->t1 = fr->t0;
+	}
 	t = fr->t0 - 1;
-	fprintf(stderr, "t-prior = %d\n", t);
 	fr->fitted[t] = (*pZ)[yno][t];
+	if (na(fr->fitted[t])) {
+	    return E_MISSDATA;
+	}
 	fr->resid[t] = 0.0;
     }
 
@@ -2165,6 +2173,9 @@ static int parse_forecast_string (const char *s,
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
  * out of sample (in cases where a dynamic forecast is meaningful).
+ * If @opt includes %OPT_I, integrate the forecast (only relevant
+ * if the dependent variable in the model in question is recognized
+ * as the first difference of another variable).
  * @err: location to receive error code.
  *
  * Allocates a #FITRESID structure and fills it out with forecasts
@@ -2973,9 +2984,11 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 
     dv = gretl_model_get_depvar(pmod);
 
+#if 0 /* not ready yet */
     if (is_standard_diff(dv, pdinfo, NULL)) {
 	*flags |= FC_INTEGRATE_OK;
     }
+#endif
 
     if (pmod->ci == NLS) {
 	/* we'll try winging it! */

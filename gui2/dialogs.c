@@ -2247,6 +2247,51 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
     }    
 }
 
+static void toggle_opt_I (GtkToggleButton *b, gretlopt *optp)
+{
+    if (gtk_toggle_button_get_active(b)) {
+	*optp |= OPT_I;
+    } else {
+	*optp &= ~OPT_I;
+    }
+}
+
+static void forecast_integrate_option(const MODEL *pmod,
+				      GtkWidget *vbox,
+				      gretlopt *optp)
+{
+    if (pmod != NULL) {
+	GtkWidget *w, *tbl, *hbox;
+	GSList *group;
+	const char *s;
+	int dv, dvp;
+
+	dv = gretl_model_get_depvar(pmod);
+	is_standard_diff(dv, datainfo, &dvp);
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tbl = gtk_table_new(2, 2, FALSE);
+	gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+	w = gtk_label_new(_("Produce forecast for"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 0, 1, 0, 1);
+	s = datainfo->varname[dv];
+	w = gtk_radio_button_new_with_label(NULL, s);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, 0, 1);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
+	s = datainfo->varname[dvp];
+	w = gtk_radio_button_new_with_label(group, s);
+	g_signal_connect(G_OBJECT(w), "toggled",
+			 G_CALLBACK(toggle_opt_I), optp); 
+	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, 1, 2);
+
+	gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	vbox_add_hsep(vbox);
+    }
+
+    /* FIXME else */
+}
+
 #define fcast_errs_ok(m) (m == NULL || m->ci != NLS || \
 			  !gretl_model_get_int(m, "dynamic"))
 
@@ -2270,16 +2315,17 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     int nopts = 3;
     int deflt = 0;
     GtkWidget *tmp;
-    GtkWidget *hbox;
+    GtkWidget *vbox, *hbox, *bbox;
     GtkWidget *button = NULL;
     struct range_setting *rset;
-    GSList *group;
     int i, ret = 0;
 
     rset = rset_new(0, NULL, pmod, t1, t2, _("gretl: forecast"));
     if (rset == NULL) {
 	return -1;
     }
+
+    vbox = GTK_DIALOG(rset->dlg)->vbox;
 
     if (pmod != NULL && pmod->ci == OLS) {
 	nopts++;
@@ -2294,28 +2340,14 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     g_signal_connect(G_OBJECT(rset->adj1), "value-changed",
 		     G_CALLBACK(sync_pre_forecast), rset);
 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-		       tmp, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
     tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-		       tmp, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
 
-#if 0
     if (flags & FC_INTEGRATE_OK) {
-	char s[32];
-
-	hbox = gtk_hbox_new(FALSE, 5);
-	button = gtk_radio_button_new_with_label(NULL, _(s[i]));
-	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	button = gtk_radio_button_new_with_label(group, _(s[i]));
-	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-			   hbox, TRUE, TRUE, 0);
-	button = NULL;
+	forecast_integrate_option(pmod, vbox, optp);
     }
-#endif
 
     if (!(flags & (FC_AUTO_OK | FC_DYNAMIC_OK))) {
 	deflt = 2;
@@ -2324,12 +2356,11 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     /* forecast-type options */
     for (i=0; i<nopts; i++) {
 	gboolean opt_ok = TRUE;
+	GSList *group = NULL;
 
 	if (button != NULL) {
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	} else {
-	    group = NULL;
-	}
+	} 
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
@@ -2347,8 +2378,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 			     spin);
 	}
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-			   hbox, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
 	if (i == deflt) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
@@ -2380,13 +2410,11 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
     /* pre-forecast obs spinner */
     tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-		       tmp, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = option_spinbox(p, _(pre_txt), pmin, pmax, 0, &rset->p);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-		       hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     /* get the max pre-forecast obs right */
     gtk_adjustment_value_changed(GTK_ADJUSTMENT(rset->adj1));
 
@@ -2395,8 +2423,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     tmp = gretl_option_check_button(_("Show fitted values for pre-forecast range"),
 				    optp, OPT_H);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-		       hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_set_sensitive(tmp, *p > 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (*optp & OPT_H));
     g_signal_connect(GTK_ADJUSTMENT(rset->p), "value-changed",
@@ -2434,25 +2461,26 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	tmp = gretl_opts_combo(&ci_opts, deflt);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-			   hbox, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
 	if (conf != NULL) {
 	    dialog_add_confidence_selector(rset->dlg, conf);
 	}
     }
 
+    bbox = GTK_DIALOG(rset->dlg)->action_area;
+
     /* Cancel button */
-    cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
+    cancel_options_button(bbox, rset->dlg, &ret);
 
     /* "OK" button */
-    tmp = ok_button(GTK_DIALOG(rset->dlg)->action_area);
+    tmp = ok_button(bbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(set_obs_from_dialog), rset);
     gtk_widget_grab_default(tmp);
 
     /* Create a "Help" button */
-    context_help_button(GTK_DIALOG(rset->dlg)->action_area, FCAST);
+    context_help_button(bbox, FCAST);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
