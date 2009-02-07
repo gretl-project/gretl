@@ -291,7 +291,7 @@ gretlw32_res.o: gretlw32.rc
 	$(RC) $(RCFLAGS) $< $@
 
 gretl.lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
-	HERE=$$PWD ; cd $(host_builddir)/gui2 && ./mklang > $$HERE/$@ ; cd $$HERE
+	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mklang && ./mklang > $$HERE/$@ ; cd $$HERE
 
 gretl_updater.exe:
 	make -C updater
