@@ -1428,7 +1428,6 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     if (gopt & OPT_I) {
 	/* transfer OPT_I (integrate forecast) from graph 
 	   to general options */
-	fprintf(stderr, "Got OPT_I\n");
 	opt |= OPT_I;
 	gopt &= ~OPT_I;
     }
@@ -4484,40 +4483,16 @@ static int dummify_dialog (gretlopt *opt)
     return ret;
 }
 
-static int logs_etc_code (GtkAction *action)
-{
-    const gchar *s = gtk_action_get_name(action);
-
-    if (!strcmp(s, "logs")) 
-	return LOGS;
-    else if (!strcmp(s, "square"))
-	return SQUARE;
-    else if (!strcmp(s, "lags")) 
-	return LAGS;
-    else if (!strcmp(s, "diff")) 
-	return DIFF;
-    else if (!strcmp(s, "ldiff")) 
-	return LDIFF;
-    else if (!strcmp(s, "sdiff")) 
-	return SDIFF;
-    else if (!strcmp(s, "dummify")) 
-	return DUMMIFY;
-    else
-	return LOGS;
-}
-
-void add_logs_etc (GtkAction *action)
+void add_logs_etc (int ci)
 {
     char *liststr;
-    int ci, order = 0;
+    int order = 0;
     int err = 0;
 
     liststr = main_window_selection_as_string();
     if (liststr == NULL) {
 	return;
     }
-
-    ci = logs_etc_code(action);
 
     if (ci == LAGS) {
 	int resp;
@@ -4599,6 +4574,35 @@ void add_logs_etc (GtkAction *action)
 	populate_varlist();
 	mark_dataset_as_modified();
     }
+}
+
+static int logs_etc_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "logs")) 
+	return LOGS;
+    else if (!strcmp(s, "square"))
+	return SQUARE;
+    else if (!strcmp(s, "lags")) 
+	return LAGS;
+    else if (!strcmp(s, "diff")) 
+	return DIFF;
+    else if (!strcmp(s, "ldiff")) 
+	return LDIFF;
+    else if (!strcmp(s, "sdiff")) 
+	return SDIFF;
+    else if (!strcmp(s, "dummify")) 
+	return DUMMIFY;
+    else
+	return LOGS;
+}
+
+void logs_etc_callback (GtkAction *action)
+{
+    int ci = logs_etc_code(action);
+    
+    add_logs_etc(ci);
 }
 
 /* 

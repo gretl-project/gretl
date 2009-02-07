@@ -229,7 +229,9 @@ void do_add_obs (void);
 
 void do_remove_obs (void);
 
-void add_logs_etc (GtkAction *action);
+void add_logs_etc (int ci);
+
+void logs_etc_callback (GtkAction *action);
 
 void add_system_resid (GtkAction *action, gpointer p);
 

@@ -116,6 +116,7 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_Q, "quiet" },
     { FCAST,    OPT_R, "rolling" },
     { FCAST,    OPT_O, "out-of-sample" },
+    { FCAST,    OPT_I, "integrate" },
     { FOREIGN,  OPT_D, "send-data" },
     { FOREIGN,  OPT_Q, "quiet" },
     { FREQ,     OPT_O, "gamma" },
@@ -970,4 +971,23 @@ int incompatible_options (gretlopt opt, gretlopt test)
     }
 
     return 0;
+}
+
+/**
+ * inapplicable_option_error:
+ * @ci: command index.
+ * @opt: bad option flag.
+ *
+ * Flags an error: to be used when @opt is not applicable in the
+ * context of command @ci, in context.
+ *
+ * Returns: %E_BADOPT.
+ */
+
+int inapplicable_option_error (int ci, gretlopt opt)
+{
+    const char *s = print_flags(opt, ci);
+
+    gretl_errmsg_sprintf("%s: inapplicable option", s);
+    return E_BADOPT;
 }

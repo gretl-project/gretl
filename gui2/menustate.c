@@ -163,11 +163,6 @@ void main_menubar_state (gboolean s)
 #define x12_ts(d) ((d)->structure == TIME_SERIES && \
                    (d->pd == 4 || d->pd == 12))
 
-const gchar *ts_ui = 
-    "<ui>"
-    
-    "</ui>";
-
 void time_series_menu_state (gboolean s)
 {
     gboolean sx = extended_ts(datainfo);
@@ -357,6 +352,10 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
  	show_spreadsheet(SHEET_EDIT_VARLIST);
     } else if (!strcmp(item, _("Delete")))  {
 	delete_selected_vars();
+    } else if (!strcmp(item, _("Add logs")))  {
+	add_logs_etc(LOGS);
+    } else if (!strcmp(item, _("Add differences")))  {
+	add_logs_etc(DIFF);
     }
 
     gtk_widget_destroy(mdata->popup);
@@ -378,6 +377,7 @@ GtkWidget *build_var_popup (void)
 	N_("Edit values"),
 	N_("Copy to clipboard"),
 	N_("Delete"),
+	NULL,
 	N_("Define new variable...")
     };
     GtkWidget *menu;
@@ -387,6 +387,12 @@ GtkWidget *build_var_popup (void)
     menu = gtk_menu_new();
 
     for (i=0; i<n; i++) {
+	if (items[i] == NULL) {
+	    item = gtk_separator_menu_item_new();
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	    continue;
+	}
 	if ((i == 5 || i == 6) && !dataset_is_time_series(datainfo)) {
 	    continue;
 	}
@@ -415,7 +421,10 @@ GtkWidget *build_selection_popup (void)
 	N_("XY scatterplot"),
 	N_("Copy to clipboard"),
 	N_("Edit values"),
-	N_("Delete")
+	N_("Delete"),
+	NULL,
+	N_("Add logs"),
+	N_("Add differences")
     };
     GtkWidget *menu;
     GtkWidget *item;
@@ -424,7 +433,13 @@ GtkWidget *build_selection_popup (void)
     menu = gtk_menu_new();
 
     for (i=0; i<n; i++) {
-	if (!dataset_is_time_series(datainfo) && i == 3) {
+	if (items[i] == NULL) {
+	    item = gtk_separator_menu_item_new();
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	    continue;
+	}
+	if (!dataset_is_time_series(datainfo) && (i == 3 || i == 11)) {
 	    continue;
 	}
 	if (!extended_ts(datainfo) && i == 4) {

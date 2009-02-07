@@ -2456,6 +2456,9 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	ci_opts.vals = opts;
 	ci_opts.optp = optp;
 
+	tmp = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+
 	hbox = gtk_hbox_new(FALSE, 0);
 	tmp = gtk_label_new(_("Plot confidence interval using"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);

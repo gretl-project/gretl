@@ -364,27 +364,49 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
     }	
 }
 
+static void real_coeffint_set_alpha (GtkWidget *w, GtkWidget *dialog)
+{
+    windata_t *vwin = g_object_get_data(G_OBJECT(dialog), "vwin");
+    double *x = g_object_get_data(G_OBJECT(dialog), "xptr");
+    CoeffIntervals *cf = vwin->data;
+    GtkTextBuffer *buf;
+    const char *newtext;
+    PRN *prn;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    reset_coeff_intervals(cf, 1.0 - *x);
+    text_print_model_confints(cf, prn);
+    newtext = gretl_print_get_buffer(prn);
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    gtk_text_buffer_set_text(buf, "", -1);
+    textview_set_text(vwin->text, newtext);
+    gretl_print_destroy(prn); 
+
+    gtk_widget_destroy(dialog);
+}
+
 static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 {
     CoeffIntervals *cf = vwin->data;
     GtkWidget *dialog, *tmp, *hbox;
     GtkObject *adj;
     double x = 1.0 - cf->alpha;
-    PRN *prn;
-    int cancel = 0;
 
     if (maybe_raise_dialog()) {
 	return;
     }
 
     dialog = gretl_dialog_new(_("gretl: coefficient confidence intervals"), 
-			      NULL, GRETL_DLG_BLOCK);
+			      vwin->main, GRETL_DLG_BLOCK);
 
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Confidence level"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tmp = gtk_label_new("1 - α =");
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     adj = gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.01, 2);
     g_signal_connect(tmp, "value-changed", 
@@ -395,28 +417,18 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 		       hbox, FALSE, FALSE, 5);
 
     /* Cancel button */
-    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &cancel);
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
+
+    g_object_set_data(G_OBJECT(dialog), "vwin", vwin);
+    g_object_set_data(G_OBJECT(dialog), "xptr", &x);
 
     /* "OK" button */
     tmp = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(delete_widget), dialog);
+		     G_CALLBACK(real_coeffint_set_alpha), dialog);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dialog);
-
-    if (!cancel && bufopen(&prn) == 0) {
-	GtkTextBuffer *buf;
-	const char *newtext;
-
-	reset_coeff_intervals(cf, 1.0 - x);
-	text_print_model_confints(cf, prn);
-	newtext = gretl_print_get_buffer(prn);
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-	gtk_text_buffer_set_text(buf, "", -1);
-	textview_set_text(vwin->text, newtext);
-	gretl_print_destroy(prn);
-    }
 }
 
 static void set_output_sticky (GtkWidget *w, windata_t *vwin)

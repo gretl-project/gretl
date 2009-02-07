@@ -1419,15 +1419,15 @@ GtkActionEntry main_entries[] = {
 
     /* Add */
     { "Add", NULL, N_("_Add"), NULL, NULL, NULL },
-    { "logs", NULL, N_("_Logs of selected variables"), NULL, NULL, G_CALLBACK(add_logs_etc) },
-    { "square", NULL, N_("_Squares of selected variables"), NULL, NULL, G_CALLBACK(add_logs_etc) },
-    { "lags", NULL, N_("_Lags of selected variables"), NULL, NULL, G_CALLBACK(add_logs_etc) },
+    { "logs", NULL, N_("_Logs of selected variables"), NULL, NULL, G_CALLBACK(logs_etc_callback) },
+    { "square", NULL, N_("_Squares of selected variables"), NULL, NULL, G_CALLBACK(logs_etc_callback) },
+    { "lags", NULL, N_("_Lags of selected variables"), NULL, NULL, G_CALLBACK(logs_etc_callback) },
     { "diff", NULL, N_("_First differences of selected variables"), NULL, NULL, 
-      G_CALLBACK(add_logs_etc) },
+      G_CALLBACK(logs_etc_callback) },
     { "ldiff", NULL, N_("_Log differences of selected variables"), NULL, NULL, 
-      G_CALLBACK(add_logs_etc) },
+      G_CALLBACK(logs_etc_callback) },
     { "sdiff", NULL, N_("_Seasonal differences of selected variables"), NULL, NULL, 
-      G_CALLBACK(add_logs_etc) },
+      G_CALLBACK(logs_etc_callback) },
     { "AddIndex", NULL, N_("_Index variable"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddTime", NULL, N_("_Time trend"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddRandom", NULL, N_("_Random variable..."), NULL, NULL, G_CALLBACK(stats_calculator) },
@@ -1435,7 +1435,7 @@ GtkActionEntry main_entries[] = {
     { "UnitDums", NULL, N_("_Unit dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "TimeDums", NULL, N_("_Time dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "dummify", NULL, N_("Dummies for selected _discrete variables"), NULL, NULL, 
-      G_CALLBACK(add_logs_etc) },
+      G_CALLBACK(logs_etc_callback) },
     { "NewMatrix", NULL, N_("_Define matrix..."), NULL, NULL, G_CALLBACK(gui_new_matrix) },
 
     /* Sample */

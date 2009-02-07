@@ -1665,8 +1665,9 @@ static double fcast_transform (double xb, int ci, int t,
     return yf;
 }
 
-/* compute forecasts for linear models without autoregressive errors,
-   version without computation of forecast standard errors
+/* Compute forecasts for linear models without autoregressive errors.
+   We don't compute forecast standard errors, unless we're integrating
+   the forecast from a static model estimated via OLS.
 */
 
 static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
@@ -1674,7 +1675,9 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 			 gretlopt opt)
 {
     const double *offvar = NULL;
+    int integrate = (opt & OPT_I);
     double lmax = NADBL;
+    double s2 = NADBL;
     double xval, yht = 0.0;
     int i, vi, t;
 
@@ -1689,15 +1692,18 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	lmax = gretl_model_get_double(pmod, "lmax");
     }
 
-    if (opt & OPT_I) {
+    if (integrate) {
 	yht = Z[yno][fc->t1 - 1];
+	if (fc->sderr != NULL) {
+	    s2 = pmod->sigma * pmod->sigma;
+	    fc->sderr[fc->t1 - 1] = 0.0;
+	}
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
 	int miss = 0;
 
-	if (!(opt & OPT_I)) {
-	    /* not integrating forecast */
+	if (!integrate) {
 	    yht = 0.0;
 	}
 
@@ -1718,8 +1724,8 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	}
 
 	if (miss) {
-	    if (opt & OPT_I) {
-		/* integrating: all subsequent values are NA */
+	    if (integrate) {
+		/* all subsequent values are NA */
 		int s;
 
 		for (s=t; s<=fc->t2; s++) {
@@ -1734,6 +1740,18 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	    fc->yhat[t] = fcast_transform(yht, pmod->ci, t, offvar, lmax);
 	} else {
 	    fc->yhat[t] = yht;
+	    if (fc->sderr != NULL) {
+		fc->sderr[t] = fc->sderr[t-1] + s2;
+	    }
+	}
+    }
+
+    if (fc->sderr != NULL) {
+	fc->sderr[fc->t1 - 1] = NADBL;
+	for (t=fc->t1; t<=fc->t2; t++) {
+	    if (!na(fc->sderr[t])) {
+		fc->sderr[t] = sqrt(fc->sderr[t]);
+	    }
 	}
     }
 
@@ -1843,6 +1861,53 @@ static int fc_add_eps (Forecast *fc, int n)
     return err;
 }
 
+/* find the earlist starting point at which we have a previous
+   valid observation on the level of Z[yno] with which to
+   initialize an integrated forecast 
+*/
+
+static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
+			    const DATAINFO *pdinfo)
+{
+    int t, t0;
+
+    if (fr->t0 == 0) {
+	/* certainly can't start before obs 1 */
+	fr->t0 = 1;
+    }
+
+    /* previous obs */
+    t0 = fr->t0 - 1;
+
+    /* find first non-missing value */
+    for (t=t0; t<pdinfo->n; t++) {
+	if (!na(Z[yno][t])) {
+	    break;
+	}
+    }
+
+    t0 = t;
+
+    if (t0 >= pdinfo->n - 2) {
+	return E_MISSDATA;
+    }
+
+    fr->t0 = t0 + 1;
+
+    if (fr->t1 < fr->t0) {
+	fr->t1 = fr->t0;
+    }
+
+    if (fr->t2 < fr->t1) {
+	fr->t2 = fr->t1;
+    }
+
+    fr->fitted[t0] = Z[yno][t0];
+    fr->resid[t0] = 0.0;
+
+    return 0;
+}
+
 /* driver for various functions that compute forecasts
    for different sorts of models */
 
@@ -1853,14 +1918,33 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     Forecast fc;
     const double **Z = (const double **) *pZ;
     int yno = gretl_model_get_depvar(pmod);
+    int integrate = (opt & OPT_I);
     int dummy_AR = 0;
     int DM_errs = 0;
     int dyn_errs = 0;
     int asy_errs = 0;
+    int int_errs = 0;
     int nf = 0;
     int t, err;
 
     forecast_init(&fc);
+
+    if (integrate) {
+	/* check we we really can do an integrated forecast */
+	int d, parent;
+
+	d = is_standard_diff(yno, pdinfo, &parent);
+	if (d == 0) {
+	    err = E_DATA;
+	} else {
+	    /* 'yno' should refer to the level variable */
+	    yno = parent;
+	    err = revise_fr_start(fr, yno, (const double **) *pZ, pdinfo);
+	}
+	if (err) {
+	    return err;
+	}
+    }
 
     fc.t1 = fr->t1;
     fc.t2 = fr->t2;
@@ -1871,22 +1955,11 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	return err;
     }
 
-    if (opt & OPT_I) {
-	/* integrated forecast wanted */
-	int d, parent;
-
-	d = is_standard_diff(yno, pdinfo, &parent);
-	if (d == 0) {
-	    return E_DATA;
-	} 
-	yno = parent;
-    }
-
     if (pmod->ci == NLS && fc.method == FC_STATIC) {
 	asy_errs = 1;
     }
 
-    if (!FCAST_SPECIAL(pmod->ci)) {
+    if (!FCAST_SPECIAL(pmod->ci) && !integrate) {
 	if (!AR_MODEL(pmod->ci) && fc.dvlags == NULL) {
 	    /* we'll do Davidson-MacKinnon error variance */
 	    DM_errs = 1;
@@ -1899,9 +1972,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	}
     }
 
-    /* FIXME temporary */
-    if (DM_errs && (opt & OPT_I)) {
-	DM_errs = 0;
+    if (integrate && pmod->ci == OLS && fc.dvlags == NULL) {
+	int_errs = 1;
     }
 
     if (dyn_errs && !AR_MODEL(pmod->ci) && fc.dvlags != NULL) {
@@ -1916,7 +1988,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	}
     }
 
-    if (DM_errs || dyn_errs || asy_errs) {
+    if (DM_errs || dyn_errs || asy_errs || int_errs) {
 	err = fit_resid_add_sderr(fr);
     }
 
@@ -1955,28 +2027,13 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	pmod->arinfo = NULL;
     }
 
-    if (opt & OPT_I) {
-	if (fr->t0 < 1) {
-	    fr->t0 = 1;
-	}
-	if (fr->t1 < fr->t0) {
-	    fr->t1 = fr->t0;
-	}
-	t = fr->t0 - 1;
-	fr->fitted[t] = (*pZ)[yno][t];
-	if (na(fr->fitted[t])) {
-	    return E_MISSDATA;
-	}
-	fr->resid[t] = 0.0;
-    }
-
     for (t=0; t<fr->nobs; t++) {
 	if (t >= fr->t1 && t <= fr->t2) {
 	    if (!na(fr->fitted[t])) {
 		nf++;
 	    }	    
 	} else if (t >= fr->t0 && t >= pmod->t1 && t <= pmod->t2) {
-	    if (opt & OPT_I) {
+	    if (integrate) {
 		fr->fitted[t] = fr->fitted[t-1] + pmod->yhat[t];
 		fr->resid[t] = fr->resid[t-1] + pmod->uhat[t];
 	    } else {
@@ -2561,6 +2618,16 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	return E_DATA;
     }
 
+    /* OPT_I for integrate: reject if the dependent variable is
+       not recognized as a first difference */
+    if (opt & OPT_I) {
+	int dv = gretl_model_get_depvar(pmod);
+
+	if (!is_standard_diff(dv, pdinfo, NULL)) {
+	    return inapplicable_option_error(FCAST, OPT_I);
+	}
+    }
+
     err = parse_forecast_string(str, opt, pmod->t2, pZ, pdinfo, 
 				&t1, &t2, &k, vname);
     if (err) {
@@ -2806,8 +2873,8 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 	return E_BADSTAT;
     }
 
-    if ((opt & OPT_R) && type != GRETL_OBJ_EQN) {
-	/* "rolling": single equations only */
+    if ((opt & (OPT_R | OPT_I)) && type != GRETL_OBJ_EQN) {
+	/* "rolling" or "integrate": single equations only */
 	err = E_NOTIMP;
     } else if (type == GRETL_OBJ_EQN) {
 	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
@@ -2984,11 +3051,9 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 
     dv = gretl_model_get_depvar(pmod);
 
-#if 0 /* not ready yet */
     if (is_standard_diff(dv, pdinfo, NULL)) {
 	*flags |= FC_INTEGRATE_OK;
     }
-#endif
 
     if (pmod->ci == NLS) {
 	/* we'll try winging it! */
