@@ -2618,12 +2618,12 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	return E_DATA;
     }
 
-    /* OPT_I for integrate: reject if the dependent variable is
-       not recognized as a first difference */
+    /* OPT_I for integrate: reject for non-OLS, or if the dependent 
+       variable is not recognized as a first difference */
     if (opt & OPT_I) {
 	int dv = gretl_model_get_depvar(pmod);
 
-	if (!is_standard_diff(dv, pdinfo, NULL)) {
+	if (pmod->ci != OLS || !is_standard_diff(dv, pdinfo, NULL)) {
 	    return inapplicable_option_error(FCAST, OPT_I);
 	}
     }
