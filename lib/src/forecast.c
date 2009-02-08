@@ -1944,7 +1944,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	int d, parent;
 
 	d = is_standard_diff(yno, pdinfo, &parent);
-	if (d == 0) {
+	if (!d) {
 	    err = E_DATA;
 	} else {
 	    /* 'yno' should refer to the level variable */
