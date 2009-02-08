@@ -3310,8 +3310,6 @@ MODEL ivreg_via_gmm (const int *list, double ***pZ,
     return model;
 }
 
-#if 1
-
 /* apparatus for bootstrapping NLS forecast errors */
 
 /* reconstitute the nlspec based on the information saved in @pmod */
@@ -3349,7 +3347,10 @@ static int set_nlspec_from_model (const MODEL *pmod, const double **Z,
 
 /* Given an NLS model @pmod, fill out the forecast error series
    @fcerr from @ft1 to @ft2 using the bootstrap, based on
-   resampling the original residuals.
+   resampling the original residuals. See also forecast.c,
+   from where this function is called.  Here we concentrate
+   solely on parameter uncertainty.  At present we do this
+   only for static forecasts.
 */
 
 int nls_boot_calc (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
@@ -3486,4 +3487,3 @@ int nls_boot_calc (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-#endif

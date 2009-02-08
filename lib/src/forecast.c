@@ -691,10 +691,20 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     }
 
     if (!err && fc->method == FC_STATIC && fc->sderr != NULL) {
-#if 0   /* not quite yet */
-	nls_boot_calc(pmod, pZ, pdinfo, fc->t1, fc->t2, fc->sderr);
+#if 1   /* not fully tested! */
+	err = nls_boot_calc(pmod, pZ, pdinfo, fc->t1, fc->t2, fc->sderr);
+	if (!err) {
+	    double et, s2 = pmod->sigma * pmod->sigma;
+
+	    for (t=fc->t1; t<=fc->t2; t++) {
+		if (!na(fc->sderr[t])) {
+		    et = fc->sderr[t];
+		    fc->sderr[t] = sqrt(et * et + s2);
+		}
+	    }
+	}
 #else
-	/* by request, but is it a good idea? */
+	/* kinda simple-minded */
 	for (t=fc->t1; t<=fc->t2; t++) {
 	    fc->sderr[t] = pmod->sigma;
 	}
