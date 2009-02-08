@@ -1807,14 +1807,13 @@ static int get_forecast_method (Forecast *fc,
 
     if (!dyn_ok && (opt & OPT_D)) {
 	/* "dynamic" option given, but can't be honored */
-	fputs("requested dynamic option, but it is not applicable\n", stderr);
-	return E_NOTIMP;
+	return inapplicable_option_error(FCAST, OPT_D);
     }
 
     /* NLS: we can only do dynamic out of sample (fc->t1 > pmod->t2) */
     if (pmod->ci == NLS && dyn_ok && (opt & OPT_D)) {
 	if (fc->t1 <= pmod->t2) {
-	    return E_NOTIMP;
+	    return inapplicable_option_error(FCAST, OPT_D);
 	}
     }
 
