@@ -323,8 +323,9 @@ int dataset_copy_variable_as (int v, const char *newname,
 
 int overwrite_err (const char *name);
 
-int dataset_rename_variable (DATAINFO *pdinfo, int v, 
-			     const char *name);
+int series_is_parent (const DATAINFO *pdinfo, int v);
+
+int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name);
 
 int dataset_drop_listed_variables (int *list, double ***pZ, 
 				   DATAINFO *pdinfo, int *renumber,

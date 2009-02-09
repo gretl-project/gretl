@@ -1254,6 +1254,7 @@ void varinfo_dialog (int varnum, int full)
     GtkWidget *tmp, *hbox;
     struct varinfo_settings *vset;
     unsigned char flags;
+    int is_parent = 0;
 
     if (maybe_raise_dialog()) {
 	return;
@@ -1276,8 +1277,10 @@ void varinfo_dialog (int varnum, int full)
     vset->compaction_menu = NULL;
     vset->spin = NULL;
     vset->check = NULL;
-    vset->formula = formula_ok(varnum);
     vset->full = full;
+
+    is_parent = series_is_parent(datainfo, varnum);
+    vset->formula = (is_parent)? 0 : formula_ok(varnum);
 
     g_signal_connect(G_OBJECT(vset->dlg), "destroy", 
 		     G_CALLBACK(free_vsettings), vset);
@@ -1296,7 +1299,11 @@ void varinfo_dialog (int varnum, int full)
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->name_entry, FALSE, FALSE, 0);
     gtk_widget_show(vset->name_entry); 
-    gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
+    if (is_parent) {
+	gtk_widget_set_sensitive(vset->name_entry, FALSE);
+    } else {
+	gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
+    }
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);

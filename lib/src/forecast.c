@@ -360,8 +360,7 @@ static const int *model_xlist (MODEL *pmod)
    variable among the regressors: return 1 if so, 0 if not
 */
 
-static int 
-has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
+static int has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
 {
     const char *yname;
     const int *xlist;
@@ -1987,7 +1986,6 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	} else {
 	    /* 'yno' should refer to the level variable */
 	    yno = parent;
-	    fprintf(stderr, "Found yno = %d\n", yno);
 	    err = revise_fr_start(fr, yno, (const double **) *pZ, pdinfo);
 	}
 	if (err) {

@@ -1503,23 +1503,45 @@ int overwrite_err (const char *name)
 }
 
 /**
- * rename_var_by_id:
- * @idstr: string representation of the ID number of the
- * variable to be renamed.
- * @vname: new name to give the variable.
+ * series_is_parent:
  * @pdinfo: dataset information.
+ * @v: ID number of variable to test.
  * 
- * Returns: 0 on sucess, %E_DATA on error.
+ * Returns: 1 if variable @v is "parent" to a transformed
+ * variable (e.g. a log, lag or difference), othewise 0.
  */
 
-int dataset_rename_variable (DATAINFO *pdinfo, int v, 
-			     const char *name)
+int series_is_parent (const DATAINFO *pdinfo, int v)
+{
+    const char *s = pdinfo->varname[v];
+    int i;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (i != v && !strcmp(s, pdinfo->varinfo[i]->parent)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * dataset_rename_series:
+ * @pdinfo: dataset information.
+ * @v: ID number of the variable to be renamed.
+ * @name: new name to give the variable.
+ * 
+ * Returns: 0 on sucess, non-zero on error.
+ */
+
+int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name)
 {
     if (v < 0 || v >= pdinfo->v) {
 	return E_DATA;
     }
 
-    if (object_is_const(pdinfo->varname[v])) {
+    if (object_is_const(pdinfo->varname[v]) ||
+	series_is_parent(pdinfo, v)) {
 	return overwrite_err(pdinfo->varname[v]);
     }
 

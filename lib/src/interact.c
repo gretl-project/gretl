@@ -4206,7 +4206,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case RENAME:
-	err = dataset_rename_variable(pdinfo, atoi(cmd->extra), cmd->param);
+	err = dataset_rename_series(pdinfo, atoi(cmd->extra), cmd->param);
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}

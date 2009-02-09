@@ -6794,6 +6794,23 @@ static int overwrite_type_check (parser *p)
     }
 }
 
+static int overwrite_const_check (const char *s, parser *p)
+{
+    int err = 0;
+
+    if (object_is_const(s)) {
+	err = 1;
+    } else if (p->lh.t == VEC && series_is_parent(p->dinfo, p->lh.v)) {
+	err = 1;
+    }
+
+    if (err) {
+	p->err = overwrite_err(s);
+    }
+
+    return err;
+}
+
 /* process the left-hand side of a genr formula */
 
 static void pre_process (parser *p, int flags)
@@ -6913,8 +6930,7 @@ static void pre_process (parser *p, int flags)
     }	    
 
     /* if pre-existing var, check for const-ness */
-    if (!newvar && object_is_const(test)) {
-	p->err = overwrite_err(test);
+    if (!newvar && overwrite_const_check(test, p)) {
 	return;
     }
 
