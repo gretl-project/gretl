@@ -1339,7 +1339,8 @@ static int non_fatal (const char *s)
        pango warning for, e.g., FreeSans font w/o GPOS table
     */
 
-    if (strstr(s, "using default") || 
+    if (strstr(s, "using default") ||
+	strstr(s, "trying default") ||
 	strstr(s, "character sets not available") ||
 	strstr(s, "Warning: empty ") ||
 	strstr(s, "Pango-WARNING")) {
