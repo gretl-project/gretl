@@ -35,10 +35,10 @@ export "GDK_PIXBUF_MODULE_FILE=$HOME/.gretl/etc/gdk-pixbuf.loaders"
 export "GNUHELP=$TOP/share/gnuplot/4.3/gnuplot.gih"
 # location of gnuplot X11 driver
 export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.3"
-# path for fonts for GD fonts (check this)
-export "GDFONTPATH=$TOP/fonts:/usr/X11R6/lib/X11/fonts/TTF"
+# path for fonts for libgd
+export "GDFONTPATH=$TOP/share/gretl/fonts:/usr/X11R6/lib/X11/fonts/TTF"
 # default font for gnuplot PNG
-export "GNUPLOT_DEFAULT_GDFONT=$TOP/fonts/Vera.ttf"
+export "GNUPLOT_DEFAULT_GDFONT=$TOP/share/gretl/fonts/Vera.ttf"
 # we do not support the 'aqua' terminal type
 if [ "$GNUTERM" = "aqua" ] ; then
    export GNUTERM=x11
