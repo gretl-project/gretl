@@ -1358,7 +1358,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     int flags = 0;
     int premax, pre_n = 0;
     int t1min = 0;
-    int rolling = 0, k = 1;
+    int rolling = 0, k = 1, *kptr;
     int dt2 = datainfo->n - 1;
     int st2 = datainfo->n - 1;
     gretlopt opt = OPT_NONE;
@@ -1405,9 +1405,15 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	pre_n = 0;
     }
 
+    if (flags & FC_INTEGRATE_OK) {
+	kptr = NULL;
+    } else {
+	kptr = &k;
+    }
+
     set_window_busy(vwin);
     resp = forecast_dialog(t1min, t2, &t1,
-			   0, t2, &t2, &k,
+			   0, t2, &t2, kptr,
 			   0, premax, &pre_n,
 			   flags, &gopt, &conf,
 			   pmod);

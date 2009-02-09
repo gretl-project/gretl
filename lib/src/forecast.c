@@ -1675,20 +1675,91 @@ static double fcast_transform (double xb, int ci, int t,
     return yf;
 }
 
+static int 
+integrated_fcast (Forecast *fc, const MODEL *pmod, int yno,
+		  const double **Z, const DATAINFO *pdinfo)
+{
+    double s2 = NADBL;
+    int dyn_start; /* start of dynamic forecast */
+    double xval, yht = 0.0;
+    int i, vi, t;
+
+    if (fc->method == FC_STATIC) {
+	dyn_start = pdinfo->n; /* i.e., never */
+    } else if (fc->method == FC_DYNAMIC) {
+	dyn_start = fc->t1;
+    } else {
+	/* FC_AUTO: dynamic out of sample */
+	dyn_start = pmod->t2 + 1;
+    }
+
+    if (fc->sderr != NULL) {
+	s2 = pmod->sigma * pmod->sigma;
+	fc->sderr[dyn_start - 1] = 0.0;
+    }
+
+    for (t=fc->t1; t<=fc->t2; t++) {
+	int miss = 0;
+
+	if (t <= dyn_start) {
+	    yht = Z[yno][t-1];
+	    if (na(yht)) {
+		miss = 1;
+	    }
+	}
+
+	for (i=0; i<pmod->ncoeff && !miss; i++) {
+	    vi = pmod->list[i+2];
+	    xval = Z[vi][t];
+	    if (na(xval)) {
+		miss = 1;
+	    } else {
+		yht += xval * pmod->coeff[i];
+	    }
+	}
+
+	if (miss) {
+	    if (t >= dyn_start) {
+		/* all subsequent values are NA */
+		int s;
+
+		for (s=t; s<=fc->t2; s++) {
+		    fc->yhat[s] = NADBL;
+		}
+		break;
+	    } else {
+		fc->yhat[t] = NADBL;
+	    }
+	} else {
+	    fc->yhat[t] = yht;
+	    if (fc->sderr != NULL && t >= dyn_start) {
+		fc->sderr[t] = fc->sderr[t-1] + s2;
+	    }
+	}
+    }
+
+    if (fc->sderr != NULL) {
+	fc->sderr[dyn_start - 1] = NADBL;
+	for (t=dyn_start; t<=fc->t2; t++) {
+	    if (!na(fc->sderr[t])) {
+		fc->sderr[t] = sqrt(fc->sderr[t]);
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* Compute forecasts for linear models without autoregressive errors.
    We don't compute forecast standard errors, unless we're integrating
    the forecast from a static model estimated via OLS.
 */
 
 static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
-			 const double **Z, const DATAINFO *pdinfo,
-			 gretlopt opt)
+			 const double **Z)
 {
     const double *offvar = NULL;
-    int integrate = (opt & OPT_I);
-    double lmax = NADBL;
-    double s2 = NADBL;
-    double xval, yht = 0.0;
+    double xval, lmax = NADBL;
     int i, vi, t;
 
     if (pmod->ci == POISSON) {
@@ -1702,20 +1773,9 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	lmax = gretl_model_get_double(pmod, "lmax");
     }
 
-    if (integrate) {
-	yht = Z[yno][fc->t1 - 1];
-	if (fc->sderr != NULL) {
-	    s2 = pmod->sigma * pmod->sigma;
-	    fc->sderr[fc->t1 - 1] = 0.0;
-	}
-    }
-
     for (t=fc->t1; t<=fc->t2; t++) {
+	double yht = 0.0;
 	int miss = 0;
-
-	if (!integrate) {
-	    yht = 0.0;
-	}
 
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    int lag;
@@ -1734,34 +1794,12 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	}
 
 	if (miss) {
-	    if (integrate) {
-		/* all subsequent values are NA */
-		int s;
-
-		for (s=t; s<=fc->t2; s++) {
-		    fc->yhat[s] = NADBL;
-		}
-		break;
-	    } else {
-		fc->yhat[t] = NADBL;
-	    }
+	    fc->yhat[t] = NADBL;
 	} else if (FCAST_SPECIAL(pmod->ci)) {
 	    /* special handling for LOGIT and others */
 	    fc->yhat[t] = fcast_transform(yht, pmod->ci, t, offvar, lmax);
 	} else {
 	    fc->yhat[t] = yht;
-	    if (fc->sderr != NULL) {
-		fc->sderr[t] = fc->sderr[t-1] + s2;
-	    }
-	}
-    }
-
-    if (fc->sderr != NULL) {
-	fc->sderr[fc->t1 - 1] = NADBL;
-	for (t=fc->t1; t<=fc->t2; t++) {
-	    if (!na(fc->sderr[t])) {
-		fc->sderr[t] = sqrt(fc->sderr[t]);
-	    }
 	}
     }
 
@@ -1796,7 +1834,8 @@ static int get_forecast_method (Forecast *fc,
 
     if (!(opt & OPT_S)) {
 	/* user didn't give the "static" option */
-	if (pmod->ci == ARMA || fc->dvlags != NULL || dynamic_nls(pmod)) {
+	if (pmod->ci == ARMA || fc->dvlags != NULL || 
+	    dynamic_nls(pmod) || (opt & OPT_I)) {
 	    /* dynamic forecast is possible */
 	    dyn_ok = 1;
 	}
@@ -1944,10 +1983,11 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 
 	d = is_standard_diff(yno, pdinfo, &parent);
 	if (!d) {
-	    err = E_DATA;
+	    err = inapplicable_option_error(FCAST, OPT_I);
 	} else {
 	    /* 'yno' should refer to the level variable */
 	    yno = parent;
+	    fprintf(stderr, "Found yno = %d\n", yno);
 	    err = revise_fr_start(fr, yno, (const double **) *pZ, pdinfo);
 	}
 	if (err) {
@@ -1981,7 +2021,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	}
     }
 
-    if (integrate && pmod->ci == OLS && fc.dvlags == NULL) {
+    if (integrate && pmod->ci == OLS && 
+	fc.dvlags == NULL && fc.method != FC_STATIC) {
 	int_errs = 1;
     }
 
@@ -2023,8 +2064,10 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = arma_fcast(&fc, pmod, Z, pdinfo);
     } else if (pmod->ci == GARCH) {
 	err = garch_fcast(&fc, pmod, Z, pdinfo);
+    } else if (integrate) {
+	err = integrated_fcast(&fc, pmod, yno, Z, pdinfo);
     } else {
-	err = linear_fcast(&fc, pmod, yno, Z, pdinfo, opt);
+	err = linear_fcast(&fc, pmod, yno, Z);
     }
 
     /* free any auxiliary info */

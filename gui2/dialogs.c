@@ -2256,10 +2256,13 @@ static void toggle_opt_I (GtkToggleButton *b, gretlopt *optp)
     }
 }
 
-static void forecast_integrate_option(const MODEL *pmod,
-				      GtkWidget *vbox,
-				      gretlopt *optp)
+static GtkWidget *
+forecast_integrate_option (const MODEL *pmod,
+			   GtkWidget *vbox,
+			   gretlopt *optp)
 {
+    GtkWidget *button = NULL;
+
     if (pmod != NULL) {
 	GtkWidget *w, *tbl, *hbox;
 	GSList *group;
@@ -2283,6 +2286,7 @@ static void forecast_integrate_option(const MODEL *pmod,
 	g_signal_connect(G_OBJECT(w), "toggled",
 			 G_CALLBACK(toggle_opt_I), optp); 
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, 1, 2);
+	button = w;
 
 	gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -2290,6 +2294,22 @@ static void forecast_integrate_option(const MODEL *pmod,
     }
 
     /* FIXME else */
+
+    return button;
+}
+
+static void flip_sensitivity (GtkToggleButton *b, GtkWidget *w)
+{
+    gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(b));
+}
+
+static void snap_to_static (GtkToggleButton *b, GtkWidget *w)
+{
+    gboolean s = gtk_toggle_button_get_active(b);
+
+    if (!s) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+    }
 }
 
 #define fcast_errs_ok(m) (m == NULL || m->ci != NLS || \
@@ -2316,6 +2336,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     int deflt = 0;
     GtkWidget *tmp;
     GtkWidget *vbox, *hbox, *bbox;
+    GtkWidget *sbutton = NULL;
+    GtkWidget *ibutton = NULL;
     GtkWidget *button = NULL;
     struct range_setting *rset;
     int i, ret = 0;
@@ -2326,10 +2348,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     }
 
     vbox = GTK_DIALOG(rset->dlg)->vbox;
-
-    if (pmod != NULL && pmod->ci == OLS) {
-	nopts++;
-    }
 
     tmp = obs_spinbox(rset, _("Forecast range:"), 
 		      _("Start"), _("End"), 
@@ -2346,10 +2364,14 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
 
     if (flags & FC_INTEGRATE_OK) {
-	forecast_integrate_option(pmod, vbox, optp);
+	ibutton = forecast_integrate_option(pmod, vbox, optp);
+    } else if (pmod != NULL && pmod->ci == OLS) {
+	/* allow the "rolling" option */
+	nopts++;
     }
 
     if (!(flags & (FC_AUTO_OK | FC_DYNAMIC_OK))) {
+	/* default to static forecast */
 	deflt = 2;
     } 
 
@@ -2365,8 +2387,13 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	hbox = gtk_hbox_new(FALSE, 5);
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	if (i == 2) {
+	    /* keep a handle to the "static forecast" button */
+	    sbutton = button;
+	}
 
 	if (i == 3 && k != NULL) {
+	    /* steps ahead for rolling forecast */
 	    GtkWidget *spin = gtk_spin_button_new_with_range(1, 50, 1);
 
 	    g_signal_connect(G_OBJECT(spin), "value-changed",
@@ -2386,29 +2413,43 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	}
 
 	if (i < 2 && !(flags & FC_DYNAMIC_OK)) {
+	    /* disallow dynamic options */
 	    opt_ok = FALSE;
 	}
 
 	if (i == 0 && (flags & FC_AUTO_OK)) {
 	    opt_ok = TRUE;
 	}
-	    
-	if (opt_ok) {
-	    if (i >= 2) {
-		g_signal_connect(G_OBJECT(button), "clicked",
-				 G_CALLBACK(adjust_fcast_t1), 
-				 rset);
-	    }
+
+	if (i >= 2) {
 	    g_signal_connect(G_OBJECT(button), "clicked",
-			     G_CALLBACK(set_radio_opt), &ret);
-	    g_object_set_data(G_OBJECT(button), "action", 
-			      GINT_TO_POINTER(i));
-	} else {
+			     G_CALLBACK(adjust_fcast_t1), 
+			     rset);
+	}
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), &ret);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(i));
+
+	if (!opt_ok) {
 	    gtk_widget_set_sensitive(button, FALSE);
+	    if (ibutton != NULL) {
+		/* integrate option makes dynamic option available */
+		g_signal_connect(G_OBJECT(ibutton), "toggled",
+				 G_CALLBACK(flip_sensitivity), 
+				 button); 
+	    }
 	}
     }
 
-    /* pre-forecast obs spinner */
+    if (ibutton != NULL && sbutton != NULL &&
+	!(flags & FC_DYNAMIC_OK)) {
+	g_signal_connect(G_OBJECT(ibutton), "toggled",
+			 G_CALLBACK(snap_to_static), 
+			 sbutton); 
+    }
+
+     /* pre-forecast obs spinner */
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
