@@ -1,3 +1,21 @@
+/* 
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
 
 /* Mechanism for recording and retrieving the preferred set of lags
    for a given variable.  We save the preferences that are set, and
@@ -11,7 +29,7 @@
 #include "lagpref.h"
 
 enum {
-    LAGS_NONE,    /* no lags specified */
+    LAGS_NONE,    /* no lags specified for variable */
     LAGS_MINMAX,  /* min and max lags given (consecutive) */
     LAGS_LIST,    /* list of lags specific given */
     LAGS_TMP      /* provisional list when working from model */
@@ -247,7 +265,7 @@ void set_VAR_max_lag (int lmax)
 int is_lag_dummy (int v, int lag, char context)
 {
     lagpref *lpref = get_saved_lpref(v, context);
-    int ynum = selector_get_depvar_number(open_selector);
+    int ynum = selector_get_depvar_number(NULL);
     int ret = 0;
 
     if (v > 0 && v == ynum) {
@@ -273,18 +291,10 @@ static void maybe_destroy_depvar_lags (lagpref *lpref, char context)
 	    lpref->lspec.lminmax[1] == 0) {
 	    lpref->lspec.lminmax[0] = 1;
 	    lpref->lspec.lminmax[1] = 1;
-	    if (context == LAG_Y_X) {
-		y_x_lags_enabled = 0;
-	    } else {
-		y_w_lags_enabled = 0;
-	    }
+	    enable_lags_for_context(context, FALSE);
 	}
     } else {
-	if (context == LAG_Y_X) {
-	    y_x_lags_enabled = 0;
-	} else {
-	    y_w_lags_enabled = 0;
-	}
+	enable_lags_for_context(context, FALSE);
     }	    
 }
 
@@ -293,7 +303,7 @@ static void maybe_destroy_depvar_lags (lagpref *lpref, char context)
 
 int remove_specific_lag (int v, int lag, char context)
 {
-    int ynum = selector_get_depvar_number(open_selector);
+    int ynum = selector_get_depvar_number(NULL);
     lagpref *lpref;
     int lmin, lmax;
     int err = 0;
@@ -525,11 +535,7 @@ static int set_lag_prefs_from_xlist (int *list, int dv, char cbase,
 		    /* delete lagged var from list to avoid duplication */
 		    gretl_list_delete_at_pos(list, i--);
 		}
-		if (context == LAG_Y_X) {
-		    y_x_lags_enabled = 1;
-		} else if (context == LAG_Y_W) {
-		    y_w_lags_enabled = 1;
-		}
+		enable_lags_for_context(context, TRUE);
 		nset++;
 	    } 
 	}
@@ -606,8 +612,8 @@ int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
 
     /* start with a clean slate */
     destroy_lag_preferences();
-    y_x_lags_enabled = 0;
-    y_w_lags_enabled = 0;
+    enable_lags_for_context(LAG_Y_X, FALSE);
+    enable_lags_for_context(LAG_Y_W, FALSE);
 
     if (xlist != NULL) {
 	/* regressors */
@@ -689,10 +695,9 @@ get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
 	return;
     }
 
-    if ((context == LAG_Y_X && !y_x_lags_enabled) ||
-	(context == LAG_Y_W && !y_w_lags_enabled)) {
+    if (!lags_enabled_for_context(context)) {
 	return;
-    }  
+    }
 
     if ((context == LAG_Y_X || context == LAG_Y_W) && lpref == NULL) {
 	*lmin = *lmax = 1;
@@ -720,8 +725,7 @@ int *get_lag_pref_as_list (int v, char context)
     fprintf(stderr, "get_lag_pref_as_list: var = %d, context = %d\n", v, context);
 #endif
 
-    if ((context == LAG_Y_X && !y_x_lags_enabled) ||
-	(context == LAG_Y_W && !y_w_lags_enabled)) {
+    if (!lags_enabled_for_context(context)) {
 	return NULL;
     }
 

@@ -624,9 +624,12 @@ static int XTX_XTy (const int *list, int t1, int t2,
     int lmin = (xpy != NULL)? 2 : 1;
     int lmax = list[0];
     int qdiff = (rho != 0.0);
+    const double *y = NULL;
+    const double *w = NULL;
+    const double *xi = NULL;
+    const double *xj = NULL;
     double x, pw1;
-    int vi, vj, m;
-    int i, j, t;
+    int i, j, t, m;
 
     /* Prais-Winsten term */
     if (qdiff && pwe) {
@@ -636,6 +639,14 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	pw1 = 0.0;
     }
 
+    /* dependent variable */
+    y = Z[yno];
+
+    if (nwt) {
+	/* weight variable */
+	w = Z[nwt];
+    }
+
     if (xpy != NULL) {
 	*ysum = *ypy = 0.0;
 
@@ -643,15 +654,15 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	    if (masked(mask, t)) {
 		continue;
 	    }
-	    x = Z[yno][t]; 
+	    x = y[t]; 
 	    if (qdiff) {
 		if (pwe && t == t1) {
-		    x = pw1 * Z[yno][t];
+		    x = pw1 * y[t];
 		} else {
-		    x -= rho * Z[yno][t-1];
+		    x -= rho * y[t-1];
 		}
 	    } else if (nwt) {
-		x *= sqrt(Z[nwt][t]);
+		x *= sqrt(w[t]);
 	    }
 	    *ysum += x;
 	    *ypy += x * x;
@@ -668,19 +679,19 @@ static int XTX_XTy (const int *list, int t1, int t2,
     if (qdiff) {
 	/* quasi-difference the data */
 	for (i=lmin; i<=lmax; i++) {
-	    vi = list[i];
+	    xi = Z[list[i]];
 	    for (j=i; j<=lmax; j++) {
-		vj = list[j];
+		xj = Z[list[j]];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (pwe && t == t1) {
-			x += pw1 * Z[vi][t1] * pw1 * Z[vj][t];
+			x += pw1 * xi[t1] * pw1 * xj[t];
 		    } else {
-			x += (Z[vi][t] - rho * Z[vi][t-1]) * 
-			    (Z[vj][t] - rho * Z[vj][t-1]);
+			x += (xi[t] - rho * xi[t-1]) * 
+			    (xj[t] - rho * xj[t-1]);
 		    }
 		}
-		if (vi == vj && x < DBL_EPSILON)  {
+		if (i == j && x < DBL_EPSILON)  {
 		    return E_SINGULAR;
 		}
 		xpx[m++] = x;
@@ -689,10 +700,10 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (pwe && t == t1) {
-			x += pw1 * Z[yno][t] * pw1 * Z[vi][t];
+			x += pw1 * y[t] * pw1 * xi[t];
 		    } else {
-			x += (Z[yno][t] - rho * Z[yno][t-1]) *
-			    (Z[vi][t] - rho * Z[vi][t-1]);
+			x += (y[t] - rho * y[t-1]) *
+			    (xi[t] - rho * xi[t-1]);
 		    }
 		}
 		xpy[i-2] = x;
@@ -701,16 +712,16 @@ static int XTX_XTy (const int *list, int t1, int t2,
     } else if (nwt) {
 	/* weight the data */
 	for (i=lmin; i<=lmax; i++) {
-	    vi = list[i];
+	    xi = Z[list[i]];
 	    for (j=i; j<=lmax; j++) {
-		vj = list[j];
+		xj = Z[list[j]];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
-			x += Z[nwt][t] * Z[vi][t] * Z[vj][t];
+			x += w[t] * xi[t] * xj[t];
 		    }
 		}
-		if (vi == vj && x < DBL_EPSILON) {
+		if (i == j && x < DBL_EPSILON) {
 		    return E_SINGULAR;
 		}   
 		xpx[m++] = x;
@@ -719,7 +730,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
-			x += Z[nwt][t] * Z[yno][t] * Z[vi][t];
+			x += w[t] * y[t] * xi[t];
 		    }
 		}
 		xpy[i-2] = x;
@@ -728,16 +739,16 @@ static int XTX_XTy (const int *list, int t1, int t2,
     } else {
 	/* no quasi-differencing or weighting wanted */
 	for (i=lmin; i<=lmax; i++) {
-	    vi = list[i];
+	    xi = Z[list[i]];
 	    for (j=i; j<=lmax; j++) {
-		vj = list[j];
+		xj = Z[list[j]];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
-			x += Z[vi][t] * Z[vj][t];
+			x += xi[t] * xj[t];
 		    }
 		}
-		if (vi == vj && x < DBL_EPSILON) {
+		if (i == j && x < DBL_EPSILON) {
 		    return E_SINGULAR;
 		}
 		xpx[m++] = x;
@@ -746,7 +757,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
-			x += Z[yno][t] * Z[vi][t];
+			x += y[t] * xi[t];
 		    }
 		}
 		xpy[i-2] = x;

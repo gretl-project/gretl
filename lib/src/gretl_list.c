@@ -2620,3 +2620,4 @@ void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
 	pputc(prn, '\n');
     }
 }
+

@@ -159,10 +159,6 @@ struct _selector {
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
                             c == IVREG || c == HECKIT)
 
-/* shared state */
-int y_x_lags_enabled;
-int y_w_lags_enabled;
-
 /* static state variables */
 
 static int default_y = -1;
@@ -191,6 +187,9 @@ static int lovar;
 static int hivar;
 static int wtvar;
 
+static int y_x_lags_enabled;
+static int y_w_lags_enabled;
+
 static int *xlist;
 static int *instlist;
 static int *veclist;
@@ -204,7 +203,7 @@ static gretlopt model_opt;
 static GtkWidget *multiplot_label;
 static GtkWidget *multiplot_menu;
 
-selector *open_selector;
+static selector *open_selector;
 
 static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data);
@@ -303,6 +302,26 @@ static int lags_button_relevant (selector *sr, int locus)
     }
 
     return 0;
+}
+
+void enable_lags_for_context (int context, gboolean s)
+{
+    if (context == LAG_Y_X) {
+	y_x_lags_enabled = s;
+    } else if (context == LAG_Y_W) {
+	y_w_lags_enabled = s;
+    }
+}
+
+gboolean lags_enabled_for_context (int context)
+{
+    if (context == LAG_Y_X) {
+	return y_x_lags_enabled;
+    } else if (context == LAG_Y_W) {
+	return y_w_lags_enabled;
+    } else {
+	return TRUE;
+    }
 }
 
 void clear_selector (void)
@@ -629,6 +648,10 @@ static void set_varflag (const char *s)
 int selector_get_depvar_number (const selector *sr)
 {
     int ynum = -1;
+
+    if (sr == NULL) {
+	sr = open_selector;
+    }
 
     if (sr != NULL && sr->depvar != NULL) {
 	const char *s = gtk_entry_get_text(GTK_ENTRY(sr->depvar));

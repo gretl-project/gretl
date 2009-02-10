@@ -214,6 +214,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     int qdiff = (pmod->rho != 0.0);
     int pwe = (pmod->opt & OPT_P);
     int yvar = pmod->list[1];
+    double *u = pmod->uhat;
     double y;
 
     if (dwt) {
@@ -225,7 +226,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     if (qdiff) {
 	for (t=0; t<fulln; t++) {
 	    if (t < pmod->t1 || t > pmod->t2) {
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		pmod->yhat[t] = u[t] = NADBL;
 	    } else {
 		y = Z[yvar][t];
 		if (t == pmod->t1 && pwe) {
@@ -234,15 +235,15 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		    y -= pmod->rho * Z[yvar][t-1];
 		}
 		pmod->yhat[t] = yhat->val[i];
-		pmod->uhat[t] = y - yhat->val[i];
-		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		u[t] = y - yhat->val[i];
+		pmod->ess += u[t] * u[t];
 		i++;
 	    }
 	}
     } else if (pmod->nwt) {
 	for (t=0; t<fulln; t++) {
 	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		pmod->yhat[t] = u[t] = NADBL;
 	    } else {
 		y = Z[yvar][t];
 		if (dwt && Z[dwt][t] == 0.0) {
@@ -252,8 +253,8 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 			y *= sqrt(Z[pmod->nwt][t]);
 		    }
 		    pmod->yhat[t] = yhat->val[i];
-		    pmod->uhat[t] = y - yhat->val[i];
-		    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		    u[t] = y - yhat->val[i];
+		    pmod->ess += u[t] * u[t];
 		    i++;
 		}
 	    }
@@ -261,11 +262,11 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     } else {
 	for (t=0; t<fulln; t++) {
 	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		pmod->yhat[t] = u[t] = NADBL;
 	    } else {
 		pmod->yhat[t] = yhat->val[i];
-		pmod->uhat[t] = Z[yvar][t] - yhat->val[i];
-		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		u[t] = Z[yvar][t] - yhat->val[i];
+		pmod->ess += u[t] * u[t];
 		i++;
 	    }
 	}
@@ -734,12 +735,11 @@ static int qr_make_regular_vcv (MODEL *pmod, gretl_matrix *v,
 static void get_model_data (MODEL *pmod, const double **Z, 
 			    gretl_matrix *Q, gretl_matrix *y)
 {
-    int i, j, t;
-    double x;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
     int qdiff = (pmod->rho != 0.0);
     int pwe = (pmod->opt & OPT_P);
-    double pw1 = 0.0;
+    double x, pw1 = 0.0;
+    int i, j, t;
 
     if (pwe) {
 	pw1 = sqrt(1.0 - pmod->rho * pmod->rho);
