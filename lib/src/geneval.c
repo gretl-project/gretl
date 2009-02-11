@@ -6863,6 +6863,11 @@ static void pre_process (parser *p, int flags)
 	s += 7;
     }
 
+    if (p->targ == VEC && p->dinfo->n == 0) {
+	no_data_error(p);
+	return;
+    }
+
     if (p->flags & P_DISCARD) {
 	/* doing a simple "eval" */
 	p->point = s;
