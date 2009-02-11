@@ -2016,6 +2016,36 @@ static int sample_range_code (GtkAction *action)
 	return SMPL;
 }
 
+static GtkWidget *build_dummies_combo (GList *dumlist, 
+				       int thisdum,
+				       const gchar *label,
+				       GtkWidget *vbox)
+{
+    GtkWidget *w, *hbox, *combo;
+    GList *dlist;
+
+    if (label != NULL) {
+	w = gtk_label_new(label);
+	hbox = gtk_hbox_new(TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    }
+
+    combo = gtk_combo_box_new_text();
+    dlist = dumlist;
+    while (dlist != NULL) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), dlist->data);
+	dlist = dlist->next;
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), thisdum);
+
+    hbox = gtk_hbox_new(TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    return combo;
+}
+
 void sample_range_dialog (GtkAction *action, gpointer p)
 {
     struct range_setting *rset = NULL;
@@ -2041,29 +2071,12 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     if (rset == NULL) return;
 
     if (u == SMPLDUM) {
-	GList *dlist;
-
-	w = gtk_label_new(_("Name of dummy variable to use:"));
-	hbox = gtk_hbox_new(TRUE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);
-
-	rset->combo = gtk_combo_box_new_text();
-	dlist = dumlist;
-	while (dlist != NULL) {
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(rset->combo), dlist->data);
-	    dlist = dlist->next;
-	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(rset->combo), thisdum);
-	g_list_free(dumlist);
+	rset->combo = build_dummies_combo(dumlist, thisdum,
+					  _("Name of dummy variable to use:"),
+					  GTK_DIALOG(rset->dlg)->vbox);
 	g_signal_connect(G_OBJECT(rset->combo), "changed",
 			 G_CALLBACK(update_obs_label), rset);
-
-	hbox = gtk_hbox_new(TRUE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), rset->combo, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);
+	g_list_free(dumlist);
     } else if (u == SMPLRAND) {
 	gchar *labtxt;
 	GtkObject *adj;
@@ -2133,8 +2146,8 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 }
 
 /* general purpose dialog box for getting from the user either one or
-   two observations (e.g. for setting the break point in a Chow test,
-   or setting the start and end of a sample range)
+   two observations (e.g. for setting the start and/or end of a sample
+   range)
 */
 
 int get_obs_dialog (const char *title, const char *text,
@@ -2167,6 +2180,92 @@ int get_obs_dialog (const char *title, const char *text,
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(set_obs_from_dialog), rset);
     gtk_widget_grab_default(tempwid);
+
+    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
+		     G_CALLBACK(free_rsetting), rset);
+
+    gretl_set_window_modal(rset->dlg);
+    gtk_widget_show_all(rset->dlg);
+
+    return ret;
+}
+
+static void configure_chow_dlg (GtkToggleButton *b, struct range_setting *rset)
+{
+    gboolean s = gtk_toggle_button_get_active(b);
+
+    gtk_widget_set_sensitive(rset->combo, s);
+    gtk_widget_set_sensitive(rset->startspin, !s);
+
+    if (!s) {
+	rset->t2 = 0;
+    }
+}
+
+static void chow_dumv_callback (GtkComboBox *box, int *dumv)
+{
+    gchar *vname = gtk_combo_box_get_active_text(box);
+
+    *dumv = series_index(datainfo, vname);
+    g_free(vname);
+}
+
+int chow_dialog (int tmin, int tmax, int *t, int *dumv)
+{
+    const gchar *olabel = N_("Observation at which to split the sample:");
+    const gchar *dlabel = N_("Name of dummy variable to use:");
+    GtkWidget *tmp, *vbox;
+    GtkWidget *b1 = NULL, *b2 = NULL;
+    struct range_setting *rset;
+    GList *dumlist;
+    int thisdum = 0;
+    int ret = 0;
+
+    dumlist = get_dummy_list(&thisdum);
+
+    rset = rset_new(0, NULL, NULL, t, NULL, _("gretl: Chow test"));
+    if (rset == NULL) {
+	return -1;
+    }
+
+    vbox = GTK_DIALOG(rset->dlg)->vbox;
+
+    if (dumlist != NULL) {
+	GSList *grp;
+
+	b1 = gtk_radio_button_new_with_label(NULL, _(olabel));
+	gtk_box_pack_start(GTK_BOX(vbox), b1, TRUE, TRUE, 0);
+	grp = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+	b2 = gtk_radio_button_new_with_label(grp, _(dlabel));
+    }
+
+    tmp = obs_spinbox(rset, 
+		      (b1 != NULL)? NULL : olabel, 
+		      NULL, NULL, 
+		      tmin, tmax, t, 
+		      0, 0, 0,
+		      (b1 != NULL)? SPIN_LABEL_NONE : SPIN_LABEL_ABOVE);
+
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+
+    if (dumlist != NULL) {
+	gtk_box_pack_start(GTK_BOX(vbox), b2, TRUE, TRUE, 0);
+	rset->combo = build_dummies_combo(dumlist, thisdum, NULL, vbox);
+	gtk_widget_set_sensitive(rset->combo, FALSE);
+	rset->t2 = dumv;
+	g_signal_connect(b2, "toggled", G_CALLBACK(configure_chow_dlg), rset);
+	g_signal_connect(G_OBJECT(rset->combo), "changed",
+			 G_CALLBACK(chow_dumv_callback), dumv);
+    }
+
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
+
+    /* "OK" button */
+    tmp = ok_button(GTK_DIALOG (rset->dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_obs_from_dialog), rset);
+    gtk_widget_grab_default(tmp);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);

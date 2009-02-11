@@ -4498,8 +4498,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = cusum_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == RESET) {
 	    err = reset_test(models[0], pZ, pdinfo, cmd->opt, prn);
-	} else if (cmd->ci == CHOW || cmd->ci == QLRTEST) {
+	} else if (cmd->ci == CHOW) {
 	    err = chow_test(line, models[0], pZ, pdinfo, cmd->opt, prn);
+	} else if (cmd->ci == QLRTEST) {
+	    err = chow_test(line, models[0], pZ, pdinfo, cmd->opt | OPT_T, prn);
 	} else if (cmd->ci == VIF) { 
 	    err = vif_test(models[0], pZ, pdinfo, prn);
 	} 

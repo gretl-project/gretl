@@ -2754,6 +2754,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_CHOW,
       N_("Chow test for structural break at observation %s"),
       N_("no structural break") },
+    { GRETL_TEST_CHOWDUM,
+      N_("Chow test for structural difference with respect to %s"),
+      N_("no structural difference") },
     { GRETL_TEST_CUSUM,
       N_("CUSUM test for parameter stability"),
       N_("no change in parameters") },
@@ -2839,7 +2842,8 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
     if (test->order > 0) {
 	sprintf(ordstr, "%d", test->order);
 	param = ordstr;
-    } else if (test->type == GRETL_TEST_CHOW) {
+    } else if (test->type == GRETL_TEST_CHOW ||
+	       test->type == GRETL_TEST_CHOWDUM) {
 	param = test->param;
     }
 

@@ -573,11 +573,15 @@ void printlist (const int *list, const char *msg)
     }
 
     if (list == NULL) {
-	fputs( "list is NULL", stderr);
+	fputs("list is NULL", stderr);
     } else {
 	fprintf(stderr, "%d : ", list[0]);
 	for (i=1; i<=list[0]; i++) {
-	    fprintf(stderr, "%d ", list[i]);
+	    if (list[i] == LISTSEP) {
+		fputs("; ", stderr);
+	    } else {
+		fprintf(stderr, "%d ", list[i]);
+	    }
 	}
     }
 

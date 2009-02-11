@@ -938,10 +938,15 @@
   <command name="chow" section="Tests" label="Chow test">
 
     <usage>
-      <arguments>
-        <argument>obs</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>chow</lit> <repl>obs</repl></altform>
+        <altform><lit>chow</lit> <repl>dummyvar</repl> <lit>--dummy</lit></altform>
+      </altforms>
       <options>
+	<option>
+	  <flag>--dummy</flag>
+	  <effect>use a pre-existing dummy variable</effect>
+	</option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>don't print estimates for augmented model</effect>
@@ -950,23 +955,26 @@
       <examples>
         <example>chow 25</example>
         <example>chow 1988:1</example>
+	<example>chow female --dummy</example>
       </examples>
     </usage>
 
     <description>
       <para context="gui">
-	This command needs an observation number (or date, with dated
-	data).
+	This command needs either an observation number (or date, with dated
+	data), or the name of a dummy variable.
       </para>
 
       <para>
-	Must follow an OLS regression.  Provides a test for the null
-	hypothesis of no structural break at the given split point. The
-	procedure is to create a dummy variable which equals 1 from the
-	split point specified by <repl>obs</repl> to the end of the
-	sample, 0 otherwise, and also interaction terms between this dummy
-	and the original regressors.  An augmented regression is run
-	including these terms.
+	Must follow an OLS regression.  If an observation number or date is
+	given, provides a test for the null hypothesis of no structural break
+	at the given split point. The procedure is to create a dummy variable
+	which equals 1 from the split point specified by <repl>obs</repl> to
+	the end of the sample, 0 otherwise, and also interaction terms between
+	this dummy and the original regressors. If a dummy variable is given,
+	tests the null hypothesis of structural homogeneity with respect to
+	that dummy. Again, interaction terms are added.  In either case an
+	augmented regression is run including the additional terms.
       </para>
       <para>
 	By default an <math>F</math> statistic is calculated, taking the

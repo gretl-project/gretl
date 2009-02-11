@@ -2000,12 +2000,21 @@ int autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
-/* compose list of variables to be added for Chow test and add
+static int chow_active (int split, const double *x, int t)
+{
+    if (x != NULL) {
+	return x[t] == 1.0;
+    } else {
+	return (t >= split);
+    } 
+}
+
+/* compose list of variables to be used for the Chow test and add
    them to the data set */
 
 static int *
 make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		int split, int *err)
+		int split, int dumv, int *err)
 {
     int *chowlist = NULL;
     int newvars = pmod->ncoeff;
@@ -2021,8 +2030,14 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!*err) {
+	const double *cdum = NULL;
 	double *dum = (*pZ)[v];
 	int l0 = pmod->list[0];
+
+	if (dumv > 0) {
+	    /* the user gave a dummy variable, not a split obs */
+	    cdum = (*pZ)[dumv];
+	}
 
 	for (i=1; i<=l0; i++) { 
 	    chowlist[i] = pmod->list[i];
@@ -2030,7 +2045,7 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	/* generate the split variable */
 	for (t=0; t<pdinfo->n; t++) {
-	    dum[t] = (double) (t >= split); 
+	    dum[t] = chow_active(split, cdum, t); 
 	}
 
 	strcpy(pdinfo->varname[v], "splitdum");
@@ -2043,12 +2058,12 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    int sv = v + i;
 
 	    for (t=0; t<pdinfo->n; t++) {
-		if (t < split) {
-		    (*pZ)[sv][t] = 0.0;
-		} else if (model_missing(pmod, t)) {
+		if (model_missing(pmod, t)) {
 		    (*pZ)[sv][t] = NADBL;
-		} else {
+		} else if (chow_active(split, cdum, t)) {
 		    (*pZ)[sv][t] = (*pZ)[pv][t];
+		} else {
+		    (*pZ)[sv][t] = 0.0;
 		}
 	    }
 
@@ -2205,11 +2220,12 @@ static double robust_chow_test (MODEL *pmod, const int *list,
     return test;
 }
 
-static void save_chow_test (MODEL *pmod, char *chowdate,
-			    double test, double pval,
+static void save_chow_test (MODEL *pmod, char *chowparm,
+			    int dumv, double test, double pval,
 			    int dfn, int dfd)
 {
-    ModelTest *mt = model_test_new(GRETL_TEST_CHOW);
+    int ttype = (dumv > 0)? GRETL_TEST_CHOWDUM : GRETL_TEST_CHOW;
+    ModelTest *mt = model_test_new(ttype);
 
     if (mt != NULL) {
 	if (dfd == 0) {
@@ -2217,7 +2233,7 @@ static void save_chow_test (MODEL *pmod, char *chowdate,
 	} else {
 	    model_test_set_teststat(mt, GRETL_STAT_F);
 	}
-	model_test_set_param(mt, chowdate);
+	model_test_set_param(mt, chowparm);
 	model_test_set_value(mt, test);
 	model_test_set_pvalue(mt, pval);
 	model_test_set_dfn(mt, dfn);
@@ -2226,13 +2242,31 @@ static void save_chow_test (MODEL *pmod, char *chowdate,
     }	  
 }
 
+static int get_chow_dummy (const char *s, const double **Z,
+			   const DATAINFO *pdinfo, int *err)
+{
+    int v = series_index(pdinfo, s);
+
+    if (v >= pdinfo->v) {
+	*err = E_UNKVAR;
+	return 0;
+    } else if (!gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v])) {
+	*err = E_DATA;
+	return 0;
+    }
+
+    return v;
+}
+
 /**
  * chow_test:
  * @line: command line for parsing.
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save test results to model.
+ * @opt: if flags include %OPT_S, save test results to model;
+ * if %OPT_D included, do the Chow test based on a given dummy
+ * variable; if %OPT_T included, do the QLR test.
  * @prn: gretl printing struct.
  *
  * Tests the given model for structural stability (Chow test).
@@ -2247,10 +2281,10 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     int smpl_t2 = pdinfo->t2;
     int *chowlist = NULL;
     int origv = pdinfo->v;
-    char chowdate[OBSLEN];
+    char chowparm[VNAMELEN];
     MODEL chow_mod;
-    int QLR = 0;
-    int split, smax;
+    int QLR = (opt & OPT_T);
+    int dumv = 0, split = 0, smax = 0;
     int err = 0;
 
     if (pmod->ci != OLS) {
@@ -2267,22 +2301,30 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
     gretl_model_init(&chow_mod);
 
-    if (sscanf(line, "%*s %8s", chowdate) != 1) {
-	QLR = 1;
+    if (QLR) {
 	/* 15 percent trimming */
 	split = pmod->t1 + 0.15 * pmod->nobs;
 	smax = pmod->t1 + 0.85 * pmod->nobs;
     } else {
-	split = dateton(chowdate, pdinfo);
-	if (split <= 0 || split >= pdinfo->n) { 
-	    strcpy(gretl_errmsg, _("Invalid sample split for Chow test"));
-	    err = E_DATA;
+	if (sscanf(line, "%*s %15s", chowparm) != 1) {
+	    err = E_PARSE;
+	}
+	if (opt & OPT_D) {
+	    dumv = get_chow_dummy(chowparm, (const double **) *pZ, pdinfo, &err);
+	} else {
+	    split = dateton(chowparm, pdinfo);
+	    if (split <= 0 || split >= pdinfo->n) { 
+		strcpy(gretl_errmsg, _("Invalid sample split for Chow test"));
+		err = E_DATA;
+	    }
+	    smax = split;
+	}
+	if (err) {
 	    goto bailout;
 	}
-	smax = split;
     }
 
-    chowlist = make_chow_list(pmod, pZ, pdinfo, split, &err);
+    chowlist = make_chow_list(pmod, pZ, pdinfo, split, dumv, &err);
 
     if (QLR) {
 	/* Quandt likelihood ratio */
@@ -2371,8 +2413,13 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		if (opt & OPT_Q) {
 		    pputc(prn, '\n');
 		}
-		pprintf(prn, _("Chow test for structural break at observation %s"),
-			       chowdate); 
+		if (opt & OPT_D) {
+		    pprintf(prn, _("Chow test for structural difference with respect to %s"),
+			    chowparm);
+		} else {
+		    pprintf(prn, _("Chow test for structural break at observation %s"),
+			    chowparm);
+		} 
 		pputc(prn, '\n');
 		if (robust) {
 		    pval = chisq_cdf_comp(dfn, test);
@@ -2387,7 +2434,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 			    dfn, dfd, test, _("with p-value"), pval);
 		}
 		if (opt & OPT_S) {
-		    save_chow_test(pmod, chowdate, test, pval, dfn, dfd);
+		    save_chow_test(pmod, chowparm, dumv, test, pval, dfn, dfd);
 		}
 		record_test_result(test, pval, "Chow");
 	    } 

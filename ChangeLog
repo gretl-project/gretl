@@ -20,6 +20,8 @@
 - VARs: support gaps in the lag structure
 - New GUI graph option: "Plot curve" under the tools menu,
   for quick plotting of a formula
+- Chow test: add the option of specifying a dummy variable
+  rather than a break point
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

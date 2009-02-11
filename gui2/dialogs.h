@@ -136,6 +136,8 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
 void lmax_dialog (double *lmax, double ymax);
 
+int chow_dialog (int tmin, int tmax, int *t, int *dumv);
+
 void tex_format_dialog (void);
 
 int gretl_all_done (void);

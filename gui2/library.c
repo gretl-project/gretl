@@ -2133,6 +2133,7 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
+    gretlopt opt = OPT_S; /* save test result */
     PRN *prn;
     int ci, err = 0;
 
@@ -2150,21 +2151,23 @@ void do_chow_cusum (GtkAction *action, gpointer p)
     if (ci == CHOW) {
 	char brkstr[OBSLEN];
 	int resp, brk = (pmod->t2 - pmod->t1) / 2;
+	int dumv = 0;
 
 	set_window_busy(vwin);
-	resp = get_obs_dialog(_("gretl: Chow test"), 
-			      _("Observation at which to split the sample:"),
-			      NULL, NULL, 
-			      pmod->t1 + 1, pmod->t2 - 1, &brk,
-			      0, 0, NULL);
+	resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &brk, &dumv);
 	unset_window_busy(vwin);
 
 	if (resp < 0) {
 	    return;
 	}
 
-	ntodate(brkstr, brk, datainfo);
-	gretl_command_sprintf("chow %s", brkstr);
+	if (dumv > 0) {
+	    gretl_command_sprintf("chow %s --dummy", datainfo->varname[dumv]);
+	    opt |= OPT_D;
+	} else {
+	    ntodate(brkstr, brk, datainfo);
+	    gretl_command_sprintf("chow %s", brkstr);
+	}
     } else if (ci == QLRTEST) {
 	gretl_command_strcpy("qlrtest");
     } else if (ci == CUSUM) {
@@ -2178,14 +2181,15 @@ void do_chow_cusum (GtkAction *action, gpointer p)
     }
 
     if (ci == CHOW || ci == QLRTEST) {
-	err = chow_test(cmdline, pmod, &Z, datainfo, OPT_S, prn);
+	if (ci == QLRTEST) {
+	    opt |= OPT_T;
+	} 
+	err = chow_test(cmdline, pmod, &Z, datainfo, opt, prn);
     } else {
-	gretlopt qopt = OPT_S;
-
 	if (ci == CUSUMSQ) {
-	    qopt |= OPT_R;
+	    opt |= OPT_R;
 	}
-	err = cusum_test(pmod, &Z, datainfo, qopt, prn);
+	err = cusum_test(pmod, &Z, datainfo, opt, prn);
     }
 
     if (err) {
