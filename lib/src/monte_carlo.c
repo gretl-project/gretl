@@ -2530,6 +2530,8 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
     return NULL;
 }
 
+#if GENCOMPILE
+
 static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno)
 {
     GENERATOR **genrs;
@@ -2572,6 +2574,8 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
     return genr;
 }
 
+#endif
+
 /* get the next command for a loop by pulling a line off the
    stack of loop commands.
 */
@@ -2605,6 +2609,9 @@ static int block_model (CMD *cmd)
 
 int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo) 
 {
+#if GENCOMPILE
+    GENERATOR *genr;
+#endif
     LOOPSET *loop = currloop;
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -2612,7 +2619,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     MODEL *pmod;
     LOOP_MODEL *lmod;
     LOOP_PRINT *lprn;
-    GENERATOR *genr;
     char errline[MAXLINE];
     int indent0, mod_id = 0;
     int subst, lrefresh;

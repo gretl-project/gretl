@@ -6549,6 +6549,17 @@ static void get_lh_mspec (parser *p)
     parser *subp;
     char *s;
 
+#if 0 /* ?? */
+    if (reusable(p) && p->subp != NULL) {
+	return;
+    }
+#endif
+
+    if (p->subp != NULL) {
+	gen_cleanup(p->subp);
+	free(p->subp);
+    }
+
     p->subp = subp = malloc(sizeof *p->subp);
     if (p->subp == NULL) {
 	p->err = E_ALLOC;
@@ -7916,17 +7927,24 @@ void gen_save_or_print (parser *p, PRN *prn)
 
 void gen_cleanup (parser *p)
 {
+#if 0
+    fprintf(stderr, "gen cleanup: reusable = %d\n", reusable(p));
+#endif
+
+    if (p->subp != NULL) {
+	/* FIXME?? */
+	parser_free_aux_nodes(p->subp);
+	gen_cleanup(p->subp);
+	free(p->subp);
+	p->subp = NULL;
+    }     
+
     if (reusable(p)) {
 	if (p->ret != p->tree) {
 	    free_tree(p->ret, p, "p->ret");
 	    p->ret = NULL;
 	}
     } else {
-	if (p->subp != NULL) {
-	    parser_free_aux_nodes(p->subp);
-	    gen_cleanup(p->subp);
-	    free(p->subp);
-	} 	
 	if (p->ret != p->tree) {
 	    free_tree(p->tree, p, "p->tree");
 	}
