@@ -386,7 +386,8 @@ static void get_box_y_range (PLOTGROUP *grp, double gyrange,
 
 /* FIXME outliers */
 
-static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
+static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
+				  gretlopt opt)
 {
     FILE *fp = NULL;
     BOXPLOT *bp;
@@ -397,10 +398,15 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
     int qtype = 2;
     int i, err = 0;
 
-    if (opt & OPT_B) {
+    if (fname != NULL) {
+	/* pre-specified filename */
+	fp = gretl_fopen(fname, "w");
+    } else if (opt & OPT_B) {
+	/* batch mode: auto-named file */
 	fp = gnuplot_batch_init(&err);
 	qtype = 3;
     } else {
+	/* displaying graph: auto-named temp file */
 	err = gnuplot_init(PLOT_BOXPLOTS, &fp);
     }
 
@@ -506,7 +512,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 
 static int gnuplot_do_boxplot (PLOTGROUP *grp, gretlopt opt)
 {
-    int err = write_gnuplot_boxplot(grp, opt);
+    int err = write_gnuplot_boxplot(grp, NULL, opt);
 
     if (!err && !(opt & OPT_B)) {
 	err = gnuplot_make_graph();
@@ -997,15 +1003,7 @@ int gnuplot_from_boxplot (const char *fname)
 	if (grp->show_mean && grp->do_notches) {
 	    grp->show_mean = 0;
 	}
-	err = write_gnuplot_boxplot(grp, OPT_NONE);
-	if (!err) {
-	    const char *pname = gretl_plotfile();
-
-	    gretl_remove(fname);
-	    gretl_copy_file(pname, fname);
-	    gretl_remove(pname);
-	    set_gretl_plotfile("");
-	}
+	err = write_gnuplot_boxplot(grp, fname, OPT_NONE);
     } else if (err == E_DATA) {
 	gretl_errmsg_set(_("boxplot file is corrupt"));
     }
