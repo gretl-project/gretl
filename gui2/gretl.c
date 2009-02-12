@@ -1102,33 +1102,11 @@ static void scale_main_window (void)
     }
 }
 
-#define NBOOK 0 /* experimental */
-
-#if NBOOK
-
-static void mdata_switch_page (GtkNotebook *book,
-			       GtkNotebookPage *pg,
-			       guint page_num,
-			       GtkWidget *box)
-{
-    if (page_num == 0) {
-	;
-    } else if (page_num == 1) {
-	view_session(box);
-    }
-}
-
-#endif
-
 static GtkWidget *make_main_window (void) 
 {
     GtkWidget *main_vbox;
     GtkWidget *box, *dlabel;
-#if NBOOK
-    GtkWidget *book, *lbl;
-#else
     GtkWidget *align;
-#endif
     const char *titles[] = {
 	N_("ID #"), 
 	N_("Variable name"), 
@@ -1203,14 +1181,10 @@ static GtkWidget *make_main_window (void)
     /* will hold the list of variables */
     box = gtk_vbox_new(FALSE, 0);
 
-#if NBOOK  
-    book = gtk_notebook_new();
-#else
     align = gtk_alignment_new(0, 0, 0, 0);
     gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
     gtk_widget_show(align);
     gtk_container_add(GTK_CONTAINER(align), dlabel);
-#endif
    
     vwin_add_list_box(mdata, GTK_BOX(box), 3, FALSE, types, titles, 1);
 
@@ -1223,22 +1197,9 @@ static GtkWidget *make_main_window (void)
 		     G_CALLBACK(mdata_handle_drag),
 		     NULL);
 
-#if NBOOK
-    mdata->status = gtk_label_new("");
-    gtk_box_pack_start(GTK_BOX(box), mdata->status, FALSE, TRUE, 5);
-    gtk_notebook_append_page(GTK_NOTEBOOK(book), box, dlabel);
-    /* empty page for icon view */
-    lbl = gtk_label_new(_("Icon view"));
-    /* gtk_widget_set_sensitive(lbl, FALSE); */
-    box = gtk_vbox_new(FALSE, 0);
-    gtk_notebook_append_page(GTK_NOTEBOOK(book), box, lbl);
-    g_signal_connect(book, "switch-page", G_CALLBACK(mdata_switch_page), box);
-    gtk_box_pack_start(GTK_BOX(main_vbox), book, TRUE, TRUE, 0);
-#else
     gtk_box_pack_start(GTK_BOX(main_vbox), box, TRUE, TRUE, 0);
     mdata->status = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
-#endif
 
     /* put stuff into list box, activate menus */
     if (have_data()) {

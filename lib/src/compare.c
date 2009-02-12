@@ -2017,13 +2017,16 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		int split, int dumv, int *err)
 {
     int *chowlist = NULL;
-    int newvars = pmod->ncoeff;
+    int l0 = pmod->list[0];
+    int ninter = pmod->ncoeff - pmod->ifc; /* number of interaction terms */
+    int havedum = (dumv > 0);
+    int newvars = ninter + 1 - havedum;
     int i, t, v = pdinfo->v;
 
     if (dataset_add_series(newvars, pZ, pdinfo)) {
 	*err = E_ALLOC;
     } else {
-	chowlist = gretl_list_new(pmod->list[0] + newvars);
+	chowlist = gretl_list_new(pmod->list[0] + ninter + 1);
 	if (chowlist == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -2031,31 +2034,29 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!*err) {
 	const double *cdum = NULL;
-	double *dum = (*pZ)[v];
-	int l0 = pmod->list[0];
-
-	if (dumv > 0) {
-	    /* the user gave a dummy variable, not a split obs */
-	    cdum = (*pZ)[dumv];
-	}
 
 	for (i=1; i<=l0; i++) { 
 	    chowlist[i] = pmod->list[i];
 	}
 
-	/* generate the split variable */
-	for (t=0; t<pdinfo->n; t++) {
-	    dum[t] = chow_active(split, cdum, t); 
+	if (dumv > 0) {
+	    /* we have a user-supplied dummy var */
+	    cdum = (*pZ)[dumv];
+	} else {
+	    /* generate the split variable */
+	    for (t=0; t<pdinfo->n; t++) {
+		(*pZ)[v][t] = (double) (t >= split); 
+	    }
+	    strcpy(pdinfo->varname[v], "splitdum");
+	    strcpy(VARLABEL(pdinfo, v), _("dummy variable for Chow test"));
 	}
 
-	strcpy(pdinfo->varname[v], "splitdum");
-	strcpy(VARLABEL(pdinfo, v), _("dummy variable for Chow test"));
-	chowlist[l0 + 1] = v;
+	chowlist[l0 + 1] = (dumv > 0)? dumv : v;
 
 	/* and the interaction terms */
-	for (i=1; i<newvars; i++) {
-	    int pv = pmod->list[i + 1 + pmod->ifc];
-	    int sv = v + i;
+	for (i=0; i<ninter; i++) {
+	    int pv = pmod->list[i + 2 + pmod->ifc];
+	    int sv = v + i + 1 - havedum;
 
 	    for (t=0; t<pdinfo->n; t++) {
 		if (model_missing(pmod, t)) {
@@ -2067,10 +2068,13 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		}
 	    }
 
-	    strcpy(pdinfo->varname[sv], "sd_");
+	    if (havedum) {
+		sprintf(pdinfo->varname[sv], "%.2s_", pdinfo->varname[dumv]);
+	    } else {
+		strcpy(pdinfo->varname[sv], "sd_");
+	    }
 	    strncat(pdinfo->varname[sv], pdinfo->varname[pv], VNAMELEN - 4);
-	    sprintf(VARLABEL(pdinfo, sv), "splitdum * %s", pdinfo->varname[pv]);
-	    chowlist[l0 + 1 + i] = sv;
+	    chowlist[l0 + 2 + i] = sv;
 	}
     }
 
@@ -2308,8 +2312,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     } else {
 	if (sscanf(line, "%*s %15s", chowparm) != 1) {
 	    err = E_PARSE;
-	}
-	if (opt & OPT_D) {
+	} else if (opt & OPT_D) {
 	    dumv = get_chow_dummy(chowparm, (const double **) *pZ, pdinfo, &err);
 	} else {
 	    split = dateton(chowparm, pdinfo);

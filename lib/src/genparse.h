@@ -473,6 +473,7 @@ struct parser_ {
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
     struct lhinfo lh;  /* left-hand side info */
+    parser *subp;      /* left-hand side matrix subslice tree */
     NODE *tree;        /* parsed syntax tree */
     NODE *ret;         /* evaluated result node */
     NODE **aux;        /* auxiliary nodes used in evaluation */

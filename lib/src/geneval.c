@@ -138,6 +138,9 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	} else if (t->t == IVEC || t->t == LVEC) {
 	    free(t->v.ivec);
 	} else if (t->t == MAT) {
+#if EDEBUG
+	    fprintf(stderr, "tmp node, freeing matrix at %p\n", t->v.m);
+#endif
 	    gretl_matrix_free(t->v.m);
 	} else if (t->t == MSPEC) {
 	    free(t->v.mspec);
@@ -5371,6 +5374,9 @@ static void transpose_matrix_result (NODE *n, parser *p)
 	return;
     }
 
+    fprintf(stderr, "*** transpose_matrix_result: n = %p, n->t = %d\n", 
+	    (void *) n, n->t);
+
     if (n->t == MAT) {
 	gretl_matrix *m = n->v.m;
 
@@ -5378,7 +5384,7 @@ static void transpose_matrix_result (NODE *n, parser *p)
 	if (is_tmp_node(n)) {
 	    gretl_matrix_free(m);
 	}
-	n->flags |= TMP_NODE;
+	n->flags |= TMP_NODE; 
     } else if (n->t == MSPEC) {
 	/* will be handled downstream */
 	n->flags |= TRANSP_NODE;
@@ -6538,8 +6544,14 @@ static void get_lhs_substr (char *str, parser *p)
 
 static void get_lh_mspec (parser *p)
 {
-    parser subp;
+    parser *subp;
     char *s;
+
+    p->subp = subp = malloc(sizeof *p->subp);
+    if (p->subp == NULL) {
+	p->err = E_ALLOC;
+	return;
+    }
 
     s = malloc(strlen(p->lh.substr) + 3);
     if (s == NULL) {
@@ -6548,33 +6560,29 @@ static void get_lh_mspec (parser *p)
     }
 
     sprintf(s, "[%s]", p->lh.substr);
-    parser_init(&subp, s, p->Z, p->dinfo, p->prn, P_SLICE);
+    parser_init(subp, s, p->Z, p->dinfo, p->prn, P_SLICE);
 
 #if EDEBUG
-    fprintf(stderr, "subp.input='%s'\n", subp.input);
+    fprintf(stderr, "subp->input='%s'\n", subp->input);
 #endif
 
-    subp.tree = msl_node_direct(&subp);
-    p->err = subp.err;
+    subp->tree = msl_node_direct(subp);
+    p->err = subp->err;
 
-    if (subp.tree != NULL) {
-	parser_aux_init(&subp);
-	subp.ret = eval(subp.tree, &subp);
+    if (subp->tree != NULL) {
+	parser_aux_init(subp);
+	subp->ret = eval(subp->tree, subp);
 
-	if (subp.err) {
-	    printf("Error in subp eval = %d\n", subp.err);
-	    p->err = subp.err;
+	if (subp->err) {
+	    printf("Error in subp eval = %d\n", subp->err);
+	    p->err = subp->err;
 	} else {
 	    if (p->lh.mspec != NULL) {
 		free(p->lh.mspec);
 	    }
-	    p->lh.mspec = subp.ret->v.mspec;
-	    /* FIXME p->lh.mspec may include aux nodes? */
-	    subp.ret->v.mspec = NULL;
+	    p->lh.mspec = subp->ret->v.mspec;
+	    subp->ret->v.mspec = NULL;
 	}
-
-	parser_free_aux_nodes(&subp); /* may be erroneous */
-	gen_cleanup(&subp);
     } 
 
     free(s);
@@ -7819,6 +7827,8 @@ static void parser_init (parser *p, const char *str,
     p->lh.substr = NULL;
     p->lh.mspec = NULL;
 
+    p->subp = NULL;
+
     p->obs = 0;
     p->sym = 0;
     p->ch = 0;
@@ -7906,6 +7916,11 @@ void gen_cleanup (parser *p)
 	    p->ret = NULL;
 	}
     } else {
+	if (p->subp != NULL) {
+	    parser_free_aux_nodes(p->subp);
+	    gen_cleanup(p->subp);
+	    free(p->subp);
+	} 	
 	if (p->ret != p->tree) {
 	    free_tree(p->tree, p, "p->tree");
 	}
