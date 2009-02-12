@@ -6815,9 +6815,13 @@ static int overwrite_const_check (const char *s, parser *p)
 
     if (object_is_const(s)) {
 	err = 1;
-    } else if (p->lh.t == VEC && series_is_parent(p->dinfo, p->lh.v)) {
+    }
+
+#if 0
+    if (p->lh.t == VEC && series_is_parent(p->dinfo, p->lh.v)) {
 	err = 1;
     }
+#endif
 
     if (err) {
 	p->err = overwrite_err(s);
