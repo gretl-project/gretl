@@ -5374,8 +5374,10 @@ static void transpose_matrix_result (NODE *n, parser *p)
 	return;
     }
 
+#if EDEBUG
     fprintf(stderr, "*** transpose_matrix_result: n = %p, n->t = %d\n", 
 	    (void *) n, n->t);
+#endif
 
     if (n->t == MAT) {
 	gretl_matrix *m = n->v.m;
