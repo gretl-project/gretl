@@ -846,7 +846,9 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
 	if (!ok_in_loop(cmd->ci)) {
-	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
+	    printf("> %s\n", line);
+	    pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
+	    err = E_NOTIMP;
 	} else {
 	    if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
 		eflag = gretl_compiling_loop()? CMD_STACKING : CMD_BATCH_MODE;

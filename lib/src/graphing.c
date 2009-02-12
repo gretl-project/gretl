@@ -1104,10 +1104,6 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
     int gui = gretl_in_gui_mode();
     char plotfile[FILENAME_MAX] = {0};
 
-    if (gretl_looping()) {
-	return E_OK;
-    }
-
     /* 'gnuplot_path' is file-scope static var */
     if (*gnuplot_path == 0) {
 	strcpy(gnuplot_path, gretl_gnuplot_path());
@@ -1171,6 +1167,39 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
 int gnuplot_init (PlotType ptype, FILE **fpp)
 {
     return real_gnuplot_init(ptype, 0, fpp);
+}
+
+static int gretl_plot_count;
+
+void reset_plot_count (void)
+{
+    gretl_plot_count = 0;
+}
+
+/* initialization for gnuplot output file in batch mode: this
+   is wanted when drawing batch boxplots */
+
+FILE *gnuplot_batch_init (int *err)
+{
+    const char *optname = get_optval_string(GNUPLOT, OPT_B);
+    FILE *fp = NULL;
+
+    if (optname != NULL && *optname != '\0') {
+	/* user gave --filename=<value> : FIXME working dir? */
+	fp = gretl_fopen(optname, "w");
+    } else {
+	char fname[FILENAME_MAX];
+
+	sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(),
+		++gretl_plot_count);
+	fp = gretl_fopen(fname, "w");
+    }
+
+    if (fp == NULL) {
+	*err = E_FOPEN;
+    }
+
+    return fp;
 }
 
 /**
@@ -1306,13 +1335,6 @@ static void print_gnuplot_literal_lines (const char *s, FILE *fp)
 	}
 	s++;
     }
-}
-
-static int gretl_plot_count;
-
-void reset_plot_count (void)
-{
-    gretl_plot_count = 0;
 }
 
 static int
@@ -3598,8 +3620,7 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
     return gnuplot_make_graph();
 }
 
-int 
-rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
+int rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     int (*range_mean_graph) (int, const double **, const DATAINFO *, PRN *);
     void *handle = NULL;

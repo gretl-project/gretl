@@ -386,7 +386,7 @@ static void get_box_y_range (PLOTGROUP *grp, double gyrange,
 
 /* FIXME outliers */
 
-static int write_gnuplot_boxplot (PLOTGROUP *grp)
+static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 {
     FILE *fp = NULL;
     BOXPLOT *bp;
@@ -394,9 +394,16 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
     double lpos, h, gyrange;
     double ymin, ymax;
     int anybool = test_for_bool(grp);
+    int qtype = 2;
     int i, err = 0;
 
-    err = gnuplot_init(PLOT_BOXPLOTS, &fp);
+    if (opt & OPT_B) {
+	fp = gnuplot_batch_init(&err);
+	qtype = 3;
+    } else {
+	err = gnuplot_init(PLOT_BOXPLOTS, &fp);
+    }
+
     if (err) {
 	return err;
     }
@@ -433,8 +440,8 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 
     fputs("plot \\\n", fp);
     /* the quartiles and extrema */
-    fputs("'-' using 1:3:2:5:4 w candlesticks lt 2 lw 2 "
-	  "notitle whiskerbars 0.5, \\\n", fp);
+    fprintf(fp, "'-' using 1:3:2:5:4 w candlesticks lt %d lw 2 "
+	    "notitle whiskerbars 0.5, \\\n", qtype);
     /* the median */
     fputs("'-' using 1:2:2:2:2 w candlesticks lt -1 notitle", fp);
 
@@ -497,13 +504,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
     return err;
 }
 
-static int gnuplot_do_boxplot (PLOTGROUP *grp)
+static int gnuplot_do_boxplot (PLOTGROUP *grp, gretlopt opt)
 {
-    int err;
+    int err = write_gnuplot_boxplot(grp, opt);
 
-    err = write_gnuplot_boxplot(grp);
-
-    if (!err) {
+    if (!err && !(opt & OPT_B)) {
 	err = gnuplot_make_graph();
     }
 
@@ -591,7 +596,7 @@ static int real_boxplots (int *list, char **bools,
 	if (!grp->do_notches) {
 	    grp->show_mean = 1;
 	}
-	err = gnuplot_do_boxplot(grp);
+	err = gnuplot_do_boxplot(grp, opt);
     }
 
     destroy_boxplots(grp);   
@@ -992,7 +997,7 @@ int gnuplot_from_boxplot (const char *fname)
 	if (grp->show_mean && grp->do_notches) {
 	    grp->show_mean = 0;
 	}
-	err = write_gnuplot_boxplot(grp);
+	err = write_gnuplot_boxplot(grp, OPT_NONE);
 	if (!err) {
 	    const char *pname = gretl_plotfile();
 

@@ -333,8 +333,7 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 int ok_in_loop (int c)
 {
     /* here are the commands we _don't_ currently allow */
-    if (c == BXPLOT ||
-	c == CORRGM ||
+    if (c == CORRGM ||
 	c == CUSUM ||
 	c == DATA ||
 	c == DELEET ||

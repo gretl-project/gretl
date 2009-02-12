@@ -37,6 +37,7 @@
 #include "gretl_string_table.h"
 #include "dbread.h"
 #include "gretl_foreign.h"
+#include "boxplots.h"
 
 #include <glib.h>
 
@@ -4671,11 +4672,20 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case GNUPLOT:
+    case BXPLOT:
 	/* in this context we only do plots in batch mode (OPT_B) */
-	err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-		      pdinfo, cmd->opt | OPT_B);
+	if (cmd->ci == GNUPLOT) {
+	    err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
+			  pdinfo, cmd->opt | OPT_B);
+	} else if (cmd_nolist(cmd)) { 
+	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
+	} else {
+	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt | OPT_B);
+	}
 	if (!err) {
 	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+	} else {
+	    fprintf(stderr, "ci = %d, err = %d\n", cmd->ci, err);
 	}
 	break;
 

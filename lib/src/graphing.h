@@ -151,6 +151,8 @@ void gnuplot_missval_string (FILE *fp);
 
 int gnuplot_init (PlotType ptype, FILE **fpp);
 
+FILE *gnuplot_batch_init (int *err);
+
 int write_plot_type_string (PlotType ptype, FILE *fp);
 
 void write_plot_line_styles (int ptype, FILE *fp);

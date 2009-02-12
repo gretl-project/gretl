@@ -566,6 +566,11 @@ static double xy_calc (double x, double y, int op, parser *p)
 	return 0.0;
     }
 
+    /* logical OR: if x is non-zero, ignore NA for y */
+    if (op == B_OR && x != 0) {
+	return 1.0;
+    }    
+
     /* otherwise NA propagates to the result */
     if (na(x) || na(y)) {
 	return NADBL;

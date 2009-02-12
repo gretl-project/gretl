@@ -7176,7 +7176,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	/* accumulating loop commands */
 	if (!ok_in_loop(cmd->ci)) {
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
-            return 1;
+            return E_NOTIMP;
         }
 	err = gretl_loop_append_line(s, pZ, pdinfo);
 	if (err) {
