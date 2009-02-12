@@ -612,6 +612,11 @@ static int matrix_replace_submatrix (gretl_matrix *M,
     int sscalar = 0;
     int err = 0;
 
+    if (spec == NULL) {
+	fprintf(stderr, "matrix_replace_submatrix: spec is NULL!\n");
+	return E_DATA;
+    }
+
     if (sr > mr || sc > mc) {
 	return E_NONCONF;
     }

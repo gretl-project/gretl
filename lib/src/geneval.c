@@ -6569,10 +6569,11 @@ static void get_lh_mspec (parser *p)
 		free(p->lh.mspec);
 	    }
 	    p->lh.mspec = subp.ret->v.mspec;
+	    /* FIXME p->lh.mspec may include aux nodes? */
 	    subp.ret->v.mspec = NULL;
 	}
 
-	parser_free_aux_nodes(&subp);
+	parser_free_aux_nodes(&subp); /* may be erroneous */
 	gen_cleanup(&subp);
     } 
 
@@ -6584,6 +6585,10 @@ static void get_lh_mspec (parser *p)
 
 static void process_lhs_substr (parser *p)
 {
+#if EDEBUG
+    fprintf(stderr, "process_lhs_substr: p->lh.t = %d\n", p->lh.t);
+#endif
+
     if (p->lh.t == NUM) {
 	sprintf(gretl_errmsg, "scalar target variable: specifier '[%s]' is not valid",
 		p->lh.substr);
