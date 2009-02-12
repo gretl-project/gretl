@@ -32,8 +32,10 @@
 
 #if GENDEBUG
 # define EDEBUG GENDEBUG
+# define LHDEBUG GENDEBUG
 #else
 # define EDEBUG 0
+# define LHDEBUG 0
 #endif
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
@@ -63,6 +65,9 @@
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
+
+static void parser_reinit (parser *p, double ***pZ, 
+			   DATAINFO *dinfo, PRN *prn);
 
 static void printnode (const NODE *t, const parser *p);
 
@@ -2293,6 +2298,31 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
     return ret;
 }
+
+#if LHDEBUG > 1
+
+static void print_mspec (matrix_subspec *mspec)
+{
+    int i;
+
+    fprintf(stderr, "mspec at %p:\n", (void *) mspec);
+
+    if (mspec == NULL) {
+	return;
+    }
+
+    for (i=0; i<2; i++) {
+	fprintf(stderr, "type[%d] = %d\n", i, mspec->type[i]);
+	if (mspec->type[i] == SEL_RANGE) {
+	    fprintf(stderr, "sel[%d].range[0] = %d\n", i, mspec->sel[i].range[0]);
+	    fprintf(stderr, "sel[%d].range[1] = %d\n", i, mspec->sel[i].range[1]);
+	} else if (mspec->type[i] == SEL_MATRIX) {
+	    gretl_matrix_print(mspec->sel[i].m, "sel matrix");
+	}
+    }
+}
+
+#endif
 
 /* compose a sub-matrix specification, from scalars and/or
    index matrices */
@@ -6541,48 +6571,70 @@ static void get_lhs_substr (char *str, parser *p)
     *s = '\0';
 }
 
+static void nullify_aux_return (parser *p)
+{
+    int i;
+
+    if (p->aux != NULL) {
+	for (i=0; i<p->n_aux; i++) {
+	    if (p->aux[i] == p->ret) {
+		p->aux[i] = NULL;
+		return;
+	    }
+	}
+    }
+}
+
 /* given a substring [...], parse and evaluate it as a
    sub-matrix specification */
 
 static void get_lh_mspec (parser *p)
 {
-    parser *subp;
-    char *s;
+    parser *subp = p->subp;
 
-#if 0 /* ?? */
-    if (reusable(p) && p->subp != NULL) {
-	return;
-    }
+#if LHDEBUG
+    fprintf(stderr, "get_lh_mspec: %s\n", (p->flags & P_COMPILE)?
+	    "compiling" : "running");
 #endif
 
-    if (p->subp != NULL) {
-	gen_cleanup(p->subp);
-	free(p->subp);
+    if (subp != NULL) {
+	/* executing a previously compiled parser */
+	parser_free_aux_nodes(subp);
+	parser_aux_init(subp);
+	parser_reinit(subp, p->Z, p->dinfo, p->prn);
+    } else {
+	/* starting from scratch */
+	int subflags = P_SLICE;
+	char *s;
+
+	p->subp = subp = malloc(sizeof *p->subp);
+	if (subp == NULL) {
+	    p->err = E_ALLOC;
+	    return;
+	}
+	s = malloc(strlen(p->lh.substr) + 3);
+	if (s == NULL) {
+	    p->err = E_ALLOC;
+	    return;
+	}
+	sprintf(s, "[%s]", p->lh.substr);
+	if (p->flags & P_COMPILE) {
+	    subflags |= P_COMPILE;
+	}
+	parser_init(subp, s, p->Z, p->dinfo, p->prn, subflags);
+	parser_aux_init(subp);
+	subp->targ = MSPEC;
+# if LHDEBUG
+	fprintf(stderr, "subp->input='%s'\n", subp->input);
+# endif
+	subp->tree = msl_node_direct(subp);
+	free(s);
     }
 
-    p->subp = subp = malloc(sizeof *p->subp);
-    if (p->subp == NULL) {
-	p->err = E_ALLOC;
-	return;
-    }
-
-    s = malloc(strlen(p->lh.substr) + 3);
-    if (s == NULL) {
-	p->err = E_ALLOC;
-	return;
-    }
-
-    sprintf(s, "[%s]", p->lh.substr);
-    parser_init(subp, s, p->Z, p->dinfo, p->prn, P_SLICE);
-
-#if EDEBUG
-    fprintf(stderr, "subp->input='%s'\n", subp->input);
-#endif
-
-    subp->tree = msl_node_direct(subp);
     p->err = subp->err;
 
-    if (subp->tree != NULL) {
+    if (subp->tree != NULL && !(p->flags & P_COMPILE)) {
+	/* evaluate subp to get a matrix subspec */
 	parser_aux_init(subp);
 	subp->ret = eval(subp->tree, subp);
 
@@ -6590,24 +6642,30 @@ static void get_lh_mspec (parser *p)
 	    printf("Error in subp eval = %d\n", subp->err);
 	    p->err = subp->err;
 	} else {
+	    /* free previous result, if any, and appropriate the
+	       mspec result from current evaluation */
 	    if (p->lh.mspec != NULL) {
 		free(p->lh.mspec);
 	    }
 	    p->lh.mspec = subp->ret->v.mspec;
-	    subp->ret->v.mspec = NULL;
+#if LHDEBUG > 1
+	    print_mspec(p->lh.mspec);
+#endif
+	    nullify_aux_return(subp); /* don't double-free */
+	    free(subp->ret);
+	    subp->ret = NULL;
 	}
     } 
-
-    free(s);
 }
 
 /* check validity of "[...]" on the LHS, and evaluate
    the expression if needed */
 
-static void process_lhs_substr (parser *p)
+static void process_lhs_substr (const char *lname, parser *p)
 {
-#if EDEBUG
-    fprintf(stderr, "process_lhs_substr: p->lh.t = %d\n", p->lh.t);
+#if LHDEBUG || EDEBUG
+    fprintf(stderr, "process_lhs_substr: p->lh.t = %d, substr = '%s'\n", 
+	    p->lh.t, p->lh.substr);
 #endif
 
     if (p->lh.t == NUM) {
@@ -6626,6 +6684,11 @@ static void process_lhs_substr (parser *p)
 	}
     } else if (p->lh.t == MAT) {
 	get_lh_mspec(p);
+    } else if (p->lh.t == UNK) {
+	if (lname != NULL) {
+	    sprintf(gretl_errmsg, "%s: unknown variable\n", lname);
+	}
+	p->err = E_UNKVAR;
     }
 }
 
@@ -6925,7 +6988,7 @@ static void pre_process (parser *p, int flags)
 	}
     }
 
-#if EDEBUG
+#if LHDEBUG || EDEBUG
     fprintf(stderr, "LHS: %s", test);
     if (p->lh.substr != NULL) {
 	fprintf(stderr, "[%s]\n", p->lh.substr);
@@ -6982,7 +7045,7 @@ static void pre_process (parser *p, int flags)
     }
 
     if (p->lh.substr != NULL) {
-	process_lhs_substr(p);
+	process_lhs_substr(test, p);
 	if (p->err) {
 	    return;
 	}
@@ -7756,32 +7819,18 @@ static int save_generated_var (parser *p, PRN *prn)
 static void parser_reinit (parser *p, double ***pZ, 
 			   DATAINFO *dinfo, PRN *prn) 
 {
-    int saveflags = p->flags;
+    /* flags that should be reinstated if they were
+       present at compile time */
+    int repflags[] = { P_PRINT, P_NATEST, P_AUTOREG,
+		       P_LOOP, P_SLAVE, P_SLICE, 0 };
+    int i, saveflags = p->flags;
 
     p->flags = (P_START | P_PRIVATE | P_EXEC);
 
-    if (saveflags & P_PRINT) {
-	p->flags |= P_PRINT;
-    }
-
-    if (saveflags & P_NATEST) {
-	p->flags |= P_NATEST;
-    }
-
-    if (saveflags & P_AUTOREG) {
-	p->flags |= P_AUTOREG;
-    }
-
-    if (saveflags & P_LOOP) {
-	p->flags |= P_LOOP;
-    }
-
-    if (saveflags & P_SLAVE) {
-	p->flags |= P_SLAVE;
-    }
-
-    if (saveflags & P_LHSCAL) {
-	p->flags |= P_LHSCAL;
+    for (i=0; repflags[i] > 0; i++) {
+	if (saveflags & repflags[i]) {
+	    p->flags |= repflags[i];
+	}
     }
 
     p->Z = pZ;
@@ -7801,22 +7850,31 @@ static void parser_reinit (parser *p, double ***pZ,
 
     *p->warning = '\0';
 
-    /* matrix: check the LH name again */
-    if (p->targ == MAT && *p->lh.name != '\0') {
-	p->lh.m0 = get_matrix_by_name(p->lh.name);
+#if EDEBUG
+    fprintf(stderr, "parser_reinit: p->subp=%p, targ=%d, lhname='%s'\n", 
+	    (void *) p->subp, p->targ, p->lh.name);
+#endif
+
+    if (p->targ == MAT) {
+	/* matrix target: check the LH name again */
+	if (*p->lh.name != '\0') {
+	    p->lh.m0 = get_matrix_by_name(p->lh.name);
+	}
+    } else if (p->targ == NUM) {
+	/* scalar target, also check LH name */
+	if (*p->lh.name != '\0' && gretl_is_scalar(p->lh.name)) {
+	    p->flags |= P_LHSCAL;
+	}
+	if (p->lh.substr != NULL) {
+	    /* reevaluate obs string */
+	    process_lhs_substr(NULL, p);
+	}
     }
 
-    /* scalar, ditto */
-    if (p->targ == NUM && *p->lh.name != '\0' &&
-	!(p->flags & P_LHSCAL) && 
-	gretl_is_scalar(p->lh.name)) {
-	p->flags |= P_LHSCAL;
-    }
-
-    /* LHS spec: make sure it's up to date */
-    if (p->lh.substr != NULL) {
-	process_lhs_substr(p);
-    }
+    /* LHS matrix subspec: re-evaluate */
+    if (p->subp != NULL) {
+	get_lh_mspec(p);
+    }    
 }
 
 static void parser_init (parser *p, const char *str, 
@@ -7889,7 +7947,7 @@ static void parser_init (parser *p, const char *str,
 
 void gen_save_or_print (parser *p, PRN *prn)
 {
-    if (p->err == 0 || p->err == 36) {
+    if (p->err == 0) {
 	if (p->flags & (P_DISCARD | P_PRINT)) {
 	    if (p->ret->t == MAT) {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
@@ -7927,19 +7985,12 @@ void gen_save_or_print (parser *p, PRN *prn)
 
 void gen_cleanup (parser *p)
 {
-#if 0
+#if EDEBUG
     fprintf(stderr, "gen cleanup: reusable = %d\n", reusable(p));
 #endif
 
-    if (p->subp != NULL) {
-	/* FIXME?? */
-	parser_free_aux_nodes(p->subp);
-	gen_cleanup(p->subp);
-	free(p->subp);
-	p->subp = NULL;
-    }     
-
     if (reusable(p)) {
+	/* just do limited cleanup */
 	if (p->ret != p->tree) {
 	    free_tree(p->ret, p, "p->ret");
 	    p->ret = NULL;
@@ -7948,9 +7999,21 @@ void gen_cleanup (parser *p)
 	if (p->ret != p->tree) {
 	    free_tree(p->tree, p, "p->tree");
 	}
+
 	free_tree(p->ret, p, "p->ret");
 	free(p->lh.substr);
 	free(p->lh.mspec);
+
+	if (p->subp != NULL) {
+	    /* since the parent genr will not be run again,
+	       wipe the "reusable" flags from its subp */
+	    p->subp->flags &= ~P_COMPILE;
+	    p->subp->flags &= ~P_EXEC;
+	    parser_free_aux_nodes(p->subp);
+	    gen_cleanup(p->subp);
+	    free(p->subp);
+	    p->subp = NULL;
+	}  
     }
 }
 
@@ -8003,7 +8066,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 {
     int t;
 
-#if EDEBUG
+#if LHDEBUG || EDEBUG
     fprintf(stderr, "*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
 #endif

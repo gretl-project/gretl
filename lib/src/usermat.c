@@ -507,6 +507,21 @@ static int msel_out_of_bounds (int *range, int n)
     }
 }
 
+static int vec_is_const (const gretl_matrix *m, int n)
+{
+    int i;
+
+    for (i=1; i<n; i++) {
+	if (m->val[i] != m->val[i-1]) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+/* convert matrix subspec into list of rows or columns */
+
 static int *mspec_to_list (int type, union msel *sel, int n,
 			   int *err)
 {
@@ -522,17 +537,33 @@ static int *mspec_to_list (int type, union msel *sel, int n,
 	    sel->range[1] = n;
 	}
 	if (msel_out_of_bounds(sel->range, n)) {
-	    *err = 1;
-	    return NULL;
+	    *err = E_DATA;
+	} else {
+	    ns = sel->range[1] - sel->range[0] + 1;
+	    if (ns <= 0) {
+		sprintf(gretl_errmsg, _("Range %d to %d is non-positive!"),
+			sel->range[0], sel->range[1]); 
+		*err = E_DATA;
+	    }
 	}
-	ns = sel->range[1] - sel->range[0] + 1;
     } else {
-	ns = gretl_vector_get_length(sel->m);
+	/* SEL_MATRIX */
+	if (sel->m == NULL) {
+	    strcpy(gretl_errmsg, _("Range is non-positive!"));
+	    *err = E_DATA;
+	} else {
+	    ns = gretl_vector_get_length(sel->m);
+	    if (ns == 0) {
+		fprintf(stderr, "selection matrix is %d x %d\n", 
+			sel->m->rows, sel->m->cols);
+		*err = E_NONCONF;
+	    } else if (vec_is_const(sel->m, ns)) {
+		ns = 1;
+	    }
+	}
     }
 
-    if (ns <= 0) {
-	strcpy(gretl_errmsg, _("Range is non-positive!")); 
-	*err = 1;
+    if (*err) {
 	return NULL;
     }
 
@@ -599,6 +630,11 @@ static int get_slices (matrix_subspec *spec,
     return err;
 }
 
+/* @M is the target for partial replacement, @S is the source to
+   substitute, and @spec tells how/where to make the
+   substitution.
+*/
+
 static int matrix_replace_submatrix (gretl_matrix *M,
 				     const gretl_matrix *S,
 				     matrix_subspec *spec)
@@ -618,6 +654,9 @@ static int matrix_replace_submatrix (gretl_matrix *M,
     }
 
     if (sr > mr || sc > mc) {
+	/* the replacement matrix won't fit into M */
+	fprintf(stderr, "matrix_replace_submatrix: target is %d x %d but "
+		"replacement part is %d x %d\n", mr, mc, sr, sc);
 	return E_NONCONF;
     }
 
@@ -625,24 +664,30 @@ static int matrix_replace_submatrix (gretl_matrix *M,
 	return matrix_insert_diagonal(M, S, mr, mc);
     }
 
+    /* parse mspec into lists of affected rows and columns */
     err = get_slices(spec, &rslice, &cslice, M);
     if (err) {
 	return err;
     }
 
 #if MDEBUG
-    printlist(rslice, "rslice");
-    printlist(cslice, "cslice");
-    fprintf(stderr, "M = %d x %d, S = %d x %d\n", mr, mc, sr, sc);
+    printlist(rslice, "rslice (rows list)");
+    printlist(cslice, "cslice (cols list)");
+    fprintf(stderr, "orig M = %d x %d, S = %d x %d\n", mr, mc, sr, sc);
 #endif
 
     if (sr == 1 && sc == 1) {
+	/* selection matrix is a scalar */
 	sscalar = 1;
 	sr = (rslice == NULL)? mr : rslice[0];
 	sc = (cslice == NULL)? mc : cslice[0];
     } else if (rslice != NULL && rslice[0] != sr) {
+	fprintf(stderr, "mspec has %d rows but substitute matrix has %d\n", 
+		rslice[0], sr);
 	err = E_NONCONF;
     } else if (cslice != NULL && cslice[0] != sc) {
+	fprintf(stderr, "mspec has %d cols but substitute matrix has %d\n", 
+		cslice[0], sc);
 	err = E_NONCONF;
     }
 
@@ -753,12 +798,18 @@ gretl_matrix *user_matrix_get_submatrix (const char *name,
     return S;
 }
 
-int user_matrix_replace_submatrix (const char *name, gretl_matrix *S,
+/* Look up the existing matrix called @name, and substitute
+   the matrix @S for part of the original, as specified by
+   @spec.
+*/
+
+int user_matrix_replace_submatrix (const char *mname, 
+				   const gretl_matrix *S,
 				   matrix_subspec *spec)
 {
     gretl_matrix *M;
 
-    M = real_get_matrix_by_name(name, LEVEL_AUTO); 
+    M = real_get_matrix_by_name(mname, LEVEL_AUTO); 
     if (M == NULL) {
 	return E_UNKVAR;
     }

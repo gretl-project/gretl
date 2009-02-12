@@ -2770,6 +2770,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		}
 #if GENCOMPILE
 		if (subst || (cmd->opt & OPT_U)) {
+		    /* can't use a "compiled" genr if string substitution
+		       has been done, since the genr expression will not
+		       be constant */
 		    err = generate(line, pZ, pdinfo, cmd->opt, prn);
 		} else {
 		    genr = get_loop_genr_by_line(loop, j, line, pZ, pdinfo, &err);

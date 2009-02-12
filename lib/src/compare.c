@@ -2023,6 +2023,13 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int newvars = ninter + 1 - havedum;
     int i, t, v = pdinfo->v;
 
+    if (havedum && in_gretl_list(pmod->list, dumv)) {
+	gretl_errmsg_sprintf(_("The model already contains %s"), 
+			     pdinfo->varname[dumv]);
+	*err = E_DATA;
+	return NULL;
+    }
+
     if (dataset_add_series(newvars, pZ, pdinfo)) {
 	*err = E_ALLOC;
     } else {
@@ -2322,12 +2329,15 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    }
 	    smax = split;
 	}
-	if (err) {
-	    goto bailout;
-	}
     }
 
-    chowlist = make_chow_list(pmod, pZ, pdinfo, split, dumv, &err);
+    if (!err) {
+	chowlist = make_chow_list(pmod, pZ, pdinfo, split, dumv, &err);
+    }
+
+    if (err) {
+	goto bailout;
+    }
 
     if (QLR) {
 	/* Quandt likelihood ratio */

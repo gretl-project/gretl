@@ -81,7 +81,8 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M);
 int user_matrix_replace_matrix_by_name (const char *name, 
 					gretl_matrix *M);
 
-int user_matrix_replace_submatrix (const char *name, gretl_matrix *M,
+int user_matrix_replace_submatrix (const char *mname, 
+				   const gretl_matrix *S,
 				   matrix_subspec *spec);
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name);
