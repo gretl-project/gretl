@@ -1589,6 +1589,11 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
     int nv = 4;
     int i, j, n = 0;
 
+    if (pdinfo->v == 0) {
+	pprintf(prn, _("No series are defined\n"));
+	return;
+    }
+
     for (i=0; i<pdinfo->v; i++) {
 	if (STACK_LEVEL(pdinfo, i) == level) {
 	    len = strlen(pdinfo->varname[i]);

@@ -3651,6 +3651,11 @@ static void showlabels (const DATAINFO *pdinfo, PRN *prn)
     const char *label;
     int i;
 
+    if (pdinfo->v == 0) {
+	pprintf(prn, _("No series are defined\n"));
+	return;
+    }
+
     pprintf(prn, _("Listing labels for variables:\n"));
 
     for (i=0; i<pdinfo->v; i++) {

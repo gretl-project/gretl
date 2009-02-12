@@ -3262,10 +3262,12 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_item(vwin, analysis, &item);
     }  
 
-    /* Display VCV matrix */
-    item.name = "sigma";
-    item.label = N_("Cross-equation covariance matrix");
-    vwin_menu_add_item(vwin, analysis, &item);
+    if (neqns > 1) {
+	/* Display VCV matrix */
+	item.name = "sigma";
+	item.label = N_("Cross-equation covariance matrix");
+	vwin_menu_add_item(vwin, analysis, &item);
+    }
 
     if (ci == VAR || ci == VECM) {
 	/* impulse response printout */
@@ -3280,7 +3282,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_item(vwin, analysis, &item);
     }
 
-    if (neqns <= 6) {
+    if (neqns > 1 && neqns <= 6) {
 	/* multiple residual plots */
 	sprintf(min, "multiresid %s", cmdword);
 	item.name = min;
@@ -3290,11 +3292,13 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     }
 
     /* combined residual plot */
-    sprintf(min, "comboresid %s", cmdword);
-    item.name = min;
-    item.label = N_("Combined residual plot");
-    item.callback = G_CALLBACK(system_resid_plot_call);
-    vwin_menu_add_item(vwin, graphs, &item);
+    if (neqns > 1) {
+	sprintf(min, "comboresid %s", cmdword);
+	item.name = min;
+	item.label = N_("Combined residual plot");
+	item.callback = G_CALLBACK(system_resid_plot_call);
+	vwin_menu_add_item(vwin, graphs, &item);
+    }
 
     if (ci != SYSTEM) {
 	/* VAR inverse roots */
@@ -3304,7 +3308,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_item(vwin, graphs, &item);
     }
 
-    if (ci != SYSTEM && neqns <= 4) {
+    if (ci != SYSTEM && neqns > 1 && neqns <= 4) {
 	/* Multiple IRFs */
 	item.name = "MultiIrf";
 	item.label = N_("Impulse responses (combined)");

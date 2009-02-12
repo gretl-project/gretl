@@ -363,7 +363,7 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 	}
     }
 
-    if (!err && (v->ylist == NULL || v->ylist[0] < 2)) {
+    if (!err && (v->ylist == NULL || v->ylist[0] < 1)) {
 	/* first test for at least 2 endog vars */
 	err = E_ARGS;
     }
@@ -390,7 +390,7 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 	}	
     }
 
-    if (!err && (v->ylist == NULL || v->ylist[0] < 2)) {
+    if (!err && (v->ylist == NULL || v->ylist[0] < 1)) {
 	/* re-test after (possibly) losing const */
 	err = E_ARGS;
     }

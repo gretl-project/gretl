@@ -2700,11 +2700,15 @@ static void compose_cmdlist (selector *sr)
 	}
     }    
 
-    if (VEC_CODE(sr->ci) && rows < 2) {
+    if ((sr->ci == COINT || sr->ci == COINT2 || sr->ci == VECM) && rows < 2) {
 	warnbox(_("You must select two or more endogenous variables"));
 	sr->error = 1;
 	return;
-    }
+    } else if ((sr->ci == VAR || sr->ci == VLAGSEL) && rows < 1) {
+	warnbox(_("You must select a dependent variable"));
+	sr->error = 1;
+	return;
+    }	
 
     if (realrows > 0) {
 	maybe_resize_recorder_lists(sr, realrows);
