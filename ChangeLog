@@ -24,6 +24,7 @@
   rather than a break point
 - Boxplots: enable boxplot command in loops
 - "var" command: allow single-equations VARs
+- seq() function: add a third, optional step parameter
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

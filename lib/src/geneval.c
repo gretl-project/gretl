@@ -2232,12 +2232,6 @@ static int ok_matrix_dim (double xr, double xc, int f)
 {
     double xm, imax = (double) INT_MAX;
 
-    if (f == F_SEQ) {
-	/* negative parameters are OK */
-	return (fabs(xr) < imax && 
-		fabs(xc) < imax);
-    }
-
     xm = xr * xc;
 
     if (f == F_IMAT || f == F_ZEROS || f == F_ONES || f == F_MUNIF || \
@@ -2284,9 +2278,6 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	case F_ONES:
 	    ret->v.m = gretl_unit_matrix_new(rows, cols);
-	    break;
-	case F_SEQ:
-	    ret->v.m = gretl_matrix_seq(rows, cols);
 	    break;
 	case F_MUNIF:
 	    ret->v.m = gretl_random_matrix_new(rows, cols, 
@@ -4477,7 +4468,21 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    A = get_corrgm_matrix(l, m, r, p);
 	}
-    } 
+    } else if (f == F_SEQ) {
+	if (l->t != NUM) {
+	    node_type_error(f, 0, NUM, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 1, NUM, m, p);
+	} else if (r->t != NUM && r->t != EMPTY) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else {
+	    int start = l->v.xval;
+	    int end = m->v.xval;
+	    int step = (r->t == NUM)? r->v.xval : 1;
+
+	    A = gretl_matrix_seq(start, end, step, &p->err);
+	}
+    }
 
     if (!p->err) {
 	ret = aux_matrix_node(p);
@@ -5966,7 +5971,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_IMAT:
     case F_ZEROS:
     case F_ONES:
-    case F_SEQ:
     case F_MUNIF:
     case F_MNORM:
 	/* matrix-creation functions */
@@ -6106,6 +6110,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_TRIMR:
     case F_TOEPSOLV:
     case F_CORRGM:
+    case F_SEQ:
 	/* built-in functions taking three args */
 	ret = eval_3args_func(l, m, r, t->t, p);
 	break;

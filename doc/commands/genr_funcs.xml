@@ -3764,14 +3764,27 @@
       <fnargs>
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
+	<fnarg optional="true" type="scalar">k</fnarg>
       </fnargs>   
       <description>
 	<para>
-	  Returns a row vector filled with consecutive integers, with
-	  <argname>a</argname> as first element and <argname>b</argname>
-	  last. If <argname>a</argname> is greater than
-	  <argname>b</argname> the sequence will be decreasing. If either
-	  argument is not integral its fractional part is discarded.
+	  Given only two arguments, returns a row vector filled with
+	  consecutive integers, with <argname>a</argname> as first element
+	  and <argname>b</argname> last. If <argname>a</argname> is
+	  greater than <argname>b</argname> the sequence will be
+	  decreasing. If either argument is not integral its fractional
+	  part is discarded.
+	</para>
+	<para>
+	  If the third argument is given, returns a row vector containing
+	  a sequence of integers starting with <argname>a</argname> and
+	  incremented (or decremented, if <argname>a</argname> is greater
+	  than <argname>b</argname>) by <argname>k</argname> at each step.
+	  The final value is the largest member of the sequence that is
+	  less than or equal to <argname>b</argname> (or mutatis mutandis
+	  for <argname>a</argname> greater than <argname>b</argname>).
+	  The argument <argname>k</argname> must be positive; if it is
+	  not integral its fractional part is discarded.
 	</para>
 	<para>
 	  <seelist>

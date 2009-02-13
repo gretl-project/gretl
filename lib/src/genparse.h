@@ -251,7 +251,6 @@ enum {
     F_BOXCOX,
     F_ZEROS,
     F_ONES,
-    F_SEQ,
     F_MUNIF,
     F_MNORM,
     F_QFORM,
@@ -292,6 +291,7 @@ enum {
     F_TRIMR,
     F_TOEPSOLV,
     F_CORRGM,
+    F_SEQ,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_FILTER,
     F_MCOVG,

@@ -209,7 +209,8 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c);
 
 gretl_matrix *gretl_null_matrix_new (void);
 
-gretl_matrix *gretl_matrix_seq (int start, int end);
+gretl_matrix *gretl_matrix_seq (int start, int end, int step, 
+				int *err);
 
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 
