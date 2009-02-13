@@ -1211,19 +1211,14 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
 }
 
 /* At least one of the nodes is a series; the other may be a
-   scalar, or 1 x 1 matrix, or a column vector of length
-   pdinfo->n (the matrix characteristics should be pre-checked).
-*/
+   scalar or 1 x 1 matrix */
 
 static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret;
     const double *x = NULL, *y = NULL;
     double xt = 0, yt = 0;
-    int t1 = p->dinfo->t1;
-    int t2 = p->dinfo->t2;
-    int matcalc = 0;
-    int t;
+    int t, t1, t2;
 
     ret = aux_vec_node(p, p->dinfo->n);
     if (ret == NULL) {
@@ -1235,12 +1230,7 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     } else if (l->t == NUM) {
 	xt = l->v.xval;
     } else if (l->t == MAT) {
-	if (gretl_matrix_is_scalar(l->v.m)) {
-	    xt = l->v.m->val[0];
-	} else {
-	    x = l->v.m->val;
-	    matcalc = 1;
-	}
+	xt = l->v.m->val[0];
     }
 
     if (r->t == VEC) {
@@ -1248,18 +1238,11 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     } else if (r->t == NUM) {
 	yt = r->v.xval;
     } else if (r->t == MAT) {
-	if (gretl_matrix_is_scalar(r->v.m)) {
-	    yt = r->v.m->val[0];
-	} else {
-	    y = r->v.m->val;
-	    matcalc = 1;
-	}
+	yt = r->v.m->val[0];
     } 
 
-    if (!matcalc) {
-	t1 = (autoreg(p))? p->obs : t1;
-	t2 = (autoreg(p))? p->obs : t2;
-    }
+    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
 
     for (t=t1; t<=t2; t++) {
 	if (x != NULL) {
@@ -1513,52 +1496,34 @@ const double *get_colvec_as_series (NODE *n, int f, parser *p)
     } 
 }
 
-/* One of the operands is a matrix, the other a series.  We
-   first explore "casting" the matrix to a series; if that
-   won't work, we try "casting" the series to a matrix.
+/* One of the operands is a matrix, the other a series: we
+   try "casting" the series to a matrix.
 */
 
 static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 {
-    NODE *ret = NULL;
+    NODE *ret = aux_matrix_node(p);
 
-    if (starting(p)) {
-	const double *x = NULL;
+    if (ret != NULL && starting(p)) {
+	gretl_matrix *a = NULL;
+	gretl_matrix *b = NULL;
+	gretl_matrix *c = NULL;
 
-	if (l->t == MAT) {
-	    x = get_colvec_as_series(l, op, p);
+	if (l->t == VEC) {
+	    a = tmp_matrix_from_series(l->v.xvec, p->dinfo, &p->err);
+	    c = a;
+	    b = r->v.m;
 	} else {
-	    x = get_colvec_as_series(r, op, p);
+	    a = l->v.m;
+	    b = tmp_matrix_from_series(r->v.xvec, p->dinfo, &p->err);
+	    c = b;
 	}
 
-	if (x != NULL) {
-	    ret = series_calc(l, r, op, p);
-	} else {
-	    gretl_matrix *a = NULL;
-	    gretl_matrix *b = NULL;
-	    gretl_matrix *c = NULL;
-	    
-	    p->err = 0;
-	    ret = aux_matrix_node(p);
-	    if (ret != NULL) {
-		if (l->t == VEC) {
-		    a = tmp_matrix_from_series(l->v.xvec, p->dinfo, &p->err);
-		    c = a;
-		    b = r->v.m;
-		} else {
-		    a = l->v.m;
-		    b = tmp_matrix_from_series(r->v.xvec, p->dinfo, &p->err);
-		    c = b;
-		}
+	if (!p->err) {
+	    ret->v.m = real_matrix_calc(a, b, op, &p->err);
+	}
 
-		if (!p->err) {
-		    ret->v.m = real_matrix_calc(a, b, op, &p->err);
-		}
-	    }
-	    gretl_matrix_free(c);
-	} 
-    } else {
-	ret = aux_any_node(p);
+	gretl_matrix_free(c);
     }
 
     return ret;
@@ -6595,8 +6560,10 @@ static void nullify_aux_return (parser *p)
     }
 }
 
-/* given a substring [...], parse and evaluate it as a
-   sub-matrix specification */
+/* Given a string [...], parse and evaluate it as a
+   sub-matrix specification.  This is for the case where
+   assignment is to a submatrix, as in m[spec] = foo.
+*/
 
 static void get_lh_mspec (parser *p)
 {

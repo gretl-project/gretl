@@ -31,9 +31,9 @@
 
 static void free_triangular_array (double **m, int n)
 {
-    int i;
-
     if (m != NULL) {
+	int i;
+
 	for (i=0; i<n; i++) {
 	    free(m[i]);
 	}
@@ -43,10 +43,8 @@ static void free_triangular_array (double **m, int n)
 
 static double **triangular_array_new (int n)
 {
-    double **m;
+    double **m = malloc(n * sizeof *m);
     int i;
-
-    m = malloc(n * sizeof *m);
 
     if (m != NULL) {
 	for (i=0; i<n; i++) {
@@ -56,8 +54,7 @@ static double **triangular_array_new (int n)
 	    m[i] = malloc((i + 1) * sizeof **m);
 	    if (m[i] == NULL) {
 		free_triangular_array(m, n);
-		m = NULL;
-		break;
+		return NULL;
 	    }
 	}
     }
@@ -70,11 +67,7 @@ static double **triangular_array_new (int n)
 
 static void hess_h_init (double *h, double *h0, int n)
 {
-    int i;
-
-    for (i=0; i<n; i++) {
-	h[i] = h0[i];
-    }
+    memcpy(h, h0, n * sizeof *h);
 }
 
 static void hess_h_reduce (double *h, double v, int n)
@@ -426,7 +419,9 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	       gretlopt opt, PRN *prn)
 {
     int crit_ok, done;
-    double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **H = NULL;
+    double *wspace = NULL;
+    double **H = NULL;
+    double *g, *t, *X, *c;
     int verbose = (opt & OPT_V);
     int fcount, gcount, ndelta = 0;
     double d, fmax, f, f0, sumgrad;
@@ -441,16 +436,18 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	gradfunc = BFGS_numeric_gradient;
     }
 
-    g = malloc(n * sizeof *g);
-    t = malloc(n * sizeof *t);
-    X = malloc(n * sizeof *X);
-    c = malloc(n * sizeof *c);
+    wspace = malloc(4 * n * sizeof *wspace);
     H = triangular_array_new(n);
 
-    if (g == NULL || t == NULL || X == NULL || c == NULL || H == NULL) {
+    if (wspace == NULL || H == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
+
+    g = wspace;
+    t = g + n;
+    X = t + n;
+    c = X + n;
 
     f = cfunc(b, data);
 
@@ -648,10 +645,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 
  bailout:
 
-    free(g);
-    free(t);
-    free(X);
-    free(c);
+    free(wspace);
     free_triangular_array(H, n);
 
 #if BFGS_DEBUG
