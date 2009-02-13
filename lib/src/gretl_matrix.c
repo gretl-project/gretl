@@ -649,25 +649,24 @@ gretl_matrix *gretl_matrix_seq (int start, int end, int step,
     gretl_matrix *v;
     int reverse = (start > end);
     int range = reverse ? (start-end) : (end-start);
-    int i, k, n = 1 + range / step;
+    int i, k, n;
 
     if (step <= 0) {
 	*err = E_DATA;
 	return NULL;
     }
 
+    n = 1 + range / step;
+
     v = gretl_vector_alloc(n);
+
     if (v == NULL) {
 	*err = E_ALLOC;
-	return v;
-    }
-
-    k = start;
-    for (i=0; i<n; i++) {
-	v->val[i] = k;
-	if (reverse) {
-	    k -= step;
-	} else {
+    } else {
+	step = reverse ? -step : step;
+	k = start;
+	for (i=0; i<n; i++) {
+	    v->val[i] = k;
 	    k += step;
 	}
     }
