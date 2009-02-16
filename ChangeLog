@@ -25,6 +25,10 @@
 - Boxplots: enable boxplot command in loops
 - "var" command: allow single-equations VARs
 - seq() function: add a third, optional step parameter
+- Speed up loading of very large data files in gretl
+  native format
+- Fixes for handling of data files with over 999 variables
+- Minor improvement to parsing of dates in CSV files
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
