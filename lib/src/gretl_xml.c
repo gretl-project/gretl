@@ -1963,7 +1963,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		pdinfo->paninfo->period[t] = s;
 	    }
 
-	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
 
 	    if (tmp) {
 		if (process_values(*pZ, pdinfo, t, (char *) tmp)) {
