@@ -646,7 +646,7 @@ static void real_register_data (int flag, const char *user_fname,
 	data_status |= GUI_DATA;
 	mark_dataset_as_modified();
     }
-
+    
     /* sync main window with datafile */
     if (mdata != NULL) {
 	populate_varlist();

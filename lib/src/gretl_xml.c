@@ -1803,38 +1803,29 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 
 static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 {
-    char valstr[32];
+    char *test;
     double x;
     int i, err = 0;
 
     gretl_error_clear();
 
     for (i=1; i<pdinfo->v && !err; i++) {
-	s = strpbrk(s, "01234567890+-NA");
-	if (s == NULL) {
-	    fprintf(stderr, "i = %d: s == NULL in process_values()\n", i);
+	while (isspace(*s)) s++;
+	x = strtod(s, &test);
+	if (errno) {
+	    err = 1;
+	} else if (!strncmp(test, "NA", 2)) {
+	    x = NADBL;
+	    s = test + 2;
+	} else if (*test != '\0' && !isspace(*test)) {
 	    err = 1;
 	} else {
-	    if (*s == '\0' || sscanf(s, "%31s", valstr) != 1) {
-		fputs("s is blank in process_values()\n", stderr);
-		err = 1;
-	    } else {
-		if (!strcmp(valstr, "NA")) {
-		    x = NADBL;
-		} else if (check_atof(valstr)) {
-		    err = 1;
-		} else {
-		    sscanf(valstr, "%lf", &x);
-		}
-	    }
+	    s = test;
 	}
-	if (!err) {
-	    if (t < pdinfo->n) {
-		Z[i][t] = x;
-	    }
-	    s = strpbrk(s, " \t\n\r");
+	if (t < pdinfo->n) {
+	    Z[i][t] = x;
 	}
-    }
+    }	
 
     if (err && *gretl_errmsg == '\0') {
 	sprintf(gretl_errmsg, _("Failed to parse data values at obs %d"), t+1);

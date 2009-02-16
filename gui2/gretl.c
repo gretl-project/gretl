@@ -614,11 +614,11 @@ int main (int argc, char *argv[])
     if (have_data()) {
 	register_startup_data(tryfile);
 	maybe_display_string_table();
-	*tryfile = 0;
+	*tryfile = '\0';
     }
 
     /* opening a script or session from the command line? */
-    if (tryfile[0] != '\0') { 
+    if (*tryfile != '\0') { 
 	if (gretl_is_pkzip_file(tryfile)) {
 	    ftype = GRETL_SESSION;
 	}
@@ -827,15 +827,14 @@ static int get_line_pos (GtkTreeModel *mod)
 
 void populate_varlist (void)
 {
+    static gint check_connected;
+    static gint click_connected;
     GtkTreeStore *store;
     GtkTreeSelection *select;
     GtkTreeIter iter;    
-    char id[4];
+    char id[8];
     int pos = 0;
     int i;
-
-    static gint check_connected;
-    static gint click_connected;
 
     store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
 
