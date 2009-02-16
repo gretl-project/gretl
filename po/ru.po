@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-02-12 17:38-0500\n"
-"PO-Revision-Date: 2009-02-04 22:16+0200\n"
+"PO-Revision-Date: 2009-02-16 15:28+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -398,8 +398,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1150
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1156
 #, c-format
@@ -476,9 +475,9 @@ msgid "Alternative statistic"
 msgstr "Альтернативная статистика"
 
 #: lib/src/compare.c:2027
-#, fuzzy, c-format
+#, c-format
 msgid "The model already contains %s"
-msgstr "Список моделей пуст"
+msgstr "Модель уже содержит %s"
 
 #: lib/src/compare.c:2058
 msgid "dummy variable for Chow test"
@@ -540,7 +539,7 @@ msgid "Invalid sample split for Chow test"
 msgstr "Недопостимое наблюдение для разделения выборки в тесте Чоу"
 
 #: lib/src/compare.c:2430 lib/src/gretl_model.c:2758
-#, fuzzy, c-format
+#, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr "Тест Чоу для структурных изменений в точке %s"
 
@@ -609,8 +608,7 @@ msgstr "Интегральная сумма масштабированных о�
 #: lib/src/compare.c:2754
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
-msgstr ""
-"('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
+msgstr "('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
 
 #: lib/src/compare.c:2814
 msgid "This test is only relevant for pooled models\n"
@@ -748,8 +746,7 @@ msgstr "   похоже на заголовок столбца данных\n"
 
 #: lib/src/csvdata.c:1104
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 "   пустая ячейка для переменной %d, наблюдение %d: отмечена как пропущенное "
 "значение\n"
@@ -790,8 +787,7 @@ msgstr "   количество столбцов данных = %d\n"
 #: lib/src/csvdata.c:1359
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr ""
-"   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
+msgstr "   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
 
 #: lib/src/csvdata.c:1404
 msgid "scanning for variable names...\n"
@@ -1387,8 +1383,7 @@ msgstr "Из всех переменных для сохранения, %d уж�
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1487 lib/src/describe.c:2610 lib/src/describe.c:3112
 #, c-format
@@ -1448,9 +1443,9 @@ msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr "  Лаг      ACF          PACF         Q-стат. [p-значение]"
 
 #: lib/src/describe.c:2783
-#, fuzzy, c-format
+#, c-format
 msgid "Argument is a constant"
-msgstr "%s является константой"
+msgstr "Аргумент является константой"
 
 #: lib/src/describe.c:2869
 #, c-format
@@ -1462,9 +1457,9 @@ msgid "Cross-correlogram"
 msgstr "Кросс-коррелограмма"
 
 #: lib/src/describe.c:3056
-#, fuzzy, c-format
+#, c-format
 msgid "xcf: argument %d is a constant"
-msgstr "%s является константой"
+msgstr "xcf: аргумент %d является константой"
 
 #: lib/src/describe.c:3144
 #, c-format
@@ -1556,8 +1551,7 @@ msgstr ""
 
 #: lib/src/describe.c:3607
 msgid "Missing values within sample -- can't do periodogram"
-msgstr ""
-"Невозможно построить периодограмму -- в выборке есть пропущенные наблюдения"
+msgstr "Невозможно построить периодограмму -- в выборке есть пропущенные наблюдения"
 
 #: lib/src/describe.c:3613
 msgid "Insufficient observations for periodogram"
@@ -2093,14 +2087,14 @@ msgid "%s: no such object\n"
 msgstr "%s: нет такого объекта\n"
 
 #: lib/src/geneval.c:5470
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument should be %s"
-msgstr "Неверный тип аргумента для \"%s\": должно быть %s"
+msgstr "%s: аргумент должен быть равен %s"
 
 #: lib/src/geneval.c:5473
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument %d should be %s"
-msgstr "Неверный тип аргумента для \"%s\": должно быть %s"
+msgstr "%s: аргумент %d должен быть равен %s"
 
 #: lib/src/geneval.c:6843 lib/src/genlex.c:632 lib/src/genlex.c:699
 #: lib/src/gensyntax.c:274
@@ -2334,9 +2328,9 @@ msgid "Panel dummy variables generated.\n"
 msgstr "Панельные фиктивные (dummy) переменные сгенерированы.\n"
 
 #: lib/src/gensyntax.c:256
-#, fuzzy, c-format
+#, c-format
 msgid "Expected '%c' but formula ended\n"
-msgstr "Ожидалось '%c' но было '%s'\n"
+msgstr "Ожидалось '%c' но запись формулы прервалась\n"
 
 #: lib/src/gensyntax.c:258
 #, c-format
@@ -2476,9 +2470,9 @@ msgid "Relative frequency"
 msgstr "Относительная частота"
 
 #: lib/src/graphing.c:3350
-#, fuzzy, c-format
+#, c-format
 msgid "%g percent interval"
-msgstr "%g-процентное критическое значение"
+msgstr "%g-процентный доверительный интервал"
 
 #: lib/src/graphing.c:3364 lib/src/graphing.c:3371 lib/src/printout.c:1165
 msgid "forecast"
@@ -2522,9 +2516,9 @@ msgid "point estimate"
 msgstr "точечная оценка"
 
 #: lib/src/graphing.c:3891
-#, fuzzy, c-format
+#, c-format
 msgid "%g and %g quantiles"
-msgstr "квантили 0.025 и 0.975"
+msgstr "Квантили %g и %g"
 
 #: lib/src/graphing.c:4062
 msgid "VAR residuals"
@@ -2867,9 +2861,8 @@ msgid "no structural break"
 msgstr "нет структурных изменений"
 
 #: lib/src/gretl_model.c:2759
-#, fuzzy
 msgid "no structural difference"
-msgstr "нет структурных изменений"
+msgstr "нет структурной разницы"
 
 #: lib/src/gretl_model.c:2761
 msgid "CUSUM test for parameter stability"
@@ -2962,7 +2955,7 @@ msgstr ""
 
 #: lib/src/gretl_model.c:2806
 msgid "Wald test for joint significance of time dummies"
-msgstr ""
+msgstr "Тест Вальда (Wald) на совместную значимость фиктивных переменных для временных периодов"
 
 #: lib/src/gretl_model.c:2969
 #, c-format
@@ -2970,9 +2963,8 @@ msgid "max F(%d, %d) = %g at observation %s"
 msgstr "максимум F(%d, %d) = %g достигается для наблюдения %s"
 
 #: lib/src/gretl_model.c:2994 lib/src/gretl_model.c:3001
-#, fuzzy
 msgid "failed"
-msgstr "Расчетные"
+msgstr "не удалось"
 
 #: lib/src/gretl_model.c:3118 lib/src/gretl_model.c:3121
 #: lib/src/gretl_model.c:3124
@@ -3697,9 +3689,9 @@ msgid "%d is not a valid variable number"
 msgstr "Переменная с номером %d не определена"
 
 #: lib/src/interact.c:2125
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not the name of a series"
-msgstr "Переменная '%s' не определена"
+msgstr "'%s' не является названием рядя"
 
 #: lib/src/interact.c:2128
 #, c-format
@@ -3787,9 +3779,8 @@ msgid "%s: negative value is out of bounds.\n"
 msgstr "%s: отрицательное значение выходит за допустимые границы.\n"
 
 #: lib/src/interact.c:3655 lib/src/printout.c:1593
-#, fuzzy
 msgid "No series are defined\n"
-msgstr "Не была определена длина временного ряда"
+msgstr "Ряды не определены\n"
 
 #: lib/src/interact.c:3659
 msgid "Listing labels for variables:\n"
@@ -4061,8 +4052,7 @@ msgstr ""
 #: lib/src/modelprint.c:538
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:541
 #, c-format
@@ -4367,8 +4357,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:929
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
-"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:930
 msgid "variant"
@@ -4474,8 +4463,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1233
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1236
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -5191,10 +5179,8 @@ msgid "not significant at the 10% level\n"
 msgstr "не значим на 10% уровне\n"
 
 #: lib/src/nonparam.c:344
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Выборка слишком мала для расчета р-значения для нормального распределения\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Выборка слишком мала для расчета р-значения для нормального распределения\n"
 
 #: lib/src/nonparam.c:767
 msgid ""
@@ -5335,9 +5321,9 @@ msgstr ""
 "базовая модель была оценена\n"
 
 #: lib/src/options.c:746
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid option '--%s'"
-msgstr "неверное поле '%s'"
+msgstr "Неверная опция '--%s'"
 
 #: lib/src/options.c:942
 #, c-format
@@ -5429,8 +5415,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99 lib/src/printout.c:122
@@ -5537,8 +5522,7 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:581
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:607 lib/src/printout.c:615
@@ -5625,14 +5609,14 @@ msgid "Mean Absolute Error"
 msgstr "Средняя абсолютная ошибка (MAE)"
 
 #: lib/src/printout.c:2368
-#, fuzzy, c-format
+#, c-format
 msgid " For %g%% confidence intervals, z(%g) = %.2f\n"
-msgstr " Для 95%% доверительных интервалов, z(.025) = %.2f\n"
+msgstr " Для %g%% доверительных интервалов, z(%g) = %.2f\n"
 
 #: lib/src/printout.c:2371
-#, fuzzy, c-format
+#, c-format
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
-msgstr " Для 95%% доверительных интервалов, t(%d, .025) = %.3f\n"
+msgstr " Для %g%% доверительных интервалов, t(%d, %g) = %.3f\n"
 
 #: lib/src/printout.c:2379 gui2/guiprint.c:1675 gui2/guiprint.c:1736
 #: gui2/guiprint.c:1788 gui2/guiprint.c:1829
@@ -5644,9 +5628,9 @@ msgid " std. error"
 msgstr " Ст. ошибка"
 
 #: lib/src/printout.c:2383
-#, fuzzy, c-format
+#, c-format
 msgid "        %g%% interval\n"
-msgstr "   95%% доверительный интервал\n"
+msgstr "   %g%% доверительный интервал\n"
 
 #: lib/src/printout.c:2504
 msgid "Criterion"
@@ -5857,8 +5841,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1530
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Общее количество пропущенных значений = %d (%.2f%% всех данных)\n"
 
 #: lib/src/subsample.c:1733 lib/src/subsample.c:1734
@@ -5983,13 +5966,11 @@ msgstr "LR-тест для диагональной ковариационной
 
 #: lib/src/system.c:2702
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr ""
-"Тест Бриша--Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
+msgstr "Тест Бриша--Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:2708
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr ""
-"Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
+msgstr "Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:3654 lib/src/system.c:3658 lib/src/system.c:3664
 #: lib/src/system.c:3668
@@ -6109,9 +6090,9 @@ msgid "Index value %d is out of bounds"
 msgstr "Значение индекса %d выходит за допустимые границы"
 
 #: lib/src/usermat.c:544
-#, fuzzy, c-format
+#, c-format
 msgid "Range %d to %d is non-positive!"
-msgstr "Размах не положителен!"
+msgstr "Диапазон от %d до %d не является положительным!"
 
 #: lib/src/usermat.c:552 gui2/calculator.c:1384
 msgid "Range is non-positive!"
@@ -6727,8 +6708,7 @@ msgstr "Тестовая статистика: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:1709
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr ""
-"Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
+msgstr "Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
 
 #: gui2/calculator.c:1712
 #, c-format
@@ -7046,23 +7026,20 @@ msgid "No suitable data are available"
 msgstr "Подходящие данные отсутствуют"
 
 #: gui2/calculator.c:3111
-#, fuzzy
 msgid "gretl: plot a curve"
-msgstr "gretl: замена"
+msgstr "gretl: график функции"
 
 #: gui2/calculator.c:3124 gui2/gpt_dialog.c:1441 gui2/gpt_dialog.c:1968
 msgid "formula"
-msgstr "формула"
+msgstr "Формула"
 
 #: gui2/calculator.c:3137
-#, fuzzy
 msgid "x minimum"
-msgstr "Минимум"
+msgstr "Минимум для х"
 
 #: gui2/calculator.c:3146
-#, fuzzy
 msgid "x range"
-msgstr "Диапазон"
+msgstr "Диапазон х"
 
 #: gui2/callbacks.c:217
 msgid "Open data file"
@@ -7257,8 +7234,7 @@ msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:674 gui2/callbacks.c:727
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr ""
-"Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
+msgstr "Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
 
 #: gui2/callbacks.c:680 gui2/callbacks.c:743 gui2/library.c:2764
 msgid "gretl: simultaneous equations system"
@@ -8152,9 +8128,8 @@ msgid "gretl: Chow test"
 msgstr "gretl: тест Чоу"
 
 #: gui2/dialogs.c:2384
-#, fuzzy
 msgid "Produce forecast for"
-msgstr "gretl: прогнозирование"
+msgstr "Провести прогнозирование для"
 
 #: gui2/dialogs.c:2433
 msgid "Number of pre-forecast observations to graph"
@@ -8359,19 +8334,16 @@ msgid "Test against gamma distribution"
 msgstr "Тест на гамма распределение"
 
 #: gui2/dialogs.c:4052
-#, fuzzy
 msgid "gretl: error"
-msgstr "gretl: периодограмма"
+msgstr "gretl: ошибка"
 
 #: gui2/dialogs.c:4053
-#, fuzzy
 msgid "gretl: warning"
-msgstr "gretl: поиск"
+msgstr "gretl: предупреждение"
 
 #: gui2/dialogs.c:4054
-#, fuzzy
 msgid "gretl: information"
-msgstr "gretl: настройки"
+msgstr "gretl: информация"
 
 #: gui2/dialogs.c:4175
 #, c-format
@@ -8665,8 +8637,7 @@ msgstr "Экспоненциальное скользящее среднее д�
 #: gui2/filters.c:176
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
-msgstr ""
-"Остатки экспоненциального скользящего среднего для %s (фактор затухания = %g)"
+msgstr "Остатки экспоненциального скользящего среднего для %s (фактор затухания = %g)"
 
 #: gui2/filters.c:181
 #, c-format
@@ -9567,7 +9538,7 @@ msgstr "_Графики распределений"
 
 #: gui2/gretl.c:1315
 msgid "_Plot a curve"
-msgstr ""
+msgstr "_График функции"
 
 #: gui2/gretl.c:1316
 msgid "_Test statistic calculator"
@@ -9715,9 +9686,8 @@ msgid "_Icon view"
 msgstr "_Сессия"
 
 #: gui2/gretl.c:1361
-#, fuzzy
 msgid "_Scalars"
-msgstr "Скалярные величины"
+msgstr "_Скалярные величины"
 
 #: gui2/gretl.c:1362
 msgid "_Graph specified vars"
@@ -10239,11 +10209,11 @@ msgstr "Название шрифта"
 
 #: gui2/gtkfontselhack.c:250
 msgid "The X string that represents this font"
-msgstr ""
+msgstr "Строка, представляющая шрифт"
 
 #: gui2/gtkfontselhack.c:256
 msgid "Preview text"
-msgstr ""
+msgstr "Предварительный просмотр"
 
 #: gui2/gtkfontselhack.c:257
 msgid "The text to display in order to demonstrate the selected font"
@@ -10370,42 +10340,42 @@ msgid "Note: * denotes a residual in excess of 2.5 standard errors"
 msgstr ""
 
 #: gui2/guiprint.c:1705
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
 "\n"
 msgstr ""
-"Для 95\\%% доверительных интервалов, $z(.025) = %.2f$\n"
+"Для %g\\%% доверительных интервалов, $z(%g) = %.2f$\n"
 "\n"
 
 #: gui2/guiprint.c:1709
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
 "\n"
 msgstr ""
-"Для 95\\%% доверительных интервалов, $t(%d, .025) = %.3f$\n"
+"Для %g\\%% доверительных интервалов, $t(%d, %g) = %.3f$\n"
 "\n"
 
 #: gui2/guiprint.c:1729
-#, fuzzy, c-format
+#, c-format
 msgid "%g\\%% interval"
 msgstr "%g\\%% доверительный интервал"
 
 #: gui2/guiprint.c:1810
-#, fuzzy, c-format
+#, c-format
 msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "Для 95%% доверительного интервала, z(.025) = %.2f"
+msgstr "Для %g%% доверительных интервалов, z(%g) = %.2f"
 
 #: gui2/guiprint.c:1814
-#, fuzzy, c-format
+#, c-format
 msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "Для 95%% доверительного интервала, t(%d, .025) = %.3f"
+msgstr "Для %g%% доверительных интервалов, t(%d, %g) = %.3f"
 
 #: gui2/guiprint.c:1819
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% interval"
-msgstr "(90% интервал)"
+msgstr "%g%% доверительный интервал"
 
 #: gui2/guiprint.c:1914 gui2/guiprint.c:1961
 #, c-format
@@ -11356,14 +11326,14 @@ msgid "Error saving model information"
 msgstr "Ошибка при сохранении информации о модели"
 
 #: gui2/library.c:3586
-#, fuzzy, c-format
+#, c-format
 msgid "Added scalar %s = %g"
-msgstr "Скаляр %s удален"
+msgstr "Добавлена скалярная переменная %s = %g"
 
 #: gui2/library.c:3593
-#, fuzzy, c-format
+#, c-format
 msgid "Added matrix %s"
-msgstr "Матрица %s изменена"
+msgstr "Мобавлена матрица %s"
 
 #: gui2/library.c:3646
 #, c-format
@@ -11399,8 +11369,7 @@ msgstr "распределение частот"
 
 #: gui2/library.c:3901
 msgid "Data contain negative values: gamma distribution not appropriate"
-msgstr ""
-"Гамма распределение не подходит, т.к. данные содержат отрицательные значения"
+msgstr "Гамма распределение не подходит, т.к. данные содержат отрицательные значения"
 
 #: gui2/library.c:3982
 msgid "This analysis is applicable only to seasonal time series"
@@ -11552,15 +11521,15 @@ msgstr "Невозможно удалить все указанные перем
 
 #: gui2/library.c:5284
 msgid "use a single graph"
-msgstr ""
+msgstr "Один график"
 
 #: gui2/library.c:5285
 msgid "multiple plots in grid"
-msgstr ""
+msgstr "Несколько графиков"
 
 #: gui2/library.c:5286
 msgid "multiple plots arranged vertically"
-msgstr ""
+msgstr "Несколько графиков (вертикально)"
 
 #: gui2/library.c:5290
 msgid "Panel time-series graph"
@@ -11571,6 +11540,8 @@ msgid ""
 "You must supply three variables, the last\n"
 "of which is a dummy variable (values 1 or 0)"
 msgstr ""
+"Необходимо указать три переменные, последняя\n"
+"из которых должна быть фиктивной (значение 1 или 0)"
 
 #: gui2/library.c:5462
 msgid "You must supply three variables"
@@ -11602,11 +11573,11 @@ msgstr ""
 
 #: gui2/library.c:5844
 msgid "Interactive R session"
-msgstr ""
+msgstr "Интерактивная сессия с R"
 
 #: gui2/library.c:5850 gui2/library.c:5854
 msgid "R mode"
-msgstr ""
+msgstr "Режим R"
 
 #: gui2/library.c:5852
 msgid "pre-load data"
@@ -11697,7 +11668,7 @@ msgstr "Перезаписать?"
 
 #: gui2/library.c:6287
 msgid "gretl: revised data set"
-msgstr ""
+msgstr "gretl: исправленные данные"
 
 #: gui2/library.c:6288
 msgid ""
@@ -11806,12 +11777,11 @@ msgstr "График разброса X-Y"
 
 #: gui2/menustate.c:355 gui2/menustate.c:426
 msgid "Add logs"
-msgstr ""
+msgstr "Добавить логарифмы"
 
 #: gui2/menustate.c:357 gui2/menustate.c:427
-#, fuzzy
 msgid "Add differences"
-msgstr "лаг для разностей"
+msgstr "Добавить разности"
 
 #: gui2/menustate.c:519
 msgid "Daily"
@@ -11861,8 +11831,7 @@ msgid "Sorry, ARMA models can't be put in the model table"
 msgstr "Модели ARMA не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:178
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -11971,8 +11940,7 @@ msgstr "gretl: список моделей"
 
 #: gui2/model_table.c:929
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr ""
-"Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
+msgstr "Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
 
 #: gui2/model_table.c:1033
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
@@ -12033,7 +12001,7 @@ msgstr "добавить экзогенную переменную"
 #: gui2/selector.c:1365
 #, c-format
 msgid "Status of '%s' in VECM:"
-msgstr ""
+msgstr "Статус '%s' в VECM:"
 
 #: gui2/selector.c:1865
 msgid "You must select an X-axis variable"
@@ -12121,7 +12089,7 @@ msgstr ""
 
 #: gui2/selector.c:2862
 msgid "Dynamic panel model"
-msgstr ""
+msgstr "Динамическая панельная модель"
 
 #: gui2/selector.c:2864
 msgid "Weighted least squares"
@@ -12289,7 +12257,7 @@ msgstr "или отдельные лаги"
 
 #: gui2/selector.c:3952
 msgid "Bits per floating-point value"
-msgstr ""
+msgstr "Бит на число с плавающей точкой"
 
 #: gui2/selector.c:3992
 msgid "Robust standard errors/intervals"
@@ -12333,7 +12301,7 @@ msgstr "Пропустить ADF-тесты для отдельных перем
 
 #: gui2/selector.c:4081
 msgid "Iterated weighted least squares"
-msgstr ""
+msgstr "Интегрированный взвешенный метод наименьших квадратов"
 
 #: gui2/selector.c:4084
 msgid "Include time dummies"
@@ -12509,7 +12477,7 @@ msgstr "график с управляемой переменной"
 
 #: gui2/selector.c:4748
 msgid "functions to package"
-msgstr ""
+msgstr "Функции для пакета"
 
 #: gui2/selector.c:4780
 msgid "Variables to test"
@@ -12525,7 +12493,7 @@ msgstr "Независимые переменные"
 
 #: gui2/selector.c:4790
 msgid "Helper functions"
-msgstr ""
+msgstr "Вспомогательные функции"
 
 #: gui2/selector.c:5006
 msgid "Select variables for logging"
@@ -12632,9 +12600,8 @@ msgid "lag order"
 msgstr "Лаговые переменные"
 
 #: gui2/selector.c:5913
-#, fuzzy
 msgid "Lags of endogenous variables"
-msgstr "Добавить список эндогенных переменных"
+msgstr "Лаги эндогенных переменных"
 
 #: gui2/selector.c:5927
 msgid "lags"
@@ -12819,9 +12786,8 @@ msgid "Graph page"
 msgstr "Графики"
 
 #: gui2/session.c:3062
-#, fuzzy
 msgid "icon view"
-msgstr "_Сессия"
+msgstr "Значки"
 
 #: gui2/session.c:3243
 #, c-format
@@ -13547,7 +13513,7 @@ msgstr "Настроить табуляцию..."
 
 #: gui2/toolbar.c:513
 msgid "Scripts index"
-msgstr ""
+msgstr "Скрипты"
 
 #: gui2/toolbar.c:514
 msgid "Confidence level..."
@@ -13649,8 +13615,7 @@ msgstr ""
 #: gui2/update.c:148
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
-"Этот файл является частью системы gretl для автоматичесгого обновления\n"
+msgstr "Этот файл является частью системы gretl для автоматичесгого обновления\n"
 
 #: gui2/update.c:210
 msgid "No new files"
@@ -13658,19 +13623,19 @@ msgstr "Новых файлов не обнаружено"
 
 #: plugin/arma.c:2222 plugin/arma.c:2225
 msgid "ARMA initialization"
-msgstr ""
+msgstr "Инициализация ARMA"
 
 #: plugin/arma.c:2223
 msgid "using nonlinear AR model"
-msgstr ""
+msgstr "используется нелинейная AR модель"
 
 #: plugin/arma.c:2226
 msgid "using linear AR model"
-msgstr ""
+msgstr "используется линейная AR модель"
 
 #: plugin/arma_common.c:707 plugin/arma_common.c:794
 msgid "Error in arma command"
-msgstr ""
+msgstr "Ошибка в команде arma"
 
 #: plugin/arma_x12.c:898
 msgid "Failed to execute x12arima"
@@ -13818,11 +13783,11 @@ msgstr "Оценка модели экспонента Хёрста"
 
 #: plugin/garch.c:635
 msgid "GARCH: p > 0 and q = 0: the model is unidentified"
-msgstr ""
+msgstr "GARCH: p > 0 и q = 0: модель неидентифицируема"
 
 #: plugin/garch.c:642
 msgid "GARCH: p + q must be less than 6"
-msgstr ""
+msgstr "GARCH: сумма p + q должна быть меньше 6"
 
 #: plugin/gnumeric_import.c:292
 #, c-format
@@ -14485,32 +14450,3 @@ msgstr "Строки"
 msgid "Accessors"
 msgstr ""
 
-#~ msgid "lag order %d\n"
-#~ msgstr "лаг %d-го порядка\n"
-
-#~ msgid "Step %d: Dickey-Fuller test on residuals\n"
-#~ msgstr "Этап %d: Тест Дики-Фуллера для остатков\n"
-
-#~ msgid "95 percent confidence interval"
-#~ msgstr "95% доверительный интервал"
-
-#~ msgid "Command '%s' ignored; not available in loop mode\n"
-#~ msgstr "Команда '%s' проигнорирована; она недоступна в циклах\n"
-
-#~ msgid "_Scalars..."
-#~ msgstr "_Скалярные величины..."
-
-#~ msgid "95\\% confidence interval"
-#~ msgstr "95\\% доверительный интервал"
-
-#~ msgid "95% confidence interval"
-#~ msgstr "95% доверительный интервал"
-
-#~ msgid "Couldn't read cointegration order"
-#~ msgstr "Невозможно получить порядок коинтеграции"
-
-#~ msgid "current session"
-#~ msgstr "текущая сессия"
-
-#~ msgid "Confidence level, percent"
-#~ msgstr "Доверительный уровень, проценты"
