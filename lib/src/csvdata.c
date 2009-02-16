@@ -23,6 +23,7 @@
 #include "csvdata.h"
 
 #include <ctype.h>
+#include <errno.h>
 #include <glib.h>
 
 #define QUOTE      '\''
@@ -382,12 +383,14 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn
 	if (pdinfo->pd == 5 && (wd == 6 || wd == 0)) {
 	    /* Got Sat or Sun, can't be 5-day daily? */
 	    alt_pd = (wd == 6)? 6 : 7;
-	    pprintf(prn, "Found a Saturday: re-trying with pd = %d\n", alt_pd);
+	    pprintf(prn, "Found a Saturday (%s): re-trying with pd = %d\n", 
+		    pdinfo->S[s], alt_pd);
 	    break;
 	} else if (pdinfo->pd == 6 && wd == 0) {
 	    /* Got Sun, can't be 6-day daily? */
 	    alt_pd = 7;
-	    pprintf(prn, "Found a Sunday: re-trying with pd = %d\n", alt_pd);
+	    pprintf(prn, "Found a Sunday (%s): re-trying with pd = %d\n", 
+		    pdinfo->S[s], alt_pd);
 	    break;
 	}
 	    
@@ -1236,6 +1239,33 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     return err;
 }
 
+/* remedial function: we may be trying to read a "CSV" file
+   that uses ',' as decimal separator, on a platform where
+   '.' is the decimal separator
+*/
+
+static double try_comma_atof (const char *orig)
+{
+    char *test, s[32];
+    double x;
+
+    if (strlen(orig) > 31) {
+	return NON_NUMERIC;
+    }
+
+    strcpy(s, orig);
+    charsub(s, ',', '.');
+
+    errno = 0;
+    x = strtod(s, &test);
+
+    if (*test == '\0' && errno != ERANGE) {
+	return x;
+    } else {
+	return NON_NUMERIC;
+    }
+}
+
 static int process_csv_obs (csvdata *c, int i, int t, PRN *prn)
 {
     int ix, err = 0;
@@ -1252,7 +1282,12 @@ static int process_csv_obs (csvdata *c, int i, int t, PRN *prn)
     } else if (csv_missval(c->str, i, t+1, prn)) {
 	c->Z[i][t] = NADBL;
     } else if (check_atof(c->str)) {
-	c->Z[i][t] = NON_NUMERIC;
+	if (c->delim != ',' && get_local_decpoint() != ',' &&
+	    strchr(c->str, ',') != NULL) {
+	    c->Z[i][t] = try_comma_atof(c->str);
+	} else {
+	    c->Z[i][t] = NON_NUMERIC;
+	}
     } else {
 	c->Z[i][t] = atof(c->str);
     }
