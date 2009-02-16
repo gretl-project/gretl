@@ -902,6 +902,7 @@ static struct font_info ttf_fonts[] = {
     { "luxisr", "Luxi Sans" },
     { "Vera", "Vera" },
     { "FreeSans", "Free Sans" },
+    { "DejaVu", "DejaVu Sans" },
 #endif
     { "tahoma", "Tahoma" },
     { "trebuc", "Trebuchet" },
