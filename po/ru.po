@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-02-12 17:38-0500\n"
-"PO-Revision-Date: 2009-02-16 15:28+0200\n"
+"PO-Revision-Date: 2009-02-16 23:36+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4131,7 +4131,7 @@ msgstr "AR"
 
 #: lib/src/modelprint.c:595 lib/src/modelprint.c:694 gui2/selector.c:2882
 msgid "LAD"
-msgstr "Наименьшие абсолютные отклонения"
+msgstr "Метод наименьших модулей"
 
 #: lib/src/modelprint.c:596
 msgid "High-Precision OLS"
@@ -10111,7 +10111,7 @@ msgstr "_Робастные оценки"
 
 #: gui2/gretl.c:1491
 msgid "Least _Absolute Deviation..."
-msgstr "Наименьшие _абсолютные отклонения..."
+msgstr "Метод наименьших _модулей..."
 
 #: gui2/gretl.c:1492
 msgid "_Quantile regression..."
