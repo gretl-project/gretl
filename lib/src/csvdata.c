@@ -298,6 +298,7 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[T - 1];
     int fulln = 0, n, t, nbak;
+    int alt_pd = 0;
     int oldpd = pdinfo->pd;
     double oldsd0 = pdinfo->sd0;
     long ed1, ed2;
@@ -336,6 +337,11 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn
 	}
     }
 
+ recompute:
+
+    alt_pd = 0;
+    nbak = 0;
+
     if (!err) {
 	int n1 = calendar_obs_number((*reversed)? lbl2 : lbl1, pdinfo);
 	int n2 = calendar_obs_number((*reversed)? lbl1 : lbl2, pdinfo);
@@ -369,8 +375,22 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn
     nbak = 0;
 
     for (t=0; t<pdinfo->n && !err; t++) {
-	int s = (*reversed)? (pdinfo->n - 1 - t) : t;
+	int wd, s = (*reversed)? (pdinfo->n - 1 - t) : t;
 
+	wd = get_day_of_week(pdinfo->S[s]);
+
+	if (pdinfo->pd == 5 && (wd == 6 || wd == 0)) {
+	    /* Got Sat or Sun, can't be 5-day daily? */
+	    alt_pd = (wd == 6)? 6 : 7;
+	    pprintf(prn, "Found a Saturday: re-trying with pd = %d\n", alt_pd);
+	    break;
+	} else if (pdinfo->pd == 6 && wd == 0) {
+	    /* Got Sun, can't be 6-day daily? */
+	    alt_pd = 7;
+	    pprintf(prn, "Found a Sunday: re-trying with pd = %d\n", alt_pd);
+	    break;
+	}
+	    
 	n = calendar_obs_number(pdinfo->S[s], pdinfo);
 	if (n < t) {
 	    pprintf(prn, "Daily dates error at t = %d:\n"
@@ -385,6 +405,11 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn
 	    err = 1;
 	}
 	nbak = n;
+    }
+
+    if (alt_pd > 0) {
+	pdinfo->pd = alt_pd;
+	goto recompute;
     }
 
     if (err) {
