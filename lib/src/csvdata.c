@@ -1418,7 +1418,6 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	} else if (chkcols != c->ncols) {
 	    pprintf(prn, M_("   ...but row %d has %d fields: aborting\n"),
 		    c->nrows, chkcols);
-	    pputs(prn, M_(csv_msg));
 	    err = E_DATA;
 	}
     }
@@ -1682,6 +1681,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     FILE *fp = NULL;
     PRN *mprn = NULL;
     int newdata = (*pZ == NULL);
+    char save_delim = pdinfo->delim;
     long datapos;
     int i, err = 0;
 
@@ -1735,6 +1735,8 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
+ alt_delim:
+
     pprintf(mprn, M_("using delimiter '%c'\n"), c->delim);
     pprintf(mprn, M_("   longest line: %d characters\n"), c->maxlen - 1);
 
@@ -1754,6 +1756,12 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     /* read lines, check for consistency in number of fields */
     err = csv_fields_check(fp, c, mprn);
     if (err) {
+	if (c->delim != ';' && csv_got_semi(c)) {
+	    c->delim = c->dinfo->delim = ';';
+	    err = 0;
+	    goto alt_delim;
+	}
+	pputs(prn, M_(csv_msg));
 	goto csv_bailout;
     }
 
@@ -1891,6 +1899,8 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 #ifdef ENABLE_NLS
     console_off();
 #endif
+
+    pdinfo->delim = save_delim;
 
     return err;
 }
