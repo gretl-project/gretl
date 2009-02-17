@@ -176,6 +176,7 @@ struct gretl_option gretl_opts[] = {
     { LMTEST,   OPT_Q, "quiet" },
     { LMTEST,   OPT_W, "white" },
     { LMTEST,   OPT_X, "white-nocross" },
+    { LOGIT,    OPT_M, "multinomial" },
     { LOGIT,    OPT_P, "p-values" },
     { LOGIT,    OPT_Q, "quiet" },
     { LOGIT,    OPT_R, "robust" },

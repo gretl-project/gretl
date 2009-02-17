@@ -838,30 +838,48 @@ typedef struct mnl_info_ mnl_info;
 
 struct mnl_info_ {
     gretl_matrix_block *B;
-    gretl_matrix *y;
-    gretl_matrix *X;
-    gretl_matrix *b;
-    gretl_matrix *Xb;
-    int n;
-    int k;
-    int T;
+    gretl_matrix *y;  /* dependent variable */
+    gretl_matrix *X;  /* regressors */
+    gretl_matrix *b;  /* coefficients, matrix form */
+    gretl_matrix *Xb; /* coeffs times regressors */
+    double *theta;    /* coeffs for BFGS */
+    int n;            /* number of categories (excluding base) */
+    int k;            /* number of coeffs per category */
+    int T;            /* number of observations */
 };
+
+static void mnl_info_destroy (mnl_info *mnl)
+{
+    if (mnl != NULL) {
+	gretl_matrix_block_destroy(mnl->B);
+	free(mnl->theta);
+    }
+}
 
 static mnl_info *mnl_info_new (int n, int k, int T)
 {
     mnl_info *mnl = malloc(sizeof *mnl);
+    int i, npar = k * n;
 
     if (mnl != NULL) {
+	mnl->theta = malloc(npar * sizeof *mnl->theta);
+	if (mnl->theta == NULL) {
+	    free(mnl);
+	    return NULL;
+	}
 	mnl->B = gretl_matrix_block_new(&mnl->y, T, 1,
 					&mnl->X, T, k,
-					&mnl->b, n*k, 1,
+					&mnl->b, k, n,
 					&mnl->Xb, T, n,
 					NULL);
 	if (mnl->B == NULL) {
+	    free(mnl->theta);
 	    free(mnl);
-	    mnl = NULL;
+	    return NULL;
 	} else {
-	    gretl_matrix_zero(mnl->b);
+	    for (i=0; i<npar; i++) {
+		mnl->theta[i] = 0.0;
+	    }
 	    mnl->n = n;
 	    mnl->k = k;
 	    mnl->T = T;
@@ -871,22 +889,18 @@ static mnl_info *mnl_info_new (int n, int k, int T)
     return mnl;
 }
 
-static void mnl_info_destroy (mnl_info *mnl)
-{
-    if (mnl != NULL) {
-	gretl_matrix_block_destroy(mnl->B);
-    }
-}
-
 /* compute loglikelihood for multinomial logit */
 
 static double mn_logit_loglik (const double *theta, void *ptr)
 {
     mnl_info *mnl = (mnl_info *) ptr;
     double x, xti, ll = 0.0;
+    int npar = mnl->k * mnl->n;
     int i, t, err;
 
-    /* note: theta = mnl->b->val */
+    for (i=0; i<npar; i++) {
+	mnl->b->val[i] = theta[i];
+    }
 
     err = gretl_matrix_multiply(mnl->X, mnl->b, mnl->Xb);
     if (err) {
@@ -912,31 +926,39 @@ static double mn_logit_loglik (const double *theta, void *ptr)
 
 /* multinomial logit dependent variable: count the distinct values */
 
-static int mn_value_count (const double *y, int T, double *ymin, int *err)
+static int mn_value_count (const double *y, MODEL *pmod, double *ymin)
 {
-    double *sy = copyvec(y, T);
+    double *sy = malloc(pmod->nobs * sizeof *sy);
+    int T = pmod->nobs;
     int ret = 0;
 
     if (sy == NULL) {
-	*err = E_ALLOC;
+	pmod->errcode = E_ALLOC;
     } else {
-	int t;
+	int t, s = 0;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t])) {
+		sy[s++] = y[t];
+	    }
+	}
 
 	qsort(sy, T, sizeof *sy, gretl_compare_doubles);
+
 	/* the y-values should be consecutive integers */
-	for (t=1; t<T && !*err; t++) {
+	for (t=1; t<T && !pmod->errcode; t++) {
 	    if (sy[t] != floor(sy[t])) {
-		*err = E_DATA;
+		pmod->errcode = E_DATA;
 	    }
 	    if (sy[t] != sy[t-1] && sy[t] != sy[t-1] + 1) {
-		*err = E_DATA;
+		pmod->errcode = E_DATA;
 	    }
-	    if (*err) {
+	    if (pmod->errcode) {
 		gretl_errmsg_set("mnlogit: the dep var must form a sequence of "
 				 "consecutive integers");
 	    }
 	}
-	if (!*err) {    
+	if (!pmod->errcode) {    
 	    *ymin = sy[0];
 	    ret = count_distinct_values(sy, T);
 	}
@@ -946,70 +968,138 @@ static int mn_value_count (const double *y, int T, double *ymin, int *err)
     return ret;
 }
 
+static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
+			    DATAINFO *pdinfo)
+{
+    int i, nc = mnl->k * mnl->n;
+    double *tmp;
+
+    tmp = realloc(pmod->coeff, nc * sizeof *tmp);
+    if (tmp == NULL) {
+	pmod->errcode = E_ALLOC;
+	return;
+    }
+    pmod->coeff = tmp;
+    
+    tmp = realloc(pmod->sderr, nc * sizeof *tmp);
+    if (tmp == NULL) {
+	pmod->errcode = E_ALLOC;
+	return;
+    }  
+    pmod->sderr = tmp;
+
+    pmod->ncoeff = nc;
+
+    for (i=0; i<nc; i++) {
+	pmod->coeff[i] = mnl->b->val[i];
+    }
+
+    if (1) { 
+	double x, *vcv;
+
+	vcv = numerical_hessian(mnl->theta, nc, mn_logit_loglik, 
+				mnl, &pmod->errcode);
+	if (!pmod->errcode) {
+	    pmod->vcv = vcv;
+	    for (i=0; i<nc; i++) {
+		x = vcv[ijton(i, i, nc)];
+		pmod->sderr[i] = (na(x))? NADBL : sqrt(x);
+	    }
+	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+	}
+    }
+
+    pmod->lnL = mn_logit_loglik(mnl->theta, mnl);
+
+    pmod->ci = LOGIT;
+
+    gretl_model_set_int(pmod, "multinom", mnl->n);
+    gretl_model_set_int(pmod, "cblock", mnl->k);
+
+    mle_criteria(pmod, 0);
+
+    pmod->ess = pmod->sigma = NADBL;
+    pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
+
+    gretl_model_allocate_params(pmod, nc);
+
+    if (!pmod->errcode) {
+	int j, vj, k = 0;
+
+	for (i=0; i<mnl->n; i++) {
+	    for (j=0; j<mnl->k; j++) {
+		vj = pmod->list[j+2];
+		strcpy(pmod->params[k++], pdinfo->varname[vj]);
+	    }
+	}
+    }
+
+    set_model_id(pmod);
+
+    /* FIXME fitted values, residuals */
+}
+
 /* built-in multinomial logit: just testing for the moment */
 
-static MODEL mnl_test (const int *list, double **Z, DATAINFO *pdinfo, 
-		       gretlopt opt, PRN *prn)
+static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn)
 {
     int maxit = 1000;
     int fncount = 0;
     int grcount = 0;
     MODEL mod;
     mnl_info *mnl;
-    double ll, ymin = 0;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    double ymin = 0;
     int n, k = list[0] - 1;
     int i, vi, t, s;
 
-    gretl_model_init(&mod);
+    /* we'll start with OLS to flush out data issues */
+    mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    if (mod.errcode) {
+	return mod;
+    }
 
-    n = mn_value_count(Z[list[1]] + pdinfo->t1, T, &ymin, &mod.errcode);
+    n = mn_value_count((*pZ)[list[1]], &mod, &ymin);
     if (mod.errcode) {
 	return mod;
     }
 
     n--; /* exclude the first value */
 
-    mnl = mnl_info_new(n, k, T);
+    mnl = mnl_info_new(n, k, mod.nobs);
     if (mnl == NULL) {
 	mod.errcode = E_ALLOC;
 	return mod;
     }
 
     s = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	mnl->y->val[s++] = Z[list[1]][t] - ymin;
+    for (t=mod.t1; t<=mod.t2; t++) {
+	if (!na(mod.yhat[t])) {
+	    mnl->y->val[s++] = (*pZ)[list[1]][t] - ymin;
+	}
     }
 
     for (i=0; i<k; i++) {
 	vi = list[i+2];
 	s = 0;
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    gretl_matrix_set(mnl->X, s++, i, Z[vi][t]);
+	for (t=mod.t1; t<=mod.t2; t++) {
+	    if (!na(mod.yhat[t])) {
+		gretl_matrix_set(mnl->X, s++, i, (*pZ)[vi][t]);
+	    }
 	}
     } 
 
-    gretl_matrix_reuse(mnl->b, k, n);
-
-    mod.errcode = BFGS_max(mnl->b->val, k * n, maxit, 1.0e-12, 
+    mod.errcode = BFGS_max(mnl->theta, k * n, maxit, 1.0e-9, 
 			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
 			   NULL, mnl, (prn != NULL)? OPT_V : OPT_NONE,
 			   prn);
 
     if (!mod.errcode) {
 	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
+	mnl_transcribe(mnl, &mod, pdinfo);
     }    
 
-    ll = mn_logit_loglik(NULL, mnl);
-
-    gretl_matrix_reuse(mnl->b, n*k, 1);
-
-    gretl_matrix_print(mnl->b, "mnl->b, on exit");
-    fprintf(stderr, "loglik = %g\n", ll);
-    
     mnl_info_destroy(mnl);
-
-    mod.errcode = E_NOTIMP;
 
     return mod;
 }
@@ -1054,20 +1144,17 @@ ordered_model_ok (double **Z, const DATAINFO *pdinfo, int v)
 MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
 		    int ci, gretlopt opt, PRN *prn)
 {
+    PRN *vprn = NULL;
     int yv = list[1];
 
-#if 0
-    if (ci == LOGIT && list[0] == 6) {
-	return mnl_test(list, *pZ, pdinfo, opt, prn);
-    }
-#endif
-
-    if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
+    if (ci == LOGIT && (opt & OPT_M)) {
+	vprn = (opt & OPT_V)? prn : NULL;
+	return mnl_model(list, pZ, pdinfo, opt, vprn);
+    } else if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
 	return binary_logit_probit(list, pZ, pdinfo, ci, opt, prn);
     } else if (ordered_model_ok(*pZ, pdinfo, yv)) {
-	PRN *oprn = (opt & OPT_V)? prn : NULL;
-
-	return ordered_model(list, ci, pZ, pdinfo, opt, oprn);
+	vprn = (opt & OPT_V)? prn : NULL;
+	return ordered_model(list, ci, pZ, pdinfo, opt, vprn);
     } else {
 	MODEL dmod;
 

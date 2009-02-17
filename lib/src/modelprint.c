@@ -47,7 +47,10 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
                            gretl_model_get_int(m, "ordered"))
 
 #define binary_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
-                         !gretl_model_get_int(m, "ordered"))
+                         !gretl_model_get_int(m, "ordered") && \
+                         !gretl_model_get_int(m, "multinom"))
+
+#define multinomial_model(m) (m->ci == LOGIT && gretl_model_get_int(m, "multinom")) 
 
 #define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
 
@@ -672,6 +675,8 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
     } else if (pmod->ci == LOGIT) {
 	if (gretl_model_get_int(pmod, "ordered")) {
 	    return N_("Ordered Logit");
+	} else if (gretl_model_get_int(pmod, "multinom")) {
+	    return N_("Multinomial Logit");
 	} else {
 	    return N_("Logit");
 	}
@@ -2705,7 +2710,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
 	pmod->ci != POISSON && pmod->ci != TOBIT && pmod->ci != LAD &&
 	pmod->ci != HECKIT && pmod->ci != ARBOND && pmod->ci != GARCH &&
-	!ordered_model(pmod) && !pmod->aux) {
+	!ordered_model(pmod) && !multinomial_model(pmod) && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 
@@ -3708,7 +3713,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     const char *sepstr = NULL;
     double *xb = NULL;
     double *xse = NULL;
-    int seppos = -1;
+    int seppos = -1, cblock = 0;
     int lmax[4] = {0};
     int rmax[4] = {0};
     int w[4], addoff[4] = {0};
@@ -3779,6 +3784,8 @@ static int plain_print_coeffs (const MODEL *pmod,
 	    seppos = pmod->list[0] - 4;
 	} else if (pmod->ci == AR || pmod->ci == ARCH) {
 	    seppos = pmod->ncoeff;
+	} else if (multinomial_model(pmod)) {
+	    cblock = gretl_model_get_int(pmod, "cblock");
 	}
     }
 
@@ -3874,6 +3881,8 @@ static int plain_print_coeffs (const MODEL *pmod,
     for (i=0; i<nc; i++) {
 	if (i == seppos) {
 	    print_coeff_separator(sepstr, dotlen, prn);
+	} else if (cblock > 0 && i > 0 && i % cblock == 0) {
+	    print_coeff_separator(NULL, 0, prn);
 	}
 	pprintf(prn, "  %-*s", namelen, names[i]);
 	bufspace(colsep, prn);
