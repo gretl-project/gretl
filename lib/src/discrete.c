@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "missing_private.h"
+#include "gretl_bfgs.h"
 
 #define TINY 1.0e-13
 
@@ -831,6 +832,188 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     return dmod;
 }
 
+/* struct for holding multinomial logit info */
+
+typedef struct mnl_info_ mnl_info;
+
+struct mnl_info_ {
+    gretl_matrix_block *B;
+    gretl_matrix *y;
+    gretl_matrix *X;
+    gretl_matrix *b;
+    gretl_matrix *Xb;
+    int n;
+    int k;
+    int T;
+};
+
+static mnl_info *mnl_info_new (int n, int k, int T)
+{
+    mnl_info *mnl = malloc(sizeof *mnl);
+
+    if (mnl != NULL) {
+	mnl->B = gretl_matrix_block_new(&mnl->y, T, 1,
+					&mnl->X, T, k,
+					&mnl->b, n*k, 1,
+					&mnl->Xb, T, n,
+					NULL);
+	if (mnl->B == NULL) {
+	    free(mnl);
+	    mnl = NULL;
+	} else {
+	    gretl_matrix_zero(mnl->b);
+	    mnl->n = n;
+	    mnl->k = k;
+	    mnl->T = T;
+	}
+    }
+
+    return mnl;
+}
+
+static void mnl_info_destroy (mnl_info *mnl)
+{
+    if (mnl != NULL) {
+	gretl_matrix_block_destroy(mnl->B);
+    }
+}
+
+/* compute loglikelihood for multinomial logit */
+
+static double mn_logit_loglik (const double *theta, void *ptr)
+{
+    mnl_info *mnl = (mnl_info *) ptr;
+    double x, xti, ll = 0.0;
+    int i, t, err;
+
+    /* note: theta = mnl->b->val */
+
+    err = gretl_matrix_multiply(mnl->X, mnl->b, mnl->Xb);
+    if (err) {
+	return NADBL;
+    }
+
+    for (t=0; t<mnl->T; t++) {
+	x = 1.0;
+	for (i=0; i<mnl->n; i++) {
+	    /* sum row i of exp(Xb) */
+	    xti = gretl_matrix_get(mnl->Xb, t, i);
+	    x += exp(xti);
+	}
+	ll -= log(x);
+	i = mnl->y->val[t];
+	if (i > 0) {
+	    ll += gretl_matrix_get(mnl->Xb, t, i-1);
+	}
+    }
+
+    return ll;
+}
+
+/* multinomial logit dependent variable: count the distinct values */
+
+static int mn_value_count (const double *y, int T, double *ymin, int *err)
+{
+    double *sy = copyvec(y, T);
+    int ret = 0;
+
+    if (sy == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int t;
+
+	qsort(sy, T, sizeof *sy, gretl_compare_doubles);
+	/* the y-values should be consecutive integers */
+	for (t=1; t<T && !*err; t++) {
+	    if (sy[t] != floor(sy[t])) {
+		*err = E_DATA;
+	    }
+	    if (sy[t] != sy[t-1] && sy[t] != sy[t-1] + 1) {
+		*err = E_DATA;
+	    }
+	    if (*err) {
+		gretl_errmsg_set("mnlogit: the dep var must form a sequence of "
+				 "consecutive integers");
+	    }
+	}
+	if (!*err) {    
+	    *ymin = sy[0];
+	    ret = count_distinct_values(sy, T);
+	}
+	free(sy);
+    }
+
+    return ret;
+}
+
+/* built-in multinomial logit: just testing for the moment */
+
+static MODEL mnl_test (const int *list, double **Z, DATAINFO *pdinfo, 
+		       gretlopt opt, PRN *prn)
+{
+    int maxit = 1000;
+    int fncount = 0;
+    int grcount = 0;
+    MODEL mod;
+    mnl_info *mnl;
+    double ll, ymin = 0;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int n, k = list[0] - 1;
+    int i, vi, t, s;
+
+    gretl_model_init(&mod);
+
+    n = mn_value_count(Z[list[1]] + pdinfo->t1, T, &ymin, &mod.errcode);
+    if (mod.errcode) {
+	return mod;
+    }
+
+    n--; /* exclude the first value */
+
+    mnl = mnl_info_new(n, k, T);
+    if (mnl == NULL) {
+	mod.errcode = E_ALLOC;
+	return mod;
+    }
+
+    s = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	mnl->y->val[s++] = Z[list[1]][t] - ymin;
+    }
+
+    for (i=0; i<k; i++) {
+	vi = list[i+2];
+	s = 0;
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    gretl_matrix_set(mnl->X, s++, i, Z[vi][t]);
+	}
+    } 
+
+    gretl_matrix_reuse(mnl->b, k, n);
+
+    mod.errcode = BFGS_max(mnl->b->val, k * n, maxit, 1.0e-12, 
+			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
+			   NULL, mnl, (prn != NULL)? OPT_V : OPT_NONE,
+			   prn);
+
+    if (!mod.errcode) {
+	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
+    }    
+
+    ll = mn_logit_loglik(NULL, mnl);
+
+    gretl_matrix_reuse(mnl->b, n*k, 1);
+
+    gretl_matrix_print(mnl->b, "mnl->b, on exit");
+    fprintf(stderr, "loglik = %g\n", ll);
+    
+    mnl_info_destroy(mnl);
+
+    mod.errcode = E_NOTIMP;
+
+    return mod;
+}
+
 static int 
 ordered_model_ok (double **Z, const DATAINFO *pdinfo, int v)
 {
@@ -872,6 +1055,12 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo,
 		    int ci, gretlopt opt, PRN *prn)
 {
     int yv = list[1];
+
+#if 0
+    if (ci == LOGIT && list[0] == 6) {
+	return mnl_test(list, *pZ, pdinfo, opt, prn);
+    }
+#endif
 
     if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
 	return binary_logit_probit(list, pZ, pdinfo, ci, opt, prn);
