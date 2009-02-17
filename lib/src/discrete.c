@@ -972,7 +972,7 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
 			    DATAINFO *pdinfo)
 {
     int i, nc = mnl->k * mnl->n;
-    double *tmp;
+    double x, *tmp, *vcv;
 
     tmp = realloc(pmod->coeff, nc * sizeof *tmp);
     if (tmp == NULL) {
@@ -994,34 +994,30 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
 	pmod->coeff[i] = mnl->b->val[i];
     }
 
-    if (1) { 
-	double x, *vcv;
-
-	vcv = numerical_hessian(mnl->theta, nc, mn_logit_loglik, 
-				mnl, &pmod->errcode);
-	if (!pmod->errcode) {
-	    pmod->vcv = vcv;
-	    for (i=0; i<nc; i++) {
-		x = vcv[ijton(i, i, nc)];
-		pmod->sderr[i] = (na(x))? NADBL : sqrt(x);
-	    }
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+    vcv = numerical_hessian(mnl->theta, nc, mn_logit_loglik, 
+			    mnl, &pmod->errcode);
+    if (!pmod->errcode) {
+	pmod->vcv = vcv;
+	for (i=0; i<nc; i++) {
+	    x = vcv[ijton(i, i, nc)];
+	    pmod->sderr[i] = (na(x))? NADBL : sqrt(x);
 	}
+	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
     }
 
-    pmod->lnL = mn_logit_loglik(mnl->theta, mnl);
+    if (!pmod->errcode) {
+	pmod->ci = LOGIT;
+	pmod->lnL = mn_logit_loglik(mnl->theta, mnl);
+	mle_criteria(pmod, 0);
 
-    pmod->ci = LOGIT;
+	gretl_model_set_int(pmod, "multinom", mnl->n);
+	gretl_model_set_int(pmod, "cblock", mnl->k);
 
-    gretl_model_set_int(pmod, "multinom", mnl->n);
-    gretl_model_set_int(pmod, "cblock", mnl->k);
+	pmod->ess = pmod->sigma = NADBL;
+	pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
 
-    mle_criteria(pmod, 0);
-
-    pmod->ess = pmod->sigma = NADBL;
-    pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
-
-    gretl_model_allocate_params(pmod, nc);
+	gretl_model_allocate_params(pmod, nc);
+    }
 
     if (!pmod->errcode) {
 	int j, vj, k = 0;
@@ -1032,9 +1028,8 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
 		strcpy(pmod->params[k++], pdinfo->varname[vj]);
 	    }
 	}
+	set_model_id(pmod);
     }
-
-    set_model_id(pmod);
 
     /* FIXME fitted values, residuals */
 }
