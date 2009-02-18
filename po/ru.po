@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-02-12 17:38-0500\n"
-"PO-Revision-Date: 2009-02-16 23:36+0200\n"
+"PO-Revision-Date: 2009-02-19 01:19+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2605,7 +2605,7 @@ msgstr "Сумма квадратов ошибок ялвляется отриц
 
 #: lib/src/gretl_errors.c:35 lib/src/system.c:1080
 msgid "Sorry, command not available for this estimator"
-msgstr "Простите, команда недоступна для этой функции оценки"
+msgstr "Простите, команда недоступна для этого метода оценки"
 
 #: lib/src/gretl_errors.c:36
 msgid "Unspecified error -- FIXME"
@@ -2854,7 +2854,7 @@ msgstr "LM тест на наличие автокорреляции до пор
 
 #: lib/src/gretl_model.c:2753
 msgid "no autocorrelation"
-msgstr "автокорреляция отстутствует"
+msgstr "автокорреляция отсутствует"
 
 #: lib/src/gretl_model.c:2756 lib/src/gretl_model.c:2765
 msgid "no structural break"
@@ -3110,7 +3110,7 @@ msgid ""
 msgstr ""
 "\n"
 "Статистика Бриша-Пэгана (Breusch-Pagan):\n"
-" LM = %g, p-значение = P(хи-квадрат(1) > %g) = %g\n"
+" LM = %g, p-значение = P(Хи-квадрат(1) > %g) = %g\n"
 
 #: lib/src/gretl_panel.c:2521
 msgid ""
@@ -3160,7 +3160,7 @@ msgstr ""
 msgid "Can't produce ML estimates: some units have only one observation"
 msgstr ""
 "Невозможно провести оценку методом максимального правдоподобия:\n"
-"для некоторых объектов существует только одно наблюдение"
+"для некоторых объектов присутствует только одно наблюдение"
 
 #: lib/src/gretl_panel.c:3537 plugin/poisson.c:327
 msgid "iteration"
@@ -3405,7 +3405,7 @@ msgstr "ESS = %g, %d наблюдений, %d коэффициентов\n"
 
 #: lib/src/gretl_utils.c:790
 msgid "no ':' allowed in starting obs with frequency 1"
-msgstr ""
+msgstr "символ ':' не допустим в первом наблюдении с частотой 1"
 
 #: lib/src/gretl_utils.c:794
 msgid "panel data must have frequency > 1"
@@ -3413,12 +3413,12 @@ msgstr "Панельные данные должны иметь частоту >
 
 #: lib/src/gretl_utils.c:799
 msgid "starting obs must contain a ':' with frequency > 1"
-msgstr ""
+msgstr "начальное наблюдение должно содержать символ ':' с частотой > 1"
 
 #: lib/src/gretl_utils.c:804
 #, c-format
 msgid "starting obs '%s' is incompatible with frequency"
-msgstr ""
+msgstr "начальное наблюдение '%s' противоречит частоте"
 
 #: lib/src/gretl_utils.c:808
 msgid "cross-sectional data: frequency must be 1"
@@ -3441,7 +3441,7 @@ msgstr "объектов"
 
 #: lib/src/gretl_utils.c:870
 msgid "Failed to parse line as frequency, startobs"
-msgstr ""
+msgstr "Не удалось интерпретировать строку как частоту"
 
 #: lib/src/gretl_utils.c:908 lib/src/gretl_utils.c:917
 #: lib/src/gretl_utils.c:927 lib/src/gretl_utils.c:937
@@ -3503,10 +3503,12 @@ msgid ""
 "Failed to parse HTTP proxy:\n"
 "format must be ipnumber:port"
 msgstr ""
+"Неправильно указан HTTP-прокси:\n"
+"Формат должен быть следующим IP-адрес:порт"
 
 #: lib/src/gretl_www.c:1662
 msgid "HTTP proxy: first field must be an IP number"
-msgstr ""
+msgstr "Для HTTP-прокси первое поле должно быть IP-адресом"
 
 #: lib/src/gretl_xml.c:80 lib/src/gretl_xml.c:2300 lib/src/gretl_xml.c:2463
 #: lib/src/gretl_xml.c:2504 plugin/gnumeric_import.c:379
@@ -3565,7 +3567,7 @@ msgstr "Не удалось прочитать количество наблюд
 #: lib/src/gretl_xml.c:1886
 #, c-format
 msgid "labels attribute for observations must be 'true' or 'false'"
-msgstr ""
+msgstr "Аттрибуты меток для наблюдений должны быть 'true' или 'false'"
 
 #: lib/src/gretl_xml.c:1931
 #, c-format
@@ -3590,7 +3592,7 @@ msgstr "Количество наблюдений не соответствуе�
 #: lib/src/gretl_xml.c:2052
 #, c-format
 msgid "Required attribute 'type' is missing from data file"
-msgstr ""
+msgstr "Обязательный аттрибут 'type' отсутствует в файле данных"
 
 #: lib/src/gretl_xml.c:2064
 #, c-format
@@ -3856,7 +3858,7 @@ msgstr "Данные записаны успешно.\n"
 
 #: lib/src/interact.c:4396
 msgid "This estimator requires panel data"
-msgstr "Эта функция оценка требует панельных данных"
+msgstr "Этот метод оценки предназначен для панельных данных"
 
 #: lib/src/interact.c:4544
 msgid "Couldn't format model\n"
@@ -3879,7 +3881,7 @@ msgstr "Вы не можете удалять переменные здесь\n"
 #: gui2/library.c:7305
 #, c-format
 msgid "wrote %s\n"
-msgstr ""
+msgstr "записано %s\n"
 
 #: lib/src/interact.c:4698
 #, c-format
@@ -3888,11 +3890,11 @@ msgstr "Команда %s еще не реализована в libgretl\n"
 
 #: lib/src/interact.c:5163
 msgid "error evaluating 'if'"
-msgstr ""
+msgstr "ошибка при выполнении команды 'if'"
 
 #: lib/src/interact.c:5166
 msgid "indeterminate condition for 'if'"
-msgstr ""
+msgstr "неверное условие для команды 'if'"
 
 #: lib/src/libset.c:913
 #, c-format
@@ -3915,7 +3917,7 @@ msgstr ""
 
 #: lib/src/libset.c:1184
 msgid "\"help set\" for details"
-msgstr "используйте \"help set\" для подробностей"
+msgstr "используйте \"help set\" для подробного описания"
 
 #: lib/src/libset.c:1187
 msgid "Program interaction and behavior"
@@ -4231,11 +4233,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:642
 msgid "Fixed-effects"
-msgstr ""
+msgstr "Фиксированные эффекты"
 
 #: lib/src/modelprint.c:644
 msgid "Random-effects (GLS)"
-msgstr ""
+msgstr "Случайные эффекты (GLS)"
 
 #: lib/src/modelprint.c:647
 msgid "Maximum Likelihood"
@@ -4255,15 +4257,15 @@ msgstr ""
 
 #: lib/src/modelprint.c:662 lib/src/modelprint.c:666
 msgid "2-step GMM"
-msgstr ""
+msgstr "Двухшаговый GMM"
 
 #: lib/src/modelprint.c:664 lib/src/modelprint.c:668
 msgid "Iterated GMM"
-msgstr ""
+msgstr "Итерационный GMM"
 
 #: lib/src/modelprint.c:670
 msgid "1-step GMM"
-msgstr ""
+msgstr "Одношаговый GMM"
 
 #: lib/src/modelprint.c:674
 msgid "Ordered Logit"
@@ -4365,15 +4367,15 @@ msgstr "вариант"
 
 #: lib/src/modelprint.c:948
 msgid "Standard errors based on Hessian"
-msgstr "Стандартные ошибки, рассчитанные на основе Гессиана"
+msgstr "Стандартные ошибки рассчитаны на основе Гессиана"
 
 #: lib/src/modelprint.c:951
 msgid "Standard errors based on Information Matrix"
-msgstr "Стандартные ошибки, основанные на информационной матрице"
+msgstr "Стандартные ошибки рассчитаны на основе информационной матрице"
 
 #: lib/src/modelprint.c:954
 msgid "Standard errors based on Outer Products matrix"
-msgstr ""
+msgstr "Стандартные ошибки рассчитаны на основе матрицы внешнего произведения"
 
 #: lib/src/modelprint.c:957
 msgid "QML standard errors"
@@ -4449,7 +4451,7 @@ msgstr "Оценено при помощи метода наименьших к�
 
 #: lib/src/modelprint.c:1213
 msgid "Estimated using BHHH method"
-msgstr ""
+msgstr "Оценено с помощью метода BHHH (Berndt, Hall, Hall and Hausman)"
 
 #: lib/src/modelprint.c:1226
 #, c-format
@@ -5870,7 +5872,7 @@ msgstr ""
 
 #: lib/src/system.c:98
 msgid "Seemingly Unrelated Regressions"
-msgstr ""
+msgstr "Внешне не связанные регрессии"
 
 #: lib/src/system.c:99
 msgid "Three-Stage Least Squares"
@@ -5979,7 +5981,7 @@ msgstr "Система уравнений"
 
 #: lib/src/system.c:3655 lib/src/system.c:3665 gui2/dlgutils.c:1018
 msgid "Estimator"
-msgstr ""
+msgstr "Метод оценки"
 
 #: lib/src/system.c:3779
 msgid "Ljung-Box Q'"
@@ -6483,7 +6485,7 @@ msgstr "Выборочное распределение - t(%d)"
 #: gui2/calculator.c:167
 #, c-format
 msgid "Chi-square(%d) sampling distribution"
-msgstr "Выборочное распределение - хи-квадрат(%d)"
+msgstr "Выборочное распределение - Хи-квадрат(%d)"
 
 #: gui2/calculator.c:170
 #, c-format
@@ -6618,7 +6620,7 @@ msgstr "Выборочная дисперсия = %g\n"
 #: gui2/calculator.c:1561
 #, c-format
 msgid "Test statistic: chi-square(%d) = %d * %g/%g = %g\n"
-msgstr "Тестовая статистика: хи-квадрат(%d) = %d * %g/%g = %g\n"
+msgstr "Тестовая статистика: Хи-квадрат(%d) = %d * %g/%g = %g\n"
 
 #: gui2/calculator.c:1580
 #, c-format
@@ -8096,11 +8098,11 @@ msgstr "Конец:"
 
 #: gui2/dialogs.c:2062
 msgid "There are no dummy variables in the current sample"
-msgstr "В текущей выборке дискретные переменные отстутствуют"
+msgstr "В текущей выборке дискретные переменные отсутствуют"
 
 #: gui2/dialogs.c:2064
 msgid "There are no dummy variables in the dataset"
-msgstr "В текущем наборе данных дискретные переменные отстутствуют"
+msgstr "В текущем наборе данных дискретные переменные отсутствуют"
 
 #: gui2/dialogs.c:2070
 msgid "gretl: set sample"
