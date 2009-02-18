@@ -1251,7 +1251,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
-    mod.errcode = BFGS_max(mnl->theta, k * n, maxit, 1.0e-9, 
+    mod.errcode = BFGS_max(mnl->theta, k * n, maxit, get_default_nls_toler(), 
 			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
 			   NULL, mnl, (prn != NULL)? OPT_V : OPT_NONE,
 			   prn);
