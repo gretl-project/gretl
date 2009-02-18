@@ -2953,11 +2953,18 @@ static void print_coeff_separator (const char *s, int n, PRN *prn)
 
     if (plain_format(prn)) {
 	if (havestr) {
-	    pputs(prn, "\n  "); 
-	    print_centered(_(s), n, prn);
+	    if (n > 0) {
+		pputs(prn, "\n  "); 
+		print_centered(_(s), n, prn);
+	    } else {
+		pputs(prn, "  "); 
+		pputs(prn, _(s));
+	    }
 	    pputc(prn, '\n'); 
-	} 
-	pputc(prn, '\n');
+	}
+	if (n > 0) {
+	    pputc(prn, '\n');
+	}
     } else if (tex_format(prn)) {
 	if (havestr) {
 	    pputs(prn, "\\\\ [-8pt]\n");
@@ -3726,12 +3733,11 @@ static int plain_print_coeffs (const MODEL *pmod,
     int dotlen, namelen = 0;
     int colsep = 2;
     int ncols = 4;
-    int i, j;
+    int i, j, k;
     int err = 0;
 
     if (pmod->ci == AR || pmod->ci == ARCH) {
-	int k = 0;
-
+	k = 0;
 	if (pmod->ci == AR) {
 	    err = get_ar_data(pmod, &xb, &xse, &k, &dfd);
 	} else {
@@ -3878,11 +3884,13 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     /* print row values */
 
+    k = 0;
     for (i=0; i<nc; i++) {
 	if (i == seppos) {
 	    print_coeff_separator(sepstr, dotlen, prn);
-	} else if (cblock > 0 && i > 0 && i % cblock == 0) {
-	    print_coeff_separator(NULL, 0, prn);
+	} else if (cblock > 0 && i % cblock == 0) {
+	    sepstr = mn_logit_coeffsep(pmod, pdinfo, ++k);
+	    print_coeff_separator(sepstr, 0, prn);
 	}
 	pprintf(prn, "  %-*s", namelen, names[i]);
 	bufspace(colsep, prn);

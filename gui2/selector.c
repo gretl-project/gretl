@@ -78,7 +78,8 @@ struct _selector {
 
 /* single-equation estimation commands plus some GUI extensions */
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
-                       c == PWE || c == PANEL_WLS || c == PANEL_B)
+                       c == PWE || c == PANEL_WLS || c == PANEL_B || \
+                       c == OLOGIT || c == OPROBIT || c == MLOGIT)
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
 
@@ -110,12 +111,15 @@ struct _selector {
                          c == INTREG || \
                          c == IVREG || \
                          c == LOGIT || \
+                         c == OLOGIT || \
+                         c == MLOGIT || \
                          c == MPOLS || \
                          c == OLS || \
                          c == PANEL || \
                          c == PANEL_WLS || \
                          c == PANEL_B || \
                          c == PROBIT || \
+                         c == OPROBIT || \
 	                 c == QUANTREG || \
 			 c == SPEARMAN || \
                          c == TOBIT || \
@@ -578,6 +582,16 @@ void selector_from_model (void *ptr, int ci)
 		sel_ci = QUANTREG;
 	    }
 	    /* FIXME replicate rq_tauvec? */
+	} else if (pmod->ci == LOGIT) {
+	    if (gretl_model_get_int(pmod, "ordered")) {
+		sel_ci = OLOGIT;
+	    } else if (gretl_model_get_int(pmod, "multinom")) {
+		sel_ci = MLOGIT;
+	    }
+	} else if (pmod->ci == PROBIT) {
+	    if (gretl_model_get_int(pmod, "ordered")) {
+		sel_ci = OPROBIT;
+	    }
 	}
 
 	if (pmod->opt & OPT_R) {
@@ -2842,8 +2856,14 @@ static char *est_str (int cmdnum)
 	return N_("Prais-Winsten");
     case LOGIT:
 	return N_("Logit");
+    case OLOGIT:
+	return N_("Ordered Logit");
+    case MLOGIT:
+	return N_("Multinomial Logit");
     case PROBIT:
 	return N_("Probit");
+    case OPROBIT:
+	return N_("Ordered Probit");
     case TOBIT:
 	return N_("Tobit");
     case HECKIT:
@@ -3972,7 +3992,9 @@ static GtkWidget *mpols_bits_selector (void)
     return hbox;
 }
 
-#define robust_conf(c) (c != LOGIT && c != PROBIT && c != QUANTREG && c != INTREG)
+#define robust_conf(c) (c != LOGIT && c != PROBIT && \
+                        c != OLOGIT && c != OPROBIT && \
+                        c != QUANTREG && c != INTREG)
 
 static void build_selector_switches (selector *sr) 
 {
@@ -3981,6 +4003,7 @@ static void build_selector_switches (selector *sr)
     if (sr->ci == OLS || sr->ci == WLS || sr->ci == INTREG ||
 	sr->ci == GARCH || sr->ci == IVREG || sr->ci == VAR || 
 	sr->ci == LOGIT || sr->ci == PROBIT ||
+	sr->ci == OLOGIT || sr->ci == OPROBIT ||
 	sr->ci == PANEL || sr->ci == QUANTREG) {
 	GtkWidget *b1;
 
@@ -4033,7 +4056,8 @@ static void build_selector_switches (selector *sr)
     }
 
     if (sr->ci == TOBIT || sr->ci == ARMA || sr->ci == GARCH ||
-	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == HECKIT) {
+	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == HECKIT ||
+	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == MLOGIT) {
 	if (sr->ci == ARMA) {
 	    vbox_add_hsep(sr->vbox);
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
@@ -4658,14 +4682,21 @@ static void selector_doit (GtkWidget *w, selector *sr)
     } 
 }
 
-static void 
-build_selector_buttons (selector *sr)
+static void build_selector_buttons (selector *sr)
 {
     GtkWidget *tmp;
 
     if (sr->ci != PRINT && sr->ci != SAVE_FUNCTIONS &&
 	sr->ci != DEFINE_LIST && sr->ci != DEFINE_MATRIX &&
 	sr->ci != ELLIPSE && !SAVE_DATA_ACTION(sr->ci)) {
+	int ci = sr->ci;
+
+	if (sr->ci == OLOGIT || sr->ci == MLOGIT) {
+	    ci = LOGIT;
+	} else if (sr->ci == OPROBIT) {
+	    ci = PROBIT;
+	}
+
 	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
@@ -4673,7 +4704,7 @@ build_selector_buttons (selector *sr)
 					   tmp, TRUE);
 	g_signal_connect(G_OBJECT(tmp), "clicked", 
 			 G_CALLBACK(context_help), 
-			 GINT_TO_POINTER(sr->ci));
+			 GINT_TO_POINTER(ci));
 	gtk_widget_show(tmp);
     }
 

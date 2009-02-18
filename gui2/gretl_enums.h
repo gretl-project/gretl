@@ -106,6 +106,9 @@ enum extra_cmds {
     AFR, /* actual, fitted, residual */
     GPT_ADDLINE,
     GPT_CURVE,
+    OLOGIT,
+    MLOGIT,
+    OPROBIT,
     GUI_CMD_MAX
 };
 

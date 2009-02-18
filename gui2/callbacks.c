@@ -404,6 +404,16 @@ static int model_action_code (GtkAction *action)
 	    ci = PANEL_B;
 	else if (!strcmp(s, "VLAGSEL"))
 	    ci = VLAGSEL;
+	else if (!strcmp(s, "blogit"))
+	    ci = LOGIT;
+	else if (!strcmp(s, "ologit"))
+	    ci = OLOGIT;
+	else if (!strcmp(s, "mlogit"))
+	    ci = MLOGIT;
+	else if (!strcmp(s, "bprobit"))
+	    ci = PROBIT;
+	else if (!strcmp(s, "oprobit"))
+	    ci = OPROBIT;
     }
 
     return ci;

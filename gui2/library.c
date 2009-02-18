@@ -3210,8 +3210,16 @@ int do_model (selector *sr)
 	pols = 1;
     }
 
+    if (ci == OLOGIT) {
+	ci = LOGIT;
+    } else if (ci == OPROBIT) {
+	ci = PROBIT;
+    }
+
     if (ar1_code(ci)) {
 	strcpy(estimator, "ar1");
+    } else if (ci == MLOGIT) {
+	strcpy(estimator, "logit");
     } else {
 	strcpy(estimator, gretl_command_word(ci));
     }
@@ -3227,6 +3235,9 @@ int do_model (selector *sr)
 	    libcmd.opt |= OPT_P;
 	}
 	ci = AR1;
+    } else if (ci == MLOGIT) {
+	libcmd.opt |= OPT_M;
+	ci = LOGIT;
     }
 
     gretl_command_sprintf("%s %s%s", estimator, buf, 

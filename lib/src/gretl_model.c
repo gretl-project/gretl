@@ -1540,6 +1540,9 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     } else if (!NONLIST_MODEL(pmod->ci)) {
 	if (pmod->ci == HECKIT) {
 	    nx = gretl_model_get_int(pmod, "base-coeffs");
+	} else if (pmod->ci == LOGIT) {
+	    /* multinomial is special */
+	    nx = pmod->list[0] - 1;
 	} else {
 	    nx = pmod->ncoeff;
 	}

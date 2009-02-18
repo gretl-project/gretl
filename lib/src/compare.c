@@ -636,7 +636,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     } else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	if (gretl_model_get_int(orig, "ordered")) {
 	    myopt |= OPT_D;
-	} 
+	} else if (gretl_model_get_int(orig, "multinom")) {
+	    myopt |= OPT_M;
+	}
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "pooled")) {
 	    myopt |= OPT_P;

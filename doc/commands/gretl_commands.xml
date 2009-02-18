@@ -4777,6 +4777,10 @@
 	  <effect>robust standard errors</effect>
 	</option>
 	<option>
+	  <flag>--multinomial</flag>
+	  <effect>estmate multinomial logit</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -4822,12 +4826,17 @@
 	calculated instead. In this case the estimated covariance matrix
 	is a <quote>sandwich</quote> of the inverse of the estimated
 	Hessian and the outer product of the gradient.  See Davidson and
-	MacKinnon (2004, Chapter 10) for details.
+	MacKinnon (2004, Chapter 10) for details.  This option is not
+	available for Multinomial Logit at present.
       </para>
       <para>
-	If the dependent variable is not binary but is discrete, then Ordered
-	Logit estimates are obtained.  (If the variable selected as dependent
-	is not discrete, an error is flagged.)
+	If the dependent variable is not binary but is discrete, then by
+	default it is interpreted as an ordinal response, and Ordered Logit
+	estimates are obtained.  However, if the <lit>--multinomial</lit>
+	option is given, the dependent variable is interpreted as an unordered
+	response, and Multinomial Logit estimates are produced. (In either
+	case, if the variable selected as dependent is not discrete an error
+	is flagged.)
       </para>
       <para>
 	If you want to use logit for analysis of proportions (where

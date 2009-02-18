@@ -853,6 +853,7 @@ static void mnl_info_destroy (mnl_info *mnl)
     if (mnl != NULL) {
 	gretl_matrix_block_destroy(mnl->B);
 	free(mnl->theta);
+	free(mnl);
     }
 }
 
@@ -924,10 +925,17 @@ static double mn_logit_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl)
+/* Construct 'yhat' and 'uhat'.  Maybe this is too simple-minded;
+   we just find, for each observation, the y-value for which the
+   likelihood is maximized and set that as yhat[t], then form
+   uhat[t] = y[t] - yhat[t];
+*/
+
+static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
+			   const gretl_matrix *yvals)
 {
-    double p, pmax, ymax;
-    int i, s, t;
+    double p, pmax;
+    int i, s, t, iymax;
     int ncorrect = 0;
 
     s = 0;
@@ -936,18 +944,24 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl)
 	    continue;
 	}
 	pmax = 1.0;
-	ymax = 0.0;
+	iymax = 0;
 	for (i=0; i<mnl->n; i++) {
 	    p = gretl_matrix_get(mnl->Xb, s, i);
 	    if (p > pmax) {
 		pmax = p;
-		ymax = i + 1;
+		iymax = i + 1;
 	    }
 	}
-	pmod->yhat[t] = ymax;
-	pmod->uhat[t] = mnl->y->val[s] - ymax;
-	if (ymax == mnl->y->val[s]) {
+	if (iymax == (int) mnl->y->val[s]) {
 	    ncorrect++;
+	}	
+	if (yvals != NULL) {
+	    pmod->yhat[t] = yvals->val[iymax];
+	    i = mnl->y->val[s];
+	    pmod->uhat[t] = yvals->val[i] - pmod->yhat[t];
+	} else {
+	    pmod->yhat[t] = iymax;
+	    pmod->uhat[t] = mnl->y->val[s] - iymax;
 	}
 	s++;
     }
@@ -956,17 +970,86 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl)
 	    ncorrect, pmod->nobs, 100 * (double) ncorrect / pmod->nobs);
 }
 
-/* multinomial logit dependent variable: count the distinct values */
+struct sorter {
+    double x;
+    int t;
+};
 
-static int mn_value_count (const double *y, MODEL *pmod, double *ymin)
+/* In case the dependent variable is not in canonical form for
+   multinomial logit, construct a transformed version */
+
+static int make_canonical_depvar (MODEL *pmod, const double *y, 
+				  gretl_matrix *yvec)
+{
+    struct sorter *s;
+    double nexty, bady;
+    int i, t, n = pmod->nobs;
+
+    s = malloc(n * sizeof *s);
+    if (s == NULL) {
+	return E_ALLOC;
+    }
+
+    i = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t])) {
+	    s[i].x = y[t];
+	    s[i].t = i;
+	    i++;
+	}
+    }
+
+    qsort(s, n, sizeof *s, gretl_compare_doubles);
+
+    /* normalize to a minimum of zero */
+    if (s[0].x != 0) {
+	double ymin = s[0].x;
+
+	for (i=0; i<n && s[i].x == ymin; i++) {
+	    s[i].x = 0.0;
+	}
+    }
+
+    /* ensure that the sorted values increase by steps of one */
+    for (i=1; i<n; i++) {
+	if (s[i].x != s[i-1].x) {
+	    nexty = s[i-1].x + 1;
+	    if (s[i].x != nexty) {
+		bady = s[i].x;
+		while (i < n && s[i].x == bady) {
+		    s[i++].x = nexty;
+		}
+		i--; /* compensate for outer i++ */
+	    } 
+	} 
+    }
+
+    /* write canonical version of y into yvec */
+    for (i=0; i<n; i++) {
+	yvec->val[s[i].t] = s[i].x;
+    }
+
+    free(s);
+
+    return 0;
+}
+
+/* multinomial logit: count the distinct values taken on by the
+   dependent variable.  If the variable does not take the form of a
+   sequence of consecutive integers with a base of zero, flag this
+   by returning via @yvals the vector of distinct values.
+*/
+
+static int mn_value_count (const double *y, MODEL *pmod, gretl_vector **yvals)
 {
     double *sy = malloc(pmod->nobs * sizeof *sy);
     int T = pmod->nobs;
-    int ret = 0;
+    int n = 0;
 
     if (sy == NULL) {
 	pmod->errcode = E_ALLOC;
     } else {
+	gretl_vector *v;
 	int t, s = 0;
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -975,36 +1058,61 @@ static int mn_value_count (const double *y, MODEL *pmod, double *ymin)
 	    }
 	}
 
-	qsort(sy, T, sizeof *sy, gretl_compare_doubles);
+	v = gretl_matrix_values(sy, T, &pmod->errcode);
+	if (pmod->errcode) {
+	    free(sy);
+	    return 0;
+	}
 
-	/* the y-values should be consecutive integers */
-	for (t=1; t<T && !pmod->errcode; t++) {
-	    if (sy[t] != floor(sy[t])) {
+	if (v->val[0] != 0.0) {
+	    *yvals = v;
+	}
+
+	n = gretl_vector_get_length(v);
+
+	for (t=0; t<n && !pmod->errcode; t++) {
+	    if (v->val[t] != floor(v->val[t])) {
 		pmod->errcode = E_DATA;
-	    }
-	    if (sy[t] != sy[t-1] && sy[t] != sy[t-1] + 1) {
-		pmod->errcode = E_DATA;
-	    }
-	    if (pmod->errcode) {
-		gretl_errmsg_set("mnlogit: the dep var must form a sequence of "
-				 "consecutive integers");
+		gretl_errmsg_set("logit: the dependent variable must form a sequence of "
+				 "integers");
+	    } else if (t > 0 && v->val[t] != v->val[t-1] + 1) {
+		/* we want a step of unity */
+		*yvals = v;
 	    }
 	}
-	if (!pmod->errcode) {    
-	    *ymin = sy[0];
-	    ret = count_distinct_values(sy, T);
+	if (pmod->errcode) {
+	    *yvals = NULL;
+	    n = 0;
+	} else {
+	    if (*yvals == v) {
+		v = NULL;
+	    }
 	}
+	gretl_matrix_free(v);
 	free(sy);
     }
 
+    return n;
+}
+
+const char *mn_logit_coeffsep (const MODEL *pmod, const DATAINFO *pdinfo, int i)
+{
+    static char ret[32];
+    const char *vname = gretl_model_get_depvar_name(pmod, pdinfo);
+    const int *list = (const int *) gretl_model_get_data(pmod, "yvals");
+    int val = (list != NULL)? list[i+1] : i;
+
+    sprintf(ret, "%s = %d", vname, val);
     return ret;
 }
 
 static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
-			    DATAINFO *pdinfo)
+			    const gretl_matrix *yvals,
+			    const DATAINFO *pdinfo)
 {
     int i, nc = mnl->k * mnl->n;
     double x, *tmp, *vcv;
+    int err = 0;
 
     tmp = realloc(pmod->coeff, nc * sizeof *tmp);
     if (tmp == NULL) {
@@ -1027,14 +1135,18 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
     }
 
     vcv = numerical_hessian(mnl->theta, nc, mn_logit_loglik, 
-			    mnl, &pmod->errcode);
-    if (!pmod->errcode) {
+			    mnl, &err);
+    if (!err) {
 	pmod->vcv = vcv;
 	for (i=0; i<nc; i++) {
 	    x = vcv[ijton(i, i, nc)];
 	    pmod->sderr[i] = (na(x))? NADBL : sqrt(x);
 	}
 	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+    } else {
+	for (i=0; i<nc; i++) {
+	    pmod->sderr[i] = NADBL;
+	}
     }
 
     if (!pmod->errcode) {
@@ -1060,12 +1172,23 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
 		strcpy(pmod->params[k++], pdinfo->varname[vj]);
 	    }
 	}
-	mn_logit_yhat(pmod, mnl);
+	mn_logit_yhat(pmod, mnl, yvals);
 	set_model_id(pmod);
+    }
+
+    if (!pmod->errcode && yvals != NULL) {
+	int *list = gretl_list_new(yvals->rows);
+
+	if (list != NULL) {
+	    for (i=0; i<yvals->rows; i++) {
+		list[i+1] = yvals->val[i];
+	    }
+	    gretl_model_set_list_as_data(pmod, "yvals", list);
+	}
     }
 }
 
-/* built-in multinomial logit: just testing for the moment */
+/* multinomial logit */
 
 static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn)
@@ -1075,7 +1198,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     int grcount = 0;
     MODEL mod;
     mnl_info *mnl;
-    double ymin = 0;
+    gretl_vector *yvals = NULL;
     int n, k = list[0] - 1;
     int i, vi, t, s;
 
@@ -1085,7 +1208,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mod;
     }
 
-    n = mn_value_count((*pZ)[list[1]], &mod, &ymin);
+    n = mn_value_count((*pZ)[list[1]], &mod, &yvals);
     if (mod.errcode) {
 	return mod;
     }
@@ -1103,10 +1226,18 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mod;
     }
 
-    s = 0;
-    for (t=mod.t1; t<=mod.t2; t++) {
-	if (!na(mod.yhat[t])) {
-	    mnl->y->val[s++] = (*pZ)[list[1]][t] - ymin;
+    if (yvals != NULL) {
+	/* the dependent variable needs transforming */
+	mod.errcode = make_canonical_depvar(&mod, (*pZ)[list[1]], mnl->y);
+	if (mod.errcode) {
+	    goto bailout;
+	}
+    } else {
+	s = 0;
+	for (t=mod.t1; t<=mod.t2; t++) {
+	    if (!na(mod.yhat[t])) {
+		mnl->y->val[s++] = (*pZ)[list[1]][t];
+	    }
 	}
     }
 
@@ -1126,17 +1257,19 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 			   prn);
 
     if (!mod.errcode) {
-	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
-	mnl_transcribe(mnl, &mod, pdinfo);
-    }    
+	mnl_transcribe(mnl, &mod, yvals, pdinfo);
+    }  
+
+ bailout:  
 
     mnl_info_destroy(mnl);
+    gretl_matrix_free(yvals);
 
     return mod;
 }
 
 static int 
-ordered_model_ok (double **Z, const DATAINFO *pdinfo, int v)
+discrete_depvar_ok (double **Z, const DATAINFO *pdinfo, int v)
 {
     if (!var_is_discrete(pdinfo, v) && 
 	!gretl_is_oprobit_ok(pdinfo->t1, pdinfo->t2, Z[v])) {
@@ -1183,7 +1316,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo,
 	return mnl_model(list, pZ, pdinfo, opt, vprn);
     } else if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
 	return binary_logit_probit(list, pZ, pdinfo, ci, opt, prn);
-    } else if (ordered_model_ok(*pZ, pdinfo, yv)) {
+    } else if (discrete_depvar_ok(*pZ, pdinfo, yv)) {
 	vprn = (opt & OPT_V)? prn : NULL;
 	return ordered_model(list, ci, pZ, pdinfo, opt, vprn);
     } else {

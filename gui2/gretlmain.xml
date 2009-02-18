@@ -236,8 +236,15 @@
 	<menuitem action='mpols'/>
       </menu>
       <menu action='NonlinearModels'>
-	<menuitem action='logit'/>
-	<menuitem action='probit'/>
+	<menu action='logit'>
+	  <menuitem action='blogit'/>
+	  <menuitem action='ologit'/>
+	  <menuitem action='mlogit'/>
+	</menu>
+	<menu action='probit'>
+	  <menuitem action='bprobit'/>
+	  <menuitem action='oprobit'/>
+	</menu>
 	<menuitem action='tobit'/>
 	<menuitem action='heckit'/>
 	<menuitem action='poisson'/>

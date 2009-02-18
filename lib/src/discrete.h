@@ -34,6 +34,9 @@ int fishers_exact_test (const Xtab *tab, PRN *prn);
 MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt, 
 	      PRN *prn);
 
+const char *mn_logit_coeffsep (const MODEL *pmod, const DATAINFO *pdinfo, 
+			       int i);
+
 #endif /* DISCRETE_H */
 
 
