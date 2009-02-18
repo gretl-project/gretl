@@ -924,6 +924,38 @@ static double mn_logit_loglik (const double *theta, void *ptr)
     return ll;
 }
 
+static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl)
+{
+    double p, pmax, ymax;
+    int i, s, t;
+    int ncorrect = 0;
+
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->yhat[t])) {
+	    continue;
+	}
+	pmax = 1.0;
+	ymax = 0.0;
+	for (i=0; i<mnl->n; i++) {
+	    p = gretl_matrix_get(mnl->Xb, s, i);
+	    if (p > pmax) {
+		pmax = p;
+		ymax = i + 1;
+	    }
+	}
+	pmod->yhat[t] = ymax;
+	pmod->uhat[t] = mnl->y->val[s] - ymax;
+	if (ymax == mnl->y->val[s]) {
+	    ncorrect++;
+	}
+	s++;
+    }
+
+    fprintf(stderr, "Cases 'correct': %d out of %d (%.2f%%)\n",
+	    ncorrect, pmod->nobs, 100 * (double) ncorrect / pmod->nobs);
+}
+
 /* multinomial logit dependent variable: count the distinct values */
 
 static int mn_value_count (const double *y, MODEL *pmod, double *ymin)
@@ -991,7 +1023,7 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
     pmod->ncoeff = nc;
 
     for (i=0; i<nc; i++) {
-	pmod->coeff[i] = mnl->b->val[i];
+	pmod->coeff[i] = mnl->theta[i];
     }
 
     vcv = numerical_hessian(mnl->theta, nc, mn_logit_loglik, 
@@ -1028,10 +1060,9 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
 		strcpy(pmod->params[k++], pdinfo->varname[vj]);
 	    }
 	}
+	mn_logit_yhat(pmod, mnl);
 	set_model_id(pmod);
     }
-
-    /* FIXME fitted values, residuals */
 }
 
 /* built-in multinomial logit: just testing for the moment */
@@ -1060,6 +1091,11 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     n--; /* exclude the first value */
+
+    if (n * k > mod.nobs) {
+	mod.errcode = E_DF;
+	return mod;
+    }
 
     mnl = mnl_info_new(n, k, mod.nobs);
     if (mnl == NULL) {
