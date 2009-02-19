@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.7.9cvs
+# Polish translation for gretl-1.8.0
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2008
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
@@ -6,10 +6,10 @@
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.7.10\n"
+"Project-Id-Version: gretl-1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-02-12 17:38-0500\n"
-"PO-Revision-Date: 2009-01-20 01:00-0500\n"
+"PO-Revision-Date: 2009-02-18 23:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -468,9 +468,9 @@ msgid "Alternative statistic"
 msgstr "Statystyka testu"
 
 #: lib/src/compare.c:2027
-#, fuzzy, c-format
+#, c-format
 msgid "The model already contains %s"
-msgstr "Tabela modeli jest pusta"
+msgstr "Ten model już zawiera %s"
 
 #: lib/src/compare.c:2058
 msgid "dummy variable for Chow test"
@@ -530,9 +530,9 @@ msgid "Invalid sample split for Chow test"
 msgstr "Błędny podział próby dla testu Chowa"
 
 #: lib/src/compare.c:2430 lib/src/gretl_model.c:2758
-#, fuzzy, c-format
+#, c-format
 msgid "Chow test for structural difference with respect to %s"
-msgstr "Test Chowa na zmiany strukturalne przy podziale próby w obserwacji %s"
+msgstr "Test Chowa na strukturalne różnice poziomów ze względu na zmienną: %s"
 
 #: lib/src/compare.c:2433 lib/src/gretl_model.c:2755
 #, c-format
@@ -1436,9 +1436,9 @@ msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr "Opóźnienia  ACF         PACF      Ljung-Box Q [wartość p]"
 
 #: lib/src/describe.c:2783
-#, fuzzy, c-format
+#, c-format
 msgid "Argument is a constant"
-msgstr "%s jest stałą"
+msgstr "Argument jest stały"
 
 #: lib/src/describe.c:2869
 #, c-format
@@ -1450,9 +1450,9 @@ msgid "Cross-correlogram"
 msgstr "Korelogram wzajemny"
 
 #: lib/src/describe.c:3056
-#, fuzzy, c-format
+#, c-format
 msgid "xcf: argument %d is a constant"
-msgstr "%s jest stałą"
+msgstr "xcf: argument %d jest stały"
 
 #: lib/src/describe.c:3144
 #, c-format
@@ -2085,14 +2085,14 @@ msgid "%s: no such object\n"
 msgstr "%s: nie jest takim obiektem\n"
 
 #: lib/src/geneval.c:5470
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument should be %s"
-msgstr "Błędny typ argumentu dla \"%s\": powinnien być %s"
+msgstr "%s: powinnien być argumentem %s"
 
 #: lib/src/geneval.c:5473
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument %d should be %s"
-msgstr "Błędny typ argumentu dla \"%s\": powinnien być %s"
+msgstr "%s: argument %d powinnien być %s"
 
 #: lib/src/geneval.c:6843 lib/src/genlex.c:632 lib/src/genlex.c:699
 #: lib/src/gensyntax.c:274
@@ -2326,14 +2326,14 @@ msgid "Panel dummy variables generated.\n"
 msgstr "Panelowe zmienne 0-1 wygenerowane.\n"
 
 #: lib/src/gensyntax.c:256
-#, fuzzy, c-format
+#, c-format
 msgid "Expected '%c' but formula ended\n"
-msgstr "Oczekiwane '%c' lecz znaleziono '%s'\n"
+msgstr "Oczekiwano '%c' jako formuły końcowej\n"
 
 #: lib/src/gensyntax.c:258
 #, c-format
 msgid "Expected '%c' but found '%s'\n"
-msgstr "Oczekiwane '%c' lecz znaleziono '%s'\n"
+msgstr "Oczekiwano '%c' lecz znaleziono '%s'\n"
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2601 lib/src/gretl_panel.c:4393
 #: lib/src/gretl_panel.c:4403 lib/src/interact.c:3624 lib/src/nls.c:2541
@@ -2468,9 +2468,9 @@ msgid "Relative frequency"
 msgstr "Względna częstości"
 
 #: lib/src/graphing.c:3350
-#, fuzzy, c-format
+#, c-format
 msgid "%g percent interval"
-msgstr "%g procentowa wartość krytyczna"
+msgstr "%g procentowy przedział"
 
 #: lib/src/graphing.c:3364 lib/src/graphing.c:3371 lib/src/printout.c:1165
 msgid "forecast"
@@ -2514,9 +2514,9 @@ msgid "point estimate"
 msgstr "Estymacja punktowa"
 
 #: lib/src/graphing.c:3891
-#, fuzzy, c-format
+#, c-format
 msgid "%g and %g quantiles"
-msgstr "kwantyle 0.025 i 0.975"
+msgstr "kwantyle %g i %g"
 
 #: lib/src/graphing.c:4062
 msgid "VAR residuals"
@@ -2858,9 +2858,8 @@ msgid "no structural break"
 msgstr "brak zmian strukturalnych"
 
 #: lib/src/gretl_model.c:2759
-#, fuzzy
 msgid "no structural difference"
-msgstr "brak zmian strukturalnych"
+msgstr "brak strukturalnych różnic"
 
 #: lib/src/gretl_model.c:2761
 msgid "CUSUM test for parameter stability"
@@ -2961,9 +2960,8 @@ msgid "max F(%d, %d) = %g at observation %s"
 msgstr "maksymalne F(%d, %d) = %g dla obserwacji %s"
 
 #: lib/src/gretl_model.c:2994 lib/src/gretl_model.c:3001
-#, fuzzy
 msgid "failed"
-msgstr "wyrównane"
+msgstr "nieudany"
 
 #: lib/src/gretl_model.c:3118 lib/src/gretl_model.c:3121
 #: lib/src/gretl_model.c:3124
@@ -3709,9 +3707,9 @@ msgid "%d is not a valid variable number"
 msgstr "%d nie jest prawidłowym numerem zmiennej"
 
 #: lib/src/interact.c:2125
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not the name of a series"
-msgstr "'%s' nie jest nazwą zmiennej"
+msgstr "'%s' nie jest nazwą serii"
 
 #: lib/src/interact.c:2128
 #, c-format
@@ -3799,9 +3797,8 @@ msgid "%s: negative value is out of bounds.\n"
 msgstr "%s: ujemna wartość jest poza dopuszczalną granicą.\n"
 
 #: lib/src/interact.c:3655 lib/src/printout.c:1593
-#, fuzzy
 msgid "No series are defined\n"
-msgstr "Niezdefiniowana długość serii"
+msgstr "Niezdefiniowane serie\n"
 
 #: lib/src/interact.c:3659
 msgid "Listing labels for variables:\n"
@@ -5347,9 +5344,9 @@ msgstr ""
 "wykorzystywanego w estymacji modelu\n"
 
 #: lib/src/options.c:746
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid option '--%s'"
-msgstr "otrzymano błędne pole '%s'"
+msgstr "Błędna opcja '--%s'"
 
 #: lib/src/options.c:942
 #, c-format
@@ -5647,14 +5644,14 @@ msgid "Mean Absolute Error"
 msgstr "średni absolutny błąd"
 
 #: lib/src/printout.c:2368
-#, fuzzy, c-format
+#, c-format
 msgid " For %g%% confidence intervals, z(%g) = %.2f\n"
-msgstr " Dla 95%% przedziału ufności, z(.025) = %.2f\n"
+msgstr " Dla %g%% przedziału ufności, z(%g) = %.2f\n"
 
 #: lib/src/printout.c:2371
-#, fuzzy, c-format
+#, c-format
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
-msgstr " Dla 95%% przedziału ufności, t(%d, .025) = %.3f\n"
+msgstr " Dla %g%% przedziału ufności, t(%d, %g) = %.3f\n"
 
 #: lib/src/printout.c:2379 gui2/guiprint.c:1675 gui2/guiprint.c:1736
 #: gui2/guiprint.c:1788 gui2/guiprint.c:1829
@@ -5666,9 +5663,9 @@ msgid " std. error"
 msgstr "błąd ex ante"
 
 #: lib/src/printout.c:2383
-#, fuzzy, c-format
+#, c-format
 msgid "        %g%% interval\n"
-msgstr "   95%% przedział ufności\n"
+msgstr "   %g%% przedział ufności\n"
 
 #: lib/src/printout.c:2504
 msgid "Criterion"
@@ -6137,9 +6134,9 @@ msgid "Index value %d is out of bounds"
 msgstr "Wartość indeksu %d jest spoza zakresu"
 
 #: lib/src/usermat.c:544
-#, fuzzy, c-format
+#, c-format
 msgid "Range %d to %d is non-positive!"
-msgstr "Rangi są niedodatnie!"
+msgstr "Rangi od %d do %d są niedodatnie!"
 
 #: lib/src/usermat.c:552 gui2/calculator.c:1384
 msgid "Range is non-positive!"
@@ -7092,23 +7089,20 @@ msgid "No suitable data are available"
 msgstr "Niedostępne dane są dostępne"
 
 #: gui2/calculator.c:3111
-#, fuzzy
 msgid "gretl: plot a curve"
-msgstr "gretl: zamienianie"
+msgstr "gretl: wykres funkcji"
 
 #: gui2/calculator.c:3124 gui2/gpt_dialog.c:1441 gui2/gpt_dialog.c:1968
 msgid "formula"
 msgstr "formuła"
 
 #: gui2/calculator.c:3137
-#, fuzzy
 msgid "x minimum"
-msgstr "minimum"
+msgstr "x minimum"
 
 #: gui2/calculator.c:3146
-#, fuzzy
 msgid "x range"
-msgstr "przedziały"
+msgstr "x maksimum"
 
 #: gui2/callbacks.c:217
 msgid "Open data file"
@@ -8203,9 +8197,8 @@ msgid "gretl: Chow test"
 msgstr "gretl: test stabilności Chowa"
 
 #: gui2/dialogs.c:2384
-#, fuzzy
 msgid "Produce forecast for"
-msgstr "gretl: prognoza"
+msgstr "Wynik prognozy dla"
 
 #: gui2/dialogs.c:2433
 msgid "Number of pre-forecast observations to graph"
@@ -8410,19 +8403,16 @@ msgid "Test against gamma distribution"
 msgstr "Test zgodności z rozkładem gama"
 
 #: gui2/dialogs.c:4052
-#, fuzzy
 msgid "gretl: error"
-msgstr "gretl: periodogram"
+msgstr "gretl: error"
 
 #: gui2/dialogs.c:4053
-#, fuzzy
 msgid "gretl: warning"
-msgstr "gretl: znajdowanie"
+msgstr "gretl: ostrzeżenie"
 
 #: gui2/dialogs.c:4054
-#, fuzzy
 msgid "gretl: information"
-msgstr "gretl: opcje"
+msgstr "gretl: informacja"
 
 #: gui2/dialogs.c:4175
 #, c-format
@@ -9634,7 +9624,7 @@ msgstr "_Wykresy rozkładów"
 
 #: gui2/gretl.c:1315
 msgid "_Plot a curve"
-msgstr ""
+msgstr "Wykresy _funkcji"
 
 #: gui2/gretl.c:1316
 msgid "_Test statistic calculator"
@@ -9782,9 +9772,8 @@ msgid "_Icon view"
 msgstr "_Ikony sesji"
 
 #: gui2/gretl.c:1361
-#, fuzzy
 msgid "_Scalars"
-msgstr "Skalary"
+msgstr "Definiowanie _skalarów"
 
 #: gui2/gretl.c:1362
 msgid "_Graph specified vars"
@@ -10443,42 +10432,42 @@ msgstr ""
 "Objaśnienie: * oznacza reszty przekraczające 2.5 razy błąd standardowy reszt"
 
 #: gui2/guiprint.c:1705
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
 "\n"
 msgstr ""
-"Dla 95\\%% przedziału ufności, $z(.025) = %.2f$\n"
+"Dla %g\\%% przedziału ufności, $z(%g) = %.2f$\n"
 "\n"
 
 #: gui2/guiprint.c:1709
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
 "\n"
 msgstr ""
-"Dla 95\\%% przedziału ufności, $t(%d, .025) = %.3f$\n"
+"Dla %g\\%% przedziału ufności, $t(%d, %g) = %.3f$\n"
 "\n"
 
 #: gui2/guiprint.c:1729
-#, fuzzy, c-format
+#, c-format
 msgid "%g\\%% interval"
 msgstr "%g\\%% przedział ufności"
 
 #: gui2/guiprint.c:1810
-#, fuzzy, c-format
+#, c-format
 msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "Dla 95%% przedziału ufności, z(.025) = %.2fn"
+msgstr "Dla %g%% przedziału ufności, z(%g) = %.2fn"
 
 #: gui2/guiprint.c:1814
-#, fuzzy, c-format
+#, c-format
 msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "Dla 95%% przedziału ufności, t(%d, .025) = %.3f"
+msgstr "Dla %g%% przedziału ufności, t(%d, %g) = %.3f"
 
 #: gui2/guiprint.c:1819
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% interval"
-msgstr "(90% przedział)"
+msgstr "%g%% przedział)"
 
 #: gui2/guiprint.c:1914 gui2/guiprint.c:1961
 #, c-format
@@ -11432,14 +11421,14 @@ msgid "Error saving model information"
 msgstr "Błąd zapisu informacji o modelu"
 
 #: gui2/library.c:3586
-#, fuzzy, c-format
+#, c-format
 msgid "Added scalar %s = %g"
-msgstr "Usunięto skalar %s"
+msgstr "Dodano skalar %s = %g"
 
 #: gui2/library.c:3593
-#, fuzzy, c-format
+#, c-format
 msgid "Added matrix %s"
-msgstr "Zmodyfikowano macierz %s"
+msgstr "Dodano macierz %s"
 
 #: gui2/library.c:3646
 #, c-format
@@ -11885,12 +11874,11 @@ msgstr "Wykres rozrzutu XY"
 
 #: gui2/menustate.c:355 gui2/menustate.c:426
 msgid "Add logs"
-msgstr ""
+msgstr "Dodaj logarytmy"
 
 #: gui2/menustate.c:357 gui2/menustate.c:427
-#, fuzzy
 msgid "Add differences"
-msgstr "opóźnione różnice"
+msgstr "Dodaj różnice"
 
 #: gui2/menustate.c:519
 msgid "Daily"
@@ -12711,9 +12699,8 @@ msgid "lag order"
 msgstr "rząd opóźnienia"
 
 #: gui2/selector.c:5913
-#, fuzzy
 msgid "Lags of endogenous variables"
-msgstr "Dołącz listę zmiennych endogenicznych"
+msgstr "Opóźnione zmienne endogeniczne"
 
 #: gui2/selector.c:5927
 msgid "lags"
@@ -12898,9 +12885,8 @@ msgid "Graph page"
 msgstr "Tabela wykres"
 
 #: gui2/session.c:3062
-#, fuzzy
 msgid "icon view"
-msgstr "_Ikony sesji"
+msgstr "Ikony bieżącej sesji"
 
 #: gui2/session.c:3243
 #, c-format
@@ -14582,38 +14568,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "lag order %d\n"
-#~ msgstr "Rząd opóźnienia %d\n"
-
-#~ msgid "Step %d: Dickey-Fuller test on residuals\n"
-#~ msgstr "Krok %d: test Dickeya-Fullera dla procesu resztowego\n"
-
-#~ msgid "95 percent confidence interval"
-#~ msgstr "95 procentowy przedział ufności"
-
-#~ msgid "Command '%s' ignored; not available in loop mode\n"
-#~ msgstr ""
-#~ "Polecenie '%s' zostało zignorowane, niedostępne polecenie dla pętli\n"
-
-#~ msgid "_Scalars..."
-#~ msgstr "Definiowanie s_kalarów..."
-
-#~ msgid "95\\% confidence interval"
-#~ msgstr "95\\% przedział ufności"
-
-#~ msgid "95% confidence interval"
-#~ msgstr "95% przedział ufności"
-
-#~ msgid "Couldn't read cointegration order"
-#~ msgstr "Niemożliwe odczytanie stopnia kointegracji"
-
-#~ msgid "current session"
-#~ msgstr "bieżąca sesja"
-
-#~ msgid "Confidence level, percent"
-#~ msgstr "Poziom ufności, procent"
-
-#~ msgid ""
-#~ "The index in a 'for' loop must be a single character from the set '%s'"
-#~ msgstr "Indeks pętli 'for' musi posiadać jeden znak z zakresu '%s'"
