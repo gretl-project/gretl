@@ -1462,12 +1462,14 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (list[2] == 0) {
 	FreqDist *freq;
+	double lf0;
 	freq = get_freq(list[1], (const double **) *pZ, pdinfo, NADBL, NADBL, \
 			0, 1, OPT_NONE, &mod.errcode); 
 
 	j = 0;
+	lf0 = log(freq->f[0]);
 	for (i=1; i<=n; i++) {
-	    mnl->theta[j] = log(freq->f[i] / freq->f[0]);
+	    mnl->theta[j] = log(freq->f[i]) - lf0;
 	    j += k;
 	}
 
