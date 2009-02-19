@@ -160,6 +160,8 @@ HACK_SRC = gtkfontselhack.c
 HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 
+all: $(PROG) $(GRETL_LANG)
+
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 

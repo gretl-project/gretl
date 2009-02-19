@@ -4826,8 +4826,7 @@
 	calculated instead. In this case the estimated covariance matrix
 	is a <quote>sandwich</quote> of the inverse of the estimated
 	Hessian and the outer product of the gradient.  See Davidson and
-	MacKinnon (2004, Chapter 10) for details.  This option is not
-	available for Multinomial Logit at present.
+	MacKinnon (2004, Chapter 10) for details.
       </para>
       <para>
 	If the dependent variable is not binary but is discrete, then by

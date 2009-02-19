@@ -961,10 +961,10 @@ static int mn_logit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll
     return 1;
 }
 
-/* form the multinomial logit covariance matrix via the
-   analytical Hessian */
+/* multinomial logit; form the negative inverse of the analytical
+   Hessian */
 
-static gretl_matrix *mnl_hessian (mnl_info *mnl, int *err)
+static gretl_matrix *mnl_hess_inverse (mnl_info *mnl, int *err)
 {
     gretl_matrix_block *B;
     gretl_matrix *H;
@@ -1080,7 +1080,7 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
     gretl_matrix *V = NULL;
     int err = 0;
 
-    H = mnl_hessian(mnl, &err);
+    H = mnl_hess_inverse(mnl, &err);
     if (err) {
 	return err;
     }
