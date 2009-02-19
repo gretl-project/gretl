@@ -22,7 +22,7 @@ open keane.gdt
 status = status-1 # dep. var. must be 0-based
 smpl (year=87 && ok(status)) --restrict
 
-matrix X = { educ, exper, expersq, black, const }
+matrix X = { const, educ, exper, expersq, black }
 scalar k = cols(X)
 matrix theta = zeros(2*k, 1)
 
