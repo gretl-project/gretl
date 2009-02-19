@@ -1460,19 +1460,22 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
-    if (list[2] == 0) {
+    if (mod.ifc) {
 	FreqDist *freq;
-	double lf0;
-	freq = get_freq(list[1], (const double **) *pZ, pdinfo, NADBL, NADBL, \
-			0, 1, OPT_NONE, &mod.errcode); 
 
-	j = 0;
-	lf0 = log(freq->f[0]);
-	for (i=1; i<=n; i++) {
-	    mnl->theta[j] = log(freq->f[i]) - lf0;
-	    j += k;
+	freq = get_discrete_freq(list[1], (const double **) *pZ, 
+				 pdinfo, OPT_X, &mod.errcode);
+
+	if (freq != NULL && freq->f[0] > 0) {
+	    double lf0 = log(freq->f[0]);
+	    j = 0;
+	    for (i=1; i<=n; i++) {
+		if (freq->f[i] > 0) {
+		    mnl->theta[j] = log(freq->f[i]) - lf0;
+		}
+		j += k;
+	    }
 	}
-
 	free_freq(freq);
     }
 

@@ -134,6 +134,10 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 		    double fmin, double fwid, int nbins, int params, 
 		    gretlopt opt, int *err);
 
+FreqDist *get_discrete_freq (int v, const double **Z, 
+			     const DATAINFO *pdinfo, 
+			     gretlopt opt, int *err);
+
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	      int graph, gretlopt opt, PRN *prn);
 

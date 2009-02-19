@@ -1551,7 +1551,7 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
     } 
 }
 
-static FreqDist *
+FreqDist *
 get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo, 
 		   gretlopt opt, int *err)
 {
