@@ -1409,7 +1409,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     mnl_info *mnl;
     gretl_vector *yvals = NULL;
     int n, k = list[0] - 1;
-    int i, vi, t, s;
+    int i, j, vi, t, s;
 
     /* we'll start with OLS to flush out data issues */
     mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
@@ -1458,6 +1458,24 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		gretl_matrix_set(mnl->X, s++, i, (*pZ)[vi][t]);
 	    }
 	}
+    } 
+
+    if (list[2] == 0) {
+	FreqDist *freq;
+	freq = get_freq(list[1], (const double **) *pZ, pdinfo, NADBL, NADBL, \
+			0, 1, OPT_NONE, &mod.errcode); 
+
+	j = 0;
+	for (i=1; i<=n; i++) {
+	    mnl->theta[j] = log(freq->f[i] / freq->f[0]);
+	    j += k;
+	}
+
+	free_freq(freq);
+    }
+
+    if (mod.errcode) {
+	goto bailout;
     } 
 
     mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
