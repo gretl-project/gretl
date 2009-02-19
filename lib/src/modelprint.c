@@ -34,6 +34,7 @@ static void alt_print_rho_terms (const MODEL *pmod, PRN *prn);
 static void print_binary_statistics (const MODEL *pmod, 
 				     const DATAINFO *pdinfo,
 				     PRN *prn);
+static void print_multinomial_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
@@ -296,7 +297,7 @@ enum {
 };
 
 static void 
-print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
+print_model_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 {
     const char *strs[] = {
 	N_("Sargan over-identification test"),
@@ -377,7 +378,7 @@ static void print_GMM_stats (const MODEL *pmod, PRN *prn)
     GMM_crit_line(pmod, prn);
     x = gretl_model_get_double(pmod, "J_test");
     if (!na(x)) {
-	print_GMM_chi2_test(pmod, x, J_TEST, prn);
+	print_model_chi2_test(pmod, x, J_TEST, prn);
     }
     
     if (!tex_format(prn)) {
@@ -407,12 +408,12 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
 
     x = gretl_model_get_double(pmod, "sargan");
     if (!na(x)) {
-	print_GMM_chi2_test(pmod, x, AB_SARGAN, prn);
+	print_model_chi2_test(pmod, x, AB_SARGAN, prn);
     }
 
     x = gretl_model_get_double(pmod, "wald");
     if (!na(x)) {
-	print_GMM_chi2_test(pmod, x, AB_WALD, prn);
+	print_model_chi2_test(pmod, x, AB_WALD, prn);
     }
 
     if (tex_format(prn)) {
@@ -2692,6 +2693,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_DPD_stats(pmod, prn);
     } else if (binary) {
 	print_binary_statistics(pmod, pdinfo, prn);
+    } else if (multinomial_model(pmod)) {
+	print_multinomial_stats(pmod, prn);
     } else if (tsls_model(pmod) && plain_format(prn)) {
 	addconst_message(pmod, prn);
     } else if (pmod->ci == INTREG) {
@@ -4425,6 +4428,35 @@ static void print_binary_statistics (const MODEL *pmod,
 		    i, pmod->chisq, chisq_cdf_comp(i, pmod->chisq));
 	}
 	pputs(prn, "\\end{raggedright}\n");
+    }
+}
+
+static void print_multinomial_stats (const MODEL *pmod, PRN *prn)
+{
+    double x = gretl_model_get_double(pmod, "wald");
+
+    if (plain_format(prn)) {
+	double pc_correct;
+	int correct;
+
+	correct = gretl_model_get_int(pmod, "correct");
+	if (correct > 0) {
+	    pc_correct = 100 * (double) correct / pmod->nobs;
+	    ensure_vsep(prn);
+	    pprintf(prn, "%s = %d (%.1f%%)\n", 
+		    _("Number of cases 'correctly predicted'"), 
+		    correct, pc_correct);
+	    if (na(x)) {
+		pputc(prn, '\n');
+	    }
+	}
+    } else {
+	ensure_vsep(prn);
+    }
+
+    if (!na(x)) {
+	print_model_chi2_test(pmod, x, AB_WALD, prn);
+	pputc(prn, '\n');
     }
 }
 

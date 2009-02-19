@@ -1164,8 +1164,7 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
 	s++;
     }
 
-    fprintf(stderr, "Cases 'correct': %d out of %d (%.2f%%)\n",
-	    ncorrect, pmod->nobs, 100 * (double) ncorrect / pmod->nobs);
+    gretl_model_set_int(pmod, "correct", ncorrect);
 }
 
 struct sorter {
@@ -1357,6 +1356,36 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	    }
 	    gretl_model_set_list_as_data(pmod, "yvals", list);
 	}
+    }
+
+    if (!pmod->errcode) {
+	/* add overal likelihood ratio test */
+	int t, ni, df = pmod->ncoeff;
+	double LR, L0 = 0.0;
+
+	if (pmod->ifc) {
+	    df -= mnl->n;
+	}
+
+	for (i=0; i<=mnl->n; i++) {
+	    ni = 0;
+	    for (t=0; t<mnl->T; t++) {
+		if (mnl->y->val[t] == i) {
+		    ni++;
+		}
+	    }
+	    if (ni > 0) {
+		if (pmod->ifc) {
+		    L0 += ni * log((double) ni / mnl->T);
+		} else {
+		    L0 += ni * log(1.0 / (mnl->n + 1));
+		}
+	    }
+	}
+
+	LR = 2.0 * (pmod->lnL - L0);
+	gretl_model_set_double(pmod, "wald", LR);
+	gretl_model_set_int(pmod, "wald_df", df);
     }
 }
 
