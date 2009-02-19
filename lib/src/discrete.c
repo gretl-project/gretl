@@ -1387,6 +1387,13 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	gretl_model_set_double(pmod, "wald", LR);
 	gretl_model_set_int(pmod, "wald_df", df);
     }
+
+    if (pmod->xpx != NULL) {
+	free(pmod->xpx);
+	pmod->xpx = NULL;
+    }
+
+    pmod->opt |= OPT_M;
 }
 
 /* multinomial logit */

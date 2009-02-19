@@ -2101,7 +2101,7 @@ static void add_model_dataset_items (windata_t *vwin)
 			    G_N_ELEMENTS(fixed_effects_data_items));
     }
 
-    if (pmod->ci != GARCH) {
+    if (pmod->ci != GARCH && !(pmod->ci == LOGIT && (pmod->opt & OPT_M))) {
 	vwin_menu_add_items(vwin, path, ess_items,
 			    G_N_ELEMENTS(ess_items));
     }
