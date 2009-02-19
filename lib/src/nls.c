@@ -2907,6 +2907,10 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
+    /* ensure that the canonical parameter values get back 
+       into external scalars or vectors */
+    update_coeff_values(spec->coeff, spec);
+
  bailout:
 
     if (spec->nvec > 0 && analytic_mode(spec)) {

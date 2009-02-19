@@ -44,7 +44,7 @@ gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 				BFGS_SCORE_FUNC scorefun,
 				void *data, int *err);
 
-double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, 
+double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func, 
 			   void *data, int *err);
 
 double user_BFGS (gretl_matrix *b, const char *fncall,

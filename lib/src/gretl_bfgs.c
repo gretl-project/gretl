@@ -107,12 +107,12 @@ static void hess_b_adjust_ij (double *c, double *b, double *h, int n,
    Allin Cottrell, June 2006.
 */
 
-double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
-			   int *err)
+double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func, 
+			   void *data, int *err)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
-    double *wspace;
+    double *bcpy, *wspace;
     double *c, *h0, *h, *Hd, *D;
     gretl_matrix *V = NULL;
     double *vcv = NULL;
@@ -127,8 +127,15 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
     int dn = vn + n;
     int i, j, k, m, u;
 
+    bcpy = copyvec(b, n);
+    if (bcpy == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }	
+
     wspace = malloc((4 * n + dn) * sizeof *wspace);
     if (wspace == NULL) {
+	free(bcpy);
 	*err = E_ALLOC;
 	return NULL;
     }
@@ -157,13 +164,13 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
     for (i=0; i<n; i++) {
 	hess_h_init(h, h0, n);
 	for (k=0; k<r; k++) {
-	    hess_b_adjust_i(c, b, h, n, i, 1);
+	    hess_b_adjust_i(c, bcpy, h, n, i, 1);
 	    f1 = func(c, data);
 	    if (na(f1)) {
 		*err = E_NAN;
 		goto bailout;
 	    }
-	    hess_b_adjust_i(c, b, h, n, i, -1);
+	    hess_b_adjust_i(c, bcpy, h, n, i, -1);
 	    f2 = func(c, data);
 	    if (na(f2)) {
 		*err = E_NAN;
@@ -197,13 +204,13 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
 	    } else {
 		hess_h_init(h, h0, n);
 		for (k=0; k<r; k++) {
-		    hess_b_adjust_ij(c, b, h, n, i, j, 1);
+		    hess_b_adjust_ij(c, bcpy, h, n, i, j, 1);
 		    f1 = func(c, data);
 		    if (na(f1)) {
 			*err = E_NAN;
 			goto bailout;
 		    }
-		    hess_b_adjust_ij(c, b, h, n, i, j, -1);
+		    hess_b_adjust_ij(c, bcpy, h, n, i, j, -1);
 		    f2 = func(c, data);
 		    if (na(f2)) {
 			*err = E_NAN;
@@ -253,6 +260,7 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
     }
 
     free(wspace);
+    free(bcpy);
 
     return vcv;
 }
@@ -355,9 +363,9 @@ static int broken_gradient (double *g, int n)
 }
 
 /* 
-   If "set inivals" has been used, supersede whatever initial
-   values were there by those given by the user (the customer is
-   always right).  In addition, respect user settings for the
+   If "set initvals" has been used, replace whatever initial values
+   might have been in place with those given by the user (the customer
+   is always right).  In addition, respect user settings for the
    maximum number of iterations and the convergence tolerance.
 */
 
@@ -367,7 +375,7 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 {
     const gretl_matrix *uinit;
     int uilen, umaxit;
-    double utol;
+    double utol, deftol;
     int i;
 
     uinit = get_init_vals();
@@ -386,7 +394,7 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 		pputs(prn, _("\n\n*** User-specified starting values:\n"));
 		for (i=0; i<n; i++) {
 		    pprintf(prn, " %12.6f", b[i]);
-		    if (i%6 == 5) {
+		    if (i % 6 == 5) {
 			pputc(prn, '\n');
 		    }
 		}
@@ -402,10 +410,16 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
     } else if (*maxit < 0) {
 	*maxit = 500;
     }
+
+    deftol = get_default_nls_toler();
+    if (*reltol == 0) {
+	/* unset: use default */
+	*reltol = deftol;
+    }
     
     utol = libset_get_double(BFGS_TOLER);
-    if (utol != get_default_nls_toler()) {
-	/* it has actually been set */
+    if (utol != deftol) {
+	/* user values has actually been set */
 	*reltol = utol;
 	if (!(opt & OPT_Q)) {
 	    fprintf(stderr, "user-specified BFGS tolerance = %g\n", utol);

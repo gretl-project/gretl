@@ -24,6 +24,8 @@
 #include "missing_private.h"
 #include "gretl_bfgs.h"
 
+#include <errno.h>
+
 #define TINY 1.0e-13
 
 static int neginv (const double *xpx, double *diag, int nv);
@@ -899,6 +901,8 @@ static double mn_logit_loglik (const double *theta, void *ptr)
     int npar = mnl->k * mnl->n;
     int i, t, err;
 
+    errno = 0;
+
     for (i=0; i<npar; i++) {
 	mnl->b->val[i] = theta[i];
     }
@@ -922,13 +926,20 @@ static double mn_logit_loglik (const double *theta, void *ptr)
 	}
     }
 
+    if (errno != 0) {
+	ll = NADBL;
+    }
+
     return ll;
 }
 
-/* Construct 'yhat' and 'uhat'.  Maybe this is too simple-minded;
-   we just find, for each observation, the y-value for which the
-   likelihood is maximized and set that as yhat[t], then form
-   uhat[t] = y[t] - yhat[t];
+/* Construct 'yhat' and 'uhat'.  Maybe this is too simple-minded; we
+   just find, for each observation, the y-value for which the
+   probability is maximized and set that as yhat[t].  We then set
+   uhat[t] as a binary "hit" (residual = 0) or "miss" (residual = 1).
+   Constructing a "quantitative" residual as y[t] - yhat[t] seems
+   spurious, since there's no meaningful metric for the "distance"
+   between y and yhat when y is an unordered response.
 */
 
 static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
@@ -954,14 +965,14 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
 	}
 	if (iymax == (int) mnl->y->val[s]) {
 	    ncorrect++;
-	}	
+	    pmod->uhat[t] = 0;
+	} else {
+	    pmod->uhat[t] = 1;
+	}
 	if (yvals != NULL) {
 	    pmod->yhat[t] = yvals->val[iymax];
-	    i = mnl->y->val[s];
-	    pmod->uhat[t] = yvals->val[i] - pmod->yhat[t];
 	} else {
 	    pmod->yhat[t] = iymax;
-	    pmod->uhat[t] = mnl->y->val[s] - iymax;
 	}
 	s++;
     }
@@ -1134,8 +1145,21 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
 	pmod->coeff[i] = mnl->theta[i];
     }
 
+#if 0
+    double *tbak = copyvec(mnl->theta, nc);
+#endif
+
     vcv = numerical_hessian(mnl->theta, nc, mn_logit_loglik, 
 			    mnl, &err);
+
+#if 0
+    for (i=0; i<nc; i++) {
+	fprintf(stderr, "theta_diff[%d] = %.15g\n", i, 
+		tbak[i] - mnl->theta[i]);
+    }
+    free(tbak);
+#endif
+
     if (!err) {
 	pmod->vcv = vcv;
 	for (i=0; i<nc; i++) {
@@ -1251,7 +1275,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
-    mod.errcode = BFGS_max(mnl->theta, k * n, maxit, get_default_nls_toler(), 
+    mod.errcode = BFGS_max(mnl->theta, k * n, maxit, 0.0, 
 			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
 			   NULL, mnl, (prn != NULL)? OPT_V : OPT_NONE,
 			   prn);
