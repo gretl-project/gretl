@@ -295,25 +295,12 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     gretl_matrix_qform(H, GRETL_MOD_NONE, S,
 		       V, GRETL_MOD_NONE);
 
-    pmod->vcv = malloc((k * (k + 1) / 2) * sizeof *pmod->vcv);
-    if (pmod->vcv == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
+    err = gretl_model_write_vcv(pmod, V);
 
-    /* set VCV and std err values */
-    for (i=0; i<k; i++) {
-	for (j=0; j<=i; j++) {
-	    x = gretl_matrix_get(V, i, j);
-	    pmod->vcv[ijton(i, j, k)] = x;
-	    if (i == j) {
-		pmod->sderr[i] = sqrt(x);
-	    }
-	}
+    if (!err) {
+	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+	pmod->opt |= OPT_R;
     }
-
-    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
-    pmod->opt |= OPT_R;
 
  bailout:
 
@@ -845,13 +832,11 @@ struct mnl_info_ {
     gretl_matrix *b;  /* coefficients, matrix form */
     gretl_matrix *Xb; /* coeffs times regressors */
     gretl_matrix *P;  /* probabilities */
-    gretl_matrix *G;  /* score matrix */
-    gretl_vector *g;  /* score vector */
     double *theta;    /* coeffs for BFGS */
     int n;            /* number of categories (excluding base) */
     int k;            /* number of coeffs per category */
+    int npar;         /* total number of parameters */
     int T;            /* number of observations */
-    int do_score;     /* analytical score required? */
 };
 
 static void mnl_info_destroy (mnl_info *mnl)
@@ -866,10 +851,11 @@ static void mnl_info_destroy (mnl_info *mnl)
 static mnl_info *mnl_info_new (int n, int k, int T)
 {
     mnl_info *mnl = malloc(sizeof *mnl);
-    int i, npar = k * n;
+    int i;
 
     if (mnl != NULL) {
-	mnl->theta = malloc(npar * sizeof *mnl->theta);
+	mnl->npar = k * n;
+	mnl->theta = malloc(mnl->npar * sizeof *mnl->theta);
 	if (mnl->theta == NULL) {
 	    free(mnl);
 	    return NULL;
@@ -879,21 +865,18 @@ static mnl_info *mnl_info_new (int n, int k, int T)
 					&mnl->b, k, n,
 					&mnl->Xb, T, n,
 					&mnl->P, T, n,
-					&mnl->G, T, n*k,
-					&mnl->g, 1, n*k,
 					NULL);
 	if (mnl->B == NULL) {
 	    free(mnl->theta);
 	    free(mnl);
 	    return NULL;
 	} else {
-	    for (i=0; i<npar; i++) {
+	    for (i=0; i<mnl->npar; i++) {
 		mnl->theta[i] = 0.0;
 	    }
 	    mnl->n = n;
 	    mnl->k = k;
 	    mnl->T = T;
-	    mnl->do_score = 1;
 	}
     }
 
@@ -905,11 +888,9 @@ static mnl_info *mnl_info_new (int n, int k, int T)
 static double mn_logit_loglik (const double *theta, void *ptr)
 {
     mnl_info *mnl = (mnl_info *) ptr;
-    int do_score = mnl->do_score;
-
-    double x, xti, p, g, ll = 0.0;
-    int npar = mnl->k * mnl->n;
-    int yt, i, j, k, t, err;
+    double x, xti, ll = 0.0;
+    int npar = mnl->npar;
+    int yt, i, t;
 
     errno = 0;
 
@@ -917,48 +898,25 @@ static double mn_logit_loglik (const double *theta, void *ptr)
 	mnl->b->val[i] = theta[i];
     }
 
-    err = gretl_matrix_multiply(mnl->X, mnl->b, mnl->Xb);
-    if (err) {
-	return NADBL;
-    }
+    gretl_matrix_multiply(mnl->X, mnl->b, mnl->Xb);
 
-    for (t=0; t<mnl->T; t++) {
+    for (t=0; t<mnl->T && !errno; t++) {
 	x = 1.0;
 	for (i=0; i<mnl->n; i++) {
 	    /* sum row i of exp(Xb) */
 	    xti = exp(gretl_matrix_get(mnl->Xb, t, i));
 	    x += xti;
-	    if (do_score) {
-		gretl_matrix_set(mnl->P, t, i, xti);
-	    }
 	}
 	ll -= log(x);
-	yt = mnl->y->val[t];
+	yt = gretl_vector_get(mnl->y, t);
 	if (yt > 0) {
 	    ll += gretl_matrix_get(mnl->Xb, t, yt-1);
 	}
-
-	if (do_score) {
-	    k = 0;
-	    for (i=0; i<mnl->n; i++) {
-		/* sum row i of exp(Xb) */
-		p = (i == (yt-1)) - gretl_matrix_get(mnl->P, t, i) / x;
-		for (j=0; j<mnl->k; j++) {
-		    g = p * gretl_matrix_get(mnl->X, t, j);
-		    gretl_matrix_set(mnl->G, t, k++, g);
-		}
-	    }
-	}
-    }
-
-    if (do_score) {
-	mnl->g = gretl_matrix_column_sum(mnl->G, &errno);
     }
 
     if (errno != 0) {
 	ll = NADBL;
     }
-
 
     return ll;
 }
@@ -967,13 +925,199 @@ static int mn_logit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll
 			   void *ptr)
 {
     mnl_info *mnl = (mnl_info *) ptr;
-    int i;
+    double x, xti, pti, p, g;
+    int i, j, k, t, yt;
+
+    errno = 0;
 
     for (i=0; i<npar; i++) {
-	s[i] = mnl->g->val[i];
+	s[i] = 0.0;
+    }
+
+    for (t=0; t<mnl->T && !errno; t++) {
+	x = 1.0;
+	for (i=0; i<mnl->n; i++) {
+	    /* sum row i of exp(Xb) */
+	    xti = exp(gretl_matrix_get(mnl->Xb, t, i));
+	    x += xti;
+	    gretl_matrix_set(mnl->P, t, i, xti);
+	}
+
+	if (!errno) {
+	    yt = gretl_vector_get(mnl->y, t);
+	    k = 0;
+	    for (i=0; i<mnl->n; i++) {
+		pti = gretl_matrix_get(mnl->P, t, i) / x;
+		gretl_matrix_set(mnl->P, t, i, pti);
+		p = (i == (yt-1)) - pti;
+		for (j=0; j<mnl->k; j++) {
+		    g = p * gretl_matrix_get(mnl->X, t, j);
+		    s[k++] += g;
+		}
+	    }
+	}
     }
 
     return 1;
+}
+
+/* form the multinomial logit covariance matrix via the
+   analytical Hessian */
+
+static gretl_matrix *mnl_hessian (mnl_info *mnl, int *err)
+{
+    gretl_matrix_block *B;
+    gretl_matrix *H;
+    gretl_matrix *x;
+    gretl_matrix *xx;
+    gretl_matrix *hjk;
+    double xti, ptj, ptk;
+    int r, c;
+    int i, j, k, t;
+
+    H = gretl_zero_matrix_new(mnl->npar, mnl->npar);
+    if (H == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    B = gretl_matrix_block_new(&x, 1, mnl->k,
+			       &xx, mnl->k, mnl->k,
+			       &hjk, mnl->k, mnl->k,
+			       NULL);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	gretl_matrix_free(H);
+	return NULL;
+    }
+
+    r = c = 0;
+
+    for (j=0; j<mnl->n; j++) {
+	for (k=0; k<=j; k++) {
+	    gretl_matrix_zero(hjk);
+	    for (t=0; t<mnl->T; t++) {
+		for (i=0; i<mnl->k; i++) {
+		    xti = gretl_matrix_get(mnl->X, t, i);
+		    gretl_vector_set(x, i, xti);
+		}
+		gretl_matrix_multiply_mod(x, GRETL_MOD_TRANSPOSE,
+					  x, GRETL_MOD_NONE,
+					  xx, GRETL_MOD_NONE);
+		ptj = gretl_matrix_get(mnl->P, t, j);
+		ptk = gretl_matrix_get(mnl->P, t, k);
+		gretl_matrix_multiply_by_scalar(xx, ptj * ((j == k) - ptk));
+		gretl_matrix_add_to(hjk, xx);
+	    }
+	    gretl_matrix_inscribe_matrix(H, hjk, r, c, GRETL_MOD_NONE);
+	    if (j != k) {
+		gretl_matrix_inscribe_matrix(H, hjk, c, r, GRETL_MOD_NONE);
+	    }
+	    c += mnl->k;
+	}
+	r += mnl->k;
+	c = 0;
+    }
+
+    gretl_matrix_block_destroy(B);
+
+    *err = gretl_invert_symmetric_matrix(H);
+
+    if (*err) {
+	gretl_matrix_free(H);
+	H = NULL;
+    }
+
+    return H;
+}
+
+static gretl_matrix *mnl_opg_matrix (mnl_info *mnl, int *err)
+{
+    gretl_matrix *G;
+    gretl_matrix *GG;
+    double p, g;
+    int yt, i, j, k, t;
+
+    G = gretl_matrix_alloc(mnl->T, mnl->npar);
+    if (G == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    GG = gretl_matrix_alloc(mnl->npar, mnl->npar);
+    if (GG == NULL) {
+	*err = E_ALLOC;
+	gretl_matrix_free(G);
+	return NULL;
+    }
+
+    for (t=0; t<mnl->T; t++) {
+	yt = gretl_vector_get(mnl->y, t);
+	k = 0;
+	for (i=0; i<mnl->n; i++) {
+	    p = (i == (yt-1)) - gretl_matrix_get(mnl->P, t, i);
+	    for (j=0; j<mnl->k; j++) {
+		g = p * gretl_matrix_get(mnl->X, t, j);
+		gretl_matrix_set(G, t, k++, g);
+	    }
+	}
+    }
+
+    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+			      G, GRETL_MOD_NONE,
+			      GG, GRETL_MOD_NONE);
+
+    gretl_matrix_free(G);
+
+    return GG;
+}
+
+static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
+				    gretlopt opt)
+{
+    gretl_matrix *H = NULL;
+    gretl_matrix *G = NULL;
+    gretl_matrix *V = NULL;
+    int err = 0;
+
+    H = mnl_hessian(mnl, &err);
+    if (err) {
+	return err;
+    }
+
+    if (opt & OPT_R) {
+	G = mnl_opg_matrix(mnl, &err);
+	if (!err) {
+	    V = gretl_matrix_alloc(mnl->npar, mnl->npar);
+	    if (V == NULL) {
+		err = E_ALLOC;
+	    } else {
+		err = gretl_matrix_qform(H, GRETL_MOD_NONE, G,
+					 V, GRETL_MOD_NONE);
+	    }
+	}
+    }
+
+    if (!err) {
+	if (opt & OPT_R) {
+	    err = gretl_model_write_vcv(pmod, V);
+	    if (!err) {
+		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+		pmod->opt |= OPT_R;
+	    }
+	} else {
+	    err = gretl_model_write_vcv(pmod, H);
+	    if (!err) {
+		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+	    }
+	}
+    }
+
+    gretl_matrix_free(H);
+    gretl_matrix_free(G);
+    gretl_matrix_free(V);
+
+    return err;
 }
 
 /* Construct 'yhat' and 'uhat'.  Maybe this is too simple-minded; we
@@ -1160,60 +1304,21 @@ const char *mn_logit_coeffsep (const MODEL *pmod, const DATAINFO *pdinfo, int i)
     return ret;
 }
 
-static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
-			    const gretl_matrix *yvals,
-			    const DATAINFO *pdinfo)
+/* transcribe multinomial logit results into @pmod, which was
+   initialized via OLS, and add covariance matrix
+*/
+
+static void mnl_finish (mnl_info *mnl, MODEL *pmod,
+			const gretl_matrix *yvals,
+			const DATAINFO *pdinfo,
+			gretlopt opt)
 {
-    int i, nc = mnl->k * mnl->n;
-    double x, *tmp, *vcv;
-    int err = 0;
+    int i;
 
-    tmp = realloc(pmod->coeff, nc * sizeof *tmp);
-    if (tmp == NULL) {
-	pmod->errcode = E_ALLOC;
-	return;
-    }
-    pmod->coeff = tmp;
-    
-    tmp = realloc(pmod->sderr, nc * sizeof *tmp);
-    if (tmp == NULL) {
-	pmod->errcode = E_ALLOC;
-	return;
-    }  
-    pmod->sderr = tmp;
+    pmod->errcode = gretl_model_write_coeffs(pmod, mnl->theta, mnl->npar);
 
-    pmod->ncoeff = nc;
-
-    for (i=0; i<nc; i++) {
-	pmod->coeff[i] = mnl->theta[i];
-    }
-
-#if 0
-    double *tbak = copyvec(mnl->theta, nc);
-#endif
-
-    vcv = numerical_hessian(mnl->theta, nc, mn_logit_loglik, 
-			    mnl, &err);
-
-#if 0
-    for (i=0; i<nc; i++) {
-	fprintf(stderr, "theta_diff[%d] = %.15g\n", i, 
-		tbak[i] - mnl->theta[i]);
-    }
-    free(tbak);
-#endif
-
-    if (!err) {
-	pmod->vcv = vcv;
-	for (i=0; i<nc; i++) {
-	    x = vcv[ijton(i, i, nc)];
-	    pmod->sderr[i] = (na(x))? NADBL : sqrt(x);
-	}
-	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
-    } else {
-	for (i=0; i<nc; i++) {
-	    pmod->sderr[i] = NADBL;
-	}
+    if (!pmod->errcode) {
+	pmod->errcode = mnl_add_variance_matrix(pmod, mnl, opt);
     }
 
     if (!pmod->errcode) {
@@ -1227,7 +1332,7 @@ static void mnl_transcribe (mnl_info *mnl, MODEL *pmod,
 	pmod->ess = pmod->sigma = NADBL;
 	pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
 
-	gretl_model_allocate_params(pmod, nc);
+	gretl_model_allocate_params(pmod, mnl->npar);
     }
 
     if (!pmod->errcode) {
@@ -1318,14 +1423,13 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
-    mod.errcode = BFGS_max(mnl->theta, k * n, maxit, 0.0, 
+    mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
 			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
-			   (mnl->do_score) ? mn_logit_score : NULL, mnl, 
+			   mn_logit_score, mnl, 
 			   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
     if (!mod.errcode) {
-	mnl->do_score = 0;
-	mnl_transcribe(mnl, &mod, yvals, pdinfo);
+	mnl_finish(mnl, &mod, yvals, pdinfo, opt);
     }  
 
  bailout:  

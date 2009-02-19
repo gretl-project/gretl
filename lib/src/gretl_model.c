@@ -1687,21 +1687,35 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 
 int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
 {
-    int k = pmod->ncoeff;
+    int k = V->rows;
     int n = (k * k + k) / 2; 
     int i, j, idx;
-    double x;
+    double x, *tmp;
     int err = 0;
 
-    /* destroy any existing vcv just in case it's wrongly sized */
-    free(pmod->vcv);
+    if (V->cols != k) {
+	return E_NONCONF;
+    }
 
-    pmod->vcv = malloc(n * sizeof *pmod->vcv);
-    if (pmod->vcv == NULL) {
+    /* reallocate vcv in case it's wrongly sized */
+    tmp = realloc(pmod->vcv, n * sizeof *pmod->vcv);
+    if (tmp == NULL) {
 	err = E_ALLOC;
-    } 
+    } else {
+	pmod->vcv = tmp;
+    }
 
-    if (pmod->vcv != NULL) {
+    /* same for standard errors array */
+    if (!err) {
+	tmp = realloc(pmod->sderr, k * sizeof *tmp);
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    pmod->sderr = tmp;
+	}
+    }
+
+    if (!err) {
 	for (i=0; i<k; i++) {
 	    for (j=0; j<=i; j++) {
 		idx = ijton(i, j, k);
@@ -1821,6 +1835,41 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
     vcv->t2 = pmod->t2;
     
     return vcv;
+}
+
+/**
+ * gretl_model_write_coeffs:
+ * @pmod: pointer to model.
+ * @b: array of coefficients.
+ * @k: number of elements in @b.
+ * 
+ * Write the coefficients @b into the model @pmod, whose
+ * coefficient array is resized appropriately if need be.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_model_write_coeffs (MODEL *pmod, double *b, int k)
+{
+    size_t sz = k * sizeof(double);
+    int err = 0;
+
+    if (pmod->coeff == NULL || pmod->ncoeff != k) {
+	double *tmp = realloc(pmod->coeff, sz);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    pmod->coeff = tmp;
+	}
+    }
+
+    if (!err) {
+	memcpy(pmod->coeff, b, sz);
+	pmod->ncoeff = k;
+    }
+
+    return err;
 }
 
 /**

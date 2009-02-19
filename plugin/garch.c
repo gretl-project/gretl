@@ -94,50 +94,35 @@ write_garch_stats (MODEL *pmod, const int *list,
 		   const double *e, const double *h, 
 		   int npar, int nc, int pad, int ifc, PRN *prn)
 {
-    int err = 0;
-    double *coeff, *sderr, *vcv, *garch_h;
-    double x, den;
+    double *garch_h;
+    double den;
     int ynum = list[4];
     int nvp = list[1] + list[2];
     int xvars = list[0] - 4;
-    int nv = npar * (npar + 1) / 2;
-    int i, j, k;
-
-    coeff = realloc(pmod->coeff, npar * sizeof *pmod->coeff);
-    sderr = realloc(pmod->sderr, npar * sizeof *pmod->sderr);
-    vcv = realloc(pmod->vcv, nv * sizeof *pmod->vcv);
-
-    if (coeff == NULL || sderr == NULL || vcv == NULL) {
-	return E_ALLOC;
-    }
+    int i, err;
 
     if (scale != 1.0) {
 	rescale_results(theta, V, scale, npar, nc);
     }
 
-    for (i=0; i<npar; i++) {
-	coeff[i] = theta[i];
-	x = gretl_matrix_get(V, i, i);
-	sderr[i] = (x > 0.0)? sqrt(x) : 0.0;
-	for (j=0; j<=i; j++) {
-	    k = ijton(i, j, npar);
-	    vcv[k] = gretl_matrix_get(V, i, j);
-	}
+    err = gretl_model_write_coeffs(pmod, theta, npar);
+
+    if (!err) {
+	gretl_model_write_vcv(pmod, V);
+    }
+
+    if (err) {
+	return err;
     }
 
     /* verbose? */
     if (prn != NULL) {
 	for (i=0; i<npar; i++) {
 	    pprintf(prn, "theta[%d]: %#14.6g (%#.6g)\n", i, theta[i], 
-		    sderr[i]);
+		    pmod->sderr[i]);
 	}
 	pputc(prn, '\n'); 
     }   
-
-    pmod->coeff = coeff;
-    pmod->sderr = sderr;
-    pmod->vcv = vcv;
-    pmod->ncoeff = npar;
 
     pmod->ess = 0.0;
     for (i=pmod->t1; i<=pmod->t2; i++) {
@@ -149,9 +134,9 @@ write_garch_stats (MODEL *pmod, const int *list,
     /* set sigma to its unconditional or steady-state value */
     den = 1.0;
     for (i=0; i<nvp; i++) {
-	den -= coeff[i+xvars+1];
+	den -= pmod->coeff[i+xvars+1];
     }
-    pmod->sigma = sqrt(coeff[xvars] / den);
+    pmod->sigma = sqrt(pmod->coeff[xvars] / den);
 
     pmod->adjrsq = NADBL; 
     pmod->fstt = NADBL;

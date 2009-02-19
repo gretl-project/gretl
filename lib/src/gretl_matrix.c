@@ -2194,7 +2194,7 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
     int m = (mod == GRETL_MOD_TRANSPOSE)? src->cols : src->rows;
     int n = (mod == GRETL_MOD_TRANSPOSE)? src->rows : src->cols;
     double x;
-    int i, j;
+    int i, j, ri, cj;
 
     if (row < 0 || col < 0) {
 	return E_NONCONF;
@@ -2207,13 +2207,18 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
     }
 
     for (i=0; i<m; i++) {
+	ri = row + i;
 	for (j=0; j<n; j++) {
+	    cj = col + j;
 	    if (mod == GRETL_MOD_TRANSPOSE) {
 		x = matrix_transp_get(src, i, j);
 	    } else {
 		x = gretl_matrix_get(src, i, j);
+		if (mod == GRETL_MOD_CUMULATE) {
+		    x += gretl_matrix_get(targ, ri, cj);
+		}
 	    }
-	    gretl_matrix_set(targ, row + i, col + j, x);
+	    gretl_matrix_set(targ, ri, cj, x);
 	}
     }
 
