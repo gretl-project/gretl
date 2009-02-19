@@ -889,12 +889,11 @@ static double mn_logit_loglik (const double *theta, void *ptr)
 {
     mnl_info *mnl = (mnl_info *) ptr;
     double x, xti, ll = 0.0;
-    int npar = mnl->npar;
     int yt, i, t;
 
     errno = 0;
 
-    for (i=0; i<npar; i++) {
+    for (i=0; i<mnl->npar; i++) {
 	mnl->b->val[i] = theta[i];
     }
 
@@ -1239,55 +1238,57 @@ static int make_canonical_depvar (MODEL *pmod, const double *y,
 
 static int mn_value_count (const double *y, MODEL *pmod, gretl_vector **yvals)
 {
-    double *sy = malloc(pmod->nobs * sizeof *sy);
-    int T = pmod->nobs;
-    int n = 0;
+    double *sy;
+    gretl_vector *v;
+    int s, t, n = 0;
 
+    sy = malloc(pmod->nobs * sizeof *sy);
     if (sy == NULL) {
 	pmod->errcode = E_ALLOC;
-    } else {
-	gretl_vector *v;
-	int t, s = 0;
+	return 0;
+    }
 
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!na(pmod->uhat[t])) {
-		sy[s++] = y[t];
-	    }
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t])) {
+	    sy[s++] = y[t];
 	}
+    }
 
-	v = gretl_matrix_values(sy, T, &pmod->errcode);
-	if (pmod->errcode) {
-	    free(sy);
-	    return 0;
-	}
+    v = gretl_matrix_values(sy, pmod->nobs, &pmod->errcode);
+    if (pmod->errcode) {
+	free(sy);
+	return 0;
+    }
 
-	if (v->val[0] != 0.0) {
+    if (v->val[0] != 0.0) {
+	/* we'll need v later */
+	*yvals = v;
+    }
+
+    n = gretl_vector_get_length(v);
+
+    for (t=0; t<n && !pmod->errcode; t++) {
+	if (v->val[t] != floor(v->val[t])) {
+	    pmod->errcode = E_DATA;
+	    gretl_errmsg_set("logit: the dependent variable must form a sequence of "
+			     "integers");
+	} else if (t > 0 && v->val[t] != v->val[t-1] + 1) {
 	    /* we'll need v later */
 	    *yvals = v;
 	}
-
-	n = gretl_vector_get_length(v);
-
-	for (t=0; t<n && !pmod->errcode; t++) {
-	    if (v->val[t] != floor(v->val[t])) {
-		pmod->errcode = E_DATA;
-		gretl_errmsg_set("logit: the dependent variable must form a sequence of "
-				 "integers");
-	    } else if (t > 0 && v->val[t] != v->val[t-1] + 1) {
-		/* we'll need v later */
-		*yvals = v;
-	    }
-	}
-	if (pmod->errcode) {
-	    *yvals = NULL;
-	    n = 0;
-	} else if (*yvals == v) {
-	    /* avoid freeing v */
-	    v = NULL;
-	}
-	gretl_matrix_free(v);
-	free(sy);
     }
+
+    if (pmod->errcode) {
+	*yvals = NULL;
+	n = 0;
+    } else if (*yvals == v) {
+	/* avoid freeing v */
+	v = NULL;
+    }
+
+    gretl_matrix_free(v);
+    free(sy);
 
     return n;
 }
