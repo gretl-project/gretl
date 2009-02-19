@@ -1262,6 +1262,7 @@ static int mn_value_count (const double *y, MODEL *pmod, gretl_vector **yvals)
 	}
 
 	if (v->val[0] != 0.0) {
+	    /* we'll need v later */
 	    *yvals = v;
 	}
 
@@ -1273,17 +1274,16 @@ static int mn_value_count (const double *y, MODEL *pmod, gretl_vector **yvals)
 		gretl_errmsg_set("logit: the dependent variable must form a sequence of "
 				 "integers");
 	    } else if (t > 0 && v->val[t] != v->val[t-1] + 1) {
-		/* we want a step of unity */
+		/* we'll need v later */
 		*yvals = v;
 	    }
 	}
 	if (pmod->errcode) {
 	    *yvals = NULL;
 	    n = 0;
-	} else {
-	    if (*yvals == v) {
-		v = NULL;
-	    }
+	} else if (*yvals == v) {
+	    /* avoid freeing v */
+	    v = NULL;
 	}
 	gretl_matrix_free(v);
 	free(sy);
@@ -1359,7 +1359,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
     }
 
     if (!pmod->errcode) {
-	/* add overal likelihood ratio test */
+	/* add overall likelihood ratio test */
 	int t, ni, df = pmod->ncoeff;
 	double LR, L0 = 0.0;
 

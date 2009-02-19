@@ -4778,7 +4778,7 @@
 	</option>
 	<option>
 	  <flag>--multinomial</flag>
-	  <effect>estmate multinomial logit</effect>
+	  <effect>estimate multinomial logit</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
