@@ -1304,6 +1304,19 @@ const char *mn_logit_coeffsep (const MODEL *pmod, const DATAINFO *pdinfo, int i)
     return ret;
 }
 
+static int mnl_value_frequency (mnl_info *mnl, int i) 
+{
+    int t, ni = 0;
+
+    for (t=0; t<mnl->T; t++) {
+	if (mnl->y->val[t] == i) {
+	    ni++;
+	}
+    }
+
+    return ni;
+}
+
 /* transcribe multinomial logit results into @pmod, which was
    initialized via OLS, and add covariance matrix
 */
@@ -1361,7 +1374,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 
     if (!pmod->errcode) {
 	/* add overall likelihood ratio test */
-	int t, ni, df = pmod->ncoeff;
+	int ni, df = pmod->ncoeff;
 	double LR, L0 = 0.0;
 
 	if (pmod->ifc) {
@@ -1369,12 +1382,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	}
 
 	for (i=0; i<=mnl->n; i++) {
-	    ni = 0;
-	    for (t=0; t<mnl->T; t++) {
-		if (mnl->y->val[t] == i) {
-		    ni++;
-		}
-	    }
+	    ni = mnl_value_frequency(mnl, i);
 	    if (ni > 0) {
 		if (pmod->ifc) {
 		    L0 += ni * log((double) ni / mnl->T);
@@ -1397,6 +1405,24 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
     pmod->opt |= OPT_M;
 }
 
+static void mnl_const_init (mnl_info *mnl) 
+{
+    int ni = mnl_value_frequency(mnl, 0);
+
+    if (ni > 0) {
+	double lf0 = log(ni);
+	int i, j = 0;
+
+	for (i=1; i<=mnl->n; i++) {
+	    ni = mnl_value_frequency(mnl, i);
+	    if (ni > 0) {
+		mnl->theta[j] = log(ni) - lf0;
+	    }
+	    j += mnl->k;
+	}	
+    }
+}
+
 /* multinomial logit */
 
 static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
@@ -1409,7 +1435,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     mnl_info *mnl;
     gretl_vector *yvals = NULL;
     int n, k = list[0] - 1;
-    int i, j, vi, t, s;
+    int i, vi, t, s;
 
     /* we'll start with OLS to flush out data issues */
     mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
@@ -1461,27 +1487,8 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     if (mod.ifc) {
-	FreqDist *freq;
-
-	freq = get_discrete_freq(list[1], (const double **) *pZ, 
-				 pdinfo, OPT_X, &mod.errcode);
-
-	if (freq != NULL && freq->f[0] > 0) {
-	    double lf0 = log(freq->f[0]);
-	    j = 0;
-	    for (i=1; i<=n; i++) {
-		if (freq->f[i] > 0) {
-		    mnl->theta[j] = log(freq->f[i]) - lf0;
-		}
-		j += k;
-	    }
-	}
-	free_freq(freq);
+	mnl_const_init(mnl);
     }
-
-    if (mod.errcode) {
-	goto bailout;
-    } 
 
     mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
 			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
