@@ -844,10 +844,14 @@ struct mnl_info_ {
     gretl_matrix *X;  /* regressors */
     gretl_matrix *b;  /* coefficients, matrix form */
     gretl_matrix *Xb; /* coeffs times regressors */
+    gretl_matrix *P;  /* probabilities */
+    gretl_matrix *G;  /* score matrix */
+    gretl_vector *g;  /* score vector */
     double *theta;    /* coeffs for BFGS */
     int n;            /* number of categories (excluding base) */
     int k;            /* number of coeffs per category */
     int T;            /* number of observations */
+    int do_score;     /* analytical score required? */
 };
 
 static void mnl_info_destroy (mnl_info *mnl)
@@ -874,6 +878,9 @@ static mnl_info *mnl_info_new (int n, int k, int T)
 					&mnl->X, T, k,
 					&mnl->b, k, n,
 					&mnl->Xb, T, n,
+					&mnl->P, T, n,
+					&mnl->G, T, n*k,
+					&mnl->g, 1, n*k,
 					NULL);
 	if (mnl->B == NULL) {
 	    free(mnl->theta);
@@ -886,6 +893,7 @@ static mnl_info *mnl_info_new (int n, int k, int T)
 	    mnl->n = n;
 	    mnl->k = k;
 	    mnl->T = T;
+	    mnl->do_score = 1;
 	}
     }
 
@@ -897,9 +905,11 @@ static mnl_info *mnl_info_new (int n, int k, int T)
 static double mn_logit_loglik (const double *theta, void *ptr)
 {
     mnl_info *mnl = (mnl_info *) ptr;
-    double x, xti, ll = 0.0;
+    int do_score = mnl->do_score;
+
+    double x, xti, p, g, ll = 0.0;
     int npar = mnl->k * mnl->n;
-    int i, t, err;
+    int yt, i, j, k, t, err;
 
     errno = 0;
 
@@ -916,21 +926,54 @@ static double mn_logit_loglik (const double *theta, void *ptr)
 	x = 1.0;
 	for (i=0; i<mnl->n; i++) {
 	    /* sum row i of exp(Xb) */
-	    xti = gretl_matrix_get(mnl->Xb, t, i);
-	    x += exp(xti);
+	    xti = exp(gretl_matrix_get(mnl->Xb, t, i));
+	    x += xti;
+	    if (do_score) {
+		gretl_matrix_set(mnl->P, t, i, xti);
+	    }
 	}
 	ll -= log(x);
-	i = mnl->y->val[t];
-	if (i > 0) {
-	    ll += gretl_matrix_get(mnl->Xb, t, i-1);
+	yt = mnl->y->val[t];
+	if (yt > 0) {
+	    ll += gretl_matrix_get(mnl->Xb, t, yt-1);
 	}
+
+	if (do_score) {
+	    k = 0;
+	    for (i=0; i<mnl->n; i++) {
+		/* sum row i of exp(Xb) */
+		p = (i == (yt-1)) - gretl_matrix_get(mnl->P, t, i) / x;
+		for (j=0; j<mnl->k; j++) {
+		    g = p * gretl_matrix_get(mnl->X, t, j);
+		    gretl_matrix_set(mnl->G, t, k++, g);
+		}
+	    }
+	}
+    }
+
+    if (do_score) {
+	mnl->g = gretl_matrix_column_sum(mnl->G, &errno);
     }
 
     if (errno != 0) {
 	ll = NADBL;
     }
 
+
     return ll;
+}
+
+static int mn_logit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
+			   void *ptr)
+{
+    mnl_info *mnl = (mnl_info *) ptr;
+    int i;
+
+    for (i=0; i<npar; i++) {
+	s[i] = mnl->g->val[i];
+    }
+
+    return 1;
 }
 
 /* Construct 'yhat' and 'uhat'.  Maybe this is too simple-minded; we
@@ -1277,10 +1320,11 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     mod.errcode = BFGS_max(mnl->theta, k * n, maxit, 0.0, 
 			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
-			   NULL, mnl, (prn != NULL)? OPT_V : OPT_NONE,
-			   prn);
+			   (mnl->do_score) ? mn_logit_score : NULL, mnl, 
+			   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
     if (!mod.errcode) {
+	mnl->do_score = 0;
 	mnl_transcribe(mnl, &mod, yvals, pdinfo);
     }  
 
