@@ -23,8 +23,6 @@
 
 #define ODEBUG 0
 
-#define USE_LOGDIFF 1
-
 #define OPROBIT_TOL 1.0e-12
 
 typedef struct op_container_ op_container;
@@ -277,39 +275,12 @@ static int compute_probs (const double *theta, op_container *OC)
     return 0;
 }
 
-#if USE_LOGDIFF
-
-/* Below: a method for getting around the "non-increasing cut point"
+/* Below: method for getting around the "non-increasing cut point"
    issue by construction: the 2nd and higher cut points are
    represented to BFGS in the form of the log-difference from the
-   previous cut point.  This produces faster convergence in some
-   cases.  Could do with some more testing.
-
-   Note that if we're _not_ doing this monkey business, there's no
-   need for conversion of theta, and the "theta" pointer is just set
-   equal to OC->theta (in do_ordered(), further below).
+   previous cut point.
+   cases.  
 */
-
-static void get_real_theta (op_container *OC, const double *theta)
-{
-    int i;
-
-    if (theta == OC->theta) {
-	return;
-    }
-
-    for (i=0; i<=OC->nx; i++) {
-	OC->theta[i] = theta[i];
-    }
-
-    for (i=OC->nx+1; i<OC->k; i++) {
-	/* retrieve cut point 2 and higher from log-difference form */
-	OC->theta[i] = exp(theta[i]) + OC->theta[i-1];
-#if ODEBUG > 1
-	fprintf(stderr, "BFGS theta[%d] = %g -> theta = %g\n", i, theta[i], OC->theta[i]);
-#endif
-    }
-}
 
 static void make_BFGS_theta (op_container *OC, double *theta)
 {
@@ -325,41 +296,33 @@ static void make_BFGS_theta (op_container *OC, double *theta)
     }
 }
 
-#else
+/* Inverse operation for the transformation done by
+   make_BFGS_theta() */
 
-static int bad_cutpoints (const double *theta, const op_container *OC)
+static void get_real_theta (op_container *OC, const double *theta)
 {
     int i;
 
-    for (i=OC->nx+1; i<OC->k; i++) {
-	if (theta[i] <= theta[i-1]) {
-#if ODEBUG
-	    fprintf(stderr, "theta[%d]: non-increasing cutpoint!\n", i);
-#endif
-	    return 1;
-	}
+    for (i=0; i<=OC->nx; i++) {
+	OC->theta[i] = theta[i];
     }
-	
-    return 0;
-}
 
-#endif /* USE_LOGDIFF, or not */
+    for (i=OC->nx+1; i<OC->k; i++) {
+	/* retrieve cut point 2 and higher from log-difference form */
+	OC->theta[i] = exp(theta[i]) + OC->theta[i-1];
+    }
+}
 
 static double op_loglik (const double *theta, void *ptr)
 {
     op_container *OC = (op_container *) ptr;
     double x, ll = 0.0;
-    int err;
     int i, s, t, v;
+    int err;
 
-#if USE_LOGDIFF
-    /* bad cut points not possible */
-    get_real_theta(OC, theta);
-#else
-    if (bad_cutpoints(theta, OC)) {
-	return NADBL;
+    if (theta != OC->theta) {
+	get_real_theta(OC, theta);
     }
-#endif
 
     s = 0;
     for (t=OC->t1; t<=OC->t2; t++) {
@@ -401,16 +364,13 @@ static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 		     void *ptr)
 {
     op_container *OC = (op_container *) ptr;
-    int i;
+    int i, j;
 
     for (i=0; i<npar; i++) {
 	s[i] = OC->g[i];
     }
 
-#if USE_LOGDIFF
     for (i=OC->nx; i<npar; i++) {
-	int j;
-
 	for (j=i+1; j<npar; j++) {
 	    /* add effects of changes in subsequent cut points */
 	    s[i] += OC->g[j];
@@ -419,23 +379,21 @@ static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 	    s[i] *= exp(theta[i]); /* apply jacobian */
 	}
     }
-#endif
 
     return 1;
 }
 
-static int opg_from_ascore (op_container *OC, double *theta, gretl_matrix *GG) 
+static int opg_from_ascore (op_container *OC, gretl_matrix *GG) 
 {
     int s, t, i, j, k = OC->k;
-    double x, ll;
+    double x, ll, *g0;
 
-    double *g0 = malloc(k * sizeof *g0);
-
+    g0 = malloc(k * sizeof *g0);
     if (g0 == NULL) {
 	return E_ALLOC;
     }
 
-    ll = op_loglik(theta, OC);
+    ll = op_loglik(OC->theta, OC);
 
     for (j=0; j<k; j++) {
 	g0[j] = OC->g[j];
@@ -462,32 +420,33 @@ static int opg_from_ascore (op_container *OC, double *theta, gretl_matrix *GG)
     return 0;
 }
 
-static int ihess_from_ascore (op_container *OC, double *theta, gretl_matrix *inH) 
+static int ihess_from_ascore (op_container *OC, gretl_matrix *inH) 
 {
     int i, j, err, k = OC->k;
     double smal = 1.0e-07;  /* "small" is some sort of macro on win32 */
     double smal2 = 2.0 * smal;
-    double x, ll;
+    double ti, x, ll, *g0;
 
-    double *g0 = malloc(k * sizeof *g0);
-
+    g0 = malloc(k * sizeof *g0);
     if (g0 == NULL) {
 	return E_ALLOC;
     }
 
     for (i=0; i<k; i++) {
-	theta[i] -= smal;
-	ll = op_loglik(theta, OC);
+	ti = OC->theta[i];
+	OC->theta[i] -= smal;
+	ll = op_loglik(OC->theta, OC);
 	for (j=0; j<k; j++) {
 	    g0[j] = OC->g[j];
 	}
-	theta[i] += smal2;
-	ll = op_loglik(theta, OC);
+	OC->theta[i] += smal2;
+	ll = op_loglik(OC->theta, OC);
 	for (j=0; j<k; j++) {
 	    x = (OC->g[j] - g0[j]) / smal2;
 	    gretl_matrix_set(inH, i, j, -x);
 	}
-	theta[i] -= smal;
+	/* restore original theta */
+	OC->theta[i] = ti;
     }
 
     gretl_matrix_xtr_symmetric(inH);
@@ -506,20 +465,21 @@ static int ihess_from_ascore (op_container *OC, double *theta, gretl_matrix *inH
     return err;
 }
 
-static int get_pred (op_container *OC, const MODEL *pmod,
-		     double Xb)
-{
-    int i, j, pred = 0;
+/* compare X*b with the cut points to get a prediction for y */
 
-    for (j=OC->M, i=OC->k-1; i>=OC->nx; i--, j++) {
-	if (Xb >= pmod->coeff[i]) {
-	    pred = j;
+static int get_prediction (op_container *OC, const MODEL *pmod,
+			   double Xb)
+{
+    int k = OC->k - 1; /* position of greatest cut point */
+    double cut;
+    int i, pred = 0;
+
+    for (i=OC->M; i>0; i--) {
+	cut = pmod->coeff[k--];
+	if (Xb > cut) {
+	    pred = i;
 	    break;
 	}
-    }
-
-    if (pred == 0 && Xb >= pmod->coeff[0]) {
-	pred = 1;
     }
 
     return pred;
@@ -563,13 +523,62 @@ static double gen_resid (op_container *OC, const double *theta, int t)
     return ret;
 } 
 
-static void fill_model (MODEL *pmod, const int *list,
-			const DATAINFO *pdinfo, 
-			op_container *OC, double *theta, 
-			gretl_matrix *V, int fnc, int grc)
+/* Initialize the cut-points by counting the occurrences of each value
+   of the (normalized) dependent variable, finding the sample
+   proportion (cumulating as we go), and taking the inverse of the
+   normal CDF.
+*/
+
+static void cut_points_init (op_container *OC, const MODEL *pmod, 
+			     const double **Z)
+{
+    const double *y = Z[pmod->list[1]];
+    double p = 0.0;
+    int i, j, t, nj;
+
+    for (i=OC->nx, j=0; i<OC->k; i++, j++) {
+	nj = 0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t]) && y[t] == j) {
+		nj++;
+	    }
+	}	
+	p += (double) nj / pmod->nobs;
+	OC->theta[i] = normal_cdf_inverse(p);
+    }
+}
+
+static void op_LR_test (MODEL *pmod, op_container *OC, 
+			const double **Z)
+{
+    int nx = OC->nx;
+    double L0;
+
+    OC->k -= OC->nx;
+    OC->nx = 0;
+
+    cut_points_init(OC, pmod, Z);
+
+    L0 = op_loglik(OC->theta, OC);
+
+    if (!na(L0) && L0 <= pmod->lnL) {
+	pmod->chisq = 2.0 * (pmod->lnL - L0);
+	gretl_model_set_int(pmod, "lr_df", nx);
+    }
+
+    /* restore original data on OC */
+    OC->nx = nx;
+    OC->k += nx;
+}
+
+static void fill_op_model (MODEL *pmod, const int *list,
+			   const double **Z, const DATAINFO *pdinfo, 
+			   op_container *OC, gretl_matrix *V, 
+			   int fnc, int grc)
 {
     int npar = OC->k;
     int nx = OC->nx;
+    int correct = 0;
     double x;
     int i, s, t, v;
 
@@ -589,7 +598,7 @@ static void fill_model (MODEL *pmod, const int *list,
     }
 
     for (i=0; i<npar; i++) {
-	pmod->coeff[i] = theta[i];
+	pmod->coeff[i] = OC->theta[i];
     }
 
     if (OC->opt & OPT_R) {
@@ -608,17 +617,23 @@ static void fill_model (MODEL *pmod, const int *list,
 	x = 0.0;
 	for (i=0; i<OC->nx; i++) {
 	    v = OC->list[i+2];
-	    x += theta[i] * OC->Z[v][t];
+	    x += OC->theta[i] * OC->Z[v][t];
 	}
 
 	/* yhat = X\hat{beta} */
 	pmod->yhat[t] = x;
-	pred = get_pred(OC, pmod, x); /* should we do anything with this? */
+	pred = get_prediction(OC, pmod, x);
+	if (pred == OC->y[s]) {
+	    correct++;
+	}
 	/* compute generalized residual */
-	pmod->uhat[t] = gen_resid(OC, OC->theta, s++);
+	pmod->uhat[t] = gen_resid(OC, OC->theta, s);
+	s++;
     }
 
-    pmod->lnL = op_loglik(theta, OC);
+    gretl_model_set_int(pmod, "correct", correct);
+
+    pmod->lnL = op_loglik(OC->theta, OC);
     mle_criteria(pmod, 0);
 
     gretl_model_allocate_params(pmod, npar);
@@ -643,11 +658,12 @@ static void fill_model (MODEL *pmod, const int *list,
     }
 
     if (nx > 0) {
+	op_LR_test(pmod, OC, Z);
 	gretl_model_set_coeff_separator(pmod, NULL, nx);
     }
 }
 
-static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
+static gretl_matrix *oprobit_vcv (op_container *OC, int *err)
 {
     gretl_matrix *V;
     int k = OC->k;
@@ -659,7 +675,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
     }
 
     /* hessian from analytical score */
-    *err = ihess_from_ascore(OC, theta, V);
+    *err = ihess_from_ascore(OC, V);
 
     if (!*err && (OC->opt & OPT_R)) {
 	gretl_matrix *GG = NULL;
@@ -673,7 +689,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 	if (GG == NULL || Vr == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    *err = opg_from_ascore(OC, theta, GG);
+	    *err = opg_from_ascore(OC, GG);
 	    if (!*err) {
 #if ODEBUG > 1
 		gretl_matrix_print(GG, "OPG matrix");
@@ -700,29 +716,6 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
     return V;
 }
 
-/* Initialize the cut-points by counting the occurrences of each value
-   of the (normalized) dependent variable, finding the sample
-   proportion (cumulating as we go), and taking the inverse of the
-   normal CDF.  It may well be possible to do better than this.
-*/
-
-static double naive_prob (MODEL *pmod, double **Z, int j,
-			  double *p)
-{
-    const double *y = Z[pmod->list[1]];
-    int t, nj = 0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->uhat[t]) && y[t] == j) {
-	    nj++;
-	}
-    }
-
-    *p += (double) nj / pmod->nobs;
-
-    return normal_cdf_inverse(*p);
-}
-
 /* Main ordered estimation function */
 
 static int do_ordered (int ci, int ndum, 
@@ -730,17 +723,14 @@ static int do_ordered (int ci, int ndum,
 		       MODEL *pmod, const int *list, 
 		       gretlopt opt, PRN *prn)
 {
-    op_container *OC;
-    int i, j, npar;
-    gretl_matrix *V = NULL;
-    double *theta = NULL;
-    double p;
-    int err;
-
-    /* BFGS apparatus */
     int maxit = 1000;
     int fncount = 0;
     int grcount = 0;
+    op_container *OC;
+    int i, npar;
+    gretl_matrix *V = NULL;
+    double *theta = NULL;
+    int err;
 
     OC = op_container_new(ci, ndum, Z, pmod, opt);
     if (OC == NULL) {
@@ -749,30 +739,23 @@ static int do_ordered (int ci, int ndum,
 
     npar = OC->k;
 
-#if USE_LOGDIFF
-    /* we need a distinct theta to pass to BFGS */
+    /* transformed theta to pass to BFGS */
     theta = malloc(npar * sizeof *theta);
     if (theta == NULL) {
 	op_container_destroy(OC);
 	return E_ALLOC;
     }
-#else
-    /* we only need one 'theta' */
-    theta = OC->theta;
-#endif
 
+    /* initialize slopes */
     for (i=0; i<OC->nx; i++) {
 	OC->theta[i] = 0.0001;
     }
 
-    p = 0.0;
-    for (i=OC->nx, j=0; i<npar; i++, j++) {
-	OC->theta[i] = naive_prob(pmod, Z, j, &p);
-    }
+    /* initialize cut points */
+    cut_points_init(OC, pmod, (const double **) Z);
 
-#if USE_LOGDIFF
+    /* transform theta to log-diff form */
     make_BFGS_theta(OC, theta);
-#endif
 
 #if ODEBUG
     for (i=0; i<npar; i++) {
@@ -793,21 +776,19 @@ static int do_ordered (int ci, int ndum,
 	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
     }
 
-#if USE_LOGDIFF
+    /* transform back to 'real' theta */
     get_real_theta(OC, theta);
-#endif
 
-    V = oprobit_vcv(OC, OC->theta, &err);
+    V = oprobit_vcv(OC, &err);
 
     if (!err) {
-	fill_model(pmod, list, pdinfo, OC, OC->theta, V, fncount, grcount);
+	fill_op_model(pmod, list, (const double **) Z, pdinfo, 
+		      OC, V, fncount, grcount);
     }
 
  bailout:
 
-#if USE_LOGDIFF
     free(theta);
-#endif
     gretl_matrix_free(V);
     op_container_destroy(OC);
 

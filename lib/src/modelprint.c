@@ -4365,19 +4365,20 @@ static void logit_probit_stats (const MODEL *pmod,
 				PRN *prn)
 {
     const int *act_pred = NULL;
-    int fbx, slopes, correct = 0;
+    int binary, slopes, correct = 0;
     double pc_correct;
     double X2;
     int df;
 
-    if (gretl_model_get_int(pmod, "ordered")) {
-	/* shouldn't be here? */
-	return;
+    if ((pmod->opt & OPT_M) || gretl_model_get_int(pmod, "ordered")) {
+	/* ordered logit/probit or multinomial logit */
+	binary = slopes = 0;
+    } else {
+	binary = 1;
+	slopes = !(pmod->opt & OPT_P);
     }
 
-    fbx = !(pmod->opt & OPT_M);
-    slopes = fbx && !(pmod->opt & OPT_P);
-
+    /* overall likelihood ratio test */
     X2 = pmod->chisq;
 
     if (pmod->aux == AUX_OMIT || pmod->aux == AUX_ADD || na(X2)) {
@@ -4386,13 +4387,13 @@ static void logit_probit_stats (const MODEL *pmod,
 	df = limdep_df(pmod);
     }
 
-    if (pmod->opt & OPT_M) {
-	correct = gretl_model_get_int(pmod, "correct");
-    } else {
+    if (binary) {
 	act_pred = gretl_model_get_data(pmod, "discrete_act_pred");
 	if (act_pred != NULL) {
 	    correct = act_pred[0] + act_pred[3];
 	}
+    } else {	
+	correct = gretl_model_get_int(pmod, "correct");
     }
 
     pc_correct = 100 * (double) correct / pmod->nobs;
@@ -4405,7 +4406,7 @@ static void logit_probit_stats (const MODEL *pmod,
 		    _("Number of cases 'correctly predicted'"), 
 		    correct, pc_correct);
 	}
-	if (fbx) {
+	if (binary) {
 	    pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
 		    pmod->sdy);
 	}
@@ -4428,7 +4429,7 @@ static void logit_probit_stats (const MODEL *pmod,
 		    I_("Number of cases 'correctly predicted'"), 
 		    correct, pc_correct);
 	}
-	if (fbx) {
+	if (binary) {
 	    pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 
 		    pmod->sdy);
 	}
