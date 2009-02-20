@@ -31,10 +31,8 @@ plain_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 static int 
 alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 static void alt_print_rho_terms (const MODEL *pmod, PRN *prn);
-static void print_binary_statistics (const MODEL *pmod, 
-				     const DATAINFO *pdinfo,
-				     PRN *prn);
-static void print_multinomial_stats (const MODEL *pmod, PRN *prn);
+static void logit_probit_stats (const MODEL *pmod, const DATAINFO *pdinfo,
+				PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
@@ -51,7 +49,9 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
                          !gretl_model_get_int(m, "ordered") && \
                          !gretl_model_get_int(m, "multinom"))
 
-#define multinomial_model(m) (m->ci == LOGIT && gretl_model_get_int(m, "multinom")) 
+#define multinomial_model(m) (m->ci == LOGIT && gretl_model_get_int(m, "multinom"))
+
+#define logit_probit(m) (m->ci == LOGIT || m->ci == PROBIT) 
 
 #define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
 
@@ -2591,7 +2591,6 @@ static void set_csv_delim (PRN *prn)
 int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt, 
 		PRN *prn)
 {
-    int binary = binary_model(pmod);
     int gotnan = 0;
 
     if (prn == NULL || (opt & OPT_Q)) {
@@ -2691,10 +2690,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_GMM_stats(pmod, prn);
     } else if (pmod->ci == ARBOND) {
 	print_DPD_stats(pmod, prn);
-    } else if (binary) {
-	print_binary_statistics(pmod, pdinfo, prn);
-    } else if (multinomial_model(pmod)) {
-	print_multinomial_stats(pmod, prn);
+    } else if (logit_probit(pmod)) {
+	logit_probit_stats(pmod, pdinfo, prn);
     } else if (tsls_model(pmod) && plain_format(prn)) {
 	addconst_message(pmod, prn);
     } else if (pmod->ci == INTREG) {
@@ -4352,39 +4349,70 @@ static void plain_print_act_pred (const int *ap, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void print_binary_statistics (const MODEL *pmod, 
-				     const DATAINFO *pdinfo,
-				     PRN *prn)
+static int limdep_df (const MODEL *pmod)
 {
-    int slopes = !(pmod->opt & OPT_P);
-    const int *act_pred;
-    int correct = -1;
-    double pc_correct = NADBL;
-    int i;
+    int df = gretl_model_get_int(pmod, "lr_df");
 
-    act_pred = gretl_model_get_data(pmod, "discrete_act_pred");
-    if (act_pred != NULL) {
-	correct = act_pred[0] + act_pred[3];
-	pc_correct = 100 * (double) correct / pmod->nobs;
-    } 
+    if (df == 0) {
+	df = pmod->ncoeff - 1;
+    }
+
+    return df;
+}
+
+static void logit_probit_stats (const MODEL *pmod, 
+				const DATAINFO *pdinfo,
+				PRN *prn)
+{
+    const int *act_pred = NULL;
+    int fbx, slopes, correct = 0;
+    double pc_correct;
+    double X2;
+    int df;
+
+    if (gretl_model_get_int(pmod, "ordered")) {
+	/* shouldn't be here? */
+	return;
+    }
+
+    fbx = !(pmod->opt & OPT_M);
+    slopes = fbx && !(pmod->opt & OPT_P);
+
+    X2 = pmod->chisq;
+
+    if (pmod->aux == AUX_OMIT || pmod->aux == AUX_ADD || na(X2)) {
+	df = 0;
+    } else {
+	df = limdep_df(pmod);
+    }
+
+    if (pmod->opt & OPT_M) {
+	correct = gretl_model_get_int(pmod, "correct");
+    } else {
+	act_pred = gretl_model_get_data(pmod, "discrete_act_pred");
+	if (act_pred != NULL) {
+	    correct = act_pred[0] + act_pred[3];
+	}
+    }
+
+    pc_correct = 100 * (double) correct / pmod->nobs;
 
     ensure_vsep(prn);
 
     if (plain_format(prn)) {
-	if (correct >= 0) {
+	if (correct > 0) {
 	    pprintf(prn, "%s = %d (%.1f%%)\n", 
 		    _("Number of cases 'correctly predicted'"), 
 		    correct, pc_correct);
 	}
-	pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
-		pmod->sdy);
-	if (!na(pmod->chisq) && pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
-	    i = pmod->ncoeff - 1;
-	    if (i > 0) {
-		pprintf(prn, "%s: %s(%d) = %g [%.4f]\n", 
-			_("Likelihood ratio test"), _("Chi-square"), 
-			i, pmod->chisq, chisq_cdf_comp(i, pmod->chisq));
-	    }
+	if (fbx) {
+	    pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
+		    pmod->sdy);
+	}
+	if (df) {
+	    pprintf(prn, "%s: %s(%d) = %g [%.4f]\n", 
+		    _("Likelihood ratio test"), _("Chi-square"), 
+		    df, pmod->chisq, chisq_cdf_comp(df, pmod->chisq));
 	}
 	pputc(prn, '\n');
 	if (act_pred != NULL) {
@@ -4395,18 +4423,19 @@ static void print_binary_statistics (const MODEL *pmod,
 	if (slopes) {
 	    pprintf(prn, "\\par {\\super *}%s\n", I_("Evaluated at the mean"));
 	}
-	if (correct >= 0) {
+	if (correct > 0) {
 	    pprintf(prn, "\\par %s = %d (%.1f%%)\n", 
 		    I_("Number of cases 'correctly predicted'"), 
 		    correct, pc_correct);
 	}
-	pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 
-		pmod->sdy);
-	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
-	    i = pmod->ncoeff - 1;
+	if (fbx) {
+	    pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 
+		    pmod->sdy);
+	}
+	if (df) {
 	    pprintf(prn, "\\par %s: %s(%d) = %g [%.4f]\n",
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
-		    i, pmod->chisq, chisq_cdf_comp(i, pmod->chisq));
+		    df, pmod->chisq, chisq_cdf_comp(df, pmod->chisq));
 	}
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
@@ -4414,49 +4443,20 @@ static void print_binary_statistics (const MODEL *pmod,
 	    pprintf(prn, "\\begin{center}\n$^*$%s\n\\end{center}\n", 
 		    I_("Evaluated at the mean"));
 	}
-
-	pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
-	if (correct >= 0) {
-	    pprintf(prn, "%s = %d (%.1f percent)\\\\\n", 
-		    I_("Number of cases `correctly predicted'"), 
-		    correct, pc_correct);
-	}
-	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
-	    i = pmod->ncoeff - 1;
-	    pprintf(prn, "%s: $\\chi^2(%d)$ = %.3f [%.4f]\\\\\n",
-		    I_("Likelihood ratio test"), 
-		    i, pmod->chisq, chisq_cdf_comp(i, pmod->chisq));
-	}
-	pputs(prn, "\\end{raggedright}\n");
-    }
-}
-
-static void print_multinomial_stats (const MODEL *pmod, PRN *prn)
-{
-    double x = gretl_model_get_double(pmod, "wald");
-
-    if (plain_format(prn)) {
-	double pc_correct;
-	int correct;
-
-	correct = gretl_model_get_int(pmod, "correct");
-	if (correct > 0) {
-	    pc_correct = 100 * (double) correct / pmod->nobs;
-	    ensure_vsep(prn);
-	    pprintf(prn, "%s = %d (%.1f%%)\n", 
-		    _("Number of cases 'correctly predicted'"), 
-		    correct, pc_correct);
-	    if (na(x)) {
-		pputc(prn, '\n');
+	if (correct > 0 || df) {
+	    pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
+	    if (correct > 0) {
+		pprintf(prn, "%s = %d (%.1f percent)\\\\\n", 
+			I_("Number of cases `correctly predicted'"), 
+			correct, pc_correct);
 	    }
+	    if (df) {
+		pprintf(prn, "%s: $\\chi^2(%d)$ = %.3f [%.4f]\\\\\n",
+			I_("Likelihood ratio test"), 
+			df, pmod->chisq, chisq_cdf_comp(df, pmod->chisq));
+	    }
+	    pputs(prn, "\\end{raggedright}\n");
 	}
-    } else {
-	ensure_vsep(prn);
-    }
-
-    if (!na(x)) {
-	print_model_chi2_test(pmod, x, AB_WALD, prn);
-	pputc(prn, '\n');
     }
 }
 

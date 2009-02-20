@@ -1390,7 +1390,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
     if (!pmod->errcode) {
 	/* add overall likelihood ratio test */
 	int ni, df = pmod->ncoeff;
-	double LR, L0 = 0.0;
+	double L0 = 0.0;
 
 	if (pmod->ifc) {
 	    df -= mnl->n;
@@ -1405,9 +1405,8 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	    }
 	}
 
-	LR = 2.0 * (pmod->lnL - L0);
-	gretl_model_set_double(pmod, "wald", LR);
-	gretl_model_set_int(pmod, "wald_df", df);
+	pmod->chisq = 2.0 * (pmod->lnL - L0);
+	gretl_model_set_int(pmod, "lr_df", df);
     }
 
     if (pmod->xpx != NULL) {
