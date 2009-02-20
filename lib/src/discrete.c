@@ -1129,7 +1129,7 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
 */
 
 static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
-			   const gretl_matrix *yvals)
+			   const int *yvals)
 {
     double p, pmax;
     int i, s, t, iymax;
@@ -1156,7 +1156,7 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
 	    pmod->uhat[t] = 1;
 	}
 	if (yvals != NULL) {
-	    pmod->yhat[t] = yvals->val[iymax];
+	    pmod->yhat[t] = yvals[iymax];
 	} else {
 	    pmod->yhat[t] = iymax;
 	}
@@ -1236,11 +1236,14 @@ static int make_canonical_depvar (MODEL *pmod, const double *y,
    by returning via @yvals the vector of distinct values.
 */
 
-static int mn_value_count (const double *y, MODEL *pmod, gretl_vector **yvals)
+static int mn_value_count (const double *y, MODEL *pmod, 
+			   int **valcount, int **yvals)
 {
     double *sy;
-    gretl_vector *v;
-    int s, t, n = 0;
+    int *vc = NULL;
+    int *v = NULL;
+    int want_yvals = 0;
+    int s, t, n;
 
     sy = malloc(pmod->nobs * sizeof *sy);
     if (sy == NULL) {
@@ -1255,39 +1258,59 @@ static int mn_value_count (const double *y, MODEL *pmod, gretl_vector **yvals)
 	}
     }
 
-    v = gretl_matrix_values(sy, pmod->nobs, &pmod->errcode);
-    if (pmod->errcode) {
+    qsort(sy, pmod->nobs, sizeof *sy, gretl_compare_doubles);
+
+    n = count_distinct_values(sy, pmod->nobs);
+
+    vc = malloc(n * sizeof *vc);
+    v = malloc(n * sizeof *v);
+    
+    if (vc == NULL || v == NULL) {
+	pmod->errcode = E_ALLOC;
 	free(sy);
+	free(vc);
 	return 0;
     }
 
-    if (v->val[0] != 0.0) {
-	/* we'll need v later */
-	*yvals = v;
+    for (s=0; s<n; s++) {
+	vc[s] = 0;
     }
 
-    n = gretl_vector_get_length(v);
+    if (sy[0] != 0.0) {
+	/* we'll need v later */
+	want_yvals = 1;
+    }
 
-    for (t=0; t<n && !pmod->errcode; t++) {
-	if (v->val[t] != floor(v->val[t])) {
+    v[0] = (int) sy[0];
+    s = 0;
+
+    for (t=0; t<pmod->nobs && !pmod->errcode; t++) {
+	if (sy[t] != floor(sy[t])) {
 	    pmod->errcode = E_DATA;
 	    gretl_errmsg_set("logit: the dependent variable must form a sequence of "
 			     "integers");
-	} else if (t > 0 && v->val[t] != v->val[t-1] + 1) {
-	    /* we'll need v later */
-	    *yvals = v;
+	} else if (t > 0 && sy[t] != sy[t-1]) {
+	    v[++s] = (int) sy[t];
+	    if (sy[t] != sy[t-1] + 1) {
+		/* not consecutive: need v later */
+		want_yvals = 1;
+	    }
+	    vc[s] = 1;
+	} else {
+	    vc[s] += 1;
 	}
     }
 
     if (pmod->errcode) {
-	*yvals = NULL;
+	free(vc);
 	n = 0;
-    } else if (*yvals == v) {
-	/* avoid freeing v */
+    } else if (want_yvals) {
+	*valcount = vc;
+	*yvals = v;
 	v = NULL;
     }
 
-    gretl_matrix_free(v);
+    free(v);
     free(sy);
 
     return n;
@@ -1304,25 +1327,13 @@ const char *mn_logit_coeffsep (const MODEL *pmod, const DATAINFO *pdinfo, int i)
     return ret;
 }
 
-static int mnl_value_frequency (mnl_info *mnl, int i) 
-{
-    int t, ni = 0;
-
-    for (t=0; t<mnl->T; t++) {
-	if (mnl->y->val[t] == i) {
-	    ni++;
-	}
-    }
-
-    return ni;
-}
-
 /* transcribe multinomial logit results into @pmod, which was
    initialized via OLS, and add covariance matrix
 */
 
 static void mnl_finish (mnl_info *mnl, MODEL *pmod,
-			const gretl_matrix *yvals,
+			const int *valcount,
+			const int *yvals,
 			const DATAINFO *pdinfo,
 			gretlopt opt)
 {
@@ -1362,11 +1373,11 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
     }
 
     if (!pmod->errcode && yvals != NULL) {
-	int *list = gretl_list_new(yvals->rows);
+	int *list = gretl_list_new(mnl->n + 1);
 
 	if (list != NULL) {
-	    for (i=0; i<yvals->rows; i++) {
-		list[i+1] = yvals->val[i];
+	    for (i=0; i<=mnl->n; i++) {
+		list[i+1] = yvals[i];
 	    }
 	    gretl_model_set_list_as_data(pmod, "yvals", list);
 	}
@@ -1382,13 +1393,11 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	}
 
 	for (i=0; i<=mnl->n; i++) {
-	    ni = mnl_value_frequency(mnl, i);
-	    if (ni > 0) {
-		if (pmod->ifc) {
-		    L0 += ni * log((double) ni / mnl->T);
-		} else {
-		    L0 += ni * log(1.0 / (mnl->n + 1));
-		}
+	    ni = valcount[i];
+	    if (pmod->ifc) {
+		L0 += ni * log((double) ni / mnl->T);
+	    } else {
+		L0 += ni * log(1.0 / (mnl->n + 1));
 	    }
 	}
 
@@ -1405,24 +1414,6 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
     pmod->opt |= OPT_M;
 }
 
-static void mnl_const_init (mnl_info *mnl) 
-{
-    int ni = mnl_value_frequency(mnl, 0);
-
-    if (ni > 0) {
-	double lf0 = log(ni);
-	int i, j = 0;
-
-	for (i=1; i<=mnl->n; i++) {
-	    ni = mnl_value_frequency(mnl, i);
-	    if (ni > 0) {
-		mnl->theta[j] = log(ni) - lf0;
-	    }
-	    j += mnl->k;
-	}	
-    }
-}
-
 /* multinomial logit */
 
 static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
@@ -1433,7 +1424,8 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     int grcount = 0;
     MODEL mod;
     mnl_info *mnl;
-    gretl_vector *yvals = NULL;
+    int *valcount = NULL;
+    int *yvals = NULL;
     int n, k = list[0] - 1;
     int i, vi, t, s;
 
@@ -1443,7 +1435,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mod;
     }
 
-    n = mn_value_count((*pZ)[list[1]], &mod, &yvals);
+    n = mn_value_count((*pZ)[list[1]], &mod, &valcount, &yvals);
     if (mod.errcode) {
 	return mod;
     }
@@ -1487,7 +1479,13 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     if (mod.ifc) {
-	mnl_const_init(mnl);
+	double lf0 = log(valcount[0]);
+	int j = 0;
+
+	for (i=1; i<=mnl->n; i++) {
+	    mnl->theta[j] = log(valcount[i]) - lf0;
+	    j += mnl->k;
+	}
     }
 
     mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
@@ -1496,13 +1494,14 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 			   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
     if (!mod.errcode) {
-	mnl_finish(mnl, &mod, yvals, pdinfo, opt);
+	mnl_finish(mnl, &mod, valcount, yvals, pdinfo, opt);
     }  
 
  bailout:  
 
     mnl_info_destroy(mnl);
-    gretl_matrix_free(yvals);
+    free(valcount);
+    free(yvals);
 
     return mod;
 }
