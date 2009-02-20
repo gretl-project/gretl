@@ -1233,7 +1233,9 @@ static int make_canonical_depvar (MODEL *pmod, const double *y,
 /* multinomial logit: count the distinct values taken on by the
    dependent variable.  If the variable does not take the form of a
    sequence of consecutive integers with a base of zero, flag this
-   by returning via @yvals the vector of distinct values.
+   by returning via @yvals the vector of distinct values. To assist
+   with later computations, we also return a frequency count for
+   the distinct y values in @valcount.
 */
 
 static int mn_value_count (const double *y, MODEL *pmod, 
@@ -1304,10 +1306,12 @@ static int mn_value_count (const double *y, MODEL *pmod,
     if (pmod->errcode) {
 	free(vc);
 	n = 0;
-    } else if (want_yvals) {
+    } else {
 	*valcount = vc;
-	*yvals = v;
-	v = NULL;
+	if (want_yvals) {
+	    *yvals = v;
+	    v = NULL;
+	}
     }
 
     free(v);
