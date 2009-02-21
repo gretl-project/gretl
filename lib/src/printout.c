@@ -1642,7 +1642,7 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
 
 void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
 {
-    if (gretl_messages_on()) {
+    if (gretl_messages_on() && !gretl_looping_quietly()) {
 	varlist(pdinfo, prn);
     }
 }

@@ -181,14 +181,28 @@ static int filter_comments (char *s, CMD *cmd)
     return filt;
 }
 
+/* as in, e.g., "lags 4 ; <varlist>" but we allow the leading
+   parameter to be given as a pre-defined scalar variable
+   instead of a numeric constant
+*/
+
 static int get_lags_param (char *s, CMD *cmd)
 {
     int k = haschar(';', s);
     int ret = 0;
 
     if (k > 0) {
+	char *tmp = gretl_strndup(s, k-1);
+	int lag = positive_int_from_string(tmp);
+
+	if (lag < 0 && gretl_is_scalar(tmp)) {
+	    lag = gretl_scalar_get_value(tmp);
+	    free(tmp);
+	    tmp = g_strdup_printf("%d", lag);
+	}
+
 	free(cmd->param);
-	cmd->param = gretl_strndup(s, k);
+	cmd->param = tmp;
 	shift_string_left(s, k + 1);
 	ret = 1;
     }

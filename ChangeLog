@@ -17,18 +17,25 @@
   user if the matrix-difference version of the Hausman test 
   fails; also document the --hausman-reg option in the help 
   entry for the "panel" command
-- VARs: support gaps in the lag structure
+- VARs: support gaps in the lag structure (not for VECMs);
+  also, allow single-equations VARs
 - New GUI graph option: "Plot curve" under the tools menu,
   for quick plotting of a formula
 - Chow test: add the option of specifying a dummy variable
   rather than a break point
 - Boxplots: enable boxplot command in loops
-- "var" command: allow single-equations VARs
 - seq() function: add a third, optional step parameter
 - Speed up loading of very large data files in gretl
   native format
 - Fixes for handling of data files with over 999 variables
 - Minor improvement to parsing of dates in CSV files
+- "lags" command: accept a scalar variable for the parameter
+  indicating how many lags to generate
+- "logit" command: support multinomial logit via a new
+  option, --multinomial
+- ordered logit, probit: add count of cases 'correctly
+  predicated', plus overall likelihood ratio test for all
+  slopes = 0
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
