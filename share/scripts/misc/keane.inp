@@ -37,5 +37,5 @@ end mle --verbose --hessian
 smpl full
 status = status + 1
 smpl (year=87) --restrict
-logit status 0 educ exper expersq black --multinomial --verbose
+logit status 0 educ exper expersq black --multinomial
 
