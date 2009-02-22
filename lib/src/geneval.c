@@ -1724,6 +1724,78 @@ static NODE *BFGS_maximize (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static void lag_calc (double *y, const double *x,
+		      int k, int t1, int t2, 
+		      int op, double mul,
+		      parser *p)
+{
+    int s, t;
+
+    for (t=t1; t<=t2; t++) {
+	s = t - k;
+	if (dated_daily_data(p->dinfo)) {
+	    if (s >= 0 && s < p->dinfo->n) {
+		while (s >= 0 && xna(x[s])) {
+		    s--;
+		}
+	    }
+	} else if (p->dinfo->structure == STACKED_TIME_SERIES) {
+	    if (s >= 0 && s < p->dinfo->n && 
+		p->dinfo->paninfo->unit[s] != 
+		p->dinfo->paninfo->unit[t]) {
+		s = -1;
+	    }
+	}
+	if (s >= 0 && s < p->dinfo->n) {
+	    if (op == B_ASN && mul == 1.0) {
+		y[t] = x[s];
+	    } else if (op == B_ASN) {
+		y[t] = mul * x[s];
+	    } else if (op == B_ADD) {
+		y[t] += mul * x[s];
+	    } else {
+		p->err = E_DATA;
+	    }
+	} 
+    }
+}
+
+/* lag polynomial, evaluated recursively if need be */
+
+static NODE *lagpoly_func (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL) {
+	const gretl_matrix *m = r->v.m;
+	int n = gretl_vector_get_length(m);
+
+	if (n == 0) {
+	    p->err = E_NONCONF;
+	} else {
+	    int t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+	    int t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+	    const double *x = l->v.xvec;
+	    int i, k = n, op = B_ASN;
+	    double mul;
+
+	    /* skip unobtainable lags */
+	    while (t1 - k < 0 || na(x[t1-k])) t1++;
+
+	    for (i=n; i>0 && !p->err; i--) {
+		mul = m->val[i-1];
+		if (mul != 0.0) {
+		    lag_calc(ret->v.xvec, x, i, t1, t2, 
+			     op, mul, p);
+		    op = B_ADD;
+		}
+	    }
+	}
+    } 
+
+    return ret;    
+}
+
 static NODE *matrix_csv_write (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -3665,7 +3737,7 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
     NODE *ret;
     const double *x = l->v.xvec;
     int k = (int) -(node_get_scalar(r, p));
-    int t, s, t1, t2;
+    int t1, t2;
 
     ret = aux_vec_node(p, p->dinfo->n);
     if (ret == NULL) {
@@ -3675,25 +3747,7 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
     t1 = (autoreg(p))? p->obs : p->dinfo->t1;
     t2 = (autoreg(p))? p->obs : p->dinfo->t2;
 
-    for (t=t1; t<=t2; t++) {
-	s = t - k;
-	if (dated_daily_data(p->dinfo)) {
-	    if (s >= 0 && s < p->dinfo->n) {
-		while (s >= 0 && xna(x[s])) {
-		    s--;
-		}
-	    }
-	} else if (p->dinfo->structure == STACKED_TIME_SERIES) {
-	    if (s >= 0 && s < p->dinfo->n && 
-		p->dinfo->paninfo->unit[s] != 
-		p->dinfo->paninfo->unit[t]) {
-		s = -1;
-	    }
-	}
-	if (s >= 0 && s < p->dinfo->n) {
-	    ret->v.xvec[t] = x[s];
-	} 
-    }
+    lag_calc(ret->v.xvec, x, k, t1, t2, B_ASN, 1.0, p);
 
     return ret;
 }
@@ -6232,7 +6286,16 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, STR, (l->t == STR)? 2 : 1,
 			    (l->t == STR)? r : l, p);
 	}
-	break;	
+	break;
+    case F_LAGPOLY:
+	if (l->t == VEC && r->t == MAT) {
+	    ret = lagpoly_func(l, r, p);
+	} else if (l->t != VEC) {
+	    node_type_error(t->t, 1, VEC, l, p);
+	} else {
+	    node_type_error(t->t, 2, MAT, r, p);
+	}
+	break;
     default: 
 	printf("EVAL: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
 	       t->t);

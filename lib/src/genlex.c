@@ -305,6 +305,7 @@ struct str_table funcs[] = {
     { F_XMAX,     "xmax" },
     { F_CORRGM,   "corrgm" },
     { F_MCOVG,    "mcovg" },
+    { F_LAGPOLY,  "lagpoly" },
     { 0,          NULL }
 };
 

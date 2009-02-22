@@ -283,6 +283,7 @@ enum {
     F_XMIN,
     F_XMAX,
     F_RESAMPLE,
+    F_LAGPOLY,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,
