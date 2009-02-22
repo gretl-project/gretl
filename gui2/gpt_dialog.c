@@ -954,7 +954,7 @@ static void graph_font_selector (GtkButton *button, plot_editor *ed)
     }
 }
 
-#else !G_OS_WIN32
+#else /* !G_OS_WIN32 */
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14
 #define gtk_font_selection_dialog_get_ok_button(f) (f->ok_button)
