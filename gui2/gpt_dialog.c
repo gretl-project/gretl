@@ -956,6 +956,13 @@ static void graph_font_selector (GtkButton *button, plot_editor *ed)
 
 #else
 
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14
+
+#define gtk_font_selection_dialog_get_ok_button(f) (f->ok_button)
+#define gtk_font_selection_dialog_get_cancel_button(f) (f->cancel_button)
+
+#endif
+
 static void graph_font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
 {
     gchar *fontname;
