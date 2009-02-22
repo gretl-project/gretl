@@ -1943,11 +1943,6 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
 
-static void fontsel_quit (GtkWidget *w, gpointer p)
-{
-    gtk_main_quit();
-}
-
 void font_selector (GtkAction *action)
 {
     static GtkWidget *fontsel = NULL;
@@ -1961,10 +1956,7 @@ void font_selector (GtkAction *action)
 # endif
 
     if (fontsel != NULL) {
-	if (!GTK_WIDGET_VISIBLE(fontsel)) {
-	    gtk_widget_show(fontsel);
-	}
-        gdk_window_raise(fontsel->window);
+	gtk_window_present(GTK_WINDOW(fontsel));
         return;
     }
 
@@ -1994,7 +1986,7 @@ void font_selector (GtkAction *action)
 		     G_CALLBACK(gtk_widget_destroyed),
 		     &fontsel);
     g_signal_connect(G_OBJECT(fontsel), "destroy",
-		     G_CALLBACK(fontsel_quit),
+		     G_CALLBACK(gtk_main_quit),
 		     NULL);
     g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_ok_button(fontsel)),
 		     "clicked", 
@@ -2012,79 +2004,25 @@ void font_selector (GtkAction *action)
 
 #else /* end non-win32 font selection, start win32 */
 
-static const char *font_weight_string (int weight)
-{
-    if (weight >= FW_THIN && weight <= FW_LIGHT) {
-	return " Light";
-    }
-    if (weight >= FW_NORMAL && weight <= FW_DEMIBOLD) {
-	return "";
-    }
-    if (weight >= FW_BOLD) {
-	return " Bold";
-    }
-    return "";
-}
-
-static void fontname_to_win32 (const char *src, int fixed,
-			       char *name, int *pts)
-{
-    int sz;
-
-    if (sscanf(src, "%31[^0123456789]%d", name, &sz) == 2) {
-	size_t i, n = strlen(name);
-
-	for (i=n-1; i>0; i--) {
-	    if (name[i] == ' ') name[i] = 0;
-	    else break;
-	}
-	*pts = sz * 10; /* measured in tenths of a point */
-    } else {
-	*name = 0;
-	strncat(name, src, 31);
-	if (fixed) *pts = 100;
-	else *pts = 80;
-    }
-}
-
 void font_selector (GtkAction *action)
 {
-    int which = fontsel_code(action);
-    CHOOSEFONT cf;            /* common dialog box structure */
-    LOGFONT lf;               /* logical font structure */
-    char fontname[48];
+    int flag = fontsel_code(action);
+    char fontname[128];
 
-    ZeroMemory(&cf, sizeof cf);
-    cf.lStructSize = sizeof cf;
-    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE | CF_INITTOLOGFONTSTRUCT;
-    cf.nSizeMin = 6;
-    cf.nSizeMax = 24;
+    if (flag == FIXED_FONT_SELECTION) {
+	strcpy(fontname, fixedfontname);
+    } else {
+	strcpy(fontname, appfontname);
+    }
 
-    ZeroMemory(&lf, sizeof lf);
+    win32_font_selector(fontname, flag);
 
-    cf.Flags |= CF_NOSCRIPTSEL;
-    
-    lf.lfWeight = FW_REGULAR;
-    lf.lfCharSet = DEFAULT_CHARSET;
-
-    if (which == FIXED_FONT_SELECTION) {
-	cf.Flags |= CF_FIXEDPITCHONLY;
-	fontname_to_win32(fixedfontname, 1, lf.lfFaceName, &(cf.iPointSize));
-    } else if (which == APP_FONT_SELECTION) {
-	fontname_to_win32(appfontname, 0, lf.lfFaceName, &(cf.iPointSize));
-    } 
-
-    cf.lpLogFont = &lf;
-
-    if (ChooseFont(&cf) == TRUE && *(cf.lpLogFont->lfFaceName)) {
-	sprintf(fontname, "%s%s %d", cf.lpLogFont->lfFaceName, 
-		font_weight_string(cf.lpLogFont->lfWeight), 
-		cf.iPointSize / 10);
-	if (which == FIXED_FONT_SELECTION) {
+    if (*fontname != '\0') {
+	if (flag == FIXED_FONT_SELECTION) {
 	    strcpy(fixedfontname, fontname);
 	    set_fixed_font();
 	    write_rc();
-	} else if (which == APP_FONT_SELECTION) {
+	} else {
 	    set_app_font(fontname);
 	    write_rc();
 	} 	    

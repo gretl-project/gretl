@@ -5046,7 +5046,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
  */
 
 double *
-gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo, 
+gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo, 
 			ModelDataIndex idx, int *err)
 {
     double *x = NULL;

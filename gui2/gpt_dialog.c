@@ -31,6 +31,10 @@
 #include "../pixmaps/mouse.xpm"
 #include "gppoints.h"
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#endif
+
 struct gpt_titles_t {
     char *desc;        /* How the field will show up in the options dialog */
     short tab;         /* which tab (if any) does the item fall under? */
@@ -68,6 +72,7 @@ struct plot_editor_ {
     GtkWidget *dialog;
     GtkWidget *notebook;
     GPT_SPEC *spec;
+    gchar *fontname;
 
     GtkWidget **linetitle;
     GtkWidget **lineformula;
@@ -696,6 +701,25 @@ static void plot_editor_sync (plot_editor *ed)
     old_labels_init(ed);
 }
 
+static void set_graph_font_from_widgets (plot_editor *ed)
+{
+    gchar *tmp = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->ttfcombo));
+    int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->ttfspin));
+
+    if (tmp != NULL && *tmp != '\0') {
+	const char *fname = get_font_filename(tmp);
+	char pngfont[128];
+
+	if (fname != NULL && ptsize > 5 && ptsize < 25) {
+	    sprintf(pngfont, "%s %d", fname, ptsize);
+	} else {
+	    *pngfont = '\0';
+	}
+	set_gretl_png_font(pngfont, &paths);
+    }
+    g_free(tmp);
+}
+
 /* Respond to "OK" or "Apply", or to hitting the Enter key in
    some parts of the plot editor dialog */
 
@@ -837,22 +861,12 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     }
 
-    if (!err && ed->ttfcombo != NULL && ed->ttfspin != NULL) {
-	gchar *tmp = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->ttfcombo));
-	int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->ttfspin));
-
-	if (tmp != NULL && *tmp != '\0') {
-	    const char *fname = get_font_filename(tmp);
-	    char pngfont[128];
-
-	    if (fname != NULL && ptsize > 5 && ptsize < 25) {
-		sprintf(pngfont, "%s %d", fname, ptsize);
-	    } else {
-		*pngfont = '\0';
-	    }
-	    set_gretl_png_font(pngfont, &paths);
+    if (!err) {
+	if (ed->fontname != NULL) {
+	    set_gretl_png_font(ed->fontname, &paths);
+	} else if (ed->ttfcombo != NULL && ed->ttfspin != NULL) {
+	    set_graph_font_from_widgets(ed);
 	}
-	g_free(tmp);
     }
 
     if (!err && ed->fitcombo != NULL && GTK_WIDGET_IS_SENSITIVE(ed->fitcombo)) {
@@ -921,7 +935,83 @@ static const char *get_font_filename (const char *showname)
     return NULL;
 }
 
-#ifndef G_OS_WIN32
+#ifdef G_OS_WIN32
+
+static void graph_font_selector (GtkButton *button, plot_editor *ed)
+{
+    char fontname[128];
+
+    strcpy(fontname, gretl_png_font());
+    win32_font_selector(fontname, APP_FONT_SELECTION);
+
+    if (*fontname != '\0') {
+	gchar *title = g_strdup_printf(_("font: %s"), fontname);
+
+	gtk_button_set_label(button, title);
+	g_free(title);
+	g_free(ed->fontname);
+	ed->fontname = g_strdup(fontname);
+    }
+}
+
+#else
+
+static void graph_font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
+{
+    gchar *fontname;
+
+    fontname = gtk_font_selection_dialog_get_font_name(fs);
+
+    if (fontname != NULL && *fontname != '\0') {
+	GtkWidget *b = g_object_get_data(G_OBJECT(fs), "launcher");
+	plot_editor *ed = g_object_get_data(G_OBJECT(fs), "editor");
+	gchar *title = g_strdup_printf(_("font: %s"), fontname);
+
+	gtk_button_set_label(GTK_BUTTON(b), title);
+	g_free(title);
+	g_free(ed->fontname);
+	ed->fontname = fontname;
+	fontname = NULL;
+    }
+
+    g_free(fontname);
+    gtk_widget_destroy(GTK_WIDGET(fs));
+}
+
+static void graph_font_selector (GtkButton *button, plot_editor *ed)
+{
+    static GtkWidget *fontsel = NULL;
+    GtkWidget *b;
+
+    if (fontsel != NULL) {
+	gtk_window_present(GTK_WINDOW(fontsel));
+        return;
+    }
+
+    fontsel = gtk_font_selection_dialog_new(_("Font for graphs"));
+    gtk_font_selection_dialog_set_font_name(GTK_FONT_SELECTION_DIALOG(fontsel), 
+					    gretl_png_font());
+    g_object_set_data(G_OBJECT(fontsel), "launcher", button);
+    g_object_set_data(G_OBJECT(fontsel), "editor", ed);
+
+    gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
+
+    g_signal_connect(G_OBJECT(fontsel), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed),
+		     &fontsel);
+    g_signal_connect(G_OBJECT(fontsel), "destroy",
+		     G_CALLBACK(gtk_main_quit), NULL);
+    b = gtk_font_selection_dialog_get_ok_button(GTK_FONT_SELECTION_DIALOG(fontsel));
+    g_signal_connect(G_OBJECT(b), "clicked", G_CALLBACK(graph_font_selection_ok), 
+		     fontsel);
+    b = gtk_font_selection_dialog_get_cancel_button(GTK_FONT_SELECTION_DIALOG(fontsel));
+    g_signal_connect(G_OBJECT(b), "clicked", G_CALLBACK(delete_widget), 
+		     fontsel);
+
+    gtk_widget_show(fontsel);
+
+    gtk_main();
+}
 
 static int font_is_ok (const char *fname)
 {
@@ -1169,13 +1259,73 @@ static GtkWidget *gp_page_vbox (GtkWidget *notebook, char *str)
     return vbox;
 }
 
+static void add_gd_font_selector (plot_editor *ed, GtkWidget *tbl, int *rows)
+{
+    GtkWidget *ebox, *entry, *label;
+    GList *fontnames = NULL;
+    struct font_info *ttflist;
+    const char *default_font = NULL;
+    int i, nfonts = 0;
+
+    ttflist = get_gnuplot_ttf_list(&nfonts);
+
+    for (i=0; i<nfonts; i++) {
+	fontnames = g_list_append(fontnames, (gpointer) ttflist[i].showname);
+	if (font_match(ttflist[i].fname, gretl_png_font())) {
+	    default_font = ttflist[i].showname;
+	}
+    }
+
+    fontnames = g_list_append(fontnames, _("None"));
+    if (default_font == NULL) {
+	default_font = _("None");
+    }
+
+    table_add_row(tbl, rows, TAB_MAIN_COLS);
+    ebox = gtk_event_box_new();
+    label = gtk_label_new(_("TrueType font"));
+    gtk_container_add(GTK_CONTAINER(ebox), label);
+    gtk_table_attach_defaults(GTK_TABLE (tbl), ebox, 0, 1, 
+			      *rows-1, *rows);
+    gtk_widget_show(label);
+    gtk_widget_show(ebox);
+
+    /* FIXME max length of font name? */
+
+    ed->ttfcombo = gtk_combo_box_entry_new_text();
+    entry = gtk_bin_get_child(GTK_BIN(ed->ttfcombo));
+    gtk_entry_set_max_length(GTK_ENTRY(entry), 15);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfcombo, 1, 2, 
+			      *rows-1, *rows);
+    set_combo_box_strings_from_list(GTK_COMBO_BOX(ed->ttfcombo), fontnames); 
+    gtk_entry_set_text(GTK_ENTRY(entry), default_font);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 15);
+    g_signal_connect(G_OBJECT(entry), "activate", 
+		     G_CALLBACK(apply_gpt_changes), 
+		     ed);
+    gtk_widget_show(ed->ttfcombo);
+    g_list_free(fontnames);
+
+    ed->ttfspin = gtk_spin_button_new_with_range(6, 24, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->ttfspin), 
+			      get_point_size(gretl_png_font()));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfspin, 2, 3, 
+			      *rows-1, *rows);
+    gtk_widget_show(ed->ttfspin);
+}
+
 static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec) 
 {
     static int aa_ok = 1;
     static int show_aa_check = -1;
+    static int pngcairo = -1;
     GtkWidget *label, *vbox, *tbl;
     int i, rows = 1;
     int kactive = 0;
+
+    if (pngcairo < 0) {
+	pngcairo = (gnuplot_png_terminal() == GP_PNG_CAIRO);
+    }
 
     vbox = gp_page_vbox(ed->notebook, _("Main"));
 
@@ -1317,29 +1467,11 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	g_signal_connect(G_OBJECT(aa_check), "clicked", 
 			 G_CALLBACK(set_aa_status), &aa_ok);
 	gtk_widget_show(aa_check);
-    }	
+    }
 
-    /* set TT font, if gnuplot uses freetype */
-    if (gnuplot_has_ttf(0)) {
-	GtkWidget *ebox, *hsep, *entry;
-	GList *fontnames = NULL;
-	struct font_info *ttflist;
-	const char *default_font = NULL;
-	int nfonts = 0;
-
-	ttflist = get_gnuplot_ttf_list(&nfonts);
-
-	for (i=0; i<nfonts; i++) {
-	    fontnames = g_list_append(fontnames, (gpointer) ttflist[i].showname);
-	    if (font_match(ttflist[i].fname, gretl_png_font())) {
-		default_font = ttflist[i].showname;
-	    }
-	}
-
-	fontnames = g_list_append(fontnames, _("None"));
-	if (default_font == NULL) {
-	    default_font = _("None");
-	}
+    /* setting of graph font, if gnuplot uses freetype */
+    if (pngcairo || gnuplot_has_ttf(0)) {
+	GtkWidget *hsep;
 
 	/* first a separator */
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);	
@@ -1348,41 +1480,24 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 				  rows-1, rows);  
 	gtk_widget_show(hsep);
 
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	ebox = gtk_event_box_new();
-	label = gtk_label_new(_("TrueType font"));
-	gtk_container_add(GTK_CONTAINER(ebox), label);
-	gtk_table_attach_defaults(GTK_TABLE (tbl), ebox, 0, 1, 
-				  rows-1, rows);
-	gtk_widget_show(label);
-	gtk_widget_show(ebox);
+	if (pngcairo) {
+	    gchar *title = g_strdup_printf(_("font: %s"), gretl_png_font());
+	    GtkWidget *b = gtk_button_new_with_label(title);
 
-	/* FIXME max length of font name? */
-
-	ed->ttfcombo = gtk_combo_box_entry_new_text();
-	entry = gtk_bin_get_child(GTK_BIN(ed->ttfcombo));
-	gtk_entry_set_max_length(GTK_ENTRY(entry), 15);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfcombo, 1, 2, 
-				  rows-1, rows);
-	set_combo_box_strings_from_list(GTK_COMBO_BOX(ed->ttfcombo), fontnames); 
-	gtk_entry_set_text(GTK_ENTRY(entry), default_font);
-	gtk_entry_set_width_chars(GTK_ENTRY(entry), 15);
-	g_signal_connect(G_OBJECT(entry), "activate", 
-			 G_CALLBACK(apply_gpt_changes), 
-			 ed);
-	gtk_widget_show(ed->ttfcombo);
-	g_list_free(fontnames);
-
-	ed->ttfspin = gtk_spin_button_new_with_range(6, 24, 1);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->ttfspin), 
-				  get_point_size(gretl_png_font()));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfspin, 2, 3, 
-				  rows - 1, rows);
-	gtk_widget_show(ed->ttfspin);
+	    table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), b, 0, TAB_MAIN_COLS, 
+				      rows - 1, rows); 
+	    g_signal_connect(G_OBJECT(b), "clicked", 
+			     G_CALLBACK(graph_font_selector), 
+			     ed);
+	    gtk_widget_show(b);
+	    g_free(title);
+	} else {
+	    add_gd_font_selector(ed, tbl, &rows);
+	}
     } 
 
-    if (gnuplot_png_terminal() != GP_PNG_OLD && 
-	frequency_plot_code(spec->code)) {
+    if (gnuplot_png_terminal() != GP_PNG_OLD && frequency_plot_code(spec->code)) {
 	GtkWidget *hsep = gtk_hseparator_new();
 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
@@ -2560,7 +2675,9 @@ static void plot_editor_destroy (plot_editor *ed)
 	free(ed->spec->labels);
 	ed->spec->labels = ed->old_labels;
 	ed->spec->n_labels = ed->old_n_labels;
-    }    
+    }  
+
+    free(ed->fontname);
 
     free(ed->linetitle);
     free(ed->lineformula);
@@ -2694,6 +2811,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     }
 
     ed->spec = spec;
+    ed->fontname = NULL;
 
     ed->dialog = NULL;
 

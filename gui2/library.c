@@ -4637,7 +4637,11 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
     int err;
 
     if (pmod->dataset != NULL) {
+	fprintf(stderr, "using pmod->dataset\n");
+	fprintf(stderr, "pmod->dataset->dinfo->n = %d, datainfo->n = %d\n",
+		pmod->dataset->dinfo->n, datainfo->n);
 	if (!undo) {
+	    fprintf(stderr, "returning 1\n");
 	    return 1;
 	} 
 	err = genr_fit_resid(pmod, 

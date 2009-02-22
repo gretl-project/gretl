@@ -79,6 +79,6 @@ void free_model_dataset (MODEL *pmod);
 
 void maybe_free_full_dataset (const DATAINFO *pdinfo);
 
-int model_sample_problem (const MODEL *pmod, const DATAINFO *pdinfo);
+int model_sample_problem (MODEL *pmod, const DATAINFO *pdinfo);
 
 #endif /* SUBSAMPLE_H */

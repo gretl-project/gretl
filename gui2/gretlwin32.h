@@ -64,4 +64,6 @@ int win32_open_file (const char *fname);
 
 void win32_raise_window (GtkWidget *w);
 
+void win32_font_selector (char *fontname, int flag);
+
 #endif /* GRETLWIN32_H */

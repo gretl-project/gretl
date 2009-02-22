@@ -635,6 +635,7 @@ static void fill_op_model (MODEL *pmod, const int *list,
 
     pmod->lnL = op_loglik(OC->theta, OC);
     mle_criteria(pmod, 0);
+    pmod->rsq = pmod->adjrsq = NADBL;
 
     gretl_model_allocate_params(pmod, npar);
 

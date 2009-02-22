@@ -36,6 +36,8 @@
 - ordered logit, probit: add count of cases 'correctly
   predicated', plus overall likelihood ratio test for all
   slopes = 0
+- Graph editing dialog: provide more comprehensive font
+  selection apparatus if gnuplot supports cairo
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

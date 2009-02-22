@@ -1,9 +1,7 @@
 function mlogitlogprobs(series y, matrix X, matrix theta)
-
   scalar n = max(y)
   scalar k = cols(X)
   matrix b = mshape(theta,k,n)
-
   matrix tmp = X*b
   series ret = -ln(1 + sumr(exp(tmp)))
 
@@ -13,13 +11,17 @@ function mlogitlogprobs(series y, matrix X, matrix theta)
   end loop
 
   return series ret
-
 end function
 
-# Replicate Table 15.2 in Wooldridge's panel data book (2002a)
+# Replicate the multinomial logit example from Table 15.2 in 
+# Wooldridge's panel data book (2002a).
+# We first do this manually using gretl's mle command, then
+# show the result from gretl's built-in logit command
 
 open keane.gdt
-status = status-1 # dep. var. must be 0-based
+# for the manual variant the dep. var. must be 0-based
+status = status - 1
+# and we must exclude NAs
 smpl (year=87 && ok(status)) --restrict
 
 matrix X = { const, educ, exper, expersq, black }
@@ -29,3 +31,11 @@ matrix theta = zeros(2*k, 1)
 mle ll = mlogitlogprobs(status,X,theta)
   params theta
 end mle --verbose --hessian
+
+# Compare the built-in command (in this case we don't need
+# status to be 0-based, and NAs are handled correctly)
+smpl full
+status = status + 1
+smpl (year=87) --restrict
+logit status 0 educ exper expersq black --multinomial --verbose
+

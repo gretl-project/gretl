@@ -51,7 +51,7 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
 #define multinomial_model(m) (m->ci == LOGIT && gretl_model_get_int(m, "multinom"))
 
-#define logit_probit(m) (m->ci == LOGIT || m->ci == PROBIT) 
+#define logit_probit_model(m) (m->ci == LOGIT || m->ci == PROBIT) 
 
 #define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
 
@@ -2434,7 +2434,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 		val[i] = NADBL;
 	    }
 	}
-    } else if (binary_model(pmod)) {
+    } else if (logit_probit_model(pmod)) {
 	val[2] = val[3] = NADBL;
 	val[6] = val[7] = NADBL;
 	val[12] = val[13] = NADBL;
@@ -2690,7 +2690,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_GMM_stats(pmod, prn);
     } else if (pmod->ci == ARBOND) {
 	print_DPD_stats(pmod, prn);
-    } else if (logit_probit(pmod)) {
+    } else if (logit_probit_model(pmod)) {
 	logit_probit_stats(pmod, pdinfo, prn);
     } else if (tsls_model(pmod) && plain_format(prn)) {
 	addconst_message(pmod, prn);
@@ -4354,7 +4354,7 @@ static int limdep_df (const MODEL *pmod)
     int df = gretl_model_get_int(pmod, "lr_df");
 
     if (df == 0) {
-	df = pmod->ncoeff - 1;
+	df = pmod->dfn;
     }
 
     return df;

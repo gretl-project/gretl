@@ -1406,7 +1406,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	}
 
 	pmod->chisq = 2.0 * (pmod->lnL - L0);
-	gretl_model_set_int(pmod, "lr_df", df);
+	pmod->dfn = df;
     }
 
     if (pmod->xpx != NULL) {

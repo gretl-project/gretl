@@ -413,34 +413,6 @@ static int set_network_cfg_filename (const char *prog)
     return 0;
 }
 
-#if 0
-static int set_gd_fontpath (void)
-{
-    char fpath[MAX_PATH];
-    char *envstr;
-    UINT usz;
-
-    usz = GetWindowsDirectory(fpath, MAX_PATH);
-    if (usz == 0 || usz > MAX_PATH - 6) {
-        return 1;
-    }
-
-    fpath[2] = '/';
-    strcat(fpath, "/fonts");
-
-    SetEnvironmentVariable("GDFONTPATH", fpath);
-
-    envstr = malloc(strlen(fpath) + 12);
-    if (envstr != NULL) {
-	sprintf(envstr, "GDFONTPATH=%s", fpath);
-	putenv(envstr);
-	free(envstr);
-    }
-
-    return 0;        
-}
-#endif
-
 void gretl_win32_init (const char *progname)
 {
     set_network_cfg_filename(progname);
@@ -448,9 +420,6 @@ void gretl_win32_init (const char *progname)
     wimp_init();
     read_rc(); /* get config info from registry */
     set_gretl_startdir();
-#if 0
-    set_gd_fontpath();
-#endif
     hush_warnings();
     ws_startup(); 
 }
@@ -802,3 +771,73 @@ void win32_raise_window (GtkWidget *w)
     }
 }
 
+static const char *font_weight_string (int weight)
+{
+    if (weight >= FW_THIN && weight <= FW_LIGHT) {
+	return " Light";
+    }
+    if (weight >= FW_NORMAL && weight <= FW_DEMIBOLD) {
+	return "";
+    }
+    if (weight >= FW_BOLD) {
+	return " Bold";
+    }
+    return "";
+}
+
+static void fontname_to_win32 (const char *src, int flag,
+			       char *name, int *pts)
+{
+    int sz;
+
+    if (sscanf(src, "%31[^0123456789]%d", name, &sz) == 2) {
+	size_t i, n = strlen(name);
+
+	for (i=n-1; i>0; i--) {
+	    if (name[i] == ' ') name[i] = 0;
+	    else break;
+	}
+	*pts = sz * 10; /* measured in tenths of a point */
+    } else {
+	*name = 0;
+	strncat(name, src, 31);
+	if (flag == FIXED_FONT_SELECTION) *pts = 100;
+	else *pts = 80;
+    }
+}
+
+void win32_font_selector (char *fontname, int flag)
+{
+    CHOOSEFONT cf;            /* common dialog box structure */
+    LOGFONT lf;               /* logical font structure */
+
+    ZeroMemory(&cf, sizeof cf);
+    cf.lStructSize = sizeof cf;
+    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE | CF_INITTOLOGFONTSTRUCT;
+    cf.nSizeMin = 6;
+    cf.nSizeMax = 24;
+
+    ZeroMemory(&lf, sizeof lf);
+
+    cf.Flags |= CF_NOSCRIPTSEL;
+    
+    lf.lfWeight = FW_REGULAR;
+    lf.lfCharSet = DEFAULT_CHARSET;
+
+    if (flag == FIXED_FONT_SELECTION) {
+	cf.Flags |= CF_FIXEDPITCHONLY;
+    } 
+
+    fontname_to_win32(fontname, flag, lf.lfFaceName, &(cf.iPointSize));
+
+    cf.lpLogFont = &lf;
+
+    if (ChooseFont(&cf) == TRUE && *(cf.lpLogFont->lfFaceName)) {
+	sprintf(fontname, "%s%s %d", cf.lpLogFont->lfFaceName, 
+		font_weight_string(cf.lpLogFont->lfWeight), 
+		cf.iPointSize / 10);
+    } else {
+	/* signal cancellation */
+	*fontname = '\0';
+    }
+}

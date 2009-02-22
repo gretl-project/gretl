@@ -768,6 +768,32 @@ void graph_palette_reset (int i)
     }
 }
 
+static int split_fontname (const char *s, char *name, int *psz)
+{
+    int i, k = 0, n = strlen(s);
+    int nf = 0;
+
+    for (i=n-1; i>0; i--) {
+	if (isdigit(s[i])) k++;
+	else break;
+    }
+
+    if (k > 0) {
+	char ptstr[8];
+
+	*ptstr = *name = '\0';
+	strncat(ptstr, s + n - k, k);
+	*psz = atoi(ptstr);
+	strncat(name, s, n - k - 1);
+	nf = 2;
+    } else if (*s != '\0') {
+	nf = 1;
+	strcpy(name, s);
+    }
+
+    return nf;
+}
+
 #define USE_SMALL_FONT(t) (t == PLOT_MULTI_IRF || \
 			   t == PLOT_MULTI_SCATTER || \
 			   t == PLOT_PANEL)
@@ -778,9 +804,9 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype,
 {
     if (pngterm == GP_PNG_CAIRO) {
 	char fname[128];
-	int fsize, nf;
+	int nf, fsize = 0;
 
-	nf = sscanf(grfont, "%s %d", fname, &fsize);
+	nf = split_fontname(grfont, fname, &fsize);
 	if (nf == 2) {
 	    if (USE_SMALL_FONT(ptype) && gp_small_font_size > 0) {
 		fprintf(stderr, "Doing small font\n");
@@ -1010,7 +1036,7 @@ static void png_font_to_emf (const char *pngfont, char *emfline)
     char name[128];
     int pt;
 
-    if (sscanf(pngfont, "%127s %d", name, &pt) == 2) {
+    if (split_fontname(pngfont, name, &pt) == 2) {
 	char ptstr[8];
 
 	if (pt <= 8) {
