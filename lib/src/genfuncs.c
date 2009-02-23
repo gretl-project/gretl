@@ -569,6 +569,8 @@ int block_resample_series (const double *x, double *y, int blocklen,
     return 0;
 }
 
+#if 0
+
 /**
  * filter_series_old:
  * @x: array of original data.
@@ -692,6 +694,8 @@ static int filter_series_old (const double *x, double *y,
     return err;
 }
 
+#endif
+
 /**
  * filter_series:
  * @x: array of original data.
@@ -714,7 +718,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 {
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
-    int t, s, i, m, n;
+    int t, s, i, n;
     int amax, cmax;
     double coef, *e;
     int err = 0;
@@ -756,7 +760,6 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     s = amax;
 
     if (amax) {
-	double xlag;
 	for (t=t1; t<=t1+amax; t++) {
 	    y[t] = y0;
 	}
