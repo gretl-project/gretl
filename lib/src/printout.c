@@ -2749,9 +2749,9 @@ char *bufgets (char *s, size_t size, const char *buf)
 /**
  * bufseek:
  * @buf: char buffer.
- * @offset: offset from start.
+ * @offset: offset from start of @buf.
  *
- * Buffer equivalent of fseek, with SEEK_SET.  Note that @buf
+ * Buffer equivalent of fseek(), with %SEEK_SET.  Note that @buf
  * must first be initialized via bufgets_init().
  * 
  * Returns: 0 on success, 1 on error.
@@ -2773,10 +2773,8 @@ int bufseek (const char *buf, long offset)
  * buf_rewind:
  * @buf: char buffer.
  *
- * Buffer equivalent of rewind.  Note that @buf
- * must first be initialized via bufgets_init().
- * 
- * Returns: 0 on success, 1 on error.
+ * Buffer equivalent of rewind().  Note that @buf
+ * must first be initialized using bufgets_init().
  */
 
 void buf_rewind (const char *buf)

@@ -1,10 +1,14 @@
 <?xml version="1.0"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" 
                "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
-<!ENTITY bhhh-max SYSTEM "xml/bhhh_max.xml">
+<!ENTITY adf-kpss  SYSTEM "xml/adf_kpss.xml">
+<!ENTITY bhhh-max  SYSTEM "xml/bhhh_max.xml">
+<!ENTITY bootstrap SYSTEM "xml/bootstrap.xml">
+<!ENTITY boxplots  SYSTEM "xml/boxplots.xml">
 <!ENTITY calendar SYSTEM "xml/calendar.xml">
 <!ENTITY compare  SYSTEM "xml/compare.xml">
 <!ENTITY compat   SYSTEM "xml/compat.xml">
+<!ENTITY csvdata  SYSTEM "xml/csvdata.xml">
 <!ENTITY dataio   SYSTEM "xml/dataio.xml">
 <!ENTITY dataset  SYSTEM "xml/dataset.xml">
 <!ENTITY dbread   SYSTEM "xml/dbread.xml">
@@ -16,8 +20,10 @@
 <!ENTITY genfuncs SYSTEM "xml/genfuncs.xml">
 <!ENTITY genmain  SYSTEM "xml/genmain.xml">
 <!ENTITY graphing SYSTEM "xml/graphing.xml">
+<!ENTITY gretl-bfgs     SYSTEM "xml/gretl_bfgs.xml">
 <!ENTITY gretl-commands SYSTEM "xml/gretl_commands.xml">
 <!ENTITY gretl-errors   SYSTEM "xml/gretl_errors.xml">
+<!ENTITY gretl-fft      SYSTEM "xml/gretl_fft.xml">
 <!ENTITY gretl-func     SYSTEM "xml/gretl_func.xml">
 <!ENTITY gretl-intl     SYSTEM "xml/gretl_intl.xml">
 <!ENTITY gretl-list     SYSTEM "xml/gretl_list.xml">
@@ -27,11 +33,14 @@
 <!ENTITY gretl-paths    SYSTEM "xml/gretl_paths.xml">
 <!ENTITY gretl-prn      SYSTEM "xml/gretl_prn.xml">
 <!ENTITY gretl-restrict SYSTEM "xml/gretl_restrict.xml">
+<!ENTITY gretl-scalar   SYSTEM "xml/gretl_scalar.xml">
 <!ENTITY gretl-string-table SYSTEM "xml/gretl_string_table.xml">
 <!ENTITY gretl-utils    SYSTEM "xml/gretl_utils.xml">
 <!ENTITY gretl-win32    SYSTEM "xml/gretl_win32.xml">
+<!ENTITY gretl-www      SYSTEM "xml/gretl_www.xml">
 <!ENTITY gretl-xml      SYSTEM "xml/gretl_xml.xml">
 <!ENTITY interact       SYSTEM "xml/interact.xml">
+<!ENTITY irfboot        SYSTEM "xml/irfboot.xml">
 <!ENTITY kalman         SYSTEM "xml/kalman.xml">
 <!ENTITY libgretl       SYSTEM "xml/libgretl.xml">
 <!ENTITY libset         SYSTEM "xml/libset.xml">
@@ -47,6 +56,7 @@
 <!ENTITY plotspec       SYSTEM "xml/plotspec.xml">
 <!ENTITY plugins        SYSTEM "xml/plugins.xml">
 <!ENTITY printout       SYSTEM "xml/printout.xml">
+<!ENTITY printscan      SYSTEM "xml/printscan.xml">
 <!ENTITY pvalues        SYSTEM "xml/pvalues.xml">
 <!ENTITY qr-estimate    SYSTEM "xml/qr_estimate.xml">
 <!ENTITY random         SYSTEM "xml/random.xml">
@@ -59,14 +69,14 @@
 <!ENTITY usermat        SYSTEM "xml/usermat.xml">
 <!ENTITY var            SYSTEM "xml/var.xml">
 <!ENTITY varprint       SYSTEM "xml/varprint.xml">
-
+<!ENTITY vartest        SYSTEM "xml/vartest.xml">
 ]>
 
 <book id="index">
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for gretl 1.7.5</releaseinfo>
+    <releaseinfo>for gretl 1.8.0</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">
@@ -83,6 +93,7 @@
 
   <chapter id="ch-dataset">
     <title>Data input and output</title>
+    &csvdata;
     &dataio; 
     &gretl-xml; 
     &dbread; 
@@ -109,9 +120,11 @@
 
   <chapter id="ch-tests">
     <title>Descriptive statistics and tests</title> 
+    &adf-kpss;
     &describe; 
     &compare;
     &gretl-restrict;
+    &vartest;
   </chapter>
 
   <chapter id="ch-data-manipulation">
@@ -127,10 +140,12 @@
 
   <chapter id="ch-printing">
     <title>Printing and graphing</title>
-    &printout;  
+    &printout; 
+    &printscan; 
     &modelprint;
     &texprint;
     &graphing;
+    &boxplots;
     &plotspec;
     &gretl-prn;
     &varprint;
@@ -172,6 +187,7 @@
 
   <chapter id="utils">
     <title>Utilities</title>
+    &gretl-bfgs;
     &gretl-utils;
     &strutils; 
     &gretl-list;
@@ -179,6 +195,7 @@
     &plugins; 
     &gretl-intl;
     &gretl-win32;
+    &gretl-www;
   </chapter>
 
 </book>

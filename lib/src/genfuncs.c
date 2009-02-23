@@ -427,8 +427,8 @@ int fracdiff_series (const double *x, double *y, double d,
  * @d: lambda parameter.
  * @pdinfo: data set information.
  *
- * Calculates the Box-Cox transformation
- * for the input series @x.
+ * Calculates in @y the Box-Cox transformation for the 
+ * input series @x.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */

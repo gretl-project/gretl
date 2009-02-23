@@ -1946,16 +1946,14 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
  * @list: high/low (2 variables) plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ci: command index: if = %LOGIT, perform logit regression, otherwise
- * perform probit regression.
  * @opt: if includes %OPT_R form robust (QML) estimates of standard
- * errors and covariance matrix, in binary case; if %OPT_P arrange for
- * printing of p-values, not slopes at mean; if %OPT_A treat as an
- * auxiliary regression.
+ * errors and covariance matrix; if includes %OPT_V give verbose
+ * operation.
  * @prn: printing struct in case additional information is
- * wanted (%OPT_V).
+ * wanted (signalled via %OPT_V).
  *
- * Returns: a #MODEL struct, containing the estimates.
+ * Returns: a #MODEL struct, containing interval estimates of the
+ * model specified by @list.
  */
 
 MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt, 

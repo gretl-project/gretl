@@ -3248,7 +3248,7 @@ static int tsld1 (const double *a1, const double *a2,
  * gretl_toeplitz_solve:
  * @c: Toeplitz column.
  * @r: Toeplitz row.
- * @x: vector 'x'.
+ * @b: right-hand side vector.
  * @err: error code.
  *
  * Solves Tx = b for the unknown vector x, where T is a Toeplitz
@@ -3259,8 +3259,7 @@ static int tsld1 (const double *a1, const double *a2,
  *
  * Note that c[0] should equal r[0]. 
  *
- * Returns: a newly allocated vector, containing the solution.
- *
+ * Returns: a newly allocated vector, containing the solution, x.
  */
 
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c, 

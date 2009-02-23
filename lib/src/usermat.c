@@ -108,6 +108,16 @@ static int matrix_is_user_matrix (const gretl_matrix *m)
 
 static void (*matrix_add_callback)(void);
 
+/**
+ * set_matrix_add_callback:
+ * @callback: function function to out in place.
+ *
+ * Sets the callback function to be invoked when a user-defined
+ * matrix is added to the stack of saved objects.  Intended
+ * for synchronizing the GUI program with the saved object
+ * state.
+ */
+
 void set_matrix_add_callback (void (*callback))
 {
     matrix_add_callback = callback; 

@@ -280,7 +280,7 @@ static const char *res2[] = {
  * gretl_reserved_word:
  * @str: string to be tested.
  *
- * Returns non-zero if @str is a reserved word that cannot 
+ * Returns: non-zero if @str is a reserved word that cannot 
  * figure as the name of a user-defined variable, otherwise 0.
  */
 
