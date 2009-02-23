@@ -4543,6 +4543,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (k != 3 && k != 4) {
 	    n_args_error(k, 3, "filter", p);
 	} else {
+	    /* series to filter */
 	    e = eval(n->v.bn.n[0], p);
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", 0);
@@ -4559,18 +4560,21 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 1) {
+		/* matrix for AR polynomial */
 		if (e->t != MAT) {
 		    node_type_error(t->t, i, MAT, e, p);
 		} else {
 		    A = e->v.m;
 		}
 	    } else if (i == 2) {
+		/* matrix for MA polynomial */
 		if (e->t != MAT) {
 		    node_type_error(t->t, i, MAT, e, p);
 		} else {
 		    C = e->v.m;
 		}
 	    } else if (i == 3) {
+		/* initial value for output series */
 		if (e->t != NUM) {
 		    node_type_error(t->t, i, NUM, e, p);
 		} else {

@@ -576,6 +576,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
  * @pdinfo: data set information.
  * @A: matrix for autoregressive polynomial.
  * @C: matrix for moving average polynomial.
+ * @y0: initial value of output series.
  *
  * Filters x according to y_t = C(L)/A(L) x_t; the matrices A and C
  * must have two columns, or be empty. The rows of A and C must
@@ -587,7 +588,6 @@ int block_resample_series (const double *x, double *y, int blocklen,
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
-
 
 int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
 		   gretl_matrix *A, gretl_matrix *C, double y0)
