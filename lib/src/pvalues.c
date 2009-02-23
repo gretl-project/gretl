@@ -1896,6 +1896,23 @@ int batch_pvalue (const char *str,
     return err;
 }
 
+/**
+ * gretl_get_DW:
+ * @n: number of observations
+ * @k: number of regressors excluding the constant.
+ * @err: location to receive error code.
+ *
+ * Consults a table of Durbin-Watson critical values and
+ * returns the results in a gretl_matrix.  
+ *
+ * Returns: on success, a 4-vector containing the lower
+ * and upper Durbin-Watson values, dl and du, along with
+ * the values actually used for @n and @k (which may differ
+ * from those given on input if the exact values are not
+ * found in the table and have to be approximated).  
+ * On error, returns %NULL.
+ */
+
 gretl_matrix *gretl_get_DW (int n, int k, int *err)
 {
     void *handle;

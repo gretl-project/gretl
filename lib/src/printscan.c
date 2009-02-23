@@ -644,7 +644,7 @@ static int real_do_printf (const char *line, double ***pZ,
  * @pdinfo: dataset information.
  * @prn: printing struct.
  *
- * Implement a somewhat limited version of C's printf
+ * Implements a somewhat limited version of C's printf()
  * for use in gretl scripts.
  *
  * Returns: 0 on success, non-zero on error.
@@ -1172,7 +1172,7 @@ int n_scanned_items (void)
  * @pdinfo: dataset information.
  * @prn: printing struct.
  *
- * Implement a somewhat limited version of C's sscanf
+ * Implements a somewhat limited version of C's sscanf()
  * for use in gretl scripts.
  *
  * Returns: 0 on success, non-zero on error.

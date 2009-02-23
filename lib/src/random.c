@@ -29,6 +29,12 @@ static unsigned int useed;
 
 #undef OLD_NORMAL
 
+/**
+ * gretl_rand_get_seed:
+ *
+ * Returns: the value of the seed for gretl's PRNG.
+ */
+
 unsigned int gretl_rand_get_seed (void)
 {
     return useed;
@@ -72,6 +78,7 @@ void gretl_rand_set_seed (unsigned int seed)
 /**
  * gretl_one_snormal:
  *
+ * Returns: a single drawing from the standard normal distribution.
  */
 
 double gretl_one_snormal (void) 

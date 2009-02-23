@@ -460,6 +460,14 @@ static const char *ok_flags = "abcdefghijklmnopqrstuvwxz";
 
 #define isflag(c) (c && (strchr(ok_flags, c) != NULL))
 
+/**
+ * opt_from_flag:
+ *
+ * Returns: the gretl option value associated with a given
+ * single-character flag.  Gives 0 if there is no associated
+ * option.
+ */
+
 gretlopt opt_from_flag (unsigned char c)
 {
     int i;
@@ -613,6 +621,13 @@ static int n_parms;
    accumulation of stale data.
 */
 
+/**
+ * clear_option_params:
+ *
+ * Clears any ancillary parameter values currently associated 
+ * with gretl command/option pairs.
+ */
+
 void clear_option_params (void)
 {
     int i;
@@ -675,12 +690,32 @@ static int push_optparm (int ci, gretlopt opt, const char *val)
     return 0;
 }
 
+/**
+ * get_optval_string:
+ * @ci: gretl command index.
+ * @opt: gretl option value.
+ *
+ * Returns: the ancillary string value currently 
+ * associated with option @opt for command @ci, if any,
+ * otherwise %NULL.
+ */
+
 const char *get_optval_string (int ci, gretlopt opt)
 {
     optparm *op = matching_optparm(ci, opt);
 
     return (op != NULL)? op->val : NULL;
 }
+
+/**
+ * get_optval_double:
+ * @ci: gretl command index.
+ * @opt: gretl option value.
+ *
+ * Returns: the double-precision ancillary value currently 
+ * associated with option @opt for command @ci, if any,
+ * otherwise #NADBL.
+ */
 
 double get_optval_double (int ci, gretlopt opt)
 {
@@ -691,6 +726,16 @@ double get_optval_double (int ci, gretlopt opt)
 }
 
 /* called via GUI */
+
+/**
+ * set_optval_double:
+ * @ci: gretl command index.
+ * @opt: gretl option value.
+ * @x: value to set.
+ *
+ * Sets a double-precision ancillary value to be associated
+ * with option @opt for command @ci.
+ */
 
 void set_optval_double (int ci, gretlopt opt, double x)
 {
@@ -800,8 +845,7 @@ static void tail_strip (char *s)
  * invalid options are found, else set to 0.
  * 
  * Check for option flags in @line: if found, chop them out and set
- * the return value accordingly. Strip any trailing semicolon from
- * @line while we're at it.
+ * the return value accordingly. 
  *
  * Returns: the options found in the line.
  */
@@ -932,6 +976,17 @@ const char *print_flags (gretlopt oflags, int ci)
 
     return flagstr;
 }
+
+/**
+ * check_for_loop_only_options:
+ * @ci: gretl command index.
+ * @opt: option flag to be tested.
+ * @prn: gretl printing struct.
+ * 
+ * Returns: 1 if option @opt is applicable for command @ci only
+ * in the context of a command loop (in which case a warning is
+ * printed to @prn), otherwise 0.  
+ */
 
 int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
 {
