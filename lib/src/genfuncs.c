@@ -719,7 +719,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
     int t, s, i, n;
-    int amax, cmax;
+    int amax, cmax, lagmax;
     double coef, *e;
     int err = 0;
 
@@ -737,6 +737,8 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 
     cmax = gretl_vector_get_length(C);
     amax = gretl_vector_get_length(A);
+    lagmax = (amax > cmax) ? amax : cmax;
+
     s = 0;
     if (cmax) {
 	for (t=t1; t<=t2; t++) {
@@ -757,13 +759,12 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	}
     }
 
-    s = amax;
-
     if (amax) {
-	for (t=t1; t<=t1+amax; t++) {
+	s = lagmax;
+	for (t=t1; t<t1+lagmax; t++) {
 	    y[t] = y0;
 	}
-	for (t=t1+amax; t<=t2; t++) {
+	for (t=t1+lagmax; t<=t2; t++) {
 	    y[t] = e[s++];
 	    for (i=0; i<amax; i++) {
 		coef = gretl_vector_get(A, i);
@@ -771,6 +772,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	    } 
 	}
     } else {
+	s = 0;
 	for (t=t1; t<=t2; t++) {
 	    y[t] = e[s++];
 	}
