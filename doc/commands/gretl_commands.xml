@@ -870,33 +870,43 @@
 	  <flag>--notches</flag>
 	  <effect>show 90 percent interval for median</effect>
 	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+	</option>
       </options>
     </usage>
 
     <description>
 
-      <para>These plots (after Tukey and Chambers) display the
-	distribution of a variable. The central box encloses the middle 50
-	percent of the data, &ie; it is bounded by the first and third
-	quartiles.  The <quote>whiskers</quote> extend to the minimum and
-	maximum values.  A line is drawn across the box at the median.  A
-	<quote>+</quote> sign indicates the mean.</para>
+      <para>
+	These plots (after Tukey and Chambers) display the distribution of a
+	variable. The central box encloses the middle 50 percent of the data,
+	&ie; it is bounded by the first and third quartiles.  The
+	<quote>whiskers</quote> extend to the minimum and maximum values.  A
+	line is drawn across the box at the median.  A <quote>+</quote> sign
+	indicates the mean.
+      </para>
 
-      <para>In the case of notched boxes, the notch shows the limits
-	of an approximate 90 percent confidence interval for the
-	median.  This is obtained by the bootstrap method.</para>
+      <para>
+	In the case of notched boxes, the notch shows the limits of an
+	approximate 90 percent confidence interval for the median.  This is
+	obtained by the bootstrap method.
+      </para>
 
-      <para context="gui">After each variable specified in the boxplot
-	command, a parenthesized Boolean expression may be added, to
-	limit the sample for the variable in question.  A space must
-	be inserted between the variable name or number and the
-	expression. Suppose you have salary figures for men and women,
-	and you have a dummy variable <lit>GENDER</lit> with value 1
-	for men and 0 for women.  In that case you could draw
-	comparative boxplots with the following line in the boxplots
-	dialog:</para>
+      <para context="gui">
+	After each variable specified in the boxplot command, a parenthesized
+	Boolean expression may be added, to limit the sample for the variable
+	in question.  A space must be inserted between the variable name or
+	number and the expression. Suppose you have salary figures for men and
+	women, and you have a dummy variable <lit>GENDER</lit> with value 1
+	for men and 0 for women.  In that case you could draw comparative
+	boxplots with the following line in the boxplots dialog:
+      </para>
 
-      <para context="cli">After each variable specified in the boxplot
+      <para context="cli">
+	After each variable specified in the boxplot
 	command, a parenthesized Boolean expression may be added, to
 	limit the sample for the variable in question.  A space must
 	be inserted between the variable name or number and the
@@ -909,9 +919,22 @@
 	salary (GENDER=1) salary (GENDER=0)
       </code>
 
-      <para>Some details of gretl's boxplots can be controlled via a
-	(plain text) file named <filename>.boxplotrc</filename>.  For
-	details on this see <guideref targ="sect-boxplots"/>.</para>
+      <para context="cli">
+	In interactive mode the result is displayed immediately. In batch mode
+	the default behavior is that a gnuplot command file is written in the
+	user's working directory, with a name on the pattern
+	<filename>gpttmpN.plt</filename>, starting with N = <lit>01</lit>. The
+	actual plots may be generated later using <program>gnuplot</program>
+	(under MS Windows, <program>wgnuplot</program>).  This behavior can be
+	modified by use of the <lit>--output=</lit><repl>filename</repl>
+	option.  This option controls the filename used, and at the same time
+	allows you to specify a particular output format via the three-letter
+	extension of the file name, as follows: <lit>.eps</lit> results in the
+	production of an Encapulated PostScript (EPS) file; <lit>.pdf</lit>
+	produces PDF; <lit>.png</lit> produces PNG format, and <lit>.fig</lit>
+	produces XFig.  With any other extensions, a gnuplot command file is
+	written.
+      </para>
 
     </description>
 
@@ -3401,6 +3424,11 @@
 	  <flag>--dummy</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
       </options>
       <examples>
         <example>gnuplot y1 y2 x</example>
@@ -3426,13 +3454,21 @@
 	<repl>dumvar</repl> is 1 or 0 at the given observation.
       </para>
 
-      <para>
-	In interactive mode the result is displayed immediately. In
-	batch mode a gnuplot command file is written, with a name on
-	the pattern <filename>gpttmpN.plt</filename>, starting with N
-	= <lit>01</lit>. The actual plots may be generated later using
-	<program>gnuplot</program> (under MS Windows,
-	<program>wgnuplot</program>).
+      <para context="cli">
+	In interactive mode the result is displayed immediately. In batch mode
+	the default behavior is that a gnuplot command file is written in the
+	user's working directory, with a name on the pattern
+	<filename>gpttmpN.plt</filename>, starting with N = <lit>01</lit>. The
+	actual plots may be generated later using <program>gnuplot</program>
+	(under MS Windows, <program>wgnuplot</program>).  This behavior can be
+	modified by use of the <lit>--output=</lit><repl>filename</repl>
+	option.  This option controls the filename used, and at the same time
+	allows you to specify a particular output format via the three-letter
+	extension of the file name, as follows: <lit>.eps</lit> results in the
+	production of an Encapulated PostScript (EPS) file; <lit>.pdf</lit>
+	produces PDF; <lit>.png</lit> produces PNG format, and <lit>.fig</lit>
+	produces XFig.  With any other extensions, a gnuplot command file is
+	written.
       </para>
 
       <para>
@@ -5867,7 +5903,7 @@
 	</option>
 	<option>
 	  <flag>--auto</flag>
-	  <optparm>alpha</optparm>
+	  <optparm optional="true">alpha</optparm>
 	  <effect>sequential elimination, see below</effect>
 	</option>
 	<option>
@@ -6936,7 +6972,7 @@
         </option>
         <option>
 	  <flag>--intervals</flag>
-	  <optparm>level</optparm>
+	  <optparm optional="true">level</optparm>
 	  <effect>compute confidence intervals</effect>
         </option>
         <option>

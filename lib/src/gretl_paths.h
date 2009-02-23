@@ -88,6 +88,8 @@ int set_gretl_work_dir (const char *path, PATHS *ppaths);
 
 const char *gretl_maybe_switch_dir (const char *fname);
 
+char *gretl_maybe_prepend_dir (char *fname);
+
 const char *gretl_gnuplot_path (void);
 
 const char *gretl_plotfile (void);

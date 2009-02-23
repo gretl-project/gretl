@@ -288,9 +288,11 @@
 </xsl:template>
 
 <xsl:template match="optparm">
-  <xsl:text>\texttt{[}=\textsl{</xsl:text>
+  <xsl:if test="(@optional)">\texttt{[}</xsl:if>
+  <xsl:text>=\textsl{</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>}\texttt{]}</xsl:text>
+  <xsl:text>}</xsl:text>
+  <xsl:if test="(@optional)">\texttt{]}</xsl:if>
 </xsl:template>
 
 <xsl:template match="argpunct">

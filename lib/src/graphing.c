@@ -1207,15 +1207,16 @@ void reset_plot_count (void)
 
 FILE *gnuplot_batch_init (int *err)
 {
-    const char *optname = get_optval_string(GNUPLOT, OPT_B);
+    const char *optname = get_optval_string(BXPLOT, OPT_F);
+    char fname[FILENAME_MAX];
     FILE *fp = NULL;
 
     if (optname != NULL && *optname != '\0') {
-	/* user gave --filename=<value> : FIXME working dir? */
-	fp = gretl_fopen(optname, "w");
+	/* user gave --filename=<value> */
+	strcpy(fname, optname);
+	gretl_maybe_prepend_dir(fname);
+	fp = gretl_fopen(fname, "w");
     } else {
-	char fname[FILENAME_MAX];
-
 	sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(),
 		++gretl_plot_count);
 	fp = gretl_fopen(fname, "w");
@@ -1223,34 +1224,138 @@ FILE *gnuplot_batch_init (int *err)
 
     if (fp == NULL) {
 	*err = E_FOPEN;
+    } else {
+	set_gretl_plotfile(fname);
     }
 
     return fp;
 }
 
+#define PDF_CAIRO_STRING "set term pdfcairo font \"sans,5\""
+
+static void print_term_string (int tt, FILE *fp)
+{
+    const char *tstr = NULL;
+
+    if (tt == GP_TERM_EPS) {
+	tstr = "set term postscript eps mono";
+    } else if (tt == GP_TERM_PDF) {
+	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	    tstr = PDF_CAIRO_STRING;
+	} else {
+	    tstr = "set term pdf";
+	}
+    } else if (tt == GP_TERM_PNG) {
+	tstr = get_gretl_png_term_line(PLOT_REGULAR, 0);
+    } else if (tt == GP_TERM_FIG) {
+	tstr = "set term fig";
+    }
+
+    if (tstr != NULL) {
+	fprintf(fp, "%s\n", tstr);
+    }
+}
+
+/* Produce formatted graph output in batch mode: at present
+   we only recognize EPS, PDF, PNG and XFig */
+
+static int make_graph_special (const char *fname, int fmt)
+{
+    char plotcmd[MAXLEN];
+    char tmp[FILENAME_MAX];
+    char line[1024];
+    FILE *fp, *fq;
+    int err;
+
+    strcpy(tmp, fname);
+    strcpy(strrchr(tmp, '.'), ".gp");
+
+    /* file to contain augmented gnuplot input */
+    fp = gretl_fopen(tmp, "w");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    /* existing plot file */
+    fq = gretl_fopen(fname, "r");
+    if (fq == NULL) {
+	fclose(fp);
+	return E_FOPEN;
+    }    
+
+    /* write terminal/output lines */
+    print_term_string(fmt, fp);
+    fprintf(fp, "set output '%s'\n", fname);
+
+    /* transcribe original plot content */
+    while (fgets(line, sizeof line, fq)) {
+	fputs(line, fp);
+    }
+
+    fclose(fq);
+    fclose(fp);
+
+#ifdef WIN32
+    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), tmp);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
+#else
+    sprintf(plotcmd, "%s \"%s\"", gretl_gnuplot_path(), tmp);
+    err = gretl_spawn(plotcmd);
+#endif 
+
+    /* remove the temporary input file */
+    remove(tmp);
+
+    return err;
+}
+
+int specified_gp_output_format (void)
+{
+    const char *fname = gretl_plotfile();
+
+    if (has_suffix(fname, ".eps")) {
+	return GP_TERM_EPS;
+    } else if (has_suffix(fname, ".pdf")) {
+	return GP_TERM_PDF;
+    } else if (has_suffix(fname, ".png")) {
+	return GP_TERM_PNG;
+    } else if (has_suffix(fname, ".fig")) {
+	return GP_TERM_FIG;
+    } else {
+	return GP_TERM_NONE;
+    }
+}
+
 /**
  * gnuplot_make_graph:
  *
- * Executes gnuplot.
+ * Executes gnuplot to produce a grapg file in PNG format.
  *
  * Returns: the return value from the system command.
  */
 
 int gnuplot_make_graph (void)
 {
+    const char *plotfile = gretl_plotfile();
     char plotcmd[MAXLEN];
-    int err = 0;
+    int fmt, err = 0;
+
+    fmt = specified_gp_output_format();
+
+    if (fmt != GP_TERM_NONE) {
+	return make_graph_special(plotfile, fmt);
+    }
 
     if (gretl_in_gui_mode() && gnuplot_has_bbox()) {
 	do_plot_bounding_box();
     }
 
 #ifdef WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), gretl_plotfile());
+    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), plotfile);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
     sprintf(plotcmd, "%s%s \"%s\"", gretl_gnuplot_path(), 
-	    (gretl_in_gui_mode())? "" : " -persist", gretl_plotfile());
+	    (gretl_in_gui_mode())? "" : " -persist", plotfile);
     err = gretl_spawn(plotcmd);  
 #endif
 
@@ -1377,24 +1482,27 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	    err = E_FOPEN;
 	}
     } else if (flags & GPT_BATCH) {
-	const char *optname = get_optval_string(GNUPLOT, OPT_B);
+	const char *optname = get_optval_string(GNUPLOT, OPT_F);
+	char fname[FILENAME_MAX];
 
 	if (optname != NULL && *optname != '\0') {
 	    /* user gave --filename=<value> */
-	    set_gretl_plotfile(optname);
+	    strcpy(fname, optname);
+	    gretl_maybe_prepend_dir(fname);
+	    *fpp = gretl_fopen(fname, "w");
+	} else if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
+	    sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(), 
+		    ++gretl_plot_count);
+	    *fpp = gretl_fopen(fname, "w");
 	} else {
-	    char fname[FILENAME_MAX];
-
-	    if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
-		sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(), 
-			++gretl_plot_count);
-		set_gretl_plotfile(fname);
-	    } 
+	    *fname = '\0';
+	    *fpp = gretl_fopen(plotfile, "w");
 	}
-	plotfile = gretl_plotfile();
-	*fpp = gretl_fopen(plotfile, "w");
+
 	if (*fpp == NULL) {
 	    err = E_FOPEN;
+	} else if (*fname != '\0') {
+	    set_gretl_plotfile(fname);
 	}
     } else {
 	/* note: gnuplot_init not used in batch mode */
@@ -2632,7 +2740,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_pop_c_numeric_locale();
 
-    if (!(gi.flags & GPT_BATCH)) {
+    if (!(gi.flags & GPT_BATCH) || specified_gp_output_format()) {
 	err = gnuplot_make_graph();
     }
 

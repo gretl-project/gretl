@@ -172,9 +172,10 @@
 </xsl:template>
 
 <xsl:template match="optparm">
-  <xsl:text>[=</xsl:text>
+  <xsl:if test="(@optional)">[</xsl:if> 
+  <xsl:text>=</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>]</xsl:text>
+  <xsl:if test="(@optional)">]</xsl:if> 
 </xsl:template>
 
 <xsl:template match="demos">
