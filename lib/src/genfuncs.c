@@ -570,7 +570,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
 }
 
 /**
- * filter_series:
+ * filter_series_old:
  * @x: array of original data.
  * @y: array into which to write the result.
  * @pdinfo: data set information.
@@ -589,8 +589,9 @@ int block_resample_series (const double *x, double *y, int blocklen,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
-		   gretl_matrix *A, gretl_matrix *C, double y0)
+static int filter_series_old (const double *x, double *y, 
+			      const DATAINFO *pdinfo, gretl_matrix *A, 
+			      gretl_matrix *C, double y0)
 {
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
@@ -683,6 +684,92 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 #endif
 	    } 
 	    s++;
+	}
+    }
+
+    free(e);
+
+    return err;
+}
+
+/**
+ * filter_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @pdinfo: data set information.
+ * @A: matrix for autoregressive polynomial.
+ * @C: matrix for moving average polynomial.
+ * @y0: initial value of output series.
+ *
+ * Filters x according to y_t = C(L)/A(L) x_t; the vectors A and C
+ * contain the coefficients for the powers other than 0 (assumed 1).
+ * For example, the matrix corresponding to the polynomial 
+ * C(L) = 1 - 0.75 L^2 should be given as { 0, -0.75 }.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
+		   gretl_vector *A, gretl_vector *C, double y0)
+{
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int t, s, i, m, n;
+    int amax, cmax;
+    double coef, *e;
+    int err = 0;
+
+    err = array_adjust_t1t2(x, &t1, &t2);
+    if (err) {
+	return E_DATA;
+    } 
+
+    n = t2 - t1 + 1;
+    e = malloc(n * sizeof *e);
+
+    if (e == NULL) {
+	return E_ALLOC;
+    }
+
+    cmax = gretl_vector_get_length(C);
+    amax = gretl_vector_get_length(A);
+    s = 0;
+    if (cmax) {
+	for (t=t1; t<=t2; t++) {
+	    if (s >= cmax && t <= t2) {
+		e[s] = x[t];
+		for (i=0; i<cmax; i++) {
+		    coef = gretl_vector_get(C, i);
+		    e[s] += x[t-i-1] * coef;
+		} 
+	    } else {
+		e[s] = NADBL;
+	    }
+	    s++;
+	} 
+    } else {
+	for (t=t1; t<=t2; t++) {
+	    e[s++] = x[t];
+	}
+    }
+
+    s = amax;
+
+    if (amax) {
+	double xlag;
+	for (t=t1; t<=t1+amax; t++) {
+	    y[t] = y0;
+	}
+	for (t=t1+amax; t<=t2; t++) {
+	    y[t] = e[s++];
+	    for (i=0; i<amax; i++) {
+		coef = gretl_vector_get(A, i);
+		y[t] += coef * y[t-i-1];
+	    } 
+	}
+    } else {
+	for (t=t1; t<=t2; t++) {
+	    y[t] = e[s++];
 	}
     }
 
