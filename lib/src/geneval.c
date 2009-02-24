@@ -4538,9 +4538,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const double *x = NULL;
 	gretl_matrix *A = NULL;
 	gretl_matrix *C = NULL;
+	int freeA = 0, freeC = 0;
 	double y0 = 0;
 
-	if (k != 3 && k != 4) {
+	if (k < 2 || k > 4) {
 	    n_args_error(k, 3, "filter", p);
 	} else {
 	    /* series to filter */
@@ -4560,18 +4561,32 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 1) {
-		/* matrix for AR polynomial */
-		if (e->t != MAT && e->t != EMPTY) {
+		/* matrix for AR polynomial (but we'll take a scalar) */
+		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
 		    node_type_error(t->t, i, MAT, e, p);
 		} else if (e->t == MAT) {
 		    A = e->v.m;
+		} else if (e->t == NUM) {
+		    A = gretl_matrix_from_scalar(e->v.xval);
+		    if (A == NULL) {
+			p->err = E_MISSDATA;
+		    } else {
+			freeA = 1;
+		    }
 		}
 	    } else if (i == 2) {
-		/* matrix for MA polynomial */
-		if (e->t != MAT && e->t != EMPTY) {
+		/* matrix for MA polynomial (but we'll take a scalar) */
+		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
 		    node_type_error(t->t, i, MAT, e, p);
 		} else if (e->t == MAT) {
 		    C = e->v.m;
+		} else if (e->t == NUM) {
+		    C = gretl_matrix_from_scalar(e->v.xval);
+		    if (C == NULL) {
+			p->err = E_MISSDATA;
+		    } else {
+			freeC = 1;
+		    }		    
 		}
 	    } else if (i == 3) {
 		/* initial value for output series */
@@ -4591,6 +4606,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = filter_series(x, ret->v.xvec, p->dinfo, A, C, y0);
 	    }
 	}
+
+	if (freeA) gretl_matrix_free(A);
+	if (freeC) gretl_matrix_free(C);
+
     } else if (t->t == F_MCOVG) {
 	gretl_matrix *X = NULL;
 	gretl_vector *u = NULL;
