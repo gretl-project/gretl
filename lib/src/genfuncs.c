@@ -591,9 +591,9 @@ int block_resample_series (const double *x, double *y, int blocklen,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-static int filter_series_old (const double *x, double *y, 
-			      const DATAINFO *pdinfo, gretl_matrix *A, 
-			      gretl_matrix *C, double y0)
+int filter_series (const double *x, double *y, 
+		   const DATAINFO *pdinfo, gretl_matrix *A, 
+		   gretl_matrix *C, double y0)
 {
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
@@ -675,15 +675,15 @@ static int filter_series_old (const double *x, double *y,
 	    for (i=0; i<A->rows; i++) {
 		m = gretl_matrix_get(A, i, 0);
 		coef = gretl_matrix_get(A, i, 1);
-#if 1
+# if 1
 		xlag = (t < m || na(y[t-m]))? y0 : y[t-m];
 		y[t] -= coef * xlag;
-#else
+# else
 		xlag = (s < m)? y0 : y[t-m];
 		if (!na(xlag)) {
 		    y[t] -= coef * xlag;
 		}
-#endif
+# endif
 	    } 
 	    s++;
 	}
@@ -694,7 +694,7 @@ static int filter_series_old (const double *x, double *y,
     return err;
 }
 
-#endif
+#else
 
 /**
  * filter_series:
@@ -723,6 +723,26 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     double coef, *e;
     int err = 0;
 
+    if (gretl_is_null_matrix(A)) {
+	amax = 0;
+    } else {
+	amax = gretl_vector_get_length(A);
+	if (amax == 0) {
+	    /* if present, A must be a vector */
+	    return E_NONCONF;
+	}
+    }
+
+    if (gretl_is_null_matrix(C)) {
+	cmax = 0;
+    } else {
+	cmax = gretl_vector_get_length(C);
+	if (cmax == 0) {
+	    /* if present, C must be a vector */
+	    return E_NONCONF;
+	}
+    }
+
     err = array_adjust_t1t2(x, &t1, &t2);
     if (err) {
 	return E_DATA;
@@ -735,8 +755,6 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    cmax = gretl_vector_get_length(C);
-    amax = gretl_vector_get_length(A);
     lagmax = (amax > cmax) ? amax : cmax;
 
     s = 0;
@@ -782,6 +800,8 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 
     return err;
 }
+
+#endif
 
 int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
 		     int k)

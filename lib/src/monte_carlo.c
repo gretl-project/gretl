@@ -35,8 +35,6 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
-#define GENCOMPILE 1
-
 #if LOOP_DEBUG
 # undef ENABLE_GMP
 #endif
@@ -2529,8 +2527,6 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
     return NULL;
 }
 
-#if GENCOMPILE
-
 static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno)
 {
     GENERATOR **genrs;
@@ -2573,8 +2569,6 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
     return genr;
 }
 
-#endif
-
 /* get the next command for a loop by pulling a line off the
    stack of loop commands.
 */
@@ -2608,9 +2602,7 @@ static int block_model (CMD *cmd)
 
 int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo) 
 {
-#if GENCOMPILE
     GENERATOR *genr;
-#endif
     LOOPSET *loop = currloop;
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -2680,7 +2672,14 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (cmd->ci < 0) {
 		continue;
 	    } else if (err) {
-		break;
+		if (libset_get_bool(HALT_ON_ERR)) {
+		    break;
+		} else {
+		    /* try soldiering on */
+		    errmsg(err, prn);
+		    err = 0;
+		    continue;
+		}
 	    }
 
 	    if (!subst && cmd_subst(cmd)) {
@@ -2767,7 +2766,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		if (!loop_is_verbose(loop)) {
 		    cmd->opt |= OPT_Q;
 		}
-#if GENCOMPILE
 		if (subst || (cmd->opt & OPT_U)) {
 		    /* can't use a "compiled" genr if string substitution
 		       has been done, since the genr expression will not
@@ -2779,9 +2777,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			err = execute_genr(genr, pZ, pdinfo, OPT_L, prn);
 		    }
 		}
-#else
-		err = generate(line, pZ, pdinfo, cmd->opt, prn);
-#endif
 	    } else {
 		err = gretl_cmd_exec(s, pZ, pdinfo);
 		if (!err && block_model(cmd)) {
@@ -2793,14 +2788,18 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 	} /* end execution of commands within loop */
 
-	if (err && !libset_get_bool(HALT_ON_ERR)) {
-	    errmsg(err, prn);
-	    err = 0;
-	}
-
 	if (err) {
-	    gretl_if_state_clear();
-	} else {
+	    if (!libset_get_bool(HALT_ON_ERR)) {
+		/* print error message but keep going */
+		errmsg(err, prn);
+		err = 0;
+		/* should we clear the "if state" here? */
+	    } else {
+		gretl_if_state_clear();
+	    }
+	} 
+
+	if (!err) {
 	    err = gretl_if_state_check(indent0);
 	}
 

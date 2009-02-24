@@ -4561,22 +4561,24 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 1) {
 		/* matrix for AR polynomial */
-		if (e->t != MAT) {
+		if (e->t != MAT && e->t != EMPTY) {
 		    node_type_error(t->t, i, MAT, e, p);
-		} else {
+		} else if (e->t == MAT) {
 		    A = e->v.m;
 		}
 	    } else if (i == 2) {
 		/* matrix for MA polynomial */
-		if (e->t != MAT) {
+		if (e->t != MAT && e->t != EMPTY) {
 		    node_type_error(t->t, i, MAT, e, p);
-		} else {
+		} else if (e->t == MAT) {
 		    C = e->v.m;
 		}
 	    } else if (i == 3) {
 		/* initial value for output series */
 		if (e->t != NUM) {
 		    node_type_error(t->t, i, NUM, e, p);
+		} else if (na(e->v.xval)) {
+		    p->err = E_MISSDATA;
 		} else {
 		    y0 = e->v.xval;
 		}
@@ -6948,6 +6950,15 @@ static int overwrite_const_check (const char *s, parser *p)
     return err;
 }
 
+static void maybe_set_matrix_target (parser *p)
+{
+    int n = strlen(p->rhs);
+
+    if (n > 1 && p->rhs[n-1] == '}') {
+	p->targ = MAT;
+    }
+}
+
 /* process the left-hand side of a genr formula */
 
 static void pre_process (parser *p, int flags)
@@ -7181,6 +7192,12 @@ static void pre_process (parser *p, int flags)
     /* set starting point for RHS parser, and also
        for a possible label */
     p->point = p->rhs = s;
+
+    /* if the target type is still unknown, and the RHS expression
+       is wrapped in '{' and '}', make the target a matrix */
+    if (p->targ == UNK && *p->rhs == '{') {
+	maybe_set_matrix_target(p);
+    }
 
     /* increment/decrement operators */
     if ((p->op == INC || p->op == DEC) && *s != '\0') {

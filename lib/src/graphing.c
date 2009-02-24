@@ -1241,8 +1241,8 @@ static int make_graph_special (const char *fname, int fmt)
     int err;
 
     if (fmt == GP_TERM_PDF && gnuplot_pdf_terminal() == GP_PDF_NONE) {
-	strcpy(gretl_errmsg, "Gnuplot does not support PDF output "
-	       "on this system");
+	strcpy(gretl_errmsg, _("Gnuplot does not support PDF output "
+			       "on this system"));
 	return E_EXTERNAL;
     }
 
