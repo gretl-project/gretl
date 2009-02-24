@@ -69,7 +69,6 @@ struct gnuplot_info_ {
 };
 
 #define MAX_LETTERBOX_LINES 8
-#define PREFER_CAIRO 1
 
 #define ts_plot(g) ((g)->flags & GPT_TS)
 #define use_impulses(g) ((g)->flags & GPT_IMPULSES)
@@ -353,20 +352,12 @@ int gnuplot_has_ttf (int reset)
 
 int gnuplot_pdf_terminal (void)
 {
-#if PREFER_CAIRO
     return GP_PDF_CAIRO;
-#else
-    return GP_PDF_PDFLIB;
-#endif
 }
 
 int gnuplot_png_terminal (void)
 {
-#if PREFER_CAIRO
     return GP_PNG_CAIRO;
-#else
-    return GP_PNG_GD2;
-#endif
 }
    
 int gnuplot_has_style_fill (void)
@@ -480,15 +471,12 @@ int gnuplot_has_cp1250 (void)
 
 int gnuplot_has_cp1254 (void)
 {
-#if 1
-    int err = 1;
-#else /* not yet */
     static int err = -1; 
 
     if (err == -1) {
 	err = gnuplot_test_command("set encoding cp1254");
     }
-#endif
+
     return !err;
 }
 
@@ -497,11 +485,7 @@ int gnuplot_pdf_terminal (void)
     static int ret = -1;
 
     if (ret == -1) {
-#if PREFER_CAIRO
 	int err = gnuplot_test_command("set term pdfcairo");
-#else
-	int err = 1;
-#endif
 
 	if (!err) {
 	    ret = GP_PDF_CAIRO;
@@ -529,23 +513,12 @@ static int gnuplot_has_x11 (void)
     return !err;
 }
 
-/* We should enable pngcairo as the default as soon as possible -- but
-   for the present this poses a problem with regard to guessing the
-   pixel bounds in the PNG file.  So we'll accept pngcairo only if
-   we find a version that supports the TERM_XMIN printable
-   variable.
-*/
-
 int gnuplot_png_terminal (void)
 {
     static int ret = -1;
 
     if (ret == -1) {
-#if PREFER_CAIRO
 	int err = gnuplot_test_command("set term pngcairo");
-#else
-	int err = 1;
-#endif
 
 	if (!err) {
 	    fprintf(stderr, "gnuplot: using pngcairo driver\n");
@@ -1266,6 +1239,12 @@ static int make_graph_special (const char *fname, int fmt)
     char line[1024];
     FILE *fp, *fq;
     int err;
+
+    if (fmt == GP_TERM_PDF && gnuplot_pdf_terminal() == GP_PDF_NONE) {
+	strcpy(gretl_errmsg, "Gnuplot does not support PDF output "
+	       "on this system");
+	return E_EXTERNAL;
+    }
 
     strcpy(tmp, fname);
     strcpy(strrchr(tmp, '.'), ".gp");
