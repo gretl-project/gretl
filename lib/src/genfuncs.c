@@ -713,6 +713,8 @@ int filter_series (const double *x, double *y,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
+#define PRESAMPLE_HACK 1
+
 int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
 		   gretl_vector *A, gretl_vector *C, double y0)
 {
@@ -720,7 +722,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     int t2 = pdinfo->t2;
     int t, s, i, n;
     int amax, cmax, lagmax;
-    double coef, *e;
+    double xlag, coef, *e;
     int err = 0;
 
     if (gretl_is_null_matrix(A)) {
@@ -759,18 +761,31 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 
     s = 0;
     if (cmax) {
+#if PRESAMPLE_HACK
 	for (t=t1; t<=t2; t++) {
-	    if (s >= cmax && t <= t2) {
-		e[s] = x[t];
-		for (i=0; i<cmax; i++) {
+	    e[s] = x[t];
+	    for (i=0; i<cmax; i++) {
+		xlag = (t>=i) ? x[t-i-1] : 0;
+		if (na(xlag)) {
+		    e[s] = NADBL;
+		    break;
+		} else {
 		    coef = gretl_vector_get(C, i);
-		    e[s] += x[t-i-1] * coef;
-		} 
-	    } else {
-		e[s] = NADBL;
-	    }
+		    e[s] += xlag * coef;
+		}
+	    } 
+	    s++;
+	}
+#else
+	for (t=t1; t<=t2; t++) {
+	    e[s] = x[t];
+	    for (i=0; i<cmax; i++) {
+		coef = gretl_vector_get(C, i);
+		e[s] += x[t-i-1] * coef;
+	    } 
 	    s++;
 	} 
+#endif
     } else {
 	for (t=t1; t<=t2; t++) {
 	    e[s++] = x[t];
@@ -778,6 +793,27 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     }
 
     if (amax) {
+#if PRESAMPLE_HACK
+	s = 0;
+	for (t=t1; t<=t2; t++) {
+	    if (na(e[s])) {
+		y[t] = NADBL;
+	    } else {
+		y[t] = e[s];
+		for (i=0; i<amax; i++) {
+		    xlag = (t>i) ? y[t-i-1] : y0;
+		    if (na(xlag)) {
+			y[t] = NADBL;
+			break;
+		    } else {
+			coef = gretl_vector_get(A, i);
+			y[t] += coef * xlag;
+		    }
+		} 
+	    }
+	    s++;
+	}
+#else
 	s = lagmax;
 	for (t=t1; t<t1+lagmax; t++) {
 	    y[t] = y0;
@@ -789,6 +825,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 		y[t] += coef * y[t-i-1];
 	    } 
 	}
+#endif
     } else {
 	s = 0;
 	for (t=t1; t<=t2; t++) {
