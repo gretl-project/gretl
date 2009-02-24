@@ -247,7 +247,8 @@ enum {
 #define F_WEIB   "weibull(x,shp,scl)=(shp/scl)*(x/scl)**(shp-1.0)*exp(-(x/scl)**shp)"
 
 static void 
-dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax)
+dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax,
+		int *alt)
 {
     double x[3] = {0};
     char st = 0;
@@ -281,6 +282,9 @@ dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax)
 	    /* use normal approx */
 	    double m = n * p;
 	    double s = sqrt(m * (1 - p));
+
+	    fprintf(stderr, "binomial: n=%d, p=%g, use normal approx\n", n, p);
+	    *alt = 1;
     
 	    *xmin = m - 4 * s;
 	    *xmax = m + 4 * s;
@@ -410,11 +414,11 @@ range_from_test_stat (int d, double x, double *parms, double *spike,
 }
 
 static void
-range_from_dist (int d, double *parms, FILE *fp)
+range_from_dist (int d, double *parms, int *alt, FILE *fp)
 {
     double x, tmin, tmax;
 
-    dist_xmin_xmax(d, parms, &tmin, &tmax);
+    dist_xmin_xmax(d, parms, &tmin, &tmax, alt);
 
     fprintf(fp, "set trange [%g:%g]\n", tmin, tmax);
 
@@ -430,12 +434,12 @@ range_from_dist (int d, double *parms, FILE *fp)
 }
 
 static void
-spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
+spec_range_from_dist (int d, double *parms, int *alt, GPT_SPEC *spec)
 {
     double *t_range = spec->range[3];
     double tmin, tmax;
 
-    dist_xmin_xmax(d, parms, &tmin, &tmax);
+    dist_xmin_xmax(d, parms, &tmin, &tmax, alt);
 
     if (t_range[0] == 0 && tmin < 0) {
 	; /* don't adjust? */
@@ -447,7 +451,7 @@ spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
 	t_range[1] = tmax;
     }   
 
-    if (d == BINOMIAL_DIST && alt) { 
+    if (d == BINOMIAL_DIST && *alt) { 
 	sprintf(spec->xtics, "%d", tic_step(t_range[1] - t_range[0]));
     }
 
@@ -607,16 +611,14 @@ static void dist_graph (int d, double *parms)
 
     if (d == CHISQ_DIST && parms[0] > 69) {
 	alt = 1;
-    } else if (d == BINOMIAL_DIST && parms[1] > 150) {
-	alt = 1;
-    }
+    } 
 
     print_keypos_string(GP_KEY_RIGHT_TOP, fp);
     fputs("set parametric\n", fp);
 
     gretl_push_c_numeric_locale();
 
-    range_from_dist(d, parms, fp);
+    range_from_dist(d, parms, &alt, fp);
 
     /* header */
     fprintf(fp, "# literal lines = %d\n", 
@@ -767,12 +769,10 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     /* alternate forms for some plots */
     if (d == CHISQ_DIST && parms[0] > 69) {
 	alt = 1;
-    } else if (d == BINOMIAL_DIST && parms[1] > 150) {
-	alt = 1;
-    }
+    } 
 
     /* maybe adjust t-range */
-    spec_range_from_dist(d, parms, alt, spec);
+    spec_range_from_dist(d, parms, &alt, spec);
 
     /* add a comment line for the new plot */
     title = dist_comment_line(d, parms);
