@@ -72,7 +72,7 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_V, "verbose" },
     { ARMA,     OPT_X, "x-12-arima" },
     { BXPLOT,   OPT_O, "notches" },
-    { BXPLOT,   OPT_F, "output" },
+    { BXPLOT,   OPT_U, "output" },
     { CHOW,     OPT_D, "dummy" },
     { CHOW,     OPT_Q, "quiet" },
     { COINT,    OPT_E, "test-down" },
@@ -144,7 +144,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_T, "time-series" },
     { GNUPLOT,  OPT_Z, "dummy" },
     { GNUPLOT,  OPT_C, "control" },
-    { GNUPLOT,  OPT_F, "output" },
+    { GNUPLOT,  OPT_U, "output" },
     { GRAPH,    OPT_O, "tall" },
     { HECKIT,   OPT_M, "ml" },
     { HECKIT,   OPT_T, "two-step" },
@@ -761,10 +761,10 @@ static int valid_optval (int ci, gretlopt opt, const char *val)
     } else if (ci == IVREG && opt == OPT_W) {
 	push_optparm(ci, opt, val);
 	return 1;
-    } else if (ci == GNUPLOT && opt == OPT_F) {
+    } else if (ci == GNUPLOT && opt == OPT_U) {
 	push_optparm(ci, opt, val);
 	return 1;
-    } else if (ci == BXPLOT && opt == OPT_F) {
+    } else if (ci == BXPLOT && opt == OPT_U) {
 	push_optparm(ci, opt, val);
 	return 1;
     } else if (ci == VAR && opt == OPT_S) {

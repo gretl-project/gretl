@@ -1207,12 +1207,12 @@ void reset_plot_count (void)
 
 FILE *gnuplot_batch_init (int *err)
 {
-    const char *optname = get_optval_string(BXPLOT, OPT_F);
+    const char *optname = get_optval_string(BXPLOT, OPT_U);
     char fname[FILENAME_MAX];
     FILE *fp = NULL;
 
     if (optname != NULL && *optname != '\0') {
-	/* user gave --filename=<value> */
+	/* user gave --output=<filename> */
 	strcpy(fname, optname);
 	gretl_maybe_prepend_dir(fname);
 	fp = gretl_fopen(fname, "w");
@@ -1304,7 +1304,11 @@ static int make_graph_special (const char *fname, int fmt)
 #endif 
 
     /* remove the temporary input file */
-    remove(tmp);
+    if (err) {
+	fprintf(stderr, "err = %d: bad file is '%s'\n", err, tmp);
+    } else {
+	remove(tmp);
+    }
 
     return err;
 }
@@ -1482,30 +1486,25 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	    err = E_FOPEN;
 	}
     } else if (flags & GPT_BATCH) {
-	const char *optname = get_optval_string(GNUPLOT, OPT_F);
+	const char *optname = get_optval_string(GNUPLOT, OPT_U);
 	char fname[FILENAME_MAX];
 
 	if (optname != NULL && *optname != '\0') {
-	    /* user gave --filename=<value> */
+	    /* user gave --output=<filename> */
 	    strcpy(fname, optname);
 	    gretl_maybe_prepend_dir(fname);
-	    *fpp = gretl_fopen(fname, "w");
-	} else if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
+	} else {
 	    sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(), 
 		    ++gretl_plot_count);
-	    *fpp = gretl_fopen(fname, "w");
-	} else {
-	    *fname = '\0';
-	    *fpp = gretl_fopen(plotfile, "w");
 	}
-
+	*fpp = gretl_fopen(fname, "w");
 	if (*fpp == NULL) {
 	    err = E_FOPEN;
-	} else if (*fname != '\0') {
+	} else {
 	    set_gretl_plotfile(fname);
 	}
     } else {
-	/* note: gnuplot_init not used in batch mode */
+	/* note: gnuplot_init is not used in batch mode */
 	err = real_gnuplot_init(code, flags, fpp);
     }
 
