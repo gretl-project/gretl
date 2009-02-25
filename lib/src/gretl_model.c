@@ -3897,6 +3897,21 @@ static void compat_compose_vcv_info (MODEL *pmod)
     }
 }
 
+/* backward compat: convert old list separator */
+
+#define OLD_LISTSEP 999
+
+static void maybe_convert_listsep (int *list, const DATAINFO *pdinfo)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == OLD_LISTSEP && list[i] >= pdinfo->v) {
+	    list[i] = LISTSEP;
+	}
+    }
+}
+
 static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 				      MODEL *pmod, int fixopt)
 {
@@ -4188,6 +4203,10 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	}
 	pmod->params[np] = NULL;
 	pmod->nparams = np;
+    }
+
+    if (!*err && pmod->list != NULL) {
+	maybe_convert_listsep(pmod->list, pdinfo);
     }
 
     if (modname != NULL) {

@@ -106,6 +106,8 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents);
 
 void start_R (const char *buf, int send_data, int interactive);
 
+const char *print_today (void);
+
 #ifndef G_OS_WIN32
 int browser_open (const char *url);
 #endif

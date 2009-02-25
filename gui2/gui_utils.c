@@ -3855,3 +3855,16 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents)
 
     return !ok;
 }	
+
+const char *print_today (void)
+{
+    static char timestr[16];
+    struct tm *local;
+    time_t t;
+
+    t = time(NULL);
+    local = localtime(&t);
+    strftime(timestr, 15, "%Y-%m-%d", local);
+
+    return timestr;
+}

@@ -338,8 +338,8 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
     return errs;
 }
 
-/* get the data file name first, so we can open it and see how
-   variables we have */
+/* peek inside the session file and retrieve the name of the
+   data file, only */
 
 static int get_session_datafile_name (const char *fname, struct sample_info *sinfo)
 {
@@ -373,7 +373,7 @@ static int get_session_datafile_name (const char *fname, struct sample_info *sin
     return err;
 }
 
-/* having previously grabbed the data file name, now get the rest
+/* (having previously grabbed the data file name) get the rest
    of the info from session.xml */
 
 static int 
@@ -663,7 +663,8 @@ static int write_session_xml (const char *datname)
 	/* ensure UTF-8 inside XML file */
 	gchar *trname = my_filename_to_utf8(datname);
 
-	fprintf(fp, "<gretl-session datafile=\"%s\">\n", trname);
+	fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n", 
+		trname, print_today());
 	g_free(trname);
     } else {
 	fputs("<gretl-session>\n", fp);

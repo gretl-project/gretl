@@ -313,19 +313,6 @@ enum {
     HIDX_SWITCH
 };
 
-const char *print_today (void)
-{
-    static char timestr[16];
-    struct tm *local;
-    time_t t;
-
-    t = time(NULL);
-    local = localtime(&t);
-    strftime(timestr, 15, "%Y-%m-%d", local);
-
-    return timestr;
-}
-
 static gboolean update_iface (GtkComboBox *menu, 
 			      function_info *finfo)
 {
