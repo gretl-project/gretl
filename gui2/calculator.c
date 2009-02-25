@@ -261,8 +261,7 @@ enum {
                  "+k*log(p)+(n-k)*log(1.0-p))"
 
 static void 
-dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax,
-		int alt)
+dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax, int alt)
 {
     double x[3] = {0};
     char st = 0;
