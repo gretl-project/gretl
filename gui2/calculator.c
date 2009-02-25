@@ -95,6 +95,20 @@ enum {
 
 /* functions relating to distribution graphics */
 
+int use_alt_form (int d, double *parms)
+{
+    if (d == CHISQ_DIST && parms[0] > 69) {
+	return 1;
+    } else if (d == BINOMIAL_DIST) {
+	int n = parms[1];
+	double p = parms[0];
+
+	return (n*p > 8 && n*(1-p) > 8);
+    } else {
+	return 0;
+    }
+}
+
 static int get_dist_and_params (const char *s, int *d, double *x)
 {
     int ret = 1;
@@ -248,7 +262,7 @@ enum {
 
 static void 
 dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax,
-		int *alt)
+		int alt)
 {
     double x[3] = {0};
     char st = 0;
@@ -275,17 +289,12 @@ dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax,
 	    x[2] = 0.005;
 	}
     } else if (d == BINOMIAL_DIST) {
-	int n = parms[1];
-	double p = parms[0];
-
-	if (n*p > 5 && n*(1-p) > 5) {
-	    /* use normal approx */
+	if (alt) {
+	    int n = parms[1];
+	    double p = parms[0];
 	    double m = n * p;
 	    double s = sqrt(m * (1 - p));
 
-	    fprintf(stderr, "binomial: n=%d, p=%g, use normal approx\n", n, p);
-	    *alt = 1;
-    
 	    *xmin = m - 4 * s;
 	    *xmax = m + 4 * s;
 	    if (*xmin < 0) {
@@ -414,7 +423,7 @@ range_from_test_stat (int d, double x, double *parms, double *spike,
 }
 
 static void
-range_from_dist (int d, double *parms, int *alt, FILE *fp)
+range_from_dist (int d, double *parms, int alt, FILE *fp)
 {
     double x, tmin, tmax;
 
@@ -434,7 +443,7 @@ range_from_dist (int d, double *parms, int *alt, FILE *fp)
 }
 
 static void
-spec_range_from_dist (int d, double *parms, int *alt, GPT_SPEC *spec)
+spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
 {
     double *t_range = spec->range[3];
     double tmin, tmax;
@@ -451,7 +460,7 @@ spec_range_from_dist (int d, double *parms, int *alt, GPT_SPEC *spec)
 	t_range[1] = tmax;
     }   
 
-    if (d == BINOMIAL_DIST && *alt) { 
+    if (d == BINOMIAL_DIST && alt) { 
 	sprintf(spec->xtics, "%d", tic_step(t_range[1] - t_range[0]));
     }
 
@@ -522,9 +531,7 @@ static void htest_graph (int d, double x, double *parms)
 	return;
     }
 
-    if (d == CHISQ_DIST && parms[0] > 69) {
-	alt = 1;
-    } 
+    alt = use_alt_form(d, parms);
 
     print_keypos_string(GP_KEY_RIGHT_TOP, fp);
     
@@ -609,16 +616,14 @@ static void dist_graph (int d, double *parms)
 	return;
     }
 
-    if (d == CHISQ_DIST && parms[0] > 69) {
-	alt = 1;
-    } 
+    alt = use_alt_form(d, parms);
 
     print_keypos_string(GP_KEY_RIGHT_TOP, fp);
     fputs("set parametric\n", fp);
 
     gretl_push_c_numeric_locale();
 
-    range_from_dist(d, parms, &alt, fp);
+    range_from_dist(d, parms, alt, fp);
 
     /* header */
     fprintf(fp, "# literal lines = %d\n", 
@@ -767,12 +772,10 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     }
 
     /* alternate forms for some plots */
-    if (d == CHISQ_DIST && parms[0] > 69) {
-	alt = 1;
-    } 
+    alt = use_alt_form(d, parms);
 
     /* maybe adjust t-range */
-    spec_range_from_dist(d, parms, &alt, spec);
+    spec_range_from_dist(d, parms, alt, spec);
 
     /* add a comment line for the new plot */
     title = dist_comment_line(d, parms);
