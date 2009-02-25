@@ -2431,7 +2431,9 @@ sys_retrieve_identity (xmlNodePtr node, xmlDocPtr doc, int *err)
 }
 
 equation_system *
-equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
+equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+			  const DATAINFO *pdinfo,
+			  int *err)
 {
     equation_system *sys;
     xmlNodePtr cur;

@@ -212,7 +212,9 @@ int transcribe_VAR_models (GRETL_VAR *var,
 
 #ifndef GRETLCLI
 
-GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
+GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+			       const DATAINFO *pdinfo,
+			       int *err);
 
 #endif
 

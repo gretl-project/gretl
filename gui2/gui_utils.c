@@ -2354,7 +2354,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	vi = pmod->list[i];
 	if (vi == LISTSEP) {
 	    break;
-	} else if (vi > 0 &&
+	} else if (vi > 0 && vi < datainfo->v && 
 	    gretl_isdummy(datainfo->t1, datainfo->t2, Z[vi])) {
 	    gretl_list_append_term(&dlist, vi);
 	}

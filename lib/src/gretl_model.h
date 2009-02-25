@@ -441,7 +441,9 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 
 #ifndef GRETLCLI
 
-MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
+MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+			     const DATAINFO *pdinfo,
+			     int *err);
 
 #endif
 

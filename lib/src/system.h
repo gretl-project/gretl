@@ -228,7 +228,9 @@ int system_adjust_t1t2 (equation_system *sys, const double **Z,
 #ifndef GRETLCLI
 
 equation_system *
-equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
+equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+			  const DATAINFO *pdinfo,
+			  int *err);
 
 #endif
 

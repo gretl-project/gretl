@@ -233,11 +233,11 @@ static int rebuild_session_model (const char *fname,
     }
 
     if (type == GRETL_OBJ_EQN) {
-	ptr = gretl_model_from_XML(node, doc, &err);
+	ptr = gretl_model_from_XML(node, doc, datainfo, &err);
     } else if (type == GRETL_OBJ_VAR) {
-	ptr = gretl_VAR_from_XML(node, doc, &err);
+	ptr = gretl_VAR_from_XML(node, doc, datainfo, &err);
     } else {
-	ptr = equation_system_from_XML(node, doc, &err);
+	ptr = equation_system_from_XML(node, doc, datainfo, &err);
     }
 
     xmlFreeDoc(doc);
@@ -338,6 +338,44 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
     return errs;
 }
 
+/* get the data file name first, so we can open it and see how
+   variables we have */
+
+static int get_session_datafile_name (const char *fname, struct sample_info *sinfo)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    xmlChar *tmp;
+    int err = 0;
+
+    LIBXML_TEST_VERSION
+	xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-session", &doc, &cur);
+    if (err) {
+	gui_errmsg(err);
+	return 1;
+    }
+
+    /* read datafile attribute, if present */
+    tmp = xmlGetProp(cur, (XUC) "datafile");
+    if (tmp != NULL) {
+	strcpy(sinfo->datafile, (char *) tmp);
+	my_filename_from_utf8(sinfo->datafile);
+	free(tmp);
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return err;
+}
+
+/* having previously grabbed the data file name, now get the rest
+   of the info from session.xml */
+
 static int 
 read_session_xml (const char *fname, struct sample_info *sinfo) 
 {
@@ -355,14 +393,6 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     if (err) {
 	gui_errmsg(err);
 	return 1;
-    }
-
-    /* read datafile attribute, if present */
-    tmp = xmlGetProp(cur, (XUC) "datafile");
-    if (tmp != NULL) {
-	strcpy(sinfo->datafile, (char *) tmp);
-	my_filename_from_utf8(sinfo->datafile);
-	free(tmp);
     }
 
     /* Now walk the tree */

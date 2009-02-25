@@ -4047,6 +4047,7 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
  * gretl_model_from_XML:
  * @node: XML node from which to read.
  * @doc: pointer to XML document.
+ * @pdinfo: dataset information.
  * @err: location to receive error code.
  *
  * Reads info on a gretl model from the given XML @node
@@ -4055,7 +4056,9 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
  * Returns: allocated model, or %NULL on failure.
  */
 
-MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
+MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+			     const DATAINFO *pdinfo,
+			     int *err)
 {
     MODEL *pmod;
     char *buf = NULL;

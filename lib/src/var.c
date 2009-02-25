@@ -3388,7 +3388,8 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 }
 
 static int VAR_retrieve_equations (xmlNodePtr node, xmlDocPtr doc,
-				   MODEL **models, int neqns)
+				   MODEL **models, int neqns,
+				   const DATAINFO *pdinfo)
 {
     xmlNodePtr cur = node->xmlChildrenNode;
     int i = 0, err = 0;
@@ -3397,7 +3398,7 @@ static int VAR_retrieve_equations (xmlNodePtr node, xmlDocPtr doc,
 	MODEL *pmod;
 
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-model")) {
-	    pmod = gretl_model_from_XML(cur, doc, &err);
+	    pmod = gretl_model_from_XML(cur, doc, pdinfo, &err);
 	    if (pmod != NULL) {
 		models[i++] = pmod;
 	    }
@@ -3523,7 +3524,9 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     return err;
 }
 
-GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
+GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+			       const DATAINFO *pdinfo,
+			       int *err)
 {
     GRETL_VAR *var;
     MODEL *pmod;
@@ -3587,7 +3590,7 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	} else if (!xmlStrcmp(cur->name, (XUC) "Ivals")) {
 	    var->Ivals = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "equations")) {
-	    *err = VAR_retrieve_equations(cur, doc, var->models, var->neqns);
+	    *err = VAR_retrieve_equations(cur, doc, var->models, var->neqns, pdinfo);
 	} else if (!xmlStrcmp(cur->name, (XUC) "gretl-johansen")) {
 	    *err = VAR_retrieve_jinfo(cur, doc, var);
 	} else if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {

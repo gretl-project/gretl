@@ -1072,8 +1072,9 @@ static int set_session_dirname (const char *zdirname)
 void do_open_session (void)
 {
     struct sample_info sinfo;
-    char sname[MAXLEN];
-    char fname[MAXLEN];
+    char xmlname[MAXLEN]; /* path to master session XML file */
+    char gdtname[MAXLEN]; /* path to session data file */
+    char fname[MAXLEN];   /* multi-purpose temp variable */
     gchar *zdirname = NULL;
     FILE *fp;
     int err = 0;
@@ -1104,8 +1105,7 @@ void do_open_session (void)
 	goto bailout;
     } 
 
-    session_name_from_session_file(sname, tryfile);
-    strcpy(session.name, sname);
+    session_name_from_session_file(session.name, tryfile);
 
     err = set_session_dirname(zdirname);
     if (err) {
@@ -1116,31 +1116,33 @@ void do_open_session (void)
     }
 
     g_free(zdirname);
-    session_file_make_path(fname, "session.xml");
-    err = read_session_xml(fname, &sinfo);
+    session_file_make_path(xmlname, "session.xml");
+
+    /* try getting the name of the session data file first */
+    err = get_session_datafile_name(xmlname, &sinfo);
 
     if (err) {
-	/* FIXME more explicit error message */
 	fprintf(stderr, "Failed on read_session_xml: err = %d\n", err);
 	file_read_errbox("session.xml");
 	goto bailout;
     }
 
+    /* construct path to session data file */
     session_file_make_path(paths.datfile, sinfo.datafile);
     fp = gretl_fopen(paths.datfile, "r");
 
     if (fp != NULL) {
-	/* OK */
-	strcpy(fname, paths.datfile);
+	/* OK, write good name into gdtname */
+	strcpy(gdtname, paths.datfile);
 	fclose(fp);
     } else {
-	/* try remedial action */
+	/* try remedial action, transform filename? */
 	fprintf(stderr, "'%s' : not found, trying to fix\n", paths.datfile);
-	err = get_session_dataname(fname, &sinfo);
+	err = get_session_dataname(gdtname, &sinfo);
     }
 
     if (!err) {
-	err = gretl_read_gdt(fname, NULL, &Z, datainfo, OPT_P, NULL);
+	err = gretl_read_gdt(gdtname, NULL, &Z, datainfo, OPT_P, NULL);
     }
 
     if (err) {
@@ -1148,7 +1150,16 @@ void do_open_session (void)
 	file_read_errbox(sinfo.datafile);
 	goto bailout;
     } else {
-	fprintf(stderr, "Opened session datafile '%s'\n", fname);
+	fprintf(stderr, "Opened session datafile '%s'\n", gdtname);
+    }
+
+    /* having opened the data file, get the rest of the info from
+       session.xml */    
+    err = read_session_xml(xmlname, &sinfo);
+    if (err) {
+	fprintf(stderr, "Failed on read_session_xml: err = %d\n", err);
+	file_read_errbox("session.xml");
+	goto bailout;
     }
 
     session_file_make_path(fname, "matrices.xml");
