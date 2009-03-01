@@ -78,8 +78,10 @@ sub business_days {
 
 	if (/^ 19/ || /^ 20/) {
 	    s/\r//;
-	    # remove economagic obfuscation (note: #149; = decimal point)
+	    # remove economagic obfuscation (note: #149; = decimal point,
+	    # and #183; = tricksy decimal point)
             s/&#149;/./g; 
+	    s/&#183;/./g; 
 	    s#>[^<]*</#><#g;
 	    s#<[^>]*># #g;
 
@@ -324,6 +326,7 @@ for ($s = 0; $s < $nseries; $s++) {
 	    if ($tester) { print TST "$_\n"; }
 	    # remove economagic obfuscation
 	    s/&#149;/./g;
+	    s/&#183;/./g;
 	    s#>[^<]*</#><#g;
 	    s#<[^>]*># #g;
 	    if ($tester) { print TST "$_\n"; }

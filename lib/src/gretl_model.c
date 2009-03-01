@@ -3899,14 +3899,14 @@ static void compat_compose_vcv_info (MODEL *pmod)
 
 /* backward compat: convert old list separator */
 
-#define OLD_LISTSEP 999
+#define old_listsep(v) (v == 999 || v == 9999)
 
 static void maybe_convert_listsep (int *list, const DATAINFO *pdinfo)
 {
     int i;
 
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == OLD_LISTSEP && list[i] >= pdinfo->v) {
+	if (old_listsep(list[i]) && list[i] >= pdinfo->v) {
 	    list[i] = LISTSEP;
 	}
     }

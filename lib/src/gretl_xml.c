@@ -385,7 +385,11 @@ void gretl_xml_put_tagged_list (const char *tag, const int *list, FILE *fp)
 
     fprintf(fp, "<%s>\n", tag);
     for (i=0; i<=list[0]; i++) {
-	fprintf(fp, "%d ", list[i]);
+	if (list[i] == LISTSEP) {
+	    fputs("; ", fp);
+	} else {
+	    fprintf(fp, "%d ", list[i]);
+	}
     }
     fprintf(fp, "</%s>\n", tag); 
 }
@@ -738,7 +742,7 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 	*err = E_DATA;
     } else {
 	p = (const char *) tmp;
-	p += strspn(p, " \r\n");
+	p += strspn(p, " \r\n"); /* skip space (get to first value) */
 	if (sscanf(p, "%d", &n) != 1) {
 	    *err = E_DATA;
 	} else if (n == 0) {
@@ -747,21 +751,25 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 	} else if (n < 0) {
 	    *err = E_DATA;
 	} else {
-	    p += strcspn(p, " \r\n");
+	    p += strcspn(p, " \r\n"); /* skip non-space (get beyond value) */
 	    list = gretl_list_new(n);
 	    if (list == NULL) {
 		*err = E_ALLOC;
 	    }
 	}
+
 	if (list != NULL && !*err) {
 	    for (i=1; i<=n && !*err; i++) {
-		if (sscanf(p, "%d", &list[i]) != 1) {
+		p += strspn(p, " \r\n"); /* skip space (get to next value) */
+		if (*p == ';') {
+		    list[i] = LISTSEP;
+		} else if (sscanf(p, "%d", &list[i]) != 1) {
 		    *err = E_DATA;
 		}
-		p += strspn(p, " \r\n");
-		p += strcspn(p, " \r\n");
+		p += strcspn(p, " \r\n"); /* skip non-space (get beyond value) */
 	    }
 	}
+
 	free(tmp);
     }
 
@@ -769,6 +777,8 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 	free(list);
 	list = NULL;
     }
+
+    fprintf(stderr, "returning list = %p\n", (void *) list);
 
     return list;
 }
