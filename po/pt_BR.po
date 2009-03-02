@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-02-12 17:38-0500\n"
-"PO-Revision-Date: 2009-02-26 23:29-0300\n"
+"PO-Revision-Date: 2009-03-02 01:33-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2664,7 +2664,7 @@ msgstr "Matriz de pesos de dimensões erradas: deve ser %d x %d"
 
 #: lib/src/gmm.c:864
 msgid "No orthogonality conditions have been specified"
-msgstr "Não foram especificadas nenhumas condições de ortogonalidade"
+msgstr "Não foram especificadas condições de ortogonalidade"
 
 #: lib/src/gmm.c:869
 msgid "No weights have been specified"
@@ -7170,7 +7170,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <ch.andrade@gmail.com>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 26 de fevereiro de 2009."
+"Tradução de 2 de março de 2009."
 
 #: gui2/about.c:163
 msgid "License"
@@ -12284,7 +12284,7 @@ msgid ""
 "if you wish."
 msgstr ""
 "Não existem observações fora da amostra para\n"
-"previsão.  Se o desejar pode acrescentar observações\n"
+"previsão. É possível acrescentar observações\n"
 "neste momento."
 
 #: gui2/library.c:1342
@@ -12294,10 +12294,10 @@ msgid ""
 "(Data menu, Edit data), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
 msgstr ""
-"Não existem observações fora da amostra para\n"
-"previsão.  Se o desejar pode acrescentar observações\n"
-"(menu Dados, Editar valores), ou pode encurtar a amplitude da\n"
-"amostra usada para estimar o modelo (menu Amostra)."
+"Não existem observações fora da amostra para previsão.\n"
+"É possivel acrescentar observações (menu Dados, Editar\n"
+"valores), ou diminuir a amplitude da amostra usada para\n"
+"estimar o modelo (menu Amostra)."
 
 #: gui2/library.c:1631
 #: gui2/library.c:2960
