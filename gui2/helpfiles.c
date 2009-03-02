@@ -1823,7 +1823,13 @@ static int get_writable_path (char *path, const char *fname)
     return err;
 }
 
-static int find_or_download_pdf (int uguide, int i, char *fullpath)
+enum {
+    GRETL_GUIDE = 1,
+    GRETL_REF,
+    GNUPLOT_REF
+};
+
+static int find_or_download_pdf (int code, int i, char *fullpath)
 {
     const char *guide_files[] = {
 	"gretl-guide.pdf",
@@ -1845,7 +1851,15 @@ static int find_or_download_pdf (int uguide, int i, char *fullpath)
 	i = 0;
     }
 
-    fname = (uguide)? guide_files[i] : ref_files[i];
+    if (code == GRETL_GUIDE) {
+	fname = guide_files[i];
+    } else if (code == GRETL_REF) {
+	fname = ref_files[i];
+    } else if (code == GNUPLOT_REF) {
+	fname = "gnuplot.pdf";
+    } else {
+	return E_DATA;
+    }
 
     /* is the file available in public dir? */
     sprintf(fullpath, "%sdoc%c%s", paths.gretldir, SLASH, fname);
@@ -1884,21 +1898,8 @@ static int find_or_download_pdf (int uguide, int i, char *fullpath)
     return err;
 }
 
-void display_pdf_help (GtkAction *action)
+static void show_pdf (const char *fname)
 {
-    char fname[FILENAME_MAX];
-    int err, uguide = 1;
-
-    if (action != NULL && strcmp(gtk_action_get_name(action), "UserGuide")) {
-	/* PDF command ref wanted */
-	uguide = 0;
-    }
-
-    err = find_or_download_pdf(uguide, get_manpref(), fname);
-    if (err) {
-	return;
-    }
-
 #if defined(G_OS_WIN32)
     win32_open_file(fname);
 #elif defined(OSX_BUILD)
@@ -1906,4 +1907,33 @@ void display_pdf_help (GtkAction *action)
 #else
     gretl_fork("viewpdf", fname);
 #endif
+}
+
+void display_pdf_help (GtkAction *action)
+{
+    char fname[FILENAME_MAX];
+    int err, code = GRETL_GUIDE;
+
+    if (action != NULL && strcmp(gtk_action_get_name(action), "UserGuide")) {
+	/* PDF command ref wanted */
+	code = GRETL_REF;
+    }
+
+    err = find_or_download_pdf(code, get_manpref(), fname);
+
+    if (!err) {
+	show_pdf(fname);
+    }
+}
+
+void display_gnuplot_help (void)
+{
+    char fname[FILENAME_MAX];
+    int err;
+
+    err = find_or_download_pdf(GNUPLOT_REF, 0, fname);
+
+    if (!err) {
+	show_pdf(fname);
+    }
 }

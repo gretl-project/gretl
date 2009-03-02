@@ -75,6 +75,7 @@ enum {
     MAIL_ITEM,
     HELP_ITEM,
     CMD_HELP_ITEM,
+    GP_HELP_ITEM,
     SORT_ITEM,
     SORT_BY_ITEM,
     FORMAT_ITEM,
@@ -521,6 +522,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(set_output_sticky), STICKIFY_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
+    { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), 0 }
 };
 
@@ -606,6 +608,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (r != COEFFINT && f == ALPHA_ITEM) {
 	return NULL;
     } else if (r != VIEW_LOG && f == REFRESH_ITEM) {
+	return NULL;
+    } else if (r != EDIT_GP && f == GP_HELP_ITEM) {
 	return NULL;
     } else if (f == SAVE_ITEM) { 
 	if (!edit_ok(r) || r == SCRIPT_OUT) {

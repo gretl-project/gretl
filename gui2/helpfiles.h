@@ -37,6 +37,8 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 void display_pdf_help (GtkAction *action);
 
+void display_gnuplot_help (void);
+
 void listbox_find (gpointer unused, gpointer data);
 
 void text_find (gpointer unused, gpointer data);
