@@ -164,7 +164,7 @@ struct _selector {
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
                             c == IVREG || c == HECKIT)
 
-#define list_special(i) (i < -1)
+#define list_lag_special(i) (i < -1)
 
 /* static state variables */
 
@@ -5795,7 +5795,7 @@ static void lag_set_callback (GtkWidget *w, gpointer p)
 	GtkWidget *s;
 	int i;
 
-	for (i=vlinfo->pos+1; i<vlinfo->nvl; i++) {
+	for (i=vlinfo->pos; i<vlinfo->nvl; i++) {
 	    if (vlset[i].context == vlinfo->context) {
 		s = (w == vlinfo->spin1)? vlset[i].spin1 : vlset[i].spin2;
 		if (s != NULL) {
@@ -5924,7 +5924,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     GtkWidget *y_check = NULL;
     gint tbl_len;
     double lmax, ldef;
-    int VAR_special;
+    int VAR_special, insts;
     int i, j;
     int ret = GRETL_CANCEL;
 
@@ -5936,50 +5936,59 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 
     myvbox = gtk_vbox_new(FALSE, 5);
 
-    /* allow for additional label row */
-    tbl_len = list[0] + 1;
+    VAR_special = (vlinfo[0].v == VDEFLT && vlinfo[0].context == LAG_Y_V);
+    insts = in_gretl_list(list, LAG_W);
 
     lmax = (datainfo->t2 - datainfo->t1) / list[0];
     ldef = datainfo->pd;
 
-    VAR_special = (vlinfo[0].v == VDEFLT && vlinfo[0].context == LAG_Y_V);
-
     if (VAR_special) {
+	/* allow for gaps in VAR lag order */
 	lbl = gtk_label_new(_("Lags of endogenous variables"));
 	gtk_box_pack_start(GTK_BOX(myvbox), lbl, FALSE, FALSE, 0);
-    }
+    } 
+
+    /* allow for additional label row */
+    tbl_len = list[0] + 1;
 
     tbl = gtk_table_new(tbl_len, 7, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_box_pack_start(GTK_BOX(myvbox), tbl, FALSE, FALSE, 0);
 
-    /* row 0 of table: headings */
+    /* row 0 of table: heading(s) */
 
-    if (!VAR_special) {
-	lbl = gtk_label_new(_("Variable"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, 0, 1);
-	lbl = gtk_label_new(_("lags"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 1, 4, 0, 1);
-	lbl = gtk_label_new("  ");
-	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 4, 5, 0, 1);
+    if (insts) {
+	/* there's an instruments section to follow */
+	lbl = gtk_label_new(_("Regressors"));
+	gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 7, 0, 1, 0, 0, 0, 5);
+    } else {
+	if (!VAR_special) {
+	    lbl = gtk_label_new(_("Variable"));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, 0, 1);
+	    lbl = gtk_label_new(_("lags"));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 1, 4, 0, 1);
+	    lbl = gtk_label_new("  ");
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 4, 5, 0, 1);
+	}
+
+	lbl = gtk_label_new(_("or"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 5, 6, 0, 1);
+	lbl = gtk_label_new(_("specific lags"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 6, 7, 0, 1);  
     }
-
-    lbl = gtk_label_new(_("or"));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 5, 6, 0, 1);
-    lbl = gtk_label_new(_("specific lags"));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 6, 7, 0, 1);    
 
     j = 0;
     for (i=1; i<=list[0]; i++) {
 	var_lag_info *vlj;
+	int li = list[i];
 	int lmin = 0;
 
-	if (list_special(list[i])) {
-	    if (list[i] - LISTSEP == LAG_W) {
+	if (list_lag_special(li)) {
+	    if (li == LAG_W) {
 		tmp = gtk_label_new(_("Instruments"));
 		gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 7, i, i+1);
-	    } else if (depvar_row(list[i] - LISTSEP)) { 
+	    } else if (depvar_row(li)) { 
 		y_check = gtk_check_button_new_with_label(_("Lags of dependent variable"));
 		gtk_table_attach_defaults(GTK_TABLE(tbl), y_check, 0, 7, i, i+1);
 	    } else {
@@ -5990,10 +5999,10 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 	}
 
 	if (!VAR_special) {
-	    if (list[i] == VDEFLT) {
+	    if (li == VDEFLT) {
 		lbl = gtk_label_new("default");
 	    } else {
-		lbl = gtk_label_new(datainfo->varname[list[i]]);
+		lbl = gtk_label_new(datainfo->varname[li]);
 	    }
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, i, i+1);
 	}
@@ -6023,7 +6032,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 
 	/* spacer column */
 	lbl = gtk_label_new("  ");
-	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 4, 5, 0, 1);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 4, 5, i, i+1);
 
 	/* toggle button for activating entry of specific lags */
 	vlj->toggle = gtk_check_button_new();
@@ -6298,12 +6307,12 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 	    if (nv[0] > 0) {
 		slist[i++] = LISTSEP;
 	    }
-	    slist[i++] = LISTSEP + LAG_W;
+	    slist[i++] = LAG_W;
 	}
 	slist[i++] = VDEFLT;
 	get_laggable_vars(listw[j], context, slist, &i);
 	if (ynum > 0) {
-	    slist[i++] = LISTSEP + ((j > 0)? LAG_Y_W : LAG_Y_X);
+	    slist[i++] = (j > 0)? LAG_Y_W : LAG_Y_X;
 	    slist[i++] = ynum;
 	}
     }
@@ -6312,12 +6321,12 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
        variable selected so far */
 
     if (nv[0] == 0 && nv[1] == 0) {
-	slist[i++] = LISTSEP + LAG_Y_X;
+	slist[i++] = LAG_Y_X;
 	slist[i++] = ynum;
 	if (USE_ZLIST(sr->ci)) {
 	    slist[i++] = LISTSEP;
-	    slist[i++] = LISTSEP + LAG_W;
-	    slist[i++] = LISTSEP + LAG_Y_W;
+	    slist[i++] = LAG_W;
+	    slist[i++] = LAG_Y_W;
 	    slist[i++] = ynum;
 	}
     }
@@ -6502,9 +6511,9 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	var_lag_info *vlj;
 	int vi = list[i];
 
-	if (list_special(vi)) {
+	if (list_lag_special(vi)) {
 	    /* LISTSEP is used to switch "lag context" */
-	    context = vi - LISTSEP;
+	    context = (vi == LISTSEP)? 0 : vi;
 #if LDEBUG
 	    fprintf(stderr, "list[%d] = %d: set context = %d\n",
 		    i, vi, context);

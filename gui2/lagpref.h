@@ -21,11 +21,11 @@
 #define LAGSELECT_H
 
 enum {
-    LAG_X = 1,    /* lags set for regular variable context */
-    LAG_Y_X,      /* lags for dependent variable */
-    LAG_W,        /* lags set for variable as instrument */
-    LAG_Y_W,      /* lags for dependent var as instrument */
-    LAG_Y_V       /* lags of endoenous vars in VAR */
+    LAG_X = LISTSEP + 1, /* lags set for regular variable context */
+    LAG_Y_X,             /* lags for dependent variable */
+    LAG_W,               /* lags set for variable as instrument */
+    LAG_Y_W,             /* lags for dependent var as instrument */
+    LAG_Y_V              /* lags of endoenous vars in VAR */
 } LagContext;
 
 #define VDEFLT -1
