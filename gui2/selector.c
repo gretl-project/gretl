@@ -37,6 +37,7 @@
 # include "bootstrap.h"
 #endif
 
+#define LDEBUG 0
 #define VLDEBUG 0
 
 enum {
@@ -162,6 +163,8 @@ struct _selector {
 
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
                             c == IVREG || c == HECKIT)
+
+#define list_special(i) (i < -1)
 
 /* static state variables */
 
@@ -5717,7 +5720,7 @@ void maybe_clear_selector (const int *dlist)
 
 /* ------------- lag selection apparatus -------------- */
 
-#define NOT_LAG 6666
+#define NOT_LAG 66666
 
 typedef struct var_lag_info_ var_lag_info;
 
@@ -5972,7 +5975,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 	var_lag_info *vlj;
 	int lmin = 0;
 
-	if (list[i] >= LISTSEP) {
+	if (list_special(list[i])) {
 	    if (list[i] - LISTSEP == LAG_W) {
 		tmp = gtk_label_new(_("Instruments"));
 		gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 7, i, i+1);
@@ -6499,7 +6502,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	var_lag_info *vlj;
 	int vi = list[i];
 
-	if (vi >= LISTSEP) {
+	if (list_special(vi)) {
 	    /* LISTSEP is used to switch "lag context" */
 	    context = vi - LISTSEP;
 #if LDEBUG

@@ -1134,7 +1134,7 @@ char *gretl_list_to_string (const int *list)
     char numstr[8];
     int len, i, err = 0;
 
-    len = 5 * (list[0] + 1);
+    len = 6 * (list[0] + 1);
     if (len > MAXLINE - 32) {
 	return NULL;
     }
@@ -1147,10 +1147,6 @@ char *gretl_list_to_string (const int *list)
     *buf = '\0';
 
     for (i=1; i<=list[0]; i++) {
-	if (abs(list[i] > 9998)) {
-	    err = 1;
-	    break;
-	}
 	if (list[i] == LISTSEP) {
 	    strcat(buf, " ;");
 	} else {
