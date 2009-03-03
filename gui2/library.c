@@ -7049,7 +7049,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(datfile, pZ, pdinfo, openopt, prn);
+	err = import_csv(datfile, pZ, pdinfo, NULL, openopt, prn);
     } else if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(datfile, &paths, pZ, pdinfo, 
 			     openopt | OPT_P, prn);

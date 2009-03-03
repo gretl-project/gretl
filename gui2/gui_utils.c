@@ -852,7 +852,7 @@ static int get_csv_data (char *fname, int ftype, int append)
 	err = import_other(fname, ftype, &Z, datainfo, OPT_NONE, prn);
 	title = g_strdup_printf(_("gretl: import %s data"), "Octave");
     } else {
-	err = import_csv(fname, &Z, datainfo, OPT_NONE, prn);
+	err = import_csv(fname, &Z, datainfo, NULL, OPT_NONE, prn);
 	title = g_strdup_printf(_("gretl: import %s data"), "CSV");
     }
 

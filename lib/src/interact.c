@@ -1539,6 +1539,17 @@ static int read_dash_param (const char **ps, CMD *cmd)
 	s += 12;
 	parm = strtol(s, &test, 10);
 	i = 3;
+    } else if (!strncmp(s, "--cols=", 7)) {
+	int n;
+
+	s += 7;
+	n = strcspn(s, " \n");
+	free(cmd->extra);
+	cmd->extra = gretl_strndup(s, n);
+	if (cmd->extra != NULL) {
+	    *ps = s + n;
+	    ok = 1;
+	}
     }
 
     if (parm >= 0 && (*test == '\0' || *test == ' ') && 
@@ -1560,7 +1571,7 @@ static int read_dash_param (const char **ps, CMD *cmd)
     return ok;
 }
 
-static void parse_spreadsheet_params (const char *s, CMD *cmd)
+static void parse_data_open_params (const char *s, CMD *cmd)
 {
     int i, ok = 1;
 
@@ -2367,7 +2378,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } else if (cmd->ci == OPEN || cmd->ci == APPEND) {
 	/* "open" and "append" may have spreadsheet parameters */
 	if (!(cmd->opt & OPT_O)) {
-	    parse_spreadsheet_params(line, cmd);
+	    parse_data_open_params(line, cmd);
 	    if (cmd->err) {
 		return cmd->err;
 	    }
@@ -3944,7 +3955,7 @@ static int append_data (const char *line, int *list,
     ftype = detect_filetype(fname, NULL);
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(fname, pZ, pdinfo, opt, prn);
+	err = import_csv(fname, pZ, pdinfo, NULL, opt, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(fname, ftype, list, sheetname, 
 				 pZ, pdinfo, opt, prn);

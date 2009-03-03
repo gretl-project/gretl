@@ -1891,7 +1891,7 @@ int gretl_get_data (char *datfile, PATHS *ppaths,
     err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
     if (err == E_FOPEN) {
 	/* no header file, so maybe it's just an ascii datafile */
-	return import_csv(datfile, pZ, pdinfo, OPT_NONE, prn);
+	return import_csv(datfile, pZ, pdinfo, NULL, OPT_NONE, prn);
     } else if (err) {
 	return err;
     } else { 

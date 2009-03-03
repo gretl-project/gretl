@@ -774,6 +774,11 @@ static int valid_optval (int ci, gretlopt opt, const char *val)
 
     return 0;
 }
+
+#define data_open_special(s) (!strcmp(s, "sheet") || \
+                              !strcmp(s, "coloffset") || \
+			      !strcmp(s, "rowoffset") || \
+			      !strcmp(s, "cols"))
   
 static gretlopt get_long_opts (char *line, int ci, int *err)
 {
@@ -791,6 +796,8 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	    if (match > 0) {
 		/* recognized an acceptable option flag */
 		ret |= match;
+	    } else if (ci == OPEN && data_open_special(longopt)) {
+		; /* no-op here: handled elsewhere */
 	    } else {
 		/* not a flag, or not applicable in context */
 		sprintf(gretl_errmsg, _("Invalid option '--%s'"), longopt);

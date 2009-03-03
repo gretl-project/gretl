@@ -60,6 +60,7 @@ struct csvdata_ {
     int *codelist;
     char *descrip;
     gretl_string_table *st;
+    int *cols_list;
 };
 
 #define csv_has_trailing_comma(c) (c->flags & CSV_TRAIL)
@@ -111,7 +112,11 @@ static void csvdata_free (csvdata *c)
 
     if (c->line != NULL) {
 	free(c->line);
-    }    
+    }  
+
+    if (c->cols_list != NULL) {
+	free(c->cols_list);
+    }  
 
     destroy_dataset(c->Z, c->dinfo);
 
@@ -142,6 +147,7 @@ static csvdata *csvdata_new (double **Z, const DATAINFO *pdinfo,
     c->codelist = NULL;
     c->descrip = NULL;
     c->st = NULL;
+    c->cols_list = NULL;
 
     c->dinfo = datainfo_new();
     if (c->dinfo == NULL) {
@@ -158,6 +164,31 @@ static csvdata *csvdata_new (double **Z, const DATAINFO *pdinfo,
     }
 
     return c;
+}
+
+static int csvdata_add_cols_list (csvdata *c, const char *s)
+{
+    int i, err = 0;
+    int *list = gretl_list_from_string(s, &err);
+
+    if (!err) {
+	/* column start list: must be a set of increasing positive
+	   integers */
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] < 0 || (i > 1 && list[i] <= list[i-1])) {
+		err = E_DATA;
+		break;
+	    }
+	}
+    }
+
+    if (!err) {
+	c->cols_list = list;
+    } else {
+	free(list);
+    }
+
+    return err;
 }
 
 static int add_obs_marker (DATAINFO *pdinfo, int n)
@@ -1403,6 +1434,19 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	}
 	
 	c->nrows += 1;
+
+	if (c->cols_list != NULL) {
+	    tailstrip(c->line);
+	    gotdata = 1;
+	    chkcols = strlen(c->line);
+	    if (chkcols < c->cols_list[c->cols_list[0]]) {
+		err = E_DATA;
+		break;
+	    } else {
+		continue;
+	    }
+	}
+
 	compress_csv_line(c);
 
 	if (!gotdata) {
@@ -1420,6 +1464,10 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 		    c->nrows, chkcols);
 	    err = E_DATA;
 	}
+    }
+
+    if (!err && c->cols_list != NULL) {
+	c->ncols = c->cols_list[0];
     }
 
     return err;
@@ -1511,7 +1559,6 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 		    iso_to_ascii(c->dinfo->varname[nv]);
 		    strip_illegals(c->dinfo->varname[nv]);
 		    if (check_varname(c->dinfo->varname[nv])) {
-			fprintf(stderr, "bombing here\n");
 			errmsg(1, prn);
 			err = E_DATA;
 		    }
@@ -1550,6 +1597,57 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	    }
 	}
 	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
+{
+    char *p, tmp[32];
+    int i, k, n, t = 0;
+    int err = 0;
+
+    c->real_n = c->dinfo->n;
+
+    while (csv_fgets(c->line, c->maxlen, fp) && !err) {
+
+	tailstrip(c->line);
+
+	if (*c->line == '#' || string_is_blank(c->line)) {
+	    continue;
+	}
+
+	for (i=1; i<=c->ncols; i++) {
+	    k = c->cols_list[i];
+	    p = c->line + k - 1;
+	    if (i < c->ncols) {
+		n = c->cols_list[i+1] - k;
+	    } else {
+		n = strlen(p);
+	    }
+	    if (n > 31) {
+		n = 31;
+	    }
+	    *tmp = '\0';
+	    strncat(tmp, p, n);
+	    if (csv_missval(tmp, i, t+1, prn)) {
+		c->Z[i][t] = NADBL;
+	    } else if (check_atof(tmp)) {
+		if (c->delim != ',' && get_local_decpoint() != ',' &&
+		    strchr(tmp, ',') != NULL) {
+		    c->Z[i][t] = try_comma_atof(tmp);
+		} else {
+		    err = E_DATA;
+		}
+	    } else {
+		c->Z[i][t] = atof(tmp);
+	    }
+	}
+
+	if (++t == c->dinfo->n) {
+	    break;
+	}
     }
 
     return err;
@@ -1674,7 +1772,7 @@ static void csv_parsing_header (const char *fname, PRN *prn)
  */
 
 int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo, 
-		gretlopt opt, PRN *prn)
+		const char *cols, gretlopt opt, PRN *prn)
 {
     csvdata *c = NULL;
     int popit = 0;
@@ -1682,6 +1780,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     PRN *mprn = NULL;
     int newdata = (*pZ == NULL);
     char save_delim = pdinfo->delim;
+    int fixed_format = 0;
     long datapos;
     int i, err = 0;
 
@@ -1711,7 +1810,16 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (c == NULL) {
 	err = E_ALLOC;
 	goto csv_bailout;
-    }	
+    }
+
+    if (cols != NULL && *cols != '\0') {
+	fixed_format = 1;
+	fprintf(stderr, "Got fixed format\n");
+	err = csvdata_add_cols_list(c, cols);
+	if (err) {
+	    goto csv_bailout;
+	}
+    }
 
     if (mprn != NULL) {
 	csv_parsing_header(fname, mprn);
@@ -1724,7 +1832,10 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	goto csv_bailout;
     } 
 
-    if (!csv_got_delim(c)) {
+    if (fixed_format) {
+	
+	;
+    } else if (!csv_got_delim(c)) {
 	/* set default delimiter */
 	if (csv_got_tab(c)) {
 	    c->delim = c->dinfo->delim = '\t';
@@ -1737,7 +1848,10 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
  alt_delim:
 
-    pprintf(mprn, M_("using delimiter '%c'\n"), c->delim);
+    if (!fixed_format) {
+	pprintf(mprn, M_("using delimiter '%c'\n"), c->delim);
+    }
+
     pprintf(mprn, M_("   longest line: %d characters\n"), c->maxlen - 1);
 
     if (csv_has_trailing_comma(c) && c->delim != ',') {
@@ -1755,7 +1869,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     /* read lines, check for consistency in number of fields */
     err = csv_fields_check(fp, c, mprn);
-    if (err) {
+    if (err && !fixed_format) {
 	if (c->delim != ';' && csv_got_semi(c)) {
 	    c->delim = c->dinfo->delim = ';';
 	    err = 0;
@@ -1765,8 +1879,13 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	goto csv_bailout;
     }
 
-    c->dinfo->n = c->nrows - 1; /* allow for var headings */
-    c->dinfo->v = (csv_skip_column(c))? c->ncols : c->ncols + 1;
+    if (fixed_format) {
+	c->dinfo->n = c->nrows;
+	c->dinfo->v = c->ncols + 1;
+    } else {
+	c->dinfo->n = c->nrows - 1; /* allow for var headings */
+	c->dinfo->v = (csv_skip_column(c))? c->ncols : c->ncols + 1;
+    }
 
     pprintf(mprn, M_("   number of variables: %d\n"), c->dinfo->v - 1);
     pprintf(mprn, M_("   number of non-blank lines: %d\n"), c->nrows);
@@ -1793,6 +1912,16 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     /* second pass */
 
     rewind(fp);
+
+    if (fixed_format) {
+	err = fixed_format_read(c, fp, prn);
+	if (err) {
+	    goto csv_bailout;
+	} else {
+	    csv_set_autoname(c);
+	    goto csv_continue;
+	}
+    }
 
     err = csv_varname_scan(c, fp, prn, mprn);
     if (err) {
@@ -1834,6 +1963,8 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (csv_data_reversed(c)) {
 	reverse_data(c->Z, c->dinfo, mprn);
     }
+
+ csv_continue:
 
     c->dinfo->t1 = 0;
     c->dinfo->t2 = c->dinfo->n - 1;

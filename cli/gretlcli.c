@@ -488,7 +488,7 @@ int main (int argc, char *argv[])
 				 OPT_NONE, prn);
 	    break;
 	case GRETL_CSV:
-	    err = import_csv(paths.datfile, &Z, datainfo, OPT_NONE, prn);
+	    err = import_csv(paths.datfile, &Z, datainfo, NULL, OPT_NONE, prn);
 	    break;
 	case GRETL_XLS:
 	case GRETL_GNUMERIC:
@@ -706,7 +706,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     } 
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(datfile, pZ, pdinfo, cmd->opt, prn);
+	err = import_csv(datfile, pZ, pdinfo, cmd->extra, cmd->opt, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(datfile, ftype, cmd->list, cmd->extra,
 				 pZ, pdinfo, cmd->opt, prn);

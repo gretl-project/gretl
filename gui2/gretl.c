@@ -544,7 +544,7 @@ int main (int argc, char *argv[])
 	    break;
 	case GRETL_CSV:
 	    err = import_csv(paths.datfile, &Z, datainfo, 
-			     OPT_NONE, prn);
+			     NULL, OPT_NONE, prn);
 	    break;
 	case GRETL_XLS:
 	case GRETL_GNUMERIC:
