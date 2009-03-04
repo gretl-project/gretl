@@ -966,6 +966,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 				    NULL);
 	if (B2 == NULL) {
 	    free(xlist);
+	    free(zlist);
 	    gretl_matrix_block_destroy(B);
 	    return E_ALLOC;
 	}
@@ -1040,7 +1041,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	}
 
 	if (!err) {
-	    /* projection of Y onto Z: Ya <- P_z Y */
+	    /* form projection P_z Y, in Ya */
 	    gretl_matrix_reuse(b, -1, n);
 	    gretl_matrix_reuse(E, -1, n);
 	    err = gretl_matrix_multi_ols(Y, Z, b, E, NULL);
@@ -1051,12 +1052,13 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	gretl_matrix_free(b);
     } 
 
-    /* form Y' P_z Y */
-    err = gretl_matrix_multiply_mod(Y, GRETL_MOD_TRANSPOSE,
-				    Ya, GRETL_MOD_NONE,
-				    YPY, GRETL_MOD_NONE);
-
-    gretl_matrix_print(YPY, "Y'P_zY");
+    if (!err) {
+	/* form Y' P_z Y */
+	err = gretl_matrix_multiply_mod(Y, GRETL_MOD_TRANSPOSE,
+					Ya, GRETL_MOD_NONE,
+					YPY, GRETL_MOD_NONE);
+	gretl_matrix_print(YPY, "Y'P_zY");
+    }
 
     /* now write first-stage residuals into Ya */
     for (i=0; i<n && !err; i++) {
@@ -1075,15 +1077,17 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	err = gretl_matrix_multiply_mod(Y, GRETL_MOD_TRANSPOSE,
 					Ya, GRETL_MOD_NONE,
 					S, GRETL_MOD_NONE);
-	gretl_matrix_xtr_symmetric(S);
-	gretl_matrix_divide_by_scalar(S, T - K);
+	if (!err) {
+	    gretl_matrix_xtr_symmetric(S);
+	    gretl_matrix_divide_by_scalar(S, T - K);
+	}
     }
 
     gretl_matrix_print(S, "\\hat{\\Sigma}_{vv}");
 
     if (!err) {
 #if 1
-	/* invert S and Choleski-decompose */
+	/* invert S and Cholesky-decompose */
 	err = gretl_invert_symmetric_matrix(S);
 	gretl_matrix_print(S, "inv(S)");
 	if (!err) {
