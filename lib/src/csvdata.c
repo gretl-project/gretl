@@ -172,7 +172,7 @@ static csvdata *csvdata_new (double **Z, const DATAINFO *pdinfo,
 static int csvdata_add_cols_list (csvdata *c, const char *s)
 {
     int *list, *clist = NULL, *wlist = NULL;
-    int i, n, err = 0;
+    int i, n, m, err = 0;
 
     list = gretl_list_from_string(s, &err);
 
@@ -181,9 +181,9 @@ static int csvdata_add_cols_list (csvdata *c, const char *s)
 	if (n == 0 || n % 2 != 0) {
 	    err = E_DATA;
 	} else {
-	    n /= 2;
-	    clist = gretl_list_new(n);
-	    wlist = gretl_list_new(n);
+	    m = n / 2;
+	    clist = gretl_list_new(m);
+	    wlist = gretl_list_new(m);
 	    if (clist == NULL || wlist == NULL) {
 		err = E_ALLOC;
 	    }
@@ -193,14 +193,16 @@ static int csvdata_add_cols_list (csvdata *c, const char *s)
     if (!err) {
 	int j = 1;
 
-	for (i=1, j=1; i<=n; i+=2, j++) {
+	for (i=1; i<=n; i+=2, j++) {
 	    clist[j] = list[i];
 	    wlist[j] = list[i+1];
 	}
-	
-	/* column start list: must be a set of increasing positive
-	   integers; and widths must all be positive */
-	for (i=1; i<=n; i++) {
+
+	/* clist = column start list: must be a set of increasing
+	   positive integers; and wlist = respective column widths
+	   must all be positive 
+	*/
+	for (i=1; i<=m; i++) {
 	    if (wlist[i] <= 0 || clist[i] <= 0 || 
 		(i > 1 && clist[i] <= clist[i-1])) {
 		err = E_DATA;
