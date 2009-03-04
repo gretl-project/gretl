@@ -199,7 +199,7 @@ static int csvdata_add_cols_list (csvdata *c, const char *s)
 	}
 
 	/* clist = column start list: must be a set of increasing
-	   positive integers; and wlist = respective column widths
+	   positive integers; and wlist = respective column widths,
 	   must all be positive 
 	*/
 	for (i=1; i<=m; i++) {
@@ -207,6 +207,10 @@ static int csvdata_add_cols_list (csvdata *c, const char *s)
 		(i > 1 && clist[i] <= clist[i-1])) {
 		err = E_DATA;
 		break;
+	    } else if (wlist[i] >= CSVSTRLEN) {
+		fprintf(stderr, "Warning: field %d too wide (%d), truncating\n", 
+			i, wlist[i]);
+		wlist[i] = CSVSTRLEN - 1;
 	    }
 	}
     }
@@ -219,6 +223,9 @@ static int csvdata_add_cols_list (csvdata *c, const char *s)
     } else {
 	free(clist);
 	free(wlist);
+	if (err == E_DATA) {
+	    gretl_errmsg_set(_("Invalid column specification"));
+	}
     }
 
     return err;
@@ -1635,10 +1642,13 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     return err;
 }
 
+/* read numerical data when we've been given a fixed column-reading
+   specification */
+
 static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 {
-    char *p, tmp[32];
-    int i, k, n, t = 0;
+    char *p;
+    int i, k, n, m, t = 0;
     int err = 0;
 
     c->real_n = c->dinfo->n;
@@ -1651,32 +1661,42 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	    continue;
 	}
 
+	m = strlen(c->line);
+
 	for (i=1; i<=c->ncols; i++) {
 	    k = c->cols_list[i];
-	    p = c->line + k - 1;
 	    n = c->width_list[i];
-	    if (n > 31) {
-		n = 31;
-	    }
-	    *tmp = '\0';
-	    strncat(tmp, p, n);
-	    if (csv_missval(tmp, i, t+1, prn)) {
+	    if (k + n - 1 > m) {
+		/* attempting to read out of bounds */
+		fprintf(stderr, "row %d, column %d: start=%d, width=%d, "
+			"but line length = %d\n", t+1, i, k, n, m);
+		err = E_DATA;
+		break;
+	    }		
+	    p = c->line + k - 1;
+	    *c->str = '\0';
+	    strncat(c->str, p, n);
+	    if (csv_missval(c->str, i, t+1, prn)) {
 		c->Z[i][t] = NADBL;
-	    } else if (check_atof(tmp)) {
+	    } else if (check_atof(c->str)) {
 		if (c->delim != ',' && get_local_decpoint() != ',' &&
-		    strchr(tmp, ',') != NULL) {
-		    c->Z[i][t] = try_comma_atof(tmp);
+		    strchr(c->str, ',') != NULL) {
+		    c->Z[i][t] = try_comma_atof(c->str);
 		} else {
 		    err = E_DATA;
 		}
 	    } else {
-		c->Z[i][t] = atof(tmp);
+		c->Z[i][t] = atof(c->str);
 	    }
 	}
 
 	if (++t == c->dinfo->n) {
 	    break;
 	}
+    }
+
+    if (err == E_DATA) {
+	gretl_errmsg_set(_("Invalid column specification"));
     }
 
     return err;
