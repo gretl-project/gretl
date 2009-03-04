@@ -61,6 +61,7 @@ struct csvdata_ {
     char *descrip;
     gretl_string_table *st;
     int *cols_list;
+    int *width_list;
 };
 
 #define csv_has_trailing_comma(c) (c->flags & CSV_TRAIL)
@@ -116,6 +117,7 @@ static void csvdata_free (csvdata *c)
 
     if (c->cols_list != NULL) {
 	free(c->cols_list);
+	free(c->width_list);
     }  
 
     destroy_dataset(c->Z, c->dinfo);
@@ -148,6 +150,7 @@ static csvdata *csvdata_new (double **Z, const DATAINFO *pdinfo,
     c->descrip = NULL;
     c->st = NULL;
     c->cols_list = NULL;
+    c->width_list = NULL;
 
     c->dinfo = datainfo_new();
     if (c->dinfo == NULL) {
@@ -168,24 +171,52 @@ static csvdata *csvdata_new (double **Z, const DATAINFO *pdinfo,
 
 static int csvdata_add_cols_list (csvdata *c, const char *s)
 {
-    int i, err = 0;
-    int *list = gretl_list_from_string(s, &err);
+    int *list, *clist = NULL, *wlist = NULL;
+    int i, n, err = 0;
+
+    list = gretl_list_from_string(s, &err);
 
     if (!err) {
+	n = list[0];
+	if (n == 0 || n % 2 != 0) {
+	    err = E_DATA;
+	} else {
+	    n /= 2;
+	    clist = gretl_list_new(n);
+	    wlist = gretl_list_new(n);
+	    if (clist == NULL || wlist == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (!err) {
+	int j = 1;
+
+	for (i=1, j=1; i<=n; i+=2, j++) {
+	    clist[j] = list[i];
+	    wlist[j] = list[i+1];
+	}
+	
 	/* column start list: must be a set of increasing positive
-	   integers */
-	for (i=1; i<=list[0]; i++) {
-	    if (list[i] < 0 || (i > 1 && list[i] <= list[i-1])) {
+	   integers; and widths must all be positive */
+	for (i=1; i<=n; i++) {
+	    if (wlist[i] <= 0 || clist[i] <= 0 || 
+		(i > 1 && clist[i] <= clist[i-1])) {
 		err = E_DATA;
 		break;
 	    }
 	}
     }
 
+    free(list);
+
     if (!err) {
-	c->cols_list = list;
+	c->cols_list = clist;
+	c->width_list = wlist;
     } else {
-	free(list);
+	free(clist);
+	free(wlist);
     }
 
     return err;
@@ -1621,11 +1652,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	for (i=1; i<=c->ncols; i++) {
 	    k = c->cols_list[i];
 	    p = c->line + k - 1;
-	    if (i < c->ncols) {
-		n = c->cols_list[i+1] - k;
-	    } else {
-		n = strlen(p);
-	    }
+	    n = c->width_list[i];
 	    if (n > 31) {
 		n = 31;
 	    }
@@ -1814,7 +1841,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     if (cols != NULL && *cols != '\0') {
 	fixed_format = 1;
-	fprintf(stderr, "Got fixed format\n");
+	pprintf(mprn, M_("using fixed column format\n"));
 	err = csvdata_add_cols_list(c, cols);
 	if (err) {
 	    goto csv_bailout;
@@ -1832,10 +1859,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	goto csv_bailout;
     } 
 
-    if (fixed_format) {
-	
-	;
-    } else if (!csv_got_delim(c)) {
+    if (!fixed_format && !csv_got_delim(c)) {
 	/* set default delimiter */
 	if (csv_got_tab(c)) {
 	    c->delim = c->dinfo->delim = '\t';
