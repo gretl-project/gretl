@@ -41,6 +41,7 @@
 - Fix bug in binomal plot for 60 <= n < 170
 - MS Windows build: update to gnuplot 4.3 CVS as of
   2009-03-02
+- Enhancements for GUI menu item "Count missing values"
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

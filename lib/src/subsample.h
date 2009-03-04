@@ -71,7 +71,8 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state);
 
 int backup_full_dataset (double **Z, DATAINFO *pdinfo);
 
-int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
+int count_missing_values (const double **Z, const DATAINFO *pdinfo, 
+			  gretlopt opt, PRN *prn, int *err);
 
 int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 

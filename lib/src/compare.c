@@ -1955,6 +1955,7 @@ int autocorr_test (MODEL *pmod, int order,
 		bg_test_header(order, prn, 0);
 	    } else {
 		printmodel(&aux, pdinfo, OPT_NONE, prn);
+		pputc(prn, '\n');
 	    } 
 	    pprintf(prn, "%s: LMF = %f,\n", _("Test statistic"), LMF);
 	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
@@ -1967,9 +1968,9 @@ int autocorr_test (MODEL *pmod, int order,
 
 	    lb = ljung_box(order, pmod->t1, pmod->t2, (*pZ)[v], &lberr);
 	    if (!na(lb)) {
-		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
-			lb, _("with p-value"), _("Chi-square"), order,
-			lb, chisq_cdf_comp(order, lb));
+		pprintf(prn, "Ljung-Box Q' = %g,\n", lb);
+		pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n", _("with p-value"), 
+			_("Chi-square"), order, lb, chisq_cdf_comp(order, lb));
 	    }
 
 	    pputc(prn, '\n');

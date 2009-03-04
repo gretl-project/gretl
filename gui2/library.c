@@ -1281,14 +1281,38 @@ int do_set_sample (void)
 
 void count_missing (void)
 {
+    const char *opts[] = {
+	N_("Show count of missing values at each observation"),
+	NULL
+    };
+    gretlopt opt;
+    int resp, active;
+    int mc, err = 0;
     PRN *prn;
 
-    if (bufopen(&prn)) return;
-    if (count_missing_values(&Z, datainfo, prn)) {
+    active = (datainfo->n < 1000);
+
+    resp = checks_dialog(_("gretl: missing values info"), NULL,
+			 opts, 1, &active, 0,
+			 NULL, NULL, NULL, 0, 0, 0);
+
+    if (resp < 0 || bufopen(&prn)) {
+	return;
+    }
+
+    opt = (active)? OPT_V : OPT_NONE;
+
+    mc = count_missing_values((const double **) Z, datainfo, opt, prn, &err);
+
+    if (!err && mc > 0) {
 	view_buffer(prn, 78, 300, _("gretl: missing values info"), 
 		    SMPL, NULL);
     } else {
-	infobox(_("No missing data values"));
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    infobox(_("No missing data values"));
+	}
 	gretl_print_destroy(prn);
     }
 }

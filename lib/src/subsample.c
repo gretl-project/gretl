@@ -1478,15 +1478,42 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+/**
+ * count_missing_values:
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @opt: use %OPT_V for verbose operation.
+ * @prn: printing struct.
+ * @err: location to receive error code.
+ *
+ * Prints a count of missing values (if any) in the current
+ * dataset over the currently defined sample range. If
+ * %OPT_V is given this includes a count of missing values
+ * at each observation; otherwise it just includes global
+ * and per-variable counts.
+ *
+ * Returns: 0 if no missing values are found (or on error),
+ * otherwise the total number of missing values.
+ */
+
+int count_missing_values (const double **Z, const DATAINFO *pdinfo, 
+			  gretlopt opt, PRN *prn, int *err)
 {
-    int i, t, tmiss;
     int missval = 0, missobs = 0, totvals = 0, oldmiss = 0;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
     int *missvec;
+    double missfrac;
+    int i, t, tmiss;
 
     missvec = malloc(pdinfo->v * sizeof missvec);
-    if (missvec != NULL) {
-	for (i=0; i<pdinfo->v; i++) missvec[i] = 0;
+
+    if (missvec == NULL) {
+	*err = E_ALLOC;
+	return 0;
+    }
+
+    for (i=0; i<pdinfo->v; i++) {
+	missvec[i] = 0;
     }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -1495,7 +1522,7 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    if (var_is_hidden(pdinfo, i)) {
 		continue;
 	    }
-	    if (na((*pZ)[i][t])) {
+	    if (na(Z[i][t])) {
 		if (missvec[i] == 0) {
 		    missvec[0] += 1;
 		}
@@ -1510,32 +1537,41 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	if (tmiss) {
 	    missobs++;
 
-	    if (pdinfo->markers) { 
-		pprintf(prn, "%8s %4d %s\n", pdinfo->S[t], tmiss,
-			_("missing values"));
-	    } else {
-		char tmp[OBSLEN];
+	    if (opt & OPT_V) {
+		/* verbose print by observation */
+		if (pdinfo->markers) { 
+		    pprintf(prn, "%8s %4d %s\n", pdinfo->S[t], tmiss,
+			    _("missing values"));
+		} else {
+		    char tmp[OBSLEN];
 
-		ntodate(tmp, t, pdinfo);
-		pprintf(prn, "%8s %4d %s\n", tmp, tmiss,
-			_("missing values"));
+		    ntodate(tmp, t, pdinfo);
+		    pprintf(prn, "%8s %4d %s\n", tmp, tmiss,
+			    _("missing values"));
+		}
 	    }
 	}
 	oldmiss = missval;
     }
 
+    missfrac = 100.0 * (double) missobs / T;
+
     pprintf(prn, _("\nNumber of observations (rows) with missing data "
-	    "values = %d (%.2f%%)\n"), missobs, 
-	    (100.0 * missobs / (pdinfo->t2 - pdinfo->t1 + 1)));
+		   "values = %d (%.2f%%)\n"), missobs, missfrac);
+
     pprintf(prn, _("Total number of missing data values = %d (%.2f%% "
 	    "of total data values)\n"), missval, 
-	    (100.0 * missval / totvals));
+	    (100.0 * (double) missval / totvals));
+
     if (missvec[0] > 0) {
 	pputc(prn, '\n');
 	for (i=1; i<pdinfo->v; i++) {
 	    if (missvec[i] > 0) {
-		pprintf(prn, "%8s: %d %s\n", pdinfo->varname[i], 
-			missvec[i], _("missing values"));
+		missfrac = 100.0 * (double) missvec[i] / T;
+		pprintf(prn, "%8s: %d %s (%.2f%%); %d %s (%.2f%%)\n", 
+			pdinfo->varname[i], missvec[i], _("missing values"),
+			missfrac, T - missvec[i], _("valid values"),
+			100.0 - missfrac);
 	    }
 	}
     }
