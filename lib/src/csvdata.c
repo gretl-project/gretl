@@ -1480,6 +1480,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	    gotdata = 1;
 	    chkcols = strlen(c->line);
 	    if (chkcols < c->cols_list[c->cols_list[0]]) {
+		gretl_errmsg_set(_("Invalid column specification"));
 		err = E_DATA;
 		break;
 	    } else {

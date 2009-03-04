@@ -892,6 +892,249 @@ reglist_remove_redundant_vars (const MODEL *tmod, int *s2list, int *reglist)
     return 0;
 }
 
+/* Stock-Yogo: compute the matrix counterpart of the first-stage F-test,
+   for the case of multiple endogenous regressors.
+ */
+
+static int 
+compute_stock_yogo (MODEL *pmod, const int *endolist, 
+		    const int *instlist, const int *hatlist,
+		    const double **dZ)
+{
+    gretl_matrix_block *B = NULL;
+    gretl_matrix_block *B2 = NULL;
+    gretl_matrix *G;
+    gretl_matrix *S;
+    gretl_matrix *Y;
+    gretl_matrix *Ya;
+    gretl_matrix *YPY;
+    gretl_matrix *X;
+    gretl_matrix *Z;
+    gretl_matrix *E;
+    int T = pmod->nobs;
+    int n = endolist[0];
+    int K = instlist[0];
+    int nx = pmod->ncoeff - n;
+    int nz = K - nx;
+    int *xlist = NULL;
+    int *zlist = NULL;
+    int i, s, vi, vj, t;
+    int err = 0;
+
+    if (nx > 0) {
+	/* form lists of included and excluded exogenous vars */
+	int j;
+
+	xlist = gretl_list_new(nx); /* included */
+	zlist = gretl_list_new(nz); /* excluded */
+
+	if (xlist == NULL || zlist == NULL) {
+	    return E_ALLOC;
+	}
+
+	for (i=2, j=0; i<=pmod->list[0]; i++) {
+	    if (in_gretl_list(instlist, pmod->list[i])) {
+		xlist[++j] = pmod->list[i];
+	    } 
+	}
+
+	for (i=1, j=0; i<=K; i++) {
+	    if (!in_gretl_list(pmod->list, instlist[i])) {
+		zlist[++j] = instlist[i];
+	    } 
+	}
+
+	printlist(xlist, "xlist");
+	printlist(zlist, "zlist");
+    } 
+
+    B = gretl_matrix_block_new(&G, n, n,
+			       &S, n, n,
+			       &Y, T, n,
+			       &Ya, T, n,
+			       &YPY, n, n,
+			       NULL);
+    if (B == NULL) {
+	free(xlist);
+	return E_ALLOC;
+    }
+
+    if (nx > 0) {
+	B2 = gretl_matrix_block_new(&X, T, nx,
+				    &Z, T, nz,
+				    &E, T, nz,
+				    NULL);
+	if (B2 == NULL) {
+	    free(xlist);
+	    gretl_matrix_block_destroy(B);
+	    return E_ALLOC;
+	}
+
+	/* form X matrix of included exogenous regressors */
+	for (i=0; i<nx; i++) {
+	    vi = xlist[i+1];
+	    s = 0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(pmod->uhat[t])) {
+		    gretl_matrix_set(X, s++, i, dZ[vi][t]);
+		}
+	    }
+	}
+
+	/* form Z matrix of excluded instruments */
+	for (i=0; i<nz; i++) {
+	    vi = zlist[i+1];
+	    s = 0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(pmod->uhat[t])) {
+		    gretl_matrix_set(Z, s++, i, dZ[vi][t]);
+		}
+	    }
+	}	
+    }	
+
+    /* form Y matrix */
+    for (i=0; i<n; i++) {
+	vi = endolist[i+1];
+	s = 0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t])) {
+		gretl_matrix_set(Y, s++, i, dZ[vi][t]);
+	    }
+	}
+    }
+
+    if (nx == 0) {
+	/* form Y-hat matrix in Ya */
+	for (i=0; i<n; i++) {
+	    vi = hatlist[i+1];
+	    s = 0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(pmod->uhat[t])) {
+		    gretl_matrix_set(Ya, s++, i, dZ[vi][t]);
+		}
+	    }
+	}
+    } else {
+	gretl_matrix *b;
+
+	b = gretl_matrix_alloc(nx, nz);
+	if (b == NULL) {
+	    err = E_ALLOC;
+	}
+
+	if (!err) {
+	    /* partial X out of Y: Y <- M_x Y */
+	    gretl_matrix_reuse(b, -1, n);
+	    gretl_matrix_reuse(E, -1, n);
+	    err = gretl_matrix_multi_ols(Y, X, b, E, NULL);
+	    gretl_matrix_copy_values(Y, E);
+	}
+
+	if (!err) {
+	    /* partial X out of Z: Z <- M_x Z */
+	    gretl_matrix_reuse(b, -1, nz);
+	    gretl_matrix_reuse(E, -1, nz);
+	    err = gretl_matrix_multi_ols(Z, X, b, E, NULL);
+	    gretl_matrix_copy_values(Z, E);
+	}
+
+	if (!err) {
+	    /* projection of Y onto Z: Ya <- P_z Y */
+	    gretl_matrix_reuse(b, -1, n);
+	    gretl_matrix_reuse(E, -1, n);
+	    err = gretl_matrix_multi_ols(Y, Z, b, E, NULL);
+	    gretl_matrix_copy_values(Ya, Y);
+	    gretl_matrix_subtract_from(Ya, E);
+	}
+
+	gretl_matrix_free(b);
+    } 
+
+    /* form Y' P_z Y */
+    err = gretl_matrix_multiply_mod(Y, GRETL_MOD_TRANSPOSE,
+				    Ya, GRETL_MOD_NONE,
+				    YPY, GRETL_MOD_NONE);
+
+    gretl_matrix_print(YPY, "Y'P_zY");
+
+    /* now write first-stage residuals into Ya */
+    for (i=0; i<n && !err; i++) {
+	vi = endolist[i+1];
+	vj = hatlist[i+1];
+	s = 0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t])) {
+		gretl_matrix_set(Ya, s++, i, dZ[vi][t] - dZ[vj][t]);
+	    }
+	}
+    }    
+
+    if (!err) {
+	/* form S = \hat{\Sigma}_{vv} */
+	err = gretl_matrix_multiply_mod(Y, GRETL_MOD_TRANSPOSE,
+					Ya, GRETL_MOD_NONE,
+					S, GRETL_MOD_NONE);
+	gretl_matrix_xtr_symmetric(S);
+	gretl_matrix_divide_by_scalar(S, T - K);
+    }
+
+    gretl_matrix_print(S, "\\hat{\\Sigma}_{vv}");
+
+    if (!err) {
+#if 1
+	/* invert S and Choleski-decompose */
+	err = gretl_invert_symmetric_matrix(S);
+	gretl_matrix_print(S, "inv(S)");
+	if (!err) {
+	    err = gretl_matrix_cholesky_decomp(S);
+	    gretl_matrix_print(S, "chol(inv(S))");
+	}
+#else
+	/* or vice versa ?? */
+	err = gretl_matrix_cholesky_decomp(S);
+	gretl_matrix_print(S, "chol(S)");
+	if (!err) {
+	    err = gretl_invert_matrix(S);
+	    gretl_matrix_print(S, "inv(chol(S))");
+	}
+#endif
+    }
+
+    if (!err) {
+	/* finally, form big sandwich */
+	gretl_matrix_qform(S, GRETL_MOD_TRANSPOSE,
+			   YPY, G, GRETL_MOD_NONE);
+	gretl_matrix_divide_by_scalar(G, K);
+	gretl_matrix_print(G, "G_T");
+    }
+
+    if (!err) {
+	gretl_matrix *e;
+	double gmin = NADBL;
+
+	e = gretl_symmetric_matrix_eigenvals(G, 0, &err); 
+	if (!err) {
+	    gretl_matrix_print(e, "eigenvalues");
+	    for (i=0; i<n; i++) {
+		if (e->val[i] < gmin) {
+		    gmin = e->val[i];
+		}
+	    }
+	    fprintf(stderr, "gmin = %g\n", gmin);
+	    gretl_matrix_free(e);
+	}
+    }
+
+    gretl_matrix_block_destroy(B);
+    gretl_matrix_block_destroy(B2);
+
+    free(xlist);
+    free(zlist);
+
+    return err;
+}
+
 static int 
 compute_first_stage_F (MODEL *pmod, int v, const int *reglist, 
 		       const int *instlist, double ***pZ, 
@@ -1255,7 +1498,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
        Deal with the variables for which instruments are needed: loop
        across the list of variables to be instrumented (endolist),
        form the fitted values as QQ'x_i, and add these fitted values
-       into the data matrix Z.
+       into the data array Z.
     */
 
     for (i=0; i<nendo; i++) {
@@ -1287,8 +1530,14 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (nendo == 1 && !sysest) {
-	compute_first_stage_F(&tsls, ev, reglist, instlist, pZ, pdinfo, opt);
+    if (!sysest) {
+	if (nendo == 1) {
+	    compute_first_stage_F(&tsls, ev, reglist, instlist, pZ, pdinfo, opt);
+	} else if (0) {
+	    /* not ready yet */
+	    compute_stock_yogo(&tsls, endolist, instlist, hatlist,
+			       (const double **) *pZ);
+	}
     } 
 
     if (tsls.list[0] < s2list[0]) {
