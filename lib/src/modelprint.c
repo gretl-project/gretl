@@ -746,7 +746,7 @@ static void plain_print_sy_vals (gretl_matrix *v, double g, int k, PRN *prn)
     pputs(prn, "  ");
 
     if (k == 1) {
-	pputs(prn, _("Critical values for TSLS bias relative to OLS\n"));
+	pputs(prn, _("Critical values for TSLS bias relative to OLS:\n"));
     } else {
 	pputs(prn, _("Critical values for desired TSLS maximal size, when running\n"
 		     "  tests at a nominal 5% significance level:\n"));
@@ -769,9 +769,9 @@ static void plain_print_sy_vals (gretl_matrix *v, double g, int k, PRN *prn)
     if (gpos == 0) {
 	x = gretl_matrix_get(v, 0, 0);
 	if (k == 1) {
-	    pprintf(prn, _("Relative bias is probably less than %g%%\n"), 100 * x);
+	    pprintf(prn, _("Relative bias is probably less than %g%%"), 100 * x);
 	} else {
-	    pprintf(prn, _("Maximal size is probably less than %g%%\n"), 100 * x);
+	    pprintf(prn, _("Maximal size is probably less than %g%%"), 100 * x);
 	}
     } else {
 	if (gpos < 0) {
@@ -781,16 +781,18 @@ static void plain_print_sy_vals (gretl_matrix *v, double g, int k, PRN *prn)
 	}
 	x = gretl_matrix_get(v, 0, gpos);
 	if (k == 1) {
-	    pprintf(prn, _("Relative bias may exceed %g%%\n"), 100 * x);
+	    pprintf(prn, _("Relative bias may exceed %g%%"), 100 * x);
 	} else {	
-	    pprintf(prn, _("Maximal size may exceed %g%%\n"), 100 * x);
+	    pprintf(prn, _("Maximal size may exceed %g%%"), 100 * x);
 	}
     }
+    
+    pputs(prn, "\n\n");
 }
 
 static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
 {
-    const char *head = N_("Weak instrument test:");
+    const char *head = N_("Weak instrument test");
     double F = gretl_model_get_double(pmod, "stage1-F");
     double g = gretl_model_get_double(pmod, "gmin");
     int got_critvals = 0;
@@ -800,36 +802,44 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
 	return;
     }
 
+    if (plain_format(prn)) {
+	pprintf(prn, "%s - \n", _(head));
+    } else if (tex_format(prn)) {
+	pprintf(prn, "%s -- \\\\\n", I_(head));
+    } else if (rtf_format(prn)) {
+	pprintf(prn, "%s - \\par\n", I_(head));
+    }
+
     if (!na(F)) {
 	/* got first-stage F-test for single endogenous regressor */
 	dfn = gretl_model_get_int(pmod, "stage1-dfn");
 	dfd = gretl_model_get_int(pmod, "stage1-dfd");
 
 	if (plain_format(prn)) {
-	    pprintf(prn, "%s %s (%d, %d) = %.*g\n", _(head), _("First-stage F-statistic"),
+	    pprintf(prn, "  %s (%d, %d) = %.*g\n", _("First-stage F-statistic"),
 		    dfn, dfd, GRETL_DIGITS, F);
 	} else if (tex_format(prn)) {
 	    char x1str[32];
 
 	    tex_sprint_double(F, x1str);
-	    pprintf(prn, "%s First-stage $F(%d, %d)$ = %s \\\\\n", I_(head), dfn, dfd, x1str);
+	    pprintf(prn, "\\quad First-stage $F(%d, %d)$ = %s \\\\\n", dfn, dfd, x1str);
 	} else if (rtf_format(prn)) {
-	    pprintf(prn, "%s %s (%d, %d) = %g\n", I_(head), I_("First-stage F-statistic"), 
+	    pprintf(prn, "  %s (%d, %d) = %g\n", I_("First-stage F-statistic"), 
 		    dfn, dfd, F);
 	}
     } else {
 	/* got minimum eigenvalue test statistic */
 	if (plain_format(prn)) {
-	    pprintf(prn, "%s %s = %.*g\n", _(head), _("Cragg-Donald minimum eigenvalue"),
+	    pprintf(prn, "  %s = %.*g\n", _("Cragg-Donald minimum eigenvalue"),
 		    GRETL_DIGITS, g);
 	} else if (tex_format(prn)) {
 	    char x1str[32];
 
 	    tex_sprint_double(g, x1str);
-	    pprintf(prn, "%s %s = %s \\\\\n", I_(head), I_("Cragg--Donald minimum eigenvalue"), 
+	    pprintf(prn, "\\quad  %s = %s \\\\\n", I_("Cragg--Donald minimum eigenvalue"), 
 		    x1str);
 	} else if (rtf_format(prn)) {
-	    pprintf(prn, "%s %s = %g\n", I_(head), I_("Cragg-Donald minimum eigenvalue"), g);
+	    pprintf(prn, "  %s = %g\n", I_("Cragg-Donald minimum eigenvalue"), g);
 	}
     }	
 
