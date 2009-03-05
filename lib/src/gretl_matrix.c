@@ -2328,7 +2328,9 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 
     if (msg != NULL && *msg != '\0') {
 	fprintf(stderr, "%s (%d x %d)", msg, m->rows, m->cols);
-	if (m->t1 != 0 || m->t2 != 0) {
+	if (m->t1 == BLOCKT && m->t2 == BLOCKT) {
+	    fprintf(stderr, " (part of matrix block)\n\n");
+	} else if (m->t1 != 0 || m->t2 != 0) {
 	    fprintf(stderr, " [t1 = %d, t2 = %d]\n\n", m->t1 + 1, m->t2 + 1);
 	} else {
 	    fputs("\n\n", stderr);

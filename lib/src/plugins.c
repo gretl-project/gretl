@@ -160,8 +160,9 @@ struct plugin_function plugin_functions[] = {
     { "range_mean_graph", P_RANGE_MEAN },
 
     /* statistical tables */
-    { "dw_lookup",       P_STATS_TABLES },
-    { "rank_sum_lookup", P_STATS_TABLES },
+    { "dw_lookup",         P_STATS_TABLES },
+    { "rank_sum_lookup",   P_STATS_TABLES },
+    { "stock_yogo_lookup", P_STATS_TABLES },
 
     /* SUR, 3SLS, FIML */
     { "system_estimate", P_SYSEST },
