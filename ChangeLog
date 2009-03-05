@@ -34,15 +34,18 @@
 - "logit" command: support multinomial logit via a new
   option, --multinomial
 - ordered logit, probit: add count of cases 'correctly
-  predicated', plus overall likelihood ratio test for all
+  predicted', plus overall likelihood ratio test for all
   slopes = 0
 - Graph editing dialog: provide more comprehensive font
   selection apparatus if gnuplot supports cairo
+- "gnuplot" script command: add mechanism for naming the
+  output file, and selecting EPS/PDF/PNG output directly
 - Fix bug in binomal plot for 60 <= n < 170
 - MS Windows build: update to gnuplot 4.3 CVS as of
   2009-03-02
 - Enhancements for GUI menu item "Count missing values"
-- tsls: add Stock-Yogo test for weak instruments
+- tsls: add Stock-Yogo minimum eigenvalue test for weak 
+  instruments
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
