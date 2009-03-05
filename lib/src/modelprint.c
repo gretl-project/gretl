@@ -811,7 +811,7 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
     }
 
     if (!na(F)) {
-	/* got first-stage F-test for single endogenous regressor */
+	/* got first-stage F-test (single endogenous regressor) */
 	dfn = gretl_model_get_int(pmod, "stage1-dfn");
 	dfd = gretl_model_get_int(pmod, "stage1-dfd");
 
