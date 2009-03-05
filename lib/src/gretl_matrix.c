@@ -8745,10 +8745,16 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     k = X->cols;
 
     if (B->rows != k || B->cols != g) {
+	fprintf(stderr, "gretl_matrix_multi_ols: B is %d x %d, should be %d x %d\n",
+		B->rows, B->cols, k, g);
 	err = E_NONCONF;
     } else if (Y->rows != T) {
+	fprintf(stderr, "gretl_matrix_multi_ols: Y has %d rows, should have %d\n",
+		Y->rows, T);
 	err = E_NONCONF;
-    } else if (E != NULL && (E->cols != g || E->rows != T)) {
+    } else if (E != NULL && (E->rows != T || E->cols != g)) {
+	fprintf(stderr, "gretl_matrix_multi_ols: E is %d x %d, should be %d x %d\n",
+		E->rows, E->cols, T, g);
 	err = E_NONCONF;
     } else if (k > T) {
 	err = E_DF;

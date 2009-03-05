@@ -892,31 +892,13 @@ reglist_remove_redundant_vars (const MODEL *tmod, int *s2list, int *reglist)
     return 0;
 }
 
-static gretl_matrix *get_syogo_critvals (int n, int K2)
-{
-    gretl_matrix *v;
-    void *handle;
-    gretl_matrix *(*lookup) (int, int);
-
-    lookup = get_plugin_function("stock_yogo_lookup", &handle);
-
-    if (lookup == NULL) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	return NULL;
-    }
-
-    v = (*lookup) (n, K2);
-    close_plugin(handle);
-
-    return v;
-}
-
-/* Stock-Yogo: compute the matrix counterpart of the first-stage
-   F-test, for the case of multiple endogenous regressors.  This is
-   the Cragg-Donald statistic: the minimum eigenvalue of the matrix
-   defined below.  See Stock and Yogo, "Testing for Weak Instruments
-   in Linear IV Regressions", NBER Technical Working Paper 284,
-   October 2002, http://www.nber.org/papers/T0284 .
+/* Stock-Yogo: compute test statistic for weakness of instruments.
+   This is the Cragg-Donald statistic: the minimum eigenvalue of the
+   matrix defined below (which reduces to the first-stage F-statistic
+   when there is just one endogenous regressor).  See Stock and Yogo,
+   "Testing for Weak Instruments in Linear IV Regressions" (originally
+   NBER Technical Working Paper 284; revised February 2003), at
+   http://ksghome.harvard.edu/~JStock/pdf/rfa_6.pdf
  */
 
 static int 
@@ -926,14 +908,9 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 {
     gretl_matrix_block *B = NULL;
     gretl_matrix_block *B2 = NULL;
-    gretl_matrix *G;
-    gretl_matrix *S;
-    gretl_matrix *Y;
-    gretl_matrix *Ya;
-    gretl_matrix *YPY;
-    gretl_matrix *X;
-    gretl_matrix *Z;
-    gretl_matrix *E;
+    gretl_matrix *G, *S, *Y;
+    gretl_matrix *Ya, *YPY;
+    gretl_matrix *X, *Z, *E;
     int T = pmod->nobs;
     int n = endolist[0];
     int K1 = pmod->ncoeff - n;
@@ -952,7 +929,8 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
     }
 
     if (K1 > 0) {
-	int ix = 0, iz = 0;
+	gretl_matrix *M;
+	int j, ix = 0, iz = 0;
 
 	B2 = gretl_matrix_block_new(&X, T, K1,
 				    &Z, T, K2,
@@ -966,23 +944,20 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	/* form the X and Z matrices */
 	for (i=1; i<=instlist[0]; i++) {
 	    vi = instlist[i];
-	    s = 0;
 	    if (in_gretl_list(pmod->list, vi)) {
 		/* included exogenous var -> X */
-		for (t=pmod->t1; t<=pmod->t2; t++) {
-		    if (!na(pmod->uhat[t])) {
-			gretl_matrix_set(X, s++, ix, dZ[vi][t]);
-		    }
-		}
-		ix++;
+		M = X;
+		j = ix++;
 	    } else {
 		/* excluded exogenous var -> Z */
-		for (t=pmod->t1; t<=pmod->t2; t++) {
-		    if (!na(pmod->uhat[t])) {
-			gretl_matrix_set(Z, s++, iz, dZ[vi][t]);
-		    }
+		M = Z;
+		j = iz++;
+	    }
+	    s = 0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(pmod->uhat[t])) {
+		    gretl_matrix_set(M, s++, j, dZ[vi][t]);
 		}
-		iz++;
 	    }
 	}
     }	
@@ -1010,16 +985,18 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	    }
 	}
     } else {
+	int bdim = (K1 > K2)? K1 : K2;
 	gretl_matrix *b;
 
-	b = gretl_matrix_alloc(K1, K2);
+	/* the leading dimension of b is the number of regressors */
+	b = gretl_matrix_alloc(bdim, K2);
 	if (b == NULL) {
 	    err = E_ALLOC;
 	}
 
 	if (!err) {
 	    /* partial X out of Y: Y <- M_x Y */
-	    gretl_matrix_reuse(b, -1, n);
+	    gretl_matrix_reuse(b, K1, n);
 	    gretl_matrix_reuse(E, -1, n);
 	    err = gretl_matrix_multi_ols(Y, X, b, E, NULL);
 	    gretl_matrix_copy_values(Y, E);
@@ -1027,7 +1004,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 
 	if (!err) {
 	    /* partial X out of Z: Z <- M_x Z */
-	    gretl_matrix_reuse(b, -1, K2);
+	    gretl_matrix_reuse(b, K1, K2);
 	    gretl_matrix_reuse(E, -1, K2);
 	    err = gretl_matrix_multi_ols(Z, X, b, E, NULL);
 	    gretl_matrix_copy_values(Z, E);
@@ -1035,7 +1012,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 
 	if (!err) {
 	    /* form projection P_z Y, in Ya */
-	    gretl_matrix_reuse(b, -1, n);
+	    gretl_matrix_reuse(b, K2, n);
 	    gretl_matrix_reuse(E, -1, n);
 	    err = gretl_matrix_multi_ols(Y, Z, b, E, NULL);
 	    gretl_matrix_copy_values(Ya, Y);
@@ -1076,7 +1053,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
     }
 
     if (!err) {
-	/* invert S and Cholesky-decompose */
+	/* S^{-1/2}: invert S and Cholesky-decompose */
 	err = gretl_invert_symmetric_matrix(S);
 	if (!err) {
 	    err = gretl_matrix_cholesky_decomp(S);
@@ -1085,9 +1062,11 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 
     if (!err) {
 	/* finally, form big sandwich */
-	gretl_matrix_qform(S, GRETL_MOD_TRANSPOSE,
-			   YPY, G, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(G, K2);
+	err = gretl_matrix_qform(S, GRETL_MOD_TRANSPOSE,
+				 YPY, G, GRETL_MOD_NONE);
+	if (!err) {
+	    gretl_matrix_divide_by_scalar(G, K2);
+	}
     }
 
     if (!err) {
@@ -1095,28 +1074,35 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	gretl_matrix *e;
 
 	e = gretl_symmetric_matrix_eigenvals(G, 0, &err); 
+
 	if (!err) {
 	    for (i=0; i<n; i++) {
 		if (e->val[i] < gmin) {
 		    gmin = e->val[i];
 		}
 	    }
-	    fprintf(stderr, "gmin = %g\n", gmin);
-	    gretl_model_set_double(pmod, "gmin", gmin);
 	    gretl_matrix_free(e);
-	    e = get_syogo_critvals(n, K2);
-	    if (e != NULL) {
-		gretl_matrix_print(e, "critvals");
-		gretl_matrix_free(e);
-	    }
-	}
+	    gretl_model_set_double(pmod, "gmin", gmin);
+	    gretl_model_set_int(pmod, "n", n);
+	    gretl_model_set_int(pmod, "K2", K2);
+	}	    
     }
 
     gretl_matrix_block_destroy(B);
     gretl_matrix_block_destroy(B2);
 
+    if (err) {
+	fprintf(stderr, "compute_stock_yogo: err = %d\n", err);
+    }
+
     return err;
 }
+
+/* Calculate first-stage F-test as diagnostic for weak instruments.
+   This variant can only handle one endogenous regressor, but it
+   supports robust estimation if the model in question uses a robust
+   covariance estimator.
+*/
 
 static int 
 compute_first_stage_F (MODEL *pmod, int v, const int *reglist, 
@@ -1124,7 +1110,6 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
 		       DATAINFO *pdinfo, gretlopt opt)
 {
     MODEL mod1;
-    gretlopt myopt;
     int *list1 = NULL;
     int *flist = NULL;
     double F;
@@ -1132,6 +1117,11 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
     int err = 0;
 
     gretl_model_init(&mod1);
+
+    /* The regression list, list1, has endogenous regressor v as the
+       dependent variable and includes all instruments; the list for
+       omission, flist, includes all the excluded instruments.
+    */
 
     list1 = gretl_list_append_term(&list1, v);
     if (list1 == NULL) {
@@ -1155,7 +1145,8 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
     }
 
     if (!err) {
-	myopt = (opt & OPT_R)? (OPT_A | OPT_R) : OPT_A;
+	gretlopt myopt = (opt & OPT_R)? (OPT_A | OPT_R) : OPT_A;
+
 	mod1 = lsq(list1, pZ, pdinfo, OLS, myopt);
 	err = mod1.errcode;
     }
@@ -1171,6 +1162,10 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
 	gretl_model_set_double(pmod, "stage1-F", F);
 	gretl_model_set_int(pmod, "stage1-dfn", flist[0]);
 	gretl_model_set_int(pmod, "stage1-dfd", mod1.dfd);
+	if (!(opt & OPT_R)) {
+	    /* flag lookup of Stock-Yogo critical values */
+	    gretl_model_set_double(pmod, "gmin", F);
+	}	
     }
     
     clear_model(&mod1);
@@ -1515,9 +1510,10 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (!sysest) {
 	if (nendo == 1) {
+	    /* handles robust estimation, for single endogenous regressor */
 	    compute_first_stage_F(&tsls, ev, reglist, instlist, pZ, pdinfo, opt);
-	} else if (1) {
-	    /* not ready yet */
+	} else if (!(opt & OPT_R)) {
+	    /* at present, only handles case of i.i.d. errors */
 	    compute_stock_yogo(&tsls, endolist, instlist, hatlist,
 			       (const double **) *pZ);
 	}
