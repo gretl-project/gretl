@@ -723,7 +723,8 @@ static int any_tests (const MODEL *pmod)
     return 0;
 }
 
-static void get_stock_yogo_critvals (int n, int K2, gretl_matrix **p1,
+static void get_stock_yogo_critvals (int n, int K2, gretlopt opt,
+				     gretl_matrix **p1,
 				     gretl_matrix **p2)
 {
     gretl_matrix *(*lookup) (int, int, int);
@@ -732,13 +733,18 @@ static void get_stock_yogo_critvals (int n, int K2, gretl_matrix **p1,
     lookup = get_plugin_function("stock_yogo_lookup", &handle);
 
     if (lookup != NULL) {
-	*p1 = (*lookup) (n, K2, 1);
-	*p2 = (*lookup) (n, K2, 2);
+	if (opt & OPT_L) {
+	    *p2 = (*lookup) (n, K2, 3);
+	} else {
+	    *p1 = (*lookup) (n, K2, 1);
+	    *p2 = (*lookup) (n, K2, 2);
+	}
 	close_plugin(handle);
     }
 }
 
-static void plain_print_sy_vals (gretl_matrix *v, double g, int k, PRN *prn)
+static void plain_print_sy_vals (gretl_matrix *v, double g, int k, 
+				 gretlopt opt, PRN *prn)
 {
     int i, gpos = -1;
     double x;
@@ -747,6 +753,9 @@ static void plain_print_sy_vals (gretl_matrix *v, double g, int k, PRN *prn)
 
     if (k == 1) {
 	pputs(prn, _("Critical values for TSLS bias relative to OLS:\n"));
+    } else if (opt & OPT_L) {
+	pputs(prn, _("Critical values for desired LIML maximal size, when running\n"
+		     "  tests at a nominal 5% significance level:\n"));
     } else {
 	pputs(prn, _("Critical values for desired TSLS maximal size, when running\n"
 		     "  tests at a nominal 5% significance level:\n"));
@@ -857,12 +866,12 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
 	    K2 = dfn;
 	}
 
-	get_stock_yogo_critvals(n, K2, &bvals, &svals);
+	get_stock_yogo_critvals(n, K2, pmod->opt, &bvals, &svals);
 
 	if (bvals != NULL) {
 	    got_critvals = 1;
 	    if (plain_format(prn)) {
-		plain_print_sy_vals(bvals, g, 1, prn);
+		plain_print_sy_vals(bvals, g, 1, pmod->opt, prn);
 	    }
 	    gretl_matrix_free(bvals);
 	}
@@ -870,7 +879,7 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
 	if (svals != NULL) {
 	    got_critvals = 1;
 	    if (plain_format(prn)) {
-		plain_print_sy_vals(svals, g, 2, prn);
+		plain_print_sy_vals(svals, g, 2, pmod->opt, prn);
 	    }
 	    gretl_matrix_free(svals);
 	}	

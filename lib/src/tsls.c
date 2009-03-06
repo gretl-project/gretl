@@ -1507,7 +1507,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (!sysest) {
+    if (!sysest || (opt & OPT_H)) {
 	if (nendo == 1) {
 	    /* handles robust estimation, for single endogenous regressor */
 	    compute_first_stage_F(&tsls, ev, reglist, instlist, pZ, pdinfo, opt);
