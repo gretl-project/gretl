@@ -198,6 +198,10 @@ static GtkActionEntry panel_hsk_items[] = {
     { "Groupwise", NULL, N_("_groupwise"), NULL, NULL, G_CALLBACK(do_lmtest) }
 };
 
+static GtkActionEntry ivreg_hsk_items[] = {
+    { "White", NULL, N_("Pesaran-Taylor test"), NULL, NULL, G_CALLBACK(do_lmtest) }
+};
+
 const gchar *model_tex_ui = 
     "<ui>"
     "  <menubar name='MenuBar'>"
@@ -2579,6 +2583,10 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
 			    panel_hsk_items, 
 			    G_N_ELEMENTS(panel_hsk_items));
+    } else if (pmod->ci == IVREG) {
+	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
+			    ivreg_hsk_items, 
+			    G_N_ELEMENTS(ivreg_hsk_items));
     } else if (model_test_ok(LMTEST, OPT_W, pmod, datainfo)) {
 	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
 			    base_hsk_items, 

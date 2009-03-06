@@ -254,9 +254,8 @@ ivreg_list_omit (const int *orig, const int *drop, gretlopt opt, int *err)
     int *newlist;
     int i;
 
-    if ((opt & OPT_T) && (opt & OPT_B)) {
-	/* incoherent options */
-	*err = E_BADOPT;
+    *err = incompatible_options(opt, OPT_T | OPT_B);
+    if (*err) {
 	return NULL;
     }
 
@@ -301,9 +300,8 @@ ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err)
     int *newlist;
     int i;
 
-    if ((opt & OPT_T) && (opt & OPT_B)) {
-	/* incoherent options */
-	*err = E_BADOPT;
+    *err = incompatible_options(opt, OPT_T | OPT_B);
+    if (*err) {
 	return NULL;
     }
 
@@ -1070,13 +1068,14 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
     }
 
     if (!err) {
-	double gmin = DBL_MAX;
 	gretl_matrix *e;
 
 	e = gretl_symmetric_matrix_eigenvals(G, 0, &err); 
 
 	if (!err) {
-	    for (i=0; i<n; i++) {
+	    double gmin = e->val[0];
+
+	    for (i=1; i<n; i++) {
 		if (e->val[i] < gmin) {
 		    gmin = e->val[i];
 		}

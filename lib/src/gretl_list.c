@@ -1722,7 +1722,9 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
  *
  * Returns: a newly allocated list including the elements of @biglist,
  * from position @minpos onwards, that are not present in @sublist, 
- * again from @minpos onwards, or %NULL on failure.  
+ * again from @minpos onwards, or %NULL on failure.  Note that
+ * comparison stops whenever a list separator is found; i.e. only
+ * the pre-separator portions of the lists are compared.
  */
 
 int *gretl_list_diff_new (const int *biglist, const int *sublist,
@@ -1743,9 +1745,14 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist,
 
     for (i=minpos; i<=biglist[0]; i++) {
 	bi = biglist[i];
+	if (bi == LISTSEP) {
+	    break;
+	}
 	match = 0;
 	for (j=minpos; j<=sublist[0]; j++) {
-	    if (sublist[j] == bi) {
+	    if (sublist[j] == LISTSEP) {
+		break;
+	    } else if (sublist[j] == bi) {
 		match = 1;
 		break;
 	    }

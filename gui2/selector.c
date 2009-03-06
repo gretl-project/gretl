@@ -80,7 +80,10 @@ struct _selector {
 /* single-equation estimation commands plus some GUI extensions */
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
                        c == PWE || c == PANEL_WLS || c == PANEL_B || \
-                       c == OLOGIT || c == OPROBIT || c == MLOGIT)
+                       c == OLOGIT || c == OPROBIT || c == MLOGIT || \
+	               c == IV_LIML || c == IV_GMM)
+
+#define IV_MODEL(c) (c == IVREG || c == IV_LIML || c == IV_GMM)
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
 
@@ -136,13 +139,15 @@ struct _selector {
 #define USE_RXLIST(c) (c == VECM || c == COINT2)
 
 #define AUX_LAST(c) (c == IVREG || \
+                     c == IV_LIML || \
+                     c == IV_GMM || \
                      c == HECKIT || \
                      c == VAR || \
                      c == VLAGSEL || \
                      c == VECM || \
                      c == COINT2)
 
-#define USE_ZLIST(c) (c == IVREG || c == HECKIT)
+#define USE_ZLIST(c) (c == IVREG || c == IV_LIML || c == IV_GMM || c == HECKIT)
 
 #define RHS_PREFILL(c) (c == CORR || \
 	                c == MAHAL || \
@@ -162,7 +167,8 @@ struct _selector {
    variable selector? */
 
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
-                            c == IVREG || c == HECKIT)
+                            c == IVREG || c == IV_LIML || c == IV_GMM || \
+                            c == HECKIT)
 
 #define list_lag_special(i) (i < -1)
 
@@ -230,7 +236,8 @@ static int want_combo (selector *sr)
     return (sr->ci == ARMA ||
 	    sr->ci == VECM || 
 	    sr->ci == COINT ||
-	    sr->ci == COINT2);
+	    sr->ci == COINT2 ||
+	    sr->ci == IV_GMM);
 }
 
 static int want_radios (selector *sr)
@@ -555,6 +562,11 @@ void selector_from_model (void *ptr, int ci)
 	    if (instlist != NULL) {
 		gotinst = 1;
 	    }
+	    if (pmod->opt & OPT_L) {
+		sel_ci = IV_LIML;
+	    } else if (pmod->opt & OPT_G) {
+		sel_ci = IV_GMM;
+	    }
 	} else if (pmod->ci == ARCH) {
 	    default_order = gretl_model_get_int(pmod, "arch_order");
 	} else if (pmod->ci == AR) {
@@ -595,7 +607,7 @@ void selector_from_model (void *ptr, int ci)
 	    if (gretl_model_get_int(pmod, "ordered")) {
 		sel_ci = OPROBIT;
 	    }
-	}
+	}   
 
 	if (pmod->opt & OPT_R) {
 	    model_opt |= OPT_R;
@@ -2371,7 +2383,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
 	gtk_tree_model_get(model, &iter, 0, &exog, 1, &lag, -1);
 
-	if (sr->ci == IVREG && exog == ynum && lag == 0) { /* HECKIT? */
+	if (IV_MODEL(sr->ci) && exog == ynum && lag == 0) { /* HECKIT? */
 	    errbox("You can't use the dependent variable as an instrument");
 	    err = 1;
 	    break;
@@ -2759,7 +2771,7 @@ static void compose_cmdlist (selector *sr)
 	    }
 
 	    sr->error = get_rvars2_data(sr, rows, context);
-	} else if (sr->ci == IVREG) {
+	} else if (IV_MODEL(sr->ci)) {
 	    warnbox(_("You must specify a set of instrumental variables"));
 	    sr->error = 1;
 	} else if (sr->ci == HECKIT) {
@@ -2886,7 +2898,11 @@ static char *est_str (int cmdnum)
     case WLS:
 	return N_("Weighted least squares");
     case IVREG:
-	return N_("Two-stage least squares"); /* FIXME */
+	return N_("Two-stage least squares");
+    case IV_LIML:
+	return N_("Limited information maximum likelihood");
+    case IV_GMM:
+	return N_("Generalized method of moments");
     case AR:
 	return N_("Autoregressive model");
     case ARMA:
@@ -2958,9 +2974,7 @@ static gint flip_multiplot_axis (GtkComboBox *box, gpointer p)
 
 static GtkWidget *multiplot_popdown (int ci)
 {
-    GtkWidget *w;
-
-    w = gtk_combo_box_new_text();
+    GtkWidget *w = gtk_combo_box_new_text();
 
     gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Y-axis variable"));
     gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("X-axis variable"));
@@ -2972,6 +2986,45 @@ static GtkWidget *multiplot_popdown (int ci)
     multiplot_menu = w;
 
     return w;
+}
+
+static gint set_gmm_est_option (GtkComboBox *box, selector *sr)
+{
+    gint i = gtk_combo_box_get_active(box);
+
+    if (i == 0) {
+	/* 1-step */
+	sr->opts &= ~(OPT_I | OPT_T);
+    } else if (i == 1) {
+	/* 2-step */
+	sr->opts |= OPT_T;
+    } else {
+	/* iterated */
+	sr->opts |= OPT_I;
+    }
+
+    return FALSE;
+}
+
+static void build_gmm_popdown (selector *sr)
+{
+    GtkWidget *w = gtk_combo_box_new_text();
+    GtkWidget *hbox;
+
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("One-step estimation"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Two-step estimation"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Iterated estimation"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
+		     G_CALLBACK(set_gmm_est_option), sr);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
+    gtk_widget_show(w);
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox);    
 }
 
 static GtkWidget *
@@ -3358,7 +3411,7 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
     if (USE_VECXLIST(sr->ci)) {
 	tmp = gtk_label_new(_("Exogenous variables"));
-    } else if (sr->ci == IVREG) {
+    } else if (IV_MODEL(sr->ci)) {
 	tmp = gtk_label_new(_("Instruments"));
     } else if (sr->ci == HECKIT) {
 	tmp = gtk_label_new(_("Selection equation regressors"));
@@ -3527,7 +3580,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 30;
     } else if (ci == HECKIT) {
 	dlgy += 80;
-    } else if (ci == IVREG) {
+    } else if (IV_MODEL(ci)) {
 	dlgy += 60;
     } else if (VEC_CODE(ci)) {
 	dlgy = 450;
@@ -4446,11 +4499,11 @@ static void build_arbond_radios (selector *sr)
     GtkWidget *b1, *b2;
     GSList *group;
 
-    b1 = gtk_radio_button_new_with_label(NULL, _("1-step estimation"));
+    b1 = gtk_radio_button_new_with_label(NULL, _("One-step estimation"));
     pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
-    b2 = gtk_radio_button_new_with_label(group, _("2-step estimation"));
+    b2 = gtk_radio_button_new_with_label(group, _("Two-step estimation"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_T, 0);
 
     sr->radios[0] = b1;
@@ -4651,6 +4704,8 @@ static void build_selector_combo (selector *sr)
 	build_coint_combo(sr);
     } else if (sr->ci == VECM || sr->ci == COINT2) {
 	build_vecm_combo(sr);
+    } else if (sr->ci == IV_GMM) {
+	build_gmm_popdown(sr);
     }
 }
 
@@ -4699,6 +4754,8 @@ static void build_selector_buttons (selector *sr)
 	    ci = LOGIT;
 	} else if (sr->ci == OPROBIT) {
 	    ci = PROBIT;
+	} else if (IV_MODEL(sr->ci)) {
+	    ci = IVREG;
 	}
 
 	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);

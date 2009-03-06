@@ -1042,6 +1042,28 @@ int incompatible_options (gretlopt opt, gretlopt test)
 }
 
 /**
+ * option_prereq_missing:
+ * @opt: option flags to be tested.
+ * @test: bitwise OR of flags that have a deinite prequisite.
+ * @prereq: bitwise OR of prequisite flags.
+ * 
+ * Returns: %E_BADOPT if @opt contains at least one element of
+ * @test but no elements of @prereq, otherwise 0.
+ */
+
+int option_prereq_missing (gretlopt opt, gretlopt test,
+			   gretlopt prereq)
+{
+    if (opt & test) {
+	if (!(opt & prereq)) {
+	    return E_BADOPT;
+	}
+    }
+
+    return 0;
+}
+
+/**
  * inapplicable_option_error:
  * @ci: command index.
  * @opt: bad option flag.

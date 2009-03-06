@@ -229,10 +229,14 @@
     </menu>
     <menu action='Model'>
       <menuitem action='ols'/>
+      <menu action='ivreg'>
+	<menuitem action='tsls'/>
+	<menuitem action='iv-liml'/>
+	<menuitem action='iv-gmm'/>
+      </menu>
       <menu action='LinearModels'>
 	<menuitem action='wls'/>
 	<menuitem action='hsk'/>
-	<menuitem action='tsls'/>
 	<menuitem action='mpols'/>
       </menu>
       <menu action='NonlinearModels'>

@@ -1604,11 +1604,6 @@ int do_add_omit (selector *sr)
 
     orig = vwin->data;
 
-    if (orig->ci == IVREG) {
-	/* this is a bit of a fudge */
-	opt |= OPT_B;
-    }
-
     if (ci == ADD) {
         gretl_command_sprintf("add %s%s", buf, print_flags(opt, ci));
     } else if (auto_omit) {
@@ -1622,7 +1617,7 @@ int do_add_omit (selector *sr)
     }
 
     if (ci == OMIT && (opt & OPT_W)) {
-	/* pmod is not needed */
+	/* Wald test: new model is not needed */
 	;
     } else {
 	pmod = gretl_model_new();
@@ -3211,13 +3206,12 @@ static int real_do_model (int action)
     return err;
 }
 
-#define ar1_code(c) (c == CORC || c == HILU || c == PWE)
-
 int do_model (selector *sr) 
 {
-    const char *buf;
+    gretlopt addopt = OPT_NONE;
     char estimator[9];
-    int ci, pols = 0;
+    const char *buf;
+    int ci;
 
     if (selector_error(sr)) {
 	return 1;
@@ -3229,40 +3223,50 @@ int do_model (selector *sr)
     }
 
     ci = selector_code(sr);
-    if (ci == OLS && dataset_is_panel(datainfo)) {
-	ci = PANEL;
-	pols = 1;
-    }
 
-    if (ci == OLOGIT) {
+    /* In some cases, choices which are represented by option flags in
+       gretl script are represented by ancillary "ci" values in the
+       GUI model selector (in order to avoid overloading the model
+       selection dialog with options).  Here we have to decode such
+       values, parsing them out into basic command index value and
+       associated option.
+    */
+
+    if (ci == OLS && dataset_is_panel(datainfo)) {
+	/* pooled OLS */
+	ci = PANEL;
+	addopt = OPT_P;
+    } else if (ci == MLOGIT) {
+	/* multinomial logit */
+	ci = LOGIT;
+	addopt = OPT_M;
+    } else if (ci == OLOGIT) {
+	/* ordered logit */
 	ci = LOGIT;
     } else if (ci == OPROBIT) {
+	/* ordered probit */
 	ci = PROBIT;
-    }
-
-    if (ar1_code(ci)) {
-	strcpy(estimator, "ar1");
-    } else if (ci == MLOGIT) {
-	strcpy(estimator, "logit");
-    } else {
-	strcpy(estimator, gretl_command_word(ci));
-    }
-
-    libcmd.opt = selector_get_opts(sr);
-
-    if (pols) {
-	libcmd.opt |= OPT_P;
-    } else if (ar1_code(ci)) {
+    } else if (ci == IV_LIML || ci == IV_GMM) {
+	/* single-equation LIML, GMM */
+	if (ci == IV_LIML) {
+	    addopt = OPT_L;
+	} else if (ci == IV_GMM) {
+	    addopt = OPT_G;
+	}	
+	ci = IVREG;
+    } else if (ci == CORC || ci == HILU || ci == PWE) {
+	/* Cochrane-Orcutt, Hildreth-Lu, Prais-Winsten */
 	if (ci == HILU) {
-	    libcmd.opt |= OPT_H;
+	    addopt = OPT_H;
 	} else if (ci == PWE) {
-	    libcmd.opt |= OPT_P;
+	    addopt = OPT_P;
 	}
 	ci = AR1;
-    } else if (ci == MLOGIT) {
-	libcmd.opt |= OPT_M;
-	ci = LOGIT;
     }
+	
+    strcpy(estimator, gretl_command_word(ci));
+
+    libcmd.opt = selector_get_opts(sr) | addopt;
 
     gretl_command_sprintf("%s %s%s", estimator, buf, 
 			  print_flags(libcmd.opt, ci));

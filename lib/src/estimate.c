@@ -2746,19 +2746,14 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 			     DATAINFO *pdinfo, gretlopt opt, 
 			     PRN *prn)
 {
-    int pos, v = pmod->list[1], newv = pdinfo->v;
+    int pos, newv = pdinfo->v;
     int *auxlist = NULL, *testlist = NULL;
-    int i, h, t;
     int savet1 = pdinfo->t1;
     int savet2 = pdinfo->t2;
     MODEL ptmod;
     double x;
+    int i, h, t;
     int err = 0;
-
-    if (pmod->opt & (OPT_G | OPT_L)) {
-	/* FIXME gmm, liml */
-	return E_NOTIMP;
-    }
 
     pos = gretl_list_separator_position(pmod->list);
     h = pmod->list[0] - pos;
@@ -2776,7 +2771,7 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 	return E_ALLOC;
     }
 
-    auxlist[1] = v;
+    auxlist[1] = pmod->list[1];
     for (i=2; i<=auxlist[0]; i++) {
 	auxlist[i] = pmod->list[i + pos - 1];
     }	
@@ -2790,6 +2785,9 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     printlist(testlist, "testlist");
 #endif
 
+    /* reduced form: regress the original dependent variable on all of
+       the instruments from the original model
+    */
     ptmod = lsq(auxlist, pZ, pdinfo, OLS, OPT_A);
     err = ptmod.errcode;
     if (err) {
@@ -2800,6 +2798,10 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     printmodel(&ptmod, pdinfo, OPT_S, prn);
 #endif
 
+    /* add two series: (i) the squares of the residuals from the
+       original model and (ii) the squares of the fitted values from
+       the auxiliary regression above
+     */
     err = dataset_add_series(2, pZ, pdinfo);
     if (err) {
 	clear_model(&ptmod);
@@ -2810,9 +2812,9 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	x = pmod->uhat[t];
-	(*pZ)[newv][t] = x*x;
+	(*pZ)[newv][t] = x*x;   /* squared residual */
 	x = ptmod.yhat[t];
-	(*pZ)[newv+1][t] = x*x;
+	(*pZ)[newv+1][t] = x*x; /* squared fitted value */
     }
 
     clear_model(&ptmod);
@@ -2820,6 +2822,9 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
 
+    /* regress the squared residuals on the squared fitted
+       values from the reduced-form auxiliary regression
+    */
     ptmod = lsq(testlist, pZ, pdinfo, OLS, OPT_A);
     err = ptmod.errcode;
 
@@ -4260,9 +4265,9 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the (panel) data set.
  * @opt: can include %OPT_Q (quiet estimation), %OPT_L
- * (LIML), ... (FIXME)
+ * (LIML estimation), %OPT_G (GMM).
  *
- * Calculate IV estimates using either 2sls or LIML.
+ * Calculate IV estimates using 2sls, LIML or GMM.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -4271,13 +4276,21 @@ MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
 	     gretlopt opt)
 {
     MODEL mod;
+    int err;
 
     gretl_error_clear();
 
-    if ((opt & (OPT_T | OPT_I)) && !(opt & OPT_G)) {
-	/* two-step and iterate options are GMM-only */
+    /* can't have both LIML and GMM options */
+    err = incompatible_options(opt, OPT_G | OPT_L);
+
+    if (!err) {
+	/* two-step, iterate and weights options are GMM-only */
+	err = option_prereq_missing(opt, OPT_T | OPT_I | OPT_W, OPT_G);
+    }
+    
+    if (err) {
 	gretl_model_init(&mod);
-	mod.errcode = E_BADOPT;
+	mod.errcode = err;
 	return mod;
     }
 

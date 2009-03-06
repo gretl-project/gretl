@@ -168,6 +168,9 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
     int err = 0;
 
     mask = mask_from_test_list(list, pmod, &err);
+    if (err) {
+	return err;
+    }
 
     if (!err) {
 	C = gretl_vcv_matrix_from_model(pmod, mask, &err);
@@ -321,7 +324,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	test = model_test_new((cmp->cmd == OMIT)? GRETL_TEST_OMIT : GRETL_TEST_ADD);
     }
 
-    if (verbosity > 1 && cmp->m2 >= 0) {
+    if (verbosity > 1 && cmp->m1 >= 0 && cmp->m2 >= 0) {
 	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
 		cmp->m1, cmp->m2);
     } 
@@ -427,21 +430,28 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.cmd = OMIT;
     }
 
-    cmp.m1 = pmodA->ID;
-    cmp.ci = pmodA->ci;
-
     cmp.F = cmp.chisq = cmp.trsq = NADBL;
     cmp.score = -1;
     cmp.robust = 0;
-    cmp.dfn = 0;
+    cmp.dfn = testvars[0];
+
+    if (pmodA != NULL) {
+	/* may be NULL for Wald add test */
+	cmp.m1 = pmodA->ID;
+	cmp.ci = pmodA->ci;
+    } else {
+	cmp.m1 = -1;
+	cmp.ci = pmodB->ci;
+    }
 
     if (pmodB != NULL) {
-	/* may be NULL for Wald test */
+	/* may be NULL for Wald omit test */
 	cmp.m2 = pmodB->ID;
-	cmp.dfn = umod->ncoeff - rmod->ncoeff;
+	if (pmodA != NULL) {
+	    cmp.dfn = umod->ncoeff - rmod->ncoeff;
+	}
     } else {
 	cmp.m2 = -1;
-	cmp.dfn = testvars[0];
     }
 
     cmp.dfd = umod->dfd;
@@ -450,7 +460,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     if (flag == OMIT_WALD || flag == ADD_WALD) {
 	cmp.err = wald_test(testvars, umod, &cmp.chisq, &cmp.F);
-    } else if (pmodA->opt & OPT_R) {
+    } else if (pmodA != NULL && (pmodA->opt & OPT_R)) {
 	cmp.F = wald_omit_F(testvars, umod);
 	cmp.robust = 1;
     } else if (LIMDEP(cmp.ci)) {
@@ -461,7 +471,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.err = wald_test(testvars, umod, &cmp.chisq, NULL);
     }
 
-    if (pmodB != NULL && flag != ADD_WALD) {
+    if (pmodA != NULL && pmodB != NULL && flag != ADD_WALD) {
 	int miss = 0;
 
 	cmp.score = 0;
@@ -1050,9 +1060,9 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
-	int flag = (orig->ci == OLS && new->nobs == orig->nobs)? 
-	    ADD_TEST : ADD_WALD;
+	int flag = ADD_WALD;
 	struct COMPARE cmp;
+	MODEL *origmod = orig;
 	int *addlist;
 
 	new->aux = AUX_ADD;
@@ -1061,9 +1071,16 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, est_opt, prn);
 	}
 
+	if (orig->ci == OLS && new->nobs == orig->nobs) {
+	    flag = ADD_TEST;
+	} else if (opt & OPT_B) {
+	    /* ivreg: adding as both regressor and instrument */
+	    origmod = NULL;
+	}
+
 	addlist = gretl_list_diff_new(new->list, orig->list, 2);
 	if (addlist != NULL) {
-	    cmp = add_or_omit_compare(orig, new, flag, addlist);
+	    cmp = add_or_omit_compare(origmod, new, flag, addlist);
 	    gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
 	    free(addlist);
 	}
@@ -1294,7 +1311,7 @@ static int omit_options_inconsistent (gretlopt opt)
  * @opt: can contain %OPT_Q (quiet) to suppress printing
  * of the new model, %OPT_O to print covariance matrix,
  * %OPT_I for silent operation; for %OPT_A, see below.
- * Additional options that are applicable only for 2SLS models: 
+ * Additional options that are applicable only for IV models: 
  * %OPT_B (omit from both list of regressors and list of 
  * instruments), %OPT_T (omit from list of instruments only).
  * @prn: gretl printing struct.
@@ -1379,12 +1396,20 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	}	
 
 	if (!omitlast) {
+	    int flag = OMIT_TEST;
+	    MODEL *newmod = new;
 	    struct COMPARE cmp;
 	    int *omitlist;
 
+	    if (opt & OPT_B) {
+		/* ivreg: omitting both as regressor and instrument */
+		newmod = NULL;
+		flag = OMIT_WALD;
+	    } 
+
 	    omitlist = gretl_list_diff_new(orig->list, new->list, 2);
 	    if (omitlist != NULL) {
-		cmp = add_or_omit_compare(orig, new, OMIT_TEST, omitlist);
+		cmp = add_or_omit_compare(orig, newmod, flag, omitlist);
 		gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
 		free(omitlist);
 	    }
@@ -1632,6 +1657,52 @@ static void bg_test_header (int order, PRN *prn, int ivreg)
     pputc(prn, '\n');
 }
 
+static double ivreg_autocorr_wald_stat (MODEL *aux, int order, int *err)
+{
+    gretl_vector *b = gretl_vector_alloc(order);
+    gretl_matrix *V1 = gretl_matrix_alloc(order, order);
+    gretl_vector *WT = gretl_vector_alloc(1);
+    gretl_matrix *V0 = NULL;
+    double x = NADBL;
+    int i, j, ki, kj;
+
+    if (b == NULL || V1 == NULL || WT == NULL) {
+	*err = E_ALLOC;
+    } else {
+	V0 = gretl_model_get_matrix(aux, M_VCV, err);
+    }
+
+    if (!*err) {
+	ki = aux->ncoeff - order;
+
+	for (i=0; i<order; i++) {
+	    x = aux->coeff[ki];
+	    gretl_vector_set(b, i, x);
+	    kj = ki;
+	    for (j=i; j<order; j++) {
+		x = gretl_matrix_get(V0, ki, kj); 
+		gretl_matrix_set(V1, i, j, x);
+		gretl_matrix_set(V1, j, i, x);
+		kj++;
+	    }
+	    ki++;
+	}
+	*err = gretl_invert_symmetric_matrix(V1);
+    }
+
+    if (!*err) {
+	gretl_matrix_qform(b, GRETL_MOD_NONE, V1, WT, GRETL_MOD_NONE);
+	x = gretl_vector_get(WT, 0) / order;
+    }
+	
+    gretl_vector_free(WT);
+    gretl_vector_free(b);
+    gretl_matrix_free(V1);
+    gretl_matrix_free(V0);
+
+    return x;
+}
+
 /**
  * ivreg_autocorr_test:
  * @pmod: pointer to model to be tested.
@@ -1662,19 +1733,16 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 {
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
+    int n = pdinfo->n;
+    int v = pdinfo->v;
     int *addlist = NULL;
     int *testlist = NULL;
-    MODEL aux;
-    int i, j, t, n = pdinfo->n, v = pdinfo->v;
     double x, pval = 1.0;
+    MODEL aux;
+    int i, t;
     int err = 0;
 
     if (dataset_is_panel(pdinfo)) { 
-	return E_NOTIMP;
-    }
-
-    if (pmod->opt & (OPT_G | OPT_L)) { 
-	/* FIXME gmm, liml */
 	return E_NOTIMP;
     }
 
@@ -1711,68 +1779,49 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	strcpy(pdinfo->varname[v], "uhat");
 	strcpy(VARLABEL(pdinfo, v), _("residual"));
 	/* then lags of same */
-	for (i=1; i<=order; i++) {
+	for (i=1; i<=order && !err; i++) {
 	    int lnum;
 
 	    lnum = laggenr(v, i, pZ, pdinfo);
-	    /* 
-	       set the first entries to 0 for compatibility with Godfrey (1994)
-	       and PcGive (not perfect)
-	    */
-	    for (t=smpl_t1; t<smpl_t1+i; t++) {
-		(*pZ)[lnum][t] = 0;
-	    }
 
 	    if (lnum < 0) {
 		sprintf(gretl_errmsg, _("lagging uhat failed"));
 		err = E_LAGS;
 	    } else {
+		/* set the first entries to 0 for compatibility with Godfrey (1994)
+		   and PcGive (not perfect) */
+		for (t=smpl_t1; t<smpl_t1+i; t++) {
+		    (*pZ)[lnum][t] = 0;
+		}
 		addlist[i] = lnum;
 	    }
 	}
-    }
-
-    if (!err) {
-	testlist = ivreg_list_add(pmod->list, addlist, OPT_B, &err);
-	aux = ivreg(testlist, pZ, pdinfo, OPT_A);
-	err = aux.errcode;
-	if (err) {
-	    errmsg(aux.errcode, prn);
+	if (!err) {
+	    /* compose augmented regression list */
+	    testlist = ivreg_list_add(pmod->list, addlist, OPT_B, &err);
 	}
     } 
 
     if (!err) {
-	gretl_matrix *V0;
-	gretl_vector *b = gretl_vector_alloc(order);
-	gretl_matrix *V1 = gretl_matrix_alloc(order, order);
-	gretl_vector *WT = gretl_matrix_alloc(1, 1);
-	int ki, kj;
+	gretlopt ivopt = OPT_A;
 
-	V0 = gretl_model_get_matrix(&aux, M_VCV, &err);
-	ki = aux.ncoeff - order;
-
-	for (i=0; i<order; i++) {
-	    x = aux.coeff[ki];
-	    gretl_vector_set(b, i, x);
-	    kj = ki;
-	    for (j=i; j<order; j++) {
-		x = gretl_matrix_get(V0, ki, kj); 
-		gretl_matrix_set(V1, i, j, x);
-		gretl_matrix_set(V1, j, i, x);
-		kj++;
-	    }
-	    ki++;
+	if (pmod->opt & OPT_L) {
+	    ivopt |= OPT_L;
+	} else if (pmod->opt & OPT_G) {
+	    ivopt |= OPT_G;
+	} else if (pmod->opt & OPT_R) {
+	    ivopt |= OPT_R; /* ?? */
 	}
 
-	err = gretl_invert_symmetric_matrix(V1);
-	gretl_matrix_qform(b, GRETL_MOD_NONE, V1, WT, GRETL_MOD_NONE);
-	x = gretl_vector_get(WT,0) / order;
-	
-	gretl_vector_free(WT);
-	gretl_vector_free(b);
-	gretl_matrix_free(V1);
-	gretl_matrix_free(V0);
+	aux = ivreg(testlist, pZ, pdinfo, ivopt);
+	err = aux.errcode;
+    }
 
+    if (!err) {
+	x = ivreg_autocorr_wald_stat(&aux, order, &err);
+    }
+
+    if (!err) {
 	aux.aux = AUX_AR;
 	gretl_model_set_int(&aux, "BG_order", order);
 	pval = snedecor_cdf_comp(order, aux.nobs - pmod->ncoeff - order, x);
@@ -1788,7 +1837,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
 		order, aux.nobs - pmod->ncoeff, x, pval);
 	pputc(prn, '\n');
-	record_test_result(x/order, pval, _("autocorrelation"));
+	record_test_result(x / order, pval, _("autocorrelation"));
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);

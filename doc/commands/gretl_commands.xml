@@ -9088,7 +9088,7 @@
   </command>
 
   <command name="tsls" section="Estimation"
-    label="Two-Stage Least Squares">
+    label="Instrumental variables regression">
 
     <usage>
       <arguments>
@@ -9124,40 +9124,38 @@
 	Computes Instrumental Variables estimates, by default using two-stage
 	least squares (TSLS) but see below for further options.  The dependent
 	variable is <repl>depvar</repl>, <repl>indepvars</repl> is the list of
-	independent variables (which is presumed to include some endogenous
-	regressors); and <repl>instruments</repl> is the combined list of
-	exogenous and predetermined variables. If the <repl>instruments</repl>
-	list is not at least as long as <repl>indepvars</repl>, the model is
-	not identified.</para>
+	independent variables (which is presumed to include at least one
+	endogenous regressor); and <repl>instruments</repl> is the list of
+	instruments (exogenous and/or predetermined variables). If the
+	<repl>instruments</repl> list is not at least as long as
+	<repl>indepvars</repl>, the model is not identified.</para>
 
       <para context="cli">
-	In the above example, the <lit>y</lit>s are the endogenous variables
-	and the <lit>x</lit>s are the exogenous and predetermined variables.
-	Note that any exogenous regressors should appear in both lists.
+	In the above example, the <lit>y</lit>s are endogenous and the
+	<lit>x</lit>s are the exogenous variables. Note that any exogenous
+	regressors should appear in both lists.
       </para>
 
       <para context="gui">
 	This command requires the selection of two lists of variables: the
 	independent variables to appear in the given model and a set of
-	instruments.  The latter contains the exogenous and/or predetermined
-	variables that will be used to derive fitted values for the endogenous
-	regressors.  Note that any exogenous regressors should appear in both
+	instruments.  Note that any exogenous regressors should appear in both
 	lists.
       </para>
 
       <para>
-	Output for TSLS estimates includes the Hausman test and, if the model
-	is over-identified, the Sargan over-identification test.  In the
-	Hausman test, the null hypothesis is that OLS estimates are
-	consistent, or in other words estimation by means of instrumental
-	variables is not required.  A model of this sort is over-identified if
-	there are more instruments than are strictly required.  The Sargan
-	test is based on an auxiliary regression of the residuals from the
-	two-stage least squares model on the full list of instruments.  The
-	null hypothesis is that all the instruments are valid, and suspicion
-	is thrown on this hypothesis if the auxiliary regression has a
-	significant degree of explanatory power.  Davidson and MacKinnon
-	(2004, chapter 8) give a good explanation of both tests.
+	Output for two-stage least squares estimates includes the Hausman test
+	and, if the model is over-identified, the Sargan over-identification
+	test.  In the Hausman test, the null hypothesis is that OLS estimates
+	are consistent, or in other words estimation by means of instrumental
+	variables is not really required.  A model of this sort is
+	over-identified if there are more instruments than are strictly
+	required.  The Sargan test is based on an auxiliary regression of the
+	residuals from the two-stage least squares model on the full list of
+	instruments.  The null hypothesis is that all the instruments are
+	valid, and suspicion is thrown on this hypothesis if the auxiliary
+	regression has a significant degree of explanatory power.  Davidson
+	and MacKinnon (2004, chapter 8) give a good explanation of both tests.
       </para>
 
       <para>
@@ -9180,7 +9178,7 @@
 	available:
       </para>
 
-      <ilist>
+      <ilist context="cli">
 	<li>
 	  <para>
 	    <lit>--two-step</lit>: perform two-step GMM rather than the

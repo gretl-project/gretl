@@ -1451,10 +1451,13 @@ GtkActionEntry main_entries[] = {
     /* Model */
     { "Model", NULL, N_("_Model"), NULL, NULL, NULL },
     { "ols", NULL, N_("_Ordinary Least Squares..."), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "ivreg", NULL, N_("_Instrumental variables"), NULL, NULL, NULL },
+    { "tsls", NULL, N_("_Two-Stage Least Squares..."), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "iv-liml", NULL, N_("_LIML..."), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "iv-gmm", NULL, N_("_GMM..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "LinearModels", NULL, N_("Other _linear models"), NULL, NULL, NULL },
     { "wls", NULL, N_("_Weighted Least Squares..."), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "hsk", NULL, N_("H_eteroskedasticity corrected..."), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "tsls", NULL, N_("_Two-Stage Least Squares..."), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "hsk", NULL, N_("H_eteroskedasticity corrected..."), NULL, NULL, G_CALLBACK(model_callback) },
 #ifdef ENABLE_GMP
     { "mpols", NULL, N_("High _precision OLS..."), NULL, NULL, G_CALLBACK(model_callback) }, 
 #endif

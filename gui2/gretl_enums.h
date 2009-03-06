@@ -109,6 +109,8 @@ enum extra_cmds {
     OLOGIT,
     MLOGIT,
     OPROBIT,
+    IV_LIML,
+    IV_GMM,
     GUI_CMD_MAX
 };
 

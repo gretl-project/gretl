@@ -582,6 +582,9 @@ static int basic_system_allocate (equation_system *sys,
 
     /* allocate a model for each stochastic equation */
     sys->models = gretl_model_array_new(m);
+    if (sys->models == NULL) {
+	return E_ALLOC;
+    }    
 
     sys->E = gretl_matrix_alloc(T, m);
     if (sys->E == NULL) {

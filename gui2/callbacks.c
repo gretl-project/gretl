@@ -392,6 +392,7 @@ static int model_action_code (GtkAction *action)
     int ci = gretl_command_number(s);
 
     if (ci == 0) {
+	/* look up "GUI special" */
 	if (!strcmp(s, "CORC"))
 	    ci = CORC;
 	else if (!strcmp(s, "HILU"))
@@ -414,6 +415,10 @@ static int model_action_code (GtkAction *action)
 	    ci = PROBIT;
 	else if (!strcmp(s, "oprobit"))
 	    ci = OPROBIT;
+	else if (!strcmp(s, "iv-liml"))
+	    ci = IV_LIML;
+	else if (!strcmp(s, "iv-gmm"))
+	    ci = IV_GMM;
     }
 
     return ci;

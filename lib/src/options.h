@@ -34,6 +34,9 @@ char **get_all_option_strings (int *pn);
 
 int incompatible_options (gretlopt opt, gretlopt test);
 
+int option_prereq_missing (gretlopt opt, gretlopt test,
+			   gretlopt prereq);
+
 int inapplicable_option_error (int ci, gretlopt opt);
 
 double get_optval_double (int ci, gretlopt opt);
