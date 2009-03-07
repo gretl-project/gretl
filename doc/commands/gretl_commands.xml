@@ -9159,6 +9159,16 @@
       </para>
 
       <para>
+	For both TSLS and LIML, an additional test result is shown,
+	provided that the model is estimated under the assumption of
+	i.i.d. errors (that, the <lit>--robust</lit> option is not
+	selected).  This is a test for weak instruments, which can lead to
+	both biased estimates and incorrect size of hypothesis tests based
+	on the covariance matrix.  Critical values based on Stock and Yogo
+	(2003) are shown when available.
+      </para>
+
+      <para>
 	The R-squared value printed for models estimated via two-stage least
 	squares is the square of the correlation between the dependent
 	variable and the fitted values.
