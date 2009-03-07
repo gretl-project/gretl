@@ -9121,18 +9121,18 @@
 
     <description>
       <para context="cli">
-	Computes Instrumental Variables estimates, by default using two-stage
-	least squares (TSLS) but see below for further options.  The dependent
-	variable is <repl>depvar</repl>, <repl>indepvars</repl> is the list of
-	independent variables (which is presumed to include at least one
-	endogenous regressor); and <repl>instruments</repl> is the list of
+	Computes Instrumental Variables (IV) estimates, by default using
+	two-stage least squares (TSLS) but see below for further options.  The
+	dependent variable is <repl>depvar</repl>, <repl>indepvars</repl> is
+	the list of regressors (which is presumed to include at least one
+	endogenous variable); and <repl>instruments</repl> is the list of
 	instruments (exogenous and/or predetermined variables). If the
 	<repl>instruments</repl> list is not at least as long as
 	<repl>indepvars</repl>, the model is not identified.</para>
 
       <para context="cli">
 	In the above example, the <lit>y</lit>s are endogenous and the
-	<lit>x</lit>s are the exogenous variables. Note that any exogenous
+	<lit>x</lit>s are the exogenous variables. Note that exogenous
 	regressors should appear in both lists.
       </para>
 
@@ -9159,13 +9159,19 @@
       </para>
 
       <para>
-	For both TSLS and LIML, an additional test result is shown,
-	provided that the model is estimated under the assumption of
-	i.i.d. errors (that, the <lit>--robust</lit> option is not
-	selected).  This is a test for weak instruments, which can lead to
-	both biased estimates and incorrect size of hypothesis tests based
-	on the covariance matrix.  Critical values based on Stock and Yogo
-	(2003) are shown when available.
+	For both TSLS and LIML estimation, an additional test result is shown
+	provided that the model is estimated under the assumption of i.i.d.
+	errors (that is, the <lit>--robust</lit> option is not selected). This
+	is a test for weakness of the instruments.  Weak instruments can lead
+	to serious problems in IV regression: biased estimates and/or
+	incorrect size of hypothesis tests based on the covariance matrix,
+	with rejection rates well in excess of the nominal significance level
+	(see Stock, Wright and Yogo, 2002).  The test statistic is the
+	first-stage <math>F</math>-test if the model contains just one
+	endogenous regressor, otherwise it is the smallest eigenvalue of the
+	matrix counterpart of the first stage <math>F</math>. Critical values
+	based on the Monte Carlo analysis of Stock and Yogo (2003) are shown
+	when available.
       </para>
 
       <para>

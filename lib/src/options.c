@@ -27,6 +27,10 @@ struct gretl_option {
     int ci;              /* command index (gives context) */
     gretlopt o;          /* index of integer type */
     const char *longopt; /* "--"-style string representation of option */
+    char parminfo;       /* 0 = option can never take a parameter,
+                            1 = option may take a parameter,
+                            2 = option requires a parameter 
+			 */
 };
 
 struct flag_match {
@@ -36,306 +40,308 @@ struct flag_match {
 
 /* Below: This is used as a one-way mapping from the long form
    to the index (e.g. OPT_Q), so a given index can have more than 
-   one long-form counterpart, depending on context. 
+   one long-form counterpart, depending on context.  The last field
+   flags whether the given option accepts (1), or requires (2), an
+   accompanying parameter value.
 */
 
 struct gretl_option gretl_opts[] = {
-    { ADD,      OPT_B, "both" },
-    { ADD,      OPT_I, "silent" },
-    { ADD,      OPT_Q, "quiet" },
-    { ADD,      OPT_T, "inst" },
-    { ADF,      OPT_N, "nc" }, 
-    { ADF,      OPT_C, "c" }, 
-    { ADF,      OPT_D, "seasonals" },
-    { ADF,      OPT_R, "ctt" },     
-    { ADF,      OPT_T, "ct" }, 
-    { ADF,      OPT_V, "verbose" },
-    { ADF,      OPT_Q, "quiet" },
-    { ADF,      OPT_F, "difference" },
-    { ADF,      OPT_E, "test-down" },
-    { ADF,      OPT_G, "gls" },
-    { AR1,      OPT_B, "no-corc"},
-    { AR1,      OPT_H, "hilu"},
-    { AR1,      OPT_P, "pwe"},
-    { AR1,      OPT_Q, "quiet"},
-    { APPEND,   OPT_T, "time-series" },
-    { APPEND,   OPT_Q, "quiet" },
-    { ARBOND,   OPT_A, "asymptotic" },
-    { ARBOND,   OPT_D, "time-dummies" },
-    { ARBOND,   OPT_H, "orthdev" },
-    { ARBOND,   OPT_T, "two-step" },
-    { ARMA,     OPT_C, "conditional" },
-    { ARMA,     OPT_G, "opg" },
-    { ARMA,     OPT_H, "hessian" },
-    { ARMA,     OPT_N, "nc" },    
-    { ARMA,     OPT_Q, "quiet" },
-    { ARMA,     OPT_V, "verbose" },
-    { ARMA,     OPT_X, "x-12-arima" },
-    { BXPLOT,   OPT_O, "notches" },
-    { BXPLOT,   OPT_U, "output" },
-    { CHOW,     OPT_D, "dummy" },
-    { CHOW,     OPT_Q, "quiet" },
-    { COINT,    OPT_E, "test-down" },
-    { COINT,    OPT_N, "nc" },
-    { COINT,    OPT_R, "ctt" },     
-    { COINT,    OPT_S, "skip-df" },
-    { COINT,    OPT_T, "ct" },
-    { COINT2,   OPT_A, "crt" },
-    { COINT2,   OPT_D, "seasonals" },
-    { COINT2,   OPT_N, "nc" },
-    { COINT2,   OPT_Q, "quiet" },
-    { COINT2,   OPT_R, "rc" },
-    { COINT2,   OPT_T, "ct" },
-    { COINT2,   OPT_V, "verbose" },
-    { CORR,     OPT_K, "kendall" },
-    { CORR,     OPT_S, "spearman" },
-    { CORR,     OPT_U, "uniform" },
-    { CORR,     OPT_V, "verbose" },
-    { CORRGM,   OPT_Q, "quiet" },
-    { CUSUM,    OPT_Q, "quiet" },
-    { CUSUM,    OPT_R, "squares" },
-    { DATA,     OPT_O, "odbc" },
-    { DATAMOD,  OPT_P, "preserve" },
-    { DELEET,   OPT_D, "db" },
-    { DIFFTEST, OPT_G, "sign" },
-    { DIFFTEST, OPT_R, "rank-sum" },
-    { DIFFTEST, OPT_I, "signed-rank" },
-    { DIFFTEST, OPT_V, "verbose" },
-    { DISCRETE, OPT_R, "reverse" },
-    { DUMMIFY,  OPT_F, "drop-first" },
-    { DUMMIFY,  OPT_L, "drop-last" },
-    { EQNPRINT, OPT_O, "complete" },
-    { EQNPRINT, OPT_T, "t-ratios" },
-    { TABPRINT, OPT_O, "complete" },
-    { TABPRINT, OPT_R, "rtf" },
-    { ESTIMATE, OPT_I, "iterate" },
-    { ESTIMATE, OPT_M, "geomean" },
-    { ESTIMATE, OPT_N, "no-df-corr" },
-    { ESTIMATE, OPT_Q, "quiet" },
-    { ESTIMATE, OPT_V, "verbose" },
-    { FCAST,    OPT_D, "dynamic" },
-    { FCAST,    OPT_S, "static" },
-    { FCAST,    OPT_Q, "quiet" },
-    { FCAST,    OPT_R, "rolling" },
-    { FCAST,    OPT_O, "out-of-sample" },
-    { FCAST,    OPT_I, "integrate" },
-    { FOREIGN,  OPT_D, "send-data" },
-    { FOREIGN,  OPT_Q, "quiet" },
-    { FREQ,     OPT_O, "gamma" },
-    { FREQ,     OPT_Q, "quiet" },
-    { FREQ,     OPT_S, "silent" },
-    { FREQ,     OPT_Z, "normal" },
-    { GARCH,    OPT_A, "arma-init" },
-    { GARCH,    OPT_F, "fcp" }, 
-    { GARCH,    OPT_N, "nc" }, 
-    { GARCH,    OPT_R, "robust" },
-    { GARCH,    OPT_V, "verbose" },
-    { GMM,      OPT_I, "iterate" },
-    { GMM,      OPT_Q, "quiet" },
-    { GMM,      OPT_T, "two-step" },
-    { GMM,      OPT_V, "verbose" },
-    { GNUPLOT,  OPT_O, "with-lines" },
-    { GNUPLOT,  OPT_I, "inverse-fit" },
-    { GNUPLOT,  OPT_L, "loess-fit" },
-    { GNUPLOT,  OPT_Q, "quadratic-fit" },
-    { GNUPLOT,  OPT_N, "linear-fit" },
-    { GNUPLOT,  OPT_M, "with-impulses" },
-    { GNUPLOT,  OPT_S, "suppress-fitted" },
-    { GNUPLOT,  OPT_T, "time-series" },
-    { GNUPLOT,  OPT_Z, "dummy" },
-    { GNUPLOT,  OPT_C, "control" },
-    { GNUPLOT,  OPT_U, "output" },
-    { GRAPH,    OPT_O, "tall" },
-    { HECKIT,   OPT_M, "ml" },
-    { HECKIT,   OPT_T, "two-step" },
-    { HECKIT,   OPT_V, "verbose" },
-    { HELP,     OPT_F, "func" },
-    { HSK,      OPT_Q, "quiet" },
-    { INTREG,   OPT_Q, "quiet" },
-    { INTREG,   OPT_R, "robust" },
-    { INTREG,   OPT_V, "verbose" },
-    { IVREG,    OPT_G, "gmm" },
-    { IVREG,    OPT_I, "iterate" },
-    { IVREG,    OPT_L, "liml" },
-    { IVREG,    OPT_Q, "quiet" },
-    { IVREG,    OPT_R, "robust" },  
-    { IVREG,    OPT_S, "save" },
-    { IVREG,    OPT_T, "two-step" },
-    { IVREG,    OPT_W, "weights" },
-    { KPSS,     OPT_T, "trend" },
-    { KPSS,     OPT_V, "verbose" },
-    { KPSS,     OPT_Q, "quiet" },
-    { KPSS,     OPT_F, "difference" },
-    { LEVERAGE, OPT_S, "save" },
-    { LMTEST,   OPT_A, "autocorr" },
-    { LMTEST,   OPT_B, "breusch-pagan" },
-    { LMTEST,   OPT_H, "arch" },
-    { LMTEST,   OPT_L, "logs" },
-    { LMTEST,   OPT_S, "squares" }, 
-    { LMTEST,   OPT_P, "panel" },
-    { LMTEST,   OPT_R, "robust" },
-    { LMTEST,   OPT_Q, "quiet" },
-    { LMTEST,   OPT_W, "white" },
-    { LMTEST,   OPT_X, "white-nocross" },
-    { LOGIT,    OPT_M, "multinomial" },
-    { LOGIT,    OPT_P, "p-values" },
-    { LOGIT,    OPT_Q, "quiet" },
-    { LOGIT,    OPT_R, "robust" },
-    { LOGIT,    OPT_V, "verbose" },
-    { LOOP,     OPT_P, "progressive" },
-    { LOOP,     OPT_Q, "quiet" },
-    { LOOP,     OPT_V, "verbose" },
-    { MAHAL,    OPT_S, "save" },
-    { MAHAL,    OPT_V, "vcv" },
-    { MEANTEST, OPT_O, "unequal-vars" },
-    { MLE,      OPT_H, "hessian" },
-    { MLE,      OPT_N, "numerical" },
-    { MLE,      OPT_Q, "quiet" },
-    { MLE,      OPT_R, "robust" },
-    { MLE,      OPT_V, "verbose" },
-    { MODPRINT, OPT_C, "csv" },
-    { MODPRINT, OPT_O, "complete" },
-    { MODPRINT, OPT_R, "rtf" },
-    { MODPRINT, OPT_T, "tex" },
-    { MPOLS,    OPT_O, "vcv" },
-    { MPOLS,    OPT_Q, "quiet" },
-    { MPOLS,    OPT_S, "simple-print" },
-    { NLS,      OPT_N, "numerical" },
-    { NLS,      OPT_O, "vcv" },
-    { NLS,      OPT_Q, "quiet" },
-    { NLS,      OPT_R, "robust" },
-    { NLS,      OPT_V, "verbose" },
-    { NORMTEST, OPT_A, "all" },
-    { NORMTEST, OPT_D, "dhansen" },
-    { NORMTEST, OPT_W, "swilk" },
-    { NORMTEST, OPT_J, "jbera" },
-    { NORMTEST, OPT_L, "lillie" },
-    { NORMTEST, OPT_Q, "quiet" },
-    { NULLDATA, OPT_P, "preserve" },
-    { OLS,      OPT_F, "print-final" },
-    { OLS,      OPT_J, "jackknife" },
-    { OLS,      OPT_N, "no-df-corr" },
-    { OLS,      OPT_O, "vcv" }, 
-    { OLS,      OPT_R, "robust" },
-    { OLS,      OPT_Q, "quiet" },
-    { OLS,      OPT_S, "simple-print" },
-    { OLS,      OPT_V, "anova" },
-    { OMIT,     OPT_A, "auto" },
-    { OMIT,     OPT_B, "both" },
-    { OMIT,     OPT_I, "silent" },
-    { OMIT,     OPT_P, "bootstrap" },
-    { OMIT,     OPT_Q, "quiet" },
-    { OMIT,     OPT_T, "inst" },
-    { OMIT,     OPT_W, "wald" },
-    { OPEN,     OPT_C, "coded" },
-    { OPEN,     OPT_D, "drop-empty" },
-    { OPEN,     OPT_O, "odbc" },
-    { OPEN,     OPT_P, "preserve" },
-    { OPEN,     OPT_W, "www" },
-    { OPEN,     OPT_Q, "quiet" },
-    { OUTFILE,  OPT_A, "append" },
-    { OUTFILE,  OPT_C, "close" },
-    { OUTFILE,  OPT_W, "write" },
-    { PANEL,    OPT_B, "between" },
-    { PANEL,    OPT_D, "time-dummies" },
-    { PANEL,    OPT_F, "fixed-effects" },
-    { PANEL,    OPT_H, "hausman-reg" },
-    { PANEL,    OPT_I, "iterate" },
-    { PANEL,    OPT_O, "vcv" },
-    { PANEL,    OPT_P, "pooled" },
-    { PANEL,    OPT_Q, "quiet" },
-    { PANEL,    OPT_R, "robust" },
-    { PANEL,    OPT_S, "silent" },
-    { PANEL,    OPT_U, "random-effects" },
-    { PANEL,    OPT_V, "verbose" },
-    { PANEL,    OPT_W, "unit-weights" },
-    { POISSON,  OPT_V, "verbose" },
-    { PCA,      OPT_C, "covariance" },
-    { PCA,      OPT_A, "save-all" },
-    { PCA,      OPT_O, "save" },
-    { PERGM,    OPT_O, "bartlett" },
-    { PERGM,    OPT_L, "log" },
-    { PLOT,     OPT_O, "one-scale" },
-    { PRINT,    OPT_O, "byobs" },
-    { PRINT,    OPT_L, "long" },
-    { PRINT,    OPT_N, "no-dates" },
-    { PROBIT,   OPT_P, "p-values" },
-    { PROBIT,   OPT_Q, "quiet" },
-    { PROBIT,   OPT_R, "robust" },
-    { PROBIT,   OPT_V, "verbose" },
-    { QUANTREG, OPT_I, "intervals" },
-    { QUANTREG, OPT_N, "no-df-corr" },
-    { QUANTREG, OPT_Q, "quiet" },
-    { QUANTREG, OPT_R, "robust" },
-    { QUIT,     OPT_X, "exit" },
-    { RESET,    OPT_C, "cubes-only" },
-    { RESET,    OPT_Q, "quiet" },
-    { RESET,    OPT_R, "squares-only" },
-    { RESTRICT, OPT_B, "bootstrap" },
-    { RESTRICT, OPT_F, "full" },
-    { RESTRICT, OPT_J, "jitter" },
-    { RESTRICT, OPT_Q, "quiet" },
-    { RESTRICT, OPT_V, "verbose" },
-    { RESTRICT, OPT_L, "lbfgs" },
-    { RESTRICT, OPT_N, "no-scaling" },
-    { RUNS,     OPT_D, "difference" },
-    { RUNS,     OPT_E, "equal" },
-    { SCATTERS, OPT_L, "with-lines" },
-    { SETINFO,  OPT_C, "continuous" },
-    { SETINFO,  OPT_D, "discrete" },
-    { SETOBS,   OPT_C, "stacked-cross-section" },
-    { SETOBS,   OPT_P, "panel-vars" },
-    { SETOBS,   OPT_R, "restructure" },
-    { SETOBS,   OPT_S, "stacked-time-series" },
-    { SETOBS,   OPT_T, "time-series" },
-    { SETOBS,   OPT_X, "cross-section" },
-    { SETOBS,   OPT_N, "special-time-series" },
-    { SMPL,     OPT_F, "full" },
-    { SMPL,     OPT_O, "dummy" },
-    { SMPL,     OPT_M, "no-missing" },
-    { SMPL,     OPT_N, "random" },
-    { SMPL,     OPT_P, "replace" }, 
-    { SMPL,     OPT_R, "restrict" },
-    { SPEARMAN, OPT_V, "verbose" },
-    { SQUARE,   OPT_O, "cross" },
-    { STORE,    OPT_C, "csv" },
-    { STORE,    OPT_D, "database" },
-    { STORE,    OPT_F, "overwrite" },
-    { STORE,    OPT_G, "dat" },
-    { STORE,    OPT_J, "jmulti" },
-    { STORE,    OPT_M, "gnu-octave" },
-    { STORE,    OPT_R, "gnu-R" },
-    { STORE,    OPT_T, "traditional" },
-    { STORE,    OPT_Z, "gzipped" },
-    { STORE,    OPT_X, "omit-obs" },
-    { SYSTEM,   OPT_I, "iterate" },
-    { SYSTEM,   OPT_V, "verbose" },
-    { TOBIT,    OPT_V, "verbose" },
-    { VAR,      OPT_D, "seasonals" },
-    { VAR,      OPT_F, "variance-decomp" },
-    { VAR,      OPT_I, "impulse-responses" },
-    { VAR,      OPT_L, "lagselect" },
-    { VAR,      OPT_N, "nc" },
-    { VAR,      OPT_Q, "quiet" }, 
-    { VAR,      OPT_R, "robust" }, 
-    { VAR,      OPT_T, "trend" }, 
-    { VAR,      OPT_S, "lags" },
-    { VECM,     OPT_A, "crt" },
-    { VECM,     OPT_D, "seasonals" },
-    { VECM,     OPT_F, "variance-decomp" },
-    { VECM,     OPT_I, "impulse-responses" },
-    { VECM,     OPT_N, "nc" },
-    { VECM,     OPT_Q, "quiet" },
-    { VECM,     OPT_R, "rc" },
-    { VECM,     OPT_T, "ct" },
-    { VECM,     OPT_V, "verbose" },
-    { WLS,      OPT_R, "robust" },    
-    { WLS,      OPT_Q, "quiet" },
-    { XCORRGM,  OPT_Q, "quiet" },
-    { XTAB,     OPT_C, "column" },
-    { XTAB,     OPT_R, "row" },
-    { XTAB,     OPT_Z, "zeros" },
-    { 0,        0L,    NULL }
+    { ADD,      OPT_B, "both", 0 },
+    { ADD,      OPT_I, "silent", 0 },
+    { ADD,      OPT_Q, "quiet", 0 },
+    { ADD,      OPT_T, "inst", 0 },
+    { ADF,      OPT_N, "nc", 0 }, 
+    { ADF,      OPT_C, "c", 0 }, 
+    { ADF,      OPT_D, "seasonals", 0 },
+    { ADF,      OPT_R, "ctt", 0 },     
+    { ADF,      OPT_T, "ct", 0 }, 
+    { ADF,      OPT_V, "verbose", 0 },
+    { ADF,      OPT_Q, "quiet", 0 },
+    { ADF,      OPT_F, "difference", 0 },
+    { ADF,      OPT_E, "test-down", 0 },
+    { ADF,      OPT_G, "gls", 0 },
+    { AR1,      OPT_B, "no-corc", 0 },
+    { AR1,      OPT_H, "hilu", 0 },
+    { AR1,      OPT_P, "pwe", 0 },
+    { AR1,      OPT_Q, "quiet", 0},
+    { APPEND,   OPT_T, "time-series", 0 },
+    { APPEND,   OPT_Q, "quiet", 0 },
+    { ARBOND,   OPT_A, "asymptotic", 0 },
+    { ARBOND,   OPT_D, "time-dummies", 0 },
+    { ARBOND,   OPT_H, "orthdev", 0 },
+    { ARBOND,   OPT_T, "two-step", 0 },
+    { ARMA,     OPT_C, "conditional", 0 },
+    { ARMA,     OPT_G, "opg", 0 },
+    { ARMA,     OPT_H, "hessian", 0 },
+    { ARMA,     OPT_N, "nc", 0 },    
+    { ARMA,     OPT_Q, "quiet", 0 },
+    { ARMA,     OPT_V, "verbose", 0 },
+    { ARMA,     OPT_X, "x-12-arima", 0 },
+    { BXPLOT,   OPT_O, "notches", 0 },
+    { BXPLOT,   OPT_U, "output", 2 },
+    { CHOW,     OPT_D, "dummy", 0 },
+    { CHOW,     OPT_Q, "quiet", 0 },
+    { COINT,    OPT_E, "test-down", 0 },
+    { COINT,    OPT_N, "nc", 0 },
+    { COINT,    OPT_R, "ctt", 0 },     
+    { COINT,    OPT_S, "skip-df", 0 },
+    { COINT,    OPT_T, "ct", 0 },
+    { COINT2,   OPT_A, "crt", 0 },
+    { COINT2,   OPT_D, "seasonals", 0 },
+    { COINT2,   OPT_N, "nc", 0 },
+    { COINT2,   OPT_Q, "quiet", 0 },
+    { COINT2,   OPT_R, "rc", 0 },
+    { COINT2,   OPT_T, "ct", 0 },
+    { COINT2,   OPT_V, "verbose", 0 },
+    { CORR,     OPT_K, "kendall", 0 },
+    { CORR,     OPT_S, "spearman", 0 },
+    { CORR,     OPT_U, "uniform", 0 },
+    { CORR,     OPT_V, "verbose", 0 },
+    { CORRGM,   OPT_Q, "quiet", 0 },
+    { CUSUM,    OPT_Q, "quiet", 0 },
+    { CUSUM,    OPT_R, "squares", 0 },
+    { DATA,     OPT_O, "odbc", 0 },
+    { DATAMOD,  OPT_P, "preserve", 0 },
+    { DELEET,   OPT_D, "db", 0 },
+    { DIFFTEST, OPT_G, "sign", 0 },
+    { DIFFTEST, OPT_R, "rank-sum", 0 },
+    { DIFFTEST, OPT_I, "signed-rank", 0 },
+    { DIFFTEST, OPT_V, "verbose", 0 },
+    { DISCRETE, OPT_R, "reverse", 0 },
+    { DUMMIFY,  OPT_F, "drop-first", 0 },
+    { DUMMIFY,  OPT_L, "drop-last", 0 },
+    { EQNPRINT, OPT_O, "complete", 0 },
+    { EQNPRINT, OPT_T, "t-ratios", 0 },
+    { TABPRINT, OPT_O, "complete", 0 },
+    { TABPRINT, OPT_R, "rtf", 0 },
+    { ESTIMATE, OPT_I, "iterate", 0 },
+    { ESTIMATE, OPT_M, "geomean", 0 },
+    { ESTIMATE, OPT_N, "no-df-corr", 0 },
+    { ESTIMATE, OPT_Q, "quiet", 0 },
+    { ESTIMATE, OPT_V, "verbose", 0 },
+    { FCAST,    OPT_D, "dynamic", 0 },
+    { FCAST,    OPT_S, "static", 0 },
+    { FCAST,    OPT_Q, "quiet", 0 },
+    { FCAST,    OPT_R, "rolling", 0 },
+    { FCAST,    OPT_O, "out-of-sample", 0 },
+    { FCAST,    OPT_I, "integrate", 0 },
+    { FOREIGN,  OPT_D, "send-data", 0 },
+    { FOREIGN,  OPT_Q, "quiet", 0 },
+    { FREQ,     OPT_O, "gamma", 0 },
+    { FREQ,     OPT_Q, "quiet", 0 },
+    { FREQ,     OPT_S, "silent", 0 },
+    { FREQ,     OPT_Z, "normal", 0 },
+    { GARCH,    OPT_A, "arma-init", 0 },
+    { GARCH,    OPT_F, "fcp", 0 }, 
+    { GARCH,    OPT_N, "nc", 0 }, 
+    { GARCH,    OPT_R, "robust", 0 },
+    { GARCH,    OPT_V, "verbose", 0 },
+    { GMM,      OPT_I, "iterate", 0 },
+    { GMM,      OPT_Q, "quiet", 0 },
+    { GMM,      OPT_T, "two-step", 0 },
+    { GMM,      OPT_V, "verbose", 0 },
+    { GNUPLOT,  OPT_O, "with-lines", 0 },
+    { GNUPLOT,  OPT_I, "inverse-fit", 0 },
+    { GNUPLOT,  OPT_L, "loess-fit", 0 },
+    { GNUPLOT,  OPT_Q, "quadratic-fit", 0 },
+    { GNUPLOT,  OPT_N, "linear-fit", 0 },
+    { GNUPLOT,  OPT_M, "with-impulses", 0 },
+    { GNUPLOT,  OPT_S, "suppress-fitted", 0 },
+    { GNUPLOT,  OPT_T, "time-series", 0 },
+    { GNUPLOT,  OPT_Z, "dummy", 0 },
+    { GNUPLOT,  OPT_C, "control", 0 },
+    { GNUPLOT,  OPT_U, "output", 2 },
+    { GRAPH,    OPT_O, "tall", 0 },
+    { HECKIT,   OPT_M, "ml", 0 },
+    { HECKIT,   OPT_T, "two-step", 0 },
+    { HECKIT,   OPT_V, "verbose", 0 },
+    { HELP,     OPT_F, "func", 0 },
+    { HSK,      OPT_Q, "quiet", 0 },
+    { INTREG,   OPT_Q, "quiet", 0 },
+    { INTREG,   OPT_R, "robust", 0 },
+    { INTREG,   OPT_V, "verbose", 0 },
+    { IVREG,    OPT_G, "gmm", 0 },
+    { IVREG,    OPT_I, "iterate", 0 },
+    { IVREG,    OPT_L, "liml", 0 },
+    { IVREG,    OPT_Q, "quiet", 0 },
+    { IVREG,    OPT_R, "robust", 0 },  
+    { IVREG,    OPT_S, "save", 0 },
+    { IVREG,    OPT_T, "two-step", 0 },
+    { IVREG,    OPT_W, "weights", 2 },
+    { KPSS,     OPT_T, "trend", 0 },
+    { KPSS,     OPT_V, "verbose", 0 },
+    { KPSS,     OPT_Q, "quiet", 0 },
+    { KPSS,     OPT_F, "difference", 0 },
+    { LEVERAGE, OPT_S, "save", 0 },
+    { LMTEST,   OPT_A, "autocorr", 0 },
+    { LMTEST,   OPT_B, "breusch-pagan", 0 },
+    { LMTEST,   OPT_H, "arch", 0 },
+    { LMTEST,   OPT_L, "logs", 0 },
+    { LMTEST,   OPT_S, "squares", 0 }, 
+    { LMTEST,   OPT_P, "panel", 0 },
+    { LMTEST,   OPT_R, "robust", 0 },
+    { LMTEST,   OPT_Q, "quiet", 0 },
+    { LMTEST,   OPT_W, "white", 0 },
+    { LMTEST,   OPT_X, "white-nocross", 0 },
+    { LOGIT,    OPT_M, "multinomial", 0 },
+    { LOGIT,    OPT_P, "p-values", 0 },
+    { LOGIT,    OPT_Q, "quiet", 0 },
+    { LOGIT,    OPT_R, "robust", 0 },
+    { LOGIT,    OPT_V, "verbose", 0 },
+    { LOOP,     OPT_P, "progressive", 0 },
+    { LOOP,     OPT_Q, "quiet", 0 },
+    { LOOP,     OPT_V, "verbose", 0 },
+    { MAHAL,    OPT_S, "save", 0 },
+    { MAHAL,    OPT_V, "vcv", 0 },
+    { MEANTEST, OPT_O, "unequal-vars", 0 },
+    { MLE,      OPT_H, "hessian", 0 },
+    { MLE,      OPT_N, "numerical", 0 },
+    { MLE,      OPT_Q, "quiet", 0 },
+    { MLE,      OPT_R, "robust", 0 },
+    { MLE,      OPT_V, "verbose", 0 },
+    { MODPRINT, OPT_C, "csv", 0 },
+    { MODPRINT, OPT_O, "complete", 0 },
+    { MODPRINT, OPT_R, "rtf", 0 },
+    { MODPRINT, OPT_T, "tex", 0 },
+    { MPOLS,    OPT_O, "vcv", 0 },
+    { MPOLS,    OPT_Q, "quiet", 0 },
+    { MPOLS,    OPT_S, "simple-print", 0 },
+    { NLS,      OPT_N, "numerical", 0 },
+    { NLS,      OPT_O, "vcv", 0 },
+    { NLS,      OPT_Q, "quiet", 0 },
+    { NLS,      OPT_R, "robust", 0 },
+    { NLS,      OPT_V, "verbose", 0 },
+    { NORMTEST, OPT_A, "all", 0 },
+    { NORMTEST, OPT_D, "dhansen", 0 },
+    { NORMTEST, OPT_W, "swilk", 0 },
+    { NORMTEST, OPT_J, "jbera", 0 },
+    { NORMTEST, OPT_L, "lillie", 0 },
+    { NORMTEST, OPT_Q, "quiet", 0 },
+    { NULLDATA, OPT_P, "preserve", 0 },
+    { OLS,      OPT_F, "print-final", 0 },
+    { OLS,      OPT_J, "jackknife", 0 },
+    { OLS,      OPT_N, "no-df-corr", 0 },
+    { OLS,      OPT_O, "vcv", 0 }, 
+    { OLS,      OPT_R, "robust", 0 },
+    { OLS,      OPT_Q, "quiet", 0 },
+    { OLS,      OPT_S, "simple-print", 0 },
+    { OLS,      OPT_V, "anova", 0 },
+    { OMIT,     OPT_A, "auto", 1 },
+    { OMIT,     OPT_B, "both", 0 },
+    { OMIT,     OPT_I, "silent", 0 },
+    { OMIT,     OPT_P, "bootstrap", 0 },
+    { OMIT,     OPT_Q, "quiet", 0 },
+    { OMIT,     OPT_T, "inst", 0 },
+    { OMIT,     OPT_W, "wald", 0 },
+    { OPEN,     OPT_C, "coded", 0 },
+    { OPEN,     OPT_D, "drop-empty", 0 },
+    { OPEN,     OPT_O, "odbc", 0 },
+    { OPEN,     OPT_P, "preserve", 0 },
+    { OPEN,     OPT_W, "www", 0 },
+    { OPEN,     OPT_Q, "quiet", 0 },
+    { OUTFILE,  OPT_A, "append", 0 },
+    { OUTFILE,  OPT_C, "close", 0 },
+    { OUTFILE,  OPT_W, "write", 0 },
+    { PANEL,    OPT_B, "between", 0 },
+    { PANEL,    OPT_D, "time-dummies", 0 },
+    { PANEL,    OPT_F, "fixed-effects", 0 },
+    { PANEL,    OPT_H, "hausman-reg", 0 },
+    { PANEL,    OPT_I, "iterate", 0 },
+    { PANEL,    OPT_O, "vcv", 0 },
+    { PANEL,    OPT_P, "pooled", 0 },
+    { PANEL,    OPT_Q, "quiet", 0 },
+    { PANEL,    OPT_R, "robust", 0 },
+    { PANEL,    OPT_S, "silent", 0 },
+    { PANEL,    OPT_U, "random-effects", 0 },
+    { PANEL,    OPT_V, "verbose", 0 },
+    { PANEL,    OPT_W, "unit-weights", 0 },
+    { POISSON,  OPT_V, "verbose", 0 },
+    { PCA,      OPT_C, "covariance", 0 },
+    { PCA,      OPT_A, "save-all", 0 },
+    { PCA,      OPT_O, "save", 0 },
+    { PERGM,    OPT_O, "bartlett", 0 },
+    { PERGM,    OPT_L, "log", 0 },
+    { PLOT,     OPT_O, "one-scale", 0 },
+    { PRINT,    OPT_O, "byobs", 0 },
+    { PRINT,    OPT_L, "long", 0 },
+    { PRINT,    OPT_N, "no-dates", 0 },
+    { PROBIT,   OPT_P, "p-values", 0 },
+    { PROBIT,   OPT_Q, "quiet", 0 },
+    { PROBIT,   OPT_R, "robust", 0 },
+    { PROBIT,   OPT_V, "verbose", 0 },
+    { QUANTREG, OPT_I, "intervals", 1 },
+    { QUANTREG, OPT_N, "no-df-corr", 0 },
+    { QUANTREG, OPT_Q, "quiet", 0 },
+    { QUANTREG, OPT_R, "robust", 0 },
+    { QUIT,     OPT_X, "exit", 0 },
+    { RESET,    OPT_C, "cubes-only", 0 },
+    { RESET,    OPT_Q, "quiet", 0 },
+    { RESET,    OPT_R, "squares-only", 0 },
+    { RESTRICT, OPT_B, "bootstrap", 0 },
+    { RESTRICT, OPT_F, "full", 0 },
+    { RESTRICT, OPT_J, "jitter", 0 },
+    { RESTRICT, OPT_Q, "quiet", 0 },
+    { RESTRICT, OPT_V, "verbose", 0 },
+    { RESTRICT, OPT_L, "lbfgs", 0 },
+    { RESTRICT, OPT_N, "no-scaling", 0 },
+    { RUNS,     OPT_D, "difference", 0 },
+    { RUNS,     OPT_E, "equal", 0 },
+    { SCATTERS, OPT_L, "with-lines", 0 },
+    { SETINFO,  OPT_C, "continuous", 0 },
+    { SETINFO,  OPT_D, "discrete", 0 },
+    { SETOBS,   OPT_C, "stacked-cross-section", 0 },
+    { SETOBS,   OPT_P, "panel-vars", 0 },
+    { SETOBS,   OPT_R, "restructure", 0 },
+    { SETOBS,   OPT_S, "stacked-time-series", 0 },
+    { SETOBS,   OPT_T, "time-series", 0 },
+    { SETOBS,   OPT_X, "cross-section", 0 },
+    { SETOBS,   OPT_N, "special-time-series", 0 },
+    { SMPL,     OPT_F, "full", 0 },
+    { SMPL,     OPT_O, "dummy", 0 },
+    { SMPL,     OPT_M, "no-missing", 0 },
+    { SMPL,     OPT_N, "random", 0 },
+    { SMPL,     OPT_P, "replace", 0 }, 
+    { SMPL,     OPT_R, "restrict", 0 },
+    { SPEARMAN, OPT_V, "verbose", 0 },
+    { SQUARE,   OPT_O, "cross", 0 },
+    { STORE,    OPT_C, "csv", 0 },
+    { STORE,    OPT_D, "database", 0 },
+    { STORE,    OPT_F, "overwrite", 0 },
+    { STORE,    OPT_G, "dat", 0 },
+    { STORE,    OPT_J, "jmulti", 0 },
+    { STORE,    OPT_M, "gnu-octave", 0 },
+    { STORE,    OPT_R, "gnu-R", 0 },
+    { STORE,    OPT_T, "traditional", 0 },
+    { STORE,    OPT_Z, "gzipped", 0 },
+    { STORE,    OPT_X, "omit-obs", 0 },
+    { SYSTEM,   OPT_I, "iterate", 0 },
+    { SYSTEM,   OPT_V, "verbose", 0 },
+    { TOBIT,    OPT_V, "verbose", 0 },
+    { VAR,      OPT_D, "seasonals", 0 },
+    { VAR,      OPT_F, "variance-decomp", 0 },
+    { VAR,      OPT_I, "impulse-responses", 0 },
+    { VAR,      OPT_L, "lagselect", 0 },
+    { VAR,      OPT_N, "nc", 0 },
+    { VAR,      OPT_Q, "quiet", 0 }, 
+    { VAR,      OPT_R, "robust", 0 }, 
+    { VAR,      OPT_T, "trend", 0 }, 
+    { VAR,      OPT_S, "lags", 2 },
+    { VECM,     OPT_A, "crt", 0 },
+    { VECM,     OPT_D, "seasonals", 0 },
+    { VECM,     OPT_F, "variance-decomp", 0 },
+    { VECM,     OPT_I, "impulse-responses", 0 },
+    { VECM,     OPT_N, "nc", 0 },
+    { VECM,     OPT_Q, "quiet", 0 },
+    { VECM,     OPT_R, "rc", 0 },
+    { VECM,     OPT_T, "ct", 0 },
+    { VECM,     OPT_V, "verbose", 0 },
+    { WLS,      OPT_R, "robust", 0 },    
+    { WLS,      OPT_Q, "quiet", 0 },
+    { XCORRGM,  OPT_Q, "quiet", 0 },
+    { XTAB,     OPT_C, "column", 0 },
+    { XTAB,     OPT_R, "row", 0 },
+    { XTAB,     OPT_Z, "zeros", 0 },
+    { 0,        0L,    NULL, 0 }
 };
 
 static int compare_strings (const void *a, const void *b)
@@ -345,6 +351,9 @@ static int compare_strings (const void *a, const void *b)
      
     return strcmp(*sa, *sb);
 }
+
+/* this function is used in compiling the gretl reference
+   manual */
 
 char **get_all_option_strings (int *pn)
 {
@@ -474,7 +483,9 @@ gretlopt opt_from_flag (unsigned char c)
     int i;
 
     for (i=0; flag_matches[i].c != '\0'; i++) {
-	if (c == flag_matches[i].c) return flag_matches[i].o;
+	if (c == flag_matches[i].c) {
+	    return flag_matches[i].o;
+	}
     }
 
     return 0L;
@@ -501,7 +512,7 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     return 0;
 }
 
-/* See if at point "p" (at which we've found '-') in string "s" we
+/* See if at point @p (at which we've found '-') in string @s we
    might be at the start of an option flag: the previous character
    must be a space, and we must not be inside a quoted string.
 */
@@ -619,7 +630,7 @@ static int n_parms;
 
 /* Note: the following is called at the start of parse_command_line(),
    via gretl_cmd_clear().  Hopefully this ensures that we won't get an
-   accumulation of stale data.
+   accumulation of stale data in the record of option parameters.
 */
 
 /**
@@ -658,7 +669,7 @@ static optparm *matching_optparm (int ci, gretlopt opt)
     return NULL;
 }
 
-static int push_optparm (int ci, gretlopt opt, const char *val)
+static int push_optparm (int ci, gretlopt opt, char *val)
 {
     optparm *op;
     int n = n_parms + 1;
@@ -667,7 +678,7 @@ static int push_optparm (int ci, gretlopt opt, const char *val)
     if (op != NULL) {
 	/* got a match for the ci, opt pair already */
 	free(op->val);
-	op->val = gretl_strdup(val);
+	op->val = val;
 	return 0;
     }
 
@@ -680,7 +691,7 @@ static int push_optparm (int ci, gretlopt opt, const char *val)
     op = &optparms[n-1];
     op->ci = ci;
     op->opt = opt;
-    op->val = gretl_strdup(val);
+    op->val = val;
     n_parms = n;
 
 #if OPDEBUG 
@@ -689,6 +700,49 @@ static int push_optparm (int ci, gretlopt opt, const char *val)
 #endif
 
     return 0;
+}
+
+enum {
+    ACCEPTS_PARM = 1,
+    NEEDS_PARM
+};
+
+/* for a given @ci, @opt pair, determine its status with regard
+   to a parameter value (not allowed, allowed, or required)
+*/
+
+static int option_parm_status (int ci, gretlopt opt)
+{
+    int i;
+
+    for (i=0; gretl_opts[i].ci != 0; i++) {
+	if (gretl_opts[i].ci == ci && gretl_opts[i].o == opt) {
+	    return gretl_opts[i].parminfo;
+	}
+    }
+
+    return 0;
+}
+
+/* We got an "=val" parameter value in connection with a given option:
+   check this for validity.  Note that (at present), for all options
+   that accept but do not mandate a parameter value, the parameter
+   must be a numerical value.  
+*/
+
+static int check_optval (int ci, gretlopt opt, int status, char *val)
+{
+    int err = 0;
+
+    if (status == NEEDS_PARM) {
+	err = push_optparm(ci, opt, val);
+    } else if (status == ACCEPTS_PARM && numeric_string(val)) {
+	err = push_optparm(ci, opt, val);
+    } else {
+	err = 1;
+    }
+
+    return err;
 }
 
 /**
@@ -745,51 +799,80 @@ void set_optval_double (int ci, gretlopt opt, double x)
     gretl_push_c_numeric_locale();
     sprintf(s, "%g", x);
     gretl_pop_c_numeric_locale();
-    push_optparm(ci, opt, s);
+    push_optparm(ci, opt, gretl_strdup(s));
 }
 
-/* FIXME generalize this */
-
-static int valid_optval (int ci, gretlopt opt, const char *val)
-{
-    if ((ci == OMIT && opt == OPT_A) ||
-	(ci == QUANTREG && opt == OPT_I)) {
-	if (numeric_string(val)) {
-	    push_optparm(ci, opt, val);
-	    return 1;
-	}
-    } else if (ci == IVREG && opt == OPT_W) {
-	push_optparm(ci, opt, val);
-	return 1;
-    } else if (ci == GNUPLOT && opt == OPT_U) {
-	push_optparm(ci, opt, val);
-	return 1;
-    } else if (ci == BXPLOT && opt == OPT_U) {
-	push_optparm(ci, opt, val);
-	return 1;
-    } else if (ci == VAR && opt == OPT_S) {
-	push_optparm(ci, opt, val);
-	return 1;
-    }	
-
-    return 0;
-}
+/* FIXME the following is funky and ad hoc */
 
 #define data_open_special(s) (!strcmp(s, "sheet") || \
                               !strcmp(s, "coloffset") || \
 			      !strcmp(s, "rowoffset") || \
 			      !strcmp(s, "cols"))
+
+/* extract an option parameter value following '=' */
+
+static int handle_optval (char *s, int ci, gretlopt opt, int status)
+{
+    char *p = s + 1; /* skip '=' */
+    char *val = NULL;
+    int quoted = 0;
+    int n, err = 0;
+
+    if (*p == '"') {
+	/* handle a quoted value (e.g. a filename) */
+	quoted = 1;
+	p++;
+	n = strcspn(p, "\"");
+	if (n > 0 && *(p + n) == '"') {
+	    val = gretl_strndup(p, n);
+	} else {
+	    err = E_PARSE;
+	}
+    } else if (*p != '\0') {
+	/* plain unquoted value */
+	n = strcspn(p, " =");
+	if (n > 0) {
+	    val = gretl_strndup(p, n);
+	} else {
+	    err = E_PARSE;
+	}
+    } else {
+	err = E_PARSE;
+    }
+
+    if (val == NULL && !err) {
+	/* allocation must have failed */
+	err = E_ALLOC;
+    } 
+
+    if (!err) {
+	err = check_optval(ci, opt, status, val);
+    }
+
+    if (err) {
+	free(val);
+    } else {
+	gretl_delete(s, 0, 1 + strlen(val) + 2 * quoted);
+    }
+
+    return err;
+}
+
+/* Crawl along @line looking for long-style option flags, possibly
+   with associated parameter values; check options for validity
+   in context.
+*/
   
 static gretlopt get_long_opts (char *line, int ci, int *err)
 {
     char *s = line;
     char longopt[32];
-    char optval[64];
     gretlopt match, ret = 0L;
 
     while ((s = strstr(s, "--")) != NULL) {
 	match = 0;
 	*longopt = '\0';
+
 	if (maybe_opt_start(line, s)) {
 	    sscanf(s + 2, "%31[^ =]", longopt);
 	    match = valid_long_opt(ci, longopt);
@@ -797,9 +880,9 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 		/* recognized an acceptable option flag */
 		ret |= match;
 	    } else if (ci == OPEN && data_open_special(longopt)) {
-		; /* no-op here: handled elsewhere */
+		; /* no-op here: handled elsewhere (FIXME) */
 	    } else {
-		/* not a flag, or not applicable in context */
+		/* not a valid flag, or not applicable in context */
 		sprintf(gretl_errmsg, _("Invalid option '--%s'"), longopt);
 		fprintf(stderr, " line='%s', ci = %d\n", line, ci);
 		*err = 1;
@@ -808,12 +891,26 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	}
 
 	if (match > 0) {
+	    int status = option_parm_status(ci, match);
+
 	    gretl_delete(s, 0, 2 + strlen(longopt));
-	    if (*s == '=' && sscanf(s + 1, "%63[^ =]", optval) == 1) {
-		if (valid_optval(ci, match, optval)) {
-		    gretl_delete(s, 0, 1 + strlen(optval));
+	    if (*s == '=') {
+		/* got a param value: is it OK? */
+		if (status == 0) {
+		    /* this option does not accept a param */
+		    *err = E_PARSE;
+		} else {
+		    *err = handle_optval(s, ci, match, status);
 		}
+	    } else if (status == NEEDS_PARM) {
+		/* we need a param value but there's none */
+		sprintf(gretl_errmsg, _("The option '--%s' requires a parameter"), 
+			longopt);
+		*err = E_PARSE;
 	    }
+	    if (*err) {
+		return 0L;
+	    }	    
 	} else {
 	    s += 2;
 	}
