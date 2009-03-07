@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-06 16:34-0500\n"
-"PO-Revision-Date: 2009-03-08 01:03+0200\n"
+"PO-Revision-Date: 2009-03-08 01:33+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4287,7 +4287,7 @@ msgstr "Упорядоченный логит"
 
 #: lib/src/modelprint.c:680 gui2/selector.c:2877
 msgid "Multinomial Logit"
-msgstr ""
+msgstr "Мультиномиальный логит"
 
 #: lib/src/modelprint.c:686 gui2/selector.c:2881
 msgid "Ordered Probit"
@@ -4307,7 +4307,7 @@ msgstr "Квантильная регрессия"
 
 #: lib/src/modelprint.c:704 lib/src/system.c:90
 msgid "LIML"
-msgstr ""
+msgstr "МП с ограниченной информацией"
 
 #: lib/src/modelprint.c:706 lib/src/system.c:92
 msgid "TSLS"
@@ -5580,7 +5580,7 @@ msgstr "Всего  "
 #: lib/src/printout.c:563
 #, c-format
 msgid "%d missing values"
-msgstr "%d пропущенные значения"
+msgstr "%d пропущенных значений"
 
 #: lib/src/printout.c:568
 #, c-format
@@ -5904,7 +5904,7 @@ msgstr "Ошибка в последнем наблюдении"
 
 #: lib/src/subsample.c:1544 lib/src/subsample.c:1550 lib/src/subsample.c:1572
 msgid "missing values"
-msgstr "пропущенные значения"
+msgstr "пропущенных значений"
 
 #: lib/src/subsample.c:1559
 #, c-format
@@ -5922,7 +5922,7 @@ msgstr "Общее количество пропущенных значений 
 
 #: lib/src/subsample.c:1573
 msgid "valid values"
-msgstr ""
+msgstr "существующих значений"
 
 #: lib/src/subsample.c:1770 lib/src/subsample.c:1771
 msgid "dataset is subsampled, model is not\n"
@@ -9940,7 +9940,7 @@ msgstr "Исключить наблюдения с _пропусками"
 
 #: gui2/gretl.c:1413
 msgid "_Count missing values"
-msgstr "_Подсчитать пропуски"
+msgstr "_Подсчитать пропуски..."
 
 #: gui2/gretl.c:1414 gui2/gretl.c:1448
 msgid "Set missing _value code..."
@@ -10068,7 +10068,7 @@ msgstr "_Двухшаговый МНК..."
 
 #: gui2/gretl.c:1456
 msgid "_LIML..."
-msgstr ""
+msgstr "_Максимальное правдоподобие с ограниченной информацией..."
 
 #: gui2/gretl.c:1457 gui2/gretl.c:1502
 msgid "_GMM..."
@@ -10176,15 +10176,15 @@ msgstr "_Логит"
 
 #: gui2/gretl.c:1485 gui2/gretl.c:1489
 msgid "_Binary..."
-msgstr ""
+msgstr "_Бинарный..."
 
 #: gui2/gretl.c:1486 gui2/gretl.c:1490
 msgid "_Ordered..."
-msgstr ""
+msgstr "_Упорядоченный..."
 
 #: gui2/gretl.c:1487
 msgid "_Multinomial..."
-msgstr ""
+msgstr "_Мультиномиальный..."
 
 #: gui2/gretl.c:1488
 msgid "_Probit"
@@ -12218,7 +12218,7 @@ msgstr "Метод максимального правдоподобия с ог
 
 #: gui2/selector.c:2905
 msgid "Generalized method of moments"
-msgstr ""
+msgstr "Обобщенный метод моментов"
 
 #: gui2/selector.c:2907
 msgid "Autoregressive model"
