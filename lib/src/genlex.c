@@ -74,7 +74,6 @@ struct str_table dvars[] = {
     { R_TEST_STAT, "$test" },
     { R_TEST_PVAL, "$pvalue" },
     { R_TEST_LNL,  "$rlnl" },
-    { R_INDEX,     "t" },
     { R_INDEX,     "obs" },
     { R_T1,        "$t1" },
     { R_T2,        "$t2" },
@@ -187,7 +186,7 @@ struct str_table funcs[] = {
     { F_RESAMPLE, "resample" },
     { F_PNOBS,    "pnobs" },     /* per-unit nobs in panels */
     { F_PMIN,     "pmin" },      /* panel min */
-    { F_PMAX,     "pmax" },       /* panel max */
+    { F_PMAX,     "pmax" },      /* panel max */
     { F_PMEAN,    "pmean" },     /* panel mean */
     { F_PSD,      "psd" },       /* panel std dev */
     { F_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
@@ -807,6 +806,10 @@ static void look_up_word (const char *s, parser *p)
 			   varname_match_any(p->dinfo, s)) {
 		    p->sym = LIST;
 		    p->idstr = gretl_strdup(s);
+		} else if (!strcmp(s, "t")) {
+		    /* "t" as synonym for internal "obs" */
+		    p->sym = DVAR;
+		    p->idnum = R_INDEX;
 		} else {
 		    err = 1;
 		}
@@ -930,7 +933,7 @@ static void getword (parser *p)
 	return;
     }
 
-    if ((*word == '$' && word[1]) || !strcmp(word, "t") || !strcmp(word, "obs")) {
+    if ((*word == '$' && word[1]) || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
     } else if (*word == '@') {
 	look_up_string_variable(word, p);

@@ -269,11 +269,15 @@ static const char *res1[] = {
 };
 
 static const char *res2[] = {
-    "t",
     "obs",
+};
+
+static const char *res3[] = {
     "scalar",
     "series",
-    "matrix"
+    "matrix",
+    "string",
+    "list"
 };
 
 /**
@@ -286,12 +290,14 @@ static const char *res2[] = {
 
 int gretl_reserved_word (const char *str)
 {
-    const char *ruses[] = {
-	N_("a constant"),
-	N_("an internal variable")
-    };
     static int n1 = sizeof res1 / sizeof res1[0];
     static int n2 = sizeof res2 / sizeof res2[0];
+    static int n3 = sizeof res3 / sizeof res3[0];
+    const char *uses[] = {
+	N_("a constant"),
+	N_("an internal variable"),
+	N_("a type")
+    };
     int i, ret = 0;
 
     for (i=0; i<n1 && !ret; i++) {
@@ -306,9 +312,15 @@ int gretl_reserved_word (const char *str)
 	}
     }
 
+    for (i=0; i<n3 && !ret; i++) {
+	if (!strcmp(str, res3[i])) {
+	    ret = 3;
+	}
+    }    
+
     if (ret > 0) {
 	sprintf(gretl_errmsg, _("'%s' refers to %s and may not be used as a "
-			    "variable name"), str, _(ruses[ret - 1])); 
+			    "variable name"), str, _(uses[ret-1])); 
     }
  
     return ret;

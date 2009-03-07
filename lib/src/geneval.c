@@ -5515,12 +5515,22 @@ static void node_type_error (int ntype, int argnum, int goodt,
 	nstr = getsymb(ntype, NULL);
     }
 
-    if (argnum <= 0) {
-	pprintf(p->prn, _("%s: argument should be %s"),
-		nstr, typestr(goodt));
+    if (ntype < OP_MAX) {
+	if (argnum <= 0) {
+	    pprintf(p->prn, _("%s: operand should be %s"),
+		    nstr, typestr(goodt));
+	} else {
+	    pprintf(p->prn, _("%s: operand %d should be %s"),
+		    nstr, argnum, typestr(goodt));
+	}
     } else {
-	pprintf(p->prn, _("%s: argument %d should be %s"),
-		nstr, argnum, typestr(goodt));
+	if (argnum <= 0) {
+	    pprintf(p->prn, _("%s: argument should be %s"),
+		    nstr, typestr(goodt));
+	} else {
+	    pprintf(p->prn, _("%s: argument %d should be %s"),
+		    nstr, argnum, typestr(goodt));
+	}
     }
 
     if (bad != NULL) {
@@ -5737,8 +5747,8 @@ static NODE *eval (NODE *t, parser *p)
 	    /* exception: string concatenation */
 	    ret = two_string_func(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, MAT, (l->t == MAT)? 2 : 1,
-			    (l->t == MAT)? r : l, p);
+	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
+			    MAT, (l->t == MAT)? r : l, p);
 	}
 	break;
     case F_MSORTBY:
@@ -6008,8 +6018,8 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == VEC && r->t == VEC) {
 	    ret = series_sort_by(l, r, p);
 	} else {
-	    node_type_error(t->t, VEC, (l->t == VEC)? 2 : 1,
-			    (l->t == VEC)? r : l, p);
+	    node_type_error(t->t, (l->t == VEC)? 2 : 1,
+			    VEC, (l->t == VEC)? r : l, p);
 	} 
 	break;	
     case F_IMAT:
@@ -6308,8 +6318,8 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == STR && r->t == STR) {
 	    ret = two_string_func(l, r, t->t, p);
 	} else {
-	    node_type_error(t->t, STR, (l->t == STR)? 2 : 1,
-			    (l->t == STR)? r : l, p);
+	    node_type_error(t->t, (l->t == STR)? 2 : 1,
+			    STR, (l->t == STR)? r : l, p);
 	}
 	break;
     case F_LAGPOLY:

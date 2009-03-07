@@ -2942,7 +2942,7 @@
       </para>
 
       <para>
-	Creates new variables, usually through transformations of existing
+	Creates new variables, often via transformations of existing
 	variables. See also <cmdref targ="diff"/>, <cmdref targ="logs"/>,
 	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, 
 	<cmdref targ="sdiff"/> and <cmdref targ="square"/>
@@ -3065,13 +3065,13 @@
       </para>
 
       <para>
-	The special variable <lit>t</lit> serves as an index of the
-	observations (<lit>obs</lit> is a synonym).  For instance <lit>genr
-	dum = (t=15)</lit> will generate a dummy variable that has value 1 for
-	observation 15, 0 otherwise.  You can also use this variable to pick
-	out particular observations by date or name.  For example, 
-	<lit>genr d = (obs&gt;1986:4)</lit>, 
-	<lit>genr d = (obs&gt;"2008/04/01")</lit>
+	The special variable <lit>obs</lit> serves as an index of the
+	observations.  For instance <lit>genr dum = (obs=15)</lit> will
+	generate a dummy variable that has value 1 for observation 15, 0
+	otherwise.  You can also use this variable to pick out particular
+	observations by date or name.  For example, 
+        <lit>genr d = (obs&gt;1986:4)</lit>, 
+        <lit>genr d = (obs&gt;"2008/04/01")</lit>
 	<lit>genr d = (obs="CA")</lit>.  If daily dates or observation labels
 	are used in this context, they must be enclosed in double quotes.
 	Quarterly and monthly dates (with a colon) may be used unquoted.
