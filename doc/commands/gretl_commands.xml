@@ -2971,7 +2971,7 @@
       </para>
 
       <para>
-	When a formula yields a series or vector result, the range over which
+	When a formula yields a series result, the range over which
 	the result is written to the target variable depends on the current
 	sample setting.  It is possible, therefore, to define a series piecewise
 	using the <lit>smpl</lit> command in conjunction with <lit>genr</lit>.
@@ -3071,19 +3071,19 @@
 	otherwise.  You can also use this variable to pick out particular
 	observations by date or name.  For example, 
         <lit>genr d = (obs&gt;1986:4)</lit>, 
-        <lit>genr d = (obs&gt;"2008/04/01")</lit>
+        <lit>genr d = (obs&gt;"2008/04/01")</lit>, or
 	<lit>genr d = (obs="CA")</lit>.  If daily dates or observation labels
 	are used in this context, they must be enclosed in double quotes.
 	Quarterly and monthly dates (with a colon) may be used unquoted.
       </para>
 
       <para>
-	Please note: when using <lit>t</lit> and <lit>obs</lit> with annual
-	time-series data, the value always corresponds to the year of the
-	observation.  Therefore if you have annual data starting in 1970, the
-	observation for 1980 corresponds to <lit>t=1980</lit>, and not
-	<lit>t=10</lit>.  With quarterly or monthly data, on the other hand,
-	<lit>t=10</lit> would correspond to the 10th observation.
+	Please note: when using <lit>obs</lit> with annual time-series
+	data, the value corresponds to the year of the observation.
+	Therefore if you have annual data starting in 1970, the
+	observation for 1980 corresponds to <lit>obs=1980</lit>, and not
+	<lit>obs=10</lit>.  With quarterly or monthly data, on the other
+	hand, <lit>obs=10</lit> would correspond to the 10th observation.
       </para>
 
       <para>
