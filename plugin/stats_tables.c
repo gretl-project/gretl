@@ -424,7 +424,10 @@ gretl_matrix *stock_yogo_lookup (int n, int K2, int which)
     } else {
 	valrow = liml_size_vals[K2 - 1];
 	c = (n == 1)? 0 : 4;
-    }	
+    }
+
+    /* put the criterion values in the first row,
+       the critical values in the second */
 
     for (i=0; i<4; i++) {
 	if (which == 1) {
