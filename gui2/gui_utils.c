@@ -699,12 +699,14 @@ static void finalize_data_open (const char *fname, int ftype,
 
     if (append) {
 	register_data(DATA_APPENDED);
-    } else {
-	if (fname != paths.datfile) {
-	    strcpy(paths.datfile, fname);
-	}
-	real_register_data(DATAFILE_OPENED, NULL, plist);
-    }  
+	return;
+    } 
+
+    if (fname != paths.datfile) {
+	strcpy(paths.datfile, fname);
+    }
+
+    real_register_data(DATAFILE_OPENED, NULL, plist);
 
     if (import && !dataset_is_time_series(datainfo) && 
 	!dataset_is_panel(datainfo) && mdata != NULL) {
