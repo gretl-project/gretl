@@ -75,8 +75,11 @@ tags:
 	$(topsrc)/cephes/*.c $(topsrc)/plugin/zipunzip/*.[ch] \
 	$(topsrc)/plugin/rq/*.[ch]
 
-buildstamp:
-	$(topsrc)/builddate.pl
+builddate: $(topsrc)/builddate.c
+	$(CC) -o $@ $<
+
+buildstamp: builddate
+	./builddate
 
 dist: 
 	$(tooldir)/makedist
