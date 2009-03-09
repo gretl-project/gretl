@@ -235,6 +235,7 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_W, "wald", 0 },
     { OPEN,     OPT_C, "coded", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
+    { OPEN,     OPT_F, "cols", 2 },    
     { OPEN,     OPT_O, "odbc", 0 },
     { OPEN,     OPT_P, "preserve", 0 },
     { OPEN,     OPT_W, "www", 0 },
@@ -802,12 +803,9 @@ void set_optval_double (int ci, gretlopt opt, double x)
     push_optparm(ci, opt, gretl_strdup(s));
 }
 
-/* FIXME the following is funky and ad hoc */
-
 #define data_open_special(s) (!strcmp(s, "sheet") || \
                               !strcmp(s, "coloffset") || \
-			      !strcmp(s, "rowoffset") || \
-			      !strcmp(s, "cols"))
+			      !strcmp(s, "rowoffset"))
 
 /* extract an option parameter value following '=' */
 
@@ -1033,56 +1031,67 @@ gretlopt get_gretl_options (char *line, int *err)
     return oflags;
 }
 
+static PRN *flagprn;
+
 /**
  * print_flags:
  * @oflags: options.
  * @ci: command index, for context.
  * 
- * Constructs a string representation of the options in @oflags.
- *
- * Returns: pointer to static string (do not free!).
+ * Returns: a string representation of the options in @oflags,
+ * or an empty string if no options are found.  The returned
+ * value should not be modified in any way.
  */
 
 const char *print_flags (gretlopt oflags, int ci)
 {
-    static char flagstr[512];
     const char *parm;
-    char fbit[32];
     gretlopt opt;
     int i;
 
-    flagstr[0] = '\0';
+    if (flagprn == NULL) {
+	int err = 0;
 
-    if (oflags == OPT_NONE) {
-	return flagstr;
+	flagprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+	if (err) {
+	    return "";
+	}
+    } else {
+	gretl_print_reset_buffer(flagprn);
     }
 
-    if (ci == QUIT || ci == GENR) {
-	/* any option flags are "hidden" */
-	return flagstr;
+    if (oflags == OPT_NONE || ci == QUIT || ci == GENR) {
+	/* no options, or only hidden ones */
+	return "";
     }
 
     /* special: -o (--vcv) can be used with several model
        commands */
     if ((oflags & OPT_O) && vcv_opt_ok(ci)) {
-	strcat(flagstr, " --vcv");
-	oflags &= ~OPT_O;
+	pputs(flagprn, " --vcv");
+	oflags &= ~OPT_O; /* handled */
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
 	opt = gretl_opts[i].o;
 	if (ci == gretl_opts[i].ci && (oflags & opt)) {
-	    sprintf(fbit, " --%s", gretl_opts[i].longopt);
-	    strcat(flagstr, fbit);
-	    parm = get_optval_string(ci, opt);
-	    if (parm != NULL && *parm != '\0') {
-		sprintf(fbit, "=%s", parm);
-		strcat(flagstr, fbit);
+	    pprintf(flagprn, " --%s", gretl_opts[i].longopt);
+	    if (gretl_opts[i].parminfo) {
+		parm = get_optval_string(ci, opt);
+		if (parm != NULL && *parm != '\0') {
+		    pprintf(flagprn, "=%s", parm);
+		}
 	    }
 	}
     }
 
-    return flagstr;
+    return gretl_print_get_buffer(flagprn);
+}
+
+void option_flags_cleanup (void)
+{
+    gretl_print_destroy(flagprn);
+    flagprn = NULL;
 }
 
 /**
@@ -1110,6 +1119,44 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
     }
 
     return ret;
+}
+
+/**
+ * transcribe_options:
+ * @targ: pointer to target option flags.
+ * @src: source option flags.
+ * @test: bitwise OR of flags that are of interest in context.
+ *
+ * If the intersection of the flags in @src and @test is non-
+ * empty, set the corresponding flags in @targ.
+ * 
+ * Returns: the (possibly modified) @targ.
+ */
+
+gretlopt transcribe_option_flags (gretlopt *targ, gretlopt src,
+				  gretlopt test)
+{
+    *targ |= (src & test);
+
+    return *targ;
+}
+
+/**
+ * delete_option_flags:
+ * @targ: pointer to target option flags.
+ * @test: bitwise OR of flags that to be deleted.
+ *
+ * If the intersection of the flags in @targ and @test is non-
+ * empty, unset the corresponding flags in @targ.
+ * 
+ * Returns: the (possibly modified) @targ.
+ */
+
+gretlopt delete_option_flags (gretlopt *targ, gretlopt test)
+{
+    *targ &= ~(*targ & test);
+
+    return *targ;
 }
 
 /**

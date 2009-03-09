@@ -527,9 +527,10 @@ void add_pca_data (windata_t *vwin)
 	int addv = datainfo->v - oldv;
 	char *liststr = gretl_list_to_string(cmat->list);
 	gretlopt opt = (addv == cmat->list[0])? OPT_O : OPT_A;
+	const char *flagstr = print_flags(opt, PCA);
 	
 	if (liststr != NULL) {
-	    gretl_command_sprintf("pca %s%s", liststr, print_flags(opt, PCA));
+	    gretl_command_sprintf("pca %s%s", liststr, flagstr);
 	    check_and_record_command();
 	    free(liststr);
 	}
@@ -661,13 +662,18 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
     char title[48];
     gpointer obj = NULL;
     gint hsize = 78, vsize = 380;
+    const char *flagstr = NULL;
     int err = 0;
 
     strcpy(title, "gretl: ");
 
+    if (ci == CORR || ci == PCA || ci == XTAB) {
+	flagstr = print_flags(opt, ci);
+    }
+
     switch (ci) {
     case CORR:
-	gretl_command_sprintf("corr%s", liststr, print_flags(opt, CORR));
+	gretl_command_sprintf("corr%s", liststr, flagstr);
 	strcat(title, _("correlation matrix"));
 	break;
     case ALL_CORR:
@@ -676,7 +682,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	ci = CORR;
 	break;
     case PCA:
-	gretl_command_sprintf("pca%s", liststr, print_flags(opt, PCA));
+	gretl_command_sprintf("pca%s", liststr, flagstr);
 	strcat(title, _("principal components"));
 	break;
     case MAHAL:
@@ -685,7 +691,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	strcat(title, _("Mahalanobis distances"));
 	break;
     case XTAB:
-	gretl_command_sprintf("xtab %s%s", liststr, print_flags(opt, XTAB));
+	gretl_command_sprintf("xtab %s%s", liststr, flagstr);
 	strcat(title, _("cross tabulation"));
 	vsize = 340;
 	break;
@@ -833,6 +839,7 @@ int do_coint (selector *sr)
     const char *buf = selector_list(sr);
     int action = selector_code(sr);
     GRETL_VAR *jvar = NULL;
+    const char *flagstr = NULL;
     PRN *prn;
     int order = 0;
     int err = 0;
@@ -840,11 +847,12 @@ int do_coint (selector *sr)
     if (buf == NULL) return 1;
 
     libcmd.opt = selector_get_opts(sr);
+    flagstr = print_flags(libcmd.opt, action);
 
     if (action == COINT) {
-	gretl_command_sprintf("coint %s%s", buf, print_flags(libcmd.opt, action));
+	gretl_command_sprintf("coint %s%s", buf, flagstr);
     } else {
-	gretl_command_sprintf("coint2 %s%s", buf, print_flags(libcmd.opt, action));
+	gretl_command_sprintf("coint2 %s%s", buf, flagstr);
     }	
 
     if (check_and_record_command() || bufopen(&prn)) {
@@ -1466,12 +1474,14 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	fr = rolling_OLS_k_step_fcast(pmod, &Z, datainfo,
 				      t1, t2, k, pre_n, &err);
     } else {
+	const char *flagstr;
+
 	ntodate(startobs, t1, datainfo);
 	ntodate(endobs, t2, datainfo);
+	flagstr = print_flags(opt, FCAST);
 
 	gretl_command_sprintf("fcasterr %s %s%s", startobs, endobs,
-			      print_flags(opt, FCAST));
-
+			      flagstr);
 	if (check_and_record_command()) {
 	    return;
 	}
@@ -1594,6 +1604,7 @@ int do_add_omit (selector *sr)
     gretlopt opt = OPT_S | selector_get_opts(sr);
     int auto_omit = (ci == OMIT && (opt & OPT_A));
     PRN *prn;
+    const char *flagstr = NULL;
     char title[48];
     MODEL *orig, *pmod = NULL;
     gint err;
@@ -1604,12 +1615,14 @@ int do_add_omit (selector *sr)
 
     orig = vwin->data;
 
+    flagstr = print_flags(opt, ci);
+
     if (ci == ADD) {
-        gretl_command_sprintf("add %s%s", buf, print_flags(opt, ci));
+        gretl_command_sprintf("add %s%s", buf, flagstr);
     } else if (auto_omit) {
-	gretl_command_sprintf("omit %s", print_flags(opt, ci));
+	gretl_command_sprintf("omit %s", flagstr);
     } else {
-        gretl_command_sprintf("omit %s%s", buf, print_flags(opt, ci));
+        gretl_command_sprintf("omit %s%s", buf, flagstr);
     }
 
     if (model_command_init(orig->ID) || bufopen(&prn)) {
@@ -3211,6 +3224,7 @@ int do_model (selector *sr)
     gretlopt addopt = OPT_NONE;
     char estimator[9];
     const char *buf;
+    const char *flagstr;
     int ci;
 
     if (selector_error(sr)) {
@@ -3267,9 +3281,8 @@ int do_model (selector *sr)
     strcpy(estimator, gretl_command_word(ci));
 
     libcmd.opt = selector_get_opts(sr) | addopt;
-
-    gretl_command_sprintf("%s %s%s", estimator, buf, 
-			  print_flags(libcmd.opt, ci));
+    flagstr = print_flags(libcmd.opt, ci);
+    gretl_command_sprintf("%s %s%s", estimator, buf, flagstr);
 
     return real_do_model(ci);
 }
@@ -3279,6 +3292,7 @@ int do_vector_model (selector *sr)
     GRETL_VAR *var;
     char estimator[9];
     const char *buf;
+    const char *flagstr;
     PRN *prn;
     int order, action;
     int err = 0;
@@ -3301,9 +3315,8 @@ int do_vector_model (selector *sr)
     }
 
     strcpy(estimator, gretl_command_word(action));
-
-    gretl_command_sprintf("%s %s%s", estimator, buf, 
-			  print_flags(libcmd.opt, action));
+    flagstr = print_flags(libcmd.opt, action);
+    gretl_command_sprintf("%s %s%s", estimator, buf, flagstr);
 
 #if 0
     fprintf(stderr, "do_vector_model: cmdline = '%s'\n", cmdline);
@@ -4262,7 +4275,9 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
     if (bufopen(&prn)) return;
 
     if (code == SELECTED_VAR) {
-	gretl_command_sprintf("pergm %s%s", selected_varname(), print_flags(opt, PERGM));
+	const char *flagstr = print_flags(opt, PERGM);
+
+	gretl_command_sprintf("pergm %s%s", selected_varname(), flagstr);
 	if (check_and_record_command()) {
 	    gretl_print_destroy(prn);
 	    return;
@@ -4562,6 +4577,7 @@ void add_logs_etc (int ci)
     } else if (ci == DUMMIFY) {
 	gretlopt opt = OPT_NONE;
 	int *list = NULL;
+	const char *flagstr;
 	int i, resp, quit = 0;
 
 	list = gretl_list_from_string(liststr, &err);
@@ -4593,8 +4609,9 @@ void add_logs_etc (int ci)
 	    free(liststr);
 	    return;
 	}
-	    
-	gretl_command_sprintf("dummify%s%s", liststr, print_flags(opt, ci));
+
+	flagstr = print_flags(opt, ci);
+	gretl_command_sprintf("dummify%s%s", liststr, flagstr);
     } else {
 	gretl_command_sprintf("%s%s", gretl_command_word(ci), liststr);
     }
@@ -7077,7 +7094,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(datfile, pZ, pdinfo, NULL, openopt, prn);
+	err = import_csv(datfile, pZ, pdinfo, openopt, prn);
     } else if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(datfile, &paths, pZ, pdinfo, 
 			     openopt | OPT_P, prn);

@@ -1216,7 +1216,12 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Generate model selection statistics */
-    ls_criteria(&mdl);
+    if (ci == AR1) {
+	mdl.lnL = NADBL;
+	mle_criteria(&mdl, 0);
+    } else {
+	ls_criteria(&mdl);
+    }
     if (!(opt & OPT_A) && !na(mdl.lnL)) {
 	log_depvar_ll(&mdl, (const double **) *pZ, pdinfo);
     }
@@ -3297,7 +3302,8 @@ MODEL ar_func (const int *list, double ***pZ,
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     }
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
-    ls_criteria(&ar);
+    ar.lnL = NADBL;
+    mle_criteria(&ar, 0);
     ar.dw = dwstat(maxlag, &ar, (const double **) *pZ);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 

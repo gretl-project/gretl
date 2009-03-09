@@ -404,6 +404,7 @@ int gretl_print_reset_buffer (PRN *prn)
 
     if (prn != NULL && prn->buf != NULL) {
 	*prn->buf = '\0';
+	prn->blen = 0;
     } else {
 	err = 1;
     }

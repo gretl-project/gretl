@@ -1822,9 +1822,10 @@ static void csv_parsing_header (const char *fname, PRN *prn)
  */
 
 int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo, 
-		const char *cols, gretlopt opt, PRN *prn)
+		gretlopt opt, PRN *prn)
 {
     csvdata *c = NULL;
+    const char *cols = NULL;
     int popit = 0;
     FILE *fp = NULL;
     PRN *mprn = NULL;
@@ -1837,6 +1838,11 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (opt & OPT_Q) {
 	/* quiet */
 	prn = NULL;
+    }
+
+    if (opt & OPT_F) {
+	/* fixed format: should have --cols=XXX specification */
+	cols = get_optval_string(OPEN, OPT_F);
     }
 
 #ifdef ENABLE_NLS

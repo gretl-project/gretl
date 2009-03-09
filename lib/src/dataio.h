@@ -114,7 +114,7 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn);
 
 int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo, 
-		const char *cols, gretlopt opt, PRN *prn);
+	        gretlopt opt, PRN *prn);
 
 int import_spreadsheet (const char *fname, int ftype,
 			int *list, char *sheetname,

@@ -704,9 +704,9 @@ static void destroy_font_test_rig (void)
 }
 
 enum {
-    LATIN_FONT = 1 << 0,
-    MONO_FONT  = 1 << 1,
-    WEIRD_FONT = 1 << 2
+    HACK_LATIN_FONT = 1 << 0,
+    HACK_MONO_FONT  = 1 << 1,
+    HACK_WEIRD_FONT = 1 << 2
 };
 
 /* We test a font for "latin text" compatibility, via the heuristic
@@ -735,7 +735,7 @@ static int get_font_characteristics (PangoFontDescription *desc)
 	pango_coverage_get(coverage, 'W') == PANGO_COVERAGE_EXACT) {
 	int x1, x2;
 
-	ret = LATIN_FONT;
+	ret = HACK_LATIN_FONT;
 	
 	if (font_test_context != NULL && font_test_layout != NULL) {
 	    pango_context_set_font_description(font_test_context, desc);
@@ -745,7 +745,7 @@ static int get_font_characteristics (PangoFontDescription *desc)
 	    pango_layout_get_pixel_size(font_test_layout, &x2, NULL);
 
 	    if (x1 == x2) {
-		ret |= MONO_FONT;
+		ret |= HACK_MONO_FONT;
 	    }
 	}
     }
@@ -754,8 +754,8 @@ static int get_font_characteristics (PangoFontDescription *desc)
 
 #if FDEBUG
     fprintf(stderr, " latin %s, monospaced %s\n",
-	    (ret & LATIN_FONT)? "yes" : "no",
-	    (ret & MONO_FONT)? "yes" : "no");
+	    (ret & HACK_LATIN_FONT)? "yes" : "no",
+	    (ret & HACK_MONO_FONT)? "yes" : "no");
 #endif
 
     return ret;
@@ -825,7 +825,7 @@ static int validate_font_family (const gchar *famname,
 	font_progress_bar(i, nf);
 
 	if (weird_font(famname)) {
-	    fcache[i] = WEIRD_FONT;
+	    fcache[i] = HACK_WEIRD_FONT;
 	} else {
 	    gchar *font = g_strdup_printf("%s 10", famname);
 	    PangoFontDescription *desc = pango_font_description_from_string(font);
@@ -843,9 +843,9 @@ static int validate_font_family (const gchar *famname,
 	build_cache = 0;
     }
 
-    ret = (filter == GTK_FONT_HACK_LATIN)? (fcache[i] & LATIN_FONT) :
-	(filter == GTK_FONT_HACK_LATIN_MONO)? (fcache[i] & MONO_FONT) :
-	!(fcache[i] & WEIRD_FONT);
+    ret = (filter == GTK_FONT_HACK_LATIN)? (fcache[i] & HACK_LATIN_FONT) :
+	(filter == GTK_FONT_HACK_LATIN_MONO)? (fcache[i] & HACK_MONO_FONT) :
+	!(fcache[i] & HACK_WEIRD_FONT);
 
     return ret;
 }

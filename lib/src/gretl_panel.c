@@ -3273,7 +3273,7 @@ print_wald_test (double W, int nunits, const int *unit_obs, PRN *prn)
 	    _("Distribution free Wald test for heteroskedasticity"),
 	    _("based on the FGLS residuals"));
     pprintf(prn, "%s(%d) = %g, ",  _("Chi-square"), df, W);
-    pprintf(prn, _("with p-value = %g\n\n"), chisq_cdf_comp(df, W));
+    pprintf(prn, "%s = %g\n", _("with p-value"), chisq_cdf_comp(df, W));
 }
 
 /* Wald test for groupwise heteroskedasticity, without assuming

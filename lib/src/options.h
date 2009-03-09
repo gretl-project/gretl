@@ -32,6 +32,11 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 
 char **get_all_option_strings (int *pn);
 
+gretlopt transcribe_option_flags (gretlopt *targ, gretlopt src,
+				  gretlopt test);
+
+gretlopt delete_option_flags (gretlopt *targ, gretlopt test);
+
 int incompatible_options (gretlopt opt, gretlopt test);
 
 int option_prereq_missing (gretlopt opt, gretlopt test,
@@ -46,5 +51,7 @@ void set_optval_double (int ci, gretlopt opt, double x);
 const char *get_optval_string (int ci, gretlopt opt);
 
 void clear_option_params (void);
+
+void option_flags_cleanup (void);
 
 #endif /* OPTIONS_H */

@@ -55,8 +55,9 @@ struct COMPARE {
     int dfn;       /* numerator degrees of freedom */
     int dfd;       /* denominator degrees of freedom */ 
     double F;      /* F test statistic */
-    double chisq;  /* Chi-square test statistic */
+    double wald;   /* Wald chi-square test statistic */
     double trsq;   /* T*R^2 test statistic */
+    double LR;     /* likelihood ratio test statistic */
     int score;     /* number of info stats showing improvement */
     int robust;    /* = 1 when robust vcv is in use, else 0 */
     int err;       /* error code */
@@ -299,9 +300,12 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 		    gretlopt opt, PRN *prn)
 {
     ModelTest *test = NULL;
+    const char *tstr = NULL;
+    int tcode = 0, statcode = 0;
+    double testval = NADBL;
     double pval = NADBL;
-    int asy, verbosity = 2;
-    int stat_ok, i;
+    int verbosity = 2;
+    int i, stat_ok = 1;
 
     if (cmp->err) {
 	return;
@@ -313,23 +317,44 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	verbosity = 1;
     }
 
-    stat_ok = !na(cmp->F) || !na(cmp->chisq);
+    if (!na(cmp->wald)) {
+	testval = cmp->wald;
+	statcode = GRETL_STAT_WALD_CHISQ;
+    } else if (!na(cmp->LR)) {
+	testval = cmp->LR;
+	statcode = GRETL_STAT_LR;
+    } else if (!na(cmp->F)) {
+	testval = cmp->F;
+	statcode = GRETL_STAT_F;
+    } else {
+	stat_ok = 0;
+    }
 
     if (!stat_ok && (!verbosity || cmp->score < 0)) {
 	/* nothing to show */
 	return;
     }
 
-    if (stat_ok && (opt & OPT_S)) {
-	test = model_test_new((cmp->cmd == OMIT)? GRETL_TEST_OMIT : GRETL_TEST_ADD);
+    if (cmp->cmd == OMIT) {
+	tcode = GRETL_TEST_OMIT;
+	tstr = N_("omit");
+    } else {
+	tcode = GRETL_TEST_ADD;
+	tstr = N_("add");
     }
+
+    if (stat_ok && (opt & OPT_S)) {
+	test = model_test_new(tcode);
+    }
+
+    /* preamble */
 
     if (verbosity > 1 && cmp->m1 >= 0 && cmp->m2 >= 0) {
 	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
 		cmp->m1, cmp->m2);
     } 
 
-    if (stat_ok && verbosity > 0) {
+    if (verbosity > 0 && stat_ok) {
 	pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		     "zero for the variables\n\n"));
 	for (i=1; i<=diffvars[0]; i++) {
@@ -337,42 +362,40 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	}
     }
 
-    asy = !LIMDEP(cmp->ci); /* ?? */
+    /* computation of p-value */
 
-    if (!na(cmp->chisq)) {
-	pval = chisq_cdf_comp(cmp->dfn, cmp->chisq);
-	if (verbosity > 0) {
-	    pprintf(prn, "\n  %s:%s%s(%d) = %g, ",  
-		    (asy)? _("Asymptotic test statistic") : _("Test statistic"),
-		    (asy)? "\n    " : " ",
-		    _("Chi-square"), cmp->dfn, cmp->chisq);
+    if (statcode == GRETL_STAT_WALD_CHISQ || statcode == GRETL_STAT_LR) {
+	pval = chisq_cdf_comp(cmp->dfn, testval);
+    } else if (statcode == GRETL_STAT_F) {
+	pval = snedecor_cdf_comp(cmp->dfn, cmp->dfd, cmp->F);
+    }
+
+    /* printout, if wanted */
+
+    if (verbosity > 0) {
+	if (statcode == GRETL_STAT_WALD_CHISQ) {
+	    pprintf(prn, "\n  %s:\n    %s(%d) = %g, ",  _("Asymptotic test statistic"),
+		    _("Wald chi-square"), cmp->dfn, testval);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
 	    if (verbosity <= 1) {
 		pputc(prn, '\n');
 	    }
-	}
-
-	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
-
-	if (test != NULL) {
-	    model_test_set_teststat(test, (LIMDEP(cmp->ci))? 
-				    GRETL_STAT_LR : GRETL_STAT_WALD_CHISQ);
-	    model_test_set_dfn(test, cmp->dfn);
-	    model_test_set_value(test, cmp->chisq);
-	    model_test_set_pvalue(test, pval);
-	}
-
-	if (verbosity > 0 && !na(cmp->F)) {
-	    /* alternate form */
-	    pval = snedecor_cdf_comp(cmp->dfn, cmp->dfd, cmp->F);
-	    pputs(prn, (asy)? "    " : "  ");
-	    pprintf(prn, "%s: F(%d, %d) = %g, ", _("F-form"), 
-		    cmp->dfn, cmp->dfd, cmp->F);
+	    if (!na(cmp->F)) {
+		/* alternate F-form for Wald */
+		pval = snedecor_cdf_comp(cmp->dfn, cmp->dfd, cmp->F);
+		pputs(prn, "    ");
+		pprintf(prn, "%s: F(%d, %d) = %g, ", _("F-form"), 
+			cmp->dfn, cmp->dfd, cmp->F);
+		pprintf(prn, _("with p-value = %g\n"), pval);
+	    }
+	} else if (statcode == GRETL_STAT_LR) {
+	    pprintf(prn, "\n  %s:\n    %s(%d) = %g, ",  _("Likelihood ratio test"),
+		    _("Chi-square"), cmp->dfn, cmp->LR);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
-	}	    
-    } else if (!na(cmp->F)) {
-	pval = snedecor_cdf_comp(cmp->dfn, cmp->dfd, cmp->F);
-	if (verbosity > 0) {
+	    if (verbosity <= 1) {
+		pputc(prn, '\n');
+	    }
+	} else if (statcode == GRETL_STAT_F) {
 	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		    (cmp->robust)? _("Robust F") : "F",
 		    cmp->dfn, cmp->dfd, cmp->F);
@@ -381,17 +404,32 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 		pputc(prn, '\n');
 	    }
 	}
+    }
 
-	record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
+    /* record test result */
 
+    if (stat_ok) {
+	record_test_result(testval, pval, _(tstr));
 	if (test != NULL) {
-	    model_test_set_teststat(test, GRETL_STAT_F);
+	    model_test_set_teststat(test, statcode);
 	    model_test_set_dfn(test, cmp->dfn);
-	    model_test_set_dfd(test, cmp->dfd);
-	    model_test_set_value(test, cmp->F);
+	    if (statcode == GRETL_STAT_F) {
+		model_test_set_dfd(test, cmp->dfd);
+	    }
+	    model_test_set_value(test, testval);
 	    model_test_set_pvalue(test, pval);
 	}
     }
+
+    if (verbosity > 0 && statcode == GRETL_STAT_WALD_CHISQ && !na(cmp->LR)) {
+	/* print auxiliary LR test if available */
+	pprintf(prn, "\n  %s:\n    %s(%d) = %g, ",  _("Likelihood ratio test"),
+		_("Chi-square"), cmp->dfn, cmp->LR);
+	pprintf(prn, _("with p-value = %g\n"), chisq_cdf_comp(cmp->dfn, cmp->LR));
+	if (verbosity <= 1) {
+	    pputc(prn, '\n');
+	}
+    }	
 
     if (test != NULL) {
 	add_diffvars_to_test(test, diffvars, pdinfo);
@@ -430,7 +468,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.cmd = OMIT;
     }
 
-    cmp.F = cmp.chisq = cmp.trsq = NADBL;
+    cmp.F = cmp.wald = cmp.trsq = cmp.LR = NADBL;
     cmp.score = -1;
     cmp.robust = 0;
     cmp.dfn = testvars[0];
@@ -456,19 +494,17 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     cmp.dfd = umod->dfd;
 
-    /* FIXME IVREG (use F or chi-square?) */
-
     if (flag == OMIT_WALD || flag == ADD_WALD) {
-	cmp.err = wald_test(testvars, umod, &cmp.chisq, &cmp.F);
+	cmp.err = wald_test(testvars, umod, &cmp.wald, &cmp.F);
     } else if (pmodA != NULL && (pmodA->opt & OPT_R)) {
 	cmp.F = wald_omit_F(testvars, umod);
 	cmp.robust = 1;
-    } else if (LIMDEP(cmp.ci)) {
-	cmp.chisq = 2.0 * (umod->lnL - rmod->lnL);
+    } else if (LIMDEP(cmp.ci) && umod != NULL && rmod != NULL) {
+	cmp.LR = 2.0 * (umod->lnL - rmod->lnL);
     } else if (cmp.ci == OLS) {
 	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
     } else if (cmp.dfn >= 1) {
-	cmp.err = wald_test(testvars, umod, &cmp.chisq, NULL);
+	cmp.err = wald_test(testvars, umod, &cmp.wald, NULL);
     }
 
     if (pmodA != NULL && pmodB != NULL && flag != ADD_WALD) {
@@ -487,6 +523,15 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	if (miss == C_MAX) {
 	    cmp.score = -1;
 	}
+    }
+
+    if (na(cmp.LR) && na(cmp.F) && 
+	umod != NULL && rmod != NULL && 
+	!na(umod->lnL) && !na(rmod->lnL) &&
+	umod->lnL > rmod->lnL) {
+	/* if we're doing a Wald test and a likelihood ratio test is
+	   also supported, add the LR test */
+	cmp.LR = 2.0 * (umod->lnL - rmod->lnL);
     }
 
     return cmp;
@@ -606,17 +651,8 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
     /* recreate options and auxiliary vars, if required */
 
-    if (orig->opt & OPT_D) {
-	myopt |= OPT_D;
-    }
-
-    if (orig->opt & OPT_J) {
-	myopt |= OPT_J;
-    }
-
-    if (orig->opt & OPT_R) {
-	myopt |= OPT_R;
-    }
+    transcribe_option_flags(&myopt, orig->opt,
+			    OPT_D | OPT_J | OPT_R);
 
     if (orig->ci == AR1) {
 	if (orig->opt & OPT_H) {
@@ -674,11 +710,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	    set_optval_double(QUANTREG, OPT_I, x);
 	}
     } else if (orig->ci == IVREG) {
-	if (orig->opt & OPT_L) {
-	    myopt |= OPT_L;
-	} else if (orig->opt & OPT_G) {
-	    myopt |= OPT_G;
-	}
+	transcribe_option_flags(&myopt, orig->opt, OPT_L | OPT_G);
     }
 
     if (rep.errcode) {
@@ -932,25 +964,9 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 static void remove_special_flags (gretlopt *popt)
 {
-    gretlopt opt = *popt;
+    gretlopt rem = OPT_S | OPT_T | OPT_B | OPT_P | OPT_A;
 
-    if (opt & OPT_S) {
-	opt &= ~OPT_S;
-    }
-    if (opt & OPT_T) {
-	opt &= ~OPT_T;
-    }    
-    if (opt & OPT_B) {
-	opt &= ~OPT_B;
-    } 
-    if (opt & OPT_P) {
-	opt &= ~OPT_P;
-    }
-    if (opt & OPT_A) {
-	opt &= ~OPT_A;
-    }    
-
-    *popt = opt;
+    delete_option_flags(popt, rem);
 }
 
 static int add_vars_missing (const MODEL *pmod, const int *list,
@@ -1805,14 +1821,8 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     if (!err) {
 	gretlopt ivopt = OPT_A;
 
-	if (pmod->opt & OPT_L) {
-	    ivopt |= OPT_L;
-	} else if (pmod->opt & OPT_G) {
-	    ivopt |= OPT_G;
-	} else if (pmod->opt & OPT_R) {
-	    ivopt |= OPT_R; /* ?? */
-	}
-
+	transcribe_option_flags(&ivopt, pmod->opt,
+				OPT_L | OPT_G | OPT_R);
 	aux = ivreg(testlist, pZ, pdinfo, ivopt);
 	err = aux.errcode;
     }
@@ -3141,14 +3151,9 @@ int lmtest_driver (const char *param,
     /* heteroskedasticity (White or Breusch-Pagan) */
     if (!err && (opt & (OPT_W | OPT_X | OPT_B))) {
 	if (type == GRETL_OBJ_EQN) {
-	    if (opt & OPT_B) {
-		testopt |= OPT_B;
-		if (opt & OPT_R) {
-		    testopt |= OPT_R;
-		}
-	    }
-	    if (opt & OPT_X) {
-		testopt |= OPT_X;
+	    transcribe_option_flags(&testopt, opt, OPT_B | OPT_X);
+	    if ((opt & OPT_B) && (opt & OPT_R)) {
+		testopt |= OPT_R;
 	    }
 	    err = whites_test(ptr, pZ, pdinfo, testopt, prn);
 	} else {
