@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-08 22:00-0400\n"
-"PO-Revision-Date: 2009-03-08 23:56+0100\n"
+"PO-Revision-Date: 2009-03-09 21:20+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2099,12 +2099,12 @@ msgid "%s: no such object\n"
 msgstr "%s: nessun oggetto\n"
 
 #: lib/src/geneval.c:5520
-#, fuzzy, c-format
+#, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: l'argomento dovrebbe essere %s"
 
 #: lib/src/geneval.c:5523
-#, fuzzy, c-format
+#, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: l'argomento %d dovrebbe essere %s"
 
@@ -2333,9 +2333,8 @@ msgid "an internal variable"
 msgstr "una variabile interna"
 
 #: lib/src/genmain.c:299
-#, fuzzy
 msgid "a type"
-msgstr "Tipo"
+msgstr "un tipo"
 
 #: lib/src/genmain.c:322
 #, c-format
@@ -4365,12 +4364,12 @@ msgid "Critical values for TSLS bias relative to OLS:\n"
 msgstr "Valori critici per la distorsione TSLS rispetto a OLS:\n"
 
 #: lib/src/modelprint.c:758
-#, fuzzy, no-c-format
+#, no-c-format
 msgid ""
 "Critical values for desired LIML maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
-"Valori critici per la dimensione massima TSLS desiderata,\n"
+"Valori critici per la dimensione massima LIML desiderata,\n"
 "  eseguendo i test al livello di significatività nominale del 5%:\n"
 
 #: lib/src/modelprint.c:762
@@ -5475,7 +5474,7 @@ msgstr "Opzione non valida '--%s'"
 #: lib/src/options.c:907
 #, c-format
 msgid "The option '--%s' requires a parameter"
-msgstr ""
+msgstr "L'opzione '--%s' richiede un parametro"
 
 #: lib/src/options.c:1106
 #, c-format
