@@ -754,9 +754,11 @@ static void plain_print_sy_vals (gretl_matrix *v, double g, int k,
     if (k == 1) {
 	pputs(prn, _("Critical values for TSLS bias relative to OLS:\n"));
     } else if (opt & OPT_L) {
+	/* xgettext:no-c-format */
 	pputs(prn, _("Critical values for desired LIML maximal size, when running\n"
 		     "  tests at a nominal 5% significance level:\n"));
     } else {
+	/* xgettext:no-c-format */	
 	pputs(prn, _("Critical values for desired TSLS maximal size, when running\n"
 		     "  tests at a nominal 5% significance level:\n"));
     }
