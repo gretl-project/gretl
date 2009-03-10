@@ -326,6 +326,7 @@ static void set_gd_fontpath (void)
     }
 
     gdpath = getenv("GDFONTPATH");
+
     if (gdpath != NULL) {
 	if (strstr(gdpath, "gretl") == NULL &&
 	    strstr(gdpath, "GRETL") == NULL) {

@@ -36,7 +36,7 @@ CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) \
   -I$(XML2_INC) -I$(zipdir) -DUSE_GMP
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
-ifeq ($(NATIVE_BUILD),no)
+ifeq ($(BUILDTYPE),cross)
   GRETL_LANG = cross_lang
   BUILDDATE = cross_builddate
 else
@@ -478,13 +478,14 @@ midi_utils.o: midi_utils.c $(topsrc)/plugin/midi_utils.h
 # Distribution executable
 
 dist.stamp:
-	sh ./mkwindist
+	sh ./mkwindist $(BUILDTYPE)
 
 .PHONY:
 
 dirs:
 	mkdir -p dlls 
 	mkdir -p plugins 
+	mkdir -p import-libs
 	
 cross_builddate: $(topsrc)/builddate.c
 	gcc -Wall -o builddate $<

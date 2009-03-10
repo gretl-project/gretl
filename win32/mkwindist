@@ -2,9 +2,15 @@
 
 # Shell script to make gretl win32 distribution
 
-GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp43cvsw32.zip
-HOME_WIN32=/home/cottrell/stats/esl/win32
-CROSSDIR=/opt/cross-tools/mingw32
+if [ "$1" = "cross" ] ; then
+  GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp43cvsw32.zip
+  HOME_WIN32=/home/cottrell/stats/esl/win32
+  INNO_CMD="nice wine c:/innodir/ISCC.exe"
+else
+  GNUPLOT_ZIPFILE=c:/mingw/winbuild/gp43cvsw32.zip
+  HOME_WIN32=c:/mingw/winbuild
+  INNO_CMD="ISCC.exe"
+fi
 
 THISDIR=`pwd`
 
@@ -157,8 +163,6 @@ add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 add_file ${TOPDIR}/build/doc/tex/gretl-guide.pdf gretl/doc/gretl-guide.pdf
 add_file ${TOPDIR}/build/doc/tex/gretl-ref.pdf gretl/doc/gretl-ref.pdf
-# add_file ${TOPDIR}/build/doc/tex/gretl-guide-a4.pdf gretl/doc/gretl-guide-a4.pdf
-# add_file ${TOPDIR}/build/doc/tex/gretl-ref-a4.pdf gretl/doc/gretl-ref-a4.pdf
 
 # data files
 for f in ${TOPDIR}/share/data/* ; do
@@ -208,12 +212,11 @@ add_file gretl.stamp gretl/gretl.stamp
 cd windist
 process_gnuplot
 
-# make Inno builder file
-cat MANIFEST | ./make_iss.pl $VERSION | todos > gretl.iss 
+make gretl.iss
 
 # make Inno installer
 echo "Building gretl installer executable..."
-nice wine "c:/Program Files/Inno Setup 5/ISCC.exe" ./gretl.iss 2>errlog && \
+$INNO_CMD ./gretl.iss 2>errlog && \
 mv Output/setup.exe Output/gretl_install.exe && \
 ls -l Output/gretl_install.exe
 

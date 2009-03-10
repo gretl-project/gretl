@@ -1,9 +1,9 @@
 # Configuration variables governing the build of gretl for win32
 
-# change to 'yes' if building on Windows
-NATIVE_BUILD = no
+# change to 'native' if building on MS Windows
+BUILDTYPE = cross
 
-ifeq ($(NATIVE_BUILD),no)
+ifeq ($(BUILDTYPE),cross)
   # directory containing the cross tools
   MGWDIR = /opt/cross-tools/mingw32
   # prefix for mingw tools (e.g. mingw32-gcc)
