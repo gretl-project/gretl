@@ -738,7 +738,14 @@ static void root_check (void)
 
 void gretl_config_init (void)
 {
-    sprintf(rcfile, "%s/.gretl2rc", getenv("HOME"));
+    char *custprof = getenv("GRETL_PROFILE");
+
+    if (custprof == NULL) {
+	sprintf(rcfile, "%s/.gretl2rc", getenv("HOME"));
+    } else {
+	strcpy(rcfile, custprof);
+    }
+
     read_rc();
     set_gretl_startdir();
     set_gd_fontpath();
