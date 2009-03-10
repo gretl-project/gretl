@@ -298,10 +298,10 @@ gretlw32.exe: $(GUIOBJ) gretlw32_res.o
 gretlw32_res.o: gretlw32.rc 
 	$(RC) $(RCFLAGS) $< $@
 
-$(cross_lang): $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
+cross_lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
 	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mklang && ./mklang > $$HERE/$@ ; cd $$HERE
 
-$(native_lang): $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c mklang
+native_lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c mklang
 	./mklang > $@	
 
 gretl_updater.exe:
