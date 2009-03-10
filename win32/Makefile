@@ -490,7 +490,7 @@ cross_builddate: $(topsrc)/builddate.c
 	gcc -Wall -o builddate $<
 
 native_builddate: $(topsrc)/builddate.c
-	$(CC) -o builddate $<
+	$(CC) -Wall -o builddate $<
 	
 buildstamp: $(BUILDDATE)
 	./builddate
