@@ -22,11 +22,16 @@ Notes on building gretl on MS Windows itself
   These should be installed under the mingw tree.
   
 * Install the auxiliary packages from 
-   http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/ : these should go
-   under /mingw/winbuild on the Windows system. 
+  http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/ : these should go
+  under /mingw/winbuild on the Windows system.  See the file "Note"
+  in that web directory for details.
   
 * Get current CVS gretl.  In the "win32" subdirectory, edit config.mk
   to specify BUILDTYPE = native.  Then you should be able to do
   "make" and build gretl.
+  
+* You'll also the need the current Inno Setup program from
+  http://www.innosetup.com/isinfo.php in order to build the
+  installer executable  
   
      
