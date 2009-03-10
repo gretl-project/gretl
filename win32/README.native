@@ -1,0 +1,32 @@
+Notes on building gretl on MS Windows itself
+
+* Install mingw: start at mingw.org, go to their download area,
+  and get their current installer (as of this writing it's
+  MinGW-5.1.4.exe).  The run it.  I installed into c:/mingw,
+  which I think is the default.  You can save yourself some
+  space in that you don't need the java or ADA compilers for
+  gretl.
+  
+  mingw gives you gcc and a full system for building executables
+  from C sources.
+  
+* Install msys: this gives you a decent terminal program (rxvt) and
+  a decent shell, with the basic *nix command-line utilities.
+  See http://www.mingw.org/wiki/MSYS . This is a bit fiddly: the
+  easy self-installer is for an old version, MSYS 1.0.10, but the
+  current (March 2009) recommendation is to install that first, then
+  update it with the update to MSYS Core 1.0.11.
+  
+* Install the core GTK file (Binaries and Dev; you don't need the
+  Source packages) from http://www.gtk.org/download-windows.html .
+  These should be installed under the mingw tree.
+  
+* Install the auxiliary packages from 
+   http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/ : these should go
+   under /mingw/winbuild on the Windows system. 
+  
+* Get current CVS gretl.  In the "win32" subdirectory, edit config.mk
+  to specify BUILDTYPE = native.  Then you should be able to do
+  "make" and build gretl.
+  
+     
