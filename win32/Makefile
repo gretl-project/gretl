@@ -36,6 +36,12 @@ CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) \
   -I$(XML2_INC) -I$(zipdir) -DUSE_GMP
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
+ifeq($(NATIVE_BUILD),no)
+  GRETL_LANG = cross_lang
+else
+  GRETL_LANG = native_lang
+endif
+
 # source paths
 vpath %.c $(libsrcdir)
 vpath %.c $(topsrc)/cephes
@@ -279,7 +285,7 @@ MOFILES = mo/de.po mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo mo/pt.mo mo/ru.m
 # targets begin
 
 all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
-	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES) gretl.lang gretl_updater.exe
+	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES) $(GRETL_LANG) gretl_updater.exe
 
 gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lz -lmingwex -s
@@ -290,8 +296,11 @@ gretlw32.exe: $(GUIOBJ) gretlw32_res.o
 gretlw32_res.o: gretlw32.rc 
 	$(RC) $(RCFLAGS) $< $@
 
-gretl.lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
+$(cross_lang): $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
 	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mklang && ./mklang > $$HERE/$@ ; cd $$HERE
+
+$(native_lang): $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c mklang
+	./mklang > $@	
 
 gretl_updater.exe:
 	make -C updater

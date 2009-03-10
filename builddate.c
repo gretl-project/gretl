@@ -13,6 +13,9 @@ void current_ymd (int *y, int *m, int *d)
     *d = lt->tm_mday;
 }
 
+/* See if build.h exists and is up to date, and if not, 
+   create/update it. */
+
 int main (void)
 {
     int yb = 0, mb = 0, db = 0;
@@ -49,6 +52,8 @@ int main (void)
 		    y, m, d);
 	    fclose(fp);
 	}
+    } else {
+	printf("build.h is current\n");
     }
 
     return 0;
