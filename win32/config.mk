@@ -7,9 +7,9 @@ ifeq ($(NATIVE_BUILD),no)
   # directory containing the cross tools
   MGWDIR = /opt/cross-tools/mingw32
   # prefix for mingw tools (e.g. mingw32-gcc)
-  MGW_PREFIX = mingw32- 
+  MGW_PREFIX = mingw32-
   # msgfmt command for producing win32 messages file
-  wine c:/bin/msgfmt.exe 
+  WIN32_MSGFMT = wine c:/bin/msgfmt.exe 
 else
   # directory containing mingw
   MGWDIR = c:/mingw

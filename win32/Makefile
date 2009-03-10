@@ -36,10 +36,12 @@ CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) \
   -I$(XML2_INC) -I$(zipdir) -DUSE_GMP
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
-ifeq($(NATIVE_BUILD),no)
+ifeq ($(NATIVE_BUILD),no)
   GRETL_LANG = cross_lang
+  BUILDDATE = cross_builddate
 else
   GRETL_LANG = native_lang
+  BUILDDATE = native_builddate
 endif
 
 # source paths
@@ -483,9 +485,15 @@ dist.stamp:
 dirs:
 	mkdir -p dlls 
 	mkdir -p plugins 
+	
+cross_builddate: $(topsrc)/builddate.c
+	gcc -Wall -o builddate $<
 
-buildstamp:
-	$(topsrc)/builddate.pl
+native_builddate: $(topsrc)/builddate.c
+	$(CC) -o builddate $<
+	
+buildstamp: $(BUILDDATE)
+	./builddate
 
 clean:
 	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
