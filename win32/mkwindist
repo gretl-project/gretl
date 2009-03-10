@@ -1,34 +1,55 @@
-# !/bin/sh
+#!/bin/sh
 
 # Shell script to make gretl win32 distribution
 
-if [ "$1" = "cross" ] ; then
-  GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp43cvsw32.zip
-  HOME_WIN32=/home/cottrell/stats/esl/win32
-  INNO_CMD="nice wine c:/innodir/ISCC.exe"
-else
-  GNUPLOT_ZIPFILE=c:/mingw/winbuild/gp43cvsw32.zip
-  HOME_WIN32=c:/mingw/winbuild
-  INNO_CMD="ISCC.exe"
+BUILDTYPE=$1
+
+if [ "x${BUILDTYPE}" = "x" ] ; then
+  echo "mkwindist: argument must be 'cross' or 'native'"
+  exit 1
 fi
 
+TOPDIR=".."
 THISDIR=`pwd`
 
-# add gnuplot distribution
+########## CONFIGURE HERE ###################
+
+if [ "$BUILDTYPE" = "cross" ] ; then
+  GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp43cvsw32.zip
+  WINFILES=/home/cottrell/stats/esl/win32
+  HLPDIR=${TOPDIR}/share
+  DOCDIR=${TOPDIR}/build/doc/tex
+  INNO_CMD="nice wine c:/innodir/ISCC.exe"
+else
+  GNUPLOT_ZIPFILE=/mingw/winbuild/gp43cvsw32.zip
+  WINFILES=/mingw/winbuild
+  HLPDIR=${WINFILES}/help
+  DOCDIR=${WINFILES}/doc
+  INNO_CMD="ISCC.exe" # FIXME
+fi
+
+#############################################
+
+# function: add gnuplot distribution
 function process_gnuplot {
     echo "adding content of $GNUPLOT_ZIPFILE" >> ../FILELIST
-    unzip -l $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
-        | awk '{ print $1" "$2" "$3" "$4 }' >> MANIFEST
+    if [ "$BUILDTYPE" = "cross" ] ; then
+      unzip -l $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
+	  | awk '{ print $1" "$2" "$3" "$4 }' >> MANIFEST
+    else
+      unzip -l $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
+	  | awk '{ print $1" "$4" "$5" "$6 }' >> MANIFEST
+    fi
     unzip -X $GNUPLOT_ZIPFILE
 }
 
-# add GTK runtime
+# function: add GTK runtime
 function process_gtk {
     echo "adding GTK runtime..."
-    mkdir -p $HOME_WIN32/tmp
-    cd $HOME_WIN32/tmp
-    tar tvfz ../gtk-runtime.tgz | awk '{ print $3" "$4" "$5" "$6 }' > gtk.files
-    tar xfz ../gtk-runtime.tgz
+    mkdir -p gtktmp
+    cd gtktmp
+    tar tvfz ${WINFILES}/gtk-runtime.tgz | awk '{ print $3" "$4" "$5" "$6 }' > gtk.files
+    tar xfz ${WINFILES}/gtk-runtime.tgz
     for d in `cat gtk.files | awk '{ print $NF }' | grep /$` ; do
        echo "make dir: $d"
        mkdir -p $THISDIR/windist/gretl/$d
@@ -48,11 +69,10 @@ function process_gtk {
     done
     IFS=$save_ifs
     cd $THISDIR
-    rm -rf $HOME_WIN32/tmp
+    rm -rf gtktmp
 }
 
-# Shouldn't have to make changes below here...
-
+# function: add file to package
 function add_file {
     if [ `basename $1` != "CVS" ] && [ ! -d $1 ] ; then
         finfo=`ls -l $1 | awk '{ print $5" "$6" "$7 }'`
@@ -63,7 +83,8 @@ function add_file {
     fi
 }
 
-TOPDIR=..
+# start of script proper
+
 VERSION=$(grep GRETL_VERSION[^_] $TOPDIR/lib/src/version.h | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
 
@@ -106,7 +127,7 @@ for f in plugins/*.dll ; do
 done
 
 # gretl translations
-LANGS=`cat LINGUAS | grep -v ^#`
+LANGS=`cat ${TOPDIR}/po/LINGUAS | grep -v ^#`
 for lang in $LANGS ; do
    mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
 done
@@ -120,11 +141,11 @@ for f in \
     libblas.dll liblapack.dll libgtksourceview.dll \
     iconv.dll intl.dll libfftw3-3.dll libpng12-0.dll
 do
-    add_file $HOME_WIN32/misc-dll/$f gretl/$f
+    add_file $WINFILES/misc-dll/$f gretl/$f
 done
 
 # Uncomment if not using cairo in gnuplot
-# add_file $HOME_WIN32/misc-dll/libpdf.dll gretl/$f
+# add_file $WINFILES/misc-dll/libpdf.dll gretl/$f
 
 # XML UI-definition files
 for f in ${TOPDIR}/gui2/*.xml ; do
@@ -141,28 +162,28 @@ add_file ${TOPDIR}/gui2/R.lang \
   gretl/share/gtksourceview-1.0/language-specs/R.lang
 
 # help files, license, logo
-add_file ${TOPDIR}/share/gretlgui.hlp gretl/gretlgui_hlp.txt
-add_file ${TOPDIR}/share/gretlcmd.hlp gretl/gretlcmd_hlp.txt
-add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt
-add_file ${TOPDIR}/share/genrcli.hlp gretl/genrcli.hlp
-add_file ${TOPDIR}/share/genrgui.hlp gretl/genrgui.hlp
-add_file ${TOPDIR}/share/genrcli.hlp.it gretl/genrcli.hlp.it
-add_file ${TOPDIR}/share/genrgui.hlp.it gretl/genrgui.hlp.it
+add_file ${HLPDIR}/gretlgui.hlp gretl/gretlgui_hlp.txt
+add_file ${HLPDIR}/gretlcmd.hlp gretl/gretlcmd_hlp.txt
+add_file ${HLPDIR}/gretlcli.hlp gretl/gretlcli_hlp.txt
+add_file ${HLPDIR}/genrcli.hlp gretl/genrcli.hlp
+add_file ${HLPDIR}/genrgui.hlp gretl/genrgui.hlp
+add_file ${HLPDIR}/genrcli.hlp.it gretl/genrcli.hlp.it
+add_file ${HLPDIR}/genrgui.hlp.it gretl/genrgui.hlp.it
 for f in ${TOPDIR}/share/texfigs/*.png ; do
    add_file $f gretl/helpfigs/`basename $f`
 done
 for lang in es it ; do
-   add_file ${TOPDIR}/share/gretlgui.hlp.${lang} \
+   add_file ${HLPDIR}/gretlgui.hlp.${lang} \
        gretl/gretlgui_hlp_${lang}.txt
-   add_file ${TOPDIR}/share/gretlcmd.hlp.${lang} \
+   add_file ${HLPDIR}/gretlcmd.hlp.${lang} \
        gretl/gretlcmd_hlp_${lang}.txt
-   add_file ${TOPDIR}/share/gretlcli.hlp.${lang} \
+   add_file ${HLPDIR}/gretlcli.hlp.${lang} \
        gretl/gretlcli_hlp_${lang}.txt
 done
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
-add_file ${TOPDIR}/build/doc/tex/gretl-guide.pdf gretl/doc/gretl-guide.pdf
-add_file ${TOPDIR}/build/doc/tex/gretl-ref.pdf gretl/doc/gretl-ref.pdf
+add_file ${DOCDIR}/gretl-guide.pdf gretl/doc/gretl-guide.pdf
+add_file ${DOCDIR}/gretl-ref.pdf gretl/doc/gretl-ref.pdf
 
 # data files
 for f in ${TOPDIR}/share/data/* ; do
@@ -187,9 +208,14 @@ for f in ${TOPDIR}/share/scripts/misc/* ; do
 done
 
 # database files
-make -C ${TOPDIR}/build/share/bcih
-add_file ${TOPDIR}/build/share/bcih/fedstl.bin gretl/db/fedstl.bin
-add_file ${TOPDIR}/share/bcih/fedstl.idx gretl/db/fedstl.idx 
+if [ "$BUILDTYPE" = "cross" ] ; then
+  make -C ${TOPDIR}/build/share/bcih
+  add_file ${TOPDIR}/build/share/bcih/fedstl.bin gretl/db/fedstl.bin
+  add_file ${TOPDIR}/share/bcih/fedstl.idx gretl/db/fedstl.idx 
+else
+  add_file ${WINFILES}/db/fedstl.bin gretl/db/fedstl.bin
+  add_file ${WINFILES}/db/fedstl.idx gretl/db/fedstl.idx 
+fi
 
 # translations (make sure they're up to date first)
 make -C mo

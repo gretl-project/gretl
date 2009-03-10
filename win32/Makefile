@@ -299,10 +299,16 @@ gretlw32_res.o: gretlw32.rc
 	$(RC) $(RCFLAGS) $< $@
 
 cross_lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
-	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mklang && ./mklang > $$HERE/$@ ; cd $$HERE
+	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mklang && ./mklang > $$HERE/gretl.lang ; cd $$HERE
 
-native_lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c mklang
-	./mklang > $@	
+mklang.o: mklang.c $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
+	$(CC) -c -I. -I$(libsrcdir) -I$(XML2_INC) $<
+
+mklang.exe: mklang.o
+	$(CC) -o $@ $< $(GRETLLIB) $(XML_LIBS)
+
+native_lang: mklang.exe
+	PATH=/bin:./dlls:/mingw/winbuild/misc-dll ./mklang.exe > gretl.lang
 
 gretl_updater.exe:
 	make -C updater

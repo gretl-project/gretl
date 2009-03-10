@@ -1,13 +1,15 @@
-HOSTCC = gcc -W -Wall
+HOSTCC = gcc -Wall
 
-include ../../config.mk
+include ../config.mk
 
 ifeq ($(BUILDTYPE),cross)
-  TODOS = todos
+  DOIT = ./make_iss < MANIFEST | todos
+else
+  DOIT = ./make_iss < MANIFEST
 endif
 
 gretl.iss: make_iss
-	./make_iss < MANIFEST | $(TODOS) > gretl.iss 
+	$(DOIT) > gretl.iss
 
 make_iss: make_iss.c
 	$(HOSTCC) -o $@ $< 
