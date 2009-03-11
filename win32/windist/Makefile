@@ -8,7 +8,7 @@ else
   DOIT = ./make_iss < MANIFEST
 endif
 
-gretl.iss: make_iss
+gretl.iss: make_iss MANIFEST
 	$(DOIT) > gretl.iss
 
 make_iss: make_iss.c

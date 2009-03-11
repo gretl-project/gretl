@@ -399,7 +399,7 @@ plugins/jmulti_import.dll: jmulti_import.o dllinit.o
 
 plugins/mp_ols.dll: mp_ols.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp
 
 plugins/sysest.dll: sysest.o fiml.o liml.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

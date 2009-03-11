@@ -24,4 +24,4 @@ else
 endif
 
 # libxml2 includes: adjust to match your system
-XML2_INC = $(MGWDIR)/libxml2
+XML2_INC = $(MGWDIR)/include/libxml2
