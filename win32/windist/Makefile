@@ -20,3 +20,4 @@ versiondiff: versiondiff.c
 clean:
 	rm -rf ./gretl 
 	rm -f errlog Output/*
+
