@@ -23,7 +23,8 @@ else
   WINFILES=/mingw/winbuild
   HLPDIR=${WINFILES}/help
   DOCDIR=${WINFILES}/doc
-  INNO_CMD="ISCC.exe" # FIXME
+  # C:/Program Files/Inno Setup 5/ISCC.exe
+  INNO_CMD="c:/progra~1/innose~1/iscc.exe"
 fi
 
 #############################################
