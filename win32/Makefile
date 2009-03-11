@@ -292,12 +292,11 @@ all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
 gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lzlib1 -lmingwex -s
 
-gretlw32.exe: $(GUIOBJ) gretlw32_res.o
+gretlw32.exe: $(GUIOBJ) gretlres.coff
 	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lzlib1 -lmingwex -s
 
-gretlw32_res.o: gretlw32.rc 
-	# $(RC) $(RCFLAGS) $< $@
-	cp gretlw32_res.dist gretlw32_res.o
+gretlres.coff: gretlw32.rc 
+	$(RC) $(RCFLAGS) $< $@
 
 cross_lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
 	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mklang && ./mklang > $$HERE/gretl.lang ; cd $$HERE
@@ -507,9 +506,9 @@ clean:
 	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
 	rm -f plugins/* $(PLUGINS)
 	rm -f $(imports)/*.a 
-	rm -f gretl.stamp build.h
+	rm -f gretl.stamp gretl.lang builddate build.h
 	rm -f windist/MANIFEST windist/gretl.iss 
-	rm -rf windist/gretl windist/gnuplot windist/Output
+	rm -rf windist/gretl windist/Output
 	make -C updater clean
 	make -C mo clean
 
