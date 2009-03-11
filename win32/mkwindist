@@ -15,13 +15,11 @@ THISDIR=`pwd`
 ########## CONFIGURE HERE ###################
 
 if [ "$BUILDTYPE" = "cross" ] ; then
-  GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp43cvsw32.zip
   WINFILES=/home/cottrell/stats/esl/win32
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
   INNO_CMD="nice wine c:/innodir/ISCC.exe"
 else
-  GNUPLOT_ZIPFILE=/mingw/winbuild/gp43cvsw32.zip
   WINFILES=/mingw/winbuild
   HLPDIR=${WINFILES}/help
   DOCDIR=${WINFILES}/doc
@@ -30,55 +28,22 @@ fi
 
 #############################################
 
-# function: add gnuplot distribution
-function process_gnuplot {
-    echo "adding content of $GNUPLOT_ZIPFILE" >> ../FILELIST
-    if [ "$BUILDTYPE" = "cross" ] ; then
-      unzip -l $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
-	  | awk '{ print $1" "$2" "$3" "$4 }' >> MANIFEST
-    else
-      unzip -l $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
-	  | awk '{ print $1" "$4" "$5" "$6 }' >> MANIFEST
-    fi
-    unzip -X $GNUPLOT_ZIPFILE
+# function: add content of unexploded tar package
+# the single argument is the path to the tarball
+function process_tarball {
+    echo "adding content of $1"
+    tar tvfz $1 | awk '{ print $3" "$4" "$5" "$6 }' | \
+       grep -v ^0 >> MANIFEST
+    tar xfz $1
 }
 
-# function: add GTK runtime
-function process_gtk {
-    echo "adding GTK runtime..."
-    mkdir -p gtktmp
-    cd gtktmp
-    tar tvfz ${WINFILES}/gtk-runtime.tgz | awk '{ print $3" "$4" "$5" "$6 }' > gtk.files
-    tar xfz ${WINFILES}/gtk-runtime.tgz
-    for d in `cat gtk.files | awk '{ print $NF }' | grep /$` ; do
-       echo "make dir: $d"
-       mkdir -p $THISDIR/windist/gretl/$d
-    done 
-    save_ifs=$IFS
-    IFS='
-'
-    for line in `cat gtk.files | grep -v /$` ; do
-       fsize=`echo $line | awk '{ print $1 }'`
-       fdate=`echo $line | awk '{ print $2 }'`
-       ftime=`echo $line | awk '{ print $3 }'`
-       fname=`echo $line | awk '{ print $NF }'`
-       instfile=`echo $fname | sed s+^bin/++`
-       echo "$fname -> gretl/$instfile" >> $THISDIR/FILELIST
-       echo "$fsize $fdate $ftime gretl/$instfile" >> $THISDIR/windist/MANIFEST
-       cp -ap $fname $THISDIR/windist/gretl/$instfile || exit 1
-    done
-    IFS=$save_ifs
-    cd $THISDIR
-    rm -rf gtktmp
-}
-
-# function: add file to package
+# function: add individual file to package
+# arg1 is path to file to add, arg2 is where to put it
 function add_file {
     if [ `basename $1` != "CVS" ] && [ ! -d $1 ] ; then
         finfo=`ls -l $1 | awk '{ print $5" "$6" "$7 }'`
 	cp -p $1 windist/$2
 	echo $2
-        echo "$1 -> $2" >> FILELIST
         echo "$finfo $2" >> windist/MANIFEST
     fi
 }
@@ -93,8 +58,7 @@ if [ -f windist/MANIFEST ] ; then
 fi
 echo "VERSION $VERSION" > windist/MANIFEST
 echo "DATE `date`" >> windist/MANIFEST
-rm -f FILELIST
-rm -rf windist/gretl windist/gnuplot
+rm -rf windist/gretl
 
 # make gretl directory structure
 mkdir -p windist
@@ -132,20 +96,14 @@ for lang in $LANGS ; do
    mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
 done
 
-# GTK directories and runtime files
-process_gtk
-
 # auxiliary dlls
 for f in \
     libgmp-3.dll libxml2.dll readline5.dll history5.dll zlib1.dll \
     libblas.dll liblapack.dll libgtksourceview.dll \
     iconv.dll intl.dll libfftw3-3.dll libpng12-0.dll
 do
-    add_file $WINFILES/misc-dll/$f gretl/$f
+    add_file ${WINFILES}/misc-dll/$f gretl/$f
 done
-
-# Uncomment if not using cairo in gnuplot
-# add_file $WINFILES/misc-dll/libpdf.dll gretl/$f
 
 # XML UI-definition files
 for f in ${TOPDIR}/gui2/*.xml ; do
@@ -234,9 +192,11 @@ add_file updater/gretl_updater.exe gretl/gretl_updater.exe
 date > gretl.stamp
 add_file gretl.stamp gretl/gretl.stamp
 
-# add gnuplot distribution
+# add GTK runtime and gnuplot distribution: note that we move
+# into the "windist" subdir first
 cd windist
-process_gnuplot
+process_tarball ${WINFILES}/gtk-runtime.tgz
+process_tarball ${WINFILES}/gp43cvsw32.tgz
 
 make gretl.iss
 
