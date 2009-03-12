@@ -1,12 +1,15 @@
 This directory contains materials for building the win32 version of
-gretl.  The files are set up for cross-compilation under Linux using
-the mingw C compiler.  It should be possible to modify them for a
-native mingw build on the win32 platform.
+gretl.  The resources should work both for cross-compilation on
+Linux, using the mingw32 cross-compiler, and for a "native" build on 
+MS Windows, using mingw plus msys (see mingw.org). 
+
+For additional resources (discussed below), see
+
+http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
 
 If you want to build gretl for win32 yourself you will need to get
-some additional files, and to modify the scripts here to suit your own
-setup.
-
+some additional files, and will probably need to modify some of the 
+settings in the Makefiles and scripts to suit your own setup.
 
 A. Additional files:
 
@@ -15,46 +18,40 @@ A. Additional files:
 
 2. libxml, libreadline, libpng, zlib and gmp
 
-For all of the above, you need DLLs, import libraries (.a) and
-headers.  See 
+   For all of the above, you need DLLs, import libraries (.a) and
+   headers.  See 
 
-http://gnuwin32.sourceforge.net/
-http://mingwrep.sourceforge.net/ 
+   http://gnuwin32.sourceforge.net/
+   http://mingwrep.sourceforge.net/ 
 
-for repositories of such packages.  For convenience, I have assembled an
-archive, misc-dll.tgz, which contains all that is needed
-in regard to libxml, libreadline, zlib and gmp. See
+   for repositories of such packages.  For convenience, I have assembled a
+   couple of archive files, namely mingw-extra.zip (build-time files:
+   headers and import libraries) and misc-dll.zip (runtime files for
+   distribution in the gretl package). See
 
-  http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
+   http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
 
 3. The Inno Setup compiler for making a self-installing executable
    See http://www.jrsoftware.org/
 
 4. The gnuplot for win32 distribution.  
-   See http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/ (preferable)
-   or http://gnuplot.info/
-
+   See http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
 
 B. Modifications to scripts:
 
-1. At the top of the shell script, mkwindist, you will need to enter
-correct settings for (a) the location of the zipfile containing
-gnuplot for win32, and (b) the path to the Inno Setup compiler.  If you
-are building on win32 you will have to make further changes to this
-script (e.g., as it stands, the Inno compiler is called using wine).
+1. config.mk: If you're doing a native build, change "BUILDTYPE = cross"
+to read "BUILDTYPE = native".  Whichever sort of build you're doing, you
+may need to change some of the configuration settings in this file.
 
-2. Adjust the settings in config.mk to match your system.
+2. Makefile: Hopefully you won't need to change anything here.
 
-3. You may have to change the path to the perl interpreter in the perl
-scripts builddate.pl and windist/make_iss.pl
+3. mkwindist: this is a shell script which builds the gretl installer.
+You may have to make some changes in the section marked "CONFIGURE HERE", 
+near the top of the script.
 
 When you have everything in place you can do "make" to build gretl for
 win32, and "make dist" to build the installer executable for gretl.
 If all goes well, you should find gretl_install.exe in windist/Output.
 
-In anyone wants to contribute a set of scripts that work for a build 
-of gretl actually on win32 (or even using the MS C compiler), please
-do so and and I'll add them to this directory.
-
 Allin Cottrell
-last updated January 2009
+last updated March 2009
