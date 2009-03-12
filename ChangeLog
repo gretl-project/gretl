@@ -46,6 +46,8 @@
 - Enhancements for GUI menu item "Count missing values"
 - tsls: add Stock-Yogo minimum eigenvalue test for weak 
   instruments
+- modify the files in the win32 subdirectory of the gretl
+  source to support building on MS Windows with mingw/msys
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
