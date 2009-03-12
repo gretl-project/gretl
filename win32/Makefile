@@ -292,10 +292,10 @@ all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
 gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lzlib1 -lmingwex -s
 
-gretlw32.exe: $(GUIOBJ) gretlres.coff
+gretlw32.exe: $(GUIOBJ) gretlres.o
 	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lzlib1 -lmingwex -s
 
-gretlres.coff: gretlw32.rc 
+gretlres.o: gretlw32.rc 
 	$(RC) $(RCFLAGS) $< $@
 
 cross_lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
