@@ -24,12 +24,12 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 # libraries
 GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win32-2.0)
 GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
-CLI_LIBS = -lreadline.dll -lhistory.dll
+CLI_LIBS = -lreadline -lhistory
 GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview -lxml2 -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas
-FFTW_LIBS = -lfftw3.dll
+FFTW_LIBS = -lfftw3
 
 # flags/defines
 CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) \

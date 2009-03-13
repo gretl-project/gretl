@@ -46,7 +46,7 @@ int read_reg_val (HKEY tree, const char *base,
                      KEY_READ,                    /* access mask */
                      &regkey                      /* key handle */
                      ) != ERROR_SUCCESS) {
-        fprintf(stderr, _("Couldn't open registry\n"));
+        fprintf(stderr, "Couldn't open registry path %s\n", regpath);
         return 1;
     }
 
@@ -142,6 +142,22 @@ DIR *win32_opendir (const char *dname)
     return opendir(tmp);
 }
 
+/* 
+   relevant extract from gretl.iss:
+
+   HKLM; "Software\gretl"; "gretldir";   "{app}"
+   HKLM; "Software\gretl"; "Rcommand";   "RGui.exe"
+   HKCU; "Software\gretl"; "binbase";    "{app}\db\"
+   HKCU; "Software\gretl"; "ratsbase";   "f:\"
+   HKCU; "Software\gretl"; "dbhost";     "ricardo.ecn.wfu.edu"
+   HKCU; "Software\gretl"; "dbproxy";    ""
+   HKCU; "Software\gretl"; "useproxy";   "false"
+   HKCU; "Software\gretl"; "updater";    "false"
+   HKCU; "Software\gretl"; "Fixed_font"; "Courier New 10"
+   HKCU; "Software\gretl"; "Png_font";   "verdana 8"
+   HKCU; "Software\gretl"; "Gp_colors";  ""
+*/
+
 void cli_read_registry (char *callname, PATHS *ppaths)
 {
     char valstr[MAXLEN];
@@ -150,12 +166,14 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     char *tmp;
     int drive = callname[0];
 
+    /* gretl installation directory */
     ppaths->gretldir[0] = '\0';
     read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", ppaths->gretldir);
     if (ppaths->gretldir[0] == '\0') {
 	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl\\", drive);
     }
 
+    /* user's working directory */
     ppaths->workdir[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", ppaths->workdir);
     if (ppaths->workdir[0] == '\0') {
@@ -169,6 +187,7 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	}
     }
 
+    /* "hidden" working dir: not user-configurable */
     ppaths->dotdir[0] = '\0';
     tmp = appdata_path();
     if (tmp != NULL) {
@@ -178,15 +197,18 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	sprintf(ppaths->dotdir, "%c:\\userdata\\gretl\\user\\", drive);
     }    
 
+    /* base path for databases */
     ppaths->binbase[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "binbase", ppaths->binbase);
     if (ppaths->binbase[0] == '\0') {
 	sprintf(ppaths->binbase, "%c:\\userdata\\gretl\\db", drive);
     }
 
+    /* base path for RATS databases */
     ppaths->ratsbase[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "ratsbase", ppaths->ratsbase);
 
+    /* path to X-12-ARIMA */
     ppaths->x12a[0] = '\0';
     read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, HKEY_CLASSES_ROOT,
 			       "x12arima", "x12a", ppaths->x12a);
@@ -194,21 +216,25 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima\\x12a.exe", drive);
     }
 
+    /* remote database host */
     ppaths->dbhost[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "dbhost", ppaths->dbhost);
     if (ppaths->dbhost[0] == '\0') {
 	strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
     }
 
+    /* www proxy for reading remote databases */
     dbproxy[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "dbproxy", dbproxy);
 
+    /* should a proxy be used? */
     valstr[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "use_proxy", valstr);
     if (!strcmp(valstr, "true") || !strcmp(valstr, "1")) {
 	use_proxy = 1;
     } 
 
+    /* do we allow the shell command within gretl? */
     valstr[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "shellok", valstr);
     if (!strcmp(valstr, "true") || !strcmp(valstr, "1")) {

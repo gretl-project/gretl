@@ -34,5 +34,11 @@ Notes on building gretl on MS Windows itself
 * You'll also the need the current Inno Setup program from
   http://www.innosetup.com/isinfo.php in order to build the
   installer executable  
+
+Note that it will be difficult if not impossible to run gretl
+directly from the location where you have built it.  In the first
+instance you should create and run the installer .exe, which
+will put the files into the correct relative positions and 
+create the required entries in the Windows registry.
   
      

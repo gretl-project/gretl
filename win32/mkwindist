@@ -196,8 +196,19 @@ add_file gretl.stamp gretl/gretl.stamp
 # add GTK runtime and gnuplot distribution: note that we move
 # into the "windist" subdir first
 cd windist
-process_tarball ${WINFILES}/gtk-runtime.tgz
-process_tarball ${WINFILES}/gp43cvsw32.tgz
+if [ ! -f ${WINFILES}/gtk-runtime.tar.gz ] ; then
+  echo "Couldn't find gtk-runtime.tar.gz"
+  exit 1
+else 
+  process_tarball ${WINFILES}/gtk-runtime.tar.gz
+fi
+
+if [ ! -f ${WINFILES}/gp43cvsw32.tar.gz ] ; then
+  echo "Couldn't find gp43cvsw32.tar.gz"
+  exit 1
+else
+  process_tarball ${WINFILES}/gp43cvsw32.tar.gz
+fi
 
 make gretl.iss
 
