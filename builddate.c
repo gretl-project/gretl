@@ -48,7 +48,7 @@ int main (void)
 	    exit(EXIT_FAILURE);
 	} else {
 	    printf("Updating build.h\n");
-	    fprintf(fp, "#define BUILD_DATE \"build date %d-%02d-%02d\"\n", 
+	    fprintf(fp, "#define BUILD_DATE \"build date %d-%02d-%02d\\n\"\n", 
 		    y, m, d);
 	    fclose(fp);
 	}
