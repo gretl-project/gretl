@@ -41,12 +41,10 @@ function process_tarball {
 # function: add individual file to package
 # arg1 is path to file to add, arg2 is where to put it
 function add_file {
-    if [ `basename $1` != "CVS" ] && [ ! -d $1 ] ; then
-        finfo=`ls -l $1 | awk '{ print $5" "$6" "$7 }'`
-	cp -p $1 windist/$2
-	echo $2
-        echo "$finfo $2" >> windist/MANIFEST
-    fi
+    finfo=`ls -l $1 | awk '{ print $5" "$6" "$7 }'`
+    cp -p $1 windist/$2
+    echo $2
+    echo "$finfo $2" >> windist/MANIFEST
 }
 
 # start of script proper
@@ -144,25 +142,51 @@ add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 add_file ${DOCDIR}/gretl-guide.pdf gretl/doc/gretl-guide.pdf
 add_file ${DOCDIR}/gretl-ref.pdf gretl/doc/gretl-ref.pdf
 
-# data files
-for f in ${TOPDIR}/share/data/* ; do
+# top-level data files
+for f in ${TOPDIR}/share/data/*.gdt ; do
     add_file $f gretl/data/`basename $f`
 done
-for f in ${TOPDIR}/share/data/greene/* ; do
+for f in ${TOPDIR}/share/data/*.dtd ; do
+    add_file $f gretl/data/`basename $f`
+done
+for f in ${TOPDIR}/share/data/descriptions ; do
+    add_file $f gretl/data/`basename $f`
+done
+
+# Greene data files
+for f in ${TOPDIR}/share/data/greene/*.gdt ; do
     add_file $f gretl/data/greene/`basename $f`
 done
-for f in ${TOPDIR}/share/data/misc/* ; do
+for f in ${TOPDIR}/share/data/greene/wg_descriptions ; do
+    add_file $f gretl/data/greene/`basename $f`
+done
+
+# "misc" data files
+for f in ${TOPDIR}/share/data/misc/*.gdt ; do
     add_file $f gretl/data/misc/`basename $f`
 done
+for f in ${TOPDIR}/share/data/misc/descriptions ; do
+    add_file $f gretl/data/misc/`basename $f`
+done
+
+# NIST test data files
 for f in ${TOPDIR}/tests/*.dat ; do
     add_file $f gretl/data/nist/`basename $f`
 done
 
-# scripts
-for f in ${TOPDIR}/share/scripts/* ; do
+# top-level scripts
+for f in ${TOPDIR}/share/scripts/*.inp ; do
     add_file $f gretl/scripts/`basename $f`
 done
-for f in ${TOPDIR}/share/scripts/misc/* ; do
+for f in ${TOPDIR}/share/scripts/*tions ; do
+    add_file $f gretl/scripts/`basename $f`
+done
+
+# "misc" scripts
+for f in ${TOPDIR}/share/scripts/misc/*.inp ; do
+    add_file $f gretl/scripts/misc/`basename $f`
+done
+for f in ${TOPDIR}/share/scripts/misc/ps_descriptions ; do
     add_file $f gretl/scripts/misc/`basename $f`
 done
 
