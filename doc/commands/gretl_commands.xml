@@ -6077,7 +6077,7 @@
 	  <effect>use a database on the gretl server</effect>
 	</option>
 	<option>
-	  <note>See below for spreadsheet-specific options</note>
+	  <note>See below for additional specialized options</note>
 	</option>
       </options>
       <examples>
@@ -6096,7 +6096,17 @@
 	assumes a native datafile with suffix <lit>.gdt</lit>.  Based on
 	the name of the file and various heuristics, gretl will try to
 	detect the format of the data file (native, plain text, CSV, MS
-	Excel, Stata, etc.).
+	Excel, Stata, SPSS, etc.).
+      </para>
+
+      <para>
+	The <lit>open</lit> command can also be used to open a database
+	(gretl, RATS 4.0 or PcGive) for reading.  In that case it should be
+	followed by the <cmdref targ="data"/> command to extract particular
+	series from the database.  If the <lit>www</lit> option is given, the
+	program will try to access a database of the given name on the gretl
+	server &mdash; for instance the Federal Reserve interest rates
+	database in the third example above.
       </para>
 
       <para>
@@ -6119,14 +6129,34 @@
       </para>
 
       <para>
-	This command can also be used to open a database (gretl, RATS 4.0
-	or PcGive) for reading.  In that case it should be followed by the
-	<cmdref targ="data"/> command to extract particular series from
-	the database.  If the <lit>www</lit> option is given, the program
-	will try to access a database of the given name on the gretl
-	server &mdash; for instance the Federal Reserve interest rates
-	database in the third example above.
+	With plain text files, gretl generally expects to find the data
+	columns delimited in some standard manner.  But there is also a
+	special facility for reading <quote>fixed format</quote> files, in
+	which there are no delimiters but there is known specification of the
+	form, &eg;, <quote>variable <math>k</math> occupies 8 columns starting
+	at column 24</quote>.  To read such files, you should append a string
+	<lit>--cols=</lit><repl>colspec</repl>, where <repl>colspec</repl> is
+	composed of comma-separated integers.  These integers are interpreted
+	as a set of pairs.  The first element of each pair denotes a starting
+	column, measured in bytes from the beginning of the line with 1
+	indicating the first byte; and the second element indicates how many
+	bytes should be read for the given field.  So, for example, if you say
       </para>
+      <code>
+	open fixed.txt --cols=1,6,20,3
+      </code>
+      <para>
+	then for variable 1 gretl will read 6 bytes starting at column 1; and
+	for variable 2, 3 bytes starting at column 20.  Lines that are blank,
+	or that begin with <lit>#</lit>, are ignored, but otherwise the
+	column-reading template is applied, and if anything other than a valid
+	numerical value is found an error is flagged.  If the data are read
+	successfully, the variables will be named <lit>v1</lit>,
+	<lit>v2</lit>, etc.  It's up to the user to provide meaningful names
+	and/or descriptions using the commands <cmdref targ="rename"/> and/or 
+	<cmdref targ="setinfo"/>.
+      </para>
+
     </description>
 
     <gui-access>
