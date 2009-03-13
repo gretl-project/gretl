@@ -33,6 +33,7 @@
 
 #include "importer.h"
 #include "biff.h"
+#include "build.h"
 
 static void free_sheet (void);
 static int allocate_row_col (int row, int col, wbook *book);
@@ -40,7 +41,6 @@ static int allocate_row_col (int row, int col, wbook *book);
 int debug_print;
 
 #ifdef WIN32
-# include "build.h"
 char debug_fname[FILENAME_MAX];
 FILE *fdb;
 static void make_debug_fname (void);
@@ -124,11 +124,7 @@ static int dprintf (const char *format, ...)
 
 static void print_version (void)
 {
-#ifdef WIN32
     dprintf("gretl, version %s, %s\n", GRETL_VERSION, BUILD_DATE);
-#else
-    dprintf("gretl, version %s\n", GRETL_VERSION); 
-#endif
 }
 
 static double get_le_double (const unsigned char *rec) 

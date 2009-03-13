@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main (int argc, char *argv[])
+int main (int argc, char **argv)
 {
     const char *binfile = "fedstl.bin";
     const char *datfile = "fedstl.dat";
-    char datpath[128];
+    char datpath[512];
     FILE *fdat, *fbin;
     double xx;
     float x;

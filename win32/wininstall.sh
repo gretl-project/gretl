@@ -108,8 +108,9 @@ done
 ${install} ${TOPDIR}/share/scripts/misc/ps_descriptions $PREFIX/scripts/misc
 
 # database files
-${install} ${WINFILES}/db/fedstl.bin $PREFIX/db
-${install} ${WINFILES}/db/fedstl.idx $PREFIX/db
+make -C db
+${install} db/fedstl.bin $PREFIX/db
+${install} ${TOPDIR}/share/bcih/fedstl.idx $PREFIX/db
 
 # gretl translations (make sure they're up to date first)
 make -C mo

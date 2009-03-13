@@ -196,8 +196,9 @@ if [ "$BUILDTYPE" = "cross" ] ; then
   add_file ${TOPDIR}/build/share/bcih/fedstl.bin gretl/db/fedstl.bin
   add_file ${TOPDIR}/share/bcih/fedstl.idx gretl/db/fedstl.idx 
 else
-  add_file ${WINFILES}/db/fedstl.bin gretl/db/fedstl.bin
-  add_file ${WINFILES}/db/fedstl.idx gretl/db/fedstl.idx 
+  make -C db
+  add_file db/fedstl.bin gretl/db/fedstl.bin
+  add_file ${TOPDIR}/share/bcih/fedstl.idx gretl/db/fedstl.idx 
 fi
 
 # translations (make sure they're up to date first)

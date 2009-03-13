@@ -511,6 +511,7 @@ clean:
 	rm -rf windist/gretl windist/Output
 	make -C updater clean
 	make -C mo clean
+	make -C db clean
 
 cleandist:
 	rm -f windist/MANIFEST windist/gretl.iss

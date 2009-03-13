@@ -110,9 +110,8 @@ void about_dialog (void)
     buf = 
 	g_markup_printf_escaped("<span weight=\"bold\" size=\"xx-large\">"
 				"gretl %s</span>\n"
-				BUILD_DATE
-				"%s",
-				GRETL_VERSION, _(bonmot));
+				"%s\n%s",
+				GRETL_VERSION, BUILD_DATE, _(bonmot));
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
     g_free(buf);
