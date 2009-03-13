@@ -46,7 +46,7 @@ int read_reg_val (HKEY tree, const char *base,
                      KEY_READ,                    /* access mask */
                      &regkey                      /* key handle */
                      ) != ERROR_SUCCESS) {
-        fprintf(stderr, "Couldn't open registry path %s\n", regpath);
+        fprintf(stderr, "Couldn't read registry path %s\n", regpath);
         return 1;
     }
 
