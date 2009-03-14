@@ -54,4 +54,6 @@ void kalman_set_options (kalman *K, int opts);
 
 int kalman_get_options (kalman *K);
 
+int kalman_parse_line (const char *line, gretlopt opt);
+
 #endif /* KALMAN_H_ */

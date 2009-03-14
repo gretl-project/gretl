@@ -38,6 +38,7 @@
 #include "dbread.h"
 #include "gretl_foreign.h"
 #include "boxplots.h"
+#include "kalman.h"
 
 #include <glib.h>
 
@@ -344,6 +345,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == HELP || \
                        c == INCLUDE || \
     	               c == INFO || \
+                       c == KALMAN || \
  	               c == LABELS || \
                        c == LEVERAGE || \
                        c == LMTEST || \
@@ -1762,6 +1764,7 @@ static int check_datamod_command (CMD *cmd, const char *s)
 #define COMMAND_CAN_END(c) (c == FOREIGN || \
 			    c == FUNC || \
                             c == GMM || \
+                            c == KALMAN || \
                             c == MLE || \
                             c == NLS || \
 			    c == RESTRICT || \
@@ -3250,6 +3253,8 @@ static int effective_ci (const CMD *cmd)
 	    ci = RESTRICT;
 	} else if (!strcmp(cmd->param, "foreign")) {
 	    ci = FOREIGN;
+	} else if (!strcmp(cmd->param, "kalman")) {
+	    ci = KALMAN;
 	}
     }
 
@@ -4482,6 +4487,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} 
 	break;
 
+    case KALMAN:
+	err = kalman_parse_line(line, cmd->opt);
+	if (!err) {
+	    gretl_cmd_set_context(cmd, cmd->ci);
+	}
+	break;
+
     case ADD:
     case OMIT:
 	clear_model(models[1]);
@@ -4637,6 +4649,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (!strcmp(cmd->param, "foreign")) {
 	    err = foreign_execute((const double **) *pZ, pdinfo, 
 				  cmd->opt, prn);
+	} else if (!strcmp(cmd->param, "kalman")) {
+	    err = kalman_parse_line(line, cmd->opt);
 	} else {
 	    err = 1;
 	}
@@ -4917,7 +4931,8 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     }
 
     if (cmd->ci == NLS || cmd->ci == MLE ||
-	cmd->ci == GMM || cmd->ci == FOREIGN) {
+	cmd->ci == GMM || cmd->ci == FOREIGN ||
+	cmd->ci == KALMAN) {
 	context = cmd->ci;
     }
 
@@ -4966,6 +4981,7 @@ int ready_for_command (const char *line)
 	"matrix",
 	"scalar",
 	"string",
+	"kalman",
 	NULL 
     };
     int i, ok = 0;

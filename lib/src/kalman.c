@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "usermat.h"
 #include "kalman.h"
 
 #define KDEBUG 0
@@ -62,6 +63,7 @@ struct kalman_ {
     gretl_matrix *E;       /* forecast errors, all time-steps */
 
     /* workspace matrices */
+    gretl_matrix_block *B; /* holder for the following */
     gretl_matrix *PH;
     gretl_matrix *HPH;
     gretl_matrix *FPH;
@@ -89,100 +91,101 @@ void kalman_free (kalman *K)
     gretl_matrix_free(K->P1);
     gretl_matrix_free(K->e);
 
-    gretl_matrix_free(K->PH);
-    gretl_matrix_free(K->HPH);
-    gretl_matrix_free(K->FPH);
-    gretl_matrix_free(K->V);
-    gretl_matrix_free(K->VE);
-    gretl_matrix_free(K->PHV);
-    gretl_matrix_free(K->Ax);
-
-    gretl_matrix_free(K->Tmpnn);
-    gretl_matrix_free(K->Tmprr);
-    gretl_matrix_free(K->Tmprr_2a);
-    gretl_matrix_free(K->Tmprr_2b);
+    gretl_matrix_block_destroy(K->B);
 
     free(K);
 }
 
-static int 
-kalman_check_dimensions (kalman *K, 
-			 const gretl_matrix *S, const gretl_matrix *P,
-			 const gretl_matrix *F, const gretl_matrix *A,
-			 const gretl_matrix *H, const gretl_matrix *Q,
-			 const gretl_matrix *R, const gretl_matrix *y,
-			 const gretl_matrix *x, const gretl_matrix *E)
+static kalman *kalman_new_empty (void)
+{
+    kalman *K = malloc(sizeof *K);
+
+    if (K != NULL) {
+	K->S0 = K->S1 = NULL;
+	K->P0 = K->P1 = NULL;
+	K->e = NULL;
+	K->B = NULL;
+	K->F = K->A = K->H = NULL;
+	K->Q = K->R = K->E = NULL;
+	K->y = K->x = NULL;
+    }
+
+    return K;
+}
+
+static int kalman_check_dimensions (kalman *K, const gretl_matrix *S,
+				    const gretl_matrix *P)
 {
     K->r = gretl_matrix_rows(S);
-    K->k = gretl_matrix_rows(A);
-    K->n = gretl_matrix_cols(H);
-    K->T = gretl_matrix_rows(y);
+    K->k = gretl_matrix_rows(K->A);
+    K->n = gretl_matrix_cols(K->H);
+    K->T = gretl_matrix_rows(K->y);
 
     /* S should be r x 1 */
-    if (gretl_matrix_cols(S) != 1) {
-	fprintf(stderr, "kalman: matrix S should have 1 column\n");
+    if (S->cols != 1) {
+	fprintf(stderr, "kalman: matrix S is %d x %d, should have 1 column\n",
+		S->rows, S->cols);
 	return 1;
     }
 
     /* P should be r x r */
-    if (gretl_matrix_rows(P) != K->r ||
-	gretl_matrix_cols(P) != K->r) {
-	fprintf(stderr, "kalman: matrix P should be %d x %d\n", K->r, K->r);
+    if (P->rows != K->r || P->cols != K->r) {
+	fprintf(stderr, "kalman: matrix P is %d x %d, should be %d x %d\n", 
+		P->rows, P->cols, K->r, K->r);
 	return 1;
     }
 
     /* F should be r x r */
-    if (gretl_matrix_rows(F) != K->r ||
-	gretl_matrix_cols(F) != K->r) {
-	fprintf(stderr, "kalman: matrix F should be %d x %d\n", K->r, K->r);
+    if (K->F->rows != K->r || K->F->cols != K->r) {
+	fprintf(stderr, "kalman: matrix F is %d x %d, should be %d x %d\n", 
+		K->F->rows, K->F->cols, K->r, K->r);
 	return 1;
     }
 
     /* A should be k x n */
-    if (gretl_matrix_cols(A) != K->n) {
-	fprintf(stderr, "kalman: matrix A should have %d cols\n", K->n);
+    if (K->A->cols != K->n) {
+	fprintf(stderr, "kalman: matrix A has %d columns, should have %d\n", 
+		K->A->cols, K->n);
 	return 1;
     }    
 
     /* H should be r x n */
-    if (gretl_matrix_rows(H) != K->r) {
-	fprintf(stderr, "kalman: matrix H should have %d rows\n", K->r);
+    if (K->H->rows != K->r) {
+	fprintf(stderr, "kalman: matrix H has %d rows, should have %d\n", 
+		K->H->rows, K->r);
 	return 1;
     }    
 
     /* Q should be r x r */
-    if (gretl_matrix_rows(Q) != K->r ||
-	gretl_matrix_cols(Q) != K->r) {
-	fprintf(stderr, "kalman: matrix Q should be %d x %d\n", K->r, K->r);
+    if (K->Q->rows != K->r || K->Q->cols != K->r) {
+	fprintf(stderr, "kalman: matrix Q is %d x %d, should be %d x %d\n", 
+		K->Q->rows, K->Q->cols, K->r, K->r);
 	return 1;
     }
 
     /* R should be n x n, if present */
-    if (R != NULL) {
-	if (gretl_matrix_rows(R) != K->n ||
-	    gretl_matrix_cols(R) != K->n) {
-	    fprintf(stderr, "kalman: matrix R should be %d x %d\n", 
-		    K->n, K->n);
+    if (K->R != NULL) {
+	if (K->R->rows != K->n || K->R->cols != K->n) {
+	    fprintf(stderr, "kalman: matrix R is %d x %d, should be %d x %d\n", 
+		    K->R->rows, K->R->cols, K->n, K->n);
 	    return 1;
 	}
     }
 
     /* x should be T x (k - 1), if present (const is implicit) */
-    if (x != NULL) {
-	if (gretl_matrix_rows(x) != K->T ||
-	    gretl_matrix_cols(x) != K->k - 1) {
-	    fprintf(stderr, "kalman: matrix x should be %d x %d\n", 
-		    K->T, K->k - 1);
+    if (K->x != NULL) {
+	if (K->x->rows != K->T || K->x->cols != K->k - 1) {
+	    fprintf(stderr, "kalman: matrix x is %d x %d, should be %d x %d\n", 
+		    K->x->rows, K->x->cols, K->T, K->k - 1);
 	    return 1;
 	}
     }
 
     /* E should be T x n, if present */
-    if (E != NULL) {
-	if (gretl_matrix_rows(E) != K->T ||
-	    gretl_matrix_cols(E) != K->n) {
-	    fprintf(stderr, "kalman: matrix E should be %d x %d\n", 
-		    K->T, K->n);
+    if (K->E != NULL) {
+	if (K->E->rows != K->T || K->E->cols != K->n) {
+	    fprintf(stderr, "kalman: matrix E is %d x %d, should be %d x %d\n", 
+		    K->E->rows, K->E->cols, K->T, K->n);
 	    return 1;
 	}
     }
@@ -243,6 +246,66 @@ static int count_nonshifts (const gretl_matrix *F)
     return ret;
 }
 
+static int kalman_init (kalman *K, 
+			const gretl_matrix *S,
+			const gretl_matrix *P,
+			int ncoeff, int ifc)
+{
+    int err = 0;
+
+    K->B = NULL;
+    K->e = NULL;
+
+    K->flags = 0;
+    K->ncoeff = ncoeff;
+    K->ifc = ifc;
+
+    K->SSRw = NADBL;
+    K->sumVt = NADBL;
+    K->loglik = NADBL;
+
+    clear_gretl_matrix_err();
+
+    if (K->S0 == NULL) {
+	K->S0 = gretl_matrix_copy(S);
+    }
+    K->S1 = gretl_matrix_copy(S);
+
+    if (K->P0 == NULL) {
+	K->P0 = gretl_matrix_copy(P);
+    }
+    K->P1 = gretl_matrix_copy(P);
+
+    /* forecast error vector, per observation */
+    K->e = gretl_matrix_alloc(K->n, 1);
+
+    err = get_gretl_matrix_err();
+    if (err) {
+	return err;
+    }
+
+    K->nonshift = -1;
+
+    K->B = gretl_matrix_block_new(&K->PH,  K->r, K->n, /* P*H */
+				  &K->FPH, K->r, K->n, /* F*P*H */
+				  &K->HPH, K->n, K->n, /* H'*P*H */
+				  &K->V,   K->n, K->n, /* (H'*P*H + R)^{-1} */
+				  &K->VE,  K->n, 1,    /* (H'*P*H + R)^{-1} * E */
+				  &K->PHV, K->r, K->n, /* P*H*V */
+				  &K->Ax,  K->n, 1,    /* A'*x at obs t */
+				  &K->Tmpnn, K->n, K->n,
+				  &K->Tmprr, K->r, K->r,
+				  &K->Tmprr_2a, K->r, K->r,
+				  &K->Tmprr_2b, K->r, K->r,
+				  NULL);
+
+    if (K->B == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
+
 /**
  * kalman_new:
  * @S: initial state vector.
@@ -285,51 +348,19 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 
     *err = 0;
 
+    if (S == NULL || P == NULL || F == NULL || 
+	A == NULL || H == NULL || Q == NULL ||
+	y == NULL) {
+	fprintf(stderr, "A required matrix is NULL\n");
+	*err = E_DATA;
+	return NULL;
+    }
+
     K = malloc(sizeof *K);
     if (K == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
-
-    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R, y, x, E)) {
-	fprintf(stderr, "failed on kalman_check_dimensions\n");
-	*err = E_NONCONF;
-	free(K);
-	return NULL;
-    }
-
-    K->e = NULL;
-    K->PH = NULL;
-    K->HPH = NULL;
-    K->FPH = NULL;
-    K->V = NULL;
-    K->VE = NULL;
-    K->PHV = NULL;
-    K->Ax = NULL;
-
-    K->Tmpnn = NULL;
-    K->Tmprr = NULL;
-    K->Tmprr_2a = NULL;
-    K->Tmprr_2b = NULL;
-
-    K->flags = 0;
-    K->ncoeff = ncoeff;
-    K->ifc = ifc;
-
-    K->SSRw = NADBL;
-    K->sumVt = NADBL;
-    K->loglik = NADBL;
-
-    clear_gretl_matrix_err();
-
-    K->S0 = gretl_matrix_copy(S);
-    K->S1 = gretl_matrix_copy(S);
-
-    K->P0 = gretl_matrix_copy(P);
-    K->P1 = gretl_matrix_copy(P);
-
-    /* forecast error vector, per observation */
-    K->e = gretl_matrix_alloc(K->n, 1);
 
     /* just use const pointers for const matrices, don't copy */
     K->F = F;
@@ -341,36 +372,18 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->x = x;
     K->E = E;
 
-    K->nonshift = -1;
+    K->S0 = K->S1 = NULL;
+    K->P0 = K->P1 = NULL;
 
-    /* will hold P*H */
-    K->PH = gretl_matrix_alloc(K->r, K->n);
+    if (kalman_check_dimensions(K, S, P)) {
+	fprintf(stderr, "failed on kalman_check_dimensions\n");
+	*err = E_NONCONF;
+	free(K);
+	return NULL;
+    }
 
-    /* will hold F*P*H */
-    K->FPH = gretl_matrix_alloc(K->r, K->n);
+    *err = kalman_init(K, S, P, ncoeff, ifc);
 
-    /* will hold H'*P*H */
-    K->HPH = gretl_matrix_alloc(K->n, K->n);
-
-    /* will hold (H'*P*H + R)^{-1} */
-    K->V = gretl_matrix_alloc(K->n, K->n);
-
-    /* will hold (H'*P*H + R)^{-1} * E */
-    K->VE = gretl_matrix_alloc(K->n, 1);
-
-    /* will hold P*H*V */
-    K->PHV = gretl_matrix_alloc(K->r, K->n);
-
-    /* will hold A'*x at obs t */
-    K->Ax = gretl_matrix_alloc(K->n, 1);
-
-    /* will hold various intermediate products */
-    K->Tmpnn = gretl_matrix_alloc(K->n, K->n);
-    K->Tmprr = gretl_matrix_alloc(K->r, K->r);
-    K->Tmprr_2a = gretl_matrix_alloc(K->r, K->r);
-    K->Tmprr_2b = gretl_matrix_alloc(K->r, K->r);
-
-    *err = get_gretl_matrix_err();
     if (*err) {
 	kalman_free(K);
 	K = NULL;
@@ -381,8 +394,32 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
-static int 
-matrix_diff (const gretl_matrix *a, const gretl_matrix *b)
+static int user_kalman_setup (kalman *K, int ncoeff, int ifc)
+{
+    int err = 0;
+
+    if (K->S0 == NULL || K->P0 == NULL || K->F == NULL || 
+	K->A == NULL || K->H == NULL || K->Q == NULL ||
+	K->y == NULL) {
+	fprintf(stderr, "A required matrix is NULL\n");
+	return E_DATA;
+    }
+
+    if (kalman_check_dimensions(K, K->S0, K->P0)) {
+	fprintf(stderr, "failed on kalman_check_dimensions\n");
+	return E_NONCONF;
+    }
+
+    err = kalman_init(K, K->S0, K->P0, ncoeff, ifc);
+
+    if (!err) {
+	gretl_matrix_zero(K->e);
+    }
+
+    return err;
+}
+
+static int matrix_diff (const gretl_matrix *a, const gretl_matrix *b)
 {
     int i, n = a->rows * a->cols;
 
@@ -698,7 +735,7 @@ static void kalman_set_Ax (kalman *K, int t)
 }
 
 /* read from the appropriate row of y (T x n) and transcribe to
-   the current E (n x 1)
+   the current e (n x 1)
 */
 
 static void
@@ -715,8 +752,7 @@ kalman_initialize_error (kalman *K, int t)
    row of the recorder matrix, K->E
 */
 
-static void
-kalman_record_error (kalman *K, int t)
+static void kalman_record_error (kalman *K, int t)
 {
     double eti;
     int i;
@@ -819,6 +855,9 @@ int kalman_forecast (kalman *K)
 	    }
 	    gretl_matrix_copy_values(K->V, K->HPH);
 	    err = gretl_invert_symmetric_matrix2(K->V, &ldet);
+	    if (err) {
+		fprintf(stderr, "kalman_forecast: failed to invert V\n");
+	    }
 	}
 
 	/* likelihood bookkeeping */
@@ -841,11 +880,11 @@ int kalman_forecast (kalman *K)
 	    err = kalman_iter_1(K, &llt);
 	    if (na(llt)) {
 		K->loglik = NADBL;
-		err = 1;
+		err = E_NAN;
 	    } else {
 		K->loglik += llt;
 		if (isnan(K->loglik)) {
-		    err = 1;
+		    err = E_NAN;
 		}
 	    }
 	}
@@ -899,6 +938,7 @@ int kalman_forecast (kalman *K)
 	}
 	if (isnan(K->loglik) || isinf(K->loglik)) {
 	    K->loglik = NADBL;
+	    err = E_NAN;
 	} 
     }
 
@@ -988,3 +1028,115 @@ int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P)
 {
     return gretl_matrix_copy_values(K->P0, P);
 }
+
+static gretl_matrix *attach_matrix (const char *s, int *err)
+{
+    char mname[VNAMELEN] = {0};
+    gretl_matrix *m = NULL;
+
+    if (sscanf(s, "%15s", mname) != 1) {
+	*err = E_PARSE;
+    } else {
+	m = get_matrix_by_name(mname);
+	if (m == NULL) {
+	    *err = E_UNKVAR;
+	}
+    }
+
+    return m;
+}
+
+static kalman *uK; /* user-defined Kalman struct */
+
+/*
+
+  kalman
+    obsy y
+    obsymat H
+    obsex x
+    obsxmat A
+    obsvar R
+    strmat F
+    strex c ??
+    strvar Q
+    inistate S
+    iniprec P
+  end kalman
+
+ */
+
+/* The following is at present just a "proof of concept" thing,
+   showing how we can assemble a "user" Kalman struct.  It's not
+   yet hooked up in any useful way.
+*/
+
+int kalman_parse_line (const char *line, gretlopt opt)
+{
+    int err = 0;
+
+    if (opt == OPT_NONE && !strncmp(line, "kalman", 6)) {
+	/* starting: allocate */
+	if (uK != NULL) {
+	    kalman_free(uK);
+	}
+	uK = kalman_new_empty();
+	if (uK == NULL) {
+	    return E_ALLOC;
+	} else {
+	    return 0;
+	}
+    }
+
+    if (uK == NULL) {
+	/* there's no Kalman in progress */
+	return E_DATA;
+    }    
+
+    if (!strncmp(line, "kalman", 6)) {
+	if (opt & OPT_F) {
+	    /* FIXME */
+	    err = kalman_forecast(uK);
+	    fprintf(stderr, "kalman_forecast: err = %d\n", err);
+	    return err;
+	} else {
+	    return E_DATA;
+	}
+    }
+	    
+    if (!strncmp(line, "end ", 4)) {
+	/* "end kalman": complete the set-up */
+	err = user_kalman_setup(uK, 0, 1); /* FIXME */
+    } else if (!strncmp(line, "obsy ", 5)) {
+	uK->y = attach_matrix(line + 5, &err);
+    } else if (!strncmp(line, "obsymat ", 8)) {
+	uK->H = attach_matrix(line + 8, &err);
+    } else if (!strncmp(line, "obsex ", 6)) {
+	uK->x = attach_matrix(line + 6, &err);
+    } else if (!strncmp(line, "obsxmat ", 8)) {
+	uK->A = attach_matrix(line + 8, &err);
+    } else if (!strncmp(line, "obsvar ", 7)) {
+	uK->R = attach_matrix(line + 7, &err);
+    } else if (!strncmp(line, "strmat ", 7)) {
+	uK->F = attach_matrix(line + 7, &err);
+    } else if (!strncmp(line, "strvar ", 7)) {
+	uK->Q = attach_matrix(line + 7, &err);
+    } else if (!strncmp(line, "inistate ", 9)) {
+	uK->S0 = attach_matrix(line + 9, &err);
+    } else if (!strncmp(line, "iniprec ", 8)) {
+	uK->P0 = attach_matrix(line + 8, &err);
+    } else {
+	err = E_PARSE;
+    }
+
+    fprintf(stderr, "kalman_parse_line: '%s' -> err = %d\n", line, err);
+
+    if (err && uK != NULL) {
+	kalman_free(uK);
+	uK = NULL;
+    }
+
+    return err;
+}
+
+
+
