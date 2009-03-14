@@ -4489,7 +4489,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case KALMAN:
 	err = kalman_parse_line(line, cmd->opt);
-	if (!err) {
+	if (!err && (cmd->opt == OPT_NONE)) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
 	break;

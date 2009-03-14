@@ -28,6 +28,7 @@
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "forecast.h"
+#include "kalman.h"
 
 #include <errno.h>
 #include <time.h>
@@ -1513,6 +1514,7 @@ void libgretl_cleanup (void)
     lapack_mem_free();
     forecast_matrix_cleanup();
     option_flags_cleanup();
+    destroy_user_kalman();
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

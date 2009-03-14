@@ -31,8 +31,8 @@ struct kalman_ {
     int k; /* rows of x_t */
     int T; /* number of observations */
 
-    int ncoeff;    /* number of adjustable coefficients */
-    int ifc;       /* include a constant (1) or not (0) */
+    int ifc; /* include a constant (1) or not (0) in the observation
+	        equation */
 
     double SSRw;   /* \sigma_{t=1}^T e_t^{\prime} V_t^{-1} e_t */
     double sumVt;  /* \sigma_{t=1}^T ln |V_t| */
@@ -85,11 +85,14 @@ void kalman_free (kalman *K)
 	return;
     }
 
-    gretl_matrix_free(K->S0);
     gretl_matrix_free(K->S1);
-    gretl_matrix_free(K->P0);
     gretl_matrix_free(K->P1);
     gretl_matrix_free(K->e);
+
+    if (!(K->flags & KALMAN_USER)) {
+	gretl_matrix_free(K->S0);
+	gretl_matrix_free(K->P0);
+    }
 
     gretl_matrix_block_destroy(K->B);
 
@@ -249,7 +252,7 @@ static int count_nonshifts (const gretl_matrix *F)
 static int kalman_init (kalman *K, 
 			const gretl_matrix *S,
 			const gretl_matrix *P,
-			int ncoeff, int ifc)
+			int ifc)
 {
     int err = 0;
 
@@ -257,7 +260,6 @@ static int kalman_init (kalman *K,
     K->e = NULL;
 
     K->flags = 0;
-    K->ncoeff = ncoeff;
     K->ifc = ifc;
 
     K->SSRw = NADBL;
@@ -323,7 +325,6 @@ static int kalman_init (kalman *K,
  * @x: T x k matrix of exogenous variable(s).  May be %NULL if there
  * are no exogenous variables, or if there's only a constant.
  * @E: T x n matrix in which to record forecast errors (or %NULL).
- * @ncoeff: number of adjustable coefficients (used when the
  * Kalman filter is employed for estimation purposes).
  * @err: location to receive error code.
  *
@@ -342,7 +343,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 		    const gretl_matrix *H, const gretl_matrix *Q,
 		    const gretl_matrix *R, const gretl_matrix *y,
 		    const gretl_matrix *x, gretl_matrix *E,
-		    int ncoeff, int ifc, int *err)
+		    int ifc, int *err)
 {
     kalman *K;
 
@@ -382,7 +383,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	return NULL;
     }
 
-    *err = kalman_init(K, S, P, ncoeff, ifc);
+    *err = kalman_init(K, S, P, ifc);
 
     if (*err) {
 	kalman_free(K);
@@ -394,7 +395,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
-static int user_kalman_setup (kalman *K, int ncoeff, int ifc)
+static int user_kalman_setup (kalman *K, int ifc)
 {
     int err = 0;
 
@@ -410,9 +411,10 @@ static int user_kalman_setup (kalman *K, int ncoeff, int ifc)
 	return E_NONCONF;
     }
 
-    err = kalman_init(K, K->S0, K->P0, ncoeff, ifc);
+    err = kalman_init(K, K->S0, K->P0, ifc);
 
     if (!err) {
+	K->flags = KALMAN_USER;
 	gretl_matrix_zero(K->e);
     }
 
@@ -985,19 +987,6 @@ double kalman_get_arma_variance (const kalman *K)
 }
 
 /**
- * kalman_get_ncoeff:
- * @K: pointer to Kalman struct.
- * 
- * Returns: the number of adjustable coefficients
- * associated with the Kalman filter. 
- */
-
-int kalman_get_ncoeff (const kalman *K)
-{
-    return K->ncoeff;
-}
-
-/**
  * kalman_set_initial_state_vector:
  * @K: pointer to Kalman struct.
  * @S: matrix of values to set.
@@ -1048,21 +1037,26 @@ static gretl_matrix *attach_matrix (const char *s, int *err)
 
 static kalman *uK; /* user-defined Kalman struct */
 
+void destroy_user_kalman (void)
+{
+    kalman_free(uK);
+    uK = NULL;
+}
+
 /*
-
-  kalman
-    obsy y
-    obsymat H
-    obsex x
-    obsxmat A
-    obsvar R
-    strmat F
-    strex c ??
-    strvar Q
-    inistate S
-    iniprec P
-  end kalman
-
+   kalman
+     obsy y
+     obsymat H
+     obsex x
+     obsxmat A
+     obsvar R
+     strmat F
+     strex c ??
+     strvar Q
+     inistate S
+     iniprec P
+     errors E
+   end kalman
  */
 
 /* The following is at present just a "proof of concept" thing,
@@ -1095,9 +1089,11 @@ int kalman_parse_line (const char *line, gretlopt opt)
     if (!strncmp(line, "kalman", 6)) {
 	if (opt & OPT_F) {
 	    /* FIXME */
-	    err = kalman_forecast(uK);
-	    fprintf(stderr, "kalman_forecast: err = %d\n", err);
-	    return err;
+	    return kalman_forecast(uK);
+	} else if (opt & OPT_D) {
+	    kalman_free(uK);
+	    uK = NULL;
+	    return 0;
 	} else {
 	    return E_DATA;
 	}
@@ -1105,7 +1101,7 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	    
     if (!strncmp(line, "end ", 4)) {
 	/* "end kalman": complete the set-up */
-	err = user_kalman_setup(uK, 0, 1); /* FIXME */
+	err = user_kalman_setup(uK, 1); /* FIXME? */
     } else if (!strncmp(line, "obsy ", 5)) {
 	uK->y = attach_matrix(line + 5, &err);
     } else if (!strncmp(line, "obsymat ", 8)) {
@@ -1124,11 +1120,15 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	uK->S0 = attach_matrix(line + 9, &err);
     } else if (!strncmp(line, "iniprec ", 8)) {
 	uK->P0 = attach_matrix(line + 8, &err);
+    } else if (!strncmp(line, "errors ", 7)) {
+	uK->E = attach_matrix(line + 7, &err);
     } else {
 	err = E_PARSE;
     }
 
+#if 0
     fprintf(stderr, "kalman_parse_line: '%s' -> err = %d\n", line, err);
+#endif
 
     if (err && uK != NULL) {
 	kalman_free(uK);
@@ -1137,6 +1137,3 @@ int kalman_parse_line (const char *line, gretlopt opt)
 
     return err;
 }
-
-
-

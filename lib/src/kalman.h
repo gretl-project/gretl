@@ -22,7 +22,8 @@
 
 enum {
     KALMAN_ARMA_LL = 1 << 0, /* is the filter being used for ARMA estimation ? */
-    KALMAN_AVG_LL  = 1 << 1  /* store total likelihood or average? */
+    KALMAN_AVG_LL  = 1 << 1, /* store total likelihood or average? */
+    KALMAN_USER    = 1 << 2  /* user-defined filter? */
 };
 
 typedef struct kalman_ kalman;
@@ -32,13 +33,11 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 		    const gretl_matrix *H, const gretl_matrix *Q,
 		    const gretl_matrix *R, const gretl_matrix *y,
 		    const gretl_matrix *x, gretl_matrix *E,
-		    int ncoeff, int ifc, int *err);
+		    int ifc, int *err);
 
 void kalman_free (kalman *K);
 
 int kalman_forecast (kalman *K);
-
-int kalman_get_ncoeff (const kalman *K);
 
 double kalman_get_loglik (const kalman *K);
 
@@ -55,5 +54,7 @@ void kalman_set_options (kalman *K, int opts);
 int kalman_get_options (kalman *K);
 
 int kalman_parse_line (const char *line, gretlopt opt);
+
+void destroy_user_kalman (void);
 
 #endif /* KALMAN_H_ */

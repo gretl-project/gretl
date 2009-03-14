@@ -1178,6 +1178,8 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 	ni++;
     } else if (wordmatch(s, "foreign")) {
 	ni++;
+    } else if (wordmatch(s, "kalman")) {
+	ni++;
     } else if (wordmatch(s, "end") ||
 	       wordmatch(s, "endif") ||
 	       wordmatch(s, "endloop")) {
