@@ -647,20 +647,18 @@ static int kalman_iter_1 (kalman *K, double *llt)
 			      K->S0, GRETL_MOD_NONE,
 			      K->e, GRETL_MOD_DECUMULATE);
     
-    /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "VE" */
+    /* form (H'PH + R)^{-1} * (y - A'x - H'S) = "VE" */
     gretl_matrix_multiply(K->V, K->e, K->VE);
 
-    if (llt != NULL) {
-	/* form (y - Ax - H'S)' * (H'PH + R)^{-1} * (y - Ax - H'S) */
-	gretl_matrix_multiply_mod(K->e, GRETL_MOD_TRANSPOSE,
-				  K->VE, GRETL_MOD_NONE,
-				  K->Tmpnn, GRETL_MOD_NONE);
+    /* form (y - A'x - H'S)' * (H'PH + R)^{-1} * (y - A'x - H'S) */
+    gretl_matrix_multiply_mod(K->e, GRETL_MOD_TRANSPOSE,
+			      K->VE, GRETL_MOD_NONE,
+			      K->Tmpnn, GRETL_MOD_NONE);
 
-	/* contribution to log-likelihood of the above -- see Hamilton
-	   (1994) equation [13.4.1] page 385.
-	*/
-	*llt -= .5 * K->Tmpnn->val[0];
-    }
+    /* contribution to log-likelihood of the above -- see Hamilton
+       (1994) equation [13.4.1] page 385.
+    */
+    *llt -= .5 * K->Tmpnn->val[0];
 
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
@@ -870,7 +868,8 @@ int kalman_forecast (kalman *K)
 	    kalman_set_Ax(K, t);
 	}	
 
-	/* initial matrix calculations */
+	/* initial matrix calculations: form PH and H'PH 
+	   (note that we need PH later) */
 	gretl_matrix_multiply(K->P0, K->H, K->PH);
 	if (arma_ll(K)) {
 	    K->HPH->val[0] = 0.0;
@@ -880,9 +879,8 @@ int kalman_forecast (kalman *K)
 	    ldet = log(K->HPH->val[0]);
 	    K->V->val[0] = 1.0 / K->HPH->val[0];
 	} else {
-	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
-				      K->PH, GRETL_MOD_NONE,
-				      K->HPH, GRETL_MOD_NONE);
+	    gretl_matrix_qform(K->H, GRETL_MOD_TRANSPOSE,
+			       K->P0, K->HPH, GRETL_MOD_NONE);
 	    if (K->R != NULL) {
 		gretl_matrix_add_to(K->HPH, K->R);
 	    }
@@ -891,7 +889,7 @@ int kalman_forecast (kalman *K)
 	    if (err) {
 		fprintf(stderr, "kalman_forecast: failed to invert V\n");
 	    }
-	}
+	}	    
 
 	/* likelihood bookkeeping */
 	if (err) {
