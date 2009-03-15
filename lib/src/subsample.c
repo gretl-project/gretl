@@ -1395,7 +1395,8 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 {
     int nf, new_t1 = pdinfo->t1, new_t2 = pdinfo->t2;
     int tmin = 0, tmax = 0;
-    char newstart[OBSLEN], newstop[OBSLEN];
+    char newstart[VNAMELEN+1];
+    char newstop[VNAMELEN+1];
 
     gretl_error_clear();
 
@@ -1430,7 +1431,7 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 #endif
 	
     if (nf == 1) {
-	if (sscanf(line, "%10s", newstart) != 1) {
+	if (sscanf(line, "%16s", newstart) != 1) {
 	    strcpy(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
@@ -1446,7 +1447,7 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     /* now we're looking at nf = 2 (2 fields) case */
 
-    if (sscanf(line, "%10s %10s", newstart, newstop) != 2) {
+    if (sscanf(line, "%16s %16s", newstart, newstop) != 2) {
 	strcpy(gretl_errmsg, _("error reading smpl line"));
 	return 1;
     }
