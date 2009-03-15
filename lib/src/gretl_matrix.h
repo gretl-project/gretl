@@ -276,6 +276,9 @@ void gretl_matrix_free (gretl_matrix *m);
 
 double *gretl_matrix_steal_data (gretl_matrix *m);
 
+int gretl_vector_copy_values (gretl_vector *targ, 
+			      const gretl_vector *src);
+
 int gretl_matrix_copy_values (gretl_matrix *targ, 
 			      const gretl_matrix *src);
 

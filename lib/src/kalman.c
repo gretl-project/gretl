@@ -59,8 +59,8 @@ struct kalman_ {
 
     /* constant data matrices */
     const gretl_matrix *F; /* r x r: state transition matrix */
-    const gretl_matrix *A; /* n x k: coeffs on exogenous vars, obs eqn */
-    const gretl_matrix *H; /* n x r: coeffs on state variables, obs eqn */
+    const gretl_matrix *A; /* k x n: coeffs on exogenous vars, obs eqn */
+    const gretl_matrix *H; /* r x n: coeffs on state variables, obs eqn */
     const gretl_matrix *Q; /* r x r: contemp covariance matrix, state eqn */
     const gretl_matrix *R; /* n x n: contemp covariance matrix, obs eqn */
     const gretl_matrix *y; /* T x n: dependent variable vector (or matrix) */
@@ -733,8 +733,6 @@ int kalman_get_options (kalman *K)
    form A'x_t.  Note: the flag K->ifc is used to indicate that the
    observation equation has an implicit constant, with an entry in
    the A matrix (the first) but no explicit entry in the x matrix.
-   Also note: what we call K->A is actually A' in Hamilton's
-   notation.
 */
 
 static void kalman_set_Ax (kalman *K, int t)
@@ -840,8 +838,8 @@ int kalman_forecast (kalman *K)
     if (K->x == NULL) {
 	/* no exogenous vars */
 	if (K->A != NULL) {
-	    /* implicit const case: A is n x 1 */
-	    gretl_matrix_copy_values(K->Ax, K->A);
+	    /* implicit const case: A is 1 x n and A'x is n x 1 */
+	    gretl_vector_copy_values(K->Ax, K->A);
 	} else {
 	    gretl_matrix_zero(K->Ax);
 	}

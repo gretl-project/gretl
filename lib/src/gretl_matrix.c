@@ -1563,6 +1563,46 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
 }
 
 /**
+ * gretl_vector_copy_values:
+ * @targ: target vector.
+ * @src: source vector.
+ *
+ * Copies the elements of @src into the corresponding elements
+ * of @targ.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if the 
+ * two vectors are not of the same length.
+ */
+
+int gretl_vector_copy_values (gretl_vector *targ, 
+			      const gretl_vector *src)
+{
+    int n;
+
+    if (src == NULL) {
+	fprintf(stderr, "gretl_vector_copy_values: src is NULL\n");
+	return E_DATA;
+    }
+
+    if (targ == src) {
+	/* no-op */
+	return 0;
+    }
+
+    n = gretl_vector_get_length(src);
+
+    if (gretl_vector_get_length(targ) != n) {
+	return E_NONCONF;
+    }
+
+    if (n > 0) {
+	memcpy(targ->val, src->val, n * sizeof *targ->val);
+    }
+
+    return 0;
+}
+
+/**
  * gretl_matrix_copy_values:
  * @targ: target matrix.
  * @src: source matrix.
