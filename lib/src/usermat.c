@@ -357,7 +357,11 @@ static user_matrix *get_user_matrix_by_data (const gretl_matrix *M)
 
 gretl_matrix *get_matrix_by_name (const char *name)
 {
-    return real_get_matrix_by_name(name, LEVEL_AUTO);
+    if (name == NULL || *name == '\0') {
+	return NULL;
+    } else {
+	return real_get_matrix_by_name(name, LEVEL_AUTO);
+    }
 }
 
 /**

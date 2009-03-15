@@ -26,6 +26,7 @@
 #include "usermat.h"
 #include "gretl_bfgs.h"
 #include "gretl_fft.h"
+#include "kalman.h"
 #include "version.h"
 
 #include <errno.h>
@@ -5177,6 +5178,8 @@ static double dvar_get_value (int i, parser *p)
 	return get_last_test_statistic(p->lh.label);
     case R_TEST_LNL:
 	return get_last_lnl(p->lh.label);
+    case R_KLNL:
+	return user_kalman_get_loglik();
     case R_STOPWATCH:
 	return gretl_stopwatch();
     case R_NSCAN:

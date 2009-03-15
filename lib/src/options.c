@@ -151,6 +151,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_Z, "dummy", 0 },
     { GNUPLOT,  OPT_C, "control", 0 },
     { GNUPLOT,  OPT_U, "output", 2 },
+    { GNUPLOT,  OPT_Y, "single-yaxis", 0 },
     { GRAPH,    OPT_O, "tall", 0 },
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_T, "two-step", 0 },
@@ -465,11 +466,12 @@ struct flag_match flag_matches[] = {
     { OPT_V, 'v' },
     { OPT_W, 'w' },
     { OPT_X, 'x' },
+    { OPT_Y, 'y' },
     { OPT_Z, 'z' },
     { 0L,   '\0' }
 };
 
-static const char *ok_flags = "abcdefghijklmnopqrstuvwxz";
+static const char *ok_flags = "abcdefghijklmnopqrstuvwxyz";
 
 #define isflag(c) (c && (strchr(ok_flags, c) != NULL))
 

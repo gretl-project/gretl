@@ -2040,7 +2040,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
     if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) && 
 	 l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
-	&& !(gi->flags & GPT_DUMMY)) { /* FIXME GPT_XYZ */
+	&& !(gi->flags & GPT_DUMMY)  & !(opt & OPT_Y)) { /* FIXME GPT_XYZ */
 	/* allow probe for using two y axes */
 #if GP_DEBUG
 	fprintf(stderr, "l0 = %d, setting y2axis probe\n", l0);

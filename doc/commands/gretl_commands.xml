@@ -3405,6 +3405,10 @@
 	  <effect>don't show fitted line</effect>
         </option>
         <option>
+	  <flag>--single-yaxis</flag>
+	  <effect>force use of just one y-axis</effect>
+        </option>
+        <option>
 	  <flag>--linear-fit</flag>
 	  <effect>show least squares fit</effect>
         </option>

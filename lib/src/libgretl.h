@@ -189,6 +189,7 @@ enum gretl_opt_flags {
     OPT_W = 1 << 22,
     OPT_X = 1 << 23,
     OPT_Z = 1 << 24,
+    OPT_Y = 1 << 25, /* added 2009-03-15 */
     OPT_UNSET = 1 << 30
 };
 
