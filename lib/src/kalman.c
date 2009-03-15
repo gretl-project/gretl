@@ -118,6 +118,7 @@ static kalman *kalman_new_empty (void)
 	K->F = K->A = K->H = NULL;
 	K->Q = K->R = K->E = NULL;
 	K->y = K->x = NULL;
+	K->flags = 0;
     }
 
     return K;
@@ -181,7 +182,7 @@ static int kalman_check_dimensions (kalman *K)
     K->ifc = 0;
 
     /* x should have T rows to match y; and it should have either k or k - 1
-       columns (the latter case representing an implicit const) */
+       columns (the latter case indicating an implicit const) */
     if (K->x != NULL) {
 	if (K->x->rows != K->T) {
 	    fprintf(stderr, "kalman: matrix x has %d rows, should have %d\n", 
@@ -282,11 +283,6 @@ static int kalman_init (kalman *K)
 {
     int err = 0;
 
-    K->B = NULL;
-    K->e = NULL;
-
-    K->flags = 0;
-
     K->SSRw = NADBL;
     K->sumVt = NADBL;
     K->loglik = NADBL;
@@ -327,6 +323,14 @@ static int kalman_init (kalman *K)
     }
 
     return err;
+}
+
+static void kalman_set_dimensions (kalman *K)
+{
+    K->r = gretl_matrix_rows(K->S); /* S->rows defines r */
+    K->k = gretl_matrix_rows(K->A); /* A->rows defines k */
+    K->T = gretl_matrix_rows(K->y); /* y->rows defines T */
+    K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
 }
 
 /**
@@ -377,7 +381,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	return NULL;
     }
 
-    K = malloc(sizeof *K);
+    K = kalman_new_empty();
     if (K == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -396,13 +400,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 
     K->E = E;
 
-    K->S0 = K->S1 = NULL;
-    K->P0 = K->P1 = NULL;
-
-    K->r = gretl_matrix_rows(K->S); /* S->rows defines r */
-    K->k = gretl_matrix_rows(K->A); /* A->rows defines k */
-    K->T = gretl_matrix_rows(K->y); /* y->rows defines T */
-    K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
+    kalman_set_dimensions(K);
 
     *err = kalman_check_dimensions(K);
     if (*err) {
@@ -433,10 +431,7 @@ static int user_kalman_setup (kalman *K)
 	return E_DATA;
     }
 
-    K->r = gretl_matrix_rows(K->S);
-    K->k = gretl_matrix_rows(K->A);
-    K->T = gretl_matrix_rows(K->y);
-    K->n = gretl_matrix_cols(K->y);
+    kalman_set_dimensions(K);
 
     err = kalman_check_dimensions(K);
     if (err) {
@@ -522,9 +517,7 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 
 	    topF->rows = K->r;
 	    topF->cols = r1;
-
 	    c = A->rows;
-
 	    top->rows = c;
 	    top->cols = r1;
 
@@ -557,9 +550,7 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 
 	    topF->rows = r1;
 	    topF->cols = K->r;
-
 	    c = A->cols;
-
 	    top->rows = r1;
 	    top->cols = c;
 
@@ -742,6 +733,8 @@ int kalman_get_options (kalman *K)
    form A'x_t.  Note: the flag K->ifc is used to indicate that the
    observation equation has an implicit constant, with an entry in
    the A matrix (the first) but no explicit entry in the x matrix.
+   Also note: what we call K->A is actually A' in Hamilton's
+   notation.
 */
 
 static void kalman_set_Ax (kalman *K, int t)
@@ -847,6 +840,7 @@ int kalman_forecast (kalman *K)
     if (K->x == NULL) {
 	/* no exogenous vars */
 	if (K->A != NULL) {
+	    /* implicit const case: A is n x 1 */
 	    gretl_matrix_copy_values(K->Ax, K->A);
 	} else {
 	    gretl_matrix_zero(K->Ax);
@@ -1045,7 +1039,7 @@ int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P)
 
 /* user-defined Kalman apparatus below */
 
-#define KNMAT 10 /* the number of user-defined matrices */
+#define KNMAT 10 /* the (max) number of user-defined matrices */
 
 static kalman *uK;      /* user-defined Kalman struct */
 static char **k_mnames; /* Kalman matrix names */
@@ -1082,7 +1076,7 @@ static gretl_matrix *attach_matrix (const char *s, int i, int *err)
 }
 
 /* When (re-)running a user-defined filter, check that no relevant
-   matrices have disappeared or been re-sized.  In addition,
+   matrices have disappeared or been resized.  In addition,
    re-initalize the state and precision.
 */
 
@@ -1105,6 +1099,11 @@ static int user_kalman_recheck_matrices (kalman *K)
 	K->H == NULL || K->Q == NULL || K->y == NULL) {
 	gretl_errmsg_set(_("kalman: a required matrix is missing"));
 	err = E_DATA;
+    } else if (gretl_matrix_rows(K->S) != K->r ||
+	       gretl_matrix_rows(K->A) != K->k ||
+	       gretl_matrix_rows(K->y) != K->T ||
+	       gretl_matrix_cols(K->y) != K->n) {
+	err = E_NONCONF;
     } else {
 	err = kalman_check_dimensions(K);
 	if (!err) {
@@ -1138,7 +1137,7 @@ void destroy_user_kalman (void)
       iniprec  P # 9
       errors   E # 10
    end kalman
- */
+*/
 
 /* Given one of the lines from the template above, or either of the
    stand-alone lines "kalman --filter" or "kalman --delete", parse and
