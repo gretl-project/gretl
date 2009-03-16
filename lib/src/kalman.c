@@ -1427,8 +1427,6 @@ static gretl_matrix *attach_export_matrix (const char *mname, int *err)
     return m;
 }
 
-/* FIXME something is broken with this apparatus */
-
 int user_kalman_run (const char *E, const char *S, const char *P,
 		     const char *L, int *err)
 {
