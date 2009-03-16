@@ -2505,7 +2505,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[6] = teststr;
 	val[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
     } else if (!na(pmod->chisq)) {
-	/* alternative: chi-square its p-value */
+	/* alternative: chi-square and its p-value */
 	sprintf(teststr, "%s(%d)", _("Chi-square"), pmod->dfn);
 	key[6] = teststr;  
 	val[6] = pmod->chisq;

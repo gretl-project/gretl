@@ -420,7 +420,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
     } 
 
-    pmod->rsq = pmod->adjrsq = pmod->fstt = NADBL;
+    pmod->rsq = pmod->adjrsq = pmod->fstt = pmod->chisq = NADBL;
     pmod->tss = NADBL;
 
     if (arma_least_squares(ainfo)) {

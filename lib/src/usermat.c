@@ -210,21 +210,19 @@ matrix_insert_diagonal (gretl_matrix *M, const gretl_matrix *S,
     return 0;
 }
 
-/* If slevel is LEVEL_AUTO, search at the current function execution
+/* If level is LEVEL_AUTO, search at the current function execution
    depth, otherwise search at the function execution depth given by
    slevel.
 */
 
-static gretl_matrix *
-real_get_matrix_by_name (const char *name, int slevel)
+static gretl_matrix *real_get_matrix_by_name (const char *name, 
+					      int level)
 {
-    int level, i;
+    int i;
 
-    if (slevel == LEVEL_AUTO) {
+    if (level == LEVEL_AUTO) {
 	level = gretl_function_depth();
-    } else {
-	level = slevel;
-    }
+    } 
 
     for (i=0; i<n_matrices; i++) {
 	if (matrices[i]->level == level && 

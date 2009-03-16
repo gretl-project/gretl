@@ -20,7 +20,7 @@
 #ifndef OBJSTACK_H
 #define OBJSTACK_H
 
-/* Note the following enumeration may be added to, but the
+/* Note: the following enumeration may be added to, but the
    existing entries up to GRETL_OBJ_SCALARS must not be
    moved.
 */

@@ -285,6 +285,7 @@ struct str_table funcs[] = {
     { F_WSD,      "wsd" },
     { F_XPX,      "xpx" },
     { F_FILTER,   "filter" },
+    { F_KFILT,    "kfilter" },
     { F_TRIMR,    "trimr" },
     { F_GETENV,   "getenv" },
     { F_ARGNAME,  "argname" },

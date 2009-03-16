@@ -1,5 +1,5 @@
 1.8.1, in progress
-- Fix bugs 2533543, 2590417, 2604963
+- Fix bugs 2533543, 2590417, 2604963, 2687954 
 - resample() function: add a second, optional parameter,
   namely a block length for resampling by moving blocks
 - Ensure that gretl.lang (for gtksourceview) gets updated

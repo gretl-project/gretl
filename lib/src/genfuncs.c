@@ -765,7 +765,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	for (t=t1; t<=t2; t++) {
 	    e[s] = x[t];
 	    for (i=0; i<cmax; i++) {
-		xlag = (t>=i) ? x[t-i-1] : 0;
+		xlag = (t > i)? x[t-i-1] : 0;
 		if (na(xlag)) {
 		    e[s] = NADBL;
 		    break;
