@@ -34,10 +34,11 @@
 struct kalman_ {
     int flags;  /* for recording any options */
 
-    int r; /* rows of S = number of elements in state */
-    int n; /* columns of y = number of observables */
-    int k; /* columns of A = number of exogenous vars in obs eqn */
-    int T; /* rows of y = number of observations */
+    int r;  /* rows of S = number of elements in state */
+    int n;  /* columns of y = number of observables */
+    int k;  /* columns of A = number of exogenous vars in obs eqn */
+    int T;  /* rows of y = number of observations */
+    int np; /* number of unique elements in precision matrix */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
 
@@ -68,8 +69,12 @@ struct kalman_ {
     const gretl_matrix *S; /* r x 1: initial state vector */
     const gretl_matrix *P; /* r x r: initial precision matrix */
 
-    /* optional output matrix */
-    gretl_matrix *E;       /* forecast errors, all time-steps */
+    /* optional output matrices */
+    gretl_matrix *E;       /* T x n: forecast errors, all time-steps */
+    gretl_matrix *Sigma;   /* T x np: variance, all time-steps */
+    gretl_matrix *State;   /* T x r: state vector, all time-steps */
+    gretl_matrix *LL;      /* T x 1: loglikelihood, all time-steps */
+    
 
     /* workspace matrices */
     gretl_matrix_block *B; /* holder for the following */
@@ -116,7 +121,8 @@ static kalman *kalman_new_empty (void)
 	K->e = NULL;
 	K->B = NULL;
 	K->F = K->A = K->H = NULL;
-	K->Q = K->R = K->E = NULL;
+	K->Q = K->R = NULL;
+	K->E = K->Sigma = K->State = K->LL = NULL;
 	K->y = K->x = NULL;
 	K->flags = 0;
     }
@@ -222,6 +228,33 @@ static int kalman_check_dimensions (kalman *K)
 	    return E_NONCONF;
 	}
     }
+
+    /* Sigma should be T x np, if present */
+    if (K->Sigma != NULL) {
+	if (K->Sigma->rows != K->T || K->Sigma->cols != K->np) {
+	    fprintf(stderr, "kalman: matrix Sigma is %d x %d, should be %d x %d\n", 
+		    K->Sigma->rows, K->Sigma->cols, K->T, K->np);
+	    return E_NONCONF;
+	}
+    }
+
+    /* State should be T x r, if present */
+    if (K->State != NULL) {
+	if (K->State->rows != K->T || K->State->cols != K->r) {
+	    fprintf(stderr, "kalman: matrix State is %d x %d, should be %d x %d\n", 
+		    K->State->rows, K->State->cols, K->T, K->r);
+	    return E_NONCONF;
+	}
+    }
+
+    /* LL should be T x 1, if present */
+    if (K->LL != NULL) {
+	if (K->LL->rows != K->T || K->LL->cols != 1) {
+	    fprintf(stderr, "kalman: matrix LL is %d x %d, should be %d x %d\n", 
+		    K->LL->rows, K->LL->cols, K->T, 1);
+	    return E_NONCONF;
+	}
+    }    
 
     return 0;
 }
@@ -331,6 +364,8 @@ static void kalman_set_dimensions (kalman *K)
     K->k = gretl_matrix_rows(K->A); /* A->rows defines k */
     K->T = gretl_matrix_rows(K->y); /* y->rows defines T */
     K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
+
+    K->np = (K->r * K->r + K->r) / 2;
 }
 
 /**
@@ -712,6 +747,28 @@ static void kalman_print_state (kalman *K, int t)
 }
 #endif
 
+static void kalman_record_state (kalman *K, int t)
+{
+    int i, j, m = 0;
+    double x;
+
+    if (K->State != NULL) {
+	for (i=0; i<K->r; i++) {
+	    x = gretl_vector_get(K->S0, i);
+	    gretl_matrix_set(K->State, t, i, x);
+	}
+    } 
+
+    if (K->Sigma != NULL) {
+	for (i=0; i<K->r; i++) {
+	    for (j=i; j<K->r; j++) {
+		x = gretl_matrix_get(K->P0, i, j);
+		gretl_matrix_set(K->Sigma, t, m++, x);
+	    }
+	}
+    }
+}
+
 void kalman_set_nonshift (kalman *K, int n)
 {
     K->nonshift = n;
@@ -852,6 +909,10 @@ int kalman_forecast (kalman *K)
 	kalman_print_state(K, t);
 #endif
 
+	if (K->State != NULL || K->Sigma != NULL) {
+	    kalman_record_state(K, t);
+	}
+
 	/* read slice from y */
 	kalman_initialize_error(K, t);
 
@@ -902,9 +963,15 @@ int kalman_forecast (kalman *K)
 	} else {
 	    err = kalman_iter_1(K, &llt);
 	    if (na(llt)) {
+		if (K->LL != NULL) {
+		    gretl_vector_set(K->LL, t, 0.0 / 0.0);
+		}
 		K->loglik = NADBL;
 		err = E_NAN;
 	    } else {
+		if (K->LL != NULL) {
+		    gretl_vector_set(K->LL, t, llt);
+		}
 		K->loglik += llt;
 		if (isnan(K->loglik)) {
 		    err = E_NAN;
@@ -1037,7 +1104,7 @@ int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P)
 
 /* user-defined Kalman apparatus below */
 
-#define KNMAT 10 /* the (max) number of user-defined matrices */
+#define KNMAT 13 /* the (max) number of user-defined matrices */
 
 static kalman *uK;      /* user-defined Kalman struct */
 static char **k_mnames; /* Kalman matrix names */
@@ -1092,6 +1159,10 @@ static int user_kalman_recheck_matrices (kalman *K)
     K->S = get_matrix_by_name(k_mnames[7]);
     K->P = get_matrix_by_name(k_mnames[8]);
     K->E = get_matrix_by_name(k_mnames[9]);
+    K->Sigma = get_matrix_by_name(k_mnames[10]);
+    K->State = get_matrix_by_name(k_mnames[11]);
+    K->LL = get_matrix_by_name(k_mnames[12]);
+
 
     if (K->S == NULL || K->P == NULL || K->F == NULL || 
 	K->H == NULL || K->Q == NULL || K->y == NULL) {
@@ -1124,16 +1195,19 @@ void destroy_user_kalman (void)
 
 /*
    kalman
-      obsy     y # 1
-      obsymat  H # 2
-      obsex    x # 3
-      obsxmat  A # 4
-      obsvar   R # 5
-      strmat   F # 6
-      strvar   Q # 7
-      inistate S # 8
-      iniprec  P # 9
-      errors   E # 10
+      obsy     y     #  1
+      obsymat  H     #  2
+      obsex    x     #  3
+      obsxmat  A     #  4
+      obsvar   R     #  5
+      strmat   F     #  6
+      strvar   Q     #  7
+      inistate S     #  8
+      iniprec  P     #  9
+      errors   E     # 10
+      sigma    Sigma # 11
+      state    State # 12
+      llvec    LL    # 13
    end kalman
 */
 
@@ -1205,6 +1279,12 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	uK->P = attach_matrix(line + 8, 8, &err);
     } else if (!strncmp(line, "errors ", 7)) {
 	uK->E = attach_matrix(line + 7, 9, &err);
+    } else if (!strncmp(line, "sigma ", 6)) {
+	uK->Sigma = attach_matrix(line + 6, 10, &err);
+    } else if (!strncmp(line, "state ", 6)) {
+	uK->State = attach_matrix(line + 6, 11, &err);
+    } else if (!strncmp(line, "llvec ", 6)) {
+	uK->LL = attach_matrix(line + 6, 12, &err);
     } else {
 	err = E_PARSE;
     }
