@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-08 22:00-0400\n"
-"PO-Revision-Date: 2009-03-11 00:15+0200\n"
-"Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
+"PO-Revision-Date: 2009-03-16 00:24-0300\n"
+"Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -939,7 +939,7 @@ msgstr "Impossível abrir %s\n"
 
 #: lib/src/csvdata.c:1867
 msgid "using fixed column format\n"
-msgstr "usando o formato de coluna fixa\n"
+msgstr "usando formato de coluna fixa\n"
 
 #: lib/src/csvdata.c:1899
 #, c-format
@@ -4455,7 +4455,7 @@ msgstr "Teste LR de sobre-identificação"
 #: lib/src/modelprint.c:261
 #: lib/src/modelprint.c:262
 msgid "Equation is just identified"
-msgstr "A equação é apenas identificada"
+msgstr "A equação é exatamente identificada"
 
 #: lib/src/modelprint.c:276
 #: lib/src/modelprint.c:278
@@ -4788,7 +4788,7 @@ msgstr "TSLS"
 
 #: lib/src/modelprint.c:755
 msgid "Critical values for TSLS bias relative to OLS:\n"
-msgstr "Valores críticos para o desvio relativo TSLS em OLS:\n"
+msgstr "Valores críticos para viés TSLS em relação ao OLS:\n"
 
 #: lib/src/modelprint.c:758
 #, no-c-format
@@ -4796,8 +4796,8 @@ msgid ""
 "Critical values for desired LIML maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
-"Valores críticos para o tamanho máximo de LIML, quando executando\n"
-"testes com num nível de significância de 5%:\n"
+"Valores críticos para o tamanho máximo desejado do LIML, quando\n"
+"  realizando testes a um nível nominal de 5% de significância:\n"
 
 #: lib/src/modelprint.c:762
 #, no-c-format
@@ -4805,12 +4805,12 @@ msgid ""
 "Critical values for desired TSLS maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
-"Valores críticos para o tamanho máximo de TSLS, quando executando\n"
-"testes com num nível de significância de 5%:\n"
+"Valores críticos para o tamanho máximo desejado do TSLS, quando\n"
+"  realizando testes a um nível nominal de 5% de significância:\n"
 
 #: lib/src/modelprint.c:766
 msgid "bias"
-msgstr "desvio"
+msgstr "viés"
 
 #: lib/src/modelprint.c:766
 msgid "size"
@@ -4829,21 +4829,21 @@ msgstr "O desvio relativo é provavelmente inferior a %g%%"
 #: lib/src/modelprint.c:785
 #, c-format
 msgid "Maximal size is probably less than %g%%"
-msgstr "O tamanho máximo é provavelmente inferior a %g%%\""
+msgstr "O tamanho máximo é provavelmente inferior a %g%%"
 
 #: lib/src/modelprint.c:795
 #, c-format
 msgid "Relative bias may exceed %g%%"
-msgstr "O tamanho máximo é provavelmente inferior a %g%%\""
+msgstr "O viés relativo pode exceder %g%%"
 
 #: lib/src/modelprint.c:797
 #, c-format
 msgid "Maximal size may exceed %g%%"
-msgstr "O tamanho máximo é provavelmente inferior a %g%%\""
+msgstr "O tamanho máximo pode exceder %g%%"
 
 #: lib/src/modelprint.c:806
 msgid "Weak instrument test"
-msgstr "Teste com instrumento fraco"
+msgstr "Teste de instrumento fraco"
 
 #: lib/src/modelprint.c:830
 #: lib/src/modelprint.c:838
@@ -4853,11 +4853,11 @@ msgstr "Estatística-F de primeira-fase"
 #: lib/src/modelprint.c:844
 #: lib/src/modelprint.c:853
 msgid "Cragg-Donald minimum eigenvalue"
-msgstr "Valor próprio mínimo de Cragg-Donald"
+msgstr "Mínimo autovalor de Cragg-Donald"
 
 #: lib/src/modelprint.c:850
 msgid "Cragg--Donald minimum eigenvalue"
-msgstr "Valor próprio mínimo de Cragg--Donald"
+msgstr "Mínimo autovalor de Cragg-Donald"
 
 #: lib/src/modelprint.c:891
 msgid "A value < 10 may indicate weak instruments"
@@ -4901,7 +4901,7 @@ msgstr "Não foi possível calcular os erros padrão de Beck-Katz"
 
 #: lib/src/modelprint.c:1040
 msgid "Bartlett kernel"
-msgstr "Núcleo Bartlett (\"Bartlett kernel\")"
+msgstr "Núcleo de Bartlett"
 
 #: lib/src/modelprint.c:1041
 msgid "Parzen kernel"
@@ -7282,7 +7282,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <ch.andrade@gmail.com>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 10 de março de 2009."
+"Tradução de 16 de março de 2009."
 
 #: gui2/about.c:163
 msgid "License"
@@ -11103,7 +11103,7 @@ msgstr "Mínimos quadrados (OLS)..."
 
 #: gui2/gretl.c:1454
 msgid "_Instrumental variables"
-msgstr "_Instrumental variables"
+msgstr "Variáveis _instrumentais"
 
 #: gui2/gretl.c:1455
 msgid "_Two-Stage Least Squares..."
@@ -12423,7 +12423,7 @@ msgstr "Agora a amostra só inclui observações completas"
 
 #: gui2/library.c:1285
 msgid "Show count of missing values at each observation"
-msgstr "Mostrar a contagem de valores omissos em cada observação"
+msgstr "Mostrar contagem de valores ausentes em cada observação"
 
 #: gui2/library.c:1295
 #: gui2/library.c:1308
@@ -13393,7 +13393,7 @@ msgstr "Mínimos quadrados de dois estágios"
 
 #: gui2/selector.c:2903
 msgid "Limited information maximum likelihood"
-msgstr "Máxima verosimilhança de informação limitada (\"Limited information maximum likelihood\")"
+msgstr "Máxima verossimilhança de informação limitada (\"Limited information maximum likelihood\")"
 
 #: gui2/selector.c:2905
 msgid "Generalized method of moments"
@@ -15849,42 +15849,164 @@ msgstr "Cadeias de caracteres"
 msgid "Accessors"
 msgstr "Assessores"
 
-msgid "_Logit..."
-msgstr "_Logit..."
+#~ msgid "_Logit..."
+#~ msgstr "_Logit..."
+#~ msgid "_Probit..."
+#~ msgstr "_Probit..."
+#~ msgid "1-step estimation"
+#~ msgstr "Estimação de uma fase"
+#~ msgid "lag order %d\n"
+#~ msgstr "ordem de defasagem %d\n"
+#~ msgid "Step %d: Dickey-Fuller test on residuals\n"
+#~ msgstr "Passo %d: teste Dickey-Fuller nos resíduos\n"
+#~ msgid "95 percent confidence interval"
+#~ msgstr "Intervalo de confiança a 95 por cento"
+#~ msgid "Command '%s' ignored; not available in loop mode\n"
+#~ msgstr "O comando '%s' foi ignorado; não é possível em modo de ciclo\n"
+#~ msgid "_Scalars..."
+#~ msgstr "_Escalares..."
+#~ msgid "95\\% confidence interval"
+#~ msgstr "Intervalo de confiança a 95\\%"
+#~ msgid "95% confidence interval"
+#~ msgstr "Intervalo de confiança a 95%"
+#~ msgid "Couldn't read cointegration order"
+#~ msgstr "Não foi possível ler a ordem de cointegração"
+#~ msgid "current session"
+#~ msgstr "sessão atual"
+#~ msgid "Confidence level, percent"
+#~ msgstr "Intervalo de confiança, percentagem"
+#~ msgid ""
+#~ "The index in a 'for' loop must be a single character from the set '%s'"
+#~ msgstr ""
+#~ "O índice num ciclo 'for' deve ser um único caractere do conjunto '%s'"
+#~ msgid "Failed to reconstruct model %d\n"
+#~ msgstr "A reconstrução do modelo %d falhou\n"
+#~ msgid "Can't do this: there is no model %d\n"
+#~ msgstr "Não se pode fazer isto: não existe o modelo %d\n"
+#~ msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
+#~ msgstr "Este software é livre e TOTALMENTE SEM NENHUMA GARANTIA.\n"
+#~ msgid ""
+#~ "\n"
+#~ "Take notes then press return key to continue (or q to quit)"
+#~ msgstr ""
+#~ "\n"
+#~ "Tire notas e pressione a tecla \"return\" para continuar (ou \"q\" para "
+#~ "sair)"
+#~ msgid ""
+#~ "\n"
+#~ "Take notes then press return key to continue"
+#~ msgstr ""
+#~ "\n"
+#~ "Tire notas e pressione a tecla \"return\" para continuar"
+#~ msgid "Varname: %s\n"
+#~ msgstr "Nome da variável: %s\n"
+#~ msgid "SUR residual, equation %d"
+#~ msgstr "resíduo SUR, equação %d"
+#~ msgid "3SLS residual, equation %d"
+#~ msgstr "resíduo 3SLS, equação %d"
+#~ msgid "SUR fitted value, equation %d"
+#~ msgstr "valor SUR ajustado, equação %d"
+#~ msgid "3SLS fitted value, equation %d"
+#~ msgstr "valor 3SLS ajustado, equação %d"
+#~ msgid "Please give the current dataset a name"
+#~ msgstr "Por favor dê um nome ao conjunto de dados atual"
+#~ msgid "Couldn't open command file for writing"
+#~ msgstr "Não foi possível abrir o arquivo de comandos para escrever"
+#~ msgid "gretl: new dataset"
+#~ msgstr "gretl: novo conjunto de dados"
+#~ msgid ""
+#~ "Do you want to start entering data values\n"
+#~ "using gretl's spreadsheet?"
+#~ msgstr ""
+#~ "Pretende iniciar a introdução de valores\n"
+#~ "usando o sistema de folha-de-cálculo do gretl?"
+#~ msgid "_Standard error of residuals"
+#~ msgstr "Erro padrão dos re_síduos"
+#~ msgid "error sum of squares"
+#~ msgstr "Erro da soma dos quadrados"
+#~ msgid "standard error of residuals"
+#~ msgstr "erro padrão dos resíduos"
+#~ msgid "log likelihood"
+#~ msgstr "log da verosimilhança"
+#~ msgid "Bayesian Information Criterion"
+#~ msgstr "Critério de Informação de Bayes"
+#~ msgid "Sorry, TSLS models can't be put in the model table"
+#~ msgstr ""
+#~ "Desculpe, os modelos TSLS não podem ser colocados na tabela de modelos"
+#~ msgid "HCCM"
+#~ msgstr "HCCM"
+#~ msgid ""
+#~ "\n"
+#~ "Augmented Dickey-Fuller tests, order %d, for %s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Teste Dickey-Fuller aumentado, de ordem %d, para %s\n"
+#~ msgid ""
+#~ "\n"
+#~ "Dickey-Fuller tests for %s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Teste Dickey-Fuller para %s\n"
+#~ msgid "P-value(DW)"
+#~ msgstr "P-valor(DW)"
+#~ msgid "errorbars"
+#~ msgstr "barras de erro"
+#~ msgid "Hannan-Quinn criterion"
+#~ msgstr "Critério de Hannan-Quinn"
+#~ msgid "Hannan--Quinn criterion"
+#~ msgstr "Critério de Hannan--Quinn"
+#~ msgid ""
+#~ "                final %11.5f\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                final %11.5f\n"
+#~ "\n"
+#~ msgid "Median of dependent variable"
+#~ msgstr "Mediana da variável dependente"
+#~ msgid "S.D. of dependent variable"
+#~ msgstr "D.P da variável dependente"
+#~ msgid "Unadjusted R{\\super 2}"
+#~ msgstr "R{\\super 2} não-ajustado"
+#~ msgid "Uncentered R{\\super 2}"
+#~ msgstr "R{\\super 2} não-centrado"
+#~ msgid "Centered R{\\super 2}"
+#~ msgstr "R{\\super 2} centrado"
+#~ msgid "Adjusted R{\\super 2}"
+#~ msgstr "R{\\super 2} ajustado"
+#~ msgid "Adjusted $\\bar{R}^2$"
+#~ msgstr "$\\bar{R}^2$ ajustado"
+#~ msgid "Within R-squared"
+#~ msgstr "Dentro de R-quadrado"
+#~ msgid "McFadden's pseudo-R{\\super 2}"
+#~ msgstr "pseudo-R{\\super 2} de McFadden"
+#~ msgid "p-value for"
+#~ msgstr "p-valor para"
+#~ msgid "Degrees of freedom"
+#~ msgstr "Graus de liberdade"
+#~ msgid "F-statistic"
+#~ msgstr "Estatística-F"
+#~ msgid "First-order autocorrelation coeff."
+#~ msgstr "Coeficiente de autocorrelação de primeira-ordem"
+#~ msgid "Durbin--Watson statistic"
+#~ msgstr "Estatística de Durbin--Watson"
+#~ msgid "Variance of innovations"
+#~ msgstr "Variância de inovações"
+#~ msgid "Mean of"
+#~ msgstr "Média de"
+#~ msgid "low"
+#~ msgstr "baixo"
+#~ msgid "high"
+#~ msgstr "alto"
 
-msgid "_Probit..."
-msgstr "_Probit..."
-
-msgid "1-step estimation"
-msgstr "Estimação de uma fase"
-
-msgid "lag order %d\n"
-msgstr "ordem de defasagem %d\n"
-
-msgid "Step %d: Dickey-Fuller test on residuals\n"
-msgstr "Passo %d: teste Dickey-Fuller nos resíduos\n"
-
-msgid "95 percent confidence interval"
-msgstr "Intervalo de confiança a 95 por cento"
-
-msgid "Command '%s' ignored; not available in loop mode\n"
-msgstr "O comando '%s' foi ignorado; não é possível em modo de ciclo\n"
-
-msgid "_Scalars..."
-msgstr "_Escalares..."
-
-msgid "95\\% confidence interval"
-msgstr "Intervalo de confiança a 95\\%"
-
-msgid "95% confidence interval"
-msgstr "Intervalo de confiança a 95%"
-
-msgid "Couldn't read cointegration order"
-msgstr "Não foi possível ler a ordem de cointegração"
-
-msgid "current session"
-msgstr "sessão atual"
-
-msgid "Confidence level, percent"
-msgstr "Intervalo de confiança, percentagem"
+#, fuzzy
+#~ msgid "Sample size"
+#~ msgstr "dimensão da amostra"
+#~ msgid "Failed to import data"
+#~ msgstr "Importação dos dados falhou"
+#~ msgid ""
+#~ "You can only have one plot controller open\n"
+#~ "at any given time"
+#~ msgstr ""
+#~ "Apenas se pode ter um controlador gráfico\n"
+#~ "aberto em cada instante"
 
