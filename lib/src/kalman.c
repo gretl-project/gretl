@@ -1173,6 +1173,10 @@ static gretl_matrix *kalman_retrieve_matrix (const char *name,
 {
     gretl_matrix *m;
 
+    if (*name == '\0') {
+	return NULL;
+    }
+
     /* We allow for the possibility that one or more of the matrices
        that are attached to a kalman struct have been temporarily
        "promoted", via matrix-pointer arguments, to the level of a
@@ -1345,7 +1349,7 @@ int kalman_parse_line (const char *line, gretlopt opt)
     u = get_user_kalman(gretl_function_depth());
 
     if (u == NULL) {
-	/* there's no Kalman in progress */
+	gretl_errmsg_set(_("No Kalman filter is defined"));
 	return E_DATA;
     }    
 
@@ -1432,10 +1436,11 @@ int user_kalman_run (const char *E, const char *S, const char *P,
     int ret = 0;
 
     if (u == NULL) {
+	gretl_errmsg_set(_("No Kalman filter is defined"));
 	*err = E_DATA;
     }
 
-    if (*err) {
+    if (!*err) {
 	u->K->E = attach_export_matrix(E, err);
     }
 
