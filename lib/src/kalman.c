@@ -1533,10 +1533,12 @@ static void load_row (gretl_vector *targ, const gretl_matrix *src,
 
 /* Row @t of @src represents the vech of an n x n matrix: extract the
    row and apply the inverse operation of vech to reconstitute the
-   matrix in @targ */
+   matrix in @targ -- or subtract the newly reconstituted matrix
+   from @targ.
+*/
 
 static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
-			    int n, int t)
+			    int n, int t, int mod)
 {
     int i, j, m = 0;
     double x;
@@ -1544,10 +1546,27 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
     for (i=0; i<n; i++) {
 	for (j=i; j<n; j++) {
 	    x = gretl_matrix_get(src, t, m++);
+	    if (mod == GRETL_MOD_DECUMULATE) {
+		x = gretl_matrix_get(targ, i, j) - x;
+	    }
 	    gretl_matrix_set(targ, i, j, x);
 	    if (i != j) {
 		gretl_matrix_set(targ, j, i, x);
 	    }
+	}
+    }
+}
+
+static void load_to_vech (gretl_matrix *targ, const gretl_matrix *src,
+			  int n, int t)
+{
+    int i, j, m = 0;
+    double x;
+
+    for (i=0; i<n; i++) {
+	for (j=i; j<n; j++) {
+	    x = gretl_matrix_get(src, i, j);
+	    gretl_matrix_set(targ, t, m++, x);
 	}
     }
 }
@@ -1557,10 +1576,11 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
    not finished/right yet.
  */
 
-static int kalman_smooth (kalman *K)
+static int kalman_smooth (kalman *K, int np)
 {
     gretl_matrix_block *B;
-    gretl_matrix *J, *Pl, *Pr, *M1, *M2, *SM;
+    gretl_matrix *J, *Pl, *Pr, *M1, *M2;
+    gretl_matrix *SS, *SP;
     double x;
     int i, t;
     int err = 0;
@@ -1570,26 +1590,32 @@ static int kalman_smooth (kalman *K)
 			       &Pr, K->r, K->r,
 			       &M1, K->r, 1,
 			       &M2, K->r, 1,
-			       &SM, K->T, K->r,
+			       &SS, K->T, K->r,
+			       &SP, K->T, np,
 			       NULL);
     if (B == NULL) {
 	return E_ALLOC;
     }
 
-    gretl_matrix_zero(SM);
-
     /* the final value of S_{t|t} is already S_{t|T} */
     for (i=0; i<K->r; i++) {
 	x = gretl_matrix_get(K->Stt, K->T-1, i);
-	gretl_matrix_set(SM, K->T-1, i, x);
+	gretl_matrix_set(SS, K->T-1, i, x);
     }
+
+    /* also final MSE is OK */
+    for (i=0; i<np; i++) {
+	x = gretl_matrix_get(K->Ptt, K->T-1, i);
+	gretl_matrix_set(SP, K->T-1, i, x);
+    }	
+    
 
     /* FIXME time subscripts on matrix reads? */
 
     for (t=K->T-2; t>=0 && !err; t--) {
 	/* J_t = P_{t|t} F' P^{-1}_{t+1|t} */
-	load_from_vech(Pl, K->Ptt, K->r, t);
-	load_from_vech(Pr, K->P, K->r, t+1);
+	load_from_vech(Pl, K->Ptt, K->r, t, GRETL_MOD_NONE);
+	load_from_vech(Pr, K->P, K->r, t+1, GRETL_MOD_NONE);
 #if KDEBUG
 	fprintf(stderr, "t = %d\n", t);
 	gretl_matrix_print(Pl, "Pl");
@@ -1601,27 +1627,32 @@ static int kalman_smooth (kalman *K)
 				  K->Tmprr, GRETL_MOD_NONE);
 	gretl_matrix_multiply(Pl, K->Tmprr, J);
 
-	/* form J_t * (S_{t+1|T} - S{t+1|t}) = "M2" */
-	load_row(M1, SM, t+1, GRETL_MOD_NONE);
+	/* "M2" = J_t * (S_{t+1|T} - S{t+1|t}) */
+	load_row(M1, SS, t+1, GRETL_MOD_NONE);
 	load_row(M1, K->S, t, GRETL_MOD_DECUMULATE);
 	gretl_matrix_multiply(J, M1, M2);
 
-	/* form S_{t|T} = S_{t|t} + M2 */
+	/* S_{t|T} = S_{t|t} + M2 */
 	load_row(M1, K->Stt, t, GRETL_MOD_NONE);
 	gretl_matrix_add_to(M1, M2);
 	for (i=0; i<K->r; i++) {
 	    /* set smoothed estimate for t */
-	    gretl_matrix_set(SM, t, i, M1->val[i]);
+	    gretl_matrix_set(SS, t, i, M1->val[i]);
 	}
 
-	/* FIXME: should calculate
-	   P_{t|T} = P_{t|t} + J_t (P_{t+1|T} - P_{t+1|t}) J'_t 
-	*/
+	/* P_{t|T} = P_{t|t} + J_t(P_{t+1|T} - P_{t+1|t})J'_t */
+	load_from_vech(Pr, SP, K->r, t+1, GRETL_MOD_NONE);
+	load_from_vech(Pr, K->P, K->r, t+1, GRETL_MOD_DECUMULATE);
+	gretl_matrix_qform(J, GRETL_MOD_NONE,
+			   Pr, K->Tmprr, GRETL_MOD_NONE);
+	gretl_matrix_add_to(Pl, K->Tmprr);
+	load_to_vech(SP, K->Tmprr, K->r, t);
     }
 
     if (!err) {
-	/* is SM redundant (can we do this in place)? */
-	gretl_matrix_copy_values(K->S, SM);
+	/* Can we do this stuff in place? */
+	gretl_matrix_copy_values(K->S, SS);
+	gretl_matrix_copy_values(K->P, SP);
     }
 
     gretl_matrix_block_destroy(B);
@@ -1700,7 +1731,7 @@ gretl_matrix *user_kalman_smooth (const char *Pname, int *err)
     }
 
     if (!*err) {
-	*err = kalman_smooth(u->K);
+	*err = kalman_smooth(u->K, np);
     }
 
     gretl_matrix_block_destroy(B);
