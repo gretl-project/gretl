@@ -1613,14 +1613,16 @@ static int kalman_smooth (kalman *K)
 	    /* set smoothed estimate for t */
 	    gretl_matrix_set(SM, t, i, M1->val[i]);
 	}
+
+	/* FIXME: should calculate
+	   P_{t|T} = P_{t|t} + J_t (P_{t+1|T} - P_{t+1|t}) J'_t 
+	*/
     }
 
     if (!err) {
 	/* is SM redundant (can we do this in place)? */
 	gretl_matrix_copy_values(K->S, SM);
     }
-
-    /* FIXME calculate MSE of smoothed state estimate in P */
 
     gretl_matrix_block_destroy(B);
 
