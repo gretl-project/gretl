@@ -459,6 +459,13 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 	return 0;
     }
 
+    if (m->rows * m->cols == n) {
+	/* no need to reallocate storage */
+	m->rows = rows;
+	m->cols = cols;
+	return 0;
+    }
+
     if (is_block_matrix(m)) {
 	matrix_block_error("gretl_matrix_realloc");
 	return E_DATA;

@@ -4651,7 +4651,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	    
 	    ret->v.m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
 	} 
-    } else if (t->t == F_KFILT) {
+    } else if (t->t == F_KFILTER) {
 	const char *E = NULL;
 	const char *S = NULL;
 	const char *P = NULL;
@@ -4684,6 +4684,36 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	if (!p->err) {
 	    ret->v.xval = user_kalman_run(E, S, P, L, &p->err);
+	} 
+    } else if (t->t == F_KSMOOTH) {
+	/* might be extended to take more args, though at present
+	   there's only one */
+	const char *P = NULL;
+
+	if (k > 1) {
+	    n_args_error(k, 1, "kfilter", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = n->v.bn.n[i];
+	    if (e->t == EMPTY) {
+		; /* NULL arguments are acceptable */
+	    } else if (e->t != U_ADDR) {
+		node_type_error(t->t, i, U_ADDR, e, p);
+	    } else if (i == 0) {
+		P = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+	    } 
+	}
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }	    
+	    ret->v.m = user_kalman_smooth(P, &p->err);
 	} 
     }
 
@@ -6207,7 +6237,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_FILTER:	
     case F_MCOVG:
-    case F_KFILT:
+    case F_KFILTER:
+    case F_KSMOOTH:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;

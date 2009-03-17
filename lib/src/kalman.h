@@ -60,6 +60,8 @@ int kalman_parse_line (const char *line, gretlopt opt);
 int user_kalman_run (const char *E, const char *S, const char *P,
 		     const char *L, int *err);
 
+gretl_matrix *user_kalman_smooth (const char *Pname, int *err);
+
 void destroy_user_kalman (void);
 
 int delete_kalman (PRN *prn);

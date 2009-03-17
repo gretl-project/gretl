@@ -296,7 +296,8 @@ enum {
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_FILTER,
     F_MCOVG,
-    F_KFILT,
+    F_KFILTER,
+    F_KSMOOTH,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
