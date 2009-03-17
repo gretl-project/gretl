@@ -1531,9 +1531,9 @@ static void load_row (gretl_vector *targ, const gretl_matrix *src,
     }
 }
 
-/* Row @t of @src represents the vech of a matrix: extract the
-   row and apply the inverse operation of vech to reconstitute
-   the matrix in @targ */
+/* Row @t of @src represents the vech of an n x n matrix: extract the
+   row and apply the inverse operation of vech to reconstitute the
+   matrix in @targ */
 
 static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
 			    int n, int t)
@@ -1610,12 +1610,13 @@ static int kalman_smooth (kalman *K)
 	load_row(M1, K->Stt, t, GRETL_MOD_NONE);
 	gretl_matrix_add_to(M1, M2);
 	for (i=0; i<K->r; i++) {
-	    /* set smoothed value for t */
+	    /* set smoothed estimate for t */
 	    gretl_matrix_set(SM, t, i, M1->val[i]);
 	}
     }
 
     if (!err) {
+	/* is SM redundant (can we do this in place)? */
 	gretl_matrix_copy_values(K->S, SM);
     }
 
