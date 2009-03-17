@@ -2470,10 +2470,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (cmd->ci == DELEET) {
-	if (nf == 1 && (gretl_is_scalar(rem) ||
+	if (nf == 1 && (!strcmp(rem, "kalman") ||
+			gretl_is_scalar(rem) ||
 			gretl_is_matrix(rem) || 
 			get_string_by_name(rem))) {
-	    /* special for deleting a named matrix or string */
+	    /* special for deleting a named matrix, string, ... */
 	    cmd_param_grab_string(cmd, rem);
 	    goto cmd_exit;
 	}

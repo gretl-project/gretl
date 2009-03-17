@@ -1443,9 +1443,11 @@ int gretl_copy_file (const char *src, const char *dest)
 
 int gretl_delete_var_by_name (const char *s, PRN *prn)
 {
-    int err;
+    int err = 0;
 
-    if (gretl_is_scalar(s)) {
+    if (!strcmp(s, "kalman")) {
+	err = delete_kalman(prn);	
+    } else if (gretl_is_scalar(s)) {
 	err = gretl_scalar_delete(s, prn);
     } else if (get_matrix_by_name(s)) {
 	err = user_matrix_destroy_by_name(s, prn);

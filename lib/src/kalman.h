@@ -62,4 +62,6 @@ int user_kalman_run (const char *E, const char *S, const char *P,
 
 void destroy_user_kalman (void);
 
+int delete_kalman (PRN *prn);
+
 #endif /* KALMAN_H_ */

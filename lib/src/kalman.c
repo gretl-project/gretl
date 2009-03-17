@@ -1105,7 +1105,7 @@ int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P)
 
 /* user-defined Kalman apparatus below */
 
-#define KNMAT 10 /* the (max) number of user-attached matrices */
+#define KNMAT 9 /* the (max) number of user-attached matrices */
 
 /* symbolic identifiers for attached matrix positions */
 
@@ -1118,8 +1118,7 @@ enum {
     K_F,     /* strmat */
     K_Q,     /* strvar */
     K_S,     /* inistate */
-    K_P,     /* iniprec */
-    K_E      /* fcast errs */
+    K_P      /* iniprec */
 };
 
 typedef struct user_kalman_ user_kalman;
@@ -1261,7 +1260,7 @@ static user_kalman *get_user_kalman (int level)
     return NULL;
 }
 
-void destroy_user_kalman (void)
+static int real_destroy_user_kalman (PRN *prn)
 {
     int i, lev = gretl_function_depth();
 
@@ -1271,9 +1270,22 @@ void destroy_user_kalman (void)
 	    free_strings_array(uK[i]->mnames, KNMAT);
 	    free(uK[i]);
 	    uK[i] = NULL;
-	    return;
+	    pputs(prn, "Deleted kalman filter\n");
+	    return 0;
 	}
     }
+
+    return E_UNKVAR;
+}
+
+void destroy_user_kalman (void)
+{
+    real_destroy_user_kalman(NULL);
+}
+
+int delete_kalman (PRN *prn)
+{
+    return real_destroy_user_kalman(prn);
 }
 
 static int add_user_kalman (void)
@@ -1353,24 +1365,6 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	return E_DATA;
     }    
 
-    if (!strncmp(line, "kalman", 6)) {
-	if (opt & OPT_F) {
-	    /* --filter option */
-	    err = user_kalman_recheck_matrices(u);
-	    if (!err) {
-		err = kalman_forecast(u->K);
-	    }
-	    return err;
-	} else if (opt & OPT_D) {
-	    /* --delete option */
-	    destroy_user_kalman();
-	    return 0;
-	} else {
-	    /* huh? */
-	    return E_DATA;
-	}
-    }
-	    
     if (!strncmp(line, "end ", 4)) {
 	/* "end kalman": complete the set-up */
 	err = user_kalman_setup(u->K);
@@ -1392,8 +1386,6 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	u->K->S = attach_matrix(u, line + 9, K_S, &err);
     } else if (!strncmp(line, "iniprec ", 8)) {
 	u->K->P = attach_matrix(u, line + 8, K_P, &err);
-    } else if (!strncmp(line, "errors ", 7)) {
-	u->K->E = attach_matrix(u, line + 7, K_E, &err);
     } else {
 	err = E_PARSE;
     }

@@ -277,7 +277,8 @@ static const char *res3[] = {
     "series",
     "matrix",
     "string",
-    "list"
+    "list",
+    "kalman"
 };
 
 /**
