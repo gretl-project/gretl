@@ -1226,7 +1226,8 @@ static gretl_matrix *kalman_retrieve_matrix (const char *name,
     /* We allow for the possibility that one or more of the matrices
        that are attached to a kalman struct have been temporarily
        "promoted", via matrix-pointer arguments, to the level of a
-       user-defined function.
+       user-defined function.  This can happen if a user-defined
+       function is using a Kalman filter defined by the caller.
     */
 
     m = get_matrix_by_name_at_level(name, level);
@@ -1239,7 +1240,7 @@ static gretl_matrix *kalman_retrieve_matrix (const char *name,
 
 /* When (re-)running a user-defined filter, check that no relevant
    matrices have disappeared or been resized.  In addition,
-   re-initalize the state and precision.
+   re-initialize the state and precision.
 */
 
 static int user_kalman_recheck_matrices (user_kalman *u)
@@ -1277,6 +1278,11 @@ static int user_kalman_recheck_matrices (user_kalman *u)
     
     return err;
 }
+
+/* Try to find a user-defined Kalman filter at the current level of
+   function execution.  Failing that, if @level is given as -1, we
+   also try looking at the parent level.
+*/
 
 static user_kalman *get_user_kalman (int level)
 {
@@ -1392,9 +1398,8 @@ static int add_user_kalman (void)
     return err;
 }
 
-/* Given a line that is part of a "kalman ... end kalman" build process,
-   or either of the stand-alone lines "kalman --filter" or "kalman
-   --delete", parse and respond appropriately.
+/* Given a line that is part of a "kalman ... end kalman" build block,
+   parse and respond appropriately.
 */
 
 int kalman_parse_line (const char *line, gretlopt opt)
@@ -1403,7 +1408,7 @@ int kalman_parse_line (const char *line, gretlopt opt)
     int err = 0;
 
     if (opt == OPT_NONE && !strncmp(line, "kalman", 6)) {
-	/* starting: allocate */
+	/* starting: allocate and return */
 	return add_user_kalman();
     }
 
@@ -1439,10 +1444,6 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	err = E_PARSE;
     }
 
-#if 0
-    fprintf(stderr, "kalman_parse_line: '%s' -> err = %d\n", line, err);
-#endif
-
     if (err) {
 	destroy_user_kalman();
     }
@@ -1467,6 +1468,9 @@ static gretl_matrix *attach_export_matrix (const char *mname, int *err)
 
     return m;
 }
+
+/* called by the kfilter() function: run a user-defined Kalman
+   filter in forecasting mode */
 
 int user_kalman_run (const char *E, const char *S, const char *P,
 		     const char *L, int *err)
@@ -1621,6 +1625,10 @@ static int kalman_smooth (kalman *K)
 
     return err;
 }
+
+/* called by the ksmooth() function: run a user-defined Kalman
+   filter in forecasting mode, then recurse backwards to 
+   produce the smoothed estimate of the state */
 
 gretl_matrix *user_kalman_smooth (const char *Pname, int *err)
 {
