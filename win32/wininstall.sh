@@ -1,10 +1,14 @@
 #!/bin/sh
 
 # Shell script to update an installation of gretl on win32, by
-# copying files from a build tree. Change PREFIX value if need be.
+# copying files from a build tree.
 
+######### CONFIGURE HERE #########
 PREFIX="c:/progra~1/gretl"
+TOPDIR=".."
+WINFILES=/mingw/winbuild
 install="cp -a"
+##################################
 
 # put binaries in place
 ${install} gretlcli.exe $PREFIX
