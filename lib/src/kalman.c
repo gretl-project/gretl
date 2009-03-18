@@ -78,7 +78,7 @@ struct kalman_ {
 
     /* optional run-time export matrices */
     gretl_matrix *E;   /* T x n: forecast errors, all time-steps */
-    gretl_matrix *YP;  /* T x nn: MSE for observables, all time-steps */
+    gretl_matrix *V;   /* T x nn: MSE for observables, all time-steps */
     gretl_matrix *S;   /* T x r: state vector, all time-steps */
     gretl_matrix *P;   /* T x nr: MSE for state, all time-steps */
     gretl_matrix *LL;  /* T x 1: loglikelihood, all time-steps */
@@ -88,8 +88,8 @@ struct kalman_ {
     gretl_matrix *PH;
     gretl_matrix *HPH;
     gretl_matrix *FPH;
-    gretl_matrix *V;
-    gretl_matrix *VE;
+    gretl_matrix *Vt;
+    gretl_matrix *Ve;
     gretl_matrix *PHV;
     gretl_matrix *Ax;
     gretl_matrix *Tmpnn;
@@ -131,7 +131,7 @@ static kalman *kalman_new_empty (void)
 	K->B = NULL;
 	K->F = K->A = K->H = NULL;
 	K->Q = K->R = NULL;
-	K->E = K->YP = K->S = K->P = K->LL = NULL;
+	K->E = K->V = K->S = K->P = K->LL = NULL;
 	K->y = K->x = NULL;
 	K->flags = 0;
 	K->fnlevel = 0;
@@ -247,12 +247,12 @@ static int kalman_check_dimensions (kalman *K)
 	}
     }
 
-    /* YP should be T x nn, if present */
-    if (K->YP != NULL) {
+    /* V should be T x nn, if present */
+    if (K->V != NULL) {
 	int nn = (K->n * K->n + K->n) / 2;
 
-	if (K->YP->rows != K->T || K->YP->cols != nn) {
-	    err = gretl_matrix_realloc(K->YP, K->T, nn);
+	if (K->V->rows != K->T || K->V->cols != nn) {
+	    err = gretl_matrix_realloc(K->V, K->T, nn);
 	    if (err) {
 		return err;
 	    }
@@ -406,8 +406,8 @@ static int kalman_init (kalman *K)
     K->B = gretl_matrix_block_new(&K->PH,  K->r, K->n, /* P*H */
 				  &K->FPH, K->r, K->n, /* F*P*H */
 				  &K->HPH, K->n, K->n, /* H'*P*H */
-				  &K->V,   K->n, K->n, /* (H'*P*H + R)^{-1} */
-				  &K->VE,  K->n, 1,    /* (H'*P*H + R)^{-1} * E */
+				  &K->Vt,  K->n, K->n, /* (H'*P*H + R)^{-1} */
+				  &K->Ve,  K->n, 1,    /* (H'*P*H + R)^{-1} * E */
 				  &K->PHV, K->r, K->n, /* P*H*V */
 				  &K->Ax,  K->n, 1,    /* A'*x at obs t */
 				  &K->Tmpnn, K->n, K->n,
@@ -702,7 +702,7 @@ static int kalman_arma_iter_1 (kalman *K)
     }
    
     /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "ve" */
-    ve = K->e->val[0] * K->V->val[0];
+    ve = K->e->val[0] * K->Vt->val[0];
 
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
@@ -730,26 +730,24 @@ static int kalman_iter_1 (kalman *K, int t, double *llt)
     /* write F*S into S+ */
     err += multiply_by_F(K, K->S0, K->S1, 0);
 
-    /* form E = y - A'x - H'S */
+    /* form e = y - A'x - H'S */
     err += gretl_matrix_subtract_from(K->e, K->Ax);
     gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
 			      K->S0, GRETL_MOD_NONE,
 			      K->e, GRETL_MOD_DECREMENT);
     
-    /* form (H'PH + R)^{-1} * (y - A'x - H'S) = "VE" */
-    gretl_matrix_multiply(K->V, K->e, K->VE);
+    /* form (H'PH + R)^{-1} * (y - A'x - H'S) = "Ve" */
+    gretl_matrix_multiply(K->Vt, K->e, K->Ve);
 
-    if (K->Stt == NULL) {
-	gretl_matrix_reuse(K->Tmpnn, 1, 1);
-	/* form (y - A'x - H'S)' * (H'PH + R)^{-1} * (y - A'x - H'S) */
-	gretl_matrix_multiply_mod(K->e, GRETL_MOD_TRANSPOSE,
-				  K->VE, GRETL_MOD_NONE,
-				  K->Tmpnn, GRETL_MOD_NONE);
-	/* contribution to log-likelihood of the above -- see Hamilton
+    if (!err) {
+	/* contribution to log-likelihood -- see Hamilton
 	   (1994) equation [13.4.1] page 385.
 	*/
-	*llt -= .5 * K->Tmpnn->val[0];
-	gretl_matrix_reuse(K->Tmpnn, K->n, K->n);
+	double x = gretl_scalar_qform(K->e, K->Vt, &err);
+
+	if (!err) {
+	    *llt -= 0.5 * x;
+	}
     }
 
     /* form FPH */
@@ -758,7 +756,7 @@ static int kalman_iter_1 (kalman *K, int t, double *llt)
     /* form FPH * (H'PH + R)^{-1} * (y - A'x - H'S) 
        and add to S+ */
     gretl_matrix_multiply_mod(K->FPH, GRETL_MOD_NONE,
-			      K->VE, GRETL_MOD_NONE,
+			      K->Ve, GRETL_MOD_NONE,
 			      K->S1, GRETL_MOD_CUMULATE);
 
     if (K->Stt != NULL) {
@@ -766,7 +764,7 @@ static int kalman_iter_1 (kalman *K, int t, double *llt)
 	double x;
 	int i;
 
-	gretl_matrix_multiply(K->PH, K->VE, K->Tmpn1);
+	gretl_matrix_multiply(K->PH, K->Ve, K->Tmpn1);
 	gretl_matrix_add_to(K->Tmpn1, K->S0);
 	for (i=0; i<K->n; i++) {
 	    x = gretl_vector_get(K->Tmpn1, i);
@@ -787,7 +785,7 @@ static int kalman_iter_2 (kalman *K, int t)
     int err = 0;
 
     /* form P - PH(H'PH + R)^{-1}H'P */
-    err += gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->V,
+    err += gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->Vt,
 			      K->P0, GRETL_MOD_DECREMENT);
 
     if (K->Ptt != NULL) {
@@ -928,7 +926,7 @@ static int kalman_incr_S (kalman *K)
     double x;
     int err = 0;
 
-    x = gretl_scalar_qform(K->e, K->V, &err);
+    x = gretl_scalar_qform(K->e, K->Vt, &err);
     if (!err) {
 	K->SSRw += x;
     }
@@ -1005,21 +1003,26 @@ int kalman_forecast (kalman *K)
 	/* initial matrix calculations: form PH and H'PH 
 	   (note that we need PH later) */
 	gretl_matrix_multiply(K->P0, K->H, K->PH);
-	if (arma_ll(K)) {
-	    K->HPH->val[0] = 0.0;
+	if (K->n == 1) {
+	    /* slight speed-up for the univariate case */
+	    K->HPH->val[0] = (K->R == NULL)? 0.0 : K->R->val[0];
 	    for (i=0; i<K->r; i++) {
 		K->HPH->val[0] += K->H->val[i] * K->PH->val[i];
 	    }
-	    ldet = log(K->HPH->val[0]);
-	    K->V->val[0] = 1.0 / K->HPH->val[0];
+	    if (K->HPH->val[0] <= 0.0) {
+		err = E_NAN;
+	    } else {
+		ldet = log(K->HPH->val[0]);
+		K->Vt->val[0] = 1.0 / K->HPH->val[0];
+	    }
 	} else {
 	    gretl_matrix_qform(K->H, GRETL_MOD_TRANSPOSE,
 			       K->P0, K->HPH, GRETL_MOD_NONE);
 	    if (K->R != NULL) {
 		gretl_matrix_add_to(K->HPH, K->R);
 	    }
-	    gretl_matrix_copy_values(K->V, K->HPH);
-	    err = gretl_invert_symmetric_matrix2(K->V, &ldet);
+	    gretl_matrix_copy_values(K->Vt, K->HPH);
+	    err = gretl_invert_symmetric_matrix2(K->Vt, &ldet);
 	    if (err) {
 		fprintf(stderr, "kalman_forecast: failed to invert V\n");
 	    }
@@ -1032,12 +1035,12 @@ int kalman_forecast (kalman *K)
 	} else if (arma_ll(K)) {
 	    K->sumVt += ldet;
 	} else {
-	    llt = -(K->n / 2.0) * LN_2_PI - .5 * ldet;
+	    llt = -0.5 * (K->n * LN_2_PI + ldet);
 	}
 
-	if (K->YP != NULL) {
+	if (K->V != NULL) {
 	    /* record variance for est. of observables */
-	    load_to_vech(K->YP, K->HPH, K->n, t);
+	    load_to_vech(K->V, K->HPH, K->n, t);
 	}
 
 	/* first stage of dual iteration */
@@ -1526,7 +1529,7 @@ static gretl_matrix *attach_export_matrix (const char *mname, int *err)
 /* called by the kfilter() function: run a user-defined Kalman
    filter in forecasting mode */
 
-int user_kalman_run (const char *E, const char *YP, 
+int user_kalman_run (const char *E, const char *V, 
 		     const char *S, const char *P,
 		     const char *L, int *err)
 {
@@ -1546,7 +1549,7 @@ int user_kalman_run (const char *E, const char *YP,
 
     if (!*err) {
 	/* MSE for observables */
-	u->K->YP = attach_export_matrix(YP, err);
+	u->K->V = attach_export_matrix(V, err);
     } 
 
     if (!*err) {
