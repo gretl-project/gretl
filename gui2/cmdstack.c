@@ -344,10 +344,10 @@ void view_command_log (void)
    This function gets called from session.c when when saving a
    session, opening a session file, or closing a session.
 
-   On saving, we shift the existing logfile into the session directory
-   so it'll get saved along with the other materials -- if required.
-   (But if the save is of a session that has already been saved to
-   file, the logfile location will already be correct.)
+   On saving, we shift the existing logfile (if any) into the session
+   directory so it'll get saved along with the other materials -- if
+   required.  (But if the save is of a session that has already been
+   saved to file, the logfile location will already be correct.)
 
    On opening a session file, we set the logfile name so the re-opened
    session log can be displayed and added to.
@@ -372,9 +372,11 @@ void set_session_log (const char *dirname, int code)
 	strcpy(tmp, dirname);
 	strcat(tmp, "session.inp");
 	if (strcmp(logname, tmp)) {
-	    err = gretl_print_rename_file(logprn, logname, tmp);
-	    if (err) {
-		free_command_stack();
+	    if (logprn != NULL) {
+		err = gretl_print_rename_file(logprn, logname, tmp);
+		if (err) {
+		    free_command_stack();
+		}
 	    }
 	    strcpy(logname, tmp);
 	    session_open = 1;

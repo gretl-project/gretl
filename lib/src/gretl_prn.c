@@ -361,6 +361,11 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 {
     int err = 0;
 
+    if (prn == NULL) {
+	fprintf(stderr, "gretl_print_rename_file: prn is NULL\n");
+	return E_DATA;
+    }
+
     if (prn->fp == NULL || prn->fpaux != NULL) {
 	return E_DATA;
     }
