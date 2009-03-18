@@ -1572,8 +1572,8 @@ static void load_to_vech (gretl_matrix *targ, const gretl_matrix *src,
 }
 
 /* Below: an attempt to implement the account of Kalman smoothing
-   given in Hamilton, Time Series Analysis, pp.  394-397.  It's
-   not finished/right yet.
+   given in Hamilton, Time Series Analysis, pp.  394-397.  Needs
+   rigorous checking!
  */
 
 static int kalman_smooth (kalman *K, int np)
@@ -1610,7 +1610,7 @@ static int kalman_smooth (kalman *K, int np)
     }	
     
 
-    /* FIXME time subscripts on matrix reads? */
+    /* FIXME: are the time subscripts on matrix reads OK? */
 
     for (t=K->T-2; t>=0 && !err; t--) {
 	/* J_t = P_{t|t} F' P^{-1}_{t+1|t} */
@@ -1629,7 +1629,7 @@ static int kalman_smooth (kalman *K, int np)
 
 	/* "M2" = J_t * (S_{t+1|T} - S{t+1|t}) */
 	load_row(M1, SS, t+1, GRETL_MOD_NONE);
-	load_row(M1, K->S, t, GRETL_MOD_DECUMULATE);
+	load_row(M1, K->S, t+1, GRETL_MOD_DECUMULATE);
 	gretl_matrix_multiply(J, M1, M2);
 
 	/* S_{t|T} = S_{t|t} + M2 */
@@ -1646,7 +1646,7 @@ static int kalman_smooth (kalman *K, int np)
 	gretl_matrix_qform(J, GRETL_MOD_NONE,
 			   Pr, K->Tmprr, GRETL_MOD_NONE);
 	gretl_matrix_add_to(Pl, K->Tmprr);
-	load_to_vech(SP, K->Tmprr, K->r, t);
+	load_to_vech(SP, Pl, K->r, t);
     }
 
     if (!err) {
