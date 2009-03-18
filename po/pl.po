@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-08 22:00-0400\n"
-"PO-Revision-Date: 2009-02-18 23:00-0500\n"
+"PO-Revision-Date: 2009-03-18 22:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -656,9 +656,8 @@ msgstr ""
 "%8c"
 
 #: lib/src/csvdata.c:227 lib/src/csvdata.c:1483 lib/src/csvdata.c:1700
-#, fuzzy
 msgid "Invalid column specification"
-msgstr "Błąd w specyfikacji NLS"
+msgstr "Błąd w specyfikacji kolumn"
 
 #: lib/src/csvdata.c:694
 msgid "reversing the data!\n"
@@ -824,7 +823,7 @@ msgstr "Nie można otworzyć %s\n"
 
 #: lib/src/csvdata.c:1867
 msgid "using fixed column format\n"
-msgstr ""
+msgstr "wykorzystuje stały format kolumn\n"
 
 #: lib/src/csvdata.c:1899
 #, c-format
@@ -2094,12 +2093,12 @@ msgid "%s: no such object\n"
 msgstr "%s: nie jest takim obiektem\n"
 
 #: lib/src/geneval.c:5520
-#, fuzzy, c-format
+#, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: powinnien być argumentem %s"
 
 #: lib/src/geneval.c:5523
-#, fuzzy, c-format
+#, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: argument %d powinnien być %s"
 
@@ -2328,7 +2327,6 @@ msgid "an internal variable"
 msgstr "wewnętrzna zmienna"
 
 #: lib/src/genmain.c:299
-#, fuzzy
 msgid "a type"
 msgstr "typ"
 
@@ -2404,7 +2402,7 @@ msgstr "odchylenie std."
 
 #: lib/src/graphing.c:1244
 msgid "Gnuplot does not support PDF output on this system"
-msgstr ""
+msgstr "Gnuplot does not support PDF output on this system"
 
 #: lib/src/graphing.c:1369 gui2/gpt_dialog.c:511
 #, c-format
@@ -4320,7 +4318,7 @@ msgstr "Ordered Logit"
 
 #: lib/src/modelprint.c:680 gui2/selector.c:2877
 msgid "Multinomial Logit"
-msgstr ""
+msgstr "Multinomial Logit"
 
 #: lib/src/modelprint.c:686 gui2/selector.c:2881
 msgid "Ordered Probit"
@@ -4347,9 +4345,8 @@ msgid "TSLS"
 msgstr "2MNK"
 
 #: lib/src/modelprint.c:755
-#, fuzzy
 msgid "Critical values for TSLS bias relative to OLS:\n"
-msgstr "Wartość krytyczna dla odstających:"
+msgstr "Critical values for TSLS bias relative to OLS:\n"
 
 #: lib/src/modelprint.c:758
 #, no-c-format
@@ -4357,6 +4354,8 @@ msgid ""
 "Critical values for desired LIML maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
+"Critical values for desired LIML maximal size, when running\n"
+"  tests at a nominal 5% significance level:\n"
 
 #: lib/src/modelprint.c:762
 #, no-c-format
@@ -4364,14 +4363,14 @@ msgid ""
 "Critical values for desired TSLS maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
+"Critical values for desired TSLS maximal size, when running\n"
+"  tests at a nominal 5% significance level:\n"
 
 #: lib/src/modelprint.c:766
-#, fuzzy
 msgid "bias"
-msgstr "liczba doświadczeń"
+msgstr "bias"
 
 #: lib/src/modelprint.c:766
-#, fuzzy
 msgid "size"
 msgstr "Size"
 
@@ -4382,39 +4381,38 @@ msgstr "wartość"
 #: lib/src/modelprint.c:783
 #, c-format
 msgid "Relative bias is probably less than %g%%"
-msgstr ""
+msgstr "Relative bias is probably less than %g%%"
 
 #: lib/src/modelprint.c:785
 #, c-format
 msgid "Maximal size is probably less than %g%%"
-msgstr ""
+msgstr "Maximal size is probably less than %g%%"
 
 #: lib/src/modelprint.c:795
 #, c-format
 msgid "Relative bias may exceed %g%%"
-msgstr ""
+msgstr "Relative bias may exceed %g%%"
 
 #: lib/src/modelprint.c:797
 #, c-format
 msgid "Maximal size may exceed %g%%"
-msgstr ""
+msgstr "Maximal size may exceed %g%%"
 
 #: lib/src/modelprint.c:806
-#, fuzzy
 msgid "Weak instrument test"
-msgstr "Nadmiarowa lista instrumentów:"
+msgstr "Weak instrument test"
 
 #: lib/src/modelprint.c:830 lib/src/modelprint.c:838
 msgid "First-stage F-statistic"
-msgstr "W pierwszym kroku - statystyka F"
+msgstr "First-stage - statystyka F"
 
 #: lib/src/modelprint.c:844 lib/src/modelprint.c:853
 msgid "Cragg-Donald minimum eigenvalue"
-msgstr ""
+msgstr "Cragg-Donald minimum eigenvalue"
 
 #: lib/src/modelprint.c:850
 msgid "Cragg--Donald minimum eigenvalue"
-msgstr ""
+msgstr "Cragg--Donald minimum eigenvalue"
 
 #: lib/src/modelprint.c:891
 msgid "A value < 10 may indicate weak instruments"
@@ -4422,7 +4420,7 @@ msgstr "Wartości < 10.0 mogą wskazywać na słabe instrumenty"
 
 #: lib/src/modelprint.c:924
 msgid "Instrumented"
-msgstr "Instrumenty"
+msgstr "Zmodyfikowane przez instrumenty"
 
 #: lib/src/modelprint.c:925 gui2/selector.c:3415 gui2/selector.c:6046
 msgid "Instruments"
@@ -5451,7 +5449,7 @@ msgstr "Błędna opcja '--%s'"
 #: lib/src/options.c:907
 #, c-format
 msgid "The option '--%s' requires a parameter"
-msgstr ""
+msgstr "Opcja '--%s' wymagany parameter"
 
 #: lib/src/options.c:1106
 #, c-format
@@ -5986,9 +5984,8 @@ msgid ""
 msgstr "Liczba brakujących danych = %d (%.2f%% z ogólnej liczby danych)\n"
 
 #: lib/src/subsample.c:1573
-#, fuzzy
 msgid "valid values"
-msgstr "Edycja wartości"
+msgstr "Poprawne wartości"
 
 #: lib/src/subsample.c:1770 lib/src/subsample.c:1771
 msgid "dataset is subsampled, model is not\n"
@@ -9262,14 +9259,13 @@ msgid "Invalid label position, must be X Y"
 msgstr "Błędne położenie opisu, musi być X Y"
 
 #: gui2/gpt_dialog.c:948 gui2/gpt_dialog.c:973 gui2/gpt_dialog.c:1489
-#, fuzzy, c-format
+#, c-format
 msgid "font: %s"
-msgstr "miesiąc %s?\n"
+msgstr "czcionka: %s"
 
 #: gui2/gpt_dialog.c:996
-#, fuzzy
 msgid "Font for graphs"
-msgstr "drukuj wykres gretla"
+msgstr "Czcionka dla wykresów"
 
 #: gui2/gpt_dialog.c:1186
 msgid "Fill color"
@@ -10176,22 +10172,20 @@ msgid "_Ordinary Least Squares..."
 msgstr "_Klasyczna metoda najmniejszych kwadratów ..."
 
 #: gui2/gretl.c:1454
-#, fuzzy
 msgid "_Instrumental variables"
-msgstr "wewnętrzna zmienna"
+msgstr "Metody zmiennych _instrumentalnych"
 
 #: gui2/gretl.c:1455
 msgid "_Two-Stage Least Squares..."
 msgstr "_Podwójna metoda najmniejszych kwadratów (2MNK)..."
 
 #: gui2/gretl.c:1456
-#, fuzzy
 msgid "_LIML..."
-msgstr "LIML"
+msgstr "Metoda największej wiarygodności z ograniczoną informacją (LIML)..."
 
 #: gui2/gretl.c:1457 gui2/gretl.c:1502
 msgid "_GMM..."
-msgstr "Metoda momentów GMM..."
+msgstr "Metoda momentów _GMM..."
 
 #: gui2/gretl.c:1458
 msgid "Other _linear models"
@@ -10203,7 +10197,7 @@ msgstr "_Ważona metoda najmniejszych kwadratów (UMNK)..."
 
 #: gui2/gretl.c:1460
 msgid "H_eteroskedasticity corrected..."
-msgstr "Korekta H_eteroskedastyczności (UMNK)..."
+msgstr "Korekta h_eteroskedastyczności (UMNK)..."
 
 #: gui2/gretl.c:1462
 msgid "High _precision OLS..."
@@ -10290,28 +10284,24 @@ msgid "_Nonlinear models"
 msgstr "_Nieliniowe modele"
 
 #: gui2/gretl.c:1484
-#, fuzzy
 msgid "_Logit"
-msgstr "Logit"
+msgstr "Modele _Logitowe"
 
 #: gui2/gretl.c:1485 gui2/gretl.c:1489
-#, fuzzy
 msgid "_Binary..."
-msgstr "_Szukaj..."
+msgstr "_Binary..."
 
 #: gui2/gretl.c:1486 gui2/gretl.c:1490
 msgid "_Ordered..."
-msgstr ""
+msgstr "_Ordered..."
 
 #: gui2/gretl.c:1487
-#, fuzzy
 msgid "_Multinomial..."
-msgstr "_JMulTi..."
+msgstr "_Multinomial..."
 
 #: gui2/gretl.c:1488
-#, fuzzy
 msgid "_Probit"
-msgstr "Probit"
+msgstr "Modele _Probitowe"
 
 #: gui2/gretl.c:1491
 msgid "To_bit..."
@@ -10795,9 +10785,8 @@ msgid "_groupwise"
 msgstr "_Groupwise"
 
 #: gui2/gui_utils.c:202
-#, fuzzy
 msgid "Pesaran-Taylor test"
-msgstr "Test Pesarana-Taylora na heteroskedastyczność"
+msgstr "Test Pesarana-Taylora"
 
 #: gui2/gui_utils.c:240 gui2/gui_utils.c:260 gui2/gui_utils.c:286
 msgid "_LaTeX"
@@ -11432,9 +11421,8 @@ msgid "Sample now includes only complete observations"
 msgstr "Teraz próba zawiera tylko kompletne obserwacje"
 
 #: gui2/library.c:1285
-#, fuzzy
 msgid "Show count of missing values at each observation"
-msgstr "Brak wartości dla obserwacji %d"
+msgstr "Pokaż liczbę brakujących wartości dla każdej obserwacji"
 
 #: gui2/library.c:1295 gui2/library.c:1308
 msgid "gretl: missing values info"
@@ -12351,13 +12339,12 @@ msgid "Two-stage least squares"
 msgstr "Podwójna MNK"
 
 #: gui2/selector.c:2903
-#, fuzzy
 msgid "Limited information maximum likelihood"
 msgstr "Metoda największej wiarygodności z ograniczoną informacją"
 
 #: gui2/selector.c:2905
 msgid "Generalized method of moments"
-msgstr ""
+msgstr "Metoda momentów GMM"
 
 #: gui2/selector.c:2907
 msgid "Autoregressive model"
@@ -12860,9 +12847,8 @@ msgid "Lags of endogenous variables"
 msgstr "Opóźnione zmienne endogeniczne"
 
 #: gui2/selector.c:6020
-#, fuzzy
 msgid "Regressors"
-msgstr "Regresja"
+msgstr "Regresory"
 
 #: gui2/selector.c:6026
 msgid "lags"
