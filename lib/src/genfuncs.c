@@ -2689,7 +2689,7 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     if (!err) {
 	/* M = I - X(X'X)^{-1}X' */
 	err = gretl_matrix_qform(X, GRETL_MOD_NONE,
-				 XX, M, GRETL_MOD_DECUMULATE);
+				 XX, M, GRETL_MOD_DECREMENT);
     }
 
     if (!err) {

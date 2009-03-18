@@ -732,7 +732,7 @@ static int update_phi (Jwrap *J, switcher *s)
 	gretl_matrix_kronecker_I(J->alpha, J->p1, s->K2);
 	gretl_matrix_multiply_mod(s->K2, GRETL_MOD_NONE,
 				  J->h, GRETL_MOD_NONE,
-				  s->TmpR, GRETL_MOD_DECUMULATE);
+				  s->TmpR, GRETL_MOD_DECREMENT);
     }
 
     /* combine */

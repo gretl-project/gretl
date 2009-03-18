@@ -1516,7 +1516,7 @@ void libgretl_cleanup (void)
     lapack_mem_free();
     forecast_matrix_cleanup();
     option_flags_cleanup();
-    destroy_user_kalman();
+    kalman_cleanup();
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

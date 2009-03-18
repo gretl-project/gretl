@@ -851,7 +851,7 @@ static int panel_DW_pvalue (MODEL *pmod, const panelmod_t *pan,
     if (!err) {
 	/* M = I - X(X'X)^{-1}X' */
 	err = gretl_matrix_qform(X, GRETL_MOD_NONE,
-				 XX, M, GRETL_MOD_DECUMULATE);
+				 XX, M, GRETL_MOD_DECREMENT);
     }
 
     if (!err) {

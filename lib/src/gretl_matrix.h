@@ -32,7 +32,7 @@ typedef enum {
     GRETL_MOD_TRANSPOSE,
     GRETL_MOD_SQUARE,
     GRETL_MOD_CUMULATE,
-    GRETL_MOD_DECUMULATE
+    GRETL_MOD_DECREMENT
 } GretlMatrixMod;
 
 typedef enum {

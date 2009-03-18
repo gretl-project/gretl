@@ -3395,7 +3395,7 @@ gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 
     if (cmod == GRETL_MOD_CUMULATE) {
 	beta = 1.0;
-    } else if (cmod == GRETL_MOD_DECUMULATE) {
+    } else if (cmod == GRETL_MOD_DECREMENT) {
 	alpha = -1.0;
 	beta = 1.0;
     }
@@ -3418,7 +3418,7 @@ gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 	if (m==GRETL_MOD_CUMULATE) {			\
 	    c->val[(j)*c->rows+(i)]+=x;			\
 	    if (i!=j) c->val[(i)*c->rows+(j)]+=x;	\
-	} else if (m==GRETL_MOD_DECUMULATE) {		\
+	} else if (m==GRETL_MOD_DECREMENT) {		\
 	    c->val[(j)*c->rows+(i)]-=x;			\
 	    if (i!=j) c->val[(i)*c->rows+(j)]-=x;	\
 	} else {					\
@@ -3576,7 +3576,7 @@ static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
 
     if (cmod == GRETL_MOD_CUMULATE) {
 	beta = 1.0;
-    } else if (cmod == GRETL_MOD_DECUMULATE) {
+    } else if (cmod == GRETL_MOD_DECREMENT) {
 	alpha = -1.0;
 	beta = 1.0;
     }
@@ -3607,7 +3607,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 
     if (cmod == GRETL_MOD_CUMULATE) {
 	beta = 1;
-    } else if (cmod == GRETL_MOD_DECUMULATE) {
+    } else if (cmod == GRETL_MOD_DECREMENT) {
 	alpha = -1.0;
 	beta = 1;
     }
@@ -8832,7 +8832,7 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
 	gretl_matrix_copy_values(E, Y);
 	gretl_matrix_multiply_mod(X, GRETL_MOD_NONE,
 				  B, GRETL_MOD_NONE,
-				  E, GRETL_MOD_DECUMULATE);
+				  E, GRETL_MOD_DECREMENT);
     }
 
     if (!err && !nasty && XTXi != NULL) {
@@ -9290,7 +9290,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 		}
 		if (cmod == GRETL_MOD_CUMULATE) {
 		    xx += gretl_matrix_get(C, i, j);
-		} else if (cmod == GRETL_MOD_DECUMULATE) {
+		} else if (cmod == GRETL_MOD_DECREMENT) {
 		    xx = gretl_matrix_get(C, i, j) - xx;
 		}
 		gretl_matrix_set(C, i, j, xx);
@@ -9313,7 +9313,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 		}
 		if (cmod == GRETL_MOD_CUMULATE) {
 		    xx += gretl_matrix_get(C, i, j);
-		} else if (cmod == GRETL_MOD_DECUMULATE) {
+		} else if (cmod == GRETL_MOD_DECREMENT) {
 		    xx = gretl_matrix_get(C, i, j) - xx;
 		}
 		gretl_matrix_set(C, i, j, xx);

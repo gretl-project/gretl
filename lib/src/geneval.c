@@ -4653,12 +4653,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	} 
     } else if (t->t == F_KFILTER) {
 	const char *E = NULL;
+	const char *YP = NULL;
 	const char *S = NULL;
 	const char *P = NULL;
 	const char *L = NULL;
 
-	if (k > 4) {
-	    n_args_error(k, 4, "kfilter", p);
+	if (k > 5) {
+	    n_args_error(k, 5, "kfilter", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -4670,10 +4671,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 0) {
 		E = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
 	    } else if (i == 1) {
-		S = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+		YP = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
 	    } else if (i == 2) {
-		P = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+		S = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
 	    } else if (i == 3) {
+		P = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+	    } else if (i == 4) {
 		L = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
 	    }
 	}
@@ -4683,7 +4686,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.xval = user_kalman_run(E, S, P, L, &p->err);
+	    ret->v.xval = user_kalman_run(E, YP, S, P, L, &p->err);
 	} 
     } else if (t->t == F_KSMOOTH) {
 	/* might be extended to take more args, though at present
