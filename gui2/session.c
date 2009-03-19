@@ -1211,7 +1211,7 @@ void do_open_session (void)
 
 	view_session(NULL);
 	mark_session_saved();
-	session_switch_log_location(OPEN_SESSION);
+	session_switch_log_location(LOG_OPEN);
     }
 }
 
@@ -1410,10 +1410,16 @@ static void session_clear_data (double ***pZ, DATAINFO *pdinfo)
 void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 		    gretlopt opt)
 {
+    int logcode = LOG_NULL;
+
 #if SESSION_DEBUG
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
-    session_clear_data(pZ, pdinfo); 
+
+    if (pdinfo != NULL && pdinfo->v > 0) {
+	logcode = LOG_CLOSE;
+	session_clear_data(pZ, pdinfo); 
+    }
 
     free_session();
 
@@ -1445,7 +1451,7 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 
     reset_plot_count();
 
-    set_session_log(NULL, 0);
+    set_session_log(NULL, logcode);
 }
 
 static int session_overwrite_check (const char *fname)
@@ -1595,7 +1601,7 @@ int save_session (char *fname)
     err = save_session_dataset(datname);
 
     if (!err) {
-	session_switch_log_location(SAVE_SESSION);
+	session_switch_log_location(LOG_SAVE);
     }
     
     if (!err) {

@@ -36,6 +36,13 @@ enum {
     ADD_OBJECT_FAIL
 };
 
+enum {
+    LOG_SAVE,
+    LOG_OPEN,
+    LOG_CLOSE,
+    LOG_NULL
+};
+
 int save_session (char *fname);
 
 int session_is_modified (void);

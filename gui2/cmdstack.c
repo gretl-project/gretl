@@ -189,6 +189,12 @@ static int flush_logfile (void)
 
     n_cmds = n_cmds_save;
 
+#if CMD_DEBUG
+    fprintf(stderr, "n_cmds = %d, logline='%s'\n", n_cmds, logline);
+#endif
+
+    n_cmds = n_cmds_save;
+
     if (logline != NULL) {
 	int n = strlen(logline);
 
@@ -353,8 +359,7 @@ void view_command_log (void)
    session log can be displayed and added to.
 
    On closing a session, we close the current session logfile and
-   redirect the log to a tempfile in the user's "dotdir"; this is
-   signalled by a NULL value for the dirname argument.
+   redirect the log to a tempfile in the user's "dotdir".
 */
 
 void set_session_log (const char *dirname, int code)
@@ -364,11 +369,12 @@ void set_session_log (const char *dirname, int code)
 
 #if CMD_DEBUG
     fprintf(stderr, "set_session_log: dirname = '%s'\n", dirname);
+    fprintf(stderr, "session_open = %d\n", session_open);
 #endif
 
     flush_logfile();
 
-    if (code == SAVE_SESSION) {
+    if (code == LOG_SAVE) {
 	strcpy(tmp, dirname);
 	strcat(tmp, "session.inp");
 	if (strcmp(logname, tmp)) {
@@ -381,17 +387,15 @@ void set_session_log (const char *dirname, int code)
 	    strcpy(logname, tmp);
 	    session_open = 1;
 	}
-    } else {
-	/* closing or opening session */
+    } else if (code == LOG_OPEN) {
 	free_command_stack();
-	if (dirname != NULL) {
-	    /* opening */
-	    strcpy(logname, dirname);
-	    strcat(logname, "session.inp");
-	    session_open = 1;
-	} else {
-	    /* closing session */
-	    session_open = 0;
-	}
+	strcpy(logname, dirname);
+	strcat(logname, "session.inp");
+	session_open = 1;
+    } else if (code == LOG_CLOSE) {
+	free_command_stack();
+	session_open = 0;
+    } else if (code == LOG_NULL) {
+	session_open = 0;
     }
 }
