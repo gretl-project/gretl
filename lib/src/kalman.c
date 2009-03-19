@@ -73,8 +73,8 @@ struct kalman_ {
     const gretl_matrix *R; /* n x n: contemp covariance matrix, obs eqn */
     const gretl_matrix *y; /* T x n: dependent variable vector (or matrix) */
     const gretl_matrix *x; /* T x k: independent variables matrix */
-    const gretl_matrix *Sini; /* r x 1: initial state vector */
-    const gretl_matrix *Pini; /* r x r: initial precision matrix */
+    const gretl_matrix *Sini; /* r x 1: S_{1|0} */
+    const gretl_matrix *Pini; /* r x r: P_{1|0} */
 
     /* optional run-time export matrices */
     gretl_matrix *E;   /* T x n: forecast errors, all time-steps */
