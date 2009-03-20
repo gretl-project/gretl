@@ -140,14 +140,47 @@ static kalman *kalman_new_empty (int flags)
     return K;
 }
 
-/* automatic initialization of P_{1|0} */
+/* If the user has not given an initial value for P_{1|0}, compute
+   this automatically as per Hamilton, ch 13, p. 378.  This works only
+   if the eigenvalues of K->F lie inside the unit circle, so we check
+   for that first.
+*/
 
 static int construct_Pini (kalman *K)
 {
+    gretl_matrix *Fcpy;
+    gretl_matrix *evals;
     gretl_matrix *Svar;
     gretl_matrix *vQ; 
+    double r, c, x;
     int r2 = K->r * K->r;
-    int err = 0;
+    int i, err = 0;
+
+    Fcpy = gretl_matrix_copy(K->F);
+    if (Fcpy == NULL) {
+	return E_ALLOC;
+    }
+
+    evals = gretl_general_matrix_eigenvals(Fcpy, 0, &err);
+    gretl_matrix_free(Fcpy);
+    if (err) {
+	return err;
+    }
+
+    for (i=0; i<evals->rows && !err; i++) {
+	r = gretl_matrix_get(evals, i, 0);
+	c = gretl_matrix_get(evals, i, 1);
+	x = sqrt(r * r + c * c);
+	if (x >= 1.0) {
+	    fprintf(stderr, "F: modulus of eigenvalue %d = %g\n", i+1, x);
+	    err = E_DATA;
+	}
+    }
+
+    gretl_matrix_free(evals);
+    if (err) {
+	return err;
+    }
 
     Svar = gretl_matrix_alloc(r2, r2);
     vQ = gretl_column_vector_alloc(r2);
@@ -162,6 +195,7 @@ static int construct_Pini (kalman *K)
     gretl_matrix_I_minus(Svar);
 
     gretl_matrix_vectorize(vQ, K->Q);
+
     err = gretl_LU_solve(Svar, vQ);
     if (!err) {
 	gretl_matrix_unvectorize(K->P0, vQ);
@@ -197,12 +231,15 @@ static int kalman_check_dimensions (kalman *K)
 	return E_NONCONF;
     } 
 
-    /* Q is mandatory, should be r x r */
+    /* Q is mandatory, should be r x r and symmetric */
     if (K->Q->rows != K->r || K->Q->cols != K->r) {
 	fprintf(stderr, "kalman: matrix Q is %d x %d, should be %d x %d\n", 
 		K->Q->rows, K->Q->cols, K->r, K->r);
 	return E_NONCONF;
-    }   
+    } else if (!gretl_matrix_is_symmetric(K->Q)) {
+	fprintf(stderr, "kalman: matrix Q is not symmetric\n");
+	return E_NONCONF;
+    }
 
     /* initial S should be r x 1, if present */
     if (K->Sini != NULL && (K->Sini->rows != K->r || K->Sini->cols != 1)) {
@@ -256,11 +293,16 @@ static int kalman_check_dimensions (kalman *K)
 	return E_DATA;
     }
 
-    /* R should be n x n, if present */
-    if (K->R != NULL && (K->R->rows != K->n || K->R->cols != K->n)) {
-	fprintf(stderr, "kalman: matrix R is %d x %d, should be %d x %d\n", 
-		K->R->rows, K->R->cols, K->n, K->n);
-	return E_NONCONF;
+    /* R should be n x n and symmetric, if present */
+    if (K->R != NULL) {
+	if (K->R->rows != K->n || K->R->cols != K->n) {
+	    fprintf(stderr, "kalman: matrix R is %d x %d, should be %d x %d\n", 
+		    K->R->rows, K->R->cols, K->n, K->n);
+	    return E_NONCONF;
+	} else if (!gretl_matrix_is_symmetric(K->R)) {
+	    fprintf(stderr, "kalman: matrix R is not symmetric\n");
+	    return E_NONCONF;
+	}
     }
 
     /* Below we have the optional "export" matrices for shipping out 
@@ -1280,36 +1322,62 @@ struct K_input_mat K_input_mats[] = {
     { K_P, "iniprec" }
 };
 
-/* given the name of a user-defined input matrix, attach it to the
-   user Kalman struct and record its name */
+/* given the name of a user-defined input matrix in @s, and an ID
+   number that identifies its role within the Kalman struct, @i,
+   attach the matrix and record its name
+*/
 
-static gretl_matrix *attach_input_matrix (user_kalman *u, const char *s, 
-					  int i, int *err)
+static int attach_input_matrix (user_kalman *u, const char *s, 
+				int i)
 {
     char mname[VNAMELEN] = {0};
     gretl_matrix *m = NULL;
+    int err = 0;
+
+    if (i < 0 || i >= KNMAT) {
+	/* "can't happen" */
+	return E_DATA;
+    }
 
     if (u->mnames == NULL) {
 	u->mnames = strings_array_new_with_length(KNMAT, VNAMELEN);
 	if (u->mnames == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
+	    return E_ALLOC;
 	}
     }
 
     if (sscanf(s, "%15s", mname) != 1) {
-	*err = E_PARSE;
+	err = E_PARSE;
     } else {
 	m = get_matrix_by_name(mname);
 	if (m == NULL) {
 	    gretl_errmsg_sprintf(_("'%s': no such matrix\n"), mname);
-	    *err = E_UNKVAR;
+	    err = E_UNKVAR;
 	} else {
 	    strcpy(u->mnames[i], mname);
+	    if (i == K_y) {
+		u->K->y = m;
+	    } else if (i == K_H) {
+		u->K->H = m;
+	    } else if (i == K_x) {
+		u->K->x = m;
+	    } else if (i == K_A) {
+		u->K->A = m;
+	    } else if (i == K_R) {
+		u->K->R = m;
+	    } else if (i == K_F) {
+		u->K->F = m;
+	    } else if (i == K_Q) {
+		u->K->Q = m;
+	    } else if (i == K_S) {
+		u->K->Sini = m;
+	    } else if (i == K_P) {
+		u->K->Pini = m;
+	    } 
 	}
     }
 
-    return m;
+    return err;
 }
 
 static gretl_matrix *kalman_retrieve_matrix (const char *name,
@@ -1520,7 +1588,9 @@ static int add_user_kalman (void)
     return err;
 }
 
-static int get_kalman_matrix_id (const char *s, int *pn)
+/* check @s for a recognized matrix code-name */
+
+static int get_kalman_matrix_id (const char **ps)
 {
     const char *mname;
     int i, n;
@@ -1528,8 +1598,8 @@ static int get_kalman_matrix_id (const char *s, int *pn)
     for (i=0; i<KNMAT; i++) {
 	mname = K_input_mats[i].name;
 	n = strlen(mname);
-	if (!strncmp(s, mname, n) && s[n] == ' ') {
-	    *pn = n + 1;
+	if (!strncmp(*ps, mname, n) && (*ps)[n] == ' ') {
+	    *ps += n + 1;
 	    return K_input_mats[i].sym;
 	}
     }
@@ -1563,43 +1633,14 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	/* "end kalman": complete the set-up */
 	err = user_kalman_setup(u->K);
     } else {
-	const char *s;
-	int m, n = 0;
+	/* we're supposed to find a matrix spec */ 
+	const char *s = line;
+	int m = get_kalman_matrix_id(&s);
 
-	m = get_kalman_matrix_id(line, &n);
-	s = line + n;
-
-	switch (m) {
-	case K_y:
-	    u->K->y = attach_input_matrix(u, s, m, &err);
-	    break;
-	case K_H:
-	    u->K->H = attach_input_matrix(u, s, m, &err);
-	    break;
-	case K_x:
-	    u->K->x = attach_input_matrix(u, s, m, &err);
-	    break;
-	case K_A:
-	    u->K->A = attach_input_matrix(u, s, m, &err);
-	    break;
-	case K_R:
-	    u->K->R = attach_input_matrix(u, s, m, &err);
-	    break;
-	case K_F:
-	    u->K->F = attach_input_matrix(u, s, m, &err);
-	    break;
-	case K_Q:
-	    u->K->Q = attach_input_matrix(u, s, m, &err);
-	    break;
-	case K_S:
-	    u->K->Sini = attach_input_matrix(u, s, m, &err);
-	    break;
-	case K_P:
-	    u->K->Pini = attach_input_matrix(u, s, m, &err);
-	    break;
-	default:
+	if (m < 0) {
 	    err = E_PARSE;
-	    break;
+	} else {
+	    err = attach_input_matrix(u, s, m);
 	}
     }
 
