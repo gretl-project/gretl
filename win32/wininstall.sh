@@ -7,6 +7,8 @@
 PREFIX="c:/progra~1/gretl"
 TOPDIR=".."
 WINFILES=/mingw/winbuild
+HLPDIR=${WINFILES}/help
+DOCDIR=${WINFILES}/doc
 install="cp -a"
 ##################################
 
