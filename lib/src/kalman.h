@@ -23,7 +23,8 @@
 enum {
     KALMAN_ARMA_LL = 1 << 0, /* is the filter being used for ARMA estimation ? */
     KALMAN_AVG_LL  = 1 << 1, /* store total likelihood or average? */
-    KALMAN_USER    = 1 << 2  /* user-defined filter? */
+    KALMAN_USER    = 1 << 2, /* user-defined filter? */
+    KALMAN_DIFFUSE = 1 << 3  /* diffuse P_{1|0} */
 };
 
 typedef struct kalman_ kalman;

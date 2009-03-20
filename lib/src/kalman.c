@@ -140,10 +140,22 @@ static kalman *kalman_new_empty (int flags)
     return K;
 }
 
+static void diffuse_Pini (kalman *K)
+{
+    int i;
+
+    gretl_matrix_zero(K->P0);
+
+    for (i=0; i<K->r; i++) {
+	gretl_matrix_set(K->P0, i, i, 1.0e+7);
+    }
+}
+
 /* If the user has not given an initial value for P_{1|0}, compute
    this automatically as per Hamilton, ch 13, p. 378.  This works only
    if the eigenvalues of K->F lie inside the unit circle, so we check
-   for that first.
+   for that first.  Failing that, or if the --diffuse option is given
+   for the user Kalman filter, we apply a diffuse initialization.
 */
 
 static int construct_Pini (kalman *K)
@@ -153,8 +165,12 @@ static int construct_Pini (kalman *K)
     gretl_matrix *Svar;
     gretl_matrix *vQ; 
     double r, c, x;
-    int r2 = K->r * K->r;
-    int i, err = 0;
+    int i, r2, err = 0;
+
+    if (K->flags & KALMAN_DIFFUSE) {
+	diffuse_Pini(K);
+	return 0;
+    }
 
     Fcpy = gretl_matrix_copy(K->F);
     if (Fcpy == NULL) {
@@ -163,24 +179,25 @@ static int construct_Pini (kalman *K)
 
     evals = gretl_general_matrix_eigenvals(Fcpy, 0, &err);
     gretl_matrix_free(Fcpy);
-    if (err) {
-	return err;
-    }
 
     for (i=0; i<evals->rows && !err; i++) {
 	r = gretl_matrix_get(evals, i, 0);
 	c = gretl_matrix_get(evals, i, 1);
-	x = sqrt(r * r + c * c);
+	x = sqrt(r*r + c*c);
 	if (x >= 1.0) {
 	    fprintf(stderr, "F: modulus of eigenvalue %d = %g\n", i+1, x);
-	    err = E_DATA;
+	    err = 1;
 	}
     }
 
     gretl_matrix_free(evals);
+
     if (err) {
-	return err;
+	diffuse_Pini(K);
+	return 0;
     }
+
+    r2 = K->r * K->r;
 
     Svar = gretl_matrix_alloc(r2, r2);
     vQ = gretl_column_vector_alloc(r2);
@@ -601,7 +618,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
-static int user_kalman_setup (kalman *K)
+static int user_kalman_setup (kalman *K, gretlopt opt)
 {
     int err = 0;
 
@@ -622,6 +639,9 @@ static int user_kalman_setup (kalman *K)
 
     if (!err) {
 	gretl_matrix_zero(K->e);
+	if (opt & OPT_D) {
+	    K->flags |= KALMAN_DIFFUSE;
+	}
     }
 
     return err;
@@ -1626,7 +1646,7 @@ int kalman_parse_line (const char *line, gretlopt opt)
 
     if (!strncmp(line, "end ", 4)) {
 	/* "end kalman": complete the set-up */
-	err = user_kalman_setup(u->K);
+	err = user_kalman_setup(u->K, opt);
     } else {
 	/* we're supposed to find a matrix spec */ 
 	const char *s = line;
@@ -1822,6 +1842,11 @@ static int kalman_smooth (kalman *K, int nr)
 	load_from_vech(Pl, K->Ptt, K->r, t, GRETL_MOD_NONE);
 	load_from_vech(Pr, P_, K->r, 0, GRETL_MOD_NONE);
 	err = gretl_invert_symmetric_matrix(Pr);
+	if (err) {
+	    /* OK, try generalized inverse */
+	    load_from_vech(Pr, P_, K->r, 0, GRETL_MOD_NONE);
+	    err = gretl_matrix_moore_penrose(Pr);
+	} 
 	if (err) {
 	    fprintf(stderr, "kalman_smooth: failed to invert P_{%d|%d}\n", 
 		    t + 2, t + 1);
