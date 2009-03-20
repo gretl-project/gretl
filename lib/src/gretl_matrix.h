@@ -445,6 +445,8 @@ int gretl_SVD_invert_matrix (gretl_matrix *a);
 
 int gretl_invpd (gretl_matrix *a);
 
+int gretl_maybe_invpd (gretl_matrix *a);
+
 int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
 		      gretl_vector **ps, gretl_matrix **pvt);
 

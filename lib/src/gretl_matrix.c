@@ -6134,20 +6134,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     return err;
 }
 
-/**
- * gretl_invpd:
- * @a: matrix to invert.
- * 
- * Computes the inverse of a symmetric positive definite matrix
- * using Cholesky factorization.  On exit @a is overwritten with 
- * the inverse. Uses the lapack functions %dpotrf and %dpotri.
- * Little checking is done, for speed: we assume the caller
- * knows what he's doing.
- *
- * Returns: 0 on success; non-zero error code on failure.
- */
-
-int gretl_invpd (gretl_matrix *a)
+int real_gretl_invpd (gretl_matrix *a, int verbose)
 {
     integer n, info;
     char uplo = 'L';
@@ -6169,10 +6156,13 @@ int gretl_invpd (gretl_matrix *a)
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
-	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
-		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
-	if (info > 0) {
-	    fputs(" matrix is not positive definite\n", stderr);
+	if (verbose) {
+	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		    " dpotrf failed with info = %d (n = %d)\n", 
+		    (int) info, (int) n);
+	    if (info > 0) {
+		fputs(" matrix is not positive definite\n", stderr);
+	    }
 	}
 	err = E_SINGULAR;
     } 
@@ -6189,6 +6179,44 @@ int gretl_invpd (gretl_matrix *a)
     }
 
     return err;
+}
+
+/**
+ * gretl_invpd:
+ * @a: matrix to invert.
+ * 
+ * Computes the inverse of a symmetric positive definite matrix
+ * using Cholesky factorization.  On exit @a is overwritten with 
+ * the inverse. Uses the lapack functions %dpotrf and %dpotri.
+ * Little checking is done, for speed: we assume the caller
+ * knows what he's doing.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_invpd (gretl_matrix *a)
+{
+    return real_gretl_invpd(a, 1);
+}
+
+/**
+ * gretl_maybe_invpd:
+ * @a: matrix to invert.
+ * 
+ * Attempts to computes the inverse of a matrix which may be
+ * positive definite.  On exit @a is overwritten with 
+ * the inverse. Uses the lapack functions %dpotrf and %dpotri.
+ * Little checking is done, for speed: we assume the caller
+ * knows what he's doing.  Unlike gretl_invpd() this function
+ * does not sump error messages to %stderr in case the matrix
+ * is not in fact positive definite.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_maybe_invpd (gretl_matrix *a)
+{
+    return real_gretl_invpd(a, 0);
 }
 
 /**

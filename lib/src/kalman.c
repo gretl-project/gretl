@@ -1841,7 +1841,7 @@ static int kalman_smooth (kalman *K, int nr)
 	/* J_t = P_{t|t} F' P^{-1}_{t+1|t} */
 	load_from_vech(Pl, K->Ptt, K->r, t, GRETL_MOD_NONE);
 	load_from_vech(Pr, P_, K->r, 0, GRETL_MOD_NONE);
-	err = gretl_invert_symmetric_matrix(Pr);
+	err = gretl_maybe_invpd(Pr);
 	if (err) {
 	    /* OK, try generalized inverse */
 	    load_from_vech(Pr, P_, K->r, 0, GRETL_MOD_NONE);
