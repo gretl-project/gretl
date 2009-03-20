@@ -1203,8 +1203,8 @@ enum {
     K_x,     /* obsx */
     K_A,     /* obsxmat */
     K_R,     /* obsvar */
-    K_F,     /* strmat */
-    K_Q,     /* strvar */
+    K_F,     /* statemat */
+    K_Q,     /* statevar */
     K_S,     /* inistate */
     K_P      /* iniprec */
 };
@@ -1489,10 +1489,10 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	u->K->A = attach_matrix(u, line + 8, K_A, &err);
     } else if (!strncmp(line, "obsvar ", 7)) {
 	u->K->R = attach_matrix(u, line + 7, K_R, &err);
-    } else if (!strncmp(line, "strmat ", 7)) {
-	u->K->F = attach_matrix(u, line + 7, K_F, &err);
-    } else if (!strncmp(line, "strvar ", 7)) {
-	u->K->Q = attach_matrix(u, line + 7, K_Q, &err);
+    } else if (!strncmp(line, "statemat ", 9)) {
+	u->K->F = attach_matrix(u, line + 9, K_F, &err);
+    } else if (!strncmp(line, "statevar ", 9)) {
+	u->K->Q = attach_matrix(u, line + 9, K_Q, &err);
     } else if (!strncmp(line, "inistate ", 9)) {
 	u->K->Sini = attach_matrix(u, line + 9, K_S, &err);
     } else if (!strncmp(line, "iniprec ", 8)) {
