@@ -939,6 +939,28 @@ static void tail_strip (char *s)
     }
 }
 
+static int end_block_ci (const char *s)
+{
+    if (strlen(s) > 4) {
+	char word[9];
+
+	sscanf(s + 4, "%8s", word);
+	if (!strcmp(word, "nls")) {
+	    return NLS;
+	} else if (!strcmp(word, "mle")) {
+	    return MLE;
+	} else if (!strcmp(word, "gmm")) {
+	    return GMM;
+	} else if (!strcmp(word, "restrict")) {
+	    return RESTRICT;
+	} else if (!strcmp(word, "kalman")) {
+	    return KALMAN;
+	}
+    }
+
+    return END;
+}
+
 #define ar1_alias(s) (!strcmp(s, "corc") || \
 		      !strcmp(s, "hilu") || \
 		      !strcmp(s, "pwe"))
@@ -979,14 +1001,8 @@ gretlopt get_gretl_options (char *line, int *err)
 
     get_cmdword(line, cmdword);
 
-    if (strstr(line, "end nls")) {
-	ci = NLS;
-    } else if (strstr(line, "end mle")) {
-	ci = MLE;
-    } else if (strstr(line, "end gmm")) {
-	ci = GMM;
-    } else if (strstr(line, "end restrict")) {
-	ci = RESTRICT;
+    if (!strcmp(cmdword, "end")) {
+	ci = end_block_ci(line);
     } else if (ar1_alias(cmdword)) {
 	ci = AR1;
     } else if (smpl_alias(cmdword)) {
