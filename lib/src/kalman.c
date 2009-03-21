@@ -1181,14 +1181,12 @@ int kalman_forecast (kalman *K)
     }
 
     if (arma_ll(K)) {
-	if (K->flags & KALMAN_AVG_LL) {
-	    K->loglik = -0.5 * 
-		(LN_2_PI + 1 + log(K->SSRw / K->T) + K->sumldet / K->T);
-	} else {
-	    double k = -(K->T / 2.0) * LN_2_PI;
+	double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->T);
 
-	    K->loglik = k - (K->T / 2.0) * (1.0 + log(K->SSRw / K->T))
-		- 0.5 * K->sumldet;
+	if (K->flags & KALMAN_AVG_LL) {
+	    K->loglik = -0.5 * (ll1 + K->sumldet / K->T);
+	} else {
+	    K->loglik = -0.5 * (K->T * ll1 + K->sumldet);
 	}
     } else {
 	/* For K->scl see Koopman, Shephard and Doornik, "Statistical
