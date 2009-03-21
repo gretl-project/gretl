@@ -5247,6 +5247,8 @@ static double dvar_get_value (int i, parser *p)
 	return get_last_lnl(p->lh.label);
     case R_KLNL:
 	return user_kalman_get_loglik();
+    case R_KSCL:
+	return user_kalman_get_scale_factor();
     case R_STOPWATCH:
 	return gretl_stopwatch();
     case R_NSCAN:

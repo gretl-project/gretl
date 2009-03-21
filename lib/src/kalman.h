@@ -44,6 +44,8 @@ double kalman_get_loglik (const kalman *K);
 
 double user_kalman_get_loglik (void);
 
+double user_kalman_get_scale_factor (void);
+
 double kalman_get_arma_variance (const kalman *K);
 
 int kalman_set_initial_state_vector (kalman *K, const gretl_matrix *S);

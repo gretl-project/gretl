@@ -44,9 +44,10 @@ struct kalman_ {
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
 
-    double SSRw;   /* \sigma_{t=1}^T e_t^{\prime} V_t^{-1} e_t */
-    double sumVt;  /* \sigma_{t=1}^T ln |V_t| */
+    double SSRw;   /* \sum_{t=1}^T e_t^{\prime} V_t^{-1} e_t */
+    double sumVt;  /* \sum_{t=1}^T ln |V_t| */
     double loglik; /* log-likelihood */
+    double scl;    /* scale factor (weighted error variance) */
 
     int nonshift; /* When F is a companion matrix (e.g. in arma), the
 		     number of rows of F that do something other than
@@ -194,6 +195,7 @@ static int construct_Pini (kalman *K)
 
     if (err) {
 	diffuse_Pini(K);
+	K->flags |= KALMAN_DIFFUSE;
 	return 0;
     }
 
@@ -468,6 +470,7 @@ static int kalman_init (kalman *K)
     K->SSRw = NADBL;
     K->sumVt = NADBL;
     K->loglik = NADBL;
+    K->scl = NADBL;
 
     clear_gretl_matrix_err();
 
@@ -835,9 +838,6 @@ static int kalman_iter_1 (kalman *K, int t, double *llt)
     gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
 			      K->S0, GRETL_MOD_NONE,
 			      K->e, GRETL_MOD_DECREMENT);
-    
-    /* form (H'PH + R)^{-1} * (y - A'x - H'S) = "Ve" */
-    gretl_matrix_multiply(K->Vt, K->e, K->Ve);
 
     if (!err) {
 	/* contribution to log-likelihood -- see Hamilton
@@ -847,8 +847,12 @@ static int kalman_iter_1 (kalman *K, int t, double *llt)
 
 	if (!err) {
 	    *llt -= 0.5 * x;
+	    K->SSRw += x;
 	}
     }
+    
+    /* form (H'PH + R)^{-1} * (y - A'x - H'S) = "Ve" */
+    gretl_matrix_multiply(K->Vt, K->e, K->Ve);
 
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
@@ -973,8 +977,6 @@ int kalman_get_options (kalman *K)
     return K->flags;
 }
 
-#define kalman_ll_average(K) (K->flags & KALMAN_AVG_LL)
-
 /* Read from the appropriate row of x (T x k) and multiply by A' to
    form A'x_t.  Note: the flag K->ifc is used to indicate that the
    observation equation has an implicit constant, with an entry in
@@ -1059,12 +1061,8 @@ int kalman_forecast (kalman *K)
 	K->nonshift = count_nonshifts(K->F);
     }
 
-    if (arma_ll(K)) {
-	K->SSRw = 0.0;
-	K->sumVt = 0.0;
-    }
-
-    K->loglik = 0.0;
+    K->SSRw = K->sumVt = K->loglik = 0.0;
+    K->scl = NADBL;
 
     if (K->x == NULL) {
 	/* no exogenous vars */
@@ -1130,7 +1128,7 @@ int kalman_forecast (kalman *K)
 	} else if (arma_ll(K)) {
 	    K->sumVt += ldet;
 	} else {
-	    llt = -0.5 * (K->n * LN_2_PI + ldet);
+	    llt = -0.5 * ldet;
 	}
 
 	if (K->V != NULL) {
@@ -1194,10 +1192,14 @@ int kalman_forecast (kalman *K)
 
     if (isnan(K->loglik) || isinf(K->loglik)) {
 	K->loglik = NADBL;
-    } 
+    }
 
-    if (arma_ll(K) && !na(K->loglik)) {
-	if (kalman_ll_average(K)) {
+    if (na(K->loglik)) {
+	goto bailout;
+    }
+
+    if (arma_ll(K)) {
+	if (K->flags & KALMAN_AVG_LL) {
 	    K->loglik = -0.5 * 
 		(LN_2_PI + 1 + log(K->SSRw / K->T) + K->sumVt / K->T);
 	} else {
@@ -1210,7 +1212,20 @@ int kalman_forecast (kalman *K)
 	    K->loglik = NADBL;
 	    err = E_NAN;
 	} 
+    } else {
+	/* For K->scl see Koopman, Shephard and Doornik, "Statistical
+	   algorithms for models in state space using SsfPack 2.2",
+	   Econometrics Journal, 1999, vol. 2, pp. 113-166; also
+	   available at http://www.ssfpack.com/ .
+	*/
+	int nT = K->n * K->T;
+	int d = (K->flags & KALMAN_DIFFUSE)? K->r : 0;
+
+	K->loglik -= 0.5 * nT * LN_2_PI;
+	K->scl = K->SSRw / (nT - d);
     }
+
+    bailout:
 
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: err=%d, ll=%#.12g\n", err, 
@@ -2000,5 +2015,26 @@ double user_kalman_get_loglik (void)
 	return NADBL;
     } else {
 	return u->K->loglik;
+    }
+}
+
+/**
+ * user_kalman_get_scale_factor:
+ * @K: pointer to Kalman struct.
+ * 
+ * Retrieves the scale factor, \hat{\sigma}^2, calculated 
+ * via the last run of kalman --forecast, if applicable.
+ * 
+ * Returns: scale value, or #NADBL on failure.
+ */
+
+double user_kalman_get_scale_factor (void)
+{
+    user_kalman *u = get_user_kalman(-1);
+
+    if (u == NULL || u->K == NULL) {
+	return NADBL;
+    } else {
+	return u->K->scl;
     }
 }
