@@ -1089,16 +1089,18 @@ int kalman_forecast (kalman *K)
 	   (note that we need PH later) */
 	gretl_matrix_multiply(K->P0, K->H, K->PH);
 	if (K->n == 1) {
-	    /* slight speed-up for the univariate case */
-	    K->HPH->val[0] = (K->R == NULL)? 0.0 : K->R->val[0];
+	    /* slight speed-up for univariate observable */
+	    double x = (K->R == NULL)? 0.0 : K->R->val[0];
+
 	    for (i=0; i<K->r; i++) {
-		K->HPH->val[0] += K->H->val[i] * K->PH->val[i];
+		x += K->H->val[i] * K->PH->val[i];
 	    }
-	    if (K->HPH->val[0] <= 0.0) {
+	    if (x <= 0.0) {
 		err = E_NAN;
 	    } else {
-		ldet = log(K->HPH->val[0]);
-		K->Vt->val[0] = 1.0 / K->HPH->val[0];
+		K->HPH->val[0] = x;
+		ldet = log(x);
+		K->Vt->val[0] = 1.0 / x;
 	    }
 	} else {
 	    gretl_matrix_qform(K->H, GRETL_MOD_TRANSPOSE,
