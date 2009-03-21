@@ -44,10 +44,10 @@ struct kalman_ {
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
 
-    double SSRw;   /* \sum_{t=1}^T e_t^{\prime} V_t^{-1} e_t */
-    double sumVt;  /* \sum_{t=1}^T ln |V_t| */
-    double loglik; /* log-likelihood */
-    double scl;    /* scale factor (weighted error variance) */
+    double SSRw;    /* \sum_{t=1}^T e_t^{\prime} V_t^{-1} e_t */
+    double sumldet; /* \sum_{t=1}^T ln |V_t| */
+    double loglik;  /* log-likelihood */
+    double scl;     /* scale factor (weighted error variance) */
 
     int nonshift; /* When F is a companion matrix (e.g. in arma), the
 		     number of rows of F that do something other than
@@ -468,7 +468,7 @@ static int kalman_init (kalman *K)
     int err = 0;
 
     K->SSRw = NADBL;
-    K->sumVt = NADBL;
+    K->sumldet = NADBL;
     K->loglik = NADBL;
     K->scl = NADBL;
 
@@ -792,20 +792,20 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 
 static int kalman_arma_iter_1 (kalman *K)
 {
-    double ve;
+    double Ve;
     int i, err = 0;
 
     /* write F*S into S+ */
     err += multiply_by_F(K, K->S0, K->S1, 0);
 
-    /* form E = y - A'x - H'S */
+    /* form e = y - A'x - H'S */
     K->e->val[0] -= K->Ax->val[0];
     for (i=0; i<K->r; i++) {
 	K->e->val[0] -= K->H->val[i] * K->S0->val[i];
     }
    
-    /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "ve" */
-    ve = K->e->val[0] * K->Vt->val[0];
+    /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "Ve" */
+    Ve = K->e->val[0] * K->Vt->val[0];
 
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
@@ -813,7 +813,12 @@ static int kalman_arma_iter_1 (kalman *K)
     /* form FPH * (H'PH + R)^{-1} * (y - A'x - H'S),
        and complete calculation of S+ */
     for (i=0; i<K->r; i++) {
-	K->S1->val[i] += K->FPH->val[i] * ve;
+	K->S1->val[i] += K->FPH->val[i] * Ve;
+    }
+
+    if (!err) {
+	/* scalar quadratic form */
+	K->SSRw += Ve * K->e->val[0];
     }
 
     return err;
@@ -845,7 +850,9 @@ static int kalman_iter_1 (kalman *K, int t, double *llt)
 	*/
 	double x = gretl_scalar_qform(K->e, K->Vt, &err);
 
-	if (!err) {
+	if (err) {
+	    *llt = NADBL;
+	} else {
 	    *llt -= 0.5 * x;
 	    K->SSRw += x;
 	}
@@ -1016,21 +1023,6 @@ kalman_initialize_error (kalman *K, int t)
     }
 }
 
-/* increment the "weighted SSR": add e'_t V_t^{-1} e_t */
-
-static int kalman_incr_S (kalman *K)
-{
-    double x;
-    int err = 0;
-
-    x = gretl_scalar_qform(K->e, K->Vt, &err);
-    if (!err) {
-	K->SSRw += x;
-    }
-
-    return err;
-}
-
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct: see kalman_new().
@@ -1061,7 +1053,7 @@ int kalman_forecast (kalman *K)
 	K->nonshift = count_nonshifts(K->F);
     }
 
-    K->SSRw = K->sumVt = K->loglik = 0.0;
+    K->SSRw = K->sumldet = K->loglik = 0.0;
     K->scl = NADBL;
 
     if (K->x == NULL) {
@@ -1125,11 +1117,9 @@ int kalman_forecast (kalman *K)
 	if (err) {
 	    K->loglik = NADBL;
 	    break;
-	} else if (arma_ll(K)) {
-	    K->sumVt += ldet;
 	} else {
-	    llt = -0.5 * ldet;
-	}
+	    K->sumldet += ldet;
+	} 
 
 	if (K->V != NULL) {
 	    /* record variance for est. of observables */
@@ -1139,25 +1129,15 @@ int kalman_forecast (kalman *K)
 	/* first stage of dual iteration */
 	if (arma_ll(K)) {
 	    err = kalman_arma_iter_1(K);
-	    if (!err) {
-		err = kalman_incr_S(K);
-	    }
 	} else {
 	    err = kalman_iter_1(K, t, &llt);
-	    if (na(llt)) {
-		if (K->LL != NULL) {
-		    gretl_vector_set(K->LL, t, 0.0 / 0.0);
+	    if (K->LL != NULL) {
+		if (na(llt)) {
+		    llt = 0.0 / 0.0;
+		} else {
+		    llt -= 0.5 * (K->n * LN_2_PI + ldet);
 		}
-		K->loglik = NADBL;
-		err = E_NAN;
-	    } else {
-		if (K->LL != NULL) {
-		    gretl_vector_set(K->LL, t, llt);
-		}
-		K->loglik += llt;
-		if (isnan(K->loglik)) {
-		    err = E_NAN;
-		}
+		gretl_vector_set(K->LL, t, llt);
 	    }
 	}
 	
@@ -1201,17 +1181,13 @@ int kalman_forecast (kalman *K)
     if (arma_ll(K)) {
 	if (K->flags & KALMAN_AVG_LL) {
 	    K->loglik = -0.5 * 
-		(LN_2_PI + 1 + log(K->SSRw / K->T) + K->sumVt / K->T);
+		(LN_2_PI + 1 + log(K->SSRw / K->T) + K->sumldet / K->T);
 	} else {
 	    double k = -(K->T / 2.0) * LN_2_PI;
 
 	    K->loglik = k - (K->T / 2.0) * (1.0 + log(K->SSRw / K->T))
-		- 0.5 * K->sumVt;
+		- 0.5 * K->sumldet;
 	}
-	if (isnan(K->loglik) || isinf(K->loglik)) {
-	    K->loglik = NADBL;
-	    err = E_NAN;
-	} 
     } else {
 	/* For K->scl see Koopman, Shephard and Doornik, "Statistical
 	   algorithms for models in state space using SsfPack 2.2",
@@ -1221,9 +1197,14 @@ int kalman_forecast (kalman *K)
 	int nT = K->n * K->T;
 	int d = (K->flags & KALMAN_DIFFUSE)? K->r : 0;
 
-	K->loglik -= 0.5 * nT * LN_2_PI;
+	K->loglik = -0.5 * (nT * LN_2_PI + K->sumldet + K->SSRw);
 	K->scl = K->SSRw / (nT - d);
     }
+
+    if (isnan(K->loglik) || isinf(K->loglik)) {
+	K->loglik = NADBL;
+	err = E_NAN;
+    }     
 
     bailout:
 
