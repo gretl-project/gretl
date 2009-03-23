@@ -29,7 +29,7 @@
 
    State:        S_{t+1} = F*S_t + v{t+1},     E(v_t*v_t') = Q
 
-   Observation:  y_t = A'*x_t + H*S_t + w_t,   E(w_t*w_t') = R
+   Observation:  y_t = A'*x_t + H'*S_t + w_t,   E(w_t*w_t') = R
 
  */
 
@@ -61,7 +61,7 @@ struct kalman_ {
     gretl_matrix *P1; /* r x r: MSE matrix, after updating */
     gretl_matrix *e;  /* n x 1: one-step forecast error(s), time t */
 
-    /* optional matrices for recording smoothing info */
+    /* optional matrices for recording extra info */
     gretl_matrix *Stt;   /* T x r: S_{t|t} */
     gretl_matrix *Ptt;   /* T x rr: P_{t|t} */
     gretl_matrix *Tmpr1; /* r x 1: workspace */
@@ -83,6 +83,7 @@ struct kalman_ {
     gretl_matrix *S;   /* T x r: state vector, all time-steps */
     gretl_matrix *P;   /* T x nr: MSE for state, all time-steps */
     gretl_matrix *LL;  /* T x 1: loglikelihood, all time-steps */
+    gretl_matrix *K;   /* T x rn: gain matrix, all time-steps */
     
     /* workspace matrices */
     gretl_matrix_block *B; /* holder for the following */
@@ -132,7 +133,7 @@ static kalman *kalman_new_empty (int flags)
 	K->B = NULL;
 	K->F = K->A = K->H = NULL;
 	K->Q = K->R = NULL;
-	K->E = K->V = K->S = K->P = K->LL = NULL;
+	K->E = K->V = K->S = K->P = K->LL = K->K = NULL;
 	K->y = K->x = NULL;
 	K->flags = flags;
 	K->fnlevel = 0;
@@ -375,6 +376,18 @@ static int kalman_check_dimensions (kalman *K)
 	if (err) {
 	    return err;
 	}
+    } 
+
+    /* K (gain) should be T x (r * n), if present */
+    if (K->K != NULL) {
+	int rn = K->r * K->n;
+
+	if (K->K->rows != K->T || K->K->cols != rn) {
+	    err = gretl_matrix_realloc(K->K, K->T, rn);
+	    if (err) {
+		return err;
+	    }
+	}
     }    
 
     return 0;
@@ -396,6 +409,18 @@ static void load_to_vech (gretl_matrix *targ, const gretl_matrix *src,
     }
 }
 
+/* Write the vec of @src into row @t of @targ */
+
+static void load_to_vec (gretl_matrix *targ, const gretl_matrix *src,
+			 int t)
+{
+    int i;
+
+    for (i=0; i<targ->cols; i++) {
+	gretl_matrix_set(targ, t, i, src->val[i]);
+    }
+}
+
 /* copy from vector @src into row @t of @targ */
 
 static void load_to_row (gretl_matrix *targ, const gretl_vector *src, 
@@ -406,6 +431,15 @@ static void load_to_row (gretl_matrix *targ, const gretl_vector *src,
 
     for (i=0; i<targ->cols; i++) {
 	x = gretl_vector_get(src, i);
+	gretl_matrix_set(targ, t, i, x);
+    }
+}
+
+static void set_row (gretl_matrix *targ, int t, double x)
+{
+    int i;
+
+    for (i=0; i<targ->cols; i++) {
 	gretl_matrix_set(targ, t, i, x);
     }
 }
@@ -839,10 +873,13 @@ static int kalman_iter_1 (kalman *K, int t, int missobs, double *llt)
     err += multiply_by_F(K, K->S0, K->S1, 0);
 
     if (missobs) {
-	/* the observable is not in fact observed */
+	/* the observable is not in fact observed at t */
 	*llt = 0.0;
 	if (K->Stt != NULL) {
 	    load_to_row(K->Stt, K->S0, t);
+	}
+	if (K->K != NULL) {
+	    set_row(K->K, t, 0.0);
 	}
 	return 0;
     }   
@@ -886,10 +923,19 @@ static int kalman_iter_1 (kalman *K, int t, int missobs, double *llt)
 	load_to_row(K->Stt, K->Tmpr1, t);
     }
 
+    if (!err && K->K != NULL) {
+	/* record gain */
+	gretl_matrix *Mrn = gretl_matrix_alloc(K->r, K->n);
+
+	gretl_matrix_multiply(K->FPH, K->Vt, Mrn);
+	load_to_vec(K->K, Mrn, t);
+	gretl_matrix_free(Mrn);
+    }    
+
     return err;
 }
 
-#define P0MIN 1.0e-16
+#define P0MIN 1.0e-15
 
 /* Hamilton (1994) equation [13.2.22] page 380, in simplified notation:
 
@@ -917,6 +963,7 @@ static int kalman_iter_2 (kalman *K, int t, int missobs)
 		if (fabs(x) < P0MIN) {
 		    gretl_matrix_set(K->P0, i, i, 0.0);
 		} else {
+		    fprintf(stderr, "P(%d,%d) = %g\n", i, i, x);
 		    err = E_DATA;
 		}
 	    }
@@ -1052,6 +1099,7 @@ int kalman_forecast (kalman *K)
 {
     double ldet;
     int update_P = 1;
+    int totmiss = 0;
     int i, t, err = 0;
 
 #if KDEBUG
@@ -1090,8 +1138,10 @@ int kalman_forecast (kalman *K)
 	/* read slice from y */
 	kalman_initialize_error(K, t, &missobs);
 
-	/* and from x if applicable */
-	if (K->x != NULL) {
+	if (missobs) {
+	    totmiss++;
+	} else if (K->x != NULL) {
+	    /* read from x if applicable */
 	    kalman_set_Ax(K, t);
 	}	
 
@@ -1129,13 +1179,17 @@ int kalman_forecast (kalman *K)
 	if (err) {
 	    K->loglik = NADBL;
 	    break;
-	} else {
+	} else if (!missobs) {
 	    K->sumldet += ldet;
 	} 
 
 	if (K->V != NULL) {
 	    /* record variance for est. of observables */
-	    load_to_vech(K->V, K->HPH, K->n, t);
+	    if (missobs) {
+		set_row(K->V, t, 1.0/0.0);
+	    } else {
+		load_to_vech(K->V, K->HPH, K->n, t);
+	    }
 	}
 
 	/* first stage of dual iteration */
@@ -1144,7 +1198,7 @@ int kalman_forecast (kalman *K)
 	} else {
 	    err = kalman_iter_1(K, t, missobs, &llt);
 	    if (K->LL != NULL) {
-		if (na(llt)) {
+		if (na(llt) || missobs) {
 		    llt = M_NA;
 		} else {
 		    llt -= 0.5 * (K->n * LN_2_PI + ldet);
@@ -1204,7 +1258,7 @@ int kalman_forecast (kalman *K)
 	   Econometrics Journal, 1999, vol. 2, pp. 113-166; also
 	   available at http://www.ssfpack.com/ .
 	*/
-	int nT = K->n * K->T;
+	int nT = K->n * (K->T - totmiss);
 	int d = (K->flags & KALMAN_DIFFUSE)? K->r : 0;
 
 	K->loglik = -0.5 * (nT * LN_2_PI + K->sumldet + K->SSRw);
@@ -1695,7 +1749,8 @@ static gretl_matrix *attach_export_matrix (const char *mname, int *err)
 
 int user_kalman_run (const char *E, const char *V, 
 		     const char *S, const char *P,
-		     const char *L, int *err)
+		     const char *L, const char *K,
+		     int *err)
 {
     user_kalman *u = get_user_kalman(-1);
     int ret = 0;
@@ -1729,6 +1784,11 @@ int user_kalman_run (const char *E, const char *V,
     if (!*err) {
 	/* loglikelihood */
 	u->K->LL = attach_export_matrix(L, err);
+    }
+
+    if (!*err) {
+	/* gain */
+	u->K->K = attach_export_matrix(K, err);
     } 
 
     if (!*err) {
@@ -1741,6 +1801,10 @@ int user_kalman_run (const char *E, const char *V,
     if (*err != 0 && *err != E_NAN) {
 	ret = 1;
     }
+
+    /* detach matrices */
+    u->K->E = u->K->V = u->K->S = NULL;
+    u->K->P = u->K->LL = u->K->K = NULL;
 
     return ret;    
 }
@@ -1921,7 +1985,7 @@ gretl_matrix *user_kalman_smooth (const char *Pname, int *err)
 	    user_P = 1;
 	}
     }
-    
+
     nr = (u->K->r * u->K->r + u->K->r) / 2;
 
     B = gretl_matrix_block_new(&E, u->K->T, u->K->n,
