@@ -4693,8 +4693,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.xval = user_kalman_run(E, V, S, P, L, K, &p->err);
 	} 
     } else if (t->t == F_KSMOOTH) {
-	/* might be extended to take more args, though at present
-	   there's only one */
+	/* might be extended to take more optional args, though at
+	   present there's only one */
 	const char *P = NULL;
 
 	if (k > 1) {
