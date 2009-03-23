@@ -52,8 +52,9 @@ enum {
     STATE_SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
     STATE_MAX_VERBOSE     = 1 << 11, /* verbose output from maximizer? */
     STATE_USE_FCP         = 1 << 12, /* use FCP garch code */
-    STATE_WARN_ON         = 1 << 13,  /* print numerical warning messages */
-    STATE_VERBOSE_INCLUDE = 1 << 14  /* verbose include */
+    STATE_WARN_ON         = 1 << 13, /* print numerical warning messages */
+    STATE_VERBOSE_INCLUDE = 1 << 14, /* verbose include */
+    STATE_FORCE_FINITE    = 1 << 15  /* make all non-finite values into NAs */
 };    
 
 /* for values that really want a non-negative integer */
@@ -119,7 +120,8 @@ struct set_vars_ {
 			   !strcmp(s, USE_CWD) || \
 			   !strcmp(s, USE_FCP) || \
                            !strcmp(s, PROTECT_LISTS) || \
-                           !strcmp(s, VERBOSE_INCLUDE))
+                           !strcmp(s, VERBOSE_INCLUDE) || \
+                           !strcmp(s, FORCE_FINITE))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -344,7 +346,8 @@ static void state_vars_init (set_vars *sv)
 #if PDEBUG
     fprintf(stderr, "state_vars_init called\n");
 #endif
-    sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | STATE_HALT_ON_ERR;
+    sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
+	STATE_HALT_ON_ERR | STATE_FORCE_FINITE;
     sv->seed = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
@@ -1222,6 +1225,7 @@ static int display_settings (PRN *prn)
     libset_print_double(NLS_TOLER, prn);
     libset_print_bool(USE_SVD, prn);
     libset_print_bool(USE_FCP, prn);
+    libset_print_bool(FORCE_FINITE, prn);
 
     libset_header(_("Random number generation"), prn);
 
@@ -1691,6 +1695,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_USE_PCSE;
     } else if (!strcmp(s, VERBOSE_INCLUDE)) {
 	return STATE_VERBOSE_INCLUDE;
+    } else if (!strcmp(s, FORCE_FINITE)) {
+	return STATE_FORCE_FINITE;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	

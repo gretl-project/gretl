@@ -22,6 +22,8 @@
 
 #include <stdarg.h>
 
+#define M_NA (0.0/0.0)
+
 /* minimum value of diagonal element of R (as in X = QR) that counts
    as non-zero for the purpose of determining the rank of X */
 

@@ -101,12 +101,16 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 static void gen_write_warning (const parser *p, PRN *prn)
 {
     if (prn != NULL) {
+	const char *w[] = {
+	    N_("missing values were generated"),
+	    N_("non-finite values were generated")
+	};
+	const char *s = (p->warn == E_MISSDATA)? w[0] : w[1];
+
 	if (*p->warning != '\0') {
-	    pprintf(prn, "%s: %s\n", 
-		    p->warning, _("missing values were generated"));
+	    pprintf(prn, "%s: %s\n", p->warning, _(s));
 	} else {
-	    pprintf(prn, "%s: %s\n", _("Warning"),
-		    _("missing values were generated"));
+	    pprintf(prn, "%s: %s\n", _("Warning"), _(s));
 	}
     }
 }

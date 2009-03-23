@@ -47,7 +47,7 @@ struct kalman_ {
     double SSRw;    /* \sum_{t=1}^T e_t^{\prime} V_t^{-1} e_t */
     double sumldet; /* \sum_{t=1}^T ln |V_t| */
     double loglik;  /* log-likelihood */
-    double scl;     /* scale factor (weighted error variance) */
+    double s2;      /* = SSRw / k */
 
     int nonshift; /* When F is a companion matrix (e.g. in arma), the
 		     number of rows of F that do something other than
@@ -470,7 +470,7 @@ static int kalman_init (kalman *K)
     K->SSRw = NADBL;
     K->sumldet = NADBL;
     K->loglik = NADBL;
-    K->scl = NADBL;
+    K->s2 = NADBL;
 
     clear_gretl_matrix_err();
 
@@ -831,12 +831,21 @@ static int kalman_arma_iter_1 (kalman *K)
    "S" is Hamilton's \xi (state vector)
 */
 
-static int kalman_iter_1 (kalman *K, int t, double *llt)
+static int kalman_iter_1 (kalman *K, int t, int missobs, double *llt)
 {
     int err = 0;
 
     /* write F*S into S+ */
     err += multiply_by_F(K, K->S0, K->S1, 0);
+
+    if (missobs) {
+	/* the observable is not in fact observed */
+	*llt = 0.0;
+	if (K->Stt != NULL) {
+	    load_to_row(K->Stt, K->S0, t);
+	}
+	return 0;
+    }   
 
     /* form e = y - A'x - H'S */
     err += gretl_matrix_subtract_from(K->e, K->Ax);
@@ -872,15 +881,9 @@ static int kalman_iter_1 (kalman *K, int t, double *llt)
 
     if (!err && K->Stt != NULL) {
 	/* record S_{t|t} for smoothing */
-	double x;
-	int i;
-
 	gretl_matrix_multiply(K->PH, K->Ve, K->Tmpr1);
 	err = gretl_matrix_add_to(K->Tmpr1, K->S0);
-	for (i=0; i<K->r; i++) {
-	    x = gretl_vector_get(K->Tmpr1, i);
-	    gretl_matrix_set(K->Stt, t, i, x);
-	}
+	load_to_row(K->Stt, K->Tmpr1, t);
     }
 
     return err;
@@ -893,13 +896,15 @@ static int kalman_iter_1 (kalman *K, int t, double *llt)
    P+ = F[P - PH(H'PH + R)^{-1}H'P]F' + Q 
 */
 
-static int kalman_iter_2 (kalman *K, int t)
+static int kalman_iter_2 (kalman *K, int t, int missobs)
 {
     int err;
 
-    /* form P - PH(H'PH + R)^{-1}H'P */
-    err = gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->Vt,
-			     K->P0, GRETL_MOD_DECREMENT);
+    if (!missobs) {
+	/* form P - PH(H'PH + R)^{-1}H'P */
+	err = gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->Vt,
+				 K->P0, GRETL_MOD_DECREMENT);
+    }
 
     if (K->Ptt != NULL && !err) {
 	double x;
@@ -1013,13 +1018,17 @@ static void kalman_set_Ax (kalman *K, int t)
    the current e (n x 1)
 */
 
-static void
-kalman_initialize_error (kalman *K, int t)
+static void kalman_initialize_error (kalman *K, int t, int *missobs)
 {
+    double yti;
     int i;
 
     for (i=0; i<K->n; i++) {
-	K->e->val[i] = gretl_matrix_get(K->y, t, i);
+	yti = gretl_matrix_get(K->y, t, i);
+	K->e->val[i] = yti;
+	if (isnan(yti)) {
+	    *missobs = 1;
+	}
     }
 }
 
@@ -1054,7 +1063,7 @@ int kalman_forecast (kalman *K)
     }
 
     K->SSRw = K->sumldet = K->loglik = 0.0;
-    K->scl = NADBL;
+    K->s2 = NADBL;
 
     if (K->x == NULL) {
 	/* no exogenous vars */
@@ -1067,6 +1076,7 @@ int kalman_forecast (kalman *K)
     } 
 
     for (t=0; t<K->T && !err; t++) {
+	int missobs = 0;
 	double llt = 0.0;
 
 #if KDEBUG > 1
@@ -1078,7 +1088,7 @@ int kalman_forecast (kalman *K)
 	}
 
 	/* read slice from y */
-	kalman_initialize_error(K, t);
+	kalman_initialize_error(K, t, &missobs);
 
 	/* and from x if applicable */
 	if (K->x != NULL) {
@@ -1132,10 +1142,10 @@ int kalman_forecast (kalman *K)
 	if (arma_ll(K)) {
 	    err = kalman_arma_iter_1(K);
 	} else {
-	    err = kalman_iter_1(K, t, &llt);
+	    err = kalman_iter_1(K, t, missobs, &llt);
 	    if (K->LL != NULL) {
 		if (na(llt)) {
-		    llt = 0.0 / 0.0;
+		    llt = M_NA;
 		} else {
 		    llt -= 0.5 * (K->n * LN_2_PI + ldet);
 		}
@@ -1155,7 +1165,7 @@ int kalman_forecast (kalman *K)
 
 	if (!err && update_P) {
 	    /* second stage of dual iteration */
-	    err = kalman_iter_2(K, t);
+	    err = kalman_iter_2(K, t, missobs);
 	}
 
 	if (!err) {
@@ -1189,7 +1199,7 @@ int kalman_forecast (kalman *K)
 	    K->loglik = -0.5 * (K->T * ll1 + K->sumldet);
 	}
     } else {
-	/* For K->scl see Koopman, Shephard and Doornik, "Statistical
+	/* For K->s2 see Koopman, Shephard and Doornik, "Statistical
 	   algorithms for models in state space using SsfPack 2.2",
 	   Econometrics Journal, 1999, vol. 2, pp. 113-166; also
 	   available at http://www.ssfpack.com/ .
@@ -1198,7 +1208,7 @@ int kalman_forecast (kalman *K)
 	int d = (K->flags & KALMAN_DIFFUSE)? K->r : 0;
 
 	K->loglik = -0.5 * (nT * LN_2_PI + K->sumldet + K->SSRw);
-	K->scl = K->SSRw / (nT - d);
+	K->s2 = K->SSRw / (nT - d);
     }
 
     if (isnan(K->loglik) || isinf(K->loglik)) {
@@ -2000,7 +2010,7 @@ double user_kalman_get_loglik (void)
 }
 
 /**
- * user_kalman_get_scale_factor:
+ * user_kalman_get_s2:
  * @K: pointer to Kalman struct.
  * 
  * Retrieves the scale factor, \hat{\sigma}^2, calculated 
@@ -2009,13 +2019,13 @@ double user_kalman_get_loglik (void)
  * Returns: scale value, or #NADBL on failure.
  */
 
-double user_kalman_get_scale_factor (void)
+double user_kalman_get_s2 (void)
 {
     user_kalman *u = get_user_kalman(-1);
 
     if (u == NULL || u->K == NULL) {
 	return NADBL;
     } else {
-	return u->K->scl;
+	return u->K->s2;
     }
 }

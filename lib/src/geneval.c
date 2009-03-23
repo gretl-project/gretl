@@ -27,6 +27,7 @@
 #include "gretl_bfgs.h"
 #include "gretl_fft.h"
 #include "kalman.h"
+#include "libset.h"
 #include "version.h"
 
 #include <errno.h>
@@ -5248,7 +5249,7 @@ static double dvar_get_value (int i, parser *p)
     case R_KLNL:
 	return user_kalman_get_loglik();
     case R_KSCL:
-	return user_kalman_get_scale_factor();
+	return user_kalman_get_s2();
     case R_STOPWATCH:
 	return gretl_stopwatch();
     case R_NSCAN:
@@ -7330,12 +7331,12 @@ static int series_compatible (const gretl_matrix *m,
 	(m->t1 > 0 && m->t1 + n <= pdinfo->n);
 }
 
-static int has_missvals (const double *x, const DATAINFO *pdinfo)
+static int series_has_missvals (const double *x, const DATAINFO *pdinfo)
 {
-    int t;
+    int t, ff = libset_get_bool(FORCE_FINITE);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (xna(x[t])) {
+	if (ff && xna(x[t])) {
 	    return 1;
 	}
     }
@@ -7343,26 +7344,54 @@ static int has_missvals (const double *x, const DATAINFO *pdinfo)
     return 0;
 }
 
+static int scalar_is_missval (double x)
+{
+    int ff = libset_get_bool(FORCE_FINITE);
+
+    return (ff && xna(x));
+}
+
 static void gen_check_errvals (parser *p)
 {
     NODE *n = p->ret;
+    int ff;
 
     if (n == NULL || (n->t == VEC && n->v.xvec == NULL)) {
 	return;
     }
 
+    ff = libset_get_bool(FORCE_FINITE);
+
     if (n->t == NUM) {
 	if (!isfinite(n->v.xval)) {
-	    n->v.xval = NADBL;
-	    p->warn = E_NAN;
+	    if (ff) {
+		n->v.xval = NADBL;
+		p->warn = E_MISSDATA;
+	    } else {
+		p->warn = E_NAN;
+	    }
 	}
     } else if (n->t == VEC) {
 	int t;
 
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    if (!isfinite(n->v.xvec[t])) {
-		n->v.xvec[t] = NADBL;
-		p->warn = E_NAN;
+		if (ff) {
+		    n->v.xvec[t] = NADBL;
+		    p->warn = E_MISSDATA;
+		} else {
+		    p->warn = E_NAN;
+		}
+	    }
+	}
+    } else if (n->t == MAT) {
+	/* convert NADBL to NaN */
+	const gretl_matrix *m = n->v.m;
+	int i, k = gretl_matrix_rows(m) * gretl_matrix_cols(m);
+
+	for (i=0; i<k; i++) {
+	    if (na(m->val[i])) {
+		m->val[i] = M_NA;
 	    }
 	}
     }
@@ -7620,6 +7649,7 @@ static void matrix_edit (parser *p)
 	gretl_matrix *b = NULL;
 
 	a = user_matrix_get_submatrix(p->lh.name, p->lh.mspec, &p->err);
+
 	if (!p->err) {
 	    if (p->ret->t == NUM) {
 		int i, n = a->rows * a->cols;
@@ -7715,16 +7745,20 @@ static int edit_list (parser *p)
     return p->err;
 }
 
-static int matrix_missvals (const gretl_matrix *m)
+static int matrix_has_missvals (const gretl_matrix *m)
 {
     if (m == NULL) {
 	return 1;
     } else {
-	int i, n = m->rows * m->cols;
+	int ff = libset_get_bool(FORCE_FINITE);
 
-	for (i=0; i<n; i++) {
-	    if (na(m->val[i])) {
-		return 1;
+	if (ff) {
+	    int i, n = m->rows * m->cols;
+
+	    for (i=0; i<n; i++) {
+		if (na(m->val[i])) {
+		    return 1;
+		}
 	    }
 	}
     }
@@ -7780,11 +7814,11 @@ static int gen_check_return_type (parser *p)
 	}
     } else if (p->targ == MAT) {
 	/* error if result contains NAs */
-	if (r->t == VEC && has_missvals(r->v.xvec, p->dinfo)) {
+	if (r->t == VEC && series_has_missvals(r->v.xvec, p->dinfo)) {
 	    p->err = E_MISSDATA;
-	} else if (r->t == NUM && xna(r->v.xval)) {
+	} else if (r->t == NUM && scalar_is_missval(r->v.xval)) {
 	    p->err = E_MISSDATA;
-	} else if (r->t == MAT && matrix_missvals(r->v.m)) {
+	} else if (r->t == MAT && matrix_has_missvals(r->v.m)) {
 	    p->err = E_MISSDATA;
 	}
     } else if (p->targ == LIST) {
@@ -7959,12 +7993,6 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* assignment to submatrix of original */
 	    matrix_edit(p);
 	}
-#if 0 /* changed 2008-06-18 */
-	if (!p->err && p->lh.m1 != NULL) {
-	    /* check we didn't get any infs or NaNs */
-	    p->err = gretl_matrix_xna_check(p->lh.m1);
-	}
-#endif
     } else if (p->targ == LIST) {
 	edit_list(p);
     } else if (p->targ == STR) {

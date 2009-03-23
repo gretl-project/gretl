@@ -319,12 +319,17 @@ int gretl_matrix_xna_check (const gretl_matrix *m)
     if (m == NULL) {
 	return E_DATA;
     } else {
+	int ff = libset_get_bool(FORCE_FINITE);
 	int i, n = m->rows * m->cols;
 
 	for (i=0; i<n; i++) {
-	    if (xna(m->val[i])) {
-		gretl_errmsg_set(_("Matrix is not finite"));
-		return E_NAN;
+	    if (ff) {
+		if (xna(m->val[i])) {
+		    gretl_errmsg_set(_("Matrix is not finite"));
+		    return E_NAN;
+		}
+	    } else if (na(m->val[i])) {
+		m->val[i] = M_NA;
 	    }
 	}
     }

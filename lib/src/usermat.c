@@ -1713,7 +1713,7 @@ static void xml_put_user_matrix (user_matrix *u, FILE *fp)
 
     for (i=0; i<M->rows; i++) {
 	for (j=0; j<M->cols; j++) {
-	    fprintf(fp, "%.15g ", gretl_matrix_get(M, i, j));
+	    fprintf(fp, "%.16g ", gretl_matrix_get(M, i, j));
 	}
 	fputc('\n', fp);
     }
