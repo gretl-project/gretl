@@ -142,6 +142,8 @@ static kalman *kalman_new_empty (int flags)
     return K;
 }
 
+#define kappa 1.0e7
+
 static void diffuse_Pini (kalman *K)
 {
     int i;
@@ -149,7 +151,7 @@ static void diffuse_Pini (kalman *K)
     gretl_matrix_zero(K->P0);
 
     for (i=0; i<K->r; i++) {
-	gretl_matrix_set(K->P0, i, i, 1.0e+7);
+	gretl_matrix_set(K->P0, i, i, kappa);
     }
 }
 
@@ -944,7 +946,7 @@ static int kalman_iter_1 (kalman *K, int t, int missobs, double *llt)
 
 static int kalman_iter_2 (kalman *K, int t, int missobs)
 {
-    int err;
+    int err = 0;
 
     if (!missobs) {
 	/* form P - PH(H'PH + R)^{-1}H'P */
@@ -1256,12 +1258,18 @@ int kalman_forecast (kalman *K)
 	/* For K->s2 see Koopman, Shephard and Doornik, "Statistical
 	   algorithms for models in state space using SsfPack 2.2",
 	   Econometrics Journal, 1999, vol. 2, pp. 113-166; also
-	   available at http://www.ssfpack.com/ .
+	   available at http://www.ssfpack.com/ .  For the role of
+	   'd', see in addition Koopman's 1997 JASA article.
 	*/
 	int nT = K->n * (K->T - totmiss);
 	int d = (K->flags & KALMAN_DIFFUSE)? K->r : 0;
 
-	K->loglik = -0.5 * (nT * LN_2_PI + K->sumldet + K->SSRw);
+	if (d > 0) {
+	    K->loglik = -0.5 * ((nT - d) * LN_2_PI + K->sumldet + K->SSRw)
+		+ (d / 2.0) * log(kappa);
+	} else {
+	    K->loglik = -0.5 * (nT * LN_2_PI + K->sumldet + K->SSRw);
+	}
 	K->s2 = K->SSRw / (nT - d);
     }
 
