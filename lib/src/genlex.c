@@ -75,7 +75,8 @@ struct str_table dvars[] = {
     { R_TEST_PVAL, "$pvalue" },
     { R_TEST_LNL,  "$rlnl" },
     { R_KLNL,      "$kalman_lnl" },
-    { R_KSCL,      "$kalman_s2" },
+    { R_KS2,       "$kalman_s2" },
+    { R_KSTEP,     "$kalman_t" },
     { R_INDEX,     "obs" },
     { R_T1,        "$t1" },
     { R_T2,        "$t2" },
@@ -782,8 +783,7 @@ static void look_up_word (const char *s, parser *p)
 	    if (p->idnum > 0) {
 		p->sym = DUM;
 	    } else {
-		p->idnum = series_index(p->dinfo, s);
-		if (p->idnum < p->dinfo->v) {
+		if ((p->idnum = current_series_index(p->dinfo, s)) >= 0) {
 		    p->sym = USERIES;
 		} else if (!strcmp(s, "time")) {
 		    p->sym = DUM;

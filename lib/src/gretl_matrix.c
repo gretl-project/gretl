@@ -1941,23 +1941,22 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
     int r = m->rows;
     int c = m->cols;
     int i, j, k = 0;
-    double x, *val;
-    size_t n = r * c * sizeof *val;
+    double *val;
+    size_t sz = r * c * sizeof *val;
 
-    val = malloc(n);
+    val = malloc(sz);
     if (val == NULL) {
 	return E_ALLOC;
     }
 
-    memcpy(val, m->val, n);
+    memcpy(val, m->val, sz);
 
     m->rows = c;
     m->cols = r;
 
     for (j=0; j<c; j++) {
 	for (i=0; i<r; i++) {
-	    x = val[k++];
-	    gretl_matrix_set(m, j, i, x);
+	    gretl_matrix_set(m, j, i, val[k++]);
 	}
     }
 

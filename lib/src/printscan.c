@@ -107,7 +107,7 @@ static char *printf_get_string (char *s, double ***pZ,
 
     /* special, not yet in genr */
 
-    if (!strncmp(s, "marker", 6) && pdinfo->S != NULL) {
+    if (!strncmp(s, "marker", 6) && pdinfo != NULL && pdinfo->S != NULL) {
 	/* observation label */
 	int offset = 0;
 
@@ -154,9 +154,9 @@ static double printf_get_scalar (char *s, double ***pZ,
     } else if (gretl_is_scalar(s)) {
 	x = gretl_scalar_get_value(s);
     } else {
-	v = series_index(pdinfo, s);
+	v = current_series_index(pdinfo, s);
 
-	if (v < pdinfo->v) {
+	if (v >= 0) {
 	    char genstr[32];
 
 	    sprintf(genstr, "%s[%d]", s, t + 1);
@@ -399,7 +399,7 @@ static int print_arg (char **pfmt, char **pargs,
 	    str = printf_get_string(arg, pZ, pdinfo, t, &err);
 	} else if ((m = get_matrix_by_name(arg)) != NULL) {
 	    ; /* OK, we'll print the matrix */
-	} else if ((v = series_index(pdinfo, arg)) < pdinfo->v) {
+	} else if ((v = current_series_index(pdinfo, arg)) >= 0) {
 	    series_v = v; /* OK, we'll print the series */
 	} else {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
@@ -425,7 +425,7 @@ static int print_arg (char **pfmt, char **pargs,
 	gretl_matrix_print_with_format(m, fmt, wid, prec, prn);
     } else if (series_v > 0) {
 	/* printing a series */
-	printf_series(series_v, (const double **)*pZ,
+	printf_series(series_v, (const double **) *pZ,
 		      pdinfo, fmt, wid, prec, 
 		      wstar, pstar, prn);
     } else if (fc == 's') {
@@ -570,7 +570,7 @@ static int real_do_printf (const char *line, double ***pZ,
     *targ = '\0';
 
     if (t < 0) {
-	t = pdinfo->t1;
+	t = (pdinfo != NULL)? pdinfo->t1 : 0;
     }
 
     err = split_printf_line(line, targ, &sp, &format, &args);

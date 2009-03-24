@@ -398,8 +398,13 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 int series_index (const DATAINFO *pdinfo, const char *varname)
 {
     const char *s = varname;
-    int i, fd;
-    int ret = pdinfo->v;
+    int i, fd, ret;
+
+    if (pdinfo == NULL) {
+	return -1;
+    }
+
+    ret = pdinfo->v;
 
     if (s == NULL || *s == 0 || isdigit(*s)) {
 	return ret;
@@ -435,6 +440,20 @@ int series_index (const DATAINFO *pdinfo, const char *varname)
 #endif 
 
     return ret;
+}
+
+int current_series_index (const DATAINFO *pdinfo, const char *vname)
+{
+    int v = -1;
+
+    if (pdinfo != NULL) {
+	v = series_index(pdinfo, vname);
+	if (v >= pdinfo->v) {
+	    v = -1;
+	}
+    }
+
+    return v;
 }
 
 int gretl_is_series (const char *name, const DATAINFO *pdinfo)
@@ -611,8 +630,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 {
     char vname[VNAMELEN];
     const char *subline = NULL;
-    int oldv = pdinfo->v;
-    int flags = 0;
+    int oldv, flags = 0;
     parser p;
 
     if (opt & OPT_P) {
@@ -626,6 +644,8 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     if (opt & OPT_Q) {
 	flags |= P_QUIET;
     }
+
+    oldv = (pdinfo != NULL)? pdinfo->v : 0;
 
 #if GDEBUG
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);

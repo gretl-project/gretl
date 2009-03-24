@@ -296,6 +296,10 @@ static void set_listargs_from_call (fncall *call, DATAINFO *pdinfo)
 {
     int i, v;
 
+    if (pdinfo == NULL) {
+	return;
+    }
+
     for (i=1; i<pdinfo->v; i++) {
 	unset_var_listarg(pdinfo, i);
     }
@@ -334,7 +338,9 @@ static void set_executing_off (fncall *call, DATAINFO *pdinfo)
 	callstack = NULL;
     }
 
-    set_listargs_from_call(popcall, pdinfo);
+    if (pdinfo != NULL) {
+	set_listargs_from_call(popcall, pdinfo);
+    }
 }
 
 /* general info accessors */
@@ -3437,20 +3443,20 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 	return 1;
     }
 
-    if ((dreq == FN_NEEDS_TS) && 
-	!dataset_is_time_series(pdinfo)) {
+    if (dreq == FN_NEEDS_TS && 
+	(pdinfo == NULL || !dataset_is_time_series(pdinfo))) {
 	strcpy(gretl_errmsg, "This function needs time-series data");
 	return 1;
     }
 
-    if ((dreq == FN_NEEDS_PANEL) && 
-	!dataset_is_panel(pdinfo)) {
+    if (dreq == FN_NEEDS_PANEL && 
+	(pdinfo == NULL || !dataset_is_panel(pdinfo))) {
 	strcpy(gretl_errmsg, "This function needs panel data");
 	return 1;
     }
 
-    if ((dreq == FN_NEEDS_QM) && 
-	(!dataset_is_time_series(pdinfo) || 
+    if (dreq == FN_NEEDS_QM && 
+	(pdinfo == NULL || !dataset_is_time_series(pdinfo) || 
 	 (pdinfo->pd != 4 || pdinfo->pd != 12))) {
 	strcpy(gretl_errmsg, "This function needs quarterly or monthly data");
 	return 1;
@@ -3459,9 +3465,8 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
     return 0;
 }
 
-static int 
-maybe_check_function_needs (const DATAINFO *pdinfo,
-			    const ufunc *fun)
+static int maybe_check_function_needs (const DATAINFO *pdinfo,
+				       const ufunc *fun)
 {
     const fnpkg *pkg = ufunc_get_parent_package(fun);
 
@@ -3472,13 +3477,7 @@ maybe_check_function_needs (const DATAINFO *pdinfo,
     }
 }
 
-enum {
-    GET_PTR,
-    GET_COPY
-};
-
-static double 
-get_scalar_return (const char *vname, int *err)
+static double get_scalar_return (const char *vname, int *err)
 {
     if (gretl_is_scalar(vname)) {
 	return gretl_scalar_get_value(vname);
@@ -3488,21 +3487,26 @@ get_scalar_return (const char *vname, int *err)
     }
 }
 
-static double *
-get_series_return (const char *vname, double **Z, DATAINFO *pdinfo,
-		   int action, int *err)
+static double *get_series_return (const char *vname, double **Z, 
+				  DATAINFO *pdinfo, int copy, 
+				  int *err)
 {
     int v = series_index(pdinfo, vname);
     double *x = NULL;
 
-    if (v < pdinfo->v) {
-	if (action == GET_COPY) {
+    if (!copy && v == 0) {
+	copy = 1;
+    }
+
+    if (v >= 0 && v < pdinfo->v) {
+	if (copy) {
 	    x = copyvec(Z[v], pdinfo->n);
 	    if (x == NULL) {
 		*err = E_ALLOC;
 	    }
 	} else {
 	    x = Z[v];
+	    Z[v] = NULL;
 	}
     } else {
 	*err = E_UNKVAR;
@@ -3511,22 +3515,24 @@ get_series_return (const char *vname, double **Z, DATAINFO *pdinfo,
     return x;
 }
 
-static gretl_matrix *
-get_matrix_return (const char *mname, int action, int *err)
+static gretl_matrix *get_matrix_return (const char *mname, int copy, int *err)
 {
-    gretl_matrix *m = get_matrix_by_name(mname);
     gretl_matrix *ret = NULL;
 
-    if (m != NULL) {
-	if (action == GET_COPY) {
+    if (copy) {
+	gretl_matrix *m = get_matrix_by_name(mname);
+
+	if (m != NULL) {
 	    ret = gretl_matrix_copy(m);
 	    if (ret == NULL) {
 		*err = E_ALLOC;
 	    }
-	} else {
-	    return ret = m;
-	}
+	} 
     } else {
+	ret = steal_matrix_by_name(mname);
+    }
+
+    if (ret == NULL && !*err) {
 	*err = E_UNKVAR;
     }
 
@@ -3615,6 +3621,25 @@ maybe_set_return_description (ufunc *u, int rtype, DATAINFO *pdinfo,
     }
 }
 
+static int is_pointer_arg (ufunc *u, fnargs *args, int rtype)
+{
+    int i;
+
+    for (i=0; i<args->argc; i++) {
+	if (u->params[i].type == rtype) {
+	    if (!strcmp(u->params[i].name, u->retname)) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+#define needs_datainfo(t) (t == GRETL_TYPE_SERIES || \
+                           t == GRETL_TYPE_LIST || \
+                           t == GRETL_TYPE_SERIES_REF)
+
 static int 
 function_assign_returns (ufunc *u, fnargs *args, int rtype, 
 			 double **Z, DATAINFO *pdinfo, 
@@ -3623,6 +3648,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 {
     struct fnarg *arg;
     fn_param *fp;
+    int copy;
     int i, err = 0;
 
 #if UDEBUG
@@ -3632,12 +3658,17 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 
     if (*perr == 0) {
 	/* direct return value */
-	if (rtype == GRETL_TYPE_DOUBLE) {
+	if (needs_datainfo(rtype) && pdinfo == NULL) {
+	    /* "can't happen" */
+	    err = E_DATA;
+	} else if (rtype == GRETL_TYPE_DOUBLE) {
 	    *(double *) ret = get_scalar_return(u->retname, &err);
 	} else if (rtype == GRETL_TYPE_SERIES) {
-	    *(double **) ret = get_series_return(u->retname, Z, pdinfo, GET_COPY, &err);
+	    copy = is_pointer_arg(u, args, rtype);
+	    *(double **) ret = get_series_return(u->retname, Z, pdinfo, copy, &err);
 	} else if (rtype == GRETL_TYPE_MATRIX) {
-	    *(gretl_matrix **) ret = get_matrix_return(u->retname, GET_COPY, &err);
+	    copy = is_pointer_arg(u, args, rtype);
+	    *(gretl_matrix **) ret = get_matrix_return(u->retname, copy, &err);
 	} else if (rtype == GRETL_TYPE_LIST) {
 	    /* note: in this case the job is finished in
 	       stop_fncall(); here we just adjust the info on the
@@ -3655,7 +3686,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 
 	*perr = err;
 
-	if (!err && descrip != NULL) {
+	if (!err && pdinfo != NULL && descrip != NULL) {
 	    maybe_set_return_description(u, rtype, pdinfo, descrip);
 	}
     }
@@ -3667,7 +3698,9 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
     for (i=0; i<args->argc; i++) {
 	arg = args->arg[i];
 	fp = &u->params[i];
-	if (gretl_ref_type(fp->type)) {
+	if (needs_datainfo(fp->type) && pdinfo == NULL) {
+	    err = E_DATA;
+	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
 
@@ -3699,12 +3732,15 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 
 static void record_obs_info (obsinfo *o, DATAINFO *pdinfo)
 {
-    o->structure = pdinfo->structure;
-    o->pd = pdinfo->pd;
-    o->t1 = pdinfo->t1;
-    o->t2 = pdinfo->t2;
-    strcpy(o->stobs, pdinfo->stobs);
     o->changed = 0;
+
+    if (pdinfo != NULL) {
+	o->structure = pdinfo->structure;
+	o->pd = pdinfo->pd;
+	o->t1 = pdinfo->t1;
+	o->t2 = pdinfo->t2;
+	strcpy(o->stobs, pdinfo->stobs);
+    }
 }
 
 static int restore_obs_info (obsinfo *o, double **Z, DATAINFO *pdinfo)
@@ -3738,7 +3774,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 #if FN_DEBUG
     fprintf(stderr, "stop_fncall: terminating call to "
 	    "function '%s' at depth %d, pdinfo->v = %d\n", 
-	    call->fun->name, d, pdinfo->v);
+	    call->fun->name, d, (pdinfo != NULL)? pdinfo->v : 0);
 #endif
 
     call->args = NULL;
@@ -3772,29 +3808,30 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
        level via their inclusion in a returned list
     */
 
-    for (i=orig_v, delv=0; i<pdinfo->v; i++) {
-	if (STACK_LEVEL(pdinfo, i) == d) {
-	    delv++;
+    if (pdinfo != NULL) {
+	for (i=orig_v, delv=0; i<pdinfo->v; i++) {
+	    if (STACK_LEVEL(pdinfo, i) == d) {
+		delv++;
+	    }
 	}
-    }
-
-    if (delv > 0) {
-	if (delv == pdinfo->v - orig_v) {
-	    /* deleting all added variables */
-	    anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
-	    if (anyerr && !err) {
-		err = anyerr;
-	    }
-	} else {
-	    for (i=pdinfo->v-1; i>=orig_v; i--) {
-		if (STACK_LEVEL(pdinfo, i) == d) {
-		    anyerr = dataset_drop_variable(i, pZ, pdinfo);
-		    if (anyerr && !err) {
-			err = anyerr;
-		    }
-		} 
-	    }
-	}    
+	if (delv > 0) {
+	    if (delv == pdinfo->v - orig_v) {
+		/* deleting all added variables */
+		anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
+		if (anyerr && !err) {
+		    err = anyerr;
+		}
+	    } else {
+		for (i=pdinfo->v-1; i>=orig_v; i--) {
+		    if (STACK_LEVEL(pdinfo, i) == d) {
+			anyerr = dataset_drop_variable(i, pZ, pdinfo);
+			if (anyerr && !err) {
+			    err = anyerr;
+			}
+		    } 
+		}
+	    }    
+	}
     }
 
     /* direct list return: write the possibly revised list to the
@@ -3821,9 +3858,11 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     }    
 
     pop_program_state();
-    if (call->obs.changed) {
-	restore_obs_info(&call->obs, *pZ, pdinfo);
+
+    if (pdinfo != NULL && call->obs.changed) {
+	restore_obs_info(&call->obs, (pZ != NULL)? *pZ : NULL, pdinfo);
     }
+
     set_executing_off(call, pdinfo);
 
     return err;
@@ -3974,9 +4013,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     MODEL **models = NULL;
     char line[MAXLINE];
     CMD cmd;
-    int orig_v = pdinfo->v;
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int orig_v = 0;
+    int orig_t1 = 0;
+    int orig_t2 = 0;
     int indent0, started = 0;
     int i, err = 0;
 
@@ -3989,6 +4028,12 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     err = maybe_check_function_needs(pdinfo, u);
     if (err) {
 	return err;
+    }
+
+    if (pdinfo != NULL) {
+	orig_v = pdinfo->v;
+	orig_t1 = pdinfo->t1;
+	orig_t2 = pdinfo->t2;
     }
 
     /* precaution */
@@ -4004,7 +4049,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	return E_ALLOC;
     }
 
-    err = check_function_args(u, args, (const double **) *pZ, pdinfo, prn);
+    err = check_function_args(u, args, (pZ != NULL)? (const double **) *pZ : NULL,
+			      pdinfo, prn);
 
     if (!err) {
 	call->args = args;
@@ -4030,7 +4076,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	*line = '\0';
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
 			      models, prn);
-	if (pdinfo->submask != NULL) {
+	if (pdinfo != NULL && pdinfo->submask != NULL) {
 	    state.submask = copy_datainfo_submask(pdinfo);
 	}
 	state.callback = func_exec_callback;
@@ -4042,6 +4088,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    started = 1;
 	}
     }
+
+#if FN_DEBUG
+    fprintf(stderr, "start_fncall: err = %d\n", err);
+#endif
 
     /* get function lines in sequence and check, parse, execute */
 
@@ -4056,6 +4106,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	err = maybe_exec_line(&state, pZ, pdinfo);
+
 	if (err) {
 	    if (*gretl_errmsg == '\0') {
 		gretl_errmsg_sprintf("error in function %s\n"
@@ -4101,24 +4152,24 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 #if UDEBUG
     fprintf(stderr, "gretl_function_exec: %s: finished main exec, err = %d, pdinfo->v = %d\n", 
-	    u->name, err, pdinfo->v);
+	    u->name, err, (pdinfo != NULL)? pdinfo->v : 0);
 #endif
 
-    /* restore the sample that was in place on entry */
-
-    if (complex_subsampled()) {
-	if (state.submask == NULL) {
-	    /* we were not sub-sampled on entry */
-	    restore_full_sample(pZ, pdinfo, NULL);
-	} else if (submask_cmp(state.submask, pdinfo->submask)) {
-	    /* we were sub-sampled differently on entry */
-	    restore_full_sample(pZ, pdinfo, NULL);
-	    restrict_sample_from_mask(state.submask, pZ, pdinfo);
-	} 
+    if (pdinfo != NULL) {
+	/* restore the sample that was in place on entry */
+	if (complex_subsampled()) {
+	    if (state.submask == NULL) {
+		/* we were not sub-sampled on entry */
+		restore_full_sample(pZ, pdinfo, NULL);
+	    } else if (submask_cmp(state.submask, pdinfo->submask)) {
+		/* we were sub-sampled differently on entry */
+		restore_full_sample(pZ, pdinfo, NULL);
+		restrict_sample_from_mask(state.submask, pZ, pdinfo);
+	    } 
+	}
+	pdinfo->t1 = orig_t1;
+	pdinfo->t2 = orig_t2;
     }
-
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
 
     if (err) {
 	gretl_if_state_clear();
@@ -4126,8 +4177,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	err = gretl_if_state_check(indent0);
     }
 
-    function_assign_returns(u, args, rtype, *pZ, pdinfo,
-			    ret, descrip, prn, &err);
+    function_assign_returns(u, args, rtype, (pZ != NULL)? *pZ : NULL, 
+			    pdinfo, ret, descrip, prn, &err);
 
     gretl_exec_state_clear(&state);
 

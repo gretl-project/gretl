@@ -36,7 +36,8 @@ typedef enum {
     R_TEST_PVAL,  /* p-value from last explicit test performed */
     R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
     R_KLNL,       /* log-likelihood from Kalman filter (if applicable) */
-    R_KSCL,       /* scale factor from Kalman filter (if applicable) */
+    R_KS2,        /* variance estimate from Kalman filter (if applicable) */
+    R_KSTEP,      /* current Kalman time-step (if applicable) */
     R_STOPWATCH,  /* stopwatch */ 
     R_NSCAN,      /* number of items scanned via sscanf */
     R_SCALAR_MAX, /* separator: scalars vs series */
@@ -126,6 +127,8 @@ int genr_get_last_output_type (void);
 gretl_matrix *genr_get_output_matrix (const GENERATOR *genr);
 
 int series_index (const DATAINFO *pdinfo, const char *varname);
+
+int current_series_index (const DATAINFO *pdinfo, const char *vname);
 
 int extract_varname (char *targ, const char *src, int *len);
 

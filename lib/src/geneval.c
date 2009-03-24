@@ -453,7 +453,7 @@ static void no_data_error (parser *p)
 
 static NODE *aux_vec_node (parser *p, int n)
 {
-    if (p->dinfo->n == 0) {
+    if (p->dinfo == NULL || p->dinfo->n == 0) {
 	no_data_error(p);
 	return NULL;
     } else {
@@ -463,7 +463,7 @@ static NODE *aux_vec_node (parser *p, int n)
 
 static NODE *aux_series_node (parser *p, int n)
 {
-    if (p->dinfo->n == 0) {
+    if (p->dinfo == NULL || p->dinfo->n == 0) {
 	no_data_error(p);
 	return NULL;
     } else {
@@ -480,7 +480,7 @@ static NODE *aux_ivec_node (parser *p, int n)
 
 static NODE *aux_lvec_node (parser *p)
 {
-    if (p->dinfo->n == 0) {
+    if (p->dinfo == NULL || p->dinfo->n == 0) {
 	no_data_error(p);
 	return NULL;
     } else {
@@ -2823,11 +2823,17 @@ static NODE *dataset_list_node (parser *p)
 
 static NODE *trend_node (parser *p)
 {
-    NODE *ret = aux_series_node(p, 0);
+    NODE *ret = NULL;
 
 #if EDEBUG
     fprintf(stderr, "trend_node called\n");
 #endif
+
+    if (p->dinfo == NULL || p->dinfo->n == 0) {
+	no_data_error(p);
+    } else {
+	ret = aux_series_node(p, 0);
+    }
 
     if (ret != NULL && starting(p)) {
 	p->err = gen_time(p->Z, p->dinfo, 1);
@@ -3284,9 +3290,9 @@ static NODE *varnum_node (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (n->t == STR) {
-	    int v = series_index(p->dinfo, n->v.str);
+	    int v = current_series_index(p->dinfo, n->v.str);
 
-	    ret->v.xval = (v < p->dinfo->v)? v : NADBL;
+	    ret->v.xval = (v >= 0)? v : NADBL;
 	} else {
 	    p->err = E_DATA;
 	}
@@ -4969,6 +4975,8 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
 	    ret->v.m = M;
+	} else {
+	    gretl_matrix_free(M);
 	}
     }
 
@@ -5251,8 +5259,10 @@ static double dvar_get_value (int i, parser *p)
 	return get_last_lnl(p->lh.label);
     case R_KLNL:
 	return user_kalman_get_loglik();
-    case R_KSCL:
+    case R_KS2:
 	return user_kalman_get_s2();
+    case R_KSTEP:
+	return user_kalman_get_time_step();
     case R_STOPWATCH:
 	return gretl_stopwatch();
     case R_NSCAN:
@@ -7167,7 +7177,7 @@ static void pre_process (parser *p, int flags)
 
     /* find out if the LHS var already exists, and if
        so, what type it is */
-    if ((v = series_index(p->dinfo, test)) < p->dinfo->v) {
+    if ((v = current_series_index(p->dinfo, test)) >= 0) {
 	p->lh.v = v;
 	p->lh.t = VEC;
 	newvar = 0;
@@ -7790,7 +7800,8 @@ static int gen_check_return_type (parser *p)
 	return (p->err = E_DATA);
     }
 
-    if (p->dinfo->n == 0 && r->t != MAT && r->t != NUM && r->t != STR) {
+    if ((p->dinfo == NULL || p->dinfo->n == 0) && 
+	r->t != MAT && r->t != NUM && r->t != STR) {
 	no_data_error(p);
 	return p->err;
     }
@@ -7848,7 +7859,7 @@ static int gen_check_return_type (parser *p)
     return p->err;
 }
 
-/* allocate storage if saving scalar or series to dataset: 
+/* allocate storage if saving a series to the dataset: 
    lh.v == 0 means that the LHS variable does not already 
    exist
 */
@@ -7856,7 +7867,11 @@ static int gen_check_return_type (parser *p)
 static int gen_allocate_storage (parser *p)
 {
     if (p->lh.v == 0) {
-	p->err = dataset_add_series(1, p->Z, p->dinfo);
+	if (p->dinfo == NULL || p->Z == NULL) {
+	    p->err = E_DATA;
+	} else {
+	    p->err = dataset_add_series(1, p->Z, p->dinfo);
+	}
 	if (!p->err) {
 	    int t;
 
@@ -7901,8 +7916,10 @@ static int save_generated_var (parser *p, PRN *prn)
     }
 
     /* put the generated data into place */
-    Z = *p->Z;
-    v = p->lh.v;
+    if (p->Z != NULL) {
+	Z = *p->Z;
+	v = p->lh.v;
+    }
     
     if (p->targ == NUM) {
 	/* writing a scalar */
@@ -8159,7 +8176,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    gen_check_return_type(p);
 	} else if (p->flags & P_DECL) {
 	    do_decl(p);
-	} else if (p->Z != NULL) {
+	} else {
 	    save_generated_var(p, prn);
 	} 
     }

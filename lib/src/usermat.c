@@ -236,8 +236,7 @@ static gretl_matrix *real_get_matrix_by_name (const char *name,
 
 user_matrix *get_user_matrix_by_name (const char *name)
 {
-    int level = gretl_function_depth();
-    int i;
+    int i, level = gretl_function_depth();
 
     for (i=0; i<n_matrices; i++) {
 	if (matrices[i]->level == level && 
@@ -360,6 +359,33 @@ gretl_matrix *get_matrix_by_name (const char *name)
     } else {
 	return real_get_matrix_by_name(name, LEVEL_AUTO);
     }
+}
+
+/**
+ * steal_matrix_by_name:
+ * @name: name of the matrix.
+ *
+ * Looks up a user-defined matrix by namem and if found,
+ * grabs the matrix, leaving the matrix pointer on the
+ * named matrix as %NULL.
+ *
+ * Returns: pointer to matrix, or %NULL if not found.
+ */
+
+gretl_matrix *steal_matrix_by_name (const char *name)
+{
+    gretl_matrix *ret = NULL;
+
+    if (name != NULL && *name != '\0') {
+	user_matrix *u = get_user_matrix_by_name(name);
+
+	if (u != NULL) {
+	    ret = u->M;
+	    u->M = NULL;
+	}
+    }
+
+    return ret;
 }
 
 /**

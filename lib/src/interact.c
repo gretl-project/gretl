@@ -1839,9 +1839,7 @@ static void param_grab_braced (CMD *cmd, const char *s, int *nf)
    none is found.
 */
 
-static int capture_param (const char *s, CMD *cmd,
-			  int *nf, const double **Z, 
-			  const DATAINFO *pdinfo)
+static int capture_param (const char *s, CMD *cmd, int *nf)
 {
     /* if param has already been written by some special
        routine, don't overwrite it */
@@ -1872,12 +1870,10 @@ static int capture_param (const char *s, CMD *cmd,
 	    /* grab one 'word' */
 	    cmd_param_grab_word(cmd, s);
 	}
-
 #if CMD_DEBUG
 	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
 		s, cmd->param);
 #endif
-
 	if (REQUIRES_ORDER(cmd->ci)) {
 	    cmd->order = gretl_int_from_string(cmd->param, &cmd->err);
 	}
@@ -2381,7 +2377,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (NO_VARLIST(cmd->ci) || 
 	(cmd->ci == DELEET && (cmd->opt & OPT_D))) { 
 	cmd_set_nolist(cmd);
-	capture_param(line, cmd, NULL, (const double **) *pZ, pdinfo);
+	capture_param(line, cmd, NULL);
 	return cmd->err;
     } 
 
@@ -2390,7 +2386,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == PRINT && strstr(line, "\"")) {
 	/* no list in string literal variant */
 	cmd_set_nolist(cmd);
-	capture_param(line, cmd, NULL, NULL, NULL);
+	capture_param(line, cmd, NULL);
 	return cmd->err;
     }
 
@@ -2417,7 +2413,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* dataset-modifying commands */
     if (cmd->ci == DATAMOD) {
-	capture_param(line, cmd, NULL, NULL, NULL);
+	capture_param(line, cmd, NULL);
 	cmd_set_nolist(cmd);
 	return cmd->err;
     }
@@ -2515,7 +2511,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        a command that needs same
     */
     if (REQUIRES_ORDER(cmd->ci) || cmd->ci == SETMISS) {
-	capture_param(line, cmd, &nf, (const double **) *pZ, pdinfo);
+	capture_param(line, cmd, &nf);
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {
@@ -2530,7 +2526,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* quantreg requires a tau specification */
     if (cmd->ci == QUANTREG) {
-	capture_param(line, cmd, &nf, NULL, NULL);
+	capture_param(line, cmd, &nf);
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {

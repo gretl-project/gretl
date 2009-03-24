@@ -24,7 +24,8 @@ enum {
     KALMAN_ARMA_LL = 1 << 0, /* is the filter being used for ARMA estimation ? */
     KALMAN_AVG_LL  = 1 << 1, /* store total likelihood or average? */
     KALMAN_USER    = 1 << 2, /* user-defined filter? */
-    KALMAN_DIFFUSE = 1 << 3  /* diffuse P_{1|0} */
+    KALMAN_DIFFUSE = 1 << 3, /* diffuse P_{1|0} */
+    KALMAN_FORWARD = 1 << 4  /* running forward filtering pass */
 };
 
 typedef struct kalman_ kalman;
@@ -45,6 +46,8 @@ double kalman_get_loglik (const kalman *K);
 double user_kalman_get_loglik (void);
 
 double user_kalman_get_s2 (void);
+
+int user_kalman_get_time_step (void);
 
 double kalman_get_arma_variance (const kalman *K);
 
