@@ -569,133 +569,6 @@ int block_resample_series (const double *x, double *y, int blocklen,
     return 0;
 }
 
-#if 0
-
-/**
- * filter_series_old:
- * @x: array of original data.
- * @y: array into which to write the result.
- * @pdinfo: data set information.
- * @A: matrix for autoregressive polynomial.
- * @C: matrix for moving average polynomial.
- * @y0: initial value of output series.
- *
- * Filters x according to y_t = C(L)/A(L) x_t; the matrices A and C
- * must have two columns, or be empty. The rows of A and C must
- * contain the coefficients for the powers other than 0 (assumed 1),
- * with the exponents on column one and the corresponding coefficient
- * on column two. For example, the matrix corresponding to the
- * polynomial C(L) = 1 - 0.75 L^2 should be given as { 2, -0.75 };
- * negative exponents (leads) are allowed for the C polynomial only.
- *
- * Returns: 0 on success, non-zero error code on failure.
- */
-
-int filter_series (const double *x, double *y, 
-		   const DATAINFO *pdinfo, gretl_matrix *A, 
-		   gretl_matrix *C, double y0)
-{
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
-    int t, s, i, m, n;
-    int amin = 0, amax = 0;
-    int cmin = 0, cmax = 0;
-    double coef, *e;
-    int err = 0;
-
-    if (!gretl_is_null_matrix(C)) {
-	for (i=0; i<C->rows; i++) {
-	    m = gretl_matrix_get(C, i, 0);
-	    if (m < cmin) {
-		cmin = m; 
-	    } else if (m > cmax) {
-		cmax = m; 
-	    } 
-	}
-    }
-
-    if (!gretl_is_null_matrix(A)) {
-	for (i=0; i<A->rows; i++) {
-	    m = gretl_matrix_get(A, i, 0);
-	    if (m < amin) {
-		amin = m; 
-	    } else if (m > amax) {
-		amax = m; 
-	    } 
-	}
-    }
-
-    if (amin < 0) {
-	return E_DATA;
-    } 
-
-    err = array_adjust_t1t2(x, &t1, &t2);
-    if (err) {
-	return E_DATA;
-    } 
-
-    n = t2 - t1 + 1;
-    e = malloc(n * sizeof *e);
-
-    if (e == NULL) {
-	return E_ALLOC;
-    }
-
-    s = 0;
-    if (gretl_is_null_matrix(C)) {
-	for (t=t1; t<=t2; t++) {
-	    e[s++] = x[t];
-	}
-    } else {
-	for (t=t1; t<=t2; t++) {
-	    if (s >= cmax && t <= t2+cmin) {
-		e[s] = x[t];
-		for (i=0; i<C->rows; i++) {
-		    m = gretl_matrix_get(C, i, 0);
-		    coef = gretl_matrix_get(C, i, 1);
-		    e[s] += x[t-m] * coef;
-		} 
-	    } else {
-		e[s] = NADBL;
-	    }
-	    s++;
-	} 
-    }
-
-    s = 0;
-    if (gretl_is_null_matrix(A)) {
-	for (t=t1; t<=t2; t++) {
-	    y[t] = e[s++];
-	}
-    } else {
-	double xlag;
-
-	for (t=t1; t<=t2-amin; t++) {
-	    y[t] = e[s];
-	    for (i=0; i<A->rows; i++) {
-		m = gretl_matrix_get(A, i, 0);
-		coef = gretl_matrix_get(A, i, 1);
-# if 1
-		xlag = (t < m || na(y[t-m]))? y0 : y[t-m];
-		y[t] -= coef * xlag;
-# else
-		xlag = (s < m)? y0 : y[t-m];
-		if (!na(xlag)) {
-		    y[t] -= coef * xlag;
-		}
-# endif
-	    } 
-	    s++;
-	}
-    }
-
-    free(e);
-
-    return err;
-}
-
-#else
-
 /**
  * filter_series:
  * @x: array of original data.
@@ -705,15 +578,10 @@ int filter_series (const double *x, double *y,
  * @C: matrix for moving average polynomial.
  * @y0: initial value of output series.
  *
- * Filters x according to y_t = C(L)/A(L) x_t; the vectors A and C
- * contain the coefficients for the powers other than 0 (assumed 1).
- * For example, the matrix corresponding to the polynomial 
- * C(L) = 1 - 0.75 L^2 should be given as { 0, -0.75 }.
+ * Filters x according to y_t = C(L)/A(L) x_t.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
-
-#define PRESAMPLE_HACK 1
 
 int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
 		   gretl_vector *A, gretl_vector *C, double y0)
@@ -725,22 +593,22 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     double xlag, coef, *e;
     int err = 0;
 
+    if (gretl_is_null_matrix(C)) {
+	return E_NONCONF;
+    } else {
+	cmax = gretl_vector_get_length(C);
+	if (cmax == 0) {
+	    /* C must be a vector */
+	    return E_NONCONF;
+	}
+    }
+
     if (gretl_is_null_matrix(A)) {
 	amax = 0;
     } else {
 	amax = gretl_vector_get_length(A);
 	if (amax == 0) {
 	    /* if present, A must be a vector */
-	    return E_NONCONF;
-	}
-    }
-
-    if (gretl_is_null_matrix(C)) {
-	return E_NONCONF;
-    } else {
-	cmax = gretl_vector_get_length(C);
-	if (cmax == 0) {
-	    /* if present, C must be a vector */
 	    return E_NONCONF;
 	}
     }
@@ -757,10 +625,9 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    lagmax = (amax > cmax) ? amax : cmax;
+    lagmax = (amax > cmax)? amax : cmax;
 
     s = 0;
-#if PRESAMPLE_HACK
     for (t=t1; t<=t2; t++) {
 	e[s] = 0;
 	for (i=0; i<cmax; i++) {
@@ -775,27 +642,16 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	} 
 	s++;
     }
-#else
-    for (t=t1; t<=t2; t++) {
-	e[s] = 0;
-	for (i=0; i<cmax; i++) {
-	    coef = gretl_vector_get(C, i);
-	    e[s] += x[t-i] * coef;
-	} 
-	s++;
-    } 
-#endif
 
+    s = 0;
     if (amax) {
-#if PRESAMPLE_HACK
-	s = 0;
 	for (t=t1; t<=t2; t++) {
 	    if (na(e[s])) {
 		y[t] = NADBL;
 	    } else {
 		y[t] = e[s];
 		for (i=0; i<amax; i++) {
-		    xlag = (t>i) ? y[t-i-1] : y0;
+		    xlag = (t>i)? y[t-i-1] : y0;
 		    if (na(xlag)) {
 			y[t] = NADBL;
 			break;
@@ -807,21 +663,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	    }
 	    s++;
 	}
-#else
-	s = lagmax;
-	for (t=t1; t<t1+lagmax; t++) {
-	    y[t] = y0;
-	}
-	for (t=t1+lagmax; t<=t2; t++) {
-	    y[t] = e[s++];
-	    for (i=0; i<amax; i++) {
-		coef = gretl_vector_get(A, i);
-		y[t] += coef * y[t-i-1];
-	    } 
-	}
-#endif
     } else {
-	s = 0;
 	for (t=t1; t<=t2; t++) {
 	    y[t] = e[s++];
 	}
@@ -831,8 +673,6 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 
     return err;
 }
-
-#endif
 
 int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
 		     int k)

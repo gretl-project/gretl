@@ -379,7 +379,7 @@ static int kalman_check_dimensions (kalman *K)
 
     /* R should be n x n and symmetric, if present */
     if (!err && K->R != NULL) {
-	err = check_matrix_dims(K, K->A, K_A);
+	err = check_matrix_dims(K, K->R, K_R);
     }
 
     /* initial S should be r x 1, if present */

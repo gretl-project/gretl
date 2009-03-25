@@ -4544,30 +4544,26 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
     if (t->t == F_FILTER) {
 	const double *x = NULL;
-	gretl_matrix *A = NULL;
 	gretl_matrix *C = NULL;
+	gretl_matrix *A = NULL;
 	int freeA = 0, freeC = 0;
 	double y0 = 0;
 
 	if (k < 2 || k > 4) {
-	    n_args_error(k, 3, "filter", p);
-	} else {
-	    /* series to filter */
-	    e = eval(n->v.bn.n[0], p);
-	    if (e == NULL) {
-		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", 0);
-		p->err = E_DATA;
-	    } else if (e->t != VEC) {
-		node_type_error(t->t, 0, VEC, e, p);
-	    } else {
-		x = e->v.xvec;
-	    }
-	}
+	    n_args_error(k, 4, "filter", p);
+	} 
 
-	for (i=1; i<k && !p->err; i++) {
+	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		/* the series to filter */
+		if (e->t != VEC) {
+		   node_type_error(t->t, i, VEC, e, p);
+		} else {
+		   x = e->v.xvec;
+		} 
 	    } else if (i == 1) {
 		/* matrix for MA polynomial (but we'll take a scalar) */
 		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
