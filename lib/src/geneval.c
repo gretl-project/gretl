@@ -4597,7 +4597,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    }
 		}
 	    } else if (i == 3) {
-		/* initial value for output series */
+		/* initial (scalar) value for output series */
 		if (e->t != NUM) {
 		    node_type_error(t->t, i, NUM, e, p);
 		} else if (na(e->v.xval)) {
