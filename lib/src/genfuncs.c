@@ -760,35 +760,31 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     lagmax = (amax > cmax) ? amax : cmax;
 
     s = 0;
-    if (cmax) {
 #if PRESAMPLE_HACK
-	for (t=t1; t<=t2; t++) {
-	    for (i=0; i<cmax; i++) {
-		xlag = (t >= i)? x[t-i] : 0;
-		if (na(xlag)) {
-		    e[s] = NADBL;
-		    break;
-		} else {
-		    coef = gretl_vector_get(C, i);
-		    e[s] += xlag * coef;
-		}
-	    } 
-	    s++;
-	}
-#else
-	for (t=t1; t<=t2; t++) {
-	    for (i=0; i<cmax; i++) {
+    for (t=t1; t<=t2; t++) {
+	e[s] = 0;
+	for (i=0; i<cmax; i++) {
+	    xlag = (t-i >= t1)? x[t-i] : 0;
+	    if (na(xlag)) {
+		e[s] = NADBL;
+		break;
+	    } else {
 		coef = gretl_vector_get(C, i);
-		e[s] += x[t-i] * coef;
-	    } 
-	    s++;
+		e[s] += xlag * coef;
+	    }
 	} 
-#endif
-    } else {
-	for (t=t1; t<=t2; t++) {
-	    e[s++] = x[t];
-	}
+	s++;
     }
+#else
+    for (t=t1; t<=t2; t++) {
+	e[s] = 0;
+	for (i=0; i<cmax; i++) {
+	    coef = gretl_vector_get(C, i);
+	    e[s] += x[t-i] * coef;
+	} 
+	s++;
+    } 
+#endif
 
     if (amax) {
 #if PRESAMPLE_HACK
