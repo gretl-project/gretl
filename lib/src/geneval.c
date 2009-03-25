@@ -4569,20 +4569,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 1) {
-		/* matrix for AR polynomial (but we'll take a scalar) */
-		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
-		    node_type_error(t->t, i, MAT, e, p);
-		} else if (e->t == MAT) {
-		    A = e->v.m;
-		} else if (e->t == NUM) {
-		    A = gretl_matrix_from_scalar(e->v.xval);
-		    if (A == NULL) {
-			p->err = E_MISSDATA;
-		    } else {
-			freeA = 1;
-		    }
-		}
-	    } else if (i == 2) {
 		/* matrix for MA polynomial (but we'll take a scalar) */
 		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
 		    node_type_error(t->t, i, MAT, e, p);
@@ -4595,6 +4581,20 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    } else {
 			freeC = 1;
 		    }		    
+		}
+	    } else if (i == 2) {
+		/* matrix for AR polynomial (but we'll take a scalar) */
+		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
+		    node_type_error(t->t, i, MAT, e, p);
+		} else if (e->t == MAT) {
+		    A = e->v.m;
+		} else if (e->t == NUM) {
+		    A = gretl_matrix_from_scalar(e->v.xval);
+		    if (A == NULL) {
+			p->err = E_MISSDATA;
+		    } else {
+			freeA = 1;
+		    }
 		}
 	    } else if (i == 3) {
 		/* initial value for output series */

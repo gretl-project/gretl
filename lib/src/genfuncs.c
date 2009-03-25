@@ -736,7 +736,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     }
 
     if (gretl_is_null_matrix(C)) {
-	cmax = 0;
+	return E_NONCONF;
     } else {
 	cmax = gretl_vector_get_length(C);
 	if (cmax == 0) {
@@ -763,9 +763,8 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     if (cmax) {
 #if PRESAMPLE_HACK
 	for (t=t1; t<=t2; t++) {
-	    e[s] = x[t];
 	    for (i=0; i<cmax; i++) {
-		xlag = (t > i)? x[t-i-1] : 0;
+		xlag = (t >= i)? x[t-i] : 0;
 		if (na(xlag)) {
 		    e[s] = NADBL;
 		    break;
@@ -778,10 +777,9 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	}
 #else
 	for (t=t1; t<=t2; t++) {
-	    e[s] = x[t];
 	    for (i=0; i<cmax; i++) {
 		coef = gretl_vector_get(C, i);
-		e[s] += x[t-i-1] * coef;
+		e[s] += x[t-i] * coef;
 	    } 
 	    s++;
 	} 
