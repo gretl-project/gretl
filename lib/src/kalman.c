@@ -33,9 +33,6 @@
 
 */
 
-#define KNMAT     9  /* max number of user-attached input matrices */
-#define NMATCALLS 5  /* max number of time-varying matrices */
-
 struct kalman_ {
     int flags;   /* for recording any options */
     int fnlevel; /* level of function execution */
@@ -79,8 +76,8 @@ struct kalman_ {
     /* optional array of function-call strings */
     char **matcalls;
 
-    /* time-varying matrices (optionally) given by function calls */
-    gretl_matrix *Mt[NMATCALLS];
+    /* optional array of time-varying matrices */
+    gretl_matrix **Mt;
 
     /* optional matrices for recording extra info */
     gretl_matrix *Stt;   /* T x r: S_{t|t} */
@@ -109,6 +106,9 @@ struct kalman_ {
     gretl_matrix *Tmprr_2a;
     gretl_matrix *Tmprr_2b;
 };
+
+#define KNMAT     9  /* max number of user-attached input matrices */
+#define NMATCALLS 5  /* max number of time-varying matrices */
 
 #define arma_ll(K) (K->flags & KALMAN_ARMA_LL)
 
@@ -154,6 +154,10 @@ void kalman_free (kalman *K)
 	free_strings_array(K->matcalls, NMATCALLS);
     }
 
+    if (K->Mt != NULL) {
+	gretl_matrix_array_free(K->Mt, NMATCALLS);
+    }
+
     free(K);
 }
 
@@ -162,8 +166,6 @@ static kalman *kalman_new_empty (int flags)
     kalman *K = malloc(sizeof *K);
 
     if (K != NULL) {
-	int i;
-
 	K->Sini = K->Pini = NULL;
 	K->S0 = K->S1 = NULL;
 	K->P0 = K->P1 = NULL;
@@ -176,13 +178,10 @@ static kalman *kalman_new_empty (int flags)
 	K->E = K->V = K->S = K->P = K->LL = K->K = NULL;
 	K->y = K->x = NULL;
 	K->matcalls = NULL;
+	K->Mt = NULL;
 	K->flags = flags;
 	K->fnlevel = 0;
 	K->t = 0;
-
-	for (i=0; i<NMATCALLS; i++) {
-	    K->Mt[i] = NULL;
-	}
     }
 
     return K;
@@ -1127,16 +1126,6 @@ static void kalman_initialize_error (kalman *K, int *missobs)
     }
 }
 
-static void kalman_destroy_fn_matrices (kalman *K)
-{
-    int i;
-
-    for (i=0; i<NMATCALLS; i++) {
-	gretl_matrix_free(K->Mt[i]);
-	K->Mt[i] = NULL;
-    }
-}
-
 /* in case we have any time-varying coefficients (matrices represented
    by function calls), refresh these for the current time step
 */
@@ -1387,7 +1376,8 @@ int kalman_forecast (kalman *K)
 #endif
 
     if (K->matcalls != NULL) {
-	kalman_destroy_fn_matrices(K);
+	gretl_matrix_array_free(K->Mt, NMATCALLS);
+	K->Mt = NULL;
     }
 
     return err;
@@ -1503,6 +1493,10 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
     if (K->matcalls == NULL) {
 	K->matcalls = strings_array_new(NMATCALLS);
 	if (K->matcalls == NULL) {
+	    return E_ALLOC;
+	}
+	K->Mt = gretl_matrix_array_new(NMATCALLS);
+	if (K->Mt == NULL) {
 	    return E_ALLOC;
 	}
     }

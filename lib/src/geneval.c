@@ -7894,7 +7894,7 @@ static int save_generated_var (parser *p, PRN *prn)
     NODE *r = p->ret;
     double **Z = NULL;
     double x;
-    int t, v;
+    int t, v = 0;
 
     /* test for type mismatch errors */
     gen_check_return_type(p);
@@ -7915,11 +7915,12 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     }
 
-    /* put the generated data into place */
     if (p->Z != NULL) {
 	Z = *p->Z;
 	v = p->lh.v;
     }
+
+    /* put the generated data into place */
     
     if (p->targ == NUM) {
 	/* writing a scalar */

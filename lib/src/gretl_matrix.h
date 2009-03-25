@@ -599,10 +599,10 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 				       int *errp);
 
-gretl_matrix **gretl_matrix_array_alloc (int n);
+gretl_matrix **gretl_matrix_array_new (int n);
 
 gretl_matrix **
-gretl_matrix_array_alloc_with_size (int n, int rows, int cols);
+gretl_matrix_array_new_with_size (int n, int rows, int cols);
 
 void gretl_matrix_array_free (gretl_matrix **A, int n);
 

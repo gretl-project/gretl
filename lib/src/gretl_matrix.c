@@ -1960,6 +1960,10 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 	}
     }
 
+    if (!is_block_matrix(m)) {
+	m->t1 = m->t2 = 0;
+    }
+
     free(val);
 
     return 0;
@@ -9670,7 +9674,7 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 }
 
 /**
- * gretl_matrix_array_alloc:
+ * gretl_matrix_array_new:
  * @n: number of matrices.
  *
  * Allocates an array of @n gretl matrix pointers. On successful
@@ -9679,7 +9683,7 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
  * Returns: pointer on sucess, %NULL on failure.
  */
 
-gretl_matrix **gretl_matrix_array_alloc (int n)
+gretl_matrix **gretl_matrix_array_new (int n)
 {
     gretl_matrix **A = malloc(n * sizeof *A);
     int i;
@@ -9694,7 +9698,7 @@ gretl_matrix **gretl_matrix_array_alloc (int n)
 }
 
 /**
- * gretl_matrix_array_alloc_with_size:
+ * gretl_matrix_array_new_with_size:
  * @n: number of matrices.
  * @rows: number of rows in each matrix.
  * @cols: number of columns in each matrix.
@@ -9706,7 +9710,7 @@ gretl_matrix **gretl_matrix_array_alloc (int n)
  */
 
 gretl_matrix **
-gretl_matrix_array_alloc_with_size (int n, int rows, int cols)
+gretl_matrix_array_new_with_size (int n, int rows, int cols)
 {
     gretl_matrix **A = malloc(n * sizeof *A);
     int i, j;

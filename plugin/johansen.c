@@ -885,7 +885,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     }
 
     if (!err && order > 0) {
-	G = gretl_matrix_array_alloc_with_size(order, n, n);
+	G = gretl_matrix_array_new_with_size(order, n, n);
 	if (G == NULL) {
 	    err = E_ALLOC;
 	}	
