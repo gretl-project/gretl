@@ -24,8 +24,9 @@ enum {
     KALMAN_ARMA_LL = 1 << 0, /* is the filter being used for ARMA estimation ? */
     KALMAN_AVG_LL  = 1 << 1, /* store total likelihood or average? */
     KALMAN_USER    = 1 << 2, /* user-defined filter? */
-    KALMAN_DIFFUSE = 1 << 3, /* diffuse P_{1|0} */
-    KALMAN_FORWARD = 1 << 4  /* running forward filtering pass */
+    KALMAN_DIFFUSE = 1 << 3, /* using diffuse P_{1|0} */
+    KALMAN_FORWARD = 1 << 4, /* running forward filtering pass */
+    KALMAN_SIM     = 1 << 5  /* running simulation */
 };
 
 typedef struct kalman_ kalman;
@@ -68,6 +69,11 @@ int user_kalman_run (const char *E, const char *S, const char *P,
 		     int *err);
 
 gretl_matrix *user_kalman_smooth (const char *Pname, int *err);
+
+gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
+				    const gretl_matrix *W,
+				    const char *Sname, 
+				    int *err);
 
 void kalman_cleanup (void);
 

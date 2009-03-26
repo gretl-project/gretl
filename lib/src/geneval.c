@@ -4724,6 +4724,52 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	    
 	    ret->v.m = user_kalman_smooth(P, &p->err);
 	} 
+    } else if (t->t == F_KSIMUL) {
+	gretl_matrix *V = NULL;
+	gretl_matrix *W = NULL;
+	const char *S = NULL;
+	
+	if (k < 1 || k > 3) {
+	    n_args_error(k, 1, "ksimul", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (i == 0) {
+		if (e->t != MAT) {
+		    node_type_error(t->t, i, MAT, e, p);
+		} else {
+		    V = e->v.m;
+		}
+	    } else if (i == 1) {
+		if (e->t == EMPTY) {
+		    ; /* OK */
+		} else if (e->t != MAT) {
+		    node_type_error(t->t, i, MAT, e, p);
+		} else {
+		    W = e->v.m;
+		}
+	    } else {		
+		if (e->t == EMPTY) {
+		    ; /* OK */
+		} else if (e->t != U_ADDR) {
+		    node_type_error(t->t, i, U_ADDR, e, p);
+		} else {
+		    S = e->v.b1.b->v.str;
+		}
+	    } 
+	}
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }	    
+	    ret->v.m = user_kalman_simulate(V, W, S, &p->err);
+	} 
     }
 
     return ret;
@@ -6254,6 +6300,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MCOVG:
     case F_KFILTER:
     case F_KSMOOTH:
+    case F_KSIMUL:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;

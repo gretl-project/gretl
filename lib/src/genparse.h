@@ -298,6 +298,7 @@ enum {
     F_MCOVG,
     F_KFILTER,
     F_KSMOOTH,
+    F_KSIMUL,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

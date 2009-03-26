@@ -289,6 +289,7 @@ struct str_table funcs[] = {
     { F_FILTER,   "filter" },
     { F_KFILTER,  "kfilter" },
     { F_KSMOOTH,  "ksmooth" },
+    { F_KSIMUL,   "ksimul" },
     { F_TRIMR,    "trimr" },
     { F_GETENV,   "getenv" },
     { F_ARGNAME,  "argname" },
