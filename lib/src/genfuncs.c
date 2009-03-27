@@ -651,7 +651,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	    } else {
 		y[t] = e[s];
 		for (i=0; i<amax; i++) {
-		    xlag = (t>i)? y[t-i-1] : y0;
+		    xlag = (t-i>t1)? y[t-i-1] : y0;
 		    if (na(xlag)) {
 			y[t] = NADBL;
 			break;
