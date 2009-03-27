@@ -4356,6 +4356,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
     fn_args_free(args);
 
+#if EDEBUG
+    fprintf(stderr, "eval_ufunc: p->err = %d, ret = %p\n", 
+	    p->err, (void *) ret);
+#endif
+
     return ret;
 }
 
@@ -8040,7 +8045,8 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
 	strcpy(p->dinfo->varname[v], p->lh.name);
 #if EDEBUG
-	fprintf(stderr, "var %d: gave name '%s'\n", v, p->lh.name);
+	fprintf(stderr, "var %d: gave generated series the name '%s'\n", 
+		v, p->lh.name);
 #endif
     } else if (p->targ == MAT) {
 	/* writing a matrix */
