@@ -1,3 +1,10 @@
+version 1.8.1, in progress
+
+The gretl reference manual says that the names of gretl
+commands are reserved, and cannot be used as the names of 
+variables.  This has not been properly enforced in the past,
+but it is now.
+
 1/23/2009 version 1.8.0
 
 The obsolete command "rhodiff" as been removed.  To create

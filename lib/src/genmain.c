@@ -278,15 +278,14 @@ static const char *reswords[] = {
     "pi",
     "NA",
     "null",
+    "obs", /* not exactly a constant, but hey */
     /* types */
     "scalar",
     "series",
     "matrix",
     "string",
     "list",
-    "kalman",
-    /* special */
-    "obs"
+    "kalman"
 };
 
 /**

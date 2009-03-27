@@ -45,7 +45,7 @@ $(GUIDE): gretl-guide-it.tex links textables_it date.tex
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-it.tex links cmdtex functex topiclist date.tex
+$(REF): gretl-ref-it.tex links cmdtex functex textables_it topiclist date.tex
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -82,7 +82,7 @@ date.tex:
 onepass: gretl-guide-it.tex links textables_it
 	pdflatex gretl-guide-it
 
-refpass: gretl-ref-it.tex links cmdtex functex topiclist
+refpass: gretl-ref-it.tex links cmdtex functex textables_it topiclist
 	pdflatex gretl-ref-it
 
 install: $(GUIDE) $(REF)

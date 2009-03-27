@@ -158,38 +158,34 @@ $(GENSTAMP): xsltrans reflow $(FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS)
 # generate some tables for manual automatically, to ensure
 # they remain in step with the actual code
 textables: tables matfuncs $(CMDSDIR)/genr_funcs.xml
-	./tables --constants > ../tex/tabconstants.tex
-	./tables --internals > ../tex/tabinternals.tex
-	./tables --functions > ../tex/tabfunctions.tex
-	./tables --loopcmds > ../tex/tabloopcmds.tex
-	./tables --nonloopcmds > ../tex/tabnonloopcmds.tex
+	./tables --internals > ../tex/tabinternals.tex && \
+	./tables --functions > ../tex/tabfunctions.tex && \
+	./tables --loopcmds > ../tex/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex/tabnonloopcmds.tex && \
 	LANG=en_US ./matfuncs $(CMDSDIR)/genr_funcs.xml > ../tex/matfuncs.tex && \
 	touch $@
 
 textables_it: tables matfuncs $(CMDSDIR)/genr_funcs_it.xml
-	./tables --constants > ../tex_it/tabconstants.tex
-	./tables --internals > ../tex_it/tabinternals.tex
-	./tables --functions > ../tex_it/tabfunctions.tex
-	./tables --loopcmds > ../tex_it/tabloopcmds.tex
-	./tables --nonloopcmds > ../tex_it/tabnonloopcmds.tex
+	./tables --internals > ../tex_it/tabinternals.tex && \
+	./tables --functions > ../tex_it/tabfunctions.tex && \
+	./tables --loopcmds > ../tex_it/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex_it/tabnonloopcmds.tex && \
 	LANG=it_IT ./matfuncs $(CMDSDIR)/genr_funcs_it.xml > ../tex_it/matfuncs.tex && \
 	touch $@
 
 textables_es: tables matfuncs $(CMDSDIR)/genr_funcs_es.xml
-	./tables --constants > ../tex_es/tabconstants.tex
-	./tables --internals > ../tex_es/tabinternals.tex
-	./tables --functions > ../tex_es/tabfunctions.tex
-	./tables --loopcmds > ../tex_es/tabloopcmds.tex
-	./tables --nonloopcmds > ../tex_es/tabnonloopcmds.tex
+	./tables --internals > ../tex_es/tabinternals.tex && \
+	./tables --functions > ../tex_es/tabfunctions.tex && \
+	./tables --loopcmds > ../tex_es/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex_es/tabnonloopcmds.tex && \
 	LANG=es_ES ./matfuncs $(CMDSDIR)/genr_funcs_es.xml > ../tex_es/matfuncs.tex && \
 	touch $@
 
 textables_pt: tables matfuncs $(CMDSDIR)/genr_funcs_pt.xml
-	./tables --constants > ../tex_pt/tabconstants.tex
-	./tables --internals > ../tex_pt/tabinternals.tex
-	./tables --functions > ../tex_pt/tabfunctions.tex
-	./tables --loopcmds > ../tex_pt/tabloopcmds.tex
-	./tables --nonloopcmds > ../tex_pt/tabnonloopcmds.tex
+	./tables --internals > ../tex_pt/tabinternals.tex && \
+	./tables --functions > ../tex_pt/tabfunctions.tex && \
+	./tables --loopcmds > ../tex_pt/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex_pt/tabnonloopcmds.tex && \
 	LANG=pt_PT ./matfuncs $(CMDSDIR)/genr_funcs_pt.xml > ../tex_pt/matfuncs.tex && \
 	touch $@
 
