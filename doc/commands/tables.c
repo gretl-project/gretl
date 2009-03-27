@@ -84,6 +84,22 @@ void sort_and_print_text (char **S, int n)
     free_strings_array(S, n);
 }
 
+void print_text_unsorted (char **S, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	printf("\\texttt{%s}", S[i]);
+	if (i < n - 1) {
+	    fputs(", ", stdout);
+	} else {
+	    fputs(".\n\n", stdout);
+	}
+    }
+
+    free_strings_array(S, n);
+}
+
 void sort_and_print_tabular (char **S, int n, int cols)
 {
     int i, t = 0;
@@ -102,35 +118,19 @@ void sort_and_print_tabular (char **S, int n, int cols)
     free_strings_array(S, n);
 }
 
-void print_constants (void)
-{
-    int n1 = sizeof res1 / sizeof res1[0];
-    char **S = NULL;
-    int i, n = 0;
-    int err = 0;
-
-    for (i=0; i<n1 && !err; i++) {
-	err = push_string_on_array(&S, res1[i], n++);
-    }	
-
-    if (!err) {
-	sort_and_print_text(S, n);
-    }   
-}
-
 void print_internals (void)
 {
-    int n2 = sizeof res2 / sizeof res2[0];
+    int nr = sizeof reswords / sizeof reswords[0];
     char **S = NULL;
     int i, n = 0;
     int err = 0;
 
-    for (i=0; i<n2 && !err; i++) {
-	err = push_string_on_array(&S, res2[i], n++);
+    for (i=0; i<nr && !err; i++) {
+	err = push_string_on_array(&S, reswords[i], n++);
     }
 
     if (!err) {
-	sort_and_print_text(S, n);
+	print_text_unsorted(S, n);
     }    
 }
 
@@ -190,7 +190,6 @@ int print_non_loop_commands (void)
 
 enum {
     NOTHING,
-    CONSTANTS,
     INTERNALS,
     FUNCTIONS,
     LOOPCMDS,
@@ -200,7 +199,6 @@ enum {
 int ok_opt (const char *str)
 {
     const char *opts[] = {
-	"--constants",
 	"--internals",
 	"--functions",
 	"--loopcmds",
@@ -238,9 +236,7 @@ int main (int argc, char **argv)
 	usage(argv[0]);
     }
 
-    if (opt == CONSTANTS) {
-	print_constants();
-    } else if (opt == INTERNALS) {
+    if (opt == INTERNALS) {
 	print_internals();
     } else if (opt == FUNCTIONS) {
 	print_func_words();
