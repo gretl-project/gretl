@@ -143,6 +143,28 @@ because the next statement evaluates \texttt{y} recursively, so
 \texttt{y = 0}, to ensure that \texttt{y} is a series and
 not a scalar.
 
+\subsection{Recoding a variable}
+
+\emph{Problem:} You want to recode a variable by classes. For example,
+you have the age of a sample of individuals ($x_i$) and you need to
+compute age classes ($y_i$) as
+\begin{eqnarray*}
+  y_i = 1 & \mathrm{for} & x_i < 18 \\
+  y_i = 2 & \mathrm{for} & 18 \le x_i < 65 \\
+  y_i = 3 & \mathrm{for} & x_i \ge 65
+\end{eqnarray*}
+
+\emph{Solution:}
+\begin{code}
+series y = 1 + (x >= 18) + (x >= 65)
+\end{code}
+
+\emph{Comment:} True and false expressions are evaluated as 1 and 0
+respectively, so they can be manipulated algebraically as any other
+number. The same result could also be achieved by using the
+conditional assignment operator (see below), but in most cases it
+would probably lead to more convoluted constructs.
+
 \subsection{Conditional assignment}
 
 \emph{Problem:} Generate $y_t$ via the following rule:
