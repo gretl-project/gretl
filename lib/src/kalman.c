@@ -209,26 +209,12 @@ static void diffuse_Pini (kalman *K)
     }
 }
 
-/* If the user has not given an initial value for P_{1|0}, compute
-   this automatically as per Hamilton, ch 13, p. 378.  This works only
-   if the eigenvalues of K->F lie inside the unit circle, so we check
-   for that first.  Failing that, or if the --diffuse option is given
-   for the user Kalman filter, we apply a diffuse initialization.
-*/
-
-static int construct_Pini (kalman *K)
+static int F_out_of_bounds (kalman *K)
 {
     gretl_matrix *Fcpy;
     gretl_matrix *evals;
-    gretl_matrix *Svar;
-    gretl_matrix *vQ; 
     double r, c, x;
-    int i, r2, err = 0;
-
-    if (K->flags & KALMAN_DIFFUSE) {
-	diffuse_Pini(K);
-	return 0;
-    }
+    int i, err = 0;
 
     Fcpy = gretl_matrix_copy(K->F);
     if (Fcpy == NULL) {
@@ -244,15 +230,30 @@ static int construct_Pini (kalman *K)
 	x = sqrt(r*r + c*c);
 	if (x >= 1.0) {
 	    fprintf(stderr, "F: modulus of eigenvalue %d = %g\n", i+1, x);
-	    err = 1;
+	    err = E_SINGULAR;
 	}
     }
 
     gretl_matrix_free(evals);
 
-    if (err) {
+    return err;
+}
+
+/* If the user has not given an initial value for P_{1|0}, compute
+   this automatically as per Hamilton, ch 13, p. 378.  This works only
+   if the eigenvalues of K->F lie inside the unit circle.  Failing
+   that, or if the --diffuse option is given for the user Kalman
+   filter, we apply a diffuse initialization.
+*/
+
+static int construct_Pini (kalman *K)
+{
+    gretl_matrix *Svar;
+    gretl_matrix *vQ; 
+    int r2, err = 0;
+
+    if (K->flags & KALMAN_DIFFUSE) {
 	diffuse_Pini(K);
-	K->flags |= KALMAN_DIFFUSE;
 	return 0;
     }
 
@@ -269,11 +270,18 @@ static int construct_Pini (kalman *K)
 
     gretl_matrix_kronecker_product(K->F, K->F, Svar);
     gretl_matrix_I_minus(Svar);
-
     gretl_matrix_vectorize(vQ, K->Q);
 
     err = gretl_LU_solve(Svar, vQ);
-    if (!err) {
+    if (err) {
+	/* failed: are some of the eigenvalues out of bounds? */
+	err = F_out_of_bounds(K);
+	if (err == E_SINGULAR) {
+	    err = 0;
+	    diffuse_Pini(K);
+	    K->flags |= KALMAN_DIFFUSE;
+	}
+    } else {
 	gretl_matrix_unvectorize(K->P0, vQ);
     }
 
