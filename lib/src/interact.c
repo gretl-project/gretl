@@ -267,8 +267,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	}
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
-    } else if (!strcmp(s, "funcerr")) {
-	cmd->ci = FUNCERR;
     } else if (!strcmp(line, "end if")) {
 	strcpy(s, "endif");
 	strcpy(line, "endif");
@@ -1876,6 +1874,11 @@ static int capture_param (const char *s, CMD *cmd, int *nf)
 #endif
 	if (REQUIRES_ORDER(cmd->ci)) {
 	    cmd->order = gretl_int_from_string(cmd->param, &cmd->err);
+	    if (cmd->err) {
+		gretl_errmsg_sprintf(_("%s: expected an integer order"),
+				     cmd->word);
+		cmd->err = E_PARSE;
+	    }
 	}
     }
 
@@ -2181,11 +2184,6 @@ static int end_foreign (const char *s)
    are a few special case: shell commands start with the "!" escape;
    restriction specifications may start with "-" (as in "-b1 + b2 =
    0") or a numerical multiplier.  
-
-   One more thing: we peek ahead and see if the next non-space
-   character following the first 'word' is '='; if so, the word is
-   presumably functioning as a variable name, since no command has a
-   valid first field starting with '='.
 */
 
 static int get_command_word (const char *line, CMD *cmd)
@@ -2204,16 +2202,10 @@ static int get_command_word (const char *line, CMD *cmd)
 	ret = 1;
     } else if (n > 0) {
 	/* got some alphabetical stuff */
-	const char *s = line + n;
-
-	s += strspn(s, " ");
-	if (*s != '=') {
-	    /* changed 2009-03-27, AC */
-	    if (n > FN_NAMELEN - 1) {
-		n = FN_NAMELEN - 1;
-	    }
-	    strncat(cmd->word, line, n);
+	if (n > FN_NAMELEN - 1) {
+	    n = FN_NAMELEN - 1;
 	}
+	strncat(cmd->word, line, n);
 	ret = 1;
     } else if (!string_is_blank(line)) {
 	/* must be garbage? */
@@ -2434,8 +2426,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    /** OK, now we're definitely doing a list-oriented command,
-	We begin by taking care of a few specials **/
+    /** OK, now we're definitely doing a list-oriented command;
+	we begin by taking care of a few specials **/
 
     if (cmd->ci == GNUPLOT) {
 	/* we may have a block of stuff to pass literally
@@ -4954,71 +4946,6 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 #endif
 
     return 0;
-}
-
-/* which commands can we run without having first opened 
-   a data file?
-*/
-
-#define startup_ci(c) (c == OPEN || \
-		       c == RUN || \
-		       c == INCLUDE || \
-		       c == NULLDATA || \
-		       c == GENR || \
-		       c == PVALUE || \
-		       c == PRINT || \
-		       c == PRINTF || \
-		       c == HELP || \
-		       c == SET || \
-		       c == FUNC || \
-		       c == QUIT || \
-		       c == LOOP || \
-		       c == ENDLOOP || \
-		       c == IF || \
-		       c == ELIF || \
-		       c == ELSE || \
-		       c == ENDIF)
-
-int ready_for_command (const char *line)
-{
-    const char *ok_cmds[] = {
-	"import", 
-	"delete",
-	"eval",
-	"!",
-	"launch",
-	"matrix",
-	"scalar",
-	"string",
-	"kalman",
-	NULL 
-    };
-    int i, ok = 0;
-
-    if (string_is_blank(line) || gretl_compiling_function()) {
-	ok = 1;
-    } else if (*line == '#') {
-	ok = 1;
-    } else if (*line == '/' && *(line+1) == '*') {
-	ok = 1;
-    } else {
-	char word[9];
-	int ci;
-
-	sscanf(line, "%8s", word);
-	ci = gretl_command_number(word);
-	if (ci == 0 || startup_ci(ci)) {
-	    ok = 1;
-	} else {
-	    for (i=0; ok_cmds[i] != NULL && !ok; i++) {
-		if (!strncmp(line, ok_cmds[i], strlen(ok_cmds[i]))) {
-		    ok = 1;
-		}
-	    }
-	}
-    }
-
-    return ok;
 }
 
 int gretl_cmd_init (CMD *cmd)

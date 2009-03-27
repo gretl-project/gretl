@@ -792,12 +792,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	k = saved_object_action(line, pZ, pdinfo, models, prn);
 	if (k == 1) return 0;   /* action was OK, or ignored */
 	if (k == -1) return 1;  /* action was faulty */
-
-	/* are we ready for this? */
-	if (!data_status && !cmd_ignore(cmd) && !ready_for_command(line)) {
-	    fprintf(stderr, _("You must open a data file first\n"));
-	    return 1;
-	}
     }
 
     /* tell libgretl if we're in batch mode */

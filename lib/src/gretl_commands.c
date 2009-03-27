@@ -69,7 +69,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { FOREIGN,  "foreign" }, 
     { FREQ,     "freq" }, 
     { FUNC,     "function" },
-    { FUNCERR,  "error" },
+    { FUNCERR,  "funcerr" },
     { GARCH,    "garch" },
     { GENR,     "genr" },  
     { GMM,      "gmm" },

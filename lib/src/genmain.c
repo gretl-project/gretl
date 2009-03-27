@@ -286,8 +286,7 @@ static const char *reswords[] = {
     "list",
     "kalman",
     /* special */
-    "obs",
-    "smpl"
+    "obs"
 };
 
 /**
@@ -301,17 +300,20 @@ static const char *reswords[] = {
 int gretl_reserved_word (const char *str)
 {
     static int n = sizeof reswords / sizeof reswords[0];
-    int i;
+    int i, ret = gretl_command_number(str);
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<n && !ret; i++) {
 	if (!strcmp(str, reswords[i])) {
-	    gretl_errmsg_sprintf(_("'%s' may not be used as a "
-				   "variable name"), str);
-	    return 1;
+	    ret = 1;
 	}
     }
 
-    return 0;
+    if (ret) {
+	gretl_errmsg_sprintf(_("'%s' may not be used as a "
+			       "variable name"), str);
+    }	
+
+    return ret;
 }
 
 /**
