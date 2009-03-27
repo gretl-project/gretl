@@ -262,27 +262,32 @@ int is_gretl_function_call (const char *s)
     }
 }
 
-/* "reserved word" data */
+/* "reserved word" data: 
 
-static const char *res1[] = {
+   smpl is special because it can legitimately be followed
+   by '+' or '-' and hence may be confused with the name
+   of a variable in parsing a command line: consider
+   "smpl +3 ;" (command) versus "smpl += 3" (revision of
+   value of variable).
+*/
+
+static const char *reswords[] = {
+    /* constants */
     "const",
     "CONST",
     "pi",
     "NA",
-    "null"
-};
-
-static const char *res2[] = {
-    "obs",
-};
-
-static const char *res3[] = {
+    "null",
+    /* types */
     "scalar",
     "series",
     "matrix",
     "string",
     "list",
-    "kalman"
+    "kalman",
+    /* special */
+    "obs",
+    "smpl"
 };
 
 /**
@@ -295,40 +300,18 @@ static const char *res3[] = {
 
 int gretl_reserved_word (const char *str)
 {
-    static int n1 = sizeof res1 / sizeof res1[0];
-    static int n2 = sizeof res2 / sizeof res2[0];
-    static int n3 = sizeof res3 / sizeof res3[0];
-    const char *uses[] = {
-	N_("a constant"),
-	N_("an internal variable"),
-	N_("a type")
-    };
-    int i, ret = 0;
+    static int n = sizeof reswords / sizeof reswords[0];
+    int i;
 
-    for (i=0; i<n1 && !ret; i++) {
-	if (!strcmp(str, res1[i])) {
-	    ret = 1;
+    for (i=0; i<n; i++) {
+	if (!strcmp(str, reswords[i])) {
+	    gretl_errmsg_sprintf(_("'%s' may not be used as a "
+				   "variable name"), str);
+	    return 1;
 	}
     }
 
-    for (i=0; i<n2 && !ret; i++) {
-	if (!strcmp(str, res2[i])) {
-	    ret = 2;
-	}
-    }
-
-    for (i=0; i<n3 && !ret; i++) {
-	if (!strcmp(str, res3[i])) {
-	    ret = 3;
-	}
-    }    
-
-    if (ret > 0) {
-	sprintf(gretl_errmsg, _("'%s' refers to %s and may not be used as a "
-			    "variable name"), str, _(uses[ret-1])); 
-    }
- 
-    return ret;
+    return 0;
 }
 
 /**

@@ -2178,13 +2178,14 @@ static int end_foreign (const char *s)
 
 /* Get the first word out of line.  In general this should be a
    command word (starting with a alphabetical character), but there
-   are a few special case: shell commands start with the "!"  escape;
+   are a few special case: shell commands start with the "!" escape;
    restriction specifications may start with "-" (as in "-b1 + b2 =
-   0") or a numerical multiplier.  And one more thing: we peek ahead
-   and see if the next non-space character is '='; if so, the word may
-   appear to be a command word but presumably it must be functioning
-   as a variable name, since no command has a valid first field
-   starting with '='.
+   0") or a numerical multiplier.  
+
+   One more thing: we peek ahead and see if the next non-space
+   character following the first 'word' is '='; if so, the word is
+   presumably functioning as a variable name, since no command has a
+   valid first field starting with '='.
 */
 
 static int get_command_word (const char *line, CMD *cmd)
@@ -2192,24 +2193,30 @@ static int get_command_word (const char *line, CMD *cmd)
     int n = gretl_namechar_spn(line);
     int ret = 0;
 
+    *cmd->word = '\0';
+
     if (cmd->context == RESTRICT && n == 0) {
+	/* non-alpha may be OK */
 	ret = !string_is_blank(line);
     } else if (*line == '!') {
+	/* shell escape */
 	strcpy(cmd->word, "!");
 	ret = 1;
     } else if (n > 0) {
+	/* got some alphabetical stuff */
 	const char *s = line + n;
 
 	s += strspn(s, " ");
 	if (*s != '=') {
+	    /* changed 2009-03-27, AC */
 	    if (n > FN_NAMELEN - 1) {
 		n = FN_NAMELEN - 1;
 	    }
-	    *cmd->word = '\0';
 	    strncat(cmd->word, line, n);
 	}
 	ret = 1;
     } else if (!string_is_blank(line)) {
+	/* must be garbage? */
 	cmd->err = E_PARSE;
     }
 
