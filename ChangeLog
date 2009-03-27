@@ -42,7 +42,7 @@
   output file, and selecting EPS/PDF/PNG output directly
 - Fix bug in binomial plot for 60 <= n < 170
 - MS Windows build: update to gnuplot 4.3 CVS as of
-  2009-03-02
+  March 2009
 - Enhancements for GUI menu item "Count missing values"
 - tsls: add Stock-Yogo minimum eigenvalue test for weak 
   instruments
