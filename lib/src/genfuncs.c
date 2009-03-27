@@ -574,11 +574,16 @@ int block_resample_series (const double *x, double *y, int blocklen,
  * @x: array of original data.
  * @y: array into which to write the result.
  * @pdinfo: data set information.
- * @A: matrix for autoregressive polynomial.
- * @C: matrix for moving average polynomial.
+ * @A: vector for autoregressive polynomial.
+ * @C: vector for moving average polynomial.
  * @y0: initial value of output series.
  *
- * Filters x according to y_t = C(L)/A(L) x_t.
+ * Filters x according to y_t = C(L)/A(L) x_t.  If the intended
+ * AR order is p, @A should be a vector of length p.  If the 
+ * intended MA order is q, @C should be vector of length (q+1), 
+ * the first entry giving the coefficient at lag 0.  However, if 
+ * @C is %NULL this is taken to mean that the lag-0 MA coefficient 
+ * is unity (and all others are zero).
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -589,16 +594,16 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
     int t, s, i, n;
-    int amax, cmax, lagmax;
+    int amax, cmax;
     double xlag, coef, *e;
     int err = 0;
 
     if (gretl_is_null_matrix(C)) {
-	return E_NONCONF;
+	cmax = 0;
     } else {
 	cmax = gretl_vector_get_length(C);
 	if (cmax == 0) {
-	    /* C must be a vector */
+	    /* if present, C must be a vector */
 	    return E_NONCONF;
 	}
     }
@@ -625,22 +630,27 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    lagmax = (amax > cmax)? amax : cmax;
-
     s = 0;
-    for (t=t1; t<=t2; t++) {
-	e[s] = 0;
-	for (i=0; i<cmax; i++) {
-	    xlag = (t-i >= t1)? x[t-i] : 0;
-	    if (na(xlag)) {
-		e[s] = NADBL;
-		break;
-	    } else {
-		coef = gretl_vector_get(C, i);
-		e[s] += xlag * coef;
-	    }
-	} 
-	s++;
+    if (cmax) {
+	for (t=t1; t<=t2; t++) {
+	    e[s] = 0;
+	    for (i=0; i<cmax; i++) {
+		xlag = (t-i >= t1)? x[t-i] : 0;
+		if (na(xlag)) {
+		    e[s] = NADBL;
+		    break;
+		} else {
+		    coef = gretl_vector_get(C, i);
+		    e[s] += xlag * coef;
+		}
+	    } 
+	    s++;
+	}
+    } else {
+	/* implicitly MA(0) = 1 */
+	for (t=t1; t<=t2; t++) {
+	    e[s++] = x[t];
+	}
     }
 
     s = 0;
