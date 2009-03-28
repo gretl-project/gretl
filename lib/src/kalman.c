@@ -145,7 +145,7 @@ enum {
 /* the data matrix in question has been constructed from a series
    or named list, and is "owned" by the Kalman struct */
 
-#define kalman_owns_matrix(K,i) (K->mnames[i][0] == '$')
+#define kalman_owns_matrix(K,i) (K->mnames != NULL && K->mnames[i][0] == '$')
 
 void kalman_free (kalman *K)
 {
