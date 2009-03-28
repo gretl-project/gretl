@@ -853,12 +853,6 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    get_args(t, p, 2, opt, &next);
 	}
-	if (!p->err && sym == F_LAGPOLY) {
-	    if (t->v.b2.l->t == VEC && t->v.b2.l->vnum == p->lh.v) {
-		/* got a lag polynomial in the LHS series */
-		p->flags |= P_AUTOREG;
-	    }
-	}
     } else if (func3_symb(sym)) {
 	t = newb3(sym, NULL);
 	if (t != NULL) {

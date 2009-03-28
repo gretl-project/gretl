@@ -2695,6 +2695,9 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	name = gretl_strndup(s, len);
 	if (name == NULL) {
 	    err = E_ALLOC;
+	} else if (gretl_reserved_word(name)) {
+	    free(name);
+	    err = E_DATA;
 	}
     }	
 

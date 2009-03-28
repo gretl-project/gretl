@@ -2618,7 +2618,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		cmd->err = 1;
 	    } 
 	    if (*gretl_errmsg == '\0') {
-		sprintf(gretl_errmsg, _("field '%s' in command is invalid"), s);
+		if (*s == '=' && cmd->ci != GENR) {
+		    gretl_errmsg_sprintf(_("'%s' may not be used as a "
+					   "variable name"), cmd->word);
+		} else {
+		    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
+		}
 	    }
 	    break;
 	}

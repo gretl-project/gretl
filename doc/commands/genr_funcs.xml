@@ -1975,25 +1975,6 @@
       </description>
     </function>
 
-    <function name="lagpoly" section="transforms" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="vector">b</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Lag polynomial: the argument <argname>b</argname> represents a
-	  vector of coefficients to be multiplied into the respective lags
-	  of the series <argname>y</argname>, from 1 to the length of the
-	  vector. The returned series is therefore a linear combination of
-	  lags of <argname>y</argname>.  If the series
-	  <argname>y</argname> appears on the left-hand side of a formula
-	  that employs this function, the function is evaluated
-	  recursively, hence producing an autoregressive result.
-	</para>
-      </description>
-    </function>
-
     <function name="lags" section="transforms" output="list">
       <fnargs>
 	<fnarg type="scalar">p</fnarg>

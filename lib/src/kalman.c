@@ -1727,7 +1727,7 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	    }
 	}
 	if (m == NULL) {
-	    gretl_errmsg_sprintf(_("'%s': no such matrix\n"), mname);
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
 	    err = E_UNKVAR;
 	}
     }
@@ -2088,9 +2088,8 @@ static gretl_matrix *attach_export_matrix (const char *mname, int *err)
     }
 
     m = get_matrix_by_name(mname);
-    
     if (m == NULL) {
-	gretl_errmsg_sprintf(_("'%s': no such matrix\n"), mname);
+	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
 	*err = E_UNKVAR;
     }
 

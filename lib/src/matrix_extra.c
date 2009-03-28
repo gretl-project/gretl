@@ -413,20 +413,22 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 {
     gretl_matrix *M;
     double x;
-    int T = t2 - t1 + 1;
+    int T, Tmax = t2 - t1 + 1;
     int k = list[0];
     int skip;
     int j, s, t;
 
-    if (k <= 0 || T <= 0) {
+    if (k <= 0 || Tmax <= 0) {
 	*err = E_DATA;
 	return NULL;
     }	
 
     *err = 0;
 
+    T = Tmax;
+
     if (mask != NULL) {
-	T -= get_mask_count(mask, T);
+	T -= get_mask_count(mask, Tmax);
     } else if (op == M_MISSING_SKIP || op == M_MISSING_ERROR) {
 	for (t=t1; t<=t2 && !*err; t++) {
 	    for (j=0; j<k; j++) {
@@ -490,6 +492,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 		x = gretl_matrix_get(M, t, j);
 		if (na(x)) {
 		    if (op == M_MISSING_OK) {
+			/* convert NA to NAN */
 			gretl_matrix_set(M, t, j, M_NA);
 		    } else {
 			*err = E_MISSDATA;
@@ -502,7 +505,10 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
     if (*err) {
 	gretl_matrix_free(M);
 	M = NULL;
-    } 
+    } else if (T == Tmax) {
+	M->t1 = t1;
+	M->t2 = t2;
+    }
 
     return M;
 }
@@ -519,7 +525,11 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
  * Creates a gretl matrix holding the subset of variables from
  * @Z specified by @list, over the sample range @t1 to @t2,
  * inclusive.  Variables are in columns. The @missop flag
- * can be % 
+ * can be %M_MISSING_OK to indicate that it's OK to include
+ * missing values in the matrix (these become NaNs),
+ * %M_MISSING_ERROR (it's an error of any missing values are
+ * found), or %M_MISSING_SKIP (observations with any missing
+ * values are omitted from the matrix).
  *
  * Returns: allocated matrix or %NULL on failure. 
  */

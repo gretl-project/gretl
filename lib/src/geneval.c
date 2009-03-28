@@ -1762,42 +1762,6 @@ static void lag_calc (double *y, const double *x,
     }
 }
 
-/* lag polynomial, evaluated recursively if need be */
-
-static NODE *lagpoly_func (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
-
-    if (ret != NULL) {
-	const gretl_matrix *m = r->v.m;
-	int n = gretl_vector_get_length(m);
-
-	if (n == 0) {
-	    p->err = E_NONCONF;
-	} else {
-	    int t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-	    int t2 = (autoreg(p))? p->obs : p->dinfo->t2;
-	    const double *x = l->v.xvec;
-	    int i, k = n, op = B_ASN;
-	    double mul;
-
-	    /* skip unobtainable lags */
-	    while (t1 - k < 0 || na(x[t1-k])) t1++;
-
-	    for (i=n; i>0 && !p->err; i--) {
-		mul = m->val[i-1];
-		if (mul != 0.0) {
-		    lag_calc(ret->v.xvec, x, i, t1, t2, 
-			     op, mul, p);
-		    op = B_ADD;
-		}
-	    }
-	}
-    } 
-
-    return ret;    
-}
-
 static NODE *matrix_csv_write (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -4431,6 +4395,27 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     return A;
 }
 
+static const char *ptr_node_get_name (NODE *t, parser *p)
+{
+    char *ret = NULL;
+
+    if (t->t == U_ADDR) {
+	NODE *n = t->v.b1.b;
+
+	if (n->t == VEC) {
+	    int v = n->vnum;
+
+	    if (p->dinfo != NULL && v > 0 && v < p->dinfo->n) {
+		ret = p->dinfo->varname[v];
+	    }
+	} else {
+	    ret = n->v.str;
+	}
+    }
+
+    return ret;
+}
+
 /* evaluate a built-in function that has three arguments */
 
 static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
@@ -4458,11 +4443,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else if (r->t != U_ADDR && r->t != EMPTY) {
 	    node_type_error(f, 2, U_ADDR, r, p);
 	} else {
-	    const char *lname, *rname;
+	    const char *uname, *vname;
 
-	    lname = (m->t == U_ADDR)? m->v.b1.b->v.str : NULL;
-	    rname = (r->t == U_ADDR)? r->v.b1.b->v.str : NULL;
-	    A = user_matrix_SVD(l->v.m, lname, rname, &p->err);
+	    uname = ptr_node_get_name(m, p);
+	    vname = ptr_node_get_name(r, p);
+	    A = user_matrix_SVD(l->v.m, uname, vname, &p->err);
 	}
     } else if (f == F_MOLS || f == F_MPOLS) {
 	if (l->t != MAT) {
@@ -4475,7 +4460,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    gretlopt opt = (f == F_MOLS)? OPT_NONE : OPT_M;
 	    const char *Uname;
 
-	    Uname = (r->t == U_ADDR)? r->v.b1.b->v.str : NULL;
+	    Uname = ptr_node_get_name(r, p);
 	    A = user_matrix_ols(l->v.m, m->v.m, Uname, opt, &p->err);
 	}
     } else if (f == F_TOEPSOLV) {
@@ -4671,19 +4656,19 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	for (i=0; i<k && !p->err; i++) {
 	    e = n->v.bn.n[i];
 	    if (e->t == EMPTY) {
-		; /* NULL arguments are acceptable */
+		; /* NULL arguments are OK */
 	    } else if (e->t != U_ADDR) {
 		node_type_error(t->t, i, U_ADDR, e, p);
 	    } else if (i == 0) {
-		E = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+		E = ptr_node_get_name(e, p);
 	    } else if (i == 1) {
-		V = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+		V = ptr_node_get_name(e, p);
 	    } else if (i == 2) {
-		S = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+		S = ptr_node_get_name(e, p);
 	    } else if (i == 3) {
-		P = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+		P = ptr_node_get_name(e, p);
 	    } else if (i == 4) {
-		K = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+		K = ptr_node_get_name(e, p);
 	    }
 	}
 
@@ -4710,7 +4695,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (e->t != U_ADDR) {
 		node_type_error(t->t, i, U_ADDR, e, p);
 	    } else if (i == 0) {
-		P = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
+		P = ptr_node_get_name(e, p);
 	    } 
 	}
 
@@ -4755,7 +4740,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i, U_ADDR, e, p);
 		} else {
-		    S = e->v.b1.b->v.str;
+		    S = ptr_node_get_name(e, p);
 		}
 	    } 
 	}
@@ -6451,15 +6436,6 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, (l->t == STR)? 2 : 1,
 			    STR, (l->t == STR)? r : l, p);
-	}
-	break;
-    case F_LAGPOLY:
-	if (l->t == VEC && r->t == MAT) {
-	    ret = lagpoly_func(l, r, p);
-	} else if (l->t != VEC) {
-	    node_type_error(t->t, 1, VEC, l, p);
-	} else {
-	    node_type_error(t->t, 2, MAT, r, p);
 	}
 	break;
     default: 

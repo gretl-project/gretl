@@ -1432,6 +1432,8 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
     return err;
 }
 
+#define nullarg(s) (s == NULL || !strcmp(s, "null"))
+
 gretl_matrix *
 user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
 {
@@ -1444,7 +1446,7 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
 	return NULL;
     }
 
-    if (rname != NULL && strcmp(rname, "null")) {
+    if (!nullarg(rname)) {
 	wantR = 1;
 	if (get_matrix_by_name(rname) == NULL) {
 	    *err = E_UNKVAR;
@@ -1462,9 +1464,6 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
     return Q;
 }
 
-#define SVD_RESIZE 1
-
-#if SVD_RESIZE
 static int revise_SVD_V (gretl_matrix **pV, int r, int c)
 {
     gretl_matrix *V;
@@ -1488,7 +1487,6 @@ static int revise_SVD_V (gretl_matrix **pV, int r, int c)
 
     return 0;
 }
-#endif
 
 gretl_matrix *user_matrix_SVD (const gretl_matrix *m, 
 			       const char *uname, 
@@ -1506,16 +1504,18 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	return NULL;
     }
 
-    if (uname != NULL && strcmp(uname, "null")) {
+    if (!nullarg(uname)) {
 	if (get_matrix_by_name(uname) == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), uname);
 	    *err = E_UNKVAR;
 	} else {
 	    pU = &U;
 	}
     }
 
-    if (vname != NULL && strcmp(vname, "null")) {
+    if (!*err && !nullarg(vname)) {
 	if (get_matrix_by_name(vname) == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), vname);
 	    *err = E_UNKVAR;
 	} else {
 	    pV = &V;
@@ -1526,7 +1526,6 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	*err = gretl_matrix_SVD(m, pU, &S, pV);
     }
 
-#if SVD_RESIZE
     if (!*err && (U != NULL || V != NULL)) {
 	int tall = m->rows - m->cols;
 	int minrc = (m->rows > m->cols)? m->cols : m->rows;
@@ -1548,16 +1547,6 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	    }
 	}
     }
-#else
-    if (!*err) {
-	if (U != NULL) {
-	    user_matrix_replace_matrix_by_name(uname, U);
-	}
-	if (V != NULL) {
-	    user_matrix_replace_matrix_by_name(vname, V);
-	}
-    }
-#endif
 
     return S;
 }
@@ -1593,9 +1582,10 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	return NULL;
     }
 
-    if (Uname != NULL && strcmp(Uname, "null")) {
+    if (!nullarg(Uname)) {
 	U = get_matrix_by_name(Uname);
 	if (U == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), Uname);
 	    *err = E_UNKVAR;
 	    return NULL;
 	} 
@@ -1678,9 +1668,10 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 	return NULL;
     }
 
-    if (rname != NULL && strcmp(rname, "null")) {
+    if (!nullarg(rname)) {
 	vecs = 1;
 	if (get_matrix_by_name(rname) == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), rname);
 	    *err = E_UNKVAR;
 	    return NULL;
 	}

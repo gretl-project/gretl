@@ -967,7 +967,8 @@ static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
     } else {
 	m = get_matrix_by_name(mname);
 	if (m == NULL) {
-	    pprintf(prn, _("'%s': no such matrix\n"), mname);
+	    pprintf(prn, _("'%s': no such matrix"), mname);
+	    pputc(prn, '\n');
 	    err = E_DATA;
 	} else {
 	    state->initvals = gretl_matrix_copy(m);
