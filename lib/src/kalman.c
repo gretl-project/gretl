@@ -22,6 +22,7 @@
 #include "gretl_func.h"
 #include "matrix_extra.h"
 #include "libset.h"
+#include "gretl_scalar.h"
 #include "kalman.h"
 
 #define KDEBUG 0
@@ -144,46 +145,46 @@ enum {
 /* the data matrix in question has been constructed from a series
    or named list, and is "owned" by the Kalman struct */
 
-#define kalman_owns_matrix(K,i) ((i == K_y || i == K_x) && \
-                                 K->mnames[i][0] == '$')
+#define kalman_owns_matrix(K,i) (K->mnames[i][0] == '$')
 
 void kalman_free (kalman *K)
 {
-    if (K == NULL) {
-	return;
+    if (K != NULL) {
+	const gretl_matrix **mptr[] = {
+	    &K->F, &K->A, &K->H, &K->Q, &K->R,
+	    &K->y, &K->x, &K->Sini, &K->Pini
+	};
+	int i;
+
+	gretl_matrix_free(K->S0);
+	gretl_matrix_free(K->P0);
+	gretl_matrix_free(K->S1);
+	gretl_matrix_free(K->P1);
+	gretl_matrix_free(K->e);
+	gretl_matrix_free(K->LL);
+
+	gretl_matrix_block_destroy(K->B);
+
+	for (i=0; i<K_MMAX; i++) {
+	    if (kalman_owns_matrix(K, i)) {
+		gretl_matrix_free((gretl_matrix *) *mptr[i]);
+	    }
+	}
+
+	if (K->mnames != NULL) {
+	    free_strings_array(K->mnames, K_MMAX);
+	}    
+
+	if (K->matcalls != NULL) {
+	    free_strings_array(K->matcalls, NMATCALLS);
+	}
+
+	if (K->Mt != NULL) {
+	    gretl_matrix_array_free(K->Mt, NMATCALLS);
+	}
+
+	free(K);
     }
-
-    gretl_matrix_free(K->S0);
-    gretl_matrix_free(K->P0);
-    gretl_matrix_free(K->S1);
-    gretl_matrix_free(K->P1);
-    gretl_matrix_free(K->e);
-
-    gretl_matrix_block_destroy(K->B);
-
-    gretl_matrix_free(K->LL);
-
-    if (kalman_owns_matrix(K, K_y)) {
-	gretl_matrix_free((gretl_matrix *) K->y);
-    }
-
-    if (kalman_owns_matrix(K, K_x)) {
-	gretl_matrix_free((gretl_matrix *) K->x);
-    }
-
-    if (K->mnames != NULL) {
-	free_strings_array(K->mnames, K_MMAX);
-    }    
-
-    if (K->matcalls != NULL) {
-	free_strings_array(K->matcalls, NMATCALLS);
-    }
-
-    if (K->Mt != NULL) {
-	gretl_matrix_array_free(K->Mt, NMATCALLS);
-    }
-
-    free(K);
 }
 
 static kalman *kalman_new_empty (int flags)
@@ -1622,10 +1623,10 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
    found, convert to matrix) or a named list (ditto).
 */
 
-static gretl_matrix *matrix_from_dataset (const char *s,
-					  const double **Z, 
-					  const DATAINFO *pdinfo,
-					  int *err)
+static gretl_matrix *k_matrix_from_dataset (const char *s,
+					    const double **Z, 
+					    const DATAINFO *pdinfo,
+					    int *err)
 {
     int v = current_series_index(pdinfo, s);
     gretl_matrix *m = NULL;
@@ -1644,6 +1645,25 @@ static gretl_matrix *matrix_from_dataset (const char *s,
 	} else {
 	    *err = E_UNKVAR;
 	}
+    }
+
+    return m;
+}
+
+static gretl_matrix *k_matrix_from_scalar (const char *s,
+					   int *err)
+{
+    gretl_matrix *m = NULL;
+    double x;
+
+    x = gretl_double_from_string(s, err);
+
+    if (!*err && na(x)) {
+	*err = E_MISSDATA;
+    }
+
+    if (!*err) {
+	m = gretl_matrix_from_scalar(x);
     }
 
     return m;
@@ -1693,11 +1713,15 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	/* didn't find a matrix */
 	if (i == K_y || i == K_x) {
 	    /* if osby or obsx, try series / list */
-	    const char *Km = (i == K_y)? "$K_y" : "$K_x";
-
-	    m = matrix_from_dataset(mname, Z, pdinfo, &err);
+	    m = k_matrix_from_dataset(mname, Z, pdinfo, &err);
 	    if (!err) {
-		strcpy(mname, Km);
+		strcpy(mname, "$Kmat");
+	    }
+	} else {
+	    /* try a scalar */
+	    m = k_matrix_from_scalar(mname, &err);
+	    if (!err) {
+		strcpy(mname, "$Kmat");
 	    }
 	}
 	if (m == NULL) {
