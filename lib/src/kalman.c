@@ -149,21 +149,25 @@ enum {
 
 void kalman_free (kalman *K)
 {
-    if (K != NULL) {
+    if (K == NULL) {
+	return;
+    }
+
+    gretl_matrix_free(K->S0);
+    gretl_matrix_free(K->P0);
+    gretl_matrix_free(K->S1);
+    gretl_matrix_free(K->P1);
+    gretl_matrix_free(K->e);
+    gretl_matrix_free(K->LL);
+
+    gretl_matrix_block_destroy(K->B);
+
+    if (K->mnames != NULL) {
 	const gretl_matrix **mptr[] = {
 	    &K->F, &K->A, &K->H, &K->Q, &K->R,
 	    &K->y, &K->x, &K->Sini, &K->Pini
 	};
 	int i;
-
-	gretl_matrix_free(K->S0);
-	gretl_matrix_free(K->P0);
-	gretl_matrix_free(K->S1);
-	gretl_matrix_free(K->P1);
-	gretl_matrix_free(K->e);
-	gretl_matrix_free(K->LL);
-
-	gretl_matrix_block_destroy(K->B);
 
 	for (i=0; i<K_MMAX; i++) {
 	    if (kalman_owns_matrix(K, i)) {
@@ -171,20 +175,18 @@ void kalman_free (kalman *K)
 	    }
 	}
 
-	if (K->mnames != NULL) {
-	    free_strings_array(K->mnames, K_MMAX);
-	}    
+	free_strings_array(K->mnames, K_MMAX);
+    }    
 
-	if (K->matcalls != NULL) {
-	    free_strings_array(K->matcalls, NMATCALLS);
-	}
-
-	if (K->Mt != NULL) {
-	    gretl_matrix_array_free(K->Mt, NMATCALLS);
-	}
-
-	free(K);
+    if (K->matcalls != NULL) {
+	free_strings_array(K->matcalls, NMATCALLS);
     }
+
+    if (K->Mt != NULL) {
+	gretl_matrix_array_free(K->Mt, NMATCALLS);
+    }
+
+    free(K);
 }
 
 static kalman *kalman_new_empty (int flags)
@@ -2131,11 +2133,12 @@ int user_kalman_run (const char *E, const char *V,
     } 
 
     if (!*err) {
-	/* gain */
+	/* Kalman gain */
 	u->K->K = attach_export_matrix(K, err);
     } 
 
     if (!*err && u->K->LL == NULL) {
+	/* log-likelihood: available via accessor */
 	u->K->LL = gretl_matrix_alloc(u->K->T, 1);
 	if (u->K->LL == NULL) {
 	    *err = E_ALLOC;
@@ -2567,25 +2570,39 @@ double user_kalman_get_loglik (void)
 }
 
 /**
- * user_kalman_get_llt:
+ * user_kalman_get_matrix:
  * @K: pointer to Kalman struct.
+ * @idx: identifier for matrix.
+ * @err: location to receive error code.
  * 
- * Retrieves the T-vector of log-likelhood per time-setep
- * calculated via the last run of a kalman forecast, if 
- * applicable.
+ * Retrieves a matrix, specified by @idx, from the last
+ * run of a kalman forecast, if applicable.
  * 
  * Returns: allocated vector, or %NULL on failure.
  */
 
-gretl_matrix *user_kalman_get_llt (void)
+gretl_matrix *user_kalman_get_matrix (int idx, int *err)
 {
     user_kalman *u = get_user_kalman(-1);
+    gretl_matrix *m = NULL;
 
     if (u == NULL || u->K == NULL || u->K->LL == NULL) {
-	return NULL;
+	*err = E_BADSTAT;
+    } else if (idx == M_KLLT) {
+	m = gretl_matrix_copy(u->K->LL);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    } else if (idx == M_KUHAT) {
+	m = gretl_matrix_copy(u->K->e);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
     } else {
-	return gretl_matrix_copy(u->K->LL);
+	*err = E_BADSTAT;
     }
+
+    return m;
 }
 
 /**

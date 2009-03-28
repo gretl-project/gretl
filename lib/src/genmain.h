@@ -90,6 +90,7 @@ typedef enum {
     M_FCERR,      /* standard errors associated with M_FCAST */
     M_COEFF_CI,   /* (asymmetric) confidence intervals for coeffs */
     M_KLLT,       /* Kalman log-likelihood, per time-step */
+    M_KUHAT,      /* Kalman: current prediction error */
     M_MATRIX_MAX, /* -- separator, matrices/lists -- */
     M_XLIST,      /* list of regressors */
     M_MAX         /* sentinel */

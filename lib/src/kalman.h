@@ -46,7 +46,7 @@ double kalman_get_loglik (const kalman *K);
 
 double user_kalman_get_loglik (void);
 
-gretl_matrix *user_kalman_get_llt (void);
+gretl_matrix *user_kalman_get_matrix (int idx, int *err);
 
 double user_kalman_get_s2 (void);
 

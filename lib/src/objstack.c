@@ -1082,8 +1082,8 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
 
     if (idx == M_FCAST || idx == M_FCERR) {
 	M = get_forecast_matrix(idx, err);
-    } else if (idx == M_KLLT) {
-	M = user_kalman_get_llt();
+    } else if (idx == M_KLLT || idx == M_KUHAT) {
+	M = user_kalman_get_matrix(idx, err);
     } else {
 	stacker *smatch = find_smatch(oname);
 
