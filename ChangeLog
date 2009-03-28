@@ -50,6 +50,7 @@
   source to support building on MS Windows with mingw/msys
 - Enforce the prohibition on using gretl command words as
   names for variables
+- Script editing window: add an "Open" button
 
 1/23/2008 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

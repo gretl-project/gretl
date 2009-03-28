@@ -1247,12 +1247,6 @@ static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)
     free(targ->val);
     targ->val = src->val;
     src->val = NULL;
-
-#if USE_COLS
-    free(targ->col);
-    targ->col = src->col;
-    src->col = NULL;
-#endif
 }
 
 int matrix_invert_in_place (gretl_matrix *m)
@@ -1439,7 +1433,7 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
-    int wantR = 0;
+    gretl_matrix **pR = NULL;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
@@ -1447,17 +1441,19 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
     }
 
     if (!nullarg(rname)) {
-	wantR = 1;
 	if (get_matrix_by_name(rname) == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), rname);
 	    *err = E_UNKVAR;
+	} else {
+	    pR = &R;
 	}
     }
 
     if (!*err) {
-	*err = real_user_matrix_QR_decomp(m, &Q, (wantR)? &R : NULL);
+	*err = real_user_matrix_QR_decomp(m, &Q, pR);
     }
 
-    if (!*err && wantR) {
+    if (!*err && R != NULL) {
 	user_matrix_replace_matrix_by_name(rname, R);
     }
 

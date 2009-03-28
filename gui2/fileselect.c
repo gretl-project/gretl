@@ -352,9 +352,11 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
     }
 }
 
-static void filesel_open_script (const char *fname)
+static void filesel_open_script (const char *fname, windata_t *vwin)
 {
-    if (has_suffix(fname, ".R")) {
+    if (vwin != NULL) {
+	sourceview_insert_file(vwin, fname);
+    } else if (has_suffix(fname, ".R")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_R);
     } else if (has_suffix(fname, ".plt")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_GP);	
@@ -492,8 +494,10 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (action == OPEN_SCRIPT) {
 	if (src == FSEL_DATA_FNPKG) {
 	    fnsave_set_script(fname, data);
+	} else if (src == FSEL_DATA_VWIN) {
+	    filesel_open_script(fname, data);
 	} else {
-	    filesel_open_script(fname);
+	    filesel_open_script(fname, NULL);
 	}
     } else if (action == OPEN_SESSION) {
 	filesel_open_session(fname);

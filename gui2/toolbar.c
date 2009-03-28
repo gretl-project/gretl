@@ -29,6 +29,7 @@
 #include "series_view.h"
 #include "cmdstack.h"
 #include "dlgutils.h"
+#include "fileselect.h"
 #include "toolbar.h"
 
 #include "usermat.h"
@@ -83,7 +84,8 @@ enum {
     EDIT_SCRIPT_ITEM,
     STICKIFY_ITEM,
     ALPHA_ITEM,
-    REFRESH_ITEM
+    REFRESH_ITEM,
+    OPEN_ITEM
 } viewbar_flags;
 
 static GtkIconFactory *gretl_stock_ifac;
@@ -251,6 +253,19 @@ static void mail_script_callback (GtkWidget *w, windata_t *vwin)
     }
     
     send_file(vwin->fname);
+}
+
+static void file_open_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (query_save_text(NULL, NULL, vwin)) {
+	return;
+    }
+
+    file_selector(_("Open script file"), OPEN_SCRIPT, FSEL_DATA_VWIN, vwin);
+
+    if (vwin->flags & VWIN_CONTENT_CHANGED) {
+	mark_vwin_content_saved(vwin);
+    }
 }
 
 static void save_plot_commands_callback (GtkWidget *w, windata_t *vwin)
@@ -496,6 +511,7 @@ static void set_plot_icon (GretlToolItem *item)
 }
 
 static GretlToolItem viewbar_items[] = {
+    { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(view_window_save), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
 #ifdef NATIVE_PRINTING
@@ -532,6 +548,10 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
                     r == EDIT_GP || \
                     r == EDIT_R || \
 	            r == VIEW_SCRIPT)
+
+#define open_ok(r) (r == EDIT_SCRIPT || \
+                    r == EDIT_GP || \
+                    r == EDIT_R)
 
 #define edit_ok(r) (r == EDIT_SCRIPT || \
                     r == EDIT_HEADER || \
@@ -576,6 +596,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     int r = vwin->role;
 
     if (!edit_ok(r) && f == EDIT_ITEM) {
+	return NULL;
+    } else if (!open_ok(r) && f == OPEN_ITEM) {
 	return NULL;
     } else if (!exec_ok(r) && f == EXEC_ITEM) {
 	return NULL;
