@@ -1272,7 +1272,7 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
 #endif
 
     x = gretl_matrix_data_subset(xlist, Z, ainfo->t1, ainfo->t2, 
-				 NULL, &err);
+				 M_MISSING_ERROR, &err);
     if (err) {
 	free(xlist);
 	return NULL;

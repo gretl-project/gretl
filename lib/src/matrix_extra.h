@@ -20,6 +20,12 @@
 #ifndef MATRIX_EXTRA_H
 #define MATRIX_EXTRA_H
 
+typedef enum {
+    M_MISSING_OK,
+    M_MISSING_ERROR,
+    M_MISSING_SKIP
+} MMissingCode;
+
 gretl_vector *
 gretl_vector_from_array (const double *x, int n, GretlMatrixMod mod);
 
@@ -46,17 +52,14 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x);
 
 
+gretl_matrix *
+gretl_matrix_data_subset_masked (const int *list, const double **Z,
+				 int t1, int t2, const char *mask, 
+				 int *err);
+
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
-					int t1, int t2, const char *mask,
+					int t1, int t2, int missop, 
 					int *err);
-
-gretl_matrix *
-gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
-				     int t1, int t2, int *err);
-
-gretl_matrix *
-gretl_matrix_data_subset_skip_missing (const int *list, const double **Z,
-				       int t1, int t2, int *err);
 
 int gretl_plotfit_matrices (int yno, int xno, FitType fit,
 			    const double **Z, int t1, int t2, 

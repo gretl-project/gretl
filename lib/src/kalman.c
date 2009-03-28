@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "usermat.h"
 #include "gretl_func.h"
+#include "matrix_extra.h"
 #include "libset.h"
 #include "kalman.h"
 
@@ -140,6 +141,12 @@ enum {
     K_MMAX /* sentinel */
 };
 
+/* the data matrix in question has been constructed from a series
+   or named list, and is "owned" by the Kalman struct */
+
+#define kalman_owns_matrix(K,i) ((i == K_y || i == K_x) && \
+                                 K->mnames[i][0] == '$')
+
 void kalman_free (kalman *K)
 {
     if (K == NULL) {
@@ -153,6 +160,14 @@ void kalman_free (kalman *K)
     gretl_matrix_free(K->e);
 
     gretl_matrix_block_destroy(K->B);
+
+    if (kalman_owns_matrix(K, K_y)) {
+	gretl_matrix_free((gretl_matrix *) K->y);
+    }
+
+    if (kalman_owns_matrix(K, K_x)) {
+	gretl_matrix_free((gretl_matrix *) K->x);
+    }
 
     if (K->mnames != NULL) {
 	free_strings_array(K->mnames, K_MMAX);
@@ -1529,7 +1544,7 @@ struct K_input_mat K_input_mats[] = {
     { K_F, "statemat" },
     { K_Q, "statevar" },
     { K_S, "inistate" },
-    { K_P, "iniprec" }
+    { K_P, "inivar" }
 };
 
 static int add_matrix_fncall (kalman *K, const char *s, int i,
@@ -1601,17 +1616,51 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
     return err;
 }
 
-/* The string @s should contain (a) the name of a user-defined input
-   matrix (alone), or (b) a function call that creates such a matrix,
-   or (c) the name of a matrix plus a void function that updates that
-   matrix.
+/* If we didn't find a matrix of the name @s, try for a series (and if
+   found, convert to matrix) or a named list (ditto).
+*/
+
+static gretl_matrix *matrix_from_dataset (const char *s,
+					  const double **Z, 
+					  const DATAINFO *pdinfo,
+					  int *err)
+{
+    int v = current_series_index(pdinfo, s);
+    gretl_matrix *m = NULL;
+	
+    if (v >= 0) {
+	int L[2] = {1, v};
+
+	m = gretl_matrix_data_subset(L, Z, pdinfo->t1, pdinfo->t2,
+				     M_MISSING_OK, err);
+    } else {
+	int *list = get_list_by_name(s);
+
+	if (list != NULL) {
+	    m = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2,
+					 M_MISSING_OK, err);
+	} else {
+	    *err = E_UNKVAR;
+	}
+    }
+
+    return m;
+}
+
+/* The string @s should contain (a) the name of a user-defined
+   variable, alone (either a matrix or, if we're looking at obsy or
+   obsx, a series or named list that can be converted to a matrix), or
+   (b) a function call that creates such a matrix, or (c) the name of
+   a matrix plus a void function that updates that matrix.
 
    The integer @i is an ID number that identifies the role of the
    matrix in question within the Kalman struct.  Given this info
    we check for errors and, if all is OK, hook things up.
 */
 
-static int attach_input_matrix (kalman *K, const char *s, int i)
+static int 
+attach_input_matrix (kalman *K, const char *s, int i,
+		     const double **Z, const DATAINFO *pdinfo)
 {
     char mname[VNAMELEN] = {0};
     gretl_matrix *m = NULL;
@@ -1639,8 +1688,20 @@ static int attach_input_matrix (kalman *K, const char *s, int i)
     }
 
     if (!err && m == NULL) {
-	gretl_errmsg_sprintf(_("'%s': no such matrix\n"), mname);
-	err = E_UNKVAR;
+	/* didn't find a matrix */
+	if (i == K_y || i == K_x) {
+	    /* if osby or obsx, try series / list */
+	    const char *Km = (i == K_y)? "$K_y" : "$K_x";
+
+	    m = matrix_from_dataset(mname, Z, pdinfo, &err);
+	    if (!err) {
+		strcpy(mname, Km);
+	    }
+	}
+	if (m == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such matrix\n"), mname);
+	    err = E_UNKVAR;
+	}
     }
 
     if (!err) {
@@ -1729,7 +1790,9 @@ static int user_kalman_recheck_matrices (user_kalman *u)
     int i, err = 0;
 
     for (i=0; i<=K_P; i++) {
-	*cptr[i] = NULL;
+	if (!kalman_owns_matrix(K, i)) {
+	    *cptr[i] = NULL;
+	}
     }
 
     for (i=0; i<=K_P && !err; i++) {
@@ -1739,7 +1802,7 @@ static int user_kalman_recheck_matrices (user_kalman *u)
 		gretl_matrix_free(K->Mt[i]);
 		K->Mt[i] = (gretl_matrix *) *cptr[i];
 	    }	
-	} else {
+	} else if (!kalman_owns_matrix(K, i)) {
 	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
 	}
     }
@@ -1913,13 +1976,13 @@ static int add_user_kalman (void)
 
 static int get_kalman_matrix_id (const char **ps)
 {
-    const char *mname;
+    const char *test;
     int i, n;
 
     for (i=0; i<K_MMAX; i++) {
-	mname = K_input_mats[i].name;
-	n = strlen(mname);
-	if (!strncmp(*ps, mname, n) && (*ps)[n] == ' ') {
+	test = K_input_mats[i].name;
+	n = strlen(test);
+	if (!strncmp(*ps, test, n) && (*ps)[n] == ' ') {
 	    *ps += n + 1;
 	    return K_input_mats[i].sym;
 	}
@@ -1947,7 +2010,8 @@ static const char *kalman_matrix_name (int sym)
    parse and respond appropriately.
 */
 
-int kalman_parse_line (const char *line, gretlopt opt)
+int kalman_parse_line (const char *line, const double **Z,
+		       const DATAINFO *pdinfo, gretlopt opt)
 {
     user_kalman *u;
     int err = 0;
@@ -1974,11 +2038,13 @@ int kalman_parse_line (const char *line, gretlopt opt)
 	if (m < 0) {
 	    err = E_PARSE;
 	} else {
-	    err = attach_input_matrix(u->K, s, m);
+	    err = attach_input_matrix(u->K, s, m, Z, pdinfo);
 	}
     }
 
     if (err) {
+	fprintf(stderr, "kalman_parse_line: '%s', err = %d\n",
+		line, err);
 	destroy_user_kalman();
     }
 

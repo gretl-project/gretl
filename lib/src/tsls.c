@@ -640,7 +640,7 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
     double test;
     int i, j, k;
 
-    Q = gretl_matrix_data_subset(instlist, Z, t1, t2, mask, err);
+    Q = gretl_matrix_data_subset_masked(instlist, Z, t1, t2, mask, err);
     if (*err) {
 	return NULL;
     }
@@ -697,7 +697,7 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 
 	k = instlist[0];
 	gretl_matrix_free(Q);
-	Q = gretl_matrix_data_subset(instlist, Z, t1, t2, mask, err);
+	Q = gretl_matrix_data_subset_masked(instlist, Z, t1, t2, mask, err);
 	if (!*err) {
 	    R = gretl_matrix_reuse(R, k, k);
 	    *err = gretl_matrix_QR_decomp(Q, R);

@@ -3117,9 +3117,9 @@ static int matrix_from_list (selector *sr)
 	return err;
     }
 
-    s->m = gretl_matrix_data_subset_skip_missing(list, (const double **) Z, 
-						 datainfo->t1, datainfo->t2, 
-						 &err);
+    s->m = gretl_matrix_data_subset(list, (const double **) Z, 
+				    datainfo->t1, datainfo->t2, 
+				    M_MISSING_SKIP, &err);
 
     if (!err) {
 	err = add_or_replace_user_matrix(s->m, s->name);

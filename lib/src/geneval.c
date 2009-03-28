@@ -4121,13 +4121,11 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 	const double **Z = (const double **) *p->Z;
 
 #if MATRIX_SKIP_MISSING
-	M = gretl_matrix_data_subset_skip_missing(list, Z, 
-						  p->dinfo->t1, p->dinfo->t2, 
-						  &p->err);
+	M = gretl_matrix_data_subset(list, Z, p->dinfo->t1, p->dinfo->t2, 
+				     M_MISSING_SKIP, &p->err);
 #else
-	M = gretl_matrix_data_subset_no_missing(list, Z, 
-						p->dinfo->t1, p->dinfo->t2, 
-						&p->err);
+	M = gretl_matrix_data_subset(list, Z, p->dinfo->t1, p->dinfo->t2, 
+				     M_MISSING_ERROR, &p->err);
 #endif
     }
 

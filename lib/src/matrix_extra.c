@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "usermat.h"
+#include "matrix_extra.h"
 
 /* functions that convert between gretl_matrix and other
    datatypes; also printing of gretl_matrices and some
@@ -405,12 +406,6 @@ static int get_mask_count (const char *mask, int n)
     return k;
 }
 
-enum {
-    OBS_MISS_MASK,
-    OBS_MISS_ERR,
-    OBS_MISS_SKIP
-};
-
 static gretl_matrix *
 real_gretl_matrix_data_subset (const int *list, const double **Z,
 			       int t1, int t2, const char *mask,
@@ -432,12 +427,12 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 
     if (mask != NULL) {
 	T -= get_mask_count(mask, T);
-    } else if (op == OBS_MISS_SKIP || op == OBS_MISS_ERR) {
+    } else if (op == M_MISSING_SKIP || op == M_MISSING_ERROR) {
 	for (t=t1; t<=t2 && !*err; t++) {
 	    for (j=0; j<k; j++) {
 		x = Z[list[j+1]][t];
 		if (na(x)) {
-		    if (op == OBS_MISS_SKIP) {
+		    if (op == M_MISSING_SKIP) {
 			T--;
 		    } else {
 			*err = E_MISSDATA;
@@ -465,7 +460,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 	skip = 0;
 	if (mask != NULL) {
 	    skip = mask[t - t1];
-	} else if (op == OBS_MISS_SKIP) {
+	} else if (op == M_MISSING_SKIP) {
 	    for (j=0; j<k; j++) {
 		x = Z[list[j+1]][t];
 		if (na(x)) {
@@ -494,7 +489,11 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 	    for (t=0; t<T && !*err; t++) {
 		x = gretl_matrix_get(M, t, j);
 		if (na(x)) {
-		    *err = E_MISSDATA;
+		    if (op == M_MISSING_OK) {
+			gretl_matrix_set(M, t, j, M_NA);
+		    } else {
+			*err = E_MISSDATA;
+		    }
 		}
 	    }
 	}
@@ -514,74 +513,51 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
  * @Z: data array.
  * @t1: starting observation.
  * @t2: ending observation.
- * @mask: missing observations mask, or %NULL.
- * @err: location to recieve error code.
+ * @missop: how to handle missing observations.
+ * @err: location to receive error code.
  *
  * Creates a gretl matrix holding the subset of variables from
  * @Z specified by @list, over the sample range @t1 to @t2,
- * inclusive.  Variables are in columns.  If @mask is not
- * %NULL then it should be an array of char of length (@t2 - @t1
- * + 1) with 1s in the positions of observations to exclude
- * from the subset and zeros elsewhere. This apparatus can be
- * used to exclude missing observations.
+ * inclusive.  Variables are in columns. The @missop flag
+ * can be % 
  *
  * Returns: allocated matrix or %NULL on failure. 
  */
 
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
-					int t1, int t2, const char *mask,
+					int t1, int t2, int missop, 
 					int *err)
 {
+    return real_gretl_matrix_data_subset(list, Z, t1, t2, NULL, 
+					 missop, err);
+}
+
+/**
+ * gretl_matrix_data_subset_masked:
+ * @list: list of variable to process.
+ * @Z: data array.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @mask: missing observations mask, or %NULL.
+ * @err: location to receive error code.
+ *
+ * Creates a gretl matrix holding the subset of variables from
+ * @Z specified by @list, over the sample range @t1 to @t2,
+ * inclusive.  Variables are in columns.  @mask should be an
+ * array of char of length (@t2 - @t1 + 1) with 1s in the positions 
+ * of observations to exclude from the subset and zeros elsewhere. 
+ * This apparatus can be used to exclude missing observations.
+ *
+ * Returns: allocated matrix or %NULL on failure. 
+ */
+
+gretl_matrix *
+gretl_matrix_data_subset_masked (const int *list, const double **Z,
+				 int t1, int t2, const char *mask,
+				 int *err)
+{
     return real_gretl_matrix_data_subset(list, Z, t1, t2, mask, 
-					 OBS_MISS_MASK, err);
-}
-
-/**
- * gretl_matrix_data_subset_no_missing:
- * @list: list of variable to process.
- * @Z: data array.
- * @t1: starting observation.
- * @t2: ending observation.
- * @err: location to receive error code.
- *
- * Creates a gretl matrix holding the subset of variables from
- * @Z specified by @list, over the sample range @t1 to @t2,
- * inclusive.  Variables are in columns.  If any missing 
- * values are encountered this constitutes an error.
- *
- * Returns: allocated matrix or %NULL on failure. 
- */
-
-gretl_matrix *
-gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
-				     int t1, int t2, int *err)
-{
-    return real_gretl_matrix_data_subset(list, Z, t1, t2, NULL, 
-					 OBS_MISS_ERR, err);
-}
-
-/**
- * gretl_matrix_data_subset_skip_missing:
- * @list: list of variable to process.
- * @Z: data array.
- * @t1: starting observation.
- * @t2: ending observation.
- * @err: location to receive error code.
- *
- * Creates a gretl matrix holding the subset of variables from
- * @Z specified by @list, over the sample range @t1 to @t2,
- * inclusive.  Variables are in columns.  If there is a missing
- * value for any variable on a given row, that row is skipped.
- *
- * Returns: allocated matrix or %NULL on failure. 
- */
-
-gretl_matrix *
-gretl_matrix_data_subset_skip_missing (const int *list, const double **Z,
-				       int t1, int t2, int *err)
-{
-    return real_gretl_matrix_data_subset(list, Z, t1, t2, NULL, 
-					 OBS_MISS_SKIP, err);
+					 M_MISSING_ERROR, err);
 }
 
 /**

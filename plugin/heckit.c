@@ -354,22 +354,22 @@ static int h_container_fill (h_container *HC, const int *Xl,
 
     if (!err) {
 	tmplist[1] = depvar;
-	HC->y = gretl_matrix_data_subset(tmplist, Z, t1, t2, 
-					 HC->uncmask, &err);
+	HC->y = gretl_matrix_data_subset_masked(tmplist, Z, t1, t2, 
+						HC->uncmask, &err);
     }
 
     if (!err) {
 	HC->nunc = gretl_matrix_rows(HC->y);
 	tmplist[1] = selvar;
-	HC->d = gretl_matrix_data_subset(tmplist, Z, t1, t2, 
-					 HC->fullmask, &err);
+	HC->d = gretl_matrix_data_subset_masked(tmplist, Z, t1, t2, 
+						HC->fullmask, &err);
     }
 
     if (!err) {
 	HC->ntot = gretl_matrix_rows(HC->d);
 	tmplist[1] = v;
-	HC->mills = gretl_matrix_data_subset(tmplist, Z, t1, t2, 
-					     HC->uncmask, &err);
+	HC->mills = gretl_matrix_data_subset_masked(tmplist, Z, t1, t2, 
+						    HC->uncmask, &err);
     }
 
     if (!err) {
@@ -392,17 +392,19 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->Zlist[i] = Zl[i+1];
     }
 
-    HC->reg = gretl_matrix_data_subset(HC->Xlist, Z, t1, t2, 
-				       HC->uncmask, &err);
+    HC->reg = gretl_matrix_data_subset_masked(HC->Xlist, Z, t1, t2, 
+					      HC->uncmask, &err);
 
     if (!err) {
-	HC->selreg = gretl_matrix_data_subset(HC->Zlist, Z, t1, t2, 
-					      HC->fullmask, &err);
+	HC->selreg = 
+	    gretl_matrix_data_subset_masked(HC->Zlist, Z, t1, t2, 
+					    HC->fullmask, &err);
     }
 
     if (!err) {
-	HC->selreg_u = gretl_matrix_data_subset(HC->Zlist, Z, t1, t2, 
-						HC->uncmask, &err);
+	HC->selreg_u = 
+	    gretl_matrix_data_subset_masked(HC->Zlist, Z, t1, t2, 
+					    HC->uncmask, &err);
     }
 
     if (err) {

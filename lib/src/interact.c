@@ -4489,7 +4489,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case KALMAN:
-	err = kalman_parse_line(line, cmd->opt);
+	err = kalman_parse_line(line, (const double **) *pZ,
+				pdinfo, cmd->opt);
 	if (!err && (cmd->opt == OPT_NONE)) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
@@ -4651,7 +4652,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = foreign_execute((const double **) *pZ, pdinfo, 
 				  cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "kalman")) {
-	    err = kalman_parse_line(line, cmd->opt);
+	    err = kalman_parse_line(line, (const double **) *pZ,
+				    pdinfo, cmd->opt);
 	} else {
 	    err = 1;
 	}
