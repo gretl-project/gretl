@@ -25,6 +25,7 @@
 #include "objstack.h"
 #include "usermat.h"
 #include "forecast.h"
+#include "kalman.h"
 
 #define ODEBUG 0
 
@@ -1081,6 +1082,8 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
 
     if (idx == M_FCAST || idx == M_FCERR) {
 	M = get_forecast_matrix(idx, err);
+    } else if (idx == M_KLLT) {
+	M = user_kalman_get_llt();
     } else {
 	stacker *smatch = find_smatch(oname);
 

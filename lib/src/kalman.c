@@ -84,6 +84,7 @@ struct kalman_ {
     gretl_matrix **Mt;
 
     /* optional matrices for recording extra info */
+    gretl_matrix *LL;    /* T x 1: loglikelihood, all time-steps */
     gretl_matrix *Stt;   /* T x r: S_{t|t} */
     gretl_matrix *Ptt;   /* T x rr: P_{t|t} */
     gretl_matrix *Tmpr1; /* r x 1: workspace */
@@ -93,7 +94,6 @@ struct kalman_ {
     gretl_matrix *V;   /* T x nn: MSE for observables, all time-steps */
     gretl_matrix *S;   /* T x r: state vector, all time-steps */
     gretl_matrix *P;   /* T x nr: MSE for state, all time-steps */
-    gretl_matrix *LL;  /* T x 1: loglikelihood, all time-steps */
     gretl_matrix *K;   /* T x rn: gain matrix, all time-steps */
     
     /* workspace matrices */
@@ -161,6 +161,8 @@ void kalman_free (kalman *K)
 
     gretl_matrix_block_destroy(K->B);
 
+    gretl_matrix_free(K->LL);
+
     if (kalman_owns_matrix(K, K_y)) {
 	gretl_matrix_free((gretl_matrix *) K->y);
     }
@@ -192,13 +194,13 @@ static kalman *kalman_new_empty (int flags)
 	K->Sini = K->Pini = NULL;
 	K->S0 = K->S1 = NULL;
 	K->P0 = K->P1 = NULL;
-	K->Stt = K->Ptt = NULL;
+	K->Stt = K->Ptt = K->LL = NULL;
 	K->Tmpr1 = NULL;
 	K->e = NULL;
 	K->B = NULL;
 	K->F = K->A = K->H = NULL;
 	K->Q = K->R = NULL;
-	K->E = K->V = K->S = K->P = K->LL = K->K = NULL;
+	K->E = K->V = K->S = K->P = K->K = NULL;
 	K->y = K->x = NULL;
 	K->mnames = NULL;
 	K->matcalls = NULL;
@@ -2074,8 +2076,7 @@ static gretl_matrix *attach_export_matrix (const char *mname, int *err)
 
 int user_kalman_run (const char *E, const char *V, 
 		     const char *S, const char *P,
-		     const char *L, const char *K,
-		     int *err)
+		     const char *K, int *err)
 {
     user_kalman *u = get_user_kalman(-1);
     int ret = 0;
@@ -2106,20 +2107,23 @@ int user_kalman_run (const char *E, const char *V,
     } 
 
     if (!*err) {
-	/* loglikelihood */
-	u->K->LL = attach_export_matrix(L, err);
-    }
-
-    if (!*err) {
 	/* gain */
 	u->K->K = attach_export_matrix(K, err);
     } 
 
+    if (!*err && u->K->LL == NULL) {
+	u->K->LL = gretl_matrix_alloc(u->K->T, 1);
+	if (u->K->LL == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
     if (!*err) {
 	*err = user_kalman_recheck_matrices(u);
-	if (!*err) {
-	    *err = kalman_forecast(u->K);
-	}
+    }
+
+    if (!*err) {
+	*err = kalman_forecast(u->K);
     }
 
     if (*err != 0 && *err != E_NAN) {
@@ -2128,7 +2132,7 @@ int user_kalman_run (const char *E, const char *V,
 
     /* detach matrices */
     u->K->E = u->K->V = u->K->S = NULL;
-    u->K->P = u->K->LL = u->K->K = NULL;
+    u->K->P = u->K->K = NULL;
 
     return ret;    
 }
@@ -2535,6 +2539,28 @@ double user_kalman_get_loglik (void)
 	return NADBL;
     } else {
 	return u->K->loglik;
+    }
+}
+
+/**
+ * user_kalman_get_llt:
+ * @K: pointer to Kalman struct.
+ * 
+ * Retrieves the T-vector of log-likelhood per time-setep
+ * calculated via the last run of a kalman forecast, if 
+ * applicable.
+ * 
+ * Returns: allocated vector, or %NULL on failure.
+ */
+
+gretl_matrix *user_kalman_get_llt (void)
+{
+    user_kalman *u = get_user_kalman(-1);
+
+    if (u == NULL || u->K == NULL || u->K->LL == NULL) {
+	return NULL;
+    } else {
+	return gretl_matrix_copy(u->K->LL);
     }
 }
 

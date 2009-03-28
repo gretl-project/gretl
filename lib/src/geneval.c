@@ -4662,11 +4662,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const char *V = NULL;
 	const char *S = NULL;
 	const char *P = NULL;
-	const char *L = NULL;
 	const char *K = NULL;
 
-	if (k > 6) {
-	    n_args_error(k, 6, "kfilter", p);
+	if (k > 5) {
+	    n_args_error(k, 5, "kfilter", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -4684,8 +4683,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 3) {
 		P = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
 	    } else if (i == 4) {
-		L = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
-	    } else if (i == 5) {
 		K = (e->t == U_ADDR)? e->v.b1.b->v.str : NULL;
 	    }
 	}
@@ -4695,7 +4692,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.xval = user_kalman_run(E, V, S, P, L, K, &p->err);
+	    ret->v.xval = user_kalman_run(E, V, S, P, K, &p->err);
 	} 
     } else if (t->t == F_KSMOOTH) {
 	/* might be extended to take more optional args, though at

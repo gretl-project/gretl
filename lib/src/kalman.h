@@ -46,6 +46,8 @@ double kalman_get_loglik (const kalman *K);
 
 double user_kalman_get_loglik (void);
 
+gretl_matrix *user_kalman_get_llt (void);
+
 double user_kalman_get_s2 (void);
 
 int user_kalman_get_time_step (void);
@@ -65,9 +67,8 @@ int kalman_get_options (kalman *K);
 int kalman_parse_line (const char *line, const double **Z,
 		       const DATAINFO *pdinfo, gretlopt opt);
 
-int user_kalman_run (const char *E, const char *S, const char *P,
-		     const char *L, const char *V, const char *K,
-		     int *err);
+int user_kalman_run (const char *E, const char *V, const char *S,
+		     const char *P, const char *K, int *err);
 
 gretl_matrix *user_kalman_smooth (const char *Pname, int *err);
 
