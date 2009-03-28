@@ -214,6 +214,8 @@ int gnuplot_test_command (const char *cmd)
 
 #endif /* !WIN32 */
 
+#define gp_interactive(f) (!(f & GPT_BATCH))
+
 static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 {
     GptFlags flags = 0;
@@ -1567,9 +1569,9 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
 
     fclose(fp);
 
-    if (!(gi->flags & GPT_BATCH)) {
+    if (gp_interactive(gi->flags) || specified_gp_output_format()) {
 	err = gnuplot_make_graph();
-    }    
+    }
 
  bailout:
 
@@ -2718,7 +2720,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_pop_c_numeric_locale();
 
-    if (!(gi.flags & GPT_BATCH) || specified_gp_output_format()) {
+    if (gp_interactive(gi.flags) || specified_gp_output_format()) {
 	err = gnuplot_make_graph();
     }
 
@@ -2901,7 +2903,7 @@ int multi_scatters (const int *list, const double **Z,
 
     fclose(fp);
 
-    if (!(flags & GPT_BATCH)) {
+    if (gp_interactive(flags)) {
 	err = gnuplot_make_graph();
     }
 
