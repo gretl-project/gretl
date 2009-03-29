@@ -349,8 +349,8 @@ enum {
     K_V,
     K_BIG_S,
     K_BIG_P,
+    K_K,
     K_LL,
-    K_K
 };
 
 static int maybe_resize_export_matrix (kalman *K, gretl_matrix *m, int i)
@@ -2079,21 +2079,114 @@ int kalman_parse_line (const char *line, const double **Z,
     return err;
 }
 
-static gretl_matrix *attach_export_matrix (const char *mname, int *err)
+#if 0
+static void kalman_timestamp_matrix (gretl_matrix *m,
+				     const DATAINFO *pdinfo)
 {
-    gretl_matrix *m;
+    if (K->y != NULL) {
+	int t1 = K->y->t1;
+	int t2 = K->y->t2;
 
-    if (mname == NULL || !strcmp(mname, "null")) {
-	return NULL;
+	if (t1 > 0 && t1 < pdinfo->n &&
+	    t2 > 0 && t2 <= pdinfo->n &&
+	    t2 > t1) {
+	    m->t1 = t1;
+	    m->t2 = t2;
+	}
+    }
+}
+#endif
+
+static gretl_matrix *series_export_matrix (kalman *K,
+					   const char *name,
+					   const DATAINFO *pdinfo,
+					   int i, int *v,
+					   int *err)
+{
+    gretl_matrix *m = NULL;
+    int T = sample_size(pdinfo);
+
+    if (T == K->T) {
+	if ((i == K_E || i == K_V) && K->n == 1) {
+	    /* just one observable */
+	    *v = current_series_index(pdinfo, name);
+	} else if ((i == K_BIG_S || i == K_BIG_P) && K->r == 1) {
+	    /* just one state variable */
+	    *v = current_series_index(pdinfo, name);
+	} else if (i == K_K && K->n == 1 && K->r == 1) {
+	    /* observable and state are both 1-vectors */
+	    *v = current_series_index(pdinfo, name);
+	}
     }
 
-    m = get_matrix_by_name(mname);
-    if (m == NULL) {
-	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
-	*err = E_UNKVAR;
+    if (*v > 0) {
+	/* make temporary matrix for series export */
+	m = gretl_column_vector_alloc(T);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	} 
     }
 
     return m;
+}
+
+static int attach_export_matrix (kalman *K,
+				 const char *name, 
+				 const DATAINFO *pdinfo,
+				 int *smat, int i)
+{
+    gretl_matrix *m = NULL;
+    int err = 0;
+
+    if (name != NULL && strcmp(name, "null")) {
+	m = get_matrix_by_name(name);
+	if (m == NULL) {
+	    int v = 0;
+
+	    m = series_export_matrix(K, name, pdinfo, i, &v, &err);
+	    if (m != NULL) {
+		smat[i] = v;
+	    } else if (!err) {
+		gretl_errmsg_sprintf(_("'%s': no such matrix"), name);
+		err = E_UNKVAR;
+	    }
+	}
+    }
+
+    if (!err) {
+	if (i == K_E) {
+	    K->E = m;
+	} else if (i == K_V) {
+	    K->V = m;
+	} else if (i == K_BIG_S) {
+	    K->S = m;
+	} else if (i == K_BIG_P) {
+	    K->P = m;
+	} else if (i == K_K) {
+	    K->K = m;
+	}
+    }
+
+    return err;
+}
+
+/* transcribe from temporary matrix to export series (if
+   things went OK), then free the temporary matrix
+*/
+
+static void transcribe_and_free (double *x, gretl_matrix *m,
+				 int err)
+{
+    if (!err) {
+	/* transcribe only if there was no error */
+	int t;
+
+	for (t=0; t<m->rows; t++) {
+	    x[t] = m->val[t];
+	}
+    }
+
+    gretl_matrix_free(m);
 }
 
 /* called by the kfilter() function: run a user-defined Kalman
@@ -2101,64 +2194,88 @@ static gretl_matrix *attach_export_matrix (const char *mname, int *err)
 
 int user_kalman_run (const char *E, const char *V, 
 		     const char *S, const char *P,
-		     const char *K, int *err)
+		     const char *G, double **Z,
+		     const DATAINFO *pdinfo,
+		     int *perr)
 {
     user_kalman *u = get_user_kalman(-1);
-    int ret = 0;
+    int smat[K_K+1] = {0};
+    kalman *K;
+    int ret = 0, err = 0;
 
     if (u == NULL) {
-	*err = missing_kalman_error();
+	*perr = missing_kalman_error();
 	return 1;
     }
 
-    if (!*err) {
+    K = u->K;
+
+    if (!err) {
 	/* forecast errors */
-	u->K->E = attach_export_matrix(E, err);
+	err = attach_export_matrix(K, E, pdinfo, smat, K_E);
     }
 
-    if (!*err) {
+    if (!err) {
 	/* MSE for observables */
-	u->K->V = attach_export_matrix(V, err);
+	err = attach_export_matrix(K, V, pdinfo, smat, K_V);
     } 
 
-    if (!*err) {
+    if (!err) {
 	/* estimate of state */
-	u->K->S = attach_export_matrix(S, err);
+	err = attach_export_matrix(K, S, pdinfo, smat, K_BIG_S);
     }
 
-    if (!*err) {
+    if (!err) {
 	/* MSE of estimate of state */
-	u->K->P = attach_export_matrix(P, err);
+	err = attach_export_matrix(K, P, pdinfo, smat, K_BIG_P);
     } 
 
-    if (!*err) {
+    if (!err) {
 	/* Kalman gain */
-	u->K->K = attach_export_matrix(K, err);
+	err = attach_export_matrix(K, G, pdinfo, smat, K_K);
     } 
 
-    if (!*err && u->K->LL == NULL) {
+    if (!err && K->LL == NULL) {
 	/* log-likelihood: available via accessor */
-	u->K->LL = gretl_matrix_alloc(u->K->T, 1);
-	if (u->K->LL == NULL) {
-	    *err = E_ALLOC;
+	K->LL = gretl_matrix_alloc(K->T, 1);
+	if (K->LL == NULL) {
+	    err = E_ALLOC;
 	}
     }
 
-    if (!*err) {
-	*err = user_kalman_recheck_matrices(u);
+    if (!err) {
+	err = user_kalman_recheck_matrices(u);
     }
 
-    if (!*err) {
-	*err = kalman_forecast(u->K);
+    if (!err) {
+	err = kalman_forecast(K);
     }
 
-    if (*err != 0 && *err != E_NAN) {
-	ret = 1;
+    if (pdinfo != NULL) {
+	int t1 = pdinfo->t1;
+
+	if (smat[K_E] > 0) 
+	    transcribe_and_free(Z[smat[K_E]] + t1, K->E, err);
+	if (smat[K_V > 0]) 
+	    transcribe_and_free(Z[smat[K_V]] + t1, K->V, err);
+	if (smat[K_BIG_S] > 0) 
+	    transcribe_and_free(Z[smat[K_BIG_S]] + t1, K->S, err);
+	if (smat[K_BIG_P] > 0) 
+	    transcribe_and_free(Z[smat[K_BIG_P]] + t1, K->P, err);
+	if (smat[K_K] > 0) 
+	    transcribe_and_free(Z[smat[K_K]] + t1, K->K, err);
     }
 
     /* detach matrices */
-    u->K->E = u->K->V = u->K->S = NULL;
-    u->K->P = u->K->K = NULL;
+    K->E = K->V = K->S = NULL;
+    K->P = K->K = NULL;
+
+    if (err == E_NAN) {
+	/* we'll not count this as fatal */
+	ret = 1;
+    } else {   
+	*perr = err;
+    }
 
     return ret;    
 }

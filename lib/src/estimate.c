@@ -3666,7 +3666,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL amod;
     int *wlist = NULL, *alist = NULL;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     int oldv = pdinfo->v;
     int i, t, nwt, k, n = pdinfo->n;
     double *a = NULL;

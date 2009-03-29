@@ -787,7 +787,7 @@ static double *series_pdist (int t, char d, double *parm,
 
     if (bvec == NULL && pvec != NULL && t == F_PDF) {
 	/* fast treatment, for pdf pnly at this point */
-	int n = p->dinfo->t2 - p->dinfo->t1 + 1;
+	int n = sample_size(p->dinfo);
 
 	for (s=0; s<p->dinfo->n; s++) {
 	    if (s < p->dinfo->t1 || s > p->dinfo->t2) {
@@ -1456,7 +1456,7 @@ tmp_matrix_from_series (const double *x, const DATAINFO *pdinfo,
 			int *err)
 {
     gretl_matrix *m = NULL;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     int i, t;
 
     /* FIXME autoregressive case? */
@@ -3790,7 +3790,7 @@ static NODE *vector_values (NODE *l, parser *p)
 	int n = 0;
 
 	if (l->t == VEC) {
-	    n = p->dinfo->t2 - p->dinfo->t1 + 1;
+	    n = sample_size(p->dinfo);
 	    x = l->v.xvec + p->dinfo->t1;
 	} else if (!gretl_is_null_matrix(l->v.m)) {
 	    n = gretl_vector_get_length(l->v.m);
@@ -4647,7 +4647,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const char *V = NULL;
 	const char *S = NULL;
 	const char *P = NULL;
-	const char *K = NULL;
+	const char *G = NULL;
 
 	if (k > 5) {
 	    n_args_error(k, 5, "kfilter", p);
@@ -4668,7 +4668,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 3) {
 		P = ptr_node_get_name(e, p);
 	    } else if (i == 4) {
-		K = ptr_node_get_name(e, p);
+		G = ptr_node_get_name(e, p);
 	    }
 	}
 
@@ -4677,7 +4677,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.xval = user_kalman_run(E, V, S, P, K, &p->err);
+	    ret->v.xval = user_kalman_run(E, V, S, P, G, 
+					  *p->Z, p->dinfo,
+					  &p->err);
 	} 
     } else if (t->t == F_KSMOOTH) {
 	/* might be extended to take more optional args, though at
@@ -4814,7 +4816,7 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 	}
     }
 
-    T = p->dinfo->t2 - p->dinfo->t1 + 1;
+    T = sample_size(p->dinfo);
 
     for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	for (i=0; i<k; i++) {
@@ -5267,7 +5269,7 @@ static double dvar_get_value (int i, parser *p)
 {
     switch (i) {
     case R_NOBS:
-	return p->dinfo->t2 - p->dinfo->t1 + 1;
+	return sample_size(p->dinfo);
     case R_NVARS:
 	return p->dinfo->v;
     case R_PD:
@@ -7357,7 +7359,7 @@ static int series_compatible (const gretl_matrix *m,
 			      const DATAINFO *pdinfo)
 {
     int n = gretl_vector_get_length(m);
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
 
     return n == T || n == pdinfo->n || n == 1 || 
 	(m->t1 > 0 && m->t1 + n <= pdinfo->n);
@@ -7475,7 +7477,7 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 	}	
     } else if (r->t == VEC) {
 	/* result was a series, not a matrix */
-	int i, n = p->dinfo->t2 - p->dinfo->t1 + 1;
+	int i, n = sample_size(p->dinfo);
 	const double *x = r->v.xvec;
 
 	m = gretl_column_vector_alloc(n);
@@ -7571,7 +7573,7 @@ static int LHS_matrix_reusable (parser *p)
     if (p->ret->t == NUM) {
 	ok = (m->rows == 1 && m->cols == 1);
     } else if (p->ret->t == VEC) {
-	int T = p->dinfo->t2 - p->dinfo->t1 + 1;
+	int T = sample_size(p->dinfo);
 
 	ok = (m->rows == T && m->cols == 1);
     } else if (p->ret->t == MAT) {
@@ -8000,7 +8002,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, p);
 		}
-	    } else if (k == p->dinfo->t2 - p->dinfo->t1 + 1 && m->t1 == 0) {
+	    } else if (k == sample_size(p->dinfo) && m->t1 == 0) {
 		/* treat as series of current sample length */
 		for (t=p->dinfo->t1, s=0; t<=p->dinfo->t2; t++, s++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, p);

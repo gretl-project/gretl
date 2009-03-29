@@ -254,6 +254,8 @@ typedef enum {
  */
 #define unset_var_listarg(p, i) ((p)->varinfo[i]->flags &= ~VAR_LISTARG)
 
+#define sample_size(p) ((p == NULL)? 0 : (p->t2 - p->t1 + 1))
+
 void free_Z (double **Z, DATAINFO *pdinfo);
 
 DATAINFO *datainfo_new (void);

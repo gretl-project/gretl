@@ -68,7 +68,8 @@ int kalman_parse_line (const char *line, const double **Z,
 		       const DATAINFO *pdinfo, gretlopt opt);
 
 int user_kalman_run (const char *E, const char *V, const char *S,
-		     const char *P, const char *K, int *err);
+		     const char *P, const char *G, double **Z,
+		     const DATAINFO *pdinfo, int *perr);
 
 gretl_matrix *user_kalman_smooth (const char *Pname, int *err);
 
