@@ -243,33 +243,46 @@ Keyword & If omitted\dots \\ [6pt]
 \end{tabular}
 \end{center}
 
-Two comments.  First, it might appear that the \texttt{obsx}
-($\obsx$) and \texttt{obsxmat} ($\obsxmat$) matrices must go
-together---either both are given or neither is given.  But an
-exception is granted for convenience.  If the observation equation
-includes a constant but no additional exogenous variables, you can
-give a ($1 \times n$) value for $\obsxmat$ without having to specify
-\texttt{obsx}.  More generally, if the row dimension of $\obsxmat$ is
-1 greater than the column dimension of $\obsx$, it is assumed that the
-first element of $\obsxmat$ is associated with an implicit column of
-1s.
+\subsection{Further details on the kalman block}
 
-Second, regarding the automatic initialization of $\statevar_{1|0}$.
-By default this is done as in equation (\ref{eq:inivar}).  However,
-this method is applicable only if all the eigenvalues of $\statemat$ lie
-inside the unit circle.  If this condition is not satisfied we instead
-apply a diffuse prior, setting $\statevar_{1|0} = \kappa \mathbf{I}_r$
-with $\kappa = 10^7$.  If for some reason you wish to impose this
-diffuse prior regardless of the characteristics of $\statemat$, append
-the option flag \verb|--diffuse| to the \texttt{end kalman}
-statement.
+It might appear that the \texttt{obsx} ($\obsx$) and \texttt{obsxmat}
+($\obsxmat$) matrices must go together---either both are given or
+neither is given.  But an exception is granted for convenience.  If
+the observation equation includes a constant but no additional
+exogenous variables, you can give a ($1 \times n$) value for
+$\obsxmat$ without having to specify \texttt{obsx}.  More generally,
+if the row dimension of $\obsxmat$ is 1 greater than the column
+dimension of $\obsx$, it is assumed that the first element of
+$\obsxmat$ is associated with an implicit column of 1s.
 
-Initialization of the Kalman filter outside of the case where equation
-(\ref{eq:inivar}) applies has been the subject of much discussion in
-the literature---see for example de Jong (1991), Koopman (1997).  At
-present gretl does not implement any of the ``fancier'' proposals that
-have been made.
+Regarding the automatic initialization of $\statevar_{1|0}$ (in case
+no \texttt{inivar} input is given): by default this is done as in
+equation (\ref{eq:inivar}).  However, this method is applicable only
+if all the eigenvalues of $\statemat$ lie inside the unit circle.  If
+this condition is not satisfied we instead apply a diffuse prior,
+setting $\statevar_{1|0} = \kappa \mathbf{I}_r$ with $\kappa = 10^7$.
+If for some reason you wish to impose this diffuse prior regardless of
+the characteristics of $\statemat$, append the option flag
+\verb|--diffuse| to the \texttt{end kalman} statement.\footnote{
+  Initialization of the Kalman filter outside of the case where
+  equation (\ref{eq:inivar}) applies has been the subject of much
+  discussion in the literature---see for example de Jong (1991),
+  Koopman (1997).  At present gretl does not implement any of the
+  ``fancier'' proposals that have been made.}
 
+As we said above, it is possible to substitute series, lists or
+scalars in place of matrix variables when building a \texttt{kalman}
+block, provided the dimensions are OK.  However, one further point
+should be noted.  When you give the name of a predefined matrix---and
+only in this case---there is a gain in generality: the input matrix is
+not ``hard-wired'' into the Kalman structure, rather a record is made
+of the \textit{name} of the matrix, and on each run of a Kalman
+function (as described below) the matrix is re-read.  It is therefore
+possible to write one \texttt{kalman} block and then do several
+filtering or smoothing passes using different sets of input values.
+The dimensions of the various input matrices are, however, defined via
+the initial \texttt{kalman} set-up and it is an error if any of the
+matrices are changed in size.
 
 \subsection{Time-varying matrices}
 
