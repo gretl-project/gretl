@@ -70,12 +70,17 @@ A state-space model can be written as
   \obsvec_t & = & \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + \obsdist_t
 \end{eqnarray}
 where (\ref{eq:state}) is the state transition equation and
-(\ref{eq:obs}) is the observation or measurement equation.  The
-state vector, $\statevec_{t}$, is ($r \times 1$) and the vector of
+(\ref{eq:obs}) is the observation or measurement equation.  The state
+vector, $\statevec_{t}$, is ($r \times 1$) and the vector of
 observables, $\obsvec_t$, is ($n \times 1$); $\mathbf{x}_t$ is a ($k
 \times 1$) vector of exogenous variables.  The ($r \times 1$) vector
 $\strdist_t$ and the ($n \times 1$) vector $\obsdist_t$ are assumed to
-be vector white noise:
+be vector white noise\footnote{At this stage, $\strdist_t$ and
+  $\obsdist_t$ are assumed to be independent; there may be a case for
+  a more general treatment of the innovations, by specifying
+  $\strdist_t = \mathbf{M} {\bm \varepsilon_t}$ and $\obsdist_t =
+  \mathbf{N} {\bm \varepsilon_t}$, as done in \textsf{SsfPack}, but
+  this is not implemented so far.}:
 \begin{eqnarray*}
 E(\strdist_t \strdist_s') = \strvar_t \mbox{ for } t = s, 
     \mbox{ otherwise } \mathbf{0} \\
@@ -279,10 +284,11 @@ not ``hard-wired'' into the Kalman structure, rather a record is made
 of the \textit{name} of the matrix, and on each run of a Kalman
 function (as described below) the matrix is re-read.  It is therefore
 possible to write one \texttt{kalman} block and then do several
-filtering or smoothing passes using different sets of input values.
-The dimensions of the various input matrices are, however, defined via
-the initial \texttt{kalman} set-up and it is an error if any of the
-matrices are changed in size.
+filtering or smoothing passes using different sets of input values. An
+example of this technique is provided later, in the example script
+contained in Table \ref{tab:armaest}. The dimensions of the various
+input matrices are, however, defined via the initial \texttt{kalman}
+set-up and it is an error if any of the matrices are changed in size.
 
 \subsection{Time-varying matrices}
 
@@ -381,7 +387,7 @@ Once a filter is established, as discussed in the previous section,
 This function returns a scalar code: 0 for successful completion, or 1
 if numerical problems were encountered.  On successful completion, two
 scalar accessor variables become available: \verb+$kalman_lnl+, which
-gives the overall log-likelihood,
+gives the overall log-likelihood under the joint normality assumption,
 %
 \[
   \ell = -\frac{1}{2} \left[nT \log(2 \pi) + \sum_{t=1}^T\left|\predvar_t\right| + 
@@ -551,13 +557,19 @@ ARMA(1,1) model
   y_t = \phi y_{t-1} + \varepsilon_t + \theta \varepsilon_{t-1} .
 \]
 One of the ways the above equation can be cast in state-space form is
-\begin{eqnarray*}
-  y_t & = & \xi_t + \theta \xi_{t-1} \\ [6pt]
-  \left[ \begin{array}{c} \xi_t \\ \xi_{t-1} \end{array} \right] & = &
+by defining a latent process $\xi_t = \frac{1}{1 - \phi L}
+\varepsilon_t$ and noting that 
+\[
+y_t = \xi_t + \theta \xi_{t-1} ,
+\]
+which is the observation equation corresponding to (\ref{eq:obs});
+the state transition equation corresponding to (\ref{eq:state}) is
+\[
+  \left[ \begin{array}{c} \xi_t \\ \xi_{t-1} \end{array} \right] =
   \left[ \begin{array}{cc} \phi & 0 \\ 1 & 0 \end{array} \right]
   \left[ \begin{array}{c} \xi_{t-1} \\ \xi_{t-2} \end{array} \right] +
   \left[ \begin{array}{c} \varepsilon_t \\ 0 \end{array} \right] 
-\end{eqnarray*}
+\]
 
 The gretl syntax for a corresponding \texttt{kalman} block would be
 \begin{verbatim}
@@ -574,7 +586,7 @@ The gretl syntax for a corresponding \texttt{kalman} block would be
     end kalman
 \end{verbatim}
 
-Once the filter is set up, all it take to compute the loglikelihood
+Once the filter is set up, all it takes to compute the loglikelihood
 for given values of $\phi$, $\theta$ and $\sigma^2$ is to execute the
 \texttt{kfilter()} function and use the \verb+$kalman_lnl+ accessor
 (which returns the total log-likelihood) or, more appropriately if the
@@ -589,10 +601,17 @@ is shown in Table \ref{tab:armaest}.
 
 \begin{small}
 \begin{verbatim}
-function arma11_loglik(series y, scalar phi, scalar theta, scalar s)
+function arma11_via_kalman(series y)
+    
+    /* parameter initalization */
+    phi = 0
+    theta = 0
+    sigma = 1
+
+    /* Kalman filter setup */
     matrix H = {1; theta}
     matrix F = {phi, 0; 1, 0}
-    matrix Q = {s^2, 0; 0, 0}
+    matrix Q = {sigma^2, 0; 0, 0}
 
     kalman
         obsy y
@@ -602,25 +621,24 @@ function arma11_loglik(series y, scalar phi, scalar theta, scalar s)
         statevar Q
     end kalman
 
-    kfilter()
-    series logl = $kalman_llt
-    return series logl
+    /* maximum likelihood estimation */
+    mle logl = ERR ? NA : $kalman_llt
+        H[2] = theta
+        F[1,1] = phi
+        Q[1,1] = sigma^2
+        ERR = kfilter()
+        params phi theta sigma
+    end mle -h
+   
 end function
 
 # --------------------------- main ---------------------------------
+
 # open the "arma" example dataset
-open arma.gdt 
-
+open arma.gdt
 # estimate an arma(1,1) model via mle
-phi = 0
-theta = 0
-sigma = 1
-
-mle loglik = arma11_loglik(y, phi, theta, sigma)
-    params phi theta sigma
-end mle -h
-
-# check via native command 
+arma11_via_kalman(y)
+# check via native command
 arma 1 1 ; y --nc
 \end{verbatim}
 \end{small}
