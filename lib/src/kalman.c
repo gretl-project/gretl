@@ -2196,86 +2196,84 @@ int user_kalman_run (const char *E, const char *V,
 		     const char *S, const char *P,
 		     const char *G, double **Z,
 		     const DATAINFO *pdinfo,
-		     int *perr)
+		     int *err)
 {
     user_kalman *u = get_user_kalman(-1);
     int smat[K_K+1] = {0};
     kalman *K;
-    int ret = 0, err = 0;
+    int ret = 0;
 
     if (u == NULL) {
-	*perr = missing_kalman_error();
+	*err = missing_kalman_error();
 	return 1;
     }
 
     K = u->K;
 
-    if (!err) {
+    if (!*err) {
 	/* forecast errors */
-	err = attach_export_matrix(K, E, pdinfo, smat, K_E);
+	*err = attach_export_matrix(K, E, pdinfo, smat, K_E);
     }
 
-    if (!err) {
+    if (!*err) {
 	/* MSE for observables */
-	err = attach_export_matrix(K, V, pdinfo, smat, K_V);
+	*err = attach_export_matrix(K, V, pdinfo, smat, K_V);
     } 
 
-    if (!err) {
+    if (!*err) {
 	/* estimate of state */
-	err = attach_export_matrix(K, S, pdinfo, smat, K_BIG_S);
+	*err = attach_export_matrix(K, S, pdinfo, smat, K_BIG_S);
     }
 
-    if (!err) {
+    if (!*err) {
 	/* MSE of estimate of state */
-	err = attach_export_matrix(K, P, pdinfo, smat, K_BIG_P);
+	*err = attach_export_matrix(K, P, pdinfo, smat, K_BIG_P);
     } 
 
-    if (!err) {
+    if (!*err) {
 	/* Kalman gain */
-	err = attach_export_matrix(K, G, pdinfo, smat, K_K);
+	*err = attach_export_matrix(K, G, pdinfo, smat, K_K);
     } 
 
-    if (!err && K->LL == NULL) {
+    if (!*err && K->LL == NULL) {
 	/* log-likelihood: available via accessor */
 	K->LL = gretl_matrix_alloc(K->T, 1);
 	if (K->LL == NULL) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	}
     }
 
-    if (!err) {
-	err = user_kalman_recheck_matrices(u);
+    if (!*err) {
+	*err = user_kalman_recheck_matrices(u);
     }
 
-    if (!err) {
-	err = kalman_forecast(K);
+    if (!*err) {
+	*err = kalman_forecast(K);
     }
 
     if (pdinfo != NULL) {
 	int t1 = pdinfo->t1;
 
 	if (smat[K_E] > 0) 
-	    transcribe_and_free(Z[smat[K_E]] + t1, K->E, err);
+	    transcribe_and_free(Z[smat[K_E]] + t1, K->E, *err);
 	if (smat[K_V > 0]) 
-	    transcribe_and_free(Z[smat[K_V]] + t1, K->V, err);
+	    transcribe_and_free(Z[smat[K_V]] + t1, K->V, *err);
 	if (smat[K_BIG_S] > 0) 
-	    transcribe_and_free(Z[smat[K_BIG_S]] + t1, K->S, err);
+	    transcribe_and_free(Z[smat[K_BIG_S]] + t1, K->S, *err);
 	if (smat[K_BIG_P] > 0) 
-	    transcribe_and_free(Z[smat[K_BIG_P]] + t1, K->P, err);
+	    transcribe_and_free(Z[smat[K_BIG_P]] + t1, K->P, *err);
 	if (smat[K_K] > 0) 
-	    transcribe_and_free(Z[smat[K_K]] + t1, K->K, err);
+	    transcribe_and_free(Z[smat[K_K]] + t1, K->K, *err);
+    }
+
+    /* reverted (??) */
+    if (*err != 0 && *err != E_NAN) {
+	ret = 1;
     }
 
     /* detach matrices */
     K->E = K->V = K->S = NULL;
     K->P = K->K = NULL;
-
-    if (err == E_NAN) {
-	ret = 1;
-    } 
-
-    /* FIXME? */
-    *perr = err;
 
     return ret;    
 }
