@@ -1,0 +1,773 @@
+\documentclass[a4paper]{article}
+\usepackage[a4paper]{geometry}
+\usepackage{smallhds,simplebib}
+\usepackage[pdftex]{hyperref}
+
+\usepackage{bm}
+\usepackage{verbatim}
+
+\newcommand{\obsvec}{\ensuremath\mathbf{y}}
+\newcommand{\obsmat}{\ensuremath\mathbf{H}}
+\newcommand{\obsx}{\ensuremath\mathbf{x}}
+\newcommand{\obsxmat}{\ensuremath\mathbf{A}}
+\newcommand{\obsdist}{\ensuremath\mathbf{w}}
+\newcommand{\obsvar}{\ensuremath\mathbf{R}}
+
+\newcommand{\statevec}{\ensuremath\mathbf{\bm \xi}}
+\newcommand{\statemat}{\ensuremath\mathbf{F}}
+\newcommand{\strdist}{\ensuremath\mathbf{v}}
+\newcommand{\strvar}{\ensuremath\mathbf{Q}}
+\newcommand{\statevar}{\ensuremath\mathbf{P}}
+\newcommand{\gain}{\ensuremath\mathbf{K}}
+
+\newcommand{\prederr}{\ensuremath\mathbf{e}}
+\newcommand{\predvar}{\ensuremath{\bm\Sigma}}
+
+\newcommand{\myvec}{\mbox{vec}}
+
+%% \setcounter{secnumdepth}{2}
+
+\title{The Kalman filter in gretl}
+\author{Allin and Jack}
+
+\begin{document}
+
+\maketitle
+
+\section{Preamble}
+\label{sec:amble}
+
+The Kalman filter has been used ``behind the scenes'' in gretl for
+quite some time, in computing ARMA estimates.  But user access to the
+Kalman filter is new and it has not yet been tested to any great
+extent.  We have run some tests of relatively simple cases against the
+benchmark of \textsf{SsfPack Basic}.  This is state-space software
+written by Koopman, Shephard and Doornik and documented in Koopman
+\textit{et al} (1999).  It requires Doornik's \textsf{ox} program.
+Both \textsf{ox} and \textsf{SsfPack} are available as free downloads
+for academic use but neither is open-source; see
+\url{http://www.ssfpack.com}.  Since Koopman is one of the leading
+researchers in this area, presumably the results from \textsf{SsfPack}
+are generally reliable.  To date we have been able to replicate the
+\textsf{SsfPack} results in gretl with a high degree of precision.
+
+We welcome both success reports and bug reports.
+
+\section{Notation}
+
+It seems that in econometrics everyone is happy with $y = X \beta +
+u$, but we can't, as a community, make up our minds on a standard
+notation for state-space models. Harvey (1991), Hamilton (1994),
+Harvey and Proietti (2005) and Pollock (1999) all use different
+conventions. The notation used here is based on James Hamilton's, with
+slight variations.
+
+A state-space model can be written as
+\begin{eqnarray}
+  \label{eq:state}
+  \statevec_{t} & = & \statemat_{t} \statevec_{t-1} + \strdist_t \\
+  \label{eq:obs}
+  \obsvec_t & = & \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + \obsdist_t
+\end{eqnarray}
+where (\ref{eq:state}) is the state transition equation and
+(\ref{eq:obs}) is the observation or measurement equation.  The
+state vector, $\statevec_{t}$, is ($r \times 1$) and the vector of
+observables, $\obsvec_t$, is ($n \times 1$); $\mathbf{x}_t$ is a ($k
+\times 1$) vector of exogenous variables.  The ($r \times 1$) vector
+$\strdist_t$ and the ($n \times 1$) vector $\obsdist_t$ are assumed to
+be vector white noise:
+\begin{eqnarray*}
+E(\strdist_t \strdist_s') = \strvar_t \mbox{ for } t = s, 
+    \mbox{ otherwise } \mathbf{0} \\
+E(\obsdist_t \obsdist_s') = \obsvar_t \mbox{ for } t = s, 
+    \mbox{ otherwise } \mathbf{0}
+\end{eqnarray*}
+%
+The number of time-series observations is denoted by $T$.
+
+In the special case when $\statemat_t = \statemat$, $\obsmat_t = \obsmat$,
+$\obsxmat_t = \obsxmat$, $\strvar_t = \strvar$ and $\obsvar_t =
+\obsvar$, the model is said to be \emph{time-invariant}.
+
+\subsection{The Kalman recursions}
+
+Using this notation the Kalman recursions can be written as follows.
+(We omit time subscripts on the coefficient matrices for convenience.)
+
+Initialization is via the unconditional mean and variance of
+$\statevec_1$:
+%
+\begin{eqnarray*}
+\hat{\statevec}_{1|0} &=& E(\statevec_1) \\
+\statevar_{1|0} &=& E\left\{\left[\statevec_1 - E(\statevec_1)\right]
+   \left[\statevec_1 - E(\statevec_1)\right]' \right\}
+\end{eqnarray*}
+Usually these are given by $\hat{\statevec}_{1|0} = \mathbf{0}$ and
+\begin{equation}
+\label{eq:inivar}
+\myvec(\statevar_{1|0}) = \left[\mathbf{I}_{r^2} - \statemat \otimes
+  \statemat\right]^{-1} \cdot \myvec(\strvar)
+\end{equation}
+but see below for further discussion of the initial variance.
+
+Iteration then proceeds in two steps.  First we update the estimate of
+the state\footnote{For a justification of these formulae see the
+  classic book by Anderson and Moore (1979); for a more modern
+  treatment see Pollock (1999) or Hamilton (1994).  A transcription of
+  R. E. Kalman's original paper of 1960 is available at
+  \url{http://www.cs.unc.edu/~welch/kalman/kalmanPaper.html}}
+%
+\begin{equation}
+\hat{\statevec}_{t+1|t} = \statemat\hat{\statevec}_{t|t-1} + 
+  \gain_t \prederr_t
+\end{equation}
+%
+where $\gain_t$ is the gain matrix, given by
+%
+\[
+\gain_t = \statemat\statevar_{t|t-1}\obsmat
+  (\obsmat'\statevar_{t|t-1}\obsmat + \obsvar)^{-1}
+\]
+%
+and $\prederr_t$ is the prediction error for the observable:
+\[
+\prederr_t = \obsvec_t - \obsxmat'\obsx_t - \obsmat' \hat{\statevec}_{t|t-1}
+\]
+
+The second step updates the estimate of the variance of the state,
+$\statevar$.  Let us define $\predvar_t =
+\obsmat'\statevar_{t|t-1}\obsmat + \obsvar$.  The update is then
+\begin{equation}
+\statevar_{t+1|t} = \statemat\left[\statevar_{t|t-1} -
+ \statevar_{t|t-1}\obsmat \predvar_t^{-1}
+ \obsmat' \statevar_{t|t-1} \right] \statemat' + \strvar
+\end{equation}
+
+
+\section{Intended usage}
+
+The Kalman filter can be used in three ways: two of these are the
+classic forward and backward pass, or filtering and smoothing
+respectively; the third use is simulation.  In the
+filtering/smoothing case you have the data $\obsvec_t$ and you want to
+reconstruct the states $\statevec_t$ (and the forecast errors as a
+by-product), but we may also have a computational apparatus that does
+the reverse: given artificially-generated series $\obsdist_t$ and
+$\strdist_t$, generate the states $\statevec_t$ (and the observables
+$\obsvec_t$ as a by-product).
+
+The usefulness of the classical filter is well known; the usefulness
+of the Kalman filter as a simulation tool may be huge too. Think for
+instance of Monte Carlo experiments, simulation-based inference---see
+Gourieroux--Monfort (1996)---or Bayesian methods, especially in the
+context of the estimation of DSGE models.
+
+\section{Overview of syntax}
+
+Using the Kalman filter in gretl is a two-step process.  First you set
+up your filter, using a block of commands starting with
+\texttt{kalman} and ending with \texttt{end kalman}---much like the
+\texttt{gmm} command.  Then you invoke the functions \texttt{kfilter},
+\texttt{ksmooth} or \texttt{ksimul} to do the actual work.  The next
+two sections expand on these points.
+
+\section{Defining the filter}
+
+Each line within the \texttt{kalman} \dots{} \texttt{end kalman} block 
+takes the form
+
+\vspace{1ex}
+\textsl{keyword} \textsl{value}
+\vspace{1ex}
+
+\noindent where \textsl{keyword} represents a matrix, as shown 
+below.
+% % in Table~\ref{tab:keywords}.
+
+%% \begin{table}[htbp]
+\begin{center}
+\begin{tabular}{lcc}
+Keyword & Symbol & Dimensions \\[6pt]
+\texttt{obsy}     & $\obsvec$         & $T \times n$ \\
+\texttt{obsymat}  & $\obsmat$         & $r \times n$ \\
+\texttt{obsx}     & $\obsx$           & $T \times k$ \\
+\texttt{obsxmat}  & $\obsxmat$        & $k \times n$ \\ 
+\texttt{obsvar}   & $\obsvar$         & $n \times n$ \\
+\texttt{statemat} & $\statemat$         & $r \times r$ \\
+\texttt{statevar} & $\strvar$         & $r \times r$ \\
+\texttt{inistate} & $\hat{\statevec}_{1|0}$  & $r \times 1$ \\
+\texttt{inivar}   & $\statevar_{1|0}$ & $r \times r$ \\
+\end{tabular}
+%% \caption{Kalman block keywords}
+%% \label{tab:keywords}
+\end{center}
+%% \end{table}
+
+For the data matrices $\obsvec$ and $\obsx$ the corresponding
+\textsl{value} may be the name of a predefined matrix, the name of a
+data series, or the name of a list of series.\footnote{Note that the
+  data matrices \texttt{obsy} and \texttt{obsx} have $T$ rows.  That
+  is, the column vectors $\obsvec_t$ and $\obsx_t$ in (\ref{eq:state})
+  and (\ref{eq:obs}) are in fact the transposes of the $t$-dated rows
+  of the full matrices.}  For the other inputs, \textsl{value} may be
+the name of a predefined matrix or, if the input in question happens
+to be ($1 \times $1), the name of a scalar variable or a numerical
+constant.  Details on the specification of time-varying matrices
+are given below.
+
+Not all of these inputs need be specified in every case; some are
+optional. (In addition, you can specify the matrices in any order.)
+The mandatory elements are $\obsvec$, $\obsmat$, $\statemat$ and
+$\strvar$, so the minimal \texttt{kalman} block looks like this:
+
+\begin{verbatim}
+kalman 
+  obsy y
+  obsymat H
+  statemat F
+  statevar Q
+end kalman
+\end{verbatim} 
+
+The optional matrices are listed below, along with the implication
+of omitting the given matrix.
+
+\begin{center}
+\begin{tabular}{ll}
+Keyword & If omitted\dots \\ [6pt]
+\texttt{obsx} & no exogenous variables in observation equation\\
+\texttt{obsxmat} & no exogenous variables in observation equation\\
+\texttt{obsvar} & no disturbance term in observation equation\\
+\texttt{inistate} & $\hat{\statevec}_{1|0}$ is set to a zero vector\\
+\texttt{inivar} & $\statevar_{1|0}$ is set automatically\\
+\end{tabular}
+\end{center}
+
+Two comments.  First, it might appear that the \texttt{obsx}
+($\obsx$) and \texttt{obsxmat} ($\obsxmat$) matrices must go
+together---either both are given or neither is given.  But an
+exception is granted for convenience.  If the observation equation
+includes a constant but no additional exogenous variables, you can
+give a ($1 \times n$) value for $\obsxmat$ without having to specify
+\texttt{obsx}.  More generally, if the row dimension of $\obsxmat$ is
+1 greater than the column dimension of $\obsx$, it is assumed that the
+first element of $\obsxmat$ is associated with an implicit column of
+1s.
+
+Second, regarding the automatic initialization of $\statevar_{1|0}$.
+By default this is done as in equation (\ref{eq:inivar}).  However,
+this method is applicable only if all the eigenvalues of $\statemat$ lie
+inside the unit circle.  If this condition is not satisfied we instead
+apply a diffuse prior, setting $\statevar_{1|0} = \kappa \mathbf{I}_r$
+with $\kappa = 10^7$.  If for some reason you wish to impose this
+diffuse prior regardless of the characteristics of $\statemat$, append
+the option flag \verb|--diffuse| to the \texttt{end kalman}
+statement.
+
+Initialization of the Kalman filter outside of the case where equation
+(\ref{eq:inivar}) applies has been the subject of much discussion in
+the literature---see for example de Jong (1991), Koopman (1997).  At
+present gretl does not implement any of the ``fancier'' proposals that
+have been made.
+
+
+\subsection{Time-varying matrices}
+
+Any or all of the matrices \texttt{obsymat}, \texttt{obsxmat},
+\texttt{obsvar}, \texttt{statemat} and \texttt{statevar} may be
+time-varying.  In that case there are two options: you may
+
+\begin{itemize}
+\item give a function which returns a matrix, or
+\item give the name of a matrix and a function which modifies that
+  matrix, separated by a semicolon.
+\end{itemize}
+
+Suppose the matrix $\obsmat$ is time-varying.  Then for an example of
+the first option, we might write
+%
+\begin{verbatim}
+  obsymat get_H(theta)
+\end{verbatim}
+%
+where \texttt{get\_H} is a user-defined function which returns a
+matrix and \texttt{theta} is a suitable argument to that function.
+For an example of the second option, we might write
+%
+\begin{verbatim}
+  obsymat H ; modify_H(&H, theta)
+\end{verbatim}
+
+In both cases the relevant function, \verb+get_H+ or \verb+modify_H+,
+will be called at each time-step of the filter operation.  Here is the
+difference. In the first case the matrix returned by the function is
+anonymous and is ``owned'' by the Kalman structure; and at each step
+the old matrix is destroyed and replaced by a new one.  In the second
+case the matrix \texttt{H} must be predefined, and the function does
+not return any value; rather it modifies the named matrix argument,
+given in ``pointer'' form.  The advantage of the latter form is that
+is does not involve creating and destroying a matrix at each step, and
+so will be more efficient.
+
+Such matrix-generating or matrix-modifying functions have access to
+the current time-step of the Kalman filter, via the internal variable
+\verb+$kalman_t+.  This has value 1 on the first iteration, 2 on the
+second, and so on, up to iteration $T$.  They also have access to
+the current $n$-vector of forecast errors, $\prederr_t$, under the
+name \verb+$kalman_uhat+.
+
+
+\subsection{Handling of missing values}
+
+It is acceptable for the data matrices, \texttt{obsy} and
+\texttt{obsx}, to contain missing values.  In this case the filtering
+operation will work around the missing values, and the \texttt{ksmooth}
+function can be used to obtain estimates of these values.  However,
+there are two points to note.
+
+First, the long-standing ``tradition'' in gretl is that while data
+series can have missing values (\texttt{NA}s), matrices can contain
+only valid numerical values.  To allow \texttt{NA}s in matrices you
+must use the \texttt{set} command thus:
+%
+\begin{verbatim}
+set force_finite off
+\end{verbatim}
+%
+This point may be revisited in future.  
+
+Second, the handling of missing values is not yet quite right for the
+case where the observable vector $\obsvec_t$ contains more than one
+element.  At present, if any of the elements of $\obsvec_t$ are
+missing the entire observation is ignored.  Clearly it should be
+possible to make use of any non-missing elements, and this is not
+very difficult in principle, it's just awkward and is not
+implemented yet.
+
+\subsection{Persistence and identity of the filter}
+
+At present there is no facility to create a ``named filter''.  Only
+one filter can exist at any point in time, namely the one created by
+the last \texttt{kalman} block.\footnote{This is not quite true: more
+  precisely, there can be no more than one Kalman filter \textit{at
+    each level of function execution}.  That is, if a gretl script
+  creates a Kalman filter, a user-defined function called from that
+  script may also create a filter, without interfering with the
+  original one.}  If a filter is already defined, and you give a new
+\texttt{kalman} block, the old filter is over-written.  Otherwise the
+existing filter persists (and remains available for the
+\texttt{kfilter}, \texttt{ksmooth} and \texttt{ksimul} functions)
+until either (a) the gretl session is terminated or (b) the command
+\texttt{delete kalman} is given.
+
+
+\section{The \texttt{kfilter} function}
+
+Once a filter is established, as discussed in the previous section,
+\texttt{kfilter} can be used to run a forward, forecasting, pass.
+This function returns a scalar code: 0 for successful completion, or 1
+if numerical problems were encountered.  On successful completion, two
+scalar accessor variables become available: \verb+$kalman_lnl+, which
+gives the overall log-likelihood,
+%
+\[
+  \ell = -\frac{1}{2} \left[nT \log(2 \pi) + \sum_{t=1}^T\left|\predvar_t\right| + 
+    \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
+  \right]
+\]
+%
+and \verb+$kalman_s2+, which gives the estimated variance,
+%
+\[
+\hat{\sigma}^2 = \frac{1}{nT} 
+   \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
+\]
+(but see below for modifications to these formulae for the case of a
+diffuse prior).  In addition the accessor \verb+$kalman_llt+ gives a
+($T \times 1$) vector, element $t$ of which is
+%
+\[
+  \ell_t = -\frac{1}{2} \left[n \log(2 \pi) + \left|\predvar_t\right| + 
+    \prederr_t'\predvar_t^{-1} \prederr_t
+  \right]
+\]
+%
+
+The \texttt{kfilter} function does not require any arguments, but up
+to five matrix quantities may be retrieved via optional pointer
+arguments.  Each of these matrices has $T$ rows, one for each
+time-step; the number of columns is shown in the following listing.
+%
+\begin{enumerate}
+\item Forecast errors for the observable variables: $n$ columns.
+\item Variance matrix for the forecast errors: $n(n+1)/2$.
+\item Estimate of the state vector: $r$.
+\item Variance of estimate of the state vector: $r(r+1)/2$.
+\item Kalman gain: $rn$.
+\end{enumerate}
+
+The variance matrices retrieved by arguments (2) and (4) are in vech
+form, i.e., the unique elements of the matrix are stacked by column
+and transposed to a row vector.  The Kalman gain matrix from each time
+step is stored in transposed vec form.
+
+Unwanted trailing arguments can be omitted, otherwise unwanted
+arguments can be skipped by using the keyword \texttt{null}.  For
+example, the following call retrieves the forecast errors in the
+matrix \texttt{E} and the estimate of the state vector in \texttt{S}:
+%
+\begin{verbatim}
+matrix E S
+kfilter(&E, null, &S)
+\end{verbatim}
+
+Matrices given as pointer arguments do not have to be correctly
+dimensioned in advance; they will be resized to receive the specified
+content.
+
+Further note: in the general case, the arguments to \texttt{kfilter}
+should all be matrix-pointers, but under two conditions you can give a
+pointer to a series variable instead.  The conditions are: (i) the
+matrix in question has just one column in context (for example, the
+first two matrices will have a single column if the length of the
+observables vector, $n$, equals 1) and (ii) the time-series length of
+the filter is equal to the current gretl sample size.
+
+\subsection{Likelihood under the diffuse prior}
+
+There seems to be general agreement in the literature that the
+log-likelihood calculation should be modified in the case of a diffuse
+prior for $\statevar_{1|0}$.  However, it is not clear to us that
+there is a well-defined ``correct'' method for this.  At present we
+emulate \textsf{SsfPack} (see Koopman \textit{et al} (1999) and
+section~\ref{sec:amble}).  In case $\statevar_{1|0} = \kappa
+\mathbf{I}_r$, we set $d = r$ and calculate
+%
+\[
+  \ell = -\frac{1}{2} \left[(nT-d) \log(2 \pi) + 
+    \sum_{t=1}^T\left|\predvar_t\right| + 
+    \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
+    - d \log(\kappa)
+  \right]
+\]
+%
+and
+%
+\[
+\hat{\sigma}^2 = \frac{1}{nT-d} 
+   \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
+\]
+
+\section{The \texttt{ksmooth} function}
+
+This function returns the ($T \times r$) matrix of smoothed estimates
+of the state vector---that is, estimates based on all $T$
+observations: row $t$ of this matrix holds $\hat{\statevec}_{t|T}'$.  This
+function has no required arguments but it offers one optional
+matrix-pointer argument, which retrieves the variance of the smoothed
+state estimate, $\statevar_{t|T}$.  The latter matrix is ($T \times
+r(r+1)/2$); each row is in transposed vech form.  Examples:
+%
+\begin{verbatim}
+matrix S = ksmooth()  # smoothed state only
+matrix P
+S = ksmooth(&P)       # the variance is wanted
+\end{verbatim}
+
+These values are computed via a backward pass of the filter.  The
+final values of $\hat{\statevec}$ and $\statevar$ already incorporate
+all the sample information.  The backward iteration, from $t=T-1$ to
+1, is then
+%
+\begin{eqnarray*}
+\hat{\statevec}_{t|T} &=& \hat{\statevec}_{t|t} + 
+  \mathbf{J}_t\left(\hat{\statevec}_{t+1|T} - \hat{\statevec}_{t+1|t}\right) \\
+\statevar_{t|T} &=& \statevar_{t|t} + 
+  \mathbf{J}_t\left(\statevar_{t+1|T} - \statevar_{t+1|t}\right) \mathbf{J}_t'
+\end{eqnarray*}
+%
+where
+\[
+\mathbf{J}_t = \statevar_{t|t} \statemat' \statevar_{t+1|t}^{-1}
+\]
+%
+This iteration is preceded by a special forward pass in which the
+matrices $\hat{\statevec}_{t|t}$ and $\statevar_{t|t}$ are stored
+for all $t$.
+
+
+\section{The \texttt{ksimul} function}
+
+This simulation function takes up to three arguments.  The first,
+mandatory, argument is a ($T \times r$) matrix containing artificial
+disturbances for the state transition equation: row $t$ of this matrix
+represents $\strdist_t'$.  If the current filter has a non-null
+$\obsvar$ (\texttt{obsvar}) matrix, then the second argument should be
+a ($T \times n$) matrix containing artificial disturbances for the
+observation equation, on the same pattern.  Otherwise the second
+argument should be given as \texttt{null}.  If $r=1$ you may give a
+series for the first argument, and if $n=1$ a series is acceptable for
+the second argument.
+
+Provided that the current filter does not include exogenous variables
+in the observation equation (\texttt{obsx}), the $T$ for simulation
+need not equal that defined by the original \texttt{obsy} data matrix:
+in effect $T$ is temporarily redefined by the row dimension of the
+first argument to \texttt{ksimul}.  Once the simulation is completed,
+the $T$ value associated with the original data is restored.
+
+The value returned by \texttt{ksimul} is a ($T \times n$) matrix
+holding simulated values for the observables at each time step.  A
+third optional matrix-pointer argument allows you to retrieve a ($T
+\times r$) matrix holding the simulated state.  Examples:
+%
+\begin{verbatim}
+matrix Y = ksimul(V)    # obsvar is null
+Y = ksimul(V, W)        # obsvar is non-null
+matrix S
+Y = ksimul(V, null, &S) # the simulated state is wanted
+\end{verbatim}
+
+\section{Example 1: ARMA estimation}
+\label{sec:example_arma}
+
+As is well known, the Kalman filter provides a very efficient way to
+compute the likelihood of ARMA models; as an example, take an
+ARMA(1,1) model
+\[
+  y_t = \phi y_{t-1} + \varepsilon_t + \theta \varepsilon_{t-1} .
+\]
+One of the ways the above equation can be cast in state-space form is
+\begin{eqnarray*}
+  y_t & = & \xi_t + \theta \xi_{t-1} \\
+  \left[ \begin{array}{c} \xi_t \\ \xi_{t-1} \end{array} \right] & = &
+  \left[ \begin{array}{cc} \phi & 0 \\ 1 & 0 \end{array} \right]
+  \left[ \begin{array}{c} \xi_{t-1} \\ \xi_{t-2} \end{array} \right] +
+  \left[ \begin{array}{c} \varepsilon_t \\ 0 \end{array} \right] 
+\end{eqnarray*}
+
+The gretl syntax for a corresponding \texttt{kalman} block would be
+\begin{verbatim}
+    matrix H = {1; theta}
+    matrix F = {phi, 0; 1, 0}
+    matrix Q = {s^2, 0; 0, 0}
+
+    kalman
+        obsy y
+        obsymat H
+        obsvar 0
+        statemat F
+        statevar Q
+    end kalman
+\end{verbatim}
+
+Once the filter is set up, all it take to compute the loglikelihood
+for given values of $\phi$, $\theta$ and $\sigma^2$ is to execute the
+\texttt{kfilter()} function and use the \verb+$kalman_lnl+ accessor
+(which returns the total log-likelihood) or, more appropriately if the
+likelihood has to be maximized through \texttt{mle}, the
+\verb+$kalman_llt+ accessor, which returns the series of individual
+contribution to the log-likelihood for each observation. An example
+is shown in Table \ref{tab:armaest}.
+
+\begin{table}[htbp]
+  \caption{ARMA estimation}
+  \label{tab:armaest}
+
+\begin{small}
+\begin{verbatim}
+function arma11_loglik(series y, scalar phi, scalar theta, scalar s)
+    matrix H = {1; theta}
+    matrix F = {phi, 0; 1, 0}
+    matrix Q = {s^2, 0; 0, 0}
+
+    kalman
+        obsy y
+        obsymat H
+        obsvar 0
+        statemat F
+        statevar Q
+    end kalman
+
+    kfilter()
+    series logl = $kalman_llt
+    return series logl
+end function
+
+# --------------------------- main ---------------------------------
+# open the "arma" example dataset
+open arma.gdt 
+
+# estimate an arma(1,1) model via mle
+phi = 0
+theta = 0
+sigma = 1
+
+mle loglik = arma11_loglik(y, phi, theta, sigma)
+    params phi theta sigma
+end mle -h
+
+# check via native command 
+arma 1 1 ; y --nc
+\end{verbatim}
+\end{small}
+\end{table}
+
+\section{Example 2: local level model}
+\label{sec:example_loclev}
+
+Suppose we have a series $y_t = \mu_t + \varepsilon_t$, where $\mu_t$
+is a random walk with normal increments of variance $\sigma^2_1$ and $
+\varepsilon_t$ is a white noise with variance $\sigma^2_2$.  This is
+known as the ``local level'' model in Harvey's (1991) terminology, and
+it can be cast in state-space form as equations
+(\ref{eq:state})-(\ref{eq:obs}) with
+\begin{eqnarray*}
+  \statemat & = & 1 \\
+  \strdist_t & \sim & N(0, \sigma^2_1) \\
+  \obsmat & = & 1 \\
+  \obsdist_t & \sim & N(0, \sigma^2_2)
+\end{eqnarray*}
+
+Its translation as a \texttt{kalman} block is
+\begin{verbatim}
+    kalman
+       obsy y
+       obsymat 1
+       statemat 1
+       statevar s2
+       obsvar s1
+    end kalman --diffuse
+\end{verbatim}
+
+The two unknown parameters $\sigma^2_1$ and $\sigma^2_2$ can be
+estimated via maximum likelihood.  The example script in
+Table~\ref{tab:loclev} provides an example of simulation and
+estimation of such a model. For the sake of brevity, simulation is
+carried out via ordinary gretl commands, rather than the state-space
+apparatus described above.
+
+\begin{table}[htbp]
+  \caption{Local level model}
+  \label{tab:loclev}
+
+\begin{small}
+\begin{verbatim}
+
+/* ----------- functions ----------- */
+
+function loclev_ll (series y, scalar s1, scalar s2)
+    /* log-likelihood function */
+    kalman
+       obsy y
+       obsymat 1
+       statemat 1
+       statevar s2
+       obsvar s1
+    end kalman --diffuse
+    kfilter()
+    series ret = $kalman_llt
+    return series ret
+end function
+
+function loclev_sm (series y, scalar s1, scalar s2)
+    /* return the smoothed estimate of \mu_t */
+    kalman
+       obsy y
+       obsymat 1
+       statemat 1
+       statevar s2
+       obsvar s1
+    end kalman --diffuse
+    matrix state = ksmooth()
+    series ret = state[,1]
+    return series ret
+end function
+
+/* ---------- main script ---------- */
+
+/* simulate the data */
+nulldata 200
+set seed 202020
+setobs 1 1 --special
+true_s1 = 0.25
+true_s2 = 0.5
+v = normal() * sqrt(true_s1)
+w = normal() * sqrt(true_s2)
+mu = 2 + cum(w)
+y = mu + v
+
+/* do the estimation */
+s1 = 1
+s2 = 1
+mle ll = loclev_ll(y, s1, s2)
+    params s1 s2
+end mle
+
+Uhat = loclev_sm(y, s1, s2) # compute the smoothed state
+\end{verbatim}
+\end{small}
+\end{table}
+
+By appending the following code snippet to the example in
+Table~\ref{tab:loclev}, one may check the results via \textsf{R}.
+
+\begin{verbatim}
+foreign language=R --send-data
+  y <- gretldata[,"y"]
+  a <- StructTS(y, type="level")
+  a
+  StateFromR <- as.ts(tsSmooth(a))
+  gretl.export(StateFromR)
+end foreign
+
+append @dotdir/StateFromR.csv
+
+ols Uhat 0 StateFromR --simple
+\end{verbatim}
+
+
+\begin{thebibliography}
+
+  Anderson B. and Moore J. (1979) \emph{Optimal Filtering}, Prentice-Hall.
+
+  de Jong, P. (1991) ``The Diffuse Kalman Filter'', \emph{The Annals
+    of Statistics}, 19, pp. 1073--1083.
+
+  Gourieroux, Christian and Alain Monfort (1996),
+  \emph{Simulation-Based Econometric Methods}, Oxford University
+  Press.
+
+  Hamilton, James D. (1994), \emph{Time Series Analysis}, Princeton
+  University Press.
+
+  Harvey, A. C. (1991), \emph{Forecasting, Structural Time Series
+    Models and the Kalman Filter}, Cambridge University Press.
+
+  Harvey, A. C. and T. Proietti (2005), \emph{Readings in Unobserved
+    Component Models}, Oxford University Press.
+
+  Kalman, R. E. (1960), ``A New Approach to Linear Filtering and
+  Prediction Problems'', \emph{Transactions of the ASME--Journal of
+    Basic Engineering}, 82, Series D, pp. 35--45
+
+  Koopman, S. J. (1997), ``Exact Initial Kalman Filtering and
+  Smoothing for Nonstationary Time Series Models'', \emph{Journal of
+    the American Statistical Association}, 92, pp. 1630--1638
+
+  Koopman, S. J., N. Shephard and J. A. Doornik (1999), 
+  ``Statistical algorithms for models in state space using SsfPack
+  2.2'', \emph{Econometrics Journal}, 2, pp. 113--166.
+  
+  Pollock, D.S.G. (1999), \emph{A Handbook of Time-Series Analysis,
+    Signal Processing and Dynamics}, Academic Press.
+
+\end{thebibliography}
+
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
