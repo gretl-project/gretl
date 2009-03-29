@@ -444,7 +444,7 @@ static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    NT = pdinfo->t2 - pdinfo->t1 + 1;
+    NT = sample_size(pdinfo);
 
     ab->t1 = pdinfo->t1;           /* start of sample range */
     ab->T = pdinfo->pd;            /* max obs. per individual */

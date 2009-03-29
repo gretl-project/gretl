@@ -226,7 +226,7 @@ int
 kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
 		double bwscale, gretlopt opt)
 {
-    int len = pdinfo->t2 - pdinfo->t1 + 1;
+    int len = sample_size(pdinfo);
     int nobs, kn;
     double h, s;
     double *x;

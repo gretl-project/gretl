@@ -4167,7 +4167,7 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 {
     char title[64];
     int order, err = 0;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     PRN *prn;
 
     strcpy(title, "gretl: ");
@@ -4247,7 +4247,7 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 {
     PRN *prn;
     char title[64];
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     const char *opts[] = {
 	N_("log scale"),
 	NULL
@@ -5106,7 +5106,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 
 void display_selected (void)
 {
-    int n = datainfo->t2 - datainfo->t1 + 1;
+    int n = sample_size(datainfo);
     PRN *prn = NULL;
     int *list = NULL;
 
@@ -5762,7 +5762,7 @@ void display_var (void)
     PRN *prn;
     windata_t *vwin;
     int height = 400;
-    int n = datainfo->t2 - datainfo->t1 + 1;
+    int n = sample_size(datainfo);
     int v = mdata_active_var();
 
     list[0] = 1;

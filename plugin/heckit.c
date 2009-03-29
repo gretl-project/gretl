@@ -152,7 +152,7 @@ make_heckit_NA_mask (h_container *HC, const int *Xlist, const int *Zlist,
 		     const double **Z, const DATAINFO *pdinfo)
 {
     int sel = Zlist[1];
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     int i, t, s = 0, m = 0;
     int err = 0;
 
@@ -233,7 +233,7 @@ static int make_uncens_mask (h_container *HC, const int *Xl,
 			     const int *Zl, const double **Z, 
 			     DATAINFO *pdinfo)
 {
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     int t, s = 0;
     int selvar = Zl[1];
 

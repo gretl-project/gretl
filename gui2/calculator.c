@@ -2112,7 +2112,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     test_t *test = g_object_get_data(G_OBJECT(p), "test");
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
     gchar **pbuf = g_object_get_data(G_OBJECT(p), "pbuf");
-    int t, n = datainfo->t2 - datainfo->t1 + 1;
+    int t, n = sample_size(datainfo);
     int vx = -1, vy = -1;
     GretlOp yop = 0;
     gchar *buf = NULL;

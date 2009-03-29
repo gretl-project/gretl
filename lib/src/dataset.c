@@ -2765,7 +2765,7 @@ int dataset_resample (int n, unsigned int seed,
     double **RZ = NULL;
     DATAINFO *rinfo = NULL;
     char **S = NULL;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     int v = pdinfo->v;
     int i, j, s, t;
     int err = 0;

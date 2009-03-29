@@ -3998,7 +3998,7 @@ Summary *get_summary (const int *list, const double **Z,
 	return NULL;
     }
 
-    nmax = pdinfo->t2 - pdinfo->t1 + 1;
+    nmax = sample_size(pdinfo);
 
     for (i=0; i<s->list[0]; i++)  {
 	double x0;
@@ -4778,7 +4778,7 @@ real_mahalanobis_distance (const int *list, double ***pZ,
     varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
 			  (const double **) *pZ);
 
-    n = pdinfo->t2 - pdinfo->t1 + 1;
+    n = sample_size(pdinfo);
     if (n < 2) {
 	pdinfo->t1 = orig_t1;
 	pdinfo->t2 = orig_t2;

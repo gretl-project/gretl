@@ -1262,7 +1262,7 @@ int write_data (const char *fname, int *list,
     int i, t, v, l0;
     GretlDataFormat fmt;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
-    int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
+    int tsamp = sample_size(pdinfo);
     int n = pdinfo->n;
     char delim = 0;
     FILE *fp = NULL;

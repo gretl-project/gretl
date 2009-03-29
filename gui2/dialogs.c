@@ -1818,7 +1818,7 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 
 static int default_randsize (void)
 {
-    int n = datainfo->t2 - datainfo->t1 + 1;
+    int n = sample_size(datainfo);
 
     if (n > 1000) {
 	return n / 10;

@@ -2027,7 +2027,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 {
     int i, t, l0 = list[0];
     int *pmax = NULL;
-    int tsamp = datainfo->t2 - datainfo->t1 + 1;
+    int tsamp = sample_size(datainfo);
     double xx;
 
     if (l0 == 0) return 1;

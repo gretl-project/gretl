@@ -531,7 +531,7 @@ static int real_boxplots (int *list, char **bools,
 			  double ***pZ, const DATAINFO *pdinfo, 
 			  gretlopt opt)
 {
-    int i, j, n = pdinfo->t2 - pdinfo->t1 + 1;
+    int i, j, n = sample_size(pdinfo);
     double *x = NULL;
     PLOTGROUP *grp = NULL;
     int err = 0;

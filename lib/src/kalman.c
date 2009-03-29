@@ -2328,9 +2328,8 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
     }
 }
 
-/* Below: an attempt to implement the account of Kalman smoothing
-   given in Hamilton, Time Series Analysis, pp.  394-397.  Needs
-   rigorous checking!
+/* Below: implementation of Kalman smoothing as described in Hamilton,
+   Time Series Analysis, pp. 394-397.  Needs more checking.
  */
 
 static int kalman_smooth (kalman *K, int nr)
@@ -2696,7 +2695,7 @@ double user_kalman_get_loglik (void)
  * Retrieves a matrix, specified by @idx, from the last
  * run of a kalman forecast, if applicable.
  * 
- * Returns: allocated vector, or %NULL on failure.
+ * Returns: allocated matrix, or %NULL on failure.
  */
 
 gretl_matrix *user_kalman_get_matrix (int idx, int *err)
@@ -2704,21 +2703,26 @@ gretl_matrix *user_kalman_get_matrix (int idx, int *err)
     user_kalman *u = get_user_kalman(-1);
     gretl_matrix *m = NULL;
 
-    if (u == NULL || u->K == NULL || u->K->LL == NULL) {
+    if (u == NULL || u->K == NULL) {
 	*err = E_BADSTAT;
-    } else if (idx == M_KLLT) {
-	m = gretl_matrix_copy(u->K->LL);
-	if (m == NULL) {
-	    *err = E_ALLOC;
-	}
-    } else if (idx == M_KUHAT) {
-	m = gretl_matrix_copy(u->K->e);
-	if (m == NULL) {
-	    *err = E_ALLOC;
-	}
     } else {
-	*err = E_BADSTAT;
-    }
+	const gretl_matrix *src = NULL;
+
+	if (idx == M_KLLT) {
+	    src = u->K->LL;
+	} else if (idx == M_KUHAT) {
+	    src = u->K->e;
+	}
+
+	if (src == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    m = gretl_matrix_copy(src);
+	    if (m == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    } 
 
     return m;
 }

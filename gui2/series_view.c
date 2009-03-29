@@ -98,7 +98,7 @@ static int series_view_allocate (series_view *sview)
 	/* already allocated */
 	return 0;
     } else {
-	int T = datainfo->t2 - datainfo->t1 + 1;
+	int T = sample_size(datainfo);
 
 	sview->points = mymalloc(T * sizeof *sview->points);
 	if (sview->points == NULL) {

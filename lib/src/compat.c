@@ -532,7 +532,7 @@ static int ascii_plot (const int *list, const double **Z,
 int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     int vx, vy1, vy2 = -1;
     double *x = NULL;
     double *y1 = NULL;

@@ -62,7 +62,7 @@ int sort_series (const double *x, double *y, int f,
     double *z = NULL;
     struct val_mark *vm = NULL;
     int markers = 0;
-    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int n = sample_size(pdinfo);
     int i, t;
 
     if (pdinfo->S != NULL && !complex_subsampled()) {
@@ -140,7 +140,7 @@ int gretl_sort_by (const double *x, const double *y,
 		   double *z, const DATAINFO *pdinfo)
 {
     struct pair_sorter *xy;
-    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int n = sample_size(pdinfo);
     int i, t;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -217,7 +217,7 @@ int rank_series (const double *x, double *y, int f,
 {
     double *sx = NULL;
     double *rx = NULL;
-    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int n = sample_size(pdinfo);
     int m = n;
     int i, t;
 
@@ -2618,7 +2618,7 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 	T = m->rows;
     } else {
 	x = Z[list[1]] + pdinfo->t1;
-	T = pdinfo->t2 - pdinfo->t1 + 1;
+	T = sample_size(pdinfo);
     }
 
     acol = 0;
@@ -2669,7 +2669,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
     const double *xvec = NULL;
     const double *yvec = NULL;
     gretl_matrix *xj, *XCF = NULL;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = sample_size(pdinfo);
     int np = 2 * p + 1;
     int Ty, nx = 1;
     int i, j;
@@ -2706,7 +2706,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	Ty = ymat->rows;
     } else {
 	yvec = (const double *) py + pdinfo->t1;
-	Ty = pdinfo->t2 - pdinfo->t1 + 1;
+	Ty = sample_size(pdinfo);
     }
 
     if (Ty != T) {
