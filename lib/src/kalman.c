@@ -2527,23 +2527,22 @@ gretl_matrix *user_kalman_smooth (const char *Pname, int *err)
     return S;
 }
 
-#if 0 /* not quite yet */
-
 /* This should probably get moved into gretl_matrix.c at some point:
-   compute the Cholesky decomposition for a possibly singular positive
-   semidefinite matrix.  The content of A is altered only on success.
+   compute the factor L, as in A = LL', for a possibly singular
+   positive semidefinite matrix A.  The content of A is altered only
+   on success.
 */
 
-static int psd_cholesky (gretl_matrix *m)
+static int psd_decomp (gretl_matrix *A)
 {
-    gretl_matrix *c;
-    int n = m->rows;
+    gretl_matrix *L;
+    int n = A->rows;
     double sum, x1, x2;
     int i, j, k;
     int err = 0;
 
-    c = gretl_zero_matrix_new(n, n);
-    if (c == NULL) {
+    L = gretl_zero_matrix_new(n, n);
+    if (L == NULL) {
 	return E_ALLOC;
     }
 
@@ -2551,36 +2550,77 @@ static int psd_cholesky (gretl_matrix *m)
 	for (j=0; j<=i; j++) {
 	    sum = 0.0;
 	    for (k=0; k<j; k++) {
-		x1 = gretl_matrix_get(c, i, k);
-		x2 = gretl_matrix_get(c, j, k);
+		x1 = gretl_matrix_get(L, i, k);
+		x2 = gretl_matrix_get(L, j, k);
 		sum += x1 * x2;
 	    }
-	    x1 = gretl_matrix_get(m, i, j);
+	    x1 = gretl_matrix_get(A, i, j);
 	    if (i == j) {
-		gretl_matrix_set(c, i, i, sqrt(x1 - sum));
+		gretl_matrix_set(L, i, i, sqrt(x1 - sum));
 	    } else {
-		x2 = gretl_matrix_get(c, j, j);  
-		gretl_matrix_set(c, i, j, 1.0 / x2 * (x1 - sum));
+		x2 = gretl_matrix_get(L, j, j);  
+		gretl_matrix_set(L, i, j, 1.0 / x2 * (x1 - sum));
 	    }
 	}
-	if (gretl_matrix_get(c, i, i) < 0) {
+	if (gretl_matrix_get(L, i, i) < 0) {
 	    fprintf(stderr, "Matrix is not positive semidefinite\n");
 	    err = E_DATA;
 	}
     }
 
     if (!err) {
-	free(m->val);
-	m->val = c->val;
-	c->val = NULL;
+	free(A->val);
+	A->val = L->val;
+	L->val = NULL;
     }
 
-    gretl_matrix_free(c);
+    gretl_matrix_free(L);
 
     return err;
 }
 
-#endif
+/* See the account in Koopman, Shephard and Doornik, Econometrics
+   Journal, 1999, section 4.2, regarding the initialization of the
+   state under simulation.
+*/
+
+static int sim_state_0 (kalman *K, const gretl_matrix *V)
+{
+    gretl_matrix *Q, *v0 = NULL, *s0 = NULL;
+    int err = 0;
+    
+    Q = gretl_matrix_copy(K->P0);
+
+    if (Q == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = psd_decomp(Q);
+    }
+
+    if (!err) {
+	v0 = gretl_matrix_alloc(K->r, 1);
+	s0 = gretl_matrix_alloc(K->r, 1);
+	if (v0 == NULL || s0 == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	load_from_row(v0, V, 0, GRETL_MOD_NONE);
+	err = gretl_matrix_multiply(Q, v0, s0);
+    }
+
+    if (!err) {
+	/* mess with K->S0 only on success */
+	gretl_matrix_add_to(K->S0, s0);
+    }
+
+    gretl_matrix_free(Q);
+    gretl_matrix_free(v0);
+    gretl_matrix_free(s0);
+
+    return err;
+}
 
 static int kalman_simulate (kalman *K, 
 			    const gretl_matrix *V,
@@ -2596,17 +2636,8 @@ static int kalman_simulate (kalman *K,
 	return E_ALLOC;
     }
 
-#if 0 /* not ready yet */
-    gretl_matrix *Q = gretl_matrix_copy(K->P0);
-
-    if (Q != NULL) {
-	err = psd_cholesky(Q);
-	if (!err) {
-	    gretl_matrix_print(Q, "ksimul: Q");
-	    /* now use Q to set initial state */
-	}
-	gretl_matrix_free(Q);
-    }
+#if 1 /* check me! */
+    sim_state_0(K, V);
 #endif
 
     if (K->x == NULL) {
