@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-08 22:00-0400\n"
-"PO-Revision-Date: 2009-03-12 07:12+0200\n"
+"PO-Revision-Date: 2009-03-29 03:14+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -685,11 +685,11 @@ msgstr "   %s: возможно это не номер года\n"
 
 #: lib/src/csvdata.c:817
 msgid "   but I can't make sense of the extra bit\n"
-msgstr ""
+msgstr "   невозможно выяснить разницу между дополнительным битом\n"
 
 #: lib/src/csvdata.c:819
 msgid "and just a year\n"
-msgstr ""
+msgstr "и номером года\n"
 
 #: lib/src/csvdata.c:834
 #, c-format
@@ -833,7 +833,7 @@ msgstr "Невозможно открыть %s\n"
 
 #: lib/src/csvdata.c:1867
 msgid "using fixed column format\n"
-msgstr ""
+msgstr "используется формат с фиксированной шириной столбца\n"
 
 #: lib/src/csvdata.c:1899
 #, c-format
@@ -2512,12 +2512,12 @@ msgstr "Коэффициент для %s"
 #: lib/src/graphing.c:3635
 #, c-format
 msgid "Quantile estimates with %g%% band"
-msgstr ""
+msgstr "Квантильная оценка с %g%% полосой"
 
 #: lib/src/graphing.c:3643
 #, c-format
 msgid "OLS estimate with %g%% band"
-msgstr ""
+msgstr "МНК оценка с %g%% полосой"
 
 #: lib/src/graphing.c:3707
 msgid "+- sqrt(h(t))"
@@ -2588,7 +2588,7 @@ msgstr ""
 
 #: lib/src/gretl_bfgs.c:469
 msgid "BFGS: initial value of objective function is not finite"
-msgstr ""
+msgstr "BFGS: начальное значение целевой функции не является конечным"
 
 #: lib/src/gretl_bfgs.c:643
 #, c-format
@@ -2904,11 +2904,11 @@ msgstr "Тест отношения правдоподобия Квандта (Q
 
 #: lib/src/gretl_model.c:2819
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
-msgstr ""
+msgstr "Отношение правдоподобия для групповой гетероскедастичности"
 
 #: lib/src/gretl_model.c:2820
 msgid "the units have a common error variance"
-msgstr ""
+msgstr "наблюдения имеют общую дисперсию ошибки"
 
 #: lib/src/gretl_model.c:2822
 msgid "Non-linearity test (logs)"
@@ -2965,11 +2965,11 @@ msgstr "ОМНК оценки состоятельны"
 
 #: lib/src/gretl_model.c:2852
 msgid "Test for differing group intercepts"
-msgstr ""
+msgstr "Тест на различие констант в группах"
 
 #: lib/src/gretl_model.c:2853
 msgid "The groups have a common intercept"
-msgstr ""
+msgstr "Группы имеют общие константы"
 
 #: lib/src/gretl_model.c:2855
 msgid "Breusch-Pagan test"
@@ -2977,7 +2977,7 @@ msgstr "Тест Бриша-Пэгана (Breusch-Pagan)"
 
 #: lib/src/gretl_model.c:2856
 msgid "Variance of the unit-specific error = 0"
-msgstr ""
+msgstr "Дисперсия специфических для наблюдений ошибок = 0"
 
 #: lib/src/gretl_model.c:2858
 msgid "Wald test for joint significance of time dummies"
@@ -3046,7 +3046,7 @@ msgstr ""
 #: lib/src/gretl_panel.c:1588
 #, c-format
 msgid "%d group means were subtracted from the data"
-msgstr ""
+msgstr "%d групповых средних были исключены из данных"
 
 #: lib/src/gretl_panel.c:1592
 #, c-format
@@ -3059,7 +3059,7 @@ msgstr ""
 
 #: lib/src/gretl_panel.c:1595
 msgid "Joint significance of differing group means:\n"
-msgstr ""
+msgstr "Совместная значимость различий в группвых средних:\n"
 
 #: lib/src/gretl_panel.c:1599
 msgid ""
@@ -3249,11 +3249,11 @@ msgstr "gretl_prn_new: Необходимо указать имя файла\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
+msgstr "Не удалось обратить матрицу: ограничения либо ошибочные, либо избыточные"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
-msgstr ""
+msgstr "Пожалуйста, укажите номер коэффициента"
 
 #: lib/src/gretl_restrict.c:772
 #, c-format
@@ -3324,6 +3324,8 @@ msgid ""
 "Matrix inversion failed:\n"
 " restrictions may be inconsistent or redundant\n"
 msgstr ""
+"Не удалось обратить матрицу:\n"
+" ограничения либо ошибочные, либо избыточные\n"
 
 #: lib/src/gretl_restrict.c:2164
 msgid "Invalid input\n"
@@ -3349,12 +3351,12 @@ msgstr "сумма"
 #: lib/src/gretl_scalar.c:365
 #, c-format
 msgid "Deleted scalar %s"
-msgstr "Скаляр %s удален"
+msgstr "Скалярная переменная %s удалена"
 
 #: lib/src/gretl_string_table.c:184
 #, c-format
 msgid "variable %d: translating from strings to code numbers\n"
-msgstr ""
+msgstr "Переменная %d: преобразование строчных данных в числовые коды\n"
 
 #: lib/src/gretl_string_table.c:263
 msgid ""
@@ -3363,8 +3365,8 @@ msgid ""
 "have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
-"Одна или более нечисловых переменных были найдены.\n"
-"Gretl не может обрабатывать такие переменные, поэтому им\n"
+"Обнаружены одна или более нечисловых переменных.\n"
+"Gretl не может обработать такие переменные, поэтому им\n"
 "были присвоены числовые коды.\n"
 "\n"
 
@@ -3832,7 +3834,7 @@ msgstr "Вывод уже направлен в '%s'\n"
 
 #: lib/src/interact.c:3749
 msgid "Now discarding output\n"
-msgstr ""
+msgstr "Отмена вывода\n"
 
 #: lib/src/interact.c:3765
 #, c-format
@@ -3941,7 +3943,7 @@ msgstr "'%s': матрица с таким названием отсутству
 
 #: lib/src/libset.c:1182
 msgid "Variables that can be set using \"set\""
-msgstr ""
+msgstr "Переменные, которые могут быть установлены с помощью \"set\""
 
 #: lib/src/libset.c:1184
 msgid "\"help set\" for details"
@@ -3949,7 +3951,7 @@ msgstr "используйте \"help set\" для подробного опис
 
 #: lib/src/libset.c:1187
 msgid "Program interaction and behavior"
-msgstr ""
+msgstr "Поведение программы"
 
 #: lib/src/libset.c:1213 doc/commands/matfuncs.c:57
 msgid "Numerical methods"
@@ -4039,7 +4041,7 @@ msgstr "LR-тест на сверхидентификацию"
 
 #: lib/src/modelprint.c:261 lib/src/modelprint.c:262
 msgid "Equation is just identified"
-msgstr ""
+msgstr "Уравнение идентифицируемо"
 
 #: lib/src/modelprint.c:276 lib/src/modelprint.c:278
 #, c-format
@@ -4048,11 +4050,11 @@ msgstr "Тест на AR(%d) ошибки:"
 
 #: lib/src/modelprint.c:304 lib/src/modelprint.c:309
 msgid "Wald (joint) test"
-msgstr ""
+msgstr "Совместный тест Вальда"
 
 #: lib/src/modelprint.c:305 lib/src/modelprint.c:310
 msgid "J test"
-msgstr ""
+msgstr "J тест"
 
 #: lib/src/modelprint.c:308
 msgid "Sargan test"
@@ -4061,7 +4063,7 @@ msgstr "Тест Саргана (Sargan)"
 #: lib/src/modelprint.c:352 lib/src/modelprint.c:355 lib/src/modelprint.c:363
 #: lib/src/modelprint.c:365 lib/src/printout.c:2503
 msgid "GMM criterion"
-msgstr ""
+msgstr "GMM-критерий"
 
 #: lib/src/modelprint.c:429
 msgid "Warning: solution is probably not unique"
@@ -4069,15 +4071,15 @@ msgstr "ВНИМАНИЕ: решение вероятно не является 
 
 #: lib/src/modelprint.c:447 lib/src/modelprint.c:465 lib/src/modelprint.c:473
 msgid "'Within' variance"
-msgstr ""
+msgstr "Внутригрупповая дисперсия"
 
 #: lib/src/modelprint.c:448 lib/src/modelprint.c:466 lib/src/modelprint.c:474
 msgid "'Between' variance"
-msgstr ""
+msgstr "Межгрупповая дисперсия"
 
 #: lib/src/modelprint.c:450 lib/src/modelprint.c:468 lib/src/modelprint.c:476
 msgid "theta used for quasi-demeaning"
-msgstr ""
+msgstr "theta, использованная для квази-деусреднения (demeaning)"
 
 #: lib/src/modelprint.c:542
 #, c-format
@@ -4135,7 +4137,7 @@ msgstr "Вспомогательная регрессия для теста Ра
 
 #: lib/src/modelprint.c:582
 msgid "Groupwise heteroskedasticity"
-msgstr ""
+msgstr "Групповая гетероскедастичность"
 
 #: lib/src/modelprint.c:590 lib/src/system.c:91 lib/src/varprint.c:1020
 #: lib/src/varprint.c:1029 lib/src/varprint.c:1037 gui2/selector.c:2863
@@ -4213,11 +4215,11 @@ msgstr "Интервальная регрессия"
 
 #: lib/src/modelprint.c:613
 msgid "Arellano--Bond"
-msgstr ""
+msgstr "Метод Ареллано--Бонда"
 
 #: lib/src/modelprint.c:614
 msgid "Arellano-Bond"
-msgstr ""
+msgstr "Метод Ареллано-Бонда"
 
 #: lib/src/modelprint.c:624
 msgid "Hildreth--Lu"
@@ -4277,11 +4279,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:660
 msgid "2-step Arellano-Bond"
-msgstr ""
+msgstr "2-шаговый метод Ареллано-Бонда"
 
 #: lib/src/modelprint.c:662
 msgid "1-step Arellano-Bond"
-msgstr ""
+msgstr "1-шаговый метод Ареллано-Бонда"
 
 #: lib/src/modelprint.c:666 lib/src/modelprint.c:670
 msgid "2-step GMM"
@@ -4309,11 +4311,11 @@ msgstr "Упорядоченный пробит"
 
 #: lib/src/modelprint.c:692
 msgid "Two-step Heckit"
-msgstr ""
+msgstr "2-шаговый метод Хекмана"
 
 #: lib/src/modelprint.c:694
 msgid "ML Heckit"
-msgstr ""
+msgstr "МП-метод Хекмана"
 
 #: lib/src/modelprint.c:698
 msgid "Quantile"
@@ -4344,6 +4346,8 @@ msgid ""
 "Critical values for desired TSLS maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
+"Критические значения максимального размера для 2МНК,\n"
+"  тесты проводились на 5% уровне значимости:\n"
 
 #: lib/src/modelprint.c:766
 msgid "bias"
@@ -4360,46 +4364,46 @@ msgstr "Значение"
 #: lib/src/modelprint.c:783
 #, c-format
 msgid "Relative bias is probably less than %g%%"
-msgstr ""
+msgstr "Относительное смещение вероятно меньше %g%%"
 
 #: lib/src/modelprint.c:785
 #, c-format
 msgid "Maximal size is probably less than %g%%"
-msgstr ""
+msgstr "Максимальный размер вероятно меньше %g%%"
 
 #: lib/src/modelprint.c:795
 #, c-format
 msgid "Relative bias may exceed %g%%"
-msgstr ""
+msgstr "Относительное смещение может быть больше %g%%"
 
 #: lib/src/modelprint.c:797
 #, c-format
 msgid "Maximal size may exceed %g%%"
-msgstr ""
+msgstr "Максимальный размер может быть больше %g%%"
 
 #: lib/src/modelprint.c:806
 msgid "Weak instrument test"
-msgstr ""
+msgstr "Тест на слабые инструменты"
 
 #: lib/src/modelprint.c:830 lib/src/modelprint.c:838
 msgid "First-stage F-statistic"
-msgstr ""
+msgstr "F-статистика для 1-го шага"
 
 #: lib/src/modelprint.c:844 lib/src/modelprint.c:853
 msgid "Cragg-Donald minimum eigenvalue"
-msgstr ""
+msgstr "Минимальное собственное число Крэга-Дональда"
 
 #: lib/src/modelprint.c:850
 msgid "Cragg--Donald minimum eigenvalue"
-msgstr ""
+msgstr "Минимальное собственное число Крэга--Дональда"
 
 #: lib/src/modelprint.c:891
 msgid "A value < 10 may indicate weak instruments"
-msgstr ""
+msgstr "Значение < 10 может указывать на слабые инструменты"
 
 #: lib/src/modelprint.c:924
 msgid "Instrumented"
-msgstr ""
+msgstr "Независимые переменные"
 
 #: lib/src/modelprint.c:925 gui2/selector.c:3415 gui2/selector.c:6046
 msgid "Instruments"
@@ -4507,11 +4511,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:1246
 msgid "Omitted because all values were zero:"
-msgstr ""
+msgstr "Пропущены из-за нулевых значений всех наблюдений:"
 
 #: lib/src/modelprint.c:1260
 msgid "Omitted due to exact collinearity:"
-msgstr ""
+msgstr "Пропущены из-за совершенной коллинеарности:"
 
 #: lib/src/modelprint.c:1272
 msgid "Redundant instruments:"
@@ -4811,7 +4815,7 @@ msgstr "Информационный критерий Хеннана-Куинн�
 
 #: lib/src/modelprint.c:2425
 msgid "note on model statistics abbreviations here"
-msgstr ""
+msgstr "note on model statistics abbreviations here"
 
 #: lib/src/modelprint.c:2431
 msgid "Mean dependent var"
@@ -5109,7 +5113,7 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:2113
 msgid "   Variable     mean         std. dev.\n"
-msgstr ""
+msgstr "   Переменная  Среднее  Ст. откл.\n"
 
 #: lib/src/monte_carlo.c:2182
 msgid "write of data file failed\n"
@@ -5426,7 +5430,7 @@ msgstr "Неверная опция '--%s'"
 #: lib/src/options.c:907
 #, c-format
 msgid "The option '--%s' requires a parameter"
-msgstr ""
+msgstr "Опция '--%s' требует указания параметра"
 
 #: lib/src/options.c:1106
 #, c-format
@@ -6041,17 +6045,17 @@ msgstr "'%s': неизвестное название"
 #: lib/src/system.c:1637
 #, c-format
 msgid "system residual, equation %d"
-msgstr ""
+msgstr "остатки системы, уравнение %d"
 
 #: lib/src/system.c:1640
 #, c-format
 msgid "system fitted value, equation %d"
-msgstr ""
+msgstr "подобранные значения системы, уравнение %d"
 
 #: lib/src/system.c:1682 lib/src/system.c:1684
 #, c-format
 msgid "iterated %s"
-msgstr ""
+msgstr "итерация %s"
 
 #: lib/src/system.c:2646
 msgid ""
