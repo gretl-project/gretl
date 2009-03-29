@@ -2,6 +2,7 @@
 \usepackage[a4paper]{geometry}
 \usepackage{smallhds,simplebib}
 \usepackage[pdftex]{hyperref}
+\usepackage{graphicx}
 
 \usepackage{bm}
 \usepackage{verbatim}
@@ -285,10 +286,11 @@ of the \textit{name} of the matrix, and on each run of a Kalman
 function (as described below) the matrix is re-read.  It is therefore
 possible to write one \texttt{kalman} block and then do several
 filtering or smoothing passes using different sets of input values. An
-example of this technique is provided later, in the example script
-contained in Table \ref{tab:armaest}. The dimensions of the various
-input matrices are, however, defined via the initial \texttt{kalman}
-set-up and it is an error if any of the matrices are changed in size.
+example of this technique is provided later, in the example scripts
+contained in Table \ref{tab:armaest} and \ref{tab:loclev}. The
+dimensions of the various input matrices are, however, defined via the
+initial \texttt{kalman} set-up and it is an error if any of the
+matrices are changed in size.
 
 \subsection{Time-varying matrices}
 
@@ -632,7 +634,7 @@ function arma11_via_kalman(series y)
    
 end function
 
-# --------------------------- main ---------------------------------
+# ------------------------ main ---------------------------
 
 # open the "arma" example dataset
 open arma.gdt
@@ -649,10 +651,10 @@ arma 1 1 ; y --nc
 
 Suppose we have a series $y_t = \mu_t + \varepsilon_t$, where $\mu_t$
 is a random walk with normal increments of variance $\sigma^2_1$ and $
-\varepsilon_t$ is a white noise with variance $\sigma^2_2$.  This is
-known as the ``local level'' model in Harvey's (1991) terminology, and
-it can be cast in state-space form as equations
-(\ref{eq:state})-(\ref{eq:obs}) with
+\varepsilon_t$ is a normal white noise with variance $\sigma^2_2$,
+independent of $\mu_t$. This is known as the ``local level'' model in
+Harvey's (1991) terminology, and it can be cast in state-space form as
+equations (\ref{eq:state})-(\ref{eq:obs}) with
 \begin{eqnarray*}
   \statemat & = & 1 \\
   \strdist_t & \sim & N(0, \sigma^2_1) \\
@@ -678,17 +680,25 @@ estimation of such a model. For the sake of brevity, simulation is
 carried out via ordinary gretl commands, rather than the state-space
 apparatus described above.
 
+The example contains two functions: the first one carries out the
+estimation of the unknown parameters $\sigma^2_1$ and $\sigma^2_2$ via
+maximum likelihood; the second one uses these estimates to compute a
+smoothed estimate of the unobservable series $\mu_t$ calles
+\texttt{muhat}. A plot of $\mu_t$ and its estimate is presented in
+Figure \ref{fig:loclev}.
+
 \begin{table}[htbp]
   \caption{Local level model}
   \label{tab:loclev}
 
 \begin{small}
 \begin{verbatim}
+function local_level (series y)
+    /* starting values */
+    matrix s1 = {1}
+    matrix s2 = {1}
 
-/* ----------- functions ----------- */
-
-function loclev_ll (series y, scalar s1, scalar s2)
-    /* log-likelihood function */
+    /* Kalman filter set-up */
     kalman
        obsy y
        obsymat 1
@@ -696,9 +706,15 @@ function loclev_ll (series y, scalar s1, scalar s2)
        statevar s2
        obsvar s1
     end kalman --diffuse
-    kfilter()
-    series ret = $kalman_llt
-    return series ret
+
+    /* ML estimation */
+    mle ll = ERR ? NA : $kalman_llt
+        ERR = kfilter()
+        params s1 s2
+    end mle
+
+    matrix ret = s1 ~ s2
+    return matrix ret
 end function
 
 function loclev_sm (series y, scalar s1, scalar s2)
@@ -710,14 +726,12 @@ function loclev_sm (series y, scalar s1, scalar s2)
        statevar s2
        obsvar s1
     end kalman --diffuse
-    matrix state = ksmooth()
-    series ret = state[,1]
+    series ret = ksmooth()
     return series ret
 end function
 
-/* ---------- main script ---------- */
+/* -------------------- main script -------------------- */
 
-/* simulate the data */
 nulldata 200
 set seed 202020
 setobs 1 1 --special
@@ -728,20 +742,21 @@ w = normal() * sqrt(true_s2)
 mu = 2 + cum(w)
 y = mu + v
 
-/* do the estimation */
-s1 = 1
-s2 = 1
-mle ll = loclev_ll(y, s1, s2)
-    params s1 s2
-end mle
-
-Uhat = loclev_sm(y, s1, s2) # compute the smoothed state
+matrix Vars = local_level(y)           # estimate the variances
+muhat = loclev_sm(y, Vars[1], Vars[2]) # compute the smoothed state
 \end{verbatim}
 \end{small}
 \end{table}
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{local_level}
+  \caption{Local level model: $\mu_t$ and its smoothed estimate}
+  \label{fig:loclev}
+\end{figure}
 By appending the following code snippet to the example in
-Table~\ref{tab:loclev}, one may check the results via \textsf{R}.
+Table~\ref{tab:loclev}, one may check the results against the
+\textsf{R} command \texttt{StructTS}.
 
 \begin{verbatim}
 foreign language=R --send-data
