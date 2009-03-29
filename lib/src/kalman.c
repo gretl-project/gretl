@@ -2592,6 +2592,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     int T, saveT;
 
     if (V == NULL) {
+	fprintf(stderr, "ksimul: V is NULL\n");
 	*err = missing_matrix_error();
     } else if (u == NULL) {
 	*err = missing_kalman_error();
@@ -2615,6 +2616,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 
     /* if R is non-null we need a disturbance for the obs equation */
     if (K->R != NULL && W == NULL) {
+	fprintf(stderr, "ksimul: W is NULL\n");
 	*err = missing_matrix_error();
 	return NULL;
     }

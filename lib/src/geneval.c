@@ -1451,29 +1451,27 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     return C;
 }
 
-static gretl_matrix *
-tmp_matrix_from_series (const double *x, const DATAINFO *pdinfo,
-			int *err)
+static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
 {
+    int t, T = sample_size(p->dinfo);
+    const double *x = n->v.xvec;
     gretl_matrix *m = NULL;
-    int T = sample_size(pdinfo);
-    int i, t;
 
-    /* FIXME autoregressive case? */
-
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	if (xna(x[t])) {
-	    *err = E_MISSDATA;
+	    p->err = E_MISSDATA;
 	    return NULL;
 	}
     }
 
     m = gretl_column_vector_alloc(T);
+
     if (m == NULL) {
-	*err = E_ALLOC;
+	p->err = E_ALLOC;
     } else {
-	i = 0;
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	int i = 0;
+
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    m->val[i++] = x[t];
 	}
     }
@@ -1512,12 +1510,12 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 	gretl_matrix *c = NULL;
 
 	if (l->t == VEC) {
-	    a = tmp_matrix_from_series(l->v.xvec, p->dinfo, &p->err);
+	    a = tmp_matrix_from_series(l, p);
 	    c = a;
 	    b = r->v.m;
 	} else {
 	    a = l->v.m;
-	    b = tmp_matrix_from_series(r->v.xvec, p->dinfo, &p->err);
+	    b = tmp_matrix_from_series(r, p);
 	    c = b;
 	}
 
@@ -4715,6 +4713,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	gretl_matrix *V = NULL;
 	gretl_matrix *W = NULL;
 	const char *S = NULL;
+	int freeV = 0, freeW = 0;
 	
 	if (k < 1 || k > 3) {
 	    n_args_error(k, 1, "ksimul", p);
@@ -4723,7 +4722,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
 	    if (i == 0) {
-		if (e->t != MAT) {
+		if (e->t == VEC) {
+		    V = tmp_matrix_from_series(e, p);
+		    freeV = 1;
+		} else if (e->t != MAT) {
 		    node_type_error(t->t, i, MAT, e, p);
 		} else {
 		    V = e->v.m;
@@ -4731,6 +4733,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 1) {
 		if (e->t == EMPTY) {
 		    ; /* OK */
+		} else if (e->t == VEC) {
+		    W = tmp_matrix_from_series(e, p);
+		    freeW = 1;
 		} else if (e->t != MAT) {
 		    node_type_error(t->t, i, MAT, e, p);
 		} else {
@@ -4756,7 +4761,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		gretl_matrix_free(ret->v.m);
 	    }	    
 	    ret->v.m = user_kalman_simulate(V, W, S, &p->err);
-	} 
+	}
+
+	if (freeV) gretl_matrix_free(V);
+	if (freeW) gretl_matrix_free(W);
     }
 
     return ret;
