@@ -2271,11 +2271,11 @@ int user_kalman_run (const char *E, const char *V,
     K->P = K->K = NULL;
 
     if (err == E_NAN) {
-	/* we'll not count this as fatal */
 	ret = 1;
-    } else {   
-	*perr = err;
-    }
+    } 
+
+    /* FIXME? */
+    *perr = err;
 
     return ret;    
 }
