@@ -561,9 +561,10 @@ ARMA(1,1) model
 One of the ways the above equation can be cast in state-space form is
 by defining a latent process $\xi_t = \frac{1}{1 - \phi L}
 \varepsilon_t$ and noting that 
-\[
-y_t = \xi_t + \theta \xi_{t-1} ,
-\]
+
+\begin{equation}
+y_t = \xi_t + \theta \xi_{t-1} ,\label{eq:arma-meas}
+\end{equation}
 which is the observation equation corresponding to (\ref{eq:obs});
 the state transition equation corresponding to (\ref{eq:state}) is
 \[
@@ -582,11 +583,14 @@ The gretl syntax for a corresponding \texttt{kalman} block would be
     kalman
         obsy y
         obsymat H
-        obsvar 0
         statemat F
         statevar Q
     end kalman
 \end{verbatim}
+Note that the observation equation (\ref{eq:arma-meas}) does not
+include an ``error term''; this is equivalent to saying that
+$V(\obsdist_t) = 0$ and, as a consequence, the \texttt{kalman} block
+does not include an \texttt{obsvar} keyword.
 
 Once the filter is set up, all it takes to compute the loglikelihood
 for given values of $\phi$, $\theta$ and $\sigma^2$ is to execute the
@@ -604,7 +608,6 @@ is shown in Table \ref{tab:armaest}.
 \begin{small}
 \begin{verbatim}
 function arma11_via_kalman(series y)
-    
     /* parameter initalization */
     phi = 0
     theta = 0
@@ -618,7 +621,6 @@ function arma11_via_kalman(series y)
     kalman
         obsy y
         obsymat H
-        obsvar 0
         statemat F
         statevar Q
     end kalman
@@ -631,17 +633,13 @@ function arma11_via_kalman(series y)
         ERR = kfilter()
         params phi theta sigma
     end mle -h
-   
 end function
 
 # ------------------------ main ---------------------------
 
-# open the "arma" example dataset
-open arma.gdt
-# estimate an arma(1,1) model via mle
-arma11_via_kalman(y)
-# check via native command
-arma 1 1 ; y --nc
+open arma.gdt        # open the "arma" example dataset
+arma11_via_kalman(y) # estimate an arma(1,1) model
+arma 1 1 ; y --nc    # check via native command
 \end{verbatim}
 \end{small}
 \end{table}
