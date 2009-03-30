@@ -26,7 +26,7 @@ static void invalid_varname (PRN *prn)
 #ifndef ODS_IMPORTER
 
 #ifdef EXCEL_IMPORTER
-# define cell_string(i,j) (rows[i].cells[j])
+# define cell_string(i,j) ((rows[i].cells != NULL)? rows[i].cells[j] : NULL)
 #else
 # define cell_string(i,j) (labels[i])
 #endif
@@ -43,7 +43,7 @@ importer_dates_check (int row_offset, int col_offset,
 
     for (t=0; t<newinfo->n; t++) {
 	s = cell_string(t + row_offset, col_offset);
-	if (*s == '\0') {
+	if (s == NULL || *s == '\0') {
 	    fprintf(stderr, "importer_dates_check: got blank label\n");
 	    return 0;
 	}
