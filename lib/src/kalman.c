@@ -1888,7 +1888,7 @@ static int user_kalman_recheck_matrices (user_kalman *u)
 		K->Mt[i] = (gretl_matrix *) *cptr[i];
 	    }	
 	} else if (kalman_owns_matrix(K, i)) {
-	    err = update_scalar_matrix((gretl_matrix *) *cptr[i], K->mnames[i]);
+	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
 	} else {
 	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
 	}
