@@ -121,6 +121,8 @@ struct kalman_ {
 #define kalman_is_running(K)  (K->flags & KALMAN_FORWARD)
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
 
+#define GENERIC_MATNAME "$Kmat"
+
 static const char *kalman_matrix_name (int sym);
 
 /* symbolic identifiers for input matrices: note that potentially
@@ -1172,6 +1174,10 @@ static void kalman_initialize_error (kalman *K, int *missobs)
     }
 }
 
+/* the user gave a function call that should be used for updating
+   a given Kalman input matrix
+*/
+
 static gretl_matrix *kalman_update_matrix (kalman *K, int i, int *err)
 {
     const char *fncall = K->matcalls[i];
@@ -1625,7 +1631,7 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
    found, convert to matrix) or a named list (ditto).
 */
 
-static gretl_matrix *k_matrix_from_dataset (const char *s,
+static gretl_matrix *k_matrix_from_dataset (char *s,
 					    const double **Z, 
 					    const DATAINFO *pdinfo,
 					    int *err)
@@ -1644,16 +1650,18 @@ static gretl_matrix *k_matrix_from_dataset (const char *s,
 	if (list != NULL) {
 	    m = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2,
 					 M_MISSING_OK, err);
-	} else {
-	    *err = E_UNKVAR;
-	}
+	} 
     }
+
+    if (m != NULL) {
+	/* give matrix generic name */
+	strcpy(s, GENERIC_MATNAME);
+    }	
 
     return m;
 }
 
-static gretl_matrix *k_matrix_from_scalar (const char *s,
-					   int *err)
+static gretl_matrix *k_matrix_from_scalar (char *s, int *err)
 {
     gretl_matrix *m = NULL;
     double x;
@@ -1666,16 +1674,32 @@ static gretl_matrix *k_matrix_from_scalar (const char *s,
 
     if (!*err) {
 	m = gretl_matrix_from_scalar(x);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	if (gretl_is_scalar(s)) {
+	    /* scalar variable: record its name */
+	    char tmp[VNAMELEN];
+
+	    strcpy(tmp, s);
+	    sprintf(s, "$%s", tmp);
+	} else {
+	    /* generic name */
+	    strcpy(s, GENERIC_MATNAME);
+	}
     }
 
     return m;
 }
 
 /* The string @s should contain (a) the name of a user-defined
-   variable, alone (either a matrix or, if we're looking at obsy or
-   obsx, a series or named list that can be converted to a matrix), or
-   (b) a function call that creates such a matrix, or (c) the name of
-   a matrix plus a void function that updates that matrix.
+   variable, alone (either a matrix or, if the dimensions are OK,
+   a series, named list or scalar that can be converted to a matrix),
+   or (b) a function call that creates such a matrix, or (c) the name
+   of a matrix plus a void function that updates that matrix.
 
    The integer @i is an ID number that identifies the role of the
    matrix in question within the Kalman struct.  Given this info
@@ -1686,7 +1710,7 @@ static int
 attach_input_matrix (kalman *K, const char *s, int i,
 		     const double **Z, const DATAINFO *pdinfo)
 {
-    char mname[VNAMELEN] = {0};
+    char mname[VNAMELEN+1] = {0};
     gretl_matrix *m = NULL;
     int err = 0;
 
@@ -1696,7 +1720,7 @@ attach_input_matrix (kalman *K, const char *s, int i,
     }
 
     if (K->mnames == NULL) {
-	K->mnames = strings_array_new_with_length(K_MMAX, VNAMELEN);
+	K->mnames = strings_array_new_with_length(K_MMAX, VNAMELEN+1);
 	if (K->mnames == NULL) {
 	    return E_ALLOC;
 	}
@@ -1716,20 +1740,16 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	if (i == K_y || i == K_x) {
 	    /* if osby or obsx, try series / list */
 	    m = k_matrix_from_dataset(mname, Z, pdinfo, &err);
-	    if (!err) {
-		strcpy(mname, "$Kmat");
-	    }
 	} else {
 	    /* try a scalar */
 	    m = k_matrix_from_scalar(mname, &err);
-	    if (!err) {
-		strcpy(mname, "$Kmat");
-	    }
 	}
-	if (m == NULL) {
-	    gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
-	    err = E_UNKVAR;
-	}
+    }
+
+    if (!err && m == NULL) {
+	/* out of options */
+	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
+	err = E_UNKVAR;
     }
 
     if (!err) {
@@ -1800,6 +1820,27 @@ static int obsy_error (kalman *K)
     }
 }
 
+/* Did the user give the name of a scalar variable in place of a
+   1 x 1 Kalman input matrix?  If so, re-read the value of that 
+   scalar */
+
+static int update_scalar_matrix (gretl_matrix *m, const char *name)
+{
+    int err = 0;
+
+    if (gretl_matrix_is_scalar(m) && strcmp(name, GENERIC_MATNAME)) {
+	double x = gretl_scalar_get_value(name + 1);
+
+	if (na(x)) {
+	    return E_MISSDATA;
+	} else {
+	    m->val[0] = x;
+	}
+    }
+
+    return err;
+}
+
 #define use_fncall(K,i) (K->matcalls != NULL && K->matcalls[i] != NULL)
 
 /* When (re-)running a user-defined filter, check that no relevant
@@ -1830,7 +1871,9 @@ static int user_kalman_recheck_matrices (user_kalman *u)
 		gretl_matrix_free(K->Mt[i]);
 		K->Mt[i] = (gretl_matrix *) *cptr[i];
 	    }	
-	} else if (!kalman_owns_matrix(K, i)) {
+	} else if (kalman_owns_matrix(K, i)) {
+	    err = update_scalar_matrix((gretl_matrix *) *cptr[i], K->mnames[i]);
+	} else {
 	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
 	}
     }
