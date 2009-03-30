@@ -1605,7 +1605,7 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
     tailstrip(fncall); 
 
     if (*mname == '\0') {
-	/* straight function call */
+	/* straight function call: try it out */
 	*pm = generate_matrix(fncall, NULL, NULL, &err);
 	if (err) {
 	    fprintf(stderr, "add_matrix_fncall: err = %d from '%s'\n", err, fncall);
@@ -1627,8 +1627,10 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
     return err;
 }
 
-/* If we didn't find a matrix of the name @s, try for a series (and if
-   found, convert to matrix) or a named list (ditto).
+/* We didn't find a matrix of the name @s: now we try for a series
+   or a named list, and if found, make a matrix out of it.  This
+   matrix will be "hard-wired" -- we don't do any further look-up
+   of values -- and will be owned by the Kalman struct.
 */
 
 static gretl_matrix *k_matrix_from_dataset (char *s,
@@ -1654,12 +1656,17 @@ static gretl_matrix *k_matrix_from_dataset (char *s,
     }
 
     if (m != NULL) {
-	/* give matrix generic name */
 	strcpy(s, GENERIC_MATNAME);
     }	
 
     return m;
 }
+
+/* We didn't find a matrix of the name @s: now we try for a scalar
+   (either a named scalar variable or a numeric constant), and if
+   found, make a matrix out of it.  If we get a named scalar, we'll
+   record its name so we're able to update its value later if need be.
+*/
 
 static gretl_matrix *k_matrix_from_scalar (char *s, int *err)
 {
@@ -1681,13 +1688,12 @@ static gretl_matrix *k_matrix_from_scalar (char *s, int *err)
 
     if (!*err) {
 	if (gretl_is_scalar(s)) {
-	    /* scalar variable: record its name */
+	    /* got a scalar variable: record its name */
 	    char tmp[VNAMELEN];
 
 	    strcpy(tmp, s);
 	    sprintf(s, "$%s", tmp);
 	} else {
-	    /* generic name */
 	    strcpy(s, GENERIC_MATNAME);
 	}
     }
@@ -1695,11 +1701,18 @@ static gretl_matrix *k_matrix_from_scalar (char *s, int *err)
     return m;
 }
 
-/* The string @s should contain (a) the name of a user-defined
-   variable, alone (either a matrix or, if the dimensions are OK,
-   a series, named list or scalar that can be converted to a matrix),
-   or (b) a function call that creates such a matrix, or (c) the name
-   of a matrix plus a void function that updates that matrix.
+/* attach_input_matrix: the string @s should contain:
+
+   (a) the name of a user-defined variable, alone (either a matrix or,
+   if the dimensions are OK, a series, named list or scalar), or
+
+   (b) a function call that returns a matrix, or 
+
+   (c) the name of a matrix plus a void function that updates that
+   matrix.
+
+   Options (b) and (c) are designed to support time-varying 
+   coefficient matrices.
 
    The integer @i is an ID number that identifies the role of the
    matrix in question within the Kalman struct.  Given this info
@@ -1726,8 +1739,8 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	}
     }
 
-    /* do we have a function call? */
     if (i <= K_R && strchr(s, '(')) {
+	/* we have a function call? */
 	err = add_matrix_fncall(K, s, i, mname, &m);
     } else if (sscanf(s, "%15s", mname) == 1) {
 	m = get_matrix_by_name(mname);
@@ -1741,13 +1754,13 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	    /* if osby or obsx, try series / list */
 	    m = k_matrix_from_dataset(mname, Z, pdinfo, &err);
 	} else {
-	    /* try a scalar */
+	    /* parameter matrix: try a scalar */
 	    m = k_matrix_from_scalar(mname, &err);
 	}
     }
 
     if (!err && m == NULL) {
-	/* out of options */
+	/* out of options now */
 	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
 	err = E_UNKVAR;
     }
@@ -1774,10 +1787,12 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	} 
 
 	if (*mname != '\0') {
-	    /* record name of external matrix */
+	    /* record name of matrix */
 	    strcpy(K->mnames[i], mname);
 	} else {
-	    /* take ownership of generated matrix */
+	    /* take ownership of generated matrix, in the case
+	       where we got a matrix-returning function call 
+	    */
 	    K->Mt[i] = m;
 	} 
     }
@@ -1832,6 +1847,7 @@ static int update_scalar_matrix (gretl_matrix *m, const char *name)
 	double x = gretl_scalar_get_value(name + 1);
 
 	if (na(x)) {
+	    /* or should we just ignore x in this case? */
 	    return E_MISSDATA;
 	} else {
 	    m->val[0] = x;
@@ -2677,9 +2693,7 @@ static int kalman_simulate (kalman *K,
 	return E_ALLOC;
     }
 
-#if 1 /* check me! */
     sim_state_0(K, V);
-#endif
 
     if (K->x == NULL) {
 	/* no exogenous vars */
