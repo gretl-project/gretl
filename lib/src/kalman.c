@@ -1876,6 +1876,7 @@ static int user_kalman_recheck_matrices (user_kalman *u)
 
     for (i=0; i<=K_P; i++) {
 	if (!kalman_owns_matrix(K, i)) {
+	    /* pointer may be invalid, needs refreshing */
 	    *cptr[i] = NULL;
 	}
     }
@@ -2549,7 +2550,6 @@ gretl_matrix *user_kalman_smooth (const char *Pname, int *err)
     u->K->Stt = Stt;
     u->K->Ptt = Ptt;
     u->K->Tmpr1 = Mr1;
-    u->K->LL = NULL;
 
     *err = user_kalman_recheck_matrices(u);
     if (!*err) {
@@ -2566,11 +2566,11 @@ gretl_matrix *user_kalman_smooth (const char *Pname, int *err)
 
     /* detach matrices */
     u->K->E = NULL;
+    u->K->S = NULL;
+    u->K->P = NULL; 
     u->K->Stt = NULL;
     u->K->Ptt = NULL;
     u->K->Tmpr1 = NULL;
-    u->K->S = NULL;
-    u->K->P = NULL; 
 
     if (*err) {
 	gretl_matrix_free(S);
