@@ -26,7 +26,8 @@ enum {
     KALMAN_USER    = 1 << 2, /* user-defined filter? */
     KALMAN_DIFFUSE = 1 << 3, /* using diffuse P_{1|0} */
     KALMAN_FORWARD = 1 << 4, /* running forward filtering pass */
-    KALMAN_SIM     = 1 << 5  /* running simulation */
+    KALMAN_SIM     = 1 << 5, /* running simulation */
+    KALMAN_CROSS   = 1 << 6  /* cross-correlated disturbances */ 
 };
 
 typedef struct kalman_ kalman;

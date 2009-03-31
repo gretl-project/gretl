@@ -169,6 +169,7 @@ struct gretl_option gretl_opts[] = {
     { IVREG,    OPT_S, "save", 0 },
     { IVREG,    OPT_T, "two-step", 0 },
     { IVREG,    OPT_W, "weights", 2 },
+    { KALMAN,   OPT_C, "cross", 0 },
     { KALMAN,   OPT_D, "diffuse", 0 },
     { KPSS,     OPT_T, "trend", 0 },
     { KPSS,     OPT_V, "verbose", 0 },
