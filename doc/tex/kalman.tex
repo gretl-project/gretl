@@ -150,9 +150,8 @@ The second step updates the estimate of the variance of the state,
 $\statevar$.  Let us define $\predvar_t =
 \obsmat'\statevar_{t|t-1}\obsmat + \obsvar$.  The update is then
 \begin{equation}
-\statevar_{t+1|t} = \statemat\left[\statevar_{t|t-1} -
- \statevar_{t|t-1}\obsmat \predvar_t^{-1}
- \obsmat' \statevar_{t|t-1} \right] \statemat' + \strvar
+\statevar_{t+1|t} = \statemat\statevar_{t|t-1}\statemat' -
+ \gain_t \predvar_t \gain_t' + \strvar
 \end{equation}
 
 \subsection{Cross-correlated disturbances}
