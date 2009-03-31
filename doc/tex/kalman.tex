@@ -21,10 +21,19 @@
 \newcommand{\statevar}{\ensuremath\mathbf{P}}
 \newcommand{\gain}{\ensuremath\mathbf{K}}
 
+\newcommand{\altstrvar}{\ensuremath\mathbf{B}}
+\newcommand{\altobsvar}{\ensuremath\mathbf{C}}
+\newcommand{\alldist}{\ensuremath\mathbf{\bm \varepsilon}}
+
 \newcommand{\prederr}{\ensuremath\mathbf{e}}
 \newcommand{\predvar}{\ensuremath{\bm\Sigma}}
 
 \newcommand{\myvec}{\mbox{vec}}
+
+\makeatletter
+\def\pdots{\vbox{\baselineskip2.5\p@ 
+  \lineskiplimit\z@ \kern2\p@\hbox{.}\hbox{.}\hbox{.}\hbox{.}}}
+\makeatother
 
 %% \setcounter{secnumdepth}{2}
 
@@ -76,12 +85,8 @@ vector, $\statevec_{t}$, is ($r \times 1$) and the vector of
 observables, $\obsvec_t$, is ($n \times 1$); $\mathbf{x}_t$ is a ($k
 \times 1$) vector of exogenous variables.  The ($r \times 1$) vector
 $\strdist_t$ and the ($n \times 1$) vector $\obsdist_t$ are assumed to
-be vector white noise\footnote{At this stage, $\strdist_t$ and
-  $\obsdist_t$ are assumed to be independent; there may be a case for
-  a more general treatment of the innovations, by specifying
-  $\strdist_t = \mathbf{M} {\bm \varepsilon_t}$ and $\obsdist_t =
-  \mathbf{N} {\bm \varepsilon_t}$, as done in \textsf{SsfPack}, but
-  this is not implemented so far.}:
+be vector white noise:
+%
 \begin{eqnarray*}
 E(\strdist_t \strdist_s') = \strvar_t \mbox{ for } t = s, 
     \mbox{ otherwise } \mathbf{0} \\
@@ -130,10 +135,11 @@ the state\footnote{For a justification of these formulae see the
 %
 where $\gain_t$ is the gain matrix, given by
 %
-\[
+\begin{equation}
+\label{eq:gain}
 \gain_t = \statemat\statevar_{t|t-1}\obsmat
   (\obsmat'\statevar_{t|t-1}\obsmat + \obsvar)^{-1}
-\]
+\end{equation}
 %
 and $\prederr_t$ is the prediction error for the observable:
 \[
@@ -148,6 +154,82 @@ $\statevar$.  Let us define $\predvar_t =
  \statevar_{t|t-1}\obsmat \predvar_t^{-1}
  \obsmat' \statevar_{t|t-1} \right] \statemat' + \strvar
 \end{equation}
+
+\subsection{Cross-correlated disturbances}
+
+The state space formulation given above assumes mutual independence of
+the disturbances in the state and observation equations, $\strdist_t$
+and $\obsdist_t$ respectively.  This assumption holds good in many
+practical applications, but a more general formulation allows for
+cross-correlation.  In place of (\ref{eq:state})--(\ref{eq:obs}) we
+may write
+%
+\begin{eqnarray}
+  \label{eq:altstate}
+  \statevec_t &=& \statemat_{t} \statevec_{t-1} + 
+     \altstrvar_t \alldist_t \\
+  \label{eq:altobs}
+  \obsvec_t &=& \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + 
+     \altobsvar_t \alldist_t
+\end{eqnarray}
+%
+where $\alldist_t$ is a ($p \times 1$) disturbance vector, all the
+elements of which have unit variance, $\altstrvar$ is ($r \times p$)
+and $\altobsvar$ is ($n \times p$).
+
+The no-correlation case is nested thus: define $\strdist^*_t$ and
+$\obsdist^*_t$ as modified versions of $\strdist_t$ and $\obsdist_t$,
+scaled such that each element has unit variance, and let
+%
+\[
+\alldist_t =
+\left[
+\begin{array}{c}
+  \strdist^*_t \\ \obsdist^*_t
+\end{array}
+\right]
+\]
+%
+so that $p = r+n$.  Then (suppressing time subscripts for simplicity)
+let 
+%
+\begin{eqnarray*}
+  \altstrvar &=& \left[
+   \begin{array}{ccc} \mathbf{\bm \Gamma}_{r\times r} & \pdots & 
+     \mathbf{0}_{r\times n}\end{array}
+  \right] \\
+  \altobsvar &=& \left[ 
+   \begin{array}{ccc} \mathbf{0}_{n\times r} & \pdots & 
+   \mathbf{\bm \Lambda}_{n\times n}\end{array}
+  \right]
+\end{eqnarray*}
+%
+where $\mathbf{\bm \Gamma}$ and $\mathbf{\bm \Lambda}$ are lower
+triangular matrices satisfying $\strvar = \mathbf{\bm
+  \Gamma}\mathbf{\bm \Gamma}'$ and $\obsvar = \mathbf{\bm
+  \Lambda}\mathbf{\bm \Lambda}'$ respectively.  The zero sub-matrices
+in the above expressions for $\altstrvar$ and $\altobsvar$ produce the
+case of mutual independence; this corresponds to the condition
+$\altstrvar \altobsvar' = \mathbf{0}$.  
+
+In the general case $p$ is not necessarily equal to $r+n$, and
+$\altstrvar \altobsvar'$ may be non-zero.  This means that the
+Kalman gain equation (\ref{eq:gain}) must be modified as
+%
+\[
+\gain_t = (\statemat\statevar_{t|t-1}\obsmat + \altstrvar\altobsvar')
+  (\obsmat'\statevar_{t|t-1}\obsmat + \obsvar)^{-1}
+\]
+%
+Otherwise, the equations given earlier hold good, if we write
+$\altstrvar\altstrvar'$ in place of $\strvar$ and
+$\altobsvar\altobsvar'$ in place of $\obsvar$.
+
+At present, as described below, gretl's implementation of the Kalman
+filter involves the user specifying $\strvar$ and $\obsvar$, and the
+cross-correlated case is not supported.  We could, however offer a
+variant in which the user instead specifies the matrices $\altstrvar$
+and $\altobsvar$.
 
 
 \section{Intended usage}
@@ -215,16 +297,31 @@ data series, or the name of a list of series.\footnote{Note that the
   data matrices \texttt{obsy} and \texttt{obsx} have $T$ rows.  That
   is, the column vectors $\obsvec_t$ and $\obsx_t$ in (\ref{eq:state})
   and (\ref{eq:obs}) are in fact the transposes of the $t$-dated rows
-  of the full matrices.}  For the other inputs, \textsl{value} may be
-the name of a predefined matrix or, if the input in question happens
-to be ($1 \times $1), the name of a scalar variable or a numerical
-constant.  Details on the specification of time-varying matrices
-are given below.
+  of the full matrices.}  
 
-Not all of these inputs need be specified in every case; some are
-optional. (In addition, you can specify the matrices in any order.)
-The mandatory elements are $\obsvec$, $\obsmat$, $\statemat$ and
-$\strvar$, so the minimal \texttt{kalman} block looks like this:
+For the other inputs, \textsl{value} may be the name of a predefined
+matrix or, if the input in question happens to be ($1 \times $1), the
+name of a scalar variable or a numerical constant.  If the
+\textsl{value} of a coefficient matrix is given as the name of a
+matrix or scalar variable, the input is not ``hard-wired'' into the
+Kalman structure, rather a record is made of the \textit{name} of the
+variable and on each run of a Kalman function (as described below) its
+value is re-read.  It is therefore possible to write one
+\texttt{kalman} block and then do several filtering or smoothing
+passes using different sets of coefficients.\footnote{Note, however,
+  that the dimensions of the various input matrices are defined via
+  the initial \texttt{kalman} set-up and it is an error if any of the
+  matrices are changed in size.}  An example of this technique is
+provided later, in the example scripts contained in Table
+\ref{tab:armaest} and \ref{tab:loclev}.  This facility to alter the
+values of the coefficients between runs of the filter is to be
+distinguished from the case of \emph{time-varying} matrices, which is
+discussed below.
+
+Not all of the above-mentioned inputs need be specified in every case;
+some are optional. (In addition, you can specify the matrices in any
+order.)  The mandatory elements are $\obsvec$, $\obsmat$, $\statemat$
+and $\strvar$, so the minimal \texttt{kalman} block looks like this:
 
 \begin{verbatim}
 kalman 
@@ -267,30 +364,13 @@ equation (\ref{eq:inivar}).  However, this method is applicable only
 if all the eigenvalues of $\statemat$ lie inside the unit circle.  If
 this condition is not satisfied we instead apply a diffuse prior,
 setting $\statevar_{1|0} = \kappa \mathbf{I}_r$ with $\kappa = 10^7$.
-If for some reason you wish to impose this diffuse prior regardless of
-the characteristics of $\statemat$, append the option flag
-\verb|--diffuse| to the \texttt{end kalman} statement.\footnote{
-  Initialization of the Kalman filter outside of the case where
-  equation (\ref{eq:inivar}) applies has been the subject of much
-  discussion in the literature---see for example de Jong (1991),
-  Koopman (1997).  At present gretl does not implement any of the
-  ``fancier'' proposals that have been made.}
-
-As we said above, it is possible to substitute series, lists or
-scalars in place of matrix variables when building a \texttt{kalman}
-block, provided the dimensions are OK.  However, one further point
-should be noted.  When you give the name of a predefined matrix---and
-only in this case---there is a gain in generality: the input matrix is
-not ``hard-wired'' into the Kalman structure, rather a record is made
-of the \textit{name} of the matrix, and on each run of a Kalman
-function (as described below) the matrix is re-read.  It is therefore
-possible to write one \texttt{kalman} block and then do several
-filtering or smoothing passes using different sets of input values. An
-example of this technique is provided later, in the example scripts
-contained in Table \ref{tab:armaest} and \ref{tab:loclev}. The
-dimensions of the various input matrices are, however, defined via the
-initial \texttt{kalman} set-up and it is an error if any of the
-matrices are changed in size.
+If you wish to impose this diffuse prior from the outset, append the
+option flag \verb|--diffuse| to the \texttt{end kalman}
+statement.\footnote{ Initialization of the Kalman filter outside of
+  the case where equation (\ref{eq:inivar}) applies has been the
+  subject of much discussion in the literature---see for example de
+  Jong (1991), Koopman (1997).  At present gretl does not implement
+  any of the ``fancier'' proposals that have been made.}
 
 \subsection{Time-varying matrices}
 
@@ -556,17 +636,19 @@ As is well known, the Kalman filter provides a very efficient way to
 compute the likelihood of ARMA models; as an example, take an
 ARMA(1,1) model
 \[
-  y_t = \phi y_{t-1} + \varepsilon_t + \theta \varepsilon_{t-1} .
+  y_t = \phi y_{t-1} + \varepsilon_t + \theta \varepsilon_{t-1}
 \]
 One of the ways the above equation can be cast in state-space form is
-by defining a latent process $\xi_t = \frac{1}{1 - \phi L}
-\varepsilon_t$ and noting that 
-
+by defining a latent process $\xi_t = (1 - \phi L)^{-1}
+\varepsilon_t$.   The observation equation corresponding to (\ref{eq:obs})
+is then
+%
 \begin{equation}
 y_t = \xi_t + \theta \xi_{t-1} ,\label{eq:arma-meas}
 \end{equation}
-which is the observation equation corresponding to (\ref{eq:obs});
-the state transition equation corresponding to (\ref{eq:state}) is
+%
+and the state transition equation corresponding to (\ref{eq:state}) is
+%
 \[
   \left[ \begin{array}{c} \xi_t \\ \xi_{t-1} \end{array} \right] =
   \left[ \begin{array}{cc} \phi & 0 \\ 1 & 0 \end{array} \right]
