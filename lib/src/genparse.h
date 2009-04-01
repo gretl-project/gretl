@@ -181,6 +181,7 @@ enum {
     F_MCORR,
     F_CDEMEAN,
     F_CHOL,
+    F_PSDROOT,
     F_INV,
     F_INVPD,
     F_GINV,

@@ -229,6 +229,7 @@ struct str_table funcs[] = {
     { F_MXTAB,    "mxtab" },
     { F_CDEMEAN,  "cdemean" },
     { F_CHOL,     "cholesky" },
+    { F_PSDROOT,  "psdroot" },
     { F_INV,      "inv" },
     { F_INVPD,    "invpd" },
     { F_GINV,     "ginv" },

@@ -5351,6 +5351,64 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     return (info == 0)? 0 : 1;
 }
 
+/**
+ * gretl_matrix_psd_root:
+ * @a: matrix to operate on.
+ * 
+ * Computes the LL' factorization of the symmetric,
+ * positive semidefinite matrix @a.  On successful exit 
+ * the lower triangle of @a is replaced by the factor L
+ * and the upper triangle is set to zero.  
+ *
+ * Returns: 0 on success; 1 on failure.
+ */
+
+int gretl_matrix_psd_root (gretl_matrix *a)
+{
+    gretl_matrix *L;
+    int n = a->rows;
+    double sum, x1, x2;
+    int i, j, k;
+    int err = 0;
+
+    L = gretl_zero_matrix_new(n, n);
+    if (L == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n && !err; i++)  {
+	for (j=0; j<=i; j++) {
+	    sum = 0.0;
+	    for (k=0; k<j; k++) {
+		x1 = gretl_matrix_get(L, i, k);
+		x2 = gretl_matrix_get(L, j, k);
+		sum += x1 * x2;
+	    }
+	    x1 = gretl_matrix_get(a, i, j);
+	    if (i == j) {
+		gretl_matrix_set(L, i, i, sqrt(x1 - sum));
+	    } else {
+		x2 = gretl_matrix_get(L, j, j);  
+		gretl_matrix_set(L, i, j, 1.0 / x2 * (x1 - sum));
+	    }
+	}
+	if (gretl_matrix_get(L, i, i) < 0) {
+	    fprintf(stderr, "Matrix is not positive semidefinite\n");
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	free(a->val);
+	a->val = L->val;
+	L->val = NULL;
+    }
+
+    gretl_matrix_free(L);
+
+    return err;
+}
+
 #if 0 /* experimental */
 
 int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,

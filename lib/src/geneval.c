@@ -2087,6 +2087,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_CDEMEAN:
 	case F_CHOL:
+	case F_PSDROOT:
 	case F_INV:
 	case F_INVPD:
 	case F_GINV:
@@ -6168,6 +6169,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MCORR:
     case F_CDEMEAN:
     case F_CHOL:
+    case F_PSDROOT:
     case F_INV:
     case F_INVPD:
     case F_GINV:

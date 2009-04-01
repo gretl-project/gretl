@@ -879,10 +879,13 @@
 	  Peforms a Cholesky decomposition of the matrix
 	  <argname>A</argname>, which is assumed to be symmetric and
 	  positive definite. The result is a lower-triangular matrix
-	  <math>K</math> which satisfies <equation status="inline"
-	  ascii="A = KK'"  tex="$A = KK'$"/>. The function will fail if
+	  <math>L</math> which satisfies <equation status="inline"
+	  ascii="A = LL'"  tex="$A = LL'$"/>. The function will fail if
 	  <argname>A</argname> is not symmetric or not positive definite.
-	</para>
+	  <seelist> 
+	    <fncref targ="psdroot"/>
+	  </seelist>
+	</para>	
       </description>
     </function>
 
@@ -3273,6 +3276,26 @@
 	    <fncref targ="pmean"/>
 	    <fncref targ="pnobs"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="psdroot" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs a generalized variant of the Cholesky decomposition of
+	  the matrix <argname>A</argname>, which must be symmetric and
+	  positive semidefinite (but which may be singular). The result is
+	  a lower-triangular matrix <math>L</math> which satisfies
+	  <equation status="inline" ascii="A = LL'" tex="$A = LL'$"/>.
+	  Indeterminate elements in the solution are set to zero.
+	</para>
+	<para>
+	  For the case where <argname>A</argname> is positive definite,
+	  see <fncref targ="cholesky"/>.
 	</para>
       </description>
     </function>
