@@ -1496,8 +1496,8 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
     return err;
 }
 
-static int 
-loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
+static int loess_plot (gnuplot_info *gi, const char *literal,
+		       const double **Z, const DATAINFO *pdinfo)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *x = NULL;
@@ -1545,6 +1545,10 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
     print_axis_label('y', s1, fp);
     print_axis_label('x', s2, fp);
     print_auto_fit_string(PLOT_FIT_LOESS, fp);
+
+    if (literal != NULL && *literal != '\0') {
+	print_gnuplot_literal_lines(literal, fp);
+    }
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 title '' w points, \\\n", fp);
@@ -2469,7 +2473,7 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (gi.fit == PLOT_FIT_LOESS) {
-	return loess_plot(&gi, Z, pdinfo);
+	return loess_plot(&gi, literal, Z, pdinfo);
     }
 
     if (gi.list[0] > MAX_LETTERBOX_LINES + 1) {
