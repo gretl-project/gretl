@@ -57,16 +57,17 @@ matrix A = { x, x^2 }
 \end{code}
 %
 Each variable occupies a column (and there can only be one variable
-per column).  You cannot use the semi-colon as a row separator in this
+per column).  You cannot use the semicolon as a row separator in this
 case: if you want the series arranged in rows, append the transpose
 symbol.  The range of data values included in the matrix depends on
 the current setting of the sample range.
 
-\tip{While gretl's built-in statistical functions for data series are
-  capable of handling missing values, the matrix arithmetic functions
-  are not. When you build a matrix from series that include missing
-  values, observations for which at least one series has a missing
-  value are skipped.}
+\tip{By default, when you build a matrix from series that include
+  missing values the data rows that contain \texttt{NA}s are skipped.
+  But you can modify this behavior via the command
+  \verb|set skip_missing off|.  In that case \texttt{NA}s are
+  converted to NaN (``Not a Number'').  In the IEEE floating-point
+  standard, arithmetic operations involving NaN always produce NaN.}
 
 Instead of giving an explicit list of variables, you may instead
 provide the \textit{name of a saved list} (see

@@ -426,16 +426,13 @@ operation will work around the missing values, and the \texttt{ksmooth}
 function can be used to obtain estimates of these values.  However,
 there are two points to note.
 
-First, the long-standing ``tradition'' in gretl is that while data
-series can have missing values (\texttt{NA}s), matrices can contain
-only valid numerical values.  To allow \texttt{NA}s in matrices you
-must use the \texttt{set} command thus:
+First, gretl's default behavior is to skip missing observations when
+constructing matrices from data series.  To change this, use the \texttt{set} 
+command thus:
 %
 \begin{verbatim}
-set force_finite off
+set skip_missing off
 \end{verbatim}
-%
-This point may be revisited in future.  
 
 Second, the handling of missing values is not yet quite right for the
 case where the observable vector $\obsvec_t$ contains more than one

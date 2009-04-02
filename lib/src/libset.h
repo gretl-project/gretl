@@ -62,7 +62,7 @@ typedef enum {
 #define VECM_NORM        "vecm_norm"
 #define ARMA_VCV         "arma_vcv"
 #define VERBOSE_INCLUDE  "verbose_include"
-#define FORCE_FINITE     "force_finite"
+#define SKIP_MISSING     "skip_missing"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 

@@ -1,4 +1,5 @@
 function mlogitlogprobs(series y, matrix X, matrix theta)
+  set warnings off
   scalar n = max(y)
   scalar k = cols(X)
   matrix b = mshape(theta,k,n)

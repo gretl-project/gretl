@@ -7785,6 +7785,12 @@
          </para>
 	</li>
 	<li>
+	  <para><lit>warnings</lit>: <lit>off</lit> or <lit>on</lit> (the
+	  default). Suppress or resume the printing of warning messages
+	  issued when arithmetical operations produce non-finite values. 
+         </para>
+	</li>
+	<li>
 	  <para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> or <lit>0</lit>
 	    (the default).  This is for use with user-defined functions.
 	    Setting <lit>debug</lit> to 1 is equivalent to turning

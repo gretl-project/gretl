@@ -544,7 +544,7 @@ static void eval_warning (parser *p, int op, int err)
 /* implementation of binary operators for scalar operands
    (also increment/decrement operators) */
 
-static double xy_calc (double x, double y, int op, parser *p)
+static double xy_calc (double x, double y, int op, int targ, parser *p)
 {
     double z = NADBL;
 
@@ -552,6 +552,12 @@ static double xy_calc (double x, double y, int op, parser *p)
     fprintf(stderr, "xy_calc: x = %g, y = %g, op = %d ('%s')\n",
 	    x, y, op, getsymb(op, NULL));
 #endif
+
+    if (targ != MAT) {
+	/* this may be questionable */
+	if (isnan(x)) x = NADBL;
+	if (isnan(y)) y = NADBL;
+    }
 
     /* assignment */
     if (op == B_ASN) {
@@ -1121,7 +1127,7 @@ static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	ret->v.xval = xy_calc(x->v.xval, y->v.xval, f, p);
+	ret->v.xval = xy_calc(x->v.xval, y->v.xval, f, NUM, p);
     }
 
     return ret;
@@ -1206,7 +1212,7 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
 	if (x != NULL) {
 	    xt = x[t];
 	}
-	ret->v.xvec[t] = xy_calc(xt, yt, f, p);
+	ret->v.xvec[t] = xy_calc(xt, yt, f, VEC, p);
     }
 
     return ret;
@@ -1253,7 +1259,7 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 	if (y != NULL) {
 	    yt = y[t];
 	}
-	ret->v.xvec[t] = xy_calc(xt, yt, f, p);
+	ret->v.xvec[t] = xy_calc(xt, yt, f, VEC, p);
     }
 
     return ret;
@@ -1457,13 +1463,6 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
     const double *x = n->v.xvec;
     gretl_matrix *m = NULL;
 
-    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	if (xna(x[t])) {
-	    p->err = E_MISSDATA;
-	    return NULL;
-	}
-    }
-
     m = gretl_column_vector_alloc(T);
 
     if (m == NULL) {
@@ -1472,7 +1471,11 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
 	int i = 0;
 
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    m->val[i++] = x[t];
+	    if (na(x[t])) {
+		m->val[i++] = M_NA;
+	    } else {
+		m->val[i++] = x[t];
+	    }
 	}
     }
 
@@ -1604,9 +1607,9 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    if (n > 1) {
 		ret->v.m = gretl_matrix_pow(m, (int) x, &p->err);
 	    } else if (l->t == NUM) {
-		ret->v.xval = xy_calc(x, m->val[0], op, p);
+		ret->v.xval = xy_calc(x, m->val[0], op, MAT, p);
 	    } else {
-		ret->v.xval = xy_calc(m->val[0], x, op, p);
+		ret->v.xval = xy_calc(m->val[0], x, op, MAT, p);
 	    }
 	    return ret;
 	}
@@ -1615,14 +1618,14 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    ret->v.xval = 1;
 	    if (l->t == NUM) {
 		for (i=0; i<n; i++) {
-		    if (xy_calc(x, m->val[i], op, p) == 0) {
+		    if (xy_calc(x, m->val[i], op, MAT, p) == 0) {
 			ret->v.xval = 0;
 			break;
 		    }
 		}
 	    } else {
 		for (i=0; i<n; i++) {
-		    if (xy_calc(m->val[i], x, op, p) == 0) {
+		    if (xy_calc(m->val[i], x, op, MAT, p) == 0) {
 			ret->v.xval = 0;
 			break;
 		    }
@@ -1636,12 +1639,12 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 
 	    if (l->t == NUM) {
 		for (i=0; i<n; i++) {
-		    y = xy_calc(x, m->val[i], op, p);
+		    y = xy_calc(x, m->val[i], op, MAT, p);
 		    ret->v.m->val[i] = y;
 		}
 	    } else {
 		for (i=0; i<n; i++) {
-		    y = xy_calc(m->val[i], x, op, p);
+		    y = xy_calc(m->val[i], x, op, MAT, p);
 		    ret->v.m->val[i] = y;
 		}	
 	    }
@@ -3984,6 +3987,7 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     int r = nsep + 1;
     int c = (seppos > 0)? seppos : m;
     int nelem = m - nsep;
+    double x;
     int i, j, k;
 
     /* check that all rows are the same length */
@@ -4026,7 +4030,8 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
 		if (n->t == EMPTY) {
 		    n = t->v.bn.n[k++];
 		} 
-		gretl_matrix_set(M, i, j, n->v.xval);
+		x = na(n->v.xval)? M_NA : n->v.xval;
+		gretl_matrix_set(M, i, j, x);
 	    }
 	}
     }
@@ -4051,8 +4056,6 @@ static int *full_series_list (const DATAINFO *pdinfo, int *err)
 
     return list;
 }
-
-#define MATRIX_SKIP_MISSING 1
 
 static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 {
@@ -4082,14 +4085,11 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 	M = gretl_null_matrix_new();
     } else {
 	const double **Z = (const double **) *p->Z;
+	int missop = (libset_get_bool(SKIP_MISSING))? M_MISSING_SKIP :
+	    M_MISSING_OK;
 
-#if MATRIX_SKIP_MISSING
 	M = gretl_matrix_data_subset(list, Z, p->dinfo->t1, p->dinfo->t2, 
-				     M_MISSING_SKIP, &p->err);
-#else
-	M = gretl_matrix_data_subset(list, Z, p->dinfo->t1, p->dinfo->t2, 
-				     M_MISSING_ERROR, &p->err);
-#endif
+				     missop, &p->err);
     }
 
     if (freelist) {
@@ -4560,7 +4560,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t == NUM) {
 		    C = gretl_matrix_from_scalar(e->v.xval);
 		    if (C == NULL) {
-			p->err = E_MISSDATA;
+			p->err = E_ALLOC;
 		    } else {
 			freeC = 1;
 		    }		    
@@ -4574,7 +4574,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t == NUM) {
 		    A = gretl_matrix_from_scalar(e->v.xval);
 		    if (A == NULL) {
-			p->err = E_MISSDATA;
+			p->err = E_ALLOC;
 		    } else {
 			freeA = 1;
 		    }
@@ -4783,6 +4783,7 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
     gretl_matrix *m = NULL;
     int *list;
     double **X = NULL;
+    int skipmiss;
     int t, T, k = 0;
     int i, j, s;
 
@@ -4827,20 +4828,18 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 
     T = sample_size(p->dinfo);
 
-    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	for (i=0; i<k; i++) {
-	    if (na(X[i][t])) {
-#if MATRIX_SKIP_MISSING
-		T--;
-		break;
-#else
-		free(X);
-		p->err = E_MISSDATA;
-		return NULL;
-#endif
+    skipmiss = libset_get_bool(SKIP_MISSING);
+
+    if (skipmiss) {
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    for (i=0; i<k; i++) {
+		if (na(X[i][t])) {
+		    T--;
+		    break;
+		}
 	    }
 	}
-    }
+    }	
 
     if (T == 0) {
 	free(X);
@@ -4852,20 +4851,24 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
     if (m == NULL) {
 	p->err = E_ALLOC;
     } else {
+	double x;
 	int skip;
 
 	i = 0;
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    skip = 0;
-	    for (j=0; j<k; j++) {
-		if (na(X[j][t])) {
-		    skip = 1;
-		    break;
+	    if (skipmiss) {
+		for (j=0; j<k; j++) {
+		    if (na(X[j][t])) {
+			skip = 1;
+			break;
+		    }
 		}
 	    }
 	    if (!skip) {
 		for (j=0; j<k; j++) {
-		    gretl_matrix_set(m, i, j, X[j][t]);
+		    x = na(X[j][t])? M_NA : X[j][t];
+		    gretl_matrix_set(m, i, j, x);
 		}
 		if (i == 0) {
 		    gretl_matrix_set_t1(m, t);
@@ -7375,67 +7378,49 @@ static int series_compatible (const gretl_matrix *m,
 	(m->t1 > 0 && m->t1 + n <= pdinfo->n);
 }
 
-static int series_has_missvals (const double *x, const DATAINFO *pdinfo)
-{
-    int t, ff = libset_get_bool(FORCE_FINITE);
-
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (ff && xna(x[t])) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static int scalar_is_missval (double x)
-{
-    int ff = libset_get_bool(FORCE_FINITE);
-
-    return (ff && xna(x));
-}
+/* below: note that node we're checking is p->ret, which may differ in
+   type from the target to which it will be assigned/converted
+*/
 
 static void gen_check_errvals (parser *p)
 {
     NODE *n = p->ret;
-    int ff;
 
     if (n == NULL || (n->t == VEC && n->v.xvec == NULL)) {
 	return;
     }
 
-    ff = libset_get_bool(FORCE_FINITE);
+    if (p->targ == MAT) {
+	/* the matrix target is handled separately */
+	return;
+    }
 
     if (n->t == NUM) {
 	if (!isfinite(n->v.xval)) {
-	    if (ff) {
-		n->v.xval = NADBL;
-		p->warn = E_MISSDATA;
-	    } else {
-		p->warn = E_NAN;
-	    }
+	    n->v.xval = NADBL;
+	    p->warn = E_MISSDATA;
 	}
     } else if (n->t == VEC) {
 	int t;
 
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    if (!isfinite(n->v.xvec[t])) {
-		if (ff) {
-		    n->v.xvec[t] = NADBL;
-		    p->warn = E_MISSDATA;
-		} else {
-		    p->warn = E_NAN;
-		}
+		n->v.xvec[t] = NADBL;
+		p->warn = E_MISSDATA;
+		break;
 	    }
 	}
     } else if (n->t == MAT) {
-	/* convert NADBL to NaN */
+	/* convert any NAs to NaNs */
 	const gretl_matrix *m = n->v.m;
 	int i, k = gretl_matrix_rows(m) * gretl_matrix_cols(m);
 
 	for (i=0; i<k; i++) {
 	    if (na(m->val[i])) {
 		m->val[i] = M_NA;
+		p->warn = E_NAN;
+	    } else if (!p->warn && !isfinite(m->val[i])) {
+		p->warn = E_NAN;
 	    }
 	}
     }
@@ -7600,18 +7585,20 @@ static int LHS_matrix_reusable (parser *p)
 static void assign_to_matrix (parser *p)
 {
     gretl_matrix *m;
+    double x;
 
     if (LHS_matrix_reusable(p)) {
 	/* result is conformable with original matrix */
 	m = p->lh.m0;
 	if (p->ret->t == NUM) {
-	    m->val[0] = p->ret->v.xval;
+	    x = p->ret->v.xval;
+	    m->val[0] = na(x)? M_NA : x;
 	} else if (p->ret->t == VEC) {
-	    const double *x = p->ret->v.xvec;
 	    int i, s = p->dinfo->t1;
 
 	    for (i=0; i<m->rows; i++) {
-		m->val[i] = x[s++];
+		x = p->ret->v.xvec[s++];
+		m->val[i] = na(x)? M_NA : x;
 	    }
 	} else {
 	    gretl_matrix_copy_values(m, p->ret->v.m);
@@ -7640,7 +7627,7 @@ static void assign_to_matrix_mod (parser *p)
 	    int i, n = m->rows * m->cols;
 
 	    for (i=0; i<n; i++) {
-		m->val[i] = xy_calc(m->val[i], p->ret->v.xval, p->op, p);
+		m->val[i] = xy_calc(m->val[i], p->ret->v.xval, p->op, MAT, p);
 	    }
 	}
     } else {
@@ -7699,7 +7686,7 @@ static void matrix_edit (parser *p)
 		int i, n = a->rows * a->cols;
 
 		for (i=0; i<n; i++) {
-		    a->val[i] = xy_calc(a->val[i], p->ret->v.xval, p->op, p);
+		    a->val[i] = xy_calc(a->val[i], p->ret->v.xval, p->op, MAT, p);
 		}
 		m = a; /* preserve modified submatrix */
 	    } else {
@@ -7789,27 +7776,6 @@ static int edit_list (parser *p)
     return p->err;
 }
 
-static int matrix_has_missvals (const gretl_matrix *m)
-{
-    if (m == NULL) {
-	return 1;
-    } else {
-	int ff = libset_get_bool(FORCE_FINITE);
-
-	if (ff) {
-	    int i, n = m->rows * m->cols;
-
-	    for (i=0; i<n; i++) {
-		if (na(m->val[i])) {
-		    return 1;
-		}
-	    }
-	}
-    }
-
-    return 0;
-}
-
 #define scalar_matrix(n) (n->t == MAT && n->v.m->rows == 1 && \
 			  n->v.m->cols == 1)
 
@@ -7858,14 +7824,7 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_TYPES;
 	}
     } else if (p->targ == MAT) {
-	/* error if result contains NAs */
-	if (r->t == VEC && series_has_missvals(r->v.xvec, p->dinfo)) {
-	    p->err = E_MISSDATA;
-	} else if (r->t == NUM && scalar_is_missval(r->v.xval)) {
-	    p->err = E_MISSDATA;
-	} else if (r->t == MAT && matrix_has_missvals(r->v.m)) {
-	    p->err = E_MISSDATA;
-	}
+	; /* no-op: leave targ alone */
     } else if (p->targ == LIST) {
 	if (r->t != EMPTY && !ok_list_node(r)) {
 	    p->err = E_TYPES;
@@ -7959,9 +7918,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* target is actually a specific observation in a series */
 	    t = p->lh.obs;
 	    if (r->t == NUM) {
-		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
+		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, NUM, p);
 	    } else if (r->t == MAT) {
-		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, p);
+		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, NUM, p);
 	    }
 	    strcpy(p->dinfo->varname[v], p->lh.name);
 	    set_dataset_is_changed();
@@ -7969,9 +7928,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* modifying existing scalar */
 	    x = gretl_scalar_get_value(p->lh.name);
 	    if (r->t == NUM) {
-		x = xy_calc(x, r->v.xval, p->op, p);
+		x = xy_calc(x, r->v.xval, p->op, NUM, p);
 	    } else {
-		x = xy_calc(x, r->v.m->val[0], p->op, p);
+		x = xy_calc(x, r->v.m->val[0], p->op, NUM, p);
 	    }
 	    gretl_scalar_set_value(p->lh.name, x);
 	} else {
@@ -7983,7 +7942,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	/* writing a series */
 	if (r->t == NUM) {
 	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) { 
-		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
+		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, VEC, p);
 	    }
 	} else if (r->t == VEC) {
 	    const double *x = r->v.xvec;
@@ -7995,7 +7954,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    }
 	    for (t=t1; t<=p->dinfo->t2; t++) {
-		Z[v][t] = xy_calc(Z[v][t], x[t], p->op, p);
+		Z[v][t] = xy_calc(Z[v][t], x[t], p->op, VEC, p);
 	    }
 	    set_dataset_is_changed();
 	} else if (r->t == MAT) {
@@ -8005,23 +7964,23 @@ static int save_generated_var (parser *p, PRN *prn)
 	    if (k == 1) {
 		/* result is effectively a scalar */
 		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-		    Z[v][t] = xy_calc(Z[v][t], m->val[0], p->op, p);
+		    Z[v][t] = xy_calc(Z[v][t], m->val[0], p->op, VEC, p);
 		}
 	    } else if (k == p->dinfo->n) {
 		/* treat result as full-length series */
 		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, p);
+		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, VEC, p);
 		}
 	    } else if (k == sample_size(p->dinfo) && m->t1 == 0) {
 		/* treat as series of current sample length */
 		for (t=p->dinfo->t1, s=0; t<=p->dinfo->t2; t++, s++) {
-		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, p);
+		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, VEC, p);
 		}
 	    } else {
 		/* align using m->t1 */
 		for (t=m->t1; t<m->t1 + k && t<=p->dinfo->t2; t++) {
 		    if (t >= p->dinfo->t1) {
-			Z[v][t] = xy_calc(Z[v][t], m->val[t - m->t1], p->op, p);
+			Z[v][t] = xy_calc(Z[v][t], m->val[t - m->t1], p->op, VEC, p);
 		    }
 		}
 	    }
@@ -8045,6 +8004,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else {
 	    /* assignment to submatrix of original */
 	    matrix_edit(p);
+	}
+	if (gretl_matrix_xna_check(p->lh.m1)) {
+	    p->warn = E_NAN;
 	}
     } else if (p->targ == LIST) {
 	edit_list(p);
@@ -8437,7 +8399,9 @@ int realgen (const char *s, parser *p, double ***pZ,
 #endif
     parser_free_aux_nodes(p);
 
+#if 1
     gen_check_errvals(p);
+#endif
 
     return p->err;
 }

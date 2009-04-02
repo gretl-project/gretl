@@ -316,25 +316,22 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 
 int gretl_matrix_xna_check (const gretl_matrix *m)
 {
-    if (m == NULL) {
-	return E_DATA;
-    } else {
-	int ff = libset_get_bool(FORCE_FINITE);
+    int ret = 0;
+
+    if (m != NULL) {
 	int i, n = m->rows * m->cols;
 
 	for (i=0; i<n; i++) {
-	    if (ff) {
-		if (xna(m->val[i])) {
-		    gretl_errmsg_set(_("Matrix is not finite"));
-		    return E_NAN;
-		}
-	    } else if (na(m->val[i])) {
+	    if (na(m->val[i])) {
 		m->val[i] = M_NA;
+	    }
+	    if (!ret && !isfinite(m->val[i])) {
+		ret = E_NAN;
 	    }
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 int gretl_matrix_get_structure (const gretl_matrix *m)

@@ -132,16 +132,6 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 	return 0;
     }
 
-    if (gretl_matrix_xna_check(M)) {
-	return E_NAN;
-    }
-
-#if 0
-    if (check_varname(name)) {
-	return E_DATA;
-    }
-#endif
-
     tmp = realloc(matrices, (n_matrices + 1) * sizeof *tmp);
     if (tmp == NULL) {
 	return E_ALLOC;
@@ -261,10 +251,6 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 {
     if (u == NULL) {
 	return E_UNKVAR;
-    }
-
-    if (gretl_matrix_xna_check(M)) {
-	return E_NAN;
     }
 
     if (M != u->M) {

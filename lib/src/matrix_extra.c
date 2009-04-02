@@ -131,19 +131,18 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
  * @x: scalar to be "promoted".
  *
  * Returns: allocated 1x1 gretl_matrix, the single element
- * of which is set to @x, or %NULL on allocation failure
- * or if @x = #NADBL.
+ * of which is set to @x, or %NULL on allocation failure.
+ * If @x = #NADBL the matrix value is #M_NA.
  */
 
 gretl_matrix *gretl_matrix_from_scalar (double x) 
 {
-    gretl_matrix *m = NULL;
+    gretl_matrix *m = gretl_matrix_alloc(1, 1);
 
-    if (!na(x)) {
-	m = gretl_matrix_alloc(1, 1);
-	if (m != NULL) {
-	    m->val[0] = x;
-	}
+    if (na(x)) {
+	m->val[0] = M_NA;
+    } else {
+	m->val[0] = x;
     }
 
     return m;

@@ -54,7 +54,7 @@ enum {
     STATE_USE_FCP         = 1 << 12, /* use FCP garch code */
     STATE_WARN_ON         = 1 << 13, /* print numerical warning messages */
     STATE_VERBOSE_INCLUDE = 1 << 14, /* verbose include */
-    STATE_FORCE_FINITE    = 1 << 15  /* make all non-finite values into NAs */
+    STATE_SKIP_MISSING    = 1 << 15  /* skip NAs when building matrix from series */
 };    
 
 /* for values that really want a non-negative integer */
@@ -121,7 +121,7 @@ struct set_vars_ {
 			   !strcmp(s, USE_FCP) || \
                            !strcmp(s, PROTECT_LISTS) || \
                            !strcmp(s, VERBOSE_INCLUDE) || \
-                           !strcmp(s, FORCE_FINITE))
+                           !strcmp(s, SKIP_MISSING))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -347,7 +347,7 @@ static void state_vars_init (set_vars *sv)
     fprintf(stderr, "state_vars_init called\n");
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
-	STATE_HALT_ON_ERR | STATE_FORCE_FINITE;
+	STATE_HALT_ON_ERR | STATE_SKIP_MISSING;
     sv->seed = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
@@ -1213,6 +1213,7 @@ static int display_settings (PRN *prn)
     libset_print_bool(USE_CWD, prn);
     libset_print_bool(PROTECT_LISTS, prn);
     libset_print_bool(VERBOSE_INCLUDE, prn);
+    libset_print_bool(SKIP_MISSING, prn);
 
     libset_header(_("Numerical methods"), prn);
 
@@ -1226,7 +1227,6 @@ static int display_settings (PRN *prn)
     libset_print_double(NLS_TOLER, prn);
     libset_print_bool(USE_SVD, prn);
     libset_print_bool(USE_FCP, prn);
-    libset_print_bool(FORCE_FINITE, prn);
 
     libset_header(_("Random number generation"), prn);
 
@@ -1696,8 +1696,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_USE_PCSE;
     } else if (!strcmp(s, VERBOSE_INCLUDE)) {
 	return STATE_VERBOSE_INCLUDE;
-    } else if (!strcmp(s, FORCE_FINITE)) {
-	return STATE_FORCE_FINITE;
+    } else if (!strcmp(s, SKIP_MISSING)) {
+	return STATE_SKIP_MISSING;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	
