@@ -1315,6 +1315,15 @@ static gchar *title_from_filename (const char *fname)
     return title;
 }
 
+void vwin_set_filename (windata_t *vwin, const char *fname)
+{
+    gchar *title = title_from_filename(fname);
+
+    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+    g_free(title);
+    strcpy(vwin->fname, fname);
+}
+
 static gchar *make_viewer_title (int role, const char *fname)
 {
     gchar *title = NULL;

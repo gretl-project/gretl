@@ -355,6 +355,7 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 static void filesel_open_script (const char *fname, windata_t *vwin)
 {
     if (vwin != NULL) {
+	strcpy(tryfile, fname);
 	sourceview_insert_file(vwin, fname);
     } else if (has_suffix(fname, ".R")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_R);

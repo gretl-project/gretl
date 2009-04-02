@@ -872,7 +872,7 @@
 
     <function name="cholesky" section="linalg" output="smatrix">
       <fnargs>
-	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="symmat">A</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3369,9 +3369,9 @@
       </description>
     </function>
 
-    <function name="psdroot" section="linalg" output="matrix">
+    <function name="psdroot" section="linalg" output="smatrix">
       <fnargs>
-	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="symmat">A</fnarg>
       </fnargs>
       <description>
 	<para>

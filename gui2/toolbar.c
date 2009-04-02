@@ -265,6 +265,7 @@ static void file_open_callback (GtkWidget *w, windata_t *vwin)
 
     if (vwin->flags & VWIN_CONTENT_CHANGED) {
 	mark_vwin_content_saved(vwin);
+	vwin_set_filename(vwin, tryfile);
     }
 }
 

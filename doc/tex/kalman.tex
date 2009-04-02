@@ -121,12 +121,13 @@ Usually these are given by $\hat{\statevec}_{1|0} = \mathbf{0}$ and
 \end{equation}
 but see below for further discussion of the initial variance.
 
-Iteration then proceeds in two steps.  First we update the estimate of
-the state\footnote{For a justification of these formulae see the
-  classic book by Anderson and Moore (1979); for a more modern
-  treatment see Pollock (1999) or Hamilton (1994).  A transcription of
-  R. E. Kalman's original paper of 1960 is available at
-  \url{http://www.cs.unc.edu/~welch/kalman/kalmanPaper.html}}
+Iteration then proceeds in two steps.\footnote{For a justification of
+  the following formulae see the classic book by Anderson and Moore
+  (1979); for a more modern treatment see Pollock (1999) or Hamilton
+  (1994).  A transcription of R. E. Kalman's original paper of 1960 is
+  available at
+  \url{http://www.cs.unc.edu/~welch/kalman/kalmanPaper.html}.}  First
+we update the estimate of the state
 %
 \begin{equation}
 \hat{\statevec}_{t+1|t} = \statemat\hat{\statevec}_{t|t-1} + 
@@ -226,7 +227,7 @@ $\altobsvar\altobsvar'$ in place of $\obsvar$.
 
 At present, as described below, gretl's implementation of the Kalman
 filter involves the user specifying $\strvar$ and $\obsvar$, and the
-cross-correlated case is not supported.  We could, however offer a
+cross-correlated case is not supported.  We could, however, offer a
 variant in which the user instead specifies the matrices $\altstrvar$
 and $\altobsvar$.
 
@@ -643,7 +644,7 @@ by defining a latent process $\xi_t = (1 - \phi L)^{-1}
 is then
 %
 \begin{equation}
-y_t = \xi_t + \theta \xi_{t-1} ,\label{eq:arma-meas}
+y_t = \xi_t + \theta \xi_{t-1} \label{eq:arma-meas}
 \end{equation}
 %
 and the state transition equation corresponding to (\ref{eq:state}) is

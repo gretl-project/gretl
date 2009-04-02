@@ -52,6 +52,8 @@ void mark_vwin_content_saved (windata_t *vwin);
 
 void mark_vwin_content_changed (windata_t *vwin);
 
+void vwin_set_filename (windata_t *vwin, const char *fname);
+
 int latex_is_ok (void);
 
 gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);

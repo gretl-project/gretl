@@ -4832,6 +4832,23 @@ int gretl_model_add_y_median (MODEL *pmod, const double *y)
     return 0;
 }
 
+static int xneq (double x, double y)
+{
+    double reldiff;
+
+    if (x == 0.0) {
+	reldiff = fabs(y);
+    } else if (y == 0.0) {
+	reldiff = fabs(x);
+    } else if (x > y) {
+	reldiff = fabs((x - y) / y);
+    } else {
+	reldiff = fabs((y - x) / x);
+    }
+
+    return reldiff > 1.5e-12;
+}
+
 /* try to tell if an OLS model with two independent variables is
    actually a quadratic model (x_2 = x_1^2). */
 
@@ -4843,7 +4860,7 @@ static int model_is_quadratic (const MODEL *pmod, const int *xlist,
     int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(x1[t]) && x2[t] != x1[t] * x1[t]) {
+	if (!na(x1[t]) && xneq(x2[t], x1[t] * x1[t])) {
 	    return 0;
 	}
     }
@@ -4884,15 +4901,14 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     int *xlist = NULL;
     char *ret = NULL;
 
-    if (xvar == 0 || pmod->ncoeff > 3 || 
-	!fitted_formula_ok(pmod->ci)) {
+    if (xvar == 0 || pmod->ncoeff > 3 || !fitted_formula_ok(pmod->ci)) {
 	return NULL;
     }
 
     xlist = gretl_model_get_x_list(pmod);
     if (xlist == NULL) {
 	return NULL;
-    }    
+    } 
 
     if (pmod->dataset != NULL) {
 	mZ = (const double **) pmod->dataset->Z;
