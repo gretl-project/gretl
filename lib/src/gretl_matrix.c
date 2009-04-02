@@ -5330,8 +5330,11 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
 	return E_DATA;
     }
 
-    n = a->rows;
-    lda = a->rows;
+    n = lda = a->rows;
+
+    if (a->cols != n) {
+	return E_NONCONF;
+    }
 
     dpotrf_(&uplo, &n, a->val, &lda, &info);
 
