@@ -1461,6 +1461,95 @@
       </description>
     </function>
 
+    <function name="filter" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="scalar-or-vec">a</fnarg>
+	<fnarg type="scalar-or-vec">b</fnarg>
+	<fnarg type="scalar">y0</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	Computes an ARMA-like filtering of the
+	series <argname>x</argname>. The transformation can be written
+	as
+	</para>
+	<para context="tex">
+	  \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=i}^p b_i y_{t-i} \]
+	</para>
+	<para context="notex">
+	  <math>y</math><sub>t</sub> = 
+	  <math>a</math><sub>0</sub> <math>x</math><sub>t</sub> +
+	  <math>a</math><sub>1</sub> <math>x</math><sub>t-1</sub> +
+	  ...
+	  <math>a</math><sub>q</sub> <math>x</math><sub>t-q</sub> +
+	  <math>b</math><sub>1</sub> <math>y</math><sub>t-1</sub> +
+	  ...
+	  <math>b</math><sub>p</sub> <math>y</math><sub>t-p</sub>
+	</para>
+	<para>
+	  The two arguments <argname>a</argname>
+	  and <argname>b</argname> are optional. They may be scalars,
+	  vectors or the keyword <lit>null</lit>.
+	</para>
+	<para>
+	  If <argname>a</argname> is a scalar, this is used
+	  as <math>a</math><sub>0</sub> and implies <math>q=0</math>;
+	  if it is a vector of <math>q+1</math> elements, they contain
+	  the coefficients from <math>a</math><sub>0</sub>
+	  to <math>a</math><sub>q</sub>. If <argname>a</argname>
+	  is <lit>null</lit> or omitted, this is equivalent to
+	  setting <math>a</math><sub>0</sub><math>=1</math>
+	  and <math>q=0</math>.
+	</para>
+	<para>
+	  If <argname>b</argname> is a scalar, this is
+	  used as <math>b</math><sub>1</sub> and
+	  implies <math>p=1</math>; if it is a vector
+	  of <math>p</math> elements, they contain the coefficients
+	  from <math>b</math><sub>1</sub>
+	  to <math>b</math><sub>p</sub>. If <argname>b</argname>
+	  is <lit>null</lit> or omitted, this is equivalent to
+	  setting <math>B(L)=1</math>.
+	</para>
+	<para>
+	  The optional scalar argument <argname>y0</argname> is taken
+	  to represent all values of <math>y</math> prior to the
+	  beginning of sample (used only when <math>p>0</math>). If
+	  omitted, it is understood to be 0.  Pre-sample values
+	  of <argname>x</argname> are always assumed zero.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="bkfilt"/>
+	    <fncref targ="fracdiff"/>
+	    <fncref targ="hpfilt"/>
+	    <fncref targ="movavg"/>
+	  </seelist>
+	</para>
+	<para>
+	  Example:
+	</para>
+	<code>
+	  nulldata 5
+	  y = filter(index, 0.5, -0.9, 1)
+	  print index y --byobs
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+                   index            y   
+           			      
+          1            1     -0.40000   
+          2            2      1.36000   
+          3            3      0.27600   
+          4            4      1.75160   
+          5            5      0.92356   
+	</code>
+      </description>
+    </function>
+
     <function name="firstobs" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
