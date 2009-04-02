@@ -5366,10 +5366,19 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
 int gretl_matrix_psd_root (gretl_matrix *a)
 {
     gretl_matrix *L;
-    int n = a->rows;
     double sum, x1, x2;
-    int i, j, k;
+    int i, j, k, n;
     int err = 0;
+
+    if (a == NULL || a->rows == 0) {
+	return E_DATA;
+    }
+
+    n = a->rows;
+
+    if (a->cols != n) {
+	return E_NONCONF;
+    }
 
     L = gretl_zero_matrix_new(n, n);
     if (L == NULL) {

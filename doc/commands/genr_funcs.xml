@@ -3287,11 +3287,14 @@
       <description>
 	<para>
 	  Performs a generalized variant of the Cholesky decomposition of
-	  the matrix <argname>A</argname>, which must be symmetric and
-	  positive semidefinite (but which may be singular). The result is
-	  a lower-triangular matrix <math>L</math> which satisfies
-	  <equation status="inline" ascii="A = LL'" tex="$A = LL'$"/>.
-	  Indeterminate elements in the solution are set to zero.
+	  the matrix <argname>A</argname>, which must be positive
+	  semidefinite (but which may be singular). If the input matrix is
+	  not square an error is flagged, but symmetry is assumed and not
+	  tested; only the lower triangle of <argname>A</argname> is read.
+	  The result is a lower-triangular matrix <math>L</math> which
+	  satisfies <equation status="inline" ascii="A = LL'" tex="$A =
+	  LL'$"/>.  Indeterminate elements in the solution are set to
+	  zero.
 	</para>
 	<para>
 	  For the case where <argname>A</argname> is positive definite,
