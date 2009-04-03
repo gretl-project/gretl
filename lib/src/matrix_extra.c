@@ -428,6 +428,13 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 
     if (mask != NULL) {
 	T -= get_mask_count(mask, Tmax);
+    } else if (op == M_MISSING_TRIM) {
+	*err = check_for_missing_obs(list, &t1, &t2, Z, NULL);
+	if (*err) {
+	    return NULL;
+	} else {
+	    Tmax = T = t2 - t1 + 1;
+	}
     } else if (op == M_MISSING_SKIP || op == M_MISSING_ERROR) {
 	for (t=t1; t<=t2 && !*err; t++) {
 	    for (j=0; j<k; j++) {
@@ -485,7 +492,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 	}
     }
 
-    if (!*err) {
+    if (!*err && (mask != NULL || op == M_MISSING_OK)) {
 	for (j=0; j<k && !*err; j++) {
 	    for (t=0; t<T && !*err; t++) {
 		x = gretl_matrix_get(M, t, j);

@@ -234,7 +234,7 @@ static void init_globals (ZipOption opt)
     fnxt = &found;
 
     if (opt & ZIP_TRACE) {
-	verbosity = 2;
+	verbosity = 8;
     } else if (opt & ZIP_VERBOSE) {
 	verbosity = 1;
     } else {

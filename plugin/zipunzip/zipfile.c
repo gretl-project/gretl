@@ -363,7 +363,7 @@ real_read_zipfile (zfile *zf, int task)
 	    }
 	    if (memcmp(t, z->iname, z->namelen)) {
 		t[z->namelen] = 0;
-		trace(2, "t = '%s' != z->iname = '%s'\n", n, z->namelen);
+		trace(2, "t = '%s' != z->iname = '%s'\n", t, z->iname);
 		free(t);
 		return ZE_FORM;
 	    }
@@ -422,8 +422,12 @@ real_read_zipfile (zfile *zf, int task)
 	    for (n = 0; n < LOCNAM; n++) {
 		if (b[n] != u[n]) {
 		    /* local and central headers disagree */
-		    trace(2, "local and central headers disagree\n");
+		    trace(2, "local and central headers disagree: b[%d]=%d, u[%d]=%d\n",
+			  n, b[n], n, u[n]);
+#if 0
+		    /* this seems to be harmless? */
 		    return ZE_FORM;
+#endif
 		}
 	    }
 

@@ -26,6 +26,7 @@
 
 int gretl_unzip_file (const char *fname, GError **gerr)
 {
+    /* for verbose operation, make 3rd arg ZIP_VERBOSE or ZIP_TRACE */
     return zipfile_extract_files(fname, NULL, 0, gerr);
 }
 

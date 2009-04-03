@@ -4057,9 +4057,28 @@ static int *full_series_list (const DATAINFO *pdinfo, int *err)
     return list;
 }
 
-static gretl_matrix *matrix_from_list (NODE *n, parser *p)
+static gretl_matrix *real_matrix_from_list (const int *list,
+					    const double **X, 
+					    parser *p)
 {
     gretl_matrix *M;
+
+    if (list != NULL && list[0] == 0) {
+	M = gretl_null_matrix_new();
+    } else {
+	int missop = (libset_get_bool(SKIP_MISSING))? M_MISSING_SKIP :
+	    M_MISSING_OK;
+
+	M = gretl_matrix_data_subset(list, X, p->dinfo->t1, p->dinfo->t2, 
+				     missop, &p->err);
+    }
+
+    return M;
+}
+
+static gretl_matrix *matrix_from_list (NODE *n, parser *p)
+{
+    gretl_matrix *M = NULL;
     int *list = NULL;
     int freelist = 0;
 
@@ -4077,19 +4096,8 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 	freelist = 1;
     }
 
-    if (p->err) {
-	return NULL;
-    }
-
-    if (list != NULL && list[0] == 0) {
-	M = gretl_null_matrix_new();
-    } else {
-	const double **Z = (const double **) *p->Z;
-	int missop = (libset_get_bool(SKIP_MISSING))? M_MISSING_SKIP :
-	    M_MISSING_OK;
-
-	M = gretl_matrix_data_subset(list, Z, p->dinfo->t1, p->dinfo->t2, 
-				     missop, &p->err);
+    if (!p->err) {
+	M = real_matrix_from_list(list, (const double **) *p->Z, p);
     }
 
     if (freelist) {
@@ -4496,7 +4504,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 	    A = gretl_matrix_seq(start, end, step, &p->err);
 	}
-    }
+    } 
 
     if (!p->err) {
 	ret = aux_matrix_node(p);
@@ -4510,6 +4518,69 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     }
 
     return ret;
+}
+
+static NODE *replace_value (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    if (l->t != NUM) {
+	node_type_error(F_REPLACE, 0, NUM, l, p);
+    } else if (m->t != NUM) {
+	node_type_error(F_REPLACE, 1, NUM, m, p);
+    }
+
+#if 0
+    if (!p->err) {
+	if (r->t == VEC) {
+	    ret = aux_vec_node(p);
+	} else if (r->t == MAT) {
+	    ret = aux_matrix_node(p);
+	} else if (ok_list_node(r)) {
+	    ret = XX;
+	} else {
+	    ;
+	}
+    }
+#endif
+
+    if (!p->err) {
+	double x0 = l->v.xval;
+	double x1 = m->v.xval;
+	int t;
+
+	if (r->t == VEC) {
+	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		if (r->v.xvec[t] == x0) {
+		    r->v.xvec[t] = x1;
+		}
+	    }
+	} else if (r->t == MAT) {
+	    gretl_matrix *m = r->v.m;
+	    int n = gretl_matrix_rows(m) * gretl_matrix_cols(m);
+
+	    for (t=0; t<n; t++) {
+		if (m->val[t] == x0) {
+		    m->val[t] = x1;
+		}
+	    }  
+	} else if (ok_list_node(r)) {
+	    int *list = node_get_list(r, p);
+	    int i, vi;
+
+	    for (i=1; i<=list[0] && !p->err; i++) {
+		vi = list[i];
+		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		    if ((*p->Z)[vi][t] == x0) {
+			(*p->Z)[vi][t] = x1;
+		    }
+		}
+	    }
+	    free(list);
+	} else {
+	    node_type_error(F_REPLACE, 2, VEC, r, p);
+	}
+    }
+
+    return r;
 }
 
 static void n_args_error (int k, int n, const char *s, parser *p)
@@ -4772,21 +4843,23 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 }
 
 /* Create a matrix using selected series, or a mixture of series and
-   lists, or more than one list.  Note that we can't use an augmented
-   list here, because the series are not necessarily members of the
-   dataset: they could be auxiliary series.
+   lists, or more than one list.  We proceed by setting up a "dummy"
+   dataset and constructing a list that indexes into it.  (We can't
+   use a regular list, in the generl case, since some of the series
+   may be temporary variables that are not part of the "real"
+   dataset.)
 */
 
 static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 {
     NODE *n;
     gretl_matrix *m = NULL;
-    int *list;
-    double **X = NULL;
-    int skipmiss;
-    int t, T, k = 0;
-    int i, j, s;
+    const int *list;
+    const double **X = NULL;
+    int *dumlist;
+    int i, j, k = 0;
 
+    /* how many columns will we need? */
     for (i=0; i<nnodes; i++) {
 	n = nn->v.bn.n[i];
 	if (n->t == LIST) {
@@ -4803,83 +4876,43 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 	}
     }
 
+    /* create dummy dataset */
     X = malloc(k * sizeof *X);
     if (X == NULL) {
+	p->err = E_ALLOC;
 	return NULL;
     }
 
-    s = 0;
+    /* and a list associated with X */
+    dumlist = gretl_consecutive_list_new(0, k-1);
+    if (dumlist == NULL) {
+	p->err = E_ALLOC;
+	free(X);
+	return NULL;
+    }
+
+    /* fill out the pointers in X */
+    k = 0;
     for (i=0; i<nnodes; i++) {
 	n = nn->v.bn.n[i];
 	if (n->t == LIST) {
 	    list = get_list_by_name(n->v.str);
 	    for (j=1; j<=list[0]; j++) {
-		X[s++] = (*p->Z)[list[j]];
+		X[k++] = (*p->Z)[list[j]];
 	    }
 	} else if (n->t == LVEC) {
 	    list = n->v.ivec;
 	    for (j=1; j<=list[0]; j++) {
-		X[s++] = (*p->Z)[list[j]];
+		X[k++] = (*p->Z)[list[j]];
 	    }	    
 	} else if (n->t == VEC) {
-	    X[s++] = n->v.xvec;
+	    X[k++] = n->v.xvec;
 	}
     }
 
-    T = sample_size(p->dinfo);
+    m = real_matrix_from_list(dumlist, X, p);
 
-    skipmiss = libset_get_bool(SKIP_MISSING);
-
-    if (skipmiss) {
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    for (i=0; i<k; i++) {
-		if (na(X[i][t])) {
-		    T--;
-		    break;
-		}
-	    }
-	}
-    }	
-
-    if (T == 0) {
-	free(X);
-	p->err = E_DATA;
-	return NULL;
-    }
-
-    m = gretl_matrix_alloc(T, k);
-    if (m == NULL) {
-	p->err = E_ALLOC;
-    } else {
-	double x;
-	int skip;
-
-	i = 0;
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    skip = 0;
-	    if (skipmiss) {
-		for (j=0; j<k; j++) {
-		    if (na(X[j][t])) {
-			skip = 1;
-			break;
-		    }
-		}
-	    }
-	    if (!skip) {
-		for (j=0; j<k; j++) {
-		    x = na(X[j][t])? M_NA : X[j][t];
-		    gretl_matrix_set(m, i, j, x);
-		}
-		if (i == 0) {
-		    gretl_matrix_set_t1(m, t);
-		} else if (i == T - 1) {
-		    gretl_matrix_set_t2(m, t);
-		}
-		i++;
-	    }
-	}
-    }
-
+    free(dumlist);
     free(X);
 
     return m;
@@ -6293,8 +6326,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_TOEPSOLV:
     case F_CORRGM:
     case F_SEQ:
+    case F_REPLACE:
 	/* built-in functions taking three args */
-	ret = eval_3args_func(l, m, r, t->t, p);
+	if (t->t == F_REPLACE) {
+	    ret = replace_value(l, m, r, p);
+	} else {
+	    ret = eval_3args_func(l, m, r, t->t, p);
+	}
 	break;
     case F_FILTER:	
     case F_MCOVG:

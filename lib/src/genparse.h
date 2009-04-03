@@ -293,6 +293,7 @@ enum {
     F_TOEPSOLV,
     F_CORRGM,
     F_SEQ,
+    F_REPLACE,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_FILTER,
     F_MCOVG,

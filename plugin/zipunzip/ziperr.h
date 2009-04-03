@@ -15,7 +15,7 @@
    for other purposes.  Allin Cottrell: added errors beyond 18 and
    increased ZE_MAXERR accordingly.
 */
-#define ZE_MISS         -1      /* used by process_filename() */
+#define ZE_MISS        -1       /* used by process_filename() */
 #define ZE_OK           0       /* success */
 #define ZE_EOF          2       /* unexpected end of zip file */
 #define ZE_FORM         3       /* zip file structure error */

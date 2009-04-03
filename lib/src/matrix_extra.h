@@ -23,7 +23,8 @@
 typedef enum {
     M_MISSING_OK,
     M_MISSING_ERROR,
-    M_MISSING_SKIP
+    M_MISSING_SKIP,
+    M_MISSING_TRIM
 } MMissingCode;
 
 gretl_vector *

@@ -205,6 +205,7 @@ struct str_table funcs[] = {
     { F_ZEROS,    "zeros" },
     { F_ONES,     "ones" },
     { F_SEQ,      "seq" },
+    { F_REPLACE,  "replace" },
     { F_MUNIF,    "muniform" },
     { F_MNORM,    "mnormal" },
     { F_SUMR,     "sumr" },
