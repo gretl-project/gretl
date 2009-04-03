@@ -286,6 +286,11 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 	gtk_window_set_title(GTK_WINDOW(d), title);
     }
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 8)
+    g_signal_connect(G_OBJECT(d), "key-press-event", 
+		     G_CALLBACK(esc_kills_window), NULL);
+#endif
+
     gtk_button_box_set_layout(GTK_BUTTON_BOX(GTK_DIALOG(d)->action_area), 
 			      GTK_BUTTONBOX_END);
     set_dialog_border_widths(d);
