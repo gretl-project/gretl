@@ -65,6 +65,11 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_window_set_title(GTK_WINDOW(s->w), _("gretl: replace"));
     gtk_container_set_border_width(GTK_CONTAINER(s->w), 5);
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 7)
+    g_signal_connect(G_OBJECT(s->w), "key-press-event", 
+		     G_CALLBACK(esc_kills_window), NULL);
+#endif
+
     /* Find part */
     hbox = gtk_hbox_new(TRUE, TRUE);
     label = gtk_label_new(_("Find:"));

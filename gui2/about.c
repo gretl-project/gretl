@@ -93,6 +93,11 @@ void about_dialog (void)
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 7)
+    g_signal_connect(G_OBJECT(dialog), "key-press-event", 
+		     G_CALLBACK(esc_kills_window), NULL);
+#endif
+
     /* arrange for a little horizontal padding */
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);

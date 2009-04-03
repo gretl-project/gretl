@@ -144,7 +144,9 @@ static void invalidate_opt (GtkWidget *w, int *opt)
 
 static void maybe_invalidate_opt (GtkDialog *d, int resp, int *opt)
 {
-    if (resp == GTK_RESPONSE_NONE || resp == GTK_RESPONSE_DELETE_EVENT) {
+    if (resp == GTK_RESPONSE_NONE || 
+	resp == GTK_RESPONSE_DELETE_EVENT ||
+	resp == GTK_RESPONSE_CANCEL) {
 	*opt = -1;
     }
 }
@@ -286,7 +288,7 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 	gtk_window_set_title(GTK_WINDOW(d), title);
     }
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 8)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 7)
     g_signal_connect(G_OBJECT(d), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
 #endif
