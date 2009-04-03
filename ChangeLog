@@ -53,6 +53,8 @@
 - Script editing window: add an "Open" button
 - New function psdroot: find the Cholesky-type root of a
   positive semidefinite (and possibly singular) matrix
+- New function filter: compute an ARMA-like filtering of a
+  series
 
 1/23/2009 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
