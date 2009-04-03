@@ -8070,6 +8070,8 @@ static void parser_reinit (parser *p, double ***pZ,
 		       P_LOOP, P_SLAVE, P_SLICE, 0 };
     int i, saveflags = p->flags;
 
+    /* P_LHSCAL, P_LHLIST, P_LHSTR ? */
+
     p->flags = (P_START | P_PRIVATE | P_EXEC);
 
     for (i=0; repflags[i] > 0; i++) {
@@ -8096,8 +8098,8 @@ static void parser_reinit (parser *p, double ***pZ,
     *p->warning = '\0';
 
 #if EDEBUG
-    fprintf(stderr, "parser_reinit: p->subp=%p, targ=%d, lhname='%s'\n", 
-	    (void *) p->subp, p->targ, p->lh.name);
+    fprintf(stderr, "parser_reinit: p->subp=%p, targ=%d, lhname='%s', op=%d\n", 
+	    (void *) p->subp, p->targ, p->lh.name, p->op);
 #endif
 
     if (p->targ == MAT) {
@@ -8114,7 +8116,12 @@ static void parser_reinit (parser *p, double ***pZ,
 	    /* reevaluate obs string */
 	    process_lhs_substr(NULL, p);
 	}
-    }
+    } else if (p->targ == LIST) {
+	/* list target, check LH name */
+	if (*p->lh.name != '\0' && get_list_by_name(p->lh.name)) {
+	    p->flags |= P_LHLIST;
+	}
+    }	
 
     /* LHS matrix subspec: re-evaluate */
     if (p->subp != NULL) {
