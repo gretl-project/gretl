@@ -145,9 +145,11 @@ static void invalidate_opt (GtkWidget *w, int *opt)
 
 static void maybe_invalidate_opt (GtkDialog *d, int resp, int *opt)
 {
+    fprintf(stderr, "maybe_invalidate_opt: resp = %d\n", resp);
     if (resp == GTK_RESPONSE_NONE || 
 	resp == GTK_RESPONSE_DELETE_EVENT ||
 	resp == GTK_RESPONSE_CANCEL) {
+	fprintf(stderr, "setting opt = -1\n");
 	*opt = -1;
     }
 }
