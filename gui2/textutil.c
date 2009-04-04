@@ -28,6 +28,10 @@
 #include "texprint.h"
 #include "system.h"
 
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7
+# include "dlgutils.h"
+#endif
+
 struct search_replace {
     GtkWidget *w;
     GtkWidget *f_entry;
@@ -65,7 +69,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_window_set_title(GTK_WINDOW(s->w), _("gretl: replace"));
     gtk_container_set_border_width(GTK_CONTAINER(s->w), 5);
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 7)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7)
     g_signal_connect(G_OBJECT(s->w), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
 #endif

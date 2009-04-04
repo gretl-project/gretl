@@ -107,7 +107,8 @@ static void set_canceled (GtkWidget *w, int *c)
 
 static void maybe_set_canceled (GtkDialog *d, int resp, int *c)
 {
-    if (resp == GTK_RESPONSE_DELETE_EVENT) {
+    if (resp == GTK_RESPONSE_DELETE_EVENT ||
+	resp == GTK_RESPONSE_CANCEL) {
 	*c = 1;
     }
 }
@@ -288,7 +289,7 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 	gtk_window_set_title(GTK_WINDOW(d), title);
     }
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 7)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7)
     g_signal_connect(G_OBJECT(d), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
 #endif
@@ -457,7 +458,9 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
 
 static void cancel_on_delete (GtkDialog *d, int resp, int *c)
 {
-    if (resp == GTK_RESPONSE_NONE || resp == GTK_RESPONSE_DELETE_EVENT) {
+    if (resp == GTK_RESPONSE_NONE || 
+	resp == GTK_RESPONSE_DELETE_EVENT ||
+	resp == GTK_RESPONSE_CANCEL) {
 	*c = 1;
     }
 }

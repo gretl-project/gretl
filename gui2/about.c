@@ -18,11 +18,16 @@
  */
 
 #include "gretl.h"
+#include "dlgutils.h"
 #include "version.h"
 #include "build.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
+#endif
+
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7
+# include "dlgutils.h"
 #endif
 
 const gchar *copyright = "Copyright (C) 2000-2008 Allin Cottrell and "
@@ -93,7 +98,7 @@ void about_dialog (void)
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 7)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7)
     g_signal_connect(G_OBJECT(dialog), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
 #endif
