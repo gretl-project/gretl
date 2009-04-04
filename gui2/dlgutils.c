@@ -145,11 +145,9 @@ static void invalidate_opt (GtkWidget *w, int *opt)
 
 static void maybe_invalidate_opt (GtkDialog *d, int resp, int *opt)
 {
-    fprintf(stderr, "maybe_invalidate_opt: resp = %d\n", resp);
     if (resp == GTK_RESPONSE_NONE || 
 	resp == GTK_RESPONSE_DELETE_EVENT ||
 	resp == GTK_RESPONSE_CANCEL) {
-	fprintf(stderr, "setting opt = -1\n");
 	*opt = -1;
     }
 }
@@ -471,8 +469,14 @@ gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
 			   gpointer unused)
 {
     if (key->keyval == GDK_Escape) { 
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7
+	/* remedial action for old gtk */
+	if (GTK_IS_DIALOG(w)) {
+	    gtk_dialog_response(GTK_DIALOG(w), GTK_RESPONSE_CANCEL);
+	}
+#endif
         gtk_widget_destroy(w);
-	return TRUE; /* handled! */
+	return TRUE;
     } else {
 	return FALSE;
     }
