@@ -1464,9 +1464,9 @@
     <function name="filter" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
-	<fnarg type="scalar-or-vec">a</fnarg>
-	<fnarg type="scalar-or-vec">b</fnarg>
-	<fnarg type="scalar">y0</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
+	<fnarg optional="true" type="scalar">y0</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3694,6 +3694,55 @@
 	<para>
 	  Also see the <cmdref targ="sscanf"/> command.
 	</para>
+      </description>
+    </function>
+
+    <function name="replace" section="data-utils" output="asinput">
+      <fnargs>
+	<fnarg type="scalar-or-vec">find</fnarg>
+	<fnarg type="scalar-or-vec">subst</fnarg>
+	<fnarg type="series-or-mat">x</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Replaces each element of <argname>x</argname> equal to
+	  the <math>i</math>-th element of <argname>find</argname>
+	  with the corresponding element of <argname>subst</argname>.
+	</para>
+	<para>
+	  The arguments <argname>find</argname>
+	  and <argname>subst</argname> must be both scalars or have
+	  the same number of elements.  The only exception is
+	  when <argname>find</argname> is a vector
+	  but <argname>subst</argname> is a scalar, in which case
+	  all matches will be replaced by <argname>subst</argname>.  
+	</para>
+	<para>
+	  Example:
+	</para>
+	<code>
+	  a = {1,2; 3,4; 1,3}
+	  find = {1,3,4}
+	  subst = {-1,-8, 0}
+	  b = replace(find, subst, a)
+	  print a b
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+          a (3 x 2)
+           
+            1   2 
+            3   4 
+            3   1 
+           
+          b (3 x 2)
+           
+            -1    2 
+            -8    0 
+            -8   -1 
+	</code>
       </description>
     </function>
 
