@@ -8055,8 +8055,15 @@ static int save_generated_var (parser *p, PRN *prn)
 		    t1++;
 		}
 	    }
-	    for (t=t1; t<=p->dinfo->t2; t++) {
-		Z[v][t] = xy_calc(Z[v][t], x[t], p->op, VEC, p);
+	    if (p->op == B_ASN) {
+		/* avoid multiple calls to xy_calc */
+		size_t sz = (p->dinfo->t2 - t1 + 1) * sizeof *x;
+
+		memcpy(Z[v] + t1, x + t1, sz);
+	    } else {
+		for (t=t1; t<=p->dinfo->t2; t++) {
+		    Z[v][t] = xy_calc(Z[v][t], x[t], p->op, VEC, p);
+		}
 	    }
 	    set_dataset_is_changed();
 	} else if (r->t == MAT) {
