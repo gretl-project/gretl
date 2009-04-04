@@ -30,10 +30,11 @@
 
 #include <glib.h>
 
-#define FN_DEBUG 0
-#define PKG_DEBUG 0
-#define EXEC_DEBUG 0
-#define UDEBUG 0
+#define FNPARSE_DEBUG 0 /* debug parsing of function code */
+#define EXEC_DEBUG 0    /* debugging of function execution */
+#define UDEBUG 0        /* debug handling of args */
+#define PKG_DEBUG 0     /* debug handling of function packages */
+#define FN_DEBUG 0      /* miscellaneous debugging */
 
 typedef struct fn_param_ fn_param;
 
@@ -561,7 +562,7 @@ ufunc *get_user_function_by_name (const char *name)
 	}
     }	
 
-#if FN_DEBUG
+#if FN_DEBUG > 1
     if (fun != NULL) {
 	fprintf(stderr, "get_user_function_by_name: name = '%s' (n_ufuns = %d);"
 		" found match\n", name, n_ufuns);
@@ -801,7 +802,7 @@ static int arg_type_from_int (const char *s)
 
 static int field_to_type (const char *s)
 {
-#if FN_DEBUG
+#if FNPARSE_DEBUG
     fprintf(stderr, "field_to_type: looking at '%s'\n", s);
 #endif
 
@@ -2598,7 +2599,7 @@ static int read_param_option (char **ps, fn_param *param)
 {
     int err = E_PARSE;
 
-#if FN_DEBUG
+#if FNPARSE_DEBUG
     fprintf(stderr, "read_param_option: got '%s'\n", *ps);
 #endif
 
@@ -2646,7 +2647,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     int type, len;
     int err = 0;
 
-#if FN_DEBUG
+#if FNPARSE_DEBUG
     fprintf(stderr, "parse_function_param: s = '%s'\n", s);
 #endif
 
@@ -2743,7 +2744,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	param->descrip = NULL;
     }
 
-#if FN_DEBUG
+#if FNPARSE_DEBUG
     if (!err) {
 	fprintf(stderr, " param[%d] = '%s', ptype = %d\n", 
 		i, name, type);
@@ -2941,7 +2942,7 @@ static int add_function_return (ufunc *fun, const char *line)
 
     type = field_to_type(s1);
 
-#if FN_DEBUG
+#if FNPARSE_DEBUG
     fprintf(stderr, "add_function_return: s1='%s', s2='%s'\n", s1, s2);
     fprintf(stderr, "field_to_type on '%s' gives %d\n", s1, type);
 #endif
@@ -2989,7 +2990,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
 	editing = 0;
     } 
 
-#if FN_DEBUG
+#if FNPARSE_DEBUG
     fprintf(stderr, "gretl_function_append_line: '%s'\n", line);
 #endif
 
@@ -3190,6 +3191,8 @@ static int localize_list (fncall *call, const char *oldname,
     if (list == NULL) {
 	err = E_DATA;
     } else {
+	/* note: it's OK if the two names are the same,
+	   since their "levels" will be different */
 	err = copy_named_list_as(oldname, fp->name);
     }
 
@@ -3542,49 +3545,84 @@ static gretl_matrix *get_matrix_return (const char *mname, int copy, int *err)
     return ret;
 }
 
-static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
+enum {
+    LIST_DIRECT_RETURN,
+    LIST_WAS_ARG
+};
+
+/* Deal with a list that exists at the level of a user-defined
+   function whose execution is now terminating.  Note that this list
+   may be the direct return value of the function, or it may have been
+   given to the function as an argument.  This is flagged in the
+   @status argument.  
+*/
+
+static int unlocalize_list (const char *lname, int status,
+			    double **Z, DATAINFO *pdinfo)
 {
     const int *list = get_list_by_name(lname);
     int d = gretl_function_depth();
-    const char *vname;
     int upd = d - 1;
-    int i, j, t, vi;
+    int i, vi;
 
 #if UDEBUG
     fprintf(stderr, "unlocalize_list: '%s', function depth = %d\n", lname, d);
     printlist(list, lname);
-    fprintf(stderr, "pdinfo = %p, pdinfo->v = %d\n", (void *) pdinfo, pdinfo->v);
+    fprintf(stderr, " pdinfo = %p, pdinfo->v = %d\n", (void *) pdinfo, pdinfo->v);
 #endif	    
 
     if (list == NULL) {
 	return E_DATA;
     }
 
-    for (i=1; i<=list[0]; i++) {
-	int overwrite = 0;
+    /* Note, AC, 2009-04-04.  The following is tricky, but I think it
+       _may_ now be right. If the list we're looking at was given as a
+       function argument we simply shunt all its members to the prior
+       STACK_LEVEL.  But if the list is the direct return value from
+       the function, we need to overwrite any variables at caller
+       level that have been redefined within the function.
+    */
 
-	vi = list[i];
-	unset_var_listarg(pdinfo, vi);
-	vname = pdinfo->varname[vi];
-	if (vi > 0 && vi < pdinfo->v && STACK_LEVEL(pdinfo, vi) == d) {
+    if (status == LIST_DIRECT_RETURN) {
+	int t, j, overwrite;
+	const char *vname;
+	
+	for (i=1; i<=list[0]; i++) {
+	    overwrite = 0;
+	    vi = list[i];
+	    vname = pdinfo->varname[vi];
+	    unset_var_listarg(pdinfo, vi);
+	    if (vi > 0 && vi < pdinfo->v && STACK_LEVEL(pdinfo, vi) == d) {
+		for (j=1; j<pdinfo->v; j++) { 
+		    if (STACK_LEVEL(pdinfo, j) == upd && 
+			!strcmp(pdinfo->varname[j], vname)) {
+			overwrite = 1;
+			break;
+		    }
+		}
+		if (overwrite) {
+		    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+			Z[j][t] = Z[vi][t];
+		    }
+		} else {
+		    STACK_LEVEL(pdinfo, vi) = upd;
+		}
+	    }
 #if UDEBUG
-	    fprintf(stderr, "unlocalize_list: looking at var %d, '%s'\n",
-		    vi, vname);
-#endif
-	    for (j=1; j<pdinfo->v; j++) { 
-		if (STACK_LEVEL(pdinfo, j) == upd && 
-		    !strcmp(pdinfo->varname[j], vname)) {
-		    overwrite = 1;
-		    break;
-		}
-	    }
+	    fprintf(stderr, " list-member var %d, '%s': ", vi, vname); 
 	    if (overwrite) {
-		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		    Z[j][t] = Z[vi][t];
-		}
+		fprintf(stderr, "found match in caller, overwrote var %d\n", j);
 	    } else {
-		STACK_LEVEL(pdinfo, vi) = upd;
+		fprintf(stderr, "no match in caller\n");
 	    }
+#endif
+	}
+    } else {
+	/* LIST_WAS_ARG */
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    unset_var_listarg(pdinfo, vi);
+	    STACK_LEVEL(pdinfo, vi) = upd;
 	}
     }
 
@@ -3660,7 +3698,8 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 #endif
 
     if (*perr == 0) {
-	/* direct return value */
+	/* first we work on the value directly returned by the
+	   function (but only if there's no error) */
 	if (needs_datainfo(rtype) && pdinfo == NULL) {
 	    /* "can't happen" */
 	    err = E_DATA;
@@ -3677,7 +3716,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	       stop_fncall(); here we just adjust the info on the
 	       listed variables so they don't get deleted
 	    */
-	    err = unlocalize_list(u->retname, Z, pdinfo);
+	    err = unlocalize_list(u->retname, LIST_DIRECT_RETURN, Z, pdinfo);
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    *(char **) ret = get_string_return(u->retname, Z, pdinfo, &err);
 	}
@@ -3718,11 +3757,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 		user_matrix_set_name(u, arg->upname);
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
-#if UDEBUG
-	    fprintf(stderr, "function_assign_returns: calling unlocalize_list on '%s'\n",
-		    fp->name);
-#endif	    
-	    unlocalize_list(fp->name, Z, pdinfo);
+	    unlocalize_list(fp->name, LIST_WAS_ARG, Z, pdinfo);
 	}
     }
 
@@ -4024,7 +4059,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     *funcerr_msg = '\0';
 
-#if FN_DEBUG
+#if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: starting %s\n", u->name);
 #endif
 
@@ -4042,7 +4077,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     /* precaution */
     fn_state_init(&cmd, &state, &indent0);
 
-#if FN_DEBUG
+#if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: argc = %d\n", args->argc);
     fprintf(stderr, "u->n_params = %d\n", u->n_params);
 #endif
@@ -4092,7 +4127,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
-#if FN_DEBUG
+#if EXEC_DEBUG
     fprintf(stderr, "start_fncall: err = %d\n", err);
 #endif
 
@@ -4120,7 +4155,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (state.funcerr) {
-#if UDEBUG
+#if EXEC_DEBUG
 	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", 
 		    i, line);
 #endif
@@ -4134,7 +4169,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (gretl_execute_loop()) { 
-#if UDEBUG
+#if EXEC_DEBUG
 	    fprintf(stderr, "gretl_function_exec: calling gretl_loop_exec\n");
 #endif
 	    err = gretl_loop_exec(&state, pZ, pdinfo);
@@ -4147,13 +4182,13 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 		fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
 		break;
 	    }
-#if UDEBUG
+#if EXEC_DEBUG
 	    fprintf(stderr, "gretl_function_exec: gretl_loop_exec done, err = %d\n", err);
 #endif
 	}
     }
 
-#if UDEBUG
+#if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: %s: finished main exec, err = %d, pdinfo->v = %d\n", 
 	    u->name, err, (pdinfo != NULL)? pdinfo->v : 0);
 #endif
@@ -4193,7 +4228,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
-#if FN_DEBUG
+#if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: err = %d\n", err);
 #endif
 

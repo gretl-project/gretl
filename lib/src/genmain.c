@@ -409,7 +409,10 @@ int series_index (const DATAINFO *pdinfo, const char *varname)
 	    if (!strcmp(pdinfo->varname[i], s)) {
 		if (lists_protected() && var_is_listarg(pdinfo, i)) {
 		    /* variable is not visible by name in context */
+		    ;
+#if 0
 		    fprintf(stderr, "var %d (%s) is invisible\n", i, s);
+#endif
 		} else {
 		    ret = i;
 		    break;

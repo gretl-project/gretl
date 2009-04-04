@@ -1422,7 +1422,13 @@ int dataset_copy_variable_as (int v, const char *newname,
 	}
 	strcpy(pdinfo->varname[vnew], newname);
 	STACK_LEVEL(pdinfo, vnew) += 1;
-	/* FIXME other varinfo stuff?? */
+	/* FIXME other varinfo stuff? */
+#if 0
+	fprintf(stderr, "copied var %d ('%s', level %d) as var %d ('%s', level %d): ",
+		v, pdinfo->varname[v], STACK_LEVEL(pdinfo, v),
+		vnew, newname, STACK_LEVEL(pdinfo, vnew));
+	fprintf(stderr, "Z[%d][0] = %g\n", vnew, (*pZ)[vnew][0]);
+#endif
     }
 
     return err;
@@ -2024,8 +2030,15 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 
 #if FULLDEBUG
     for (i=0; i<pdinfo->v; i++) {
-	fprintf(stderr, "var %d (%s, level %d) %s\n", i, pdinfo->varname[i],
-		STACK_LEVEL(pdinfo, i), (i >= newv)? "deleting" : "");
+	if ((*pZ)[i] == NULL) {
+	    fprintf(stderr, "var %d (%s, level %d, val = NULL) %s\n", 
+		    i, pdinfo->varname[i], STACK_LEVEL(pdinfo, i), 
+		    (i >= newv)? "deleting" : "");
+	} else {
+	    fprintf(stderr, "var %d (%s, level %d, val[0] = %g) %s\n", 
+		    i, pdinfo->varname[i], STACK_LEVEL(pdinfo, i), 
+		    (*pZ)[i][0], (i >= newv)? "deleting" : "");
+	}
     }
 #endif
 

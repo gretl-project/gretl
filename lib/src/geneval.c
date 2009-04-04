@@ -4520,67 +4520,131 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *replace_value (NODE *l, NODE *m, NODE *r, parser *p)
+/* given an original value @x, see if it matches any of the @n0 values
+   in @x0.  If so, return the substitute value from @x1, otherwise
+   return the original.
+*/
+
+static double subst_val (double x, const double *x0, int n0,
+			 const double *x1, int n1)
 {
-    if (l->t != NUM) {
-	node_type_error(F_REPLACE, 0, NUM, l, p);
-    } else if (m->t != NUM) {
-	node_type_error(F_REPLACE, 1, NUM, m, p);
+    int i;
+
+    if (n0 == 1 && n1 == 1) {
+	return (x == *x0)? *x1 : x;
+    } else {
+	for (i=0; i<n0; i++) {
+	    if (x == x0[i]) {
+		return (n1 == 1)? *x1 : x1[i];
+	    }
+	}
+	return x;
+    }
+}
+
+/* replace_value: non-interactive search-and-replace for series and
+   matrices.  @src holds the series or matrix of which we want a
+   modified copy; @n0 holds the value (or vector of values) to be
+   replaced; and @n1 holds the replacement value(s). It would be nice
+   to extend this to lists.
+*/
+
+static NODE *replace_value (NODE *n0, NODE *n1, NODE *src, parser *p)
+{
+    gretl_vector *vx0 = NULL;
+    gretl_vector *vx1 = NULL;
+    double x0 = 0, x1 = 0;
+    int k0 = -1, k1 = -1;
+    NODE *ret = NULL;
+
+    if (!starting(p)) {
+	return aux_any_node(p);
+    } 
+
+    /* n0: the original value, to be replaced */
+    if (n0->t == NUM) {
+	x0 = n0->v.xval;
+    } else if (n0->t == MAT) {
+	vx0 = n0->v.m;
+	if (gretl_is_null_matrix(vx0)) {
+	    p->err = E_DATA;
+	} else if ((k0 = gretl_vector_get_length(vx0)) == 0) { 
+	    p->err = E_NONCONF;
+	}
+    } else {
+	node_type_error(F_REPLACE, 0, NUM, n0, p);
     }
 
-#if 0
+    if (p->err) {
+	return NULL;
+    }
+
+    /* n1: the replacement value */
+    if (n1->t == NUM) {
+	x1 = n1->v.xval;
+    } else if (n1->t == MAT) {
+	vx1 = n1->v.m;
+	if (gretl_is_null_matrix(vx1)) {
+	    p->err = E_DATA;
+	} else if ((k1 = gretl_vector_get_length(vx1)) == 0) {
+	    p->err = E_NONCONF;
+	}
+    } else {
+	node_type_error(F_REPLACE, 1, NUM, n1, p);
+    }
+
     if (!p->err) {
-	if (r->t == VEC) {
-	    ret = aux_vec_node(p);
-	} else if (r->t == MAT) {
-	    ret = aux_matrix_node(p);
-	} else if (ok_list_node(r)) {
-	    ret = XX;
-	} else {
-	    ;
+	if (n0->t == NUM && n1->t == MAT) {
+	    /* can't replace scalar with vector */
+	    p->err = E_TYPES;
+	} else if (k0 > 0 && k1 > 0 && k0 != k1) {
+	    /* if they're both vectors, they must be
+	       the same length */
+	    p->err = E_NONCONF;
 	}
     }
-#endif
 
     if (!p->err) {
-	double x0 = l->v.xval;
-	double x1 = m->v.xval;
+	if (src->t == VEC) {
+	    ret = aux_vec_node(p, p->dinfo->n);
+	} else if (src->t == MAT) {
+	    ret = aux_matrix_node(p);
+	} else {
+	    node_type_error(F_REPLACE, 2, VEC, src, p);
+	}
+    }
+
+    if (!p->err) {
+	double *px0 = (vx0 != NULL)? vx0->val : &x0;
+	double *px1 = (vx1 != NULL)? vx1->val : &x1;
+	double xt;
 	int t;
 
-	if (r->t == VEC) {
+	if (k0 < 0) k0 = 1;
+	if (k1 < 0) k1 = 1;
+
+	if (src->t == VEC) {
 	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-		if (r->v.xvec[t] == x0) {
-		    r->v.xvec[t] = x1;
-		}
+		xt = src->v.xvec[t];
+		ret->v.xvec[t] = subst_val(xt, px0, k0, px1, k1);
 	    }
-	} else if (r->t == MAT) {
-	    gretl_matrix *m = r->v.m;
+	} else if (src->t == MAT) {
+	    gretl_matrix *m = src->v.m;
 	    int n = gretl_matrix_rows(m) * gretl_matrix_cols(m);
 
-	    for (t=0; t<n; t++) {
-		if (m->val[t] == x0) {
-		    m->val[t] = x1;
-		}
-	    }  
-	} else if (ok_list_node(r)) {
-	    int *list = node_get_list(r, p);
-	    int i, vi;
-
-	    for (i=1; i<=list[0] && !p->err; i++) {
-		vi = list[i];
-		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-		    if ((*p->Z)[vi][t] == x0) {
-			(*p->Z)[vi][t] = x1;
-		    }
+	    ret->v.m = gretl_matrix_copy(m);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		for (t=0; t<n; t++) {
+		    xt = m->val[t];
+		    ret->v.m->val[t] = subst_val(xt, px0, k0, px1, k1);
 		}
 	    }
-	    free(list);
-	} else {
-	    node_type_error(F_REPLACE, 2, VEC, r, p);
 	}
     }
 
-    return r;
+    return ret;
 }
 
 static void n_args_error (int k, int n, const char *s, parser *p)

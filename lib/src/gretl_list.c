@@ -285,6 +285,13 @@ static int real_remember_list (const int *list, const char *name,
 	    " n_lists=%d\n", name, force_new, n_lists);
 #endif
 
+    /* Note: 'force_new' means that we'll add a new list even if it
+       has the same name as an existing one.  This makes sense only if
+       we're copying a list in the context of running a user-defined
+       function, since in that case the new list will exist at a
+       different "stack level" from any prior list.
+    */
+
     if (!force_new) {
 	orig = get_saved_list_by_name(name);
     }
