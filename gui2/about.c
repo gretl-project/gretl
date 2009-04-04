@@ -30,7 +30,7 @@
 # include "dlgutils.h"
 #endif
 
-const gchar *copyright = "Copyright (C) 2000-2008 Allin Cottrell and "
+const gchar *copyright = "Copyright (C) 2000-2009 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
 const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
 const gchar *website = "http://gretl.sourceforge.net/";
