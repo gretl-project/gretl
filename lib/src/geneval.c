@@ -4549,7 +4549,7 @@ static double subst_val (double x, const double *x0, int n0,
    to extend this to lists.
 */
 
-static NODE *replace_value (NODE *n0, NODE *n1, NODE *src, parser *p)
+static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 {
     gretl_vector *vx0 = NULL;
     gretl_vector *vx1 = NULL;
