@@ -287,11 +287,11 @@ int gretl_isint (int t1, int t2, const double *x)
 
 #define FEWVALS 32
 
-static int few_vals (int t1, int t2, const double *x)
+static int few_vals (int t1, int t2, const double *x, double *ratio)
 {
     double test[FEWVALS];
     int match;
-    int i, t, n = 0;
+    int i, t, n = 0, nv = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
@@ -303,16 +303,19 @@ static int few_vals (int t1, int t2, const double *x)
 		}
 	    }
 	    if (!match) {
-		if (n == FEWVALS) {
-		    n++;
+		if (nv == FEWVALS) {
+		    nv++;
 		    break;
 		}
-		test[n++] = x[t];
+		test[nv++] = x[t];
 	    }
+	    n++;
 	}
     }
 
-    return n;
+    *ratio = (double) nv / n;
+
+    return nv;
 }
 
  /**
@@ -362,8 +365,14 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
     }
 
     if (d) {
-	n = few_vals(t1, t2, x);
+	n = few_vals(t1, t2, x, &r);
 	if (n > FEWVALS) {
+	    d = 0;
+	} else if (r > 0.9) {
+	    /* somewhat arbitrary: but if r (= ratio of distinct
+	       values to number of cases) is "too high", perhaps we
+	       should not take the var as discrete
+	    */
 	    d = 0;
 	} else if (n < 5) {
 	    d = 2;

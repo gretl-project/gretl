@@ -3895,7 +3895,7 @@ void do_freq_dist (int plot)
 	    }
 	} else {
 	    err = freq_setup(v, (const double **) Z, datainfo,
-			 &n, &xmax, &xmin, &nbins, &fwid);
+			     &n, &xmax, &xmin, &nbins, &fwid);
 	}
 
 	if (err) {
