@@ -4520,7 +4520,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     return ret;
 }
 
-/* given an original value @x, see if it matches any of the @n0 values
+/* Given an original value @x, see if it matches any of the @n0 values
    in @x0.  If so, return the substitute value from @x1, otherwise
    return the original.
 */
@@ -4530,16 +4530,13 @@ static double subst_val (double x, const double *x0, int n0,
 {
     int i;
 
-    if (n0 == 1 && n1 == 1) {
-	return (x == *x0)? *x1 : x;
-    } else {
-	for (i=0; i<n0; i++) {
-	    if (x == x0[i]) {
-		return (n1 == 1)? *x1 : x1[i];
-	    }
+    for (i=0; i<n0; i++) {
+	if (x == x0[i]) {
+	    return (n1 == 1)? *x1 : x1[i];
 	}
-	return x;
     }
+
+    return x;
 }
 
 /* replace_value: non-interactive search-and-replace for series and
