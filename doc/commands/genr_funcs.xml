@@ -3710,12 +3710,12 @@
 	  with the corresponding element of <argname>subst</argname>.
 	</para>
 	<para>
-	  The arguments <argname>find</argname>
-	  and <argname>subst</argname> must be both scalars or have
-	  the same number of elements.  The only exception is
-	  when <argname>find</argname> is a vector
-	  but <argname>subst</argname> is a scalar, in which case
-	  all matches will be replaced by <argname>subst</argname>.  
+	  If <argname>find</argname> is a scalar, <argname>subst</argname>
+	  must also be a scalar.  If <argname>find</argname> and
+	  <argname>subst</argname> are both vectors, they must have the same
+	  number of elements.  But if <argname>find</argname> is a vector and
+	  <argname>subst</argname> a scalar, then all matches will be replaced
+	  by <argname>subst</argname>.
 	</para>
 	<para>
 	  Example:

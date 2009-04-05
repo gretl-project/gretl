@@ -3662,12 +3662,15 @@ maybe_set_return_description (ufunc *u, int rtype, DATAINFO *pdinfo,
     }
 }
 
+#define types_match(pt,rt) ((pt==GRETL_TYPE_SERIES_REF && rt==GRETL_TYPE_SERIES) || \
+                            (pt==GRETL_TYPE_MATRIX_REF && rt==GRETL_TYPE_MATRIX))
+
 static int is_pointer_arg (ufunc *u, fnargs *args, int rtype)
 {
     int i;
 
     for (i=0; i<args->argc; i++) {
-	if (u->params[i].type == rtype) {
+	if (types_match(u->params[i].type, rtype)) {
 	    if (!strcmp(u->params[i].name, u->retname)) {
 		return 1;
 	    }
@@ -3689,8 +3692,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 {
     struct fnarg *arg;
     fn_param *fp;
-    int copy;
-    int i, err = 0;
+    int copy, i, err = 0;
 
 #if UDEBUG
     fprintf(stderr, "function_assign_returns: retname = '%s', rtype = %d\n", 
@@ -3734,7 +3736,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
     }
 
     /* "indirect return" values: these should be restored even if the
-       function bombed
+       function bombed.
     */
 
     for (i=0; i<args->argc; i++) {
