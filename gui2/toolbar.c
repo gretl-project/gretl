@@ -269,6 +269,11 @@ static void file_open_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
+static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
+{
+    do_new_script(vwin->role);
+}
+
 static void save_plot_commands_callback (GtkWidget *w, windata_t *vwin)
 {
     auto_save_plot(vwin);
@@ -512,6 +517,7 @@ static void set_plot_icon (GretlToolItem *item)
 }
 
 static GretlToolItem viewbar_items[] = {
+    { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), OPEN_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(view_window_save), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },

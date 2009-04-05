@@ -609,14 +609,19 @@ static int *get_garch_list (const int *list, const double **Z,
 			    gretlopt opt, int *ifc, int *err)
 {
     int *glist = NULL;
-    int i, p = list[1], q = list[2];
+    int i, p, q;
     int cpos = 0;
     int add0 = 0;
 
-    if (p == LISTSEP || q == LISTSEP) {
+    /* is the list well-formed? */
+    if (list[0] < 4 || list[1] == LISTSEP ||
+	list[2] == LISTSEP || list[3] != LISTSEP) {
 	*err = E_PARSE;
 	return NULL;
     }
+
+    p = list[1];
+    q = list[2];
 
     *err = 0;
 

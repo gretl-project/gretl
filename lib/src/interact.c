@@ -40,6 +40,7 @@
 #include "boxplots.h"
 #include "kalman.h"
 
+#include <errno.h>
 #include <glib.h>
 
 /* for the "shell" command */
@@ -49,7 +50,7 @@
 # endif
 #endif
 
-#define CMD_DEBUG 0
+#define CMD_DEBUG 8
 #define ARMA_DBG 0
 
 #include "laginfo.c"
@@ -2054,8 +2055,15 @@ static int handle_semicolon (int *k, int *ints_ok, int *poly,
 static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
 			  const DATAINFO *pdinfo, CMD *cmd)
 {
-    int v = atoi(s);
-    int ok = 0;
+    char *test;
+    int v, ok = 0;
+
+    errno = 0;
+
+    v = strtol(s, &test, 10);
+    if (*test != '\0' || errno == ERANGE) {
+	return 0;
+    } 
 
     if (!ints_ok && !poly && v >= pdinfo->v) {
 	cmd->err = 1;
