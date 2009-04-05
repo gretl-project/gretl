@@ -1,0 +1,33 @@
+# MLE estimation based on Lucchetti, R., Papi, L., and Zazzaro, A. 
+# (2001) "Banks' Inefficiency and Economic Growth: A Micro Macro 
+# Approach", Scottish Journal of Political Economy, 48, pp. 400­424.
+
+open banks91
+
+# Cobb-Douglas cost function
+
+ols cost const y p1 p2 p3
+
+# Cobb-Douglas cost function with homogeneity restrictions
+
+genr rcost = cost - p3
+genr rp1 = p1 - p3
+genr rp2 = p2 - p3
+
+list xlist = const y rp1 rp2
+ols rcost xlist
+
+# Cobb-Douglas cost function with homogeneity restrictions
+# and inefficiency
+
+matrix b = $coeff
+
+scalar su = 0.1
+scalar sv = 0.1
+
+mle logl   = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
+  scalar   ss = sqrt(su^2 + sv^2)
+  scalar   lambda = su/sv
+  series   e = rcost - lincomb(xlist, b)
+  params   b su sv
+end mle --hessian
