@@ -50,7 +50,7 @@
 # endif
 #endif
 
-#define CMD_DEBUG 8
+#define CMD_DEBUG 0
 #define ARMA_DBG 0
 
 #include "laginfo.c"
