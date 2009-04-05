@@ -2119,6 +2119,11 @@ void do_kernel (void)
 	return;
     }
 
+    if (sample_size(datainfo) < 30) {
+	errbox(_("Insufficient observations for density estimation"));
+	return;
+    }
+
     err = density_dialog(v, &bw);
     if (err < 0) {
 	return;
