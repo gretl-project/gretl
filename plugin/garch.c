@@ -613,6 +613,11 @@ static int *get_garch_list (const int *list, const double **Z,
     int cpos = 0;
     int add0 = 0;
 
+    if (p == LISTSEP || q == LISTSEP) {
+	*err = E_PARSE;
+	return NULL;
+    }
+
     *err = 0;
 
     /* rule out pure AR in variance: the model is unidentified */
