@@ -35,18 +35,20 @@ char *iso_to_ascii (char *s);
 #ifdef ENABLE_NLS
 
 typedef enum {
-    L_DE = 3,
-    L_EN,
-    L_ES,
-    L_EU,
-    L_FR,
-    L_IT,
-    L_PL,
-    L_TR,
-    L_PT,
-    L_PT_BR,
-    L_RU,
-    L_ZH_TW
+    LANG_AUTO = 0,
+    LANG_C,
+    LANG_EU,
+    LANG_DE,
+    LANG_ES,
+    LANG_FR,
+    LANG_IT,
+    LANG_PL,
+    LANG_TR,
+    LANG_PT,
+    LANG_PT_BR,
+    LANG_RU,
+    LANG_ZH_TW,
+    LANG_MAX
 } LangCode;
 
 char *iso_gettext (const char *msgid);
@@ -79,9 +81,13 @@ void unset_gui_native_printing (void);
 
 int chinese_locale (void);
 
-const char *lang_string_from_id (int id);
+const char *lang_string_from_id (int langid);
 
-const char *lang_code_from_id (int id);
+const char *lang_code_from_id (int langid);
+
+void force_language (int langid);
+
+void set_lcnumeric (int langid, int lcnumeric);
 
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)

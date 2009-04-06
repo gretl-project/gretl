@@ -379,27 +379,28 @@ struct langinfo {
 };
 
 static struct langinfo langs[] = {
-    { L_DE,    "German",               "de_DE" },
-    { L_EN,    "English",              "C"     },
-    { L_ES,    "Spanish",              "es_ES" },
-    { L_EU,    "Basque",               "eu_ES" },
-    { L_FR,    "French",               "fr_FR" },
-    { L_IT,    "Italian",              "it_IT" },
-    { L_PL,    "Polish",               "pl_PL" },
-    { L_TR,    "Turkish",              "tr_TR" },
-    { L_PT,    "Portuguese",           "pt_PT" },
-    { L_PT_BR, "Brazilian Portuguese", "pt_BR" },
-    { L_RU,    "Russian",              "ru_RU" },
-    { L_ZH_TW, "Traditional Chinese",  "zh_TW" },
-    { 0,        NULL,                   NULL }
+    { LANG_AUTO,  "Automatic",            NULL    },
+    { LANG_C,     "English",              "C"     },
+    { LANG_EU,    "Basque",               "eu_ES" },
+    { LANG_DE,    "German",               "de_DE" },
+    { LANG_ES,    "Spanish",              "es_ES" },
+    { LANG_FR,    "French",               "fr_FR" },
+    { LANG_IT,    "Italian",              "it_IT" },
+    { LANG_PL,    "Polish",               "pl_PL" },
+    { LANG_TR,    "Turkish",              "tr_TR" },
+    { LANG_PT,    "Portuguese",           "pt_PT" },
+    { LANG_PT_BR, "Portuguese (Brazil)",  "pt_BR" },
+    { LANG_RU,    "Russian",              "ru_RU" },
+    { LANG_ZH_TW, "Chinese (Taiwan)",     "zh_TW" },
+    { LANG_MAX,    NULL,                   NULL   }
 };
 
-const char *lang_string_from_id (int id)
+const char *lang_string_from_id (int langid)
 {
     int i;
 
-    for (i=0; langs[i].id > 0; i++) {
-	if (id == langs[i].id) {
+    for (i=0; i<LANG_MAX; i++) {
+	if (langid == langs[i].id) {
 	    return langs[i].name;
 	}
     }
@@ -407,12 +408,12 @@ const char *lang_string_from_id (int id)
     return NULL;
 }
 
-const char *lang_code_from_id (int id)
+const char *lang_code_from_id (int langid)
 {
     int i;
 
-    for (i=0; langs[i].id > 0; i++) {
-	if (id == langs[i].id) {
+    for (i=0; i<LANG_MAX; i++) {
+	if (langid == langs[i].id) {
 	    return langs[i].code;
 	}
     }
@@ -420,6 +421,97 @@ const char *lang_code_from_id (int id)
     return NULL;
 }
 
+# ifdef WIN32
+
+static char *win32_set_numeric (const char *lang)
+{
+    char *set = NULL;
+    int i;
+
+    for (i=LANG_EU; i<LANG_MAX; i++) {
+	if (!strncmp(lang, langs[i].code, 2)) {
+	    set = setlocale(LC_NUMERIC, langs[i].name);
+	    if (set == NULL) {
+		set = setlocale(LC_NUMERIC, langs[i].code); /* ?? */
+	    }
+	    if (set == NULL) {
+		set = setlocale(LC_NUMERIC, lang);
+	    }
+	    if (set != NULL) {
+		break;
+	    }
+	}
+    }
+
+    return set;
+}
+
+# endif /* WIN32 */
+
+void set_lcnumeric (int langid, int lcnumeric)
+{
+    if (lcnumeric && langid != LANG_C) {
+	char *lang = getenv("LANG");
+	char *set = NULL;
+
+	if (lang != NULL) {
+# ifdef WIN32
+	    set = win32_set_numeric(lang);
+# else
+	    set = setlocale(LC_NUMERIC, lang);
+# endif
+	} 
+	if (set == NULL) {
+	    setlocale(LC_NUMERIC, "");
+	    putenv("LC_NUMERIC=");
+	}
+    } else {
+	setlocale(LC_NUMERIC, "C");
+	putenv("LC_NUMERIC=C");
+    }
+
+    reset_local_decpoint();
+}
+
+void force_language (int langid)
+{
+# ifdef WIN32
+    char wl[3] = {0};
+#endif
+
+    if (langid == LANG_C) {
+	putenv("LANGUAGE=english");
+	setlocale(LC_ALL, "C");
+    } else {
+	const char *lcode;
+
+	lcode = lang_code_from_id(langid);
+# ifdef WIN32
+	if (lcode != NULL) { 
+	    strncat(wl, lcode, 2);
+	    setlocale(LC_ALL, wl);
+	}
+# else
+	if (lcode != NULL) {  
+	    setlocale(LC_ALL, lcode);
+	}
+# endif
+    }
+
+# ifdef WIN32
+    if (langid == LANG_C) {
+	SetEnvironmentVariable("LC_ALL", "C");
+	putenv("LC_ALL=C");
+	textdomain("none");
+    } else if (*wl != '\0') {
+	char estr[24];
+
+	SetEnvironmentVariable("LC_ALL", wl);
+	sprintf(estr, "LC_ALL=%s", wl);
+	putenv(estr);
+    }
+# endif
+}
 
 #endif  /* ENABLE_NLS */
 

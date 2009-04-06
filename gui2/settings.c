@@ -173,12 +173,12 @@ RCVAR rc_vars[] = {
 #endif
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
       BOOLSET, 0, TAB_MAIN, NULL },
-#ifdef ENABLE_NLS
-    { "langpref", N_("Language preference"), NULL, &langpref, 
-      RADIOSET | INTSET, 0, TAB_MAIN, NULL },
-#endif
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
+#ifdef ENABLE_NLS
+    { "langpref", N_("Language preference"), NULL, &langpref, 
+      LISTSET | INTSET, 0, TAB_MAIN, NULL },
+#endif
 #ifndef G_OS_WIN32 
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
@@ -916,11 +916,6 @@ static const char **get_radio_setting_strings (void *var, int *n)
         N_("Italian"),
 	N_("Spanish")
     };
-    static const char *lang_strs[] = {
-        N_("Use local language if possible"),
-        N_("Use English"),
-	N_("Use Basque")
-    };
     const char **strs = NULL;
 
     *n = 0;
@@ -931,10 +926,7 @@ static const char **get_radio_setting_strings (void *var, int *n)
 #if HIDE_SPANISH_MANUAL
 	*n -= 1;
 #endif
-    } else if (var == &langpref) {
-	strs = lang_strs;
-	*n = sizeof lang_strs / sizeof lang_strs[0];
-    }	
+    } 
 
     return strs;
 }
@@ -950,11 +942,6 @@ static const char **get_list_setting_strings (void *var, int *n)
     static const char *garch_strs[] = {
 	"QML", "BW"
     };
-    static const char *lang_strs[] = {
-        N_("Use local language if possible"),
-        N_("Use English"),
-	N_("Use Basque")
-    };
     const char **strs = NULL;
 
     *n = 0;
@@ -969,16 +956,14 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == hc_garch) {
 	strs = garch_strs;
 	*n = sizeof garch_strs / sizeof garch_strs[0];
-    } else if (var == &langpref) {
-	strs = lang_strs;
-	*n = sizeof lang_strs / sizeof lang_strs[0];
-    }	
+    } 
 
     return strs;
 }
 
 static void 
-get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse)
+get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse,
+		 int *n_list)
 {
     int i;
 
@@ -986,6 +971,8 @@ get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse)
 	if (rc_vars[i].tab == page) {
 	    if (rc_vars[i].flags & BROWSER) {
 		*n_browse += 1;
+	    } else if (rc_vars[i].flags & LISTSET) {
+		*n_list += 1;
 	    }
 	    if (rc_vars[i].flags & BOOLSET) {
 		*n_bool += 1;
@@ -993,7 +980,7 @@ get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse)
 		*n_bool += 1;
 	    } else if (!(rc_vars[i].flags & INVISET)) {
 		*n_str += 1;
-	    }
+	    } 
 	}
     }
 }
@@ -1003,9 +990,6 @@ static void radio_change_value (GtkWidget *w, int *v)
     if (GTK_TOGGLE_BUTTON(w)->active) {
 	gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 
-	if (v == &langpref) {
-	    takes_effect_on_restart();
-	}
 	*v = i;
     }
 }
@@ -1013,13 +997,16 @@ static void radio_change_value (GtkWidget *w, int *v)
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
     GtkWidget *b_table = NULL, *s_table = NULL;
+    GtkWidget *l_table = NULL;
     GtkWidget *box, *w = NULL;
-    int s_len = 1, b_len = 0;
-    int s_cols, b_cols = 0;
+    int s_len = 1, b_len = 0, l_len = 1;
+    int s_cols, b_cols = 0, l_cols = 0;
     int b_col = 0;
     int n_str = 0;
     int n_bool = 0;
     int n_browse = 0;
+    int n_list = 0;
+    int langs = 0;
     RCVAR *rc;
     int i;
    
@@ -1042,9 +1029,19 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     gtk_widget_show(w);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, w);   
 
-    get_table_sizes(tab, &n_str, &n_bool, &n_browse);
+    get_table_sizes(tab, &n_str, &n_bool, &n_browse, &n_list);
 
     s_cols = (n_browse > 0)? 3 : 2;
+
+    if (tab == TAB_VCV && n_list > 0) {
+	/* VCV tab -- put the list entries first, right aligned */
+	l_cols = 2;
+	l_table = gtk_table_new(l_len, l_cols, FALSE);
+	gtk_table_set_row_spacings(GTK_TABLE(l_table), 5);
+	gtk_table_set_col_spacings(GTK_TABLE(l_table), 5);
+	gtk_box_pack_start(GTK_BOX(box), l_table, FALSE, FALSE, 0);
+	gtk_widget_show(l_table);
+    }	
 
     if (n_str > 0) {
 	s_table = gtk_table_new(s_len, s_cols, FALSE);
@@ -1061,6 +1058,17 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
 	gtk_box_pack_start(GTK_BOX(box), b_table, FALSE, FALSE, 10);
 	gtk_widget_show(b_table);
+    }
+
+    if (tab != TAB_VCV && n_list > 0) {
+	/* non-VCV tab: language list comes last */
+	l_cols = 2;
+	langs = 1;
+	l_table = gtk_table_new(l_len, l_cols, FALSE);
+	gtk_table_set_row_spacings(GTK_TABLE(l_table), 5);
+	gtk_table_set_col_spacings(GTK_TABLE(l_table), 5);
+	gtk_box_pack_start(GTK_BOX(box), l_table, FALSE, FALSE, 0);
+	gtk_widget_show(l_table);
     }
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1173,38 +1181,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_widget_set_sensitive(button, FALSE);
 		gtk_widget_set_sensitive(rc->widget, FALSE);
 	    }
-	} else if (rc->flags & LISTSET) {
-	    char *strvar = (char *) rc->var;
-	    const char **strs;
-	    int j, ww, nopt, active = 0;
-
-	    s_len++;
-
-	    gtk_table_resize(GTK_TABLE(s_table), s_len, s_cols);
-	    w = gtk_label_new(_(rc->description));
-	    gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
-	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
-				      w, 0, 1, s_len - 1, s_len);
-	    gtk_widget_show(w);
-
-	    rc->widget = gtk_combo_box_new_text();
-	    gtk_table_attach(GTK_TABLE(s_table), rc->widget, 
-			     1, 2, s_len - 1, s_len,
-			     0, 0, 0, 0);
-	    strs = get_list_setting_strings(rc->var, &nopt);
-	    for (j=0; j<nopt; j++) {
-		gtk_combo_box_append_text(GTK_COMBO_BOX(rc->widget), 
-					  strs[j]);
-		if (!strcmp(strs[j], strvar)) {
-		    active = j;
-		}
-	    }
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
-	    /* this will need generalizing if we add another LISTSET
-	       variable */
-	    ww = get_string_width("XXArellanoXXXXX");
-	    gtk_widget_set_size_request(rc->widget, ww, -1);
-	    gtk_widget_show(rc->widget);
 	} else if (rc->flags & RADIOSET) {
 	    int nopt, j, rcval = *(int *) (rc->var);
 	    int rcol;
@@ -1250,6 +1226,62 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 				 G_CALLBACK(radio_change_value),
 				 rc->var);
 	    }
+	} else if (rc->flags & LISTSET) {
+	    int j, active = 0;
+
+	    l_len++;
+
+	    gtk_table_resize(GTK_TABLE(l_table), l_len, l_cols);
+	    w = gtk_label_new(_(rc->description));
+	    if (langs) {
+		gtk_table_attach(GTK_TABLE(l_table), w, 
+				 0, 1, l_len - 1, l_len,
+				 0, 0, 0, 0);
+	    } else {		
+		gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
+		gtk_table_attach_defaults(GTK_TABLE(l_table), 
+					  w, 0, 1, l_len - 1, l_len);
+	    } 
+	    gtk_widget_show(w);
+
+	    rc->widget = gtk_combo_box_new_text();
+	    gtk_table_attach(GTK_TABLE(l_table), rc->widget, 
+			     1, 2, l_len - 1, l_len,
+			     0, 0, 0, 0);
+	    if (langs) {
+		active = *(int *) rc->var;
+#ifdef ENABLE_NLS
+		for (j=LANG_AUTO; j<LANG_MAX; j++) {
+		    gtk_combo_box_append_text(GTK_COMBO_BOX(rc->widget), 
+					      lang_string_from_id(j));
+		}
+#endif
+	    } else {
+		char *strvar = (char *) rc->var;
+		const char **strs;
+		int nopt;
+		
+		strs = get_list_setting_strings(rc->var, &nopt);
+		for (j=0; j<nopt; j++) {
+		    gtk_combo_box_append_text(GTK_COMBO_BOX(rc->widget), 
+					      strs[j]);
+		    if (!strcmp(strs[j], strvar)) {
+			active = j;
+		    }
+		}
+	    }
+	    if (tab == TAB_VCV) {
+		int ww = get_string_width("XXArellanoXXXXX");
+
+		gtk_widget_set_size_request(rc->widget, ww, -1);
+	    }
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
+	    gtk_widget_show(rc->widget);
+	    if (langs) {
+		g_signal_connect(G_OBJECT(rc->widget), "changed",
+				 G_CALLBACK(takes_effect_on_restart), 
+				 NULL);
+	    }
 	} else if (!(rc->flags & INVISET)) { 
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
@@ -1282,7 +1314,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_widget_set_sensitive(w, FALSE);
 	    }
 	} 
-    } 
+    }
 
     if (tab == TAB_VCV) {
 	/* we need a help button */
@@ -1303,92 +1335,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_widget_show(hb);
     }
 }
-
-#ifdef ENABLE_NLS
-
-# ifdef G_OS_WIN32
-
-struct langname {
-    const char *abbr;
-    const char *full;
-};
-
-static void set_lcnumeric (void)
-{
-    if (lcnumeric && langpref != ENGLISH) {
-	struct langname names[] = {
-	    { "es", "Spanish" },
-	    { "eu", "Basque" },
-	    { "fr", "French" },
-	    { "it", "Italian" },
-	    { "pl", "Polish" },
-	    { "de", "German" },
-	    { "pt", "Portuguese" },
-	    { "ru", "Russian" },
-	    { "tr", "Turkish" },
-	    { "zh", "Chinese" },
-	    { NULL, NULL }
-	};
-	char *lang = getenv("LANG");
-	char *set = NULL;
-	int i;
-
-	if (lang != NULL) {
-	    for (i=0; names[i].abbr != NULL; i++) {
-		if (!strncmp(lang, names[i].abbr, 2)) {
-		    set = setlocale(LC_NUMERIC, names[i].full);
-		    if (set == NULL) {
-			set = setlocale(LC_NUMERIC, names[i].abbr);
-		    }
-		    if (set != NULL) {
-			break;
-		    }
-		}
-	    }
-	}
-
-	if (set == NULL) {
-	    setlocale(LC_NUMERIC, "");
-	    putenv("LC_NUMERIC=");
-	}
-    } else {
-	setlocale(LC_NUMERIC, "C");
-	putenv("LC_NUMERIC=C");
-    }
-
-    reset_local_decpoint();
-}
-
-# else /* ! G_OS_WIN32 */
-
-static void set_lcnumeric (void)
-{
-    if (lcnumeric && langpref != ENGLISH) {
-	char *lang = getenv("LANG");
-	char *set = NULL;
-
-	if (lang != NULL) {
-	    set = setlocale(LC_NUMERIC, lang);
-	    fprintf(stderr, "setlocale(LC_NUMERIC, \"%s\") returned %s\n", 
-		    lang, set);
-	} else {
-	    fprintf(stderr, "set_lcnumeric: getenv(\"LANG\") gave NULL\n");
-	}
-	if (set == NULL) {
-	    setlocale(LC_NUMERIC, "");
-	    putenv("LC_NUMERIC=");
-	}
-    } else {
-	setlocale(LC_NUMERIC, "C");
-	putenv("LC_NUMERIC=C");
-    }
-
-    reset_local_decpoint();
-}
-
-# endif
-
-#endif /* ENABLE_NLS */
 
 static void set_gp_colors (void)
 {
@@ -1455,15 +1401,17 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 {
     const gchar *str;
     char *strvar;
+    int *intvar;
     int i = 0;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	if (rc_vars[i].widget != NULL) {
 	    if (rc_vars[i].flags & BOOLSET) {
+		intvar = (int *) rc_vars[i].var;
 		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active) {
-		    *(int *) (rc_vars[i].var) = TRUE;
+		    *intvar = TRUE;
 		} else {
-		    *(int *) (rc_vars[i].var) = FALSE;
+		    *intvar = FALSE;
 		}
 	    } else if ((rc_vars[i].flags & USERSET) || 
 		       (rc_vars[i].flags & ROOTSET) ||
@@ -1476,13 +1424,21 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 		}
 	    } else if (rc_vars[i].flags & LISTSET) {
 		GtkComboBox *box = GTK_COMBO_BOX(rc_vars[i].widget);
-		gchar *boxval;
 
-		boxval = gtk_combo_box_get_active_text(box);
-		strvar = (char *) rc_vars[i].var;
-		*strvar = '\0';
-		strcat(strvar, boxval);
-		g_free(boxval);
+		if (rc_vars[i].flags & INTSET) {
+		    int boxval = gtk_combo_box_get_active(box);
+		    
+		    intvar = (int *) rc_vars[i].var;
+		    *intvar = boxval;
+		} else {
+		    gchar *boxval;
+
+		    boxval = gtk_combo_box_get_active_text(box);
+		    strvar = (char *) rc_vars[i].var;
+		    *strvar = '\0';
+		    strcat(strvar, boxval);
+		    g_free(boxval);
+		}
 	    }
 	}
     }
@@ -1661,9 +1617,12 @@ static int common_read_rc_setup (void)
 # endif
 
 # ifdef ENABLE_NLS
-    set_lcnumeric();
+    set_lcnumeric(langpref, lcnumeric);
     if (langpref > 0) {
 	force_language(langpref);
+	if (langpref == LANG_C) {
+	    force_english_help();
+	}
     } 
 # endif
 

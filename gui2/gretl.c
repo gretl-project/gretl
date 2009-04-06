@@ -327,55 +327,6 @@ void nls_init (void)
     real_nls_init();
 }
 
-void force_language (int lang)
-{
-# ifdef G_OS_WIN32
-    char wl[3] = {0};
-#endif
-
-    if (lang == ENGLISH || lang == L_EN) {
-	putenv("LANGUAGE=english");
-	setlocale(LC_ALL, "C");
-    } else if (lang == BASQUE) {
-# ifdef G_OS_WIN32
-	setlocale(LC_ALL, "eu");
-# else
-	setlocale(LC_ALL, "eu_ES");
-# endif
-    } else {
-	const char *lcode;
-
-	lcode = lang_code_from_id(lang);
-# ifdef G_OS_WIN32
-	if (lcode != NULL) { 
-	    strncat(wl, lcode, 2);
-	    setlocale(LC_ALL, wl);
-	}
-# else
-	if (lcode != NULL) {  
-	    setlocale(LC_ALL, lcode);
-	}
-# endif
-    }
-
-# ifdef G_OS_WIN32
-    if (lang == ENGLISH) {
-	SetEnvironmentVariable("LC_ALL", "C");
-	putenv("LC_ALL=C");
-	textdomain("none");
-    } else if (lang == BASQUE) {
-	SetEnvironmentVariable("LC_ALL", "eu");
-	putenv("LC_ALL=eu");
-    } else if (*wl != '\0') {
-	SetEnvironmentVariable("LC_ALL", wl);
-    }
-# endif
-
-    if (lang == ENGLISH || lang == L_EN) {
-	force_english_help();
-    }
-}
-
 #endif /* ENABLE_NLS */
 
 #ifndef G_OS_WIN32
@@ -509,6 +460,9 @@ int main (int argc, char *argv[])
 #ifdef ENABLE_NLS
 	if (force_lang) {
 	    force_language(force_lang);
+	    if (force_lang == LANG_C) {
+		force_english_help();
+	    }	    
 	}
 #endif
     } 

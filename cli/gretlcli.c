@@ -175,29 +175,6 @@ static void nls_init (void)
     reset_local_decpoint();
 }
 
-static void force_language (int f)
-{
-    if (f == ENGLISH) {
-	setlocale(LC_ALL, "C");
-    } else if (f == BASQUE) {
-# ifdef WIN32
-	setlocale(LC_ALL, "eu");
-# else
-	setlocale(LC_ALL, "eu_ES");
-# endif
-    }
-
-# ifdef WIN32
-    if (f == ENGLISH) { 
-	SetEnvironmentVariable("LC_ALL", "C");
-	putenv("LC_ALL=C");
-    } else if (f == BASQUE) {
-	SetEnvironmentVariable("LC_ALL", "eu");
-	putenv("LC_ALL=eu");
-    }	
-# endif
-}
-
 #endif /* ENABLE_NLS */
 
 static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,

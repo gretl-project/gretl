@@ -49,11 +49,6 @@ typedef enum {
 } ProgramOptions;
 
 typedef enum {
-    ENGLISH = 1,
-    BASQUE
-} ForcedLangs;
-
-typedef enum {
     CONSOLE_EXEC      = 1 << 0,
     SCRIPT_EXEC       = 1 << 1,
     INCLUDE_EXEC      = 1 << 2,

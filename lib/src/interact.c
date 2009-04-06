@@ -2966,10 +2966,10 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 
 #ifdef ENABLE_NLS
 	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
-	    *force_lang = ENGLISH;
+	    *force_lang = LANG_C;
 	    continue;
 	} else if (!strcmp(s, "-q") || !strncmp(s, "--basque", 8)) { 
-	    *force_lang = BASQUE;
+	    *force_lang = LANG_EU;
 	    continue;
 	}
 #endif
