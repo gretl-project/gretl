@@ -378,6 +378,31 @@ struct langinfo {
     const char *code;
 };
 
+#ifdef WIN32
+
+/* http://msdn.microsoft.com/en-us/library/0h88fahh(VS.85).aspx
+   Locale ID (LCID) Chart
+*/
+
+static struct langinfo langs[] = {
+    { LANG_AUTO,  "Automatic",            NULL    },
+    { LANG_C,     "English",              "C"     },
+    { LANG_EU,    "Basque",               "eu" },
+    { LANG_DE,    "German",               "de-de" },
+    { LANG_ES,    "Spanish",              "es-es" },
+    { LANG_FR,    "French",               "fr-fr" },
+    { LANG_IT,    "Italian",              "it-it" },
+    { LANG_PL,    "Polish",               "pl" },
+    { LANG_TR,    "Turkish",              "tr" },
+    { LANG_PT,    "Portuguese",           "pt-pt" },
+    { LANG_PT_BR, "Portuguese (Brazil)",  "pt-br" },
+    { LANG_RU,    "Russian",              "ru" },
+    { LANG_ZH_TW, "Chinese (Taiwan)",     "zh-tw" },
+    { LANG_MAX,    NULL,                   NULL   }
+};
+
+#else
+
 static struct langinfo langs[] = {
     { LANG_AUTO,  "Automatic",            NULL    },
     { LANG_C,     "English",              "C"     },
@@ -394,6 +419,8 @@ static struct langinfo langs[] = {
     { LANG_ZH_TW, "Chinese (Taiwan)",     "zh_TW" },
     { LANG_MAX,    NULL,                   NULL   }
 };
+
+#endif
 
 const char *lang_string_from_id (int langid)
 {
@@ -429,10 +456,11 @@ static char *win32_set_numeric (const char *lang)
     int i;
 
     for (i=LANG_EU; i<LANG_MAX; i++) {
-	if (!strncmp(lang, langs[i].code, 2)) {
+	if (!strcmp(lang, langs[i].code) ||
+	    !strncmp(lang, langs[i].code, 2)) {
 	    set = setlocale(LC_NUMERIC, langs[i].name);
 	    if (set == NULL) {
-		set = setlocale(LC_NUMERIC, langs[i].code); /* ?? */
+		set = setlocale(LC_NUMERIC, langs[i].code);
 	    }
 	    if (set == NULL) {
 		set = setlocale(LC_NUMERIC, lang);
@@ -473,29 +501,39 @@ void set_lcnumeric (int langid, int lcnumeric)
     reset_local_decpoint();
 }
 
+int test_locale (int langid)
+{
+    const char *lcode = lang_code_from_id(langid);
+    char *orig = setlocale(LC_ALL, NULL);
+    char ocpy[16];
+
+    gretl_error_clear();
+
+    *ocpy = '\0';
+    strncat(ocpy, orig, 15);
+
+    if (setlocale(LC_ALL, lcode) != NULL) {
+	setlocale(LC_ALL, ocpy);
+	return 0;
+    } else {
+	gretl_errmsg_sprintf(_("%s: locale is not supported "
+			       "on this system"), lcode);
+	return 1;
+    }
+}
+
 void force_language (int langid)
 {
-# ifdef WIN32
-    char wl[3] = {0};
-#endif
+    const char *lcode = NULL;
 
     if (langid == LANG_C) {
 	putenv("LANGUAGE=english");
 	setlocale(LC_ALL, "C");
     } else {
-	const char *lcode;
-
 	lcode = lang_code_from_id(langid);
-# ifdef WIN32
-	if (lcode != NULL) { 
-	    strncat(wl, lcode, 2);
-	    setlocale(LC_ALL, wl);
-	}
-# else
 	if (lcode != NULL) {  
 	    setlocale(LC_ALL, lcode);
 	}
-# endif
     }
 
 # ifdef WIN32
@@ -503,11 +541,11 @@ void force_language (int langid)
 	SetEnvironmentVariable("LC_ALL", "C");
 	putenv("LC_ALL=C");
 	textdomain("none");
-    } else if (*wl != '\0') {
+    } else if (lcode != NULL) {
 	char estr[24];
 
-	SetEnvironmentVariable("LC_ALL", wl);
-	sprintf(estr, "LC_ALL=%s", wl);
+	SetEnvironmentVariable("LC_ALL", lcode);
+	sprintf(estr, "LC_ALL=%s", lcode);
 	putenv(estr);
     }
 # endif

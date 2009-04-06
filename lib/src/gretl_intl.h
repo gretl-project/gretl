@@ -89,6 +89,8 @@ void force_language (int langid);
 
 void set_lcnumeric (int langid, int lcnumeric);
 
+int test_locale (int langid);
+
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)
 

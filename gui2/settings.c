@@ -906,6 +906,31 @@ static gboolean takes_effect_on_restart (void)
     return FALSE;
 }
 
+static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
+{
+    int i = gtk_combo_box_get_active(box);
+    static int lasterr;
+    int err;
+
+    if (lasterr) {
+	lasterr = 0;
+	return FALSE;
+    }
+
+    err = test_locale(i);
+
+    if (err) {
+	lasterr = err;
+	gui_errmsg(err);
+	gretl_error_clear();
+	gtk_combo_box_set_active(box, 0);
+    } else {
+	infobox(_("This change will take effect when you restart gretl"));
+    }
+
+    return FALSE;
+}
+
 #define HIDE_SPANISH_MANUAL 1
 
 static const char **get_radio_setting_strings (void *var, int *n)
@@ -1279,7 +1304,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_widget_show(rc->widget);
 	    if (langs) {
 		g_signal_connect(G_OBJECT(rc->widget), "changed",
-				 G_CALLBACK(takes_effect_on_restart), 
+				 G_CALLBACK(try_switch_locale), 
 				 NULL);
 	    }
 	} else if (!(rc->flags & INVISET)) { 
