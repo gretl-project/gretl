@@ -934,7 +934,7 @@ static const char **get_radio_setting_strings (void *var, int *n)
     } else if (var == &langpref) {
 	strs = lang_strs;
 	*n = sizeof lang_strs / sizeof lang_strs[0];
-    }
+    }	
 
     return strs;
 }
@@ -950,6 +950,11 @@ static const char **get_list_setting_strings (void *var, int *n)
     static const char *garch_strs[] = {
 	"QML", "BW"
     };
+    static const char *lang_strs[] = {
+        N_("Use local language if possible"),
+        N_("Use English"),
+	N_("Use Basque")
+    };
     const char **strs = NULL;
 
     *n = 0;
@@ -964,7 +969,10 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == hc_garch) {
 	strs = garch_strs;
 	*n = sizeof garch_strs / sizeof garch_strs[0];
-    } 
+    } else if (var == &langpref) {
+	strs = lang_strs;
+	*n = sizeof lang_strs / sizeof lang_strs[0];
+    }	
 
     return strs;
 }
@@ -1317,6 +1325,8 @@ static void set_lcnumeric (void)
 	    { "de", "German" },
 	    { "pt", "Portuguese" },
 	    { "ru", "Russian" },
+	    { "tr", "Turkish" },
+	    { "zh", "Chinese" },
 	    { NULL, NULL }
 	};
 	char *lang = getenv("LANG");

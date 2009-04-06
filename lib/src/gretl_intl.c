@@ -372,6 +372,55 @@ char *iso_gettext (const char *msgid)
     return ret;
 } 
 
+struct langinfo {
+    int id;
+    const char *name;
+    const char *code;
+};
+
+static struct langinfo langs[] = {
+    { L_DE,    "German",               "de_DE" },
+    { L_EN,    "English",              "C"     },
+    { L_ES,    "Spanish",              "es_ES" },
+    { L_EU,    "Basque",               "eu_ES" },
+    { L_FR,    "French",               "fr_FR" },
+    { L_IT,    "Italian",              "it_IT" },
+    { L_PL,    "Polish",               "pl_PL" },
+    { L_TR,    "Turkish",              "tr_TR" },
+    { L_PT,    "Portuguese",           "pt_PT" },
+    { L_PT_BR, "Brazilian Portuguese", "pt_BR" },
+    { L_RU,    "Russian",              "ru_RU" },
+    { L_ZH_TW, "Traditional Chinese",  "zh_TW" },
+    { 0,        NULL,                   NULL }
+};
+
+const char *lang_string_from_id (int id)
+{
+    int i;
+
+    for (i=0; langs[i].id > 0; i++) {
+	if (id == langs[i].id) {
+	    return langs[i].name;
+	}
+    }
+
+    return NULL;
+}
+
+const char *lang_code_from_id (int id)
+{
+    int i;
+
+    for (i=0; langs[i].id > 0; i++) {
+	if (id == langs[i].id) {
+	    return langs[i].code;
+	}
+    }
+
+    return NULL;
+}
+
+
 #endif  /* ENABLE_NLS */
 
 static void 
