@@ -296,7 +296,7 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
 	    match = 0;
-	    for (i=0; i<n; i++) {
+	    for (i=0; i<nv; i++) {
 		if (x[t] == test[i]) {
 		    match = 1;
 		    break;
