@@ -92,7 +92,7 @@ enum {
 #define plot_is_roots(p)        (p->spec->code == PLOT_VAR_ROOTS)
 
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
-#define plot_show_all_markers(p)    (p->spec->flags & GPT_ALL_MARKERS)
+#define plot_show_all_markers(p)    (p->spec->flags & GPT_PRINT_MARKERS)
 
 #define plot_has_controller(p) (p->editor != NULL)
 
@@ -132,7 +132,7 @@ struct png_plot_t {
 };
 
 static int render_pngfile (png_plot *plot, int view);
-static int zoom_unzoom_png (png_plot *plot, int view);
+static int repaint_png (png_plot *plot, int view);
 static void create_selection_gc (png_plot *plot);
 static int get_plot_ranges (png_plot *plot);
 static void graph_display_pdf (GPT_SPEC *spec);
@@ -1831,15 +1831,15 @@ static int plot_ols_var_ok (const char *vname, int v)
     return 0;
 }
 
-static void maybe_set_all_markers_ok (GPT_SPEC *spec)
+static void maybe_set_markers_ok (GPT_SPEC *spec)
 {
     if (spec->n_lines <= 2 &&
 	spec->lines[0].ncols == 2 &&
 	(spec->n_lines == 1 || spec->lines[1].ncols == 0) &&
 	spec->n_markers > 0) {
-	spec->flags |= GPT_ALL_MARKERS_OK;
+	spec->flags |= GPT_MARKERS_OK;
     } else {
-	spec->flags &= ~GPT_ALL_MARKERS_OK;
+	spec->flags &= ~GPT_MARKERS_OK;
     }
 }
 
@@ -1933,7 +1933,7 @@ static int uneditable_get_markers (GPT_SPEC *spec, const char *buf, int *polar)
     }
 
     if (!err) {
-	maybe_set_all_markers_ok(spec);
+	maybe_set_markers_ok(spec);
     }
 
     return err;
@@ -2138,7 +2138,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	}
 
 	if (strstr(gpline, "printing data labels")) {
-	    spec->flags |= GPT_ALL_MARKERS;
+	    spec->flags |= GPT_PRINT_MARKERS;
 	    continue;
 	}	
 
@@ -2229,7 +2229,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     }
 
     if (!err && spec->markers != NULL) {
-	maybe_set_all_markers_ok(spec);
+	maybe_set_markers_ok(spec);
     }
 
     if (!err && spec->fit == PLOT_FIT_NONE) {
@@ -2665,6 +2665,9 @@ static void set_plot_format_flags (png_plot *plot)
     if (plot->spec->flags & GPT_Y2AXIS) {
 	plot->format |= PLOT_Y2AXIS;
     }
+    if (plot->spec->flags & GPT_PRINT_MARKERS) {
+	plot->format |= PLOT_MARKERS_UP;
+    }
 }
 
 /* called from png plot popup menu */
@@ -2876,10 +2879,11 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     } else if (plot_is_hurst(plot) && !strcmp(item, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(HURST));
     } else if (!strcmp(item, _("Freeze data labels"))) {
-	plot->spec->flags |= GPT_ALL_MARKERS;
+	plot->spec->flags |= GPT_PRINT_MARKERS;
 	redisplay_edited_plot(plot);
     } else if (!strcmp(item, _("Clear data labels"))) { 
-	zoom_unzoom_png(plot, PNG_REDISPLAY);
+	plot->spec->flags &= ~GPT_PRINT_MARKERS;
+	repaint_png(plot, PNG_REDISPLAY);
     } else if (!strcmp(item, _("Zoom..."))) { 
 	GdkCursor* cursor;
 
@@ -2891,7 +2895,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 			   _(" Drag to define zoom rectangle"));
 	create_selection_gc(plot);
     } else if (!strcmp(item, _("Restore full view"))) { 
-	zoom_unzoom_png(plot, PNG_UNZOOM);
+	repaint_png(plot, PNG_UNZOOM);
     }
 #if defined(USE_GNOME) || defined(GTK_PRINTING)
     else if (!strcmp(item, _("Print..."))) { 
@@ -3134,7 +3138,7 @@ int redisplay_edited_plot (png_plot *plot)
     return render_pngfile(plot, PNG_REDISPLAY);
 }
 
-static int zoom_unzoom_png (png_plot *plot, int view)
+static int repaint_png (png_plot *plot, int view)
 {
     int err = 0;
     char zoomname[MAXLEN];
@@ -3177,10 +3181,16 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  zoomname);
     } else { 
-	/* PNG_UNZOOM or PNG_START */
+	/* PNG_UNZOOM, PNG_START or PNG_REDISPLAY */
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  plot->spec->fname);
     }
+
+    /* FIXME: if we're doing "clear labels" and the labels have been
+       affixed (plot->spec->flags & GPT_PRINT_LABELS), we have to do
+       more here: print the plotspec afresh so the label commands are
+       removed.
+    */
 
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);  
@@ -3193,6 +3203,8 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 	gui_errmsg(err);
 	return err;
     }
+
+    fprintf(stderr, "repaint: done OK?\n");
 
     return render_pngfile(plot, view);
 }
@@ -3223,7 +3235,7 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 
 	if (plot->zoom_xmin != plot->zoom_xmax &&
 	    plot->zoom_ymin != plot->zoom_ymax) {
-	    zoom_unzoom_png(plot, PNG_ZOOM);
+	    repaint_png(plot, PNG_ZOOM);
 	}
 
 	plot->status ^= PLOT_ZOOMING;
@@ -3400,7 +3412,10 @@ static int render_pngfile (png_plot *plot, int view)
     if (plot->spec->labeled != NULL) {
 	free(plot->spec->labeled);
 	plot->spec->labeled = NULL;
-	plot->format &= ~PLOT_MARKERS_UP;
+	if (!(plot->spec->flags & GPT_PRINT_MARKERS)) {
+	    /* any markers will have disappeared on reprinting */
+	    plot->format &= ~PLOT_MARKERS_UP;
+	} 
     }
 
     gdk_draw_pixbuf(plot->pixmap, 

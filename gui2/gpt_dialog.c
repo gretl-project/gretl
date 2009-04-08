@@ -855,9 +855,9 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	if (GTK_TOGGLE_BUTTON(ed->markers_check)->active) {
 	    free(spec->labeled);
 	    spec->labeled = NULL;
-	    spec->flags |= GPT_ALL_MARKERS;
+	    spec->flags |= GPT_PRINT_MARKERS;
 	} else {
-	    spec->flags &= ~GPT_ALL_MARKERS;
+	    spec->flags &= ~GPT_PRINT_MARKERS;
 	}
     }
 
@@ -1441,13 +1441,13 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
     }
 
     /* give option of showing all case markers */
-    if (spec->flags & GPT_ALL_MARKERS_OK) { 
+    if (spec->flags & GPT_MARKERS_OK) { 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	ed->markers_check = gtk_check_button_new_with_label(_("Show all data labels"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  ed->markers_check, 0, TAB_MAIN_COLS, 
 				  rows-1, rows);
-	if (spec->flags & GPT_ALL_MARKERS) {
+	if (spec->flags & GPT_PRINT_MARKERS) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->markers_check),
 					 TRUE);
 	}	

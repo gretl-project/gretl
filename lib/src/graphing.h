@@ -44,8 +44,8 @@ typedef enum {
     GPT_AUTO_FIT       = 1 << 14, /* automatic (OLS) fitted line was added */
     GPT_FIT_HIDDEN     = 1 << 15, /* autofit line calculated, but suppressed */
     GPT_PNG_OUTPUT     = 1 << 16, /* output is to PNG file */
-    GPT_ALL_MARKERS    = 1 << 17, /* all observation markers displayed */
-    GPT_ALL_MARKERS_OK = 1 << 18, /* OK to show all observation markers */
+    GPT_PRINT_MARKERS  = 1 << 17, /* print observation markers */
+    GPT_MARKERS_OK     = 1 << 18, /* OK to print observation markers */
     GPT_LETTERBOX      = 1 << 19, /* special format for time series graphs */
     GPT_PARAMETRIC     = 1 << 20, /* gnuplot should be in parametric mode */
     GPT_XZEROAXIS      = 1 << 21, /* show x = 0 line */

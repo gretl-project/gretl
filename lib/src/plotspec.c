@@ -917,7 +917,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	fputs("set style fill solid 0.4\n", fp);
     }
 
-    if (spec->flags & GPT_ALL_MARKERS) {
+    if (spec->flags & GPT_PRINT_MARKERS) {
 	print_data_labels(spec, fp);
     }
 
