@@ -50,11 +50,12 @@
   source to support building on MS Windows with mingw/msys
 - Enforce the prohibition on using gretl command words as
   names for variables
-- Script editing window: add an "Open" button
+- Script editing window: add "New" and "Open" buttons
 - New function psdroot: find the Cholesky-type root of a
   positive semidefinite (and possibly singular) matrix
 - New function filter: compute an ARMA-like filtering of a
   series
+- Add a GUI language selector (by popular request)
 
 1/23/2009 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

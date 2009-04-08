@@ -5,6 +5,10 @@ commands are reserved, and cannot be used as the names of
 variables.  This has not been properly enforced in the past,
 but it is now.
 
+The exponentation operator, '^', now associates rightward,
+which is how it works in most mathematical software: e.g.
+2^2^3 = 2^(2^3) = 256.
+
 1/23/2009 version 1.8.0
 
 The obsolete command "rhodiff" as been removed.  To create
