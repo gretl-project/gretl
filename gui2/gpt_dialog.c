@@ -91,7 +91,6 @@ struct plot_editor_ {
     GtkWidget *keycombo;
     GtkWidget *fitcombo;
     GtkWidget *border_check;
-    GtkWidget *markers_check;
     GtkWidget *y2_check;
     GtkWidget *ttfcombo;
     GtkWidget *ttfspin;
@@ -851,16 +850,6 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     } 
 
-    if (!err && ed->markers_check != NULL) {
-	if (GTK_TOGGLE_BUTTON(ed->markers_check)->active) {
-	    free(spec->labeled);
-	    spec->labeled = NULL;
-	    spec->flags |= GPT_PRINT_MARKERS;
-	} else {
-	    spec->flags &= ~GPT_PRINT_MARKERS;
-	}
-    }
-
     if (!err) {
 	if (ed->fontname != NULL) {
 	    set_gretl_png_font(ed->fontname, &paths);
@@ -1439,20 +1428,6 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 			 G_CALLBACK(toggle_axis_selection), ed);
 	gtk_widget_show(ed->y2_check);
     }
-
-    /* give option of showing all case markers */
-    if (spec->flags & GPT_MARKERS_OK) { 
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	ed->markers_check = gtk_check_button_new_with_label(_("Show all data labels"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  ed->markers_check, 0, TAB_MAIN_COLS, 
-				  rows-1, rows);
-	if (spec->flags & GPT_PRINT_MARKERS) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->markers_check),
-					 TRUE);
-	}	
-	gtk_widget_show(ed->markers_check);
-    } 
 
     if (show_aa_check < 0) {
 	show_aa_check = (gnuplot_png_terminal() == GP_PNG_GD2);
@@ -2840,7 +2815,6 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->keycombo = NULL;
     ed->fitcombo = NULL;
     ed->border_check = NULL;
-    ed->markers_check = NULL;
     ed->y2_check = NULL;
     ed->ttfcombo = NULL;
     ed->ttfspin = NULL;

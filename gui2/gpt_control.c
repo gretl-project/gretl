@@ -53,7 +53,8 @@ enum {
     PLOT_DONT_ZOOM      = 1 << 7,
     PLOT_DONT_EDIT      = 1 << 8,
     PLOT_DONT_MOUSE     = 1 << 9,
-    PLOT_POSITIONING    = 1 << 10
+    PLOT_POSITIONING    = 1 << 10,
+    PLOT_KILL_LABEL     = 1 << 11
 } plot_status_flags;
 
 enum {
@@ -71,20 +72,20 @@ enum {
 #define plot_is_saved(p)        (p->status & PLOT_SAVED)
 #define plot_is_zoomed(p)       (p->status & PLOT_ZOOMED)
 #define plot_is_zooming(p)      (p->status & PLOT_ZOOMING)
-#define plot_has_no_markers(p)  (p->status & PLOT_NO_MARKERS)
 #define plot_has_png_coords(p)  (p->status & PLOT_PNG_COORDS)
 #define plot_has_xrange(p)      (p->status & PLOT_HAS_XRANGE)
 #define plot_has_yrange(p)      (p->status & PLOT_HAS_YRANGE)
 #define plot_not_zoomable(p)    (p->status & PLOT_DONT_ZOOM)
 #define plot_not_editable(p)    (p->status & PLOT_DONT_EDIT)
 #define plot_doing_position(p)  (p->status & PLOT_POSITIONING)
+#define plot_killing_label(p)   (p->status & PLOT_KILL_LABEL)
 
 #define plot_has_title(p)        (p->format & PLOT_TITLE)
 #define plot_has_xlabel(p)       (p->format & PLOT_XLABEL)
 #define plot_has_ylabel(p)       (p->format & PLOT_YLABEL)
 #define plot_has_y2axis(p)       (p->format & PLOT_Y2AXIS)
 #define plot_has_y2label(p)      (p->format & PLOT_Y2LABEL)
-#define plot_has_data_markers(p) (p->format & PLOT_MARKERS_UP)
+#define plot_labels_shown(p)     (p->format & PLOT_MARKERS_UP)
 #define plot_is_polar(p)         (p->format & PLOT_POLAR)
 
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
@@ -92,7 +93,9 @@ enum {
 #define plot_is_roots(p)        (p->spec->code == PLOT_VAR_ROOTS)
 
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
-#define plot_show_all_markers(p)    (p->spec->flags & GPT_PRINT_MARKERS)
+
+#define labels_frozen(p)        (p->spec->flags & GPT_PRINT_MARKERS)
+#define cant_do_labels(p)       (p->status & PLOT_NO_MARKERS)
 
 #define plot_has_controller(p) (p->editor != NULL)
 
@@ -190,6 +193,17 @@ static void terminate_plot_positioning (png_plot *plot)
     }
 }
 
+static void terminate_killing_label (png_plot *plot)
+{
+    if (!(plot->status & PLOT_KILL_LABEL)) {
+	return;
+    }
+	    
+    plot->status ^= PLOT_KILL_LABEL;
+    gdk_window_set_cursor(plot->canvas->window, NULL);
+    gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+}
+
 GtkWidget *plot_get_shell (png_plot *plot) 
 {
     return plot->shell;
@@ -239,6 +253,18 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
 			   _(" Click to set label position"));
     }
+}
+
+static void start_kill_label (png_plot *plot)
+{
+    GdkCursor* cursor;
+
+    cursor = gdk_cursor_new(GDK_CROSSHAIR);
+    gdk_window_set_cursor(plot->canvas->window, cursor);
+    gdk_cursor_unref(cursor);
+    plot->status |= PLOT_KILL_LABEL;
+    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
+		       _(" Click on label to delete"));
 }
 
 static FILE *open_gp_file (const char *fname, const char *mode)
@@ -2455,11 +2481,15 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     plot->format |= PLOT_MARKERS_UP;
 }
 
+enum {
+    ADD_LABEL,
+    KILL_LABEL
+};
+
 #define TOLDIST 0.01
 
-static gint
-identify_point (png_plot *plot, int pixel_x, int pixel_y,
-		double x, double y) 
+static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
+			    double x, double y, int action) 
 {
     const double *data_x = NULL;
     const double *data_y = NULL;
@@ -2484,11 +2514,13 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	return TRUE;
     }
 
-    /* need array to keep track of which points are labeled */
-    if (plot->spec->labeled == NULL) {
-	plot->spec->labeled = calloc(plot->spec->nobs, 1);
+    if (action == ADD_LABEL) {
+	/* need array to keep track of which points are labeled */
 	if (plot->spec->labeled == NULL) {
-	    return TRUE;
+	    plot->spec->labeled = calloc(plot->spec->nobs, 1);
+	    if (plot->spec->labeled == NULL) {
+		return TRUE;
+	    }
 	}
     }
 
@@ -2540,9 +2572,11 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	}
     }
 
-    /* if the point is already labeled, skip */
-    if (plot->spec->labeled[best_match]) {
-	return TRUE;
+    if (action == ADD_LABEL) {
+	/* if the point is already labeled, skip */
+	if (plot->spec->labeled[best_match]) {
+	    return TRUE;
+	}
     }
 
 #if GPDEBUG > 2
@@ -2551,13 +2585,19 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	    best_match, data_y[best_match]);
 #endif
 
-    /* if the match is good enough, show the label */
+    /* if the match is good enough, show/kill the label */
     if (best_match >= 0 && 
 	min_xdist < TOLDIST * xrange &&
 	min_ydist < TOLDIST * yrange) {
-	write_label_to_plot(plot, best_match, pixel_x, pixel_y);
-	/* flag the point as labeled already */
-	plot->spec->labeled[best_match] = 1;
+	if (action == ADD_LABEL) {
+	    write_label_to_plot(plot, best_match, pixel_x, pixel_y);
+	    /* flag the point as labeled already */
+	    plot->spec->labeled[best_match] = 1;
+	} else {
+	    plot->spec->labeled[best_match] = 0;
+	    fprintf(stderr, "Got it!\n");
+	    /* FIXME do it */
+	}
     }
 
     return TRUE;
@@ -2605,10 +2645,10 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	    return TRUE;
 	}
 
-	if (!plot_has_no_markers(plot) && !plot_show_all_markers(plot) &&
+	if (!cant_do_labels(plot) && !labels_frozen(plot) &&
 	    !plot_is_zooming(plot) &&
 	    !na(data_y)) {
-	    identify_point(plot, x, y, data_x, data_y);
+	    identify_point(plot, x, y, data_x, data_y, ADD_LABEL);
 	}
 
 	if (plot->pd == 4 || plot->pd == 12) {
@@ -2852,6 +2892,50 @@ static void add_to_session_callback (GPT_SPEC *spec)
     }
 }
 
+static void show_all_labels (png_plot *plot)
+{
+    FILE *fp;
+
+    if (plot->spec->labeled != NULL) {
+	free(plot->spec->labeled);
+	plot->spec->labeled = NULL;
+    }
+
+    plot->spec->flags |= GPT_PRINT_MARKERS;
+
+    gnuplot_png_init(plot->spec, &fp);
+
+    if (fp == NULL) {
+	gui_errmsg(E_FOPEN);
+	return;
+    }
+
+    plotspec_print(plot->spec, fp);
+    fclose(fp);
+
+    repaint_png(plot, PNG_REDISPLAY); 
+    plot->format |= PLOT_MARKERS_UP;
+}
+
+static void clear_labels (png_plot *plot)
+{
+    if (plot->spec->flags & GPT_PRINT_MARKERS) {
+	FILE *fp;
+
+	plot->spec->flags &= ~GPT_PRINT_MARKERS;
+	gnuplot_png_init(plot->spec, &fp);
+	if (fp == NULL) {
+	    gui_errmsg(E_FOPEN);
+	    return;
+	}
+	plotspec_print(plot->spec, fp);
+	fclose(fp);
+    }
+
+    repaint_png(plot, PNG_REDISPLAY); 
+    plot->format &= ~PLOT_MARKERS_UP;
+}
+
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -2882,8 +2966,11 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	plot->spec->flags |= GPT_PRINT_MARKERS;
 	redisplay_edited_plot(plot);
     } else if (!strcmp(item, _("Clear data labels"))) { 
-	plot->spec->flags &= ~GPT_PRINT_MARKERS;
-	repaint_png(plot, PNG_REDISPLAY);
+	clear_labels(plot);
+    } else if (!strcmp(item, _("All data labels"))) { 
+	show_all_labels(plot);
+    } else if (!strcmp(item, _("Delete data label..."))) { 
+	start_kill_label(plot);
     } else if (!strcmp(item, _("Zoom..."))) { 
 	GdkCursor* cursor;
 
@@ -2949,6 +3036,10 @@ static void attach_color_popup (GtkWidget *w, png_plot *plot)
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(w), cpopup);
 }
 
+#define showing_all_labels(p) (p->spec != NULL && \
+			       (p->spec->flags & GPT_PRINT_MARKERS) &&	\
+			       p->spec->labeled == NULL)
+
 #define graph_model_ok(f) (f == PLOT_FIT_OLS || \
                            f == PLOT_FIT_QUADRATIC || \
                            f == PLOT_FIT_INVERSE)
@@ -2972,7 +3063,11 @@ static void build_plot_menu (png_plot *plot)
 #endif
 	N_("Save to session as icon"),
 	N_("Freeze data labels"),
+	N_("All data labels"),
 	N_("Clear data labels"),
+#if 0 /* not ready */
+	N_("Delete data label..."),
+#endif
 	N_("Zoom..."),
 #if defined(USE_GNOME) || defined(GTK_PRINTING)
 	N_("Print..."),
@@ -3048,9 +3143,23 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}	    
-	if (!plot_has_data_markers(plot) &&
+	if (!plot_labels_shown(plot) &&
 	    (!strcmp(plot_items[i], "Freeze data labels") ||
-	     !strcmp(plot_items[i], "Clear data labels"))) {
+	     !strcmp(plot_items[i], "Clear data labels") ||
+	     !strcmp(plot_items[i], "Delete data label..."))) {
+	    /* no labels displayed, so these items are not relevant */
+	    i++;
+	    continue;
+	}
+	if (labels_frozen(plot) && 
+	    (!strcmp(plot_items[i], "Freeze data labels") ||
+	     !strcmp(plot_items[i], "Delete data label..."))) {
+	    /* labels are frozen so these items inapplicable */
+	    i++;
+	    continue;
+	}
+	if ((cant_do_labels(plot) || showing_all_labels(plot)) &&
+	    !strcmp(plot_items[i], "All data labels")) {
 	    i++;
 	    continue;
 	}
@@ -3138,6 +3247,11 @@ int redisplay_edited_plot (png_plot *plot)
     return render_pngfile(plot, PNG_REDISPLAY);
 }
 
+/* preparation for redisplaying graph: here we handle the case where
+   we're switching to a zoomed view (by use of a temporary gnuplot
+   source file); then we get gnuplot to create a new PNG.
+ */
+
 static int repaint_png (png_plot *plot, int view)
 {
     int err = 0;
@@ -3186,12 +3300,6 @@ static int repaint_png (png_plot *plot, int view)
 				  plot->spec->fname);
     }
 
-    /* FIXME: if we're doing "clear labels" and the labels have been
-       affixed (plot->spec->flags & GPT_PRINT_LABELS), we have to do
-       more here: print the plotspec afresh so the label commands are
-       removed.
-    */
-
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);  
 
@@ -3203,8 +3311,6 @@ static int repaint_png (png_plot *plot, int view)
 	gui_errmsg(err);
 	return err;
     }
-
-    fprintf(stderr, "repaint: done OK?\n");
 
     return render_pngfile(plot, view);
 }
@@ -3250,7 +3356,6 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 			       png_plot *plot)
 {
     if (plot_is_zooming(plot)) {
-	/* think about this */
 	if (get_data_xy(plot, event->x, event->y, 
 			&plot->zoom_xmin, &plot->zoom_ymin)) {
 	    plot->screen_xmin = event->x;
@@ -3274,6 +3379,16 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 	terminate_plot_positioning(plot);
 	return TRUE;
     }
+
+    if (plot_killing_label(plot)) {
+	double dx, dy;
+	    
+	if (get_data_xy(plot, event->x, event->y, &dx, &dy)) {
+	    identify_point(plot, event->x, event->y, dx, dy, KILL_LABEL);
+	}
+	terminate_killing_label(plot);
+	return TRUE;
+    }	
 
     if (plot->popup != NULL) {
 	gtk_widget_destroy(plot->popup);
@@ -3382,6 +3497,11 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 
     return pbuf;
 }
+
+/* The last step of redisplaying a graph after some change has been
+   made: grab the gulot-generated PNG file, make a pixbuf out of it,
+   and draw the pixbuf onto the canvas of the plot window.
+*/
 
 static int render_pngfile (png_plot *plot, int view)
 {
