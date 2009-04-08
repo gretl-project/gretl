@@ -378,31 +378,6 @@ struct langinfo {
     const char *code;
 };
 
-#if 0 /* def WIN32 */
-
-/* http://msdn.microsoft.com/en-us/library/0h88fahh(VS.85).aspx
-   Locale ID (LCID) Chart
-*/
-
-static struct langinfo langs[] = {
-    { LANG_AUTO,  "Automatic",            NULL    },
-    { LANG_C,     "English",              "C"     },
-    { LANG_EU,    "Basque",               "eu" },
-    { LANG_DE,    "German",               "de" },
-    { LANG_ES,    "Spanish",              "es-es" },
-    { LANG_FR,    "French",               "fr-fr" },
-    { LANG_IT,    "Italian",              "it-it" },
-    { LANG_PL,    "Polish",               "pl" },
-    { LANG_TR,    "Turkish",              "tr" },
-    { LANG_PT,    "Portuguese",           "pt-pt" },
-    { LANG_PT_BR, "Portuguese (Brazil)",  "pt-br" },
-    { LANG_RU,    "Russian",              "ru" },
-    { LANG_ZH_TW, "Chinese (Taiwan)",     "zh-tw" },
-    { LANG_MAX,    NULL,                   NULL   }
-};
-
-#else
-
 static struct langinfo langs[] = {
     { LANG_AUTO,  "Automatic",            NULL    },
     { LANG_C,     "English",              "C"     },
@@ -419,8 +394,6 @@ static struct langinfo langs[] = {
     { LANG_ZH_TW, "Chinese (Taiwan)",     "zh_TW" },
     { LANG_MAX,    NULL,                   NULL   }
 };
-
-#endif
 
 const char *lang_string_from_id (int langid)
 {
@@ -503,13 +476,18 @@ void set_lcnumeric (int langid, int lcnumeric)
 
 int test_locale (int langid)
 {
-    const char *lcode = lang_code_from_id(langid);
-    char *orig = setlocale(LC_ALL, NULL);
+    const char *lcode;
+    char *orig;
     char ocpy[64];
 
 #ifdef WIN32
+    /* can't get setlocale to work on win32 at this point,
+       so we'll jst hope for the best */
     return 0;
 #endif
+
+    lcode = lang_code_from_id(langid);
+    orig = setlocale(LC_ALL, NULL);
 
     gretl_error_clear();
 
@@ -551,6 +529,7 @@ void force_language (int langid)
 	SetEnvironmentVariable("LC_ALL", lcode);
 	sprintf(estr, "LC_ALL=%s", lcode);
 	putenv(estr);
+	/* setting LANG seems to work for win32 */
 	SetEnvironmentVariable("LANG", lcode);
 	sprintf(estr, "LANG=%s", lcode);
 	putenv(estr);

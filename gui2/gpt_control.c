@@ -53,8 +53,7 @@ enum {
     PLOT_DONT_ZOOM      = 1 << 7,
     PLOT_DONT_EDIT      = 1 << 8,
     PLOT_DONT_MOUSE     = 1 << 9,
-    PLOT_POSITIONING    = 1 << 10,
-    PLOT_KILL_LABEL     = 1 << 11
+    PLOT_POSITIONING    = 1 << 10
 } plot_status_flags;
 
 enum {
@@ -78,7 +77,6 @@ enum {
 #define plot_not_zoomable(p)    (p->status & PLOT_DONT_ZOOM)
 #define plot_not_editable(p)    (p->status & PLOT_DONT_EDIT)
 #define plot_doing_position(p)  (p->status & PLOT_POSITIONING)
-#define plot_killing_label(p)   (p->status & PLOT_KILL_LABEL)
 
 #define plot_has_title(p)        (p->format & PLOT_TITLE)
 #define plot_has_xlabel(p)       (p->format & PLOT_XLABEL)
@@ -193,17 +191,6 @@ static void terminate_plot_positioning (png_plot *plot)
     }
 }
 
-static void terminate_killing_label (png_plot *plot)
-{
-    if (!(plot->status & PLOT_KILL_LABEL)) {
-	return;
-    }
-	    
-    plot->status ^= PLOT_KILL_LABEL;
-    gdk_window_set_cursor(plot->canvas->window, NULL);
-    gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
-}
-
 GtkWidget *plot_get_shell (png_plot *plot) 
 {
     return plot->shell;
@@ -253,18 +240,6 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
 			   _(" Click to set label position"));
     }
-}
-
-static void start_kill_label (png_plot *plot)
-{
-    GdkCursor* cursor;
-
-    cursor = gdk_cursor_new(GDK_CROSSHAIR);
-    gdk_window_set_cursor(plot->canvas->window, cursor);
-    gdk_cursor_unref(cursor);
-    plot->status |= PLOT_KILL_LABEL;
-    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
-		       _(" Click on label to delete"));
 }
 
 static FILE *open_gp_file (const char *fname, const char *mode)
@@ -2481,15 +2456,10 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     plot->format |= PLOT_MARKERS_UP;
 }
 
-enum {
-    ADD_LABEL,
-    KILL_LABEL
-};
-
 #define TOLDIST 0.01
 
 static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
-			    double x, double y, int action) 
+			    double x, double y) 
 {
     const double *data_x = NULL;
     const double *data_y = NULL;
@@ -2514,13 +2484,11 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	return TRUE;
     }
 
-    if (action == ADD_LABEL) {
-	/* need array to keep track of which points are labeled */
+    /* need array to keep track of which points are labeled */
+    if (plot->spec->labeled == NULL) {
+	plot->spec->labeled = calloc(plot->spec->nobs, 1);
 	if (plot->spec->labeled == NULL) {
-	    plot->spec->labeled = calloc(plot->spec->nobs, 1);
-	    if (plot->spec->labeled == NULL) {
-		return TRUE;
-	    }
+	    return TRUE;
 	}
     }
 
@@ -2572,11 +2540,9 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	}
     }
 
-    if (action == ADD_LABEL) {
-	/* if the point is already labeled, skip */
-	if (plot->spec->labeled[best_match]) {
-	    return TRUE;
-	}
+    /* if the point is already labeled, skip */
+    if (plot->spec->labeled[best_match]) {
+	return TRUE;
     }
 
 #if GPDEBUG > 2
@@ -2585,19 +2551,13 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	    best_match, data_y[best_match]);
 #endif
 
-    /* if the match is good enough, show/kill the label */
+    /* if the match is good enough, show the label */
     if (best_match >= 0 && 
 	min_xdist < TOLDIST * xrange &&
 	min_ydist < TOLDIST * yrange) {
-	if (action == ADD_LABEL) {
-	    write_label_to_plot(plot, best_match, pixel_x, pixel_y);
-	    /* flag the point as labeled already */
-	    plot->spec->labeled[best_match] = 1;
-	} else {
-	    plot->spec->labeled[best_match] = 0;
-	    fprintf(stderr, "Got it!\n");
-	    /* FIXME do it */
-	}
+	write_label_to_plot(plot, best_match, pixel_x, pixel_y);
+	/* flag the point as labeled already */
+	plot->spec->labeled[best_match] = 1;
     }
 
     return TRUE;
@@ -2648,7 +2608,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	if (!cant_do_labels(plot) && !labels_frozen(plot) &&
 	    !plot_is_zooming(plot) &&
 	    !na(data_y)) {
-	    identify_point(plot, x, y, data_x, data_y, ADD_LABEL);
+	    identify_point(plot, x, y, data_x, data_y);
 	}
 
 	if (plot->pd == 4 || plot->pd == 12) {
@@ -2969,8 +2929,6 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	clear_labels(plot);
     } else if (!strcmp(item, _("All data labels"))) { 
 	show_all_labels(plot);
-    } else if (!strcmp(item, _("Delete data label..."))) { 
-	start_kill_label(plot);
     } else if (!strcmp(item, _("Zoom..."))) { 
 	GdkCursor* cursor;
 
@@ -3065,9 +3023,6 @@ static void build_plot_menu (png_plot *plot)
 	N_("Freeze data labels"),
 	N_("All data labels"),
 	N_("Clear data labels"),
-#if 0 /* not ready */
-	N_("Delete data label..."),
-#endif
 	N_("Zoom..."),
 #if defined(USE_GNOME) || defined(GTK_PRINTING)
 	N_("Print..."),
@@ -3145,16 +3100,14 @@ static void build_plot_menu (png_plot *plot)
 	}	    
 	if (!plot_labels_shown(plot) &&
 	    (!strcmp(plot_items[i], "Freeze data labels") ||
-	     !strcmp(plot_items[i], "Clear data labels") ||
-	     !strcmp(plot_items[i], "Delete data label..."))) {
+	     !strcmp(plot_items[i], "Clear data labels"))) {
 	    /* no labels displayed, so these items are not relevant */
 	    i++;
 	    continue;
 	}
 	if (labels_frozen(plot) && 
-	    (!strcmp(plot_items[i], "Freeze data labels") ||
-	     !strcmp(plot_items[i], "Delete data label..."))) {
-	    /* labels are frozen so these items inapplicable */
+	    !strcmp(plot_items[i], "Freeze data labels")) {
+	    /* labels are frozen so this item inapplicable */
 	    i++;
 	    continue;
 	}
@@ -3379,16 +3332,6 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 	terminate_plot_positioning(plot);
 	return TRUE;
     }
-
-    if (plot_killing_label(plot)) {
-	double dx, dy;
-	    
-	if (get_data_xy(plot, event->x, event->y, &dx, &dy)) {
-	    identify_point(plot, event->x, event->y, dx, dy, KILL_LABEL);
-	}
-	terminate_killing_label(plot);
-	return TRUE;
-    }	
 
     if (plot->popup != NULL) {
 	gtk_widget_destroy(plot->popup);
