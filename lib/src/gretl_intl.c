@@ -378,7 +378,7 @@ struct langinfo {
     const char *code;
 };
 
-#ifdef WIN32
+#if 0 /* def WIN32 */
 
 /* http://msdn.microsoft.com/en-us/library/0h88fahh(VS.85).aspx
    Locale ID (LCID) Chart
@@ -388,7 +388,7 @@ static struct langinfo langs[] = {
     { LANG_AUTO,  "Automatic",            NULL    },
     { LANG_C,     "English",              "C"     },
     { LANG_EU,    "Basque",               "eu" },
-    { LANG_DE,    "German",               "de-de" },
+    { LANG_DE,    "German",               "de" },
     { LANG_ES,    "Spanish",              "es-es" },
     { LANG_FR,    "French",               "fr-fr" },
     { LANG_IT,    "Italian",              "it-it" },
@@ -505,12 +505,16 @@ int test_locale (int langid)
 {
     const char *lcode = lang_code_from_id(langid);
     char *orig = setlocale(LC_ALL, NULL);
-    char ocpy[16];
+    char ocpy[64];
+
+#ifdef WIN32
+    return 0;
+#endif
 
     gretl_error_clear();
 
     *ocpy = '\0';
-    strncat(ocpy, orig, 15);
+    strncat(ocpy, orig, 63);
 
     if (setlocale(LC_ALL, lcode) != NULL) {
 	setlocale(LC_ALL, ocpy);
@@ -546,6 +550,9 @@ void force_language (int langid)
 
 	SetEnvironmentVariable("LC_ALL", lcode);
 	sprintf(estr, "LC_ALL=%s", lcode);
+	putenv(estr);
+	SetEnvironmentVariable("LANG", lcode);
+	sprintf(estr, "LANG=%s", lcode);
 	putenv(estr);
     }
 # endif
