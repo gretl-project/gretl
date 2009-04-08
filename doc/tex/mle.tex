@@ -651,27 +651,11 @@ zip(y, X)
   the results
 */
 function zip(series y, list X)
-    matrix ret = zip_estimate(y, X)
-    matrix coef = ret[,1]
-    matrix vcv = ret[,2:cols(ret)]
-
-    printf "\nZero-inflated Poisson model:\n\n"
-    scalar c = coef[1]
-    scalar se = sqrt(vcv[1,1])
-    scalar zs = c/se
-    scalar pv = 2*pvalue(n, zs) 
-    printf "     alpha%9.4f%9.4f%8.3f%8.3f\n", c, se, zs, pv
-
-    k = 2
-    loop foreach i X -q
-        sprintf s "$i"
-        scalar c = coef[k]
-        scalar se = sqrt(vcv[k,k])
-        scalar zs = c/se
-        scalar pv = 2*pvalue(n, zs) 
-        printf "%10s%9.4f%9.4f%8.3f%8.3f\n", s, c, se, zs, pv
-        k++
-    end loop
+    matrix coef_stde = zip_estimate(y, X)
+    printf "\nZero-inflated Poisson model:\n"
+    string parnames = "alpha,"
+    string parnames += varname(X)
+    modprint coef_stde parnames
 end function
 \end{scode}
 \end{script}
@@ -683,8 +667,9 @@ variable \texttt{y} and a list of explanatory variables \texttt{X}. An
 example of such function can be seen in script~\ref{mle-zip-main}. By
 inspecting the function code, you can see that the actual estimation
 does not happen here: rather, the \texttt{zip()} function merely
-formats and prints out the results coming from another user-written
-function, namely \texttt{zip\_estimate()}.
+uses the built-in \cmd{modprint} command to print out the results
+coming from another user-written function, namely
+\texttt{zip\_estimate()}.
 
 \begin{script}[htbp]
   \caption{Zero-inflated Poisson Model --- internal functions}
@@ -728,7 +713,7 @@ function zip_estimate(series y, list X)
     mle ll = ln_zip_prob(y, X, coef, alpha)
         params alpha coef
     end mle --hessian --quiet
-    matrix ret = $coeff ~ $vcv
+    matrix ret = $coeff ~ $stderr
     return matrix ret
 end function
 \end{scode}
@@ -785,9 +770,11 @@ The results are as follows:
 \begin{code}
 Zero-inflated Poisson model:
 
-     alpha   0.2031   0.0238   8.531   0.000
-     const   0.2570   0.0417   6.162   0.000
-         x   0.4667   0.0321  14.527   0.000
+             coefficient   std. error   z-stat   p-value 
+  -------------------------------------------------------
+  alpha       0.203069     0.0238035     8.531   1.45e-17 ***
+  const       0.257014     0.0417129     6.161   7.21e-10 ***
+  x           0.466657     0.0321235    14.53    8.17e-48 ***
 \end{code}
 
 A further step may then be creating a function package for accessing
