@@ -2298,7 +2298,6 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
     GtkWidget *vbox, *page, *sep;
     int i, j, tbl_len, tbl_num, tbl_col;
     png_plot *plot = (png_plot *) spec->ptr;
-    int edit_ok = (spec->code != PLOT_BOXPLOTS);
     int pgnum = -1;
 
     vbox = gp_dialog_vbox();
@@ -2339,13 +2338,9 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 	ed->labeltext[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(ed->labeltext[i]), PLOT_LABEL_TEXT_LEN);
 	gp_string_to_entry(ed->labeltext[i], spec->labels[i].text);
-	if (edit_ok) {
-	    g_signal_connect(G_OBJECT(ed->labeltext[i]), "activate", 
-			     G_CALLBACK(apply_gpt_changes), 
-			     ed);
-	} else {
-	    gtk_widget_set_sensitive(ed->labeltext[i], FALSE);
-	}
+	g_signal_connect(G_OBJECT(ed->labeltext[i]), "activate", 
+			 G_CALLBACK(apply_gpt_changes), 
+			 ed);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  ed->labeltext[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show(ed->labeltext[i]);
@@ -2354,9 +2349,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 
-	if (edit_ok) {
-	    item_remove_button(tbl, tbl_len, ed, i, GUI_LABEL);
-	}
+	item_remove_button(tbl, tbl_len, ed, i, GUI_LABEL);
 
 	print_field_label(tbl, tbl_len, _("position (X Y)"));
 
@@ -2408,7 +2401,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 				  ed->labeljust[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(ed->labeljust[i]);
 
-	if (i < ed->gui_nlabels - 1 || (edit_ok && spec->n_labels < 8)) {
+	if (i < ed->gui_nlabels - 1 || spec->n_labels < 8) {
 	    /* separator */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -2419,7 +2412,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 	}
     }
 
-    if (edit_ok && spec->n_labels < 8) {
+    if (spec->n_labels < 8) {
 	/* button for adding a label */
 	GtkWidget *button;
 

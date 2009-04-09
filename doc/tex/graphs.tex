@@ -41,10 +41,9 @@ menu with the following options.
 \subsection{Displaying data labels}
 \label{plot-labels}
 
-In the case of a simple X-Y scatterplot (with or without a line of
-best fit displayed), some further options are available if the dataset
-includes ``case markers'' (that is, labels identifying each
-observation).\footnote{For an example of such a dataset, see the
+For simple X-Y scatter plots, some further options are available if
+the dataset includes ``case markers'' (that is, labels identifying
+each observation).\footnote{For an example of such a dataset, see the
   Ramanathan file \verb+data4-10+: this contains data on private
   school enrollment for the 50 states of the USA plus Washington, DC;
   the case markers are the two-letter codes for the states.} With a
@@ -54,21 +53,11 @@ transient: they do not appear in the printed or copied version of the
 graph.  They can be removed by selecting ``Clear data labels'' from
 the graph pop-up menu. If you want the labels to be affixed
 permanently (so they will show up when the graph is printed or
-copied), you have two options.
-    
-\begin{itemize}
-\item To affix the labels currently shown on the graph, select
-  ``Freeze data labels'' from the graph pop-up menu.
-\item To affix labels for all points in the graph, select ``Edit''
-  from the graph pop-up and check the box titled ``Show all data
-  labels''.  This option is available only if there are less than 55
-  data points, and it is unlikely to produce good results if the
-  points are tightly clustered since the labels will tend to overlap.
-\end{itemize}
-
-To remove labels that have been affixed in either of these ways,
-select ``Edit'' from the graph pop-up and uncheck ``Show all data
-labels''.
+copied), select the option ``Freeze data labels'' from the pop-up
+menu; ``Clear data labels'' cancels this operation.  The other
+label-related option, ``All data labels'', requests that case markers
+be shown for all observations.  At present the display of case markers
+is disabled for graphs containing more than 250 data points.
     
 
 \subsection{Advanced options}
@@ -113,7 +102,15 @@ of a variable. The central box encloses the middle 50 percent of the
 data, i.e.\ it is bounded by the first and third quartiles.  The
 ``whiskers'' extend to the minimum and maximum values.  A line is
 drawn across the box at the median and a ``\texttt{+}'' sign
-identifies the mean.
+identifies the mean --- see Figure~\ref{fig-boxplot}.
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics{figures/boxplot_sample}
+  \end{center}
+  \caption{Sample boxplot}
+  \label{fig-boxplot}
+\end{figure}
 
 In the case of boxplots with confidence intervals, dotted lines show
 the limits of an approximate 90 percent confidence interval for the
