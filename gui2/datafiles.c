@@ -677,16 +677,6 @@ void browser_open_data (GtkWidget *w, gpointer data)
     verify_open_data(vwin, OPEN_DATA);
 }
 
-static gint enter_open_data (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
-{
-    if (key->keyval == GDK_Return) {
-	browser_open_data(w, vwin);
-	return TRUE;
-    } else {
-	return FALSE;
-    }
-}
-
 void browser_open_ps (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -707,6 +697,21 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 } 
+
+static gint enter_opens_file (GtkWidget *w, GdkEventKey *key, 
+			      windata_t *vwin)
+{
+    if (key->keyval == GDK_Return || key->keyval == GDK_o) {
+	if (vwin->role == TEXTBOOK_DATA) {
+	    browser_open_data(w, vwin);
+	} else if (vwin->role == PS_FILES) {
+	    browser_open_ps(w, vwin);
+	}
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
 
 enum {
     VIEW_FN_PKG_INFO,
@@ -1379,9 +1384,9 @@ void display_files (int code, gpointer p)
 	gtk_widget_grab_focus(vwin->listbox);
 	if (code == NATIVE_DB || code == FUNC_FILES) {
 	    set_up_viewer_drag_target(vwin);
-	} else if (code == TEXTBOOK_DATA) {
+	} else if (code == TEXTBOOK_DATA || code == PS_FILES) {
 	    g_signal_connect(G_OBJECT(vwin->listbox), "key-press-event",
-			     G_CALLBACK(enter_open_data), vwin);
+			     G_CALLBACK(enter_opens_file), vwin);
 	}
     }
 
