@@ -665,49 +665,74 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
     }
 }
 
+/* if a keystroke would take us to row 0 (e.g. page up), countermand
+   and got to row 1 instead
+*/
+
+static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
+{
+    GtkTreePath *path = NULL;
+    int i;
+
+    gtk_tree_view_get_cursor(view, &path, NULL);
+
+    if (path != NULL) {
+	i = gtk_tree_path_get_indices(path)[0];
+	if (i == 0) {
+	    GtkTreePath *newp;
+
+	    newp = gtk_tree_path_new_from_indices(1, -1);
+	    gtk_tree_view_set_cursor(view, newp, NULL, FALSE);
+	    gtk_tree_path_free(newp);
+	}
+	gtk_tree_path_free(path);
+    }
+}
+
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods;
+    int k = key->keyval;
 
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     if (!(mods & GDK_MOD1_MASK)) {
-	if (key->keyval == GDK_a) {
+	if (k == GDK_a) {
 	    audio_render_window(vwin, AUDIO_LISTBOX);
-	} else if (key->keyval == GDK_x) {
+	} else if (k == GDK_x) {
 	    stop_talking();
 	}
     }
 #endif
 
-    if (key->keyval == GDK_h || key->keyval == GDK_F1) {
+    if (k == GDK_h || k == GDK_F1) {
 	/* invoke help */
 	plain_text_cmdref(NULL);
 	return FALSE;
     }
 
-    if (key->keyval == GDK_g) {
+    if (k == GDK_g) {
 	/* invoke genr */
 	genr_callback();
 	return FALSE;
     }
 
-    if (key->keyval == GDK_r) {
+    if (k == GDK_r) {
 	refresh_data();
 	return FALSE;
     }
 
-    if (key->keyval == GDK_x && (mods & GDK_MOD1_MASK)) {
+    if (k == GDK_x && (mods & GDK_MOD1_MASK)) {
 	/* invoke command minibuffer */
 	minibuf_callback();
 	return FALSE;
     }
 
-    if (key->keyval == GDK_Return                        /* display variable(s) */
-	|| key->keyval == GDK_Delete                     /* delete variable(s) */
-	|| key->keyval == GDK_e || key->keyval == GDK_F2 /* edit variable's info */
-	|| key->keyval == GDK_t                          /* graph variable */
+    if (k == GDK_Return              /* display variable(s) */
+	|| k == GDK_Delete           /* delete variable(s) */
+	|| k == GDK_e || k == GDK_F2 /* edit variable's info */
+	|| k == GDK_t                /* graph variable */
 	) {
 	int selcount, vnum = 0;
 
@@ -715,26 +740,28 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
 	if (selcount == 1 && vnum != 0) {
 	    mdata->active_var = vnum;
-	    if (key->keyval == GDK_e || key->keyval == GDK_F2) {
+	    if (k == GDK_e || k == GDK_F2) {
 		varinfo_dialog(mdata->active_var, 1);
-	    } else if (key->keyval == GDK_t) {
+	    } else if (k == GDK_t) {
 		do_graph_var(mdata->active_var);
-	    } else if (key->keyval == GDK_Return) {
+	    } else if (k == GDK_Return) {
 		display_var();
-	    } else if (key->keyval == GDK_Delete) {
+	    } else if (k == GDK_Delete) {
 		delete_single_var(mdata->active_var);
 	    }
 	} else if (selcount > 1) {
-	    if (key->keyval == GDK_Delete) {
+	    if (k == GDK_Delete) {
 		delete_selected_vars();
-	    } else if (key->keyval == GDK_Return) {
+	    } else if (k == GDK_Return) {
 		display_selected();
 	    }
 	}
     } 
 
-    /* suppress useless keystrokes */
-    if (key->keyval != GDK_Up && key->keyval != GDK_Down) {
+    /* suppress echo of useless keystrokes */
+    if (k != GDK_Up && k != GDK_Down &&
+	k != GDK_Page_Up && k != GDK_Page_Down &&
+	k != GDK_Home && k != GDK_End) {
 	return TRUE;
     }
 
@@ -897,6 +924,9 @@ void populate_varlist (void)
 	g_signal_connect(G_OBJECT(select), "changed",
 			 G_CALLBACK(check_varmenu_state),
 			 mdata);
+	g_signal_connect(G_OBJECT(mdata->listbox), "cursor-changed",
+			 G_CALLBACK(mdata_avoid_zero),
+			 NULL);
 	check_connected = 1;
     }
 

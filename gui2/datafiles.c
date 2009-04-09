@@ -675,7 +675,17 @@ void browser_open_data (GtkWidget *w, gpointer data)
     set_datapage(coll->title);
 
     verify_open_data(vwin, OPEN_DATA);
-} 
+}
+
+static gint enter_open_data (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    if (key->keyval == GDK_Return) {
+	browser_open_data(w, vwin);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
 
 void browser_open_ps (GtkWidget *w, gpointer data)
 {
@@ -1369,6 +1379,9 @@ void display_files (int code, gpointer p)
 	gtk_widget_grab_focus(vwin->listbox);
 	if (code == NATIVE_DB || code == FUNC_FILES) {
 	    set_up_viewer_drag_target(vwin);
+	} else if (code == TEXTBOOK_DATA) {
+	    g_signal_connect(G_OBJECT(vwin->listbox), "key-press-event",
+			     G_CALLBACK(enter_open_data), vwin);
 	}
     }
 
