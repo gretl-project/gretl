@@ -272,21 +272,28 @@ static gint tree_store_go_to (windata_t *vwin, int k)
 		rows = gtk_tree_model_iter_n_children(model, NULL);
 		path = gtk_tree_path_new_from_indices(rows - 1, -1);
 	    }
-	    gtk_tree_view_scroll_to_cell(view, path, NULL,
-					 TRUE, 0.0, 0.0);
-	} else {
+	    if (path != NULL) {
+		gtk_tree_view_scroll_to_cell(view, path, NULL,
+					     TRUE, 0.0, 0.0);
+	    }
+	} else if (k == GDK_Page_Up) {
+	    /* messed upo below: FIXME */
+	    return FALSE;
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
 	    gtk_tree_view_tree_to_widget_coords(view, r.x, r.y,
 						&wx, &wy);
 #else
-	    gtk_tree_view_convert_bin_window_to_widget_coords(view, r.x, r.y,
+	    gtk_tree_view_convert_bin_window_to_widget_coords(view, 
+							      r.x, r.y,
 							      &wx, &wy);
 #endif
 	    gtk_tree_view_get_path_at_pos(view, wx, wy, &path, 
 					  NULL, NULL, NULL);
-	    gtk_tree_view_scroll_to_cell(view, path, NULL,
-					 TRUE, 1.0, 0.0);
-	    if (vwin == mdata && r.y == 0) {
+	    if (path != NULL) {
+		gtk_tree_view_scroll_to_cell(view, path, NULL,
+					     TRUE, 1.0, 0.0);
+	    }
+	    if (r.y == 0) {
 		gtk_tree_path_free(path);
 		path = gtk_tree_path_new_from_indices(1, -1);
 	    }
@@ -296,9 +303,10 @@ static gint tree_store_go_to (windata_t *vwin, int k)
     if (path != NULL) {
 	gtk_tree_view_set_cursor(view, path, NULL, FALSE);
 	gtk_tree_path_free(path);
+	return TRUE;
+    } else {
+	return FALSE;
     }
-
-    return TRUE;
 }
 
 static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
