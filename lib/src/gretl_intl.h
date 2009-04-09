@@ -49,7 +49,7 @@ typedef enum {
     LANG_RU,
     LANG_ZH_TW,
     LANG_MAX
-} LangCode;
+} GretlLangCode;
 
 char *iso_gettext (const char *msgid);
 
