@@ -1112,9 +1112,19 @@ rtfprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "}}\n");
 }
 
-static void printftex (double zz, PRN *prn, int endrow)
+/* print value in (non-correlation) matrix */
+
+static void tex_matnum (double x, PRN *prn)
 {
-    if (na(zz)) {
+    char s[32];
+
+    tex_sprint_double_digits(x, s, 5);
+    pprintf(prn, "%s & ", s);
+}
+
+static void printftex (double x, PRN *prn, int endrow)
+{
+    if (na(x)) {
 	if (endrow) {
 	    pprintf(prn, "\\multicolumn{2}{c}{%s}\\\\", I_("undefined"));
 	} else {
@@ -1123,7 +1133,7 @@ static void printftex (double zz, PRN *prn, int endrow)
     } else {
 	char s[32];
 
-	tex_rl_double(zz, s);
+	tex_rl_double(x, s);
 
 	if (endrow) {
 	    pprintf(prn, "%s\\\\", s);
@@ -1428,7 +1438,7 @@ texprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 		if (vmat->ci == CORR) {
 		    tex_outxx(vmat->vec[idx], prn);
 		} else {
-		    printftex(vmat->vec[idx], prn, 0);
+		    tex_matnum(vmat->vec[idx], prn);
 		}
 	    }
 	    tex_escape(vname, vmat->names[j]);
@@ -1446,7 +1456,7 @@ texprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 		if (vmat->ci == CORR) {
 		    tex_outxx(vmat->vec[idx], prn);
 		} else {
-		    printftex(vmat->vec[idx], prn, 0);
+		    tex_matnum(vmat->vec[idx], prn);
 		}
 	    }
 	    tex_escape(vname, vmat->names[ij2]);
