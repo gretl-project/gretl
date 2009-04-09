@@ -200,6 +200,11 @@ int submask_cmp (const char *m1, const char *m2)
     return 0;
 }
 
+/* all values apart from the sentinel are initialized to zero; once
+   the mask is used, 1s will indicate included observations and
+   0s will indicate excluded observations
+*/
+
 static char *make_submask (int n)
 {
     char *mask = calloc(n + 1, 1);
@@ -502,12 +507,14 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 	    sample_range_get_extrema(pdinfo, &t1min, &t2max);
 	}
 
-	pdinfo->t1 = t1min;
-	pdinfo->t2 = t2max;
+	if (pdinfo->t1 != t1min || pdinfo->t2 != t2max) {
+	    pdinfo->t1 = t1min;
+	    pdinfo->t2 = t2max;
 #if SUBDEBUG
-	fprintf(stderr, "restore_full_sample: just set t1=%d and t2=%d\n",
-		t1min, t2max);
+	    fprintf(stderr, "restore_full_sample: just set t1=%d and t2=%d\n",
+		    t1min, t2max);
 #endif
+	}
 	return 0;
     }
 
@@ -1034,7 +1041,8 @@ make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
 static int 
 make_restriction_mask (int mode, const char *s, const int *list, 
 		       double ***pZ, DATAINFO *pdinfo,
-		       PRN *prn, const char *oldmask, char **pmask)
+		       const char *oldmask, char **pmask,
+		       PRN *prn)
 {
     char *mask = NULL;
     int sn = 0, err = 0;
@@ -1208,6 +1216,63 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
+/* Below: we do this "precompute" thing if the dataset is already
+   subsampled and the user wants to compound the restriction with a
+   new one of the form "obs=x" or "obs!=x".  The "obs" references may
+   get out of whack if we restore the full dataset first, as we
+   usually do.  For example, say the spec is "obs!=50" to exclude
+   observation 50: presumably the user means to exclude the 50th
+   observation in the current, subsampled dataset, which may not be
+   the same as the 50th observation in the full dataset.
+*/
+
+static char *precompute_mask (const char *s, const char *oldmask,
+			      double ***pZ, DATAINFO *pdinfo, 
+			      int *err)
+{
+    char *mask, *tmp = make_submask(pdinfo->n);
+    int i, t;
+
+#if SUBDEBUG
+    fprintf(stderr, "restrict_sample: precomputing new mask\n");
+#endif
+
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* fill out mask relative to current, restricted dataset */
+    *err = mask_from_temp_dummy(s, pZ, pdinfo, tmp);
+
+    if (!*err) {
+	/* make blank full-length mask */
+	mask = make_submask(fullinfo->n);
+	if (mask == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	/* map the new mask onto full data range */
+	i = 0;
+	for (t=0; t<fullinfo->n; t++) {
+	    if (oldmask[t]) {
+		mask[t] = tmp[i++];
+	    }
+	}
+    }
+
+    free(tmp);
+
+    return mask;
+}
+
+static int restriction_uses_obs (const char *s)
+{
+    return gretl_namechar_spn(s) == 3 && !strncmp(s, "obs", 3);
+}
+
 /* restrict_sample: 
  * @line: command line (or %NULL).  
  * @pZ: pointer to original data array.  
@@ -1278,31 +1343,52 @@ int restrict_sample (const char *line, const int *list,
 	oldmask = state->submask;
     }
 
+    if (mode == SUBSAMPLE_BOOLEAN && oldmask != NULL && 
+	restriction_uses_obs(line)) {
+	mask = precompute_mask(line, oldmask, pZ, pdinfo, &err);
+    }
+
     /* restore the full data range, for housekeeping purposes */
-    err = restore_full_sample(pZ, pdinfo, NULL);
+    if (!err) {
+	err = restore_full_sample(pZ, pdinfo, NULL);
+    }
+
     if (err) {
 	return err;
     }
 
-    if (!err) {
+    if (mask == NULL) {
 	err = make_restriction_mask(mode, line, list, pZ, pdinfo, 
-				    prn, oldmask, &mask);
+				    oldmask, &mask, prn);
     }
 
     if (!err && mask != NULL) {
 	int t1 = 0, t2 = 0;
 	int contig = 0;
 
-	if (mode != SUBSAMPLE_RANDOM &&
+	if (mode != SUBSAMPLE_RANDOM && 
 	    (dataset_is_time_series(pdinfo) ||
 	     dataset_is_panel(pdinfo))) {
+	    /* AC 2009-04-09: this check is restricted to time series
+	       and panel data.  Why?  Maybe this should be changed.
+	    */
 	    contig = mask_contiguous(mask, pdinfo, &t1, &t2);
 	}
 
 	if (contig) {
+	    /* The specified subsample consists of contiguous
+	       observations, so we'll just adjust the range, avoiding
+	       the overhead of creating a parallel dataset.
+	    */
+#if SUBDEBUG
+	    fprintf(stderr, "restrict sample: got contiguous range\n");
+#endif
 	    pdinfo->t1 = t1;
 	    pdinfo->t2 = t2;
 	} else {
+#if SUBDEBUG
+	    fprintf(stderr, "restrict sample: using mask\n");
+#endif
 	    err = restrict_sample_from_mask(mask, pZ, pdinfo);
 	}
     }
