@@ -7978,6 +7978,22 @@ static int gen_allocate_storage (parser *p)
     return p->err;
 }
 
+static void series_ensure_finite (double *x, int n)
+{
+    int i;
+
+    /* this may be questionable, but is necessary for
+       backward compatibility (e.g. when taking logs
+       of a series that contains zeros)
+    */
+
+    for (i=0; i<n; i++) {
+	if (xna(x[i])) {
+	    x[i] = NADBL;
+	}
+    }
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -8092,6 +8108,9 @@ static int save_generated_var (parser *p, PRN *prn)
 		    }
 		}
 	    }
+	}
+	if (!p->err) {
+	    series_ensure_finite(Z[v], p->dinfo->n);
 	}
 	strcpy(p->dinfo->varname[v], p->lh.name);
 #if EDEBUG

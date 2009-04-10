@@ -393,6 +393,9 @@ struct localeinfo {
     const char *code;
 };
 
+/* the following are the strings that are accepted by setlocale()
+   on win32 */
+
 static struct localeinfo locales[] = {
     { LANG_AUTO,  NULL },
     { LANG_C,     "english" },
@@ -541,7 +544,7 @@ int test_locale (int langid)
 
     if ((test = setlocale(LC_ALL, lcode)) != NULL) {
         fprintf(stderr, "test_locale: '%s' -> '%s'\n", lcode, test);
-	setlocale(LC_ALL, ocpy);
+	setlocale(LC_ALL, ocpy); /* restore the original locale */
 	return 0;
     } else {
 	gretl_errmsg_sprintf(_("%s: locale is not supported "
@@ -568,7 +571,9 @@ void force_language (int langid)
 
             fprintf(stderr, "lcode='%s', newloc='%s'\n", lcode, newloc);
 # ifdef WIN32
-            set_cp_from_locale(newloc);
+	    if (newloc != NULL) {
+		set_cp_from_locale(newloc);
+	    }
 # endif
 	}
     }
@@ -585,7 +590,6 @@ void force_language (int langid)
 	SetEnvironmentVariable("LC_ALL", lcode);
 	sprintf(estr, "LC_ALL=%s", lcode);
 	putenv(estr);
-	/* setting LANG seems to work for win32 */
 	SetEnvironmentVariable("LANG", lcode);
 	sprintf(estr, "LANG=%s", lcode);
 	putenv(estr);

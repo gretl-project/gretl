@@ -2590,6 +2590,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[3] = (tex)? "$\\hat{\\rho}$" : N_("rho");
 	val[3] = pmod->rho;
 	for (i=4; i<MID_STATS; i++) {
+	    /* may add an R-squared (item 4)? */
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;
 	    }

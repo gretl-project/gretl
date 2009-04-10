@@ -4013,6 +4013,39 @@ int freq_dialog (const char *title, const char *blurb,
     return ret;
 }
 
+#ifdef NATIVE_WIN32_MSGBOX
+
+/* MS Windows native "MessageBox" */
+
+static void msgbox (const char *msg, int msgtype)
+{
+    gchar *trmsg = NULL;
+    int nls_on = doing_nls();
+    int utype;
+
+    if (nls_on && !gretl_is_ascii(msg) && g_utf8_validate(msg, -1, NULL)) {
+	/* recode messages in UTF-8, but don't try to recode messages
+	   that are already in the locale encoding (strerror) 
+	*/
+	gsize bytes;
+
+	trmsg = g_locale_from_utf8(msg, -1, NULL, &bytes, NULL);
+    } 
+
+    utype = (msgtype == GTK_MESSAGE_WARNING)? MB_ICONWARNING :
+	(msgtype == GTK_MESSAGE_ERROR)? MB_ICONERROR :
+	MB_ICONINFORMATION;
+
+    MessageBox(NULL, (trmsg != NULL)? trmsg : msg, "gretl", 
+	       MB_OK | utype);
+
+    if (trmsg != NULL) {
+	g_free(trmsg);
+    }
+}
+
+#else /* not native win32 */
+
 static void msgbox (const char *msg, int msgtype)
 {
     const gchar *titles[] = {
@@ -4050,6 +4083,8 @@ static void msgbox (const char *msg, int msgtype)
 	g_free(trmsg);
     }    
 }
+
+#endif
 
 void errbox (const char *template, ...)
 {

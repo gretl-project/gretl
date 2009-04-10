@@ -604,6 +604,14 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    }
 	}
     }
+
+#if 0
+    /* R-squared based on correlation? */
+    x = gretl_corr(hm->t1, hm->t2, Z[depvar], hm->yhat, NULL);
+    if (!na(x)) {
+	hm->rsq = x * x;
+    }
+#endif
 }
 
 /*

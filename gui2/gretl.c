@@ -329,7 +329,23 @@ void nls_init (void)
 
 #endif /* ENABLE_NLS */
 
-#ifndef G_OS_WIN32
+#ifdef G_OS_WIN32
+
+static int get_debug_opt (int argc, char **argv)
+{
+    int i;
+
+    for (i=1; i<argc; i++) {
+        if (!strcmp(argv[i], "--debug")) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+#else
+
 static void record_filearg (char *targ, const char *src)
 {
     if (*src == '.') {
@@ -343,27 +359,13 @@ static void record_filearg (char *targ, const char *src)
 	strcpy(targ, src);
     }
 }
+
 #endif
 
 static int have_data (void)
 {
     return datainfo != NULL && datainfo->v > 0;
 }
-
-#ifdef G_OS_WIN32
-static int get_debug_opt (int argc, char **argv)
-{
-    int i;
-
-    for (i=1; i<argc; i++) {
-        if (!strcmp(argv[i], "--debug")) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-#endif
 
 int main (int argc, char **argv)
 {
