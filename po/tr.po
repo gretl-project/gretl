@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-08 22:00-0400\n"
-"PO-Revision-Date: 2009-04-10 11:53+0300\n"
+"PO-Revision-Date: 2009-04-10 16:49+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -598,7 +598,7 @@ msgstr "Bu sınama yalnızca karma modeller için uygundur\n"
 
 #: lib/src/compare.c:2871
 msgid "This test requires that the model contains a constant\n"
-msgstr "Bu sınama sabit terim içeren bir model gerektirmektedir\n"
+msgstr "Bu sınama modelin bir sabit terim içermesini gerektirir\n"
 
 #: lib/src/compare.c:2876
 msgid ""
@@ -813,7 +813,7 @@ msgstr "%s açılamadı\n"
 
 #: lib/src/csvdata.c:1867
 msgid "using fixed column format\n"
-msgstr ""
+msgstr "sabit sütun biçimi kullanılarak\n"
 
 #: lib/src/csvdata.c:1899
 #, c-format
@@ -2379,7 +2379,7 @@ msgstr "ölç. sap"
 
 #: lib/src/graphing.c:1244
 msgid "Gnuplot does not support PDF output on this system"
-msgstr ""
+msgstr "Gnuplot bu sistemde PDF çıktısını desteklemiyor"
 
 #: lib/src/graphing.c:1369 gui2/gpt_dialog.c:511
 #, c-format
@@ -4289,7 +4289,7 @@ msgstr "sıralı logbirim"
 
 #: lib/src/modelprint.c:680 gui2/selector.c:2877
 msgid "Multinomial Logit"
-msgstr ""
+msgstr "Çokterimli Logbirim"
 
 #: lib/src/modelprint.c:686 gui2/selector.c:2881
 msgid "Ordered Probit"
@@ -4325,6 +4325,8 @@ msgid ""
 "Critical values for desired LIML maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
+"Sayısal olarak % 5 anlamlılık düzeyindeki sınamalar için,\n"
+"arzulanan KBEO ençok büyüklüğü eşik değerleri:\n"
 
 #: lib/src/modelprint.c:762
 #, no-c-format
@@ -4332,6 +4334,8 @@ msgid ""
 "Critical values for desired TSLS maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
+"Sayısal olarak % 5 anlamlılık düzeyindeki sınamalar için,\n"
+"arzulanan 2AEK ençok büyüklüğü eşik değerleri:\n"
 
 #: lib/src/modelprint.c:766
 msgid "bias"
@@ -4348,22 +4352,22 @@ msgstr "değer"
 #: lib/src/modelprint.c:783
 #, c-format
 msgid "Relative bias is probably less than %g%%"
-msgstr ""
+msgstr "Göreli yanlılık büyük olasılıkla %% %g değeri altında"
 
 #: lib/src/modelprint.c:785
 #, c-format
 msgid "Maximal size is probably less than %g%%"
-msgstr ""
+msgstr "Ençok büyüklük büyük olasılıkla %% %g değeri altında"
 
 #: lib/src/modelprint.c:795
 #, c-format
 msgid "Relative bias may exceed %g%%"
-msgstr ""
+msgstr "Göreli yanlılık %% %g değerini aşıyor olabilir"
 
 #: lib/src/modelprint.c:797
 #, c-format
 msgid "Maximal size may exceed %g%%"
-msgstr ""
+msgstr "Ençok büyüklük %% %g değerini aşıyor olabilir"
 
 #: lib/src/modelprint.c:806
 msgid "Weak instrument test"
@@ -4375,11 +4379,11 @@ msgstr "Birinci-aşama F-istatistiği"
 
 #: lib/src/modelprint.c:844 lib/src/modelprint.c:853
 msgid "Cragg-Donald minimum eigenvalue"
-msgstr ""
+msgstr "Cragg-Donald enaz özdeğeri"
 
 #: lib/src/modelprint.c:850
 msgid "Cragg--Donald minimum eigenvalue"
-msgstr ""
+msgstr "Cragg--Donald enaz özdeğeri"
 
 #: lib/src/modelprint.c:891
 msgid "A value < 10 may indicate weak instruments"
@@ -5410,7 +5414,7 @@ msgstr "Geçersiz seçenek '--%s'"
 #: lib/src/options.c:907
 #, c-format
 msgid "The option '--%s' requires a parameter"
-msgstr ""
+msgstr "'--%s' seçeneği bir değiştirge gerektirir"
 
 #: lib/src/options.c:1106
 #, c-format
@@ -9683,7 +9687,7 @@ msgstr "_Dağılım çizimleri"
 
 #: gui2/gretl.c:1314
 msgid "_Plot a curve"
-msgstr ""
+msgstr "_Bir eğri çiz"
 
 #: gui2/gretl.c:1315
 msgid "_Test statistic calculator"
@@ -10240,7 +10244,7 @@ msgstr "_İkili..."
 
 #: gui2/gretl.c:1486 gui2/gretl.c:1490
 msgid "_Ordered..."
-msgstr ""
+msgstr "_Sıralı..."
 
 #: gui2/gretl.c:1487
 msgid "_Multinomial..."
@@ -11956,7 +11960,7 @@ msgstr "X-Y serpilme çizimi"
 
 #: gui2/menustate.c:355 gui2/menustate.c:426
 msgid "Add logs"
-msgstr ""
+msgstr "Log ekle"
 
 #: gui2/menustate.c:357 gui2/menustate.c:427
 msgid "Add differences"
@@ -12273,13 +12277,12 @@ msgid "Two-stage least squares"
 msgstr "İki aşamalı en küçük kareler"
 
 #: gui2/selector.c:2903
-#, fuzzy
 msgid "Limited information maximum likelihood"
-msgstr "Sınırlı Bilgi En yüksek Olabilirlik"
+msgstr "Sınırlı bilgi ençok olabilirlik"
 
 #: gui2/selector.c:2905
 msgid "Generalized method of moments"
-msgstr ""
+msgstr "Genelleştirilmiş beklemler yöntemi"
 
 #: gui2/selector.c:2907
 msgid "Autoregressive model"
@@ -12778,14 +12781,12 @@ msgid "lag order"
 msgstr "gecikme derecesi"
 
 #: gui2/selector.c:6004
-#, fuzzy
 msgid "Lags of endogenous variables"
-msgstr "İçtürel değişken listesi ekle"
+msgstr "İçtürel değişken gecikmeleri"
 
 #: gui2/selector.c:6020
-#, fuzzy
 msgid "Regressors"
-msgstr "Bağlanım"
+msgstr "Bağlayanlar"
 
 #: gui2/selector.c:6026
 msgid "lags"
@@ -12970,9 +12971,8 @@ msgid "Graph page"
 msgstr "Çizim sayfası"
 
 #: gui2/session.c:3073
-#, fuzzy
 msgid "icon view"
-msgstr "_Simge görünümü"
+msgstr "simge görünümü"
 
 #: gui2/session.c:3254
 #, c-format
