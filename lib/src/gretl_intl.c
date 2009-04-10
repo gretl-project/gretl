@@ -236,14 +236,23 @@ void set_gretl_charset (const char *s)
 # endif
 }
 
+# ifdef WIN32
+
+static void set_cp_from_locale (const char *loc)
+{
+    const char *p = strrchr(loc, '.');
+
+    if (p != NULL && strlen(p) > 3 && isdigit(p[1])) {
+        gretl_cpage = atoi(p + 1);
+        fprintf(stderr, "set_cp_from_locale: CP = %d\n", gretl_cpage);
+    }
+}
+
+# endif
+
 static const char *get_gretl_charset (void)
 {
     static char cset[12];
-
-    if (gretl_cset_maj > 0 && gretl_cset_min > 0) {
-	sprintf(cset, "ISO-%d-%d", gretl_cset_maj, gretl_cset_min);
-	return cset;
-    } 
 
 # ifdef WIN32
     if (gretl_cpage > 0) {
@@ -251,6 +260,11 @@ static const char *get_gretl_charset (void)
 	return cset;
     }
 # endif
+
+    if (gretl_cset_maj > 0 && gretl_cset_min > 0) {
+	sprintf(cset, "ISO-%d-%d", gretl_cset_maj, gretl_cset_min);
+	return cset;
+    } 
 
     return NULL;
 }
@@ -372,6 +386,45 @@ char *iso_gettext (const char *msgid)
     return ret;
 } 
 
+# ifdef WIN32
+
+struct localeinfo {
+    int id;
+    const char *code;
+};
+
+static struct localeinfo locales[] = {
+    { LANG_AUTO,  NULL },
+    { LANG_C,     "english" },
+    { LANG_EU,    "basque" },
+    { LANG_DE,    "german" },
+    { LANG_ES,    "spanish" },
+    { LANG_FR,    "french" },
+    { LANG_IT,    "italian" },
+    { LANG_PL,    "polish" },
+    { LANG_TR,    "turkish" },
+    { LANG_PT,    "portuguese" },
+    { LANG_PT_BR, "portuguese-brazilian" },
+    { LANG_RU,    "russian" },
+    { LANG_ZH_TW, "chinese-traditional" },
+    { LANG_MAX,    NULL }
+};
+
+const char *locale_code_from_id (int langid)
+{
+    int i;
+
+    for (i=0; i<LANG_MAX; i++) {
+	if (langid == locales[i].id) {
+	    return locales[i].code;
+	}
+    }
+
+    return NULL;
+}
+
+# endif
+
 struct langinfo {
     int id;
     const char *name;
@@ -431,13 +484,7 @@ static char *win32_set_numeric (const char *lang)
     for (i=LANG_EU; i<LANG_MAX; i++) {
 	if (!strcmp(lang, langs[i].code) ||
 	    !strncmp(lang, langs[i].code, 2)) {
-	    set = setlocale(LC_NUMERIC, langs[i].name);
-	    if (set == NULL) {
-		set = setlocale(LC_NUMERIC, langs[i].code);
-	    }
-	    if (set == NULL) {
-		set = setlocale(LC_NUMERIC, lang);
-	    }
+	    set = setlocale(LC_NUMERIC, locales[i].code);
 	    if (set != NULL) {
 		break;
 	    }
@@ -477,16 +524,14 @@ void set_lcnumeric (int langid, int lcnumeric)
 int test_locale (int langid)
 {
     const char *lcode;
-    char *orig;
+    char *orig, *test;
     char ocpy[64];
 
 #ifdef WIN32
-    /* can't get setlocale to work on win32 at this point,
-       so we'll jst hope for the best */
-    return 0;
-#endif
-
+    lcode = locale_code_from_id(langid);
+#else
     lcode = lang_code_from_id(langid);
+#endif
     orig = setlocale(LC_ALL, NULL);
 
     gretl_error_clear();
@@ -494,7 +539,8 @@ int test_locale (int langid)
     *ocpy = '\0';
     strncat(ocpy, orig, 63);
 
-    if (setlocale(LC_ALL, lcode) != NULL) {
+    if ((test = setlocale(LC_ALL, lcode)) != NULL) {
+        fprintf(stderr, "test_locale: '%s' -> '%s'\n", lcode, test);
 	setlocale(LC_ALL, ocpy);
 	return 0;
     } else {
@@ -512,9 +558,18 @@ void force_language (int langid)
 	putenv("LANGUAGE=english");
 	setlocale(LC_ALL, "C");
     } else {
+# ifdef WIN32
+        lcode = locale_code_from_id(langid);
+# else
 	lcode = lang_code_from_id(langid);
+# endif
 	if (lcode != NULL) {  
-	    setlocale(LC_ALL, lcode);
+	    char *newloc = setlocale(LC_ALL, lcode);
+
+            fprintf(stderr, "lcode='%s', newloc='%s'\n", lcode, newloc);
+# ifdef WIN32
+            set_cp_from_locale(newloc);
+# endif
 	}
     }
 
@@ -524,8 +579,9 @@ void force_language (int langid)
 	putenv("LC_ALL=C");
 	textdomain("none");
     } else if (lcode != NULL) {
-	char estr[24];
+        char estr[32];
 
+        lcode = lang_code_from_id(langid);
 	SetEnvironmentVariable("LC_ALL", lcode);
 	sprintf(estr, "LC_ALL=%s", lcode);
 	putenv(estr);

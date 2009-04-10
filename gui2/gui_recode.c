@@ -71,7 +71,7 @@ gchar *my_locale_from_utf8 (const gchar *src)
 	/* g_get_charset returns TRUE if the returned 
 	   charset is UTF-8 */ 
 	return g_strdup(src);
-    }
+    } 
 
     ret = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
 

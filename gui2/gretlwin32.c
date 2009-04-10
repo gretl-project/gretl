@@ -413,20 +413,19 @@ static int set_network_cfg_filename (const char *prog)
     return 0;
 }
 
-void gretl_win32_init (const char *progname)
+void gretl_win32_init (const char *progname, int debug)
 {
+    if (debug) {
+        redirect_io_to_console();
+    }
+
     set_network_cfg_filename(progname);
 
     wimp_init();
-    read_rc(); /* get config info from registry */
+    read_rc(debug); /* get config info from registry */
     set_gretl_startdir();
     hush_warnings();
     ws_startup(); 
-}
-
-void gretl_win32_debug (void)
-{
-    redirect_io_to_console();
 }
 
 static int win_copy_buf (const char *buf, int fmt, size_t buflen)

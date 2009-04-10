@@ -847,7 +847,9 @@ static void win32_file_selector (const char *msg, int action, FselDataSrc src,
     file_selector_process_result(fname, action, src, data);
 }
 
-#else /* End of MS Windows file selection code, start GTK */
+#endif
+
+/* #else End of MS Windows file selection code, start GTK */
 
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
 {
@@ -996,7 +998,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     gtk_widget_destroy(filesel);
 }
 
-#endif /* end of non-MS Windows code */
+/* #endif end of non-MS Windows code */
 
 void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 {
@@ -1008,7 +1010,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	w = vwin->main;
     }
 
-#ifdef G_OS_WIN32
+#if 0 /* def G_OS_WIN32 */
     win32_file_selector(msg, action, src, data, w);
 #else
     gtk_file_selector(msg, action, src, data, w);
@@ -1018,7 +1020,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 void file_selector_with_parent (const char *msg, int action, FselDataSrc src, 
 				gpointer data, GtkWidget *w)
 {
-#ifdef G_OS_WIN32
+#if 0 /* def G_OS_WIN32 */
     win32_file_selector(msg, action, src, data, w);
 #else
     gtk_file_selector(msg, action, src, data, w);

@@ -350,7 +350,22 @@ static int have_data (void)
     return datainfo != NULL && datainfo->v > 0;
 }
 
-int main (int argc, char *argv[])
+#ifdef G_OS_WIN32
+static int get_debug_opt (int argc, char **argv)
+{
+    int i;
+
+    for (i=1; i<argc; i++) {
+        if (!strcmp(argv[i], "--debug")) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+#endif
+
+int main (int argc, char **argv)
 {
     int open_datafile = 0;
     int ftype = 0;
@@ -361,7 +376,7 @@ int main (int argc, char *argv[])
     GnomeProgram *program;
 #endif
 #ifdef G_OS_WIN32
-    int debug = 0;
+    int debug = get_debug_opt(argc, argv);
 #endif
     int err = 0;
 
@@ -391,7 +406,7 @@ int main (int argc, char *argv[])
     gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(argv[0]);
+    gretl_win32_init(argv[0], debug);
 #else 
     gretl_config_init();
 #endif
@@ -406,12 +421,6 @@ int main (int argc, char *argv[])
 	if (opt & OPT_ERROR) {
 	    gui_usage(1);
 	}
-
-#ifdef G_OS_WIN32
-	if (opt & OPT_DEBUG) {
-	    debug = 1;
-	}
-#endif
 
 	switch (opt) {
 	case OPT_HELP:
@@ -614,17 +623,6 @@ int main (int argc, char *argv[])
     } else if (opt == OPT_WEBDB) {
 	open_named_remote_db_index(dbname);
     }
-
-#ifdef G_OS_WIN32
-    if (debug) {
-	char *loc;
-
-	gretl_win32_debug();
-	loc = setlocale(LC_ALL, "");
-	fprintf(stderr, "setlocale gives '%s'\n", 
-		(loc != NULL)? loc : "NULL");
-    }
-#endif
 
     /* Enter the event loop */
     gtk_main();

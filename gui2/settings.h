@@ -2,7 +2,7 @@
 #define SETTINGS_H
 
 #ifdef G_OS_WIN32
-void read_rc (void);
+void read_rc (int debug);
 #else
 void gretl_config_init (void);
 #endif

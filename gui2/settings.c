@@ -1756,7 +1756,7 @@ static int get_network_settings (void)
     return gotini;
 }
 
-void read_rc (void) 
+void read_rc (int debug) 
 {
     char value[MAXSTR];
     char *strvar;
@@ -1806,6 +1806,11 @@ void read_rc (void)
 			       rc_vars[i].key, 
 			       value);
 	}
+
+        if (debug) {
+            fprintf(stderr, "reg: err = %d, '%s' -> '%s'\n", err, rc_vars[i].key,
+                    value);
+        }
 	    
 	if (!err && *value != '\0') {
 	    if (rc_vars[i].flags & BOOLSET) {
