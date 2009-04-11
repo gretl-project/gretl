@@ -676,7 +676,7 @@ static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S,
     int m = S->rows;
     int n = Vp->rows;
     int nvc, tot = m + n;
-    int i, j, k = 0;
+    int i, j, k;
     double vij;
 
     if (pmod->vcv != NULL) {
@@ -696,10 +696,17 @@ static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S,
 	return E_ALLOC;
     }
 
+    /* build combined covariance matrix */
+
+    k = 0;
     for (i=0; i<tot; i++) {
 	for (j=i; j<tot; j++) {
 	    if (i < m) {
-		vij = (j < m)? gretl_matrix_get(S, i, j) : NADBL;
+		/* How to handle the "irrelevant" block?  In the line below
+		   these elements were being set to NADBL; for the moment
+		   I'm setting them to zero -- AC, 2009-04-11.
+		*/
+		vij = (j < m)? gretl_matrix_get(S, i, j) : 0.0;
 	    } else {
 		vij = gretl_matrix_get(Vp, i-m, j-m);
 	    }

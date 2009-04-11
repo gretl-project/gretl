@@ -1268,10 +1268,18 @@ static char *precompute_mask (const char *s, const char *oldmask,
     return mask;
 }
 
+#if 1 /* let's be conservative here */
+
+# define restriction_uses_obs(s) (strstr(s, "obs") != NULL)
+
+#else
+
 static int restriction_uses_obs (const char *s)
 {
     return gretl_namechar_spn(s) == 3 && !strncmp(s, "obs", 3);
 }
+
+#endif
 
 /* restrict_sample: 
  * @line: command line (or %NULL).  
@@ -1358,6 +1366,7 @@ int restrict_sample (const char *line, const int *list,
     }
 
     if (mask == NULL) {
+	/* not already handled by "precompute" above */
 	err = make_restriction_mask(mode, line, list, pZ, pdinfo, 
 				    oldmask, &mask, prn);
     }
@@ -1366,11 +1375,9 @@ int restrict_sample (const char *line, const int *list,
 	int t1 = 0, t2 = 0;
 	int contig = 0;
 
-	if (mode != SUBSAMPLE_RANDOM && 
-	    (dataset_is_time_series(pdinfo) ||
-	     dataset_is_panel(pdinfo))) {
-	    /* AC 2009-04-09: this check is restricted to time series
-	       and panel data.  Why?  Maybe this should be changed.
+	if (mode != SUBSAMPLE_RANDOM) {
+	    /* AC 2009-04-11: this check was not being done
+	       for cross-sectional data.  Why not?
 	    */
 	    contig = mask_contiguous(mask, pdinfo, &t1, &t2);
 	}
