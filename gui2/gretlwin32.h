@@ -44,7 +44,7 @@ void menu_font_option_off (void);
 
 void win_help (void);
 
-void gretl_win32_init (const char *progname, int debug);
+void gretl_win32_init (int argc, vhar **argv);
 
 const char *get_network_cfg_filename (void);
 

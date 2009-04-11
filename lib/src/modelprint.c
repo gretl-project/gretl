@@ -2125,15 +2125,21 @@ struct middletab {
 
 static void set_mtab_string_width (struct middletab *mt)
 {
-    int len, maxlen = 0;
+    int len, badkey = 0, maxlen = 0;
     int i, j;
 
     for (i=0, j=0; i<7; i++, j+=2) {
 	if (!na(mt->val[j])) {
 	    len = g_utf8_strlen(_(mt->key[j]), -1);
-	    if (len > maxlen) maxlen = len;
+	    if (len > maxlen) {
+		maxlen = len;
+		badkey = j;
+	    }
 	    len = g_utf8_strlen(_(mt->key[j+1]), -1);
-	    if (len > maxlen) maxlen = len;
+	    if (len > maxlen) {
+		maxlen = len;
+		badkey = j+1;
+	    }
 	}
     }
 
@@ -2141,6 +2147,8 @@ static void set_mtab_string_width (struct middletab *mt)
 	fprintf(stderr, "Can't make compact model stats table -- the max\n"
 		"length translated string is %d chars, should be < 23\n",
 		maxlen);
+	fprintf(stderr, "offending string: '%s' ->\n '%s'\n", 
+		mt->key[badkey], _(mt->key[badkey]));
     }
 
     mt->mlen = maxlen;
@@ -2379,6 +2387,16 @@ static void middle_table_row (struct middletab *mt, int j, PRN *prn)
 
 #ifdef ENABLE_NLS
 
+static int string_is_translated (const char *s)
+{
+    if (strcmp(s, "Hannan-Quinn") && strcmp(s, "rho")) {
+	return strcmp(s, _(s));
+    } else {
+	/* give the benefit of the doubt */
+	return 1;
+    }
+}
+
 /* If we haven't found a translation for a new-style short string, 
    use the corresponding old-style long string instead.
 */
@@ -2404,7 +2422,7 @@ static void maybe_remedy_translations (const char **S, int n)
     int i;
 
     for (i=0; i<n; i++) {
-	if (old_key[i] != NULL && !strcmp(S[i], _(S[i]))) {
+	if (old_key[i] != NULL && !string_is_translated(S[i])) {
 	    /* new-style string is not translated */
 	    if (strcmp(old_key[i], _(old_key[i]))) {
 		/* but the old-style one is, so we'll use it */

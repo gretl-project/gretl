@@ -2374,7 +2374,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 	}
     }
 
-    pputs(prn, "\n     Obs ");
+    pprintf(prn, "\n     %s ", _("Obs"));
     pprintf(prn, "%12s", fr->depvar);
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 

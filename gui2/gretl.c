@@ -329,22 +329,7 @@ void nls_init (void)
 
 #endif /* ENABLE_NLS */
 
-#ifdef G_OS_WIN32
-
-static int get_debug_opt (int argc, char **argv)
-{
-    int i;
-
-    for (i=1; i<argc; i++) {
-        if (!strcmp(argv[i], "--debug")) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-#else
+#ifndef G_OS_WIN32
 
 static void record_filearg (char *targ, const char *src)
 {
@@ -377,9 +362,6 @@ int main (int argc, char **argv)
 #ifdef USE_GNOME
     GnomeProgram *program;
 #endif
-#ifdef G_OS_WIN32
-    int debug = get_debug_opt(argc, argv);
-#endif
     int err = 0;
 
 #ifdef ENABLE_NLS
@@ -408,7 +390,7 @@ int main (int argc, char **argv)
     gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(argv[0], debug);
+    gretl_win32_init(argc, argv);
 #else 
     gretl_config_init();
 #endif
