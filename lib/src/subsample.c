@@ -1230,7 +1230,8 @@ static char *precompute_mask (const char *s, const char *oldmask,
 			      double ***pZ, DATAINFO *pdinfo, 
 			      int *err)
 {
-    char *mask, *tmp = make_submask(pdinfo->n);
+    char *tmp = make_submask(pdinfo->n);
+    char *mask = NULL;
     int i, t;
 
 #if SUBDEBUG
