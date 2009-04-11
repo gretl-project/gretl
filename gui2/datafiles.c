@@ -1384,10 +1384,7 @@ void display_files (int code, gpointer p)
 	gtk_widget_grab_focus(vwin->listbox);
 	if (code == NATIVE_DB || code == FUNC_FILES) {
 	    set_up_viewer_drag_target(vwin);
-	} else if (code == TEXTBOOK_DATA || code == PS_FILES) {
-	    g_signal_connect(G_OBJECT(vwin->listbox), "key-press-event",
-			     G_CALLBACK(enter_opens_file), vwin);
-	}
+	} 
     }
 
     if (err && code == FUNC_FILES && fresp.try_server == 1) {
@@ -1846,6 +1843,8 @@ static GtkWidget *files_notebook (windata_t *vwin, int code)
 	sprintf(wnum, "%d", j);
 	g_object_set_data(G_OBJECT(notebook), wnum, coll->page);
 	g_object_set_data(G_OBJECT(coll->page), "coll", coll);
+	g_signal_connect(G_OBJECT(coll->page), "key-press-event",
+			 G_CALLBACK(enter_opens_file), vwin);
 	j++;
     }
 

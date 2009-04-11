@@ -40,10 +40,6 @@ int unmangle (const char *dosname, char *longname);
 
 void set_up_windows_look (void);
 
-void menu_font_option_off (void);
-
-void win_help (void);
-
 void gretl_win32_init (int argc, char **argv);
 
 const char *get_network_cfg_filename (void);
@@ -59,8 +55,6 @@ int emf_to_clipboard (char *emfname);
 int browser_open (const char *url);
 
 int win32_open_file (const char *fname);
-
-void win32_raise_window (GtkWidget *w);
 
 void win32_font_selector (char *fontname, int flag);
 

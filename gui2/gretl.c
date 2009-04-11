@@ -89,6 +89,7 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    gpointer            p);
 
 #ifdef USE_GNOME
+
 static char *optrun, *optdb;
 static int opteng, optbasque, optdump;
 
@@ -107,7 +108,31 @@ static const struct poptOption options[] = {
       N_("dump gretl configuration to file"), NULL },
     { NULL, '\0', 0, NULL, 0, NULL, NULL },
 };
-#endif /* USE_GNOME */
+
+#endif
+
+#ifdef USE_GOPTION /* not yet */
+
+static char *optrun, *optdb;
+static int opteng, optbasque, optdump;
+
+static const GOptionEntry options[] = {
+    { "run", 'r', 0, G_OPTION_ARG_STRING, &optrun, 
+      N_("open a script file on startup"), "SCRIPT" },
+    { "db", 'd', 0, G_OPTION_ARG_STRING, &optdb, 
+      N_("open a database on startup"), "DATABASE" },
+    { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optdb, 
+      N_("open a remote (web) database on startup"), "REMOTE_DB" },
+    { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng, 
+      N_("force use of English"), NULL },
+    { "basque", 'q', 0, G_OPTION_ARG_NONE, &optbasque, 
+      N_("force use of Basque"), NULL },
+    { "dump", 'c', 0, G_OPTION_ARG_NONE, &optdump, 
+      N_("dump gretl configuration to file"), NULL },
+    { NULL, '\0', 0, 0, NULL, NULL, NULL },
+};
+
+#endif
 
 windata_t *mdata;
 DATAINFO *datainfo;
@@ -362,6 +387,10 @@ int main (int argc, char **argv)
 #ifdef USE_GNOME
     GnomeProgram *program;
 #endif
+#ifdef USE_GOPTION
+    GError *opterr = NULL;
+    GOptionContext *context;
+#endif
     int err = 0;
 
 #ifdef ENABLE_NLS
@@ -381,10 +410,20 @@ int main (int argc, char **argv)
 				  GNOME_PARAM_HUMAN_READABLE_NAME,
 				  _("The GNOME 2.0 econometrics package"),
 				  GNOME_PARAM_APP_DATADIR, DATADIR,
+				  LIBGNOMEUI_PARAM_CRASH_DIALOG, TRUE,
 				  GNOME_PARAM_NONE);
 #else
     gtk_init(&argc, &argv);
-#endif /* USE_GNOME */
+# if USE_GOPTION
+    context = g_option_context_new("gretl");
+    g_option_context_add_main_entries(context, options, "gretl");
+    g_option_context_add_group(context, gtk_get_option_group(TRUE));
+    if (!g_option_context_parse(context, &argc, &argv, &error)) {
+	g_print("option parsing failed: %s\n", error->message);
+	exit(EXIT_FAILURE);
+    }
+# endif
+#endif /* !USE_GNOME */
 
     libgretl_init();
     gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */

@@ -243,28 +243,6 @@ int unmangle (const char *dosname, char *longname)
     return err;
 }
 
-void win_help (void)
-{
-    char hlpshow[MAXLEN];
-    int found = 0;
-
-    sprintf(hlpshow, "hh.exe \"%s\\%s\"", paths.gretldir, _("gretl.chm"));
-    
-    if (WinExec(hlpshow, SW_SHOWNORMAL) < 32) {
-	if (strcmp("gretl.chm", _("gretl.chm"))) {
-	    /* try falling back on untranslated helpfile */
-	    sprintf(hlpshow, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
-	    if (WinExec(hlpshow, SW_SHOWNORMAL) >= 32) found = 1;
-	}
-    } else {
-	found = 1;
-    }
-
-    if (!found) {
-	errbox(_("Couldn't access help file"));
-    }
-}
-
 static void dummy_output_handler (const gchar *log_domain,
 				  GLogLevelFlags log_level,
 				  const gchar *message,
@@ -764,19 +742,6 @@ int win32_open_file (const char *fname)
     }
 
     return err;
-}
-
-void win32_raise_window (GtkWidget *w)
-{
-    GtkWidget *top = gtk_widget_get_toplevel(w);
-
-    if (top != NULL && top->window != NULL) {
-	HWND h = GDK_WINDOW_HWND(top->window);
-
-	SetWindowPos(h, HWND_TOP, 0, 0, 0, 0, /* was HWND_TOPMOST */
-		     SWP_NOMOVE | SWP_NOSIZE);
-	gtk_widget_grab_focus(w);
-    }
 }
 
 static const char *font_weight_string (int weight)
