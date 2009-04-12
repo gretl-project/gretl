@@ -391,13 +391,13 @@ static int set_network_cfg_filename (const char *prog)
     return 0;
 }
 
-void gretl_win32_init (int debug)
+void gretl_win32_init (const char *progname, int debug)
 {
     if (debug) {
         redirect_io_to_console();
     }
 
-    set_network_cfg_filename(argv[0]);
+    set_network_cfg_filename(progname);
 
     wimp_init();
     read_rc(debug); /* get config info from registry */

@@ -368,7 +368,7 @@ int main (int argc, char **argv)
     gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(optdebug);
+    gretl_win32_init(argv[0], optdebug);
 #else 
     gretl_config_init();
 #endif

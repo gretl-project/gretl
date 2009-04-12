@@ -40,7 +40,7 @@ int unmangle (const char *dosname, char *longname);
 
 void set_up_windows_look (void);
 
-void gretl_win32_init (int debug);
+void gretl_win32_init (const char *progname, int debug);
 
 const char *get_network_cfg_filename (void);
 
