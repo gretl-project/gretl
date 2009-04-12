@@ -3920,10 +3920,14 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
        flag this, but it's not necessarily a show-stopper in
        terms of simply displaying the graph. 
     */
-    err = read_plotspec_from_file(plot->spec, &plot->pd, &polar);
+    plot->err = read_plotspec_from_file(plot->spec, &plot->pd, &polar);
 
-    if (err) {
-	plot->err = 1;
+#if GPDEBUG
+    fprintf(stderr, "gnuplot_show_png: read_plotspec_from_file returned %d\n",
+	    plot->err);
+#endif
+
+    if (plot->err) {
 	plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
     } else if (cant_edit(plot->spec->code)) {
 	if (plot->spec->n_markers > 0) {
@@ -3947,7 +3951,7 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	plot->pixel_height = 400;
     }
 
-    if (!err) {
+    if (!plot->err) {
 	get_plot_ranges(plot);
     }
 

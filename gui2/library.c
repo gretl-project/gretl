@@ -154,15 +154,11 @@ void library_command_free (void)
 
 void register_graph (void)
 {
-    int err;
-
     gretl_error_clear();
 
-    err = gnuplot_show_png_by_name(gretl_plotfile());
-
-    if (err) {
-	gui_errmsg(err);
-    }
+    /* if this gives an error, the message will be
+       handled downstream */
+    gnuplot_show_png_by_name(gretl_plotfile());
 }
 
 static void gui_graph_handler (int err)
