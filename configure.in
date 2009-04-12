@@ -548,8 +548,7 @@ dnl
 dnl Check for gnome, if we haven't been told not to
 dnl
 if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
-   if test "${have_gtkprint}" = "no" ; then
-     PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.2 libgnomeprintui-2.2,
+    PKG_CHECK_MODULES(GNOME, libgnomeui-2.0,
        AC_DEFINE(USE_GNOME)
        have_gnome="2.0"
        if test "${gnome_prefix}" = "NA" ; then
@@ -557,19 +556,8 @@ if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
        fi,
        echo "no"
        have_gnome="no"
-     )
-   else
-     PKG_CHECK_MODULES(GNOME, libgnomeui-2.0,
-       AC_DEFINE(USE_GNOME)
-       have_gnome="2.0"
-       if test "${gnome_prefix}" = "NA" ; then
-           gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
-       fi,
-       echo "no"
-       have_gnome="no"
-     )   
-   fi
-   if test "$have_gnome" = "2.0" ; then
+    )   
+    if test "$have_gnome" = "2.0" ; then
       PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
     fi 
     AC_SUBST(have_gnome)
