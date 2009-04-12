@@ -88,40 +88,18 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    guint               time,
 		    gpointer            p);
 
-#ifdef USE_GNOME
-
-static char *optrun, *optdb;
-static int opteng, optbasque, optdump;
-
-static const struct poptOption options[] = {
-    { "run", 'r', POPT_ARG_STRING, &optrun, 0, 
-      N_("open a script file on startup"), "SCRIPT" },
-    { "db", 'd', POPT_ARG_STRING, &optdb, 0, 
-      N_("open a database on startup"), "DATABASE" },
-    { "webdb", 'w', POPT_ARG_STRING, &optdb, 0, 
-      N_("open a remote (web) database on startup"), "REMOTE_DB" },
-    { "english", 'e', POPT_ARG_NONE, &opteng, 0, 
-      N_("force use of English"), NULL },
-    { "basque", 'q', POPT_ARG_NONE, &optbasque, 0, 
-      N_("force use of Basque"), NULL },
-    { "dump", 'c', POPT_ARG_NONE, &optdump, 0, 
-      N_("dump gretl configuration to file"), NULL },
-    { NULL, '\0', 0, NULL, 0, NULL, NULL },
-};
-
+static char *optrun, *optdb, *optwebdb;
+static int opteng, optbasque, optdump, optver;
+#ifdef G_OS_WIN32
+static int optdebug;
 #endif
 
-#ifdef USE_GOPTION /* not yet */
-
-static char *optrun, *optdb;
-static int opteng, optbasque, optdump;
-
-static const GOptionEntry options[] = {
-    { "run", 'r', 0, G_OPTION_ARG_STRING, &optrun, 
+static GOptionEntry options[] = {
+    { "run", 'r', 0, G_OPTION_ARG_FILENAME, &optrun, 
       N_("open a script file on startup"), "SCRIPT" },
     { "db", 'd', 0, G_OPTION_ARG_STRING, &optdb, 
       N_("open a database on startup"), "DATABASE" },
-    { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optdb, 
+    { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optwebdb, 
       N_("open a remote (web) database on startup"), "REMOTE_DB" },
     { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng, 
       N_("force use of English"), NULL },
@@ -129,10 +107,14 @@ static const GOptionEntry options[] = {
       N_("force use of Basque"), NULL },
     { "dump", 'c', 0, G_OPTION_ARG_NONE, &optdump, 
       N_("dump gretl configuration to file"), NULL },
+#ifdef G_OS_WIN32
+    { "debug", 'b', 0, G_OPTION_ARG_NONE, &optdebug, 
+      N_("send debugging info to console"), NULL }, 
+#endif
+    { "version", 'v', 0, G_OPTION_ARG_NONE, &optver, 
+      N_("print version information"), NULL }, 
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
-
-#endif
 
 windata_t *mdata;
 DATAINFO *datainfo;
@@ -205,29 +187,6 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
     send_file(paths.datfile);
 }
 #endif
-
-
-static void gui_usage (int err)
-{
-    gui_logo(NULL);
-
-    printf(I_("\nYou may supply the name of a data file on the command line.\n"
-	      "Options:\n"
-	      " -c or --dump      Dump the configuration file.\n"
-	      " -d or --db        Open a local database.\n"
-	      " -e or --english   Force use of English rather than translation.\n"
-	      " -q or --basque    Force use of Basque translation.\n"
-	      " -r or --run       Open a command script.\n"
-	      " -w or --webdb     Open a remote database.\n"
-	      " -h or --help      Print this info and exit.\n"
-	      " -v or --version   Print version info and exit.\n"));
-
-    if (err) {
-	exit(EXIT_FAILURE);
-    } else {
-	exit(EXIT_SUCCESS);
-    }
-}
 
 static void noalloc (void)
 {
@@ -318,6 +277,7 @@ static void real_nls_init (void)
 	strcpy(p, "share/locale");
     }
 
+    /* FIXME GUI language choice? */
     loc = setlocale(LC_ALL, "");
     set_gretl_charset(loc);
     bindtextdomain(PACKAGE, localedir);
@@ -377,20 +337,15 @@ static int have_data (void)
     return datainfo != NULL && datainfo->v > 0;
 }
 
+static gchar *param_msg = 
+    N_("\nYou may supply the name of a data file on the command line");
+
 int main (int argc, char **argv)
 {
-    int open_datafile = 0;
     int ftype = 0;
     char dbname[MAXLEN];
     char filearg[MAXLEN];
-    int opt = 0;
-#ifdef USE_GNOME
-    GnomeProgram *program;
-#endif
-#ifdef USE_GOPTION
     GError *opterr = NULL;
-    GOptionContext *context;
-#endif
     int err = 0;
 
 #ifdef ENABLE_NLS
@@ -401,103 +356,48 @@ int main (int argc, char **argv)
     *scriptfile = '\0';
     *paths.datfile = '\0';
     *dbname = '\0';
+    *filearg = '\0';
 
-    /* Initialize gnome or GTK */
-#ifdef USE_GNOME
-    program = gnome_program_init ("gretl", GRETL_VERSION,
-				  LIBGNOMEUI_MODULE, argc, argv,
-				  GNOME_PARAM_POPT_TABLE, options,
-				  GNOME_PARAM_HUMAN_READABLE_NAME,
-				  _("The GNOME 2.0 econometrics package"),
-				  GNOME_PARAM_APP_DATADIR, DATADIR,
-				  LIBGNOMEUI_PARAM_CRASH_DIALOG, TRUE,
-				  GNOME_PARAM_NONE);
-#else
-    gtk_init(&argc, &argv);
-# if USE_GOPTION
-    context = g_option_context_new("gretl");
-    g_option_context_add_main_entries(context, options, "gretl");
-    g_option_context_add_group(context, gtk_get_option_group(TRUE));
-    if (!g_option_context_parse(context, &argc, &argv, &error)) {
-	g_print("option parsing failed: %s\n", error->message);
+    gtk_init_with_args(&argc, &argv, param_msg, options, "gretl", &opterr);
+    if (opterr != NULL) {
+	g_print("%s\n", opterr->message);
 	exit(EXIT_FAILURE);
     }
-# endif
-#endif /* !USE_GNOME */
 
     libgretl_init();
     gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(argc, argv);
+    gretl_win32_init(optdebug);
 #else 
     gretl_config_init();
 #endif
 
-    set_workdir_callback(gui_set_working_dir);
-
-    if (argc > 1) {
-	int force_lang = 0;
-
-	opt = parseopt((const char **) argv, argc, filearg, &force_lang);
-
-	if (opt & OPT_ERROR) {
-	    gui_usage(1);
-	}
-
-	switch (opt) {
-	case OPT_HELP:
-	    gui_usage(0);
-	    break;
-	case OPT_VERSION:
-	    gui_logo(NULL);
-	    exit(EXIT_SUCCESS);
-	    break;
-	case OPT_RUNIT:
-#ifdef USE_GNOME
-	    get_runfile(optrun);
-#else
-	    if (*filearg == '\0') {
-		gui_usage(1);
-	    }
-	    get_runfile(filearg);
-#endif
-	    break;
-	case OPT_DBOPEN:
-	case OPT_WEBDB:
-#ifdef USE_GNOME
-	    strncpy(dbname, optdb, MAXLEN - 1);
-#else
-	    if (*filearg == '\0') {
-		gui_usage(1);
-	    }
-	    strcpy(dbname, filearg);
-#endif
-	    if (opt == OPT_DBOPEN) {
-		fix_dbname(dbname);
-	    }
-	    break;
-	case OPT_DUMP:
-	    dump_rc();
-	    exit(EXIT_SUCCESS);
-	    break;
-	default:
-	    /* let's suppose any string argument is a data file */
-	    if (*filearg != '\0') {
-		open_datafile = 1;
-	    }
-	    break;
-	}
+    if (optver) {
+	gui_logo(NULL);
+	exit(EXIT_SUCCESS);
+    } else if (optdump) {
+	dump_rc();
+	exit(EXIT_SUCCESS);
+    } else if (optrun) {
+	get_runfile(optrun);
+    } else if (optdb != NULL) {
+	strncat(dbname, optdb, MAXLEN - 1);
+	fix_dbname(dbname);
+    } else if (optwebdb != NULL) {
+	strncat(dbname, optdb, MAXLEN - 1);
+    } 
 
 #ifdef ENABLE_NLS
-	if (force_lang) {
-	    force_language(force_lang);
-	    if (force_lang == LANG_C) {
-		force_english_help();
-	    }	    
-	}
+    if (opteng) {
+	force_language(LANG_C);
+	force_english_help();
+    } else if (optbasque) {
+	force_language(LANG_EU);
+    }
 #endif
-    } 
+
+    set_workdir_callback(gui_set_working_dir);
 
     /* allocate data information struct */
     datainfo = datainfo_new();
@@ -517,12 +417,17 @@ int main (int argc, char **argv)
     session_init();
     init_fileptrs();
 
-    /* get the data file, if specified on the command line */
-    if (open_datafile) {
+    if (argc > 1) {
+	/* Process what is presumably a filename argument
+	   given on the command line (by now any options will
+	   have been extracted from the argv array).
+	*/
 	PRN *prn; 
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 	if (err) exit(EXIT_FAILURE);
+
+	strncat(filearg, argv[1], MAXLEN - 1);
 
 	*paths.datfile = '\0';
 
@@ -574,10 +479,9 @@ int main (int argc, char **argv)
 	    *tryfile = '\0';
 	    *paths.datfile = '\0';
 	    fix_dbname(dbname);
-	    opt = OPT_DBOPEN;
+	    optdb = dbname;
 	    break;
 	case GRETL_UNRECOGNIZED:
-	    gui_usage(1);
 	default:
 	    fprintf(stderr, "%s: unrecognized file type", tryfile);
 	    exit(EXIT_FAILURE);
@@ -615,7 +519,7 @@ int main (int argc, char **argv)
     restore_sample_state(FALSE);
     main_menubar_state(FALSE);
 
-    /* run init script, if found? */
+    /* FIXME run init script, if found? */
 
     if (have_data()) {
 	register_startup_data(tryfile);
@@ -641,9 +545,9 @@ int main (int argc, char **argv)
     }
 
     /* try opening specified database */
-    if (opt == OPT_DBOPEN) {
+    if (optdb != NULL) {
 	open_named_db_index(dbname);
-    } else if (opt == OPT_WEBDB) {
+    } else if (optwebdb != NULL) {
 	open_named_remote_db_index(dbname);
     }
 
@@ -1156,11 +1060,7 @@ static GtkWidget *make_main_window (void)
 	scale_main_window();
     }
 
-#ifdef USE_GNOME
-    mdata->main = gnome_app_new("gretl", _("Econometrics program"));
-#else
     mdata->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-#endif
 
 #ifdef G_OS_WIN32
     set_up_windows_look();
@@ -1184,11 +1084,7 @@ static GtkWidget *make_main_window (void)
 
     main_vbox = gtk_vbox_new(FALSE, 4);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 8);
-#ifdef USE_GNOME
-    gnome_app_set_contents(GNOME_APP(mdata->main), main_vbox);
-#else
     gtk_container_add(GTK_CONTAINER(mdata->main), main_vbox);
-#endif
     g_object_set_data(G_OBJECT(mdata->main), "vbox", main_vbox);
 
     if (set_up_main_menu()) {
@@ -1234,9 +1130,7 @@ static GtkWidget *make_main_window (void)
     set_fixed_font();
 
     /* and a proportional font for menus, etc */
-#ifndef USE_GNOME
     set_app_font(NULL);
-#endif
 
     gtk_widget_show_all(mdata->main); 
 
@@ -1355,10 +1249,8 @@ GtkActionEntry main_entries[] = {
       G_CALLBACK(options_dialog_callback) },
     { "FixedFont", GTK_STOCK_SELECT_FONT, N_("_Fixed font..."), NULL, NULL, 
       G_CALLBACK(font_selector) },
-#if !defined(USE_GNOME)
     { "MenuFont", GTK_STOCK_SELECT_FONT, N_("_Menu font..."), NULL, NULL, 
       G_CALLBACK(font_selector) },
-#endif
 
     /* Data */
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
@@ -1540,14 +1432,12 @@ GtkActionEntry main_entries[] = {
 
 static void add_conditional_items (GtkUIManager *ui)
 {
-#if !defined(USE_GNOME)
     gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
 			  "/MenuBar/Tools/Preferences",
 			  N_("_Menu font..."),
 			  "MenuFont",
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);
-#endif
 
 #ifdef HAVE_X12A
     gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),

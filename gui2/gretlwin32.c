@@ -391,17 +391,8 @@ static int set_network_cfg_filename (const char *prog)
     return 0;
 }
 
-void gretl_win32_init (int argc, char **argv)
+void gretl_win32_init (int debug)
 {
-    int i, debug = 0;
-
-    for (i=1; i<argc; i++) {
-        if (!strcmp(argv[i], "--debug")) {
-            debug = 1;
-	    break;
-        }
-    }  
-  
     if (debug) {
         redirect_io_to_console();
     }

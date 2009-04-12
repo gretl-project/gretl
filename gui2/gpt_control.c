@@ -1082,7 +1082,7 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     } else if (dest == WIN32_TO_CLIPBOARD) {
 	err = emf_to_clipboard(emfname);
     } else if (dest == WIN32_TO_PRINTER) {
-	err = winprint_graph(emfname);
+	err = win32_print_graph(emfname);
     }
 
     gretl_remove(emfname);
@@ -2942,7 +2942,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     } else if (!strcmp(item, _("Restore full view"))) { 
 	repaint_png(plot, PNG_UNZOOM);
     }
-#if defined(USE_GNOME) || defined(GTK_PRINTING)
+#ifdef GTK_PRINTING
     else if (!strcmp(item, _("Print..."))) { 
 	gtk_print_graph(plot->spec->fname);
     }
@@ -3024,10 +3024,9 @@ static void build_plot_menu (png_plot *plot)
 	N_("All data labels"),
 	N_("Clear data labels"),
 	N_("Zoom..."),
-#if defined(USE_GNOME) || defined(GTK_PRINTING)
+#if defined GTK_PRINTING
 	N_("Print..."),
-#endif
-#ifdef G_OS_WIN32
+#elif defined(G_OS_WIN32)
 	N_("Print"),
 #endif
 	N_("Display PDF"),

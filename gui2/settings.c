@@ -73,12 +73,10 @@ static char fixedfontname[MAXLEN] = "Monospace 10";
 
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "tahoma 8";
-#elif !defined(USE_GNOME)
-# ifdef OSX_BUILD
-static char appfontname[MAXLEN] = "Luxi Sans 12";
+#elif defined(OSX_BUILD)
+static char appfontname[MAXLEN] = "Vera 12";
 # else
 static char appfontname[MAXLEN] = "Sans 10";
-# endif
 #endif
 
 PangoFontDescription *fixed_font;
@@ -221,10 +219,8 @@ RCVAR rc_vars[] = {
       BOOLSET, 1, TAB_DBS, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
       USERSET, MAXLEN, TAB_NONE, NULL },
-#if !defined(USE_GNOME)
     { "App_font", N_("Menu font"), NULL, appfontname, 
       USERSET, MAXLEN, TAB_NONE, NULL },
-#endif
     { "DataPage", "Default data page", NULL, datapage, 
       INVISET, sizeof datapage, TAB_NONE, NULL },
     { "ScriptPage", "Default script page", NULL, scriptpage, 
@@ -364,8 +360,6 @@ static void record_shell_opt (void)
 
 #endif
 
-#ifndef USE_GNOME
-
 const char *get_app_fontname (void)
 {
     return appfontname;
@@ -401,8 +395,6 @@ void set_app_font (const char *fontname)
 	pango_font_description_free(pfd);
     }
 }
-
-#endif
 
 static void slash_terminate (char *path)
 {
@@ -1937,14 +1929,10 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
 	strcpy(fixedfontname, fontname);
 	set_fixed_font();
 	write_rc();
-    } 
-
-# ifndef USE_GNOME /* gnome handles the app font */
-    else if (which == APP_FONT_SELECTION) {
+    } else if (which == APP_FONT_SELECTION) {
 	set_app_font(fontname);
 	write_rc();
     }
-# endif
 
     g_free(fontname);
     gtk_widget_destroy(GTK_WIDGET(fs));
@@ -1958,10 +1946,6 @@ void font_selector (GtkAction *action)
     char *title = NULL;
     const char *fontname = NULL;
 
-# ifdef USE_GNOME
-    if (which == APP_FONT_SELECTION) return; /* shouldn't happen */
-# endif
-
     if (fontsel != NULL) {
 	gtk_window_present(GTK_WINDOW(fontsel));
         return;
@@ -1971,14 +1955,10 @@ void font_selector (GtkAction *action)
 	title = _("Font for gretl output windows");
 	filter = GTK_FONT_HACK_LATIN_MONO;
 	fontname = fixedfontname;
-    } 
-
-# ifndef USE_GNOME
-    else if (which == APP_FONT_SELECTION) {
+    } else if (which == APP_FONT_SELECTION) {
 	title = _("Font for menus and labels");
 	fontname = appfontname;
     }
-# endif
 
     fontsel = gtk_fontsel_hack_dialog_new(title);
     gtk_fontsel_hack_dialog_set_filter

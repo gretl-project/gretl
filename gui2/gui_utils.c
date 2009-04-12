@@ -3646,6 +3646,23 @@ static void run_R_sync (void)
 
 #else /* some non-Windows functions follow */
 
+#if 0 /* needs GTK >= 2.14 */
+static int alt_show (const char *url)
+{
+    GError *err = NULL;
+    int ret;
+
+    ret = gtk_show_uri(NULL, url, GDK_CURRENT_TIME, &err);
+
+    if (err) {
+	errbox(err->message);
+	g_error_free(err);
+    }
+
+    return ret;
+}
+#endif
+
 int browser_open (const char *url)
 {
 # if defined(USE_GNOME)

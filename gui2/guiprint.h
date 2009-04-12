@@ -22,13 +22,11 @@
 #ifndef GUIPRINT_H
 #define GUIPRINT_H
 
-#ifdef G_OS_WIN32
-int winprint_graph (char *emfname);
-#endif
-
 #ifdef NATIVE_PRINTING
-void winprint (char *fullbuf, char *selbuf);
-# ifndef G_OS_WIN32
+void print_window_content (char *fullbuf, char *selbuf);
+# ifdef G_OS_WIN32
+int win32_print_graph (char *emfname);
+# else
 void gtk_print_graph (const char *fname);
 # endif
 #endif

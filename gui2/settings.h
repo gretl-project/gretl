@@ -27,13 +27,9 @@ void set_fixed_font (void);
 
 void update_persistent_graph_colors (void);
 
-#ifndef USE_GNOME
-
 void set_app_font (const char *fontname);
 
 const char *get_app_fontname (void);
-
-#endif
 
 void get_default_dir (char *s, int action);
 

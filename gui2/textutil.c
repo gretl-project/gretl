@@ -532,7 +532,7 @@ void window_print (GtkAction *action, windata_t *vwin)
 	selbuf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     }
 
-    winprint(buf, selbuf);
+    print_window_content(buf, selbuf);
 }
 
 #endif
