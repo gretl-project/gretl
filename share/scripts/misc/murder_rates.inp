@@ -1,0 +1,20 @@
+/*
+  Replication of
+  Stokes, Houston H. (2004) ``On the advantage of using two or more
+  econometric software systems to solve the same problem'',
+  Journal of Economic and Social Measurement, 29, pp. 307-320.
+  
+  Illustrates the perfect prediction problem in binary response models.
+*/
+
+open murder_rates
+genr D1 = (executions>0)
+
+# linear probability model
+ols D1 const time income lfp noncauc southern
+
+# probit model
+probit D1 const time income lfp noncauc southern
+
+# reduced probit model
+probit D1 const time income lfp noncauc
