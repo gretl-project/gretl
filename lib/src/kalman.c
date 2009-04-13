@@ -2547,6 +2547,104 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
     }
 }
 
+#if 0 /* not ready yet */
+
+/* Row @t of @src represents the vec of an @m x @n matrix: extract the
+   row and reconstitute the matrix in @targ.
+*/
+
+static void load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
+			   int m, int n, int t)
+{
+    int i, k = m * n;
+
+    for (i=0; i<k; i++) {
+	targ->val[i] = gretl_matrix_get(src, t, i);
+    }
+}
+
+/* First go at implementing alternative smoothing algorithm that will
+   work with cross-correlated disturbances.  This is not hooked up
+   yet; it requires that the gain be recorded for all time steps.
+   See Koopman, Shephard and Doornik, section 4.4.
+*/
+
+static int kalman_cross_smooth (kalman *K, int nr)
+{
+    gretl_matrix_block *B;
+    gretl_matrix *u, *Z, *D, *L;
+    gretl_matrix *r1, *r2, *N1, *N2;
+    int t, err = 0;
+
+    B = gretl_matrix_block_new(&u,  K->n, 1,
+			       &Z,  K->n, K->n,
+			       &D,  K->n, K->n,
+			       &L,  K->r, K->r,
+			       &r1, K->r, 1,
+			       &r2, K->r, 1,
+			       &N1, K->r, K->r,
+			       &N2, K->r, K->r,
+			       NULL);
+
+    if (B == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_zero(r1);
+    gretl_matrix_zero(N1);
+
+    for (t=K->T-1; t>=0 && !err; t--) {
+	/* load e, P and gain (K) for time t */
+	load_from_row(K->e, K->E, t, GRETL_MOD_NONE);
+	load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
+	load_from_vec(K->Kt, K->K, K->r, K->n, t);
+
+	/* Z = H'PH + R */
+	gretl_matrix_qform(K->H, GRETL_MOD_TRANSPOSE,
+			   K->P0, Z, GRETL_MOD_NONE);
+	gretl_matrix_add_to(Z, K->R);
+	gretl_invert_symmetric_matrix(Z);
+
+	/* u_t = Z^{-1}e_t - K_t'r_t */
+	gretl_matrix_multiply(Z, K->e, u);
+	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_TRANSPOSE,
+				  r1, GRETL_MOD_NONE,
+				  u, GRETL_MOD_DECREMENT);
+
+	/* D_t = Z^{-1} + K_t'N_tK_t */
+	gretl_matrix_copy_values(D, Z);
+	gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
+			   N1, D, GRETL_MOD_CUMULATE);
+
+	/* L_t = F - KH' */
+	gretl_matrix_copy_values(L, K->F);
+	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+				  K->H, GRETL_MOD_TRANSPOSE,
+				  L, GRETL_MOD_DECREMENT);
+
+	/* r_{t-1} = HZ^{-1}e_t + L_t'r_t */
+	gretl_matrix_multiply(K->H, Z, K->Tmpr1);
+	gretl_matrix_multiply(K->Tmpr1, K->e, r1);
+	gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE, 
+				  r1, GRETL_MOD_NONE,
+				  r2, GRETL_MOD_CUMULATE);
+	gretl_matrix_copy_values(r1, r2);
+
+	/* N_{t-1} = HZ^{-1}H' + L'NL */
+	gretl_matrix_qform(K->H, GRETL_MOD_NONE,
+			   Z, N2, GRETL_MOD_NONE);
+	gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
+			   N1, N2, GRETL_MOD_CUMULATE);
+	gretl_matrix_copy_values(N1, N2);
+    }
+
+    gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
+#endif /* not ready yet */
+
 /* Below: implementation of Kalman smoothing as described in Hamilton,
    Time Series Analysis, pp. 394-397.  Needs more checking.
  */
