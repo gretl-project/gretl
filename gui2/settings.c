@@ -334,6 +334,8 @@ static void set_gd_fontpath (void)
     }
 
     if (newpath != NULL) {
+	/* Vera is supplied with gretl, so it should work */
+	strcpy(paths.pngfont, "Vera 9");
 	setenv("GDFONTPATH", newpath, 1);
 	g_free(newpath);
 	gnuplot_has_ttf(1);
