@@ -26,8 +26,9 @@ enum {
     KALMAN_USER    = 1 << 2, /* user-defined filter? */
     KALMAN_DIFFUSE = 1 << 3, /* using diffuse P_{1|0} */
     KALMAN_FORWARD = 1 << 4, /* running forward filtering pass */
-    KALMAN_SIM     = 1 << 5, /* running simulation */
-    KALMAN_CROSS   = 1 << 6  /* cross-correlated disturbances */ 
+    KALMAN_SMOOTH  = 1 << 5, /* preparing for smoothing pass */
+    KALMAN_SIM     = 1 << 6, /* running simulation */
+    KALMAN_CROSS   = 1 << 7  /* cross-correlated disturbances */ 
 };
 
 typedef struct kalman_ kalman;
@@ -72,7 +73,8 @@ int user_kalman_run (const char *E, const char *V, const char *S,
 		     const char *P, const char *G, double **Z,
 		     const DATAINFO *pdinfo, int *err);
 
-gretl_matrix *user_kalman_smooth (const char *Pname, int *err);
+gretl_matrix *user_kalman_smooth (const char *Pname, const char *Uname,
+				  int *err);
 
 gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
 				    const gretl_matrix *W,

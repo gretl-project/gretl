@@ -4813,12 +4813,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 					  &p->err);
 	} 
     } else if (t->t == F_KSMOOTH) {
-	/* might be extended to take more optional args, though at
-	   present there's only one */
 	const char *P = NULL;
+	const char *U = NULL;
 
-	if (k > 1) {
-	    n_args_error(k, 1, "kfilter", p);
+	if (k > 2) {
+	    n_args_error(k, 2, "ksmooth", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -4829,7 +4828,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		node_type_error(t->t, i, U_ADDR, e, p);
 	    } else if (i == 0) {
 		P = ptr_node_get_name(e, p);
-	    } 
+	    } else if (i == 1) {
+		U = ptr_node_get_name(e, p);
+	    }
 	}
 
 	if (!p->err) {
@@ -4840,7 +4841,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }	    
-	    ret->v.m = user_kalman_smooth(P, &p->err);
+	    ret->v.m = user_kalman_smooth(P, U, &p->err);
 	} 
     } else if (t->t == F_KSIMUL) {
 	gretl_matrix *V = NULL;
