@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-08 22:00-0400\n"
-"PO-Revision-Date: 2009-04-10 16:49+0300\n"
+"PO-Revision-Date: 2009-04-13 09:33+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -196,7 +196,7 @@ msgstr "%s katsayısı için (%g nokta tahmini)"
 #: lib/src/bootstrap.c:429
 #, c-format
 msgid "Studentized %g%% confidence interval = %g to %g"
-msgstr "Studentleştirmeli %% %g güven aralığı =%g - %g"
+msgstr "Studentlemeli %% %g güven aralığı =%g - %g"
 
 #: lib/src/bootstrap.c:432
 #, c-format
@@ -594,7 +594,7 @@ msgstr "('*' % 95 güven kuşağı dışındaki bir değeri göstermektedir)"
 
 #: lib/src/compare.c:2866
 msgid "This test is only relevant for pooled models\n"
-msgstr "Bu sınama yalnızca karma modeller için uygundur\n"
+msgstr "Bu sınama yalnızca havuzlamalı modeller için uygundur\n"
 
 #: lib/src/compare.c:2871
 msgid "This test requires that the model contains a constant\n"
@@ -2505,12 +2505,12 @@ msgstr "zaman"
 #: lib/src/graphing.c:3984
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (özyetinim güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s tepkisi (özyetinim güven aralıkları ile)"
 
 #: lib/src/graphing.c:3989
 #, c-format
 msgid "response of %s to a shock in %s"
-msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s tepkisi"
 
 #: lib/src/graphing.c:4002
 msgid "point estimate"
@@ -3044,9 +3044,8 @@ msgid ""
 "is adequate, in favor of the fixed effects alternative.)\n"
 "\n"
 msgstr ""
-"(Düşük bir p-değeri, karma OLS modelinin yeterli olduğu sıfır önsavına "
-"karşı\n"
-"olup, sabit etkiler karşı savını desteklemektedir.)\n"
+"(Düşük bir p-değeri, havuzlamalı OLS modelinin yeterliliği sıfır önsavına\n"
+"karşı olup, sabit etkiler karşı savını desteklemektedir.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:1657 lib/src/gretl_restrict.c:1953
@@ -3101,7 +3100,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Yatay-kesit birimleri için karma SEK kalıntı ortalamaları:\n"
+"Yatay-kesit birimleri için havuzlamalı SEK kalıntı ortalamaları:\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2506
@@ -3126,9 +3125,8 @@ msgid ""
 "is adequate, in favor of the random effects alternative.)\n"
 "\n"
 msgstr ""
-"(Düşük bir p-değeri, karma OLS modelinin yeterli olduğu sıfır önsavına "
-"karşı\n"
-"olup, rastsal etkiler karşı savını desteklemektedir.)\n"
+"(Düşük bir p-değeri, havuzlamalı OLS modelinin yeterliliği sıfır önsavına\n"
+"karşı olup, rastsal etkiler karşı savını desteklemektedir.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2543
@@ -3169,7 +3167,7 @@ msgstr ""
 
 #: lib/src/gretl_panel.c:3485
 msgid "Can't produce ML estimates: some units have only one observation"
-msgstr "EYO tahminleri üretilemedi: Bazı birimlerde yalnızca bir gözlem var"
+msgstr "EO tahminleri üretilemedi: Bazı birimlerde yalnızca bir gözlem var"
 
 #: lib/src/gretl_panel.c:3537 plugin/poisson.c:327
 msgid "iteration"
@@ -3197,7 +3195,7 @@ msgstr "'%s' üzerine yazılamadı: gretl düzgün çalışmayacak!"
 #: lib/src/gretl_paths.c:1628
 #, c-format
 msgid "gretl: using these basic search paths:\n"
-msgstr "gretl: şu temel arama yolları kullanılsın:\n"
+msgstr "gretl: kullanılan temel arama yolları:\n"
 
 #: lib/src/gretl_paths.c:1698
 msgid "gretlgui_hlp.txt"
@@ -3962,7 +3960,7 @@ msgstr "Zaman serisi"
 #: lib/src/libset.c:1411
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
-msgstr "Sözde-rastsal sayı üreteci %d ile tohumlandı\n"
+msgstr "Sahte-rastsal sayı üreteci %d ile tohumlandı\n"
 
 #: lib/src/missing.c:816
 #, c-format
@@ -4065,7 +4063,7 @@ msgstr "Varyans 'arası'"
 
 #: lib/src/modelprint.c:450 lib/src/modelprint.c:468 lib/src/modelprint.c:476
 msgid "theta used for quasi-demeaning"
-msgstr "sözde-ortalamasızlaştırma için kullanılacak teta"
+msgstr "sözde-ortalamadan-arındırma için kullanılacak teta"
 
 #: lib/src/modelprint.c:542
 #, c-format
@@ -4181,7 +4179,7 @@ msgstr "DDEK (NLS)"
 
 #: lib/src/modelprint.c:607
 msgid "ML"
-msgstr "EYO (ML)"
+msgstr "EO (ML)"
 
 #: lib/src/modelprint.c:608
 msgid "GMM"
@@ -4245,7 +4243,7 @@ msgstr "ÖBHO (ARMA)"
 
 #: lib/src/modelprint.c:643
 msgid "Pooled OLS"
-msgstr "karma SEK"
+msgstr "havuzlamalı SEK"
 
 #: lib/src/modelprint.c:646
 msgid "Fixed-effects"
@@ -4301,7 +4299,7 @@ msgstr "iki-adımlı Heckbirim"
 
 #: lib/src/modelprint.c:694
 msgid "ML Heckit"
-msgstr "EYO Heckbirim"
+msgstr "EO Heckbirim"
 
 #: lib/src/modelprint.c:698
 msgid "Quantile"
@@ -4309,7 +4307,7 @@ msgstr "bölüt"
 
 #: lib/src/modelprint.c:704 lib/src/system.c:90
 msgid "LIML"
-msgstr "SBEYO"
+msgstr "SBEO"
 
 #: lib/src/modelprint.c:706 lib/src/system.c:92
 msgid "TSLS"
@@ -4467,7 +4465,7 @@ msgstr "Ölçünlü hatalar, Dış Çarpanlar dizeyine dayalı"
 
 #: lib/src/modelprint.c:1101
 msgid "QML standard errors"
-msgstr "BEYO (QML) ölçünlü hataları"
+msgstr "SEO (QML) ölçünlü hataları"
 
 #: lib/src/modelprint.c:1105
 msgid "Bollerslev--Wooldridge standard errors"
@@ -4520,12 +4518,12 @@ msgstr "X-12-ARIMA kullanılarak tahmin edildi"
 
 #: lib/src/modelprint.c:1344 lib/src/modelprint.c:1349
 msgid "exact ML"
-msgstr "tam EYO"
+msgstr "tam EO"
 
 #: lib/src/modelprint.c:1344 lib/src/modelprint.c:1354
 #: lib/src/modelprint.c:1359
 msgid "conditional ML"
-msgstr "koşullu EYO"
+msgstr "koşullu EO"
 
 #: lib/src/modelprint.c:1347
 msgid "Estimated using Kalman filter"
@@ -5964,7 +5962,7 @@ msgstr "3AEK"
 
 #: lib/src/system.c:89
 msgid "FIML"
-msgstr "TBEYO"
+msgstr "TBEO"
 
 #: lib/src/system.c:98
 msgid "Seemingly Unrelated Regressions"
@@ -6042,7 +6040,7 @@ msgstr "sistem yakıştırılan değeri, denklem %d"
 #: lib/src/system.c:1682 lib/src/system.c:1684
 #, c-format
 msgid "iterated %s"
-msgstr "%s yinelendi"
+msgstr "yinelemeli %s"
 
 #: lib/src/system.c:2646
 msgid ""
@@ -6259,7 +6257,7 @@ msgstr "YHDM sistem artığı, denklem %d"
 #: lib/src/varprint.c:90 lib/src/varprint.c:106 lib/src/varprint.c:121
 #, c-format
 msgid "Responses to a one-standard error shock in %s"
-msgstr "%s üzerindeki bir ölçünlü hatalık sarsıma karşı yanıtlar"
+msgstr "%s üzerindeki bir ölçünlü hatalık sarsıma karşı tepkiler"
 
 #: lib/src/varprint.c:93 lib/src/varprint.c:109 lib/src/varprint.c:124
 #, c-format
@@ -7343,7 +7341,7 @@ msgstr "gretl: en yüksek olabilirlik"
 
 #: gui2/callbacks.c:682 gui2/callbacks.c:737
 msgid "MLE: Specify function, and derivatives if possible:"
-msgstr "EYO: İşlevi ve eğer olanaklı ise türevlerini belirtiniz:"
+msgstr "EO: İşlevi ve eğer olanaklı ise türevlerini belirtiniz:"
 
 #: gui2/callbacks.c:688 gui2/callbacks.c:741
 msgid "gretl: nonlinear least squares"
@@ -8101,7 +8099,7 @@ msgstr "Güven aralığı"
 
 #: gui2/dialogs.c:872
 msgid "Studentized confidence interval"
-msgstr "Studentleştirmeli güven aralığı"
+msgstr "Studentlemeli güven aralığı"
 
 #: gui2/dialogs.c:881
 msgid "P-value"
@@ -8252,7 +8250,7 @@ msgstr "gretl: Chow sınaması"
 
 #: gui2/dialogs.c:2384
 msgid "Produce forecast for"
-msgstr "Yordama üretilecek değişken"
+msgstr "Yordama üretilecek olan:"
 
 #: gui2/dialogs.c:2433
 msgid "Number of pre-forecast observations to graph"
@@ -8791,7 +8789,7 @@ msgstr "Düzleştirmeli seriyi farklı kaydet"
 
 #: gui2/filters.c:304
 msgid "Save cyclical component as"
-msgstr "Çevrimsel bileşeni şu adla kaydet"
+msgstr "Çevrimsel bileşeni şu adla kaydet:"
 
 #: gui2/filters.c:337
 msgid "Lower frequency bound:"
@@ -10132,7 +10130,7 @@ msgstr "_İki Aşamalı En küçük Kareler..."
 
 #: gui2/gretl.c:1456
 msgid "_LIML..."
-msgstr "_SBEYO..."
+msgstr "_SBEO..."
 
 #: gui2/gretl.c:1457 gui2/gretl.c:1502
 msgid "_GMM..."
@@ -10979,7 +10977,7 @@ msgstr "Sistem yakıştırılan değerleri"
 
 #: gui2/gui_utils.c:2761 gui2/gui_utils.c:2829
 msgid "impulse responses"
-msgstr "itki yanıtları"
+msgstr "itki tepkiler"
 
 #: gui2/gui_utils.c:2762
 msgid "variance decompositions"
@@ -10991,7 +10989,7 @@ msgstr "yordama uzaklığı  (dönem):"
 
 #: gui2/gui_utils.c:2774
 msgid "gretl: VAR impulse responses"
-msgstr "gretl: YÖB itki yanıtları"
+msgstr "gretl: YÖB itki tepkileri"
 
 #: gui2/gui_utils.c:2777
 msgid "gretl: VAR variance decompositions"
@@ -11048,7 +11046,7 @@ msgstr "Yakıştırılan değerleri göster, tüm denklemler"
 
 #: gui2/gui_utils.c:3285
 msgid "Impulse responses"
-msgstr "İtki yanıtları"
+msgstr "İtki tepkiler"
 
 #: gui2/gui_utils.c:3291
 msgid "Forecast variance decomposition"
@@ -11068,12 +11066,12 @@ msgstr "YÖB evrik kökleri"
 
 #: gui2/gui_utils.c:3324
 msgid "Impulse responses (combined)"
-msgstr "İtki yanıtları (birleşik)"
+msgstr "İtki tepkiler (birleşik)"
 
 #: gui2/gui_utils.c:3354
 #, c-format
 msgid "Response of %s"
-msgstr "%s yanıtı"
+msgstr "%s tepkisi"
 
 #: gui2/gui_utils.c:3368
 #, c-format
@@ -12035,7 +12033,7 @@ msgstr "ÖBKÇ (ARCH)"
 
 #: gui2/model_table.c:360
 msgid "MLE"
-msgstr "EYO (ML)"
+msgstr "EO (ML)"
 
 #: gui2/model_table.c:366
 msgid "Within"
@@ -12111,7 +12109,7 @@ msgstr "** yüzde 5 anlamlılık düzeyini göstermektedir"
 
 #: gui2/model_table.c:825
 msgid "For logit and probit, R-squared is McFadden's pseudo-R-squared"
-msgstr "Logbirim ve olabirim için, McFadden sözde-R-kare gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sahte-R-kare gösterilmektedir"
 
 #: gui2/model_table.c:833
 msgid "gretl: model table"
@@ -12119,11 +12117,11 @@ msgstr "gretl: model çizelgesi"
 
 #: gui2/model_table.c:929
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr "Logbirim ve olabirim için, McFadden sözde-$R^2$ gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sahte-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1033
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr "Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1061
 msgid "No model is available"
@@ -13294,7 +13292,7 @@ msgstr "yukarıdaki seçili dizin"
 
 #: gui2/settings.c:2175
 msgid "the current directory as determined via the shell"
-msgstr "kabuk tarafından belirli, şu anki dizin"
+msgstr "kabuk tarafından belirli, şu anki dizin:"
 
 #: gui2/settings.c:2223
 msgid "gretl: working directory"
@@ -14060,11 +14058,11 @@ msgstr "Gözlem %d: Alt sınır (%g), üst sınırı (%g) aşıyor"
 
 #: plugin/johansen.c:202
 msgid "renormalized beta"
-msgstr "yeniden normalleştirmeli beta"
+msgstr "yeniden-normallemeli beta"
 
 #: plugin/johansen.c:203
 msgid "renormalized alpha"
-msgstr "yeniden normalleştirmeli alfa"
+msgstr "yeniden-normallemeli alfa"
 
 #: plugin/johansen.c:206
 msgid "beta (cointegrating vectors)"
