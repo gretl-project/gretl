@@ -27,16 +27,9 @@
 
 #define KDEBUG 0
 
-typedef struct ksmoother_ ksmoother;
+/* notation (based on James Hamilton):
 
-struct ksmoother_ {
-    gretl_matrix *Stt;   /* T x r: S_{t|t} */
-    gretl_matrix *Ptt;   /* T x rr: P_{t|t} */
-};
-
-/* notation (cf. James Hamilton):
-
-   State:   S_{t+1} = F*S_t + v{t+1},      E(v_t*v_t') = Q
+   State:   S_{t+1} = F*S_t + v_t,         E(v_t*v_t') = Q
 
    Obs:     y_t = A'*x_t + H'*S_t + w_t,   E(w_t*w_t') = R
 
@@ -91,9 +84,6 @@ struct kalman_ {
 
     /* optional array of time-varying matrices */
     gretl_matrix **Mt;
-
-    /* optional smoothing-related info */
-    ksmoother *smoother;
 
     /* optional matrices for recording extra info */
     gretl_matrix *LL;  /* T x 1: loglikelihood, all time-steps */
@@ -237,7 +227,6 @@ static kalman *kalman_new_empty (int flags)
 	K->E = K->V = K->S = K->P = K->K = NULL;
 	K->y = K->x = NULL;
 	K->BB = K->CC = K->BC = NULL;
-	K->smoother = NULL;
 	K->mnames = NULL;
 	K->matcalls = NULL;
 	K->Mt = NULL;
@@ -719,7 +708,8 @@ static void kalman_set_dimensions (kalman *K, gretlopt opt)
     K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
 
     /* K->p is non-zero only under cross-correlation */
-    K->p = (opt & OPT_C)? gretl_matrix_rows(K->Q): 0;
+    K->p = (opt & OPT_C)? gretl_matrix_cols(K->Q): 0;
+    fprintf(stderr, "K->p = %d\n", K->p);
 }
 
 /**
@@ -821,11 +811,11 @@ static int kalman_revise_variance (kalman *K)
     }
 
     if (K->BB == NULL) {
-	K->BB = gretl_matrix_alloc(K->r, K->p);
+	K->BB = gretl_matrix_alloc(K->r, K->r);
     }
 
     if (K->CC == NULL) {
-	K->CC = gretl_matrix_alloc(K->n, K->p);
+	K->CC = gretl_matrix_alloc(K->n, K->n);
     }
 
     if (K->BC == NULL) {
@@ -879,14 +869,19 @@ static int user_kalman_setup (kalman *K, gretlopt opt)
 
     if (K->p > 0) {
 	err = kalman_revise_variance(K);
+	if (err) {
+	    fprintf(stderr, "failed in kalman_revise_variance\n");
+	}
     }
 
     if (!err) {
 	err = kalman_check_dimensions(K);
+	if (err) {
+	    fprintf(stderr, "failed in kalman_check_dimensions\n");
+	}
     }
 
     if (err) {
-	fprintf(stderr, "failed in user_kalman_setup\n");
 	return err;
     }
 
@@ -1055,21 +1050,6 @@ static int kalman_arma_iter_1 (kalman *K)
     return err;
 }
 
-static void smoother_record_state_as_is (kalman *K)
-{
-    load_to_row(K->smoother->Stt, K->S0, K->t);
-}
-
-/* record S_{t|t} for smoothing (no cross-correlation) */
-
-static void smoother_record_state (kalman *K)
-{
-    gretl_matrix_multiply(K->Vt, K->e, K->Ve);
-    gretl_matrix_multiply(K->PH, K->Ve, K->Tmpr1);
-    gretl_matrix_add_to(K->Tmpr1, K->S0);
-    load_to_row(K->smoother->Stt, K->Tmpr1, K->t);
-}
-
 /* Hamilton (1994) equation [13.2.23] page 381, in simplified notation:
 
    S+ = FS + FPH(H'PH + R)^{-1} * (y - A'x - H'S) 
@@ -1087,16 +1067,13 @@ static int kalman_iter_1 (kalman *K, int missobs, double *llt)
     if (missobs) {
 	/* the observable is not in fact observed at t */
 	*llt = 0.0;
-	if (K->smoother != NULL) {
-	    smoother_record_state_as_is(K);
-	}
 	if (K->K != NULL) {
 	    set_row(K->K, K->t, 0.0);
 	}
 	return 0;
     }   
 
-    /* form e = y - A'x - H'S */
+    /* form e = y - A'x - H'S (e is already initialized to y) */
     err += gretl_matrix_subtract_from(K->e, K->Ax);
     gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
 			      K->S0, GRETL_MOD_NONE,
@@ -1120,7 +1097,7 @@ static int kalman_iter_1 (kalman *K, int missobs, double *llt)
     err += multiply_by_F(K, K->PH, K->FPH, 0);
     if (K->BC != NULL) {
 	/* cross-correlated case */
-	err += gretl_matrix_add_to(K->FPH, K->BC);
+	gretl_matrix_add_to(K->FPH, K->BC);
     }
     err += gretl_matrix_multiply(K->FPH, K->Vt, K->Kt);
 
@@ -1128,10 +1105,6 @@ static int kalman_iter_1 (kalman *K, int missobs, double *llt)
     err += gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
 				     K->e,  GRETL_MOD_NONE,
 				     K->S1, GRETL_MOD_CUMULATE);
-
-    if (!err && K->smoother != NULL) {
-	smoother_record_state(K);
-    }
 
     if (!err && K->K != NULL) {
 	/* record the gain */
@@ -1141,42 +1114,11 @@ static int kalman_iter_1 (kalman *K, int missobs, double *llt)
     return err;
 }
 
-#define P0MIN 1.0e-15
-
-static int record_Ptt (kalman *K)
-{
-    gretl_matrix *P = K->P0;
-    double x;
-    int i;
-
-    if (K->p > 0) {
-	P = K->Tmprr;
-    }
-
-    for (i=0; i<K->r; i++) {
-	x = gretl_matrix_get(P, i, i);
-	if (x < 0) {
-	    /* problem! */
-	    if (fabs(x) < P0MIN) {
-		gretl_matrix_set(P, i, i, 0.0);
-	    } else {
-		fprintf(stderr, "P(%d,%d) = %g\n", i, i, x);
-		return E_DATA;
-	    }
-	}
-    }
-
-    /* record vech of P_{t|t} for smoothing */
-    load_to_vech(K->smoother->Ptt, P, K->r, K->t);
-
-    return 0;
-}
-
 /* Hamilton (1994) equation [13.2.22] page 380, in simplified notation:
 
       P+ = F[P - PH(H'PH + R)^{-1}H'P]F' + Q 
 
-   Or use the alternative calculation
+   Or use the alternative formulation:
 
       P+ = FPF' - KVK + Q  where K = gain and V = error variance
 */
@@ -1185,41 +1127,26 @@ static int kalman_iter_2 (kalman *K, int missobs)
 {
     int err = 0;
 
-    if (K->p > 0) {
-	/* record P for applying alternative update using gain */
-	gretl_matrix_copy_values(K->Tmprr, K->P0);
-    }
-
-    if (!missobs && (K->p == 0 || K->smoother != NULL)) {
-	/* form P_{t|t} = P - PH(H'PH + R)^{-1}H'P */
+    if (K->p == 0 && !missobs) {
+	/* revise "P0" as P_{t|t} = P - PH(H'PH + R)^{-1}H'P */
 	err = gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->Vt,
 				 K->P0, GRETL_MOD_DECREMENT);
     }
 
-    if (!err && K->smoother != NULL) {
-	/* uncorrelated case */
-	record_Ptt(K);
+    /* pre-multiply by F, post-multiply by F' */
+    if (K->nonshift == K->r) {
+	err += gretl_matrix_qform(K->F, GRETL_MOD_NONE, K->P0,
+				  K->P1, GRETL_MOD_NONE);
+    } else {
+	err += multiply_by_F(K, K->P0, K->Tmprr, 0);
+	err += multiply_by_F(K, K->Tmprr, K->P1, 1);
+	gretl_matrix_xtr_symmetric(K->P1);
     }
 
-    if (K->p > 0) {
-	/* FPF' */
-	gretl_matrix_qform(K->F, GRETL_MOD_NONE, K->Tmprr,
-			   K->P1, GRETL_MOD_NONE);
-	if (!missobs) {
-	    /* - K(H'PH + R)K' */
-	    gretl_matrix_qform(K->Kt, GRETL_MOD_NONE, K->HPH, 
-			       K->P1, GRETL_MOD_DECREMENT);
-	}
-    } else {
-	/* pre-multiply by F, post-multiply by F' */
-	if (K->nonshift == K->r) {
-	    err += gretl_matrix_qform(K->F, GRETL_MOD_NONE, K->P0,
-				      K->P1, GRETL_MOD_NONE);
-	} else {
-	    err += multiply_by_F(K, K->P0, K->Tmprr, 0);
-	    err += multiply_by_F(K, K->Tmprr, K->P1, 1);
-	    gretl_matrix_xtr_symmetric(K->P1);
-	}
+    if (K->p > 0 && !missobs) {
+	/* subtract K(H'PH + R)K' */
+	gretl_matrix_qform(K->Kt, GRETL_MOD_NONE, K->HPH, 
+			   K->P1, GRETL_MOD_DECREMENT);
     }
 
     /* add Q */
@@ -1511,14 +1438,18 @@ int kalman_forecast (kalman *K)
 	} 
 
 	if (K->V != NULL) {
-	    /* record variance for est. of observables */
+	    /* record MSE for estimate of observables */
 	    if (missobs) {
-		set_row(K->V, K->t, M_NA);
+		if (K->flags & KALMAN_SMOOTH) {
+		    set_row(K->V, K->t, 0.0); 
+		} else {
+		    set_row(K->V, K->t, 1.0/0.0); 
+		}
 	    } else if (K->flags & KALMAN_SMOOTH) {
 		/* record inverse */
 		load_to_vech(K->V, K->Vt, K->n, K->t);
 	    } else {
-		/* record uninverted */
+		/* record uninverted matrix */
 		load_to_vech(K->V, K->HPH, K->n, K->t);
 	    }
 	}
@@ -1540,7 +1471,11 @@ int kalman_forecast (kalman *K)
 	
 	/* record forecast errors if wanted */
 	if (!err && K->E != NULL) {
-	    load_to_row(K->E, K->e, K->t);
+	    if (missobs && (K->flags & KALMAN_SMOOTH)) {
+		set_row(K->E, K->t, 0.0);
+	    } else {
+		load_to_row(K->E, K->e, K->t);
+	    }
 	}
 
 	/* update state vector */
@@ -2027,7 +1962,7 @@ static int update_scalar_matrix (gretl_matrix *m, const char *name)
 
 /* When (re-)running a user-defined filter, check that no relevant
    matrices have disappeared or been resized.  In addition,
-   re-initialize the state and precision.
+   re-initialize the state and variance.
 */
 
 static int user_kalman_recheck_matrices (user_kalman *u)
@@ -2570,19 +2505,27 @@ static void load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
     }
 }
 
-/* First go at implementing alternative smoothing algorithm that will
-   work with cross-correlated disturbances.  
-   See Koopman, Shephard and Doornik, section 4.4.
+/* Partial implementation of Koopman's "disturbance smoother".
+   See Koopman, Shephard and Doornik, section 4.4.  Needs
+   more work.
 */
 
-static int kalman_cross_smooth (kalman *K, gretl_matrix *U)
+static int koopman_smooth (kalman *K, gretl_matrix *U)
 {
     gretl_matrix_block *B;
     gretl_matrix *u, *D, *L, *R;
     gretl_matrix *r0, *r1, *r2, *N1, *N2;
     gretl_matrix *n1 = NULL;
+    gretl_matrix *Mp1 = NULL;
     double x;
     int i, t, err = 0;
+
+    if (K->p > 0) {
+	Mp1 = gretl_matrix_alloc(K->p, 1);
+	if (Mp1 == NULL) {
+	    return E_ALLOC;
+	}
+    }
 
     B = gretl_matrix_block_new(&u,  K->n, 1,
 			       &D,  K->n, K->n,
@@ -2596,6 +2539,7 @@ static int kalman_cross_smooth (kalman *K, gretl_matrix *U)
 			       NULL);
 
     if (B == NULL) {
+	gretl_matrix_free(Mp1);
 	return E_ALLOC;
     }
 
@@ -2674,19 +2618,17 @@ static int kalman_cross_smooth (kalman *K, gretl_matrix *U)
 #if 0
 	if (K->p > 0) {
 	    /* cross-correlated disturbances */
-	    load_from_row(K->e, K->E, t);
-	    load_from_row(r1, R, t);
+	    load_from_row(K->e, K->E, t, GRETL_MOD_NONE);
+	    load_from_row(r1, R, t, GRETL_MOD_NONE);
 	    gretl_matrix_multiply(K->C, GRETL_MOD_TRANSPOSE,
 				  K->e, GRETL_MOD_NONE,
-				  XX, GRETL_MOD_NONE);
+				  Mp1, GRETL_MOD_NONE);
 	    gretl_matrix_multiply(K->B, GRETL_MOD_TRANSPOSE,
 				  r1, GRETL_MOD_NONE,
-				  XX, GRETL_MOD_CUMULATE);
-	} else {
-	    load_from_row(r1, R, t);
-	    gretl_matrix_multiply(K->Q, r1, r2);
+				  Mp1, GRETL_MOD_CUMULATE);
+	    gretl_matrix_multiply(K->B, Mp1, r2);
 	    load_to_row(R, r2, t);
-	}
+	} 
 #else
 	load_from_row(r1, R, t, GRETL_MOD_NONE);
 	gretl_matrix_multiply(K->Q, r1, r2);
@@ -2711,10 +2653,6 @@ static int kalman_cross_smooth (kalman *K, gretl_matrix *U)
     if (K->R != NULL && U != NULL) {
 	gretl_matrix_reuse(K->Tmpnn, K->n, K->n);
     }
-
-#if 0
-    gretl_matrix_print(R, "Q*eps_t, all t");
-#endif
 
     /* write initial smoothed state into first row of S */
     if (K->Pini != NULL) {
@@ -2742,167 +2680,122 @@ static int kalman_cross_smooth (kalman *K, gretl_matrix *U)
     return err;
 }
 
-/* Below: implementation of Kalman smoothing as described in Hamilton,
-   Time Series Analysis, pp. 394-397.  This algorithm assumes no
-   cross-correlation of diturbances between the equations.
- */
+/* Anderson-Moore Kalman smoothing: see Iskander Karibzhanov's
+   exposition at http://www.econ.umn.edu/~karib003/help/kalcvs.htm
+   This is much the clearest account I have seen (AC 2009-04-14).
 
-static int kalman_smooth (kalman *K, int nr)
+   This method uses S_{t|t-1} and P_{t|t-1} for all t, but we can
+   overwrite these with the smoothed values as we go. We also need
+   stored values for the prediction error, its MSE, and the gain at
+   each time step.  Note that u_t and U_t are set to zero for t = T -
+   1.
+*/
+
+static int anderson_moore_smooth (kalman *K)
 {
     gretl_matrix_block *B;
-    gretl_matrix *J, *Pl, *Pr, *M1, *M2;
-    gretl_matrix *SS, *SP, *S_, *P_;
-    gretl_matrix *Stt, *Ptt;
-    gretl_matrix *L = NULL;
-    double x;
-    int i, t;
-    int err = 0;
+    gretl_matrix *L = K->Tmprr;
+    gretl_matrix *u, *u1, *U, *U1;
+    gretl_matrix *StT, *PtT;
+    int t, err = 0;
 
-    if (K->p > 0) {
-	/* FIXME */
-	L = gretl_matrix_copy(K->F);
-    }
-
-    B = gretl_matrix_block_new(&J, K->r, K->r,
-			       &Pl, K->r, K->r,
-			       &Pr, K->r, K->r,
-			       &M1, K->r, 1,
-			       &M2, K->r, 1,
-			       &S_, 1, K->r,
-			       &P_, 1, nr,
+    B = gretl_matrix_block_new(&StT, K->r, 1,
+			       &PtT, K->r, K->r,
+			       &u,   K->r, 1,
+			       &u1,  K->r, 1,
+			       &U,   K->r, K->r,
+			       &U1,  K->r, K->r,
 			       NULL);
     if (B == NULL) {
 	return E_ALLOC;
     }
 
-    /* the t|t values */
-    Stt = K->smoother->Stt;
-    Ptt = K->smoother->Ptt;
+    gretl_matrix_zero(u);
+    gretl_matrix_zero(U);
 
-    /* these will hold the smoothed values */
-    SS = K->S;
-    SP = K->P;
-
-    /* In the backward recursion below we need to have available the
-       "previous" (that is, t + 1) values of the original, unsmoothed
-       state estimate and its MSE.  We therefore keep copies of these
-       values in the vectors S_ and P_, as we overwrite the original
-       matrices with the smoothed values.
+    /* This method uses S_{t|t-1} and P_{t|t-1} for all t, but we can
+       overwrite these with the smoothed values as we go. We also need
+       stored values for the prediction error, its MSE, and the gain
+       at each time step.  Note that u_t and U_t are set to zero for 
+       t = T - 1.
     */
 
-    /* the final value of S_{t|t} is already S_{t|T} */
-    for (i=0; i<K->r; i++) {
-	x = gretl_matrix_get(K->S, K->T-1, i);
-	gretl_vector_set(S_, i, x); /* backup */
-	x = gretl_matrix_get(Stt, K->T-1, i);
-	gretl_matrix_set(SS, K->T-1, i, x);
-    }
+    /* FIXME: handle time-varying F, H matrices */
 
-    /* also final MSE is OK */
-    for (i=0; i<nr; i++) {
-	x = gretl_matrix_get(K->P, K->T-1, i);
-	gretl_vector_set(P_, i, x); /* backup */
-	x = gretl_matrix_get(Ptt, K->T-1, i);
-	gretl_matrix_set(SP, K->T-1, i, x);
-    }	
+    for (t=K->T-1; t>=0 && !err; t--) {
+	/* L_t = F_t - K_t H_t' */
+	gretl_matrix_copy_values(L, K->F);
+	load_from_vec(K->Kt, K->K, t);
+	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+				  K->H, GRETL_MOD_TRANSPOSE,
+				  L, GRETL_MOD_DECREMENT);
 
-    for (t=K->T-2; t>=0 && !err; t--) {
-	/* J_t = P_{t|t} F' P^{-1}_{t+1|t} */
-	load_from_vech(Pl, Ptt, K->r, t, GRETL_MOD_NONE);
-	load_from_vech(Pr, P_, K->r, 0, GRETL_MOD_NONE);
-	err = gretl_maybe_invpd(Pr);
-	if (err) {
-	    /* OK, try generalized inverse */
-	    load_from_vech(Pr, P_, K->r, 0, GRETL_MOD_NONE);
-	    err = gretl_matrix_moore_penrose(Pr);
-	} 
-	if (err) {
-	    fprintf(stderr, "kalman_smooth: failed to invert P_{%d|%d}\n", 
-		    t + 2, t + 1);
-	    break;
-	}
-	if (K->p > 0) {
-	    /* alt: J_t = P_{t|t} L_t' P^{-1}_{t+1|t}, where
-	       L_t = F_t - K_t H_t'
-	    */
-	    gretl_matrix_copy_values(L, K->F);
-	    load_from_vec(K->Kt, K->K, t);
-	    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-				      K->H, GRETL_MOD_TRANSPOSE,
-				      L, GRETL_MOD_DECREMENT);
-	    gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
-				      Pr, GRETL_MOD_NONE,
-				      K->Tmprr, GRETL_MOD_NONE);
+	/* u_{t-1} = H_t V_t e_t + L_t' u_t */
+	load_from_vech(K->Vt, K->V, K->n, t, GRETL_MOD_NONE);
+	load_from_row(K->e, K->E, t, GRETL_MOD_NONE);
+	gretl_matrix_multiply(K->Vt, K->e, K->Ve);
+	gretl_matrix_multiply(K->H, K->Ve, u1);
+	if (t == K->T - 1) {
+	    gretl_matrix_multiply(K->H, K->Ve, u);
 	} else {
-	    gretl_matrix_multiply_mod(K->F, GRETL_MOD_TRANSPOSE,
-				      Pr, GRETL_MOD_NONE,
-				      K->Tmprr, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
+				      u, GRETL_MOD_NONE,
+				      u1, GRETL_MOD_CUMULATE);
+	    gretl_matrix_copy_values(u, u1);
 	}
-	gretl_matrix_multiply(Pl, K->Tmprr, J);
 
-	/* "M2" = J_t * (S_{t+1|T} - S{t+1|t}) */
-	load_from_row(M1, SS, t+1, GRETL_MOD_NONE);
-	load_from_row(M1, S_, 0, GRETL_MOD_DECREMENT);
-	gretl_matrix_multiply(J, M1, M2);
+	/* U_{t-1} = H_t V_t H_t' + L_t' U_t L_t */
+	if (t == K->T - 1) {
+	    gretl_matrix_qform(K->H, GRETL_MOD_NONE,
+			       K->Vt, U, GRETL_MOD_NONE);
+	} else {
+	    gretl_matrix_qform(K->H, GRETL_MOD_NONE,
+			       K->Vt, U1, GRETL_MOD_NONE);
+	    gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
+			       U, U1, GRETL_MOD_CUMULATE);
+	    gretl_matrix_copy_values(U, U1);
+	}
 
-	/* S_{t|T} = S_{t|t} + M2 */
-	load_from_row(M1, Stt, t, GRETL_MOD_NONE);
-	gretl_matrix_add_to(M1, M2);
-	/* record unsmoothed state estimate */
-	load_from_row(S_, K->S, t, GRETL_MOD_NONE);
-	/* and set smoothed value for t */
-	load_to_row(SS, M1, t);
+	/* S_{t|T} = S_{t|t-1} + P_{t|t-1} u_{t-1} */
+	load_from_row(StT, K->S, t, GRETL_MOD_NONE);
+	load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
+	gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
+				  u, GRETL_MOD_NONE,
+				  StT, GRETL_MOD_CUMULATE);
+	load_to_row(K->S, StT, t);
 
-	/* P_{t|T} = P_{t|t} + J_t(P_{t+1|T} - P_{t+1|t})J'_t */
-	load_from_vech(Pr, SP, K->r, t+1, GRETL_MOD_NONE);
-	load_from_vech(Pr, P_, K->r, 0, GRETL_MOD_DECREMENT);
-	gretl_matrix_qform(J, GRETL_MOD_NONE,
-			   Pr, K->Tmprr, GRETL_MOD_NONE);
-	gretl_matrix_add_to(Pl, K->Tmprr);
-	/* record vech of unsmoothed MSE */
-	load_from_row(P_, K->P, t, GRETL_MOD_NONE);
-	/* and set smoothed value for t */
-	load_to_vech(SP, Pl, K->r, t);
+	/* P_{t|T} = P_{t|t-1} - P_{t|t-1} U_{t-1} P_{t|t-1} */
+	gretl_matrix_copy_values(PtT, K->P0);
+	gretl_matrix_qform(K->P0, GRETL_MOD_NONE,
+			   U, PtT, GRETL_MOD_DECREMENT);
+	load_to_vech(K->P, PtT, K->r, t);
     }
 
     gretl_matrix_block_destroy(B);
-    gretl_matrix_free(L);
 
     return err;
 }
 
-static void kalman_destroy_smoother (kalman *K)
-{
-    gretl_matrix_free(K->smoother->Stt);
-    gretl_matrix_free(K->smoother->Ptt);
-    free(K->smoother);
-    K->smoother = NULL;
-}
+/**
+ * user_kalman_smooth:
+ * @Pname: name of matrix in which to retrieve the MSE of the
+ * smoothed state (or %NULL if this is not required).
+ * @Uname: name of matrix in which to retrieve the smoothed
+ * disturbances (or %NULL if this is not required).
+ * @err: location to receive error code.
+ * 
+ * If a user-defined Kalman filter is found, runs a filtering
+ * pass followed by a backward, smoothing pass.  At present
+ * the @Uname argument is a experimental and a bodge: it will 
+ * not actually do anything unless @Pname is left null.
+ *
+ * Returns: matrix containing the smoothed estimate of the
+ * state, or %NULL on error.
+ */
 
-static int kalman_add_smoother (kalman *K, int nr)
-{
-    int err = 0;
-
-    K->smoother = malloc(sizeof *K->smoother);
-    
-    if (K->smoother == NULL) {
-	return E_ALLOC;
-    }
-
-    K->smoother->Stt = gretl_matrix_alloc(K->T, K->r);
-    K->smoother->Ptt = gretl_matrix_alloc(K->T, nr);
-
-    if (K->smoother->Stt == NULL || K->smoother->Ptt == NULL) {
-	err = E_ALLOC;
-	kalman_destroy_smoother(K);
-    }
-
-    return err;
-}
-
-static gretl_matrix *user_kalman_cross_smooth (const char *Pname, 
-					       const char *Uname,
-					       int *err)
+gretl_matrix *user_kalman_smooth (const char *Pname, 
+				  const char *Uname,
+				  int *err)
 {
     user_kalman *u = get_user_kalman(-1);
     gretl_matrix *E, *S, *P = NULL;
@@ -2917,40 +2810,49 @@ static gretl_matrix *user_kalman_cross_smooth (const char *Pname,
 
     K = u->K;
 
-    /* optional accessor for smoothed disturbances */
-    if (Uname != NULL && strcmp(Uname, "null")) {
-	U = get_matrix_by_name(Uname);
-	if (U == NULL) {
-	    *err = E_UNKVAR;
-	    return NULL;
-	} else {
-	    int Ucols = K->r;
-
-	    if (K->R != NULL) {
-		Ucols += K->n;
-	    }
-	    if (U->rows != K->T || U->cols != Ucols) {
-		*err = gretl_matrix_realloc(U, K->T, Ucols);
-		if (*err) {
-		    return NULL;
-		}
-	    }
-	}
-    }
-
     /* optional accessor for MSE of smoothed state estimate */
     if (Pname != NULL && strcmp(Pname, "null")) {
 	P = get_matrix_by_name(Pname);
 	if (P == NULL) {
 	    *err = E_UNKVAR;
-	    return NULL;
 	} else {
 	    user_P = 1;
 	}
     }
 
+    if (!user_P && !*err) {
+	/* optional accessor for smoothed disturbances a la Koopman:
+	   experimental, and avilable only in @Pname is not given
+	*/
+	if (Uname != NULL && strcmp(Uname, "null")) {
+	    U = get_matrix_by_name(Uname);
+	    if (U == NULL) {
+		*err = E_UNKVAR;
+	    } else {
+		int Ucols = K->r;
+
+		if (K->R != NULL) {
+		    Ucols += K->n;
+		}
+		if (U->rows != K->T || U->cols != Ucols) {
+		    *err = gretl_matrix_realloc(U, K->T, Ucols);
+		}
+	    }
+	}
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
     nr = (K->r * K->r + K->r) / 2;
     nn = (K->n * K->n + K->n) / 2;
+
+    /* Set up the matrices we need to store computed results from all
+       time steps on the forward pass: prediction error, (inverse)
+       error variance, gain, state S_{t|t-1} and MSE of state,
+       P_{t|t-1}.
+    */
 
     E = gretl_matrix_alloc(K->T, K->n);
     V = gretl_matrix_alloc(K->T, nn);
@@ -2964,27 +2866,19 @@ static gretl_matrix *user_kalman_cross_smooth (const char *Pname,
 
     if (E == NULL || V == NULL || G == NULL || 
 	S == NULL || P == NULL) {
-	gretl_matrix_free(E);
-	gretl_matrix_free(V);
-	gretl_matrix_free(G);
-	gretl_matrix_free(S);
-	if (!user_P) {
-	    gretl_matrix_free(P);
-	}
 	*err = E_ALLOC;
-	return NULL;
+	goto bailout;
     } 
 
-    if (!*err) {
-	/* attach all export matrices to Kalman */
-	K->E = E;
-	K->V = V;
-	K->K = G;
-	K->S = S;
-	K->P = P;
-	/* and recheck dimensions */
-	*err = user_kalman_recheck_matrices(u);
-    }
+    /* attach all export matrices to Kalman */
+    K->E = E;
+    K->V = V;
+    K->K = G;
+    K->S = S;
+    K->P = P;
+
+    /* and recheck dimensions */
+    *err = user_kalman_recheck_matrices(u);
 
     if (!*err) {
 	K->flags |= KALMAN_SMOOTH;
@@ -2995,7 +2889,12 @@ static gretl_matrix *user_kalman_cross_smooth (const char *Pname,
     K->t = 0;
 
     if (!*err) {
-	*err = kalman_cross_smooth(K, U);
+	/* bodge */
+	if (U != NULL) {
+	    *err = koopman_smooth(K, U);
+	} else {
+	    *err = anderson_moore_smooth(K);
+	}
     }
 
     /* detach matrices */
@@ -3005,135 +2904,22 @@ static gretl_matrix *user_kalman_cross_smooth (const char *Pname,
     K->S = NULL;
     K->P = NULL; 
 
+ bailout:
+
     gretl_matrix_free(E);
     gretl_matrix_free(V);
     gretl_matrix_free(G);
 
-    if (*err) {
-	gretl_matrix_free(S);
-	S = NULL;
-    }
-
     if (!user_P) {
 	gretl_matrix_free(P);
     }
-
-    return S;
-}
-
-/* driver for smoothing algorithm as set out by Hamilton */
-
-static gretl_matrix *real_user_kalman_smooth (const char *Pname, int *err)
-{
-    user_kalman *u = get_user_kalman(-1);
-    gretl_matrix *E, *S, *P = NULL;
-    gretl_matrix *G = NULL;
-    kalman *K;
-    int nr, user_P = 0;
-
-    if (u == NULL) {
-	*err = missing_kalman_error();
-	return NULL;
-    }
-
-    K = u->K;
-
-    /* optional accessor for MSE of smoothed state estimate */
-    if (Pname != NULL && strcmp(Pname, "null")) {
-	P = get_matrix_by_name(Pname);
-	if (P == NULL) {
-	    *err = E_UNKVAR;
-	    return NULL;
-	} else {
-	    user_P = 1;
-	}
-    }
-
-    nr = (K->r * K->r + K->r) / 2;
-
-    E = gretl_matrix_alloc(K->T, K->n);
-    S = gretl_matrix_alloc(K->T, K->r);
-
-    if (P == NULL) {
-	/* the user didn't give P on input */
-	P = gretl_matrix_alloc(K->T, nr);
-    }
-
-    if (E == NULL || S == NULL || P == NULL) {
-	gretl_matrix_free(E);
-	gretl_matrix_free(S);
-	if (!user_P) {
-	    gretl_matrix_free(P);
-	}
-	*err = E_ALLOC;
-	return NULL;
-    } 
-
-    if (K->p > 0) {
-	int nn = (K->n * K->n + K->n) / 2;
-
-	G = gretl_matrix_alloc(K->T, nn);
-	/* FIXME checking */
-    }
-
-    *err = kalman_add_smoother(K, nr);
-
-    if (!*err) {
-	/* attach all matrices to Kalman */
-	K->E = E;
-	K->K = G;
-	K->S = S;
-	K->P = P;
-	/* and recheck dimensions */
-	*err = user_kalman_recheck_matrices(u);
-    }
-
-    if (!*err) {
-	*err = kalman_forecast(K);
-    }
-
-    K->t = 0;
-
-    if (!*err) {
-	*err = kalman_smooth(K, nr);
-    }
-
-    kalman_destroy_smoother(K);
-
-    /* detach matrices */
-    K->E = NULL;
-    K->K = NULL;
-    K->S = NULL;
-    K->P = NULL; 
-
-    gretl_matrix_free(E);
-    gretl_matrix_free(G);
 
     if (*err) {
 	gretl_matrix_free(S);
 	S = NULL;
     }
 
-    if (!user_P) {
-	gretl_matrix_free(P);
-    }
-
     return S;
-}
-
-/* called by the ksmooth() function: run a user-defined Kalman
-   filter in forecasting mode, then recurse backwards to 
-   produce the smoothed estimate of the state */
-
-gretl_matrix *user_kalman_smooth (const char *Pname, const char *Uname,
-				  int *err)
-{
-    if (0) {
-	return real_user_kalman_smooth(Pname, err);
-    } else {
-	/* doesn't do smoothed variance yet */
-	return user_kalman_cross_smooth(Pname, Uname, err);
-    }
 }
 
 /* See the account in Koopman, Shephard and Doornik, Econometrics
@@ -3163,6 +2949,7 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
     }
 
     if (!err) {
+	/* FIXME cross-correlated */
 	load_from_row(v0, V, 0, GRETL_MOD_NONE);
 	err = gretl_matrix_multiply(Q, v0, s0);
     }
@@ -3185,13 +2972,27 @@ static int kalman_simulate (kalman *K,
 			    gretl_matrix *Y, 
 			    gretl_matrix *S)
 {
-    gretl_matrix *yt;
+    gretl_matrix *yt, *et = NULL;
+    gretl_matrix *Mnp = NULL, *Mrp = NULL;
     int err = 0;
 
     yt = gretl_matrix_alloc(K->n, 1);
     if (yt == NULL) {
 	return E_ALLOC;
     }
+
+    if (K->p > 0) {
+	et = gretl_matrix_alloc(K->p, 1);
+	Mnp = gretl_matrix_alloc(K->n, K->p);
+	Mrp = gretl_matrix_alloc(K->r, K->p);
+	if (et == NULL || Mnp == NULL || Mrp == NULL) {
+	    gretl_matrix_free(yt);
+	    gretl_matrix_free(et);
+	    gretl_matrix_free(Mnp);
+	    gretl_matrix_free(Mrp);
+	    return E_ALLOC;
+	}
+    }	
 
     sim_state_0(K, V);
 
@@ -3205,6 +3006,8 @@ static int kalman_simulate (kalman *K,
 	}
     } 
 
+    /* FIXME time-varying matrices */
+
     for (K->t = 0; K->t < K->T; K->t += 1) {
 	/* y_t = A'*x_t + H'*S_t + w_t */
 	gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
@@ -3212,7 +3015,15 @@ static int kalman_simulate (kalman *K,
 				  yt, GRETL_MOD_NONE);
 	if (W != NULL) {
 	    load_from_row(yt, W, K->t, GRETL_MOD_CUMULATE);
-	} 
+	} else if (K->p > 0) {
+	    /* (CB' CC') * e_t */
+	    gretl_matrix_inscribe_matrix(Mnp, K->R, 0, 0, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(Mnp, K->BC, 0, K->n, GRETL_MOD_TRANSPOSE);
+	    load_from_row(et, V, K->t, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_mod(Mnp, GRETL_MOD_NONE,
+				      et, GRETL_MOD_NONE,
+				      yt, GRETL_MOD_CUMULATE);
+	}
 	if (K->x != NULL) {
 	    kalman_set_Ax(K);
 	    gretl_matrix_add_to(yt, K->Ax);
@@ -3223,16 +3034,43 @@ static int kalman_simulate (kalman *K,
 	    /* and the state, if wanted */
 	    load_to_row(S, K->S0, K->t);
 	}	
-	/* S_{t+1} = F*S_t + v{t+1} */
+	/* S_{t+1} = F*S_t + v_t */
 	gretl_matrix_multiply(K->F, K->S0, K->S1);
-	load_from_row(K->S1, V, K->t, GRETL_MOD_CUMULATE);
+	if (K->p == 0) {
+	    load_from_row(K->S1, V, K->t, GRETL_MOD_CUMULATE);
+	} else {
+	    gretl_matrix_inscribe_matrix(Mrp, K->Q, 0, 0, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(Mrp, K->BC, 0, K->r, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_mod(Mrp, GRETL_MOD_NONE,
+				      et, GRETL_MOD_NONE,
+				      K->S1, GRETL_MOD_CUMULATE);
+	}	    
 	gretl_matrix_copy_values(K->S0, K->S1);
     }
 
     gretl_matrix_free(yt);
+    gretl_matrix_free(et);
+    gretl_matrix_free(Mnp);
+    gretl_matrix_free(Mrp);
 
     return err;
 }
+
+/**
+ * user_kalman_simulate:
+ * @V: artificial state disturbance vector.
+ * @W: artificial observation disturbance vector.
+ * @Sname: name of matrix to retrieve simulated state.
+ * @err: location to receive error code.
+ * 
+ * If a user-defined Kalman filter is found, uses it to 
+ * construct a simulation based on the articificial disturbances
+ * @V and @W.  FIXME this does not yet handle the case of
+ * correlated disturbances.
+ *
+ * Returns: matrix containing the simulated values of the
+ * observables.
+ */
 
 gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
 				    const gretl_matrix *W,
@@ -3257,28 +3095,36 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 
     K = u->K;
 
-    /* the state disurbance matrix, V, must have r columns */
-    if (V->cols != K->r) {
-	*err = E_NONCONF;
+    if (K->p > 0) {
+	/* If K->p > 0 we're in the cross-correlated case: we'll interpret
+	   @V as the underlying disturbance matrix (and ignore @W).
+	*/
+	if (V->cols != K->p) {
+	    *err = E_NONCONF;
+	}
+    } else {	
+	/* Otherwise @V must have r columns, and @W must be given if
+	   K->R is non-null.
+	*/
+	if (V->cols != K->r) {
+	    *err = E_NONCONF;
+	} else if (K->R != NULL) {
+	    if (W == NULL) {
+		fprintf(stderr, "ksimul: W is NULL\n");
+		*err = missing_matrix_error();
+	    } else if (W->rows != V->rows || W->cols != K->n) {
+		*err = E_NONCONF;
+	    }
+	}	    
+    }
+
+    if (*err) {
 	return NULL;
     }
 
     /* we let V provisionally define the sample length */
     saveT = K->T;
     T = V->rows;
-
-    /* if R is non-null we need a disturbance for the obs equation */
-    if (K->R != NULL && W == NULL) {
-	fprintf(stderr, "ksimul: W is NULL\n");
-	*err = missing_matrix_error();
-	return NULL;
-    }
-
-    /* the matrix W must be T x n, if present */
-    if (W != NULL && (W->rows != T || W->cols != K->n)) {
-	*err = E_NONCONF;
-	return NULL;
-    }
 
     /* now, are the other needed matrices in place? */
     K->flags |= KALMAN_SIM;
