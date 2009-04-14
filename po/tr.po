@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-04-13 21:55-0400\n"
-"PO-Revision-Date: 2009-04-13 09:33+0300\n"
+"PO-Revision-Date: 2009-04-14 09:18+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -312,9 +312,8 @@ msgid "Asymptotic test statistic"
 msgstr "Kavuşmazsal sınama istatistiği"
 
 #: lib/src/compare.c:378
-#, fuzzy
 msgid "Wald chi-square"
-msgstr "ki-kare"
+msgstr "Wald ki-kare"
 
 #: lib/src/compare.c:379 lib/src/compare.c:389 lib/src/compare.c:394
 #: lib/src/compare.c:402 lib/src/compare.c:428 lib/src/gretl_restrict.c:1838
@@ -624,8 +623,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:341
 #, c-format
@@ -722,8 +720,7 @@ msgstr "   dört basamaklı yıl olmadığı kesin\n"
 #: lib/src/csvdata.c:1032 lib/src/dataio.c:2622
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+msgstr "İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
 
 #: lib/src/csvdata.c:1054 lib/src/dataio.c:2633
 msgid "Data file is empty\n"
@@ -744,10 +741,8 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1203
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1212
 #, c-format
@@ -1378,8 +1373,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
 
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
@@ -2303,9 +2297,8 @@ msgid "missing values were generated"
 msgstr "eksik değerler ortaya çıktı"
 
 #: lib/src/genmain.c:106
-#, fuzzy
 msgid "non-finite values were generated"
-msgstr "eksik değerler ortaya çıktı"
+msgstr "sonlu-dışı değerler üretildi"
 
 #: lib/src/genmain.c:113
 msgid "Warning"
@@ -2317,9 +2310,9 @@ msgid "Replaced after model %d: "
 msgstr "model %d sonrası değiştirildi: "
 
 #: lib/src/genmain.c:311 lib/src/interact.c:2630
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' may not be used as a variable name"
-msgstr "'%s', %s ile ilgilidir ve bir değişken adı olarak kullanılamaz"
+msgstr "'%s' bir değişken adı olarak kullanılamaz"
 
 #: lib/src/genmain.c:490
 msgid "Periodic dummy variables generated.\n"
@@ -2514,8 +2507,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:3990
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s tepkisi (özyetinim güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s tepkisi (özyetinim güven aralıkları ile)"
 
 #: lib/src/graphing.c:3995
 #, c-format
@@ -2812,9 +2804,9 @@ msgid "_Open data"
 msgstr "Verileri _aç"
 
 #: lib/src/gretl_intl.c:550
-#, fuzzy, c-format
+#, c-format
 msgid "%s: locale is not supported on this system"
-msgstr "Gnuplot bu sistemde PDF çıktısını desteklemiyor"
+msgstr "%s: yereli bu sistemde desteklenmiyor"
 
 #: lib/src/gretl_list.c:306
 #, c-format
@@ -3230,8 +3222,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Dizey evriği alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey evriği alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
@@ -3700,7 +3691,7 @@ msgstr "%s: gerekli değiştirge eksik"
 #: lib/src/interact.c:1879
 #, c-format
 msgid "%s: expected an integer order"
-msgstr ""
+msgstr "%s: bir tamsayı üs bekleniyordu"
 
 #: lib/src/interact.c:2070
 #, c-format
@@ -3914,21 +3905,19 @@ msgid "indeterminate condition for 'if'"
 msgstr "'if' için belirsizlik koşulu"
 
 #: lib/src/kalman.c:419
-#, fuzzy
 msgid "kalman: a required matrix is missing"
-msgstr "%s: gerekli değiştirge eksik"
+msgstr "kalman: gerekli bir dizey eksik"
 
 #: lib/src/kalman.c:425
-#, fuzzy
 msgid "No Kalman filter is defined"
-msgstr "Tanımlı bir seri yok\n"
+msgstr "Tanımlı bir Kalman süzgeci yok"
 
 #: lib/src/kalman.c:1930 lib/src/kalman.c:2380 lib/src/libset.c:970
 #: lib/src/usermat.c:1433 lib/src/usermat.c:1493 lib/src/usermat.c:1502
 #: lib/src/usermat.c:1572 lib/src/usermat.c:1658
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such matrix"
-msgstr "'%s': böyle bir dizey yok\n"
+msgstr "'%s': böyle bir dizey yok"
 
 #: lib/src/libset.c:916
 #, c-format
@@ -5276,10 +5265,8 @@ msgid "not significant at the 10% level\n"
 msgstr "% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:344
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Örneklem, normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Örneklem, normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük\n"
 
 #: lib/src/nonparam.c:767
 msgid ""
@@ -5308,8 +5295,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:815
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:819
 #, c-format
@@ -5516,10 +5502,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99 lib/src/printout.c:122
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5592,8 +5576,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:493
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:501
 msgid "TOT."
@@ -5624,10 +5607,8 @@ msgstr "Pearson ki-kare sınaması = %g (%d sd p-değeri = %g)"
 
 #: lib/src/printout.c:581
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
-msgstr ""
-"Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgstr "Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
 
 #: lib/src/printout.c:607 lib/src/printout.c:615
 #, c-format
@@ -5950,10 +5931,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1657
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
 
 #: lib/src/subsample.c:1668
 msgid "valid values"
@@ -6563,8 +6542,7 @@ msgstr "komutlar %s olarak kaydedildi\n"
 #: cli/gretlcli.c:951
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
+msgstr "Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
 
 #: cli/gretlcli.c:959
 #, c-format
@@ -6818,8 +6796,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazsal yaklaştırma yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazsal yaklaştırma yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -8842,7 +8819,7 @@ msgstr "gretl: zaman-serisi süzgeçi"
 
 #: gui2/filters.c:430
 msgid "Number of observations in average:"
-msgstr "Ortalama gözlem sayısı:"
+msgstr "Ortalamadaki gözlem sayısı:"
 
 #: gui2/filters.c:441
 msgid "Centered"
@@ -9161,9 +9138,8 @@ msgid "Clear data labels"
 msgstr "Veri etiketlerini temizle"
 
 #: gui2/gpt_control.c:2930 gui2/gpt_control.c:3024
-#, fuzzy
 msgid "All data labels"
-msgstr "Veri etiketlerini temizle"
+msgstr "Tüm veri etiketleri"
 
 #: gui2/gpt_control.c:2932 gui2/gpt_control.c:3026
 msgid "Zoom..."
@@ -9462,14 +9438,12 @@ msgid "dump gretl configuration to file"
 msgstr "gretl ayarlarını dosyaya dök"
 
 #: gui2/gretl.c:112
-#, fuzzy
 msgid "send debugging info to console"
-msgstr "Ayıklama çıktıları %s dosyasına gönderiliyor"
+msgstr "ayıklama bilgilerini uçbirime gönder"
 
 #: gui2/gretl.c:115
-#, fuzzy
 msgid "print version information"
-msgstr "gretl: bilgi"
+msgstr "sürüm bilgisini yazdır"
 
 #: gui2/gretl.c:208
 #, c-format
@@ -9486,6 +9460,8 @@ msgid ""
 "\n"
 "You may supply the name of a data file on the command line"
 msgstr ""
+"\n"
+"Bir veri dosyası adını komut satırında sağlayabilirsiniz"
 
 #: gui2/gretl.c:1039
 msgid "ID #"
@@ -12007,8 +11983,7 @@ msgid "Sorry, ARMA models can't be put in the model table"
 msgstr "Üzgünüm, ÖBHO modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:178
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:185
@@ -12117,8 +12092,7 @@ msgstr "Logbirim ve olabirim için, McFadden sahte-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1033
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1061
 msgid "No model is available"
@@ -12800,9 +12774,8 @@ msgid "Lags of dependent variable"
 msgstr "Bağımlı değişken gecikmeleri"
 
 #: gui2/selector.c:6060
-#, fuzzy
 msgid "default"
-msgstr "Öntanımlı olarak sapta"
+msgstr "öntanımlı"
 
 #: gui2/selector.c:6080
 msgid "to"
@@ -13655,14 +13628,12 @@ msgid "Running a script adds to text"
 msgstr "Betik çalıştırmak metne ekler"
 
 #: gui2/toolbar.c:520
-#, fuzzy
 msgid "New window"
-msgstr "Pencereyi kapat"
+msgstr "Yeni pencere"
 
 #: gui2/toolbar.c:521
-#, fuzzy
 msgid "Open..."
-msgstr "Aç"
+msgstr "Aç..."
 
 #: gui2/toolbar.c:523
 msgid "Save as..."
@@ -14598,8 +14569,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 
 #: plugin/workbook.c:637
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+msgstr "Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
 
 #: plugin/workbook.c:639
 msgid "Unexpected error reading the file\n"
@@ -14645,75 +14615,3 @@ msgstr "Dizgiler"
 msgid "Accessors"
 msgstr "Erişiciler"
 
-#~ msgid "a constant"
-#~ msgstr "bir sabit terim"
-
-#~ msgid "an internal variable"
-#~ msgstr "bir dahili değişken"
-
-#~ msgid "a type"
-#~ msgstr "bir tür"
-
-#~ msgid "Matrix is not finite"
-#~ msgstr "Dizey sonlu değil"
-
-#~ msgid "Couldn't open registry\n"
-#~ msgstr "Kayıt defteri (registry) açılamadı\n"
-
-#~ msgid "You must open a data file first\n"
-#~ msgstr "Önce bir veri dosyası açmalısınız\n"
-
-#~ msgid "Show all data labels"
-#~ msgstr "Tüm veri etiketlerini göster"
-
-#~ msgid ""
-#~ "\n"
-#~ "You may supply the name of a data file on the command line.\n"
-#~ "Options:\n"
-#~ " -c or --dump      Dump the configuration file.\n"
-#~ " -d or --db        Open a local database.\n"
-#~ " -e or --english   Force use of English rather than translation.\n"
-#~ " -q or --basque    Force use of Basque translation.\n"
-#~ " -r or --run       Open a command script.\n"
-#~ " -w or --webdb     Open a remote database.\n"
-#~ " -h or --help      Print this info and exit.\n"
-#~ " -v or --version   Print version info and exit.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Komut satırından bir veri dosyası adını sağlayabilirsiniz.\n"
-#~ "Seçenekler:\n"
-#~ " -c veya --dump      Ayarlar dosyasını dök.\n"
-#~ " -d veya --db        Yerel bir veritabanı aç.\n"
-#~ " -e veya --english   Çeviri yerine İngilizce kullanmaya zorla.\n"
-#~ " -q veya --basque    Bask çevirisini kullanmaya zorla.\n"
-#~ " -r veya --run       Bir komut betiği aç.\n"
-#~ " -w veya --webdb     Uzak bir veritabanı aç.\n"
-#~ " -h veya --help      Bu bilgiyi yaz ve çık.\n"
-#~ " -v veya --version   Sürüm bilgisini yaz ve çık.\n"
-
-#~ msgid "The GNOME 2.0 econometrics package"
-#~ msgstr "GNOME 2.0 ekonometri paketi"
-
-#~ msgid "Econometrics program"
-#~ msgstr "Ekonometri programı"
-
-#~ msgid "gretl.chm"
-#~ msgstr "gretl.chm"
-
-#~ msgid "Couldn't access help file"
-#~ msgstr "Yardım dosyasına erişilemedi"
-
-#~ msgid "print gretl graph"
-#~ msgstr "gretl çizimini yazdır"
-
-#~ msgid "Failed to generate graph"
-#~ msgstr "Çizim oluşturma başarısız"
-
-#~ msgid "Use local language if possible"
-#~ msgstr "Eğer olanaklı ise yerel dili kullan"
-
-#~ msgid "Use English"
-#~ msgstr "İngilizce kullan"
-
-#~ msgid "Use Basque"
-#~ msgstr "Bask kullan"
