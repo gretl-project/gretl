@@ -75,7 +75,7 @@ slight variations.
 A state-space model can be written as
 \begin{eqnarray}
   \label{eq:state}
-  \statevec_{t} & = & \statemat_{t} \statevec_{t-1} + \strdist_t \\
+  \statevec_{t+1} & = & \statemat_t \statevec_t + \strdist_t \\
   \label{eq:obs}
   \obsvec_t & = & \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + \obsdist_t
 \end{eqnarray}
@@ -134,22 +134,27 @@ we update the estimate of the state
   \gain_t \prederr_t
 \end{equation}
 %
-where $\gain_t$ is the gain matrix, given by
-%
-\begin{equation}
-\label{eq:gain}
-\gain_t = \statemat\statevar_{t|t-1}\obsmat
-  (\obsmat'\statevar_{t|t-1}\obsmat + \obsvar)^{-1}
-\end{equation}
-%
-and $\prederr_t$ is the prediction error for the observable:
+where $\prederr_t$ is the prediction error for the observable:
 \[
 \prederr_t = \obsvec_t - \obsxmat'\obsx_t - \obsmat' \hat{\statevec}_{t|t-1}
 \]
+%
+and $\gain_t$ is the gain matrix, given by
+%
+\begin{equation}
+\label{eq:gain}
+\gain_t = \statemat\statevar_{t|t-1}\obsmat \predvar_t^{-1}
+\end{equation}
+%
+with
+%
+\[
+\predvar_t = \obsmat'\statevar_{t|t-1}\obsmat + \obsvar
+\]
 
-The second step updates the estimate of the variance of the state,
-$\statevar$.  Let us define $\predvar_t =
-\obsmat'\statevar_{t|t-1}\obsmat + \obsvar$.  The update is then
+The second step then updates the estimate of the variance of the state
+using
+%
 \begin{equation}
 \statevar_{t+1|t} = \statemat\statevar_{t|t-1}\statemat' -
  \gain_t \predvar_t \gain_t' + \strvar
@@ -166,7 +171,7 @@ may write
 %
 \begin{eqnarray}
   \label{eq:altstate}
-  \statevec_t &=& \statemat_{t} \statevec_{t-1} + 
+  \statevec_{t+1} &=& \statemat_t \statevec_t + 
      \altstrvar_t \alldist_t \\
   \label{eq:altobs}
   \obsvec_t &=& \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + 
@@ -218,7 +223,7 @@ Kalman gain equation (\ref{eq:gain}) must be modified as
 %
 \[
 \gain_t = (\statemat\statevar_{t|t-1}\obsmat + \altstrvar\altobsvar')
-  (\obsmat'\statevar_{t|t-1}\obsmat + \obsvar)^{-1}
+  \predvar_t^{-1}
 \]
 %
 Otherwise, the equations given earlier hold good, if we write
