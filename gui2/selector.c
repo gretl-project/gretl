@@ -6057,7 +6057,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 
 	if (!VAR_special) {
 	    if (li == VDEFLT) {
-		lbl = gtk_label_new("default");
+		lbl = gtk_label_new(_("default"));
 	    } else {
 		lbl = gtk_label_new(datainfo->varname[li]);
 	    }

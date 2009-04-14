@@ -20,7 +20,7 @@
 "longley","Multicollinearity","US employment"
 "mrw","Solow growth model (Mankiw, Romer, Weil)","cross-country"
 "mrw_qr","Quantile regression","cross-country growth"
-"murder_rates","Probit","Perfect prediction problem"
+"murder_rates","Perfect prediction problem","Murder rates"
 "ooballot","Ordered probit","corruption and ISO voting"
 "oprobit","Ordered probit and logit","happiness and age"
 "penngrow","Nerlove dynamic panel model","cross-country"
