@@ -1259,17 +1259,18 @@ n_vars_from_col (wbook *book, int totcols, char *blank_col)
 }
 
 static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo, 
-			    int totcols, char *blank_col)
+			    int totcols, char *blank_col, PRN *prn)
 {
     int startcol = book->col_offset;
     int roff = book->row_offset;
     int i, t, j = 1;
+    int err = 0;
 
     if (book_obs_labels(book) || book_time_series(book)) {
 	startcol++;
     } 
 
-    for (i=startcol; i<totcols; i++) { /* was i<=totcols */
+    for (i=startcol; i<totcols; i++) {
 	int ts;
 
 	if (blank_col[i]) {
@@ -1291,6 +1292,16 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	    dprintf("accessing rows[%d].cells[%d] at %p\n",
 		    roff, i, (void *) rows[roff].cells[i]);
 	}
+
+	/* remedial: replace space with underscore */
+	charsub(pdinfo->varname[j], ' ', '_');
+
+	err = check_varname(pdinfo->varname[j]);
+	if (err) {
+	    pprintf(prn, "%s\n", gretl_errmsg_get());
+	    break;
+	}
+
 	dprintf("set varname[%d] = '%s'\n", j, pdinfo->varname[j]);
 
 	for (t=0; t<pdinfo->n; t++) {
@@ -1314,7 +1325,7 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	j++;
     }
 
-    return 0;
+    return err;
 }
 
 static int 
@@ -1615,7 +1626,10 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     } 
 
     /* OK: actually populate the dataset */
-    transcribe_data(book, newZ, newinfo, totcols, blank_col);
+    err = transcribe_data(book, newZ, newinfo, totcols, blank_col, prn);
+    if (err) {
+	goto getout;
+    }
 
     if (fix_varname_duplicates(newinfo)) {
 	pputs(prn, _("warning: some variable names were duplicated\n"));
