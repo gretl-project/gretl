@@ -27,7 +27,7 @@
 
 #define KDEBUG 0
 
-/* notation (based on James Hamilton):
+/* notation (quasi-Hamilton):
 
    State:   S_{t+1} = F*S_t + v_t,         E(v_t*v_t') = Q
 
@@ -2712,8 +2712,8 @@ static int koopman_smooth (kalman *K, gretl_matrix *U)
    This method uses S_{t|t-1} and P_{t|t-1} for all t, but we can
    overwrite these with the smoothed values as we go. We also need
    stored values for the prediction error, its MSE, and the gain at
-   each time step.  Note that u_t and U_t are set to zero for t = T -
-   1.
+   each time step.  Note that u_t and U_t are set to zero for 
+   t = T - 1.
 */
 
 static int anderson_moore_smooth (kalman *K)
@@ -2737,13 +2737,6 @@ static int anderson_moore_smooth (kalman *K)
 
     gretl_matrix_zero(u);
     gretl_matrix_zero(U);
-
-    /* This method uses S_{t|t-1} and P_{t|t-1} for all t, but we can
-       overwrite these with the smoothed values as we go. We also need
-       stored values for the prediction error, its MSE, and the gain
-       at each time step.  Note that u_t and U_t are set to zero for 
-       t = T - 1.
-    */
 
     /* FIXME: handle time-varying F, H matrices */
 
@@ -2811,7 +2804,7 @@ static int anderson_moore_smooth (kalman *K)
  * 
  * If a user-defined Kalman filter is found, runs a filtering
  * pass followed by a backward, smoothing pass.  At present
- * the @Uname argument is a experimental and a bodge: it will 
+ * the @Uname argument is experimental and a bodge: it will 
  * not actually do anything unless @Pname is left null.
  *
  * Returns: matrix containing the smoothed estimate of the
@@ -3035,7 +3028,7 @@ static int kalman_simulate (kalman *K,
 	if (W != NULL) {
 	    load_from_row(yt, W, K->t, GRETL_MOD_CUMULATE);
 	} else if (K->p > 0) {
-	    /* C * e_t */
+	    /* C e_t */
 	    load_from_row(et, V, K->t, GRETL_MOD_NONE);
 	    gretl_matrix_multiply_mod(K->C, GRETL_MOD_NONE,
 				      et, GRETL_MOD_NONE,
@@ -3056,6 +3049,7 @@ static int kalman_simulate (kalman *K,
 	if (K->p == 0) {
 	    load_from_row(K->S1, V, K->t, GRETL_MOD_CUMULATE);
 	} else {
+	    /* B e_t */
 	    gretl_matrix_multiply_mod(K->B, GRETL_MOD_NONE,
 				      et, GRETL_MOD_NONE,
 				      K->S1, GRETL_MOD_CUMULATE);
@@ -3071,18 +3065,23 @@ static int kalman_simulate (kalman *K,
 
 /**
  * user_kalman_simulate:
- * @V: artificial state disturbance vector.
- * @W: artificial observation disturbance vector.
- * @Sname: name of matrix to retrieve simulated state.
+ * @V: artificial disturbance to state.
+ * @W: artificial disturbance to observation.
+ * @Sname: name of matrix to retrieve simulated state (or %NULL).
  * @err: location to receive error code.
  * 
- * If a user-defined Kalman filter is found, uses it to 
- * construct a simulation based on the articificial disturbances
- * @V and @W.  FIXME this does not yet handle the case of
- * correlated disturbances.
+ * If a user-defined Kalman filter is found, use it to 
+ * construct a simulation based on the artificial disturbances
+ * @V and (possibly) @W.  If the disturbances are not correlated 
+ * across the two equations, then @V should contain the 
+ * disturbances in the state equation and @W should contain 
+ * those in the observation equation (if any).  But if the 
+ * disturbances are correlated, then @V should contain the
+ * "combined" disturbance vector at each time step, and
+ * @W should be left %NULL.
  *
  * Returns: matrix containing the simulated values of the
- * observables.
+ * observables, or %NULL on failure.
  */
 
 gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
