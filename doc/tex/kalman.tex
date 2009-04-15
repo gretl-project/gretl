@@ -3,6 +3,7 @@
 \usepackage{smallhds,simplebib}
 \usepackage[pdftex]{hyperref}
 \usepackage{graphicx}
+\usepackage{amsmath}
 
 \usepackage{bm}
 \usepackage{verbatim}
@@ -73,12 +74,15 @@ conventions. The notation used here is based on James Hamilton's, with
 slight variations.
 
 A state-space model can be written as
-\begin{eqnarray}
+%
+\begin{align}
   \label{eq:state}
-  \statevec_{t+1} & = & \statemat_t \statevec_t + \strdist_t \\
+  \statevec_{t+1} &=  \statemat_t \statevec_t + \strdist_t \\
   \label{eq:obs}
-  \obsvec_t & = & \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + \obsdist_t
-\end{eqnarray}
+  \obsvec_t &= \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t +
+  \obsdist_t 
+\end{align}
+%
 where (\ref{eq:state}) is the state transition equation and
 (\ref{eq:obs}) is the observation or measurement equation.  The state
 vector, $\statevec_{t}$, is ($r \times 1$) and the vector of
@@ -87,12 +91,12 @@ observables, $\obsvec_t$, is ($n \times 1$); $\mathbf{x}_t$ is a ($k
 $\strdist_t$ and the ($n \times 1$) vector $\obsdist_t$ are assumed to
 be vector white noise:
 %
-\begin{eqnarray*}
-E(\strdist_t \strdist_s') = \strvar_t \mbox{ for } t = s, 
+\begin{align*}
+E(\strdist_t \strdist_s') &= \strvar_t \mbox{ for } t = s, 
     \mbox{ otherwise } \mathbf{0} \\
-E(\obsdist_t \obsdist_s') = \obsvar_t \mbox{ for } t = s, 
+E(\obsdist_t \obsdist_s') &= \obsvar_t \mbox{ for } t = s, 
     \mbox{ otherwise } \mathbf{0}
-\end{eqnarray*}
+\end{align*}
 %
 The number of time-series observations is denoted by $T$.
 
@@ -101,19 +105,23 @@ $\obsxmat_t = \obsxmat$, $\strvar_t = \strvar$ and $\obsvar_t =
 \obsvar$, the model is said to be \emph{time-invariant}.
 
 \subsection{The Kalman recursions}
+\label{sec:kalman-recursions}
 
-Using this notation the Kalman recursions can be written as follows.
-(We omit time subscripts on the coefficient matrices for convenience.)
+Using this notation, and assuming for the moment that $\strdist_t$ and
+$\obsdist_t$ are mutually independent, the Kalman recursions can be
+written as follows.
 
 Initialization is via the unconditional mean and variance of
 $\statevec_1$:
 %
-\begin{eqnarray*}
-\hat{\statevec}_{1|0} &=& E(\statevec_1) \\
-\statevar_{1|0} &=& E\left\{\left[\statevec_1 - E(\statevec_1)\right]
+\begin{align*}
+\hat{\statevec}_{1|0} &= E(\statevec_1) \\
+\statevar_{1|0} &= E\left\{\left[\statevec_1 - E(\statevec_1)\right]
    \left[\statevec_1 - E(\statevec_1)\right]' \right\}
-\end{eqnarray*}
+\end{align*}
+%
 Usually these are given by $\hat{\statevec}_{1|0} = \mathbf{0}$ and
+%
 \begin{equation}
 \label{eq:inivar}
 \myvec(\statevar_{1|0}) = \left[\mathbf{I}_{r^2} - \statemat \otimes
@@ -136,28 +144,28 @@ we update the estimate of the state
 %
 where $\prederr_t$ is the prediction error for the observable:
 \[
-\prederr_t = \obsvec_t - \obsxmat'\obsx_t - \obsmat' \hat{\statevec}_{t|t-1}
+\prederr_t = \obsvec_t - \obsxmat_t'\obsx_t - \obsmat' \hat{\statevec}_{t|t-1}
 \]
 %
 and $\gain_t$ is the gain matrix, given by
 %
 \begin{equation}
 \label{eq:gain}
-\gain_t = \statemat\statevar_{t|t-1}\obsmat \predvar_t^{-1}
+\gain_t = \statemat_t\statevar_{t|t-1}\obsmat_t \predvar_t^{-1}
 \end{equation}
 %
 with
 %
 \[
-\predvar_t = \obsmat'\statevar_{t|t-1}\obsmat + \obsvar
+\predvar_t = \obsmat_t'\statevar_{t|t-1}\obsmat_t + \obsvar_t
 \]
 
 The second step then updates the estimate of the variance of the state
 using
 %
 \begin{equation}
-\statevar_{t+1|t} = \statemat\statevar_{t|t-1}\statemat' -
- \gain_t \predvar_t \gain_t' + \strvar
+\statevar_{t+1|t} = \statemat_t\statevar_{t|t-1}\statemat_t' -
+ \gain_t \predvar_t \gain_t' + \strvar_t
 \end{equation}
 
 \subsection{Cross-correlated disturbances}
@@ -169,18 +177,18 @@ practical applications, but a more general formulation allows for
 cross-correlation.  In place of (\ref{eq:state})--(\ref{eq:obs}) we
 may write
 %
-\begin{eqnarray}
+\begin{align}
   \label{eq:altstate}
-  \statevec_{t+1} &=& \statemat_t \statevec_t + 
-     \altstrvar_t \alldist_t \\
+  \statevec_{t+1} &= \statemat_t \statevec_t + 
+     \altstrvar_t \alldist_t \tag{1$'$} \\
   \label{eq:altobs}
-  \obsvec_t &=& \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + 
-     \altobsvar_t \alldist_t
-\end{eqnarray}
+  \obsvec_t &= \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + 
+     \altobsvar_t \alldist_t \tag{2$'$}
+\end{align}
 %
 where $\alldist_t$ is a ($p \times 1$) disturbance vector, all the
-elements of which have unit variance, $\altstrvar$ is ($r \times p$)
-and $\altobsvar$ is ($n \times p$).
+elements of which have unit variance, $\altstrvar_t$ is ($r \times p$)
+and $\altobsvar_t$ is ($n \times p$).
 
 The no-correlation case is nested thus: define $\strdist^*_t$ and
 $\obsdist^*_t$ as modified versions of $\strdist_t$ and $\obsdist_t$,
@@ -198,16 +206,16 @@ scaled such that each element has unit variance, and let
 so that $p = r+n$.  Then (suppressing time subscripts for simplicity)
 let 
 %
-\begin{eqnarray*}
-  \altstrvar &=& \left[
+\begin{align*}
+  \altstrvar &= \left[
    \begin{array}{ccc} \mathbf{\bm \Gamma}_{r\times r} & \pdots & 
      \mathbf{0}_{r\times n}\end{array}
   \right] \\
-  \altobsvar &=& \left[ 
+  \altobsvar &= \left[ 
    \begin{array}{ccc} \mathbf{0}_{n\times r} & \pdots & 
    \mathbf{\bm \Lambda}_{n\times n}\end{array}
   \right]
-\end{eqnarray*}
+\end{align*}
 %
 where $\mathbf{\bm \Gamma}$ and $\mathbf{\bm \Lambda}$ are lower
 triangular matrices satisfying $\strvar = \mathbf{\bm
@@ -221,21 +229,15 @@ In the general case $p$ is not necessarily equal to $r+n$, and
 $\altstrvar \altobsvar'$ may be non-zero.  This means that the
 Kalman gain equation (\ref{eq:gain}) must be modified as
 %
-\[
-\gain_t = (\statemat\statevar_{t|t-1}\obsmat + \altstrvar\altobsvar')
+\begin{equation}
+\label{eq:altgain}
+\gain_t = (\statemat_t\statevar_{t|t-1}\obsmat_t + \altstrvar_t\altobsvar_t')
   \predvar_t^{-1}
-\]
+\end{equation}
 %
 Otherwise, the equations given earlier hold good, if we write
 $\altstrvar\altstrvar'$ in place of $\strvar$ and
 $\altobsvar\altobsvar'$ in place of $\obsvar$.
-
-At present, as described below, gretl's implementation of the Kalman
-filter involves the user specifying $\strvar$ and $\obsvar$, and the
-cross-correlated case is not supported.  We could, however, offer a
-variant in which the user instead specifies the matrices $\altstrvar$
-and $\altobsvar$.
-
 
 \section{Intended usage}
 
@@ -286,7 +288,7 @@ Keyword & Symbol & Dimensions \\[6pt]
 \texttt{obsx}     & $\obsx$           & $T \times k$ \\
 \texttt{obsxmat}  & $\obsxmat$        & $k \times n$ \\ 
 \texttt{obsvar}   & $\obsvar$         & $n \times n$ \\
-\texttt{statemat} & $\statemat$         & $r \times r$ \\
+\texttt{statemat} & $\statemat$       & $r \times r$ \\
 \texttt{statevar} & $\strvar$         & $r \times r$ \\
 \texttt{inistate} & $\hat{\statevec}_{1|0}$  & $r \times 1$ \\
 \texttt{inivar}   & $\statevar_{1|0}$ & $r \times r$ \\
@@ -381,47 +383,49 @@ statement.\footnote{ Initialization of the Kalman filter outside of
 
 Any or all of the matrices \texttt{obsymat}, \texttt{obsxmat},
 \texttt{obsvar}, \texttt{statemat} and \texttt{statevar} may be
-time-varying.  In that case there are two options: you may
+time-varying.  In that case the \textsl{value} corresponding to the
+matrix keyword should be given in a special form: the name of an
+existing matrix plus a function call which modifies that matrix,
+separated by a semicolon.  Note that in this case you must use
+a matrix variable, even if the matrix in question happens to be
+$1 \times 1$. 
 
-\begin{itemize}
-\item give a function which returns a matrix, or
-\item give the name of a matrix and a function which modifies that
-  matrix, separated by a semicolon.
-\end{itemize}
-
-Suppose the matrix $\obsmat$ is time-varying.  Then for an example of
-the first option, we might write
-%
-\begin{verbatim}
-  obsymat get_H(theta)
-\end{verbatim}
-%
-where \texttt{get\_H} is a user-defined function which returns a
-matrix and \texttt{theta} is a suitable argument to that function.
-For an example of the second option, we might write
+For example, suppose the matrix $\obsmat$ is time-varying.  Then we
+might write
 %
 \begin{verbatim}
   obsymat H ; modify_H(&H, theta)
 \end{verbatim}
+%
+where \texttt{modify\_H} is a user-defined function which modifies
+matrix \texttt{H} (given as an argument in ``pointer'' form) and
+\texttt{theta} is a suitable additional argument to that function (if
+required).
 
-In both cases the relevant function, \verb+get_H+ or \verb+modify_H+,
-will be called at each time-step of the filter operation.  Here is the
-difference. In the first case the matrix returned by the function is
-anonymous and is ``owned'' by the Kalman structure; and at each step
-the old matrix is destroyed and replaced by a new one.  In the second
-case the matrix \texttt{H} must be predefined, and the function does
-not return any value; rather it modifies the named matrix argument,
-given in ``pointer'' form.  The advantage of the latter form is that
-is does not involve creating and destroying a matrix at each step, and
-so will be more efficient.
+The function \verb+modify_H+ will be called at each time-step of the
+filter operation.  Such a matrix-modifying function has access to the
+current time-step of the Kalman filter via the internal variable
+\verb+$kalman_t+, which has value 1 on the first step, 2 on the
+second, and so on, up to step $T$.  It also has access to the
+current $n$-vector of forecast errors, $\prederr_t$, under the name
+\verb+$kalman_uhat+.
 
-Such matrix-generating or matrix-modifying functions have access to
-the current time-step of the Kalman filter, via the internal variable
-\verb+$kalman_t+.  This has value 1 on the first iteration, 2 on the
-second, and so on, up to iteration $T$.  They also have access to
-the current $n$-vector of forecast errors, $\prederr_t$, under the
-name \verb+$kalman_uhat+.
+\subsection{Correlated disturbances}
 
+Defining a filter in which the disturbances $\strdist_t$ and
+$\obsdist_t$ are correlated involves one modification to the account
+given above.  If you append the \verb|--cross| option flag to the
+\texttt{end kalman} statement, then the matrices corresponding to
+the keywords \texttt{statevar} and \texttt{obsvar} are interpreted
+not as $\strvar$ and $\obsvar$ but rather as $\altstrvar$ and
+$\altobsvar$ as discussed in section~\ref{sec:kalman-recursions}.
+Gretl then computes $\strvar = \altstrvar\altstrvar'$ and
+$\obsvar = \altobsvar\altobsvar'$ as well as the cross-product
+$\altstrvar\altobsvar'$ and utilizes the modified expression for
+the gain as given in equation (\ref{eq:altgain}).  As mentioned
+above, $\altstrvar$ should be ($r \times p$) and $\altobsvar$
+should be ($n \times p$), where $p$ is the number of elements
+in the combined disturbance vector $\varepsilon_t$.
 
 \subsection{Handling of missing values}
 
@@ -582,12 +586,12 @@ final values of $\hat{\statevec}$ and $\statevar$ already incorporate
 all the sample information.  The backward iteration, from $t=T-1$ to
 1, is then
 %
-\begin{eqnarray*}
-\hat{\statevec}_{t|T} &=& \hat{\statevec}_{t|t} + 
+\begin{align*}
+\hat{\statevec}_{t|T} &= \hat{\statevec}_{t|t} + 
   \mathbf{J}_t\left(\hat{\statevec}_{t+1|T} - \hat{\statevec}_{t+1|t}\right) \\
-\statevar_{t|T} &=& \statevar_{t|t} + 
+\statevar_{t|T} &= \statevar_{t|t} + 
   \mathbf{J}_t\left(\statevar_{t+1|T} - \statevar_{t+1|t}\right) \mathbf{J}_t'
-\end{eqnarray*}
+\end{align*}
 %
 where
 \[

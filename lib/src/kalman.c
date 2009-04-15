@@ -35,6 +35,16 @@
 
 */
 
+typedef struct crossinfo_ crossinfo;
+
+struct crossinfo_ {
+    gretl_matrix *B;  /* r x p */
+    gretl_matrix *C;  /* n x p */
+    gretl_matrix *BB; /* BB': r x r */
+    gretl_matrix *CC; /* CC': n x n */
+    gretl_matrix *BC; /* BC': r x n */
+};
+
 struct kalman_ {
     int flags;   /* for recording any options */
     int fnlevel; /* level of function execution */
@@ -82,9 +92,6 @@ struct kalman_ {
     /* optional array of function-call strings */
     char **matcalls;
 
-    /* optional array of time-varying matrices */
-    gretl_matrix **Mt;
-
     /* optional matrices for recording extra info */
     gretl_matrix *LL;  /* T x 1: loglikelihood, all time-steps */
 
@@ -95,12 +102,8 @@ struct kalman_ {
     gretl_matrix *P;   /* T x nr: MSE for state, all time-steps */
     gretl_matrix *K;   /* T x rn: gain matrix, all time-steps */
 
-    /* matrices needed only for cross-correlated case */
-    const gretl_matrix *B;
-    const gretl_matrix *C;
-    gretl_matrix *BB;
-    gretl_matrix *CC;
-    gretl_matrix *BC;
+    /* structure needed only for cross-correlated case */
+    crossinfo *cross;
     
     /* workspace matrices */
     gretl_matrix_block *Blk; /* holder for the following */
@@ -128,6 +131,14 @@ struct kalman_ {
 #define kalman_is_running(K)  (K->flags & KALMAN_FORWARD)
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
 
+/* the matrix in question is not an external named user-matrix,
+   and is "owned" by the Kalman struct */
+#define kalman_owns_matrix(K,i) (K->mnames != NULL && K->mnames[i][0] == '$')
+
+/* the matrix in question is time-varying (it has an associated 
+   function call) */
+#define matrix_is_varying(K,i) (K->matcalls != NULL && K->matcalls[i] != NULL)
+
 #define GENERIC_MATNAME "$Kmat"
 
 static const char *kalman_matrix_name (int sym);
@@ -151,10 +162,22 @@ enum {
     K_MMAX /* sentinel */
 };
 
-/* the matrix in question is not an external named user-matrix,
-   and is "owned" by the Kalman struct */
+void free_crossinfo (crossinfo *c)
+{
+    gretl_matrix_free(c->B);
+    gretl_matrix_free(c->C);
+    gretl_matrix_free(c->BB);
+    gretl_matrix_free(c->CC);
+    gretl_matrix_free(c->BC);
 
-#define kalman_owns_matrix(K,i) (K->mnames != NULL && K->mnames[i][0] == '$')
+    free(c);
+}
+
+#define Q_is_cross_pointer(K) (K->cross != NULL && K->cross->BB != NULL \
+                               && K->Q == K->cross->BB)
+
+#define R_is_cross_pointer(K) (K->cross != NULL && K->cross->CC != NULL \
+                               && K->R == K->cross->CC)
 
 void kalman_free (kalman *K)
 {
@@ -168,20 +191,15 @@ void kalman_free (kalman *K)
     gretl_matrix_free(K->P1);
     gretl_matrix_free(K->e);
     gretl_matrix_free(K->LL);
-    gretl_matrix_free(K->BC);
 
-    if (K->BB != NULL) {
-	if (K->Q == K->BB) {
-	    K->Q = NULL;
-	}
-	gretl_matrix_free(K->BB);
+    if (Q_is_cross_pointer(K)) {
+	/* avoid double freeing */
+	K->Q = NULL;
     }
 
-    if (K->CC != NULL) {
-	if (K->R == K->CC) {
-	    K->R = NULL;
-	}
-	gretl_matrix_free(K->CC);
+    if (R_is_cross_pointer(K)) {
+	/* avoid double freeing */
+	K->R = NULL;
     }    
 
     gretl_matrix_block_destroy(K->Blk);
@@ -206,8 +224,8 @@ void kalman_free (kalman *K)
 	free_strings_array(K->matcalls, NMATCALLS);
     }
 
-    if (K->Mt != NULL) {
-	gretl_matrix_array_free(K->Mt, NMATCALLS);
+    if (K->cross != NULL) {
+	free_crossinfo(K->cross);
     }
 
     free(K);
@@ -228,11 +246,9 @@ static kalman *kalman_new_empty (int flags)
 	K->Q = K->R = NULL;
 	K->E = K->V = K->S = K->P = K->K = NULL;
 	K->y = K->x = NULL;
-	K->B = K->C = NULL;
-	K->BB = K->CC = K->BC = NULL;
 	K->mnames = NULL;
 	K->matcalls = NULL;
-	K->Mt = NULL;
+	K->cross = NULL;
 	K->flags = flags;
 	K->fnlevel = 0;
 	K->t = 0;
@@ -680,7 +696,7 @@ static int kalman_init (kalman *K)
 				    &K->FPH, K->r, K->n, /* F*P*H */
 				    &K->HPH, K->n, K->n, /* H'*P*H */
 				    &K->Vt,  K->n, K->n, /* (H'*P*H + R)^{-1} */
-				    &K->Ve,  K->n, 1,    /* (H'*P*H + R)^{-1} * E */
+				    &K->Ve,  K->n, 1,    /* (H'*P*H + R)^{-1} * e */
 				    &K->PHV, K->r, K->n, /* P*H*V */
 				    &K->Ax,  K->n, 1,    /* A'*x at obs t */
 				    &K->Kt,  K->r, K->n, /* gain at t */
@@ -711,12 +727,12 @@ static void kalman_set_dimensions (kalman *K, gretlopt opt)
     K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
 
     /* K->p is non-zero only under cross-correlation; in that case the
-       matrix B (as in v_t = B \varepsilon_t) is non-optional, and it
-       must be r x p, where p is the number of elements in the
-       "combined" disturbance vector for time t.
+       matrix given as 'Q' in Kalman set-up in fact represents B (as
+       in v_t = B \varepsilon_t) and it must be r x p, where p is the
+       number of elements in the "combined" disturbance vector
+       \varepsilon_t.
     */
-    K->p = (opt & OPT_C)? gretl_matrix_cols(K->B): 0;
-    fprintf(stderr, "K->p = %d\n", K->p);
+    K->p = (opt & OPT_C)? gretl_matrix_cols(K->Q): 0;
 }
 
 /**
@@ -806,67 +822,141 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
-/* kalman_revise_variance: the user has actually given B in place
-   of Q and C in place of R; so we have to form K->Q = BB' and
-   K->R = CC', and also K->BC = BC'.  
+enum {
+    UPDATE_INIT, /* initialization of matrices */
+    UPDATE_STEP  /* refreshing matrices per time-step */
+};
+
+/* After reading 'Q' = B and 'R' = C from the user, either at
+   (re-)initializaton or at a given time-step in the case where either
+   of these matrices is time-varying, record the user input in K->B
+   and K->C and form the 'real' Q and R.  But note that in the
+   time-step case it may be that only one of Q, R needs to be treated
+   in this way (if only one is time-varying, only one will have 
+   been redefined via function call).
+*/
+
+static int kalman_update_crossinfo (kalman *K, int mode)
+{
+    crossinfo *c = K->cross;
+    int err = 0;
+
+    /* Note that B and C may be needed for simulation */
+
+    if (mode == UPDATE_INIT || matrix_is_varying(K, K_Q)) {
+	err = gretl_matrix_copy_values(c->B, K->Q);
+	if (!err) {
+	    err = gretl_matrix_multiply_mod(c->B, GRETL_MOD_NONE,
+					    c->B, GRETL_MOD_TRANSPOSE,
+					    c->BB, GRETL_MOD_NONE);
+	}
+    }
+
+    if (!err && (mode == UPDATE_INIT || matrix_is_varying(K, K_R))) {
+	err = gretl_matrix_copy_values(c->C, K->R);
+	if (!err) {
+	    err = gretl_matrix_multiply_mod(c->C, GRETL_MOD_NONE,
+					    c->C, GRETL_MOD_TRANSPOSE,
+					    c->CC, GRETL_MOD_NONE);
+	}
+    }
+
+    if (!err && (mode == UPDATE_INIT || matrix_is_varying(K, K_Q) ||
+		 matrix_is_varying(K, K_R))) {
+	err = gretl_matrix_multiply_mod(c->B, GRETL_MOD_NONE,
+					c->C, GRETL_MOD_TRANSPOSE,
+					c->BC, GRETL_MOD_NONE);
+    }
+
+    if (mode == UPDATE_STEP) {
+	if (matrix_is_varying(K, K_Q)) {
+	    K->Q = c->BB;
+	}
+	if (matrix_is_varying(K, K_R)) {
+	    K->R = c->CC;
+	}
+    }
+
+    return err;
+}
+
+static int kalman_add_crossinfo (kalman *K)
+{
+    crossinfo *c = malloc(sizeof *c);
+    
+    if (c == NULL) {
+	return E_ALLOC;
+    } 
+
+    c->B = gretl_matrix_alloc(K->r, K->p);
+    c->C = gretl_matrix_alloc(K->n, K->p);
+
+    c->BB = gretl_matrix_alloc(K->r, K->r);
+    c->CC = gretl_matrix_alloc(K->n, K->n);
+    c->BC = gretl_matrix_alloc(K->r, K->n);
+
+    if (c->B == NULL || c->C == NULL || c->BB == NULL || 
+	c->CC == NULL || c->BC == NULL) {
+	free_crossinfo(c);
+	return E_ALLOC;
+    }
+
+    K->cross = c;
+
+    return 0;
+}
+
+/* kalman_revise_variance: the user has actually given B in place of Q
+   and C in place of R; so we have to form Q = BB', R = CC' and BC'.
+
+   This function is called in the course of initial set-up of a
+   filter, and also when the Kalman matrices are being re-checked at
+   the start of filtering, smoothing or simulation.
 */
 
 static int kalman_revise_variance (kalman *K)
 {
+    int err = 0;
+
     if (K->Q == NULL || K->R == NULL) {
 	return missing_matrix_error();
     }
 
-    /* record the user-given matrix pointers: these may be
-       needed for simulation
+    if (K->cross == NULL) {
+	/* not allocated yet: this should be the case only 
+	   on initial set-up */
+	err = kalman_add_crossinfo(K);
+    }
+
+    if (!err) {
+	err = kalman_update_crossinfo(K, UPDATE_INIT);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    /* K->Q and K->R might not be user-supplied matrices: they could
+       be matrices constructed from scalars and "owned" by the filter.
+       In that case we should free them at this point in order to
+       avoid leaking memory.
     */
-    K->B = K->Q;
-    K->C = K->R;
-
-    if (K->BB == NULL) {
-	K->BB = gretl_matrix_alloc(K->r, K->r);
-    }
-
-    if (K->CC == NULL) {
-	K->CC = gretl_matrix_alloc(K->n, K->n);
-    }
-
-    if (K->BC == NULL) {
-	K->BC = gretl_matrix_alloc(K->r, K->n);
-    }   
-
-    if (K->BB == NULL || K->CC == NULL || K->BC == NULL) {
-	return E_ALLOC;
-    }
-
-    gretl_matrix_multiply_mod(K->Q, GRETL_MOD_NONE,
-			      K->Q, GRETL_MOD_TRANSPOSE,
-			      K->BB, GRETL_MOD_NONE);
-
-    gretl_matrix_multiply_mod(K->R, GRETL_MOD_NONE,
-			      K->R, GRETL_MOD_TRANSPOSE,
-			      K->CC, GRETL_MOD_NONE);
-
-    gretl_matrix_multiply_mod(K->Q, GRETL_MOD_NONE,
-			      K->R, GRETL_MOD_TRANSPOSE,
-			      K->BC, GRETL_MOD_NONE);
 
     if (kalman_owns_matrix(K, K_Q)) {
-	/* FIXME: we could own it, if it's time-varying */
 	gretl_matrix_free((gretl_matrix *) K->Q);
     }
-    K->Q = K->BB;
 
     if (kalman_owns_matrix(K, K_R)) {
-	/* ditto */
 	gretl_matrix_free((gretl_matrix *) K->R);
     }    
-    K->R = K->CC;
+
+    K->Q = K->cross->BB;
+    K->R = K->cross->CC;
 
 #if 0
-    gretl_matrix_print(K->BB, "BB");
-    gretl_matrix_print(K->CC, "CC");
-    gretl_matrix_print(K->BC, "BC");
+    gretl_matrix_print(K->cross->BB, "BB");
+    gretl_matrix_print(K->cross->CC, "CC");
+    gretl_matrix_print(K->cross->BC, "BC");
 #endif
 
     return 0;
@@ -1110,9 +1200,9 @@ static int kalman_iter_1 (kalman *K, int missobs, double *llt)
 
     /* form the gain, Kt = (FPH + BC') * (H'PH + R)^{-1} */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
-    if (K->BC != NULL) {
+    if (K->p > 0) {
 	/* cross-correlated case */
-	gretl_matrix_add_to(K->FPH, K->BC);
+	gretl_matrix_add_to(K->FPH, K->cross->BC);
     }
     err += gretl_matrix_multiply(K->FPH, K->Vt, K->Kt);
 
@@ -1259,52 +1349,47 @@ static void kalman_initialize_error (kalman *K, int *missobs)
     }
 }
 
-/* the user gave a function call that should be used for updating
-   a given Kalman input matrix
+/* The user gave a function call that should be used for updating
+   a given Kalman coefficient matrix: here we call it.
 */
 
 static gretl_matrix *kalman_update_matrix (kalman *K, int i, int *err)
 {
-    const char *fncall = K->matcalls[i];
     gretl_matrix *m = NULL;
 
-    if (K->mnames[i][0] != '\0') {
-	/* named matrix updated via void function call */
-	*err = generate(fncall, NULL, NULL, OPT_U, NULL);
-	if (!*err) {
-	    m = get_matrix_by_name(K->mnames[i]);
-	    if (m == NULL) {
-		*err = E_DATA;
-	    }
+    *err = generate(K->matcalls[i], NULL, NULL, OPT_U, NULL);
+
+    if (!*err) {
+	m = get_matrix_by_name(K->mnames[i]);
+	if (m == NULL) {
+	    *err = E_DATA;
 	}
-    } else {
-	/* anonymous matrix generated by function call */
-	m = generate_matrix(fncall, NULL, NULL, err);
     }
 
     return m;
 }
 
-/* in case we have any time-varying coefficient matrices, refresh
-   these for the current time step
+/* If we have any time-varying coefficient matrices, refresh these for
+   the current time step.
 */
 
 static int kalman_refresh_matrices (kalman *K)
 {
     const gretl_matrix **cptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R
-    };    
+    };  
+    int cross_update = 0;
     int i, err = 0;
 
     for (i=0; i<NMATCALLS && !err; i++) {
-	if (K->matcalls[i] != NULL) {
+	if (matrix_is_varying(K, i)) {
 	    *cptr[i] = kalman_update_matrix(K, i, &err);
-	    if (K->Mt[i] != NULL) {
-		gretl_matrix_free(K->Mt[i]);
-		K->Mt[i] = (gretl_matrix *) *cptr[i];
-	    }
 	    if (!err) {
-		err = check_matrix_dims(K, *cptr[i], i);
+		if (K->p > 0 && i >= K_Q) {
+		    cross_update = 1;
+		} else {
+		    err = check_matrix_dims(K, *cptr[i], i);
+		}
 	    }	    
 	    if (err) {
 		fprintf(stderr, "kalman_refresh_matrices: err = %d at t = %d\n", 
@@ -1313,23 +1398,9 @@ static int kalman_refresh_matrices (kalman *K)
 	}
     }
 
-    if (K->p > 0) {
+    if (!err && cross_update) {
 	/* cross-correlated case */
-	if (K->BB != NULL) {
-	    err = gretl_matrix_multiply_mod(K->Q, GRETL_MOD_NONE,
-					    K->Q, GRETL_MOD_TRANSPOSE,
-					    K->BB, GRETL_MOD_NONE);
-	} 
-	if (K->CC != NULL && !err) {
-	    err = gretl_matrix_multiply_mod(K->R, GRETL_MOD_NONE,
-					    K->R, GRETL_MOD_TRANSPOSE,
-					    K->CC, GRETL_MOD_NONE);
-	} 
-	if (K->BC != NULL && !err) {
-	    err = gretl_matrix_multiply_mod(K->Q, GRETL_MOD_NONE,
-					    K->R, GRETL_MOD_TRANSPOSE,
-					    K->BC, GRETL_MOD_NONE);
-	} 
+	err = kalman_update_crossinfo(K, UPDATE_STEP);
     }
 
     return err;
@@ -1345,8 +1416,6 @@ static int kalman_refresh_matrices (kalman *K)
  * kalman_set_initial_MSE_matrix().  The log-likelihood is
  * calculated for the sequence of forecast errors on the assumption
  * of normality: this can be accessed using kalman_get_loglik().
- * If @E is non-%NULL, the forecast errors are recorded in this
- * matrix.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -1566,11 +1635,6 @@ int kalman_forecast (kalman *K)
 	    K->loglik);
 #endif
 
-    if (K->matcalls != NULL) {
-	gretl_matrix_array_free(K->Mt, NMATCALLS);
-	K->Mt = NULL;
-    }
-
     return err;
 }
 
@@ -1674,36 +1738,46 @@ struct K_input_mat K_input_mats[] = {
     { K_P, "inivar" }
 };
 
+/* Add storage to record function calls for generating matrices.
+   We do this if at least one coefficient matrix has a time-varying
+   specification.  We size the array to the max number of time-varying
+   matrices, but some slots may be left NULL if the corresponding
+   matrix is not in fact time-varying.
+*/
+
+static int kalman_add_matcalls (kalman *K)
+{
+    K->matcalls = strings_array_new(NMATCALLS);
+
+    if (K->matcalls == NULL) {
+	return E_ALLOC;
+    } else {
+	return 0;
+    }
+}
+
+/* We found a function call given by way of specification of one
+   of the coefficient matrices in a Kalman filter.
+*/
+
 static int add_matrix_fncall (kalman *K, const char *s, int i,
 			      char *mname, gretl_matrix **pm)
 {
     char *p, *q, *fncall;
     int n, err = 0;
 
-    if (K->matcalls == NULL) {
-	K->matcalls = strings_array_new(NMATCALLS);
-	if (K->matcalls == NULL) {
-	    return E_ALLOC;
-	}
-	K->Mt = gretl_matrix_array_new(NMATCALLS);
-	if (K->Mt == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
     s += strspn(s, " ");
+
+    /* We need the name of a matrix followed by a function call, the
+       two elements separated by a semicolon: the separating ';' must
+       come before the opening parenthesis of the function call.
+    */
 
     p = strchr(s, ';');
     q = strchr(s, '(');
 
-    /* We may have a straight function call, or the name of a matrix
-       followed by a function call, the two elements separated by
-       a semicolon: in that case the separating ';' must come before
-       the opening parenthesis of the function call.
-    */
-
     if (p != NULL && q - p > 0) {
-	/* we have two elements */
+	/* OK, we have the two separated elements */
 	n = strcspn(s, " ;");
 	if (n > VNAMELEN - 1) {
 	    n = VNAMELEN - 1;
@@ -1711,42 +1785,46 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
 	strncat(mname, s, n);
 	s = p + 1;
 	s += strspn(s, " ");
-    } 
+    } else {
+	err = E_PARSE;
+    }
 
-    fncall = gretl_strdup(s);
-    if (fncall == NULL) {
-	return E_ALLOC;
+    if (!err && K->matcalls == NULL) {
+	err = kalman_add_matcalls(K);
+    }
+
+    if (!err) {
+	fncall = gretl_strdup(s);
+	if (fncall == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	return err;
     }
 
     tailstrip(fncall); 
 
-    if (*mname == '\0') {
-	/* straight function call: try it out */
-	*pm = generate_matrix(fncall, NULL, NULL, &err);
-	if (err) {
-	    fprintf(stderr, "add_matrix_fncall: err = %d from '%s'\n", err, fncall);
-	}
-    } else {
-	/* got a named matrix */
-	*pm = get_matrix_by_name(mname);
-	if (*pm == NULL) {
-	    err = E_UNKVAR;
-	}
+    *pm = get_matrix_by_name(mname);
+    if (*pm == NULL) {
+	err = E_UNKVAR;
     }
 
     if (err) {
 	free(fncall);
     } else {
+	/* record the function call */
 	K->matcalls[i] = fncall;
     }
 
     return err;
 }
 
-/* We didn't find a matrix of the name @s: now we try for a series
+/* We didn't find a matrix of the name @s: here we try for a series
    or a named list, and if found, make a matrix out of it.  This
    matrix will be "hard-wired" -- we don't do any further look-up
-   of values -- and will be owned by the Kalman struct.
+   of values -- and it will be owned by the Kalman struct.
 */
 
 static gretl_matrix *k_matrix_from_dataset (char *s,
@@ -1778,7 +1856,7 @@ static gretl_matrix *k_matrix_from_dataset (char *s,
     return m;
 }
 
-/* We didn't find a matrix of the name @s: now we try for a scalar
+/* We didn't find a matrix of the name @s: here we try for a scalar
    (either a named scalar variable or a numeric constant), and if
    found, make a matrix out of it.  If we get a named scalar, we'll
    record its name so we're able to update its value later if need be.
@@ -1867,7 +1945,10 @@ attach_input_matrix (kalman *K, const char *s, int i,
     if (!err && m == NULL) {
 	/* didn't find a matrix */
 	if (i == K_y || i == K_x) {
-	    /* if osby or obsx, try series / list */
+	    /* if we're looking at osby or obsx, try for a series or
+	       list; this should fail gracefully if there's no dataset
+	       in place
+	    */
 	    m = k_matrix_from_dataset(mname, Z, pdinfo, &err);
 	} else {
 	    /* parameter matrix: try a scalar */
@@ -1902,15 +1983,8 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	    K->Pini = m;
 	} 
 
-	if (*mname != '\0') {
-	    /* record name of matrix */
-	    strcpy(K->mnames[i], mname);
-	} else {
-	    /* take ownership of generated matrix, in the case
-	       where we got a matrix-returning function call 
-	    */
-	    K->Mt[i] = m;
-	} 
+	/* record name of matrix */
+	strcpy(K->mnames[i], mname);
     }
 
     return err;
@@ -2000,10 +2074,6 @@ static int user_kalman_recheck_matrices (user_kalman *u)
     for (i=0; i<=K_P && !err; i++) {
 	if (i <= K_R && use_fncall(K, i)) {
 	    *cptr[i] = kalman_update_matrix(K, i, &err);
-	    if (K->Mt[i] != NULL) {
-		gretl_matrix_free(K->Mt[i]);
-		K->Mt[i] = (gretl_matrix *) *cptr[i];
-	    }	
 	} else if (kalman_owns_matrix(K, i)) {
 	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
 	} else {
@@ -2180,7 +2250,9 @@ static int add_user_kalman (void)
     return err;
 }
 
-/* check @s for a recognized matrix code-name */
+/* check the content of @ps for a recognized matrix code-name, and if
+   successful, move the char pointer beyond the code-name
+*/
 
 static int get_kalman_matrix_id (const char **ps)
 {
@@ -2214,9 +2286,24 @@ static const char *kalman_matrix_name (int sym)
     return "matrix";
 }
 
-/* Given a line that is part of a "kalman ... end kalman" build block,
-   parse and respond appropriately.
-*/
+/**
+ * kalman_parse_line:
+ * @line: "kalman" to start, "end kalman" to end; otherwise
+ * this string should contain a matrix specification on the 
+ * pattern "key value".
+ * @Z: data array (may be %NULL).
+ * @pdinfo: dataset information (may be %NULL).
+ * @opt: may contain %OPT_D for diffuse initialization of the
+ * Kalman filter; also may contain %OPT_C to specify that the
+ * disturbances are correlated across the two equations.
+ *
+ * Parses @line and either (a) starts a filter definition or
+ * (b) adds a matrix specification to the filter or (c)
+ * completes the filter set-up.
+ *
+ * Returns: 0 on successful completion, non-zero error code
+ * otherwise.
+ */
 
 int kalman_parse_line (const char *line, const double **Z,
 		       const DATAINFO *pdinfo, gretlopt opt)
@@ -3030,7 +3117,7 @@ static int kalman_simulate (kalman *K,
 	} else if (K->p > 0) {
 	    /* C e_t */
 	    load_from_row(et, V, K->t, GRETL_MOD_NONE);
-	    gretl_matrix_multiply_mod(K->C, GRETL_MOD_NONE,
+	    gretl_matrix_multiply_mod(K->cross->C, GRETL_MOD_NONE,
 				      et, GRETL_MOD_NONE,
 				      yt, GRETL_MOD_CUMULATE);
 	}
@@ -3050,7 +3137,7 @@ static int kalman_simulate (kalman *K,
 	    load_from_row(K->S1, V, K->t, GRETL_MOD_CUMULATE);
 	} else {
 	    /* B e_t */
-	    gretl_matrix_multiply_mod(K->B, GRETL_MOD_NONE,
+	    gretl_matrix_multiply_mod(K->cross->B, GRETL_MOD_NONE,
 				      et, GRETL_MOD_NONE,
 				      K->S1, GRETL_MOD_CUMULATE);
 	}	    
