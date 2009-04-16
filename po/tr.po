@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-04-13 21:55-0400\n"
-"PO-Revision-Date: 2009-04-14 09:18+0300\n"
+"PO-Revision-Date: 2009-04-16 09:47+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3691,7 +3691,7 @@ msgstr "%s: gerekli değiştirge eksik"
 #: lib/src/interact.c:1879
 #, c-format
 msgid "%s: expected an integer order"
-msgstr "%s: bir tamsayı üs bekleniyordu"
+msgstr "%s: tamsayı bir derece bekleniyordu"
 
 #: lib/src/interact.c:2070
 #, c-format
