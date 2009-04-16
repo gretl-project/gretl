@@ -7246,9 +7246,10 @@
 
       <para>
 	Each restriction in the set should be expressed as an equation,
-	with a linear combination of parameters on the left and a numeric
-	value to the right of the equals sign. In the single-equation
-	case, parameters may be referenced in the form
+	with a linear combination of parameters on the left and a
+	scalar value to the right of the equals sign (either a
+	numerical constant or the name of a scalar variable). In the
+	single-equation case, parameters may be referenced in the form
 	<lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
 	represents the position in the list of regressors (starting at 1),
 	or <lit>b[</lit><repl>varname</repl><lit>]</lit>, where
