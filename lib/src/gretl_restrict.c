@@ -25,6 +25,7 @@
 #include "matrix_extra.h"
 #include "gretl_restrict.h"
 #include "bootstrap.h"
+#include "gretl_scalar.h"
 
 #define RDEBUG 0
 
@@ -925,7 +926,35 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
     return err;
 }
 
-#define ok_letter(r, c) (c == 'b' || (r->vecm && c == 'a'))
+static int r_get_scalar (const char *s, double *x)
+{
+    if (sscanf(s, "%lf", x)) {
+	return 1;
+    } else {
+	int n;
+
+	s += strspn(s, " ");
+	n = gretl_namechar_spn(s);
+
+	if (n > 0) {
+	    char tmp[VNAMELEN];
+
+	    *tmp = '\0';
+	    strncat(tmp, s, n);
+	    if (gretl_is_scalar(tmp)) {
+		*x = gretl_scalar_get_value(tmp);
+		if (!na(*x)) {
+		    return 1;
+		}
+	    } 
+	}
+    }
+
+    return 0;
+}
+
+#define b_start(r,s) ((*s == 'b' || (r->vecm && *s == 'a')) && \
+		      (isdigit(*(s+1)) || *(s+1) == '['))
 
 static int 
 parse_coeff_chunk (gretl_restriction *r, const char *s, double *x, 
@@ -943,7 +972,7 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
     fprintf(stderr, "parse_coeff_chunk: s='%s'\n", s);
 #endif
 
-    if (ok_letter(r, *s)) {
+    if (b_start(r, s)) {
 	*letter = *s;
 	s++;
 #if RDEBUG
@@ -951,11 +980,11 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 #endif
 	err = parse_b_bit(r, s, eq, bnum, pdinfo);
 	*x = 1.0;
-    } else if (sscanf(s, "%lf", x)) {
+    } else if (r_get_scalar(s, x)) {
 	s += strspn(s, " ");
 	s += strcspn(s, " *");
 	s += strspn(s, " *");
-	if (ok_letter(r, *s)) {
+	if (b_start(r, s)) {
 	    *letter = *s;
 	    s++;
 	    err = parse_b_bit(r, s, eq, bnum, pdinfo);

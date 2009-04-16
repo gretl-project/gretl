@@ -2980,6 +2980,51 @@ static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+/* boolean test of all vars in list against a scalar, for each
+   observation in the sample, hence generating a series
+*/
+
+static NODE *list_scalar_bool (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL && starting(p)) {
+	int *list = node_get_list(l, p);
+	double targ = r->v.xval;
+	double *x = ret->v.xvec;
+	double xit;
+	int i, t;
+
+	if (list != NULL) {
+	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		x[t] = 1.0;
+		for (i=1; i<=list[0]; i++) {
+		    xit = (*p->Z)[list[i]][t];
+		    if (na(xit)) {
+			x[t] = NADBL;
+			break;
+		    } else if (f == B_EQ && xit != targ) {
+			x[t] = 0.0;
+		    } else if (f == B_NEQ && xit == targ) {
+			x[t] = 0.0;
+		    } else if (f == B_LT && xit >= targ) {
+			x[t] = 0.0;
+		    } else if (f == B_GT && xit <= targ) {
+			x[t] = 0.0;
+		    } else if (f == B_LTE && xit > targ) {
+			x[t] = 0.0;
+		    } else if (f == B_GTE && xit < targ) {
+			x[t] = 0.0;
+		    }
+		}
+	    }
+	    free(list);
+	}
+    }
+
+    return ret;
+}
+
 /* argument is list; value returned is series */
 
 static NODE *list_to_series_func (NODE *n, int f, parser *p)
@@ -5915,6 +5960,8 @@ static NODE *eval (NODE *t, parser *p)
 	} else if ((t->t == B_AND || t->t == B_OR) &&
 		   ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_and_or(l, r, t->t, p);
+	} else if (ok_list_node(l) && r->t == NUM && bool_comp(t->t)) {
+	    ret = list_scalar_bool(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
