@@ -989,7 +989,7 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 	    s++;
 	    err = parse_b_bit(r, s, eq, bnum, pdinfo);
 	} else if (*s == '\0') {
-	    /* plain numeric constant, saved in *x */
+	    /* plain numeric value, saved in *x */
 	    *bnum = 0;
 	    *letter = '\0';
 	    err = 0;
