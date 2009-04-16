@@ -45,6 +45,13 @@ struct crossinfo_ {
     gretl_matrix *BC; /* BC': r x n */
 };
 
+typedef struct stepinfo_ stepinfo;
+
+struct stepinfo_ {
+    gretl_matrix *F;  /* T x (r * r) */
+    gretl_matrix *H;  /* T x (r * n) */
+};
+
 struct kalman_ {
     int flags;   /* for recording any options */
     int fnlevel; /* level of function execution */
@@ -104,6 +111,9 @@ struct kalman_ {
 
     /* structure needed only for cross-correlated case */
     crossinfo *cross;
+
+    /* structure need only when smoothing in the time-varying case */
+    stepinfo *step;
     
     /* workspace matrices */
     gretl_matrix_block *Blk; /* holder for the following */
@@ -139,6 +149,8 @@ struct kalman_ {
    function call) */
 #define matrix_is_varying(K,i) (K->matcalls != NULL && K->matcalls[i] != NULL)
 
+#define filter_is_varying(K) (K->matcalls != NULL)
+
 #define GENERIC_MATNAME "$Kmat"
 
 static const char *kalman_matrix_name (int sym);
@@ -161,6 +173,16 @@ enum {
     K_P,
     K_MMAX /* sentinel */
 };
+
+void free_stepinfo (kalman *K)
+{
+    if (K->step != NULL) {
+	gretl_matrix_free(K->step->F);
+	gretl_matrix_free(K->step->H);
+	free(K->step);
+	K->step = NULL;
+    }
+}
 
 void free_crossinfo (crossinfo *c)
 {
@@ -228,6 +250,10 @@ void kalman_free (kalman *K)
 	free_crossinfo(K->cross);
     }
 
+    if (K->step != NULL) {
+	free_stepinfo(K);
+    }    
+
     free(K);
 }
 
@@ -249,6 +275,7 @@ static kalman *kalman_new_empty (int flags)
 	K->mnames = NULL;
 	K->matcalls = NULL;
 	K->cross = NULL;
+	K->step = NULL;
 	K->flags = flags;
 	K->fnlevel = 0;
 	K->t = 0;
@@ -1370,7 +1397,7 @@ static gretl_matrix *kalman_update_matrix (kalman *K, int i, int *err)
 }
 
 /* If we have any time-varying coefficient matrices, refresh these for
-   the current time step.
+   the current time step.  This is called on a forward filtering pass.
 */
 
 static int kalman_refresh_matrices (kalman *K)
@@ -1396,6 +1423,16 @@ static int kalman_refresh_matrices (kalman *K)
 			err, K->t);
 	    } 
 	}
+    }
+
+    if (!err && K->step != NULL) {
+	/* keep a record of F and/or H at the given time step */
+	if (K->step->F != NULL) {
+	    load_to_vec(K->step->F, K->F, K->t); 
+	} 
+	if (K->step->H != NULL) {
+	    load_to_vec(K->step->H, K->H, K->t); 
+	} 	
     }
 
     if (!err && cross_update) {
@@ -1462,7 +1499,7 @@ int kalman_forecast (kalman *K)
 	    kalman_record_state(K);
 	}
 
-	if (K->matcalls != NULL) {
+	if (filter_is_varying(K)) {
 	    /* we have time-varying coefficients */
 	    err = kalman_refresh_matrices(K);
 	    if (err) {
@@ -1738,7 +1775,7 @@ struct K_input_mat K_input_mats[] = {
     { K_P, "inivar" }
 };
 
-/* Add storage to record function calls for generating matrices.
+/* Add storage to record function calls for updating matrices.
    We do this if at least one coefficient matrix has a time-varying
    specification.  We size the array to the max number of time-varying
    matrices, but some slots may be left NULL if the corresponding
@@ -2047,8 +2084,6 @@ static int update_scalar_matrix (gretl_matrix *m, const char *name)
     return err;
 }
 
-#define use_fncall(K,i) (K->matcalls != NULL && K->matcalls[i] != NULL)
-
 /* When (re-)running a user-defined filter, check that no relevant
    matrices have disappeared or been resized.  In addition,
    re-initialize the state and variance.
@@ -2072,7 +2107,7 @@ static int user_kalman_recheck_matrices (user_kalman *u)
     }
 
     for (i=0; i<=K_P && !err; i++) {
-	if (i <= K_R && use_fncall(K, i)) {
+	if (i <= K_R && matrix_is_varying(K, i)) {
 	    *cptr[i] = kalman_update_matrix(K, i, &err);
 	} else if (kalman_owns_matrix(K, i)) {
 	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
@@ -2607,7 +2642,7 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
    row and reconstitute the matrix in @targ.
 */
 
-static void load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
+static int load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
 			   int t)
 {
     int i, k = targ->rows * targ->cols;
@@ -2615,6 +2650,8 @@ static void load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
     for (i=0; i<k; i++) {
 	targ->val[i] = gretl_matrix_get(src, t, i);
     }
+
+    return 0;
 }
 
 /* Partial implementation of Koopman's "disturbance smoother".
@@ -2792,6 +2829,24 @@ static int koopman_smooth (kalman *K, gretl_matrix *U)
     return err;
 }
 
+static int retrieve_Ft (kalman *K, int t)
+{
+    if (K->step == NULL || K->step->F == NULL) {
+	return E_DATA;
+    } else {
+	return load_from_vec((gretl_matrix *) K->F, K->step->F, t);
+    }
+}
+
+static int retrieve_Ht (kalman *K, int t)
+{
+    if (K->step == NULL || K->step->H == NULL) {
+	return E_DATA;
+    } else {
+	return load_from_vec((gretl_matrix *) K->H, K->step->H, t);
+    }
+}
+
 /* Anderson-Moore Kalman smoothing: see Iskander Karibzhanov's
    exposition at http://www.econ.umn.edu/~karib003/help/kalcvs.htm
    This is much the clearest account I have seen (AC 2009-04-14).
@@ -2825,9 +2880,18 @@ static int anderson_moore_smooth (kalman *K)
     gretl_matrix_zero(u);
     gretl_matrix_zero(U);
 
-    /* FIXME: handle time-varying F, H matrices */
-
     for (t=K->T-1; t>=0 && !err; t--) {
+	/* get F_t and/or H_t if need be */
+	if (matrix_is_varying(K, K_F)) {
+	    err = retrieve_Ft(K, t);
+	}
+	if (!err && matrix_is_varying(K, K_H)) {
+	    err = retrieve_Ht(K, t);
+	}
+	if (err) {
+	    break;
+	}
+
 	/* L_t = F_t - K_t H_t' */
 	gretl_matrix_copy_values(L, K->F);
 	load_from_vec(K->Kt, K->K, t);
@@ -2877,6 +2941,45 @@ static int anderson_moore_smooth (kalman *K)
     }
 
     gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
+/* If we're doing smoothing for a system that has time-varying
+   coefficients in K->F or K->H we'll record the vec of the
+   coefficient matrices for each time-step on the forward pass.  Here
+   we allocate the required storage.
+*/
+
+static int kalman_add_stepinfo (kalman *K)
+{
+    int err = 0;
+
+    K->step = malloc(sizeof *K->step);
+
+    if (K->step == NULL) {
+	return E_ALLOC;
+    }
+
+    K->step->F = K->step->H = NULL;
+
+    if (matrix_is_varying(K, K_F)) {
+	K->step->F = gretl_matrix_alloc(K->T, K->r * K->r);
+	if (K->step->F == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && matrix_is_varying(K, K_H)) {
+	K->step->H = gretl_matrix_alloc(K->T, K->r * K->n);
+	if (K->step->H == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+    
+    if (err) {
+	free_stepinfo(K);
+    }
 
     return err;
 }
@@ -2975,6 +3078,14 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
 	goto bailout;
     } 
 
+    if (matrix_is_varying(K, K_F) || matrix_is_varying(K, K_H)) {
+	/* add recorder for F_t and/or H_t */
+	*err = kalman_add_stepinfo(K);
+	if (*err) {
+	    goto bailout;
+	}
+    }
+
     /* attach all export matrices to Kalman */
     K->E = E;
     K->V = V;
@@ -3008,6 +3119,9 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
     K->K = NULL;
     K->S = NULL;
     K->P = NULL; 
+
+    /* and trash the "stepinfo" storage */
+    free_stepinfo(K);
 
  bailout:
 
@@ -3054,7 +3168,7 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
     }
 
     if (!err) {
-	/* FIXME cross-correlated */
+	/* FIXME cross-correlated? */
 	load_from_row(v0, V, 0, GRETL_MOD_NONE);
 	err = gretl_matrix_multiply(Q, v0, s0);
     }
@@ -3105,42 +3219,50 @@ static int kalman_simulate (kalman *K,
 	}
     } 
 
-    /* FIXME time-varying matrices */
-
     for (K->t = 0; K->t < K->T; K->t += 1) {
+	if (filter_is_varying(K)) {
+	    err = kalman_refresh_matrices(K);
+	    if (err) {
+		break;
+	    }
+	}
+
 	/* y_t = A'*x_t + H'*S_t + w_t */
 	gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
 				  K->S0, GRETL_MOD_NONE,
 				  yt, GRETL_MOD_NONE);
-	if (W != NULL) {
-	    load_from_row(yt, W, K->t, GRETL_MOD_CUMULATE);
-	} else if (K->p > 0) {
-	    /* C e_t */
-	    load_from_row(et, V, K->t, GRETL_MOD_NONE);
-	    gretl_matrix_multiply_mod(K->cross->C, GRETL_MOD_NONE,
-				      et, GRETL_MOD_NONE,
-				      yt, GRETL_MOD_CUMULATE);
-	}
 	if (K->x != NULL) {
 	    kalman_set_Ax(K);
+	}
+	if (K->A != NULL) {
 	    gretl_matrix_add_to(yt, K->Ax);
 	}
+	if (K->p > 0) {
+	    /* C \varepsilon_t */
+	    load_from_row(et, V, K->t, GRETL_MOD_NONE);
+	    gretl_matrix_multiply(K->cross->C, et, K->e);
+	} else if (W != NULL) {
+	    load_from_row(K->e, W, K->t, GRETL_MOD_NONE);
+	}
+	gretl_matrix_add_to(yt, K->e);
+
 	/* record the observables */
 	load_to_row(Y, yt, K->t);
 	if (S != NULL) {
 	    /* and the state, if wanted */
 	    load_to_row(S, K->S0, K->t);
-	}	
+	}
+	
 	/* S_{t+1} = F*S_t + v_t */
 	gretl_matrix_multiply(K->F, K->S0, K->S1);
-	if (K->p == 0) {
-	    load_from_row(K->S1, V, K->t, GRETL_MOD_CUMULATE);
-	} else {
-	    /* B e_t */
+	if (K->p > 0) {
+	    /* B \varepsilon_t */
 	    gretl_matrix_multiply_mod(K->cross->B, GRETL_MOD_NONE,
 				      et, GRETL_MOD_NONE,
 				      K->S1, GRETL_MOD_CUMULATE);
-	}	    
+	} else {	    
+	    load_from_row(K->S1, V, K->t, GRETL_MOD_CUMULATE);
+	} 
 	gretl_matrix_copy_values(K->S0, K->S1);
     }
 

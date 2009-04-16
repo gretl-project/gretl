@@ -109,6 +109,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_MANY_TS,        "multiple timeseries" },
     { PLOT_RQ_TAU,         "tau sequence plot" },
     { PLOT_BOXPLOTS,       "boxplots" },
+    { PLOT_CURVE,          "curve" },
     { PLOT_TYPE_MAX,       NULL }
 };
 

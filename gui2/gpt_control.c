@@ -1629,7 +1629,8 @@ static int get_plot_nobs (const char *buf, PlotType *ptype, int *do_markers)
 		    *do_markers = 1;
 		}
 	    }
-	    if (*line == 'e') {
+	    if (*line == 'e' || !strncmp(line, "set ", 4)) {
+		/* end of data, or onto "set print" for bounds */
 		break;
 	    }
 	    n++;
@@ -1996,7 +1997,9 @@ static void linestyle_init (linestyle *ls)
     ls->type = LT_NONE;
 }
 
-#define plot_needs_obs(c) (c != PLOT_ELLIPSE && c != PLOT_PROB_DIST)
+#define plot_needs_obs(c) (c != PLOT_ELLIPSE && \
+                           c != PLOT_PROB_DIST && \
+                           c != PLOT_CURVE)
 
 /* Read plotspec struct from gnuplot command file.  This is _not_ a
    general parser for gnuplot files; it is designed specifically for

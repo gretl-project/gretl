@@ -169,10 +169,10 @@ using
 
 \subsection{Cross-correlated disturbances}
 
-The state space formulation given above assumes mutual independence of
-the disturbances in the state and observation equations, $\strdist_t$
-and $\obsdist_t$ respectively.  This assumption holds good in many
-practical applications, but a more general formulation allows for
+The formulation given above assumes mutual independence of the
+disturbances in the state and observation equations, $\strdist_t$ and
+$\obsdist_t$.  This assumption holds good in many practical
+applications, but a more general formulation allows for
 cross-correlation.  In place of (\ref{eq:state})--(\ref{eq:obs}) we
 may write
 %
@@ -237,6 +237,10 @@ Kalman gain equation (\ref{eq:gain}) must be modified as
 Otherwise, the equations given earlier hold good, if we write
 $\altstrvar\altstrvar'$ in place of $\strvar$ and
 $\altobsvar\altobsvar'$ in place of $\obsvar$.
+
+In the account of gretl's Kalman facility below we take the
+uncorrelated case as the baseline, but add remarks on how to
+handle the correlated case where applicable.
 
 \section{Intended usage}
 
@@ -376,7 +380,7 @@ statement.\footnote{ Initialization of the Kalman filter outside of
   the case where equation (\ref{eq:inivar}) applies has been the
   subject of much discussion in the literature---see for example de
   Jong (1991), Koopman (1997).  At present gretl does not implement
-  any of the ``fancier'' proposals that have been made.}
+  any of the more elaborate proposals that have been made.}
 
 \subsection{Time-varying matrices}
 
@@ -397,17 +401,23 @@ might write
 \end{verbatim}
 %
 where \texttt{modify\_H} is a user-defined function which modifies
-matrix \texttt{H} (given as an argument in ``pointer'' form) and
-\texttt{theta} is a suitable additional argument to that function (if
-required).
+matrix \texttt{H} (and \texttt{theta} is a suitable additional
+argument to that function, if required).
 
-The function \verb+modify_H+ will be called at each time-step of the
-filter operation.  Such a matrix-modifying function has access to the
-current time-step of the Kalman filter via the internal variable
-\verb+$kalman_t+, which has value 1 on the first step, 2 on the
-second, and so on, up to step $T$.  It also has access to the
-current $n$-vector of forecast errors, $\prederr_t$, under the name
-\verb+$kalman_uhat+.
+The above is just an illustration: the matrix argument does not have
+to come first, and the function can have as many arguments as you
+like.  The essential point is that the function must modify the
+specified matrix, which requires that it be given as an argument in
+``pointer'' form (preceded by \verb|&|).  The function need not return
+any value directly; if it does, that value is ignored.
+
+Such matrix-modifying functions will be called at each time-step of
+the filter operation, prior to performing any calculations.  They have
+access to the current time-step of the Kalman filter via the internal
+variable \verb+$kalman_t+, which has value 1 on the first step, 2 on
+the second, and so on, up to step $T$.  They also have access to the
+previous $n$-vector of forecast errors, $\prederr_{t-1}$, under the
+name \verb+$kalman_uhat+.  When $t=1$ this will be a zero vector.
 
 \subsection{Correlated disturbances}
 
@@ -531,13 +541,13 @@ Matrices given as pointer arguments do not have to be correctly
 dimensioned in advance; they will be resized to receive the specified
 content.
 
-Further note: in the general case, the arguments to \texttt{kfilter}
-should all be matrix-pointers, but under two conditions you can give a
-pointer to a series variable instead.  The conditions are: (i) the
-matrix in question has just one column in context (for example, the
-first two matrices will have a single column if the length of the
-observables vector, $n$, equals 1) and (ii) the time-series length of
-the filter is equal to the current gretl sample size.
+Further note: in general, the arguments to \texttt{kfilter} should all
+be matrix-pointers, but under two conditions you can give a pointer to
+a series variable instead.  The conditions are: (i) the matrix in
+question has just one column in context (for example, the first two
+matrices will have a single column if the length of the observables
+vector, $n$, equals 1) and (ii) the time-series length of the filter
+is equal to the current gretl sample size.
 
 \subsection{Likelihood under the diffuse prior}
 
@@ -601,7 +611,9 @@ with initial values $\mathbf{u}_T = 0$ and $\mathbf{U}_T =
 
 This iteration is preceded by a special forward pass in which the
 matrices $\gain_t$, $\predvar_t^{-1}$, $\hat{\statevec}_{t|t-1}$ and
-$\statevar_{t|t-1}$ are stored for all $t$.
+$\statevar_{t|t-1}$ are stored for all $t$.  If $\statemat$
+is time-varying, its values for all $t$ are stored on the forward
+pass, and similarly for $\obsmat$.
 
 
 \section{The \texttt{ksimul} function}
