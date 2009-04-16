@@ -2033,6 +2033,69 @@
       </description>
     </function>  
 
+    <function name="kfilter" section="filters" output="scalar">
+      <fnargs>
+	<fnarg optional="true" type="matrixref">E</fnarg>
+	<fnarg optional="true" type="matrixref">V</fnarg>
+	<fnarg optional="true" type="matrixref">S</fnarg>
+	<fnarg optional="true" type="matrixref">P</fnarg>
+	<fnarg optional="true" type="matrixref">G</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Requires that a Kalman filter be set up.  Performs a forward,
+	  filtering pass and returns 0 on successful completion or 1 
+	  if numerical problems are encountered.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="ksmooth"/>
+	    <fncref targ="ksimul"/>
+	  </seelist>
+	</para>
+      </description>
+    </function> 
+
+    <function name="ksimul" section="filters" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">v</fnarg>
+	<fnarg type="matrix">w</fnarg>
+	<fnarg optional="true" type="matrixref">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Requires that a Kalman filter be set up.  Performs a simulation
+	  and returns a matrix holding simulated values of the
+	  observable variables.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="kfilter"/>
+	    <fncref targ="ksimul"/>
+	  </seelist>
+	</para>
+      </description>
+    </function> 
+
+    <function name="ksmooth" section="filters" output="matrix">
+      <fnargs>
+	<fnarg optional="true" type="matrixref">P</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Requires that a Kalman filter be set up.  Performs a backward,
+	  smoothing pass and returns a matrix holding smoothed estimates
+	  of the state vector.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="kfilter"/>
+	    <fncref targ="ksimul"/>
+	  </seelist>
+	</para>
+      </description>
+    </function> 
+
     <function name="isseries" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>

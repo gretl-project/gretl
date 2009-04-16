@@ -4296,6 +4296,34 @@
 
   </command>
 
+  <command name="kalman" section="Estimation" label="Kalman filter">
+
+    <usage>
+      <options>
+	<option>
+	  <flag>--cross</flag>
+	  <effect>allow for cross-correlated disturbances</effect>
+	</option>
+	<option>
+	  <flag>--diffuse</flag>
+	  <effect>use diffuse initialization</effect>
+	</option>
+      </options>
+    </usage>
+     
+
+    <description>
+      <para>
+	Opens a block of statements that set up a Kalman filter.  This
+	block should end with the line <lit>end kalman</lit>, to which the
+	options shown above may be appended.  Please see <guideref
+	targ="chap:kalman"/> for details.
+      </para>
+    </description>
+
+  </command>
+
+
   <command name="kpss" section="Tests" label="KPSS stationarity test">
 
     <usage>
