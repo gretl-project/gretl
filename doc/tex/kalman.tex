@@ -1,13 +1,3 @@
-\documentclass[a4paper]{article}
-\usepackage[a4paper]{geometry}
-\usepackage{smallhds,simplebib}
-\usepackage[pdftex]{hyperref}
-\usepackage{graphicx}
-\usepackage{amsmath}
-
-\usepackage{bm}
-\usepackage{verbatim}
-
 \newcommand{\obsvec}{\ensuremath\mathbf{y}}
 \newcommand{\obsmat}{\ensuremath\mathbf{H}}
 \newcommand{\obsx}{\ensuremath\mathbf{x}}
@@ -36,14 +26,8 @@
   \lineskiplimit\z@ \kern2\p@\hbox{.}\hbox{.}\hbox{.}\hbox{.}}}
 \makeatother
 
-%% \setcounter{secnumdepth}{2}
-
-\title{The Kalman filter in gretl}
-\author{Allin and Jack}
-
-\begin{document}
-
-\maketitle
+\chapter{The Kalman Filter}
+\label{chap:kalman}
 
 \section{Preamble}
 \label{sec:amble}
@@ -68,7 +52,7 @@ We welcome both success reports and bug reports.
 
 It seems that in econometrics everyone is happy with $y = X \beta +
 u$, but we can't, as a community, make up our minds on a standard
-notation for state-space models. Harvey (1991), Hamilton (1994),
+notation for state-space models. Harvey (1989), Hamilton (1994),
 Harvey and Proietti (2005) and Pollock (1999) all use different
 conventions. The notation used here is based on James Hamilton's, with
 slight variations.
@@ -137,13 +121,13 @@ Iteration then proceeds in two steps.\footnote{For a justification of
 we update the estimate of the state
 %
 \begin{equation}
-\hat{\statevec}_{t+1|t} = \statemat\hat{\statevec}_{t|t-1} + 
+\hat{\statevec}_{t+1|t} = \statemat_t\hat{\statevec}_{t|t-1} + 
   \gain_t \prederr_t
 \end{equation}
 %
 where $\prederr_t$ is the prediction error for the observable:
 \[
-\prederr_t = \obsvec_t - \obsxmat_t'\obsx_t - \obsmat' \hat{\statevec}_{t|t-1}
+\prederr_t = \obsvec_t - \obsxmat_t'\obsx_t - \obsmat_t' \hat{\statevec}_{t|t-1}
 \]
 %
 and $\gain_t$ is the gain matrix, given by
@@ -176,14 +160,12 @@ applications, but a more general formulation allows for
 cross-correlation.  In place of (\ref{eq:state})--(\ref{eq:obs}) we
 may write
 %
-\begin{align}
-  \label{eq:altstate}
+\begin{align*}
   \statevec_{t+1} &= \statemat_t \statevec_t + 
-     \altstrvar_t \alldist_t \tag{1$'$} \\
-  \label{eq:altobs}
+     \altstrvar_t \alldist_t \\
   \obsvec_t &= \obsxmat_t'\obsx_t + \obsmat_t' \statevec_t + 
-     \altobsvar_t \alldist_t \tag{2$'$}
-\end{align}
+     \altobsvar_t \alldist_t 
+\end{align*}
 %
 where $\alldist_t$ is a ($p \times 1$) disturbance vector, all the
 elements of which have unit variance, $\altstrvar_t$ is ($r \times p$)
@@ -322,25 +304,24 @@ passes using different sets of coefficients.\footnote{Note, however,
   that the dimensions of the various input matrices are defined via
   the initial \texttt{kalman} set-up and it is an error if any of the
   matrices are changed in size.}  An example of this technique is
-provided later, in the example scripts contained in Table
-\ref{tab:armaest} and \ref{tab:loclev}.  This facility to alter the
-values of the coefficients between runs of the filter is to be
-distinguished from the case of \emph{time-varying} matrices, which is
-discussed below.
+provided later, in the example scripts \ref{script:armaest} and
+\ref{script:loclev}.  This facility to alter the values of the
+coefficients between runs of the filter is to be distinguished from
+the case of \emph{time-varying} matrices, which is discussed below.
 
 Not all of the above-mentioned inputs need be specified in every case;
 some are optional. (In addition, you can specify the matrices in any
 order.)  The mandatory elements are $\obsvec$, $\obsmat$, $\statemat$
 and $\strvar$, so the minimal \texttt{kalman} block looks like this:
 
-\begin{verbatim}
+\begin{code}
 kalman 
   obsy y
   obsymat H
   statemat F
   statevar Q
 end kalman
-\end{verbatim} 
+\end{code} 
 
 The optional matrices are listed below, along with the implication
 of omitting the given matrix.
@@ -355,8 +336,6 @@ Keyword & If omitted\dots \\ [6pt]
 \texttt{inivar} & $\statevar_{1|0}$ is set automatically\\
 \end{tabular}
 \end{center}
-
-\subsection{Further details on the kalman block}
 
 It might appear that the \texttt{obsx} ($\obsx$) and \texttt{obsxmat}
 ($\obsxmat$) matrices must go together---either both are given or
@@ -396,9 +375,9 @@ $1 \times 1$.
 For example, suppose the matrix $\obsmat$ is time-varying.  Then we
 might write
 %
-\begin{verbatim}
-  obsymat H ; modify_H(&H, theta)
-\end{verbatim}
+\begin{code}
+obsymat H ; modify_H(&H, theta)
+\end{code}
 %
 where \texttt{modify\_H} is a user-defined function which modifies
 matrix \texttt{H} (and \texttt{theta} is a suitable additional
@@ -448,9 +427,9 @@ First, gretl's default behavior is to skip missing observations when
 constructing matrices from data series.  To change this, use the \texttt{set} 
 command thus:
 %
-\begin{verbatim}
+\begin{code}
 set skip_missing off
-\end{verbatim}
+\end{code}
 
 Second, the handling of missing values is not yet quite right for the
 case where the observable vector $\obsvec_t$ contains more than one
@@ -532,10 +511,10 @@ arguments can be skipped by using the keyword \texttt{null}.  For
 example, the following call retrieves the forecast errors in the
 matrix \texttt{E} and the estimate of the state vector in \texttt{S}:
 %
-\begin{verbatim}
+\begin{code}
 matrix E S
 kfilter(&E, null, &S)
-\end{verbatim}
+\end{code}
 
 Matrices given as pointer arguments do not have to be correctly
 dimensioned in advance; they will be resized to receive the specified
@@ -584,11 +563,11 @@ matrix-pointer argument, which retrieves the variance of the smoothed
 state estimate, $\statevar_{t|T}$.  The latter matrix is ($T \times
 r(r+1)/2$); each row is in transposed vech form.  Examples:
 %
-\begin{verbatim}
+\begin{code}
 matrix S = ksmooth()  # smoothed state only
 matrix P
 S = ksmooth(&P)       # the variance is wanted
-\end{verbatim}
+\end{code}
 
 These values are computed via a backward pass of the filter, from
 $t = T$ to $t = 1$, as follows:
@@ -641,12 +620,12 @@ holding simulated values for the observables at each time step.  A
 third optional matrix-pointer argument allows you to retrieve a ($T
 \times r$) matrix holding the simulated state.  Examples:
 %
-\begin{verbatim}
+\begin{code}
 matrix Y = ksimul(V)    # obsvar is null
 Y = ksimul(V, W)        # obsvar is non-null
 matrix S
 Y = ksimul(V, null, &S) # the simulated state is wanted
-\end{verbatim}
+\end{code}
 
 If the disturbances are correlated across the two equations the
 arguments to \texttt{ksimul} must be revised: the first argument
@@ -682,18 +661,18 @@ and the state transition equation corresponding to (\ref{eq:state}) is
 \]
 
 The gretl syntax for a corresponding \texttt{kalman} block would be
-\begin{verbatim}
-    matrix H = {1; theta}
-    matrix F = {phi, 0; 1, 0}
-    matrix Q = {s^2, 0; 0, 0}
+\begin{code}
+matrix H = {1; theta}
+matrix F = {phi, 0; 1, 0}
+matrix Q = {s^2, 0; 0, 0}
 
-    kalman
-        obsy y
-        obsymat H
-        statemat F
-        statevar Q
-    end kalman
-\end{verbatim}
+kalman
+    obsy y
+    obsymat H
+    statemat F
+    statevar Q
+end kalman
+\end{code}
 Note that the observation equation (\ref{eq:arma-meas}) does not
 include an ``error term''; this is equivalent to saying that
 $V(\obsdist_t) = 0$ and, as a consequence, the \texttt{kalman} block
@@ -706,14 +685,12 @@ for given values of $\phi$, $\theta$ and $\sigma^2$ is to execute the
 likelihood has to be maximized through \texttt{mle}, the
 \verb+$kalman_llt+ accessor, which returns the series of individual
 contribution to the log-likelihood for each observation. An example
-is shown in Table \ref{tab:armaest}.
+is shown in script~\ref{script:armaest}.
 
-\begin{table}[htbp]
+\begin{script}[htbp]
   \caption{ARMA estimation}
-  \label{tab:armaest}
-
-\begin{small}
-\begin{verbatim}
+  \label{script:armaest}
+\begin{scode}
 function arma11_via_kalman(series y)
     /* parameter initalization */
     phi = 0
@@ -747,9 +724,8 @@ end function
 open arma.gdt        # open the "arma" example dataset
 arma11_via_kalman(y) # estimate an arma(1,1) model
 arma 1 1 ; y --nc    # check via native command
-\end{verbatim}
-\end{small}
-\end{table}
+\end{scode}
+\end{script}
 
 \section{Example 2: local level model}
 \label{sec:example_loclev}
@@ -760,44 +736,36 @@ is a random walk with normal increments of variance $\sigma^2_1$ and $
 independent of $\mu_t$. This is known as the ``local level'' model in
 Harvey's (1991) terminology, and it can be cast in state-space form as
 equations (\ref{eq:state})-(\ref{eq:obs}) with
-\begin{eqnarray*}
-  \statemat & = & 1 \\
-  \strdist_t & \sim & N(0, \sigma^2_1) \\
-  \obsmat & = & 1 \\
-  \obsdist_t & \sim & N(0, \sigma^2_2)
-\end{eqnarray*}
-
-Its translation as a \texttt{kalman} block is
-\begin{verbatim}
-    kalman
-       obsy y
-       obsymat 1
-       statemat 1
-       statevar s2
-       obsvar s1
-    end kalman --diffuse
-\end{verbatim}
+$\statemat = 1$, $\strdist_t \sim N(0,\, \sigma^2_1)$, $\obsmat = 1$
+and $\obsdist_t \sim N(0,\, \sigma^2_2)$.  The translation to a
+\texttt{kalman} block is
+\begin{code}
+kalman
+   obsy y
+   obsymat 1
+   statemat 1
+   statevar s2
+   obsvar s1
+end kalman --diffuse
+\end{code}
 
 The two unknown parameters $\sigma^2_1$ and $\sigma^2_2$ can be
-estimated via maximum likelihood.  The example script in
-Table~\ref{tab:loclev} provides an example of simulation and
-estimation of such a model. For the sake of brevity, simulation is
-carried out via ordinary gretl commands, rather than the state-space
-apparatus described above.
+estimated via maximum likelihood.  Script~\ref{script:loclev} provides
+an example of simulation and estimation of such a model. For the sake
+of brevity, simulation is carried out via ordinary gretl commands,
+rather than the state-space apparatus described above.
 
 The example contains two functions: the first one carries out the
 estimation of the unknown parameters $\sigma^2_1$ and $\sigma^2_2$ via
 maximum likelihood; the second one uses these estimates to compute a
 smoothed estimate of the unobservable series $\mu_t$ calles
 \texttt{muhat}. A plot of $\mu_t$ and its estimate is presented in
-Figure \ref{fig:loclev}.
+Figure~\ref{fig:loclev}.
 
-\begin{table}[htbp]
+\begin{script}[htbp]
   \caption{Local level model}
-  \label{tab:loclev}
-
-\begin{small}
-\begin{verbatim}
+  \label{script:loclev}
+\begin{scode}
 function local_level (series y)
     /* starting values */
     scalar s1 = 1
@@ -849,21 +817,20 @@ y = mu + v
 
 matrix Vars = local_level(y)           # estimate the variances
 muhat = loclev_sm(y, Vars[1], Vars[2]) # compute the smoothed state
-\end{verbatim}
-\end{small}
-\end{table}
+\end{scode}
+\end{script}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics{../figures/local_level}
+  \includegraphics{figures/local_level}
   \caption{Local level model: $\mu_t$ and its smoothed estimate}
   \label{fig:loclev}
 \end{figure}
 By appending the following code snippet to the example in
-Table~\ref{tab:loclev}, one may check the results against the
+Table~\ref{script:loclev}, one may check the results against the
 \textsf{R} command \texttt{StructTS}.
 
-\begin{verbatim}
+\begin{code}
 foreign language=R --send-data
   y <- gretldata[,"y"]
   a <- StructTS(y, type="level")
@@ -875,50 +842,7 @@ end foreign
 append @dotdir/StateFromR.csv
 
 ols Uhat 0 StateFromR --simple
-\end{verbatim}
+\end{code}
 
 
-\begin{thebibliography}
 
-  Anderson B. and Moore J. (1979) \emph{Optimal Filtering}, Prentice-Hall.
-
-  de Jong, P. (1991) ``The Diffuse Kalman Filter'', \emph{The Annals
-    of Statistics}, 19, pp. 1073--1083.
-
-  Gourieroux, Christian and Alain Monfort (1996),
-  \emph{Simulation-Based Econometric Methods}, Oxford University
-  Press.
-
-  Hamilton, James D. (1994), \emph{Time Series Analysis}, Princeton
-  University Press.
-
-  Harvey, A. C. (1991), \emph{Forecasting, Structural Time Series
-    Models and the Kalman Filter}, Cambridge University Press.
-
-  Harvey, A. C. and T. Proietti (2005), \emph{Readings in Unobserved
-    Component Models}, Oxford University Press.
-
-  Kalman, R. E. (1960), ``A New Approach to Linear Filtering and
-  Prediction Problems'', \emph{Transactions of the ASME--Journal of
-    Basic Engineering}, 82, Series D, pp. 35--45
-
-  Koopman, S. J. (1997), ``Exact Initial Kalman Filtering and
-  Smoothing for Nonstationary Time Series Models'', \emph{Journal of
-    the American Statistical Association}, 92, pp. 1630--1638
-
-  Koopman, S. J., N. Shephard and J. A. Doornik (1999), 
-  ``Statistical algorithms for models in state space using SsfPack
-  2.2'', \emph{Econometrics Journal}, 2, pp. 113--166.
-  
-  Pollock, D.S.G. (1999), \emph{A Handbook of Time-Series Analysis,
-    Signal Processing and Dynamics}, Academic Press.
-
-\end{thebibliography}
-
-
-\end{document}
-
-%%% Local Variables: 
-%%% mode: latex
-%%% TeX-master: t
-%%% End: 

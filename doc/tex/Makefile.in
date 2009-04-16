@@ -30,6 +30,7 @@ TEXSRC = cli.tex \
 	nls.tex \
 	timeseries.tex \
 	vecm.tex \
+	kalman.tex \
 	functions.tex \
 	gretltex.tex \
 	cheatsheet.tex \
