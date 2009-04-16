@@ -97,9 +97,8 @@ E(\strdist_t \strdist_s') &= \strvar_t \mbox{ for } t = s,
 E(\obsdist_t \obsdist_s') &= \obsvar_t \mbox{ for } t = s, 
     \mbox{ otherwise } \mathbf{0}
 \end{align*}
-%
-The number of time-series observations is denoted by $T$.
 
+The number of time-series observations is denoted by $T$.
 In the special case when $\statemat_t = \statemat$, $\obsmat_t = \obsmat$,
 $\obsxmat_t = \obsxmat$, $\strvar_t = \strvar$ and $\obsvar_t =
 \obsvar$, the model is said to be \emph{time-invariant}.
@@ -425,7 +424,7 @@ $\altstrvar\altobsvar'$ and utilizes the modified expression for
 the gain as given in equation (\ref{eq:altgain}).  As mentioned
 above, $\altstrvar$ should be ($r \times p$) and $\altobsvar$
 should be ($n \times p$), where $p$ is the number of elements
-in the combined disturbance vector $\varepsilon_t$.
+in the combined disturbance vector $\alldist_t$.
 
 \subsection{Handling of missing values}
 
@@ -581,26 +580,28 @@ matrix P
 S = ksmooth(&P)       # the variance is wanted
 \end{verbatim}
 
-These values are computed via a backward pass of the filter.  The
-final values of $\hat{\statevec}$ and $\statevar$ already incorporate
-all the sample information.  The backward iteration, from $t=T-1$ to
-1, is then
+These values are computed via a backward pass of the filter, from
+$t = T$ to $t = 1$, as follows:
 %
 \begin{align*}
-\hat{\statevec}_{t|T} &= \hat{\statevec}_{t|t} + 
-  \mathbf{J}_t\left(\hat{\statevec}_{t+1|T} - \hat{\statevec}_{t+1|t}\right) \\
-\statevar_{t|T} &= \statevar_{t|t} + 
-  \mathbf{J}_t\left(\statevar_{t+1|T} - \statevar_{t+1|t}\right) \mathbf{J}_t'
+\mathbf{L}_t &= \statemat_t - \gain_t \obsmat_t' \\
+\mathbf{u}_{t-1} &= \obsmat_t \predvar_t^{-1} \prederr_t 
+ + \mathbf{L}_t' \mathbf{u}_t \\
+\mathbf{U}_{t-1} &= \obsmat_t \predvar_t^{-1} \obsmat_t' + 
+  \mathbf{L}_t' \mathbf{U}_t \mathbf{L}_t \\
+\hat{\statevec}_{t|T} &= \hat{\statevec}_{t|t-1} + 
+  \statevar_{t|t-1} \mathbf{u}_{t-1} \\
+\statevar_{t|T} &= \statevar_{t|t-1} - 
+  \statevar_{t|t-1} \mathbf{U}_{t-1} \statevar_{t|t-1}
 \end{align*}
 %
-where
-\[
-\mathbf{J}_t = \statevar_{t|t} \statemat' \statevar_{t+1|t}^{-1}
-\]
-%
+with initial values $\mathbf{u}_T = 0$ and $\mathbf{U}_T =
+0$.\footnote{See I. Karibzhanov's exposition at
+\url{http://www.econ.umn.edu/~karib003/help/kalcvs.htm}.}
+
 This iteration is preceded by a special forward pass in which the
-matrices $\hat{\statevec}_{t|t}$ and $\statevar_{t|t}$ are stored
-for all $t$.
+matrices $\gain_t$, $\predvar_t^{-1}$, $\hat{\statevec}_{t|t-1}$ and
+$\statevar_{t|t-1}$ are stored for all $t$.
 
 
 \section{The \texttt{ksimul} function}
@@ -634,6 +635,12 @@ Y = ksimul(V, W)        # obsvar is non-null
 matrix S
 Y = ksimul(V, null, &S) # the simulated state is wanted
 \end{verbatim}
+
+If the disturbances are correlated across the two equations the
+arguments to \texttt{ksimul} must be revised: the first argument
+should be a ($T \times p$) matrix, each row of which represents
+$\alldist_t'$ (see section~\ref{sec:kalman-recursions}), and the
+second argument should be given as \texttt{null}.
 
 \section{Example 1: ARMA estimation}
 \label{sec:example_arma}
