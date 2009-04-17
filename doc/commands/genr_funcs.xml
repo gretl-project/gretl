@@ -2035,11 +2035,11 @@
 
     <function name="kfilter" section="filters" output="scalar">
       <fnargs>
-	<fnarg optional="true" type="matrixref">E</fnarg>
-	<fnarg optional="true" type="matrixref">V</fnarg>
-	<fnarg optional="true" type="matrixref">S</fnarg>
-	<fnarg optional="true" type="matrixref">P</fnarg>
-	<fnarg optional="true" type="matrixref">G</fnarg>
+	<fnarg optional="true" type="matrixref">&amp;E</fnarg>
+	<fnarg optional="true" type="matrixref">&amp;V</fnarg>
+	<fnarg optional="true" type="matrixref">&amp;S</fnarg>
+	<fnarg optional="true" type="matrixref">&amp;P</fnarg>
+	<fnarg optional="true" type="matrixref">&amp;G</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2060,7 +2060,7 @@
       <fnargs>
 	<fnarg type="matrix">v</fnarg>
 	<fnarg type="matrix">w</fnarg>
-	<fnarg optional="true" type="matrixref">S</fnarg>
+	<fnarg optional="true" type="matrixref">&amp;S</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2079,7 +2079,7 @@
 
     <function name="ksmooth" section="filters" output="matrix">
       <fnargs>
-	<fnarg optional="true" type="matrixref">P</fnarg>
+	<fnarg optional="true" type="matrixref">&amp;P</fnarg>
       </fnargs>
       <description>
 	<para>
