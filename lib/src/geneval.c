@@ -2980,24 +2980,61 @@ static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-/* boolean test of all vars in list against a scalar, for each
-   observation in the sample, hence generating a series
+/* in case we switched the LHS and RHS in a boolean comparison */
+
+static int reversed_comp (int f)
+{
+    if (f == B_GT) {
+	return B_LT;
+    } else if (f == B_LT) {
+	return B_GT;
+    } else if (f == B_GTE) {
+	return B_LTE;
+    } else if (f == B_LTE) {
+	return B_GTE;
+    } else {
+	return f;
+    }
+}
+
+/* Boolean test of all vars in list against a scalar or series, for
+   each observation in the sample, hence generating a series.
+   The list will always be on the left-hand node; the 'reversed'
+   flag is set if the list was originally on the right.
 */
 
-static NODE *list_scalar_bool (NODE *l, NODE *r, int f, parser *p)
+static NODE *list_bool_comp (NODE *l, NODE *r, int f, int reversed,
+			     parser *p)
 {
     NODE *ret = aux_vec_node(p, p->dinfo->n);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
-	double targ = r->v.xval;
 	double *x = ret->v.xvec;
-	double xit;
+	double xit, targ = NADBL;
+	double *tvec = NULL;
 	int i, t;
+
+	if (r->t == NUM) {
+	    targ = r->v.xval;
+	} else {
+	    tvec = r->v.xvec;
+	}
+
+	if (reversed) {
+	    f = reversed_comp(f);
+	}
 
 	if (list != NULL) {
 	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-		x[t] = 1.0;
+		if (tvec != NULL) {
+		    targ = tvec[t];
+		}
+		if (na(targ)) {
+		    x[t] = NADBL;
+		    continue;
+		}
+		x[t] = 1.0; /* assume 'true' */
 		for (i=1; i<=list[0]; i++) {
 		    xit = (*p->Z)[list[i]][t];
 		    if (na(xit)) {
@@ -3020,6 +3057,37 @@ static NODE *list_scalar_bool (NODE *l, NODE *r, int f, parser *p)
 	    }
 	    free(list);
 	}
+    }
+
+    return ret;
+}
+
+/* Test for whether or not two lists are identical.  Note that
+   using gretl_list_cmp() the order of the members matters.
+   Perhaps the order shouldn't matter?
+*/
+
+static NODE *list_list_comp (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *llist = node_get_list(l, p);
+	int *rlist = node_get_list(r, p);
+
+	if (llist != NULL && rlist != NULL) {
+	    int d = gretl_list_cmp(llist, rlist);
+
+	    if (f == B_NEQ) {
+		ret->v.xval = d;
+	    } else if (f == B_EQ) {
+		ret->v.xval = !d;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+	free(llist);
+	free(rlist);
     }
 
     return ret;
@@ -5960,8 +6028,16 @@ static NODE *eval (NODE *t, parser *p)
 	} else if ((t->t == B_AND || t->t == B_OR) &&
 		   ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_and_or(l, r, t->t, p);
-	} else if (ok_list_node(l) && r->t == NUM && bool_comp(t->t)) {
-	    ret = list_scalar_bool(l, r, t->t, p);
+	} else if (bool_comp(t->t)) {
+	    if (ok_list_node(l) && (r->t == NUM || r->t == VEC)) {
+		ret = list_bool_comp(l, r, t->t, 0, p);
+	    } else if (ok_list_node(r) && (l->t == NUM || l->t == VEC)) {
+		ret = list_bool_comp(r, l, t->t, 1, p);
+	    } else if (ok_list_node(l) && ok_list_node(r)) {
+		ret = list_list_comp(r, l, t->t, p);
+	    } else {
+		p->err = E_TYPES;
+	    }
 	} else {
 	    p->err = E_TYPES;
 	}

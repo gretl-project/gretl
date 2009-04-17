@@ -96,6 +96,45 @@ smpl full
 \app{gretl} perform as many instructions as you want for each value of
 \texttt{d}, as long as they are allowed inside a loop.
 
+\subsection{Adding a time series to a panel}
+
+\emph{Problem:} You have a panel dataset (comprising observations of
+$n$ indidivuals in each of $T$ periods) and you want to add a variable
+which is available in straight time-series form.  For example, you
+want to add annual CPI data to a panel in order to deflate nominal
+income figures.
+
+In gretl a panel is represented in stacked time-series format, so in
+effect the task is to create a new variable which holds $n$ stacked
+copies of the original time series.  Let's say the panel comprises 500
+individuals observed in the years 1990, 1995 and 2000 ($n=500$,
+$T=3$), and we have these CPI data in the ASCII file \texttt{cpi.txt}:
+
+\begin{code}
+date cpi
+1990 130.658
+1995 152.383
+2000 172.192
+\end{code}
+
+What we need is for the CPI variable in the panel to repeat these
+three values 500 times.
+
+\emph{Solution:} Simple!  With the panel dataset open in gretl,
+\begin{code}
+append cpi.txt
+\end{code}
+
+\emph{Comment:} If the length of the time series is the same as the
+length of the time dimension in the panel (3 in this example), gretl
+will perform the stacking automatically.  Rather than using the
+\texttt{append} command you could use the ``Append data'' item under
+the \textsf{File} menu in the GUI program.  For this to work, your
+main dataset must be recognized as a panel.  This can be arranged via
+the \texttt{setobs} command or the ``Dataset structure'' item under
+the \textsf{Data} menu.
+
+
 \section{Creating/modifying variables}
 
 \subsection{Generating a dummy variable for a specific observation}
