@@ -4923,7 +4923,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    ret->v.xval = user_kalman_run(E, V, S, P, G, 
 					  *p->Z, p->dinfo,
-					  &p->err);
+					  p->prn, &p->err);
 	} 
     } else if (t->t == F_KSMOOTH) {
 	const char *P = NULL;

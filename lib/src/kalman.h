@@ -42,7 +42,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 
 void kalman_free (kalman *K);
 
-int kalman_forecast (kalman *K);
+int kalman_forecast (kalman *K, PRN *prn);
 
 double kalman_get_loglik (const kalman *K);
 
@@ -71,7 +71,7 @@ int kalman_parse_line (const char *line, const double **Z,
 
 int user_kalman_run (const char *E, const char *V, const char *S,
 		     const char *P, const char *G, double **Z,
-		     const DATAINFO *pdinfo, int *err);
+		     const DATAINFO *pdinfo, PRN *prn, int *err);
 
 gretl_matrix *user_kalman_smooth (const char *Pname, const char *Uname,
 				  int *err);

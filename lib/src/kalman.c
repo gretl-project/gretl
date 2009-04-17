@@ -1380,11 +1380,12 @@ static void kalman_initialize_error (kalman *K, int *missobs)
    a given Kalman coefficient matrix: here we call it.
 */
 
-static gretl_matrix *kalman_update_matrix (kalman *K, int i, int *err)
+static gretl_matrix *kalman_update_matrix (kalman *K, int i, 
+					   PRN *prn, int *err)
 {
     gretl_matrix *m = NULL;
 
-    *err = generate(K->matcalls[i], NULL, NULL, OPT_U, NULL);
+    *err = generate(K->matcalls[i], NULL, NULL, OPT_U, prn);
 
     if (!*err) {
 	m = get_matrix_by_name(K->mnames[i]);
@@ -1400,7 +1401,7 @@ static gretl_matrix *kalman_update_matrix (kalman *K, int i, int *err)
    the current time step.  This is called on a forward filtering pass.
 */
 
-static int kalman_refresh_matrices (kalman *K)
+static int kalman_refresh_matrices (kalman *K, PRN *prn)
 {
     const gretl_matrix **cptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R
@@ -1410,7 +1411,7 @@ static int kalman_refresh_matrices (kalman *K)
 
     for (i=0; i<NMATCALLS && !err; i++) {
 	if (matrix_is_varying(K, i)) {
-	    *cptr[i] = kalman_update_matrix(K, i, &err);
+	    *cptr[i] = kalman_update_matrix(K, i, prn, &err);
 	    if (!err) {
 		if (K->p > 0 && i >= K_Q) {
 		    cross_update = 1;
@@ -1446,6 +1447,7 @@ static int kalman_refresh_matrices (kalman *K)
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct: see kalman_new().
+ * @prn: printing apparatus (or %NULL).
  *
  * Generates a series of one-step ahead forecasts for y, based on
  * information entered initially using kalman_new(), and possibly
@@ -1457,7 +1459,7 @@ static int kalman_refresh_matrices (kalman *K)
  * Returns: 0 on success, non-zero on error.
  */
 
-int kalman_forecast (kalman *K)
+int kalman_forecast (kalman *K, PRN *prn)
 {
     double ldet;
     int update_P = 1;
@@ -1501,7 +1503,7 @@ int kalman_forecast (kalman *K)
 
 	if (filter_is_varying(K)) {
 	    /* we have time-varying coefficients */
-	    err = kalman_refresh_matrices(K);
+	    err = kalman_refresh_matrices(K, prn);
 	    if (err) {
 		K->loglik = NADBL;
 		break;
@@ -2108,7 +2110,7 @@ static int user_kalman_recheck_matrices (user_kalman *u)
 
     for (i=0; i<=K_P && !err; i++) {
 	if (i <= K_R && matrix_is_varying(K, i)) {
-	    *cptr[i] = kalman_update_matrix(K, i, &err);
+	    *cptr[i] = kalman_update_matrix(K, i, NULL, &err);
 	} else if (kalman_owns_matrix(K, i)) {
 	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
 	} else {
@@ -2498,7 +2500,7 @@ int user_kalman_run (const char *E, const char *V,
 		     const char *S, const char *P,
 		     const char *G, double **Z,
 		     const DATAINFO *pdinfo,
-		     int *err)
+		     PRN *prn, int *err)
 {
     user_kalman *u = get_user_kalman(-1);
     int smat[K_K+1] = {0};
@@ -2550,7 +2552,7 @@ int user_kalman_run (const char *E, const char *V,
     }
 
     if (!*err) {
-	*err = kalman_forecast(K);
+	*err = kalman_forecast(K, prn);
     }
 
     if (pdinfo != NULL) {
@@ -3098,7 +3100,7 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
 
     if (!*err) {
 	K->flags |= KALMAN_SMOOTH;
-	*err = kalman_forecast(K);
+	*err = kalman_forecast(K, NULL);
 	K->flags &= ~KALMAN_SMOOTH;
     }
 
@@ -3221,7 +3223,7 @@ static int kalman_simulate (kalman *K,
 
     for (K->t = 0; K->t < K->T; K->t += 1) {
 	if (filter_is_varying(K)) {
-	    err = kalman_refresh_matrices(K);
+	    err = kalman_refresh_matrices(K, NULL);
 	    if (err) {
 		break;
 	    }

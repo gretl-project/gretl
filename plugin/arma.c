@@ -957,7 +957,7 @@ kalman_arma_score_callback (const double *b, int i, void *data)
     int err;
 
     rewrite_kalman_matrices(K, b, i);
-    err = kalman_forecast(K);
+    err = kalman_forecast(K, NULL);
 
 #if ARMA_DEBUG
     fprintf(stderr, "kalman_arma_score: kalman f'cast gave "
@@ -1070,7 +1070,7 @@ static double kalman_arma_ll (const double *b, void *p)
     K = (kalman *) p;
     err = rewrite_kalman_matrices(K, b, KALMAN_ALL);
     if (!err) {
-	err = kalman_forecast(K);
+	err = kalman_forecast(K, NULL);
 	ll = kalman_get_loglik(K);
     }
 

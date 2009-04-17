@@ -4011,6 +4011,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     CMD *cmd = s->cmd;
     char *line = s->line;
     MODEL **models = s->models;
+    const double **Z = NULL;
     PRN *prn = s->prn;
     double rho;
     char runfile[MAXLEN];
@@ -4045,6 +4046,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	cmd->opt |= OPT_P; /* panel pooled flag */
     }
 
+    if (pZ != NULL) {
+	Z = (const double **) *pZ;
+    }
+
     gretl_error_clear();
 
     switch (cmd->ci) {
@@ -4067,7 +4072,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case COINT2:
-	err = johansen_test_simple(cmd->order, cmd->list, (const double **) *pZ, 
+	err = johansen_test_simple(cmd->order, cmd->list, Z, 
 				   pdinfo, cmd->opt, prn);
 	break;
 
@@ -4077,32 +4082,29 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    break;
 	}
 	if (cmd->opt & OPT_K) {
-	    err = kendall(cmd->list, (const double **) *pZ, pdinfo,
-			  cmd->opt, prn);
+	    err = kendall(cmd->list, Z, pdinfo, cmd->opt, prn);
 	} else if (cmd->opt & OPT_S) {
-	    err = spearman(cmd->list, (const double **) *pZ, pdinfo,
-			   cmd->opt, prn);
+	    err = spearman(cmd->list, Z, pdinfo, cmd->opt, prn);
 	} else {
-	    err = gretl_corrmx(cmd->list, (const double **) *pZ, pdinfo, 
-			       cmd->opt, prn);
+	    err = gretl_corrmx(cmd->list, Z, pdinfo, cmd->opt, prn);
 	}
 	break;
 
     case CORRGM:
 	order = atoi(cmd->param);
-	err = corrgram(cmd->list[1], order, 0, (const double **) *pZ, pdinfo, 
+	err = corrgram(cmd->list[1], order, 0, Z, pdinfo, 
 		       prn, cmd->opt | OPT_A);
 	break;
 
     case XCORRGM:
 	order = atoi(cmd->param);
-	err = xcorrgram(cmd->list, order, (const double **) *pZ, pdinfo, 
+	err = xcorrgram(cmd->list, order, Z, pdinfo, 
 			prn, cmd->opt | OPT_A);
 	break;
 
     case PERGM:
 	order = atoi(cmd->param);
-	err = periodogram(cmd->list[1], order, (const double **) *pZ, pdinfo, 
+	err = periodogram(cmd->list[1], order, Z, pdinfo, 
 			  cmd->opt | OPT_N, prn);
 	break;
 
@@ -4118,8 +4120,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case FREQ:
-	err = freqdist(cmd->list[1], (const double **) *pZ, 
-		       pdinfo, (s->flags == CONSOLE_EXEC),
+	err = freqdist(cmd->list[1], Z, pdinfo, (s->flags == CONSOLE_EXEC),
 		       cmd->opt, prn);
 	if (!err && !(cmd->opt & OPT_Q) && s->callback != NULL) {
 	    s->callback(s, pZ, pdinfo);
@@ -4147,7 +4148,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case CRITERIA:
-	err = parse_criteria(line, (const double **) *pZ, pdinfo, prn);
+	err = parse_criteria(line, Z, pdinfo, prn);
 	break;
 
     case DATA:
@@ -4217,13 +4218,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case GRAPH:
-	err = ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
-			  cmd->opt, prn);
+	err = ascii_graph(cmd->list, Z, pdinfo, cmd->opt, prn);
 	break;
 
     case PLOT:
-	err = ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
-			  (cmd->opt | OPT_T), prn);
+	err = ascii_graph(cmd->list, Z, pdinfo, (cmd->opt | OPT_T), prn);
 	break;
 
     case RMPLOT:
@@ -4233,11 +4232,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 1;
 	} else {
 	    if (cmd->ci == RMPLOT) {
-		err = rmplot(cmd->list, (const double **) *pZ, 
-			     pdinfo, prn);
+		err = rmplot(cmd->list, Z, pdinfo, prn);
 	    } else {
-		err = hurstplot(cmd->list, (const double **) *pZ, 
-				pdinfo, prn);
+		err = hurstplot(cmd->list, Z, pdinfo, prn);
 	    }
 	}
 	break;
@@ -4254,7 +4251,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SET:
-	err = execute_set_line(line, *pZ, pdinfo, prn);
+	err = execute_set_line(line, pdinfo, prn);
 	break;
 
     case SETINFO:
@@ -4262,7 +4259,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SETMISS:
-        set_miss(cmd->list, cmd->param, *pZ, pdinfo, prn);
+	if (pZ == NULL || pdinfo == NULL) {
+	    err = E_DATA;
+	} else {
+	    set_miss(cmd->list, cmd->param, *pZ, pdinfo, prn);
+	}
         break;
 
     case LABELS:
@@ -4277,8 +4278,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (*cmd->param != '\0') {
 	    do_print_string(cmd->param, prn);
 	} else {
-	    printdata(cmd->list, cmd->extra, (const double **) *pZ, pdinfo, 
-		      cmd->opt, prn);
+	    printdata(cmd->list, cmd->extra, Z, pdinfo, cmd->opt, prn);
 	}
 	break;
 
@@ -4296,12 +4296,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SUMMARY:
-	err = list_summary(cmd->list, (const double **) *pZ, pdinfo, prn);
+	err = list_summary(cmd->list, Z, pdinfo, prn);
 	break; 
 
     case XTAB:
-	err = crosstab(cmd->list, (const double **) *pZ, 
-		       pdinfo, cmd->opt, prn);
+	err = crosstab(cmd->list, Z, pdinfo, cmd->opt, prn);
 	break;
 
     case MAHAL:
@@ -4310,28 +4309,23 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case MEANTEST:
-	err = means_test(cmd->list, (const double **) *pZ, pdinfo, 
-			 cmd->opt, prn);
+	err = means_test(cmd->list, Z, pdinfo, cmd->opt, prn);
 	break;	
 
     case VARTEST:
-	err = vars_test(cmd->list, (const double **) *pZ, pdinfo, 
-			prn);
+	err = vars_test(cmd->list, Z, pdinfo, prn);
 	break;
 
     case RUNS:
-	err = runs_test(cmd->list[1], (const double **) *pZ, pdinfo, 
-			cmd->opt, prn);
+	err = runs_test(cmd->list[1], Z, pdinfo, cmd->opt, prn);
 	break;
 
     case SPEARMAN:
-	err = spearman(cmd->list, (const double **) *pZ, pdinfo, 
-		       cmd->opt, prn);
+	err = spearman(cmd->list, Z, pdinfo, cmd->opt, prn);
 	break;
 
     case DIFFTEST:
-	err = diff_test(cmd->list, (const double **) *pZ, pdinfo, 
-			cmd->opt, prn);
+	err = diff_test(cmd->list, Z, pdinfo, cmd->opt, prn);
 	break;
 
     case OUTFILE:
@@ -4339,7 +4333,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SETOBS:
-	err = set_obs(line, *pZ, pdinfo, cmd->opt);
+	if (pZ == NULL || pdinfo == NULL) {
+	    err = E_DATA;
+	} else {
+	    err = set_obs(line, *pZ, pdinfo, cmd->opt);
+	}
 	if (!err) {
 	    if (pdinfo->n > 0) {
 		print_smpl(pdinfo, 0, prn);
@@ -4374,8 +4372,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (gretl_messages_on()) {
 	    pprintf(prn, _("store: using filename %s\n"), cmd->param);
 	}
-	err = write_data(cmd->param, cmd->list, (const double **) *pZ,
-			 pdinfo, cmd->opt, NULL);
+	err = write_data(cmd->param, cmd->list, Z, pdinfo, cmd->opt, NULL);
 	if (!err && gretl_messages_on()) {
 	    pprintf(prn, _("Data written OK.\n"));
 	}
@@ -4395,7 +4392,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #ifdef ENABLE_GMP
     case MPOLS:
 	clear_model(models[0]);
-	*models[0] = mp_ols(cmd->list, (const double **) *pZ, pdinfo);
+	*models[0] = mp_ols(cmd->list, Z, pdinfo);
 	err = maybe_print_model(models[0], pdinfo, prn, s);
 	break;
 #endif
@@ -4407,8 +4404,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->ci == AR) {
 	    *models[0] = ar_func(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
-	    *models[0] = arma(cmd->list, cmd->param, (const double **) *pZ, 
-			      pdinfo, cmd->opt, prn);
+	    *models[0] = arma(cmd->list, cmd->param, Z, pdinfo, 
+			      cmd->opt, prn);
 	} else {
 	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,
 				    cmd->opt, prn);
@@ -4472,8 +4469,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == PANEL) {
 	    *models[0] = panel_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == ARBOND) {
-	    *models[0] = arbond_model(cmd->list, cmd->param, (const double **) *pZ, 
-				      pdinfo, cmd->opt, prn);
+	    *models[0] = arbond_model(cmd->list, cmd->param, Z, pdinfo, 
+				      cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
 	    *models[0] = intreg(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else {
@@ -4487,8 +4484,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case GMM:
     case MLE:
     case NLS:
-	err = nl_parse_line(cmd->ci, line, (const double **) *pZ, 
-			    pdinfo, prn);
+	err = nl_parse_line(cmd->ci, line, Z, pdinfo, prn);
 	if (!err) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	} 
@@ -4502,8 +4498,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case KALMAN:
-	err = kalman_parse_line(line, (const double **) *pZ,
-				pdinfo, cmd->opt);
+	err = kalman_parse_line(line, Z, pdinfo, cmd->opt);
 	if (!err && (cmd->opt == OPT_NONE)) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
@@ -4561,8 +4556,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case NORMTEST:
-	err = gretl_normality_test(cmd->param, (const double **) *pZ, 
-				   pdinfo, cmd->opt, prn);
+	err = gretl_normality_test(cmd->param, Z, pdinfo, cmd->opt, prn);
 	break;
 
     case HAUSMAN:
@@ -4662,11 +4656,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, pZ, pdinfo);
 	} else if (!strcmp(cmd->param, "foreign")) {
-	    err = foreign_execute((const double **) *pZ, pdinfo, 
-				  cmd->opt, prn);
+	    err = foreign_execute(Z, pdinfo, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "kalman")) {
-	    err = kalman_parse_line(line, (const double **) *pZ,
-				    pdinfo, cmd->opt);
+	    err = kalman_parse_line(line, Z, pdinfo, cmd->opt);
 	} else {
 	    err = 1;
 	}
@@ -4675,11 +4667,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case VAR:
     case VECM:
 	if (cmd->ci == VAR) {
-	    s->var = gretl_VAR(cmd->order, cmd->list, (const double **) *pZ, 
-			       pdinfo, cmd->opt, prn, &err);
+	    s->var = gretl_VAR(cmd->order, cmd->list, Z, pdinfo, 
+			       cmd->opt, prn, &err);
 	} else {
-	    s->var = gretl_VECM(cmd->order, cmd->aux, cmd->list, (const double **) *pZ,
-				pdinfo, cmd->opt, prn, &err);
+	    s->var = gretl_VECM(cmd->order, cmd->aux, cmd->list, Z, pdinfo, 
+				cmd->opt, prn, &err);
 	}
 	if (s->var != NULL) {
 	    if (s->callback != NULL) {
@@ -4726,8 +4718,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case BXPLOT:
 	/* in this context we only do plots in batch mode (OPT_B) */
 	if (cmd->ci == GNUPLOT) {
-	    err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			  pdinfo, cmd->opt | OPT_B);
+	    err = gnuplot(cmd->list, cmd->param, Z, pdinfo, cmd->opt | OPT_B);
 	} else if (cmd_nolist(cmd)) { 
 	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
 	} else {

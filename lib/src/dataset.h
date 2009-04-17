@@ -62,7 +62,7 @@ typedef enum {
  * Attempt to determine whether a data set contains cross-sectional
  * data (1) or not (0).
  */
-#define dataset_is_cross_section(p) ((p)->structure == CROSS_SECTION)
+#define dataset_is_cross_section(p) (p != NULL && p->structure == CROSS_SECTION)
 
 /**
  * dataset_is_time_series:
@@ -71,8 +71,8 @@ typedef enum {
  * Attempt to determine whether a data set contains time series
  * data (1) or not (0).
  */
-#define dataset_is_time_series(p) ((p)->structure == TIME_SERIES || \
-				   (p)->structure == SPECIAL_TIME_SERIES)
+#define dataset_is_time_series(p) (p != NULL && (p->structure == TIME_SERIES || \
+						 p->structure == SPECIAL_TIME_SERIES))
 
 /**
  * dataset_is_seasonal:
@@ -81,9 +81,9 @@ typedef enum {
  * Attempt to determine whether a data set contains seasonal time series
  * data (1) or not (0).
  */
-#define dataset_is_seasonal(p) (((p)->structure == TIME_SERIES || \
-                                (p)->structure == SPECIAL_TIME_SERIES) && \
-                                (p)->pd > 1)
+#define dataset_is_seasonal(p) (p != NULL && (p->structure == TIME_SERIES || \
+                                p->structure == SPECIAL_TIME_SERIES) && \
+                                p->pd > 1)
 
 /**
  * custom_time_series:
@@ -92,7 +92,7 @@ typedef enum {
  * Attempt to determine whether a data set contains time series
  * data with custom (non-standard) frequency (1) or not (0).
  */
-#define custom_time_series(p) ((p)->structure == SPECIAL_TIME_SERIES)
+#define custom_time_series(p) (p != NULL && p->structure == SPECIAL_TIME_SERIES)
 
 /**
  * dataset_is_daily:
@@ -101,7 +101,7 @@ typedef enum {
  * Attempt to determine whether a data set contains daily time series
  * data (1) or not (0).
  */
-#define dataset_is_daily(p) (p->structure == TIME_SERIES \
+#define dataset_is_daily(p) (p != NULL && p->structure == TIME_SERIES \
                              && (p->pd == 5 || p->pd == 6 || p->pd == 7))
 
 /**
@@ -111,7 +111,7 @@ typedef enum {
  * Attempt to determine whether a data set contains weekly time series
  * data (1) or not (0).
  */
-#define dataset_is_weekly(p) (p->structure == TIME_SERIES \
+#define dataset_is_weekly(p) (p != NULL && p->structure == TIME_SERIES \
                               && p->pd == 52)
 
 /**
@@ -121,7 +121,7 @@ typedef enum {
  * Attempt to determine whether a data set contains hourly time series
  * data (1) or not (0).
  */
-#define dataset_is_hourly(p) (p->structure == TIME_SERIES \
+#define dataset_is_hourly(p) (p != NULL && p->structure == TIME_SERIES \
                               && p->pd == 24)
 
 /**
@@ -131,7 +131,7 @@ typedef enum {
  * Attempt to determine whether a data set contains decennial time series
  * data (1) or not (0).
  */
-#define dataset_is_decennial(p) (p->structure == TIME_SERIES \
+#define dataset_is_decennial(p) (p != NULL && p->structure == TIME_SERIES \
                                  && p->pd == 10)
 
 /**
@@ -141,7 +141,7 @@ typedef enum {
  * Attempt to determine whether a data set contains dated daily time series
  * data (1) or not (0).
  */
-#define dated_daily_data(p) (p->structure == TIME_SERIES \
+#define dated_daily_data(p) (p != NULL && p->structure == TIME_SERIES \
                              && (p->pd == 5 || p->pd == 6 || p->pd == 7) \
                              && p->sd0 > 10000.0)
 
@@ -152,7 +152,7 @@ typedef enum {
  * Attempt to determine whether a data set contains dated daily 
  * (seven-day) time series data (1) or not (0).
  */
-#define dated_seven_day_data(p) (p->structure == TIME_SERIES \
+#define dated_seven_day_data(p) (p != NULL && p->structure == TIME_SERIES \
                                  && p->pd == 7 && \
                                  p->sd0 > 10000.0)
 
@@ -163,7 +163,7 @@ typedef enum {
  * Attempt to determine whether a data set contains dated weekly 
  * time series data (1) or not (0).
  */
-#define dated_weekly_data(p) (p->structure == TIME_SERIES \
+#define dated_weekly_data(p) (p != NULL && p->structure == TIME_SERIES \
                               && p->pd == 52 && \
                               p->sd0 > 10000.0)
 
@@ -174,7 +174,7 @@ typedef enum {
  * Attempt to determine whether a data set uses calendar
  * dates for observation strings (1) or not (0).
  */
-#define calendar_data(p) (p->structure == TIME_SERIES && \
+#define calendar_data(p) (p != NULL && p->structure == TIME_SERIES && \
                           (p->pd == 5 || p->pd == 6 || p->pd == 7 \
                            || p->pd == 52) && p->sd0 > 10000.0) 
 
@@ -185,7 +185,7 @@ typedef enum {
  * Attempt to determine whether a data set is a quarterly
  * or monthly time series (1), or something else (0).
  */
-#define quarterly_or_monthly(p) (p->structure == TIME_SERIES && \
+#define quarterly_or_monthly(p) (p != NULL && p->structure == TIME_SERIES && \
                                  (p->pd == 4 || p->pd == 12))
 
 /**
@@ -195,7 +195,7 @@ typedef enum {
  * Attempt to determine whether a data set contains panel
  * data (1) or not (0).
  */
-#define dataset_is_panel(p) ((p)->structure == STACKED_TIME_SERIES)
+#define dataset_is_panel(p) (p != NULL && p->structure == STACKED_TIME_SERIES)
 
 /**
  * var_is_discrete:
@@ -205,7 +205,7 @@ typedef enum {
  * Determine whether a variable should be treated as discrete
  * or not.
  */
-#define var_is_discrete(p, i) ((p)->varinfo[i]->flags & VAR_DISCRETE)
+#define var_is_discrete(p, i) (p->varinfo[i]->flags & VAR_DISCRETE)
 
 /**
  * var_is_hidden:
@@ -214,7 +214,7 @@ typedef enum {
  *
  * Determine whether or not a variable is hidden.
  */
-#define var_is_hidden(p, i) ((p)->varinfo[i]->flags & VAR_HIDDEN)
+#define var_is_hidden(p, i) (p->varinfo[i]->flags & VAR_HIDDEN)
 
 /**
  * var_is_generated:
@@ -224,7 +224,7 @@ typedef enum {
  * Determine whether or not a variable was generated using
  * a formula or transformation function.
  */
-#define var_is_generated(p, i) ((p)->varinfo[i]->flags & VAR_GENERATED)
+#define var_is_generated(p, i) (p->varinfo[i]->flags & VAR_GENERATED)
 
 /**
  * var_is_listarg:
@@ -234,7 +234,7 @@ typedef enum {
  * Determine whether or not a variable has been marked as
  * belonging to a list argument to a function.
  */
-#define var_is_listarg(p, i) ((p)->varinfo[i]->flags & VAR_LISTARG)
+#define var_is_listarg(p, i) (p->varinfo[i]->flags & VAR_LISTARG)
 
 /**
  * set_var_listarg:
@@ -243,7 +243,7 @@ typedef enum {
  *
  * Set the "listarg" flag on the given variable.
  */
-#define set_var_listarg(p, i) ((p)->varinfo[i]->flags |= VAR_LISTARG)
+#define set_var_listarg(p, i) (p->varinfo[i]->flags |= VAR_LISTARG)
 
 /**
  * unset_var_listarg:
@@ -252,7 +252,7 @@ typedef enum {
  *
  * Remove the "listarg" flag from the given variable.
  */
-#define unset_var_listarg(p, i) ((p)->varinfo[i]->flags &= ~VAR_LISTARG)
+#define unset_var_listarg(p, i) (p->varinfo[i]->flags &= ~VAR_LISTARG)
 
 #define sample_size(p) ((p == NULL)? 0 : (p->t2 - p->t1 + 1))
 

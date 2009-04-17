@@ -1256,7 +1256,6 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	if (model_sample_problem(pmod, pdinfo)) {
 	    pputs(prn, _("Can't do: the current data set is different from "
 			 "the one on which\nthe reference model was estimated\n"));
-	    fprintf(stderr, "bad 3\n");
 	    err = E_DATA;
 	}
     } else if (type == GRETL_OBJ_SYS) {

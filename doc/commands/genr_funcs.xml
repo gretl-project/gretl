@@ -2048,6 +2048,17 @@
 	  if numerical problems are encountered.
 	</para>
 	<para>
+	  The optional matrix arguments can be used to retrieve the following
+	  information: <argname>E</argname> gets the matrix of one-step ahead
+	  prediction errors and <argname>V</argname> gets the variance matrix
+	  for these errors; <argname>S</argname> gets the matrix of estimated
+	  values of the state vector and <argname>P</argname> the variance
+	  matrix of these estimates; <argname>G</argname> gets the Kalman
+	  gain.  All of these matrices have <math>T</math> rows, corresponding
+	  to <math>T</math> observations.  For the column dimensions and
+	  further details see <guideref targ="chap:kalman"/>.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="ksmooth"/>
 	    <fncref targ="ksimul"/>

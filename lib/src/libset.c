@@ -715,7 +715,6 @@ static int negval_invalid (const char *var)
 }
 
 static int libset_get_scalar (const char *var, const char *arg, 
-			      double **Z, DATAINFO *pdinfo,
 			      int *pi, double *px)
 {
     double x = NADBL;
@@ -900,10 +899,10 @@ static int set_line_width (const char *s0, const char *s1,
     if (isdigit((unsigned char) *s0)) {
 	v = atoi(s0);
     } else {
-	v = series_index(pdinfo, s0);
+	v = current_series_index(pdinfo, s0);
     }
 
-    if (v < 1 || v >= pdinfo->v) {
+    if (v < 0) {
 	return E_DATA;
     }
 
@@ -921,15 +920,14 @@ static int set_line_width (const char *s0, const char *s1,
 }
 
 static int set_bkbp_limits (const char *s0, const char *s1,
-			    double **Z, DATAINFO *pdinfo,
 			    PRN *prn)
 {
     int p0, p1;
     int err = 0;
 
-    err = libset_get_scalar(NULL, s0, Z, pdinfo, &p0, NULL);
+    err = libset_get_scalar(NULL, s0, &p0, NULL);
     if (!err) {
-	err = libset_get_scalar(NULL, s1, Z, pdinfo, &p1, NULL);
+	err = libset_get_scalar(NULL, s1, &p1, NULL);
     }
 
     if (err) {
@@ -952,7 +950,7 @@ static int set_bkbp_limits (const char *s0, const char *s1,
     return 0;
 }
 
-static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
+static int set_initvals (const char *s, PRN *prn)
 {
     gretl_matrix *m;
     char mname[VNAMELEN];
@@ -1334,8 +1332,7 @@ libset_query_settings (const char *s, PRN *prn)
 #define boolean_off(s) (!strcmp(s, "off") || !strcmp(s, "0") || \
                         !strcmp(s, "false"))
 
-int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo, 
-		      PRN *prn)
+int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 {
     char setobj[32], setarg[32], setarg2[32];
     int k, nw, err = E_PARSE;
@@ -1356,7 +1353,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	if (!strcmp(setobj, "plotfile")) {
 	    return parse_set_plotfile(line);
 	} else if (!strcmp(setobj, "initvals")) {
-	    return set_initvals(line, pdinfo, prn);
+	    return set_initvals(line, prn);
 	} else if (!strcmp(setobj, "shelldir")) {
 	    return set_shelldir(line);
 	} else if (!strcmp(setobj, "codevars")) {
@@ -1395,7 +1392,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		libset_set_double(setobj, NADBL);
 		err = 0;
 	    } else {
-		err = libset_get_scalar(NULL, setarg, Z, pdinfo, NULL, &x);
+		err = libset_get_scalar(NULL, setarg, NULL, &x);
 		if (!err) {
 		    err = libset_set_double(setobj, x);
 		}
@@ -1408,7 +1405,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "seed")) {
-	    err = libset_get_scalar(NULL, setarg, Z, pdinfo, &k, NULL);
+	    err = libset_get_scalar(NULL, setarg, &k, NULL);
 	    if (!err) {
 		gretl_rand_set_seed((unsigned int) k);
 		if (gretl_messages_on() && !gretl_looping_quietly()) {
@@ -1423,7 +1420,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		state->horizon = UNSET_INT;
 		err = 0;
 	    } else {
-		err = libset_get_scalar(NULL, setarg, Z, pdinfo, &k, NULL);
+		err = libset_get_scalar(NULL, setarg, &k, NULL);
 		if (!err) {
 		    state->horizon = k;
 		} else {
@@ -1433,7 +1430,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	} else if (coded_intvar(setobj)) {
 	    err = parse_libset_int_code(setobj, setarg);
 	} else if (libset_int(setobj)) {
-	    err = libset_get_scalar(setobj, setarg, Z, pdinfo, &k, NULL);
+	    err = libset_get_scalar(setobj, setarg, &k, NULL);
 	    if (!err) {
 		err = libset_set_int(setobj, k);
 	    }
@@ -1442,7 +1439,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	}
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
-	    err = set_bkbp_limits(setarg, setarg2, Z, pdinfo, prn);
+	    err = set_bkbp_limits(setarg, setarg2, prn);
 	} else if (!strcmp(setobj, "linewidth")) {
 	    err = set_line_width(setarg, setarg2, pdinfo, prn);
 	} else {
