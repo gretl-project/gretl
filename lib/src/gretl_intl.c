@@ -578,7 +578,7 @@ void force_language (int langid)
 	}
     }
 
-# ifdef WIN32
+# if defined(WIN32)
     if (langid == LANG_C) {
 	SetEnvironmentVariable("LC_ALL", "C");
 	putenv("LC_ALL=C");
@@ -592,6 +592,13 @@ void force_language (int langid)
 	putenv(estr);
 	SetEnvironmentVariable("LANG", lcode);
 	sprintf(estr, "LANG=%s", lcode);
+	putenv(estr);
+    }
+# elif defined(OSX_BUILD)
+    if (langid != LANG_C) {
+	char estr[64];
+
+	sprintf(estr, "LANGUAGE=%s", lang_string_from_id(langid));
 	putenv(estr);
     }
 # endif
