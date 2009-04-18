@@ -600,7 +600,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    *clr->vname = '\0';
 	    strncat(clr->vname, s, VNAMELEN - 1);
 	    clr->val = (int) gretl_scalar_get_value(s);
-	} else if ((v = series_index(pdinfo, s)) < pdinfo->v) {
+	} else if ((v = current_series_index(pdinfo, s)) >= 0) {
 	    /* found a series by the name of s */
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), s);
 	} else if (loop->parent != NULL && strlen(s) == gretl_namechar_spn(s)) {
@@ -868,10 +868,10 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
     if (sscanf(s, "%15[^.]..%15s", vn1, vn2) != 2) {
 	err = E_PARSE;
     } else {
-	v1 = series_index(pdinfo, vn1);
-	v2 = series_index(pdinfo, vn2);
+	v1 = current_series_index(pdinfo, vn1);
+	v2 = current_series_index(pdinfo, vn2);
 
-	if (v1 >= pdinfo->v || v2 >= pdinfo->v) {
+	if (v1 < 0 || v2 < 0) {
 	    err = 1;
 	} else {
 	    nf = v2 - v1 + 1;

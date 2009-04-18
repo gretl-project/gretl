@@ -1942,8 +1942,8 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 	    /* left-hand side variable */
 	    *err = extract_varname(vname, p, &len);
 	    if (!*err) {
-		v = series_index(pdinfo, vname);
-		if (v == pdinfo->v) {
+		v = current_series_index(pdinfo, vname);
+		if (v < 0) {
 		    *err = E_UNKVAR;
 		} else {
 		    p += len;
@@ -1971,8 +1971,8 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 		*err = E_PARSE;
 	    }
 	    if (!*err) {
-		v = series_index(pdinfo, vname);
-		if (v == pdinfo->v) {
+		v = current_series_index(pdinfo, vname);
+		if (v < 0) {
 		    *err = E_UNKVAR;
 		} else {
 		    p += len;

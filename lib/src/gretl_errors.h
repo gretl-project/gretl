@@ -64,10 +64,11 @@ enum gretl_error_codes {
     E_BADOPT,      /* 40 */
     E_NOIDENT,     /* 41 */
     E_EXTERNAL,    /* 42 */
-    E_TOOLONG,     /* 43 : command line too long */
-    E_DB_DUP,      /* 44 : duplicate vars found when saving to database */
-    E_OK,          /* 45 : not really an error */
-    E_MAX          /* 46 */
+    E_TOOLONG,     /* 43 */
+    E_NODATA,      /* 44 */
+    E_DB_DUP,      /* 45 : duplicate vars found when saving to database */
+    E_OK,          /* 46 : not really an error */
+    E_MAX          /* 47 */
 }; 
 
 void errmsg (int err, PRN *prn);

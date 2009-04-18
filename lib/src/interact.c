@@ -2899,8 +2899,7 @@ int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn)
     return 0;
 }
 
-static int parse_criteria (const char *line, const double **Z,
-			   const DATAINFO *pdinfo, PRN *prn)
+static int parse_criteria (const char *line, PRN *prn)
 {
     char essstr[32], Tstr[9], kstr[9];
     double ess = NADBL;
@@ -3643,8 +3642,9 @@ static int set_var_info (const char *line, gretlopt opt,
     char *p, vname[VNAMELEN];
     int v;
 
-    if (pdinfo->varinfo == NULL) {
-	return 1;
+    if (pdinfo == NULL || pdinfo->varinfo == NULL) {
+	gretl_errmsg_set(_("No dataset is in place"));
+	return E_DATA;
     }
 
     /* skip command word plus space */
@@ -3845,7 +3845,7 @@ static int do_pca (int *list, double ***pZ, DATAINFO *pdinfo,
 
 static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 {
-    if (pdinfo->descrip != NULL) {
+    if (pdinfo != NULL && pdinfo->descrip != NULL) {
 	pprintf(prn, "%s\n", pdinfo->descrip);
     } else {
 	pputs(prn, _("No data information is available.\n"));
@@ -4148,7 +4148,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case CRITERIA:
-	err = parse_criteria(line, Z, pdinfo, prn);
+	err = parse_criteria(line, prn);
 	break;
 
     case DATA:
@@ -4259,7 +4259,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SETMISS:
-	if (pZ == NULL || pdinfo == NULL) {
+	if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
 	    err = E_DATA;
 	} else {
 	    set_miss(cmd->list, cmd->param, *pZ, pdinfo, prn);
@@ -4333,8 +4333,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SETOBS:
-	if (pZ == NULL || pdinfo == NULL) {
-	    err = E_DATA;
+	if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	    err = E_NODATA;
 	} else {
 	    err = set_obs(line, *pZ, pdinfo, cmd->opt);
 	}
@@ -4351,7 +4351,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SMPL:
-	if (cmd->opt == OPT_F) {
+	if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	    err = E_NODATA;
+	} else if (cmd->opt == OPT_F) {
 	    err = restore_full_sample(pZ, pdinfo, s);
 	} else if (cmd->opt) {
 	    err = restrict_sample(line, cmd->list, pZ, pdinfo, 
@@ -4365,14 +4367,17 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case STORE:
-	if (*cmd->param == '\0') {
+	if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	    err = E_NODATA;
+	} else if (*cmd->param == '\0') {
 	    pputs(prn, _("store: no filename given\n"));
-	    break;
-	}
-	if (gretl_messages_on()) {
+	    err = E_PARSE;
+	} else if (gretl_messages_on()) {
 	    pprintf(prn, _("store: using filename %s\n"), cmd->param);
 	}
-	err = write_data(cmd->param, cmd->list, Z, pdinfo, cmd->opt, NULL);
+	if (!err) {
+	    err = write_data(cmd->param, cmd->list, Z, pdinfo, cmd->opt, NULL);
+	}
 	if (!err && gretl_messages_on()) {
 	    pprintf(prn, _("Data written OK.\n"));
 	}

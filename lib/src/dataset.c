@@ -2884,6 +2884,10 @@ int modify_dataset (int op, const int *list, const char *s,
     static int resampled;
     int k = 0, err = 0;
 
+    if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	return E_NODATA;
+    }
+
     if (op == DS_CLEAR) {
 	/* must be handled by the calling program */
 	return E_NOTIMP;

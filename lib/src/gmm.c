@@ -132,7 +132,7 @@ static int
 oc_get_type (const char *name, const DATAINFO *pdinfo, int *err)
 {
     int *list = NULL;
-    int j, v = series_index(pdinfo, name);
+    int j, v = current_series_index(pdinfo, name);
     int ret = GRETL_TYPE_NONE;
 
 #if GMM_DEBUG
@@ -140,7 +140,7 @@ oc_get_type (const char *name, const DATAINFO *pdinfo, int *err)
 	    name, v, pdinfo->v);
 #endif
 
-    if (v >= 0 && v < pdinfo->v) {
+    if (v >= 0) {
 	/* try for a series first */
 	ret = GRETL_TYPE_SERIES;
     } else if (get_matrix_by_name(name) != NULL) {

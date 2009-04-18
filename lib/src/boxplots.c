@@ -737,8 +737,8 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		    err = E_DATA;
 		}
 	    } else if (isalpha(tok[0])) {
-		v = series_index(pdinfo, tok);
-		if (v < origv) {
+		v = current_series_index(pdinfo, tok);
+		if (v >= 0) {
 		    list[++i] = v;
 		} else {
 		    gretl_errmsg_sprintf(_("got invalid varname '%s'"), tok);

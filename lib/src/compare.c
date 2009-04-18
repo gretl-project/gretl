@@ -2318,9 +2318,9 @@ static void save_chow_test (MODEL *pmod, char *chowparm,
 static int get_chow_dummy (const char *s, const double **Z,
 			   const DATAINFO *pdinfo, int *err)
 {
-    int v = series_index(pdinfo, s);
+    int v = current_series_index(pdinfo, s);
 
-    if (v >= pdinfo->v) {
+    if (v < 0) {
 	*err = E_UNKVAR;
 	return 0;
     } else if (!gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v])) {

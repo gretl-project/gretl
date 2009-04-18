@@ -5591,8 +5591,8 @@ int gretl_normality_test (const char *param,
     err = incompatible_options(opt, OPT_A|OPT_D|OPT_W|OPT_J|OPT_L);
 
     if (!err) {
-	v = series_index(pdinfo, param);
-	if (v == pdinfo->v) {
+	v = current_series_index(pdinfo, param);
+	if (v < 0) {
 	    err = E_UNKVAR;
 	} 
     }

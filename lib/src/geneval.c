@@ -447,8 +447,7 @@ static NODE *aux_scalar_node (parser *p)
 
 static void no_data_error (parser *p)
 {
-    gretl_errmsg_set(_("No dataset is in place"));
-    p->err = E_DATA;
+    p->err = E_NODATA;
 }
 
 static NODE *aux_vec_node (parser *p, int n)

@@ -1822,11 +1822,11 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
    @v.  We return 1 if this checks out OK, otherwise 0.
 */
 
-static int plot_ols_var_ok (const char *vname, int v)
+static int plot_ols_var_ok (const char *vname)
 {
-    int vi = series_index(datainfo, vname);
+    int v = current_series_index(datainfo, vname);
 
-    if (vi < datainfo->v && !strcmp(datainfo->varname[vi], vname)) {
+    if (v >= 0 && !strcmp(datainfo->varname[v], vname)) {
 	return 1;
     }
 
@@ -2101,12 +2101,12 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	}
 
 	if (sscanf(gpline, "# X = '%15[^\']' (%d)", vname, &v) == 2) {
-	    if (plot_ols_var_ok(vname, v)) {
+	    if (plot_ols_var_ok(vname)) {
 		reglist[2] = v;
 	    }
 	    continue;
 	} else if (sscanf(gpline, "# Y = '%15[^\']' (%d)", vname, &v) == 2) {
-	    if (reglist[2] > 0 && plot_ols_var_ok(vname, v)) {
+	    if (reglist[2] > 0 && plot_ols_var_ok(vname)) {
 		reglist[0] = 3;
 		reglist[1] = v;
 	    }
