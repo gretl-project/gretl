@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-04-13 21:55-0400\n"
-"PO-Revision-Date: 2009-03-29 03:14+0300\n"
+"PO-Revision-Date: 2009-04-18 12:15-0400\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -5041,19 +5041,19 @@ msgstr "          Сумма квадратов"
 #: lib/src/modelprint.c:4634 lib/src/varprint.c:940 lib/src/varprint.c:944
 #: lib/src/varprint.c:948 gui2/calculator.c:1963 gui2/calculator.c:1966
 msgid "df"
-msgstr "     Ст. свободы"
+msgstr "Ст. свободы"
 
 #: lib/src/modelprint.c:4634
 msgid "Mean square"
-msgstr "    Среднее квадратов"
+msgstr "Среднее квадратов"
 
 #: lib/src/modelprint.c:4637
 msgid "Regression"
-msgstr "Регрессия  "
+msgstr "Регрессия"
 
 #: lib/src/modelprint.c:4640
 msgid "Residual"
-msgstr "Остатки    "
+msgstr "Остатки"
 
 #: lib/src/modelprint.c:4643
 msgid "Total"

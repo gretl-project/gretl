@@ -1586,14 +1586,16 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 
 static void 
 get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
-			 char *haystack)
+			 char *haystack, int vnames)
 {
     gchar *tmp;
 
     gtk_tree_model_get(mod, iter, col, &tmp, -1);
     if (tmp != NULL) {
 	strcpy(haystack, tmp);
-	lower(haystack);
+	if (!vnames) {
+	    lower(haystack);
+	}
 	g_free(tmp);
     } else {
 	*haystack = '\0';
@@ -1608,10 +1610,18 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     char pstr[16];
     GtkTreeModel *model;
     GtkTreeIter iter;
+    gpointer vp;
+    int vnames = 0;
     int found = -1;
 
     /* if searching in the main gretl window, start on line 1 */
     minvar = (win == mdata)? 1 : 0;
+
+    /* are we confining the search to variable names? */
+    vp = g_object_get_data(G_OBJECT(p), "vnames_only");
+    if (vp != NULL) {
+	vnames = GPOINTER_TO_INT(vp);
+    }
 
     if (needle != NULL) {
 	g_free(needle);
@@ -1619,7 +1629,9 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     }
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
-    lower(needle);
+    if (!vnames) {
+	lower(needle);
+    }
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox));
 
@@ -1635,17 +1647,17 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
 
     while (found < 0) {
 	/* try looking in column 1 first */
-	get_tree_model_haystack(model, &iter, 1, haystack);
+	get_tree_model_haystack(model, &iter, 1, haystack, vnames);
 
 	found = look_for_string(haystack, needle, 0);
 
-	if (found < 0) {
+	if (found < 0 && !vnames) {
 	    if (win == mdata) {
 		/* then column 2 */
-		get_tree_model_haystack(model, &iter, 2, haystack);
+		get_tree_model_haystack(model, &iter, 2, haystack, vnames);
 	    } else {
 		/* then column 0 */
-		get_tree_model_haystack(model, &iter, 0, haystack);
+		get_tree_model_haystack(model, &iter, 0, haystack, vnames);
 	    }
 	    found = look_for_string(haystack, needle, 0);
 	}
@@ -1701,6 +1713,17 @@ static void parent_find (GtkWidget *finder, windata_t *caller)
     }
 }
 
+static void toggle_vname_search (GtkToggleButton *tb, GtkWidget *w)
+{
+    if (gtk_toggle_button_get_active(tb)) {
+	g_object_set_data(G_OBJECT(w), "vnames_only",
+			  GINT_TO_POINTER(1));
+    } else {
+	g_object_set_data(G_OBJECT(w), "vnames_only",
+			  GINT_TO_POINTER(0));
+    }
+}
+
 static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 {
     GtkWidget *label;
@@ -1722,9 +1745,9 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 		     G_CALLBACK(close_find_dialog),
 		     find_window);
 
-    hbox = gtk_hbox_new(TRUE, TRUE);
+    hbox = gtk_hbox_new(FALSE, 5);
     label = gtk_label_new(_(" Find what:"));
-    gtk_widget_show (label);
+    gtk_widget_show(label);
     find_entry = gtk_entry_new();
 
     if (needle != NULL) {
@@ -1737,12 +1760,23 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 
     gtk_widget_show(find_entry);
 
-    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), find_entry, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), find_entry, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_window)->vbox), 
-		       hbox, TRUE, TRUE, 0);
+		       hbox, TRUE, TRUE, 5);
+
+    if (vwin == mdata) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	button = gtk_check_button_new_with_label(_("Variable names only (case sensitive)"));
+	g_signal_connect(G_OBJECT(button), "toggled",
+			 G_CALLBACK(toggle_vname_search), find_window);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	gtk_widget_show_all(hbox);
+	gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_window)->vbox), 
+			   hbox, FALSE, FALSE, 0);
+    }
 
     hbox = GTK_DIALOG(find_window)->action_area;
 

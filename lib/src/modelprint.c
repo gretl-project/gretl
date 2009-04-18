@@ -4621,6 +4621,9 @@ static void logit_probit_stats (const MODEL *pmod,
 int ols_print_anova (const MODEL *pmod, PRN *prn)
 {
     double mst, msr, mse, rss;
+#ifdef ENABLE_NLS
+    int n, c1, c2, c3;
+#endif
 
     if (pmod->ci != OLS || !pmod->ifc ||
 	na(pmod->ess) || na(pmod->tss)) {
@@ -4631,16 +4634,66 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 
     rss = pmod->tss - pmod->ess;
 
+#ifdef ENABLE_NLS
+    c1 = g_utf8_strlen(_("Sum of squares"), -1);
+    c2 = g_utf8_strlen(_("df"), -1);
+    c3 = g_utf8_strlen(_("Mean square"), -1);
+
+    c1 = (c1 < 35)? 35 : c1;
+    c2 = (c2 > 8)? c2 + 1 : (c2 < 8)? 8 : c2;
+    c3 = (c3 > 16)? c3 + 1 : (c3 < 16)? 16 : c3;
+
+    /* header strings are right-aligned */
+    n = g_utf8_strlen(_("Sum of squares"), -1);
+    bufspace(c1 - n, prn);
+    pputs(prn, _("Sum of squares"));
+    n = g_utf8_strlen(_("df"), -1);
+    bufspace(c2 + 1 - n, prn);
+    pputs(prn, _("df"));
+    n = g_utf8_strlen(_("Mean square"), -1);
+    bufspace(c3 + 1 - n, prn);
+    pputs(prn, _("Mean square"));
+    pputs(prn, "\n\n");
+    c1 = 16;
+#else
     pprintf(prn, "%35s %8s %16s\n\n", _("Sum of squares"), _("df"), _("Mean square"));
+#endif
 
     msr = rss / pmod->dfn;
+#ifdef ENABLE_NLS
+    /* string left-aligned with initial offset of 2 */
+    n = g_utf8_strlen(_("Regression"), -1);
+    bufspace(2, prn);
+    pputs(prn, _("Regression"));
+    bufspace(16 - n, prn);
+    pprintf(prn, " %*g %*d %*g\n", c1, rss, c2, pmod->dfn, c3, msr);
+#else
     pprintf(prn, "  %-16s %16g %8d %16g\n", _("Regression"), rss, pmod->dfn, msr);
+#endif
 
     mse = pmod->ess / pmod->dfd;
+#ifdef ENABLE_NLS
+    /* string left-aligned with initial offset of 2 */
+    n = g_utf8_strlen(_("Residual"), -1);
+    bufspace(2, prn);
+    pputs(prn, _("Residual"));
+    bufspace(16 - n, prn);
+    pprintf(prn, " %*g %*d %*g\n", c1, pmod->ess, c2, pmod->dfd, c3, mse);
+#else
     pprintf(prn, "  %-16s %16g %8d %16g\n", _("Residual"), pmod->ess, pmod->dfd, mse);
+#endif
 
     mst = pmod->tss / pmod->dfd;
+#ifdef ENABLE_NLS
+    /* string left-aligned with initial offset of 2 */
+    n = g_utf8_strlen(_("Total"), -1);
+    bufspace(2, prn);
+    pputs(prn, _("Total"));
+    bufspace(16 - n, prn);
+    pprintf(prn, " %*g %*d %*g\n", c1, pmod->tss, c2, pmod->nobs - 1, c3, mst);
+#else
     pprintf(prn, "  %-16s %16g %8d %16g\n", _("Total"), pmod->tss, pmod->nobs - 1, mst);
+#endif
 
     pprintf(prn, "\n  R^2 = %g / %g = %.6f\n", rss, pmod->tss, rss / pmod->tss);
 
