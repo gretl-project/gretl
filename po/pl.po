@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-04-13 21:55-0400\n"
-"PO-Revision-Date: 2009-03-18 22:00-0500\n"
+"PO-Revision-Date: 2009-04-18 00:20-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -317,9 +317,8 @@ msgid "Asymptotic test statistic"
 msgstr "Asymptotyczna statystyka testu"
 
 #: lib/src/compare.c:378
-#, fuzzy
 msgid "Wald chi-square"
-msgstr "chi-kwadrat"
+msgstr "Wald chi-kwadrat"
 
 #: lib/src/compare.c:379 lib/src/compare.c:389 lib/src/compare.c:394
 #: lib/src/compare.c:402 lib/src/compare.c:428 lib/src/gretl_restrict.c:1838
@@ -2321,9 +2320,8 @@ msgid "missing values were generated"
 msgstr "puste obserwacje zostały wygenerowane"
 
 #: lib/src/genmain.c:106
-#, fuzzy
 msgid "non-finite values were generated"
-msgstr "puste obserwacje zostały wygenerowane"
+msgstr "nie określone wartości zostały wygenerowane"
 
 #: lib/src/genmain.c:113
 msgid "Warning"
@@ -2335,9 +2333,9 @@ msgid "Replaced after model %d: "
 msgstr "Zamieniono model %d: "
 
 #: lib/src/genmain.c:311 lib/src/interact.c:2630
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' may not be used as a variable name"
-msgstr "'%s' odnosi się do %s i nie może być użyty jako nazwa zmiennej"
+msgstr "'%s' nie odnosi się do użytej nazwy zmiennej"
 
 #: lib/src/genmain.c:490
 msgid "Periodic dummy variables generated.\n"
@@ -2829,9 +2827,9 @@ msgid "_Open data"
 msgstr "_Otwórz dane"
 
 #: lib/src/gretl_intl.c:550
-#, fuzzy, c-format
+#, c-format
 msgid "%s: locale is not supported on this system"
-msgstr "Gnuplot does not support PDF output on this system"
+msgstr "%s: lokalny jest nie wspomagany przez system"
 
 #: lib/src/gretl_list.c:306
 #, c-format
@@ -3721,7 +3719,7 @@ msgstr "%s: brak wymaganego parametru"
 #: lib/src/interact.c:1879
 #, c-format
 msgid "%s: expected an integer order"
-msgstr ""
+msgstr "%s: oczekiwano całkowitej wartości"
 
 #: lib/src/interact.c:2070
 #, c-format
@@ -3936,21 +3934,19 @@ msgid "indeterminate condition for 'if'"
 msgstr "nieokreślony warunek dla polecenia 'if'"
 
 #: lib/src/kalman.c:419
-#, fuzzy
 msgid "kalman: a required matrix is missing"
-msgstr "%s: brak wymaganego parametru"
+msgstr "Kalman: wymagana macierz jest błędna"
 
 #: lib/src/kalman.c:425
-#, fuzzy
 msgid "No Kalman filter is defined"
-msgstr "Niezdefiniowane serie\n"
+msgstr "Filtr Kalmana jest niezdefiniowany"
 
 #: lib/src/kalman.c:1930 lib/src/kalman.c:2380 lib/src/libset.c:970
 #: lib/src/usermat.c:1433 lib/src/usermat.c:1493 lib/src/usermat.c:1502
 #: lib/src/usermat.c:1572 lib/src/usermat.c:1658
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such matrix"
-msgstr "%s: nie jest macierzą\n"
+msgstr "%s: nie jest macierzą"
 
 #: lib/src/libset.c:916
 #, c-format
@@ -9193,9 +9189,8 @@ msgid "Clear data labels"
 msgstr "Wyczyść opisy danych"
 
 #: gui2/gpt_control.c:2930 gui2/gpt_control.c:3024
-#, fuzzy
 msgid "All data labels"
-msgstr "Wyczyść opisy danych"
+msgstr "Wszystkie dane to etykiety"
 
 #: gui2/gpt_control.c:2932 gui2/gpt_control.c:3026
 msgid "Zoom..."
@@ -9494,14 +9489,12 @@ msgid "dump gretl configuration to file"
 msgstr "Zapisz konfigurację gretla do pliku"
 
 #: gui2/gretl.c:112
-#, fuzzy
 msgid "send debugging info to console"
-msgstr "Zapisywanie wyników debuggingu do %s"
+msgstr "Prześlij wyniki debuggingu do konsoli"
 
 #: gui2/gretl.c:115
-#, fuzzy
 msgid "print version information"
-msgstr "gretl: informacja"
+msgstr "drukuj informację o wersji"
 
 #: gui2/gretl.c:208
 #, c-format
@@ -9518,6 +9511,8 @@ msgid ""
 "\n"
 "You may supply the name of a data file on the command line"
 msgstr ""
+"\n"
+"You may supply the name of a data file on the command line"
 
 #: gui2/gretl.c:1039
 msgid "ID #"
@@ -12843,9 +12838,8 @@ msgid "Lags of dependent variable"
 msgstr "Opóźnienia dla zmiennej zależnej"
 
 #: gui2/selector.c:6060
-#, fuzzy
 msgid "default"
-msgstr "Ustaw jako domyślną zmienną (Y)"
+msgstr "domyślnie"
 
 #: gui2/selector.c:6080
 msgid "to"
@@ -13698,14 +13692,12 @@ msgid "Running a script adds to text"
 msgstr "Wyniki wykonanego skryptu uzupełnią ten tekst"
 
 #: gui2/toolbar.c:520
-#, fuzzy
 msgid "New window"
-msgstr "Zamknij okno"
+msgstr "Nowe okno"
 
 #: gui2/toolbar.c:521
-#, fuzzy
 msgid "Open..."
-msgstr "Otwórz"
+msgstr "Otwórz..."
 
 #: gui2/toolbar.c:523
 msgid "Save as..."
@@ -14691,85 +14683,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "a constant"
-#~ msgstr "stała"
-
-#~ msgid "an internal variable"
-#~ msgstr "wewnętrzna zmienna"
-
-#~ msgid "a type"
-#~ msgstr "typ"
-
-#~ msgid "Matrix is not finite"
-#~ msgstr "Macierz nie jest zdefiniowana"
-
-#~ msgid "Couldn't open registry\n"
-#~ msgstr "Niemożliwe otwarcie rejestru\n"
-
-#~ msgid "You must open a data file first\n"
-#~ msgstr "Musisz w pierwszej kolejności otworzyć plik danych\n"
-
-#~ msgid "Show all data labels"
-#~ msgstr "Pokaż wszystkie opisy danych"
-
-#~ msgid ""
-#~ "\n"
-#~ "You may supply the name of a data file on the command line.\n"
-#~ "Options:\n"
-#~ " -c or --dump      Dump the configuration file.\n"
-#~ " -d or --db        Open a local database.\n"
-#~ " -e or --english   Force use of English rather than translation.\n"
-#~ " -q or --basque    Force use of Basque translation.\n"
-#~ " -r or --run       Open a command script.\n"
-#~ " -w or --webdb     Open a remote database.\n"
-#~ " -h or --help      Print this info and exit.\n"
-#~ " -v or --version   Print version info and exit.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Wprowadz nazwę pliku z lini poleceń.\n"
-#~ "Opcje:\n"
-#~ " -c or --dump      Zapisz plik konfiguracyjny.\n"
-#~ " -d or --db        Otwórz lokalną bazę.\n"
-#~ " -e or --english   Użyj wersję angielskiej.\n"
-#~ " -q or --basque    Użyj wersję baskijską.\n"
-#~ " -r or --run       Otwórz plik skrytpowy.\n"
-#~ " -w or --webdb     Otwórz zdalną bazę.\n"
-#~ " -h lub --help     Drukuje te informacje i zamyka program.\n"
-#~ " -v lub --version  Drukuje informacje o wersji i zamyka program.\n"
-
-#~ msgid "The GNOME 2.0 econometrics package"
-#~ msgstr "The GNOME 2.0 econometrics package"
-
-#~ msgid "Econometrics program"
-#~ msgstr "Program ekonometryczny"
-
-#~ msgid "gretl.chm"
-#~ msgstr "gretl.chm"
-
-#~ msgid "Couldn't access help file"
-#~ msgstr "Brak dostępu do pliku pomocy"
-
-#~ msgid "print gretl graph"
-#~ msgstr "drukuj wykres gretla"
-
-#~ msgid "Failed to generate graph"
-#~ msgstr "Błąd w generowaniu wykresu"
-
-#~ msgid "Use local language if possible"
-#~ msgstr "użyj wersji zgodnej z językiem systemu operacyjnego"
-
-#~ msgid "Use English"
-#~ msgstr "użyj wersji angielskiej"
-
-#~ msgid "Use Basque"
-#~ msgstr "użyj wersji baskijskiej"
-
-#~ msgid "_Logit..."
-#~ msgstr "Modele _Logitowe..."
-
-#~ msgid "_Probit..."
-#~ msgstr "Modele _Probitowe..."
-
-#~ msgid "1-step estimation"
-#~ msgstr "Estymacja 1-step"
