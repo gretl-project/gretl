@@ -4310,19 +4310,35 @@
 	</option>
       </options>
     </usage>
-     
 
     <description>
       <para>
-	Opens a block of statements that set up a Kalman filter.  This
-	block should end with the line <lit>end kalman</lit>, to which the
-	options shown above may be appended.  Please see <guideref
-	targ="chap:kalman"/> for details.
+	Opens a block of statements to set up a Kalman filter.  This block
+	should end with the line <lit>end kalman</lit>, to which the options
+	shown above may be appended.  The intervening lines specify the
+	matrices that compose the filter.  For example,
       </para>
+      <code>
+	kalman 
+	  obsy y
+	  obsymat H
+	  statemat F
+	  statevar Q
+	end kalman
+      </code>
+      <para>
+	Please see <guideref targ="chap:kalman"/> for details.
+      </para>
+	<para>
+	  <seelist>
+	    <fncref targ="kfilter"/>
+	    <fncref targ="ksimul"/>
+	    <fncref targ="ksmooth"/>
+	  </seelist>
+	</para>
     </description>
 
   </command>
-
 
   <command name="kpss" section="Tests" label="KPSS stationarity test">
 

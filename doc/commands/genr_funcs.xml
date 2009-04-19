@@ -2060,6 +2060,7 @@
 	</para>
 	<para>
 	  <seelist>
+	    <cmdref targ="kalman"/>
 	    <fncref targ="ksmooth"/>
 	    <fncref targ="ksimul"/>
 	  </seelist>
@@ -2080,7 +2081,16 @@
 	  observable variables.
 	</para>
 	<para>
+	  The argument <argname>v</argname> supplies artificial disturbances
+	  for the state transition equation and <argname>w</argname> supplies
+	  disturbances for the observation equation, if applicable.  The
+	  optional argument <argname>S</argname> may be used to retrieve the
+	  simulated state vector.  For details see <guideref
+	    targ="chap:kalman"/>.
+	</para>
+	<para>
 	  <seelist>
+	    <cmdref targ="kalman"/>
 	    <fncref targ="kfilter"/>
 	    <fncref targ="ksimul"/>
 	  </seelist>
@@ -2095,11 +2105,14 @@
       <description>
 	<para>
 	  Requires that a Kalman filter be set up.  Performs a backward,
-	  smoothing pass and returns a matrix holding smoothed estimates
-	  of the state vector.
+	  smoothing pass and returns a matrix holding smoothed estimates of
+	  the state vector.  The optional argument <argname>P</argname> may be
+	  used to retrieve the MSE of the smoothed state.  For details see
+	  <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
+	    <cmdref targ="kalman"/>
 	    <fncref targ="kfilter"/>
 	    <fncref targ="ksimul"/>
 	  </seelist>

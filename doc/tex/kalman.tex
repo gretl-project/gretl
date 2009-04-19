@@ -1,25 +1,26 @@
-\newcommand{\obsvec}{\ensuremath\mathbf{y}}
-\newcommand{\obsmat}{\ensuremath\mathbf{H}}
-\newcommand{\obsx}{\ensuremath\mathbf{x}}
-\newcommand{\obsxmat}{\ensuremath\mathbf{A}}
-\newcommand{\obsdist}{\ensuremath\mathbf{w}}
-\newcommand{\obsvar}{\ensuremath\mathbf{R}}
+\newcommand{\obsvec}{\mathbf{y}}
+\newcommand{\obsmat}{\mathbf{H}}
+\newcommand{\obsx}{\mathbf{x}}
+\newcommand{\obsxmat}{\mathbf{A}}
+\newcommand{\obsdist}{\mathbf{w}}
+\newcommand{\obsvar}{\mathbf{R}}
 
-\newcommand{\statevec}{\ensuremath\mathbf{\bm \xi}}
-\newcommand{\statemat}{\ensuremath\mathbf{F}}
-\newcommand{\strdist}{\ensuremath\mathbf{v}}
-\newcommand{\strvar}{\ensuremath\mathbf{Q}}
-\newcommand{\statevar}{\ensuremath\mathbf{P}}
-\newcommand{\gain}{\ensuremath\mathbf{K}}
+\newcommand{\statevec}{\bm{\xi}}
+\newcommand{\statevar}{\mathbf{P}}
+\newcommand{\statemat}{\mathbf{F}}
+\newcommand{\strdist}{\mathbf{v}}
+\newcommand{\strvar}{\mathbf{Q}}
+\newcommand{\gain}{\mathbf{K}}
 
-\newcommand{\altstrvar}{\ensuremath\mathbf{B}}
-\newcommand{\altobsvar}{\ensuremath\mathbf{C}}
-\newcommand{\alldist}{\ensuremath\mathbf{\bm \varepsilon}}
+\newcommand{\altstrvar}{\mathbf{B}}
+\newcommand{\altobsvar}{\mathbf{C}}
+\newcommand{\alldist}{\bm{\varepsilon}}
 
-\newcommand{\prederr}{\ensuremath\mathbf{e}}
-\newcommand{\predvar}{\ensuremath{\bm\Sigma}}
+\newcommand{\prederr}{\mathbf{e}}
+\newcommand{\predvar}{\bm{\Sigma}}
 
 \newcommand{\myvec}{\mbox{vec}}
+\newcommand{\myvech}{\mbox{vech}}
 
 \makeatletter
 \def\pdots{\vbox{\baselineskip2.5\p@ 
@@ -70,7 +71,7 @@ A state-space model can be written as
 where (\ref{eq:state}) is the state transition equation and
 (\ref{eq:obs}) is the observation or measurement equation.  The state
 vector, $\statevec_{t}$, is ($r \times 1$) and the vector of
-observables, $\obsvec_t$, is ($n \times 1$); $\mathbf{x}_t$ is a ($k
+observables, $\obsvec_t$, is ($n \times 1$); $\obsx_t$ is a ($k
 \times 1$) vector of exogenous variables.  The ($r \times 1$) vector
 $\strdist_t$ and the ($n \times 1$) vector $\obsdist_t$ are assumed to
 be vector white noise:
@@ -82,7 +83,7 @@ E(\obsdist_t \obsdist_s') &= \obsvar_t \mbox{ for } t = s,
     \mbox{ otherwise } \mathbf{0}
 \end{align*}
 
-The number of time-series observations is denoted by $T$.
+The number of time-series observations will be denoted by $T$.
 In the special case when $\statemat_t = \statemat$, $\obsmat_t = \obsmat$,
 $\obsxmat_t = \obsxmat$, $\strvar_t = \strvar$ and $\obsvar_t =
 \obsvar$, the model is said to be \emph{time-invariant}.
@@ -114,7 +115,7 @@ but see below for further discussion of the initial variance.
 
 Iteration then proceeds in two steps.\footnote{For a justification of
   the following formulae see the classic book by Anderson and Moore
-  (1979); for a more modern treatment see Pollock (1999) or Hamilton
+  (1979) or, for a more modern treatment, Pollock (1999) or Hamilton
   (1994).  A transcription of R. E. Kalman's original paper of 1960 is
   available at
   \url{http://www.cs.unc.edu/~welch/kalman/kalmanPaper.html}.}  First
@@ -189,22 +190,21 @@ let
 %
 \begin{align*}
   \altstrvar &= \left[
-   \begin{array}{ccc} \mathbf{\bm \Gamma}_{r\times r} & \pdots & 
+   \begin{array}{ccc} \bm{\Gamma}_{r\times r} & \pdots & 
      \mathbf{0}_{r\times n}\end{array}
   \right] \\
   \altobsvar &= \left[ 
    \begin{array}{ccc} \mathbf{0}_{n\times r} & \pdots & 
-   \mathbf{\bm \Lambda}_{n\times n}\end{array}
+   \bm{\Lambda}_{n\times n}\end{array}
   \right]
 \end{align*}
 %
-where $\mathbf{\bm \Gamma}$ and $\mathbf{\bm \Lambda}$ are lower
-triangular matrices satisfying $\strvar = \mathbf{\bm
-  \Gamma}\mathbf{\bm \Gamma}'$ and $\obsvar = \mathbf{\bm
-  \Lambda}\mathbf{\bm \Lambda}'$ respectively.  The zero sub-matrices
-in the above expressions for $\altstrvar$ and $\altobsvar$ produce the
-case of mutual independence; this corresponds to the condition
-$\altstrvar \altobsvar' = \mathbf{0}$.  
+where $\bm{\Gamma}$ and $\bm{\Lambda}$ are lower triangular matrices
+satisfying $\strvar = \bm{\Gamma} \bm{\Gamma}'$ and $\obsvar =
+\bm{\Lambda} \bm{\Lambda}'$ respectively.  The zero
+sub-matrices in the above expressions for $\altstrvar$ and
+$\altobsvar$ produce the case of mutual independence; this corresponds
+to the condition $\altstrvar \altobsvar' = \mathbf{0}$.
 
 In the general case $p$ is not necessarily equal to $r+n$, and
 $\altstrvar \altobsvar'$ may be non-zero.  This means that the
@@ -459,7 +459,7 @@ until either (a) the gretl session is terminated or (b) the command
 \section{The \texttt{kfilter} function}
 
 Once a filter is established, as discussed in the previous section,
-\texttt{kfilter} can be used to run a forward, forecasting, pass.
+\texttt{kfilter} can be used to run a forward, forecasting pass.
 This function returns a scalar code: 0 for successful completion, or 1
 if numerical problems were encountered.  On successful completion, two
 scalar accessor variables become available: \verb+$kalman_lnl+, which
@@ -491,20 +491,19 @@ diffuse prior).  In addition the accessor \verb+$kalman_llt+ gives a
 The \texttt{kfilter} function does not require any arguments, but up
 to five matrix quantities may be retrieved via optional pointer
 arguments.  Each of these matrices has $T$ rows, one for each
-time-step; the number of columns is shown in the following listing.
+time-step; the contents of the rows are shown in the following
+listing.
 %
 \begin{enumerate}
-\item Forecast errors for the observable variables: $n$ columns.
-\item Variance matrix for the forecast errors: $n(n+1)/2$.
-\item Estimate of the state vector: $r$.
-\item Variance of estimate of the state vector: $r(r+1)/2$.
-\item Kalman gain: $rn$.
+\item Forecast errors for the observable variables: $\prederr_t'$, $n$
+  columns.
+\item Variance matrix for the forecast errors: $\myvech(\predvar_t)'$,
+  $n(n+1)/2$ columns.
+\item Estimate of the state vector: $\hat{\statevec}_{t|t-1}'$, $r$ columns.
+\item MSE of estimate of the state vector:
+  $\myvech(\statevar_{t|t-1})'$, $r(r+1)/2$ columns.
+\item Kalman gain: $\myvec(\gain_t)'$, $rn$ columns.
 \end{enumerate}
-
-The variance matrices retrieved by arguments (2) and (4) are in vech
-form, i.e., the unique elements of the matrix are stacked by column
-and transposed to a row vector.  The Kalman gain matrix from each time
-step is stored in transposed vec form.
 
 Unwanted trailing arguments can be omitted, otherwise unwanted
 arguments can be skipped by using the keyword \texttt{null}.  For
@@ -618,7 +617,7 @@ the $T$ value associated with the original data is restored.
 The value returned by \texttt{ksimul} is a ($T \times n$) matrix
 holding simulated values for the observables at each time step.  A
 third optional matrix-pointer argument allows you to retrieve a ($T
-\times r$) matrix holding the simulated state.  Examples:
+\times r$) matrix holding the simulated state vector.  Examples:
 %
 \begin{code}
 matrix Y = ksimul(V)    # obsvar is null
@@ -627,11 +626,19 @@ matrix S
 Y = ksimul(V, null, &S) # the simulated state is wanted
 \end{code}
 
+The initial value $\statevec_1$ is calculated thus: we find the matrix
+$\mathbf{T}$ such that $\mathbf{T}\mathbf{T}' = \statevar_{1|0}$ (as
+given by the \texttt{inivar} element in the \texttt{kalman} block),
+multiply it into $\strdist_1$, and add the result to $\statevec_{1|0}$
+(as given by \texttt{inistate}).
+
 If the disturbances are correlated across the two equations the
 arguments to \texttt{ksimul} must be revised: the first argument
 should be a ($T \times p$) matrix, each row of which represents
 $\alldist_t'$ (see section~\ref{sec:kalman-recursions}), and the
 second argument should be given as \texttt{null}.
+
+
 
 \section{Example 1: ARMA estimation}
 \label{sec:example_arma}
