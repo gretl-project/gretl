@@ -328,7 +328,7 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
     fprintf(stderr, "setline = '%s', opt = %ld\n", setline, opt);
 #endif
 
-    err = set_obs(setline, Z, datainfo, opt);
+    err = set_obs(setline, &Z, datainfo, opt);
 
 #if DWDEBUG
     fprintf(stderr, "set_obs returned %d\n", err);
