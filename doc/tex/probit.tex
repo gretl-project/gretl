@@ -369,12 +369,13 @@ $y^*_i$ simply by adding the two together.
 \label{sec:mlogit}
 
 When the dependent variable is not binary and does not have a natural
-ordering, \emph{multinomial} models are used. \app{Gretl} does not
-provide a native implementation of these yet, but simple models can be
-handled via the \texttt{mle} command (see chapter \ref{chap:mle}). We
-give here an example of a multinomial logit model.  Let the dependent
-variable, $y_i$, take on integer values $0,1,\dots p$.  The
-probability that $y_i = k$ is given by
+ordering, \emph{multinomial} models are used.  Multinomial logit is
+supported in \app{gretl} via the \verb|--multinomial| option to the
+\texttt{logit} command.  Simple models can also be handled via the
+\texttt{mle} command (see chapter \ref{chap:mle}). We give here an
+example of such a model.  Let the dependent variable, $y_i$, take on
+integer values $0,1,\dots p$.  The probability that $y_i = k$ is given
+by
 \[
   P(y_i = k |  x_i) = \frac{\exp(x_i \beta_k)}{\sum_{j=0}^p \exp(x_i \beta_j)}
 \]
@@ -402,35 +403,42 @@ chapter~\ref{chap:matrices}.
   \caption{Multinomial logit}
   \label{ex:mlogit}
 \begin{scode}
-function mlogitlogprobs(series y, matrix X, matrix theta)
-
+function mlogitlogprobs (series y, matrix X, matrix theta)
   scalar n = max(y)
   scalar k = cols(X)
   matrix b = mshape(theta,k,n)
-
   matrix tmp = X*b
   series ret = -ln(1 + sumr(exp(tmp)))
 
   loop for i=1..n --quiet
     series x = tmp[,i]
-    ret += (y=$i) ? x : 0 
+    ret += (y=$i)? x : 0 
   end loop
 
   return series ret
-
 end function
 
 open keane.gdt
-status = status-1 # dep. var. must be 0-based
+
+# for the manual mle variant the dep. var. must be 0-based
+status = status - 1
+# and we must exclude missing values
 smpl (year=87 && ok(status)) --restrict
 
-matrix X = { const educ exper expersq black }
+matrix X = { const, educ, exper, expersq, black }
 scalar k = cols(X)
 matrix theta = zeros(2*k, 1)
 
 mle loglik = mlogitlogprobs(status,X,theta)
   params theta
-end mle --verbose --hessian
+end mle --hessian
+
+# Compare the built-in command (in this case we don't need
+# status to be 0-based, and NAs are handled correctly)
+smpl full
+status = status + 1
+smpl (year=87) --restrict
+logit status 0 educ exper expersq black --multinomial
 \end{scode}
 %$
 \end{script}
