@@ -49,4 +49,9 @@ export "PATH=$CWD:$PATH"
 # echo "pwd is `pwd`" >>~/where
 
 cd $CWD
-exec "$CWD/gretl_x11" "$@"
+if [ "x$DISPLAY" = "x" ] ; then
+  exec "$CWD/gretlcli" "$@" 
+else
+  exec "$CWD/gretl_x11" "$@"
+fi
+
