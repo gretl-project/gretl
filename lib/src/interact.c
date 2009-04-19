@@ -4333,11 +4333,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SETOBS:
-	if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
-	    err = E_NODATA;
-	} else {
-	    err = set_obs(line, *pZ, pdinfo, cmd->opt);
-	}
+	err = set_obs(line, pZ, pdinfo, cmd->opt);
 	if (!err) {
 	    if (pdinfo->n > 0) {
 		print_smpl(pdinfo, 0, prn);
@@ -4351,7 +4347,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SMPL:
-	if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	if (pZ == NULL || pdinfo == NULL) {
 	    err = E_NODATA;
 	} else if (cmd->opt == OPT_F) {
 	    err = restore_full_sample(pZ, pdinfo, s);
@@ -4367,7 +4363,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case STORE:
-	if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	if (pZ == NULL || Z == NULL || pdinfo == NULL) {
 	    err = E_NODATA;
 	} else if (*cmd->param == '\0') {
 	    pputs(prn, _("store: no filename given\n"));

@@ -67,7 +67,7 @@ int true_const (int v, const double **Z, const DATAINFO *pdinfo);
 
 char *format_obs (char *obs, int maj, int min, int pd);
 
-int set_obs (const char *line, double **Z, DATAINFO *pdinfo, 
+int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo, 
 	     gretlopt opt);
 
 /* sorting and comparison */

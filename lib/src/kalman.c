@@ -3191,7 +3191,8 @@ static int kalman_simulate (kalman *K,
 			    const gretl_matrix *V,
 			    const gretl_matrix *W,
 			    gretl_matrix *Y, 
-			    gretl_matrix *S)
+			    gretl_matrix *S,
+			    PRN *prn)
 {
     gretl_matrix *yt, *et = NULL;
     int err = 0;
@@ -3223,7 +3224,7 @@ static int kalman_simulate (kalman *K,
 
     for (K->t = 0; K->t < K->T; K->t += 1) {
 	if (filter_is_varying(K)) {
-	    err = kalman_refresh_matrices(K, NULL);
+	    err = kalman_refresh_matrices(K, prn);
 	    if (err) {
 		break;
 	    }
@@ -3298,7 +3299,7 @@ static int kalman_simulate (kalman *K,
 gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
 				    const gretl_matrix *W,
 				    const char *Sname, 
-				    int *err)
+				    PRN *prn, int *err)
 {
     user_kalman *u = get_user_kalman(-1);
     gretl_matrix *Y = NULL, *S = NULL;
@@ -3373,7 +3374,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     }
 
     if (!*err) {
-	*err = kalman_simulate(K, V, W, Y, S);
+	*err = kalman_simulate(K, V, W, Y, S, prn);
     }
 
     if (*err) {

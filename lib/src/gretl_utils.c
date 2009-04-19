@@ -836,7 +836,7 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
 /**
  * set_obs:
  * @line: command line.
- * @Z: data array.
+ * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  * @opt: %OPT_S for stacked time-series, %OPT_C for stacked cross-section,
  * %OPT_T for time series, %OPT_X for cross section, %OPT_P to set
@@ -848,7 +848,7 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int set_obs (const char *line, double **Z, DATAINFO *pdinfo, 
+int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo, 
 	     gretlopt opt)
 {
     char pdstr[VNAMELEN];
@@ -858,11 +858,19 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
     int pd, dated = 0;
     int err = 0;
 
+    if (pZ == NULL || pdinfo == NULL) {
+	return E_NODATA;
+    }
+
+    if ((opt & (OPT_R | OPT_P)) && *pZ == NULL) {
+	return E_NODATA;
+    }
+
     gretl_error_clear();
 
     if (opt & OPT_R) {
 	/* restructure panel: "hidden" option */
-	return switch_panel_orientation(Z, pdinfo);
+	return switch_panel_orientation(*pZ, pdinfo);
     }    
 
     if (!strcmp(line, "setobs")) {
@@ -871,7 +879,7 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
     }
 
     if (opt & OPT_P) {
-	return set_panel_structure_from_line(line, Z, pdinfo);
+	return set_panel_structure_from_line(line, *pZ, pdinfo);
     }
 
     /* now we get down to business */
@@ -997,7 +1005,11 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
        stacked time series form
     */
     if (pdinfo->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(Z, pdinfo);
+	if (*pZ == NULL) {
+	    err = E_NODATA;
+	} else {
+	    err = switch_panel_orientation(*pZ, pdinfo);
+	}
     }	
 
     if (!err && pdinfo->structure == STACKED_TIME_SERIES) {

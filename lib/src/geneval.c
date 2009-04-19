@@ -5006,7 +5006,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }	    
-	    ret->v.m = user_kalman_simulate(V, W, S, &p->err);
+	    ret->v.m = user_kalman_simulate(V, W, S, p->prn, &p->err);
 	}
 
 	if (freeV) gretl_matrix_free(V);

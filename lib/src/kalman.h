@@ -79,7 +79,7 @@ gretl_matrix *user_kalman_smooth (const char *Pname, const char *Uname,
 gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
 				    const gretl_matrix *W,
 				    const char *Sname, 
-				    int *err);
+				    PRN *prn, int *err);
 
 void kalman_cleanup (void);
 

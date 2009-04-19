@@ -3783,7 +3783,7 @@ static void record_obs_info (obsinfo *o, DATAINFO *pdinfo)
     }
 }
 
-static int restore_obs_info (obsinfo *o, double **Z, DATAINFO *pdinfo)
+static int restore_obs_info (obsinfo *o, double ***pZ, DATAINFO *pdinfo)
 {
     char line[128];
     gretlopt opt = OPT_NONE;
@@ -3800,7 +3800,7 @@ static int restore_obs_info (obsinfo *o, double **Z, DATAINFO *pdinfo)
 
     sprintf(line, "setobs %d %s", o->pd, o->stobs);
 
-    return set_obs(line, Z, pdinfo, opt);
+    return set_obs(line, pZ, pdinfo, opt);
 }
 
 static int stop_fncall (fncall *call, int rtype, void *ret,
@@ -3900,7 +3900,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     pop_program_state();
 
     if (pdinfo != NULL && call->obs.changed) {
-	restore_obs_info(&call->obs, (pZ != NULL)? *pZ : NULL, pdinfo);
+	restore_obs_info(&call->obs, pZ, pdinfo);
     }
 
     set_executing_off(call, pdinfo);
