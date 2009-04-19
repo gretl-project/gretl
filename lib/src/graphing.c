@@ -2863,7 +2863,8 @@ int multi_scatters (const int *list, const double **Z,
 	if (obs != NULL) {
 	    fputs("set noxlabel\n", fp);
 	    fputs("set noylabel\n", fp);
-	    fprintf(fp, "set title '%s'\n", pdinfo->varname[pv]);
+	    fprintf(fp, "set title '%s'\n", 
+		    var_get_graph_name(pdinfo, pv));
 	} else {
 	    fprintf(fp, "set xlabel '%s'\n",
 		    (yvar)? pdinfo->varname[pv] :
