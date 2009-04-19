@@ -8450,7 +8450,8 @@ void gen_save_or_print (parser *p, PRN *prn)
 void gen_cleanup (parser *p)
 {
 #if EDEBUG
-    fprintf(stderr, "gen cleanup: reusable = %d\n", reusable(p));
+    fprintf(stderr, "gen cleanup: reusable = %d, err = %d\n", 
+	    reusable(p), p->err);
 #endif
 
     if (reusable(p)) {

@@ -667,6 +667,11 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     genr_last_type = genr_get_output_type(&p);
 
+    if (p.err == 1) {
+	/* a fairly good guess? */
+	p.err = E_PARSE;
+    }
+
     gen_cleanup(&p);
 
 #if GDEBUG
@@ -694,6 +699,8 @@ double generate_scalar (const char *s, double ***pZ,
 	} else {
 	    *err = E_TYPES;
 	}
+    } else if (*err == 1) {
+	*err = E_PARSE;
     }
 
     gen_cleanup(&p);
@@ -725,6 +732,8 @@ double *generate_series (const char *s, double ***pZ,
 	} else {
 	    *err = E_TYPES;
 	}
+    } else if (*err == 1) {
+	*err = E_PARSE;
     }
 
     gen_cleanup(&p);
@@ -770,6 +779,8 @@ gretl_matrix *generate_matrix (const char *s, double ***pZ,
 	} else {
 	    *err = E_TYPES;
 	}
+    } else if (*err == 1) {
+	*err = E_PARSE;
     }
 
     gen_cleanup(&p);
@@ -793,6 +804,8 @@ char *generate_string (const char *s, double ***pZ,
 	} else {
 	    *err = E_TYPES;
 	}
+    } else if (*err == 1) {
+	*err = E_PARSE;
     }
 
     gen_cleanup(&p);
