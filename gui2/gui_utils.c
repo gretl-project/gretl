@@ -3646,7 +3646,7 @@ static void run_R_sync (void)
 
 #else /* some non-Windows functions follow */
 
-#if 1 /* needs GTK >= 2.14 */
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 14
 static int alt_show (const char *url)
 {
     char foo[256];
@@ -3673,8 +3673,10 @@ static int alt_show (const char *url)
 
 int browser_open (const char *url)
 {
-#if 1
-    return alt_show(url);
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 14
+    if (getenv("ALTSHOW") != NULL) {
+	return alt_show(url);
+    }
 #endif
 # if defined(USE_GNOME)
     gnome_url_show(url, NULL); 
