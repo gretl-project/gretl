@@ -16462,7 +16462,7 @@ fi
 
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
-  *darwin*)
+  *arwin*)
     LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
     have_lapack="yes"
     cat >>confdefs.h <<\_ACEOF

@@ -348,7 +348,7 @@ dnl Check for LAPACK: Apple _will_ be different
 dnl
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
-  *darwin*) 
+  *arwin*) 
     LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
     have_lapack="yes"
     AC_DEFINE(OSX_BUILD)
