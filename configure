@@ -16464,12 +16464,13 @@ LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
   *darwin*)
     LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
+    have_lapack="yes"
     cat >>confdefs.h <<\_ACEOF
 #define OSX_BUILD 1
 _ACEOF
 
   ;;
-esac
+  *)
 
 # Check whether --with-lapack-prefix was given.
 if test "${with_lapack_prefix+set}" = set; then
@@ -16852,11 +16853,10 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 
   rm -f conf.lapacktest
 
-
-if test "$have_lapack" = "yes" ; then
-  SAVE_LIBS=$LIBS
-  LIBS=$LAPACK_LIBS
-  { echo "$as_me:$LINENO: checking for dgejsv_ in -llapack" >&5
+   if test "$have_lapack" = "yes" ; then
+     SAVE_LIBS=$LIBS
+     LIBS=$LAPACK_LIBS
+     { echo "$as_me:$LINENO: checking for dgejsv_ in -llapack" >&5
 echo $ECHO_N "checking for dgejsv_ in -llapack... $ECHO_C" >&6; }
 if test "${ac_cv_lib_lapack_dgejsv_+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -16924,8 +16924,10 @@ _ACEOF
 
 fi
 
-  LIBS=$SAVE_LIBS
-fi
+     LIBS=$SAVE_LIBS
+   fi
+  ;;
+esac
 
 case $host_os in
   *darwin*)

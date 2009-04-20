@@ -344,24 +344,25 @@ if test x"${try_mpfr}" != xno ; then
 fi
 
 dnl
-dnl Check for LAPACK 
-dnl Apple _will_ be different
+dnl Check for LAPACK: Apple _will_ be different
 dnl
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
   *darwin*) 
     LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
+    have_lapack="yes"
     AC_DEFINE(OSX_BUILD)
   ;; 
+  *)
+   AM_PATH_LAPACK(, have_lapack="yes") 
+   if test "$have_lapack" = "yes" ; then
+     SAVE_LIBS=$LIBS
+     LIBS=$LAPACK_LIBS
+     AC_CHECK_LIB(lapack, dgejsv_, AC_DEFINE(HAVE_LAPACK_3_2))
+     LIBS=$SAVE_LIBS
+   fi
+  ;;
 esac
-AM_PATH_LAPACK(, have_lapack="yes")
-
-if test "$have_lapack" = "yes" ; then
-  SAVE_LIBS=$LIBS
-  LIBS=$LAPACK_LIBS
-  AC_CHECK_LIB(lapack, dgejsv_, AC_DEFINE(HAVE_LAPACK_3_2))
-  LIBS=$SAVE_LIBS
-fi
 
 dnl And while we're at it...
 case $host_os in
