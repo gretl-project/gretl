@@ -142,7 +142,8 @@ double generate_scalar (const char *s, double ***pZ,
 			DATAINFO *pdinfo, int *err);
 
 double *generate_series (const char *s, double ***pZ, 
-			 DATAINFO *pdinfo, int *err);
+			 DATAINFO *pdinfo, PRN *prn,
+			 int *err);
 
 gretl_matrix *generate_matrix (const char *s, double ***pZ, 
 			       DATAINFO *pdinfo, int *err);

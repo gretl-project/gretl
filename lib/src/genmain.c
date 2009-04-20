@@ -661,7 +661,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!p.err && p.warn && gretl_warnings_on()) {
+    if (!p.err && p.warn && gretl_warnings_on() && !(flags & P_PRIVATE)) {
 	gen_write_warning(&p, prn);
     }
 
@@ -711,12 +711,13 @@ double generate_scalar (const char *s, double ***pZ,
 /* retrieve a series result directly */
 
 double *generate_series (const char *s, double ***pZ, 
-			 DATAINFO *pdinfo, int *err)
+			 DATAINFO *pdinfo, PRN *prn,
+			 int *err)
 {
     parser p;
     double *x = NULL;
 
-    *err = realgen(s, &p, pZ, pdinfo, NULL, P_SERIES | P_PRIVATE);
+    *err = realgen(s, &p, pZ, pdinfo, prn, P_SERIES | P_PRIVATE);
 
     if (!*err) {
 	NODE *n = p.ret;

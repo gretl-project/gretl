@@ -613,7 +613,11 @@ void context_error (int c, parser *p)
     if (c != 0) {
 	parser_print_input(p);
 	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
-	
+	if (c == '&') {
+	    pputs(p->prn, _("(for logical AND, use '&&')\n"));
+	} else if (c == '|') {
+	    pputs(p->prn, _("(for logical OR, use '||')\n"));
+	}
     } else {
 	const char *s = getsymb(p->sym, p);
 

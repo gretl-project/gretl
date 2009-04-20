@@ -3646,17 +3646,25 @@ static void run_R_sync (void)
 
 #else /* some non-Windows functions follow */
 
-#if 0 /* needs GTK >= 2.14 */
+#if 1 /* needs GTK >= 2.14 */
 static int alt_show (const char *url)
 {
+    char foo[256];
     GError *err = NULL;
-    int ret;
+    int n, ret;
 
-    ret = gtk_show_uri(NULL, url, GDK_CURRENT_TIME, &err);
+    strcpy(foo, url);
+    n = strlen(foo);
+    if (foo[n-1] == '/') {
+	foo[n-1] = '\0';
+    }
+
+    ret = gtk_show_uri(NULL, foo, GDK_CURRENT_TIME, &err);
 
     if (err) {
 	errbox(err->message);
 	g_error_free(err);
+	fprintf(stderr, "uri was '%s'\n", foo);
     }
 
     return ret;
@@ -3665,6 +3673,9 @@ static int alt_show (const char *url)
 
 int browser_open (const char *url)
 {
+#if 1
+    return alt_show(url);
+#endif
 # if defined(USE_GNOME)
     gnome_url_show(url, NULL); 
 # elif defined(OSX_BUILD)

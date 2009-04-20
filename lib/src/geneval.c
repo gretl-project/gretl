@@ -8639,6 +8639,7 @@ int realgen (const char *s, parser *p, double ***pZ,
     }
 
     p->aux_i = 0;
+
     if (!p->err) {
 	p->ret = eval(p->tree, p);
     }

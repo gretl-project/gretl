@@ -658,7 +658,7 @@ static int copy_dummy_to_mask (char *mask, const double *x, int n)
 }
 
 static int mask_from_temp_dummy (const char *s, double ***pZ, DATAINFO *pdinfo, 
-				 char *mask)
+				 char *mask, PRN *prn)
 {
     char formula[MAXLEN];
     double *x;
@@ -667,7 +667,7 @@ static int mask_from_temp_dummy (const char *s, double ***pZ, DATAINFO *pdinfo,
     *formula = '\0';
     strncat(formula, s, MAXLEN - 1);
 
-    x = generate_series(formula, pZ, pdinfo, &err);
+    x = generate_series(formula, pZ, pdinfo, prn, &err);
 
     if (!err) {
 	err = copy_dummy_to_mask(mask, x, pdinfo->n);
@@ -1064,7 +1064,7 @@ make_restriction_mask (int mode, const char *s, const int *list,
     } else if (mode == SUBSAMPLE_USE_DUMMY) {
 	err = mask_from_dummy(s, (const double **) *pZ, pdinfo, mask);
     } else if (mode == SUBSAMPLE_BOOLEAN) {
-	err = mask_from_temp_dummy(s, pZ, pdinfo, mask);
+	err = mask_from_temp_dummy(s, pZ, pdinfo, mask, prn);
     } else {
 	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));
 	err = 1;
@@ -1228,7 +1228,7 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
 
 static char *precompute_mask (const char *s, const char *oldmask,
 			      double ***pZ, DATAINFO *pdinfo, 
-			      int *err)
+			      PRN *prn, int *err)
 {
     char *tmp = make_submask(pdinfo->n);
     char *mask = NULL;
@@ -1244,7 +1244,7 @@ static char *precompute_mask (const char *s, const char *oldmask,
     }
 
     /* fill out mask relative to current, restricted dataset */
-    *err = mask_from_temp_dummy(s, pZ, pdinfo, tmp);
+    *err = mask_from_temp_dummy(s, pZ, pdinfo, tmp, prn);
 
     if (!*err) {
 	/* make blank full-length mask */
@@ -1354,7 +1354,7 @@ int restrict_sample (const char *line, const int *list,
 
     if (mode == SUBSAMPLE_BOOLEAN && oldmask != NULL && 
 	restriction_uses_obs(line)) {
-	mask = precompute_mask(line, oldmask, pZ, pdinfo, &err);
+	mask = precompute_mask(line, oldmask, pZ, pdinfo, prn, &err);
     }
 
     /* restore the full data range, for housekeeping purposes */
