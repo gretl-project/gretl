@@ -3362,7 +3362,7 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *varnum_node (NODE *n, int f, parser *p)
+static NODE *varnum_node (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
@@ -3512,6 +3512,31 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 		*ret->v.str = '\0';
 		strcat(ret->v.str, l->v.str);
 		strcat(ret->v.str, r->v.str);
+	    }
+	} else {
+	    p->err = E_DATA;
+	}
+
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
+static NODE *one_string_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	char *s;
+
+	if (f == F_TOLOWER) {
+	    s = ret->v.str = gretl_strdup(n->v.str);
+	    while (s && *s) {
+		*s = tolower(*s);
+		s++;
 	    }
 	} else {
 	    p->err = E_DATA;
@@ -6661,8 +6686,13 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_VARNUM:
+    case F_TOLOWER:
 	if (l->t == STR) {
-	    ret = varnum_node(l, t->t, p);
+	    if (t->t == F_TOLOWER) {
+		ret = one_string_func(l, t->t, p);
+	    } else {
+		ret = varnum_node(l, p);
+	    }
 	} else {
 	    node_type_error(t->t, 1, STR, l, p);
 	}
