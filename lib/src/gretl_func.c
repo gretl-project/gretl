@@ -2980,6 +2980,43 @@ static int end_of_function (const char *s)
     return ret;
 }
 
+#define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
+#define starts_comment(p) (*p == '/' && *(p+1) == '*')
+#define ends_comment(p)   (*p == '*' && *(p+1) == '/')
+
+static int ignore_line (ufunc *fun)
+{
+    int i, quoted = 0, ignore = 0;
+    char *s, *p;
+
+    for (i=0; i<fun->n_lines; i++) {
+	s = p = fun->lines[i];
+	while (*p) {
+	    if (!quoted && !ignore && *p == '#') {
+		break;
+	    }
+	    if (!ignore && bare_quote(p, s)) {
+		quoted = !quoted;
+	    }
+	    if (!quoted) {
+		if (starts_comment(p)) {
+		    ignore = 1;
+		    p += 2;
+		} else if (ends_comment(p)) {
+		    ignore = 0;
+		    p += 2;
+		    p += strspn(p, " ");
+		}
+	    }
+	    if (*p) {
+		p++;
+	    }
+	}
+    }
+
+    return ignore;
+}
+
 static int real_function_append_line (const char *line, ufunc *fun)
 {
     int editing = 1;
@@ -3019,7 +3056,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
     } else if (!strncmp(line, "function", 8)) {
 	strcpy(gretl_errmsg, "You can't define a function within a function");
 	err = 1;
-    } else if (!strncmp(line, "return ", 7)) {
+    } else if (!strncmp(line, "return ", 7) && !ignore_line(fun)) {
 	err = add_function_return(fun, line + 7);
     } else {  
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
