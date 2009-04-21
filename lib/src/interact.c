@@ -992,8 +992,12 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	return err;
     }
 
-    lv->v = series_index(pdinfo, lv->vname);
-    if (lv->v == 0 || lv->v >= pdinfo->v) {
+#if LAG_DEBUG
+    fprintf(stderr, "parse_lagvar: vname = '%s'\n", lv->vname);
+#endif
+
+    lv->v = current_series_index(pdinfo, lv->vname);
+    if (lv->v <= 0) {
 	return err;
     }
 

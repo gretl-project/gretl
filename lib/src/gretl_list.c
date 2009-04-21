@@ -1026,6 +1026,8 @@ int *gretl_list_from_string (const char *str, int *err)
 	return NULL;
     }
 
+    *err = 0;
+
     /* strip white space at both ends */
     while (isspace(*s)) s++;
     tailstrip(s);
@@ -1062,7 +1064,7 @@ int *gretl_list_from_string (const char *str, int *err)
 	    *err = E_PARSE;
 	} else {
 	    s = next;
-	    if (*s == '-') {
+	    if (n > 0 && *s == '-' && isdigit(*(s-1)) && isdigit(*(s+1))) {
 		/* hyphen indicating range? */
 		s++;
 		r2 = strtol(s, &next, 10);

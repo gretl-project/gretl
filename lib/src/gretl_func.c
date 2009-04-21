@@ -2980,6 +2980,11 @@ static int end_of_function (const char *s)
     return ret;
 }
 
+static int function_return_line (const char *s)
+{
+    return !strncmp(s, "return ", 7);
+}
+
 #define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
 #define starts_comment(p) (*p == '/' && *(p+1) == '*')
 #define ends_comment(p)   (*p == '*' && *(p+1) == '/')
@@ -3039,9 +3044,8 @@ static int real_function_append_line (const char *line, ufunc *fun)
     }
 
     if (string_is_blank(line)) {
-	/* return 0; */
 	err = strings_array_add(&fun->lines, &fun->n_lines, "");
-    } else if (end_of_function(line)) {
+    } else if (end_of_function(line) && !ignore_line(fun)) {
 	if (fun->n_lines == 0) {
 	    sprintf(gretl_errmsg, "%s: empty function", fun->name);
 	    err = 1;
@@ -3056,7 +3060,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
     } else if (!strncmp(line, "function", 8)) {
 	strcpy(gretl_errmsg, "You can't define a function within a function");
 	err = 1;
-    } else if (!strncmp(line, "return ", 7) && !ignore_line(fun)) {
+    } else if (function_return_line(line) && !ignore_line(fun)) {
 	err = add_function_return(fun, line + 7);
     } else {  
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
