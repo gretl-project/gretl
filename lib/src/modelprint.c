@@ -216,6 +216,16 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void ssrline (const MODEL *pmod, PRN *prn)
+{
+    if (!na(pmod->ess)) {
+	if (plain_format(prn)) { 
+	    pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
+		XDIGITS(pmod), pmod->ess);
+	} 
+    }
+}
+
 static void rssline (const MODEL *pmod, PRN *prn)
 {
     if (!na(pmod->ess) && !na(pmod->tss)) {
@@ -580,7 +590,9 @@ static const char *aux_string (int aux, PRN *prn)
 	return N_("Auxiliary regression for RESET specification test");
     } else if (aux == AUX_GROUPWISE) {
 	return N_("Groupwise heteroskedasticity");
-    } 
+    } else if (aux == AUX_COMFAC) {
+	return N_("Augmented regression for common factor test");
+    }
 
     else return "";
 }
@@ -1444,6 +1456,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_KPSS:
     case AUX_RESET:
     case AUX_GROUPWISE:
+    case AUX_COMFAC:
 	if (plain) {
 	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn)));
 	} else if (tex) {
@@ -2799,7 +2812,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	       pmod->aux == AUX_AR) {
 	rsqline(pmod, prn);
 	goto close_format;
-    } 
+    } else if (pmod->aux == AUX_COMFAC) {
+	ssrline(pmod, prn);
+	goto close_format;
+    }
 
     if (opt & OPT_S) {
 	/* --simple-print */

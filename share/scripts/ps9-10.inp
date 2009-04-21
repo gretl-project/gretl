@@ -8,7 +8,7 @@ genr ut = $uhat
 # Model C 
 omit 7 8 
 # autocorrelation test on Model C 
-lmtest -a 
+modtest -a 
 # correlogram of ut 
 corrgm ut 
 # estimate by corc 

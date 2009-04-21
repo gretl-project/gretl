@@ -176,16 +176,17 @@ struct gretl_option gretl_opts[] = {
     { KPSS,     OPT_Q, "quiet", 0 },
     { KPSS,     OPT_F, "difference", 0 },
     { LEVERAGE, OPT_S, "save", 0 },
-    { LMTEST,   OPT_A, "autocorr", 0 },
-    { LMTEST,   OPT_B, "breusch-pagan", 0 },
-    { LMTEST,   OPT_H, "arch", 0 },
-    { LMTEST,   OPT_L, "logs", 0 },
-    { LMTEST,   OPT_S, "squares", 0 }, 
-    { LMTEST,   OPT_P, "panel", 0 },
-    { LMTEST,   OPT_R, "robust", 0 },
-    { LMTEST,   OPT_Q, "quiet", 0 },
-    { LMTEST,   OPT_W, "white", 0 },
-    { LMTEST,   OPT_X, "white-nocross", 0 },
+    { MODTEST,  OPT_A, "autocorr", 0 },
+    { MODTEST,  OPT_B, "breusch-pagan", 0 },
+    { MODTEST,  OPT_C, "comfac", 0 },
+    { MODTEST,  OPT_H, "arch", 0 },
+    { MODTEST,  OPT_L, "logs", 0 },
+    { MODTEST,  OPT_S, "squares", 0 }, 
+    { MODTEST,  OPT_P, "panel", 0 },
+    { MODTEST,  OPT_R, "robust", 0 },
+    { MODTEST,  OPT_Q, "quiet", 0 },
+    { MODTEST,  OPT_W, "white", 0 },
+    { MODTEST,  OPT_X, "white-nocross", 0 },
     { LOGIT,    OPT_M, "multinomial", 0 },
     { LOGIT,    OPT_P, "p-values", 0 },
     { LOGIT,    OPT_Q, "quiet", 0 },
@@ -970,6 +971,8 @@ static int end_block_ci (const char *s)
 
 #define smpl_alias(s) (!strcmp(s, "sample"))
 
+#define modtest_alias(s) (!strcmp(s, "lmtest"))
+
 /**
  * get_gretl_options:
  * @line: command line to parse.
@@ -1010,6 +1013,8 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = SMPL;
     } else if (ols_alias(cmdword)) {
 	ci = OLS;
+    } else if (modtest_alias(cmdword)) {
+	ci = MODTEST;
     } else {
 	ci = gretl_command_number(cmdword);
     }

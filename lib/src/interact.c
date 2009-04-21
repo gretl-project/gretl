@@ -249,6 +249,8 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->opt = OPT_F;
     } else if (!strcmp(s, "sample")) {
 	cmd->ci = SMPL;
+    } else if (!strcmp(s, "lmtest")) {
+	cmd->ci = MODTEST;
     } else if (!strcmp(s, "list")) {
 	char lname[VNAMELEN];
 
@@ -347,11 +349,11 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == KALMAN || \
  	               c == LABELS || \
                        c == LEVERAGE || \
-                       c == LMTEST || \
                        c == LOOP || \
                        c == MLE || \
                        c == MODELTAB || \
                        c == MODPRINT || \
+                       c == MODTEST || \
                        c == NLS || \
 		       c == NORMTEST || \
                        c == NULLDATA || \
@@ -4564,8 +4566,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = panel_hausman_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	break;
 
-    case LMTEST:
-	err = lmtest_driver(cmd->param, pZ, pdinfo, cmd->opt, prn);
+    case MODTEST:
+	err = model_test_driver(cmd->param, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case LEVERAGE:

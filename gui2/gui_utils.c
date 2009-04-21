@@ -169,37 +169,38 @@ static GtkActionEntry model_test_items[] = {
     { "add", NULL, N_("_Add variables"), NULL, NULL, G_CALLBACK(selector_callback) },
     { "coeffsum", NULL, N_("_Sum of coefficients"), NULL, NULL, G_CALLBACK(selector_callback) },
     { "restrict", NULL, N_("_Linear restrictions"), NULL, NULL, G_CALLBACK(gretl_callback) },
-    { "lmtest:s", NULL, N_("Non-linearity (s_quares)"), NULL, NULL, G_CALLBACK(do_lmtest) },
-    { "lmtest:l", NULL, N_("Non-linearity (_logs)"), NULL, NULL, G_CALLBACK(do_lmtest) },
+    { "modtest:s", NULL, N_("Non-linearity (s_quares)"), NULL, NULL, G_CALLBACK(do_modtest) },
+    { "modtest:l", NULL, N_("Non-linearity (_logs)"), NULL, NULL, G_CALLBACK(do_modtest) },
     { "reset", NULL, N_("_Ramsey's RESET"), NULL, NULL, G_CALLBACK(do_reset) },
     { "Hsk", NULL, N_("_Heteroskedasticity"), NULL, NULL, NULL },    
     { "testuhat", NULL, N_("_Normality of residual"), NULL, NULL, G_CALLBACK(do_resid_freq) },
     { "leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
     { "chow", NULL, N_("_Chow test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },    
     { "vif", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
-    { "lmtest:a", NULL, N_("_Autocorrelation"), NULL, NULL, G_CALLBACK(do_autocorr) },
+    { "modtest:a", NULL, N_("_Autocorrelation"), NULL, NULL, G_CALLBACK(do_autocorr) },
     { "dwpval", NULL, N_("_Durbin-Watson p-value"), NULL, NULL, G_CALLBACK(do_dwpval) },
-    { "lmtest:h", NULL, N_("A_RCH"), NULL, NULL, G_CALLBACK(do_arch) },
+    { "modtest:h", NULL, N_("A_RCH"), NULL, NULL, G_CALLBACK(do_arch) },
     { "qlrtest", NULL, N_("_QLR test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "cusum", NULL, N_("_CUSUM test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "cusum:r", NULL, N_("CUSUM_SQ test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
+    { "modtest:c", NULL, N_("_Common factor"), NULL, NULL, G_CALLBACK(do_modtest) },
     { "hausman", NULL, N_("_Panel diagnostics"), NULL, NULL, G_CALLBACK(do_panel_tests) }
 };
 
 static GtkActionEntry base_hsk_items[] = {
-    { "White", NULL, N_("White's test"), NULL, NULL, G_CALLBACK(do_lmtest) },
-    { "WhiteSquares", NULL, N_("White's test (squares only)"), NULL, NULL, G_CALLBACK(do_lmtest) },
-    { "BreuschPagan", NULL, "Breusch-Pagan", NULL, NULL, G_CALLBACK(do_lmtest) },
-    { "Koenker", NULL, "Koenker", NULL, NULL, G_CALLBACK(do_lmtest) }
+    { "White", NULL, N_("White's test"), NULL, NULL, G_CALLBACK(do_modtest) },
+    { "WhiteSquares", NULL, N_("White's test (squares only)"), NULL, NULL, G_CALLBACK(do_modtest) },
+    { "BreuschPagan", NULL, "Breusch-Pagan", NULL, NULL, G_CALLBACK(do_modtest) },
+    { "Koenker", NULL, "Koenker", NULL, NULL, G_CALLBACK(do_modtest) }
 };
 
 static GtkActionEntry panel_hsk_items[] = {
-    { "White", NULL, N_("White's test"), NULL, NULL, G_CALLBACK(do_lmtest) },
-    { "Groupwise", NULL, N_("_groupwise"), NULL, NULL, G_CALLBACK(do_lmtest) }
+    { "White", NULL, N_("White's test"), NULL, NULL, G_CALLBACK(do_modtest) },
+    { "Groupwise", NULL, N_("_groupwise"), NULL, NULL, G_CALLBACK(do_modtest) }
 };
 
 static GtkActionEntry ivreg_hsk_items[] = {
-    { "White", NULL, N_("Pesaran-Taylor test"), NULL, NULL, G_CALLBACK(do_lmtest) }
+    { "White", NULL, N_("Pesaran-Taylor test"), NULL, NULL, G_CALLBACK(do_modtest) }
 };
 
 const gchar *model_tex_ui = 
@@ -2515,8 +2516,8 @@ static const gchar *model_ui =
     "   <menuitem action='coeffsum'/>"
     "   <menuitem action='restrict'/>"
     "   <separator/>"
-    "   <menuitem action='lmtest:s'/>"
-    "   <menuitem action='lmtest:l'/>"
+    "   <menuitem action='modtest:s'/>"
+    "   <menuitem action='modtest:l'/>"
     "   <menuitem action='reset'/>"
     "   <separator/>"
     "   <menu action='Hsk'/>"
@@ -2525,12 +2526,13 @@ static const gchar *model_ui =
     "   <menuitem action='vif'/>"
     "   <menuitem action='chow'/>"
     "   <separator/>"
-    "   <menuitem action='lmtest:a'/>"
+    "   <menuitem action='modtest:a'/>"
     "   <menuitem action='dwpval'/>"
-    "   <menuitem action='lmtest:h'/>"
+    "   <menuitem action='modtest:h'/>"
     "   <menuitem action='qlrtest'/>"
     "   <menuitem action='cusum'/>"
     "   <menuitem action='cusum:r'/>"
+    "   <menuitem action='modtest:c'/>"
     "   <separator/>"
     "   <menuitem action='hausman'/>"
     "  </menu>"      
@@ -2598,7 +2600,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
 			    ivreg_hsk_items, 
 			    G_N_ELEMENTS(ivreg_hsk_items));
-    } else if (model_test_ok(LMTEST, OPT_W, pmod, datainfo)) {
+    } else if (model_test_ok(MODTEST, OPT_W, pmod, datainfo)) {
 	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
 			    base_hsk_items, 
 			    G_N_ELEMENTS(base_hsk_items));
@@ -3090,7 +3092,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 			  _("gretl: autocorrelation") :
 			  _("gretl: ARCH test"), NULL,
 			  &order, _("Lag order for test:"),
-			  1, datainfo->n / 2, LMTEST);
+			  1, datainfo->n / 2, MODTEST);
 	unset_window_busy(vwin);
 	if (err < 0) {
 	    gretl_print_destroy(prn);
@@ -3100,7 +3102,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 
     if (code == SYS_AUTOCORR_TEST) {
 	title = g_strdup(_("gretl: autocorrelation"));
-	cstr = g_strdup_printf("lmtest %d --autocorr", order);
+	cstr = g_strdup_printf("modtest %d --autocorr", order);
 	if (var != NULL) {
 	    err = gretl_VAR_autocorrelation_test(var, order, 
 						 &Z, datainfo, 
@@ -3110,7 +3112,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 	}
     } else if (code == SYS_ARCH_TEST) {
 	title = g_strdup(_("gretl: ARCH test"));
-	cstr = g_strdup_printf("lmtest %d --arch", order);
+	cstr = g_strdup_printf("modtest %d --arch", order);
 	if (var != NULL) {
 	    err = gretl_VAR_arch_test(var, order, datainfo, prn);
 	} else {

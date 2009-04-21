@@ -17,7 +17,7 @@ ols It 0 Ft Ct
 ols It 0 Ft Ct --robust
 
 # Run White's test
-lmtest --white --quiet
+modtest --white --quiet
 
 # Now treat as panel
 setobs 20 1:1 --stacked-time

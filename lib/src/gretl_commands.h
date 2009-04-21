@@ -81,7 +81,6 @@ typedef enum {
     LAGS,    
     LDIFF,
     LEVERAGE,
-    LMTEST, 
     LOGISTIC,
     LOGIT,
     LOGS,
@@ -91,6 +90,7 @@ typedef enum {
     MLE,
     MODELTAB,
     MODPRINT,
+    MODTEST,
     MPOLS,
     NLS,
     NORMTEST,
@@ -171,7 +171,7 @@ typedef enum {
                         c == HAUSMAN || \
                         c == KPSS || \
                         c == LEVERAGE || \
-                        c == LMTEST || \
+                        c == MODTEST || \
                         c == MEANTEST || \
                         c == MPOLS || \
 			c == NORMTEST || \
@@ -202,7 +202,7 @@ typedef enum {
                               c == FCAST || \
                               c == HAUSMAN || \
                               c == LEVERAGE || \
-                              c == LMTEST || \
+                              c == MODTEST || \
                               c == OMIT || \
                               c == QLRTEST || \
                               c == RESET || \

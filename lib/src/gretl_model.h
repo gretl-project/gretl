@@ -168,7 +168,7 @@ struct VCVInfo_ {
 	                     c == CUSUM || \
 	                     c == FCAST || \
                              c == LEVERAGE || \
-	                     c == LMTEST || \
+	                     c == MODTEST || \
                              c == OMIT || \
 	                     c == RESTRICT || \
 	                     c == TESTUHAT || \
@@ -203,6 +203,7 @@ typedef enum {
     GRETL_TEST_HET_1,
     GRETL_TEST_BP,
     GRETL_TEST_CHOWDUM,
+    GRETL_TEST_COMFAC,
     GRETL_TEST_MAX
 } ModelTestType;
 

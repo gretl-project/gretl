@@ -159,7 +159,7 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
 {
     int pv = 0, ret = 0;
 
-    if (v <= 0 || v >= pdinfo->v) {
+    if (pdinfo == NULL || v <= 0 || v >= pdinfo->v) {
 	return 0;
     }
 

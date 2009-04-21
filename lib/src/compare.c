@@ -858,9 +858,10 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	    nonlin_test_header(aux_code, prn);
 	} else {
 	    printmodel(&aux, pdinfo, opt, prn);
+	    pputc(prn, '\n');
 	}
 
-	pprintf(prn, "%s: TR^2 = %g,\n", _("Test statistic"), trsq);
+	pprintf(prn, "  %s: TR^2 = %g,\n  ", _("Test statistic"), trsq);
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %g\n\n"), 
 		df, trsq, pval);
 
@@ -2721,13 +2722,13 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 {
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-    int m, i, j;
     int T = pmod->t2 - pmod->t1 + 1;
     int k = pmod->ncoeff;
     char cumdate[OBSLEN];
     double wbar = 0.0;
     double *cresid = NULL, *W = NULL;
     int quiet = opt & OPT_Q;
+    int m, i, j;
     int err = 0;
 
     if (pmod->ci != OLS) {
@@ -2852,6 +2853,160 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     
     free(cresid);
     free(W);
+
+    return err;
+}
+
+/**
+ * comfac_test:
+ * @pmod: pointer to original model.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on the data set.
+ * @opt: if contains %OPT_S, save test results to model.
+ * @prn: gretl printing struct.
+ *
+ * If @pmod was estimated via an AR(1) estimator, run an
+ * auxiliary regression to test the implied common-factor
+ * restriction.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn)
+{
+    MODEL cmod;
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
+    int src, v = pdinfo->v;
+    int *biglist = NULL;
+    int clearit = 0;
+    int nadd, i, k, t;
+    int err;
+
+    if (pmod->ci != AR1) {
+	return E_NOTIMP;
+    }
+
+    /* check for changes in original list members */
+    err = list_members_replaced(pmod->list, pdinfo, pmod->ID);
+    if (err) {
+	return err;
+    }
+
+    biglist = gretl_list_copy(pmod->list);
+    if (biglist == NULL) {
+	return E_ALLOC;
+    }
+
+    nadd = 1 + pmod->ncoeff - pmod->ifc;
+
+    err = dataset_add_series(nadd, pZ, pdinfo);
+    if (err) {
+	free(biglist);
+	return err;
+    }
+
+    k = v;
+    for (i=1; i<=pmod->list[0]; i++) {
+	int lag, parent;
+
+	src = pmod->list[i];
+	if (src == 0) {
+	    continue;
+	}
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t == 0 || na((*pZ)[src][t-1])) {
+		(*pZ)[k][t] = NADBL;
+	    } else {
+		(*pZ)[k][t] = (*pZ)[src][t-1];
+	    }
+	}
+	biglist = gretl_list_append_term(&biglist, k);
+	if (biglist == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+	lag = is_standard_lag(src, pdinfo, &parent);
+	if (lag && parent) {
+	    char tmp[8];
+
+	    sprintf(tmp, "_%d", lag + 1);
+	    strcpy(pdinfo->varname[k], pdinfo->varname[parent]);
+	    gretl_trunc(pdinfo->varname[k], 15 - strlen(tmp));
+	    strcat(pdinfo->varname[k], tmp);
+	} else {
+	    strcpy(pdinfo->varname[k], pdinfo->varname[src]);
+	    gretl_trunc(pdinfo->varname[k], 13);
+	    strcat(pdinfo->varname[k], "_1");
+	}
+	k++;
+    }
+
+    if (!err) {
+	/* re-impose the sample that was in force when the original model
+	   was estimated */
+	impose_model_smpl(pmod, pdinfo);
+	cmod = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
+	clearit = 1;
+	err = cmod.errcode;
+    }
+
+    if (!err) {
+	if (cmod.nobs != pmod->nobs || cmod.ess > pmod->ess || cmod.dfd >= pmod->dfd) {
+	    /* something has gone badly wrong */
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	int dfd = cmod.dfd;
+	int dfn = pmod->dfd - dfd;
+	double SSRr = pmod->ess;
+	double SSRu = cmod.ess;
+	double Ftest = ((SSRr - SSRu)/dfn) / (SSRu/dfd);
+	double pval = snedecor_cdf_comp(dfn, dfd, Ftest);
+
+	if (!(opt & OPT_Q)) {
+	    cmod.aux = AUX_COMFAC;
+	    printmodel(&cmod, pdinfo, OPT_S, prn);
+	    pputc(prn, '\n');
+	}
+
+	pputs(prn, _("Test of common factor restriction"));
+	pputs(prn, "\n\n");
+
+	pprintf(prn, "  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		"F", dfn, dfd, Ftest);
+	pprintf(prn, _("with p-value = %g\n"), pval);
+	pputc(prn, '\n');
+
+	if (opt & OPT_S) {
+	    ModelTest *test;
+
+	    test = model_test_new(GRETL_TEST_COMFAC);
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_F);
+		model_test_set_dfn(test, dfn);
+		model_test_set_dfd(test, dfd);
+		model_test_set_value(test, Ftest);
+		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
+	    }
+	}
+
+	record_test_result(Ftest, pval, _("common factor restriction"));
+    }
+
+    if (clearit) {
+	clear_model(&cmod);
+    }
+
+    dataset_drop_last_variables(nadd, pZ, pdinfo);   
+    free(biglist);
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
 
     return err;
 }
@@ -3075,7 +3230,7 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 }
 
 /**
- * lmtest_driver:
+ * model_test_driver:
  * @param: auxiliary parameter for some uses.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
@@ -3083,15 +3238,15 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
  * gives less verbose results.
  * @prn: gretl printing struct.
  * 
- * Performs some subset of gretl's "lmtest" tests on the
+ * Performs some subset of gretl's "modtest" tests on the
  * model last estimated, and prints the results to @prn.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
 
-int lmtest_driver (const char *param, 
-		   double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn)
+int model_test_driver (const char *param, 
+		       double ***pZ, DATAINFO *pdinfo, 
+		       gretlopt opt, PRN *prn)
 {
     GretlObjType type;
     gretlopt testopt;
@@ -3100,7 +3255,7 @@ int lmtest_driver (const char *param,
     int err = 0;
 
     if (opt == OPT_NONE || opt == OPT_Q) {
-	pprintf(prn, "lmtest: no options selected\n");
+	pprintf(prn, "modtest: no options selected\n");
 	return 0;
     }
 
@@ -3195,6 +3350,15 @@ int lmtest_driver (const char *param,
 	    err = E_NOTIMP;
 	}
     }
+
+    /* common factor restriction */
+    if (!err && (opt & OPT_C)) {
+	if (type == GRETL_OBJ_EQN) {
+	    err = comfac_test(ptr, pZ, pdinfo, testopt, prn);
+	} else {
+	    err = E_NOTIMP;
+	}
+    }    
 
     return err;
 }

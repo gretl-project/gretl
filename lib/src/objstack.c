@@ -1262,7 +1262,7 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	err = E_NOTIMP;
 	if (ci == RESTRICT || ci == TESTUHAT || ci == FCAST) {
 	    err = 0;
-	} else if (ci == LMTEST && ((opt & OPT_A) || (opt & OPT_H))) {
+	} else if (ci == MODTEST && ((opt & OPT_A) || (opt & OPT_H))) {
 	    err = 0;
 	}
     } else if (type == GRETL_OBJ_VAR) {
@@ -1275,7 +1275,7 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	    err = 0;
 	} else if (ci == TESTUHAT || ci == FCAST) {
 	    err = 0;
-	} else if (ci == LMTEST && ((opt & OPT_A) || (opt & OPT_H))) {
+	} else if (ci == MODTEST && ((opt & OPT_A) || (opt & OPT_H))) {
 	    err = 0;
 	} 
     }

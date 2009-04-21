@@ -615,7 +615,7 @@
 	auxiliary regression.
       </para>
       <para>
-	See also <cmdref targ="garch"/> and <cmdref targ="lmtest"/> (the
+	See also <cmdref targ="garch"/> and <cmdref targ="modtest"/> (the
 	<lit>--arch</lit> option).  
       </para>
     </description>
@@ -4649,7 +4649,7 @@
 
   </command>
 
-  <command name="lmtest" section="Tests" label="LM tests">
+  <command name="modtest" section="Tests" label="Model tests">
 
     <usage>
       <arguments>
@@ -4693,6 +4693,10 @@
 	  <effect>heteroskedasticity, groupwise</effect>
         </option>
         <option>
+	  <flag>--comfac</flag>
+	  <effect>common factor restriction, AR1 models only</effect>
+        </option>
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>don't print auxiliary regression</effect>
         </option>
@@ -4703,31 +4707,31 @@
       <para>
 	Under this heading fall several hypothesis tests.  What they have in
 	common is that the test involves the estimation of an auxiliary
-	regression, where the dependent variable is the residual from some
-	<quote>original</quote> regression.  The right-hand side variables
-	include those from the original regression, along with some additional
-	terms.  In most cases the test statistic is calculated as (sample size
-	* R-squared) from the auxiliary regression: this is distributed as
-	chi-square with degrees of freedom equal to the number of additional
-	terms, under the null hypothesis that the additional terms have no
-	explanatory power over the residual.  A <quote>large</quote>
-	chi-square value (small p-value) suggests that this null hypothesis
-	should be rejected.
+	regression; in most cases the dependent variable is the residual from
+	some <quote>original</quote> regression.  The right-hand side
+	variables include those from the original regression, along with some
+	additional terms.  In most cases the test statistic is calculated as
+	(sample size * R-squared) from the auxiliary regression: this is
+	distributed as chi-square with degrees of freedom equal to the number
+	of additional terms, under the null hypothesis that the additional
+	terms have no explanatory power over the residual.  A
+	<quote>large</quote> chi-square value (small p-value) suggests that
+	this null hypothesis should be rejected.
       </para>
     </description>
 
     <description context="cli">
       <para>
-	Must immediately follow an estimation command. Depending on
-	the option given, this command carries out one of the
-	following: a Lagrange Multiplier test for nonlinearity (logs
-	or squares); White's test (with or without cross-products) or
-	the Breusch&ndash;Pagan test for heteroskedasticity; the LMF
-	test for serial correlation (Kiviet, 1986); or a test for ARCH
-	(Autoregressive Conditional Heteroskedasticity; see also
-	the <cmd>arch</cmd> command).  Most of the options are only
-	available for models estimated via OLS, but see below for
-	details regarding two-stage least squares.
+	Must immediately follow an estimation command. Depending on the option
+	given, this command carries out one of the following: a Lagrange
+	Multiplier test for nonlinearity (logs or squares); White's test (with
+	or without cross-products) or the Breusch&ndash;Pagan test for
+	heteroskedasticity; the LMF test for serial correlation (Kiviet,
+	1986); or a test for ARCH (Autoregressive Conditional
+	Heteroskedasticity; see also the <cmd>arch</cmd> command).  With the
+	exception of the common factor test most of the options are only
+	available for models estimated via OLS, but see below for details
+	regarding two-stage least squares.
       </para>
       <para>
 	The optional <lit>order</lit> argument is relevant only in case
@@ -4747,6 +4751,13 @@
 	is estimated on panel data: in this case a test for groupwise
 	heteroskedasticity is performed (that is, for a differing
 	error variance across the cross-sectional units).
+      </para>
+      <para>
+	The <lit>--comfac</lit> option is available only when the model is
+	estimated via an AR(1) method such as Hildreth&ndash;Lu.  The
+	auxiliary regression takes the form of a relatively unrestricted
+	dynamic model, which is used to test the common factor restriction
+	implicit in the AR(1) specification.
       </para>
       <para>
 	By default, the program prints the auxiliary regression on which

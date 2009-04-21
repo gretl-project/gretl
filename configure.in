@@ -220,8 +220,6 @@ then
 fi,
 have_odbc=no)
 
-AC_CANONICAL_HOST  dnl Make generic macros for the kind of system.
-
 AC_PROG_CC
 
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
@@ -368,7 +366,7 @@ esac
 
 dnl And while we're at it...
 case $host_os in
-  *darwin*) 
+  *arwin*) 
     CARBONLIB="-Wl,-framework -Wl,Carbon"
     AC_SUBST(CARBONLIB)
   ;; 

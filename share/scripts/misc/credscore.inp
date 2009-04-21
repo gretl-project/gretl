@@ -28,7 +28,7 @@ printf "D and M (1):\n%8.3f", DM1
 printf "D and M (2):\n%8.3f", DM2 
 
 # White's test
-lmtest --white --quiet
+modtest --white --quiet
 
 set echo off
 set messages off

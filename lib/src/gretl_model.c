@@ -2860,6 +2860,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_HET_1,
       N_("Pesaran-Taylor test for heteroskedasticity"),
       N_("heteroskedasticity not present") },
+    { GRETL_TEST_COMFAC,
+      N_("Test of common factor restriction"),
+      N_("restriction is acceptable") },
     { GRETL_TEST_MAX, NULL, NULL }
 }; 
 
@@ -4334,10 +4337,12 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	}
 	break;
 
-    case LMTEST:
+    case MODTEST:
 	if (opt & OPT_H) {
 	    /* ARCH */
 	    ok = (mci != ARCH);
+	} else if (opt & OPT_C) {
+	    ok = (mci == AR1);
 	} else if (mci != OLS) {
 	    if ((mci == IVREG) && (opt & (OPT_A | OPT_W))) {
 		/* Autocorr. and H'sked. supported for IVREG */
@@ -4403,7 +4408,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     if (ok && pmod->missmask != NULL) {
 	/* can't do these with embedded missing obs */
 	if (ci == CUSUM || 
-	    (ci == LMTEST && (opt & (OPT_A | OPT_H)))) {
+	    (ci == MODTEST && (opt & (OPT_A | OPT_H)))) {
 	    ok = 0;
 	}
     }
@@ -4411,7 +4416,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     if (ok && pmod->ncoeff == 1) {
 	if (ci == OMIT || ci == COEFFSUM) {
 	    ok = 0;
-	} else if (pmod->ifc && ci == LMTEST) {
+	} else if (pmod->ifc && ci == MODTEST) {
 	    /* const only: rule out squares, logs, h'sked */
 	    if (opt & (OPT_W | OPT_B | OPT_S | OPT_L)) {
 		ok = 0;
@@ -4422,7 +4427,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     if (ok && !dataset_is_time_series(pdinfo)) {
 	/* time-series-only tests */
 	if (ci == CUSUM || ci == QLRTEST || 
-	    (ci == LMTEST && (opt & (OPT_H | OPT_A)))) {
+	    (ci == MODTEST && (opt & (OPT_H | OPT_A)))) {
 	    ok = 0;
 	}
     }
@@ -4431,7 +4436,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     if (ok && !dataset_is_time_series(pdinfo) &&
 	!dataset_is_panel(pdinfo)) {
 	/* time-series or panel tests */
-	if (ci == LMTEST && (opt & OPT_A)) {
+	if (ci == MODTEST && (opt & OPT_A)) {
 	    ok = 0;
 	}
     }
@@ -4439,7 +4444,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && !dataset_is_panel(pdinfo)) {
 	/* panel-only tests */
-	if (ci == HAUSMAN || (ci == LMTEST && (opt & OPT_P))) {
+	if (ci == HAUSMAN || (ci == MODTEST && (opt & OPT_P))) {
 	    ok = 0;
 	}
     }

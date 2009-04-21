@@ -123,7 +123,7 @@ int do_VAR_omit (selector *sr);
 
 int do_confidence_region (selector *sr);
 
-void do_lmtest (GtkAction *action, gpointer p);
+void do_modtest (GtkAction *action, gpointer p);
 
 void do_autocorr (GtkAction *action, gpointer p);
 

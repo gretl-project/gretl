@@ -56,11 +56,15 @@
   positive semidefinite (and possibly singular) matrix
 - New function filter: compute an ARMA-like filtering of a
   series
-- Add a GUI language selector (by popular request)
+- Add a GUI language selector (by popular request!)
 - "restrict" command: accept scalar variables in place of
   numerical constants
 - "genr" with lists: allow boolean comparison of a list to a
   scalar, returning a series
+- Add new string function "tolower"
+- Rename "lmtest" command to "modtest"
+- Add --comfac option to "modtest" for testing common factor
+  restriction in models estimated via an AR(1) method
 
 1/23/2009 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog

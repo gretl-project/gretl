@@ -1800,7 +1800,7 @@ static void update_model_tests (windata_t *vwin)
     }
 }
 
-static gretlopt lmtest_get_opt (GtkAction *action)
+static gretlopt modtest_get_opt (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
 
@@ -1824,7 +1824,7 @@ static gretlopt lmtest_get_opt (GtkAction *action)
     }
 }
 
-void do_lmtest (GtkAction *action, gpointer p)
+void do_modtest (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -1839,12 +1839,12 @@ void do_lmtest (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
-    opt = lmtest_get_opt(action);
+    opt = modtest_get_opt(action);
 
     strcpy(title, _("gretl: LM test "));
 
     if (opt == OPT_W) {
-	gretl_command_strcpy("lmtest --white");
+	gretl_command_strcpy("modtest --white");
 	err = whites_test(pmod, &Z, datainfo, OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
@@ -1853,7 +1853,7 @@ void do_lmtest (GtkAction *action, gpointer p)
 	    strcat(title, _("(heteroskedasticity)"));
 	}
     } else if (opt == OPT_X) {
-	gretl_command_strcpy("lmtest --white-nocross");
+	gretl_command_strcpy("modtest --white-nocross");
 	err = whites_test(pmod, &Z, datainfo, OPT_S | OPT_X, prn);
 	if (err) {
 	    gui_errmsg(err);
@@ -1863,9 +1863,9 @@ void do_lmtest (GtkAction *action, gpointer p)
 	}
     } else if (opt & OPT_B) {
 	if (opt & OPT_R) {
-	    gretl_command_strcpy("lmtest --breusch-pagan --robust");
+	    gretl_command_strcpy("modtest --breusch-pagan --robust");
 	} else {
-	    gretl_command_strcpy("lmtest --breusch-pagan");
+	    gretl_command_strcpy("modtest --breusch-pagan");
 	}
 	err = whites_test(pmod, &Z, datainfo, opt | OPT_S, prn);
 	if (err) {
@@ -1875,7 +1875,7 @@ void do_lmtest (GtkAction *action, gpointer p)
 	    strcat(title, _("(heteroskedasticity)"));
 	}
     } else if (opt == OPT_P) {
-	gretl_command_strcpy("lmtest --panel");
+	gretl_command_strcpy("modtest --panel");
 	err = groupwise_hetero_test(pmod, &Z, datainfo, prn);
 	if (err) {
 	    gui_errmsg(err);
@@ -1887,9 +1887,9 @@ void do_lmtest (GtkAction *action, gpointer p)
 	int aux = (opt == OPT_S)? AUX_SQ : AUX_LOG;
 
 	if (opt == OPT_S) { 
-	    gretl_command_strcpy("lmtest --squares");
+	    gretl_command_strcpy("modtest --squares");
 	} else {
-	    gretl_command_strcpy("lmtest --logs");
+	    gretl_command_strcpy("modtest --logs");
 	}
 	clear_model(models[0]);
 	err = nonlinearity_test(pmod, &Z, datainfo, aux, OPT_S, prn);
@@ -1899,12 +1899,21 @@ void do_lmtest (GtkAction *action, gpointer p)
 	} else {
 	    strcat(title, _("(non-linearity)"));
 	} 
-    }
+    } else if (opt == OPT_C) {
+	gretl_command_strcpy("modtest --comfac");
+	err = comfac_test(pmod, &Z, datainfo, OPT_S, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    strcpy(title, _("gretl: common factor test"));
+	}
+    }	
 
     if (!err) {
 	update_model_tests(vwin);
 	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, title, LMTEST, NULL); 
+	view_buffer(prn, 78, 400, title, MODTEST, NULL); 
     }
 }
 
@@ -2331,7 +2340,7 @@ void do_autocorr (GtkAction *action, gpointer p)
     set_window_busy(vwin);
     err = spin_dialog(_("gretl: autocorrelation"), NULL,
 		      &order, _("Lag order for test:"),
-		      1, datainfo->n / 2, LMTEST);
+		      1, datainfo->n / 2, MODTEST);
     unset_window_busy(vwin);
 
     if (err < 0) {
@@ -2356,9 +2365,9 @@ void do_autocorr (GtkAction *action, gpointer p)
 	gretl_print_destroy(prn);
     } else {
 	update_model_tests(vwin);
-	gretl_command_sprintf("lmtest --autocorr %d", order);
+	gretl_command_sprintf("modtest --autocorr %d", order);
 	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, title, LMTEST, NULL); 
+	view_buffer(prn, 78, 400, title, MODTEST, NULL); 
     }
 }
 
@@ -2405,7 +2414,7 @@ void do_arch (GtkAction *action, gpointer p)
     set_window_busy(vwin);
     err = spin_dialog(_("gretl: ARCH test"), NULL,
 		      &order, _("Lag order for ARCH test:"),
-		      1, datainfo->n / 2, LMTEST);
+		      1, datainfo->n / 2, MODTEST);
     unset_window_busy(vwin);
 
     if (err < 0) {
@@ -2423,9 +2432,9 @@ void do_arch (GtkAction *action, gpointer p)
 	gretl_print_destroy(prn);
     } else {
 	update_model_tests(vwin);
-	gretl_command_sprintf("lmtest --arch %d", order);
+	gretl_command_sprintf("modtest --arch %d", order);
 	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, _("gretl: ARCH test"), LMTEST, NULL); 
+	view_buffer(prn, 78, 400, _("gretl: ARCH test"), MODTEST, NULL); 
     }
 }
 

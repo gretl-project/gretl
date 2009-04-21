@@ -55,7 +55,8 @@ typedef enum {
     AUX_GROUPWISE, /* testing for groupwise heteroskedasticity */
     AUX_HET_1, /* aux. regression for Pesaran-Taylor HET_1 test */
     AUX_BP,    /* aux. regression for Breusch-Pagan heterosked. test */
-    AUX_AUX    /* auxiliary regression not otherwise specified */
+    AUX_AUX,   /* auxiliary regression not otherwise specified */
+    AUX_COMFAC /* aux. regression for common factor test */
 } ModelAuxCode;
 
 /* functions follow */
@@ -81,6 +82,9 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 int autocorr_test (MODEL *pmod, int order,
 		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn);
+
+int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn);
 
 double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		      int *err);
@@ -108,8 +112,8 @@ int leverage_test (MODEL *pmod,
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				    gretl_matrix *m, unsigned char flags);
 
-int lmtest_driver (const char *param,
-		   double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn);
+int model_test_driver (const char *param,
+		       double ***pZ, DATAINFO *pdinfo, 
+		       gretlopt opt, PRN *prn);
 
 #endif /* COMPARE_H */
