@@ -1064,7 +1064,7 @@ int *gretl_list_from_string (const char *str, int *err)
 	    *err = E_PARSE;
 	} else {
 	    s = next;
-	    if (n > 0 && *s == '-' && isdigit(*(s-1)) && isdigit(*(s+1))) {
+	    if (*s == '-') {
 		/* hyphen indicating range? */
 		s++;
 		r2 = strtol(s, &next, 10);
