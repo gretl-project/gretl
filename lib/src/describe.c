@@ -4954,6 +4954,32 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
 
     qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
 
+#if 0
+    if (1) {
+	/* just testing alternative calculation for equivalence */
+	double num, S[2];
+	int s, fyi;
+    
+	num = S[0] = S[1] = 0.0;
+
+	for (t=0; t<n; t++) {
+	    fyi = 0;
+	    s = t;
+	    while (s < n && sx[s] == sx[t]) {
+		fyi++;
+		s++; 
+	    }
+	    S[1] += (double) fyi/n * sx[t];
+	    num += (double) fyi/n * (S[0] + S[1]);
+	    t = s - 1;
+	    S[0] = S[1];
+	}
+
+	gini = 1.0 - num / S[1];
+	fprintf(stderr, "G = %g\n", gini);
+    }
+#endif
+
     for (t=0; t<n; t++) {
 	csx += sx[t];
 	idx = t + 1;
