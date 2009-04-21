@@ -601,7 +601,7 @@
         del processo ARCH stimati nella regressione ausiliaria.
       </para>
       <para>
-	Si veda anche <cmdref targ="garch"/> e <cmdref targ="lmtest"/>
+	Si veda anche <cmdref targ="garch"/> e <cmdref targ="modtest"/>
         (l'opzione <lit>--arch</lit>).
       </para>
     </description>
@@ -4499,7 +4499,7 @@
 
   </command>
 
-  <command name="lmtest" section="Tests" label="Test LM">
+  <command name="modtest" section="Tests" label="Test LM">
 
     <usage>
       <arguments>

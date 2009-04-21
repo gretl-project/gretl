@@ -2878,7 +2878,7 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL cmod;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-    int src, v = pdinfo->v;
+    int v = pdinfo->v;
     int *biglist = NULL;
     int clearit = 0;
     int nadd, i, k, t;
@@ -2907,9 +2907,14 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return err;
     }
 
+    /* add lags of the dependent variable and all regressors: some of
+       these may be redundant but we'll just let the redundat terms be
+       eliminated automatically via gretl's collinearity checking.
+    */
+
     k = v;
     for (i=1; i<=pmod->list[0]; i++) {
-	int lag, parent;
+	int src, lag, parent;
 
 	src = pmod->list[i];
 	if (src == 0) {
@@ -2960,6 +2965,9 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
+	/* construct an F-test based on the SSR from the original
+	   AR(1) model and the SSR from the unrestricted model, cmod.
+	*/
 	int dfd = cmod.dfd;
 	int dfn = pmod->dfd - dfd;
 	double SSRr = pmod->ess;
@@ -3001,6 +3009,9 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (clearit) {
 	clear_model(&cmod);
     }
+
+    /* delete the added variables and restore the original
+       sample range */
 
     dataset_drop_last_variables(nadd, pZ, pdinfo);   
     free(biglist);
