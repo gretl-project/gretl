@@ -1,5 +1,9 @@
 version 1.8.1, in progress
 
+The command "lmtest" has been renamed as "modtest".  However,
+"lmtest" has been retained as an alias so this is not a
+true incompatibility.
+
 The gretl reference manual says that the names of gretl
 commands are reserved, and cannot be used as the names of 
 variables.  This has not been properly enforced in the past,

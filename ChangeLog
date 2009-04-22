@@ -65,6 +65,9 @@
 - Rename "lmtest" command to "modtest"
 - Add --comfac option to "modtest" for testing common factor
   restriction in models estimated via an AR(1) method
+- Add user-level access to the Kalman filter, with a new
+  command "kalman" and new functions kfilter, ksmooth and
+  ksimul
 
 1/23/2009 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
