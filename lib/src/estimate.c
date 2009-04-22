@@ -2891,20 +2891,22 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
     if (opt & OPT_R) {
 	/* calculate robust variance estimate a la Koenker */
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    u2t = pmod->uhat[t] * pmod->uhat[t];
-	    V += (u2t - s2) * (u2t - s2);
+	    if (!na(pmod->uhat[t])) {
+		u2t = pmod->uhat[t] * pmod->uhat[t];
+		V += (u2t - s2) * (u2t - s2);
+	    }
 	}
 	V /= pmod->nobs;
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	u2t = pmod->uhat[t] * pmod->uhat[t];
-	if (opt & OPT_R) {
-	    gt = u2t - s2;
+	if (na(pmod->uhat[t])) {
+	    (*pZ)[v][t] = NADBL;
 	} else {
-	    gt = u2t / s2;
+	    u2t = pmod->uhat[t] * pmod->uhat[t];
+	    gt = (opt & OPT_R)? (u2t - s2) : (u2t / s2);
+	    (*pZ)[v][t] = gt;
 	}
-	(*pZ)[v][t] = gt;
     }
 
     *aux = lsq(list, pZ, pdinfo, OLS, OPT_A);
