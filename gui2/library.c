@@ -1917,6 +1917,46 @@ void do_modtest (GtkAction *action, gpointer p)
     }
 }
 
+void do_arch (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = vwin->data;
+    PRN *prn;
+    int order, err = 0;
+
+    if (gui_exact_fit_check(pmod)) {
+	return;
+    }    
+
+    order = default_lag_order(datainfo);
+
+    set_window_busy(vwin);
+    err = spin_dialog(_("gretl: ARCH test"), NULL,
+		      &order, _("Lag order for ARCH test:"),
+		      1, datainfo->n / 2, MODTEST);
+    unset_window_busy(vwin);
+
+    if (err < 0) {
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    err = arch_test(pmod, order, datainfo, OPT_S, prn);
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	update_model_tests(vwin);
+	gretl_command_sprintf("modtest --arch %d", order);
+	model_command_init(pmod->ID);
+	view_buffer(prn, 78, 400, _("gretl: ARCH test"), MODTEST, NULL); 
+    }
+}
+
 void do_panel_tests (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -2395,46 +2435,6 @@ void do_dwpval (GtkAction *action, gpointer p)
 	pprintf(prn, "%s = %g\n", _("p-value"), pv);
 	view_buffer(prn, 78, 200, title, PRINT, NULL); 
 	g_free(title);
-    }
-}
-
-void do_arch (GtkAction *action, gpointer p)
-{
-    windata_t *vwin = (windata_t *) p;
-    MODEL *pmod = vwin->data;
-    PRN *prn;
-    int order, err = 0;
-
-    if (gui_exact_fit_check(pmod)) {
-	return;
-    }    
-
-    order = default_lag_order(datainfo);
-
-    set_window_busy(vwin);
-    err = spin_dialog(_("gretl: ARCH test"), NULL,
-		      &order, _("Lag order for ARCH test:"),
-		      1, datainfo->n / 2, MODTEST);
-    unset_window_busy(vwin);
-
-    if (err < 0) {
-	return;
-    }
-
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    err = arch_test(pmod, order, datainfo, OPT_S, prn);
-
-    if (err) {
-	gui_errmsg(err);
-	gretl_print_destroy(prn);
-    } else {
-	update_model_tests(vwin);
-	gretl_command_sprintf("modtest --arch %d", order);
-	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, _("gretl: ARCH test"), MODTEST, NULL); 
     }
 }
 

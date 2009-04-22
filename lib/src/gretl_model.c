@@ -4189,7 +4189,8 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	    *err = model_data_items_from_xml(cur, doc, pmod, fixopt);
 	}
 	if (*err) {
-	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d on %s\n", *err, cur->name);
+	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d on %s\n", 
+		    *err, cur->name);
 	}
 	cur = cur->next;
     }
@@ -4289,9 +4290,14 @@ void swap_models (MODEL *targ, MODEL *src)
  * @mci: command index of a gretl model (for example,
  * %OLS, %WLS or %AR1).
  *
- * Returns: 1 if the model-related command in question is
- * meaningful and acceptable in the context of the specific
- * sort of model indentified by @model_ci, otherwise 0.
+ * Check to see if the model-related command in question is
+ * meaningful and acceptable in the context of the estimator
+ * identified by the command index @mci. Note, though, that 
+ * this function may give a "false positive": to be quite sure, 
+ * we may need to know more about the model (e.g. specific 
+ * options used).  See also model_test_ok().
+ * 
+ * Returns: 1 if the command seems OK, otherwise 0.
  */
 
 int command_ok_for_model (int test_ci, gretlopt opt, int mci)
@@ -4452,6 +4458,13 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     if (ok && pmod->ncoeff - pmod->ifc <= 1 && ci == VIF) {
 	/* needs at least two independent vars */
 	ok = 0;
+    }
+
+    if (ok && ci == MODTEST && (opt & OPT_C)) {
+	/* common factor test */
+	if (pmod->opt & OPT_P) {
+	    ok = 0;
+	}
     }
 
     return ok;

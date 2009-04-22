@@ -2884,7 +2884,8 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int nadd, i, k, t;
     int err;
 
-    if (pmod->ci != AR1) {
+    if (pmod->ci != AR1 || (pmod->opt & OPT_P)) {
+	/* can't handle Prais-Winsten? */
 	return E_NOTIMP;
     }
 
@@ -2959,7 +2960,7 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	if (cmod.nobs != pmod->nobs || cmod.ess > pmod->ess || cmod.dfd >= pmod->dfd) {
-	    /* something has gone badly wrong */
+	    /* something has gone wrong */
 	    err = E_DATA;
 	}
     }
@@ -2969,7 +2970,7 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	   AR(1) model and the SSR from the unrestricted model, cmod.
 	*/
 	int dfd = cmod.dfd;
-	int dfn = pmod->dfd - dfd;
+	int dfn = pmod->dfd - dfd - 1; /* account for rho */
 	double SSRr = pmod->ess;
 	double SSRu = cmod.ess;
 	double Ftest = ((SSRr - SSRu)/dfn) / (SSRu/dfd);
