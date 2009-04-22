@@ -224,7 +224,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
 
 clean:
-	rm -f *.o $(PROG)
+	rm -f *.o $(PROG) mklang gretl.lang gretl.lang.2
 	rm -rf .libs .deps
 	make -C gtksourceview clean
 
