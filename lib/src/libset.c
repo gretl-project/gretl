@@ -1968,28 +1968,70 @@ enum {
     LOOPING_QUIETLY
 };
 
-static int loop_on;
+#define LDEPCHUNK 16
+
+static int *loop_on;
+static int ldepth;
+
 static int batch_mode;
 static int gui_mode;
 
+static int more_loop_depth (void)
+{
+    loop_on = realloc(loop_on, (ldepth + LDEPCHUNK) * sizeof *loop_on);
+
+    if (loop_on == NULL) {
+	fprintf(stderr, "*** Couldn't allocate looping record\n");
+    } else {
+	ldepth += LDEPCHUNK;
+    }
+
+    return (loop_on == NULL)? E_ALLOC : 0;
+}
+
 void set_loop_on (int quiet)
 {
-    loop_on = (quiet)? LOOPING_QUIETLY : LOOPING;
+    int fd = gretl_function_depth();
+    int err = 0;
+
+    if (fd >= ldepth) {
+	err = more_loop_depth();
+    }
+
+    if (!err) {
+	loop_on[fd] = (quiet)? LOOPING_QUIETLY : LOOPING;
+    }
 }
 
 void set_loop_off (void)
 {
-    loop_on = 0;
+    int fd = gretl_function_depth();
+
+    if (loop_on != NULL && fd <= ldepth) {
+	loop_on[fd] = 0;
+    }
 }
 
 int gretl_looping (void)
 {
-    return loop_on;
+    int fd = gretl_function_depth();
+
+    if (fd >= ldepth) {
+	return 0;
+    } else {
+	return loop_on[fd];
+    }
 }
 
 int gretl_looping_quietly (void)
 {
-    return (loop_on == LOOPING_QUIETLY);
+    int fd = gretl_function_depth();
+
+    if (fd >= ldepth) {
+	return 0;
+    } else {
+	return (loop_on[fd] == LOOPING_QUIETLY);
+    }
 }
 
 void gretl_set_batch_mode (int b)
