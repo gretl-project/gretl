@@ -26,9 +26,6 @@
 # include "winconfig.h"
 #else
 # include "config.h"
-# ifdef USE_GNOME
-#   include <gnome.h>
-# endif
 #endif
 
 #include <gtk/gtk.h>

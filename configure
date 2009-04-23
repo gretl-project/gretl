@@ -791,10 +791,10 @@ build_docs
 XSLT_LIBS
 XSLT_CFLAGS
 XMLCONF
-gnome_prefix
-have_gnome
 XML_LIBS
 XML_CFLAGS
+gnome_prefix
+have_gnome
 GNOME_LIBS
 GNOME_CFLAGS
 GDK_PIXBUF_LIBS
@@ -1650,7 +1650,7 @@ Optional Packages:
   --with-lucida           Use Lucida fonts for manual [CVS only]
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline      Build with libreadline support [default=auto]
-  --with-gnome         Build with gnome support [default=auto]
+  --with-gnome         Install gnome support [default=auto]
   --with-gnome-install=DIR  where to install gnome-specific files [default=auto]
   --with-gmp            Use Gnu Multiple Precision library [default=auto]
   --with-mpfr            Use MPFR library [default=auto]
@@ -18749,12 +18749,12 @@ if test -n "$GNOME_CFLAGS"; then
     pkg_cv_GNOME_CFLAGS="$GNOME_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"libgnomeui-2.0\"") >&5
-  ($PKG_CONFIG --exists --print-errors "libgnomeui-2.0") 2>&5
+    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"libgnome-2.0\"") >&5
+  ($PKG_CONFIG --exists --print-errors "libgnome-2.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_GNOME_CFLAGS=`$PKG_CONFIG --cflags "libgnomeui-2.0" 2>/dev/null`
+  pkg_cv_GNOME_CFLAGS=`$PKG_CONFIG --cflags "libgnome-2.0" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -18765,12 +18765,12 @@ if test -n "$GNOME_LIBS"; then
     pkg_cv_GNOME_LIBS="$GNOME_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"libgnomeui-2.0\"") >&5
-  ($PKG_CONFIG --exists --print-errors "libgnomeui-2.0") 2>&5
+    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"libgnome-2.0\"") >&5
+  ($PKG_CONFIG --exists --print-errors "libgnome-2.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_GNOME_LIBS=`$PKG_CONFIG --libs "libgnomeui-2.0" 2>/dev/null`
+  pkg_cv_GNOME_LIBS=`$PKG_CONFIG --libs "libgnome-2.0" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -18788,9 +18788,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GNOME_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libgnomeui-2.0" 2>&1`
+	        GNOME_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libgnome-2.0" 2>&1`
         else
-	        GNOME_PKG_ERRORS=`$PKG_CONFIG --print-errors "libgnomeui-2.0" 2>&1`
+	        GNOME_PKG_ERRORS=`$PKG_CONFIG --print-errors "libgnome-2.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GNOME_PKG_ERRORS" >&5
@@ -18809,16 +18809,16 @@ else
 	GNOME_LIBS=$pkg_cv_GNOME_LIBS
         { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-	cat >>confdefs.h <<\_ACEOF
-#define USE_GNOME 1
-_ACEOF
-
-       have_gnome="2.0"
+	have_gnome="2.0"
        if test "${gnome_prefix}" = "NA" ; then
            gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
        fi
 fi
-    if test "$have_gnome" = "2.0" ; then
+
+
+fi
+
+if test "$have_gtk" = "2.0" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:$LINENO: checking for XML" >&5
@@ -18928,125 +18928,7 @@ else
 $as_echo "yes" >&6; }
 	:
 fi
-    fi
-
-
-
-
-fi
-
-if test x"${XML_LIBS}" = x ; then
-  if test "$have_gtk" = "2.0" ; then
-
-pkg_failed=no
-{ $as_echo "$as_me:$LINENO: checking for XML" >&5
-$as_echo_n "checking for XML... " >&6; }
-
-if test -n "$XML_CFLAGS"; then
-    pkg_cv_XML_CFLAGS="$XML_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"libxml-2.0 >= 2.5.0\"") >&5
-  ($PKG_CONFIG --exists --print-errors "libxml-2.0 >= 2.5.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; then
-  pkg_cv_XML_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0 >= 2.5.0" 2>/dev/null`
 else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$XML_LIBS"; then
-    pkg_cv_XML_LIBS="$XML_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"libxml-2.0 >= 2.5.0\"") >&5
-  ($PKG_CONFIG --exists --print-errors "libxml-2.0 >= 2.5.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; then
-  pkg_cv_XML_LIBS=`$PKG_CONFIG --libs "libxml-2.0 >= 2.5.0" 2>/dev/null`
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        XML_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libxml-2.0 >= 2.5.0" 2>&1`
-        else
-	        XML_PKG_ERRORS=`$PKG_CONFIG --print-errors "libxml-2.0 >= 2.5.0" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$XML_PKG_ERRORS" >&5
-
-	{ { $as_echo "$as_me:$LINENO: error: Package requirements (libxml-2.0 >= 2.5.0) were not met:
-
-$XML_PKG_ERRORS
-
-Consider adjusting the PKG_CONFIG_PATH environment variable if you
-installed software in a non-standard prefix.
-
-Alternatively, you may set the environment variables XML_CFLAGS
-and XML_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-" >&5
-$as_echo "$as_me: error: Package requirements (libxml-2.0 >= 2.5.0) were not met:
-
-$XML_PKG_ERRORS
-
-Consider adjusting the PKG_CONFIG_PATH environment variable if you
-installed software in a non-standard prefix.
-
-Alternatively, you may set the environment variables XML_CFLAGS
-and XML_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-" >&2;}
-   { (exit 1); exit 1; }; }
-elif test $pkg_failed = untried; then
-	{ { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-{ { $as_echo "$as_me:$LINENO: error: The pkg-config script could not be found or is too old.  Make sure it
-is in your PATH or set the PKG_CONFIG environment variable to the full
-path to pkg-config.
-
-Alternatively, you may set the environment variables XML_CFLAGS
-and XML_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.
-See \`config.log' for more details." >&5
-$as_echo "$as_me: error: The pkg-config script could not be found or is too old.  Make sure it
-is in your PATH or set the PKG_CONFIG environment variable to the full
-path to pkg-config.
-
-Alternatively, you may set the environment variables XML_CFLAGS
-and XML_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }; }
-else
-	XML_CFLAGS=$pkg_cv_XML_CFLAGS
-	XML_LIBS=$pkg_cv_XML_LIBS
-        { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
-	:
-fi
-  else
     XMLCONF=''
     for ac_prog in xml2-config xml-config
 do
@@ -19091,10 +18973,9 @@ fi
 done
 
     if test x"${XMLCONF}" != x ; then
-      XML_CFLAGS=`$XMLCONF --cflags`
-      XML_LIBS=`$XMLCONF --libs`
+       XML_CFLAGS=`$XMLCONF --cflags`
+       XML_LIBS=`$XMLCONF --libs`
     fi
-  fi
 fi
 
 if test "${build_docs}" = "yes" ; then

@@ -128,7 +128,7 @@ fi,
 try_readline=yes)
 
 AC_ARG_WITH(gnome,
-[  --with-gnome         Build with gnome support [[default=auto]]],
+[  --with-gnome         Install gnome support [[default=auto]]],
 if test "x${withval}" = "xno"
 then
   try_gnome=no
@@ -531,9 +531,7 @@ AC_SUBST(build_po)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-dnl
 dnl Check for gdk-pixbuf support
-dnl
 if test ${have_gtk} = "2.0" ; then
     PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= 0.7.0,
         pixbuf_failed="no",
@@ -545,12 +543,9 @@ if test "${pixbuf_failed}" = "yes" ; then
     exit
 fi
 
-dnl
 dnl Check for gnome, if we haven't been told not to
-dnl
 if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
-    PKG_CHECK_MODULES(GNOME, libgnomeui-2.0,
-       AC_DEFINE(USE_GNOME)
+    PKG_CHECK_MODULES(GNOME, libgnome-2.0,
        have_gnome="2.0"
        if test "${gnome_prefix}" = "NA" ; then
            gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
@@ -558,28 +553,20 @@ if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
        echo "no"
        have_gnome="no"
     )   
-    if test "$have_gnome" = "2.0" ; then
-      PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
-    fi 
     AC_SUBST(have_gnome)
     AC_SUBST(gnome_prefix)
-    AC_SUBST(GNOME_CFLAGS)
-    AC_SUBST(GNOME_LIBS)
 fi
-dnl End of gnome check
 
-dnl If libxml is not already provided by gnome, test for it separately
-if test x"${XML_LIBS}" = x ; then
-  if test "$have_gtk" = "2.0" ; then
+dnl Check for libxml2
+if test "$have_gtk" = "2.0" ; then
     PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
-  else 
+else 
     XMLCONF=''
     AC_CHECK_PROGS(XMLCONF,xml2-config xml-config,)
     if test x"${XMLCONF}" != x ; then
-      XML_CFLAGS=`$XMLCONF --cflags`
-      XML_LIBS=`$XMLCONF --libs`
+       XML_CFLAGS=`$XMLCONF --cflags`
+       XML_LIBS=`$XMLCONF --libs`
     fi
-  fi
 fi
 
 dnl Check for libxslt (for the helpfiles)

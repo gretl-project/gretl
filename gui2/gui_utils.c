@@ -3648,45 +3648,37 @@ static void run_R_sync (void)
 
 #else /* some non-Windows functions follow */
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 14
-static int alt_show (const char *url)
+# if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 14
+static int alt_show (const char *uri)
 {
-    char foo[256];
+    
     GError *err = NULL;
-    int n, ret;
+    int ret;
 
-    strcpy(foo, url);
-    n = strlen(foo);
-    if (foo[n-1] == '/') {
-	foo[n-1] = '\0';
-    }
-
-    ret = gtk_show_uri(NULL, foo, GDK_CURRENT_TIME, &err);
+    ret = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &err);
 
     if (err) {
 	errbox(err->message);
 	g_error_free(err);
-	fprintf(stderr, "uri was '%s'\n", foo);
     }
 
     return ret;
 }
-#endif
+# endif
 
 int browser_open (const char *url)
 {
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 14
-    if (getenv("ALTSHOW") != NULL) {
-	return alt_show(url);
-    }
-#endif
-# if defined(USE_GNOME)
-    gnome_url_show(url, NULL); 
-# elif defined(OSX_BUILD)
-    osx_open_url(url);
+# if defined(OSX_BUILD)
+    return osx_open_url(url);
 # else
     gchar *urlcmd;
     int err;
+
+#  if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 14
+    if (getenv("ALTSHOW") != NULL) {
+	return alt_show(url);
+    }
+#  endif
     
     urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
     err = gretl_spawn(urlcmd);
@@ -3695,9 +3687,9 @@ int browser_open (const char *url)
     if (err) {
 	gretl_fork("Browser", url);
     }
-# endif /* !GNOME, !OSX */
 
     return 0;
+# endif /* !OSX */
 }
 
 #include <signal.h>

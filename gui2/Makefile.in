@@ -16,8 +16,6 @@ have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
 
-GNOME_CFLAGS = @GNOME_CFLAGS@
-GNOME_LIBS = @GNOME_LIBS@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
@@ -70,17 +68,12 @@ ifeq ($(LN),)
 endif
 
 ifeq ($(have_gnome),2.0)
-  G_LIBS = $(GNOME_LIBS)
-  G_CFLAGS = $(GNOME_CFLAGS)
   query_install_gnome = install-gnome
   GNOMEDEF = -DDATADIR=\"$(gnome_prefix)/share\"
-else
-  G_LIBS = $(GTK_LIBS)
-  G_CFLAGS = $(GTK_CFLAGS)
 endif
 
-LIBS = $(G_LIBS) $(GTKSOURCEVIEW_LIBS) ../lib/libgretl-1.0.la
-GUI_CFLAGS = $(G_CFLAGS) $(GTKSOURCEVIEW_CFLAGS)
+LIBS = $(GTK_LIBS) $(GTKSOURCEVIEW_LIBS) ../lib/libgretl-1.0.la
+GUI_CFLAGS = $(GTK_CFLAGS) $(GTKSOURCEVIEW_CFLAGS)
 
 ifeq ($(USE_NLS),yes)
   datadir = @datadir@
