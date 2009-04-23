@@ -3860,15 +3860,16 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 
 /* Print a model that was just estimated, provided it's not carrying
    an error code, and provided we're not in looping mode, in which
-   case the printing or not of models requires special handling.  In
+   case the printing (or not) of models requires special handling.  In
    addition (if not looping) register the fact that we successfully
-   estimated a model.
+   estimated a model.  Note that in this context, "looping" means that
+   a loop is in progress at the current level of function execution.
 */
 
 static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 			      PRN *prn, ExecState *s)
 {
-    if (pmod->errcode == 0 && !gretl_looping()) {
+    if (pmod->errcode == 0 && !gretl_looping_currently()) {
 	printmodel(pmod, pdinfo, s->cmd->opt, prn);
 	s->pmod = pmod;
     }

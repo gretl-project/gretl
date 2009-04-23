@@ -110,6 +110,7 @@ void free_init_vals (void);
 void set_loop_on (int quiet);
 void set_loop_off (void);
 int gretl_looping (void);
+int gretl_looping_currently (void);
 int gretl_looping_quietly (void);
 
 void gretl_set_batch_mode (int b);

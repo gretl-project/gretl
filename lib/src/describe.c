@@ -4911,13 +4911,19 @@ MahalDist *get_mahal_distances (const int *list, double ***pZ,
     return md;
 }
 
+/* 
+   G = [(2 * \sum_i^n (i * x_i)) / (n * \sum_i^n x_i )] - [(n + 1)/n] 
+
+   where x is sorted: x_i <= x_{i+1}
+*/
+
 static double gini_coeff (const double *x, int t1, int t2, double **plz,
 			  int *pn, int *err)
 {
     int m = t2 - t1 + 1;
     double *sx = NULL;
     double csx = 0.0, sumx = 0.0, sisx = 0.0;
-    double idx, gini;
+    double G;
     int t, n = 0;
 
     gretl_error_clear();
@@ -4975,19 +4981,18 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
 	    S[0] = S[1];
 	}
 
-	gini = 1.0 - num / S[1];
-	fprintf(stderr, "G = %g\n", gini);
+	G = 1.0 - num / S[1];
+	fprintf(stderr, "G = %g\n", G);
     }
 #endif
 
     for (t=0; t<n; t++) {
 	csx += sx[t];
-	idx = t + 1;
-	sisx += idx * sx[t];
-	sx[t] = csx / sumx; /* now = Lorenz curve */
+	sisx += (t + 1) * sx[t];
+	sx[t] = csx / sumx; /* sx now = Lorenz curve */
     }
 
-    gini = 2.0 * sisx / (n * sumx) - ((double) n + 1) / n;
+    G = 2.0 * sisx / (n * sumx) - ((double) n + 1) / n;
 
     if (plz != NULL) {
 	*plz = sx;
@@ -4996,7 +5001,7 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
 	free(sx);
     }
 
-    return gini;
+    return G;
 }
 
 /**

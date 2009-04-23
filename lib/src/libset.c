@@ -54,7 +54,9 @@ enum {
     STATE_USE_FCP         = 1 << 12, /* use FCP garch code */
     STATE_WARN_ON         = 1 << 13, /* print numerical warning messages */
     STATE_VERBOSE_INCLUDE = 1 << 14, /* verbose include */
-    STATE_SKIP_MISSING    = 1 << 15  /* skip NAs when building matrix from series */
+    STATE_SKIP_MISSING    = 1 << 15, /* skip NAs when building matrix from series */
+    STATE_LOOPING         = 1 << 16, /* loop is in progress at this level */
+    STATE_LOOP_QUIET      = 1 << 17  /* loop commands should be quiet */
 };    
 
 /* for values that really want a non-negative integer */
@@ -315,6 +317,11 @@ static void state_vars_copy (set_vars *sv)
     fprintf(stderr, "state_vars_copy() called\n");
 #endif
     sv->flags = state->flags;
+    /* We're not (yet) looping at the current level of execution (but
+       note that the STATE_LOOP_QUIET flag should be inherited).
+    */
+    sv->flags &= ~STATE_LOOPING;
+
     sv->seed = state->seed;
     sv->hp_lambda = state->hp_lambda;
     sv->horizon = state->horizon;
@@ -1963,75 +1970,62 @@ void libset_cleanup (void)
    state of the program calling libgretl, but are not user-settable
 */
 
-enum {
-    LOOPING = 1,
-    LOOPING_QUIETLY
-};
-
-#define LDEPCHUNK 16
-
-static int *loop_on;
-static int ldepth;
-
 static int batch_mode;
 static int gui_mode;
 
-static int more_loop_depth (void)
-{
-    loop_on = realloc(loop_on, (ldepth + LDEPCHUNK) * sizeof *loop_on);
-
-    if (loop_on == NULL) {
-	fprintf(stderr, "*** Couldn't allocate looping record\n");
-    } else {
-	ldepth += LDEPCHUNK;
-    }
-
-    return (loop_on == NULL)? E_ALLOC : 0;
-}
-
 void set_loop_on (int quiet)
 {
-    int fd = gretl_function_depth();
-    int err = 0;
-
-    if (fd >= ldepth) {
-	err = more_loop_depth();
-    }
-
-    if (!err) {
-	loop_on[fd] = (quiet)? LOOPING_QUIETLY : LOOPING;
+    state->flags |= STATE_LOOPING;
+    if (quiet) {
+	state->flags |= STATE_LOOP_QUIET;
     }
 }
 
 void set_loop_off (void)
 {
-    int fd = gretl_function_depth();
+    state->flags &= ~STATE_LOOPING;
+    
+    /* If we're not currently governed by "loop quietness" at
+       caller level, turn such quietness off too 
+    */
+    if (state->flags & STATE_LOOP_QUIET) {
+	int i = n_states - 1;
 
-    if (loop_on != NULL && fd < ldepth) {
-	loop_on[fd] = 0;
+	if (i <= 0 || !(state_stack[i-1]->flags & STATE_LOOP_QUIET)) {
+	    state->flags ^= STATE_LOOP_QUIET;
+	}
     }
 }
 
+/* returns 1 if there's a loop going on anywhere in the "caller
+   ancestry" of the current execution level, else 0.
+*/
+
 int gretl_looping (void)
 {
-    int fd = gretl_function_depth();
+    int i, ns = n_states;
 
-    if (fd >= ldepth) {
-	return 0;
-    } else {
-	return loop_on[fd];
+    for (i=0; i<ns; i++) {
+	if (state_stack[i]->flags & STATE_LOOPING) {
+	    return 1;
+	}
     }
+
+    return 0;
+}
+
+/* returns 1 if there's a loop going on at the current execution
+   stack level, else 0.
+*/
+
+int gretl_looping_currently (void)
+{
+    return (state->flags & STATE_LOOPING)? 1 : 0;
 }
 
 int gretl_looping_quietly (void)
 {
-    int fd = gretl_function_depth();
-
-    if (fd >= ldepth) {
-	return 0;
-    } else {
-	return (loop_on[fd] == LOOPING_QUIETLY);
-    }
+    return (state->flags & STATE_LOOP_QUIET)? 1 : 0;
 }
 
 void gretl_set_batch_mode (int b)
