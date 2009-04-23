@@ -327,17 +327,6 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
     } 
 }
 
-static void set_startdir (char *startdir, int action)
-{
-    get_default_dir(startdir, action);
-
-#ifndef G_OS_WIN32
-    if (startdir[strlen(startdir) - 1] != '/') {
-	strcat(startdir, "/");
-    }
-#endif
-}
-
 static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 {
     FILE *fp = gretl_fopen(fname, "w");
@@ -763,7 +752,7 @@ static void win32_file_selector (const char *msg, int action, FselDataSrc src,
     *fname = '\0';
     *endname = '\0';
 
-    set_startdir(startdir, action);
+    get_default_dir(startdir, action);
 
     /* special cases */
     if (action == SAVE_DATA && *paths.datfile != '\0') {
@@ -887,7 +876,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     const gchar *okstr;
     gint response;
 
-    set_startdir(startdir, action);
+    get_default_dir(startdir, action);
 
     if (SET_DIR_ACTION(action)) {
 	fa = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
