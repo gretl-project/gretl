@@ -2007,7 +2007,7 @@ void set_loop_off (void)
 {
     int fd = gretl_function_depth();
 
-    if (loop_on != NULL && fd <= ldepth) {
+    if (loop_on != NULL && fd < ldepth) {
 	loop_on[fd] = 0;
     }
 }
