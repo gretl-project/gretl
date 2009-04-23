@@ -52,6 +52,8 @@ int gretl_remove (const char *path);
 
 gzFile gretl_gzopen (const char *fname, const char *mode);
 
+long gretl_get_filesize (const char *fname);
+
 int gretl_mkdir (const char *path);
 
 int gretl_chdir (const char *path);

@@ -2016,20 +2016,6 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     return err;
 }
 
-static long get_filesize (const char *fname)
-{
-    struct stat buf;
-
-    errno = 0;
-
-    if (stat(fname, &buf) == 0) {
-        return buf.st_size;
-    } else {
-	gretl_errmsg_set_from_errno(NULL);
-        return -1;
-    }
-}
-
 static double get_gdt_version (xmlNodePtr node)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "version");
@@ -2275,7 +2261,7 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
 
-    fsz = get_filesize(fname);
+    fsz = gretl_get_filesize(fname);
 
     if (fsz < 0) {
 	return E_FOPEN;

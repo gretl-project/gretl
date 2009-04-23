@@ -121,6 +121,8 @@ int get_stdio_use_utf8 (void)
     return stdio_use_utf8;
 }
 
+#define FDEBUG 0
+
 /* Try to handle both possible 'cases of need': we should be using 
    UTF-8 but the path is not in UTF-8, or the path is in UTF-8
    but should be in locale encoding.
@@ -129,6 +131,10 @@ int get_stdio_use_utf8 (void)
 static int maybe_recode_path (const char *path, int want_utf8, char **pconv)
 {
     int err = 0;
+
+#if FDEBUG
+    fprintf(stderr, "maybe_recode_path: want_utf8 = %d\n", want_utf8);
+#endif
 
     if (want_utf8) {
 	if (!g_utf8_validate(path, -1, NULL)) {
@@ -183,16 +189,28 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
     gretl_error_clear();
 
+#if FDEBUG
+    fprintf(stderr, "gretl_fopen: got '%s'\n", fname);
+#endif
+
     err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
 
     if (!err) {
 	if (fconv != NULL) {
 	    fp = fopen(fconv, mode);
+#if FDEBUG
+            fprintf(stderr, "using fconv, fp = %p\n", (void *) fp);
+#endif
 	    g_free(fconv);
 	} else {
 	    fp = fopen(fname, mode);
+            fprintf(stderr, "using given filename, fp = %p\n", (void *) fp);
 	}
     }
+
+#if FDEBUG
+    fprintf(stderr, "after fopen, errno = %d\n", errno);
+#endif
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(fname);
@@ -237,6 +255,36 @@ int gretl_open (const char *pathname, int flags)
     }
 
     return fd;
+}
+
+long gretl_get_filesize (const char *fname)
+{
+    struct stat buf;
+    gchar *pconv = NULL;
+    int err;
+    long ret;
+
+    gretl_error_clear();
+
+    err = maybe_recode_path(fname, stdio_use_utf8, &pconv);
+
+    if (!err) {
+	if (pconv != NULL) {
+            err = stat(pconv, &buf);
+ 	    g_free(pconv);
+	} else {
+            err = stat(fname, &buf);
+ 	}
+    }
+
+    if (err) {
+        gretl_errmsg_set_from_errno(NULL);
+        ret = -1;
+    } else {
+        ret = buf.st_size;
+    }
+
+    return ret;
 }
 
 /**
