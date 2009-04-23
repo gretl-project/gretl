@@ -636,6 +636,7 @@ share/Makefile
 share/bcih/Makefile
 tests/Makefile
 extra/Makefile
+osx/Makefile
 redhat/gretl.spec
 ])
 

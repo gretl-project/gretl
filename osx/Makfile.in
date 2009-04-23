@@ -1,0 +1,28 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_PROGRAM),)
+  INSTALL_PROGRAM = $(INSTALL) -m 755
+endif
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+# The directory above Gretl.app
+topdir = $(prefix)/../../..
+
+install:
+	rm -f $(prefix)/bin/gretl
+	rm -rf $(prefix)/include
+	rm -rf $(prefix)/share/aclocal
+	rm -rf $(prefix)/share/info
+	rm -rf $(prefix)/info
+	rm -rf $(prefix)/lib/pkgconfig
+	rm -f $(prefix)/lib/*.la
+	rm -f $(prefix)/lib/gretl-gtk2/*.la
+	rm -rf $(prefix)/share/emacs
+	rm -rf $(prefix)/share/texmf-local
+	$(INSTALL_DATA) -m 644 $(topsrc)/osx/README.pdf $(topdir)
+	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh $(prefix)/bin/gretl
+	$(INSTALL_PROGRAM) $(topsrc)/osx/script $(prefix)
