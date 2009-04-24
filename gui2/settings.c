@@ -634,7 +634,11 @@ int is_executable (const char *s, uid_t myid, gid_t mygrp)
     struct stat buf;
     int ok = 0;
 
-    if (stat(s, &buf) == 0 && (buf.st_mode & (S_IFREG|S_IFLNK))) {
+    if (gretl_stat(s, &buf) != 0) {
+	return 0;
+    }
+
+    if (buf.st_mode & (S_IFREG|S_IFLNK)) {
 	if (buf.st_uid == myid && (buf.st_mode & S_IXUSR)) {
 	    ok = 1;
 	} else if (buf.st_gid == mygrp && (buf.st_mode & S_IXGRP)) {

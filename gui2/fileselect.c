@@ -214,13 +214,6 @@ static const char *get_ext (int action, gpointer data)
     return s;
 }
 
-static int isdir (const char *path)
-{
-    struct stat buf;
-
-    return (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)); 
-}
-
 static int check_maybe_add_ext (char *fname, int action, gpointer data)
 {
     const char *ext = NULL;
@@ -230,7 +223,7 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
     }
 
     /* don't mess if the fname is really a dir */
-    if (isdir(fname)) {
+    if (gretl_isdir(fname)) {
 	return !SET_DIR_ACTION(action);
     }
 

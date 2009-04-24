@@ -20,6 +20,8 @@
 #ifndef GRETL_PATHS_H
 #define GRETL_PATHS_H
 
+#include <sys/stat.h>
+
 typedef enum {
     CURRENT_DIR,
     DATA_SEARCH,
@@ -52,7 +54,7 @@ int gretl_remove (const char *path);
 
 gzFile gretl_gzopen (const char *fname, const char *mode);
 
-long gretl_get_filesize (const char *fname);
+int gretl_stat (const char *fname, struct stat *buf);
 
 int gretl_mkdir (const char *path);
 
@@ -63,6 +65,8 @@ int gretl_deltree (const char *path);
 int gretl_write_access (char *fname);
 
 int gretl_is_xml_file (const char *fname);
+
+int gretl_isdir (const char *path);
 
 char *addpath (char *fname, PATHS *ppaths, int script);
 

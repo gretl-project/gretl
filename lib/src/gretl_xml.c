@@ -2225,6 +2225,23 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
     pputc(prn, '\n');
 }
 
+static long get_filesize (const char *fname)
+{
+    struct stat buf;
+    int err;
+    long ret;
+
+    err = gretl_stat(fname, &buf);
+
+    if (err) {
+	ret = -1;
+    } else {
+	ret = buf.st_size;
+    }
+
+    return ret;
+}
+
 /**
  * gretl_read_gdt:
  * @fname: name of file to try.
@@ -2261,7 +2278,7 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
 
-    fsz = gretl_get_filesize(fname);
+    fsz = get_filesize(fname);
 
     if (fsz < 0) {
 	return E_FOPEN;

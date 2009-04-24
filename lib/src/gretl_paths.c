@@ -257,12 +257,22 @@ int gretl_open (const char *pathname, int flags)
     return fd;
 }
 
-long gretl_get_filesize (const char *fname)
+/**
+ * gretl_stat:
+ * @fname: name of file to be examined.
+ * @buf: pointer to %struct %stat.
+ *
+ * A wrapper for the C library's stat(), making allowance for
+ * the possibility that @fname has to be converted from UTF-8 
+ * to the locale encoding or vice versa.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gretl_stat (const char *fname, struct stat *buf)
 {
-    struct stat buf;
     gchar *pconv = NULL;
     int err;
-    long ret;
 
     gretl_error_clear();
 
@@ -270,21 +280,18 @@ long gretl_get_filesize (const char *fname)
 
     if (!err) {
 	if (pconv != NULL) {
-            err = stat(pconv, &buf);
+            err = stat(pconv, buf);
  	    g_free(pconv);
 	} else {
-            err = stat(fname, &buf);
+            err = stat(fname, buf);
  	}
     }
 
     if (err) {
-        gretl_errmsg_set_from_errno(NULL);
-        ret = -1;
-    } else {
-        ret = buf.st_size;
+	gretl_errmsg_set_from_errno(NULL);
     }
 
-    return ret;
+    return err;
 }
 
 /**
@@ -565,11 +572,18 @@ static const char *gretl_readd (DIR *d)
     return (e == NULL)? NULL : e->d_name;
 }
 
-static int gretl_isdir (const char *path)
+int gretl_isdir (const char *path)
 {
     struct stat buf;
+    int err;
 
-    return (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)); 
+    err = gretl_stat(path, &buf);
+
+    if (!err) {
+	return S_ISDIR(buf.st_mode);
+    } else {
+	return 0;
+    }
 }
 
 /* recursive deletion of directory tree: must be located

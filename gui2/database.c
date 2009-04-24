@@ -2135,7 +2135,7 @@ static void get_local_object_status (const char *fname, int role,
 	build_path(fullname, fndir, fname, NULL);
     }
 
-    if ((err = stat(fullname, &fbuf)) == -1) {
+    if ((err = gretl_stat(fullname, &fbuf)) == -1) {
 	if (errno == ENOENT) {
 #ifdef G_OS_WIN32
 	    *status = N_("Not installed");
@@ -2147,7 +2147,7 @@ static void get_local_object_status (const char *fname, int role,
 		build_path(fndir, paths.workdir, "functions", NULL);
 		build_path(fullname, fndir, fname, NULL);
 	    }
-	    err = stat(fullname, &fbuf);
+	    err = gretl_stat(fullname, &fbuf);
 	    if (err == -1) {
 		if (role == REMOTE_FUNC_FILES) {
 		    /* try default working dir */
