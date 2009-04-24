@@ -2089,6 +2089,15 @@ int gretl_model_add_arinfo (MODEL *pmod, int nterms)
     return 0;
 }
 
+void model_stats_init (MODEL *pmod)
+{
+    pmod->ess = pmod->sigma = NADBL;
+    pmod->fstt = pmod->lnL = NADBL;
+    pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->chisq = NADBL;
+    pmod->dw = pmod->rho = NADBL;
+}
+
 static void gretl_model_init_pointers (MODEL *pmod)
 {
     pmod->list = NULL;
@@ -2148,6 +2157,8 @@ void gretl_model_init (MODEL *pmod)
     pmod->errcode = 0;
     pmod->ifc = 0;
     pmod->aux = AUX_NONE;
+
+    model_stats_init(pmod);
 
     for (i=0; i<C_MAX; i++) {
 	pmod->criterion[i] = NADBL;
@@ -3372,6 +3383,8 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 
 	if (nelem > 0) {
 	    fprintf(fp, " count=\"%d\">\n", nelem);
+	} else if (item->type == GRETL_TYPE_STRING) {
+	    fputc('>', fp);
 	} else {
 	    fputs(">\n", fp);
 	}
@@ -3981,19 +3994,17 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    }
 	} else if (t == GRETL_TYPE_STRING) {
 	    char *s;
+	    int gots;
 
-	    if (!gretl_xml_node_get_string(cur, doc, &s)) {
+	    if (!strcmp(key, "pmask") || !strcmp(key, "qmask")) {
+		/* these masks must not have leading white space */
+		gots = gretl_xml_node_get_trimmed_string(cur, doc, &s);
+	    } else {
+		gots = gretl_xml_node_get_string(cur, doc, &s);
+	    }
+	    if (gots) {
 		err = 1;
 	    } else {
-		if (!strcmp(key, "pmask") || !strcmp(key, "qmask")) {
-		    /* these masks must not have leading white space */
-		    int i = 0, n = 0;
-
-		    while (isspace(s[i++])) n++;
-		    if (n > 0) {
-			shift_string_left(s, n);
-		    }
-		}
 		err = gretl_model_set_string_as_data(pmod, key, s);
 	    }
 	} else if (t == GRETL_TYPE_INT_ARRAY) {

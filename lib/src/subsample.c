@@ -1352,8 +1352,8 @@ int restrict_sample (const char *line, const int *list,
 	oldmask = state->submask;
     }
 
-    if (mode == SUBSAMPLE_BOOLEAN && oldmask != NULL && 
-	restriction_uses_obs(line)) {
+    if (mode == SUBSAMPLE_BOOLEAN && fullinfo != NULL && 
+	oldmask != NULL && restriction_uses_obs(line)) {
 	mask = precompute_mask(line, oldmask, pZ, pdinfo, prn, &err);
     }
 

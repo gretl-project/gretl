@@ -435,16 +435,6 @@ static void dropwt (int *list)
     }
 }
 
-static void model_stats_init (MODEL *pmod)
-{
-    pmod->ess = NADBL;
-    pmod->sigma = NADBL;
-    pmod->fstt = pmod->lnL = NADBL;
-    pmod->rsq = pmod->adjrsq = NADBL;
-    pmod->chisq = NADBL;
-    pmod->dw = NADBL;
-}
-
 #define SMPL_DEBUG 0
 
 static int 
