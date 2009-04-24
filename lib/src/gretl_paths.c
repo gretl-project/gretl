@@ -464,6 +464,27 @@ int gretl_chdir (const char *path)
     return err;
 }
 
+/**
+ * gretl_isdir:
+ * @path: path to check.
+ *
+ * A test for whether or not @path is the name of a directory,
+ * allowing for the possibility that @path has to be converted 
+ * from UTF-8 to the locale encoding or vice versa.
+ *
+ * Returns: 1 if @path is the name of a directory, else 0.
+ */
+
+int gretl_isdir (const char *path)
+{
+    struct stat buf;
+    int err;
+
+    err = gretl_stat(path, &buf);
+
+    return (err)? 0 : S_ISDIR(buf.st_mode);
+}
+
 #ifdef WIN32
 
 int gretl_mkdir (const char *path)
@@ -570,20 +591,6 @@ static const char *gretl_readd (DIR *d)
     struct dirent *e = readdir(d);
 
     return (e == NULL)? NULL : e->d_name;
-}
-
-int gretl_isdir (const char *path)
-{
-    struct stat buf;
-    int err;
-
-    err = gretl_stat(path, &buf);
-
-    if (!err) {
-	return S_ISDIR(buf.st_mode);
-    } else {
-	return 0;
-    }
 }
 
 /* recursive deletion of directory tree: must be located
@@ -779,13 +786,22 @@ static int try_open_file (char *targ, const char *finddir,
     return found;
 }
 
-static void make_finddir (char *targ, const char *src)
+static void make_findname (char *targ, const char *src)
 {
-    int n = strlen(src);
-
     strcpy(targ, src);
 
-    if (targ[n-1] != '\\') {
+    if (string_is_utf8(targ)) {
+	gchar *tmp;
+	gsize sz;
+	
+	tmp = g_locale_from_utf8(src, -1, NULL, &sz, NULL);
+	if (tmp != NULL) {
+	    strcpy(targ, tmp);
+	    g_free(tmp);
+	}
+    }
+
+    if (targ[strlen(targ)-1] != '\\') {
 	strcat(targ, "\\*");
     } else {
 	strcat(targ, "*");
@@ -814,7 +830,7 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
     int found = 0;
 
     /* make find target */
-    make_finddir(finddir, topdir);
+    make_findname(finddir, topdir);
 
     handle = FindFirstFile(finddir, &fdata); 
     if (handle != INVALID_HANDLE_VALUE) {
@@ -862,7 +878,7 @@ static int try_open_file (char *targ, const char *finddir,
     return found;
 }
 
-static void make_finddir (char *targ, const char *src)
+static void make_findname (char *targ, const char *src)
 {
     int n = strlen(src);
 
@@ -901,7 +917,7 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
     int found = 0;
 
     /* make find target */
-    make_finddir(finddir, topdir);
+    make_findname(finddir, topdir);
 
     dir = opendir(finddir);
     if (dir != NULL) {

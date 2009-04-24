@@ -2229,17 +2229,10 @@ static long get_filesize (const char *fname)
 {
     struct stat buf;
     int err;
-    long ret;
 
     err = gretl_stat(fname, &buf);
 
-    if (err) {
-	ret = -1;
-    } else {
-	ret = buf.st_size;
-    }
-
-    return ret;
+    return (err)? -1 : buf.st_size;
 }
 
 /**

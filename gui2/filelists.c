@@ -99,10 +99,15 @@ static const char *file_sections[] = {
 
 #ifdef G_OS_WIN32
 
+/* we're not exactly "printing" here, but writing to the
+   Windows registry */
+
 static void printfilelist (int filetype)
 {
     char rpath[MAXLEN];
     char **filep;
+    gchar *fname;
+    gsize bytes;
     int i;
 
     filep = get_file_list(filetype);
@@ -113,7 +118,16 @@ static void printfilelist (int filetype)
     for (i=0; i<MAXRECENT; i++) {
 	if (filep[i] != NULL) {
 	    sprintf(rpath, "%s\\%d", file_sections[filetype], i);
-	    write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
+	    if (string_is_utf8(filep[i])) {
+		/* ensure that ilenames are in the locale encoding */
+		fname = g_locale_from_utf8(filep[i], -1, NULL, &bytes, NULL);
+		if (fname != NULL) {
+		    write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, fname);
+		    g_free(fname);
+		}
+	    } else {
+		write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
+	    }
 	}
     }
 }
@@ -129,6 +143,8 @@ void save_file_lists (void)
 void read_file_lists (void)
 {
     char rpath[MAXSTR], value[MAXSTR];
+    gchar *fname;
+    gsize bytes;
     int i, j;
 
     initialize_file_lists();
@@ -137,7 +153,16 @@ void read_file_lists (void)
 	for (j=0; j<MAXRECENT; j++) {
 	    sprintf(rpath, "%s\\%d", file_sections[i], j);
 	    if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) { 
-		write_filename_to_list(i, j, value);
+		if (!g_utf8_validate(value, -1, NULL)) {
+		    /* convert to UTF-8 for GUI, if need be */
+		    fname = g_locale_to_utf8(value, -1, NULL, &bytes, NULL);
+		    if (fname != NULL) {
+			write_filename_to_list(i, j, fname);
+			g_free(fname);
+		    }
+		} else {
+		    write_filename_to_list(i, j, value);
+		}
 	    } else {
 		break;
 	    }
@@ -572,6 +597,9 @@ static void real_add_files_to_menus (int ftype)
 	for (i=0; i<MAXRECENT && filep[i][0]; i++) {
 	    gchar *fname, *apath;
 
+	    /* note: if the filename is already valid UTF-8, this just
+	       gives us a copy of filep[i] 
+	    */
 	    fname = my_filename_to_utf8(filep[i]);
 
 	    if (fname == NULL) {

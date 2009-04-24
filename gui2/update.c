@@ -169,7 +169,7 @@ static int real_update_query (int queryopt)
 
     build_path(testfile, paths.gretldir, "gretl.stamp", NULL);
 
-    if (stat(testfile, &fbuf)) {
+    if (gretl_stat(testfile, &fbuf)) {
 	fprintf(stderr, "update_query: couldn't stat testfile '%s'\n", 
 		testfile);
 	return 1;
@@ -180,7 +180,7 @@ static int real_update_query (int queryopt)
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
 	    build_path(hometest, paths.dotdir, "gretl.stamp", NULL);
-	    if (!stat(hometest, &fbuf)) {
+	    if (!gretl_stat(hometest, &fbuf)) {
 		filedate = get_time_from_stamp_file(hometest);
 	    }
 	} else {

@@ -96,7 +96,7 @@ gchar *my_filename_to_utf8 (const char *fname)
     } else {
 	/* On Windows, with GTK >= 2.6, the GLib filename
 	   encoding is UTF-8; however, filenames coming from
-	   a native Windows file dialog will be in the
+	   a native Windows source will be in the
 	   locale charset 
 	*/
 #ifdef G_OS_WIN32
