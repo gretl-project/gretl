@@ -3985,6 +3985,15 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    if (!gretl_xml_node_get_string(cur, doc, &s)) {
 		err = 1;
 	    } else {
+		if (!strcmp(key, "pmask") || !strcmp(key, "qmask")) {
+		    /* these masks must not have leading white space */
+		    int i = 0, n = 0;
+
+		    while (isspace(s[i++])) n++;
+		    if (n > 0) {
+			shift_string_left(s, n);
+		    }
+		}
 		err = gretl_model_set_string_as_data(pmod, key, s);
 	    }
 	} else if (t == GRETL_TYPE_INT_ARRAY) {

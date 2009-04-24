@@ -677,7 +677,7 @@ int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc,
  * @pstr: location to receive string.
  * 
  * Reads a string from @node and trims both leading and trailing
- * whit space.
+ * white space.
  * 
  * Returns: 1 if a string is found and read successfully, 0
  * otherwise.

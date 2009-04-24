@@ -2175,9 +2175,13 @@ static int parse_forecast_string (const char *s,
 	nmax = (opt & OPT_R)? 2 : 1;
     } else {
 	nmax = (opt & OPT_R)? 4 : 3;
-    }    
+    }   
 
-    nf = sscanf(s, "%31s %31s %31s %31s", f[0], f[1], f[2], f[3]);
+    if (*s == '\0') {
+	nf = 0;
+    } else {
+	nf = sscanf(s, "%31s %31s %31s %31s", f[0], f[1], f[2], f[3]);
+    }
 
     if (nf < nmin || nf > nmax) {
 	fprintf(stderr, "fcast: expected %d to %d fields in input, got %d\n",

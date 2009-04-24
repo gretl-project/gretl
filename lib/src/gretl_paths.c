@@ -204,7 +204,6 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 	    g_free(fconv);
 	} else {
 	    fp = fopen(fname, mode);
-            fprintf(stderr, "using given filename, fp = %p\n", (void *) fp);
 	}
     }
 
