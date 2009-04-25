@@ -721,36 +721,16 @@ GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
     return button;
 }
 
-/* "text_out": if this argument is non-zero, it means that vwin
-   carries text output which could appropriately be saved, either
-   to file or in the form of a chunk of text to be added as a
-   session icon.
-*/
-
-void vwin_add_viewbar (windata_t *vwin, int text_out)
+static void viewbar_add_items (windata_t *vwin)
 {
-    GtkWidget *hbox;
-    GtkToolItem *button;
-    GretlToolItem *item;
-    GCallback func;
     int sortby_ok = has_sortable_data(vwin);
     int format_ok = can_format_data(vwin);
     int latex_ok = latex_is_ok();
+    GtkToolItem *button;
+    GretlToolItem *item;
+    GCallback func;
     int i;
-
-    if (gretl_stock_ifac == NULL) {
-	gretl_stock_icons_init();
-    }
-
-    if (text_out || vwin->role == SCRIPT_OUT) {
-	g_object_set_data(G_OBJECT(vwin->main), "text_out", GINT_TO_POINTER(1));
-    }
-
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
-
-    vwin->mbar = gretl_toolbar_new();
-
+ 
     for (i=0; i<n_viewbar_items; i++) {
 	item = &viewbar_items[i];
 
@@ -777,37 +757,48 @@ void vwin_add_viewbar (windata_t *vwin, int text_out)
 	    }
 	}
     }
+}
+
+/* "text_out": if this argument is non-zero, it means that vwin
+   carries text output which could appropriately be saved, either
+   to file or in the form of a chunk of text to be added as a
+   session icon.
+*/
+
+void vwin_add_viewbar (windata_t *vwin, int text_out)
+{
+    GtkWidget *hbox;
+
+    if (gretl_stock_ifac == NULL) {
+	gretl_stock_icons_init();
+    }
+
+    if (text_out || vwin->role == SCRIPT_OUT) {
+	g_object_set_data(G_OBJECT(vwin->main), "text_out", GINT_TO_POINTER(1));
+    }
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
+
+    vwin->mbar = gretl_toolbar_new();
+
+    viewbar_add_items(vwin);
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
     gtk_widget_show_all(hbox);
 }
 
+static void remove_child (GtkWidget *child, GtkWidget *cont)
+{
+    gtk_container_remove(GTK_CONTAINER(cont), child);
+}
+
 void viewbar_add_edit_items (windata_t *vwin)
 {
-    GretlToolItem *item;
-    GtkToolItem *button;
-    int i, pos = 0;
-
-    for (i=0; i<n_viewbar_items; i++) {
-	item = &viewbar_items[i];
-	if (item->flag == SAVE_ITEM ||
-	    item->flag == EDIT_ITEM ||
-	    item->flag == EDIT_SCRIPT_ITEM) {
-	    button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, pos);
-	    if (item->flag == SAVE_ITEM) {
-		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
-		g_object_set_data(G_OBJECT(vwin->mbar), "save_button",
-				  button);
-	    } else if (item->flag == SAVE_AS_ITEM) {
-		g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button",
-				  button);
-	    }
-	    gtk_widget_show(GTK_WIDGET(button));
-	}
-	if (item->flag != EDIT_GP) {
-	    pos++;
-	}
-    }
+    gtk_container_foreach(GTK_CONTAINER(vwin->mbar),
+			  (GtkCallback) remove_child, vwin->mbar);
+    viewbar_add_items(vwin);
+    gtk_widget_show_all(vwin->mbar);
 }
 
 GtkWidget *build_text_popup (windata_t *vwin)
