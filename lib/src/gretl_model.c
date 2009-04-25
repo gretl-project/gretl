@@ -4267,6 +4267,11 @@ MODEL *gretl_model_copy (const MODEL *pmod)
 {
     MODEL *new = malloc(sizeof *new);
 
+#if MDEBUG
+    fprintf(stderr, "gretl_model_copy: copying %p, allocated at %p\n", 
+	    pmod, new);
+#endif
+
     if (new != NULL) {
 	int err = copy_model(new, pmod);
 

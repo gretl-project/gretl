@@ -92,9 +92,23 @@ void gretl_object_ref (void *ptr, GretlObjType type)
     }
 }
 
-static void gretl_object_unstack (void *ptr)
+enum {
+    UNSTACK_REMOVE,
+    UNSTACK_DESTROY
+};
+
+static void gretl_object_unstack (void *ptr, int action)
 {
     int i, pos = -1;
+
+    if (action == UNSTACK_DESTROY && ptr == last_model.ptr) {
+#if ODEBUG
+	fprintf(stderr, "gretl_object_unstack: %p is 'last_model'\n", ptr);
+#endif
+	/* avoid double-freeing */
+	last_model.ptr = NULL;
+	last_model.type = GRETL_OBJ_NULL;
+    }
 
     for (i=0; i<n_obj; i++) {
 	if (ptr == ostack[i].ptr) {
@@ -102,6 +116,11 @@ static void gretl_object_unstack (void *ptr)
 	    break;
 	}
     }
+
+#if ODEBUG
+    fprintf(stderr, "gretl_object_unstack: stack pos for %p = %d\n",
+	    ptr, pos);
+#endif
     
     if (pos >= 0) {
 	n_obj--;
@@ -130,7 +149,7 @@ static void gretl_object_destroy (void *ptr, GretlObjType type)
 	    ptr, type);
 #endif
 
-    gretl_object_unstack(ptr);
+    gretl_object_unstack(ptr, UNSTACK_DESTROY);
     
     if (type == GRETL_OBJ_EQN) {
 	gretl_model_free(ptr);
@@ -634,7 +653,7 @@ void remove_model_from_stack_on_exit (MODEL *pmod)
 
 void gretl_object_remove_from_stack (void *ptr, GretlObjType type)
 {
-    gretl_object_unstack(ptr);
+    gretl_object_unstack(ptr, UNSTACK_REMOVE);
     gretl_object_unref(ptr, type);
 }
 
@@ -1372,16 +1391,20 @@ void gretl_saved_objects_cleanup (void)
 {
     int i;
 
+#if ODEBUG
+    fprintf(stderr, "gretl_saved_objects_cleanup, n_obj = %d\n", n_obj);
+#endif
+
     for (i=0; i<n_obj; i++) {
 	if (ostack[i].ptr == last_model.ptr) {
 	    if (gretl_object_get_refcount(ostack[i].ptr, ostack[i].type) == 1) {
 		/* don't double-free! */
 		last_model.ptr = NULL;
+		
 	    }
 	}
 #if ODEBUG
-	fprintf(stderr, "gretl_saved_objects_cleanup:\n"
-		" calling saved_object_free on ostack[%d]\n", i);
+	fprintf(stderr, " calling saved_object_free on ostack[%d]\n", i);
 #endif
 	saved_object_free(&ostack[i]);
     }
