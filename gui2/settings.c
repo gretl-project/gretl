@@ -1669,7 +1669,7 @@ void write_rc (void)
 {
     char bval[6];
     char ival[16];
-    const char *strval;
+    char *strval;
     int i = 0, err = 0;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1684,25 +1684,25 @@ void write_rc (void)
 	    err += write_reg_val(HKEY_CURRENT_USER, 
 				 "gretl", 
 				 rc_vars[i].key, 
-				 bval);
+				 bval, GRETL_TYPE_BOOL);
 	} else if (rc_vars[i].flags & INTSET) {
 	    sprintf(ival, "%d", *(int *) rc_vars[i].var);
 	    err += write_reg_val(HKEY_CURRENT_USER, 
 				 "gretl", 
 				 rc_vars[i].key, 
-				 ival);	    
+				 ival, GRETL_TYPE_INT);	    
 	} else if (rc_vars[i].flags & MACHSET) {
 	    strval = (char *) rc_vars[i].var;
 	    err += write_reg_val(HKEY_LOCAL_MACHINE, 
 				 get_reg_base(rc_vars[i].key),
 				 rc_vars[i].key, 
-				 strval);
+				 strval, GRETL_TYPE_STRING);
 	} else {
 	    strval = (char *) rc_vars[i].var;
 	    err += write_reg_val(HKEY_CURRENT_USER, 
 				 get_reg_base(rc_vars[i].key),
 				 rc_vars[i].key, 
-				 strval);
+				 strval, GRETL_TYPE_STRING);
 	}
     }
 

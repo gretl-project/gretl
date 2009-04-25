@@ -62,6 +62,8 @@ int read_reg_val (HKEY tree, const char *base,
 	err = 1;
     }
 
+    if (0) ;
+
     RegCloseKey(regkey);
 
     return err;
@@ -80,12 +82,29 @@ int read_reg_val_with_fallback (HKEY tree0, HKEY tree1, const char *base,
     return err;
 }
 
-int write_reg_val (HKEY tree, const char *base, 
-		   const char *keyname, const char *keyval)
+static gchar *get_windows_string (char *s)
 {
+    gsize bytes;
+
+    return g_locale_from_utf8(s, -1, NULL, &bytes, NULL);
+}
+
+int write_reg_val (HKEY tree, const char *base, 
+		   const char *keyname, char *keyval,
+		   int ktype)
+{
+    gchar *tmp = NULL;
     char regpath[64];
     int err = 0;
     HKEY regkey;
+
+    /* ensure that strings are in the locale encoding */
+    if (ktype == GRETL_TYPE_STRING && string_is_utf8(keyval)) {
+	tmp = get_windows_string(keyval);
+	if (tmp != NULL) {
+	    keyval = tmp;
+	}
+    }
 
     sprintf(regpath, "Software\\%s", base);
 
@@ -113,6 +132,10 @@ int write_reg_val (HKEY tree, const char *base,
                   strlen(keyval) + 1) != ERROR_SUCCESS) {
 	fprintf(stderr, "RegSetValueEx: failed on '%s'\n", keyname);
         err = 1;
+    }
+
+    if (tmp != NULL) {
+	g_free(tmp);
     }
                   
     RegCloseKey(regkey);

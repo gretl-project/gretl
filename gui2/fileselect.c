@@ -859,6 +859,24 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
     return filter;
 }
 
+#ifdef G_OS_WIN32
+
+static gchar *windows_filename (gchar *s)
+{
+    if (string_is_utf8(s)) {
+	gchar *tmp = my_locale_from_utf8(s);
+
+	if (tmp != NULL) {
+	    g_free(s);
+	    s = tmp;
+	}
+    }
+
+    return s;
+}
+
+#endif
+
 static void gtk_file_selector (const char *msg, int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
@@ -973,8 +991,14 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	gchar *fname;
 	
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
-	file_selector_process_result(fname, action, src, data);
-	g_free(fname);
+
+	if (fname != NULL) {
+#ifdef G_OS_WIN32
+	    fname = windows_filename(fname);
+#endif
+	    file_selector_process_result(fname, action, src, data);
+	    g_free(fname);
+	}
     } 
 
     gtk_widget_destroy(filesel);

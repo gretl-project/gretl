@@ -41,7 +41,8 @@ int read_reg_val_with_fallback (HKEY tree0, HKEY tree1,
 				char *keyval);
 
 int write_reg_val (HKEY tree, const char *base,
-		   const char *keyname, const char *keyval);
+		   const char *keyname, char *keyval,
+		   int ktype);
 
 void cli_read_registry (char *callname, PATHS *ppaths);
 

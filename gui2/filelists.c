@@ -106,8 +106,6 @@ static void printfilelist (int filetype)
 {
     char rpath[MAXLEN];
     char **filep;
-    gchar *fname;
-    gsize bytes;
     int i;
 
     filep = get_file_list(filetype);
@@ -118,16 +116,8 @@ static void printfilelist (int filetype)
     for (i=0; i<MAXRECENT; i++) {
 	if (filep[i] != NULL) {
 	    sprintf(rpath, "%s\\%d", file_sections[filetype], i);
-	    if (string_is_utf8(filep[i])) {
-		/* ensure that ilenames are in the locale encoding */
-		fname = g_locale_from_utf8(filep[i], -1, NULL, &bytes, NULL);
-		if (fname != NULL) {
-		    write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, fname);
-		    g_free(fname);
-		}
-	    } else {
-		write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
-	    }
+	    write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i],
+			  GRETL_TYPE_STRING);
 	}
     }
 }
