@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-04-13 21:55-0400\n"
-"PO-Revision-Date: 2009-03-09 21:20+0100\n"
+"PO-Revision-Date: 2009-04-25 13:56+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -317,9 +317,8 @@ msgid "Asymptotic test statistic"
 msgstr "Statistica test asintotica"
 
 #: lib/src/compare.c:378
-#, fuzzy
 msgid "Wald chi-square"
-msgstr "Chi-quadro"
+msgstr "Chi-quadro di Wald"
 
 #: lib/src/compare.c:379 lib/src/compare.c:389 lib/src/compare.c:394
 #: lib/src/compare.c:402 lib/src/compare.c:428 lib/src/gretl_restrict.c:1838
@@ -2327,9 +2326,8 @@ msgid "missing values were generated"
 msgstr "sono stati generati valori mancanti"
 
 #: lib/src/genmain.c:106
-#, fuzzy
 msgid "non-finite values were generated"
-msgstr "sono stati generati valori mancanti"
+msgstr "sono stati generati valori non-finiti"
 
 #: lib/src/genmain.c:113
 msgid "Warning"
@@ -2341,9 +2339,9 @@ msgid "Replaced after model %d: "
 msgstr "Sostituite dal modello %d: "
 
 #: lib/src/genmain.c:311 lib/src/interact.c:2630
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' may not be used as a variable name"
-msgstr "\"%s\" si riferisce a %s e non può essere usato come nome di variabile"
+msgstr "\"%s\" non può essere usato come nome di variabile"
 
 #: lib/src/genmain.c:490
 msgid "Periodic dummy variables generated.\n"
@@ -2838,9 +2836,9 @@ msgid "_Open data"
 msgstr "_Apri dati"
 
 #: lib/src/gretl_intl.c:550
-#, fuzzy, c-format
+#, c-format
 msgid "%s: locale is not supported on this system"
-msgstr "Gnuplot non supporta l'output PDF su questo sistema"
+msgstr "%s: localizzazione non supportata su questo sistema"
 
 #: lib/src/gretl_list.c:306
 #, c-format
@@ -3736,7 +3734,7 @@ msgstr "%s: il parametro richiesto manca"
 #: lib/src/interact.c:1879
 #, c-format
 msgid "%s: expected an integer order"
-msgstr ""
+msgstr "%s: deve essere un ordine intero"
 
 #: lib/src/interact.c:2070
 #, c-format
@@ -3951,21 +3949,19 @@ msgid "indeterminate condition for 'if'"
 msgstr "condizione indeterminata per 'if'"
 
 #: lib/src/kalman.c:419
-#, fuzzy
 msgid "kalman: a required matrix is missing"
-msgstr "%s: il parametro richiesto manca"
+msgstr "kalman: manca una matrice richiest"
 
 #: lib/src/kalman.c:425
-#, fuzzy
 msgid "No Kalman filter is defined"
-msgstr "Non sono definite serie\n"
+msgstr "Non è stato definito alcun filtro di Kalman"
 
 #: lib/src/kalman.c:1930 lib/src/kalman.c:2380 lib/src/libset.c:970
 #: lib/src/usermat.c:1433 lib/src/usermat.c:1493 lib/src/usermat.c:1502
 #: lib/src/usermat.c:1572 lib/src/usermat.c:1658
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such matrix"
-msgstr "%s: matrice inesistente\n"
+msgstr "%s: matrice inesistente"
 
 #: lib/src/libset.c:916
 #, c-format
@@ -9223,9 +9219,8 @@ msgid "Clear data labels"
 msgstr "Cancella le etichette dei dati"
 
 #: gui2/gpt_control.c:2930 gui2/gpt_control.c:3024
-#, fuzzy
 msgid "All data labels"
-msgstr "Cancella le etichette dei dati"
+msgstr "Tutte le etichette dei dati"
 
 #: gui2/gpt_control.c:2932 gui2/gpt_control.c:3026
 msgid "Zoom..."
@@ -9524,14 +9519,12 @@ msgid "dump gretl configuration to file"
 msgstr "scrive su un file la configurazione di gretl"
 
 #: gui2/gretl.c:112
-#, fuzzy
 msgid "send debugging info to console"
-msgstr "Invio dell'output di debug a %s"
+msgstr "invio dell'output di debug alla console"
 
 #: gui2/gretl.c:115
-#, fuzzy
 msgid "print version information"
-msgstr "Lettura delle informazioni sulle variabili...\n"
+msgstr "mostra informazioni sulla versione"
 
 #: gui2/gretl.c:208
 #, c-format
@@ -9544,12 +9537,12 @@ msgid "%s found\n"
 msgstr "%s trovato\n"
 
 #: gui2/gretl.c:341
-#, fuzzy
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line"
 msgstr ""
-"È possibile indicare il nome di un file di dati sulla riga di comando.\n"
+"\n"
+"È possibile indicare il nome di un file di dati sulla riga di comando"
 
 #: gui2/gretl.c:1039
 msgid "ID #"
@@ -12891,9 +12884,8 @@ msgid "Lags of dependent variable"
 msgstr "Ritardi della variabile dipendente"
 
 #: gui2/selector.c:6060
-#, fuzzy
 msgid "default"
-msgstr "Imposta come predefinito"
+msgstr "predefinito"
 
 #: gui2/selector.c:6080
 msgid "to"
@@ -13748,14 +13740,12 @@ msgid "Running a script adds to text"
 msgstr "Eseguendo uno script, il testo viene aggiunto"
 
 #: gui2/toolbar.c:520
-#, fuzzy
 msgid "New window"
-msgstr "Chiudi finestra"
+msgstr "Nuova finestra"
 
 #: gui2/toolbar.c:521
-#, fuzzy
 msgid "Open..."
-msgstr "Apri"
+msgstr "Apri..."
 
 #: gui2/toolbar.c:523
 msgid "Save as..."
