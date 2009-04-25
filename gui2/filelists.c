@@ -133,26 +133,20 @@ void save_file_lists (void)
 void read_file_lists (void)
 {
     char rpath[MAXSTR], value[MAXSTR];
-    gchar *fname;
-    gsize bytes;
     int i, j;
 
     initialize_file_lists();
+
+    /* Note: the filenames read from the Windows registry will be in
+       the locale encoding.  That's intended; we'll re-encode them for
+       GUI display if required.  Below we are just storing the names.
+    */
 
     for (i=0; i<NFILELISTS; i++) {
 	for (j=0; j<MAXRECENT; j++) {
 	    sprintf(rpath, "%s\\%d", file_sections[i], j);
 	    if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) { 
-		if (!g_utf8_validate(value, -1, NULL)) {
-		    /* convert to UTF-8 for GUI, if need be */
-		    fname = g_locale_to_utf8(value, -1, NULL, &bytes, NULL);
-		    if (fname != NULL) {
-			write_filename_to_list(i, j, fname);
-			g_free(fname);
-		    }
-		} else {
-		    write_filename_to_list(i, j, value);
-		}
+		write_filename_to_list(i, j, value);
 	    } else {
 		break;
 	    }
@@ -582,7 +576,7 @@ static void real_add_files_to_menus (int ftype)
 	}
 
 	/* put the files under the menu separator: ensure valid UTF-8
-	   for display */
+	   for display purposes */
 
 	for (i=0; i<MAXRECENT && filep[i][0]; i++) {
 	    gchar *fname, *apath;

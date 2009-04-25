@@ -498,17 +498,6 @@ void get_default_dir (char *s, int action)
 	strcpy(s, paths.workdir);
     }
 
-#ifdef G_OS_WIN32
-    if (!g_utf8_validate(s, -1, NULL)) {
-	gchar *tmp = my_locale_to_utf8(s);
-
-	if (tmp != NULL) {
-	    strcpy(s, tmp);
-	    g_free(tmp);
-	}
-    }
-#endif
-
     slash_terminate(s);
 }
 

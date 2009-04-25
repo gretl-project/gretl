@@ -877,6 +877,20 @@ static gchar *windows_filename (gchar *s)
 
 #endif
 
+#ifdef G_OS_WIN32
+static void correct_default_dir (char *s)
+{
+    if (!g_utf8_validate(s, -1, NULL)) {
+	gchar *tmp = my_locale_to_utf8(s);
+
+	if (tmp != NULL) {
+	    strcpy(s, tmp);
+	    g_free(tmp);
+	}
+    }
+}
+#endif
+
 static void gtk_file_selector (const char *msg, int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
@@ -888,6 +902,10 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     gint response;
 
     get_default_dir(startdir, action);
+
+#ifdef G_OS_WIN32
+    correct_default_dir(startdir);
+#endif
 
     if (SET_DIR_ACTION(action)) {
 	fa = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
