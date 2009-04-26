@@ -12,7 +12,13 @@ endif
 # The directory above Gretl.app
 topdir = $(prefix)/../../..
 
-install:
+install-fink: install_common
+	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh $(prefix)/bin/gretl
+	
+install-nofink: install_common
+	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh.nofink $(prefix)/bin/gretl
+	
+install_common:
 	rm -f $(prefix)/bin/gretl
 	rm -rf $(prefix)/include
 	rm -rf $(prefix)/share/aclocal
@@ -23,6 +29,5 @@ install:
 	rm -f $(prefix)/lib/gretl-gtk2/*.la
 	rm -rf $(prefix)/share/emacs
 	rm -rf $(prefix)/share/texmf-local
-	$(INSTALL_DATA) -m 644 $(topsrc)/osx/README.pdf $(topdir)
-	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh $(prefix)/bin/gretl
+	$(INSTALL_DATA) -m 644 $(topsrc)/osx/README.pdf $(topdir)	
 	$(INSTALL_PROGRAM) $(topsrc)/osx/script $(prefix)
