@@ -48,9 +48,16 @@
 #endif
 
 #ifdef ENABLE_NLS
+# include "libintl.h"
+# include "locale.h"
+# define gettext_noop(String) String
+# define _(String) gettext (String)
+# define N_(String) gettext_noop (String)
 # define I_(String) iso_gettext (String) 
 # define M_(String) maybe_iso_gettext (String)
 #else
+# define _(String) String
+# define N_(String) String
 # define I_(String) String
 # define M_(String) String
 #endif /* ENABLE_NLS */
