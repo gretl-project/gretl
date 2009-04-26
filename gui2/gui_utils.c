@@ -930,8 +930,11 @@ void do_open_data (windata_t *fwin, int code)
 
     gretl_error_clear();
 
-    if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII ||
-	code == APPEND_ASCII) {
+    if (code == OPEN_DATA || code == APPEND_DATA) {
+	/* native .gdt files */
+	ftype = GRETL_XML_DATA;
+    } else if (code == OPEN_CSV || code == APPEND_CSV || 
+	       code == OPEN_ASCII || code == APPEND_ASCII) {
 	ftype = GRETL_CSV;
     } else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
 	ftype = GRETL_GNUMERIC;

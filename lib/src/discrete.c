@@ -1671,10 +1671,6 @@ static int cholesky_decomp (double *xpx, int nv)
     return 0; 
 }
 
-/* logistic model: doesn't exactly belong here but it seems like
-   the most suitable place for it 
-*/
-
 int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
 			double *ymax, double *lmax)
 {
@@ -1701,6 +1697,7 @@ int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
     } else if (*ymax < 100.0) {
 	*lmax = 100.0;
     } else {
+	/* admittedly arbitrary */
 	*lmax = 1.1 * *ymax;
     }
 	    
