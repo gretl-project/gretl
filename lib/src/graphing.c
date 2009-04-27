@@ -427,7 +427,10 @@ int gnuplot_has_ttf (int reset)
        with X11 */
 
     if (err == -1 || reset) {
-	err = gnuplot_test_command("set term png font Vera 8");
+        err = gnuplot_test_command("set term pngcairo");
+        if (err) {
+	    err = gnuplot_test_command("set term png font Vera 8");
+        }
 	if (err) {
 	    err = gnuplot_test_command("set term png font luxisr 8");
 	}
