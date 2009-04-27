@@ -3,6 +3,9 @@
 # The directory above Gretl.app
 TOPDIR="/Users/allin/dist"
 
+# this has to be GNU cp -- may be in /sw/bin
+CP=/usr/local/bin/cp
+
 rm -f gretl.dmg tmp.dmg
 
 HERE=`pwd`
@@ -14,8 +17,8 @@ sudo newfs_hfs -v gretl $MYDEV
 hdiutil eject $MYDEV
 hdid tmp.dmg
 cd ${TOPDIR} && \
-/sw/bin/cp -a Gretl.app /Volumes/gretl && \
-/sw/bin/cp -a README.pdf /Volumes/gretl
+$CP -a Gretl.app /Volumes/gretl && \
+$CP -a README.pdf /Volumes/gretl
 cd $HERE
 hdiutil eject $MYDEV
 hdiutil convert -format UDZO tmp.dmg -o gretl.dmg && rm tmp.dmg
