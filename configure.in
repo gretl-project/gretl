@@ -57,6 +57,7 @@ have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
 have_odbc="no"
+check_gnuplot="yes"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -90,6 +91,15 @@ then
   build_docs=yes
 else
   build_docs=no
+fi])
+
+AC_ARG_ENABLE(gnuplot-checks,
+[  --disable-gnuplot-checks     do not run checks for gnuplot],
+[if test "$enableval" = "yes"
+then
+  check_gnuplot=yes
+else
+  check_gnuplot=no
 fi])
 
 AC_ARG_WITH(lucida,
@@ -397,30 +407,38 @@ if test "$have_odbc" = "yes" ; then
 fi
 
 dnl
-dnl Check for gnuplot, and its PNG capacity
+dnl Check for gnuplot and its PNG capacity, unless the
+dnl user has said not to
 dnl
-AC_DEFUN([AC_PROG_GNUPLOT],
-[AC_CHECK_PROG(GNUPLOT,gnuplot,yes)])
-
-AC_PROG_GNUPLOT
-test x"${GNUPLOT}" = xyes && AC_DEFINE(HAVE_GNUPLOT) 
-if test x"${GNUPLOT}" = xyes ; then
+if test "$check_gnuplot" = "no" ; then
   have_gnuplot=yes
-fi
+  gnuplot_png=yes
+  AC_DEFINE(HAVE_GNUPLOT)
+  AC_DEFINE(GNUPLOT_PNG)
+else
+  AC_DEFUN([AC_PROG_GNUPLOT],
+  [AC_CHECK_PROG(GNUPLOT,gnuplot,yes)])
 
-gnuplot_png=no
-if test "$build_gui" = "yes" ; then
-  AC_MSG_CHECKING(for PNG support in gnuplot)
-  echo "set term png" | GNUTERM=dumb `which gnuplot` 2>/dev/null && gnuplot_png=yes
-  if test "$gnuplot_png" = yes ; then
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(GNUPLOT_PNG)
-  else
-    AC_MSG_RESULT(no)
-    echo
-    echo "* gretl needs PNG support in gnuplot."
-    echo "* The current version of gnuplot is available from www.gnuplot.info"
-    exit
+  AC_PROG_GNUPLOT
+  test x"${GNUPLOT}" = xyes && AC_DEFINE(HAVE_GNUPLOT) 
+  if test x"${GNUPLOT}" = xyes ; then
+    have_gnuplot=yes
+  fi
+
+  gnuplot_png=no
+  if test "$build_gui" = "yes" ; then
+    AC_MSG_CHECKING(for PNG support in gnuplot)
+    echo "set term png" | GNUTERM=dumb `which gnuplot` 2>/dev/null && gnuplot_png=yes
+    if test "$gnuplot_png" = yes ; then
+      AC_MSG_RESULT(yes)
+      AC_DEFINE(GNUPLOT_PNG)
+    else
+      AC_MSG_RESULT(no)
+      echo
+      echo "* gretl needs PNG support in gnuplot."
+      echo "* The current version of gnuplot is available from www.gnuplot.info"
+      exit
+    fi
   fi
 fi
 
