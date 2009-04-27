@@ -276,18 +276,17 @@ int gretl_stat (const char *fname, struct stat *buf)
     gretl_error_clear();
 
     err = maybe_recode_path(fname, stdio_use_utf8, &pconv);
-
-    if (!err) {
+    
+    if (err) {
+	/* emulate 'stat' */
+	err = -1;
+    } else {
 	if (pconv != NULL) {
             err = stat(pconv, buf);
  	    g_free(pconv);
 	} else {
             err = stat(fname, buf);
  	}
-    }
-
-    if (err) {
-	gretl_errmsg_set_from_errno(NULL);
     }
 
     return err;

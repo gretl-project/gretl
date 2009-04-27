@@ -836,6 +836,10 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 
     err = make_connection(&sock, conn->host, conn->port);
 
+#if WDEBUG
+    fprintf(stderr, "make_connection returned %d\n", err);
+#endif   
+
     switch (err) {
     case HOSTERR:
 	if (*conn->host != '\0') {
@@ -902,7 +906,6 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 	return NOTENOUGHMEM;
     }
 
-#if 1 /* changed 2008-09-23: use host name here, not IP:port */
     if (u->params != NULL && u->upload == NULL) {
 	sprintf(request, "%s %s?%s HTTP/1.0\r\n"
 		"User-Agent: %s\r\n"
@@ -916,21 +919,6 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 		"Accept: %s\r\n",
 		cmd, u->path, u->agent, u->hostname, HTTP_ACCEPT);
     }
-#else
-    if (u->params != NULL && u->upload == NULL) {
-	sprintf(request, "%s %s?%s HTTP/1.0\r\n"
-		"User-Agent: %s\r\n"
-		"Host: %s:%d\r\n"
-		"Accept: %s\r\n",
-		cmd, u->path, u->params, u->agent, u->host, u->port, HTTP_ACCEPT);
-    } else {
-	sprintf(request, "%s %s HTTP/1.0\r\n"
-		"User-Agent: %s\r\n"
-		"Host: %s:%d\r\n"
-		"Accept: %s\r\n",
-		cmd, u->path, u->agent, u->host, u->port, HTTP_ACCEPT);
-    }
-#endif
 
     if (posthead != NULL) {
 	strcat(request, posthead);
@@ -1171,11 +1159,17 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 static uerr_t try_http (urlinfo *u)
 {
     struct http_stat hstat;
-    int i, dt = 0 | ACCEPTRANGES;
+    int i, dt, got_newloc = 0;
+    int redirs = 0;
     uerr_t err;
 
+ start_again:
+
+    dt = 0 | ACCEPTRANGES;
+    got_newloc = 0;
+
 #if WDEBUG
-    fprintf(stderr, "try_http: u->path = '%s'\n", u->path);
+    fprintf(stderr, "*** try_http: u->path = '%s'\n", u->path);
 #endif
 
     for (i=0; i<MAXTRY; i++) {
@@ -1183,7 +1177,7 @@ static uerr_t try_http (urlinfo *u)
 	err = real_get_http(u, &hstat, &dt);
 
 #if WDEBUG
-	fprintf(stderr, "try_http: err (from real_get_http) = %d\n"
+	fprintf(stderr, "try_http: real_get_http returned %d\n"
 		" errbuf = '%s'\n", err,
 		(wproxy)? gretlproxy.errbuf : u->errbuf);
 	if (err == RETRFINISHED) {
@@ -1204,9 +1198,29 @@ static uerr_t try_http (urlinfo *u)
 	    return err;
 	case RETRFINISHED:
 	    break;
+	case NEWLOCATION: /* ?? */
+	    if (redirs == 0 && hstat.newloc != NULL) {
+		char *p;
+
+		free(u->path);
+		u->path = hstat.newloc;
+		p = strchr(u->path, '?');
+		if (p != NULL) {
+		    *p = '\0';
+		}
+		hstat.newloc = NULL;
+		got_newloc = 1;
+		redirs++;
+	    }
+	    break;
 	default:
 	    FREEHSTAT(hstat);
 	    return err;
+	}
+
+	if (got_newloc) {
+	    FREEHSTAT(hstat);
+	    break;
 	}
 
 	if (!(dt & RETROKF)) {
@@ -1232,7 +1246,11 @@ static uerr_t try_http (urlinfo *u)
 	    }
 	}
 	break;
-    } 
+    }
+    
+    if (got_newloc) {
+	goto start_again;
+    }
 
     return TRYLIMEXC;
 }
