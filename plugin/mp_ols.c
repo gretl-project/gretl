@@ -585,6 +585,8 @@ static void set_gretl_mpfr_bits (void)
 	bits = strtoul(user_bits, NULL, 10);
     }
 
+    fprintf(stderr, "MPFR: using %d bits\n", (int) bits);
+
     mpfr_set_default_prec(bits);
 } 
 
