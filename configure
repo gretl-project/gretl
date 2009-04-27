@@ -16120,7 +16120,7 @@ fi
   CFLAGS="$ac_save_CFLAGS"
   LIBS="$ac_save_LIBS"
 
-   if test "$have_readline="no" ; then
+   if test "$have_readline" = "no" ; then
      READLINE_LIBS=""
      READLINE_CFLAGS=""
    fi

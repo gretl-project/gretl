@@ -283,7 +283,7 @@ dnl Check for libreadline for use with gretlcli
 dnl
 if test "$try_readline" = "yes" ; then
    AM_PATH_READLINE(have_readline="yes", have_readline="no")
-   if test "$have_readline="no" ; then
+   if test "$have_readline" = "no" ; then
      READLINE_LIBS=""
      READLINE_CFLAGS=""
    fi
