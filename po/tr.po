@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-04-13 21:55-0400\n"
-"PO-Revision-Date: 2009-04-16 09:47+0300\n"
+"PO-Revision-Date: 2009-04-28 16:10+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1400,7 +1400,7 @@ msgstr "Kalıntı Öİİ"
 
 #: lib/src/describe.c:2496
 msgid "ACF for"
-msgstr "Öİİ - değişken:"
+msgstr "Öİİ, değişken:"
 
 #: lib/src/describe.c:2512
 msgid "Residual PACF"
@@ -1408,7 +1408,7 @@ msgstr "Kalıntı KÖİİ"
 
 #: lib/src/describe.c:2514
 msgid "PACF for"
-msgstr "KÖİİ - değişken:"
+msgstr "KÖİİ, değişken:"
 
 #: lib/src/describe.c:2553 gui2/menustate.c:296 gui2/menustate.c:374
 msgid "Correlogram"
@@ -1503,7 +1503,7 @@ msgstr "Kalıntı izgesi"
 #: lib/src/describe.c:3510
 #, c-format
 msgid "Spectrum of %s"
-msgstr "%s Değişkeni İzgesi"
+msgstr "%s İzgesi"
 
 #: lib/src/describe.c:3516
 #, c-format
@@ -6583,7 +6583,7 @@ msgstr "gretl hakkında"
 #: gui2/about.c:159 gui2/about.c:162
 msgid "translator_credits"
 msgstr ""
-"Çeviren: Dr. A. Talha YALTA\n"
+"Çeviren: Yrd. Doç. Dr. A. Talha YALTA\n"
 "TOBB Ekonomi ve Teknoloji Üniversitesi\n"
 "İktisat Bölümü\n"
 "İletişim bilgileri için: http://yalta.etu.edu.tr/"
@@ -9249,7 +9249,7 @@ msgstr "Ana"
 
 #: gui2/gpt_dialog.c:1362
 msgid "key position"
-msgstr "Anahtar konum"
+msgstr "anahtarın konumu"
 
 #: gui2/gpt_dialog.c:1388
 msgid "fitted line"
@@ -9693,7 +9693,7 @@ msgstr "Gretl _uçbirimi"
 
 #: gui2/gretl.c:1239
 msgid "Start GNU _R"
-msgstr "GNU _R'ı başlat"
+msgstr "GNU _R'yi başlat"
 
 #: gui2/gretl.c:1240
 msgid "_Sort variables"
@@ -13061,7 +13061,7 @@ msgstr "Windows görünümünü benzet"
 
 #: gui2/settings.c:169
 msgid "Web browser"
-msgstr "Internet gezgini"
+msgstr "Internet tarayıcı"
 
 #: gui2/settings.c:172
 msgid "Allow shell commands"
@@ -13910,7 +13910,7 @@ msgstr "Eksik veri değerleri bulunuyordu"
 
 #: plugin/fractals.c:224
 msgid "Sample is too small for Hurst exponent"
-msgstr "Örneklem Hurst üstü için aşırı küçük"
+msgstr "Örneklem, Hurst üstü için aşırı küçük"
 
 #: plugin/fractals.c:234
 #, c-format
@@ -14301,7 +14301,7 @@ msgstr "Bu model için güven aralıkları hesaplanamadı"
 
 #: plugin/range-mean.c:65
 msgid "range-mean plot for"
-msgstr "aralık-ortalama çizimi şuna:"
+msgstr "aralık-ortalama çizimi, değişken:"
 
 #: plugin/range-mean.c:68 plugin/range-mean.c:157
 msgid "range"
