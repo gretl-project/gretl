@@ -1664,22 +1664,27 @@ mdata_handle_drag  (GtkWidget *widget,
 	strcat(tmp, dfname + skip);
     }
 
-    /* handle spaces in filenames */
+    /* handle spaces and such */
     unescape_url(tmp);
 
 #ifdef G_OS_WIN32
-    slash_convert(tmp, TO_BACKSLASH);
+    slash_convert(tmp, TO_BACKSLASH); 
+    if (string_is_utf8(tmp)) {
+        unmangle(tmp, tryfile);
+    } else {
+        strcpy(tryfile, tmp);
+    }
+#else
+    strcpy(tryfile, tmp);
 #endif
 
-    strcpy(tryfile, tmp);
-
-    if (has_suffix(tmp, ".gretl") && gretl_is_pkzip_file(tmp)) {
+    if (has_suffix(tryfile, ".gretl") && gretl_is_pkzip_file(tryfile)) {
 	verify_open_session();
-    } else if (has_suffix(tmp, ".inp")) {
+    } else if (has_suffix(tryfile, ".inp")) {
 	do_open_script(EDIT_SCRIPT);
-    } else if (has_suffix(tmp, ".R")) {
+    } else if (has_suffix(tryfile, ".R")) {
 	do_open_script(EDIT_R);
-    } else if (has_suffix(tmp, ".plt")) {
+    } else if (has_suffix(tryfile, ".plt")) {
 	do_open_script(EDIT_GP);
     } else {
 	verify_open_data(NULL, 0);

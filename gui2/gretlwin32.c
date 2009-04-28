@@ -204,6 +204,24 @@ static char *substr (char *targ, const char *src, const char *p)
 
 int unmangle (const char *dosname, char *longname)
 {
+#if 1
+    GError *err = NULL;
+    gsize bytes;
+    gchar *tr;
+
+    tr = g_locale_from_utf8(dosname, -1, NULL, &bytes, &err);
+
+    if (err) {
+        fprintf(stderr, "Couldn't open '%s': %s\n",
+                dosname, err->message);
+        g_error_free(err);
+        return 1;
+    } else {
+        strcpy(longname, tr);
+        g_free(tr);
+        return 0;
+    }
+#else
     HANDLE handle;
     WIN32_FIND_DATA fdata;
     char tmp[MAXLEN];
@@ -241,6 +259,7 @@ int unmangle (const char *dosname, char *longname)
     }
 
     return err;
+#endif
 }
 
 static void dummy_output_handler (const gchar *log_domain,
