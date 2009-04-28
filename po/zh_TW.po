@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2009-04-24 02:57+0800\n"
+"PO-Revision-Date: 2009-04-29 01:21+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -298,7 +298,7 @@ msgstr "敘述統計(_S)"
 #: plugin/range-mean.c:68
 #: plugin/range-mean.c:157
 msgid "mean"
-msgstr "平均數"
+msgstr "平均數(mean)"
 
 #: lib/src/boxplots.c:163
 #: lib/src/boxplots.c:166
@@ -1265,7 +1265,7 @@ msgstr "頻率"
 #: lib/src/dataio.c:1638
 #, fuzzy
 msgid "Range"
-msgstr "全距"
+msgstr ""
 
 #: lib/src/dataio.c:1641
 msgid "Listing of variables"
@@ -1391,9 +1391,9 @@ msgstr ""
 
 #: lib/src/dataio.c:3165
 #: lib/src/dataio.c:3208
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' -- number out of range!"
-msgstr "恢復為全樣本(_R)"
+msgstr "'%s' -- 超過樣本範圍"
 
 #: lib/src/dataset.c:577
 msgid "auto-generated constant"
@@ -1611,7 +1611,7 @@ msgstr ""
 #: lib/src/describe.c:1583
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr "資料不足, 無法產生 %s 變數的頻率分配"
+msgstr "資料不足, 無法產生 %s 變數的機率分配"
 
 #: lib/src/describe.c:1487
 #: lib/src/describe.c:2610
@@ -2874,9 +2874,8 @@ msgid "Density"
 msgstr "密度"
 
 #: lib/src/graphing.c:3282
-#, fuzzy
 msgid "Relative frequency"
-msgstr "頻率分配表(_F)"
+msgstr "相對機率 (Relative frequency)"
 
 #: lib/src/graphing.c:3468
 #, fuzzy, c-format
@@ -4664,7 +4663,7 @@ msgstr "群組異質變異 (Groupwise heteroskedasticity)"
 #: lib/src/varprint.c:1037
 #: gui2/selector.c:2863
 msgid "OLS"
-msgstr "一般最小平方法 (OLS)"
+msgstr "OLS"
 
 #: lib/src/modelprint.c:591
 #: lib/src/modelprint.c:594
@@ -6254,11 +6253,13 @@ msgid "Test for null hypothesis of gamma distribution"
 msgstr "檢定常態分配的虛無假設"
 
 #: lib/src/printout.c:338
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Frequency distribution for %s, obs %d-%d\n"
-msgstr "檢定常態分配的虛無假設"
+msgstr ""
+"\n"
+"機率分配 (Frequency distribution) for %s, obs %d-%d\n"
 
 #: lib/src/printout.c:354
 #, fuzzy
@@ -11025,7 +11026,7 @@ msgstr "檢視(_V)"
 
 #: gui2/gretl.c:1276
 msgid "_Icon view"
-msgstr "圖示(_I)"
+msgstr "分析檔圖示(_Icon view)"
 
 #: gui2/gretl.c:1277
 msgid "_Scalars"
@@ -11227,11 +11228,11 @@ msgstr "常態性檢定(_Normality)"
 
 #: gui2/gretl.c:1339
 msgid "_Frequency distribution"
-msgstr "頻率分配表(_F)"
+msgstr "次數分配表(_F)"
 
 #: gui2/gretl.c:1340
 msgid "Frequency _plot"
-msgstr "頻率分配圖(_p)"
+msgstr "機率分配圖(_p)"
 
 #: gui2/gretl.c:1341
 msgid "Estimated _density plot..."
@@ -11243,7 +11244,7 @@ msgstr "Gini 係數(_G)"
 
 #: gui2/gretl.c:1343
 msgid "_Range-mean graph"
-msgstr "全距-均數圖(_R)"
+msgstr "組距-均數圖(range-mean)(_R)"
 
 #: gui2/gretl.c:1344
 msgid "_Time series plot"
@@ -11334,7 +11335,7 @@ msgstr "一般最小平方法 (_OLS)..."
 
 #: gui2/gretl.c:1371
 msgid "_Instrumental variables"
-msgstr "工具變數法(_Instrumental variables)"
+msgstr "工具變數法(_IV)"
 
 #: gui2/gretl.c:1372
 msgid "_Two-Stage Least Squares..."
@@ -12890,7 +12891,7 @@ msgstr ""
 
 #: gui2/library.c:4121
 msgid "gretl: range-mean statistics"
-msgstr ""
+msgstr "gretl: 組距-均數統計量 (range-mean statistics)"
 
 #: gui2/library.c:4158
 #, fuzzy
@@ -13251,12 +13252,12 @@ msgstr "時間序列圖"
 
 #: gui2/menustate.c:288
 msgid "Frequency distribution"
-msgstr "頻率分配表"
+msgstr "機率分配"
 
 #: gui2/menustate.c:290
 #: gui2/menustate.c:372
 msgid "Frequency plot"
-msgstr "頻率分配圖"
+msgstr "機率分配圖"
 
 #: gui2/menustate.c:292
 #: gui2/menustate.c:373
@@ -13993,7 +13994,7 @@ msgstr "共變數矩陣的反矩陣"
 
 #: gui2/selector.c:4393
 msgid "Show slopes at mean"
-msgstr ""
+msgstr "顯示邊際效果 (在自變數為平均值時) (slopes at mean)"
 
 #: gui2/selector.c:4397
 msgid "Show p-values"
@@ -14480,9 +14481,8 @@ msgid "Graph page"
 msgstr "變數繪圖(_G)"
 
 #: gui2/session.c:3079
-#, fuzzy
 msgid "icon view"
-msgstr "圖示(_I)"
+msgstr "分析檔圖示(icon view)"
 
 #: gui2/session.c:3260
 #, fuzzy, c-format
@@ -15301,9 +15301,8 @@ msgid "open gretl console"
 msgstr "gretl: open data"
 
 #: gui2/toolbar.c:935
-#, fuzzy
 msgid "session icon view"
-msgstr "儲存分析檔(_a)"
+msgstr "分析檔圖示(session icon view)"
 
 #: gui2/toolbar.c:936
 #, fuzzy
@@ -15930,22 +15929,21 @@ msgstr ""
 
 #: plugin/range-mean.c:65
 msgid "range-mean plot for"
-msgstr ""
+msgstr "組距-均數圖 (range-mean plot) for"
 
 #: plugin/range-mean.c:68
 #: plugin/range-mean.c:157
-#, fuzzy
 msgid "range"
-msgstr "全距"
+msgstr "\t組距(range)"
 
 #: plugin/range-mean.c:133
 msgid "Sample is too small for range-mean graph\n"
-msgstr ""
+msgstr "樣本太少, 無法繪組距-均數圖\n"
 
 #: plugin/range-mean.c:152
 #, c-format
 msgid "Range-mean statistics for %s\n"
-msgstr ""
+msgstr "組距-均數統計量 (Range-mean statistics) for %s\n"
 
 #: plugin/range-mean.c:154
 #, c-format
