@@ -1,19 +1,21 @@
 # exec in dir above bin, lib inside Gretl.app
 
-PREFIX=/Users/allin/dist/Gretl.app/Contents/Resources
-GMPDIR=/sw/lib
+PREFIX=@prefix@
+
+# change if required
+GMPDIR=/usr/local/lib
 
 # fix gretlcli
 install_name_tool -change \
- $GMPDIR/libgmp.3.dylib @executable_path/../lib/libgmp.3.dylib bin/gretlcli
+ $AUXDIR/libgmp.3.dylib @executable_path/../lib/libgmp.3.dylib bin/gretlcli
 install_name_tool -change \
- /usr/local/lib/libreadline.5.2.dylib @executable_path/../lib/libreadline.5.2.dylib bin/gretlcli
+ $AUXDIR/libreadline.5.2.dylib @executable_path/../lib/libreadline.5.2.dylib bin/gretlcli
 install_name_tool -change \
  $PREFIX/lib/libgretl-1.0.0.dylib @executable_path/../lib/libgretl-1.0.0.dylib bin/gretlcli
 
 # fix gretl_x11
 install_name_tool -change \
- $GMPDIR/libgmp.3.dylib @executable_path/../lib/libgmp.3.dylib bin/gretl_x11
+ $AUXDIR/libgmp.3.dylib @executable_path/../lib/libgmp.3.dylib bin/gretl_x11
 install_name_tool -change \
  $PREFIX/lib/libgretl-1.0.0.dylib @executable_path/../lib/libgretl-1.0.0.dylib bin/gretl_x11
 
