@@ -598,7 +598,7 @@ void force_language (int langid)
     if (langid != LANG_C) {
 	char estr[64];
 
-	sprintf(estr, "LANGUAGE=%s", lang_string_from_id(langid));
+	sprintf(estr, "LANGUAGE=%s", lang_code_from_id(langid));
 	putenv(estr);
     }
 # endif
