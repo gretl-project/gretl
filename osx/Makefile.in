@@ -15,7 +15,7 @@ topdir = $(prefix)/../../..
 install-fink: install_common
 	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh $(prefix)/bin/gretl
 	
-install-nofink: install_common
+install: install_common
 	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh.nofink $(prefix)/bin/gretl
 	
 install_common:
