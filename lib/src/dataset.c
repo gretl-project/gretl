@@ -669,8 +669,7 @@ create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
     return pdinfo;
 }
 
-DATAINFO *
-create_auxiliary_dataset (double ***pZ, int nvar, int nobs)
+DATAINFO *create_auxiliary_dataset (double ***pZ, int nvar, int nobs)
 {
     DATAINFO *pdinfo;
 

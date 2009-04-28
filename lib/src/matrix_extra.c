@@ -577,6 +577,76 @@ gretl_matrix_data_subset_masked (const int *list, const double **Z,
 }
 
 /**
+ * gretl_dataset_from_matrix:
+ * @m: source matrix.
+ * @list: list of columns (1-based) to include, or %NULL.
+ * @pZ: location to receive data array.
+ * @err: location to receive error code.
+ *
+ * Creates a gretl dataset from matrix @m, either using the
+ * columns specified in @list or using all columns if @list
+ * is %NULL.
+ *
+ * Returns: pointer to new dataset information struct on success, 
+ * or %NULL on failure.
+ */
+
+DATAINFO *gretl_dataset_from_matrix (gretl_matrix *m, const int *list,
+				     double ***pZ, int *err)
+{
+    DATAINFO *dinfo = NULL;
+    const char **names;
+    int i, t, col, nv, T;
+
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    T = gretl_matrix_rows(m);
+    nv = gretl_matrix_cols(m);
+
+    if (list != NULL) {
+	for (i=1; i<=list[0]; i++) {
+	    col = list[i];
+	    if (col < 1 || col > nv) {
+		fprintf(stderr, "column %d: out of bounds\n", col);
+		*err = E_DATA;
+		break;
+	    } 
+	}
+	nv = list[0];
+    } 
+
+    if (!*err) {
+	dinfo = create_auxiliary_dataset(pZ, nv + 1, T);
+	if (dinfo == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
+    names = user_matrix_get_column_names(m);
+
+    for (i=1; i<=nv; i++) {
+	col = (list != NULL)? list[i] - 1 : i - 1;
+	for (t=0; t<T; t++) {
+	    (*pZ)[i][t] = gretl_matrix_get(m, t, col);
+	}
+	if (names != NULL) {
+	    strcpy(dinfo->varname[i], names[col]);
+	} else {
+	    sprintf(dinfo->varname[i], "col%d", col + 1);
+	}
+    }
+
+    return dinfo;
+}
+
+/**
  * gretl_plotfit_matrices:
  * @yno: ID number of the y variable.
  * @xno: ID number of the y variable.

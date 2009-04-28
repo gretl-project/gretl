@@ -62,6 +62,9 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
 					int t1, int t2, int missop, 
 					int *err);
 
+DATAINFO *gretl_dataset_from_matrix (gretl_matrix *m, const int *list,
+				     double ***pZ, int *err);
+
 int gretl_plotfit_matrices (int yno, int xno, FitType fit,
 			    const double **Z, int t1, int t2, 
 			    gretl_matrix **py, gretl_matrix **pX);

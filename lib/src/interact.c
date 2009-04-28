@@ -2589,6 +2589,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	ints_ok = 1;
     }
 
+    if (cmd->ci == GNUPLOT && (cmd->opt & OPT_X)) {
+	/* plotting columns of a matrix */
+	ints_ok = 1;
+    }
+
     /* allocate space for the command list */
     if (resize_command_list(cmd, nf)) {
 	goto cmd_exit;
@@ -2676,8 +2681,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->err = E_ARGS;
     }
 
-    if (cmd->ci == GNUPLOT && !(cmd->opt & OPT_T) && cmd->list[0] < 2) {
-	cmd->err = E_ARGS;
+    if (cmd->ci == GNUPLOT) {
+	if (!(cmd->opt & (OPT_T | OPT_X)) && cmd->list[0] < 2) {
+	    cmd->err = E_ARGS;
+	}
     }
 
     /* check list for duplicated variables? */
@@ -3305,6 +3312,11 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 
     if (cmd->list == NULL || cmd->list[0] == 0) {
 	return;
+    }
+    
+    if (cmd->ci == GNUPLOT && (cmd->opt & OPT_X)) {
+	/* plotting columns of matrix */
+	use_varnames = 0;
     }
 
     nsep = n_separators(cmd->list);

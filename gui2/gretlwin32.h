@@ -36,7 +36,7 @@ int create_child_process (char *prog);
 
 void win32_start_R_async (void);
 
-int unmangle (const char *dosname, char *longname);
+int filename_to_win32 (char *targ, const char *src);
 
 void set_up_windows_look (void);
 

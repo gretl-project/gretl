@@ -17,9 +17,6 @@
  * 
  */
 
-/* fileselect.c for gretl -- use the gtk file chooser under X11,
-   the native MS file selector under MS Windows */
-
 #include "gretl.h"
 #include "gpt_control.h"
 #include "session.h"
@@ -35,7 +32,7 @@
 #include <unistd.h>
 
 #ifdef G_OS_WIN32
-# include <gdk/gdkwin32.h>
+# include "gretlwin32.h"
 #endif
 
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
@@ -537,301 +534,6 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     }
 }
 
-#ifdef WIN32_FILESEL
-
-/* ........................................................... */
-
-          /* MS Windows version of file selection code */
-
-/* ........................................................... */
-
-
-#include <windows.h>
-#include <shlobj.h>
-
-struct winfilter {
-    const char *descrip;
-    const char *pat;
-} winfilter;
-
-struct win32_filtermap {
-    int action;
-    struct winfilter filter;
-};
-
-static struct winfilter get_gp_filter (int ttype)
-{
-    static struct winfilter gpfilt[] = {
-	{ N_("postscript files (*.eps)"), "*.eps" },
-	{ N_("PDF files (*.pdf)"), "*.pdf" },
-	{ N_("xfig files (*.fig)"), "*.fig" },
-	{ N_("LaTeX files (*.tex)"), "*.tex" },
-	{ N_("PNG files (*.png)"), "*.png" },
-	{ N_("Windows metafiles (*.emf)"), "*.emf" },
-	{ N_("gnuplot files (*.plt)"), "*.plt" },
-	{ N_("all files (*.*)"), "*" }
-    };
-
-    if (ttype == GP_TERM_EPS) 
-	return gpfilt[0];
-    else if (ttype == GP_TERM_PDF) 
-	return gpfilt[1];
-    else if (ttype == GP_TERM_FIG) 
-	return gpfilt[2];
-    else if (ttype == GP_TERM_TEX) 
-	return gpfilt[3];
-    else if (ttype == GP_TERM_PNG) 
-	return gpfilt[4];
-    else if (ttype == GP_TERM_EMF) 
-	return gpfilt[5];
-    else if (ttype == GP_TERM_PLT)
-	return gpfilt[6];
-    else
-	return gpfilt[7];
-}
-
-static struct winfilter get_filter (int action, gpointer data)
-{
-    static struct win32_filtermap map[] = {
-	{ SAVE_DATA,        { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{ SAVE_DBDATA,      { N_("gretl database files (*.bin)"), "*.bin" }},
-	{ SAVE_SCRIPT,      { N_("gretl script files (*.inp)"), "*.inp" }},
-	{ SAVE_FUNCTIONS_AS,{ N_("gretl script files (*.inp)"), "*.inp" }},
-	{ SAVE_CONSOLE,     { N_("gretl command files (*.inp)"), "*.inp" }},
-	{ SAVE_SESSION,     { N_("session files (*.gretl)"), "*.gretl" }},
-	{ SAVE_GP_CMDS,     { N_("gnuplot files (*.plt)"), "*.plt" }},
-	{ SAVE_R_CMDS,      { N_("GNU R files (*.R)"), "*.R" }},
-	{ SAVE_FUNCTIONS,   { N_("gretl function files (*.gfn)"), "*.gfn" }},
-	{ EXPORT_CSV,       { N_("CSV files (*.csv)"), "*.csv" }},
-	{ EXPORT_R,         { N_("GNU R files (*.R)"), "*.R" }},
-	{ EXPORT_OCTAVE,    { N_("GNU Octave files (*.m)"), "*.m" }},
-	{ OPEN_OCTAVE,      { N_("GNU Octave files (*.m)"), "*.m" }},
-	{ APPEND_OCTAVE,    { N_("GNU Octave files (*.m)"), "*.m" }},
-	{ EXPORT_DAT,       { N_("PcGive files (*.dat)"), "*.dat" }},
-	{ EXPORT_JM,        { N_("JMulti files (*.dat)"), "*.dat" }},
-	{ SAVE_OUTPUT,      { N_("text files (*.txt)"), "*.txt" }},
-	{ SAVE_TEX,         { N_("TeX files (*.tex)"), "*.tex" }},
-	{ SAVE_RTF,         { N_("RTF files (*.rtf)"), "*.rtf" }},
-	{ SAVE_TEXT,        { N_("ASCII files (*.txt)"), "*.txt" }},
-	{ OPEN_SCRIPT,      { N_("gretl script files (*.inp)"), "*.inp" }},
-	{ OPEN_SESSION,     { N_("session files (*.gretl)"), "*.gretl" }},
-	{ OPEN_CSV,         { N_("CSV files (*.csv)"), "*.csv" }},
-	{ APPEND_CSV,       { N_("CSV files (*.csv)"), "*.csv" }},
-	{ OPEN_ASCII,       { N_("ASCII files (*.txt)"), "*.txt" }},
-	{ APPEND_ASCII,     { N_("ASCII files (*.txt)"), "*.txt" }},
-	{ OPEN_GNUMERIC,    { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
-	{ APPEND_GNUMERIC,  { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
-	{ OPEN_XLS,         { N_("Excel files (*.xls)"), "*.xls" }},
-	{ APPEND_XLS,       { N_("Excel files (*.xls)"), "*.xls" }},
-	{ OPEN_WF1,         { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
-	{ APPEND_WF1,       { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
-	{ OPEN_DTA,         { N_("Stata files (*.dta)"), "*.dta" }},
-	{ APPEND_DTA,       { N_("Stata files (*.dta)"), "*.dta" }},
-	{ OPEN_SAV,         { N_("SPSS files (*.sav)"), "*.sav" }},
-	{ APPEND_SAV,       { N_("SPSS files (*.sav)"), "*.sav" }},
-	{ OPEN_JMULTI,      { N_("JMulTi files (*.dat)"), "*.dat" }},
-	{ APPEND_JMULTI,    { N_("JMulTi files (*.dat)"), "*.dat" }},
-	{ OPEN_ODS,         { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},
-	{ APPEND_ODS,       { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},
-	{ OPEN_RATS_DB,     { N_("RATS databases (*.rat)"), "*.rat" }},
-	{ OPEN_PCGIVE_DB,   { N_("PcGive data files (*.bn7)"), "*.bn7" }},
-	{ SET_PROG,         { N_("program files (*.exe)"), "*.exe" }}
-    };
-    static struct winfilter default_filter = {
-	N_("all files (*.*)"), "*" 
-    };
-    struct winfilter filt;
-    int i;
-
-    if (action == SAVE_GNUPLOT) {
-	int ttype = gp_term_code(data);
-
-	filt = get_gp_filter(ttype);
-    } else {
-	filt = default_filter;
-
-	for (i=0; i< sizeof map / sizeof *map; i++) {
-	    if (action == map[i].action) {
-		filt = map[i].filter;
-		break;
-	    }
-	}
-    }
-
-    return filt;
-}
-
-static char *make_winfilter (int action, FselDataSrc src, gpointer data)
-{
-    struct winfilter filter;
-    char *ret, *p;
-
-    ret = calloc(256, 1);
-    if (ret == NULL) {
-	return NULL;
-    }
-
-    p = ret;
-
-    if (GDT_ACTION(action)) {
-	filter = get_filter(SAVE_DATA, data);
-    } else {
-	filter = get_filter(action, data);
-    }
-
-    strcpy(p, I_(filter.descrip));
-    p += strlen(p) + 1;
-    strcpy(p, filter.pat);
-
-    if (action == OPEN_SCRIPT && src != FSEL_DATA_FNPKG) {
-	p += strlen(p) + 1;
-	strcpy(p, I_("gnuplot files (*.plt)"));
-	p += strlen(p) + 1;
-	strcpy(p, "*.plt");
-	p += strlen(p) + 1;
-	strcpy(p, I_("GNU R files (*.*)"));
-	p += strlen(p) + 1;
-	strcpy(p, "*.R");
-    }	
-
-    if (strncmp(filter.descrip, "all", 3)) {
-	p += strlen(p) + 1;
-	strcpy(p, I_("all files (*.*)"));
-	p += strlen(p) + 1;
-	strcpy(p, "*");
-    }
-
-    return ret;
-}
-
-static int select_dirname (char *fname, char *trmsg)
-{
-    BROWSEINFO bi;
-    LPITEMIDLIST pidl;
-    char dirname[MAX_PATH];
-    int ret = 1;
-
-    CoInitialize(NULL);
-
-    bi.hwndOwner = NULL;
-    bi.pidlRoot = NULL; /* FIXME? */
-    bi.pszDisplayName = dirname;
-    bi.lpszTitle = trmsg;
-    bi.ulFlags = BIF_USENEWUI;
-    bi.lpfn = NULL;
-    bi.lParam = 0;
-    bi.iImage = 0;   
-
-    pidl = SHBrowseForFolder(&bi);
-    if (pidl == NULL) {
-	ret = 0;
-    } else {
-	SHGetPathFromIDList(pidl, fname);
-	CoTaskMemFree(pidl);
-    }
-
-    return ret;
-}
-
-static void win32_file_selector (const char *msg, int action, FselDataSrc src, 
-				 gpointer data, GtkWidget *parent) 
-{
-    OPENFILENAME of;
-    int retval;
-    char fname[MAXLEN], endname[64], startdir[MAXLEN];
-    char *filter = NULL;
-    gchar *trmsg = NULL;
-
-    *fname = '\0';
-    *endname = '\0';
-
-    get_default_dir(startdir, action);
-
-    /* special cases */
-    if (action == SAVE_DATA && *paths.datfile != '\0') {
-	char *savename = suggested_savename(paths.datfile);
-
-	strcpy(fname, savename);
-	g_free(savename);
-	if (!(data_status & BOOK_DATA)) {
-	    get_base(startdir, paths.datfile, SLASH);
-	}
-    } else if (EXPORT_ACTION(action, src) && *paths.datfile != '\0') {
-	char *savename = suggested_exportname(paths.datfile, action);
-
-	strcpy(fname, savename);
-	g_free(savename);
-	get_base(startdir, paths.datfile, SLASH);
-    } else if (action == SET_PROG) {
-	char *strvar = (char *) data;
-
-	if (strvar != NULL && *strvar != '\0') {
-	    if (get_base(startdir, strvar, SLASH)) {
-		strcpy(fname, strvar + slashpos(strvar) + 1);
-	    } 
-	}
-    } else if (action == SAVE_FUNCTIONS || action == SAVE_FUNCTIONS_AS) {
-	get_default_package_name(fname, data, action);
-    }
-
-    if (doing_nls()) {
-	trmsg = my_locale_from_utf8(msg);
-    } else {
-	trmsg = g_strdup(msg);
-    }
-
-    if (SET_DIR_ACTION(action)) {
-	retval = select_dirname(fname, trmsg);
-    } else {
-	/* initialize file dialog info struct */
-	memset(&of, 0, sizeof of);
-#ifdef OPENFILENAME_SIZE_VERSION_400
-	of.lStructSize = OPENFILENAME_SIZE_VERSION_400;
-#else
-	of.lStructSize = sizeof of;
-#endif
-	if (parent != NULL) {
-	    of.hwndOwner = GDK_WINDOW_HWND(parent->window);
-	} else {
-	    of.hwndOwner = NULL;
-	}
-	filter = make_winfilter(action, src, data);
-	of.lpstrFilter = filter;
-	of.lpstrCustomFilter = NULL;
-	of.nFilterIndex = 1;
-	of.lpstrFile = fname;
-	of.nMaxFile = sizeof fname;
-	of.lpstrFileTitle = endname;
-	of.nMaxFileTitle = sizeof endname;
-	of.lpstrInitialDir = startdir;
-	of.lpstrTitle = trmsg;
-	of.lpstrDefExt = NULL;
-	of.Flags = OFN_HIDEREADONLY;
-
-	if (action < END_OPEN || action == SET_PROG) {
-	    retval = GetOpenFileName(&of);
-	} else {
-	    /* a file save action */
-	    retval = GetSaveFileName(&of);
-	}
-    }
-
-    free(filter);
-    g_free(trmsg);
-
-    if (!retval) {
-	if (CommDlgExtendedError()) {
-	    errbox(_("File dialog box error"));
-	}
-	return;
-    }
-
-    file_selector_process_result(fname, action, src, data);
-}
-
-#endif
-
-/* #else End of MS Windows native file selection code, start GTK */
 
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
 {
@@ -861,23 +563,21 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
 
 #ifdef G_OS_WIN32
 
-static gchar *windows_filename (gchar *s)
+static gchar *inplace_windows_filename (gchar *s)
 {
-    if (string_is_utf8(s)) {
-	gchar *tmp = my_locale_from_utf8(s);
+    char tmp[MAXLEN];
+    int err;
 
-	if (tmp != NULL) {
-	    g_free(s);
-	    s = tmp;
-	}
+    err = filename_to_win32(tmp, s);
+
+    if (!err) {
+	g_free(s);
+	s = g_strdup(tmp);
     }
 
     return s;
 }
 
-#endif
-
-#ifdef G_OS_WIN32
 static void correct_default_dir (char *s)
 {
     if (!g_utf8_validate(s, -1, NULL)) {
@@ -889,6 +589,7 @@ static void correct_default_dir (char *s)
 	}
     }
 }
+
 #endif
 
 static void gtk_file_selector (const char *msg, int action, FselDataSrc src, 
@@ -1012,7 +713,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 
 	if (fname != NULL) {
 #ifdef G_OS_WIN32
-	    fname = windows_filename(fname);
+	    fname = inplace_windows_filename(fname);
 #endif
 	    file_selector_process_result(fname, action, src, data);
 	    g_free(fname);
@@ -1021,8 +722,6 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 
     gtk_widget_destroy(filesel);
 }
-
-/* #endif end of non-MS Windows code */
 
 void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 {
@@ -1034,19 +733,11 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	w = vwin->main;
     }
 
-#ifdef WIN32_FILESEL
-    win32_file_selector(msg, action, src, data, w);
-#else
     gtk_file_selector(msg, action, src, data, w);
-#endif
 }
 
 void file_selector_with_parent (const char *msg, int action, FselDataSrc src, 
 				gpointer data, GtkWidget *w)
 {
-#if WIN32_FILESEL
-    win32_file_selector(msg, action, src, data, w);
-#else
     gtk_file_selector(msg, action, src, data, w);
-#endif
 }

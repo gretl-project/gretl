@@ -26,6 +26,7 @@
 #include "matrix_extra.h"
 #include "forecast.h"
 #include "plotspec.h"
+#include "usermat.h"
 
 #include <unistd.h>
 #include <glib.h>
@@ -2426,6 +2427,56 @@ static void make_calendar_tics (const DATAINFO *pdinfo,
     }
 }
 
+/* Respond to use of the option --matrix=<matname> in the gnuplot
+   command, or create a plot directly from a matrix and a plot list.
+*/
+
+int matrix_plot (gretl_matrix *m, const int *list, const char *literal, 
+		 gretlopt opt)
+{
+    double **Z = NULL;
+    DATAINFO *dinfo = NULL;
+    int *plotlist = NULL;
+    int err = 0;
+
+    if (m == NULL) {
+	/* we need to find the matrix by name */
+	const char *mname = get_optval_string(GNUPLOT, OPT_X);
+    
+	if (mname == NULL) {
+	    err = E_DATA;
+	} else {
+	    m = get_matrix_by_name(mname);
+	    if (m == NULL) {
+		err = E_DATA;
+	    }
+	}
+    }
+
+    if (!err) {
+	dinfo = gretl_dataset_from_matrix(m, list, &Z, &err);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    plotlist = gretl_consecutive_list_new(1, dinfo->v - 1);
+    if (plotlist == NULL) {
+	err = E_ALLOC;
+    } 
+
+    if (!err) {
+	opt &= ~OPT_X;
+	err = gnuplot(plotlist, literal, (const double **) Z, dinfo, opt);
+    }
+
+    destroy_dataset(Z, dinfo);   
+    free(plotlist);
+
+    return err;
+}
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -2464,6 +2515,10 @@ int gnuplot (const int *plotlist, const char *literal,
     err = incompatible_options(opt, OPT_T | OPT_I | OPT_L | OPT_Q | OPT_N);
     if (err) {
 	return err;
+    }
+
+    if (opt & OPT_X) {
+	return matrix_plot(NULL, plotlist, literal, opt);
     }
 
 #if GP_DEBUG

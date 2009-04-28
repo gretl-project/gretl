@@ -189,77 +189,39 @@ void win32_start_R_async (void)
     g_free(Rline);
 }
 
-static char *substr (char *targ, const char *src, const char *p)
+/* Convert @src, a filename that might be in UTF-8 and might contain
+   forward slashes, to canonical win32 form.  We assume that @targ can
+   hold MAXLEN bytes.
+*/
+
+int filename_to_win32 (char *targ, const char *src)
 {
+    GError *gerr = NULL;
+    gsize bytes;
+    int err = 0;
+
     *targ = '\0';
 
-    if (p == NULL) {
-	strcpy(targ, src);
-    } else {
-	strncat(targ, src, p - src);
-    }
+    if (string_is_utf8(src)) {
+	gchar *tr = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
 
-    return targ;
-}
-
-int unmangle (const char *dosname, char *longname)
-{
-#if 1
-    GError *err = NULL;
-    gsize bytes;
-    gchar *tr;
-
-    tr = g_locale_from_utf8(dosname, -1, NULL, &bytes, &err);
-
-    if (err) {
-        fprintf(stderr, "Couldn't open '%s': %s\n",
-                dosname, err->message);
-        g_error_free(err);
-        return 1;
-    } else {
-        strcpy(longname, tr);
-        g_free(tr);
-        return 0;
-    }
-#else
-    HANDLE handle;
-    WIN32_FIND_DATA fdata;
-    char tmp[MAXLEN];
-    const char *p;
-    int err = 0, done = 0;
-    char drive;
-
-    *longname = '\0';
-    
-    if (sscanf(dosname, "%c:\\", &drive) != 1 ||
-	dosname[strlen(dosname) - 1] == '\\') {
-	strcpy(longname, dosname);
-	return 0;
-    }
-
-    sprintf(longname, "%c:", tolower(drive));
-    p = dosname + 2;
-
-    while (!done) {
-	p = strchr(p + 1, '\\');
-	if (p == NULL) {
-	    done = 1;
-	} 
-	substr(tmp, dosname, p);
-	handle = FindFirstFile(tmp, &fdata);
-	if (handle != INVALID_HANDLE_VALUE) {
-	    strcat(longname, "\\");
-	    strcat(longname, fdata.cFileName);
-	    FindClose(handle);
-	} else {
-	    *longname = '\0';
+	if (gerr != NULL) {
+	    fprintf(stderr, "Couldn't handle '%s': %s\n", src, gerr->message);
+	    g_error_free(gerr);
 	    err = 1;
-	    break;
+	} else {
+	    strncat(targ, tr, MAXLEN - 1);
+	    g_free(tr);
 	}
+    } else {
+	strncat(targ, src, MAXLEN - 1);
+    }
+
+    if (!err) {
+	slash_convert(targ, TO_BACKSLASH);
     }
 
     return err;
-#endif
 }
 
 static void dummy_output_handler (const gchar *log_domain,

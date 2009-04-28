@@ -168,6 +168,9 @@ int gnuplot_make_graph (void);
 
 void reset_plot_count (void);
 
+int matrix_plot (gretl_matrix *m, const int *list, const char *literal, 
+		 gretlopt opt);
+
 int gnuplot (const int *plotlist, const char *literal,
 	     const double **Z, const DATAINFO *pdinfo, 
 	     gretlopt opt);

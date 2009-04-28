@@ -199,7 +199,9 @@ static void get_runfile (char *fname)
     *tryfile = '\0';
 
 #ifdef G_OS_WIN32
-    if (unmangle(fname, tryfile)) return;
+    if (filename_to_win32(tryfile, fname)) {
+	return;
+    }
 #else
     strncat(tryfile, fname, MAXLEN - 1);
 #endif
@@ -432,7 +434,7 @@ int main (int argc, char **argv)
 	*paths.datfile = '\0';
 
 #ifdef G_OS_WIN32
-	if (unmangle(filearg, paths.datfile)) {
+	if (filename_to_win32(paths.datfile, filearg)) {
 	    exit(EXIT_FAILURE);
 	}
 #else
@@ -1668,12 +1670,7 @@ mdata_handle_drag  (GtkWidget *widget,
     unescape_url(tmp);
 
 #ifdef G_OS_WIN32
-    slash_convert(tmp, TO_BACKSLASH); 
-    if (string_is_utf8(tmp)) {
-        unmangle(tmp, tryfile);
-    } else {
-        strcpy(tryfile, tmp);
-    }
+    filename_to_win32(tryfile, tmp);
 #else
     strcpy(tryfile, tmp);
 #endif
