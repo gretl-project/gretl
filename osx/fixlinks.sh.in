@@ -3,7 +3,7 @@
 PREFIX=@prefix@
 
 # change if required
-GMPDIR=/usr/local/lib
+AUXDIR=/usr/local/lib
 
 # fix gretlcli
 install_name_tool -change \
