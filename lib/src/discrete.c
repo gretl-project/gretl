@@ -120,34 +120,7 @@ logit_probit_llhood (const double *y, const MODEL *pmod, int opt)
     return lnL;
 }
 
-static int add_slopes_to_model (MODEL *pmod, double fbx)
-{
-    double *slopes;
-    size_t ssize = pmod->ncoeff * sizeof *slopes;
-    int i;
 
-    slopes = malloc(ssize);
-
-    if (slopes == NULL) {
-	return 1;
-    }
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	if (pmod->list[i+2] == 0) {
-	    continue;
-	}
-	slopes[i] = pmod->coeff[i] * fbx;
-    }
-
-    if (gretl_model_set_data(pmod, "slopes", slopes, 
-			     GRETL_TYPE_DOUBLE_ARRAY,
-			     ssize)) {
-	free(slopes);
-	return 1;
-    }
-
-    return 0;
-}
 
 static double *hess_wts (MODEL *pmod, const double **Z, int ci) 
 {
@@ -633,6 +606,137 @@ static char *classifier_check (int *list, double **Z, DATAINFO *pdinfo,
     return mask;
 }
 
+/* construct an array holding the means of the independent variables
+   in the binary model */
+
+static double *model_get_x_means (MODEL *pmod, const double **Z)
+{
+    double *xbar;
+    int i, vi, t;
+
+    xbar = malloc(pmod->ncoeff * sizeof *xbar);
+    if (xbar == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	vi = pmod->list[i+2];
+	if (vi == 0) {
+	    xbar[i] = 1.0;
+	} else {
+	    xbar[i] = 0.0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!model_missing(pmod, t)) {
+		    xbar[i] += Z[vi][t];
+		}
+	    }
+	    xbar[i] /= pmod->nobs;
+	}
+    }
+
+    return xbar;
+}
+
+/* f(Xb) calculated at the means of the independent variables */
+
+static double binary_fXb (MODEL *pmod, const double **Z)
+{
+    double *xbar;
+    double Xb = 0.0;
+    int i;
+
+    xbar = model_get_x_means(pmod, Z);
+    if (xbar == NULL) {
+	return NADBL;
+    }
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	Xb += pmod->coeff[i] * xbar[i];
+    }
+
+    free(xbar);
+
+    return (pmod->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
+}
+
+/* Special "slope" calculation for a dummy regressor in binary model:
+   this is F(~Xb + b_j) - F(~Xb) where ~Xb denotes the sum of
+   (coefficient times mean) for all regressors other than the dummy in
+   question and b_j indicates the coefficient on the dummy.  That is,
+   the calculation measures the effect on the probability of Y = 1 of
+   the discrete change 0 to 1 in x_j.
+*/
+
+static double dumslope (MODEL *pmod, const double *xbar, int j)
+{
+    double s, Xb = 0.0;
+    int i;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	if (i != j) {
+	    Xb += pmod->coeff[i] * xbar[i];
+	}
+    } 
+
+    if (pmod->ci == LOGIT) {
+	s = logit(Xb + pmod->coeff[j]) - logit(Xb);
+    } else {
+	s = normal_cdf(Xb + pmod->coeff[j]) - normal_cdf(Xb);
+    }
+
+    return s;
+}
+
+static int add_slopes_to_model (MODEL *pmod, const double **Z)
+{
+    double *xbar, *slopes;
+    double Xb, fXb;
+    size_t ssize;
+    int i, vi, err = 0;
+
+    xbar = model_get_x_means(pmod, Z);
+    if (xbar == NULL) {
+	return E_ALLOC;
+    }    
+
+    ssize = pmod->ncoeff * sizeof *slopes;
+    slopes = malloc(ssize);
+    if (slopes == NULL) {
+	free(xbar);
+	return E_ALLOC;
+    }
+
+    Xb = 0.0;
+    for (i=0; i<pmod->ncoeff; i++) {
+	Xb += pmod->coeff[i] * xbar[i];
+    }
+
+    fXb = (pmod->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
+    pmod->sdy = fXb;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	vi = pmod->list[i+2];
+	if (vi == 0) {
+	    slopes[i] = 0.0;
+	} else if (gretl_isdummy(pmod->t1, pmod->t2, Z[vi])) {
+	    slopes[i] = dumslope(pmod, xbar, i);
+	} else {
+	    slopes[i] = pmod->coeff[i] * fXb;
+	}
+    }
+
+    err = gretl_model_set_data(pmod, "slopes", slopes, 
+			       GRETL_TYPE_DOUBLE_ARRAY,
+			       ssize);
+
+    free(xbar);
+    if (err) {
+	free(slopes);
+    }
+
+    return err;
+}
+
 static MODEL 
 binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo, 
 		     int ci, gretlopt opt, PRN *prn)
@@ -644,8 +748,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     int oldt2 = pdinfo->t2;
     int *act_pred = NULL;
     MODEL dmod;
-    double xx, fbx, f, F;
-    double *xbar = NULL;
+    double xx, f, F;
     double *beta = NULL;
 
     /* FIXME do we need to insist on a constant in this sort
@@ -679,14 +782,6 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     depvar = list[1];
     nx = list[0] - 1;
 
-    /* allocate space for means of indep vars, coeffs */
-    xbar = malloc(nx * sizeof *xbar);
-    beta = malloc(nx * sizeof *beta);
-    if (xbar == NULL || beta == NULL) {
-	dmod.errcode = E_ALLOC;
-	goto bailout;
-    }
-
     if (mask != NULL) {
 	dmod.errcode = copy_to_reference_missmask(mask);
     }
@@ -706,20 +801,16 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     printmodel(&dmod, pdinfo, OPT_NONE, prn);
 #endif
 
-    for (i=0; i<dmod.ncoeff; i++) {
-	beta[i] = dmod.coeff[i];
-	xbar[i] = 0.0;
-	for (t=dmod.t1; t<=dmod.t2; t++) {
-	    if (!model_missing(&dmod, t)) {
-		xbar[i] += (*pZ)[list[i+2]][t];
-	    }
-	}
-	xbar[i] /= dmod.nobs;
+    beta = copyvec(dmod.coeff, dmod.ncoeff);
+
+    if (beta == NULL) {
+	dmod.errcode = E_ALLOC;
+    } else {
+	dmod.errcode = do_BRMR(list, &dmod, ci, beta, 
+			       (const double **) *pZ, pdinfo, 
+			       (opt & OPT_V)? prn : NULL);
     }
 
-    dmod.errcode = do_BRMR(list, &dmod, ci, beta, 
-			   (const double **) *pZ, pdinfo, 
-			   (opt & OPT_V)? prn : NULL);
     if (dmod.errcode) {
 	goto bailout;
     }
@@ -739,24 +830,11 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* apparatus for calculating slopes at means */
-    xx = 0.0;
-    for (i=0; i<dmod.ncoeff; i++) {
-	xx += dmod.coeff[i] * xbar[i];
-    }
-
-    if (ci == LOGIT) {
-	fbx = logit_pdf(xx);
-#if LPDEBUG
-	fprintf(stderr, "xx = %.8g, fbx = %.8g\n", xx, fbx);
-#endif
-    } else {
-	fbx = normal_pdf(xx);
-    }
-
     if (opt & OPT_P) {
+	/* showing p-values, not slopes */
 	dmod.opt |= OPT_P;
-    } else if (add_slopes_to_model(&dmod, fbx)) {
+	dmod.sdy = binary_fXb(&dmod, (const double **) *pZ);
+    } else if (add_slopes_to_model(&dmod, (const double **) *pZ)) {
 	dmod.errcode = E_ALLOC;
 	goto bailout;
     }
@@ -792,7 +870,6 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 
     xx /= dmod.nobs;
     dmod.ybar = xx;
-    dmod.sdy = fbx;
 
     if (act_pred != NULL) {
 	gretl_model_set_data(&dmod, "discrete_act_pred", act_pred, 
@@ -810,7 +887,6 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 
  bailout:
 
-    free(xbar);
     free(beta);
     free(list);
     free(mask);
