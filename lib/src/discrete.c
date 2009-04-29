@@ -68,17 +68,16 @@ static double logit_pdf (double x)
     return l;
 }
 
-static void Lr_chisq (MODEL *pmod, double **Z)
+static void Lr_chisq (MODEL *pmod, const double **Z)
 {
     int t, zeros, ones = 0, m = pmod->nobs;
     double Lr, chisq;
     
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (model_missing(pmod, t)) {
-	    continue;
-	}
-	if (Z[pmod->list[1]][t] == 1.0) {
-	    ones++;
+	if (!model_missing(pmod, t)) {
+	    if (Z[pmod->list[1]][t] == 1.0) {
+		ones++;
+	    }
 	} 
     }
 
@@ -119,8 +118,6 @@ logit_probit_llhood (const double *y, const MODEL *pmod, int opt)
 
     return lnL;
 }
-
-
 
 static double *hess_wts (MODEL *pmod, const double **Z, int ci) 
 {
@@ -532,8 +529,10 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
     return err;
 }
 
-static char *classifier_check (int *list, double **Z, DATAINFO *pdinfo,
-			       gretlopt opt, PRN *prn, int *err)
+static char *classifier_check (int *list, const double **Z, 
+			       const DATAINFO *pdinfo,
+			       gretlopt opt, PRN *prn, 
+			       int *err)
 {
     char *mask = NULL;
     const double *y = Z[list[1]];
@@ -737,19 +736,70 @@ static int add_slopes_to_model (MODEL *pmod, const double **Z)
     return err;
 }
 
+static void binary_model_add_stats (MODEL *pmod, const double *y)
+{
+    int *act_pred;
+    double f, F, xx = 0.0;
+    int i, t;
+
+    /* space for actual/predicted matrix */
+    act_pred = malloc(4 * sizeof *act_pred);
+    if (act_pred != NULL) {
+	for (i=0; i<4; i++) {
+	    act_pred[i] = 0;
+	}
+    }
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	double xb = pmod->yhat[t];
+	int yt;
+
+	if (model_missing(pmod, t)) {
+	    continue;
+	}
+
+	yt = (int) y[t];
+	xx += yt;
+
+	if (act_pred != NULL) {
+	    i = 2 * yt + (xb > 0.0);
+	    act_pred[i] += 1;
+	}
+
+	if (pmod->ci == LOGIT) {
+	    pmod->yhat[t] = exp(xb) / (1.0 + exp(xb)); 
+	    pmod->uhat[t] = yt - pmod->yhat[t];
+	} else {
+	    f = normal_pdf(xb);
+	    F = normal_cdf(xb);
+	    pmod->yhat[t] = F; 
+	    pmod->uhat[t] = (yt != 0)? f/F : -f/(1-F);
+	}
+    }
+
+    pmod->ybar = xx / pmod->nobs;
+
+    if (act_pred != NULL) {
+	gretl_model_set_data(pmod, "discrete_act_pred", act_pred, 
+			     GRETL_TYPE_INT_ARRAY, 
+			     4 * sizeof *act_pred);
+    }
+
+    mle_criteria(pmod, 0);
+}
+
 static MODEL 
 binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo, 
 		     int ci, gretlopt opt, PRN *prn)
 {
-    int *list = NULL;
-    char *mask = NULL;
-    int i, t, depvar, nx;
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
-    int *act_pred = NULL;
-    MODEL dmod;
-    double xx, f, F;
+    int *list = NULL;
+    char *mask = NULL;
     double *beta = NULL;
+    const double **Z;
+    MODEL dmod;
+    int i, depvar, nx;
 
     /* FIXME do we need to insist on a constant in this sort
        of model? */
@@ -762,18 +812,11 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* space for actual/predicted matrix */
-    act_pred = malloc(4 * sizeof *act_pred);
-    if (act_pred != NULL) {
-	for (i=0; i<4; i++) {
-	    act_pred[i] = 0;
-	}
-    }
+    Z = (const double **) *pZ;
 
-    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-			  (const double **) *pZ);
+    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
 
-    mask = classifier_check(list, *pZ, pdinfo, opt, prn,
+    mask = classifier_check(list, Z, pdinfo, opt, prn,
 			    &dmod.errcode);
     if (dmod.errcode) {
 	goto bailout;
@@ -793,6 +836,9 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
+    /* re-attach */
+    Z = (const double **) *pZ;
+
     if (dmod.errcode) {
 	goto bailout;
     }
@@ -806,8 +852,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     if (beta == NULL) {
 	dmod.errcode = E_ALLOC;
     } else {
-	dmod.errcode = do_BRMR(list, &dmod, ci, beta, 
-			       (const double **) *pZ, pdinfo, 
+	dmod.errcode = do_BRMR(list, &dmod, ci, beta, Z, pdinfo, 
 			       (opt & OPT_V)? prn : NULL);
     }
 
@@ -820,69 +865,30 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 	dmod.coeff[i] = beta[i];
     }
 
-    dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, ci);
-    Lr_chisq(&dmod, *pZ);
+    dmod.lnL = logit_probit_llhood(Z[depvar], &dmod, ci);
+    Lr_chisq(&dmod, Z);
     dmod.ci = ci;
 
     /* calculate standard errors etc */
-    dmod.errcode = logit_probit_vcv(&dmod, opt, (const double **) *pZ);
-    if (dmod.errcode) {
-	goto bailout;
-    }
+    dmod.errcode = logit_probit_vcv(&dmod, opt, Z);
 
-    if (opt & OPT_P) {
-	/* showing p-values, not slopes */
-	dmod.opt |= OPT_P;
-	dmod.sdy = binary_fXb(&dmod, (const double **) *pZ);
-    } else if (add_slopes_to_model(&dmod, (const double **) *pZ)) {
-	dmod.errcode = E_ALLOC;
-	goto bailout;
-    }
-
-    /* calculate additional statistics */
-    xx = 0.0;
-    for (t=dmod.t1; t<=dmod.t2; t++) {
-	double xb = dmod.yhat[t];
-	int yt;
-
-	if (model_missing(&dmod, t)) {
-	    continue;
-	}
-
-	yt = (int) (*pZ)[depvar][t];
-	xx += yt;
-
-	if (act_pred != NULL) {
-	    i = 2 * yt + (xb > 0.0);
-	    act_pred[i] += 1;
-	}
-
-	if (dmod.ci == LOGIT) {
-	    dmod.yhat[t] = exp(xb) / (1.0 + exp(xb)); 
-	    dmod.uhat[t] = yt - dmod.yhat[t];
+    if (!dmod.errcode) {
+	if (opt & OPT_P) {
+	    /* showing p-values, not slopes */
+	    dmod.opt |= OPT_P;
+	    dmod.sdy = binary_fXb(&dmod, Z);
 	} else {
-	    f = normal_pdf(xb);
-	    F = normal_cdf(xb);
-	    dmod.yhat[t] = F; 
-	    dmod.uhat[t] = yt ? f/F : -f/(1-F);
+	    dmod.errcode = add_slopes_to_model(&dmod, Z);
 	}
     }
 
-    xx /= dmod.nobs;
-    dmod.ybar = xx;
-
-    if (act_pred != NULL) {
-	gretl_model_set_data(&dmod, "discrete_act_pred", act_pred, 
-			     GRETL_TYPE_INT_ARRAY, 
-			     4 * sizeof *act_pred);
-    }
-
-    mle_criteria(&dmod, 0);
-
-    if (opt & OPT_A) {
-	dmod.aux = AUX_AUX;
-    } else {
-	dmod.ID = model_count_plus();
+    if (!dmod.errcode) {
+	binary_model_add_stats(&dmod, Z[depvar]);
+	if (opt & OPT_A) {
+	    dmod.aux = AUX_AUX;
+	} else {
+	    dmod.ID = model_count_plus();
+	}
     }
 
  bailout:
