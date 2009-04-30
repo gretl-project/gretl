@@ -17,6 +17,7 @@ if [ -f ~/.profile ] ; then
   . ~/.profile
 fi  
 
+export "DYLD_LIBRARY_PATH=$TOP/lib"
 export "GRETL_HOME=$TOP/share/gretl/"
 export "GTKSOURCEVIEW_LANGUAGE_DIR=$TOP/share/gretl/gtksourceview"
 
