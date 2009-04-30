@@ -1,68 +1,39 @@
-# exec in dir above bin, lib inside Gretl.app
+# exec in dir above {bin,lib} inside Gretl.app
 
 PREFIX=@prefix@
 
-# change if required
-AUXDIR=/usr/local/lib
+# path to libraries installed via gretl's "make install"
+SRCPATH="${PREFIX}/lib"
 
-# fix gretlcli
-install_name_tool -change \
- $AUXDIR/libgmp.3.dylib @executable_path/../lib/libgmp.3.dylib bin/gretlcli
-install_name_tool -change \
- $AUXDIR/libreadline.5.2.dylib @executable_path/../lib/libreadline.5.2.dylib bin/gretlcli
-install_name_tool -change \
- $PREFIX/lib/libgretl-1.0.0.dylib @executable_path/../lib/libgretl-1.0.0.dylib bin/gretlcli
+TOOL=install_name_tool
 
-# fix gretl_x11
-install_name_tool -change \
- $AUXDIR/libgmp.3.dylib @executable_path/../lib/libgmp.3.dylib bin/gretl_x11
-install_name_tool -change \
- $PREFIX/lib/libgretl-1.0.0.dylib @executable_path/../lib/libgretl-1.0.0.dylib bin/gretl_x11
+# path to auxiliary libraries (may need to be changed)
+AUXPATH="/usr/local/lib"
 
-# fix libgretl 
-install_name_tool -id \
- @executable_path/../lib/libgretl-1.0.0.dylib lib/libgretl-1.0.0.dylib
-install_name_tool -change \
- $AUXDIR/libgmp.3.dylib @executable_path/../lib/libgmp.3.dylib lib/libgretl-1.0.0.dylib
- 
-# fix plugins
-for f in arbond.so \
-	arma.so \
-	arma_x12.so \
-	eviews_import.so \
-	excel_import.so \
-	fractals.so \
-	garch.so \
-	gnumeric_import.so \
-	gretlzip.so \
-	heckit.so \
-	interval.so \
-	jmulti_import.so \
-	johansen.so \
-	kernel.so \
-	lad.so \
-	leverage.so \
-	mailer.so \
-	mp_ols.so \
-	nistcheck.so \
-	ods_import.so \
-	oprobit.so \
-	pca.so \
-	poisson.so \
-	progress_bar.so \
-	quantreg.so \
-	range-mean.so \
-	spss_import.so \
-	stata_import.so \
-	stats_tables.so \
-	sysest.so \
-	tobit.so \
-	tramo-x12a.so \
-	urcdist.so \
-	vif.so ; do
-        echo "gretl-gtk2/$f"	
-done	
- 
+# correct library path specification for distribution
+NEWPATH="@executable_path/../lib"
+
+# change install name of libraries
+$TOOL -id ${NEWPATH}/libgretl-1.0.0.dylib lib/libgretl-1.0.0.dylib
+$TOOL -id ${NEWPATH}/libgmp.3.4.4.dylib   lib/libgmp.3.dylib
+$TOOL -id ${NEWPATH}/libmpfr.1.1.2.dylib  lib/libmpfr.1.dylib
+
+# change copied install names
+$TOOL -change ${SRCPATH}/libgretl-1.0.0.dylib ${NEWPATH}/libgretl-1.0.0.dylib bin/gretlcli
+$TOOL -change ${SRCPATH}/libgretl-1.0.0.dylib ${NEWPATH}/libgretl-1.0.0.dylib bin/gretl_x11
+$TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib bin/gretlcli
+$TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib bin/gretl_x11
+$TOOL -change ${AUXPATH}/libreadline.5.2.dylib ${NEWPATH}/libreadline.5.2.dylib bin/gretlcli
+$TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib lib/libgretl-1.0.0.dylib
+$TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib lib/libmpfr.1.1.2.dylib
+
+for d in lib/gretl-gtk2/*.so ; do
+   $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib $d
+   $TOOL -change ${SRCPATH}/libgretl-1.0.0.dylib ${NEWPATH}/libgretl-1.0.0.dylib $d
+done
+
+$TOOL -change ${AUXPATH}/libmpfr.1.dylib ${NEWPATH}/libmpfr.1.dylib lib/gretl-gtk2/mp_ols.so
+
 
 
  
