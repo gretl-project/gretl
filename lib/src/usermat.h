@@ -89,9 +89,9 @@ int user_matrix_replace_submatrix (const char *mname,
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name);
 
-int copy_named_matrix_as (const char *orig, const char *new);
+int copy_named_matrix_as (const char *orig, const char *newname);
 
-int copy_matrix_as (const gretl_matrix *m, const char *new);
+int copy_matrix_as (const gretl_matrix *m, const char *newname);
 
 int umatrix_set_colnames_from_string (const gretl_matrix *M, 
 				      const char *s);

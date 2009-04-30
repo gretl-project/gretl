@@ -241,15 +241,15 @@ int subtract_from_list_by_name (const char *targ, const int *sub)
 /**
  * replace_list_by_name:
  * @targ: the name of the target list.
- * @new: replacement list
+ * @src: replacement list
  *
  * If @targ is the name of a saved list, replace the
- * list of that name with @new.
+ * list of that name with @src.
  *
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int replace_list_by_name (const char *targ, const int *new)
+int replace_list_by_name (const char *targ, const int *src)
 {
     saved_list *sl = get_saved_list_by_name(targ);
     int err = 0;
@@ -257,7 +257,7 @@ int replace_list_by_name (const char *targ, const int *new)
     if (sl == NULL) {
 	err = E_UNKVAR;
     } else {
-	int *tmp = gretl_list_copy(new);
+	int *tmp = gretl_list_copy(src);
 
 	if (tmp == NULL) {
 	    err = E_ALLOC;
@@ -411,15 +411,15 @@ static int destroy_saved_list (saved_list *sl)
 /**
  * rename_saved_list:
  * @orig: the original name of the list.
- * @new: the new name to be given.
+ * @newname: the new name to be given.
  *
  * Renames a saved list from @orig to @new.  If there is
- * already a list called @new, it is destroyed.
+ * already a list called @newname, it is destroyed.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int rename_saved_list (const char *orig, const char *new)
+int rename_saved_list (const char *orig, const char *newname)
 {
     saved_list *sl0, *sl1;
     int err = 0;
@@ -428,13 +428,13 @@ int rename_saved_list (const char *orig, const char *new)
     if (sl0 == NULL) {
 	err = 1;
     } else {
-	/* is there already a list called @new? */
-	sl1 = get_saved_list_by_name(new);
+	/* is there already a list called @newname? */
+	sl1 = get_saved_list_by_name(newname);
 	if (sl1 != NULL) {
 	    err = destroy_saved_list(sl1);
 	}
 	*sl0->name = '\0';
-	strncat(sl0->name, new, VNAMELEN - 1);
+	strncat(sl0->name, newname, VNAMELEN - 1);
     } 
 
     return err;
@@ -443,18 +443,18 @@ int rename_saved_list (const char *orig, const char *new)
 /**
  * copy_named_list_as:
  * @orig: the name of the original list.
- * @new: the name to be given to the copy.
+ * @newname: the name to be given to the copy.
  *
  * If a saved list is found by the name @orig, a copy of
  * this list is added to the stack of saved lists under the
- * name @new.  This is intended for use when a list is given
+ * name @newname.  This is intended for use when a list is given
  * as the argument to a user-defined function: it is copied
  * under the name assigned by the function's parameter list.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int copy_named_list_as (const char *orig, const char *new)
+int copy_named_list_as (const char *orig, const char *newname)
 {
     saved_list *sl;
     int err = 0;
@@ -463,7 +463,7 @@ int copy_named_list_as (const char *orig, const char *new)
     if (sl == NULL) {
 	err = 1;
     } else {
-	err = real_remember_list(sl->list, new, 1, NULL);
+	err = real_remember_list(sl->list, newname, 1, NULL);
 	if (!err) {
 	    sl = list_stack[n_lists - 1];
 	    sl->level += 1;

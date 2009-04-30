@@ -484,7 +484,7 @@ char *gretl_strndup (const char *src, size_t n)
 
 /**
  * gretl_strdup_printf:
- * @template: as in printf().
+ * @format: as in printf().
  * @Varargs: arguments to be printed.
  *
  * Print the arguments according to @format.
@@ -492,7 +492,7 @@ char *gretl_strndup (const char *src, size_t n)
  * Returns: allocated result of the printing, or %NULL on failure.
  */
 
-char *gretl_strdup_printf (const char *template, ...)
+char *gretl_strdup_printf (const char *format, ...)
 {
     va_list args;
     int plen, bsize = 2048;
@@ -505,8 +505,8 @@ char *gretl_strdup_printf (const char *template, ...)
 
     memset(buf, 0, 1);
 
-    va_start(args, template);
-    plen = vsnprintf(buf, bsize, template, args);
+    va_start(args, format);
+    plen = vsnprintf(buf, bsize, format, args);
     va_end(args);
 
     if (plen >= bsize) {

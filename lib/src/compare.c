@@ -296,7 +296,7 @@ add_diffvars_to_test (ModelTest *test, const int *list,
 
 static void
 gretl_make_compare (const struct COMPARE *cmp, const int *diffvars, 
-		    MODEL *new, const DATAINFO *pdinfo, 
+		    MODEL *newmod, const DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn)
 {
     ModelTest *test = NULL;
@@ -433,7 +433,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 
     if (test != NULL) {
 	add_diffvars_to_test(test, diffvars, pdinfo);
-	maybe_add_test_to_model(new, test);
+	maybe_add_test_to_model(newmod, test);
     }
 
     if (verbosity > 1 && cmp->score >= 0) {
@@ -611,16 +611,16 @@ static gretlopt retrieve_arbond_opts (const MODEL *pmod)
     return opt;
 }
 
-static int obs_diff_ok (const MODEL *old, const MODEL *new)
+static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
 {
-    int tdiff, ndiff = new->nobs - old->nobs;
+    int tdiff, ndiff = m_new->nobs - m_old->nobs;
 
-    if (old->ci == AR1) {
+    if (m_old->ci == AR1) {
 	return 0;
     }
 
     if (ndiff > 0) {
-	tdiff = (new->t2 - new->t1) - (old->t2 - old->t1);
+	tdiff = (m_new->t2 - m_new->t1) - (m_old->t2 - m_old->t1);
 	if (ndiff == tdiff) {
 	    return 1;
 	}
@@ -992,7 +992,7 @@ static int add_vars_missing (const MODEL *pmod, const int *list,
  * add_test:
  * @addvars: list of variables to add to original model.
  * @orig: pointer to original model.
- * @new: pointer to receive new model, with vars added.
+ * @pmod: pointer to receive new model, with vars added.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: can contain %OPT_Q (quiet) to suppress printing
@@ -1009,7 +1009,7 @@ static int add_vars_missing (const MODEL *pmod, const int *list,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int add_test (const int *addvars, MODEL *orig, MODEL *new, 
+int add_test (const int *addvars, MODEL *orig, MODEL *pmod, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn)
 {
@@ -1068,11 +1068,11 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
        method; use OPT_Z to suppress the elimination of perfectly
        collinear variables.
     */
-    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
-			       (est_opt | OPT_Z), prn);
+    *pmod = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
+				(est_opt | OPT_Z), prn);
 
-    if (new->errcode) {
-	err = new->errcode;
+    if (pmod->errcode) {
+	err = pmod->errcode;
 	errmsg(err, prn);
     }
 
@@ -1082,22 +1082,22 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	MODEL *origmod = orig;
 	int *addlist;
 
-	new->aux = AUX_ADD;
+	pmod->aux = AUX_ADD;
 
-	if (print_add_omit_model(new, opt)) {
-	    printmodel(new, pdinfo, est_opt, prn);
+	if (print_add_omit_model(pmod, opt)) {
+	    printmodel(pmod, pdinfo, est_opt, prn);
 	}
 
-	if (orig->ci == OLS && new->nobs == orig->nobs) {
+	if (orig->ci == OLS && pmod->nobs == orig->nobs) {
 	    flag = ADD_TEST;
 	} else if (opt & OPT_B) {
 	    /* ivreg: adding as both regressor and instrument */
 	    origmod = NULL;
 	}
 
-	addlist = gretl_list_diff_new(new->list, orig->list, 2);
+	addlist = gretl_list_diff_new(pmod->list, orig->list, 2);
 	if (addlist != NULL) {
-	    cmp = add_or_omit_compare(origmod, new, flag, addlist);
+	    cmp = add_or_omit_compare(origmod, pmod, flag, addlist);
 	    gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
 	    free(addlist);
 	}
@@ -1212,7 +1212,7 @@ static void list_copy_values (int *targ, const int *src)
    estimators other than OLS.
 */
 
-static int auto_omit (MODEL *orig, MODEL *new, 
+static int auto_omit (MODEL *orig, MODEL *pmod, 
 		      double ***pZ, DATAINFO *pdinfo, 
 		      gretlopt est_opt, gretlopt opt,
 		      PRN *prn)
@@ -1240,16 +1240,16 @@ static int auto_omit (MODEL *orig, MODEL *new,
 	if (i > 0) {
 	    set_reference_missmask_from_model(orig);
 	}
-	*new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
-				   est_opt, prn);
-	if (new->errcode) {
-	    err = new->errcode;
+	*pmod = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
+				    est_opt, prn);
+	if (pmod->errcode) {
+	    err = pmod->errcode;
 	    fprintf(stderr, "auto_omit: error %d from replicate_estimator\n", err);
 	} else {
-	    list_copy_values(tmplist, new->list);
-	    if (auto_drop_var(new, tmplist, pdinfo, amax, 0, prn, &err)) {
+	    list_copy_values(tmplist, pmod->list);
+	    if (auto_drop_var(pmod, tmplist, pdinfo, amax, 0, prn, &err)) {
 		model_count_minus();
-		clear_model(new);
+		clear_model(pmod);
 	    } else {
 		break;
 	    }
@@ -1322,7 +1322,7 @@ static int omit_options_inconsistent (gretlopt opt)
  * omit_test:
  * @omitvars: list of variables to omit from original model.
  * @orig: pointer to original model.
- * @new: pointer to receive new model, with vars omitted.
+ * @pmod: pointer to receive new model, with vars omitted.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  * @opt: can contain %OPT_Q (quiet) to suppress printing
@@ -1344,7 +1344,7 @@ static int omit_options_inconsistent (gretlopt opt)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int omit_test (const int *omitvars, MODEL *orig, MODEL *new, 
+int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
@@ -1395,26 +1395,26 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     remove_special_flags(&est_opt);
 
     if (opt & OPT_A) {
-	err = auto_omit(orig, new, pZ, pdinfo, est_opt, opt, prn);
+	err = auto_omit(orig, pmod, pZ, pdinfo, est_opt, opt, prn);
     } else {
-	*new = replicate_estimator(orig, &tmplist, pZ, pdinfo, est_opt, prn);
-	err = new->errcode;
+	*pmod = replicate_estimator(orig, &tmplist, pZ, pdinfo, est_opt, prn);
+	err = pmod->errcode;
     }
 
     if (err) {
 	errmsg(err, prn);
     } else {
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
-	    new->aux = AUX_OMIT;
+	    pmod->aux = AUX_OMIT;
 	}
 
 	if (print_add_omit_model(orig, opt)) {
-	    printmodel(new, pdinfo, est_opt, prn); 
+	    printmodel(pmod, pdinfo, est_opt, prn); 
 	}	
 
 	if (!omitlast) {
 	    int flag = OMIT_TEST;
-	    MODEL *newmod = new;
+	    MODEL *newmod = pmod;
 	    struct COMPARE cmp;
 	    int *omitlist;
 
@@ -1424,7 +1424,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 		flag = OMIT_WALD;
 	    } 
 
-	    omitlist = gretl_list_diff_new(orig->list, new->list, 2);
+	    omitlist = gretl_list_diff_new(orig->list, pmod->list, 2);
 	    if (omitlist != NULL) {
 		cmp = add_or_omit_compare(orig, newmod, flag, omitlist);
 		gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
@@ -1433,7 +1433,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	}
 
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
-	    new->aux = AUX_NONE;
+	    pmod->aux = AUX_NONE;
 	}
     }
 

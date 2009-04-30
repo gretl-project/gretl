@@ -65,11 +65,11 @@ double wald_omit_F (const int *list, MODEL *pmod);
 
 double wald_omit_chisq (const int *list, MODEL *pmod);
 
-int add_test (const int *addvars,  MODEL *orig, MODEL *new,
+int add_test (const int *addvars,  MODEL *orig, MODEL *pmod,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn);
 
-int omit_test (const int *omitvars, MODEL *orig, MODEL *new, 
+int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 

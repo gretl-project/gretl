@@ -112,15 +112,15 @@ int append_to_list_by_name (const char *targ, const int *add);
 
 int subtract_from_list_by_name (const char *targ, const int *sub);
 
-int replace_list_by_name (const char *targ, const int *new);
+int replace_list_by_name (const char *targ, const int *src);
 
 int remember_list (const int *list, const char *name, PRN *prn);
 
-int copy_named_list_as (const char *orig, const char *new);
+int copy_named_list_as (const char *orig, const char *newname);
 
 int named_list_lower_level (const char *name);
 
-int rename_saved_list (const char *orig, const char *new); 
+int rename_saved_list (const char *orig, const char *newname); 
 
 int create_named_null_list (const char *name);
 

@@ -783,7 +783,7 @@ static int pprintf_init (PRN *prn)
 /**
  * pprintf:
  * @prn: gretl printing struct.
- * @template: as in printf().
+ * @format: as in printf().
  * @Varargs: arguments to be printed.
  *
  * Multi-purpose printing function: can output to stream, to buffer
@@ -795,7 +795,7 @@ static int pprintf_init (PRN *prn)
  * failure.
  */
 
-int pprintf (PRN *prn, const char *template, ...)
+int pprintf (PRN *prn, const char *format, ...)
 {
     va_list args;
     int rem, plen = 0;
@@ -806,13 +806,13 @@ int pprintf (PRN *prn, const char *template, ...)
 
     if (prn->fp != NULL) {
 	/* printing to stream: straightforward */
-	va_start(args, template);
-	plen = vfprintf(prn->fp, template, args);
+	va_start(args, format);
+	plen = vfprintf(prn->fp, format, args);
 	va_end(args);
 	return plen;
     }
 
-    if (strncmp(template, "@init", 5) == 0) {
+    if (strncmp(format, "@init", 5) == 0) {
 	return pprintf_init(prn);
     }
 
@@ -832,8 +832,8 @@ int pprintf (PRN *prn, const char *template, ...)
 
     /* printing to buffer: be careful not to overrun */
     rem = prn->bufsize - prn->blen - 1;
-    va_start(args, template);
-    plen = vsnprintf(prn->buf + prn->blen, rem, template, args);
+    va_start(args, format);
+    plen = vsnprintf(prn->buf + prn->blen, rem, format, args);
     va_end(args);
 
     if (plen >= rem) {

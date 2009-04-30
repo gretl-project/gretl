@@ -71,7 +71,7 @@ char *gretl_strdup (const char *src);
 
 char *gretl_strndup (const char *src, size_t n);
 
-char *gretl_strdup_printf (const char *template, ...);
+char *gretl_strdup_printf (const char *format, ...);
 
 char *gretl_word_strdup (const char *src, const char **ptr);
 

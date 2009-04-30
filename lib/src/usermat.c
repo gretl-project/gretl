@@ -441,18 +441,18 @@ gretl_matrix *user_matrix_get_matrix (user_matrix *u)
 /**
  * copy_named_matrix_as:
  * @orig: the name of the original matrix.
- * @new: the name to be given to the copy.
+ * @newname: the name to be given to the copy.
  *
  * If a saved matrix is found by the name @orig, a copy of
  * this matrix is added to the stack of saved matrices under the
- * name @new.  This is intended for use when a matrix is given
+ * name @newname.  This is intended for use when a matrix is given
  * as the argument to a user-defined function: it is copied
  * under the name assigned by the function's parameter list.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int copy_named_matrix_as (const char *orig, const char *new)
+int copy_named_matrix_as (const char *orig, const char *newname)
 {
     user_matrix *u;
     int err = 0;
@@ -466,7 +466,7 @@ int copy_named_matrix_as (const char *orig, const char *new)
 	if (M == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = user_matrix_add(M, new);
+	    err = user_matrix_add(M, newname);
 	}
 	if (!err) {
 	    /* for use in functions: increment level of last-added matrix */
@@ -481,17 +481,17 @@ int copy_named_matrix_as (const char *orig, const char *new)
 /**
  * copy_matrix_as:
  * @m: the original matrix.
- * @new: the name to be given to the copy.
+ * @newname: the name to be given to the copy.
  *
  * A copy of matrix @m is added to the stack of saved matrices
- * under the name @new.  This is intended for use when a matrix is given
+ * under the name @newname.  This is intended for use when a matrix is given
  * is given as the argument to a user-defined function: it is copied
  * under the name assigned by the function's parameter list.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int copy_matrix_as (const gretl_matrix *m, const char *new)
+int copy_matrix_as (const gretl_matrix *m, const char *newname)
 {
     gretl_matrix *m2 = gretl_matrix_copy(m);
     int err;
@@ -499,7 +499,7 @@ int copy_matrix_as (const gretl_matrix *m, const char *new)
     if (m2 == NULL) {
 	err = E_ALLOC;
     } else {
-	err = matrix_copy_add(m2, new);
+	err = matrix_copy_add(m2, newname);
     }
 
     if (!err) {
