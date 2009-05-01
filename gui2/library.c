@@ -914,12 +914,7 @@ void unit_root_test (int ci)
 	N_("use level of variable"),
 	N_("use first difference of variable")
     };
-    const char *dfgls_opts[] = {
-	N_("include a trend"),
-	N_("use level of variable"),
-	N_("use first difference of variable")
-    };
-    const char *kpss_opts[] = {
+    const char *alt_opts[] = {
 	N_("include a trend"),
 	N_("show regression results"),
 	N_("use level of variable"),
@@ -935,8 +930,7 @@ void unit_root_test (int ci)
 
     /* save the user's settings, per session */
     static int adf_active[] = { 0, 1, 1, 0, 0, 0, 0 };
-    static int dfgls_active[] = { 0 };
-    static int kpss_active[] = { 0, 0 };
+    static int alt_active[] = { 0, 0 };
     static int order = 1;
 
     int difference = 0;
@@ -961,15 +955,15 @@ void unit_root_test (int ci)
     } else if (ci == DFGLS) {
 	title = dfgls_title;
 	spintext = adf_spintext;
-	opts = dfgls_opts;
-	nchecks = 1;
-	active = dfgls_active;
+	opts = alt_opts;
+	nchecks = 2;
+	active = alt_active;
     } else {
 	title = kpss_title;
 	spintext = kpss_spintext;
-	opts = kpss_opts;
+	opts = alt_opts;
 	nchecks = 2;
-	active = kpss_active;
+	active = alt_active;
 	order = 4.0 * pow(okT / 100.0, 0.25);
     }
 
@@ -1012,6 +1006,7 @@ void unit_root_test (int ci)
     } else if (ci == DFGLS) {
 	if (active[0]) gretl_command_strcat(" --ct --gls");
 	else gretl_command_strcat(" --c --gls");
+	if (active[1]) gretl_command_strcat(" --verbose");
     } else {
 	if (active[0]) gretl_command_strcat(" --trend");
 	if (active[1]) gretl_command_strcat(" --verbose");
