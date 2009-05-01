@@ -53,9 +53,7 @@ else
   INSTALL_CFG = install-cfg-old
 endif
 
-# hard-coded -L/usr/local/lib is a bodge!!
-
-LIBS = $(LAPACK_LIBS) -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) \
+LIBS = $(LAPACK_LIBS) -lm -ldl -lz $(XML_LIBS) \
 	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS)
 
 #### End of system configuration section. ####
