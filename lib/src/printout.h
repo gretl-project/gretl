@@ -38,6 +38,8 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn);
 
 void print_freq (const FreqDist *freq, PRN *prn);
 
+void print_freq_test (const FreqDist *freq, PRN *prn);
+
 void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn);
 
 void print_smpl (const DATAINFO *pdinfo, 

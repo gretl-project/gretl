@@ -2247,10 +2247,11 @@ Xtab *single_crosstab (const int *list, const double **Z,
 }
 
 int model_error_dist (const MODEL *pmod, double ***pZ,
-		      DATAINFO *pdinfo, PRN *prn)
+		      DATAINFO *pdinfo, gretlopt opt,
+		      PRN *prn)
 {
     FreqDist *freq = NULL;
-    gretlopt opt = OPT_Z; /* show normal test */
+    gretlopt fopt = OPT_Z; /* show normality test */
     int err = 0;
 
     if (pmod == NULL || pmod->uhat == NULL) {
@@ -2267,11 +2268,15 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
     if (!err) {
 	freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
-			NADBL, NADBL, 0, pmod->ncoeff, opt, &err);
+			NADBL, NADBL, 0, pmod->ncoeff, fopt, &err);
     }
 
     if (!err) {
-	print_freq(freq, prn); 
+	if (opt & OPT_Q) {
+	    print_freq_test(freq, prn);
+	} else {
+	    print_freq(freq, prn); 
+	}
 	free_freq(freq);
     }
 

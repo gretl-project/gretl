@@ -12,13 +12,13 @@ endif
 # The directory above Gretl.app
 topdir = $(prefix)/../../..
 
-install-fink: install_common
+postinst: postinst_common
+	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh.nofink $(prefix)/bin/gretl
+
+postinst-fink: postinst_common
 	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh $(prefix)/bin/gretl
 	
-install: install_common
-	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh.nofink $(prefix)/bin/gretl
-	
-install_common:
+postinst_common:
 	rm -f $(prefix)/bin/gretl
 	rm -rf $(prefix)/include
 	rm -rf $(prefix)/share/aclocal

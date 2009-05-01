@@ -171,7 +171,6 @@ struct VCVInfo_ {
 	                     c == MODTEST || \
                              c == OMIT || \
 	                     c == RESTRICT || \
-	                     c == TESTUHAT || \
                              c == VIF)
 
 #define RQ_SPECIAL_MODEL(m) (m->ci == LAD && \

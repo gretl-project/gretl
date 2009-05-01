@@ -251,6 +251,9 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = SMPL;
     } else if (!strcmp(s, "lmtest")) {
 	cmd->ci = MODTEST;
+    } else if (!strcmp(s, "testuhat")) {
+	cmd->ci = MODTEST;
+	cmd->opt |= OPT_N;
     } else if (!strcmp(s, "list")) {
 	char lname[VNAMELEN];
 
@@ -375,7 +378,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 		       c == SSCANF || \
                        c == SYSTEM || \
                        c == TABPRINT || \
-                       c == TESTUHAT || \
                        c == VARLIST || \
                        c == VIF)
 
@@ -4569,10 +4571,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == VIF) { 
 	    err = vif_test(models[0], pZ, pdinfo, prn);
 	} 
-	break;
-
-    case TESTUHAT:
-	err = last_model_test_uhat(pZ, pdinfo, prn);
 	break;
 
     case NORMTEST:

@@ -144,7 +144,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { SUMMARY,  "summary" },
     { SYSTEM,   "system" },
     { TABPRINT, "tabprint" },
-    { TESTUHAT, "testuhat" },
     { TOBIT,    "tobit" },
     { IVREG,    "tsls", },
     { VAR,      "var" },

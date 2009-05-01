@@ -1253,6 +1253,8 @@ static void saved_object_free (stacker *s)
     }
 }
 
+#define sys_modtest_opt_ok(o) (o & (OPT_A | OPT_H | OPT_N))
+
 int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo, 
 			PRN *prn)
 {
@@ -1279,9 +1281,9 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	}
     } else if (type == GRETL_OBJ_SYS) {
 	err = E_NOTIMP;
-	if (ci == RESTRICT || ci == TESTUHAT || ci == FCAST) {
+	if (ci == RESTRICT || ci == FCAST) {
 	    err = 0;
-	} else if (ci == MODTEST && ((opt & OPT_A) || (opt & OPT_H))) {
+	} else if (ci == MODTEST && sys_modtest_opt_ok(opt)) {
 	    err = 0;
 	}
     } else if (type == GRETL_OBJ_VAR) {
@@ -1292,9 +1294,9 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 
 	if (ci == RESTRICT && r > 0) {
 	    err = 0;
-	} else if (ci == TESTUHAT || ci == FCAST) {
+	} else if (ci == FCAST) {
 	    err = 0;
-	} else if (ci == MODTEST && ((opt & OPT_A) || (opt & OPT_H))) {
+	} else if (ci == MODTEST && sys_modtest_opt_ok(opt)) {
 	    err = 0;
 	} 
     }
@@ -1302,7 +1304,8 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
     return err;
 }
 
-int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, 
+			  gretlopt opt, PRN *prn)
 {
     GretlObjType type;
     void *ptr;
@@ -1320,7 +1323,7 @@ int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    gretl_model_get_int(pmod, "ordered")) {
 	    err = E_NOTIMP;
 	} else if (!exact_fit_check(pmod, prn)) {
-	    err = model_error_dist(ptr, pZ, pdinfo, prn);
+	    err = model_error_dist(ptr, pZ, pdinfo, opt, prn);
 	}
     } else if (type == GRETL_OBJ_SYS) {
 	err = system_normality_test(ptr, prn);

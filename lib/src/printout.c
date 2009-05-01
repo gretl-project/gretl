@@ -286,7 +286,7 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void print_freq_test (const FreqDist *freq, PRN *prn)
+void print_freq_test (const FreqDist *freq, PRN *prn)
 {
     double pval = NADBL;
 
@@ -303,7 +303,9 @@ static void print_freq_test (const FreqDist *freq, PRN *prn)
 		_("Test for null hypothesis of gamma distribution"));
 	pprintf(prn, "z = %.3f %s %.5f\n", freq->test, 
 		_("with p-value"), pval);
-    }	
+    }
+
+    pputc(prn, '\n');
 
     if (!na(pval)) {
 	record_test_result(freq->test, pval, 

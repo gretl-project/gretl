@@ -142,7 +142,8 @@ int match_object_command (const char *s, GretlObjType type);
 int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo, 
 			PRN *prn);
 
-int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, PRN *prn);
+int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, 
+			  gretlopt opt, PRN *prn);
 
 void set_genr_model (MODEL *pmod);
 

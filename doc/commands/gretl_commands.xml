@@ -4657,6 +4657,10 @@
       </arguments>
       <options>
         <option>
+	  <flag>--normality</flag>
+	  <effect>normality of residual</effect>
+        </option>
+        <option>
 	  <flag>--logs</flag>
 	  <effect>non-linearity, logs</effect>
         </option>
@@ -4698,38 +4702,34 @@
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>don't print auxiliary regression</effect>
+	  <effect>don't print details</effect>
         </option>
       </options>
     </usage>
 
     <description context="gui">
       <para>
-	Under this heading fall several hypothesis tests.  What they have in
-	common is that the test involves the estimation of an auxiliary
-	regression; in most cases the dependent variable is the residual from
-	some <quote>original</quote> regression.  The right-hand side
-	variables include those from the original regression, along with some
-	additional terms.  In most cases the test statistic is calculated as
-	(sample size * R-squared) from the auxiliary regression: this is
-	distributed as chi-square with degrees of freedom equal to the number
-	of additional terms, under the null hypothesis that the additional
-	terms have no explanatory power over the residual.  A
-	<quote>large</quote> chi-square value (small p-value) suggests that
-	this null hypothesis should be rejected.
+	Under this heading fall several diagnostic tests.  In each case the
+	null hypothesis is that the model under test does not exhibit some
+	problematic condition (heteroskedasticity, autocorrelation, etc.). A
+	<quote>large</quote> test statistic value (small p-value) suggests
+	that the null hypothesis should be rejected, or in other words the
+	problem is present.
       </para>
     </description>
 
     <description context="cli">
       <para>
 	Must immediately follow an estimation command. Depending on the option
-	given, this command carries out one of the following: a Lagrange
-	Multiplier test for nonlinearity (logs or squares); White's test (with
-	or without cross-products) or the Breusch&ndash;Pagan test for
-	heteroskedasticity; the LMF test for serial correlation (Kiviet,
-	1986); or a test for ARCH (Autoregressive Conditional
-	Heteroskedasticity; see also the <cmd>arch</cmd> command).  With the
-	exception of the common factor test most of the options are only
+	given, this command carries out one of the following: the
+	Doornik&ndash;Hansen test for the normality of the error term; a
+	Lagrange Multiplier test for nonlinearity (logs or squares); White's
+	test (with or without cross-products) or the Breusch&ndash;Pagan test
+	for heteroskedasticity; the LMF test for serial correlation (Kiviet,
+	1986); a test for ARCH (Autoregressive Conditional Heteroskedasticity;
+	see also the <cmd>arch</cmd> command); or a test of the common factor
+	restriction implied by AR(1) estimation.  With the exception of the
+	normality and common factor test most of the options are only
 	available for models estimated via OLS, but see below for details
 	regarding two-stage least squares.
       </para>
@@ -4760,10 +4760,10 @@
 	implicit in the AR(1) specification.
       </para>
       <para>
-	By default, the program prints the auxiliary regression on which
-	the test statistic is based.  This may be suppressed by using the
-	<lit>--quiet</lit> flag.  The test statistic and its p-value may
-	be retrieved using the accessors <lit>$test</lit> and
+	By default, the program prints the auxiliary regression on which the
+	test statistic is based, where applicable.  This may be suppressed by
+	using the <lit>--quiet</lit> flag.  The test statistic and its p-value
+	may be retrieved using the accessors <lit>$test</lit> and
 	<lit>$pvalue</lit> respectively.
       </para>
       <para>
@@ -9102,24 +9102,6 @@
 
     <gui-access>
       <menu-path>Model window, /LaTeX</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="testuhat" section="Tests" context="cli"
-    label="Normality of residual">
-
-    <description>
-      <para>
-	Must follow a model estimation command.  Gives the frequency
-	distribution for the residual from the model along with a
-	chi-square test for normality, based on the procedure
-	suggested by Doornik and Hansen (1994).
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Model window, /Tests/Normality of residual</menu-path>
     </gui-access>
 
   </command>

@@ -134,7 +134,6 @@ typedef enum {
     SUMMARY,
     SYSTEM,
     TABPRINT,
-    TESTUHAT,
     TOBIT,
     IVREG,
     VAR,
@@ -188,7 +187,6 @@ typedef enum {
                         c == RUNS || \
                         c == SPEARMAN || \
                         c == SUMMARY || \
-                        c == TESTUHAT || \
                         c == VIF || \
                         c == VARTEST || \
                         c == XCORRGM || \
@@ -207,7 +205,6 @@ typedef enum {
                               c == QLRTEST || \
                               c == RESET || \
                               c == TABPRINT || \
-                              c == TESTUHAT || \
                               c == VIF)
 
 #define USES_BFGS(c) ((c) == ARMA || \

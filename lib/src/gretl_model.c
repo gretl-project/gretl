@@ -4308,6 +4308,8 @@ void swap_models (MODEL *targ, MODEL *src)
     *src = tmp;
 }
 
+#define normality_test(ci, opt) (ci == MODTEST && (opt & OPT_N))
+
 /**
  * command_ok_for_model:
  * @test_ci: index of command to be tested.
@@ -4336,7 +4338,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
     if (NONLIST_MODEL(mci)) {
 	return (test_ci == RESTRICT ||
 		test_ci == TABPRINT ||
-		(mci != MLE && test_ci == TESTUHAT));
+		(mci != MLE && normality_test(test_ci, opt)));
     }
 
     switch (test_ci) {
@@ -4374,6 +4376,13 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	    ok = (mci != ARCH);
 	} else if (opt & OPT_C) {
 	    ok = (mci == AR1);
+	} else if (opt & OPT_N) {
+	    /* normality: do we really need to exclude garch? */
+	    if (mci == TOBIT || mci == PROBIT ||
+		mci == LOGIT || mci == GARCH ||
+		mci == INTREG) {
+		ok = 0;
+	    }	    
 	} else if (mci != OLS) {
 	    if ((mci == IVREG) && (opt & (OPT_A | OPT_W))) {
 		/* Autocorr. and H'sked. supported for IVREG */
@@ -4396,15 +4405,6 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 
     case RESTRICT:
 	if (mci == LAD || mci == QUANTREG) {
-	    ok = 0;
-	}
-	break;
-
-    case TESTUHAT:
-	/* do we really need to exclude garch? */
-	if (mci == TOBIT || mci == PROBIT ||
-	    mci == LOGIT || mci == GARCH ||
-	    mci == INTREG) {
 	    ok = 0;
 	}
 	break;

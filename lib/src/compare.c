@@ -3272,7 +3272,7 @@ int model_test_driver (const char *param,
     }
 
     err = incompatible_options(opt, OPT_A | OPT_H | OPT_L | OPT_S |
-			       OPT_P | OPT_W | OPT_X);
+			       OPT_N | OPT_P | OPT_W | OPT_X);
     if (err) {
 	return err;
     }
@@ -3287,6 +3287,7 @@ int model_test_driver (const char *param,
     }
 
     if (opt & (OPT_A | OPT_H)) {
+	/* autocorrelation and arch: lag order */
 	k = atoi(param);
 	if (k == 0) {
 	    k = pdinfo->pd;
@@ -3353,6 +3354,11 @@ int model_test_driver (const char *param,
 	    err = E_NOTIMP;
 	}
     }    
+
+    /* normality of residual */
+    if (!err && (opt & OPT_N)) {
+	err = last_model_test_uhat(pZ, pdinfo, testopt, prn);
+    }
 
     /* groupwise heteroskedasticity */
     if (!err && (opt & OPT_P)) {

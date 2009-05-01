@@ -3836,7 +3836,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     normal_test(pmod, freq);
     update_model_tests(vwin);
 
-    gretl_command_strcpy("testuhat");
+    gretl_command_strcpy("modtest --normality");
 
     if (model_command_init(pmod->ID)) {
 	return;
@@ -3844,7 +3844,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
  
     print_freq(freq, prn);
 
-    view_buffer(prn, 78, 300, _("gretl: residual dist."), TESTUHAT,
+    view_buffer(prn, 78, 300, _("gretl: residual dist."), MODTEST,
 		NULL);
 
     /* show the graph too */

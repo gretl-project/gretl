@@ -156,7 +156,8 @@ gretl_matrix *xtab_to_matrix (const Xtab *tab);
 void free_xtab (Xtab *tab);
 
 int model_error_dist (const MODEL *pmod, double ***pZ,
-		      DATAINFO *pdinfo, PRN *prn);
+		      DATAINFO *pdinfo, gretlopt opt,
+		      PRN *prn);
 
 int auto_acf_order (int pd, int nobs);
 

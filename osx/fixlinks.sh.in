@@ -17,8 +17,9 @@ NEWPATH="@executable_path/../lib"
 $TOOL -id ${NEWPATH}/libgretl-1.0.0.dylib lib/libgretl-1.0.0.dylib
 $TOOL -id ${NEWPATH}/libgmp.3.dylib lib/libgmp.3.dylib
 $TOOL -id ${NEWPATH}/libmpfr.1.dylib lib/libmpfr.1.dylib
+$TOOL -id ${NEWPATH}/libreadline.5.2.dylib lib/libreadline.5.2.dylib
 
-# change copied install names
+# change install names copied into executables
 $TOOL -change ${SRCPATH}/libgretl-1.0.0.dylib ${NEWPATH}/libgretl-1.0.0.dylib bin/gretlcli
 $TOOL -change ${SRCPATH}/libgretl-1.0.0.dylib ${NEWPATH}/libgretl-1.0.0.dylib bin/gretl_x11
 $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib bin/gretlcli
