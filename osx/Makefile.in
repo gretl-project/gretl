@@ -1,7 +1,7 @@
 topsrc = @top_srcdir@
 prefix = @prefix@
 INSTALL = @INSTALL@
-HERE = `pwd`
+HERE = $(shell pwd)
 
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755

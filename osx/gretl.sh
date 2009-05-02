@@ -29,7 +29,6 @@ if [ "$GNUTERM" = "aqua" ] ; then
    export GNUTERM=x11
 fi
 
-export "DYLD_LIBRARY_PATH=$TOP/lib"
 export "PATH=$CWD:$PATH"
 
 # echo "pwd is `pwd`" >>~/where
