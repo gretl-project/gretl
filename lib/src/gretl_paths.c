@@ -1887,7 +1887,11 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	}
 
 	strcpy(ppaths->gnuplot, "gnuplot");
+#ifdef OSX_BUILD
+	strcpy(ppaths->pngfont, "Sans 9");
+#else
 	strcpy(ppaths->pngfont, "Vera 9");
+#endif
 	ppaths->currdir[0] = '\0';	
 	shelldir_init(NULL);
 
