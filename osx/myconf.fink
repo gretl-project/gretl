@@ -1,0 +1,9 @@
+TOPDIR=/Users/allin/dist
+export CFLAGS="-O2 -I/sw/include"
+export LDFLAGS=-L/sw/lib
+export CPPFLAGS=$CFLAGS
+export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/X11R6/lib/pkgconfig:/sw/lib/pkgconfig:/Users/allin/misc/lib/pkgconfig"
+export PATH=$TOPDIR/Gretl.app/Contents/Resources/bin:$PATH
+./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources \
+  --disable-rpath --enable-build-doc --without-gnome
+

@@ -1,6 +1,7 @@
 topsrc = @top_srcdir@
 prefix = @prefix@
 INSTALL = @INSTALL@
+HERE = `pwd`
 
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
@@ -13,11 +14,11 @@ endif
 topdir = $(prefix)/../../..
 
 postinst: postinst_common
-	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh.nofink $(prefix)/bin/gretl
+	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh $(prefix)/bin/gretl
 	rm -rf $(prefix)/share/gretl/fonts
 
 postinst-fink: postinst_common
-	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh $(prefix)/bin/gretl
+	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh.fink $(prefix)/bin/gretl
 	
 postinst_common:
 	rm -f $(prefix)/bin/gretl
@@ -32,3 +33,4 @@ postinst_common:
 	rm -rf $(prefix)/share/texmf-local
 	$(INSTALL_DATA) -m 644 $(topsrc)/osx/README.pdf $(topdir)	
 	$(INSTALL_PROGRAM) $(topsrc)/osx/script $(prefix)
+	cd $(prefix) && sh $(HERE)/fixlinks.sh
