@@ -14,6 +14,7 @@ topdir = $(prefix)/../../..
 
 postinst: postinst_common
 	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh.nofink $(prefix)/bin/gretl
+	rm -rf $(prefix)/share/gretl/fonts
 
 postinst-fink: postinst_common
 	$(INSTALL_PROGRAM) $(topsrc)/osx/gretl.sh $(prefix)/bin/gretl
