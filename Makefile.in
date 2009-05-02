@@ -93,14 +93,13 @@ distclean: clean
 check:
 	make -C tests check
 
+osx-dist:
+	make -C osx postinst
+
 # dependency for parallel builds
 cli: lib
 $(GUIDIR): lib buildstamp
 plugin: lib
 tests: lib
-
-
-
-
 
 

@@ -1783,6 +1783,7 @@ int libset_get_bool (const char *s)
 
 static void libset_set_decpoint (int on)
 {
+#ifdef ENABLE_NLS
     static char num_locale[16];
 
     if (on) {
@@ -1796,6 +1797,7 @@ static void libset_set_decpoint (int on)
     }
 
     reset_local_decpoint();
+#endif
 }
 
 void libset_set_bool (const char *s, int set)

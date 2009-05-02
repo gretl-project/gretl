@@ -19,8 +19,6 @@
 
 #include "gretl.h"
 
-#ifdef ENABLE_NLS
-
 static int seven_bit_string (const unsigned char *s)
 {
     while (*s) {
@@ -60,29 +58,6 @@ gchar *my_filename_from_utf8 (char *fname)
     return fname;
 }
 
-gchar *my_locale_from_utf8 (const gchar *src)
-{
-    const gchar *cset;
-    gsize bytes;
-    GError *err = NULL;
-    gchar *ret = NULL;
-
-    if (g_get_charset(&cset)) {
-	/* g_get_charset returns TRUE if the returned 
-	   charset is UTF-8 */ 
-	return g_strdup(src);
-    } 
-
-    ret = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
-    }
-
-    return ret;
-}
-
 /* returns new copy of fname, converted if need be */
 
 gchar *my_filename_to_utf8 (const char *fname)
@@ -110,6 +85,31 @@ gchar *my_filename_to_utf8 (const char *fname)
 	errbox(err->message);
 	g_error_free(err);
     } 
+
+    return ret;
+}
+
+#ifdef ENABLE_NLS
+
+gchar *my_locale_from_utf8 (const gchar *src)
+{
+    const gchar *cset;
+    gsize bytes;
+    GError *err = NULL;
+    gchar *ret = NULL;
+
+    if (g_get_charset(&cset)) {
+	/* g_get_charset returns TRUE if the returned 
+	   charset is UTF-8 */ 
+	return g_strdup(src);
+    } 
+
+    ret = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
+
+    if (err) {
+	errbox(err->message);
+	g_error_free(err);
+    }
 
     return ret;
 }

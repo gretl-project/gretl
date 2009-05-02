@@ -3180,7 +3180,7 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	N_("std. error"),
 	N_("t-ratio")
     };
-    char *head;
+    const char *head;
 
     if (tauvec == NULL || B == NULL) {
 	return E_DATA;
@@ -3818,8 +3818,9 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
     return err;
 }
 
-static char *get_col_heading (const char **S, int j, int slopes,
-			      int intervals)
+static const char *
+get_col_heading (const char **S, int j, int slopes,
+		 int intervals)
 {
     if (j == 3 && slopes) {
 	return _(S[j+1]);

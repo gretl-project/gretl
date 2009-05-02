@@ -1198,7 +1198,9 @@ void set_tex_use_utf (int s)
 
 void gretl_tex_preamble (PRN *prn, int fmt)
 {
+#ifdef ENABLE_NLS
     char* lang = getenv("LANG");
+#endif
     FILE *fp = NULL;
     int userfile = 0;
 

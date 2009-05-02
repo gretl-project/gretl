@@ -35,7 +35,9 @@ static int check_graph_file (const char *fname, int type)
 	    }
 	} else {
 	    fclose(fp);
+#ifdef ENABLE_NLS
 	    err = maybe_recode_gp_file_to_utf8(fullname);
+#endif
 	}
     }
 

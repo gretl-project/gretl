@@ -89,7 +89,9 @@ static char datapage[24];
 static char scriptpage[24];
 
 static int hc_by_default;
+#ifdef ENABLE_NLS
 static int langpref;
+#endif
 static char hc_xsect[5] = "HC1";
 static char hc_tseri[5] = "HAC";
 static char hc_panel[9] = "Arellano";
@@ -904,6 +906,8 @@ static gboolean takes_effect_on_restart (void)
     return FALSE;
 }
 
+#ifdef ENABLE_NLS
+
 static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 {
     int i = gtk_combo_box_get_active(box);
@@ -928,6 +932,8 @@ static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 
     return FALSE;
 }
+
+#endif
 
 #define HIDE_SPANISH_MANUAL 1
 
@@ -1300,11 +1306,13 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
 	    gtk_widget_show(rc->widget);
+#ifdef ENABLE_NLS
 	    if (langs) {
 		g_signal_connect(G_OBJECT(rc->widget), "changed",
 				 G_CALLBACK(try_switch_locale), 
 				 NULL);
 	    }
+#endif
 	} else if (!(rc->flags & INVISET)) { 
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;

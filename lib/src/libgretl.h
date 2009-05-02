@@ -56,24 +56,11 @@
 # define I_(String) iso_gettext (String) 
 # define M_(String) maybe_iso_gettext (String)
 #else
-# define _(String) String
+# define _(String)  ((char *) String)
 # define N_(String) String
-# define I_(String) String
-# define M_(String) String
+# define I_(String) ((char *) String)
+# define M_(String) ((char *) String)
 #endif /* ENABLE_NLS */
-
-#ifndef __GNOME_I18N_H__
-# ifdef ENABLE_NLS
-#  include "libintl.h"
-#  include "locale.h"
-#  define gettext_noop(String) String
-#  define _(String) gettext (String)
-#  define N_(String) gettext_noop (String)
-# else
-#  define _(String) String
-#  define N_(String) String
-# endif /* ENABLE_NLS */
-#endif /* __GNOME_I18N_H__ */
 
 #define MAXLINE 8192  /* maximum length of command line */
 #define MAXLABEL 128  /* maximum length of descriptive labels for variables */
