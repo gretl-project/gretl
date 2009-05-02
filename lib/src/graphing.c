@@ -71,8 +71,9 @@ struct gnuplot_info_ {
 
 #define MAX_LETTERBOX_LINES 8
 
-#define ts_plot(g) ((g)->flags & GPT_TS)
+#define ts_plot(g)      ((g)->flags & GPT_TS)
 #define use_impulses(g) ((g)->flags & GPT_IMPULSES)
+#define use_lines(g)    ((g)->flags & GPT_LINES)
 
 #if GP_DEBUG
 static void print_gnuplot_flags (int flags, int revised);
@@ -424,19 +425,18 @@ int gnuplot_has_ttf (int reset)
 {
     static int err = -1; 
 
-    /* try a range of ttf fonts that might plausibly be installed
-       with X11 */
-
     if (err == -1 || reset) {
+	/* if we have cairo we know we (should be!) OK */
         err = gnuplot_test_command("set term pngcairo");
-        if (err) {
+	if (err) {
+	    /* otherwise (libgd) try some plausible ttf fonts */
 	    err = gnuplot_test_command("set term png font Vera 8");
-        }
-	if (err) {
-	    err = gnuplot_test_command("set term png font luxisr 8");
-	}
-	if (err) {
-	    err = gnuplot_test_command("set term png font arial 8");
+	    if (err) {
+		err = gnuplot_test_command("set term png font luxisr 8");
+	    }
+	    if (err) {
+		err = gnuplot_test_command("set term png font arial 8");
+	    }
 	}
     }
 
@@ -1952,14 +1952,14 @@ all_graph_data_missing (const int *list, int t, const double **Z)
     return 1;
 }
 
-static void
-print_gp_data (gnuplot_info *gi, const double **Z, 
-	       const DATAINFO *pdinfo)
+static void print_gp_data (gnuplot_info *gi, const double **Z, 
+			   const DATAINFO *pdinfo)
 {
     int n = gi->t2 - gi->t1 + 1;
     double offset = 0.0;
     int datlist[3];
     int ynum = 2;
+    int nomarkers = 0;
     int i, t;
 
     /* multi impulse plot? calculate offset for lines */
@@ -1973,6 +1973,10 @@ print_gp_data (gnuplot_info *gi, const double **Z,
     } else {
 	datlist[0] = 2;
 	datlist[1] = gi->list[gi->list[0]];
+    }
+
+    if (use_impulses(gi) || use_lines(gi)) {
+	nomarkers = 1;
     }
 
     /* loop across the variables, printing x then y[i] for each i */
@@ -1993,7 +1997,7 @@ print_gp_data (gnuplot_info *gi, const double **Z,
 	    if (!(gi->flags & GPT_TS) && i == 1) {
 		if (pdinfo->markers) {
 		    label = pdinfo->S[t];
-		} else if (dataset_is_time_series(pdinfo)) {
+		} else if (!nomarkers && dataset_is_time_series(pdinfo)) {
 		    ntodate(obs, t, pdinfo);
 		    label = obs;
 		}
@@ -2350,6 +2354,15 @@ static void make_named_month_tics (const gnuplot_info *gi, double yrs,
     pputs(prn, ")\n");
 }
 
+/* Below: we're making a combined time series plot for panel data.
+   That is, time series for unit 1, followed by time series for unit
+   2, etc.  We'd like to show tic marks to represent the start of each
+   unit's time series, but we have to watch out for the case where
+   there are "too many" units -- we don't want a dense fudge of marks
+   on the x-axis.  In that case we put a tic mark only for every k'th
+   unit.
+*/
+
 static void make_panel_unit_tics (const DATAINFO *pdinfo, 
 				  gnuplot_info *gi, 
 				  PRN *prn)
@@ -2364,11 +2377,12 @@ static void make_panel_unit_tics (const DATAINFO *pdinfo,
 
     gretl_push_c_numeric_locale();
 
+    /* how many panel units are included in the plot? */
     maxtics = pdinfo->paninfo->unit[gi->t2] - 
 	pdinfo->paninfo->unit[gi->t1] + 1;
 
     ntics = maxtics;
-    while (ntics > 14) {
+    while (ntics > 20) {
 	ntics /= 1.5;
     }
 

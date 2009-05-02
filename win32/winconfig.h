@@ -8,6 +8,9 @@
 /* GMP library support */
 #define ENABLE_GMP 1
 
+/* Extra floating-point GMP routines? */
+#define HAVE_MPFR 1
+
 /* X-12-ARIMA support? */
 #define HAVE_X12A 1
 

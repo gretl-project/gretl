@@ -250,9 +250,6 @@ static void *get_plugin_handle (const char *plugin)
     strcat(pluginpath, plugin);
     strcat(pluginpath, ".dll");
     handle = LoadLibrary(pluginpath);
-    if (handle == NULL) {
-        sprintf(gretl_errmsg, _("Couldn't load plugin %s"), pluginpath);
-    }
 #elif defined(OSX_NATIVE)
     strcat(pluginpath, plugin);
     strcat(pluginpath, ".so");
@@ -263,18 +260,18 @@ static void *get_plugin_handle (const char *plugin)
 			      NSLINKMODULE_OPTION_PRIVATE |
 			      NSLINKMODULE_OPTION_RETURN_ON_ERROR);
     }
-    if (handle == NULL) {
-        sprintf(gretl_errmsg, _("Couldn't load plugin %s"), pluginpath);
-    }
 #else
     strcat(pluginpath, plugin);
     strcat(pluginpath, ".so");
     handle = dlopen(pluginpath, RTLD_LAZY);
+#endif 
+
     if (handle == NULL) {
         sprintf(gretl_errmsg, _("Failed to load plugin: %s"), pluginpath);
+#if !defined(WIN32) && !defined(OSX_NATIVE)
 	fprintf(stderr, "%s\n", dlerror());
-    } 
-#endif 
+#endif
+    }     
 
     return handle;
 }
