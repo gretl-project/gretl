@@ -3059,6 +3059,12 @@ static void iconview_connect_signals (GtkWidget *iconview)
 		     G_CALLBACK(iconview_resize_callback), NULL);
 }
 
+/* @parent: this should be non-NULL only if want to embed the "icon
+   view" of a session inside another widget, which is something that
+   I've experimented with, briefly, but is not an active option as of
+   this writing. AC, 2009-05-02
+*/
+
 void view_session (GtkWidget *parent)
 {
     GtkWidget *hbox, *scroller;
