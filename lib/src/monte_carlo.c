@@ -343,7 +343,6 @@ int ok_in_loop (int c)
 	c == MODELTAB ||
 	c == NULLDATA ||
 	c == OPEN ||
-	c == QLRTEST ||
 	c == RMPLOT ||
 	c == RUN ||
 	c == SCATTERS ||
