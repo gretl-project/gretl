@@ -84,6 +84,7 @@ PangoFontDescription *fixed_font;
 static int usecwd;
 static int shellok;
 static int manpref;
+static int autoicon = 1;
 char gpcolors[64];
 static char datapage[24];
 static char scriptpage[24];
@@ -172,6 +173,8 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
+      BOOLSET, 0, TAB_MAIN, NULL },
+    { "autoicon", N_("Show icon view automatically"), NULL, &autoicon, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
@@ -288,6 +291,11 @@ const char *get_datapage (void)
 const char *get_scriptpage (void)
 {
     return scriptpage;
+}
+
+int autoicon_on (void)
+{
+    return autoicon;
 }
 
 static gretlopt set_paths_opt = OPT_X;

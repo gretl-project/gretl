@@ -1555,8 +1555,8 @@ static int dcsrch_(double *f, double *g, double *stp,
     }
     *stp = max(*stp,*stpmin);
     *stp = min(*stp,*stpmax);
-    if (brackt && (*stp <= stmin || *stp >= stmax) || brackt && stmax - stmin 
-	<= *xtol * stmax) {
+    if ((brackt && (*stp <= stmin || *stp >= stmax)) || 
+        (brackt && stmax - stmin <= *xtol * stmax)) {
 	*stp = stx;
     }
     strcpy(task, "FG");
@@ -2075,20 +2075,20 @@ static int mainlb_(int *n, int *m, double *x,
     int wrk;
     double stp, cpu1, cpu2;
     int head;
-    double fold;
+    double fold = 0;
     double ddum;
     int info;
     double time;
-    int nfgv, ifun, iter, nint;
+    int nfgv, iter, nint, ifun = 0;
     double time1, time2;
-    int iback;
-    double gdold;
+    int iback = 0;
+    double gdold = 0;
     int nfree;
     int boxed;
     double theta;
-    double dnorm;
+    double dnorm = 0;
     int nskip;
-    double xstep, stpmx;
+    double xstep, stpmx = 0;
     int ileave;
     double cachyt;
     double epsmch;

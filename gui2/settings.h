@@ -13,6 +13,8 @@ int using_hc_by_default (void);
 
 int get_manpref (void);
 
+int autoicon_on (void);
+
 void write_rc (void);
 
 void dump_rc (void);

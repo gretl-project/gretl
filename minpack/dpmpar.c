@@ -182,7 +182,7 @@ doublereal dpmpar_(integer *i__)
 /*     Machine constants for IEEE machines. */
 
 
-    ret_val = dmach[(0 + (0 + (*i__ - 1 << 3))) / 8];
+    ret_val = dmach[(0 + (0 + ((*i__ - 1) << 3))) / 8];
     return ret_val;
 
 /*     Last card of function dpmpar. */

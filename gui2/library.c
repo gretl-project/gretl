@@ -3637,19 +3637,27 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	    populate_varlist();
 	    mark_dataset_as_modified();
 	} else if (gentype == GRETL_TYPE_DOUBLE) {
-	    n = n_saved_scalars();
-	    name = gretl_scalar_get_name(n-1);
-	    val = gretl_scalar_get_value_by_index(n-1);
-	    txt = g_strdup_printf(_("Added scalar %s = %g"),
-				  name, val);
-	    infobox(txt);
-	    g_free(txt);
+	    if (autoicon_on()) {
+		edit_scalars();
+	    } else {	    
+		n = n_saved_scalars();
+		name = gretl_scalar_get_name(n-1);
+		val = gretl_scalar_get_value_by_index(n-1);
+		txt = g_strdup_printf(_("Added scalar %s = %g"),
+				      name, val);
+		infobox(txt);
+		g_free(txt);
+	    }
 	} else if (gentype == GRETL_TYPE_MATRIX) {
-	    n = n_user_matrices();
-	    name = get_matrix_name_by_index(n-1);
-	    txt = g_strdup_printf(_("Added matrix %s"), name);
-	    infobox(txt);
-	    g_free(txt);
+	    if (autoicon_on()) {
+		view_session(NULL);
+	    } else {
+		n = n_user_matrices();
+		name = get_matrix_name_by_index(n-1);
+		txt = g_strdup_printf(_("Added matrix %s"), name);
+		infobox(txt);
+		g_free(txt);
+	    }
 	}
     }
 

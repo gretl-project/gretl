@@ -250,6 +250,7 @@ static gboolean session_view_click (GtkWidget *widget,
 static int real_delete_model_from_session (SESSION_MODEL *model);
 static void make_short_label_string (char *targ, const char *src);
 static gui_obj *get_gui_obj_by_data (void *finddata);
+static void add_user_matrix_callback (void);
 
 static int session_graph_count;
 static int session_bplot_count;
@@ -647,10 +648,14 @@ void save_output_as_text_icon (windata_t *vwin)
     ensure_unique_text_name(tname);
     err = session_append_text(tname, buf);
 
-    if (!err && iconlist != NULL) {
-	SESSION_TEXT * text = get_session_text_by_name(tname);
+    if (err) {
+	return;
+    } else if (iconlist != NULL) {
+	    SESSION_TEXT * text = get_session_text_by_name(tname);
 
-	session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
+	    session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
+    } else if (autoicon_on()) {
+	view_session(NULL);
     }
 }
 
@@ -671,6 +676,8 @@ static int real_add_model_to_session (void *ptr, const char *name,
 
     if (iconlist != NULL) {
 	session_add_icon(mod, type, ICON_ADD_SINGLE);
+    } else if (autoicon_on()) {
+	view_session(NULL);
     }
 
     return 0;
@@ -698,6 +705,10 @@ real_add_graph_to_session (const char *fname, const char *grname,
 
     if (iconlist != NULL && !replace) {
 	session_add_icon(graph, type, ICON_ADD_SINGLE);
+    }
+
+    if (autoicon_on() && iconlist == NULL) {
+	view_session(NULL);
     }
 
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
@@ -1279,6 +1290,7 @@ void session_init (void)
     *session.dirname = '\0';
 
     winstack_init();
+    set_matrix_add_callback(add_user_matrix_callback);    
 }
 
 void free_session (void)
@@ -2312,7 +2324,11 @@ static void add_user_matrix_callback (void)
 	    session_add_icon(get_user_matrix_by_index(n-1), GRETL_OBJ_MATRIX, 
 			     ICON_ADD_SINGLE);
 	}
+    } else if (autoicon_on()) {
+	view_session(NULL);
     }
+
+    mark_session_changed();
 }
 
 static void add_all_icons (void) 
@@ -2321,8 +2337,6 @@ static void add_all_icons (void)
     int i, n;
 
     active_object = NULL;
-
-    set_matrix_add_callback(add_user_matrix_callback);
 
     if (data_status) {
 	session_add_icon(NULL, GRETL_OBJ_INFO,    ICON_ADD_BATCH);  /* data info */
@@ -3072,8 +3086,7 @@ void view_session (GtkWidget *parent)
 
     if (iconview != NULL) {
 	if (parent == NULL) {
-	    gdk_window_show(iconview->window);
-	    gdk_window_raise(iconview->window);
+	    gtk_window_present(GTK_WINDOW(iconview));
 	}
 	return;
     }
