@@ -7,8 +7,10 @@ SRCPATH="${PREFIX}/lib"
 
 TOOL=install_name_tool
 
-# path to auxiliary libraries (may need to be changed)
-AUXPATH="/usr/local/lib"
+# path to auxiliary libraries (may be set in environment)
+if [ "x$AUXPATH" = "x" ] ; then
+   AUXPATH=/usr/local/lib
+fi
 
 # correct library path specification for distribution
 NEWPATH="@executable_path/../lib"
