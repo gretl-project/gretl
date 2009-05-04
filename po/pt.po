@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-03 15:24-0400\n"
+"POT-Creation-Date: 2009-05-04 11:24-0400\n"
 "PO-Revision-Date: 2009-04-20 00:47+0100\n"
 "Last-Translator: Hélio Guilherme\n"
 "Language-Team: \n"
@@ -158,7 +158,7 @@ msgstr "Parâmetro de truncagem do desfasamento = %d\n"
 #: lib/src/compare.c:1624 lib/src/compare.c:1847 lib/src/compare.c:2020
 #: lib/src/compare.c:2988 lib/src/describe.c:4674 lib/src/estimate.c:2663
 #: lib/src/estimate.c:2676 lib/src/estimate.c:2683 lib/src/estimate.c:3451
-#: lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3158
+#: lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3155
 #: lib/src/gretl_panel.c:3791 lib/src/gretl_restrict.c:1855
 #: lib/src/gretl_restrict.c:1862 lib/src/modelprint.c:2025
 #: lib/src/modelprint.c:2029 lib/src/modelprint.c:2034
@@ -313,7 +313,7 @@ msgstr ""
 "  Hipótese nula: os parâmetros de regressão para as variáveis valem zero.\n"
 "\n"
 
-#: lib/src/compare.c:377 lib/src/gretl_model.c:3157
+#: lib/src/compare.c:377 lib/src/gretl_model.c:3154
 msgid "Asymptotic test statistic"
 msgstr "Estatística de teste assimptótica"
 
@@ -341,8 +341,8 @@ msgstr "Teste de razões de verosimilhanças"
 
 #: lib/src/compare.c:393 lib/src/compare.c:427 lib/src/compare.c:2027
 #: lib/src/compare.c:2033 lib/src/compare.c:2502 lib/src/estimate.c:2687
-#: lib/src/estimate.c:3453 lib/src/gretl_model.c:3053
-#: lib/src/gretl_model.c:3066 lib/src/gretl_model.c:3069
+#: lib/src/estimate.c:3453 lib/src/gretl_model.c:3050
+#: lib/src/gretl_model.c:3063 lib/src/gretl_model.c:3066
 #: lib/src/gretl_panel.c:3275 lib/src/gretl_panel.c:3798
 #: lib/src/modelprint.c:262 lib/src/modelprint.c:266 lib/src/modelprint.c:347
 #: lib/src/modelprint.c:350 lib/src/modelprint.c:2027
@@ -408,11 +408,11 @@ msgstr "Eliminação sequencial usando alfa bilateral = %.2f"
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " Descartando %-16s (valor p %.3f)\n"
 
-#: lib/src/compare.c:1545 lib/src/gretl_model.c:2884 gui2/library.c:2301
+#: lib/src/compare.c:1545 lib/src/gretl_model.c:2881 gui2/library.c:2301
 msgid "squares only"
 msgstr "apenas quadrados"
 
-#: lib/src/compare.c:1548 lib/src/gretl_model.c:2886 gui2/library.c:2302
+#: lib/src/compare.c:1548 lib/src/gretl_model.c:2883 gui2/library.c:2302
 msgid "cubes only"
 msgstr "apenas cubos"
 
@@ -420,7 +420,7 @@ msgstr "apenas cubos"
 msgid "squares and cubes"
 msgstr "quadrados e cubos"
 
-#: lib/src/compare.c:1617 lib/src/gretl_model.c:2842
+#: lib/src/compare.c:1617 lib/src/gretl_model.c:2839
 msgid "RESET test for specification"
 msgstr "Teste RESET para especificação"
 
@@ -429,8 +429,8 @@ msgstr "Teste RESET para especificação"
 #: lib/src/compare.c:2505 lib/src/compare.c:2510 lib/src/describe.c:3234
 #: lib/src/describe.c:3461 lib/src/describe.c:5608 lib/src/describe.c:5611
 #: lib/src/estimate.c:2665 lib/src/estimate.c:2687 lib/src/estimate.c:3453
-#: lib/src/gretl_model.c:3174 lib/src/gretl_model.c:3176
-#: lib/src/gretl_model.c:3178 lib/src/gretl_panel.c:1597
+#: lib/src/gretl_model.c:3171 lib/src/gretl_model.c:3173
+#: lib/src/gretl_model.c:3175 lib/src/gretl_panel.c:1597
 #: lib/src/gretl_panel.c:3276 lib/src/gretl_panel.c:3792
 #: lib/src/gretl_panel.c:3797 lib/src/modelprint.c:2027
 #: lib/src/modelprint.c:2032 lib/src/modelprint.c:2036
@@ -540,12 +540,12 @@ msgstr ""
 msgid "Invalid sample split for Chow test"
 msgstr "Separação de amostra inválida para o teste de Chow"
 
-#: lib/src/compare.c:2493 lib/src/gretl_model.c:2821
+#: lib/src/compare.c:2493 lib/src/gretl_model.c:2818
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr "Teste de Chow para diferença estrutural respeitante a %s"
 
-#: lib/src/compare.c:2496 lib/src/gretl_model.c:2818
+#: lib/src/compare.c:2496 lib/src/gretl_model.c:2815
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr "Teste de Chow para a falha estrutural na observação %s"
@@ -610,7 +610,7 @@ msgstr "Soma acumulada dos resíduos escalados"
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' indica um valor fora do intervalo de confiança a 95%)"
 
-#: lib/src/compare.c:2985 lib/src/gretl_model.c:2875
+#: lib/src/compare.c:2985 lib/src/gretl_model.c:2872
 #, fuzzy
 msgid "Test of common factor restriction"
 msgstr "Testes-F com zero restrições"
@@ -1323,8 +1323,8 @@ msgstr "Não se encontraram séries válidas"
 #: lib/src/dbread.c:2089 lib/src/dbread.c:2444 lib/src/dbread.c:2448
 #: lib/src/dbread.c:2476 lib/src/genfuncs.c:1220 lib/src/gretl_errors.c:40
 #: lib/src/gretl_restrict.c:1594 lib/src/gretl_restrict.c:1620
-#: lib/src/gretl_restrict.c:1643 lib/src/monte_carlo.c:1124
-#: lib/src/monte_carlo.c:1858 lib/src/monte_carlo.c:1865 gui2/gui_utils.c:552
+#: lib/src/gretl_restrict.c:1643 lib/src/monte_carlo.c:1123
+#: lib/src/monte_carlo.c:1857 lib/src/monte_carlo.c:1864 gui2/gui_utils.c:552
 msgid "Out of memory!"
 msgstr "Memória esgotada!"
 
@@ -1817,8 +1817,8 @@ msgstr ""
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Rácio de variâncias amostrais = %g\n"
 
-#: lib/src/describe.c:4672 lib/src/gretl_model.c:2998
-#: lib/src/gretl_model.c:3001 lib/src/gretl_model.c:3004
+#: lib/src/describe.c:4672 lib/src/gretl_model.c:2995
+#: lib/src/gretl_model.c:2998 lib/src/gretl_model.c:3001
 #: lib/src/nonparam.c:953 lib/src/nonparam.c:1085 lib/src/varprint.c:1188
 #: lib/src/varprint.c:1194 lib/src/varprint.c:1202
 msgid "Null hypothesis"
@@ -1995,11 +1995,11 @@ msgstr ""
 msgid "                 ITER       RHO        ESS"
 msgstr "                 ITER       RHO        ESS"
 
-#: lib/src/estimate.c:2662 lib/src/gretl_model.c:2872 lib/src/modelprint.c:575
+#: lib/src/estimate.c:2662 lib/src/gretl_model.c:2869 lib/src/modelprint.c:575
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "Teste de Pesaran-Taylor para a heterocedasticidade"
 
-#: lib/src/estimate.c:2672 lib/src/gretl_model.c:2851 lib/src/modelprint.c:573
+#: lib/src/estimate.c:2672 lib/src/gretl_model.c:2848 lib/src/modelprint.c:573
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr "Teste de Breusch-Pagan para a heterocedasticidade"
 
@@ -2011,7 +2011,7 @@ msgstr "com o estimador de variância robusta de Koenker"
 msgid "White's test for heteroskedasticity (no cross products)"
 msgstr "Teste de White para a heterocedasticidade (sem produtos cuzados)"
 
-#: lib/src/estimate.c:2681 lib/src/gretl_model.c:2848 lib/src/modelprint.c:571
+#: lib/src/estimate.c:2681 lib/src/gretl_model.c:2845 lib/src/modelprint.c:571
 msgid "White's test for heteroskedasticity"
 msgstr "Teste de White para a heterocedasticidade"
 
@@ -2873,180 +2873,180 @@ msgstr ""
 "Não se pode fazer isto: algumas variáveis no modelo original foram "
 "redefinidas"
 
-#: lib/src/gretl_model.c:2809
+#: lib/src/gretl_model.c:2806
 msgid "Test for addition of variables"
 msgstr "Teste para o acrescento de variáveis"
 
-#: lib/src/gretl_model.c:2810 lib/src/gretl_model.c:2840
+#: lib/src/gretl_model.c:2807 lib/src/gretl_model.c:2837
 msgid "parameters are zero for the variables"
 msgstr "os parâmetros são nulos para as variáveis"
 
-#: lib/src/gretl_model.c:2812
+#: lib/src/gretl_model.c:2809
 #, c-format
 msgid "Test for ARCH of order %s"
 msgstr "Teste para ARCH de ordem %s"
 
-#: lib/src/gretl_model.c:2813
+#: lib/src/gretl_model.c:2810
 msgid "no ARCH effect is present"
 msgstr "o efeito ARCH não está presente"
 
-#: lib/src/gretl_model.c:2815
+#: lib/src/gretl_model.c:2812
 #, c-format
 msgid "LM test for autocorrelation up to order %s"
 msgstr "Teste LM para autocorrelação até à ordem %s"
 
-#: lib/src/gretl_model.c:2816
+#: lib/src/gretl_model.c:2813
 msgid "no autocorrelation"
 msgstr "sem autocorrelação"
 
-#: lib/src/gretl_model.c:2819 lib/src/gretl_model.c:2828
+#: lib/src/gretl_model.c:2816 lib/src/gretl_model.c:2825
 msgid "no structural break"
 msgstr "sem falha estrutural"
 
-#: lib/src/gretl_model.c:2822
+#: lib/src/gretl_model.c:2819
 msgid "no structural difference"
 msgstr "sem diferença estrutural"
 
-#: lib/src/gretl_model.c:2824
+#: lib/src/gretl_model.c:2821
 msgid "CUSUM test for parameter stability"
 msgstr "Teste CUSUM para a estabilidade dos parâmetros"
 
-#: lib/src/gretl_model.c:2825
+#: lib/src/gretl_model.c:2822
 msgid "no change in parameters"
 msgstr "sem alterações nos parâmetros"
 
-#: lib/src/gretl_model.c:2827
+#: lib/src/gretl_model.c:2824
 msgid "QLR test for structural break"
 msgstr "Teste QLR para quebra estrutural"
 
-#: lib/src/gretl_model.c:2830
+#: lib/src/gretl_model.c:2827
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
 msgstr ""
 "Teste de razão de verosimilhanças para heterocedasticidade entre grupos"
 
-#: lib/src/gretl_model.c:2831
+#: lib/src/gretl_model.c:2828
 msgid "the units have a common error variance"
 msgstr "as unidades têm a mesma variância de erro"
 
-#: lib/src/gretl_model.c:2833
+#: lib/src/gretl_model.c:2830
 msgid "Non-linearity test (logs)"
 msgstr "Teste de não-linearidade (desfasamentos)"
 
-#: lib/src/gretl_model.c:2834 lib/src/gretl_model.c:2846
+#: lib/src/gretl_model.c:2831 lib/src/gretl_model.c:2843
 msgid "relationship is linear"
 msgstr "a relação é linear"
 
-#: lib/src/gretl_model.c:2836 gui2/gui_utils.c:3125
+#: lib/src/gretl_model.c:2833 gui2/gui_utils.c:3125
 msgid "Test for normality of residual"
 msgstr "Teste da normalidade dos resíduos"
 
-#: lib/src/gretl_model.c:2837
+#: lib/src/gretl_model.c:2834
 msgid "error is normally distributed"
 msgstr "o erro tem distribuição Normal"
 
-#: lib/src/gretl_model.c:2839
+#: lib/src/gretl_model.c:2836
 msgid "Test for omission of variables"
 msgstr "Teste para a omissão de variáveis"
 
-#: lib/src/gretl_model.c:2843
+#: lib/src/gretl_model.c:2840
 msgid "specification is adequate"
 msgstr "a especificação é adequada"
 
-#: lib/src/gretl_model.c:2845
+#: lib/src/gretl_model.c:2842
 msgid "Non-linearity test (squares)"
 msgstr "Teste de não-linearidade (quadrados)"
 
-#: lib/src/gretl_model.c:2849 lib/src/gretl_model.c:2852
-#: lib/src/gretl_model.c:2873
+#: lib/src/gretl_model.c:2846 lib/src/gretl_model.c:2849
+#: lib/src/gretl_model.c:2870
 msgid "heteroskedasticity not present"
 msgstr "sem heterocedasticidade "
 
-#: lib/src/gretl_model.c:2854 lib/src/modelprint.c:313
+#: lib/src/gretl_model.c:2851 lib/src/modelprint.c:313
 msgid "Sargan over-identification test"
 msgstr "Teste de Sargan para a sobre-identificação"
 
-#: lib/src/gretl_model.c:2855
+#: lib/src/gretl_model.c:2852
 msgid "all instruments are valid"
 msgstr "todos os instrumentos são válidos"
 
-#: lib/src/gretl_model.c:2857 lib/src/gretl_model.c:2860
+#: lib/src/gretl_model.c:2854 lib/src/gretl_model.c:2857
 msgid "Hausman test"
 msgstr "Teste de Hausman"
 
-#: lib/src/gretl_model.c:2858
+#: lib/src/gretl_model.c:2855
 msgid "OLS estimates are consistent"
 msgstr "as estimativas Mínimos Quadrados (OLS) são consistentes"
 
-#: lib/src/gretl_model.c:2861
+#: lib/src/gretl_model.c:2858
 msgid "GLS estimates are consistent"
 msgstr "As estimativas GLS são consistentes"
 
-#: lib/src/gretl_model.c:2863
+#: lib/src/gretl_model.c:2860
 msgid "Test for differing group intercepts"
 msgstr "Teste para diferenciar grupos de intercepções no eixo x=0"
 
-#: lib/src/gretl_model.c:2864
+#: lib/src/gretl_model.c:2861
 msgid "The groups have a common intercept"
 msgstr "Os grupos têm a mesma intercepção no eixo x=0"
 
-#: lib/src/gretl_model.c:2866
+#: lib/src/gretl_model.c:2863
 msgid "Breusch-Pagan test"
 msgstr "Teste de Breusch-Pagan"
 
-#: lib/src/gretl_model.c:2867
+#: lib/src/gretl_model.c:2864
 msgid "Variance of the unit-specific error = 0"
 msgstr "Variância do erro de unidade-específica = 0"
 
-#: lib/src/gretl_model.c:2869
+#: lib/src/gretl_model.c:2866
 msgid "Wald test for joint significance of time dummies"
 msgstr ""
 "Teste de Wald para a significância conjunta das variáveis tempo auxiliares"
 
-#: lib/src/gretl_model.c:2876
+#: lib/src/gretl_model.c:2873
 #, fuzzy
 msgid "restriction is acceptable"
 msgstr "Conjunto de Restrições"
 
-#: lib/src/gretl_model.c:3035
+#: lib/src/gretl_model.c:3032
 #, c-format
 msgid "max F(%d, %d) = %g at observation %s"
 msgstr "O máximo F(%d ; %d) = %g ocorre na observação %s"
 
-#: lib/src/gretl_model.c:3060 lib/src/gretl_model.c:3067
+#: lib/src/gretl_model.c:3057 lib/src/gretl_model.c:3064
 msgid "failed"
 msgstr "falhou"
 
-#: lib/src/gretl_model.c:3184 lib/src/gretl_model.c:3187
-#: lib/src/gretl_model.c:3190
+#: lib/src/gretl_model.c:3181 lib/src/gretl_model.c:3184
+#: lib/src/gretl_model.c:3187
 #, c-format
 msgid "%g percent critical value"
 msgstr "valor crítico a %g por cento"
 
-#: lib/src/gretl_model.c:5141
+#: lib/src/gretl_model.c:5138
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "Não se conseguiu obter uhat: o conjunto de dados foi alterado"
 
-#: lib/src/gretl_model.c:5143
+#: lib/src/gretl_model.c:5140
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "Não se conseguiu obter yhat: o conjunto de dados foi alterado"
 
-#: lib/src/gretl_model.c:5145
+#: lib/src/gretl_model.c:5142
 msgid "Can't retrieve ht: data set has changed"
 msgstr "Não se conseguiu obter ht: o conjunto de dados foi alterado"
 
-#: lib/src/gretl_model.c:5146
+#: lib/src/gretl_model.c:5143
 msgid "Can't retrieve series: data set has changed"
 msgstr "Não se pode obter a série: o conjunto de dados for alterado"
 
-#: lib/src/gretl_model.c:5160
+#: lib/src/gretl_model.c:5157
 msgid "Can't retrieve intercepts"
 msgstr "Não se conseguiu obter as intercepções no eixo x=0"
 
-#: lib/src/gretl_model.c:5167
+#: lib/src/gretl_model.c:5164
 msgid "Can't retrieve error variance"
 msgstr "Não se conseguiu obter a variância do erro"
 
-#: lib/src/gretl_model.c:5591 gui2/library.c:452
+#: lib/src/gretl_model.c:5588 gui2/library.c:452
 msgid "The model exhibits an exact linear fit"
 msgstr "O modelo tem um ajustamento linear exacto"
 
@@ -3923,12 +3923,12 @@ msgstr "colocando a frequência dos dados = %d\n"
 msgid "store: no filename given\n"
 msgstr "store: não foi fornecido o nome de ficheiro\n"
 
-#: lib/src/interact.c:4393 lib/src/monte_carlo.c:2174
+#: lib/src/interact.c:4393 lib/src/monte_carlo.c:2173
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "store: usando o nome de ficheiro %s\n"
 
-#: lib/src/interact.c:4399 lib/src/monte_carlo.c:2180
+#: lib/src/interact.c:4399 lib/src/monte_carlo.c:2179
 msgid "Data written OK.\n"
 msgstr "Dados escritos com sucesso.\n"
 
@@ -5121,7 +5121,7 @@ msgstr "modprint: esperado %d nomes"
 msgid "modprint: the first matrix argument must have 2 columns"
 msgstr "modprint: o primeiro argumento da matriz tem que ter 2 colunas"
 
-#: lib/src/monte_carlo.c:221 lib/src/monte_carlo.c:605
+#: lib/src/monte_carlo.c:221 lib/src/monte_carlo.c:604
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': não é um escalar"
@@ -5131,36 +5131,36 @@ msgstr "'%s': não é um escalar"
 msgid "error evaluating loop condition"
 msgstr "erro ao avaliar a condição de ciclo"
 
-#: lib/src/monte_carlo.c:611
+#: lib/src/monte_carlo.c:610
 #, c-format
 msgid "Undefined variable '%s' in loop condition."
 msgstr "Variável não definida '%s' na condição de ciclo."
 
-#: lib/src/monte_carlo.c:1078
+#: lib/src/monte_carlo.c:1077
 msgid "No valid loop condition was given."
 msgstr "Não foi dada uma condição válida para o ciclo."
 
-#: lib/src/monte_carlo.c:1163
+#: lib/src/monte_carlo.c:1162
 #, c-format
 msgid "Reached maximum interations, %d"
 msgstr "Atingido o máximo de iterações, %d"
 
-#: lib/src/monte_carlo.c:1172
+#: lib/src/monte_carlo.c:1171
 #, c-format
 msgid "Warning: no convergence after %d interations"
 msgstr "Atenção: não se atingiu a convergência após %d iterações"
 
-#: lib/src/monte_carlo.c:2076
+#: lib/src/monte_carlo.c:2075
 #, c-format
 msgid "%s estimates using the %d observations %s-%s\n"
 msgstr "Estimativas %s usando as %d observações %s-%s\n"
 
-#: lib/src/monte_carlo.c:2080 lib/src/monte_carlo.c:2111
+#: lib/src/monte_carlo.c:2079 lib/src/monte_carlo.c:2110
 #, c-format
 msgid "Statistics for %d repetitions\n"
 msgstr "Estatísticas para %d repetições\n"
 
-#: lib/src/monte_carlo.c:2081
+#: lib/src/monte_carlo.c:2080
 #, c-format
 msgid ""
 "Dependent variable: %s\n"
@@ -5169,7 +5169,7 @@ msgstr ""
 "Variável dependente: %s\n"
 "\n"
 
-#: lib/src/monte_carlo.c:2084
+#: lib/src/monte_carlo.c:2083
 msgid ""
 "                     mean of      std. dev. of     mean of     std. dev. of\n"
 "                    estimated      estimated      estimated      estimated\n"
@@ -5183,15 +5183,15 @@ msgstr ""
 "padrão\n"
 "\n"
 
-#: lib/src/monte_carlo.c:2113
+#: lib/src/monte_carlo.c:2112
 msgid "   Variable     mean         std. dev.\n"
 msgstr "   Variável     média         desv. padrão\n"
 
-#: lib/src/monte_carlo.c:2182
+#: lib/src/monte_carlo.c:2181
 msgid "write of data file failed\n"
 msgstr "a escrita do ficheiro de dados falhou\n"
 
-#: lib/src/monte_carlo.c:2207
+#: lib/src/monte_carlo.c:2206
 #, c-format
 msgid ""
 "\n"
@@ -5202,7 +5202,7 @@ msgstr ""
 "Número de iterações: %d\n"
 "\n"
 
-#: lib/src/monte_carlo.c:2762
+#: lib/src/monte_carlo.c:2761
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
 msgstr "'%s' : não está implementado em ciclos 'progressivos'"

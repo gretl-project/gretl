@@ -410,6 +410,7 @@ static struct localeinfo locales[] = {
     { LANG_PT_BR, "portuguese-brazilian" },
     { LANG_RU,    "russian" },
     { LANG_ZH_TW, "chinese-traditional" },
+    { LANG_CS,    "czech" },
     { LANG_MAX,    NULL }
 };
 
@@ -438,16 +439,17 @@ static struct langinfo langs[] = {
     { LANG_AUTO,  "Automatic",            NULL    },
     { LANG_C,     "English",              "C"     },
     { LANG_EU,    "Basque",               "eu_ES" },
-    { LANG_DE,    "German",               "de_DE" },
-    { LANG_ES,    "Spanish",              "es_ES" },
+    { LANG_ZH_TW, "Chinese (Taiwan)",     "zh_TW" },
+    { LANG_CS,    "Czech",                "cs_CZ" },
     { LANG_FR,    "French",               "fr_FR" },
+    { LANG_DE,    "German",               "de_DE" },
     { LANG_IT,    "Italian",              "it_IT" },
     { LANG_PL,    "Polish",               "pl_PL" },
-    { LANG_TR,    "Turkish",              "tr_TR" },
     { LANG_PT,    "Portuguese",           "pt_PT" },
     { LANG_PT_BR, "Portuguese (Brazil)",  "pt_BR" },
     { LANG_RU,    "Russian",              "ru_RU" },
-    { LANG_ZH_TW, "Chinese (Taiwan)",     "zh_TW" },
+    { LANG_ES,    "Spanish",              "es_ES" },
+    { LANG_TR,    "Turkish",              "tr_TR" },
     { LANG_MAX,    NULL,                   NULL   }
 };
 
@@ -462,6 +464,23 @@ const char *lang_string_from_id (int langid)
     }
 
     return NULL;
+}
+
+int lang_id_from_name (const char *s)
+{
+    int i;
+
+    if (s == NULL || *s == '\0') {
+	return 0;
+    }
+
+    for (i=0; i<LANG_MAX; i++) {
+	if (!strcmp(s, langs[i].name)) {
+	    return langs[i].id;
+	}
+    }
+
+    return 0;
 }
 
 const char *lang_code_from_id (int langid)
@@ -524,11 +543,17 @@ void set_lcnumeric (int langid, int lcnumeric)
     reset_local_decpoint();
 }
 
-int test_locale (int langid)
+/* arg should be long English form of language, as displayed
+   in GUI, e.g. "German", "French" */
+
+int test_locale (const char *langstr)
 {
     const char *lcode;
+    int langid;
     char *orig, *test;
     char ocpy[64];
+
+    langid = lang_id_from_name(langstr);
 
 #ifdef WIN32
     lcode = locale_code_from_id(langid);

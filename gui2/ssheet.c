@@ -70,6 +70,7 @@ typedef struct {
     GtkUIManager *ui;
     GtkCellRenderer *dumbcell;
     GtkCellRenderer *datacell;
+    GdkPixbuf *pbuf;
     gchar location[64];
     gretl_matrix *matrix;
     gretl_matrix *oldmat;
@@ -612,13 +613,15 @@ static int real_add_new_scalar (Spreadsheet *sheet, const char *vname,
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_list_store_append(store, &iter);
+
     if (na(val)) {
 	gtk_list_store_set(store, &iter, 0, vname, 1, "", -1);
     } else {
 	gchar *numstr;
 
 	numstr = g_strdup_printf("%.*g", DBL_DIG, val);
-	gtk_list_store_set(store, &iter, 0, vname, 1, numstr, -1);
+	gtk_list_store_set(store, &iter, 0, vname, 1, numstr, 
+			   2, sheet->pbuf, -1);
 	g_free(numstr);
     }
 
@@ -910,12 +913,17 @@ static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
 {
     GtkListStore *store;
     GType *types;
+    int ncols;
     int i;
 
     /* obs col, data cols */
-    sheet->totcols = sheet->datacols + 1;
+    ncols = sheet->totcols = sheet->datacols + 1;
 
-    types = mymalloc(sheet->totcols * sizeof *types);
+    if (sheet->cmd == SHEET_EDIT_SCALARS) {
+	ncols++;
+    }
+
+    types = mymalloc(ncols * sizeof *types);
     if (types == NULL) {
 	return NULL;
     }
@@ -924,7 +932,11 @@ static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
 	types[i] = G_TYPE_STRING;
     }
 
-    store = gtk_list_store_newv(sheet->totcols, types);
+    if (sheet->cmd == SHEET_EDIT_SCALARS) {
+	types[i] = GDK_TYPE_PIXBUF;
+    }
+
+    store = gtk_list_store_newv(ncols, types);
     free(types);
 
     return store;
@@ -1131,10 +1143,21 @@ static void popup_sheet_add_scalar (GtkWidget *w, Spreadsheet *sheet)
     new_scalar_dialog(sheet);
 }
 
+static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreeIter iter;
+    GtkListStore *store;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
+    gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
+    gtk_list_store_remove(store, &iter);
+    sheet->datarows--;
+    sheet_set_modified(sheet, TRUE);
+}
+
 static void build_sheet_popup (Spreadsheet *sheet)
 {
-    if (sheet->popup != NULL) return;
-
     sheet->popup = gtk_menu_new();
 
     if (sheet->cmd == SHEET_EDIT_SCALARS) {
@@ -1226,12 +1249,15 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
     GtkTreeModel *model;
     GtkTreeIter iter;
     gchar *vname, *val;
+    const char *sname;
     double x;
-    int i, err = 0;
+    int i, j, ns;
+    int err = 0;
 
     model = gtk_tree_view_get_model(view);
     gtk_tree_model_get_iter_first(model, &iter);
 
+    /* deal with added or modified scalars fist */
     for (i=0; i<sheet->datarows && !err; i++) {
 	gtk_tree_model_get(model, &iter, 0, &vname, 1, &val, -1);
 	x = (*val == '\0')? NADBL : atof(val);
@@ -1243,6 +1269,30 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 	g_free(vname);
 	g_free(val);
 	gtk_tree_model_iter_next(model, &iter);
+    }
+
+    ns = n_saved_scalars();
+
+    if (ns > sheet->datarows) {
+	/* must have deleted some scalar(s) via GUI */
+	int match, n = 0, ndel = ns - sheet->datarows;
+
+	i = 0;
+	while ((sname = gretl_scalar_get_name(i)) && n < ndel) {
+	    gtk_tree_model_get_iter_first(model, &iter);
+	    match = 0;
+	    for (j=0; j<sheet->datarows && !match; j++) {
+		gtk_tree_model_get(model, &iter, 0, &vname, -1);
+		match = !strcmp(sname, vname);
+		g_free(vname);
+	    }
+	    if (!match) {
+		gretl_scalar_delete(sname, NULL);
+		n++;
+	    } else {
+		i++;
+	    }
+	}
     }
 
     if (err) {
@@ -1612,13 +1662,18 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
 
 static int add_scalars_to_sheet (Spreadsheet *sheet)
 {
-    gchar vname[VNAMELEN];
-    gchar val[32];
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkTreeIter iter;
     GtkListStore *store;
+    gchar vname[VNAMELEN];
+    gchar val[32];
     double x;
     int i;
+
+    if (sheet->pbuf == NULL) {
+	sheet->pbuf = gtk_widget_render_icon(sheet->view, GTK_STOCK_DELETE,
+					     GTK_ICON_SIZE_MENU, NULL);
+    }
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
@@ -1626,7 +1681,8 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
     if (n_saved_scalars() == 0) {
 	/* starting from scratch */
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, sheet->mname, 1, "", -1);
+	gtk_list_store_set(store, &iter, 0, sheet->mname, 1, "", 
+			   2, sheet->pbuf, -1);
 	return 0;
     }
 
@@ -1641,7 +1697,8 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 	    sprintf(val, "%.*g", DBL_DIG, x);
 	}
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, vname, 1, val, -1);
+	gtk_list_store_set(store, &iter, 0, vname, 1, val, 
+			   2, sheet->pbuf, -1);
     }
 
     return 0;
@@ -1765,6 +1822,16 @@ static gint get_data_col_width (void)
 
     if (width == 0) {
 	width = get_string_width("-00.0000000000");
+    }
+    return width;
+}
+
+static gint get_delete_col_width (void)
+{
+    static gint width;
+
+    if (width == 0) {
+	width = get_string_width("XXXXXX");
     }
     return width;
 }
@@ -2070,6 +2137,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	    if (colnum == 0) {
 		/* don't respond to a click in a non-data column */
 		ret = TRUE;
+	    } else if (sheet->cmd == SHEET_EDIT_SCALARS && colnum == 2) {
+		/* call to delete scalar */
+		sheet_delete_scalar(sheet, path);
 	    } else {
 		/* activate clicked cell for editing */
 		gtk_tree_view_set_cursor(GTK_TREE_VIEW(sheet->view), 
@@ -2167,6 +2237,9 @@ static int build_sheet_view (Spreadsheet *sheet)
 	}
 	sheet->colnames = NULL;
     } else if (sheet->cmd == SHEET_EDIT_SCALARS) {
+	GtkCellRenderer *pixcell;
+	
+	/* numerical value */
 	column = gtk_tree_view_column_new_with_attributes(_("Value"),
 							  sheet->datacell,
 							  "text", 
@@ -2175,6 +2248,18 @@ static int build_sheet_view (Spreadsheet *sheet)
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	set_up_sheet_column(column, width, TRUE);
 	g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(1));
+	g_object_set_data(G_OBJECT(column), "sheet", sheet);
+
+	/* deletion icon */
+	pixcell = gtk_cell_renderer_pixbuf_new();
+	column = gtk_tree_view_column_new_with_attributes(_("Delete"),
+							  pixcell,
+							  "pixbuf", 
+							  2, 
+							  NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+	gtk_tree_view_column_set_resizable(column, FALSE);
+	g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(2));
 	g_object_set_data(G_OBJECT(column), "sheet", sheet);
     } else {
 	colnum = 0;
@@ -2295,6 +2380,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->apply = NULL;
     sheet->dumbcell = NULL;
     sheet->datacell = NULL;
+    sheet->pbuf = NULL;
     sheet->datacols = sheet->datarows = 0;
     sheet->totcols = 0;
     sheet->added_vars = 0;
@@ -2462,7 +2548,8 @@ static void size_scalars_window (Spreadsheet *sheet)
     int nc = 2;
     int w, h;
 
-    w = get_row_label_width() + nc * get_data_col_width() + 30;
+    w = get_row_label_width() + nc * get_data_col_width() + 
+	get_delete_col_width() + 30;
     if (w > 640) {
 	w = 640;
     }

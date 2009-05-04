@@ -3146,9 +3146,8 @@ void view_session (GtkWidget *parent)
 
 static void make_short_label_string (char *targ, const char *src)
 {
-    if (strlen(src) > SHOWNAMELEN) {
-	*targ = '\0';
-	strncat(targ, src, SHOWNAMELEN - 3);
+    if (g_utf8_strlen(src, -1) > SHOWNAMELEN) {
+	g_utf8_strncpy(targ, src, SHOWNAMELEN - 3);
 	strcat(targ, "...");
     } else {
 	strcpy(targ, src);

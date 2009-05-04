@@ -91,7 +91,7 @@ static char scriptpage[24];
 
 static int hc_by_default;
 #ifdef ENABLE_NLS
-static int langpref;
+static char langpref[32];
 #endif
 static char hc_xsect[5] = "HC1";
 static char hc_tseri[5] = "HAC";
@@ -179,8 +179,8 @@ RCVAR rc_vars[] = {
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
 #ifdef ENABLE_NLS
-    { "langpref", N_("Language preference"), NULL, &langpref, 
-      LISTSET | INTSET, 0, TAB_MAIN, NULL },
+    { "langpref", N_("Language preference"), NULL, langpref, 
+      LISTSET, 32, TAB_MAIN, NULL },
 #endif
 #ifndef G_OS_WIN32 
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
@@ -918,8 +918,8 @@ static gboolean takes_effect_on_restart (void)
 
 static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 {
-    int i = gtk_combo_box_get_active(box);
     static int lasterr;
+    gchar *langstr;
     int err;
 
     if (lasterr) {
@@ -927,7 +927,9 @@ static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 	return FALSE;
     }
 
-    err = test_locale(i);
+    langstr = gtk_combo_box_get_active_text(box);
+    err = test_locale(langstr);
+    g_free(langstr);
 
     if (err) {
 	lasterr = err;
@@ -1286,11 +1288,16 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 			     1, 2, l_len - 1, l_len,
 			     0, 0, 0, 0);
 	    if (langs) {
-		active = *(int *) rc->var;
 #ifdef ENABLE_NLS
+		char *strvar = (char *) rc->var;
+		const char *str;
+
 		for (j=LANG_AUTO; j<LANG_MAX; j++) {
-		    gtk_combo_box_append_text(GTK_COMBO_BOX(rc->widget), 
-					      lang_string_from_id(j));
+		    str = lang_string_from_id(j);
+		    gtk_combo_box_append_text(GTK_COMBO_BOX(rc->widget), str);
+		    if (!strcmp(str, strvar)) {
+			active = j;
+		    }
 		}
 #endif
 	    } else {
@@ -1631,6 +1638,9 @@ static void maybe_fix_viewpdf (void)
 
 static int common_read_rc_setup (void)
 {
+# ifdef ENABLE_NLS
+    int langid = 0;
+# endif
     int err = 0;
 
     libset_set_bool(SHELL_OK, shellok);
@@ -1656,10 +1666,11 @@ static int common_read_rc_setup (void)
 # endif
 
 # ifdef ENABLE_NLS
-    set_lcnumeric(langpref, lcnumeric);
-    if (langpref > 0) {
-	force_language(langpref);
-	if (langpref == LANG_C) {
+    langid = lang_id_from_name(langpref);
+    set_lcnumeric(langid, lcnumeric);
+    if (langid > 0) {
+	force_language(langid);
+	if (langid == LANG_C) {
 	    force_english_help();
 	}
     } 

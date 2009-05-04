@@ -34,20 +34,25 @@ char *iso_to_ascii (char *s);
 
 #ifdef ENABLE_NLS
 
+/* the following enumeration is organized by alphabetical order of
+   English name of language: Basque, Chinese, Czech, ...
+*/
+
 typedef enum {
     LANG_AUTO = 0,
     LANG_C,
     LANG_EU,
-    LANG_DE,
-    LANG_ES,
+    LANG_ZH_TW,
+    LANG_CS,
     LANG_FR,
+    LANG_DE,
     LANG_IT,
     LANG_PL,
-    LANG_TR,
     LANG_PT,
     LANG_PT_BR,
     LANG_RU,
-    LANG_ZH_TW,
+    LANG_ES,
+    LANG_TR,
     LANG_MAX
 } GretlLangCode;
 
@@ -83,13 +88,15 @@ int chinese_locale (void);
 
 const char *lang_string_from_id (int langid);
 
-const char *lang_code_from_id (int langid);
+int lang_id_from_name (const char *s);
+
+int lang_id_from_code (const char *s);
 
 void force_language (int langid);
 
 void set_lcnumeric (int langid, int lcnumeric);
 
-int test_locale (int langid);
+int test_locale (const char *langstr);
 
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)

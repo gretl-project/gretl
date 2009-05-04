@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-03 15:24-0400\n"
+"POT-Creation-Date: 2009-05-04 11:24-0400\n"
 "PO-Revision-Date: 2009-04-29 01:21+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -158,7 +158,7 @@ msgstr "落後期截斷參數 = %d\n"
 #: lib/src/compare.c:1624 lib/src/compare.c:1847 lib/src/compare.c:2020
 #: lib/src/compare.c:2988 lib/src/describe.c:4674 lib/src/estimate.c:2663
 #: lib/src/estimate.c:2676 lib/src/estimate.c:2683 lib/src/estimate.c:3451
-#: lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3158
+#: lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3155
 #: lib/src/gretl_panel.c:3791 lib/src/gretl_restrict.c:1855
 #: lib/src/gretl_restrict.c:1862 lib/src/modelprint.c:2025
 #: lib/src/modelprint.c:2029 lib/src/modelprint.c:2034
@@ -320,7 +320,7 @@ msgstr ""
 "  虛無假設: the regression parameters are zero for the variables\n"
 "\n"
 
-#: lib/src/compare.c:377 lib/src/gretl_model.c:3157
+#: lib/src/compare.c:377 lib/src/gretl_model.c:3154
 #, fuzzy
 msgid "Asymptotic test statistic"
 msgstr "基本假設檢定(_T)"
@@ -350,8 +350,8 @@ msgstr "概似值比例檢定 (Likelihood ratio test)"
 
 #: lib/src/compare.c:393 lib/src/compare.c:427 lib/src/compare.c:2027
 #: lib/src/compare.c:2033 lib/src/compare.c:2502 lib/src/estimate.c:2687
-#: lib/src/estimate.c:3453 lib/src/gretl_model.c:3053
-#: lib/src/gretl_model.c:3066 lib/src/gretl_model.c:3069
+#: lib/src/estimate.c:3453 lib/src/gretl_model.c:3050
+#: lib/src/gretl_model.c:3063 lib/src/gretl_model.c:3066
 #: lib/src/gretl_panel.c:3275 lib/src/gretl_panel.c:3798
 #: lib/src/modelprint.c:262 lib/src/modelprint.c:266 lib/src/modelprint.c:347
 #: lib/src/modelprint.c:350 lib/src/modelprint.c:2027
@@ -418,12 +418,12 @@ msgstr ""
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr ""
 
-#: lib/src/compare.c:1545 lib/src/gretl_model.c:2884 gui2/library.c:2301
+#: lib/src/compare.c:1545 lib/src/gretl_model.c:2881 gui2/library.c:2301
 #, fuzzy
 msgid "squares only"
 msgstr "加權最小平方法"
 
-#: lib/src/compare.c:1548 lib/src/gretl_model.c:2886 gui2/library.c:2302
+#: lib/src/compare.c:1548 lib/src/gretl_model.c:2883 gui2/library.c:2302
 msgid "cubes only"
 msgstr ""
 
@@ -432,7 +432,7 @@ msgstr ""
 msgid "squares and cubes"
 msgstr " %s 的實際值 及 預測值"
 
-#: lib/src/compare.c:1617 lib/src/gretl_model.c:2842
+#: lib/src/compare.c:1617 lib/src/gretl_model.c:2839
 #, fuzzy
 msgid "RESET test for specification"
 msgstr ""
@@ -444,8 +444,8 @@ msgstr ""
 #: lib/src/compare.c:2505 lib/src/compare.c:2510 lib/src/describe.c:3234
 #: lib/src/describe.c:3461 lib/src/describe.c:5608 lib/src/describe.c:5611
 #: lib/src/estimate.c:2665 lib/src/estimate.c:2687 lib/src/estimate.c:3453
-#: lib/src/gretl_model.c:3174 lib/src/gretl_model.c:3176
-#: lib/src/gretl_model.c:3178 lib/src/gretl_panel.c:1597
+#: lib/src/gretl_model.c:3171 lib/src/gretl_model.c:3173
+#: lib/src/gretl_model.c:3175 lib/src/gretl_panel.c:1597
 #: lib/src/gretl_panel.c:3276 lib/src/gretl_panel.c:3792
 #: lib/src/gretl_panel.c:3797 lib/src/modelprint.c:2027
 #: lib/src/modelprint.c:2032 lib/src/modelprint.c:2036
@@ -563,12 +563,12 @@ msgstr ""
 msgid "Invalid sample split for Chow test"
 msgstr ""
 
-#: lib/src/compare.c:2493 lib/src/gretl_model.c:2821
+#: lib/src/compare.c:2493 lib/src/gretl_model.c:2818
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr ""
 
-#: lib/src/compare.c:2496 lib/src/gretl_model.c:2818
+#: lib/src/compare.c:2496 lib/src/gretl_model.c:2815
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr ""
@@ -631,7 +631,7 @@ msgstr "累計殘差平方和"
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr ""
 
-#: lib/src/compare.c:2985 lib/src/gretl_model.c:2875
+#: lib/src/compare.c:2985 lib/src/gretl_model.c:2872
 #, fuzzy
 msgid "Test of common factor restriction"
 msgstr "gretl: 無母數檢定(_N)"
@@ -1326,8 +1326,8 @@ msgstr ""
 #: lib/src/dbread.c:2089 lib/src/dbread.c:2444 lib/src/dbread.c:2448
 #: lib/src/dbread.c:2476 lib/src/genfuncs.c:1220 lib/src/gretl_errors.c:40
 #: lib/src/gretl_restrict.c:1594 lib/src/gretl_restrict.c:1620
-#: lib/src/gretl_restrict.c:1643 lib/src/monte_carlo.c:1124
-#: lib/src/monte_carlo.c:1858 lib/src/monte_carlo.c:1865 gui2/gui_utils.c:552
+#: lib/src/gretl_restrict.c:1643 lib/src/monte_carlo.c:1123
+#: lib/src/monte_carlo.c:1857 lib/src/monte_carlo.c:1864 gui2/gui_utils.c:552
 msgid "Out of memory!"
 msgstr "記憶體不足! "
 
@@ -1826,8 +1826,8 @@ msgstr "基本假設檢定(_T)"
 msgid "   Ratio of sample variances = %g\n"
 msgstr "H0: Ratio of variances 變異數比率 = 1"
 
-#: lib/src/describe.c:4672 lib/src/gretl_model.c:2998
-#: lib/src/gretl_model.c:3001 lib/src/gretl_model.c:3004
+#: lib/src/describe.c:4672 lib/src/gretl_model.c:2995
+#: lib/src/gretl_model.c:2998 lib/src/gretl_model.c:3001
 #: lib/src/nonparam.c:953 lib/src/nonparam.c:1085 lib/src/varprint.c:1188
 #: lib/src/varprint.c:1194 lib/src/varprint.c:1202
 #, fuzzy
@@ -2009,11 +2009,11 @@ msgstr ""
 msgid "                 ITER       RHO        ESS"
 msgstr ""
 
-#: lib/src/estimate.c:2662 lib/src/gretl_model.c:2872 lib/src/modelprint.c:575
+#: lib/src/estimate.c:2662 lib/src/gretl_model.c:2869 lib/src/modelprint.c:575
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr ""
 
-#: lib/src/estimate.c:2672 lib/src/gretl_model.c:2851 lib/src/modelprint.c:573
+#: lib/src/estimate.c:2672 lib/src/gretl_model.c:2848 lib/src/modelprint.c:573
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr ""
 
@@ -2025,7 +2025,7 @@ msgstr ""
 msgid "White's test for heteroskedasticity (no cross products)"
 msgstr ""
 
-#: lib/src/estimate.c:2681 lib/src/gretl_model.c:2848 lib/src/modelprint.c:571
+#: lib/src/estimate.c:2681 lib/src/gretl_model.c:2845 lib/src/modelprint.c:571
 #, fuzzy
 msgid "White's test for heteroskedasticity"
 msgstr ""
@@ -2916,196 +2916,196 @@ msgstr ""
 msgid "Can't do this: some vars in original model have been redefined"
 msgstr ""
 
-#: lib/src/gretl_model.c:2809
+#: lib/src/gretl_model.c:2806
 #, fuzzy
 msgid "Test for addition of variables"
 msgstr ""
 "\n"
 "DF 檢定 對變數 %s\n"
 
-#: lib/src/gretl_model.c:2810 lib/src/gretl_model.c:2840
+#: lib/src/gretl_model.c:2807 lib/src/gretl_model.c:2837
 msgid "parameters are zero for the variables"
 msgstr ""
 
-#: lib/src/gretl_model.c:2812
+#: lib/src/gretl_model.c:2809
 #, fuzzy, c-format
 msgid "Test for ARCH of order %s"
 msgstr "ADF 檢定落後階次 (lag order):"
 
-#: lib/src/gretl_model.c:2813
+#: lib/src/gretl_model.c:2810
 msgid "no ARCH effect is present"
 msgstr ""
 
-#: lib/src/gretl_model.c:2815
+#: lib/src/gretl_model.c:2812
 #, c-format
 msgid "LM test for autocorrelation up to order %s"
 msgstr ""
 
-#: lib/src/gretl_model.c:2816
+#: lib/src/gretl_model.c:2813
 #, fuzzy
 msgid "no autocorrelation"
 msgstr "殘差自我相關函數"
 
-#: lib/src/gretl_model.c:2819 lib/src/gretl_model.c:2828
+#: lib/src/gretl_model.c:2816 lib/src/gretl_model.c:2825
 #, fuzzy
 msgid "no structural break"
 msgstr "Chow 的結構性轉變之 F 檢定"
 
-#: lib/src/gretl_model.c:2822
+#: lib/src/gretl_model.c:2819
 #, fuzzy
 msgid "no structural difference"
 msgstr "用一階差分"
 
-#: lib/src/gretl_model.c:2824
+#: lib/src/gretl_model.c:2821
 msgid "CUSUM test for parameter stability"
 msgstr ""
 
-#: lib/src/gretl_model.c:2825
+#: lib/src/gretl_model.c:2822
 msgid "no change in parameters"
 msgstr ""
 
-#: lib/src/gretl_model.c:2827
+#: lib/src/gretl_model.c:2824
 msgid "QLR test for structural break"
 msgstr ""
 
-#: lib/src/gretl_model.c:2830
+#: lib/src/gretl_model.c:2827
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
 msgstr ""
 
-#: lib/src/gretl_model.c:2831
+#: lib/src/gretl_model.c:2828
 msgid "the units have a common error variance"
 msgstr ""
 
-#: lib/src/gretl_model.c:2833
+#: lib/src/gretl_model.c:2830
 msgid "Non-linearity test (logs)"
 msgstr ""
 
-#: lib/src/gretl_model.c:2834 lib/src/gretl_model.c:2846
+#: lib/src/gretl_model.c:2831 lib/src/gretl_model.c:2843
 #, fuzzy
 msgid "relationship is linear"
 msgstr "其它線性模型(_l)"
 
-#: lib/src/gretl_model.c:2836 gui2/gui_utils.c:3125
+#: lib/src/gretl_model.c:2833 gui2/gui_utils.c:3125
 #, fuzzy
 msgid "Test for normality of residual"
 msgstr "檢定殘差的常態性 (normality)"
 
-#: lib/src/gretl_model.c:2837
+#: lib/src/gretl_model.c:2834
 #, fuzzy
 msgid "error is normally distributed"
 msgstr "殘差是常態分配"
 
-#: lib/src/gretl_model.c:2839
+#: lib/src/gretl_model.c:2836
 #, fuzzy
 msgid "Test for omission of variables"
 msgstr ""
 "\n"
 "DF 檢定 對變數 %s\n"
 
-#: lib/src/gretl_model.c:2843
+#: lib/src/gretl_model.c:2840
 #, fuzzy
 msgid "specification is adequate"
 msgstr "殘差是常態分配"
 
-#: lib/src/gretl_model.c:2845
+#: lib/src/gretl_model.c:2842
 msgid "Non-linearity test (squares)"
 msgstr ""
 
-#: lib/src/gretl_model.c:2849 lib/src/gretl_model.c:2852
-#: lib/src/gretl_model.c:2873
+#: lib/src/gretl_model.c:2846 lib/src/gretl_model.c:2849
+#: lib/src/gretl_model.c:2870
 #, fuzzy
 msgid "heteroskedasticity not present"
 msgstr "   %s: 可能不是1年\n"
 
-#: lib/src/gretl_model.c:2854 lib/src/modelprint.c:313
+#: lib/src/gretl_model.c:2851 lib/src/modelprint.c:313
 msgid "Sargan over-identification test"
 msgstr ""
 
-#: lib/src/gretl_model.c:2855
+#: lib/src/gretl_model.c:2852
 msgid "all instruments are valid"
 msgstr ""
 
-#: lib/src/gretl_model.c:2857 lib/src/gretl_model.c:2860
+#: lib/src/gretl_model.c:2854 lib/src/gretl_model.c:2857
 #, fuzzy
 msgid "Hausman test"
 msgstr "常態性檢定(_N)"
 
-#: lib/src/gretl_model.c:2858
+#: lib/src/gretl_model.c:2855
 msgid "OLS estimates are consistent"
 msgstr ""
 
-#: lib/src/gretl_model.c:2861
+#: lib/src/gretl_model.c:2858
 msgid "GLS estimates are consistent"
 msgstr ""
 
-#: lib/src/gretl_model.c:2863
+#: lib/src/gretl_model.c:2860
 msgid "Test for differing group intercepts"
 msgstr ""
 
-#: lib/src/gretl_model.c:2864
+#: lib/src/gretl_model.c:2861
 #, fuzzy
 msgid "The groups have a common intercept"
 msgstr "假設母體標準差相同"
 
-#: lib/src/gretl_model.c:2866
+#: lib/src/gretl_model.c:2863
 #, fuzzy
 msgid "Breusch-Pagan test"
 msgstr "基本假設檢定(_T)"
 
-#: lib/src/gretl_model.c:2867
+#: lib/src/gretl_model.c:2864
 msgid "Variance of the unit-specific error = 0"
 msgstr ""
 
-#: lib/src/gretl_model.c:2869
+#: lib/src/gretl_model.c:2866
 msgid "Wald test for joint significance of time dummies"
 msgstr ""
 
-#: lib/src/gretl_model.c:2876
+#: lib/src/gretl_model.c:2873
 #, fuzzy
 msgid "restriction is acceptable"
 msgstr "設定子樣本範圍(_S)"
 
-#: lib/src/gretl_model.c:3035
+#: lib/src/gretl_model.c:3032
 #, fuzzy, c-format
 msgid "max F(%d, %d) = %g at observation %s"
 msgstr "要選擇的樣本數 (最多 %d)"
 
-#: lib/src/gretl_model.c:3060 lib/src/gretl_model.c:3067
+#: lib/src/gretl_model.c:3057 lib/src/gretl_model.c:3064
 #, fuzzy
 msgid "failed"
 msgstr "預測"
 
-#: lib/src/gretl_model.c:3184 lib/src/gretl_model.c:3187
-#: lib/src/gretl_model.c:3190
+#: lib/src/gretl_model.c:3181 lib/src/gretl_model.c:3184
+#: lib/src/gretl_model.c:3187
 #, c-format
 msgid "%g percent critical value"
 msgstr "%g percent 臨界值"
 
-#: lib/src/gretl_model.c:5141
+#: lib/src/gretl_model.c:5138
 msgid "Can't retrieve uhat: data set has changed"
 msgstr ""
 
-#: lib/src/gretl_model.c:5143
+#: lib/src/gretl_model.c:5140
 msgid "Can't retrieve yhat: data set has changed"
 msgstr ""
 
-#: lib/src/gretl_model.c:5145
+#: lib/src/gretl_model.c:5142
 msgid "Can't retrieve ht: data set has changed"
 msgstr ""
 
-#: lib/src/gretl_model.c:5146
+#: lib/src/gretl_model.c:5143
 msgid "Can't retrieve series: data set has changed"
 msgstr ""
 
-#: lib/src/gretl_model.c:5160
+#: lib/src/gretl_model.c:5157
 msgid "Can't retrieve intercepts"
 msgstr ""
 
-#: lib/src/gretl_model.c:5167
+#: lib/src/gretl_model.c:5164
 msgid "Can't retrieve error variance"
 msgstr ""
 
-#: lib/src/gretl_model.c:5591 gui2/library.c:452
+#: lib/src/gretl_model.c:5588 gui2/library.c:452
 msgid "The model exhibits an exact linear fit"
 msgstr ""
 
@@ -3926,12 +3926,12 @@ msgstr "資料頻率不相符\n"
 msgid "store: no filename given\n"
 msgstr ""
 
-#: lib/src/interact.c:4393 lib/src/monte_carlo.c:2174
+#: lib/src/interact.c:4393 lib/src/monte_carlo.c:2173
 #, c-format
 msgid "store: using filename %s\n"
 msgstr ""
 
-#: lib/src/interact.c:4399 lib/src/monte_carlo.c:2180
+#: lib/src/interact.c:4399 lib/src/monte_carlo.c:2179
 #, fuzzy
 msgid "Data written OK.\n"
 msgstr "資料已順利加入\n"
@@ -5208,7 +5208,7 @@ msgstr "變數名稱衝突"
 msgid "modprint: the first matrix argument must have 2 columns"
 msgstr ""
 
-#: lib/src/monte_carlo.c:221 lib/src/monte_carlo.c:605
+#: lib/src/monte_carlo.c:221 lib/src/monte_carlo.c:604
 #, fuzzy, c-format
 msgid "'%s': not a scalar"
 msgstr "   %s: 可能不是1年\n"
@@ -5218,43 +5218,43 @@ msgstr "   %s: 可能不是1年\n"
 msgid "error evaluating loop condition"
 msgstr ""
 
-#: lib/src/monte_carlo.c:611
+#: lib/src/monte_carlo.c:610
 #, c-format
 msgid "Undefined variable '%s' in loop condition."
 msgstr ""
 
-#: lib/src/monte_carlo.c:1078
+#: lib/src/monte_carlo.c:1077
 msgid "No valid loop condition was given."
 msgstr ""
 
-#: lib/src/monte_carlo.c:1163
+#: lib/src/monte_carlo.c:1162
 #, fuzzy, c-format
 msgid "Reached maximum interations, %d"
 msgstr "gretl: 最大概似法"
 
-#: lib/src/monte_carlo.c:1172
+#: lib/src/monte_carlo.c:1171
 #, c-format
 msgid "Warning: no convergence after %d interations"
 msgstr ""
 
-#: lib/src/monte_carlo.c:2076
+#: lib/src/monte_carlo.c:2075
 #, fuzzy, c-format
 msgid "%s estimates using the %d observations %s-%s\n"
 msgstr "移除樣本(_R)"
 
-#: lib/src/monte_carlo.c:2080 lib/src/monte_carlo.c:2111
+#: lib/src/monte_carlo.c:2079 lib/src/monte_carlo.c:2110
 #, fuzzy, c-format
 msgid "Statistics for %d repetitions\n"
 msgstr "檢查有無更新版(_u)"
 
-#: lib/src/monte_carlo.c:2081
+#: lib/src/monte_carlo.c:2080
 #, fuzzy, c-format
 msgid ""
 "Dependent variable: %s\n"
 "\n"
 msgstr "新增指標變數(_I)"
 
-#: lib/src/monte_carlo.c:2084
+#: lib/src/monte_carlo.c:2083
 msgid ""
 "                     mean of      std. dev. of     mean of     std. dev. of\n"
 "                    estimated      estimated      estimated      estimated\n"
@@ -5262,16 +5262,16 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/monte_carlo.c:2113
+#: lib/src/monte_carlo.c:2112
 msgid "   Variable     mean         std. dev.\n"
 msgstr ""
 
-#: lib/src/monte_carlo.c:2182
+#: lib/src/monte_carlo.c:2181
 #, fuzzy
 msgid "write of data file failed\n"
 msgstr "/檔案/開啟資料檔/使用者資料檔_U..."
 
-#: lib/src/monte_carlo.c:2207
+#: lib/src/monte_carlo.c:2206
 #, c-format
 msgid ""
 "\n"
@@ -5279,7 +5279,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/monte_carlo.c:2762
+#: lib/src/monte_carlo.c:2761
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
 msgstr ""
