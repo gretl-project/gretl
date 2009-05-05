@@ -1,13 +1,13 @@
-# translation of ru_m.po to Russian
+# translation of ru.po to Russian
 # Alexander B. Gedranovich <gedranovich@gmail.com>, 2008, 2009.
 # moradan, 2008.
 # #-#-#-#-#  ru.po (ru)  #-#-#-#-#
 msgid ""
 msgstr ""
-"Project-Id-Version: ru_m\n"
+"Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-04 11:24-0400\n"
-"PO-Revision-Date: 2009-04-22 00:58+0300\n"
+"PO-Revision-Date: 2009-05-06 01:11+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -409,8 +409,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1186
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1192
 #, c-format
@@ -620,18 +619,15 @@ msgstr "Интегральная сумма масштабированных о�
 #: lib/src/compare.c:2817
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
-msgstr ""
-"('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
+msgstr "('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
 
 #: lib/src/compare.c:2985 lib/src/gretl_model.c:2872
-#, fuzzy
 msgid "Test of common factor restriction"
-msgstr "F-тесты для нулевых ограничений"
+msgstr ""
 
 #: lib/src/compare.c:3007
-#, fuzzy
 msgid "common factor restriction"
-msgstr "Линейные ограничения"
+msgstr ""
 
 #: lib/src/compare.c:3043
 msgid "This test is only relevant for pooled models\n"
@@ -773,8 +769,7 @@ msgstr "   похоже на заголовок столбца данных\n"
 
 #: lib/src/csvdata.c:1203
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 "   пустая ячейка для переменной %d, наблюдение %d: отмечена как пропущенное "
 "значение\n"
@@ -815,8 +810,7 @@ msgstr "   количество столбцов данных = %d\n"
 #: lib/src/csvdata.c:1504
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr ""
-"   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
+msgstr "   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
 
 #: lib/src/csvdata.c:1552
 msgid "scanning for variable names...\n"
@@ -1416,8 +1410,7 @@ msgstr "Из всех переменных для сохранения, %d уж�
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1487 lib/src/describe.c:2615 lib/src/describe.c:3117
 #, c-format
@@ -1585,8 +1578,7 @@ msgstr ""
 
 #: lib/src/describe.c:3612
 msgid "Missing values within sample -- can't do periodogram"
-msgstr ""
-"Невозможно построить периодограмму -- в выборке есть пропущенные наблюдения"
+msgstr "Невозможно построить периодограмму -- в выборке есть пропущенные наблюдения"
 
 #: lib/src/describe.c:3618
 msgid "Insufficient observations for periodogram"
@@ -3014,9 +3006,8 @@ msgstr ""
 "временных периодов"
 
 #: lib/src/gretl_model.c:2873
-#, fuzzy
 msgid "restriction is acceptable"
-msgstr "Множество ограничений"
+msgstr "ограничение допустимо"
 
 #: lib/src/gretl_model.c:3032
 #, c-format
@@ -3273,8 +3264,7 @@ msgstr "gretl_prn_new: Необходимо указать имя файла\n"
 
 #: lib/src/gretl_restrict.c:98
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Не удалось обратить матрицу: ограничения либо ошибочные, либо избыточные"
+msgstr "Не удалось обратить матрицу: ограничения либо ошибочные, либо избыточные"
 
 #: lib/src/gretl_restrict.c:766
 msgid "Please give a coefficient number"
@@ -4123,8 +4113,7 @@ msgstr "theta, использованная для квази-деусредне
 #: lib/src/modelprint.c:552
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:555
 #, c-format
@@ -4180,9 +4169,8 @@ msgid "Groupwise heteroskedasticity"
 msgstr "Групповая гетероскедастичность"
 
 #: lib/src/modelprint.c:594
-#, fuzzy
 msgid "Augmented regression for common factor test"
-msgstr "Расширенная регрессия для теста Чоу"
+msgstr ""
 
 #: lib/src/modelprint.c:602 lib/src/system.c:91 lib/src/varprint.c:1020
 #: lib/src/varprint.c:1029 lib/src/varprint.c:1037 gui2/selector.c:2863
@@ -4320,7 +4308,7 @@ msgstr "Максимальное правдоподобие"
 
 #: lib/src/modelprint.c:668
 msgid "Between-groups"
-msgstr ""
+msgstr "Межгрупповой"
 
 #: lib/src/modelprint.c:672
 msgid "2-step Arellano-Bond"
@@ -4376,8 +4364,7 @@ msgstr "2МНК"
 
 #: lib/src/modelprint.c:767
 msgid "Critical values for TSLS bias relative to OLS:\n"
-msgstr ""
-"Критические значения для смещения 2МНК-оценок относитлельно МНК-оценок:\n"
+msgstr "Критические значения для смещения 2МНК-оценок относитлельно МНК-оценок:\n"
 
 #: lib/src/modelprint.c:770
 #, no-c-format
@@ -4506,8 +4493,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1085
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
-"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:1086
 msgid "variant"
@@ -4613,8 +4599,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1389
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1392
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -5327,10 +5312,8 @@ msgid "not significant at the 10% level\n"
 msgstr "не значим на 10% уровне\n"
 
 #: lib/src/nonparam.c:344
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Выборка слишком мала для расчета р-значения для нормального распределения\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Выборка слишком мала для расчета р-значения для нормального распределения\n"
 
 #: lib/src/nonparam.c:767
 msgid ""
@@ -5565,8 +5548,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99 lib/src/printout.c:122
@@ -5673,8 +5655,7 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:583
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:609 lib/src/printout.c:617
@@ -5993,8 +5974,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1657
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Общее количество пропущенных значений = %d (%.2f%% всех данных)\n"
 
 #: lib/src/subsample.c:1668
@@ -6123,13 +6103,11 @@ msgstr "LR-тест для диагональной ковариационной
 
 #: lib/src/system.c:2704
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr ""
-"Тест Бриша--Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
+msgstr "Тест Бриша--Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:2710
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr ""
-"Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
+msgstr "Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:3656 lib/src/system.c:3660 lib/src/system.c:3666
 #: lib/src/system.c:3670
@@ -6871,8 +6849,7 @@ msgstr "Тестовая статистика: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:1707
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr ""
-"Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
+msgstr "Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
 
 #: gui2/calculator.c:1710
 #, c-format
@@ -7394,8 +7371,7 @@ msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:689 gui2/callbacks.c:742
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr ""
-"Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
+msgstr "Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
 
 #: gui2/callbacks.c:695 gui2/callbacks.c:758 gui2/library.c:2801
 msgid "gretl: simultaneous equations system"
@@ -8674,8 +8650,7 @@ msgstr "Экспоненциальное скользящее среднее д�
 #: gui2/filters.c:176
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
-msgstr ""
-"Остатки экспоненциального скользящего среднего для %s (фактор затухания = %g)"
+msgstr "Остатки экспоненциального скользящего среднего для %s (фактор затухания = %g)"
 
 #: gui2/filters.c:181
 #, c-format
@@ -10586,9 +10561,8 @@ msgid "CUSUM_SQ test"
 msgstr "Критерий кумулятивной суммы квадратов (CUSUM_SQ)"
 
 #: gui2/gui_utils.c:186
-#, fuzzy
 msgid "_Common factor"
-msgstr "_История команд"
+msgstr ""
 
 #: gui2/gui_utils.c:187
 msgid "_Panel diagnostics"
@@ -11114,9 +11088,8 @@ msgid " Find what:"
 msgstr " Найти:"
 
 #: gui2/helpfiles.c:1772
-#, fuzzy
 msgid "Variable names only (case sensitive)"
-msgstr "Отсуствует имя переменной"
+msgstr "Только названия переменных (зависит от регистра)"
 
 #: gui2/helpfiles.c:1928
 msgid "Failed to download file"
@@ -11309,9 +11282,8 @@ msgid "(non-linearity)"
 msgstr "(нелинейность)"
 
 #: gui2/library.c:1904
-#, fuzzy
 msgid "gretl: common factor test"
-msgstr "gretl: тест на коинтеграцию"
+msgstr ""
 
 #: gui2/library.c:1930
 msgid "Lag order for ARCH test:"
@@ -11437,8 +11409,7 @@ msgstr "распределение частот"
 
 #: gui2/library.c:3966
 msgid "Data contain negative values: gamma distribution not appropriate"
-msgstr ""
-"Гамма распределение не подходит, т.к. данные содержат отрицательные значения"
+msgstr "Гамма распределение не подходит, т.к. данные содержат отрицательные значения"
 
 #: gui2/library.c:4047
 msgid "This analysis is applicable only to seasonal time series"
@@ -11900,8 +11871,7 @@ msgid "Sorry, ARMA models can't be put in the model table"
 msgstr "Модели ARMA не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:178
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -12010,8 +11980,7 @@ msgstr "gretl: список моделей"
 
 #: gui2/model_table.c:929
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr ""
-"Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
+msgstr "Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
 
 #: gui2/model_table.c:1033
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
@@ -12156,7 +12125,7 @@ msgstr ""
 
 #: gui2/selector.c:2895
 msgid "Between-groups model"
-msgstr ""
+msgstr "Межгрупповая модель"
 
 #: gui2/selector.c:2897
 msgid "Dynamic panel model"
@@ -13698,8 +13667,7 @@ msgstr ""
 #: gui2/update.c:148
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
-"Этот файл является частью системы gretl для автоматичесгого обновления\n"
+msgstr "Этот файл является частью системы gretl для автоматичесгого обновления\n"
 
 #: gui2/update.c:210
 msgid "No new files"
@@ -14530,95 +14498,3 @@ msgstr "Строки"
 msgid "Accessors"
 msgstr ""
 
-#~ msgid "Couldn't load plugin %s"
-#~ msgstr "Невозможно загрузить плагин %s"
-
-#~ msgid "postscript files (*.eps)"
-#~ msgstr "Файлы postscript (*.eps)"
-
-#~ msgid "PDF files (*.pdf)"
-#~ msgstr "PDF файлы (*.pdf)"
-
-#~ msgid "xfig files (*.fig)"
-#~ msgstr "Файлы xfig (*.fig)"
-
-#~ msgid "LaTeX files (*.tex)"
-#~ msgstr "Файлы LaTeX (*.tex)"
-
-#~ msgid "PNG files (*.png)"
-#~ msgstr "Файлы PNG (*.png)"
-
-#~ msgid "Windows metafiles (*.emf)"
-#~ msgstr "Метафайлы Windows (*.emf)"
-
-#~ msgid "gretl data files (*.gdt)"
-#~ msgstr "Файлы данных gretl (*.gdt)"
-
-#~ msgid "gretl database files (*.bin)"
-#~ msgstr "Базы данных gretl (*.bin)"
-
-#~ msgid "gretl command files (*.inp)"
-#~ msgstr "Командные файлы gretl (*.inp)"
-
-#~ msgid "session files (*.gretl)"
-#~ msgstr "Файлы сессий gretl (*.gretl)"
-
-#~ msgid "gretl function files (*.gfn)"
-#~ msgstr "Файлы функций gretl (*.gfn)"
-
-#~ msgid "CSV files (*.csv)"
-#~ msgstr "Файлы CSV (*.csv)"
-
-#~ msgid "GNU Octave files (*.m)"
-#~ msgstr "Файлы GNU Octave (*.m)"
-
-#~ msgid "PcGive files (*.dat)"
-#~ msgstr "Файлы PcGive (*.dat)"
-
-#~ msgid "JMulti files (*.dat)"
-#~ msgstr "Файлы JMulti (*.dat)"
-
-#~ msgid "text files (*.txt)"
-#~ msgstr "Текстовые файлы (*.txt)"
-
-#~ msgid "TeX files (*.tex)"
-#~ msgstr "Файлы TeX (*.tex)"
-
-#~ msgid "RTF files (*.rtf)"
-#~ msgstr "Файлы RTF (*.rtf)"
-
-#~ msgid "Gnumeric files (*.gnumeric)"
-#~ msgstr "Файлы Gnumeric (*.gnumeric)"
-
-#~ msgid "Excel files (*.xls)"
-#~ msgstr "Файлы Excel (*.xls)"
-
-#~ msgid "Eviews workfiles (*.wf1)"
-#~ msgstr "Файлы Eviews (*.wf1)"
-
-#~ msgid "Stata files (*.dta)"
-#~ msgstr "Файлы Stata (*.dta)"
-
-#~ msgid "SPSS files (*.sav)"
-#~ msgstr "Файлы SPSS (*.sav)"
-
-#~ msgid "JMulTi files (*.dat)"
-#~ msgstr "Файлы JMulTi (*.dat)"
-
-#~ msgid "Open Document Spreadsheet (*.ods)"
-#~ msgstr "Электронные таблицы OpenOffice (*.ods)"
-
-#~ msgid "RATS databases (*.rat)"
-#~ msgstr "Базы данных RATS (*.rat)"
-
-#~ msgid "PcGive data files (*.bn7)"
-#~ msgstr "Файлы данных PcGive (*.bn7)"
-
-#~ msgid "program files (*.exe)"
-#~ msgstr "Приложения (*.exe)"
-
-#~ msgid "GNU R files (*.*)"
-#~ msgstr "Файлы GNU R (*.*)"
-
-#~ msgid "File dialog box error"
-#~ msgstr "Ошибка диалога открытия файлов"
