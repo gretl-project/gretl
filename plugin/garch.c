@@ -838,6 +838,18 @@ static MODEL garch_run_ols (const int *list, double ***pZ,
     return model;
 }
 
+static void garch_add_lr_test (MODEL *pmod, double llr,
+			       const int *list)
+{
+    if (!na(pmod->lnL) && llr <= pmod->lnL) {
+	double LR = 2.0 * (pmod->lnL - llr);
+	int LRdf = list[1] + list[2];
+
+	gretl_model_set_double(pmod, "garch_LR", LR);
+	gretl_model_set_int(pmod, "garch_LR_df", LRdf);
+    }
+}
+
 static void garch_standardize_residuals (MODEL *pmod)
 {
     double *h = gretl_model_get_data(pmod, "garch_h");
@@ -862,8 +874,9 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     double vparm[VPARM_MAX] = {0};
     double LMF = NADBL;
     double pvF = NADBL;
+    double llr = NADBL;
     double scale = 1.0;
-    int ifc, yno = 0;
+    int ols_T, ifc, yno = 0;
     int err = 0;
 
     list = get_garch_list(cmdlist, (const double **) *pZ,
@@ -880,6 +893,9 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	free(list);
 	return model;
     }
+
+    llr = model.lnL;
+    ols_T = model.nobs;
 
 #if GARCH_AUTOCORR_TEST
     /* pretest the residuals for autocorrelation */
@@ -918,8 +934,13 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     }
 #endif
 
-    if ((opt & OPT_U) && model.errcode == 0) {
-	garch_standardize_residuals(&model);
+    if (model.errcode == 0) {
+	if (opt & OPT_U) {
+	    garch_standardize_residuals(&model);
+	}
+	if (!na(llr) && ols_T == model.nobs) {
+	    garch_add_lr_test(&model, llr, cmdlist);
+	}
     }
 
     free(list);

@@ -154,9 +154,17 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
     ensure_vsep(prn);
 
     if (plain_format(prn)) {  
+	double LR = gretl_model_get_double(pmod, "garch_LR");
+	int LRdf = gretl_model_get_int(pmod, "garch_LR_df");
+	
 	pprintf(prn, "%s = %.*g\n", _(varstr), GRETL_DIGITS, v);
 	if (pmod->opt & OPT_U) {
 	    pprintf(prn, "%s\n", _("The residuals are standardized"));
+	}
+	if (LR >= 0 && LRdf > 0) {
+	    pprintf(prn, "%s:\n", _("Likelihood ratio test for (G)ARCH terms"));
+	    pprintf(prn, "  %s(%d) = %g [%g]\n",
+		    _("Chi-square"), LRdf, LR, chisq_cdf_comp(LRdf, LR));
 	}
 	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
