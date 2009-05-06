@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-04 11:24-0400\n"
-"PO-Revision-Date: 2009-05-06 01:11+0300\n"
+"PO-Revision-Date: 2009-05-06 18:49+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -12815,7 +12815,7 @@ msgstr "Данные"
 
 #: gui2/session.c:2852
 msgid "Scalars"
-msgstr "Скалярные величины"
+msgstr "Скаляры"
 
 #: gui2/session.c:2855
 msgid "Data info"
