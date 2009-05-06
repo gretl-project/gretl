@@ -142,6 +142,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
     f->method = 0;
     f->model_ID = 0;
     f->asymp = 0;
+    f->std = 0;
     f->model_t1 = 0;
     f->t0 = 0;
     f->t1 = 0;
@@ -308,6 +309,9 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 
     if (LIMDEP(pmod->ci)) {
 	fr->sigma = NADBL;
+    } else if (pmod->ci == GARCH && (pmod->opt & OPT_S)) {
+	fr->sigma = 1.0;
+	fr->std = 1;
     } else {
 	fr->sigma = gretl_model_get_double(pmod, "sigma_orig");
 	if (na(fr->sigma)) {

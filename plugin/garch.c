@@ -838,6 +838,20 @@ static MODEL garch_run_ols (const int *list, double ***pZ,
     return model;
 }
 
+static void garch_standardize_residuals (MODEL *pmod)
+{
+    double *h = gretl_model_get_data(pmod, "garch_h");
+
+    if (h != NULL) {
+	int t;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    pmod->uhat[t] /= sqrt(h[t]);
+	}
+	pmod->opt |= OPT_S;
+    }
+}
+
 /* the driver function for the plugin */
 
 MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
@@ -903,6 +917,10 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 #endif
+
+    if ((opt & OPT_S) && model.errcode == 0) {
+	garch_standardize_residuals(&model);
+    }
 
     free(list);
 

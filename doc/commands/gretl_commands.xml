@@ -2797,6 +2797,10 @@
 	  <effect>do not include a constant</effect>
         </option>
         <option>
+	  <flag>--stdresid</flag>
+	  <effect>standardize the residuals</effect>
+        </option>
+        <option>
 	  <flag>--fcp</flag>
 	  <effect>use Fiorentini, Calzolari, Panattoni algorithm</effect>
         </option>
@@ -2916,6 +2920,10 @@
       <code context="cli">
 	genr ht = $h
       </code>
+      <para context="cli">
+	If the <lit>--stdresid</lit> option is given, the <lit>$uhat</lit>
+	values are divided by the square root of <math>h</math><sub>t</sub>.
+      </para>
 
     </description>
 

@@ -3609,8 +3609,8 @@ static void selector_init (selector *sr, guint ci, const char *title,
     }
 
     if (ci == GARCH) {
-	/* extra check box */
-	dlgy += 20;
+	/* extra check boxes */
+	dlgy += 50;
     }
 
     if (dataset_lags_ok(datainfo)) {
@@ -4189,6 +4189,8 @@ static void build_selector_switches (selector *sr)
 	}
 #endif
     } else if (sr->ci == GARCH) {
+	tmp = gtk_check_button_new_with_label(_("Standardize the residuals"));
+	pack_switch(tmp, sr, (model_opt & OPT_S), FALSE, OPT_S, 0);
 	tmp = gtk_check_button_new_with_label(_("Use Fiorentini et al algorithm"));
 	pack_switch(tmp, sr, libset_get_bool(USE_FCP), FALSE, OPT_F, 0);
     } else if (sr->ci == MPOLS) {

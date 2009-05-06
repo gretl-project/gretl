@@ -2012,6 +2012,8 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (pmod->ci == ARBOND) {
 	flip(vwin->ui, "/MenuBar/Analysis/Forecasts", FALSE);
+    } else if (pmod->ci == GARCH) {
+	flip(vwin->ui, "/MenuBar/Tests/Hsk", FALSE);
     }
 
     if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) || na(pmod->tss)) {
@@ -2607,7 +2609,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
 			    base_hsk_items, 
 			    G_N_ELEMENTS(base_hsk_items));
-    }
+    } 
 
     if (latex_is_ok() && !pmod->errcode && !RQ_SPECIAL_MODEL(pmod)) {
 	add_model_tex_items(vwin);

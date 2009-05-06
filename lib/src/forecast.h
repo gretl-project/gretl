@@ -37,6 +37,7 @@ typedef enum {
 struct FITRESID_ {
     int model_ID;
     int asymp;
+    int std;
     int model_t1;
     int method;
     double *actual;

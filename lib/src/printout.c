@@ -1154,7 +1154,9 @@ static void fit_resid_head (const FITRESID *fr,
 	pprintf(prn, _("Model estimation range: %s - %s"), obs1, obs2);
 	pputc(prn, '\n');
 
-	if (!na(fr->sigma)) {
+	if (fr->std) {
+	    pprintf(prn, "%s\n", _("The residuals are standardized"));
+	} else if (!na(fr->sigma)) {
 	    pprintf(prn, "%s = %.*g\n", _("Standard error of the regression"), 
 		    GRETL_DIGITS, fr->sigma);
 	}

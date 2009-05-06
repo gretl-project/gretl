@@ -4370,7 +4370,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
     case MODTEST:
 	if (opt & OPT_H) {
 	    /* ARCH */
-	    ok = (mci != ARCH);
+	    ok = (mci != ARCH && mci != GARCH);
 	} else if (opt & OPT_C) {
 	    ok = (mci == AR1);
 	} else if (opt & OPT_N) {
