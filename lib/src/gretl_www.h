@@ -33,7 +33,9 @@ typedef enum {
     GRAB_FUNC,
     GRAB_PDF,
     CHECK_DB,
-    UPLOAD
+    UPLOAD,
+    LIST_PKGS,
+    GRAB_PKG
 } CGIOpt;
 
 typedef enum {
@@ -46,6 +48,8 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy);
 int list_remote_dbs (char **getbuf);
 
 int list_remote_function_packages (char **getbuf);
+
+int list_remote_data_packages (char **getbuf);
 
 int retrieve_remote_db_index (const char *dbname, char **getbuf);
 

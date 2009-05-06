@@ -93,7 +93,9 @@ struct fpkg_response {
     int try_server;
 };
 
-#define REMOTE_ACTION(c) (c == REMOTE_DB || c == REMOTE_FUNC_FILES)
+#define REMOTE_ACTION(c) (c == REMOTE_DB || \
+                          c == REMOTE_FUNC_FILES || \
+                          c == REMOTE_DATA_PKGS)
 
 static void 
 fpkg_response_init (struct fpkg_response *f, gpointer p)
@@ -565,13 +567,25 @@ static int build_file_collections (void)
 
 char *strip_extension (char *s)
 {
-    char *p = strrchr(s, '.');
+    char *p = strstr(s, ".tar.gz");
+
+    if (p != NULL) {
+	char *q = strstr(s, "_data");
+
+	if (q != NULL) {
+	    *q = '\0';
+	} else {
+	    *p = '\0';
+	}
+    } else {
+	p = strrchr(s, '.');
     
-    if (p != NULL && 
-	(!strcmp(p, ".gdt") || !strcmp(p, ".inp") ||
-	 !strcmp(p, ".bin") || !strcmp(p, ".gfn") ||
-	 !strcmp(p, ".bn7"))) {
-	*p = '\0';
+	if (p != NULL && 
+	    (!strcmp(p, ".gdt") || !strcmp(p, ".inp") ||
+	     !strcmp(p, ".bin") || !strcmp(p, ".gfn") ||
+	     !strcmp(p, ".bn7"))) {
+	    *p = '\0';
+	}
     }
 
     return s;
@@ -1063,6 +1077,11 @@ static void show_server_funcs (GtkWidget *w, gpointer p)
     display_files(REMOTE_FUNC_FILES, p);
 }
 
+static void show_server_data_pkgs (GtkWidget *w, gpointer p)
+{
+    display_files(REMOTE_DATA_PKGS, p);
+}
+
 static void show_local_funcs (GtkWidget *w, gpointer p)
 {
     display_files(FUNC_FILES, p);
@@ -1114,7 +1133,9 @@ static int files_item_get_callback (GretlToolItem *item, int role)
     } else if (local_funcs_item(item->flag)) {
 	return (role == FUNC_FILES);
     } else if (item->flag == BTN_INST) {
-	return (role == REMOTE_DB || role == REMOTE_FUNC_FILES);
+	/* FIXME enable case of REMOTE_DATA_PKGS */
+	return (role == REMOTE_DB || 
+		role == REMOTE_FUNC_FILES);
     } else if (item->flag == BTN_EXEC) {
 	return (role == FUNC_FILES || role == REMOTE_FUNC_FILES);
     }
@@ -1148,7 +1169,9 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(show_server_funcs);
 	} else if (role == NATIVE_DB) {
 	    item->func = G_CALLBACK(show_server_dbs);
-	} 
+	} else if (role == TEXTBOOK_DATA) {
+	    item->func = G_CALLBACK(show_server_data_pkgs);
+	}
     } else if (item->flag == BTN_HOME) {
 	/* home: show only for on-server items */
 	if (role == REMOTE_FUNC_FILES) {
@@ -1293,6 +1316,8 @@ void display_files (int code, gpointer p)
 	title = g_strdup(_("gretl: databases on server"));
     } else if (code == REMOTE_FUNC_FILES) {
 	title = g_strdup(_("gretl: function packages on server"));
+    } else if (code == REMOTE_DATA_PKGS) {
+	title = g_strdup(_("gretl: data packages on server"));
     }
 
     vwin = gretl_browser_new(code, title, 0);
@@ -1658,6 +1683,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_remote_db_list(vwin);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
 	return populate_remote_func_list(vwin);
+    } else if (vwin->role == REMOTE_DATA_PKGS) {
+	return populate_remote_data_pkg_list(vwin);
     } else if (vwin->role == FUNC_FILES) {
 	return populate_func_list(vwin, p);
     } else {
@@ -1670,6 +1697,11 @@ static GtkWidget *files_window (windata_t *vwin)
     const char *data_titles[] = {
 	N_("File"), 
 	N_("Summary")
+    };
+    const char *remote_data_titles[] = {
+	N_("File"), 
+	N_("Source"),
+	N_("Local status")
     };
     const char *ps_titles[] = {
 	N_("Script"), 
@@ -1742,6 +1774,11 @@ static GtkWidget *files_window (windata_t *vwin)
 	cols = 3;
 	full_width = 580;
 	use_tree = 1;
+	break;
+    case REMOTE_DATA_PKGS:
+	titles = remote_data_titles;
+	cols = 3;
+	full_width = 600;
 	break;
     case PS_FILES:
 	titles = ps_titles;

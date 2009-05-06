@@ -1462,6 +1462,10 @@ static char *print_option (int opt)
 	return "UPLOAD";
     case CHECK_DB:
 	return "CHECK_DB";
+    case LIST_PKGS:
+	return "LIST_PKGS";
+    case GRAB_PKG:
+	return "GRAB_PKG";
     default:
 	break;
     }
@@ -1849,6 +1853,12 @@ int list_remote_dbs (char **getbuf)
 int list_remote_function_packages (char **getbuf)
 {
     return retrieve_url (GRETLHOST, LIST_FUNCS, NULL, NULL, SAVE_TO_BUFFER, 
+			 NULL, getbuf);
+}
+
+int list_remote_data_packages (char **getbuf)
+{
+    return retrieve_url (GRETLHOST, LIST_PKGS, NULL, NULL, SAVE_TO_BUFFER, 
 			 NULL, getbuf);
 }
 

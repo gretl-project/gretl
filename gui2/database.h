@@ -19,6 +19,8 @@ gint populate_remote_db_list (windata_t *vwin);
 
 gint populate_remote_func_list (windata_t *win);
 
+gint populate_remote_data_pkg_list (windata_t *vwin);
+
 void db_series_callback (GtkAction *action, gpointer data);
 
 void import_db_series (windata_t *vwin);

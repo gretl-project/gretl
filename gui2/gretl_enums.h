@@ -173,6 +173,7 @@ enum browser_codes {
     REMOTE_FUNC_FILES,
     NATIVE_DB,
     REMOTE_DB,
+    REMOTE_DATA_PKGS,
     NATIVE_SERIES,
     RATS_SERIES,
     PCGIVE_SERIES,

@@ -1888,8 +1888,8 @@ static char *get_writable_target (int code, int op, char *objname)
 }
 
 /* note : 'vwin' here is the source viewer window displaying the
-   remote file (database or function package) that is being installed
-   onto the local machine.
+   remote file (database or data files package or function package)
+   that is being installed onto the local machine.
 */
 
 static int real_install_file_from_server (windata_t *vwin, int op)
@@ -1897,6 +1897,11 @@ static int real_install_file_from_server (windata_t *vwin, int op)
     gchar *objname = NULL;
     char *target = NULL;
     int err = 0;
+
+    if (vwin->role == REMOTE_DATA_PKGS) {
+	dummy_call();
+	return 1;
+    }
 
     if (vwin->role == REMOTE_DB) {
 	GtkTreeSelection *sel;
@@ -1908,10 +1913,9 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	    gtk_tree_model_get(model, &iter, 0, &objname, -1);
 	}
     } else {
-	/* remote function packages */
+	/* remote data file or function package */
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			     vwin->active_var, 0, &objname);
-	
     }
 
     if (objname == NULL || *objname == '\0') {
@@ -2123,16 +2127,19 @@ static void get_local_object_status (const char *fname, int role,
 				     const char **status, 
 				     time_t remtime)
 {
-    char fndir[MAXLEN];
+    char filedir[MAXLEN];
     char fullname[MAXLEN];
     struct stat fbuf;
     int err;
 
     if (role == REMOTE_DB) {
 	build_path(fullname, paths.binbase, fname, NULL);
+    } else if (role == REMOTE_DATA_PKGS) {
+	build_path(filedir, paths.gretldir, "data", NULL);
+	build_path(fullname, filedir, fname, NULL);
     } else {
-	build_path(fndir, paths.gretldir, "functions", NULL);
-	build_path(fullname, fndir, fname, NULL);
+	build_path(filedir, paths.gretldir, "functions", NULL);
+	build_path(fullname, filedir, fname, NULL);
     }
 
     if ((err = gretl_stat(fullname, &fbuf)) == -1) {
@@ -2143,23 +2150,29 @@ static void get_local_object_status (const char *fname, int role,
 	    /* try user dir too, if not on Windows */
 	    if (role == REMOTE_DB) {
 		build_path(fullname, paths.workdir, fname, NULL);
+	    } else if (role == REMOTE_DATA_PKGS) {
+		build_path(fullname, paths.workdir, fname, NULL);
 	    } else {
-		build_path(fndir, paths.workdir, "functions", NULL);
-		build_path(fullname, fndir, fname, NULL);
+		build_path(filedir, paths.workdir, "functions", NULL);
+		build_path(fullname, filedir, fname, NULL);
 	    }
 	    err = gretl_stat(fullname, &fbuf);
 	    if (err == -1) {
-		if (role == REMOTE_FUNC_FILES) {
+		if (role == REMOTE_FUNC_FILES || role == REMOTE_DATA_PKGS) {
 		    /* try default working dir */
 		    char *tmp = gretl_default_workdir(&paths);
 
 		    if (tmp != NULL) {
-			build_path(fndir, tmp, "functions", NULL);
-			build_path(fullname, fndir, fname, NULL);
+			if (role == REMOTE_FUNC_FILES) {
+			    build_path(filedir, tmp, "functions", NULL);
+			    build_path(fullname, filedir, fname, NULL);
+			} else {
+			    build_path(fullname, tmp, fname, NULL);
+			}
 			err = stat(fullname, &fbuf);
 			free(tmp);
 		    }
-		}
+		} 
 		if (err == -1) {
 		    *status = N_("Not installed");
 		}
@@ -2513,6 +2526,88 @@ gint populate_remote_func_list (windata_t *vwin)
     if (!err) {
 	funcpkg_drag_connect(vwin);
     }
+
+    return err;
+}
+
+/* Fill a list box with names and short descriptions
+   of data file packages, retrieved from server.
+*/
+
+gint populate_remote_data_pkg_list (windata_t *vwin)
+{
+    GtkListStore *store;
+    GtkTreeIter iter;  
+    char *getbuf = NULL;
+    char line[256];
+    char fname[32];
+    const char *status;
+    char *basename;
+    char *descrip;
+    time_t remtime;
+    int n, err = 0;
+
+    err = list_remote_data_packages(&getbuf);
+
+    if (err) {
+	show_network_error(NULL);
+	free(getbuf);
+	return err;
+    }
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model 
+			   (GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    n = 0;
+    bufgets_init(getbuf);
+
+    while (bufgets(line, sizeof line, getbuf)) {
+	descrip = NULL;
+
+	if (read_remote_filetime(line, fname, &remtime)) {
+	    continue;
+	}
+
+	status = "";
+	basename = strip_extension(fname);
+	get_local_object_status(basename, vwin->role, &status, remtime);
+
+	if (bufgets(line, sizeof line, getbuf)) {
+	    tailstrip(line);
+	    utf8_correct(line);
+	    descrip = gretl_strdup(line + 2);
+	} 
+
+	if (descrip == NULL) {
+	    descrip = gretl_strdup("");
+	}
+
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 
+			   0, basename, 
+			   1, descrip, 
+			   2, _(status),
+			   -1);
+
+	free(descrip);
+	n++;
+    }
+
+    bufgets_finalize(getbuf);
+    free(getbuf);
+
+    if (n == 0) {
+	warnbox(_("No data packages found"));
+	err = 1;
+    }
+
+#if 0
+    if (!err) {
+	funcpkg_drag_connect(vwin);
+    }
+#endif
 
     return err;
 }
