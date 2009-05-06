@@ -2895,8 +2895,10 @@
       <para context="gui">
 	The estimated conditional variance, along with the residuals and
 	various other model statistics, can be accessed and added to the
-	dataset using the <quote>Model data</quote> menu in the window
-	where the model is displayed.
+	dataset using the <quote>Model data</quote> menu in the window where
+	the model is displayed.  If the box marked <quote>Standardize the
+	residuals</quote> is checked, the residuals are divided by the
+	square root of te conditional variance.
       </para>
 
       <para context="cli">

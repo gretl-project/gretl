@@ -4376,8 +4376,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	} else if (opt & OPT_N) {
 	    /* normality: do we really need to exclude garch? */
 	    if (mci == TOBIT || mci == PROBIT ||
-		mci == LOGIT || mci == GARCH ||
-		mci == INTREG) {
+		mci == LOGIT || mci == INTREG) {
 		ok = 0;
 	    }	    
 	} else if (mci != OLS) {

@@ -155,7 +155,7 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
 
     if (plain_format(prn)) {  
 	pprintf(prn, "%s = %.*g\n", _(varstr), GRETL_DIGITS, v);
-	if (pmod->opt & OPT_S) {
+	if (pmod->opt & OPT_U) {
 	    pprintf(prn, "%s\n", _("The residuals are standardized"));
 	}
 	pputc(prn, '\n');

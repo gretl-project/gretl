@@ -848,7 +848,7 @@ static void garch_standardize_residuals (MODEL *pmod)
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    pmod->uhat[t] /= sqrt(h[t]);
 	}
-	pmod->opt |= OPT_S;
+	pmod->opt |= OPT_U;
     }
 }
 
@@ -918,7 +918,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     }
 #endif
 
-    if ((opt & OPT_S) && model.errcode == 0) {
+    if ((opt & OPT_U) && model.errcode == 0) {
 	garch_standardize_residuals(&model);
     }
 

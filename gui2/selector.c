@@ -4190,7 +4190,7 @@ static void build_selector_switches (selector *sr)
 #endif
     } else if (sr->ci == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Standardize the residuals"));
-	pack_switch(tmp, sr, (model_opt & OPT_S), FALSE, OPT_S, 0);
+	pack_switch(tmp, sr, (model_opt & OPT_U), FALSE, OPT_U, 0);
 	tmp = gtk_check_button_new_with_label(_("Use Fiorentini et al algorithm"));
 	pack_switch(tmp, sr, libset_get_bool(USE_FCP), FALSE, OPT_F, 0);
     } else if (sr->ci == MPOLS) {

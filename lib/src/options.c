@@ -135,7 +135,7 @@ struct gretl_option gretl_opts[] = {
     { GARCH,    OPT_F, "fcp", 0 }, 
     { GARCH,    OPT_N, "nc", 0 }, 
     { GARCH,    OPT_R, "robust", 0 },
-    { GARCH,    OPT_S, "stdresid", 0 },
+    { GARCH,    OPT_U, "stdresid", 0 },
     { GARCH,    OPT_V, "verbose", 0 },
     { GMM,      OPT_I, "iterate", 0 },
     { GMM,      OPT_Q, "quiet", 0 },
