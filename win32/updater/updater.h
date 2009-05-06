@@ -25,7 +25,7 @@ char *gretl_strdup (const char *src);
 FILE *gretl_fopen (const char *filename, const char *mode);
 int errbox (const char *msg);
 int infobox (const char *msg);
-int untgz (char *fname);
+int gretl_untar (const char *fname);
 int show_progress (long res, long expected, int flag);
 
 #endif /* UPDATER_H_ */

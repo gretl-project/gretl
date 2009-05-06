@@ -2,21 +2,16 @@
 
 CC = gcc -g -O2 -Wall
 CFLAGS = -I../../lib/src -I../../win32/updater
-SRC = update_client.c webget.c untgz.c
-OBJ = update_client.o untgz.o
-
-LIBS = -L/usr/local/lib -lz 
+SRC = update_client.c gretl_www.c gretl_untar.c
+OBJ = update_client.o
 
 vpath %.h ../../lib/src ../../win32/updater
 vpath %.c ../../lib/src ../../win32/updater
 
 gretl_updater: $(OBJ) version.h
-	 $(CC) -o $@ $(OBJ) $(LIBS)
+	 $(CC) -o $@ $(OBJ) -lz
 
-update_client.o: update_client.c gretl_www.c
-
-untgz.o: untgz.c
-
+update_client.o: $(SRC)
 
 .PHONY :
 

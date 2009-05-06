@@ -5,8 +5,8 @@ include ../config.mk
 
 CC = $(MGW_PREFIX)gcc -O2 -Wall -mms-bitfields
 CFLAGS = -I../../lib/src -I../../win32/updater
-SRC = update_client.c gretl_www.c untgz.c
-OBJ = update_client.o untgz.o
+SRC = update_client.c gretl_www.c gretl_untar.c
+OBJ = update_client.o 
 
 LIBS = -lz -lwsock32
 
@@ -19,9 +19,7 @@ vpath %.c ../../win32/updater ../../lib/src
 gretl_updater.exe: $(OBJ) version.h
 	 $(CC) -mwindows -s -o $@ $^ $(LIBS)
 
-update_client.o: update_client.c gretl_www.c
-
-untgz.o: untgz.c
+update_client.o: update_client.c gretl_www.c gretl_untar.c
 
 .PHONY :
 

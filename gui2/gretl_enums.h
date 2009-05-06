@@ -161,6 +161,7 @@ enum file_ops {
     SET_PROG,
     SET_DIR,
     SET_WDIR,
+    SAVE_DATA_PKG,
     FILE_OP_MAX
 };
 

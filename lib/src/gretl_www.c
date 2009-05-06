@@ -250,6 +250,7 @@ struct urlinfo_ {
     char *params;            /* parameters to be passed to CGI */
     char *localfile;         /* name of local file to write or NULL */
     char *getbuf;            /* buffer to which to write result or NULL */
+    char *gottype;           /* record of content type from server */
     const char *upload;      /* content of file to upload */
     int upsize;              /* size of the above */
     char agent[32];          /* to communicate gretl version */
@@ -341,6 +342,12 @@ static uerr_t make_connection (int *sock, char *hostname,
 static int iread (int fd, char *buf, int len);
 static int iwrite (int fd, const char *buf, int len);
 static char *print_option (int opt);
+
+#ifdef STANDALONE
+# define errmsg_set(s) fprintf(stderr, s)
+#else
+# define errmsg_set(s) gretl_errmsg_set(s)
+#endif
 
 static char *w_strdup (const char *src)
 {
@@ -1124,7 +1131,10 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 	}
     }
 
-    free(type);
+    if (u->gottype != NULL) {
+	free(u->gottype);
+    }
+    u->gottype = type;
     type = NULL;	
 
     /* Return if we have no intention of further downloading */
@@ -1294,6 +1304,7 @@ static void url_init (urlinfo *u)
     u->params = NULL;
     u->localfile = NULL;
     u->getbuf = NULL;
+    u->gottype = NULL;
 
     u->proto = URLHTTP;
     u->port = DEFAULT_HTTP_PORT;
@@ -1337,6 +1348,7 @@ static void urlinfo_destroy (urlinfo *u, int delfile)
     free(u->url);
     free(u->path);
     free(u->params);
+    free(u->gottype);
 
     if (u->localfile != NULL) {
 	if (u->fp != NULL) {
@@ -1546,6 +1558,8 @@ urlinfo_set_params (urlinfo *u, CGIOpt opt, const char *fname,
     if (fname != NULL) {
 	if (opt == GRAB_FILE || opt == GRAB_FUNC) {
 	    strcat(u->params, "&fname=");
+	} else if (opt == GRAB_PKG) {
+	    strcat(u->params, "&pkg=");
 	} else {
 	    strcat(u->params, "&dbase=");
 	}
@@ -1558,6 +1572,33 @@ urlinfo_set_params (urlinfo *u, CGIOpt opt, const char *fname,
     }
 
     return (u->params != NULL);
+}
+
+/* when we're expecting binary data, check that we didn't get
+   text/plain instead, which presumably in fact means we got
+   an error message from the server
+*/
+
+static int maybe_register_type_error (urlinfo *u, CGIOpt opt)
+{
+    int err = 0;
+
+    if ((opt == GRAB_PKG || opt == GRAB_PDF) && 
+	!strcmp(u->gottype, "text/plain")) {
+	/* we shouldn't have got plain text */
+	err = 1;
+	if (u->fp != NULL) {
+	    char buf[256];
+
+	    fclose(u->fp);
+	    u->fp = fopen(u->localfile, "r");
+	    if (fgets(buf, sizeof buf, u->fp)) {
+		fprintf(stderr, "server says: '%s'\n", buf);
+	    }
+	}
+    }
+    
+    return err;
 }
 
 /* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored
@@ -1643,6 +1684,10 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 #endif
 	*getbuf = u->getbuf;
     }    
+
+    if (!err && u->gottype != NULL && saveopt == SAVE_TO_FILE) {
+	err = maybe_register_type_error(u, opt);
+    }
 
     urlinfo_destroy(u, err);
 
@@ -1901,6 +1946,13 @@ int retrieve_remote_function_package (const char *pkgname,
 				      const char *localname)
 {
     return retrieve_url (GRETLHOST, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
+			 localname, NULL);
+}
+
+int retrieve_remote_datafiles_package (const char *pkgname, 
+				       const char *localname)
+{
+    return retrieve_url (GRETLHOST, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
 			 localname, NULL);
 }
 

@@ -1,99 +1,59 @@
 
-untgz.c,659
-#    define F_OK 30,482
-#    define mkdir(mkdir33,530
-#    define strdup(strdup34,578
-#    define unlink(unlink35,623
-#    define access(access36,667
-#    define mkdir(mkdir38,726
-#define REGTYPE	45,831
-#define AREGTYPE 46,872
-#define LNKTYPE 47,914
-#define SYMTYPE 48,947
-#define CHRTYPE 49,984
-#define BLKTYPE 50,1030
-#define DIRTYPE 51,1072
-#define FIFOTYPE 52,1110
-#define CONTTYPE 53,1151
-#define BLOCKSIZE 55,1189
-struct tar_headertar_header57,1212
-union tar_buffer tar_buffer78,1770
-int getoct(96,2086
-#define ISSPECIAL(ISSPECIAL115,2348
-int ExprMatch 117,2401
-int makedir 143,2846
-int untar 182,3501
-int untgz 281,5497
-
-update_client.c,1540
+update_client.c,1643
 #define ERRLEN 15,258
 #define MAXLEN 16,277
 #define UBUFSIZE 17,296
 #define E_ALLOC 18,318
 #define E_DATA 19,337
-FILE *flg;23,377
+FILE *flg;flg23,377
 int logit;24,388
 int debug;25,399
     UPDATER_DEFAULT,28,418
     UPDATER_GET_LISTING,29,439
     UPDATER_GET_FILE30,464
 } program_opts;31,485
-static char get_fname[33,502
-static char gretl_errmsg[34,529
+static char get_fname[get_fname33,502
+static char gretl_errmsg[gretl_errmsg34,529
 static int ask_before_download 35,563
 static time_t filedate;36,599
 static int argcount;37,623
 static int prog_opt;38,644
 #define STANDALONE40,666
-# define IDYES 44,723
-# define TRUE 48,761
-FILE *gretl_fopen 55,916
-int show_progress 64,1050
-char *gretl_strdup 69,1123
-static void getout 85,1346
-    GRETL_NOT_RUNNING 105,1650
-    GRETL_RUNNING,106,1677
-    GRETL_RUN_UNKNOWN107,1696
-static int gretl_run_status;110,1722
-static void ws_cleanup 112,1752
-int ws_startup 117,1805
-static int win_error 141,2246
-static int create_child_process 166,2757
-static int yes_no_dialog 194,3774
-static int msgbox 200,3910
-static int read_reg_val 209,4154
-static void read_proxy_info 242,5114
-BOOL CALLBACK record_gretl_running 257,5464
-static int check_for_gretl 275,5834
-static int yes_no_dialog 288,6038
-static int msgbox 295,6126
-static char *get_size_string 308,6309
-int errbox 323,6666
-int infobox 328,6728
-static int files_query 333,6791
-static int get_remote_file 347,7078
-static void listerr 362,7384
-static void usage 388,7875
-static time_t get_time_from_stamp_file 401,8174
-static int real_program 455,9245
-static void win32_start 600,12156
-int main 622,12582
+# define IDYES 45,748
+# define TRUE 49,786
+FILE *gretl_fopen gretl_fopen56,941
+int show_progress 61,1039
+char *gretl_strdup gretl_strdup66,1112
+static void getout 82,1335
+    GRETL_NOT_RUNNING 102,1639
+    GRETL_RUNNING,103,1666
+    GRETL_RUN_UNKNOWN104,1685
+static int gretl_run_status;107,1711
+static void ws_cleanup 109,1741
+int ws_startup 114,1794
+static int win_error 138,2235
+static int create_child_process 163,2746
+static int yes_no_dialog 191,3763
+static int msgbox 197,3899
+static int read_reg_val 206,4143
+static void read_proxy_info 239,5103
+BOOL CALLBACK record_gretl_running 254,5453
+static int check_for_gretl 272,5823
+static int yes_no_dialog 285,6027
+static int msgbox 292,6115
+static char *get_size_string get_size_string305,6298
+int errbox 320,6655
+int infobox 325,6717
+static int files_query 330,6780
+static int get_remote_file 344,7069
+static void listerr 359,7379
+static void usage 385,7870
+static time_t get_time_from_stamp_file 400,8210
+static int real_program 454,9237
+static void win32_start 601,12152
+static void win32_setup 621,12570
+int main 653,13248
 
 winprogress.c,59
 LRESULT CALLBACK DlgProc 8,112
 INT WINAPI WinMain 44,791
-
-updater.h,315
-#define UPDATER_H_2,19
-#define _(_4,39
-#define I_(I_5,64
-    SP_NONE,8,98
-    SP_LOAD_INIT,9,112
-    SP_SAVE_INIT,10,130
-    SP_FONT_INIT,11,148
-    SP_FINISH 12,166
-} progress_flags;13,181
-    SP_RETURN_OK,16,207
-    SP_RETURN_DONE,17,225
-    SP_RETURN_CANCELED18,245
-} progress_return_flags;19,268

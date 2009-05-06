@@ -62,6 +62,9 @@ int check_remote_db (const char *dbname);
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname);
 
+int retrieve_remote_datafiles_package (const char *pkgname, 
+				       const char *localname);
+
 int retrieve_remote_db_data (const char *dbname,
 			     const char *varname,
 			     char **getbuf,

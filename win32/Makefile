@@ -1,5 +1,8 @@
-# Makefile for cross-compiling gretl for win32 on Linux,
-# using mingw compiler
+# This makefile can be used for cross-compiling gretl for win32
+# on Linux, or for a native build on MS Windows.  In both cases we
+# assume that the mingw compiler is used.  The build type is
+# controlled by the BUILDTYPE variable in config.mk, included
+# below.
 
 include config.mk
 
@@ -183,6 +186,7 @@ LIBSRC = adf_kpss.c \
 	gretl_restrict.c \
 	gretl_scalar.c \
 	gretl_string_table.c \
+	gretl_untar.c \
 	gretl_utils.c \
 	gretl_win32.c \
 	gretl_www.c \

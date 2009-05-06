@@ -417,13 +417,22 @@ static void slash_terminate (char *path)
     }
 }
 
-static void get_functions_dir (char *dirname)
+static void get_pkg_dir (char *dirname, int action)
 {
+    const char *subdir = NULL;
     char *target = NULL;
     FILE *fp;
     int err, ok = 0;
 
-    sprintf(dirname, "%sfunctions", paths.gretldir);
+    if (action == SAVE_FUNCTIONS) {
+	subdir = "functions";
+    } else if (action == SAVE_DATA_PKG) {
+	subdir = "data";
+    } else {
+	return;
+    }
+
+    sprintf(dirname, "%s%s", paths.gretldir, subdir);
     err = gretl_mkdir(dirname);
     if (!err) {
 	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
@@ -440,7 +449,7 @@ static void get_functions_dir (char *dirname)
     
     if (ok) return;
 
-    sprintf(dirname, "%sfunctions", paths.dotdir); /* ?? */
+    sprintf(dirname, "%s%s", paths.dotdir, subdir); /* ?? */
     err = gretl_mkdir(dirname);
     if (!err) {
 	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
@@ -500,8 +509,8 @@ void get_default_dir (char *s, int action)
 {
     *s = '\0';
 
-    if (action == SAVE_FUNCTIONS) {
-	get_functions_dir(s);
+    if (action == SAVE_FUNCTIONS || action == SAVE_DATA_PKG) {
+	get_pkg_dir(s, action);
     } else if (action == OPEN_RATS_DB) {
 	strcpy(s, paths.ratsbase);
     } else {

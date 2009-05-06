@@ -37,8 +37,10 @@ static time_t filedate;
 static int argcount;
 static int prog_opt;
 
+/* include stand-alone versions of two libgretl source files */
 #define STANDALONE
 #include "gretl_www.c"
+#include "gretl_untar.c"
 
 #ifndef WIN32
 # define IDYES 1
@@ -54,11 +56,7 @@ static int prog_opt;
 
 FILE *gretl_fopen (const char *filename, const char *mode)
 {
-    FILE *fp = NULL;
-
-    fp = fopen(filename, mode);
-
-    return fp;
+    return fopen(filename, mode);
 }
 
 int show_progress (long res, long expected, int flag)
@@ -398,8 +396,9 @@ static void usage (char *prog)
     getout(0);
 }
 
+/* E.g. Sun Mar 16 13:50:52 EST 2003 */
+
 static time_t get_time_from_stamp_file (const char *fname)
-     /* E.g. Sun Mar 16 13:50:52 EST 2003 */
 {
     FILE *fp;
     struct tm stime;
@@ -413,6 +412,7 @@ static time_t get_time_from_stamp_file (const char *fname)
     };
 
     fp = fopen(fname, "r");
+
     if (fp == NULL) {
 	if (logit) {
 	    fprintf(flg, "Couldn't open %s\n", fname);
@@ -533,7 +533,7 @@ static int real_program (void)
 	    if (logit && debug) {
 		fputs("[debug: faking it]\n", flg);
 	    } else {
-		tarerr = untgz(get_fname);
+		tarerr = gretl_untar(get_fname);
 	    }
 
 	    if (logit) fprintf(flg, "Removing %s... ", get_fname);
@@ -546,7 +546,8 @@ static int real_program (void)
 		err = 1;
 	    }
 	}
-    } else if (prog_opt == UPDATER_GET_LISTING) { /* get listing */
+    } else if (prog_opt == UPDATER_GET_LISTING) { 
+	/* get listing */
 	getbuf = malloc(UBUFSIZE); 
 	if (getbuf == NULL) {
 	    getout(1);
@@ -562,13 +563,14 @@ static int real_program (void)
 	    infobox(getbuf);
 	}
 	free(getbuf);
-    } else if (prog_opt == UPDATER_GET_FILE) { /* get a specified file */
+    } else if (prog_opt == UPDATER_GET_FILE) { 
+	/* get a specified file */
 	err = get_remote_file(get_fname);
 	if (err) {
 	    listerr(get_fname);
 	    getout(1);
 	}
-	tarerr = untgz(get_fname);
+	tarerr = gretl_untar(get_fname);
 	remerr = remove(get_fname);
 	if (!err && !tarerr && !remerr) {
 	    unpack_ok = 1;
@@ -617,15 +619,42 @@ static void win32_start (int warn)
     }
 }
 
+static void win32_setup (int warn)
+{
+    char gretldir[MAXLEN];
+
+    if (read_reg_val(HKEY_LOCAL_MACHINE, "gretldir", gretldir)) {
+	errbox("Couldn't get the path to the gretl installation\n"
+	       "from the Windows registry");
+	exit(EXIT_FAILURE);
+    }
+
+    if (!SetCurrentDirectory(gretldir)) {
+	errbox("Couldn't move to the gretl folder");
+	exit(EXIT_FAILURE);
+    }
+
+    if (warn) {
+	check_for_gretl();
+	if (gretl_run_status == GRETL_RUNNING) {
+	    errbox("Please close gretl before running the updater");
+	    exit(EXIT_FAILURE);
+	} else if (gretl_run_status == GRETL_NOT_RUNNING) {
+	    warn = 0;
+	}
+    }
+
+    if (ws_startup()) {
+	exit(EXIT_FAILURE);
+    }
+}
+
 #endif
 
-int main (int argc, char *argv[])
+int main (int argc, char **argv)
 {
     const char *testfile = "gretl.stamp";
     int warn = 1;
-#ifdef WIN32
-    char gretldir[MAXLEN];
-#endif
 
     prog_opt = UPDATER_DEFAULT;
     *get_fname = '\0';
@@ -659,30 +688,7 @@ int main (int argc, char *argv[])
     }    
 
 #ifdef WIN32
-    if (read_reg_val(HKEY_LOCAL_MACHINE, "gretldir", gretldir)) {
-	errbox("Couldn't get the path to the gretl installation\n"
-	       "from the Windows registry");
-	exit(EXIT_FAILURE);
-    }
-
-    if (!SetCurrentDirectory(gretldir)) {
-	errbox("Couldn't move to the gretl folder");
-	exit(EXIT_FAILURE);
-    }
-
-    if (warn) {
-	check_for_gretl();
-	if (gretl_run_status == GRETL_RUNNING) {
-	    errbox("Please close gretl before running the updater");
-	    exit(EXIT_FAILURE);
-	} else if (gretl_run_status == GRETL_NOT_RUNNING) {
-	    warn = 0;
-	}
-    }
-
-    if (ws_startup()) {
-	exit(EXIT_FAILURE);
-    }
+    win32_setup(warn);
 #endif
 
     flg = fopen("updater.log", "w");
@@ -706,6 +712,8 @@ int main (int argc, char *argv[])
 
 #ifdef WIN32
     win32_start(warn);
+#else
+    real_program();
 #endif
 
     getout(0);

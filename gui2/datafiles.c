@@ -1062,6 +1062,16 @@ static void build_db_popup (windata_t *vwin)
     }
 }
 
+static void build_data_pkg_popup (windata_t *vwin)
+{
+    if (vwin->popup == NULL) {
+	vwin->popup = gtk_menu_new();
+	add_popup_item(_("Install"), vwin->popup, 
+		       G_CALLBACK(install_file_from_server), 
+		       vwin);
+    }
+}
+
 static void show_server_dbs (GtkWidget *w, gpointer p)
 {
     display_files(REMOTE_DB, p);
@@ -1133,9 +1143,9 @@ static int files_item_get_callback (GretlToolItem *item, int role)
     } else if (local_funcs_item(item->flag)) {
 	return (role == FUNC_FILES);
     } else if (item->flag == BTN_INST) {
-	/* FIXME enable case of REMOTE_DATA_PKGS */
 	return (role == REMOTE_DB || 
-		role == REMOTE_FUNC_FILES);
+		role == REMOTE_FUNC_FILES ||
+		role == REMOTE_DATA_PKGS);
     } else if (item->flag == BTN_EXEC) {
 	return (role == FUNC_FILES || role == REMOTE_FUNC_FILES);
     }
@@ -1370,6 +1380,11 @@ void display_files (int code, gpointer p)
 			 vwin->popup);
     } else if (code == NATIVE_DB || code == REMOTE_DB) {
 	build_db_popup(vwin);
+	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
+			 G_CALLBACK(popup_menu_handler), 
+			 vwin->popup);
+    } else if (code == REMOTE_DATA_PKGS)  {
+	build_data_pkg_popup(vwin);
 	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 			 G_CALLBACK(popup_menu_handler), 
 			 vwin->popup);
@@ -1701,7 +1716,7 @@ static GtkWidget *files_window (windata_t *vwin)
     const char *remote_data_titles[] = {
 	N_("File"), 
 	N_("Source"),
-	N_("Local status")
+	N_("Date")
     };
     const char *ps_titles[] = {
 	N_("Script"), 

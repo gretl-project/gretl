@@ -24,6 +24,7 @@
 #include "database.h"
 #include "datafiles.h"
 #include "gretl_www.h"
+#include "gretl_untar.h"
 #include "menustate.h"
 #include "treeutils.h"
 #include "winstack.h"
@@ -1840,6 +1841,7 @@ enum {
 
 static char *get_writable_target (int code, int op, char *objname)
 {
+    const char *ext;
     FILE *fp;
     char *targ;
     int err = 0;
@@ -1850,16 +1852,29 @@ static char *get_writable_target (int code, int op, char *objname)
     }
 
     if (code == REMOTE_DB) {
-	build_path(targ, paths.binbase, objname, ".ggz");
+	ext = ".ggz";
+    } else if (code == REMOTE_FUNC_FILES) {
+	ext = ".gfn";
+    } else {
+	ext = ".tar.gz";
+    }
+
+    if (code == REMOTE_DB) {
+	build_path(targ, paths.binbase, objname, ext);
+    } else if (code == REMOTE_DATA_PKGS) {
+	    char pkgdir[MAXLEN];
+
+	    get_default_dir(pkgdir, SAVE_DATA_PKG);
+	    build_path(targ, pkgdir, objname, ext);
     } else {
 	if (op == TMP_INSTALL) {
 	    build_path(targ, paths.dotdir, "dltmp", NULL);
 	    err = gretl_tempname(targ);
 	} else {
-	    char fndir[MAXLEN];
+	    char pkgdir[MAXLEN];
 
-	    get_default_dir(fndir, SAVE_FUNCTIONS);
-	    build_path(targ, fndir, objname, ".gfn");
+	    get_default_dir(pkgdir, SAVE_FUNCTIONS);
+	    build_path(targ, pkgdir, objname, ext);
 	}
     } 
 
@@ -1873,7 +1888,7 @@ static char *get_writable_target (int code, int op, char *objname)
 	if (fp == NULL) {
 	    if (errno == EACCES && code != REMOTE_FUNC_FILES) { 
 		/* write to user dir instead? */
-		build_path(targ, paths.workdir, objname, ".ggz");
+		build_path(targ, paths.workdir, objname, ext);
 	    } else {
 		file_write_errbox(targ);
 		free(targ);
@@ -1888,7 +1903,7 @@ static char *get_writable_target (int code, int op, char *objname)
 }
 
 /* note : 'vwin' here is the source viewer window displaying the
-   remote file (database or data files package or function package)
+   remote file (database or datafiles package or function package)
    that is being installed onto the local machine.
 */
 
@@ -1897,11 +1912,6 @@ static int real_install_file_from_server (windata_t *vwin, int op)
     gchar *objname = NULL;
     char *target = NULL;
     int err = 0;
-
-    if (vwin->role == REMOTE_DATA_PKGS) {
-	dummy_call();
-	return 1;
-    }
 
     if (vwin->role == REMOTE_DB) {
 	GtkTreeSelection *sel;
@@ -1913,24 +1923,26 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	    gtk_tree_model_get(model, &iter, 0, &objname, -1);
 	}
     } else {
-	/* remote data file or function package */
+	/* remote datafiles or function package */
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			     vwin->active_var, 0, &objname);
     }
 
     if (objname == NULL || *objname == '\0') {
-	free(objname);
+	g_free(objname);
 	return 1;
     }    
 
     target = get_writable_target(vwin->role, op, objname);
     if (target == NULL) {
-	free(objname);
+	g_free(objname);
 	return 1;
     }
 
     if (vwin->role == REMOTE_FUNC_FILES) {
 	err = retrieve_remote_function_package(objname, target);
+    } else if (vwin->role == REMOTE_DATA_PKGS) {
+	err = retrieve_remote_datafiles_package(objname, target);
     } else {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	err = retrieve_remote_db(objname, target, GRAB_NBO_DATA);
@@ -1955,7 +1967,17 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	    } else {
 		gui_show_function_info(target, VIEW_FUNC_INFO);
 	    }
+	} else if (vwin->role == REMOTE_DATA_PKGS) {
+	    fprintf(stderr, "downloaded '%s'\n", target);
+	    err = gretl_untar(target);
+	    remove(target);
+	    if (err) {
+		errbox(_("Error unzipping compressed data"));
+	    } else {
+		infobox("Restart gretl to access this database");
+	    }
 	} else {
+	    fprintf(stderr, "downloaded '%s'\n", target);
 	    err = ggz_extract(target);
 	    if (err) {
 		if (err != E_FOPEN) {
@@ -1974,7 +1996,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	}
     }
 
-    free(objname);
+    g_free(objname);
     free(target);
 
     return err;
@@ -2144,7 +2166,7 @@ static void get_local_object_status (const char *fname, int role,
 
     if ((err = gretl_stat(fullname, &fbuf)) == -1) {
 	if (errno == ENOENT) {
-#ifdef G_OS_WIN32
+#ifdef G_OS_WIN32 /* FIXME? */
 	    *status = N_("Not installed");
 #else
 	    /* try user dir too, if not on Windows */
@@ -2184,7 +2206,13 @@ static void get_local_object_status (const char *fname, int role,
     }
 
     if (!err) {
-	if (difftime(remtime, fbuf.st_ctime) > 360) {
+	double dt;
+
+	dt = difftime(remtime, fbuf.st_ctime);
+	if (dt > 360) {
+	    dt = difftime(remtime, fbuf.st_mtime);
+	}
+	if (dt > 360) {
 	    *status = N_("Not up to date");
 	} else {
 	    *status = N_("Up to date");
@@ -2192,11 +2220,11 @@ static void get_local_object_status (const char *fname, int role,
     }
 }
 
-static int read_remote_filetime (char *line, char *fname, time_t *date)
+static int read_remote_filetime (char *line, char *fname, time_t *date,
+				 char *buf)
 {
-    char mon[4], hrs[9];
-    int mday, yr;
-    struct tm mytime;
+    char month[4], hrs[9];
+    int mday, yr, mon = 0;
     const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr",
 	"May", "Jun", "Jul", "Aug",
@@ -2213,29 +2241,35 @@ static int read_remote_filetime (char *line, char *fname, time_t *date)
     */
 
     if (sscanf(line, "%*s%*s%3s%2d%8s%4d%31s", 
-	       mon, &mday, hrs, &yr, fname) != 5) {
+	       month, &mday, hrs, &yr, fname) != 5) {
 	return 1;
     }
 
-    hrs[2] = 0;
-
-    mytime.tm_sec = 0;
-    mytime.tm_min = 0;   
-    mytime.tm_wday = 0;   
-    mytime.tm_yday = 0;   
-    mytime.tm_isdst = -1; 
-    mytime.tm_hour = atoi(hrs);
-    mytime.tm_year = yr - 1900;
-    mytime.tm_mday = mday;
-    mytime.tm_mon = 0;
-
     for (i=0; i<12; i++) {
-	if (strcmp(mon, months[i]) == 0) {
-	    mytime.tm_mon = i;
+	if (!strcmp(month, months[i])) {
+	    mon = i;
 	}
-    }
+    }    
 
-    *date = mktime(&mytime);
+    if (buf != NULL) {
+	sprintf(buf, "%d-%02d-%02d", yr, mon + 1, mday);
+    } else {
+	struct tm mytime;
+
+	hrs[2] = 0;
+
+	mytime.tm_sec = 0;
+	mytime.tm_min = 0;   
+	mytime.tm_wday = 0;   
+	mytime.tm_yday = 0;   
+	mytime.tm_isdst = -1; 
+	mytime.tm_hour = atoi(hrs);
+	mytime.tm_year = yr - 1900;
+	mytime.tm_mday = mday;
+	mytime.tm_mon = mon;
+
+	*date = mktime(&mytime);
+    }
 
     return 0;
 }
@@ -2341,7 +2375,7 @@ gint populate_remote_db_list (windata_t *vwin)
 	if (strstr(line, "idx")) {
 	    continue;
 	}
-	if (read_remote_filetime(line, fname, &remtime)) {
+	if (read_remote_filetime(line, fname, &remtime, NULL)) {
 	    continue;
 	}
 	if (bufgets(line, sizeof line, getbuf)) {
@@ -2385,7 +2419,7 @@ gint populate_remote_db_list (windata_t *vwin)
 	if (strstr(line, "idx")) {
 	    continue;
 	}
-	if (read_remote_filetime(line, fname, &remtime)) {
+	if (read_remote_filetime(line, fname, &remtime, NULL)) {
 	    continue;
 	}
 
@@ -2479,7 +2513,7 @@ gint populate_remote_func_list (windata_t *vwin)
 	descrip = NULL;
 	version = NULL;
 
-	if (read_remote_filetime(line, fname, &remtime)) {
+	if (read_remote_filetime(line, fname, &remtime, NULL)) {
 	    continue;
 	}
 
@@ -2541,10 +2575,10 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
     char *getbuf = NULL;
     char line[256];
     char fname[32];
+    char tstr[16];
     const char *status;
     char *basename;
     char *descrip;
-    time_t remtime;
     int n, err = 0;
 
     err = list_remote_data_packages(&getbuf);
@@ -2565,14 +2599,14 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
 
     while (bufgets(line, sizeof line, getbuf)) {
 	descrip = NULL;
+	*tstr = '\0';
 
-	if (read_remote_filetime(line, fname, &remtime)) {
+	if (read_remote_filetime(line, fname, NULL, tstr)) {
 	    continue;
 	}
 
 	status = "";
 	basename = strip_extension(fname);
-	get_local_object_status(basename, vwin->role, &status, remtime);
 
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
@@ -2588,7 +2622,7 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
 	gtk_list_store_set(store, &iter, 
 			   0, basename, 
 			   1, descrip, 
-			   2, _(status),
+			   2, tstr,
 			   -1);
 
 	free(descrip);
