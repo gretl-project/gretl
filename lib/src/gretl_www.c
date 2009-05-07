@@ -770,11 +770,15 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 
     if (sp_ret == SP_RETURN_CANCELED) goto canceled;
 
-    /* Read from fd while there is available data. */
+    /* read from fd while there is available data */
+
     nchunks = 1;
     allocated = WBUFSIZE;
+
     do {
+	fprintf(stderr, "get_contents: calling iread...\n");
 	res = iread(fd, cbuf, sizeof cbuf);
+	fprintf(stderr, " got %d bytes\n", (int) res);
 	if (res > 0) {
 	    if (fp == NULL) {
 		if ((size_t) (*len + res) > allocated) {
@@ -791,6 +795,7 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 		    return -2;
 		}
 	    }
+
 	    *len += res;
 
 	    if (show) {
