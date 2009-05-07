@@ -4906,7 +4906,7 @@ void resid_plot (GtkAction *action, gpointer p)
     DATAINFO *ginfo;
 
     /* special case: GARCH model (show fitted variance) */
-    if (pmod->ci == GARCH && xvar == 0) {
+    if (pmod->ci == GARCH && !(pmod->opt & OPT_U) && xvar == 0) {
 	err = garch_resid_plot(pmod, datainfo);
 	if (err) {
 	    gui_errmsg(err);
@@ -4947,9 +4947,15 @@ void resid_plot (GtkAction *action, gpointer p)
     plotlist[1] = uhatno; 
 
     strcpy(ginfo->varname[uhatno], _("residual"));
-    yno = gretl_model_get_depvar(pmod);
-    sprintf(VARLABEL(ginfo, uhatno), "residual for %s", 
-	    ginfo->varname[yno]);
+
+    if (pmod->ci == GARCH && (pmod->opt & OPT_U)) {
+	strcpy(DISPLAYNAME(ginfo, uhatno), _("standardized residual"));
+	opt ^= OPT_R;
+    } else {
+	yno = gretl_model_get_depvar(pmod);
+	sprintf(VARLABEL(ginfo, uhatno), "residual for %s", 
+		ginfo->varname[yno]);
+    }
 
     if (xvar) { 
 	/* plot against specified xvar */
