@@ -33,6 +33,7 @@
 #include "selector.h"
 #include "toolbar.h"
 #include "winstack.h"
+#include "fileselect.h"
 
 #include "gretl_xml.h"
 #include "gretl_func.h"
@@ -96,6 +97,11 @@ struct fpkg_response {
 #define REMOTE_ACTION(c) (c == REMOTE_DB || \
                           c == REMOTE_FUNC_FILES || \
                           c == REMOTE_DATA_PKGS)
+
+static void
+read_fn_files_in_dir (int role, DIR *dir, const char *path, 
+		      GtkListStore *store, GtkTreeIter *iter,
+		      int *nfn, int *maxlen);
 
 static void 
 fpkg_response_init (struct fpkg_response *f, gpointer p)
@@ -816,6 +822,31 @@ windata_t *gui_show_function_info (const char *fname, int role)
     return vwin;
 }
 
+void set_funcs_dir_callback (windata_t *vwin, char *path)
+{
+    DIR *dir = opendir(path);
+
+    if (dir != NULL) {
+	GtkListStore *store;
+	GtkTreeIter iter;
+	int maxlen = 0;
+	int nfn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->listbox), "nfn"));
+	int nfn0 = nfn;	
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	read_fn_files_in_dir(vwin->role, dir, path, store, &iter,
+			     &nfn, &maxlen);
+	if (nfn > nfn0) {
+	    infobox("Found %d additional function file(s)", nfn - nfn0);
+	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
+	} else {
+	    warnbox("No additional function files were found");
+	}
+	closedir(dir);
+    }
+}
+
 static void browser_functions_handler (windata_t *vwin, int task)
 {
     char fnfile[FILENAME_MAX];
@@ -1097,6 +1128,12 @@ static void show_local_funcs (GtkWidget *w, gpointer p)
     display_files(FUNC_FILES, p);
 }
 
+static void alt_funcs_dir (GtkWidget *w, windata_t *vwin)
+{
+    file_selector_with_parent(NULL, SET_FDIR, FSEL_DATA_VWIN, vwin, 
+                              vwin->main);
+}
+
 enum {
     BTN_EDIT = 1,
     BTN_INFO,
@@ -1110,11 +1147,13 @@ enum {
     BTN_NEW,
     BTN_FIND,
     BTN_OPEN,
+    BTN_DIR,
     BTN_CLOSE
 };
 
 static GretlToolItem files_items[] = {
     { N_("Open"),           GTK_STOCK_OK,         NULL,                          BTN_OPEN },
+    { N_("Select directory"), GTK_STOCK_DIRECTORY,  G_CALLBACK(alt_funcs_dir),   BTN_DIR },
     { N_("Edit"),           GTK_STOCK_EDIT,       G_CALLBACK(browser_edit_func), BTN_EDIT },
     { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
@@ -1133,7 +1172,7 @@ static int n_files_items = G_N_ELEMENTS(files_items);
 
 #define common_item(f) (f == BTN_FIND || f == BTN_CLOSE)
 
-#define local_funcs_item(f) (f == BTN_EDIT || f == BTN_NEW || \
+#define local_funcs_item(f) (f == BTN_DIR || f == BTN_EDIT || f == BTN_NEW || \
 			     f == BTN_DEL || f == BTN_CODE)
 
 static int files_item_get_callback (GretlToolItem *item, int role)
@@ -1476,10 +1515,48 @@ static int get_func_info (const char *fname, const char *fndir,
     return err;
 }
 
-static int
-read_fn_files_in_dir (int role, DIR *dir, const char *fndir, 
+static int fn_file_is_duplicate (const char *fname, 
+				 const char *version,
+				 GtkListStore *store,
+				 int imax)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gchar *fname_i;
+    gchar *version_i;
+    int i, n, ret = 0;
+
+    model = GTK_TREE_MODEL(store);
+
+    if (!gtk_tree_model_get_iter_first(model, &iter)) {
+	return 0;
+    }
+
+    n = strlen(fname) - 4;
+
+    for (i=0; i<imax; i++) {
+	gtk_tree_model_get(model, &iter, 
+			   0, &fname_i, 
+			   1, &version_i,
+			   -1);
+	if (strncmp(fname, fname_i, n) == 0 &&
+	    strcmp(version, version_i) == 0) {
+	    ret = 1;
+	} 
+	g_free(fname_i);
+	g_free(version_i);
+	if (ret || !gtk_tree_model_iter_next(model, &iter)) {
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+static void
+read_fn_files_in_dir (int role, DIR *dir, const char *path, 
 		      GtkListStore *store, GtkTreeIter *iter,
-		      int *maxlen)
+		      int *nfn, int *maxlen)
 {
     struct dirent *dirent;
     char fullname[MAXLEN];
@@ -1487,7 +1564,7 @@ read_fn_files_in_dir (int role, DIR *dir, const char *fndir,
     char *fname;
     char *descrip;
     char *version;
-    int n, nfn = 0;
+    int n, imax = *nfn;
     int err;
 
     while ((dirent = readdir(dir)) != NULL) {
@@ -1501,31 +1578,31 @@ read_fn_files_in_dir (int role, DIR *dir, const char *fndir,
 	}
 	n = strlen(fname);
 	if (!g_ascii_strcasecmp(fname + n - 4, ".gfn")) {
-	    err = get_func_info(fname, fndir, &descrip, &version);
+	    err = get_func_info(fname, path, &descrip, &version);
 	    if (!err) {
-		gtk_list_store_append(store, iter);
-		build_path(fullname, fndir, fname, NULL);
-		n -= 4;
-		fname[n] = '\0';
-		if (n > *maxlen) {
-		    *maxlen = n;
+		if (!fn_file_is_duplicate(fname, version, store, imax)) {
+		    gtk_list_store_append(store, iter);
+		    build_path(fullname, path, fname, NULL);
+		    n -= 4;
+		    fname[n] = '\0';
+		    if (n > *maxlen) {
+			*maxlen = n;
+		    }
+		    loaded = function_package_is_loaded(fullname);
+		    gtk_list_store_set(store, iter, 
+				       0, fname, 
+				       1, version,
+				       2, descrip, 
+				       3, loaded, 
+				       4, path, -1);
+		    *nfn += 1;
 		}
-		loaded = function_package_is_loaded(fullname);
-		gtk_list_store_set(store, iter, 
-				   0, fname, 
-				   1, version,
-				   2, descrip, 
-				   3, loaded, 
-				   4, fndir, -1);
 		free(descrip);
 		free(version);
-		nfn++;
 	    }
 	}
 	g_free(fname);
     }
-
-    return nfn;
 }
 
 static gint 
@@ -1579,17 +1656,26 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     build_path(fndir, paths.gretldir, "functions", NULL);
     dir = opendir(fndir);
     if (dir != NULL) {
-	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-				    &maxlen);
+	read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+			     &nfn, &maxlen);
 	closedir(dir);
     }
 
     /* plus any function files in the user's working dir */
+    strcpy(fndir, paths.workdir);
+    dir = opendir(fndir);
+    if (dir != NULL) {
+	read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+			     &nfn, &maxlen);
+	closedir(dir);
+    }    
+
+    /* plus any function files under "functions" in the user's working dir */
     build_path(fndir, paths.workdir, "functions", NULL);
     dir = opendir(fndir);
     if (dir != NULL) {
-	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-				    &maxlen);
+	read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+			     &nfn, &maxlen);
 	closedir(dir);
     }
 
@@ -1597,8 +1683,8 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     build_path(fndir, paths.dotdir, "functions", NULL);
     dir = opendir(fndir);
     if (dir != NULL) {
-	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-				    &maxlen);
+	read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+			     &nfn, &maxlen);
 	closedir(dir);
     } 
 
@@ -1608,8 +1694,8 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	build_path(fndir, tmp, "functions", NULL);
 	dir = opendir(fndir);
 	if (dir != NULL) {
-	    nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-				    &maxlen);
+	    read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+				 &nfn, &maxlen);
 	    closedir(dir);
 	}
 	free(tmp);
@@ -1631,6 +1717,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	}
 	return 1;
     } else {
+	g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
 	sort_pkglist(vwin);
     }
 

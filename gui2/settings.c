@@ -432,6 +432,8 @@ static void get_pkg_dir (char *dirname, int action)
 	return;
     }
 
+    /* try 'system' location first */
+
     sprintf(dirname, "%s%s", paths.gretldir, subdir);
     err = gretl_mkdir(dirname);
     if (!err) {
@@ -449,19 +451,28 @@ static void get_pkg_dir (char *dirname, int action)
     
     if (ok) return;
 
-    sprintf(dirname, "%s%s", paths.dotdir, subdir); /* ?? */
-    err = gretl_mkdir(dirname);
-    if (!err) {
-	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
-	if (target != NULL) {
-	    fp = gretl_fopen(target, "w");
-	    if (fp != NULL) {
-		ok = 1;
-		fclose(fp);
-		gretl_remove(target);
-	    }
-	    free(target);
+    /* try user's directory */
+
+    if (action == SAVE_DATA_PKG) {
+	strcpy(dirname, paths.workdir);
+	target = g_strdup_printf("%s%s", dirname, "wtest");
+    } else {
+	/* should we really use dotdir here? */
+	sprintf(dirname, "%s%s", paths.dotdir, subdir);
+	err = gretl_mkdir(dirname);
+	if (!err) {
+	    target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
 	}
+    } 
+
+    if (target != NULL) {
+	fp = gretl_fopen(target, "w");
+	if (fp != NULL) {
+	    ok = 1;
+	    fclose(fp);
+	    gretl_remove(target);
+	}
+	free(target);
     }
 
     if (ok) return;

@@ -26,6 +26,7 @@
 #include "fileselect.h"
 #include "fnsave.h"
 #include "database.h"
+#include "datafiles.h"
 #include "bootstrap.h"
 
 #include <sys/stat.h>
@@ -77,7 +78,7 @@
                        i == OPEN_DATA || \
                        i == APPEND_DATA)
 
-#define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR)
+#define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR || i == SET_FDIR)
 
 struct extmap {
     int action;
@@ -527,6 +528,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	set_path_callback(data, fname);
     } else if (action == SET_WDIR) {
 	set_working_dir_callback(data, fname);
+    } else if (action == SET_FDIR) {
+	set_funcs_dir_callback(data, fname);
     } else {
 	windata_t *vwin = (windata_t *) data;
 
