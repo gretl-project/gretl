@@ -1902,6 +1902,37 @@ static char *get_writable_target (int code, int op, char *objname)
     return targ;
 }
 
+static int unpack_book_data (const char *fname)
+{
+    char *p, path[FILENAME_MAX];
+    int err = 0;
+
+    errno = 0;
+
+    strcpy(path, fname);
+
+    p = strrchr(path, SLASH);
+    if (p == NULL && SLASH == '\\') {
+	p = strrchr(path, '/');
+    }
+    if (p != NULL) {
+	*p = '\0';
+    }
+
+    chdir(path);
+
+    if (errno != 0) {
+        gretl_errmsg_set_from_errno("chdir");
+	err = E_FOPEN;
+    }
+
+    if (!err) {
+	err = gretl_untar(fname);
+    }
+
+    return err;
+}
+
 /* note : 'vwin' here is the source viewer window displaying the
    remote file (database or datafiles package or function package)
    that is being installed onto the local machine.
@@ -1969,7 +2000,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	    }
 	} else if (vwin->role == REMOTE_DATA_PKGS) {
 	    fprintf(stderr, "downloaded '%s'\n", target);
-	    err = gretl_untar(target);
+	    err = unpack_book_data(target);
 	    remove(target);
 	    if (err) {
 		errbox(_("Error unzipping compressed data"));
