@@ -1182,7 +1182,7 @@ static void varheading (const int *list, int leader, int wid,
 {
     int i, vi;
 
-    if (csv_format(prn)) {
+    if (delim) {
 	pprintf(prn, "obs%c", delim);
 	for (i=1; i<=list[0]; i++) { 
 	    vi = list[i];
@@ -1459,7 +1459,8 @@ static int g_too_long (double x, int signif)
     return (strlen(n1) > strlen(n2));
 }
 
-static char *bufprintnum (char *buf, double x, int signif, int width)
+static char *bufprintnum (char *buf, double x, int signif,
+			  int gprec, int width)
 {
     static char numstr[32];
     int i, l;
@@ -1468,7 +1469,7 @@ static char *bufprintnum (char *buf, double x, int signif, int width)
 
     /* guard against monster numbers that will smash the stack */
     if (fabs(x) > 1.0e20 || signif == PMAX_NOT_AVAILABLE) {
-	sprintf(numstr, "%g", x);
+	sprintf(numstr, "%.*g", gprec, x);
 	goto finish;
     }
 
@@ -1818,6 +1819,23 @@ static int *get_pmax_array (const int *list, const double **Z,
     return pmax;
 }
 
+int column_width_from_list (const int *list, const DATAINFO *pdinfo)
+{
+    int i, n, vi, w = 13;
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi > 0 && vi < pdinfo->v) {
+	    n = strlen(pdinfo->varname[vi]);
+	    if (n >= w) {
+		w = n + 1;
+	    }
+	}
+    }
+
+    return w;
+}
+
 #define BMAX 5
 
 /* print the series referenced in 'list' by observation */
@@ -1828,12 +1846,12 @@ static int print_by_obs (int *list, const double **Z,
 			 PRN *prn)
 {
     int i, j, j0, k, t, nrem;
-    int colwidth = 13;
-    int sortvar, obslen;
+    int colwidth, sortvar, obslen;
     int *pmax = NULL;
     char obslabel[OBSLEN];
     char buf[128];
     int blist[BMAX+1];
+    int gprec = 6;
     double x;
     int err = 0;
 
@@ -1850,6 +1868,8 @@ static int print_by_obs (int *list, const double **Z,
 	obslen = max_obs_label_length(pdinfo);
     }
 
+    colwidth = column_width_from_list(list, pdinfo);
+
     nrem = list[0];
     k = 1;
 
@@ -1863,7 +1883,7 @@ static int print_by_obs (int *list, const double **Z,
 	    nrem--;
 	}
 
-	varheading(blist, obslen, colwidth, pdinfo, pdinfo->delim, prn);
+	varheading(blist, obslen, colwidth, pdinfo, 0, prn);
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 
@@ -1887,7 +1907,7 @@ static int print_by_obs (int *list, const double **Z,
 		if (na(x)) {
 		    bufspace(colwidth, prn);
 		} else { 
-		    bufprintnum(buf, x, pmax[j-1], colwidth);
+		    bufprintnum(buf, x, pmax[j-1], gprec, colwidth);
 		    pputs(prn, buf);
 		}
 	    }
@@ -1944,8 +1964,8 @@ static int print_by_var (const int *list, const double **Z,
  * Note that %OPT_L nullifies %OPT_O.
  * @prn: gretl printing struct.
  *
- * Print the data for the variables in @list, from observations t1 to
- * t2.
+ * Print the data for the variables in @list over the currently
+ * defined sample range.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
@@ -2141,7 +2161,12 @@ int print_series_with_format (const int *list, const double **Z,
     return err;
 }
 
-void rtf_print_row_spec (int ncols, RtfRowType type, PRN *prn)
+enum {
+    RTF_HEADER,
+    RTF_TRAILER
+};
+
+static void rtf_print_row_spec (int ncols, int type, PRN *prn)
 {
     int j;
 
@@ -2191,8 +2216,9 @@ int print_data_sorted (const int *list, const int *obsvec,
     double xx;
     char obs_string[OBSLEN];
     char buf[128];
-    int colwidth = 16;
+    int colwidth = 0;
     int ncols = 0, obslen = 0;
+    int gprec = 6;
     int T, lmax;
     int i, s, t;
 
@@ -2221,21 +2247,24 @@ int print_data_sorted (const int *list, const int *obsvec,
 	return E_DATA;
     }
 
+    pmax = get_pmax_array(list, Z, pdinfo);
+    if (pmax == NULL) {
+	return E_ALLOC;
+    }
+
     if (delimited) {
+	if (csv_format(prn)) {
+	    gprec = 15;
+	}
 	delim = pdinfo->delim;
 	if (get_local_decpoint() == ',' && delim == ',') {
 	    delim = ';';
 	}
+    } else if (rtf) {
+	ncols = list[0] + 1;
     } else {
-	pmax = get_pmax_array(list, Z, pdinfo);
-	if (pmax == NULL) {
-	    return E_ALLOC;
-	}
-	if (rtf) {
-	    ncols = list[0] + 1;
-	} else {
-	    obslen = max_obs_label_length(pdinfo);
-	}
+	colwidth = column_width_from_list(list, pdinfo);
+	obslen = max_obs_label_length(pdinfo);
     }
 
     if (rtf) {
@@ -2282,13 +2311,11 @@ int print_data_sorted (const int *list, const int *obsvec,
 		    bufspace(colwidth, prn);
 		}
 	    } else { 
-		if (delimited) {
-		    pprintf(prn, "%.15g", xx);
-		} else if (rtf) {
-		    bufprintnum(buf, xx, pmax[i-1], 0);
+		if (rtf) {
+		    bufprintnum(buf, xx, pmax[i-1], gprec, 0);
 		    pprintf(prn, "\\qr %s\\cell ", buf);
 		} else {
-		    bufprintnum(buf, xx, pmax[i-1], colwidth);
+		    bufprintnum(buf, xx, pmax[i-1], gprec, colwidth);
 		    pputs(prn, buf);
 		}
 	    }
