@@ -1690,7 +1690,105 @@ int scalars_to_prn (PRN *prn)
     return 0;
 }
 
-/* copy data to buffer in CSV format and place on clipboard */
+static void rtf_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn)
+{
+    if (pdinfo->S != NULL) {
+	pprintf(prn, "%s\\cell ", pdinfo->S[t]);
+    } else if (pdinfo->structure != CROSS_SECTION) {
+	char tmp[OBSLEN];
+
+	ntodate_full(tmp, t, pdinfo);
+	if (quarterly_or_monthly(pdinfo)) {
+	    modify_date_for_csv(tmp, pdinfo->pd);
+	}
+	pprintf(prn, "%s\\cell ", tmp);
+    }
+}
+
+/* print listed variables in RTF table format */
+
+static int data_to_buf_as_rtf (const int *list, PRN *prn)
+{
+    int i, t, l0 = list[0];
+    int *pmax = NULL;
+    int tsamp = sample_size(datainfo);
+    int ncols, obscol = 0;
+    double xx;
+
+    if (l0 == 0) return 1;
+
+    pmax = mymalloc(l0 * sizeof *pmax);
+    if (pmax == NULL) {
+	return 1;
+    }
+
+    for (i=1; i<=l0; i++) {
+	pmax[i-1] = get_precision(&Z[list[i]][datainfo->t1], 
+				  tsamp, 8);
+    }	
+
+    if (datainfo->decpoint != ',') {
+	gretl_push_c_numeric_locale();
+    }
+
+    if (datainfo->S != NULL || datainfo->structure != CROSS_SECTION) {
+	obscol = 1;
+	ncols = l0 + 1;
+    } else {
+	ncols = l0;
+    }
+
+    pputs(prn, "{\\rtf1\n");
+
+    rtf_print_row_spec(ncols, RTF_HEADER, prn);
+
+    /* headings row */
+    pputc(prn, '{');
+    if (obscol) {
+	pputs(prn, " \\cell ");
+    }
+    for (i=1; i<=l0; i++) {
+	pprintf(prn, "%s\\cell ", datainfo->varname[list[i]]);
+    }
+    pputs(prn, "}\n");
+
+    rtf_print_row_spec(ncols, RTF_TRAILER, prn);
+
+    /* actual data values */
+    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	rtf_print_row_spec(ncols, RTF_HEADER, prn);
+	pputc(prn, '{');
+	if (obscol) {
+	    rtf_obs_to_prn(t, datainfo, prn);
+	}
+	for (i=1; i<=l0; i++) { 
+	    xx = Z[list[i]][t];
+	    if (na(xx)) {
+		pputs(prn, "\\qr NA\\cell ");
+	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		pprintf(prn, "\\qr %g\\cell ", xx);
+	    } else {
+		pprintf(prn, "\\qr %.*f\\cell ", pmax[i-1], xx);
+	    }
+	}
+	pputs(prn, "}\n");
+	rtf_print_row_spec(ncols, RTF_TRAILER, prn);
+    }
+
+    pputs(prn, "}\n");
+
+    if (datainfo->decpoint != ',') {
+	gretl_pop_c_numeric_locale();
+    }
+
+    if (pmax != NULL) {
+	free(pmax);
+    }
+
+    return 0;
+}
+
+/* print listed data in CSV format */
 
 static int data_to_buf_as_csv (const int *list, PRN *prn)
 {
@@ -1850,7 +1948,7 @@ int scalars_to_clipboard_as_csv (void)
 #include "series_view.h"
 #include "fileselect.h"
 
-int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
+int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 {
     int *list = series_view_get_list(vwin);
     PRN *prn = NULL;
@@ -1869,25 +1967,37 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 	if (fmt == GRETL_FORMAT_CSV) {
 	    datainfo->delim = ',';
 	    datainfo->decpoint = '.';
-	} else {
+	} else if (fmt == GRETL_FORMAT_TAB) {
+	    fmt |= GRETL_FORMAT_CSV;
 	    datainfo->delim = '\t';
 	}
 
 	if (series_view_is_sorted(vwin)) {
-	    prn = vwin_print_sorted_as_csv(vwin);
+	    prn = vwin_print_sorted_with_format(vwin, fmt);
 	    if (prn == NULL) {
 		err = 1;
 	    }
 	} else {
 	    err = bufopen(&prn);
 	    if (!err) {
-		err = data_to_buf_as_csv(list, prn);
+		if (fmt == GRETL_FORMAT_RTF) {
+		    err = data_to_buf_as_rtf(list, prn);
+		} else {
+#if 1
+		    err = data_to_buf_as_csv(list, prn);
+#else
+		    gretl_print_set_format(prn, GRETL_FORMAT_CSV);
+		    err = print_data_sorted(list, NULL, Z, datainfo, prn);
+#endif
+		}
 	    }
 	}
 
 	if (!err) {
 	    if (action == W_COPY) {
 		err = prn_to_clipboard(prn, fmt);
+	    } else if (fmt == GRETL_FORMAT_RTF) {
+		file_selector(_("Save"), SAVE_RTF, FSEL_DATA_PRN, prn);
 	    } else {
 		file_selector(_("Save data"), EXPORT_CSV, FSEL_DATA_PRN, prn);
 	    }

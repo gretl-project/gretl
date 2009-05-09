@@ -2882,7 +2882,15 @@ static void print_test_opt (const ModelTest *test, PRN *prn)
 	} else if (test->opt & OPT_C) {
 	    pprintf(prn, " (%s)", _("cubes only"));
 	}
-    }
+    } else if (test->type == GRETL_TEST_WHITES) {
+	if (test->opt & OPT_X) {
+	    pprintf(prn, " (%s)", _("squares only"));
+	}
+    } else if (test->type == GRETL_TEST_BP) {
+	if (test->opt & OPT_R) {
+	    pprintf(prn, " (%s)", _("robust variant"));
+	}
+    }	
 }  
 
 static int gretl_test_print_heading (const ModelTest *test, PRN *prn)

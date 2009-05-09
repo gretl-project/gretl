@@ -471,8 +471,9 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	special_text_handler(vwin, fmt, action);
     } else if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
 	special_text_handler(vwin, fmt, action);
-    } else if (fmt == GRETL_FORMAT_CSV || fmt == GRETL_FORMAT_TAB) {
-	csv_copy_listed_vars(vwin, fmt, action);
+    } else if (fmt == GRETL_FORMAT_CSV || fmt == GRETL_FORMAT_TAB ||
+	       fmt == GRETL_FORMAT_RTF) {
+	copy_vars_formatted(vwin, fmt, action);
     } else if (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) {
 	cpybuf = text_window_get_copy_buf(vwin, 0);
     } else if (fmt == GRETL_FORMAT_SELECTION) {

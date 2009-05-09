@@ -2675,10 +2675,11 @@ static void print_whites_test (double LM, int df, double pval,
 	}
 	pprintf(prn, "\n%s: LM = %f,\n", _("Test statistic"), LM);
     } else {
+	pprintf(prn, "\n%s", _("White's test for heteroskedasticity"));
 	if (opt & OPT_X) {
-	    pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity (no cross products)"));
+	    pprintf(prn, " (%s)\n", _("squares only"));
 	} else {
-	    pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity"));
+	    pputc(prn, '\n');
 	}
 	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), LM);
     }
@@ -3036,10 +3037,22 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	int df = white.ncoeff - 1;
 	double pval = chisq_cdf_comp(df, LM);
+	gretlopt testopt = OPT_NONE;
+
+	if (BP) {
+	    if (opt & OPT_R) {
+		/* Koenker robust variant */
+		testopt = OPT_R;
+	    }
+	} else if (opt & OPT_X) {
+	    /* squares only */
+	    testopt = OPT_X;
+	}
 
 	if (opt & OPT_Q) {
 	    print_whites_test(LM, df, pval, opt, prn);
 	} else {
+	    white.opt |= testopt;
 	    printmodel(&white, pdinfo, OPT_NONE, prn);
 	}
 
@@ -3052,6 +3065,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		model_test_set_dfn(test, df);
 		model_test_set_value(test, LM);
 		model_test_set_pvalue(test, pval);
+		model_test_set_opt(test, testopt);
 		maybe_add_test_to_model(pmod, test);
 	    }	  
 	}

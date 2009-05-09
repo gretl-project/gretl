@@ -44,7 +44,7 @@ int *series_view_get_list (windata_t *vwin);
 
 int series_view_is_sorted (windata_t *vwin);
 
-PRN *vwin_print_sorted_as_csv (windata_t *vwin);
+PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt);
 
 void scalar_to_clipboard (windata_t *vwin);
 

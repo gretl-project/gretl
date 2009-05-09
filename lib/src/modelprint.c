@@ -571,42 +571,90 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
-static const char *aux_string (int aux, PRN *prn)
+#ifndef ENABLE_NLS
+static char *nulltrans (const char *s)
 {
+    return (char *) s;
+}
+#endif
+
+static void print_aux_string (const MODEL *pmod, PRN *prn)
+{
+    char *(*tr) (const char *);
+    int aux = pmod->aux;
+    int plain = plain_format(prn);
+    int tex = tex_format(prn);
+    int csv = csv_format(prn);
+    int close = 1;
+
+#ifdef ENABLE_NLS
+    tr = (plain)? gettext : iso_gettext;
+#else
+    tr = nulltrans;
+#endif
+
+    if (plain || tex) {
+	pputc(prn, '\n');
+    } else if (csv) {
+	pputc(prn, '"');
+    } 
+
     if (aux == AUX_SQ) {
-	return N_("Auxiliary regression for non-linearity test "
-		 "(squared terms)");
+	pputs(prn, tr(N_("Auxiliary regression for non-linearity test "
+			 "(squared terms)")));
     } else if (aux == AUX_LOG) {
-	return N_("Auxiliary regression for non-linearity test "
-		 "(log terms)");
+	pputs(prn, tr(N_("Auxiliary regression for non-linearity test "
+			 "(log terms)")));
     } else if (aux == AUX_WHITE) {
-	return N_("White's test for heteroskedasticity");
+	pputs(prn, tr(N_("White's test for heteroskedasticity")));
+	if (pmod->opt & OPT_X) {
+	    pprintf(prn, " (%s)", tr(N_("squares only")));
+	} 
     } else if (aux == AUX_BP) {
-	return N_("Breusch-Pagan test for heteroskedasticity");
+	pputs(prn, tr(N_("Breusch-Pagan test for heteroskedasticity")));
     } else if (aux == AUX_HET_1) {
-	return N_("Pesaran-Taylor test for heteroskedasticity");
+	pputs(prn, tr(N_("Pesaran-Taylor test for heteroskedasticity")));
     } else if (aux == AUX_CHOW) {
-	return N_("Augmented regression for Chow test");
+	pputs(prn, tr(N_("Augmented regression for Chow test")));
     } else if (aux == AUX_COINT) {
-	if (tex_format(prn)) return N_("Cointegrating regression -- ");
-	else return N_("Cointegrating regression - ");
+	if (tex_format(prn)) {
+	    pputs(prn, I_("Cointegrating regression -- "));
+	} else {
+	    pputs(prn, tr(N_("Cointegrating regression - ")));
+	}
     } else if (aux == AUX_ADF) {
-	if (tex_format(prn)) return N_("Augmented Dickey--Fuller regression");
-	else return N_("Augmented Dickey-Fuller regression");
+	if (tex_format(prn)) {
+	    pputs(prn, I_("Augmented Dickey--Fuller regression"));
+	} else {
+	    pputs(prn, tr(N_("Augmented Dickey-Fuller regression")));
+	}
     } else if (aux == AUX_DF) {
-	if (tex_format(prn)) return N_("Dickey--Fuller regression");
-	else return N_("Dickey-Fuller regression");
+	if (tex_format(prn)) {
+	    pputs(prn, I_("Dickey--Fuller regression"));
+	} else {
+	    pputs(prn, tr(N_("Dickey-Fuller regression")));
+	}
     } else if (aux == AUX_KPSS) {
-	return N_("KPSS regression");
+	pputs(prn, tr(N_("KPSS regression")));
     } else if (aux == AUX_RESET) {
-	return N_("Auxiliary regression for RESET specification test");
+	pputs(prn, tr(N_("Auxiliary regression for RESET specification test")));
     } else if (aux == AUX_GROUPWISE) {
-	return N_("Groupwise heteroskedasticity");
+	pputs(prn, tr(N_("Groupwise heteroskedasticity")));
     } else if (aux == AUX_COMFAC) {
-	return N_("Augmented regression for common factor test");
+	pputs(prn, tr(N_("Augmented regression for common factor test")));
+    } else {
+	close = 0;
     }
 
-    else return "";
+    if (close) {
+	if (plain || tex) {
+	    pputc(prn, '\n');
+	} else if (csv) {
+	    pputs(prn, "\"\n");
+	} else { /* RTF */
+	    pputs(prn, "\\par\n");
+	}
+    }	      
 }
 
 static const char *simple_estimator_string (int ci, PRN *prn)
@@ -1445,7 +1493,6 @@ static void print_model_heading (const MODEL *pmod,
     char startdate[OBSLEN], enddate[OBSLEN], vname[32];
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = tex_format(prn);
-    int plain = plain_format(prn);
     int csv = csv_format(prn);
     int dvnl = 1;
     int order = 0;
@@ -1469,15 +1516,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_RESET:
     case AUX_GROUPWISE:
     case AUX_COMFAC:
-	if (plain) {
-	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn)));
-	} else if (tex) {
-	    pprintf(prn, "\n%s\n", I_(aux_string(pmod->aux, prn)));
-	} else if (csv) {
-	    pprintf(prn, "\"%s\"\n", I_(aux_string(pmod->aux, prn)));
-	} else { /* RTF */
-	    pprintf(prn, "%s\\par\n", I_(aux_string(pmod->aux, prn)));
-	}
+	print_aux_string(pmod, prn);
 	break;
     case AUX_AR:
 	order = gretl_model_get_int(pmod, "BG_order");

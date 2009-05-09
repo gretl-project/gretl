@@ -54,7 +54,7 @@ int csv_to_clipboard (void);
 
 int csv_selected_to_clipboard (void);
 
-int csv_copy_listed_vars (windata_t *vwin, int fmt, int action);
+int copy_vars_formatted (windata_t *vwin, int fmt, int action);
 
 int scalars_to_clipboard_as_csv (void);
 

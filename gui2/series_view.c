@@ -116,7 +116,8 @@ static int series_view_allocate (series_view *sview)
     return err;
 }
 
-static PRN *single_series_view_print_csv (windata_t *vwin)
+static PRN *single_series_view_print_formatted (windata_t *vwin, 
+						PrnFormat fmt)
 {
     series_view *sview = (series_view *) vwin->data;
     char obslabel[OBSLEN];
@@ -128,7 +129,7 @@ static PRN *single_series_view_print_csv (windata_t *vwin)
     if (bufopen(&prn)) {
 	return NULL;
     }
-    
+
     pprintf(prn, "obs%c%s\n", dchar, datainfo->varname[sview->varnum]);
 
     for (i=0; i<sview->npoints; i++) {
@@ -294,7 +295,7 @@ int series_view_is_sorted (windata_t *vwin)
     }
 }
 
-PRN *vwin_print_sorted_as_csv (windata_t *vwin)
+PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
 {
     series_view *sview;
     int *obsvec;
@@ -303,7 +304,7 @@ PRN *vwin_print_sorted_as_csv (windata_t *vwin)
 
     if (vwin->role == VIEW_SERIES) {
 	/* a single series */
-	return single_series_view_print_csv(vwin);
+	return single_series_view_print_formatted(vwin, fmt);
     }
 
     sview = (series_view *) vwin->data;
@@ -318,7 +319,7 @@ PRN *vwin_print_sorted_as_csv (windata_t *vwin)
 	return NULL;
     }
 
-    gretl_print_set_format(prn, GRETL_FORMAT_CSV);
+    gretl_print_set_format(prn, fmt);
     err = print_data_sorted(sview->list, obsvec, (const double **) Z, 
 			    datainfo, prn);
     if (err) {

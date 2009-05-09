@@ -496,6 +496,9 @@ TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     return button;
 }  
 
+#define can_do_tabbed(v) ((v->role == PRINT && v->data != NULL) || \
+		           v->role == VIEW_SERIES)
+
 static GtkWidget *
 RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 		 int pref)
@@ -510,7 +513,7 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
-    if (finfo->multi) {
+    if (finfo->multi || can_do_tabbed(finfo->vwin)) {
 	g_object_set_data(G_OBJECT(button), "format", 
 			  GINT_TO_POINTER(GRETL_FORMAT_RTF));  
     } else {
@@ -586,9 +589,6 @@ plain_text_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     return button;
 }
 
-#define can_do_tabbed(v) ((v->role == PRINT && v->data != NULL) || \
-		           v->role == VIEW_SERIES)
-
 #define can_do_csv(v) ((v->role == PRINT && v->data != NULL) || \
 		        v->role == VIEW_SERIES || \
                         v->role == VIEW_MODEL)
@@ -631,14 +631,20 @@ void copy_format_dialog (windata_t *vwin, int action)
     gtk_box_pack_start(GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox); 
 
-    /* Tab-separated option */
+#ifdef G_OS_WIN32
+    /* Windows: put RTF option first */
+    button = RTF_copy_button(group, myvbox, finfo, pref);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+#endif
+
     if (can_do_tabbed(vwin)) {
+	/* tab-separated option */
 	button = tab_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    }
+    }    
 
-    /* Comma-separated option */
     if (can_do_csv(vwin)) {
+	/* comma-separated option */
 	button = CSV_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
@@ -647,31 +653,17 @@ void copy_format_dialog (windata_t *vwin, int action)
     button = plain_text_button(group, myvbox, finfo, pref);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
-# ifdef G_OS_WIN32
-
-    if (finfo->multi || !can_do_tabbed(vwin)) {
-	button = RTF_copy_button(group, myvbox, finfo, pref);
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    }
-
+    /* LaTeX option? */
     if (finfo->multi) {
 	button = TeX_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    }
+    }    
 
-# else /* not MS Windows: reverse RTF and LaTeX options */
-
-    if (finfo->multi) {
-	button = TeX_copy_button(group, myvbox, finfo, pref);
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    }
-
-    if (finfo->multi || !can_do_tabbed(vwin)) {
-	button = RTF_copy_button(group, myvbox, finfo, pref);
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    }
-
-# endif /* G_OS_WIN32 */
+#ifndef G_OS_WIN32
+    /* not Windows: put RTF option last */
+    button = RTF_copy_button(group, myvbox, finfo, pref);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+#endif
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);

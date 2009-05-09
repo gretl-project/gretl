@@ -22,6 +22,11 @@
 #define GRETL_DIGITS 6
 #define GRETL_MP_DIGITS 12
 
+typedef enum {
+    RTF_HEADER,
+    RTF_TRAILER
+} RtfRowType;
+
 /* functions follow */
  
 void session_time (PRN *prn);
@@ -72,6 +77,8 @@ int print_data_sorted (const int *list, const int *obsvec,
 int print_series_with_format (const int *list, const double **Z, 
 			      const DATAINFO *pdinfo, 
 			      char fmt, int digits, PRN *prn);
+
+void rtf_print_row_spec (int ncols, RtfRowType type, PRN *prn);
 
 int text_print_fit_resid (const FITRESID *fr, 
 			  const DATAINFO *pdinfo, 

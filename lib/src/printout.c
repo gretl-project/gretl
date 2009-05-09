@@ -1180,22 +1180,31 @@ static void varheading (const int *list, int leader, int wid,
 			const DATAINFO *pdinfo, char delim, 
 			PRN *prn)
 {
-    int i;
+    int i, vi;
 
     if (csv_format(prn)) {
 	pprintf(prn, "obs%c", delim);
 	for (i=1; i<=list[0]; i++) { 
-	    pputs(prn, pdinfo->varname[list[i]]);
+	    vi = list[i];
+	    pputs(prn, pdinfo->varname[vi]);
 	    if (i < list[0]) {
 		pputc(prn, pdinfo->delim);
 	    } 
 	}
 	pputc(prn, '\n');
+    } else if (rtf_format(prn)) {
+	pputs(prn, "{obs\\cell ");
+	for (i=1; i<=list[0]; i++) { 
+	    vi = list[i];
+	    pprintf(prn, "%s\\cell ", pdinfo->varname[vi]);
+	}
+	pputs(prn, "}\n");	
     } else {
 	pputc(prn, '\n');
 	bufspace(leader, prn);
 	for (i=1; i<=list[0]; i++) { 
-	    pprintf(prn, "%*s", wid, pdinfo->varname[list[i]]);
+	    vi = list[i];
+	    pprintf(prn, "%*s", wid, pdinfo->varname[vi]);
 	}
 	pputs(prn, "\n\n");
     }
@@ -1793,7 +1802,7 @@ static int *get_pmax_array (const int *list, const double **Z,
 			    const DATAINFO *pdinfo)
 {
     int *pmax = malloc(list[0] * sizeof *pmax);
-    int i, vi, T = pdinfo->t2 - pdinfo->t1 + 1;
+    int i, vi, T = sample_size(pdinfo);
 
     if (pmax == NULL) {
 	return NULL;
@@ -2132,20 +2141,41 @@ int print_series_with_format (const int *list, const double **Z,
     return err;
 }
 
+void rtf_print_row_spec (int ncols, RtfRowType type, PRN *prn)
+{
+    int j;
+
+    if (type == RTF_TRAILER) {
+	pputc(prn, '{');
+    }
+
+    pputs(prn, "\\trowd\\trautofit1\n\\intbl\n");
+    for (j=1; j<=ncols; j++) {
+	pprintf(prn, "\\cellx%d\n", j);
+    }
+
+    if (type == RTF_TRAILER) {
+	pputs(prn, "\\row }\n");
+    }    
+}
+
+#define prn_delimited(p) (prn_format(p) & (GRETL_FORMAT_CSV | GRETL_FORMAT_TAB))
+
 /**
  * print_data_sorted:
  * @list: list of variables to print.
- * @obsvec: list of observation numbers.
+ * @obsvec: list of observation numbers (or %NULL)
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
- * Print the data for the variables in @list, using the sort order 
- * given in @obsvec.  The first element of @obsvec must contain the
- * number of observations that follow.  By default, printing is plain 
- * text, formatted in columns using space characters, but if the @prn 
+ * Print the data for the variables in @list.  If @obsvec is not %NULL,
+ * it should specify a sort order; the first element of @obsvec must 
+ * contain the number of observations that follow.  By default, printing is 
+ * plain text, formatted in columns using space characters, but if the @prn 
  * format is set to %GRETL_FORMAT_CSV then printing respects the user's 
- * choice of column delimiter.
+ * choice of column delimiter, and if the format is set to %GRETL_FORMAT_RTF
+ * the data are printed as an RTF table.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
@@ -2154,18 +2184,28 @@ int print_data_sorted (const int *list, const int *obsvec,
 		       const double **Z, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
-    int csv = csv_format(prn);
-    char delim = pdinfo->delim;
+    int delimited = prn_delimited(prn);
+    int rtf = rtf_format(prn);
+    char delim = 0;
     int *pmax = NULL; 
     double xx;
     char obs_string[OBSLEN];
     char buf[128];
-    int colwidth = 16, obslen = 0;
-    int T = obsvec[0];
+    int colwidth = 16;
+    int ncols = 0, obslen = 0;
+    int T, lmax;
     int i, s, t;
 
-    /* must have a list of not more than 4 variables... */
-    if (list == NULL || list[0] < 1 || list[0] > 4) {
+    if (obsvec != NULL) {
+	T = obsvec[0];
+	lmax = 4;
+    } else {
+	T = sample_size(pdinfo);
+	lmax = 8;
+    }
+
+    /* must have a list of not more than lmax variables... */
+    if (list == NULL || list[0] < 1 || list[0] > lmax) {
 	return E_DATA;
     }
 
@@ -2181,7 +2221,8 @@ int print_data_sorted (const int *list, const int *obsvec,
 	return E_DATA;
     }
 
-    if (csv) {
+    if (delimited) {
+	delim = pdinfo->delim;
 	if (get_local_decpoint() == ',' && delim == ',') {
 	    delim = ';';
 	}
@@ -2190,49 +2231,86 @@ int print_data_sorted (const int *list, const int *obsvec,
 	if (pmax == NULL) {
 	    return E_ALLOC;
 	}
-	obslen = max_obs_label_length(pdinfo);
+	if (rtf) {
+	    ncols = list[0] + 1;
+	} else {
+	    obslen = max_obs_label_length(pdinfo);
+	}
+    }
+
+    if (rtf) {
+	pputs(prn, "{\\rtf1\n");
+	rtf_print_row_spec(ncols, RTF_HEADER, prn);
     }
 
     varheading(list, obslen, colwidth, pdinfo, delim, prn);
 
+    if (rtf) {
+	rtf_print_row_spec(ncols, RTF_TRAILER, prn);
+    }    
+
     /* print data by observations */
     for (s=0; s<T; s++) {
-	t = obsvec[s+1];
+	if (obsvec != NULL) {
+	    t = obsvec[s+1];
+	} else {
+	    t = pdinfo->t1 + s;
+	}
 	if (t >= pdinfo->n) {
 	    continue;
 	}
+	if (rtf) {
+	    rtf_print_row_spec(ncols, RTF_HEADER, prn);
+	    pputc(prn, '{');
+	}
 	get_obs_string(obs_string, t, pdinfo);
-	if (csv) {
+	if (delimited) {
 	    pprintf(prn, "%s%c", obs_string, delim);
+	} else if (rtf) {
+	    pprintf(prn, "%s\\cell ", obs_string);
 	} else {
 	    pprintf(prn, "%*s", obslen, obs_string);
 	}
 	for (i=1; i<=list[0]; i++) {
 	    xx = Z[list[i]][t];
 	    if (na(xx)) {
-		if (csv) {
+		if (delimited) {
 		    pputs(prn, "NA");
+		} else if (rtf) {
+		    pputs(prn, "\\qr NA\\cell ");
 		} else {
 		    bufspace(colwidth, prn);
 		}
 	    } else { 
-		if (csv) {
+		if (delimited) {
 		    pprintf(prn, "%.15g", xx);
+		} else if (rtf) {
+		    bufprintnum(buf, xx, pmax[i-1], 0);
+		    pprintf(prn, "\\qr %s\\cell ", buf);
 		} else {
 		    bufprintnum(buf, xx, pmax[i-1], colwidth);
 		    pputs(prn, buf);
 		}
 	    }
-	    if (csv && i < list[0]) {
+	    if (delimited && i < list[0]) {
 		pputc(prn, delim);
 	    }
 	}
-	pputc(prn, '\n');
+	if (rtf) {
+	    pputs(prn, "}\n");
+	    rtf_print_row_spec(ncols, RTF_TRAILER, prn);
+	} else {
+	    pputc(prn, '\n');
+	}
     } 
 
-    pputc(prn, '\n');
+    if (rtf) {
+	pputs(prn, "}\n");
+    } else {
+	pputc(prn, '\n');
+    }
 
-    if (!csv) {
+    if (pmax != NULL) {
 	free(pmax);
     }
 
