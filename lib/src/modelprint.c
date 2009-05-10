@@ -2504,26 +2504,45 @@ static void maybe_remedy_translations (const char **S, int n)
 
 static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 {
-    const char *note = N_("note on model statistics abbreviations here");
+    const char *note = 
+	/* TRANSLATORS: please do not translate literally: this is for 
+	   your use in describing locale-specific abbreviations. It is
+	   OK to leave it untranslated, in which case it will not be
+	   printed.
+	*/
+	N_("note on model statistics abbreviations here");
     int rtf = rtf_format(prn);
     int tex = tex_format(prn);
     int csv = csv_format(prn);
     char teststr[32];
     const char *key[] = {
-	N_("Mean dependent var"),  /* 22: Mean of dependent variable */
-	N_("S.D. dependent var"),  /* 22: Standard deviation of dependent var */
-	N_("Sum squared resid"),   /* 22: Sum of squared residuals */
-	N_("S.E. of regression"),  /* 22: Standard error of the regression */
-	N_("R-squared"),           /* 22: */
-	N_("Adjusted R-squared"),  /* 22: */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("Mean dependent var"),  /* Mean of dependent variable */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("S.D. dependent var"),  /* Standard deviation of dependent var */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("Sum squared resid"),   /* Sum of squared residuals */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("S.E. of regression"),  /* Standard error of the regression */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("R-squared"),           
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("Adjusted R-squared"),  
 	"F-statistic",             /* will be replaced below */
-	N_("P-value(F)"),          /* 22: P-value of F-statistic */	
-	N_("Log-likelihood"),      /* 22: */
-	N_("Akaike criterion"),    /* 22: Akaike Information Criterion */
-	N_("Schwarz criterion"),   /* 22: Schwarz Bayesian Criterion */
-	N_("Hannan-Quinn"),        /* 22: Hannan-Quinn Criterion */
-	N_("rho"),                 /* 22: 1st-order autocorrelation coeff. */
-	N_("Durbin-Watson")        /* 22: Durbin-Watson statistic */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("P-value(F)"),          /* P-value of F-statistic */	
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("Log-likelihood"),      
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("Akaike criterion"),    /* Akaike Information Criterion */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("Schwarz criterion"),   /* Schwarz Bayesian Criterion */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("Hannan-Quinn"),        /* Hannan-Quinn Criterion */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("rho"),                 /* 1st-order autocorrelation coeff. */
+	/* TRANSLATORS: maximum length of string is 22 characters */
+	N_("Durbin-Watson")        /* Durbin-Watson statistic */
     };
     double val[MID_STATS] = {
 	pmod->ybar,

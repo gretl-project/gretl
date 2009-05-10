@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.6.6.pre3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-04 11:24-0400\n"
+"POT-Creation-Date: 2009-05-10 11:44-0400\n"
 "PO-Revision-Date: 2007-12-19 16:02+0100\n"
 "Last-Translator: susan orbe <susan.orbe@ehu.es>\n"
 "Language-Team: Basque <translation-team-eu@lists.sourceforge.net>\n"
@@ -48,33 +48,33 @@ msgstr ""
 msgid "including %d lags of (1-L)%s"
 msgstr ""
 
-#: lib/src/adf_kpss.c:283 gui2/library.c:907 gui2/selector.c:4611
+#: lib/src/adf_kpss.c:283 gui2/library.c:907 gui2/selector.c:4613
 msgid "test without constant"
 msgstr "konstanterik gabeko kontrastea"
 
-#: lib/src/adf_kpss.c:284 gui2/selector.c:4612
+#: lib/src/adf_kpss.c:284 gui2/selector.c:4614
 msgid "test with constant"
 msgstr "konstanteduneko kontrastea"
 
-#: lib/src/adf_kpss.c:285 gui2/library.c:909 gui2/selector.c:4613
+#: lib/src/adf_kpss.c:285 gui2/library.c:909 gui2/selector.c:4615
 msgid "with constant and trend"
 msgstr "konstante eta joerarekin"
 
-#: lib/src/adf_kpss.c:286 gui2/selector.c:4614
+#: lib/src/adf_kpss.c:286 gui2/selector.c:4616
 msgid "with constant and quadratic trend"
 msgstr "konstante eta joera koadratikoarekin"
 
 #: lib/src/adf_kpss.c:300 lib/src/adf_kpss.c:305 lib/src/bootstrap.c:413
-#: lib/src/modelprint.c:1857 lib/src/modelprint.c:1873
-#: lib/src/modelprint.c:1893 lib/src/modelprint.c:2543
-#: lib/src/modelprint.c:3579 lib/src/modelprint.c:3884
-#: lib/src/modelprint.c:4727 lib/src/modelprint.c:4729 gui2/dialogs.c:4340
+#: lib/src/modelprint.c:1908 lib/src/modelprint.c:1924
+#: lib/src/modelprint.c:1944 lib/src/modelprint.c:2613
+#: lib/src/modelprint.c:3649 lib/src/modelprint.c:3954
+#: lib/src/modelprint.c:4797 lib/src/modelprint.c:4799 gui2/dialogs.c:4332
 #: gui2/library.c:2430 plugin/johansen.c:1451 plugin/johansen.c:1452
 msgid "p-value"
 msgstr "p-balioa"
 
-#: lib/src/adf_kpss.c:300 lib/src/dataio.c:1593 lib/src/modelprint.c:3035
-#: lib/src/modelprint.c:3100
+#: lib/src/adf_kpss.c:300 lib/src/dataio.c:1593 lib/src/modelprint.c:3105
+#: lib/src/modelprint.c:3170
 msgid "unknown"
 msgstr "ezezaguna"
 
@@ -152,14 +152,14 @@ msgstr "Atzerapenen moztura-parametroa = %d\n"
 #: lib/src/adf_kpss.c:899 lib/src/compare.c:399 lib/src/compare.c:864
 #: lib/src/compare.c:1624 lib/src/compare.c:1847 lib/src/compare.c:2020
 #: lib/src/compare.c:2988 lib/src/describe.c:4674 lib/src/estimate.c:2663
-#: lib/src/estimate.c:2676 lib/src/estimate.c:2683 lib/src/estimate.c:3451
-#: lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3155
+#: lib/src/estimate.c:2676 lib/src/estimate.c:2684 lib/src/estimate.c:3465
+#: lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3163
 #: lib/src/gretl_panel.c:3791 lib/src/gretl_restrict.c:1855
-#: lib/src/gretl_restrict.c:1862 lib/src/modelprint.c:2025
-#: lib/src/modelprint.c:2029 lib/src/modelprint.c:2034
-#: lib/src/modelprint.c:2052 lib/src/modelprint.c:2056
-#: lib/src/modelprint.c:2061 lib/src/modelprint.c:2073
-#: lib/src/modelprint.c:2078 lib/src/modelprint.c:2082 lib/src/vartest.c:664
+#: lib/src/gretl_restrict.c:1862 lib/src/modelprint.c:2076
+#: lib/src/modelprint.c:2080 lib/src/modelprint.c:2085
+#: lib/src/modelprint.c:2103 lib/src/modelprint.c:2107
+#: lib/src/modelprint.c:2112 lib/src/modelprint.c:2124
+#: lib/src/modelprint.c:2129 lib/src/modelprint.c:2133 lib/src/vartest.c:664
 msgid "Test statistic"
 msgstr "Kontrasterako estatistikoa"
 
@@ -308,7 +308,7 @@ msgstr ""
 "  Hipotesi hutsa: aldagaien erregresio koefizienteak zero dira\n"
 "\n"
 
-#: lib/src/compare.c:377 lib/src/gretl_model.c:3154
+#: lib/src/compare.c:377 lib/src/gretl_model.c:3162
 msgid "Asymptotic test statistic"
 msgstr "Kontrasterako estatistiko asintotikoa"
 
@@ -329,22 +329,22 @@ msgstr "p-balioarekin = %g\n"
 msgid "F-form"
 msgstr "F-era"
 
-#: lib/src/compare.c:392 lib/src/compare.c:426 lib/src/modelprint.c:4589
-#: lib/src/modelprint.c:4612 lib/src/modelprint.c:4630 lib/src/varprint.c:1191
+#: lib/src/compare.c:392 lib/src/compare.c:426 lib/src/modelprint.c:4659
+#: lib/src/modelprint.c:4682 lib/src/modelprint.c:4700 lib/src/varprint.c:1191
 #: lib/src/varprint.c:1196 lib/src/varprint.c:1204
 msgid "Likelihood ratio test"
 msgstr "Egiantz arrazoiaren kontrastea"
 
 #: lib/src/compare.c:393 lib/src/compare.c:427 lib/src/compare.c:2027
-#: lib/src/compare.c:2033 lib/src/compare.c:2502 lib/src/estimate.c:2687
-#: lib/src/estimate.c:3453 lib/src/gretl_model.c:3050
-#: lib/src/gretl_model.c:3063 lib/src/gretl_model.c:3066
+#: lib/src/compare.c:2033 lib/src/compare.c:2502 lib/src/estimate.c:2688
+#: lib/src/estimate.c:3467 lib/src/gretl_model.c:3058
+#: lib/src/gretl_model.c:3071 lib/src/gretl_model.c:3074
 #: lib/src/gretl_panel.c:3275 lib/src/gretl_panel.c:3798
-#: lib/src/modelprint.c:262 lib/src/modelprint.c:266 lib/src/modelprint.c:347
-#: lib/src/modelprint.c:350 lib/src/modelprint.c:2027
-#: lib/src/modelprint.c:2032 lib/src/modelprint.c:2054
-#: lib/src/modelprint.c:2059 lib/src/modelprint.c:2540
-#: lib/src/modelprint.c:4589 lib/src/modelprint.c:4612 lib/src/printout.c:298
+#: lib/src/modelprint.c:167 lib/src/modelprint.c:274 lib/src/modelprint.c:278
+#: lib/src/modelprint.c:359 lib/src/modelprint.c:362 lib/src/modelprint.c:2078
+#: lib/src/modelprint.c:2083 lib/src/modelprint.c:2105
+#: lib/src/modelprint.c:2110 lib/src/modelprint.c:2610
+#: lib/src/modelprint.c:4659 lib/src/modelprint.c:4682 lib/src/printout.c:298
 #: lib/src/pvalues.c:1756 lib/src/system.c:816 lib/src/system.c:2640
 #: lib/src/system.c:2662 lib/src/system.c:2693 lib/src/system.c:2711
 #: lib/src/system.c:3781 lib/src/varprint.c:1197 lib/src/varprint.c:1205
@@ -404,7 +404,8 @@ msgstr "Ezabaketa sekuentziala bi aldeetako alpha = %.2f erabiliz"
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " %-16s (p-balioak %.3f) kenduta\n"
 
-#: lib/src/compare.c:1545 lib/src/gretl_model.c:2881 gui2/library.c:2301
+#: lib/src/compare.c:1545 lib/src/estimate.c:2680 lib/src/gretl_model.c:2881
+#: lib/src/gretl_model.c:2887 lib/src/modelprint.c:611 gui2/library.c:2301
 #, fuzzy
 msgid "squares only"
 msgstr "hiruhilabeterokoak"
@@ -425,15 +426,15 @@ msgstr "Zehazpenerako RESET kontrastea"
 #: lib/src/compare.c:2026 lib/src/compare.c:2032 lib/src/compare.c:2503
 #: lib/src/compare.c:2505 lib/src/compare.c:2510 lib/src/describe.c:3234
 #: lib/src/describe.c:3461 lib/src/describe.c:5608 lib/src/describe.c:5611
-#: lib/src/estimate.c:2665 lib/src/estimate.c:2687 lib/src/estimate.c:3453
-#: lib/src/gretl_model.c:3171 lib/src/gretl_model.c:3173
-#: lib/src/gretl_model.c:3175 lib/src/gretl_panel.c:1597
+#: lib/src/estimate.c:2665 lib/src/estimate.c:2688 lib/src/estimate.c:3467
+#: lib/src/gretl_model.c:3179 lib/src/gretl_model.c:3181
+#: lib/src/gretl_model.c:3183 lib/src/gretl_panel.c:1597
 #: lib/src/gretl_panel.c:3276 lib/src/gretl_panel.c:3792
-#: lib/src/gretl_panel.c:3797 lib/src/modelprint.c:2027
-#: lib/src/modelprint.c:2032 lib/src/modelprint.c:2036
-#: lib/src/modelprint.c:2054 lib/src/modelprint.c:2059
-#: lib/src/modelprint.c:2063 lib/src/modelprint.c:2076
-#: lib/src/modelprint.c:2080 lib/src/modelprint.c:2084 lib/src/printout.c:299
+#: lib/src/gretl_panel.c:3797 lib/src/modelprint.c:2078
+#: lib/src/modelprint.c:2083 lib/src/modelprint.c:2087
+#: lib/src/modelprint.c:2105 lib/src/modelprint.c:2110
+#: lib/src/modelprint.c:2114 lib/src/modelprint.c:2127
+#: lib/src/modelprint.c:2131 lib/src/modelprint.c:2135 lib/src/printout.c:299
 #: lib/src/printout.c:305 lib/src/vartest.c:60
 msgid "with p-value"
 msgstr "p-balioarekin"
@@ -457,7 +458,7 @@ msgstr "lehen ordenako autokoerlazioa"
 
 #: lib/src/compare.c:1797 lib/src/compare.c:1966 lib/src/graphing.c:2670
 #: lib/src/graphing.c:2679 lib/src/graphing.c:2751 lib/src/graphing.c:3787
-#: lib/src/gretl_panel.c:3643 lib/src/printout.c:1168 gui2/guiprint.c:1212
+#: lib/src/gretl_panel.c:3643 lib/src/printout.c:1170 gui2/guiprint.c:1212
 #: gui2/guiprint.c:1268 gui2/library.c:4949 plugin/leverage.c:464
 msgid "residual"
 msgstr "hondar"
@@ -992,7 +993,7 @@ msgstr "Karaktere okerra %d data-katean"
 msgid "Date strings inconsistent"
 msgstr "Data-kateak ez datoz bat"
 
-#: lib/src/dataio.c:781 lib/src/forecast.c:2120 lib/src/genfuncs.c:1904
+#: lib/src/dataio.c:781 lib/src/forecast.c:2124 lib/src/genfuncs.c:1912
 #, c-format
 msgid "Observation number out of bounds"
 msgstr "Behaketa kopurua bornetik kanpo"
@@ -1019,7 +1020,7 @@ msgstr ""
 msgid " (none)\n"
 msgstr "(ezer)\n"
 
-#: lib/src/dataio.c:1311 gui2/guiprint.c:1666 gui2/guiprint.c:1705
+#: lib/src/dataio.c:1311 gui2/guiprint.c:1666
 #, c-format
 msgid ""
 "You can't use the same character for the column delimiter and the decimal "
@@ -1052,16 +1053,16 @@ msgstr "data gabe"
 msgid "special"
 msgstr "berezia"
 
-#: lib/src/dataio.c:1577 lib/src/gretl_intl.c:105 gui2/dialogs.c:3314
+#: lib/src/dataio.c:1577 lib/src/gretl_intl.c:105 gui2/dialogs.c:3306
 msgid "annual"
 msgstr "urterokoak"
 
-#: lib/src/dataio.c:1579 gui2/dialogs.c:3153 gui2/dialogs.c:3314
-#: gui2/dialogs.c:3315
+#: lib/src/dataio.c:1579 gui2/dialogs.c:3145 gui2/dialogs.c:3306
+#: gui2/dialogs.c:3307
 msgid "quarterly"
 msgstr "hiruhilabeterokoak"
 
-#: lib/src/dataio.c:1581 gui2/dialogs.c:3153 gui2/dialogs.c:3315
+#: lib/src/dataio.c:1581 gui2/dialogs.c:3145 gui2/dialogs.c:3307
 msgid "monthly"
 msgstr "hilabetero"
 
@@ -1094,7 +1095,7 @@ msgstr ""
 msgid "(unsaved)"
 msgstr "(gorde gabe)"
 
-#: lib/src/dataio.c:1625 gui2/database.c:1348
+#: lib/src/dataio.c:1625 gui2/database.c:1349
 msgid "Description"
 msgstr "Deskribapena"
 
@@ -1102,7 +1103,7 @@ msgstr "Deskribapena"
 msgid "Type of data"
 msgstr "Datu mota"
 
-#: lib/src/dataio.c:1635 lib/src/modelprint.c:4370 lib/src/modelprint.c:4378
+#: lib/src/dataio.c:1635 lib/src/modelprint.c:4440 lib/src/modelprint.c:4448
 msgid "Frequency"
 msgstr "Maiztasuna"
 
@@ -1233,7 +1234,7 @@ msgid "auto-generated constant"
 msgstr "Berez eraikitako konstantea"
 
 #: lib/src/dataset.c:1368 gui2/fncall.c:757 gui2/fncall.c:767
-#: gui2/gui_utils.c:3821 gui2/toolbar.c:884 gui2/toolbar.c:893
+#: gui2/gui_utils.c:3823 gui2/toolbar.c:884 gui2/toolbar.c:893
 #: gui2/toolbar.c:902
 msgid "Please open a data file first"
 msgstr "Mesedez, ireki datu-fitxategia lehenik"
@@ -1270,7 +1271,7 @@ msgid "The 'dataset' command is not available within functions"
 msgstr "Komando honek aldagai bat behar du.\n"
 
 #: lib/src/dataset.c:2901 lib/src/interact.c:4811 cli/gretlcli.c:821
-#: gui2/library.c:7238
+#: gui2/library.c:7244
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Barkatu, komando hau ez dago eskuragarri begizta moduan\n"
 
@@ -1291,7 +1292,7 @@ msgid "Couldn't open database binary file"
 msgstr "Ezin ireki  bitarren datu-basearen fitxategia"
 
 #: lib/src/dbread.c:432 lib/src/dbread.c:442 lib/src/dbread.c:505
-#: gui2/database.c:1467
+#: gui2/database.c:1468
 msgid "Failed to parse series information"
 msgstr "Segiden informazioa pasatzean huts egin du"
 
@@ -1360,7 +1361,7 @@ msgid "Series imported OK"
 msgstr "Segidak inportatuta OK"
 
 #: lib/src/dbread.c:2156 lib/src/gretl_func.c:1504 lib/src/gretl_utils.c:1445
-#: lib/src/interact.c:3940 gui2/dialogs.c:4136 plugin/tramo-x12a.c:411
+#: lib/src/interact.c:3940 gui2/dialogs.c:4128 plugin/tramo-x12a.c:411
 #, c-format
 msgid "Couldn't open %s"
 msgstr " %s ezin da ireki"
@@ -1670,7 +1671,7 @@ msgstr "'%s' aldagaiarentzat (%d behaketa baliagarriak)"
 #: lib/src/describe.c:3881 lib/src/describe.c:3896 gui2/calculator.c:2306
 #: gui2/guiprint.c:727 gui2/guiprint.c:750 gui2/guiprint.c:835
 #: gui2/guiprint.c:862 gui2/guiprint.c:1588 gui2/guiprint.c:1638
-#: gui2/selector.c:6024 plugin/pca.c:205 plugin/pca.c:216
+#: gui2/selector.c:6026 plugin/pca.c:205 plugin/pca.c:216
 msgid "Variable"
 msgstr "Aldagaia"
 
@@ -1695,12 +1696,12 @@ msgstr ""
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "%s kentzen: laginak ez du behaketa baliogarririk\n"
 
-#: lib/src/describe.c:4415 lib/src/modelprint.c:3004 lib/src/modelprint.c:3016
-#: lib/src/modelprint.c:3017 lib/src/modelprint.c:3018
-#: lib/src/modelprint.c:3027 lib/src/modelprint.c:3037
-#: lib/src/modelprint.c:3069 lib/src/modelprint.c:3082
-#: lib/src/modelprint.c:3091 lib/src/modelprint.c:3102
-#: lib/src/modelprint.c:4719 lib/src/printout.c:166 lib/src/printout.c:174
+#: lib/src/describe.c:4415 lib/src/modelprint.c:3074 lib/src/modelprint.c:3086
+#: lib/src/modelprint.c:3087 lib/src/modelprint.c:3088
+#: lib/src/modelprint.c:3097 lib/src/modelprint.c:3107
+#: lib/src/modelprint.c:3139 lib/src/modelprint.c:3152
+#: lib/src/modelprint.c:3161 lib/src/modelprint.c:3172
+#: lib/src/modelprint.c:4789 lib/src/printout.c:166 lib/src/printout.c:174
 #: lib/src/texprint.c:563 lib/src/texprint.c:581 lib/src/texprint.c:598
 #: lib/src/texprint.c:611 lib/src/texprint.c:690 lib/src/texprint.c:701
 #: lib/src/texprint.c:707 gui2/guiprint.c:681 gui2/guiprint.c:683
@@ -1814,8 +1815,8 @@ msgstr ""
 msgid "   Ratio of sample variances = %g\n"
 msgstr "  Lagin bariantzen arrazoia  = %g\n"
 
-#: lib/src/describe.c:4672 lib/src/gretl_model.c:2995
-#: lib/src/gretl_model.c:2998 lib/src/gretl_model.c:3001
+#: lib/src/describe.c:4672 lib/src/gretl_model.c:3003
+#: lib/src/gretl_model.c:3006 lib/src/gretl_model.c:3009
 #: lib/src/nonparam.c:953 lib/src/nonparam.c:1085 lib/src/varprint.c:1188
 #: lib/src/varprint.c:1194 lib/src/varprint.c:1202
 msgid "Null hypothesis"
@@ -1994,12 +1995,12 @@ msgstr ""
 msgid "                 ITER       RHO        ESS"
 msgstr "                 ITER       RHO        HKB"
 
-#: lib/src/estimate.c:2662 lib/src/gretl_model.c:2869 lib/src/modelprint.c:575
+#: lib/src/estimate.c:2662 lib/src/gretl_model.c:2869 lib/src/modelprint.c:616
 #, fuzzy
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "White-n heterozedastizitatearen kontrastea"
 
-#: lib/src/estimate.c:2672 lib/src/gretl_model.c:2848 lib/src/modelprint.c:573
+#: lib/src/estimate.c:2672 lib/src/gretl_model.c:2848 lib/src/modelprint.c:614
 #, fuzzy
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr "White-n heterozedastizitatearen kontrastea"
@@ -2008,51 +2009,46 @@ msgstr "White-n heterozedastizitatearen kontrastea"
 msgid "with Koenker robust variance estimator"
 msgstr ""
 
-#: lib/src/estimate.c:2679
-#, fuzzy
-msgid "White's test for heteroskedasticity (no cross products)"
-msgstr "White-n heterozedastizitatearen kontrastea"
-
-#: lib/src/estimate.c:2681 lib/src/gretl_model.c:2845 lib/src/modelprint.c:571
+#: lib/src/estimate.c:2678 lib/src/gretl_model.c:2845 lib/src/modelprint.c:609
 msgid "White's test for heteroskedasticity"
 msgstr "White-n heterozedastizitatearen kontrastea"
 
-#: lib/src/estimate.c:2848
+#: lib/src/estimate.c:2849
 msgid "HET_1"
 msgstr ""
 
-#: lib/src/estimate.c:3062
+#: lib/src/estimate.c:3076
 msgid "White's"
 msgstr "Whitena"
 
-#: lib/src/estimate.c:3175
+#: lib/src/estimate.c:3189
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Cochrane-Orcutt orokortuaren estimazioa"
 
-#: lib/src/estimate.c:3178
+#: lib/src/estimate.c:3192
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr "ITER             HKB          % ALDAKETA"
 
-#: lib/src/estimate.c:3450
+#: lib/src/estimate.c:3464
 msgid "Test for ARCH of order"
 msgstr "ARCH kontrastearen ordena:"
 
-#: lib/src/estimate.c:3475 lib/src/modelprint.c:1477
+#: lib/src/estimate.c:3489 lib/src/modelprint.c:1528
 #, fuzzy, c-format
 msgid "Test for ARCH of order %d"
 msgstr "%s ordenako ARCH kontrastea"
 
-#: lib/src/estimate.c:3532 lib/src/estimate.c:3678
+#: lib/src/estimate.c:3546 lib/src/estimate.c:3692
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "arch (%d) atzerapen ordena baliogabea"
 
-#: lib/src/estimate.c:3820 lib/src/estimate.c:3879 lib/src/estimate.c:3938
+#: lib/src/estimate.c:3834 lib/src/estimate.c:3893 lib/src/estimate.c:3952
 msgid "Couldn't load plugin function\n"
 msgstr "Lokia funtzioa ezin kargatu\n"
 
-#: lib/src/estimate.c:3925 plugin/tramo-x12a.c:774
+#: lib/src/estimate.c:3939 plugin/tramo-x12a.c:774
 msgid ""
 "X-12-ARIMA can't handle more than 720 observations.\n"
 "Please select a smaller sample."
@@ -2060,20 +2056,20 @@ msgstr ""
 "X-12-ARIMAk ezin du 720 baino behaketa gehiago maneiatu.\n"
 "Mesedez, aukeratu lagin txikiago bat."
 
-#: lib/src/estimate.c:4375
+#: lib/src/estimate.c:4389
 msgid "This test is only available for panel data"
 msgstr "Kontraste hau taula-datuentzat bakarrik dago eskuragarri"
 
-#: lib/src/forecast.c:2638
+#: lib/src/forecast.c:2642
 msgid "predicted values"
 msgstr "aurresandako balioak"
 
-#: lib/src/forecast.c:2642 lib/src/genmain.c:67
+#: lib/src/forecast.c:2646 lib/src/genmain.c:67
 #, c-format
 msgid "Replaced series %s (ID %d)"
 msgstr "Ordezkatutako segidak %s (ID %d)"
 
-#: lib/src/forecast.c:2645 lib/src/genmain.c:70
+#: lib/src/forecast.c:2649 lib/src/genmain.c:70
 #, c-format
 msgid "Generated series %s (ID %d)"
 msgstr "Sortutako segidak %s (ID %d)"
@@ -2219,32 +2215,42 @@ msgstr "datuen indize aldagaia"
 msgid "day of week (1 = Monday)"
 msgstr "asteko eguna (1 = Astelehena)"
 
-#: lib/src/genfuncs.c:1740
+#: lib/src/genfuncs.c:1741
+#, fuzzy, c-format
+msgid "standardized residual from model %d"
+msgstr "%d ereduaren hondarrak karratura"
+
+#: lib/src/genfuncs.c:1743
 #, c-format
 msgid "residual from model %d"
 msgstr "%d ereduaren hondarrak"
 
-#: lib/src/genfuncs.c:1746
+#: lib/src/genfuncs.c:1750
 #, c-format
 msgid "fitted value from model %d"
 msgstr "%d ereduko estimatutako balioak"
 
-#: lib/src/genfuncs.c:1753
+#: lib/src/genfuncs.c:1758
+#, fuzzy, c-format
+msgid "squared standardized residual from model %d"
+msgstr "%d ereduaren hondarrak karratura"
+
+#: lib/src/genfuncs.c:1760
 #, c-format
 msgid "squared residual from model %d"
 msgstr "%d ereduaren hondarrak karratura"
 
-#: lib/src/genfuncs.c:1764
+#: lib/src/genfuncs.c:1772
 #, c-format
 msgid "fitted variance from model %d"
 msgstr "%d ereduaren estimatutako bariantza"
 
-#: lib/src/genfuncs.c:1771
+#: lib/src/genfuncs.c:1779
 #, c-format
 msgid "per-unit constants from model %d"
 msgstr "banako bakoitzaren jatorriak %d eredutik"
 
-#: lib/src/genfuncs.c:1974
+#: lib/src/genfuncs.c:1982
 #, fuzzy
 msgid "Invalid declaration"
 msgstr "Baliogabetuko desbideratze tipikoa"
@@ -2488,7 +2494,7 @@ msgstr "ezkerra"
 msgid "actual"
 msgstr "benetakoa"
 
-#: lib/src/graphing.c:2758 lib/src/graphing.c:2761 lib/src/printout.c:1167
+#: lib/src/graphing.c:2758 lib/src/graphing.c:2761 lib/src/printout.c:1169
 #: gui2/guiprint.c:1212 gui2/guiprint.c:1268
 msgid "fitted"
 msgstr "estimatutakoa"
@@ -2524,7 +2530,7 @@ msgstr "Maiztasun erlatiboa"
 msgid "%g percent interval"
 msgstr "ehuneko %g balio kritikoa"
 
-#: lib/src/graphing.c:3556 lib/src/graphing.c:3563 lib/src/printout.c:1167
+#: lib/src/graphing.c:3556 lib/src/graphing.c:3563 lib/src/printout.c:1169
 msgid "forecast"
 msgstr "aurresana"
 
@@ -2576,7 +2582,7 @@ msgstr "0.025 eta 0.975 koantilak"
 msgid "VAR residuals"
 msgstr "VAR hondarrak"
 
-#: lib/src/graphing.c:4256 gui2/gui_utils.c:2689
+#: lib/src/graphing.c:4256 gui2/gui_utils.c:2691
 #, fuzzy
 msgid "System residuals"
 msgstr "Birlagindu hondarrak"
@@ -2623,12 +2629,12 @@ msgstr ""
 msgid "stopped after %d iterations\n"
 msgstr "geldituta %d iterazio ondoren\n"
 
-#: lib/src/gretl_bfgs.c:1004 lib/src/modelprint.c:2728
+#: lib/src/gretl_bfgs.c:1004 lib/src/modelprint.c:2798
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr "Funtzioen ebaluazioa: %d\n"
 
-#: lib/src/gretl_bfgs.c:1005 lib/src/modelprint.c:2729
+#: lib/src/gretl_bfgs.c:1005 lib/src/modelprint.c:2799
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr "Gradientearen ebaluazioak: %d\n"
@@ -2855,7 +2861,7 @@ msgstr "\"%s\"  ez dago definituta.\n"
 msgid "_Open data"
 msgstr "_Ireki datuak"
 
-#: lib/src/gretl_intl.c:550
+#: lib/src/gretl_intl.c:575
 #, c-format
 msgid "%s: locale is not supported on this system"
 msgstr ""
@@ -2949,7 +2955,7 @@ msgstr "Linealtasun-ezaren kontrastea (log)"
 msgid "relationship is linear"
 msgstr "erlazio lineala da"
 
-#: lib/src/gretl_model.c:2833 gui2/gui_utils.c:3125
+#: lib/src/gretl_model.c:2833 gui2/gui_utils.c:3127
 msgid "Test for normality of residual"
 msgstr "Hondarren normaltasun kontrastea"
 
@@ -2974,7 +2980,7 @@ msgstr "Linealtasun-ezaren kontrastea (karratuak)"
 msgid "heteroskedasticity not present"
 msgstr "heterozedastizitaterik ez"
 
-#: lib/src/gretl_model.c:2851 lib/src/modelprint.c:313
+#: lib/src/gretl_model.c:2851 lib/src/modelprint.c:325
 msgid "Sargan over-identification test"
 msgstr "Sargan gain-identifikazio kontrastea"
 
@@ -3020,47 +3026,52 @@ msgstr ""
 msgid "restriction is acceptable"
 msgstr "Murrizketa multzoa"
 
-#: lib/src/gretl_model.c:3032
+#: lib/src/gretl_model.c:2891
+#, fuzzy
+msgid "robust variant"
+msgstr "aldakorra"
+
+#: lib/src/gretl_model.c:3040
 #, fuzzy, c-format
 msgid "max F(%d, %d) = %g at observation %s"
 msgstr "F(%d, %d) = %g maximoa %s behaketan ematen da"
 
-#: lib/src/gretl_model.c:3057 lib/src/gretl_model.c:3064
+#: lib/src/gretl_model.c:3065 lib/src/gretl_model.c:3072
 #, fuzzy
 msgid "failed"
 msgstr "estimatutakoa"
 
-#: lib/src/gretl_model.c:3181 lib/src/gretl_model.c:3184
-#: lib/src/gretl_model.c:3187
+#: lib/src/gretl_model.c:3189 lib/src/gretl_model.c:3192
+#: lib/src/gretl_model.c:3195
 #, c-format
 msgid "%g percent critical value"
 msgstr "ehuneko %g balio kritikoa"
 
-#: lib/src/gretl_model.c:5138
+#: lib/src/gretl_model.c:5145
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "uhat ezin da berreskuratu: datu-multzoa aldatu egin da"
 
-#: lib/src/gretl_model.c:5140
+#: lib/src/gretl_model.c:5147
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "yhat ezin da berreskuratu: datu-multzoa aldatu egin da"
 
-#: lib/src/gretl_model.c:5142
+#: lib/src/gretl_model.c:5149
 msgid "Can't retrieve ht: data set has changed"
 msgstr "ht ezin da berreskuratu: datu-multzoa aldatu egin da"
 
-#: lib/src/gretl_model.c:5143
+#: lib/src/gretl_model.c:5150
 msgid "Can't retrieve series: data set has changed"
 msgstr "Segida ezin da berreskuratu: datu-multzoa aldatu egin da"
 
-#: lib/src/gretl_model.c:5157
+#: lib/src/gretl_model.c:5164
 msgid "Can't retrieve intercepts"
 msgstr "Jatorriak ezin dira berreskuratu"
 
-#: lib/src/gretl_model.c:5164
+#: lib/src/gretl_model.c:5171
 msgid "Can't retrieve error variance"
 msgstr "Hondar bariantza ezin da berreskuratu"
 
-#: lib/src/gretl_model.c:5588 gui2/library.c:452
+#: lib/src/gretl_model.c:5595 gui2/library.c:452
 msgid "The model exhibits an exact linear fit"
 msgstr ""
 
@@ -3346,8 +3357,8 @@ msgstr "Murrizketa gehiegi (maximoa %d da)"
 msgid "Restricted estimates"
 msgstr "Murriztutako estimazioa"
 
-#: lib/src/gretl_restrict.c:1751 lib/src/modelprint.c:2423
-#: lib/src/printout.c:1158 gui2/library.c:4835
+#: lib/src/gretl_restrict.c:1751 lib/src/modelprint.c:2474
+#: lib/src/printout.c:1160 gui2/library.c:4835
 #, fuzzy
 msgid "Standard error of the regression"
 msgstr "Hondarren desbideratze tipikoa"
@@ -3381,7 +3392,7 @@ msgid "Sum of coefficients"
 msgstr "Koefizienteen batura"
 
 #: lib/src/gretl_restrict.c:2249 lib/src/gretl_restrict.c:2258
-#: gui2/dialogs.c:4338
+#: gui2/dialogs.c:4330
 msgid "Standard error"
 msgstr "Desbideratze tipikoa"
 
@@ -3526,7 +3537,7 @@ msgstr "hasierako '%s' behaketa baliogabea da"
 msgid "Command failed"
 msgstr "Komandoak huts egin du"
 
-#: lib/src/gretl_utils.c:1450 gui2/dialogs.c:4150
+#: lib/src/gretl_utils.c:1450 gui2/dialogs.c:4142
 #, c-format
 msgid "Couldn't write to %s"
 msgstr "%s ezin da idatzi"
@@ -3546,27 +3557,27 @@ msgstr "p-balioa %s estatistikoarentzat"
 msgid "log-likelihood for %s test"
 msgstr "%s -rentzat log-egiantzako kontrastea"
 
-#: lib/src/gretl_www.c:715
+#: lib/src/gretl_www.c:722
 msgid "Host not found"
 msgstr "Ostalaria ez da aurkitu"
 
-#: lib/src/gretl_www.c:717
+#: lib/src/gretl_www.c:724
 msgid "Unknown error"
 msgstr "Errore ezezaguna"
 
-#: lib/src/gretl_www.c:1017
+#: lib/src/gretl_www.c:1029
 msgid "No data received"
 msgstr "Ez da daturik jaso"
 
-#: lib/src/gretl_www.c:1019
+#: lib/src/gretl_www.c:1031
 msgid "Malformed status line"
 msgstr "Gaizki osatutako egoera-lerroa"
 
-#: lib/src/gretl_www.c:1024
+#: lib/src/gretl_www.c:1036
 msgid "(no description)"
 msgstr "(deskribapenik ez)"
 
-#: lib/src/gretl_www.c:1671
+#: lib/src/gretl_www.c:1725
 msgid ""
 "Failed to parse HTTP proxy:\n"
 "format must be ipnumber:port"
@@ -3574,7 +3585,7 @@ msgstr ""
 "HTTP proxy pasatzean huts egin du:\n"
 "formatoa ipzenbakia:portua izan behar da"
 
-#: lib/src/gretl_www.c:1680
+#: lib/src/gretl_www.c:1734
 msgid "HTTP proxy: first field must be an IP number"
 msgstr "HTTP proxy: lehen eremua IP zenbaki bat izan behar da"
 
@@ -3729,7 +3740,7 @@ msgstr "Komando zerrendarentzat memoria esleitzean huts egin du"
 msgid "generation of lag variable failed"
 msgstr "aldagaien atzerapena eraikitzean huts egin du"
 
-#: lib/src/interact.c:1458 gui2/gui_utils.c:3479 gui2/library.c:3751
+#: lib/src/interact.c:1458 gui2/gui_utils.c:3481 gui2/library.c:3751
 #, fuzzy, c-format
 msgid "A series named %s already exists"
 msgstr ""
@@ -3861,7 +3872,7 @@ msgstr "%s: barkatu, ez dago eskuragai laguntzarik.\n"
 msgid "%s: negative value is out of bounds.\n"
 msgstr "KAB: balio negatiboak eremutik kanpo.\n"
 
-#: lib/src/interact.c:3714 lib/src/printout.c:1595
+#: lib/src/interact.c:3714 lib/src/printout.c:1607
 #, fuzzy
 msgid "No series are defined\n"
 msgstr "Ez da ekuazio sistemarik definitu"
@@ -3952,7 +3963,7 @@ msgstr "Eredua ezin da zehaztu\n"
 msgid "Model printed to %s\n"
 msgstr "Eredua inprimatu %s -ra\n"
 
-#: lib/src/interact.c:4715 cli/gretlcli.c:994 gui2/library.c:7431
+#: lib/src/interact.c:4715 cli/gretlcli.c:994 gui2/library.c:7437
 msgid "Infinite loop detected in script\n"
 msgstr "Katean begizta infinitua antzeman da\n"
 
@@ -3961,8 +3972,8 @@ msgstr "Katean begizta infinitua antzeman da\n"
 msgid "You cannot delete variables in this context\n"
 msgstr "Ezin da %s ezabatu; aldagaia erabiltzen ari da"
 
-#: lib/src/interact.c:4746 cli/gretlcli.c:900 gui2/library.c:7337
-#: gui2/library.c:7365
+#: lib/src/interact.c:4746 cli/gretlcli.c:900 gui2/library.c:7343
+#: gui2/library.c:7371
 #, c-format
 msgid "wrote %s\n"
 msgstr "idatzitakoa %s\n"
@@ -4068,792 +4079,802 @@ msgstr "%s: ez da bat egiten duten behaketarik aurkitu\n"
 msgid "Unconditional error variance"
 msgstr "Baldintzatu gabeko perturbazio bariantza"
 
-#: lib/src/modelprint.c:170
+#: lib/src/modelprint.c:162 lib/src/printout.c:1158
+#, fuzzy
+msgid "The residuals are standardized"
+msgstr "Marraztu hondarrak edo zikloen segidak"
+
+#: lib/src/modelprint.c:165
+#, fuzzy
+msgid "Likelihood ratio test for (G)ARCH terms"
+msgstr "Egiantz arrazoiaren kontrastea"
+
+#: lib/src/modelprint.c:182
 #, fuzzy
 msgid "Left-unbounded observations"
 msgstr "Zentsuratutako behaketak"
 
-#: lib/src/modelprint.c:171
+#: lib/src/modelprint.c:183
 #, fuzzy
 msgid "Right-unbounded observations"
 msgstr "Zentsuratutako behaketak"
 
-#: lib/src/modelprint.c:172
+#: lib/src/modelprint.c:184
 #, fuzzy
 msgid "Bounded observations"
 msgstr "Gehitu behaketak"
 
-#: lib/src/modelprint.c:173
+#: lib/src/modelprint.c:185
 #, fuzzy
 msgid "Point observations"
 msgstr "Behaketa guztiak"
 
-#: lib/src/modelprint.c:183 lib/src/modelprint.c:190 lib/src/modelprint.c:204
-#: lib/src/modelprint.c:2619
+#: lib/src/modelprint.c:195 lib/src/modelprint.c:202 lib/src/modelprint.c:216
+#: lib/src/modelprint.c:2689
 msgid "sigma"
 msgstr "sigma"
 
-#: lib/src/modelprint.c:215 lib/src/modelprint.c:2424 gui2/library.c:4820
+#: lib/src/modelprint.c:227 lib/src/modelprint.c:2475 gui2/library.c:4820
 msgid "Unadjusted R-squared"
 msgstr "R-karratua"
 
-#: lib/src/modelprint.c:223 lib/src/modelprint.c:2422 gui2/library.c:4815
+#: lib/src/modelprint.c:235 lib/src/modelprint.c:2473 gui2/library.c:4815
 msgid "Sum of squared residuals"
 msgstr "Hondar Karratuen Batura"
 
-#: lib/src/modelprint.c:233
+#: lib/src/modelprint.c:245
 #, fuzzy
 msgid "Explained sum of squares"
 msgstr "Karratuen Batura"
 
-#: lib/src/modelprint.c:248 lib/src/modelprint.c:250 lib/src/modelprint.c:2578
+#: lib/src/modelprint.c:260 lib/src/modelprint.c:262 lib/src/modelprint.c:2648
 #, fuzzy
 msgid "Smallest eigenvalue"
 msgstr "balio propioa"
 
-#: lib/src/modelprint.c:259 lib/src/modelprint.c:261 lib/src/modelprint.c:265
+#: lib/src/modelprint.c:271 lib/src/modelprint.c:273 lib/src/modelprint.c:277
 #: lib/src/system.c:2622 lib/src/system.c:2637
 msgid "LR over-identification test"
 msgstr "LR gain-identifikazio estatistikoa"
 
-#: lib/src/modelprint.c:271 lib/src/modelprint.c:272
+#: lib/src/modelprint.c:283 lib/src/modelprint.c:284
 msgid "Equation is just identified"
 msgstr "Ekuazioa jadanik identifikatuta"
 
-#: lib/src/modelprint.c:286 lib/src/modelprint.c:288
+#: lib/src/modelprint.c:298 lib/src/modelprint.c:300
 #, c-format
 msgid "Test for AR(%d) errors:"
 msgstr "AR(%d) perturbazioen kontrastea"
 
-#: lib/src/modelprint.c:314 lib/src/modelprint.c:319
+#: lib/src/modelprint.c:326 lib/src/modelprint.c:331
 msgid "Wald (joint) test"
 msgstr "Wald (baterakoa) estatistikoa"
 
-#: lib/src/modelprint.c:315 lib/src/modelprint.c:320
+#: lib/src/modelprint.c:327 lib/src/modelprint.c:332
 msgid "J test"
 msgstr "J kontrastea"
 
-#: lib/src/modelprint.c:318
+#: lib/src/modelprint.c:330
 msgid "Sargan test"
 msgstr "Sargan kontrastea"
 
-#: lib/src/modelprint.c:362 lib/src/modelprint.c:365 lib/src/modelprint.c:373
-#: lib/src/modelprint.c:375 lib/src/printout.c:2505
+#: lib/src/modelprint.c:374 lib/src/modelprint.c:377 lib/src/modelprint.c:385
+#: lib/src/modelprint.c:387 lib/src/printout.c:2612
 msgid "GMM criterion"
 msgstr "GMM irizpidea"
 
-#: lib/src/modelprint.c:439
+#: lib/src/modelprint.c:451
 #, fuzzy
 msgid "Warning: solution is probably not unique"
 msgstr ""
 "\n"
 "Kontuz: baliteke soluzioa bakarra ez izatea\n"
 
-#: lib/src/modelprint.c:457 lib/src/modelprint.c:475 lib/src/modelprint.c:483
+#: lib/src/modelprint.c:469 lib/src/modelprint.c:487 lib/src/modelprint.c:495
 msgid "'Within' variance"
 msgstr "Bariantzen 'barnean'"
 
-#: lib/src/modelprint.c:458 lib/src/modelprint.c:476 lib/src/modelprint.c:484
+#: lib/src/modelprint.c:470 lib/src/modelprint.c:488 lib/src/modelprint.c:496
 msgid "'Between' variance"
 msgstr "Bariantzen 'artean'"
 
-#: lib/src/modelprint.c:460 lib/src/modelprint.c:478 lib/src/modelprint.c:486
+#: lib/src/modelprint.c:472 lib/src/modelprint.c:490 lib/src/modelprint.c:498
 msgid "theta used for quasi-demeaning"
 msgstr "erabilitako theta sasi-batezbestekoa kentzerakoan"
 
-#: lib/src/modelprint.c:552
+#: lib/src/modelprint.c:564
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
 msgstr ""
 "Termino konstantea izan ezik, p-balio handiena  %d (%s) aldagaiarena zen"
 
-#: lib/src/modelprint.c:555
+#: lib/src/modelprint.c:567
 #, c-format
 msgid "P-value was highest for variable %d (%s)"
 msgstr "P-balio handiena %d aldagaiarena zen (%s)"
 
-#: lib/src/modelprint.c:565
+#: lib/src/modelprint.c:603
 msgid "Auxiliary regression for non-linearity test (squared terms)"
 msgstr ""
 "Erregresio laguntzailea linealtasun ezaren kontrastearentzat (terminu "
 "karratuak)"
 
-#: lib/src/modelprint.c:568
+#: lib/src/modelprint.c:606
 msgid "Auxiliary regression for non-linearity test (log terms)"
 msgstr ""
 "Erregresio laguntzailea linealtasun ezaren kontrastearentzat (log terminuak)"
 
-#: lib/src/modelprint.c:577
+#: lib/src/modelprint.c:618
 msgid "Augmented regression for Chow test"
 msgstr "Chow kontrastearako erregresioa"
 
-#: lib/src/modelprint.c:579
+#: lib/src/modelprint.c:621
 msgid "Cointegrating regression -- "
 msgstr "Kointegrazio erregresioa -- "
 
-#: lib/src/modelprint.c:580
+#: lib/src/modelprint.c:623
 msgid "Cointegrating regression - "
 msgstr "Kointegrazio erregresioa - "
 
-#: lib/src/modelprint.c:582
+#: lib/src/modelprint.c:627
 msgid "Augmented Dickey--Fuller regression"
 msgstr "Zabaldutako Dickey--Fuller erregresioa"
 
-#: lib/src/modelprint.c:583
+#: lib/src/modelprint.c:629
 msgid "Augmented Dickey-Fuller regression"
 msgstr "Zabaldutako  Dickey-Fuller erregresioa"
 
-#: lib/src/modelprint.c:585
+#: lib/src/modelprint.c:633
 msgid "Dickey--Fuller regression"
 msgstr "Dickey--Fuller erregresioa"
 
-#: lib/src/modelprint.c:586
+#: lib/src/modelprint.c:635
 msgid "Dickey-Fuller regression"
 msgstr "Dickey-Fuller erregresioa"
 
-#: lib/src/modelprint.c:588
+#: lib/src/modelprint.c:638
 msgid "KPSS regression"
 msgstr "KPSS erregresioa"
 
-#: lib/src/modelprint.c:590
+#: lib/src/modelprint.c:640
 msgid "Auxiliary regression for RESET specification test"
 msgstr "Erregresio laguntzailea RESET zehazpen kontrastearentzat"
 
-#: lib/src/modelprint.c:592
+#: lib/src/modelprint.c:642
 msgid "Groupwise heteroskedasticity"
 msgstr "Taldekako heterozedastizitatea"
 
-#: lib/src/modelprint.c:594
+#: lib/src/modelprint.c:644
 #, fuzzy
 msgid "Augmented regression for common factor test"
 msgstr "Chow kontrastearako erregresioa"
 
-#: lib/src/modelprint.c:602 lib/src/system.c:91 lib/src/varprint.c:1020
+#: lib/src/modelprint.c:662 lib/src/system.c:91 lib/src/varprint.c:1020
 #: lib/src/varprint.c:1029 lib/src/varprint.c:1037 gui2/selector.c:2863
 msgid "OLS"
 msgstr "KTA"
 
-#: lib/src/modelprint.c:603 lib/src/modelprint.c:606 lib/src/modelprint.c:665
+#: lib/src/modelprint.c:663 lib/src/modelprint.c:666 lib/src/modelprint.c:725
 #: lib/src/system.c:93 gui2/model_table.c:362
 msgid "WLS"
 msgstr "KTO"
 
-#: lib/src/modelprint.c:604
+#: lib/src/modelprint.c:664
 msgid "WLS (ARCH)"
 msgstr "KTO (ARCH)"
 
-#: lib/src/modelprint.c:608
+#: lib/src/modelprint.c:668
 msgid "Heteroskedasticity-corrected"
 msgstr "Heterozedastizitatea-zuzenduta"
 
-#: lib/src/modelprint.c:610 lib/src/modelprint.c:4383
+#: lib/src/modelprint.c:670 lib/src/modelprint.c:4453
 msgid "AR"
 msgstr "AR"
 
-#: lib/src/modelprint.c:611 lib/src/modelprint.c:712 gui2/selector.c:2921
+#: lib/src/modelprint.c:671 lib/src/modelprint.c:772 gui2/selector.c:2921
 msgid "LAD"
 msgstr "LAD"
 
-#: lib/src/modelprint.c:612
+#: lib/src/modelprint.c:672
 msgid "High-Precision OLS"
 msgstr "Goi-doitasuneko KTA"
 
-#: lib/src/modelprint.c:613 lib/src/modelprint.c:700 gui2/selector.c:2879
+#: lib/src/modelprint.c:673 lib/src/modelprint.c:760 gui2/selector.c:2879
 msgid "Probit"
 msgstr "Probit"
 
-#: lib/src/modelprint.c:614 lib/src/modelprint.c:694 gui2/selector.c:2873
+#: lib/src/modelprint.c:674 lib/src/modelprint.c:754 gui2/selector.c:2873
 msgid "Logit"
 msgstr "Logit"
 
-#: lib/src/modelprint.c:615 gui2/selector.c:2883
+#: lib/src/modelprint.c:675 gui2/selector.c:2883
 msgid "Tobit"
 msgstr "Tobit"
 
-#: lib/src/modelprint.c:616 gui2/selector.c:2885
+#: lib/src/modelprint.c:676 gui2/selector.c:2885
 msgid "Heckit"
 msgstr "Heckit"
 
-#: lib/src/modelprint.c:617 gui2/selector.c:2889
+#: lib/src/modelprint.c:677 gui2/selector.c:2889
 msgid "Poisson"
 msgstr "Poisson"
 
-#: lib/src/modelprint.c:618
+#: lib/src/modelprint.c:678
 msgid "NLS"
 msgstr "NLS"
 
-#: lib/src/modelprint.c:619
+#: lib/src/modelprint.c:679
 msgid "ML"
 msgstr "EH"
 
-#: lib/src/modelprint.c:620
+#: lib/src/modelprint.c:680
 msgid "GMM"
 msgstr "GMM"
 
-#: lib/src/modelprint.c:621 gui2/selector.c:2887
+#: lib/src/modelprint.c:681 gui2/selector.c:2887
 msgid "Logistic"
 msgstr "Logistikoa"
 
-#: lib/src/modelprint.c:622 gui2/selector.c:2913
+#: lib/src/modelprint.c:682 gui2/selector.c:2913
 msgid "GARCH"
 msgstr "GARCH"
 
-#: lib/src/modelprint.c:623
+#: lib/src/modelprint.c:683
 #, fuzzy
 msgid "Interval"
 msgstr "Instalatu"
 
-#: lib/src/modelprint.c:625
+#: lib/src/modelprint.c:685
 msgid "Arellano--Bond"
 msgstr "Arellano--Bond"
 
-#: lib/src/modelprint.c:626
+#: lib/src/modelprint.c:686
 msgid "Arellano-Bond"
 msgstr "Arellano-Bond"
 
-#: lib/src/modelprint.c:636
+#: lib/src/modelprint.c:696
 msgid "Hildreth--Lu"
 msgstr "Hildreth--Lu"
 
-#: lib/src/modelprint.c:637 gui2/selector.c:2869
+#: lib/src/modelprint.c:697 gui2/selector.c:2869
 msgid "Hildreth-Lu"
 msgstr "Hildreth--Lu"
 
-#: lib/src/modelprint.c:639
+#: lib/src/modelprint.c:699
 msgid "Prais--Winsten"
 msgstr "Prais--Winsten"
 
-#: lib/src/modelprint.c:640 gui2/selector.c:2871
+#: lib/src/modelprint.c:700 gui2/selector.c:2871
 msgid "Prais-Winsten"
 msgstr "Prais-Winsten"
 
-#: lib/src/modelprint.c:642
+#: lib/src/modelprint.c:702
 msgid "Cochrane--Orcutt"
 msgstr "Cochrane--Orcutt"
 
-#: lib/src/modelprint.c:643 gui2/selector.c:2867
+#: lib/src/modelprint.c:703 gui2/selector.c:2867
 msgid "Cochrane-Orcutt"
 msgstr "Cochrane-Orcutt"
 
-#: lib/src/modelprint.c:647
+#: lib/src/modelprint.c:707
 msgid "ARMAX"
 msgstr "ARMAX"
 
-#: lib/src/modelprint.c:650 gui2/selector.c:2909 plugin/tramo_options.c:734
+#: lib/src/modelprint.c:710 gui2/selector.c:2909 plugin/tramo_options.c:734
 msgid "ARIMA"
 msgstr "ARIMA"
 
-#: lib/src/modelprint.c:652
+#: lib/src/modelprint.c:712
 msgid "ARMA"
 msgstr "ARMA"
 
-#: lib/src/modelprint.c:655
+#: lib/src/modelprint.c:715
 msgid "Pooled OLS"
 msgstr "Konbinatutako KTA (Pooled)"
 
-#: lib/src/modelprint.c:658
+#: lib/src/modelprint.c:718
 msgid "Fixed-effects"
 msgstr "Eragin finkoak"
 
-#: lib/src/modelprint.c:660
+#: lib/src/modelprint.c:720
 msgid "Random-effects (GLS)"
 msgstr "Eragin aleatorioak (KTO)"
 
-#: lib/src/modelprint.c:663
+#: lib/src/modelprint.c:723
 msgid "Maximum Likelihood"
 msgstr "Egiantz Handia"
 
-#: lib/src/modelprint.c:668
+#: lib/src/modelprint.c:728
 msgid "Between-groups"
 msgstr "Taldeen arteko"
 
-#: lib/src/modelprint.c:672
+#: lib/src/modelprint.c:732
 msgid "2-step Arellano-Bond"
 msgstr "2-urratsetako Arellano-Bond"
 
-#: lib/src/modelprint.c:674
+#: lib/src/modelprint.c:734
 msgid "1-step Arellano-Bond"
 msgstr "1-urratseko Arellano-Bond"
 
-#: lib/src/modelprint.c:678 lib/src/modelprint.c:682
+#: lib/src/modelprint.c:738 lib/src/modelprint.c:742
 msgid "2-step GMM"
 msgstr "2-urratsetako GMM"
 
-#: lib/src/modelprint.c:680 lib/src/modelprint.c:684
+#: lib/src/modelprint.c:740 lib/src/modelprint.c:744
 msgid "Iterated GMM"
 msgstr "GMM iteratua"
 
-#: lib/src/modelprint.c:686
+#: lib/src/modelprint.c:746
 msgid "1-step GMM"
 msgstr "1-urratseko GMM"
 
-#: lib/src/modelprint.c:690 gui2/selector.c:2875
+#: lib/src/modelprint.c:750 gui2/selector.c:2875
 msgid "Ordered Logit"
 msgstr "Ordenatutako Logit"
 
-#: lib/src/modelprint.c:692 gui2/selector.c:2877
+#: lib/src/modelprint.c:752 gui2/selector.c:2877
 msgid "Multinomial Logit"
 msgstr ""
 
-#: lib/src/modelprint.c:698 gui2/selector.c:2881
+#: lib/src/modelprint.c:758 gui2/selector.c:2881
 msgid "Ordered Probit"
 msgstr "Ordenatutako Probit"
 
-#: lib/src/modelprint.c:704
+#: lib/src/modelprint.c:764
 msgid "Two-step Heckit"
 msgstr "Bi-urratseko Heckit"
 
-#: lib/src/modelprint.c:706
+#: lib/src/modelprint.c:766
 msgid "ML Heckit"
 msgstr "EH Heckit"
 
-#: lib/src/modelprint.c:710
+#: lib/src/modelprint.c:770
 msgid "Quantile"
 msgstr ""
 
-#: lib/src/modelprint.c:716 lib/src/system.c:90
+#: lib/src/modelprint.c:776 lib/src/system.c:90
 msgid "LIML"
 msgstr "LIML"
 
-#: lib/src/modelprint.c:718 lib/src/system.c:92
+#: lib/src/modelprint.c:778 lib/src/system.c:92
 msgid "TSLS"
 msgstr "TSLS"
 
-#: lib/src/modelprint.c:767
+#: lib/src/modelprint.c:827
 #, fuzzy
 msgid "Critical values for TSLS bias relative to OLS:\n"
 msgstr "Ezohikoen balio kritikoak:"
 
-#: lib/src/modelprint.c:770
+#: lib/src/modelprint.c:830
 #, no-c-format
 msgid ""
 "Critical values for desired LIML maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 
-#: lib/src/modelprint.c:774
+#: lib/src/modelprint.c:834
 #, no-c-format
 msgid ""
 "Critical values for desired TSLS maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 
-#: lib/src/modelprint.c:778
+#: lib/src/modelprint.c:838
 #, fuzzy
 msgid "bias"
 msgstr "saiakuntzak"
 
-#: lib/src/modelprint.c:778
+#: lib/src/modelprint.c:838
 #, fuzzy
 msgid "size"
 msgstr "Tamainua"
 
-#: lib/src/modelprint.c:782 gui2/calculator.c:1998
+#: lib/src/modelprint.c:842 gui2/calculator.c:1998
 msgid "value"
 msgstr "balioa"
 
-#: lib/src/modelprint.c:795
+#: lib/src/modelprint.c:855
 #, c-format
 msgid "Relative bias is probably less than %g%%"
 msgstr ""
 
-#: lib/src/modelprint.c:797
+#: lib/src/modelprint.c:857
 #, c-format
 msgid "Maximal size is probably less than %g%%"
 msgstr ""
 
-#: lib/src/modelprint.c:807
+#: lib/src/modelprint.c:867
 #, c-format
 msgid "Relative bias may exceed %g%%"
 msgstr ""
 
-#: lib/src/modelprint.c:809
+#: lib/src/modelprint.c:869
 #, c-format
 msgid "Maximal size may exceed %g%%"
 msgstr ""
 
-#: lib/src/modelprint.c:818
+#: lib/src/modelprint.c:878
 #, fuzzy
 msgid "Weak instrument test"
 msgstr "Ordezkoak soberan:"
 
-#: lib/src/modelprint.c:842 lib/src/modelprint.c:850
+#: lib/src/modelprint.c:902 lib/src/modelprint.c:910
 msgid "First-stage F-statistic"
 msgstr "Lehen-ordenako F-estatistikoa"
 
-#: lib/src/modelprint.c:856 lib/src/modelprint.c:865
+#: lib/src/modelprint.c:916 lib/src/modelprint.c:925
 msgid "Cragg-Donald minimum eigenvalue"
 msgstr ""
 
-#: lib/src/modelprint.c:862
+#: lib/src/modelprint.c:922
 msgid "Cragg--Donald minimum eigenvalue"
 msgstr ""
 
-#: lib/src/modelprint.c:903
+#: lib/src/modelprint.c:963
 msgid "A value < 10 may indicate weak instruments"
 msgstr "Balioa < 10  bada ordezkoa eskasa dela adierazi dezake"
 
-#: lib/src/modelprint.c:936
+#: lib/src/modelprint.c:996
 #, fuzzy
 msgid "Instrumented"
 msgstr "Ordezkoak"
 
-#: lib/src/modelprint.c:937 gui2/selector.c:3415 gui2/selector.c:6046
+#: lib/src/modelprint.c:997 gui2/selector.c:3415 gui2/selector.c:6048
 msgid "Instruments"
 msgstr "Ordezkoak"
 
-#: lib/src/modelprint.c:1006 lib/src/modelprint.c:1008
-#: lib/src/modelprint.c:1010
+#: lib/src/modelprint.c:1066 lib/src/modelprint.c:1068
+#: lib/src/modelprint.c:1070
 msgid "Asymptotic standard errors (unreliable)"
 msgstr "Desbideratze tipiko asintotikoak (sinesgaitzak)"
 
-#: lib/src/modelprint.c:1020 lib/src/modelprint.c:1022
-#: lib/src/modelprint.c:1024
+#: lib/src/modelprint.c:1080 lib/src/modelprint.c:1082
+#: lib/src/modelprint.c:1084
 msgid "Robust (HAC) standard errors"
 msgstr "Desbideratze tipiko sendoak (HAC)"
 
-#: lib/src/modelprint.c:1029 lib/src/modelprint.c:1031
-#: lib/src/modelprint.c:1035
+#: lib/src/modelprint.c:1089 lib/src/modelprint.c:1091
+#: lib/src/modelprint.c:1095
 msgid "Beck-Katz standard errors"
 msgstr "Beck-Katz desbideratze tipikoak"
 
-#: lib/src/modelprint.c:1033
+#: lib/src/modelprint.c:1093
 msgid "Beck--Katz standard errors"
 msgstr "Beck--Katz desbideratze tipikoak"
 
-#: lib/src/modelprint.c:1044
+#: lib/src/modelprint.c:1104
 msgid "Could not compute Beck-Katz standard errors"
 msgstr "Ezin dira Beck-Katz desbideratze tipikoak kalkulatu"
 
-#: lib/src/modelprint.c:1052
+#: lib/src/modelprint.c:1112
 msgid "Bartlett kernel"
 msgstr "Bartlett kernela"
 
-#: lib/src/modelprint.c:1053
+#: lib/src/modelprint.c:1113
 msgid "Parzen kernel"
 msgstr "Parzen kernela"
 
-#: lib/src/modelprint.c:1054
+#: lib/src/modelprint.c:1114
 msgid "QS kernel"
 msgstr "QS kernela"
 
-#: lib/src/modelprint.c:1058
+#: lib/src/modelprint.c:1118
 #, c-format
 msgid "HAC standard errors, bandwidth %.2f"
 msgstr "HAC desbideratze tipikoak, lehio-luzera %.2f"
 
-#: lib/src/modelprint.c:1061
+#: lib/src/modelprint.c:1121
 #, c-format
 msgid "HAC standard errors, bandwidth %d"
 msgstr "HAC desbideratze tipikoak, lehio-luzera %d"
 
-#: lib/src/modelprint.c:1068
+#: lib/src/modelprint.c:1128
 msgid "prewhitened"
 msgstr "aurrez-ponderatuta"
 
-#: lib/src/modelprint.c:1085
+#: lib/src/modelprint.c:1145
 msgid "Heteroskedasticity-robust standard errors"
 msgstr "Heterozedastizitatearekiko sendoak diren desbideratze tipikoak"
 
-#: lib/src/modelprint.c:1086
+#: lib/src/modelprint.c:1146
 msgid "variant"
 msgstr "aldakorra"
 
-#: lib/src/modelprint.c:1104
+#: lib/src/modelprint.c:1164
 msgid "Standard errors based on Hessian"
 msgstr "Hessianoan oinarritutako desbideratze tipikoak"
 
-#: lib/src/modelprint.c:1107
+#: lib/src/modelprint.c:1167
 msgid "Standard errors based on Information Matrix"
 msgstr "Informazio Matrizean oinarritutako desbideratze tipikoak"
 
-#: lib/src/modelprint.c:1110
+#: lib/src/modelprint.c:1170
 msgid "Standard errors based on Outer Products matrix"
 msgstr "Kanpoko biderkadura-matrizean oinarritutako desbideratze tipikoak"
 
-#: lib/src/modelprint.c:1113
+#: lib/src/modelprint.c:1173
 msgid "QML standard errors"
 msgstr "QML desbideratze tipikoa"
 
-#: lib/src/modelprint.c:1117
+#: lib/src/modelprint.c:1177
 msgid "Bollerslev--Wooldridge standard errors"
 msgstr "Bollerslev--Wooldridge desbideratze tipikoak"
 
-#: lib/src/modelprint.c:1119
+#: lib/src/modelprint.c:1179
 msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Bollerslev-Wooldridge desbideratze tipikoak"
 
-#: lib/src/modelprint.c:1144
+#: lib/src/modelprint.c:1204
 #, fuzzy, c-format
 msgid "With robust %g percent confidence intervals"
 msgstr "ehuneko 95eko konfidantza tartea"
 
-#: lib/src/modelprint.c:1147
+#: lib/src/modelprint.c:1207
 #, fuzzy, c-format
 msgid "With %g percent confidence intervals"
 msgstr "ehuneko 95eko konfidantza tartea"
 
-#: lib/src/modelprint.c:1152
+#: lib/src/modelprint.c:1212
 #, fuzzy
 msgid "Robust (sandwich) standard errors"
 msgstr "Desbideratze tipiko sendoak (HAC)"
 
-#: lib/src/modelprint.c:1154
+#: lib/src/modelprint.c:1214
 #, fuzzy
 msgid "Asymptotic standard errors assuming IID errors"
 msgstr "Desbideratze tipiko asintotikoak (sinesgaitzak)"
 
-#: lib/src/modelprint.c:1258
+#: lib/src/modelprint.c:1318
 msgid "Omitted because all values were zero:"
 msgstr "Ahanztuta, behaketa guztiak zero direlako:"
 
-#: lib/src/modelprint.c:1272
+#: lib/src/modelprint.c:1332
 msgid "Omitted due to exact collinearity:"
 msgstr "Ahanztu kolinealitate zehatzagatik:"
 
-#: lib/src/modelprint.c:1284
+#: lib/src/modelprint.c:1344
 msgid "Redundant instruments:"
 msgstr "Ordezkoak soberan:"
 
-#: lib/src/modelprint.c:1346 lib/src/modelprint.c:1595
-#: lib/src/modelprint.c:1598 lib/src/modelprint.c:1608
-#: lib/src/modelprint.c:1611 lib/src/modelprint.c:1644 gui2/model_table.c:866
+#: lib/src/modelprint.c:1406 lib/src/modelprint.c:1646
+#: lib/src/modelprint.c:1649 lib/src/modelprint.c:1659
+#: lib/src/modelprint.c:1662 lib/src/modelprint.c:1695 gui2/model_table.c:866
 #: gui2/model_table.c:980 gui2/selector.c:3118
 msgid "Dependent variable"
 msgstr "Aldagai azaldua"
 
-#: lib/src/modelprint.c:1354
+#: lib/src/modelprint.c:1414
 msgid "Estimated using X-12-ARIMA"
 msgstr "X-12-ARIMA erabilita estimatuta"
 
-#: lib/src/modelprint.c:1356 lib/src/modelprint.c:1361
+#: lib/src/modelprint.c:1416 lib/src/modelprint.c:1421
 msgid "exact ML"
 msgstr "EH zehatza"
 
-#: lib/src/modelprint.c:1356 lib/src/modelprint.c:1366
-#: lib/src/modelprint.c:1371
+#: lib/src/modelprint.c:1416 lib/src/modelprint.c:1426
+#: lib/src/modelprint.c:1431
 msgid "conditional ML"
 msgstr "baldintzatutako EH"
 
-#: lib/src/modelprint.c:1359
+#: lib/src/modelprint.c:1419
 msgid "Estimated using Kalman filter"
 msgstr "Kalman irazkia erabiliz estimatua"
 
-#: lib/src/modelprint.c:1364
+#: lib/src/modelprint.c:1424
 #, fuzzy
 msgid "Estimated using least squares"
 msgstr "Iteratutako karratu txikienen ponderatuak"
 
-#: lib/src/modelprint.c:1369
+#: lib/src/modelprint.c:1429
 msgid "Estimated using BHHH method"
 msgstr "BHHH metodoa erabiliz estimatuta"
 
-#: lib/src/modelprint.c:1382
+#: lib/src/modelprint.c:1442
 #, fuzzy, c-format
 msgid "Godfrey (1994) test for autocorrelation up to order %d"
 msgstr " %s ordenako autokoerlazioaren LM kontrastea"
 
-#: lib/src/modelprint.c:1385
+#: lib/src/modelprint.c:1445
 #, fuzzy
 msgid "Godfrey (1994) test for first-order autocorrelation"
 msgstr "lehen ordenako autokoerlazioa"
 
-#: lib/src/modelprint.c:1389
+#: lib/src/modelprint.c:1449
 #, fuzzy, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
 msgstr " %s ordenako autokoerlazioaren LM kontrastea"
 
-#: lib/src/modelprint.c:1392
+#: lib/src/modelprint.c:1452
 #, fuzzy
 msgid "Breusch-Godfrey test for first-order autocorrelation"
 msgstr "lehen ordenako autokoerlazioa"
 
-#: lib/src/modelprint.c:1423
+#: lib/src/modelprint.c:1483
 msgid "Lower limit"
 msgstr ""
 
-#: lib/src/modelprint.c:1424
+#: lib/src/modelprint.c:1484
 msgid "Upper limit"
 msgstr ""
 
-#: lib/src/modelprint.c:1481 lib/src/modelprint.c:1484
-#: lib/src/modelprint.c:1487 lib/src/system.c:3776 lib/src/system.c:3795
+#: lib/src/modelprint.c:1532 lib/src/modelprint.c:1535
+#: lib/src/modelprint.c:1538 lib/src/system.c:3776 lib/src/system.c:3795
 #: lib/src/vartest.c:54 lib/src/vartest.c:81
 msgid "Equation"
 msgstr "Ekuazioa"
 
-#: lib/src/modelprint.c:1506 lib/src/modelprint.c:1508 lib/src/objstack.c:592
+#: lib/src/modelprint.c:1557 lib/src/modelprint.c:1559 lib/src/objstack.c:592
 msgid "Model"
 msgstr "Eredua"
 
-#: lib/src/modelprint.c:1517 lib/src/modelprint.c:1554
+#: lib/src/modelprint.c:1568 lib/src/modelprint.c:1605
 #, c-format
 msgid "%s estimates using the %d observations %s%s%s"
 msgstr "%s estimazioak %d behaketak erabiliz %s%s%s"
 
-#: lib/src/modelprint.c:1534 lib/src/modelprint.c:1549
+#: lib/src/modelprint.c:1585 lib/src/modelprint.c:1600
 #, fuzzy, c-format
 msgid "%s estimates %s%s%s (T = %d)"
 msgstr "%s estimazioak, behaketak  %s-%s (T = %d)"
 
-#: lib/src/modelprint.c:1538
+#: lib/src/modelprint.c:1589
 #, c-format
 msgid "%s estimates using %d observations from %s%s%s"
 msgstr "%s estimazioak %d behaketa erabiliz %s%s%s -tik"
 
-#: lib/src/modelprint.c:1544
+#: lib/src/modelprint.c:1595
 msgid "Missing or incomplete observations dropped"
 msgstr "Faltako edo osatu gabeko behaketak kenduta"
 
-#: lib/src/modelprint.c:1564
+#: lib/src/modelprint.c:1615
 #, c-format
 msgid "%s estimates using %d observations"
 msgstr "%s estimazioak %d behaketak erabiliz"
 
-#: lib/src/modelprint.c:1568
+#: lib/src/modelprint.c:1619
 #, c-format
 msgid "Included %d cross-sectional units"
 msgstr "%d gurutzatutako banakoak barneratuta"
 
-#: lib/src/modelprint.c:1573
+#: lib/src/modelprint.c:1624
 #, c-format
 msgid "Time-series length = %d"
 msgstr "Denbora segiden luzera = %d"
 
-#: lib/src/modelprint.c:1575
+#: lib/src/modelprint.c:1626
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
 msgstr "Denbora-segidaren luzera: minimoa %d, maximoa %d"
 
-#: lib/src/modelprint.c:1604
+#: lib/src/modelprint.c:1655
 #, c-format
 msgid "scaled %s (Koenker robust variant)"
 msgstr ""
 
-#: lib/src/modelprint.c:1606
+#: lib/src/modelprint.c:1657
 #, fuzzy, c-format
 msgid "scaled %s"
 msgstr "eskala"
 
-#: lib/src/modelprint.c:1687
+#: lib/src/modelprint.c:1738
 msgid "Allowing for groupwise heteroskedasticity"
 msgstr "Taldekako heterozedastizitatea posiblea"
 
-#: lib/src/modelprint.c:1689
+#: lib/src/modelprint.c:1740
 msgid "Weights based on per-unit error variances"
 msgstr "Ponderazioak banakoen perturbazioen bariantzetan oinarrituta"
 
-#: lib/src/modelprint.c:1698 lib/src/modelprint.c:1705
+#: lib/src/modelprint.c:1749 lib/src/modelprint.c:1756
 msgid "Variable used as weight"
 msgstr "Ponderatzeko erabilitako aldagaia"
 
-#: lib/src/modelprint.c:1718 gui2/selector.c:2946
+#: lib/src/modelprint.c:1769 gui2/selector.c:2946
 msgid "Selection variable"
 msgstr "Aukeratze-aldagaia"
 
-#: lib/src/modelprint.c:1763
+#: lib/src/modelprint.c:1814
 msgid "Weight var is a dummy variable, effective obs ="
 msgstr "Ponderazio aldagaia fikzio-aldagaia da, behaketa eraginkorrak ="
 
-#: lib/src/modelprint.c:1828
+#: lib/src/modelprint.c:1879
 #, fuzzy
 msgid "$z$-stat"
 msgstr "$t$-estatistikoa"
 
-#: lib/src/modelprint.c:1828 lib/src/modelprint.c:3598
+#: lib/src/modelprint.c:1879 lib/src/modelprint.c:3668
 msgid "z-stat"
 msgstr ""
 
-#: lib/src/modelprint.c:1830
+#: lib/src/modelprint.c:1881
 #, fuzzy
 msgid "$t$-ratio"
 msgstr "t-arrazoia"
 
-#: lib/src/modelprint.c:1830 lib/src/modelprint.c:3181
-#: lib/src/modelprint.c:3578 lib/src/modelprint.c:3883 gui2/dialogs.c:4339
+#: lib/src/modelprint.c:1881 lib/src/modelprint.c:3251
+#: lib/src/modelprint.c:3648 lib/src/modelprint.c:3953 gui2/dialogs.c:4331
 msgid "t-ratio"
 msgstr "t-arrazoia"
 
-#: lib/src/modelprint.c:1849 lib/src/modelprint.c:1852
-#: lib/src/modelprint.c:1860 lib/src/modelprint.c:1864
-#: lib/src/modelprint.c:1868 lib/src/modelprint.c:1872
-#: lib/src/modelprint.c:3177 lib/src/modelprint.c:3576
-#: lib/src/modelprint.c:3716 lib/src/modelprint.c:3881
+#: lib/src/modelprint.c:1900 lib/src/modelprint.c:1903
+#: lib/src/modelprint.c:1911 lib/src/modelprint.c:1915
+#: lib/src/modelprint.c:1919 lib/src/modelprint.c:1923
+#: lib/src/modelprint.c:3247 lib/src/modelprint.c:3646
+#: lib/src/modelprint.c:3786 lib/src/modelprint.c:3951
 #, fuzzy
 msgid "coefficient"
 msgstr "Koefizientea"
 
-#: lib/src/modelprint.c:1849 lib/src/modelprint.c:1852
-#: lib/src/modelprint.c:1856 lib/src/modelprint.c:1868
-#: lib/src/modelprint.c:1872 lib/src/modelprint.c:3180
-#: lib/src/modelprint.c:3577 lib/src/modelprint.c:3717
-#: lib/src/modelprint.c:3882 lib/src/varprint.c:441 lib/src/varprint.c:443
+#: lib/src/modelprint.c:1900 lib/src/modelprint.c:1903
+#: lib/src/modelprint.c:1907 lib/src/modelprint.c:1919
+#: lib/src/modelprint.c:1923 lib/src/modelprint.c:3250
+#: lib/src/modelprint.c:3647 lib/src/modelprint.c:3787
+#: lib/src/modelprint.c:3952 lib/src/varprint.c:441 lib/src/varprint.c:443
 #: lib/src/varprint.c:445 gui2/guiprint.c:1405 gui2/guiprint.c:1499
 #: plugin/fractals.c:253
 msgid "std. error"
 msgstr "desb. tipikoa"
 
-#: lib/src/modelprint.c:1853
+#: lib/src/modelprint.c:1904
 #, fuzzy
 msgid "slope at mean"
 msgstr "Erakutsi maldak batezbestekoan"
 
-#: lib/src/modelprint.c:1856 lib/src/modelprint.c:3934
+#: lib/src/modelprint.c:1907 lib/src/modelprint.c:4004
 #, fuzzy
 msgid "estimate"
 msgstr "Estimazioa"
 
-#: lib/src/modelprint.c:1860 lib/src/modelprint.c:1864
-#: lib/src/modelprint.c:3178 lib/src/modelprint.c:3886
+#: lib/src/modelprint.c:1911 lib/src/modelprint.c:1915
+#: lib/src/modelprint.c:3248 lib/src/modelprint.c:3956
 #, fuzzy
 msgid "lower"
 msgstr "behea"
 
-#: lib/src/modelprint.c:1861 lib/src/modelprint.c:1865
-#: lib/src/modelprint.c:3179 lib/src/modelprint.c:3887
+#: lib/src/modelprint.c:1912 lib/src/modelprint.c:1916
+#: lib/src/modelprint.c:3249 lib/src/modelprint.c:3957
 #, fuzzy
 msgid "upper"
 msgstr "goi aldea"
 
-#: lib/src/modelprint.c:1880
+#: lib/src/modelprint.c:1931
 msgid "Estimate"
 msgstr "Estimazioa"
 
-#: lib/src/modelprint.c:1880 gui2/dialogs.c:838 gui2/dialogs.c:4337
+#: lib/src/modelprint.c:1931 gui2/dialogs.c:830 gui2/dialogs.c:4329
 #: gui2/guiprint.c:1588 gui2/guiprint.c:1638
 msgid "Coefficient"
 msgstr "Koefizientea"
 
-#: lib/src/modelprint.c:1883 lib/src/modelprint.c:1887
+#: lib/src/modelprint.c:1934 lib/src/modelprint.c:1938
 msgid "Lower"
 msgstr ""
 
-#: lib/src/modelprint.c:1884 lib/src/modelprint.c:1888
+#: lib/src/modelprint.c:1935 lib/src/modelprint.c:1939
 msgid "Upper"
 msgstr ""
 
-#: lib/src/modelprint.c:1886 lib/src/modelprint.c:3176
+#: lib/src/modelprint.c:1937 lib/src/modelprint.c:3246
 #, fuzzy
 msgid "tau"
 msgstr "tabuladore"
 
-#: lib/src/modelprint.c:1890
+#: lib/src/modelprint.c:1941
 msgid "Std.\\ Error"
 msgstr "Desb.\\ Tipikoa"
 
-#: lib/src/modelprint.c:1890
+#: lib/src/modelprint.c:1941
 msgid "Std. Error"
 msgstr "Desb. Tip."
 
-#: lib/src/modelprint.c:1893
+#: lib/src/modelprint.c:1944
 msgid "Slope"
 msgstr "Malda"
 
-#: lib/src/modelprint.c:1944
+#: lib/src/modelprint.c:1995
 msgid "Warning: data matrix close to singularity!"
 msgstr "Oharra: datu matrizea ia singularra!"
 
-#: lib/src/modelprint.c:1970
+#: lib/src/modelprint.c:2021
 msgid ""
 "WARNING: The constant was present among the regressors but not among the\n"
 "instruments, so it has been automatically added to the instrument list.\n"
@@ -4861,7 +4882,7 @@ msgid ""
 "scripts accordingly.\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1985
+#: lib/src/modelprint.c:2036
 msgid ""
 "R-squared is computed as the square of the correlation between observed and\n"
 "fitted values of the dependent variable"
@@ -4869,310 +4890,328 @@ msgstr ""
 "R-karratua aldagai azalduaren benetako eta estimatutako balioen arteko\n"
 "koerlazio koefizientearen karratua bezala kalkulaturik"
 
-#: lib/src/modelprint.c:2000
+#: lib/src/modelprint.c:2051
 msgid "Statistics based on the original data"
 msgstr "Jatorrizko datuetan oinarritutako estatistikoak"
 
-#: lib/src/modelprint.c:2001
+#: lib/src/modelprint.c:2052
 msgid "Statistics based on the weighted data"
 msgstr "Ponderatutako datuetan oinarritutako estatistikoak"
 
-#: lib/src/modelprint.c:2002
+#: lib/src/modelprint.c:2053
 msgid "Statistics based on the rho-differenced data"
 msgstr "rho-atzeratutako datuetan oinarritutako estatistikoak "
 
-#: lib/src/modelprint.c:2003
+#: lib/src/modelprint.c:2054
 #, fuzzy
 msgid "Statistics based on the transformed data"
 msgstr "Ponderatutako datuetan oinarritutako estatistikoak"
 
-#: lib/src/modelprint.c:2096
+#: lib/src/modelprint.c:2147
 #, c-format
 msgid "Log-likelihood for %s"
 msgstr "Log-egiantza %s -rentzat"
 
-#: lib/src/modelprint.c:2420
+#: lib/src/modelprint.c:2471
 msgid "Mean of dependent variable"
 msgstr "Aldagai azalduaren batezbestekoa"
 
-#: lib/src/modelprint.c:2421
+#: lib/src/modelprint.c:2472
 msgid "Standard deviation of dep. var."
 msgstr "Aldagai azalduaren desbideratze tipikoa"
 
-#: lib/src/modelprint.c:2429
+#: lib/src/modelprint.c:2480
 msgid "Akaike information criterion"
 msgstr "Akaike Informazio Irizpidea"
 
-#: lib/src/modelprint.c:2430 gui2/library.c:4850
+#: lib/src/modelprint.c:2481 gui2/library.c:4850
 msgid "Schwarz Bayesian criterion"
 msgstr "Schwarz Bayesian Irizpidea"
 
-#: lib/src/modelprint.c:2431 gui2/library.c:4855
+#: lib/src/modelprint.c:2482 gui2/library.c:4855
 #, fuzzy
 msgid "Hannan-Quinn Information Criterion"
 msgstr "_Hannan-Quinn Informazio Irizpidea"
 
-#: lib/src/modelprint.c:2456
+#. TRANSLATORS: please do not translate literally: this is for
+#. your use in describing locale-specific abbreviations. It is
+#. OK to leave it untranslated, in which case it will not be
+#. printed.
+#.
+#: lib/src/modelprint.c:2513
 msgid "note on model statistics abbreviations here"
 msgstr ""
 
-#: lib/src/modelprint.c:2462
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2520
 #, fuzzy
 msgid "Mean dependent var"
 msgstr "Aldagai azalduaren batezbestekoa"
 
-#: lib/src/modelprint.c:2463
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2522
 #, fuzzy
 msgid "S.D. dependent var"
 msgstr "Aldagai azalduaren Desb. Tip. "
 
-#: lib/src/modelprint.c:2464 lib/src/modelprint.c:2599
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2524 lib/src/modelprint.c:2669
 #, fuzzy
 msgid "Sum squared resid"
 msgstr "Hondar Karratuen Batura"
 
-#: lib/src/modelprint.c:2465
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2526
 #, fuzzy
 msgid "S.E. of regression"
 msgstr "KPSS erregresioa"
 
-#: lib/src/modelprint.c:2466 gui2/model_table.c:628
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2528 gui2/model_table.c:628
 msgid "R-squared"
 msgstr "R-karratu"
 
-#: lib/src/modelprint.c:2467
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2530
 msgid "Adjusted R-squared"
 msgstr "Zuzendutako R-karratua"
 
-#: lib/src/modelprint.c:2469
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2533
 #, fuzzy
 msgid "P-value(F)"
 msgstr "P-balioa"
 
-#: lib/src/modelprint.c:2470 lib/src/printout.c:2504 lib/src/system.c:3686
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2535 lib/src/printout.c:2611 lib/src/system.c:3686
 #: lib/src/system.c:3693 lib/src/texprint.c:1047 lib/src/varprint.c:1056
 #: lib/src/varprint.c:1065 gui2/library.c:4840
 msgid "Log-likelihood"
 msgstr "Log-egiantza"
 
-#: lib/src/modelprint.c:2471
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2537
 #, fuzzy
 msgid "Akaike criterion"
 msgstr "Akaike Informazio Irizpidea"
 
-#: lib/src/modelprint.c:2472
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2539
 #, fuzzy
 msgid "Schwarz criterion"
 msgstr "Schwarz Bayesian Irizpidea"
 
-#: lib/src/modelprint.c:2473
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2541
 #, fuzzy
 msgid "Hannan-Quinn"
 msgstr "Hannan-Quinn Irizpidea"
 
-#: lib/src/modelprint.c:2474 lib/src/modelprint.c:2621
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2543 lib/src/modelprint.c:2691
 msgid "rho"
 msgstr "rho"
 
-#: lib/src/modelprint.c:2475 gui2/library.c:2428
+#. TRANSLATORS: maximum length of string is 22 characters
+#: lib/src/modelprint.c:2545 gui2/library.c:2428
 #, fuzzy
 msgid "Durbin-Watson"
 msgstr "Durbin-Watson estatistikoa"
 
-#: lib/src/modelprint.c:2516
+#: lib/src/modelprint.c:2586
 #, fuzzy
 msgid "Adjusted $R^2$"
 msgstr "$R^2$"
 
-#: lib/src/modelprint.c:2517
+#: lib/src/modelprint.c:2587
 #, fuzzy
 msgid "P-value($F$)"
 msgstr "P-balioa"
 
-#: lib/src/modelprint.c:2549
+#: lib/src/modelprint.c:2619
 msgid "Uncentered $R^2$"
 msgstr "Zentratu gabeko $R^2$"
 
-#: lib/src/modelprint.c:2550
+#: lib/src/modelprint.c:2620
 msgid "Uncentered R-squared"
 msgstr "Zentratu gabeko R-karratua"
 
-#: lib/src/modelprint.c:2551
+#: lib/src/modelprint.c:2621
 #, fuzzy
 msgid "Centered $R^2$"
 msgstr "Zentratu gabeko $R^2$"
 
-#: lib/src/modelprint.c:2552
+#: lib/src/modelprint.c:2622
 #, fuzzy
 msgid "Centered R-squared"
 msgstr "Zentratu gabeko R-karratua"
 
-#: lib/src/modelprint.c:2555
+#: lib/src/modelprint.c:2625
 #, fuzzy
 msgid "McFadden $R^2$"
 msgstr "McFadden-en sasi-$R^2$"
 
-#: lib/src/modelprint.c:2556
+#: lib/src/modelprint.c:2626
 #, fuzzy
 msgid "McFadden R-squared"
 msgstr "McFadden-en sasi-R-karratua"
 
-#: lib/src/modelprint.c:2586
+#: lib/src/modelprint.c:2656
 msgid "Mean of innovations"
 msgstr "Berrikuntzen batezbestekoa"
 
-#: lib/src/modelprint.c:2588
+#: lib/src/modelprint.c:2658
 #, fuzzy
 msgid "S.D. of innovations"
 msgstr "Berrikuntzen batezbestekoa"
 
-#: lib/src/modelprint.c:2595
+#: lib/src/modelprint.c:2665
 #, fuzzy
 msgid "Median depend. var"
 msgstr "Aldagai azalduaren batezbestekoa"
 
-#: lib/src/modelprint.c:2597
+#: lib/src/modelprint.c:2667
 #, fuzzy
 msgid "Sum absolute resid"
 msgstr "Hondar absolutuen batura"
 
-#: lib/src/modelprint.c:2611
+#: lib/src/modelprint.c:2681
 #, fuzzy
 msgid "Censored obs"
 msgstr "Zentsuratutako behaketak"
 
-#: lib/src/modelprint.c:2646
+#: lib/src/modelprint.c:2716
 #, fuzzy
 msgid "Durbin's $h$"
 msgstr "Durbinen h "
 
-#: lib/src/modelprint.c:2646
+#: lib/src/modelprint.c:2716
 msgid "Durbin's h"
 msgstr "Durbinen h "
 
-#: lib/src/modelprint.c:2722 lib/src/system.c:3678 lib/src/system.c:3680
+#: lib/src/modelprint.c:2792 lib/src/system.c:3678 lib/src/system.c:3680
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr "Konbergentzia lortua %d iterazio ondoren\n"
 
-#: lib/src/modelprint.c:3871
+#: lib/src/modelprint.c:3941
 msgid "Sum of AR coefficients"
 msgstr "AR koefizienteen batura"
 
-#: lib/src/modelprint.c:3885
+#: lib/src/modelprint.c:3955
 #, fuzzy
 msgid "slope"
 msgstr "Malda"
 
-#: lib/src/modelprint.c:4309
+#: lib/src/modelprint.c:4379
 msgid "                        Real  Imaginary    Modulus  Frequency"
 msgstr "                        Erreala  Irudikaria  Modulua  Maiztasuna"
 
-#: lib/src/modelprint.c:4319 lib/src/modelprint.c:4322
-#: lib/src/modelprint.c:4335
+#: lib/src/modelprint.c:4389 lib/src/modelprint.c:4392
+#: lib/src/modelprint.c:4405
 msgid "Root"
 msgstr "Erroa"
 
-#: lib/src/modelprint.c:4370 lib/src/modelprint.c:4378
+#: lib/src/modelprint.c:4440 lib/src/modelprint.c:4448
 msgid "Real"
 msgstr "Erreala"
 
-#: lib/src/modelprint.c:4370 lib/src/modelprint.c:4378
+#: lib/src/modelprint.c:4440 lib/src/modelprint.c:4448
 msgid "Imaginary"
 msgstr "Irudikaria"
 
-#: lib/src/modelprint.c:4370 lib/src/modelprint.c:4378
+#: lib/src/modelprint.c:4440 lib/src/modelprint.c:4448
 msgid "Modulus"
 msgstr "Moduluak"
 
-#: lib/src/modelprint.c:4403
+#: lib/src/modelprint.c:4473
 msgid "AR (seasonal)"
 msgstr "AR (epealdikoa)"
 
-#: lib/src/modelprint.c:4423
+#: lib/src/modelprint.c:4493
 msgid "MA"
 msgstr "MA"
 
-#: lib/src/modelprint.c:4443
+#: lib/src/modelprint.c:4513
 msgid "MA (seasonal)"
 msgstr "MA (epealdikoa)"
 
-#: lib/src/modelprint.c:4480 lib/src/modelprint.c:4485
-#: lib/src/modelprint.c:4489
+#: lib/src/modelprint.c:4550 lib/src/modelprint.c:4555
+#: lib/src/modelprint.c:4559
 msgid "Total observations"
 msgstr "Behaketa guztiak"
 
-#: lib/src/modelprint.c:4481 lib/src/modelprint.c:4486
-#: lib/src/modelprint.c:4490
+#: lib/src/modelprint.c:4551 lib/src/modelprint.c:4556
+#: lib/src/modelprint.c:4560
 msgid "Censored observations"
 msgstr "Zentsuratutako behaketak"
 
-#: lib/src/modelprint.c:4511 lib/src/modelprint.c:4519
+#: lib/src/modelprint.c:4581 lib/src/modelprint.c:4589
 msgid "Actual"
 msgstr "Benetakoa"
 
-#: lib/src/modelprint.c:4514
+#: lib/src/modelprint.c:4584
 msgid "Predicted"
 msgstr "Aurresandako balioak"
 
-#: lib/src/modelprint.c:4580 lib/src/modelprint.c:4603
+#: lib/src/modelprint.c:4650 lib/src/modelprint.c:4673
 msgid "Number of cases 'correctly predicted'"
 msgstr "'Zuzenki aurresandako' balioen kopurua"
 
-#: lib/src/modelprint.c:4584 lib/src/modelprint.c:4607
+#: lib/src/modelprint.c:4654 lib/src/modelprint.c:4677
 msgid "at mean of independent vars"
 msgstr "aldagai azaltzaileen batezbestekoan"
 
-#: lib/src/modelprint.c:4599 lib/src/modelprint.c:4619
+#: lib/src/modelprint.c:4669 lib/src/modelprint.c:4689
 msgid "Evaluated at the mean"
 msgstr "Batezbestekoan ebaluatua"
 
-#: lib/src/modelprint.c:4625
+#: lib/src/modelprint.c:4695
 msgid "Number of cases `correctly predicted'"
 msgstr "`Zuzenki aurresandako' balioen kopurua"
 
-#: lib/src/modelprint.c:4650
+#: lib/src/modelprint.c:4720
 msgid "Analysis of Variance"
 msgstr "Bariantzen analisia"
 
-#: lib/src/modelprint.c:4655 lib/src/modelprint.c:4664
-#: lib/src/modelprint.c:4666 lib/src/modelprint.c:4676
+#: lib/src/modelprint.c:4725 lib/src/modelprint.c:4734
+#: lib/src/modelprint.c:4736 lib/src/modelprint.c:4746
 msgid "Sum of squares"
 msgstr "Karratuen Batura"
 
-#: lib/src/modelprint.c:4656 lib/src/modelprint.c:4667
-#: lib/src/modelprint.c:4669 lib/src/modelprint.c:4676 lib/src/varprint.c:940
+#: lib/src/modelprint.c:4726 lib/src/modelprint.c:4737
+#: lib/src/modelprint.c:4739 lib/src/modelprint.c:4746 lib/src/varprint.c:940
 #: lib/src/varprint.c:944 lib/src/varprint.c:948 gui2/calculator.c:1963
 #: gui2/calculator.c:1966
 msgid "df"
 msgstr "ag"
 
-#: lib/src/modelprint.c:4657 lib/src/modelprint.c:4670
-#: lib/src/modelprint.c:4672 lib/src/modelprint.c:4676
+#: lib/src/modelprint.c:4727 lib/src/modelprint.c:4740
+#: lib/src/modelprint.c:4742 lib/src/modelprint.c:4746
 msgid "Mean square"
 msgstr "Batezbesteko karratua"
 
-#: lib/src/modelprint.c:4682 lib/src/modelprint.c:4684
-#: lib/src/modelprint.c:4688
+#: lib/src/modelprint.c:4752 lib/src/modelprint.c:4754
+#: lib/src/modelprint.c:4758
 msgid "Regression"
 msgstr "Erregresio"
 
-#: lib/src/modelprint.c:4694 lib/src/modelprint.c:4696
-#: lib/src/modelprint.c:4700
+#: lib/src/modelprint.c:4764 lib/src/modelprint.c:4766
+#: lib/src/modelprint.c:4770
 msgid "Residual"
 msgstr "Hondarrak"
 
-#: lib/src/modelprint.c:4706 lib/src/modelprint.c:4708
-#: lib/src/modelprint.c:4712
+#: lib/src/modelprint.c:4776 lib/src/modelprint.c:4778
+#: lib/src/modelprint.c:4782
 msgid "Total"
 msgstr "Guztira"
 
-#: lib/src/modelprint.c:4765
+#: lib/src/modelprint.c:4835
 #, c-format
 msgid "modprint: expected %d names"
 msgstr ""
 
-#: lib/src/modelprint.c:4871
+#: lib/src/modelprint.c:4941
 msgid "modprint: the first matrix argument must have 2 columns"
 msgstr ""
 
@@ -5362,7 +5401,7 @@ msgstr "Deribatu analitikoak erabiliz\n"
 msgid "Tolerance = %g\n"
 msgstr "Tolerantzia = %g\n"
 
-#: lib/src/nonparam.c:249 lib/src/printout.c:2379 gui2/guiprint.c:1344
+#: lib/src/nonparam.c:249 lib/src/printout.c:2486 gui2/guiprint.c:1344
 #: gui2/guiprint.c:1404 gui2/guiprint.c:1457 gui2/guiprint.c:1498
 msgid "Obs"
 msgstr "Behaketa"
@@ -5552,17 +5591,17 @@ msgstr ""
 "Ezin aurrera egin: oraingo datu multzoa  eta eredua estimatzerakoan\n"
 "erabili dena desberdinak dira\n"
 
-#: lib/src/options.c:891
+#: lib/src/options.c:892
 #, fuzzy, c-format
 msgid "Invalid option '--%s'"
 msgstr "baliogabeko eremua '%s'"
 
-#: lib/src/options.c:912
+#: lib/src/options.c:913
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr ""
 
-#: lib/src/options.c:1142
+#: lib/src/options.c:1143
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Oharra: %s aukerak begizta kanpokoa ez du kontuan"
@@ -5625,7 +5664,7 @@ msgid "outside"
 msgstr ""
 
 #: lib/src/plotspec.c:217 lib/src/plotspec.c:231 gui2/gpt_dialog.c:114
-#: gui2/gui_utils.c:2405
+#: gui2/gui_utils.c:2407
 msgid "none"
 msgstr "ezer"
 
@@ -5827,66 +5866,66 @@ msgstr ""
 msgid "Model estimation range: %s - %s"
 msgstr "Ereduaren estimazio ibiltartea: %s - %s"
 
-#: lib/src/printout.c:1168
+#: lib/src/printout.c:1170
 msgid "error"
 msgstr "errore "
 
-#: lib/src/printout.c:1615
+#: lib/src/printout.c:1627
 #, c-format
 msgid "Listing %d variables:\n"
 msgstr "%d aldagaiak zerrendatzen:\n"
 
-#: lib/src/printout.c:1700
+#: lib/src/printout.c:1712
 msgid "list is empty"
 msgstr "zerrenda hutsik dago"
 
-#: lib/src/printout.c:2308
+#: lib/src/printout.c:2415
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr ""
 "Oharra:* ikurrak desbideratze tipikoak 2.5a gainditzen duen hondarra "
 "adierazten du\n"
 
-#: lib/src/printout.c:2314
+#: lib/src/printout.c:2421
 msgid "Mean Squared Error"
 msgstr "Batezbesteko Errore Koadratikoa"
 
-#: lib/src/printout.c:2315
+#: lib/src/printout.c:2422
 msgid "Root Mean Squared Error"
 msgstr "Batezbesteko Errore Koadratikoaren erroa"
 
-#: lib/src/printout.c:2316
+#: lib/src/printout.c:2423
 msgid "Mean Absolute Error"
 msgstr "Batezbesteko Errore Absolutua"
 
-#: lib/src/printout.c:2370
+#: lib/src/printout.c:2477
 #, fuzzy, c-format
 msgid " For %g%% confidence intervals, z(%g) = %.2f\n"
 msgstr "%%95eko konfidantza tarteentzat, z(.025) = %.2f\n"
 
-#: lib/src/printout.c:2373
+#: lib/src/printout.c:2480
 #, fuzzy, c-format
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
 msgstr "%%95eko konfidantza tarteentzat,  t(%d, .025) = %.3f\n"
 
-#: lib/src/printout.c:2381 gui2/guiprint.c:1344 gui2/guiprint.c:1405
+#: lib/src/printout.c:2488 gui2/guiprint.c:1344 gui2/guiprint.c:1405
 #: gui2/guiprint.c:1457 gui2/guiprint.c:1498
 msgid "prediction"
 msgstr "aurresana"
 
-#: lib/src/printout.c:2384
+#: lib/src/printout.c:2491
 msgid " std. error"
 msgstr "desb. tipikoa"
 
-#: lib/src/printout.c:2385
+#: lib/src/printout.c:2492
 #, fuzzy, c-format
 msgid "        %g%% interval\n"
 msgstr "   %%95eko konfidantza tartea\n"
 
-#: lib/src/printout.c:2506
+#: lib/src/printout.c:2613
 msgid "Criterion"
 msgstr "Irizpide"
 
-#: lib/src/printout.c:2516
+#: lib/src/printout.c:2623
 msgid ""
 "\n"
 "--- FINAL VALUES: \n"
@@ -5894,20 +5933,20 @@ msgstr ""
 "\n"
 "--- AZKEN BALIOAK: \n"
 
-#: lib/src/printout.c:2518
+#: lib/src/printout.c:2625
 msgid "Iteration"
 msgstr "Iterazio"
 
-#: lib/src/printout.c:2528
+#: lib/src/printout.c:2635
 #, c-format
 msgid " (steplength = %g)"
 msgstr " (urrats luzera = %g)"
 
-#: lib/src/printout.c:2533 plugin/fcp.c:249
+#: lib/src/printout.c:2640 plugin/fcp.c:249
 msgid "Parameters: "
 msgstr "Parametroak:"
 
-#: lib/src/printout.c:2539 plugin/fcp.c:262
+#: lib/src/printout.c:2646 plugin/fcp.c:262
 msgid "Gradients:  "
 msgstr "Gradienteak:"
 
@@ -6244,7 +6283,7 @@ msgid "Ljung-Box Q'"
 msgstr ""
 
 #: lib/src/texprint.c:863 lib/src/varprint.c:736 lib/src/varprint.c:737
-#: gui2/gui_utils.c:3292
+#: gui2/gui_utils.c:3294
 msgid "Cross-equation covariance matrix"
 msgstr "Gurutzatutako-ekuazioen kobariantza matrizea"
 
@@ -6669,17 +6708,17 @@ msgstr "Datu-fitxategi berria irekitzeko hau itxi egin behar da. Itxi? (b/e)"
 msgid "OK, staying with current data set\n"
 msgstr "OK, oraingo datu multzoarekin jarraitu\n"
 
-#: cli/gretlcli.c:805 gui2/library.c:7223
+#: cli/gretlcli.c:805 gui2/library.c:7229
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
 msgstr ""
 "'%s' komandoa kontuan ez da hartu, ez da baliagarria ekuazio sisteman\n"
 
-#: cli/gretlcli.c:813 gui2/library.c:7231
+#: cli/gretlcli.c:813 gui2/library.c:7237
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr "Sartu komandoak begiztarentzat. Idatzi 'endloop' kanporatzeko\n"
 
-#: cli/gretlcli.c:868 gui2/library.c:5313 gui2/library.c:7317
+#: cli/gretlcli.c:868 gui2/library.c:5319 gui2/library.c:7323
 msgid "Take note: variables have been renumbered"
 msgstr "Oharterazi: aldagaiak berzenbatuak izan dira"
 
@@ -6691,7 +6730,7 @@ msgstr ""
 "Hiru aldagai eskaini behar dituzu, azkenekoa fikziozko aldagaia\n"
 "(1 edo 0 balioduna)\n"
 
-#: cli/gretlcli.c:919 gui2/library.c:7397
+#: cli/gretlcli.c:919 gui2/library.c:7403
 msgid "Data series length count missing or invalid\n"
 msgstr "Datuen segidaren luzera faltako edo baliagabeko balioa da\n"
 
@@ -6720,7 +6759,7 @@ msgstr "saioaren irteera %s%s -ra idazten\n"
 msgid "Command is malformed\n"
 msgstr "Komandoa txarto jarrita\n"
 
-#: cli/gretlcli.c:987 gui2/library.c:7426
+#: cli/gretlcli.c:987 gui2/library.c:7432
 #, c-format
 msgid "Error reading %s\n"
 msgstr "%s irakurtzean huts egin du\n"
@@ -6730,7 +6769,7 @@ msgstr "%s irakurtzean huts egin du\n"
 msgid "Couldn't open script \"%s\"\n"
 msgstr "Ezin da ireki script fitxategia \"%s\"\n"
 
-#: cli/gretlcli.c:1007 gui2/library.c:7442
+#: cli/gretlcli.c:1007 gui2/library.c:7448
 #, c-format
 msgid "%s opened OK\n"
 msgstr "%s irekita OK\n"
@@ -6819,7 +6858,7 @@ msgstr "N(%g, %g)"
 msgid "Standard errors"
 msgstr "Desbideratze tipikoak"
 
-#: gui2/calculator.c:599 gui2/calculator.c:692 gui2/database.c:211
+#: gui2/calculator.c:599 gui2/calculator.c:692 gui2/database.c:212
 #: gui2/filters.c:654 gui2/gpt_control.c:990
 msgid "gnuplot command failed"
 msgstr "gnuplot komandoak huts egin du"
@@ -6828,7 +6867,7 @@ msgstr "gnuplot komandoak huts egin du"
 msgid "Incomplete entry"
 msgstr "Osotu gabeko sarrera"
 
-#: gui2/calculator.c:1009 gui2/dialogs.c:756
+#: gui2/calculator.c:1009 gui2/dialogs.c:748
 msgid "Invalid entry"
 msgstr "Baliogabeko sarrera"
 
@@ -7282,7 +7321,7 @@ msgstr "Bigarren lagineko proportzioa"
 msgid "H0: Difference of proportions = 0"
 msgstr "H0: Proportzioen diferentzia = 0"
 
-#: gui2/calculator.c:2687 gui2/dialogs.c:934
+#: gui2/calculator.c:2687 gui2/dialogs.c:926
 msgid "Show graph of sampling distribution"
 msgstr "Lagin banaketaren grafikoa erakutsi"
 
@@ -7310,7 +7349,7 @@ msgstr "gretl: banaketa grafikoak"
 msgid "gretl: add random variable"
 msgstr "gretl: gehitu aldagai aleatorioa"
 
-#: gui2/calculator.c:2945 gui2/selector.c:5554 gui2/selector.c:5557
+#: gui2/calculator.c:2945 gui2/selector.c:5556 gui2/selector.c:5559
 msgid "No suitable data are available"
 msgstr "Datu egokiak eskuragarri EZ"
 
@@ -7463,7 +7502,7 @@ msgid "gretl: VAR lag selection"
 msgstr "gretl: VAR atzerapenen aukerapena"
 
 #: gui2/callbacks.c:577 gui2/callbacks.c:587 gui2/callbacks.c:589
-#: gui2/library.c:5363 gui2/library.c:5717 gui2/toolbar.c:879
+#: gui2/library.c:5369 gui2/library.c:5723 gui2/toolbar.c:879
 msgid "gretl: define graph"
 msgstr "gretl: definitu grafikoa"
 
@@ -7604,24 +7643,24 @@ msgstr ""
 "gretl kontsola: idatzi 'help' komando zerrenda batentzat\n"
 "? "
 
-#: gui2/database.c:92
+#: gui2/database.c:93
 #, c-format
 msgid "Network status: %s"
 msgstr "Sarearen egoera: %s"
 
-#: gui2/database.c:148 gui2/database.c:150
+#: gui2/database.c:149 gui2/database.c:151
 msgid "Error retrieving data from server"
 msgstr "Zerbitzaritik datuak berreskuratzean huts egin du"
 
-#: gui2/database.c:160 gui2/database.c:1636
+#: gui2/database.c:161 gui2/database.c:1637
 msgid "Retrieving data..."
 msgstr "Berreskuratu datuak..."
 
-#: gui2/database.c:188
+#: gui2/database.c:189
 msgid "gretl: display database series"
 msgstr "gretl: bistaratu denbora segiden datu-multzoa"
 
-#: gui2/database.c:223
+#: gui2/database.c:224
 #, c-format
 msgid ""
 "Do you really want to add a lower frequency series\n"
@@ -7638,11 +7677,11 @@ msgstr ""
 "balio bakoitza %d aldiz errepikatuz. Orokorrean, hau \n"
 " ez da baliogarria. "
 
-#: gui2/database.c:258
+#: gui2/database.c:259
 msgid "Sorry, can't handle this frequency conversion"
 msgstr "Barkatu, oraindik ezin da maiztasun bihurketa hau egin"
 
-#: gui2/database.c:305
+#: gui2/database.c:306
 msgid ""
 "There is already a variable of this name\n"
 "in the dataset.  OK to overwrite it?"
@@ -7650,113 +7689,113 @@ msgstr ""
 "Jadanik datu-multzoan aldagai bat dago izen honekin.\n"
 "Gainidatzi?"
 
-#: gui2/database.c:477
+#: gui2/database.c:478
 msgid "Really delete the selected series?"
 msgstr "Benetan aukeratutako segida ezabatu?"
 
-#: gui2/database.c:634
+#: gui2/database.c:635
 msgid "Warning: series has missing observations"
 msgstr "Kontuz: segidak faltako behaketak ditu"
 
-#: gui2/database.c:638
+#: gui2/database.c:639
 msgid "Couldn't access binary datafile"
 msgstr "Datu-fitxategia bitarra ezin da eskuratu"
 
-#: gui2/database.c:711 gui2/session.c:151 gui2/session.c:158
+#: gui2/database.c:712 gui2/session.c:151 gui2/session.c:158
 #: gui2/session.c:165 gui2/session.c:172 gui2/session.c:178
 #: gui2/session.c:2656
 msgid "Display"
 msgstr "Bistaratu"
 
-#: gui2/database.c:714 gui2/session.c:776 gui2/toolbar.c:541
+#: gui2/database.c:715 gui2/session.c:776 gui2/toolbar.c:541
 msgid "Graph"
 msgstr "Grafikoa"
 
-#: gui2/database.c:717
+#: gui2/database.c:718
 msgid "Import"
 msgstr "Inportatu"
 
-#: gui2/database.c:721 gui2/datafiles.c:1005 gui2/datafiles.c:1095
+#: gui2/database.c:722 gui2/datafiles.c:1050 gui2/datafiles.c:1163
 #: gui2/menustate.c:315 gui2/menustate.c:353 gui2/menustate.c:379
 #: gui2/menustate.c:424 gui2/session.c:154 gui2/session.c:174
 #: gui2/session.c:181 gui2/session.c:206 gui2/session.c:2610
-#: gui2/session.c:2685
+#: gui2/session.c:2685 gui2/ssheet.c:2255
 msgid "Delete"
 msgstr "Ezabatu"
 
-#: gui2/database.c:726 gui2/datafiles.c:1034 gui2/datafiles.c:1044
-#: gui2/datafiles.c:1099 gui2/toolbar.c:530
+#: gui2/database.c:727 gui2/datafiles.c:1079 gui2/datafiles.c:1089
+#: gui2/datafiles.c:1167 gui2/toolbar.c:530
 msgid "Find..."
 msgstr "Aurkitu..."
 
-#: gui2/database.c:731
+#: gui2/database.c:732
 msgid "Codebook"
 msgstr "Kodeliburua"
 
-#: gui2/database.c:750 gui2/gretl.c:1156 gui2/gui_utils.c:138
+#: gui2/database.c:751 gui2/gretl.c:1156 gui2/gui_utils.c:138
 #: gui2/gui_utils.c:266
 msgid "_File"
 msgstr "_Fitxategia"
 
-#: gui2/database.c:751 gui2/gui_utils.c:145 gui2/gui_utils.c:273
+#: gui2/database.c:752 gui2/gui_utils.c:145 gui2/gui_utils.c:273
 msgid "_Close"
 msgstr "I_txi"
 
-#: gui2/database.c:752
+#: gui2/database.c:753
 #, fuzzy
 msgid "_Series"
 msgstr "segidak"
 
-#: gui2/database.c:753
+#: gui2/database.c:754
 msgid "_Display"
 msgstr "_Bistaratu"
 
-#: gui2/database.c:754
+#: gui2/database.c:755
 msgid "_Graph"
 msgstr "_Grafikoa"
 
-#: gui2/database.c:755 gui2/gretl.c:1160
+#: gui2/database.c:756 gui2/gretl.c:1160
 msgid "_Import"
 msgstr "_Inportatu"
 
-#: gui2/database.c:756
+#: gui2/database.c:757
 msgid "_Delete"
 msgstr "_Ezabatu"
 
-#: gui2/database.c:757 gui2/helpfiles.c:94
+#: gui2/database.c:758 gui2/helpfiles.c:94
 msgid "_Find"
 msgstr "_Aurkitu"
 
-#: gui2/database.c:758 gui2/helpfiles.c:95
+#: gui2/database.c:759 gui2/helpfiles.c:95
 msgid "_Find in window"
 msgstr "_Aurkitu lehioan"
 
-#: gui2/database.c:761
+#: gui2/database.c:762
 msgid "_Codebook"
 msgstr "_Kodeliburua"
 
-#: gui2/database.c:762
+#: gui2/database.c:763
 msgid "_Open"
 msgstr "_Ireki"
 
-#: gui2/database.c:962 gui2/datafiles.c:1358
+#: gui2/database.c:963 gui2/datafiles.c:1437
 msgid "Network status: OK"
 msgstr "Sarearen lanaren egoera: OK"
 
-#: gui2/database.c:1014
+#: gui2/database.c:1015
 #, c-format
 msgid "Database parse error at variable '%s'"
 msgstr "Datu-basea pasatzean, '%s' aldagaian huts egin du"
 
-#: gui2/database.c:1347 gui2/ssheet.c:2131
+#: gui2/database.c:1348 gui2/ssheet.c:2201
 msgid "Name"
 msgstr "Izena"
 
-#: gui2/database.c:1349
+#: gui2/database.c:1350
 msgid "Observations"
 msgstr "Behaketak"
 
-#: gui2/database.c:1824
+#: gui2/database.c:1825
 msgid ""
 "Database installed.\n"
 "Open it now?"
@@ -7764,203 +7803,224 @@ msgstr ""
 "Datu-basea instalatuta.\n"
 "Ireki orain?"
 
-#: gui2/database.c:1947 gui2/database.c:1963 gui2/database.c:2177
+#: gui2/database.c:1994 gui2/database.c:2020 gui2/database.c:2249
 msgid "Up to date"
 msgstr "Eguneratuta"
 
-#: gui2/database.c:1958
+#: gui2/database.c:2006 gui2/database.c:2015
 msgid "Error unzipping compressed data"
 msgstr "Konprimatutako datuak zabaltzean huts egin du"
 
-#: gui2/database.c:2141 gui2/database.c:2164
+#: gui2/database.c:2201 gui2/database.c:2230
 msgid "Not installed"
 msgstr "Instalatu gabe"
 
-#: gui2/database.c:2169
+#: gui2/database.c:2235
 msgid "Unknown: access error"
 msgstr "Ezezaguna: sartze errorea"
 
-#: gui2/database.c:2175
+#: gui2/database.c:2247
 msgid "Not up to date"
 msgstr "Eguneratzeke"
 
-#: gui2/database.c:2353 gui2/database.c:2576
+#: gui2/database.c:2431 gui2/database.c:2736
 msgid "No database files found"
 msgstr "Datu-baserik ez da aurkitu"
 
-#: gui2/database.c:2509
+#: gui2/database.c:2587
 msgid "No function packages found"
 msgstr "Funtzio-paketerik ez da aurkitu"
 
-#: gui2/database.c:2532
+#: gui2/database.c:2667
+#, fuzzy
+msgid "No data packages found"
+msgstr "Funtzio-paketerik ez da aurkitu"
+
+#: gui2/database.c:2692
 #, c-format
 msgid "Can't open folder %s"
 msgstr "Ezin da ireki  %s karpeta"
 
-#: gui2/datafiles.c:655
+#: gui2/datafiles.c:675
 msgid "gretl: data header"
 msgstr "gretl: datu goiburua"
 
-#: gui2/datafiles.c:657
+#: gui2/datafiles.c:677
 msgid "Failed to retrieve description of data"
 msgstr "Datuen komentarioak biltegiratzerakoan huts egin du"
 
-#: gui2/datafiles.c:658
+#: gui2/datafiles.c:678
 #, c-format
 msgid "didn't get description from %s\n"
 msgstr "ez zegoen %s -ren deskribapenik\n"
 
-#: gui2/datafiles.c:739 gui2/library.c:5258 gui2/library.c:5266
+#: gui2/datafiles.c:759 gui2/library.c:5264 gui2/library.c:5272
 #: gui2/session.c:1987
 #, c-format
 msgid "Really delete %s?"
 msgstr "Benetan %s ezabatu?"
 
-#: gui2/datafiles.c:742 gui2/library.c:5273 gui2/session.c:1989
+#: gui2/datafiles.c:762 gui2/library.c:5279 gui2/session.c:1989
 msgid "gretl: delete"
 msgstr "gretl: ezabatu"
 
-#: gui2/datafiles.c:791
+#: gui2/datafiles.c:811
 msgid "function code"
 msgstr "kode funtzioa"
 
-#: gui2/datafiles.c:978 gui2/datafiles.c:996 gui2/datafiles.c:1012
-#: gui2/datafiles.c:1090
+#: gui2/datafiles.c:1023 gui2/datafiles.c:1041 gui2/datafiles.c:1057
+#: gui2/datafiles.c:1158
 msgid "Info"
 msgstr "Informazioa"
 
-#: gui2/datafiles.c:981 gui2/datafiles.c:1088
+#: gui2/datafiles.c:1026 gui2/datafiles.c:1155
 msgid "Open"
 msgstr "Ireki"
 
-#: gui2/datafiles.c:993 gui2/datafiles.c:1089 gui2/gpt_control.c:2963
+#: gui2/datafiles.c:1038 gui2/datafiles.c:1157 gui2/gpt_control.c:2963
 #: gui2/gpt_control.c:3039 gui2/session.c:185 gui2/session.c:192
 #: gui2/session.c:198 gui2/session.c:203 gui2/session.c:2582
 #: gui2/session.c:2603 gui2/session.c:2619 gui2/session.c:2634
 msgid "Edit"
 msgstr "Editatu"
 
-#: gui2/datafiles.c:999 gui2/datafiles.c:1091
+#: gui2/datafiles.c:1044 gui2/datafiles.c:1159
 msgid "View code"
 msgstr "Ikusi kodea"
 
-#: gui2/datafiles.c:1002 gui2/datafiles.c:1018 gui2/datafiles.c:1094
+#: gui2/datafiles.c:1047 gui2/datafiles.c:1063 gui2/datafiles.c:1162
 msgid "Execute"
 msgstr "Exekutatu"
 
-#: gui2/datafiles.c:1008 gui2/datafiles.c:1098
+#: gui2/datafiles.c:1053 gui2/datafiles.c:1166
 msgid "New"
 msgstr "Berria"
 
-#: gui2/datafiles.c:1015 gui2/datafiles.c:1041 gui2/datafiles.c:1093
+#: gui2/datafiles.c:1060 gui2/datafiles.c:1086 gui2/datafiles.c:1100
+#: gui2/datafiles.c:1161
 msgid "Install"
 msgstr "Instalatu"
 
-#: gui2/datafiles.c:1031 gui2/datafiles.c:1038 gui2/datafiles.c:1092
+#: gui2/datafiles.c:1076 gui2/datafiles.c:1083 gui2/datafiles.c:1160
 #, fuzzy
 msgid "List series"
 msgstr "denbora segidak"
 
-#: gui2/datafiles.c:1096
+#: gui2/datafiles.c:1156
+#, fuzzy
+msgid "Select directory"
+msgstr "Aukeratu kolorea"
+
+#: gui2/datafiles.c:1164
 msgid "Look on server"
 msgstr ""
 
-#: gui2/datafiles.c:1097
+#: gui2/datafiles.c:1165
 msgid "Local machine"
 msgstr ""
 
-#: gui2/datafiles.c:1100 gui2/gpt_control.c:2965 gui2/gpt_control.c:3041
+#: gui2/datafiles.c:1168 gui2/gpt_control.c:2965 gui2/gpt_control.c:3041
 #: gui2/gpt_control.c:3046 gui2/toolbar.c:549
 msgid "Close"
 msgstr "Itxi"
 
-#: gui2/datafiles.c:1194 gui2/datafiles.c:1201
+#: gui2/datafiles.c:1266 gui2/datafiles.c:1273
 msgid "local machine"
 msgstr ""
 
-#: gui2/datafiles.c:1207
+#: gui2/datafiles.c:1279
 #, fuzzy, c-format
 msgid "gretl: databases on %s"
 msgstr "gretl: datu-baseak zerbitzarian"
 
-#: gui2/datafiles.c:1209
+#: gui2/datafiles.c:1281
 #, fuzzy, c-format
 msgid "gretl: function packages on %s"
 msgstr "gretl: funtzio-paketeak zerbitzarian"
 
-#: gui2/datafiles.c:1289
+#: gui2/datafiles.c:1361
 msgid "gretl: practice files"
 msgstr "gretl: praktika fitxategiak"
 
-#: gui2/datafiles.c:1291
+#: gui2/datafiles.c:1363
 msgid "gretl: data files"
 msgstr "gretl: datu fitxategiak"
 
-#: gui2/datafiles.c:1293
+#: gui2/datafiles.c:1365
 msgid "gretl: databases on server"
 msgstr "gretl: datu-baseak zerbitzarian"
 
-#: gui2/datafiles.c:1295
+#: gui2/datafiles.c:1367
 msgid "gretl: function packages on server"
 msgstr "gretl: funtzio-paketeak zerbitzarian"
 
-#: gui2/datafiles.c:1582 gui2/fnsave.c:1342
+#: gui2/datafiles.c:1369
+#, fuzzy
+msgid "gretl: data packages on server"
+msgstr "gretl: datu-baseak zerbitzarian"
+
+#: gui2/datafiles.c:1708 gui2/fnsave.c:1342
 msgid "gretl: function packages"
 msgstr "gretl: funtzio-paketeak"
 
-#: gui2/datafiles.c:1583
+#: gui2/datafiles.c:1709
 msgid ""
 "No gretl function packages were found on this computer.\n"
 "Do you want to take a look on the gretl server?"
 msgstr ""
 
-#: gui2/datafiles.c:1590
+#: gui2/datafiles.c:1716
 #, fuzzy
 msgid "No gretl function packages were found on this computer."
 msgstr "gretl: funtzio-paketeak zerbitzarian"
 
-#: gui2/datafiles.c:1671
+#: gui2/datafiles.c:1800 gui2/datafiles.c:1804
 msgid "File"
 msgstr "Fitxategia"
 
-#: gui2/datafiles.c:1672 gui2/datafiles.c:1691 gui2/datafiles.c:1697
+#: gui2/datafiles.c:1801 gui2/datafiles.c:1825 gui2/datafiles.c:1831
 #: gui2/session.c:2864
 msgid "Summary"
 msgstr "Laburpena"
 
-#: gui2/datafiles.c:1675
-msgid "Script"
-msgstr "Script"
-
-#: gui2/datafiles.c:1676
-msgid "Topic"
-msgstr "Gaia"
-
-#: gui2/datafiles.c:1677
-msgid "Data"
-msgstr "Datuak"
-
-#: gui2/datafiles.c:1680 gui2/datafiles.c:1684
-msgid "Database"
-msgstr "Datu-basea"
-
-#: gui2/datafiles.c:1681 gui2/datafiles.c:1685
+#: gui2/datafiles.c:1805 gui2/datafiles.c:1815 gui2/datafiles.c:1819
 msgid "Source"
 msgstr "Iturria"
 
-#: gui2/datafiles.c:1686 gui2/datafiles.c:1698
+#: gui2/datafiles.c:1806
+#, fuzzy
+msgid "Date"
+msgstr "Datuak"
+
+#: gui2/datafiles.c:1809
+msgid "Script"
+msgstr "Script"
+
+#: gui2/datafiles.c:1810
+msgid "Topic"
+msgstr "Gaia"
+
+#: gui2/datafiles.c:1811
+msgid "Data"
+msgstr "Datuak"
+
+#: gui2/datafiles.c:1814 gui2/datafiles.c:1818
+msgid "Database"
+msgstr "Datu-basea"
+
+#: gui2/datafiles.c:1820 gui2/datafiles.c:1832
 msgid "Local status"
 msgstr "Egoera lokala"
 
-#: gui2/datafiles.c:1689 gui2/datafiles.c:1695
+#: gui2/datafiles.c:1823 gui2/datafiles.c:1829
 msgid "Package"
 msgstr "Programa-paketea"
 
-#: gui2/datafiles.c:1690 gui2/datafiles.c:1696 gui2/fnsave.c:721
+#: gui2/datafiles.c:1824 gui2/datafiles.c:1830 gui2/fnsave.c:721
 msgid "Version"
 msgstr "Bertsioa"
 
-#: gui2/datafiles.c:1692
+#: gui2/datafiles.c:1826
 msgid "Loaded?"
 msgstr "Kargatuta?"
 
@@ -8000,7 +8060,7 @@ msgstr "Taula-datu-indize aldagaia"
 msgid "Confirm dataset structure"
 msgstr "Datu-multzoaren egitura berretsi:"
 
-#: gui2/datawiz.c:168 gui2/ssheet.c:840
+#: gui2/datawiz.c:168 gui2/ssheet.c:843
 msgid "gretl: name variable"
 msgstr "gretl: aldagaiaren izena"
 
@@ -8012,25 +8072,25 @@ msgstr ""
 "Sartu lehen aldagaiaren izena\n"
 " (gehienez 15 karaktere)"
 
-#: gui2/datawiz.c:285 gui2/ssheet.c:1423
+#: gui2/datawiz.c:285 gui2/ssheet.c:1473
 msgid "No changes were made"
 msgstr "Aldaketarik ez da egin"
 
-#: gui2/datawiz.c:375 gui2/dialogs.c:2910 gui2/menustate.c:507
+#: gui2/datawiz.c:375 gui2/dialogs.c:2902 gui2/menustate.c:507
 msgid "Annual"
 msgstr "Urterokoak"
 
-#: gui2/datawiz.c:376 gui2/dialogs.c:2909 gui2/dialogs.c:3264
+#: gui2/datawiz.c:376 gui2/dialogs.c:2901 gui2/dialogs.c:3256
 #: gui2/menustate.c:509
 msgid "Quarterly"
 msgstr "Hiruhilabeterokoak"
 
-#: gui2/datawiz.c:377 gui2/dialogs.c:2915 gui2/dialogs.c:3265
+#: gui2/datawiz.c:377 gui2/dialogs.c:2907 gui2/dialogs.c:3257
 #: gui2/menustate.c:511
 msgid "Monthly"
 msgstr "Hilabeterokoak"
 
-#: gui2/datawiz.c:378 gui2/dialogs.c:2914 gui2/menustate.c:515
+#: gui2/datawiz.c:378 gui2/dialogs.c:2906 gui2/menustate.c:515
 msgid "Weekly"
 msgstr "Asterokoak"
 
@@ -8083,31 +8143,31 @@ msgstr "Gurutzatutakoak"
 msgid "Panel"
 msgstr "Taula-datuak"
 
-#: gui2/datawiz.c:481 gui2/dialogs.c:2982
+#: gui2/datawiz.c:481 gui2/dialogs.c:2974
 msgid "Monday"
 msgstr "Astelehena"
 
-#: gui2/datawiz.c:482 gui2/dialogs.c:2983
+#: gui2/datawiz.c:482 gui2/dialogs.c:2975
 msgid "Tuesday"
 msgstr "Asteartea"
 
-#: gui2/datawiz.c:483 gui2/dialogs.c:2984
+#: gui2/datawiz.c:483 gui2/dialogs.c:2976
 msgid "Wednesday"
 msgstr "Asteazkena"
 
-#: gui2/datawiz.c:484 gui2/dialogs.c:2985
+#: gui2/datawiz.c:484 gui2/dialogs.c:2977
 msgid "Thursday"
 msgstr "Osteguna"
 
-#: gui2/datawiz.c:485 gui2/dialogs.c:2986
+#: gui2/datawiz.c:485 gui2/dialogs.c:2978
 msgid "Friday"
 msgstr "Ostirala"
 
-#: gui2/datawiz.c:486 gui2/dialogs.c:2987
+#: gui2/datawiz.c:486 gui2/dialogs.c:2979
 msgid "Saturday"
 msgstr "Larunbata"
 
-#: gui2/datawiz.c:487 gui2/dialogs.c:2981
+#: gui2/datawiz.c:487 gui2/dialogs.c:2973
 msgid "Sunday"
 msgstr "Igandea"
 
@@ -8212,7 +8272,7 @@ msgstr ""
 "Saio honetako aldaketak\n"
 " gorde nahi dituzu?"
 
-#: gui2/dialogs.c:155 gui2/ssheet.c:2400
+#: gui2/dialogs.c:155 gui2/ssheet.c:2486
 msgid ""
 "Do you want to save changes you have\n"
 "made to the current data set?"
@@ -8256,15 +8316,15 @@ msgstr "puntua (.)"
 msgid "include observations column"
 msgstr "barneratu behaketen zutabea"
 
-#: gui2/dialogs.c:535
+#: gui2/dialogs.c:538
 msgid "Tab separated"
 msgstr "Tabuladorearekin aldenduta"
 
-#: gui2/dialogs.c:555
+#: gui2/dialogs.c:558
 msgid "Comma separated"
 msgstr "Komarekin aldenduta"
 
-#: gui2/dialogs.c:575
+#: gui2/dialogs.c:578
 msgid "plain text"
 msgstr "testu arrunta"
 
@@ -8280,407 +8340,407 @@ msgstr "Kopiatu honela:"
 msgid "Save as"
 msgstr "Gorde honela"
 
-#: gui2/dialogs.c:832 gui2/library.c:1540
+#: gui2/dialogs.c:824 gui2/library.c:1540
 msgid "gretl: bootstrap analysis"
 msgstr "gretl: bootstrap analisia"
 
-#: gui2/dialogs.c:863
+#: gui2/dialogs.c:855
 msgid "Confidence interval"
 msgstr "Konfidantza tartea"
 
-#: gui2/dialogs.c:872
+#: gui2/dialogs.c:864
 msgid "Studentized confidence interval"
 msgstr "Studentizatutako konfidantza tartea"
 
-#: gui2/dialogs.c:881
+#: gui2/dialogs.c:873
 msgid "P-value"
 msgstr "P-balioa"
 
-#: gui2/dialogs.c:895
+#: gui2/dialogs.c:887
 msgid "Resample residuals"
 msgstr "Birlagindu hondarrak"
 
-#: gui2/dialogs.c:904
+#: gui2/dialogs.c:896
 msgid "Simulate normal errors"
 msgstr "Simulatu perturbazio normalak"
 
-#: gui2/dialogs.c:917
+#: gui2/dialogs.c:909
 msgid "Number of replications:"
 msgstr "Errepikapen kopurua:"
 
-#: gui2/dialogs.c:942 gui2/library.c:1546
+#: gui2/dialogs.c:934 gui2/library.c:1546
 msgid "Save bootstrap data to file"
 msgstr "Gorde bootstrap datuak fitxategira"
 
-#: gui2/dialogs.c:1130
+#: gui2/dialogs.c:1122
 msgid "The display name for a variable cannot contain double quotes"
 msgstr "Bistaratutako aldagaiaren izenak ezin ditu kakotx bikoitzak izan"
 
-#: gui2/dialogs.c:1217 gui2/dialogs.c:1222
+#: gui2/dialogs.c:1209 gui2/dialogs.c:1214
 msgid "not set"
 msgstr "jarri gabe"
 
-#: gui2/dialogs.c:1218
+#: gui2/dialogs.c:1210
 msgid "average of observations"
 msgstr "behaketen batezbestekoa"
 
-#: gui2/dialogs.c:1219
+#: gui2/dialogs.c:1211
 msgid "sum of observations"
 msgstr "behaketen batura"
 
-#: gui2/dialogs.c:1220
+#: gui2/dialogs.c:1212
 msgid "first observation"
 msgstr "lehen behaketa"
 
-#: gui2/dialogs.c:1221
+#: gui2/dialogs.c:1213
 msgid "last observation"
 msgstr "azken behaketa"
 
-#: gui2/dialogs.c:1248 gui2/dialogs.c:1317
+#: gui2/dialogs.c:1240 gui2/dialogs.c:1309
 msgid "Formula:"
 msgstr "Formula:"
 
-#: gui2/dialogs.c:1273
+#: gui2/dialogs.c:1265
 msgid "gretl: variable attributes"
 msgstr "gretl: aldagaiaren ezaugarriak"
 
-#: gui2/dialogs.c:1290
+#: gui2/dialogs.c:1282
 msgid "Name of variable:"
 msgstr "Aldagaiaren izena:"
 
-#: gui2/dialogs.c:1316 gui2/dialogs.c:1323
+#: gui2/dialogs.c:1308 gui2/dialogs.c:1315
 msgid "Description:"
 msgstr "Deskribapena:"
 
-#: gui2/dialogs.c:1351
+#: gui2/dialogs.c:1343
 msgid "Display name (shown in graphs):"
 msgstr "Grafikoan bistaratzeko izena:"
 
-#: gui2/dialogs.c:1377
+#: gui2/dialogs.c:1369
 msgid "Compaction method (for reducing frequency):"
 msgstr "Trinkotze metodoa (maiztasunak murrizteko):"
 
-#: gui2/dialogs.c:1403
+#: gui2/dialogs.c:1395
 msgid "Graph line width:"
 msgstr "Grafiko lerroaren zabalera:"
 
-#: gui2/dialogs.c:1425
+#: gui2/dialogs.c:1417
 msgid "Treat this variable as discrete"
 msgstr "Erabili aldagai diskretua bezala"
 
-#: gui2/dialogs.c:1499
+#: gui2/dialogs.c:1491
 msgid "gretl: database description"
 msgstr "gretl: datu-baseen deskribapena"
 
-#: gui2/dialogs.c:1503
+#: gui2/dialogs.c:1495
 msgid "description:"
 msgstr "deskribapena:"
 
-#: gui2/dialogs.c:1566
+#: gui2/dialogs.c:1558
 msgid "gretl: seed for random numbers"
 msgstr "gretl: zenbaki aleatorioaren hazia"
 
-#: gui2/dialogs.c:1571
+#: gui2/dialogs.c:1563
 msgid "Seed for generator:"
 msgstr "Hazia:"
 
-#: gui2/dialogs.c:1808
+#: gui2/dialogs.c:1800
 #, c-format
 msgid "Included groups: %d"
 msgstr ""
 
-#: gui2/dialogs.c:1810
+#: gui2/dialogs.c:1802
 #, c-format
 msgid "Observations: %d"
 msgstr "Behaketak: %d"
 
-#: gui2/dialogs.c:1881
+#: gui2/dialogs.c:1873
 #, fuzzy
 msgid "Panel groups"
 msgstr "Taula-datuen eredua"
 
-#: gui2/dialogs.c:1888 gui2/dialogs.c:2109
+#: gui2/dialogs.c:1880 gui2/dialogs.c:2101
 msgid "Start:"
 msgstr "Hasi:"
 
-#: gui2/dialogs.c:1898 gui2/dialogs.c:2109
+#: gui2/dialogs.c:1890 gui2/dialogs.c:2101
 msgid "End:"
 msgstr "Bukatu:"
 
-#: gui2/dialogs.c:2062
+#: gui2/dialogs.c:2054
 msgid "There are no dummy variables in the current sample"
 msgstr "Oraingo laginean ez dago fikziozko aldagairik"
 
-#: gui2/dialogs.c:2064
+#: gui2/dialogs.c:2056
 msgid "There are no dummy variables in the dataset"
 msgstr "Datu-multzoan ez dago fikziozko aldagairik"
 
-#: gui2/dialogs.c:2070
+#: gui2/dialogs.c:2062
 msgid "gretl: set sample"
 msgstr "gretl: ezarri lagina"
 
-#: gui2/dialogs.c:2075 gui2/dialogs.c:2216
+#: gui2/dialogs.c:2067 gui2/dialogs.c:2208
 msgid "Name of dummy variable to use:"
 msgstr "Erabiltzeko fikzio-aldagaiaren izena:"
 
-#: gui2/dialogs.c:2086
+#: gui2/dialogs.c:2078
 #, c-format
 msgid "Number of observations to select (max %d)"
 msgstr "Kontuan hartzeko behaketa kopurua (gehienez %d)"
 
-#: gui2/dialogs.c:2108
+#: gui2/dialogs.c:2100
 msgid "Set sample range"
 msgstr "Ezarri lagin tartea"
 
-#: gui2/dialogs.c:2215
+#: gui2/dialogs.c:2207
 msgid "Observation at which to split the sample:"
 msgstr "Lagina zatikatzeko behaketa:"
 
-#: gui2/dialogs.c:2226
+#: gui2/dialogs.c:2218
 msgid "gretl: Chow test"
 msgstr "gretl: Chow kontrastea"
 
-#: gui2/dialogs.c:2384
+#: gui2/dialogs.c:2376
 #, fuzzy
 msgid "Produce forecast for"
 msgstr "gretl: aurresanak"
 
-#: gui2/dialogs.c:2433
+#: gui2/dialogs.c:2425
 msgid "Number of pre-forecast observations to graph"
 msgstr "Marrazteko aurreikusitako behaketa kopurua"
 
-#: gui2/dialogs.c:2436
+#: gui2/dialogs.c:2428
 msgid "automatic forecast (dynamic out of sample)"
 msgstr "aurresan automatikoa "
 
-#: gui2/dialogs.c:2437
+#: gui2/dialogs.c:2429
 msgid "dynamic forecast"
 msgstr "aurresan dinamikoa"
 
-#: gui2/dialogs.c:2438
+#: gui2/dialogs.c:2430
 msgid "static forecast"
 msgstr "aurresan estatikoa"
 
-#: gui2/dialogs.c:2439
+#: gui2/dialogs.c:2431
 #, fuzzy
 msgid "rolling k-step ahead forecasts: k = "
 msgstr "atzerakada bateko aurresanak"
 
-#: gui2/dialogs.c:2451
+#: gui2/dialogs.c:2443
 msgid "gretl: forecast"
 msgstr "gretl: aurresanak"
 
-#: gui2/dialogs.c:2458
+#: gui2/dialogs.c:2450
 msgid "Forecast range:"
 msgstr "Aurresan tartea:"
 
-#: gui2/dialogs.c:2459
+#: gui2/dialogs.c:2451
 msgid "Start"
 msgstr "Hasi"
 
-#: gui2/dialogs.c:2459
+#: gui2/dialogs.c:2451
 msgid "End"
 msgstr "Bukatu"
 
-#: gui2/dialogs.c:2570
+#: gui2/dialogs.c:2562
 msgid "Show fitted values for pre-forecast range"
 msgstr ""
 
-#: gui2/dialogs.c:2582
+#: gui2/dialogs.c:2574
 #, fuzzy
 msgid "error bars"
 msgstr "errore "
 
-#: gui2/dialogs.c:2583
+#: gui2/dialogs.c:2575
 #, fuzzy
 msgid "low and high lines"
 msgstr "Lerroen gainjartze-eza  baimendu"
 
-#: gui2/dialogs.c:2584
+#: gui2/dialogs.c:2576
 msgid "shaded area"
 msgstr ""
 
-#: gui2/dialogs.c:2610
+#: gui2/dialogs.c:2602
 #, fuzzy
 msgid "Plot confidence interval using"
 msgstr "%95eko konfidantza tartea"
 
-#: gui2/dialogs.c:2674
+#: gui2/dialogs.c:2666
 msgid "Add observations"
 msgstr "Gehitu behaketak"
 
-#: gui2/dialogs.c:2686
+#: gui2/dialogs.c:2678
 msgid "Number of observations to add:"
 msgstr "Eransteko behaketen kopurua:"
 
-#: gui2/dialogs.c:2775
+#: gui2/dialogs.c:2767
 msgid "select variable"
 msgstr "aukeratu aldagaia"
 
-#: gui2/dialogs.c:2955
+#: gui2/dialogs.c:2947
 msgid "Week starts on Monday"
 msgstr "Astea astelehenean hasten da"
 
-#: gui2/dialogs.c:2968
+#: gui2/dialogs.c:2960
 msgid "Week starts on Sunday"
 msgstr "Astea igandean hasten da"
 
-#: gui2/dialogs.c:3018
+#: gui2/dialogs.c:3010
 msgid "Default method:"
 msgstr "Lehenetsiko metodoa"
 
-#: gui2/dialogs.c:3023
+#: gui2/dialogs.c:3015
 msgid "Compact by averaging"
 msgstr "Trinkotu batezbestekoak eginez"
 
-#: gui2/dialogs.c:3033
+#: gui2/dialogs.c:3025
 msgid "Compact by summing"
 msgstr "Trinkotu baturak eginez"
 
-#: gui2/dialogs.c:3045
+#: gui2/dialogs.c:3037
 msgid "Use end-of-period values"
 msgstr "Erabili lagin amaierako balioak"
 
-#: gui2/dialogs.c:3057
+#: gui2/dialogs.c:3049
 msgid "Use start-of-period values"
 msgstr "Erabili lagin bukaerako balioak"
 
-#: gui2/dialogs.c:3074
+#: gui2/dialogs.c:3066
 msgid "Use representative day"
 msgstr "Erabili egun adierazgarria"
 
-#: gui2/dialogs.c:3138
+#: gui2/dialogs.c:3130
 msgid "gretl: compact data"
 msgstr "gretl: datu trinkoak"
 
-#: gui2/dialogs.c:3152
+#: gui2/dialogs.c:3144
 #, c-format
 msgid "You are adding a %s series to %s dataset"
 msgstr "%s segida %s datu multzora eransten ari zara"
 
-#: gui2/dialogs.c:3154
+#: gui2/dialogs.c:3146
 msgid "a quarterly"
 msgstr "hiruhilabeterokoa"
 
-#: gui2/dialogs.c:3154
+#: gui2/dialogs.c:3146
 msgid "an annual"
 msgstr "urterokoa"
 
-#: gui2/dialogs.c:3159
+#: gui2/dialogs.c:3151
 msgid "Compact quarterly data to annual"
 msgstr "Hiruhilabeteroko datuak urterokoetara trinkotu"
 
-#: gui2/dialogs.c:3162
+#: gui2/dialogs.c:3154
 msgid "Compact monthly data to:"
 msgstr "Trinkotu hilabeteroko datuak:"
 
-#: gui2/dialogs.c:3168
+#: gui2/dialogs.c:3160
 msgid "Compact daily data to:"
 msgstr "Trinkotu eguneroko datuak:"
 
-#: gui2/dialogs.c:3171
+#: gui2/dialogs.c:3163
 msgid "Compact daily data to weekly"
 msgstr "Eguneroko datuak asterokoetara trinkotu"
 
-#: gui2/dialogs.c:3178
+#: gui2/dialogs.c:3170
 msgid "Compact weekly data to monthly"
 msgstr "Asteroko datuak hilabetekoetara trinkotu"
 
-#: gui2/dialogs.c:3309
+#: gui2/dialogs.c:3301
 msgid "gretl: expand data"
 msgstr "gretl: zabaldu datuak"
 
-#: gui2/dialogs.c:3313
+#: gui2/dialogs.c:3305
 #, c-format
 msgid "Adding %s series to %s dataset"
 msgstr "%s segida %s datu-multzora eransten"
 
-#: gui2/dialogs.c:3319
+#: gui2/dialogs.c:3311
 msgid "Expand annual data to:"
 msgstr "Zabaldu urteroko datuak:"
 
-#: gui2/dialogs.c:3324
+#: gui2/dialogs.c:3316
 msgid "Expand quarterly data to monthly"
 msgstr "Hiruhilabeteroko datuak hilabetekora zabaldu"
 
-#: gui2/dialogs.c:3495
+#: gui2/dialogs.c:3487
 msgid "density estimation options"
 msgstr "dentsitate estimazioaren aukerak"
 
-#: gui2/dialogs.c:3500 plugin/kernel.c:130
+#: gui2/dialogs.c:3492 plugin/kernel.c:130
 msgid "Gaussian kernel"
 msgstr "Gaussian kernela"
 
-#: gui2/dialogs.c:3512 plugin/kernel.c:131
+#: gui2/dialogs.c:3504 plugin/kernel.c:131
 msgid "Epanechnikov kernel"
 msgstr "Epanechnikov kernela"
 
-#: gui2/dialogs.c:3531
+#: gui2/dialogs.c:3523
 msgid "bandwidth adjustment factor:"
 msgstr "lehio-zabaleraren doikuntza faktorea:"
 
-#: gui2/dialogs.c:3863
+#: gui2/dialogs.c:3855
 msgid "Number of bins:"
 msgstr "Tarte kopurua:"
 
-#: gui2/dialogs.c:3864
+#: gui2/dialogs.c:3856
 msgid "Minimum value, left bin:"
 msgstr "Balio minimoduna, ezkerreko tartea:"
 
-#: gui2/dialogs.c:3865
+#: gui2/dialogs.c:3857
 msgid "Bin width:"
 msgstr "Tarteen zabalera:"
 
-#: gui2/dialogs.c:3868 gui2/dialogs.c:3873
+#: gui2/dialogs.c:3860 gui2/dialogs.c:3865
 #, fuzzy
 msgid "Show data only"
 msgstr "Xehetasunak azaldu"
 
-#: gui2/dialogs.c:3869
+#: gui2/dialogs.c:3861
 #, fuzzy
 msgid "Show normal distribution"
 msgstr "Banaketa normal bakuna"
 
-#: gui2/dialogs.c:3870
+#: gui2/dialogs.c:3862
 #, fuzzy
 msgid "Show gamma distribution"
 msgstr "Lagin banaketaren grafikoa erakutsi"
 
-#: gui2/dialogs.c:3874
+#: gui2/dialogs.c:3866
 #, fuzzy
 msgid "Test against normal distribution"
 msgstr "Banaketa normal bakuna"
 
-#: gui2/dialogs.c:3875
+#: gui2/dialogs.c:3867
 #, fuzzy
 msgid "Test against gamma distribution"
 msgstr "Lagin banaketaren grafikoa erakutsi"
 
-#: gui2/dialogs.c:4049
+#: gui2/dialogs.c:4041
 #, fuzzy
 msgid "gretl: error"
 msgstr "gretl: periodograma"
 
-#: gui2/dialogs.c:4050
+#: gui2/dialogs.c:4042
 #, fuzzy
 msgid "gretl: warning"
 msgstr "gretl: bilatu"
 
-#: gui2/dialogs.c:4051
+#: gui2/dialogs.c:4043
 #, fuzzy
 msgid "gretl: information"
 msgstr "datu informazioa"
 
-#: gui2/dialogs.c:4172
+#: gui2/dialogs.c:4164
 #, c-format
 msgid "The maximum must be greater than %g"
 msgstr "Maximoa %g baino handiagoa izan behar da"
 
-#: gui2/dialogs.c:4193
+#: gui2/dialogs.c:4185
 msgid "Logistic model"
 msgstr "Eredu logistikoa"
 
-#: gui2/dialogs.c:4199
+#: gui2/dialogs.c:4191
 msgid ""
 "Maximum (asymptote) for the\n"
 "dependent variable"
@@ -8688,27 +8748,27 @@ msgstr ""
 "Aldagai azalduarentzat\n"
 "maximoa (asintotikoa) "
 
-#: gui2/dialogs.c:4355
+#: gui2/dialogs.c:4347
 msgid "gretl: TeX tabular format"
 msgstr "gretl: TeX taula formatua"
 
-#: gui2/dialogs.c:4360 gui2/series_view.c:590
+#: gui2/dialogs.c:4352 gui2/series_view.c:591
 msgid "Standard format"
 msgstr "Gretl formatoa"
 
-#: gui2/dialogs.c:4363
+#: gui2/dialogs.c:4355
 msgid "Custom format"
 msgstr "Norberaren formatoa"
 
-#: gui2/dialogs.c:4402 gui2/series_view.c:600
+#: gui2/dialogs.c:4394 gui2/series_view.c:601
 msgid "Show"
 msgstr "Erakutsi"
 
-#: gui2/dialogs.c:4410 gui2/series_view.c:616
+#: gui2/dialogs.c:4402 gui2/series_view.c:617
 msgid "decimal places"
 msgstr "hamarrekoen tokia"
 
-#: gui2/dialogs.c:4413 gui2/series_view.c:615
+#: gui2/dialogs.c:4405 gui2/series_view.c:616
 msgid "significant figures"
 msgstr "balio esanguratsuak"
 
@@ -8752,7 +8812,7 @@ msgstr "Erakutsi iterazioen xehetasunak"
 msgid "Robust standard errors"
 msgstr "Desbideratze tipiko sendoak"
 
-#: gui2/dlgutils.c:913 gui2/selector.c:4255
+#: gui2/dlgutils.c:913 gui2/selector.c:4257
 msgid "Use bootstrap"
 msgstr "Erabili bootstrap"
 
@@ -8760,11 +8820,11 @@ msgstr "Erabili bootstrap"
 msgid "Show full restricted estimates"
 msgstr "Erakutsi guztiz murriztutako estimazioak"
 
-#: gui2/dlgutils.c:982 gui2/selector.c:3014 gui2/selector.c:4502
+#: gui2/dlgutils.c:982 gui2/selector.c:3014 gui2/selector.c:4504
 msgid "One-step estimation"
 msgstr "Bat-urratsako estimazioak"
 
-#: gui2/dlgutils.c:983 gui2/selector.c:3015 gui2/selector.c:4506
+#: gui2/dlgutils.c:983 gui2/selector.c:3015 gui2/selector.c:4508
 msgid "Two-step estimation"
 msgstr "Bi-urratseko estimazioak"
 
@@ -8772,7 +8832,7 @@ msgstr "Bi-urratseko estimazioak"
 msgid "(Please refer to Help for guidance)"
 msgstr "(Mesedez, Laguntzara joan gida zaitezen)"
 
-#: gui2/fileselect.c:181
+#: gui2/fileselect.c:182
 msgid ""
 "The suffix you selected should be used\n"
 "only for gretl datafiles"
@@ -8780,23 +8840,23 @@ msgstr ""
 "Aukeratutako luzapena gretl datu-fitxategietan\n"
 " bakarrik erabiltzen da"
 
-#: gui2/fileselect.c:639
+#: gui2/fileselect.c:642
 msgid "ASCII files (*.txt)"
 msgstr "ASCII fitxategiak (*.txt)"
 
-#: gui2/fileselect.c:642
+#: gui2/fileselect.c:645
 msgid "gretl script files (*.inp)"
 msgstr "gretl script fitxategiak (*.inp)"
 
-#: gui2/fileselect.c:650
+#: gui2/fileselect.c:653
 msgid "all files (*.*)"
 msgstr "fitxategi guztiak (*.*)"
 
-#: gui2/fileselect.c:655
+#: gui2/fileselect.c:658
 msgid "GNU R files (*.R)"
 msgstr "GNU R fitxategiak (*.R)"
 
-#: gui2/fileselect.c:659
+#: gui2/fileselect.c:662
 msgid "gnuplot files (*.plt)"
 msgstr "gnuplot fitxategiak (*.plt)"
 
@@ -9432,7 +9492,7 @@ msgstr "(X,Y) kokapena"
 msgid "justification"
 msgstr "lerrokadura"
 
-#: gui2/gpt_dialog.c:2422 gui2/ssheet.c:1141
+#: gui2/gpt_dialog.c:2422 gui2/ssheet.c:1164
 #, fuzzy
 msgid "Add..."
 msgstr "Aurkitu..."
@@ -9493,7 +9553,7 @@ msgstr "gretleko grafikoen kontrolatzaileak"
 msgid "The graph page is full"
 msgstr "Grafiko orria beterik dago"
 
-#: gui2/graph_page.c:451 gui2/library.c:6553 gui2/library.c:6708
+#: gui2/graph_page.c:451 gui2/library.c:6559 gui2/library.c:6714
 msgid "Failed to process TeX file"
 msgstr "Tex fitxategia prozesatzerakoan huts egin du"
 
@@ -9905,7 +9965,7 @@ msgid "_Refresh window"
 msgstr "_Berriztatu lehioa"
 
 #: gui2/gretl.c:1277 gui2/gui_utils.c:242 gui2/gui_utils.c:288
-#: gui2/ssheet.c:161
+#: gui2/ssheet.c:162
 msgid "_View"
 msgstr "_Ikusi"
 
@@ -9991,7 +10051,7 @@ msgstr "_Mahalanobis distantziak"
 msgid "C_ross-correlogram"
 msgstr "_Gurutzatutako koerlograma"
 
-#: gui2/gretl.c:1300 gui2/ssheet.c:130
+#: gui2/gretl.c:1300 gui2/ssheet.c:131
 msgid "_Add"
 msgstr "_Gehitu"
 
@@ -10092,7 +10152,7 @@ msgstr "_Zenbatu faltako balioak"
 msgid "Set missing _value code..."
 msgstr "Ezarri faltako _balioen kodea..."
 
-#: gui2/gretl.c:1336 gui2/ssheet.c:129
+#: gui2/gretl.c:1336 gui2/ssheet.c:130
 msgid "_Variable"
 msgstr "_Aldagaia"
 
@@ -10194,7 +10254,7 @@ msgstr "_Hurst berretzailea"
 msgid "_Edit attributes"
 msgstr "_Editatu ezaugarriak"
 
-#: gui2/gretl.c:1368 gui2/gui_utils.c:2093
+#: gui2/gretl.c:1368 gui2/gui_utils.c:2095
 msgid "Define _new variable..."
 msgstr "Definitu_ aldagai berria..."
 
@@ -10428,7 +10488,7 @@ msgstr "Begiratu _eguneratzeak"
 msgid "_About gretl"
 msgstr "_Gretl-i buruz"
 
-#: gui2/gretl.c:1706 gui2/selector.c:5632
+#: gui2/gretl.c:1706 gui2/selector.c:5634
 msgid "Save data file"
 msgstr "Gorde datu-fitxategia"
 
@@ -10631,12 +10691,17 @@ msgstr "(%90 eko tartea)"
 msgid "%g\\%% confidence interval"
 msgstr "\\%95eko konfidantza tartea"
 
-#: gui2/guiprint.c:1828
+#: gui2/guiprint.c:1779
 #, fuzzy
 msgid "No scalar variables are currently defined"
 msgstr "Ez dira aldagai diskreturik aukeratu"
 
-#: gui2/guiprint.c:1892 gui2/selector.c:5677 plugin/tramo-x12a.c:184
+#: gui2/guiprint.c:1849 gui2/textutil.c:352 gui2/textutil.c:367
+#: gui2/textutil.c:502 gui2/toolbar.c:522
+msgid "Save"
+msgstr "Gorde"
+
+#: gui2/guiprint.c:1851 gui2/selector.c:5679 plugin/tramo-x12a.c:184
 msgid "Save data"
 msgstr "Gorde datuak"
 
@@ -10773,7 +10838,7 @@ msgstr "_Chow kontrastea"
 msgid "_Collinearity"
 msgstr "_Kolinealitatea"
 
-#: gui2/gui_utils.c:180 gui2/gui_utils.c:3235
+#: gui2/gui_utils.c:180 gui2/gui_utils.c:3237
 msgid "_Autocorrelation"
 msgstr "_Autokoerlazioa"
 
@@ -10782,7 +10847,7 @@ msgstr "_Autokoerlazioa"
 msgid "_Durbin-Watson p-value"
 msgstr "Durbin-Watson estatistikoa"
 
-#: gui2/gui_utils.c:182 gui2/gui_utils.c:3241
+#: gui2/gui_utils.c:182 gui2/gui_utils.c:3243
 msgid "A_RCH"
 msgstr "A_RCH"
 
@@ -10865,7 +10930,7 @@ msgstr "Zehazpenerako RESET kontrastea"
 msgid "_Forecasts"
 msgstr "Aurresanak"
 
-#: gui2/gui_utils.c:716 gui2/gui_utils.c:985 gui2/library.c:7086
+#: gui2/gui_utils.c:716 gui2/gui_utils.c:985 gui2/library.c:7092
 msgid "gretl: open data"
 msgstr "gretl: ireki datuak"
 
@@ -10884,7 +10949,7 @@ msgstr ""
 msgid "gretl: import %s data"
 msgstr "gretl: %s datuak inportatu"
 
-#: gui2/gui_utils.c:986 gui2/library.c:7087
+#: gui2/gui_utils.c:986 gui2/library.c:7093
 msgid ""
 "Opening a new data file will automatically\n"
 "close the current one.  Any unsaved work\n"
@@ -10959,7 +11024,7 @@ msgstr "gretl: editatu grafikoaren komandoak"
 msgid "gretl: script output"
 msgstr "gretl: idatzi irteera"
 
-#: gui2/gui_utils.c:1369 gui2/library.c:5159 gui2/library.c:5185
+#: gui2/gui_utils.c:1369 gui2/library.c:5165 gui2/library.c:5191
 msgid "gretl: display data"
 msgstr "gretl: erakutsi datuak"
 
@@ -10968,262 +11033,262 @@ msgstr "gretl: erakutsi datuak"
 msgid "Can't open %s for reading"
 msgstr "Ezin da ireki  %s irakurtzeko"
 
-#: gui2/gui_utils.c:1734 gui2/ssheet.c:2374 gui2/ssheet.c:2399
+#: gui2/gui_utils.c:1734 gui2/ssheet.c:2460 gui2/ssheet.c:2485
 msgid "Save changes?"
 msgstr "Aldaketak gorde?"
 
-#: gui2/gui_utils.c:2045
+#: gui2/gui_utils.c:2047
 msgid "_Fitted values"
 msgstr "_Estimatutako balioak"
 
-#: gui2/gui_utils.c:2047
+#: gui2/gui_utils.c:2049
 msgid "_Residuals"
 msgstr "_Hondarrak"
 
-#: gui2/gui_utils.c:2049
+#: gui2/gui_utils.c:2051
 msgid "_Squared residuals"
 msgstr "_Hondarrak Karratura"
 
-#: gui2/gui_utils.c:2054
+#: gui2/gui_utils.c:2056
 msgid "_Error sum of squares"
 msgstr "_Hondar Karratuen Batura"
 
-#: gui2/gui_utils.c:2056
+#: gui2/gui_utils.c:2058
 #, fuzzy
 msgid "_Standard error of the regression"
 msgstr "Hondarren desbideratze tipikoa"
 
-#: gui2/gui_utils.c:2061
+#: gui2/gui_utils.c:2063
 msgid "_R-squared"
 msgstr "_R-karratua"
 
-#: gui2/gui_utils.c:2062
+#: gui2/gui_utils.c:2064
 msgid "_T*R-squared"
 msgstr "_T*R-karratua"
 
-#: gui2/gui_utils.c:2066
+#: gui2/gui_utils.c:2068
 msgid "_Log likelihood"
 msgstr "_Log-egiantza"
 
-#: gui2/gui_utils.c:2071
+#: gui2/gui_utils.c:2073
 msgid "_Akaike Information Criterion"
 msgstr "_Akaiken Informazio Irizpidea"
 
-#: gui2/gui_utils.c:2073
+#: gui2/gui_utils.c:2075
 msgid "_Bayesian Information Criterion"
 msgstr "_Bayes Informazio Irizpidea"
 
-#: gui2/gui_utils.c:2075
+#: gui2/gui_utils.c:2077
 msgid "_Hannan-Quinn Information Criterion"
 msgstr "_Hannan-Quinn Informazio Irizpidea"
 
-#: gui2/gui_utils.c:2080
+#: gui2/gui_utils.c:2082
 msgid "_Predicted error variance"
 msgstr "_Aurresan errorearen bariantza"
 
-#: gui2/gui_utils.c:2086
+#: gui2/gui_utils.c:2088
 msgid "Per-unit _constants"
 msgstr "Banakoen _konstanteak"
 
-#: gui2/gui_utils.c:2249
+#: gui2/gui_utils.c:2251
 msgid "_Against time"
 msgstr "_Denborarekiko"
 
-#: gui2/gui_utils.c:2251
+#: gui2/gui_utils.c:2253
 msgid "By _observation number"
 msgstr "_Behaketa zenbakiarekiko"
 
-#: gui2/gui_utils.c:2271 gui2/gui_utils.c:2295
+#: gui2/gui_utils.c:2273 gui2/gui_utils.c:2297
 #, c-format
 msgid "_Against %s"
 msgstr "%s -ren _aurka"
 
-#: gui2/gui_utils.c:2309
+#: gui2/gui_utils.c:2311
 #, fuzzy
 msgid "Residual _correlogram"
 msgstr "Hondarren periodograma"
 
-#: gui2/gui_utils.c:2313
+#: gui2/gui_utils.c:2315
 #, fuzzy
 msgid "Residual _spectrum"
 msgstr "Hondarren espektroa"
 
-#: gui2/gui_utils.c:2334
+#: gui2/gui_utils.c:2336
 #, c-format
 msgid "_Against %s and %s"
 msgstr "%s eta %s -ren _aurka"
 
-#: gui2/gui_utils.c:2399
+#: gui2/gui_utils.c:2401
 msgid "Separation"
 msgstr "Bereizmena"
 
-#: gui2/gui_utils.c:2414
+#: gui2/gui_utils.c:2416
 #, c-format
 msgid "By %s"
 msgstr ", %srekiko"
 
-#: gui2/gui_utils.c:2462
+#: gui2/gui_utils.c:2464
 msgid "tau sequence"
 msgstr ""
 
-#: gui2/gui_utils.c:2681
+#: gui2/gui_utils.c:2683
 msgid "gretl: VAR covariance matrix"
 msgstr "gretl: bariantza eta kobariantza matrizea"
 
-#: gui2/gui_utils.c:2684
+#: gui2/gui_utils.c:2686
 #, fuzzy
 msgid "gretl: system covariance matrix"
 msgstr "gretl: bariantza eta kobariantza matrizea"
 
-#: gui2/gui_utils.c:2690
+#: gui2/gui_utils.c:2692
 #, fuzzy
 msgid "System fitted values"
 msgstr "_Estimatutako balioak"
 
-#: gui2/gui_utils.c:2775 gui2/gui_utils.c:2843
+#: gui2/gui_utils.c:2777 gui2/gui_utils.c:2845
 msgid "impulse responses"
 msgstr "bultzadaren erantzunak"
 
-#: gui2/gui_utils.c:2776
+#: gui2/gui_utils.c:2778
 msgid "variance decompositions"
 msgstr "bariantzaren deskonposaketa"
 
-#: gui2/gui_utils.c:2778 gui2/gui_utils.c:2850
+#: gui2/gui_utils.c:2780 gui2/gui_utils.c:2852
 msgid "forecast horizon (periods):"
 msgstr "iragarpen horizontea (epea):"
 
-#: gui2/gui_utils.c:2788
+#: gui2/gui_utils.c:2790
 msgid "gretl: VAR impulse responses"
 msgstr "gretl: VAR bultzaden erantzunak"
 
-#: gui2/gui_utils.c:2791
+#: gui2/gui_utils.c:2793
 msgid "gretl: VAR variance decompositions"
 msgstr "gretl: VAR bariantza deskonposaketak"
 
-#: gui2/gui_utils.c:2820
+#: gui2/gui_utils.c:2822
 msgid "View X-12-ARIMA output"
 msgstr "Ikusi X-12-ARIMA irteera"
 
-#: gui2/gui_utils.c:2832
+#: gui2/gui_utils.c:2834
 msgid "include bootstrap confidence interval"
 msgstr "barneratu bootstrap konfidantza tartea"
 
-#: gui2/gui_utils.c:3040 gui2/library.c:1510
+#: gui2/gui_utils.c:3042 gui2/library.c:1510
 msgid "gretl: forecasts"
 msgstr "gretl: aurresanak"
 
-#: gui2/gui_utils.c:3095 gui2/gui_utils.c:3107 gui2/library.c:2376
+#: gui2/gui_utils.c:3097 gui2/gui_utils.c:3109 gui2/library.c:2376
 msgid "gretl: autocorrelation"
 msgstr "gretl: autokoerlazioa"
 
-#: gui2/gui_utils.c:3096 gui2/gui_utils.c:3117 gui2/library.c:1929
+#: gui2/gui_utils.c:3098 gui2/gui_utils.c:3119 gui2/library.c:1929
 #: gui2/library.c:1951
 msgid "gretl: ARCH test"
 msgstr "gretl: ARCH kontrastea"
 
-#: gui2/gui_utils.c:3097 gui2/library.c:2377
+#: gui2/gui_utils.c:3099 gui2/library.c:2377
 msgid "Lag order for test:"
 msgstr "Atzerapen kopurua kontrastearentzat:"
 
-#: gui2/gui_utils.c:3247
+#: gui2/gui_utils.c:3249
 #, fuzzy
 msgid "_Normality of residuals"
 msgstr "_Hondarren normaltasuna"
 
-#: gui2/gui_utils.c:3253
+#: gui2/gui_utils.c:3255
 msgid "Linear restrictions"
 msgstr "Murrizketa linealak"
 
-#: gui2/gui_utils.c:3260
+#: gui2/gui_utils.c:3262
 msgid "Omit exogenous variables..."
 msgstr "Ahantzi aldagai azaltzaileak..."
 
-#: gui2/gui_utils.c:3269
+#: gui2/gui_utils.c:3271
 msgid "Residuals from equation"
 msgstr "Ekuazioaren hondarrak"
 
-#: gui2/gui_utils.c:3278
+#: gui2/gui_utils.c:3280
 #, fuzzy
 msgid "Display residuals, all equations"
 msgstr "sistemaren hondarra, %d ekuazioa"
 
-#: gui2/gui_utils.c:3285
+#: gui2/gui_utils.c:3287
 #, fuzzy
 msgid "Display fitted values, all equations"
 msgstr "sistemaren balio estimatuak, %d ekuazioa"
 
-#: gui2/gui_utils.c:3299
+#: gui2/gui_utils.c:3301
 msgid "Impulse responses"
 msgstr "Bultzadaren erantzunak"
 
-#: gui2/gui_utils.c:3305
+#: gui2/gui_utils.c:3307
 msgid "Forecast variance decomposition"
 msgstr "Bariantzaren aurresanaren deskonposaketa"
 
-#: gui2/gui_utils.c:3313
+#: gui2/gui_utils.c:3315
 msgid "Residual plots"
 msgstr "Hondarren grafikoak"
 
-#: gui2/gui_utils.c:3322
+#: gui2/gui_utils.c:3324
 msgid "Combined residual plot"
 msgstr "Bateratutako hondarren grafikoa"
 
-#: gui2/gui_utils.c:3330
+#: gui2/gui_utils.c:3332
 msgid "VAR inverse roots"
 msgstr "VAR alderantzizkoen erroak"
 
-#: gui2/gui_utils.c:3338
+#: gui2/gui_utils.c:3340
 msgid "Impulse responses (combined)"
 msgstr "Bultzadaren erantzunak (bateratuak)"
 
-#: gui2/gui_utils.c:3368
+#: gui2/gui_utils.c:3370
 #, c-format
 msgid "Response of %s"
 msgstr "%s -ren erantzuna"
 
-#: gui2/gui_utils.c:3382
+#: gui2/gui_utils.c:3384
 #, c-format
 msgid "to %s"
 msgstr "%s -ri"
 
-#: gui2/gui_utils.c:3394
+#: gui2/gui_utils.c:3396
 msgid "EC term"
 msgstr "EC terminoa"
 
-#: gui2/gui_utils.c:3481
+#: gui2/gui_utils.c:3483
 #, fuzzy, c-format
 msgid "A matrix named %s already exists"
 msgstr ""
 "Jadanik %s izeneko matrizea badago.\n"
 "Gainidatzi?"
 
-#: gui2/gui_utils.c:3483
+#: gui2/gui_utils.c:3485
 #, fuzzy, c-format
 msgid "A scalar named %s already exists"
 msgstr ""
 "Jadanik %s izeneko matrizea badago.\n"
 "Gainidatzi?"
 
-#: gui2/gui_utils.c:3485
+#: gui2/gui_utils.c:3487
 #, fuzzy, c-format
 msgid "A list named %s already exists"
 msgstr ""
 "Jadanik %s izeneko matrizea badago.\n"
 "Gainidatzi?"
 
-#: gui2/gui_utils.c:3487
+#: gui2/gui_utils.c:3489
 #, fuzzy, c-format
 msgid "A string named %s already exists"
 msgstr ""
 "Jadanik %s izeneko matrizea badago.\n"
 "Gainidatzi?"
 
-#: gui2/gui_utils.c:3496
+#: gui2/gui_utils.c:3498
 #, fuzzy
 msgid "OK to overwrite it?"
 msgstr "Gainidatzi?"
 
-#: gui2/gui_utils.c:3517
+#: gui2/gui_utils.c:3519
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -11232,7 +11297,7 @@ msgstr ""
 "Aldagaiaren izena %s... luzeegia da\n"
 "(gehienez %d karaktere)"
 
-#: gui2/gui_utils.c:3522
+#: gui2/gui_utils.c:3524
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -11241,7 +11306,7 @@ msgstr ""
 "Aldagaiaren izenaren ('%c') lehen karakterea kerra\n"
 "(lehenengoa alfabetikoa izan behar da)"
 
-#: gui2/gui_utils.c:3530
+#: gui2/gui_utils.c:3532
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -11250,15 +11315,15 @@ msgstr ""
 "Izenak legez kanpoko karaktere bat du (%d lekuan)\n"
 "Erabili azentugabeko letrak, digitu eta puntuazioa"
 
-#: gui2/gui_utils.c:3726
+#: gui2/gui_utils.c:3728
 msgid "No command was supplied to start R"
 msgstr "R hasteko ez da komandorik eskaintzen"
 
-#: gui2/gui_utils.c:3734
+#: gui2/gui_utils.c:3736
 msgid "Couldn't fork"
 msgstr "Ezin aldaratu"
 
-#: gui2/gui_utils.c:3804
+#: gui2/gui_utils.c:3806
 #, fuzzy
 msgid "R output"
 msgstr "Irteera laburtua"
@@ -11374,7 +11439,7 @@ msgstr "Fitxategia jeistean huts egin du"
 msgid "gretl: iteration info"
 msgstr "gretl: iterazioen informazioa"
 
-#: gui2/library.c:167 gui2/library.c:5106 gui2/library.c:5632
+#: gui2/library.c:167 gui2/library.c:5112 gui2/library.c:5638
 msgid "No data were available to graph"
 msgstr "Daturik ez  marraztu ahal izateko"
 
@@ -11829,42 +11894,47 @@ msgstr "_Akaiken Informazio Irizpidea"
 msgid "gretl: add scalar"
 msgstr "gretl: erantsi aldagaiak"
 
-#: gui2/library.c:5240
+#: gui2/library.c:4952
+#, fuzzy
+msgid "standardized residual"
+msgstr "Hondarren desbideratze tipikoa"
+
+#: gui2/library.c:5246
 msgid "Can't delete a variable when in sub-sample mode\n"
 msgstr "Ezinezkoa da aldagai bat ezabatzea azpilaginaren moduan dagoenean\n"
 
-#: gui2/library.c:5254
+#: gui2/library.c:5260
 #, c-format
 msgid "Cannot delete %s; variable is in use"
 msgstr "Ezin da %s ezabatu; aldagaia erabiltzen ari da"
 
-#: gui2/library.c:5299
+#: gui2/library.c:5305
 msgid "Cannot delete the specified variables"
 msgstr "Ezin dira zehaztutako aldagaiak ezabatu"
 
-#: gui2/library.c:5302
+#: gui2/library.c:5308
 msgid "Cannot delete all of the specified variables"
 msgstr "Ezin dira zehaztutako aldagai guztiak ezabatu"
 
-#: gui2/library.c:5357
+#: gui2/library.c:5363
 msgid "use a single graph"
 msgstr ""
 
-#: gui2/library.c:5358
+#: gui2/library.c:5364
 #, fuzzy
 msgid "multiple plots in grid"
 msgstr "Grafiko anizkoitzak"
 
-#: gui2/library.c:5359
+#: gui2/library.c:5365
 msgid "multiple plots arranged vertically"
 msgstr ""
 
-#: gui2/library.c:5363
+#: gui2/library.c:5369
 #, fuzzy
 msgid "Panel time-series graph"
 msgstr "denbora segidako datuak"
 
-#: gui2/library.c:5502
+#: gui2/library.c:5508
 msgid ""
 "You must supply three variables, the last\n"
 "of which is a dummy variable (values 1 or 0)"
@@ -11872,59 +11942,59 @@ msgstr ""
 "Hiru aldagai eskaini behar dituzu, azkeneko\n"
 "aldagaia fikziozkoa da (1 edo 0 balioak)"
 
-#: gui2/library.c:5535
+#: gui2/library.c:5541
 #, fuzzy
 msgid "You must supply three variables"
 msgstr "Bereizle-aldagaia aukeratu behar duzu"
 
-#: gui2/library.c:5610
+#: gui2/library.c:5616
 #, fuzzy
 msgid "Couldn't find a usable terminal program"
 msgstr "Ezin da socket kontrolatzailea aurkitu\n"
 
-#: gui2/library.c:5657 gui2/selector.c:2980 gui2/selector.c:3082
+#: gui2/library.c:5663 gui2/selector.c:2980 gui2/selector.c:3082
 msgid "X-axis variable"
 msgstr "X-ardatzaren aldagaia"
 
-#: gui2/library.c:5712
+#: gui2/library.c:5718
 msgid "on a single graph"
 msgstr ""
 
-#: gui2/library.c:5713
+#: gui2/library.c:5719
 #, fuzzy
 msgid "in separate small graphs"
 msgstr "Grafikoa sortu"
 
-#: gui2/library.c:5717
+#: gui2/library.c:5723
 #, fuzzy
 msgid "Plot the series"
 msgstr "denbora segidak"
 
-#: gui2/library.c:5916
+#: gui2/library.c:5922
 msgid "Non-interactive (just get output)"
 msgstr ""
 
-#: gui2/library.c:5917
+#: gui2/library.c:5923
 #, fuzzy
 msgid "Interactive R session"
 msgstr "Gorde saioa"
 
-#: gui2/library.c:5923 gui2/library.c:5927
+#: gui2/library.c:5929 gui2/library.c:5933
 #, fuzzy
 msgid "R mode"
 msgstr "eredua"
 
-#: gui2/library.c:5925
+#: gui2/library.c:5931
 #, fuzzy
 msgid "pre-load data"
 msgstr "gretl: datuak kargatzen"
 
-#: gui2/library.c:6113 gui2/library.c:6423 plugin/leverage.c:98
+#: gui2/library.c:6119 gui2/library.c:6429 plugin/leverage.c:98
 #: plugin/pca.c:82
 msgid "gretl: save data"
 msgstr "gretl: datuak gorde"
 
-#: gui2/library.c:6114
+#: gui2/library.c:6120
 msgid ""
 "The data set is currently sub-sampled.\n"
 "Would you like to restore the full range?"
@@ -11932,11 +12002,11 @@ msgstr ""
 "Datu-multzoa oraindik azpilagindurik.\n"
 "Datuen ibiltarte osoa berreskuratu nahi?"
 
-#: gui2/library.c:6117
+#: gui2/library.c:6123
 msgid "gretl: Compact data"
 msgstr "gretl: Trinkotu datuak"
 
-#: gui2/library.c:6118
+#: gui2/library.c:6124
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before compacting.\n"
@@ -11946,11 +12016,11 @@ msgstr ""
 "Ibiltarte  osoa berreskuratu behar duzu trinkotu baino lehen.\n"
 "Ibiltarte osoa berreskuratu orain?"
 
-#: gui2/library.c:6122
+#: gui2/library.c:6128
 msgid "gretl: Expand data"
 msgstr "gretl: Zabaldu datuak"
 
-#: gui2/library.c:6123
+#: gui2/library.c:6129
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before expanding.\n"
@@ -11960,11 +12030,11 @@ msgstr ""
 "Ibiltarte osoa berreskuratu behar duzu zabaltzen hasi baino lehen.\n"
 "Ibiltarte osoa berreskuratu nahi?"
 
-#: gui2/library.c:6142
+#: gui2/library.c:6148
 msgid "gretl: transpose data"
 msgstr "gretl: irauli datuak"
 
-#: gui2/library.c:6143
+#: gui2/library.c:6149
 msgid ""
 "Transposing means that each variable becomes interpreted\n"
 "as an observation, and each observation as a variable.\n"
@@ -11974,41 +12044,41 @@ msgstr ""
 "kontsideratzen da eta behaketa bakoitza aldagai bezala.\n"
 "Jarraitzea nahi?"
 
-#: gui2/library.c:6155
+#: gui2/library.c:6161
 msgid "Data transposed"
 msgstr "Iraulitako datuak"
 
-#: gui2/library.c:6174
+#: gui2/library.c:6180
 msgid "Ascending"
 msgstr "Gorakorra"
 
-#: gui2/library.c:6175
+#: gui2/library.c:6181
 msgid "Descending"
 msgstr "Beherakorra"
 
-#: gui2/library.c:6211
+#: gui2/library.c:6217
 #, fuzzy
 msgid "resample dataset"
 msgstr "ireki datu-multzoa"
 
-#: gui2/library.c:6213
+#: gui2/library.c:6219
 msgid "Resampling with replacement"
 msgstr ""
 
-#: gui2/library.c:6214
+#: gui2/library.c:6220
 #, fuzzy
 msgid "Number of cases"
 msgstr "Tarte kopurua:"
 
-#: gui2/library.c:6240
+#: gui2/library.c:6246
 msgid "OK to overwrite?"
 msgstr "Gainidatzi?"
 
-#: gui2/library.c:6360
+#: gui2/library.c:6366
 msgid "gretl: revised data set"
 msgstr "gretl: berrikusitako datuak"
 
-#: gui2/library.c:6361
+#: gui2/library.c:6367
 msgid ""
 "You have saved a reduced version of the current data set.\n"
 "Do you want to switch to the reduced version now?"
@@ -12016,7 +12086,7 @@ msgstr ""
 "Datu hauen azpilagin bat bat gorde duzu.\n"
 "Azpilagin honetara aldatzea nahi duzu orain?"
 
-#: gui2/library.c:6424
+#: gui2/library.c:6430
 msgid ""
 "There is already a data file of this name.\n"
 "OK to overwrite it?"
@@ -12024,11 +12094,11 @@ msgstr ""
 "Jadanik datu-fitxategi bat dago izen honekin.\n"
 "Gainidatzi?"
 
-#: gui2/library.c:6835 gui2/library.c:6913
+#: gui2/library.c:6841 gui2/library.c:6919
 msgid "No commands to execute"
 msgstr "Ez dago komandorik exekutatzeko"
 
-#: gui2/library.c:6986
+#: gui2/library.c:6992
 msgid ""
 "\n"
 "Error executing script: halting\n"
@@ -12036,7 +12106,7 @@ msgstr ""
 "\n"
 "Idazkera exekutatzean huts egin du: gelditzen\n"
 
-#: gui2/library.c:7410
+#: gui2/library.c:7416
 msgid "Script done\n"
 msgstr "Script egina\n"
 
@@ -12109,7 +12179,7 @@ msgstr "Aldagai berria definitu..."
 msgid "Correlation matrix"
 msgstr "Koerlazio matrizea"
 
-#: gui2/menustate.c:347 gui2/menustate.c:421 gui2/selector.c:4828
+#: gui2/menustate.c:347 gui2/menustate.c:421 gui2/selector.c:4830
 msgid "XY scatterplot"
 msgstr "XY grafikoa"
 
@@ -12297,7 +12367,7 @@ msgstr "ereduaren taularen aukerak "
 msgid "%s replaced\n"
 msgstr "%s ordezkatuta\n"
 
-#: gui2/obsbutton.c:232 gui2/ssheet.c:2170
+#: gui2/obsbutton.c:232 gui2/ssheet.c:2243
 msgid "Value"
 msgstr "Balioa"
 
@@ -12502,11 +12572,11 @@ msgstr "Erabili indize aldagaiak"
 msgid "Y-axis variable"
 msgstr "Y-ardatzaren aldagaia"
 
-#: gui2/selector.c:2967 gui2/selector.c:4878
+#: gui2/selector.c:2967 gui2/selector.c:4880
 msgid "Y-axis variables"
 msgstr "Y-ardatzaren aldagaiak"
 
-#: gui2/selector.c:2969 gui2/selector.c:4880
+#: gui2/selector.c:2969 gui2/selector.c:4882
 msgid "X-axis variables"
 msgstr "X-ardatzaren aldagaiak"
 
@@ -12580,7 +12650,7 @@ msgstr "Aldagai azaltzaileak"
 msgid "Selection equation regressors"
 msgstr "Ekuazioen erregresoreak aukeraketa"
 
-#: gui2/selector.c:3436 gui2/selector.c:4716 gui2/selector.c:4902
+#: gui2/selector.c:3436 gui2/selector.c:4718 gui2/selector.c:4904
 msgid "lags..."
 msgstr "Atzerapenak..."
 
@@ -12690,324 +12760,329 @@ msgid "Use X-12-ARIMA"
 msgstr "Erabili X-12-ARIMA"
 
 #: gui2/selector.c:4192
+#, fuzzy
+msgid "Standardize the residuals"
+msgstr "Hondarren desbideratze tipikoa"
+
+#: gui2/selector.c:4194
 msgid "Use Fiorentini et al algorithm"
 msgstr ""
 
-#: gui2/selector.c:4227
+#: gui2/selector.c:4229
 msgid "Show lagged variables"
 msgstr "Erakutsi atzeratutako aldagaiak"
 
-#: gui2/selector.c:4318
+#: gui2/selector.c:4320
 #, fuzzy
 msgid "Compute standard errors"
 msgstr "Desbideratze tipiko sendoak"
 
-#: gui2/selector.c:4323
+#: gui2/selector.c:4325
 #, fuzzy
 msgid "Compute confidence intervals"
 msgstr "Konfidantza tartea"
 
-#: gui2/selector.c:4343 gui2/toolbar.c:428
+#: gui2/selector.c:4345 gui2/toolbar.c:428
 #, fuzzy
 msgid "Confidence level"
 msgstr "Konfidantza tartea"
 
-#: gui2/selector.c:4361
+#: gui2/selector.c:4363
 msgid "Spearman's rho"
 msgstr "Spearman-en rho"
 
-#: gui2/selector.c:4365
+#: gui2/selector.c:4367
 msgid "Kendall's tau"
 msgstr "Kendall-ren tau"
 
-#: gui2/selector.c:4377
+#: gui2/selector.c:4379
 #, fuzzy
 msgid "Use correlation matrix"
 msgstr "koerlazio matrizea"
 
-#: gui2/selector.c:4381
+#: gui2/selector.c:4383
 #, fuzzy
 msgid "Use covariance matrix"
 msgstr "Kobariantza matrizea"
 
-#: gui2/selector.c:4393
+#: gui2/selector.c:4395
 msgid "Show slopes at mean"
 msgstr "Erakutsi maldak batezbestekoan"
 
-#: gui2/selector.c:4397
+#: gui2/selector.c:4399
 msgid "Show p-values"
 msgstr "Erakutsi p-balioak"
 
-#: gui2/selector.c:4409
+#: gui2/selector.c:4411
 msgid "Use points"
 msgstr "Erabili puntuak"
 
-#: gui2/selector.c:4413
+#: gui2/selector.c:4415
 msgid "Use lines"
 msgstr "Erabili lerroak"
 
-#: gui2/selector.c:4447
+#: gui2/selector.c:4449
 msgid "Estimate reduced model"
 msgstr "Estimatu txikitutako eredua"
 
-#: gui2/selector.c:4452
+#: gui2/selector.c:4454
 msgid "Wald test, based on covariance matrix"
 msgstr "Wald estatistikoa, kobariantza matrizean oinarrituz"
 
-#: gui2/selector.c:4458
+#: gui2/selector.c:4460
 #, fuzzy
 msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
 msgstr "Ezabaketa sekuentziala bi aldeetako alpha = %.2f erabiliz"
 
-#: gui2/selector.c:4486
+#: gui2/selector.c:4488
 msgid "Fixed effects"
 msgstr "Eragin finkoak"
 
-#: gui2/selector.c:4490
+#: gui2/selector.c:4492
 msgid "Random effects"
 msgstr "Eragin aleatorioak"
 
-#: gui2/selector.c:4523
+#: gui2/selector.c:4525
 msgid "Maximum likelihood estimation"
 msgstr "Egiantz Handieneko estimazioa"
 
-#: gui2/selector.c:4527
+#: gui2/selector.c:4529
 msgid "2-step estimation"
 msgstr "2-urratseko estimazioak"
 
-#: gui2/selector.c:4539
+#: gui2/selector.c:4541
 msgid "Plain numerical values"
 msgstr "Balio numeriko leunak"
 
-#: gui2/selector.c:4543
+#: gui2/selector.c:4545
 msgid "Show row percentages"
 msgstr "Erakutsi errenkaden portzentaia"
 
-#: gui2/selector.c:4547
+#: gui2/selector.c:4549
 msgid "Show column percentages"
 msgstr "Erakutsi zutabeen portzentaia"
 
-#: gui2/selector.c:4564 gui2/selector.c:4576
+#: gui2/selector.c:4566 gui2/selector.c:4578
 msgid "Exact Maximum Likelihood"
 msgstr "Egiantz Handia Zehatza"
 
-#: gui2/selector.c:4577
+#: gui2/selector.c:4579
 msgid "Conditional Maximum Likelihood"
 msgstr "Baldintzatutako Egiantz Handia"
 
-#: gui2/selector.c:4644
+#: gui2/selector.c:4646
 msgid "No constant"
 msgstr "Konstanterik ez"
 
-#: gui2/selector.c:4645
+#: gui2/selector.c:4647
 msgid "Restricted constant"
 msgstr "Murriztutako konstantea"
 
-#: gui2/selector.c:4646
+#: gui2/selector.c:4648
 msgid "Unrestricted constant"
 msgstr "Murriztu gabeko konstantea"
 
-#: gui2/selector.c:4647
+#: gui2/selector.c:4649
 msgid "Restricted trend"
 msgstr "Murriztutako joera"
 
-#: gui2/selector.c:4648
+#: gui2/selector.c:4650
 msgid "Unrestricted trend"
 msgstr "Murriztu gabeko joera"
 
-#: gui2/selector.c:4830
+#: gui2/selector.c:4832
 msgid "plot with impulses"
 msgstr "marraztu bultzadekin"
 
-#: gui2/selector.c:4832
+#: gui2/selector.c:4834
 msgid "3D plot"
 msgstr "3D grafikoa"
 
-#: gui2/selector.c:4834
+#: gui2/selector.c:4836
 msgid "multiple scatterplots"
 msgstr "Grafiko anizkoitzak"
 
-#: gui2/selector.c:4836
+#: gui2/selector.c:4838
 msgid "factorized plot"
 msgstr "faktorizatutako grafikoa"
 
-#: gui2/selector.c:4838
+#: gui2/selector.c:4840
 #, fuzzy
 msgid "scatterplot with control"
 msgstr "konstanteduneko kontrastea"
 
-#: gui2/selector.c:4840
+#: gui2/selector.c:4842
 msgid "functions to package"
 msgstr "funtzioak paketatzeko"
 
-#: gui2/selector.c:4872
+#: gui2/selector.c:4874
 msgid "Variables to test"
 msgstr "Kontrasterako aldagaiak"
 
-#: gui2/selector.c:4874
+#: gui2/selector.c:4876
 msgid "Endogenous variables"
 msgstr "Aldagai azalduak"
 
-#: gui2/selector.c:4876
+#: gui2/selector.c:4878
 msgid "Independent variables"
 msgstr "Aldagai azaltzaileak"
 
-#: gui2/selector.c:4882
+#: gui2/selector.c:4884
 msgid "Helper functions"
 msgstr "Laguntza-funtzioak"
 
-#: gui2/selector.c:5098
+#: gui2/selector.c:5100
 msgid "Select variables for logging"
 msgstr "Aldagaiak aukeratu logaritmoak aplikatzeko"
 
-#: gui2/selector.c:5100
+#: gui2/selector.c:5102
 msgid "Select variables for lagging"
 msgstr "Aldagaiak aukeratu atzerapenak aplikatzeko"
 
-#: gui2/selector.c:5102
+#: gui2/selector.c:5104
 msgid "Select variables to square"
 msgstr "Aldagaiak aukeratu karratura jartzeko"
 
-#: gui2/selector.c:5104
+#: gui2/selector.c:5106
 msgid "Select variables to difference"
 msgstr "Aldagaiak aukeratu diferentziak aplikatzeko"
 
-#: gui2/selector.c:5106
+#: gui2/selector.c:5108
 msgid "Select variables to log-difference"
 msgstr "Aldagaiak aukeratu log-diferentziak aplikatzeko "
 
-#: gui2/selector.c:5108
+#: gui2/selector.c:5110
 msgid "Select variables to add"
 msgstr "Aldagaiak aukeratu eransteko"
 
-#: gui2/selector.c:5111
+#: gui2/selector.c:5113
 msgid "Select variables to omit"
 msgstr "Aldagaiak aukeratu aldera uzteko"
 
-#: gui2/selector.c:5113
+#: gui2/selector.c:5115
 msgid "Select coefficients to sum"
 msgstr "Koefizienteak aukeratu batzeko"
 
-#: gui2/selector.c:5115
+#: gui2/selector.c:5117
 msgid "Select two variables"
 msgstr "Aukeratu bi aldagai"
 
-#: gui2/selector.c:5117
+#: gui2/selector.c:5119
 #, fuzzy
 msgid "Confidence region: select two variables"
 msgstr "Aukeratu bi aldagai"
 
-#: gui2/selector.c:5119
+#: gui2/selector.c:5121
 msgid "Select variables to display"
 msgstr "Aldagaiak aukeratu bistaratzeko"
 
-#: gui2/selector.c:5123
+#: gui2/selector.c:5125
 msgid "Select variables to plot"
 msgstr "Aldagaiak aukeratu grafikoan irudikatzeko"
 
-#: gui2/selector.c:5131
+#: gui2/selector.c:5133
 msgid "Select variables to save"
 msgstr "Aldagaiak aukeratu gordetzeko"
 
-#: gui2/selector.c:5133
+#: gui2/selector.c:5135
 msgid "Select variables to copy"
 msgstr "Aldagaiak aukeratu kopiatzeko"
 
-#: gui2/selector.c:5135
+#: gui2/selector.c:5137
 msgid "Define named list"
 msgstr "Definitu izendatutako zerrenda"
 
-#: gui2/selector.c:5331
+#: gui2/selector.c:5333
 #, fuzzy
 msgid "Name for list:"
 msgstr "Tarte kopurua:"
 
-#: gui2/selector.c:5420
+#: gui2/selector.c:5422
 msgid "Available vars"
 msgstr "Eskuragarriak diren aldagaiak"
 
-#: gui2/selector.c:5428
+#: gui2/selector.c:5430
 msgid "Selected vars"
 msgstr "Aukeratutako aldagaiak"
 
-#: gui2/selector.c:5476
+#: gui2/selector.c:5478
 msgid "All ->"
 msgstr "Denak ->"
 
-#: gui2/selector.c:5615
+#: gui2/selector.c:5617
 msgid "Too many items were selected"
 msgstr "Elementu gehiegi aukeratu dira"
 
-#: gui2/selector.c:5626
+#: gui2/selector.c:5628
 msgid "Save CSV data file"
 msgstr "Gorde CSV datu-fitxategia"
 
-#: gui2/selector.c:5628
+#: gui2/selector.c:5630
 msgid "Save R data file"
 msgstr "Gorde R datu-fitxategia"
 
-#: gui2/selector.c:5630
+#: gui2/selector.c:5632
 msgid "Save octave data file"
 msgstr "Gorde octave datu-fitxategia"
 
-#: gui2/selector.c:5673
+#: gui2/selector.c:5675
 msgid "Save functions"
 msgstr "Gorde funtzioak"
 
-#: gui2/selector.c:5677
+#: gui2/selector.c:5679
 msgid "Copy data"
 msgstr "Kopiatu datuak"
 
-#: gui2/selector.c:5988
+#: gui2/selector.c:5990
 msgid "lag order"
 msgstr "atzerapen ordena"
 
-#: gui2/selector.c:6004
+#: gui2/selector.c:6006
 #, fuzzy
 msgid "Lags of endogenous variables"
 msgstr "Gehitu aldagai azalduaren zerrenda"
 
-#: gui2/selector.c:6020
+#: gui2/selector.c:6022
 #, fuzzy
 msgid "Regressors"
 msgstr "Erregresio"
 
-#: gui2/selector.c:6026
+#: gui2/selector.c:6028
 msgid "lags"
 msgstr "Atzerapenak"
 
-#: gui2/selector.c:6032
+#: gui2/selector.c:6034
 msgid "or"
 msgstr "edo"
 
-#: gui2/selector.c:6034
+#: gui2/selector.c:6036
 msgid "specific lags"
 msgstr "atzerapen zehatzak"
 
-#: gui2/selector.c:6049
+#: gui2/selector.c:6051
 msgid "Lags of dependent variable"
 msgstr "Aldagai azalduaren atzerapenak"
 
-#: gui2/selector.c:6060
+#: gui2/selector.c:6062
 #, fuzzy
 msgid "default"
 msgstr "Jarri lehenetsia bezala"
 
-#: gui2/selector.c:6080
+#: gui2/selector.c:6082
 msgid "to"
 msgstr "-"
 
-#: gui2/series_view.c:404
+#: gui2/series_view.c:405
 msgid "Variable to sort by"
 msgstr "Ordenatu aldagaiak honekiko"
 
-#: gui2/series_view.c:574
+#: gui2/series_view.c:575
 msgid "gretl: data format"
 msgstr "gretl: datu formatua"
 
-#: gui2/series_view.c:583
+#: gui2/series_view.c:584
 msgid "Select data format"
 msgstr "Aukeratu datuen formatua"
 
@@ -13170,91 +13245,91 @@ msgstr "Grafiko orria"
 msgid "icon view"
 msgstr "_Ikonoa ikusi"
 
-#: gui2/session.c:3279
+#: gui2/session.c:3278
 #, c-format
 msgid "Properties of matrix %s"
 msgstr "%s matrizearen propietateak"
 
-#: gui2/session.c:3283
+#: gui2/session.c:3282
 #, c-format
 msgid "Scalar matrix, value %g\n"
 msgstr "Matrize eskalarra, %g balioa\n"
 
-#: gui2/session.c:3286
+#: gui2/session.c:3285
 #, c-format
 msgid "Identity matrix, order %d\n"
 msgstr "Identitate matrizea, %d ordenakoa\n"
 
-#: gui2/session.c:3289
+#: gui2/session.c:3288
 #, c-format
 msgid "Null matrix, %d x %d\n"
 msgstr "Matrize nulua, %d x %d\n"
 
-#: gui2/session.c:3293
+#: gui2/session.c:3292
 msgid "Rows"
 msgstr "Errenkadak"
 
-#: gui2/session.c:3294
+#: gui2/session.c:3293
 msgid "Columns"
 msgstr "Zutabeak"
 
-#: gui2/session.c:3295 plugin/johansen.c:1450
+#: gui2/session.c:3294 plugin/johansen.c:1450
 msgid "Rank"
 msgstr "Heina"
 
-#: gui2/session.c:3300
+#: gui2/session.c:3299
 msgid "Square"
 msgstr "Karratua"
 
-#: gui2/session.c:3304
+#: gui2/session.c:3303
 msgid "Diagonal"
 msgstr "Diagonala"
 
-#: gui2/session.c:3306
+#: gui2/session.c:3305
 msgid "Lower triangular"
 msgstr "Behe triangelua"
 
-#: gui2/session.c:3308
+#: gui2/session.c:3307
 msgid "Upper triangular"
 msgstr "Goi triangelua"
 
-#: gui2/session.c:3310
+#: gui2/session.c:3309
 msgid "Symmetric"
 msgstr "Simetrikoa"
 
-#: gui2/session.c:3315
+#: gui2/session.c:3314
 msgid "Positive definite"
 msgstr "Definitu positiboa"
 
-#: gui2/session.c:3317
+#: gui2/session.c:3316
 msgid "Not positive definite"
 msgstr "Definitu positiboa ez da"
 
-#: gui2/session.c:3333
+#: gui2/session.c:3332
 msgid "Idempotent"
 msgstr "Idenpotentea"
 
-#: gui2/session.c:3335
+#: gui2/session.c:3334
 msgid "Not idempotent"
 msgstr "Ez da idenpotentea"
 
-#: gui2/session.c:3341 plugin/vif.c:108
+#: gui2/session.c:3340 plugin/vif.c:108
 msgid "1-norm"
 msgstr "1-norma"
 
-#: gui2/session.c:3342
+#: gui2/session.c:3341
 msgid "Infinity-norm"
 msgstr "Norma infinitoa"
 
-#: gui2/session.c:3347
+#: gui2/session.c:3346
 msgid "Trace"
 msgstr "Traza"
 
-#: gui2/session.c:3356 plugin/vif.c:109
+#: gui2/session.c:3355 plugin/vif.c:109
 msgid "Determinant"
 msgstr "Determinantea"
 
-#: gui2/session.c:3364
+#: gui2/session.c:3363
 msgid "Eigenvalues"
 msgstr "Balio propioak"
 
@@ -13404,156 +13479,156 @@ msgstr "GARCH estimazioarentzat"
 msgid "PDF manual preference"
 msgstr "PDF eskuliburuari lehentasuna"
 
-#: gui2/settings.c:739
+#: gui2/settings.c:759
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
 msgstr "Badirudi gretl  erroan exekutatzen ari zarela. Benetan hau egin nahi?"
 
-#: gui2/settings.c:801
+#: gui2/settings.c:821
 msgid "gretl: options"
 msgstr "gretl: aukerak"
 
-#: gui2/settings.c:903 gui2/settings.c:2160
+#: gui2/settings.c:923 gui2/settings.c:2191
 msgid "Browse..."
 msgstr "Arakatu..."
 
-#: gui2/settings.c:913 gui2/settings.c:938
+#: gui2/settings.c:933 gui2/settings.c:960
 msgid "This change will take effect when you restart gretl"
 msgstr "Aldaketa honek gretl berabiatzean eragingo du"
 
-#: gui2/settings.c:951
+#: gui2/settings.c:973
 msgid "English (US letter paper)"
 msgstr "Ingelesa (US gutun papela)"
 
-#: gui2/settings.c:952
+#: gui2/settings.c:974
 msgid "English (A4 paper)"
 msgstr "Ingelesa (A4 papela)"
 
-#: gui2/settings.c:953
+#: gui2/settings.c:975
 msgid "Italian"
 msgstr "Italiera"
 
-#: gui2/settings.c:954
+#: gui2/settings.c:976
 msgid "Spanish"
 msgstr "Gaztelania"
 
-#: gui2/settings.c:1055 plugin/tramo_options.c:341
+#: gui2/settings.c:1077 plugin/tramo_options.c:341
 msgid "General"
 msgstr "Orokorra"
 
-#: gui2/settings.c:1057
+#: gui2/settings.c:1079
 msgid "Databases"
 msgstr "Datu-basea"
 
-#: gui2/settings.c:1059
+#: gui2/settings.c:1081
 msgid "Programs"
 msgstr "Programak"
 
-#: gui2/settings.c:1061
+#: gui2/settings.c:1083
 msgid "HCCME"
 msgstr "HCCME"
 
-#: gui2/settings.c:1063
+#: gui2/settings.c:1085
 msgid "Manuals"
 msgstr "Eskuliburuak"
 
-#: gui2/settings.c:1977
+#: gui2/settings.c:2008
 msgid "Font for gretl output windows"
 msgstr "Gretl irteeraren leihoaren iturria"
 
-#: gui2/settings.c:1981
+#: gui2/settings.c:2012
 msgid "Font for menus and labels"
 msgstr "Menu eta etiketen iturria"
 
-#: gui2/settings.c:2124
+#: gui2/settings.c:2155
 #, fuzzy
 msgid "gretl working directory"
 msgstr "gretl: lan direktorioa"
 
-#: gui2/settings.c:2147
+#: gui2/settings.c:2178
 #, fuzzy
 msgid "Working directory:"
 msgstr "gretl: lan direktorioa"
 
-#: gui2/settings.c:2169
+#: gui2/settings.c:2200
 msgid "On start-up, gretl should use:"
 msgstr ""
 
-#: gui2/settings.c:2176
+#: gui2/settings.c:2207
 #, fuzzy
 msgid "the directory selected above"
 msgstr "Erabiltzaile direktorioa ez dago ezarrita"
 
-#: gui2/settings.c:2184
+#: gui2/settings.c:2215
 #, fuzzy
 msgid "the current directory as determined via the shell"
 msgstr "Erabili uneko lan-direktorioa lehenetsi gisa"
 
-#: gui2/settings.c:2232
+#: gui2/settings.c:2263
 #, fuzzy
 msgid "gretl: working directory"
 msgstr "gretl: lan direktorioa"
 
-#: gui2/ssheet.c:126
+#: gui2/ssheet.c:127
 msgid "_Observation"
 msgstr "_Behaketak"
 
-#: gui2/ssheet.c:127
+#: gui2/ssheet.c:128
 msgid "_Append obs"
 msgstr "_Erantsi behaketak"
 
-#: gui2/ssheet.c:128
+#: gui2/ssheet.c:129
 msgid "_Insert obs"
 msgstr "_Barneratu behaketak"
 
-#: gui2/ssheet.c:156
+#: gui2/ssheet.c:157
 msgid "_Fill"
 msgstr "_Bete"
 
-#: gui2/ssheet.c:157
+#: gui2/ssheet.c:158
 msgid "_Identity matrix"
 msgstr "_Identitate matrizea"
 
-#: gui2/ssheet.c:158
+#: gui2/ssheet.c:159
 msgid "_Uniform random"
 msgstr "Aleatorio _Uniformea"
 
-#: gui2/ssheet.c:159
+#: gui2/ssheet.c:160
 msgid "_Normal random"
 msgstr "Aleatorio _Normala"
 
-#: gui2/ssheet.c:160
+#: gui2/ssheet.c:161
 msgid "_Properties"
 msgstr "_Propietateak"
 
-#: gui2/ssheet.c:162
+#: gui2/ssheet.c:163
 msgid "_Transform"
 msgstr "_Eraldatu"
 
-#: gui2/ssheet.c:163
+#: gui2/ssheet.c:164
 msgid "_X'X"
 msgstr "_X'X"
 
-#: gui2/ssheet.c:164
+#: gui2/ssheet.c:165
 msgid "_Transpose"
 msgstr "_Irauli"
 
-#: gui2/ssheet.c:165
+#: gui2/ssheet.c:166
 msgid "_Cholesky"
 msgstr "_Choleski"
 
-#: gui2/ssheet.c:166
+#: gui2/ssheet.c:167
 msgid "_Invert"
 msgstr "_Alderantzikatu"
 
-#: gui2/ssheet.c:167
+#: gui2/ssheet.c:168
 msgid "_Multiply by scalar"
 msgstr "_Biderkatu eskalarragatik"
 
-#: gui2/ssheet.c:168
+#: gui2/ssheet.c:169
 msgid "_Divide by scalar"
 msgstr "_Zatitu eskalarragatik"
 
-#: gui2/ssheet.c:841
+#: gui2/ssheet.c:844
 msgid ""
 "Enter name for new variable\n"
 "(max. 15 characters)"
@@ -13561,12 +13636,12 @@ msgstr ""
 "Sartu izena aldagai berriarentzat\n"
 "(gehienez 15 karaktere)"
 
-#: gui2/ssheet.c:851
+#: gui2/ssheet.c:854
 #, fuzzy
 msgid "gretl: scalar"
 msgstr "gretl: erantsi aldagaiak"
 
-#: gui2/ssheet.c:852
+#: gui2/ssheet.c:855
 #, fuzzy
 msgid ""
 "Enter name, or name=value,\n"
@@ -13575,11 +13650,11 @@ msgstr ""
 "Sartu izena aldagai berriarentzat\n"
 "(gehienez 15 karaktere)"
 
-#: gui2/ssheet.c:862
+#: gui2/ssheet.c:865
 msgid "gretl: case marker"
 msgstr "gretl: markatzailea"
 
-#: gui2/ssheet.c:863
+#: gui2/ssheet.c:866
 msgid ""
 "Enter case marker for new obs\n"
 "(max. 8 characters)"
@@ -13587,12 +13662,12 @@ msgstr ""
 "Sartu markatzailea behaketa berrientzat\n"
 "(gehienez 8 karaktere)"
 
-#: gui2/ssheet.c:901
+#: gui2/ssheet.c:904
 #, fuzzy
 msgid "gretl: name column"
 msgstr "gretl: aldagaiaren izena"
 
-#: gui2/ssheet.c:902
+#: gui2/ssheet.c:905
 #, fuzzy
 msgid ""
 "Enter name for column\n"
@@ -13601,81 +13676,81 @@ msgstr ""
 "Sartu izena aldagai berriarentzat\n"
 "(gehienez 15 karaktere)"
 
-#: gui2/ssheet.c:1020
+#: gui2/ssheet.c:1032
 msgid "gretl: specify scalar"
 msgstr "gretl: zehaztu eskalarra"
 
-#: gui2/ssheet.c:1021
+#: gui2/ssheet.c:1033
 msgid "Enter a numerical value"
 msgstr "Sartu zenbakizko balio bat"
 
-#: gui2/ssheet.c:1146
+#: gui2/ssheet.c:1169
 msgid "Add Variable"
 msgstr "Gehitu aldagaia"
 
-#: gui2/ssheet.c:1152
+#: gui2/ssheet.c:1175
 msgid "Add Observation"
 msgstr "Gehitu behaketa"
 
-#: gui2/ssheet.c:1158
+#: gui2/ssheet.c:1181
 msgid "Insert Observation"
 msgstr "Barneratu behaketa"
 
-#: gui2/ssheet.c:1363 gui2/ssheet.c:2365
+#: gui2/ssheet.c:1413 gui2/ssheet.c:2451
 msgid "Warning: there were missing observations"
 msgstr "Oharra: faltako balioak daude"
 
-#: gui2/ssheet.c:1390 gui2/toolbar.c:351
+#: gui2/ssheet.c:1440 gui2/toolbar.c:351
 msgid "gretl: save matrix"
 msgstr "gretl: gorde matrizea"
 
-#: gui2/ssheet.c:1391 gui2/toolbar.c:352
+#: gui2/ssheet.c:1441 gui2/toolbar.c:352
 msgid "Enter a name"
 msgstr "Sartu izen bat"
 
-#: gui2/ssheet.c:2275
+#: gui2/ssheet.c:2360
 msgid "No series to edit"
 msgstr "Segidarik ez editatzeko"
 
-#: gui2/ssheet.c:2363
+#: gui2/ssheet.c:2449
 #, c-format
 msgid "Warning: series %s is empty"
 msgstr "Kontuz: %s segida hutsik dago"
 
-#: gui2/ssheet.c:2593
+#: gui2/ssheet.c:2680
 msgid "gretl: edit matrix"
 msgstr "gretl: editatu matrizea"
 
-#: gui2/ssheet.c:2596
+#: gui2/ssheet.c:2683
 #, fuzzy
 msgid "gretl: edit scalars"
 msgstr "gretl: erantsi aldagaiak"
 
-#: gui2/ssheet.c:2598
+#: gui2/ssheet.c:2685
 msgid "gretl: edit data"
 msgstr "gretl: editatu datuak"
 
-#: gui2/ssheet.c:2755
+#: gui2/ssheet.c:2842
 msgid "Please add a variable to the dataset first"
 msgstr "Mesedez, lehendabizi erantsi aldagai bat datu-multzoan"
 
-#: gui2/ssheet.c:2796
+#: gui2/ssheet.c:2883
 #, fuzzy
 msgid "gretl: scalars"
 msgstr "gretl: erantsi aldagaiak"
 
-#: gui2/ssheet.c:2797
+#: gui2/ssheet.c:2884
 msgid ""
 "No scalar variable are currently defined.\n"
 "Add one now?"
 msgstr ""
 
-#: gui2/ssheet.c:2804
+#: gui2/ssheet.c:2891
 #, fuzzy
 msgid "gretl: name scalar"
 msgstr "gretl: erantsi aldagaiak"
 
-#: gui2/ssheet.c:2805
+#: gui2/ssheet.c:2892
 #, fuzzy
 msgid ""
 "Enter name for new scalar\n"
@@ -13684,56 +13759,56 @@ msgstr ""
 "Sartu izena aldagai berriarentzat\n"
 "(gehienez 15 karaktere)"
 
-#: gui2/ssheet.c:2885
+#: gui2/ssheet.c:2972
 msgid "You must give the matrix a name"
 msgstr "Matrizeari izena jarri behar diozu"
 
-#: gui2/ssheet.c:2909
+#: gui2/ssheet.c:2996
 msgid "The matrix formula is empty"
 msgstr "Matrizearen formula hutsik"
 
-#: gui2/ssheet.c:2986
+#: gui2/ssheet.c:3073
 msgid "New matrix"
 msgstr "Matrize berria"
 
-#: gui2/ssheet.c:2992
+#: gui2/ssheet.c:3079
 msgid "Name:"
 msgstr "Izena:"
 
-#: gui2/ssheet.c:3012
+#: gui2/ssheet.c:3099
 msgid "Build from series"
 msgstr "Eraiki segidetatik"
 
-#: gui2/ssheet.c:3021
+#: gui2/ssheet.c:3108
 msgid "Build numerically"
 msgstr "Eraiki zenbakiz"
 
-#: gui2/ssheet.c:3030
+#: gui2/ssheet.c:3117
 msgid "Number of rows:"
 msgstr "Lerroen kopurua:"
 
-#: gui2/ssheet.c:3039
+#: gui2/ssheet.c:3126
 msgid "Number of columns:"
 msgstr "Zutabeen kopurua:"
 
-#: gui2/ssheet.c:3048
+#: gui2/ssheet.c:3135
 msgid "Initial fill value:"
 msgstr "Hasierako betetze-balio:"
 
-#: gui2/ssheet.c:3071
+#: gui2/ssheet.c:3158
 msgid "Build from formula"
 msgstr "Eraiki formulatik"
 
-#: gui2/ssheet.c:3257
+#: gui2/ssheet.c:3344
 msgid "Define matrix"
 msgstr "Definitu matrizea"
 
-#: gui2/ssheet.c:3296
+#: gui2/ssheet.c:3383
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr " '%s' ezin da ireki"
 
-#: gui2/ssheet.c:3317
+#: gui2/ssheet.c:3404
 msgid "You can't do this while editing the dataset"
 msgstr "Hau ezin dezakezu egin datu-multzoa editatzen den bitartean"
 
@@ -13844,11 +13919,6 @@ msgstr "Ezeztatu"
 #: gui2/textutil.c:200
 msgid "String to replace was not found"
 msgstr "Ordezkatzeko katea ez dabil"
-
-#: gui2/textutil.c:352 gui2/textutil.c:367 gui2/textutil.c:501
-#: gui2/toolbar.c:522
-msgid "Save"
-msgstr "Gorde"
 
 #: gui2/textutil.c:366 gui2/toolbar.c:528
 msgid "Copy"
@@ -14890,6 +14960,10 @@ msgstr "Biltegiratzen"
 msgid "Accessors"
 msgstr ""
 
+#, fuzzy
+#~ msgid "White's test for heteroskedasticity (no cross products)"
+#~ msgstr "White-n heterozedastizitatearen kontrastea"
+
 #~ msgid "Couldn't load plugin %s"
 #~ msgstr "Ezin da %s plugin-a kargatu"
 
@@ -15171,10 +15245,6 @@ msgstr ""
 #~ msgstr "_Hondar Karratuen Batura"
 
 #, fuzzy
-#~ msgid "standard error of residuals"
-#~ msgstr "Hondarren desbideratze tipikoa"
-
-#, fuzzy
 #~ msgid "log likelihood"
 #~ msgstr "Log-egiantza"
 
@@ -15348,9 +15418,6 @@ msgstr ""
 #~ "Egitura aldaketarako Chow estatistikoa %s. behaketan:\n"
 #~ "  F(%d, %d) = %f  %f p-balioarentzat\n"
 #~ "\n"
-
-#~ msgid "Standard error of residuals"
-#~ msgstr "Hondarren desbideratze tipikoa"
 
 #~ msgid "Standard error of residuals = %g\n"
 #~ msgstr "Hondarren desbideratze tipikoa = %g\n"
