@@ -249,7 +249,7 @@ static void multi_series_view_print_sorted (windata_t *vwin)
     if (err) {
 	gui_errmsg(err);
     } else {
-	textview_set_text(vwin->text, gretl_print_get_buffer(prn));
+	textview_set_text(vwin->text, gretl_print_get_trimmed_buffer(prn));
     }
 
     free(obsvec);
@@ -278,7 +278,7 @@ static void multi_series_view_print (windata_t *vwin)
     if (err) {
 	gui_errmsg(err);
     } else {
-	textview_set_text(vwin->text, gretl_print_get_buffer(prn));
+	textview_set_text(vwin->text, gretl_print_get_trimmed_buffer(prn));
     }
 
     gretl_print_destroy(prn);
