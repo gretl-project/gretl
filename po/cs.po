@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-10 11:44-0400\n"
-"PO-Revision-Date: 2009-04-23 12:39+0100\n"
+"PO-Revision-Date: 2009-05-10 16:27-0400\n"
 "Last-Translator: Pavla Nikolovova <pavla.nikolovova@cerge-ei.cz>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4886,7 +4886,7 @@ msgstr "Hannan-Quinnovo Informační Kritérium"
 #.
 #: lib/src/modelprint.c:2513
 msgid "note on model statistics abbreviations here"
-msgstr "zde poznámka o zkratkách statistik modelu"
+msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2520

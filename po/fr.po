@@ -4923,7 +4923,7 @@ msgstr "Critère d'information d'Hannan-Quinn"
 #.
 #: lib/src/modelprint.c:2513
 msgid "note on model statistics abbreviations here"
-msgstr "note sur les abréviations des statistiques du modèle"
+msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2520
