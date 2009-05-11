@@ -1159,7 +1159,7 @@ static int loop_count_too_high (LOOPSET *loop)
 
     if (loop->type == FOR_LOOP) {
 	if (nt >= MAX_FOR_TIMES) {
-	    sprintf(gretl_errmsg, _("Reached maximum interations, %d"),
+	    sprintf(gretl_errmsg, _("Reached maximum iterations, %d"),
 		    MAX_FOR_TIMES);
 	    loop->err = 1;
 	}
@@ -1168,7 +1168,7 @@ static int loop_count_too_high (LOOPSET *loop)
 	    max_iters = libset_get_int(LOOP_MAXITER);
 	}
 	if (nt >= max_iters) {
-	    sprintf(gretl_errmsg, _("Warning: no convergence after %d interations"),
+	    sprintf(gretl_errmsg, _("Warning: no convergence after %d iterations"),
 		    max_iters);
 	    loop->err = 1;
 	}

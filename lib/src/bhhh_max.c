@@ -650,7 +650,7 @@ int bhhh_max (LL_FUNC loglik,
 	    stepsize *= 2.0;
 	}
 
-	/* print interation info, if wanted */
+	/* print iteration info, if wanted */
 	if (opt & OPT_V) {
 	    print_iter_info(iters, minfo->ll, C_LOGLIK, k, minfo->theta, delta, 
 			    stepsize, prn);
