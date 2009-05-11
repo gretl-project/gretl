@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-10 11:44-0400\n"
-"PO-Revision-Date: 2009-05-11 09:37+0300\n"
+"PO-Revision-Date: 2009-05-11 12:57+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -496,7 +496,7 @@ msgstr ""
 #: lib/src/compare.c:2242
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
-msgstr "Ençok F(%d, %d) = %g olan gözlem: %s"
+msgstr "Ençoksal F(%d, %d) = %g, %s gözleminde ortaya çıkmaktadır"
 
 #: lib/src/compare.c:2249
 #, c-format
@@ -1905,7 +1905,7 @@ msgstr "bağımlı değişken için yasak, artı-dışı değer"
 
 #: lib/src/discrete.c:1804
 msgid "Invalid value for the maximum of the dependent variable"
-msgstr "Bağımlı değişkenin en büyük değeri için geçersiz değer"
+msgstr "Bağımlı değişkenin ençoksal değeri için geçersiz değer"
 
 #: lib/src/discrete.c:2014
 msgid "Fisher's Exact Test"
@@ -4307,7 +4307,7 @@ msgstr "GEK (GLS) rastsal-etki"
 
 #: lib/src/modelprint.c:723
 msgid "Maximum Likelihood"
-msgstr "en yüksek olabilirlik"
+msgstr "ençok olabilirlik"
 
 #: lib/src/modelprint.c:728
 msgid "Between-groups"
@@ -5129,7 +5129,7 @@ msgstr "Verilmiş geçerli bir döngü koşulu yok."
 #: lib/src/monte_carlo.c:1162
 #, c-format
 msgid "Reached maximum interations, %d"
-msgstr "Yineleme sayı sınırına (%d) ulaşıldı"
+msgstr "Ençoksal yineleme sayısına (%d) ulaşıldı"
 
 #: lib/src/monte_carlo.c:1171
 #, c-format
@@ -6037,11 +6037,11 @@ msgstr "Üç-Aşamalı En küçük Kareler"
 
 #: lib/src/system.c:100
 msgid "Full Information Maximum Likelihood"
-msgstr "Tam Bilgi En yüksek Olabilirlik"
+msgstr "Tam Bilgi Ençok Olabilirlik"
 
 #: lib/src/system.c:101
 msgid "Limited Information Maximum Likelihood"
-msgstr "Sınırlı Bilgi En yüksek Olabilirlik"
+msgstr "Sınırlı Bilgi Ençok Olabilirlik"
 
 #: lib/src/system.c:102
 msgid "Ordinary Least Squares"
@@ -6421,7 +6421,7 @@ msgstr "%s tahminleri, gözlemler %s--%s ($T=%d$)"
 
 #: lib/src/varprint.c:1020 lib/src/varprint.c:1029 lib/src/varprint.c:1037
 msgid "Maximum likelihood"
-msgstr "En yüksek olabilirlik"
+msgstr "Ençok olabilirlik"
 
 #: lib/src/varprint.c:1028 lib/src/varprint.c:1036
 #, c-format
@@ -6472,7 +6472,7 @@ msgstr "Gecikme derecesi %*d"
 #: lib/src/vartest.c:288
 #, c-format
 msgid "VAR system, maximum lag order %d"
-msgstr "YÖB sistemi, en büyük gecikme derecesi %d"
+msgstr "YÖB sistemi, ençoksal gecikme derecesi %d"
 
 #: lib/src/vartest.c:291
 msgid ""
@@ -7404,7 +7404,7 @@ msgstr "GBY: İşlevi ve dikeysellik koşullarını belirtiniz:"
 
 #: gui2/callbacks.c:681 gui2/callbacks.c:736
 msgid "gretl: maximum likelihood"
-msgstr "gretl: en yüksek olabilirlik"
+msgstr "gretl: ençok olabilirlik"
 
 #: gui2/callbacks.c:682 gui2/callbacks.c:737
 msgid "MLE: Specify function, and derivatives if possible:"
@@ -8553,7 +8553,7 @@ msgstr "gretl: bilgi"
 #: gui2/dialogs.c:4164
 #, c-format
 msgid "The maximum must be greater than %g"
-msgstr "En büyük değer > %g olmalıdır"
+msgstr "Ençoksal değer > %g olmalıdır"
 
 #: gui2/dialogs.c:4185
 msgid "Logistic model"
@@ -8564,7 +8564,7 @@ msgid ""
 "Maximum (asymptote) for the\n"
 "dependent variable"
 msgstr ""
-"Bağımlı değişken için ençok\n"
+"Bağımlı değişken için ençoksal\n"
 "(kavuşmaz) değeri"
 
 #: gui2/dialogs.c:4347
@@ -10236,7 +10236,7 @@ msgstr "_Sıra ilintisi..."
 
 #: gui2/gretl.c:1420
 msgid "_Maximum likelihood..."
-msgstr "En yüksek _olabilirlik"
+msgstr "Ençok _olabilirlik"
 
 #: gui2/gretl.c:1422
 msgid "_Simultaneous equations..."
@@ -11240,7 +11240,7 @@ msgstr "bağlanım sonuçlarını göster"
 
 #: gui2/library.c:913
 msgid "test down from maximum lag order"
-msgstr "en büyük gecikme derecesinden geriye sınama"
+msgstr "ençoksal gecikme derecesinden geriye sınama"
 
 #: gui2/library.c:914 gui2/library.c:920
 msgid "use level of variable"
@@ -11522,7 +11522,7 @@ msgstr "ilintiçizit"
 
 #: gui2/library.c:4191
 msgid "Maximum lag:"
-msgstr "En büyük gecikme:"
+msgstr "Ençoksal gecikme:"
 
 #: gui2/library.c:4273
 msgid "gretl: periodogram"
@@ -12318,7 +12318,7 @@ msgstr "Eştümleme sırası:"
 
 #: gui2/selector.c:3244
 msgid "maximum lag:"
-msgstr "en büyük gecikme:"
+msgstr "ençoksal gecikme:"
 
 #: gui2/selector.c:3288
 msgid "ARCH order:"
@@ -12426,7 +12426,7 @@ msgstr "Cochrane-Orcutt kullanarak ince ayar yap"
 
 #: gui2/selector.c:4157
 msgid "Test down from maximum lag order"
-msgstr "En büyük gecikme derecesinden geriye sınama"
+msgstr "Ençoksal gecikme derecesinden geriye sınama"
 
 #: gui2/selector.c:4159
 msgid "Skip initial DF tests"
@@ -12542,7 +12542,7 @@ msgstr "Rastsal etkiler"
 
 #: gui2/selector.c:4525
 msgid "Maximum likelihood estimation"
-msgstr "En yüksek olabilirlik tahmini"
+msgstr "Ençok olabilirlik tahmini"
 
 #: gui2/selector.c:4529
 msgid "2-step estimation"
@@ -12562,11 +12562,11 @@ msgstr "Sütun yüzdelerini göster"
 
 #: gui2/selector.c:4566 gui2/selector.c:4578
 msgid "Exact Maximum Likelihood"
-msgstr "Tam En yüksek Olabilirlik"
+msgstr "Tam Ençok Olabilirlik"
 
 #: gui2/selector.c:4579
 msgid "Conditional Maximum Likelihood"
-msgstr "Koşullu En yüksek Olabilirlik"
+msgstr "Koşullu Ençok Olabilirlik"
 
 #: gui2/selector.c:4646
 msgid "No constant"
