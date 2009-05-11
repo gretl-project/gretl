@@ -5442,6 +5442,17 @@ static NODE *ternary_return_node (NODE *n, parser *p)
 		p->err = E_ALLOC;
 	    }
 	}
+    } else if (n->t == STR) {
+	ret = aux_string_node(p);
+	if (ret != NULL) {
+	    if (is_tmp_node(ret)) {
+		free(ret->v.str);
+	    }
+	    ret->v.str = gretl_strdup(n->v.str);
+	    if (ret->v.str == NULL) {
+		p->err = E_ALLOC;
+	    }	    
+	}	
     } else {
 	p->err = E_TYPES;
     }
