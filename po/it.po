@@ -4916,17 +4916,17 @@ msgstr "Note: SQM = scarto quadratico medio; E.S. = errore standard"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2520
 msgid "Mean dependent var"
-msgstr "Media variabile dipendente"
+msgstr "Media var. dipendente"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2522
 msgid "S.D. dependent var"
-msgstr "SQM variabile dipendente"
+msgstr "SQM var. dipendente"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2524 lib/src/modelprint.c:2669
 msgid "Sum squared resid"
-msgstr "Somma quadrati dei residui"
+msgstr "Somma quadr. residui"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2526
