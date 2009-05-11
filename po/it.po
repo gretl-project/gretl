@@ -1,7 +1,7 @@
 # Italian messages for gretl
-# Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+# Copyright (C) 2003-2009 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
-# Cristian Rigamonti <cri@linux.it>, 2003, 2004, 2005, 2006, 2007, 2008
+# Cristian Rigamonti <cri@linux.it>, 2003-2009
 # Thanks to Daniele "Madrid" Medri, Riccardo "Jack" Lucchetti and
 # Stefano Fachin for useful suggestions.
 msgid ""
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-11 12:28-0400\n"
-"PO-Revision-Date: 2009-05-11 12:36-0400\n"
+"PO-Revision-Date: 2009-05-11 22:42+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -613,14 +613,12 @@ msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "(\"*\" indica un valore al di fuori della banda di confidenza al 95%)"
 
 #: lib/src/compare.c:2985 lib/src/gretl_model.c:2872
-#, fuzzy
 msgid "Test of common factor restriction"
-msgstr "Test F per zero vincoli"
+msgstr "Test del vincolo a fattore comune"
 
 #: lib/src/compare.c:3007
-#, fuzzy
 msgid "common factor restriction"
-msgstr "Vincoli lineari"
+msgstr "Vincolo a fattore comune"
 
 #: lib/src/compare.c:3043
 msgid "This test is only relevant for pooled models\n"
@@ -2222,9 +2220,9 @@ msgid "day of week (1 = Monday)"
 msgstr "giorno della settimana (1 = lunedì)"
 
 #: lib/src/genfuncs.c:1741
-#, fuzzy, c-format
+#, c-format
 msgid "standardized residual from model %d"
-msgstr "Quadrato dei residui del modello %d"
+msgstr "Residui standardizzati del modello %d"
 
 #: lib/src/genfuncs.c:1743
 #, c-format
@@ -2237,9 +2235,9 @@ msgid "fitted value from model %d"
 msgstr "Valore stimato del modello %d"
 
 #: lib/src/genfuncs.c:1758
-#, fuzzy, c-format
+#, c-format
 msgid "squared standardized residual from model %d"
-msgstr "Quadrato dei residui del modello %d"
+msgstr "Quadrato dei residui standardizzati del modello %d"
 
 #: lib/src/genfuncs.c:1760
 #, c-format
@@ -2277,11 +2275,11 @@ msgstr "Il simbolo '%c' non è valido in questo contesto\n"
 
 #: lib/src/genlex.c:618
 msgid "(for logical AND, use '&&')\n"
-msgstr ""
+msgstr "(per l'AND logico, usare '&&')\n"
 
 #: lib/src/genlex.c:620
 msgid "(for logical OR, use '||')\n"
-msgstr ""
+msgstr "(per l'OR logico, usare '||')\n"
 
 #: lib/src/genlex.c:626
 #, c-format
@@ -3023,14 +3021,12 @@ msgid "Wald test for joint significance of time dummies"
 msgstr "Test di Wald per la significatività congiunta delle dummy temporali"
 
 #: lib/src/gretl_model.c:2873
-#, fuzzy
 msgid "restriction is acceptable"
-msgstr "Insieme di vincoli"
+msgstr "Il vincolo è accettabile"
 
 #: lib/src/gretl_model.c:2891
-#, fuzzy
 msgid "robust variant"
-msgstr "variante"
+msgstr "variante robusta"
 
 #: lib/src/gretl_model.c:3040
 #, c-format
@@ -4070,14 +4066,12 @@ msgid "Unconditional error variance"
 msgstr "Varianza dell'errore non condizionale"
 
 #: lib/src/modelprint.c:162 lib/src/printout.c:1158
-#, fuzzy
 msgid "The residuals are standardized"
-msgstr "Grafico della serie residua o di ciclo"
+msgstr "I residui sono standardizzati"
 
 #: lib/src/modelprint.c:165
-#, fuzzy
 msgid "Likelihood ratio test for (G)ARCH terms"
-msgstr "Test del rapporto di verosimiglianza"
+msgstr "Test del rapporto di verosimiglianza per i termini (G)ARCH"
 
 #: lib/src/modelprint.c:182
 msgid "Left-unbounded observations"
@@ -4224,9 +4218,8 @@ msgid "Groupwise heteroskedasticity"
 msgstr "Eteroschedasticità di gruppo"
 
 #: lib/src/modelprint.c:644
-#, fuzzy
 msgid "Augmented regression for common factor test"
-msgstr "Regressione aumentata per il test Chow"
+msgstr "Regressione aumentata per il test del fattore comune"
 
 #: lib/src/modelprint.c:662 lib/src/system.c:91 lib/src/varprint.c:1020
 #: lib/src/varprint.c:1029 lib/src/varprint.c:1037 gui2/selector.c:2863
@@ -7765,9 +7758,8 @@ msgid "No function packages found"
 msgstr "Non è stato trovato alcun pacchetto di funzioni"
 
 #: gui2/database.c:2667
-#, fuzzy
 msgid "No data packages found"
-msgstr "Non è stato trovato alcun pacchetto di funzioni"
+msgstr "Non è stato trovato alcun pacchetto di dati"
 
 #: gui2/database.c:2692
 #, c-format
@@ -7839,9 +7831,8 @@ msgid "List series"
 msgstr "Elenca serie"
 
 #: gui2/datafiles.c:1156
-#, fuzzy
 msgid "Select directory"
-msgstr "Seleziona colore"
+msgstr "Seleziona directory"
 
 #: gui2/datafiles.c:1164
 msgid "Look on server"
@@ -7887,9 +7878,8 @@ msgid "gretl: function packages on server"
 msgstr "gretl: pacchetti di funzioni sul server"
 
 #: gui2/datafiles.c:1369
-#, fuzzy
 msgid "gretl: data packages on server"
-msgstr "gretl: database sul server"
+msgstr "gretl: pacchetti di dati sul server"
 
 #: gui2/datafiles.c:1708 gui2/fnsave.c:1342
 msgid "gretl: function packages"
@@ -10743,9 +10733,8 @@ msgid "CUSUM_SQ test"
 msgstr "_CUSUMSQ - Stabilità parametri"
 
 #: gui2/gui_utils.c:186
-#, fuzzy
 msgid "_Common factor"
-msgstr "_Visualizza log comandi"
+msgstr "_Fattore comune"
 
 #: gui2/gui_utils.c:187
 msgid "_Panel diagnostics"
@@ -11276,9 +11265,8 @@ msgid " Find what:"
 msgstr " Trova:"
 
 #: gui2/helpfiles.c:1772
-#, fuzzy
 msgid "Variable names only (case sensitive)"
-msgstr "Manca il nome della variabile"
+msgstr "Solo nomi delle variabili (attenzione a maiuscolo e minuscolo)"
 
 #: gui2/helpfiles.c:1928
 msgid "Failed to download file"
@@ -11474,9 +11462,8 @@ msgid "(non-linearity)"
 msgstr " (non linearità)"
 
 #: gui2/library.c:1904
-#, fuzzy
 msgid "gretl: common factor test"
-msgstr "gretl: test di cointegrazione"
+msgstr "gretl: test del fattore comune"
 
 #: gui2/library.c:1930
 msgid "Lag order for ARCH test:"
@@ -11739,9 +11726,8 @@ msgid "gretl: add scalar"
 msgstr "gretl: aggiungi scalare"
 
 #: gui2/library.c:4952
-#, fuzzy
 msgid "standardized residual"
-msgstr "errore standard dei residui"
+msgstr "residui standardizzati"
 
 #: gui2/library.c:5246
 msgid "Can't delete a variable when in sub-sample mode\n"
@@ -12585,9 +12571,8 @@ msgid "Use X-12-ARIMA"
 msgstr "Usa X-12-ARIMA"
 
 #: gui2/selector.c:4192
-#, fuzzy
 msgid "Standardize the residuals"
-msgstr "Errore standard dei residui"
+msgstr "Standardizza i residui"
 
 #: gui2/selector.c:4194
 msgid "Use Fiorentini et al algorithm"
@@ -13177,7 +13162,7 @@ msgstr "Abilita comandi shell"
 
 #: gui2/settings.c:177
 msgid "Show icon view automatically"
-msgstr ""
+msgstr "Mostra automaticamente la finestra icone"
 
 #: gui2/settings.c:179
 msgid "Set working directory from shell"
