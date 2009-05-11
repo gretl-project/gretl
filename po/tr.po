@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-10 11:44-0400\n"
-"PO-Revision-Date: 2009-04-28 16:10+0300\n"
+"PO-Revision-Date: 2009-05-11 09:37+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -605,14 +605,12 @@ msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' % 95 güven kuşağı dışındaki bir değeri göstermektedir)"
 
 #: lib/src/compare.c:2985 lib/src/gretl_model.c:2872
-#, fuzzy
 msgid "Test of common factor restriction"
-msgstr "Sıfır kısıtlama için F-sınamaları"
+msgstr "Ortak çarpan sınırlama sınaması"
 
 #: lib/src/compare.c:3007
-#, fuzzy
 msgid "common factor restriction"
-msgstr "Doğrusal kısıtlamalar"
+msgstr "ortak çarpan sınırlaması"
 
 #: lib/src/compare.c:3043
 msgid "This test is only relevant for pooled models\n"
@@ -635,8 +633,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:341
 #, c-format
@@ -733,8 +730,7 @@ msgstr "   dört basamaklı yıl olmadığı kesin\n"
 #: lib/src/csvdata.c:1032 lib/src/dataio.c:2622
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+msgstr "İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
 
 #: lib/src/csvdata.c:1054 lib/src/dataio.c:2633
 msgid "Data file is empty\n"
@@ -755,10 +751,8 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1203
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1212
 #, c-format
@@ -1389,8 +1383,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
 
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
@@ -2198,9 +2191,9 @@ msgid "day of week (1 = Monday)"
 msgstr "haftanın günü (1 = Pazartesi)"
 
 #: lib/src/genfuncs.c:1741
-#, fuzzy, c-format
+#, c-format
 msgid "standardized residual from model %d"
-msgstr "model %d kalıntı kareleri"
+msgstr "model %d ölçünlemeli kalıntıları"
 
 #: lib/src/genfuncs.c:1743
 #, c-format
@@ -2213,9 +2206,9 @@ msgid "fitted value from model %d"
 msgstr "model %d yakıştırılan değer"
 
 #: lib/src/genfuncs.c:1758
-#, fuzzy, c-format
+#, c-format
 msgid "squared standardized residual from model %d"
-msgstr "model %d kalıntı kareleri"
+msgstr "model %d ölçünlemeli kalıntı kareleri"
 
 #: lib/src/genfuncs.c:1760
 #, c-format
@@ -2253,11 +2246,11 @@ msgstr "'%c' simgesi bu bağlamda geçerli değil\n"
 
 #: lib/src/genlex.c:618
 msgid "(for logical AND, use '&&')\n"
-msgstr ""
+msgstr "(mantıksal AND için, '&&' kullanınız)\n"
 
 #: lib/src/genlex.c:620
 msgid "(for logical OR, use '||')\n"
-msgstr ""
+msgstr "(mantıksal OR için, '||' kullanınız)\n"
 
 #: lib/src/genlex.c:626
 #, c-format
@@ -2538,8 +2531,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:4064
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s tepkisi (özyetinim güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s tepkisi (özyetinim güven aralıkları ile)"
 
 #: lib/src/graphing.c:4069
 #, c-format
@@ -2764,7 +2756,7 @@ msgstr "Seçenekler uyumsuz"
 
 #: lib/src/gretl_errors.c:68
 msgid "The restrictions do not identify the parameters"
-msgstr "Kısıtlamalar değiştirgeleri özdeşlemiyor"
+msgstr "Sınırlamalar değiştirgeleri özdeşlemiyor"
 
 #: lib/src/gretl_errors.c:69
 msgid "External command failed"
@@ -2992,14 +2984,12 @@ msgid "Wald test for joint significance of time dummies"
 msgstr "Zaman kuklalarının ortak anlamlılığı için Wald sınaması"
 
 #: lib/src/gretl_model.c:2873
-#, fuzzy
 msgid "restriction is acceptable"
-msgstr "Kısıtlama seti"
+msgstr "sınırlama kabul edilebilir"
 
 #: lib/src/gretl_model.c:2891
-#, fuzzy
 msgid "robust variant"
-msgstr "değişke"
+msgstr "sağlam değişke"
 
 #: lib/src/gretl_model.c:3040
 #, c-format
@@ -3216,7 +3206,7 @@ msgstr "Hata: birim %g, dönem %g: tekrarlı gözlem"
 
 #: lib/src/gretl_paths.c:1581
 msgid "User directory is not set"
-msgstr "Kullanıcı klasörü saptanmış değil"
+msgstr "Kullanıcı dizini saptanmış değil"
 
 #: lib/src/gretl_paths.c:1587
 #, c-format
@@ -3264,8 +3254,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:98
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Dizey evriği alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey evriği alma başarısız: Sınırlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:766
 msgid "Please give a coefficient number"
@@ -3302,11 +3291,11 @@ msgstr "'%s' için çözümleme hatası\n"
 
 #: lib/src/gretl_restrict.c:1177
 msgid "Restriction set"
-msgstr "Kısıtlama seti"
+msgstr "Sınırlama seti"
 
 #: lib/src/gretl_restrict.c:1179
 msgid "Restriction"
-msgstr "Kısıtlama"
+msgstr "Sınırlama"
 
 #: lib/src/gretl_restrict.c:1374
 #, c-format
@@ -3316,11 +3305,11 @@ msgstr "Katsayı numarası (%d), denklem %d için sınırlar dışında"
 #: lib/src/gretl_restrict.c:1576
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
-msgstr "Aşırı kısıtlama sayısı (ençok %d)"
+msgstr "Aşırı sınırlama sayısı (ençok %d)"
 
 #: lib/src/gretl_restrict.c:1739
 msgid "Restricted estimates"
-msgstr "Kısıtlamalı tahminler"
+msgstr "Sınırlamalı tahminler"
 
 #: lib/src/gretl_restrict.c:1751 lib/src/modelprint.c:2474
 #: lib/src/printout.c:1160 gui2/library.c:4835
@@ -3333,7 +3322,7 @@ msgstr "Sağlam ki-kare"
 
 #: lib/src/gretl_restrict.c:1871
 msgid "restriction"
-msgstr "kısıtlama"
+msgstr "sınırlama"
 
 #: lib/src/gretl_restrict.c:1975
 msgid ""
@@ -3341,7 +3330,7 @@ msgid ""
 " restrictions may be inconsistent or redundant\n"
 msgstr ""
 "Dizey evriği alma başarısız:\n"
-"Kısıtlamalar tutarsız veya fazla gelmiş olabilir\n"
+"Sınırlamalar tutarsız veya fazla gelmiş olabilir\n"
 
 #: lib/src/gretl_restrict.c:2193
 msgid "Invalid input\n"
@@ -4033,14 +4022,12 @@ msgid "Unconditional error variance"
 msgstr "Koşulsuz hata varyansı"
 
 #: lib/src/modelprint.c:162 lib/src/printout.c:1158
-#, fuzzy
 msgid "The residuals are standardized"
-msgstr "Kalıntı veya çevrim serilerini çiz"
+msgstr "Kalıntılar ölçünlü"
 
 #: lib/src/modelprint.c:165
-#, fuzzy
 msgid "Likelihood ratio test for (G)ARCH terms"
-msgstr "Olabilirlik oranı sınaması"
+msgstr "(G)ÖBKÇ terimleri için olabilirlik oranı sınaması"
 
 #: lib/src/modelprint.c:182
 msgid "Left-unbounded observations"
@@ -4185,9 +4172,8 @@ msgid "Groupwise heteroskedasticity"
 msgstr "kümeli çokluserpilim"
 
 #: lib/src/modelprint.c:644
-#, fuzzy
 msgid "Augmented regression for common factor test"
-msgstr "Chow sınaması için genişletilmiş bağlanım"
+msgstr "Ortak çarpan sınaması için genişletilmiş bağlanım"
 
 #: lib/src/modelprint.c:662 lib/src/system.c:91 lib/src/varprint.c:1020
 #: lib/src/varprint.c:1029 lib/src/varprint.c:1037 gui2/selector.c:2863
@@ -5349,10 +5335,8 @@ msgid "not significant at the 10% level\n"
 msgstr "% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:344
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Örneklem, normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Örneklem, normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük\n"
 
 #: lib/src/nonparam.c:767
 msgid ""
@@ -5381,8 +5365,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:815
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:819
 #, c-format
@@ -5584,10 +5567,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99 lib/src/printout.c:122
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5660,8 +5641,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:495
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:503
 msgid "TOT."
@@ -5692,10 +5672,8 @@ msgstr "Pearson ki-kare sınaması = %g (%d sd p-değeri = %g)"
 
 #: lib/src/printout.c:583
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
-msgstr ""
-"Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgstr "Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
 
 #: lib/src/printout.c:609 lib/src/printout.c:617
 #, c-format
@@ -6018,10 +5996,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1657
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
 
 #: lib/src/subsample.c:1668
 msgid "valid values"
@@ -6093,21 +6069,21 @@ msgstr "Bir denklem sisteminde en az iki denklem bulunmalıdır"
 
 #: lib/src/system.c:787
 msgid "F test for the specified restrictions"
-msgstr "Belirtilen kısıtlamalar için F sınaması"
+msgstr "Belirtilen sınırlamalar için F sınaması"
 
 #: lib/src/system.c:813
 msgid "LR test for the specified restrictions"
-msgstr "Belirtilen kısıtlamalar için LR sınaması"
+msgstr "Belirtilen sınırlamalar için LR sınaması"
 
 #: lib/src/system.c:814 lib/src/system.c:2624 lib/src/system.c:2626
 #: lib/src/system.c:2638
 msgid "Restricted log-likelihood"
-msgstr "Kısıtlamalı log-olabilirlik"
+msgstr "Sınırlamalı log-olabilirlik"
 
 #: lib/src/system.c:815 lib/src/system.c:2630 lib/src/system.c:2632
 #: lib/src/system.c:2639
 msgid "Unrestricted log-likelihood"
-msgstr "Kısıtlamasız log-olabilirlik"
+msgstr "Sınırlamasız log-olabilirlik"
 
 #: lib/src/system.c:1487
 #, c-format
@@ -6361,19 +6337,19 @@ msgstr "Durum 1: Sabit terim yok"
 
 #: lib/src/varprint.c:537
 msgid "Case 2: Restricted constant"
-msgstr "Durum 2: Kısıtlamalı sabit terim"
+msgstr "Durum 2: Sınırlamalı sabit terim"
 
 #: lib/src/varprint.c:538
 msgid "Case 3: Unrestricted constant"
-msgstr "Durum 3: Kısıtlamasız sabit terim"
+msgstr "Durum 3: Sınırlamasız sabit terim"
 
 #: lib/src/varprint.c:539
 msgid "Case 4: Restricted trend, unrestricted constant"
-msgstr "Durum 4: Kısıtlamalı eğilim, kısıtlamasız sabit terim"
+msgstr "Durum 4: Sınırlamalı eğilim, sınırlamasız sabit terim"
 
 #: lib/src/varprint.c:540
 msgid "Case 5: Unrestricted trend and constant"
-msgstr "Durum 5: Kısıtlamasız eğilim ve sabit terim"
+msgstr "Durum 5: Sınırlamasız eğilim ve sabit terim"
 
 #: lib/src/varprint.c:603 lib/src/varprint.c:604
 msgid "cointegrating vectors"
@@ -6385,11 +6361,11 @@ msgstr "ayarlama yöneyleri"
 
 #: lib/src/varprint.c:805
 msgid "Restrictions on beta:"
-msgstr "Beta üzerindeki kısıtlamalar:"
+msgstr "Beta üzerindeki sınırlamalar:"
 
 #: lib/src/varprint.c:817
 msgid "Restrictions on alpha:"
-msgstr "Alpha üzerindeki kısıtlamalar:"
+msgstr "Alpha üzerindeki sınırlamalar:"
 
 #: lib/src/varprint.c:841 lib/src/varprint.c:845
 #, c-format
@@ -6398,27 +6374,27 @@ msgstr "P(Ki-Kare(%d) > %g) = %g"
 
 #: lib/src/varprint.c:865 lib/src/varprint.c:867
 msgid "Relative to prior restriction"
-msgstr "Önceki kısıtlama ile göreli olarak"
+msgstr "Önceki sınırlama ile göreli olarak"
 
 #: lib/src/varprint.c:879
 #, c-format
 msgid "Unrestricted loglikelihood $(l_u) = %.8g$"
-msgstr "Kısıtlamasız log-olabilirlik $(l_u) = %.8g$"
+msgstr "Sınırlamasız log-olabilirlik $(l_u) = %.8g$"
 
 #: lib/src/varprint.c:881
 #, c-format
 msgid "Restricted loglikelihood $(l_r) = %.8g$"
-msgstr "Kısıtlamalı log-olabilirlik  $(l_r) = %.8g$"
+msgstr "Sınırlamalı log-olabilirlik  $(l_r) = %.8g$"
 
 #: lib/src/varprint.c:883 lib/src/varprint.c:887
 #, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g"
-msgstr "Kısıtlamasız log-olabilirlik  (lu) = %.8g"
+msgstr "Sınırlamasız log-olabilirlik  (lu) = %.8g"
 
 #: lib/src/varprint.c:885 lib/src/varprint.c:889
 #, c-format
 msgid "Restricted loglikelihood (lr) = %.8g"
-msgstr "Kısıtlamalı log-olabilirlik  (lr) = %.8g"
+msgstr "Sınırlamalı log-olabilirlik  (lr) = %.8g"
 
 #: lib/src/varprint.c:908
 msgid "Cointegration rank"
@@ -6458,7 +6434,7 @@ msgstr "Denklem şunun için:"
 
 #: lib/src/varprint.c:1112 lib/src/varprint.c:1115 lib/src/varprint.c:1117
 msgid "F-tests of zero restrictions"
-msgstr "Sıfır kısıtlama için F-sınamaları"
+msgstr "Sıfır sınırlama için F-sınamaları"
 
 #: lib/src/varprint.c:1124 lib/src/varprint.c:1129 lib/src/varprint.c:1133
 #, c-format
@@ -6631,8 +6607,7 @@ msgstr "komutlar %s olarak kaydedildi\n"
 #: cli/gretlcli.c:951
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
+msgstr "Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
 
 #: cli/gretlcli.c:959
 #, c-format
@@ -6886,8 +6861,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazsal yaklaştırma yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazsal yaklaştırma yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7390,7 +7364,7 @@ msgstr "sıra ilintisi"
 
 #: gui2/callbacks.c:643
 msgid "gretl: restrict sample"
-msgstr "gretl: örneklemi kısıtla"
+msgstr "gretl: örneklemi sınırla"
 
 #: gui2/callbacks.c:644
 msgid "Enter boolean condition for selecting cases:"
@@ -7454,11 +7428,11 @@ msgstr "Eşanlı denklemleri belirtiniz:"
 
 #: gui2/callbacks.c:702
 msgid "gretl: linear restrictions"
-msgstr "gretl: doğrusal kısıtlamalar"
+msgstr "gretl: doğrusal sınırlamalar"
 
 #: gui2/callbacks.c:703
 msgid "Specify restrictions:"
-msgstr "Kısıtlamaları belirtiniz:"
+msgstr "Sınırlamaları belirtiniz:"
 
 #: gui2/callbacks.c:707 gui2/callbacks.c:779
 msgid "gretl: command entry"
@@ -7706,9 +7680,8 @@ msgid "No function packages found"
 msgstr "Bulunan işlev paketi yok"
 
 #: gui2/database.c:2667
-#, fuzzy
 msgid "No data packages found"
-msgstr "Bulunan işlev paketi yok"
+msgstr "Bulunan veri paketi yok"
 
 #: gui2/database.c:2692
 #, c-format
@@ -7780,9 +7753,8 @@ msgid "List series"
 msgstr "Seriyi listele"
 
 #: gui2/datafiles.c:1156
-#, fuzzy
 msgid "Select directory"
-msgstr "Renk seçiniz"
+msgstr "Dizin seçiniz"
 
 #: gui2/datafiles.c:1164
 msgid "Look on server"
@@ -7828,9 +7800,8 @@ msgid "gretl: function packages on server"
 msgstr "gretl: sunucudaki işlev paketleri"
 
 #: gui2/datafiles.c:1369
-#, fuzzy
 msgid "gretl: data packages on server"
-msgstr "gretl: sunucudaki veritabanları"
+msgstr "gretl: sunucudaki veri paketleri"
 
 #: gui2/datafiles.c:1708 gui2/fnsave.c:1342
 msgid "gretl: function packages"
@@ -7862,9 +7833,8 @@ msgid "Source"
 msgstr "Kaynak"
 
 #: gui2/datafiles.c:1806
-#, fuzzy
 msgid "Date"
-msgstr "Veriler"
+msgstr "Tarih"
 
 #: gui2/datafiles.c:1809
 msgid "Script"
@@ -8643,11 +8613,11 @@ msgstr "Araç listesi ekle"
 
 #: gui2/dlgutils.c:838
 msgid "add to current restriction"
-msgstr "şu anki kısıtlamaya ekle"
+msgstr "şu anki sınırlamaya ekle"
 
 #: gui2/dlgutils.c:845
 msgid "replace current restriction"
-msgstr "şu anki kısıtlamayı değiştir"
+msgstr "şu anki sınırlamayı değiştir"
 
 #: gui2/dlgutils.c:898 gui2/dlgutils.c:984 gui2/selector.c:3016
 msgid "Iterated estimation"
@@ -8667,7 +8637,7 @@ msgstr "Özyetinim kullan"
 
 #: gui2/dlgutils.c:916
 msgid "Show full restricted estimates"
-msgstr "Tüm kısıtlamalı tahminleri göster"
+msgstr "Tüm sınırlamalı tahminleri göster"
 
 #: gui2/dlgutils.c:982 gui2/selector.c:3014 gui2/selector.c:4504
 msgid "One-step estimation"
@@ -9958,7 +9928,7 @@ msgstr "_Tanımla, kuklaya dayalı..."
 
 #: gui2/gretl.c:1325
 msgid "_Restrict, based on criterion..."
-msgstr "_Kısıtla, ölçüte dayalı..."
+msgstr "_Sınırla, ölçüte dayalı..."
 
 #: gui2/gretl.c:1327
 msgid "R_andom sub-sample..."
@@ -10615,7 +10585,7 @@ msgstr "Katsayılar _toplamı"
 
 #: gui2/gui_utils.c:171
 msgid "_Linear restrictions"
-msgstr "Doğrusal _kısıtlamalar"
+msgstr "Doğrusal _sınırlamalar"
 
 #: gui2/gui_utils.c:172
 msgid "Non-linearity (s_quares)"
@@ -10674,9 +10644,8 @@ msgid "CUSUM_SQ test"
 msgstr "CUSUM_SQ sınaması"
 
 #: gui2/gui_utils.c:186
-#, fuzzy
 msgid "_Common factor"
-msgstr "_Komut defteri"
+msgstr "_Ortak çarpan"
 
 #: gui2/gui_utils.c:187
 msgid "_Panel diagnostics"
@@ -10991,7 +10960,7 @@ msgstr "Kalıntıların _normalliği"
 
 #: gui2/gui_utils.c:3255
 msgid "Linear restrictions"
-msgstr "Doğrusal kısıtlamalar"
+msgstr "Doğrusal sınırlamalar"
 
 #: gui2/gui_utils.c:3262
 msgid "Omit exogenous variables..."
@@ -11204,9 +11173,8 @@ msgid " Find what:"
 msgstr "Bulunacak dizgi:"
 
 #: gui2/helpfiles.c:1772
-#, fuzzy
 msgid "Variable names only (case sensitive)"
-msgstr "Değişken adı eksik"
+msgstr "Yalnızca değişken adları (büyük/küçük harfe duyarlı)"
 
 #: gui2/helpfiles.c:1928
 msgid "Failed to download file"
@@ -11399,9 +11367,8 @@ msgid "(non-linearity)"
 msgstr "(doğrusal-dışılık)"
 
 #: gui2/library.c:1904
-#, fuzzy
 msgid "gretl: common factor test"
-msgstr "gretl: eştümleme sınaması"
+msgstr "gretl: ortak çarpan sınaması"
 
 #: gui2/library.c:1930
 msgid "Lag order for ARCH test:"
@@ -11469,7 +11436,7 @@ msgstr "Durbin-Watson istatistiği"
 
 #: gui2/library.c:2632
 msgid "linear restrictions"
-msgstr "doğrusal kısıtlamalar"
+msgstr "doğrusal sınırlamalar"
 
 #: gui2/library.c:3200
 msgid "Sorry, not implemented yet!"
@@ -11663,9 +11630,8 @@ msgid "gretl: add scalar"
 msgstr "gretl: sayıl ekle"
 
 #: gui2/library.c:4952
-#, fuzzy
 msgid "standardized residual"
-msgstr "Kalıntı ka_releri"
+msgstr "ölçünlemeli kalıntı"
 
 #: gui2/library.c:5246
 msgid "Can't delete a variable when in sub-sample mode\n"
@@ -11996,8 +11962,7 @@ msgid "Sorry, ARMA models can't be put in the model table"
 msgstr "Üzgünüm, ÖBHO modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:178
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:185
@@ -12106,8 +12071,7 @@ msgstr "Logbirim ve olabirim için, McFadden sahte-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1033
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1061
 msgid "No model is available"
@@ -12149,11 +12113,11 @@ msgstr "'%s' değişkeni bir 0/1 değişkeni değil."
 
 #: gui2/selector.c:1387 gui2/selector.c:1697
 msgid "Unrestricted"
-msgstr "Kısıtlamasız"
+msgstr "Sınırlamasız"
 
 #: gui2/selector.c:1388 gui2/selector.c:1698
 msgid "Restricted"
-msgstr "Kısıtlamalı"
+msgstr "Sınırlamalı"
 
 #: gui2/selector.c:1393
 msgid "add exogenous variable"
@@ -12497,9 +12461,8 @@ msgid "Use X-12-ARIMA"
 msgstr "X-12-ARIMA kullan"
 
 #: gui2/selector.c:4192
-#, fuzzy
 msgid "Standardize the residuals"
-msgstr "Kalıntılar ölçünlü hatası = %g"
+msgstr "Kalıntıları ölçünle"
 
 #: gui2/selector.c:4194
 msgid "Use Fiorentini et al algorithm"
@@ -12611,19 +12574,19 @@ msgstr "Sabit terim yok"
 
 #: gui2/selector.c:4647
 msgid "Restricted constant"
-msgstr "Kısıtlamalı sabit terim"
+msgstr "Sınırlamalı sabit terim"
 
 #: gui2/selector.c:4648
 msgid "Unrestricted constant"
-msgstr "Kısıtlamasız sabit"
+msgstr "Sınırlamasız sabit"
 
 #: gui2/selector.c:4649
 msgid "Restricted trend"
-msgstr "Kısıtlamalı eğilim"
+msgstr "Sınırlamalı eğilim"
 
 #: gui2/selector.c:4650
 msgid "Unrestricted trend"
-msgstr "Kısıtlamasız eğilim"
+msgstr "Sınırlamasız eğilim"
 
 #: gui2/selector.c:4832
 msgid "plot with impulses"
@@ -13089,7 +13052,7 @@ msgstr "Kabuk komutlarına izin ver"
 
 #: gui2/settings.c:177
 msgid "Show icon view automatically"
-msgstr ""
+msgstr "Simge görünümünü kendiliğinden göster"
 
 #: gui2/settings.c:179
 msgid "Set working directory from shell"
@@ -14094,17 +14057,17 @@ msgstr "%d özdeğeri = %g\n"
 #: plugin/johansen.c:1613 plugin/jrestrict.c:2747
 #, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g\n"
-msgstr "Kısıtlamalı log-olabilirlik (lu) = %.8g\n"
+msgstr "Sınırlamalı log-olabilirlik (lu) = %.8g\n"
 
 #: plugin/johansen.c:1614 plugin/jrestrict.c:2748
 #, c-format
 msgid "Restricted loglikelihood (lr) = %.8g\n"
-msgstr "Kısıtlamasız log-olabilirlik (lr) = %.8g\n"
+msgstr "Sınırlamasız log-olabilirlik (lr) = %.8g\n"
 
 #: plugin/johansen.c:1620 plugin/jrestrict.c:1838
 #, c-format
 msgid "Allowing for prior restriction, df = %d\n"
-msgstr "Önceki kısıtlama  (sd = %d) göz önüne alındı\n"
+msgstr "Önceki sınırlama  (sd = %d) göz önüne alındı\n"
 
 #: plugin/johansen.c:1622 plugin/jrestrict.c:2766
 #, c-format
@@ -14588,8 +14551,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 
 #: plugin/workbook.c:637
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+msgstr "Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
 
 #: plugin/workbook.c:639
 msgid "Unexpected error reading the file\n"
@@ -14635,98 +14597,3 @@ msgstr "Dizgiler"
 msgid "Accessors"
 msgstr "Erişiciler"
 
-#~ msgid "White's test for heteroskedasticity (no cross products)"
-#~ msgstr "White çokluserpilim sınaması (çapraz-çarpım yok)"
-
-#~ msgid "Couldn't load plugin %s"
-#~ msgstr "%s eklentisi yüklenemedi"
-
-#~ msgid "postscript files (*.eps)"
-#~ msgstr "postscript dosyaları (*.eps)"
-
-#~ msgid "PDF files (*.pdf)"
-#~ msgstr "PDF dosyaları (*.pdf)"
-
-#~ msgid "xfig files (*.fig)"
-#~ msgstr "xfig dosyaları (*.fig)"
-
-#~ msgid "LaTeX files (*.tex)"
-#~ msgstr "LaTeX dosyaları (*.tex)"
-
-#~ msgid "PNG files (*.png)"
-#~ msgstr "PNG dosyaları (*.png)"
-
-#~ msgid "Windows metafiles (*.emf)"
-#~ msgstr "Windows meta dosyaları (*.emf)"
-
-#~ msgid "gretl data files (*.gdt)"
-#~ msgstr "gretl veri dosyaları (*.gdt)"
-
-#~ msgid "gretl database files (*.bin)"
-#~ msgstr "gretl veritabanı dosyaları (*.bin)"
-
-#~ msgid "gretl command files (*.inp)"
-#~ msgstr "gretl komut dosyaları (*.inp)"
-
-#~ msgid "session files (*.gretl)"
-#~ msgstr "oturum dosyaları (*.gretl)"
-
-#~ msgid "gretl function files (*.gfn)"
-#~ msgstr "gretl işlev dosyaları (*.gfn)"
-
-#~ msgid "CSV files (*.csv)"
-#~ msgstr "CSV dosyaları (*.csv)"
-
-#~ msgid "GNU Octave files (*.m)"
-#~ msgstr "GNU Octave dosyaları (*.m)"
-
-#~ msgid "PcGive files (*.dat)"
-#~ msgstr "PcGive dosyaları (*.dat)"
-
-#~ msgid "JMulti files (*.dat)"
-#~ msgstr "JMulti dosyaları (*.dat)"
-
-#~ msgid "text files (*.txt)"
-#~ msgstr "metin dosyaları (*.txt)"
-
-#~ msgid "TeX files (*.tex)"
-#~ msgstr "TeX dosyaları (*.tex)"
-
-#~ msgid "RTF files (*.rtf)"
-#~ msgstr "RTF dosyaları (*.rtf)"
-
-#~ msgid "Gnumeric files (*.gnumeric)"
-#~ msgstr "Gnumeric dosyaları (*.gnumeric)"
-
-#~ msgid "Excel files (*.xls)"
-#~ msgstr "Excel dosyaları (*.xls)"
-
-#~ msgid "Eviews workfiles (*.wf1)"
-#~ msgstr "Eviews  çalışma dosyaları (*.wf1)"
-
-#~ msgid "Stata files (*.dta)"
-#~ msgstr "Stata dosyaları (*.dta)"
-
-#~ msgid "SPSS files (*.sav)"
-#~ msgstr "SPSS dosyaları (*.sav)"
-
-#~ msgid "JMulTi files (*.dat)"
-#~ msgstr "JMulTi dosyaları (*.dat)"
-
-#~ msgid "Open Document Spreadsheet (*.ods)"
-#~ msgstr "Open Document hesap çizelgesi (*.ods)"
-
-#~ msgid "RATS databases (*.rat)"
-#~ msgstr "RATS veritabanları (*.rat)"
-
-#~ msgid "PcGive data files (*.bn7)"
-#~ msgstr "PcGive veri dosyaları (*.bn7)"
-
-#~ msgid "program files (*.exe)"
-#~ msgstr "program dosyaları (*.exe)"
-
-#~ msgid "GNU R files (*.*)"
-#~ msgstr "GNU R dosyaları (*.*)"
-
-#~ msgid "File dialog box error"
-#~ msgstr "Dosya iletişim kutusu hatası"
