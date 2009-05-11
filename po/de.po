@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-10 11:44-0400\n"
-"PO-Revision-Date: 2009-04-21 18:39+0100\n"
+"POT-Creation-Date: 2009-05-11 12:28-0400\n"
+"PO-Revision-Date: 2009-05-11 12:33-0400\n"
 "Last-Translator: Sven Schreiber <svetosch )at( gmx.net>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -5154,12 +5154,12 @@ msgstr "Es wurde keine gültige Schleifenbedingung angegeben."
 
 #: lib/src/monte_carlo.c:1162
 #, c-format
-msgid "Reached maximum interations, %d"
+msgid "Reached maximum iterations, %d"
 msgstr "Maximale Anzahl an Iterationen erreicht, %d"
 
 #: lib/src/monte_carlo.c:1171
 #, c-format
-msgid "Warning: no convergence after %d interations"
+msgid "Warning: no convergence after %d iterations"
 msgstr "Warnung: keine Konvergenz nach %d Iterationen"
 
 #: lib/src/monte_carlo.c:2075

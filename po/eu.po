@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.6.6.pre3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-10 11:44-0400\n"
-"PO-Revision-Date: 2007-12-19 16:02+0100\n"
+"POT-Creation-Date: 2009-05-11 12:28-0400\n"
+"PO-Revision-Date: 2009-05-11 12:34-0400\n"
 "Last-Translator: susan orbe <susan.orbe@ehu.es>\n"
 "Language-Team: Basque <translation-team-eu@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -5236,12 +5236,12 @@ msgstr "Begizta murrizketa baliodunik ez"
 
 #: lib/src/monte_carlo.c:1162
 #, c-format
-msgid "Reached maximum interations, %d"
+msgid "Reached maximum iterations, %d"
 msgstr "Iterazio maximoaren kopurua lortuta, %d"
 
 #: lib/src/monte_carlo.c:1171
 #, c-format
-msgid "Warning: no convergence after %d interations"
+msgid "Warning: no convergence after %d iterations"
 msgstr "Oharra: %d iterazio ondoren konbergentziarik ez"
 
 #: lib/src/monte_carlo.c:2075

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-10 11:44-0400\n"
-"PO-Revision-Date: 2009-04-25 13:56+0200\n"
+"POT-Creation-Date: 2009-05-11 12:28-0400\n"
+"PO-Revision-Date: 2009-05-11 12:36-0400\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -5187,12 +5187,12 @@ msgstr "Non è stata assegnata alcuna condizione valida per il loop"
 
 #: lib/src/monte_carlo.c:1162
 #, c-format
-msgid "Reached maximum interations, %d"
+msgid "Reached maximum iterations, %d"
 msgstr "Raggiunto il massimo numero di iterazioni, %d"
 
 #: lib/src/monte_carlo.c:1171
 #, c-format
-msgid "Warning: no convergence after %d interations"
+msgid "Warning: no convergence after %d iterations"
 msgstr "Attenzione: convergenza fallita dopo %d iterazioni"
 
 #: lib/src/monte_carlo.c:2075

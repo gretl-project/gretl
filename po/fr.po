@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-10 11:44-0400\n"
-"PO-Revision-Date: 2009-01-14 10:19+0100\n"
+"POT-Creation-Date: 2009-05-11 12:28-0400\n"
+"PO-Revision-Date: 2009-05-11 12:36-0400\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -2579,9 +2579,9 @@ msgid "point estimate"
 msgstr "estimation ponctuelle"
 
 #: lib/src/graphing.c:4083
-#, fuzzy, c-format
+#, c-format
 msgid "%g and %g quantiles"
-msgstr "quantiles 0,025 et 0,975"
+msgstr "quantiles %g et %g"
 
 #: lib/src/graphing.c:4254
 msgid "VAR residuals"
@@ -5198,12 +5198,12 @@ msgstr "Aucune de condition de boucle valide n'a été fournie."
 
 #: lib/src/monte_carlo.c:1162
 #, c-format
-msgid "Reached maximum interations, %d"
+msgid "Reached maximum iterations, %d"
 msgstr "Nombre maximal d'itérations a été atteint %d"
 
 #: lib/src/monte_carlo.c:1171
 #, c-format
-msgid "Warning: no convergence after %d interations"
+msgid "Warning: no convergence after %d iterations"
 msgstr "Echec de la convergence après %d itérations"
 
 #: lib/src/monte_carlo.c:2075

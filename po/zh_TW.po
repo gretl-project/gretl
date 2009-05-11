@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-10 11:44-0400\n"
+"POT-Creation-Date: 2009-05-11 12:28-0400\n"
 "PO-Revision-Date: 2009-04-29 01:21+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -5269,13 +5269,14 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:1162
 #, fuzzy, c-format
-msgid "Reached maximum interations, %d"
+msgid "Reached maximum iterations, %d"
 msgstr "gretl: 最大概似法"
 
 #: lib/src/monte_carlo.c:1171
-#, c-format
-msgid "Warning: no convergence after %d interations"
+#, fuzzy, c-format
+msgid "Warning: no convergence after %d iterations"
 msgstr ""
+"NLS:  在 %d 次反覆運算 (iterations) 後, 仍無法收歛 (failed to converge)"
 
 #: lib/src/monte_carlo.c:2075
 #, fuzzy, c-format

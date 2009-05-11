@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-10 11:44-0400\n"
+"POT-Creation-Date: 2009-05-11 12:28-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4942,12 +4942,12 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:1162
 #, c-format
-msgid "Reached maximum interations, %d"
+msgid "Reached maximum iterations, %d"
 msgstr ""
 
 #: lib/src/monte_carlo.c:1171
 #, c-format
-msgid "Warning: no convergence after %d interations"
+msgid "Warning: no convergence after %d iterations"
 msgstr ""
 
 #: lib/src/monte_carlo.c:2075
