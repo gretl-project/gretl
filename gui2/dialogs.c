@@ -683,11 +683,6 @@ void copy_format_dialog (windata_t *vwin, int action)
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
 
-    /* Help button if needed */
-    if (can_do_tabbed(vwin)) {
-	context_help_button(GTK_DIALOG(dialog)->action_area, COPY_FORMATS);
-    }	
-
     gtk_widget_show(dialog);
 }
 

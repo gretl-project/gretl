@@ -1412,34 +1412,6 @@
 
   </command>
 
-  <command name="copy-formats" section="Utilities" context="gui"
-    label="Copy formats">
-
-    <description>
-      <para>
-	Besides plain text, you have two options for copying data
-	from this window.  
-      </para>
-
-      <para>
-	Tab separated: The data are copied as plain text, using tabs to
-	separate the columns.  This is a good choice for pasting data into
-	a word processor.  In MS Word or OpenOffice.org Writer, for
-	example, you can select the copied material and covert it to a
-	properly formatted table, using a menu item such as <quote>Table
-	  autoformat</quote> or <quote>Convert text to table</quote>.
-      </para>
-
-      <para>
-	Comma separated: The data are placed onto the clipboard as
-	comma-separated values (CSV).  Use this format if you want to
-	paste the data into a spreadsheet.
-      </para>
-
-    </description>
-
-  </command>
-
   <command name="corr" section="Statistics" 
     label="Correlation coefficients">
 
