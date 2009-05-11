@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-10 11:44-0400\n"
-"PO-Revision-Date: 2009-05-11 12:57+0300\n"
+"PO-Revision-Date: 2009-05-11 13:20+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1948,7 +1948,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"HKT, rho = %g için en düşük\n"
+"HKT, rho = %g için enazsal\n"
 "\n"
 
 #: lib/src/estimate.c:2152
@@ -2764,7 +2764,7 @@ msgstr "Kullanıcı komutu başarısız"
 
 #: lib/src/gretl_errors.c:70
 msgid "Maximum length of command line (8192 bytes) exceeded"
-msgstr "Komut satırı için en büyük uzunluk (8192 byte) aşıldı"
+msgstr "Komut satırı için ençoksal uzunluk (8192 byte) aşıldı"
 
 #: lib/src/gretl_func.c:2423
 msgid "No description available"
@@ -3432,7 +3432,7 @@ msgstr "%s dizgisi değiştirildi\n"
 #: lib/src/gretl_string_table.c:890 lib/src/interact.c:3916
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
-msgstr "Komut satırı için en büyük uzunluk (%d byte) aşıldı\n"
+msgstr "Komut satırı için ençoksal uzunluk (%d byte) aşıldı\n"
 
 #: lib/src/gretl_utils.c:705
 msgid "Error calculating model selection criteria\n"
@@ -4429,11 +4429,11 @@ msgstr "Birinci-aşama F-istatistiği"
 
 #: lib/src/modelprint.c:916 lib/src/modelprint.c:925
 msgid "Cragg-Donald minimum eigenvalue"
-msgstr "Cragg-Donald enaz özdeğeri"
+msgstr "Cragg-Donald enazsal özdeğeri"
 
 #: lib/src/modelprint.c:922
 msgid "Cragg--Donald minimum eigenvalue"
-msgstr "Cragg--Donald enaz özdeğeri"
+msgstr "Cragg--Donald enazsal özdeğeri"
 
 #: lib/src/modelprint.c:963
 msgid "A value < 10 may indicate weak instruments"
@@ -7217,7 +7217,7 @@ msgstr "formül"
 
 #: gui2/calculator.c:3135
 msgid "x minimum"
-msgstr "enaz x"
+msgstr "enazsal x"
 
 #: gui2/calculator.c:3144
 msgid "x range"
@@ -8512,7 +8512,7 @@ msgstr "Kap sayısı:"
 
 #: gui2/dialogs.c:3856
 msgid "Minimum value, left bin:"
-msgstr "Enaz değer, sol kap:"
+msgstr "Enazsal değer, sol kap:"
 
 #: gui2/dialogs.c:3857
 msgid "Bin width:"
@@ -8923,7 +8923,7 @@ msgstr "Veri gereksinimi"
 
 #: gui2/fnsave.c:647
 msgid "Minimum gretl version"
-msgstr "En düşük gretl sürümü"
+msgstr "Enazsal gretl sürümü"
 
 #: gui2/fnsave.c:720
 msgid "Author"
@@ -14531,7 +14531,7 @@ msgstr "Varyans Şişirme Çarpanları"
 
 #: plugin/vif.c:240
 msgid "Minimum possible value = 1.0"
-msgstr "Olabilecek en küçük değer = 1.0"
+msgstr "Olabilecek enazsal değer = 1.0"
 
 #: plugin/vif.c:241
 msgid "Values > 10.0 may indicate a collinearity problem"
