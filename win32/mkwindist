@@ -18,7 +18,7 @@ if [ "$BUILDTYPE" = "cross" ] ; then
   WINFILES=/home/cottrell/stats/esl/win32
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
-  INNO_CMD="nice wine c:/innodir/ISCC.exe"
+  INNO_CMD="wine c:/innodir/ISCC.exe"
 else
   WINFILES=/mingw/winbuild
   HLPDIR=${WINFILES}/help
@@ -239,7 +239,7 @@ make gretl.iss
 
 # make Inno installer
 echo "Building gretl installer executable..."
-$INNO_CMD ./gretl.iss 2>errlog && \
+${INNO_CMD} ./gretl.iss 2>errlog && \
 mv Output/setup.exe Output/gretl_install.exe && \
 ls -l Output/gretl_install.exe
 

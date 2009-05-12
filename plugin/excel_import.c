@@ -93,7 +93,7 @@ static void open_debug_stream (void)
 }
 #endif
 
-static int dprintf (const char *format, ...)
+static int dbprintf (const char *format, ...)
 {
     va_list args;
     int len = 0;
@@ -124,7 +124,7 @@ static int dprintf (const char *format, ...)
 
 static void print_version (void)
 {
-    dprintf("gretl, version %s, %s\n", GRETL_VERSION, BUILD_DATE);
+    dbprintf("gretl, version %s, %s\n", GRETL_VERSION, BUILD_DATE);
 }
 
 static double get_le_double (const unsigned char *rec) 
@@ -215,7 +215,7 @@ static char *convert8to7 (const char *s, int count)
 	tailstrip(dest);
     }
 
-    dprintf("convert8to7: returning '%s'\n", dest);
+    dbprintf("convert8to7: returning '%s'\n", dest);
 
     return dest;
 }
@@ -240,7 +240,7 @@ static char *convert16to7 (const unsigned char *s, int count)
 	}
     }
 
-    dprintf("convert16to7: returning '%s'\n", dest);
+    dbprintf("convert16to7: returning '%s'\n", dest);
 
     return dest;    
 }
@@ -254,14 +254,14 @@ copy_unicode_string (unsigned char *src, int remlen,
     int this_skip = 3, skip_to_next = 3;
     int csize = (flags & 0x01)? 2 : 1;
 
-    dprintf("copy_unicode_string: count = %d, csize = %d\n",
+    dbprintf("copy_unicode_string: count = %d, csize = %d\n",
 	    count, csize);
 
     if (flags & 0x08) {
-	dprintf(" contains Rich-Text info\n");
+	dbprintf(" contains Rich-Text info\n");
     }
     if (flags & 0x04) {
-	dprintf(" contains Far-East info\n");
+	dbprintf(" contains Far-East info\n");
     }    
 
     skip_to_next += count * csize;
@@ -304,7 +304,7 @@ copy_unicode_string (unsigned char *src, int remlen,
 	/* let's not mess with excessive strings */
 	return g_strdup("bigstr");
     } else if (csize == 1) {
-	dprintf("original string = '%s'\n", src + this_skip);
+	dbprintf("original string = '%s'\n", src + this_skip);
 	return convert8to7((char *) src + this_skip, count);
     } else { 
 	return convert16to7(src + this_skip, count);
@@ -358,7 +358,7 @@ static int row_col_err (int row, int col, PRN *prn)
 static int check_copy_string (struct sheetrow *prow, int row, int col, 
 			      int idx, const char *s)
 {
-    dprintf("inspecting sst[%d] = '%s'\n", idx, s);
+    dbprintf("inspecting sst[%d] = '%s'\n", idx, s);
     
     if (row > 0 && col > 0) {
 	const char *numok = "0123456789 -,.";
@@ -367,7 +367,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	static int warned = 0;
 
 	if (len == 0) {
-	    dprintf(" converting to NA\n");
+	    dbprintf(" converting to NA\n");
 	    prow->cells[col] = g_strdup("-999");
 	    return 0;
 	}
@@ -414,7 +414,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	       may end up with zeros where there should be NAs.
 	    */ 
 	    if (numeric_string(q)) {
-		dprintf(" taking '%s' to be numeric string: %s\n", s, q);
+		dbprintf(" taking '%s' to be numeric string: %s\n", s, q);
 		prow->cells[col] = q;
 		return 0;
 	    } else {
@@ -423,7 +423,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	} 
     }
 
-    dprintf(" copying '%s' into place as string\n", s);
+    dbprintf(" copying '%s' into place as string\n", s);
     prow->cells[col] = g_strdup_printf("\"%s", s);
 
     return 0;
@@ -571,8 +571,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    return 1;
 	}
 
-	dprintf("Got SST: allocated for %d strings (%d bytes), %p\n", 
-		sstsize, sstsize * sizeof *sst, (void *) sst);
+	dbprintf("Got SST: allocated for %d strings (%d bytes), %p\n", 
+		 sstsize, sstsize * sizeof *sst, (void *) sst);
 
 	for (k=oldsz; k<sstsize; k++) {
 	    /* careful: initialize all pointers to NULL */
@@ -583,8 +583,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
 	for (k=oldsz; k<sstsize; k++) {
 	    remlen = q->length - (ptr - q->data);
-	    dprintf("Working on sst[%d], data offset=%d, remlen=%d\n", 
-		    k, (int) (ptr - q->data), remlen);
+	    dbprintf("Working on sst[%d], data offset=%d, remlen=%d\n", 
+		     k, (int) (ptr - q->data), remlen);
 	    if (remlen <= 0) {
 		break;
 	    }
@@ -600,8 +600,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     }	
 
     case BIFF_CONTINUE: 
-	dprintf("Got CONTINUE, sstnext = %d, len = %d\n", 
-		sstnext, (int) q->length);
+	dbprintf("Got CONTINUE, sstnext = %d, len = %d\n", 
+		 sstnext, (int) q->length);
 	if (sstnext > 0) {
 	    int k, skip, remlen;
 
@@ -610,8 +610,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		unsigned char flags = *ptr;
 		int csize = (flags & 0x01)? 2 : 1;
 
-		dprintf("BIFF_CONTINUE: slop = %d, csize = %d\n", (int) slop,
-			(int) csize);
+		dbprintf("BIFF_CONTINUE: slop = %d, csize = %d\n", (int) slop,
+			 (int) csize);
 		ptr += 1 + csize * slop;
 	    }
 	    for (k=sstnext; k<sstsize; k++) {
@@ -619,7 +619,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		if (remlen <= 0) {
 		    break;
 		}
-		dprintf("Working on sst[%d], remlen = %d\n", k, remlen);
+		dbprintf("Working on sst[%d], remlen = %d\n", k, remlen);
 		sst[k] = copy_unicode_string(ptr, remlen, &skip, &slop);
 		ptr += skip;
 	    }
@@ -630,7 +630,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	break;
 			   
     case BIFF_LABEL: 
-	dprintf("Got LABEL, row=%d, col=%d\n", i, j);
+	dbprintf("Got LABEL, row=%d, col=%d\n", i, j);
 	if (allocate_row_col(i, j, book)) {
 	    return 1;
 	} else {
@@ -644,7 +644,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	break;
   
     case BIFF_LABELSST:
-	dprintf("Got LABELSST, row=%d, col=%d\n", i, j);
+	dbprintf("Got LABELSST, row=%d, col=%d\n", i, j);
 	if (allocate_row_col(i, j, book)) {
 	    return 1;
 	} else {
@@ -657,7 +657,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    } else if (sst[sidx] != NULL) {
 		check_copy_string(prow, i, j, sidx, sst[sidx]);
 	    } else {
-		dprintf("sst[%d] seems to be NULL, leaving string blank\n", (int) sidx);
+		dbprintf("sst[%d] seems to be NULL, leaving string blank\n", (int) sidx);
 		prow->cells[j] = malloc(2);
 		if (prow->cells[j] != NULL) {
 		    prow->cells[j][0] = '\0';
@@ -673,7 +673,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    val = get_le_double(q->data + 6);
 	    prow = rows + i;
 	    prow->cells[j] = g_strdup_printf("%.15g", val);
-	    dprintf("Got NUMBER (%g), row=%d, col=%d\n", val, i, j);
+	    dbprintf("Got NUMBER (%g), row=%d, col=%d\n", val, i, j);
 	}
 	break;
 
@@ -684,14 +684,14 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    val = biff_get_rk(q->data + 6);
 	    prow = rows + i;
 	    prow->cells[j] = g_strdup_printf("%.15g", val);
-	    dprintf("Got RK (%g), row=%d, col=%d\n", val, i, j);
+	    dbprintf("Got RK (%g), row=%d, col=%d\n", val, i, j);
 	}
 	break;
 
     case BIFF_MULRK: {
 	int k, ncols = (q->length - 6) / 6;
 
-	dprintf("Got MULRK, row=%d, first_col=%d, ncols=%d\n", i, j, ncols);
+	dbprintf("Got MULRK, row=%d, first_col=%d, ncols=%d\n", i, j, ncols);
 	for (k=0; k<ncols; k++) {
 	    if (allocate_row_col(i, j, book)) {
 		return 1;
@@ -699,14 +699,14 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    val = biff_get_rk(q->data + 6 + 6 * k);
 	    prow = rows + i; /* might have moved */
 	    prow->cells[j] = g_strdup_printf("%.15g", val);
-	    dprintf(" MULRK[col=%d] = %g\n", j, val);
+	    dbprintf(" MULRK[col=%d] = %g\n", j, val);
 	    j++;
 	}
 	break;
     }
 
     case BIFF_FORMULA:  
-	dprintf("Got FORMULA, row=%d, col=%d\n", i, j);
+	dbprintf("Got FORMULA, row=%d, col=%d\n", i, j);
 	if (allocate_row_col(i, j, book)) {
 	    return 1;
 	} else {
@@ -733,7 +733,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    } else {
 		/* floating-point */
 		val = get_le_double(ptr);
-		dprintf(" floating-point value = %g\n", val);
+		dbprintf(" floating-point value = %g\n", val);
 		if (isnan(val)) {
 		    fprintf(stderr, "Got a NaN\n");
 		    prow->cells[j] = g_strdup("-999");
@@ -750,12 +750,12 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
     case BIFF_STRING: 
 	if (string_targ == NULL) {
-	    dprintf("String record without preceding string formula\n");
+	    dbprintf("String record without preceding string formula\n");
 	} else {
 	    char *tmp = copy_unicode_string(q->data, 0, NULL, NULL);
 
 	    *string_targ = make_string(tmp);
-	    dprintf("Filled out string formula with '%s'\n", *string_targ);	
+	    dbprintf("Filled out string formula with '%s'\n", *string_targ);	
 	    string_targ = NULL;
 	}
 	break;
@@ -770,7 +770,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
 	    version = MS_OLE_GET_GUINT16(q->data + 0);
 	    boftype = MS_OLE_GET_GUINT16(q->data + 2);
-	    dprintf("Got BOF: version=%x, type=%x\n", version, boftype);
+	    dbprintf("Got BOF: version=%x, type=%x\n", version, boftype);
 	}
 	break;
 
@@ -892,9 +892,9 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
     } 
 
     while (!err && ms_biff_query_next(q)) {
-	dprintf("At %lu: q->opcode=0x%02x\n", (unsigned long) q->streamPos, q->opcode);
+	dbprintf("At %lu: q->opcode=0x%02x\n", (unsigned long) q->streamPos, q->opcode);
 	if (q->opcode == BIFF_EOF) {
-	    dprintf("got MSEOF at %lu\n", (unsigned long) ms_ole_stream_position(stream));
+	    dbprintf("got MSEOF at %lu\n", (unsigned long) ms_ole_stream_position(stream));
 	    eofcount++;
 
 	    if (eofcount == 1) {
@@ -919,11 +919,11 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 	if (handled_record(q)) {
 	    err = process_item(q, book, prn);
 	} else if (q->ms_op == 0x02 && q->ls_op == BIFF_ROW) {
-	    dprintf("Got BIFF_ROW\n");
+	    dbprintf("Got BIFF_ROW\n");
 	} else if (q->opcode == BIFF_DBCELL) {
-	    dprintf("Got BIFF_DBCELL\n");
+	    dbprintf("Got BIFF_DBCELL\n");
 	} else {
-	    dprintf("skipping unhandled opcode 0x%02x\n", q->opcode);
+	    dbprintf("skipping unhandled opcode 0x%02x\n", q->opcode);
 	}
     }
 
@@ -955,7 +955,7 @@ static int allocate_row_col (int i, int j, wbook *book)
 
     started = 1;
 
-    dprintf("allocate: row=%d, col=%d, nrows=%d\n", i, j, nrows);
+    dbprintf("allocate: row=%d, col=%d, nrows=%d\n", i, j, nrows);
 
     if (i >= nrows) {
 	new_nrows = (i / 16 + 1) * 16;
@@ -969,18 +969,18 @@ static int allocate_row_col (int i, int j, wbook *book)
 	rows = myrows;
 
 	for (k=nrows; k<new_nrows; k++) {
-	    dprintf("allocate: initing rows[%d]\n", k);
+	    dbprintf("allocate: initing rows[%d]\n", k);
 	    row_init(&rows[k]);
-	    dprintf("rows[%d].end=%d\n", i, rows[k].end);
+	    dbprintf("rows[%d].end=%d\n", i, rows[k].end);
 	}
 	nrows = new_nrows;
     }
 
-    dprintf("allocate: col=%d and rows[%d].end = %d\n", j, i, rows[i].end);
+    dbprintf("allocate: col=%d and rows[%d].end = %d\n", j, i, rows[i].end);
 
     if (j >= rows[i].end) {
 	newcol = (j / 16 + 1) * 16;
-	dprintf("allocate: reallocing rows[%d].cells to size %d\n", i, newcol);
+	dbprintf("allocate: reallocing rows[%d].cells to size %d\n", i, newcol);
 	cells = realloc(rows[i].cells, newcol * sizeof *cells);
 
 	if (cells == NULL) {
@@ -1006,7 +1006,7 @@ static void free_sheet (void)
 {
     int i, j;
 
-    dprintf("free_sheet(), nrows=%d\n", nrows);
+    dbprintf("free_sheet(), nrows=%d\n", nrows);
 
     /* free shared string table */
     if (sst != NULL) {
@@ -1020,17 +1020,17 @@ static void free_sheet (void)
     if (rows != NULL) {
 	for (i=0; i<nrows; i++) {
 	    if (rows[i].cells == NULL) {
-		dprintf("rows[%d].cells = NULL, skipping free\n", i);
+		dbprintf("rows[%d].cells = NULL, skipping free\n", i);
 		continue;
 	    }
 	    for (j=0; j<rows[i].end; j++) {
 		if (rows[i].cells[j] != NULL) {
-		    dprintf("Freeing rows[%d].cells[%d] at %p\n",
-			    i, j, (void *) rows[i].cells[j]);
+		    dbprintf("Freeing rows[%d].cells[%d] at %p\n",
+			     i, j, (void *) rows[i].cells[j]);
 		    free(rows[i].cells[j]); 
 		}
 	    }
-	    dprintf("Freeing rows[%d].cells at %p\n", i, (void *) rows[i].cells);
+	    dbprintf("Freeing rows[%d].cells at %p\n", i, (void *) rows[i].cells);
 	    free(rows[i].cells);
 	}
 	free(rows);
@@ -1052,20 +1052,20 @@ static int first_col_strings (wbook *book)
     int startrow = book->row_offset + 1;
     int ret = 1;
 
-    dprintf("checking for first column strings...\n");
+    dbprintf("checking for first column strings...\n");
 
     for (i=startrow; i<nrows; i++) {
-	dprintf("book->row_offset=%d, i=%d\n", book->row_offset, i);
-	dprintf("rows = %p\n", (void *) rows);
+	dbprintf("book->row_offset=%d, i=%d\n", book->row_offset, i);
+	dbprintf("rows = %p\n", (void *) rows);
 	if (rows == NULL || rows[i].cells == NULL || 
 	    rows[i].cells[j] == NULL ||
 	    !IS_STRING(rows[i].cells[j])) {
-	    dprintf("no: not a string at row %d\n", i);
+	    dbprintf("no: not a string at row %d\n", i);
 	    ret = 0;
 	    break;
 	}
-	dprintf("first_col_strings: rows[%d].cells[%d]: '%s'\n", i, j,
-		rows[i].cells[j]);
+	dbprintf("first_col_strings: rows[%d].cells[%d]: '%s'\n", i, j,
+		 rows[i].cells[j]);
     }
 
     if (ret) {
@@ -1124,14 +1124,14 @@ check_all_varnames (wbook *book, int totcols, const char *blank_col)
 	}
 
 	if (rows[i].cells[j] == NULL) {
-	    dprintf("got_varnames: rows[%d].cells[%d] is NULL\n", i, j);
+	    dbprintf("got_varnames: rows[%d].cells[%d] is NULL\n", i, j);
 	    break;
 	}
 
 	gotcols++;
 
-	dprintf("got_varnames: rows[%d].cells[%d] is '%s'\n", i, j, 
-		rows[i].cells[j]);
+	dbprintf("got_varnames: rows[%d].cells[%d] is '%s'\n", i, j, 
+		 rows[i].cells[j]);
 
 	if (IS_STRING(rows[i].cells[j])) {
 	    /* skip beyond the quote */
@@ -1203,15 +1203,15 @@ check_data_block (wbook *book, int totcols, const char *blank_col,
 	    continue;
 	}
 	for (i=startrow; i<nrows; i++) {
-	    dprintf("data_block: looking at rows[%d], end = %d\n", i, rows[i].end);
+	    dbprintf("data_block: looking at rows[%d], end = %d\n", i, rows[i].end);
 	    if (rows[i].cells  == NULL) {
-		dprintf("data_block: rows[%d].cells = NULL\n", i);
+		dbprintf("data_block: rows[%d].cells = NULL\n", i);
 		ret = -1;
 	    } else if (j >= rows[i].end) {
-		dprintf("data_block: short row, fell off the end\n");
+		dbprintf("data_block: short row, fell off the end\n");
 		ret = -1;
 	    } else if (rows[i].cells[j] == NULL) {
-		dprintf("data_block: rows[%d].cells[%d] = NULL\n", i, j);
+		dbprintf("data_block: rows[%d].cells[%d] = NULL\n", i, j);
 		rows[i].cells[j] = g_strdup("-999");
 		ret = -1;
 	    } else if (IS_STRING(rows[i].cells[j])) {
@@ -1253,7 +1253,7 @@ n_vars_from_col (wbook *book, int totcols, char *blank_col)
 	if (!blank_col[i]) nv++;
     }
 
-    dprintf("n_vars_from_col: totcols=%d, nv=%d\n", totcols, nv);
+    dbprintf("n_vars_from_col: totcols=%d, nv=%d\n", totcols, nv);
 
     return nv;
 }
@@ -1289,8 +1289,8 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	} else {
 	    strncat(pdinfo->varname[j], rows[roff].cells[i] + 1, 
 		    VNAMELEN - 1);
-	    dprintf("accessing rows[%d].cells[%d] at %p\n",
-		    roff, i, (void *) rows[roff].cells[i]);
+	    dbprintf("accessing rows[%d].cells[%d] at %p\n",
+		     roff, i, (void *) rows[roff].cells[i]);
 	}
 
 	/* remedial: replace space with underscore */
@@ -1302,7 +1302,7 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	    break;
 	}
 
-	dprintf("set varname[%d] = '%s'\n", j, pdinfo->varname[j]);
+	dbprintf("set varname[%d] = '%s'\n", j, pdinfo->varname[j]);
 
 	for (t=0; t<pdinfo->n; t++) {
 	    ts = t + 1 + roff;
@@ -1311,10 +1311,10 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 		continue;
 	    }
 
-	    dprintf("accessing rows[%d].cells[%d] at %p\n", ts, i,
-		    (void *) rows[ts].cells[i]);
-	    dprintf("setting Z[%d][%d] = rows[%d].cells[%d] "
-		    "= '%s'\n", j, t, i, ts, rows[ts].cells[i]);
+	    dbprintf("accessing rows[%d].cells[%d] at %p\n", ts, i,
+		     (void *) rows[ts].cells[i]);
+	    dbprintf("setting Z[%d][%d] = rows[%d].cells[%d] "
+		     "= '%s'\n", j, t, i, ts, rows[ts].cells[i]);
 
 	    Z[j][t] = atof(rows[ts].cells[i]);
 	    if (Z[j][t] == -999 || Z[j][t] == -9999) {
@@ -1508,8 +1508,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	}
     }
 
-    dprintf("sheet selected=%d; import offsets: col=%d, row=%d\n",
-	    book->selected, book->col_offset, book->row_offset);
+    dbprintf("sheet selected=%d; import offsets: col=%d, row=%d\n",
+	     book->selected, book->col_offset, book->row_offset);
 
     if (book->selected == -1) {
 	/* canceled */
