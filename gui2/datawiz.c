@@ -247,11 +247,14 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 			      GtkWidget *dlg)
 {
     char setline[32];
+    char record[128];
     gretlopt opt = OPT_NONE;
     int create = (opts->flags & DW_CREATE);
     int delmiss = (opts->flags & DW_DROPMISS);
     int delete_markers = 0;
     int err = 0;
+
+    *record = '\0';
 
     /* preliminaries */
     if (time_series(dwinfo)) {
@@ -272,6 +275,10 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 	if (!err) {
 	    err = set_panel_structure_from_vars(uv, tv, Z, datainfo);
 	}
+	if (!err) {
+	    sprintf(record, "setobs %s %s --panel-vars",
+		    datainfo->varname[uv], datainfo->varname[tv]);
+	}
 	goto finalize;
     }
 
@@ -280,6 +287,7 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 	dwinfo->pd == datainfo->pd &&
 	strcmp(dwinfo->stobs, datainfo->stobs) == 0) {
 	if (create || delmiss) {
+	    /* recording? */
 	    goto finalize;
 	} else {
 	    infobox(_("No changes were made"));
@@ -324,15 +332,16 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 	opt = OPT_N;
     }
 
-#if DWDEBUG
-    fprintf(stderr, "setline = '%s', opt = %ld\n", setline, opt);
-#endif
-
     err = set_obs(setline, &Z, datainfo, opt);
 
 #if DWDEBUG
-    fprintf(stderr, "set_obs returned %d\n", err);
+    fprintf(stderr, "setline = '%s', opt = %ld; set_obs returned %d\n", 
+	    setline, opt, err);
 #endif
+
+    if (!err) {
+	sprintf(record, "%s%s", setline, print_flags(opt, SETOBS));
+    }
 
  finalize:
 
@@ -354,6 +363,10 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 	    dataset_destroy_obs_markers(datainfo);
 	}
 	mark_dataset_as_modified();
+    }
+
+    if (!err && *record != '\0') {
+	record_command_line(record);
     }
 
 #if DWDEBUG

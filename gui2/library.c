@@ -366,6 +366,11 @@ static int cmd_init (char *s, int flag)
     return err;
 }
 
+int record_command_line (const char *s)
+{
+    return cmd_init(s, 0);
+}
+
 static int lib_cmd_init (void)
 {
     return cmd_init(cmdline, 0);

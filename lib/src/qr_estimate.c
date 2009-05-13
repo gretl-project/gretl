@@ -877,7 +877,7 @@ drop_redundant_vars (MODEL *pmod, gretl_matrix *R, int rank, gretlopt opt)
     int nd = R->rows - rank;
     int i, j;
 
-    if (!(opt & OPT_A)) {
+    if (1 || !(opt & OPT_A)) {
 	dlist = gretl_list_new(nd);
 	if (dlist != NULL) {
 	    dlist[0] = 0;

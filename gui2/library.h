@@ -57,6 +57,8 @@ int gretl_command_strcpy (const char *s);
 
 int gretl_command_strcat (const char *s);
 
+int record_command_line (const char *s);
+
 int user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);
