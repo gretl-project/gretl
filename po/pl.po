@@ -1,15 +1,15 @@
-# Polish translation for gretl-1.8.0
+# Polish translation for gretl-1.8.0cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2008
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008
+# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2009
+# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2009
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2009
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-11 12:28-0400\n"
-"PO-Revision-Date: 2009-05-11 12:37-0400\n"
+"PO-Revision-Date: 2009-05-14 19:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -614,14 +614,12 @@ msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' oznacza wartość przekraczającą 95%% przedział ufności)"
 
 #: lib/src/compare.c:2985 lib/src/gretl_model.c:2872
-#, fuzzy
 msgid "Test of common factor restriction"
-msgstr "Test F dla hipotezy o braku restrykcji"
+msgstr "Restrykcje dla testu COMFAC"
 
 #: lib/src/compare.c:3007
-#, fuzzy
 msgid "common factor restriction"
-msgstr "Test liniowych restrykcji"
+msgstr "Restrykcje COMFAC"
 
 #: lib/src/compare.c:3043
 msgid "This test is only relevant for pooled models\n"
@@ -2216,9 +2214,9 @@ msgid "day of week (1 = Monday)"
 msgstr "dzień tygodnia (1 = Ponidziałek)"
 
 #: lib/src/genfuncs.c:1741
-#, fuzzy, c-format
+#, c-format
 msgid "standardized residual from model %d"
-msgstr "kwadraty reszt z modelu %d"
+msgstr "standaryzowane reszty z modelu %d"
 
 #: lib/src/genfuncs.c:1743
 #, c-format
@@ -2231,9 +2229,9 @@ msgid "fitted value from model %d"
 msgstr "wyrównane wartości z modelu %d"
 
 #: lib/src/genfuncs.c:1758
-#, fuzzy, c-format
+#, c-format
 msgid "squared standardized residual from model %d"
-msgstr "kwadraty reszt z modelu %d"
+msgstr "kwadraty standaryzowanych reszt z modelu %d"
 
 #: lib/src/genfuncs.c:1760
 #, c-format
@@ -2271,11 +2269,11 @@ msgstr "Symbol '%c' jest błędny w tym kontekście\n"
 
 #: lib/src/genlex.c:618
 msgid "(for logical AND, use '&&')\n"
-msgstr ""
+msgstr "(dla logicznego AND, użyj '&&')\n"
 
 #: lib/src/genlex.c:620
 msgid "(for logical OR, use '||')\n"
-msgstr ""
+msgstr "(dla logicznego OR, użyj '||')\n"
 
 #: lib/src/genlex.c:626
 #, c-format
@@ -3010,14 +3008,12 @@ msgid "Wald test for joint significance of time dummies"
 msgstr "Test Walda na łączną istotność zmiennych 0-1 jednostek czasu"
 
 #: lib/src/gretl_model.c:2873
-#, fuzzy
 msgid "restriction is acceptable"
-msgstr "Zbiór restrykcji"
+msgstr "Restrykcje zaakceptowane"
 
 #: lib/src/gretl_model.c:2891
-#, fuzzy
 msgid "robust variant"
-msgstr "wariant"
+msgstr "robust variant"
 
 #: lib/src/gretl_model.c:3040
 #, c-format
@@ -4055,14 +4051,12 @@ msgid "Unconditional error variance"
 msgstr "Bezwarunkowa wariancja błędu modelu"
 
 #: lib/src/modelprint.c:162 lib/src/printout.c:1158
-#, fuzzy
 msgid "The residuals are standardized"
-msgstr "Wykres cyklicznego lub resztowego szeregu"
+msgstr "Reszty są standaryzowane"
 
 #: lib/src/modelprint.c:165
-#, fuzzy
 msgid "Likelihood ratio test for (G)ARCH terms"
-msgstr "Test ilorazu wiarygodności"
+msgstr "Test ilorazu wiarygodności dla (G)ARCH"
 
 #: lib/src/modelprint.c:182
 msgid "Left-unbounded observations"
@@ -4209,9 +4203,8 @@ msgid "Groupwise heteroskedasticity"
 msgstr "Groupwise heteroskedasticity"
 
 #: lib/src/modelprint.c:644
-#, fuzzy
 msgid "Augmented regression for common factor test"
-msgstr "Pomocnicze równanie regresji dla testu Chowa"
+msgstr "Pomocnicze równanie regresji dla testu COMFAC"
 
 #: lib/src/modelprint.c:662 lib/src/system.c:91 lib/src/varprint.c:1020
 #: lib/src/varprint.c:1029 lib/src/varprint.c:1037 gui2/selector.c:2863
@@ -7738,7 +7731,6 @@ msgid "No function packages found"
 msgstr "Nie znaleziono funkcji w pakiecie"
 
 #: gui2/database.c:2667
-#, fuzzy
 msgid "No data packages found"
 msgstr "Nie znaleziono funkcji w pakiecie"
 
@@ -7812,9 +7804,8 @@ msgid "List series"
 msgstr "Lista zmiennych"
 
 #: gui2/datafiles.c:1156
-#, fuzzy
 msgid "Select directory"
-msgstr "Wybór koloru"
+msgstr "Wybór katalogu"
 
 #: gui2/datafiles.c:1164
 msgid "Look on server"
@@ -7860,7 +7851,6 @@ msgid "gretl: function packages on server"
 msgstr "gretl: Pakiet funkcji na serwerze"
 
 #: gui2/datafiles.c:1369
-#, fuzzy
 msgid "gretl: data packages on server"
 msgstr "gretl: serwer baz danych"
 
@@ -7894,9 +7884,8 @@ msgid "Source"
 msgstr "Zródło danych"
 
 #: gui2/datafiles.c:1806
-#, fuzzy
 msgid "Date"
-msgstr "Plik danych"
+msgstr "Data"
 
 #: gui2/datafiles.c:1809
 msgid "Script"
@@ -10679,15 +10668,15 @@ msgstr "ocena wpływowych obserwacji"
 
 #: gui2/gui_utils.c:178
 msgid "_Chow test"
-msgstr "test zmian strukturalnych Chowa"
+msgstr "test zmian strukturalnych _Chowa"
 
 #: gui2/gui_utils.c:179
 msgid "_Collinearity"
-msgstr "ocena współliniowości VIF"
+msgstr "ocena _współliniowości VIF"
 
 #: gui2/gui_utils.c:180 gui2/gui_utils.c:3237
 msgid "_Autocorrelation"
-msgstr "testy autokorelacji (LMF, LM, Q)"
+msgstr "testy _autokorelacji (LMF, LM, Q)"
 
 #: gui2/gui_utils.c:181
 msgid "_Durbin-Watson p-value"
@@ -10695,28 +10684,27 @@ msgstr "test Durbina-Watsona (wartość p)"
 
 #: gui2/gui_utils.c:182 gui2/gui_utils.c:3243
 msgid "A_RCH"
-msgstr "test efektu ARCH"
+msgstr "test efektu A_RCH"
 
 #: gui2/gui_utils.c:183
 msgid "_QLR test"
-msgstr "test stabilności QLR"
+msgstr "test stabilności _QLR"
 
 #: gui2/gui_utils.c:184
 msgid "_CUSUM test"
-msgstr "test stabilności CUSUM"
+msgstr "test stabilności _CUSUM"
 
 #: gui2/gui_utils.c:185
 msgid "CUSUM_SQ test"
-msgstr "test stabilności CUSUMSQ"
+msgstr "test stabilności CUSUM_SQ"
 
 #: gui2/gui_utils.c:186
-#, fuzzy
 msgid "_Common factor"
-msgstr "Pokaż _dziennik poleceń"
+msgstr "Test COM_FAC"
 
 #: gui2/gui_utils.c:187
 msgid "_Panel diagnostics"
-msgstr "testy diagnostyczne panelu"
+msgstr "testy _diagnostyczne panelu"
 
 #: gui2/gui_utils.c:191 gui2/gui_utils.c:198
 msgid "White's test"
@@ -11241,9 +11229,8 @@ msgid " Find what:"
 msgstr " Znajdź:"
 
 #: gui2/helpfiles.c:1772
-#, fuzzy
 msgid "Variable names only (case sensitive)"
-msgstr "Błędna nazwa zmiennej"
+msgstr "Tylko nazwy zmiennych"
 
 #: gui2/helpfiles.c:1928
 msgid "Failed to download file"
@@ -11436,9 +11423,8 @@ msgid "(non-linearity)"
 msgstr "(nieliniowość)"
 
 #: gui2/library.c:1904
-#, fuzzy
 msgid "gretl: common factor test"
-msgstr "gretl: test kointegracji"
+msgstr "gretl: test COMFAC"
 
 #: gui2/library.c:1930
 msgid "Lag order for ARCH test:"
@@ -11700,9 +11686,8 @@ msgid "gretl: add scalar"
 msgstr "gretl: definiowanie nowej zmiennej"
 
 #: gui2/library.c:4952
-#, fuzzy
 msgid "standardized residual"
-msgstr "_Kwadraty reszt"
+msgstr "standaryzowane reszty"
 
 #: gui2/library.c:5246
 msgid "Can't delete a variable when in sub-sample mode\n"
@@ -12540,9 +12525,8 @@ msgid "Use X-12-ARIMA"
 msgstr "Wykorzystaj X-12-ARIMA"
 
 #: gui2/selector.c:4192
-#, fuzzy
 msgid "Standardize the residuals"
-msgstr "Błąd standardowy reszt = %g"
+msgstr "Standaryzowane reszty"
 
 #: gui2/selector.c:4194
 msgid "Use Fiorentini et al algorithm"
@@ -13132,7 +13116,7 @@ msgstr "Dopuszcza polecenia powłoki shell"
 
 #: gui2/settings.c:177
 msgid "Show icon view automatically"
-msgstr ""
+msgstr "Pokaż ikony automatycznie"
 
 #: gui2/settings.c:179
 msgid "Set working directory from shell"
@@ -14417,7 +14401,7 @@ msgid ""
 "(Type 0 characteristic of nonzero length)"
 msgstr ""
 "Błąd w pliku. (Wpisz 0 dla\n"
-"wartości o niezerowej długoci)"
+"wartości o niezerowej długości)"
 
 #: plugin/stata_import.c:811
 msgid "cannot read Stata .dta on this platform"
@@ -14526,7 +14510,7 @@ msgstr "odejścia od poziomu"
 
 #: plugin/tramo_options.c:646
 msgid "innovational outliers"
-msgstr "inowacyjnie odstające"
+msgstr "innowacyjnie odstające"
 
 #: plugin/tramo_options.c:665
 msgid "Critical value for outliers:"
@@ -14681,100 +14665,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "White's test for heteroskedasticity (no cross products)"
-#~ msgstr ""
-#~ "Test White'a na heteroskedastyczność reszt (bez iloczynów zmiennych)"
-
-#~ msgid "Couldn't load plugin %s"
-#~ msgstr "Niemożliwe załadowanie funkcji %s"
-
-#~ msgid "postscript files (*.eps)"
-#~ msgstr "pliki postscriptowe (*.eps)"
-
-#~ msgid "PDF files (*.pdf)"
-#~ msgstr "pliki PDF (*.pdf)"
-
-#~ msgid "xfig files (*.fig)"
-#~ msgstr "pliki xfig (*.fig)"
-
-#~ msgid "LaTeX files (*.tex)"
-#~ msgstr "pliki LaTeX (*.tex)"
-
-#~ msgid "PNG files (*.png)"
-#~ msgstr "pliki PNG (*.png)"
-
-#~ msgid "Windows metafiles (*.emf)"
-#~ msgstr "pliki metafiles (*.emf)"
-
-#~ msgid "gretl data files (*.gdt)"
-#~ msgstr "pliki danych gretla (*.gdt)"
-
-#~ msgid "gretl database files (*.bin)"
-#~ msgstr "pliki baz danych gretla (*.bin)"
-
-#~ msgid "gretl command files (*.inp)"
-#~ msgstr "pliki poleceń gretla (*.imp)"
-
-#~ msgid "session files (*.gretl)"
-#~ msgstr "pliki sesji gretla (*.gretl)"
-
-#~ msgid "gretl function files (*.gfn)"
-#~ msgstr "pliki z pakietami funkcji (*.gfn)"
-
-#~ msgid "CSV files (*.csv)"
-#~ msgstr "pliki CSV (*.csv)"
-
-#~ msgid "GNU Octave files (*.m)"
-#~ msgstr "pliki programu GNU Octave (*.m)"
-
-#~ msgid "PcGive files (*.dat)"
-#~ msgstr "pliki danych PcGive (*.dat)"
-
-#~ msgid "JMulti files (*.dat)"
-#~ msgstr "pliki danych JMulTi (*.dat)"
-
-#~ msgid "text files (*.txt)"
-#~ msgstr "pliki tekstowe (*.txt)"
-
-#~ msgid "TeX files (*.tex)"
-#~ msgstr "pliki TeX (*.tex)"
-
-#~ msgid "RTF files (*.rtf)"
-#~ msgstr "pliki RTF (*.rtf)"
-
-#~ msgid "Gnumeric files (*.gnumeric)"
-#~ msgstr "pliki Gnumeric (*.gnumeric)"
-
-#~ msgid "Excel files (*.xls)"
-#~ msgstr "pliki MS Excel (*.xls)"
-
-#~ msgid "Eviews workfiles (*.wf1)"
-#~ msgstr "pliki Eviews (*.wf1)"
-
-#~ msgid "Stata files (*.dta)"
-#~ msgstr "pliki Stata (*.dat)"
-
-#~ msgid "SPSS files (*.sav)"
-#~ msgstr "pliki SPSS (*.sav)"
-
-#~ msgid "JMulTi files (*.dat)"
-#~ msgstr "pliki danych JMulTi (*.dat)"
-
-#~ msgid "Open Document Spreadsheet (*.ods)"
-#~ msgstr "pliki danych OpenOffice (*.ods)"
-
-#~ msgid "RATS databases (*.rat)"
-#~ msgstr "pliki RATS (*.rat)"
-
-#~ msgid "PcGive data files (*.bn7)"
-#~ msgstr "pliki danych PcGive (*.bn7)"
-
-#~ msgid "program files (*.exe)"
-#~ msgstr "pliki aplikacji (*.exe)"
-
-#~ msgid "GNU R files (*.*)"
-#~ msgstr "pliki programu GNU R (*.R)"
-
-#~ msgid "File dialog box error"
-#~ msgstr "Błąd w pliku dialog box"

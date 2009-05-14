@@ -1505,7 +1505,7 @@ static int bXb (panelmod_t *pan)
     integer info = 0;
     integer *ipiv;
     double *x;
-    int i;
+    int i, err = 0;
 
     pan->H = NADBL;
 
@@ -1525,8 +1525,10 @@ static int bXb (panelmod_t *pan)
 
     if (info > 0) {
 	fprintf(stderr, "Hausman sigma matrix is singular\n");
+	err = E_SINGULAR;
     } else if (info < 0) {
 	fprintf(stderr, "Illegal entry in Hausman sigma matrix\n");
+	err = E_SINGULAR;
     } else {
 	pan->H = 0.0;
 	for (i=0; i<pan->nbeta; i++) {
@@ -1535,13 +1537,14 @@ static int bXb (panelmod_t *pan)
 	if (pan->H < 0.0) {
 	    fprintf(stderr, "Hausman stat = %g < 0\n", pan->H);
 	    pan->H = NADBL;
+	    err = E_SINGULAR;
 	}
     }
 
     free(x);
     free(ipiv);
 
-    return na(pan->H);
+    return err;
 }
 
 static void panel_df_correction (MODEL *pmod, int k)
@@ -2528,24 +2531,28 @@ breusch_pagan_LM (panelmod_t *pan, const DATAINFO *pdinfo, PRN *prn)
 
 static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 {
-    int err = 0;
+    int mdiff = 0, err = 0;
 
     if (pan->bdiff != NULL && pan->sigma != NULL) {
 	/* matrix approach */
+	mdiff = 1;
 	err = bXb(pan);
     } else if (na(pan->H)) {
 	/* regression approach bombed somehow? */
-	err = 1;
+	err = E_DATA;
     }
 
     if (pan->opt & OPT_V) {
-	if (err) {
-	    pputs(prn, _("Error attempting to invert vcv difference matrix\n"));
-	} else {
+	if (!err || (mdiff && err == E_SINGULAR)) {
 	    print_hausman_result(pan, prn);
-	}
+	} 
     } else {
-	save_hausman_result(pan);
+	if (mdiff && err == E_SINGULAR) {
+	    pputs(prn, _("Error attempting to invert vcv difference matrix\n"));
+	}
+	if (!err) {    
+	    save_hausman_result(pan);
+	}
     }
 
     return err;
