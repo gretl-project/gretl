@@ -106,6 +106,7 @@ static void matrix_props_callback (GtkAction *action, gpointer data);
 static void matrix_edit_callback (GtkAction *action, gpointer data);
 static int update_sheet_from_matrix (Spreadsheet *sheet);
 static void size_matrix_window (Spreadsheet *sheet);
+static void set_ok_transforms (Spreadsheet *sheet);
 
 static void 
 spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col);
@@ -1238,6 +1239,7 @@ static void update_matrix_from_sheet_full (Spreadsheet *sheet)
     }
 
     sheet_set_modified(sheet, FALSE);
+    set_ok_transforms(sheet);
 }
 
 /* put modified values from the spreadsheet into the array
@@ -1591,6 +1593,9 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	}	    
 	for (j=0; j<sheet->datacols; j++) {
 	    x = gretl_matrix_get(sheet->matrix, i, j);
+	    if (x == -0.0) {
+		x = 0.0;
+	    }
 	    sprintf(tmpstr, "%.*g", MATRIX_DIGITS, x);
 	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
 	}
@@ -2757,6 +2762,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 			 G_CALLBACK(simple_exit_sheet), sheet);
 	gtk_widget_show(tmp);
     } else if (sheet->matrix != NULL) {
+	/* editing a new matrix */
 	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
@@ -3326,6 +3332,9 @@ static void edit_matrix (gretl_matrix *m, const char *name,
     }
 }
 
+/* note that both @m and @name may be NULL depending on how
+   we are called */
+
 static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 {
     struct gui_matrix_spec spec;
@@ -3359,6 +3368,8 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 
     edit_matrix(spec.m, spec.name, block);
 }
+
+/* callback for "Define matrix..." in main window */
 
 void gui_new_matrix (void)
 {

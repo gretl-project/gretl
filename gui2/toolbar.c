@@ -410,12 +410,37 @@ static void real_coeffint_set_alpha (GtkWidget *w, GtkWidget *dialog)
     gtk_widget_destroy(dialog);
 }
 
+static void alpha_button_callback (GtkToggleButton *b, double *x)
+{
+    if (gtk_toggle_button_get_active(b)) {
+	int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(b), "i"));
+
+	if (i == 0) {
+	    *x = 0.90;
+	} else if (i == 1) {
+	    *x = 0.95;
+	} else if (i == 2) {
+	    *x = 0.99;
+	}
+    } 
+}
+
+static void toggle_alpha_spin (GtkToggleButton *b, GtkWidget *w)
+{
+    gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(b));
+}
+
 static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 {
     CoeffIntervals *cf = vwin->data;
     GtkWidget *dialog, *tmp, *hbox;
+    GtkWidget *vbox, *b, *hb2;
+    GSList *group = NULL;
     GtkObject *adj;
+    gchar txt[16];
     double x = 1.0 - cf->alpha;
+    gboolean defset = FALSE;
+    int i;
 
     if (maybe_raise_dialog()) {
 	return;
@@ -425,18 +450,60 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 			      vwin->main, GRETL_DLG_BLOCK);
 
     hbox = gtk_hbox_new(FALSE, 5);
+    hb2 = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Confidence level"));
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    tmp = gtk_label_new("1 - α =");
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hb2), tmp, FALSE, FALSE, 0);
+    tmp = gtk_label_new("1 - α :");
+    gtk_box_pack_start(GTK_BOX(hb2), tmp, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), hb2, TRUE, TRUE, 10);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    vbox = gtk_vbox_new(FALSE, 5);
+
+    /* radio button for 90%, 95%, 99% confidence */
+
+    for (i=0; i<3; i++) {
+	double a = (i == 0)? 0.90 : (i == 1)? 0.95 : 0.99;
+
+	sprintf(txt, "%.2f", a);
+	b = gtk_radio_button_new_with_label(group, txt);
+	gtk_box_pack_start(GTK_BOX(vbox), b, FALSE, FALSE, 0);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
+	if (a == x) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
+	    defset = TRUE;
+	} else {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), FALSE);
+	}
+	g_object_set_data(G_OBJECT(b), "i", GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(alpha_button_callback), 
+			 &x);
+    }
+
+    /* radio button for "other" confidence level, plus spinner */
+
+    hb2 = gtk_hbox_new(FALSE, 0);
+    b = gtk_radio_button_new_with_label(group, _("Other"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), !defset);
+    gtk_box_pack_start(GTK_BOX(hb2), b, FALSE, FALSE, 0);
     adj = gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.01, 2);
     g_signal_connect(tmp, "value-changed", 
 		     G_CALLBACK(set_double_from_spinner), &x);
+    gtk_widget_set_sensitive(tmp, !defset);
+    g_signal_connect(G_OBJECT(b), "toggled", 
+		     G_CALLBACK(toggle_alpha_spin),
+		     tmp);
     gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hb2), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hb2, FALSE, FALSE, 0);
+
+    gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 10);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       hbox, FALSE, FALSE, 5);
+		       hbox, FALSE, FALSE, 0);
 
     /* Cancel button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
