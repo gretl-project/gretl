@@ -1011,7 +1011,7 @@ void shelldir_init (const char *s)
 
 static int set_shelldir (const char *s)
 {
-    int err = 0;
+    int len = 0, err = 0;
 
     /* skip past "set shelldir" and space */
     s += 12;
@@ -1019,22 +1019,52 @@ static int set_shelldir (const char *s)
 
     if (*s == '\0') {
 	*state->shelldir = '\0';
+	gretl_insert_builtin_string("shelldir", state->shelldir);
     } else if (*s == '"') {
-	int len = haschar('"', s + 1);
-
-	if (len <= 0 || len >= MAXLEN) {
+	s++;
+	len = haschar('"', s);
+	if (len <= 0) {
 	    err = E_PARSE;
-	} else {
-	    *state->shelldir = '\0';
-	    strncat(state->shelldir, s + 1, len);
-	}
+	} 
     } else {
-	*state->shelldir = '\0';
-	strncat(state->shelldir, s, MAXLEN - 1);
+	len = strlen(s);
     }
 
-    if (!err) {
-	gretl_insert_builtin_string("shelldir", state->shelldir);
+    if (!err && len > 0) {
+	char test[MAXLEN];
+	char *home = NULL;
+	int slen = len;
+
+	if (*s == '~') {
+	    home = getenv("HOME");
+	    if (home != NULL) {
+		s++;
+		slen--;
+		len = slen + strlen(home);
+	    }
+	} 
+
+	*test = '\0';
+    
+	if (len >= MAXLEN) {
+	    gretl_errmsg_set("shelldir: string is too long");
+	    err = E_DATA;
+	} else if (home != NULL) {
+	    strcat(test, home);
+	    strncat(test, s, slen);
+	} else {
+	    strncat(test, s, len);
+	}
+
+	if (!gretl_isdir(test)) {
+	    gretl_errmsg_sprintf("shelldir: '%s' no such directory", test);
+	    err = E_DATA;
+	}
+
+	if (!err) {
+	    strcpy(state->shelldir, test);
+	    gretl_insert_builtin_string("shelldir", state->shelldir);
+	}
     }
 
     return err;
