@@ -750,9 +750,7 @@ int garch_estimate_mod (const double *y, const double **X,
 	return E_ALLOC;
     }
 
-    theta[0] = gretl_mean(t1, t2, y);
     npar = nc + 1 + p + q; 
-
     err = BFGS_max(theta, npar, maxit, reltol, 
 		   fncount, grcount, loglik, C_LOGLIK,
 		   anal_score, DH, (prn != NULL)? OPT_V : OPT_NONE, 
