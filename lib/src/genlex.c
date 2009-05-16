@@ -301,6 +301,8 @@ struct str_table funcs[] = {
     { F_READFILE, "readfile" },
     { F_BACKTICK, "grab" },
     { F_STRSTR,   "strstr" },
+    { F_STRCMP,   "strcmp" },
+    { F_STRNCMP,  "strncmp" },
     { F_STRLEN,   "strlen" },
     { F_VARNAME,  "varname" },
     { F_VARNUM,   "varnum" },

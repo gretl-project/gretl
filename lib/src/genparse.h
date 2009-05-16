@@ -277,6 +277,7 @@ enum {
     F_WVAR,
     F_WSD,
     F_STRSTR,
+    F_STRCMP,
     F_COLNAMES,
     F_LJUNGBOX,
     F_MSORTBY,
@@ -295,6 +296,7 @@ enum {
     F_CORRGM,
     F_SEQ,
     F_REPLACE,
+    F_STRNCMP,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_FILTER,
     F_MCOVG,

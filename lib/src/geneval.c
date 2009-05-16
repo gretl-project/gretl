@@ -3489,15 +3489,27 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
 
 static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_string_node(p);
+    NODE *ret;
 
-    if (ret != NULL && starting(p)) {
+    if (starting(p)) {
 	const char *sl = l->v.str;
 	const char *sr = r->v.str;
-	char *sret;
 
-	if (f == F_STRSTR) {
-	    sret = strstr(sl, sr);
+	if (f == F_STRCMP) {
+	    ret = aux_scalar_node(p);
+	} else {
+	    ret = aux_string_node(p);
+	}
+
+	if (ret == NULL) {
+	    return NULL;
+	}
+
+	if (f == F_STRCMP) {
+	    ret->v.xval = strcmp(sl, sr);
+	} else if (f == F_STRSTR) {
+	    char *sret = strstr(sl, sr);
+
 	    if (sret != NULL) {
 		ret->v.str = gretl_strdup(sret);
 	    } else {
@@ -3517,9 +3529,11 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = E_DATA;
 	}
 
-	if (!p->err && ret->v.str == NULL) {
+	if (f != F_STRCMP && !p->err && ret->v.str == NULL) {
 	    p->err = E_ALLOC;
 	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -4641,17 +4655,33 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 	    A = gretl_matrix_seq(start, end, step, &p->err);
 	}
-    } 
+    } else if (f == F_STRNCMP) {
+	if (l->t != STR) {
+	    node_type_error(f, 0, STR, l, p);
+	} else if (m->t != STR) {
+	    node_type_error(f, 1, STR, m, p);
+	} else if (r->t != NUM) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else {
+	    int len = r->v.xval;
 
-    if (!p->err) {
-	ret = aux_matrix_node(p);
-    }
-
-    if (!p->err) {
-	if (ret->v.m != NULL) {
-	    gretl_matrix_free(ret->v.m);
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		ret->v.xval = strncmp(l->v.str, m->v.str, len);
+	    }
 	}
-	ret->v.m = A;
+    }	    
+
+    if (f !=  F_STRNCMP) {
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }
+	    ret->v.m = A;
+	}
     }
 
     return ret;
@@ -6547,6 +6577,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CORRGM:
     case F_SEQ:
     case F_REPLACE:
+    case F_STRNCMP:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
@@ -6709,6 +6740,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSTR:
+    case F_STRCMP:
 	if (l->t == STR && r->t == STR) {
 	    ret = two_string_func(l, r, t->t, p);
 	} else {

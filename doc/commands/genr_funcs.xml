@@ -4129,6 +4129,22 @@
       </description>
     </function>
 
+    <function name="strcmp" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">s1</fnarg>
+	<fnarg type="string">s2</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Compares the strings <argname>s1</argname> and <argname>s2</argname>
+	  and returns 0 if they match, otherwise a non-zero integer.
+	  <seelist> 
+	    <fncref targ="strncmp"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="strlen" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -4136,6 +4152,21 @@
       <description>
 	<para>
 	  Returns the number of characters in <argname>s</argname>.
+	</para>
+      </description>
+    </function>
+
+    <function name="strncmp" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">s1</fnarg>
+	<fnarg type="string">s2</fnarg>
+	<fnarg type="scalar">n</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Works as <fncref targ="strcmp"/> except that it compares at most the
+	  first <argname>n</argname> characters of <argname>s1</argname> and
+	  <argname>s2</argname>.
 	</para>
       </description>
     </function>
