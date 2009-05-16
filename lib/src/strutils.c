@@ -2036,6 +2036,10 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
     int *list = NULL;
     int i, n = 0;
 
+    if (pdinfo == NULL) {
+	return NULL;
+    }
+
     pspec = g_pattern_spec_new(pattern);
 
     for (i=1; i<pdinfo->v; i++) { 

@@ -854,48 +854,71 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
     return err;
 }
 
+enum {
+    DOTTED_LIST,
+    WILDCARD_LIST
+};
+
 static int
 each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo, 
-				char *s, int *pnf)
+				char *s, int *pnf, int type)
 {
-    char vn1[VNAMELEN], vn2[VNAMELEN];
-    int v1, v2, nf = 0;
-    int i, err = 0;
+    int *list = NULL;
+    int err = 0;
 
-    delchar(' ', s);
-
-    if (sscanf(s, "%15[^.]..%15s", vn1, vn2) != 2) {
-	err = E_PARSE;
-    } else {
-	v1 = current_series_index(pdinfo, vn1);
-	v2 = current_series_index(pdinfo, vn2);
-
-	if (v1 < 0 || v2 < 0) {
+    if (type == WILDCARD_LIST) {
+	s += strspn(s, " \t");
+	list = varname_match_list(pdinfo, s);
+	if (list == NULL) {
 	    err = 1;
+	}
+    } else {
+	char vn1[VNAMELEN], vn2[VNAMELEN];
+	
+	delchar(' ', s);
+
+	if (sscanf(s, "%15[^.]..%15s", vn1, vn2) != 2) {
+	    err = E_PARSE;
 	} else {
-	    nf = v2 - v1 + 1;
-	    if (nf <= 0) {
-		err = 1;
+	    int v1 = current_series_index(pdinfo, vn1);
+	    int v2 = current_series_index(pdinfo, vn2);
+
+	    if (v1 < 0 || v2 < 0) {
+		err = E_UNKVAR;
+	    } else if (v2 - v1 + 1 <= 0) {
+		err = E_DATA;
+	    } else {
+		list = gretl_consecutive_list_new(v1, v2);
+		if (list == NULL) {
+		    err = E_ALLOC;
+		}
 	    }
 	}
-
-	if (!err) {
-	    err = allocate_each_strings(loop, nf);
+	if (err) {
+	    *pnf = 0;
 	}
+    }
 
+    if (list != NULL) {
+	int i, vi;
+
+	err = allocate_each_strings(loop, list[0]);
 	if (!err) {
-	    for (i=0; i<nf && !err; i++) {
-		loop->eachstrs[i] = gretl_strdup(pdinfo->varname[v1+i]);
-		if (loop->eachstrs[i] == NULL) {
-		    free_strings_array(loop->eachstrs, nf);
+	    for (i=1; i<=list[0] && !err; i++) {
+		vi = list[i];
+		loop->eachstrs[i-1] = gretl_strdup(pdinfo->varname[vi]);
+		if (loop->eachstrs[i-1] == NULL) {
+		    free_strings_array(loop->eachstrs, list[0]);
 		    loop->eachstrs = NULL;
 		    err = E_ALLOC;
 		}
 	    }
 	}
+	if (!err) {
+	    *pnf = list[0];
+	}
+	free(list);
     }
-
-    *pnf = nf;
 
     return err;
 }
@@ -931,9 +954,14 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 
     if (nf <= 3 && strstr(s, "..") != NULL) {
 	/* range of values, foo..quux */
-	err = each_strings_from_list_of_vars(loop, pdinfo, s, &nf);
+	err = each_strings_from_list_of_vars(loop, pdinfo, s, &nf,
+					     DOTTED_LIST);
 	done = 1;
-    }
+    } else if (nf == 1 && strchr(s, '*')) {
+	err = each_strings_from_list_of_vars(loop, pdinfo, s, &nf,
+					     WILDCARD_LIST);
+	done = (err == 0);
+    }	
 
     if (!done && nf == 1) {
 	/* try for a named list? */
