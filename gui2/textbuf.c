@@ -1572,24 +1572,25 @@ static void get_cmdword (const char *s, char *word)
 #define starts_comment(p) (*p == '/' && *(p+1) == '*')
 #define ends_comment(p)   (*p == '*' && *(p+1) == '/')
 
-static void check_for_comment (const char *s, int *ignore)
+static void check_for_comment (const char *s, int *incomm)
 {
+    int commbak = *incomm;
     const char *p = s;
     int quoted = 0;
 
     while (*p) {
-	if (!quoted && !*ignore && *p == '#') {
+	if (!quoted && !*incomm && *p == '#') {
 	    break;
 	}
-	if (!*ignore && bare_quote(p, s)) {
+	if (!*incomm && bare_quote(p, s)) {
 	    quoted = !quoted;
 	}
 	if (!quoted) {
 	    if (starts_comment(p)) {
-		*ignore = 1;
+		*incomm = 1;
 		p += 2;
 	    } else if (ends_comment(p)) {
-		*ignore = 0;
+		*incomm = 0;
 		p += 2;
 		p += strspn(p, " ");
 	    }
@@ -1597,6 +1598,12 @@ static void check_for_comment (const char *s, int *ignore)
 	if (*p) {
 	    p++;
 	}
+    }
+
+    if (*incomm && commbak) {
+	/* on the second or subsequent line of a multiline
+	   comment */
+	*incomm = 2;
     }
 }
 
@@ -1609,7 +1616,7 @@ static void normalize_indent (GtkTextBuffer *tbuf,
     int next_indent = 0;
     char word[9], line[1024];
     const char *ins;
-    int ignore = 0;
+    int incomment = 0;
     int i, nsp;
 
     if (buf == NULL) {
@@ -1625,17 +1632,24 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 	    gtk_text_buffer_insert(tbuf, start, line, -1);
 	    continue;
 	}
-	check_for_comment(line, &ignore);
-	if (ignore) {
+	check_for_comment(line, &incomment);
+#if 0
+	if (incomment) {
 	    /* in multiline comment */
 	    gtk_text_buffer_insert(tbuf, start, line, -1);
 	    continue;
 	}
+#endif
 	ins = line + strspn(line, " \t");
-	*word = '\0';
-	get_cmdword(ins, word);
-	adjust_indent(word, &this_indent, &next_indent);
+	if (!incomment) {
+	    *word = '\0';
+	    get_cmdword(ins, word);
+	    adjust_indent(word, &this_indent, &next_indent);
+	}
 	nsp = this_indent * tabwidth;
+	if (incomment == 2) {
+	    nsp += 3;
+	}
 	for (i=0; i<nsp; i++) {
 	    gtk_text_buffer_insert(tbuf, start, " ", -1);
 	}

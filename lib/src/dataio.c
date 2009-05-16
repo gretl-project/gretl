@@ -2318,9 +2318,12 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    if (simple_structure(pdinfo) && simple_range_match(pdinfo, addinfo, &offset)) {
-	/* we'll allow undated data to be merged with x-sectional or
-	   dated, sideways, provided the number of observations
+    /* below: had additional condition: simple_structure(pdinfo)
+       relaxed this on 2009-05-15 */
+
+    if (simple_range_match(pdinfo, addinfo, &offset)) {
+	/* we'll allow undated data to be merged with the existing
+	   dateset, sideways, provided the number of observations
 	   matches OK */
 	addsimple = 1;
     } else if (dataset_is_panel(pdinfo) && 

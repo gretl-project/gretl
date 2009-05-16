@@ -328,7 +328,7 @@ gint bufopen (PRN **pprn)
     return err;
 }
 
-static int cmd_init (char *s, int flag)
+static int cmd_init (const char *s, int flag)
 {
     PRN *echo;
     int err = 0;
