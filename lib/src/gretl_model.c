@@ -3131,7 +3131,9 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_LR:
     case GRETL_STAT_WALD_CHISQ:
     case GRETL_STAT_Z:
-	if (na(test->pvalue)) {
+	if (na(test->value)) {
+	    *str = '\0';
+	} else if (na(test->pvalue)) {
 	    strcpy(str, "NA");
 	} else {
 	    sprintf(str, "%g", test->pvalue);
