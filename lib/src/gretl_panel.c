@@ -2113,6 +2113,28 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
     return gretl_model_set_list_as_data(pmod, "droplist", dlist);
 }
 
+static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
+{
+    int nc;
+
+    fix_panelmod_list(pmod, pan);
+
+    pmod->ybar = pan->pooled->ybar;
+    pmod->sdy = pan->pooled->sdy;
+    pmod->tss = pan->pooled->tss;
+
+    pmod->rsq = NADBL;
+    pmod->adjrsq = NADBL;
+    pmod->fstt = NADBL;
+    pmod->rho = NADBL;
+    pmod->dw = NADBL;
+
+    nc = pmod->ncoeff;
+    pmod->ncoeff = pmod->dfn + 1;
+    ls_criteria(pmod);
+    pmod->ncoeff = nc;
+}
+
 static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
 {
     gretl_model_set_int(pmod, "n_included_units", pan->effn);
@@ -2120,52 +2142,63 @@ static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
     gretl_model_set_int(pmod, "Tmax", pan->Tmax);
 }
 
-/* spruce up the fixed-effects model and attach it to pan */
+/* We use this to "finalize" models estimated via fixed effects
+   and random effects */
 
-static int save_fixed_effects_model (MODEL *pmod, panelmod_t *pan,
-				     const double **Z,
-				     DATAINFO *pdinfo)
+static int save_panel_model (MODEL *pmod, panelmod_t *pan,
+			     const double **Z, 
+			     const DATAINFO *pdinfo)
 {
-    int *ulist;
     int err = 0;
 
     pmod->ci = PANEL;
-    pmod->opt |= OPT_F;
- 
-    err = fix_within_stats(pmod, pan);
-    if (err) {
-	return err;
+
+    if (pan->opt & OPT_F) {
+	/* fixed effects */
+	int *ulist;
+
+	pmod->opt |= OPT_F;
+	err = fix_within_stats(pmod, pan);
+	if (err) {
+	    return err;
+	}
+	ulist = fe_units_list(pan);
+	gretl_model_add_panel_varnames(pmod, pdinfo, ulist);
+	free(ulist);
+	fe_model_add_ahat(pmod, Z, pdinfo, pan);
+	save_fixed_effects_F(pan, pmod);
+    } else {
+	/* random effects */
+	pmod->opt |= OPT_U;
+	gretl_model_set_double(pmod, "within-variance", pan->s2e);
+	gretl_model_set_double(pmod, "between-variance", pan->between_s2);
+	if (pan->balanced) {
+	    gretl_model_set_double(pmod, "gls-theta", pan->theta);
+	}
+	gretl_model_add_panel_varnames(pmod, pdinfo, NULL);
+	fix_panel_hatvars(pmod, pdinfo, pan, Z);
+	fix_gls_stats(pmod, pan);	
     }
 
     /* compose list of dropped variables, if any */
     compose_panel_droplist(pmod, pan);
 
-    ulist = fe_units_list(pan);
-    gretl_model_add_panel_varnames(pmod, pdinfo, ulist);
-    free(ulist);
-
-    fe_model_add_ahat(pmod, Z, pdinfo, pan);
-    
     if (!(pan->opt & OPT_A)) {
 	set_model_id(pmod);
-    }
+    }  
 
-    panel_dwstat(pmod, pan);
-    if (!na(pmod->dw) && (pan->opt & OPT_I)) {
-	panel_DW_pvalue(pmod, pan, Z);
-    }
+    if (pan->opt & OPT_F) {
+	panel_dwstat(pmod, pan);
+	if (!na(pmod->dw) && (pan->opt & OPT_I)) {
+	    panel_DW_pvalue(pmod, pan, Z);
+	}
+    }   
 
-#if 0
-    panel_autocorr_1(pmod, pan);
-#endif
-    save_fixed_effects_F(pan, pmod);
     time_dummies_wald_test(pan, pmod);
-
     add_panel_obs_info(pmod, pan);
-
     *pan->realmod = *pmod;
 
-    return err;
+    return err;    
 }
 
 /* drive the calculation of the fixed effects regression, print the
@@ -2212,9 +2245,9 @@ static int within_variance (panelmod_t *pan,
 	}
 
 	if (pan->opt & OPT_F) {
-	    err = save_fixed_effects_model(&femod, pan, 
-					   (const double **) *pZ,
-					   pdinfo);
+	    err = save_panel_model(&femod, pan, 
+				   (const double **) *pZ,
+				   pdinfo);
 	    if (err) {
 		clear_model(&femod);
 	    }
@@ -2224,68 +2257,6 @@ static int within_variance (panelmod_t *pan,
     }
 
     return err;
-}
-
-static void fix_gls_stats (MODEL *gmod, panelmod_t *pan)
-{
-    int nc;
-
-    fix_panelmod_list(gmod, pan);
-
-    gmod->ybar = pan->pooled->ybar;
-    gmod->sdy = pan->pooled->sdy;
-    gmod->tss = pan->pooled->tss;
-
-    gmod->rsq = NADBL;
-    gmod->adjrsq = NADBL;
-    gmod->fstt = NADBL;
-    gmod->rho = NADBL;
-    gmod->dw = NADBL;
-
-    nc = gmod->ncoeff;
-    gmod->ncoeff = gmod->dfn + 1;
-    ls_criteria(gmod);
-    gmod->ncoeff = nc;
-}
-
-/* spruce up GLS model and attach it to pan */
-
-static void save_random_effects_model (MODEL *pmod, panelmod_t *pan,
-				       const double **Z,
-				       const DATAINFO *reinfo)
-{
-    pmod->ci = PANEL;
-    pmod->opt |= OPT_U;
-
-    gretl_model_set_double(pmod, "within-variance", pan->s2e);
-    gretl_model_set_double(pmod, "between-variance", pan->between_s2);
-
-    if (pan->balanced) {
-	gretl_model_set_double(pmod, "gls-theta", pan->theta);
-    }
-
-    add_panel_obs_info(pmod, pan);
-
-    /* compose list of dropped variables, if any */
-    compose_panel_droplist(pmod, pan);
-
-    gretl_model_add_panel_varnames(pmod, reinfo, NULL);
-    fix_panel_hatvars(pmod, reinfo, pan, Z);
-    fix_gls_stats(pmod, pan);
-
-    if (!(pan->opt & OPT_A)) {
-	set_model_id(pmod);
-    }
-
-#if 0
-    /* Do we want this? */
-    panel_dwstat(pmod, pan);
-    if (!na(pmod->dw) && (pan->opt & OPT_I)) {
-	panel_DW_pvalue(pmod, pan, Z);
-    }
-#endif
-
-    *pan->realmod = *pmod;
 }
 
 static void print_hausman_result (panelmod_t *pan, PRN *prn)
@@ -2356,7 +2327,7 @@ static int random_effects (panelmod_t *pan,
     }
 
     if (pan->opt & OPT_H) {
-	/* extra regressors for Hausman test, reg. approach */
+	/* extra regressors for Hausman test, regression approach */
 	hlist = gretl_list_new(pan->vlist[0] - 1);
 	if (hlist == NULL) {
 	    free(relist);
@@ -2443,7 +2414,7 @@ static int random_effects (panelmod_t *pan,
 #endif	
 
     if (!err && (pan->opt & OPT_U)) {
-	save_random_effects_model(&remod, pan, Z, reinfo);
+	save_panel_model(&remod, pan, Z, reinfo);
     } else {
 	clear_model(&remod);
     }

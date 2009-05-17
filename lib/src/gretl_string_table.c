@@ -806,7 +806,8 @@ int save_named_string (const char *name, const char *s, PRN *prn)
 	err = E_ALLOC;
     }
 
-    if (prn != NULL && !err && gretl_messages_on() && *s != '\0') {
+    if (prn != NULL && !err && gretl_messages_on() && 
+	!gretl_looping_quietly() && *s != '\0') {
 	if (add) {
 	    pprintf(prn, _("Generated string %s\n"), name); 
 	} else {
