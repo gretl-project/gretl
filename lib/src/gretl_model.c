@@ -3197,6 +3197,8 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 	    sprintf(buf, I_("%g percent critical value"), a);
 	    pprintf(prn, " (%s = %.2f)\\par\n\n", buf, test->crit);
 	}
+    } else {
+	pputc(prn, '\n');
     }
 }
 
