@@ -65,8 +65,8 @@ struct panelmod_t_ {
     double F;             /* joint significance of differing unit intercepts */
     double BP;            /* Breusch-Pagan test statistic */
     double H;             /* Hausman test statistic */
-    double *bdiff;        /* array of coefficient differences */
-    double *sigma;        /* Hausman covariance matrix */
+    gretl_matrix *bdiff;  /* array of coefficient differences */
+    gretl_matrix *Sigma;  /* Hausman covariance matrix */
     double between_s2;    /* group-means or "between" error variance */
     double s2e;           /* \hat{sigma}^2_e, from fixed-effects estimator */
     double s2u;           /* \hat{sigma}^2_u measure */
@@ -167,7 +167,7 @@ static void panelmod_init (panelmod_t *pan)
     pan->H = NADBL;
 
     pan->bdiff = NULL;
-    pan->sigma = NULL;
+    pan->Sigma = NULL;
 
     pan->small2big = NULL;
     pan->big2small = NULL;
@@ -212,8 +212,8 @@ static void panelmod_free (panelmod_t *pan)
     free(pan->varying);
     free(pan->vlist);
 
-    free(pan->bdiff);
-    free(pan->sigma);
+    gretl_matrix_free(pan->bdiff);
+    gretl_matrix_free(pan->Sigma);
     
     free(pan->small2big);
     free(pan->big2small);
@@ -956,7 +956,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 
 static int hausman_allocate (panelmod_t *pan)
 {
-    int ns, k = pan->vlist[0] - 2;
+    int k = pan->vlist[0] - 2;
 
     pan->nbeta = k;
 
@@ -967,17 +967,15 @@ static int hausman_allocate (panelmod_t *pan)
     }
 
     /* array to hold differences between coefficient estimates */
-    pan->bdiff = malloc(k * sizeof *pan->bdiff);
+    pan->bdiff = gretl_vector_alloc(k);
     if (pan->bdiff == NULL) {
 	return E_ALLOC;
     }
 
-    ns = k * (k + 1) / 2;
-
     /* array to hold covariance matrix */
-    pan->sigma = malloc(ns * sizeof *pan->sigma);
-    if (pan->sigma == NULL) {
-	free(pan->bdiff);
+    pan->Sigma = gretl_matrix_alloc(k, k);
+    if (pan->Sigma == NULL) {
+	gretl_matrix_free(pan->bdiff);
 	pan->bdiff = NULL;
 	return E_ALLOC; 
     }
@@ -1466,7 +1464,8 @@ vcv_slopes (panelmod_t *pan, const MODEL *pmod, int op)
 {
     int idx, i, j;
     int mj, mi = 0;
-    int k = 0;
+    int sj, si = 0;
+    double x;
 
     for (i=0; i<pan->nbeta; i++) {
 	if (vcv_skip(pmod, mi, pan, op)) {
@@ -1475,6 +1474,7 @@ vcv_slopes (panelmod_t *pan, const MODEL *pmod, int op)
 	    continue;
 	}
 	mj = mi;
+	sj = si;
 	for (j=i; j<pan->nbeta; j++) {
 	    if (vcv_skip(pmod, mj, pan, op)) {
 		j--;
@@ -1483,18 +1483,51 @@ vcv_slopes (panelmod_t *pan, const MODEL *pmod, int op)
 	    }
 
 	    idx = ijton(mi, mj, pmod->ncoeff);
+
 	    if (op == VCV_SUBTRACT) {
-		pan->sigma[k++] -= pmod->vcv[idx];
+		x = gretl_matrix_get(pan->Sigma, si, sj);
+		x -= pmod->vcv[idx];
 	    } else {
-		pan->sigma[k++] = pmod->vcv[idx];
+		x = pmod->vcv[idx];
 	    }
+
+	    gretl_matrix_set(pan->Sigma, si, sj, x);
+	    if (si != sj) {
+		gretl_matrix_set(pan->Sigma, sj, si, x);
+	    }
+
 	    mj++;
+	    sj++;
 	}
 	mi++;
+	si++;
     }
 }
 
 /* calculate Hausman test statistic, matrix diff style */
+
+#define BXB_NEW 1
+
+#if BXB_NEW
+
+static int bXb (panelmod_t *pan)
+{
+    int err;
+
+    err = gretl_invert_symmetric_matrix(pan->Sigma);
+
+    if (!err) {
+	pan->H = gretl_scalar_qform(pan->bdiff, pan->Sigma, &err);
+    }
+
+    if (err) {
+	pan->H = NADBL;
+    }
+
+    return err;
+}
+
+#else
 
 static int bXb (panelmod_t *pan)
 {
@@ -1509,18 +1542,11 @@ static int bXb (panelmod_t *pan)
 
     pan->H = NADBL;
 
-    x = copyvec(pan->bdiff, pan->nbeta);
+    x = copyvec(pan->bdiff->val, pan->nbeta);
     if (x == NULL) {
 	return E_ALLOC;
     }
 
-#if 0
-    err = gretl_invert_symmetric_matrix(pan->sigma);
-    if (!err) {
-	gretl_matrix_from_array()
-	pan->H = gretl_scalar_qform(pan->bdiff, pan->sigma, &err);
-    }
-#else
     ipiv = malloc(pan->nbeta * sizeof *ipiv);
     if (ipiv == NULL) {
 	free(x);
@@ -1528,7 +1554,7 @@ static int bXb (panelmod_t *pan)
     }
 
     /* solve for X-inverse * b */
-    dspsv_(&uplo, &n, &nrhs, pan->sigma, ipiv, x, &ldb, &info);
+    dspsv_(&uplo, &n, &nrhs, pan->Sigma->val, ipiv, x, &ldb, &info);
 
     if (info > 0) {
 	fprintf(stderr, "Hausman sigma matrix is singular\n");
@@ -1539,7 +1565,7 @@ static int bXb (panelmod_t *pan)
     } else {
 	pan->H = 0.0;
 	for (i=0; i<pan->nbeta; i++) {
-	    pan->H += x[i] * pan->bdiff[i];
+	    pan->H += x[i] * pan->bdiff->val[i];
 	}
 	if (pan->H < 0.0) {
 	    fprintf(stderr, "Hausman stat = %g < 0\n", pan->H);
@@ -1550,10 +1576,11 @@ static int bXb (panelmod_t *pan)
 
     free(x);
     free(ipiv);
-#endif
 
     return err;
 }
+
+#endif
 
 static void panel_df_correction (MODEL *pmod, int k)
 {
@@ -2243,9 +2270,9 @@ static int within_variance (panelmod_t *pan,
 	    print_fe_results(pan, &femod, pdinfo, prn);
 	}
 
-	if (pan->bdiff != NULL && pan->sigma != NULL) {
+	if (pan->bdiff != NULL && pan->Sigma != NULL) {
 	    for (i=1; i<femod.ncoeff; i++) {
-		pan->bdiff[i-1] = femod.coeff[i];
+		pan->bdiff->val[i-1] = femod.coeff[i];
 	    }
 	    femod_regular_vcv(&femod);
 	    pan->sigma_e = femod.sigma;
@@ -2401,7 +2428,7 @@ static int random_effects (panelmod_t *pan,
 		print_panel_coeff(&remod, pdinfo->varname[vi], i, prn);
 	    }
 	    if (pan->bdiff != NULL && var_is_varying(pan, vi)) {
-		pan->bdiff[k++] -= remod.coeff[i];
+		pan->bdiff->val[k++] -= remod.coeff[i];
 	    }
 	}
 
@@ -2410,7 +2437,7 @@ static int random_effects (panelmod_t *pan,
 	if (!na(URSS)) {
 	    /* it appears that Baltagi uses T-k instead of T here. Why? */
 	    pan->H = (remod.ess / URSS - 1.0) * (remod.nobs);
-	} else if (pan->sigma != NULL) {
+	} else if (pan->Sigma != NULL) {
 	    vcv_slopes(pan, &remod, VCV_SUBTRACT);
 	}
     }
@@ -2514,7 +2541,7 @@ static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 {
     int mdiff = 0, err = 0;
 
-    if (pan->bdiff != NULL && pan->sigma != NULL) {
+    if (pan->bdiff != NULL && pan->Sigma != NULL) {
 	/* matrix approach */
 	mdiff = 1;
 	err = bXb(pan);
@@ -2524,16 +2551,15 @@ static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
     }
 
     if (pan->opt & OPT_V) {
-	if (!err || (mdiff && err == E_SINGULAR)) {
+	if (!err || (mdiff && err == E_NOTPD)) {
 	    print_hausman_result(pan, prn);
 	} 
     } else {
-	if (mdiff && err == E_SINGULAR) {
-	    pputs(prn, _("Error attempting to invert vcv difference matrix\n"));
+	if (mdiff && err == E_NOTPD) {
+	    pputs(prn, _("Hausman test matrix is not positive definite"));
+	    pputc(prn, '\n');
 	}
-	if (!err) {    
-	    save_hausman_result(pan);
-	}
+	save_hausman_result(pan);
     }
 
     return err;

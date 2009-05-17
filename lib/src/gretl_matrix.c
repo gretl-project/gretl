@@ -6166,7 +6166,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 
     if (!real_gretl_matrix_is_symmetric(a, 1)) {
 	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
-	return 1;
+	return E_NOTPD;
     }
 
     /* back-up, just in case */
@@ -6186,13 +6186,13 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	if (info > 0) {
 	    fputs(" matrix is not positive definite\n", stderr);
 	}
-	err = E_SINGULAR;
+	err = E_NOTPD;
     } 
 
     if (!err) {
 	dpotri_(&uplo, &n, a->val, &n, &info);
 	if (info != 0) {
-	    err = E_SINGULAR;
+	    err = E_NOTPD;
 	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		    " dpotri failed with info = %d\n", (int) info);
 	} else {
