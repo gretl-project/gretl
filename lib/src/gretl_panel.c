@@ -2395,6 +2395,7 @@ static int random_effects (panelmod_t *pan,
 	if (!err) {
 	    remod = lsq(biglist, &reZ, reinfo, OLS, OPT_A);
 	    if (remod.errcode == 0) {
+		/* record unrestricted SSR */
 		URSS = remod.ess;
 	    }
 	    clear_model(&remod);
@@ -2425,11 +2426,12 @@ static int random_effects (panelmod_t *pan,
 	    }
 	}
 
+	makevcv(&remod, remod.sigma);
+
 	if (!na(URSS)) {
 	    /* it appears that Baltagi uses T-k instead of T here. Why? */
 	    pan->H = (remod.ess / URSS - 1.0) * (remod.nobs);
 	} else if (pan->sigma != NULL) {
-	    makevcv(&remod, remod.sigma);
 	    vcv_slopes(pan, &remod, VCV_SUBTRACT);
 	}
     }
