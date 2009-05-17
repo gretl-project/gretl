@@ -1514,6 +1514,13 @@ static int bXb (panelmod_t *pan)
 	return E_ALLOC;
     }
 
+#if 0
+    err = gretl_invert_symmetric_matrix(pan->sigma);
+    if (!err) {
+	gretl_matrix_from_array()
+	pan->H = gretl_scalar_qform(pan->bdiff, pan->sigma, &err);
+    }
+#else
     ipiv = malloc(pan->nbeta * sizeof *ipiv);
     if (ipiv == NULL) {
 	free(x);
@@ -1543,6 +1550,7 @@ static int bXb (panelmod_t *pan)
 
     free(x);
     free(ipiv);
+#endif
 
     return err;
 }
