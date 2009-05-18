@@ -17,7 +17,8 @@
 - panel, random effects estimator, Hausman test: notify the 
   user if the matrix-difference version of the Hausman test 
   fails; also document the --hausman-reg option in the help 
-  entry for the "panel" command
+  entry for the "panel" command; and fix the covariance
+  matrix in case --hausman-reg is chosen.
 - VARs: support gaps in the lag structure (not for VECMs);
   also, allow single-equations VARs
 - New GUI graph option: "Plot curve" under the tools menu,
