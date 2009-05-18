@@ -6328,8 +6328,8 @@
 	  <effect>iterative estimation</effect>
         </option>
         <option>
-	  <flag>--hausman-reg</flag>
-	  <effect>use regression method for Hausman test</effect>
+	  <flag>--matrix-diff</flag>
+	  <effect>use matrix-difference method for Hausman test</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -6351,8 +6351,8 @@
       <para context="cli">
 	If the <lit>--random-effects</lit> flag is given, random effects
 	estimates are computed, using the method of Swamy and Arora. In this
-	case (only) the option <lit>--hausman-reg</lit> forces use of the
-	regression method (as opposed to the matrix-difference method) for
+	case (only) the option <lit>--matrix-diff</lit> forces use of the
+	matrix-difference method (as opposed to the regression method) for
 	carrying out the Hausman test for the consistency of the random
 	effects estimator.
       </para>

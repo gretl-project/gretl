@@ -1,5 +1,12 @@
 version 1.8.1, in progress
 
+The default calculation method for the Hausman test in relation
+to the random effects estimator has been reversed: we now use 
+the regression method by default, and the matrix-difference 
+method only if the --matrix-diff option is given.  For the 
+present, the --hausman-reg option has been retained but it
+does not really do anything, it just confirms the default.
+
 The command "lmtest" has been renamed as "modtest".  However,
 "lmtest" has been retained as an alias so this is not a
 true incompatibility.

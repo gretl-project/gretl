@@ -960,24 +960,20 @@ static int hausman_allocate (panelmod_t *pan)
 
     pan->nbeta = k;
 
-    if (pan->opt & OPT_H) {
-	/* taking the regression approach to Hausman: we don't need
-	   the allocations below */
-	return 0;
-    }
+    if (pan->opt & OPT_M) {
+	/* array to hold differences between coefficient estimates */
+	pan->bdiff = gretl_vector_alloc(k);
+	if (pan->bdiff == NULL) {
+	    return E_ALLOC;
+	}
 
-    /* array to hold differences between coefficient estimates */
-    pan->bdiff = gretl_vector_alloc(k);
-    if (pan->bdiff == NULL) {
-	return E_ALLOC;
-    }
-
-    /* array to hold covariance matrix */
-    pan->Sigma = gretl_matrix_alloc(k, k);
-    if (pan->Sigma == NULL) {
-	gretl_matrix_free(pan->bdiff);
-	pan->bdiff = NULL;
-	return E_ALLOC; 
+	/* array to hold covariance matrix */
+	pan->Sigma = gretl_matrix_alloc(k, k);
+	if (pan->Sigma == NULL) {
+	    gretl_matrix_free(pan->bdiff);
+	    pan->bdiff = NULL;
+	    return E_ALLOC; 
+	}
     }
 
     return 0;
@@ -1506,10 +1502,6 @@ vcv_slopes (panelmod_t *pan, const MODEL *pmod, int op)
 
 /* calculate Hausman test statistic, matrix diff style */
 
-#define BXB_NEW 1
-
-#if BXB_NEW
-
 static int bXb (panelmod_t *pan)
 {
     int err;
@@ -1526,61 +1518,6 @@ static int bXb (panelmod_t *pan)
 
     return err;
 }
-
-#else
-
-static int bXb (panelmod_t *pan)
-{
-    char uplo = 'L'; 
-    integer nrhs = 1;
-    integer n = pan->nbeta;
-    integer ldb = n;
-    integer info = 0;
-    integer *ipiv;
-    double *x;
-    int i, err = 0;
-
-    pan->H = NADBL;
-
-    x = copyvec(pan->bdiff->val, pan->nbeta);
-    if (x == NULL) {
-	return E_ALLOC;
-    }
-
-    ipiv = malloc(pan->nbeta * sizeof *ipiv);
-    if (ipiv == NULL) {
-	free(x);
-	return E_ALLOC;
-    }
-
-    /* solve for X-inverse * b */
-    dspsv_(&uplo, &n, &nrhs, pan->Sigma->val, ipiv, x, &ldb, &info);
-
-    if (info > 0) {
-	fprintf(stderr, "Hausman sigma matrix is singular\n");
-	err = E_SINGULAR;
-    } else if (info < 0) {
-	fprintf(stderr, "Illegal entry in Hausman sigma matrix\n");
-	err = E_SINGULAR;
-    } else {
-	pan->H = 0.0;
-	for (i=0; i<pan->nbeta; i++) {
-	    pan->H += x[i] * pan->bdiff->val[i];
-	}
-	if (pan->H < 0.0) {
-	    fprintf(stderr, "Hausman stat = %g < 0\n", pan->H);
-	    pan->H = NADBL;
-	    err = E_SINGULAR;
-	}
-    }
-
-    free(x);
-    free(ipiv);
-
-    return err;
-}
-
-#endif
 
 static void panel_df_correction (MODEL *pmod, int k)
 {
@@ -2361,7 +2298,7 @@ static int random_effects (panelmod_t *pan,
 	return E_ALLOC;
     }
 
-    if (pan->opt & OPT_H) {
+    if (!(pan->opt & OPT_M)) {
 	/* extra regressors for Hausman test, regression approach */
 	hlist = gretl_list_new(pan->vlist[0] - 1);
 	if (hlist == NULL) {
@@ -2995,8 +2932,8 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * @pdinfo: data info pointer. 
  * @opt: may include %OPT_U for the random effects model;
  * %OPT_R for robust standard errors (fixed effects model
- * and pooled OLS only); %OPT_H to use the regression approach 
- * to the Hausman test (random effects only); %OPT_B for 
+ * and pooled OLS only); %OPT_M to use the matrix-difference 
+ * version of the Hausman test (random effects only); %OPT_B for 
  * the "between" model; %OPT_P for pooled OLS; and %OPT_D to 
  * include time dummies.
  * @prn: printing struct.

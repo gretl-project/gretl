@@ -346,10 +346,9 @@ avoids this potential problem.  The procedure is:
   regressors to the RE model cannot raise the SSR.
 \end{itemize}
 
-By default \app{gretl} computes the Hausman test via the
-matrix-difference method (largely for comparability with other
-software), but it uses the regression method if you pass the
-option \option{hausman-reg} to the \cmd{panel} command.
+By default \app{gretl} computes the Hausman test via the regression
+method, but it uses the matrix-difference method if you pass the
+option \option{matrix-diff} to the \cmd{panel} command.
 
 \subsection{Robust standard errors}
 \label{panel-robust}

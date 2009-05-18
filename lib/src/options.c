@@ -255,6 +255,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_F, "fixed-effects", 0 },
     { PANEL,    OPT_H, "hausman-reg", 0 },
     { PANEL,    OPT_I, "iterate", 0 },
+    { PANEL,    OPT_M, "matrix-diff", 0 },
     { PANEL,    OPT_O, "vcv", 0 },
     { PANEL,    OPT_P, "pooled", 0 },
     { PANEL,    OPT_Q, "quiet", 0 },
