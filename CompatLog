@@ -1,4 +1,4 @@
-version 1.8.1, in progress
+5/21/2009 version 1.8.1
 
 The default calculation method for the Hausman test in relation
 to the random effects estimator has been reversed: we now use 

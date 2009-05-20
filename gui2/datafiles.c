@@ -1153,7 +1153,11 @@ enum {
 
 static GretlToolItem files_items[] = {
     { N_("Open"),           GTK_STOCK_OK,         NULL,                          BTN_OPEN },
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+    { N_("Select directory"), GTK_STOCK_OPEN,  G_CALLBACK(alt_funcs_dir),   BTN_DIR },
+#else
     { N_("Select directory"), GTK_STOCK_DIRECTORY,  G_CALLBACK(alt_funcs_dir),   BTN_DIR },
+#endif
     { N_("Edit"),           GTK_STOCK_EDIT,       G_CALLBACK(browser_edit_func), BTN_EDIT },
     { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
