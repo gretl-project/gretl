@@ -3937,6 +3937,8 @@ static void maybe_convert_listsep (int *list, const DATAINFO *pdinfo)
     }
 }
 
+#define XDEBUG 1
+
 static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 				      MODEL *pmod, int fixopt)
 {
@@ -3961,6 +3963,10 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    err = 1;
 	    break;
 	}
+
+#if XDEBUG
+	fprintf(stderr, "data_item: type='%s', key='%s'\n", typestr, key);
+#endif
 
 	t = type_from_type_string(typestr);
 
@@ -4011,7 +4017,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    } else {
 		gots = gretl_xml_node_get_string(cur, doc, &s);
 	    }
-	    if (gots) {
+	    if (!gots) {
 		err = 1;
 	    } else {
 		err = gretl_model_set_string_as_data(pmod, key, s);
@@ -4060,6 +4066,10 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
     if (!err && !got_vcv) {
 	compat_compose_vcv_info(pmod);
     }
+
+#if XDEBUG
+    fprintf(stderr, "data items from XML, returning %d\n", err);
+#endif
 
     return err;
 }

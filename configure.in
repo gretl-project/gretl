@@ -488,7 +488,7 @@ dnl
 dnl Check for GTK 2.0
 dnl
 if test "$build_gui" = "yes" ; then
-    PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0,
+    PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.6.0,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="2.0",
