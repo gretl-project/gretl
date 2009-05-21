@@ -481,14 +481,14 @@ dnl
 dnl glib 2.0 (needed even if not building GUI)
 dnl
 if test "$PKG_CONFIG" != "no" ; then
-   PKG_CHECK_MODULES(GLIB, glib-2.0, have_glib2="yes", have_glib2="no")
+   PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.6.0, have_glib2="yes", have_glib2="no")
 fi
 
 dnl
 dnl Check for GTK 2.0
 dnl
 if test "$build_gui" = "yes" ; then
-    PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.6.0,
+    PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="2.0",
