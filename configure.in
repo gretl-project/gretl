@@ -481,7 +481,7 @@ dnl
 dnl glib 2.0 (needed even if not building GUI)
 dnl
 if test "$PKG_CONFIG" != "no" ; then
-   PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.6.0, have_glib2="yes", have_glib2="no")
+   PKG_CHECK_MODULES(GLIB, glib-2.0, have_glib2="yes", have_glib2="no")
 fi
 
 dnl

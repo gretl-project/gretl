@@ -353,7 +353,7 @@ int main (int argc, char *argv[])
     
     if (argc > 1) {
 	int force_lang = 0;
-	int opt = parseopt((const char **) argv, argc, filearg, &force_lang);
+	int opt = parseopt(&argc, &argv, filearg, &force_lang);
 
 	if (opt & OPT_ERROR) {
 	    usage(1);

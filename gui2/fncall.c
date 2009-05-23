@@ -26,6 +26,7 @@
 #include "cmd_private.h"
 #include "gretl_www.h"
 #include "gretl_string_table.h"
+#include "gretl_scalar.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -271,7 +272,7 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 {
     GList *list = NULL;
     const char *name;
-    int optional = 0;
+    int n, optional = 0;
 
     /* FIXME int, bool arguments */
 
@@ -284,7 +285,11 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
     }
 
     if (scalar_arg(type)) {
-	/* FIXME scalar */
+	n = n_saved_scalars();
+	for (i=0; i<n; i++) {
+	    name = gretl_scalar_get_name(i);
+	    list = g_list_append(list, (gpointer) name);
+	}	
     } else if (series_arg(type)) {
 	for (i=1; i<datainfo->v; i++) {
 	    if (!var_is_hidden(datainfo, i)) {
@@ -293,20 +298,19 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 	}
 	list = g_list_append(list, (gpointer) datainfo->varname[0]);
     } else if (type == GRETL_TYPE_LIST) {
-	int nl = n_saved_lists();
+	n = n_saved_lists();
 
 	if (optional) {
 	    list = g_list_append(list, "null");
 	}
 
-	for (i=0; i<nl; i++) {
+	for (i=0; i<n; i++) {
 	    name = get_list_name_by_index(i);
 	    list = g_list_append(list, (gpointer) name);
 	}
     } else if (matrix_arg(type)) {
-	int nm = n_user_matrices();
-
-	for (i=0; i<nm; i++) {
+	n = n_user_matrices();
+	for (i=0; i<n; i++) {
 	    name = get_matrix_name_by_index(i);
 	    list = g_list_append(list, (gpointer) name);
 	}	

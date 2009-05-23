@@ -86,8 +86,7 @@ int command_number (const char *cmd);
 
 int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn);
 
-int parseopt (const char **argv, int argc, char *fname, 
-	      int *force_lang);
+int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang);
 
 void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       unsigned char flags, PRN *prn);

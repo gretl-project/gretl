@@ -1162,6 +1162,7 @@ void do_open_session (void)
 	goto bailout;
     } else {
 	fprintf(stderr, "Opened session datafile '%s'\n", gdtname);
+	data_status = USER_DATA;
     }
 
     /* having opened the data file, get the rest of the info from
@@ -3261,11 +3262,35 @@ static int is_idempotent (const gretl_matrix *m,
     return gretl_matrix_is_idempotent(m);
 }
 
+static void print_int_formatted (char *s, int k, PRN *prn)
+{
+    int len = 12, n = strlen(s) - g_utf8_strlen(s, -1);
+    char fmt[16];
+
+    if (n > 0) {
+	len += n;
+    }
+
+    sprintf(fmt, "%%-%ds %%3d\n", len);
+    pprintf(prn, fmt, s, k);
+}
+
+static void print_double_formatted (char *s, double x, PRN *prn)
+{
+    int len = 16, n = strlen(s) - g_utf8_strlen(s, -1);
+    char fmt[16];
+
+    if (n > 0) {
+	len += n;
+    }
+
+    sprintf(fmt, "%%-%ds %%.8g\n", len);    
+    pprintf(prn, fmt, s, x);    
+}
+
 void 
 view_matrix_properties (const gretl_matrix *m, const char *name)
 {
-    const char *xfmt = "%-16s %.8g\n";
-    const char *ifmt = "%-12s %3d\n";
     gretl_matrix *A = NULL;
     gretl_matrix *evals = NULL;
     PRN *prn;
@@ -3289,9 +3314,9 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 	goto done;
     } 
 
-    pprintf(prn, ifmt, _("Rows"), m->rows);
-    pprintf(prn, ifmt, _("Columns"), m->cols);
-    pprintf(prn, ifmt, _("Rank"), gretl_matrix_rank(m, &err));
+    print_int_formatted(_("Rows"), m->rows, prn);
+    print_int_formatted(_("Columns"), m->cols, prn);
+    print_int_formatted(_("Rank"), gretl_matrix_rank(m, &err), prn);
 
     s = gretl_matrix_get_structure(m);
 
@@ -3337,13 +3362,13 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 
     pputc(prn, '\n');
 
-    pprintf(prn, xfmt, _("1-norm"), gretl_matrix_one_norm(m));
-    pprintf(prn, xfmt, _("Infinity-norm"), gretl_matrix_infinity_norm(m));
+    print_double_formatted(_("1-norm"), gretl_matrix_one_norm(m), prn);
+    print_double_formatted(_("Infinity-norm"), gretl_matrix_infinity_norm(m), prn);
 	    
     if (m->rows == m->cols) {
 	double det;
 
-	pprintf(prn, xfmt, _("Trace"), gretl_matrix_trace(m, &err));
+	print_double_formatted(_("Trace"), gretl_matrix_trace(m, &err), prn);
 	if (A == NULL) {
 	    A = gretl_matrix_copy(m);
 	} else {
@@ -3352,7 +3377,7 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 	if (A != NULL) {
 	    det = gretl_matrix_determinant(A, &err);
 	    if (!err) {
-		pprintf(prn, xfmt, _("Determinant"), det);
+		print_double_formatted(_("Determinant"), det, prn);
 	    }
 	}
     }

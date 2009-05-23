@@ -2958,8 +2958,8 @@ static int parse_criteria (const char *line, PRN *prn)
 
 /**
  * parseopt:
- * @argv: command-line argument array.
- * @argc: argument count.
+ * @pargc: pointer to count of arguments.
+ * @pargv: pointer to command-line argument array.
  * @fname: optional filename argument.
  * @force_lang: pointer to store result of "force language" option.
  *
@@ -2967,13 +2967,20 @@ static int parse_criteria (const char *line, PRN *prn)
  * option flag, or 0 if the option flag is not recognized.
  */
 
-int parseopt (const char **argv, int argc, char *fname, int *force_lang)
+int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 {
+    char **argv;
     int opt = 0, extra = 0;
     int gotfile = 0;
 
     *fname = '\0';
     *force_lang = 0;
+
+    if (pargv == NULL) {
+	return opt;
+    }
+
+    argv = *pargv;
 
     while (*++argv) {
 	const char *s = *argv;
@@ -3012,7 +3019,11 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 	    strncat(fname, s, MAXLEN - 1);
 	    gotfile = 1;
 	}
+
+	*pargc -= 1;
     }
+
+    *pargv = argv;
 
     opt |= extra;
 
