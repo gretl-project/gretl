@@ -7114,7 +7114,7 @@ static int script_open_append (ExecState *s, double ***pZ,
 	err = import_csv(datfile, pZ, pdinfo, openopt, prn);
     } else if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(datfile, &paths, pZ, pdinfo, 
-			     openopt | OPT_P, prn);
+			     openopt | OPT_B, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(datfile, ftype, cmd->list, cmd->extra, pZ, pdinfo, 
 				 openopt, prn);

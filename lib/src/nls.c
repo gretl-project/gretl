@@ -2145,8 +2145,15 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	integer n = s->ncoeff;
 	integer ldjac = m; 
 
+#if 0
+	if (s->opt & OPT_G) {
+	    err = check_derivatives(m, n, s->coeff, s->fvec, 
+				    s->jac, ldjac, prn, s);
+	}
+#else
 	err = check_derivatives(m, n, s->coeff, s->fvec, s->jac, ldjac, 
 				prn, s);
+#endif
     }
 
     if (!err) {

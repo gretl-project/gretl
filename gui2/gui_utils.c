@@ -885,7 +885,7 @@ static int get_native_data (char *fname, int ftype, int append,
 
     if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(fname, &paths, &Z, datainfo, 
-			     OPT_P, prn);
+			     OPT_B, prn);
     } else {
 	err = gretl_get_data(fname, &paths, &Z, datainfo, 
 			     OPT_NONE, prn);

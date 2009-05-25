@@ -202,6 +202,9 @@ struct gretl_option gretl_opts[] = {
     { MAHAL,    OPT_V, "vcv", 0 },
     { MEANTEST, OPT_O, "unequal-vars", 0 },
     { MLE,      OPT_H, "hessian", 0 },
+#if 0
+    { MLE,      OPT_G, "gradient-check", 0 },
+#endif
     { MLE,      OPT_N, "numerical", 0 },
     { MLE,      OPT_Q, "quiet", 0 },
     { MLE,      OPT_R, "robust", 0 },
@@ -240,6 +243,7 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_Q, "quiet", 0 },
     { OMIT,     OPT_T, "inst", 0 },
     { OMIT,     OPT_W, "wald", 0 },
+    { OPEN,     OPT_B, "progress-bar", 0 },
     { OPEN,     OPT_C, "coded", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
     { OPEN,     OPT_F, "cols", 2 },    

@@ -2279,7 +2279,7 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 	fprintf(stderr, "%s %ld bytes %s...\n", 
 		(is_gzipped(fname))? I_("Uncompressing") : I_("Reading"),
 		fsz, I_("of data"));
-	if (opt & OPT_P) progress = fsz;
+	if (opt & OPT_B) progress = fsz;
     }
 
 #ifdef ENABLE_NLS
