@@ -1153,7 +1153,7 @@ void do_open_session (void)
     }
 
     if (!err) {
-	err = gretl_read_gdt(gdtname, NULL, &Z, datainfo, OPT_P, NULL);
+	err = gretl_read_gdt(gdtname, NULL, &Z, datainfo, OPT_B, NULL);
     }
 
     if (err) {
