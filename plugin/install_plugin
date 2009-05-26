@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PLUG=$1
-DEST=~/dist/Gretl_Folder/lib/gretl-gtk2
+DEST=/usr/local/lib/gretl-gtk2
 
 if [ "x$PLUG" = "x" ] ; then
   echo "Supply the basename of a plugin to install"

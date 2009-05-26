@@ -838,6 +838,17 @@ static MODEL garch_run_ols (const int *list, double ***pZ,
     return model;
 }
 
+static void clean_dropped_vars (MODEL mod, int *list)
+{
+    if (list[0] - mod.list[0] > 3) {
+	int i;
+        list[0] = mod.list[0] + 3;
+	for (i=4; i<list[0]; i++) {
+	    list[i] = mod.list[i-3];
+	}
+    }
+}
+
 static void garch_add_lr_test (MODEL *pmod, double llr,
 			       const int *list)
 {
@@ -894,6 +905,9 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	return model;
     }
 
+    clean_dropped_vars(model, list);
+
+    printlist(list, "list (after)");
     llr = model.lnL;
     ols_T = model.nobs;
 
