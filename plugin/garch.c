@@ -906,8 +906,6 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     clean_dropped_vars(model, list);
-
-    printlist(list, "list (after)");
     llr = model.lnL;
     ols_T = model.nobs;
 
