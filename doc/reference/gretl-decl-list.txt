@@ -5,10 +5,12 @@ QueryOpt
 gretl_www_init
 list_remote_dbs
 list_remote_function_packages
+list_remote_data_packages
 retrieve_remote_db_index
 retrieve_remote_db
 check_remote_db
 retrieve_remote_function_package
+retrieve_remote_datafiles_package
 retrieve_remote_db_data
 retrieve_manfile
 get_update_info
@@ -24,7 +26,6 @@ CMD
 ExecState
 CmdEchoFlags
 ProgramOptions
-ForcedLangs
 ExecFlags
 HIDDEN_COMMAND
 gretl_cmd_init
@@ -46,7 +47,6 @@ echo_function_call
 safe_print_line
 gretl_cmd_exec
 call_pca_plugin
-ready_for_command
 gretl_shell_grab
 </SECTION>
 
@@ -279,6 +279,7 @@ var_is_generated
 var_is_listarg
 set_var_listarg
 unset_var_listarg
+sample_size
 free_Z
 datainfo_new
 create_new_dataset
@@ -430,12 +431,14 @@ gnuplot_label_front_string
 gnuplot_missval_string
 gnuplot_init
 gnuplot_batch_init
+specified_gp_output_format
 write_plot_type_string
 write_plot_line_styles
 print_plot_bounding_box_request
 plot_type_from_string
 gnuplot_make_graph
 reset_plot_count
+matrix_plot
 gnuplot
 multi_scatters
 gnuplot_3d
@@ -485,6 +488,7 @@ n_user_matrices
 get_matrix_name_by_index
 get_matrix_by_name
 get_matrix_copy_by_name
+steal_matrix_by_name
 get_matrix_by_name_at_level
 user_matrix_get_matrix
 get_user_matrix_by_name
@@ -617,14 +621,23 @@ kalman
 kalman_new
 kalman_free
 kalman_forecast
-kalman_get_ncoeff
 kalman_get_loglik
+user_kalman_get_loglik
+user_kalman_get_matrix
+user_kalman_get_s2
+user_kalman_get_time_step
 kalman_get_arma_variance
 kalman_set_initial_state_vector
 kalman_set_initial_MSE_matrix
 kalman_set_nonshift
 kalman_set_options
 kalman_get_options
+kalman_parse_line
+user_kalman_run
+user_kalman_smooth
+user_kalman_simulate
+kalman_cleanup
+delete_kalman
 </SECTION>
 
 <SECTION>
@@ -673,6 +686,7 @@ genr_get_output_scalar
 genr_get_last_output_type
 genr_get_output_matrix
 series_index
+current_series_index
 extract_varname
 genr_fit_resid
 generate_scalar
@@ -708,6 +722,7 @@ omit_test
 nonlinearity_test
 reset_test
 autocorr_test
+comfac_test
 get_dw_pvalue
 chow_test
 cusum_test
@@ -715,7 +730,7 @@ panel_hausman_test
 vif_test
 leverage_test
 add_leverage_values_to_dataset
-lmtest_driver
+model_test_driver
 </SECTION>
 
 <SECTION>
@@ -808,6 +823,7 @@ POOLED_MODEL
 ModelTestType
 attach_model_tests_from_xml
 gretl_model_new
+model_stats_init
 gretl_model_init
 gretl_model_allocate_storage
 gretl_model_array_new
@@ -1077,6 +1093,7 @@ multi_xcf
 
 <SECTION>
 <FILE>gretl_matrix</FILE>
+M_NA
 R_DIAG_MIN
 GretlMatrixMod
 GretlMatrixStructure
@@ -1142,6 +1159,7 @@ gretl_matrix_polroots
 gretl_matrix_raise
 gretl_matrix_free
 gretl_matrix_steal_data
+gretl_vector_copy_values
 gretl_matrix_copy_values
 gretl_matrix_copy_values_shaped
 gretl_matrix_add_to
@@ -1205,6 +1223,7 @@ gretl_invert_matrix
 gretl_matrix_moore_penrose
 gretl_SVD_invert_matrix
 gretl_invpd
+gretl_maybe_invpd
 gretl_matrix_SVD
 gretl_symmetric_matrix_rcond
 gretl_matrix_rcond
@@ -1223,6 +1242,7 @@ gretl_matrix_diffcol
 gretl_matrix_lag
 gretl_matrix_inplace_lag
 gretl_matrix_cholesky_decomp
+gretl_matrix_psd_root
 gretl_matrix_QR_decomp
 gretl_check_QR_rank
 gretl_matrix_rank
@@ -1247,8 +1267,8 @@ gretl_is_zero_matrix
 gretl_matrix_get_structure
 gretl_matrices_are_equal
 gretl_covariance_matrix
-gretl_matrix_array_alloc
-gretl_matrix_array_alloc_with_size
+gretl_matrix_array_new
+gretl_matrix_array_new_with_size
 gretl_matrix_array_free
 gretl_matrix_values
 gretl_matrix_shape
@@ -1266,6 +1286,11 @@ get_blas_nmk_min
 </SECTION>
 
 <SECTION>
+<FILE>gretl_untar</FILE>
+gretl_untar
+</SECTION>
+
+<SECTION>
 <FILE>options</FILE>
 get_gretl_options
 opt_from_flag
@@ -1273,12 +1298,16 @@ print_flags
 get_opts_for_command
 check_for_loop_only_options
 get_all_option_strings
+transcribe_option_flags
+delete_option_flags
 incompatible_options
+option_prereq_missing
 inapplicable_option_error
 get_optval_double
 set_optval_double
 get_optval_string
 clear_option_params
+option_flags_cleanup
 </SECTION>
 
 <SECTION>
@@ -1381,6 +1410,7 @@ mn_logit_coeffsep
 
 <SECTION>
 <FILE>matrix_extra</FILE>
+MMissingCode
 gretl_vector_from_array
 gretl_vector_from_series
 gretl_matrix_from_2d_array
@@ -1389,9 +1419,9 @@ gretl_vcv_matrix_from_model
 gretl_coeff_vector_from_model
 gretl_covariance_matrix_from_varlist
 gretl_matrix_row_to_array
+gretl_matrix_data_subset_masked
 gretl_matrix_data_subset
-gretl_matrix_data_subset_no_missing
-gretl_matrix_data_subset_skip_missing
+gretl_dataset_from_matrix
 gretl_plotfit_matrices
 gretl_matrix_delete_columns
 gretl_matrix_read_from_text
@@ -1536,11 +1566,11 @@ df_pvalue_from_plugin
 <SECTION>
 <FILE>libgretl</FILE>
 isnan
-I_
-M_
 gettext_noop
 _
 N_
+I_
+M_
 MAXLINE
 MAXLABEL
 MAXLEN
@@ -1598,6 +1628,7 @@ gui_script_logo
 gui_logo
 text_print_model_confints
 print_freq
+print_freq_test
 print_xtab
 print_smpl
 print_contemp_covariance_matrix
@@ -1796,6 +1827,7 @@ USE_FCP
 VECM_NORM
 ARMA_VCV
 VERBOSE_INCLUDE
+SKIP_MISSING
 ITER_PRINT_FUNC
 set_nls_toler
 libset_init
@@ -1829,6 +1861,7 @@ free_init_vals
 set_loop_on
 set_loop_off
 gretl_looping
+gretl_looping_currently
 gretl_looping_quietly
 gretl_set_batch_mode
 gretl_in_batch_mode
@@ -1932,6 +1965,7 @@ doing_nls
 reset_local_decpoint
 get_local_decpoint
 iso_to_ascii
+GretlLangCode
 iso_gettext
 maybe_iso_gettext
 set_gretl_charset
@@ -1947,6 +1981,12 @@ console_off
 set_gui_native_printing
 unset_gui_native_printing
 chinese_locale
+lang_string_from_id
+lang_id_from_name
+lang_id_from_code
+force_language
+set_lcnumeric
+test_locale
 UTF_WIDTH
 TRANSLATED_WIDTH
 </SECTION>
@@ -2220,11 +2260,13 @@ gretl_open
 gretl_rename
 gretl_remove
 gretl_gzopen
+gretl_stat
 gretl_mkdir
 gretl_chdir
 gretl_deltree
 gretl_write_access
 gretl_is_xml_file
+gretl_isdir
 addpath
 getopenfile
 gretl_path_is_absolute
@@ -2237,6 +2279,7 @@ gretl_work_dir
 gretl_default_workdir
 set_gretl_work_dir
 gretl_maybe_switch_dir
+gretl_maybe_prepend_dir
 gretl_gnuplot_path
 gretl_plotfile
 set_gretl_plotfile
