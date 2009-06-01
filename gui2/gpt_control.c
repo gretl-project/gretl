@@ -3490,7 +3490,7 @@ static int render_pngfile (png_plot *plot, int view)
 
     g_object_unref(pbuf);
     gretl_remove(pngname);
-    
+   
     if (view != PNG_START) { 
 	/* we're changing the view, so refresh the whole canvas */
 	gdk_draw_drawable(plot->canvas->window,

@@ -3767,11 +3767,18 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     }
 }
 
+static void summary_print_message (const Summary *s, int j, 
+				   const DATAINFO *pdinfo,
+				   PRN *prn)
+{
+    pprintf(prn, "%s (%s)\n", pdinfo->varname[s->list[j+1]], s->msg);
+    pprintf(prn, "%d valid observations\n", s->n);	    
+}
+
 static void print_summary_single (const Summary *s, int j,
 				  const DATAINFO *pdinfo,
 				  PRN *prn)
 {
-    char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
     double vals[8];
     const char *labels[] = {
 	N_("Mean"),
@@ -3785,15 +3792,22 @@ static void print_summary_single (const Summary *s, int j,
     };
     const char *wstr = N_("Within s.d.");
     const char *bstr = N_("Between s.d.");
+    int simple_skip[] = {0,1,0,0,0,1,1,1};
     int slen = 0, i = 0;
 
-    ntodate(obs1, pdinfo->t1, pdinfo);
-    ntodate(obs2, pdinfo->t2, pdinfo);
+    if (s->msg != NULL) {
+	summary_print_message(s, j, pdinfo, prn);
+    } else {
+	char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
 
-    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, 0, prn);
-    sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-	    pdinfo->varname[s->list[j+1]], s->n);
-    output_line(tmp, prn, 1);
+	ntodate(obs1, pdinfo->t1, pdinfo);
+	ntodate(obs2, pdinfo->t2, pdinfo);
+
+	prhdr(_("Summary Statistics"), pdinfo, SUMMARY, 0, prn);
+	sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
+		pdinfo->varname[s->list[j+1]], s->n);
+	output_line(tmp, prn, 1);
+    }
 
     vals[0] = s->mean[j];
     vals[1] = s->median[j];
@@ -3805,6 +3819,9 @@ static void print_summary_single (const Summary *s, int j,
     vals[7] = s->xkurt[j];
 
     for (i=0; i<8; i++) {
+	if ((s->opt & OPT_S) && simple_skip[i]) {
+	    continue;
+	}	
 	if (strlen(_(labels[i])) > slen) {
 #if defined(ENABLE_NLS)
 	    slen = g_utf8_strlen(_(labels[i]), -1);	    
@@ -3816,6 +3833,9 @@ static void print_summary_single (const Summary *s, int j,
     slen++;
 
     for (i=0; i<8; i++) {
+	if ((s->opt & OPT_S) && simple_skip[i]) {
+	    continue;
+	}
 	pprintf(prn, "  %-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
 	printf15(vals[i], prn);
 	pputc(prn, '\n');
@@ -3868,7 +3888,7 @@ void print_summary (const Summary *summ,
 
     len = (maxlen <= 8)? 10 : maxlen + 1;
 
-    if (len > 14) {
+    if (len > 14 || (summ->opt & OPT_S)) {
 	/* printout gets broken with excessively long varnames */
 	for (i=0; i<summ->list[0]; i++) {
 	    print_summary_single(summ, i, pdinfo, prn);
@@ -3932,11 +3952,12 @@ void free_summary (Summary *summ)
 {
     free(summ->list);
     free(summ->stats);
+    free(summ->msg);
 
     free(summ);
 }
 
-static Summary *summary_new (const int *list)
+static Summary *summary_new (const int *list, gretlopt opt)
 {
     Summary *s;
     int nv = list[0];
@@ -3946,12 +3967,15 @@ static Summary *summary_new (const int *list)
 	return NULL;
     }
 
+    s->msg = NULL;
+
     s->list = gretl_list_copy(list);
     if (s->list == NULL) {
 	free(s);
 	return NULL;
     }
 
+    s->opt = opt;
     s->n = 0;
     s->missing = 0;
 
@@ -3980,6 +4004,7 @@ static Summary *summary_new (const int *list)
  * @list: list of variables to process.
  * @Z: data matrix.
  * @pdinfo: information on the data set.
+ * @opt: may include %OPT_S for "simple" version.
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  *
@@ -3990,13 +4015,14 @@ static Summary *summary_new (const int *list)
  */
 
 Summary *get_summary (const int *list, const double **Z, 
-		      const DATAINFO *pdinfo, PRN *prn,
+		      const DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn, 
 		      int *err) 
 {
     Summary *s;
     int i, vi, ni, nmax;
 
-    s = summary_new(list);
+    s = summary_new(list, opt);
 
     if (s == NULL) {
 	*err = E_ALLOC;
@@ -4006,6 +4032,7 @@ Summary *get_summary (const int *list, const double **Z,
     nmax = sample_size(pdinfo);
 
     for (i=0; i<s->list[0]; i++)  {
+	double *pskew = NULL, *pkurt = NULL;
 	double x0;
 
 	vi = s->list[i + 1];
@@ -4031,6 +4058,16 @@ Summary *get_summary (const int *list, const double **Z,
 	    }
 	}
 
+	if (opt & OPT_S) {
+	    s->skew[i] = NADBL;
+	    s->xkurt[i] = NADBL;
+	    s->cv[i] = NADBL;
+	    s->median[i] = NADBL;
+	} else {
+	    pskew = &s->skew[i];
+	    pkurt = &s->xkurt[i];
+	}
+
 	gretl_minmax(pdinfo->t1, pdinfo->t2, Z[vi], 
 		     &s->low[i], 
 		     &s->high[i]);
@@ -4038,18 +4075,19 @@ Summary *get_summary (const int *list, const double **Z,
 	gretl_moments(pdinfo->t1, pdinfo->t2, Z[vi], 
 		      &s->mean[i], 
 		      &s->sd[i], 
-		      &s->skew[i], 
-		      &s->xkurt[i], 1);
+		      pskew, pkurt, 
+		      1);
 
-	if (floateq(s->mean[i], 0.0)) {
-	    s->cv[i] = NADBL;
-	} else if (floateq(s->sd[i], 0.0)) {
-	    s->cv[i] = 0.0;
-	} else {
-	    s->cv[i] = fabs(s->sd[i] / s->mean[i]);
-	} 
-
-	s->median[i] = gretl_median(pdinfo->t1, pdinfo->t2, Z[vi]);
+	if (!(opt & OPT_S)) {
+	    if (floateq(s->mean[i], 0.0)) {
+		s->cv[i] = NADBL;
+	    } else if (floateq(s->sd[i], 0.0)) {
+		s->cv[i] = 0.0;
+	    } else {
+		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
+	    } 
+	    s->median[i] = gretl_median(pdinfo->t1, pdinfo->t2, Z[vi]);
+	}
     } 
 
     if (dataset_is_panel(pdinfo) && list[0] == 1) {
@@ -4060,7 +4098,8 @@ Summary *get_summary (const int *list, const double **Z,
 }
 
 int list_summary (const int *list, const double **Z, 
-		  const DATAINFO *pdinfo, PRN *prn)
+		  const DATAINFO *pdinfo, 
+		  gretlopt opt, PRN *prn)
 {
     Summary *summ;
     int err = 0;
@@ -4069,7 +4108,7 @@ int list_summary (const int *list, const double **Z,
 	return 0;
     }
 
-    summ = get_summary(list, Z, pdinfo, prn, &err);
+    summ = get_summary(list, Z, pdinfo, opt, prn, &err);
 
     if (!err) {
 	print_summary(summ, pdinfo, prn);

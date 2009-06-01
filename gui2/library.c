@@ -762,7 +762,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 
     case SUMMARY:
 	obj = get_summary(libcmd.list, (const double **) Z, datainfo, 
-			  prn, &err);
+			  OPT_NONE, prn, &err);
 	if (!err) {
 	    print_summary(obj, datainfo, prn);
 	}

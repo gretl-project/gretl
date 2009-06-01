@@ -26,6 +26,7 @@ typedef struct Xtab_ Xtab;
 typedef struct MahalDist_ MahalDist;
 
 struct Summary_ {
+    gretlopt opt;
     int n;
     int missing;
     int *list;
@@ -40,6 +41,7 @@ struct Summary_ {
     double *cv;
     double sw;
     double sb;
+    char *msg;
 };
 
 struct FreqDist_ {
@@ -177,10 +179,12 @@ int periodogram (int varno, int width,
 
 Summary *get_summary (const int *list, const double **Z, 
 		      const DATAINFO *pdinfo,
-		      PRN *prn, int *err);
+		      gretlopt opt, PRN *prn, 
+		      int *err);
 
 int list_summary (const int *list, const double **Z, 
-		  const DATAINFO *pdinfo, PRN *prn);
+		  const DATAINFO *pdinfo, 
+		  gretlopt opt, PRN *prn);
 
 void print_summary (const Summary *summ,
 		    const DATAINFO *pdinfo,

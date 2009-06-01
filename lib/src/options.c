@@ -327,6 +327,8 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_T, "traditional", 0 },
     { STORE,    OPT_Z, "gzipped", 0 },
     { STORE,    OPT_X, "omit-obs", 0 },
+    { SUMMARY,  OPT_B, "by", 2 },
+    { SUMMARY,  OPT_S, "simple", 0 },
     { SYSTEM,   OPT_I, "iterate", 0 },
     { SYSTEM,   OPT_V, "verbose", 0 },
     { TOBIT,    OPT_V, "verbose", 0 },

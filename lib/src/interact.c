@@ -4038,6 +4038,95 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
+/* given the name of a discrete variable, perform one of a short list of
+   commands for each value of the discrete variable
+*/
+
+static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
+			  PRN *prn)
+{
+    ExecState state;
+    const char *byvar = get_optval_string(cmd->ci, OPT_B);
+    char line[64];
+    gretl_matrix *vals = NULL;
+    const double *x;
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
+    int i, v, nvals = 0;
+    int err = 0;
+
+    if (pdinfo == NULL || byvar == NULL) {
+	return E_DATA;
+    }
+
+    /* FIXME accept "unit" and "time"/"period" in place of actual
+       variables for panel data? */
+
+    v = current_series_index(pdinfo, byvar);
+    if (v < 0) {
+	return E_UNKVAR;
+    }
+
+    x = (const double *) (*pZ)[v];
+
+    if (!var_is_discrete(pdinfo, v) && !gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x)) {
+	sprintf(gretl_errmsg, _("The variable '%s' is not discrete"), byvar);
+	return E_DATA;
+    }
+
+    state.cmd = NULL;
+    state.models = NULL;
+    state.submask = NULL;
+
+    vals = gretl_matrix_values(x + pdinfo->t1, pdinfo->t2 - pdinfo->t1 + 1, &err);
+
+    if (!err) {
+	nvals = gretl_vector_get_length(vals);
+    }
+
+    if (!err && pdinfo->submask != NULL) {
+	state.submask = copy_datainfo_submask(pdinfo);
+	if (state.submask == NULL) {
+	    gretl_matrix_free(vals);
+	    return E_ALLOC;
+	}
+    }
+
+    for (i=0; i<nvals && !err; i++) {
+	sprintf(line, "smpl %s = %g", byvar, gretl_vector_get(vals, i));
+	err = restrict_sample(line, NULL, pZ, pdinfo, &state, 
+			      OPT_R | OPT_P, prn);
+	if (err) {
+	    break;
+	}
+	if (cmd->ci == SUMMARY) {
+	    pprintf(prn, "%s:\n", line + 5);
+	    err = list_summary(cmd->list, (const double **) *pZ, pdinfo, 
+			       cmd->opt, prn);
+	}
+    }
+
+    gretl_matrix_free(vals);
+
+    if (complex_subsampled()) {
+	if (state.submask == NULL) {
+	    /* we were not sub-sampled on entry */
+	    restore_full_sample(pZ, pdinfo, NULL);
+	} else if (submask_cmp(state.submask, pdinfo->submask)) {
+	    /* we were sub-sampled differently on entry */
+	    restore_full_sample(pZ, pdinfo, NULL);
+	    restrict_sample_from_mask(state.submask, pZ, pdinfo);
+	} 
+    }
+
+    free(state.submask);
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
+
+    return err;
+}
+
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
     CMD *cmd = s->cmd;
@@ -4328,7 +4417,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SUMMARY:
-	err = list_summary(cmd->list, Z, pdinfo, prn);
+	if (cmd->opt & OPT_B) {
+	    err = do_command_by(cmd, pZ, pdinfo, prn);
+	} else {
+	    err = list_summary(cmd->list, Z, pdinfo, cmd->opt, prn);
+	}
 	break; 
 
     case XTAB:
