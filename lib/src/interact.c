@@ -4093,14 +4093,20 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
     }
 
     for (i=0; i<nvals && !err; i++) {
+	int n;
+
 	sprintf(line, "smpl %s = %g", byvar, gretl_vector_get(vals, i));
 	err = restrict_sample(line, NULL, pZ, pdinfo, &state, 
 			      OPT_R | OPT_P, prn);
 	if (err) {
 	    break;
 	}
+	n = pdinfo->t2 - pdinfo->t1 + 1;
 	if (cmd->ci == SUMMARY) {
-	    pprintf(prn, "%s:\n", line + 5);
+	    if (i == 0) {
+		pputc(prn, '\n');
+	    }	    
+	    pprintf(prn, "%s (n = %d):\n", line + 5, n);
 	    err = list_summary(cmd->list, (const double **) *pZ, pdinfo, 
 			       cmd->opt, prn);
 	}

@@ -3767,18 +3767,11 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     }
 }
 
-static void summary_print_message (const Summary *s, int j, 
-				   const DATAINFO *pdinfo,
-				   PRN *prn)
-{
-    pprintf(prn, "%s (%s)\n", pdinfo->varname[s->list[j+1]], s->msg);
-    pprintf(prn, "%d valid observations\n", s->n);	    
-}
-
 static void print_summary_single (const Summary *s, int j,
 				  const DATAINFO *pdinfo,
 				  PRN *prn)
 {
+    char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
     double vals[8];
     const char *labels[] = {
 	N_("Mean"),
@@ -3795,19 +3788,13 @@ static void print_summary_single (const Summary *s, int j,
     int simple_skip[] = {0,1,0,0,0,1,1,1};
     int slen = 0, i = 0;
 
-    if (s->msg != NULL) {
-	summary_print_message(s, j, pdinfo, prn);
-    } else {
-	char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
+    ntodate(obs1, pdinfo->t1, pdinfo);
+    ntodate(obs2, pdinfo->t2, pdinfo);
 
-	ntodate(obs1, pdinfo->t1, pdinfo);
-	ntodate(obs2, pdinfo->t2, pdinfo);
-
-	prhdr(_("Summary Statistics"), pdinfo, SUMMARY, 0, prn);
-	sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-		pdinfo->varname[s->list[j+1]], s->n);
-	output_line(tmp, prn, 1);
-    }
+    prhdr(_("Summary statistics"), pdinfo, SUMMARY, 0, prn);
+    sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
+	    pdinfo->varname[s->list[j+1]], s->n);
+    output_line(tmp, prn, 1);
 
     vals[0] = s->mean[j];
     vals[1] = s->median[j];
@@ -3873,7 +3860,7 @@ void print_summary (const Summary *summ,
 	return;
     }
 
-    if (summ->list[0] == 1) {
+    if (summ->list[0] == 1 && !(summ->opt & OPT_B)) {
 	print_summary_single(summ, 0, pdinfo, prn);
 	return;
     }
@@ -3888,7 +3875,7 @@ void print_summary (const Summary *summ,
 
     len = (maxlen <= 8)? 10 : maxlen + 1;
 
-    if (len > 14 || (summ->opt & OPT_S)) {
+    if (len > 14) {
 	/* printout gets broken with excessively long varnames */
 	for (i=0; i<summ->list[0]; i++) {
 	    print_summary_single(summ, i, pdinfo, prn);
@@ -3896,11 +3883,41 @@ void print_summary (const Summary *summ,
 	return;
     }
 
-    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, summ->missing, prn);
+    if (!(summ->opt & OPT_B)) {
+	prhdr(_("Summary statistics"), pdinfo, SUMMARY, summ->missing, prn);
+    }
 
-    pprintf(prn, "\n%s  ", _("Variable"));
-    pputs(prn, _("      MEAN           MEDIAN           MIN"
-            "             MAX\n\n"));
+    pputc(prn, '\n');
+
+    if (summ->opt & OPT_S) {
+	/* the "simple" option */
+	pprintf(prn, "%-*s", len + 6, " ");
+	pprintf(prn, "%-*s", 15, _("Mean"));
+	pprintf(prn, "%-*s", 15, _("Minimum"));
+	pprintf(prn, "%-*s", 15, _("Maximum"));
+	pprintf(prn, "%-*s", 15, _("Std. Dev."));
+	pputs(prn, "\n");
+
+	for (i=0; i<summ->list[0]; i++) {
+	    vi = summ->list[i + 1];
+	    pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
+	    printf15(summ->mean[i], prn);
+	    printf15(summ->low[i], prn);
+	    printf15(summ->high[i], prn);
+	    printf15(summ->sd[i], prn);
+	    pputc(prn, '\n');
+	}
+
+	pputs(prn, "\n\n");
+	return;
+    }
+
+    pprintf(prn, "%-*s", len + 6, " ");
+    pprintf(prn, "%-*s", 15, _("Mean"));
+    pprintf(prn, "%-*s", 15, _("Median"));
+    pprintf(prn, "%-*s", 15, _("Minimum"));
+    pprintf(prn, "%-*s", 15, _("Maximum"));
+    pputs(prn, "\n");
 
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
@@ -3913,9 +3930,12 @@ void print_summary (const Summary *summ,
     }
     pputc(prn, '\n');
 
-    pprintf(prn, "\n%s  ", _("Variable"));
-    pputs(prn, _("      S.D.            C.V.           "
-	 " SKEW          EXCSKURT\n\n"));
+    pprintf(prn, "%-*s", len + 6, " ");
+    pprintf(prn, "%-*s", 15, _("Std. Dev."));
+    pprintf(prn, "%-*s", 15, _("C.V."));
+    pprintf(prn, "%-*s", 15, _("Skewness"));
+    pprintf(prn, "%-*s", 15, _("Ex. kurtosis"));
+    pputs(prn, "\n");    
 
     for (i=0; i<summ->list[0]; i++) {
 	double cv;
@@ -3952,7 +3972,6 @@ void free_summary (Summary *summ)
 {
     free(summ->list);
     free(summ->stats);
-    free(summ->msg);
 
     free(summ);
 }
@@ -3966,8 +3985,6 @@ static Summary *summary_new (const int *list, gretlopt opt)
     if (s == NULL) {
 	return NULL;
     }
-
-    s->msg = NULL;
 
     s->list = gretl_list_copy(list);
     if (s->list == NULL) {

@@ -41,7 +41,6 @@ struct Summary_ {
     double *cv;
     double sw;
     double sb;
-    char *msg;
 };
 
 struct FreqDist_ {
