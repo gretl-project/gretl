@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-11 12:28-0400\n"
-"PO-Revision-Date: 2009-05-14 15:05+0300\n"
+"PO-Revision-Date: 2009-06-03 16:42+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -117,7 +117,7 @@ msgstr "sınama istatistiği"
 #: lib/src/adf_kpss.c:354 lib/src/adf_kpss.c:357 lib/src/adf_kpss.c:900
 #: lib/src/adf_kpss.c:904 lib/src/adf_kpss.c:907 plugin/stats_tables.c:238
 msgid "Critical values"
-msgstr "Eşik değerleri"
+msgstr "Kritik değerler"
 
 #: lib/src/adf_kpss.c:890
 msgid "Robust estimate of variance"
@@ -506,12 +506,12 @@ msgstr "Yüzde %d düzeyinde anlamlı"
 #: lib/src/compare.c:2250
 #, c-format
 msgid "(%d%% critical value %s %.2f)"
-msgstr "(%% %d eşik değeri %s %.2f)"
+msgstr "(%% %d kritik değeri %s %.2f)"
 
 #: lib/src/compare.c:2254
 #, c-format
 msgid "10%% critical value for q = 20 is %.2f"
-msgstr "q = 20 için %% 10 eşik değeri: %.2f"
+msgstr "q = 20 için %% 10 kritik değeri: %.2f"
 
 #: lib/src/compare.c:2257
 msgid "Not significant at the 10 percent level "
@@ -528,7 +528,7 @@ msgid ""
 "critical values are from Stock and Watson (2003)."
 msgstr ""
 "Bu istatistik ölçünlü F dağılımına uymamaktadır.\n"
-"Eşik değerleri Stock ve Watson (2003)'ten alınmadır."
+"Kritik değerler Stock ve Watson (2003)'ten alınmadır."
 
 #: lib/src/compare.c:2390
 msgid "Invalid sample split for Chow test"
@@ -1709,7 +1709,7 @@ msgstr "t(%d) = %g (çift-kuyruk p-değeri %.4f)\n"
 #: lib/src/describe.c:4427 lib/src/describe.c:4465 gui2/guiprint.c:964
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "%% 5 eşik değeri (çift-kuyruk) = %.4f (n = %d)"
+msgstr "%% 5 kritik değeri (çift-kuyruk) = %.4f (n = %d)"
 
 #: lib/src/describe.c:4456
 msgid "Correlation Coefficients"
@@ -3004,7 +3004,7 @@ msgstr "başarısız"
 #: lib/src/gretl_model.c:3195
 #, c-format
 msgid "%g percent critical value"
-msgstr "yüzde %g eşik değeri"
+msgstr "yüzde %g kritik değeri"
 
 #: lib/src/gretl_model.c:5145
 msgid "Can't retrieve uhat: data set has changed"
@@ -4367,7 +4367,7 @@ msgstr "2AEK (2SLS)"
 
 #: lib/src/modelprint.c:827
 msgid "Critical values for TSLS bias relative to OLS:\n"
-msgstr "2AEK'in SEK'e göre yanlılığı için eşik değerleri:\n"
+msgstr "2AEK'in SEK'e göre yanlılığı için kritik değerler:\n"
 
 #: lib/src/modelprint.c:830
 #, no-c-format
@@ -4376,7 +4376,7 @@ msgid ""
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 "Sayısal olarak % 5 anlamlılık düzeyindeki sınamalar için,\n"
-"arzulanan KBEO ençok büyüklüğü eşik değerleri:\n"
+"arzulanan KBEO ençoksal büyüklüğü kritik değerleri:\n"
 
 #: lib/src/modelprint.c:834
 #, no-c-format
@@ -4385,7 +4385,7 @@ msgid ""
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 "Sayısal olarak % 5 anlamlılık düzeyindeki sınamalar için,\n"
-"arzulanan 2AEK ençok büyüklüğü eşik değerleri:\n"
+"arzulanan 2AEK ençoksal büyüklüğü kritik değerleri:\n"
 
 #: lib/src/modelprint.c:838
 msgid "bias"
@@ -5852,7 +5852,7 @@ msgstr "çift-kuyruk olasılığı = %g"
 #: lib/src/pvalues.c:1477 gui2/calculator.c:1220
 #, c-format
 msgid "Critical value = %g"
-msgstr "Eşik değeri = %g"
+msgstr "Kritik değer = %g"
 
 #: lib/src/pvalues.c:1696
 #, c-format
@@ -6731,15 +6731,15 @@ msgstr "Geçersiz girdi"
 #: gui2/calculator.c:1064
 #, no-c-format
 msgid "5% critical values for Durbin-Watson statistic"
-msgstr "Durbin-Watson istatistiği % 5 eşik değerleri"
+msgstr "Durbin-Watson istatistiği % 5 kritik değerleri"
 
 #: gui2/calculator.c:1070 gui2/calculator.c:1275 gui2/calculator.c:2918
 msgid "gretl: critical values"
-msgstr "gretl: eşik değerleri"
+msgstr "gretl: kritik değerler"
 
 #: gui2/calculator.c:1259
 msgid "Failed to compute critical value"
-msgstr "Eşik değeri hesaplaması başarısız"
+msgstr "Kritik değer hesaplaması başarısız"
 
 #: gui2/calculator.c:1327
 msgid "Failed to compute p-value"
@@ -10410,7 +10410,7 @@ msgstr "İlinti katsayıları, %s--%s gözlemlerine dayalı"
 #: gui2/guiprint.c:1058
 #, c-format
 msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "n = %2$d için \\%% 5 eşik değeri (çift-kuyruk) = %1$.4f"
+msgstr "n = %2$d için \\%% 5 kritik değeri (çift-kuyruk) = %1$.4f"
 
 #: gui2/guiprint.c:1151 gui2/guiprint.c:1169
 msgid "Model estimation range:"
@@ -12980,7 +12980,7 @@ msgstr "Yukarı üçgensel"
 
 #: gui2/session.c:3309
 msgid "Symmetric"
-msgstr "Bakışık"
+msgstr "Bakışımlı"
 
 #: gui2/session.c:3314
 msgid "Positive definite"
@@ -14448,7 +14448,7 @@ msgstr "Yenilikçi dışadüşenler"
 
 #: plugin/tramo_options.c:665
 msgid "Critical value for outliers:"
-msgstr "Dışadüşenler için eşik değeri:"
+msgstr "Dışadüşenler için kritik değer:"
 
 #: plugin/tramo_options.c:749
 msgid "Non-seasonal differences:"
