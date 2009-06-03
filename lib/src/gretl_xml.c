@@ -1776,7 +1776,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    tmp = xmlGetProp(cur, (XUC) "discrete");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
-		    set_var_discrete(pdinfo, i, 1);
+		    series_set_flag(pdinfo, i, VAR_DISCRETE);
 		}
 		free(tmp);
 	    }

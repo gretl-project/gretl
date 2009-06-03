@@ -254,6 +254,16 @@ typedef enum {
  */
 #define unset_var_listarg(p, i) (p->varinfo[i]->flags &= ~VAR_LISTARG)
 
+/**
+ * series_set_flag:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ * @f: flag to set.
+ *
+ * Set the given flag on the given (series) variable.
+ */
+#define series_set_flag(p, i, f) (p->varinfo[i]->flags |= f)
+
 #define sample_size(p) ((p == NULL)? 0 : (p->t2 - p->t1 + 1))
 
 void free_Z (double **Z, DATAINFO *pdinfo);

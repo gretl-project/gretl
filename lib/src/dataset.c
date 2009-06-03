@@ -1552,7 +1552,7 @@ int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name)
 
     if (strcmp(pdinfo->varname[v], name)) {
 	strcpy(pdinfo->varname[v], name);
-	dataset_changed = 1;
+	set_dataset_is_changed();
     }
 
     return 0;
@@ -2527,10 +2527,10 @@ void set_var_discrete (DATAINFO *pdinfo, int i, int s)
 
 	if (s && !(flags & VAR_DISCRETE)) {
 	    pdinfo->varinfo[i]->flags |= VAR_DISCRETE;
-	    dataset_changed = 1;
+	    set_dataset_is_changed();
 	} else if (!s && (flags & VAR_DISCRETE)) {
 	    pdinfo->varinfo[i]->flags &= ~VAR_DISCRETE;
-	    dataset_changed = 1;
+	    set_dataset_is_changed();
 	}
     }
 }
@@ -2595,7 +2595,7 @@ int var_set_description (DATAINFO *pdinfo, int i,
     if (strcmp(targ, s)) {
 	*targ = 0;
 	strncat(targ, s, MAXLABEL - 1);
-	dataset_changed = 1;
+	set_dataset_is_changed();
     }
 
     return 0;
@@ -2609,7 +2609,7 @@ int var_set_display_name (DATAINFO *pdinfo, int i,
     if (strcmp(targ, s)) {
 	*targ = 0;
 	strncat(targ, s, MAXDISP - 1);
-	dataset_changed = 1;
+	set_dataset_is_changed();
     }
 
     return 0;

@@ -1265,7 +1265,7 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 	    int v = list[i];
 	    int cv = is_codevar(c->dinfo->varname[v]);
 
-	    set_var_discrete(c->dinfo, v, 1);
+	    series_set_flag(c->dinfo, v, VAR_DISCRETE);
 
 	    if (!cv) {
 		double nnfrac;
