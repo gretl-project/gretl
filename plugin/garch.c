@@ -843,7 +843,7 @@ static void clean_dropped_vars (MODEL mod, int *list)
     if (list[0] - mod.list[0] > 3) {
 	int i;
         list[0] = mod.list[0] + 3;
-	for (i=4; i<list[0]; i++) {
+	for (i=4; i<=list[0]; i++) {
 	    list[i] = mod.list[i-3];
 	}
     }
