@@ -1,7 +1,7 @@
 version 1.8.2, in progress
 - Fixes for GARCH "corner cases"
 - "summary" command: add --simple and --by=byvar options
-
+- Fix another XLS import bug
 
 5/21/2009 version 1.8.1
 - Fix bugs 2533543, 2590417, 2604963, 2687954, 2734471, 

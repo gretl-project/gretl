@@ -1286,6 +1286,8 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	    sprintf(pdinfo->varname[j], "v%d", j);
 	} else if (rows[roff].cells[i] == NULL) {
 	    sprintf(pdinfo->varname[j], "v%d", j);
+	} else if (i >= rows[roff].end) {
+	    sprintf(pdinfo->varname[j], "v%d", j);
 	} else {
 	    strncat(pdinfo->varname[j], rows[roff].cells[i] + 1, 
 		    VNAMELEN - 1);

@@ -714,6 +714,9 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
 
+	gtk_widget_destroy(filesel);
+	filesel = NULL;
+
 	if (fname != NULL) {
 #ifdef G_OS_WIN32
 	    fname = inplace_windows_filename(fname);
@@ -723,7 +726,9 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	}
     } 
 
-    gtk_widget_destroy(filesel);
+    if (filesel != NULL) {
+	gtk_widget_destroy(filesel);
+    }
 }
 
 void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)

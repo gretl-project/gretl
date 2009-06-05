@@ -4047,10 +4047,10 @@ static void msgbox (const char *msg, int msgtype)
 	gsize bytes;
 
 	trmsg = g_locale_to_utf8(msg, -1, NULL, &bytes, NULL);
-    }     
+    }   
 
-    dialog = gtk_message_dialog_new(NULL, /* GTK_WINDOW(mdata->w), */
-				    GTK_DIALOG_DESTROY_WITH_PARENT,
+    dialog = gtk_message_dialog_new(NULL, /* GTK_WINDOW(mdata->main) */
+				    0,    /* GTK_DIALOG_DESTROY_WITH_PARENT */
 				    msgtype,
 				    GTK_BUTTONS_CLOSE,
 				    (trmsg != NULL)? trmsg : msg);
@@ -4061,6 +4061,13 @@ static void msgbox (const char *msg, int msgtype)
     gtk_window_set_title(GTK_WINDOW(dialog), _(title));
 
     gtk_dialog_run(GTK_DIALOG(dialog));
+
+    /* ?? with gtk 2.16.2, the above produces 
+       "Gdk-CRITICAL **: gdk_x11_atom_to_xatom_for_display: 
+       assertion `atom != GDK_NONE' failed", when Close
+       is clicked.
+    */
+
     gtk_widget_destroy(dialog);
 
     if (trmsg != NULL) {

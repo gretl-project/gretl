@@ -396,6 +396,11 @@ void add_sheets_list (GtkWidget *vbox, wbook *book)
     gtk_container_add (GTK_CONTAINER(sw), view); 
 }
 
+static void make_wmenu_modal (GtkWidget *w, gpointer p)
+{
+    gtk_window_set_modal(GTK_WINDOW(w), TRUE);
+}
+
 static void wsheet_menu (wbook *book, int multisheet)
 {
     GtkWidget *w, *tmp, *label;
@@ -410,6 +415,8 @@ static void wsheet_menu (wbook *book, int multisheet)
 			   G_CALLBACK(wsheet_menu_cancel), book);
     g_signal_connect(G_OBJECT(w), "destroy",  
 		     G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT(w), "realize",
+		     G_CALLBACK(make_wmenu_modal), NULL);
 
     vbox = GTK_DIALOG(w)->vbox;
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
@@ -492,8 +499,5 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_entry_set_activates_default(GTK_ENTRY(book->rowspin), TRUE);
 
     gtk_widget_show_all(w);
-
-    gtk_window_set_modal(GTK_WINDOW(w), TRUE);
-
     gtk_main();
 }
