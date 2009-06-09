@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-11 12:28-0400\n"
-"PO-Revision-Date: 2009-06-09 11:09+0200\n"
+"PO-Revision-Date: 2009-06-09 12:07+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -14155,11 +14155,11 @@ msgstr "Valor propio"
 
 #: plugin/johansen.c:1451
 msgid "Trace test"
-msgstr "Estadístico de la traza"
+msgstr "Estad. traza"
 
 #: plugin/johansen.c:1452
 msgid "Lmax test"
-msgstr "Estadístico Lmáx"
+msgstr "Estad. Lmáx"
 
 #: plugin/johansen.c:1537
 msgid "Failed to find eigenvalues\n"
