@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-11 12:28-0400\n"
-"PO-Revision-Date: 2009-06-09 12:07+0200\n"
+"PO-Revision-Date: 2009-06-09 12:19+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -11093,7 +11093,7 @@ msgstr "Gráficos de los residuos"
 
 #: gui2/gui_utils.c:3324
 msgid "Combined residual plot"
-msgstr "Gráfico de los residuos combinado"
+msgstr "Gráfico de los residuos conjunto"
 
 #: gui2/gui_utils.c:3332
 msgid "VAR inverse roots"
@@ -11101,7 +11101,7 @@ msgstr "raíces inversas del VAR"
 
 #: gui2/gui_utils.c:3340
 msgid "Impulse responses (combined)"
-msgstr "Respuestas al impulso (combinadas)"
+msgstr "Respuestas al impulso (todas)"
 
 #: gui2/gui_utils.c:3370
 #, c-format
