@@ -7,6 +7,8 @@ version 1.8.2, in progress
   $error is set to a non-zero value
 - Add fcstats function to provide statistics for evaluation of
   forecasts
+- Rationalize use of GRETL_KEEP_GOING and halt_on_error: induce
+  consistency between CLI and GUI programs
 
 5/21/2009 version 1.8.1
 - Fix bugs 2533543, 2590417, 2604963, 2687954, 2734471, 
