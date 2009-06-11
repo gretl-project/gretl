@@ -18,6 +18,9 @@
  */
 
 #include "libgretl.h"
+#include "gretl_func.h"
+#include "libset.h"
+#include "monte_carlo.h"
 
 #include <errno.h>
 
@@ -251,6 +254,18 @@ int get_gretl_errno (void)
 int check_gretl_errno (void)
 {
     return gretl_errno;
+}
+
+int gretl_error_is_fatal (void)
+{
+    if (gretl_compiling_function() ||
+	gretl_compiling_loop()) {
+	return 1;
+    } else if (libset_get_bool(HALT_ON_ERR) == 0) {
+	return 0;
+    } else {
+	return gretl_in_batch_mode();
+    }
 }
 
 #if 0 /* not yet */

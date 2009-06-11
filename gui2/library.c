@@ -5857,6 +5857,7 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     gpointer vp = NULL;
     gint x, y;
     PRN *prn;
+    int save_batch;
     int shown = 0;
     int err;
 
@@ -5890,7 +5891,9 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 
     gdk_flush();
 
+    save_batch = gretl_in_batch_mode();
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
+    gretl_set_batch_mode(save_batch);
 
     if (wcurr != NULL) {
 	gdk_window_set_cursor(wcurr, NULL);
@@ -6908,6 +6911,8 @@ static int execute_script (const char *runfile, const char *buf,
     int indent0, bufread = 0;
     int exec_err = 0;
 
+    gretl_set_batch_mode(1);
+
 #if 0
     debug_print_model_info(models[0], "Start of execute_script, models[0]");
 #endif
@@ -6991,6 +6996,10 @@ static int execute_script (const char *runfile, const char *buf,
 		}
 		state.flags = exec_code;
 		exec_err = gui_exec_line(&state, &Z, datainfo);
+	    }
+
+	    if (exec_err && !gretl_error_is_fatal()) {
+		exec_err = 0;
 	    }
 
 	    if (exec_err) {
@@ -7444,6 +7453,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    int orig_code = s->flags;
 	    int script_code = s->flags;
+	    int save_batch;
 
 	    if (s->flags == CONSOLE_EXEC) {
 		script_code = SCRIPT_EXEC;
@@ -7454,7 +7464,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		}
 		script_code |= INCLUDE_EXEC;
 	    }
+	    save_batch = gretl_in_batch_mode();
 	    err = execute_script(runfile, NULL, prn, script_code);
+	    gretl_set_batch_mode(save_batch);
 	    if (!err && orig_code == CONSOLE_EXEC) {
 		console_run = 1;
 	    }

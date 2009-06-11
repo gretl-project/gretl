@@ -92,4 +92,6 @@ int get_gretl_errno (void);
 
 int check_gretl_errno (void);
 
+int gretl_error_is_fatal (void);
+
 #endif /* GRETL_ERRORS_H */

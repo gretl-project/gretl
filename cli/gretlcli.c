@@ -51,11 +51,6 @@
 # include <unistd.h>
 #endif 
 
-enum {
-    ERRFATAL_AUTO,
-    ERRFATAL_FORCE
-};
-
 #ifdef HAVE_READLINE
 # include <readline/readline.h>
 /* readline functions from complete.c */
@@ -70,7 +65,7 @@ char syscmd[MAXLEN];
 PATHS paths;                  /* useful paths */
 PRN *cmdprn;
 FILE *fb;
-int errfatal, batch;
+int batch;
 int runit;
 int data_status;
 char linebak[MAXLINE];      /* for storing comments */
@@ -289,27 +284,6 @@ static int maybe_get_input_line_continuation (char *line)
     }
 
     return err;
-}
-
-static void set_errfatal (int code)
-{
-    static int hoe = -1;
-
-    if (hoe < 0) {
-	hoe = libset_get_bool(HALT_ON_ERR);
-    }
-
-    if (code == ERRFATAL_FORCE) {
-	/* for contexts where continuation on error is
-	   bound to make a big mess */
-	errfatal = 1;
-    } else if (hoe == 0) {
-	/* we've been explicitly told to keep going on error */
-	errfatal = 0;
-    } else {
-	/* default: errors are fatal in batch mode only */
-	errfatal = batch;
-    }
 }
 
 static int xout;
@@ -554,14 +528,11 @@ int main (int argc, char *argv[])
 	exec_line(&state, &Z, datainfo);
     }
 
-    /* should we stop immediately on error, in batch mode? */
-    set_errfatal(ERRFATAL_AUTO);
-
     /* main command loop */
     while (cmd.ci != QUIT && fb != NULL && !xout) {
 	char linecopy[MAXLINE];
 
-	if (err && errfatal) {
+	if (err && gretl_error_is_fatal()) {
 	    gretl_abort(linecopy);
 	}
 
@@ -569,7 +540,6 @@ int main (int argc, char *argv[])
 	    if (gretl_loop_exec(&state, &Z, datainfo)) {
 		return 1;
 	    }
-	    set_errfatal(ERRFATAL_AUTO);
 	} else {
 	    err = cli_get_input_line(&state, &Z, datainfo);
 	    if (err) {
@@ -828,7 +798,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 	    err = gretl_loop_append_line(s, pZ, pdinfo);
 	    if (err) {
-		set_errfatal(ERRFATAL_FORCE);
 		errmsg(err, prn);
 	    } else if (!batch && !runit) {
 		/* echo to record */
