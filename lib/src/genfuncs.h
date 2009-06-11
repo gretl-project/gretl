@@ -106,4 +106,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 			 const DATAINFO *pdinfo,
 			 int p, int *err);
 
+gretl_matrix *forecast_stats (const double *y, const double *f,
+			      int t1, int t2, int *err);
+
 #endif /* GENFUNCS_H */

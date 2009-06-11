@@ -3242,15 +3242,25 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 }
 
 /* functions taking two series as arguments and returning a scalar
-   result */
+   or matrix result */
 
 static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
+    if (starting(p)) {
 	const double *x = l->v.xvec;
 	const double *y = r->v.xvec;
+
+	if (f == F_FCSTATS) {
+	    ret = aux_matrix_node(p);
+	} else {
+	    ret = aux_scalar_node(p);
+	}
+
+	if (ret == NULL) {
+	    return NULL;
+	}
 
 	switch (f) {
 	case F_COR:
@@ -3259,9 +3269,13 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	case F_COV:
 	    ret->v.xval = gretl_covar(p->dinfo->t1, p->dinfo->t2, x, y, NULL);
 	    break;
+	case F_FCSTATS:
+	    ret->v.m = forecast_stats(x, y, p->dinfo->t1, p->dinfo->t2, &p->err);
 	default:
 	    break;
 	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -6407,6 +6421,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_COR:
     case F_COV:
+    case F_FCSTATS:
 	/* functions taking two series as args */
 	if (l->t == VEC && r->t == VEC) {
 	    ret = series_2_func(l, r, t->t, p);

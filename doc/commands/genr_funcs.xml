@@ -1391,6 +1391,64 @@
       </description>
     </function>
 
+    <function name="fcstats" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series">f</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Produces a column vector holding several statistics which may be
+	  used for evaluating the series <argname>f</argname> as a forecast of
+	  the series <argname>y</argname>.  The layout of the returned vector
+	  is as follows: 
+	</para>
+	<code>
+	  1  T
+	  2  Mean Error (ME)
+	  3  Mean Squared Error (MSE)
+	  4  Mean Absolute Error (MAE)
+	  5  Mean Percentage Error (MPE)
+	  6  Mean Absolute Percentage Error (MAPE)
+	  7  Theil's U1
+	  8  Tdiff
+	  9  Theil's U2
+	</code>
+	<para>
+	  where <lit>T</lit> denotes the number of observations used for the
+	  statistics in levels and <lit>Tdiff</lit> denotes the number of
+	  observations used in calculating Theil's <math>U</math><sub>2</sub>.
+	</para>
+	<para context="notex">
+	  For details on the calculation of these statistics, and the
+	  interpretation of the <math>U</math> values, please see 
+	  the Gretl Command Reference (FIXME crossref).
+	</para>
+	<para context="tex">
+	  Let $e_t$ denote the forecast error, $y_t - f_t$.  The various
+	  measures are defined thus: \[ {\rm ME} = \frac{1}{T} \sum_{t=1}^T
+	  e_t \qquad {\rm MSE} = \frac{1}{T} \sum_{t=1}^T e_t^2 \qquad {\rm
+	  MAE} = \frac{1}{T} \sum_{t=1}^T |e_t| \\ \] \[ {\rm MPE} =
+	  \frac{1}{T} \sum_{t=1}^T 100\, \frac{e_t}{y_t} \qquad {\rm MAPE} =
+	  \frac{1}{T} \sum_{t=1}^T 100\, \frac{|e_t|}{y_t} \] \[ U_1 =
+	  \frac{\sqrt{\frac{1}{T} \sum_{t=1}^T (y_t - f_t)^2}}
+	  {\sqrt{\frac{1}{T} \sum_{t=1}^T y_t^2} \, \sqrt{\frac{1}{T}
+	  \sum_{t=1}^T f_t^2}} \] \[ U_2 = \frac{\sqrt{\frac{1}{T}
+	  \sum_{t=1}^{T-1} \left(\frac{f_{t+1} - y_{t+1}}{y_t}\right)^2}}
+	  {\sqrt{\frac{1}{T} \sum_{t=1}^{T-1} \left(\frac{y_{t+1} -
+	  y_t}{y_t}\right)^2}} \] 
+	  The more accurate the forecasts, the lower the value of the Theil
+	  $U$ statistics. $U_1$ is bounded by 0 and 1, with 0 indicating
+	  maximal accuracy.  The $U_2$ measure can be interpreted as the ratio
+	  of the root mean squared error (RMSE) of the proposed forecasting
+	  model to the RMSE of a naive model which simply predicts $y_{t+1} =
+	  y_t$ for all $t$.  The naive model yields $U_2 = 1$; values less
+	  than 1 indicate an improvement relative to this benchmark and values
+	  greater than 1 a deterioration.  
+	</para>
+      </description>
+    </function>
+
     <function name="fdjac" section="numerical" output="matrix">
       <fnargs>
 	<fnarg type="cvec">b</fnarg>

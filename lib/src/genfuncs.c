@@ -2762,3 +2762,111 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
     return XCF;
 }
 
+/* cf. http://www.economicsnetwork.ac.uk/showcase/cook_forecast
+   by Steven Cook of Swansea University <s.cook@Swansea.ac.uk>
+   Published October 2006; with XLS example file.
+*/
+
+gretl_matrix *forecast_stats (const double *y, const double *f,
+			      int t1, int t2, int *err)
+{
+    gretl_matrix *m = NULL;
+    double et, ME, MSE, MAE, MPE, MAPE;
+    double U1, U2, u[2];
+    int t, n = 0, nd = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(y[t]) && !na(f[t])) {
+	    n++;
+	    if (t > t1 && !na(y[t-1]) && !na(f[t-1])) {
+		nd++;
+	    }
+	}
+    }
+
+    if (n == 0 || nd == 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    m = gretl_zero_matrix_new(9, 1);
+    if (m == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    gretl_vector_set(m, 0, n);
+
+    /* level-based statistics */
+    
+    ME = MSE = MAE = MPE = MAPE = 0.0;
+    u[0] = u[1] = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(y[t]) && !na(f[t])) {
+	    et = y[t] - f[t];
+	    ME += et;
+	    MSE += et * et;
+	    MAE += fabs(et);
+	    if (y[t] == 0.0) {
+		MPE = MAPE = M_NA;
+	    } else {
+		MPE += 100 * et / y[t];
+		MAPE += 100 * fabs(et) / y[t];
+	    }
+	    u[0] += y[t] * y[t];
+	    u[1] += f[t] * f[t];
+	}
+    }
+
+    ME /= n;
+    MSE /= n;
+    MAE /= n;
+    if (!isnan(MPE)) {
+	MPE /= n;
+    }
+    if (!isnan(MAPE)) {
+	MAPE /= n;
+    }
+    U1 = sqrt(MSE) / (sqrt(u[0] / n) + sqrt(u[1] / n));
+
+    gretl_vector_set(m, 1, ME);
+    gretl_vector_set(m, 2, MSE);
+    gretl_vector_set(m, 3, MAE);
+    gretl_vector_set(m, 4, MPE);
+    gretl_vector_set(m, 5, MAPE);
+    gretl_vector_set(m, 6, U1);
+
+    /* difference-based Theil U2 statistic */
+
+    gretl_vector_set(m, 7, nd);
+    u[0] = u[1] = 0.0;
+
+    for (t=t1+1; t<=t2; t++) {
+	double x;
+
+	if (!na(y[t]) && !na(f[t]) && !na(y[t-1]) && !na(f[t-1])) {
+	    if (y[t-1] == 0.0) {
+		u[0] = M_NA;
+		break;
+	    } else {
+		x = (f[t] - y[t]) / y[t-1];
+		u[0] += x * x;
+		x = (y[t-1] - y[t]) / y[t-1];
+		u[1] += x * x;
+	    }
+	}
+    }
+
+    if (isnan(u[0]) || isnan(u[1]) || u[1] == 0.0) {
+	U2 = M_NA;
+    } else {
+	nd++;
+	U2 = sqrt(u[0] / nd) / sqrt(u[1] / nd);
+    }
+
+    gretl_vector_set(m, 8, U2);
+
+    return m;
+}
+
