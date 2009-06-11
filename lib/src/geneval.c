@@ -5589,6 +5589,8 @@ static double dvar_get_value (int i, parser *p)
 #endif
     case R_VERSION:
 	return get_version_as_scalar();
+    case R_ERRNO:
+	return get_gretl_errno();
     default:
 	return NADBL;
     }

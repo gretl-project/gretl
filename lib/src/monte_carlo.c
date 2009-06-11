@@ -2757,8 +2757,14 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		    err = gretl_cmd_exec(s, pZ, pdinfo);
 		}
 		if (!err) {
-		    /* record the results */
-		    if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {
+		    int moderr = check_gretl_errno();
+
+		    if (moderr) {
+			if (loop_is_progressive(loop) || 
+			    model_print_deferred(cmd->opt)) {
+			    err = moderr;
+			}
+		    } else if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {
 			err = loop_model_update(lmod, s->models[0]);
 			set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 		    } else if (model_print_deferred(cmd->opt)) {

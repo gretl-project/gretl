@@ -220,6 +220,8 @@ void gretl_errmsg_set_from_errno (const char *s)
     }
 }
 
+static int gretl_errno;
+
 /**
  * gretl_error_clear:
  *
@@ -231,6 +233,24 @@ void gretl_error_clear (void)
     *gretl_errmsg = '\0';
     error_printed = 0;
     errno = 0;
+}
+
+void set_gretl_errno (int err)
+{
+    gretl_errno = err;
+}
+
+int get_gretl_errno (void)
+{
+    int err = gretl_errno;
+
+    gretl_errno = 0;
+    return err;
+}
+
+int check_gretl_errno (void)
+{
+    return gretl_errno;
 }
 
 #if 0 /* not yet */

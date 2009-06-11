@@ -3883,6 +3883,8 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
     }
 }
 
+#define allow_noconv(c) (c == NLS || c == MLE || c == GMM || c == ARMA)
+
 /* Print a model that was just estimated, provided it's not carrying
    an error code, and provided we're not in looping mode, in which
    case the printing (or not) of models requires special handling.  In
@@ -3894,12 +3896,21 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 			      PRN *prn, ExecState *s)
 {
-    if (pmod->errcode == 0 && !gretl_looping_currently()) {
+    int err = pmod->errcode;
+
+    if (!err && !gretl_looping_currently()) {
 	printmodel(pmod, pdinfo, s->cmd->opt, prn);
 	s->pmod = pmod;
     }
 
-    return pmod->errcode;
+    if (err == E_NOCONV && allow_noconv(pmod->ci)) {
+	/* allow continuation */
+	errmsg(err, prn);
+	set_gretl_errno(err);
+	err = 0;
+    }
+
+    return err;
 }
 
 static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
@@ -4168,9 +4179,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (cmd->ci == OLS && dataset_is_panel(pdinfo)) {
-	/* FIXME is this too funky? */
 	cmd->ci = PANEL;
-	cmd->opt |= OPT_P; /* panel pooled flag */
+	cmd->opt |= OPT_P; /* panel pooled OLS flag */
     }
 
     if (pZ != NULL) {
