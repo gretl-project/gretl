@@ -966,7 +966,6 @@ static int hausman_allocate (panelmod_t *pan)
 	if (pan->bdiff == NULL) {
 	    return E_ALLOC;
 	}
-
 	/* array to hold covariance matrix */
 	pan->Sigma = gretl_matrix_alloc(k, k);
 	if (pan->Sigma == NULL) {

@@ -1399,26 +1399,20 @@
       <description>
 	<para>
 	  Produces a column vector holding several statistics which may be
-	  used for evaluating the series <argname>f</argname> as a forecast of
-	  the series <argname>y</argname>.  The layout of the returned vector
-	  is as follows: 
+	  used for evaluating the series <argname>f</argname> as a
+	  forecast of the series <argname>y</argname> over the current
+	  sample range.  The layout of the returned vector is as follows:
 	</para>
 	<code>
-	  1  T
-	  2  Mean Error (ME)
-	  3  Mean Squared Error (MSE)
-	  4  Mean Absolute Error (MAE)
-	  5  Mean Percentage Error (MPE)
-	  6  Mean Absolute Percentage Error (MAPE)
-	  7  Theil's U1
-	  8  Tdiff
-	  9  Theil's U2
+	  1  Mean Error (ME)
+	  2  Mean Squared Error (MSE)
+	  3  Mean Absolute Error (MAE)
+	  4  Mean Percentage Error (MPE)
+	  5  Mean Absolute Percentage Error (MAPE)
+	  6  Theil's U1
+	  7  Theil's U2
+	  8  Number of observations used (T)
 	</code>
-	<para>
-	  where <lit>T</lit> denotes the number of observations used for the
-	  statistics in levels and <lit>Tdiff</lit> denotes the number of
-	  observations used in calculating Theil's <math>U</math><sub>2</sub>.
-	</para>
 	<para context="notex">
 	  For details on the calculation of these statistics, and the
 	  interpretation of the <math>U</math> values, please see 
