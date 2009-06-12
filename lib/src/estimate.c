@@ -1258,6 +1258,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  *   %OPT_B: don't compute R^2.
  *   %OPT_I: compute Durbin-Watson p-value.
  *   %OPT_Q: use QR decomposition (not necessarily robust VCV).
+ *   %OPT_U: treat null model as OK.
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.

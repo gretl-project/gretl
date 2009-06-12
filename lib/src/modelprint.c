@@ -158,7 +158,7 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
 	int LRdf = gretl_model_get_int(pmod, "garch_LR_df");
 	
 	pprintf(prn, "%s = %.*g\n", _(varstr), GRETL_DIGITS, v);
-	if (pmod->opt & OPT_U) {
+	if (pmod->opt & OPT_E) {
 	    pprintf(prn, "%s\n", _("The residuals are standardized"));
 	}
 	if (LR >= 0 && LRdf > 0) {

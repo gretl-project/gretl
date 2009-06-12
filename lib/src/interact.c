@@ -3883,7 +3883,9 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-#define allow_noconv(c) (c == NLS || c == MLE || c == GMM || c == ARMA)
+#define numerical_error(e) (e == E_NOCONV || e == E_JACOBIAN || \
+                            e == E_NAN || e == E_SINGULAR)
+#define allow_continue(m) (m->opt & OPT_U)
 
 /* Print a model that was just estimated, provided it's not carrying
    an error code, and provided we're not in looping mode, in which
@@ -3903,8 +3905,7 @@ static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 	s->pmod = pmod;
     }
 
-    if (err == E_NOCONV && allow_noconv(pmod->ci)) {
-	/* allow continuation */
+    if (numerical_error(err) && allow_continue(pmod)) {
 	errmsg(err, prn);
 	set_gretl_errno(err);
 	err = 0;

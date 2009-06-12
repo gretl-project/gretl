@@ -2930,7 +2930,11 @@ MODEL arma_model (const int *list, const char *pqspec,
 
  bailout:
 
-    if (!armod.errcode) {
+    if (armod.errcode) {
+	if (opt & OPT_U) {
+	    armod.opt |= OPT_U; /* continue on error */
+	}
+    } else {
 	gretl_model_smpl_init(&armod, pdinfo);
     }
 

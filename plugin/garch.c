@@ -871,7 +871,7 @@ static void garch_standardize_residuals (MODEL *pmod)
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    pmod->uhat[t] /= sqrt(h[t]);
 	}
-	pmod->opt |= OPT_U;
+	pmod->opt |= OPT_E;
     }
 }
 
@@ -947,12 +947,15 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     if (model.errcode == 0) {
-	if (opt & OPT_U) {
+	if (opt & OPT_E) {
 	    garch_standardize_residuals(&model);
 	}
 	if (!na(llr) && ols_T == model.nobs) {
 	    garch_add_lr_test(&model, llr, cmdlist);
 	}
+    } else if (opt & OPT_U) {
+	/* continue on error */
+	model.opt |= OPT_U;
     }
 
     free(list);

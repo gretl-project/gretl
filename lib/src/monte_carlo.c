@@ -2638,8 +2638,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     LOOP_MODEL *lmod;
     LOOP_PRINT *lprn;
     char errline[MAXLINE];
-    int indent0, mod_id = 0;
-    int subst, lrefresh;
+    int indent0, subst, lrefresh;
     int j, err = 0;
 
     /* for the benefit of the caller: register the fact that execution
@@ -2717,9 +2716,11 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		lrefresh = 1;
 	    }
 
-	    if (gretl_echo_on() && indexed_loop(loop)) {
+	    if (gretl_echo_on()) {
 		if (s->cmd->ci == ENDLOOP) {
-		    pputc(prn, '\n');
+		    if (indexed_loop(loop)) {
+			pputc(prn, '\n');
+		    }
 		} else if (!loop_is_quiet(loop)) {
 		    echo_cmd(cmd, pdinfo, line, CMD_BATCH_MODE, prn);
 		}
@@ -2763,6 +2764,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			if (loop_is_progressive(loop) || 
 			    model_print_deferred(cmd->opt)) {
 			    err = moderr;
+			} else {
+			    errmsg(moderr, prn);
 			}
 		    } else if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {
 			err = loop_model_update(lmod, s->models[0]);
@@ -2773,7 +2776,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			set_as_last_model(pmod, GRETL_OBJ_EQN);
 			model_count_minus();
 		    } else {
-			s->models[0]->ID = ++mod_id; /* ?? */
 			if (!(cmd->opt & OPT_Q)) {
 			    printmodel(s->models[0], pdinfo, cmd->opt, prn);
 			}
@@ -2814,7 +2816,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		err = gretl_cmd_exec(s, pZ, pdinfo);
 		if (!err && block_model(cmd)) {
 		    /* NLS, etc. */
-		    s->models[0]->ID = ++mod_id;
 		    printmodel(s->models[0], pdinfo, cmd->opt, prn);
 		    set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 		}

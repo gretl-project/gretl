@@ -1751,8 +1751,7 @@ static MODEL GNR (nlspec *spec, const double **Z, DATAINFO *pdinfo,
     } 
 
     if (gnr.list[0] != glist[0]) {
-	strcpy(gretl_errmsg, _("Failed to calculate Jacobian"));
-	gnr.errcode = E_DATA;
+	gnr.errcode = E_JACOBIAN;
     }
 
     if (gnr.errcode == 0) {
@@ -2945,7 +2944,9 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 
     if (!(opt & OPT_A)) {
 	if (nlmod.errcode) {
-	    nlmod.ci = spec->ci;
+	    if (opt & OPT_U) {
+		nlmod.opt |= OPT_U; /* continue on error */
+	    }
 	} else {
 	    set_model_id(&nlmod);
 	}

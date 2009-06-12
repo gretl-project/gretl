@@ -908,6 +908,11 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     free(alist);
     arma_info_cleanup(&ainfo);
 
+    if (armod.errcode && (opt & OPT_U)) {
+	/* continue on error */
+	armod.opt |= OPT_U;
+    }
+
     return armod;
 }
 
