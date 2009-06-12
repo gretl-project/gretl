@@ -28,6 +28,7 @@
 #include "gretl_scalar.h"
 
 #include <time.h>
+#include <glib.h>
 
 #define PDEBUG 0
 
@@ -2344,6 +2345,73 @@ int print_data_sorted (const int *list, const int *obsvec,
     return 0;
 }
 
+static int print_fcast_stats (const FITRESID *fr, PRN *prn)
+{
+    const char *strs[] = {
+	N_("Mean Error"),
+	N_("Mean Squared Error"),
+	N_("Root Mean Squared Error"),
+	N_("Mean Absolute Error"),
+	N_("Mean Percentage Error"),
+	N_("Mean Absolute Percentage Error"),
+	N_("Theil's U1"),
+	N_("Theil's U2"),
+	N_("Observations used")
+    };
+    gretl_matrix *m;
+    double x;
+    int i, j, t1, t2;
+    int n, nmax = 0;
+    int err = 0;
+
+    fcast_get_continuous_range(fr, &t1, &t2);
+
+    if (t2 - t1 + 1 <= 0) {
+	return E_MISSDATA;
+    }
+
+    m = forecast_stats(fr->actual, fr->fitted, t1, t2, &err);
+    if (err) {
+	return err;
+    }
+
+    j = 0;
+    for (i=0; i<8; i++) {
+	x = gretl_vector_get(m, i);
+	if (!isnan(x)) {
+	    n = g_utf8_strlen(_(strs[j]), -1);	    
+	    if (n > nmax) nmax = n;
+	    if (i == 2) {
+		n = g_utf8_strlen(_(strs[j+1]), -1);
+		if (n > nmax) nmax = n;
+	    }
+	}
+	j += (i == 2)? 2 : 1;
+    }
+
+    nmax += 2;
+
+    pputs(prn, _("Forecast evaluation statistics"));
+    pputs(prn, "\n\n");
+
+    j = 0;
+    for (i=0; i<8; i++) {
+	x = gretl_vector_get(m, i);
+	if (!isnan(x)) {
+	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[j]), nmax), _(strs[j]), x);
+	    if (i == 1) {
+		pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[j+1]), nmax), 
+			_(strs[j+1]), sqrt(x));	
+	    }
+	}
+	j += (i == 1)? 2 : 1;
+    }
+    
+    gretl_matrix_free(m);
+
+    return err;
+}
+
 #define SIGMA_MIN 1.0e-18
 
 int
@@ -2353,9 +2421,6 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
     int kstep = fr->method == FC_KSTEP;
     int t, anyast = 0;
     double yt, yf, et;
-    double MSE = 0.0;
-    double AE = 0.0;
-    int effn = 0;
     int err = 0;
 
     fit_resid_head(fr, pdinfo, prn); 
@@ -2386,11 +2451,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
 	} else {
 	    int ast = 0;
 
-	    if (kstep) {
-		MSE += et * et;
-		AE += fabs(et);
-		effn++;
-	    } else if (fr->sigma > SIGMA_MIN) {
+	    if (!kstep && fr->sigma > SIGMA_MIN) {
 		ast = (fabs(et) > 2.5 * fr->sigma);
 		if (ast) {
 		    anyast = 1;
@@ -2416,12 +2477,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
 		     "2.5 standard errors\n"));
     }
 
-    if (effn > 0) {
-	MSE /= effn;
-	pprintf(prn, "%s = %g\n", _("Mean Squared Error"), MSE);
-	pprintf(prn, "%s = %g\n", _("Root Mean Squared Error"), sqrt(MSE));
-	pprintf(prn, "%s = %g\n", _("Mean Absolute Error"), AE / effn);
-    }
+    print_fcast_stats(fr, prn);
 
     if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
 	err = plot_fcast_errs(fr, NULL, pdinfo, OPT_NONE);
@@ -2533,6 +2589,8 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
     }
 
     pputc(prn, '\n');
+
+    print_fcast_stats(fr, prn);
 
     /* do we really want a plot for non-time series? */
 

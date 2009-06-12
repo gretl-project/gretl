@@ -81,6 +81,8 @@ FITRESID *
 rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			  int t1, int t2, int k, int pre_n, int *err);
 
+void fcast_get_continuous_range (const FITRESID *fr, int *pt1, int *pt2);
+
 void forecast_matrix_cleanup (void);
 
 #endif /* FORECAST_H */

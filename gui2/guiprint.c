@@ -1138,6 +1138,60 @@ void special_print_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo,
     }
 }
 
+static int texprint_fcast_stats (const FITRESID *fr, PRN *prn)
+{
+    const char *strs[] = {
+	N_("Mean Error"),
+	N_("Mean Squared Error"),
+	N_("Root Mean Squared Error"),
+	N_("Mean Absolute Error"),
+	N_("Mean Percentage Error"),
+	N_("Mean Absolute Percentage Error"),
+	N_("Theil's $U_1$"),
+	N_("Theil's $U_2$"),
+	N_("Observations used")
+    };
+    gretl_matrix *m;
+    double x;
+    int i, j, t1, t2;
+    int err = 0;
+
+    fcast_get_continuous_range(fr, &t1, &t2);
+
+    if (t2 - t1 + 1 <= 0) {
+	return E_MISSDATA;
+    }
+
+    m = forecast_stats(fr->actual, fr->fitted, t1, t2, &err);
+    if (err) {
+	return err;
+    }
+
+    pputs(prn, _("Forecast evaluation statistics"));
+    pputs(prn, "\\\\[1ex]\n\n");
+
+    pputs(prn, "\\begin{tabular}{ll}\n");
+
+    j = 0;
+    for (i=0; i<8; i++) {
+	x = gretl_vector_get(m, i);
+	if (!isnan(x)) {
+	    pprintf(prn, "%s & %s%.5g \\\\\n", I_(strs[j]), (x < 0)? "$-$" : "", 
+		    fabs(x));
+	    if (i == 1) {
+		pprintf(prn, "%s & %.5g \\\\\n", I_(strs[j+1]), sqrt(x));	
+	    }
+	}
+	j += (i == 1)? 2 : 1;
+    }
+
+    pputs(prn, "\\end{tabular}\n");
+    
+    gretl_matrix_free(m);
+
+    return err;
+}
+
 static 
 void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
 			 PRN *prn)
@@ -1235,12 +1289,16 @@ static void texprint_fit_resid (const FITRESID *fr,
 	pputs(prn, " \\\\\n");
     }
 
-    pputs(prn, "\\end{longtable}\n\\end{center}\n\n");
+    pputs(prn, "\\end{longtable}\n\n");
 
     if (anyast) {
 	pputs(prn, I_("\\textit{Note}: * denotes a residual "
 		      "in excess of 2.5 standard errors\n\n"));
     }
+
+    texprint_fcast_stats(fr, prn);
+
+    pputs(prn, "\\end{center}\n\n");
 }
 
 #define FR_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
@@ -1351,7 +1409,9 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 		actual, fitted);
     }
 
-    pputs(prn, "\\end{longtable}\n\\end{center}\n\n");
+    pputs(prn, "\\end{longtable}\n\n");
+    texprint_fcast_stats(fr, prn);
+    pputs(prn, "\\end{center}\n\n");
 }
 
 static void texprint_fcast_with_errs (const FITRESID *fr, 
@@ -1429,7 +1489,10 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 		actual, fitted, sderr, lo, hi);
     }
 
-    pputs(prn, "\\end{longtable}\n\\end{center}\n\n");
+    pputs(prn, "\\end{longtable}\n\n");
+    texprint_fcast_stats(fr, prn);
+    pputs(prn, "\\end{center}\n\n");
+    
 }
 
 #define FC_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \

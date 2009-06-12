@@ -3810,11 +3810,7 @@ static void print_summary_single (const Summary *s, int j,
 	    continue;
 	}	
 	if (strlen(_(labels[i])) > slen) {
-#if defined(ENABLE_NLS)
 	    slen = g_utf8_strlen(_(labels[i]), -1);	    
-#else
-	    slen = strlen(_(labels[i]));
-#endif
 	}
     }
     slen++;

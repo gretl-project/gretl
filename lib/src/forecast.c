@@ -3361,3 +3361,27 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	
     return fr;
 }
+
+void fcast_get_continuous_range (const FITRESID *fr, int *pt1, int *pt2)
+{
+    int t, t1 = fr->t1, t2 = fr->t2;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(fr->actual[t]) || na(fr->fitted[t])) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+
+    for (t=t2; t>=t1; t--) {
+	if (na(fr->actual[t]) || na(fr->fitted[t])) {
+	    t2--;
+	} else {
+	    break;
+	}
+    }
+
+    *pt1 = t1;
+    *pt2 = t2;
+}  
