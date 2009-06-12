@@ -2762,6 +2762,52 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
     return XCF;
 }
 
+static int theil_decomp (double *m, double MSE,
+			 const double *y, const double *f,
+			 int t1, int t2)
+{
+    double da, dp;
+    double Abar, Pbar;
+    double sa, sp, r;
+    int t, T = t2 - t1 + 1;
+    int err = 0;
+
+    Abar = Pbar = MSE = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	Abar += y[t];
+	Pbar += f[t];
+    }
+
+    Abar /= T;
+    Pbar /= T;
+
+    sa = sp = r = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	da = y[t] - Abar;
+	sa += da * da;
+	dp = f[t] - Pbar;
+	sp += dp * dp;
+	r += da * dp;
+    }    
+
+    sa = sqrt(sa / T);
+    sp = sqrt(sp / T);
+    r /= T * sa * sp;
+
+    if (sa == 0.0 || sp == 0.0) {
+	err = E_DATA;
+	m[0] = m[1] = m[2] = M_NA;
+    } else {
+	m[0] = (Abar - Pbar) * (Abar - Pbar) / MSE; /* UM */
+	m[1] = (sp - r * sa) * (sp - r * sa) / MSE; /* UR */
+	m[2] = (1.0 - r * r) * sa * sa / MSE;       /* UD */
+    }
+
+    return err;
+}
+
 /* cf. http://www.economicsnetwork.ac.uk/showcase/cook_forecast
    by Steven Cook of Swansea University <s.cook@Swansea.ac.uk>
 */
@@ -2851,6 +2897,16 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 
     gretl_vector_set(m, 6, U2);
     gretl_vector_set(m, 7, T);
+
+#if 0
+    if (MSE > 0) {
+	theil_decomp(m->val + 8, MSE, y, f, t1, t2);
+    } else {
+	gretl_vector_set(m, 8, M_NA);
+	gretl_vector_set(m, 9, M_NA);
+	gretl_vector_set(m, 10, M_NA);
+    }	
+#endif
 
     return m;
 }

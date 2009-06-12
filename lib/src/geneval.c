@@ -3271,6 +3271,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	case F_FCSTATS:
 	    ret->v.m = forecast_stats(x, y, p->dinfo->t1, p->dinfo->t2, &p->err);
+	    break;
 	default:
 	    break;
 	}
