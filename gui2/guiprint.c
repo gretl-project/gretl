@@ -1138,7 +1138,9 @@ void special_print_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo,
     }
 }
 
-static int texprint_fcast_stats (const FITRESID *fr, PRN *prn)
+static int texprint_fcast_stats (const FITRESID *fr, 
+				 gretlopt opt,
+				 PRN *prn)
 {
     const char *strs[] = {
 	N_("Mean Error"),
@@ -1147,14 +1149,15 @@ static int texprint_fcast_stats (const FITRESID *fr, PRN *prn)
 	N_("Mean Absolute Error"),
 	N_("Mean Percentage Error"),
 	N_("Mean Absolute Percentage Error"),
-	N_("Theil's $U_1$"),
-	N_("Theil's $U_2$"),
-	N_("Observations used")
+	N_("Theil's $U$"),
+	N_("Bias proportion, $U^M$"),
+	N_("Regression proportion, $U^R$"),
+	N_("Disturbance proportion, $U^D$")
     };
     gretl_matrix *m;
     double x;
     int i, j, t1, t2;
-    int err = 0;
+    int len, err = 0;
 
     fcast_get_continuous_range(fr, &t1, &t2);
 
@@ -1162,10 +1165,12 @@ static int texprint_fcast_stats (const FITRESID *fr, PRN *prn)
 	return E_MISSDATA;
     }
 
-    m = forecast_stats(fr->actual, fr->fitted, t1, t2, &err);
+    m = forecast_stats(fr->actual, fr->fitted, t1, t2, opt, &err);
     if (err) {
 	return err;
     }
+
+    len = gretl_vector_get_length(m);
 
     pputs(prn, _("Forecast evaluation statistics"));
     pputs(prn, "\\\\[1ex]\n\n");
@@ -1173,7 +1178,7 @@ static int texprint_fcast_stats (const FITRESID *fr, PRN *prn)
     pputs(prn, "\\begin{tabular}{ll}\n");
 
     j = 0;
-    for (i=0; i<8; i++) {
+    for (i=0; i<len; i++) {
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
 	    pprintf(prn, "%s & %s%.5g \\\\\n", I_(strs[j]), (x < 0)? "$-$" : "", 
@@ -1296,7 +1301,7 @@ static void texprint_fit_resid (const FITRESID *fr,
 		      "in excess of 2.5 standard errors\n\n"));
     }
 
-    texprint_fcast_stats(fr, prn);
+    texprint_fcast_stats(fr, OPT_NONE, prn);
 
     pputs(prn, "\\end{center}\n\n");
 }
@@ -1410,7 +1415,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     }
 
     pputs(prn, "\\end{longtable}\n\n");
-    texprint_fcast_stats(fr, prn);
+    texprint_fcast_stats(fr, OPT_D, prn);
     pputs(prn, "\\end{center}\n\n");
 }
 
@@ -1490,7 +1495,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     }
 
     pputs(prn, "\\end{longtable}\n\n");
-    texprint_fcast_stats(fr, prn);
+    texprint_fcast_stats(fr, OPT_D, prn);
     pputs(prn, "\\end{center}\n\n");
     
 }

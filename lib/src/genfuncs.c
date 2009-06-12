@@ -2772,7 +2772,12 @@ static int theil_decomp (double *m, double MSE,
     int t, T = t2 - t1 + 1;
     int err = 0;
 
-    Abar = Pbar = MSE = 0.0;
+    if (MSE <= 0.0) {
+	m[0] = m[1] = m[2] = M_NA;
+	return E_DATA;
+    }
+
+    Abar = Pbar = 0.0;
 
     for (t=t1; t<=t2; t++) {
 	Abar += y[t];
@@ -2800,9 +2805,15 @@ static int theil_decomp (double *m, double MSE,
 	err = E_DATA;
 	m[0] = m[1] = m[2] = M_NA;
     } else {
-	m[0] = (Abar - Pbar) * (Abar - Pbar) / MSE; /* UM */
-	m[1] = (sp - r * sa) * (sp - r * sa) / MSE; /* UR */
-	m[2] = (1.0 - r * r) * sa * sa / MSE;       /* UD */
+	m[0] = (Abar - Pbar) * (Abar - Pbar) / MSE; /* U^M */
+	m[1] = (sp - r * sa) * (sp - r * sa) / MSE; /* U^R */
+	m[2] = (1.0 - r * r) * sa * sa / MSE;       /* U^D */
+
+	if (m[2] > 0.99999999999999) {
+	    /* U^M and U^R are just machine noise? */
+	    m[2] = 1.0;
+	    m[0] = m[1] = 0.0;
+	} 
     }
 
     return err;
@@ -2810,14 +2821,17 @@ static int theil_decomp (double *m, double MSE,
 
 /* cf. http://www.economicsnetwork.ac.uk/showcase/cook_forecast
    by Steven Cook of Swansea University <s.cook@Swansea.ac.uk>
+
+   OPT_D indicates that we should include the Theil decomposition.
 */
 
 gretl_matrix *forecast_stats (const double *y, const double *f,
-			      int t1, int t2, int *err)
+			      int t1, int t2, gretlopt opt,
+			      int *err)
 {
     gretl_matrix *m = NULL;
-    double et, ME, MSE, MAE, MPE, MAPE;
-    double U1, U2, u[2];
+    double ME, MSE, MAE, MPE, MAPE, U;
+    double x, u[2];
     int t, T = t2 - t1 + 1;
 
     for (t=t1; t<=t2; t++) {
@@ -2827,86 +2841,65 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	}
     }
 
-    m = gretl_zero_matrix_new(8, 1);
-    if (m == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    /* purely level-based statistics */
-    
-    ME = MSE = MAE = MPE = MAPE = 0.0;
+    ME = MSE = MAE = MPE = MAPE = U = 0.0;
     u[0] = u[1] = 0.0;
 
     for (t=t1; t<=t2; t++) {
-	et = y[t] - f[t];
-	ME += et;
-	MSE += et * et;
-	MAE += fabs(et);
+	x = y[t] - f[t];
+	ME += x;
+	MSE += x * x;
+	MAE += fabs(x);
 	if (y[t] == 0.0) {
-	    MPE = MAPE = M_NA;
+	    MPE = MAPE = U = M_NA;
 	} else {
-	    MPE += 100 * et / y[t];
-	    MAPE += 100 * fabs(et) / y[t];
+	    MPE += 100 * x / y[t];
+	    MAPE += 100 * fabs(x) / y[t];
+	    if (t < t2) {
+		x = (f[t+1] - y[t+1]) / y[t];
+		u[0] += x * x;
+		x = (y[t+1] - y[t]) / y[t];
+		u[1] += x * x;
+	    }
 	}
-	u[0] += y[t] * y[t];
-	u[1] += f[t] * f[t];
     }
 
     ME /= T;
     MSE /= T;
     MAE /= T;
+
     if (!isnan(MPE)) {
 	MPE /= T;
     }
+
     if (!isnan(MAPE)) {
 	MAPE /= T;
     }
-    U1 = sqrt(MSE) / (sqrt(u[0] / T) + sqrt(u[1] / T));
+
+    if (!isnan(U) && u[1] > 0.0) {
+	U = sqrt(u[0] / T) / sqrt(u[1] / T);
+    }
+
+    if (opt & OPT_D) {
+	m = gretl_column_vector_alloc(9);
+    } else {
+	m = gretl_column_vector_alloc(6);
+    }
+    
+    if (m == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
     gretl_vector_set(m, 0, ME);
     gretl_vector_set(m, 1, MSE);
     gretl_vector_set(m, 2, MAE);
     gretl_vector_set(m, 3, MPE);
     gretl_vector_set(m, 4, MAPE);
-    gretl_vector_set(m, 5, U1);
+    gretl_vector_set(m, 5, U);
 
-    /* Theil U2 statistic */
-
-    u[0] = u[1] = 0.0;
-
-    for (t=t1; t<t2; t++) {
-	double x;
-
-	if (y[t] == 0.0) {
-	    u[0] = M_NA;
-	    break;
-	} else {
-	    x = (f[t+1] - y[t+1]) / y[t];
-	    u[0] += x * x;
-	    x = (y[t+1] - y[t]) / y[t];
-	    u[1] += x * x;
-	}
-    }
-
-    if (isnan(u[0]) || isnan(u[1]) || u[1] == 0.0) {
-	U2 = M_NA;
-    } else {
-	U2 = sqrt(u[0] / T) / sqrt(u[1] / T);
-    }
-
-    gretl_vector_set(m, 6, U2);
-    gretl_vector_set(m, 7, T);
-
-#if 0
-    if (MSE > 0) {
-	theil_decomp(m->val + 8, MSE, y, f, t1, t2);
-    } else {
-	gretl_vector_set(m, 8, M_NA);
-	gretl_vector_set(m, 9, M_NA);
-	gretl_vector_set(m, 10, M_NA);
-    }	
-#endif
+    if (opt & OPT_D) {
+	theil_decomp(m->val + 6, MSE, y, f, t1, t2);
+    } 
 
     return m;
 }

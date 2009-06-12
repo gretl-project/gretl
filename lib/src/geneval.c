@@ -3270,7 +3270,8 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.xval = gretl_covar(p->dinfo->t1, p->dinfo->t2, x, y, NULL);
 	    break;
 	case F_FCSTATS:
-	    ret->v.m = forecast_stats(x, y, p->dinfo->t1, p->dinfo->t2, &p->err);
+	    ret->v.m = forecast_stats(x, y, p->dinfo->t1, p->dinfo->t2, 
+				      OPT_D, &p->err);
 	    break;
 	default:
 	    break;

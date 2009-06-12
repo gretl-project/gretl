@@ -3884,7 +3884,8 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 }
 
 #define numerical_error(e) (e == E_NOCONV || e == E_JACOBIAN || \
-                            e == E_NAN || e == E_SINGULAR)
+                            e == E_NAN || e == E_SINGULAR || \
+			    e == E_NOTPD)
 #define allow_continue(m) (m->opt & OPT_U)
 
 /* Print a model that was just estimated, provided it's not carrying

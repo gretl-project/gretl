@@ -1050,7 +1050,12 @@ garch_hessian (fcpinfo *f, gretl_matrix *V, double toler,
 	*count += 1;
     }
 
-    err = gretl_invert_symmetric_indef_matrix(V);
+    if (toler == 0.0) {
+	err = gretl_invert_symmetric_matrix(V);
+    } else {
+	err = gretl_invert_symmetric_indef_matrix(V);
+    }
+
     if (err) {
 	fprintf(stderr, "garch_hessian: matrix inversion failed\n");
 	return err;

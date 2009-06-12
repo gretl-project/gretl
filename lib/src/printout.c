@@ -2345,7 +2345,8 @@ int print_data_sorted (const int *list, const int *obsvec,
     return 0;
 }
 
-static int print_fcast_stats (const FITRESID *fr, PRN *prn)
+static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
+			      PRN *prn)
 {
     const char *strs[] = {
 	N_("Mean Error"),
@@ -2354,15 +2355,16 @@ static int print_fcast_stats (const FITRESID *fr, PRN *prn)
 	N_("Mean Absolute Error"),
 	N_("Mean Percentage Error"),
 	N_("Mean Absolute Percentage Error"),
-	N_("Theil's U1"),
-	N_("Theil's U2"),
-	N_("Observations used")
+	N_("Theil's U"),
+	N_("Bias proportion, UM"),
+	N_("Regression proportion, UR"),
+	N_("Disturbance proportion, UD")
     };
     gretl_matrix *m;
     double x;
     int i, j, t1, t2;
     int n, nmax = 0;
-    int err = 0;
+    int len, err = 0;
 
     fcast_get_continuous_range(fr, &t1, &t2);
 
@@ -2370,13 +2372,15 @@ static int print_fcast_stats (const FITRESID *fr, PRN *prn)
 	return E_MISSDATA;
     }
 
-    m = forecast_stats(fr->actual, fr->fitted, t1, t2, &err);
+    m = forecast_stats(fr->actual, fr->fitted, t1, t2, opt, &err);
     if (err) {
 	return err;
     }
 
+    len = gretl_vector_get_length(m);
+
     j = 0;
-    for (i=0; i<8; i++) {
+    for (i=0; i<len; i++) {
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
 	    n = g_utf8_strlen(_(strs[j]), -1);	    
@@ -2395,7 +2399,7 @@ static int print_fcast_stats (const FITRESID *fr, PRN *prn)
     pputs(prn, "\n\n");
 
     j = 0;
-    for (i=0; i<8; i++) {
+    for (i=0; i<len; i++) {
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
 	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[j]), nmax), _(strs[j]), x);
@@ -2414,9 +2418,8 @@ static int print_fcast_stats (const FITRESID *fr, PRN *prn)
 
 #define SIGMA_MIN 1.0e-18
 
-int
-text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, 
-		      PRN *prn)
+int text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, 
+			  PRN *prn)
 {
     int kstep = fr->method == FC_KSTEP;
     int t, anyast = 0;
@@ -2477,7 +2480,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
 		     "2.5 standard errors\n"));
     }
 
-    print_fcast_stats(fr, prn);
+    print_fcast_stats(fr, OPT_NONE, prn);
 
     if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
 	err = plot_fcast_errs(fr, NULL, pdinfo, OPT_NONE);
@@ -2590,7 +2593,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 
     pputc(prn, '\n');
 
-    print_fcast_stats(fr, prn);
+    print_fcast_stats(fr, OPT_D, prn);
 
     /* do we really want a plot for non-time series? */
 
