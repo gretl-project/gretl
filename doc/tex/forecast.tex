@@ -67,35 +67,51 @@ U^2 = \frac{1}{T}
 \]
 
 The more accurate the forecasts, the lower the value of Theil's $U$,
-which has a minimum of 0. This measure can be interpreted as the ratio
-of the RMSE of the proposed forecasting model to the RMSE of a na\"ive
-model which simply predicts $y_{t+1} = y_t$ for all $t$.  The na\"ive
-model yields $U = 1$; values less than 1 indicate an improvement
-relative to this benchmark and values greater than 1 a deterioration.
+which has a minimum of 0.\footnote{This statistic is sometimes called
+  $U_2$, to distinguish it from a related but different $U$ defined in
+  an earlier work by Theil (1961).  It seems to be generally accepted
+  that the later version of Theil's $U$ is a superior statistic, so we
+  ignore the earlier version here.} This measure can be interpreted as
+the ratio of the RMSE of the proposed forecasting model to the RMSE of
+a na\"ive model which simply predicts $y_{t+1} = y_t$ for all $t$.
+The na\"ive model yields $U = 1$; values less than 1 indicate an
+improvement relative to this benchmark and values greater than 1 a
+deterioration.
 
-In addition, Theil proposed a decomposition of the MSE which can be
-useful in evaluating a set of forecasts.  He showed that the MSE could
-be broken down into three non-negative components as follows,
+In addition, Theil (1966, pp.\ 33--36) proposed a decomposition of the
+MSE which can be useful in evaluating a set of forecasts.  He showed
+that the MSE could be broken down into three non-negative components
+as follows
 %
 \[
-{\rm MSE} = \left(\bar{f}-\bar{y}\right)^2 + () + 
-  \left(1-r_{fy}^2\right) s_a^2
+{\rm MSE} = \left(\bar{f}-\bar{y}\right)^2 + 
+  \left(s_f - rs_y\right)^2 + 
+  \left(1-r^2\right) s_y^2
 \]
 %
 where $\bar{f}$ and $\bar{y}$ are the sample means of the forecasts
 and the observations, $s_f$ and $s_y$ are the respective standard
-deviations (using $T$ in the denominator), and $r_{fy}$ is the sample
+deviations (using $T$ in the denominator), and $r$ is the sample
 correlation between $y$ and $f$.  Dividing through by MSE we get
 %
 \begin{equation}
 \label{eq:theil}
-\frac{(\bar{f}-\bar{y})^2}{\rm MSE} +
-\frac{}{\rm MSE} + \frac{}{\rm MSE} = 1
+\frac{\left(\bar{f}-\bar{y}\right)^2}{\rm MSE} +
+\frac{\left(s_f - rs_y\right)^2}{\rm MSE} + 
+\frac{\left(1-r^2\right) s_y^2}{\rm MSE} = 1
 \end{equation}
 %
 Theil labeled the three terms on the left-hand side of
 (\ref{eq:theil}) the bias proportion ($U^M$), regression proportion
-($U^R$) and disturbance proportion ($U^D$), respectively.
+($U^R$) and disturbance proportion ($U^D$), respectively. If $y$ and
+$f$ represent the in-sample observations of the dependent variable and
+the fitted values from a linear regression then the first two
+components, $U^M$ and $U^R$, will be zero (apart from rounding error),
+and the entire MSE will be accounted for by the unsystematic part,
+$U^D$.  In the case of out-of-sample prediction, however (or
+``prediction'' over a sub-sample of the data used in the regression),
+$U^M$ and $U^R$ are not necessarily close to zero, although this is a
+desirable property for a forecast to have.
 
 The above-mentioned statistics are printed as part of the output of
 the \texttt{fcast} command.  They can also be retrieved in the form of
