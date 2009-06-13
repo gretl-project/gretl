@@ -907,14 +907,8 @@ int substitute_named_strings (char *line, int *subst)
 	return 0;
     }
 
-    /* when using the genr apparatus for a string, let @foo be handled 
-       as a variable (FIXME?) */
-    if (0 && !strncmp(line, "string ", 7)) {
-	return 0;
-    }
-
     if (!strncmp(line, "sscanf", 6)) {
-	/* when scanning, let @foo be handled as a variable */
+	/* when scanning, let @foo be handled as a variable (FIXME?) */
 	return 0;
     }    
 

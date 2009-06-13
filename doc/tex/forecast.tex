@@ -1,0 +1,128 @@
+\chapter{Forecasting}
+\label{chap-forecast}
+
+\section{Introduction}
+\label{sec:fcast-intro}
+
+In some econometric contexts forecasting is the prime objective: one
+wants estimates of the future values of certain variables to reduce
+the uncertainty attaching to current decision making.  In other
+contexts where real-time forecasting is not the focus prediction
+may nonetheless be an important moment in the analysis.  For example,
+out-of-sample prediction can provide a useful check on the validity of
+an econometric model.  In other cases we are interested in questions
+of ``what if'': for example, how might macroeconomic outcomes have
+differed over a certain period if a different policy had been pursued?
+In the latter cases ``prediction'' need not be a matter of actually
+projecting into the future but in any case it involves generating
+fitted values from a given model.  The term ``postdiction'' might be
+more accurate but it is not commonly used; we tend to talk of
+prediction even when there is no true forecast in view.
+
+This chapter offers an overview of the methods available within
+\app{gretl} for forecasting or prediction (whether forward in time or
+not) and explicates some of the finer points of the relevant commands.
+
+\section{Saving and inspecting fitted values}
+\label{sec:fcast-fitted}
+
+To be written.
+
+\section{The \texttt{fcast} command}
+\label{sec:fcast-fcast}
+
+To be written.
+
+\section{Univariate forecast evaluation statistics}
+\label{sec:fcast-stats}
+
+Let $y_t$ be the value of a variable of interest at time $t$ and let
+$f_t$ be a forecast of $y_t$.  We define the forecast error as $e_t =
+y_t - f_t$.  Given a series of $T$ observations and associated
+forecasts we can construct several measures of the overall accuracy of
+the forecasts.  Some commonly used measures are the Mean Error (ME),
+Mean Squared Error (MSE), Root Mean Squared Error (RMSE), Mean
+Absolute Error (MAE), Mean Percentage Error (MPE) and Mean Absolute
+Percentage Error (MAPE).  These are defined as follows.
+%
+\[ {\rm ME} = \frac{1}{T} \sum_{t=1}^T e_t \qquad 
+   {\rm MSE} = \frac{1}{T} \sum_{t=1}^T e_t^2 \qquad 
+   {\rm RMSE} = \sqrt{\frac{1}{T} \sum_{t=1}^T e_t^2} \qquad 
+   {\rm MAE} = \frac{1}{T} \sum_{t=1}^T |e_t|
+\] 
+%
+\[ {\rm MPE} = \frac{1}{T} \sum_{t=1}^T 100\, \frac{e_t}{y_t} \qquad
+   {\rm MAPE} = \frac{1}{T} \sum_{t=1}^T 100\, \frac{|e_t|}{y_t} 
+\]
+%
+A further relevant statistic is Theil's $U$ (Theil, 1966), defined as
+the positive square root of
+%
+\[ 
+U^2 = \frac{1}{T}
+     \sum_{t=1}^{T-1} \left(\frac{f_{t+1} - y_{t+1}}{y_t}\right)^2
+     \cdot \left[
+     \frac{1}{T} \sum_{t=1}^{T-1} 
+        \left(\frac{y_{t+1} - y_t}{y_t}\right)^2 \right]^{-1}
+\]
+
+The more accurate the forecasts, the lower the value of Theil's $U$,
+which has a minimum of 0. This measure can be interpreted as the ratio
+of the RMSE of the proposed forecasting model to the RMSE of a na\"ive
+model which simply predicts $y_{t+1} = y_t$ for all $t$.  The na\"ive
+model yields $U = 1$; values less than 1 indicate an improvement
+relative to this benchmark and values greater than 1 a deterioration.
+
+In addition, Theil proposed a decomposition of the MSE which can be
+useful in evaluating a set of forecasts.  He showed that the MSE could
+be broken down into three non-negative components as follows,
+%
+\[
+{\rm MSE} = \left(\bar{f}-\bar{y}\right)^2 + () + 
+  \left(1-r_{fy}^2\right) s_a^2
+\]
+%
+where $\bar{f}$ and $\bar{y}$ are the sample means of the forecasts
+and the observations, $s_f$ and $s_y$ are the respective standard
+deviations (using $T$ in the denominator), and $r_{fy}$ is the sample
+correlation between $y$ and $f$.  Dividing through by MSE we get
+%
+\begin{equation}
+\label{eq:theil}
+\frac{(\bar{f}-\bar{y})^2}{\rm MSE} +
+\frac{}{\rm MSE} + \frac{}{\rm MSE} = 1
+\end{equation}
+%
+Theil labeled the three terms on the left-hand side of
+(\ref{eq:theil}) the bias proportion ($U^M$), regression proportion
+($U^R$) and disturbance proportion ($U^D$), respectively.
+
+The above-mentioned statistics are printed as part of the output of
+the \texttt{fcast} command.  They can also be retrieved in the form of
+a column vector using the function \texttt{fcstats}, which takes two
+series arguments corresponding to $y$ and $f$.  The vector returned is
+%
+\[
+({\rm ME},\, {\rm MSE},\, {\rm MAE},\, {\rm MPE},\, {\rm MAPE},\, U, U^M, U^R, U^D)'
+\]
+%
+(Note that the RMSE is not included since it can easily be obtained
+given the MSE.)  The series given as arguments to \texttt{fcstats}
+must not contain any missing values in the currently defined sample
+range; use the \texttt{smpl} command to adjust the range if needed.
+
+\section{Forecasts based on VAR models}
+\label{sec:fcast-VAR}
+
+To be written.
+
+\section{Forecasting from simultaneous systems}
+\label{sec:fcast-system}
+
+To be written.
+
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

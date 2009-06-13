@@ -394,7 +394,7 @@ if such a variable exists, or would generate an error otherwise.
 
 In some contexts, however, one wants to treat string variables as
 variables in their own right: to do this, give the name of
-the variable without a leading \verb|@| symbol.  This is the
+the variable without the leading \verb|@| symbol.  This is the
 way to handle such variables in the following contexts:
 
 \begin{itemize}
@@ -496,8 +496,18 @@ the syntax
 
 \texttt{string} \textsl{stringname} = \texttt{readfile(}\textsl{filename}\texttt{)}
 
-The \textsl{filename} field may include components that are
-string variables (in ``macro'' form).  For example
+The \textsl{filename} field may be given as a string variable.  For
+example
+%
+\begin{code}
+? sprintf fname "%s/QNC.rts", x12adir
+Generated string fname
+? string foo = readfile(fname)
+Generated string foo
+\end{code}
+%
+The above could also be accomplished using the ``macro'' variant
+of a string variable, provided it is placed in quotation marks: 
 
 \verb|string foo = readfile("@x12adir/QNC.rts")|
 

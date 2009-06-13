@@ -29,6 +29,7 @@ TEXSRC = cli.tex \
 	probit.tex \
 	nls.tex \
 	timeseries.tex \
+	forecast.tex \
 	vecm.tex \
 	kalman.tex \
 	functions.tex \
