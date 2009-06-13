@@ -909,7 +909,7 @@ int substitute_named_strings (char *line, int *subst)
 
     /* when using the genr apparatus for a string, let @foo be handled 
        as a variable (FIXME?) */
-    if (!strncmp(line, "string ", 7)) {
+    if (0 && !strncmp(line, "string ", 7)) {
 	return 0;
     }
 

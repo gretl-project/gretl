@@ -497,9 +497,9 @@ the syntax
 \texttt{string} \textsl{stringname} = \texttt{readfile(}\textsl{filename}\texttt{)}
 
 The \textsl{filename} field may include components that are
-string variables.  For example
+string variables (in ``macro'' form).  For example
 
-\verb|string foo = readfile(x12adir/QNC.rts)|
+\verb|string foo = readfile("@x12adir/QNC.rts")|
 
 \subsection{The \texttt{strstr} function}
 
