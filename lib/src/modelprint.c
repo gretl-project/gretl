@@ -2038,19 +2038,6 @@ static void addconst_message (const MODEL *pmod, PRN *prn)
     }
 }
 
-#if 0
-static void r_squared_message (const MODEL *pmod, PRN *prn)
-{
-    if (na(pmod->rsq)) {
-	return;
-    }
-
-    pprintf(prn, "%s.\n\n",    
-	    _("R-squared is computed as the square of the correlation "
-	      "between observed and\nfitted values of the dependent variable"));
-}
-#endif
-
 enum {
     ORIG_STATS,
     WTD_STATS,

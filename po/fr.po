@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-14 16:56-0400\n"
-"PO-Revision-Date: 2009-05-11 12:36-0400\n"
+"PO-Revision-Date: 2009-06-14 17:32-0400\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -314,9 +314,8 @@ msgid "Asymptotic test statistic"
 msgstr "Statistique asymptotique de test "
 
 #: lib/src/compare.c:378
-#, fuzzy
 msgid "Wald chi-square"
-msgstr "Khi-deux"
+msgstr "Khi-deux de Wald"
 
 #: lib/src/compare.c:379 lib/src/compare.c:389 lib/src/compare.c:394
 #: lib/src/compare.c:402 lib/src/compare.c:428 lib/src/compare.c:2990
@@ -1476,9 +1475,9 @@ msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr "  RETARD   ACF      PACF         Q  [p. crit.]"
 
 #: lib/src/describe.c:2865
-#, fuzzy, c-format
+#, c-format
 msgid "Argument is a constant"
-msgstr "%s est une constante"
+msgstr "Argument est une constante"
 
 #: lib/src/describe.c:2951
 #, c-format
@@ -1490,9 +1489,9 @@ msgid "Cross-correlogram"
 msgstr "Corrélogramme croisé"
 
 #: lib/src/describe.c:3138
-#, fuzzy, c-format
+#, c-format
 msgid "xcf: argument %d is a constant"
-msgstr "%s est une constante"
+msgstr "xcf: argument %d est une constante"
 
 #: lib/src/describe.c:3226
 #, c-format
@@ -1678,9 +1677,8 @@ msgid "Between s.d."
 msgstr "Ecart type inter"
 
 #: lib/src/describe.c:3871 lib/src/describe.c:3960
-#, fuzzy
 msgid "Summary statistics"
-msgstr "_Statistiques descriptives"
+msgstr "Statistiques descriptives"
 
 #: lib/src/describe.c:3872
 #, c-format
@@ -4708,9 +4706,9 @@ msgid "Model"
 msgstr "Modèle"
 
 #: lib/src/modelprint.c:1586 lib/src/modelprint.c:1600
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using observations %s%s%s"
-msgstr "%s, utilisant les observations %s - %s"
+msgstr "%s, utilisant les observations %s%s%s"
 
 #: lib/src/modelprint.c:1595
 #, c-format
@@ -4722,14 +4720,14 @@ msgid "Missing or incomplete observations dropped"
 msgstr "Observations manquantes ou incomplètes"
 
 #: lib/src/modelprint.c:1628
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations"
-msgstr "Estimation %s utilisant les %d observations"
+msgstr "%s, utilisant les %d observations"
 
 #: lib/src/modelprint.c:1632
 #, c-format
 msgid "Included %d cross-sectional units"
-msgstr "%d unités  de coupe transversale incluses"
+msgstr "%d unités de coupe transversale incluses"
 
 #: lib/src/modelprint.c:1637
 #, c-format
@@ -5866,7 +5864,7 @@ msgstr "Erreur absolue moyenne"
 
 #: lib/src/printout.c:2365
 msgid "Theil's U"
-msgstr ""
+msgstr "U de Theil"
 
 #: lib/src/printout.c:2366
 #, fuzzy
@@ -10577,7 +10575,7 @@ msgstr "5\\%% valeur critique (bilatéral) = %.4f pour n = %d"
 
 #: gui2/guiprint.c:1152
 msgid "Theil's $U$"
-msgstr ""
+msgstr "$U$ de Theil"
 
 #: gui2/guiprint.c:1153
 #, fuzzy

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-14 16:56-0400\n"
-"PO-Revision-Date: 2009-05-11 22:42+0200\n"
+"PO-Revision-Date: 2009-06-14 17:20-0400\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4687,9 +4687,9 @@ msgid "Model"
 msgstr "Modello"
 
 #: lib/src/modelprint.c:1586 lib/src/modelprint.c:1600
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using observations %s%s%s"
-msgstr "%s, usando le osservazioni %s - %s"
+msgstr "%s, usando le osservazioni %s%s%s"
 
 #: lib/src/modelprint.c:1595
 #, c-format
@@ -4701,9 +4701,9 @@ msgid "Missing or incomplete observations dropped"
 msgstr "Sono state scartate osservazioni mancanti o incomplete"
 
 #: lib/src/modelprint.c:1628
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations"
-msgstr "Stime %s usando %d osservazioni"
+msgstr "%s, usando %d osservazioni"
 
 #: lib/src/modelprint.c:1632
 #, c-format

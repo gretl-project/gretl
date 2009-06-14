@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: eu\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-14 16:56-0400\n"
-"PO-Revision-Date: 2009-05-07 16:54+0100\n"
+"PO-Revision-Date: 2009-06-14 17:40-0400\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>, Marian Zubia <marian."
 "zubia@ehu.es>\n"
 "Language-Team: Basque <translation-team-eu@lists.sourceforge.net>\n"
@@ -1668,9 +1668,8 @@ msgid "Between s.d."
 msgstr "D.T artean"
 
 #: lib/src/describe.c:3871 lib/src/describe.c:3960
-#, fuzzy
 msgid "Summary statistics"
-msgstr "_Estatistikoen laburpena"
+msgstr "Estatistikoen laburpena"
 
 #: lib/src/describe.c:3872
 #, c-format
@@ -4696,9 +4695,9 @@ msgid "Missing or incomplete observations dropped"
 msgstr "Faltako edo osatu gabeko behaketak kenduta"
 
 #: lib/src/modelprint.c:1628
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations"
-msgstr "%s estimazioak %d behaketak erabiliz"
+msgstr "%s, %d behaketak erabiliz"
 
 #: lib/src/modelprint.c:1632
 #, c-format
@@ -5808,9 +5807,8 @@ msgid "list is empty"
 msgstr "zerrenda hutsik dago"
 
 #: lib/src/printout.c:2359 gui2/guiprint.c:1146
-#, fuzzy
 msgid "Mean Error"
-msgstr "Batezbesteko Errore Koadratikoa"
+msgstr "Batezbesteko Errore"
 
 #: lib/src/printout.c:2360 gui2/guiprint.c:1147
 msgid "Mean Squared Error"

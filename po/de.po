@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-14 16:56-0400\n"
-"PO-Revision-Date: 2009-05-14 19:15+0100\n"
+"PO-Revision-Date: 2009-06-14 17:34-0400\n"
 "Last-Translator: Sven Schreiber <svetosch )at( gmx.net>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -1661,9 +1661,8 @@ msgid "Between s.d."
 msgstr "Inter-StdAbw."
 
 #: lib/src/describe.c:3871 lib/src/describe.c:3960
-#, fuzzy
 msgid "Summary statistics"
-msgstr "Grundlegende _Statistiken"
+msgstr "Grundlegende Statistiken"
 
 #: lib/src/describe.c:3872
 #, c-format
@@ -4662,9 +4661,9 @@ msgid "Model"
 msgstr "Modell"
 
 #: lib/src/modelprint.c:1586 lib/src/modelprint.c:1600
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using observations %s%s%s"
-msgstr "%s, benutze die Beobachtungen %s - %s"
+msgstr "%s, benutze die Beobachtungen %s%s%s"
 
 #: lib/src/modelprint.c:1595
 #, c-format
@@ -4676,9 +4675,9 @@ msgid "Missing or incomplete observations dropped"
 msgstr "Fehlende oder unvollständige Beobachtungen entfernt"
 
 #: lib/src/modelprint.c:1628
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations"
-msgstr "%s-Schätzungen mit %d Beobachtungen"
+msgstr "%s, mit %d Beobachtungen"
 
 #: lib/src/modelprint.c:1632
 #, c-format
@@ -5787,9 +5786,8 @@ msgid "list is empty"
 msgstr "Liste ist leer"
 
 #: lib/src/printout.c:2359 gui2/guiprint.c:1146
-#, fuzzy
 msgid "Mean Error"
-msgstr "Mittlerer quadratischer Fehler"
+msgstr "Mittlerer Fehler"
 
 #: lib/src/printout.c:2360 gui2/guiprint.c:1147
 msgid "Mean Squared Error"
