@@ -1366,35 +1366,6 @@
 
   </command>
 
-  <command name="copy-formats" section="Utilities" context="gui"
-    label="Formati di copia">
-
-    <description>
-      <para>
-	Per copiare i dati da questa finestra, è possibile scegliere il formato
-        testo semplice o altri due formati.
-      </para>
-
-      <para>
-	Separato da tab: i dati vengono copiati sotto forma di testo semplice, con
-        le colonne separate dal carattere tab. È una buona scelta se si vuole
-        incollare i dati in un programma di videoscrittura: in MS Word o Writer
-        di OpenOffice.org, ad esempio, è possibile selezionare il materiale
-        incollato e convertirlo in una tabella, usando comandi come
-	<quote>Formattazione automatica tabella</quote> o <quote>Converti il testo
-        in tabella</quote>.
-      </para>
-
-      <para>
-	Separato da virgola: i dati sono copiati negli appunti in formato CSV
-        (Comma Separated Values). Questo metodo è consigliabile se occorre
-        incollare i dati in un foglio elettronico.
-      </para>
-
-    </description>
-
-  </command>
-
   <command name="corr" section="Statistics" label="Coefficienti di correlazione">
 
     <usage>
@@ -4506,6 +4477,10 @@
         <argument optional="true">ordine</argument>
       </arguments>
       <options>
+        <option>
+	  <flag>--normality</flag>
+	  <effect>normalità dei residui</effect>
+        </option>
         <option>
 	  <flag>--logs</flag>
 	  <effect>non-linearità, logaritmi</effect>
@@ -8855,24 +8830,6 @@
 
     <gui-access>
       <menu-path>Finestra del modello, /LaTeX</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="testuhat" section="Tests" context="cli"
-    label="Normalità dei residui">
-
-    <description>
-      <para>
-	Deve seguire un comando di stima. Mostra la distribuzione di
-        frequenza dei residui del modello, insieme a un test chi-quadro
-        per la normalità, basato sulla procedura suggerita da Doornik
-        e Hansen (1994).
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Finestra del modello, /Test/Normalità dei residui</menu-path>
     </gui-access>
 
   </command>

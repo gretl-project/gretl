@@ -4,9 +4,11 @@ version 1.8.2, in progress
 - Fix another XLS import bug
 - nls, mle, gmm, arma: allow continuation of scripts when
   these estimators fail to converge, in which case the variable
-  $error is set to a non-zero value
+  $error is set to a non-zero value (new --continue option)
 - Add fcstats function to provide statistics for evaluation of
   forecasts
+- GUI model window, Graphs menu: add scatter plot of actual vs
+  fitted a la Theil
 - Rationalize use of GRETL_KEEP_GOING and halt_on_error: induce
   consistency between CLI and GUI programs
 
