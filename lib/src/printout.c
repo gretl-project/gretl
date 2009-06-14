@@ -578,15 +578,18 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     } else {
 	double n5p = (double) n5 / (r * c);
 	int df = (r - 1) * (c - 1);
+	double pval = chisq_cdf_comp(df, pearson);
 
-	pputc(prn, '\n');
-	pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
-		pearson, df, chisq_cdf_comp(df, pearson));
-	pputc(prn, '\n');
-	if (n5p < 0.80) {
-	    /* xgettext:no-c-format */
-	    pputs(prn, _("Warning: Less than of 80% of cells had expected "
-			 "values of 5 or greater.\n"));
+	if (!na(pval)) {
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
+		    pearson, df, pval);
+	    pputc(prn, '\n');
+	    if (n5p < 0.80) {
+		/* xgettext:no-c-format */
+		pputs(prn, _("Warning: Less than of 80% of cells had expected "
+			     "values of 5 or greater.\n"));
+	    }
 	}
     }
 

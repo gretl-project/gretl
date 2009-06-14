@@ -2125,7 +2125,9 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     const char *mname;
     const gretl_matrix *m;
     Xtab *tab;
-    int i, j, err = 0;
+    int i, j, nvals, n = 0;
+    double x;
+    int err = 0;
 
     mname = get_optval_string(XTAB, OPT_M);
     if (mname == NULL) {
@@ -2138,10 +2140,26 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     }
 
     if (m->rows < 2 || m->cols < 2) {
-	return E_DATA;
+	err = E_DATA;
     }
 
-    tab = xtab_new(0, 0, 0);
+    nvals = m->rows * m->cols;
+
+    for (i=0; i<nvals && !err; i++) {
+	x = m->val[i];
+	if (x < 0 || x != floor(x) || x > INT_MAX) {
+	    err = E_DATA;
+	}
+	n += x;
+    }
+
+    if (err) {
+	gretl_errmsg_sprintf(_("Matrix %s does not represent a "
+			       "contingency table"), mname);
+	return err;
+    }
+
+    tab = xtab_new(n, 0, 0);
     if (tab == NULL) {
 	return E_ALLOC;
     }
@@ -2167,10 +2185,6 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
 	    tab->ctotal[j] += tab->f[i][j];
 	}
     }  
-
-    for (i=0; i<m->rows; i++) {
-	tab->n += tab->rtotal[i];
-    }
 
     print_xtab(tab, opt, prn);
     free_xtab(tab);	
