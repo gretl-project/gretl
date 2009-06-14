@@ -5000,7 +5000,6 @@ void resid_plot (GtkAction *action, gpointer p)
 static void theil_plot (MODEL *pmod, double ***gZ, DATAINFO *ginfo)
 {
     int plotlist[3];
-    int origv = ginfo->v;
     int dv, fv, err;
 
     if (add_fit_resid(pmod, M_YHAT, 1)) {
@@ -5023,7 +5022,7 @@ static void theil_plot (MODEL *pmod, double ***gZ, DATAINFO *ginfo)
 	register_graph();
     }
 
-    dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
+    dataset_drop_last_variables(1, gZ, ginfo);
 }
 
 void fit_actual_plot (GtkAction *action, gpointer p)
