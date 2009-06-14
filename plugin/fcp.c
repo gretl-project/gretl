@@ -1051,11 +1051,13 @@ garch_hessian (fcpinfo *f, gretl_matrix *V, double toler,
 	*count += 1;
     }
 
-    for (i=0; i<V->rows; i++) {
-	if (gretl_matrix_get(V, i, i) < 0.0) {
-	    gretl_matrix_switch_sign(V);
-	    sign_done = 1;
-	    break;
+    if (toler == 0.0) {
+	for (i=0; i<V->rows; i++) {
+	    if (gretl_matrix_get(V, i, i) < 0.0) {
+		gretl_matrix_switch_sign(V);
+		sign_done = 1;
+		break;
+	    }
 	}
     }
 
