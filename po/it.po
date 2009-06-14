@@ -5007,11 +5007,11 @@ msgstr "R-quadro di McFadden"
 
 #: lib/src/modelprint.c:2656
 msgid "Mean of innovations"
-msgstr "Media delle innovazioni"
+msgstr "Media innovazioni"
 
 #: lib/src/modelprint.c:2658
 msgid "S.D. of innovations"
-msgstr "SQM delle innovazioni"
+msgstr "SQM innovazioni"
 
 #: lib/src/modelprint.c:2665
 msgid "Median depend. var"
@@ -15080,7 +15080,7 @@ msgstr "Accessori"
 #~ msgstr "Statistica Durbin-Watson"
 
 #~ msgid "Variance of innovations"
-#~ msgstr "Varianza delle innovazioni"
+#~ msgstr "Varianza innovazioni"
 
 #~ msgid "Mean of"
 #~ msgstr "Media di"
