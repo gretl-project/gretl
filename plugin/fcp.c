@@ -1042,12 +1042,21 @@ garch_hessian (fcpinfo *f, gretl_matrix *V, double toler,
 	       int *count)
 {
     static double ll1 = 0.0, fs = 0.0;
+    int i, sign_done = 0;
     int err;
 
     vcv_setup(f, V, VCV_HESSIAN);
 
     if (count != NULL) {
 	*count += 1;
+    }
+
+    for (i=0; i<V->rows; i++) {
+	if (gretl_matrix_get(V, i, i) < 0.0) {
+	    gretl_matrix_switch_sign(V);
+	    sign_done = 1;
+	    break;
+	}
     }
 
     if (toler == 0.0) {
@@ -1065,7 +1074,9 @@ garch_hessian (fcpinfo *f, gretl_matrix *V, double toler,
 	fcp_iterate(f, V, &ll1, &fs, toler, *count);
     }
 
-    gretl_matrix_switch_sign(V);
+    if (!sign_done) {
+	gretl_matrix_switch_sign(V);
+    }
 
     return err;
 } 

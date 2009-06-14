@@ -26,6 +26,32 @@ not) and explicates some of the finer points of the relevant commands.
 \section{Saving and inspecting fitted values}
 \label{sec:fcast-fitted}
 
+In the simplest case, the ``predictions'' of interest are just the
+(within sample) fitted values from an econometric model.  For the
+single-equation linear model, $y_t = X_t \beta + u_t$, these are
+$\hat{y}_t = X_t \hat{\beta}$.  
+
+In command-line mode, the $\hat{y}$ series can be retrieved using the
+accessor \verb|$yhat|, as in
+%
+\begin{code}
+series yh = $yhat
+\end{code}
+% 
+If the model in question takes the form of a system of equations,
+\verb|$yhat| returns a matrix, each column of which contains the
+fitted values for a particular dependent variable.  To extract
+the fitted series for, e.g., the dependent variable in the second
+equation, do
+%
+\begin{code}
+matrix Yh = $yhat
+series yh2 = Yh[,2]
+\end{code}
+% 
+
+
+
 To be written.
 
 \section{The \texttt{fcast} command}

@@ -5719,7 +5719,7 @@ static GretlType object_var_type (int idx, const char *oname)
 	int ci = 0;
 	GretlObjType otype = gretl_model_get_type_and_ci(oname, &ci);
 
-	if (otype != GRETL_OBJ_EQN || (0 && idx == M_SIGMA && ci == GARCH)) {
+	if (otype != GRETL_OBJ_EQN) {
 	    vtype = GRETL_TYPE_MATRIX;
 	}
     }
