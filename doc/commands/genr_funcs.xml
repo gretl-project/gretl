@@ -1409,47 +1409,15 @@
 	  3  Mean Absolute Error (MAE)
 	  4  Mean Percentage Error (MPE)
 	  5  Mean Absolute Percentage Error (MAPE)
-	  6  Theil's U
+	  6  Theil's U 
 	  7  Bias proportion, UM
-          8  Regression proportion, UR
+	  8  Regression proportion, UR
 	  9  Disturbance proportion, UD
 	</code>
-	<para context="notex">
+	<para>
 	  For details on the calculation of these statistics, and the
 	  interpretation of the <math>U</math> values, please see 
-	  the Gretl Command Reference (FIXME crossref).
-	</para>
-	<para context="tex">
-	  Let $e_t$ denote the forecast error, $y_t - f_t$.  The various
-	  measures are defined thus: 
-	  \[ {\rm ME} = \frac{1}{T} \sum_{t=1}^T e_t \qquad 
-	     {\rm MSE} = \frac{1}{T} \sum_{t=1}^T e_t^2 \qquad 
-	     {\rm MAE} = \frac{1}{T} \sum_{t=1}^T |e_t| 
-	  \] 
-	  \[ {\rm MPE} =
-	       \frac{1}{T} \sum_{t=1}^T 100\, \frac{e_t}{y_t} \qquad 
-	     {\rm MAPE} =
-	       \frac{1}{T} \sum_{t=1}^T 100\, \frac{|e_t|}{y_t} \] 
-             \[ U = \frac{\sqrt{\frac{1}{T}
-	      \sum_{t=1}^{T-1} \left(\frac{f_{t+1} - y_{t+1}}{y_t}\right)^2}}
-	      {\sqrt{\frac{1}{T} \sum_{t=1}^{T-1} 
-                \left(\frac{y_{t+1} - y_t}{y_t}\right)^2}} 
-          \] 
-	</para>
-	<para context="tex">
-	  The more accurate the forecasts, the lower the value of the
-	  Theil $U$ statistic, which has a minimum of 0. This measure can
-	  be interpreted as the ratio of the root mean squared error
-	  (RMSE) of the proposed forecasting model to the RMSE of a naive
-	  model which simply predicts $y_{t+1} = y_t$ for all $t$.  The
-	  naive model yields $U = 1$; values less than 1 indicate an
-	  improvement relative to this benchmark and values greater than 1
-	  a deterioration.
-	</para>
-	<para context="tex">
-	  The values $U^M$, $U^R$ and $U^D$ derive from the decomposition
-	  of the Mean Squared Error proposed by Theil (1966).  FIXME
-	  say more here.
+	  <guideref targ="chap-forecast"/>.
 	</para>
       </description>
     </function>
