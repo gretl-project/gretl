@@ -662,7 +662,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     if (ci == OLS || ci == VAR) return N_("OLS");
     else if (ci == WLS)  return N_("WLS"); 
     else if (ci == ARCH) return N_("WLS (ARCH)");
-#if 1
+#if 0
     else if (ci == HSK)  return N_("WLS"); 
 #else
     else if (ci == HSK)  return N_("Heteroskedasticity-corrected");
@@ -1485,6 +1485,24 @@ static void print_intreg_depvar (const MODEL *pmod,
     }
 }
 
+static void maybe_print_T (const MODEL *pmod, 
+			   const DATAINFO *pdinfo,
+			   const char *start,
+			   PRN *prn)
+{
+    int xsect = dataset_is_cross_section(pdinfo);
+
+    if (pmod->missmask || !xsect || strcmp(start, "1")) {
+	char *nstr = (xsect)? N_("n") : N_("T");
+
+	if (tex_format(prn)) {
+	    pprintf(prn, " ($%s$ = %d)", I_(nstr), pmod->nobs);
+	} else {
+	    pprintf(prn, " (%s = %d)", _(nstr), pmod->nobs);
+	}
+    } 
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
@@ -1565,54 +1583,49 @@ static void print_model_heading (const MODEL *pmod,
     if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
 	;
     } else if (pmod->aux == AUX_SYS) {
-	pprintf(prn, I_("%s estimates using the %d observations %s%s%s"),
+	pprintf(prn, I_("%s, using observations %s%s%s"),
 		I_(system_short_string(pmod)),
-		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+		startdate, (tex)? "--" : "-", enddate);
+	maybe_print_T(pmod, pdinfo, startdate, prn);
     } else if (!dataset_is_panel(pdinfo)) {
 	const char *estr = estimator_string(pmod, prn);
 	const char *fmt;
 
+	if (char_len(estr) > 32) {
+	    fmt = N_("%s, obs. %s%s%s");
+	    pprintf(prn, I_(fmt), I_(estr), startdate, 
+		    (tex)? "--" : "-", enddate);
+	    maybe_print_T(pmod, pdinfo, startdate, prn);
+	} else {
+	    fmt = N_("%s, using observations %s%s%s");
+	    pprintf(prn, I_(fmt), I_(estr), startdate, 
+		    (tex)? "--" : "-", enddate);
+	    maybe_print_T(pmod, pdinfo, startdate, prn);
+	}	
+
 	if (pmod->missmask != NULL) {
-	    int mc = model_missval_count(pmod);
+	    int mc;
 
 	    if (pmod->ci == HECKIT) {
 		int Tmax = pmod->t2 - pmod->t1 + 1;
 		
 		mc = Tmax - gretl_model_get_int(pmod, "totobs");
+	    } else {
+		mc = model_missval_count(pmod);
 	    }
 
-	    if (char_len(estr) > 24) {
-		fmt = N_("%s estimates %s%s%s (T = %d)");
-		pprintf(prn, I_(fmt), I_(estr), startdate, 
-			(tex)? "--" : "-", enddate, pmod->nobs);
-	    } else {
-		fmt = N_("%s estimates using %d observations from %s%s%s");
-		pprintf(prn, I_(fmt), I_(estr), pmod->nobs, startdate, 
-			(tex)? "--" : "-", enddate);
-	    }
 	    if (mc > 0) {
 		gretl_prn_newline(prn);
 		pprintf(prn, "%s: %d", I_("Missing or incomplete observations dropped"), 
 			mc);
 	    }
-	} else {
-	    if (char_len(estr) > 24) {
-		fmt = N_("%s estimates %s%s%s (T = %d)");
-		pprintf(prn, I_(fmt), I_(estr), startdate, 
-			(tex)? "--" : "-", enddate, pmod->nobs);
-
-	    } else {
-		fmt = N_("%s estimates using the %d observations %s%s%s");
-		pprintf(prn, I_(fmt), I_(estr), pmod->nobs, startdate, 
-			(tex)? "--" : "-", enddate);
-	    }
-	}
+	} 
     } else {
 	int effn = gretl_model_get_int(pmod, "n_included_units");
 	int Tmin = gretl_model_get_int(pmod, "Tmin");
 	int Tmax = gretl_model_get_int(pmod, "Tmax");
 
-	pprintf(prn, I_("%s estimates using %d observations"),
+	pprintf(prn, I_("%s, using %d observations"),
 		I_(estimator_string(pmod, prn)), pmod->nobs);
 	if (effn > 0) {
 	    gretl_prn_newline(prn);
