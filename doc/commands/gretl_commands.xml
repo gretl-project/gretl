@@ -9895,6 +9895,11 @@
 	  <flag>--zeros</flag>
 	  <effect>display zero entries</effect>
         </option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>matname</optparm>
+	  <effect>use frequencies from named matrix</effect>
+        </option>
       </options>
     </usage>
 
@@ -9906,7 +9911,10 @@
 	<repl>ylist</repl> is cross-tabulated by row against each variable
 	in <repl>xlist</repl> (by column).  Variables in these lists can
 	be referenced by name or by number.  Note that all the variables
-	must have been marked as discrete.
+	must have been marked as discrete.  Alternatively, if the 
+	<lit>--matrix</lit> option is given, treat the named matrix as
+	a precomputed set of frequencies and display this as a 
+	cross-tabulation.
       </para>
       <para>
 	By default the cell entries are given as frequency counts. The

@@ -359,6 +359,7 @@ struct gretl_option gretl_opts[] = {
     { WLS,      OPT_Q, "quiet", 0 },
     { XCORRGM,  OPT_Q, "quiet", 0 },
     { XTAB,     OPT_C, "column", 0 },
+    { XTAB,     OPT_M, "matrix", 2 },
     { XTAB,     OPT_R, "row", 0 },
     { XTAB,     OPT_Z, "zeros", 0 },
     { 0,        0L,    NULL, 0 }

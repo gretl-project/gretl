@@ -2435,6 +2435,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     } 
 
+    /* XTAB generally takes a list, but not with the --matrix option */
+    if (cmd->ci == XTAB && (cmd->opt & OPT_M)) {
+	cmd_set_nolist(cmd);
+	return cmd->err;
+    }     
+
     /* dataset-modifying commands */
     if (cmd->ci == DATAMOD) {
 	capture_param(line, cmd, NULL);
@@ -4443,7 +4449,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break; 
 
     case XTAB:
-	err = crosstab(cmd->list, Z, pdinfo, cmd->opt, prn);
+	if (cmd->opt & OPT_M) {
+	    err = crosstab_from_matrix(cmd->opt, prn);
+	} else {
+	    err = crosstab(cmd->list, Z, pdinfo, cmd->opt, prn);
+	}
 	break;
 
     case MAHAL:

@@ -4000,7 +4000,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	ret = aux_vec_node(p, p->dinfo->n);
     }
 
-    if (ret != NULL && starting(p)) {
+    if (ret != NULL) {
 	gretl_matrix *tmp = NULL;
 	const double *x;
 	double *y;

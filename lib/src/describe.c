@@ -27,6 +27,7 @@
 #include "libset.h"
 #include "compat.h"
 #include "plotspec.h"
+#include "usermat.h"
 
 #include <unistd.h>
 
@@ -1918,6 +1919,10 @@ static Xtab *xtab_new (int n, int t1, int t2)
     tab->n = n;
     tab->t1 = t1;
     tab->t2 = t2;
+    tab->missing = 0;
+
+    *tab->rvarname = '\0';
+    *tab->cvarname = '\0';
 
     return tab;
 }
@@ -2113,6 +2118,60 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     }
 
     return tab;
+}
+
+int crosstab_from_matrix (gretlopt opt, PRN *prn)
+{
+    const char *mname;
+    const gretl_matrix *m;
+    Xtab *tab;
+    int i, j, err = 0;
+
+    mname = get_optval_string(XTAB, OPT_M);
+    if (mname == NULL) {
+	return E_DATA;
+    }    
+
+    m = get_matrix_by_name(mname);
+    if (m == NULL) {
+	return E_UNKVAR;
+    }
+
+    tab = xtab_new(0, 0, 0);
+    if (tab == NULL) {
+	return E_ALLOC;
+    }
+
+    if (xtab_allocate_arrays(tab, m->rows, m->cols)) {
+	free_xtab(tab);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	tab->rval[i] = i + 1;
+	tab->rtotal[i] = 0.0;
+	for (j=0; j<m->cols; j++) {
+	    tab->f[i][j] = gretl_matrix_get(m, i, j);
+	    tab->rtotal[i] += tab->f[i][j];
+	}
+    }
+
+    for (j=0; j<m->cols; j++) {
+	tab->cval[j] = j + 1;
+	tab->ctotal[j] = 0.0;
+	for (i=0; i<m->rows; i++) {
+	    tab->ctotal[j] += tab->f[i][j];
+	}
+    }  
+
+    for (i=0; i<m->rows; i++) {
+	tab->n += tab->rtotal[i];
+    }
+
+    print_xtab(tab, opt, prn);
+    free_xtab(tab);	
+
+    return err;    
 }
 
 int crosstab (const int *list, const double **Z, 

@@ -492,11 +492,15 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     double pearson = 0.0;
     int i, j;
 
-    pputc(prn, '\n');
-    pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
-	    tab->rvarname, tab->cvarname);
+    if (*tab->rvarname != '\0' && *tab->cvarname != '\0') {
+	pputc(prn, '\n');
+	pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
+		tab->rvarname, tab->cvarname);
+	pputs(prn, "\n\n       ");
+    } else {
+	pputs(prn, "\n       ");
+    }
 
-    pputs(prn, "\n\n       ");
     for (j=0; j<c; j++) {
 	pprintf(prn, "[%4g]", tab->cval[j]);
     } 

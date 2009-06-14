@@ -146,6 +146,8 @@ int crosstab (const int *list, const double **Z,
 	      const DATAINFO *pdinfo, gretlopt opt,
 	      PRN *prn);
 
+int crosstab_from_matrix (gretlopt opt, PRN *prn);
+
 int compare_xtab_rows (const void *a, const void *b);
 
 Xtab *single_crosstab (const int *list, const double **Z, 
