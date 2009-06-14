@@ -192,6 +192,9 @@ int rmplot (const int *list, const double **Z, DATAINFO *pdinfo,
 int hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, 
 	       PRN *prn);
 
+int theil_forecast_plot (const int *plotlist, const double **Z, 
+			 const DATAINFO *pdinfo, gretlopt opt);
+
 int 
 gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
 		     gretlopt opt);

@@ -1316,6 +1316,25 @@ gretl_VAR_get_residual_matrix (const GRETL_VAR *var)
     return var->E;
 }
 
+#define samesize(p,q) (p->rows == q->rows && p->cols == q->cols)
+
+gretl_matrix *
+gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
+{
+    gretl_matrix *Yh = NULL;
+
+    if (var->Y != NULL && var->E != NULL && samesize(var->Y, var->E)) {
+	Yh = gretl_matrix_copy(var->Y);
+	if (Yh != NULL) {
+	    gretl_matrix_subtract_from(Yh, var->E);
+	    Yh->t1 = var->t1;
+	    Yh->t2 = var->t2;
+	}
+    }
+
+    return Yh;
+}
+
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k)
 {
     if (var->models != NULL && k >= 0 && k < var->neqns) {
@@ -3159,6 +3178,9 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 
     if (idx == M_UHAT) {
 	src = gretl_VAR_get_residual_matrix(var);
+    } else if (idx == M_YHAT) {
+	M = gretl_VAR_get_fitted_matrix(var);
+	copy = 0;
     } else if (idx == M_COMPAN) {
 	src = var->A;
     } else if (idx == M_COEFF || idx == M_SE) {

@@ -2279,28 +2279,34 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    }
 	}
 
-	if (xlist == NULL) {
-	    continue;
+	if (xlist != NULL) {
+	    /* put the independent vars on the menu list */
+	    for (j=1; j<=xlist[0]; j++) {
+		v1 = xlist[j];
+		if (v1 == 0) {
+		    continue;
+		}
+		if (!strcmp(datainfo->varname[v1], "time")) {
+		    continue;
+		}
+		sprintf(aname, "%c:xvar %d", (i == 0)? 'r' : 'f', v1);
+		double_underscores(tmp, datainfo->varname[v1]);
+		alabel = g_strdup_printf(_("_Against %s"), tmp);
+		entry.name = aname;
+		entry.label = alabel;
+		entry.callback = (i == 0)? G_CALLBACK(resid_plot) : 
+		    G_CALLBACK(fit_actual_plot);
+		vwin_menu_add_item(vwin, mpath[i], &entry);
+		g_free(alabel);
+	    }
 	}
 
-	/* put the independent vars on the menu list */
-	for (j=1; j<=xlist[0]; j++) {
-	    v1 = xlist[j];
-	    if (v1 == 0) {
-		continue;
-	    }
-	    if (!strcmp(datainfo->varname[v1], "time")) {
-		continue;
-	    }
-	    sprintf(aname, "%c:xvar %d", (i == 0)? 'r' : 'f', v1);
-	    double_underscores(tmp, datainfo->varname[v1]);
-	    alabel = g_strdup_printf(_("_Against %s"), tmp);
-	    entry.name = aname;
-	    entry.label = alabel;
-	    entry.callback = (i == 0)? G_CALLBACK(resid_plot) : 
-		G_CALLBACK(fit_actual_plot);
+	if (i == 1) {
+	    /* fitted values: offer Theil-type scatterplot */
+	    entry.name = "f:theil";
+	    entry.label = _("Actual vs. Fitted");
+	    entry.callback = G_CALLBACK(fit_actual_plot);
 	    vwin_menu_add_item(vwin, mpath[i], &entry);
-	    g_free(alabel);
 	}
     }
 

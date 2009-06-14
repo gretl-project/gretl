@@ -2808,6 +2808,78 @@ int gnuplot (const int *plotlist, const char *literal,
     return err;
 }
 
+int theil_forecast_plot (const int *plotlist, const double **Z, 
+			 const DATAINFO *pdinfo, gretlopt opt)
+{
+    FILE *fp = NULL;
+    gnuplot_info gi;
+    int vx, vy;
+    int err;
+
+    gretl_error_clear();
+
+    if (plotlist[0] != 2) {
+	return E_DATA;
+    }
+
+    err = gpinfo_init(&gi, opt | OPT_S, plotlist, NULL, 
+		      pdinfo->t1, pdinfo->t2);
+    if (err) {
+	goto bailout;
+    }
+
+    /* ensure the time-series flag is unset */
+    gi.flags &= ~GPT_TS;
+
+    graph_list_adjust_sample(gi.list, &gi, Z);
+    if (gi.t1 == gi.t2) {
+	err = GRAPH_NO_DATA;
+	goto bailout;
+    }
+
+    if (get_gnuplot_output_file(&fp, gi.flags, PLOT_REGULAR)) {
+	err = E_FOPEN;
+	goto bailout;
+    } 
+
+    gi.fp = fp;
+
+    vx = gi.list[2];
+    vy = gi.list[1];
+
+    print_axis_label('x', var_get_graph_name(pdinfo, vx), fp);
+    print_axis_label('y', var_get_graph_name(pdinfo, vy), fp);
+	   
+    fputs("set xzeroaxis\n", fp); 
+    gnuplot_missval_string(fp);
+    fputs("set key left top\n", fp);
+
+    gretl_push_c_numeric_locale();
+
+    print_x_range_from_list(&gi, Z, gi.list);
+
+    fputs("plot \\\n", fp);
+    fputs(" '-' using 1:($2) notitle w points , \\\n", fp);
+    fprintf(fp, " x title \"%s\" w lines\n", _("actual = predicted"));
+
+    print_gp_data(&gi, Z, pdinfo);
+
+    fclose(gi.fp);
+    gi.fp = NULL;
+
+    gretl_pop_c_numeric_locale();
+
+    if (gp_interactive(gi.flags) || specified_gp_output_format()) {
+	err = gnuplot_make_graph();
+    }
+
+ bailout:
+
+    clear_gpinfo(&gi);
+
+    return err;
+}
+
 /**
  * multi_scatters:
  * @list: list of variables to plot, by ID number.

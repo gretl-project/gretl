@@ -4894,7 +4894,11 @@ static void xvar_from_action (GtkAction *action, int *xvar)
 {
     const gchar *s = gtk_action_get_name(action);
 
-    sscanf(s, "%*s %d", xvar);
+    if (!strcmp(s, "f:theil")) {
+	*xvar = -1;
+    } else {
+	sscanf(s, "%*s %d", xvar);
+    }
 }
 
 void resid_plot (GtkAction *action, gpointer p)
@@ -4993,6 +4997,35 @@ void resid_plot (GtkAction *action, gpointer p)
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
 }
 
+static void theil_plot (MODEL *pmod, double ***gZ, DATAINFO *ginfo)
+{
+    int plotlist[3];
+    int origv = ginfo->v;
+    int dv, fv, err;
+
+    if (add_fit_resid(pmod, M_YHAT, 1)) {
+	return;
+    }
+
+    plotlist[0] = 2;
+    plotlist[1] = dv = gretl_model_get_depvar(pmod);
+    plotlist[2] = fv = ginfo->v - 1; /* fitted values */
+
+    sprintf(DISPLAYNAME(ginfo, fv), _("predicted %s"),
+	    ginfo->varname[dv]);
+
+    err = theil_forecast_plot(plotlist, (const double **) *gZ, 
+			      ginfo, OPT_G);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph();
+    }
+
+    dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
+}
+
 void fit_actual_plot (GtkAction *action, gpointer p)
 {
     gretlopt opt = OPT_G | OPT_F;
@@ -5015,6 +5048,11 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     }
 
     xvar_from_action(action, &xvar);
+
+    if (xvar < 0) {
+	theil_plot(pmod, gZ, ginfo);
+	return;
+    }
 
     formula = gretl_model_get_fitted_formula(pmod, xvar, (const double **) *gZ,
 					     ginfo);

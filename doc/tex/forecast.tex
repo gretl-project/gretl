@@ -31,8 +31,8 @@ In the simplest case, the ``predictions'' of interest are just the
 single-equation linear model, $y_t = X_t \beta + u_t$, these are
 $\hat{y}_t = X_t \hat{\beta}$.  
 
-In command-line mode, the $\hat{y}$ series can be retrieved using the
-accessor \verb|$yhat|, as in
+In command-line mode, the $\hat{y}$ series can be retrieved, after
+estimating a model, using the accessor \verb|$yhat|, as in
 %
 \begin{code}
 series yh = $yhat
@@ -48,11 +48,19 @@ equation, do
 matrix Yh = $yhat
 series yh2 = Yh[,2]
 \end{code}
-% 
 
+Having obtained a series of fitted values, you can use the
+\texttt{fcstats} function to produce a vector of statistics that
+characterize the accuracy of the predictions (see
+section~\ref{sec:fcast-stats} below).
 
+The \app{gretl} GUI offers several ways of accessing and examining
+within-sample predictions.  In the model display window the
+\textsf{Save} menu contains an item for saving fitted values, the
+\textsf{Graphs} menu allows plotting of fitted versus actual values,
+and the \textsf{Analysis} menu offers a display of actual, fitted and
+residual values.
 
-To be written.
 
 \section{The \texttt{fcast} command}
 \label{sec:fcast-fcast}
