@@ -11,6 +11,8 @@ version 1.8.2, in progress
   fitted a la Theil
 - Rationalize use of GRETL_KEEP_GOING and halt_on_error: induce
   consistency between CLI and GUI programs
+- xtab command: add --matrix option to take frequencies from
+  a named matrix
 
 5/21/2009 version 1.8.1
 - Fix bugs 2533543, 2590417, 2604963, 2687954, 2734471, 

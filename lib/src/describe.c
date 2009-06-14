@@ -2137,6 +2137,10 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
 	return E_UNKVAR;
     }
 
+    if (m->rows < 2 || m->cols < 2) {
+	return E_DATA;
+    }
+
     tab = xtab_new(0, 0, 0);
     if (tab == NULL) {
 	return E_ALLOC;
