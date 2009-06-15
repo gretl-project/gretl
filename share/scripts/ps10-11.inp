@@ -1,12 +1,19 @@
 # PS10-11 for the VAR Example 10.9 
 open data10-1
 lags r M D
+# define sample ranges for estimation and out-of-sample forecast
+string est_range = "1964:1 1988:4"
+string fc_range = "1989:1 1991:2"
 # Set sample range for the estimation 
-smpl 1964.1 1988.4
+smpl @est_range
 # Estimate the model for interest rate 
 ols r const r_1 r_2 r_3 r_4 M_1 M_2 M_3 M_4 D_1 D_2 D_3 D_4
-# Forecast out of sample for 1989,1-1991.2 
-fcast 1989.1 1991.2 rhat1
+# Forecast out of sample
+smpl @fc_range
+fcast --quiet
+series rhat1 = $fcast
+# reset estimation range
+smpl @est_range
 # Omit variables with insignificant coefficients, one at a time 
 omit D_2
 omit D_3
@@ -15,33 +22,43 @@ omit M_4
 omit M_3
 omit M_2
 # forecast again for final model and generate mean absolute % errors 
-fcast 1989.1 1991.2 rhat2
-smpl 1989.1 1991.2
+smpl @fc_range
+fcast --quiet
+series rhat2 = $fcast
 genr aper1 = 100*abs(r-rhat1)/r
 genr aper2 = 100*abs(r-rhat2)/r
 genr maper1 = mean(aper1)
 genr maper2 = mean(aper2)
 print maper1 maper2
 # reset sample range and repeat process for money supply 
-smpl 1964.1 1988.4
+smpl @est_range
 ols M const r_1 r_2 r_3 r_4 M_1 M_2 M_3 M_4 D_1 D_2 D_3 D_4
-fcast 1989.1 1991.2 Mhat1
+smpl @fc_range
+fcast --quiet
+series Mhat1 = $fcast
+# reset estimation range
+smpl @est_range
 omit M_3
 omit D_2
 omit D_4
 omit r_3
 omit r_4
-fcast 1989.1 1991.2 Mhat2
-smpl 1989.1 1991.2
+smpl @fc_range
+fcast --quiet
+series Mhat2 = $fcast
 genr apeM1 = 100*abs(M-Mhat1)/M
 genr apeM2 = 100*abs(M-Mhat2)/M
 genr mapeM1 = mean(apeM1)
 genr mapeM2 = mean(apeM2)
 print mapeM1 mapeM2
 # reset sample range and repeat process for the deficit 
-smpl 1964.1 1988.4
+smpl @est_range
 ols D const r_1 r_2 r_3 r_4 M_1 M_2 M_3 M_4 D_1 D_2 D_3 D_4
-fcast 1989.1 1991.2 Dhat1
+smpl @fc_range
+fcast --quiet
+series Dhat1 = $fcast
+# reset estimation range
+smpl @est_range
 omit r_2
 omit D_4
 omit M_2
@@ -50,8 +67,9 @@ omit M_4
 omit M_1
 omit M_3
 omit r_1
-fcast 1989.1 1991.2 Dhat2
-smpl 1989.1 1991.2
+smpl @fc_range
+fcast --quiet
+series Dhat2 = $fcast
 genr apeD1 = 100*abs(D-Dhat1)/D
 genr apeD2 = 100*abs(D-Dhat2)/D
 genr mapeD1 = mean(apeD1)

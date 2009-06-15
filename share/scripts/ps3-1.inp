@@ -3,26 +3,24 @@ open data3-1
 graph 1 2 
 # learn about the ols command 	  
 help ols 
-# estimate model; -o is to get covariance 
-ols -o 1 0 2
-# generate "fitted" value 		  
-fcast 1 14 phat1
-# learn about fcast command 		  
-help fcast
+# estimate model; --vcv is to get covariance 
+ols 1 0 2 --vcv
+# gretl saves fitted values under the name $yhat.  Copy this to phat1
+genr phat1 = $yhat
 # print values                         
-print phat1 
-# ESL saves residuals under the name uhat.  Copy this to ut 
+print phat1
+# gretl saves residuals under the name $uhat.  Copy this to ut 
 genr ut = $uhat 
 # another way to get fitted value is to subtract the error from the 
 # actual value of the dependent variable 
-genr phat2 = price - ut 
+genr yh2 = price - ut 
 # print values                         
-print phat2 
-# retrieve number of obs. 		  
+print yh2 
+# retrieve number of obsservations		  
 genr n = $nobs
 # retrieve ESS - Section 3.4 	  
 genr ESS = $ess
-# compute st. dev. for price 	  
+# compute standard deviation for price 	  
 genr sdy = sd(price) 
 # compute TSS - Example 3.4 	  	  
 genr TSS = (n-1)*sdy*sdy 

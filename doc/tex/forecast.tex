@@ -145,7 +145,11 @@ and the entire MSE will be accounted for by the unsystematic part,
 $U^D$.  In the case of out-of-sample prediction, however (or
 ``prediction'' over a sub-sample of the data used in the regression),
 $U^M$ and $U^R$ are not necessarily close to zero, although this is a
-desirable property for a forecast to have.
+desirable property for a forecast to have. $U^M$ differs from zero if
+and only if the mean of the forecasts differs from the mean of the
+realizations, and $U^R$ is non-zero if and only if the slope of a
+simple regression of the realizations on the forecasts differs from
+1.
 
 The above-mentioned statistics are printed as part of the output of
 the \texttt{fcast} command.  They can also be retrieved in the form of

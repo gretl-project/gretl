@@ -87,7 +87,7 @@ typedef enum {
     M_SYSGAM,     /* Parameter matrix Gamma (simultaneous systems) */
     M_SYSA,       /* Parameter matrix A (simultaneous systems) */
     M_SYSB,       /* Parameter matrix B (simultaneous systems) */
-    M_FCAST,      /* last forecast generated via fcasterr */
+    M_FCAST,      /* last forecast generated via fcast command */
     M_FCERR,      /* standard errors associated with M_FCAST */
     M_COEFF_CI,   /* (asymmetric) confidence intervals for coeffs */
     M_KLLT,       /* Kalman log-likelihood, per time-step */
