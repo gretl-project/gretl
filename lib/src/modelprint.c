@@ -662,11 +662,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     if (ci == OLS || ci == VAR) return N_("OLS");
     else if (ci == WLS)  return N_("WLS"); 
     else if (ci == ARCH) return N_("WLS (ARCH)");
-#if 0
-    else if (ci == HSK)  return N_("WLS"); 
-#else
     else if (ci == HSK)  return N_("Heteroskedasticity-corrected");
-#endif
     else if (ci == AR)   return N_("AR");
     else if (ci == LAD)  return N_("LAD");
     else if (ci == MPOLS) return N_("High-Precision OLS");
@@ -680,7 +676,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == GMM) return N_("GMM");
     else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == GARCH) return N_("GARCH");
-    else if (ci == INTREG) return N_("Interval");
+    else if (ci == INTREG) return N_("Interval estimates");
     else if (ci == ARBOND) {
 	if (tex_format(prn)) return N_("Arellano--Bond");
 	else return N_("Arellano-Bond");
@@ -767,7 +763,7 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	}
     } else if (pmod->ci == LAD) {
 	if (gretl_model_get_int(pmod, "rq")) {
-	    return N_("Quantile");
+	    return N_("Quantile estimates");
 	} else {
 	    return N_("LAD");
 	}
@@ -1490,17 +1486,27 @@ static void maybe_print_T (const MODEL *pmod,
 			   const char *start,
 			   PRN *prn)
 {
-    int xsect = dataset_is_cross_section(pdinfo);
+    if (pmod->missmask == NULL && !strcmp(start, "1")) {
+	return;
+    } else {
+	int xsect = dataset_is_cross_section(pdinfo);
 
-    if (pmod->missmask || !xsect || strcmp(start, "1")) {
-	char *nstr = (xsect)? N_("n") : N_("T");
+	if (pmod->missmask || !xsect || strcmp(start, "1")) {
+	    const char *nstrs[] = {
+		/* TRANSLATORS: 'n' denotes sample size */
+		N_("n"),
+		/* TRANSLATORS: 'T' denotes time-series sample size */
+		N_("T")
+	    };
+	    const char *nstr = xsect ? nstrs[0] : nstrs[1];
 
-	if (tex_format(prn)) {
-	    pprintf(prn, " ($%s$ = %d)", I_(nstr), pmod->nobs);
-	} else {
-	    pprintf(prn, " (%s = %d)", _(nstr), pmod->nobs);
-	}
-    } 
+	    if (tex_format(prn)) {
+		pprintf(prn, " ($%s$ = %d)", I_(nstr), pmod->nobs);
+	    } else {
+		pprintf(prn, " (%s = %d)", _(nstr), pmod->nobs);
+	    }
+	} 
+    }
 }
 
 static void print_model_heading (const MODEL *pmod, 

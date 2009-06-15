@@ -2402,6 +2402,7 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
 
     nmax += 2;
 
+    pputs(prn, "  ");
     pputs(prn, _("Forecast evaluation statistics"));
     pputs(prn, "\n\n");
 
@@ -2417,6 +2418,7 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
 	}
 	j += (i == 1)? 2 : 1;
     }
+    pputc(prn, '\n');
     
     gretl_matrix_free(m);
 
@@ -2549,7 +2551,11 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 	}
     }
 
-    pprintf(prn, "\n     %s ", _("Obs"));
+    if (!(opt & OPT_Q)) {
+	pputc(prn, '\n');
+    }
+
+    pprintf(prn, "     %s ", _("Obs"));
     pprintf(prn, "%12s", fr->depvar);
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 
@@ -2600,7 +2606,9 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 
     pputc(prn, '\n');
 
-    print_fcast_stats(fr, OPT_D, prn);
+    if (!(opt & OPT_N)) {
+	print_fcast_stats(fr, OPT_D, prn);
+    }
 
     /* do we really want a plot for non-time series? */
 

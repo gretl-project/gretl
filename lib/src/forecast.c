@@ -2864,7 +2864,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 
     if (!(opt & OPT_Q)) {
 	/* assemble and print per-equation forecasts */
-	gretlopt printopt = OPT_NONE;
+	gretlopt printopt = (opt & OPT_N)? OPT_N : OPT_NONE;
 	FITRESID *fr = NULL;
 	int i, asy;
 

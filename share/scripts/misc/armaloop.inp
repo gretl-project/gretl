@@ -14,7 +14,7 @@ series de_m = e
 
 scalar crit = 1
 
-loop while crit > 1.0e-9
+loop while crit > 1.0e-9 --quiet
 
    # one-step forecast errors
    e = y - c - a*y(-1) - m*e(-1)  

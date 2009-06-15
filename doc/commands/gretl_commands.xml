@@ -2482,8 +2482,12 @@
 	  <effect>generate post-sample forecast</effect>
         </option>
         <option>
+	  <flag>--no-stats</flag>
+	  <effect>don't print forecast statistics</effect>
+        </option>
+        <option>
 	  <flag>--quiet</flag>
-	  <effect>don't print the forecast</effect>
+	  <effect>don't print anything</effect>
         </option>
         <option>
 	  <flag>--rolling</flag>

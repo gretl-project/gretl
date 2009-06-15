@@ -121,6 +121,7 @@ struct gretl_option gretl_opts[] = {
     { ESTIMATE, OPT_Q, "quiet", 0 },
     { ESTIMATE, OPT_V, "verbose", 0 },
     { FCAST,    OPT_D, "dynamic", 0 },
+    { FCAST,    OPT_N, "no-stats", 0 },
     { FCAST,    OPT_S, "static", 0 },
     { FCAST,    OPT_Q, "quiet", 0 },
     { FCAST,    OPT_R, "rolling", 0 },
@@ -262,7 +263,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_B, "between", 0 },
     { PANEL,    OPT_D, "time-dummies", 0 },
     { PANEL,    OPT_F, "fixed-effects", 0 },
-    { PANEL,    OPT_H, "hausman-reg", 0 },
+    { PANEL,    OPT_H, "hausman-reg", 0 }, /* backward compatibility */
     { PANEL,    OPT_I, "iterate", 0 },
     { PANEL,    OPT_M, "matrix-diff", 0 },
     { PANEL,    OPT_O, "vcv", 0 },

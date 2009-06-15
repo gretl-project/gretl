@@ -7,7 +7,7 @@ genr essdiff = 1
 genr b = $coeff(Y)
 genr g = 1
 # iterate OLS till the error sum of squares converges
-loop while essdiff > .00001
+loop while essdiff > .00001 --quiet
    # form the linearized variables
    genr C0 = C + g * b * Y^g * log(Y)
    genr x1 = Y^g
