@@ -23,6 +23,14 @@ double ndtri (double);                   /* ndtri.c */
 double p1evl (double, double *, int);    /* polevl.c */
 double polevl (double, double *, int);   /* polevl.c */
 
+int airy (double x, double *ai, double *aip, double *bi, double *bip);
+double hyp2f1 (double a, double b, double c, double x);
+double cephes_bessel_Jn (int n, double x);
+double cephes_bessel_Yn (int n, double x);
+double cephes_bessel_Jv (double n, double x);
+double cephes_bessel_Yv (double n, double x);
+double cephes_bessel_Iv (double v, double x);
+
 #ifndef INFINITY
 extern double INFINITY;
 #endif
