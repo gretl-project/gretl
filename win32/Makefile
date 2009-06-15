@@ -271,9 +271,12 @@ GUISRC = about.c \
 
 GUIOBJ = $(GUISRC:.c=.o)
 
-PROBSRC = bdtr.c btdtr.c chdtr.c expx2.c fdtr.c gamma.c gdtr.c \
-	igam.c igami.c incbet.c incbi.c mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c \
-	stdtr.c unity.c polevl.c polrt.c const.c
+PROBSRC = airy.c const.c hyp2f1.c igami.c j1.c kn.c pdtr.c struve.c \
+	bdtr.c expx2.c hyperg.c incbet.c jn.c mtherr.c polevl.c unity.c \
+	btdtr.c fdtr.c i0.c incbi.c jv.c  nbdtr.c polrt.c yn.c \
+	chbevl.c gamma.c i1.c iv.c k0.c  ndtr.c psi.c \
+	chdtr.c gdtr.c igam.c j0.c k1.c ndtri.c stdtr.c
+
 PROBOBJ = $(PROBSRC:.c=.o)
 
 MINSRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \

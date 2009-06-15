@@ -1,16 +1,12 @@
-/*							jv.c
+/* jv.c
  *
  *	Bessel function of noninteger order
- *
- *
  *
  * SYNOPSIS:
  *
  * double v, x, y, jv();
  *
  * y = jv( v, x );
- *
- *
  *
  * DESCRIPTION:
  *
@@ -22,8 +18,6 @@
  * expansions for large v.  If v is not too large, it
  * is reduced by recurrence to a region of best accuracy.
  * The transitional expansions give 12D accuracy for v > 500.
- *
- *
  *
  * ACCURACY:
  * Results for integer v are indicated by *, where x and v
@@ -39,11 +33,10 @@
  *    IEEE   -125,125   -125,125      50000      3.5e-15*   1.9e-16*
  *
  */
-
 
 /*
-Cephes Math Library Release 2.8:  June, 2000
-Copyright 1984, 1987, 1989, 1992, 2000 by Stephen L. Moshier
+  Cephes Math Library Release 2.8:  June, 2000
+  Copyright 1984, 1987, 1989, 1992, 2000 by Stephen L. Moshier
 */
 
 #include "mconf.h"
@@ -70,100 +63,99 @@ double cephes_bessel_Jv (double n, double x)
 
     nint = 0;	/* Flag for integer n */
     sign = 1;	/* Flag for sign inversion */
-    an = fabs( n );
-    y = floor( an );
+    an = fabs(n);
+    y = floor(an);
 
-    if ( y == an ) {
+    if (y == an) {
 	nint = 1;
-	i = an - 16384.0 * floor( an/16384.0 );
-	if ( n < 0.0 ) {
-	    if ( i & 1 )
+	i = an - 16384.0 * floor(an/16384.0);
+	if (n < 0.0) {
+	    if (i & 1)
 		sign = -sign;
 	    n = an;
 	}
-	if ( x < 0.0 ) {
-	    if ( i & 1 )
+	if (x < 0.0) {
+	    if (i & 1)
 		sign = -sign;
 	    x = -x;
 	}
-	if ( n == 0.0 )
+	if (n == 0.0)
 	    return j0(x);
-	if ( n == 1.0 )
+	if (n == 1.0)
 	    return sign * j1(x);
     }
 
-    if( (x < 0.0) && (y != an) ) {
-	mtherr( "Jv", DOMAIN );
+    if (x < 0.0 && y != an) {
+	mtherr("Jv", DOMAIN);
 	y = 0.0;
 	goto done;
     }
 
     y = fabs(x);
 
-    if ( y < MACHEP )
+    if (y < MACHEP)
 	goto underf;
 
     k = 3.6 * sqrt(y);
     t = 3.6 * sqrt(an);
-    if ( (y < t) && (an > 21.0) )
+
+    if (y < t && an > 21.0)
 	return sign * jvs(n,x);
-    if ( (an < k) && (y > 21.0) )
+    if (an < k && y > 21.0)
 	return sign * hankel(n,x);
 
-    if ( an < 500.0 ) {
-	/* Note: if x is too large, the continued
-	 * fraction will fail; but then the
-	 * Hankel expansion can be used.
+    if (an < 500.0) {
+	/* Note: if x is too large, the continued fraction will fail;
+	   but then the Hankel expansion can be used.
 	 */
-	if ( nint != 0 ) {
+	if (nint != 0) {
 	    k = 0.0;
-	    q = recur( &n, x, &k, 1 );
-	    if ( k == 0.0 ) {
+	    q = recur(&n, x, &k, 1);
+	    if (k == 0.0) {
 		y = j0(x)/q;
 		goto done;
 	    }
-	    if ( k == 1.0 ) {
+	    if (k == 1.0) {
 		y = j1(x)/q;
 		goto done;
 	    }
 	}
 
-	if ( an > 2.0 * y )
+	if (an > 2.0 * y)
 	    goto rlarger;
 
-	if ( (n >= 0.0) && (n < 20.0) && (y > 6.0) && (y < 20.0) ) {
+	if (n >= 0.0 && n < 20.0 && y > 6.0 && y < 20.0) {
 	    /* Recur backwards from a larger value of n */
 	rlarger:
 	    k = n;
-
 	    y = y + an + 1.0;
-	    if ( y < 30.0 )
+	    if (y < 30.0)
 		y = 30.0;
 	    y = n + floor(y-n);
-	    q = recur( &y, x, &k, 0 );
+	    q = recur(&y, x, &k, 0);
 	    y = jvs(y,x) * q;
 	    goto done;
 	}
 
-	if ( k <= 30.0 ) {
+	if (k <= 30.0) {
 	    k = 2.0;
-	} else if ( k < 90.0 ) {
+	} else if (k < 90.0) {
 	    k = (3*k)/4;
 	}
-	if ( an > (k + 3.0) ) {
-	    if ( n < 0.0 )
+	if (an > (k + 3.0)) {
+	    if (n < 0.0)
 		k = -k;
 	    q = n - floor(n);
 	    k = floor(k) + q;
-	    if ( n > 0.0 ) {
-		q = recur( &n, x, &k, 1 );
+	    if (n > 0.0) {
+		q = recur(&n, x, &k, 1);
 	    } else {
 		t = k;
 		k = n;
-		q = recur( &t, x, &k, 1 );
+		q = recur(&t, x, &k, 1);
 		k = t;
 	    }
-	    if ( q == 0.0 ) {
+	    if (q == 0.0) {
 	    underf:
 		y = 0.0;
 		goto done;
@@ -174,19 +166,17 @@ double cephes_bessel_Jv (double n, double x)
 	}
 
 	/* boundary between convergence of power series and Hankel
-	   expansion */
+	   expansion 
+	*/
 	y = fabs(k);
-	if ( y < 26.0 )
+	if (y < 26.0)
 	    t = (0.0083*y + 0.09)*y + 12.9;
 	else
 	    t = 0.9 * y;
 
-	if ( x > t )
-	    y = hankel(k,x);
-	else
-	    y = jvs(k,x);
+	y = (x > t)? hankel(k,x) : jvs(k,x);
 
-	if ( n > 0.0 )
+	if (n > 0.0)
 	    y /= q;
 	else
 	    y *= q;
@@ -195,17 +185,14 @@ double cephes_bessel_Jv (double n, double x)
 	   expansion.  But if x is of the order of n**2, these may
 	   blow up, whereas the Hankel expansion will then work.
 	 */
-	if ( n < 0.0 ) {
-	    mtherr( "Jv", TLOSS );
+	if (n < 0.0) {
+	    mtherr("Jv", TLOSS);
 	    y = 0.0;
 	    goto done;
 	}
 	t = x/n;
 	t /= n;
-	if ( t > 0.3 )
-	    y = hankel(n,x);
-	else
-	    y = jnx(n,x);
+	y = (t > 0.3)? hankel(n,x) : jnx(n,x);
     }
 
  done:	
@@ -224,7 +211,7 @@ static double recur (double *n, double x, double *newn, int cancel)
     int nflag, ctr;
 
     /* continued fraction for Jn(x)/Jn-1(x) */
-    if ( *n < 0.0 )
+    if (*n < 0.0)
 	nflag = 1;
     else
 	nflag = 0;
@@ -247,37 +234,37 @@ static double recur (double *n, double x, double *newn, int cancel)
 	pkm1 = pk;
 	qkm2 = qkm1;
 	qkm1 = qk;
-	if ( qk != 0 )
+	if (qk != 0)
 	    r = pk/qk;
 	else
 	    r = 0.0;
-	if ( r != 0 ) {
-	    t = fabs( (ans - r)/r );
+	if (r != 0) {
+	    t = fabs((ans - r)/r);
 	    ans = r;
 	} else
 	    t = 1.0;
 
-	if ( ++ctr > 1000 ) {
-	    mtherr( "jv", UNDERFLOW );
+	if (++ctr > 1000) {
+	    mtherr("jv", UNDERFLOW);
 	    goto done;
 	}
-	if ( t < MACHEP )
+	if (t < MACHEP)
 	    goto done;
 
-	if ( fabs(pk) > big ) {
+	if (fabs(pk) > big) {
 	    pkm2 /= big;
 	    pkm1 /= big;
 	    qkm2 /= big;
 	    qkm1 /= big;
 	}
-    } while ( t > MACHEP );
+    } while (t > MACHEP);
 
  done:
 
     /* Change n to n-1 if n < 0 and the continued fraction is small
      */
-    if ( nflag > 0 ) {
-	if ( fabs(ans) < 0.125 ) {
+    if (nflag > 0) {
+	if (fabs(ans) < 0.125) {
 	    nflag = -1;
 	    *n = *n - 1.0;
 	    goto fstart;
@@ -297,23 +284,24 @@ static double recur (double *n, double x, double *newn, int cancel)
     k = *n - 1.0;
     r = 2 * k;
     do {
-	pkm2 = (pkm1 * r  -  pk * x) / x;
+	pkm2 = (pkm1 * r - pk * x) / x;
 	pk = pkm1;
 	pkm1 = pkm2;
 	r -= 2.0;
 	k -= 1.0;
-    } while ( k > (kf + 0.5) );
+    } while (k > (kf + 0.5));
 
-    /* Take the larger of the last two iterates
-     * on the theory that it may have less cancellation error.
+    /* Take the larger of the last two iterates on the theory that it
+       may have less cancellation error.
      */
 
-    if ( cancel ) {
-	if ( (kf >= 0.0) && (fabs(pk) > fabs(pkm1)) ) {
+    if (cancel) {
+	if (kf >= 0.0 && fabs(pk) > fabs(pkm1)) {
 	    k += 1.0;
 	    pkm2 = pk;
 	}
     }
+
     *newn = k;
     return pkm2;
 }
@@ -326,47 +314,46 @@ extern int cephes_sgngam;
 
 static double jvs (double n, double x)
 {
-    double t, u, y, z, k;
+    double t, u, y, k, z = -x * x / 4.0;
     int ex;
 
-    z = -x * x / 4.0;
-    u = 1.0;
-    y = u;
-    k = 1.0;
-    t = 1.0;
+    y = u = 1.0;
+    t = k = 1.0;
 
-    while ( t > MACHEP ) {
+    while (t > MACHEP) {
 	u *= z / (k * (n+k));
 	y += u;
 	k += 1.0;
-	if( y != 0 )
-	    t = fabs( u/y );
+	if(y != 0)
+	    t = fabs(u/y);
     }
 
-    t = frexp( 0.5*x, &ex );
+    t = frexp(0.5*x, &ex);
     ex = ex * n;
-    if ( (ex > -1023)
-	 && (ex < 1023) 
-	 && (n > 0.0)
-	 && (n < (MAXGAM-1.0)) ) {
-	t = pow( 0.5*x, n ) / cephes_gamma( n + 1.0 );
+
+    if ((ex > -1023)
+	&& (ex < 1023) 
+	&& (n > 0.0)
+	&& (n < (MAXGAM-1.0))) {
+	t = pow(0.5*x, n) / cephes_gamma(n + 1.0);
 	y *= t;
     } else {
 	t = n * log(0.5*x) - lgam(n + 1.0);
-	if ( y < 0 ) {
+	if (y < 0) {
 	    cephes_sgngam = -cephes_sgngam;
 	    y = -y;
 	}
 	t += log(y);
-	if ( t < -MAXLOG ) {
+	if (t < -MAXLOG) {
 	    return 0.0;
 	}
-	if ( t > MAXLOG ) {
-	    mtherr( "Jv", OVERFLOW );
+	if (t > MAXLOG) {
+	    mtherr("Jv", OVERFLOW);
 	    return MAXNUM;
 	}
-	y = cephes_sgngam * exp( t );
+	y = cephes_sgngam * exp(t);
     }
+
     return y;
 }
 
@@ -395,7 +382,7 @@ static double hankel (double n, double x)
     pp = 1.0e38;
     qq = 1.0e38;
 
-    while ( t > MACHEP ) {
+    while (t > MACHEP) {
 	k += 2.0;
 	j += 1.0;
 	sign = -sign;
@@ -406,21 +393,22 @@ static double hankel (double n, double x)
 	u *= (m - k * k)/(j * z);
 	q += sign * u;
 	t = fabs(u/p);
-	if ( t < conv ) {
+	if (t < conv) {
 	    conv = t;
 	    qq = q;
 	    pp = p;
 	    flag = 1;
 	}
 	/* stop if the terms start getting larger */
-	if ( (flag != 0) && (t > conv) ) {
+	if (flag != 0 && t > conv) {
 	    goto hank1;
 	}
     }	
 
  hank1:
     u = x - (0.5*n + 0.25) * PI;
-    t = sqrt( 2.0/(PI*x) ) * ( pp * cos(u) - qq * sin(u) );
+    t = sqrt(2.0/(PI*x)) * (pp * cos(u) - qq * sin(u));
+
     return t;
 }
 
@@ -522,51 +510,51 @@ static double jnx (double n, double x)
     static double u[8];
     static double ai, aip, bi, bip;
 
-    /* Test for x very close to n.
-     * Use expansion for transition region if so.
+    /* Test for x very close to n. Use expansion for transition region
+       if so.
      */
     cbn = cbrt(n);
     z = (x - n)/cbn;
-    if ( fabs(z) <= 0.7 )
+    if (fabs(z) <= 0.7)
 	return jnt(n,x);
 
     z = x/n;
     zz = 1.0 - z*z;
-    if ( zz == 0.0 )
+    if (zz == 0.0)
 	return 0.0;
 
-    if ( zz > 0.0 ) {
-	sz = sqrt( zz );
-	t = 1.5 * (log( (1.0+sz)/z ) - sz ); /* zeta ** 3/2 */
-	zeta = cbrt( t * t );
+    if (zz > 0.0) {
+	sz = sqrt(zz);
+	t = 1.5 * (log((1.0+sz)/z) - sz); /* zeta ** 3/2 */
+	zeta = cbrt(t * t);
 	nflg = 1;
     } else {
 	sz = sqrt(-zz);
 	t = 1.5 * (sz - acos(1.0/z));
-	zeta = -cbrt( t * t );
+	zeta = -cbrt(t * t);
 	nflg = -1;
     }
     z32i = fabs(1.0/t);
     sqz = cbrt(t);
 
     /* Airy function */
-    n23 = cbrt( n * n );
+    n23 = cbrt(n * n);
     t = n23 * zeta;
 
-    airy( t, &ai, &aip, &bi, &bip );
+    airy(t, &ai, &aip, &bi, &bip);
 
     /* polynomials in expansion */
     u[0] = 1.0;
     zzi = 1.0/zz;
-    u[1] = polevl( zzi, P1, 1 )/sz;
-    u[2] = polevl( zzi, P2, 2 )/zz;
-    u[3] = polevl( zzi, P3, 3 )/(sz*zz);
+    u[1] = polevl(zzi, P1, 1)/sz;
+    u[2] = polevl(zzi, P2, 2)/zz;
+    u[3] = polevl(zzi, P3, 3)/(sz*zz);
     pp = zz*zz;
-    u[4] = polevl( zzi, P4, 4 )/pp;
-    u[5] = polevl( zzi, P5, 5 )/(pp*sz);
+    u[4] = polevl(zzi, P4, 4)/pp;
+    u[5] = polevl(zzi, P5, 5)/(pp*sz);
     pp *= zz;
-    u[6] = polevl( zzi, P6, 6 )/pp;
-    u[7] = polevl( zzi, P7, 7 )/(pp*sz);
+    u[6] = polevl(zzi, P6, 6)/pp;
+    u[7] = polevl(zzi, P7, 7)/(pp*sz);
 
     pp = 0.0;
     qq = 0.0;
@@ -577,24 +565,24 @@ static double jnx (double n, double x)
     akl = MAXNUM;
     bkl = MAXNUM;
 
-    for ( k=0; k<=3; k++ ) {
+    for (k=0; k<=3; k++) {
 	tk = 2 * k;
 	tkp1 = tk + 1;
 	zp = 1.0;
 	ak = 0.0;
 	bk = 0.0;
-	for ( s=0; s<=tk; s++ ) {
-	    if ( doa ) {
-		if ( (s & 3) > 1 )
+	for (s=0; s<=tk; s++) {
+	    if (doa) {
+		if ((s & 3) > 1)
 		    sign = nflg;
 		else
 		    sign = 1;
 		ak += sign * mu[s] * zp * u[tk-s];
 	    }
 
-	    if ( dob ) {
+	    if (dob) {
 		m = tkp1 - s;
-		if ( ((m+1) & 3) > 1 )
+		if (((m+1) & 3) > 1)
 		    sign = nflg;
 		else
 		    sign = 1;
@@ -603,10 +591,10 @@ static double jnx (double n, double x)
 	    zp *= z32i;
 	}
 
-	if ( doa ) {
+	if (doa) {
 	    ak *= np;
 	    t = fabs(ak);
-	    if ( t < akl ) {
+	    if (t < akl) {
 		akl = t;
 		pp += ak;
 	    } else {
@@ -614,27 +602,28 @@ static double jnx (double n, double x)
 	    }
 	}
 
-	if ( dob ) {
+	if (dob) {
 	    bk += lambda[tkp1] * zp * u[0];
 	    bk *= -np/sqz;
 	    t = fabs(bk);
-	    if ( t < bkl ) {
+	    if (t < bkl) {
 		bkl = t;
 		qq += bk;
 	    } else {
 		dob = 0;
 	    }
 	}
-	if ( np < MACHEP )
+	if (np < MACHEP)
 	    break;
 	np /= n*n;
     }
 
-    /* normalizing factor ( 4*zeta/(1 - z**2) )**1/4	*/
+    /* normalizing factor (4*zeta/(1 - z**2))**1/4 */
     t = 4.0 * zeta/zz;
-    t = sqrt( sqrt(t) );
+    t = sqrt(sqrt(t));
 
     t *= ai*pp/cbrt(n) + aip*qq/(n23*n);
+
     return t;
 }
 
@@ -689,41 +678,41 @@ static double jnt (double n, double x)
 
     cbn = cbrt(n);
     z = (x - n)/cbn;
-    cbtwo = cbrt( 2.0 );
+    cbtwo = cbrt(2.0);
 
     /* Airy function */
     zz = -cbtwo * z;
-    airy( zz, &ai, &aip, &bi, &bip );
+    airy(zz, &ai, &aip, &bi, &bip);
 
     /* polynomials in expansion */
     zz = z * z;
     z3 = zz * z;
     F[0] = 1.0;
     F[1] = -z/5.0;
-    F[2] = polevl( z3, PF2, 1 ) * zz;
-    F[3] = polevl( z3, PF3, 2 );
-    F[4] = polevl( z3, PF4, 3 ) * z;
+    F[2] = polevl(z3, PF2, 1) * zz;
+    F[3] = polevl(z3, PF3, 2);
+    F[4] = polevl(z3, PF4, 3) * z;
     G[0] = 0.3 * zz;
-    G[1] = polevl( z3, PG1, 1 );
-    G[2] = polevl( z3, PG2, 2 ) * z;
-    G[3] = polevl( z3, PG3, 2 ) * zz;
+    G[1] = polevl(z3, PG1, 1);
+    G[2] = polevl(z3, PG2, 2) * z;
+    G[3] = polevl(z3, PG3, 2) * zz;
 
     pp = 0.0;
     qq = 0.0;
     nk = 1.0;
-    n23 = cbrt( n * n );
+    n23 = cbrt(n * n);
 
-    for ( k=0; k<=4; k++ ) {
+    for (k=0; k<=4; k++) {
 	fk = F[k]*nk;
 	pp += fk;
-	if ( k != 4 ) {
+	if (k != 4) {
 	    gk = G[k]*nk;
 	    qq += gk;
 	}
 	nk /= n23;
     }
 
-    fk = cbtwo * ai * pp/cbn  +  cbrt(4.0) * aip * qq/n;
+    fk = cbtwo * ai * pp/cbn + cbrt(4.0) * aip * qq/n;
 
     return fk;
 }
