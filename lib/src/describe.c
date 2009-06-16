@@ -5856,7 +5856,7 @@ int anova (const int *list, const double **Z, const DATAINFO *pdinfo,
     int i, t, n, nvals;
     int err = 0;
 
-    if (list[0] != 2) {
+    if (list[0] != 2 || list[1] == list[2]) {
 	gretl_errmsg_set(_("This command requires two variables\n"));
 	return E_DATA;
     }

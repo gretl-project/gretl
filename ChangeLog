@@ -13,6 +13,7 @@ version 1.8.2, in progress
   consistency between CLI and GUI programs
 - xtab command: add --matrix option to take frequencies from
   a named matrix
+- add "anova" command for (only one-way ANOVA so far)
 - Fix bug 2806815
 
 5/21/2009 version 1.8.1
