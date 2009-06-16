@@ -162,8 +162,7 @@ static int tx_dialog (tx_request *request)
     }
 
     request->dialog = 
-	gtk_dialog_new_with_buttons (
-				     (request->code == TRAMO_SEATS)?
+	gtk_dialog_new_with_buttons ((request->code == TRAMO_SEATS)?
 				     "TRAMO/SEATS" : "X-12-ARIMA",
 				     NULL,
 				     GTK_DIALOG_MODAL | 
@@ -854,7 +853,13 @@ int write_tx_data (char *fname, int varnum,
 	}
     }
 
-    if (!err) {
+    if (err) {
+	if (request.code == X12A) {
+	    sprintf(fname, "%s%c%s.err", workdir, SLASH, varname);
+	} else {
+	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, varname);
+	}
+    } else {
 	if (request.code == X12A) {
 	    sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
 	} else {
@@ -871,10 +876,15 @@ int write_tx_data (char *fname, int varnum,
 					   request.code, errmsg);
 		if (err) {
 		    fprintf(stderr, "add_series_from_file() failed\n");
+		    if (request.code == X12A) {
+			/* switch to X12A error file */
+			sprintf(fname, "%s%c%s.err", workdir, SLASH, varname);
+		    }
+		    break;
 		}
 	    }
 
-	    if (request.opt[TRIGRAPH].save) {
+	    if (!err && request.opt[TRIGRAPH].save) {
 		err = graph_series(tmpZ, tmpinfo, request.code);
 		if (err) {
 		    fprintf(stderr, "graph_series() failed\n");
@@ -885,7 +895,7 @@ int write_tx_data (char *fname, int varnum,
 	}
 
 	/* now save the local vars to main dataset, if wanted */
-	if (request.savevars > 0) {
+	if (!err && request.savevars > 0) {
 	    err = save_vars_to_dataset(pZ, pdinfo, tmpZ, tmpinfo, varlist, 
 				       &request, errmsg);
 	}

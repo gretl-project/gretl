@@ -4073,13 +4073,13 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	} else {
 	    gui_errmsg(err);
 	}
-	return;
     } else if (*fname == '\0') {
 	return;
     }
 
     err = gretl_file_get_contents(fname, &databuf);
     if (err) {
+	remove(fname);
 	return;
     }
 
@@ -4090,7 +4090,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 		_("gretl: X-12-ARIMA analysis"),
 		opt, NULL);
 
-    if (graph) {
+    if (!err && graph) {
 	make_and_display_graph();
     }
 
