@@ -73,6 +73,13 @@ Copyright 1984, 1987, 1992, 2000 by Stephen L. Moshier
 static double hyt2f1(double, double, double, double, double *);
 static double hys2f1(double, double, double, double, double *);
 
+static double cephes_round (double x)
+{
+    double xf = floor(x);
+
+    return (x - xf < 0.5)? xf : ceil(x);
+}
+
 double hyp2f1 (double a, double b, double c, double x)
 {
     double d, d1, d2, e;
@@ -84,8 +91,8 @@ double hyp2f1 (double a, double b, double c, double x)
     ax = fabs(x);
     s = 1.0 - x;
     flag = 0;
-    ia = round(a); /* nearest integer to a */
-    ib = round(b);
+    ia = cephes_round(a); /* nearest integer to a */
+    ib = cephes_round(b);
 
     if (a <= 0) {
 	if (fabs(a-ia) < EPS)		/* a is a negative integer */
@@ -109,7 +116,7 @@ double hyp2f1 (double a, double b, double c, double x)
     }
 
     if (c <= 0.0) {
-	ic = round(c); 	/* nearest integer to c */
+	ic = cephes_round(c); /* nearest integer to c */
 	if (fabs(c-ic) < EPS) {		/* c is a negative integer */
 	    /* check if termination before explosion */
 	    if ((flag & 1) && (ia > ic))
@@ -127,17 +134,17 @@ double hyp2f1 (double a, double b, double c, double x)
 	goto hypdiv;
 
     p = c - a;
-    ia = round(p); /* nearest integer to c-a */
+    ia = cephes_round(p); /* nearest integer to c-a */
     if ((ia <= 0.0) && (fabs(p-ia) < EPS)) /* negative int c - a */
 	flag |= 4;
 
     r = c - b;
-    ib = round(r); /* nearest integer to c-b */
+    ib = cephes_round(r); /* nearest integer to c-b */
     if ((ib <= 0.0) && (fabs(r-ib) < EPS)) /* negative int c - b */
 	flag |= 8;
 
     d = c - a - b;
-    id = round(d); /* nearest integer to d */
+    id = cephes_round(d); /* nearest integer to d */
     q = fabs(d-id);
 
     /* Thanks to Christian Burger <BURGER@DMRHRZ11.HRZ.Uni-Marburg.DE>
@@ -236,7 +243,7 @@ static double hyt2f1 (double a, double b, double c, double x,
     }
 
     d = c - a - b;
-    id = round(d);	/* nearest integer to d */
+    id = cephes_round(d); /* nearest integer to d */
 
     if (x > 0.9) {
 	if (fabs(d-id) > EPS) { /* test for integer c-a-b */
