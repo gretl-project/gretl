@@ -73,25 +73,24 @@ static double A[] = {
 double psi (double x)
 {
     double p, q, nz, s, w, y, z;
-    int i, n, negative;
+    int i, n, negative = 0;
 
-    negative = 0;
     nz = 0.0;
 
-    if ( x <= 0.0 ) {
+    if (x <= 0.0) {
 	negative = 1;
 	q = x;
 	p = floor(q);
-	if ( p == q ) {
-	    mtherr( "psi", SING );
+	if (p == q) {
+	    mtherr("psi", CEPHES_SING);
 	    return MAXNUM;
 	}
-	/* Remove the zeros of tan(PI x)
-	 * by subtracting the nearest integer from x
+	/* Remove the zeros of tan(PI x) by subtracting the nearest
+	   integer from x
 	 */
 	nz = q - p;
-	if ( nz != 0.5 ) {
-	    if( nz > 0.5 ) {
+	if (nz != 0.5) {
+	    if (nz > 0.5) {
 		p += 1.0;
 		nz = q - p;
 	    }
@@ -103,10 +102,10 @@ double psi (double x)
     }
 
     /* check for positive integer up to 10 */
-    if ( (x <= 10.0) && (x == floor(x)) ) {
+    if (x <= 10.0 && x == floor(x)) {
 	y = 0.0;
 	n = x;
-	for ( i=1; i<n; i++ ) {
+	for (i=1; i<n; i++) {
 	    w = i;
 	    y += 1.0/w;
 	}
@@ -116,14 +115,14 @@ double psi (double x)
 
     s = x;
     w = 0.0;
-    while ( s < 10.0 ) {
+    while (s < 10.0) {
 	w += 1.0/s;
 	s += 1.0;
     }
 
-    if ( s < 1.0e17 ) {
+    if (s < 1.0e17) {
 	z = 1.0/(s * s);
-	y = z * polevl( z, A, 6 );
+	y = z * polevl(z, A, 6);
     } else {
 	y = 0.0;
     }
@@ -131,7 +130,8 @@ double psi (double x)
     y = log(s) - (0.5/s) - y - w;
 
  done:
-    if ( negative ) {
+
+    if (negative) {
 	y -= nz;
     }
 

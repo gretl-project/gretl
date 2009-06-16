@@ -49,17 +49,14 @@ Copyright 1984, 1987, 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-extern double y0 (double);
-extern double y1 (double);
-
 double cephes_bessel_Yn (int n, double x)
 {
     double an, anm1, anm2, r;
     int k, sign;
 
-    if ( n < 0 ) {
+    if (n < 0) {
 	n = -n;
-	if ( (n & 1) == 0 ) /* -1**n */
+	if ((n & 1) == 0) /* -1**n */
 	    sign = 1;
 	else
 	    sign = -1;
@@ -67,14 +64,14 @@ double cephes_bessel_Yn (int n, double x)
 	sign = 1;
     }
 
-    if ( n == 0 )
+    if (n == 0)
 	return sign * y0(x);
-    if ( n == 1 )
+    if (n == 1)
 	return sign * y1(x);
 
     /* test for overflow */
-    if ( x <= 0.0 ) {
-	mtherr( "yn", SING );
+    if (x <= 0.0) {
+	mtherr("yn", CEPHES_SING);
 	return -MAXNUM;
     }
 
@@ -90,7 +87,7 @@ double cephes_bessel_Yn (int n, double x)
 	anm1 = an;
 	r += 2.0;
 	++k;
-    } while ( k < n );
+    } while (k < n);
 
     return sign * an;
 }

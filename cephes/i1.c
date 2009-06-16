@@ -150,34 +150,30 @@ static double B[] =
  7.78576235018280120474E-1
 };
 
-extern double chbevl (double, void *, int);
-
 double i1 (double x)
 { 
     double y, z = fabs(x);
 
-    if ( z <= 8.0 ) {
+    if (z <= 8.0) {
 	y = (z/2.0) - 2.0;
-	z = chbevl( y, A, 29 ) * z * exp(z);
+	z = chbevl(y, A, 29) * z * exp(z);
     } else {
-	z = exp(z) * chbevl( 32.0/z - 2.0, B, 25 ) / sqrt(z);
+	z = exp(z) * chbevl(32.0/z - 2.0, B, 25) / sqrt(z);
     }
-    if ( x < 0.0 )
-	z = -z;
-    return z;
+
+    return (x < 0.0)? -z : z;
 }
 
 double i1e (double x)
 { 
     double y, z = fabs(x);
 
-    if ( z <= 8.0 ) {
+    if (z <= 8.0) {
 	y = (z/2.0) - 2.0;
-	z = chbevl( y, A, 29 ) * z;
+	z = chbevl(y, A, 29) * z;
     } else {
-	z = chbevl( 32.0/z - 2.0, B, 25 ) / sqrt(z);
+	z = chbevl(32.0/z - 2.0, B, 25) / sqrt(z);
     }
-    if ( x < 0.0 )
-	z = -z;
-    return z;
+
+    return (x < 0.0)? -z : z;
 }

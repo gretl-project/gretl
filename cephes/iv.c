@@ -53,8 +53,6 @@ Copyright 1984, 1987, 1988, 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-extern double hyperg ( double, double, double );
-
 double cephes_bessel_Iv (double v, double x)
 {
     int sign;
@@ -62,37 +60,39 @@ double cephes_bessel_Iv (double v, double x)
 
     /* If v is a negative integer, invoke symmetry */
     t = floor(v);
-    if ( v < 0.0 ) {
-	if ( t == v ) {
-	    v = -v;	/* symmetry */
+    if (v < 0.0) {
+	if (t == v) {
+	    v = -v; /* symmetry */
 	    t = -t;
 	}
     }
+
     /* If x is negative, require v to be an integer */
     sign = 1;
-    if ( x < 0.0 ) {
-	if ( t != v ) {
-	    mtherr( "iv", DOMAIN );
+    if (x < 0.0) {
+	if (t != v) {
+	    mtherr("iv", CEPHES_DOMAIN);
 	    return 0.0;
 	}
-	if ( v != 2.0 * floor(v/2.0) )
+	if (v != 2.0 * floor(v/2.0))
 	    sign = -1;
     }
 
     /* Avoid logarithm singularity */
-    if ( x == 0.0 ) {
-	if ( v == 0.0 )
+    if (x == 0.0) {
+	if (v == 0.0)
 	    return 1.0;
-	if ( v < 0.0 ) {
-	    mtherr( "iv", OVERFLOW );
+	if (v < 0.0) {
+	    mtherr("iv", CEPHES_OVERFLOW);
 	    return MAXNUM;
 	} else
-	    return( 0.0 );
+	    return(0.0);
     }
 
     ax = fabs(x);
-    t = v * log( 0.5 * ax )  -  x;
-    t = sign * exp(t) / cephes_gamma( v + 1.0 );
+    t = v * log(0.5 * ax)  -  x;
+    t = sign * exp(t) / cephes_gamma(v + 1.0);
     ax = v + 0.5;
-    return t * hyperg( ax,  2.0 * ax,  2.0 * x );
+
+    return t * hyperg(ax,  2.0 * ax,  2.0 * x);
 }

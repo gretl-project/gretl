@@ -187,23 +187,23 @@ double j0 (double x)
 {
     double w, z, p, q, xn;
 
-    if ( x < 0 )
+    if (x < 0)
 	x = -x;
 
-    if ( x <= 5.0 ) {
+    if (x <= 5.0) {
 	z = x * x;
-	if ( x < 1.0e-5 )
+	if (x < 1.0e-5)
 	    return 1.0 - z/4.0;
 
 	p = (z - DR1) * (z - DR2);
-	p = p * polevl( z, RP, 3)/p1evl( z, RQ, 8 );
+	p = p * polevl(z, RP, 3)/p1evl(z, RQ, 8);
 	return p;
     }
 
     w = 5.0/x;
     q = 25.0/(x*x);
-    p = polevl( q, PP, 6)/polevl( q, PQ, 6 );
-    q = polevl( q, QP, 7)/p1evl( q, QQ, 7 );
+    p = polevl(q, PP, 6)/polevl(q, PQ, 6);
+    q = polevl(q, QP, 7)/p1evl(q, QQ, 7);
     xn = x - PIO4;
     p = p * cos(xn) - w * q * sin(xn);
     return p * SQ2OPI / sqrt(x);
@@ -214,7 +214,7 @@ double j0 (double x)
 
 /* Rational approximation coefficients YP[], YQ[] are used here.
  * The function computed is  y0(x)  -  2 * log(x) * j0(x) / PI,
- * whose value at x = 0 is  2 * ( log(0.5) + EUL ) / PI
+ * whose value at x = 0 is  2 * (log(0.5) + EUL) / PI
  * = 0.073804295108687225.
  */
 
@@ -222,21 +222,21 @@ double y0 (double x)
 {
     double w, z, p, q, xn;
 
-    if ( x <= 5.0 ) {
-	if ( x <= 0.0 ) {
-	    mtherr( "y0", DOMAIN );
+    if (x <= 5.0) {
+	if (x <= 0.0) {
+	    mtherr("y0", CEPHES_DOMAIN);
 	    return -MAXNUM;
 	}
 	z = x * x;
-	w = polevl( z, YP, 7) / p1evl( z, YQ, 7 );
+	w = polevl(z, YP, 7) / p1evl(z, YQ, 7);
 	w += TWOOPI * log(x) * j0(x);
 	return w;
     }
 
     w = 5.0/x;
     z = 25.0 / (x * x);
-    p = polevl( z, PP, 6)/polevl( z, PQ, 6 );
-    q = polevl( z, QP, 7)/p1evl( z, QQ, 7 );
+    p = polevl(z, PP, 6)/polevl(z, PQ, 6);
+    q = polevl(z, QP, 7)/p1evl(z, QQ, 7);
     xn = x - PIO4;
     p = p * sin(xn) + w * q * cos(xn);
     return p * SQ2OPI / sqrt(x);

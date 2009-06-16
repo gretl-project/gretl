@@ -17,6 +17,7 @@
  * 1/sqrt(2) <= x < sqrt(2)
  * Theoretical peak relative error = 2.32e-20
  */
+
 static double LP[] = {
  4.5270000862445199635215E-5,
  4.9854102823193375972212E-1,
@@ -26,6 +27,7 @@ static double LP[] = {
  5.7112963590585538103336E1,
  2.0039553499201281259648E1,
 };
+
 static double LQ[] = {
 /* 1.0000000000000000000000E0,*/
  1.5062909083469192043167E1,
@@ -41,14 +43,15 @@ static double LQ[] = {
 
 double cephes_log (double x)
 {
-    double z;
+    double z = 1.0 + x;
 
-    z = 1.0 + x;
-    if ((z < SQRTH) || (z > SQRT2)) {
+    if (z < SQRTH || z > SQRT2) {
 	return log(z);
     }
+
     z = x*x;
     z = -0.5 * z + x * (z * polevl(x, LP, 6) / p1evl(x, LQ, 6));
+
     return x + z;
 }
 
@@ -63,6 +66,7 @@ static double EP[3] = {
  3.0299440770744196129956E-2,
  9.9999999999999999991025E-1,
 };
+
 static double EQ[4] = {
  3.0019850513866445504159E-6,
  2.5244834034968410419224E-3,
@@ -74,18 +78,17 @@ double cephes_exp (double x)
 {
     double r, xx;
 
-#ifdef NANS
-    if (isnan(x))
+    if (isnan(x)) {
 	return(x);
-#endif
-#ifdef INFINITIES
-    if (x == INFINITY)
-	return(INFINITY);
-    if (x == -INFINITY)
-	return(-1.0);
-#endif
-    if ((x < -0.5) || (x > 0.5))
+    }
+
+    if (!isfinite(x)) {
+	return (x < 0)? -1.0 : x;
+    }
+
+    if (x < -0.5 || x > 0.5) {
 	return exp(x) - 1.0;
+    }
 
     xx = x * x;
     r = x * polevl(xx, EP, 2);
@@ -110,8 +113,9 @@ double cosm1 (double x)
 {
     double xx;
 
-    if ((x < -PIO4) || (x > PIO4))
+    if (x < -PIO4 || x > PIO4) {
 	return cos(x) - 1.0;
+    }
 
     xx = x * x;
     xx = -0.5*xx + xx * xx * polevl(xx, coscof, 6);

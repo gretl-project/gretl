@@ -150,32 +150,30 @@ static double B[] =
  8.04490411014108831608E-1
 };
 
-extern double chbevl (double, void *, int);
-
 double i0 (double x)
 {
     double y;
 
-    if ( x < 0 )
+    if (x < 0)
 	x = -x;
-    if ( x <= 8.0 ) {
+    if (x <= 8.0) {
 	y = (x/2.0) - 2.0;
-	return exp(x) * chbevl( y, A, 30 );
+	return exp(x) * chbevl(y, A, 30);
     }
 
-    return exp(x) * chbevl( 32.0/x - 2.0, B, 25 ) / sqrt(x);
+    return exp(x) * chbevl(32.0/x - 2.0, B, 25) / sqrt(x);
 }
 
 double i0e (double x)
 {
     double y;
 
-    if ( x < 0 )
+    if (x < 0)
 	x = -x;
-    if ( x <= 8.0 ) {
+    if (x <= 8.0) {
 	y = (x/2.0) - 2.0;
-	return chbevl( y, A, 30 );
+	return chbevl(y, A, 30);
     }
 
-    return chbevl( 32.0/x - 2.0, B, 25 ) / sqrt(x);
+    return chbevl(32.0/x - 2.0, B, 25) / sqrt(x);
 }

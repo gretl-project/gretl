@@ -132,42 +132,39 @@ static double B[] =
  2.72062619048444266945E0
 };
 
-extern double chbevl (double, void *, int);
-extern double i1 (double);
-
 double k1 (double x)
 {
     double y, z;
 
     z = 0.5 * x;
-    if ( z <= 0.0 ) {
-	mtherr( "k1", DOMAIN );
+    if (z <= 0.0) {
+	mtherr("k1", CEPHES_DOMAIN);
 	return MAXNUM;
     }
 
-    if ( x <= 2.0 ) {
+    if (x <= 2.0) {
 	y = x * x - 2.0;
-	y =  log(z) * i1(x)  +  chbevl( y, A, 11 ) / x;
+	y =  log(z) * i1(x) + chbevl(y, A, 11) / x;
 	return y;
     }
 
-    return exp(-x) * chbevl( 8.0/x - 2.0, B, 25 ) / sqrt(x);
+    return exp(-x) * chbevl(8.0/x - 2.0, B, 25) / sqrt(x);
 }
 
 double k1e (double x)
 {
     double y;
 
-    if ( x <= 0.0 ) {
-	mtherr( "k1e", DOMAIN );
+    if (x <= 0.0) {
+	mtherr("k1e", CEPHES_DOMAIN);
 	return MAXNUM;
     }
 
-    if ( x <= 2.0 ) {
+    if (x <= 2.0) {
 	y = x * x - 2.0;
-	y =  log( 0.5 * x ) * i1(x)  +  chbevl( y, A, 11 ) / x;
+	y =  log(0.5 * x) * i1(x) + chbevl(y, A, 11) / x;
 	return y * exp(x);
     }
 
-    return chbevl( 8.0/x - 2.0, B, 25 ) / sqrt(x);
+    return chbevl(8.0/x - 2.0, B, 25) / sqrt(x);
 }

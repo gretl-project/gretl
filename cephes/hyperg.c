@@ -77,25 +77,25 @@ double hyperg (double a, double b, double x)
 
     /* See if a Kummer transformation will help */
     temp = b - a;
-    if ( fabs(temp) < 0.001 * fabs(a) )
-	return exp(x) * hyperg( temp, b, -x );
+    if (fabs(temp) < 0.001 * fabs(a))
+	return exp(x) * hyperg(temp, b, -x);
 
-    psum = hy1f1p( a, b, x, &pcanc );
-    if ( pcanc < 1.0e-15 )
+    psum = hy1f1p(a, b, x, &pcanc);
+    if (pcanc < 1.0e-15)
 	goto done;
 
     /* try asymptotic series */
-    asum = hy1f1a( a, b, x, &acanc );
+    asum = hy1f1a(a, b, x, &acanc);
 
     /* Pick the result with less estimated error */
-    if ( acanc < pcanc ) {
+    if (acanc < pcanc) {
 	pcanc = acanc;
 	psum = asum;
     }
 
  done:
-    if ( pcanc > 1.0e-12 )
-	mtherr( "hyperg", PLOSS );
+    if (pcanc > 1.0e-12)
+	mtherr("hyperg", CEPHES_PLOSS);
 
     return psum;
 }
@@ -116,20 +116,20 @@ static double hy1f1p (double a, double b, double x, double *err)
     t = 1.0;
     maxt = 0.0;
 
-    while ( t > MACHEP ) {
-	if ( bn == 0 ) { /* check bn first since if both */
-	    mtherr( "hyperg", SING );
+    while (t > MACHEP) {
+	if (bn == 0) { /* check bn first since if both */
+	    mtherr("hyperg", CEPHES_SING);
 	    return MAXNUM; /* an and bn are zero it is */
 	}
-	if ( an == 0 ) /* a singularity */
-	    return( sum );
-	if ( n > 200 )
+	if (an == 0) /* a singularity */
+	    return(sum);
+	if (n > 200)
 	    goto pdone;
-	u = x * ( an / (bn * n) );
+	u = x * (an / (bn * n));
 
 	/* check for blowup */
 	temp = fabs(u);
-	if ( (temp > 1.0 ) && (maxt > (MAXNUM/temp)) ) {
+	if ((temp > 1.0) && (maxt > (MAXNUM/temp))) {
 	    pcanc = 1.0; /* estimate 100% error */
 	    goto blowup;
 	}
@@ -137,7 +137,7 @@ static double hy1f1p (double a, double b, double x, double *err)
 	a0 *= u;
 	sum += a0;
 	t = fabs(a0);
-	if ( t > maxt )
+	if (t > maxt)
 	    maxt = t;
 	an += 1.0;
 	bn += 1.0;
@@ -146,10 +146,10 @@ static double hy1f1p (double a, double b, double x, double *err)
 
  pdone:
     /* estimate error due to roundoff and cancellation */
-    if ( sum != 0.0 )
+    if (sum != 0.0)
 	maxt /= fabs(sum);
     maxt *= MACHEP; 	/* this way avoids multiply overflow */
-    pcanc = fabs( MACHEP * n  +  maxt );
+    pcanc = fabs(MACHEP * n  +  maxt);
 
  blowup:
     *err = pcanc;
@@ -160,70 +160,70 @@ static double hy1f1p (double a, double b, double x, double *err)
 /* hy1f1a() */
 /* asymptotic formula for hypergeometric function:
  *
- *        (    -a                         
- *  --    ( |z|                           
- * |  (b) ( -------- 2f0( a, 1+a-b, -1/x )
- *        (  --                           
- *        ( |  (b-a)                      
+ *        (   -a                         
+ *  --    (|z|                           
+ * |  (b) (-------- 2f0(a, 1+a-b, -1/x)
+ *        ( --                           
+ *        (|  (b-a)                      
  *
  *
- *                                x    a-b                     )
- *                               e  |x|                        )
- *                             + -------- 2f0( b-a, 1-a, 1/x ) )
- *                                --                           )
- *                               |  (a)                        )
+ *                                x    a-b                    )
+ *                               e  |x|                       )
+ *                             + -------- 2f0(b-a, 1-a, 1/x))
+ *                                --                          )
+ *                               |  (a)                       )
  */
 
 static double hy1f1a (double a, double b, double x, double *err)
 {
     double h1, h2, t, u, temp, acanc, asum, err1, err2;
 
-    if ( x == 0 ) {
+    if (x == 0) {
 	acanc = 1.0;
 	asum = MAXNUM;
 	goto adone;
     }
-    temp = log( fabs(x) );
+    temp = log(fabs(x));
     t = x + temp * (a-b);
     u = -temp * a;
 
-    if ( b > 0 ) {
+    if (b > 0) {
 	temp = lgam(b);
 	t += temp;
 	u += temp;
     }
 
-    h1 = hyp2f0( a, a-b+1, -1.0/x, 1, &err1 );
+    h1 = hyp2f0(a, a-b+1, -1.0/x, 1, &err1);
 
     temp = exp(u) / cephes_gamma(b-a);
     h1 *= temp;
     err1 *= temp;
 
-    h2 = hyp2f0( b-a, 1.0-a, 1.0/x, 2, &err2 );
+    h2 = hyp2f0(b-a, 1.0-a, 1.0/x, 2, &err2);
 
-    if ( a < 0 )
+    if (a < 0)
 	temp = exp(t) / cephes_gamma(a);
     else
-	temp = exp( t - lgam(a) );
+	temp = exp(t - lgam(a));
 
     h2 *= temp;
     err2 *= temp;
 
-    if ( x < 0.0 )
+    if (x < 0.0)
 	asum = h1;
     else
 	asum = h2;
 
     acanc = fabs(err1) + fabs(err2);
 
-    if ( b < 0 ) {
+    if (b < 0) {
 	temp = cephes_gamma(b);
 	asum *= temp;
 	acanc *= fabs(temp);
     }
 
 
-    if ( asum != 0.0 )
+    if (asum != 0.0)
 	acanc /= fabs(asum);
 
     acanc *= 30.0;	/* fudge factor, since error of asymptotic formula
@@ -252,43 +252,43 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
     maxt = 0.0;
 
     do {
-	if ( an == 0 )
+	if (an == 0)
 	    goto pdone;
-	if ( bn == 0 )
+	if (bn == 0)
 	    goto pdone;
 
 	u = an * (bn * x / n);
 
 	/* check for blowup */
 	temp = fabs(u);
-	if ( (temp > 1.0 ) && (maxt > (MAXNUM/temp)) )
+	if ((temp > 1.0) && (maxt > (MAXNUM/temp)))
 	    goto error;
 
 	a0 *= u;
 	t = fabs(a0);
 
 	/* terminating condition for asymptotic series */
-	if ( t > tlast )
+	if (t > tlast)
 	    goto ndone;
 
 	tlast = t;
 	sum += alast;	/* the sum is one term behind */
 	alast = a0;
 
-	if ( n > 200 )
+	if (n > 200)
 	    goto ndone;
 
 	an += 1.0e0;
 	bn += 1.0e0;
 	n += 1.0e0;
-	if ( t > maxt )
+	if (t > maxt)
 	    maxt = t;
-    } while ( t > MACHEP );
+    } while (t > MACHEP);
 
  pdone:	/* series converged! */
 
     /* estimate error due to roundoff and cancellation */
-    *err = fabs(  MACHEP * (n + maxt)  );
+    *err = fabs( MACHEP * (n + maxt) );
 
     alast = a0;
     goto done;
@@ -301,9 +301,9 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
     n -= 1.0;
     x = 1.0/x;
 
-    switch( type ) { /* "type" given as subroutine argument */
+    switch(type) { /* "type" given as subroutine argument */
     case 1:
-	alast *= ( 0.5 + (0.125 + 0.25*b - 0.5*a + 0.25*x - 0.25*n)/x );
+	alast *= (0.5 + (0.125 + 0.25*b - 0.5*a + 0.25*x - 0.25*n)/x);
 	break;
     case 2:
 	alast *= 2.0/3.0 - b + 2.0*a + x - n;
@@ -313,7 +313,7 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
     }
 
     /* estimate error due to roundoff, cancellation, and nonconvergence */
-    *err = MACHEP * (n + maxt)  +  fabs ( a0 );
+    *err = MACHEP * (n + maxt)  +  fabs (a0);
 
  done:
     sum += alast;
@@ -322,6 +322,6 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
     /* series blew up: */
  error:
     *err = MAXNUM;
-    mtherr( "hyperg", TLOSS );
+    mtherr("hyperg", CEPHES_TLOSS);
     return sum;
 }

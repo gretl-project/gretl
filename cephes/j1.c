@@ -176,22 +176,23 @@ double j1 (double x)
 {
     double z, p, q, xn, w = x;
 
-    if ( x < 0 )
+    if (x < 0)
 	w = -x;
 
-    if ( w <= 5.0 ) {
+    if (w <= 5.0) {
 	z = x * x;	
-	w = polevl( z, RP, 3 ) / p1evl( z, RQ, 8 );
+	w = polevl(z, RP, 3) / p1evl(z, RQ, 8);
 	w = w * x * (z - Z1) * (z - Z2);
 	return w;
     }
 
     w = 5.0/x;
     z = w * w;
-    p = polevl( z, PP, 6)/polevl( z, PQ, 6 );
-    q = polevl( z, QP, 7)/p1evl( z, QQ, 7 );
+    p = polevl(z, PP, 6)/polevl(z, PQ, 6);
+    q = polevl(z, QP, 7)/p1evl(z, QQ, 7);
     xn = x - THPIO4;
     p = p * cos(xn) - w * q * sin(xn);
+
     return p * SQ2OPI / sqrt(x);
 }
 
@@ -199,22 +200,23 @@ double y1 (double x)
 {
     double w, z, p, q, xn;
 
-    if ( x <= 5.0 ) {
-	if ( x <= 0.0 ) {
-	    mtherr( "y1", DOMAIN );
+    if (x <= 5.0) {
+	if (x <= 0.0) {
+	    mtherr("y1", CEPHES_DOMAIN);
 	    return -MAXNUM;
 	}
 	z = x * x;
-	w = x * (polevl( z, YP, 5 ) / p1evl( z, YQ, 8 ));
-	w += TWOOPI * ( j1(x) * log(x)  -  1.0/x );
+	w = x * (polevl(z, YP, 5) / p1evl(z, YQ, 8));
+	w += TWOOPI * (j1(x) * log(x)  -  1.0/x);
 	return w;
     }
 
     w = 5.0/x;
     z = w * w;
-    p = polevl( z, PP, 6)/polevl( z, PQ, 6 );
-    q = polevl( z, QP, 7)/p1evl( z, QQ, 7 );
+    p = polevl(z, PP, 6)/polevl(z, PQ, 6);
+    q = polevl(z, QP, 7)/p1evl(z, QQ, 7);
     xn = x - THPIO4;
     p = p * sin(xn) + w * q * cos(xn);
+
     return p * SQ2OPI / sqrt(x);
 }

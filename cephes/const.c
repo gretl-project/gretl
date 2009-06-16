@@ -92,19 +92,11 @@ double THPIO4 =  2.35619449019234492885;       /* 3*pi/4 */
 double TWOOPI =  6.36619772367581343075535E-1; /* 2/pi */
 
 #ifndef INFINITY
-# ifdef INFINITIES
-double INFINITY = 1.0/0.0; /* 99e999; */
-# else
-double INFINITY = 1.79769313486231570815E308; /* 2**1024*(1-MACHEP) */
-# endif
+double INFINITY = 1.0/0.0;
 #endif
 
 #ifndef NAN
-# ifdef NANS
-double NAN = 1.0/0.0 - 1.0/0.0;
-# else
-double NAN = 0.0;
-# endif
+double NAN = 0.0/0.0;
 #endif
 
 #ifdef MINUSZERO

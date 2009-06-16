@@ -185,25 +185,14 @@ double cephes_gamma (double x)
     int i;
 
     cephes_sgngam = 1;
-#ifdef NANS
+
     if (isnan(x)) {
 	return x;
     }
-#endif
-#ifdef INFINITIES
-# ifdef NANS
-    if (x == INFINITY) {
-	return x;
-    }
-    if (x == -INFINITY) {
-	return NAN;
-    }
-# else
+
     if (!isfinite(x)) {
-	return x;
+	return (x < 0)? NAN : x;
     }
-# endif
-#endif
 
     q = fabs(x);
 
@@ -211,13 +200,9 @@ double cephes_gamma (double x)
 	if (x < 0.0) {
 	    p = floor(q);
 	    if (p == q) {
-#ifdef NANS
 	    gamnan:
 		mtherr("gamma", CEPHES_DOMAIN);
 		return NAN;
-#else
-		goto goverf;
-#endif
 	    }
 	    i = p;
 	    if ((i & 1) == 0) {
@@ -228,15 +213,9 @@ double cephes_gamma (double x)
 		p += 1.0;
 		z = q - p;
 	    }
-	    z = q * sin( PI * z );
+	    z = q * sin(PI * z);
 	    if (z == 0.0) {
-#ifdef INFINITIES
 		return cephes_sgngam * INFINITY;
-#else
-	    goverf:
-		mtherr("gamma", CEPHES_OVERFLOW);
-		return cephes_sgngam * MAXNUM;
-#endif
 	    }
 	    z = fabs(z);
 	    z = PI/(z * stirf(q));
@@ -281,16 +260,7 @@ double cephes_gamma (double x)
  small:
 
     if (x == 0.0) {
-#ifdef INFINITIES
-# ifdef NANS
 	goto gamnan;
-# else
-	return INFINITY;
-# endif
-#else
-	mtherr("gamma", CEPHES_SING);
-	return MAXNUM;
-#endif
     } else {
 	return z/((1.0 + 0.5772156649015329 * x) * x);
     }
@@ -328,10 +298,9 @@ static double C[] = {
     -2.01889141433532773231E6
 };
 
-static double LS2PI  =  0.91893853320467274178;
+static double LS2PI = 0.91893853320467274178;
 
 #define MAXLGM 2.556348e305
-
 
 /* Logarithm of gamma function */
 
@@ -342,17 +311,13 @@ double lgam (double x)
 
     cephes_sgngam = 1;
 
-#ifdef NANS
     if (isnan(x)) {
 	return x;
     }
-#endif
 
-#ifdef INFINITIES
     if (!isfinite(x)) {
 	return INFINITY;
     }
-#endif
 
     if (x < -34.0) {
 	q = -x;
@@ -360,12 +325,8 @@ double lgam (double x)
 	p = floor(q);
 	if (p == q) {
 	lgsing:
-#ifdef INFINITIES
 	    mtherr("lgam", CEPHES_SING);
 	    return INFINITY;
-#else
-	    goto loverf;
-#endif
 	}
 	i = p;
 	if ((i & 1) == 0) {
@@ -420,13 +381,7 @@ double lgam (double x)
     }
 
     if (x > MAXLGM) {
-#ifdef INFINITIES
 	return cephes_sgngam * INFINITY;
-#else
-    loverf:
-	mtherr("lgam", CEPHES_OVERFLOW);
-	return cephes_sgngam * MAXNUM;
-#endif
     }
 
     q = (x - 0.5) * log(x) - x + LS2PI;
@@ -437,7 +392,7 @@ double lgam (double x)
     p = 1.0/(x*x);
     if (x >= 1000.0) {
 	q += ((7.9365079365079365079365e-4 * p
-		  - 2.7777777777777777777778e-3) * p
+	       - 2.7777777777777777777778e-3) * p
 	      + 0.0833333333333333333333) / x;
     } else {
 	q += polevl(p, A, 4) / x;

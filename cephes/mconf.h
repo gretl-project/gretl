@@ -64,8 +64,6 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 #ifndef CEPHES_MCONF_H
 #define CEPHES_MCONF_H
 
-
-
 #include <math.h>
 
 #ifdef _WIN32
@@ -91,7 +89,7 @@ enum {
     CEPHES_UNKNOWN      /* unspecified error */
 };
 
-/* Complex numeral.  */
+/* complex number */
 typedef struct {
     double r;
     double i;
@@ -100,7 +98,7 @@ typedef struct {
 #define CMPLX
 
 #ifdef HAVE_LONG_DOUBLE
-/* Long double complex numeral.  */
+/* Long double complex number */
 typedef struct {
     long double r;
     long double i;
@@ -117,24 +115,24 @@ typedef struct {
  */
 #define UNK 1
 
+#ifndef isnan
+# define isnan(x) ((x) != (x))
+#endif
+
+#ifndef isfinite
+# define isfinite(x) (!isnan(x) && !isinf(x))
+#endif
+
 /* Define to support tiny denormal numbers, else undefine. */
 #undef DENORMAL
 
-/* Define to ask for infinity support, else undefine. */
-#undef INFINITIES
+/* Define to distinguish between -0.0 and +0.0 */
+#define MINUSZERO 
 
-/* Define to ask for support of numbers that are Not-a-Number,
-   else undefine.  This may automatically define INFINITIES in some files. */
-#undef NANS 
-
-/* Define to distinguish between -0.0 and +0.0.  */
-#undef MINUSZERO 
-
-/* Mechanism for error reporting.  See mtherr.c.  */
+/* Mechanism for error reporting.  See mtherr.c. */
 int mtherr (char *, int);
 
-/* private functions */
-
+/* includes shared private functions */
 #include "cephes.h"
 
 #endif /* CEPHES_MCONF_H */

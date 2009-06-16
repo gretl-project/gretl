@@ -37,13 +37,8 @@ Copyright 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-#ifdef DEC
-#define M 32.0
-#define MINV .03125
-#else
 #define M 128.0
 #define MINV .0078125
-#endif
 
 double expx2 (double x, int sign)
 {
@@ -70,7 +65,7 @@ double expx2 (double x, int sign)
 	u1 = -u1;
     }
 
-    if ((u+u1) > MAXLOG) {
+    if (u + u1 > MAXLOG) {
 	return INFINITY;
     }
 

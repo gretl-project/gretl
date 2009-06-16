@@ -61,9 +61,6 @@ static double c1 = 0.35502805388781723926;
 static double c2 = 0.258819403792806798405;
 static double sqrt3 = 1.732050807568877293527;
 static double sqpii = 5.64189583547756286948E-1;
-extern double PI;
-
-extern double MAXNUM, MACHEP;
 
 #define MAXAIRY 25.77
 
@@ -256,7 +253,7 @@ int airy (double x, double *ai, double *aip, double *bi, double *bip)
     double z, zz, t, f, g, uf, ug, k, zeta, theta;
     int domflg = 0;
 
-    if ( x > MAXAIRY ) {
+    if (x > MAXAIRY) {
 	*ai = 0;
 	*aip = 0;
 	*bi = MAXNUM;
@@ -264,7 +261,7 @@ int airy (double x, double *ai, double *aip, double *bi, double *bip)
 	return -1;
     }
 
-    if ( x < -2.09 ) {
+    if (x < -2.09) {
 	domflg = 15;
 	t = sqrt(-x);
 	zeta = -2.0 * x * t / 3.0;
@@ -272,40 +269,40 @@ int airy (double x, double *ai, double *aip, double *bi, double *bip)
 	k = sqpii / t;
 	z = 1.0/zeta;
 	zz = z * z;
-	uf = 1.0 + zz * polevl( zz, AFN, 8 ) / p1evl( zz, AFD, 9 );
-	ug = z * polevl( zz, AGN, 10 ) / p1evl( zz, AGD, 10 );
+	uf = 1.0 + zz * polevl(zz, AFN, 8) / p1evl(zz, AFD, 9);
+	ug = z * polevl(zz, AGN, 10) / p1evl(zz, AGD, 10);
 	theta = zeta + 0.25 * PI;
-	f = sin( theta );
-	g = cos( theta );
+	f = sin(theta);
+	g = cos(theta);
 	*ai = k * (f * uf - g * ug);
 	*bi = k * (g * uf + f * ug);
-	uf = 1.0 + zz * polevl( zz, APFN, 8 ) / p1evl( zz, APFD, 9 );
-	ug = z * polevl( zz, APGN, 10 ) / p1evl( zz, APGD, 10 );
+	uf = 1.0 + zz * polevl(zz, APFN, 8) / p1evl(zz, APFD, 9);
+	ug = z * polevl(zz, APGN, 10) / p1evl(zz, APGD, 10);
 	k = sqpii * t;
 	*aip = -k * (g * uf + f * ug);
 	*bip = k * (f * uf - g * ug);
 	return 0;
     }
 
-    if ( x >= 2.09 ) {	/* cbrt(9) */
+    if (x >= 2.09) {	/* cbrt(9) */
 	domflg = 5;
 	t = sqrt(x);
 	zeta = 2.0 * x * t / 3.0;
-	g = exp( zeta );
+	g = exp(zeta);
 	t = sqrt(t);
 	k = 2.0 * t * g;
 	z = 1.0/zeta;
-	f = polevl( z, AN, 7 ) / polevl( z, AD, 7 );
+	f = polevl(z, AN, 7) / polevl(z, AD, 7);
 	*ai = sqpii * f / k;
 	k = -0.5 * sqpii * t / g;
-	f = polevl( z, APN, 7 ) / polevl( z, APD, 7 );
+	f = polevl(z, APN, 7) / polevl(z, APD, 7);
 	*aip = f * k;
 
-	if ( x > 8.3203353 ) { /* zeta > 16 */
-	    f = z * polevl( z, BN16, 4 ) / p1evl( z, BD16, 5 );
+	if (x > 8.3203353) { /* zeta > 16 */
+	    f = z * polevl(z, BN16, 4) / p1evl(z, BD16, 5);
 	    k = sqpii * g;
 	    *bi = k * (1.0 + f) / t;
-	    f = z * polevl( z, BPPN, 4 ) / p1evl( z, BPPD, 5 );
+	    f = z * polevl(z, BPPN, 4) / p1evl(z, BPPD, 5);
 	    *bip = k * t * (1.0 + f);
 	    return 0;
 	}
@@ -319,7 +316,7 @@ int airy (double x, double *ai, double *aip, double *bi, double *bip)
     k = 1.0;
     z = x * x * x;
 
-    while ( t > MACHEP ) {
+    while (t > MACHEP) {
 	uf *= z;
 	k += 1.0;
 	uf /=k;
@@ -336,9 +333,9 @@ int airy (double x, double *ai, double *aip, double *bi, double *bip)
 
     uf = c1 * f;
     ug = c2 * g;
-    if ( (domflg & 1) == 0 )
+    if ((domflg & 1) == 0)
 	*ai = uf - ug;
-    if ( (domflg & 2) == 0 )
+    if ((domflg & 2) == 0)
 	*bi = sqrt3 * (uf + ug);
 
     /* the deriviative of ai */
@@ -350,7 +347,7 @@ int airy (double x, double *ai, double *aip, double *bi, double *bip)
     uf /= 3.0;
     t = 1.0;
 
-    while ( t > MACHEP ) {
+    while (t > MACHEP) {
 	uf *= z;
 	ug /=k;
 	k += 1.0;
@@ -367,9 +364,9 @@ int airy (double x, double *ai, double *aip, double *bi, double *bip)
 
     uf = c1 * f;
     ug = c2 * g;
-    if ( (domflg & 4) == 0 )
+    if ((domflg & 4) == 0)
 	*aip = uf - ug;
-    if ( (domflg & 8) == 0 )
+    if ((domflg & 8) == 0)
 	*bip = sqrt3 * (uf + ug);
 
     return 0;

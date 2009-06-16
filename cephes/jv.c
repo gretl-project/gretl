@@ -43,11 +43,6 @@
 
 #define MAXGAM 171.624376956302725
 
-extern int airy (double, double *, double *, double *, double *);
-extern double j0 (double);
-extern double j1 (double);
-extern double cbrt (double);
-
 static double recur (double *, double, double *, int);
 static double jvs (double, double);
 static double hankel (double, double);
@@ -86,7 +81,7 @@ double cephes_bessel_Jv (double n, double x)
     }
 
     if (x < 0.0 && y != an) {
-	mtherr("Jv", DOMAIN);
+	mtherr("Jv", CEPHES_DOMAIN);
 	y = 0.0;
 	goto done;
     }
@@ -186,7 +181,7 @@ double cephes_bessel_Jv (double n, double x)
 	   blow up, whereas the Hankel expansion will then work.
 	 */
 	if (n < 0.0) {
-	    mtherr("Jv", TLOSS);
+	    mtherr("Jv", CEPHES_TLOSS);
 	    y = 0.0;
 	    goto done;
 	}
@@ -245,7 +240,7 @@ static double recur (double *n, double x, double *newn, int cancel)
 	    t = 1.0;
 
 	if (++ctr > 1000) {
-	    mtherr("jv", UNDERFLOW);
+	    mtherr("jv", CEPHES_UNDERFLOW);
 	    goto done;
 	}
 	if (t < MACHEP)
@@ -348,7 +343,7 @@ static double jvs (double n, double x)
 	    return 0.0;
 	}
 	if (t > MAXLOG) {
-	    mtherr("Jv", OVERFLOW);
+	    mtherr("Jv", CEPHES_OVERFLOW);
 	    return MAXNUM;
 	}
 	y = cephes_sgngam * exp(t);
