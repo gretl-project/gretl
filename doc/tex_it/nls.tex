@@ -24,9 +24,9 @@ anche le derivate.
   \label{nls-cons}
 \begin{scode}
 nls C = alfa + beta * Y^gamma
-deriv alfa = 1
-deriv beta = Y^gamma
-deriv gamma = beta * Y^gamma * log(Y)
+    deriv alfa = 1
+    deriv beta = Y^gamma
+    deriv gamma = beta * Y^gamma * log(Y)
 end nls
 \end{scode}
 \end{script}
@@ -36,8 +36,8 @@ end nls
   \label{nls-ects}
 \begin{scode}
 nls y = alfa + beta * x1 + (1/beta) * x2
-deriv alfa = 1
-deriv beta = x1 - x2/(beta*beta)
+    deriv alfa = 1
+    deriv beta = x1 - x2/(beta*beta)
 end nls
 \end{scode}
 \end{script}
@@ -106,9 +106,25 @@ occorre scrivere i comandi \cmd{nls} e \cmd{end nls}.
 Se si è in grado di calcolare le derivate dalla funzione di
 regressione rispetto ai parametri, è consigliabile indicarle come
 mostrato negli esempi precedenti. Se ciò non è possibile, \app{gretl}
-calcolerà delle derivate approssimate numericamente. Le proprietà
-dell'algoritmo NLS in questo caso potrebbero non essere ottimali (si
-veda la sezione~\ref{nls-accuracy}).
+calcolerà delle derivate approssimate numericamente. Tuttavia, le
+proprietà dell'algoritmo NLS in questo caso potrebbero non essere
+ottimali (si veda la sezione~\ref{nls-accuracy}).
+
+Questo vien fatto usando l'istruzione \cmd{params}, seguita da una
+lista di identificatori per i parametri da stimare. In questo caso,
+gli esempi fatti sopra diventano:
+
+\begin{scode}
+nls C = alpha + beta * Y^gamma
+    params alpha beta gamma
+end nls
+\end{scode}
+
+\begin{scode}
+nls y = alpha + beta * x1 + (1/beta) * x2
+    params alpha beta
+end nls
+\end{scode}
 
 Se vengono fornite delle derivate analitiche, ne viene controllata la
 coerenza con la funzione non lineare data. Se esse sono chiaramente
