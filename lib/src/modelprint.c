@@ -4714,9 +4714,7 @@ static void logit_probit_stats (const MODEL *pmod,
 int ols_print_anova (const MODEL *pmod, PRN *prn)
 {
     double mst, msr, mse, rss;
-#ifdef ENABLE_NLS
     int n, c1, c2, c3;
-#endif
 
     if (pmod->ci != OLS || !pmod->ifc ||
 	na(pmod->ess) || na(pmod->tss)) {
@@ -4725,9 +4723,13 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 
     pprintf(prn, "%s:\n\n", _("Analysis of Variance"));
 
-    rss = pmod->tss - pmod->ess;
+    if (pmod->list[0] == 2 && pmod->list[2] == 0) {
+	/* degenerate model: const only */
+	rss = 0.0;
+    } else {
+	rss = pmod->tss - pmod->ess;
+    }
 
-#ifdef ENABLE_NLS
     c1 = g_utf8_strlen(_("Sum of squares"), -1);
     c2 = g_utf8_strlen(_("df"), -1);
     c3 = g_utf8_strlen(_("Mean square"), -1);
@@ -4748,49 +4750,43 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
     pputs(prn, _("Mean square"));
     pputs(prn, "\n\n");
     c1 = 16;
-#else
-    pprintf(prn, "%35s %8s %16s\n\n", _("Sum of squares"), _("df"), _("Mean square"));
-#endif
 
     msr = rss / pmod->dfn;
-#ifdef ENABLE_NLS
     /* string left-aligned with initial offset of 2 */
     n = g_utf8_strlen(_("Regression"), -1);
     bufspace(2, prn);
     pputs(prn, _("Regression"));
     bufspace(16 - n, prn);
-    pprintf(prn, " %*g %*d %*g\n", c1, rss, c2, pmod->dfn, c3, msr);
-#else
-    pprintf(prn, "  %-16s %16g %8d %16g\n", _("Regression"), rss, pmod->dfn, msr);
-#endif
+    if (pmod->dfn == 0) {
+	pprintf(prn, " %*g %*d %*s\n", c1, rss, c2, pmod->dfn, c3, _("undefined"));
+    } else {
+	pprintf(prn, " %*g %*d %*g\n", c1, rss, c2, pmod->dfn, c3, msr);
+    }
 
     mse = pmod->ess / pmod->dfd;
-#ifdef ENABLE_NLS
     /* string left-aligned with initial offset of 2 */
     n = g_utf8_strlen(_("Residual"), -1);
     bufspace(2, prn);
     pputs(prn, _("Residual"));
     bufspace(16 - n, prn);
     pprintf(prn, " %*g %*d %*g\n", c1, pmod->ess, c2, pmod->dfd, c3, mse);
-#else
-    pprintf(prn, "  %-16s %16g %8d %16g\n", _("Residual"), pmod->ess, pmod->dfd, mse);
-#endif
 
     mst = pmod->tss / pmod->dfd;
-#ifdef ENABLE_NLS
     /* string left-aligned with initial offset of 2 */
     n = g_utf8_strlen(_("Total"), -1);
     bufspace(2, prn);
     pputs(prn, _("Total"));
     bufspace(16 - n, prn);
     pprintf(prn, " %*g %*d %*g\n", c1, pmod->tss, c2, pmod->nobs - 1, c3, mst);
-#else
-    pprintf(prn, "  %-16s %16g %8d %16g\n", _("Total"), pmod->tss, pmod->nobs - 1, mst);
-#endif
 
     pprintf(prn, "\n  R^2 = %g / %g = %.6f\n", rss, pmod->tss, rss / pmod->tss);
 
-    if (pmod->ess == 0) {
+    if (pmod->dfn == 0) {
+	pprintf(prn, "  F(%d, %d) %s\n\n", pmod->dfn, pmod->dfd, _("undefined"));
+	return 0;
+    }
+
+    if (pmod->ess == 0 || rss == 0.0) {
 	pprintf(prn, "  F(%d, %d) = %g / %g (%s)\n\n", pmod->dfn, pmod->dfd, 
 		msr, mse, _("undefined"));
     } else {
@@ -4801,7 +4797,7 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 		pmod->dfn, pmod->dfd, msr, mse, F);
 	if (pv < .0001) {
 	    pprintf(prn, "[%s %.3g]\n\n", _("p-value"), pv);
-	} else {
+	} else if (!na(pv)) {
 	    pprintf(prn, "[%s %.4f]\n\n", _("p-value"), pv); 
 	}
     }
