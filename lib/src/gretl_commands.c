@@ -34,6 +34,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SEMIC,    ";" },     
     { ADD,      "add" },
     { ADF,      "adf" }, 
+    { ANOVA,    "anova" }, 
     { APPEND,   "append" },
     { AR,       "ar" },  
     { AR1,      "ar1" },

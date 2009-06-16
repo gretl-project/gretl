@@ -277,6 +277,44 @@
 
   </command>
 
+  <command name="anova" section="Statistics" context="cli">
+    <usage>
+      <arguments>
+        <argument>response</argument>
+        <argument>treatment</argument>
+      </arguments>
+    </usage>
+    <description>
+      <para>
+	One-way Analysis of Variance: <repl>response</repl> is a series
+	measuring some effect of interest and <repl>treatment</repl> must be a
+	discrete variable that codes for two or more types of treatment (or
+	non-treatment). Prints a table showing the sums of squares and mean
+	squares along with an <math>F</math>-test.
+      </para>
+      <para>
+	The null hypothesis for the <math>F</math>-test is that the mean
+	response is invariant with respect to the treatment type, or in words
+	that the treatment has no effect.  Strictly speaking, the test
+	is valid only if the variance of the response is a common value
+	across the treatment types.
+      </para>
+      <para>
+	Note that the result shown by this command is in fact a subset of the
+	information given by the following procedure, which is easily
+	implemented in gretl: create a set of dummy variables coding for the
+	treatment types and regress <repl>response</repl> on this set of
+	dummies using <cmdref targ="ols"/> with the <lit>--anova</lit> option.
+	For example (assuming <lit>y</lit> is the response and <lit>x</lit>
+	codes for the treatment):
+      </para>
+      <code context="cli">
+	list dx = dummify(x)
+	ols y 0 dx --anova
+      </code>
+    </description>
+  </command>
+
   <command name="append" section="Dataset" 
     label="Append data" context="cli">
 

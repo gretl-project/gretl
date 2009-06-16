@@ -5830,3 +5830,167 @@ int gretl_normality_test (const char *param,
     
     return err;
 }
+
+/**
+ * anova:
+ * @x: list: must contain the response and treatment variables.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @prn: printing struct.
+ * 
+ * Does one-way Analysis of Variance (prints table and F-test).
+ * 
+ * Returns: 0 on success, non-zero on failure.
+*/
+
+int anova (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	   PRN *prn)
+{
+    MODEL amod;
+    gretl_matrix *xvals = NULL;
+    const double *ax, *y;
+    double SST, SSE, ybar, dev;
+    double *x, *cmeans = NULL;
+    int *ccount = NULL;
+    int t1, t2;
+    int i, t, n, nvals;
+    int err = 0;
+
+    if (list[0] != 2) {
+	return E_DATA;
+    }
+
+    t1 = pdinfo->t1;
+    t2 = pdinfo->t2;
+
+    varlist_adjust_sample(list, &t1, &t2, Z);
+
+    n = t2 - t1 + 1;
+    if (n == 0) {
+	return E_DATA;
+    }
+
+    y = Z[list[1]];
+    ax = Z[list[2]];
+
+    n = 0;
+    for (t=t1; t<=t2; t++) {
+	if (na(ax[t]) || na(y[t])) {
+	    continue;
+	} else if (ax[t] != floor(ax[t])) {
+	    gretl_errmsg_set("anova: the x variable must be discrete");
+	    return E_DATA;
+	} else {
+	    n++;
+	}
+    }
+    
+    if (n < 2) {
+	return E_DATA;
+    }
+
+    x = malloc(n * sizeof *x);
+    if (x == NULL) {
+	return E_ALLOC;
+    }
+
+    ybar = 0.0;
+    i = 0;
+    for (t=t1; t<=t2; t++) {
+	if (!na(ax[t]) && !na(y[t])) {
+	    x[i++] = ax[t];
+	    ybar += y[t];
+	}
+    }
+
+    ybar /= n;
+    
+    xvals = gretl_matrix_values(x, n, &err);
+    if (err) {
+	free(x);
+	return err;
+    }
+
+    nvals = xvals->rows;
+    if (nvals < 2) {
+	err = E_DATA;
+	goto bailout;
+    }
+
+    cmeans = malloc(nvals * sizeof *cmeans);
+    ccount = malloc(nvals * sizeof *ccount);
+
+    if (cmeans == NULL || ccount == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<nvals; i++) {
+	cmeans[i] = 0.0;
+	ccount[i] = 0;
+    }
+
+    SST = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(ax[t]) && !na(y[t])) {
+	    dev = y[t] - ybar;
+	    SST += dev * dev;
+	    for (i=0; i<nvals; i++) {
+		if (ax[t] == xvals->val[i]) {
+		    cmeans[i] += y[t];
+		    ccount[i] += 1;
+		    break;
+		}
+	    }
+	}
+    }
+
+    for (i=0; i<nvals; i++) {
+	cmeans[i] /= ccount[i];
+    }
+
+    SSE = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(ax[t]) && !na(y[t])) {
+	    for (i=0; i<nvals; i++) {
+		if (ax[t] == xvals->val[i]) {
+		    dev = y[t] - cmeans[i];
+		    SSE += dev * dev;
+		    break;
+		}
+	    }
+	}
+    }
+
+    gretl_model_init(&amod);
+
+    /* use dummy model for printing results */
+    amod.ci = OLS;
+    amod.list = (int *) list;
+    amod.ess = SSE;
+    amod.tss = SST;
+    amod.dfn = nvals - 1;
+    amod.dfd = n - nvals;
+    amod.nobs = n;
+    amod.ifc = 1;
+    amod.opt = OPT_V;
+
+    pputc(prn, '\n');
+    pprintf(prn, _("%s, response = %s, treatment = %s:"), 
+	    _("Analysis of Variance"), 
+	    pdinfo->varname[list[1]],
+	    pdinfo->varname[list[2]]);
+
+    err = ols_print_anova(&amod, prn);
+
+ bailout:
+
+    free(x);
+    free(cmeans);
+    free(ccount);
+    gretl_matrix_free(xvals);
+
+    return err;
+}

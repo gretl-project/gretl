@@ -261,4 +261,7 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
 
 double ljung_box (int m, int t1, int t2, const double *y, int *err);
 
+int anova (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	   PRN *prn);
+
 #endif /* DESCRIBE_H */

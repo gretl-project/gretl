@@ -24,6 +24,7 @@ typedef enum {
     SEMIC = 0,    
     ADD,
     ADF,
+    ANOVA,
     APPEND,
     AR,  
     AR1,
