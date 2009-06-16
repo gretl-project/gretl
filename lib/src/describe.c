@@ -5857,6 +5857,7 @@ int anova (const int *list, const double **Z, const DATAINFO *pdinfo,
     int err = 0;
 
     if (list[0] != 2) {
+	gretl_errmsg_set(_("This command requires two variables\n"));
 	return E_DATA;
     }
 
@@ -5867,6 +5868,7 @@ int anova (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     n = t2 - t1 + 1;
     if (n == 0) {
+	gretl_errmsg_set("Insufficient observations");
 	return E_DATA;
     }
 
@@ -5886,6 +5888,7 @@ int anova (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
     
     if (n < 2) {
+	gretl_errmsg_set("Insufficient observations");
 	return E_DATA;
     }
 
@@ -5913,6 +5916,7 @@ int anova (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     nvals = xvals->rows;
     if (nvals < 2) {
+	gretl_errmsg_set("Insufficient observations");
 	err = E_DATA;
 	goto bailout;
     }

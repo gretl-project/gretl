@@ -1464,6 +1464,7 @@ GtkActionEntry main_entries[] = {
 #ifdef ENABLE_GMP
     { "mpols", NULL, N_("High _precision OLS..."), NULL, NULL, G_CALLBACK(model_callback) }, 
 #endif
+    { "anova", NULL, N_("ANOVA..."), NULL, NULL, G_CALLBACK(model_callback) },
     { "TSModels", NULL, N_("_Time series"), NULL, NULL, NULL },
     { "CORC", NULL, N_("_Cochrane-Orcutt..."), NULL, NULL, G_CALLBACK(model_callback) },
     { "HILU", NULL, N_("_Hildreth-Lu..."), NULL, NULL, G_CALLBACK(model_callback) },

@@ -238,6 +238,7 @@
 	<menuitem action='wls'/>
 	<menuitem action='hsk'/>
 	<menuitem action='mpols'/>
+        <menuitem action='anova'/>
       </menu>
       <menu action='NonlinearModels'>
 	<menu action='logit'>

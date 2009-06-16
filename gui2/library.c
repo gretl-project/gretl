@@ -3049,6 +3049,30 @@ static int logistic_model_get_lmax (CMD *cmd)
     return err;
 }
 
+static int do_straight_anova (void) 
+{
+    PRN *prn;
+    int err;
+
+    if (check_model_cmd() || bufopen(&prn)) {
+	return 1;
+    }
+
+    err = anova(libcmd.list, (const double **) Z, datainfo, prn);
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	gchar *title = g_strdup_printf("gretl: %s", _("ANOVA"));
+
+	view_buffer(prn, 78, 400, title, PRINT, NULL);
+	g_free(title);
+    } 
+
+    return err;    
+}
+
 static int real_do_model (int action) 
 {
     char *linecpy;
@@ -3294,7 +3318,11 @@ int do_model (selector *sr)
     flagstr = print_flags(libcmd.opt, ci);
     gretl_command_sprintf("%s %s%s", estimator, buf, flagstr);
 
-    return real_do_model(ci);
+    if (ci == ANOVA) {
+	return do_straight_anova();
+    } else {
+	return real_do_model(ci);
+    }
 }
 
 int do_vector_model (selector *sr) 

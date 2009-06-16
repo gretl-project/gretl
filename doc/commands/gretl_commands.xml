@@ -277,7 +277,7 @@
 
   </command>
 
-  <command name="anova" section="Statistics" context="cli">
+  <command name="anova" label="ANOVA" section="Statistics">
     <usage>
       <arguments>
         <argument>response</argument>
@@ -308,7 +308,7 @@
 	For example (assuming <lit>y</lit> is the response and <lit>x</lit>
 	codes for the treatment):
       </para>
-      <code context="cli">
+      <code>
 	list dx = dummify(x)
 	ols y 0 dx --anova
       </code>
