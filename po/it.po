@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.8.0\n"
+"Project-Id-Version: gretl 1.8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-15 09:25-0400\n"
-"PO-Revision-Date: 2009-06-15 09:27-0400\n"
+"PO-Revision-Date: 2009-06-16 13:57+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1419,7 +1419,7 @@ msgstr "Comando gnuplot fallito\n"
 #: lib/src/describe.c:2157
 #, c-format
 msgid "Matrix %s does not represent a contingency table"
-msgstr ""
+msgstr "La matrice %s non rappresenta una tabella di contingenza"
 
 #: lib/src/describe.c:2568 lib/src/describe.c:2636 lib/src/describe.c:2945
 #: lib/src/describe.c:2992
@@ -2491,7 +2491,7 @@ msgstr "Stime"
 
 #: lib/src/graphing.c:2863
 msgid "actual = predicted"
-msgstr ""
+msgstr "effettivi = stimati"
 
 #: lib/src/graphing.c:3372
 msgid "Test statistic for normality"
@@ -2793,9 +2793,8 @@ msgstr ""
 "È stata superata la lunghezza massima della riga di comando (8192 byte)"
 
 #: lib/src/gretl_errors.c:75
-#, fuzzy
 msgid "Matrix is not positive definite"
-msgstr "La matrice non è finita"
+msgstr "La matrice non è definita positiva"
 
 #: lib/src/gretl_errors.c:76
 msgid "Failed to calculate Jacobian"
@@ -3205,9 +3204,8 @@ msgstr ""
 "\n"
 
 #: lib/src/gretl_panel.c:2495
-#, fuzzy
 msgid "Hausman test matrix is not positive definite"
-msgstr "Non definita positiva"
+msgstr "La matrice del test di Hausman non è definita positiva"
 
 #: lib/src/gretl_panel.c:2707
 #, c-format
@@ -4296,9 +4294,8 @@ msgid "GARCH"
 msgstr "GARCH"
 
 #: lib/src/modelprint.c:679
-#, fuzzy
 msgid "Interval estimates"
-msgstr "Stima iterata"
+msgstr "Stime per intervallo"
 
 #: lib/src/modelprint.c:681
 msgid "Arellano--Bond"
@@ -4676,7 +4673,7 @@ msgstr "n"
 #. TRANSLATORS: 'T' denotes time-series sample size
 #: lib/src/modelprint.c:1499
 msgid "T"
-msgstr ""
+msgstr "T"
 
 #: lib/src/modelprint.c:1556 lib/src/modelprint.c:1559
 #: lib/src/modelprint.c:1562 lib/src/system.c:3776 lib/src/system.c:3795
@@ -4696,7 +4693,7 @@ msgstr "%s, usando le osservazioni %s%s%s"
 #: lib/src/modelprint.c:1601
 #, c-format
 msgid "%s, obs. %s%s%s"
-msgstr ""
+msgstr "%s, oss. %s%s%s"
 
 #: lib/src/modelprint.c:1625
 msgid "Missing or incomplete observations dropped"
@@ -5832,38 +5829,32 @@ msgid "Mean Absolute Error"
 msgstr "Errore assoluto medio"
 
 #: lib/src/printout.c:2363 gui2/guiprint.c:1150
-#, fuzzy
 msgid "Mean Percentage Error"
-msgstr "Errore quadratico medio"
+msgstr "Errore percentuale medio"
 
 #: lib/src/printout.c:2364 gui2/guiprint.c:1151
-#, fuzzy
 msgid "Mean Absolute Percentage Error"
-msgstr "Errore assoluto medio"
+msgstr "Errore percentuale assoluto medio"
 
 #: lib/src/printout.c:2365
 msgid "Theil's U"
-msgstr ""
+msgstr "U di Theil"
 
 #: lib/src/printout.c:2366
-#, fuzzy
 msgid "Bias proportion, UM"
-msgstr "Proporzione"
+msgstr "Proporzione del bias, UM"
 
 #: lib/src/printout.c:2367
-#, fuzzy
 msgid "Regression proportion, UR"
-msgstr "Risultati della regressione"
+msgstr "Proporzione della regressione, UR"
 
 #: lib/src/printout.c:2368
-#, fuzzy
 msgid "Disturbance proportion, UD"
-msgstr "Proporzione nel campione"
+msgstr "Proporzione del disturbo, UD"
 
 #: lib/src/printout.c:2406 gui2/guiprint.c:1175
-#, fuzzy
 msgid "Forecast evaluation statistics"
-msgstr "gretl: statistiche range-mean"
+msgstr "Statistiche della previsione"
 
 #: lib/src/printout.c:2488
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
@@ -10541,21 +10532,19 @@ msgstr "Valore critico al 5\\%% (due code) = %.4f per n = %d"
 
 #: gui2/guiprint.c:1152
 msgid "Theil's $U$"
-msgstr ""
+msgstr "$U$ di Theil"
 
 #: gui2/guiprint.c:1153
-#, fuzzy
 msgid "Bias proportion, $U^M$"
-msgstr "H0: proporzione ="
+msgstr "Proporzione del bias, $U^M$"
 
 #: gui2/guiprint.c:1154
 msgid "Regression proportion, $U^R$"
-msgstr ""
+msgstr "Proporzione della regressione, $U^R$"
 
 #: gui2/guiprint.c:1155
-#, fuzzy
 msgid "Disturbance proportion, $U^D$"
-msgstr "Proporzione nel campione"
+msgstr "Proporzione del disturbo, $U^D$"
 
 #: gui2/guiprint.c:1210 gui2/guiprint.c:1228
 msgid "Model estimation range:"
@@ -11019,9 +11008,8 @@ msgid "_Against %s"
 msgstr "_Rispetto a %s"
 
 #: gui2/gui_utils.c:2307
-#, fuzzy
 msgid "Actual vs. Fitted"
-msgstr "%s: valori effettivi e stimati"
+msgstr "Effettivo vs stimato"
 
 #: gui2/gui_utils.c:2317
 msgid "Residual _correlogram"
@@ -11792,9 +11780,9 @@ msgid "standardized residual"
 msgstr "residui standardizzati"
 
 #: gui2/library.c:5013
-#, fuzzy, c-format
+#, c-format
 msgid "predicted %s"
-msgstr "Valori previsti"
+msgstr "%s previsto"
 
 #: gui2/library.c:5288
 msgid "Can't delete a variable when in sub-sample mode\n"
