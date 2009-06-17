@@ -4404,4 +4404,37 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+/**
+ * anova:
+ * @x: list: must contain the response and treatment variables.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @opt: not used yet.
+ * @prn: printing struct.
+ * 
+ * Does one-way Analysis of Variance (prints table and F-test).
+ * 
+ * Returns: 0 on success, non-zero on failure.
+*/
+
+int anova (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	   gretlopt opt, PRN *prn)
+{
+    void *handle = NULL;
+    int (*gretl_anova) (const int *, const double **, const DATAINFO *, 
+			gretlopt, PRN *);
+    int err;
+
+    gretl_anova = get_plugin_function("gretl_anova", &handle);
+    if (gretl_anova == NULL) {
+	return 1;
+    }
+
+    err = (*gretl_anova)(list, Z, pdinfo, opt, prn);
+
+    close_plugin(handle);
+
+    return err;    
+}
+
 

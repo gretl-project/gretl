@@ -63,7 +63,8 @@ enum {
     P_HECKIT,
     P_ODBC,
     P_QUANTREG,
-    P_INTREG
+    P_INTREG,
+    P_ANOVA
 } plugin_codes;
 
 struct plugin_info {
@@ -113,7 +114,8 @@ struct plugin_info plugins[] = {
     { P_HECKIT,          "heckit" },
     { P_ODBC,            "odbc_import" },
     { P_QUANTREG,        "quantreg" },
-    { P_INTREG,          "interval" }
+    { P_INTREG,          "interval" },
+    { P_ANOVA,           "anova" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -215,6 +217,9 @@ struct plugin_function plugin_functions[] = {
 
     /* quantreg */
     { "rq_driver", P_QUANTREG},
+
+    /* analysis of variance */
+    { "gretl_anova", P_ANOVA},
 
     /* sentinel */
     { NULL, 0 }

@@ -3058,7 +3058,8 @@ static int do_straight_anova (void)
 	return 1;
     }
 
-    err = anova(libcmd.list, (const double **) Z, datainfo, prn);
+    err = anova(libcmd.list, (const double **) Z, datainfo, 
+		libcmd.opt, prn);
 
     if (err) {
 	gui_errmsg(err);

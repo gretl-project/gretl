@@ -4721,12 +4721,7 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 	return E_NOTIMP;
     }
 
-    if (pmod->opt == OPT_V) {
-	/* dummy model for ANOVA */
-	pputs(prn, "\n\n");
-    } else {
-	pprintf(prn, "%s:\n\n", _("Analysis of Variance"));
-    }
+    pprintf(prn, "%s:\n\n", _("Analysis of Variance"));
 
     if (pmod->dfn == 0) {
 	/* degenerate model: const only */
@@ -4759,17 +4754,10 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
     /* Mean Square, regression */
     msr = rss / pmod->dfn;
     /* string left-aligned with initial offset of 2 */
-    if (pmod->opt == OPT_V) {
-	n = g_utf8_strlen(_("Treatment"), -1);
-	bufspace(2, prn);
-	pputs(prn, _("Treatment"));
-	bufspace(16 - n, prn);	
-    } else {
-	n = g_utf8_strlen(_("Regression"), -1);
-	bufspace(2, prn);
-	pputs(prn, _("Regression"));
-	bufspace(16 - n, prn);
-    }
+    n = g_utf8_strlen(_("Regression"), -1);
+    bufspace(2, prn);
+    pputs(prn, _("Regression"));
+    bufspace(16 - n, prn);
     if (pmod->dfn == 0) {
 	pprintf(prn, " %*g %*d %*s\n", c1, rss, c2, pmod->dfn, c3, _("undefined"));
     } else {
@@ -4794,11 +4782,7 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
     bufspace(16 - n, prn);
     pprintf(prn, " %*g %*d %*g\n", c1, pmod->tss, c2, pmod->nobs - 1, c3, mst);
 
-    if (pmod->opt == OPT_V) {
-	pputc(prn, '\n');
-    } else {
-	pprintf(prn, "\n  R^2 = %g / %g = %.6f\n", rss, pmod->tss, rss / pmod->tss);
-    }
+    pprintf(prn, "\n  R^2 = %g / %g = %.6f\n", rss, pmod->tss, rss / pmod->tss);
 
     if (pmod->dfn == 0) {
 	pprintf(prn, "  F(%d, %d) %s\n\n", pmod->dfn, pmod->dfd, _("undefined"));

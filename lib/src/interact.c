@@ -4205,7 +4205,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case ANOVA:
-	err = anova(cmd->list, Z, pdinfo, prn);
+	err = anova(cmd->list, Z, pdinfo, cmd->opt, prn);
 	break;
 
     case ADF:

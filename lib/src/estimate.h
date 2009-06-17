@@ -95,6 +95,9 @@ int *augment_regression_list (const int *orig, int aux,
 
 double *gretl_XTX (const MODEL *pmod, const double **Z, int *err);
 
+int anova (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	   gretlopt opt, PRN *prn);
+
 #endif /* ESTIMATE_H */
 
 

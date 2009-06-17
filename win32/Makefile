@@ -107,7 +107,8 @@ PLUGINSRC = \
 	heckit.c \
 	odbc_import.c \
 	quantreg.c \
-	interval.c
+	interval.c \
+	anova.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -145,7 +146,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/heckit.dll \
 	plugins/odbc_import.dll \
 	plugins/quantreg.dll \
-	plugins/interval.dll
+	plugins/interval.dll \
+	plugins/anova.dll \
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -477,6 +479,10 @@ plugins/quantreg.dll: quantreg.o rqfnb.o rqbr.o dllinit.o
 plugins/interval.dll: interval.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
+
+plugins/anova.dll: anova.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GLIBLIB) 
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<

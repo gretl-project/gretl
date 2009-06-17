@@ -81,7 +81,7 @@ struct _selector {
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
                        c == PWE || c == PANEL_WLS || c == PANEL_B || \
                        c == OLOGIT || c == OPROBIT || c == MLOGIT || \
-	               c == IV_LIML || c == IV_GMM || c == ANOVA)
+	               c == IV_LIML || c == IV_GMM)
 
 #define IV_MODEL(c) (c == IVREG || c == IV_LIML || c == IV_GMM)
 
@@ -102,7 +102,8 @@ struct _selector {
 
 #define TWO_VARS_CODE(c) (c == SPEARMAN || c == ELLIPSE || c == XCORRGM)
 
-#define THREE_VARS_GRAPH(c) (c == GR_DUMMY || c == GR_XYZ || c == GR_3D)
+#define THREE_VARS_CODE(c) (c == GR_DUMMY || c == GR_XYZ || \
+			    c == GR_3D || c == ANOVA)
 
 #define WANT_TOGGLES(c) (c == ARBOND || \
                          c == ARMA || \
@@ -1060,8 +1061,8 @@ static void set_extra_var_callback (GtkWidget *w, selector *sr)
 					sr);
 }
 
-static void real_set_factor (GtkTreeModel *model, GtkTreePath *path,
-			     GtkTreeIter *iter, selector *sr)
+static void real_set_third_var (GtkTreeModel *model, GtkTreePath *path,
+				GtkTreeIter *iter, selector *sr)
 {
     gint vnum;
     gchar *vname;
@@ -1073,14 +1074,14 @@ static void real_set_factor (GtkTreeModel *model, GtkTreePath *path,
 		      GINT_TO_POINTER(vnum));
 }
 
-static void set_factor_callback (GtkWidget *w, selector *sr)
+static void set_third_var_callback (GtkWidget *w, selector *sr)
 {
     GtkTreeSelection *selection;
 
     selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
     gtk_tree_selection_selected_foreach(selection, 
 					(GtkTreeSelectionForeachFunc) 
-					real_set_factor,
+					real_set_third_var,
 					sr);
 }
 
@@ -1233,11 +1234,7 @@ static void dependent_var_cleanup (selector *sr, int newy)
 {
     int oldy = selector_get_depvar_number(sr);
 
-    if (sr->ci == ANOVA) {
-	return;
-    }
-
-    if (oldy != newy) {
+    if (GTK_IS_TREE_VIEW(sr->rvars1) && oldy != newy) {
 	if (oldy > 0) {
 	    remove_as_indep_var(sr, oldy); /* lags business */
 	}
@@ -1806,12 +1803,19 @@ static void clear_vars (GtkWidget *w, selector *sr)
     /* clear dependent var slot */
     if (sr->depvar != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
-				     FALSE);
+	if (sr->default_check != NULL) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
+					 FALSE);
+	}
 	default_y = -1;
     }
 
-    if (THREE_VARS_GRAPH(sr->ci)) {
+    /* extra variable entry? */
+    if (GTK_IS_ENTRY(sr->extra[0])) {
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), "");
+    }
+
+    if (THREE_VARS_CODE(sr->ci)) {
 	/* clear special slot */
 	gtk_entry_set_text(GTK_ENTRY(sr->rvars1), "");
     } else {
@@ -2472,8 +2476,7 @@ static void read_omit_cutoff (selector *sr)
                                  c == INTREG || \
                                  c == POISSON || \
                                  c == WLS || \
-	                         c == ANOVA || \
-                                 THREE_VARS_GRAPH(c))
+                                 THREE_VARS_CODE(c))
 
 static void parse_extra_widgets (selector *sr, char *endbit)
 {
@@ -2498,7 +2501,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (sr->ci == WLS || sr->ci == POISSON || 
 	sr->ci == AR || sr->ci == HECKIT ||
-	sr->ci == INTREG || THREE_VARS_GRAPH(sr->ci)) {
+	sr->ci == INTREG || THREE_VARS_CODE(sr->ci)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
 	    if (sr->ci == WLS) {
@@ -2516,7 +2519,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	    } else if (sr->ci == ANOVA) {
 		warnbox(_("You must specify a treatment variable"));
 		sr->error = 1;
-	    } else if (THREE_VARS_GRAPH(sr->ci)) { 
+	    } else if (THREE_VARS_CODE(sr->ci)) { 
 		warnbox(("You must select a Y-axis variable"));
 		sr->error = 1;
 	    } else if (sr->ci == POISSON) {
@@ -2534,7 +2537,10 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
     }
 
-    if (sr->ci == WLS || THREE_VARS_GRAPH(sr->ci)) {
+    if (sr->ci == ANOVA) {
+	sprintf(numstr, " %d", k);
+	add_to_cmdlist(sr, numstr);
+    } else if (sr->ci == WLS || THREE_VARS_CODE(sr->ci)) {
 	sprintf(numstr, "%d ", k);
 	add_to_cmdlist(sr, numstr);
 	if (sr->ci == WLS) {
@@ -2550,8 +2556,6 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->ci == HECKIT) {
 	sprintf(endbit, " %d", k);
 	selvar = k;
-    } else if (sr->ci == ANOVA) {
-	sprintf(endbit, " %d", k);
     } else if (sr->ci == AR) {
 	free(arlags);
 	arlags = gretl_strdup(txt);
@@ -2624,8 +2628,7 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 	    sprintf(numstr, "%d", ynum);
 	    add_to_cmdlist(sr, numstr);
 	}
-	if (dataset_lags_ok(datainfo) && 
-	    select_lags_depvar(sr->ci)) {
+	if (select_lags_depvar(sr->ci) && dataset_lags_ok(datainfo)) {
 	    *dvlags = get_lagpref_string(ynum, LAG_Y_X, NULL);
 	    if (USE_ZLIST(sr->ci)) {
 		*idvlags = get_lagpref_string(ynum, LAG_Y_W, NULL);
@@ -2640,13 +2643,16 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
     }
 }
 
-static void parse_special_graph_data (selector *sr)
+static void parse_third_var_slot (selector *sr)
 {
     const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sr->rvars1));
     char numstr[8];
 
-    if (txt == NULL || !*txt) {
-	if (sr->ci == GR_3D) {
+    if (txt == NULL || *txt == '\0') {
+	if (sr->ci == ANOVA) {
+	    /* third var is optional */
+	    return;
+	} else if (sr->ci == GR_3D) {
 	    warnbox(_("You must select a Z-axis variable"));
 	} else if (sr->ci == GR_DUMMY) {
 	    warnbox(_("You must select a factor variable"));
@@ -2669,6 +2675,24 @@ static void selector_cancel_unavailable_options (selector *sr)
 	    sr->opts ^= OPT_H;
 	}
     }
+}
+
+static void get_anova_list (selector *sr)
+{
+    /* get response var */
+    parse_depvar_widget(sr, NULL, NULL, NULL);
+    if (sr->error < 0) {
+	return;
+    } 
+
+    /* get treatment var */
+    parse_extra_widgets(sr, NULL);
+    if (sr->error) {
+	return;
+    }
+
+    /* get (optional) block var */
+    parse_third_var_slot(sr);    
 }
 
 /* main function for building a command list from information stored
@@ -2697,6 +2721,12 @@ static void compose_cmdlist (selector *sr)
 	    parse_extra_widgets(sr, endbit);
 	}
 	goto int_next;
+    } 
+
+    if (sr->ci == ANOVA) {
+	/* special: either 2 or 3 variables selected */
+	get_anova_list(sr);
+	return;
     }
 
     /* deal with content of "extra" widgets */
@@ -2724,8 +2754,8 @@ static void compose_cmdlist (selector *sr)
 	return;
     }
 
-    if (THREE_VARS_GRAPH(sr->ci)) { 
-	parse_special_graph_data(sr);
+    if (THREE_VARS_CODE(sr->ci)) { 
+	parse_third_var_slot(sr);
 	return;
     } 
 
@@ -2940,8 +2970,6 @@ static char *est_str (int cmdnum)
     case COINT:
     case COINT2:
 	return N_("Cointegration");
-    case ANOVA:
-	return N_("ANOVA");
 #ifdef ENABLE_GMP
     case MPOLS:
 	return N_("Multiple precision OLS");
@@ -3083,7 +3111,9 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
     gtk_widget_show(x_hbox); 
 
     if (label_active || label_string != NULL) {
-	vbox_add_hsep(vbox);
+	if (clickfunc != set_third_var_callback) {
+	    vbox_add_hsep(vbox);
+	}
     }
 
     return entry;
@@ -3137,6 +3167,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     } else {
 	tmp = gtk_label_new(_("Dependent variable"));
     }
+
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);
 
@@ -3165,7 +3196,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_box_pack_start(GTK_BOX(right_vbox), depvar_hbox, FALSE, FALSE, 0);
     gtk_widget_show(depvar_hbox); 
 
-    if (sr->ci != INTREG && sr->ci != ANOVA) {
+    if (sr->ci != INTREG) {
 	sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
 	gtk_widget_show(sr->default_check); 
@@ -3335,7 +3366,7 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     gtk_widget_show(hbox); 
 }
 
-static void graph_zvar_box (selector *sr, GtkWidget *vbox)
+static void third_var_box (selector *sr, GtkWidget *vbox)
 {
     const gchar *label;
 
@@ -3345,12 +3376,14 @@ static void graph_zvar_box (selector *sr, GtkWidget *vbox)
 	label = _("Factor (dummy)");
     } else if (sr->ci == GR_XYZ) {
 	label = N_("Control variable");
+    } else if (sr->ci == ANOVA) {
+	label = N_("Block variable (optional)");
     } else {
 	return;
     }
 
     sr->rvars1 = entry_with_label_and_chooser(sr, vbox, _(label), 0,
-					      set_factor_callback);
+					      set_third_var_callback);
 }
 
 static void extra_var_box (selector *sr, GtkWidget *vbox)
@@ -3537,8 +3570,8 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	extra_var_box(sr, right_vbox);
 	vbox_add_hsep(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
-    } else if (sr->ci == WLS || sr->ci == INTREG || sr->ci == ANOVA ||
-	       sr->ci == POISSON || THREE_VARS_GRAPH(sr->ci)) {
+    } else if (sr->ci == WLS || sr->ci == INTREG || 
+	       sr->ci == POISSON || THREE_VARS_CODE(sr->ci)) {
 	extra_var_box(sr, right_vbox);
     } else if (USE_ZLIST(sr->ci)) {
 	primary_rhs_varlist(sr, right_vbox);
@@ -3573,9 +3606,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	AR_order_spin(sr, right_vbox);
     }
     
-    if (sr->ci != ANOVA) {
-	vbox_add_hsep(right_vbox);
-    }
+    vbox_add_hsep(right_vbox);
 }
 
 static void selector_init (selector *sr, guint ci, const char *title,
@@ -4864,6 +4895,8 @@ static GtkWidget *selection_dialog_top_label (int ci)
 	s = _("scatterplot with control");
     else if (ci == SAVE_FUNCTIONS) 
 	s = _("functions to package");
+    else if (ci == ANOVA) 
+	s = _("ANOVA");
     else
 	s = "fixme need string";
 
@@ -5037,7 +5070,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci)
     /* RHS: vertical holder */
     right_vbox = gtk_vbox_new(FALSE, 5);
 
-    if (MODEL_CODE(ci)) { 
+    if (MODEL_CODE(ci) || ci == ANOVA) { 
 	/* models: top right -> dependent variable */
 	yvar = build_depvar_section(sr, right_vbox, preselect);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
@@ -5051,17 +5084,16 @@ void selection_dialog (const char *title, int (*callback)(), guint ci)
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == POISSON || ci == ARBOND ||
-	ci == QUANTREG || ci == INTREG || ci == ANOVA ||
-	THREE_VARS_GRAPH(ci)) {
+	ci == QUANTREG || ci == INTREG || THREE_VARS_CODE(ci)) {
 	build_mid_section(sr, right_vbox);
     }
     
-    if (THREE_VARS_GRAPH(ci)) {
+    if (THREE_VARS_CODE(ci)) {
 	/* choose extra var for plot */
-	graph_zvar_box(sr, right_vbox);
+	third_var_box(sr, right_vbox);
     } else if (AUX_LAST(ci)) {
 	auxiliary_rhs_varlist(sr, right_vbox);
-    } else if (ci != ANOVA) {
+    } else {
 	/* all other uses: list of vars */
 	primary_rhs_varlist(sr, right_vbox);
     }
@@ -5103,7 +5135,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci)
 	    ci == SCATTERS || ci == GR_3D || ci == GR_XYZ) {
 	    unhide_lags_switch(sr);
 	}
-	if (MODEL_CODE(ci) && ci != ARMA && ci != ANOVA) {
+	if (MODEL_CODE(ci) && ci != ARMA) {
 	    lag_selector_button(sr);
 	} 
 	if (select_lags_depvar(ci) && yvar > 0) {
