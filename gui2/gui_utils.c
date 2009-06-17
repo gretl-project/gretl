@@ -284,10 +284,10 @@ static GtkActionEntry system_items[] = {
 };
 
 static GtkActionEntry sys_tex_items[] = {
-    { "LaTeX", NULL, N_("_LaTeX"), NULL, NULL, NULL },  
-    { "TeXView", NULL, N_("_View"), NULL, NULL, G_CALLBACK(model_tex_view) },      
-    { "TeXCopy", NULL, N_("_Copy"), NULL, NULL, G_CALLBACK(model_tex_copy) },      
-    { "TeXSave", NULL, N_("_Save"), NULL, NULL, G_CALLBACK(model_tex_save) },
+    { "LaTeX",   NULL, N_("_LaTeX"), NULL, NULL, NULL },  
+    { "TeXView", NULL, N_("_View"),  NULL, NULL, G_CALLBACK(model_tex_view) },      
+    { "TeXCopy", NULL, N_("_Copy"),  NULL, NULL, G_CALLBACK(model_tex_copy) },      
+    { "TeXSave", NULL, N_("_Save"),  NULL, NULL, G_CALLBACK(model_tex_save) },
 };
 
 static const gchar *sys_ui =
@@ -2561,7 +2561,6 @@ static const gchar *model_ui =
     "   <menuitem action='ANOVA'/>"
     "   <menuitem action='Bootstrap'/>"
     "  </menu>"     
-    "  <menu action='LaTeX'/>"
     " </menubar>"
     "</ui>";
 
@@ -2615,6 +2614,9 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
 			    base_hsk_items, 
 			    G_N_ELEMENTS(base_hsk_items));
+	if (pmod->ncoeff == 1 || (pmod->ifc && pmod->ncoeff == 2)) {
+	    flip(vwin->ui, "/MenuBar/Tests/Hsk/WhiteSquares", FALSE);
+	}
     } 
 
     if (latex_is_ok() && !pmod->errcode && !RQ_SPECIAL_MODEL(pmod)) {
