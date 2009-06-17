@@ -32,10 +32,10 @@ struct anova {
     double SSE;   /* error sum of squares */
     double *tvec;
     double *bvec;
-    double *cmeans;
-    double *rmeans;
-    int *ccount;
-    int *rcount;
+    double *cmeans; /* column means */
+    double *rmeans; /* row means */
+    int *ccount;    /* column counts */
+    int *rcount;    /* row counts */
     gretl_matrix *tvals;
     gretl_matrix *bvals;
 };
@@ -315,7 +315,7 @@ static int anova_accounting_arrays (struct anova *v)
 #define anova_obs_ok(y,x,z,t) (!na(y[t]) && !na(x[t]) && \
                                (z == NULL || !na(z[t])))
 
-/* for one-way anova the list contain response and treatment; for
+/* for one-way anova the list contains response and treatment; for
    two-way it should in addition contain the block variable
 */
 
