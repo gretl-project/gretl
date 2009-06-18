@@ -43,7 +43,7 @@ double cephes_bessel_I1 (double x);
 double cephes_bessel_K0 (double x);
 double cephes_bessel_K1 (double x);
 
-/* interlopers */
+/* interloper from elsewhere in netlib repository */
 double netlib_bessel_K (double v, double x, double expo);
 
 #ifndef INFINITY

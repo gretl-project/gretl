@@ -1,3 +1,8 @@
+/* Complements to the cephes Bessel code, for cases where
+   cephes suffers a significant loss of accuracy.  Derived
+   from GNU R, and in turn derived from netlib.
+*/
+
 /* From http://www.netlib.org/specfun/rkbesl	
    Fortran translated by f2c,...
    Martin Maechler, ETH Zurich for GNU R
@@ -15,12 +20,12 @@
 
 static int imin2 (int x, int y)
 {
-    return (x < y) ? x : y;
+    return (x < y)? x : y;
 }
 
 static int imax2 (int x, int y)
 {
-    return (x > y) ? x : y;
+    return (x > y)? x : y;
 }
 
 static double ftrunc(double x)
@@ -476,9 +481,26 @@ L420:
     }
 }
 
+static double *zero_dbl_array (int n)
+{
+    double *x = malloc(n * sizeof *x);
+
+    if (x == NULL) {
+	mtherr ("allocation", CEPHES_UNKNOWN);
+    } else {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    x[i] = 0.0;
+	}
+    }
+
+    return x;
+}
+
 double netlib_bessel_K (double v, double x, double expo)
 {
-    int i, nb, ncalc, ize;
+    int nb, ncalc, ize;
     double *bk;
 
     if (isnan(x) || isnan(v)) {
@@ -492,20 +514,16 @@ double netlib_bessel_K (double v, double x, double expo)
 
     ize = (int) expo;
 
-    if (v < 0)
+    if (v < 0) {
 	v = -v;
+    }
 
     nb = 1 + (int) floor(v); /* nb-1 <= |v| < nb */
     v -= (nb - 1);
 
-    bk = malloc(nb * sizeof *bk);
+    bk = zero_dbl_array(nb);
     if (bk == NULL) {
-	mtherr("netlib_bessel_K", CEPHES_UNKNOWN);
 	return NAN;
-    }
-
-    for (i=0; i<nb; i++) {
-	bk[i] = 0.0;
     }
 
     K_bessel(x, v, nb, ize, bk, &ncalc);
