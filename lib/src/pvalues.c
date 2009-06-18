@@ -972,7 +972,7 @@ double normal_critval (double a)
 
 static int normal_pdf_array (double *x, int n)
 {
-    double s = 1.0 / sqrt(M_2PI);
+    double s = 1.0 / SQRT_2_PI;
     int i;
 
     for (i=0; i<n; i++) {
@@ -1000,29 +1000,7 @@ static int normal_pdf_array (double *x, int n)
 
 double normal_pdf (double x)
 {
-    return (1 / sqrt(M_2PI)) * exp(-0.5 * x * x);
-}
-
-/**
- * general_normal_pdf:
- * @mu: mean.
- * @sigma: standard deviation.
- * @x: abscissa value.
- * 
- * Returns: the value of the normal PDF with mean @mu
- * and standard deviation @sigma evaluated at @x.
- */
-
-double general_normal_pdf (double mu, double sigma, double x)
-{
-    if (na(x) || na(mu) || na(sigma) || sigma <= 0.0) {
-	return NADBL;
-    } else {
-	double d = x - mu;
-
-	return (1 / (sigma * sqrt(M_2PI))) * 
-	    exp(-0.5 * d * d / (sigma * sigma));
-    }
+    return exp(-0.5 * x * x) / SQRT_2_PI;
 }
 
 /**
@@ -1035,7 +1013,7 @@ double general_normal_pdf (double mu, double sigma, double x)
 
 double log_normal_pdf (double x)
 {
-    return (x * x) / 2 - 0.91893853320467274178;
+    return (x * x) / 2 - LN_SQRT_2_PI;
 }
 
 /**
