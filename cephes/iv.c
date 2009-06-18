@@ -55,11 +55,10 @@ Copyright 1984, 1987, 1988, 2000 by Stephen L. Moshier
 
 double cephes_bessel_Iv (double v, double x)
 {
+    double ax, t = floor(v);
     int sign;
-    double t, ax;
 
     /* If v is a negative integer, invoke symmetry */
-    t = floor(v);
     if (v < 0.0) {
 	if (t == v) {
 	    v = -v; /* symmetry */
@@ -94,5 +93,5 @@ double cephes_bessel_Iv (double v, double x)
     t = sign * exp(t) / cephes_gamma(v + 1.0);
     ax = v + 0.5;
 
-    return t * hyperg(ax,  2.0 * ax,  2.0 * x);
+    return t * hyperg(ax, 2.0*ax, 2.0*x);
 }

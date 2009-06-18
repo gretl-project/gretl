@@ -34,12 +34,12 @@ double cephes_bessel_Yn (int n, double x);
 double cephes_bessel_Jv (double n, double x);
 double cephes_bessel_Yv (double n, double x);
 double cephes_bessel_Iv (double v, double x);
-double j0 (double x); /* Bessel J_0(x) */
-double j1 (double x); /* Bessel J_1(x) */
-double y0 (double x); /* Bessel Y_0(x) */
-double y1 (double x); /* Bessel Y_1(x) */
-double i0 (double x); /* Bessel I_0(x) */
-double i1 (double x); /* Bessel I_1(x) */
+double hyperg( double a, double b, double x);
+double cephes_bessel_Kn (int nn, double x);
+double cephes_bessel_I0 (double x);
+double cephes_bessel_I1 (double x);
+double cephes_bessel_K0 (double x);
+double cephes_bessel_K1 (double x);
 
 #ifndef INFINITY
 extern double INFINITY;

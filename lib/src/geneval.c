@@ -2514,11 +2514,7 @@ static double real_apply_func (double x, int f, parser *p)
     case F_FLOOR:
 	return floor(x);
     case F_ROUND:
-	if (x < 0) {
-	    return (x - floor(x) <= 0.5)? floor(x) : ceil(x);
-	} else {
-	    return (x - floor(x) < 0.5)? floor(x) : ceil(x);
-	}
+	return gretl_round(x);
     case F_SIN:
 	return sin(x);
     case F_COS:
@@ -4703,6 +4699,62 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     return ret;
 }
 
+/* Bessel function handler: the 'r' node can be of scalar, series or
+   matrix type.  Right now, this only supports scalar order.
+*/
+
+static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p) 
+{
+    char ftype;
+    double v;
+    NODE *ret = NULL;
+
+    if (!starting(p)) {
+	return aux_any_node(p);
+    }
+
+    ftype = l->v.str[0];
+    v = node_get_scalar(m, p);
+
+    if (r->t == NUM) {
+	ret = aux_scalar_node(p);
+    	if (ret != NULL) {
+	    double x = r->v.xval;
+
+	    ret->v.xval = gretl_bessel(ftype, v, x, &p->err);
+    	}
+    } else if (r->t == MAT) {
+	ret = aux_matrix_node(p);
+	if (ret != NULL) {
+	    const gretl_matrix *x = r->v.m;
+	    int i, n = x->rows * x->cols;
+
+	    if (node_allocate_matrix(ret, x->rows, x->cols, p)) {
+		free_tree(ret, p, "On error");
+		return NULL;
+	    }
+
+	    for (i=0; i<n && !p->err; i++) {
+		ret->v.m->val[i] = gretl_bessel(ftype, v, x->val[i], &p->err);
+	    }
+	}
+    } else if (r->t == VEC) {
+	ret = aux_vec_node(p, p->dinfo->n);
+	if (ret != NULL) {
+	    const double *x = r->v.xvec;
+	    int t1 = p->dinfo->t1;
+	    int t2 = p->dinfo->t2;
+	    int t;
+
+	    for (t=t1; t<=t2 && !p->err; t++) {
+		ret->v.xvec[t] = gretl_bessel(ftype, v, x[t], &p->err);
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* Given an original value @x, see if it matches any of the @n0 values
    in @x0.  If so, return the substitute value from @x1, otherwise
    return the original.
@@ -6603,6 +6655,19 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    ret = eval_3args_func(l, m, r, t->t, p);
 	}
+	break;
+    case F_BESSEL:
+	/* functions taking one char, one scalar/series and one 
+	   matrix/series/scalar as args */
+	if (l->t != STR) {
+	    node_type_error(t->t, 1, STR, l, p);
+	} else if (!scalar_node(m)) {
+	    node_type_error(t->t, 2, NUM, m, p);
+	} else if (r->t != NUM && r->t != VEC && r->t != MAT) {
+	    node_type_error(t->t, 3, NUM, r, p);
+	} else {
+	    ret = eval_bessel_func(l, m, r, p);
+	}		
 	break;
     case F_FILTER:	
     case F_MCOVG:

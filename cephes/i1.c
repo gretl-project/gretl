@@ -150,7 +150,7 @@ static double B[] =
  7.78576235018280120474E-1
 };
 
-double i1 (double x)
+double cephes_bessel_I1(double x)
 { 
     double y, z = fabs(x);
 

@@ -81,7 +81,7 @@ asymptotically, where
 #define EUL 5.772156649015328606065e-1
 #define MAXFAC 31
 
-double kn (int nn, double x)
+double cephes_bessel_Kn (int nn, double x)
 {
     double k, kf, nk1f, nkf, zn, t, s, z0, z;
     double ans, fn, pn, pk, zmn, tlg, tox;

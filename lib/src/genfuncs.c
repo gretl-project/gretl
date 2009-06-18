@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "monte_carlo.h"
 #include "gretl_string_table.h"
+#include "../../cephes/cephes.h"
 
 #include <errno.h>
 
@@ -2903,4 +2904,117 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 
     return m;
 }
+
+double gretl_round (double x)
+{
+    double fx = floor(x);
+
+    if (x < 0) {
+	return (x - fx <= 0.5)? fx : ceil(x);
+    } else {
+	return (x - fx < 0.5)? fx : ceil(x);
+    }
+}
+
+static double gretl_bessel_I (double v, double x)
+{
+    int err = 0;
+
+    if (v == 0) {
+	return cephes_bessel_I0(x);
+    } else if (v == 1) {
+	return cephes_bessel_I1(x);
+    } else if (1 || v > 0) {
+	/* ?? */
+	return cephes_bessel_Iv(v, x);
+    } else if (fabs((gretl_round(2*v))/2 - (v)) < 0.00001) {
+	/* interpolation around (half) integer number */
+	double v2 = ((double)gretl_round(2*v))/2+0.0001;
+	double up, down;
+
+	up = gretl_bessel('I', v2, x, &err);
+	v2 = (gretl_round(2*v)) / 2.0 - 0.0001;
+	down = gretl_bessel('I', v2, x, &err);
+	return down + (up - down) * ((v - v2) / 0.0002);
+    } else {
+	double v2 = floor(fabs(v));
+	double ex, hg;
+				
+	if (((v2==0) && (x>7.4 )) ||
+	    ((v2==1) && (x>8   )) ||
+	    ((v2==2) && (x>8.2 )) ||
+	    ((v2==3) && ((x>8.3 ) || (x<1.0))) ||
+	    ((v2==4) && ((x>8.5 ) || (x<1.6))) ||
+	    ((v2==5) && ((x>8.8 ) || (x<2.0))) ||
+	    ((v2==6) && ((x>9.9 ) || (x<2.3))) ||	
+	    ((v2==7) && ((x>11.6) || (x<3.5))) ||
+	    ((v2==8) && ((x>13  ) || (x<4.1))) ||
+	    ((v2==9) && ((x>13  ) || (x<5  ))) ||
+	    ((v2 >9) && (x>13))) {
+	    ex = exp(-x);
+	    hg = hyperg(v+0.5,1+2*v,2*x);
+	} else {
+	    ex = exp(x);
+	    hg = hyperg(v+0.5,1+2*v,-2*x);
+	}
+	return ex * pow(0.5*x,v) * hg / cephes_gamma(v+1);
+    }	
+}
+
+#define neg_x_real_v_err(t) (t == 'J' || t == 'I' || t == 'y')
+
+/* evaluates bessel function for scalar nu and x */
+
+double gretl_bessel (char type, double v, double x, int *err)
+{
+    if (x < 0 && v != floor(v) && neg_x_real_v_err(type)) {
+	/* negative x and non-integer v is not supported */
+	*err = E_INVARG;
+	return NADBL;
+    }
+
+    switch (type) {
+    case 'J':
+	return cephes_bessel_Jv(v, x);
+    case 'I':
+	return gretl_bessel_I(v, x);
+    case 'Y':
+	return cephes_bessel_Yv(v, x);
+    case 'K':
+	/* bessel K is symmetric around v = 0 */
+	v = fabs(v);
+	if (x < 0) {
+	    /* negative x is not supported */
+	    *err = E_INVARG;
+	    return NADBL;
+	} else if (v == 0) {
+	    return cephes_bessel_K0(x);
+	} else if (v == 1) {
+	    return cephes_bessel_K1(x);
+	} else if (v == floor(v)) {
+	    return cephes_bessel_Kn(v, x);
+	} else if (fabs(gretl_round(v) - v) < 0.000001) {
+	    /* interpolation around integer number */
+	    double v2, up, down;
+
+	    v2 = gretl_round(v) + 0.00001;
+	    up = gretl_bessel('K', v2, x, err);
+	    v2 = gretl_round(v) - 0.00001;
+	    down = gretl_bessel('K', v2, x, err);
+	    return down + (up-down) * ((v-v2)/0.00002);
+	} else {
+	    /* accuracy problem here? */
+	    double Im, Ip;
+
+	    Im = gretl_bessel('I', -v, x, err);
+	    Ip = gretl_bessel('I', v, x, err);
+	    return 0.5 * M_PI * (Im - Ip) / sin(v * M_PI);			
+	}
+	break;
+    default:
+	/* unknown bessel function */
+	return NADBL;
+    }
+}
+
 

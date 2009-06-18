@@ -298,6 +298,7 @@ enum {
     F_SEQ,
     F_REPLACE,
     F_STRNCMP,
+    F_BESSEL,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_FILTER,
     F_MCOVG,

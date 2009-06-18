@@ -131,7 +131,7 @@ static double B[] = {
  2.44030308206595545468E0
 };
 
-double k0 (double x)
+double cephes_bessel_K0 (double x)
 {
     double y, z;
 
@@ -142,7 +142,7 @@ double k0 (double x)
 
     if (x <= 2.0) {
 	y = x * x - 2.0;
-	y = chbevl(y, A, 10) - log(0.5 * x) * i0(x);
+	y = chbevl(y, A, 10) - log(0.5 * x) * cephes_bessel_I0(x);
 	return y;
     }
 
@@ -163,7 +163,7 @@ double k0e (double x)
 
     if (x <= 2.0) {
 	y = x * x - 2.0;
-	y = chbevl(y, A, 10) - log(0.5 * x) * i0(x);
+	y = chbevl(y, A, 10) - log(0.5 * x) * cephes_bessel_I0(x);
 	return y * exp(x);
     }
 

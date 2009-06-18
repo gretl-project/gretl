@@ -117,19 +117,23 @@ static double hy1f1p (double a, double b, double x, double *err)
     maxt = 0.0;
 
     while (t > MACHEP) {
-	if (bn == 0) { /* check bn first since if both */
+	/* check bn first since if both an and bn are zero it is
+	   a singularity 
+	*/
+	if (bn == 0) {
 	    mtherr("hyperg", CEPHES_SING);
-	    return MAXNUM; /* an and bn are zero it is */
+	    return MAXNUM;
 	}
-	if (an == 0) /* a singularity */
-	    return(sum);
+	if (an == 0)
+	    return sum;
+
 	if (n > 200)
 	    goto pdone;
 	u = x * (an / (bn * n));
 
 	/* check for blowup */
 	temp = fabs(u);
-	if ((temp > 1.0) && (maxt > (MAXNUM/temp))) {
+	if (temp > 1.0 && maxt > (MAXNUM/temp)) {
 	    pcanc = 1.0; /* estimate 100% error */
 	    goto blowup;
 	}
@@ -148,7 +152,7 @@ static double hy1f1p (double a, double b, double x, double *err)
     /* estimate error due to roundoff and cancellation */
     if (sum != 0.0)
 	maxt /= fabs(sum);
-    maxt *= MACHEP; 	/* this way avoids multiply overflow */
+    maxt *= MACHEP; /* this way avoids multiply overflow */
     pcanc = fabs(MACHEP * n  +  maxt);
 
  blowup:

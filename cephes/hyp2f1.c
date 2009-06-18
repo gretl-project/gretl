@@ -73,11 +73,15 @@ Copyright 1984, 1987, 1992, 2000 by Stephen L. Moshier
 static double hyt2f1(double, double, double, double, double *);
 static double hys2f1(double, double, double, double, double *);
 
-static double cephes_round (double x)
+double cephes_round (double x)
 {
-    double xf = floor(x);
+    double fx = floor(x);
 
-    return (x - xf < 0.5)? xf : ceil(x);
+    if (x < 0) {
+	return (x - fx <= 0.5)? fx : ceil(x);
+    } else {
+	return (x - fx < 0.5)? fx : ceil(x);
+    }
 }
 
 double hyp2f1 (double a, double b, double c, double x)

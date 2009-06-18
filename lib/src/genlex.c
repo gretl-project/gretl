@@ -319,6 +319,7 @@ struct str_table funcs[] = {
     { F_CORRGM,   "corrgm" },
     { F_MCOVG,    "mcovg" },
     { F_FCSTATS,  "fcstats" },
+    { F_BESSEL,   "bessel" },
     { 0,          NULL }
 };
 
