@@ -99,29 +99,29 @@ double hyp2f1 (double a, double b, double c, double x)
     ib = cephes_round(b);
 
     if (a <= 0) {
-	if (fabs(a-ia) < EPS)		/* a is a negative integer */
+	if (fabs(a-ia) < EPS) /* a is a negative integer */
 	    flag |= 1;
     }
 
     if (b <= 0) {
-	if (fabs(b-ib) < EPS)		/* b is a negative integer */
+	if (fabs(b-ib) < EPS) /* b is a negative integer */
 	    flag |= 2;
     }
 
     if (ax < 1.0) {
-	if (fabs(b-c) < EPS) {		/* b = c */
-	    y = pow(s, -a);	/* s to the -a power */
+	if (fabs(b-c) < EPS) { /* b = c */
+	    y = pow(s, -a); /* s to the -a power */
 	    goto hypdon;
 	}
-	if (fabs(a-c) < EPS) {		/* a = c */
-	    y = pow(s, -b);	/* s to the -b power */
+	if (fabs(a-c) < EPS) { /* a = c */
+	    y = pow(s, -b); /* s to the -b power */
 	    goto hypdon;
 	}
     }
 
     if (c <= 0.0) {
 	ic = cephes_round(c); /* nearest integer to c */
-	if (fabs(c-ic) < EPS) {		/* c is a negative integer */
+	if (fabs(c-ic) < EPS) { /* c is a negative integer */
 	    /* check if termination before explosion */
 	    if ((flag & 1) && (ia > ic))
 		goto hypok;
@@ -131,10 +131,10 @@ double hyp2f1 (double a, double b, double c, double x)
 	}
     }
 
-    if (flag)			/* function is a polynomial */
+    if (flag) /* function is a polynomial */
 	goto hypok;
 
-    if (ax > 1.0)			/* series diverges	*/
+    if (ax > 1.0) /* series diverges	*/
 	goto hypdiv;
 
     p = c - a;
@@ -153,7 +153,7 @@ double hyp2f1 (double a, double b, double c, double x)
 
     /* Thanks to Christian Burger <BURGER@DMRHRZ11.HRZ.Uni-Marburg.DE>
      * for reporting a bug here.  */
-    if (fabs(ax-1.0) < EPS) {			/* |x| == 1.0	*/
+    if (fabs(ax-1.0) < EPS) { /* |x| == 1.0 */
 	if (x > 0.0) {
 	    if (flag & 12) { /* negative int c-a or c-b */
 		if (d >= 0.0)

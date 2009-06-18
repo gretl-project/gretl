@@ -59,19 +59,16 @@ double cephes_bessel_Iv (double v, double x)
     int sign;
 
     /* If v is a negative integer, invoke symmetry */
-    if (v < 0.0) {
-	if (t == v) {
-	    v = -v;
-	    t = -t;
-	}
+    if (v < 0.0 && t == v) {
+	t = v = -v;
     }
 
     /* If x is negative, require v to be an integer */
     sign = 1;
     if (x < 0.0) {
 	if (t != v) {
-	    mtherr( "iv", DOMAIN );
-	    return( 0.0 );
+	    mtherr("iv", DOMAIN);
+	    return 0.0;
 	}
 	if (v != 2.0 * floor(v/2.0))
 	    sign = -1;
@@ -92,6 +89,7 @@ double cephes_bessel_Iv (double v, double x)
     t = v * log(0.5 * ax) - x;
     t = sign * exp(t) / cephes_gamma(v + 1.0);
     ax = v + 0.5;
-    return t * hyperg(ax, 2.0 * ax, 2.0 * x);
+
+    return t * hyperg(ax, 2*ax, 2*x);
 }
 

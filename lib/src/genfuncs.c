@@ -3014,22 +3014,8 @@ double gretl_bessel (char type, double v, double x, int *err)
 	    return cephes_bessel_K1(x);
 	} else if (v == floor(v)) {
 	    return cephes_bessel_Kn(v, x);
-	} else if (fabs(gretl_round(v) - v) < 0.000001) {
-	    /* interpolation around nearby integer */
-	    double v2, up, down;
-
-	    v2 = gretl_round(v) + 0.00001;
-	    up = gretl_bessel('K', v2, x, err);
-	    v2 = gretl_round(v) - 0.00001;
-	    down = gretl_bessel('K', v2, x, err);
-	    return down + (up-down) * ((v-v2)/0.00002);
 	} else {
-	    /* accuracy problem here? */
-	    double Im, Ip;
-
-	    Im = gretl_bessel('I', -v, x, err);
-	    Ip = gretl_bessel('I',  v, x, err);
-	    return 0.5 * M_PI * (Im - Ip) / sin(v * M_PI);			
+	    return netlib_bessel_K(v, x, 1);
 	}
 	break;
     default:

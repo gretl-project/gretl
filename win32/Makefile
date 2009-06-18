@@ -276,7 +276,7 @@ GUIOBJ = $(GUISRC:.c=.o)
 PROBSRC = airy.c const.c hyp2f1.c igami.c j1.c kn.c pdtr.c struve.c \
 	bdtr.c expx2.c hyperg.c incbet.c jn.c mtherr.c polevl.c unity.c \
 	btdtr.c fdtr.c i0.c incbi.c jv.c  nbdtr.c polrt.c yn.c \
-	chbevl.c gamma.c i1.c iv.c k0.c  ndtr.c psi.c \
+	chbevl.c gamma.c i1.c iv.c k0.c kv.c ndtr.c psi.c \
 	chdtr.c gdtr.c igam.c j0.c k1.c ndtri.c stdtr.c
 
 PROBOBJ = $(PROBSRC:.c=.o)

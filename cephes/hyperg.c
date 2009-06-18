@@ -293,7 +293,9 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
  pdone:	/* series converged! */
 
     /* estimate error due to roundoff and cancellation */
-    *err = fabs( MACHEP * (n + maxt) );
+    if (err) {
+	*err = fabs(MACHEP * (n + maxt));
+    }
 
     alast = a0;
     goto done;
@@ -318,7 +320,9 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
     }
 
     /* estimate error due to roundoff, cancellation, and nonconvergence */
-    *err = MACHEP * (n + maxt)  +  fabs (a0);
+    if (err) {
+	*err = MACHEP * (n + maxt) + fabs(a0);
+    }
 
  done:
     sum += alast;
@@ -326,7 +330,9 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
 
     /* series blew up: */
  error:
-    *err = MAXNUM;
+    if (err) {
+	*err = MAXNUM;
+    }
     mtherr("hyperg", CEPHES_TLOSS);
     return sum;
 }

@@ -28,6 +28,7 @@ double cbrt (double);                    /* cbrt.c: cube root */
 double psi (double);                     /* psi.c: digamma fn */
 
 int airy (double x, double *ai, double *aip, double *bi, double *bip);
+double hyp2f0 (double a, double b, double c, int t, double *err);
 double hyp2f1 (double a, double b, double c, double x);
 double hyperg (double a, double b, double x);
 double cephes_hankel (double n, double x);
@@ -41,6 +42,9 @@ double cephes_bessel_I0 (double x);
 double cephes_bessel_I1 (double x);
 double cephes_bessel_K0 (double x);
 double cephes_bessel_K1 (double x);
+
+/* interlopers */
+double netlib_bessel_K (double v, double x, double expo);
 
 #ifndef INFINITY
 extern double INFINITY;

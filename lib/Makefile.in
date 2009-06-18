@@ -212,7 +212,8 @@ CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \
 	   mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c polevl.c polrt.c \
 	   stdtr.c unity.c airy.c hyp2f1.c hyperg.c i0.c i1.c \
-	   iv.c j0.c j1.c jn.c jv.c k0.c k1.c kn.c psi.c struve.c yn.c
+	   iv.c j0.c j1.c jn.c jv.c k0.c k1.c kn.c psi.c struve.c \
+	   yn.c kv.c
 
 MINPACK_SRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder.c lmder1.c \
 	lmdif.c lmpar.c qrfac.c qrsolv.c dlog10.c lbfgsb.c
