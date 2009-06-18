@@ -4019,9 +4019,12 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = bkbp_filter(x, y, p->dinfo);
 	    break;
 	case F_FRACDIFF:
-	    p->err = fracdiff_series(x, y, r->v.xval, p->dinfo);
+	    p->err = fracdiff_series(x, y, r->v.xval, 1, (autoreg(p))? p->obs : -1, p->dinfo);
 	    break;
-        case F_BOXCOX:
+	case F_FRACLAG:
+	    p->err = fracdiff_series(x, y, r->v.xval, 0, (autoreg(p))? p->obs : -1, p->dinfo);
+	    break;
+	case F_BOXCOX:
 	    p->err = boxcox_series(x, y, r->v.xval, p->dinfo);
 	    break;
 	case F_DIFF:
@@ -4700,7 +4703,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 }
 
 /* Bessel function handler: the 'r' node can be of scalar, series or
-   matrix type.  Right now, this only supports scalar order.
+   matrix type.  Right now, this only supports scalar order ('m'
+   node).
 */
 
 static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p) 
@@ -4709,7 +4713,7 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
     double v;
     NODE *ret = NULL;
 
-    if (!starting(p)) {
+    if (!starting(p) && r->t != VEC) {
 	return aux_any_node(p);
     }
 
@@ -4742,8 +4746,8 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
 	ret = aux_vec_node(p, p->dinfo->n);
 	if (ret != NULL) {
 	    const double *x = r->v.xvec;
-	    int t1 = p->dinfo->t1;
-	    int t2 = p->dinfo->t2;
+	    int t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+	    int t2 = (autoreg(p))? p->obs : p->dinfo->t2;
 	    int t;
 
 	    for (t=t1; t<=t2 && !p->err; t++) {
@@ -6374,6 +6378,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HPFILT:
     case F_BKFILT:
     case F_FRACDIFF:
+    case F_FRACLAG:
     case F_BOXCOX:
     case F_PNOBS:
     case F_PMIN:

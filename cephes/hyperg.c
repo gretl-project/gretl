@@ -68,8 +68,8 @@ Copyright 1984, 1987, 1988, 2000 by Stephen L. Moshier
 
 double hyp2f0 (double, double, double, int, double *);
 
-static double hy1f1p(double, double, double, double *);
-static double hy1f1a(double, double, double, double *);
+static double hy1f1p (double, double, double, double *);
+static double hy1f1a (double, double, double, double *);
 
 double hyperg (double a, double b, double x)
 {
@@ -153,7 +153,7 @@ static double hy1f1p (double a, double b, double x, double *err)
     if (sum != 0.0)
 	maxt /= fabs(sum);
     maxt *= MACHEP; /* this way avoids multiply overflow */
-    pcanc = fabs(MACHEP * n  +  maxt);
+    pcanc = fabs(MACHEP * n + maxt);
 
  blowup:
     *err = pcanc;
@@ -226,12 +226,13 @@ static double hy1f1a (double a, double b, double x, double *err)
 	acanc *= fabs(temp);
     }
 
-
     if (asum != 0.0)
 	acanc /= fabs(asum);
 
-    acanc *= 30.0;	/* fudge factor, since error of asymptotic formula
-			 * often seems this much larger than advertised */
+    /* fudge factor, since error of asymptotic formula
+       often seems this much larger than advertised 
+    */
+    acanc *= 30.0;
 
  adone:
     *err = acanc;
@@ -276,7 +277,7 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
 	    goto ndone;
 
 	tlast = t;
-	sum += alast;	/* the sum is one term behind */
+	sum += alast; /* the sum is one term behind */
 	alast = a0;
 
 	if (n > 200)
@@ -305,7 +306,7 @@ double hyp2f0 (double a, double b, double x, int type, double *err)
     n -= 1.0;
     x = 1.0/x;
 
-    switch(type) { /* "type" given as subroutine argument */
+    switch (type) { /* "type" given as subroutine argument */
     case 1:
 	alast *= (0.5 + (0.125 + 0.25*b - 0.5*a + 0.25*x - 0.25*n)/x);
 	break;

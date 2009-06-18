@@ -374,22 +374,28 @@ int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
  * @x: array of original data.
  * @y: array into which to write the result.
  * @d: fraction by which to difference.
+ * @diff: boolean variable 1 for fracdiff, 0 for fraclag
+ * @obs: used for autoreg calculation, -1 if whole series 
+ *	should be calculated otherwise just the observation for
+ *	obs is calculated 
  * @pdinfo: data set information.
  *
- * Calculates the fractionally differenced counterpart
- * to the input series @x.
+ * Calculates the fractionally differenced or lagged 
+ * counterpart to the input series @x. The fractional 
+ * difference operator is defined as (1-L)^d, while the
+ * fractional lag operator 1-(1-L)^d.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
 int fracdiff_series (const double *x, double *y, double d,
-		     const DATAINFO *pdinfo)
+		     int diff, int obs, const DATAINFO *pdinfo)
 {
     int dd, t, T;
     const double TOL = 1.0E-07;
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
-    double phi = -d;
+    double phi = (diff)? -d : d;
     int err;
 
 #if 0
@@ -400,22 +406,38 @@ int fracdiff_series (const double *x, double *y, double d,
     if (err) {
 	return E_DATA;
     } 
-
-    T = t2 - t1 + 1;
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (t >= t1 && t <= t2) {
-	    y[t] = x[t];
-	} else {
+ 
+    if (obs >= 0) {
+	/* doing a specific observation */
+	T = obs - t1 + 1;
+	for (t=0; t<pdinfo->n; t++) {
 	    y[t] = NADBL;
 	}
-    }   
-
-    for (dd=1; dd<=T && fabs(phi)>TOL; dd++) {
-	for (t=t1+dd; t<=t2; t++) {
-	    y[t] += phi * x[t - dd];
+	if (obs != t1) {
+	    y[obs] = (diff)? x[obs] : 0;
+	    for (dd=1; dd<T && fabs(phi)>TOL; dd++) {
+		y[obs] += phi * x[obs - dd];
+		phi *= (dd - d)/(dd + 1);
+	    }
+	} else if (diff) {
+	    y[obs] = x[obs];
 	}
-	phi *= (dd - d)/(dd + 1);
+    } else {
+	/* doing the whole series */
+	T = t2 - t1 + 1;
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t >= t1 && t <= t2) {
+		y[t] = (diff)? x[t] : 0;
+	    } else {
+		y[t] = NADBL;
+	    } 
+	}  
+	for (dd=1; dd<=T && fabs(phi)>TOL; dd++) {
+	    for (t=t1+dd; t<=t2; t++) {
+		y[t] += phi * x[t - dd];
+	    }
+	    phi *= (dd - d)/(dd + 1);
+	}
     }
 
     return 0;
@@ -2924,40 +2946,39 @@ static double gretl_bessel_I (double v, double x)
 	return cephes_bessel_I0(x);
     } else if (v == 1) {
 	return cephes_bessel_I1(x);
-    } else if (1 || v > 0) {
-	/* ?? */
+    } else if (v > 0) {
+	/* what's up with cephes_bessel_Iv for v < 0 ? */
 	return cephes_bessel_Iv(v, x);
     } else if (fabs((gretl_round(2*v))/2 - (v)) < 0.00001) {
 	/* interpolation around (half) integer number */
-	double v2 = ((double)gretl_round(2*v))/2+0.0001;
+	double v2 = gretl_round(2*v)/2 + 0.0001;
 	double up, down;
 
 	up = gretl_bessel('I', v2, x, &err);
-	v2 = (gretl_round(2*v)) / 2.0 - 0.0001;
+	v2 = gretl_round(2*v) / 2.0 - 0.0001;
 	down = gretl_bessel('I', v2, x, &err);
 	return down + (up - down) * ((v - v2) / 0.0002);
     } else {
-	double v2 = floor(fabs(v));
-	double ex, hg;
+	double ex, hg, v2 = floor(fabs(v));
 				
-	if (((v2==0) && (x>7.4 )) ||
-	    ((v2==1) && (x>8   )) ||
-	    ((v2==2) && (x>8.2 )) ||
-	    ((v2==3) && ((x>8.3 ) || (x<1.0))) ||
-	    ((v2==4) && ((x>8.5 ) || (x<1.6))) ||
-	    ((v2==5) && ((x>8.8 ) || (x<2.0))) ||
-	    ((v2==6) && ((x>9.9 ) || (x<2.3))) ||	
-	    ((v2==7) && ((x>11.6) || (x<3.5))) ||
-	    ((v2==8) && ((x>13  ) || (x<4.1))) ||
-	    ((v2==9) && ((x>13  ) || (x<5  ))) ||
-	    ((v2 >9) && (x>13))) {
+	if ((v2 == 0 &&  x > 7.4) ||
+	    (v2 == 1 &&  x > 8.0) ||
+	    (v2 == 2 &&  x > 8.2) ||
+	    (v2 == 3 && (x > 8.3  || x < 1.0)) ||
+	    (v2 == 4 && (x > 8.5  || x < 1.6)) ||
+	    (v2 == 5 && (x > 8.8  || x < 2.0)) ||
+	    (v2 == 6 && (x > 9.9  || x < 2.3)) ||	
+	    (v2 == 7 && (x > 11.6 || x < 3.5)) ||
+	    (v2 == 8 && (x > 13   || x < 4.1)) ||
+	    (v2 == 9 && (x > 13   || x < 5.0)) ||
+	    (v2 > 9  && x > 13)) {
 	    ex = exp(-x);
-	    hg = hyperg(v+0.5,1+2*v,2*x);
+	    hg = hyperg(v+0.5, 1+2*v, 2*x);
 	} else {
 	    ex = exp(x);
-	    hg = hyperg(v+0.5,1+2*v,-2*x);
+	    hg = hyperg(v+0.5, 1+2*v, -2*x);
 	}
-	return ex * pow(0.5*x,v) * hg / cephes_gamma(v+1);
+	return ex * pow(0.5*x, v) * hg / cephes_gamma(v+1);
     }	
 }
 
@@ -2994,7 +3015,7 @@ double gretl_bessel (char type, double v, double x, int *err)
 	} else if (v == floor(v)) {
 	    return cephes_bessel_Kn(v, x);
 	} else if (fabs(gretl_round(v) - v) < 0.000001) {
-	    /* interpolation around integer number */
+	    /* interpolation around nearby integer */
 	    double v2, up, down;
 
 	    v2 = gretl_round(v) + 0.00001;
@@ -3007,7 +3028,7 @@ double gretl_bessel (char type, double v, double x, int *err)
 	    double Im, Ip;
 
 	    Im = gretl_bessel('I', -v, x, err);
-	    Ip = gretl_bessel('I', v, x, err);
+	    Ip = gretl_bessel('I',  v, x, err);
 	    return 0.5 * M_PI * (Im - Ip) / sin(v * M_PI);			
 	}
 	break;

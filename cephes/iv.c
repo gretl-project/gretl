@@ -61,7 +61,7 @@ double cephes_bessel_Iv (double v, double x)
     /* If v is a negative integer, invoke symmetry */
     if (v < 0.0) {
 	if (t == v) {
-	    v = -v; /* symmetry */
+	    v = -v;
 	    t = -t;
 	}
     }
@@ -70,8 +70,8 @@ double cephes_bessel_Iv (double v, double x)
     sign = 1;
     if (x < 0.0) {
 	if (t != v) {
-	    mtherr("iv", CEPHES_DOMAIN);
-	    return 0.0;
+	    mtherr( "iv", DOMAIN );
+	    return( 0.0 );
 	}
 	if (v != 2.0 * floor(v/2.0))
 	    sign = -1;
@@ -85,13 +85,13 @@ double cephes_bessel_Iv (double v, double x)
 	    mtherr("iv", CEPHES_OVERFLOW);
 	    return MAXNUM;
 	} else
-	    return(0.0);
+	    return 0.0;
     }
 
     ax = fabs(x);
-    t = v * log(0.5 * ax)  -  x;
+    t = v * log(0.5 * ax) - x;
     t = sign * exp(t) / cephes_gamma(v + 1.0);
     ax = v + 0.5;
-
-    return t * hyperg(ax, 2.0*ax, 2.0*x);
+    return t * hyperg(ax, 2.0 * ax, 2.0 * x);
 }
+

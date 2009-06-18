@@ -44,13 +44,13 @@ int block_resample_series (const double *x, double *y, int blocklen,
 			   const DATAINFO *pdinfo);
 
 int fracdiff_series (const double *x, double *y, double d,
-		     const DATAINFO *pdinfo);
+		     int diff, int obs, const DATAINFO *pdinfo);
 
 int boxcox_series (const double *x, double *y, double d,
 		   const DATAINFO *pdinfo);
 
-int filter_series(const double *x, double *y, const DATAINFO *pdinfo, 
-		  gretl_matrix *A, gretl_matrix *C, double y0);
+int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
+		   gretl_matrix *A, gretl_matrix *C, double y0);
 
 int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
 		     int k);

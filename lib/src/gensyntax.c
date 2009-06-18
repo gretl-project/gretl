@@ -857,6 +857,9 @@ static NODE *powterm (parser *p)
 	t = newb3(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
+	    if (string0_func(sym)) {
+		p->flags |= P_GETSTR;
+	    }
 	    get_args(t, p, 3, opt, &next);
 	}
     } else if (string0_func(sym)) {

@@ -45,7 +45,6 @@
 
 static double recur (double *, double, double *, int);
 static double jvs (double, double);
-static double hankel (double, double);
 static double jnx (double, double);
 static double jnt (double, double);
 
@@ -95,9 +94,9 @@ double cephes_bessel_Jv (double n, double x)
     t = 3.6 * sqrt(an);
 
     if (y < t && an > 21.0)
-	return sign * jvs(n,x);
+	return sign * jvs(n, x);
     if (an < k && y > 21.0)
-	return sign * hankel(n,x);
+	return sign * cephes_hankel(n, x);
 
     if (an < 500.0) {
 	/* Note: if x is too large, the continued fraction will fail;
@@ -169,7 +168,7 @@ double cephes_bessel_Jv (double n, double x)
 	else
 	    t = 0.9 * y;
 
-	y = (x > t)? hankel(k,x) : jvs(k,x);
+	y = (x > t)? cephes_hankel(k, x) : jvs(k, x);
 
 	if (n > 0.0)
 	    y /= q;
@@ -187,7 +186,7 @@ double cephes_bessel_Jv (double n, double x)
 	}
 	t = x/n;
 	t /= n;
-	y = (t > 0.3)? hankel(n,x) : jnx(n,x);
+	y = (t > 0.3)? cephes_hankel(n, x) : jnx(n, x);
     }
 
  done:	
@@ -357,7 +356,7 @@ static double jvs (double n, double x)
  * AMS55 #9.2.5.
  */
 
-static double hankel (double n, double x)
+double cephes_hankel (double n, double x)
 {
     double t, u, z, k, sign, conv;
     double p, q, j, m, pp, qq;

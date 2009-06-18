@@ -287,6 +287,7 @@ enum {
     F_XMAX,
     F_RESAMPLE,
     F_FCSTATS,
+    F_FRACLAG,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,
@@ -335,7 +336,8 @@ enum {
 			    s == F_BACKTICK || s == F_VARNUM)
 
 #define string0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
-                         s == F_CRIT || s == F_RANDGEN || s == F_PDF)
+                         s == F_CRIT || s == F_RANDGEN || s == F_PDF || \
+			 s == F_BESSEL)
 
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)

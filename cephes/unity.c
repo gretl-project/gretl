@@ -79,7 +79,7 @@ double cephes_exp (double x)
     double r, xx;
 
     if (isnan(x)) {
-	return(x);
+	return x;
     }
 
     if (!isfinite(x)) {
