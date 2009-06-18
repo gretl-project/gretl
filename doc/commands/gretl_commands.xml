@@ -284,6 +284,12 @@
         <argument>treatment</argument>
         <argument optional="true">block</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
+	</option>
+      </options>
     </usage>
     <description>
       <para>
@@ -292,8 +298,14 @@
 	variable that codes for two or more types of treatment (or
 	non-treatment).  For two-way ANOVA, the <repl>block</repl> variable
 	(which should also be discrete) codes for the values of some control
-	variable.  This command prints a table showing the sums of squares and
-	mean squares along with an <math>F</math>-test.
+	variable.
+      </para>
+      <para context="cli">
+	Unless the <lit>--quiet</lit> option is given, this command prints a
+	table showing the sums of squares and mean squares along with an
+	<math>F</math>-test.  The <math>F</math>-test and its P-value can be
+	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
+	respectively.  
       </para>
       <para>
 	The null hypothesis for the <math>F</math>-test is that the mean
@@ -321,7 +333,7 @@
 	ols y 0 dxt --anova
 	# two-way
 	list dxb = dummify(xb)
-	ols y 0 dxt dxb --anova
+	ols y 0 dxt dxb
 	omit dxt --quiet
       </code>
     </description>

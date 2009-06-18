@@ -23,19 +23,21 @@
 /* provides for one-way and two-way ANOVA */
 
 struct anova {
-    int n;        /* observations used */
-    int nt;       /* number of treatment 'levels' */
-    int nb;       /* number of 'blocks' (if applicable) */
-    double SST;   /* total sum of squares */
-    double SSTr;  /* treatment sum of squares */
-    double SSB;   /* 'block' sum of squares (if applicable) */
-    double SSE;   /* error sum of squares */
-    double *tvec;
-    double *bvec;
+    int n;          /* observations used */
+    int nt;         /* number of treatment 'levels' */
+    int nb;         /* number of 'blocks' (if applicable) */
+    double SST;     /* total sum of squares */
+    double SSTr;    /* treatment sum of squares */
+    double SSB;     /* 'block' sum of squares (if applicable) */
+    double SSE;     /* error sum of squares */
+    double F;       /* F-test */
+    double pval;    /* p-value for F-test */
     double *cmeans; /* column means */
     double *rmeans; /* row means */
     int *ccount;    /* column counts */
     int *rcount;    /* row counts */
+    double *tvec;   /* workspace follows */
+    double *bvec;
     gretl_matrix *tvals;
     gretl_matrix *bvals;
 };
@@ -44,20 +46,21 @@ static void anova_init (struct anova *v)
 {
     v->n = v->nt = v->nb = 0;
     v->SST = v->SSTr = v->SSB = v->SSE = 0.0;
-    v->tvec = v->bvec = NULL;
+    v->F = v->pval = NADBL;
     v->cmeans = v->rmeans = NULL;
     v->ccount = v->rcount = NULL;
+    v->tvec = v->bvec = NULL;
     v->tvals = v->bvals = NULL;
 }
 
 static void anova_free (struct anova *v)
 {
-    free(v->tvec);
-    free(v->bvec);
     free(v->cmeans);
     free(v->rmeans);
     free(v->ccount);
     free(v->rcount);
+    free(v->tvec);
+    free(v->bvec);
 
     gretl_matrix_free(v->tvals);
     gretl_matrix_free(v->bvals);
@@ -138,26 +141,23 @@ static int print_anova (struct anova *v, PRN *prn)
 
     pputc(prn, '\n');
 
-    if (v->SSE == 0 || v->SSTr == 0.0) {
+    if (na(v->F)) {
 	pprintf(prn, "  F(%d, %d) = %g / %g (%s)\n\n", dftreat, dferr, 
 		msr, mse, _("undefined"));
     } else {
-	double F = msr / mse;
-	double pv = snedecor_cdf_comp(dftreat, dferr, F);
-
 	pprintf(prn, "  F(%d, %d) = %g / %g = %g ", 
-		dftreat, dferr, msr, mse, F);
-	if (pv < .0001) {
-	    pprintf(prn, "[%s %.3g]\n\n", _("p-value"), pv);
-	} else if (!na(pv)) {
-	    pprintf(prn, "[%s %.4f]\n\n", _("p-value"), pv); 
+		dftreat, dferr, msr, mse, v->F);
+	if (v->pval < .0001) {
+	    pprintf(prn, "[%s %.3g]\n\n", _("p-value"), v->pval);
+	} else if (!na(v->pval)) {
+	    pprintf(prn, "[%s %.4f]\n\n", _("p-value"), v->pval); 
 	}
     }
 
     return 0;
 }
 
-/* one-way anova only: print the means and standard deviations
+/* one-way anova only: print the mean and standard deviation
    of the response at each level of treatment */
 
 static int anova_print_means (struct anova *v, const double *xt,
@@ -275,7 +275,7 @@ static int anova_make_value_vecs (struct anova *v)
     return err;
 }
 
-/* allocate and zero arrays to calculate the column
+/* allocate and initialize arrays to calculate the column
    and rows means of the ANOVA table */
 
 static int anova_accounting_arrays (struct anova *v)
@@ -289,27 +289,46 @@ static int anova_accounting_arrays (struct anova *v)
 	return E_ALLOC;
     }
 
-    if (v->nb > 0) {
-	v->rmeans = malloc(v->nb * sizeof *v->rmeans);
-	v->rcount = malloc(v->nb * sizeof *v->rcount);
-	if (v->rmeans == NULL || v->rcount == NULL) {
-	    return E_ALLOC;
-	}
-    }	
-
     for (i=0; i<v->nt; i++) {
 	v->cmeans[i] = 0.0;
 	v->ccount[i] = 0;
     }
 
     if (v->nb > 0) {
+	v->rmeans = malloc(v->nb * sizeof *v->rmeans);
+	v->rcount = malloc(v->nb * sizeof *v->rcount);
+
+	if (v->rmeans == NULL || v->rcount == NULL) {
+	    return E_ALLOC;
+	}
+
 	for (i=0; i<v->nb; i++) {
 	    v->rmeans[i] = 0.0;
 	    v->rcount[i] = 0;
 	}
-    }   
+    }	
 
     return 0;
+}
+
+static void anova_add_F_stat (struct anova *v)
+{
+    int dfn = v->nt - 1;
+    int dfd = v->n - 1 - dfn;
+    double MSE, MSTr = v->SSTr / dfn;
+
+    if (v->nb > 0) {
+	dfd -= v->nb - 1;
+    }
+
+    MSE = v->SSE / dfd;
+
+    if (MSE > 0) {
+	v->F = MSTr / MSE;
+	v->pval = snedecor_cdf_comp(dfn, dfd, v->F);
+    }
+
+    record_test_result(v->F, v->pval, NULL);    
 }
 
 #define anova_obs_ok(y,x,z,t) (!na(y[t]) && !na(x[t]) && \
@@ -324,12 +343,11 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
 {
     struct anova v;
     const double *y, *xt, *xb;
-    const char *yname, *tname;
     double ybar, dev;
     int i, t, t1, t2;
     int err = 0;
 
-    if (list[0] != 2 && list[0] != 3) {
+    if (list[0] < 2 || list[0] > 3) {
 	return E_DATA;
     }
 
@@ -341,7 +359,7 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
     varlist_adjust_sample(list, &t1, &t2, Z);
 
     v.n = t2 - t1 + 1;
-    if (v.n == 0) {
+    if (v.n < 2) {
 	gretl_errmsg_set("Insufficient observations");
 	return E_DATA;
     }
@@ -349,6 +367,8 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
     y = Z[list[1]];
     xt = Z[list[2]];
     xb = (list[0] == 3)? Z[list[3]] : NULL;
+
+    /* check that treatment (and block, if present) are discrete */
 
     if (!var_is_discrete(pdinfo, list[2]) && 
 	!gretl_isdiscrete(t1, t2, xt)) {
@@ -379,6 +399,8 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return err;
     }
 
+    /* fill tvec and bvec; calculate grand mean */
+
     ybar = 0.0;
     i = 0;
     for (t=t1; t<=t2; t++) {
@@ -404,6 +426,8 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }    
 
+    /* find column (treatment) means */
+
     for (t=t1; t<=t2; t++) {
 	if (anova_obs_ok(y, xt, xb, t)) {
 	    dev = y[t] - ybar;
@@ -421,6 +445,8 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
     for (i=0; i<v.nt; i++) {
 	v.cmeans[i] /= v.ccount[i];
     }
+
+    /* sums of squares */
 
     if (v.nb > 0) {
 	/* two-way ANOVA */
@@ -464,18 +490,22 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
 	v.SSTr = v.SST - v.SSE;
     }
 
-    yname = pdinfo->varname[list[1]];
-    tname = pdinfo->varname[list[2]];
+    anova_add_F_stat(&v);
+	
+    if (!(opt & OPT_Q)) {
+	const char *yname = pdinfo->varname[list[1]];
+	const char *tname = pdinfo->varname[list[2]];
 
-    pputc(prn, '\n');
-    pprintf(prn, _("%s, response = %s, treatment = %s:"), 
-	    _("Analysis of Variance"), yname, tname);
+	pputc(prn, '\n');
+	pprintf(prn, _("%s, response = %s, treatment = %s:"), 
+		_("Analysis of Variance"), yname, tname);
 
-    err = print_anova(&v, prn);
+	err = print_anova(&v, prn);
 
-    if (!err && v.nb == 0) {
-	anova_print_means(&v, xt, y, ybar, t1, t2, prn);
-    }
+	if (!err && v.nb == 0) {
+	    anova_print_means(&v, xt, y, ybar, t1, t2, prn);
+	}
+    } 
 
  bailout:
 
