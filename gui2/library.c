@@ -38,6 +38,7 @@
 #include "treeutils.h"
 #include "lib_private.h"
 #include "cmd_private.h"
+#include "flow_control.h"
 #include "libset.h"
 #include "objstack.h"
 #include "gretl_xml.h"

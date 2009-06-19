@@ -27,6 +27,7 @@
 #include "cmd_private.h"
 #include "gretl_string_table.h"
 #include "gretl_scalar.h"
+#include "flow_control.h"
 
 #include <glib.h>
 

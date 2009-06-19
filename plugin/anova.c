@@ -334,8 +334,9 @@ static void anova_add_F_stat (struct anova *v)
 #define anova_obs_ok(y,x,z,t) (!na(y[t]) && !na(x[t]) && \
                                (z == NULL || !na(z[t])))
 
-/* for one-way anova the list contains response and treatment; for
-   two-way it should in addition contain the block variable
+/* For one-way anova @list contains response and treatment; for
+   two-way it should in addition contain the block variable.
+   @opt can contain OPT_Q to suppress printing.
 */
 
 int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo, 

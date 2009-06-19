@@ -28,6 +28,7 @@
 #include "objstack.h"
 #include "gretl_func.h"
 #include "gretl_scalar.h"
+#include "flow_control.h"
 
 #include <time.h>
 #include <unistd.h>

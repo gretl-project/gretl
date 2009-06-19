@@ -39,6 +39,7 @@
 #include "gretl_foreign.h"
 #include "boxplots.h"
 #include "kalman.h"
+#include "flow_control.h"
 
 #include <errno.h>
 #include <glib.h>
@@ -67,9 +68,6 @@ typedef struct {
 #define cmd_unset_nolist(c) (c->flags &= ~CMD_NOLIST)
 
 static void get_optional_filename_etc (const char *line, CMD *cmd);
-static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err);
-static int set_if_state (int code);
-static int get_if_state (int code);
 
 #define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
 #define starts_comment(p) (*p == '/' && *(p+1) == '*')
@@ -431,65 +429,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 			  c == LOGS || \
 			  c == SQUARE || \
 	                  c == ORTHDEV)
-
-enum {
-    SET_FALSE,
-    SET_TRUE,
-    SET_ELSE,
-    SET_ELIF,
-    SET_ENDIF,
-    IS_FALSE,
-    IS_TRUE,
-    UNINDENT,
-    GETINDENT,
-    RELAX
-};
-
-#define IFDEBUG 0
-
-static int flow_control (const char *line, double ***pZ, 
-			 DATAINFO *pdinfo, CMD *cmd)
-{
-    int ci = cmd->ci;
-    int blocked, ok, err = 0;
-
-    blocked = get_if_state(IS_FALSE);
-
-    if (ci != IF && ci != ELSE && ci != ENDIF) {
-	return blocked;
-    }
-
-    if (ci == IF) {
-	if (blocked) {
-	    err = set_if_state(SET_FALSE);
-	} else {
-	    ok = if_eval(line, pZ, pdinfo, &err);
-	    if (!err) {
-		err = set_if_state(ok? SET_TRUE : SET_FALSE);
-	    }
-	}
-    } else if (ci == ENDIF) {
-	err = set_if_state(SET_ENDIF);
-    } else if (ci == ELSE && (cmd->opt & OPT_I)) {
-	err = set_if_state(SET_ELIF);
-	if (!err && get_if_state(IS_TRUE)) {
-	    set_if_state(UNINDENT);
-	    ok = if_eval(line, pZ, pdinfo, &err);
-	    if (!err) {
-		err = set_if_state(ok? SET_TRUE : SET_FALSE);
-	    }
-	}
-    } else if (ci == ELSE) {
-	err = set_if_state(SET_ELSE);
-    }
-
-    if (err) {
-	set_if_state(RELAX);
-	cmd->err = err;
-    } 
-
-    return 1;
-}
 
 static char cmd_savename[MAXSAVENAME];
 
@@ -2350,7 +2289,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    } else if (is_gretl_function_call(line)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
-	    } else if (get_if_state(IS_FALSE)) {
+	    } else if (gretl_if_state_false()) {
 		cmd_set_nolist(cmd);
 		cmd->ci = CMD_NULL;
 		return 0;
@@ -3961,10 +3900,10 @@ static int run_script (const char *fname, ExecState *s,
 		       double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn)
 {
+    int indent = gretl_if_state_record();
     FILE *fp;
-    int indent = get_if_state(GETINDENT);
-    int err = 0;
-    
+    int iferr, err = 0;
+
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
@@ -3986,14 +3925,9 @@ static int run_script (const char *fname, ExecState *s,
 
     fclose(fp);
 
-    if (get_if_state(GETINDENT) != indent) {
-	set_if_state(RELAX);
-	pputc(prn, '\n');
-	pprintf(prn, _("Unmatched \"%s\""), "if");
-	pputc(prn, '\n');
-	if (!err) {
-	    err = E_PARSE;
-	}
+    iferr = gretl_if_state_check(indent);
+    if (iferr && !err) {
+	err = iferr;
     }
 
     return err;
@@ -4844,7 +4778,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pprintf(prn, " %s\n", runfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
-	    err = load_user_matrix_file(runfile);
+	    err = load_user_XML_file(runfile);
 	    break;
 	}
 	if (!strcmp(runfile, s->runfile)) { 
@@ -4911,7 +4845,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     return err;
 }
-
 
 /* called by functions, and by scripts executed from within
    functions */
@@ -5260,196 +5193,3 @@ void gretl_exec_state_uncomment (ExecState *s)
     s->cmd->flags &= ~CMD_IGNORE;
 }
 
-/* if-then stuff - conditional execution */
-
-static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err)
-{
-    double val = NADBL;
-    int ret = -1;
-
-#if IFDEBUG
-    fprintf(stderr, "if_eval: line = '%s'\n", s);
-#endif
-
-    if (!strncmp(s, "if", 2)) {
-	s += 2;
-    } else if (!strncmp(s, "elif", 4)) {
-	s += 4;
-    }
-
-    while (*s == ' ') s++;
-
-    val = generate_scalar(s, pZ, pdinfo, err);
-
-#if IFDEBUG
-    if (err) {
-	fprintf(stderr, "if_eval: generate returned %d\n", *err);
-    }
-#endif
-
-    if (*err) {
-	gretl_errmsg_set(_("error evaluating 'if'"));
-    } else if (na(val)) {
-	*err = 1;
-	strcpy(gretl_errmsg, _("indeterminate condition for 'if'"));
-    } else {
-	ret = (int) val;
-    }
-
-#if IFDEBUG
-    fprintf(stderr, "if_eval: returning %d\n", ret);
-#endif
-
-    return ret;
-}
-
-#if IFDEBUG
-static const char *ifstr (int c)
-{
-    if (c == SET_FALSE) return "SET_FALSE";
-    if (c == SET_TRUE)  return "SET_TRUE";
-    if (c == SET_ELSE)  return "SET_ELSE";
-    if (c == SET_ELIF)  return "SET_ELIF";
-    if (c == SET_ENDIF) return "SET_ENDIF";
-    if (c == IS_FALSE)  return "IS_FALSE";
-    if (c == IS_TRUE)   return "IS_TRUE";
-    if (c == UNINDENT)  return "UNINDENT";
-    if (c == GETINDENT) return "GETINDENT";
-    if (c == RELAX)     return "RELAX";
-    return "UNKNOWN";
-}
-#endif
-
-static void unmatched_message (int code)
-{
-    sprintf(gretl_errmsg, _("Unmatched \"%s\""),
-	    (code == SET_ELSE)? "else" : 
-	    (code == SET_ELIF)? "elif": "endif");
-}
-
-#define IF_DEPTH 32
-
-static int ifstate (int code, int *err)
-{
-    static unsigned char T[IF_DEPTH];
-    static unsigned char got_if[IF_DEPTH];
-    static unsigned char got_else[IF_DEPTH];
-    static unsigned char got_T[IF_DEPTH];
-    static unsigned char indent;
-    int i, ret = 0;
-
-#if IFDEBUG
-    fprintf(stderr, "ifstate: code = %s\n", ifstr(code));
-#endif
-
-    if (code == RELAX) {
-	indent = 0;
-    } else if (code == GETINDENT) {
-	ret = indent;
-    } else if (code == UNINDENT) {
-	ret = --indent;
-    } else if (code == SET_FALSE || code == SET_TRUE) {
-	indent++;
-	if (indent >= IF_DEPTH) {
-	    sprintf(gretl_errmsg, "IF depth (%d) exceeded\n", IF_DEPTH);
-	    *err = E_DATA;
-	} else {
-	    T[indent] = got_T[indent] = (code == SET_TRUE);
-	    got_if[indent] = 1;
-	    got_else[indent] = 0;
-	}
-    } else if (code == SET_ELSE || code == SET_ELIF) {
-	if (got_else[indent] || !got_if[indent]) {
-	    unmatched_message(code);
-	    *err = E_PARSE;
-	} else {
-	    got_else[indent] = (code == SET_ELSE);
-	    if (T[indent]) {
-		T[indent] = 0;
-	    } else if (!got_T[indent]) {
-		T[indent] = 1;
-	    }
-	}
-    } else if (code == SET_ENDIF) {
-	if (!got_if[indent] || indent == 0) {
-	    unmatched_message(code);
-	    *err = E_PARSE;
-	} else {
-	    got_if[indent] = 0;
-	    got_else[indent] = 0;
-	    got_T[indent] = 0;
-	    indent--;
-	}
-    } else if (code == IS_FALSE || code == IS_TRUE) {
-	for (i=1; i<=indent; i++) {
-	    if (T[i] == 0) {
-		ret = 1;
-		break;
-	    }
-	}
-	if (code == IS_TRUE) {
-	    ret = !ret;
-	}
-    } 
-
-#if IFDEBUG
-    fprintf(stderr, "ifstate: returning %d (indent %d, err %d)\n", 
-	    ret, indent, (err == NULL)? 0 : *err);
-#endif
-
-    return ret;
-}
-
-static int set_if_state (int code)
-{
-    int err = 0;
-
-    ifstate(code, &err);
-    return err;
-}
-
-static int get_if_state (int code)
-{
-    int err = 0;
-
-    return ifstate(code, &err);
-}
-
-void gretl_if_state_clear (void)
-{
-    ifstate(RELAX, NULL);
-}
-
-int gretl_if_state_finalize (void)
-{
-    int ret, err = 0;
-
-    ret = ifstate(IS_TRUE, NULL);
-
-    if (!ret) {
-	ifstate(RELAX, NULL);
-	err = E_PARSE;
-    }
-
-    return err;
-}
-
-int gretl_if_state_record (void)
-{
-    return ifstate(GETINDENT, NULL);
-}
-
-int gretl_if_state_check (int indent0)
-{
-    int indent, err = 0;
-
-    indent = ifstate(GETINDENT, NULL);
-
-    if (indent != indent0) {
-	sprintf(gretl_errmsg, _("Unmatched \"%s\""), "if");
-	ifstate(RELAX, NULL);
-	err = E_PARSE;
-    }
-
-    return err;
-}

@@ -164,6 +164,7 @@ LIBSRC = adf_kpss.c \
 	describe.c \
         discrete.c \
 	estimate.c \
+	flow_control.c \
 	forecast.c \
 	geneval.c \
 	genfuncs.c \

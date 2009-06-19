@@ -2616,6 +2616,8 @@ int load_user_XML_file (const char *fname)
 	err = load_user_function_file(fname);
     } else if (!strcmp(rootname, "gretl-matrices")) {
 	err = load_user_matrix_file(fname);
+    } else if (!strcmp(rootname, "gretl-scalars")) {
+	err = load_user_scalars_file(fname);
     }
 
     free(rootname);

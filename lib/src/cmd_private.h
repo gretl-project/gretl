@@ -71,14 +71,6 @@ void gretl_exec_state_clear (ExecState *s);
 
 void gretl_exec_state_uncomment (ExecState *s);
 
-void gretl_if_state_clear (void);
-
-int gretl_if_state_finalize (void);
-
-int gretl_if_state_record (void);
-
-int gretl_if_state_check (int indent0);
-
 int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 
 int plausible_genr_start (const char *s, const DATAINFO *pdinfo);
