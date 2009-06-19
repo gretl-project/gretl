@@ -2983,13 +2983,17 @@ double gretl_bessel (char type, double v, double x, int *err)
 	} else if (v == 1) {
 	    return cephes_bessel_K1(x);
 	} else if (v == floor(v) && fabs(v) <= 30.0) {
+	    /* cephes doesn't do non-integer v, and also loses
+	       accuracy beyond |v| = 30
+	    */
 	    return cephes_bessel_Kn(v, x);
 	} else {
+	    /* accurate but expensive */
 	    return netlib_bessel_K(v, x, 1);
 	}
 	break;
     default:
-	/* unknown bessel function */
+	/* unknown function type */
 	return NADBL;
     }
 }
