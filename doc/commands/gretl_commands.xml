@@ -311,29 +311,31 @@
 	The null hypothesis for the <math>F</math>-test is that the mean
 	response is invariant with respect to the treatment type, or in words
 	that the treatment has no effect.  Strictly speaking, the test
-	is valid only if the variance of the response is a common value
-	across the treatment types.
+	is valid only if the variance of the response is the same for
+	all treatment types.
       </para>
       <para>
 	Note that the results shown by this command are in fact a subset of
 	the information given by the following procedure, which is easily
-	implemented in gretl.  Create a set of dummy variables coding for the
-	treatment types.  For two-way ANOVA, in addition create a set of
-	dummies coding for the <quote>block</quote>. Then regress
-	<repl>response</repl> on a constant and all of the dummies using
-	<cmdref targ="ols"/> with the <lit>--anova</lit> option.  In the
-	two-way case the treatment <math>F</math>-test is found by using the
-	<cmdref targ="omit"/> command.  For example (assuming <lit>y</lit> is
-	the response, <lit>xt</lit> codes for the treatment, and <lit>xb</lit>
+	implemented in gretl.  Create a set of dummy variables coding for all
+	but one of the treatment types.  For two-way ANOVA, in addition create
+	a set of dummies coding for all but one of the <quote>blocks</quote>.
+	Then regress <repl>response</repl> on a constant and the dummies using
+	<cmdref targ="ols"/>.  For a one-way design the ANOVA table is printed
+	via the <lit>--anova</lit> option to <lit>ols</lit>.  In the two-way
+	case the relevant <math>F</math>-test is found by using the <cmdref
+	targ="omit"/> command.  For example (assuming <lit>y</lit> is the
+	response, <lit>xt</lit> codes for the treatment, and <lit>xb</lit>
 	codes for blocks):
       </para>
       <code>
-	# one way
+	# one-way
 	list dxt = dummify(xt)
 	ols y 0 dxt --anova
 	# two-way
 	list dxb = dummify(xb)
 	ols y 0 dxt dxb
+	# test joint significance of dxt
 	omit dxt --quiet
       </code>
     </description>
