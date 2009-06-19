@@ -975,6 +975,8 @@ static int end_block_ci (const char *s)
 	    return RESTRICT;
 	} else if (!strcmp(word, "kalman")) {
 	    return KALMAN;
+	} else if (!strcmp(word, "foreign")) {
+	    return FOREIGN;
 	}
     }
 
