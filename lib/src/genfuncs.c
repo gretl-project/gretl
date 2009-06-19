@@ -2982,7 +2982,7 @@ double gretl_bessel (char type, double v, double x, int *err)
 	    return cephes_bessel_K0(x);
 	} else if (v == 1) {
 	    return cephes_bessel_K1(x);
-	} else if (v == floor(v)) {
+	} else if (v == floor(v) && fabs(v) <= 30.0) {
 	    return cephes_bessel_Kn(v, x);
 	} else {
 	    return netlib_bessel_K(v, x, 1);

@@ -10,6 +10,7 @@
 
 #include "mconf.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
 
@@ -32,8 +33,13 @@ static double ftrunc(double x)
     return (x >= 0)? floor(x) : ceil(x);
 }
 
-static void K_bessel (double x, double alpha, int nb,
-		      int ize, double *bk, int *ncalc)
+/* Allin Cottrell mods: pass x, alpha, nb and ize by value
+   since they are not modified; make K_bessel return the
+   value of interest directly (in context, bk[nb-1]).
+*/
+
+static double K_bessel (double x, double alpha, int nb,
+			int ize, double *bk, int *ncalc)
 {
 /*
   This routine calculates modified Bessel functions
@@ -160,328 +166,340 @@ static void K_bessel (double x, double alpha, int nb,
     int iend, i, j, k, m, ii, mplus1;
     double x2by4, twox, c, blpha, ratio, wminf;
     double d1, d2, d3, f0, f1, f2, p0, q0, t1, t2, twonu;
-    double dm, ex, bk1, bk2, nu;
+    double dm, bk1, bk2, nu, ret;
 
     ii = 0;
-
-    ex = x;
     nu = alpha;
     *ncalc = imin2(nb, 0) - 2;
-    if (nb > 0 && (0. <= nu && nu < 1.) && (1 <= ize && ize <= 2)) {
-	if (ex <= 0 || (ize == 1 && ex > xmax_BESS_K)) {
-	    if (ex <= 0) {
-		if (ex < 0) {
-		    mtherr("bessel_k", CEPHES_DOMAIN);
-		}
-		for (i=0; i < nb; i++) {
-		    bk[i] = 1.0/0.0;
-		}
-	    } else {
-		/* would only have underflow */
-		for (i=0; i < nb; i++) {
-		    bk[i] = 0.;
-		}
-	    }
-	    *ncalc = nb;
-	    return;
-	}
-	k = 0;
-	if (nu < sqxmin_BESS_K) {
-	    nu = 0.;
-	} else if (nu > .5) {
-	    k = 1;
-	    nu -= 1.;
-	}
-	twonu = nu + nu;
-	iend = nb + k - 1;
-	c = nu * nu;
-	d3 = -c;
-	if (ex <= 1.) {
-	    /* ------------------------------------------------------------
-	       Calculation of P0 = GAMMA(1+ALPHA) * (2/X)**ALPHA
-			      Q0 = GAMMA(1-ALPHA) * (X/2)**ALPHA
-	       ------------------------------------------------------------ */
-	    d1 = 0.; d2 = p[0];
-	    t1 = 1.; t2 = q[0];
-	    for (i = 2; i <= 7; i += 2) {
-		d1 = c * d1 + p[i - 1];
-		d2 = c * d2 + p[i];
-		t1 = c * t1 + q[i - 1];
-		t2 = c * t2 + q[i];
-	    }
-	    d1 = nu * d1;
-	    t1 = nu * t1;
-	    f1 = log(ex);
-	    f0 = a + nu * (p[7] - nu * (d1 + d2) / (t1 + t2)) - f1;
-	    q0 = exp(-nu * (a - nu * (p[7] + nu * (d1-d2) / (t1-t2)) - f1));
-	    f1 = nu * f0;
-	    p0 = exp(f1);
-	    /* -----------------------------------------------------------
-	       Calculation of F0 =
-	       ----------------------------------------------------------- */
-	    d1 = r[4];
-	    t1 = 1.;
-	    for (i = 0; i < 4; ++i) {
-		d1 = c * d1 + r[i];
-		t1 = c * t1 + s[i];
-	    }
-	    /* d2 := sinh(f1)/ nu = sinh(f1)/(f1/f0)
-	     *	   = f0 * sinh(f1)/f1 */
-	    if (fabs(f1) <= .5) {
-		f1 *= f1;
-		d2 = 0.;
-		for (i = 0; i < 6; ++i) {
-		    d2 = f1 * d2 + t[i];
-		}
-		d2 = f0 + f0 * f1 * d2;
-	    } else {
-		d2 = sinh(f1) / nu;
-	    }
-	    f0 = d2 - nu * d1 / (t1 * p0);
-	    if (ex <= 1e-10) {
-		/* ---------------------------------------------------------
-		   X <= 1.0E-10
-		   Calculation of K(ALPHA,X) and X*K(ALPHA+1,X)/K(ALPHA,X)
-		   --------------------------------------------------------- */
-		bk[0] = f0 + ex * f0;
-		if (ize == 1) {
-		    bk[0] -= ex * bk[0];
-		}
-		ratio = p0 / f0;
-		c = ex * DBL_MAX;
-		if (k != 0) {
-		    /* ---------------------------------------------------
-		       Calculation of K(ALPHA,X)
-		       and  X*K(ALPHA+1,X)/K(ALPHA,X),	ALPHA >= 1/2
-		       --------------------------------------------------- */
-		    *ncalc = -1;
-		    if (bk[0] >= c / ratio) {
-			return;
-		    }
-		    bk[0] = ratio * bk[0] / ex;
-		    twonu += 2.;
-		    ratio = twonu;
-		}
-		*ncalc = 1;
-		if (nb == 1)
-		    return;
 
-		/* -----------------------------------------------------
-		   Calculate  K(ALPHA+L,X)/K(ALPHA+L-1,X),
-		   L = 1, 2, ... , NB-1
-		   ----------------------------------------------------- */
-		*ncalc = -1;
-		for (i = 1; i < nb; ++i) {
-		    if (ratio >= c)
-			return;
+    /* check for invalid parameter settings */
+    if (nb <= 0 || (nu < 0 || nu >= 1) || (ize != 1 && ize != 2)) {
+	fprintf(stderr, "internal error: bad arg for K_bessel\n");
+	return NAN;
+    }
 
-		    bk[i] = ratio / ex;
-		    twonu += 2.;
-		    ratio = twonu;
-		}
-		*ncalc = 1;
-		goto L420;
-	    } else {
-		/* ------------------------------------------------------
-		   10^-10 < X <= 1.0
-		   ------------------------------------------------------ */
-		c = 1.;
-		x2by4 = ex * ex / 4.;
-		p0 = .5 * p0;
-		q0 = .5 * q0;
-		d1 = -1.;
-		d2 = 0.;
-		bk1 = 0.;
-		bk2 = 0.;
-		f1 = f0;
-		f2 = p0;
-		do {
-		    d1 += 2.;
-		    d2 += 1.;
-		    d3 = d1 + d3;
-		    c = x2by4 * c / d2;
-		    f0 = (d2 * f0 + p0 + q0) / d3;
-		    p0 /= d2 - nu;
-		    q0 /= d2 + nu;
-		    t1 = c * f0;
-		    t2 = c * (p0 - d2 * f0);
-		    bk1 += t1;
-		    bk2 += t2;
-		} while (fabs(t1 / (f1 + bk1)) > DBL_EPSILON ||
-			 fabs(t2 / (f2 + bk2)) > DBL_EPSILON);
-		bk1 = f1 + bk1;
-		bk2 = 2. * (f2 + bk2) / ex;
-		if (ize == 2) {
-		    d1 = exp(ex);
-		    bk1 *= d1;
-		    bk2 *= d1;
-		}
-		wminf = estf[0] * ex + estf[1];
-	    }
-	} else if (DBL_EPSILON * ex > 1.) {
-	    /* -------------------------------------------------
-	       X > 1./EPS
-	       ------------------------------------------------- */
-	    *ncalc = nb;
-	    bk1 = 1. / (M_SQRT_2dPI * sqrt(ex));
-	    for (i = 0; i < nb; ++i)
-		bk[i] = bk1;
-	    return;
-
+    /* check the argument, x */
+    if (x <= 0 || (ize == 1 && x > xmax_BESS_K)) {
+	if (x < 0.0) {
+	    mtherr("bessel_k", CEPHES_DOMAIN);
+	    return NAN;
+	} else if (x == 0.0) {
+	    ret = INFINITY;
 	} else {
-	    /* -------------------------------------------------------
-	       X > 1.0
-	       ------------------------------------------------------- */
-	    twox = ex + ex;
-	    blpha = 0.;
-	    ratio = 0.;
-	    if (ex <= 4.) {
-		/* ----------------------------------------------------------
-		   Calculation of K(ALPHA+1,X)/K(ALPHA,X),  1.0 <= X <= 4.0
-		   ----------------------------------------------------------*/
-		d2 = ftrunc(estm[0] / ex + estm[1]);
-		m = (int) d2;
-		d1 = d2 + d2;
-		d2 -= .5;
-		d2 *= d2;
-		for (i = 2; i <= m; ++i) {
-		    d1 -= 2.;
-		    d2 -= d1;
-		    ratio = (d3 + d2) / (twox + d1 - ratio);
-		}
-		/* -----------------------------------------------------------
-		   Calculation of I(|ALPHA|,X) and I(|ALPHA|+1,X) by backward
-		   recurrence and K(ALPHA,X) from the wronskian
-		   -----------------------------------------------------------*/
-		d2 = ftrunc(estm[2] * ex + estm[3]);
-		m = (int) d2;
-		c = fabs(nu);
-		d3 = c + c;
-		d1 = d3 - 1.;
-		f1 = DBL_MIN;
-		f0 = (2. * (c + d2) / ex + .5 * ex / (c + d2 + 1.)) * DBL_MIN;
-		for (i = 3; i <= m; ++i) {
-		    d2 -= 1.;
-		    f2 = (d3 + d2 + d2) * f0;
-		    blpha = (1. + d1 / d2) * (f2 + blpha);
-		    f2 = f2 / ex + f1;
-		    f1 = f0;
-		    f0 = f2;
-		}
-		f1 = (d3 + 2.) * f0 / ex + f1;
-		d1 = 0.;
-		t1 = 1.;
-		for (i = 1; i <= 7; ++i) {
-		    d1 = c * d1 + p[i - 1];
-		    t1 = c * t1 + q[i - 1];
-		}
-		p0 = exp(c * (a + c * (p[7] - c * d1 / t1) - log(ex))) / ex;
-		f2 = (c + .5 - ratio) * f1 / ex;
-		bk1 = p0 + (d3 * f0 - f2 + f0 + blpha) / (f2 + f1 + f0) * p0;
-		if (ize == 1) {
-		    bk1 *= exp(-ex);
-		}
-		wminf = estf[2] * ex + estf[3];
-	    } else {
-		/* ---------------------------------------------------------
-		   Calculation of K(ALPHA,X) and K(ALPHA+1,X)/K(ALPHA,X), by
-		   backward recurrence, for  X > 4.0
-		   ----------------------------------------------------------*/
-		dm = ftrunc(estm[4] / ex + estm[5]);
-		m = (int) dm;
-		d2 = dm - .5;
-		d2 *= d2;
-		d1 = dm + dm;
-		for (i = 2; i <= m; ++i) {
-		    dm -= 1.;
-		    d1 -= 2.;
-		    d2 -= d1;
-		    ratio = (d3 + d2) / (twox + d1 - ratio);
-		    blpha = (ratio + ratio * blpha) / dm;
-		}
-		bk1 = 1. / ((M_SQRT_2dPI + M_SQRT_2dPI * blpha) * sqrt(ex));
-		if (ize == 1)
-		    bk1 *= exp(-ex);
-		wminf = estf[4] * (ex - fabs(ex - estf[6])) + estf[5];
-	    }
-	    /* ---------------------------------------------------------
-	       Calculation of K(ALPHA+1,X)
-	       from K(ALPHA,X) and  K(ALPHA+1,X)/K(ALPHA,X)
-	       --------------------------------------------------------- */
-	    bk2 = bk1 + bk1 * (nu + .5 - ratio) / ex;
+	    /* would only have underflow */
+	    ret = 0.0;
 	}
-	/*--------------------------------------------------------------------
-	  Calculation of 'NCALC', K(ALPHA+I,X),	I  =  0, 1, ... , NCALC-1,
-	  &	  K(ALPHA+I,X)/K(ALPHA+I-1,X),	I = NCALC, NCALC+1, ... , NB-1
-	  -------------------------------------------------------------------*/
 	*ncalc = nb;
-	bk[0] = bk1;
-	if (iend == 0)
-	    return;
+	return ret;
+    }
 
-	j = 1 - k;
-	if (j >= 0)
+    k = 0;
+    if (nu < sqxmin_BESS_K) {
+	nu = 0.;
+    } else if (nu > .5) {
+	k = 1;
+	nu -= 1.;
+    }
+
+    twonu = nu + nu;
+    iend = nb + k - 1;
+    c = nu * nu;
+    d3 = -c;
+
+    if (x <= 1.0) {
+	/* ------------------------------------------------------------
+	   Calculation of P0 = GAMMA(1+ALPHA) * (2/X)**ALPHA
+	   Q0 = GAMMA(1-ALPHA) * (X/2)**ALPHA
+	   ------------------------------------------------------------ */
+	d1 = 0.; d2 = p[0];
+	t1 = 1.; t2 = q[0];
+	for (i = 2; i <= 7; i += 2) {
+	    d1 = c * d1 + p[i - 1];
+	    d2 = c * d2 + p[i];
+	    t1 = c * t1 + q[i - 1];
+	    t2 = c * t2 + q[i];
+	}
+	d1 = nu * d1;
+	t1 = nu * t1;
+	f1 = log(x);
+	f0 = a + nu * (p[7] - nu * (d1 + d2) / (t1 + t2)) - f1;
+	q0 = exp(-nu * (a - nu * (p[7] + nu * (d1-d2) / (t1-t2)) - f1));
+	f1 = nu * f0;
+	p0 = exp(f1);
+	/* -----------------------------------------------------------
+	   Calculation of F0 =
+	   ----------------------------------------------------------- */
+	d1 = r[4];
+	t1 = 1.;
+	for (i = 0; i < 4; ++i) {
+	    d1 = c * d1 + r[i];
+	    t1 = c * t1 + s[i];
+	}
+	/* d2 := sinh(f1)/ nu = sinh(f1)/(f1/f0)
+	 *	   = f0 * sinh(f1)/f1 */
+	if (fabs(f1) <= .5) {
+	    f1 *= f1;
+	    d2 = 0.;
+	    for (i = 0; i < 6; ++i) {
+		d2 = f1 * d2 + t[i];
+	    }
+	    d2 = f0 + f0 * f1 * d2;
+	} else {
+	    d2 = sinh(f1) / nu;
+	}
+	f0 = d2 - nu * d1 / (t1 * p0);
+	if (x <= 1e-10) {
+	    /* ---------------------------------------------------------
+	       X <= 1.0E-10
+	       Calculation of K(ALPHA,X) and X*K(ALPHA+1,X)/K(ALPHA,X)
+	       --------------------------------------------------------- */
+	    bk[0] = f0 + x * f0;
+	    if (ize == 1) {
+		bk[0] -= x * bk[0];
+	    }
+	    ratio = p0 / f0;
+	    c = x * DBL_MAX;
+	    if (k != 0) {
+		/* ---------------------------------------------------
+		   Calculation of K(ALPHA,X)
+		   and  X*K(ALPHA+1,X)/K(ALPHA,X),	ALPHA >= 1/2
+		   --------------------------------------------------- */
+		*ncalc = -1;
+		if (bk[0] >= c / ratio) {
+		    goto finish;
+		}
+		bk[0] = ratio * bk[0] / x;
+		twonu += 2.;
+		ratio = twonu;
+	    }
+	    *ncalc = 1;
+	    if (nb == 1) {
+		goto finish;
+	    }
+
+	    /* -----------------------------------------------------
+	       Calculate  K(ALPHA+L,X)/K(ALPHA+L-1,X),
+	       L = 1, 2, ... , NB-1
+	       ----------------------------------------------------- */
+	    *ncalc = -1;
+	    for (i = 1; i < nb; ++i) {
+		if (ratio >= c) {
+		    goto finish;
+		}
+		bk[i] = ratio / x;
+		twonu += 2.;
+		ratio = twonu;
+	    }
+	    *ncalc = 1;
+	    goto set_all_bk;
+	} else {
+	    /* ------------------------------------------------------
+	       10^-10 < X <= 1.0
+	       ------------------------------------------------------ */
+	    c = 1.;
+	    x2by4 = x * x / 4.;
+	    p0 = .5 * p0;
+	    q0 = .5 * q0;
+	    d1 = -1.;
+	    d2 = 0.;
+	    bk1 = 0.;
+	    bk2 = 0.;
+	    f1 = f0;
+	    f2 = p0;
+	    do {
+		d1 += 2.;
+		d2 += 1.;
+		d3 = d1 + d3;
+		c = x2by4 * c / d2;
+		f0 = (d2 * f0 + p0 + q0) / d3;
+		p0 /= d2 - nu;
+		q0 /= d2 + nu;
+		t1 = c * f0;
+		t2 = c * (p0 - d2 * f0);
+		bk1 += t1;
+		bk2 += t2;
+	    } while (fabs(t1 / (f1 + bk1)) > DBL_EPSILON ||
+		     fabs(t2 / (f2 + bk2)) > DBL_EPSILON);
+	    bk1 = f1 + bk1;
+	    bk2 = 2. * (f2 + bk2) / x;
+	    if (ize == 2) {
+		d1 = exp(x);
+		bk1 *= d1;
+		bk2 *= d1;
+	    }
+	    wminf = estf[0] * x + estf[1];
+	}
+    } else if (DBL_EPSILON * x > 1.0) {
+	/* -------------------------------------------------
+	   X > 1/EPS
+	   ------------------------------------------------- */
+	*ncalc = nb;
+	bk1 = 1.0 / (M_SQRT_2dPI * sqrt(x));
+	bk[nb-1] = bk1;
+	goto finish;
+
+    } else {
+	/* -------------------------------------------------------
+	   X > 1.0
+	   ------------------------------------------------------- */
+	twox = x + x;
+	blpha = 0.0;
+	ratio = 0.0;
+	if (x <= 4.0) {
+	    /* ----------------------------------------------------------
+	       Calculation of K(ALPHA+1,X)/K(ALPHA,X),  1.0 <= X <= 4.0
+	       ----------------------------------------------------------*/
+	    d2 = ftrunc(estm[0] / x + estm[1]);
+	    m = (int) d2;
+	    d1 = d2 + d2;
+	    d2 -= .5;
+	    d2 *= d2;
+	    for (i = 2; i <= m; ++i) {
+		d1 -= 2.0;
+		d2 -= d1;
+		ratio = (d3 + d2) / (twox + d1 - ratio);
+	    }
+	    /* -----------------------------------------------------------
+	       Calculation of I(|ALPHA|,X) and I(|ALPHA|+1,X) by backward
+	       recurrence and K(ALPHA,X) from the wronskian
+	       -----------------------------------------------------------*/
+	    d2 = ftrunc(estm[2] * x + estm[3]);
+	    m = (int) d2;
+	    c = fabs(nu);
+	    d3 = c + c;
+	    d1 = d3 - 1.;
+	    f1 = DBL_MIN;
+	    f0 = (2. * (c + d2) / x + .5 * x / (c + d2 + 1.)) * DBL_MIN;
+	    for (i = 3; i <= m; ++i) {
+		d2 -= 1.;
+		f2 = (d3 + d2 + d2) * f0;
+		blpha = (1. + d1 / d2) * (f2 + blpha);
+		f2 = f2 / x + f1;
+		f1 = f0;
+		f0 = f2;
+	    }
+	    f1 = (d3 + 2.) * f0 / x + f1;
+	    d1 = 0.;
+	    t1 = 1.;
+	    for (i = 1; i <= 7; ++i) {
+		d1 = c * d1 + p[i - 1];
+		t1 = c * t1 + q[i - 1];
+	    }
+	    p0 = exp(c * (a + c * (p[7] - c * d1 / t1) - log(x))) / x;
+	    f2 = (c + .5 - ratio) * f1 / x;
+	    bk1 = p0 + (d3 * f0 - f2 + f0 + blpha) / (f2 + f1 + f0) * p0;
+	    if (ize == 1) {
+		bk1 *= exp(-x);
+	    }
+	    wminf = estf[2] * x + estf[3];
+	} else {
+	    /* ---------------------------------------------------------
+	       Calculation of K(ALPHA,X) and K(ALPHA+1,X)/K(ALPHA,X), by
+	       backward recurrence, for  X > 4.0
+	       ----------------------------------------------------------*/
+	    dm = ftrunc(estm[4] / x + estm[5]);
+	    m = (int) dm;
+	    d2 = dm - .5;
+	    d2 *= d2;
+	    d1 = dm + dm;
+	    for (i = 2; i <= m; ++i) {
+		dm -= 1.;
+		d1 -= 2.;
+		d2 -= d1;
+		ratio = (d3 + d2) / (twox + d1 - ratio);
+		blpha = (ratio + ratio * blpha) / dm;
+	    }
+	    bk1 = 1. / ((M_SQRT_2dPI + M_SQRT_2dPI * blpha) * sqrt(x));
+	    if (ize == 1)
+		bk1 *= exp(-x);
+	    wminf = estf[4] * (x - fabs(x - estf[6])) + estf[5];
+	}
+	/* ---------------------------------------------------------
+	   Calculation of K(ALPHA+1,X)
+	   from K(ALPHA,X) and  K(ALPHA+1,X)/K(ALPHA,X)
+	   --------------------------------------------------------- */
+	bk2 = bk1 + bk1 * (nu + .5 - ratio) / x;
+    }
+
+    /*--------------------------------------------------------------------
+      Calculation of 'NCALC', K(ALPHA+I,X),	I  =  0, 1, ... , NCALC-1,
+      &	  K(ALPHA+I,X)/K(ALPHA+I-1,X),	I = NCALC, NCALC+1, ... , NB-1
+      -------------------------------------------------------------------*/
+
+    *ncalc = nb;
+    bk[0] = bk1;
+    if (iend == 0) {
+	goto finish;
+    }
+
+    j = 1 - k;
+    if (j >= 0) {
+	bk[j] = bk2;
+    }
+
+    if (iend == 1) {
+	goto finish;
+    }
+
+    m = imin2((int) (wminf - nu),iend);
+    for (i = 2; i <= m; ++i) {
+	t1 = bk1;
+	bk1 = bk2;
+	twonu += 2.0;
+	if (x < 1.) {
+	    if (bk1 >= DBL_MAX / twonu * x) {
+		break;
+	    }
+	} else if (bk1 / x >= DBL_MAX / twonu) {
+	    break;
+	}
+	bk2 = twonu / x * bk1 + t1;
+	ii = i;
+	if (++j >= 0) {
 	    bk[j] = bk2;
-
-	if (iend == 1)
-	    return;
-
-	m = imin2((int) (wminf - nu),iend);
-	for (i = 2; i <= m; ++i) {
-	    t1 = bk1;
-	    bk1 = bk2;
-	    twonu += 2.;
-	    if (ex < 1.) {
-		if (bk1 >= DBL_MAX / twonu * ex)
-		    break;
-	    } else {
-		if (bk1 / ex >= DBL_MAX / twonu)
-		    break;
-	    }
-	    bk2 = twonu / ex * bk1 + t1;
-	    ii = i;
-	    ++j;
-	    if (j >= 0) {
-		bk[j] = bk2;
-	    }
-	}
-
-	m = ii;
-	if (m == iend) {
-	    return;
-	}
-	ratio = bk2 / bk1;
-	mplus1 = m + 1;
-	*ncalc = -1;
-	for (i = mplus1; i <= iend; ++i) {
-	    twonu += 2.;
-	    ratio = twonu / ex + 1./ratio;
-	    ++j;
-	    if (j >= 1) {
-		bk[j] = ratio;
-	    } else {
-		if (bk2 >= DBL_MAX / ratio)
-		    return;
-
-		bk2 *= ratio;
-	    }
-	}
-	*ncalc = imax2(1, mplus1 - k);
-	if (*ncalc == 1)
-	    bk[0] = bk2;
-	if (nb == 1)
-	    return;
-
-L420:
-	for (i = *ncalc; i < nb; ++i) { /* i == *ncalc */
-#ifndef IEEE_754
-	    if (bk[i-1] >= DBL_MAX / bk[i])
-		return;
-#endif
-	    bk[i] *= bk[i-1];
-	    (*ncalc)++;
 	}
     }
+
+    m = ii;
+    if (m == iend) {
+	goto finish;
+    }
+    ratio = bk2 / bk1;
+    mplus1 = m + 1;
+    *ncalc = -1;
+    for (i = mplus1; i <= iend; ++i) {
+	twonu += 2.0;
+	ratio = twonu / x + 1./ratio;
+	if (++j >= 1) {
+	    bk[j] = ratio;
+	} else {
+	    if (bk2 >= DBL_MAX / ratio) {
+		goto finish;
+	    }
+	    bk2 *= ratio;
+	}
+    }
+    *ncalc = imax2(1, mplus1 - k);
+    if (*ncalc == 1) {
+	bk[0] = bk2;
+    }
+    if (nb == 1) {
+	goto finish;
+    }
+
+ set_all_bk:
+
+    /* fill out values not directly computed: kicks in
+       only if ncalc < nb 
+    */
+    for (i = *ncalc; i < nb; ++i) {
+	bk[i] *= bk[i-1];
+	(*ncalc)++;
+    }
+
+ finish:
+
+    return bk[nb-1];
 }
 
 static double *zero_dbl_array (int n)
@@ -531,7 +549,7 @@ double netlib_bessel_K (double v, double x, int ize)
 	return NAN;
     }
 
-    K_bessel(x, v, nb, ize, bk, &ncalc);
+    x = K_bessel(x, v, nb, ize, bk, &ncalc);
 
     if (ncalc != nb) {
 	if (ncalc < 0) {
@@ -542,7 +560,6 @@ double netlib_bessel_K (double v, double x, int ize)
 	}
     }
 
-    x = bk[nb-1];
     free(bk);
 
     return x;
