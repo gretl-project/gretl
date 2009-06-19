@@ -339,6 +339,11 @@
 	omit dxt --quiet
       </code>
     </description>
+
+    <gui-access>
+      <menu-path>/Model/Other linear models/ANOVA</menu-path>
+    </gui-access>
+
   </command>
 
   <command name="append" section="Dataset" 
