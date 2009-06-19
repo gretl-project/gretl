@@ -2938,77 +2938,47 @@ double gretl_round (double x)
     }
 }
 
-static double gretl_bessel_I (double v, double x)
-{
-    int err = 0;
-
-    if (v == 0) {
-	return cephes_bessel_I0(x);
-    } else if (v == 1) {
-	return cephes_bessel_I1(x);
-    } else if (v > 0) {
-	/* what's up with cephes_bessel_Iv for v < 0 ? */
-	return cephes_bessel_Iv(v, x);
-    } else if (fabs((gretl_round(2*v))/2 - (v)) < 0.00001) {
-	/* interpolation around (half) integer number */
-	double v2 = gretl_round(2*v)/2 + 0.0001;
-	double up, down;
-
-	up = gretl_bessel('I', v2, x, &err);
-	v2 = gretl_round(2*v) / 2.0 - 0.0001;
-	down = gretl_bessel('I', v2, x, &err);
-	return down + (up - down) * ((v - v2) / 0.0002);
-    } else {
-	double ex, hg, v2 = floor(fabs(v));
-				
-	if ((v2 == 0 &&  x > 7.4) ||
-	    (v2 == 1 &&  x > 8.0) ||
-	    (v2 == 2 &&  x > 8.2) ||
-	    (v2 == 3 && (x > 8.3  || x < 1.0)) ||
-	    (v2 == 4 && (x > 8.5  || x < 1.6)) ||
-	    (v2 == 5 && (x > 8.8  || x < 2.0)) ||
-	    (v2 == 6 && (x > 9.9  || x < 2.3)) ||	
-	    (v2 == 7 && (x > 11.6 || x < 3.5)) ||
-	    (v2 == 8 && (x > 13   || x < 4.1)) ||
-	    (v2 == 9 && (x > 13   || x < 5.0)) ||
-	    (v2 > 9  && x > 13)) {
-	    ex = exp(-x);
-	    hg = hyperg(v+0.5, 1+2*v, 2*x);
-	} else {
-	    ex = exp(x);
-	    hg = hyperg(v+0.5, 1+2*v, -2*x);
-	}
-	return ex * pow(0.5*x, v) * hg / cephes_gamma(v+1);
-    }	
-}
-
-#define neg_x_real_v_err(t) (t == 'J' || t == 'I' || t == 'y')
+#define neg_x_real_v_err(t) (t == 'J' || t == 'I')
 
 /* evaluates bessel function for scalar nu and x */
 
 double gretl_bessel (char type, double v, double x, int *err)
 {
-    if (x < 0 && v != floor(v) && neg_x_real_v_err(type)) {
-	/* negative x and non-integer v is not supported */
-	*err = E_INVARG;
-	return NADBL;
+    if (x < 0) {
+	/* catch invalid cases for x < 0 */
+	if (type == 'K') {
+	    *err = E_INVARG;
+	    return NADBL;
+	} else if (v != floor(v) && (type == 'J' || type == 'I')) {
+	    *err = E_INVARG;
+	    return NADBL;
+	}
     }
 
     switch (type) {
     case 'J':
 	return cephes_bessel_Jv(v, x);
-    case 'I':
-	return gretl_bessel_I(v, x);
     case 'Y':
 	return cephes_bessel_Yv(v, x);
+    case 'I':
+	if (v == 0) {
+	    return cephes_bessel_I0(x);
+	} else if (v == 1) {
+	    return cephes_bessel_I1(x);
+	} else if (v > 0) {
+	    return cephes_bessel_Iv(v, x);
+	} else {
+	    /* v < 0 : cephes_bessel_Iv is not correct */
+	    double b1 = netlib_bessel_K(-v, x, 1);
+	    double b2 = cephes_bessel_Iv(-v, x);
+
+	    return (2*b1*sin(-v*M_PI)) / M_PI + b2;
+	}
+	break;
     case 'K':
 	/* bessel K is symmetric around v = 0 */
 	v = fabs(v);
-	if (x < 0) {
-	    /* negative x is not supported */
-	    *err = E_INVARG;
-	    return NADBL;
-	} else if (v == 0) {
+	if (v == 0) {
 	    return cephes_bessel_K0(x);
 	} else if (v == 1) {
 	    return cephes_bessel_K1(x);

@@ -632,6 +632,47 @@
       </description>
     </function>
 
+    <function name="bessel" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="char">type</fnarg>
+	<fnarg type="scalar">v</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes one of the Bessel function variants for order
+	  <argname>v</argname> and argument <argname>x</argname>.  The return
+	  value is of the same type as <argname>x</argname>. The specific
+	  function is selected by the first argument, which must be
+	  <lit>J</lit>, <lit>Y</lit>, <lit>I</lit>, or <lit>K</lit>.  A good
+	  discussion of the Bessel functions can be found on Wikipedia; here
+	  we give a brief account.
+	</para>
+	<para>
+	  case <lit>J</lit>: Bessel function of the first kind.  Resembles a
+	  damped sine wave.  Defined for real <argname>v</argname> and
+	  <argname>x</argname>, but if <argname>x</argname> is negative
+	  then <argname>v</argname> must be an integer.
+	</para>
+	<para>
+	  case <lit>Y</lit>: Bessel function of the second kind.  Defined
+	  for real <argname>v</argname> and <argname>x</argname> but has
+	  a singularity at <argname>x</argname> = 0.
+	</para>
+	<para>
+	  case <lit>I</lit>: Modified Bessel function of the first kind.
+	  An exponentially growing function.  Acceptable arguments are
+	  as for case <lit>J</lit>.
+	</para>
+	<para>
+	  case <lit>K</lit>: Modified Bessel function of the second kind.  An
+	  exponentially decaying function.  Diverges at <argname>x</argname> =
+	  0 and is not defined for negative <argname>x</argname>.  Symmetric
+	  around <argname>v</argname> = 0.
+	</para>
+      </description>
+    </function>
+
     <function name="BFGSmax" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="vector">b</fnarg>
