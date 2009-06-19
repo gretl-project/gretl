@@ -33,9 +33,9 @@ static double ftrunc(double x)
     return (x >= 0)? floor(x) : ceil(x);
 }
 
-/* Allin Cottrell mods: pass x, alpha, nb and ize by value
-   since they are not modified; make K_bessel return the
-   value of interest directly (in context, bk[nb-1]).
+/* Allin Cottrell mods below: pass x, alpha, nb and ize by value since
+   they are not modified; also make K_bessel return the value of
+   interest directly (in context, bk[nb-1]).
 */
 
 static double K_bessel (double x, double alpha, int nb,
@@ -163,12 +163,11 @@ static double K_bessel (double x, double alpha, int nb,
     };
 
     /* Local variables */
-    int iend, i, j, k, m, ii, mplus1;
+    int iend, i, j, k, m, mplus1, ii = 0;
     double x2by4, twox, c, blpha, ratio, wminf;
     double d1, d2, d3, f0, f1, f2, p0, q0, t1, t2, twonu;
     double dm, bk1, bk2, nu, ret;
 
-    ii = 0;
     nu = alpha;
     *ncalc = imin2(nb, 0) - 2;
 

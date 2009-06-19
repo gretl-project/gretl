@@ -2968,7 +2968,7 @@ double gretl_bessel (char type, double v, double x, int *err)
 	} else if (v > 0) {
 	    return cephes_bessel_Iv(v, x);
 	} else {
-	    /* v < 0 : cephes_bessel_Iv is not correct */
+	    /* cephes_bessel_Iv is not right for v < 0 */
 	    double b1 = netlib_bessel_K(-v, x, 1);
 	    double b2 = cephes_bessel_Iv(-v, x);
 
@@ -2982,7 +2982,7 @@ double gretl_bessel (char type, double v, double x, int *err)
 	    return cephes_bessel_K0(x);
 	} else if (v == 1) {
 	    return cephes_bessel_K1(x);
-	} else if (v == floor(v) && fabs(v) <= 30.0) {
+	} else if (v == floor(v) && v <= 30.0) {
 	    /* cephes doesn't do non-integer v, and also loses
 	       accuracy beyond |v| = 30
 	    */
