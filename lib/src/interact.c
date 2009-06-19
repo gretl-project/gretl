@@ -1691,10 +1691,8 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 	char word[VNAMELEN];
 
 	if (sscanf(s, "%15[^[ +*/%^~|=-]", word)) {
-	    fprintf(stderr, "word = '%s'\n", word);
 	    s += strlen(word);
 	    while (*s == ' ') s++;
-	    fprintf(stderr, "new s = '%s'\n", s);
 	    if (strspn(s, ok) && check_varname(word) == 0) {
 		ret = 1;
 	    }
