@@ -639,10 +639,12 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	if (loop->init.val < 0) {
 	    err = E_DATA;
 	} else {
+	    loop->init.val += 1;
 	    loop->final.val = dateton(end, pdinfo);
 	    if (loop->final.val < 0) {
 		err = E_DATA;
 	    } else {
+		loop->final.val += 1;
 		loop->type = DATED_LOOP;
 	    }
 	}

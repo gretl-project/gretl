@@ -69,8 +69,8 @@ The \texttt{fcast} command generates predictions based on the last
 estimated model.  Several questions arise here: How to control the
 range over which predictions are generated?  How to control the
 forecasting method (where a choice is available)?  How to control the
-printing and/or saving of the results?  We address these points in
-turn.
+printing and/or saving of the results?  Basic answers can be found in
+the \GCR; we add some more details here.
 
 \subsection{The forecast range}
 
@@ -124,7 +124,18 @@ trend, periodic dummy variables).  In addition, lagged values of the
 dependent variable can be supported via a dynamic forecast (see below
 for discussion of the static/dynamic distinction).  But ``future''
 values of any other included regressors must be supplied before such a
-forecast is possible.
+forecast is possible.  Note that specific values in a series can be
+set directly by date, for example: \texttt{x1[2009:1] = 120.5}.  Or,
+if the assumption of no change in the regressors is warranted:
+%
+\begin{code}
+loop t=1991:1..1991:4
+    loop foreach i xlist
+        $i[t] = $i[1990:4]
+    endloop
+endloop
+\end{code}
+
 
 
 \subsection{Forecasting methods}
