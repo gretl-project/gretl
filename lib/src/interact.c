@@ -2861,12 +2861,12 @@ int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn)
 
 static int parse_criteria (const char *line, PRN *prn)
 {
-    char essstr[32], Tstr[9], kstr[9];
+    char essstr[32], Tstr[11], kstr[11];
     double ess = NADBL;
     int T = 0, k = 0;
     int err = 0;
     
-    if (sscanf(line, "%*s %s %s %s", essstr, Tstr, kstr) != 3) {
+    if (sscanf(line, "%*s %31s %10s %10s", essstr, Tstr, kstr) != 3) {
 	err = E_PARSE;
     }
 

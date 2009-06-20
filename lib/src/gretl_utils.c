@@ -1106,6 +1106,8 @@ int gretl_int_from_string (const char *s, int *err)
 	x = gretl_scalar_get_value(s);
 	if (na(x)) {
 	    *err = E_MISSDATA;
+	} else if (fabs(x) > INT_MAX) {
+	    *err = E_DATA;
 	} else {
 	    n = (int) x;
 	}	
