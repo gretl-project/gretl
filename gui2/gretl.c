@@ -139,7 +139,7 @@ static void gui_help (void)
     printf("%s\n", _(param_msg));
 }
 
-static void old_gretl_init (int *pargc, char ***pargv)
+static void old_gretl_init (int *pargc, char ***pargv, char *filearg)
 {
     static char fname[FILENAME_MAX];
     int force_lang = 0;
@@ -154,11 +154,14 @@ static void old_gretl_init (int *pargc, char ***pargv)
     }
 
     if (opt & (OPT_HELP | OPT_VERSION | OPT_ERROR)) {
+	int ecode = (opt & OPT_ERROR)? EXIT_FAILURE :
+	    EXIT_SUCCESS;
+
 	gui_logo(NULL);
 	if (opt != OPT_VERSION) {
 	    gui_help();
 	}
-	exit(EXIT_SUCCESS);
+	exit(ecode);
     } else if (opt & OPT_DUMP) {
 	optdump = 1;
     } else if (opt & OPT_RUNIT) {
@@ -167,6 +170,10 @@ static void old_gretl_init (int *pargc, char ***pargv)
 	optdb = fname;
     } else if (opt & OPT_WEBDB) {
 	optwebdb = fname;
+    } else if (*fname != '\0') {
+	/* got a data file argument? */
+	*pargc += 1;
+	strncat(filearg, fname, MAXLEN - 1);
     }
 }
 
@@ -421,6 +428,9 @@ static int have_data (void)
 
 int main (int argc, char **argv)
 {
+#ifdef G_OS_WIN32
+    char *callname = argv[0];
+#endif
     int ftype = 0;
     char dbname[MAXLEN];
     char filearg[MAXLEN];
@@ -439,9 +449,9 @@ int main (int argc, char **argv)
     *dbname = '\0';
     *filearg = '\0';
 
-#ifdef OLD_GTK
+#ifdef OLD_GTK 
     gtk_init(&argc, &argv);
-    old_gretl_init(&argc, &argv);
+    old_gretl_init(&argc, &argv, filearg);
 #else
     gtk_init_with_args(&argc, &argv, param_msg, options, "gretl", &opterr);
     if (opterr != NULL) {
@@ -454,7 +464,7 @@ int main (int argc, char **argv)
     gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(argv[0], optdebug);
+    gretl_win32_init(callname, optdebug);
 #else 
     gretl_config_init();
 #endif
@@ -513,7 +523,10 @@ int main (int argc, char **argv)
 	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 	if (err) exit(EXIT_FAILURE);
 
-	strncat(filearg, argv[1], MAXLEN - 1);
+	if (*filearg == '\0') {
+	    /* not already registered */
+	    strncat(filearg, argv[1], MAXLEN - 1);
+	}
 
 	*paths.datfile = '\0';
 

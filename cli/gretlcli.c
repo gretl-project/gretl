@@ -301,12 +301,15 @@ static int ctrl_x (int count, int key)
 
 int main (int argc, char *argv[])
 {
+#ifdef WIN32
+    char *callname = argv[0];
+#endif
     double **Z = NULL;
     DATAINFO *datainfo = NULL;
     MODEL **models = NULL;
     ExecState state;
     char *line = NULL;
-    int cli_get_data = 0;
+    int load_datafile = 1;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
     CMD cmd;
@@ -325,21 +328,32 @@ int main (int argc, char *argv[])
     if (datainfo == NULL) {
 	noalloc();
     }
-    
-    if (argc > 1) {
+
+    if (argc < 2) {
+	load_datafile = 0;
+    } else {
 	int force_lang = 0;
 	int opt = parseopt(&argc, &argv, filearg, &force_lang);
 
 	if (opt & OPT_ERROR) {
+	    /* bad option */
 	    usage(1);
+	} else if (opt & (OPT_BATCH | OPT_RUNIT)) {
+	    if (*filearg == '\0') {
+		/* missing an argument */
+		usage(1);
+	    } else {
+		/* record argument (not a datafile) */
+		strcpy(runfile, filearg);
+		load_datafile = 0;
+	    }
+	} else if (*filearg == '\0') {
+	    load_datafile = 0;
 	}
 
 	switch (opt) {
 	case OPT_BATCH:
 	    batch = 1;
-	    if (*filearg == '\0') usage(1);
-	    strcpy(runfile, filearg);
-	    cli_get_data = 1;
 	    break;
 	case OPT_HELP:
 	    usage(0);
@@ -354,11 +368,6 @@ int main (int argc, char *argv[])
 	    break;
 	case OPT_RUNIT:
 	    runit = 1;
-	    if (*filearg == '\0') {
-		usage(1);
-	    }
-	    strcpy(runfile, filearg); 
-	    cli_get_data = 1;
 	    break;
 	default:
 	    break;
@@ -367,14 +376,9 @@ int main (int argc, char *argv[])
 #ifdef ENABLE_NLS
 	if (force_lang) {
 	    force_language(force_lang);
-	    if (argc == 2) {
-		cli_get_data = 1;
-	    }
 	}
 #endif
-    } else {
-	cli_get_data = 1;
-    }
+    } 
 
 #ifdef WIN32
     if (!batch) {
@@ -399,7 +403,7 @@ int main (int argc, char *argv[])
     gretl_set_paths(&paths, OPT_D); /* defaults, not gui */
 
 #ifdef WIN32
-    cli_read_registry(argv[0], &paths);
+    cli_read_registry(callname, &paths);
 #else
     cli_read_rc(&paths);
 #endif /* WIN32 */
@@ -416,7 +420,7 @@ int main (int argc, char *argv[])
 	}
     }
 
-    if (!cli_get_data) {
+    if (load_datafile) {
 	char given_file[MAXLEN];
 	int ftype;
 
@@ -460,13 +464,13 @@ int main (int argc, char *argv[])
 	    runit = 1;
 	    strcpy(runfile, paths.datfile); 
 	    clear(paths.datfile, MAXLEN);
-	    cli_get_data = 1;
+	    load_datafile = 0;
 	    break;
 	default:
 	    break;
 	}
 
-	if (!cli_get_data) {
+	if (load_datafile) {
 	    if (err) {
 		errmsg(err, prn);
 		if (err == E_FOPEN) {

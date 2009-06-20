@@ -2916,7 +2916,7 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 {
     char **argv;
     int opt = 0, extra = 0;
-    int gotfile = 0;
+    int argc, gotfile = 0;
 
     *fname = '\0';
     *force_lang = 0;
@@ -2925,6 +2925,7 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 	return opt;
     }
 
+    argc = *pargc;
     argv = *pargv;
 
     while (*++argv) {
@@ -2933,9 +2934,11 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 #ifdef ENABLE_NLS
 	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
 	    *force_lang = LANG_C;
+	    argc--;
 	    continue;
 	} else if (!strcmp(s, "-q") || !strncmp(s, "--basque", 8)) { 
 	    *force_lang = LANG_EU;
+	    argc--;
 	    continue;
 	}
 #endif
@@ -2955,7 +2958,7 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 	} else if (!strcmp(s, "-c") || !strncmp(s, "--dump", 6)) {
 	    opt = OPT_DUMP;
 	} else if (!strcmp(s, "-g") || !strncmp(s, "--debug", 7)) {
-	    extra = OPT_DEBUG;
+	    extra |= OPT_DEBUG;
 	} else if (*s == '-') {
 	    /* not a valid option */
 	    extra = OPT_ERROR;
@@ -2965,9 +2968,10 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 	    gotfile = 1;
 	}
 
-	*pargc -= 1;
+	argc--;
     }
 
+    *pargc = argc;
     *pargv = argv;
 
     opt |= extra;
