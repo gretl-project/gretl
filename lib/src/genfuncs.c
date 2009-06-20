@@ -2944,6 +2944,10 @@ double gretl_round (double x)
 
 double gretl_bessel (char type, double v, double x, int *err)
 {
+    if (na(x) || na(v)) {
+	return NADBL;
+    }
+
     if (x < 0) {
 	/* catch invalid cases for x < 0 */
 	if (type == 'K') {
