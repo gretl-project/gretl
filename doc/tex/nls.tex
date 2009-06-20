@@ -10,8 +10,11 @@ specification of the regression function; prior to giving this
 specification the parameters to be estimated must be ``declared'' and
 given initial values.  Optionally, the user may supply analytical
 derivatives of the regression function with respect to each of the
-parameters.  The tolerance (criterion for terminating the iterative
-estimation procedure) can be adjusted using the \cmd{set} command.
+parameters.  If derivatives are not given, the user must instead give
+a list of the parameters to be estimated (separated by spaces or
+commas), preceded by the keyword \cmd{params}.  The tolerance
+(criterion for terminating the iterative estimation procedure) can be
+adjusted using the \cmd{set} command.
 
 The syntax for specifying the function to be estimated is the same as
 for the \cmd{genr} command.  Here are two examples, with accompanying
@@ -36,7 +39,9 @@ end nls
 nls y = alpha + beta * x1 + (1/beta) * x2
     deriv alpha = 1
     deriv beta = x1 - x2/(beta*beta)
-end nls
+    # or: 
+    # params alpha beta
+end nls --vcv
 \end{scode}
 \end{script}
 
