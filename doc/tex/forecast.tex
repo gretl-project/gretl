@@ -79,38 +79,41 @@ remains unchanged following estimation of the model in question, the
 forecast will be ``within sample'' and (with some qualifications noted
 below) it will essentially duplicate the information available via the
 retrieval of fitted values (see section~\ref{sec:fcast-fitted} above).
-There are two ways of adjusting the forecast range:
-%
-\begin{itemize}
-\item By use of the \texttt{smpl} command prior to invoking
-  \texttt{fcast}.
-\item Via the optional \textsl{startobs} and \textsl{endobs} arguments
-  to \texttt{fcast} (which should come first after the command word).
-\end{itemize}
 
 A common situation is that a model is estimated over a given sample
-and then forecasts are wanted for an out-of-sample range.  The
-following code-snippet illustrates how this can be done, assuming we
-have a quarterly time-series dataset containing observations from
-1980:1 to 2008:4, four of which are to be reserved for forecasting.
+and then forecasts are wanted for a subsequent out-of-sample range.  The
+simplest way to accomplish this is via the \verb|--out-of-sample|
+option to \texttt{fcast}.  For example, assuming we have a quarterly
+time-series dataset containing observations from 1980:1 to 2008:4,
+four of which are to be reserved for forecasting:
 %
 \begin{code}
 # reserve the last 4 observations
 smpl 1980:1 2007:4
 ols y 0 xlist
-# use 'smpl'
-smpl 2008:1 2008:4
-fcast
-# or specify range in command
-fcast 2008:1 2008:4
+fcast --out-of-sample
 \end{code}
+%
+This will generate a forecast from 2008:1 to 2008:4.
+
+There are two other ways of adjusting the forecast range, offering
+finer control:
+%
+\begin{itemize}
+\item Use the \texttt{smpl} command to adjust the sample range
+  prior to invoking \texttt{fcast}.
+\item Use the optional \textsl{startobs} and \textsl{endobs} arguments
+  to \texttt{fcast} (which should come right after the command word).
+  These values set the forecast range independently of the
+  sample range.
+\end{itemize}
 
 What if one wants to generate a true forecast that goes beyond the
 available data?  In that case one can use the \texttt{addobs} command
 to add extra observations before forecasting.  For example:
 %
 \begin{code}
-smpl 1980:1 2008:4 # the entire dataset
+# use the entire dataset, which ends in 2008:4
 ols y 0 xlist
 addobs 4
 fcast 2009:1 2009:4
@@ -126,12 +129,13 @@ for discussion of the static/dynamic distinction).  But ``future''
 values of any other included regressors must be supplied before such a
 forecast is possible.  Note that specific values in a series can be
 set directly by date, for example: \texttt{x1[2009:1] = 120.5}.  Or,
-if the assumption of no change in the regressors is warranted:
+if the assumption of no change in the regressors is warranted, one can
+do something like this:
 %
 \begin{code}
-loop t=1991:1..1991:4
+loop t=2009:1..2009:4
     loop foreach i xlist
-        $i[t] = $i[1990:4]
+        $i[t] = $i[2008:4]
     endloop
 endloop
 \end{code}
