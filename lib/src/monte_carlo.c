@@ -2525,7 +2525,7 @@ static int modifies_loop_list (const LOOPSET *loop, const char *s)
 	s += 4;
 	s += strspn(s, " ");
 	*lname = '\0';
-	sscanf(s, "%15[^ +-=]", lname);
+	sscanf(s, "%15[^ +=-]", lname);
 	ret = !strcmp(lname, loop->listname);
     }
 
