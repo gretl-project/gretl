@@ -167,4 +167,6 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);
 
 int varname_match_any (const DATAINFO *pdinfo, const char *pattern);
 
+void get_column_widths (const char **strs, int *widths, int n);
+
 #endif /* STRUTILS_H */

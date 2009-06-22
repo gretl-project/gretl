@@ -21,7 +21,7 @@ void dump_rc (void);
 
 void force_english_help (void);
 
-int options_dialog (int page, const char *varname);
+int options_dialog (int page, const char *varname, GtkWidget *parent);
 
 void font_selector (GtkAction *action);
 

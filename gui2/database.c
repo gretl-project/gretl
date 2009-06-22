@@ -2690,7 +2690,7 @@ static DIR *open_gretl_db_dir (char *dbdir)
 #endif
 	if (dir == NULL) {
 	    errbox(_("Can't open folder %s"), dbdir);
-	    if (++tries == 2 || options_dialog(TAB_DBS, "binbase")) {
+	    if (++tries == 2 || options_dialog(TAB_DBS, "binbase", mdata->main)) {
 		/* canceled */
 		return NULL;
 	    }

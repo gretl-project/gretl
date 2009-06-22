@@ -163,8 +163,7 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 	    gretl_matrix_rows(M), gretl_matrix_cols(M));
 #endif
 
-    if (callback_ok && 
-	matrix_add_callback != NULL && 
+    if (callback_ok && matrix_add_callback != NULL && 
 	gretl_function_depth() == 0) {
 	(*matrix_add_callback)();
     }
@@ -177,7 +176,7 @@ int user_matrix_add (gretl_matrix *M, const char *name)
     return real_user_matrix_add(M, name, 1);
 }
 
-int matrix_copy_add (gretl_matrix *M, const char *name)
+int private_matrix_add (gretl_matrix *M, const char *name)
 {
     return real_user_matrix_add(M, name, 0);
 }
@@ -484,7 +483,7 @@ int copy_named_matrix_as (const char *orig, const char *newname)
  * @newname: the name to be given to the copy.
  *
  * A copy of matrix @m is added to the stack of saved matrices
- * under the name @newname.  This is intended for use when a matrix is given
+ * under the name @newname.  This is intended for use when a matrix
  * is given as the argument to a user-defined function: it is copied
  * under the name assigned by the function's parameter list.
  *
@@ -499,7 +498,7 @@ int copy_matrix_as (const gretl_matrix *m, const char *newname)
     if (m2 == NULL) {
 	err = E_ALLOC;
     } else {
-	err = matrix_copy_add(m2, newname);
+	err = real_user_matrix_add(m2, newname, 0);
     }
 
     if (!err) {

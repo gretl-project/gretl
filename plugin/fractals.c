@@ -40,15 +40,16 @@ do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
     fprintf(fp, "set title '%s %s'\n", _("Rescaled-range plot for"), vname);
     fprintf(fp, "set xlabel '%s'\n", _("log(sample size)"));
     fprintf(fp, "set ylabel '%s'\n", _("log(RS)"));
-    fputs("plot \\\n", fp);
-    fprintf(fp, "%g+%g*x notitle w lines lt 2 ,\\\n", 
-	    pmod->coeff[0], pmod->coeff[1]);
-    fputs("'-' using 1:2 w points lt 1\n", fp);
 
     gretl_push_c_numeric_locale();
 
+    fputs("plot \\\n", fp);
+    fprintf(fp, "%.10g+%.10g*x notitle w lines lt 2 ,\\\n", 
+	    pmod->coeff[0], pmod->coeff[1]);
+    fputs("'-' using 1:2 w points lt 1\n", fp);
+
     for (t=0; t<n; t++) {
-	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
+	fprintf(fp, "%.10g %.10g\n", Z[2][t], Z[1][t]);
     }
     fputs("e\n", fp);
     
@@ -114,11 +115,23 @@ static double stdev (const double *x, int n, double xbar)
 static int hurst_calc (const double *x, int n, int depth,
 		       double **Z, PRN *prn)
 {
+    const char *heads[] = {
+	N_("Size"),
+	N_("RS(avg)"),
+	N_("log(Size)"),
+	N_("log(RS)")
+    };
+    int cw[] = { 5, 11, 11, 11 };
     int m, i, j;
 
-    pprintf(prn, "%5s%11s%11s%11s\n", _("Size"), _("RS(avg)"),
-	    _("log(Size)"), _("log(RS)"));
+    get_column_widths(heads, cw, 4);
 
+    pprintf(prn, "%*s %*s %*s %*s\n", 
+	    UTF_WIDTH(_(heads[0]), cw[0]), _(heads[0]), 
+	    UTF_WIDTH(_(heads[1]), cw[1]), _(heads[1]),
+	    UTF_WIDTH(_(heads[2]), cw[2]), _(heads[2]), 
+	    UTF_WIDTH(_(heads[3]), cw[3]), _(heads[3]));
+    
     for (i=0, m=n; i<depth; i++, m/=2) {
 	double RS = 0.0;
 	int nsub = n / m;
@@ -146,7 +159,8 @@ static int hurst_calc (const double *x, int n, int depth,
 	Z[1][i] = log_2(RS);
 	Z[2][i] = log_2(m);
 
-	pprintf(prn, "%4d %10.5g %10.5g %10.5g\n", m, RS, Z[2][i], Z[1][i]);
+	pprintf(prn, "%*d %#*.5g %#*.5g %#*.5g\n", cw[0], m, cw[1], RS, 
+		cw[2], Z[2][i], cw[3], Z[1][i]);
     }
 
     return 0;
@@ -249,10 +263,27 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 	pputs(prn, _("Error estimating Hurst exponent model\n"));
 	errmsg(err, prn);
     } else {
+	const char *heads[] = {
+	    N_("Intercept"),
+	    N_("coeff"),
+	    N_("std. error")
+	};
+	int cw[] = { 12, 12, 12 };
+
+	get_column_widths(heads, cw, 3);
+
 	pprintf(prn, "\n%s (n = %d)\n\n", _("Regression results"), k);
-	pprintf(prn, "          %12s  %11s\n", _("coeff"), _("std. error")); 
-	pprintf(prn, _("Intercept %12.6g   %g\n"), hmod.coeff[0], hmod.sderr[0]);
-	pprintf(prn, _("Slope     %12.6g   %g\n"), hmod.coeff[1], hmod.sderr[1]);
+	pprintf(prn, "%*s %*s %*s\n", cw[0], "", 
+		UTF_WIDTH(_(heads[1]), cw[1]), _(heads[1]), 
+		UTF_WIDTH(_(heads[2]), cw[2]), _(heads[2]));
+	pprintf(prn, "%*s %#*.5g %#*.5g\n", 
+		UTF_WIDTH(_(heads[0]), cw[0]), _(heads[0]), 
+		cw[1], hmod.coeff[0], 
+		cw[2], hmod.sderr[0]);
+	pprintf(prn, "%*s %#*.5g %#*.5g\n", 
+		UTF_WIDTH(_("Slope"), cw[0]), _("Slope"), 
+		cw[1], hmod.coeff[1], 
+		cw[2], hmod.sderr[1]);
 	pputc(prn, '\n');
 	pprintf(prn, "%s = %g\n", _("Estimated Hurst exponent"), hmod.coeff[1]);
     }

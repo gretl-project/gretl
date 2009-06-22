@@ -72,9 +72,9 @@ GtkWidget *back_button (GtkWidget *hbox);
 gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
 			   gpointer unused);
 
-void sensitize_widget_from_check (GtkWidget *check, GtkWidget *w);
+void sensitize_conditional_on (GtkWidget *w, GtkWidget *b);
 
-void desensitize_widget_from_check (GtkWidget *check, GtkWidget *w);
+void desensitize_conditional_on (GtkWidget *w, GtkWidget *b);
 
 void set_double_from_spinner (GtkSpinButton *b, double *x);
 

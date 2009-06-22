@@ -3603,6 +3603,14 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	fputs("set xtics 1\n", fp);
     }
 
+    if (do_errs && !use_fill && !use_lines && n > 150) {
+	if (gnuplot_has_style_fill()) {
+	    use_fill = 1;
+	} else {
+	    use_lines = 1;
+	}
+    }
+
     if (use_fill) {
 	fprintf(fp, "set style fill solid 0.4\n");
     }

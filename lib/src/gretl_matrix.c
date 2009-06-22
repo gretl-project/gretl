@@ -3105,10 +3105,7 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
     if (info != 0) {
 	fprintf(stderr, "gretl_cholesky_decomp_solve:\n"
 		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
-	if (info > 0) {
-	    fputs(" matrix is not positive definite\n", stderr);
-	}
-	err = E_SINGULAR;
+	err = (info > 0)? E_NOTPD : E_DATA;
     } 
 
     if (!err) {
@@ -5322,6 +5319,7 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     char uplo = 'L';
     integer n, lda;
     integer info;
+    int err = 0;
 
     if (gretl_is_null_matrix(a)) {
 	return E_DATA;
@@ -5336,19 +5334,14 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     dpotrf_(&uplo, &n, a->val, &lda, &info);
 
     if (info != 0) {
-	if (info > 0) {
-	    fprintf(stderr, "n = %d, info = %d\n", (int) n, (int) info);
-	    fputs("gretl_matrix_cholesky_decomp: matrix not positive definite\n", 
-		  stderr);
-	} else {
-	    fputs("gretl_matrix_cholesky_decomp: illegal argument to dpotrf\n", 
-		  stderr);
-	}
+	fprintf(stderr, "gretl_matrix_cholesky_decomp: info = %d\n", 
+		(int) info);
+	err = (info > 0)? E_NOTPD : E_DATA;
     } else {
 	gretl_matrix_zero_upper(a);
     }
 
-    return (info == 0)? 0 : 1;
+    return err;
 }
 
 /**
@@ -6183,10 +6176,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     if (info != 0) {
 	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
-	if (info > 0) {
-	    fputs(" matrix is not positive definite\n", stderr);
-	}
-	err = E_NOTPD;
+	err = (info > 0)? E_NOTPD : E_DATA;
     } 
 
     if (!err) {
@@ -6235,11 +6225,8 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
 	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		    " dpotrf failed with info = %d (n = %d)\n", 
 		    (int) info, (int) n);
-	    if (info > 0) {
-		fputs(" matrix is not positive definite\n", stderr);
-	    }
 	}
-	err = E_SINGULAR;
+	err = (info > 0)? E_NOTPD : E_DATA;
     } 
 
     if (!err) {
@@ -6388,10 +6375,7 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
     if (info != 0) {
 	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
-	if (info > 0) {
-	    fputs(" matrix is not positive definite\n", stderr);
-	}
-	return E_SINGULAR;
+	return (info > 0)? E_NOTPD : E_DATA;
     } 
 
     if (ldet != NULL) {
@@ -6668,6 +6652,8 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     double nullvl[2] = {0.0};
     double nullvr[2] = {0.0};
 
+    *err = 0;
+
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
@@ -6779,6 +6765,8 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     double *work2 = NULL;
     double *w = NULL;
     char uplo = 'U', jobz = (eigenvecs)? 'V' : 'N';
+
+    *err = 0;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;

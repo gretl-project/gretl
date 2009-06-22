@@ -518,6 +518,8 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     } else if (f == PLOT_FIT_LOESS) {
 	title = g_strdup_printf(_("%s versus %s (with loess fit)"),
 		s1, s2);
+    } else {
+	title = g_strdup("");
     }
 
     if (title != NULL) {
@@ -2610,8 +2612,7 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 	    gtk_widget_set_sensitive(entry, FALSE);
 	}
 
-	desensitize_widget_from_check(b1, entry);
-	sensitize_widget_from_check(b2, entry);
+	sensitize_conditional_on(entry, b2);
     }
 }
 

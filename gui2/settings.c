@@ -805,7 +805,7 @@ static void option_dialog_canceled (GtkWidget *w, int *c)
     *c = 1;
 }
 
-int options_dialog (int page, const char *varname) 
+int options_dialog (int page, const char *varname, GtkWidget *parent) 
 {
     static GtkWidget *dialog;
     GtkWidget *notebook;
@@ -818,7 +818,7 @@ int options_dialog (int page, const char *varname)
 	return 0;
     }
 
-    dialog = gretl_dialog_new(_("gretl: options"), mdata->main, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(_("gretl: options"), parent, GRETL_DLG_BLOCK);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 2);
 

@@ -331,26 +331,36 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     return d;
 }
 
-/* make the sensitivity of widget @w positively dependent on the state
-   of check button @check */
-
-void sensitize_widget_from_check (GtkWidget *check, GtkWidget *w)
+static void sensitize_widget (GtkWidget *b, GtkWidget *w)
 {
-    gboolean s;
+    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b));
 
-    s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check));
     gtk_widget_set_sensitive(w, s);
 }
 
-/* make the sensitivity of widget @w negatively dependent on the state
-   of check button @check */
+/* make the sensitivity of widget @w positively dependent on the state
+   of button @b */
 
-void desensitize_widget_from_check (GtkWidget *check, GtkWidget *w)
+void sensitize_conditional_on (GtkWidget *w, GtkWidget *b)
 {
-    gboolean s;
+    g_signal_connect(G_OBJECT(b), "toggled",
+		     G_CALLBACK(sensitize_widget), w);	
+}
 
-    s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check));
+static void desensitize_widget (GtkWidget *b, GtkWidget *w)
+{
+    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b));
+
     gtk_widget_set_sensitive(w, !s);
+}
+
+/* make the sensitivity of widget @w negatively dependent on the state
+   of button @b */
+
+void desensitize_conditional_on (GtkWidget *w, GtkWidget *b)
+{
+    g_signal_connect(G_OBJECT(b), "toggled",
+		     G_CALLBACK(desensitize_widget), w);	
 }
 
 void set_double_from_spinner (GtkSpinButton *b, double *x)

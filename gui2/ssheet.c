@@ -1534,11 +1534,13 @@ static int rejig_sheet_cols (Spreadsheet *sheet)
     g_object_unref(G_OBJECT(store));
 
     if (n > 0) {
+	/* add extra columns */
 	for (i=0; i<n; i++) {
 	    sprintf(cstr, "%d", sheet->datacols - n + i + 1);
 	    add_treeview_column_with_title(sheet, cstr);
 	}
     } else {
+	/* remove surplus columns */
 	n = -n;
 	for (i=0; i<n; i++) {
 	    col = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view),
@@ -1556,7 +1558,6 @@ static int rejig_sheet_cols (Spreadsheet *sheet)
 	g_object_set_data(G_OBJECT(col), "sheet", sheet);
 	g_signal_connect(G_OBJECT(col), "clicked",
 			 G_CALLBACK(name_column_dialog), col);
-
     }
 
     return 0;
@@ -1564,11 +1565,11 @@ static int rejig_sheet_cols (Spreadsheet *sheet)
 
 static int update_sheet_from_matrix (Spreadsheet *sheet)
 {
-    gchar tmpstr[32];
+    gchar tmpstr[48];
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkListStore *store;
     GtkTreeIter iter;
-    int i, j, resize = 0;
+    int i, j, resized = 0;
     double x;
     int err = 0;
 
@@ -1577,21 +1578,21 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	if (err) {
 	    return err;
 	}
-	resize = 1;
+	resized = 1;
     }
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<sheet->matrix->rows; i++) {
-	if (resize) {
+	int i1 = i + 1;
+
+	if (resized) {
 	    gtk_list_store_append(store, &iter);
-	}
-	if (resize || i >= sheet->datarows) {
-	    sprintf(tmpstr, "%d", i + 1);
+	    sprintf(tmpstr, "%d", i1);
 	    gtk_list_store_set(store, &iter, 0, tmpstr, -1);
-	}	    
-	for (j=0; j<sheet->datacols; j++) {
+	}
+	for (j=0; j<sheet->matrix->cols; j++) {
 	    x = gretl_matrix_get(sheet->matrix, i, j);
 	    if (x == -0.0) {
 		x = 0.0;
@@ -1599,30 +1600,41 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	    sprintf(tmpstr, "%.*g", MATRIX_DIGITS, x);
 	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
 	}
-	if (resize) {
-	    continue;
-	} else if (i < sheet->datarows) {
-	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
-	} else {
-	    gtk_list_store_append(store, &iter);
+	if (i1 < sheet->matrix->rows) {
+	    /* there are more rows to handle */
+	    if (resized) {
+		/* will be handled above on next iteration */
+		continue;
+	    } else if (i1 >= sheet->datarows) {
+		/* need to add another row */
+		gtk_list_store_append(store, &iter);
+		sprintf(tmpstr, "%d", i1 + 1);
+		gtk_list_store_set(store, &iter, 0, tmpstr, -1);
+	    } else {
+		/* row already present */
+		gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	    } 
 	}
     }
 
-    if (!resize) {
-	for (i=sheet->matrix->rows; i<sheet->datarows; i++) {
+    if (!resized && (sheet->datarows > sheet->matrix->rows)) {
+	int rdel = sheet->datarows - sheet->matrix->rows;
+
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	for (i=0; i<rdel; i++) {
 	    gtk_list_store_remove(store, &iter);
 	}
     }
 
     if (sheet->datarows != sheet->matrix->rows) {
 	sheet->datarows = sheet->matrix->rows;
-	resize = 1;
+	resized = 1;
     } 
 
     sheet_set_modified(sheet, TRUE);
     set_ok_transforms(sheet);
 
-    if (resize) {
+    if (resized) {
 	size_matrix_window(sheet);
     }
 

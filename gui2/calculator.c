@@ -2559,7 +2559,7 @@ static void make_nptest_tab (CalcChild *child, int idx)
 
     if (idx == NP_DIFF) {
 	gtk_widget_set_sensitive(tmp, FALSE);
-	desensitize_widget_from_check(test->radio[0], tmp);
+	desensitize_conditional_on(tmp, test->radio[0]);
     }
 }
 

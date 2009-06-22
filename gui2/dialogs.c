@@ -2334,9 +2334,7 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
 	gboolean ok = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(cb));
 
 	gtk_widget_set_sensitive(hbox, ok);
-	g_signal_connect(G_OBJECT(cb), "toggled", 
-			 G_CALLBACK(sensitize_widget_from_check), 
-			 hbox);
+	sensitize_conditional_on(hbox, cb);
     }    
 }
 
@@ -2493,9 +2491,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 			     G_CALLBACK(set_int_from_spinner), k);
 	    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
 	    gtk_widget_set_sensitive(spin, deflt == 3);
-	    g_signal_connect(G_OBJECT(button), "clicked",
-			     G_CALLBACK(sensitize_widget_from_check), 
-			     spin);
+	    sensitize_conditional_on(spin, button);
 	}
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
@@ -3082,7 +3078,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	    gtk_widget_set_sensitive(daymenu, FALSE);
 	}
 
-	sensitize_widget_from_check(button, daymenu);
+	sensitize_conditional_on(daymenu, button);
 	g_object_set_data(G_OBJECT(button), "daymenu", daymenu);
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);

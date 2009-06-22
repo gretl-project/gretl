@@ -2085,3 +2085,25 @@ int varname_match_any (const DATAINFO *pdinfo, const char *pattern)
 
     return ret;
 }
+
+/**
+ * get_column_widths:
+ * @strs: array of @n strings.
+ * @widths: array of @n default column widths.
+ * @n: number of columns.
+ *
+ * If need be, increases the column widths in @widths to
+ * accomodate the current translations of @strs.
+ */
+
+void get_column_widths (const char **strs, int *widths, int n)
+{
+    int i, len;
+
+    for (i=0; i<n; i++) {
+	len = g_utf8_strlen(_(strs[i]), -1);
+	if (len > widths[i]) {
+	    widths[i] = len;
+	}
+    }
+}

@@ -3172,7 +3172,7 @@ static int ivreg_weights_setup (nlspec *spec, const int *ilist,
 	if (V == NULL) {
 	    return E_ALLOC;
 	}
-	err = user_matrix_add(V, IVREG_WEIGHTNAME);
+	err = private_matrix_add(V, IVREG_WEIGHTNAME);
 	if (err) {
 	    gretl_matrix_free(V);
 	} else {

@@ -256,7 +256,7 @@ static void varinfo_callback (void)
 
 static void options_dialog_callback (void)
 {
-    options_dialog(0, NULL);
+    options_dialog(0, NULL, mdata->main);
 }
 
 static void new_function_pkg_callback (GtkAction *action, gpointer p)
@@ -1690,7 +1690,7 @@ int gretl_fork (const char *progvar, const char *arg)
 	errbox(err->message);
 	if (err->domain == G_SPAWN_ERROR &&
 	    err->code == G_SPAWN_ERROR_NOENT) {
-	    options_dialog(TAB_PROGS, progvar);
+	    options_dialog(TAB_PROGS, progvar, mdata->main);
 	}
 	g_error_free(err);
     }

@@ -930,7 +930,7 @@ double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
 }
 
 /* we're supposing a variance smaller than this is just noise */
-#define TINYVAR 1.0e-28
+#define TINYVAR 1.0e-36
 
 /**
  * gretl_moments:
@@ -3801,15 +3801,18 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
     return err;
 }
 
-static void printf15 (double zz, PRN *prn)
+static void printf15 (double x, PRN *prn)
 {
-    if (na(zz)) {
+    if (na(x)) {
 	pputc(prn, ' ');
-	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 15), 
-		_("NA"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 14), _("NA"));
     } else {
 	pputc(prn, ' ');
-	gretl_print_fullwidth_double(zz, 5, prn);	
+#if 1
+	pprintf(prn, "%#14.5g", x);
+#else
+	gretl_print_fullwidth_double(x, 5, prn);
+#endif	
     }
 }
 
@@ -3961,13 +3964,19 @@ void print_summary (const Summary *summ,
     pputc(prn, '\n');
 
     if (summ->opt & OPT_S) {
+	const char *h[] = {
+	    N_("Mean"),
+	    N_("Minimum"),
+	    N_("Maximum"),
+	    N_("Std. Dev.")
+	};
+
 	/* the "simple" option */
-	pprintf(prn, "%-*s", len + 6, " ");
-	pprintf(prn, "%-*s", 15, _("Mean"));
-	pprintf(prn, "%-*s", 15, _("Minimum"));
-	pprintf(prn, "%-*s", 15, _("Maximum"));
-	pprintf(prn, "%-*s", 15, _("Std. Dev."));
-	pputs(prn, "\n");
+	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
+		UTF_WIDTH(_(h[0]), 15), _(h[0]),
+		UTF_WIDTH(_(h[0]), 15), _(h[1]),
+		UTF_WIDTH(_(h[0]), 15), _(h[2]),
+		UTF_WIDTH(_(h[0]), 15), _(h[3]));
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i + 1];
@@ -3978,55 +3987,63 @@ void print_summary (const Summary *summ,
 	    printf15(summ->sd[i], prn);
 	    pputc(prn, '\n');
 	}
+    } else {
+	const char *ha[] = {
+	    N_("Mean"),
+	    N_("Median"),
+	    N_("Minimum"),
+	    N_("Maximum"),
+	};
+	const char *hb[] = {
+	    N_("Std. Dev."),
+	    N_("C.V."),
+	    N_("Skewness"),
+	    N_("Ex. kurtosis")
+	};
 
-	pputs(prn, "\n\n");
-	return;
-    }
+	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
+		UTF_WIDTH(_(ha[0]), 15), _(ha[0]),
+		UTF_WIDTH(_(ha[1]), 15), _(ha[1]),
+		UTF_WIDTH(_(ha[2]), 15), _(ha[2]),
+		UTF_WIDTH(_(ha[3]), 15), _(ha[3]));
 
-    pprintf(prn, "%-*s", len + 6, " ");
-    pprintf(prn, "%-*s", 15, _("Mean"));
-    pprintf(prn, "%-*s", 15, _("Median"));
-    pprintf(prn, "%-*s", 15, _("Minimum"));
-    pprintf(prn, "%-*s", 15, _("Maximum"));
-    pputs(prn, "\n");
-
-    for (i=0; i<summ->list[0]; i++) {
-	vi = summ->list[i + 1];
-	pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
-	printf15(summ->mean[i], prn);
-	printf15(summ->median[i], prn);
-	printf15(summ->low[i], prn);
-	printf15(summ->high[i], prn);
+	for (i=0; i<summ->list[0]; i++) {
+	    vi = summ->list[i + 1];
+	    pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
+	    printf15(summ->mean[i], prn);
+	    printf15(summ->median[i], prn);
+	    printf15(summ->low[i], prn);
+	    printf15(summ->high[i], prn);
+	    pputc(prn, '\n');
+	}
 	pputc(prn, '\n');
-    }
-    pputc(prn, '\n');
 
-    pprintf(prn, "%-*s", len + 6, " ");
-    pprintf(prn, "%-*s", 15, _("Std. Dev."));
-    pprintf(prn, "%-*s", 15, _("C.V."));
-    pprintf(prn, "%-*s", 15, _("Skewness"));
-    pprintf(prn, "%-*s", 15, _("Ex. kurtosis"));
-    pputs(prn, "\n");    
+	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
+		UTF_WIDTH(_(hb[0]), 15), _(hb[0]),
+		UTF_WIDTH(_(hb[1]), 15), _(hb[1]),
+		UTF_WIDTH(_(hb[2]), 15), _(hb[2]),
+		UTF_WIDTH(_(hb[3]), 15), _(hb[3]));
 
-    for (i=0; i<summ->list[0]; i++) {
-	double cv;
+	for (i=0; i<summ->list[0]; i++) {
+	    double cv;
 
-	vi = summ->list[i + 1];
-	pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
+	    vi = summ->list[i + 1];
+	    pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
 
-	if (floateq(summ->mean[i], 0.0)) {
-	    cv = NADBL;
-	} else if (floateq(summ->sd[i], 0.0)) {
-	    cv = 0.0;
-	} else {
-	    cv = fabs(summ->sd[i] / summ->mean[i]);
-	} 
+	    if (floateq(summ->mean[i], 0.0)) {
+		cv = NADBL;
+	    } else if (floateq(summ->sd[i], 0.0)) {
+		cv = 0.0;
+	    } else {
+		cv = fabs(summ->sd[i] / summ->mean[i]);
+	    } 
 
-	printf15(summ->sd[i], prn);
-	printf15(cv, prn);
-	printf15(summ->skew[i], prn);
-	printf15(summ->xkurt[i], prn);
-	pputc(prn, '\n');
+	    printf15(summ->sd[i], prn);
+	    printf15(cv, prn);
+	    printf15(summ->skew[i], prn);
+	    printf15(summ->xkurt[i], prn);
+	    pputc(prn, '\n');
+	}
     }
 
     pputc(prn, '\n');

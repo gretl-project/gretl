@@ -3341,13 +3341,16 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 		pprintf(prn, "%s\n", _("Not positive definite"));
 	    }
 	    gretl_matrix_copy_values(A, m);
+	    err = 0;
 	    evals = gretl_symmetric_matrix_eigenvals(A, 0, &err);
 	}
     } 
 
     if (s > 0 && (s != GRETL_MATRIX_SYMMETRIC || evals == NULL)) {
+	gretl_matrix_free(A);
 	A = gretl_matrix_copy(m);
 	if (A != NULL) {
+	    err = 0;
 	    evals = gretl_general_matrix_eigenvals(A, 0, &err);
 	}
     }

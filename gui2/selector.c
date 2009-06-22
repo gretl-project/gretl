@@ -3964,9 +3964,9 @@ static void build_arma_spinners (selector *sr)
     }
 }
 
-static void hc_config (GtkWidget *w, gpointer p)
+static void hc_config (GtkWidget *w, selector *sr)
 {
-    options_dialog(TAB_VCV, NULL);
+    options_dialog(TAB_VCV, NULL, sr->dlg);
 }
 
 static void pack_switch (GtkWidget *b, selector *sr,
@@ -4154,11 +4154,7 @@ static void build_selector_switches (selector *sr)
 	    g_signal_connect(G_OBJECT(b2), "clicked",
 			     G_CALLBACK(hc_config), sr);
 	    gtk_widget_set_sensitive(b2, using_hc_by_default());
-
-	    g_signal_connect(G_OBJECT(b1), "toggled",
-			     G_CALLBACK(sensitize_widget_from_check), 
-			     b2);	
-
+	    sensitize_conditional_on(b2, b1);
 	    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
 	    gtk_widget_show(b2);
 	}
@@ -4381,7 +4377,7 @@ static void build_quantreg_radios (selector *sr)
     sr->extra[1] = alpha_spinner(0.90, 0.70);
     pack_switch_with_extra(b2, sr, FALSE, OPT_I, 0, sr->extra[1], "1 - α =");
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
-    sensitize_widget_from_check(b2, sr->extra[1]);
+    sensitize_conditional_on(sr->extra[1], b2);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;

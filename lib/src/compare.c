@@ -355,10 +355,31 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     } 
 
     if (verbosity > 0 && stat_ok) {
-	pputs(prn, _("\n  Null hypothesis: the regression parameters are "
-		     "zero for the variables\n\n"));
-	for (i=1; i<=diffvars[0]; i++) {
-	    pprintf(prn, "    %s\n", pdinfo->varname[diffvars[i]]);	
+	if (diffvars[0] == 1) {
+	    pputs(prn, "\n  ");
+	    pprintf(prn, "%s: the regression parameter is zero for %s\n", 
+		    _("Null hypothesis"), pdinfo->varname[diffvars[1]]);
+	} else {
+	    const char *vname;
+	    int nc = 0;
+
+	    pputs(prn, _("\n  Null hypothesis: the regression parameters are "
+			 "zero for the variables\n"));
+	    pputs(prn, "    ");
+	    for (i=1; i<=diffvars[0]; i++) {
+		vname = pdinfo->varname[diffvars[i]];
+		nc += strlen(vname) + 2;
+		pprintf(prn, "%s", vname);
+		if (i < diffvars[0]) {
+		    if (nc > 60) {
+			pputs(prn, ",\n    ");
+			nc = 0;
+		    } else {
+			pputs(prn, ", ");
+		    }
+		}
+	    }
+	    pputc(prn, '\n');
 	}
     }
 
@@ -373,8 +394,11 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     /* printout, if wanted */
 
     if (verbosity > 0) {
+	if (diffvars[0] > 1 || statcode == GRETL_STAT_WALD_CHISQ) {
+	    pputc(prn, '\n');
+	}
 	if (statcode == GRETL_STAT_WALD_CHISQ) {
-	    pprintf(prn, "\n  %s:\n    %s(%d) = %g, ",  _("Asymptotic test statistic"),
+	    pprintf(prn, "  %s:\n    %s(%d) = %g, ",  _("Asymptotic test statistic"),
 		    _("Wald chi-square"), cmp->dfn, testval);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
 	    if (verbosity <= 1) {
@@ -389,14 +413,14 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 		pprintf(prn, _("with p-value = %g\n"), pval);
 	    }
 	} else if (statcode == GRETL_STAT_LR) {
-	    pprintf(prn, "\n  %s:\n    %s(%d) = %g, ",  _("Likelihood ratio test"),
+	    pprintf(prn, "  %s:\n    %s(%d) = %g, ",  _("Likelihood ratio test"),
 		    _("Chi-square"), cmp->dfn, cmp->LR);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
 	    if (verbosity <= 1) {
 		pputc(prn, '\n');
 	    }
 	} else if (statcode == GRETL_STAT_F) {
-	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+	    pprintf(prn, "  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		    (cmp->robust)? _("Robust F") : "F",
 		    cmp->dfn, cmp->dfd, cmp->F);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
@@ -436,14 +460,18 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	maybe_add_test_to_model(newmod, test);
     }
 
-    if (verbosity > 1 && cmp->score >= 0) {
-	pputc(prn, '\n');
-	pprintf(prn, _("  Of the %d model selection statistics, %d "), 
-		C_MAX, cmp->score);
-	if (cmp->score == 1) {
-	    pputs(prn, _("has improved.\n"));
+    if (verbosity > 1) {
+	if (cmp->score >= 0) {
+	    pprintf(prn, _("  Of the %d model selection statistics, %d "), 
+		    C_MAX, cmp->score);
+	    if (cmp->score == 1) {
+		pputs(prn, _("has improved.\n"));
+		pputc(prn, '\n');
+	    } else {
+		pputs(prn, _("have improved.\n\n"));
+	    }
 	} else {
-	    pputs(prn, _("have improved.\n\n"));
+	    pputc(prn, '\n');
 	}
     }
 }
