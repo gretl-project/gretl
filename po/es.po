@@ -11787,7 +11787,8 @@ msgstr "gretl: añadir escalar"
 msgid "standardized residual"
 msgstr "residuos estandarizados"
 
-#: gui2/library.c:5013, c-format
+#: gui2/library.c:5013
+#, c-format
 msgid "predicted %s"
 msgstr "predicción de %s"
 
