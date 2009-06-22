@@ -364,6 +364,19 @@ static void clear_tramo_files (const char *tpath, const char *varname)
     gretl_remove(tfname);
 }
 
+static void clear_x12a_files (const char *xpath, const char *varname)
+{
+    char xfname[MAXLEN];
+
+    sprintf(xfname, "%s%c%s.out", xpath, SLASH, varname);
+    fprintf(stderr, "removing '%s'\n", xfname);
+    gretl_remove(xfname);
+
+    sprintf(xfname, "%s%c%s.err", xpath, SLASH, varname);
+    fprintf(stderr, "removing '%s'\n", xfname);
+    gretl_remove(xfname);
+}
+
 static int add_series_from_file (const char *fname, int code,
 				 double **Z, DATAINFO *pdinfo,
 				 int v, int opt, char *errmsg)
@@ -835,16 +848,17 @@ int write_tx_data (char *fname, int varnum,
 	}
     }
 
-    /* now run the program(s) */
+    /* now run the program(s): we try to ensure that any
+       old output files get deleted first 
+    */
 
     if (request.code == X12A) {
+	clear_x12a_files(workdir, varname);
 	err = helper_spawn(prog, varname, workdir, X12A);
     } else { 
 	char seats[MAXLEN];
 
-	/* ensure any stale files get deleted first, just in case */
 	clear_tramo_files(workdir, varname);
-
 	err = helper_spawn(prog, varname, workdir, TRAMO_ONLY);
 
 	if (!err && request.code == TRAMO_SEATS) {
