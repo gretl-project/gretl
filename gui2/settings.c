@@ -295,7 +295,11 @@ const char *get_scriptpage (void)
 
 int autoicon_on (void)
 {
-    return autoicon;
+    if (datainfo != NULL && datainfo->v > 0) {
+	return autoicon;
+    } else {
+	return 0;
+    }
 }
 
 static gretlopt set_paths_opt = OPT_X;

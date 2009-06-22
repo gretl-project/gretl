@@ -654,7 +654,7 @@ void save_output_as_text_icon (windata_t *vwin)
 	    SESSION_TEXT * text = get_session_text_by_name(tname);
 
 	    session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
-    } else if (autoicon_on()) {
+    } else if (datainfo != NULL && datainfo->v > 0 && autoicon_on()) {
 	view_session(NULL);
     }
 }
