@@ -13,6 +13,7 @@ lib/src/dbwrite.c
 lib/src/describe.c
 lib/src/discrete.c
 lib/src/estimate.c
+lib/src/flow_control.c
 lib/src/forecast.c
 lib/src/geneval.c
 lib/src/genfuncs.c
@@ -37,6 +38,7 @@ lib/src/gretl_prn.c
 lib/src/gretl_restrict.c
 lib/src/gretl_scalar.c
 lib/src/gretl_string_table.c
+lib/src/gretl_untar.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
 lib/src/gretl_www.c
@@ -119,6 +121,7 @@ gui2/toolbar.c
 gui2/treeutils.c
 gui2/update.c
 gui2/winstack.c
+plugin/anova.c
 plugin/arbond.c
 plugin/arma.c
 plugin/arma_common.c
