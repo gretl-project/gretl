@@ -3947,15 +3947,7 @@ void print_summary (const Summary *summ,
 	}
     }
 
-    len = (maxlen <= 8)? 10 : maxlen + 1;
-
-    if (len > 14) {
-	/* printout gets broken with excessively long varnames */
-	for (i=0; i<summ->list[0]; i++) {
-	    print_summary_single(summ, i, pdinfo, prn);
-	}
-	return;
-    }
+    len = (maxlen <= 8)? 10 : (maxlen + 1);
 
     if (!(summ->opt & OPT_B)) {
 	prhdr(_("Summary statistics"), pdinfo, SUMMARY, summ->missing, prn);
@@ -3964,6 +3956,7 @@ void print_summary (const Summary *summ,
     pputc(prn, '\n');
 
     if (summ->opt & OPT_S) {
+	/* the "simple" option */
 	const char *h[] = {
 	    N_("Mean"),
 	    N_("Minimum"),
@@ -3971,7 +3964,6 @@ void print_summary (const Summary *summ,
 	    N_("Std. Dev.")
 	};
 
-	/* the "simple" option */
 	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
 		UTF_WIDTH(_(h[0]), 15), _(h[0]),
 		UTF_WIDTH(_(h[0]), 15), _(h[1]),
@@ -3988,6 +3980,7 @@ void print_summary (const Summary *summ,
 	    pputc(prn, '\n');
 	}
     } else {
+	/* print all available stats */
 	const char *ha[] = {
 	    N_("Mean"),
 	    N_("Median"),
