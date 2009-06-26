@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.8.0cvs
+# Polish translation for gretl-1.8.1cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2009
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2009
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.8.0\n"
+"Project-Id-Version: gretl-1.8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-22 16:53-0400\n"
-"PO-Revision-Date: 2009-05-14 19:00-0400\n"
+"PO-Revision-Date: 2009-06-26 02:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -311,7 +311,6 @@ msgid "Null hypothesis"
 msgstr "Hipoteza zerowa"
 
 #: lib/src/compare.c:366
-#, fuzzy
 msgid ""
 "\n"
 "  Null hypothesis: the regression parameters are zero for the variables\n"
@@ -319,7 +318,6 @@ msgstr ""
 "\n"
 "  Hipoteza zerowa: parametry regresji dla wskazanych zmiennych są równe "
 "zero\n"
-"\n"
 
 #: lib/src/compare.c:401 lib/src/gretl_model.c:3164
 msgid "Asymptotic test statistic"
@@ -1425,7 +1423,7 @@ msgstr "Błędne polecenie gnuplot\n"
 #: lib/src/describe.c:2155
 #, c-format
 msgid "Matrix %s does not represent a contingency table"
-msgstr ""
+msgstr "Macierz %s nie reprezentuje tablicy przypadków"
 
 #: lib/src/describe.c:2566 lib/src/describe.c:2634 lib/src/describe.c:2943
 #: lib/src/describe.c:2990
@@ -1679,9 +1677,8 @@ msgid "Between s.d."
 msgstr "Between s.d."
 
 #: lib/src/describe.c:3872 lib/src/describe.c:3961
-#, fuzzy
 msgid "Summary statistics"
-msgstr "_Statystyki opisowe"
+msgstr "Statystyki opisowe"
 
 #: lib/src/describe.c:3873
 #, c-format
@@ -2503,7 +2500,7 @@ msgstr "wyrównane"
 
 #: lib/src/graphing.c:2863
 msgid "actual = predicted"
-msgstr ""
+msgstr "empiryczne = prognozowane"
 
 #: lib/src/graphing.c:3372
 msgid "Test statistic for normality"
@@ -2802,9 +2799,8 @@ msgid "Maximum length of command line (8192 bytes) exceeded"
 msgstr "Maksymalna długość lini polecenia przekracza (8192 bajty)"
 
 #: lib/src/gretl_errors.c:75
-#, fuzzy
 msgid "Matrix is not positive definite"
-msgstr "Nie dodatnio określona"
+msgstr "Macierz jest niedodatnio określona"
 
 #: lib/src/gretl_errors.c:76
 msgid "Failed to calculate Jacobian"
@@ -3214,9 +3210,8 @@ msgstr ""
 "\n"
 
 #: lib/src/gretl_panel.c:2495
-#, fuzzy
 msgid "Hausman test matrix is not positive definite"
-msgstr "Nie dodatnio określona"
+msgstr "Test Hausmana - macierz jest niedodatnio określona"
 
 #: lib/src/gretl_panel.c:2707
 #, c-format
@@ -4286,9 +4281,8 @@ msgid "GARCH"
 msgstr "GARCH"
 
 #: lib/src/modelprint.c:679
-#, fuzzy
 msgid "Interval estimates"
-msgstr "Estymacja iteracyjna"
+msgstr "Estymacja przedziałowa"
 
 #: lib/src/modelprint.c:681
 msgid "Arellano--Bond"
@@ -4395,9 +4389,8 @@ msgid "ML Heckit"
 msgstr "ML Heckit"
 
 #: lib/src/modelprint.c:766
-#, fuzzy
 msgid "Quantile estimates"
-msgstr "Estymator kwantylowy z %g%% przedziałem ufności"
+msgstr "Estymator kwantylowy"
 
 #: lib/src/modelprint.c:772 lib/src/system.c:90
 msgid "LIML"
@@ -4667,7 +4660,7 @@ msgstr "n"
 #. TRANSLATORS: 'T' denotes time-series sample size
 #: lib/src/modelprint.c:1499
 msgid "T"
-msgstr ""
+msgstr "N"
 
 #: lib/src/modelprint.c:1556 lib/src/modelprint.c:1559
 #: lib/src/modelprint.c:1562 lib/src/system.c:3776 lib/src/system.c:3795
@@ -4680,23 +4673,23 @@ msgid "Model"
 msgstr "Model"
 
 #: lib/src/modelprint.c:1592 lib/src/modelprint.c:1606
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using observations %s%s%s"
-msgstr "%s, wykorzystane obserwacje %s - %s"
+msgstr "Estymacja %s, wykorzystane obserwacje %s%s%s"
 
 #: lib/src/modelprint.c:1601
 #, c-format
 msgid "%s, obs. %s%s%s"
-msgstr ""
+msgstr "%s, obs. %s%s%s"
 
 #: lib/src/modelprint.c:1625
 msgid "Missing or incomplete observations dropped"
 msgstr "Liczba pominiętych niekompletnych obserwacji"
 
 #: lib/src/modelprint.c:1634
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations"
-msgstr "Estymacja %s z wykorzystaniem %d obserwacji"
+msgstr "Estymacja %s, z wykorzystaniem %d obserwacji"
 
 #: lib/src/modelprint.c:1638
 #, c-format
@@ -5798,60 +5791,53 @@ msgid "list is empty"
 msgstr "Lista jest pusta"
 
 #: lib/src/printout.c:2359 gui2/guiprint.c:1146
-#, fuzzy
 msgid "Mean Error"
-msgstr "Błąd średniokwadratowy"
+msgstr "Średni błąd predykcji             ME ="
 
 #: lib/src/printout.c:2360 gui2/guiprint.c:1147
 msgid "Mean Squared Error"
-msgstr "Błąd średniokwadratowy"
+msgstr "Błąd średniokwadratowy           MSE ="
 
 #: lib/src/printout.c:2361 gui2/guiprint.c:1148
 msgid "Root Mean Squared Error"
-msgstr "Pierwiastek błędu średniokwadratowego"
+msgstr "Pierwiastek błędu średniokwadr. RMSE ="
 
 #: lib/src/printout.c:2362 gui2/guiprint.c:1149
 msgid "Mean Absolute Error"
-msgstr "średni absolutny błąd"
+msgstr "Średni błąd absolutny            MAE ="
 
 #: lib/src/printout.c:2363 gui2/guiprint.c:1150
-#, fuzzy
 msgid "Mean Percentage Error"
-msgstr "Błąd średniokwadratowy"
+msgstr "Średni błąd procentowy           MPE ="
 
 #: lib/src/printout.c:2364 gui2/guiprint.c:1151
-#, fuzzy
 msgid "Mean Absolute Percentage Error"
-msgstr "średni absolutny błąd"
+msgstr "Średni absolutny błąd procent.  MAPE ="
 
 #: lib/src/printout.c:2365
 msgid "Theil's U"
-msgstr ""
+msgstr "Współczynnik Theila (w procentach) I ="
 
 #: lib/src/printout.c:2366
-#, fuzzy
 msgid "Bias proportion, UM"
-msgstr "proporcja"
+msgstr "Obciążoność predykcji,          I1^2 ="
 
 #: lib/src/printout.c:2367
-#, fuzzy
 msgid "Regression proportion, UR"
-msgstr "Wyniki regresji"
+msgstr "Niedost.elastyczność predykcji, I2^2 ="
 
 #: lib/src/printout.c:2368
-#, fuzzy
 msgid "Disturbance proportion, UD"
-msgstr "proporcja z próby"
+msgstr "Niezgodność kierunku predykcji, I3^2 ="
 
 #: lib/src/printout.c:2406 gui2/guiprint.c:1175
-#, fuzzy
 msgid "Forecast evaluation statistics"
-msgstr "gretl: statystyki dla średnich-przedziałowych"
+msgstr "Miary dokładności prognoz ex post"
 
 #: lib/src/printout.c:2488
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr ""
-"Objaśnienie: * oznacza resztę przekraczajacą 2.5 raza błąd standardowy "
+"Objaśnienie: * oznacza resztę przekraczajacą 2.5 razy błąd standardowy "
 "reszt\n"
 
 #: lib/src/printout.c:2545
@@ -10208,9 +10194,8 @@ msgid "High _precision OLS..."
 msgstr "MNK _wysokiej precyzji..."
 
 #: gui2/gretl.c:1480
-#, fuzzy
 msgid "ANOVA..."
-msgstr "Analiza wariancji ANOVA"
+msgstr "Analiza wariancji ANOVA..."
 
 #: gui2/gretl.c:1481
 msgid "_Time series"
@@ -10530,21 +10515,19 @@ msgstr ""
 
 #: gui2/guiprint.c:1152
 msgid "Theil's $U$"
-msgstr ""
+msgstr "Współczynnik Theila $I$"
 
 #: gui2/guiprint.c:1153
-#, fuzzy
 msgid "Bias proportion, $U^M$"
-msgstr "H0: proporcja ="
+msgstr "Obciążoność predykcji, $I1^2$"
 
 #: gui2/guiprint.c:1154
 msgid "Regression proportion, $U^R$"
-msgstr ""
+msgstr "Niedostateczna elastyczność predykcji, $I2^2$"
 
 #: gui2/guiprint.c:1155
-#, fuzzy
 msgid "Disturbance proportion, $U^D$"
-msgstr "proporcja z próby"
+msgstr "Niezgodnoć kierunku predykcji, $I3^2$"
 
 #: gui2/guiprint.c:1210 gui2/guiprint.c:1228
 msgid "Model estimation range:"
@@ -11009,9 +10992,8 @@ msgid "_Against %s"
 msgstr "względem %s"
 
 #: gui2/gui_utils.c:2307
-#, fuzzy
 msgid "Actual vs. Fitted"
-msgstr "Empiryczne i wyrównane wartości zmiennej: %s"
+msgstr "Empiryczne i wyrównane wartości zmiennej"
 
 #: gui2/gui_utils.c:2317
 msgid "Residual _correlogram"
@@ -11776,9 +11758,9 @@ msgid "standardized residual"
 msgstr "standaryzowane reszty"
 
 #: gui2/library.c:5043
-#, fuzzy, c-format
+#, c-format
 msgid "predicted %s"
-msgstr "wartości predyktora"
+msgstr "wartości predyktora %s"
 
 #: gui2/library.c:5318
 msgid "Can't delete a variable when in sub-sample mode\n"
@@ -11929,9 +11911,8 @@ msgid "Descending"
 msgstr "Malejąco"
 
 #: gui2/library.c:6272
-#, fuzzy
 msgid "Select sort key"
-msgstr "Wybór koloru"
+msgstr "Wybór klucza sortowania"
 
 #: gui2/library.c:6292
 msgid "resample dataset"
@@ -12329,9 +12310,8 @@ msgid "You must specify an upper bound variable"
 msgstr "Należy wybrać górną granicę zmiennej"
 
 #: gui2/selector.c:2520
-#, fuzzy
 msgid "You must specify a treatment variable"
-msgstr "Należy wyspecyfikować zmienne - instrumenty"
+msgstr "Należy wyspecyfikować zmienne - treatment"
 
 #: gui2/selector.c:2656
 msgid "You must select a Z-axis variable"
@@ -12442,9 +12422,8 @@ msgid "Y-axis variable"
 msgstr "Zmienna dla osi Y"
 
 #: gui2/selector.c:3002
-#, fuzzy
 msgid "Treatment variable"
-msgstr "gretl: nazwa zmiennej"
+msgstr "Treatment variable"
 
 #: gui2/selector.c:3013 gui2/selector.c:4933
 msgid "Y-axis variables"
@@ -12463,9 +12442,8 @@ msgid "Lower bound variable"
 msgstr "Dolna granica zmiennej"
 
 #: gui2/selector.c:3166
-#, fuzzy
 msgid "Response variable"
-msgstr "Zmienna zależna"
+msgstr "Zmienna - odpowiedź"
 
 #: gui2/selector.c:3176 gui2/selector.c:3223
 msgid "Choose ->"
@@ -12512,9 +12490,8 @@ msgid "Control variable"
 msgstr "Zmienna kontrolna"
 
 #: gui2/selector.c:3380
-#, fuzzy
 msgid "Block variable (optional)"
-msgstr "Wybór zmiennych do testu dodanych zmiennych (add vars)"
+msgstr "Blok zmiennych (opcjonalnie)"
 
 #: gui2/selector.c:3427
 msgid "Add ->"
@@ -13944,27 +13921,25 @@ msgid "No new files"
 msgstr "Brak nowych plików"
 
 #: plugin/anova.c:106 plugin/anova.c:108
-#, fuzzy
 msgid "Treatment"
-msgstr "Test śladu"
+msgstr "Treatment"
 
 #: plugin/anova.c:117 plugin/anova.c:119
-#, fuzzy
 msgid "Block"
-msgstr "Wstecz"
+msgstr "Blok"
 
 #: plugin/anova.c:191 plugin/anova.c:201
 msgid "Level"
-msgstr ""
+msgstr "Poziom"
 
 #: plugin/anova.c:216
 msgid "Grand mean"
-msgstr ""
+msgstr "Grand mean"
 
 #: plugin/anova.c:501
 #, c-format
 msgid "%s, response = %s, treatment = %s:"
-msgstr ""
+msgstr "%s, response = %s, treatment = %s:"
 
 #: plugin/arma.c:2221 plugin/arma.c:2224
 msgid "ARMA initialization"
@@ -14107,9 +14082,8 @@ msgid "Error estimating Hurst exponent model\n"
 msgstr "Błąd w szacowaniu wykładnika Hursta\n"
 
 #: plugin/fractals.c:267
-#, fuzzy
 msgid "Intercept"
-msgstr "Macierz odwrotna"
+msgstr "Stała"
 
 #: plugin/fractals.c:268
 msgid "coeff"
@@ -14795,52 +14769,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "Intercept %12.6g   %g\n"
-#~ msgstr "Stała      %12.6g   %g\n"
-
-#~ msgid "Slope     %12.6g   %g\n"
-#~ msgstr "Nachylenie %12.6g   %g\n"
-
-#~ msgid "Interval"
-#~ msgstr "Interval"
-
-#~ msgid "Quantile"
-#~ msgstr "Kwantylowa"
-
-#~ msgid ""
-#~ "R-squared is computed as the square of the correlation between observed "
-#~ "and\n"
-#~ "fitted values of the dependent variable"
-#~ msgstr ""
-#~ "R-kwadrat jest szacowane jako kwadrat współczynnika korelacji pomiędzy\n"
-#~ "obserwacjami a wartściami wyrównanymi dla zmiennej zależnej"
-
-#~ msgid "Summary Statistics"
-#~ msgstr "Statystyki opisowe"
-
-#~ msgid ""
-#~ "      MEAN           MEDIAN           MIN             MAX\n"
-#~ "\n"
-#~ msgstr ""
-#~ "      ŚREDNIA        MEDIANA          MINIMALNA       MAKSYMALNA\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "      S.D.            C.V.            SKEW          EXCSKURT\n"
-#~ "\n"
-#~ msgstr ""
-#~ "      ODCH.STAND.     WSP.ZMIEN.      SKOŚNOŚĆ       KURTOZA\n"
-#~ "\n"
-
-#~ msgid "Error attempting to invert vcv difference matrix\n"
-#~ msgstr "Błąd przy próbie odwrócenia macierzy różnic VCV\n"
-
-#~ msgid "%s estimates using the %d observations %s%s%s"
-#~ msgstr "Estymacja %s z wykorzystaniem %d obserwacji %s%s%s"
-
-#~ msgid "%s estimates %s%s%s (T = %d)"
-#~ msgstr "Estymacja %s dla obserwacji %s%s%s (T = %d)"
-
-#~ msgid "%s estimates using %d observations from %s%s%s"
-#~ msgstr "Estymacja %s z wykorzystaniem %d obserwacji %s%s%s"

@@ -83,8 +83,7 @@ typedef struct gui_obj_ gui_obj;
 
 enum {
     SESSION_CHANGED  = 1 << 0,
-    SESSION_SAVED    = 1 << 1,
-    SESSION_EMBEDDED = 1 << 2
+    SESSION_SAVED    = 1 << 1
 };
 
 struct SESSION_ {
@@ -2955,9 +2954,6 @@ static void session_build_popups (void)
     if (global_popup == NULL) {
 	global_popup = gtk_menu_new();
 	n = G_N_ELEMENTS(global_items);
-	if (session.status & SESSION_EMBEDDED) {
-	    n--;
-	}
 	for (i=0; i<n; i++) {
 	    create_pop_item(global_popup, _(global_items[i]), 
 			    global_popup_callback);
@@ -3086,26 +3082,17 @@ void view_session (GtkWidget *parent)
     gchar *title;
 
     if (iconview != NULL) {
-	if (parent == NULL) {
-	    gtk_window_present(GTK_WINDOW(iconview));
-	}
+	gtk_window_present(GTK_WINDOW(iconview));
 	return;
     }
 
     session_view_init();
 
-    if (parent == NULL) {
-	iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	title = g_strdup_printf("gretl: %s", _("icon view"));
-	gtk_window_set_title(GTK_WINDOW(iconview), title);
-	g_free(title);
-	gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
-	session.status &= ~SESSION_EMBEDDED;
-    } else {
-	iconview = gtk_vbox_new(FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(parent), iconview, TRUE, TRUE, 0);
-	session.status |= SESSION_EMBEDDED;
-    }
+    iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    title = g_strdup_printf("gretl: %s", _("icon view"));
+    gtk_window_set_title(GTK_WINDOW(iconview), title);
+    g_free(title);
+    gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
 
     gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
     iconview_connect_signals(iconview);
