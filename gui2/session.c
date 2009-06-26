@@ -3125,8 +3125,8 @@ void view_session (GtkWidget *parent)
     gtk_widget_show(iconview);
 
     gtk_container_foreach(GTK_CONTAINER(scroller), 
-			 (GtkCallback) white_bg_style, 
-			 NULL);
+			  (GtkCallback) white_bg_style, 
+			  NULL);
 
     GTK_WIDGET_SET_FLAGS(icon_table, GTK_CAN_FOCUS);
     gtk_widget_grab_focus(icon_table);
@@ -3144,7 +3144,7 @@ static void make_short_label_string (char *targ, const char *src)
 
 static void create_gobj_icon (gui_obj *obj, const char **xpm)
 {
-    gchar str[SHOWNAMELEN + 1];
+    gchar str[2*SHOWNAMELEN];
     GdkPixbuf *pbuf;
     GtkWidget *image;
 
@@ -3183,6 +3183,10 @@ static gui_obj *gui_object_new (gchar *name, int sort, gpointer data)
     char **xpm = NULL;
 
     obj = mymalloc(sizeof *obj);
+    if (obj == NULL) {
+	return NULL;
+    }
+
     obj->name = name; 
     obj->sort = sort;
     obj->data = data;

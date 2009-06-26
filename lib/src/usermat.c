@@ -74,9 +74,8 @@ const char *get_matrix_name_by_index (int idx)
 
 static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
 {
-    user_matrix *u;
+    user_matrix *u = malloc(sizeof *u);
 
-    u = malloc(sizeof *u);
     if (u == NULL) {
 	return NULL;
     }
@@ -127,12 +126,13 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 				 int callback_ok)
 {
     user_matrix **tmp;
+    int n = n_matrices;
 
     if (M == NULL) {
 	return 0;
     }
 
-    tmp = realloc(matrices, (n_matrices + 1) * sizeof *tmp);
+    tmp = realloc(matrices, (n + 1) * sizeof *tmp);
     if (tmp == NULL) {
 	return E_ALLOC;
     } else {
@@ -149,9 +149,9 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 	M = Mcpy;
     }
 
-    matrices[n_matrices] = user_matrix_new(M, name);
+    matrices[n] = user_matrix_new(M, name);
 
-    if (matrices[n_matrices] == NULL) {
+    if (matrices[n] == NULL) {
 	return E_ALLOC;
     }
 
@@ -159,7 +159,7 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 
 #if MDEBUG
     fprintf(stderr, "add_user_matrix: allocated '%s' at %p (M at %p, %dx%d)\n",
-	    name, (void *) matrices[n_matrices-1], (void *) M,
+	    name, (void *) matrices[n], (void *) M,
 	    gretl_matrix_rows(M), gretl_matrix_cols(M));
 #endif
 
