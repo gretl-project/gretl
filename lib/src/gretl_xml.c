@@ -1102,6 +1102,8 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
     p = (const char *) tmp;
     p += strspn(p, " \r\n");
 
+    gretl_push_c_numeric_locale();
+
     for (i=0; i<rows && !*err; i++) {
 	for (j=0; j<cols && !*err; j++) {
 	    if (sscanf(p, "%lf", &x) != 1) {
@@ -1114,6 +1116,8 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 	    }
 	}
     }
+
+    gretl_pop_c_numeric_locale();
 
     free(tmp);
 
