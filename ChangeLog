@@ -14,7 +14,7 @@ version 1.8.2, in progress
 - xtab command: add --matrix option to take frequencies from
   a named matrix
 - add "anova" command plus GUI menu entry
-- Fix bug 2806815
+- Fix bugs 2806815, 2810219
 
 5/21/2009 version 1.8.1
 - Fix bugs 2533543, 2590417, 2604963, 2687954, 2734471, 
