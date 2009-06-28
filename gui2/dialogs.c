@@ -971,9 +971,12 @@ struct varinfo_settings {
     GtkWidget *compaction_menu;
     GtkWidget *spin;
     GtkWidget *check;
+    GtkWidget *up;
+    GtkWidget *down;
     int varnum;
     int formula;
     int full;
+    int preserve;
 };
 
 static int got_var_row (int v, gchar *s)
@@ -1182,7 +1185,9 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	}
     }
 
-    gtk_widget_destroy(vset->dlg);
+    if (!vset->preserve) {
+	gtk_widget_destroy(vset->dlg);
+    }
 }
 
 static void varinfo_cancel (GtkWidget *w, struct varinfo_settings *vset)
@@ -1234,7 +1239,119 @@ vset_toggle_formula (GtkComboBox *box, struct varinfo_settings *vset)
 
     vset->formula = !strcmp(s, _("Formula:"));
     g_free(s);
-}	    
+}
+
+/* can we go up and/or down a line in the main window? */
+
+static void sensitize_up_down_buttons (struct varinfo_settings *vset)
+{
+    GtkTreeModel *model = 
+	gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
+    GtkTreeIter iter;
+    gchar *idstr;
+    int vrow = 0;
+    int id, n = 1;
+
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    while (gtk_tree_model_iter_next(model, &iter)) {
+	if (vrow == 0) {
+	    gtk_tree_model_get(model, &iter, 0, &idstr, -1);
+	    id = atoi(idstr);
+	    g_free(idstr);
+	    if (id == vset->varnum) {
+		vrow = n;
+	    }
+	}
+	n++;
+    }
+
+    gtk_widget_set_sensitive(vset->up, vrow > 1);
+    gtk_widget_set_sensitive(vset->down, vrow < n - 1);
+}
+
+static void varinfo_insert_info (struct varinfo_settings *vset, int v)
+{
+    int is_parent;
+
+    vset->varnum = v;
+    is_parent = series_is_parent(datainfo, v);
+    vset->formula = (is_parent)? 0 : formula_ok(v);
+    gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
+		       datainfo->varname[v]);
+    gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
+		       VARLABEL(datainfo, v));
+    if (vset->display_name_entry != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(vset->display_name_entry), 
+			   DISPLAYNAME(datainfo, v));
+    }
+
+    if (vset->spin) { 
+	int w;
+
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
+				 COMPACT_METHOD(datainfo, v));
+	w = var_get_linewidth(datainfo, v);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vset->spin), w);
+    } 
+
+    if (vset->check != NULL) {
+	int d2, d1 = var_is_discrete(datainfo, v);
+
+	if (!d1) {
+	    d2 = gretl_isdiscrete(0, datainfo->n - 1, Z[v]);
+	}
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->check), d1);
+	gtk_widget_set_sensitive(vset->check, d1 || d2);
+    } 
+
+    sensitize_up_down_buttons(vset);
+}
+
+static int varinfo_get_new_var (struct varinfo_settings *vset,
+				gboolean up)
+{
+    GtkTreeModel *model = 
+	gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
+    GtkTreeIter iter;
+    gchar *idstr;
+    int newvar = 0;
+    int id, got = 0;
+
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    while (gtk_tree_model_iter_next(model, &iter)) {
+	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
+	id = atoi(idstr);
+	g_free(idstr);
+	if (got) {
+	    /* 'newvar' holds variable ID from next line */
+	    newvar = id;
+	    break;
+	}
+	if (id == vset->varnum) {
+	    if (up) {
+		/* 'newvar' holds variable ID from previous line */
+		break;
+	    } else {
+		got = 1;
+	    }
+	}
+	newvar = id;
+    }
+
+    return newvar;
+}
+
+static void varinfo_up_down (GtkButton *b, struct varinfo_settings *vset)
+{
+    int newvar = varinfo_get_new_var(vset, GTK_WIDGET(b) == vset->up);
+
+    vset->preserve = 1;
+    really_set_variable_info(GTK_WIDGET(b), vset);
+    vset->preserve = 0;
+    varinfo_insert_info(vset, newvar);
+}
 
 void varinfo_dialog (int varnum, int full)
 {
@@ -1264,7 +1381,9 @@ void varinfo_dialog (int varnum, int full)
     vset->compaction_menu = NULL;
     vset->spin = NULL;
     vset->check = NULL;
+    vset->up = vset->down = NULL;
     vset->full = full;
+    vset->preserve = 0;
 
     is_parent = series_is_parent(datainfo, varnum);
     vset->formula = (is_parent)? 0 : formula_ok(varnum);
@@ -1292,6 +1411,24 @@ void varinfo_dialog (int varnum, int full)
 	gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
     }
 
+    if (full) {
+	/* up and down arrows */
+	vset->up = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
+	gtk_box_pack_start(GTK_BOX(hbox), vset->up, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(vset->up), "clicked", 
+			 G_CALLBACK(varinfo_up_down), vset);
+	gtk_widget_show(vset->up); 
+
+	vset->down = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
+	gtk_box_pack_start(GTK_BOX(hbox), vset->down, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(vset->down), "clicked", 
+			 G_CALLBACK(varinfo_up_down), vset);
+	gtk_widget_show(vset->down); 
+	vset->down = vset->down;
+
+	sensitize_up_down_buttons(vset);
+    }
+    
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
@@ -1406,13 +1543,15 @@ void varinfo_dialog (int varnum, int full)
     }    
 
     /* mark variable as discrete or not? */
-    if (full && (var_is_discrete(datainfo, varnum) ||
-		 gretl_isint(0, datainfo->n - 1, Z[varnum]))) {
+    if (full) {
+	int d = var_is_discrete(datainfo, varnum);
+
 	hbox = gtk_hbox_new(FALSE, 5);
 	vset->check = gtk_check_button_new_with_label(_("Treat this variable "
 							"as discrete"));
-	if (var_is_discrete(datainfo, varnum)) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->check), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->check), d);
+	if (!d && !gretl_isdiscrete(0, datainfo->n - 1, Z[varnum])) {
+	    gtk_widget_set_sensitive(vset->check, FALSE);
 	}
 	gtk_widget_show(vset->check);
 	gtk_box_pack_start(GTK_BOX(hbox), vset->check, FALSE, FALSE, 5);
