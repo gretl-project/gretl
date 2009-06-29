@@ -99,7 +99,6 @@ static void set_up_sheet_column (GtkTreeViewColumn *column, gint width,
 static gint get_data_col_width (void);
 static int add_data_column (Spreadsheet *sheet);
 static void create_sheet_cell_renderers (Spreadsheet *sheet);
-static void set_dataset_locked (gboolean s);
 
 static void matrix_fill_callback (GtkAction *action, gpointer data);
 static void matrix_props_callback (GtkAction *action, gpointer data);
@@ -3415,7 +3414,7 @@ void edit_user_matrix_by_name (const char *name)
 
 static int locked;
 
-static void set_dataset_locked (gboolean s)
+void set_dataset_locked (gboolean s)
 {
     locked = s;
     flip(mdata->ui, "/MenuBar/Sample", !s);

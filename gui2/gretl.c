@@ -41,6 +41,7 @@
 #include "fnsave.h"
 #include "winstack.h"
 #include "datawiz.h"
+#include "varinfo.h"
 
 #include <dirent.h>
 

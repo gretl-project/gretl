@@ -374,6 +374,9 @@ int var_set_display_name (DATAINFO *pdinfo, int i,
 int var_set_description (DATAINFO *pdinfo, int i,
 			 const char *s); 
 
+int var_set_compact_method (DATAINFO *pdinfo, int i,
+			    int method);
+
 const char *var_get_graph_name (const DATAINFO *pdinfo, int i);
 
 unsigned int get_resampling_seed (void);

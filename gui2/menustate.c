@@ -24,6 +24,7 @@
 #include "guiprint.h"
 #include "ssheet.h"
 #include "selector.h"
+#include "varinfo.h"
 #include "menustate.h"
 
 void refresh_data (void)

@@ -2615,6 +2615,19 @@ int var_set_display_name (DATAINFO *pdinfo, int i,
     return 0;
 }
 
+int var_set_compact_method (DATAINFO *pdinfo, int i,
+			    int method) 
+{
+    int orig = COMPACT_METHOD(pdinfo, i);
+
+    if (method != orig) {
+	COMPACT_METHOD(pdinfo, i) = method;
+	set_dataset_is_changed();
+    }
+
+    return 0;
+}
+
 const char *var_get_graph_name (const DATAINFO *pdinfo, int i)
 {
     const char *ret = pdinfo->varname[i];

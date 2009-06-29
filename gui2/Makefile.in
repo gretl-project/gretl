@@ -145,6 +145,7 @@ SRCS = about.c \
 	toolbar.c \
 	treeutils.c \
 	update.c \
+	varinfo.c \
 	winstack.c
 
 OBJS = $(SRCS:.c=.o)

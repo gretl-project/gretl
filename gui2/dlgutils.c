@@ -209,6 +209,17 @@ GtkWidget *cancel_button (GtkWidget *hbox)
     return w;
 }
 
+GtkWidget *close_button (GtkWidget *hbox)
+{
+    GtkWidget *w;
+
+    w = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), w);
+
+    return w;
+}
+
 GtkWidget *next_button (GtkWidget *hbox)
 {
     GtkWidget *w;

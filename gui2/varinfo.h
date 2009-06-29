@@ -17,29 +17,9 @@
  * 
  */
 
-#ifndef SSHEET_H
-#define SSHEET_H
+#ifndef VARINFO_H
+#define VARINFO_H
 
-typedef enum {
-    SHEET_EDIT_VARLIST,
-    SHEET_EDIT_DATASET,
-    SHEET_NEW_DATASET,
-    SHEET_EDIT_MATRIX,
-    SHEET_EDIT_SCALARS
-} SheetCmd;
+void varinfo_dialog (int varnum, int full);
 
-void show_spreadsheet (SheetCmd c);
-
-void edit_scalars (void);
-
-void gui_new_matrix (void);
-
-void edit_user_matrix_by_name (const char *name);
-
-void set_dataset_locked (gboolean s);
-
-int dataset_locked (void);
-
-gint get_string_width (const gchar *str);
-
-#endif /* SSHEET_H */
+#endif /* VARINFO_H */

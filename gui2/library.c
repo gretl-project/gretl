@@ -53,6 +53,7 @@
 #include "database.h"
 #include "winstack.h"
 #include "guiprint.h"
+#include "varinfo.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>

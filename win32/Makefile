@@ -270,6 +270,7 @@ GUISRC = about.c \
 	toolbar.c \
 	treeutils.c \
 	update.c \
+	varinfo.c \
 	winstack.c
 
 GUIOBJ = $(GUISRC:.c=.o)

@@ -58,8 +58,6 @@ double gui_double_from_string (const char *str, int *err);
 
 int delimiter_dialog (gretlopt *optp);
 
-void varinfo_dialog (int varnum, int full);
-
 void rand_seed_dialog (void);
 
 void database_description_dialog (const char *binname);
