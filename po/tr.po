@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-22 16:53-0400\n"
-"PO-Revision-Date: 2009-06-23 10:02+0300\n"
+"PO-Revision-Date: 2009-06-29 14:15+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1407,7 +1407,7 @@ msgstr "gnuplot komutu başarısız\n"
 #: lib/src/describe.c:2155
 #, c-format
 msgid "Matrix %s does not represent a contingency table"
-msgstr ""
+msgstr "%s dizeyi bir olumsallık çizelgesi anlatmıyor"
 
 #: lib/src/describe.c:2566 lib/src/describe.c:2634 lib/src/describe.c:2943
 #: lib/src/describe.c:2990
@@ -2321,11 +2321,11 @@ msgstr "%s dizgisi oluşturuldu"
 
 #: lib/src/genmain.c:105
 msgid "missing values were generated"
-msgstr "eksik değerler ortaya çıktı"
+msgstr "eksik değerler oluştu"
 
 #: lib/src/genmain.c:106
 msgid "non-finite values were generated"
-msgstr "sonlu-dışı değerler üretildi"
+msgstr "sonlu-dışı değerler oluştu"
 
 #: lib/src/genmain.c:113
 msgid "Warning"
@@ -3983,7 +3983,7 @@ msgstr "Sayısal yöntemler"
 
 #: lib/src/libset.c:1266
 msgid "Random number generation"
-msgstr "Rastsal sayı üretimi"
+msgstr "Rastsal sayı oluşturma"
 
 #: lib/src/libset.c:1270
 msgid "Robust estimation"
@@ -4000,7 +4000,7 @@ msgstr "Zaman serisi"
 #: lib/src/libset.c:1450
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
-msgstr "Sahte-rastsal sayı üreteci %d ile tohumlandı\n"
+msgstr "Sahte-rastsal sayı oluşturucusu %d ile tohumlandı\n"
 
 #: lib/src/missing.c:816
 #, c-format
@@ -8102,7 +8102,7 @@ msgstr "birim ve zaman endeksi değişkenleri ayrı olmalıdır"
 
 #: gui2/datawiz.c:830
 msgid "The selected index variables do not represent a panel structure"
-msgstr "Seçili endeks değişkenleri bir panel yapısı göstermiyor"
+msgstr "Seçili endeks değişkenleri bir panel yapısı anlatmıyor"
 
 #: gui2/datawiz.c:921
 msgid "This dataset cannot be interpreted as a panel"
@@ -10443,7 +10443,7 @@ msgstr "Fzl.\\ basıklık"
 #: gui2/guiprint.c:958
 #, c-format
 msgid "Correlation coefficients, using the observations %s - %s"
-msgstr "İlinti katsayıları, %s - %s gözlemlerine dayalı"
+msgstr "İlinti katsayıları, kullanılan gözlemler: %s - %s"
 
 #: gui2/guiprint.c:969 gui2/guiprint.c:1063
 msgid "Coefficient covariance matrix"
@@ -11613,7 +11613,7 @@ msgstr "Veri seti gitti"
 
 #: gui2/library.c:4429
 msgid "Error generating covariance matrix"
-msgstr "Kovaryans dizeyi üretilirken bir hata oluştu"
+msgstr "Kovaryans dizeyi oluşturulurken bir hata oluştu"
 
 #: gui2/library.c:4432
 msgid "gretl: coefficient covariances"
@@ -11629,11 +11629,11 @@ msgstr ""
 
 #: gui2/library.c:4522
 msgid "Error generating time trend"
-msgstr "Zaman eğilimi üretilirken bir hata oluştu"
+msgstr "Zaman eğilimi oluşturulurken bir hata oluştu"
 
 #: gui2/library.c:4523
 msgid "Error generating index variable"
-msgstr "Endeks değişkeni üretilirken bir hata oluştu"
+msgstr "Endeks değişkeni oluşturulurken bir hata oluştu"
 
 #: gui2/library.c:4559
 #, c-format
@@ -11670,7 +11670,7 @@ msgstr "Değişkenleri kukla olarak kodlama"
 
 #: gui2/library.c:4613
 msgid "gretl: generate lags"
-msgstr "gretl: gecikme üret"
+msgstr "gretl: gecikme oluştur"
 
 #: gui2/library.c:4614
 msgid "Number of lags to create:"
