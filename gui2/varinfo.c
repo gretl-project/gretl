@@ -374,6 +374,7 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
 
     if (!is_parent && formula_ok(v)) {
 	gtk_widget_hide(vset->label_label);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->label_combo), 0);
 	gtk_widget_show(vset->label_combo);
     } else {
 	gtk_widget_hide(vset->label_combo);
