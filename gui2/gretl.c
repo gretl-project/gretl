@@ -64,6 +64,7 @@ extern int update_query (void);
 
 /* functions private to gretl.c */
 static GtkWidget *make_main_window (void);
+
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
 static int set_up_main_menu (void);
@@ -689,8 +690,6 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
     }
 }
 
-#if MAIN_SHOW_CONST
-
 /* if a keystroke would take us to row 0 (e.g. page up), countermand
    and go to row 1 instead
 */
@@ -714,8 +713,6 @@ static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
 	gtk_tree_path_free(path);
     }
 }
-
-#endif
 
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
@@ -834,25 +831,20 @@ static void mdata_select_all (void)
 static int get_line_pos (GtkTreeModel *mod)
 {
     GtkTreeIter iter;
-    gboolean got;
     gchar *idstr;
-    int i, pos = -1;
+    int i = 1, pos = 0;
 
-    for (i=0; pos<0; i++) {
-	if (i == 0) {
-	    got = gtk_tree_model_get_iter_first(mod, &iter);
-	} else {
-	    got = gtk_tree_model_iter_next(mod, &iter);
-	}
-	if (!got) {
-	    break;
-	}
-	gtk_tree_model_get(mod, &iter, 0, &idstr, -1);
-	if (idstr != NULL) {
-	    if (atoi(idstr) == mdata->active_var) {
+    if (gtk_tree_model_get_iter_first(mod, &iter)) {
+	while (gtk_tree_model_iter_next(mod, &iter)) {
+	    gtk_tree_model_get(mod, &iter, 0, &idstr, -1);
+	    if (idstr != NULL && atoi(idstr) == mdata->active_var) {
 		pos = i;
 	    }
 	    g_free(idstr);
+	    if (pos) {
+		break;
+	    }
+	    i++;
 	}
     }
 
@@ -867,7 +859,8 @@ void populate_varlist (void)
     GtkTreeSelection *select;
     GtkTreeIter iter;    
     char id[8];
-    int i, pos = -1;
+    int pos = 0;
+    int i;
 
     store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
 
@@ -877,11 +870,10 @@ void populate_varlist (void)
     }
     
     gtk_tree_store_clear(store);
-    /* sort_varlist(); */
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    for (i=1; i<datainfo->v; i++) {
+    for (i=0; i<datainfo->v; i++) {
 	int pv = 0;
 
 	if (var_is_hidden(datainfo, i)) {
@@ -918,23 +910,26 @@ void populate_varlist (void)
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (pos < 0) {
-	/* no previous position */
-	pos = 0;
-    } else {
-	/* return to previous position, if possible */
-	GtkTreeIter prev;
+    if (pos == 0) {
+	/* no saved position */
+	pos = 1;
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+    } else {	
+	/* try to return to previous position */
+	GtkTreeIter last;
 
-	for (i=0; ; i++) {
-	    prev = iter;
+	i = 1;
+	while (1) {
+	    last = iter;
 	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
-		/* reached the end */
-		iter = prev;
+		/* reached the end! */
+		iter = last;
 		break;
 	    } else if (i == pos) {
-		/* found the old position */
+		/* found previous position */
 		break;
 	    }
+	    i++;
 	}
 	pos = i;
     } 
@@ -956,6 +951,9 @@ void populate_varlist (void)
 	g_signal_connect(G_OBJECT(select), "changed",
 			 G_CALLBACK(check_varmenu_state),
 			 mdata);
+	g_signal_connect(G_OBJECT(mdata->listbox), "cursor-changed",
+			 G_CALLBACK(mdata_avoid_zero),
+			 NULL);
 	check_connected = 1;
     }
 

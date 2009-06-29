@@ -334,21 +334,14 @@ static void sensitize_up_down_buttons (gui_varinfo *vset)
     GtkTreeModel *model = 
 	gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
     GtkTreeIter iter;
-    gboolean got;
     gchar *idstr;
-    int vrow = -1;
-    int id, n = 0;
+    int vrow = 0;
+    int id, n = 1;
 
-    for (n=0; ; n++) {
-	if (n == 0) {
-	    got = gtk_tree_model_get_iter_first(model, &iter);
-	} else {
-	    got = gtk_tree_model_iter_next(model, &iter);
-	}
-	if (!got) {
-	    break;
-	}
-	if (vrow < 0) {
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    while (gtk_tree_model_iter_next(model, &iter)) {
+	if (vrow == 0) {
 	    gtk_tree_model_get(model, &iter, 0, &idstr, -1);
 	    id = atoi(idstr);
 	    g_free(idstr);
@@ -356,10 +349,11 @@ static void sensitize_up_down_buttons (gui_varinfo *vset)
 		vrow = n;
 	    }
 	}
+	n++;
     }
 
-    gtk_widget_set_sensitive(vset->up, vrow > 0);
-    gtk_widget_set_sensitive(vset->down, vrow < n);
+    gtk_widget_set_sensitive(vset->up, vrow > 1);
+    gtk_widget_set_sensitive(vset->down, vrow < n - 1);
 }
 
 /* On selecting a different variable via Up/Down, insert the
@@ -798,9 +792,3 @@ void maybe_reset_varinfo_dialog (void)
 	gtk_window_present(GTK_WINDOW(active_varinfo->dlg));
     }
 }
-
-
-
-
-
-
