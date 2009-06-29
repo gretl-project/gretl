@@ -31,6 +31,8 @@ enum {
     VSET_FORMULA  = 1 << 1
 };
 
+/* symbolic names for the things which can be set here */
+
 enum {
     VSET_VARNAME,
     VSET_LABEL,
@@ -45,6 +47,7 @@ typedef struct gui_varinfo_ gui_varinfo;
 
 struct gui_varinfo_ {
     int varnum;
+    int flags;
     GtkWidget *dlg;
     GtkWidget *name_entry;
     GtkWidget *label_combo;
@@ -57,15 +60,20 @@ struct gui_varinfo_ {
     GtkWidget *apply;
     GtkWidget *up;
     GtkWidget *down;
-    int flags;
     char changed[VSET_MAX];
 };
 
 #define varinfo_full(v)        (v->flags & VSET_FULL)
 #define varinfo_use_formula(v) (v->flags & VSET_FORMULA)
 
-static int formula_ok (int v);
-static void varinfo_set_unchanged (gui_varinfo *vset);
+static void varinfo_set_unchanged (gui_varinfo *vset)
+{
+    int i;
+
+    for (i=0; i<VSET_MAX; i++) {
+	vset->changed[i] = 0;
+    }
+}
 
 static void varinfo_init (gui_varinfo *vset, int v, int full)
 {
@@ -80,15 +88,6 @@ static void varinfo_init (gui_varinfo *vset, int v, int full)
     vset->up = vset->down = NULL;
     vset->apply = NULL;
     varinfo_set_unchanged(vset);
-}
-
-static void varinfo_set_unchanged (gui_varinfo *vset)
-{
-    int i;
-
-    for (i=0; i<VSET_MAX; i++) {
-	vset->changed[i] = 0;
-    }
 }
 
 /* see if anything has been changed via the varinfo dialog */
@@ -223,6 +222,14 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     int ival, v = vset->varnum;
     int err = 0;
 
+    if (!varinfo_any_changed(vset)) {
+	/* no-op */
+	if (w != vset->apply) {
+	    gtk_widget_destroy(vset->dlg);
+	}
+	return;
+    }
+
     if (vset->changed[VSET_VARNAME]) {
 	newstr = entry_get_trimmed_text(vset->name_entry);
 	err = do_rename_variable(v, newstr, varinfo_full(vset));
@@ -272,8 +279,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	    record_varlabel_change(v);
 	}
 	if (vset->changed[VSET_VARNAME] ||
-	    vset->changed[VSET_LABEL] ||
-	    vset->changed[VSET_DISPLAY]) {
+	    vset->changed[VSET_LABEL]) {
 	    show_varinfo_changes(v);
 	}
 	if (check_dataset_is_changed()) {
@@ -504,12 +510,19 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
     g_free(newstr);
 }
 
+/* Edit information for the variable with ID number @varnum.  If
+   @full is non-zero we're editing all available fields; if it's
+   zero that means we're just editing name and description for
+   a variable saved via the GUI (e.g. residual series from a
+   model).
+*/
+
 void varinfo_dialog (int varnum, int full)
 {
     GtkWidget *tmp, *hbox;
     gui_varinfo *vset;
     unsigned char flags;
-    int is_parent;
+    int is_parent = 0;
 
     if (maybe_raise_dialog()) {
 	return;
@@ -529,9 +542,11 @@ void varinfo_dialog (int varnum, int full)
     vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
     varinfo_init(vset, varnum, full);
 
-    is_parent = series_is_parent(datainfo, varnum);
-    if (!is_parent && formula_ok(varnum)) {
-	vset->flags |= VSET_FORMULA;
+    if (full) {
+	is_parent = series_is_parent(datainfo, varnum);
+	if (!is_parent && formula_ok(varnum)) {
+	    vset->flags |= VSET_FORMULA;
+	}
     }
 
     g_signal_connect(G_OBJECT(vset->dlg), "destroy", 
@@ -664,7 +679,7 @@ void varinfo_dialog (int varnum, int full)
 	gtk_widget_show(hbox); 
     }
 
-    /* read/set compaction method? */
+    /* read/set compaction method */
     if (full && dataset_is_time_series(datainfo)) {  
 	int i;
 
