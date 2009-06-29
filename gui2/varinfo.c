@@ -63,6 +63,8 @@ struct gui_varinfo_ {
     char changed[VSET_MAX];
 };
 
+static gui_varinfo *active_varinfo;
+
 #define varinfo_full(v)        (v->flags & VSET_FULL)
 #define varinfo_use_formula(v) (v->flags & VSET_FORMULA)
 
@@ -305,6 +307,7 @@ static void free_vsettings (GtkWidget *w, gui_varinfo *vset)
 {
     if (varinfo_full(vset)) {
 	set_dataset_locked(FALSE);
+	active_varinfo = NULL;
     }
     free(vset);
 }
@@ -331,14 +334,21 @@ static void sensitize_up_down_buttons (gui_varinfo *vset)
     GtkTreeModel *model = 
 	gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
     GtkTreeIter iter;
+    gboolean got;
     gchar *idstr;
-    int vrow = 0;
-    int id, n = 1;
+    int vrow = -1;
+    int id, n = 0;
 
-    gtk_tree_model_get_iter_first(model, &iter);
-
-    while (gtk_tree_model_iter_next(model, &iter)) {
-	if (vrow == 0) {
+    for (n=0; ; n++) {
+	if (n == 0) {
+	    got = gtk_tree_model_get_iter_first(model, &iter);
+	} else {
+	    got = gtk_tree_model_iter_next(model, &iter);
+	}
+	if (!got) {
+	    break;
+	}
+	if (vrow < 0) {
 	    gtk_tree_model_get(model, &iter, 0, &idstr, -1);
 	    id = atoi(idstr);
 	    g_free(idstr);
@@ -346,11 +356,10 @@ static void sensitize_up_down_buttons (gui_varinfo *vset)
 		vrow = n;
 	    }
 	}
-	n++;
     }
 
-    gtk_widget_set_sensitive(vset->up, vrow > 1);
-    gtk_widget_set_sensitive(vset->down, vrow < n - 1);
+    gtk_widget_set_sensitive(vset->up, vrow > 0);
+    gtk_widget_set_sensitive(vset->down, vrow < n);
 }
 
 /* On selecting a different variable via Up/Down, insert the
@@ -398,7 +407,7 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
     } 
 
     if (vset->discrete_check != NULL) {
-	int d2, d1 = var_is_discrete(datainfo, v);
+	int d2 = 0, d1 = var_is_discrete(datainfo, v);
 
 	if (!d1) {
 	    d2 = gretl_isdiscrete(0, datainfo->n - 1, Z[v]);
@@ -436,12 +445,13 @@ static int varinfo_get_new_var (gui_varinfo *vset, gboolean up)
 	    gtk_tree_path_next(path);
 	}
 
-	gtk_tree_model_get_iter(model, &iter, path);
-	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
-	id = atoi(idstr);
-	gtk_tree_view_set_cursor(view, path, NULL, FALSE);
+	if (gtk_tree_model_get_iter(model, &iter, path)) {
+	    gtk_tree_model_get(model, &iter, 0, &idstr, -1);
+	    id = atoi(idstr);
+	    g_free(idstr);
+	    gtk_tree_view_set_cursor(view, path, NULL, FALSE);
+	}
 	gtk_tree_path_free(path);
-	g_free(idstr);
     }
 
     return id;
@@ -451,9 +461,12 @@ static int varinfo_get_new_var (gui_varinfo *vset, gboolean up)
 
 static void varinfo_up_down (GtkButton *b, gui_varinfo *vset)
 {
-    int newvar = varinfo_get_new_var(vset, GTK_WIDGET(b) == vset->up);
+    gboolean up = (GTK_WIDGET(b) == vset->up);
+    int newvar = varinfo_get_new_var(vset, up);
 
-    varinfo_insert_info(vset, newvar);
+    if (newvar > 0) {
+	varinfo_insert_info(vset, newvar);
+    }
 }
 
 /* respond to the Apply button in varinfo dialog */
@@ -772,9 +785,18 @@ void varinfo_dialog (int varnum, int full)
     if (full) {
 	context_help_button(hbox, SETINFO);
 	set_dataset_locked(TRUE);
+	active_varinfo = vset;
     }
 
     gtk_widget_show(vset->dlg);
+}
+
+void maybe_reset_varinfo_dialog (void)
+{
+    if (active_varinfo != NULL) {
+	varinfo_insert_info(active_varinfo, mdata->active_var);
+	gtk_window_present(GTK_WINDOW(active_varinfo->dlg));
+    }
 }
 
 

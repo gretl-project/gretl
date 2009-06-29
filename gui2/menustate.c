@@ -135,7 +135,6 @@ void main_menubar_state (gboolean s)
     flip(mdata->ui, "/MenuBar/Sample", s);
     flip(mdata->ui, "/MenuBar/Variable", s);
     flip(mdata->ui, "/MenuBar/Model", s);
-    flip(mdata->ui, "/MenuBar/Tools/SortVars", s);
 
     flip(mdata->ui, "/MenuBar/File/NewData", !s);
 

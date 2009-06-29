@@ -120,6 +120,7 @@ gui2/textutil.c
 gui2/toolbar.c
 gui2/treeutils.c
 gui2/update.c
+gui2/varinfo.c
 gui2/winstack.c
 plugin/anova.c
 plugin/arbond.c

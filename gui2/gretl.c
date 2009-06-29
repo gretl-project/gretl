@@ -63,9 +63,7 @@ extern int silent_update_query (void);
 extern int update_query (void); 
 
 /* functions private to gretl.c */
-static void sort_varlist (GtkAction *action);
 static GtkWidget *make_main_window (void);
-
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
 static int set_up_main_menu (void);
@@ -684,14 +682,17 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 
 	if (sc == 1 && vnum > 0) {
 	    mdata->active_var = vnum;
+	    maybe_reset_varinfo_dialog();
 	}
 
 	variable_menu_state(sc == 1);
     }
 }
 
+#if MAIN_SHOW_CONST
+
 /* if a keystroke would take us to row 0 (e.g. page up), countermand
-   and got to row 1 instead
+   and go to row 1 instead
 */
 
 static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
@@ -713,6 +714,8 @@ static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
 	gtk_tree_path_free(path);
     }
 }
+
+#endif
 
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
@@ -831,20 +834,25 @@ static void mdata_select_all (void)
 static int get_line_pos (GtkTreeModel *mod)
 {
     GtkTreeIter iter;
+    gboolean got;
     gchar *idstr;
-    int i = 1, pos = 0;
+    int i, pos = -1;
 
-    if (gtk_tree_model_get_iter_first(mod, &iter)) {
-	while (gtk_tree_model_iter_next(mod, &iter)) {
-	    gtk_tree_model_get(mod, &iter, 0, &idstr, -1);
-	    if (idstr != NULL && atoi(idstr) == mdata->active_var) {
+    for (i=0; pos<0; i++) {
+	if (i == 0) {
+	    got = gtk_tree_model_get_iter_first(mod, &iter);
+	} else {
+	    got = gtk_tree_model_iter_next(mod, &iter);
+	}
+	if (!got) {
+	    break;
+	}
+	gtk_tree_model_get(mod, &iter, 0, &idstr, -1);
+	if (idstr != NULL) {
+	    if (atoi(idstr) == mdata->active_var) {
 		pos = i;
 	    }
 	    g_free(idstr);
-	    if (pos) {
-		break;
-	    }
-	    i++;
 	}
     }
 
@@ -859,8 +867,7 @@ void populate_varlist (void)
     GtkTreeSelection *select;
     GtkTreeIter iter;    
     char id[8];
-    int pos = 0;
-    int i;
+    int i, pos = -1;
 
     store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
 
@@ -870,11 +877,11 @@ void populate_varlist (void)
     }
     
     gtk_tree_store_clear(store);
-    sort_varlist(NULL);
+    /* sort_varlist(); */
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    for (i=0; i<datainfo->v; i++) {
+    for (i=1; i<datainfo->v; i++) {
 	int pv = 0;
 
 	if (var_is_hidden(datainfo, i)) {
@@ -911,26 +918,26 @@ void populate_varlist (void)
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (pos != 0) {
-	/* return to previous position? */
-	GtkTreeIter last;
+    if (pos < 0) {
+	/* no previous position */
+	pos = 0;
+    } else {
+	/* return to previous position, if possible */
+	GtkTreeIter prev;
 
-	i = 1;
-	while (1) {
-	    last = iter;
+	for (i=0; ; i++) {
+	    prev = iter;
 	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
-		iter = last;
+		/* reached the end */
+		iter = prev;
 		break;
 	    } else if (i == pos) {
+		/* found the old position */
 		break;
 	    }
-	    i++;
 	}
 	pos = i;
-    } else {
-	pos = 1;
-	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
-    }
+    } 
 
     mdata->active_var = pos;
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
@@ -949,9 +956,6 @@ void populate_varlist (void)
 	g_signal_connect(G_OBJECT(select), "changed",
 			 G_CALLBACK(check_varmenu_state),
 			 mdata);
-	g_signal_connect(G_OBJECT(mdata->listbox), "cursor-changed",
-			 G_CALLBACK(mdata_avoid_zero),
-			 NULL);
 	check_connected = 1;
     }
 
@@ -991,68 +995,6 @@ void mdata_select_last_var (void)
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
     gtk_tree_selection_unselect_all(select);
     gtk_tree_selection_select_iter(select, &iter);
-}
-
-static gint 
-compare_var_ids (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
-		 gpointer p)
-{
-    gchar *t1, *t2;
-    int i1, i2;
-
-    gtk_tree_model_get(model, a, 0, &t1, -1);
-    gtk_tree_model_get(model, b, 0, &t2, -1);
-
-    i1 = atoi(t1);
-    i2 = atoi(t2);
-
-    g_free(t1);
-    g_free(t2);
-
-    return ((i1 < i2) ? -1 : (i1 > i2) ? 1 : 0);    
-}
-
-static gint 
-compare_varnames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
-		  gpointer p)
-{
-    gchar *t1, *t2;
-    gint ret;
-
-    gtk_tree_model_get(model, a, 1, &t1, -1);
-    gtk_tree_model_get(model, b, 1, &t2, -1);
-
-    if (!strcmp(t1, "const")) return 0;
-    if (!strcmp(t2, "const")) return 1;
-
-    ret = strcmp(t1, t2);
-    g_free(t1);
-    g_free(t2);
-
-    return ret;    
-}
-
-static void sort_varlist (GtkAction *action)
-{
-    GtkTreeModel *model;
-    int col = 0;
-
-    if (action != NULL) {
-	const gchar *s = gtk_action_get_name(action);
-	
-	if (!strcmp(s, "SortByName")) {
-	    col = 1;
-	}
-    }
-
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
-
-    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
-				    compare_var_ids, NULL, NULL);
-    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 1,
-				    compare_varnames, NULL, NULL);
-    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model), 
-					 col, GTK_SORT_ASCENDING);
 }
 
 void clear_varlist (GtkWidget *widget)
@@ -1337,9 +1279,6 @@ GtkActionEntry main_entries[] = {
     { "CommandLog", NULL, N_("_Command log"), NULL, NULL, G_CALLBACK(view_command_log) },
     { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(show_gretl_console) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
-    { "SortVars", NULL, N_("_Sort variables"), NULL, NULL, NULL },
-    { "SortByID", NULL, N_("By _ID number"), NULL, NULL, G_CALLBACK(sort_varlist) },
-    { "SortByName", NULL, N_("By _name"), NULL, NULL, G_CALLBACK(sort_varlist) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },

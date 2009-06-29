@@ -96,10 +96,6 @@
       <menuitem action='ShowConsole'/>
       <menuitem action='StartR'/>
       <separator/>
-      <menu action='SortVars'>
-	<menuitem action='SortByID'/>
-	<menuitem action='SortByName'/>
-      </menu>
       <menu action='NistTest'>
 	<menuitem action='NistBasic'/>
 	<menuitem action='NistVerbose'/>

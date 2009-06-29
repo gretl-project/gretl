@@ -22,4 +22,6 @@
 
 void varinfo_dialog (int varnum, int full);
 
+void maybe_reset_varinfo_dialog (void);
+
 #endif /* VARINFO_H */
