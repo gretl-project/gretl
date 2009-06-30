@@ -534,7 +534,7 @@ static double h_loglik (const double *param, void *ptr)
 	j = 0;
 	for (i=0; i<HC->ntot; i++) {
 	    sel = (1.0 == gretl_vector_get(HC->d, i));
-	    ndxt = gretl_vector_get(HC->ndx,i);
+	    ndxt = gretl_vector_get(HC->ndx, i);
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j++);
 		x = (ndxt + HC->rho*ut) * rhofunc;
@@ -610,6 +610,12 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    }
 	}
 
+	if (na(zg)) {
+	    /* Added by A.C. */
+	    hm->uhat[t] = NADBL;
+	    continue;
+	}
+
 	if (Z[HC->selvar][t] == 0) {
 	    /* censored */
 	    if (na(zg)) {
@@ -628,10 +634,10 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    /* uncensored */
 	    if (!na(xb) && Z[HC->selvar][t] == 1) {
 		hm->uhat[t] = u = Z[HC->depvar][t] - xb;
-		u = u / HC->sigma;
+		u /= HC->sigma;
+		/* note that zg is used here */
 		x = (zg + rho*u) * rhofunc;
-		hm->llt[t] = -LN_SQRT_2_PI - 0.5*u*u - lnsig + 
-		    log(normal_cdf(x));
+		hm->llt[t] = -LN_SQRT_2_PI - 0.5*u*u - lnsig + log(normal_cdf(x));
 #if HDEBUG
 		lltsum += hm->llt[t];
 		nllt++;
