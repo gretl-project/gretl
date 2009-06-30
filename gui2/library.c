@@ -4037,47 +4037,47 @@ void freq_callback (GtkAction *action)
 
 void do_tramo_x12a (GtkAction *action, gpointer p)
 {
-    gint err;
+    gretlopt opt = OPT_NONE;
     int v = mdata_active_var();
-    int graph = 0, oldv = datainfo->v;
+    int oldv = datainfo->v;
     gchar *databuf;
     void *handle;
     int (*write_tx_data) (char *, int, 
-			  double ***, DATAINFO *, int *,
+			  double ***, DATAINFO *, gretlopt *,
 			  const char *, const char *, char *);
     PRN *prn;
     char fname[MAXLEN] = {0};
     char errtext[MAXLEN];
-    char *prog = NULL, *workdir = NULL;
+    char *exepath = NULL, *workdir = NULL;
     const gchar *code;
-    int opt;
+    int prog, err;
 
     code = gtk_action_get_name(action);
     if (!strcmp(code, "Tramo")) {
-	opt = TRAMO;
+	prog = TRAMO;
     } else {
-	opt = X12A;
+	prog = X12A;
     }
 
     code = gtk_action_get_name(action);
 
-    if (opt == TRAMO) {
+    if (prog == TRAMO) {
 #ifdef HAVE_TRAMO
-	prog = paths.tramo;
+	exepath = paths.tramo;
 	workdir = paths.tramodir;
 #else
 	return;
 #endif
     } else {
 #ifdef HAVE_X12A
-	prog = paths.x12a;
+	exepath = paths.x12a;
 	workdir = paths.x12adir;
 #else
 	return;
 #endif
     }
 
-    if (opt != TRAMO) {
+    if (prog != TRAMO) {
 	/* we'll let tramo handle annual data */
 	if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
 	    errbox(_("This analysis is applicable only to seasonal time series"));
@@ -4093,8 +4093,8 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 
     *errtext = 0;
 
-    err = write_tx_data(fname, v, &Z, datainfo, 
-			&graph, prog, workdir, errtext);
+    err = write_tx_data(fname, v, &Z, datainfo, &opt,
+			exepath, workdir, errtext);
     
     close_plugin(handle);
 
@@ -4108,20 +4108,25 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	return;
     }
 
-    err = gretl_file_get_contents(fname, &databuf);
-    if (err) {
+    if (opt & OPT_Q) {
+	/* text output not wanted */
 	remove(fname);
-	return;
+    } else {
+	err = gretl_file_get_contents(fname, &databuf);
+	if (err) {
+	    remove(fname);
+	    return;
+	}
+
+	prn = gretl_print_new_with_buffer(databuf);
+
+	view_buffer(prn, (opt == TRAMO)? 106 : 84, 500, 
+		    (opt == TRAMO)? _("gretl: TRAMO analysis") :
+		    _("gretl: X-12-ARIMA analysis"),
+		    opt, NULL);
     }
 
-    prn = gretl_print_new_with_buffer(databuf);
-
-    view_buffer(prn, (opt == TRAMO)? 106 : 84, 500, 
-		(opt == TRAMO)? _("gretl: TRAMO analysis") :
-		_("gretl: X-12-ARIMA analysis"),
-		opt, NULL);
-
-    if (!err && graph) {
+    if (!err && (opt & OPT_G)) {
 	make_and_display_graph();
     }
 

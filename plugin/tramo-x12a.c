@@ -211,6 +211,12 @@ static int tx_dialog (tx_request *request)
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 	request->opt[TRIGRAPH].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+
+	tmp = gtk_check_button_new_with_label(_("Show full output"));
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+	request->opt[TEXTOUT].check = tmp;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
     }
 
     gtk_widget_show(vbox);
@@ -222,10 +228,7 @@ static int tx_dialog (tx_request *request)
 
     ret = gtk_dialog_run(GTK_DIALOG(request->dialog));
 
-    if (ret == GTK_RESPONSE_ACCEPT) ret = 1;
-    else ret = 0;
-
-    return ret;
+    return (ret == GTK_RESPONSE_ACCEPT)? 1 : 0;
 }
 
 static void get_seats_command (char *seats, const char *tramo)
@@ -504,7 +507,7 @@ static void set_opts (tx_request *request)
 	if (request->opt[i].check != NULL && 
 	    GTK_TOGGLE_BUTTON(request->opt[i].check)->active) {
 	    request->opt[i].save = 1;
-	    if (i != TRIGRAPH) {
+	    if (i < TRIGRAPH) {
 		request->savevars++;
 	    }
 	} else {
@@ -757,7 +760,7 @@ static int helper_spawn (const char *prog, const char *vname,
 #endif
 
 int write_tx_data (char *fname, int varnum, 
-		   double ***pZ, DATAINFO *pdinfo, int *graph, 
+		   double ***pZ, DATAINFO *pdinfo, gretlopt *opt, 
 		   const char *prog, const char *workdir,
 		   char *errmsg)
 {
@@ -904,8 +907,12 @@ int write_tx_data (char *fname, int varnum,
 		if (err) {
 		    fprintf(stderr, "graph_series() failed\n");
 		} else {
-		    *graph = 1;
+		    *opt |= OPT_G;
 		}
+	    }
+
+	    if (request.code == X12A && !request.opt[TEXTOUT].save) {
+		*opt |= OPT_Q;
 	    }
 	}
 

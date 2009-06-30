@@ -17,13 +17,14 @@
  * 
  */
 
-#define N_COMMON_OPTS 4
+#define N_COMMON_OPTS 5
 
 enum tx_objects {
     D11,      /* seasonally adjusted series */
     D12,      /* trend/cycle */
     D13,      /* irregular component */
     TRIGRAPH, /* graph showing all of the above */
+    TEXTOUT,  /* for full text output */
     XAXIS     /* x-axis (time) variable for graphing */
 };
 

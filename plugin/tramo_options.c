@@ -842,7 +842,9 @@ int show_tramo_options (tx_request *request, GtkWidget *vbox)
     tramo_options *opts;
 
     opts = tramo_options_new(request->pd);
-    if (opts == NULL) return 1;
+    if (opts == NULL) {
+	return 1;
+    }
 
     /* mutual pointer hook-up */
     request->opts = opts;
