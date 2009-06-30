@@ -263,6 +263,43 @@ static int make_uncens_mask (h_container *HC, const int *Xl,
     return 0;
 }
 
+#if HDEBUG
+
+static void debug_print_masks (h_container *HC,
+			       const int *Xl,
+			       const double **Z)
+{
+    double x;
+    int t, i;
+
+    for (t=HC->t1; t<=HC->t2; t++) {
+	if (HC->fullmask[t] == 1) {
+	    fputc('F', stderr);
+	}
+	if (HC->uncmask[t] == 1) {
+	    fputc('U', stderr);
+	}
+	fputc('\t', stderr);
+	x = Z[HC->selvar][t];
+	if (na(x)) {
+	    fprintf(stderr, "          NA");
+	} else {
+	    fprintf(stderr, "%12.4f", x);
+	}
+	for (i=1; i<=Xl[0]; i++) {
+	    x = Z[Xl[i]][t];
+	    if (na(x)) {
+		fprintf(stderr, "          NA");
+	    } else {
+		fprintf(stderr, "%12.4f", x);
+	    }
+	}
+	fputc('\n', stderr);
+    }
+}
+
+#endif
+
 static int h_container_fill (h_container *HC, const int *Xl, 
 			     const int *Zl, const double **Z, 
 			     DATAINFO *pdinfo, MODEL *probmod, 
@@ -271,9 +308,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
     gretl_vector *tmp = NULL;
     double bmills, s2, mdelta;
     int tmplist[2];
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
-    int depvar, selvar;
+    int t1, t2;
     int v, i, err = 0;
 
     HC->t1 = probmod->t1;
@@ -285,8 +320,8 @@ static int h_container_fill (h_container *HC, const int *Xl,
     v = pdinfo->v - 1;
 
     /* X does NOT include the Mills ratios: hence the "-1" */
-    HC->depvar = depvar = Xl[1];
-    HC->selvar = selvar = Zl[1];
+    HC->depvar = Xl[1];
+    HC->selvar = Zl[1];
     HC->kmain = olsmod->ncoeff - 1;
     HC->ksel = probmod->ncoeff;
 
@@ -322,50 +357,25 @@ static int h_container_fill (h_container *HC, const int *Xl,
     err = make_uncens_mask(HC, Xl, Zl, Z, pdinfo);
 
 #if HDEBUG
-    if (!err) {
-	double x;
-	int t;
-
-	if (HC->fullmask != NULL) {
-	    for (t=t1; t<=t2; t++) {
-		if (HC->fullmask[t] == 1) {
-		    fputc('F', stderr);
-		}
-		if (HC->uncmask[t] == 1) {
-		    fputc('U', stderr);
-		}
-		fputc('\t', stderr);
-		x = Z[selvar][t];
-		if (na(x)) {
-		    fprintf(stderr, "          NA");
-		} else {
-		    fprintf(stderr, "%12.4f", x);
-		}
-		for (i=1; i<=Xl[0]; i++) {
-		    x = Z[Xl[i]][t];
-		    if (na(x)) {
-			fprintf(stderr, "          NA");
-		    } else {
-			fprintf(stderr, "%12.4f", x);
-		    }
-		}
-		fputc('\n', stderr);
-	    }
-	}
+    if (!err && HC->fullmask != NULL) {
+	debug_print_masks(HC, Xl, Z);
     }
 #endif
+
+    t1 = pdinfo->t1;
+    t2 = pdinfo->t2;
 
     tmplist[0] = 1;
 
     if (!err) {
-	tmplist[1] = depvar;
+	tmplist[1] = HC->depvar;
 	HC->y = gretl_matrix_data_subset_masked(tmplist, Z, t1, t2, 
 						HC->uncmask, &err);
     }
 
     if (!err) {
 	HC->nunc = gretl_matrix_rows(HC->y);
-	tmplist[1] = selvar;
+	tmplist[1] = HC->selvar;
 	HC->d = gretl_matrix_data_subset_masked(tmplist, Z, t1, t2, 
 						HC->fullmask, &err);
     }
@@ -458,24 +468,23 @@ static int h_container_fill (h_container *HC, const int *Xl,
 static double h_loglik (const double *param, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
-    double lnsig, isqrtrhoc, x, ll = NADBL;
-    int k1 = HC->kmain;
-    int k2 = HC->ksel;
+    double lnsig, x, ll = NADBL;
+    int kmax = HC->kmain + HC->ksel;
     int i, j, err = 0;
     
-    for (i=0; i<k1; i++) {
+    for (i=0; i<HC->kmain; i++) {
 	gretl_vector_set(HC->beta, i, param[i]);
     }
 
     j = 0;
-    for (i=k1; i<k1+k2; i++) {
+    for (i=HC->kmain; i<kmax; i++) {
 	gretl_vector_set(HC->gama, j++, param[i]);
     }
 
-    HC->sigma = param[k1+k2];
+    HC->sigma = param[kmax];
     lnsig = log(HC->sigma);
 
-    HC->rho = param[k1+k2+1];
+    HC->rho = param[kmax+1];
 
 #if HDEBUG
     gretl_matrix_print(HC->beta, "beta");
@@ -486,9 +495,7 @@ static double h_loglik (const double *param, void *ptr)
 
     if (HC->sigma <= 0 || fabs(HC->rho) >= 1) {
 	return NADBL;
-    } else {
-	isqrtrhoc = 1 / sqrt(1 - HC->rho * HC->rho);
-    }
+    } 
 
     err = gretl_matrix_multiply(HC->reg, HC->beta, HC->fitted);
     
@@ -506,22 +513,20 @@ static double h_loglik (const double *param, void *ptr)
     }
 
     if (!err) {
+	double rhofunc = 1 / sqrt(1 - HC->rho * HC->rho);
+	double ll0 = 0, ll1 = 0, ll2 = 0;
 	double ut, ndxt;
-	double ll0 = 0;
-	double ll1 = 0;
-	double ll2 = 0;
 	int sel;
-	/* 
-	   i goes through all obs, while j keeps track of the uncensored
-	   ones
-	*/
+
+	/* i goes through all obs, while j keeps track of the uncensored
+	   ones */
 	j = 0;
 	for (i=0; i<HC->ntot; i++) {
 	    sel = (1.0 == gretl_vector_get(HC->d, i));
 	    ndxt = gretl_vector_get(HC->ndx,i);
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j++);
-		x = (ndxt + HC->rho*ut) * isqrtrhoc;
+		x = (ndxt + HC->rho*ut) * rhofunc;
 		ll1 += log(normal_pdf(ut)) - lnsig;
 		ll2 += log(normal_cdf(x));
 	    } else {
@@ -551,20 +556,14 @@ static double h_loglik (const double *param, void *ptr)
 static void heckit_yhat_uhat (MODEL *hm, h_container *HC, 
 			      const double **Z, DATAINFO *pdinfo)
 {
-
-    int i, t, v, kb, kg;
-    int depvar, selvar;
     double x, xb, zg, u;
     double f, F, lam = HC->lambda;
     double rho = HC->rho;
-    double isqrtrhoc = 1 / sqrt(1 - rho * rho);
-    double sigma = HC->sigma;
-    double lnsig = log(sigma);
-
-    depvar = HC->depvar;
-    selvar = HC->selvar;
-    kb = HC->kmain;
-    kg = HC->ksel;
+    double rhofunc = 1 / sqrt(1 - rho * rho);
+    double lnsig = log(HC->sigma);
+    int kb = HC->kmain;
+    int kg = HC->ksel;
+    int i, t, v;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xb = 0.0;
@@ -595,7 +594,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    }
 	}
 
-	if (Z[selvar][t] == 0) {
+	if (Z[HC->selvar][t] == 0) {
 	    /* censored */
 	    if (!na(zg)) {
 		f = normal_pdf(zg);
@@ -607,10 +606,10 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    }
 	} else {
 	    /* uncensored */
-	    if (!na(xb) && Z[selvar][t] == 1) {
-		hm->uhat[t] = u = Z[depvar][t] - xb;
-		u = u/sigma;
-		x = (zg + rho*u) * isqrtrhoc;
+	    if (!na(xb) && Z[HC->selvar][t] == 1) {
+		hm->uhat[t] = u = Z[HC->depvar][t] - xb;
+		u = u / HC->sigma;
+		x = (zg + rho*u) * rhofunc;
 		hm->llt[t] = -LN_SQRT_2_PI - 0.5*u*u - lnsig + 
 		    log(normal_cdf(x));
 	    }
@@ -635,32 +634,31 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinfo)
 {
     double *fullcoeff;
-    int ko = HC->kmain;
-    int kp = HC->ksel;
-    int k = ko + kp + 1;
+    int kb = HC->kmain;
+    int npar = kb + HC->ksel + 1;
     int i, err = 0;
 
-    fullcoeff = malloc(k * sizeof *fullcoeff);
+    fullcoeff = malloc(npar * sizeof *fullcoeff);
     if (fullcoeff == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	err = gretl_model_allocate_params(hm, k);
+	err = gretl_model_allocate_params(hm, npar);
     }
 
     if (!err) {
-	for (i=0; i<ko; i++) {
+	for (i=0; i<kb; i++) {
 	    strcpy(hm->params[i], pdinfo->varname[hm->list[i+2]]);
 	    fullcoeff[i] = gretl_vector_get(HC->beta, i);
 	}
 	
-	strcpy(hm->params[ko], "lambda");
-	fullcoeff[ko] = HC->lambda;
+	strcpy(hm->params[kb], "lambda");
+	fullcoeff[kb] = HC->lambda;
 
-	for (i=0; i<kp; i++) {
-	    strcpy(hm->params[i+ko+1], pdinfo->varname[HC->Zlist[i+1]]);
-	    fullcoeff[i+ko+1] = gretl_vector_get(HC->gama, i);
+	for (i=0; i<HC->ksel; i++) {
+	    strcpy(hm->params[i+kb+1], pdinfo->varname[HC->Zlist[i+1]]);
+	    fullcoeff[i+kb+1] = gretl_vector_get(HC->gama, i);
 	}
     }
 
@@ -674,11 +672,11 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 	hm->list = gretl_list_copy(HC->list);
 	free(hm->coeff);
 	hm->coeff = fullcoeff;
-	hm->ncoeff = k;
+	hm->ncoeff = npar;
 	hm->t1 = HC->t1;
 	hm->t2 = HC->t2;
-	gretl_model_set_coeff_separator(hm, N_("Selection equation"), ko + 1);
-	gretl_model_set_int(hm, "base-coeffs", ko);
+	gretl_model_set_coeff_separator(hm, N_("Selection equation"), kb + 1);
+	gretl_model_set_int(hm, "base-coeffs", kb);
     }
     
     return err;
@@ -745,24 +743,15 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
     gretl_matrix *Xw = NULL;
     gretl_matrix *W = HC->selreg_u;
     gretl_matrix *w = HC->delta;
-
     gretl_matrix *XX = NULL;
     gretl_matrix *XXi = NULL;
     gretl_matrix *XXw = NULL;
     gretl_matrix *XwZ = NULL;
     gretl_matrix *S = NULL;
-
     gretl_matrix *Vp = HC->VProbit;
-
     int nX = HC->kmain + 1;
     int nZ = HC->ksel;
     int err = 0;
-
-    double s2, sigma, rho;
-
-    sigma = HC->sigma;
-    rho = HC->rho;
-    s2 = sigma * sigma;
 
     X = gretl_matrix_col_concat(HC->reg, HC->mills, &err);
     if (err) {
@@ -807,11 +796,11 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
     gretl_matrix_qform(XwZ, GRETL_MOD_NONE,
 		       Vp, S, GRETL_MOD_NONE);
     gretl_matrix_subtract_from(XXw, S);
-    gretl_matrix_multiply_by_scalar(XXw, rho * rho);
+    gretl_matrix_multiply_by_scalar(XXw, HC->rho * HC->rho);
     gretl_matrix_subtract_from(XX, XXw);
     gretl_matrix_qform(XXi, GRETL_MOD_NONE,
 		       XX, S, GRETL_MOD_NONE);
-    gretl_matrix_multiply_by_scalar(S, s2);
+    gretl_matrix_multiply_by_scalar(S, HC->sigma * HC->sigma);
 
     err = transcribe_2step_vcv(olsmod, S, Vp);
 
@@ -835,10 +824,11 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 
 int add_lambda_to_ml_vcv (h_container *HC)
 {
-    int i, k, npar = HC->vcv->rows;
     gretl_matrix *J = NULL;
     gretl_matrix *tmp = NULL;
-    int err = 0;
+    int npar = HC->vcv->rows;
+    int kb = HC->kmain;
+    int i, err = 0;
 
     tmp = gretl_matrix_alloc(npar+1, npar+1);
     J = gretl_zero_matrix_new(npar+1, npar);
@@ -849,16 +839,14 @@ int add_lambda_to_ml_vcv (h_container *HC)
 	return E_ALLOC;
     }
 
-    k = HC->kmain;
-
-    for (i=0; i<k; i++) {
+    for (i=0; i<kb; i++) {
 	gretl_matrix_set(J, i, i, 1);
     }
 
-    gretl_matrix_set(J, k, npar-2, HC->rho);
-    gretl_matrix_set(J, k, npar-1, HC->sigma);
+    gretl_matrix_set(J, kb, npar-2, HC->rho);
+    gretl_matrix_set(J, kb, npar-1, HC->sigma);
 
-    for (i=k+1; i<=npar; i++) {
+    for (i=kb+1; i<=npar; i++) {
 	gretl_matrix_set(J, i, i-1, 1);
     }
 
