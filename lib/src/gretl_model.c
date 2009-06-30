@@ -2107,6 +2107,7 @@ static void gretl_model_init_pointers (MODEL *pmod)
     pmod->sderr = NULL;
     pmod->yhat = NULL;
     pmod->uhat = NULL;
+    pmod->llt = NULL;
     pmod->xpx = NULL;
     pmod->vcv = NULL;
     pmod->arinfo = NULL;
@@ -2351,6 +2352,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->sderr = %p\n"
 	    " pmod->yhat = %p\n"
 	    " pmod->uhat = %p\n"
+	    " pmod->llt = %p\n"
 	    " pmod->xpx = %p\n"
 	    " pmod->vcv = %p\n"
 	    " pmod->name = %p\n"
@@ -2363,10 +2365,11 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    (void *) pmod->submask, (void *) pmod->missmask, 
 	    (void *) pmod->coeff, (void *) pmod->sderr, 
 	    (void *) pmod->yhat, (void *) pmod->uhat, 
-	    (void *) pmod->xpx, (void *) pmod->vcv, 
-	    (void *) pmod->name, (void *) pmod->depvar,
-	    (void *) pmod->params, (void *) pmod->arinfo, 
-	    (void *) pmod->tests, (void *) pmod->data_items);
+	    (void *) pmod->llt, (void *) pmod->xpx, 
+	    (void *) pmod->vcv, (void *) pmod->name, 
+	    (void *) pmod->depvar, (void *) pmod->params, 
+	    (void *) pmod->arinfo, (void *) pmod->tests, 
+	    (void *) pmod->data_items);
 }
 
 #endif /* MDEBUG */
@@ -2425,6 +2428,7 @@ void clear_model (MODEL *pmod)
 	if (pmod->sderr != NULL) free(pmod->sderr);
 	if (pmod->yhat != NULL) free(pmod->yhat);
 	if (pmod->uhat != NULL) free(pmod->uhat);
+	if (pmod->llt != NULL) free(pmod->llt);
 	if (pmod->xpx != NULL) free(pmod->xpx);
 	if (pmod->vcv != NULL) free(pmod->vcv);
 	if (pmod->name != NULL) free(pmod->name);
@@ -3550,6 +3554,11 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	return 1;
     }
 
+    if (src->llt != NULL && 
+	(targ->llt = copyvec(src->llt, src->full_n)) == NULL) {
+	return 1;
+    }
+
     if (src->submask != NULL && 
 	(targ->submask = copy_subsample_mask(src->submask)) == NULL) { 
 	return 1;
@@ -3680,6 +3689,10 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 
     if (pmod->yhat != NULL) {
 	gretl_xml_put_double_array("yhat", pmod->yhat, pmod->full_n, fp);
+    }
+
+    if (pmod->llt != NULL) {
+	gretl_xml_put_double_array("llt", pmod->llt, pmod->full_n, fp);
     }
 
     if (pmod->submask != NULL) {
@@ -4206,6 +4219,8 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	    pmod->uhat = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "yhat")) {
 	    pmod->yhat = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "llt")) {
+	    pmod->llt = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "xpx")) {
 	    pmod->xpx = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "vcv")) {
@@ -5167,7 +5182,8 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
     }   
 
     if ((idx == M_UHAT && pmod->uhat == NULL) ||
-	(idx == M_YHAT && pmod->yhat == NULL)) {
+	(idx == M_YHAT && pmod->yhat == NULL) ||
+	(idx == M_LLT && pmod->llt == NULL)) {
 	*err = E_BADSTAT;
 	return NULL;
     }
@@ -5211,6 +5227,8 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
 		    x[t] = pmod->uhat[t];
 		} else if (idx == M_YHAT) {
 		    x[t] = pmod->yhat[t];
+		} else if (idx == M_LLT) {
+		    x[t] = pmod->llt[t];
 		} else if (idx == M_AHAT || idx == M_H) {
 		    x[t] = mdata[t];
 		} 
@@ -5258,21 +5276,27 @@ static gretl_matrix *
 model_get_hatvec (const MODEL *pmod, int idx, int *err)
 {
     gretl_matrix *v = NULL;
-    double x;
+    const double *src = NULL;
     int t;
 
-    if (idx == M_UHAT && pmod->uhat == NULL) {
+    if (idx == M_UHAT) {
+	src = pmod->uhat;
+    } else if (idx == M_YHAT) {
+	src = pmod->yhat;
+    } else if (idx == M_LLT) {
+	src = pmod->llt;
+    }
+
+    if (src == NULL) {
 	*err = E_BADSTAT;
 	return NULL;
     }
 
-    if (idx == M_YHAT && pmod->yhat == NULL) {
-	*err = E_BADSTAT;
-	return NULL;
-    }
-
+    /* FIXME: we reject NAs when creating a gretl_matrix -- but should
+       we just substitute NaNs?
+    */
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (na(pmod->uhat[t])) {
+	if (na(src[t])) {
 	    *err = E_MISSDATA;
 	    break;
 	}
@@ -5284,9 +5308,8 @@ model_get_hatvec (const MODEL *pmod, int idx, int *err)
 	    *err = E_ALLOC;
 	} else {
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		x = (idx == M_UHAT)? pmod->uhat[t] : pmod->yhat[t];
-		gretl_vector_set(v, t - pmod->t1, x);
-	    }
+		gretl_vector_set(v, t - pmod->t1, src[t]);
+	    }	    
 	}
     }
 
@@ -5437,6 +5460,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
     switch (idx) {  
     case M_UHAT:
     case M_YHAT:
+    case M_LLT:
 	M = model_get_hatvec(pmod, idx, err);
 	break;
     case M_COEFF:

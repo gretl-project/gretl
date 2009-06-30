@@ -549,8 +549,12 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 
     int i, t, v, kb, kg;
     int depvar, selvar;
-    double x, xb, zg;
+    double x, xb, zg, u;
     double f, F, lam = HC->lambda;
+    double rho = HC->rho;
+    double isqrtrhoc = 1 / sqrt(1 - rho * rho);
+    double sigma = HC->sigma;
+    double lnsig = log(sigma);
 
     depvar = HC->depvar;
     selvar = HC->selvar;
@@ -574,33 +578,36 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    hm->yhat[t] = xb;
 	}
 
+	zg = 0;
+	for (i=0; i<kg; i++) {
+	    v = HC->Zlist[i+1];
+	    x = Z[v][t];
+	    if (na(x)) {
+		zg = NADBL;
+		break;
+	    } else {
+		zg += x * gretl_vector_get(HC->gama, i);
+	    }
+	}
+
 	if (Z[selvar][t] == 0) {
 	    /* censored */
-	    zg = 0;
-	    for (i=0; i<kg; i++) {
-		v = HC->Zlist[i+1];
-		x = Z[v][t];
-		if (na(x)) {
-		    zg = NADBL;
-		    break;
-		} else {
-		    zg += x * gretl_vector_get(HC->gama, i);
-		}
-	    }
-
 	    if (!na(zg)) {
 		f = normal_pdf(zg);
 		F = normal_cdf(-zg);
 		hm->uhat[t] = -lam * f / F;
+		hm->llt[t] = log(F);
 	    } else {
 		hm->uhat[t] = NADBL;
 	    }
 	} else {
 	    /* uncensored */
-	    if (!na(xb)) {
-		if (Z[selvar][t] == 1) {
-		    hm->uhat[t] = Z[depvar][t] - xb;
-		}
+	    if (!na(xb) && Z[selvar][t] == 1) {
+		hm->uhat[t] = u = Z[depvar][t] - xb;
+		u = u/sigma;
+		x = (zg + rho*u) * isqrtrhoc;
+		hm->llt[t] = -LN_SQRT_2_PI - 0.5*u*u - lnsig + 
+		    log(normal_cdf(x));
 	    }
 	}
     }
@@ -1131,6 +1138,13 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     h_container_destroy(HC);
+
+#if 0
+    int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    for (t=t1; t<=t2; t++) {
+	fprintf(stderr, "%4d: u = %12.6f, llt = %12.6f\n", t, hm.uhat[t], hm.llt[t]);
+    }
+#endif
 
     return hm;
 }

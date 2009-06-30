@@ -847,9 +847,13 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
 	pmod->uhat = malloc(pmod->full_n * sizeof *pmod->uhat);
     }
 
+    if (pmod->llt == NULL) {
+	pmod->llt = malloc(pmod->full_n * sizeof *pmod->llt);
+    }
+
     if (pmod->xpx == NULL || pmod->coeff == NULL ||
 	pmod->sderr == NULL || pmod->yhat == NULL || 
-	pmod->uhat == NULL) {
+	pmod->uhat == NULL || pmod->llt == NULL) {
 	free(xpy);
 	pmod->errcode = E_ALLOC;
 	return pmod->errcode;
@@ -899,7 +903,12 @@ static int gretl_null_regress (MODEL *pmod, const double **Z)
 	pmod->uhat = malloc(pmod->full_n * sizeof *pmod->uhat);
     }
 
-    if (pmod->yhat == NULL || pmod->uhat == NULL) {
+    if (pmod->llt == NULL) {
+	pmod->llt = malloc(pmod->full_n * sizeof *pmod->llt);
+    }
+
+    if (pmod->yhat == NULL || pmod->uhat == NULL ||
+	pmod->llt == NULL) {
 	pmod->errcode = E_ALLOC;
 	return pmod->errcode;
     }
@@ -912,10 +921,11 @@ static int gretl_null_regress (MODEL *pmod, const double **Z)
     for (t=0; t<pmod->full_n; t++) {
 	yt = Z[pmod->list[1]][t];
 	if (t < pmod->t1 || t > pmod->t2 || na(yt)) {
-	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
+	    pmod->uhat[t] = pmod->yhat[t] = pmod->llt[t] = NADBL;
 	} else {
 	    pmod->uhat[t] = yt;
 	    pmod->yhat[t] = 0.0;
+	    pmod->llt[t] = NADBL;
 	    pmod->ess += yt * yt;
 	    pmod->nobs += 1;
 	}
@@ -1577,7 +1587,7 @@ static void regress (MODEL *pmod, double *xpy,
     int i, err = 0;
 
     for (i=0; i<n; i++) {
-	pmod->yhat[i] = pmod->yhat[i] = NADBL;
+	pmod->yhat[i] = pmod->uhat[i] = pmod->llt[i] = NADBL;
     }    
 
     zz = ysum * ysum / pmod->nobs;
@@ -1896,10 +1906,11 @@ static int hatvar (MODEL *pmod, int n, const double **Z)
 {
     int xno, i, t;
     int yno = pmod->list[1];
-    double x;
+    int ssize = 0;
+    double x, u, logs, s = 0.0;
 
     for (t=0; t<n; t++) {
-	pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	pmod->yhat[t] = pmod->uhat[t] = pmod->llt[t] = NADBL;
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -1919,7 +1930,19 @@ static int hatvar (MODEL *pmod, int n, const double **Z)
 	if (pmod->nwt) {
 	    x *= sqrt(Z[pmod->nwt][t]);
 	}
-        pmod->uhat[t] = x - pmod->yhat[t];                
+        pmod->uhat[t] = u = x - pmod->yhat[t];
+	ssize++;
+	s += u*u;
+    }
+
+    s = sqrt(s/ssize);
+    logs = log(s);
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!model_missing(pmod, t)) {
+	    u = pmod->uhat[t]/s;
+	    pmod->llt[t] = -(LN_SQRT_2_PI + logs + 0.5*u*u);
+	}
     }
 
     return 0;

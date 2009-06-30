@@ -357,6 +357,7 @@ struct MODEL_ {
     double *sderr;               /* array of estimated std. errors */
     double *uhat;                /* regression residuals */
     double *yhat;                /* fitted values from regression */
+    double *llt;                 /* log-likelihood by observation */
     double *xpx;                 /* X'X matrix, in packed form */
     double *vcv;                 /* VCV matrix for coefficient estimates */
     double ess, tss;             /* Error and Total Sums of Squares */

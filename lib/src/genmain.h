@@ -66,6 +66,7 @@ typedef enum {
     M_SCALAR_MAX, /* -- separator, scalars/series -- */
     M_UHAT,       /* residuals */
     M_YHAT,       /* fitted values */
+    M_LLT,        /* per-observation loglikelihood */
     M_AHAT,       /* per-unit intercepts in panel model */
     M_H,          /* GARCH predicted variances */
     M_SAMPLE,     /* observations used in estimation */

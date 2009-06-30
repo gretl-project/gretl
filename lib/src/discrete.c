@@ -767,7 +767,8 @@ static void binary_model_add_stats (MODEL *pmod, const double *y)
 	}
 
 	if (pmod->ci == LOGIT) {
-	    pmod->yhat[t] = exp(xb) / (1.0 + exp(xb)); 
+	    F = exp(xb) / (1.0 + exp(xb));
+	    pmod->yhat[t] = F; 
 	    pmod->uhat[t] = yt - pmod->yhat[t];
 	} else {
 	    f = normal_pdf(xb);
@@ -775,6 +776,8 @@ static void binary_model_add_stats (MODEL *pmod, const double *y)
 	    pmod->yhat[t] = F; 
 	    pmod->uhat[t] = (yt != 0)? f/F : -f/(1-F);
 	}
+
+	pmod->llt[t] = (yt != 0)? log(F) : log(1-F);
     }
 
     pmod->ybar = xx / pmod->nobs;

@@ -274,7 +274,7 @@ static double recompute_tobit_ll (const MODEL *pmod, const double *y)
 	} else {
 	    lt = (1.0 / pmod->sigma) * normal_pdf(pmod->uhat[t] / pmod->sigma);
 	}
-	ll += log(lt);
+	ll += pmod->llt[t] = log(lt);
     }
 
     return ll;
@@ -473,11 +473,16 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 	s++;
     }
 
+#if 0
     if (scale != 1.0) {
 	pmod->lnL = recompute_tobit_ll(pmod, y);
     } else {
 	pmod->lnL = ll;
     }
+#else
+    /* force recomputation to get llt series */
+    pmod->lnL = recompute_tobit_ll(pmod, y);
+#endif
 
     chesher_irish_test(pmod, X);
     pmod->fstt = pmod->adjrsq = NADBL;
@@ -756,7 +761,9 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 		y[t] *= scale;
 	    }
 	}
+#if TDEBUG
 	fprintf(stderr, "Tobit: rescaling depvar using %g\n", scale);
+#endif
 	clear_model(&model);
 	model = lsq(list, pZ, pdinfo, OLS, OPT_A);
     }
