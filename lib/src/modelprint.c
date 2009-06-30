@@ -1486,7 +1486,9 @@ static void maybe_print_T (const MODEL *pmod,
 			   const char *start,
 			   PRN *prn)
 {
-    if (pmod->missmask == NULL && !strcmp(start, "1")) {
+    if (pmod->ci == HECKIT) {
+	return;
+    } else if (pmod->missmask == NULL && !strcmp(start, "1")) {
 	return;
     } else {
 	int xsect = dataset_is_cross_section(pdinfo);
@@ -4548,7 +4550,7 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 {
     int totobs = gretl_model_get_int(pmod, "totobs");
     int cenobs = totobs - pmod->nobs;
-    double cenpc = 100.0 * cenobs / totobs;
+    double cenpc = (100.0 * cenobs) / totobs;
 
     ensure_vsep(prn);
 
