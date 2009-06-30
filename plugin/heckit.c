@@ -773,40 +773,35 @@ static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S,
 
 static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 {
-    gretl_matrix *X = NULL;
-    gretl_matrix *Xw = NULL;
     gretl_matrix *W = HC->selreg_u;
     gretl_matrix *w = HC->delta;
-    gretl_matrix *XX = NULL;
-    gretl_matrix *XXi = NULL;
-    gretl_matrix *XXw = NULL;
-    gretl_matrix *XwZ = NULL;
-    gretl_matrix *S = NULL;
     gretl_matrix *Vp = HC->VProbit;
+    gretl_matrix_block *B = NULL;
+    gretl_matrix *X, *Xw, *XX, *XXi;
+    gretl_matrix *XXw, *XwZ, *S;
     int nX = HC->kmain + 1;
     int nZ = HC->ksel;
     int err = 0;
 
     X = gretl_matrix_col_concat(HC->reg, HC->mills, &err);
-    if (err) {
-	goto bailout;
+
+    if (!err) {
+	Xw = gretl_matrix_dot_op(w, X, '*', &err);
     }
 
-    Xw = gretl_matrix_dot_op(w, X, '*', &err);
-    if (err) {
-	goto bailout;
+    if (!err) {
+	B = gretl_matrix_block_new(&XX, nX, nX,
+				   &XXi, nX, nX,
+				   &XXw, nX, nX,
+				   &XwZ, nX, nZ,
+				   &S, nX, nX,
+				   NULL);
+	if (B == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    XX = gretl_matrix_alloc(nX, nX);
-    XXi = gretl_matrix_alloc(nX, nX);
-    XXw = gretl_matrix_alloc(nX, nX);
-    XwZ = gretl_matrix_alloc(nX, nZ);
-    S = gretl_matrix_alloc(nX, nX);
-
-    if (X == NULL || w == NULL || W == NULL || Xw == NULL ||
-	XX == NULL || XXi == NULL || XXw == NULL ||
-	XwZ == NULL || S == NULL) {
-	err = E_ALLOC;
+    if (err) {
 	goto bailout;
     }
 
@@ -842,11 +837,7 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 
     gretl_matrix_free(X);
     gretl_matrix_free(Xw);
-    gretl_matrix_free(XX);
-    gretl_matrix_free(XXi);
-    gretl_matrix_free(XXw);
-    gretl_matrix_free(XwZ);
-    gretl_matrix_free(S);
+    gretl_matrix_block_destroy(B);
 
     return err;
 }
