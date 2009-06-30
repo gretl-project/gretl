@@ -5163,8 +5163,8 @@ double *
 gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo, 
 			ModelDataIndex idx, int *err)
 {
+    const double *src = NULL;
     double *x = NULL;
-    double *mdata = NULL;
     int t;
 
     if (pmod->t2 - pmod->t1 + 1 > pdinfo->n || 
@@ -5181,27 +5181,21 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
 	return NULL;
     }   
 
-    if ((idx == M_UHAT && pmod->uhat == NULL) ||
-	(idx == M_YHAT && pmod->yhat == NULL) ||
-	(idx == M_LLT && pmod->llt == NULL)) {
-	*err = E_BADSTAT;
-	return NULL;
+    if (idx == M_UHAT) {
+	src = pmod->uhat;
+    } else if (idx == M_YHAT) {
+	src = pmod->yhat;
+    } else if (idx == M_LLT) {
+	src = pmod->llt;
+    } else if (idx == M_AHAT) {
+	src = gretl_model_get_data(pmod, "ahat");
+    } else if (idx == M_H) {
+	src = gretl_model_get_data(pmod, "garch_h");
     }
 
-    if (idx == M_AHAT) {
-	mdata = gretl_model_get_data(pmod, "ahat");
-	if (mdata == NULL) {
-	    strcpy(gretl_errmsg, _("Can't retrieve intercepts"));
-	    *err = E_BADSTAT;
-	    return NULL;
-	}
-    } else if (idx == M_H) {
-	mdata = gretl_model_get_data(pmod, "garch_h");
-	if (mdata == NULL) {
-	    strcpy(gretl_errmsg, _("Can't retrieve error variance"));
-	    *err = E_BADSTAT;
-	    return NULL;
-	}
+    if (src == NULL && idx != M_SAMPLE) {
+	*err = E_BADSTAT;
+	return NULL;
     }
 
     x = malloc(pdinfo->n * sizeof *x);
@@ -5223,15 +5217,7 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
 	    if (t < pmod->t1 || t > pmod->t2) {
 		x[t] = NADBL;
 	    } else {
-		if (idx == M_UHAT) {
-		    x[t] = pmod->uhat[t];
-		} else if (idx == M_YHAT) {
-		    x[t] = pmod->yhat[t];
-		} else if (idx == M_LLT) {
-		    x[t] = pmod->llt[t];
-		} else if (idx == M_AHAT || idx == M_H) {
-		    x[t] = mdata[t];
-		} 
+		x[t] = src[t];
 	    }
 	}
     }
@@ -5242,8 +5228,8 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
 static gretl_matrix *
 model_get_estvec (const MODEL *pmod, int idx, int *err)
 {
+    const double *src;
     gretl_matrix *v = NULL;
-    double x;
     int i;
 
     if (gretl_model_get_data(pmod, "rq_tauvec")) {
@@ -5251,9 +5237,10 @@ model_get_estvec (const MODEL *pmod, int idx, int *err)
 	return NULL;
     }
 
+    src = (idx == M_COEFF)? pmod->coeff : pmod->sderr;
+
     for (i=0; i<pmod->ncoeff; i++) {
-	x = (idx == M_COEFF)? pmod->coeff[i] : pmod->sderr[i];
-	if (na(x)) {
+	if (na(src[i])) {
 	    *err = E_BADSTAT;
 	    return NULL;
 	}
@@ -5264,8 +5251,7 @@ model_get_estvec (const MODEL *pmod, int idx, int *err)
 	*err = E_ALLOC;
     } else {
 	for (i=0; i<pmod->ncoeff; i++) {
-	    x = (idx == M_COEFF)? pmod->coeff[i] : pmod->sderr[i];
-	    gretl_vector_set(v, i, x);
+	    gretl_vector_set(v, i, src[i]);
 	}
     }
 
