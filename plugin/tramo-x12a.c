@@ -838,6 +838,7 @@ int write_tx_data (char *fname, int varnum,
     } else { 
 	/* TRAMO, possibly plus SEATS */
 	lower(varname);
+	gretl_trunc(varname, 8);
 	sprintf(fname, "%s%c%s", workdir, SLASH, varname);
 	/* next line: this also sets request->code = TRAMO_ONLY if
 	   seats is not to be run */

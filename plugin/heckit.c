@@ -777,8 +777,9 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
     gretl_matrix *w = HC->delta;
     gretl_matrix *Vp = HC->VProbit;
     gretl_matrix_block *B = NULL;
-    gretl_matrix *X, *Xw, *XX, *XXi;
+    gretl_matrix *X, *XX, *XXi;
     gretl_matrix *XXw, *XwZ, *S;
+    gretl_matrix *Xw = NULL;
     int nX = HC->kmain + 1;
     int nZ = HC->ksel;
     int err = 0;
