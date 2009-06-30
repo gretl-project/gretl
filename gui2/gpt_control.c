@@ -3751,7 +3751,6 @@ static int get_plot_ranges (png_plot *plot)
     plot->xmin = plot->xmax = 0.0;
     plot->ymin = plot->ymax = 0.0;   
     plot->xint = plot->yint = 0;
-    plot->pd = 0;
 
     if (no_readback(plot->spec->code)) {
 	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
