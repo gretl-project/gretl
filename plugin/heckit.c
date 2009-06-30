@@ -30,6 +30,7 @@ typedef struct h_container_ h_container;
 
 struct h_container_ {
     const int *list;         /* incoming model specification */
+    int t1, t2;              /* start and end of sample range */
     int kmain;		     /* no. of params in the main eq. */
     int ksel;		     /* no. of params in the selection eq. */
     double ll;		     /* log-likelihood */
@@ -107,6 +108,7 @@ static h_container *h_container_new (const int *list)
     }
 
     HC->list = list;
+    HC->t1 = HC->t2 = 0;
     HC->ll = NADBL;
 
     HC->Xlist = NULL;
@@ -274,12 +276,15 @@ static int h_container_fill (h_container *HC, const int *Xl,
     int depvar, selvar;
     int v, i, err = 0;
 
+    HC->t1 = probmod->t1;
+    HC->t2 = probmod->t2;
+
     /* it is assumed that the Mills ratios have just been added to the dataset;
        hence they're the last variable
     */
     v = pdinfo->v - 1;
 
-    /* X does NOT include the Mills ratios: hence the "-2" */
+    /* X does NOT include the Mills ratios: hence the "-1" */
     HC->depvar = depvar = Xl[1];
     HC->selvar = selvar = Zl[1];
     HC->kmain = olsmod->ncoeff - 1;
@@ -562,7 +567,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     kg = HC->ksel;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xb = 0;
+	xb = 0.0;
 	for (i=0; i<kb; i++) {
 	    v = HC->Xlist[i+1];
 	    x = Z[v][t];
@@ -578,7 +583,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    hm->yhat[t] = xb;
 	}
 
-	zg = 0;
+	zg = 0.0;
 	for (i=0; i<kg; i++) {
 	    v = HC->Zlist[i+1];
 	    x = Z[v][t];
@@ -670,6 +675,8 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 	free(hm->coeff);
 	hm->coeff = fullcoeff;
 	hm->ncoeff = k;
+	hm->t1 = HC->t1;
+	hm->t2 = HC->t2;
 	gretl_model_set_coeff_separator(hm, N_("Selection equation"), ko + 1);
 	gretl_model_set_int(hm, "base-coeffs", ko);
     }
@@ -1140,9 +1147,11 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     h_container_destroy(HC);
 
 #if 0
-    int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    for (t=t1; t<=t2; t++) {
-	fprintf(stderr, "%4d: u = %12.6f, llt = %12.6f\n", t, hm.uhat[t], hm.llt[t]);
+    int t;
+
+    for (t=hm.t1; t<=hm.t2; t++) {
+	fprintf(stderr, "%4d: u = %12.6f, llt = %12.6f, missing = %d\n", 
+		t, hm.uhat[t], hm.llt[t], model_missing(&hm, t));
     }
 #endif
 
