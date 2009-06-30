@@ -576,11 +576,6 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     int kg = HC->ksel;
     int i, t, v;
 
-#if HDEBUG
-    double lltsum = 0.0;
-    int nllt = 0;
-#endif
-
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xb = 0.0;
 	for (i=0; i<kb; i++) {
@@ -611,44 +606,24 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	}
 
 	if (na(zg)) {
-	    /* Added by A.C. */
 	    hm->uhat[t] = NADBL;
 	    continue;
 	}
 
 	if (Z[HC->selvar][t] == 0) {
 	    /* censored */
-	    if (na(zg)) {
-		hm->uhat[t] = NADBL;
-	    } else {
-		f = normal_pdf(zg);
-		F = normal_cdf(-zg);
-		hm->uhat[t] = -lam * f / F;
-		hm->llt[t] = log(F);
-#if HDEBUG
-		lltsum += hm->llt[t];
-		nllt++;
-#endif
-	    } 
-	} else {
+	    f = normal_pdf(zg);
+	    F = normal_cdf(-zg);
+	    hm->uhat[t] = -lam * f / F;
+	    hm->llt[t] = log(F);
+	} else if (!na(xb) && Z[HC->selvar][t] == 1) {
 	    /* uncensored */
-	    if (!na(xb) && Z[HC->selvar][t] == 1) {
-		hm->uhat[t] = u = Z[HC->depvar][t] - xb;
-		u /= HC->sigma;
-		/* note that zg is used here */
-		x = (zg + rho*u) * rhofunc;
-		hm->llt[t] = -LN_SQRT_2_PI - 0.5*u*u - lnsig + log(normal_cdf(x));
-#if HDEBUG
-		lltsum += hm->llt[t];
-		nllt++;
-#endif
-	    }
+	    hm->uhat[t] = u = Z[HC->depvar][t] - xb;
+	    u /= HC->sigma;
+	    x = (zg + rho*u) * rhofunc;
+	    hm->llt[t] = -LN_SQRT_2_PI - 0.5*u*u - lnsig + log(normal_cdf(x));
 	}
     }
-
-#if HDEBUG
-    fprintf(stderr, "sum of hm->llt = %g (n = %d)\n", lltsum, nllt);
-#endif
 
 #if 0
     /* R-squared based on correlation? */

@@ -14,6 +14,12 @@ version 1.8.2, in progress
 - xtab command: add --matrix option to take frequencies from
   a named matrix
 - add "anova" command plus GUI menu entry
+- Main window: make column headings clickable for sorting
+  variables by ID number or name
+- Enhancements to Edit Attributes dialog for data series
+- "heckit command": fix problem with some residuals being
+  unavailable
+- Several small fixes for the GUI
 - Fix bugs 2806815, 2810219
 
 5/21/2009 version 1.8.1
