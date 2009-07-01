@@ -157,7 +157,7 @@ static int tx_dialog (tx_request *request)
     GtkWidget *hbox, *vbox, *tmp;
     gint i, ret = 0;
 
-    for (i=0; i<N_COMMON_OPTS; i++) {
+    for (i=0; i<TX_MAXOPT; i++) {
 	request->opt[i].check = NULL;
     }
 
@@ -180,7 +180,7 @@ static int tx_dialog (tx_request *request)
 	show_tramo_options(request, vbox);
     } else {
 	/* X-12-ARIMA */
-	tmp = gtk_label_new (_("Save data"));
+	tmp = gtk_label_new(_("Save data"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 
@@ -188,19 +188,22 @@ static int tx_dialog (tx_request *request)
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 	request->opt[D11].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+				     (*request->popt & OPT_A)? TRUE : FALSE);
 
 	tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 	request->opt[D12].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+				     (*request->popt & OPT_B)? TRUE : FALSE);
 
 	tmp = gtk_check_button_new_with_label(_("Irregular"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 	request->opt[D13].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+				     (*request->popt & OPT_C)? TRUE : FALSE);
 
 	tmp = gtk_hseparator_new();
 	gtk_widget_show(tmp);
@@ -210,13 +213,15 @@ static int tx_dialog (tx_request *request)
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 	request->opt[TRIGRAPH].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+				     (*request->popt & OPT_G)? TRUE : FALSE);
 
 	tmp = gtk_check_button_new_with_label(_("Show full output"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 	request->opt[TEXTOUT].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
+				     (*request->popt & OPT_Q)? FALSE : TRUE);
     }
 
     gtk_widget_show(vbox);
@@ -372,11 +377,9 @@ static void clear_x12a_files (const char *xpath, const char *varname)
     char xfname[MAXLEN];
 
     sprintf(xfname, "%s%c%s.out", xpath, SLASH, varname);
-    fprintf(stderr, "removing '%s'\n", xfname);
     gretl_remove(xfname);
 
     sprintf(xfname, "%s%c%s.err", xpath, SLASH, varname);
-    fprintf(stderr, "removing '%s'\n", xfname);
     gretl_remove(xfname);
 }
 
@@ -497,18 +500,38 @@ static int add_series_from_file (const char *fname, int code,
     return err;
 }
 
+static void request_opts_init (tx_request *request)
+{
+    int i;
+
+    request->savevars = 0;
+
+    for (i=0; i<TX_MAXOPT; i++) {
+	request->opt[i].save = 0;
+    }
+}
+
 static void set_opts (tx_request *request)
 {
     int i;
 
     request->savevars = 0;
 
-    for (i=0; i<N_COMMON_OPTS; i++) {
+    *request->popt &= ~(OPT_A|OPT_B|OPT_C);
+
+    for (i=0; i<TX_MAXOPT; i++) {
 	if (request->opt[i].check != NULL && 
 	    GTK_TOGGLE_BUTTON(request->opt[i].check)->active) {
 	    request->opt[i].save = 1;
 	    if (i < TRIGRAPH) {
 		request->savevars++;
+		if (i == 0) {
+		    *request->popt |= OPT_A;
+		} else if (i == 1) {
+		    *request->popt |= OPT_B;
+		} else if (i == 2) {
+		    *request->popt |= OPT_C;
+		}
 	    }
 	} else {
 	    request->opt[i].save = 0;
@@ -522,7 +545,7 @@ static void cancel_savevars (tx_request *request)
 
     request->savevars = 0;
 
-    for (i=0; i<N_COMMON_OPTS; i++) {
+    for (i=0; i<TX_MAXOPT; i++) {
 	request->opt[i].save = 0;
     } 
 }
@@ -781,6 +804,8 @@ int write_tx_data (char *fname, int varnum,
 	request.code = X12A;
     }
 
+    request_opts_init(&request);
+
     if (request.code == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
 	strcpy(errmsg, _("TRAMO can't handle more than 600 observations.\n"
 			 "Please select a smaller sample."));
@@ -792,6 +817,7 @@ int write_tx_data (char *fname, int varnum,
     }	
 
     request.pd = pdinfo->pd;
+    request.popt = opt;
 
     /* show dialog and get option settings */
     doit = tx_dialog(&request); 
@@ -902,17 +928,25 @@ int write_tx_data (char *fname, int varnum,
 		}
 	    }
 
-	    if (!err && request.opt[TRIGRAPH].save) {
-		err = graph_series(tmpZ, tmpinfo, request.code);
-		if (err) {
-		    fprintf(stderr, "graph_series() failed\n");
+	    if (!err) {
+		if (request.opt[TRIGRAPH].save) {
+		    err = graph_series(tmpZ, tmpinfo, request.code);
+		    if (err) {
+			fprintf(stderr, "graph_series() failed\n");
+		    } else {
+			*opt |= OPT_G;
+		    }
 		} else {
-		    *opt |= OPT_G;
+		    *opt &= ~OPT_G;
 		}
 	    }
 
-	    if (request.code == X12A && !request.opt[TEXTOUT].save) {
-		*opt |= OPT_Q;
+	    if (request.code == X12A) {
+		if (request.opt[TEXTOUT].save) {
+		    *opt &= ~OPT_Q;
+		} else {
+		    *opt |= OPT_Q;
+		}
 	    }
 	}
 

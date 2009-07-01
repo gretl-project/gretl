@@ -257,7 +257,7 @@ seats_specific_widgets_set_sensitive (tramo_options *opts,
 	gtk_widget_set_sensitive(opts->aio_innov_button, !s); 
     }
     
-    for (i=0; i<N_COMMON_OPTS; i++) {
+    for (i=0; i<TX_MAXOPT; i++) {
 	if (request->opt[i].check != NULL) {
 	    gtk_widget_set_sensitive(request->opt[i].check, s);
 	}

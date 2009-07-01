@@ -17,15 +17,13 @@
  * 
  */
 
-#define N_COMMON_OPTS 5
-
 enum tx_objects {
     D11,      /* seasonally adjusted series */
     D12,      /* trend/cycle */
     D13,      /* irregular component */
     TRIGRAPH, /* graph showing all of the above */
     TEXTOUT,  /* for full text output */
-    XAXIS     /* x-axis (time) variable for graphing */
+    TX_MAXOPT
 };
 
 typedef struct _common_opt_info common_opt_info;
@@ -40,8 +38,9 @@ struct _common_opt_info {
 struct _tx_request {
     int code;          /* tramo vs x12arima */
     GtkWidget *dialog;
-    common_opt_info opt[N_COMMON_OPTS];
+    common_opt_info opt[TX_MAXOPT];
     void *opts;
+    gretlopt *popt;
     int savevars;
     int pd;
 };

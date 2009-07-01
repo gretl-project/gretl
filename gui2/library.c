@@ -4037,7 +4037,8 @@ void freq_callback (GtkAction *action)
 
 void do_tramo_x12a (GtkAction *action, gpointer p)
 {
-    gretlopt opt = OPT_NONE;
+    /* save options between invocations */
+    static gretlopt opt = OPT_G;
     int v = mdata_active_var();
     int oldv = datainfo->v;
     gchar *databuf;
@@ -4109,7 +4110,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     }
 
     if (opt & OPT_Q) {
-	/* text output not wanted */
+	/* text output suppressed */
 	remove(fname);
     } else {
 	err = gretl_file_get_contents(fname, &databuf);
