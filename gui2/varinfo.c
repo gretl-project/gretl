@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "dlgutils.h"
 #include "ssheet.h"
+#include "toolbar.h"
 #include "varinfo.h"
 
 #define VSET_MAX_FIELDS 6
@@ -518,6 +519,63 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
     g_free(newstr);
 }
 
+/* get the GTK stock label for @id, with any underscore
+   mnemonic removed */
+
+static void add_stock_tooltip (GtkWidget *w, const gchar *id)
+{
+    GtkStockItem stock;
+
+    if (gtk_stock_lookup(id, &stock)) {
+	gchar *label = g_strdup(stock.label);
+	gchar *s = label;
+
+	while (*s) {
+	    if (*s == '_') {
+		shift_string_left(s, 1);
+		if (*s == '\0') {
+		    break;
+		}
+	    }
+	    s++;
+	}
+	gretl_tooltips_add(w, label);
+	g_free(label);
+    }
+}
+
+static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
+{
+    GtkWidget *tbar;
+    GtkToolItem *item;
+
+    tbar = gretl_toolbar_new();
+
+    item = gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
+    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_apply), vset);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
+    vset->apply = GTK_WIDGET(item);
+    add_stock_tooltip(vset->apply, GTK_STOCK_APPLY);
+    gtk_widget_set_sensitive(vset->apply, FALSE);
+
+    item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
+    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
+    vset->up = GTK_WIDGET(item);
+    add_stock_tooltip(vset->up, GTK_STOCK_MEDIA_PREVIOUS);
+    
+    item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
+    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
+    vset->down = GTK_WIDGET(item);
+    add_stock_tooltip(vset->down, GTK_STOCK_MEDIA_NEXT);
+
+    sensitize_up_down_buttons(vset);
+
+    gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 5);
+    gtk_widget_show_all(tbar); 
+}
+
 /* Edit information for the variable with ID number @varnum.  If
    @full is non-zero we're editing all available fields; if it's
    zero that means we're just editing name and description for
@@ -584,28 +642,8 @@ void varinfo_dialog (int varnum, int full)
     }
 
     if (full) {
-	/* apply button; up and down arrows */
-	vset->apply = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-	gtk_box_pack_start(GTK_BOX(hbox), vset->apply, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(vset->apply), "clicked", 
-			 G_CALLBACK(varinfo_apply), vset);
-	gtk_widget_set_sensitive(vset->apply, FALSE);
-	gtk_widget_show(vset->apply); 
-
-	vset->up = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
-	gtk_box_pack_start(GTK_BOX(hbox), vset->up, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(vset->up), "clicked", 
-			 G_CALLBACK(varinfo_up_down), vset);
-	gtk_widget_show(vset->up); 
-
-	vset->down = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
-	gtk_box_pack_start(GTK_BOX(hbox), vset->down, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(vset->down), "clicked", 
-			 G_CALLBACK(varinfo_up_down), vset);
-	gtk_widget_show(vset->down); 
-	vset->down = vset->down;
-
-	sensitize_up_down_buttons(vset);
+	/* Apply, Up and Down buttons */
+	varinfo_add_toolbar(vset, hbox);
     }
     
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
