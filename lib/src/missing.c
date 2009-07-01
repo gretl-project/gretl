@@ -562,9 +562,15 @@ int list_adjust_t1t2 (const int *list, const double **Z, DATAINFO *pdinfo)
     return err;
 }
 
-/* drop first/last observations from sample if missing obs 
-   encountered -- also check for missing vals within the
-   remaining sample */
+/* 
+   Drop leading and trailing observations from the sample defined by
+   the incoming content of @t1 and @t2 if missing observations are
+   encountered in the series @x.  Also check for missing values within
+   the remaining sample, defined by the content of the adjusted @t1
+   and @t2. If such a missing value is found, this function returns
+   its observation number (that is, for the first such value, starting
+   at @t1), otherwise it returns 0.
+*/
 
 int array_adjust_t1t2 (const double *x, int *t1, int *t2)
 {
@@ -586,7 +592,8 @@ int array_adjust_t1t2 (const double *x, int *t1, int *t2)
 	}
     }
 
-    *t1 = t1min; *t2 = t2max;
+    *t1 = t1min; 
+    *t2 = t2max;
 
     return 0;
 }
