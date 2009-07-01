@@ -438,7 +438,7 @@ smpl ; 1981:4
 arma 1 1 ; dy
 smpl --full
 fcast fc2
-genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
+genr fcdiff = (t<=1982:1)? (fc1 - y(-1)) : (fc1 - fc1(-1))
 # compare the forecasts over the later period
 smpl 1981:1 1983:4
 print y fc1 fc2 fcdiff --byobs
