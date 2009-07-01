@@ -8031,9 +8031,10 @@ static void assign_to_matrix_mod (parser *p)
 	gretl_matrix_free(b);
     }
 
+    p->lh.m1 = m;
+
     if (!p->err) {
 	p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
-	p->lh.m1 = m;
     }
 }
 

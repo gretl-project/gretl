@@ -598,6 +598,17 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     }
 }
 
+static void print_sample_obs (const DATAINFO *pdinfo, PRN *prn)
+{
+    char d1[OBSLEN], d2[OBSLEN];
+
+    ntodate_full(d1, pdinfo->t1, pdinfo);
+    ntodate_full(d2, pdinfo->t2, pdinfo);
+
+    pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
+    pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
+}
+
 /**
  * print_smpl:
  * @pdinfo: data information struct
@@ -614,10 +625,13 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
     }
 
     if (fulln && !dataset_is_panel(pdinfo)) {
-	pprintf(prn, _("Full data set: %d observations\n"),
-		fulln);
-	pprintf(prn, _("Current sample: %d observations\n"),
-		pdinfo->n);
+	pprintf(prn, _("Full data set: %d observations\n"), fulln);
+	if (sample_size(pdinfo) < pdinfo->n) {
+	    print_sample_obs(pdinfo, prn);
+	} else {
+	    pprintf(prn, _("Current sample: %d observations\n"),
+		    pdinfo->n);
+	}
 	return;
     }
 
@@ -630,12 +644,7 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 
     if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1 ||
 	(fulln && dataset_is_panel(pdinfo))) {
-	char d1[OBSLEN], d2[OBSLEN];
-	ntodate_full(d1, pdinfo->t1, pdinfo);
-	ntodate_full(d2, pdinfo->t2, pdinfo);
-
-	pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
-	pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
+	print_sample_obs(pdinfo, prn);
     }
 
     pputc(prn, '\n');
