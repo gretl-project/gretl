@@ -28,6 +28,9 @@ extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern GtkWidget *active_edit_text;
 
+/* special comparator which always preserves "const" in the
+   first position when sorting variables by name */
+
 static gint list_alpha_compare (GtkTreeModel *model, 
 				GtkTreeIter *a, GtkTreeIter *b,
 				gpointer p)
@@ -55,6 +58,9 @@ static gint list_alpha_compare (GtkTreeModel *model,
     
     return ret;
 }
+
+/* special comparator which preserves 0 in first position when sorting
+   variables by ID number */
 
 static gint list_id_compare (GtkTreeModel *model, 
 			     GtkTreeIter *a, GtkTreeIter *b,
@@ -320,6 +326,20 @@ static void check_db_series_selection (GtkTreeSelection *sel,
     }  
 }
 
+static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
+{
+    GtkTreeModel *model;
+    GtkSortType order;
+    gint scol;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(view));
+    gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
+					 &scol, &order);
+    if (order == GTK_SORT_ASCENDING) {
+	gtk_tree_view_column_set_sort_indicator(column, FALSE);
+    }
+}
+
 #define db_series_window(v) (v->role == NATIVE_SERIES || \
                              v->role == RATS_SERIES || \
                              v->role == PCGIVE_SERIES || \
@@ -382,6 +402,10 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
 	    } else if (i < 2) {
 		gtk_tree_view_column_set_sort_column_id(GTK_TREE_VIEW_COLUMN(column), i);
+		if (i == 0) {
+		    g_signal_connect(G_OBJECT(column), "clicked",
+				     G_CALLBACK(id_col_clicked), view);
+		}
 	    }
 	}	
     }
