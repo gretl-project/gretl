@@ -392,9 +392,9 @@ int fracdiff_series (const double *x, double *y, double d,
 		     int diff, int obs, const DATAINFO *pdinfo)
 {
     int dd, t, T;
-    const double TOL = 1.0E-07;
+    const double TOL = 1.0E-12;
     int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t2 = (obs >= 0) ? obs : pdinfo->t2;
     double phi = (diff)? -d : d;
     int err;
 
@@ -403,8 +403,11 @@ int fracdiff_series (const double *x, double *y, double d,
 #endif
 
     err = array_adjust_t1t2(x, &t1, &t2);
-    if (err) {
-	return E_DATA;
+    if (err>0 && err<t2) {
+	t2 = err;
+	for (t>=t2; t<pdinfo->n; t++) {
+	    y[t] = NADBL;
+	}
     } 
  
     if (obs >= 0) {
@@ -425,7 +428,7 @@ int fracdiff_series (const double *x, double *y, double d,
     } else {
 	/* doing the whole series */
 	T = t2 - t1 + 1;
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<=t2; t++) {
 	    if (t >= t1 && t <= t2) {
 		y[t] = (diff)? x[t] : 0;
 	    } else {
