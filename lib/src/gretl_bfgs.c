@@ -438,7 +438,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     double *g, *t, *X, *c;
     int verbose = (opt & OPT_V);
     int fcount, gcount, ndelta = 0;
-    double d, fmax, f, f0, sumgrad;
+    double fmax, f, f0, sumgrad, d = 0.0;
     int i, j, ilast, iter;
     double s, steplen = 0.0;
     double D1, D2;
@@ -642,7 +642,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     if (iter >= maxit) {
 	fprintf(stderr, _("stopped after %d iterations\n"), iter);
 	err = E_NOCONV;
-    } else if (fmax < f0) {
+    } else if ((fmax + d) < f0) {
 	/* FIXME this should never happen */
 	fprintf(stderr, "failed to match initial value of objective function, %g\n", f0);
 	err = E_NOCONV;
