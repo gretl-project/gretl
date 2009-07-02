@@ -642,7 +642,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     if (iter >= maxit) {
 	fprintf(stderr, _("stopped after %d iterations\n"), iter);
 	err = E_NOCONV;
-    } else if ((fmax + d) < f0) {
+    } else if (fmax < f0) {
 	/* FIXME this should never happen */
 	fprintf(stderr, "failed to match initial value of objective function, %g\n", f0);
 	err = E_NOCONV;
