@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-29 13:22-0400\n"
-"PO-Revision-Date: 2009-06-22 16:56-0400\n"
+"PO-Revision-Date: 2009-07-02 13:48+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -11900,9 +11900,8 @@ msgid "Descending"
 msgstr "Descendente"
 
 #: gui2/library.c:6273
-#, fuzzy
 msgid "Select sort key"
-msgstr "Seleccione un color"
+msgstr "Seleccione clave de ordenación"
 
 #: gui2/library.c:6293
 msgid "resample dataset"
@@ -12297,9 +12296,8 @@ msgid "You must specify an upper bound variable"
 msgstr "Se debe especificar una variable de límite superior"
 
 #: gui2/selector.c:2520
-#, fuzzy
 msgid "You must specify a treatment variable"
-msgstr "Se debe especificar una variable de selección"
+msgstr "Se debe especificar una variable de tratamiento"
 
 #: gui2/selector.c:2656
 msgid "You must select a Z-axis variable"
@@ -12410,9 +12408,8 @@ msgid "Y-axis variable"
 msgstr "variable del eje Y"
 
 #: gui2/selector.c:3002
-#, fuzzy
 msgid "Treatment variable"
-msgstr "gretl: nombrar variable"
+msgstr "Variable de tratamiento"
 
 #: gui2/selector.c:3013 gui2/selector.c:4933
 msgid "Y-axis variables"
@@ -12431,9 +12428,8 @@ msgid "Lower bound variable"
 msgstr "Variable de límite inferior"
 
 #: gui2/selector.c:3166
-#, fuzzy
 msgid "Response variable"
-msgstr "Variable dependiente"
+msgstr "Variable de respuesta"
 
 #: gui2/selector.c:3176 gui2/selector.c:3223
 msgid "Choose ->"
@@ -12480,9 +12476,8 @@ msgid "Control variable"
 msgstr "Variable de control"
 
 #: gui2/selector.c:3380
-#, fuzzy
 msgid "Block variable (optional)"
-msgstr "Elija las variables a añadir"
+msgstr "Variable de bloque (opcional)"
 
 #: gui2/selector.c:3427
 msgid "Add ->"
@@ -13976,27 +13971,25 @@ msgid "Treat this variable as discrete"
 msgstr "Tratar esta variable como discreta"
 
 #: plugin/anova.c:106 plugin/anova.c:108
-#, fuzzy
 msgid "Treatment"
-msgstr "Estad. traza"
+msgstr "Tratamiento"
 
 #: plugin/anova.c:117 plugin/anova.c:119
-#, fuzzy
 msgid "Block"
-msgstr "Volver"
+msgstr "Bloque"
 
 #: plugin/anova.c:191 plugin/anova.c:201
 msgid "Level"
-msgstr ""
+msgstr "Nivel"
 
 #: plugin/anova.c:216
 msgid "Grand mean"
-msgstr ""
+msgstr "Media grande"
 
 #: plugin/anova.c:501
 #, c-format
 msgid "%s, response = %s, treatment = %s:"
-msgstr ""
+msgstr "%s, respuesta = %s, tratamiento = %s:"
 
 #: plugin/arma.c:2221 plugin/arma.c:2224
 msgid "ARMA initialization"
