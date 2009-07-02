@@ -391,7 +391,7 @@ int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
 int fracdiff_series (const double *x, double *y, double d,
 		     int diff, int obs, const DATAINFO *pdinfo)
 {
-    int dd, t, err, T;
+    int dd, t, tmiss, T;
     const double TOL = 1.0E-12;
     int t1 = pdinfo->t1;
     int t2 = (obs >= 0)? obs : pdinfo->t2;
@@ -401,23 +401,11 @@ int fracdiff_series (const double *x, double *y, double d,
     fprintf(stderr, "Doing fracdiff_series, with d = %g\n", d);
 #endif
 
-#if 1
-    err = array_adjust_t1t2(x, &t1, &t2);
-    if (err>0 && err<t2) {
-	t2 = err;
-	for (t>=t2; t<pdinfo->n; t++) {
-	    y[t] = NADBL;
-	}
-    } 
-#else
     tmiss = array_adjust_t1t2(x, &t1, &t2);
 
     if (tmiss > 0 && tmiss < t2) {
-	for (t=tmiss; t<pdinfo->n; t++) {
-	    y[t] = NADBL;
-	}
+	t2 = tmiss;
     } 
-#endif
  
     if (obs >= 0) {
 	/* doing a specific observation */
