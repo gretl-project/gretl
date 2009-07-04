@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-03 22:16-0400\n"
-"PO-Revision-Date: 2009-06-22 16:57-0400\n"
+"PO-Revision-Date: 2009-07-04 10:02+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -11873,9 +11873,8 @@ msgid "Descending"
 msgstr "Decrescente"
 
 #: gui2/library.c:6279
-#, fuzzy
 msgid "Select sort key"
-msgstr "Seleziona colore"
+msgstr "Seleziona il campo di ordinamento"
 
 #: gui2/library.c:6299
 msgid "resample dataset"
@@ -12279,9 +12278,8 @@ msgid "You must specify an upper bound variable"
 msgstr "Occorre specificare una variabile limite superiore"
 
 #: gui2/selector.c:2520
-#, fuzzy
 msgid "You must specify a treatment variable"
-msgstr "Occorre specificare una variabile di selezione"
+msgstr "Occorre specificare una variabile di trattamento"
 
 #: gui2/selector.c:2656
 msgid "You must select a Z-axis variable"
@@ -12392,9 +12390,8 @@ msgid "Y-axis variable"
 msgstr "Variabile asse Y"
 
 #: gui2/selector.c:3002
-#, fuzzy
 msgid "Treatment variable"
-msgstr "gretl: nome variabile"
+msgstr "Variabile di trattamento"
 
 #: gui2/selector.c:3013 gui2/selector.c:4933
 msgid "Y-axis variables"
@@ -12413,9 +12410,8 @@ msgid "Lower bound variable"
 msgstr "Variabile limite inferiore"
 
 #: gui2/selector.c:3166
-#, fuzzy
 msgid "Response variable"
-msgstr "Variabile dipendente"
+msgstr "Variabile di risposta"
 
 #: gui2/selector.c:3176 gui2/selector.c:3223
 msgid "Choose ->"
@@ -12462,9 +12458,8 @@ msgid "Control variable"
 msgstr "Variabile di controllo"
 
 #: gui2/selector.c:3380
-#, fuzzy
 msgid "Block variable (optional)"
-msgstr "Selezionare le variabili da aggiungere"
+msgstr "Variabile di blocco (opzionale)"
 
 #: gui2/selector.c:3427
 msgid "Add ->"
@@ -13954,28 +13949,25 @@ msgid "Treat this variable as discrete"
 msgstr "Tratta questa variabile come discreta"
 
 #: plugin/anova.c:106 plugin/anova.c:108
-#, fuzzy
 msgid "Treatment"
-msgstr "Test traccia"
+msgstr "Trattamento"
 
 #: plugin/anova.c:117 plugin/anova.c:119
-#, fuzzy
 msgid "Block"
-msgstr "Indietro"
+msgstr "Blocco"
 
 #: plugin/anova.c:191 plugin/anova.c:201
 msgid "Level"
-msgstr ""
+msgstr "Livello"
 
 #: plugin/anova.c:216
-#, fuzzy
 msgid "Grand mean"
-msgstr "Media non valida"
+msgstr "Media generale"
 
 #: plugin/anova.c:501
 #, c-format
 msgid "%s, response = %s, treatment = %s:"
-msgstr ""
+msgstr "%s, risposta = %s, trattamento = %s:"
 
 #: plugin/arma.c:2221 plugin/arma.c:2224
 msgid "ARMA initialization"
@@ -14695,9 +14687,8 @@ msgid "irregular component of %s"
 msgstr "componente irregolare di %s"
 
 #: plugin/tramo-x12a.c:219
-#, fuzzy
 msgid "Show full output"
-msgstr "Mostra bordo completo"
+msgstr "Mostra risultati completi"
 
 #: plugin/tramo-x12a.c:286 plugin/tramo-x12a.c:288
 msgid "irregular"
