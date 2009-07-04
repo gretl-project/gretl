@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-03 22:16-0400\n"
+"POT-Creation-Date: 2009-07-04 12:34-0400\n"
 "PO-Revision-Date: 2009-05-11 12:32-0400\n"
 "Last-Translator: Pavla Nikolovova <pavla.nikolovova@cerge-ei.cz>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -2379,7 +2379,7 @@ msgid "Expected '%c' but found '%s'\n"
 msgstr "Očekáváno '%c' ale nalezeno '%s'\n"
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2613 lib/src/gretl_panel.c:4343
-#: lib/src/gretl_panel.c:4353 lib/src/interact.c:3643 lib/src/nls.c:2547
+#: lib/src/gretl_panel.c:4353 lib/src/interact.c:3643 lib/src/nls.c:2542
 #, c-format
 msgid "Unknown variable '%s'"
 msgstr "Neznámá proměnná '%s'"
@@ -3317,7 +3317,7 @@ msgstr "Rovnice číslo (%d) je mimo rozsah"
 
 #: lib/src/gretl_restrict.c:1000 lib/src/gretl_restrict.c:1602
 #: lib/src/gretl_restrict.c:1625 lib/src/gretl_restrict.c:1648
-#: lib/src/gretl_restrict.c:1703 lib/src/nls.c:2542
+#: lib/src/gretl_restrict.c:1703 lib/src/nls.c:2537
 #, c-format
 msgid "parse error in '%s'\n"
 msgstr "chyba analýzy v '%s'\n"
@@ -5266,58 +5266,58 @@ msgstr ""
 "%d z %d gradientů vypadá podezřele.\n"
 "\n"
 
-#: lib/src/nls.c:2218 lib/src/nls.c:2322
+#: lib/src/nls.c:2213 lib/src/nls.c:2317
 msgid "Invalid NLS specification"
 msgstr "Neplatná NLS specificace"
 
-#: lib/src/nls.c:2230 lib/src/nls.c:2335
+#: lib/src/nls.c:2225 lib/src/nls.c:2330
 #, c-format
 msgid "NLS: failed to converge after %d iterations"
 msgstr "NLS: po %d iteracích nebylo dosaženo konvergence"
 
-#: lib/src/nls.c:2399
+#: lib/src/nls.c:2394
 msgid "Analytical derivatives cannot be used with GMM"
 msgstr "Při GMM nelze použít analytické derivace"
 
-#: lib/src/nls.c:2457
+#: lib/src/nls.c:2452
 #, c-format
 msgid "command '%s' not valid in this context"
 msgstr "příkaz '%s' je v tomto kontextu neplatný"
 
-#: lib/src/nls.c:2647 plugin/heckit.c:347
+#: lib/src/nls.c:2642 plugin/heckit.c:347
 msgid "No regression function has been specified"
 msgstr "Nebyla specifikována žádná regresní funkce"
 
-#: lib/src/nls.c:2652
+#: lib/src/nls.c:2647
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
 msgstr "Nemůžete zadat zároveň řádek \"params\" a analytické derivace"
 
-#: lib/src/nls.c:2662
+#: lib/src/nls.c:2657
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
 msgstr "Byly zadány analytické derivace: řádek \"params\" bude ignorován"
 
-#: lib/src/nls.c:2705
+#: lib/src/nls.c:2700
 msgid "No parameters have been specified"
 msgstr "Nebyly specifikovány žádné parametry"
 
-#: lib/src/nls.c:2801
+#: lib/src/nls.c:2796
 msgid "No function has been specified"
 msgstr "Nebyla specifikována žádná funkce"
 
-#: lib/src/nls.c:2819
+#: lib/src/nls.c:2814
 #, fuzzy, c-format
 msgid "%s: no parameters were specified"
 msgstr "Nebyly specifikovány žádné parametry"
 
-#: lib/src/nls.c:2869
+#: lib/src/nls.c:2864
 msgid "Using numerical derivatives\n"
 msgstr "Použity numerické derivace\n"
 
-#: lib/src/nls.c:2870
+#: lib/src/nls.c:2865
 msgid "Using analytical derivatives\n"
 msgstr "Použity analytické derivace\n"
 
-#: lib/src/nls.c:2890
+#: lib/src/nls.c:2885
 #, c-format
 msgid "Tolerance = %g\n"
 msgstr "Tolerance = %g\n"
@@ -5509,17 +5509,17 @@ msgstr ""
 "Nelze provést: aktuální soubor dat je odlišný od toho,\n"
 "na němž byl proveden odhad referenčního modelu\n"
 
-#: lib/src/options.c:907
+#: lib/src/options.c:905
 #, fuzzy, c-format
 msgid "Invalid option '--%s'"
 msgstr "neplatné pole '%s'"
 
-#: lib/src/options.c:928
+#: lib/src/options.c:926
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr ""
 
-#: lib/src/options.c:1160
+#: lib/src/options.c:1158
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Varování: možnost%s ignorována mimo cyklus"
@@ -6808,7 +6808,7 @@ msgid "Standard errors"
 msgstr "Směrodatné chyby"
 
 #: gui2/calculator.c:599 gui2/calculator.c:692 gui2/database.c:212
-#: gui2/filters.c:654 gui2/gpt_control.c:990
+#: gui2/filters.c:698 gui2/gpt_control.c:990
 msgid "gnuplot command failed"
 msgstr "příkaz gnuplot se nezdařil"
 
@@ -8734,154 +8734,174 @@ msgstr "GNU R soubory (*.R)"
 msgid "gnuplot files (*.plt)"
 msgstr "gnuplot soubory (*.plt)"
 
-#: gui2/filters.c:73
+#: gui2/filters.c:75
 msgid "Simple moving average"
 msgstr "Jednoduchý klouzavý průměr"
 
-#: gui2/filters.c:75
+#: gui2/filters.c:77
 msgid "Exponential moving average"
 msgstr "Exponenciální klouzavý průměr"
 
-#: gui2/filters.c:77
+#: gui2/filters.c:79
 msgid "Hodrick-Prescott filter"
 msgstr "Hodrick-Prescottův filtr"
 
-#: gui2/filters.c:79
+#: gui2/filters.c:81
 msgid "Baxter-King Band-pass filter"
 msgstr "Baxter-King Band-pass filtr"
 
-#: gui2/filters.c:161
+#: gui2/filters.c:83
+#, fuzzy
+msgid "Fractional difference"
+msgstr "Sezónní diference:"
+
+#: gui2/filters.c:170
 #, c-format
 msgid "Centered %d-period moving average of %s"
 msgstr ""
 
-#: gui2/filters.c:164
+#: gui2/filters.c:173
 #, fuzzy, c-format
 msgid "%d-period moving average of %s"
 msgstr "Jednoduchý klouzavý průměr"
 
-#: gui2/filters.c:168
+#: gui2/filters.c:177
 #, fuzzy, c-format
 msgid "Residual from %d-period MA of %s"
 msgstr "reziduum v modelu %d"
 
-#: gui2/filters.c:173
+#: gui2/filters.c:182
 #, fuzzy, c-format
 msgid "Exponential moving average of %s (current weight %g)"
 msgstr "Exponenciální klouzavý průměr"
 
-#: gui2/filters.c:176
+#: gui2/filters.c:185
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
 msgstr ""
 
-#: gui2/filters.c:181
+#: gui2/filters.c:190
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
 msgstr ""
 
-#: gui2/filters.c:184
+#: gui2/filters.c:193
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
 msgstr ""
 
-#: gui2/filters.c:188
+#: gui2/filters.c:197
 #, c-format
 msgid "Filtered %s: Baxter-King cycle"
 msgstr ""
 
-#: gui2/filters.c:227
+#: gui2/filters.c:237
 msgid "Variable name is missing"
 msgstr "Chybí jméno proměnné"
 
-#: gui2/filters.c:233
+#: gui2/filters.c:243
 msgid "Conflicting variable names"
 msgstr "Jména proměnných jsou v rozporu"
 
-#: gui2/filters.c:300
+#: gui2/filters.c:314
+#, fuzzy
+msgid "Save output as"
+msgstr "Uložit výstupní soubor"
+
+#: gui2/filters.c:318
 msgid "Save smoothed series as"
 msgstr "Uložit vyhlazenou řadu jako"
 
-#: gui2/filters.c:304
+#: gui2/filters.c:322
 msgid "Save cyclical component as"
 msgstr "Uložit cyklickou komponentu jako"
 
-#: gui2/filters.c:337
+#: gui2/filters.c:355
 msgid "Lower frequency bound:"
 msgstr "Dolní mez frekvence:"
 
-#: gui2/filters.c:346
+#: gui2/filters.c:364
 msgid "Upper frequency bound:"
 msgstr "Horní mez frekvence:"
 
-#: gui2/filters.c:377
+#: gui2/filters.c:395
 msgid "The first EMA value is"
 msgstr "První hodnota filtru EMA je"
 
-#: gui2/filters.c:386
+#: gui2/filters.c:404
 msgid "the mean of the whole series"
 msgstr "střední hodnota celé řady"
 
-#: gui2/filters.c:391
+#: gui2/filters.c:409
 msgid "the mean of the first n observations"
 msgstr "střední hodnota prvních n pozorování"
 
-#: gui2/filters.c:413
+#: gui2/filters.c:431
 msgid "gretl: time-series filter"
 msgstr "gretl: filtr časových řad"
 
-#: gui2/filters.c:430
+#: gui2/filters.c:448
 msgid "Number of observations in average:"
 msgstr "Průměrný počet pozorování:"
 
-#: gui2/filters.c:441
+#: gui2/filters.c:459
 msgid "Centered"
 msgstr "Centrované"
 
-#: gui2/filters.c:452
+#: gui2/filters.c:470
 msgid "Weight on current observation:"
 msgstr "Váha aktuálního pozorování:"
 
-#: gui2/filters.c:466
+#: gui2/filters.c:484
 msgid "lambda (higher values -> smoother trend):"
 msgstr "lambda (vyšší hodnoty -> vyhlazený trend):"
 
-#: gui2/filters.c:477
+#: gui2/filters.c:495
 msgid "k (higher values -> better approximation):"
 msgstr "k (vyšší hodnoty -> lepší aproximace):"
 
-#: gui2/filters.c:494
+#: gui2/filters.c:509
+#, fuzzy
+msgid "differencing parameter:"
+msgstr "rozdíl rozptylů"
+
+#: gui2/filters.c:523
 msgid "Graph filtered series"
 msgstr "Vykreslit filtrované řady"
 
-#: gui2/filters.c:498
+#: gui2/filters.c:527
 msgid "Save cyclical series as"
 msgstr "Uložit cyklické řady jako"
 
-#: gui2/filters.c:511
+#: gui2/filters.c:540
+#, fuzzy
+msgid "Graph differenced series"
+msgstr "Vykreslit filtrované řady"
+
+#: gui2/filters.c:546
 msgid "Graph original and smoothed series"
 msgstr "Vykreslit původní a vyhlazenou řadu"
 
-#: gui2/filters.c:513
+#: gui2/filters.c:548
 msgid "Graph residual or cycle series"
 msgstr "Vykrelit reziduální nebo cyklickou řadu"
 
-#: gui2/filters.c:606 gui2/filters.c:627
+#: gui2/filters.c:645 gui2/filters.c:671
 #, c-format
 msgid "%s (original data)"
 msgstr "%s (původní data)"
 
-#: gui2/filters.c:607 gui2/filters.c:628
+#: gui2/filters.c:646 gui2/filters.c:672
 #, c-format
 msgid "%s (smoothed)"
 msgstr "%s (vyhlazená)"
 
-#: gui2/filters.c:618 gui2/filters.c:640
+#: gui2/filters.c:657 gui2/filters.c:684
 #, c-format
 msgid "Cyclical component of %s"
 msgstr "Cyklická komponenta %s"
 
-#: gui2/filters.c:637
+#: gui2/filters.c:681
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr "Baxter-Kingova komponenta %s při frekvenci %d do %d"
@@ -9738,7 +9758,7 @@ msgstr "_Obecné..."
 msgid "_Fixed font..."
 msgstr "_Pevný font..."
 
-#: gui2/gretl.c:1289 gui2/gretl.c:1475
+#: gui2/gretl.c:1289 gui2/gretl.c:1477
 msgid "_Menu font..."
 msgstr "Font _menu..."
 
@@ -9992,7 +10012,7 @@ msgstr "Vymazat všechna pozorování s _chybějícími hodnotami"
 msgid "_Count missing values"
 msgstr "_Spočítat chybějící hodnoty"
 
-#: gui2/gretl.c:1368 gui2/gretl.c:1402
+#: gui2/gretl.c:1368 gui2/gretl.c:1404
 msgid "Set missing _value code..."
 msgstr "Zadat kód pro chybějící _hodnoty..."
 
@@ -10080,259 +10100,264 @@ msgstr "_Hodrick-Prescott"
 msgid "_Baxter-King"
 msgstr "_Baxter-King"
 
-#: gui2/gretl.c:1395 gui2/gretl.c:1483
+#: gui2/gretl.c:1394
+#, fuzzy
+msgid "_Fractional difference"
+msgstr "Sezónní diference:"
+
+#: gui2/gretl.c:1397 gui2/gretl.c:1485
 msgid "_X-12-ARIMA analysis"
 msgstr "_X-12-ARIMA analýza"
 
-#: gui2/gretl.c:1398 gui2/gretl.c:1492
+#: gui2/gretl.c:1400 gui2/gretl.c:1494
 msgid "_TRAMO analysis"
 msgstr "_TRAMO analýza"
 
-#: gui2/gretl.c:1400
+#: gui2/gretl.c:1402
 msgid "_Hurst exponent"
 msgstr "_Hurstův exponent"
 
-#: gui2/gretl.c:1401
+#: gui2/gretl.c:1403
 msgid "_Edit attributes"
 msgstr "_Upravit atributy"
 
-#: gui2/gretl.c:1403 gui2/gui_utils.c:2095
+#: gui2/gretl.c:1405 gui2/gui_utils.c:2095
 msgid "Define _new variable..."
 msgstr "Definovat _novou proměnnou..."
 
-#: gui2/gretl.c:1406
+#: gui2/gretl.c:1408
 msgid "_Model"
 msgstr "_Model"
 
-#: gui2/gretl.c:1407
+#: gui2/gretl.c:1409
 msgid "_Ordinary Least Squares..."
 msgstr "_Obyčejné Nejmenší Čtverce..."
 
-#: gui2/gretl.c:1408
+#: gui2/gretl.c:1410
 #, fuzzy
 msgid "_Instrumental variables"
 msgstr "interní proměnná"
 
-#: gui2/gretl.c:1409
+#: gui2/gretl.c:1411
 msgid "_Two-Stage Least Squares..."
 msgstr "_Dvoustupňové Nejmenší Čtverce..."
 
-#: gui2/gretl.c:1410
+#: gui2/gretl.c:1412
 #, fuzzy
 msgid "_LIML..."
 msgstr "LIML"
 
-#: gui2/gretl.c:1411 gui2/gretl.c:1457
+#: gui2/gretl.c:1413 gui2/gretl.c:1459
 msgid "_GMM..."
 msgstr "_GMM..."
 
-#: gui2/gretl.c:1412
+#: gui2/gretl.c:1414
 msgid "Other _linear models"
 msgstr "Další _lineární modely"
 
-#: gui2/gretl.c:1413
+#: gui2/gretl.c:1415
 msgid "_Weighted Least Squares..."
 msgstr "_Vážené Nejmenší Čtverce..."
 
-#: gui2/gretl.c:1414
+#: gui2/gretl.c:1416
 msgid "H_eteroskedasticity corrected..."
 msgstr "Opravená h_eteroskedasticita..."
 
-#: gui2/gretl.c:1416
+#: gui2/gretl.c:1418
 msgid "High _precision OLS..."
 msgstr "OLS s vysokou _přesností..."
 
-#: gui2/gretl.c:1418
+#: gui2/gretl.c:1420
 #, fuzzy
 msgid "ANOVA..."
 msgstr "ANOVA"
 
-#: gui2/gretl.c:1419
+#: gui2/gretl.c:1421
 msgid "_Time series"
 msgstr "_Časová řada"
 
-#: gui2/gretl.c:1420
+#: gui2/gretl.c:1422
 msgid "_Cochrane-Orcutt..."
 msgstr "_Cochrane-Orcutt..."
 
-#: gui2/gretl.c:1421
+#: gui2/gretl.c:1423
 msgid "_Hildreth-Lu..."
 msgstr "_Hildreth-Lu..."
 
-#: gui2/gretl.c:1422
+#: gui2/gretl.c:1424
 msgid "_Prais-Winsten..."
 msgstr "_Prais-Winsten..."
 
-#: gui2/gretl.c:1423
+#: gui2/gretl.c:1425
 msgid "_Autoregressive estimation..."
 msgstr "_Autoregressivní odhad..."
 
-#: gui2/gretl.c:1424
+#: gui2/gretl.c:1426
 msgid "ARI_MA..."
 msgstr "ARI_MA..."
 
-#: gui2/gretl.c:1425
+#: gui2/gretl.c:1427
 msgid "_ARCH..."
 msgstr "_ARCH..."
 
-#: gui2/gretl.c:1426
+#: gui2/gretl.c:1428
 msgid "_GARCH..."
 msgstr "_GARCH..."
 
-#: gui2/gretl.c:1427
+#: gui2/gretl.c:1429
 msgid "_Vector Autoregression..."
 msgstr "_Vektorová Autoregresse..."
 
-#: gui2/gretl.c:1428
+#: gui2/gretl.c:1430
 msgid "VAR _lag selection..."
 msgstr "VAR výběr _zpožděných proměnných..."
 
-#: gui2/gretl.c:1429
+#: gui2/gretl.c:1431
 msgid "V_ECM..."
 msgstr "V_ECM..."
 
-#: gui2/gretl.c:1430
+#: gui2/gretl.c:1432
 msgid "_Cointegration test"
 msgstr "Test _kointegrace"
 
-#: gui2/gretl.c:1431
+#: gui2/gretl.c:1433
 msgid "_Engle-Granger..."
 msgstr "_Engle-Granger..."
 
-#: gui2/gretl.c:1432
+#: gui2/gretl.c:1434
 msgid "_Johansen..."
 msgstr "_Johansen..."
 
-#: gui2/gretl.c:1433
+#: gui2/gretl.c:1435
 msgid "_Panel"
 msgstr "_Panel"
 
-#: gui2/gretl.c:1434
+#: gui2/gretl.c:1436
 msgid "_Fixed or random effects..."
 msgstr "_Pevné nebo náhodné efekty..."
 
-#: gui2/gretl.c:1435
+#: gui2/gretl.c:1437
 msgid "_Weighted least squares..."
 msgstr "_Vážené nejmenší čtverce..."
 
-#: gui2/gretl.c:1436
+#: gui2/gretl.c:1438
 msgid "_Between model..."
 msgstr "_Mezi modely..."
 
-#: gui2/gretl.c:1437
+#: gui2/gretl.c:1439
 msgid "_Arellano-Bond..."
 msgstr "_Arellano-Bond..."
 
-#: gui2/gretl.c:1438
+#: gui2/gretl.c:1440
 msgid "_Nonlinear models"
 msgstr "_Nelineární modely"
 
-#: gui2/gretl.c:1439
+#: gui2/gretl.c:1441
 #, fuzzy
 msgid "_Logit"
 msgstr "Logit"
 
-#: gui2/gretl.c:1440 gui2/gretl.c:1444
+#: gui2/gretl.c:1442 gui2/gretl.c:1446
 #, fuzzy
 msgid "_Binary..."
 msgstr "_Najít..."
 
-#: gui2/gretl.c:1441 gui2/gretl.c:1445
+#: gui2/gretl.c:1443 gui2/gretl.c:1447
 msgid "_Ordered..."
 msgstr ""
 
-#: gui2/gretl.c:1442
+#: gui2/gretl.c:1444
 #, fuzzy
 msgid "_Multinomial..."
 msgstr "_JMulTi..."
 
-#: gui2/gretl.c:1443
+#: gui2/gretl.c:1445
 #, fuzzy
 msgid "_Probit"
 msgstr "Probit"
 
-#: gui2/gretl.c:1446
+#: gui2/gretl.c:1448
 msgid "To_bit..."
 msgstr "To_bit"
 
-#: gui2/gretl.c:1447
+#: gui2/gretl.c:1449
 msgid "_Heckit..."
 msgstr "_Heckit..."
 
-#: gui2/gretl.c:1448
+#: gui2/gretl.c:1450
 msgid "Poi_sson..."
 msgstr "Poi_ssonovo..."
 
-#: gui2/gretl.c:1449
+#: gui2/gretl.c:1451
 msgid "Lo_gistic..."
 msgstr "Lo_gistické..."
 
-#: gui2/gretl.c:1450
+#: gui2/gretl.c:1452
 msgid "_Nonlinear Least Squares..."
 msgstr "_Nelineární Nejmenší Čtverce"
 
-#: gui2/gretl.c:1451
+#: gui2/gretl.c:1453
 #, fuzzy
 msgid "_Interval regression..."
 msgstr "_Kvantilová regrese..."
 
-#: gui2/gretl.c:1452
+#: gui2/gretl.c:1454
 msgid "_Robust estimation"
 msgstr "_Robustní odhad"
 
-#: gui2/gretl.c:1453
+#: gui2/gretl.c:1455
 msgid "Least _Absolute Deviation..."
 msgstr "Nejmenší _Absolutní Odchylka..."
 
-#: gui2/gretl.c:1454
+#: gui2/gretl.c:1456
 msgid "_Quantile regression..."
 msgstr "_Kvantilová regrese..."
 
-#: gui2/gretl.c:1455
+#: gui2/gretl.c:1457
 msgid "_Rank correlation..."
 msgstr "_Pořadová korelace..."
 
-#: gui2/gretl.c:1456
+#: gui2/gretl.c:1458
 msgid "_Maximum likelihood..."
 msgstr "_Maximální věrohodnost..."
 
-#: gui2/gretl.c:1458
+#: gui2/gretl.c:1460
 msgid "_Simultaneous equations..."
 msgstr "_Simultánní rovnice..."
 
-#: gui2/gretl.c:1461
+#: gui2/gretl.c:1463
 msgid "_Help"
 msgstr "_Nápověda"
 
-#: gui2/gretl.c:1462
+#: gui2/gretl.c:1464
 msgid "_Command reference"
 msgstr "_Popis příkazu"
 
-#: gui2/gretl.c:1463
+#: gui2/gretl.c:1465
 msgid "Plain _text"
 msgstr "Prostý _text"
 
-#: gui2/gretl.c:1464
+#: gui2/gretl.c:1466
 msgid "_PDF"
 msgstr "_PDF"
 
-#: gui2/gretl.c:1465
+#: gui2/gretl.c:1467
 msgid "Function reference"
 msgstr "Popis funkce"
 
-#: gui2/gretl.c:1466
+#: gui2/gretl.c:1468
 msgid "_User's guide"
 msgstr "_Průvodce pro uživatele"
 
-#: gui2/gretl.c:1467
+#: gui2/gretl.c:1469
 msgid "Check for _updates"
 msgstr "Zkontrolujte _aktualizace"
 
-#: gui2/gretl.c:1468
+#: gui2/gretl.c:1470
 msgid "_About gretl"
 msgstr "_O gretlu"
 
-#: gui2/gretl.c:1742 gui2/selector.c:5687
+#: gui2/gretl.c:1744 gui2/selector.c:5687
 msgid "Save data file"
 msgstr "Uložit datový soubor"
 

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-03 22:16-0400\n"
+"POT-Creation-Date: 2009-07-04 12:34-0400\n"
 "PO-Revision-Date: 2009-06-03 01:06+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -2416,7 +2416,7 @@ msgid "Expected '%c' but found '%s'\n"
 msgstr ""
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2613 lib/src/gretl_panel.c:4343
-#: lib/src/gretl_panel.c:4353 lib/src/interact.c:3643 lib/src/nls.c:2547
+#: lib/src/gretl_panel.c:4353 lib/src/interact.c:3643 lib/src/nls.c:2542
 #, fuzzy, c-format
 msgid "Unknown variable '%s'"
 msgstr " '%s' 是未知的變數"
@@ -3357,7 +3357,7 @@ msgstr ""
 
 #: lib/src/gretl_restrict.c:1000 lib/src/gretl_restrict.c:1602
 #: lib/src/gretl_restrict.c:1625 lib/src/gretl_restrict.c:1648
-#: lib/src/gretl_restrict.c:1703 lib/src/nls.c:2542
+#: lib/src/gretl_restrict.c:1703 lib/src/nls.c:2537
 #, fuzzy, c-format
 msgid "parse error in '%s'\n"
 msgstr "非條件殘差變異數"
@@ -5356,60 +5356,60 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/nls.c:2218 lib/src/nls.c:2322
+#: lib/src/nls.c:2213 lib/src/nls.c:2317
 #, fuzzy
 msgid "Invalid NLS specification"
 msgstr "資料檔格式錯誤\n"
 
-#: lib/src/nls.c:2230 lib/src/nls.c:2335
+#: lib/src/nls.c:2225 lib/src/nls.c:2330
 #, c-format
 msgid "NLS: failed to converge after %d iterations"
 msgstr ""
 "NLS:  在 %d 次反覆運算 (iterations) 後, 仍無法收歛 (failed to converge)"
 
-#: lib/src/nls.c:2399
+#: lib/src/nls.c:2394
 msgid "Analytical derivatives cannot be used with GMM"
 msgstr ""
 
-#: lib/src/nls.c:2457
+#: lib/src/nls.c:2452
 #, c-format
 msgid "command '%s' not valid in this context"
 msgstr ""
 
-#: lib/src/nls.c:2647 plugin/heckit.c:347
+#: lib/src/nls.c:2642 plugin/heckit.c:347
 msgid "No regression function has been specified"
 msgstr ""
 
-#: lib/src/nls.c:2652
+#: lib/src/nls.c:2647
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
 msgstr ""
 
-#: lib/src/nls.c:2662
+#: lib/src/nls.c:2657
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
 msgstr ""
 
-#: lib/src/nls.c:2705
+#: lib/src/nls.c:2700
 msgid "No parameters have been specified"
 msgstr ""
 
-#: lib/src/nls.c:2801
+#: lib/src/nls.c:2796
 msgid "No function has been specified"
 msgstr "沒有定義任何函數"
 
-#: lib/src/nls.c:2819
+#: lib/src/nls.c:2814
 #, c-format
 msgid "%s: no parameters were specified"
 msgstr "%s: 未設定任何參數"
 
-#: lib/src/nls.c:2869
+#: lib/src/nls.c:2864
 msgid "Using numerical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:2870
+#: lib/src/nls.c:2865
 msgid "Using analytical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:2890
+#: lib/src/nls.c:2885
 #, c-format
 msgid "Tolerance = %g\n"
 msgstr ""
@@ -5601,17 +5601,17 @@ msgid ""
 "the reference model was estimated\n"
 msgstr ""
 
-#: lib/src/options.c:907
+#: lib/src/options.c:905
 #, fuzzy, c-format
 msgid "Invalid option '--%s'"
 msgstr "資料檔格式錯誤\n"
 
-#: lib/src/options.c:928
+#: lib/src/options.c:926
 #, fuzzy, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "落後期截斷參數 = %d\n"
 
-#: lib/src/options.c:1160
+#: lib/src/options.c:1158
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr ""
@@ -6890,7 +6890,7 @@ msgid "Standard errors"
 msgstr "標準誤"
 
 #: gui2/calculator.c:599 gui2/calculator.c:692 gui2/database.c:212
-#: gui2/filters.c:654 gui2/gpt_control.c:990
+#: gui2/filters.c:698 gui2/gpt_control.c:990
 #, fuzzy
 msgid "gnuplot command failed"
 msgstr "儲存指令檔"
@@ -8854,167 +8854,187 @@ msgstr "開指令檔(_S)"
 msgid "gnuplot files (*.plt)"
 msgstr "gretl 指令檔 (*.inp)"
 
-#: gui2/filters.c:73
+#: gui2/filters.c:75
 #, fuzzy
 msgid "Simple moving average"
 msgstr "/變數/頻率分配圖/簡單(_S)"
 
-#: gui2/filters.c:75
+#: gui2/filters.c:77
 msgid "Exponential moving average"
 msgstr ""
 
-#: gui2/filters.c:77
+#: gui2/filters.c:79
 msgid "Hodrick-Prescott filter"
 msgstr ""
 
-#: gui2/filters.c:79
+#: gui2/filters.c:81
 msgid "Baxter-King Band-pass filter"
 msgstr ""
 
-#: gui2/filters.c:161
+#: gui2/filters.c:83
+#, fuzzy
+msgid "Fractional difference"
+msgstr "取季節差分(_S)"
+
+#: gui2/filters.c:170
 #, c-format
 msgid "Centered %d-period moving average of %s"
 msgstr ""
 
-#: gui2/filters.c:164
+#: gui2/filters.c:173
 #, fuzzy, c-format
 msgid "%d-period moving average of %s"
 msgstr "取期末值 (end-of-period)"
 
-#: gui2/filters.c:168
+#: gui2/filters.c:177
 #, c-format
 msgid "Residual from %d-period MA of %s"
 msgstr ""
 
-#: gui2/filters.c:173
+#: gui2/filters.c:182
 #, c-format
 msgid "Exponential moving average of %s (current weight %g)"
 msgstr ""
 
-#: gui2/filters.c:176
+#: gui2/filters.c:185
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
 msgstr ""
 
-#: gui2/filters.c:181
+#: gui2/filters.c:190
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
 msgstr ""
 
-#: gui2/filters.c:184
+#: gui2/filters.c:193
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
 msgstr ""
 
-#: gui2/filters.c:188
+#: gui2/filters.c:197
 #, c-format
 msgid "Filtered %s: Baxter-King cycle"
 msgstr ""
 
-#: gui2/filters.c:227
+#: gui2/filters.c:237
 msgid "Variable name is missing"
 msgstr ""
 
-#: gui2/filters.c:233
+#: gui2/filters.c:243
 #, fuzzy
 msgid "Conflicting variable names"
 msgstr "產生新變數(_n)"
 
-#: gui2/filters.c:300
+#: gui2/filters.c:314
+#, fuzzy
+msgid "Save output as"
+msgstr "儲存 output 檔"
+
+#: gui2/filters.c:318
 #, fuzzy
 msgid "Save smoothed series as"
 msgstr "儲存分析檔(_a)"
 
-#: gui2/filters.c:304
+#: gui2/filters.c:322
 #, fuzzy
 msgid "Save cyclical component as"
 msgstr "儲存分析檔(_a)"
 
-#: gui2/filters.c:337
+#: gui2/filters.c:355
 #, fuzzy
 msgid "Lower frequency bound:"
 msgstr "資料頻率"
 
-#: gui2/filters.c:346
+#: gui2/filters.c:364
 #, fuzzy
 msgid "Upper frequency bound:"
 msgstr "資料頻率"
 
-#: gui2/filters.c:377
+#: gui2/filters.c:395
 #, fuzzy
 msgid "The first EMA value is"
 msgstr "假設標準差與母體值相同"
 
-#: gui2/filters.c:386
+#: gui2/filters.c:404
 #, fuzzy
 msgid "the mean of the whole series"
 msgstr "時間序列圖(_T)"
 
-#: gui2/filters.c:391
+#: gui2/filters.c:409
 #, fuzzy
 msgid "the mean of the first n observations"
 msgstr "移除樣本(_R)"
 
-#: gui2/filters.c:413
+#: gui2/filters.c:431
 #, fuzzy
 msgid "gretl: time-series filter"
 msgstr "/變數/時間序列圖(_T)"
 
-#: gui2/filters.c:430
+#: gui2/filters.c:448
 #, fuzzy
 msgid "Number of observations in average:"
 msgstr "輸入要增加的樣本數"
 
-#: gui2/filters.c:441
+#: gui2/filters.c:459
 msgid "Centered"
 msgstr ""
 
-#: gui2/filters.c:452
+#: gui2/filters.c:470
 msgid "Weight on current observation:"
 msgstr ""
 
-#: gui2/filters.c:466
+#: gui2/filters.c:484
 msgid "lambda (higher values -> smoother trend):"
 msgstr ""
 
-#: gui2/filters.c:477
+#: gui2/filters.c:495
 msgid "k (higher values -> better approximation):"
 msgstr ""
 
-#: gui2/filters.c:494
+#: gui2/filters.c:509
+#, fuzzy
+msgid "differencing parameter:"
+msgstr "Difference test 差異檢定"
+
+#: gui2/filters.c:523
 #, fuzzy
 msgid "Graph filtered series"
 msgstr "時間序列圖(_T)"
 
-#: gui2/filters.c:498
+#: gui2/filters.c:527
 #, fuzzy
 msgid "Save cyclical series as"
 msgstr "儲存分析檔(_a)"
 
-#: gui2/filters.c:511
+#: gui2/filters.c:540
+#, fuzzy
+msgid "Graph differenced series"
+msgstr "時間序列圖(_T)"
+
+#: gui2/filters.c:546
 msgid "Graph original and smoothed series"
 msgstr ""
 
-#: gui2/filters.c:513
+#: gui2/filters.c:548
 msgid "Graph residual or cycle series"
 msgstr ""
 
-#: gui2/filters.c:606 gui2/filters.c:627
+#: gui2/filters.c:645 gui2/filters.c:671
 #, fuzzy, c-format
 msgid "%s (original data)"
 msgstr "開啟資料檔(_O)"
 
-#: gui2/filters.c:607 gui2/filters.c:628
+#: gui2/filters.c:646 gui2/filters.c:672
 #, c-format
 msgid "%s (smoothed)"
 msgstr ""
 
-#: gui2/filters.c:618 gui2/filters.c:640
+#: gui2/filters.c:657 gui2/filters.c:684
 #, c-format
 msgid "Cyclical component of %s"
 msgstr ""
 
-#: gui2/filters.c:637
+#: gui2/filters.c:681
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr ""
@@ -9886,7 +9906,7 @@ msgstr "基本設定 (_G)..."
 msgid "_Fixed font..."
 msgstr "設定固定寬度字形大小..."
 
-#: gui2/gretl.c:1289 gui2/gretl.c:1475
+#: gui2/gretl.c:1289 gui2/gretl.c:1477
 msgid "_Menu font..."
 msgstr "設定功能表字形大小..."
 
@@ -10147,7 +10167,7 @@ msgstr "排除變數有遺漏值之樣本(_m)"
 msgid "_Count missing values"
 msgstr "計算遺漏值比例(_Count missing values)"
 
-#: gui2/gretl.c:1368 gui2/gretl.c:1402
+#: gui2/gretl.c:1368 gui2/gretl.c:1404
 msgid "Set missing _value code..."
 msgstr "設定遺漏值(missing _value) 代碼..."
 
@@ -10238,259 +10258,264 @@ msgstr ""
 msgid "_Baxter-King"
 msgstr ""
 
-#: gui2/gretl.c:1395 gui2/gretl.c:1483
+#: gui2/gretl.c:1394
+#, fuzzy
+msgid "_Fractional difference"
+msgstr "取季節差分(_S)"
+
+#: gui2/gretl.c:1397 gui2/gretl.c:1485
 msgid "_X-12-ARIMA analysis"
 msgstr ""
 
-#: gui2/gretl.c:1398 gui2/gretl.c:1492
+#: gui2/gretl.c:1400 gui2/gretl.c:1494
 #, fuzzy
 msgid "_TRAMO analysis"
 msgstr "變異數分析"
 
-#: gui2/gretl.c:1400
+#: gui2/gretl.c:1402
 msgid "_Hurst exponent"
 msgstr ""
 
-#: gui2/gretl.c:1401
+#: gui2/gretl.c:1403
 msgid "_Edit attributes"
 msgstr "編輯變數屬性(_E)"
 
-#: gui2/gretl.c:1403 gui2/gui_utils.c:2095
+#: gui2/gretl.c:1405 gui2/gui_utils.c:2095
 msgid "Define _new variable..."
 msgstr "產生新變數 (_n)..."
 
-#: gui2/gretl.c:1406
+#: gui2/gretl.c:1408
 msgid "_Model"
 msgstr "模型(_M)"
 
-#: gui2/gretl.c:1407
+#: gui2/gretl.c:1409
 msgid "_Ordinary Least Squares..."
 msgstr "一般最小平方法 (_OLS)..."
 
-#: gui2/gretl.c:1408
+#: gui2/gretl.c:1410
 msgid "_Instrumental variables"
 msgstr "工具變數法(_IV)"
 
-#: gui2/gretl.c:1409
+#: gui2/gretl.c:1411
 msgid "_Two-Stage Least Squares..."
 msgstr "兩階段最小平方法 (2SLS)(_T)..."
 
-#: gui2/gretl.c:1410
+#: gui2/gretl.c:1412
 msgid "_LIML..."
 msgstr "限制資訊最大概似法(_LIML)..."
 
-#: gui2/gretl.c:1411 gui2/gretl.c:1457
+#: gui2/gretl.c:1413 gui2/gretl.c:1459
 msgid "_GMM..."
 msgstr "_GMM 一般動差法..."
 
-#: gui2/gretl.c:1412
+#: gui2/gretl.c:1414
 msgid "Other _linear models"
 msgstr "其它線性模型 (_l)"
 
-#: gui2/gretl.c:1413
+#: gui2/gretl.c:1415
 msgid "_Weighted Least Squares..."
 msgstr "加權最小平方法 (_WLS)..."
 
-#: gui2/gretl.c:1414
+#: gui2/gretl.c:1416
 msgid "H_eteroskedasticity corrected..."
 msgstr "殘差異質變異校正 WLS (_hsk)..."
 
-#: gui2/gretl.c:1416
+#: gui2/gretl.c:1418
 msgid "High _precision OLS..."
 msgstr ""
 
-#: gui2/gretl.c:1418
+#: gui2/gretl.c:1420
 #, fuzzy
 msgid "ANOVA..."
 msgstr "變異數分析(_ANOVA)"
 
-#: gui2/gretl.c:1419
+#: gui2/gretl.c:1421
 msgid "_Time series"
 msgstr "時間序列 (_T)"
 
-#: gui2/gretl.c:1420
+#: gui2/gretl.c:1422
 msgid "_Cochrane-Orcutt..."
 msgstr "Cochrane-Orcutt 轉換(_C)..."
 
-#: gui2/gretl.c:1421
+#: gui2/gretl.c:1423
 msgid "_Hildreth-Lu..."
 msgstr ""
 
-#: gui2/gretl.c:1422
+#: gui2/gretl.c:1424
 msgid "_Prais-Winsten..."
 msgstr ""
 
-#: gui2/gretl.c:1423
+#: gui2/gretl.c:1425
 msgid "_Autoregressive estimation..."
 msgstr "自我相關模型 (_A)..."
 
-#: gui2/gretl.c:1424
+#: gui2/gretl.c:1426
 msgid "ARI_MA..."
 msgstr ""
 
-#: gui2/gretl.c:1425
+#: gui2/gretl.c:1427
 msgid "_ARCH..."
 msgstr "_ARCH 自我相關異質變異模型..."
 
-#: gui2/gretl.c:1426
+#: gui2/gretl.c:1428
 msgid "_GARCH..."
 msgstr "_GARCH 一般自我相關異質變異模型..."
 
-#: gui2/gretl.c:1427
+#: gui2/gretl.c:1429
 msgid "_Vector Autoregression..."
 msgstr "_VAR 向量自我迴歸..."
 
-#: gui2/gretl.c:1428
+#: gui2/gretl.c:1430
 msgid "VAR _lag selection..."
 msgstr "選擇VAR落後期 (_lag)..."
 
-#: gui2/gretl.c:1429
+#: gui2/gretl.c:1431
 msgid "V_ECM..."
 msgstr "V_ECM 向量誤差修正模型..."
 
-#: gui2/gretl.c:1430
+#: gui2/gretl.c:1432
 msgid "_Cointegration test"
 msgstr "共整合檢定 (_C)"
 
-#: gui2/gretl.c:1431
+#: gui2/gretl.c:1433
 msgid "_Engle-Granger..."
 msgstr "Engle-Granger 兩階段法(_E)..."
 
-#: gui2/gretl.c:1432
+#: gui2/gretl.c:1434
 msgid "_Johansen..."
 msgstr "Johansen 共整合檢定(_J)..."
 
-#: gui2/gretl.c:1433
+#: gui2/gretl.c:1435
 msgid "_Panel"
 msgstr "縱橫資料 (_Panel)"
 
-#: gui2/gretl.c:1434
+#: gui2/gretl.c:1436
 msgid "_Fixed or random effects..."
 msgstr "固定或隨機效果 (_Fixed or random effects)..."
 
-#: gui2/gretl.c:1435
+#: gui2/gretl.c:1437
 msgid "_Weighted least squares..."
 msgstr "加權最小平方法 (_WLS)..."
 
-#: gui2/gretl.c:1436
+#: gui2/gretl.c:1438
 #, fuzzy
 msgid "_Between model..."
 msgstr "/模型/最大概似法(_M)"
 
-#: gui2/gretl.c:1437
+#: gui2/gretl.c:1439
 msgid "_Arellano-Bond..."
 msgstr ""
 
-#: gui2/gretl.c:1438
+#: gui2/gretl.c:1440
 msgid "_Nonlinear models"
 msgstr "非線性模型 (_Nonliear)"
 
-#: gui2/gretl.c:1439
+#: gui2/gretl.c:1441
 msgid "_Logit"
 msgstr ""
 
-#: gui2/gretl.c:1440 gui2/gretl.c:1444
+#: gui2/gretl.c:1442 gui2/gretl.c:1446
 #, fuzzy
 msgid "_Binary..."
 msgstr "尋找 (_Find)..."
 
-#: gui2/gretl.c:1441 gui2/gretl.c:1445
+#: gui2/gretl.c:1443 gui2/gretl.c:1447
 msgid "_Ordered..."
 msgstr ""
 
-#: gui2/gretl.c:1442
+#: gui2/gretl.c:1444
 #, fuzzy
 msgid "_Multinomial..."
 msgstr "二項分配"
 
-#: gui2/gretl.c:1443
+#: gui2/gretl.c:1445
 #, fuzzy
 msgid "_Probit"
 msgstr "機率 Prob"
 
-#: gui2/gretl.c:1446
+#: gui2/gretl.c:1448
 #, fuzzy
 msgid "To_bit..."
 msgstr "寄送資料至"
 
-#: gui2/gretl.c:1447
+#: gui2/gretl.c:1449
 msgid "_Heckit..."
 msgstr ""
 
-#: gui2/gretl.c:1448
+#: gui2/gretl.c:1450
 msgid "Poi_sson..."
 msgstr ""
 
-#: gui2/gretl.c:1449
+#: gui2/gretl.c:1451
 msgid "Lo_gistic..."
 msgstr ""
 
-#: gui2/gretl.c:1450
+#: gui2/gretl.c:1452
 msgid "_Nonlinear Least Squares..."
 msgstr "非線性最小平方法 (_NLS)..."
 
-#: gui2/gretl.c:1451
+#: gui2/gretl.c:1453
 #, fuzzy
 msgid "_Interval regression..."
 msgstr "分量迴歸(_Q)"
 
-#: gui2/gretl.c:1452
+#: gui2/gretl.c:1454
 msgid "_Robust estimation"
 msgstr "穩健估計法 (_R)"
 
-#: gui2/gretl.c:1453
+#: gui2/gretl.c:1455
 msgid "Least _Absolute Deviation..."
 msgstr "最小絕對誤差法 (L_AD)..."
 
-#: gui2/gretl.c:1454
+#: gui2/gretl.c:1456
 msgid "_Quantile regression..."
 msgstr "分量迴歸 (_Quantile regression)..."
 
-#: gui2/gretl.c:1455
+#: gui2/gretl.c:1457
 msgid "_Rank correlation..."
 msgstr "等級相關檢定(_Rank correlation)..."
 
-#: gui2/gretl.c:1456
+#: gui2/gretl.c:1458
 msgid "_Maximum likelihood..."
 msgstr "最大概似法 (_M)..."
 
-#: gui2/gretl.c:1458
+#: gui2/gretl.c:1460
 msgid "_Simultaneous equations..."
 msgstr "聯立方程式模型 (_S)..."
 
-#: gui2/gretl.c:1461
+#: gui2/gretl.c:1463
 msgid "_Help"
 msgstr "說明(_H)"
 
-#: gui2/gretl.c:1462
+#: gui2/gretl.c:1464
 msgid "_Command reference"
 msgstr "指令參考說明"
 
-#: gui2/gretl.c:1463
+#: gui2/gretl.c:1465
 msgid "Plain _text"
 msgstr "本文說明檔(_t)"
 
-#: gui2/gretl.c:1464
+#: gui2/gretl.c:1466
 msgid "_PDF"
 msgstr "_PDF 說明檔"
 
-#: gui2/gretl.c:1465
+#: gui2/gretl.c:1467
 msgid "Function reference"
 msgstr "函數參考說明"
 
-#: gui2/gretl.c:1466
+#: gui2/gretl.c:1468
 msgid "_User's guide"
 msgstr "gretl 操作說明 (_U)"
 
-#: gui2/gretl.c:1467
+#: gui2/gretl.c:1469
 msgid "Check for _updates"
 msgstr "檢查有無更新版(_u)"
 
-#: gui2/gretl.c:1468
+#: gui2/gretl.c:1470
 msgid "_About gretl"
 msgstr "有關 gretl(_A)"
 
-#: gui2/gretl.c:1742 gui2/selector.c:5687
+#: gui2/gretl.c:1744 gui2/selector.c:5687
 msgid "Save data file"
 msgstr "儲存資料檔"
 
