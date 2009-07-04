@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-04 12:34-0400\n"
-"PO-Revision-Date: 2009-07-03 22:00-0400\n"
+"PO-Revision-Date: 2009-07-04 20:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -8731,9 +8731,8 @@ msgid "Baxter-King Band-pass filter"
 msgstr "Pasmo filtru Baxtera-Kinga"
 
 #: gui2/filters.c:83
-#, fuzzy
 msgid "Fractional difference"
-msgstr "Sezonowe różnice:"
+msgstr "Częstociowe różnice"
 
 #: gui2/filters.c:170
 #, c-format
@@ -8784,9 +8783,8 @@ msgid "Conflicting variable names"
 msgstr "Konflikt nazw zmiennych"
 
 #: gui2/filters.c:314
-#, fuzzy
 msgid "Save output as"
-msgstr "Zapisz okno wyników"
+msgstr "Zapisz zróżnicowany szereg jako"
 
 #: gui2/filters.c:318
 msgid "Save smoothed series as"
@@ -8841,9 +8839,8 @@ msgid "k (higher values -> better approximation):"
 msgstr "k (wyższa wartość -> lepsza aproksymacja):"
 
 #: gui2/filters.c:509
-#, fuzzy
 msgid "differencing parameter:"
-msgstr "Test równości dwóch wariancji"
+msgstr "Parametr różnicowania częstościowego:"
 
 #: gui2/filters.c:523
 msgid "Graph filtered series"
@@ -8854,9 +8851,8 @@ msgid "Save cyclical series as"
 msgstr "Zapisz cykliczny szereg jako"
 
 #: gui2/filters.c:540
-#, fuzzy
 msgid "Graph differenced series"
-msgstr "Wykres cyklicznego-przefiltrowanego szeregu"
+msgstr "Wykres częstościowwo zróżnicowanego szeregu"
 
 #: gui2/filters.c:546
 msgid "Graph original and smoothed series"
@@ -10078,9 +10074,8 @@ msgid "_Baxter-King"
 msgstr "filtr _Baxtera-Kinga"
 
 #: gui2/gretl.c:1394
-#, fuzzy
 msgid "_Fractional difference"
-msgstr "Sezonowe różnice:"
+msgstr "_Częstociowe różnice"
 
 #: gui2/gretl.c:1397 gui2/gretl.c:1485
 msgid "_X-12-ARIMA analysis"
@@ -14665,9 +14660,8 @@ msgid "irregular component of %s"
 msgstr "Składnik przypadkowy dla %s"
 
 #: plugin/tramo-x12a.c:219
-#, fuzzy
 msgid "Show full output"
-msgstr "Pokaż pełną ramkę"
+msgstr "Pokaż pełne wyniki"
 
 #: plugin/tramo-x12a.c:286 plugin/tramo-x12a.c:288
 msgid "irregular"
