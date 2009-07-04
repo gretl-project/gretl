@@ -213,6 +213,7 @@
 	<menuitem action='FilterEMA'/>
 	<menuitem action='FilterHP'/>
 	<menuitem action='FilterBK'/>
+	<menuitem action='FilterFD'/>
       </menu>
       <placeholder action='X12A'/>
       <placeholder action='Tramo'/>

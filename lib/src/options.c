@@ -207,9 +207,7 @@ struct gretl_option gretl_opts[] = {
     { MAHAL,    OPT_V, "vcv", 0 },
     { MEANTEST, OPT_O, "unequal-vars", 0 },
     { MLE,      OPT_H, "hessian", 0 },
-#if 0
-    { MLE,      OPT_G, "gradient-check", 0 },
-#endif
+    { MLE,      OPT_G, "no-gradient-check", 0 },
     { MLE,      OPT_N, "numerical", 0 },
     { MLE,      OPT_Q, "quiet", 0 },
     { MLE,      OPT_R, "robust", 0 },
