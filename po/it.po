@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.8.1\n"
+"Project-Id-Version: gretl 1.8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-04 12:34-0400\n"
-"PO-Revision-Date: 2009-07-04 10:02+0200\n"
+"PO-Revision-Date: 2009-07-04 19:11+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -8757,9 +8757,8 @@ msgid "Baxter-King Band-pass filter"
 msgstr "Filtro passa-banda di Baxter-King"
 
 #: gui2/filters.c:83
-#, fuzzy
 msgid "Fractional difference"
-msgstr "Differenze stagionali:"
+msgstr "Differenza frazionale"
 
 #: gui2/filters.c:170
 #, c-format
@@ -8810,9 +8809,8 @@ msgid "Conflicting variable names"
 msgstr "Nomi di variabile in conflitto"
 
 #: gui2/filters.c:314
-#, fuzzy
 msgid "Save output as"
-msgstr "Salva file di output"
+msgstr "Salva output come"
 
 #: gui2/filters.c:318
 msgid "Save smoothed series as"
@@ -8869,9 +8867,8 @@ msgid "k (higher values -> better approximation):"
 msgstr "k (valori maggiori -> miglior approssimazione):"
 
 #: gui2/filters.c:509
-#, fuzzy
 msgid "differencing parameter:"
-msgstr "differenza delle varianze"
+msgstr "parametro di differenziazione:"
 
 #: gui2/filters.c:523
 msgid "Graph filtered series"
@@ -8882,9 +8879,8 @@ msgid "Save cyclical series as"
 msgstr "Salva la serie ciclica come"
 
 #: gui2/filters.c:540
-#, fuzzy
 msgid "Graph differenced series"
-msgstr "Grafico della serie filtrata"
+msgstr "Grafico della serie differenziata"
 
 #: gui2/filters.c:546
 msgid "Graph original and smoothed series"
@@ -10108,9 +10104,8 @@ msgid "_Baxter-King"
 msgstr "_Baxter-King"
 
 #: gui2/gretl.c:1394
-#, fuzzy
 msgid "_Fractional difference"
-msgstr "Differenze stagionali:"
+msgstr "Differenza _frazionale"
 
 #: gui2/gretl.c:1397 gui2/gretl.c:1485
 msgid "_X-12-ARIMA analysis"
