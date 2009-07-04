@@ -5,6 +5,7 @@ version 1.8.2, in progress
 - nls, mle, gmm, arma: allow continuation of scripts when
   these estimators fail to converge, in which case the variable
   $error is set to a non-zero value (new --continue option)
+- "fcast" command: add more forecast evaluation statistics
 - Add fcstats function to provide statistics for evaluation of
   forecasts
 - GUI model window, Graphs menu: add scatter plot of actual vs
@@ -13,12 +14,26 @@ version 1.8.2, in progress
   consistency between CLI and GUI programs
 - xtab command: add --matrix option to take frequencies from
   a named matrix
-- add "anova" command plus GUI menu entry
+- add "anova" command (one-way and two-way) plus GUI menu entry
 - Main window: make column headings clickable for sorting
   variables by ID number or name
 - Enhancements to Edit Attributes dialog for data series
 - "heckit command": fix problem with some residuals being
-  unavailable
+  unavailable via $uhat
+- Printing: fix bad output from "pergm" command when the 
+  spectral density is very large
+- Printing: revise printout of summary statistics for better
+  consistency in non-English locales and for long variable
+  names
+- Fix bug: allow for the fact that TRAMO truncates long variable
+  names to 8 characters in the names of its output file
+- Fix bug: ensure that old X-12-ARIMA output files get deleted
+  before a new run
+- TRAMO and X-12-ARIMA: try to provide better information in
+  case of errors 
+- Add GUI option: suppress detailed printout from X-12-ARIMA
+- GUI menu Variable/Filters: add GUI access to the fracdiff
+  function
 - Several small fixes for the GUI
 - Fix bugs 2806815, 2810219
 

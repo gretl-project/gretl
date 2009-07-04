@@ -737,6 +737,10 @@
 	  <flag>--x-12-arima</flag>
 	  <effect>use X-12-ARIMA for estimation</effect>
         </option>
+	<option>
+	  <flag>--continue</flag>
+	  <effect>continue on numerical errors</effect>
+	</option>
       </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
@@ -746,6 +750,7 @@
     </usage>
 
     <description>
+
       <para context="cli">
 	If no <repl>indepvars</repl> list is given, estimates a univariate
 	ARIMA (Autoregressive, Integrated, Moving Average) model.  The
@@ -832,6 +837,16 @@
 	ignored if estimation via <program>X-12-ARIMA</program> is selected. 
       </para>
 
+      <para context="cli">
+	In general if a gretl command fails to complete successfully,
+	execution of a script is halted.  However, if the
+	<lit>--continue</lit> option is given for this command, execution
+	continues provided that that error is <quote>numerical</quote>
+	(&eg; failure to converge, to the specified tolerance).  See the
+	<cmdref targ="set"/> command for related ways of controlling
+	gretl's behavior.
+      </para>
+
       <para>The AIC value given in connection with ARIMA models is
 	calculated according to the definition used in
 	<program>X-12-ARIMA</program>, namely
@@ -858,6 +873,7 @@
 	  graphic="lambda"/> where <math>z</math> is the root in
 	question and <math>r</math> is its modulus.
       </para>
+
     </description>
 
     <gui-access>
@@ -3385,6 +3401,10 @@
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
+	<option>
+	  <flag>--continue</flag>
+	  <effect>continue on numerical errors</effect>
+	</option>
       </options>
     </usage>
 
@@ -3424,6 +3444,15 @@
 	orthogonal to each of the instruments composing the columns of
 	<lit>W</lit>.
       </para>
+      <para context="cli">
+	In general if a gretl command fails to complete successfully,
+	execution of a script is halted.  However, if the
+	<lit>--continue</lit> option is given for this command, execution
+	continues provided that that error is <quote>numerical</quote>
+	(&eg; failure to converge, to the specified tolerance).  See the
+	<cmdref targ="set"/> command for related ways of controlling
+	gretl's behavior.
+      </para>      
 
     </description>
 
@@ -5278,6 +5307,14 @@
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
+	<option>
+	  <flag>--continue</flag>
+	  <effect>continue on numerical errors</effect>
+	</option>
+	<option>
+	  <flag>--no-gradient-check</flag>
+	  <effect>see below</effect>
+	</option>
       </options>
       <examples>
 	<demos>
@@ -5347,17 +5384,17 @@
 	specify the log-likelihood function.  The parameters of this
 	function must be declared and given starting values (using the
 	<cmd>genr</cmd> command) prior to estimation.  Optionally, the
-	user may specify the derivatives of the log-likelihood
-	function with respect to each of the parameters; if analytical
-	derivatives are not supplied, a numerical approximation is
-	computed.
+	user may specify the derivatives of the log-likelihood function
+	with respect to each of the parameters; if analytical derivatives
+	are not supplied, a numerical approximation is computed.
       </para>
 
-      <para>Simple example: Suppose we have a series <lit>X</lit> with values 0
-	or 1 and we wish to obtain the maximum likelihood estimate of the
-	probability, <lit>p</lit>, that <lit>X</lit> = 1.  (In this simple case
-	we can guess in advance that the ML estimate of <lit>p</lit> will simply
-	equal the proportion of Xs equal to 1 in the sample.)
+      <para>Simple example: Suppose we have a series <lit>X</lit> with
+	values 0 or 1 and we wish to obtain the maximum likelihood
+	estimate of the probability, <lit>p</lit>, that <lit>X</lit> = 1.
+	(In this simple case we can guess in advance that the ML estimate
+	of <lit>p</lit> will simply equal the proportion of Xs equal to 1
+	in the sample.)
       </para>
 
       <para>The parameter <lit>p</lit> must first be added to the dataset and
@@ -5408,6 +5445,25 @@
 	<lit>--robust</lit> option is given, a QML estimator is used
 	(namely, a sandwich of the negative inverse of the Hessian and the
 	covariance matrix of the gradient). 
+      </para>
+      <para>
+	If you supply analytical derivatives, by default gretl runs a
+	numerical check on their plausibility.  Occasionally this may
+	produce false positives, instances where correct derivatives
+	appear to be wrong and estimation is refused. To counter this,
+	or to achieve a little extra speed, you can give the option
+	<lit>--no-gradient-check</lit>.  Obviously, you should do
+	this only if you are quite confident that the gradient you
+	have specified is right.
+      </para>
+      <para>
+	In general if a gretl command fails to complete successfully,
+	execution of a script is halted.  However, if the
+	<lit>--continue</lit> option is given for this command, execution
+	continues provided that that error is <quote>numerical</quote>
+	(&eg; failure to converge, to the specified tolerance).  See the
+	<cmdref targ="set"/> command for related ways of controlling
+	gretl's behavior.
       </para>
 
     </description>
@@ -5631,6 +5687,10 @@
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
+	<option>
+	  <flag>--continue</flag>
+	  <effect>continue on numerical errors</effect>
+	</option>
       </options>
       <examples>
 	<demos>
@@ -5769,8 +5829,18 @@
 	estimation.
       </para>
 
+      <para>
+	In general if a gretl command fails to complete successfully,
+	execution of a script is halted.  However, if the
+	<lit>--continue</lit> option is given for this command, execution
+	continues provided that that error is <quote>numerical</quote>
+	(&eg; failure to converge, to the specified tolerance).  See the
+	<cmdref targ="set"/> command for related ways of controlling
+	gretl's behavior.
+      </para>
       <para>For further details on NLS estimation please see
-	<guideref targ="chap-nls"/>.</para>
+	<guideref targ="chap-nls"/>.
+      </para>
 
     </description>
 
