@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-04 12:34-0400\n"
-"PO-Revision-Date: 2009-07-04 20:00-0400\n"
+"PO-Revision-Date: 2009-07-05 23:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -8732,7 +8732,7 @@ msgstr "Pasmo filtru Baxtera-Kinga"
 
 #: gui2/filters.c:83
 msgid "Fractional difference"
-msgstr "Częstociowe różnice"
+msgstr "Filtracja różnicowa ułamkowa"
 
 #: gui2/filters.c:170
 #, c-format
@@ -8784,7 +8784,7 @@ msgstr "Konflikt nazw zmiennych"
 
 #: gui2/filters.c:314
 msgid "Save output as"
-msgstr "Zapisz zróżnicowany szereg jako"
+msgstr "Zapisz przefiltrowany szereg jako"
 
 #: gui2/filters.c:318
 msgid "Save smoothed series as"
@@ -8840,7 +8840,7 @@ msgstr "k (wyższa wartość -> lepsza aproksymacja):"
 
 #: gui2/filters.c:509
 msgid "differencing parameter:"
-msgstr "Parametr różnicowania częstościowego:"
+msgstr "Parametr różnicowania ułamkowego:"
 
 #: gui2/filters.c:523
 msgid "Graph filtered series"
@@ -8852,7 +8852,7 @@ msgstr "Zapisz cykliczny szereg jako"
 
 #: gui2/filters.c:540
 msgid "Graph differenced series"
-msgstr "Wykres częstościowwo zróżnicowanego szeregu"
+msgstr "Wykres ułamkowo zróżnicowanego szeregu"
 
 #: gui2/filters.c:546
 msgid "Graph original and smoothed series"
