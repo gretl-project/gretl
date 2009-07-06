@@ -4516,8 +4516,6 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
     int rtype = GRETL_TYPE_NONE;
     NODE *n, *ret = NULL;
 
-    fprintf(stderr, "eval_Rfunc\n");
-
     /* first find the function */
     p->err = gretl_R_get_call(funname, m);
     if (p->err) {

@@ -517,8 +517,7 @@ int get_R_function_by_name (const char *name)
     SEXP fun;
 
     if (!Rinit) {
-	/* use gretl_R_init() here? */
-	return 0;
+	gretl_R_init();
     } 
 
     fun = find_R_function(name);
