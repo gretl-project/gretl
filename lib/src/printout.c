@@ -72,7 +72,7 @@ static void covhdr (PRN *prn)
 
 void session_time (PRN *prn)
 {
-    time_t runtime = time(NULL);
+    char timestr[48];
     PRN *myprn = NULL;
 
     if (prn == NULL) {
@@ -80,7 +80,8 @@ void session_time (PRN *prn)
 	prn = myprn;
     }
 
-    pprintf(prn, "%s: %s\n", _("Current session"), print_time(&runtime));
+    print_time(timestr);
+    pprintf(prn, "%s: %s\n", _("Current session"), timestr);
     
     if (myprn != NULL) {
 	gretl_print_destroy(myprn);
@@ -148,10 +149,11 @@ void lib_logo (void)
 
 void gui_script_logo (PRN *prn)
 {
-    time_t runtime = time(NULL);
+    char timestr[48];
 
     pprintf(prn, _("gretl version %s\n"), GRETL_VERSION);
-    pprintf(prn, "%s: %s\n", _("Current session"), print_time(&runtime));
+    print_time(timestr);
+    pprintf(prn, "%s: %s\n", _("Current session"), timestr);
 }
 
 /* ----------------------------------------------------- */

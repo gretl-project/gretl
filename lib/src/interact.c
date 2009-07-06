@@ -1627,7 +1627,7 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 
     if (strchr(s, '=') || strstr(s, "++") || strstr(s, "--")) {
 	const char *ok = "+-*/%^~|=[";
-	char word[VNAMELEN];
+	char word[VNAMELEN] = {0};
 
 	if (sscanf(s, "%15[^[ +*/%^~|=-]", word)) {
 	    s += strlen(word);
@@ -1781,7 +1781,7 @@ static void param_grab_braced (CMD *cmd, const char *s, int *nf)
 
 /* Capture the next 'word' found following the initial command word
    (or the whole remainder of the line in some cases) as the parameter
-   for cmd.  Flag an error if the command requires a parameter but
+   for @cmd.  Flag an error if the command requires a parameter but
    none is found.
 */
 
@@ -2340,7 +2340,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (NO_VARLIST(cmd->ci) || 
 	(cmd->ci == DELEET && (cmd->opt & OPT_D))) { 
 	cmd_set_nolist(cmd);
-	capture_param(line, cmd, NULL);
+	if (cmd->ci != GENR) {
+	    capture_param(line, cmd, NULL);
+	}
 	return cmd->err;
     } 
 
@@ -4090,6 +4092,9 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+#define param_to_order(ci) (ci == CORRGM || ci == XCORRGM || \
+                            ci == PERGM || ci == LAGS)
+
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
     CMD *cmd = s->cmd;
@@ -4100,7 +4105,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     double rho;
     char runfile[MAXLEN];
     int *listcpy = NULL;
-    int order = 0;
     int err = 0;
 
     s->pmod = NULL;
@@ -4127,6 +4131,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == OLS && dataset_is_panel(pdinfo)) {
 	cmd->ci = PANEL;
 	cmd->opt |= OPT_P; /* panel pooled OLS flag */
+    }
+
+    if (param_to_order(cmd->ci)) {
+	cmd->order = atoi(cmd->param);
     }
 
     if (pZ != NULL) {
@@ -4178,20 +4186,17 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case CORRGM:
-	order = atoi(cmd->param);
-	err = corrgram(cmd->list[1], order, 0, Z, pdinfo, 
+	err = corrgram(cmd->list[1], cmd->order, 0, Z, pdinfo, 
 		       prn, cmd->opt | OPT_A);
 	break;
 
     case XCORRGM:
-	order = atoi(cmd->param);
-	err = xcorrgram(cmd->list, order, Z, pdinfo, 
+	err = xcorrgram(cmd->list, cmd->order, Z, pdinfo, 
 			prn, cmd->opt | OPT_A);
 	break;
 
     case PERGM:
-	order = atoi(cmd->param);
-	err = periodogram(cmd->list[1], order, Z, pdinfo, 
+	err = periodogram(cmd->list[1], cmd->order, Z, pdinfo, 
 			  cmd->opt | OPT_N, prn);
 	break;
 
@@ -4280,8 +4285,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case LAGS:
-	order = atoi(cmd->param);
-	err = list_laggenr(&listcpy, order, pZ, pdinfo); 
+	err = list_laggenr(&listcpy, cmd->order, pZ, pdinfo); 
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	    set_dataset_is_changed();

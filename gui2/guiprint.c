@@ -63,15 +63,16 @@ static char *header_string (void)
 # if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
     gchar *trans;
 # endif
-    time_t prntime = time(NULL);
+    char tstr[48];
 
+    print_time(tstr);
     ustr = user_string();
+
     if (ustr != NULL) {
-	hdr = g_strdup_printf("%s %s %s", _("gretl output"), ustr,
-			      print_time(&prntime));
+	hdr = g_strdup_printf("%s %s %s", _("gretl output"), ustr, tstr);
 	g_free(ustr);
     } else {
-	hdr = g_strdup_printf("%s %s", _("gretl output"), print_time(&prntime));
+	hdr = g_strdup_printf("%s %s", _("gretl output"), tstr);
     }
 
 # if defined(ENABLE_NLS) && !defined(G_OS_WIN32)

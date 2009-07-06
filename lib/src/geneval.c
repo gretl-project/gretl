@@ -28,8 +28,11 @@
 #include "gretl_fft.h"
 #include "kalman.h"
 #include "libset.h"
-#include "gretl_foreign.h"
 #include "version.h"
+
+#ifdef USE_RLIB
+# include "gretl_foreign.h"
+#endif
 
 #include <errno.h>
 
@@ -4500,6 +4503,102 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     return ret;
 }
 
+#ifdef USE_RLIB
+
+/* evaluate an R function */
+
+static NODE *eval_Rfunc (NODE *t, parser *p)
+{
+    NODE *l = t->v.b2.l;
+    NODE *r = t->v.b2.r;
+    int i, m = r->v.bn.n_nodes;
+    const char *funname = l->v.str;
+    int rtype = GRETL_TYPE_NONE;
+    NODE *n, *ret = NULL;
+
+
+    /* first find the function */
+    p->err = gretl_R_get_call(funname, m);
+    if (p->err) {
+	return NULL;
+    }
+
+    /* evaluate the function arguments */
+    for (i=0; i<m && !p->err; i++) {
+	if (useries_node(r->v.bn.n[i])) {
+	    /* let dataset variables through "as is" */
+	    n = r->v.bn.n[i];
+	} else if (uscalar_node(r->v.bn.n[i])) {
+	    /* let predefined scalars through "as is" */
+	    n = r->v.bn.n[i];
+	} else {
+	    n = eval(r->v.bn.n[i], p);
+	    if (n == NULL) {
+		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
+	    } else if (!ok_ufunc_sym(n->t)) {
+		fprintf(stderr, "%s: node type %d: not OK\n", funname, n->t);
+		p->err = E_TYPES;
+	    }
+	}
+
+	if (p->err) {
+	    break;
+	}
+
+#if EDEBUG
+	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, n->t);
+#endif
+
+	if (n->t == NUM) {
+	    p->err = gretl_R_function_add_scalar(n->v.xval);
+	} else if (n->t == MAT) {
+	    p->err = gretl_R_function_add_matrix(n->v.m);
+	} else {
+	    fprintf(stderr, "eval_Rfunc: argument not supported\n");
+	    p->err = 1;
+	    return NULL;
+	}
+	if (p->err) {
+	    fprintf(stderr, "eval_Rfunc: error evaluating arg %d\n", i);
+	}
+    }
+
+    /* try sending args to function */
+
+    if (!p->err) {
+	double xret = NADBL;
+	void *retp = &ret;
+
+	p->err = gretl_R_function_exec(funname, &rtype, &retp);
+
+	if (!p->err) {
+	    if (rtype == GRETL_TYPE_DOUBLE) {
+		ret = aux_scalar_node(p);
+		if (ret != NULL) {
+		    ret->v.xval = xret;
+		}
+	    } else if (rtype == GRETL_TYPE_MATRIX) {
+		ret = aux_matrix_node(p);
+		if (ret != NULL) {
+		    if (is_tmp_node(ret)) {
+			gretl_matrix_free(ret->v.m);
+		    }
+		    ret->v.m = (gretl_matrix *) retp;
+		}
+	    } 
+	}
+    }
+
+#if EDEBUG
+    fprintf(stderr, "eval_Rfunc: p->err = %d, ret = %p\n", 
+	    p->err, (void *) ret);
+#endif
+
+    return ret;
+}
+
+#endif
+
 static gretl_matrix *get_corrgm_matrix (NODE *l,
 					NODE *m,
 					NODE *r,
@@ -4567,101 +4666,6 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     free(list);
 
     return A;
-}
-
-/* evaluate an R function */
-
-static NODE *eval_Rfunc (NODE *t, parser *p)
-{
-    NODE *l = t->v.b2.l;
-    NODE *r = t->v.b2.r;
-    int i, m = r->v.bn.n_nodes;
-    const char *funname = l->v.str;
-    int rtype = GRETL_TYPE_NONE;
-    NODE *n, *ret = NULL;
-
-
-    /* first find the function */
-    p->err = gretl_R_get_call(funname, m);
-    if (p->err) {
-	return NULL;
-    }
-
-    /* evaluate the function arguments */
-    for (i=0; i<m && !p->err; i++) {
-	if (useries_node(r->v.bn.n[i])) {
-	    /* let dataset variables through "as is" */
-	    n = r->v.bn.n[i];
-	} else if (uscalar_node(r->v.bn.n[i])) {
-	    /* let predefined scalars through "as is" */
-	    n = r->v.bn.n[i];
-	} else {
-	    n = eval(r->v.bn.n[i], p);
-	    if (n == NULL) {
-		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
-	    } else if (!ok_ufunc_sym(n->t)) {
-		fprintf(stderr, "%s: node type %d: not OK\n", funname, n->t);
-		p->err = E_TYPES;
-	    }
-	}
-
-	if (p->err) {
-	    break;
-	}
-
-#if EDEBUG
-	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, n->t);
-#endif
-
-	if (uscalar_node(n)) {
-	    p->err = gretl_R_function_add_scalar(n->v.xval);
-	} else if (n->t == NUM) {
-	    p->err = gretl_R_function_add_scalar(n->v.xval);
-	} else if (n->t == MAT) {
-	    p->err = gretl_R_function_add_matrix(n->v.m);
-	} else {
-	    fprintf(stderr, "argument not supported");
-	    p->err = 1;
-	    return NULL;
-	}
-	if (p->err) {
-	    fprintf(stderr, "eval_Rfunc: error evaluating arg %d\n", i);
-	}
-    }
-
-    /* try sending args to function */
-
-    if (!p->err) {
-	void *retp = NULL;
-	double xret = NADBL;
-
-    	retp = &xret;
-	p->err = gretl_R_function_exec(funname, &rtype, &retp);
-
-	if (!p->err) {
-	    if (rtype == GRETL_TYPE_DOUBLE) {
-		ret = aux_scalar_node(p);
-		if (ret != NULL) {
-		    ret->v.xval = xret;
-		}
-	    } else if (rtype == GRETL_TYPE_MATRIX) {
-		ret = aux_matrix_node(p);
-		if (ret != NULL) {
-		    if (is_tmp_node(ret)) {
-			gretl_matrix_free(ret->v.m);
-		    }
-		    ret->v.m = (gretl_matrix *) retp;
-		}
-	    } 
-	}
-    }
-
-#if EDEBUG
-    fprintf(stderr, "eval_Rfunc: p->err = %d, ret = %p\n", 
-	    p->err, (void *) ret);
-#endif
-
-    return ret;
 }
 
 static const char *ptr_node_get_name (NODE *t, parser *p)
@@ -5715,10 +5719,10 @@ static int get_version_as_scalar (void)
     return 10000 * x + 100 * y + z;
 }
 
-#define dvar_scalar(i) (i < R_SCALAR_MAX)
-#define dvar_series(i) (i == R_INDEX || i == R_PUNIT)
+#define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
+#define dvar_series(i) (i > R_SCALAR_MAX && i < R_MAX)
 
-static double dvar_get_value (int i, parser *p)
+static double dvar_get_scalar (int i, parser *p)
 {
     switch (i) {
     case R_NOBS:
@@ -5797,6 +5801,7 @@ static double *dvar_get_series (int i, parser *p)
 	}
 	break;
     default:
+	p->err = E_DATA;
 	break;
     }
 
@@ -5811,7 +5816,7 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	if (dvar_scalar(t->v.idnum)) {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL && starting(p)) {
-		ret->v.xval = dvar_get_value(t->v.idnum, p);
+		ret->v.xval = dvar_get_scalar(t->v.idnum, p);
 	    }
 	} else if (dvar_series(t->v.idnum)) {
 	    ret = aux_vec_node(p, 0);
@@ -6848,9 +6853,11 @@ static NODE *eval (NODE *t, parser *p)
     case UFUN:
 	ret = eval_ufunc(t, p);
 	break;
+#ifdef USE_RLIB
     case RFUN:
 	ret = eval_Rfunc(t, p);
 	break;
+#endif
     case QUERY:
 	ret = eval_query(t, p);
 	break;
@@ -7833,7 +7840,7 @@ static void pre_process (parser *p, int flags)
 	maybe_set_matrix_target(p);
     }
 
-    /* increment/decrement operators */
+    /* unary increment/decrement operators */
     if ((p->op == INC || p->op == DEC) && *s != '\0') {
 	p->err = E_PARSE;
     }

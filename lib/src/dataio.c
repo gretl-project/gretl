@@ -1610,7 +1610,7 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
 int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN], tmp[MAXLEN];
-    time_t prntime = time(NULL);
+    char tstr[48];
     int i;
 
     ntodate_full(startdate, 0, pdinfo);
@@ -1619,7 +1619,8 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     sprintf(tmp, _("Data file %s\nas of"), 
 	    strlen(ppaths->datfile)? ppaths->datfile : _("(unsaved)"));
 
-    pprintf(prn, "%s %s\n\n", tmp, print_time(&prntime));
+    print_time(tstr);
+    pprintf(prn, "%s %s\n\n", tmp, tstr);
 
     if (pdinfo->descrip != NULL && *pdinfo->descrip != '\0') {
 	pprintf(prn, "%s:\n\n", _("Description"));

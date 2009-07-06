@@ -81,7 +81,7 @@ void free_command_stack (void)
 
 static int session_logfile_init (void)
 {
-    time_t logtime;
+    char timestr[48];
     FILE *fp;
 
     fp = gretl_fopen(logname, "a");
@@ -101,8 +101,8 @@ static int session_logfile_init (void)
     fprintf(stderr, "session_logfile_init: open prn for '%s'\n", logname);
 #endif
 
-    logtime = time(NULL);
-    pprintf(logprn, _("# Log re-started %s\n"), print_time(&logtime));
+    print_time(timestr);
+    pprintf(logprn, _("# Log re-started %s\n"), timestr);
 
     return 0;
 }
@@ -114,7 +114,7 @@ static int session_logfile_init (void)
 static int scratch_logfile_init (void)
 {
     const char *fname;
-    time_t logtime;
+    char timestr[48];
     int err = 0;
 
     n_cmds = prev_ID = 0;
@@ -141,8 +141,8 @@ static int scratch_logfile_init (void)
     fprintf(stderr, "logfile_init: open prn for '%s'\n", logname);
 #endif
 
-    logtime = time(NULL);
-    pprintf(logprn, _("# Log started %s\n"), print_time(&logtime));
+    print_time(timestr);
+    pprintf(logprn, _("# Log started %s\n"), timestr);
 
     pputs(logprn, _("# Record of session commands.  Please note that this will\n"
 		    "# likely require editing if it is to be run as a script.\n"));

@@ -634,39 +634,7 @@ int gretl_R_function_exec (char *name, int *rtype, void **ret)
     return E_EXTERNAL;
 }
 
-#else /* !USE_RLIB */
-
-int get_R_function_by_name (const char *name)
-{
-    return 0;
-}
-
-int gretl_R_get_call (const char *name, int argc)
-{
-    return E_NOTIMP;
-}
-
-int gretl_R_function_add_scalar (double x)
-{
-    return E_NOTIMP;
-}
-
-int gretl_R_function_add_vector (const double *x, int t1, int t2)
-{
-    return E_NOTIMP;
-}
-
-int gretl_R_function_add_matrix (const gretl_matrix *m)
-{
-    return E_NOTIMP;
-}
-
-int gretl_R_function_exec (const char *name, int *rtype, void **ret)
-{
-    return E_NOTIMP;
-}
-
-#endif /* USE_RLIB or not */
+#endif /* USE_RLIB */
 
 static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 {
@@ -754,7 +722,7 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 	    lib_run_Rlib_sync(foreign_opt, prn);
 	}
 #else
-	pputs(prn, "Rlib: language not supported\n");
+	pputs(prn, "language=Rlib: not supported\n");
 	destroy_foreign();
 	return E_NOTIMP;
 #endif

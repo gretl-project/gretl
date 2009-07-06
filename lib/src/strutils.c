@@ -1601,23 +1601,21 @@ void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn)
 	
 /**
  * print_time:
- * @timep: time to print.
+ * @s: string into which to print: must be at least 48 bytes.
  *
- * Returns: pointer to a static string containing a locale-dependent
- * representation of @timep.  In English, this will be in the format
- * Y/m/d H:M.
+ * Returns: @s, which will contain a locale-dependent representation 
+ * of the current time.  In English, this will be in the format Y/m/d H:M.
  */
 
-const char *print_time (const time_t *timep)
+char *print_time (char *s)
 {
-    static char timestr[48];
+    time_t now = time(NULL);
     struct tm *local;
 
-    local = localtime(timep);
+    local = localtime(&now);
+    strftime(s, 47, "%Y/%m/%d %H:%M", local);
 
-    strftime(timestr, 47, "%Y/%m/%d %H:%M", local);
-
-    return timestr;
+    return s;
 }
 
 /**

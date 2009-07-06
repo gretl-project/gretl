@@ -23,7 +23,6 @@
 #include "usermat.h"
 #include "gretl_func.h"
 #include "gretl_string_table.h"
-#include "gretl_foreign.h"
 
 #include <glib.h>
 
@@ -785,6 +784,12 @@ static void look_up_dollar_word (const char *s, parser *p)
     }
 }
 
+#ifdef USE_RLIB
+# include "gretl_foreign.h"
+#else
+# define get_R_function_by_name(s) (0)
+#endif
+
 static void look_up_word (const char *s, parser *p)
 {
     int fsym, err = 0;
@@ -820,9 +825,6 @@ static void look_up_word (const char *s, parser *p)
 		} else if (get_user_function_by_name(s)) {
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
-		} else if (get_R_function_by_name(s)) {
-		    p->sym = RFUN;
-		    p->idstr = gretl_strdup(s);
 		} else if (string_is_defined(s)) {
 		    p->sym = VSTR;
 		    p->idstr = gretl_strdup(s);
@@ -830,8 +832,14 @@ static void look_up_word (const char *s, parser *p)
 			   varname_match_any(p->dinfo, s)) {
 		    p->sym = LIST;
 		    p->idstr = gretl_strdup(s);
+		} else if (get_R_function_by_name(s)) {
+		    /* note: all "native" types take precedence over this */
+		    p->sym = RFUN;
+		    p->idstr = gretl_strdup(s);
 		} else if (!strcmp(s, "t")) {
-		    /* "t" as synonym for internal "obs" */
+		    /* if "t" has not been otherwise defined, treat it
+		       as a synonym for the internal variable "obs" 
+		    */
 		    p->sym = DVAR;
 		    p->idnum = R_INDEX;
 		} else {

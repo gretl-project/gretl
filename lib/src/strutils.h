@@ -136,7 +136,7 @@ void modify_date_for_csv (char *s, int pd);
 
 void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn);
 
-const char *print_time (const time_t *timep);
+char *print_time (char *s);
 
 int gretl_xml_validate (const char *s);
 

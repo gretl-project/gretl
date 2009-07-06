@@ -189,11 +189,11 @@ void gretl_errmsg_set (const char *str)
 void gretl_errmsg_sprintf (const char *fmt, ...)
 {
     if (*gretl_errmsg == '\0' && fmt != NULL) {
-	va_list args;
+	va_list ap;
 
-	va_start(args, fmt);
-	vsnprintf(gretl_errmsg, ERRLEN, fmt, args);
-	va_end(args);
+	va_start(ap, fmt);
+	vsnprintf(gretl_errmsg, ERRLEN, fmt, ap);
+	va_end(ap);
     }
 }
 
