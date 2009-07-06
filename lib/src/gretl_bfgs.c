@@ -543,7 +543,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		}
 		if (ndelta > 0) {
 		    f = cfunc(b, data);
-		    d = sumgrad * steplen * acctol;
+		    d = -sumgrad * steplen * acctol;
 		    fcount++;
 		    crit_ok = !na(f) && (f >= fmax + d);
 #if BFGS_DEBUG
