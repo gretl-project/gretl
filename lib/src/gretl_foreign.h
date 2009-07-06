@@ -44,6 +44,8 @@ int gretl_R_function_add_matrix (const gretl_matrix *m);
 
 int gretl_R_function_exec (const char *name, int *rtype, void **ret);
 
+void gretl_R_cleanup (void);
+
 #endif
 
 #endif /* GRETL_FOREIGN_H */

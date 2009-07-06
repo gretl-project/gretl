@@ -433,12 +433,14 @@ static int eval_R_command (const char *name, int argc, char **argv)
     return 0;
 }
 
-static void gretl_R_cleanup (void)
-{
-    Rf_endEmbeddedR(0);
-}
-
 # endif /* unused */
+
+void gretl_R_cleanup (void)
+{
+    if (Rinit) {
+	Rf_endEmbeddedR(0);
+    }
+}
 
 static void gretl_R_init (void)
 {
@@ -482,23 +484,16 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
     return 0;
 }
 
-/* used in "genr" */
-
-int get_R_function_by_name (const char *name) 
+static SEXP find_R_function (const char *name)
 {
     SEXP fun;
     SEXPTYPE t;
 
-    if (!Rinit) {
-	/* use gretl_R_init() here? */
-	return 0;
-    }
-
     fun = findVar(install(name), R_GlobalEnv);
     t = TYPEOF(fun);
 
-    /* eval promise if need be */
-    if (t == PROMSXP){
+    if (t == PROMSXP) {
+	/* eval promise if need be */
 	int err = 1;
 
 	fun = R_tryEval(fun, R_GlobalEnv, &err);
@@ -509,10 +504,26 @@ int get_R_function_by_name (const char *name)
 
     if (t != CLOSXP && t != BUILTINSXP &&
 	t != BUILTINSXP && t != SPECIALSXP) {
-	return 0;
+	return R_UnboundValue;
     }
 
-    return 1;
+    return fun;
+}
+
+/* used in "genr" */
+
+int get_R_function_by_name (const char *name) 
+{
+    SEXP fun;
+
+    if (!Rinit) {
+	/* use gretl_R_init() here? */
+	return 0;
+    } 
+
+    fun = find_R_function(name);
+
+    return (fun == R_UnboundValue)? 0 : 1;
 }
 
 int gretl_R_function_add_scalar (double x) 
@@ -543,7 +554,6 @@ int gretl_R_function_add_vector (const double *x, int t1, int t2)
 
 int gretl_R_function_add_matrix (const gretl_matrix *m) 
 {
-
     int nr = gretl_matrix_rows(m);
     int nc = gretl_matrix_cols(m);
     SEXP res;
@@ -574,7 +584,7 @@ int gretl_R_get_call (const char *name, int argc)
     if (call == R_NilValue) {
 	fprintf(stderr, "gretl_R_get_call: no definition for function %s\n", 
 		name);
-	UNPROTECT(1);
+	UNPROTECT(1); /* is this OK? */
 	return E_EXTERNAL;
     } 
 

@@ -30,6 +30,10 @@
 #include "forecast.h"
 #include "kalman.h"
 
+#ifdef USE_RLIB
+# include "gretl_foreign.h"
+#endif
+
 #include <errno.h>
 #include <time.h>
 
@@ -1540,6 +1544,9 @@ void libgretl_cleanup (void)
     forecast_matrix_cleanup();
     option_flags_cleanup();
     kalman_cleanup();
+#ifdef USE_RLIB
+    gretl_R_cleanup();
+#endif
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {
