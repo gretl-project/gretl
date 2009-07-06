@@ -57,6 +57,7 @@ have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
 have_odbc="no"
+have_libR="no"
 check_gnuplot="yes"
 MAKE="make"
 XML_LIBS=
@@ -599,6 +600,13 @@ if test "${build_docs}" = "yes" ; then
   )
 fi
 
+dnl Check for libR (optional)
+PKG_CHECK_MODULES(RLIB, libR,
+  AC_DEFINE(USE_RLIB)	
+  have_libR="yes",
+  have_libR="no",
+)
+
 dnl If building docs was requested, see if we can do it
 if test "${build_docs}" = "yes" ; then
    if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
@@ -617,6 +625,8 @@ AC_SUBST(XSLT_CFLAGS)
 AC_SUBST(XSLT_LIBS)
 AC_SUBST(GDK_PIXBUF_CFLAGS)
 AC_SUBST(GDK_PIXBUF_LIBS)
+AC_SUBST(RLIB_CFLAGS)
+AC_SUBST(RLIB_LIBS)
 
 dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then
@@ -722,6 +732,7 @@ Configuration:
   TRAMO/SEATS support:                    ${have_tramo}
   Experimental audio support:             ${have_audio}
   Experimental ODBC support:              ${have_odbc}
+  Experimental libR support:              ${have_libR}
   LAPACK libraries:
     ${LAPACK_LIBS}
 

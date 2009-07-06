@@ -968,7 +968,7 @@ static NODE *powterm (parser *p)
 		}		
 	    }
 	}
-    } else if (sym == UFUN) {
+    } else if (sym == UFUN || sym == RFUN) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newstr(p, STR);

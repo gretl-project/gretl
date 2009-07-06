@@ -87,7 +87,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef HAVE_SOCKADDR_IN
 #undef HAVE_IN_ADDR
 
-/* Define if the `long double' type works.  */
+/* Define if the 'long double' type works.  */
 #undef HAVE_LONG_DOUBLE
 
 /* Define as the return type of signal handlers (int or void).  */
@@ -114,6 +114,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Have Jacobi SVD in Lapack 3.2 or higher */
 #undef HAVE_LAPACK_3_2
+
+/* Use the GNU R shared library */
+#undef USE_RLIB
 
 /* Building for Mac OS X? */
 #undef OSX_BUILD

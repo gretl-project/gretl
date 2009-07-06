@@ -28,6 +28,7 @@
 #include "gretl_fft.h"
 #include "kalman.h"
 #include "libset.h"
+#include "gretl_foreign.h"
 #include "version.h"
 
 #include <errno.h>
@@ -4568,6 +4569,101 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     return A;
 }
 
+/* evaluate an R function */
+
+static NODE *eval_Rfunc (NODE *t, parser *p)
+{
+    NODE *l = t->v.b2.l;
+    NODE *r = t->v.b2.r;
+    int i, m = r->v.bn.n_nodes;
+    const char *funname = l->v.str;
+    int rtype = GRETL_TYPE_NONE;
+    NODE *n, *ret = NULL;
+
+
+    /* first find the function */
+    p->err = gretl_R_get_call(funname, m);
+    if (p->err) {
+	return NULL;
+    }
+
+    /* evaluate the function arguments */
+    for (i=0; i<m && !p->err; i++) {
+	if (useries_node(r->v.bn.n[i])) {
+	    /* let dataset variables through "as is" */
+	    n = r->v.bn.n[i];
+	} else if (uscalar_node(r->v.bn.n[i])) {
+	    /* let predefined scalars through "as is" */
+	    n = r->v.bn.n[i];
+	} else {
+	    n = eval(r->v.bn.n[i], p);
+	    if (n == NULL) {
+		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
+	    } else if (!ok_ufunc_sym(n->t)) {
+		fprintf(stderr, "%s: node type %d: not OK\n", funname, n->t);
+		p->err = E_TYPES;
+	    }
+	}
+
+	if (p->err) {
+	    break;
+	}
+
+#if EDEBUG
+	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, n->t);
+#endif
+
+	if (uscalar_node(n)) {
+	    p->err = gretl_R_function_add_scalar(n->v.xval);
+	} else if (n->t == NUM) {
+	    p->err = gretl_R_function_add_scalar(n->v.xval);
+	} else if (n->t == MAT) {
+	    p->err = gretl_R_function_add_matrix(n->v.m);
+	} else {
+	    fprintf(stderr, "argument not supported");
+	    p->err = 1;
+	    return NULL;
+	}
+	if (p->err) {
+	    fprintf(stderr, "eval_Rfunc: error evaluating arg %d\n", i);
+	}
+    }
+
+    /* try sending args to function */
+
+    if (!p->err) {
+	void *retp = NULL;
+	double xret = NADBL;
+
+    	retp = &xret;
+	p->err = gretl_R_function_exec(funname, &rtype, &retp);
+
+	if (!p->err) {
+	    if (rtype == GRETL_TYPE_DOUBLE) {
+		ret = aux_scalar_node(p);
+		if (ret != NULL) {
+		    ret->v.xval = xret;
+		}
+	    } else if (rtype == GRETL_TYPE_MATRIX) {
+		ret = aux_matrix_node(p);
+		if (ret != NULL) {
+		    if (is_tmp_node(ret)) {
+			gretl_matrix_free(ret->v.m);
+		    }
+		    ret->v.m = (gretl_matrix *) retp;
+		}
+	    } 
+	}
+    }
+
+#if EDEBUG
+    fprintf(stderr, "eval_Rfunc: p->err = %d, ret = %p\n", 
+	    p->err, (void *) ret);
+#endif
+
+    return ret;
+}
+
 static const char *ptr_node_get_name (NODE *t, parser *p)
 {
     char *ret = NULL;
@@ -6751,6 +6847,9 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case UFUN:
 	ret = eval_ufunc(t, p);
+	break;
+    case RFUN:
+	ret = eval_Rfunc(t, p);
 	break;
     case QUERY:
 	ret = eval_query(t, p);

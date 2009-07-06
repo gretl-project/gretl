@@ -20,6 +20,12 @@
 #include "libgretl.h"
 #include <glib.h>
 
+#ifdef USE_RLIB
+# include <R.h>
+# include <Rinternals.h>
+# include <Rembedded.h> 
+#endif
+
 #ifdef G_OS_WIN32
 # include <windows.h>
 #else
@@ -34,13 +40,18 @@ static int foreign_n_lines;
 static int foreign_lang;
 static gretlopt foreign_opt;
 
+#ifdef USE_RLIB
+static int Rinit;
+#endif
+
 /* foreign_opt may include OPT_D to send data, OPT_Q to operate
    quietly (don't display output from foreign program)
 */
 
 enum {
     LANG_R = 1,
-    LANG_OX
+    LANG_OX,
+    LANG_RLIB
 };
 
 static void destroy_foreign (void)
@@ -60,6 +71,8 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 	foreign_lang = LANG_R;
     } else if (!strcmp(lang, "ox")) {
 	foreign_lang = LANG_OX;
+    } else if (!strcmp(lang, "RLib")) {
+	foreign_lang = LANG_RLIB;
     } else {
 	pprintf(prn, "%s: unknown language\n");
 	err = E_DATA;
@@ -258,12 +271,15 @@ static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
 				  const gchar *dotdir, gretlopt opt)
 {
     FILE *fp;
-    int err;
+    int err = 0;
 
 #ifdef G_OS_WIN32
     err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
 #else
-    err = setenv("R_PROFILE", Rprofile, 1);
+    gchar *envstr = g_strdup_printf("R_PROFILE=%s", Rprofile);
+    putenv(envstr);
+    g_free(envstr);
+    /* err = setenv("R_PROFILE", Rprofile, 1); */
 #endif
     if (err) {
 	return err;
@@ -369,6 +385,7 @@ int write_gretl_R_files (const char *buf,
     /* first write a temporary R profile, so R knows what to do */
     err = write_gretl_R_profile(Rprofile, Rsrc, dotcpy, opt);
     if (err) {
+	fprintf(stderr, "error writing gretl Rprofile\n");
 	return err;
     }
 
@@ -397,6 +414,262 @@ void delete_gretl_R_files (void)
     g_free(Rprofile);
     g_free(Rsrc);
 }
+
+#ifdef USE_RLIB
+
+static SEXP current_arg;
+static SEXP current_call;
+
+static void init_R (int argc, char **argv)
+{
+    char *defaultArgv[] = {"Rtest"};
+
+    if (argc == 0 || argv == NULL) {
+	argv = defaultArgv;
+	argc = 1;
+    }
+
+    Rf_initEmbeddedR(argc, argv);
+}
+
+# if 0 /* unused at present */
+
+static int eval_R_command (const char *funcName, int argc, char **argv)
+{
+    SEXP e, arg;
+    int i, err = 0;
+
+    init_R(argc, argv);
+
+    PROTECT(arg = allocVector(INTSXP, 10));
+
+    for (i=0; i<LENGTH(arg); i++) {
+	INTEGER(arg)[i] = i + 1;
+    }
+
+    PROTECT(e = lang2(install(funcName), arg));
+
+    /* Evaluate the call to the R function.
+       Ignore the return value.
+    */
+    R_tryEval(e, R_GlobalEnv, &err);
+
+    Rf_endEmbeddedR(0);
+    UNPROTECT(2); 
+  
+    return 0;
+}
+
+static void end_R (void)
+{
+    Rf_endEmbeddedR(0);
+}
+
+# endif /* unused */
+
+/* This arranges for the command source("foo.R")
+   to be called and this defines the function we will
+   call in bar1.
+*/
+
+static void source (const char *name)
+{
+    SEXP e;
+
+    PROTECT(e = lang2(install("source"), mkString(name)));
+    R_tryEval(e, R_GlobalEnv, NULL);
+    UNPROTECT(1);
+}
+
+static int lib_run_Rlib_sync (gretlopt opt, PRN *prn) 
+{
+    gchar *Rsrc;
+
+    if (!Rinit) {
+	char *localArgs[] = { "R", "--silent" };
+
+#ifdef G_OS_WIN32
+    	err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
+#endif
+    	init_R(sizeof(localArgs)/sizeof(localArgs[0]), localArgs);
+	Rinit = 1;
+    }
+    
+    Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir());
+    source(Rsrc);
+    g_free(Rsrc);
+
+    return 0;
+}
+
+/* used in "genr" */
+
+int get_R_function_by_name (const char *name) 
+{
+    SEXP fun;
+#if 0
+    SEXP e;
+#endif
+
+    fun = findFun(install(name), R_GlobalEnv);
+    if (fun == R_NilValue) {
+	UNPROTECT(1);
+	return 0;
+    }
+
+    return 1;
+}
+
+int gretl_R_function_add_scalar (double x) 
+{
+    current_arg = CDR(current_arg);
+    SETCAR(current_arg, ScalarReal(x));
+    return 0;
+}
+
+int gretl_R_function_add_vector (const double *x, int t1, int t2) 
+{
+    SEXP res = allocVector(REALSXP, t2 - t1 + 1);
+    int i;
+
+    if (res == NULL) {
+	return E_ALLOC;
+    }
+
+    current_arg = CDR(current_arg);
+
+    for (i=t1; i<=t2; i++) {
+    	REAL(res)[i-t1] = x[i];
+    }
+    
+    SETCAR(current_arg, res);
+    return 0;
+}
+
+int gretl_R_function_add_matrix (const gretl_matrix *m) 
+{
+
+    int nr = gretl_matrix_rows(m);
+    int nc = gretl_matrix_cols(m);
+    SEXP res;
+    int i, j;
+
+    current_arg = CDR(current_arg);
+    res = allocMatrix(REALSXP, nr, nc);
+    if (res == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<nr; i++) {
+	for (j=0; j<nc; j++) {
+	    REAL(res)[i + j * nr] = gretl_matrix_get(m, i, j);
+    	}
+    }
+    
+    SETCAR(current_arg, res);
+    return 0;
+}
+
+int gretl_R_get_call (const char *name, int argc) 
+{
+    SEXP call;
+    SEXP e;
+
+    call = findFun(install(name), R_GlobalEnv);
+
+    if (call == R_NilValue) {
+	fprintf(stderr, "No definition for function %s\n", name);
+	UNPROTECT(1);
+	return -1;
+    }
+
+    PROTECT(e = allocList(argc + 1));
+    SET_TYPEOF(e, LANGSXP);
+    SETCAR(e, install(name));
+    current_call = current_arg = e;
+ 
+    return 0;
+}
+
+int gretl_R_function_exec (char *name, int *rtype, void **ret) 
+{
+    SEXP res;
+
+    /* PrintValue(current_call); */
+    /* eval(current_call, R_GlobalEnv); */
+    /* SETCAR(current_call, install(name)); */
+
+    PrintValue(current_call);
+    res = R_tryEval(current_call, R_GlobalEnv, NULL);
+
+    if (isMatrix(res)) {
+	gretl_matrix *pm;
+	int nc = ncols(res);
+	int nr = nrows(res);
+	int i, j;
+
+	pm = gretl_matrix_alloc(nr, nc);
+	if (pm == NULL) {
+	    return E_ALLOC;
+	}
+
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		gretl_matrix_set(pm, i, j,REAL(res)[i + j * nr]);
+	    }
+	}
+	UNPROTECT(1);
+	*ret = pm;
+	*rtype = GRETL_TYPE_MATRIX;
+	return 0;
+    } else if (isVectorAtomic(res)) {
+	double *resD1, *resD2;
+
+	resD1 = REAL(res);
+	resD2 = *ret;
+	*resD2 = *resD1;
+
+    	UNPROTECT(1);
+	*rtype = GRETL_TYPE_DOUBLE;
+	return 0;
+    }
+
+    return E_EXTERNAL;
+}
+
+#else /* !USE_RLIB */
+
+int get_R_function_by_name (const char *name)
+{
+    return 0;
+}
+
+int gretl_R_get_call (const char *name, int argc)
+{
+    return E_NOTIMP;
+}
+
+int gretl_R_function_add_scalar (double x)
+{
+    return E_NOTIMP;
+}
+
+int gretl_R_function_add_vector (const double *x, int t1, int t2)
+{
+    return E_NOTIMP;
+}
+
+int gretl_R_function_add_matrix (const gretl_matrix *m)
+{
+    return E_NOTIMP;
+}
+
+int gretl_R_function_exec (const char *name, int *rtype, void **ret)
+{
+    return E_NOTIMP;
+}
+
+#endif /* USE_RLIB or not */
 
 static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 {
@@ -475,6 +748,23 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 
     foreign_opt |= opt;
 
+#ifndef USE_RLIB
+    if (foreign_lang == LANG_RLIB) {
+	pputs(prn, "Rlib: language not supported\n");
+	destroy_foreign();
+	return E_NOTIMP;
+    }
+#else
+    if (foreign_lang == LANG_RLIB) {
+	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
+	if (err) {
+	    delete_gretl_R_files();
+	} else {
+	    lib_run_Rlib_sync(foreign_opt, prn);
+	}
+    }
+#endif
+
     if (foreign_lang == LANG_R) {
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
@@ -485,9 +775,10 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
     } else if (foreign_lang == LANG_OX) {
 	pputs(prn, "language=ox: not supported yet\n");
 	err = E_NOTIMP;
-    }
+    } 
     
     destroy_foreign();
 
     return err;
 }
+

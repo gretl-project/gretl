@@ -107,8 +107,9 @@ enum {
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
-              VSTR,       /* string variable */
-  /* 80 */    INC,   
+	      RFUN,       /* GNU R function */
+  /* 80 */    VSTR,       /* string variable */
+              INC,   
 	      DEC,
 	      QUERY,
 	      EOT,	  /* end of transmission */
@@ -356,7 +357,8 @@ enum {
                    !func2_symb(s) && s != EROOT)
 
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == DMSL || \
-                  s == OVAR || s == UFUN || s == LISTVAR)
+                  s == OVAR || s == UFUN || s == RFUN || \
+                  s == LISTVAR)
 
 #define b3sym(s) (s == QUERY || func3_symb(s))
 

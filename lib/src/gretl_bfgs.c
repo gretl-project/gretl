@@ -523,6 +523,10 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    sumgrad += s * g[i];
 	}
 
+#if BFGS_DEBUG
+	fprintf(stderr, "sumgrad = %g\n", sumgrad);
+#endif
+
 	if (sumgrad < 0.0) {	
 	    steplen = 1.0;
 	    crit_ok = 0;
@@ -542,6 +546,10 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		    d = sumgrad * steplen * acctol;
 		    fcount++;
 		    crit_ok = !na(f) && (f >= fmax + d);
+#if BFGS_DEBUG
+		    fprintf(stderr, "crit_ok: f=%.15g, fmax=%.15g, d=%g, ok=%d\n",
+			    f, fmax, d, crit_ok);
+#endif
 		    if (!crit_ok) {
 			/* calculated criterion no good: try smaller step */
 			steplen *= stepfrac;
@@ -644,7 +652,8 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	err = E_NOCONV;
     } else if (fmax < f0) {
 	/* FIXME this should never happen */
-	fprintf(stderr, "failed to match initial value of objective function, %g\n", f0);
+	fprintf(stderr, "failed to match initial value of objective function:\n"
+		" f0=%.15g, fmax=%.15g\n", f0, fmax);
 	err = E_NOCONV;
     }
 

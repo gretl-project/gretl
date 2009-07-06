@@ -18,6 +18,8 @@ GMP_LIBS = @GMP_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
 FFTW_CFLAGS = @FFTW_CFLAGS@
 FFTW_LIBS = @FFTW_LIBS@
+RLIB_CFLAGS = @RLIB_CFLAGS@
+RLIB_LIBS = @RLIB_LIBS@
 
 CURRENT=@LIBGRETL_CURRENT@
 REVISION=@LIBGRETL_REVISION@
@@ -45,7 +47,6 @@ INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(aclocaldir
 
 LIBGRETL = libgretl-1.0.la 
 
-# Libraries:
 ifeq ($(have_gtk),2.0)
   INSTALLDIRS += $(DESTDIR)$(pkgconfigdir)
   INSTALL_CFG = install-cfg-new
@@ -54,7 +55,7 @@ else
 endif
 
 LIBS = $(LAPACK_LIBS) -lm -ldl -lz $(XML_LIBS) \
-	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS)
+	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(RLIB_LIBS)
 
 #### End of system configuration section. ####
 
@@ -226,7 +227,7 @@ AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)
 LIBTOOL = ../libtool
 
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
-	$(GMP_CFLAGS) $(FFTW_CFLAGS) -DHAVE_CONFIG_H
+	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
 

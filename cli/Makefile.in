@@ -16,6 +16,8 @@ have_readline = @have_readline@
 READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 
+R_LIBS = @R_LIBS@
+
 ifeq ($(CC),)
   CC = gcc
 endif
@@ -51,7 +53,8 @@ LIBTOOL = ../libtool
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
 $(CLI): .deps $(OBJS)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(GRETLLIB) $(READLINE_LIBS) 
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(GRETLLIB) \
+	$(READLINE_LIBS) $(R_LIBS)
 
 .deps:
 	mkdir $@

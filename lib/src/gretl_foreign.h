@@ -30,4 +30,16 @@ int write_gretl_R_files (const char *buf,
 
 void delete_gretl_R_files (void);
 
+int get_R_function_by_name (const char *name);
+
+int gretl_R_get_call (const char *name, int argc);
+
+int gretl_R_function_add_scalar (double x);
+
+int gretl_R_function_add_vector (const double *x, int t1, int t2);
+
+int gretl_R_function_add_matrix (const gretl_matrix *m);
+
+int gretl_R_function_exec (const char *name, int *rtype, void **ret);
+
 #endif /* GRETL_FOREIGN_H */

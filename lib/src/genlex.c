@@ -23,6 +23,7 @@
 #include "usermat.h"
 #include "gretl_func.h"
 #include "gretl_string_table.h"
+#include "gretl_foreign.h"
 
 #include <glib.h>
 
@@ -819,6 +820,9 @@ static void look_up_word (const char *s, parser *p)
 		} else if (get_user_function_by_name(s)) {
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
+		} else if (get_R_function_by_name(s)) {
+		    p->sym = RFUN;
+		    p->idstr = gretl_strdup(s);
 		} else if (string_is_defined(s)) {
 		    p->sym = VSTR;
 		    p->idstr = gretl_strdup(s);
@@ -869,7 +873,8 @@ static void word_check_next_char (const char *s, parser *p)
 		   !func2_symb(p->sym) &&
 		   !func3_symb(p->sym) &&
 		   !funcn_symb(p->sym) && 
-		   p->sym != UFUN) {
+		   p->sym != UFUN && 
+		   p->sym != RFUN) {
 	    p->err = 1;
 	} 
     } else if (p->ch == '[') {
@@ -1384,7 +1389,7 @@ const char *getsymb (int t, const parser *p)
 	    return dvarname(p->idnum);
 	} else if (t == MVAR) {
 	    return mvarname(p->idnum);
-	} else if (t == UFUN) {
+	} else if (t == UFUN || t == RFUN) {
 	    return p->idstr;
 	} else if (t == STR) {
 	    return p->idstr;
