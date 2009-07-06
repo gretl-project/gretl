@@ -30,7 +30,7 @@ int write_gretl_R_files (const char *buf,
 
 void delete_gretl_R_files (void);
 
-# ifdef USE_RLIB
+#ifdef USE_RLIB
 
 int get_R_function_by_name (const char *name);
 
@@ -44,6 +44,6 @@ int gretl_R_function_add_matrix (const gretl_matrix *m);
 
 int gretl_R_function_exec (const char *name, int *rtype, void **ret);
 
-# endif
+#endif
 
 #endif /* GRETL_FOREIGN_H */

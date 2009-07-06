@@ -4567,7 +4567,7 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
     if (!p->err) {
 	double xret = NADBL;
-	void *retp = &ret;
+	void *retp = &xret;
 
 	p->err = gretl_R_function_exec(funname, &rtype, &retp);
 
