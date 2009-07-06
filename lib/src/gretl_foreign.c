@@ -33,8 +33,6 @@
 # include <signal.h>
 #endif
 
-#define USE_DASH_F 0
-
 static char **foreign_lines;
 static int foreign_started;
 static int foreign_n_lines; 
@@ -127,31 +125,19 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
-#if USE_DASH_F
-    gchar *Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir());
-    gchar *argv[8];
-#else
-    gchar *argv[6];
-#endif
+    gchar *argv[6] = {
+	"R", 
+	"--no-save",
+	"--no-init-file",
+	"--no-restore-data",
+	"--slave",
+	NULL
+    };
     gchar *out = NULL;
     gchar *errout = NULL;
     gint status = 0;
     GError *gerr = NULL;
     int err = 0;
-
-    argv[0] = "R";
-    argv[1] = "--no-save";
-    argv[2] = "--no-init-file";
-    argv[3] = "--no-restore-data";
-    argv[4] = "--slave";
-
-#if USE_DASH_F
-    argv[5] = "-f";
-    argv[6] = Rsrc;
-    argv[7] = NULL;
-#else
-    argv[5] = NULL;
-#endif
 
     signal(SIGCHLD, SIG_DFL);
 
@@ -186,9 +172,6 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
     g_free(out);
     g_free(errout);
-#if USE_DASH_F
-    g_free(Rsrc);
-#endif
 
     return err;
 }
@@ -297,14 +280,7 @@ static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
 
     write_R_export_func(dotdir, fp);
 
-#if USE_DASH_F
-    if (opt & OPT_I) {
-	/* source the commands and/or data from gretl */
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
-    }
-#else
     fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
-#endif
 
     fclose(fp);
 
@@ -420,19 +396,18 @@ static SEXP current_call;
 
 static void init_R (int argc, char **argv)
 {
-    char *defaultArgv[] = {"Rtest"};
-
     if (argc == 0 || argv == NULL) {
-	argv = defaultArgv;
-	argc = 1;
-    }
+	char *defargs[] = {"Rtest"};
 
-    Rf_initEmbeddedR(argc, argv);
+	Rf_initEmbeddedR(1, defargs);
+    } else {
+	Rf_initEmbeddedR(argc, argv);
+    }
 }
 
 # if 0 /* unused at present */
 
-static int eval_R_command (const char *funcName, int argc, char **argv)
+static int eval_R_command (const char *name, int argc, char **argv)
 {
     SEXP e, arg;
     int i, err = 0;
@@ -445,7 +420,7 @@ static int eval_R_command (const char *funcName, int argc, char **argv)
 	INTEGER(arg)[i] = i + 1;
     }
 
-    PROTECT(e = lang2(install(funcName), arg));
+    PROTECT(e = lang2(install(name), arg));
 
     /* Evaluate the call to the R function.
        Ignore the return value.
@@ -458,7 +433,7 @@ static int eval_R_command (const char *funcName, int argc, char **argv)
     return 0;
 }
 
-static void end_R (void)
+static void gretl_R_cleanup (void)
 {
     Rf_endEmbeddedR(0);
 }
@@ -470,9 +445,9 @@ static void gretl_R_init (void)
     char *argv[] = { "R", "--silent" };
     int argc = 2;
 
-#ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
     SetEnvironmentVariable("R_PROFILE", Rprofile);
-#endif
+# endif
     init_R(argc, argv);
 
     Rinit = 1;
@@ -512,15 +487,28 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 int get_R_function_by_name (const char *name) 
 {
     SEXP fun;
+    SEXPTYPE t;
 
     if (!Rinit) {
 	/* use gretl_R_init() here? */
 	return 0;
     }
 
-    fun = findFun(install(name), R_GlobalEnv);
-    if (fun == R_NilValue) {
-	UNPROTECT(1);
+    fun = findVar(install(name), R_GlobalEnv);
+    t = TYPEOF(fun);
+
+    /* eval promise if need be */
+    if (t == PROMSXP){
+	int err = 1;
+
+	fun = R_tryEval(fun, R_GlobalEnv, &err);
+	if (!err) {
+	    t = TYPEOF(fun);
+	}
+    }
+
+    if (t != CLOSXP && t != BUILTINSXP &&
+	t != BUILTINSXP && t != SPECIALSXP) {
 	return 0;
     }
 
@@ -579,8 +567,7 @@ int gretl_R_function_add_matrix (const gretl_matrix *m)
 
 int gretl_R_get_call (const char *name, int argc) 
 {
-    SEXP call;
-    SEXP e;
+    SEXP call, e;
 
     call = findFun(install(name), R_GlobalEnv);
 
@@ -588,8 +575,8 @@ int gretl_R_get_call (const char *name, int argc)
 	fprintf(stderr, "gretl_R_get_call: no definition for function %s\n", 
 		name);
 	UNPROTECT(1);
-	return -1;
-    }
+	return E_EXTERNAL;
+    } 
 
     PROTECT(e = allocList(argc + 1));
     SET_TYPEOF(e, LANGSXP);
@@ -604,9 +591,11 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     SEXP res;
     int err = 0;
 
-    /* PrintValue(current_call); */
-    /* eval(current_call, R_GlobalEnv); */
-    /* SETCAR(current_call, install(name)); */
+#if 0
+    PrintValue(current_call);
+    eval(current_call, R_GlobalEnv);
+    SETCAR(current_call, install(name));
+#endif
 
     PrintValue(current_call);
     res = R_tryEval(current_call, R_GlobalEnv, NULL);
@@ -641,6 +630,10 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     } else {
 	err = E_EXTERNAL;
     }
+
+#if 0
+    gretl_R_cleanup();
+#endif
 
     return err;
 }
