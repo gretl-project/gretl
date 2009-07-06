@@ -394,8 +394,14 @@ void delete_gretl_R_files (void)
 static SEXP current_arg;
 static SEXP current_call;
 
-static void init_R (int argc, char **argv)
+# if 0 /* unused at present */
+
+static int init_R (int argc, char **argv)
 {
+    if (getenv("R_HOME") == NULL) {
+	return 1;
+    }
+
     if (argc == 0 || argv == NULL) {
 	char *defargs[] = {"Rtest"};
 
@@ -403,16 +409,19 @@ static void init_R (int argc, char **argv)
     } else {
 	Rf_initEmbeddedR(argc, argv);
     }
-}
 
-# if 0 /* unused at present */
+    return 0;
+}
 
 static int eval_R_command (const char *name, int argc, char **argv)
 {
     SEXP e, arg;
-    int i, err = 0;
+    int i, err;
 
-    init_R(argc, argv);
+    err = init_R(argc, argv);
+    if (err) {
+	return err;
+    }
 
     PROTECT(arg = allocVector(INTSXP, 10));
 
@@ -442,17 +451,24 @@ void gretl_R_cleanup (void)
     }
 }
 
-static void gretl_R_init (void)
+static int gretl_R_init (void)
 {
-    char *argv[] = { "R", "--silent" };
-    int argc = 2;
+    int err = 0;
 
-# ifdef G_OS_WIN32
+#ifdef G_OS_WIN32 /* do we need this? */
     SetEnvironmentVariable("R_PROFILE", Rprofile);
-# endif
-    init_R(argc, argv);
+#endif
 
-    Rinit = 1;
+    if (getenv("R_HOME") == NULL) {
+	err = E_EXTERNAL;
+    } else {
+	char *argv[] = { "R", "--silent" };
+
+	Rf_initEmbeddedR(2, argv);
+	Rinit = 1;
+    }
+
+    return err;
 }
 
 /* This arranges for the command source("foo.R")
@@ -472,16 +488,19 @@ static void source (const char *name)
 static int lib_run_Rlib_sync (gretlopt opt, PRN *prn) 
 {
     gchar *Rsrc;
+    int err = 0;
 
     if (!Rinit) {
-	gretl_R_init();
+	if ((err = gretl_R_init())) {
+	    return err;
+	}
     }
     
     Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir());
     source(Rsrc);
     g_free(Rsrc);
 
-    return 0;
+    return err;
 }
 
 static SEXP find_R_function (const char *name)
@@ -517,7 +536,11 @@ int get_R_function_by_name (const char *name)
     SEXP fun;
 
     if (!Rinit) {
-	gretl_R_init();
+	int err = gretl_R_init();
+
+	if (err) {
+	    return err;
+	}
     } 
 
     fun = find_R_function(name);
