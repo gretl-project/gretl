@@ -271,15 +271,12 @@ static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
 				  const gchar *dotdir, gretlopt opt)
 {
     FILE *fp;
-    int err = 0;
+    int err;
 
 #ifdef G_OS_WIN32
     err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
 #else
-    gchar *envstr = g_strdup_printf("R_PROFILE=%s", Rprofile);
-    putenv(envstr);
-    g_free(envstr);
-    /* err = setenv("R_PROFILE", Rprofile, 1); */
+    err = setenv("R_PROFILE", Rprofile, 1);
 #endif
     if (err) {
 	return err;
@@ -748,24 +745,20 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 
     foreign_opt |= opt;
 
-#ifndef USE_RLIB
     if (foreign_lang == LANG_RLIB) {
-	pputs(prn, "Rlib: language not supported\n");
-	destroy_foreign();
-	return E_NOTIMP;
-    }
-#else
-    if (foreign_lang == LANG_RLIB) {
+#ifdef USE_RLIB
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
 	    delete_gretl_R_files();
 	} else {
 	    lib_run_Rlib_sync(foreign_opt, prn);
 	}
-    }
+#else
+	pputs(prn, "Rlib: language not supported\n");
+	destroy_foreign();
+	return E_NOTIMP;
 #endif
-
-    if (foreign_lang == LANG_R) {
+    } else if (foreign_lang == LANG_R) {
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
 	    delete_gretl_R_files();
