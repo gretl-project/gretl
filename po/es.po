@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-04 12:34-0400\n"
-"PO-Revision-Date: 2009-07-02 13:48+0200\n"
+"PO-Revision-Date: 2009-07-06 10:32+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -8775,9 +8775,8 @@ msgid "Baxter-King Band-pass filter"
 msgstr "Filtro pasabanda de Baxter-King"
 
 #: gui2/filters.c:83
-#, fuzzy
 msgid "Fractional difference"
-msgstr "Diferencias estacionales:"
+msgstr "Diferencia fraccional"
 
 #: gui2/filters.c:170
 #, c-format
@@ -8828,9 +8827,8 @@ msgid "Conflicting variable names"
 msgstr "Nombres de variable en conflicto"
 
 #: gui2/filters.c:314
-#, fuzzy
 msgid "Save output as"
-msgstr "Guardar fichero de resultados"
+msgstr "Guardar los resultados como"
 
 #: gui2/filters.c:318
 msgid "Save smoothed series as"
@@ -8885,9 +8883,8 @@ msgid "k (higher values -> better approximation):"
 msgstr "k (valores más altos -> mejor aproximación):"
 
 #: gui2/filters.c:509
-#, fuzzy
 msgid "differencing parameter:"
-msgstr "diferencia de varianzas"
+msgstr "parámetro de diferenciación:"
 
 #: gui2/filters.c:523
 msgid "Graph filtered series"
@@ -8898,9 +8895,8 @@ msgid "Save cyclical series as"
 msgstr "Guardar la serie cíclica como"
 
 #: gui2/filters.c:540
-#, fuzzy
 msgid "Graph differenced series"
-msgstr "Representar gráficamente la serie filtrada"
+msgstr "Representar la serie diferenciada"
 
 #: gui2/filters.c:546
 msgid "Graph original and smoothed series"
@@ -10124,9 +10120,8 @@ msgid "_Baxter-King"
 msgstr "_Baxter-King"
 
 #: gui2/gretl.c:1394
-#, fuzzy
 msgid "_Fractional difference"
-msgstr "Diferencias estacionales:"
+msgstr "Diferencia _fraccional"
 
 #: gui2/gretl.c:1397 gui2/gretl.c:1485
 msgid "_X-12-ARIMA analysis"
@@ -14713,9 +14708,8 @@ msgid "irregular component of %s"
 msgstr "componente irregular de %s"
 
 #: plugin/tramo-x12a.c:219
-#, fuzzy
 msgid "Show full output"
-msgstr "Mostrar el borde completo"
+msgstr "Mostrar todos los resultados"
 
 #: plugin/tramo-x12a.c:286 plugin/tramo-x12a.c:288
 msgid "irregular"
