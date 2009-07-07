@@ -3670,6 +3670,7 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
     double *sdy = NULL;
     double *xvec = NULL;
     const char *vname;
+    char dstr[32];
     double xx, yy, varx, sdx, w;
     int k, L, m, T, t; 
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -3781,7 +3782,10 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
     for (t=1; t<=T/2; t++) {
 	yy = M_2PI * t / (double) T;
 	xx = (opt & OPT_L)? log(xvec[t]) : xvec[t];
-	pprintf(prn, " %.4f%9d%16.2f%#16.6g\n", yy, t, (double) T / t, xx);
+	pprintf(prn, " %.4f%9d%16.2f", yy, t, (double) T / t);
+	sprintf(dstr, "%#.4e", xx);
+	gretl_fix_exponent(dstr);
+	pprintf(prn, "%16s\n", dstr);
     }
 
     pputc(prn, '\n');
