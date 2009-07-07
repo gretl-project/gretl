@@ -35,7 +35,7 @@ static int GLS_demean_detrend (double *y, int T, int test)
     gretl_matrix *ya = NULL;
     gretl_matrix *Za = NULL;
     gretl_matrix *b = NULL;
-    double c;
+    double c, b0, b1 = 0;
     int t, zcols;
     int err = 0;
 
@@ -56,9 +56,9 @@ static int GLS_demean_detrend (double *y, int T, int test)
 
     c = (test == UR_CONST)? (1.0 - 7.0/T) : (1.0 - 13.5/T);
 
-    ya->val[0] = y[0];
+    gretl_vector_set(ya, 0, y[0]);
     for (t=1; t<T; t++) {
-	ya->val[t] = y[t] - y[t-1] * c;
+	gretl_vector_set(ya, t, y[t] - y[t-1] * c);
     }
 
     gretl_matrix_set(Za, 0, 0, 1);
@@ -76,10 +76,14 @@ static int GLS_demean_detrend (double *y, int T, int test)
     err = gretl_matrix_ols(ya, Za, b, NULL, NULL, NULL);
 
     if (!err) {
+	b0 = gretl_vector_get(b, 0);
+	if (zcols == 2) {
+	    b1 = gretl_vector_get(b, 1);
+	}
 	for (t=0; t<T; t++) {
-	    y[t] -= b->val[0];
+	    y[t] -= b0;
 	    if (zcols == 2) {
-		y[t] -= b->val[1] * (t+1);
+		y[t] -= b1 * (t+1);
 	    }
 	}
     }    
