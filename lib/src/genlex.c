@@ -785,9 +785,20 @@ static void look_up_dollar_word (const char *s, parser *p)
 }
 
 #ifdef USE_RLIB
+# include "libset.h"
 # include "gretl_foreign.h"
-#else
-# define get_R_function_by_name(s) (0)
+
+static int maybe_get_R_function (const char *s)
+{
+    if (!libset_get_bool(R_FUNCTIONS) || strlen(s) < 3) {
+	return 0;
+    } else {
+	return get_R_function_by_name(s + 2);
+    }
+}
+
+#else /* !USE_RLIB */
+# define maybe_get_R_function(s) (0)
 #endif
 
 static void look_up_word (const char *s, parser *p)
@@ -838,10 +849,10 @@ static void look_up_word (const char *s, parser *p)
 		    */
 		    p->sym = DVAR;
 		    p->idnum = R_INDEX;
-		} else if (get_R_function_by_name(s)) {
+		} else if (maybe_get_R_function(s)) {
 		    /* note: all "native" types take precedence over this */
 		    p->sym = RFUN;
-		    p->idstr = gretl_strdup(s);
+		    p->idstr = gretl_strdup(s + 2);
 		} else {
 		    err = 1;
 		}

@@ -276,7 +276,7 @@ static int anova_make_value_vecs (struct anova *v)
 }
 
 /* allocate and initialize arrays to calculate the column
-   and rows means of the ANOVA table */
+   and row means of the ANOVA table */
 
 static int anova_accounting_arrays (struct anova *v)
 {

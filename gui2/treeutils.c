@@ -28,33 +28,37 @@ extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern GtkWidget *active_edit_text;
 
-/* special comparator which always preserves "const" in the
-   first position when sorting variables by name */
+/* special comparator which always preserves "const" (variable 0) in
+   the first position when sorting variables by name */
 
 static gint list_alpha_compare (GtkTreeModel *model, 
 				GtkTreeIter *a, GtkTreeIter *b,
 				gpointer p)
 {
-    gchar *vname_a, *vname_b;
+    gchar *str_a, *str_b;
+    gchar *id_a, *id_b;
     GtkSortType order;
     gint scol, ret;
 
     gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
 					 &scol, &order);
- 
-    gtk_tree_model_get(model, a, 1, &vname_a, -1);
-    gtk_tree_model_get(model, b, 1, &vname_b, -1);
 
-    if (strcmp(vname_a, "const") == 0) {
+    gtk_tree_model_get(model, a, 0, &id_a, scol, &str_a, -1);
+    gtk_tree_model_get(model, b, 0, &id_b, scol, &str_b, -1);
+
+    if (atoi(id_a) == 0) {
 	ret = (order == GTK_SORT_DESCENDING)? 1 : 0;
-    } else if (strcmp(vname_b, "const") == 0) {
+    } else if (atoi(id_b) == 0) {
 	ret = (order == GTK_SORT_DESCENDING)? 0 : 1;
     } else {
-	ret = strcmp(vname_a, vname_b);
-    }
+	ret = strcmp(str_a, str_b);
+    }    
 
-    g_free(vname_a);
-    g_free(vname_b);
+    g_free(id_a);
+    g_free(id_b);
+
+    g_free(str_a);
+    g_free(str_b);
     
     return ret;
 }
@@ -66,18 +70,18 @@ static gint list_id_compare (GtkTreeModel *model,
 			     GtkTreeIter *a, GtkTreeIter *b,
 			     gpointer p)
 {
-    gchar *vnum_a, *vnum_b;
+    gchar *id_a, *id_b;
     GtkSortType order;
     gint ia, ib, scol, ret;
 
     gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
 					 &scol, &order);
     
-    gtk_tree_model_get(model, a, 0, &vnum_a, -1);
-    gtk_tree_model_get(model, b, 0, &vnum_b, -1);
+    gtk_tree_model_get(model, a, 0, &id_a, -1);
+    gtk_tree_model_get(model, b, 0, &id_b, -1);
 
-    ia = atoi(vnum_a);
-    ib = atoi(vnum_b);
+    ia = atoi(id_a);
+    ib = atoi(id_b);
 
     if (ia == 0) {
 	ret = (order == GTK_SORT_DESCENDING)? 1 : 0;
@@ -87,8 +91,8 @@ static gint list_id_compare (GtkTreeModel *model,
 	ret = ia - ib;
     }    
 
-    g_free(vnum_a);
-    g_free(vnum_b);
+    g_free(id_a);
+    g_free(id_b);
     
     return ret;
 }
@@ -400,7 +404,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	    if (vwin != mdata) {
 		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
-	    } else if (i < 2) {
+	    } else {
 		gtk_tree_view_column_set_sort_column_id(GTK_TREE_VIEW_COLUMN(column), i);
 		if (i == 0) {
 		    g_signal_connect(G_OBJECT(column), "clicked",
@@ -459,6 +463,10 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 					list_id_compare,
 					NULL, NULL);
 	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 1, 
+					(GtkTreeIterCompareFunc) 
+					list_alpha_compare,
+					NULL, NULL);
+	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 2, 
 					(GtkTreeIterCompareFunc) 
 					list_alpha_compare,
 					NULL, NULL);

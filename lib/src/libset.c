@@ -123,7 +123,8 @@ struct set_vars_ {
 			   !strcmp(s, USE_FCP) || \
                            !strcmp(s, PROTECT_LISTS) || \
                            !strcmp(s, VERBOSE_INCLUDE) || \
-                           !strcmp(s, SKIP_MISSING))
+                           !strcmp(s, SKIP_MISSING) || \
+			   !strcmp(s, R_FUNCTIONS))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -150,6 +151,7 @@ set_vars *state;
 static int gretl_debug;
 static int protect_lists = 1;
 static int user_mp_bits;
+static int R_functions;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -1784,9 +1786,12 @@ int libset_get_bool (const char *s)
 {
     int flag, ret = 0;
 
+    /* two global special */
+
     if (!strcmp(s, PROTECT_LISTS)) {
-	/* global special */
 	return protect_lists;
+    } else if (!strcmp(s, R_FUNCTIONS)) {
+	return R_functions;
     }
 
     if (!strcmp(s, MAX_VERBOSE) && gretl_debug > 1) {
@@ -1838,11 +1843,15 @@ void libset_set_bool (const char *s, int set)
 	return;
     }
 
+    /* two global specials */
+
     if (!strcmp(s, PROTECT_LISTS)) {
-	/* global special */
 	protect_lists = set;
 	return;
-    }
+    } else if (!strcmp(s, R_FUNCTIONS)) {
+	R_functions = set;
+	return;
+    }    
 
     flag = boolvar_get_flag(s);
 

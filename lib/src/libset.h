@@ -63,6 +63,7 @@ typedef enum {
 #define ARMA_VCV         "arma_vcv"
 #define VERBOSE_INCLUDE  "verbose_include"
 #define SKIP_MISSING     "skip_missing"
+#define R_FUNCTIONS      "R_functions"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 

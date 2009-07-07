@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_foreign.h"
+
 #include <glib.h>
 
 #ifdef USE_RLIB
@@ -460,6 +461,7 @@ static int gretl_R_init (void)
 #endif
 
     if (getenv("R_HOME") == NULL) {
+	fprintf(stderr, "To use Rlib, the variable R_HOME needs to be set\n");
 	err = E_EXTERNAL;
     } else {
 	char *argv[] = { "R", "--silent" };
@@ -623,13 +625,11 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     SEXP res;
     int err = 0;
 
-#if 0
-    PrintValue(current_call);
-    eval(current_call, R_GlobalEnv);
-    SETCAR(current_call, install(name));
-#endif
+    if (!(foreign_opt & OPT_Q)) {
+	/* FIXME enable this mechanism */
+	PrintValue(current_call);
+    }
 
-    PrintValue(current_call);
     res = R_tryEval(current_call, R_GlobalEnv, NULL);
 
     if (isMatrix(res)) {
