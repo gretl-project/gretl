@@ -23,6 +23,7 @@
 #include <glib.h>
 
 #ifdef USE_RLIB
+# include "libset.h"
 # define STRICT_R_HEADERS
 # include <R.h>
 # include <Rinternals.h>
@@ -558,17 +559,38 @@ int gretl_R_get_call (const char *name, int argc)
     return 0;
 }
 
+static int R_type_to_gretl_type (SEXP s)
+{
+    if (isMatrix(s)) {
+	return GRETL_TYPE_MATRIX;
+    } else if (isLogical(s)) {
+	return GRETL_TYPE_BOOL;
+    } else if (isInteger(s)) {
+	return GRETL_TYPE_INT;
+    } else if (isReal(s)) {
+	return GRETL_TYPE_DOUBLE;
+    } else {
+	return GRETL_TYPE_NONE;
+    }
+}
+
 int gretl_R_function_exec (const char *name, int *rtype, void **ret) 
 {
     SEXP res;
     int err = 0;
 
-    /* FIXME make this optional? */
-    PrintValue(current_call);
+    if (gretl_messages_on()) {
+	PrintValue(current_call);
+    }
 
-    res = R_tryEval(current_call, R_GlobalEnv, NULL);
+    res = R_tryEval(current_call, R_GlobalEnv, &err);
+    if (err) {
+	return E_EXTERNAL;
+    }
 
-    if (isMatrix(res)) {
+    *rtype = R_type_to_gretl_type(res);
+
+    if (*rtype == GRETL_TYPE_MATRIX) {
 	gretl_matrix *pm;
 	int nc = ncols(res);
 	int nr = nrows(res);
@@ -586,15 +608,13 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	}
 	UNPROTECT(1);
 	*ret = pm;
-	*rtype = GRETL_TYPE_MATRIX;
-    } else if (isVectorAtomic(res)) {
+    } else if (gretl_scalar_type(*rtype)) {
 	double *realres = REAL(res);
 	double *dret = *ret;
 
 	*dret = *realres;
 
     	UNPROTECT(1);
-	*rtype = GRETL_TYPE_DOUBLE;
     } else {
 	err = E_EXTERNAL;
     }

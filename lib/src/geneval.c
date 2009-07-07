@@ -4550,6 +4550,13 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
 	if (n->t == NUM) {
 	    p->err = gretl_R_function_add_scalar(n->v.xval);
+	} else if (n->t == VEC) {
+	    gretl_matrix *m = tmp_matrix_from_series(n, p);
+
+	    if (m != NULL) {
+		p->err = gretl_R_function_add_matrix(m);
+		gretl_matrix_free(m);
+	    }
 	} else if (n->t == MAT) {
 	    p->err = gretl_R_function_add_matrix(n->v.m);
 	} else {
@@ -4571,7 +4578,7 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 	p->err = gretl_R_function_exec(funname, &rtype, &retp);
 
 	if (!p->err) {
-	    if (rtype == GRETL_TYPE_DOUBLE) {
+	    if (gretl_scalar_type(rtype)) {
 		ret = aux_scalar_node(p);
 		if (ret != NULL) {
 		    ret->v.xval = xret;
