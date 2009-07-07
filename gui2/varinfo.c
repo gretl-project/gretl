@@ -562,13 +562,17 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
     g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->up = GTK_WIDGET(item);
+#ifdef GTK_STOCK_MEDIA_PREVIOUS
     add_stock_tooltip(vset->up, GTK_STOCK_MEDIA_PREVIOUS);
+#endif
     
     item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
     g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->down = GTK_WIDGET(item);
+#ifdef GTK_STOCK_MEDIA_NEXT
     add_stock_tooltip(vset->down, GTK_STOCK_MEDIA_NEXT);
+#endif
 
     sensitize_up_down_buttons(vset);
 
