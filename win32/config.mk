@@ -25,3 +25,6 @@ endif
 
 # libxml2 includes: adjust to match your system
 XML2_INC = $(MGWDIR)/include/libxml2
+
+# libR includes: likewise
+RLIB_CFLAGS = -I/opt/R/lib/R/include

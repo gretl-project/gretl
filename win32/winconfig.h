@@ -72,4 +72,7 @@
 /* Mailer (send-to) support */
 #define ENABLE_MAILER 1
 
+/* Use the GNU R shared library */
+/* #undef USE_RLIB */
+
 #endif /* WINCONFIG_H */

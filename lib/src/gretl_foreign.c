@@ -23,6 +23,7 @@
 #include <glib.h>
 
 #ifdef USE_RLIB
+# define STRICT_R_HEADERS
 # include <R.h>
 # include <Rinternals.h>
 # include <Rembedded.h> 
@@ -39,10 +40,6 @@ static int foreign_started;
 static int foreign_n_lines; 
 static int foreign_lang;
 static gretlopt foreign_opt;
-
-#ifdef USE_RLIB
-static int Rinit;
-#endif
 
 /* foreign_opt may include OPT_D to send data, OPT_Q to operate
    quietly (don't display output from foreign program)
@@ -392,58 +389,10 @@ void delete_gretl_R_files (void)
 
 #ifdef USE_RLIB
 
+static int Rinit;
+
 static SEXP current_arg;
 static SEXP current_call;
-
-# if 0 /* unused at present */
-
-static int init_R (int argc, char **argv)
-{
-    if (getenv("R_HOME") == NULL) {
-	return 1;
-    }
-
-    if (argc == 0 || argv == NULL) {
-	char *defargs[] = {"Rtest"};
-
-	Rf_initEmbeddedR(1, defargs);
-    } else {
-	Rf_initEmbeddedR(argc, argv);
-    }
-
-    return 0;
-}
-
-static int eval_R_command (const char *name, int argc, char **argv)
-{
-    SEXP e, arg;
-    int i, err;
-
-    err = init_R(argc, argv);
-    if (err) {
-	return err;
-    }
-
-    PROTECT(arg = allocVector(INTSXP, 10));
-
-    for (i=0; i<LENGTH(arg); i++) {
-	INTEGER(arg)[i] = i + 1;
-    }
-
-    PROTECT(e = lang2(install(name), arg));
-
-    /* Evaluate the call to the R function.
-       Ignore the return value.
-    */
-    R_tryEval(e, R_GlobalEnv, &err);
-
-    Rf_endEmbeddedR(0);
-    UNPROTECT(2); 
-  
-    return 0;
-}
-
-# endif /* unused */
 
 void gretl_R_cleanup (void)
 {
@@ -456,12 +405,8 @@ static int gretl_R_init (void)
 {
     int err = 0;
 
-#ifdef G_OS_WIN32 /* do we need this? */
-    SetEnvironmentVariable("R_PROFILE", Rprofile);
-#endif
-
     if (getenv("R_HOME") == NULL) {
-	fprintf(stderr, "To use Rlib, the variable R_HOME needs to be set\n");
+	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
 	err = E_EXTERNAL;
     } else {
 	char *argv[] = { "R", "--silent" };
@@ -473,23 +418,12 @@ static int gretl_R_init (void)
     return err;
 }
 
-/* This arranges for the command source("foo.R")
-   to be called and this defines the function we will
-   call in bar1.
-*/
-
-static void source (const char *name)
-{
-    SEXP e;
-
-    PROTECT(e = lang2(install("source"), mkString(name)));
-    R_tryEval(e, R_GlobalEnv, NULL);
-    UNPROTECT(1);
-}
+/* run R's source() function on the gretl-written R command file */
 
 static int lib_run_Rlib_sync (gretlopt opt, PRN *prn) 
 {
     gchar *Rsrc;
+    SEXP e;
     int err = 0;
 
     if (!Rinit) {
@@ -499,7 +433,11 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
     }
     
     Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir());
-    source(Rsrc);
+
+    PROTECT(e = lang2(install("source"), mkString(Rsrc)));
+    R_tryEval(e, R_GlobalEnv, NULL);
+    UNPROTECT(1);
+
     g_free(Rsrc);
 
     return err;
@@ -625,10 +563,8 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     SEXP res;
     int err = 0;
 
-    if (!(foreign_opt & OPT_Q)) {
-	/* FIXME enable this mechanism */
-	PrintValue(current_call);
-    }
+    /* FIXME make this optional? */
+    PrintValue(current_call);
 
     res = R_tryEval(current_call, R_GlobalEnv, NULL);
 
@@ -662,10 +598,6 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     } else {
 	err = E_EXTERNAL;
     }
-
-#if 0
-    gretl_R_cleanup();
-#endif
 
     return err;
 }
@@ -760,7 +692,7 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 #else
 	pputs(prn, "language=Rlib: not supported\n");
 	destroy_foreign();
-	return E_NOTIMP;
+	return E_EXTERNAL;
 #endif
     } else if (foreign_lang == LANG_R) {
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
