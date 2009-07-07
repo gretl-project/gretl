@@ -841,10 +841,12 @@
 	In general if a gretl command fails to complete successfully,
 	execution of a script is halted.  However, if the
 	<lit>--continue</lit> option is given for this command, execution
-	continues provided that that error is <quote>numerical</quote>
-	(&eg; failure to converge, to the specified tolerance).  See the
-	<cmdref targ="set"/> command for related ways of controlling
-	gretl's behavior.
+	continues provided that that error is <quote>numerical</quote> (&eg;
+	failure to converge, to the specified tolerance).  In this case the
+	internal variable <lit>$error</lit> is set to a non-zero value;
+	accessing this variable causes it to be cleared to zero. See the
+	<cmdref targ="set"/> command for related ways of controlling gretl's
+	behavior.
       </para>
 
       <para>The AIC value given in connection with ARIMA models is
@@ -3448,10 +3450,12 @@
 	In general if a gretl command fails to complete successfully,
 	execution of a script is halted.  However, if the
 	<lit>--continue</lit> option is given for this command, execution
-	continues provided that that error is <quote>numerical</quote>
-	(&eg; failure to converge, to the specified tolerance).  See the
-	<cmdref targ="set"/> command for related ways of controlling
-	gretl's behavior.
+	continues provided that that error is <quote>numerical</quote> (&eg;
+	failure to converge, to the specified tolerance).  In this case the
+	internal variable <lit>$error</lit> is set to a non-zero value;
+	accessing this variable causes it to be cleared to zero. See the
+	<cmdref targ="set"/> command for related ways of controlling gretl's
+	behavior.
       </para>      
 
     </description>
@@ -5460,10 +5464,12 @@
 	In general if a gretl command fails to complete successfully,
 	execution of a script is halted.  However, if the
 	<lit>--continue</lit> option is given for this command, execution
-	continues provided that that error is <quote>numerical</quote>
-	(&eg; failure to converge, to the specified tolerance).  See the
-	<cmdref targ="set"/> command for related ways of controlling
-	gretl's behavior.
+	continues provided that that error is <quote>numerical</quote> (&eg;
+	failure to converge, to the specified tolerance).  In this case the
+	internal variable <lit>$error</lit> is set to a non-zero value;
+	accessing this variable causes it to be cleared to zero. See the
+	<cmdref targ="set"/> command for related ways of controlling gretl's
+	behavior.
       </para>
 
     </description>
@@ -5833,10 +5839,12 @@
 	In general if a gretl command fails to complete successfully,
 	execution of a script is halted.  However, if the
 	<lit>--continue</lit> option is given for this command, execution
-	continues provided that that error is <quote>numerical</quote>
-	(&eg; failure to converge, to the specified tolerance).  See the
-	<cmdref targ="set"/> command for related ways of controlling
-	gretl's behavior.
+	continues provided that that error is <quote>numerical</quote> (&eg;
+	failure to converge, to the specified tolerance).  In this case the
+	internal variable <lit>$error</lit> is set to a non-zero value;
+	accessing this variable causes it to be cleared to zero. See the
+	<cmdref targ="set"/> command for related ways of controlling gretl's
+	behavior.
       </para>
       <para>For further details on NLS estimation please see
 	<guideref targ="chap-nls"/>.
