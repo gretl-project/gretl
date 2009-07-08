@@ -92,7 +92,7 @@ static void boot_destroy (boot *bs)
 static int 
 make_model_matrices (boot *bs, const MODEL *pmod, const double **Z)
 {
-    double xti;
+    double xti, xtmp;
     int T = pmod->nobs;
     int k = pmod->ncoeff;
     int needw = 0;
@@ -114,25 +114,29 @@ make_model_matrices (boot *bs, const MODEL *pmod, const double **Z)
     }
 
     for (i=0; i<k; i++) {
-	bs->b0->val[i] = pmod->coeff[i];
+	gretl_vector_set(bs->b0, i, pmod->coeff[i]);
     }    
 
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    bs->y->val[s] = Z[pmod->list[1]][t];
+	    gretl_vector_set(bs->y, s, Z[pmod->list[1]][t]);
 	    if (pmod->ci == WLS) {
-		bs->w->val[s] = sqrt(Z[pmod->nwt][t]);
-		bs->y->val[s] *= bs->w->val[s];
-		bs->u0->val[s] = bs->y->val[s];
+		xtmp = sqrt(Z[pmod->nwt][t]);
+		gretl_vector_set(bs->w, s, xtmp);
+		xtmp *= gretl_vector_get(bs->y, s);
+		gretl_vector_set(bs->y, s, xtmp);
+		gretl_vector_set(bs->u0, s, xtmp);
 	    } else {
-		bs->u0->val[s] = pmod->uhat[t];
+		gretl_vector_set(bs->u0, s, pmod->uhat[t]);
 	    }
 	    for (i=2; i<=pmod->list[0]; i++) {
 		xti = Z[pmod->list[i]][t];
 		if (pmod->ci == WLS) {
-		    xti *= bs->w->val[s];
-		    bs->u0->val[s] -= bs->b0->val[i-2] * xti;
+		    xti *= gretl_vector_get(bs->w, s);
+		    xtmp = gretl_vector_get(bs->u0, s);
+		    xtmp -= xti * gretl_vector_get(bs->b0, i-2);
+		    gretl_vector_set(bs->u0, s, xtmp);
 		}
 		gretl_matrix_set(bs->X, s, i-2, xti);
 	    }
@@ -264,31 +268,32 @@ static boot *boot_new (const MODEL *pmod,
     bs->test0 = NADBL;
     bs->b_p = NADBL;
 
-    bs->k = bs->X->cols;
-    bs->T = bs->X->rows;
+    bs->k = gretl_matrix_cols(bs->X);
+    bs->T = gretl_matrix_rows(bs->X);
 
     return bs;
 }
 
 static void make_normal_y (boot *bs)
 {
-    double xti;
+    double xti, yt;
     int i, t;
 
     /* generate scaled normal errors */
-    gretl_rand_normal(bs->y->val, 0, bs->T - 1);
-    for (t=0; t<bs->T; t++) {
-	bs->y->val[t] *= bs->SE;
-    }
+    gretl_matrix_random_fill(bs->y, D_NORMAL);
+    gretl_matrix_multiply_by_scalar(bs->y, bs->SE);
 
     /* construct y recursively */
     for (t=0; t<bs->X->rows; t++) {
 	for (i=0; i<bs->X->cols; i++) {
 	    if (t > 0 && i == bs->ldvpos) {
-		gretl_matrix_set(bs->X, t, i, bs->y->val[t-1]);
+		yt = gretl_vector_get(bs->y, t-1);
+		gretl_matrix_set(bs->X, t, i, yt);
 	    } 
 	    xti = gretl_matrix_get(bs->X, t, i);
-	    bs->y->val[t] += bs->b0->val[i] * xti;
+	    yt = gretl_vector_get(bs->y, t);
+	    yt += gretl_vector_get(bs->b0, i) * xti;
+	    gretl_vector_set(bs->y, t, yt);
 	}
     }  	
 }
@@ -297,32 +302,39 @@ static void
 resample_vector (const gretl_matrix *u0, gretl_matrix *u, int *z)
 {
     int t, T = u->rows;
+    double ut;
 
     /* generate T uniform drawings from [0 .. T-1] */
     gretl_rand_int_minmax(z, T, 0, T-1);
 
     /* sample from source vector based on indices */
     for (t=0; t<T; t++) {
-	u->val[t] = u0->val[z[t]];
+	ut = gretl_vector_get(u0, z[t]);
+	gretl_vector_set(u, t, ut);
     }
 }
 
 static void make_resampled_y (boot *bs, int *z)
 {
-    double xti;
+    int Xr = gretl_matrix_rows(bs->X);
+    int Xc = gretl_matrix_cols(bs->X);
+    double xti, yt;
     int i, t;
 
     /* resample the residuals, into y */
     resample_vector(bs->u0, bs->y, z);
 
     /* construct y recursively */
-    for (t=0; t<bs->X->rows; t++) {
-	for (i=0; i<bs->X->cols; i++) {
+    for (t=0; t<Xr; t++) {
+	for (i=0; i<Xc; i++) {
 	    if (t > 0 && i == bs->ldvpos) {
-		gretl_matrix_set(bs->X, t, i, bs->y->val[t-1]);
+		yt = gretl_vector_get(bs->y, t-1);
+		gretl_matrix_set(bs->X, t, i, yt);
 	    }
 	    xti = gretl_matrix_get(bs->X, t, i);
-	    bs->y->val[t] += bs->b0->val[i] * xti;
+	    yt = gretl_vector_get(bs->y, t);
+	    yt += xti * gretl_vector_get(bs->b0, i);
+	    gretl_vector_set(bs->y, t, yt);
 	}
     }
 }
@@ -345,7 +357,7 @@ static int do_restricted_ols (boot *bs)
 
 	fprintf(stderr, "Restricted estimates (err = %d):\n", err);
 	for (i=0; i<bs->b0->rows; i++) {
-	    fprintf(stderr, "b[%d] = %g\n", i, bs->b0->val[i]);
+	    fprintf(stderr, "b[%d] = %g\n", i, gretl_vector_get(bs->b0, i));
 	}
 	fprintf(stderr, "s2 = %g\n", s2);
 	fprintf(stderr, "bs->ldvpos = %d\n", bs->ldvpos);
@@ -374,7 +386,7 @@ static int bs_store_result (boot *bs, double *xi)
     }
 
     for (i=0; i<bs->B; i++) {
-	bs_data->val[i] = xi[i];
+	gretl_vector_set(bs_data, i, xi[i]);
     }
 
     *bs_vname = '\0';
@@ -478,7 +490,7 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 static void rescale_residuals (boot *bs)
 {
     double s;
-    int t, k = bs->k;
+    int k = bs->k;
 
     if (bs->flags & BOOT_PVAL) {
 	k--;
@@ -486,9 +498,7 @@ static void rescale_residuals (boot *bs)
 
     s = sqrt((double) bs->T / (bs->T - k));
 
-    for (t=0; t<bs->T; t++) {
-	bs->u0->val[t] *= s;
-    }
+    gretl_matrix_multiply_by_scalar(bs->u0, s);
 }
 
 /* we do the following on each replication if we're bootstrapping
@@ -591,8 +601,8 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 
     /* calculate log of uhat squared */
     for (t=0; t<bs->T; t++) {
-	ut = bs->y->val[t] - yh->val[t];
-	bs->w->val[t] = log(ut * ut);
+	ut = gretl_vector_get(bs->y, t) * gretl_vector_get(yh, t);
+	gretl_vector_set(bs->w, t, log(ut * ut));
     } 
 
     mask = squarable_cols_mask(bs->X, &Xcols);
@@ -650,7 +660,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 
     gretl_matrix_multiply(X, g, yh);
     for (t=0; t<bs->T; t++) {
-	bs->w->val[t] = sqrt(1.0 / exp(yh->val[t]));
+	gretl_vector_set(bs->w, t, sqrt(1.0 / exp(yh->val[t])));
     }
 
     gretl_matrix_reuse(X, bs->T, bs->k);
