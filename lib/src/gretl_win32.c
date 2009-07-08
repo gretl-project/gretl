@@ -746,24 +746,27 @@ char *slash_convert (char *str, int which)
     return str;
 }
 
-char *R_path_from_registry (void)
+int R_path_from_registry (char *s, int which)
 {
-    char tmp[MAX_PATH] = {0}; 
-    char *ret = NULL;
     int err;
 
-    err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", tmp);
+    err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", s);
 
     if (err) {
-	err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", tmp);
+	err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", s);
     }
 
     if (!err) {
-	strcat(tmp, "\\bin\\");
-	strcat(tmp, "Rterm.exe");
-	ret = gretl_strdup(tmp);
+	strcat(s, "\\bin\\");
+	if (which == RTERM) {
+	    strcat(s, "Rterm.exe");
+	} else if (which == RLIB) {
+	    strcat(s, "R.dll");
+	}
     }
 
-    return ret;
+    return err;
 }
+
+
 

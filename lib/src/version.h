@@ -17,13 +17,13 @@
  * 
  */
 
-#ifndef GRTL_VERSION_H
-#define GRTL_VERSION_H
+#ifndef GRETL__VERSION_H
+#define GRETL__VERSION_H
 
 #define LIBGRETL_CURRENT   0
 #define LIBGRETL_REVISION  52
 #define LIBGRETL_AGE       0
 
-#define GRETL_VERSION "1.8.2"
+#define GRETL_VERSION "1.8.2cvs"
 
-#endif /* GRTL_VERSION_H */
+#endif /* GRETL__VERSION_H */

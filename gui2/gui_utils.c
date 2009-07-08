@@ -3631,13 +3631,13 @@ char *double_underscores (char *targ, const char *src)
 
 static void run_R_sync (void)
 {
-    char *Rterm;
+    char Rterm[FILENAME_MAX];
     gchar *cmd;
     int err;
 
-    Rterm = R_path_from_registry();
-    if (Rterm == NULL) {
-	gui_errmsg(E_EXTERNAL);
+    err = R_path_from_registry(Rterm, RTERM);
+    if (err) {
+	gui_errmsg(err);
 	return;
     }
 
@@ -3656,7 +3656,6 @@ static void run_R_sync (void)
     }
 
     g_free(cmd);
-    free(Rterm);
 }
 
 #else /* some non-Windows functions follow */

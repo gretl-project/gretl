@@ -31,6 +31,11 @@ enum {
     FROM_BACKSLASH
 };
 
+enum {
+    RTERM,
+    RLIB
+};
+
 DIR *win32_opendir (const char *dname);
 
 int read_reg_val (HKEY tree, const char *base,
@@ -67,7 +72,7 @@ int win32_write_access (char *path);
 
 int win32_delete_dir (const char *path);
 
-char *R_path_from_registry (void);
+int R_path_from_registry (char *s, int which);
 
 #endif /* WIN32 */
 

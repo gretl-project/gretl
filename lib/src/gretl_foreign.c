@@ -83,11 +83,12 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
-    gchar *Rterm, *cmd;
+    char Rterm[MAX_PATH];
+    gchar *cmd;
     int err = 0;
 
-    Rterm = R_path_from_registry();
-    if (Rterm == NULL) {
+    err = R_path_from_registry(Rterm, RTERM);
+    if (err) {
 	return E_EXTERNAL;
     }
 
@@ -115,7 +116,6 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     }
 
     g_free(cmd);
-    g_free(Rterm);
 
     return err;
 }
@@ -390,6 +390,203 @@ void delete_gretl_R_files (void)
 
 #ifdef USE_RLIB
 
+#ifdef WIN32
+# define RLIB_DLOPEN
+#else 
+# undef RLIB_DLOPEN /* can def for testing */
+#endif
+
+#ifdef RLIB_DLOPEN
+
+#if defined(WIN32)
+# include <windows.h>
+#elif defined(OSX_NATIVE)
+# include <mach-o/dyld.h>
+#else
+# include <dlfcn.h>
+#endif
+
+static void *Rhandle;
+
+SEXP *PVR_GlobalEnv;
+SEXP *PVR_NilValue;
+SEXP *PVR_UnboundValue;
+
+SEXP VR_GlobalEnv;
+SEXP VR_NilValue;
+SEXP VR_UnboundValue;
+
+static double *(*VREAL) (SEXP);
+
+static SEXP (*VCDR) (SEXP);
+static SEXP (*VRf_allocList) (int);
+static SEXP (*VRf_allocMatrix) (SEXPTYPE, int, int);
+static SEXP (*VRf_allocVector) (SEXPTYPE, R_len_t);
+static SEXP (*VRf_findFun) (SEXP, SEXP);
+static SEXP (*VRf_findVar) (SEXP, SEXP);
+static SEXP (*VSETCAR) (SEXP, SEXP);
+static SEXP (*VRf_lang2) (SEXP, SEXP);
+static SEXP (*VRf_protect) (SEXP);
+static SEXP (*VRf_ScalarReal) (double);
+static SEXP (*VR_tryEval) (SEXP, SEXP, int *);
+static SEXP (*VRf_install) (const char *);
+static SEXP (*VRf_mkString) (const char *);
+
+static Rboolean (*VRf_isMatrix) (SEXP);
+static Rboolean (*VRf_isLogical) (SEXP);
+static Rboolean (*VRf_isInteger) (SEXP);
+static Rboolean (*VRf_isReal) (SEXP);
+
+static int (*VRf_initEmbeddedR) (int, char **);
+static int (*VRf_ncols) (SEXP);
+static int (*VRf_nrows) (SEXP);
+static int (*VTYPEOF) (SEXP);
+
+static void (*VRf_endEmbeddedR) (int);
+static void (*VRf_unprotect) (int);
+static void (*VRf_PrintValue) (SEXP);
+static void (*VSET_TYPEOF) (SEXP, int);
+
+#ifdef WIN32
+static char *(*Vget_R_HOME) (void);
+#endif
+
+static void *dlget (void *handle, const char *name, int *err)
+{
+    void *p;
+
+#if defined(WIN32)
+    p = GetProcAddress(handle, name);
+#elif defined(OSX_NATIVE)
+    p = NSLookupSymbolInModule(handle, name);
+#else
+    p = dlsym(handle, name);
+#endif
+    
+    if (p == NULL) {
+	fprintf(stderr, "dlget: couldn't find '%s'\n", name);
+	*err += 1;
+    }
+
+    return p;
+}
+
+static int load_R_symbols (void)
+{
+#ifdef OSX_NATIVE
+    NSObjectFileImage file;
+    NSObjectFileImageReturnCode rc;
+#endif
+    char libpath[FILENAME_MAX];
+    int err = 0;
+
+#if defined(WIN32)
+    err = R_path_from_registry(libpath, RLIB);
+    if (err) {
+	return E_EXTERNAL;
+    }
+#else 
+    /* FIXME */
+    strcpy(libpath, "/opt/R/lib/R/lib/libR.so");
+#endif
+
+#if defined(WIN32)
+    Rhandle = LoadLibrary(libpath);
+#elif defined(OSX_NATIVE)
+    rc = NSCreateObjectFileImageFromFile(libpath, &file);
+    if (rc == NSObjectFileImageSuccess) {
+	Rhandle = NSLinkModule(file, libpath,
+			       NSLINKMODULE_OPTION_BINDNOW |
+			       NSLINKMODULE_OPTION_PRIVATE |
+			       NSLINKMODULE_OPTION_RETURN_ON_ERROR);
+    }
+#else
+    Rhandle = dlopen(libpath, RTLD_NOW);
+#endif
+
+    if (Rhandle == NULL) {
+        sprintf(gretl_errmsg, _("Failed to load plugin: %s"), libpath);
+	return E_EXTERNAL;
+    } 
+
+    VCDR              = dlget(Rhandle, "CDR", &err);
+    VREAL             = dlget(Rhandle, "REAL", &err);
+    VRf_allocList     = dlget(Rhandle, "Rf_allocList", &err);
+    VRf_allocMatrix   = dlget(Rhandle, "Rf_allocMatrix", &err);
+    VRf_allocVector   = dlget(Rhandle, "Rf_allocVector", &err);
+    VRf_endEmbeddedR  = dlget(Rhandle, "Rf_endEmbeddedR", &err);
+    VRf_findFun       = dlget(Rhandle, "Rf_findFun", &err);
+    VRf_findVar       = dlget(Rhandle, "Rf_findVar", &err);
+    VRf_initEmbeddedR = dlget(Rhandle, "Rf_initEmbeddedR", &err);
+    VRf_install       = dlget(Rhandle, "Rf_install", &err);
+    VRf_isMatrix      = dlget(Rhandle, "Rf_isMatrix", &err);
+    VRf_isLogical     = dlget(Rhandle, "Rf_isLogical", &err);
+    VRf_isInteger     = dlget(Rhandle, "Rf_isInteger", &err);
+    VRf_isReal        = dlget(Rhandle, "Rf_isReal", &err);
+    VRf_lang2         = dlget(Rhandle, "Rf_lang2", &err);
+    VRf_mkString      = dlget(Rhandle, "Rf_mkString", &err);
+    VRf_ncols         = dlget(Rhandle, "Rf_ncols", &err);
+    VRf_nrows         = dlget(Rhandle, "Rf_nrows", &err);
+    VRf_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
+    VRf_protect       = dlget(Rhandle, "Rf_protect", &err);
+    VRf_ScalarReal    = dlget(Rhandle, "Rf_ScalarReal", &err);
+    VRf_unprotect     = dlget(Rhandle, "Rf_unprotect", &err);
+    VR_tryEval        = dlget(Rhandle, "R_tryEval", &err);
+    VSETCAR           = dlget(Rhandle, "SETCAR", &err);
+    VSET_TYPEOF       = dlget(Rhandle, "SET_TYPEOF", &err); 
+    VTYPEOF           = dlget(Rhandle, "TYPEOF", &err);
+
+#ifdef WIN32
+    Vget_R_HOME = dlget(Rhandle, "get_R_HOME", &err);
+#endif
+
+    if (!err) {
+	PVR_GlobalEnv    = (SEXP *) dlget(Rhandle, "R_GlobalEnv", &err);
+	PVR_NilValue     = (SEXP *) dlget(Rhandle, "R_NilValue", &err);
+	PVR_UnboundValue = (SEXP *) dlget(Rhandle, "R_UnboundValue", &err);
+    }
+
+    if (err) {
+	err = E_EXTERNAL;
+    }
+
+    return err;
+}
+
+#else 
+
+#define VR_GlobalEnv R_GlobalEnv
+#define VR_NilValue R_NilValue
+#define VR_UnboundValue R_UnboundValue
+#define VRf_allocList Rf_allocList
+#define VRf_allocMatrix Rf_allocMatrix 
+#define VRf_allocVector Rf_allocVector 
+#define VRf_initEmbeddedR Rf_initEmbeddedR
+#define VRf_endEmbeddedR Rf_endEmbeddedR 
+#define VRf_findFun Rf_findFun
+#define VRf_findVar Rf_findVar
+#define VRf_install Rf_install
+#define VRf_isMatrix Rf_isMatrix
+#define VRf_isLogical Rf_isLogical
+#define VRf_isInteger Rf_isInteger
+#define VRf_isReal Rf_isReal
+#define VRf_lang2 Rf_lang2
+#define VRf_mkString Rf_mkString
+#define VRf_ncols Rf_ncols
+#define VRf_nrows Rf_nrows
+#define VRf_PrintValue Rf_PrintValue
+#define VRf_protect Rf_protect
+#define VRf_unprotect Rf_unprotect
+#define VRf_ScalarReal Rf_ScalarReal
+#define VR_tryEval R_tryEval
+#define VCDR CDR
+#define VREAL REAL
+#define VSETCAR SETCAR
+#define VSET_TYPEOF SET_TYPEOF
+#define VTYPEOF TYPEOF
+
+#endif /* !RLIB_DLOPEN */
+
 static int Rinit;
 
 static SEXP current_arg;
@@ -398,21 +595,46 @@ static SEXP current_call;
 void gretl_R_cleanup (void)
 {
     if (Rinit) {
-	Rf_endEmbeddedR(0);
+	VRf_endEmbeddedR(0);
+#ifdef RLIB_DLOPEN
+	if (Rhandle != NULL) {
+	    close_plugin(Rhandle);
+	}
+#endif
     }
 }
 
-static int gretl_R_init (void)
+static int gretl_Rlib_init (void)
 {
+    char *Rhome;
     int err = 0;
 
-    if (getenv("R_HOME") == NULL) {
+#ifdef RLIB_DLOPEN
+    err = load_R_symbols();
+    if (err) {
+	fprintf(stderr, "gretl_Rlib_init: failed to load R functions\n");
+	return err;
+    }
+#endif
+
+#ifdef WIN32
+    Rhome = Vget_R_HOME();
+#else
+    Rhome = getenv("R_HOME");
+#endif
+
+    if (Rhome == NULL) {
 	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
 	err = E_EXTERNAL;
     } else {
 	char *argv[] = { "R", "--silent" };
 
-	Rf_initEmbeddedR(2, argv);
+	VRf_initEmbeddedR(2, argv);
+#ifdef RLIB_DLOPEN 
+	VR_GlobalEnv = *PVR_GlobalEnv;
+	VR_NilValue = *PVR_NilValue;
+	VR_UnboundValue = *PVR_UnboundValue;
+#endif
 	Rinit = 1;
     }
 
@@ -428,16 +650,17 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
     int err = 0;
 
     if (!Rinit) {
-	if ((err = gretl_R_init())) {
+	if ((err = gretl_Rlib_init())) {
+	    fprintf(stderr, "lib_run_Rlib_sync: failed on gretl_Rlib_init\n");
 	    return err;
 	}
     }
     
     Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir());
 
-    PROTECT(e = lang2(install("source"), mkString(Rsrc)));
-    R_tryEval(e, R_GlobalEnv, NULL);
-    UNPROTECT(1);
+    VRf_protect(e = VRf_lang2(VRf_install("source"), VRf_mkString(Rsrc)));
+    VR_tryEval(e, VR_GlobalEnv, NULL);
+    VRf_unprotect(1);
 
     g_free(Rsrc);
 
@@ -449,22 +672,22 @@ static SEXP find_R_function (const char *name)
     SEXP fun;
     SEXPTYPE t;
 
-    fun = findVar(install(name), R_GlobalEnv);
-    t = TYPEOF(fun);
+    fun = VRf_findVar(VRf_install(name), VR_GlobalEnv);
+    t = VTYPEOF(fun);
 
     if (t == PROMSXP) {
 	/* eval promise if need be */
 	int err = 1;
 
-	fun = R_tryEval(fun, R_GlobalEnv, &err);
+	fun = VR_tryEval(fun, VR_GlobalEnv, &err);
 	if (!err) {
-	    t = TYPEOF(fun);
+	    t = VTYPEOF(fun);
 	}
     }
 
     if (t != CLOSXP && t != BUILTINSXP &&
 	t != BUILTINSXP && t != SPECIALSXP) {
-	return R_UnboundValue;
+	return VR_UnboundValue;
     }
 
     return fun;
@@ -474,44 +697,45 @@ static SEXP find_R_function (const char *name)
 
 int get_R_function_by_name (const char *name) 
 {
+    static int initerr;
     SEXP fun;
 
-    if (!Rinit) {
-	int err = gretl_R_init();
-
-	if (err) {
-	    return err;
+    if (!Rinit && !initerr) {
+	initerr = gretl_Rlib_init();
+	if (initerr) {
+	    fprintf(stderr, "get_R_function_by_name: failed on gretl_Rlib_init\n");
+	    return 0;
 	}
     } 
 
     fun = find_R_function(name);
 
-    return (fun == R_UnboundValue)? 0 : 1;
+    return (fun == VR_UnboundValue)? 0 : 1;
 }
 
 int gretl_R_function_add_scalar (double x) 
 {
-    current_arg = CDR(current_arg);
-    SETCAR(current_arg, ScalarReal(x));
+    current_arg = VCDR(current_arg);
+    VSETCAR(current_arg, VRf_ScalarReal(x));
     return 0;
 }
 
 int gretl_R_function_add_vector (const double *x, int t1, int t2) 
 {
-    SEXP res = allocVector(REALSXP, t2 - t1 + 1);
+    SEXP res = VRf_allocVector(REALSXP, t2 - t1 + 1);
     int i;
 
     if (res == NULL) {
 	return E_ALLOC;
     }
 
-    current_arg = CDR(current_arg);
+    current_arg = VCDR(current_arg);
 
     for (i=t1; i<=t2; i++) {
-    	REAL(res)[i-t1] = x[i];
+    	VREAL(res)[i-t1] = x[i];
     }
     
-    SETCAR(current_arg, res);
+    VSETCAR(current_arg, res);
     return 0;
 }
 
@@ -522,19 +746,20 @@ int gretl_R_function_add_matrix (const gretl_matrix *m)
     SEXP res;
     int i, j;
 
-    current_arg = CDR(current_arg);
-    res = allocMatrix(REALSXP, nr, nc);
+    current_arg = VCDR(current_arg);
+    res = VRf_allocMatrix(REALSXP, nr, nc);
     if (res == NULL) {
 	return E_ALLOC;
     }
 
     for (i=0; i<nr; i++) {
 	for (j=0; j<nc; j++) {
-	    REAL(res)[i + j * nr] = gretl_matrix_get(m, i, j);
+	    VREAL(res)[i + j * nr] = gretl_matrix_get(m, i, j);
     	}
     }
     
-    SETCAR(current_arg, res);
+    VSETCAR(current_arg, res);
+
     return 0;
 }
 
@@ -542,18 +767,18 @@ int gretl_R_get_call (const char *name, int argc)
 {
     SEXP call, e;
 
-    call = findFun(install(name), R_GlobalEnv);
+    call = VRf_findFun(VRf_install(name), VR_GlobalEnv);
 
-    if (call == R_NilValue) {
+    if (call == VR_NilValue) {
 	fprintf(stderr, "gretl_R_get_call: no definition for function %s\n", 
 		name);
-	UNPROTECT(1); /* is this OK? */
+	VRf_unprotect(1); /* is this OK? */
 	return E_EXTERNAL;
     } 
 
-    PROTECT(e = allocList(argc + 1));
-    SET_TYPEOF(e, LANGSXP);
-    SETCAR(e, install(name));
+    VRf_protect(e = VRf_allocList(argc + 1));
+    VSET_TYPEOF(e, LANGSXP);
+    VSETCAR(e, VRf_install(name));
     current_call = current_arg = e;
  
     return 0;
@@ -561,13 +786,13 @@ int gretl_R_get_call (const char *name, int argc)
 
 static int R_type_to_gretl_type (SEXP s)
 {
-    if (isMatrix(s)) {
+    if (VRf_isMatrix(s)) {
 	return GRETL_TYPE_MATRIX;
-    } else if (isLogical(s)) {
+    } else if (VRf_isLogical(s)) {
 	return GRETL_TYPE_BOOL;
-    } else if (isInteger(s)) {
+    } else if (VRf_isInteger(s)) {
 	return GRETL_TYPE_INT;
-    } else if (isReal(s)) {
+    } else if (VRf_isReal(s)) {
 	return GRETL_TYPE_DOUBLE;
     } else {
 	return GRETL_TYPE_NONE;
@@ -580,10 +805,10 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     int err = 0;
 
     if (gretl_messages_on()) {
-	PrintValue(current_call);
+	VRf_PrintValue(current_call);
     }
 
-    res = R_tryEval(current_call, R_GlobalEnv, &err);
+    res = VR_tryEval(current_call, VR_GlobalEnv, &err);
     if (err) {
 	return E_EXTERNAL;
     }
@@ -592,8 +817,8 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
     if (*rtype == GRETL_TYPE_MATRIX) {
 	gretl_matrix *pm;
-	int nc = ncols(res);
-	int nr = nrows(res);
+	int nc = VRf_ncols(res);
+	int nr = VRf_nrows(res);
 	int i, j;
 
 	pm = gretl_matrix_alloc(nr, nc);
@@ -603,18 +828,18 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
 	for (i=0; i<nr; i++) {
 	    for (j=0; j<nc; j++) {
-		gretl_matrix_set(pm, i, j,REAL(res)[i + j * nr]);
+		gretl_matrix_set(pm, i, j, VREAL(res)[i + j * nr]);
 	    }
 	}
-	UNPROTECT(1);
+	VRf_unprotect(1);
 	*ret = pm;
     } else if (gretl_scalar_type(*rtype)) {
-	double *realres = REAL(res);
+	double *realres = VREAL(res);
 	double *dret = *ret;
 
 	*dret = *realres;
 
-    	UNPROTECT(1);
+    	VRf_unprotect(1);
     } else {
 	err = E_EXTERNAL;
     }

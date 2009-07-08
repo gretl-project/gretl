@@ -73,6 +73,6 @@
 #define ENABLE_MAILER 1
 
 /* Use the GNU R shared library */
-/* #undef USE_RLIB */
+#define USE_RLIB 1
 
 #endif /* WINCONFIG_H */

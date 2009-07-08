@@ -36,7 +36,7 @@ FFTW_LIBS = -lfftw3
 
 # flags/defines
 CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) \
-  -I$(XML2_INC) -I$(zipdir) -DUSE_GMP
+  -I$(XML2_INC) -I$(zipdir) $(RLIB_CFLAGS) -DUSE_GMP
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 ifeq ($(BUILDTYPE),cross)
