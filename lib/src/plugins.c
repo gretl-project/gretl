@@ -239,37 +239,66 @@ static const char *get_plugin_name_for_function (const char *func)
     return plugins[idx].pname;
 }
 
-static void *get_plugin_handle (const char *plugin)
+void *gretl_dlopen (const char *path, int now)
 {
 #ifdef OSX_NATIVE
     NSObjectFileImage file;
     NSObjectFileImageReturnCode rc;
 #endif
+    void *handle = NULL;
+
+#if defined(WIN32)
+    handle = LoadLibrary(path);
+#elif defined(OSX_NATIVE)
+    rc = NSCreateObjectFileImageFromFile(path, &file);
+    if (rc == NSObjectFileImageSuccess) {
+	Rhandle = NSLinkModule(file, path,
+			       NSLINKMODULE_OPTION_BINDNOW |
+			       NSLINKMODULE_OPTION_PRIVATE |
+			       NSLINKMODULE_OPTION_RETURN_ON_ERROR);
+    }
+#else
+    handle = dlopen(path, (now)? RTLD_NOW : RTLD_LAZY);
+#endif
+
+    if (handle == NULL) {
+        sprintf(gretl_errmsg, _("Failed to load plugin: %s"), path);
+#if !defined(WIN32) && !defined(OSX_NATIVE)
+	fprintf(stderr, "%s\n", dlerror());
+#endif
+    }   
+
+    return handle;
+}
+
+void *gretl_dlsym (void *handle, const char *name)
+{
+#if defined(WIN32)
+    return GetProcAddress(handle, name);
+#elif defined(OSX_NATIVE)
+    return NSLookupSymbolInModule(handle, name);
+#else
+    return dlsym(handle, name);
+#endif
+}
+
+static void *get_plugin_handle (const char *plugin)
+{
     char pluginpath[MAXLEN];
     void *handle = NULL;
 
     strcpy(pluginpath, gretl_lib_path());
 
-#if defined(WIN32)
+#ifdef WIN32
     append_dir(pluginpath, "plugins");
     strcat(pluginpath, plugin);
     strcat(pluginpath, ".dll");
-    handle = LoadLibrary(pluginpath);
-#elif defined(OSX_NATIVE)
-    strcat(pluginpath, plugin);
-    strcat(pluginpath, ".so");
-    rc = NSCreateObjectFileImageFromFile(pluginpath, &file);
-    if (rc == NSObjectFileImageSuccess) {
-	handle = NSLinkModule(file, pluginpath,
-			      NSLINKMODULE_OPTION_BINDNOW |
-			      NSLINKMODULE_OPTION_PRIVATE |
-			      NSLINKMODULE_OPTION_RETURN_ON_ERROR);
-    }
 #else
     strcat(pluginpath, plugin);
     strcat(pluginpath, ".so");
-    handle = dlopen(pluginpath, RTLD_LAZY);
 #endif 
+
+    handle = gretl_dlopen(pluginpath, 0);
 
     if (handle == NULL) {
         sprintf(gretl_errmsg, _("Failed to load plugin: %s"), pluginpath);

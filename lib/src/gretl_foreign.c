@@ -398,14 +398,6 @@ void delete_gretl_R_files (void)
 
 #ifdef RLIB_DLOPEN
 
-#if defined(WIN32)
-# include <windows.h>
-#elif defined(OSX_NATIVE)
-# include <mach-o/dyld.h>
-#else
-# include <dlfcn.h>
-#endif
-
 static void *Rhandle;
 
 SEXP *PVR_GlobalEnv;
@@ -453,15 +445,7 @@ static char *(*Vget_R_HOME) (void);
 
 static void *dlget (void *handle, const char *name, int *err)
 {
-    void *p;
-
-#if defined(WIN32)
-    p = GetProcAddress(handle, name);
-#elif defined(OSX_NATIVE)
-    p = NSLookupSymbolInModule(handle, name);
-#else
-    p = dlsym(handle, name);
-#endif
+    void *p = gretl_dlsym(handle, name);
     
     if (p == NULL) {
 	fprintf(stderr, "dlget: couldn't find '%s'\n", name);
@@ -473,10 +457,6 @@ static void *dlget (void *handle, const char *name, int *err)
 
 static int load_R_symbols (void)
 {
-#ifdef OSX_NATIVE
-    NSObjectFileImage file;
-    NSObjectFileImageReturnCode rc;
-#endif
     char libpath[FILENAME_MAX];
     int err = 0;
 
@@ -490,22 +470,8 @@ static int load_R_symbols (void)
     strcpy(libpath, "/opt/R/lib/R/lib/libR.so");
 #endif
 
-#if defined(WIN32)
-    Rhandle = LoadLibrary(libpath);
-#elif defined(OSX_NATIVE)
-    rc = NSCreateObjectFileImageFromFile(libpath, &file);
-    if (rc == NSObjectFileImageSuccess) {
-	Rhandle = NSLinkModule(file, libpath,
-			       NSLINKMODULE_OPTION_BINDNOW |
-			       NSLINKMODULE_OPTION_PRIVATE |
-			       NSLINKMODULE_OPTION_RETURN_ON_ERROR);
-    }
-#else
-    Rhandle = dlopen(libpath, RTLD_NOW);
-#endif
-
+    Rhandle = gretl_dlopen(libpath, 1);
     if (Rhandle == NULL) {
-        sprintf(gretl_errmsg, _("Failed to load plugin: %s"), libpath);
 	return E_EXTERNAL;
     } 
 
@@ -597,9 +563,7 @@ void gretl_R_cleanup (void)
     if (Rinit) {
 	VRf_endEmbeddedR(0);
 #ifdef RLIB_DLOPEN
-	if (Rhandle != NULL) {
-	    close_plugin(Rhandle);
-	}
+	close_plugin(Rhandle);
 #endif
     }
 }

@@ -20,6 +20,10 @@
 #ifndef PLUGINS_H
 #define PLUGINS_H
 
+void *gretl_dlopen (const char *path, int now);
+
+void *gretl_dlsym (void *handle, const char *name);
+
 void *get_plugin_function (const char *funcname, void **handle);
 
 void close_plugin (void *handle);
