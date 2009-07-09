@@ -124,7 +124,8 @@ struct set_vars_ {
                            !strcmp(s, PROTECT_LISTS) || \
                            !strcmp(s, VERBOSE_INCLUDE) || \
                            !strcmp(s, SKIP_MISSING) || \
-			   !strcmp(s, R_FUNCTIONS))
+			   !strcmp(s, R_FUNCTIONS) || \
+                           !strcmp(s, R_LIB))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -152,7 +153,9 @@ static int gretl_debug;
 static int protect_lists = 1;
 static int user_mp_bits;
 static int R_functions;
+static int R_lib;
 
+static int real_libset_set_bool (const char *s, int val, PRN *prn);
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
 
@@ -1420,11 +1423,9 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 		pprintf(prn, "You can only set this variable "
 			"via the gretl GUI\n");
 	    } else if (boolean_on(setarg)) {
-		libset_set_bool(setobj, 1);
-		err = 0;
+		err = real_libset_set_bool(setobj, 1, prn);
 	    } else if (boolean_off(setarg)) {
-		libset_set_bool(setobj, 0);
-		err = 0;
+		err = real_libset_set_bool(setobj, 0, prn);
 	    }
 	} else if (libset_double(setobj)) {
 	    if (default_ok(setobj) && default_str(setarg)) {
@@ -1786,12 +1787,14 @@ int libset_get_bool (const char *s)
 {
     int flag, ret = 0;
 
-    /* two global special */
+    /* global specials */
 
     if (!strcmp(s, PROTECT_LISTS)) {
 	return protect_lists;
     } else if (!strcmp(s, R_FUNCTIONS)) {
 	return R_functions;
+    } else if (!strcmp(s, R_LIB)) {
+	return R_lib;
     }
 
     if (!strcmp(s, MAX_VERBOSE) && gretl_debug > 1) {
@@ -1835,23 +1838,41 @@ static void libset_set_decpoint (int on)
 #endif
 }
 
-void libset_set_bool (const char *s, int set)
+static int check_libR_setting (int *setvar, int val,
+			       const char *s, PRN *prn)
+{
+    int err = 0;
+
+#ifdef USE_RLIB
+    *setvar = val;
+#else
+    *setvar = 0;
+    if (val) {
+	pprintf(prn, "Warning: setting ignored: '%s' not supported.\n", s);
+    }
+#endif
+
+    return err;
+}
+
+static int real_libset_set_bool (const char *s, int set, PRN *prn)
 {
     int flag;
 
     if (check_for_state()) {
-	return;
+	return E_ALLOC;
     }
 
-    /* two global specials */
+    /* global specials */
 
     if (!strcmp(s, PROTECT_LISTS)) {
 	protect_lists = set;
-	return;
+	return 0;
     } else if (!strcmp(s, R_FUNCTIONS)) {
-	R_functions = set;
-	return;
-    }    
+	return check_libR_setting(&R_functions, set, s, prn);
+    } else if (!strcmp(s, R_LIB)) { 
+	return check_libR_setting(&R_lib, set, s, prn);
+    }	
 
     flag = boolvar_get_flag(s);
 
@@ -1867,6 +1888,13 @@ void libset_set_bool (const char *s, int set)
     if (flag == STATE_FORCE_DECPOINT) {
 	libset_set_decpoint(set);
     }
+
+    return 0;
+}
+
+void libset_set_bool (const char *s, int set)
+{
+    real_libset_set_bool(s, set, NULL);
 }
 
 /* Mechanism for pushing and popping program state for user-defined

@@ -486,6 +486,21 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     gtk_widget_show(scroller);
 }
 
+void set_main_colheads_clickable (gboolean s)
+{
+    GtkTreeViewColumn *col;
+    int i;
+
+    for (i=0; i<3; i++) {
+	col = gtk_tree_view_get_column(GTK_TREE_VIEW(mdata->listbox), i);
+	gtk_tree_view_column_set_clickable(col, s);
+    }
+
+    if (!s) {
+	gtk_widget_grab_focus(mdata->listbox);
+    }
+}
+
 void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val)
 {
     GtkTreeModel *model;

@@ -2869,9 +2869,9 @@ static void compose_cmdlist (selector *sr)
 	if (sr->ci == GARCH) {
 	    if (sr->opts & OPT_F) {
 		sr->opts &= ~OPT_F;
-		libset_set_bool("fcp", 1);
+		libset_set_bool(USE_FCP, 1);
 	    } else {
-		libset_set_bool("fcp", 0);
+		libset_set_bool(USE_FCP, 0);
 	    }
 	}
 	verbose = (sr->opts & OPT_V)? 1 : 0;

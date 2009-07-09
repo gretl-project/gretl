@@ -25,4 +25,6 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 
 int *main_window_selection_as_list (void); 
 
+void set_main_colheads_clickable (gboolean s);
+
 #endif /* TREEUTILS_H */

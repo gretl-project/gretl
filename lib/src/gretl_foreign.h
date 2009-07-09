@@ -30,6 +30,10 @@ int write_gretl_R_files (const char *buf,
 
 void delete_gretl_R_files (void);
 
+int write_gretl_ox_file (const char *buf, gretlopt opt);
+
+void delete_gretl_ox_file (void);
+
 #ifdef USE_RLIB
 
 int get_R_function_by_name (const char *name);

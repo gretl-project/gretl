@@ -121,6 +121,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Location of R shared library */
 #undef RLIBPATH
 
+/* Support Ox? */
+#undef USE_OX
+
 /* Building for Mac OS X? */
 #undef OSX_BUILD
 

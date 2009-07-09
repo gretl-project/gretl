@@ -302,6 +302,20 @@ static void get_runfile (char *fname)
     }
 }
 
+static int foreign_script_type (const char *fname)
+{
+    if (has_suffix(fname, ".R")) {
+	return EDIT_R;
+    } else if (has_suffix(fname, ".plt") ||
+	       has_suffix(fname, ".gp")) {
+	return EDIT_GP;
+    } else if (has_suffix(fname, ".ox")) {
+	return EDIT_OX;
+    } else {
+	return 0;
+    }
+}
+
 static void fix_dbname (char *db)
 {
     FILE *fp = NULL;
@@ -633,6 +647,8 @@ int main (int argc, char **argv)
 	}
 	if (ftype == GRETL_SESSION) {
 	    do_open_session();
+	} else if ((ftype = foreign_script_type(tryfile))) {
+	    do_open_script(ftype);
 	} else {
 	    do_open_script(EDIT_SCRIPT);
 	}
@@ -1244,6 +1260,9 @@ GtkActionEntry main_entries[] = {
     { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "RScript", NULL, N_("R script"), NULL, NULL, G_CALLBACK(new_script_callback) },
+#ifdef USE_OX
+    { "OxScript", NULL, N_("Ox script"), NULL, NULL, G_CALLBACK(new_script_callback) },
+#endif
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
     { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_script) },
@@ -1496,6 +1515,15 @@ static void add_conditional_items (GtkUIManager *ui)
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);
 #endif
+
+#ifdef USE_OX
+    gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
+			  "/MenuBar/File/ScriptFiles/NewScript/OxScript",
+			  N_("Ox script"),
+			  "OxScript",
+			  GTK_UI_MANAGER_MENUITEM, 
+			  FALSE);
+#endif
 }
 
 static gchar *get_main_ui (void)
@@ -1672,6 +1700,7 @@ mdata_handle_drag  (GtkWidget *widget,
     gchar *dfname;
     char tmp[MAXLEN];
     int pos, skip = 5;
+    int ftype = 0;
 
     /* handle drag of pointer from database window */
     if (info == GRETL_DBSERIES_PTR && data != NULL && 
@@ -1715,12 +1744,8 @@ mdata_handle_drag  (GtkWidget *widget,
 
     if (has_suffix(tryfile, ".gretl") && gretl_is_pkzip_file(tryfile)) {
 	verify_open_session();
-    } else if (has_suffix(tryfile, ".inp")) {
-	do_open_script(EDIT_SCRIPT);
-    } else if (has_suffix(tryfile, ".R")) {
-	do_open_script(EDIT_R);
-    } else if (has_suffix(tryfile, ".plt")) {
-	do_open_script(EDIT_GP);
+    } else if ((ftype = foreign_script_type(tryfile))) {
+	do_open_script(ftype);
     } else {
 	verify_open_data(NULL, 0);
     }

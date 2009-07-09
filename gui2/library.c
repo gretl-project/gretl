@@ -5922,7 +5922,7 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
 /* Execute a script from the buffer in a viewer window.  The script
    may be executed in full or in part (if sel is non-zero) */
 
-static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
+static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 {
     static GdkCursor *busy_cursor;
     GdkDisplay *disp;
@@ -6037,7 +6037,9 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     gchar *buf;
     int sel = 0;
 
-    if (vwin->role == EDIT_GP || vwin->role == EDIT_GP) {
+    if (vwin->role == EDIT_GP || 
+	vwin->role == EDIT_R || 
+	vwin->role == EDIT_OX) {
 	buf = textview_get_text(vwin->text);
     } else {
 	buf = textview_get_selection_or_all(vwin->text, &sel);
@@ -6057,16 +6059,20 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	run_gp_script(buf);
     } else if (vwin->role == EDIT_R) {
 	run_R_script(buf);
+    } else if (vwin->role == EDIT_OX) {
+	run_ox_script(buf);
     } else {
-	real_do_run_script(vwin, buf, sel);
+	run_native_script(vwin, buf, sel);
     }
 
     g_free(buf);
 }
 
+/* called from textbuf.c */
+
 void run_script_fragment (windata_t *vwin, gchar *buf)
 {
-    real_do_run_script(vwin, buf, 1);
+    run_native_script(vwin, buf, 1);
 }
 
 void set_currdir_from_filename (const char *fname)
@@ -6143,6 +6149,8 @@ void new_script_callback (GtkAction *action)
 	do_new_script(EDIT_GP);
     } else if (!strcmp(s, "RScript")) {
 	do_new_script(EDIT_R);
+    } else if (!strcmp(s, "OxScript")) {
+	do_new_script(EDIT_OX);
     } else {
 	do_new_script(EDIT_SCRIPT);
     }

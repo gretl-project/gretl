@@ -50,6 +50,7 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_audio="no"
+have_ox="no"
 try_sourceview="yes"
 have_sourceview="no"
 bundled_sourceview="yes"
@@ -220,6 +221,15 @@ then
   try_libR=no
 fi,
 try_libR=yes)
+
+AC_ARG_WITH(ox,
+[  --with-ox              include Ox support [[default=no]]],
+if test "$withval" = "yes"
+then
+  have_ox=yes
+  AC_DEFINE(USE_OX)
+fi,
+have_ox=no)
 
 AC_ARG_WITH(audio,
 [  --with-audio           include audio graph support (experimental)],

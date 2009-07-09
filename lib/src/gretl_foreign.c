@@ -36,6 +36,8 @@
 # include <signal.h>
 #endif
 
+#define FDEBUG 0
+
 static char **foreign_lines;
 static int foreign_started;
 static int foreign_n_lines; 
@@ -48,7 +50,6 @@ static gretlopt foreign_opt;
 
 enum {
     LANG_R = 1,
-    LANG_RLIB,
     LANG_OX
 };
 
@@ -65,26 +66,33 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 {
     int err = 0;
 
-#ifndef USE_RLIB
-    if (!strcmp(lang, "RLib")) {
-	/* fall back to using plain R */
-	foreign_lang = LANG_R;	
-	return 0;
-    }
-#endif
-
     if (!strcmp(lang, "R")) {
 	foreign_lang = LANG_R;
     } else if (!strcmp(lang, "RLib")) {
-	foreign_lang = LANG_RLIB;
+	pprintf(prn, "Please do \"set R_lib on\" and use \"language=R\".\n");
+	pprintf(prn, "I'll fix that for you now, but not forever.\n");
+	libset_set_bool(R_LIB, 1);
+	foreign_lang = LANG_R;
     } else if (!strcmp(lang, "ox")) {
+#ifdef USE_OX
 	foreign_lang = LANG_OX;
+#else
+	pprintf(prn, "%s: not supported\n", lang);
+	err = E_DATA;
+#endif
     } else {
-	pprintf(prn, "%s: unknown language\n");
+	pprintf(prn, "%s: unknown language\n", lang);
 	err = E_DATA;
     }
 
     return err;
+}
+
+static gchar *gretl_ox_filename (void)
+{
+    const char *dotdir = gretl_dot_dir();
+    
+    return g_strdup_printf("%sgretltmp.ox", dotdir);
 }
 
 #ifdef G_OS_WIN32
@@ -128,18 +136,15 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
+static int lib_run_ox_sync (gretlopt opt, PRN *prn)
+{
+    return E_EXTERNAL;
+}
+
 #else
 
-static int lib_run_R_sync (gretlopt opt, PRN *prn)
+static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
 {
-    gchar *argv[6] = {
-	"R", 
-	"--no-save",
-	"--no-init-file",
-	"--no-restore-data",
-	"--slave",
-	NULL
-    };
     gchar *out = NULL;
     gchar *errout = NULL;
     gint status = 0;
@@ -159,7 +164,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     } else if (status != 0) {
 	if (errout != NULL) {
 	    if (*errout == '\0') {
-		pprintf(prn, "R exited with status %d", status);
+		pprintf(prn, "%s exited with status %d", argv[0], status);
 	    } else {
 		pputs(prn, errout);
 		pputc(prn, '\n');
@@ -183,7 +188,68 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
+static int lib_run_R_sync (gretlopt opt, PRN *prn)
+{
+    gchar *argv[] = {
+	"R", 
+	"--no-save",
+	"--no-init-file",
+	"--no-restore-data",
+	"--slave",
+	NULL
+    };
+
+    return lib_run_prog_sync(argv, opt, prn);
+}
+
+static int lib_run_ox_sync (gretlopt opt, PRN *prn)
+{
+    gchar *fname;
+    gchar *argv[] = {
+	"oxl", 
+	NULL,
+	NULL
+    };
+    int err;
+
+    fname = gretl_ox_filename();
+    argv[1] = fname;
+    err = lib_run_prog_sync(argv, opt, prn);
+    g_free(fname);
+
+    return err;
+}
+
 #endif
+
+int write_gretl_ox_file (const char *buf, gretlopt opt)
+{
+    gchar *fname = gretl_ox_filename();
+    FILE *fp;
+    int i, err = 0;
+
+    fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	if (buf != NULL) {
+	    /* pass on the material supplied in the 'buf' argument */
+	    fputs("// load buffer from gretl\n", fp);
+	    fputs(buf, fp);
+	} else if (!(opt & OPT_G)) {
+	    /* non-GUI */
+	    for (i=0; i<foreign_n_lines; i++) { 
+		fprintf(fp, "%s\n", foreign_lines[i]);
+	    }
+	}
+	fclose(fp);
+    }
+
+    g_free(fname);
+
+    return err;
+}
 
 /* write out current dataset in R format, and, if this succeeds,
    write appropriate R commands to @fp to source the data
@@ -394,6 +460,15 @@ void delete_gretl_R_files (void)
 
     g_free(Rprofile);
     g_free(Rsrc);
+}
+
+
+void delete_gretl_ox_file (void)
+{
+    gchar *fname = gretl_ox_filename();
+
+    gretl_remove(fname);
+    g_free(fname);
 }
 
 #ifdef USE_RLIB
@@ -624,7 +699,9 @@ static SEXP find_R_function (const char *name)
     return fun;
 }
 
-/* used in "genr" */
+/* used in "genr", to see if @name denotes an R function,
+   either built-in or possibly user-defined
+*/
 
 int get_R_function_by_name (const char *name) 
 {
@@ -648,6 +725,10 @@ int get_R_function_by_name (const char *name)
 
     return (fun == VR_UnboundValue)? 0 : 1;
 }
+
+/* gretl_R_function_add... : these functions are used to convert from
+   gretl types to R constructs for passing to R functions
+*/
 
 int gretl_R_function_add_scalar (double x) 
 {
@@ -699,6 +780,8 @@ int gretl_R_function_add_matrix (const gretl_matrix *m)
     return 0;
 }
 
+/* called from geneval.c only, and should be pre-checked */
+
 int gretl_R_get_call (const char *name, int argc) 
 {
     SEXP call, e;
@@ -734,6 +817,10 @@ static int R_type_to_gretl_type (SEXP s)
 	return GRETL_TYPE_NONE;
     }
 }
+
+/* execute an R function and try to convert the value returned
+   into a gretl type
+*/
 
 int gretl_R_function_exec (const char *name, int *rtype, void **ret) 
 {
@@ -862,18 +949,28 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 
     foreign_opt |= opt;
 
-    if (foreign_lang == LANG_R || foreign_lang == LANG_RLIB) {
+    if (foreign_lang == LANG_R) {
+	int R_lib = libset_get_bool(R_LIB);
+
+#if FDEBUG
+	fprintf(stderr, "*** foreign_execute: R_lib = %d\n", R_lib);
+#endif
+
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
 	    delete_gretl_R_files();
-	} else if (foreign_lang == LANG_RLIB) {
+	} else if (R_lib) {
 	    lib_run_Rlib_sync(foreign_opt, prn);
 	} else {
 	    lib_run_R_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_OX) {
-	pputs(prn, "language=ox: not supported yet\n");
-	err = E_NOTIMP;
+	err = write_gretl_ox_file(NULL, foreign_opt);
+	if (err) {
+	    delete_gretl_ox_file();
+	} else {
+	    lib_run_ox_sync(foreign_opt, prn);
+	}
     } 
     
     destroy_foreign();

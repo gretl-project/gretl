@@ -197,6 +197,8 @@ void save_as_callback (GtkWidget *w, windata_t *vwin)
 	u = SAVE_GP_CMDS;
     } else if (vwin->role == EDIT_R) {
 	u = SAVE_R_CMDS;
+    } else if (vwin->role == EDIT_OX) {
+	u = SAVE_OX_CMDS;
     } else if (vwin->role == VIEW_FILE) {
 	u = SAVE_TEXT;
     } else {
@@ -621,11 +623,13 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 #define exec_ok(r) (r == EDIT_SCRIPT || \
                     r == EDIT_GP || \
                     r == EDIT_R || \
+	            r == EDIT_OX || \
 	            r == VIEW_SCRIPT)
 
 #define open_ok(r) (r == EDIT_SCRIPT || \
                     r == EDIT_GP || \
-                    r == EDIT_R)
+                    r == EDIT_R || \
+                    r == EDIT_OX)
 
 #define edit_ok(r) (r == EDIT_SCRIPT || \
                     r == EDIT_HEADER || \
@@ -633,6 +637,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
                     r == EDIT_FUNC_CODE || \
 	            r == EDIT_GP || \
 		    r == EDIT_R || \
+                    r == EDIT_OX || \
                     r == SCRIPT_OUT)
 
 #define save_as_ok(r) (r != EDIT_HEADER && \

@@ -1104,7 +1104,10 @@ void view_window_save (GtkWidget *widget, windata_t *vwin)
 	} else if (vwin->role == EDIT_R) {
 	    file_selector(_("Save R commands"), SAVE_R_CMDS, 
 			  FSEL_DATA_VWIN, vwin);
-	}
+	} else if (vwin->role == EDIT_OX) {
+	    file_selector(_("Save"), SAVE_OX_CMDS, 
+			  FSEL_DATA_VWIN, vwin);
+	}	    
     } else {
 	FILE *fp;
 	gchar *text;
@@ -1363,6 +1366,8 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: edit plot commands")); break;
     case EDIT_R:
 	title = g_strdup(_("gretl: edit R commands")); break;
+    case EDIT_OX:
+	title = g_strdup(_("gretl: edit Ox program")); break;
     case SCRIPT_OUT:
 	title = g_strdup(_("gretl: script output")); break;
     case VIEW_DATA:
@@ -1560,18 +1565,21 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
                                      r == VIEW_SCRIPT || \
                                      r == VIEW_LOG || \
                                      r == EDIT_GP || \
-				     r == EDIT_R)
+				     r == EDIT_R || \
+				     r == EDIT_OX)
 
 #define record_on_winstack(r) (r != EDIT_SCRIPT && \
 	                       r != EDIT_GP && \
                                r != EDIT_R && \
+                               r != EDIT_OX && \
                                r != VIEW_LOG && \
                                r != VIEW_SCRIPT && \
                                r != CONSOLE)
 
 #define editing_script(r) (r == EDIT_SCRIPT || \
 	                   r == EDIT_GP || \
-                           r == EDIT_R)
+                           r == EDIT_R || \
+			   r == EDIT_OX)
 
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
@@ -3658,6 +3666,11 @@ static void run_R_sync (void)
     g_free(cmd);
 }
 
+void run_ox_script (gchar *buf)
+{
+    dummy_call();
+}
+
 #else /* some non-Windows functions follow */
 
 # if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 14
@@ -3762,25 +3775,17 @@ static void start_R_async (void)
     free(s2);
 }
 
-/* run R in synchronous (batch) mode and display the results
+/* run R or Ox in synchronous (batch) mode and display the results
    in a gretl window
 */
 
-static void run_R_sync (void)
+static void run_prog_sync (char **argv)
 {
-    gchar *argv[6];
     gchar *out = NULL;
     gchar *errout = NULL;
     gint status = 0;
     GError *gerr = NULL;
     PRN *prn = NULL;
-
-    argv[0] = "R";
-    argv[1] = "--no-save";
-    argv[2] = "--no-init-file";
-    argv[3] = "--no-restore-data";
-    argv[4] = "--slave";
-    argv[5] = NULL;
 
     signal(SIGCHLD, SIG_DFL);
 
@@ -3794,7 +3799,7 @@ static void run_R_sync (void)
     } else if (status != 0) {
 	if (errout != NULL) {
 	    if (*errout == '\0') {
-		errbox("R exited with status %d", status);
+		errbox("%s exited with status %d", argv[0], status);
 	    } else if (strlen(errout) < MAXLEN) {
 		errbox(errout);
 	    } else {
@@ -3810,12 +3815,49 @@ static void run_R_sync (void)
     }
 
     if (prn != NULL) {
-	view_buffer(prn, 78, 350, _("R output"), PRINT, NULL);
+	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
     }
 
     g_free(out);
     g_free(errout);
 }
+
+static void run_R_sync (void)
+{
+    gchar *argv[] = {
+	"R",
+	"--no-save",
+	"--no-init-file",
+	"--no-restore-data",
+	"--slave",
+	NULL
+    };
+
+    run_prog_sync(argv);
+}
+
+void run_ox_script (gchar *buf)
+{
+    int err = write_gretl_ox_file(buf, OPT_G);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	const char *dotdir = gretl_dot_dir();
+	gchar *fname;
+	gchar *argv[] = {
+	    "oxl",
+	    NULL,
+	    NULL
+	};
+
+	fname = g_strdup_printf("%sgretltmp.ox", dotdir);
+	argv[1] = fname;
+	run_prog_sync(argv);
+	g_free(fname);    
+    }
+}
+
 
 #endif /* !G_OS_WIN32 */
 

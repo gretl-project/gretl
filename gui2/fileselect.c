@@ -93,6 +93,7 @@ static struct extmap action_map[] = {
     { SAVE_SESSION,      ".gretl" },
     { SAVE_GP_CMDS,      ".plt" },
     { SAVE_R_CMDS,       ".R" },
+    { SAVE_OX_CMDS,      ".ox" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
@@ -313,7 +314,9 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	strcpy(scriptfile, fname);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	script_window_update(vwin, fname);
-    } else if (action == SAVE_GP_CMDS || action == SAVE_R_CMDS) {
+    } else if (action == SAVE_GP_CMDS || 
+	       action == SAVE_R_CMDS ||
+	       action == SAVE_OX_CMDS) {
 	script_window_update(vwin, fname);
     } 
 }
@@ -340,7 +343,9 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
     } else if (has_suffix(fname, ".R")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_R);
     } else if (has_suffix(fname, ".plt")) {
-	view_file(fname, 1, 0, 78, 370, EDIT_GP);	
+	view_file(fname, 1, 0, 78, 370, EDIT_GP);
+    } else if (has_suffix(fname, ".ox")) {
+	view_file(fname, 1, 0, 78, 370, EDIT_OX);
     } else {
 	strcpy(tryfile, fname);
 	if (view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
@@ -662,6 +667,12 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	gtk_file_filter_set_name(filter, _("gnuplot files (*.plt)"));
 	gtk_file_filter_add_pattern(filter, "*.plt");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+#ifdef USE_OX
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("Ox files (*.ox)"));
+	gtk_file_filter_add_pattern(filter, "*.ox");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+#endif
     } 
 
     /* FIXME session dir */

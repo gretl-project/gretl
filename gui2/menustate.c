@@ -25,6 +25,7 @@
 #include "ssheet.h"
 #include "selector.h"
 #include "varinfo.h"
+#include "treeutils.h"
 #include "menustate.h"
 
 void refresh_data (void)
@@ -142,6 +143,8 @@ void main_menubar_state (gboolean s)
 	edit_info_state(!(data_status & BOOK_DATA));
 	add_remove_markers_state(datainfo->S != NULL);
     }
+
+    set_main_colheads_clickable(s);
 }
 
 #define COMPACTABLE(d) (d->structure == TIME_SERIES && \

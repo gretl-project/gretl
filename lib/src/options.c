@@ -130,6 +130,7 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_I, "integrate", 0 },
     { FOREIGN,  OPT_D, "send-data", 0 },
     { FOREIGN,  OPT_Q, "quiet", 0 },
+    { FOREIGN,  OPT_V, "verbose", 0 },
     { FREQ,     OPT_O, "gamma", 0 },
     { FREQ,     OPT_Q, "quiet", 0 },
     { FREQ,     OPT_S, "silent", 0 },

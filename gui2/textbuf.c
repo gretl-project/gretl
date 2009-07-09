@@ -41,7 +41,7 @@ enum {
 };
 
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
-#define foreign_script_role(r) (r == EDIT_GP || r == EDIT_R)
+#define foreign_script_role(r) (r == EDIT_GP || r == EDIT_R || r == EDIT_OX)
 
 /* globals accessed in settings.c */
 int tabwidth = 4;
@@ -377,6 +377,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	id = "gnuplot";
     } else if (vwin->role == EDIT_R) {
 	id = "r";
+    } else if (vwin->role == EDIT_OX) {
+	id = "cpp";
     } else {
 	id = "gretl";
     }
@@ -403,6 +405,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	mtype = "application/x-gnuplot";
     } else if (vwin->role == EDIT_R) {
 	mtype = "text/x-R";
+    } else if (vwin->role == EDIT_OX) {
+	mtype = "text/x-cpp";
     } else {
 	mtype = "application/x-gretlscript";
     }

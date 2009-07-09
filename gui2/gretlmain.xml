@@ -58,6 +58,7 @@
 	  <menuitem action='GretlScript'/>
 	  <menuitem action='GnuplotScript'/>
 	  <menuitem action='RScript'/>
+	  <placeholder action='OxScript'/>
 	</menu>
 	<separator/>
 	<placeholder name='RecentScripts'/>
