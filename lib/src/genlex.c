@@ -792,6 +792,8 @@ static int maybe_get_R_function (const char *s)
 {
     if (!libset_get_bool(R_FUNCTIONS) || strlen(s) < 3) {
 	return 0;
+    } else if (strncmp(s, "R_", 2)) {
+	return 0;
     } else {
 	return get_R_function_by_name(s + 2);
     }

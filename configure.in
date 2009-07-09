@@ -57,6 +57,7 @@ have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
 have_odbc="no"
+try_libR="yes"
 have_libR="no"
 check_gnuplot="yes"
 MAKE="make"
@@ -211,6 +212,14 @@ fi,
 AC_DEFINE(HAVE_TRAMO)
 HAVE_TRAMO=1)
 AC_SUBST(HAVE_TRAMO)
+
+AC_ARG_WITH(libR,
+[  --with-libR            include libR support [[default=auto]]],
+if test "$withval" = "no"
+then
+  try_libR=no
+fi,
+try_libR=yes)
 
 AC_ARG_WITH(audio,
 [  --with-audio           include audio graph support (experimental)],
@@ -601,11 +610,20 @@ if test "${build_docs}" = "yes" ; then
 fi
 
 dnl Check for libR (optional)
-PKG_CHECK_MODULES(RLIB, libR,
-  AC_DEFINE(USE_RLIB)	
-  have_libR="yes",
-  have_libR="no",
-)
+if test "$try_libR" = "yes" ; then
+    PKG_CHECK_MODULES(RLIB, libR,
+      AC_DEFINE(USE_RLIB)
+      if echo "$RLIB_LIBS" | grep ^-L > /dev/null ; then
+        RLIBDIR=`echo $RLIB_LIBS | cut -b 3- | awk '{ print $1 }'`
+      else 
+        RLIBDIR="/usr/lib"
+      fi 
+      RLIB="${RLIBDIR}/libR.so"
+      AC_DEFINE_UNQUOTED(RLIBPATH, "$RLIB") 
+      have_libR="yes",
+      have_libR="no"
+    )
+fi
 
 dnl If building docs was requested, see if we can do it
 if test "${build_docs}" = "yes" ; then
@@ -627,6 +645,7 @@ AC_SUBST(GDK_PIXBUF_CFLAGS)
 AC_SUBST(GDK_PIXBUF_LIBS)
 AC_SUBST(RLIB_CFLAGS)
 AC_SUBST(RLIB_LIBS)
+AC_SUBST(RLIB)
 
 dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then

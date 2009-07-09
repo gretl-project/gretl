@@ -118,6 +118,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Use the GNU R shared library */
 #undef USE_RLIB
 
+/* Location of R shared library */
+#undef RLIBPATH
+
 /* Building for Mac OS X? */
 #undef OSX_BUILD
 

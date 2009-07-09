@@ -48,8 +48,8 @@ static gretlopt foreign_opt;
 
 enum {
     LANG_R = 1,
-    LANG_OX,
-    LANG_RLIB
+    LANG_RLIB,
+    LANG_OX
 };
 
 static void destroy_foreign (void)
@@ -64,6 +64,14 @@ static void destroy_foreign (void)
 static int set_foreign_lang (const char *lang, PRN *prn)
 {
     int err = 0;
+
+#ifndef USE_RLIB
+    if (!strcmp(lang, "RLib")) {
+	/* fall back to using plain R */
+	foreign_lang = LANG_R;	
+	return 0;
+    }
+#endif
 
     if (!strcmp(lang, "R")) {
 	foreign_lang = LANG_R;
@@ -390,14 +398,6 @@ void delete_gretl_R_files (void)
 
 #ifdef USE_RLIB
 
-#ifdef WIN32
-# define RLIB_DLOPEN
-#else 
-# undef RLIB_DLOPEN /* can def for testing */
-#endif
-
-#ifdef RLIB_DLOPEN
-
 static void *Rhandle;
 
 SEXP *PVR_GlobalEnv;
@@ -467,7 +467,7 @@ static int load_R_symbols (void)
     }
 #else 
     /* FIXME */
-    strcpy(libpath, "/opt/R/lib/R/lib/libR.so");
+    strcpy(libpath, RLIBPATH);
 #endif
 
     Rhandle = gretl_dlopen(libpath, 1);
@@ -519,40 +519,6 @@ static int load_R_symbols (void)
     return err;
 }
 
-#else 
-
-#define VR_GlobalEnv R_GlobalEnv
-#define VR_NilValue R_NilValue
-#define VR_UnboundValue R_UnboundValue
-#define VRf_allocList Rf_allocList
-#define VRf_allocMatrix Rf_allocMatrix 
-#define VRf_allocVector Rf_allocVector 
-#define VRf_initEmbeddedR Rf_initEmbeddedR
-#define VRf_endEmbeddedR Rf_endEmbeddedR 
-#define VRf_findFun Rf_findFun
-#define VRf_findVar Rf_findVar
-#define VRf_install Rf_install
-#define VRf_isMatrix Rf_isMatrix
-#define VRf_isLogical Rf_isLogical
-#define VRf_isInteger Rf_isInteger
-#define VRf_isReal Rf_isReal
-#define VRf_lang2 Rf_lang2
-#define VRf_mkString Rf_mkString
-#define VRf_ncols Rf_ncols
-#define VRf_nrows Rf_nrows
-#define VRf_PrintValue Rf_PrintValue
-#define VRf_protect Rf_protect
-#define VRf_unprotect Rf_unprotect
-#define VRf_ScalarReal Rf_ScalarReal
-#define VR_tryEval R_tryEval
-#define VCDR CDR
-#define VREAL REAL
-#define VSETCAR SETCAR
-#define VSET_TYPEOF SET_TYPEOF
-#define VTYPEOF TYPEOF
-
-#endif /* !RLIB_DLOPEN */
-
 static int Rinit;
 
 static SEXP current_arg;
@@ -562,9 +528,7 @@ void gretl_R_cleanup (void)
 {
     if (Rinit) {
 	VRf_endEmbeddedR(0);
-#ifdef RLIB_DLOPEN
 	close_plugin(Rhandle);
-#endif
     }
 }
 
@@ -573,32 +537,35 @@ static int gretl_Rlib_init (void)
     char *Rhome;
     int err = 0;
 
-#ifdef RLIB_DLOPEN
+#ifndef WIN32
+    Rhome = getenv("R_HOME");
+    if (Rhome == NULL) {
+	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
+	return E_EXTERNAL;
+    }
+#endif
+
     err = load_R_symbols();
     if (err) {
 	fprintf(stderr, "gretl_Rlib_init: failed to load R functions\n");
 	return err;
     }
-#endif
 
 #ifdef WIN32
     Rhome = Vget_R_HOME();
-#else
-    Rhome = getenv("R_HOME");
-#endif
-
     if (Rhome == NULL) {
 	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
-	err = E_EXTERNAL;
-    } else {
+	return E_EXTERNAL;
+    }
+#endif
+
+    if (!err) {
 	char *argv[] = { "R", "--silent" };
 
 	VRf_initEmbeddedR(2, argv);
-#ifdef RLIB_DLOPEN 
 	VR_GlobalEnv = *PVR_GlobalEnv;
 	VR_NilValue = *PVR_NilValue;
 	VR_UnboundValue = *PVR_UnboundValue;
-#endif
 	Rinit = 1;
     }
 
@@ -890,23 +857,12 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 
     foreign_opt |= opt;
 
-    if (foreign_lang == LANG_RLIB) {
-#ifdef USE_RLIB
+    if (foreign_lang == LANG_R || foreign_lang == LANG_RLIB) {
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
 	    delete_gretl_R_files();
-	} else {
+	} else if (foreign_lang == LANG_RLIB) {
 	    lib_run_Rlib_sync(foreign_opt, prn);
-	}
-#else
-	pputs(prn, "language=Rlib: not supported\n");
-	destroy_foreign();
-	return E_EXTERNAL;
-#endif
-    } else if (foreign_lang == LANG_R) {
-	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
-	if (err) {
-	    delete_gretl_R_files();
 	} else {
 	    lib_run_R_sync(foreign_opt, prn);
 	}
