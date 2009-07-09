@@ -631,7 +631,12 @@ int get_R_function_by_name (const char *name)
     static int initerr;
     SEXP fun;
 
-    if (!Rinit && !initerr) {
+    if (initerr) {
+	/* we already tried and failed to initialize libR */
+	return 0;
+    }
+
+    if (!Rinit) {
 	initerr = gretl_Rlib_init();
 	if (initerr) {
 	    fprintf(stderr, "get_R_function_by_name: failed on gretl_Rlib_init\n");
