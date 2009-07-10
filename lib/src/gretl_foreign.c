@@ -955,11 +955,17 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
 	    delete_gretl_R_files();
+#ifndef USE_RLIB
+	} else {
+	    lib_run_R_sync(foreign_opt, prn);
+	}
+#else
 	} else if (R_lib) {
 	    lib_run_Rlib_sync(foreign_opt, prn);
 	} else {
 	    lib_run_R_sync(foreign_opt, prn);
 	}
+#endif
     } else if (foreign_lang == LANG_OX) {
 	err = write_gretl_ox_file(NULL, foreign_opt);
 	if (err) {
