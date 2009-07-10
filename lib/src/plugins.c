@@ -248,7 +248,11 @@ void *gretl_dlopen (const char *path, int now)
     void *handle = NULL;
 
 #if defined(WIN32)
-    handle = LoadLibrary(path);
+    if (strstr(path, "R.dll")) {
+	handle = LoadLibraryEx(path, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+    } else {
+	handle = LoadLibrary(path);
+    }
 #elif defined(OSX_NATIVE)
     rc = NSCreateObjectFileImageFromFile(path, &file);
     if (rc == NSObjectFileImageSuccess) {

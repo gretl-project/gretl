@@ -153,7 +153,6 @@ static int protect_lists = 1;
 static int user_mp_bits;
 static int R_functions;
 
-static int real_libset_set_bool (const char *s, int val, PRN *prn);
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
 
@@ -1428,9 +1427,9 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 		pprintf(prn, "You can only set this variable "
 			"via the gretl GUI\n");
 	    } else if (boolean_on(setarg)) {
-		err = real_libset_set_bool(setobj, 1, prn);
+		err = libset_set_bool(setobj, 1);
 	    } else if (boolean_off(setarg)) {
-		err = real_libset_set_bool(setobj, 0, prn);
+		err = libset_set_bool(setobj, 0);
 	    }
 	} else if (libset_double(setobj)) {
 	    if (default_ok(setobj) && default_str(setarg)) {
@@ -1495,41 +1494,41 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-double libset_get_double (const char *s)
+double libset_get_double (const char *key)
 {
     if (check_for_state()) {
 	return 1;
     }
 
-    if (!strcmp(s, QS_BANDWIDTH)) {
+    if (!strcmp(key, QS_BANDWIDTH)) {
 	if (!na(state->ropts.qsband) && state->ropts.qsband > 0) {
 	    return state->ropts.qsband;
 	} else {
 	    /* what's a sensible default here? */
 	    return 2.0;
 	}
-    } else if (!strcmp(s, NLS_TOLER)) {
+    } else if (!strcmp(key, NLS_TOLER)) {
 	if (na(state->nls_toler)) {
 	    state->nls_toler = get_default_nls_toler();
 	}
 	return state->nls_toler;
-    } else if (!strcmp(s, BHHH_TOLER)) {
+    } else if (!strcmp(key, BHHH_TOLER)) {
 	return state->bhhh_toler;
-    } else if (!strcmp(s, BFGS_TOLER)) {
+    } else if (!strcmp(key, BFGS_TOLER)) {
 	if (na(state->bfgs_toler)) {
 	    state->bfgs_toler = get_default_nls_toler();
 	}
 	return state->bfgs_toler;
-    } else if (!strcmp(s, HP_LAMBDA)) {
+    } else if (!strcmp(key, HP_LAMBDA)) {
 	return state->hp_lambda;
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
-		"variable '%s'\n", s);	
-	return 1;
+		"variable '%s'\n", key);	
+	return 0;
     }
 }
 
-int libset_set_double (const char *s, double x)
+int libset_set_double (const char *key, double val)
 {
     int err = 0;
 
@@ -1538,70 +1537,70 @@ int libset_set_double (const char *s, double x)
     }
 
     /* all the libset double vals must be positive */
-    if (x <= 0.0) {
+    if (val <= 0.0) {
 	return E_DATA;
     }
 
-    if (!strcmp(s, QS_BANDWIDTH)) {
-	state->ropts.qsband = x;
-    } else if (!strcmp(s, NLS_TOLER)) {
-	state->nls_toler = x;
-    } else if (!strcmp(s, BHHH_TOLER)) {
-	state->bhhh_toler = x;
-    } else if (!strcmp(s, BFGS_TOLER)) {
-	state->bfgs_toler = x;
-    } else if (!strcmp(s, HP_LAMBDA)) {
-	state->hp_lambda = x;
+    if (!strcmp(key, QS_BANDWIDTH)) {
+	state->ropts.qsband = val;
+    } else if (!strcmp(key, NLS_TOLER)) {
+	state->nls_toler = val;
+    } else if (!strcmp(key, BHHH_TOLER)) {
+	state->bhhh_toler = val;
+    } else if (!strcmp(key, BFGS_TOLER)) {
+	state->bfgs_toler = val;
+    } else if (!strcmp(key, HP_LAMBDA)) {
+	state->hp_lambda = val;
     } else {
 	fprintf(stderr, "libset_set_double: unrecognized "
-		"variable '%s'\n", s);	
+		"variable '%s'\n", key);	
 	err = E_UNKVAR;
     }
 
     return err;
 }
 
-int libset_get_int (const char *s)
+int libset_get_int (const char *key)
 {
     if (check_for_state()) {
 	return 0;
     }
 
-    if (!strcmp(s, BFGS_MAXITER)) {
+    if (!strcmp(key, BFGS_MAXITER)) {
 	return state->bfgs_maxiter;
-    } else if (!strcmp(s, BHHH_MAXITER)) {
+    } else if (!strcmp(key, BHHH_MAXITER)) {
 	return state->bhhh_maxiter;
-    } else if (!strcmp(s, RQ_MAXITER)) {
+    } else if (!strcmp(key, RQ_MAXITER)) {
 	return state->rq_maxiter;
-    } else if (!strcmp(s, BKBP_K)) {
+    } else if (!strcmp(key, BKBP_K)) {
 	return state->bkbp_k;
-    } else if (!strcmp(s, BOOTREP)) {
+    } else if (!strcmp(key, BOOTREP)) {
 	return state->bootrep;
-    } else if (!strcmp(s, GARCH_VCV)) {
+    } else if (!strcmp(key, GARCH_VCV)) {
 	return state->garch_vcv;
-    } else if (!strcmp(s, GARCH_ROBUST_VCV)) {
+    } else if (!strcmp(key, GARCH_ROBUST_VCV)) {
 	return state->garch_robust_vcv;
-    } else if (!strcmp(s, ARMA_VCV)) {
+    } else if (!strcmp(key, ARMA_VCV)) {
 	return state->arma_vcv;
-    } else if (!strcmp(s, HAC_KERNEL)) {
+    } else if (!strcmp(key, HAC_KERNEL)) {
 	return state->ropts.hkern;
-    } else if (!strcmp(s, HC_VERSION)) {
+    } else if (!strcmp(key, HC_VERSION)) {
 	return state->ropts.hc_version;
-    } else if (!strcmp(s, HORIZON)) {
+    } else if (!strcmp(key, HORIZON)) {
 	return state->horizon;
-    } else if (!strcmp(s, LONGDIGITS)) {
+    } else if (!strcmp(key, LONGDIGITS)) {
 	return state->longdigits;
-    } else if (!strcmp(s, LOOP_MAXITER)) {
+    } else if (!strcmp(key, LOOP_MAXITER)) {
 	return state->loop_maxiter;
-    } else if (!strcmp(s, VECM_NORM)) {
+    } else if (!strcmp(key, VECM_NORM)) {
 	return state->vecm_norm;
-    } else if (!strcmp(s, GRETL_DEBUG)) {
+    } else if (!strcmp(key, GRETL_DEBUG)) {
 	return gretl_debug;
-    } else if (!strcmp(s, BLAS_NMK_MIN)) {
+    } else if (!strcmp(key, BLAS_NMK_MIN)) {
 	return get_blas_nmk_min();
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
-		"variable '%s'\n", s);	
+		"variable '%s'\n", key);	
 	return 0;
     }
 }
@@ -1654,13 +1653,13 @@ static int intvar_min_max (const char *s, int *min, int *max,
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
 		"variable '%s'\n", s);	
-	return E_DATA;
+	return E_UNKVAR;
     }
 
     return 0;
 }
 
-int libset_set_int (const char *s, int k)
+int libset_set_int (const char *key, int val)
 {
     int min = 0, max = 0;
     int *ivar = NULL;
@@ -1670,18 +1669,18 @@ int libset_set_int (const char *s, int k)
 	return 1;
     }
 
-    if (!strcmp(s, BLAS_NMK_MIN)) {
-	set_blas_nmk_min(k);
+    if (!strcmp(key, BLAS_NMK_MIN)) {
+	set_blas_nmk_min(val);
 	return 0;
     }
 
-    err = intvar_min_max(s, &min, &max, &ivar);
+    err = intvar_min_max(key, &min, &max, &ivar);
 
     if (!err) {
-	if (k < min || k >= max || ivar == NULL) {
+	if (val < min || val >= max || ivar == NULL) {
 	    err = E_DATA;
 	} else {
-	    *ivar = k;
+	    *ivar = val;
 	}
     }
 
@@ -1788,19 +1787,19 @@ static void maybe_check_env (const char *s)
 #endif
 }
 
-int libset_get_bool (const char *s)
+int libset_get_bool (const char *key)
 {
     int flag, ret = 0;
 
     /* global specials */
 
-    if (!strcmp(s, PROTECT_LISTS)) {
+    if (!strcmp(key, PROTECT_LISTS)) {
 	return protect_lists;
-    } else if (!strcmp(s, R_FUNCTIONS)) {
+    } else if (!strcmp(key, R_FUNCTIONS)) {
 	return R_functions;
     } 
 
-    if (!strcmp(s, MAX_VERBOSE) && gretl_debug > 1) {
+    if (!strcmp(key, MAX_VERBOSE) && gretl_debug > 1) {
 	/* strong debugging turns on max_verbose */
 	return 1;
     }
@@ -1809,12 +1808,13 @@ int libset_get_bool (const char *s)
 	return 0;
     }
 
-    maybe_check_env(s);
+    maybe_check_env(key);
 
-    flag = boolvar_get_flag(s);
+    flag = boolvar_get_flag(key);
     if (flag == 0) {
 	fprintf(stderr, "libset_get_bool: unrecognized "
-		"variable '%s'\n", s);
+		"variable '%s'\n", key);
+	ret = 0;
     } else {
 	ret = flag_to_bool(state, flag);
     }
@@ -1841,26 +1841,25 @@ static void libset_set_decpoint (int on)
 #endif
 }
 
-static int check_libR_setting (int *setvar, int val,
-			       const char *s, PRN *prn)
+static int check_R_setting (const char *key, int val)
 {
     int err = 0;
 
 #ifdef USE_RLIB
-    *setvar = val;
+    R_functions = val;
 #else
-    *setvar = 0;
     if (val) {
-	pprintf(prn, "Warning: setting ignored: '%s' not supported.\n", s);
+	gretl_errmsg_sprintf("%s: not supported.", key);
+	err = E_EXTERNAL;
     }
 #endif
 
     return err;
 }
 
-static int real_libset_set_bool (const char *s, int set, PRN *prn)
+int libset_set_bool (const char *key, int val)
 {
-    int flag;
+    int flag, err = 0;
 
     if (check_for_state()) {
 	return E_ALLOC;
@@ -1868,34 +1867,30 @@ static int real_libset_set_bool (const char *s, int set, PRN *prn)
 
     /* global specials */
 
-    if (!strcmp(s, PROTECT_LISTS)) {
-	protect_lists = set;
+    if (!strcmp(key, PROTECT_LISTS)) {
+	protect_lists = val;
 	return 0;
-    } else if (!strcmp(s, R_FUNCTIONS)) {
-	return check_libR_setting(&R_functions, set, s, prn);
+    } else if (!strcmp(key, R_FUNCTIONS)) {
+	return check_R_setting(key, val);
     } 
 
-    flag = boolvar_get_flag(s);
+    flag = boolvar_get_flag(key);
 
     if (flag == 0) {
 	fprintf(stderr, "libset_set_bool: unrecognized "
-		"variable '%s'\n", s);
-    } else if (set) {
+		"variable '%s'\n", key);
+	err = E_UNKVAR;
+    } else if (val) {
 	state->flags |= flag;
     } else {
 	state->flags &= ~flag;
     }
 
     if (flag == STATE_FORCE_DECPOINT) {
-	libset_set_decpoint(set);
+	libset_set_decpoint(val);
     }
 
-    return 0;
-}
-
-void libset_set_bool (const char *s, int set)
-{
-    real_libset_set_bool(s, set, NULL);
+    return err;
 }
 
 /* Mechanism for pushing and popping program state for user-defined

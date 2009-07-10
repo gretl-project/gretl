@@ -786,17 +786,14 @@ static void look_up_dollar_word (const char *s, parser *p)
 }
 
 #ifdef USE_RLIB
-# include "libset.h"
 # include "gretl_foreign.h"
 
 static int maybe_get_R_function (const char *s)
 {
-    if (!libset_get_bool(R_FUNCTIONS) || strlen(s) < 3) {
-	return 0;
-    } else if (strncmp(s, "R_", 2)) {
-	return 0;
-    } else {
+    if (strlen(s) >= 3 && !strncmp(s, "R_", 2)) {
 	return get_R_function_by_name(s + 2);
+    } else {
+	return 0;
     }
 }
 

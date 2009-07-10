@@ -719,15 +719,16 @@ static int gretl_use_Rlib (void)
     return ret;
 }
 
-/* used in "genr", to see if @name denotes an R function,
-   either built-in or possibly user-defined
+/* Used in "genr", to see if @name denotes an R function,
+   either built-in or possibly user-defined.  The lookup
+   is conditional on the user's doing "set R_functions on".
 */
 
 int get_R_function_by_name (const char *name) 
 {
     int ret = 0;
     
-    if (gretl_use_Rlib()) {
+    if (libset_get_bool(R_FUNCTIONS) && gretl_use_Rlib()) {
 	SEXP fun = find_R_function(name);
 
 	ret = (fun == VR_UnboundValue)? 0 : 1;

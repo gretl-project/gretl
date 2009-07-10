@@ -76,14 +76,14 @@ int libset_restore_state_zero (DATAINFO *pdinfo);
 int push_program_state (void);
 int pop_program_state (void);
 
-int libset_get_bool (const char *s);
-void libset_set_bool (const char *s, int set);
+int libset_get_bool (const char *key);
+int libset_set_bool (const char *key, int val);
 
-double libset_get_double (const char *s);
-int libset_set_double (const char *s, double x);
+double libset_get_double (const char *key);
+int libset_set_double (const char *key, double val);
 
-int libset_get_int (const char *s);
-int libset_set_int (const char *s, int k);
+int libset_get_int (const char *key);
+int libset_set_int (const char *key, int val);
 
 /* GUI setter functions */
 void set_xsect_hccme (const char *s);
