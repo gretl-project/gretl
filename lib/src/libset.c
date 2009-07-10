@@ -657,7 +657,7 @@ static const char *hac_lag_string (void)
 
 static int parse_hac_lag_variant (const char *s)
 {
-    int err = 1;
+    int err = E_DATA;
 
     if (!strcmp(s, "nw1")) {
 	state->ropts.auto_lag = AUTO_LAG_STOCK_WATSON;
@@ -777,7 +777,7 @@ static int parse_hc_variant (const char *s)
 	s += 2;
     }
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<5; i++) {
 	if (!strcmp(s, hc_version_strs[i])) {
 	    state->ropts.hc_version = i;
 	    return 0;
@@ -792,47 +792,54 @@ static int parse_hc_variant (const char *s)
     return 1;
 }
 
-static int parse_libset_int_code (const char *s, 
-				  const char *code)
+static int parse_libset_int_code (const char *key, 
+				  const char *val)
 {
-    int i;
+    int i, err = E_DATA;
 
-    if (!strcmp(s, HC_VERSION)) {
-	return parse_hc_variant(code);
-    } else if (!strcmp(s, HAC_LAG)) {
-	return parse_hac_lag_variant(code);
-    } else if (!strcmp(s, GARCH_VCV)) {
+    if (!strcmp(key, HC_VERSION)) {
+	err = parse_hc_variant(val);
+    } else if (!strcmp(key, HAC_LAG)) {
+	err = parse_hac_lag_variant(val);
+    } else if (!strcmp(key, GARCH_VCV)) {
 	for (i=0; i<VCV_MAX; i++) {
-	    if (!strcmp(code, garch_vcv_strs[i])) {
+	    if (!strcmp(val, garch_vcv_strs[i])) {
 		state->garch_vcv = i;
-		return 0;
+		err = 0;
+		break;
 	    }
 	}
-    } else if (!strcmp(s, ARMA_VCV)) {
-	if (!strcmp(code, "op")) {
+    } else if (!strcmp(key, ARMA_VCV)) {
+	if (!strcmp(val, "op")) {
 	    state->arma_vcv = VCV_OP;
-	    return 0;
-	} else if (!strcmp(code, "hessian")) {
+	    err = 0;
+	} else if (!strcmp(val, "hessian")) {
 	    state->arma_vcv = VCV_HESSIAN;
-	    return 0;
+	    err = 0;
 	}
-    } else if (!strcmp(s, HAC_KERNEL)) {
+    } else if (!strcmp(key, HAC_KERNEL)) {
 	for (i=0; i<KERNEL_MAX; i++) {
-	    if (!strcmp(code, hac_kernel_strs[i])) {
+	    if (!strcmp(val, hac_kernel_strs[i])) {
 		state->ropts.hkern = i;
-		return 0;
+		err = 0;
+		break;
 	    }
 	}
-    } else if (!strcmp(s, VECM_NORM)) {
+    } else if (!strcmp(key, VECM_NORM)) {
 	for (i=0; i<NORM_MAX; i++) {
-	    if (!strcmp(code, vecm_norm_strs[i])) {
+	    if (!strcmp(val, vecm_norm_strs[i])) {
 		state->vecm_norm = i;
-		return 0;
+		err = 0;
+		break;
 	    }
 	}
     }
 
-    return 1;
+    if (err) {
+	gretl_errmsg_sprintf("%s: invalid value '%s'\n", key, val);
+    }
+
+    return err;
 }	
 
 void set_xsect_hccme (const char *s)
