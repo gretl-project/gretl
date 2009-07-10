@@ -2,6 +2,8 @@ version 1.8.3, in progress
 - Fix bug 2819633
 - $stopwatch: use times() function if available, to include
   execution time of child processes
+- Add function "mreverse" to reverse rows or columns of
+  a matrix
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"
