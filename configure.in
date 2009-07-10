@@ -61,6 +61,7 @@ have_odbc="no"
 try_libR="yes"
 have_libR="no"
 check_gnuplot="yes"
+darwin_build="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -385,6 +386,7 @@ case $host_os in
   *arwin*) 
     LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
     have_lapack="yes"
+    darwin_build="yes"
     AC_DEFINE(OSX_BUILD)
   ;; 
   *)
@@ -399,12 +401,10 @@ case $host_os in
 esac
 
 dnl And while we're at it...
-case $host_os in
-  *arwin*) 
-    CARBONLIB="-Wl,-framework -Wl,Carbon"
-    AC_SUBST(CARBONLIB)
-  ;; 
-esac
+if test "$darwin_build" = "yes" ; then
+  CARBONLIB="-Wl,-framework -Wl,Carbon"
+  AC_SUBST(CARBONLIB)
+fi
 
 dnl
 dnl Check for FLITE?
@@ -628,7 +628,12 @@ if test "$try_libR" = "yes" ; then
       else 
         RLIBDIR="/usr/lib"
       fi 
-      RLIB="${RLIBDIR}/libR.so"
+      if test "$darwin_build" = "yes" ; then
+        RLIBNAME="libR.dylib"
+      else 
+        RLIBNAME="libR.so"
+      fi
+      RLIB="${RLIBDIR}/${RLIBNAME}"
       AC_DEFINE_UNQUOTED(RLIBPATH, "$RLIB") 
       have_libR="yes",
       have_libR="no"

@@ -35,11 +35,8 @@
 #endif
 
 #include <errno.h>
-#include <time.h>
 
-#ifdef WIN32
-# include <windows.h>
-#else
+#ifndef WIN32
 # include <signal.h>
 # include <glib.h>
 #endif
@@ -1495,6 +1492,8 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
 
 #ifdef WIN32
 
+#include <windows.h>
+
 static DWORD tim0;
 
 static void gretl_stopwatch_init (void)
@@ -1519,7 +1518,10 @@ static clock_t tim0;
 
 #ifdef HAVE_SYS_TIMES_H
 # include <sys/times.h>
+# include <unistd.h>
 static unsigned ticks_per_sec;
+#else
+# include <time.h>
 #endif
 
 static void gretl_stopwatch_init (void)
