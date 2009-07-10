@@ -2035,6 +2035,8 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
     *idx = (f == F_IMINR || f == F_IMINC || f == F_IMAXR || f == F_IMAXC);
 }
 
+#define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
+
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -2048,9 +2050,13 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_RESAMPLE && r != NULL && r->t != EMPTY && r->t != NUM) {
-	    node_type_error(f, 2, NUM, r, p);
-	    goto finalize;
+	if (f == F_RESAMPLE || f == F_MREVERSE) {
+	    /* the r node may be absent, but if present it should
+	       hold a scalar */
+	    if (!empty_or_num(r)) {
+		node_type_error(f, 2, NUM, r, p);
+		goto finalize;
+	    }
 	}
 
 	gretl_error_clear();
@@ -2117,7 +2123,11 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
 	case F_MREVERSE:
-	    ret->v.m = gretl_matrix_reverse_rows(m);
+	    if (r != NULL && r->t == NUM && r->v.xval != 0) {
+		ret->v.m = gretl_matrix_reverse_cols(m);
+	    } else {
+		ret->v.m = gretl_matrix_reverse_rows(m);
+	    }
 	    break;
 	case F_NULLSPC:
 	    ret->v.m = gretl_matrix_right_nullspace(m, &p->err);

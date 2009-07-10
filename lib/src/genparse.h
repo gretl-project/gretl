@@ -243,7 +243,6 @@ enum {
     F_VARNAME,
     F_VARNUM,
     F_TOLOWER,
-    F_MREVERSE,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -290,6 +289,7 @@ enum {
     F_RESAMPLE,
     F_FCSTATS,
     F_FRACLAG,
+    F_MREVERSE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,

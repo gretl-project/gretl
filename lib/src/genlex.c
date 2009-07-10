@@ -322,7 +322,7 @@ struct str_table funcs[] = {
     { F_FCSTATS,  "fcstats" },
     { F_BESSEL,   "bessel" },
     { F_FRACLAG,  "fraclag" },
-    { F_MREVERSE, "rev" },
+    { F_MREVERSE, "mreverse" },
     { 0,          NULL }
 };
 
