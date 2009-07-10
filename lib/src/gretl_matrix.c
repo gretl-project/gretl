@@ -825,8 +825,8 @@ int gretl_matrix_copy_row (gretl_matrix *dest, int di,
 
 gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
 {
-    int i, r, c;
     gretl_matrix *ret;
+    int i, r, c;
 
     if (m == NULL) {
 	return NULL;
@@ -840,12 +840,54 @@ gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
     c = m->cols;
     ret = gretl_matrix_alloc(r, c);
 
-    if (ret == NULL) {
-	return NULL;
+    if (ret != NULL) {
+	for (i=0; i<r; i++) {
+	    gretl_matrix_copy_row(ret, i, m, r-i-1);
+	}
     }
 
-    for (i=0; i<r; i++) {
-	gretl_matrix_copy_row(ret, i, m, r-i-1);
+    return ret;
+}
+
+/**
+ * gretl_matrix_reverse_cols:
+ * @m: source matrix whose columns are to be reversed.
+ *
+ * Returns: a matrix with the same columns as @m, last to first.  
+ */
+
+gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
+{
+    gretl_matrix *ret;
+    const double *x;
+    double *y;
+    size_t csize;
+    int i, r, c;
+
+    if (m == NULL) {
+        return NULL;
+    }
+
+    if (gretl_is_null_matrix(m)) {
+        return gretl_null_matrix_new();
+    }
+
+    r = m->rows;
+    c = m->cols;
+    ret = gretl_matrix_alloc(r, c);
+
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    x = m->val;
+    y = ret->val + r * (c-1);
+    csize = r * sizeof *x;
+
+    for (i=0; i<c; i++) {
+        memcpy(y, x, csize);
+        x += r;
+        y -= r;
     }
 
     return ret;
