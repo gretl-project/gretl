@@ -68,11 +68,6 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 
     if (!strcmp(lang, "R")) {
 	foreign_lang = LANG_R;
-    } else if (!strcmp(lang, "RLib")) {
-	pprintf(prn, "Please do \"set R_lib on\" and use \"language=R\".\n");
-	pprintf(prn, "I'll fix that for you now, but not forever.\n");
-	libset_set_bool(R_LIB, 1);
-	foreign_lang = LANG_R;
     } else if (!strcmp(lang, "ox")) {
 #ifdef USE_OX
 	foreign_lang = LANG_OX;
