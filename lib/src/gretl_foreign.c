@@ -620,9 +620,9 @@ static int gretl_Rlib_init (void)
 #endif
 
     if (!err) {
-	char *argv[] = { "R", "--silent" };
+	char *argv[] = { "R", "--no-save", "--silent" };
 
-	VRf_initEmbeddedR(2, argv);
+	VRf_initEmbeddedR(3, argv);
 	VR_GlobalEnv = *PVR_GlobalEnv;
 	VR_NilValue = *PVR_NilValue;
 	VR_UnboundValue = *PVR_UnboundValue;
