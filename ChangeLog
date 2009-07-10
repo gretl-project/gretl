@@ -1,3 +1,8 @@
+version 1.8.3, in progress
+- Fix bug 2819633
+- $stopwatch: use times() function if available, to include
+  execution time of child processes
+
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"
 - "summary" command: add --simple and --by=byvar options

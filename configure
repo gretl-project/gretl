@@ -14105,7 +14105,8 @@ fi
 
 
 
-for ac_header in unistd.h dirent.h fnmatch.h byteswap.h
+
+for ac_header in unistd.h dirent.h fnmatch.h byteswap.h sys/times.h
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then

@@ -74,6 +74,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have sys/wait.h */
 #undef HAVE_SYS_WAIT_H
 
+/* Do we have sys/times.h */
+#undef HAVE_SYS_TIMES_H
+
 /* Do we have byteswap.h */
 #undef HAVE_BYTESWAP_H
 

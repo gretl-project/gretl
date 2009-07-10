@@ -1487,19 +1487,43 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     return err;
 }
 
-/* timer */  
+/* internal execution timer: use times() if available, 
+   otherwise fall back on clock() 
+*/ 
 
 static clock_t tim0;
 
+#ifdef HAVE_SYS_TIMES_H
+# include <sys/times.h>
+static unsigned ticks_per_sec;
+#endif
+
 static void gretl_stopwatch_init (void)
 {
+#ifdef HAVE_SYS_TIMES_H
+    struct tms timebuf;
+
+    ticks_per_sec = sysconf(_SC_CLK_TCK);
+    tim0 = times(&timebuf);
+#else
     tim0 = clock();
+#endif
 }
 
 double gretl_stopwatch (void)
 {
-    clock_t tim1 = clock();
-    double x = (double) (tim1 - tim0) / CLOCKS_PER_SEC;
+    clock_t tim1;
+    double x;
+
+#ifdef HAVE_SYS_TIMES_H
+    struct tms timebuf;
+
+    tim1 = times(&timebuf);
+    x = (double) (tim1 - tim0) / ticks_per_sec;
+#else
+    tim1 = clock();
+    x = (double) (tim1 - tim0) / CLOCKS_PER_SEC;
+#endif
 
     tim0 = tim1;
 
