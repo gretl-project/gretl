@@ -37,7 +37,9 @@
 #include <errno.h>
 #include <time.h>
 
-#ifndef WIN32
+#ifdef WIN32
+# include <windows.h>
+#else
 # include <signal.h>
 # include <glib.h>
 #endif
@@ -1487,9 +1489,31 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     return err;
 }
 
-/* internal execution timer: use times() if available, 
-   otherwise fall back on clock() 
+/* internal execution timer: on Windows use use GetTickCount,
+   else use times() if available, otherwise fall back on clock() 
 */ 
+
+#ifdef WIN32
+
+static DWORD tim0;
+
+static void gretl_stopwatch_init (void)
+{
+    tim0 = GetTickCount();
+}
+
+double gretl_stopwatch (void)
+{
+    DWORD tim1 = GetTickCount();
+    double x;
+
+    x = (double) (tim1 - tim0) / 1000.0;
+    tim0 = tim1;
+
+    return x;
+} 
+
+#else /* !WIN32 */
 
 static clock_t tim0;
 
@@ -1529,6 +1553,8 @@ double gretl_stopwatch (void)
 
     return x;
 } 
+
+#endif /* WIN32 or not */
 
 /* library init and cleanup functions */
 
