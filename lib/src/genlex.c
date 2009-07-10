@@ -321,7 +321,8 @@ struct str_table funcs[] = {
     { F_MCOVG,    "mcovg" },
     { F_FCSTATS,  "fcstats" },
     { F_BESSEL,   "bessel" },
-	{ F_FRACLAG,  "fraclag" },
+    { F_FRACLAG,  "fraclag" },
+    { F_MREVERSE, "rev" },
     { 0,          NULL }
 };
 

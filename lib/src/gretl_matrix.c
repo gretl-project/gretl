@@ -817,6 +817,41 @@ int gretl_matrix_copy_row (gretl_matrix *dest, int di,
 }
 
 /**
+ * gretl_matrix_reverse_rows:
+ * @m: source matrix whose rows are to be reversed.
+ *
+ * Returns: a matrix with the same rows as @m, last to first.  
+ */
+
+gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
+{
+    int i, r, c;
+    gretl_matrix *ret;
+
+    if (m == NULL) {
+	return NULL;
+    }
+
+    if (gretl_is_null_matrix(m)) {
+	return gretl_null_matrix_new();
+    }
+
+    r = m->rows;
+    c = m->cols;
+    ret = gretl_matrix_alloc(r, c);
+
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<r; i++) {
+	gretl_matrix_copy_row(ret, i, m, r-i-1);
+    }
+
+    return ret;
+}
+
+/**
  * gretl_matrix_free:
  * @m: matrix to be freed.
  *

@@ -2116,6 +2116,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_UNVECH:
 	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
+	case F_MREVERSE:
+	    ret->v.m = gretl_matrix_reverse_rows(m);
+	    break;
 	case F_NULLSPC:
 	    ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
 	    break;
@@ -6644,6 +6647,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_GINV:
     case F_DIAG:
     case F_TRANSP:
+    case F_MREVERSE:
     case F_VEC:
     case F_VECH:
     case F_UNVECH:
