@@ -212,6 +212,10 @@ RCVAR rc_vars[] = {
     { "tramo", N_("path to tramo"), NULL, paths.tramo, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
+#ifdef USE_RLIB
+    { "Rlib", N_("path to R library"), NULL, paths.rlibpath, 
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+#endif
     { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
       USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },
     { "ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 

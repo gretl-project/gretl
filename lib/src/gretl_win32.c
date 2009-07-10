@@ -239,6 +239,9 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima\\x12a.exe", drive);
     }
 
+    /* path to R shared library */
+    R_path_from_registry(ppaths->rlibpath, RLIB);
+
     /* remote database host */
     ppaths->dbhost[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "dbhost", ppaths->dbhost);
@@ -749,6 +752,8 @@ char *slash_convert (char *str, int which)
 int R_path_from_registry (char *s, int which)
 {
     int err;
+
+    *s = '\0';
 
     err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", s);
 

@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "libset.h"
 #include "gretl_foreign.h"
 
 #include <glib.h>
@@ -231,7 +230,6 @@ int write_gretl_ox_file (const char *buf, gretlopt opt)
     } else {
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
-	    fputs("// load buffer from gretl\n", fp);
 	    fputs(buf, fp);
 	} else if (!(opt & OPT_G)) {
 	    /* non-GUI */
@@ -458,7 +456,6 @@ void delete_gretl_R_files (void)
     g_free(Rsrc);
 }
 
-
 void delete_gretl_ox_file (void)
 {
     gchar *fname = gretl_ox_filename();
@@ -528,18 +525,8 @@ static void *dlget (void *handle, const char *name, int *err)
 
 static int load_R_symbols (void)
 {
-    char libpath[FILENAME_MAX];
+    const char *libpath = gretl_rlib_path();
     int err = 0;
-
-#if defined(WIN32)
-    err = R_path_from_registry(libpath, RLIB);
-    if (err) {
-	return E_EXTERNAL;
-    }
-#else 
-    /* FIXME */
-    strcpy(libpath, RLIBPATH);
-#endif
 
     Rhandle = gretl_dlopen(libpath, 1);
     if (Rhandle == NULL) {
@@ -584,6 +571,8 @@ static int load_R_symbols (void)
     }
 
     if (err) {
+	close_plugin(Rhandle);
+	Rhandle = NULL;
 	err = E_EXTERNAL;
     }
 
@@ -695,31 +684,56 @@ static SEXP find_R_function (const char *name)
     return fun;
 }
 
+static int Rlib_err;
+
+/* called from gretl_paths.c on revising the Rlib path:
+   allow for the possibility that the path was wrong but is
+   now OK
+*/
+
+void gretl_R_reset_error (void)
+{
+    Rlib_err = 0;
+}
+
+static int gretl_use_Rlib (void)
+{
+    int ret = 0;
+
+    if (!Rlib_err && !getenv("GRETL_NO_RLIB")) {
+	/* use of library is not blocked */
+	if (Rinit) {
+	    /* already opened, fine */
+	    ret = 1;
+	} else {
+	    /* try opening library */
+	    Rlib_err = gretl_Rlib_init();
+	    ret = !Rlib_err;
+	}
+    }
+
+#if FDEBUG
+    fprintf(stderr, "R: using %s\n", (ret)? "library" : "executable");
+#endif    
+
+    return ret;
+}
+
 /* used in "genr", to see if @name denotes an R function,
    either built-in or possibly user-defined
 */
 
 int get_R_function_by_name (const char *name) 
 {
-    static int initerr;
-    SEXP fun;
+    int ret = 0;
+    
+    if (gretl_use_Rlib()) {
+	SEXP fun = find_R_function(name);
 
-    if (initerr) {
-	/* we already tried and failed to initialize libR */
-	return 0;
-    }
-
-    if (!Rinit) {
-	initerr = gretl_Rlib_init();
-	if (initerr) {
-	    fprintf(stderr, "get_R_function_by_name: failed on gretl_Rlib_init\n");
-	    return 0;
-	}
+	ret = (fun == VR_UnboundValue)? 0 : 1;
     } 
 
-    fun = find_R_function(name);
-
-    return (fun == VR_UnboundValue)? 0 : 1;
+    return ret;
 }
 
 /* gretl_R_function_add... : these functions are used to convert from
@@ -946,26 +960,20 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
     foreign_opt |= opt;
 
     if (foreign_lang == LANG_R) {
-	int R_lib = libset_get_bool(R_LIB);
-
-#if FDEBUG
-	fprintf(stderr, "*** foreign_execute: R_lib = %d\n", R_lib);
-#endif
-
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
 	    delete_gretl_R_files();
-#ifndef USE_RLIB
 	} else {
-	    lib_run_R_sync(foreign_opt, prn);
-	}
+#ifdef USE_RLIB
+	    if (gretl_use_Rlib()) {
+		lib_run_Rlib_sync(foreign_opt, prn);
+	    } else {
+		lib_run_R_sync(foreign_opt, prn);
+	    }
 #else
-	} else if (R_lib) {
-	    lib_run_Rlib_sync(foreign_opt, prn);
-	} else {
 	    lib_run_R_sync(foreign_opt, prn);
-	}
 #endif
+	}
     } else if (foreign_lang == LANG_OX) {
 	err = write_gretl_ox_file(NULL, foreign_opt);
 	if (err) {

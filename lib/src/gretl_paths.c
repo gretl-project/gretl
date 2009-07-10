@@ -24,6 +24,9 @@
 #include "gretl_string_table.h"
 #include "gretl_www.h"
 #include "texprint.h"
+#ifdef USE_RLIB
+# include "gretl_foreign.h"
+#endif
 
 #include <unistd.h>
 
@@ -54,6 +57,7 @@ struct INTERNAL_PATHS {
     char x12adir[MAXLEN];
     char tramo[MAXLEN];
     char tramodir[MAXLEN];
+    char rlibpath[MAXLEN];
     char pngfont[128];
     unsigned char status;
 };
@@ -1414,6 +1418,13 @@ static void copy_paths_to_internal (PATHS *paths)
     strcpy(gretl_paths.tramodir, paths->tramodir);
     strcpy(gretl_paths.pngfont,  paths->pngfont);
 
+#ifdef USE_RLIB
+    if (strcmp(paths->rlibpath, gretl_paths.rlibpath)) {
+	strcpy(gretl_paths.rlibpath, paths->rlibpath);
+	gretl_R_reset_error();
+    }
+#endif
+
     gretl_insert_builtin_string("gretldir", paths->gretldir);
     gretl_insert_builtin_string("dotdir",   paths->dotdir);
     gretl_insert_builtin_string("workdir",  paths->workdir);
@@ -1672,6 +1683,11 @@ const char *gretl_x12_arima_dir (void)
     return gretl_paths.x12adir;
 }
 
+const char *gretl_rlib_path (void)
+{
+    return gretl_paths.rlibpath;
+}
+
 const char *gretl_png_font (void)
 {
     return gretl_paths.pngfont;
@@ -1731,6 +1747,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
 	strcpy(ppaths->x12a, "c:\\userdata\\x12arima\\x12a.exe");
 	strcpy(ppaths->tramo, "c:\\userdata\\tramo\\tramo.exe");
+	R_path_from_registry(ppaths->rlibpath, RLIB);
 
 	if (opt & OPT_X) {
 	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
@@ -1885,6 +1902,12 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	} else {
 	    ppaths->dbhost[0] = '\0';
 	}
+
+#ifdef RLIBPATH
+	strcpy(ppaths->rlibpath, RLIBPATH);
+#else
+	*ppaths->rlibpath = '\0';
+#endif
 
 	strcpy(ppaths->gnuplot, "gnuplot");
 #ifdef OSX_BUILD

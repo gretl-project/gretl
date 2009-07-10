@@ -124,8 +124,7 @@ struct set_vars_ {
                            !strcmp(s, PROTECT_LISTS) || \
                            !strcmp(s, VERBOSE_INCLUDE) || \
                            !strcmp(s, SKIP_MISSING) || \
-			   !strcmp(s, R_FUNCTIONS) || \
-                           !strcmp(s, R_LIB))
+			   !strcmp(s, R_FUNCTIONS))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -153,7 +152,6 @@ static int gretl_debug;
 static int protect_lists = 1;
 static int user_mp_bits;
 static int R_functions;
-static int R_lib;
 
 static int real_libset_set_bool (const char *s, int val, PRN *prn);
 static int boolvar_get_flag (const char *s);
@@ -777,7 +775,7 @@ static int parse_hc_variant (const char *s)
 	s += 2;
     }
 
-    for (i=0; i<5; i++) {
+    for (i=0; hc_version_strs[i] != NULL; i++) {
 	if (!strcmp(s, hc_version_strs[i])) {
 	    state->ropts.hc_version = i;
 	    return 0;
@@ -1800,9 +1798,7 @@ int libset_get_bool (const char *s)
 	return protect_lists;
     } else if (!strcmp(s, R_FUNCTIONS)) {
 	return R_functions;
-    } else if (!strcmp(s, R_LIB)) {
-	return R_lib;
-    }
+    } 
 
     if (!strcmp(s, MAX_VERBOSE) && gretl_debug > 1) {
 	/* strong debugging turns on max_verbose */
@@ -1877,9 +1873,7 @@ static int real_libset_set_bool (const char *s, int set, PRN *prn)
 	return 0;
     } else if (!strcmp(s, R_FUNCTIONS)) {
 	return check_libR_setting(&R_functions, set, s, prn);
-    } else if (!strcmp(s, R_LIB)) { 
-	return check_libR_setting(&R_lib, set, s, prn);
-    }	
+    } 
 
     flag = boolvar_get_flag(s);
 

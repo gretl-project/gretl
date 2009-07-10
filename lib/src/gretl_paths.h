@@ -108,6 +108,8 @@ const char *gretl_x12_arima (void);
 
 const char *gretl_x12_arima_dir (void);
 
+const char *gretl_rlib_path (void);
+
 const char *gretl_png_font (void);
 
 void set_gretl_png_font (const char *s, PATHS *ppaths);
