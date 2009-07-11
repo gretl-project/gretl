@@ -1261,7 +1261,7 @@ GtkActionEntry main_entries[] = {
     { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "RScript", NULL, N_("R script"), NULL, NULL, G_CALLBACK(new_script_callback) },
 #ifdef USE_OX
-    { "OxScript", NULL, N_("Ox script"), NULL, NULL, G_CALLBACK(new_script_callback) },
+    { "OxScript", NULL, N_("Ox program"), NULL, NULL, G_CALLBACK(new_script_callback) },
 #endif
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
@@ -1519,7 +1519,7 @@ static void add_conditional_items (GtkUIManager *ui)
 #ifdef USE_OX
     gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
 			  "/MenuBar/File/ScriptFiles/NewScript/OxScript",
-			  N_("Ox script"),
+			  N_("Ox program"),
 			  "OxScript",
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);

@@ -6130,6 +6130,9 @@ void do_new_script (int code)
 
     if (code == FUNC) {
 	fputs("function \n\nend function\n", fp);
+    } else if (code == EDIT_OX) {
+	fputs("#include <oxstd.h>\n\n", fp);
+	fputs("main()\n{\n\n}\n", fp);
     }
 
     fclose(fp);
@@ -6144,16 +6147,17 @@ void do_new_script (int code)
 void new_script_callback (GtkAction *action) 
 {
     const gchar *s = gtk_action_get_name(action);
+    int etype = EDIT_SCRIPT;
 
     if (!strcmp(s, "GnuplotScript")) {
-	do_new_script(EDIT_GP);
+	etype = EDIT_GP;
     } else if (!strcmp(s, "RScript")) {
-	do_new_script(EDIT_R);
+	etype = EDIT_R;
     } else if (!strcmp(s, "OxScript")) {
-	do_new_script(EDIT_OX);
-    } else {
-	do_new_script(EDIT_SCRIPT);
-    }
+	etype = EDIT_OX;
+    } 
+
+    do_new_script(etype);
 }
 
 void maybe_display_string_table (void)
