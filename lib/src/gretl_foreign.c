@@ -24,7 +24,6 @@
 
 #ifdef USE_RLIB
 # include "libset.h"
-# define STRICT_R_HEADERS /* do we need this? */
 # include <Rinternals.h> /* for SEXP and friends */
 #endif
 

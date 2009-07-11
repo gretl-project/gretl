@@ -344,7 +344,7 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	view_file(fname, 1, 0, 78, 370, EDIT_R);
     } else if (has_suffix(fname, ".plt")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_GP);
-    } else if (has_suffix(fname, ".ox")) {
+    } else if (ox_support && has_suffix(fname, ".ox")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_OX);
     } else {
 	strcpy(tryfile, fname);
@@ -668,10 +668,12 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	gtk_file_filter_add_pattern(filter, "*.plt");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
 #ifdef USE_OX
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("Ox files (*.ox)"));
-	gtk_file_filter_add_pattern(filter, "*.ox");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+	if (ox_support) {
+	    filter = gtk_file_filter_new();
+	    gtk_file_filter_set_name(filter, _("Ox files (*.ox)"));
+	    gtk_file_filter_add_pattern(filter, "*.ox");
+	    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+	}
 #endif
     } 
 

@@ -94,6 +94,7 @@ extern int main_x;
 extern int main_y;
 extern int mainwin_width;
 extern int mainwin_height;
+extern int ox_support;
 
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
 extern char viewps[MAXSTR];

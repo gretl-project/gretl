@@ -176,6 +176,10 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "autoicon", N_("Show icon view automatically"), NULL, &autoicon, 
       BOOLSET, 0, TAB_MAIN, NULL },
+#ifdef USE_OX
+    { "oxsupport", N_("Enable Ox support"), NULL, &ox_support, 
+      BOOLSET, 0, TAB_MAIN, NULL },
+#endif
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
 #ifdef ENABLE_NLS
@@ -1163,6 +1167,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    /* special case: deferred processing */
 	    if (!strcmp(rc->key, "lcnumeric") ||
 		!strcmp(rc->key, "usecwd") ||
+		!strcmp(rc->key, "oxsupport") ||
 		!strcmp(rc->key, "wimp")) {
 		g_signal_connect(G_OBJECT(rc->widget), "toggled",
 				 G_CALLBACK(takes_effect_on_restart), 

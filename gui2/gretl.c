@@ -223,6 +223,7 @@ int main_x = -1;
 int main_y = -1;
 int mainwin_width = 520;
 int mainwin_height = 420;
+int ox_support = FALSE;
 
 #if defined(G_OS_WIN32)
 char calculator[MAXSTR] = "calc.exe";
@@ -309,7 +310,7 @@ static int foreign_script_type (const char *fname)
     } else if (has_suffix(fname, ".plt") ||
 	       has_suffix(fname, ".gp")) {
 	return EDIT_GP;
-    } else if (has_suffix(fname, ".ox")) {
+    } else if (ox_support && has_suffix(fname, ".ox")) {
 	return EDIT_OX;
     } else {
 	return 0;
@@ -1517,12 +1518,14 @@ static void add_conditional_items (GtkUIManager *ui)
 #endif
 
 #ifdef USE_OX
-    gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
-			  "/MenuBar/File/ScriptFiles/NewScript/OxScript",
-			  N_("Ox program"),
-			  "OxScript",
-			  GTK_UI_MANAGER_MENUITEM, 
-			  FALSE);
+    if (ox_support) {
+	gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
+			      "/MenuBar/File/ScriptFiles/NewScript/OxScript",
+			      N_("Ox program"),
+			      "OxScript",
+			      GTK_UI_MANAGER_MENUITEM, 
+			      FALSE);
+    }
 #endif
 }
 
