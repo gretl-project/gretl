@@ -36,7 +36,7 @@
 # include <signal.h>
 #endif
 
-#define FDEBUG 1
+#define FDEBUG 0
 
 static char **foreign_lines;
 static int foreign_started;
@@ -359,32 +359,20 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
 				const gchar *dotdir, gretlopt opt)
 {
     FILE *fp = gretl_fopen(Rsrc, "w");
-    int i, do_sink = 0;
-    int err = 0;
-
-#if 0
-    if (opt & OPT_L) {
-	fprintf(stderr, "OPT_L, setting do_sink\n");
-	do_sink = 1;
-    }
-#endif
-
-#ifdef G_OS_WIN32
-    if (!(opt & OPT_I)) {
-	/* non-interactive */
-	do_sink = 1;
-    }
-#endif
+    int i, err = 0;
 
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	if (do_sink) {
+#ifdef G_OS_WIN32
+	if (!(opt & OPT_I)) {
+	    /* non-interactive */
 	    gchar *Rout = g_strdup_printf("%sR.out", dotdir);
 
 	    fprintf(fp, "sink(\"%s\")\n", Rout);
 	    g_free(Rout);
 	}
+#endif
 
 	if (opt & OPT_D) {
 	    /* send data */
@@ -973,21 +961,12 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
     foreign_opt |= opt;
 
     if (foreign_lang == LANG_R) {
-	int uselib = 0;
-
-#ifdef USE_RLIB
-	uselib = gretl_use_Rlib();
-	if (uselib) {
-	    foreign_opt |= OPT_L;
-	}
-#endif
-
 	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
 	    delete_gretl_R_files();
 	} else {
 #ifdef USE_RLIB
-	    if (uselib) {
+	    if (gretl_use_Rlib()) {
 		lib_run_Rlib_sync(foreign_opt, prn);
 	    } else {
 		lib_run_R_sync(foreign_opt, prn);
