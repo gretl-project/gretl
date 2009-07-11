@@ -7044,7 +7044,7 @@ int parser_charpos (parser *p, int c)
 
 /* look ahead to the next non-space character and return it */
 
-int parser_next_char (parser *p)
+int parser_next_nonspace_char (parser *p)
 {
     int i;
 
@@ -7055,6 +7055,13 @@ int parser_next_char (parser *p)
     }
 
     return 0;
+}
+
+/* look ahead to the next character and return it */
+
+int parser_next_char (parser *p)
+{
+    return p->point[0];
 }
 
 /* for error reporting: print the input up to the current

@@ -24,10 +24,8 @@
 
 #ifdef USE_RLIB
 # include "libset.h"
-# define STRICT_R_HEADERS
-# include <R.h>
-# include <Rinternals.h>
-# include <Rembedded.h> 
+# define STRICT_R_HEADERS /* do we need this? */
+# include <Rinternals.h> /* for SEXP and friends */
 #endif
 
 #ifdef G_OS_WIN32
@@ -217,6 +215,17 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 
 #endif
 
+/**
+ * write_gretl_ox_file:
+ * @buf: text buffer containing Ox code.
+ * @opt: should contain %OPT_G for use from GUI.
+ *
+ * Writes the content of @buf into a file in the gretl user's
+ * "dotdir".
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
 int write_gretl_ox_file (const char *buf, gretlopt opt)
 {
     gchar *fname = gretl_ox_filename();
@@ -290,7 +299,7 @@ static int write_data_for_R (const double **Z,
     return err;
 }
 
-/* define an R function for passing data or matrices back to gretl */
+/* define an R function for passing data back to gretl */
 
 static void write_R_export_func (const gchar *dotdir, FILE *fp) 
 {
@@ -334,24 +343,21 @@ static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
     }     
 
     fp = gretl_fopen(Rprofile, "w");
+
     if (fp == NULL) {
-	return E_FOPEN;
+	err = E_FOPEN;
+    } else {
+	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
+	      fp);
+	fputs("if (vnum > 2.41) library(utils)\n", fp);
+	fputs("library(stats)\n", fp);
+	fputs("if (vnum <= 1.89) library(ts)\n", fp);
+	write_R_export_func(dotdir, fp);
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
+	fclose(fp);
     }
 
-    /* profile preamble */
-    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
-	  fp);
-    fputs("if (vnum > 2.41) library(utils)\n", fp);
-    fputs("library(stats)\n", fp);
-    fputs("if (vnum <= 1.89) library(ts)\n", fp);
-
-    write_R_export_func(dotdir, fp);
-
-    fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
-
-    fclose(fp);
-
-    return 0;
+    return err;
 }
 
 static int write_R_source_file (const char *Rsrc, const char *buf,
@@ -403,39 +409,50 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
     return err;
 }
 
-/* opt should contain OPT_G (only) when called from the
-   GUI program */
+/* Write files to be read by R.  May be called when exec'ing the R
+   binary, or when calling the R library.  @opt should contain OPT_G
+   (only) when called from the GUI program
+*/
 
 int write_gretl_R_files (const char *buf,
 			 const double **Z, const DATAINFO *pdinfo,
 			 gretlopt opt)
 { 
+    static int profile_done;
     const char *dotdir = gretl_dot_dir();
     gchar *dotcpy = g_strdup(dotdir);
-    gchar *Rprofile, *Rsrc;
+    gchar *Rsrc;
     int err = 0;
 
 #ifdef G_OS_WIN32
     slash_convert(dotcpy, FROM_BACKSLASH);
 #endif
 
-    /* organize filenames */
-    Rprofile = g_strdup_printf("%sgretl.Rprofile", dotcpy);
     Rsrc = g_strdup_printf("%sRsrc", dotcpy);
-    
-    /* first write a temporary R profile, so R knows what to do */
-    err = write_gretl_R_profile(Rprofile, Rsrc, dotcpy, opt);
-    if (err) {
-	fprintf(stderr, "error writing gretl Rprofile\n");
-	return err;
+
+    if (!profile_done) {
+	/* Write a temporary R profile so R knows what to do.
+	   We should only have to do this once per session,
+	   since the profile is just boiler plate.
+	*/
+	gchar *Rprofile;
+
+	Rprofile = g_strdup_printf("%sgretl.Rprofile", dotcpy);
+	err = write_gretl_R_profile(Rprofile, Rsrc, dotcpy, opt);
+	if (err) {
+	    fprintf(stderr, "error writing gretl Rprofile\n");
+	} else {
+	    profile_done = 1;
+	}
+	g_free(Rprofile);
     }
 
-    /* then write commands and/or data to file, to be sourced
-       by the R profile */
-    err = write_R_source_file(Rsrc, buf, Z, pdinfo, dotcpy, opt);
+    if (!err) {
+	/* write commands and/or data to file, to be sourced in R */
+	err = write_R_source_file(Rsrc, buf, Z, pdinfo, dotcpy, opt);
+    }
 
     g_free(dotcpy);
-    g_free(Rprofile);
     g_free(Rsrc);
 
     return err;
@@ -464,52 +481,69 @@ void delete_gretl_ox_file (void)
     g_free(fname);
 }
 
+/* The following code block is used if we're implementing
+   gretl's R support by dlopening the R shared library
+   (as opposed to executing the R binary).
+*/
+
 #ifdef USE_RLIB
 
-static void *Rhandle;
+static void *Rhandle;  /* handle to the R library */
+static int Rlib_err;   /* initialization error record */
+static int Rinit;      /* are we initialized or not? */
 
-SEXP *PVR_GlobalEnv;
-SEXP *PVR_NilValue;
-SEXP *PVR_UnboundValue;
+static SEXP current_arg;
+static SEXP current_call;
+
+/* ponters to, and renamed versions of, the R global variables
+   we'll need */
+
+SEXP *PR_GlobalEnv;
+SEXP *PR_NilValue;
+SEXP *PR_UnboundValue;
 
 SEXP VR_GlobalEnv;
 SEXP VR_NilValue;
 SEXP VR_UnboundValue;
 
-static double *(*VREAL) (SEXP);
+/* renamed, pointerized versions of the R functions we need */
 
-static SEXP (*VCDR) (SEXP);
-static SEXP (*VRf_allocList) (int);
-static SEXP (*VRf_allocMatrix) (SEXPTYPE, int, int);
-static SEXP (*VRf_allocVector) (SEXPTYPE, R_len_t);
-static SEXP (*VRf_findFun) (SEXP, SEXP);
-static SEXP (*VRf_findVar) (SEXP, SEXP);
-static SEXP (*VSETCAR) (SEXP, SEXP);
-static SEXP (*VRf_lang2) (SEXP, SEXP);
-static SEXP (*VRf_protect) (SEXP);
-static SEXP (*VRf_ScalarReal) (double);
-static SEXP (*VR_tryEval) (SEXP, SEXP, int *);
-static SEXP (*VRf_install) (const char *);
-static SEXP (*VRf_mkString) (const char *);
+static double *(*R_REAL) (SEXP);
 
-static Rboolean (*VRf_isMatrix) (SEXP);
-static Rboolean (*VRf_isLogical) (SEXP);
-static Rboolean (*VRf_isInteger) (SEXP);
-static Rboolean (*VRf_isReal) (SEXP);
+static SEXP (*R_CDR) (SEXP);
+static SEXP (*R_allocList) (int);
+static SEXP (*R_allocMatrix) (SEXPTYPE, int, int);
+static SEXP (*R_allocVector) (SEXPTYPE, R_len_t);
+static SEXP (*R_findFun) (SEXP, SEXP);
+static SEXP (*R_findVar) (SEXP, SEXP);
+static SEXP (*R_SETCAR) (SEXP, SEXP);
+static SEXP (*R_lang2) (SEXP, SEXP);
+static SEXP (*R_protect) (SEXP);
+static SEXP (*R_ScalarReal) (double);
+static SEXP (*R_catch) (SEXP, SEXP, int *);
+static SEXP (*R_install) (const char *);
+static SEXP (*R_mkString) (const char *);
 
-static int (*VRf_initEmbeddedR) (int, char **);
-static int (*VRf_ncols) (SEXP);
-static int (*VRf_nrows) (SEXP);
-static int (*VTYPEOF) (SEXP);
+static Rboolean (*R_isMatrix) (SEXP);
+static Rboolean (*R_isLogical) (SEXP);
+static Rboolean (*R_isInteger) (SEXP);
+static Rboolean (*R_isReal) (SEXP);
 
-static void (*VRf_endEmbeddedR) (int);
-static void (*VRf_unprotect) (int);
-static void (*VRf_PrintValue) (SEXP);
-static void (*VSET_TYPEOF) (SEXP, int);
+static int (*R_initEmbeddedR) (int, char **);
+static int (*R_ncols) (SEXP);
+static int (*R_nrows) (SEXP);
+static int (*R_TYPEOF) (SEXP);
+
+static void (*R_endEmbeddedR) (int);
+static void (*R_unprotect) (int);
+static void (*R_PrintValue) (SEXP);
+static void (*R_SET_TYPEOF) (SEXP, int);
 
 #ifdef WIN32
-static char *(*Vget_R_HOME) (void);
+static char *(*R_get_HOME) (void);
 #endif
+
+/* utility function to cumulate errors from dlsym */
 
 static void *dlget (void *handle, const char *name, int *err)
 {
@@ -523,6 +557,10 @@ static void *dlget (void *handle, const char *name, int *err)
     return p;
 }
 
+/* dlopen the R library and grab all the symbols we need:
+   several function pointers and a few global variables
+*/
+
 static int load_R_symbols (void)
 {
     const char *libpath = gretl_rlib_path();
@@ -533,41 +571,41 @@ static int load_R_symbols (void)
 	return E_EXTERNAL;
     } 
 
-    VCDR              = dlget(Rhandle, "CDR", &err);
-    VREAL             = dlget(Rhandle, "REAL", &err);
-    VRf_allocList     = dlget(Rhandle, "Rf_allocList", &err);
-    VRf_allocMatrix   = dlget(Rhandle, "Rf_allocMatrix", &err);
-    VRf_allocVector   = dlget(Rhandle, "Rf_allocVector", &err);
-    VRf_endEmbeddedR  = dlget(Rhandle, "Rf_endEmbeddedR", &err);
-    VRf_findFun       = dlget(Rhandle, "Rf_findFun", &err);
-    VRf_findVar       = dlget(Rhandle, "Rf_findVar", &err);
-    VRf_initEmbeddedR = dlget(Rhandle, "Rf_initEmbeddedR", &err);
-    VRf_install       = dlget(Rhandle, "Rf_install", &err);
-    VRf_isMatrix      = dlget(Rhandle, "Rf_isMatrix", &err);
-    VRf_isLogical     = dlget(Rhandle, "Rf_isLogical", &err);
-    VRf_isInteger     = dlget(Rhandle, "Rf_isInteger", &err);
-    VRf_isReal        = dlget(Rhandle, "Rf_isReal", &err);
-    VRf_lang2         = dlget(Rhandle, "Rf_lang2", &err);
-    VRf_mkString      = dlget(Rhandle, "Rf_mkString", &err);
-    VRf_ncols         = dlget(Rhandle, "Rf_ncols", &err);
-    VRf_nrows         = dlget(Rhandle, "Rf_nrows", &err);
-    VRf_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
-    VRf_protect       = dlget(Rhandle, "Rf_protect", &err);
-    VRf_ScalarReal    = dlget(Rhandle, "Rf_ScalarReal", &err);
-    VRf_unprotect     = dlget(Rhandle, "Rf_unprotect", &err);
-    VR_tryEval        = dlget(Rhandle, "R_tryEval", &err);
-    VSETCAR           = dlget(Rhandle, "SETCAR", &err);
-    VSET_TYPEOF       = dlget(Rhandle, "SET_TYPEOF", &err); 
-    VTYPEOF           = dlget(Rhandle, "TYPEOF", &err);
+    R_CDR           = dlget(Rhandle, "CDR", &err);
+    R_REAL          = dlget(Rhandle, "REAL", &err);
+    R_allocList     = dlget(Rhandle, "Rf_allocList", &err);
+    R_allocMatrix   = dlget(Rhandle, "Rf_allocMatrix", &err);
+    R_allocVector   = dlget(Rhandle, "Rf_allocVector", &err);
+    R_endEmbeddedR  = dlget(Rhandle, "Rf_endEmbeddedR", &err);
+    R_findFun       = dlget(Rhandle, "Rf_findFun", &err);
+    R_findVar       = dlget(Rhandle, "Rf_findVar", &err);
+    R_initEmbeddedR = dlget(Rhandle, "Rf_initEmbeddedR", &err);
+    R_install       = dlget(Rhandle, "Rf_install", &err);
+    R_isMatrix      = dlget(Rhandle, "Rf_isMatrix", &err);
+    R_isLogical     = dlget(Rhandle, "Rf_isLogical", &err);
+    R_isInteger     = dlget(Rhandle, "Rf_isInteger", &err);
+    R_isReal        = dlget(Rhandle, "Rf_isReal", &err);
+    R_lang2         = dlget(Rhandle, "Rf_lang2", &err);
+    R_mkString      = dlget(Rhandle, "Rf_mkString", &err);
+    R_ncols         = dlget(Rhandle, "Rf_ncols", &err);
+    R_nrows         = dlget(Rhandle, "Rf_nrows", &err);
+    R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
+    R_protect       = dlget(Rhandle, "Rf_protect", &err);
+    R_ScalarReal    = dlget(Rhandle, "Rf_ScalarReal", &err);
+    R_unprotect     = dlget(Rhandle, "Rf_unprotect", &err);
+    R_catch         = dlget(Rhandle, "R_tryEval", &err);
+    R_SETCAR        = dlget(Rhandle, "SETCAR", &err);
+    R_SET_TYPEOF    = dlget(Rhandle, "SET_TYPEOF", &err); 
+    R_TYPEOF        = dlget(Rhandle, "TYPEOF", &err);
 
 #ifdef WIN32
-    Vget_R_HOME = dlget(Rhandle, "get_R_HOME", &err);
+    R_get_HOME = dlget(Rhandle, "get_R_HOME", &err);
 #endif
 
     if (!err) {
-	PVR_GlobalEnv    = (SEXP *) dlget(Rhandle, "R_GlobalEnv", &err);
-	PVR_NilValue     = (SEXP *) dlget(Rhandle, "R_NilValue", &err);
-	PVR_UnboundValue = (SEXP *) dlget(Rhandle, "R_UnboundValue", &err);
+	PR_GlobalEnv    = (SEXP *) dlget(Rhandle, "R_GlobalEnv", &err);
+	PR_NilValue     = (SEXP *) dlget(Rhandle, "R_NilValue", &err);
+	PR_UnboundValue = (SEXP *) dlget(Rhandle, "R_UnboundValue", &err);
     }
 
     if (err) {
@@ -579,18 +617,30 @@ static int load_R_symbols (void)
     return err;
 }
 
-static int Rinit;
-
-static SEXP current_arg;
-static SEXP current_call;
-
 void gretl_R_cleanup (void)
 {
     if (Rinit) {
-	VRf_endEmbeddedR(0);
+	R_endEmbeddedR(0);
 	close_plugin(Rhandle);
+	Rhandle = NULL;
     }
 }
+
+/* called from gretl_paths.c on revising the Rlib path:
+   allow for the possibility that the path was wrong but is
+   now OK
+*/
+
+void gretl_R_reset_error (void)
+{
+    Rlib_err = 0;
+}
+
+/* Initialize the R library for use with gretl.  Note that we only
+   need do this once per gretl session.  We need to check that the
+   environment is set to R's liking first, otherwise initialization
+   will fail -- and abort gretl too!
+*/
 
 static int gretl_Rlib_init (void)
 {
@@ -612,7 +662,7 @@ static int gretl_Rlib_init (void)
     }
 
 #ifdef WIN32
-    Rhome = Vget_R_HOME();
+    Rhome = R_get_HOME();
     if (Rhome == NULL) {
 	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
 	return E_EXTERNAL;
@@ -620,19 +670,32 @@ static int gretl_Rlib_init (void)
 #endif
 
     if (!err) {
-	char *argv[] = { "R", "--no-save", "--silent" };
+	char *argv[] = { 
+	    "gretl", 
+	    "--no-save", 
+	    "--silent", 
+	    "--slave" 
+	};
+	int ok, argc = 4;
 
-	VRf_initEmbeddedR(3, argv);
-	VR_GlobalEnv = *PVR_GlobalEnv;
-	VR_NilValue = *PVR_NilValue;
-	VR_UnboundValue = *PVR_UnboundValue;
-	Rinit = 1;
+	ok = R_initEmbeddedR(argc, argv);
+	if (ok) {
+	    VR_GlobalEnv = *PR_GlobalEnv;
+	    VR_NilValue = *PR_NilValue;
+	    VR_UnboundValue = *PR_UnboundValue;
+	    Rinit = 1;
+	} else {
+	    close_plugin(Rhandle);
+	    Rhandle = NULL;
+	    err = Rlib_err = E_EXTERNAL;
+	}
     }
 
     return err;
 }
 
-/* run R's source() function on the gretl-written R command file */
+/* run R's source() function on an R command file written by
+   gretl -- shared library version */
 
 static int lib_run_Rlib_sync (gretlopt opt, PRN *prn) 
 {
@@ -642,20 +705,19 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 
     if (!Rinit) {
 	if ((err = gretl_Rlib_init())) {
-	    fprintf(stderr, "lib_run_Rlib_sync: failed on gretl_Rlib_init\n");
 	    return err;
 	}
     }
     
     Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir());
 
-    VRf_protect(e = VRf_lang2(VRf_install("source"), VRf_mkString(Rsrc)));
-    VR_tryEval(e, VR_GlobalEnv, NULL);
-    VRf_unprotect(1);
+    R_protect(e = R_lang2(R_install("source"), R_mkString(Rsrc)));
+    R_catch(e, VR_GlobalEnv, &err);
+    R_unprotect(1);
 
     g_free(Rsrc);
 
-    return err;
+    return (err)? E_EXTERNAL : 0;
 }
 
 static SEXP find_R_function (const char *name)
@@ -663,16 +725,16 @@ static SEXP find_R_function (const char *name)
     SEXP fun;
     SEXPTYPE t;
 
-    fun = VRf_findVar(VRf_install(name), VR_GlobalEnv);
-    t = VTYPEOF(fun);
+    fun = R_findVar(R_install(name), VR_GlobalEnv);
+    t = R_TYPEOF(fun);
 
     if (t == PROMSXP) {
 	/* eval promise if need be */
 	int err = 1;
 
-	fun = VR_tryEval(fun, VR_GlobalEnv, &err);
+	fun = R_catch(fun, VR_GlobalEnv, &err);
 	if (!err) {
-	    t = VTYPEOF(fun);
+	    t = R_TYPEOF(fun);
 	}
     }
 
@@ -684,17 +746,12 @@ static SEXP find_R_function (const char *name)
     return fun;
 }
 
-static int Rlib_err;
-
-/* called from gretl_paths.c on revising the Rlib path:
-   allow for the possibility that the path was wrong but is
-   now OK
+/* Check if we should be using the R shared library for executing the
+   code in a "foreign" block.  This can be prohibited by the
+   environment variable GRETL_NO_RLIB, and can also be blocked if we
+   already tried and failed to initialize the library for gretl's use.
+   (The fallback will be to call the R binary.)
 */
-
-void gretl_R_reset_error (void)
-{
-    Rlib_err = 0;
-}
 
 static int gretl_use_Rlib (void)
 {
@@ -743,27 +800,27 @@ int get_R_function_by_name (const char *name)
 
 int gretl_R_function_add_scalar (double x) 
 {
-    current_arg = VCDR(current_arg);
-    VSETCAR(current_arg, VRf_ScalarReal(x));
+    current_arg = R_CDR(current_arg);
+    R_SETCAR(current_arg, R_ScalarReal(x));
     return 0;
 }
 
 int gretl_R_function_add_vector (const double *x, int t1, int t2) 
 {
-    SEXP res = VRf_allocVector(REALSXP, t2 - t1 + 1);
+    SEXP res = R_allocVector(REALSXP, t2 - t1 + 1);
     int i;
 
     if (res == NULL) {
 	return E_ALLOC;
     }
 
-    current_arg = VCDR(current_arg);
+    current_arg = R_CDR(current_arg);
 
     for (i=t1; i<=t2; i++) {
-    	VREAL(res)[i-t1] = x[i];
+    	R_REAL(res)[i-t1] = x[i];
     }
     
-    VSETCAR(current_arg, res);
+    R_SETCAR(current_arg, res);
     return 0;
 }
 
@@ -774,19 +831,19 @@ int gretl_R_function_add_matrix (const gretl_matrix *m)
     SEXP res;
     int i, j;
 
-    current_arg = VCDR(current_arg);
-    res = VRf_allocMatrix(REALSXP, nr, nc);
+    current_arg = R_CDR(current_arg);
+    res = R_allocMatrix(REALSXP, nr, nc);
     if (res == NULL) {
 	return E_ALLOC;
     }
 
     for (i=0; i<nr; i++) {
 	for (j=0; j<nc; j++) {
-	    VREAL(res)[i + j * nr] = gretl_matrix_get(m, i, j);
+	    R_REAL(res)[i + j * nr] = gretl_matrix_get(m, i, j);
     	}
     }
     
-    VSETCAR(current_arg, res);
+    R_SETCAR(current_arg, res);
 
     return 0;
 }
@@ -797,18 +854,18 @@ int gretl_R_get_call (const char *name, int argc)
 {
     SEXP call, e;
 
-    call = VRf_findFun(VRf_install(name), VR_GlobalEnv);
+    call = R_findFun(R_install(name), VR_GlobalEnv);
 
     if (call == VR_NilValue) {
 	fprintf(stderr, "gretl_R_get_call: no definition for function %s\n", 
 		name);
-	VRf_unprotect(1); /* is this OK? */
+	R_unprotect(1); /* is this OK? */
 	return E_EXTERNAL;
     } 
 
-    VRf_protect(e = VRf_allocList(argc + 1));
-    VSET_TYPEOF(e, LANGSXP);
-    VSETCAR(e, VRf_install(name));
+    R_protect(e = R_allocList(argc + 1));
+    R_SET_TYPEOF(e, LANGSXP);
+    R_SETCAR(e, R_install(name));
     current_call = current_arg = e;
  
     return 0;
@@ -816,13 +873,13 @@ int gretl_R_get_call (const char *name, int argc)
 
 static int R_type_to_gretl_type (SEXP s)
 {
-    if (VRf_isMatrix(s)) {
+    if (R_isMatrix(s)) {
 	return GRETL_TYPE_MATRIX;
-    } else if (VRf_isLogical(s)) {
+    } else if (R_isLogical(s)) {
 	return GRETL_TYPE_BOOL;
-    } else if (VRf_isInteger(s)) {
+    } else if (R_isInteger(s)) {
 	return GRETL_TYPE_INT;
-    } else if (VRf_isReal(s)) {
+    } else if (R_isReal(s)) {
 	return GRETL_TYPE_DOUBLE;
     } else {
 	return GRETL_TYPE_NONE;
@@ -839,10 +896,10 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     int err = 0;
 
     if (gretl_messages_on()) {
-	VRf_PrintValue(current_call);
+	R_PrintValue(current_call);
     }
 
-    res = VR_tryEval(current_call, VR_GlobalEnv, &err);
+    res = R_catch(current_call, VR_GlobalEnv, &err);
     if (err) {
 	return E_EXTERNAL;
     }
@@ -851,8 +908,8 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
     if (*rtype == GRETL_TYPE_MATRIX) {
 	gretl_matrix *pm;
-	int nc = VRf_ncols(res);
-	int nr = VRf_nrows(res);
+	int nc = R_ncols(res);
+	int nr = R_nrows(res);
 	int i, j;
 
 	pm = gretl_matrix_alloc(nr, nc);
@@ -862,18 +919,18 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
 	for (i=0; i<nr; i++) {
 	    for (j=0; j<nc; j++) {
-		gretl_matrix_set(pm, i, j, VREAL(res)[i + j * nr]);
+		gretl_matrix_set(pm, i, j, R_REAL(res)[i + j * nr]);
 	    }
 	}
-	VRf_unprotect(1);
+	R_unprotect(1);
 	*ret = pm;
     } else if (gretl_scalar_type(*rtype)) {
-	double *realres = VREAL(res);
+	double *realres = R_REAL(res);
 	double *dret = *ret;
 
 	*dret = *realres;
 
-    	VRf_unprotect(1);
+    	R_unprotect(1);
     } else {
 	err = E_EXTERNAL;
     }
@@ -881,7 +938,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     return err;
 }
 
-#endif /* USE_RLIB */
+#endif /* USE_RLIB : accessing R shared library */
 
 static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 {
@@ -917,8 +974,18 @@ static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
     return err;
 }
 
-/* starting a "foreign" block from scratch, or adding a line
-   to an existing block */
+/**
+ * foreign_append_line:
+ * @line: command line.
+ * @opt: may include %OPT_V for verbose operation
+ * @prn: struct for printing output.
+ *
+ * Appends @line to an internally stored block of "foreign"
+ * commands, or starts a new block if no such block is
+ * currently defined.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
 {
@@ -945,7 +1012,18 @@ int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
     return err;
 }
 
-/* respond to "end foreign" [opts] */
+/**
+ * foreign_execute:
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @opt: may include %OPT_V for verbose operation
+ * @prn: struct for printing output.
+ *
+ * Executes a block of commands previously established via
+ * calls to foreign_append_line().
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int foreign_execute (const double **Z, const DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn)
@@ -953,6 +1031,7 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
     int i, err = 0;
 
     if (opt & OPT_V) {
+	/* verbose: echo the stored commands */
 	for (i=0; i<foreign_n_lines; i++) {
 	    pprintf(prn, "> %s\n", foreign_lines[i]);
 	}
@@ -982,7 +1061,10 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 	} else {
 	    lib_run_ox_sync(foreign_opt, prn);
 	}
-    } 
+    } else {
+	/* "can't happen" */
+	err = E_DATA;
+    }
     
     destroy_foreign();
 

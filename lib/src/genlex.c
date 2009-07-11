@@ -656,7 +656,7 @@ static char *get_quoted_string (parser *p)
     }
 
     if (!p->err) {
-	if (p->ch == '.' && parser_charpos(p, '$') == 0) {
+	if (p->ch == '.' && *p->point == '$') {
 	    /* maybe quoted name of saved object followed by 
 	       dollar variable? */
 	    p->sym = OVAR;
@@ -790,7 +790,7 @@ static void look_up_dollar_word (const char *s, parser *p)
 
 static int maybe_get_R_function (const char *s)
 {
-    if (strlen(s) >= 3 && !strncmp(s, "R_", 2)) {
+    if (strlen(s) >= 3 && !strncmp(s, "R.", 2)) {
 	return get_R_function_by_name(s + 2);
     } else {
 	return 0;
@@ -909,7 +909,7 @@ static void word_check_next_char (const char *s, parser *p)
 	} else {
 	    p->err = 1;
 	} 
-    } else if (p->ch == '.' && parser_charpos(p, '$') == 0) {
+    } else if (p->ch == '.' && *p->point == '$') {
 	if (p->sym == UOBJ) {
 	    /* name of saved object followed by dollar variable? */
 	    p->sym = OVAR;
@@ -939,7 +939,7 @@ static int is_word_char (parser *p)
 	return 1;
     } else if (p->targ == LIST && p->ch == '*') {
 	return 1;
-    }
+    } 
 
     return 0;
 }
@@ -952,6 +952,14 @@ static void getword (parser *p)
     /* we know the first char is acceptable (and might be '$' or '@') */
     word[i++] = p->ch;
     parser_getc(p);
+
+#ifdef USE_RLIB
+    /* allow for R.foo function namespace */
+    if (*word == 'R' && p->ch == '.' && *p->point != '$') {
+	word[i++] = p->ch;
+	parser_getc(p);
+    }
+#endif
 
     while (p->ch != 0 && is_word_char(p) && i < 31) {
 	word[i++] = p->ch;

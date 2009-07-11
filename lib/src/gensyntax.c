@@ -284,8 +284,8 @@ static void unmatched_symbol_error (int c, parser *p)
 static int unary_apost (parser *p) 
 {
     if (p->ch == '\'') {
-	/* peek at the next non-space character */
-	int c = parser_next_char(p);
+	/* peek ahead */
+	int c = parser_next_nonspace_char(p);
 
 	if (isalpha(c) || c == '$' || c == '(') {
 	    /* next symbol is variable or expression: the
