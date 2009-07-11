@@ -28,6 +28,10 @@ export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.3"
 if [ "$GNUTERM" = "aqua" ] ; then
    export GNUTERM=x11
 fi
+# R shared library: may require platform-specific symlink
+if [ "x$R_HOME" = "x" ] ; then
+   export R_HOME=/Library/Framework/R.framework/Resources
+fi
 
 export "PATH=$CWD:$PATH"
 
