@@ -130,7 +130,45 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 {
-    return E_EXTERNAL;
+    char oxpath[MAX_PATH];
+    gchar *fname, *cmd;
+    gchar *oxout = NULL;
+    int err = 0;
+
+    strcpy(oxpath, "ox.exe"); /* FIXME */
+    fname = gretl_ox_filename();   
+
+    if (opt & OPT_Q) {
+	cmd = g_strdup_printf("\"%s\" \"%s\"", oxpath, fname);
+    } else {
+	oxout = g_strdup_printf("%sox.out", gretl_dot_dir());
+	cmd = g_strdup_printf("\"%s\" \"%s\" > \"%s\"", 
+			      oxpath, fname, oxout);
+    }
+
+    err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
+
+    if (!err && oxout != NULL) {
+	FILE *fp;
+
+	fp = gretl_fopen(oxout, "r");
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    char line[1024];
+
+	    while (fgets(line, sizeof line, fp)) {
+		pputs(prn, line);
+	    }
+	    fclose(fp);
+	}
+    }
+
+    g_free(fname);
+    g_free(oxout);
+    g_free(cmd);
+
+    return err;
 }
 
 #else
