@@ -135,7 +135,7 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
     gchar *oxout = NULL;
     int err = 0;
 
-    strcpy(oxpath, "ox.exe"); /* FIXME */
+    strcpy(oxpath, "oxl.exe"); /* FIXME? */
     fname = gretl_ox_filename();   
 
     if (opt & OPT_Q) {
