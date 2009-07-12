@@ -115,14 +115,19 @@ static int progress_window (ProgressData **ppdata, int flag)
 
 int show_progress (long res, long expected, int flag)
 {
-    static long offs;
     static ProgressData *pdata;
+    static long offs;
 
-    if (expected == 0) return SP_RETURN_DONE;
+    if (expected == 0) {
+	return SP_RETURN_DONE;
+    }
 
     if (res < 0 || flag == SP_FINISH) {
 	if (pdata != NULL && pdata->window != NULL) {
 	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
+	    while (gtk_events_pending()) {
+		gtk_main_iteration();
+	    }	    
 	}
 	return SP_RETURN_DONE;
     }
@@ -169,7 +174,9 @@ int show_progress (long res, long expected, int flag)
     if (offs <= expected && pdata != NULL) {
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 
 				      (gdouble) ((double) offs / expected));
-	while (gtk_events_pending()) gtk_main_iteration();
+	while (gtk_events_pending()) {
+	    gtk_main_iteration();
+	}
     } else {
 	if (pdata != NULL && pdata->window != NULL) {
 	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 

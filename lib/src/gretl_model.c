@@ -4207,7 +4207,11 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 
     cur = node->xmlChildrenNode;
 
-    while (cur != NULL && !*err) {
+#if XDEBUG
+    fprintf(stderr, "reading model child nodes...\n");
+#endif
+
+    while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "sample")) {
 	    gretl_xml_get_prop_as_int(cur, "t1", &pmod->smpl.t1);
 	    gretl_xml_get_prop_as_int(cur, "t2", &pmod->smpl.t2);
@@ -4242,10 +4246,13 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	} else if (!xmlStrcmp(cur->name, (XUC) "data-items")) {
 	    *err = model_data_items_from_xml(cur, doc, pmod, fixopt);
 	}
+
 	if (*err) {
 	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d on %s\n", 
 		    *err, cur->name);
+	    break;
 	}
+
 	cur = cur->next;
     }
 

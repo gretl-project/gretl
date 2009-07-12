@@ -75,4 +75,7 @@
 /* Use the GNU R shared library */
 #define USE_RLIB 1
 
+/* Support Ox? */
+#define USE_OX 1
+
 #endif /* WINCONFIG_H */

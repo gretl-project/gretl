@@ -820,72 +820,126 @@ int gretl_xml_child_get_string (xmlNodePtr node, xmlDocPtr doc,
     return ret;
 }
 
-static const char *skip_to_next (const char *s)
-{
-    s += strspn(s, " \r\n");
-    s += strcspn(s, " \r\n");
-    s += strspn(s, " \r\n");
-
-    return s;
-}
-
 static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 				  GretlType type,
 				  int *nelem, int *err)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
-    const char *p;
     int *ivals = NULL;
     double *xvals = NULL;
     cmplx *cvals = NULL;
     void *ptr = NULL;
+    int nread = 0;
     int i, n = 0;
 
-    if (tmp != NULL) {
-	n = atoi((const char *) tmp);
-	free(tmp);
-	if (n > 0) {
-	    if (type == GRETL_TYPE_INT_ARRAY) {
-		ivals = malloc(n * sizeof *ivals);
-		ptr = ivals;
-	    } else if (type == GRETL_TYPE_DOUBLE_ARRAY) {
-		xvals = malloc(n * sizeof *xvals);
-		ptr = xvals;
-	    } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
-		cvals = malloc(n * sizeof *cvals);
-		ptr = cvals;
-	    }
-	    if (ptr == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-		if (tmp == NULL) {
+    if (tmp == NULL) {
+	fprintf(stderr, "gretl_xml_get_array: failed\n");
+	*err = E_DATA;
+	*nelem = 0;
+	return NULL;
+    }
+
+    n = atoi((const char *) tmp);
+    free(tmp);
+
+    if (n <= 0) {
+	*nelem = 0;
+	return NULL;
+    }    
+
+    if (type == GRETL_TYPE_INT_ARRAY) {
+	ivals = malloc(n * sizeof *ivals);
+	ptr = ivals;
+    } else if (type == GRETL_TYPE_DOUBLE_ARRAY) {
+	xvals = malloc(n * sizeof *xvals);
+	ptr = xvals;
+    } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
+	cvals = malloc(n * sizeof *cvals);
+	ptr = cvals;
+    }
+
+    if (ptr == NULL) {
+	*err = E_ALLOC;
+	*nelem = 0;
+	return NULL;
+    }
+
+    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    if (tmp == NULL) {
+	*err = E_DATA;
+    } else {
+	const char *s = (const char *) tmp;
+	char *test;
+
+	errno = 0;
+	
+	if (type == GRETL_TYPE_DOUBLE_ARRAY) {
+	    double x;
+
+	    for (i=0; i<n && !*err && *s; i++) {
+		while (isspace(*s)) s++;
+		x = strtod(s, &test);
+		if (errno) {
+		    *err = E_DATA;
+		} else if (!strncmp(test, "NA", 2)) {
+		    x = NADBL;
+		    s = test + 2;
+		} else if (*test != '\0' && !isspace(*test)) {
 		    *err = E_DATA;
 		} else {
-		    p = (const char *) tmp;
-		    p += strspn(p, " \r\n");
-		    for (i=0; i<n && !*err; i++) {
-			if (type == GRETL_TYPE_INT_ARRAY) {
-			    if (sscanf(p, "%d", &ivals[i]) != 1) {
-				*err = E_DATA;
-			    }
-			} else if (type == GRETL_TYPE_DOUBLE_ARRAY) {
-			    if (!strncmp(p, "NA", 2)) {
-				xvals[i] = NADBL;
-			    } else if (sscanf(p, "%lf", &xvals[i]) != 1) {
-				*err = E_DATA;
-			    }
-			} else if (type == GRETL_TYPE_CMPLX_ARRAY) {
-			    if (sscanf(p, "%lf %lf", &cvals[i].r, &cvals[i].i) != 2) {
-				*err = E_DATA;
-			    } 
-			    p = skip_to_next(p);
-			}
-			p = skip_to_next(p);
-		    }
-		    free(tmp);
+		    s = test;
+		}
+		xvals[i] = x;
+		nread++;
+	    }
+	} if (type == GRETL_TYPE_INT_ARRAY) {
+	    long kl;
+
+	    for (i=0; i<n && !*err && *s; i++) {
+		while (isspace(*s)) s++;
+		kl = strtol(s, &test, 10);
+		if (errno) {
+		    *err = E_DATA;
+		} else if (*test != '\0' && !isspace(*test)) {
+		    *err = E_DATA;
+		} else {
+		    s = test;
+		    ivals[i] = kl;
+		    nread++;
 		}
 	    }
+	} else if (type == GRETL_TYPE_CMPLX_ARRAY) { 
+	    double x;
+	    int n2 = n * 2;
+	    int rval = 1;
+
+	    for (i=0; i<n2 && !*err && *s; i++) {
+		while (isspace(*s)) s++;
+		x = strtod(s, &test);
+		if (errno) {
+		    *err = E_DATA;
+		} else if (*test != '\0' && !isspace(*test)) {
+		    *err = E_DATA;
+		} else {
+		    s = test;
+		    if (rval) {
+			cvals[nread].r = x;
+			rval = 0;
+		    } else {
+			cvals[nread].i = x;
+			rval = 1;
+			nread++;
+		    }
+		}
+	    }
+	}   
+
+	free(tmp);
+
+	if (nread < n) {
+	    fprintf(stderr, "expected %d items in array, but got %d\n", n, nread);
+	    *err = E_DATA;
 	}
     }
 
@@ -1848,6 +1902,8 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
     return err;
 }
 
+#define GDT_DEBUG 0
+
 static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
 				 double ***pZ, DATAINFO *pdinfo,
 				 long progress)
@@ -1939,6 +1995,10 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 
     if (progress) {
 	(*show_progress)(0L, progress, SP_LOAD_INIT);
+#if GDT_DEBUG
+	fprintf(stderr, "process_observations: inited progess bar (n=%d)\n",
+		pdinfo->n);
+#endif
     }
 
     t = 0;
@@ -2008,6 +2068,9 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
  bailout:
 
     if (progress) {
+#if GDT_DEBUG
+	fprintf(stderr, "finalizing progress bar (n = %d)\n", pdinfo->n);
+#endif
 	(*show_progress)(0L, (long) pdinfo->n, SP_FINISH);
 	close_plugin(handle);
     }
@@ -2283,7 +2346,9 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 	fprintf(stderr, "%s %ld bytes %s...\n", 
 		(is_gzipped(fname))? I_("Uncompressing") : I_("Reading"),
 		fsz, I_("of data"));
-	if (opt & OPT_B) progress = fsz;
+	if (opt & OPT_B) {
+	    progress = fsz;
+	}
     }
 
 #ifdef ENABLE_NLS
@@ -2350,6 +2415,10 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 	goto bailout;
     }     
 
+#if GDT_DEBUG
+    fprintf(stderr, "starting to walk XML tree...\n");
+#endif
+
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
@@ -2373,8 +2442,14 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 		gotobs = 1;
 	    }
 	}
-	if (!err) cur = cur->next;
+	if (!err) {
+	    cur = cur->next;
+	}
     }
+
+#if GDT_DEBUG
+    fprintf(stderr, "done walking XML tree...\n");
+#endif
 
     gretl_pop_c_numeric_locale();
 
@@ -2434,6 +2509,10 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 
 #ifdef ENABLE_NLS
     console_off();
+#endif
+
+#if GDT_DEBUG
+    fprintf(stderr, "gretl_read_gdt: returning %d\n", err);
 #endif
 
     return err;

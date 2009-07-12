@@ -1123,6 +1123,8 @@ void do_open_session (void)
 	fprintf(stderr, "Failed on set_session_dirname\n");
 	file_read_errbox("session.xml");
 	goto bailout;
+    } else {
+	fprintf(stderr, "set_session_dirname: '%s', OK\n", zdirname);
     }
 
     g_free(zdirname);
@@ -1143,6 +1145,7 @@ void do_open_session (void)
 
     if (fp != NULL) {
 	/* OK, write good name into gdtname */
+	fprintf(stderr, "got datafile name '%s'\n", paths.datfile);
 	strcpy(gdtname, paths.datfile);
 	fclose(fp);
     } else {
