@@ -2682,6 +2682,9 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	    remove_png_term_from_plotfile_by_name(fullname);
 	    vwin = view_file(fullname, 1, 0, 78, 400, EDIT_GP);
 	    object_set_window_title(vwin, obj);
+	    /* add flag so we can mark the session as modified
+	       if the plot file is changed */
+	    vwin->flags |= VWIN_SESSION_GRAPH;
 	}
     } else if (!strcmp(item, _("Rename"))) {
 	rename_object_dialog(obj);

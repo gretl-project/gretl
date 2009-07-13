@@ -54,7 +54,8 @@ enum windata_flags {
     VWIN_BUSY            = 1 << 1,
     VWIN_DELETE_FNAME    = 1 << 2,
     VWIN_STICKY          = 1 << 3,
-    VWIN_CONTENT_CHANGED = 1 << 4
+    VWIN_CONTENT_CHANGED = 1 << 4,
+    VWIN_SESSION_GRAPH   = 1 << 5
 };
 
 typedef struct _windata_t windata_t;

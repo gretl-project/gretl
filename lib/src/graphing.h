@@ -254,6 +254,8 @@ int gnuplot_has_bbox (void);
 
 int gnuplot_has_utf8 (void);
 
+int gnuplot_uses_datafile_missing (void);
+
 void set_graph_palette (int i, gretlRGB color);
 
 void set_graph_palette_from_string (int i, const char *cstr);

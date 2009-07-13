@@ -11,7 +11,7 @@ gchar *my_locale_to_utf8 (const gchar *src);
 
 gchar *my_locale_to_utf8_next (const gchar *src);
 
-int maybe_recode_gp_file_to_utf8 (const char *fname);
+int maybe_rewrite_gp_file (const char *fname);
 
 gchar *gp_locale_from_utf8 (const gchar *src);
 

@@ -20,13 +20,18 @@
 #ifndef TOOLBAR_H
 #define TOOLBAR_H
 
+typedef enum {
+    VIEWBAR_EDITABLE = 1 << 0,
+    VIEWBAR_HAS_TEXT = 1 << 1
+} ViewbarFlags;
+
 void gretl_stock_icons_init (void);
 
 void show_toolbar (void);
 
 void gretl_pdf_manual (void);
 
-void vwin_add_viewbar (windata_t *vwin, int text_out);
+void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags);
 
 void viewbar_add_edit_items (windata_t *vwin);
 

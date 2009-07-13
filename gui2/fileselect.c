@@ -265,6 +265,9 @@ static void script_window_update (windata_t *vwin, const char *fname)
 	vwin->role == VIEW_FUNC_CODE) {
 	/* change role of window for editing */
 	vwin->role = EDIT_SCRIPT;
+    } else if (vwin->role == EDIT_GP) {
+	/* plot file no longer under session control */
+	vwin->flags &= ~VWIN_SESSION_GRAPH;
     }
 
     mark_vwin_content_saved(vwin);

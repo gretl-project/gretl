@@ -64,7 +64,6 @@ char *storelist = NULL;
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkActionEntry *items, const gchar *ui_info);
 static void set_up_model_view_menu (GtkWidget *window, windata_t *vwin);
-static void auto_save_script (windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
@@ -476,38 +475,45 @@ static gboolean Ctrl_C (windata_t *vwin)
 #endif
 }
 
+int vwin_is_editing (windata_t *vwin)
+{
+    if (vwin != NULL && vwin->text != NULL) {
+	return gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->text));
+    } else {
+	return 0;
+    }
+}
+
 static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods;
+    guint upkey;
     int editing;
 
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
-    editing = gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->text));
+    upkey = gdk_keyval_to_upper(key->keyval);
+    editing = vwin_is_editing(vwin);
 
     if (mods & GDK_CONTROL_MASK) {
-	if (key->keyval == GDK_f) {
+	if (upkey == GDK_F) {
 	    /* Ctrl-F: find */
 	    text_find(NULL, vwin);
 	    return TRUE;
-	} else if (key->keyval == GDK_c) {
+	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
 	    return Ctrl_C(vwin);
 	} else if (editing) {
-	    if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
+	    if (upkey == GDK_S) { 
 		/* Ctrl-S: save */
-		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
-		    buf_edit_save(NULL, vwin);
-		} else {
-		    view_window_save(NULL, vwin);
-		}
-	    } else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
-		/* Ctrl-Q: quit */
-		if (vwin->role == EDIT_SCRIPT && 
-		    (vwin->flags & VWIN_CONTENT_CHANGED)) {
+		vwin_save_callback(NULL, vwin);
+	    } else if (upkey == GDK_Q || upkey == GDK_X) {
+		/* Ctrl-Q, Ctrl-X: quit, exit */
+		if (vwin->role == EDIT_SCRIPT && vwin_content_changed(vwin)) {
 		    if (query_save_text(NULL, NULL, vwin) == FALSE) {
 			gtk_widget_destroy(vwin->main);
 		    }
 		} else { 
+		    /* eh? */
 		    gtk_widget_destroy(w);
 		}
 	    } 
@@ -520,11 +526,11 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	return FALSE;
     }
 
-    if (key->keyval == GDK_q) { 
+    if (upkey == GDK_Q) { 
         gtk_widget_destroy(w);
-    } else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
+    } else if (upkey == GDK_S && Z != NULL && vwin->role == VIEW_MODEL) {
 	model_add_as_icon(NULL, vwin);
-    } else if (key->keyval == GDK_w) {
+    } else if (upkey == GDK_W) {
 	if (mods & GDK_CONTROL_MASK) {
 	    gtk_widget_destroy(w);
 	    return TRUE;
@@ -534,9 +540,9 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     /* respond to 'a' and 'x', but not if Alt-modified */
     else if (!(mods & GDK_MOD1_MASK)) {
-	if (key->keyval == GDK_a) {
+	if (upkey == GDK_A) {
 	    audio_render_window(vwin, AUDIO_TEXT);
-	} else if (key->keyval == GDK_x) {
+	} else if (upkey == GDK_X) {
 	    stop_talking();
 	}
     }
@@ -1045,7 +1051,12 @@ void mark_vwin_content_saved (windata_t *vwin)
     }
 }
 
-void buf_edit_save (GtkWidget *widget, windata_t *vwin)
+/* save content function for an editor window that is hooked
+   up to a given text buffer rather than in the business of
+   saving to file
+*/
+
+static void buf_edit_save (GtkWidget *w, windata_t *vwin)
 {
     char **pbuf = (char **) vwin->data;
     gchar *text;
@@ -1087,14 +1098,14 @@ static int update_func_code (windata_t *vwin)
     return err;
 }
 
-void view_window_save (GtkWidget *widget, windata_t *vwin)
+static void file_edit_save (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == EDIT_FUNC_CODE && *vwin->fname == '\0') {
-	/* function package, sample script window */
+	/* special: function package, sample script window */
 	update_sample_script(vwin);
 	mark_vwin_content_saved(vwin);
     } else if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
-	/* special case: a newly created script */
+	/* newly created script: no real filename yet */
 	if (vwin->role == EDIT_SCRIPT) {
 	    file_selector(_("Save command script"), SAVE_SCRIPT, 
 			  FSEL_DATA_VWIN, vwin);
@@ -1108,13 +1119,23 @@ void view_window_save (GtkWidget *widget, windata_t *vwin)
 	    file_selector(_("Save"), SAVE_OX_CMDS, 
 			  FSEL_DATA_VWIN, vwin);
 	}	    
+    } else if (vwin->role == EDIT_GP) {
+	gchar *text = textview_get_text(vwin->text);
+
+	dump_plot_buffer(text, vwin->fname, 0);
+	g_free(text);
+	mark_vwin_content_saved(vwin);
+	if (vwin->flags & VWIN_SESSION_GRAPH) {
+	    mark_session_changed();
+	}
     } else {
 	FILE *fp;
 	gchar *text;
 
-	if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
-	    errbox(_("Can't open file for writing"));
-	    return;
+	fp = gretl_fopen(vwin->fname, "w");
+
+	if (fp == NULL) {
+	    file_write_errbox(vwin->fname);
 	} else {
 	    text = textview_get_text(vwin->text);
 	    system_print_buf(text, fp);
@@ -1125,6 +1146,15 @@ void view_window_save (GtkWidget *widget, windata_t *vwin)
 		update_func_code(vwin);
 	    }
 	}
+    }
+}
+
+void vwin_save_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin_editing_buffer(vwin->role)) {
+	buf_edit_save(w, vwin);
+    } else {
+	file_edit_save(w, vwin);
     }
 }
 
@@ -1500,8 +1530,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	       role == EDIT_FUNC_CODE ||
 	       role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
+    } else if (role == EDIT_FUNC_CODE) {
+	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
     } else if (role != IMPORT) {
-	vwin_add_viewbar(vwin, 1);
+	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 
     gretl_print_get_size(prn, &w, &nlines);
@@ -1561,30 +1593,24 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     return vwin;
 }
 
-#define view_file_use_sourceview(r) (r == EDIT_SCRIPT || \
+#define view_file_use_sourceview(r) (vwin_editing_script(r) || \
                                      r == VIEW_SCRIPT || \
-                                     r == VIEW_LOG || \
-                                     r == EDIT_GP || \
-				     r == EDIT_R || \
-				     r == EDIT_OX)
+                                     r == VIEW_LOG)
 
-#define record_on_winstack(r) (r != EDIT_SCRIPT && \
-	                       r != EDIT_GP && \
-                               r != EDIT_R && \
-                               r != EDIT_OX && \
+#define record_on_winstack(r) (!vwin_editing_script(r) && \
                                r != VIEW_LOG && \
                                r != VIEW_SCRIPT && \
                                r != CONSOLE)
 
-#define editing_script(r) (r == EDIT_SCRIPT || \
-	                   r == EDIT_GP || \
-                           r == EDIT_R || \
-			   r == EDIT_OX)
+#define text_out_ok(r) (r == VIEW_DATA ||	\
+			r == CONSOLE ||		\
+			r == VIEW_FILE)
 
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
 {
     windata_t *vwin;
+    ViewbarFlags vflags = 0;
     FILE *fp;
     gchar *title = NULL;
 
@@ -1610,7 +1636,16 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     strcpy(vwin->fname, filename);
 
     viewer_box_config(vwin);
-    vwin_add_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE || role == VIEW_FILE));
+
+    if (editable) {
+	vflags = VIEWBAR_EDITABLE;
+    }
+
+    if (text_out_ok(role)) {
+	vflags |= VIEWBAR_HAS_TEXT;
+    }
+
+    vwin_add_viewbar(vwin, vflags);
 
     if (view_file_use_sourceview(role)) {
 	create_source(vwin, hsize, vsize, editable);
@@ -1634,9 +1669,9 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
     }
 
-    /* editing script or graph: grab the "changed" signal and
+    /* editing script or graph commands: grab the "changed" signal and
        set up alert for unsaved changes on exit */
-    if (editing_script(role)) {
+    if (vwin_editing_script(role)) {
 	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
@@ -1735,24 +1770,20 @@ void view_window_set_editable (windata_t *vwin)
     attach_content_changed_signal(vwin);
 }
 
-gint query_save_text (GtkWidget *w, GdkEvent *event, 
-		      windata_t *vwin)
+/* Called on destroying an editing window: give the user a chance
+   to save if the content is changed, or to cancel the close.
+*/
+
+gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
-    if (vwin->flags & VWIN_CONTENT_CHANGED) {
+    if (vwin_content_changed(vwin)) {
 	int resp = yes_no_dialog("gretl", _("Save changes?"), 1);
 
 	if (resp == GRETL_CANCEL) {
+	    /* cancel -> don't save, but also don't close */
 	    return TRUE;
-	}
-
-	if (resp == GRETL_YES) {
-	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
-		buf_edit_save(NULL, vwin);
-	    } else if (vwin->role == EDIT_SCRIPT) {
-		auto_save_script(vwin);
-	    } else if (vwin->role == GR_PLOT) {
-		auto_save_plot(vwin);
-	    }
+	} else if (resp == GRETL_YES) {
+	    vwin_save_callback(NULL, vwin);
 	}
     }
 
@@ -1772,7 +1803,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     viewer_box_config(vwin); 
 
     /* add a tool bar */
-    vwin_add_viewbar(vwin, 0);
+    vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
 
     create_text(vwin, hsize, vsize, 0, TRUE);
     text_table_setup(vwin->vbox, vwin->text);
@@ -1886,32 +1917,6 @@ void auto_save_plot (windata_t *vwin)
 
     dump_plot_buffer(buf, vwin->fname, 1);
     g_free(buf);
-
-    mark_vwin_content_saved(vwin);
-}
-
-static void auto_save_script (windata_t *vwin)
-{
-    FILE *fp;
-    gchar *savestuff;
-    int unsaved = 0;
-
-    if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
-	file_selector(_("Save command script"), SAVE_SCRIPT, 
-		      FSEL_DATA_VWIN, vwin);
-	strcpy(vwin->fname, scriptfile);
-	unsaved = 1;
-    }
-
-    if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
-	file_write_errbox(vwin->fname);
-	return;
-    }
-
-    savestuff = textview_get_text(vwin->text);
-    fprintf(fp, "%s", savestuff);
-    g_free(savestuff); 
-    fclose(fp);
 
     mark_vwin_content_saved(vwin);
 }

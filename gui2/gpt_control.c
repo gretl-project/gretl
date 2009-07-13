@@ -871,29 +871,27 @@ static void graph_display_pdf (GPT_SPEC *spec)
 
 /* dump_plot_buffer: this is used when we're taking the material from
    an editor window containing gnuplot commands, and either (a)
-   sending it to gnuplot for execution, or (b) saving it to "user
-   file".  There's a question over what we should do with non-ascii
-   strings in the plot file.  These will be in UTF-8 in the GTK editor
-   window.  It seems that the best thing is to determine the character
-   set for the current locale (using g_get_charset) and if it is not
-   UTF-8, recode to the locale.  This won't be right in all cases, but
-   I'm not sure how we could do better.
+   sending it to gnuplot for execution, or (b) saving it to a "user
+   file".  
 
-   It might perhaps be worth offering a dialog box with a choice of
-   encodings, but the user would have to be quite knowledgeable
-   to make sense of this.  AC, 2008-01-10.
+   There's a question over what we should do with non-ascii strings in
+   the plot file.  These will be in UTF-8 in the GTK editor window.
+   That's OK if gnuplot supports UTF-8, but otherwise it seems that
+   the best thing is to determine the character set for the current
+   locale (using g_get_charset) and if it is not UTF-8, recode to the
+   locale. 
+
+   This function also handles the addition of "pause -1" on MS
+   Windows, if @addpause is non-zero.
 */
 
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause)
 {
     FILE *fp;
-    int gotpause = 0;
-    int done, recode = 0;
-    char bufline[512];
+    int recode = 0;
 #ifdef ENABLE_NLS
     const gchar *cset;
-    gchar *trbuf;
 #endif
 
     fp = gretl_fopen(fname, "w");
@@ -903,40 +901,58 @@ int dump_plot_buffer (const char *buf, const char *fname,
     }
 
 #ifdef ENABLE_NLS
-    recode = !g_get_charset(&cset);
+    if (!g_get_charset(&cset) && !gnuplot_has_utf8()) {
+	/* we're on a non-UTF-8 platform and we need to convert */
+	recode = 1;
+    } else if (!gnuplot_has_utf8()) {
+	/* we're screwed -- what do we recode to? */
+	fprintf(stderr, "Warning: gnuplot does not support UTF-8\n");
+    }
 #endif
 
-    bufgets_init(buf);
-
-    while (bufgets(bufline, sizeof bufline, buf)) {
-	done = 0;
+    if (!recode && !addpause) {
+	/* nice and simple! */
+	fputs(buf, fp);
+    } else {
 #ifdef ENABLE_NLS
-	if (recode) {
-	    trbuf = gp_locale_from_utf8(bufline);
-	    if (trbuf != NULL) {
-		fputs(trbuf, fp);
-		g_free(trbuf);
-		done = 1;
+	gchar *trbuf;
+#endif
+	char bufline[512];
+	int gotpause = 0;
+	int handled;
+
+	bufgets_init(buf);
+
+	while (bufgets(bufline, sizeof bufline, buf)) {
+	    handled = 0;
+#ifdef ENABLE_NLS
+	    if (recode) {
+		trbuf = gp_locale_from_utf8(bufline);
+		if (trbuf != NULL) {
+		    fputs(trbuf, fp);
+		    g_free(trbuf);
+		    handled = 1;
+		}
+	    }
+#endif
+	    if (!handled) {
+		fputs(bufline, fp);
+	    }
+	    if (addpause && strstr(bufline, "pause -1")) {
+		gotpause = 1;
 	    }
 	}
-#endif
-	if (!done) {
-	    fputs(bufline, fp);
-	}
-	if (addpause && strstr(bufline, "pause -1")) {
-	    gotpause = 1;
-	}
-    }
 
-    bufgets_finalize(buf);
+	bufgets_finalize(buf);
 
 #ifdef G_OS_WIN32
-    /* sending directly to gnuplot on MS Windows */
-    if (addpause && !gotpause) {
-        fprintf(stderr, "adding 'pause -1'\n");
-	fputs("pause -1\n", fp);
-    }
+	/* sending directly to gnuplot on MS Windows */
+	if (addpause && !gotpause) {
+	    fprintf(stderr, "adding 'pause -1'\n");
+	    fputs("pause -1\n", fp);
+	}
 #endif
+    }
 
     fclose(fp);
 

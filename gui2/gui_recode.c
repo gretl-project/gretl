@@ -204,61 +204,6 @@ static gchar *gp_locale_to_utf8 (const gchar *src, int starting)
     return ret;
 }
 
-/* Backward compatibility for gnuplot command files as saved in
-   sessions: if the file is non-ascii and non-UTF-8, convert to UTF-8,
-   since we have now (2008-01) standardized on UTF-8 as the encoding
-   for all gnuplot files that are "internal" to gretl.
-*/
-
-int maybe_recode_gp_file_to_utf8 (const char *fname)
-{
-    FILE *fin, *fout;
-    gchar *trbuf, *trname = NULL;
-    char line[512];
-    int recoded = 0;
-    int err = 0;
-
-    fin = gretl_fopen(fname, "r");
-    if (fin == NULL) {
-	return 1;
-    }
-
-    trname = g_strdup_printf("%s.tr", fname);
-
-    fout = gretl_fopen(trname, "w");
-    if (fout == NULL) {
-	fclose(fin);
-	g_free(trname);
-	return 1;
-    }	
-
-    while (fgets(line, sizeof line, fin)) {
-	if (!g_utf8_validate(line, -1, NULL)) {
-	    trbuf = gp_locale_to_utf8(line, !recoded);
-	    if (trbuf != NULL) {
-		fputs(trbuf, fout);
-		g_free(trbuf);
-	    } 
-	    recoded = 1;
-	} else {
-	    fputs(line, fout);
-	}
-    }
-
-    fclose(fin);
-    fclose(fout);
-
-    if (recoded) {
-	fprintf(stderr, "recoded old graph file\n");
-	err = copyfile(trname, fname);
-    }
-
-    gretl_remove(trname);
-    g_free(trname);
-
-    return err;
-}
-
 /* gp_locale_from_utf8: used when taking gnuplot commands
    from a GTK editor window and sending them to gnuplot
    or saving to "user file", on non-UTF-8 platforms.
@@ -288,4 +233,88 @@ gchar *gp_locale_from_utf8 (const gchar *src)
 
 #endif /* ENABLE_NLS */
 
+/* Backward compatibility for gnuplot command files as saved in
+   sessions: if the file is non-ascii and non-UTF-8, convert to UTF-8,
+   since we have now (2008-01) standardized on UTF-8 as the encoding
+   for all gnuplot files that are "internal" to gretl.
+
+   While we're at it, check for a couple of other things.  If we have
+   a "set missing" or "set datafile missing" line, ensure that it's in
+   sync with the installed gnuplot.  Also, do we have a commented-out
+   "set term" line?  If so, this may be out of date with respect to
+   current gnuplot, so we'll strip it out.
+*/
+
+int maybe_rewrite_gp_file (const char *fname)
+{
+    FILE *fin, *fout;
+    gchar *trbuf, *modname = NULL;
+    char line[512];
+    int newmiss, modified = 0;
+#ifdef ENABLE_NLS
+    int recoded = 0;
+#endif
+    int err = 0;
+
+    fin = gretl_fopen(fname, "r");
+    if (fin == NULL) {
+	return 1;
+    }
+
+    modname = g_strdup_printf("%s.tr", fname);
+
+    fout = gretl_fopen(modname, "w");
+    if (fout == NULL) {
+	fclose(fin);
+	g_free(modname);
+	return 1;
+    }
+
+    newmiss = gnuplot_uses_datafile_missing();
+
+    while (fgets(line, sizeof line, fin)) {
+	int modline = 0;
+	
+	if (newmiss && !strncmp(line, "set missing", 11)) {
+	    fputs("set datafile missing \"?\"\n", fout);
+	    modline = 1;
+	} else if (!newmiss && !strncmp(line, "set datafile miss", 17)) {
+	    fputs("set missing \"?\"\n", fout);
+	    modline = 1;
+	} else if (!strncmp(line, "# set term", 10)) {
+	    /* skip it */
+	    modline = 1;
+	} 
+
+#ifdef ENABLE_NLS
+	if (!modline && !g_utf8_validate(line, -1, NULL)) {
+	    trbuf = gp_locale_to_utf8(line, !recoded);
+	    if (trbuf != NULL) {
+		fputs(trbuf, fout);
+		g_free(trbuf);
+	    } 
+	    modline = recoded = 1;
+	}
+#endif
+
+	if (modline) {
+	    modified = 1;
+	} else {
+	    /* pass old line through */
+	    fputs(line, fout);
+	}
+    }
+
+    fclose(fin);
+    fclose(fout);
+
+    if (modified) {
+	err = copyfile(modname, fname);
+    }
+
+    gretl_remove(modname);
+    g_free(modname);
+
+    return err;
+}
 

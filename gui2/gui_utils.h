@@ -20,6 +20,20 @@
 #ifndef GUI_UTILS_H
 #define GUI_UTILS_H
 
+#define vwin_editing_script(r) (r == EDIT_SCRIPT || \
+				r == EDIT_GP ||	    \
+				r == EDIT_R ||	    \
+				r == EDIT_OX)
+
+#define vwin_editing_buffer(r) (r == EDIT_HEADER || \
+	                        r == EDIT_NOTES)
+
+#define vwin_content_changed(v) (v->flags & VWIN_CONTENT_CHANGED)
+
+/* FIXME FUNC stuff */
+
+int vwin_is_editing (windata_t *vwin);
+
 int copyfile (const char *src, const char *dest);
 
 FILE *gretl_tempfile_open (char *fname);
@@ -60,9 +74,7 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 
 void auto_save_plot (windata_t *vwin);
 
-void view_window_save (GtkWidget *widget, windata_t *vwin);
-
-void buf_edit_save (GtkWidget *widget, windata_t *vwin);
+void vwin_save_callback (GtkWidget *w, windata_t *vwin);
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role,

@@ -371,7 +371,7 @@ int gnuplot_has_style_fill (void)
     return 1;
 }
 
-static int gnuplot_uses_datafile_missing (void)
+int gnuplot_uses_datafile_missing (void)
 {
     /* yup */
     return 1;
@@ -583,7 +583,7 @@ int gnuplot_has_style_fill (void)
     return !err;
 }
 
-static int gnuplot_uses_datafile_missing (void)
+int gnuplot_uses_datafile_missing (void)
 {
     static int err = -1; 
 

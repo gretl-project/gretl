@@ -1972,6 +1972,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
     }
 
     if (getenv("GTKSOURCEVIEW_LANGUAGE_DIR") == NULL) {
+	/* for the benefit of the bundled gtksourceview library */
 	static char envstr[MAXLEN];
 
 	sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sgtksourceview",
