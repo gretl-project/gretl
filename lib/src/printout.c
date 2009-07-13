@@ -811,7 +811,7 @@ static char *cut_trailing_point (char *s)
 void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
 				    PRN *prn)
 {
-    char decpoint = '.';
+    char decpoint;
     int n;
 
     if (na(x)) {
@@ -819,9 +819,7 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
 	return;
     }
 
-#ifdef ENABLE_NLS
     decpoint = get_local_decpoint();
-#endif
 
     if (digits == -4) {
 	if (x < .0001 && x > 0.0) {
@@ -869,12 +867,10 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     char numstr[36], final[36];
     int totlen = 2 * digits + 5; /* try changing this? */
     int i, tmp, forept = 0;
-    char decpoint = '.';
+    char decpoint;
     char *p;
 
-#ifdef ENABLE_NLS
     decpoint = get_local_decpoint();
-#endif
 
     /* let's not print non-zero values for numbers smaller than
        machine zero */
@@ -1366,11 +1362,9 @@ static int get_signif (const double *x, int n)
     int gotdec, trail, trailmax = 0;
     double xx;
     int allfrac = 1;
-    char decpoint = '.';
+    char decpoint;
 
-#ifdef ENABLE_NLS
     decpoint = get_local_decpoint();
-#endif
 
     for (i=0; i<n; i++) {
 

@@ -342,9 +342,8 @@ static void fix_dbname (char *db)
     }
 }
 
-#ifdef ENABLE_NLS
 
-# if defined(G_OS_WIN32) 
+#if defined(G_OS_WIN32) 
 
 static void real_nls_init (void)
 {
@@ -363,7 +362,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-# elif defined(OSX_BUILD) 
+#elif defined(OSX_BUILD) 
 
 static void real_nls_init (void)
 {
@@ -389,7 +388,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-# else /* regular *nix treatment */
+#else /* regular *nix treatment */
 
 static void real_nls_init (void)
 {
@@ -402,7 +401,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-# endif /* NLS init variants */
+#endif /* NLS init variants */
 
 void nls_init (void)
 {
@@ -415,8 +414,6 @@ void nls_init (void)
 
     real_nls_init();
 }
-
-#endif /* ENABLE_NLS */
 
 #ifndef G_OS_WIN32
 
@@ -454,9 +451,7 @@ int main (int argc, char **argv)
 #endif
     int err = 0;
 
-#ifdef ENABLE_NLS
     nls_init();
-#endif  
 
     *tryfile = '\0';
     *scriptfile = '\0';
@@ -499,14 +494,12 @@ int main (int argc, char **argv)
 	strncat(dbname, optdb, MAXLEN - 1);
     } 
 
-#ifdef ENABLE_NLS
     if (opteng) {
 	force_language(LANG_C);
 	force_english_help();
     } else if (optbasque) {
 	force_language(LANG_EU);
     }
-#endif
 
     set_workdir_callback(gui_set_working_dir);
 
@@ -1553,11 +1546,7 @@ static int set_up_main_menu (void)
 
     mdata->ui = gtk_ui_manager_new();
     actions = gtk_action_group_new("Actions");
-
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
-
     gtk_action_group_add_actions(actions, main_entries, 
 				 G_N_ELEMENTS(main_entries), mdata);
 

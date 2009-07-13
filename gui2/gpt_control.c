@@ -585,7 +585,6 @@ static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
 {
     int err = 0;
 
-#ifdef ENABLE_NLS    
     if (!gretl_is_ascii(s) && g_utf8_validate(s, -1, NULL)) {
 	char *tmp;
 	
@@ -604,14 +603,9 @@ static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
     } else {
 	fputs(s, fp);
     }
-#else
-    fputs(s, fp);
-#endif
 
     return err;
 }
-
-#ifdef ENABLE_NLS
 
 /* check for non-ASCII strings in plot file: these may
    require special treatment */
@@ -654,8 +648,6 @@ static int term_uses_utf8 (int ttype)
 	return 0;
     }
 }
-
-#endif
 
 #define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
 
@@ -764,7 +756,6 @@ static int revise_plot_file (GPT_SPEC *spec,
 	return 1;
     }
 
-#ifdef ENABLE_NLS
     if (non_ascii_gp_file(fpin)) {
 	/* plot contains UTF-8 strings */
 	if (!term_uses_utf8(ttype)) {
@@ -774,7 +765,6 @@ static int revise_plot_file (GPT_SPEC *spec,
 	    fputs("set encoding utf8\n", fpout);
 	}
     }
-#endif
 
     if (outtarg != NULL && *outtarg != '\0') {
 	fprintf(fpout, "%s\n", setterm);
@@ -888,11 +878,9 @@ static void graph_display_pdf (GPT_SPEC *spec)
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause)
 {
+    const gchar *cset;
     FILE *fp;
     int recode = 0;
-#ifdef ENABLE_NLS
-    const gchar *cset;
-#endif
 
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
@@ -900,7 +888,6 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	return E_FOPEN;
     }
 
-#ifdef ENABLE_NLS
     if (!g_get_charset(&cset) && !gnuplot_has_utf8()) {
 	/* we're on a non-UTF-8 platform and we need to convert */
 	recode = 1;
@@ -908,15 +895,12 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	/* we're screwed -- what do we recode to? */
 	fprintf(stderr, "Warning: gnuplot does not support UTF-8\n");
     }
-#endif
 
     if (!recode && !addpause) {
 	/* nice and simple! */
 	fputs(buf, fp);
     } else {
-#ifdef ENABLE_NLS
 	gchar *trbuf;
-#endif
 	char bufline[512];
 	int gotpause = 0;
 	int handled;
@@ -925,7 +909,6 @@ int dump_plot_buffer (const char *buf, const char *fname,
 
 	while (bufgets(bufline, sizeof bufline, buf)) {
 	    handled = 0;
-#ifdef ENABLE_NLS
 	    if (recode) {
 		trbuf = gp_locale_from_utf8(bufline);
 		if (trbuf != NULL) {
@@ -934,7 +917,6 @@ int dump_plot_buffer (const char *buf, const char *fname,
 		    handled = 1;
 		}
 	    }
-#endif
 	    if (!handled) {
 		fputs(bufline, fp);
 	    }

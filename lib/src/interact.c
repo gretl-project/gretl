@@ -2933,7 +2933,6 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
     while (*++argv) {
 	const char *s = *argv;
 
-#ifdef ENABLE_NLS
 	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
 	    *force_lang = LANG_C;
 	    argc--;
@@ -2943,7 +2942,6 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 	    argc--;
 	    continue;
 	}
-#endif
 
 	if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) { 
 	    opt = OPT_BATCH;

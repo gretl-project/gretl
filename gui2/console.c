@@ -278,7 +278,6 @@ static void console_exec (void)
 	/* put results into console window */
 	const char *getbuf = gretl_print_get_buffer(console_prn);
 
-#ifdef ENABLE_NLS
 	if (!g_utf8_validate(getbuf, -1, NULL)) {
 	    gchar *trbuf = my_locale_to_utf8(getbuf);
 
@@ -290,9 +289,7 @@ static void console_exec (void)
 	} else {
 	    gtk_text_buffer_insert(buf, &start, getbuf, strlen(getbuf));
 	}
-#else
-	gtk_text_buffer_insert(buf, &start, getbuf, strlen(getbuf));
-#endif
+
 	gretl_print_destroy(console_prn);
 	console_prn = NULL;
     }

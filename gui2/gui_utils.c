@@ -2183,9 +2183,7 @@ static void add_model_tex_items (windata_t *vwin)
     }	
 
     actions = gtk_action_group_new("ModelTeX");
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
     gtk_action_group_add_actions(actions, model_tex_items, 
 				 G_N_ELEMENTS(model_tex_items),
 				 vwin);
@@ -2585,9 +2583,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
     GError *err = NULL;
 
     actions = gtk_action_group_new("ModelActions");
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
 
     gtk_action_group_add_actions(actions, model_items, 
 				 G_N_ELEMENTS(model_items), 

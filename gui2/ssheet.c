@@ -2627,9 +2627,7 @@ static void sheet_add_menubar (Spreadsheet *sheet, GtkWidget *vbox)
 
     sheet->ui = gtk_ui_manager_new();
     actions = gtk_action_group_new("SheetActions");
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
 
     if (sheet->matrix != NULL) {
 	gtk_action_group_add_actions(actions, matrix_items, 

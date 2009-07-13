@@ -196,7 +196,6 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     gretl_clipboard_free();
 
-#ifdef ENABLE_NLS
     if (fmt == GRETL_FORMAT_TXT) {
 	/* recode (only) if needed */
 	clipboard_buf = my_locale_from_utf8(buf);
@@ -222,13 +221,6 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	/* TeX, CSV */
 	clipboard_buf = gretl_strdup(buf);
     }
-#else
-    if (fmt == GRETL_FORMAT_RTF_TXT) { 
-	clipboard_buf = dosify_buffer(buf, fmt);
-    } else { 
-	clipboard_buf = gretl_strdup(buf);
-    }
-#endif
 
     if (clipboard_buf == NULL) {
 	err = 1;

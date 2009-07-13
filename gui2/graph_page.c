@@ -344,12 +344,10 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	pdfterm = gnuplot_pdf_terminal();
     } 
 
-#ifdef ENABLE_NLS
     if (gpage.term == GP_TERM_EPS || pdfterm != GP_PDF_CAIRO) {
 	latin = iso_latin_version();
 	fprintf(fq, "set encoding iso_8859_%d\n", latin);
     }
-#endif
 
     gretl_push_c_numeric_locale();
     

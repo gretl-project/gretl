@@ -571,13 +571,6 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
-#ifndef ENABLE_NLS
-static char *nulltrans (const char *s)
-{
-    return (char *) s;
-}
-#endif
-
 static void print_aux_string (const MODEL *pmod, PRN *prn)
 {
     char *(*tr) (const char *);
@@ -587,11 +580,7 @@ static void print_aux_string (const MODEL *pmod, PRN *prn)
     int csv = csv_format(prn);
     int close = 1;
 
-#ifdef ENABLE_NLS
     tr = (plain)? gettext : iso_gettext;
-#else
-    tr = nulltrans;
-#endif
 
     if (plain || tex) {
 	pputc(prn, '\n');
@@ -1857,9 +1846,7 @@ static void model_format_start (PRN *prn)
 	    pputs(prn, "\\par\n\\qc ");
 	}
     } else if (plain_format(prn)) {
-#ifdef ENABLE_NLS
 	set_gui_native_printing();
-#endif
     }
 }
 
@@ -2029,9 +2016,7 @@ static void model_format_end (PRN *prn)
     } else if (rtf_doc_format(prn)) {
 	pputs(prn, "\n}\n");
     } else if (plain_format(prn)) {
-#ifdef ENABLE_NLS
 	unset_gui_native_printing();
-#endif
     }
 } 
 
@@ -2193,8 +2178,6 @@ struct middletab {
     char txt_fmt[36];     /* format for plain text output */
 };
 
-#ifdef ENABLE_NLS
-
 static void set_mtab_string_width (struct middletab *mt)
 {
     int len, badkey = 0, maxlen = 0;
@@ -2225,8 +2208,6 @@ static void set_mtab_string_width (struct middletab *mt)
 
     mt->mlen = maxlen;
 }
-
-#endif
 
 static void middletab_prepare_format (struct middletab *mt, int j)
 {
@@ -2457,8 +2438,6 @@ static void middle_table_row (struct middletab *mt, int j, PRN *prn)
     }
 }
 
-#ifdef ENABLE_NLS
-
 static int string_is_translated (const char *s)
 {
     if (strcmp(s, "Hannan-Quinn") && strcmp(s, "rho")) {
@@ -2503,8 +2482,6 @@ static void maybe_remedy_translations (const char **S, int n)
 	}
     }
 }
-
-#endif
 
 /* print the block of statistics that appears beneath of the
    table of coefficients, standard errors, etc.
@@ -2580,12 +2557,10 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     mtab.nls = 0;
     mtab.multi = (pmod->ci == MPOLS);
 
-#ifdef ENABLE_NLS
     mtab.nls = doing_nls();
     if (mtab.nls) {
 	maybe_remedy_translations(key, MID_STATS);
     }
-#endif
 
     if (tex) {
 	/* some special strings for TeX output */
@@ -2762,11 +2737,9 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     mtab.val = val;
     strcpy(mtab.txt_fmt, TXT_MT_FMT);
 
-#ifdef ENABLE_NLS
     if (plain_format(prn) && mtab.nls) {
 	set_mtab_string_width(&mtab);
     }
-#endif
 
     /* print the various statistics */
     for (i=0, j=0; i<7; i++, j+=2) {

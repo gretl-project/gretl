@@ -283,9 +283,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 {
     FILE *fp;
     gchar *buf;
-#ifdef ENABLE_NLS
     gchar *trbuf;
-#endif
 
     buf = textview_get_text(vwin->text);
     if (buf == NULL) {
@@ -300,15 +298,11 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	return;
     }
 
-#ifdef ENABLE_NLS
     trbuf = my_locale_from_utf8(buf);
     if (trbuf != NULL) {
 	system_print_buf(trbuf, fp);
 	g_free(trbuf);
     }
-#else
-    system_print_buf(buf, fp);
-#endif
 
     g_free(buf);
     fclose(fp);

@@ -2830,9 +2830,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	clear_datainfo(octinfo, CLEAR_FULL);
     }
 
-#ifdef ENABLE_NLS
     console_off();
-#endif
 
     return err;
 }
@@ -2862,9 +2860,7 @@ int import_other (const char *fname, int ftype,
 		     gretlopt, PRN *);
     int err = 0;
 
-#ifdef ENABLE_NLS
     check_for_console(prn);
-#endif
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -2903,9 +2899,7 @@ int import_other (const char *fname, int ftype,
 
  bailout:
 
-#ifdef ENABLE_NLS
     console_off();
-#endif
 
     return err;
 }
@@ -2938,9 +2932,7 @@ int import_spreadsheet (const char *fname, int ftype,
 		     gretlopt, PRN *);
     int err = 0;
 
-#ifdef ENABLE_NLS
     check_for_console(prn);
-#endif
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -2972,9 +2964,7 @@ int import_spreadsheet (const char *fname, int ftype,
 
  bailout:
 
-#ifdef ENABLE_NLS
     console_off();
-#endif
 
     return err;
 }

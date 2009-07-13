@@ -90,17 +90,13 @@ static char datapage[24];
 static char scriptpage[24];
 
 static int hc_by_default;
-#ifdef ENABLE_NLS
 static char langpref[32];
-#endif
 static char hc_xsect[5] = "HC1";
 static char hc_tseri[5] = "HAC";
 static char hc_panel[9] = "Arellano";
 static char hc_garch[5] = "QML";
 
-#ifdef ENABLE_NLS
 static int lcnumeric = 1;
-#endif
 
 #ifdef G_OS_WIN32
 extern int use_wimp;
@@ -946,8 +942,6 @@ static gboolean takes_effect_on_restart (void)
     return FALSE;
 }
 
-#ifdef ENABLE_NLS
-
 static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 {
     static int lasterr;
@@ -974,8 +968,6 @@ static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 
     return FALSE;
 }
-
-#endif
 
 #define HIDE_SPANISH_MANUAL 1
 
@@ -1134,7 +1126,9 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     if (tab != TAB_VCV && n_list > 0) {
 	/* non-VCV tab: language list comes last */
 	l_cols = 2;
+#ifdef ENABLE_NLS
 	langs = 1;
+#endif
 	l_table = gtk_table_new(l_len, l_cols, FALSE);
 	gtk_table_set_row_spacings(GTK_TABLE(l_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(l_table), 5);
@@ -1321,7 +1315,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 			     1, 2, l_len - 1, l_len,
 			     0, 0, 0, 0);
 	    if (langs) {
-#ifdef ENABLE_NLS
 		char *strvar = (char *) rc->var;
 		const char *str;
 
@@ -1332,7 +1325,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 			active = j;
 		    }
 		}
-#endif
 	    } else {
 		char *strvar = (char *) rc->var;
 		const char **strs;
@@ -1354,13 +1346,11 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
 	    gtk_widget_show(rc->widget);
-#ifdef ENABLE_NLS
 	    if (langs) {
 		g_signal_connect(G_OBJECT(rc->widget), "changed",
 				 G_CALLBACK(try_switch_locale), 
 				 NULL);
 	    }
-#endif
 	} else if (!(rc->flags & INVISET)) { 
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
@@ -1671,9 +1661,7 @@ static void maybe_fix_viewpdf (void)
 
 static int common_read_rc_setup (void)
 {
-# ifdef ENABLE_NLS
     int langid = 0;
-# endif
     int err = 0;
 
     libset_set_bool(SHELL_OK, shellok);
@@ -1698,7 +1686,6 @@ static int common_read_rc_setup (void)
     set_tramo_x12a_status();
 # endif
 
-# ifdef ENABLE_NLS
     langid = lang_id_from_name(langpref);
     set_lcnumeric(langid, lcnumeric);
     if (langid > 0) {
@@ -1707,7 +1694,6 @@ static int common_read_rc_setup (void)
 	    force_english_help();
 	}
     } 
-# endif
 
     return err;
 }

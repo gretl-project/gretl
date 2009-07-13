@@ -154,8 +154,7 @@ void about_dialog (void)
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 5);
 
-#ifdef ENABLE_NLS
-    /* Translator credits? */
+    /* Translator credits */
     if (strcmp(_("translator_credits"), "translator_credits")) {
 	buf = 
 	    g_markup_printf_escaped("<span size=\"small\">%s</span>",
@@ -166,7 +165,6 @@ void about_dialog (void)
 	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
 	gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
     }
-#endif
 
     /* GPL button */
     button = gtk_button_new_with_label(_("License"));

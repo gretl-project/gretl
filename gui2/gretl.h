@@ -62,9 +62,7 @@
 #include "helpfiles.h"
 #include "gui_recode.h"
 
-#ifdef ENABLE_NLS
-# include "locale.h"
-#endif
+#include "locale.h"
 
 #define GRETL_BUFSIZE 8192
 #define MAXSTR FILENAME_MAX
@@ -131,10 +129,7 @@ void populate_varlist (void);
 void clear_varlist (GtkWidget *widget);
 void mdata_select_last_var (void);
 int gui_restore_sample (double ***pZ, DATAINFO *pdinfo);
-
-#ifdef ENABLE_NLS
 void force_language (int lang);
-#endif
 
 /* functions defined in files other than gretl.c */
 void about_dialog (void);

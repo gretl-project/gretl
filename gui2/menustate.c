@@ -607,9 +607,7 @@ int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
     GError *err = NULL;
 
     actions = gtk_action_group_new("MyActions");
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
 
     gtk_action_group_add_actions(actions, entries, n_entries, vwin);
 
@@ -638,9 +636,7 @@ int vwin_menu_add_item (windata_t *vwin, const gchar *path,
     GtkActionGroup *actions;
 
     actions = gtk_action_group_new("AdHoc");
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
 
     gtk_action_group_add_actions(actions, entry, 1, vwin);
     gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
@@ -659,9 +655,7 @@ int vwin_menu_add_items (windata_t *vwin, const gchar *path,
     int i;
 
     actions = gtk_action_group_new("AdHoc");
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
 
     gtk_action_group_add_actions(actions, entries, n, vwin);
     for (i=0; i<n; i++) {
@@ -684,9 +678,7 @@ int vwin_menu_add_radios (windata_t *vwin, const gchar *path,
     int i;
 
     actions = gtk_action_group_new("Radios");
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
 
     gtk_action_group_add_radio_actions(actions, entries, n,
 				       deflt, callback,
@@ -709,9 +701,7 @@ int vwin_menu_add_menu (windata_t *vwin, const gchar *path,
     GtkActionGroup *actions;
 
     actions = gtk_action_group_new("NewMenu");
-#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain(actions, "gretl");
-#endif
 
     gtk_action_group_add_actions(actions, entry, 1, vwin);
     gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,

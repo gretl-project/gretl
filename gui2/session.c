@@ -1721,7 +1721,6 @@ static gchar *graph_str (SESSION_GRAPH *graph)
 	    } 
 	}
 
-#ifdef ENABLE_NLS
 	if (gottitle) {
 	    /* FIXME? encoding */
 	    buf = my_locale_to_utf8(title);
@@ -1733,13 +1732,6 @@ static gchar *graph_str (SESSION_GRAPH *graph)
 		free(s);
 	    }
 	}
-#else
-	if (gottitle) {
-	    buf = g_strdup(title);
-	} else if (gotxy == 2) {
-	    buf = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
-	}
-#endif
 
 	fclose(fp);
     }

@@ -86,7 +86,7 @@ void gretl_pop_c_numeric_locale (void)
     return;
 }
 
-#endif /* ENABLE_NLS */
+#endif /* ENABLE_NLS or not */
 
 /**
  * doing_nls:
@@ -96,7 +96,6 @@ void gretl_pop_c_numeric_locale (void)
 
 int doing_nls (void)
 {
-#ifdef ENABLE_NLS
     static int called, nls;
 
     if (!called) {
@@ -105,15 +104,13 @@ int doing_nls (void)
 	       strcmp("annual", _("annual")));
 	called = 1;
     }
+
     return nls;
-#else
-    return 0;
-#endif
 }
 
 #ifdef ENABLE_NLS
+
 static int decpoint;
-#endif
 
 /**
  * reset_local_decpoint:
@@ -126,15 +123,11 @@ static int decpoint;
 
 int reset_local_decpoint (void)
 {
-#ifdef ENABLE_NLS
     struct lconv *lc;
 
     lc = localeconv();
     decpoint = *lc->decimal_point;
     return decpoint;
-#else
-    return '.';
-#endif
 }
 
 /**
@@ -145,23 +138,31 @@ int reset_local_decpoint (void)
 
 int get_local_decpoint (void)
 {
-#ifdef ENABLE_NLS
     if (decpoint == 0) {
 	decpoint = reset_local_decpoint();
     }
     return decpoint;
-#else
-    return '.';
-#endif
 }
+
+#else
+
+int reset_local_decpoint (void)
+{
+    return;
+}
+
+int get_local_decpoint (void)
+{
+    return '.';
+}
+
+#endif
 
 /* fudges for strings that should not be in utf-8 under some
    conditions: under GTK translations always come out in utf-8 in the
    GUI, but when we're sending stuff to stderr we may have to put it
    into ISO-8859-N.
 */
-
-#ifdef ENABLE_NLS
 
 static int gretl_cset_maj;
 static int gretl_cset_min;
@@ -317,7 +318,7 @@ int chinese_locale (void)
     char *lang = getenv("LANG");
 
     return (lang != NULL && !strncmp(lang, "zh", 2));
-#endif
+# endif
 }
 
 static int gui_native_printing;
@@ -555,11 +556,11 @@ int test_locale (const char *langstr)
 
     langid = lang_id_from_name(langstr);
 
-#ifdef WIN32
+# ifdef WIN32
     lcode = locale_code_from_id(langid);
-#else
+# else
     lcode = lang_code_from_id(langid);
-#endif
+# endif
     orig = setlocale(LC_ALL, NULL);
 
     gretl_error_clear();
@@ -628,8 +629,6 @@ void force_language (int langid)
     }
 # endif
 }
-
-#endif  /* ENABLE_NLS */
 
 static void 
 iso_to_ascii_translate (char *targ, const char *src, int latin)
@@ -875,8 +874,6 @@ char *iso_to_ascii (char *s)
     return real_iso_to_ascii(s, 1);
 }
 
-#ifdef ENABLE_NLS
-
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len)
 {
     iso_to_ascii_translate(targ, s, 2);
@@ -1034,11 +1031,4 @@ void console_off (void)
     printing_to_console = 0;
 }
 
-#else
 
-int gretl_is_ascii (const char *buf)
-{
-    return 1;
-}
-
-#endif /* !ENABLE_NLS */

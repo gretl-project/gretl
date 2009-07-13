@@ -582,7 +582,6 @@ static void entry_to_gp_double (GtkWidget *w, double *val)
     if (w != NULL && GTK_IS_ENTRY(w)) {
 	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
 
-#ifdef ENABLE_NLS
 	if (s != NULL && *s != '\0') {
 	    gchar *tmp = g_strdup(s);
 
@@ -596,15 +595,6 @@ static void entry_to_gp_double (GtkWidget *w, double *val)
 	    gretl_pop_c_numeric_locale();
 	    g_free(tmp);
 	}
-#else
-	if (s != NULL && *s != '\0') {
-	    if (check_atof(s)) {
-		errbox(gretl_errmsg_get());
-	    } else {
-		x = atof(s);
-	    }
-	}
-#endif
     }
 
     if (!na(x)) {

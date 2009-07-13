@@ -61,10 +61,8 @@ int string_is_blank (const char *s)
 
 double dot_atof (const char *s)
 {
-    double x;
-
-#ifdef ENABLE_NLS
     static int decpoint = 0;
+    double x;
 
     if (decpoint == 0) {
 	struct lconv *lc;
@@ -79,9 +77,6 @@ double dot_atof (const char *s)
 	x = atof(s);
 	gretl_pop_c_numeric_locale();
     }
-#else
-    x = atof(s);
-#endif
 
     return x;
 }

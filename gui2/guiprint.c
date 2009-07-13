@@ -60,7 +60,7 @@ static gchar *user_string (void)
 static char *header_string (void)
 {
     gchar *hdr, *ustr;
-# if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
+# ifndef G_OS_WIN32
     gchar *trans;
 # endif
     char tstr[48];
@@ -75,7 +75,7 @@ static char *header_string (void)
 	hdr = g_strdup_printf("%s %s", _("gretl output"), tstr);
     }
 
-# if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
+# ifndef G_OS_WIN32
     trans = my_locale_to_utf8(hdr);
     if (trans != NULL) {
 	g_free(hdr);
@@ -167,19 +167,11 @@ void print_window_content (char *fullbuf, char *selbuf)
     
     printok = StartDoc(dc, &di);
 
-# ifdef ENABLE_NLS
     if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
 	printbuf = my_locale_from_utf8(selbuf);
     } else {
 	printbuf = my_locale_from_utf8(fullbuf);
     }
-# else
-    if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
-	printbuf = selbuf;
-    } else {
-	printbuf = fullbuf;
-    }
-# endif
 
     if (printbuf == NULL) {
 	printok = 0;
@@ -229,9 +221,7 @@ void print_window_content (char *fullbuf, char *selbuf)
     GlobalFree(pdlg.hDevMode);
     GlobalFree(pdlg.hDevNames);
 
-# ifdef ENABLE_NLS
     g_free(printbuf);
-# endif
 
     free(fullbuf); /* was allocated by gtk_editable_get_chars() */
     if (selbuf) {

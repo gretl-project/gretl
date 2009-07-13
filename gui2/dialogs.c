@@ -207,7 +207,6 @@ typedef struct {
     gint decpoint;
 } csv_stuff;
 
-#ifdef ENABLE_NLS
 static void set_dec (GtkWidget *w, csv_stuff *csv)
 {
     gint i;
@@ -222,7 +221,6 @@ static void set_dec (GtkWidget *w, csv_stuff *csv)
 	}
     }
 }
-#endif
 
 static void set_delim (GtkWidget *w, csv_stuff *csv)
 {
@@ -336,7 +334,6 @@ int delimiter_dialog (gretlopt *optp)
 		      GINT_TO_POINTER(';'));    
     gtk_widget_show (button);
 
-#ifdef ENABLE_NLS
     if (',' == get_local_decpoint()) {
 	GSList *decgroup;
 
@@ -375,7 +372,6 @@ int delimiter_dialog (gretlopt *optp)
 			  GINT_TO_POINTER(','));   
 	gtk_widget_show(button);
     }
-#endif /* ENABLE_NLS */
 
     if (optp != NULL) {
 	vbox_add_hsep(myvbox);

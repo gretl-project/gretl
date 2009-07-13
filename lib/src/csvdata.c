@@ -1845,11 +1845,9 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	cols = get_optval_string(OPEN, OPT_F);
     }
 
-#ifdef ENABLE_NLS
     if (prn != NULL) {
 	check_for_console(prn);
     }
-#endif
 
     if (gretl_messages_on()) {
 	mprn = prn;
@@ -2080,9 +2078,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, M_("Out of memory\n"));
     }    
 
-#ifdef ENABLE_NLS
     console_off();
-#endif
 
     pdinfo->delim = save_delim;
 

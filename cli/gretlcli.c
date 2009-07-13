@@ -148,8 +148,6 @@ static int file_get_line (char *line, CMD *cmd)
     return 0;
 }
 
-#ifdef ENABLE_NLS
-
 static void nls_init (void)
 {
 # ifdef WIN32
@@ -170,8 +168,6 @@ static void nls_init (void)
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
 }
-
-#endif /* ENABLE_NLS */
 
 static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 			   MODEL **models)
@@ -316,9 +312,7 @@ int main (int argc, char *argv[])
     PRN *prn;
     int err = 0;
 
-#ifdef ENABLE_NLS
     nls_init();
-#endif
 
 #ifdef HAVE_READLINE
     rl_bind_key(0x18, ctrl_x);
@@ -373,11 +367,9 @@ int main (int argc, char *argv[])
 	    break;
 	}
 
-#ifdef ENABLE_NLS
 	if (force_lang) {
 	    force_language(force_lang);
 	}
-#endif
     } 
 
 #ifdef WIN32

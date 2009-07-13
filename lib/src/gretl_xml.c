@@ -2351,9 +2351,7 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 	}
     }
 
-#ifdef ENABLE_NLS
     check_for_console(prn);
-#endif
 
     tmpdinfo = datainfo_new();
     if (tmpdinfo == NULL) {
@@ -2507,9 +2505,7 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 	destroy_dataset(tmpZ, tmpdinfo);
     }
 
-#ifdef ENABLE_NLS
     console_off();
-#endif
 
 #if GDT_DEBUG
     fprintf(stderr, "gretl_read_gdt: returning %d\n", err);

@@ -285,9 +285,7 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
     char fline[MAXSTR];
     gchar *chunk = NULL;
     GtkTextIter iter;
-#ifdef ENABLE_NLS
     int i = 0;
-#endif
 
     gtk_source_buffer_begin_not_undoable_action(sbuf);
 
@@ -297,7 +295,6 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
     memset(fline, 0, sizeof fline);
 
     while (fgets(fline, sizeof fline, fp)) {
-#ifdef ENABLE_NLS
 	if (!g_utf8_validate(fline, -1, NULL)) {
 	    if (i == 0) {
 		chunk = my_locale_to_utf8(fline);
@@ -311,9 +308,6 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
 	} else {
 	    chunk = fline;
 	}
-#else
-	chunk = fline;
-#endif /* ENABLE_NLS */
 
 	strip_CRLF(chunk);
 
@@ -799,7 +793,6 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     memset(fline, 0, sizeof fline);
 
     while (fgets(fline, sizeof fline, fp)) {
-#ifdef ENABLE_NLS
 	if (!g_utf8_validate(fline, -1, NULL)) {
 	    if (i == 0) {
 		chunk = my_locale_to_utf8(fline);
@@ -813,9 +806,6 @@ void textview_insert_file (windata_t *vwin, const char *fname)
 	} else {
 	    chunk = fline;
 	}
-#else
-	chunk = fline;
-#endif
 
 	nextcolor = PLAIN_TEXT;
 	

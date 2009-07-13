@@ -3222,15 +3222,14 @@ static void print_freq_test_label (char *s, const char *format,
 static void print_freq_dist_label (char *s, int dist, double x, double y)
 {
     int dcomma = 0;
-#ifdef ENABLE_NLS
     char test[8];
 
     gretl_pop_c_numeric_locale();
+
     sprintf(test, "%g", 0.5);
     if (strchr(test, ',')) {
 	dcomma = 1;
     }
-#endif
 
     if (dist == D_NORMAL) {
 	sprintf(s, "N(%.5g%c%.5g)", x, 
@@ -3240,9 +3239,7 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
 		((dcomma)? ' ' : ','), y);
     }
 
-#ifdef ENABLE_NLS
     gretl_push_c_numeric_locale();
-#endif
 }
 
 /* Below: a fix for the case where the y-range is by default

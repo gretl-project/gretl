@@ -89,8 +89,6 @@ gchar *my_filename_to_utf8 (const char *fname)
     return ret;
 }
 
-#ifdef ENABLE_NLS
-
 gchar *my_locale_from_utf8 (const gchar *src)
 {
     const gchar *cset;
@@ -231,8 +229,6 @@ gchar *gp_locale_from_utf8 (const gchar *src)
     return ret;
 }
 
-#endif /* ENABLE_NLS */
-
 /* Backward compatibility for gnuplot command files as saved in
    sessions: if the file is non-ascii and non-UTF-8, convert to UTF-8,
    since we have now (2008-01) standardized on UTF-8 as the encoding
@@ -251,9 +247,7 @@ int maybe_rewrite_gp_file (const char *fname)
     gchar *trbuf, *modname = NULL;
     char line[512];
     int newmiss, modified = 0;
-#ifdef ENABLE_NLS
     int recoded = 0;
-#endif
     int err = 0;
 
     fin = gretl_fopen(fname, "r");
@@ -286,7 +280,6 @@ int maybe_rewrite_gp_file (const char *fname)
 	    modline = 1;
 	} 
 
-#ifdef ENABLE_NLS
 	if (!modline && !g_utf8_validate(line, -1, NULL)) {
 	    trbuf = gp_locale_to_utf8(line, !recoded);
 	    if (trbuf != NULL) {
@@ -295,8 +288,7 @@ int maybe_rewrite_gp_file (const char *fname)
 	    } 
 	    modline = recoded = 1;
 	}
-#endif
-
+#
 	if (modline) {
 	    modified = 1;
 	} else {

@@ -1114,7 +1114,6 @@ static PRN *make_rtf_prn (int ID, char *fname, int *err)
 
 static char tex_preamble_file[MAXLEN];
 
-#ifdef ENABLE_NLS
 static const char *get_gretltex_local (void)
 {
     static char localtex[32] = {0};
@@ -1129,14 +1128,12 @@ static const char *get_gretltex_local (void)
 
     return localtex;
 }
-#endif
 
 void set_gretl_tex_preamble (void)
 {
     char test[MAXLEN];
     FILE *fp;
 
-#ifdef ENABLE_NLS
     /* first choice: localized preamble file */
     sprintf(test, "%s%s", gretl_work_dir(), get_gretltex_local());
     fp = gretl_fopen(test, "r");
@@ -1145,7 +1142,6 @@ void set_gretl_tex_preamble (void)
 	fclose(fp);
 	return;
     }    
-#endif
 
     /* preamble file on disk */
     sprintf(test, "%sgretlpre.tex", gretl_work_dir());
@@ -1198,9 +1194,7 @@ void set_tex_use_utf (int s)
 
 void gretl_tex_preamble (PRN *prn, int fmt)
 {
-#ifdef ENABLE_NLS
     char* lang = getenv("LANG");
-#endif
     FILE *fp = NULL;
     int userfile = 0;
 
@@ -1238,7 +1232,6 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 
 	pputs(prn, "{article}\n");
 
-#ifdef ENABLE_NLS
 	if (tex_use_utf) {
 	    pputs(prn, "\\usepackage{ucs}\n");
 	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n");
@@ -1248,7 +1241,7 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	if (lang != NULL && !strncmp(lang, "ru", 2)) {
 	    pputs(prn, "\\usepackage[russian]{babel}\n");
 	}
-#endif
+
 	if (fmt & GRETL_FORMAT_EQN) {
 	    pputs(prn, "\\usepackage{amsmath}\n\n");
 	} else if (fmt & GRETL_FORMAT_MODELTAB) {
