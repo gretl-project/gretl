@@ -6760,7 +6760,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de Julho de 2009."
+"Tradução de 13 de Julho de 2009."
 
 #: gui2/about.c:172
 msgid "License"
@@ -13958,7 +13958,7 @@ msgstr "Nível"
 
 #: plugin/anova.c:216
 msgid "Grand mean"
-msgstr "Média Grande"
+msgstr "Média geral"
 
 #: plugin/anova.c:501
 #, c-format
