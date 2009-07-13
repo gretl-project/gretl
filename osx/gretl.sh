@@ -30,7 +30,7 @@ if [ "$GNUTERM" = "aqua" ] ; then
 fi
 # R shared library: may require platform-specific symlink
 if [ "x$R_HOME" = "x" ] ; then
-   export R_HOME=/Library/Framework/R.framework/Resources
+   export R_HOME=/Library/Frameworks/R.framework/Resources
 fi
 
 export "PATH=$CWD:$PATH"
