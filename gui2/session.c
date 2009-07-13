@@ -1507,6 +1507,8 @@ static void relpath_from_fname (char *path, const char *fname)
     }
 }
 
+/* dump the current dataset into the session dir */
+
 static int save_session_dataset (const char *dname)
 {
     char tmpname[MAXLEN];
@@ -1514,8 +1516,6 @@ static int save_session_dataset (const char *dname)
     DATAINFO *dinfo = NULL;
     int t1, t2;
     int err = 0;
-
-    /* dump current dataset into session dir */
 
     if (complex_subsampled()) {
 	/* save full version of dataset */
@@ -1565,10 +1565,32 @@ static const char *unpath (const char *fname)
 
 static void make_session_dataname (char *datname)
 {
+    int changed = 0;
+
     if (*paths.datfile != '\0') {
+	char *p;
+
 	strcpy(datname, unpath(paths.datfile));
+	p = strrchr(datname, '.');
+	if (p == NULL) {
+	    strcat(datname, ".gdt");
+	    changed = 1;
+	} else if (strcmp(p, ".gdt")) {
+	    strcpy(p, ".gdt");
+	    changed = 1;
+	}
     } else {
 	strcpy(datname, "data.gdt");
+	changed = 1;
+    }
+
+    if (changed) {
+	GtkWidget *dlabel;
+
+	dlabel = g_object_get_data(G_OBJECT(mdata->main), "dlabel");
+	if (dlabel != NULL) {
+	    gtk_label_set_text(GTK_LABEL(dlabel), datname);
+	}
     }
 }
 

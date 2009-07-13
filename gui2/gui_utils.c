@@ -1119,15 +1119,15 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(_("Save"), SAVE_OX_CMDS, 
 			  FSEL_DATA_VWIN, vwin);
 	}	    
-    } else if (vwin->role == EDIT_GP) {
+    } else if ((vwin->flags & VWIN_SESSION_GRAPH) &&
+	       vwin->role == EDIT_GP) {
+	/* "auto-save" of session graph file */
 	gchar *text = textview_get_text(vwin->text);
 
 	dump_plot_buffer(text, vwin->fname, 0);
 	g_free(text);
 	mark_vwin_content_saved(vwin);
-	if (vwin->flags & VWIN_SESSION_GRAPH) {
-	    mark_session_changed();
-	}
+	mark_session_changed();
     } else {
 	FILE *fp;
 	gchar *text;
