@@ -61,6 +61,9 @@ int string_is_blank (const char *s)
 
 double dot_atof (const char *s)
 {
+#ifndef ENABLE_NLS
+    return atof(s);
+#else
     static int decpoint = 0;
     double x;
 
@@ -79,6 +82,7 @@ double dot_atof (const char *s)
     }
 
     return x;
+#endif
 }
 
 /**

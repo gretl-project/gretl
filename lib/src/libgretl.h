@@ -56,8 +56,6 @@
 # define I_(String) iso_gettext (String) 
 # define M_(String) maybe_iso_gettext (String)
 #else
-# define gettext(s) s
-# define iso_gettext(s) s
 # define _(String)  ((char *) String)
 # define N_(String) String
 # define I_(String) ((char *) String)

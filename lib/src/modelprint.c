@@ -573,14 +573,20 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
 static void print_aux_string (const MODEL *pmod, PRN *prn)
 {
+#ifdef ENABLE_NLS
     char *(*tr) (const char *);
+#endif
     int aux = pmod->aux;
     int plain = plain_format(prn);
     int tex = tex_format(prn);
     int csv = csv_format(prn);
     int close = 1;
 
+#ifdef ENABLE_NLS
     tr = (plain)? gettext : iso_gettext;
+#else
+# define tr(s) s
+#endif
 
     if (plain || tex) {
 	pputc(prn, '\n');

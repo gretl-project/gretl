@@ -32,8 +32,6 @@ int get_local_decpoint (void);
 
 char *iso_to_ascii (char *s);
 
-#ifdef ENABLE_NLS
-
 /* the following enumeration is organized by alphabetical order of
    English name of language: Basque, Chinese, Czech, ...
 */
@@ -56,52 +54,58 @@ typedef enum {
     LANG_MAX
 } GretlLangCode;
 
+const char *lang_string_from_id (int langid);
+
+char *utf8_to_cp (const char *s);
+
+char *utf8_to_latin (const char *s);
+
+int iso_latin_version (void);
+
+void check_for_console (PRN *prn);
+
+void console_off (void);
+
+int lang_id_from_name (const char *s);
+
+int lang_id_from_code (const char *s);
+
+void set_gui_native_printing (void);
+
+void unset_gui_native_printing (void);
+
+void set_lcnumeric (int langid, int lcnumeric);
+
+int gretl_is_ascii (const char *buf);
+
+void force_language (int langid);
+
+int test_locale (const char *langstr);
+
+#ifdef ENABLE_NLS
+
 char *iso_gettext (const char *msgid);
 
 char *maybe_iso_gettext (const char *msgid);
 
 void set_gretl_charset (const char *s);
 
-int iso_latin_version (void);
-
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
-
-char *utf8_to_latin (const char *s);
-
-char *utf8_to_cp (const char *s);
-
-int gretl_is_ascii (const char *buf);
 
 int get_utf_width (const char *str, int width);
 
 int get_translated_width (const char *str);
 
-void check_for_console (PRN *prn);
-
-void console_off (void);
-
-void set_gui_native_printing (void);
-
-void unset_gui_native_printing (void);
-
 int chinese_locale (void);
-
-const char *lang_string_from_id (int langid);
-
-int lang_id_from_name (const char *s);
-
-int lang_id_from_code (const char *s);
-
-void force_language (int langid);
-
-void set_lcnumeric (int langid, int lcnumeric);
-
-int test_locale (const char *langstr);
 
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)
 
 #else
+
+#define gettext(s) s
+#define iso_gettext(s) s
+#define maybe_iso_gettext(s) s
 
 # define UTF_WIDTH(s, w) w
 # define TRANSLATED_WIDTH(s) strlen(s)

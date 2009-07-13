@@ -342,8 +342,14 @@ static void fix_dbname (char *db)
     }
 }
 
+#if !defined(ENABLE_NLS)
 
-#if defined(G_OS_WIN32) 
+static void real_nls_init (void)
+{
+    return;
+}
+
+#elif defined(G_OS_WIN32) 
 
 static void real_nls_init (void)
 {

@@ -150,6 +150,7 @@ static int file_get_line (char *line, CMD *cmd)
 
 static void nls_init (void)
 {
+#ifdef ENABLE_NLS
 # ifdef WIN32
     char gretldir[MAXLEN], LOCALEDIR[MAXLEN];
 
@@ -167,6 +168,7 @@ static void nls_init (void)
     putenv("LC_NUMERIC=");
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
+#endif /* ENABLE_NLS */
 }
 
 static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,

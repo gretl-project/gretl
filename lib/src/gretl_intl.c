@@ -148,7 +148,7 @@ int get_local_decpoint (void)
 
 int reset_local_decpoint (void)
 {
-    return;
+    return '.';
 }
 
 int get_local_decpoint (void)
@@ -217,14 +217,14 @@ void set_gretl_charset (const char *s)
 		gretl_cset_maj = gretl_cset_min = 0;
 	    }
 	} 
-# ifdef WIN32
+#ifdef WIN32
 	if (p == NULL) {
 	    sscanf(gretl_charset, "cp%d", &gretl_cpage);
 	}
-# endif
+#endif
     }
 
-# ifdef WIN32
+#ifdef WIN32
     fprintf(stderr, "codepage = %d\n", gretl_cpage);
     if (gretl_cpage != 1250) {
 	char *e = getenv("GRETL_CPAGE");
@@ -234,10 +234,10 @@ void set_gretl_charset (const char *s)
 	    fprintf(stderr, "revised codepage to 1250\n");
 	}
     }
-# endif
+#endif
 }
 
-# ifdef WIN32
+#ifdef WIN32
 
 static void set_cp_from_locale (const char *loc)
 {
@@ -249,7 +249,9 @@ static void set_cp_from_locale (const char *loc)
     }
 }
 
-# endif
+#endif
+
+#ifdef ENABLE_NLS
 
 static const char *get_gretl_charset (void)
 {
@@ -270,6 +272,8 @@ static const char *get_gretl_charset (void)
     return NULL;
 }
 
+#endif
+
 int iso_latin_version (void)
 {
     char *lang = NULL;
@@ -283,7 +287,7 @@ int iso_latin_version (void)
 	return gretl_cset_min;
     }
 
-# ifdef WIN32
+#ifdef WIN32
     if (gretl_cpage == 1252) {
 	return 1;
     } else if (gretl_cpage == 1250) {
@@ -293,7 +297,7 @@ int iso_latin_version (void)
     } else if (gretl_cpage == 1254) {
 	return 9;
     }
-# endif
+#endif
 
     /* Polish, Russian, Turkish: UTF-8 locale? */
     lang = getenv("LANG");
@@ -312,13 +316,13 @@ int iso_latin_version (void)
 
 int chinese_locale (void)
 {
-# ifdef WIN32
+#ifdef WIN32
     return (gretl_cpage == 950);
-# else
+#else
     char *lang = getenv("LANG");
 
     return (lang != NULL && !strncmp(lang, "zh", 2));
-# endif
+#endif
 }
 
 static int gui_native_printing;
@@ -332,6 +336,8 @@ void unset_gui_native_printing (void)
 {
     gui_native_printing = 0;
 }
+
+#ifdef ENABLE_NLS
 
 char *iso_gettext (const char *msgid)
 {
@@ -387,7 +393,9 @@ char *iso_gettext (const char *msgid)
     return ret;
 } 
 
-# ifdef WIN32
+#endif /* ENABLE_NLS */
+
+#ifdef WIN32
 
 struct localeinfo {
     int id;
@@ -428,7 +436,7 @@ const char *locale_code_from_id (int langid)
     return NULL;
 }
 
-# endif
+#endif /* WIN32 */
 
 struct langinfo {
     int id;
@@ -497,7 +505,7 @@ const char *lang_code_from_id (int langid)
     return NULL;
 }
 
-# ifdef WIN32
+#ifdef WIN32
 
 static char *win32_set_numeric (const char *lang)
 {
@@ -517,10 +525,13 @@ static char *win32_set_numeric (const char *lang)
     return set;
 }
 
-# endif /* WIN32 */
+#endif /* WIN32 */
 
 void set_lcnumeric (int langid, int lcnumeric)
 {
+#ifndef ENABLE_NLS
+    return;
+#else
     if (lcnumeric && langid != LANG_C) {
 	char *lang = getenv("LANG");
 	char *set = NULL;
@@ -542,6 +553,7 @@ void set_lcnumeric (int langid, int lcnumeric)
     }
 
     reset_local_decpoint();
+#endif
 }
 
 /* arg should be long English form of language, as displayed
@@ -549,6 +561,9 @@ void set_lcnumeric (int langid, int lcnumeric)
 
 int test_locale (const char *langstr)
 {
+#ifndef ENABLE_NLS
+    return 1;
+#else
     const char *lcode;
     int langid;
     char *orig, *test;
@@ -577,10 +592,14 @@ int test_locale (const char *langstr)
 			       "on this system"), lcode);
 	return 1;
     }
+#endif
 }
 
 void force_language (int langid)
 {
+#ifndef ENABLE_NLS
+    return;
+#else
     const char *lcode = NULL;
 
     if (langid == LANG_C) {
@@ -628,6 +647,7 @@ void force_language (int langid)
 	putenv(estr);
     }
 # endif
+#endif
 }
 
 static void 
@@ -1009,6 +1029,8 @@ int get_translated_width (const char *str)
 
 static int printing_to_console;
 
+#ifdef ENABLE_NLS
+
 char *maybe_iso_gettext (const char *msgid)
 {
    if (printing_to_console) {
@@ -1017,6 +1039,8 @@ char *maybe_iso_gettext (const char *msgid)
        return gettext(msgid);
    }
 } 
+
+#endif
 
 void check_for_console (PRN *prn)
 {
