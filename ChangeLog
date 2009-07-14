@@ -4,6 +4,11 @@ version 1.8.3, in progress
   execution time of child processes
 - Add function "mreverse" to reverse rows or columns of
   a matrix
+- Several small fixes and enhancements for interaction with
+  TRAMO/SEATS and X-12-ARIMA
+- Several small GUI fixes
+- Add (optional) support for Ox programs via the "foreign"
+  command
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"
