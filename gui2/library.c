@@ -4105,7 +4105,9 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	} else {
 	    gui_errmsg(err);
 	}
-    } else if (*fname == '\0') {
+    } 
+
+    if (*fname == '\0') {
 	return;
     }
 
@@ -4113,8 +4115,11 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	/* text output suppressed */
 	remove(fname);
     } else {
-	err = gretl_file_get_contents(fname, &databuf);
-	if (err) {
+	/* note that in some error cases this file might
+	   be informative */
+	int ferr = gretl_file_get_contents(fname, &databuf);
+
+	if (ferr) {
 	    remove(fname);
 	    return;
 	}

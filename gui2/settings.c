@@ -599,11 +599,12 @@ static void set_tramo_x12a_status (void)
 	if (!ok) {
 	    ok = alt_ok(paths.tramo);
 	}
-# endif    
+# endif 
+	fprintf(stderr, "tramo: ok = %d\n", ok);
     }
 
     if (mdata != NULL) {
-	flip(mdata->ui, "/Variable/TRAMO analysis", ok);
+	flip(mdata->ui, "/Menubar/Variable/Tramo", ok);
     }
 #endif /* TRAMO */
 
@@ -616,10 +617,11 @@ static void set_tramo_x12a_status (void)
 	    ok = alt_ok(paths.x12a);
 	}
 # endif  
+	fprintf(stderr, "x12a: ok = %d\n", ok);
     }
 
     if (mdata != NULL) {
-	flip(mdata->ui, "/Variable/X-12-ARIMA analysis", ok);
+	flip(mdata->ui, "/Menubar/Variable/X12A", ok);
     }    
 #endif /* X12A */
 }

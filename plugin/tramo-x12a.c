@@ -66,15 +66,15 @@ const char *default_mdl = {
 
 static int glib_spawn (const char *workdir, const char *fmt, ...)
 {
-    GError *error = NULL;
+    GError *gerr = NULL;
     gchar *sout = NULL;
     gchar *serr = NULL;
     gchar *argv[8];
-
+    char *s;
     va_list ap;
     int i, ok, nargs;
-    int status = 0, ret = 0;
-    char *s;
+    int status = 0;
+    int err = 0;
 
     argv[0] = g_strdup(fmt);
     argv[1] = NULL;
@@ -111,13 +111,13 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 		       &sout,
 		       &serr,
 		       &status,
-		       &error);
+		       &gerr);
 
     if (!ok) {
-	gretl_errmsg_set(error->message);
-	fprintf(stderr, "spawn: '%s'\n", error->message);
-	g_error_free(error);
-	ret = 1;
+	gretl_errmsg_set(gerr->message);
+	fprintf(stderr, "spawn failed: '%s'\n", gerr->message);
+	g_error_free(gerr);
+	err = E_EXTERNAL;
     } else if (status != 0) {
 	if (sout && *sout) {
 	    gretl_errmsg_set(sout);
@@ -126,7 +126,7 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 	    strcpy(gretl_errmsg, _("Command failed"));
 	    fprintf(stderr, "spawn: status = %d\n", status);
 	}
-	ret = 1;
+	err = E_DATA;
     } else if (serr && *serr) {
 	fprintf(stderr, "stderr: '%s'\n", serr);
     }
@@ -135,7 +135,7 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
     if (sout != NULL) g_free(sout);
 
     for (i=0; i<nargs; i++) {
-	if (ret != 0) {
+	if (err) {
 	    if (i == 0) {
 		fputc(' ', stderr);
 	    }
@@ -147,7 +147,7 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 	free(argv[i]);
     }
 
-    return ret;
+    return err;
 }
 
 #endif /* !WIN32 */
@@ -737,7 +737,7 @@ static int helper_spawn (const char *prog, const char *vname,
 			 const char *workdir, int code)
 {
     char *cmd = NULL;
-    int ret;
+    int err = 0;
 
     if (code == TRAMO_ONLY) {
 	cmd = g_strdup_printf("\"%s\" -i %s -k serie", prog, vname);
@@ -746,18 +746,18 @@ static int helper_spawn (const char *prog, const char *vname,
     } else if (code == X12A) {
 	cmd = g_strdup_printf("\"%s\" %s -r -p -q", prog, vname);
     } else {
-	return 1;
+	return E_EXTERNAL;
     }
 
     if (cmd == NULL) {
-	ret = E_ALLOC;
+	err = E_ALLOC;
     } else {
-	ret = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
+	err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
 		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
 	g_free(cmd);
     }
 
-    return ret;
+    return err;
 }
 
 #else
@@ -774,7 +774,7 @@ static int helper_spawn (const char *prog, const char *vname,
     } else if (code == X12A) {
 	err = glib_spawn(workdir, prog, vname, "-r", "-p", "-q", NULL);
     } else {
-	err = 1;
+	err = E_EXTERNAL;
     }
 
     return err;
@@ -795,7 +795,7 @@ int write_tx_data (char *fname, int varnum,
     double **tmpZ;
     DATAINFO *tmpinfo;
 
-    *errmsg = 0;
+    *errmsg = '\0';
 
     /* figure out which program we're using */
     if (strstr(prog, "tramo") != NULL) {
@@ -809,11 +809,11 @@ int write_tx_data (char *fname, int varnum,
     if (request.code == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
 	strcpy(errmsg, _("TRAMO can't handle more than 600 observations.\n"
 			 "Please select a smaller sample."));
-	return 1;
+	return E_EXTERNAL;
     } else if (request.code == X12A && (pdinfo->t2 - pdinfo->t1) > 719) {
 	strcpy(errmsg, _("X-12-ARIMA can't handle more than 720 observations.\n"
 			 "Please select a smaller sample."));
-	return 1;
+	return E_EXTERNAL;
     }	
 
     request.pd = pdinfo->pd;
@@ -897,7 +897,10 @@ int write_tx_data (char *fname, int varnum,
 	}
     }
 
-    if (err) {
+    if (err == E_EXTERNAL) {
+	/* fatal: not even error output */
+	*fname = '\0';
+    } else if (err) {
 	if (request.code == X12A) {
 	    sprintf(fname, "%s%c%s.err", workdir, SLASH, varname);
 	} else {
