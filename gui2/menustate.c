@@ -160,12 +160,6 @@ void main_menubar_state (gboolean s)
 			(d)->structure == SPECIAL_TIME_SERIES || \
 			(d)->structure == STACKED_TIME_SERIES)
 
-#define tramo_ts(d) ((d)->structure == TIME_SERIES && \
-                     (d->pd == 1 || d->pd == 4 || d->pd == 12))
-
-#define x12_ts(d) ((d)->structure == TIME_SERIES && \
-                   (d->pd == 4 || d->pd == 12))
-
 void time_series_menu_state (gboolean s)
 {
     gboolean sx = extended_ts(datainfo);
@@ -190,10 +184,10 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/MenuBar/Variable/KPSS", s);
     flip(mdata->ui, "/MenuBar/Variable/Filter", s);
 #ifdef HAVE_X12A
-    flip(mdata->ui, "/MenuBar/Variable/X12A", x12_ts(datainfo));
+    flip(mdata->ui, "/MenuBar/Variable/X12A", get_x12a_ok());
 #endif
 #ifdef HAVE_TRAMO
-    flip(mdata->ui, "/MenuBar/Variable/Tramo", tramo_ts(datainfo));
+    flip(mdata->ui, "/MenuBar/Variable/Tramo", get_tramo_ok());
 #endif
     flip(mdata->ui, "/MenuBar/Variable/Hurst", s);
     /* Model menu */

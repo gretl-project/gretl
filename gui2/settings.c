@@ -585,48 +585,71 @@ static int alt_ok (const char *prog)
 }
 #endif
 
-#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-
-static void set_tramo_x12a_status (void)
-{
-    int ok;
-
 #ifdef HAVE_TRAMO
-    ok = 0;
-    if (*paths.tramodir != '\0') {
-	ok = check_for_prog(paths.tramo);
-# ifdef OSX_BUILD
-	if (!ok) {
-	    ok = alt_ok(paths.tramo);
-	}
-# endif 
-	fprintf(stderr, "tramo: ok = %d\n", ok);
-    }
 
-    if (mdata != NULL) {
-	flip(mdata->ui, "/Menubar/Variable/Tramo", ok);
-    }
-#endif /* TRAMO */
+#define tramo_ts(d) ((d)->structure == TIME_SERIES && \
+                     (d->pd == 1 || d->pd == 4 || d->pd == 12))
 
-#ifdef HAVE_X12A
-    ok = 0;
-    if (*paths.x12adir != '\0') {
-	ok = check_for_prog(paths.x12a);
-# ifdef OSX_BUILD    
-	if (!ok) {
-	    ok = alt_ok(paths.x12a);
-	}
-# endif  
-	fprintf(stderr, "x12a: ok = %d\n", ok);
-    }
+static int tramo_ok = 0;
 
-    if (mdata != NULL) {
-	flip(mdata->ui, "/Menubar/Variable/X12A", ok);
-    }    
-#endif /* X12A */
+int get_tramo_ok (void)
+{
+    return tramo_ok && tramo_ts(datainfo);
 }
 
-#endif /* tramo || x12a */
+static void set_tramo_status (void)
+{
+    tramo_ok = 0;
+
+    if (*paths.tramodir != '\0') {
+	tramo_ok = check_for_prog(paths.tramo);
+# ifdef OSX_BUILD
+	if (!tramo_ok) {
+	    tramo_ok = alt_ok(paths.tramo);
+	}
+# endif 
+    }
+
+    if (mdata != NULL) {
+	flip(mdata->ui, "/MenuBar/Variable/Tramo", 
+	     get_tramo_ok());
+    }
+}
+
+#endif /* HAVE_TRAMO */
+
+#ifdef HAVE_X12A
+
+#define x12_ts(d) ((d)->structure == TIME_SERIES && \
+                   (d->pd == 4 || d->pd == 12))
+
+static int x12a_ok = 0;
+
+int get_x12a_ok (void)
+{
+    return x12a_ok && x12_ts(datainfo);
+}
+
+static void set_x12a_status (void)
+{
+    x12a_ok = 0;
+
+    if (*paths.x12adir != '\0') {
+	x12a_ok = check_for_prog(paths.x12a);
+# ifdef OSX_BUILD    
+	if (!x12a_ok) {
+	    x12a_ok = alt_ok(paths.x12a);
+	}
+# endif  
+    }
+
+    if (mdata != NULL) {
+	flip(mdata->ui, "/MenuBar/Variable/X12A", 
+	     get_x12a_ok());
+    }    
+}
+
+#endif /* HAVE_X12A */
 
 #ifdef G_OS_WIN32
 
@@ -1445,23 +1468,17 @@ static void set_gp_colors (void)
 
 static void maybe_revise_tramo_x12a_status (void)
 {
-    int doit = 0;
-
 # ifdef HAVE_TRAMO
     if (strcmp(paths.tramo, gretl_tramo())) {
-	doit = 1;
+	set_tramo_status();
     } 
 # endif
 
 # ifdef HAVE_X12A
     if (strcmp(paths.x12a, gretl_x12_arima())) {
-	doit = 1;
+	set_x12a_status();
     }
 # endif
-
-    if (doit) {
-	set_tramo_x12a_status();
-    }
 }
 
 #endif
@@ -1684,8 +1701,12 @@ static int common_read_rc_setup (void)
     maybe_fix_viewpdf();
 #endif
 
-# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-    set_tramo_x12a_status();
+#ifdef HAVE_TRAMO
+    set_tramo_status();
+#endif
+
+#ifdef HAVE_X12A
+    set_x12a_status();
 # endif
 
     langid = lang_id_from_name(langpref);

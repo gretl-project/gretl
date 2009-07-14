@@ -7,6 +7,14 @@ void read_rc (int debug);
 void gretl_config_init (void);
 #endif
 
+#ifdef HAVE_TRAMO
+int get_tramo_ok (void);
+#endif
+
+#ifdef HAVE_X12A
+int get_x12a_ok (void);
+#endif
+
 void set_gretl_startdir (void);
 
 int using_hc_by_default (void);
