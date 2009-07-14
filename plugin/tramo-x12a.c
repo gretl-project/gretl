@@ -36,7 +36,9 @@ enum prog_codes {
 };
 
 const char *x12a_series_strings[] = {
-    "d11", "d12", "d13"
+    "d11", /* seasonally adjusted */
+    "d12", /* trend/cycle */
+    "d13"  /* irregular */
 };
 
 static int tramo_got_irfin;
@@ -252,6 +254,32 @@ static void get_seats_command (char *seats, const char *tramo)
     }
 }
 
+/* try to avoid collision of date and graph key, which
+   defaults to right top
+*/
+
+static void set_keypos (const double *x, int t1, int t2,
+			FILE *fp)
+{
+    int T = t2 - t1 + 1;
+
+    if (T <= 12) {
+	if (x[t2] > x[t1]) {
+	    fputs("set key left top\n", fp);
+	}
+    } else {
+	double m1, m2;
+	int r = T / 6;
+
+	m1 = gretl_mean(t1, t1 + r, x);
+	m2 = gretl_mean(t2 - r, t2, x);
+
+	if (m2 > m1) {
+	    fputs("set key left top\n", fp);
+	}
+    }
+}
+
 static int graph_series (const double **Z, const DATAINFO *pdinfo, 
 			 tx_request *req)
 {
@@ -260,6 +288,8 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
     int v_sa = TX_SA + 1;
     int v_tr = TX_TR + 1;
     int v_ir = TX_IR + 1;
+    double irbar, irmax;
+    int sub1 = 0;
     double f1;
     char title[32];
     int t;
@@ -296,17 +326,30 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
 	tramo_got_irfin = 0; /* I _think_ this may be right */
     }
 
-    /* irregular component */
-    if (req->prog == TRAMO_SEATS && !tramo_got_irfin) {
-	sprintf(title, "%s", _("irregular"));
+    if (req->prog == TRAMO_SEATS && tramo_got_irfin) {
+	/* need to divide by 100? */
+	irmax = 10.0;
     } else {
+	irmax = 0.5;
+    }
+
+    irbar = gretl_mean(pdinfo->t1, pdinfo->t2, Z[v_ir]);
+    if (irbar > irmax) {
+	sub1 = 1;
+    }
+
+    /* irregular component */
+    if (sub1) {
 	sprintf(title, "%s - 1", _("irregular"));
+    } else {
+	sprintf(title, "%s", _("irregular"));
     }
 
     fprintf(fp, "set bars 0\n"
 	    "set origin 0.0,0.0\n"
-	    "plot '-' using 1:($2-1.0) title '%s' w impulses\n",
-	    title);
+	    "set xzeroaxis\n"
+	    "plot '-' using 1:%s title '%s' w impulses\n",
+	    (sub1)? "($2-1.0)" : "2", title);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	double yt = Z[v_ir][t];
@@ -318,6 +361,8 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
 	fprintf(fp, "%.10g %.10g\n", obs[t], yt);
     }
     fputs("e\n", fp);
+
+    set_keypos(Z[0], pdinfo->t1, pdinfo->t2, fp);
 
     /* actual (in var 0) vs trend/cycle */
 
