@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-04 12:34-0400\n"
-"PO-Revision-Date: 2009-07-06 10:32+0200\n"
+"PO-Revision-Date: 2009-07-14 16:43+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -13984,7 +13984,7 @@ msgstr "Nivel"
 
 #: plugin/anova.c:216
 msgid "Grand mean"
-msgstr "Media grande"
+msgstr "Media global"
 
 #: plugin/anova.c:501
 #, c-format
