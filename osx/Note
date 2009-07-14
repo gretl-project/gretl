@@ -1,0 +1,99 @@
+Allin Cottrell, 2009-05-03
+
+Build gretl.dmg on OS X, the new way using GTK+.framework and
+without Fink.  If you do have Fink installed you should probably
+disable it while building gretl.  
+
+1. If you don't already have it, you must install the GTK+ Framework
+   built by the R guys:
+
+   http://r.research.att.com/gtk2-framework.dmg
+   or http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg
+
+2. You'll also need some supplementary build tools and auxiliary libraries.
+    My copies of these things are at
+    
+    http://ricardo.ecn.wfu.edu/pub/gretl/osxbuild/local.tar.gz
+
+(Includes libs and headers for readline, fftw3, GMP and MPFR, plus GNU cp, 
+wget and automake 1.9.5; some of this you may not need -- but you do need
+GNU cp.  You can untar my package in a "safe place" and copy things
+into place selectively if you wish.)    
+
+# Or if you prefer to build fftw3 yourself...
+# fftw3 version 3.2.1 (install static lib to /usr/local)
+wget ftp://ftp.fftw.org/pub/fftw/fftw-3.2.1.tar.gz
+tar xvfz fftw-3.2.1.tar.gz
+rm fftw-3.2.1.tar.gz
+cd fftw-3.2.1
+./configure
+make
+make check
+sudo make install
+# unless you want to use this...
+sudo rm /usr/local/bin/fftw-wisdom*
+
+# GMP, MPFR: my local.tar.gz package contains these, but if you prefer
+# to build tham yourself, fine.  My versions come from Fink, with
+# the install names changed to "/usr/local/lib/..."
+
+# gnuplot
+export PREFIX=/Users/allin/dist/Gretl.app/Contents/Resources
+wget http://ricardo.ecn.wfu.edu/pub/gretl/osxbuild/gnuplot-20090503.tar.gz
+tar xvfz gnuplot-20090503.tar.gz
+cd gnuplot-20090503
+CFLAGS=-O2 ./configure --prefix=$PREFIX \
+ --disable-wxwidgets --without-tutorial
+make
+make install-strip
+# change gnuplot libreadline run-time linkage
+cd $PREFIX/bin
+install_name_tool -change /usr/local/lib/libreadline.5.2.dylib \
+ @executable_path/../lib/libreadline.5.2.dylib gnuplot
+ 
+# build CVS gretl
+# here's the config I use:
+mkdir -p build
+cd build
+export CFLAGS="-O2 -I/Library/Frameworks/GTK+.framework/Headers"
+export LDFLAGS=-L/Library/Frameworks/GTK+.framework/Libraries
+export CPPFLAGS=$CFLAGS
+export PKG_CONFIG_PATH="/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/X11R6/lib/pkgconfig"
+../configure --prefix=/Users/allin/dist/Gretl.app/Contents/Resources \
+  --enable-build-doc --with-gmp-prefix=/usr/local \
+  --with-libintl-prefix=/Library/Frameworks/GTK+.framework/Libraries \
+  --disable-gnuplot-checks
+make
+make install
+make osx-dist
+
+# the last target cleans out some unneeded stuff from the distribution dir
+# and also attempts to fix library linkage, by calling osx/fixlinks.sh .
+# If your "auxiliary" libararies (such as libreadline, libgmp, etc) do not 
+# live in /usr/local/lib, set AUXPATH to the right location:
+
+# either just
+make osx-dist
+# or 
+AUXPATH=/some/place/lib make osx-dist
+
+# To save some space in the distribution you can strip the gretl 
+# executables and libs, but be careful -- don't destroy needed symbols!
+# Notional commands:
+cd ~/dist/Gretl.app/Contents/Resources
+strip -x lib/whatever
+strip -u -r bin/whatever
+
+
+
+
+
+
+
+
+
+
+
+
+
+
