@@ -599,18 +599,25 @@ int get_tramo_ok (void)
 
 static void set_tramo_status (void)
 {
-    tramo_ok = 0;
+    int gui_up = (mdata != NULL);
+    int ok = 0;
 
     if (*paths.tramodir != '\0') {
-	tramo_ok = check_for_prog(paths.tramo);
+	ok = check_for_prog(paths.tramo);
 # ifdef OSX_BUILD
-	if (!tramo_ok) {
-	    tramo_ok = alt_ok(paths.tramo);
+	if (!ok) {
+	    ok = alt_ok(paths.tramo);
 	}
 # endif 
     }
 
-    if (mdata != NULL) {
+    if (tramo_ok && !ok && gui_up) {
+	warnbox("Invalid path for %s", "TRAMO");
+    }
+
+    tramo_ok = ok;
+
+    if (gui_up) {
 	flip(mdata->ui, "/MenuBar/Variable/Tramo", 
 	     get_tramo_ok());
     }
@@ -632,18 +639,25 @@ int get_x12a_ok (void)
 
 static void set_x12a_status (void)
 {
-    x12a_ok = 0;
+    int gui_up = (mdata != NULL);
+    int ok = 0;
 
     if (*paths.x12adir != '\0') {
-	x12a_ok = check_for_prog(paths.x12a);
+	ok = check_for_prog(paths.x12a);
 # ifdef OSX_BUILD    
-	if (!x12a_ok) {
-	    x12a_ok = alt_ok(paths.x12a);
+	if (!ok) {
+	    ok = alt_ok(paths.x12a);
 	}
 # endif  
     }
 
-    if (mdata != NULL) {
+    if (x12a_ok && !ok && gui_up) {
+	warnbox("Invalid path for %s", "X-12-ARIMA");
+    }
+
+    x12a_ok = ok;
+
+    if (gui_up) {
 	flip(mdata->ui, "/MenuBar/Variable/X12A", 
 	     get_x12a_ok());
     }    

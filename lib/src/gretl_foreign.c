@@ -784,17 +784,18 @@ static SEXP find_R_function (const char *name)
 }
 
 /* Check if we should be using the R shared library for executing the
-   code in a "foreign" block.  This can be prohibited by the
-   environment variable GRETL_NO_RLIB, and can also be blocked if we
-   already tried and failed to initialize the library for gretl's use.
-   (The fallback will be to call the R binary.)
+   code in a "foreign" block.  This is disabled if the user has not
+   done "set R_lib on", and can be prohibited by the environment
+   variable GRETL_NO_RLIB.  It may also be blocked if we already tried
+   and failed to initialize the library for gretl's use.  (The
+   fallback will be to call the R binary.)
 */
 
 static int gretl_use_Rlib (void)
 {
     int ret = 0;
 
-    if (!Rlib_err && !getenv("GRETL_NO_RLIB")) {
+    if (!Rlib_err && libset_get_bool(R_LIB) && !getenv("GRETL_NO_RLIB")) {
 	/* use of library is not blocked */
 	if (Rinit) {
 	    /* already opened, fine */

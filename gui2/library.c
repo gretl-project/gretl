@@ -4045,12 +4045,14 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     void *handle;
     int (*write_tx_data) (char *, int, 
 			  double ***, DATAINFO *, gretlopt *,
-			  const char *, const char *, char *);
+			  const char *, const char *, int *, 
+			  char *);
     PRN *prn;
     char fname[MAXLEN] = {0};
     char errtext[MAXLEN];
     char *exepath = NULL, *workdir = NULL;
     const gchar *code;
+    int graph_ok = 1;
     int prog, err;
 
     code = gtk_action_get_name(action);
@@ -4094,8 +4096,8 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 
     *errtext = 0;
 
-    err = write_tx_data(fname, v, &Z, datainfo, &opt,
-			exepath, workdir, errtext);
+    err = write_tx_data(fname, v, &Z, datainfo, &opt, exepath, 
+			workdir, &graph_ok, errtext);
     
     close_plugin(handle);
 
@@ -4132,7 +4134,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 		    opt, NULL);
     }
 
-    if (!err && (opt & OPT_G)) {
+    if (!err && graph_ok && (opt & OPT_G)) {
 	make_and_display_graph();
     }
 

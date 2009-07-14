@@ -124,7 +124,8 @@ struct set_vars_ {
                            !strcmp(s, PROTECT_LISTS) || \
                            !strcmp(s, VERBOSE_INCLUDE) || \
                            !strcmp(s, SKIP_MISSING) || \
-			   !strcmp(s, R_FUNCTIONS))
+			   !strcmp(s, R_FUNCTIONS) || \
+			   !strcmp(s, R_LIB))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -152,6 +153,7 @@ static int gretl_debug;
 static int protect_lists = 1;
 static int user_mp_bits;
 static int R_functions;
+static int R_lib;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -1797,7 +1799,9 @@ int libset_get_bool (const char *key)
 	return protect_lists;
     } else if (!strcmp(key, R_FUNCTIONS)) {
 	return R_functions;
-    } 
+    } else if (!strcmp(key, R_LIB)) {
+	return R_lib;
+    }
 
     if (!strcmp(key, MAX_VERBOSE) && gretl_debug > 1) {
 	/* strong debugging turns on max_verbose */
@@ -1841,12 +1845,12 @@ static void libset_set_decpoint (int on)
 #endif
 }
 
-static int check_R_setting (const char *key, int val)
+static int check_R_setting (int *var, int val, const char *key)
 {
     int err = 0;
 
 #ifdef USE_RLIB
-    R_functions = val;
+    *var = val;
 #else
     if (val) {
 	gretl_errmsg_sprintf("%s: not supported.", key);
@@ -1871,8 +1875,10 @@ int libset_set_bool (const char *key, int val)
 	protect_lists = val;
 	return 0;
     } else if (!strcmp(key, R_FUNCTIONS)) {
-	return check_R_setting(key, val);
-    } 
+	return check_R_setting(&R_functions, val, key);
+    } else if (!strcmp(key, R_LIB)) {
+	return check_R_setting(&R_lib, val, key);
+    }
 
     flag = boolvar_get_flag(key);
 

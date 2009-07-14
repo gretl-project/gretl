@@ -18,9 +18,9 @@
  */
 
 enum tx_objects {
-    D11,      /* seasonally adjusted series */
-    D12,      /* trend/cycle */
-    D13,      /* irregular component */
+    TX_SA,    /* seasonally adjusted series */
+    TX_TR,    /* trend/cycle */
+    TX_IR,    /* irregular component */
     TRIGRAPH, /* graph showing all of the above */
     TEXTOUT,  /* for full text output */
     TX_MAXOPT
@@ -36,13 +36,14 @@ struct _common_opt_info {
 };
 
 struct _tx_request {
-    int code;          /* tramo vs x12arima */
+    int prog;          /* tramo vs x12arima */
     GtkWidget *dialog;
-    common_opt_info opt[TX_MAXOPT];
-    void *opts;
+    common_opt_info opts[TX_MAXOPT];
+    void *gui;
     gretlopt *popt;
     int savevars;
     int pd;
+    int seasonal_ok;
 };
 
 int show_tramo_options (tx_request *request, GtkWidget *vbox);

@@ -258,8 +258,8 @@ seats_specific_widgets_set_sensitive (tramo_options *opts,
     }
     
     for (i=0; i<TX_MAXOPT; i++) {
-	if (request->opt[i].check != NULL) {
-	    gtk_widget_set_sensitive(request->opt[i].check, s);
+	if (request->opts[i].check != NULL) {
+	    gtk_widget_set_sensitive(request->opts[i].check, s);
 	}
     }
 }				      
@@ -347,7 +347,7 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     row++;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
     g_object_set_data(G_OBJECT(notebook), "opts",
-		      request->opts);
+		      request->gui);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(main_auto_callback), 
 		     notebook);
@@ -371,7 +371,7 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     } else {    
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(set_seats), 
-			 request->opts);
+			 request->gui);
     }
 
     /* TRAMO-only option */
@@ -387,7 +387,7 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     } else {   
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(set_no_seats), 
-			 request->opts);
+			 request->gui);
     }
 }
 
@@ -417,7 +417,7 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(set_out), 
-		     request->opts);
+		     request->gui);
     g_object_set_data(G_OBJECT(tmp), "out_value", 
                       GINT_TO_POINTER(0));
 
@@ -429,7 +429,7 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     row++;
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(set_out), 
-		     request->opts);
+		     request->gui);
     g_object_set_data(G_OBJECT(tmp), "out_value", 
                       GINT_TO_POINTER(1));
 
@@ -450,24 +450,24 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
 	gtk_widget_show(tmp);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
 	row++;
-	request->opt[D11].check = tmp;
+	request->opts[TX_SA].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
     } else {
-	request->opt[D11].check = NULL;
+	request->opts[TX_SA].check = NULL;
     }
 
     tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
-    request->opt[D12].check = tmp;
+    request->opts[TX_TR].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Irregular"));
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
-    request->opt[D13].check = tmp;
+    request->opts[TX_IR].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
     tmp = gtk_hseparator_new();
@@ -479,10 +479,10 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
 	tmp = gtk_check_button_new_with_label(_("Generate graph"));
 	gtk_widget_show(tmp);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
-	request->opt[TRIGRAPH].check = tmp;
+	request->opts[TRIGRAPH].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
     } else {
-	request->opt[TRIGRAPH].check = NULL;
+	request->opts[TRIGRAPH].check = NULL;
     }
 }
 
@@ -795,7 +795,7 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts, int pd)
 
 static void real_show_tramo_options (tx_request *request, GtkWidget *vbox) 
 {
-    tramo_options *opts = (tramo_options *) request->opts;
+    tramo_options *opts = (tramo_options *) request->gui;
     GtkWidget *book;
 
     book = gtk_notebook_new();
@@ -847,7 +847,7 @@ int show_tramo_options (tx_request *request, GtkWidget *vbox)
     }
 
     /* mutual pointer hook-up */
-    request->opts = opts;
+    request->gui = opts;
     opts->request = request;
 
     real_show_tramo_options(request, vbox);
@@ -863,9 +863,9 @@ int print_tramo_options (tx_request *request, FILE *fp)
 {
     tramo_options *opts;
 
-    if (request->opts == NULL) return 0;
+    if (request->gui == NULL) return 0;
 
-    opts = request->opts;
+    opts = request->gui;
 
     fputs("$INPUT ", fp);
 
@@ -923,7 +923,7 @@ int print_tramo_options (tx_request *request, FILE *fp)
     fputs("$\n", fp);
 
     free(opts);
-    request->opts = NULL;
+    request->gui = NULL;
 
     return (opts->seats > 0);
 }

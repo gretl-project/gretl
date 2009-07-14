@@ -29,7 +29,7 @@
 # include <signal.h>
 #endif
 
-enum opt_codes {
+enum prog_codes {
     TRAMO_SEATS,
     TRAMO_ONLY,
     X12A
@@ -42,7 +42,10 @@ const char *x12a_series_strings[] = {
 static int tramo_got_irfin;
 
 const char *tramo_series_strings[] = {
-    "safin.t", "trfin.t", "irfin.t", "irreg.t"
+    "safin.t", /* final seasonally adjusted series */
+    "trfin.t", /* final trend */
+    "irfin.t", /* final irregular factor (component) */
+    "irreg.t"  /* irregular component (logs) */
 };
 
 const char *tx_descrip_formats[] = {
@@ -158,11 +161,11 @@ static int tx_dialog (tx_request *request)
     gint i, ret = 0;
 
     for (i=0; i<TX_MAXOPT; i++) {
-	request->opt[i].check = NULL;
+	request->opts[i].check = NULL;
     }
 
     request->dialog = 
-	gtk_dialog_new_with_buttons ((request->code == TRAMO_SEATS)?
+	gtk_dialog_new_with_buttons ((request->prog == TRAMO_SEATS)?
 				     "TRAMO/SEATS" : "X-12-ARIMA",
 				     NULL,
 				     GTK_DIALOG_MODAL | 
@@ -175,7 +178,7 @@ static int tx_dialog (tx_request *request)
 
     vbox = gtk_vbox_new(FALSE, 0);    
 
-    if (request->code == TRAMO_SEATS) {
+    if (request->prog == TRAMO_SEATS) {
 	gtk_dialog_set_has_separator(GTK_DIALOG(request->dialog), FALSE);
 	show_tramo_options(request, vbox);
     } else {
@@ -187,21 +190,21 @@ static int tx_dialog (tx_request *request)
 	tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opt[D11].check = tmp;
+	request->opts[TX_SA].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
 				     (*request->popt & OPT_A)? TRUE : FALSE);
 
 	tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opt[D12].check = tmp;
+	request->opts[TX_TR].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
 				     (*request->popt & OPT_B)? TRUE : FALSE);
 
 	tmp = gtk_check_button_new_with_label(_("Irregular"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opt[D13].check = tmp;
+	request->opts[TX_IR].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
 				     (*request->popt & OPT_C)? TRUE : FALSE);
 
@@ -212,14 +215,14 @@ static int tx_dialog (tx_request *request)
 	tmp = gtk_check_button_new_with_label(_("Generate graph"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opt[TRIGRAPH].check = tmp;
+	request->opts[TRIGRAPH].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
 				     (*request->popt & OPT_G)? TRUE : FALSE);
 
 	tmp = gtk_check_button_new_with_label(_("Show full output"));
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opt[TEXTOUT].check = tmp;
+	request->opts[TEXTOUT].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
 				     (*request->popt & OPT_Q)? FALSE : TRUE);
     }
@@ -249,10 +252,15 @@ static void get_seats_command (char *seats, const char *tramo)
     }
 }
 
-static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
+static int graph_series (const double **Z, const DATAINFO *pdinfo, 
+			 tx_request *req)
 {
     FILE *fp = NULL;
     const double *obs;
+    int v_sa = TX_SA + 1;
+    int v_tr = TX_TR + 1;
+    int v_ir = TX_IR + 1;
+    double f1;
     char title[32];
     int t;
 
@@ -279,10 +287,17 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 	}
     }
 
-    fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.32\n", fp);
+    if (req->seasonal_ok) {
+	f1 = 0.33;
+	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.32\n", fp);
+    } else {
+	f1 = 0.5;
+	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
+	tramo_got_irfin = 0; /* I _think_ this may be right */
+    }
 
     /* irregular component */
-    if (opt == TRAMO_SEATS && !tramo_got_irfin) {
+    if (req->prog == TRAMO_SEATS && !tramo_got_irfin) {
 	sprintf(title, "%s", _("irregular"));
     } else {
 	sprintf(title, "%s - 1", _("irregular"));
@@ -294,46 +309,50 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 	    title);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	double y = Z[D13 + 1][t];
+	double yt = Z[v_ir][t];
 
-	fprintf(fp, "%g %g\n", obs[t], 
-		(opt == TRAMO_SEATS && tramo_got_irfin)? y / 100.0 : y);
+	if (req->prog == TRAMO_SEATS && tramo_got_irfin) {
+	    yt /= 100.0;
+	}
+
+	fprintf(fp, "%.10g %.10g\n", obs[t], yt);
     }
     fputs("e\n", fp);
 
-    /* actual vs trend/cycle */
+    /* actual (in var 0) vs trend/cycle */
 
-    fprintf(fp, "set origin 0.0,0.33\n"
+    fprintf(fp, "set origin 0.0,%.2f\n"
 	    "plot '-' using 1:2 title '%s' w l, \\\n"
 	    " '-' using 1:2 title '%s' w l\n",
-	    pdinfo->varname[0], _("trend/cycle"));
+	    f1, pdinfo->varname[0], _("trend/cycle"));
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	fprintf(fp, "%g %g\n", obs[t], Z[0][t]);
+	fprintf(fp, "%.10g %.10g\n", obs[t], Z[0][t]);
     }
     fputs("e , \\\n", fp);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	fprintf(fp, "%g %g\n", obs[t], Z[D12 + 1][t]);
+	fprintf(fp, "%.10g %.10g\n", obs[t], Z[v_tr][t]);
     }
     fputs("e\n", fp);
 
-    /* actual vs seasonally adjusted */
+    if (req->seasonal_ok) {
+	/* actual vs seasonally adjusted */
+	fprintf(fp, "set origin 0.0,0.66\n"
+		"plot '-' using 1:2 title '%s' w l, \\\n"
+		" '-' using 1:2 title '%s' w l\n",
+		pdinfo->varname[0], _("adjusted"));
 
-    fprintf(fp, "set origin 0.0,0.66\n"
-	    "plot '-' using 1:2 title '%s' w l, \\\n"
-	    " '-' using 1:2 title '%s' w l\n",
-	    pdinfo->varname[0], _("adjusted"));
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    fprintf(fp, "%.10g %.10g\n", obs[t], Z[0][t]);
+	}
+	fputs("e\n", fp);
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "%g %g\n", obs[t], Z[0][t]);
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    fprintf(fp, "%.10g %.10g\n", obs[t], Z[v_sa][t]);
+	}
+	fputs("e\n", fp);
     }
-    fputs("e\n", fp);
-
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "%g %g\n", obs[t], Z[D11 + 1][t]);
-    }
-    fputs("e\n", fp);
 
     fputs("set nomultiplot\n", fp);
 
@@ -362,7 +381,7 @@ static void clear_tramo_files (const char *tpath, const char *varname)
     char tfname[MAXLEN];
     int i;
 
-    for (i=D11; i<=TRIGRAPH; i++) {
+    for (i=TX_SA; i<=TRIGRAPH; i++) {
 	sprintf(tfname, "%s%cgraph%cseries%c%s", tpath, SLASH, SLASH, SLASH,
 		tramo_series_strings[i]);
 	gretl_remove(tfname);
@@ -383,9 +402,10 @@ static void clear_x12a_files (const char *xpath, const char *varname)
     gretl_remove(xfname);
 }
 
-static int add_series_from_file (const char *fname, int code,
+static int add_series_from_file (const char *path, int src,
 				 double **Z, DATAINFO *pdinfo,
-				 int v, int opt, char *errmsg)
+				 int targv, tx_request *request,
+				 char *errmsg)
 {
     FILE *fp;
     char *p, line[128], sfname[MAXLEN], date[8];
@@ -394,34 +414,47 @@ static int add_series_from_file (const char *fname, int code,
     int d, yr, per, err = 0;
     int t;
 
-    if (opt == TRAMO_SEATS) {
+    if (request->prog == TRAMO_SEATS) {
 	tramo_got_irfin = 1;
-	sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
-		tramo_series_strings[code]);
+	sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
+		tramo_series_strings[src]);
     } else {
-	strcpy(sfname, fname);
+	strcpy(sfname, path);
 	p = strrchr(sfname, '.');
-	if (p != NULL) strcpy(p + 1, x12a_series_strings[code]);
+	if (p != NULL) strcpy(p + 1, x12a_series_strings[src]);
     }
 
     fp = gretl_fopen(sfname, "r");
 
     if (fp == NULL) {
+	/* couldn't open the file we wanted */
 	int gotit = 0;
 
-	/* this is a bit of a pest: under some configurations, tramo/seats
+	/* This is a bit of a pest: under some configurations, tramo/seats
 	   outputs a series "irfin"; sometimes that is not created, but
 	   we do get an "irreg".  So if we can't find the one, try looking
-	   for the other.
+	   for the other.  Also, the seasonally adjusted series "safin"
+	   is not always available.
 	*/
-	if (opt == TRAMO_SEATS && code == D13) { 
-	    sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
-		    tramo_series_strings[code + 1]);
-	    fp = gretl_fopen(sfname, "r");
-	    if (fp != NULL) {
-		gotit = 1;
+	if (request->prog == TRAMO_SEATS) {
+	    if (src == TX_IR) { 
+		/* try "irreg" */
+		sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
+			tramo_series_strings[src + 1]);
+		fp = gretl_fopen(sfname, "r");
+		if (fp != NULL) {
+		    gotit = 1;
+		}
+		tramo_got_irfin = 0;
+	    } else if (src == TX_SA) {
+		/* scrub all use of seasonal series */
+		request->seasonal_ok = 0;
+		if (request->opts[src].save) {
+		    request->opts[src].save = 0;
+		    request->savevars -= 1;
+		}
+		return 0;
 	    }
-	    tramo_got_irfin = 0;
 	}
 
 	if (!gotit) {
@@ -432,31 +465,31 @@ static int add_series_from_file (const char *fname, int code,
     }
 
     /* formulate name of new variable to add */
-    if (opt == TRAMO_SEATS) {
+    if (request->prog == TRAMO_SEATS) {
 	sprintf(varname, "%.5s_%.2s", pdinfo->varname[0], 
-		tramo_series_strings[code]);
+		tramo_series_strings[src]);
     } else {
 	sprintf(varname, "%.4s_%s", pdinfo->varname[0], 
-		x12a_series_strings[code]);
+		x12a_series_strings[src]);
     }
 
     /* copy varname and label into place */
-    strcpy(pdinfo->varname[v], varname);
-    sprintf(VARLABEL(pdinfo, v), _(tx_descrip_formats[code]), pdinfo->varname[0]);
+    strcpy(pdinfo->varname[targv], varname);
+    sprintf(VARLABEL(pdinfo, targv), _(tx_descrip_formats[src]), pdinfo->varname[0]);
 
-    if (opt == TRAMO_SEATS) {
-	strcat(VARLABEL(pdinfo, v), " (TRAMO/SEATS)");
+    if (request->prog == TRAMO_SEATS) {
+	strcat(VARLABEL(pdinfo, targv), " (TRAMO/SEATS)");
     } else {
-	strcat(VARLABEL(pdinfo, v), " (X-12-ARIMA)");
+	strcat(VARLABEL(pdinfo, targv), " (X-12-ARIMA)");
     }	
 
     for (t=0; t<pdinfo->n; t++) {
-	Z[v][t] = NADBL;
+	Z[targv][t] = NADBL;
     }
 
     gretl_push_c_numeric_locale();
 
-    if (opt == TRAMO_SEATS) {
+    if (request->prog == TRAMO_SEATS) {
 	int i = 0;
 
 	t = pdinfo->t1;
@@ -468,7 +501,7 @@ static int add_series_from_file (const char *fname, int code,
 		    err = 1;
 		    break;
 		}		
-		Z[v][t++] = x;
+		Z[targv][t++] = x;
 	    }
 	}
     } else {
@@ -489,7 +522,7 @@ static int add_series_from_file (const char *fname, int code,
 		err = 1;
 		break;
 	    }
-	    Z[v][t] = x;
+	    Z[targv][t] = x;
 	}
     }
 
@@ -507,8 +540,10 @@ static void request_opts_init (tx_request *request)
     request->savevars = 0;
 
     for (i=0; i<TX_MAXOPT; i++) {
-	request->opt[i].save = 0;
+	request->opts[i].save = 0;
     }
+
+    request->seasonal_ok = 1;
 }
 
 static void set_opts (tx_request *request)
@@ -520,9 +555,9 @@ static void set_opts (tx_request *request)
     *request->popt &= ~(OPT_A|OPT_B|OPT_C);
 
     for (i=0; i<TX_MAXOPT; i++) {
-	if (request->opt[i].check != NULL && 
-	    GTK_TOGGLE_BUTTON(request->opt[i].check)->active) {
-	    request->opt[i].save = 1;
+	if (request->opts[i].check != NULL && 
+	    GTK_TOGGLE_BUTTON(request->opts[i].check)->active) {
+	    request->opts[i].save = 1;
 	    if (i < TRIGRAPH) {
 		request->savevars++;
 		if (i == 0) {
@@ -534,7 +569,7 @@ static void set_opts (tx_request *request)
 		}
 	    }
 	} else {
-	    request->opt[i].save = 0;
+	    request->opts[i].save = 0;
 	} 
     }
 }
@@ -546,7 +581,7 @@ static void cancel_savevars (tx_request *request)
     request->savevars = 0;
 
     for (i=0; i<TX_MAXOPT; i++) {
-	request->opt[i].save = 0;
+	request->opts[i].save = 0;
     } 
 }
 
@@ -591,7 +626,7 @@ static int write_tramo_file (const char *fname,
     fputc('\n', fp);
 
     if (print_tramo_options(request, fp) == 0) {
-	request->code = TRAMO_ONLY; /* not running SEATS */
+	request->prog = TRAMO_ONLY; /* not running SEATS */
     }
 
     gretl_pop_c_numeric_locale();
@@ -678,7 +713,7 @@ static void form_varlist (int *varlist, tx_request *request)
     varlist[0] = 0;
 
     for (i=0; i<TRIGRAPH; i++) {
-	if (request->opt[TRIGRAPH].save || request->opt[i].save) {
+	if (request->opts[TRIGRAPH].save || request->opts[i].save) {
 	    varlist[0] += 1;
 	    varlist[j++] = i;
 	}
@@ -702,23 +737,22 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 {
     int i, v, j, addvars = 0;
 
-    /* how many vars are wanted, and new? */
+    /* how many vars are wanted, and how many are new? */
     for (i=1; i<=varlist[0]; i++) {
-	if (request->opt[varlist[i]].save && 
+	if (request->opts[varlist[i]].save && 
 	    series_index(pdinfo, tmpinfo->varname[i]) == pdinfo->v) {
 	    addvars++;
 	}
     }
 
     if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
-	strcpy(errmsg, _("Failed to allocate memory for new data"));
-	return 1;
+	return E_ALLOC;
     }
 
     j = pdinfo->v - addvars;
 
     for (i=1; i<=varlist[0]; i++) {
-	if (request->opt[varlist[i]].save) {
+	if (request->opts[varlist[i]].save) {
 	    v = series_index(pdinfo, tmpinfo->varname[i]);
 	    if (v < pdinfo->v) {
 		copy_variable(*pZ, pdinfo, v, tmpZ, tmpinfo, i);
@@ -734,16 +768,16 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 #ifdef WIN32
 
 static int helper_spawn (const char *prog, const char *vname,
-			 const char *workdir, int code)
+			 const char *workdir, int prog)
 {
     char *cmd = NULL;
     int err = 0;
 
-    if (code == TRAMO_ONLY) {
+    if (prog == TRAMO_ONLY) {
 	cmd = g_strdup_printf("\"%s\" -i %s -k serie", prog, vname);
-    } else if (code == TRAMO_SEATS) {
+    } else if (prog == TRAMO_SEATS) {
 	cmd = g_strdup_printf("\"%s\" -OF %s", prog, vname);
-    } else if (code == X12A) {
+    } else if (prog == X12A) {
 	cmd = g_strdup_printf("\"%s\" %s -r -p -q", prog, vname);
     } else {
 	return E_EXTERNAL;
@@ -762,17 +796,17 @@ static int helper_spawn (const char *prog, const char *vname,
 
 #else
 
-static int helper_spawn (const char *prog, const char *vname,
-			 const char *workdir, int code)
+static int helper_spawn (const char *path, const char *vname,
+			 const char *workdir, int prog)
 {
     int err;
 
-    if (code == TRAMO_ONLY) {
-	err = glib_spawn(workdir, prog, "-i", vname, "-k", "serie", NULL);
-    } else if (code == TRAMO_SEATS) {
-	err = glib_spawn(workdir, prog, "-OF", vname, NULL);
-    } else if (code == X12A) {
-	err = glib_spawn(workdir, prog, vname, "-r", "-p", "-q", NULL);
+    if (prog == TRAMO_ONLY) {
+	err = glib_spawn(workdir, path, "-i", vname, "-k", "serie", NULL);
+    } else if (prog == TRAMO_SEATS) {
+	err = glib_spawn(workdir, path, "-OF", vname, NULL);
+    } else if (prog == X12A) {
+	err = glib_spawn(workdir, path, vname, "-r", "-p", "-q", NULL);
     } else {
 	err = E_EXTERNAL;
     }
@@ -785,7 +819,7 @@ static int helper_spawn (const char *prog, const char *vname,
 int write_tx_data (char *fname, int varnum, 
 		   double ***pZ, DATAINFO *pdinfo, gretlopt *opt, 
 		   const char *prog, const char *workdir,
-		   char *errmsg)
+		   int *graph_ok, char *errmsg)
 {
     int i, doit, err = 0;
     char varname[VNAMELEN];
@@ -799,18 +833,18 @@ int write_tx_data (char *fname, int varnum,
 
     /* figure out which program we're using */
     if (strstr(prog, "tramo") != NULL) {
-	request.code = TRAMO_SEATS;
+	request.prog = TRAMO_SEATS;
     } else {
-	request.code = X12A;
+	request.prog = X12A;
     }
 
     request_opts_init(&request);
 
-    if (request.code == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
+    if (request.prog == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
 	strcpy(errmsg, _("TRAMO can't handle more than 600 observations.\n"
 			 "Please select a smaller sample."));
 	return E_EXTERNAL;
-    } else if (request.code == X12A && (pdinfo->t2 - pdinfo->t1) > 719) {
+    } else if (request.prog == X12A && (pdinfo->t2 - pdinfo->t1) > 719) {
 	strcpy(errmsg, _("X-12-ARIMA can't handle more than 720 observations.\n"
 			 "Please select a smaller sample."));
 	return E_EXTERNAL;
@@ -829,7 +863,7 @@ int write_tx_data (char *fname, int varnum,
     gtk_widget_destroy(request.dialog);
 
 #if 0
-    if (request.code == TRAMO_SEATS) {
+    if (request.prog == TRAMO_SEATS) {
 	print_tramo_options(&request, stderr);
 	return 1;
     }
@@ -843,7 +877,7 @@ int write_tx_data (char *fname, int varnum,
 
     copy_basic_data_info(tmpinfo, pdinfo);
 
-    if (request.code == X12A) { 
+    if (request.prog == X12A) { 
 	/* make a default x12a.mdl file if it doesn't already exist */
 	sprintf(fname, "%s%cx12a.mdl", workdir, SLASH);
 	fp = gretl_fopen(fname, "r");
@@ -860,7 +894,7 @@ int write_tx_data (char *fname, int varnum,
     sprintf(varname, pdinfo->varname[varnum]);
     form_varlist(varlist, &request);
 
-    if (request.code == X12A) { 
+    if (request.prog == X12A) { 
 	/* write out the .spc file for x12a */
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, varname);
 	write_spc_file(fname, *pZ, pdinfo, varnum, varlist);
@@ -869,10 +903,10 @@ int write_tx_data (char *fname, int varnum,
 	lower(varname);
 	gretl_trunc(varname, 8);
 	sprintf(fname, "%s%c%s", workdir, SLASH, varname);
-	/* next line: this also sets request->code = TRAMO_ONLY if
-	   seats is not to be run */
+	/* next line: this also sets request->prog = TRAMO_ONLY if
+	   SEATS is not to be run */
 	write_tramo_file(fname, *pZ, pdinfo, varnum, &request);
-	if (request.code == TRAMO_ONLY) {
+	if (request.prog == TRAMO_ONLY) {
 	    cancel_savevars(&request); /* FIXME later */
 	    varlist[0] = 0;
 	}
@@ -882,7 +916,7 @@ int write_tx_data (char *fname, int varnum,
        old output files get deleted first 
     */
 
-    if (request.code == X12A) {
+    if (request.prog == X12A) {
 	clear_x12a_files(workdir, varname);
 	err = helper_spawn(prog, varname, workdir, X12A);
     } else { 
@@ -891,49 +925,55 @@ int write_tx_data (char *fname, int varnum,
 	clear_tramo_files(workdir, varname);
 	err = helper_spawn(prog, varname, workdir, TRAMO_ONLY);
 
-	if (!err && request.code == TRAMO_SEATS) {
+	if (!err && request.prog == TRAMO_SEATS) {
 	    get_seats_command(seats, prog);
 	    err = helper_spawn(seats, varname, workdir, TRAMO_SEATS);
 	}
     }
 
     if (err == E_EXTERNAL) {
-	/* fatal: not even error output */
+	/* fatal: couldn't run program */
 	*fname = '\0';
     } else if (err) {
-	if (request.code == X12A) {
+	if (request.prog == X12A) {
 	    sprintf(fname, "%s%c%s.err", workdir, SLASH, varname);
 	} else {
 	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, varname);
 	}
     } else {
-	if (request.code == X12A) {
+	if (request.prog == X12A) {
 	    sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
 	} else {
 	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, varname);
+	    if (request.prog == TRAMO_ONLY) {
+		/* no graph offered */
+		request.opts[TRIGRAPH].save = 0;
+		*graph_ok = 0;
+	    }
 	} 
 
 	/* save vars locally if needed; graph if wanted */
 	if (varlist[0] > 0) {
+	    const char *path = (request.prog == X12A)? fname : workdir;
+	    
 	    copy_variable(tmpZ, tmpinfo, 0, *pZ, pdinfo, varnum);
 
 	    for (i=1; i<=varlist[0]; i++) {
-		err = add_series_from_file((request.code == X12A)? fname : workdir, 
-					   varlist[i], tmpZ, tmpinfo, i, 
-					   request.code, errmsg);
+		err = add_series_from_file(path, varlist[i], tmpZ, tmpinfo,
+					   i, &request, errmsg);
 		if (err) {
-		    fprintf(stderr, "add_series_from_file() failed\n");
-		    if (request.code == X12A) {
+		    fprintf(stderr, "i = %d: add_series_from_file() failed\n", i);
+		    if (request.prog == X12A) {
 			/* switch to X12A error file */
 			sprintf(fname, "%s%c%s.err", workdir, SLASH, varname);
 		    }
 		    break;
-		}
+		} 
 	    }
 
 	    if (!err) {
-		if (request.opt[TRIGRAPH].save) {
-		    err = graph_series(tmpZ, tmpinfo, request.code);
+		if (request.opts[TRIGRAPH].save) {
+		    err = graph_series((const double **) tmpZ, tmpinfo, &request);
 		    if (err) {
 			fprintf(stderr, "graph_series() failed\n");
 		    } else {
@@ -944,8 +984,8 @@ int write_tx_data (char *fname, int varnum,
 		}
 	    }
 
-	    if (request.code == X12A) {
-		if (request.opt[TEXTOUT].save) {
+	    if (request.prog == X12A) {
+		if (request.opts[TEXTOUT].save) {
 		    *opt &= ~OPT_Q;
 		} else {
 		    *opt |= OPT_Q;
