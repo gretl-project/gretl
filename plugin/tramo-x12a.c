@@ -767,18 +767,18 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 
 #ifdef WIN32
 
-static int helper_spawn (const char *prog, const char *vname,
+static int helper_spawn (const char *path, const char *vname,
 			 const char *workdir, int prog)
 {
     char *cmd = NULL;
     int err = 0;
 
     if (prog == TRAMO_ONLY) {
-	cmd = g_strdup_printf("\"%s\" -i %s -k serie", prog, vname);
+	cmd = g_strdup_printf("\"%s\" -i %s -k serie", path, vname);
     } else if (prog == TRAMO_SEATS) {
-	cmd = g_strdup_printf("\"%s\" -OF %s", prog, vname);
+	cmd = g_strdup_printf("\"%s\" -OF %s", path, vname);
     } else if (prog == X12A) {
-	cmd = g_strdup_printf("\"%s\" %s -r -p -q", prog, vname);
+	cmd = g_strdup_printf("\"%s\" %s -r -p -q", path, vname);
     } else {
 	return E_EXTERNAL;
     }
