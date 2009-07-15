@@ -87,7 +87,7 @@ static int set_foreign_lang (const char *lang, PRN *prn)
     return err;
 }
 
-static gchar *gretl_ox_filename (void)
+static const gchar *gretl_ox_filename (void)
 {
     if (gretl_Oxprog == NULL) {
 	const char *dotdir = gretl_dot_dir();
@@ -155,8 +155,8 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 {
     char oxpath[MAX_PATH];
-    gchar *fname, *cmd;
-    gchar *oxout = NULL;
+    const gchar *fname;
+    gchar *cmd, *oxout = NULL;
     int err = 0;
 
     strcpy(oxpath, "oxl.exe"); /* FIXME? */
@@ -188,7 +188,6 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 	}
     }
 
-    g_free(fname);
     g_free(oxout);
     g_free(cmd);
 
@@ -244,7 +243,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
-    gchar *argv[] = {
+    char *argv[] = {
 	"R", 
 	"--no-save",
 	"--no-init-file",
@@ -258,18 +257,15 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 {
-    gchar *fname;
-    gchar *argv[] = {
+    char *argv[] = {
 	"oxl", 
 	NULL,
 	NULL
     };
     int err;
 
-    fname = gretl_ox_filename();
-    argv[1] = fname;
+    argv[1] = (char *) gretl_ox_filename();
     err = lib_run_prog_sync(argv, opt, prn);
-    g_free(fname);
 
     return err;
 }
@@ -289,7 +285,7 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 
 int write_gretl_ox_file (const char *buf, gretlopt opt)
 {
-    gchar *fname = gretl_ox_filename();
+    const gchar *fname = gretl_ox_filename();
     FILE *fp;
     int i, err = 0;
 
@@ -301,16 +297,13 @@ int write_gretl_ox_file (const char *buf, gretlopt opt)
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
 	    fputs(buf, fp);
-	} else if (!(opt & OPT_G)) {
-	    /* non-GUI */
+	} else {
 	    for (i=0; i<foreign_n_lines; i++) { 
 		fprintf(fp, "%s\n", foreign_lines[i]);
 	    }
 	}
 	fclose(fp);
     }
-
-    g_free(fname);
 
     return err;
 }
@@ -582,10 +575,9 @@ void delete_gretl_R_files (void)
 
 void delete_gretl_ox_file (void)
 {
-    gchar *fname = gretl_ox_filename();
-
-    gretl_remove(fname);
-    g_free(fname);
+    if (gretl_Oxprog != NULL) {
+	gretl_remove(gretl_Oxprog);
+    }
 }
 
 /* The following code block is used if we're implementing

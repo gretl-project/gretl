@@ -333,7 +333,7 @@ enum {
 #define funcn_symb(s) (s > F3_MAX && s < FN_MAX)
 
 #define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
-			    s == F_ISLIST || s == F_LISTLEN || \
+			    s == F_ISLIST   || s == F_LISTLEN || \
 			    s == F_ISSTRING || s == F_OBSNUM || \
 			    s == F_BACKTICK || s == F_VARNUM)
 
