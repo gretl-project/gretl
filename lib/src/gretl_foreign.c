@@ -145,7 +145,6 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 	    }
 	    fclose(fp);
 	}
-	g_free(Rout);
     }
 
     g_free(cmd);
@@ -422,7 +421,9 @@ static int write_gretl_R_profile (gretlopt opt)
 	err = E_FOPEN;
     } else {
 	put_startup_content(fp);
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", gretl_Rsrc);
+	fprintf(fp, "source(\"%s\", %s=TRUE)\n", 
+		(opt & OPT_V)? "echo" : "print.eval",
+		gretl_Rsrc);
 	fclose(fp);
     }
 
@@ -442,8 +443,10 @@ static int write_gretl_R_profile (gretlopt opt)
    OPT_I: indicates that we're in the context of an interactive R
    session.
 
-   OPT_D: indicates that the current gretl dataset should be send
+   OPT_D: indicates that the current gretl dataset should be sent
    to R.
+
+   OPT_G: we're being called via the gretl GUI.
 
    OPT_L: indicates that the source file is intended for use
    via the R shared library.
@@ -812,7 +815,6 @@ static int gretl_Rlib_init (void)
 	    "gretl", 
 	    "--no-save", 
 	    "--silent", 
-	    "--slave" 
 	};
 	int ok, argc = 3;
 
