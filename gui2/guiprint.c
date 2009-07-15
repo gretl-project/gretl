@@ -1935,7 +1935,7 @@ int font_has_minus (PangoFontDescription *desc)
 	return -1;
     }
 
-    widget = gtk_label_new(NULL);  
+    widget = gtk_label_new("");  
     context = gtk_widget_get_pango_context(widget); 
 
     if (context == NULL) {
@@ -1953,14 +1953,15 @@ int font_has_minus (PangoFontDescription *desc)
 	    if (coverage != NULL) {
 		/* U+2212 = minus sign */
 		ret = (pango_coverage_get(coverage, 0x2212) == PANGO_COVERAGE_EXACT);
+		pango_coverage_unref(coverage);
 	    }
+	    g_object_unref(G_OBJECT(pfont));
 	}
     } 
 
-    pango_coverage_unref(coverage);
     g_object_unref(G_OBJECT(layout));
     g_object_unref(G_OBJECT(context));
-    gtk_widget_destroy(widget);    
+    gtk_widget_destroy(widget);
 
     return ret;
 }
