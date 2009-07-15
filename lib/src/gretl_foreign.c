@@ -414,9 +414,8 @@ static int write_gretl_R_profile (gretlopt opt)
 	err = E_FOPEN;
     } else {
 	put_startup_content(fp);
-	fprintf(fp, "source(\"%s\", %s=TRUE)\n", 
-		(opt & OPT_V)? "echo" : "print.eval",
-		gretl_Rsrc);
+	fprintf(fp, "source(\"%s\", %s = TRUE)\n", 
+		gretl_Rsrc, (opt & OPT_V)? "echo" : "print.eval");
 	fclose(fp);
     }
 
@@ -616,8 +615,6 @@ static SEXP (*R_allocVector) (SEXPTYPE, R_len_t);
 static SEXP (*R_findFun) (SEXP, SEXP);
 static SEXP (*R_findVar) (SEXP, SEXP);
 static SEXP (*R_SETCAR) (SEXP, SEXP);
-static SEXP (*R_lang2) (SEXP, SEXP);
-static SEXP (*R_lang3) (SEXP, SEXP, SEXP);
 static SEXP (*R_protect) (SEXP);
 static SEXP (*R_ScalarReal) (double);
 static SEXP (*R_catch) (SEXP, SEXP, int *);
@@ -693,8 +690,6 @@ static int load_R_symbols (void)
     R_isLogical     = dlget(Rhandle, "Rf_isLogical", &err);
     R_isInteger     = dlget(Rhandle, "Rf_isInteger", &err);
     R_isReal        = dlget(Rhandle, "Rf_isReal", &err);
-    R_lang2         = dlget(Rhandle, "Rf_lang2", &err);
-    R_lang3         = dlget(Rhandle, "Rf_lang3", &err);
     R_mkString      = dlget(Rhandle, "Rf_mkString", &err);
     R_ncols         = dlget(Rhandle, "Rf_ncols", &err);
     R_nrows         = dlget(Rhandle, "Rf_nrows", &err);

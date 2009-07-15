@@ -332,11 +332,14 @@ enum {
 #define func3_symb(s) (s > F2_MAX && s < F3_MAX)
 #define funcn_symb(s) (s > F3_MAX && s < FN_MAX)
 
+/* function with single string argument */
 #define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
 			    s == F_ISLIST   || s == F_LISTLEN || \
 			    s == F_ISSTRING || s == F_OBSNUM || \
-			    s == F_BACKTICK || s == F_VARNUM)
+			    s == F_BACKTICK || s == F_VARNUM || \
+			    s == F_MREAD)
 
+/* function with multiple args, string for first arg */
 #define string0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
                          s == F_CRIT || s == F_RANDGEN || s == F_PDF || \
 			 s == F_BESSEL)
