@@ -370,6 +370,10 @@ static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
     FILE *fp;
     int err;
 
+#if FDEBUG
+    printf("writing R profile...\n");
+#endif
+
 #ifdef G_OS_WIN32
     err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
 #else
@@ -403,6 +407,10 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
 {
     FILE *fp = gretl_fopen(Rsrc, "w");
     int i, err = 0;
+
+#if FDEBUG
+    printf("writing R source file...\n");
+#endif
 
     if (fp == NULL) {
 	err = E_FOPEN;
@@ -461,6 +469,10 @@ int write_gretl_R_files (const char *buf,
     gchar *Rsrc;
     int err = 0;
 
+#if FDEBUG
+    printf("writing gretl R files...\n");
+#endif
+
 #ifdef G_OS_WIN32
     slash_convert(dotcpy, FROM_BACKSLASH);
 #endif
@@ -499,6 +511,10 @@ void delete_gretl_R_files (void)
 {
     const char *dotdir = gretl_dot_dir();
     gchar *Rprofile, *Rsrc;
+
+#if FDEBUG
+    printf("deleting gretl R files...\n");
+#endif
     
     Rprofile = g_strdup_printf("%sgretl.Rprofile", dotdir);
     Rsrc = g_strdup_printf("%sRsrc", dotdir);
@@ -603,9 +619,14 @@ static int load_R_symbols (void)
     const char *libpath = gretl_rlib_path();
     int err = 0;
 
+#if FDEBUG
+    printf("Loading libR symbols\n");
+#endif
+
     Rhandle = gretl_dlopen(libpath, 1);
     if (Rhandle == NULL) {
-	return E_EXTERNAL;
+	err = E_EXTERNAL;
+	goto bailout;
     } 
 
     R_CDR           = dlget(Rhandle, "CDR", &err);
@@ -651,11 +672,21 @@ static int load_R_symbols (void)
 	err = E_EXTERNAL;
     }
 
+ bailout:
+
+#if FDEBUG
+    printf("load_R_symbols: returning %d\n", err);
+#endif
+
     return err;
 }
 
 void gretl_R_cleanup (void)
 {
+#if FDEBUG
+    printf("gretl_R_cleanup: Rinit = %d\n", Rinit);
+#endif
+
     if (Rinit) {
 	R_endEmbeddedR(0);
 	close_plugin(Rhandle);
@@ -684,25 +715,31 @@ static int gretl_Rlib_init (void)
     char *Rhome;
     int err = 0;
 
+#if FDEBUG
+    printf("gretl_Rlib_init: starting\n");
+#endif
+
 #ifndef WIN32
     Rhome = getenv("R_HOME");
     if (Rhome == NULL) {
 	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
-	return E_EXTERNAL;
+	err = E_EXTERNAL;
+	goto bailout;
     }
 #endif
 
     err = load_R_symbols();
     if (err) {
 	fprintf(stderr, "gretl_Rlib_init: failed to load R functions\n");
-	return err;
+	goto bailout;
     }
 
 #ifdef WIN32
     Rhome = R_get_HOME();
     if (Rhome == NULL) {
 	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
-	return E_EXTERNAL;
+	err = E_EXTERNAL;
+	goto bailout;
     }
 #endif
 
@@ -728,6 +765,12 @@ static int gretl_Rlib_init (void)
 	}
     }
 
+ bailout:
+
+#if FDEBUG
+    printf("gretl_Rlib_init: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -740,9 +783,13 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
     SEXP e;
     int err = 0;
 
+#if FDEBUG
+    printf("lib_run_Rlib_sync: starting\n");
+#endif
+
     if (!Rinit) {
 	if ((err = gretl_Rlib_init())) {
-	    return err;
+	    goto bailout;
 	}
     }
     
@@ -753,6 +800,12 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
     R_unprotect(1);
 
     g_free(Rsrc);
+
+ bailout:
+    
+#if FDEBUG
+    printf("lib_run_Rlib_sync: returning %d\n", err);
+#endif
 
     return (err)? E_EXTERNAL : 0;
 }
@@ -795,6 +848,10 @@ static int gretl_use_Rlib (void)
 {
     int ret = 0;
 
+#if FDEBUG
+    printf("gretl_use_Rlib: starting\n");
+#endif
+
     if (!Rlib_err && libset_get_bool(R_LIB) && !getenv("GRETL_NO_RLIB")) {
 	/* use of library is not blocked */
 	if (Rinit) {
@@ -808,7 +865,7 @@ static int gretl_use_Rlib (void)
     }
 
 #if FDEBUG
-    fprintf(stderr, "R: using %s\n", (ret)? "library" : "executable");
+    printf("gretl_use_Rlib: using %s\n", (ret)? "library" : "executable");
 #endif    
 
     return ret;
@@ -1084,7 +1141,13 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 	} else {
 #ifdef USE_RLIB
 	    if (gretl_use_Rlib()) {
-		lib_run_Rlib_sync(foreign_opt, prn);
+		static int doit = 0; /* tricksy! */
+
+		if (doit) {
+		    lib_run_Rlib_sync(foreign_opt, prn);
+		} else {
+		    doit = 1;
+		}
 	    } else {
 		lib_run_R_sync(foreign_opt, prn);
 	    }

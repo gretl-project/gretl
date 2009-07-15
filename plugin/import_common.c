@@ -501,3 +501,4 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_widget_show_all(w);
     gtk_main();
 }
+
