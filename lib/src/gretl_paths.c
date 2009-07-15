@@ -648,7 +648,28 @@ int gretl_deltree (const char *path)
     return err;
 }
 
+#endif /* WIN32 or not */
+
+/**
+ * gretl_setenv:
+ * @name: name of variable to be set.
+ * @value: value to set.
+ *
+ * Cross-platform wrapper for setenv().
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gretl_setenv (const char *name, const char *value)
+{
+#ifdef WIN32
+    int ok = SetEnvironmentVariable(name, value);
+
+    return !ok;
+#else
+    return setenv(name, value, 1);
 #endif
+}
 
 /**
  * gretl_write_access:
@@ -1728,7 +1749,7 @@ void show_paths (const PATHS *ppaths)
 
 int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 {
-    static char envstr[MAXLEN];
+    char envstr[MAXLEN];
     int err = 0;
 
     if (opt & OPT_D) {
@@ -1799,9 +1820,8 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
     sprintf(ppaths->gnuplot, "%swgnuplot.exe", ppaths->gretldir);
 
-    sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sshare\\gtksourceview-1.0"
-	    "\\language-specs", ppaths->gretldir);
-    putenv(envstr);
+    sprintf(envstr, "%sshare\\gtksourceview-1.0\\language-specs", ppaths->gretldir);
+    gretl_setenv("GTKSOURCEVIEW_LANGUAGE_DIR", envstr);
 
     ensure_slash(ppaths->dotdir);
     ensure_slash(ppaths->workdir);
@@ -1973,11 +1993,10 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
     if (getenv("GTKSOURCEVIEW_LANGUAGE_DIR") == NULL) {
 	/* for the benefit of the bundled gtksourceview library */
-	static char envstr[MAXLEN];
+	char envstr[MAXLEN];
 
-	sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sgtksourceview",
-		ppaths->gretldir);
-	putenv(envstr);
+	sprintf(envstr, "%sgtksourceview", ppaths->gretldir);
+	gretl_setenv("GTKSOURCEVIEW_LANGUAGE_DIR", envstr);
     }
 
     ensure_slash(ppaths->dotdir);

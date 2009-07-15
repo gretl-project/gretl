@@ -62,6 +62,8 @@ int gretl_chdir (const char *path);
 
 int gretl_deltree (const char *path);
 
+int gretl_setenv (const char *name, const char *value);
+
 int gretl_write_access (char *fname);
 
 int gretl_is_xml_file (const char *fname);

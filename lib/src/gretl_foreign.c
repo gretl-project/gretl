@@ -39,11 +39,18 @@ static char **foreign_lines;
 static int foreign_started;
 static int foreign_n_lines; 
 static int foreign_lang;
-static gretlopt foreign_opt;
 
 /* foreign_opt may include OPT_D to send data, OPT_Q to operate
    quietly (don't display output from foreign program)
 */
+static gretlopt foreign_opt;
+
+/* "dotdir" filenames */
+static gchar *gretl_dotdir;
+static gchar *gretl_Rprofile;
+static gchar *gretl_Rsrc;
+static gchar *gretl_Rout;
+static gchar *gretl_Oxprog;
 
 enum {
     LANG_R = 1,
@@ -82,9 +89,29 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 
 static gchar *gretl_ox_filename (void)
 {
-    const char *dotdir = gretl_dot_dir();
-    
-    return g_strdup_printf("%sgretltmp.ox", dotdir);
+    if (gretl_Oxprog == NULL) {
+	const char *dotdir = gretl_dot_dir();
+
+	gretl_Oxprog = g_strdup_printf("%sgretltmp.ox", dotdir);
+    }
+
+    return gretl_Oxprog;
+}
+
+static void make_gretl_R_names (void)
+{
+    static int done;
+
+    if (!done) {
+	gretl_dotdir = g_strdup(gretl_dot_dir());
+#ifdef G_OS_WIN32
+	slash_convert(gretl_dotdir, FROM_BACKSLASH);
+#endif
+	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", gretl_dotdir);
+	gretl_Rsrc = g_strdup_printf("%sRsrc", gretl_dotdir);
+	gretl_Rout = g_strdup_printf("%sR.out", gretl_dotdir);
+	done = 1;
+    }
 }
 
 #ifdef G_OS_WIN32
@@ -106,10 +133,8 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
 
     if (!err && !(opt & OPT_Q)) {
-	gchar *Rout = g_strdup_printf("%sR.out", gretl_dot_dir());
-	FILE *fp;
+	FILE *fp = gretl_fopen(gretl_Rout, "r");
 
-	fp = gretl_fopen(Rout, "r");
 	if (fp == NULL) {
 	    err = E_FOPEN;
 	} else {
@@ -297,13 +322,12 @@ int write_gretl_ox_file (const char *buf, gretlopt opt)
 
 static int write_data_for_R (const double **Z, 
 			     const DATAINFO *pdinfo,
-			     const gchar *dotdir,
 			     FILE *fp)
 {
-    gchar *Rline = NULL, *Rdata = NULL;
+    gchar *Rdata, *Rline;
     int err;
 
-    Rdata = g_strdup_printf("%sRdata.tmp", dotdir);
+    Rdata = g_strdup_printf("%sRdata.tmp", gretl_dotdir);
     Rline = g_strdup_printf("store \"%s\" -r", Rdata);
     g_free(Rline);
 
@@ -338,11 +362,11 @@ static int write_data_for_R (const double **Z,
 
 /* define an R function for passing data back to gretl */
 
-static void write_R_export_func (const gchar *dotdir, FILE *fp) 
+static void write_R_export_func (FILE *fp) 
 {
-    fprintf(fp, "gretl.dotdir <- \"%s\"\n", dotdir);
+    fprintf(fp, "gretl.dotdir <- \"%s\"\n", gretl_dotdir);
     fputs("gretl.export <- function(x) {\n", fp);
-    fprintf(fp, "  prefix <- \"%s\"\n", dotdir);
+    fprintf(fp, "  prefix <- \"%s\"\n", gretl_dotdir);
     fputs("  sx <- as.character(substitute(x))\n", fp);
     fputs("  if (is.ts(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
@@ -362,54 +386,79 @@ static void write_R_export_func (const gchar *dotdir, FILE *fp)
     fputs("}\n", fp);
 }
 
-/* set up for a temporary R profile, so R knows what to do */
+/* basic content which can either go into gretl.Rprofile or into
+   Rsrc for sourcing */
 
-static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
-				  const gchar *dotdir, gretlopt opt)
+static void put_startup_content (FILE *fp)
+{
+    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
+	  fp);
+    fputs("if (vnum > 2.41) library(utils)\n", fp);
+    fputs("library(stats)\n", fp);
+    fputs("if (vnum <= 1.89) library(ts)\n", fp);
+    write_R_export_func(fp);
+}
+
+/* Set up a gretl-specific R profile, and put notice of its existence
+   into the environment.  Used when exec'ing the R binary (only) */
+
+static int write_gretl_R_profile (gretlopt opt)
 {
     FILE *fp;
     int err;
 
 #if FDEBUG
-    printf("writing R profile...\n");
+    printf("writing R profile: starting\n");
 #endif
 
-#ifdef G_OS_WIN32
-    err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
-#else
-    err = setenv("R_PROFILE", Rprofile, 1);
-#endif
+    err = gretl_setenv("R_PROFILE", gretl_Rprofile);
     if (err) {
 	return err;
     }     
 
-    fp = gretl_fopen(Rprofile, "w");
+    fp = gretl_fopen(gretl_Rprofile, "w");
 
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
-	      fp);
-	fputs("if (vnum > 2.41) library(utils)\n", fp);
-	fputs("library(stats)\n", fp);
-	fputs("if (vnum <= 1.89) library(ts)\n", fp);
-	write_R_export_func(dotdir, fp);
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
+	put_startup_content(fp);
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", gretl_Rsrc);
 	fclose(fp);
     }
+
+#if FDEBUG
+    printf("writing R profile: returning %d\n", err);
+#endif
 
     return err;
 }
 
-static int write_R_source_file (const char *Rsrc, const char *buf,
-				const double **Z, const DATAINFO *pdinfo,
-				const gchar *dotdir, gretlopt opt)
+/* Write an R command file to be sourced by R.  @buf may contain R
+   commands assembled via the GUI; if it is NULL the current "foreign"
+   block is used as input.
+
+   @opt may contain the following:
+
+   OPT_I: indicates that we're in the context of an interactive R
+   session.
+
+   OPT_D: indicates that the current gretl dataset should be send
+   to R.
+
+   OPT_L: indicates that the source file is intended for use
+   via the R shared library.
+*/
+
+static int write_R_source_file (const char *buf,
+				const double **Z, 
+				const DATAINFO *pdinfo,
+				gretlopt opt)
 {
-    FILE *fp = gretl_fopen(Rsrc, "w");
+    FILE *fp = gretl_fopen(gretl_Rsrc, "w");
     int i, err = 0;
 
 #if FDEBUG
-    printf("writing R source file...\n");
+    printf("write R source file: starting\n");
 #endif
 
     if (fp == NULL) {
@@ -418,16 +467,27 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
 #ifdef G_OS_WIN32
 	if (!(opt & OPT_I)) {
 	    /* non-interactive */
-	    gchar *Rout = g_strdup_printf("%sR.out", dotdir);
-
-	    fprintf(fp, "sink(\"%s\")\n", Rout);
-	    g_free(Rout);
+	    fprintf(fp, "sink(\"%s\")\n", gretl_Rout);
 	}
 #endif
 
+	if (opt & OPT_L) {
+	    /* we're using the R shared library */
+	    static int startup_done;
+
+	    if (!startup_done) {
+#if FDEBUG
+		printf("Rlib: writing 'startup' material\n");
+#endif
+		put_startup_content(fp);
+		startup_done = 1;
+	    }
+	    fprintf(fp, "sink(\"%s\")\n", gretl_Rout);
+	}
+
 	if (opt & OPT_D) {
 	    /* send data */
-	    err = write_data_for_R(Z, pdinfo, dotdir, fp);
+	    err = write_data_for_R(Z, pdinfo, fp);
 	}
 
 	if (buf != NULL) {
@@ -441,8 +501,12 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
 	    }
 	}
 
+	if (opt & OPT_L) {
+	    fputs("sink()\n", fp);
+	}
+
 #ifdef G_OS_WIN32
-	if (!(opt & OPT_I)) {
+	if (!(opt & OPT_I) && !(opt & OPT_L)) {
 	    /* Rterm on Windows won't exit without this? */
 	    fputs("q()\n", fp);
 	}
@@ -451,79 +515,66 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
 	fclose(fp);
     }
 
+#if FDEBUG
+    printf("write R source file: returning %d\n", err);
+#endif
+
     return err;
 }
 
-/* Write files to be read by R.  May be called when exec'ing the R
-   binary, or when calling the R library.  @opt should contain OPT_G
-   (only) when called from the GUI program
+/* Write files to be read by R: profile to be read on startup and
+   command source file.  This is called when we're exec'ing the R
+   binary.  OPT_G in @opt indicates that this function is being called
+   from the GUI program; @buf may contain R commands taken from a GUI
+   window.
 */
 
 int write_gretl_R_files (const char *buf,
-			 const double **Z, const DATAINFO *pdinfo,
+			 const double **Z, 
+			 const DATAINFO *pdinfo,
 			 gretlopt opt)
 { 
-    static int profile_done;
-    const char *dotdir = gretl_dot_dir();
-    gchar *dotcpy = g_strdup(dotdir);
-    gchar *Rsrc;
     int err = 0;
 
 #if FDEBUG
-    printf("writing gretl R files...\n");
+    printf("write_gretl_R_files: starting\n");
 #endif
 
-#ifdef G_OS_WIN32
-    slash_convert(dotcpy, FROM_BACKSLASH);
-#endif
+    make_gretl_R_names();
 
-    Rsrc = g_strdup_printf("%sRsrc", dotcpy);
-
-    if (!profile_done) {
-	/* Write a temporary R profile so R knows what to do.
-	   We should only have to do this once per session,
-	   since the profile is just boiler plate.
-	*/
-	gchar *Rprofile;
-
-	Rprofile = g_strdup_printf("%sgretl.Rprofile", dotcpy);
-	err = write_gretl_R_profile(Rprofile, Rsrc, dotcpy, opt);
-	if (err) {
-	    fprintf(stderr, "error writing gretl Rprofile\n");
-	} else {
-	    profile_done = 1;
-	}
-	g_free(Rprofile);
-    }
+    /* write a temporary R profile so R knows what to do */
+    err = write_gretl_R_profile(opt);
+    if (err) {
+	fprintf(stderr, "error writing gretl.Rprofile\n");
+    } 
 
     if (!err) {
 	/* write commands and/or data to file, to be sourced in R */
-	err = write_R_source_file(Rsrc, buf, Z, pdinfo, dotcpy, opt);
+	err = write_R_source_file(buf, Z, pdinfo, opt);
+	if (err) {
+	    fprintf(stderr, "error writing gretl's Rsrc\n");
+	} 	
     }
 
-    g_free(dotcpy);
-    g_free(Rsrc);
+#if FDEBUG
+    printf("write_gretl_R_files: returning %d\n", err);
+#endif
 
     return err;
 }
 
 void delete_gretl_R_files (void)
 {
-    const char *dotdir = gretl_dot_dir();
-    gchar *Rprofile, *Rsrc;
-
 #if FDEBUG
     printf("deleting gretl R files...\n");
 #endif
-    
-    Rprofile = g_strdup_printf("%sgretl.Rprofile", dotdir);
-    Rsrc = g_strdup_printf("%sRsrc", dotdir);
 
-    gretl_remove(Rprofile);
-    gretl_remove(Rsrc);
-
-    g_free(Rprofile);
-    g_free(Rsrc);
+    if (gretl_Rprofile != NULL) {
+	gretl_remove(gretl_Rprofile);
+    }
+    if (gretl_Rsrc != NULL) {
+	gretl_remove(gretl_Rsrc);
+    }
 }
 
 void delete_gretl_ox_file (void)
@@ -571,6 +622,7 @@ static SEXP (*R_findFun) (SEXP, SEXP);
 static SEXP (*R_findVar) (SEXP, SEXP);
 static SEXP (*R_SETCAR) (SEXP, SEXP);
 static SEXP (*R_lang2) (SEXP, SEXP);
+static SEXP (*R_lang3) (SEXP, SEXP, SEXP);
 static SEXP (*R_protect) (SEXP);
 static SEXP (*R_ScalarReal) (double);
 static SEXP (*R_catch) (SEXP, SEXP, int *);
@@ -591,6 +643,9 @@ static void (*R_endEmbeddedR) (int);
 static void (*R_unprotect) (int);
 static void (*R_PrintValue) (SEXP);
 static void (*R_SET_TYPEOF) (SEXP, int);
+static void (*R_SET_TAG) (SEXP, SEXP);
+
+static int *(*R_LOGICAL) (SEXP);
 
 #ifdef WIN32
 static char *(*R_get_HOME) (void);
@@ -644,6 +699,7 @@ static int load_R_symbols (void)
     R_isInteger     = dlget(Rhandle, "Rf_isInteger", &err);
     R_isReal        = dlget(Rhandle, "Rf_isReal", &err);
     R_lang2         = dlget(Rhandle, "Rf_lang2", &err);
+    R_lang3         = dlget(Rhandle, "Rf_lang3", &err);
     R_mkString      = dlget(Rhandle, "Rf_mkString", &err);
     R_ncols         = dlget(Rhandle, "Rf_ncols", &err);
     R_nrows         = dlget(Rhandle, "Rf_nrows", &err);
@@ -655,6 +711,8 @@ static int load_R_symbols (void)
     R_SETCAR        = dlget(Rhandle, "SETCAR", &err);
     R_SET_TYPEOF    = dlget(Rhandle, "SET_TYPEOF", &err); 
     R_TYPEOF        = dlget(Rhandle, "TYPEOF", &err);
+    R_SET_TAG       = dlget(Rhandle, "SET_TAG", &err);
+    R_LOGICAL       = dlget(Rhandle, "LOGICAL", &err);
 
 #ifdef WIN32
     R_get_HOME = dlget(Rhandle, "get_R_HOME", &err);
@@ -743,6 +801,12 @@ static int gretl_Rlib_init (void)
     }
 #endif
 
+    /* ensure common filenames are in place */
+    make_gretl_R_names();
+
+    /* and ensure that gretl.Rprofile doesn't get in the way */
+    gretl_remove(gretl_Rprofile);
+
     if (!err) {
 	char *argv[] = { 
 	    "gretl", 
@@ -750,7 +814,7 @@ static int gretl_Rlib_init (void)
 	    "--silent", 
 	    "--slave" 
 	};
-	int ok, argc = 4;
+	int ok, argc = 3;
 
 	ok = R_initEmbeddedR(argc, argv);
 	if (ok) {
@@ -779,8 +843,6 @@ static int gretl_Rlib_init (void)
 
 static int lib_run_Rlib_sync (gretlopt opt, PRN *prn) 
 {
-    gchar *Rsrc;
-    SEXP e;
     int err = 0;
 
 #if FDEBUG
@@ -788,21 +850,42 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 #endif
 
     if (!Rinit) {
-	if ((err = gretl_Rlib_init())) {
-	    goto bailout;
+	err = gretl_Rlib_init();
+    }
+
+    if (!err) {
+	SEXP expr, p;
+
+	/* make echo/print.eval argument */
+	R_protect(p = R_allocVector(LGLSXP, 1));
+	R_LOGICAL(p)[0] = TRUE;
+
+	/* expression source(f, print.eval=p) */
+	R_protect(expr = R_allocVector(LANGSXP, 3));
+	R_SETCAR(expr, R_install("source")); 
+	R_SETCAR(R_CDR(expr), R_mkString(gretl_Rsrc));
+	R_SETCAR(R_CDR(R_CDR(expr)), p);
+	R_SET_TAG(R_CDR(R_CDR(expr)), 
+		  R_install((opt & OPT_V)? "echo" : "print.eval"));
+
+	R_catch(expr, NULL, &err);
+	R_unprotect(2);
+    }
+
+    if (!err && prn != NULL) {
+	FILE *fp = gretl_fopen(gretl_Rout, "r");
+
+	if (fp != NULL) {
+	    char line[512];
+
+	    while (fgets(line, sizeof line, fp)) {
+		pputs(prn, line);
+	    }
+	    fclose(fp);
+	    gretl_remove(gretl_Rout);
 	}
     }
-    
-    Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir());
 
-    R_protect(e = R_lang2(R_install("source"), R_mkString(Rsrc)));
-    R_catch(e, VR_GlobalEnv, &err);
-    R_unprotect(1);
-
-    g_free(Rsrc);
-
- bailout:
-    
 #if FDEBUG
     printf("lib_run_Rlib_sync: returning %d\n", err);
 #endif
@@ -1033,7 +1116,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     return err;
 }
 
-#endif /* USE_RLIB : accessing R shared library */
+#endif /* USE_RLIB */
 
 static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 {
@@ -1107,6 +1190,41 @@ int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
     return err;
 }
 
+static int run_R_binary (const double **Z, const DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn)
+{
+    int err;
+
+    /* write both profile and Rsrc files */
+
+    err = write_gretl_R_files(NULL, Z, pdinfo, opt);
+    if (err) {
+	delete_gretl_R_files();
+    } else {
+	err = lib_run_R_sync(opt, prn);
+    }
+
+    return err;
+}
+
+static int run_R_lib (const double **Z, const DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
+{
+    int err;
+
+    /* we don't want gretl.Rprofile in the way */
+    gretl_remove(gretl_Rprofile);
+
+    /* by passing OPT_L below we indicate that we're
+       using the library */
+    err = write_R_source_file(NULL, Z, pdinfo, opt | OPT_L);
+    if (!err) {
+	err = lib_run_Rlib_sync(opt, prn);
+    }
+
+    return err;
+}
+
 /**
  * foreign_execute:
  * @Z: data array.
@@ -1125,6 +1243,10 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 {
     int i, err = 0;
 
+    if (foreign_lang == LANG_R) {
+	make_gretl_R_names();
+    }
+
     if (opt & OPT_V) {
 	/* verbose: echo the stored commands */
 	for (i=0; i<foreign_n_lines; i++) {
@@ -1135,32 +1257,21 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
     foreign_opt |= opt;
 
     if (foreign_lang == LANG_R) {
-	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
-	if (err) {
-	    delete_gretl_R_files();
-	} else {
-#ifdef USE_RLIB
-	    if (gretl_use_Rlib()) {
-		static int doit = 0; /* tricksy! */
-
-		if (doit) {
-		    lib_run_Rlib_sync(foreign_opt, prn);
-		} else {
-		    doit = 1;
-		}
-	    } else {
-		lib_run_R_sync(foreign_opt, prn);
-	    }
+#ifndef USE_RLIB
+	err = run_R_binary(Z, pdinfo, foreign_opt, prn);	
 #else
-	    lib_run_R_sync(foreign_opt, prn);
-#endif
+	if (gretl_use_Rlib()) {
+	    err = run_R_lib(Z, pdinfo, foreign_opt, prn);
+	} else {
+	    err = run_R_binary(Z, pdinfo, foreign_opt, prn);
 	}
+#endif	    
     } else if (foreign_lang == LANG_OX) {
 	err = write_gretl_ox_file(NULL, foreign_opt);
 	if (err) {
 	    delete_gretl_ox_file();
 	} else {
-	    lib_run_ox_sync(foreign_opt, prn);
+	    err = lib_run_ox_sync(foreign_opt, prn);
 	}
     } else {
 	/* "can't happen" */

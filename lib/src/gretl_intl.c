@@ -545,11 +545,11 @@ void set_lcnumeric (int langid, int lcnumeric)
 	} 
 	if (set == NULL) {
 	    setlocale(LC_NUMERIC, "");
-	    putenv("LC_NUMERIC=");
+	    gretl_setenv("LC_NUMERIC", "");
 	}
     } else {
 	setlocale(LC_NUMERIC, "C");
-	putenv("LC_NUMERIC=C");
+	gretl_setenv("LC_NUMERIC", "C");
     }
 
     reset_local_decpoint();
@@ -603,7 +603,7 @@ void force_language (int langid)
     const char *lcode = NULL;
 
     if (langid == LANG_C) {
-	putenv("LANGUAGE=english");
+	gretl_setenv("LANGUAGE", "english");
 	setlocale(LC_ALL, "C");
     } else {
 # ifdef WIN32
@@ -625,26 +625,16 @@ void force_language (int langid)
 
 # if defined(WIN32)
     if (langid == LANG_C) {
-	SetEnvironmentVariable("LC_ALL", "C");
-	putenv("LC_ALL=C");
+	gretl_setenv("LC_ALL", "C");
 	textdomain("none");
     } else if (lcode != NULL) {
-        char estr[32];
-
         lcode = lang_code_from_id(langid);
-	SetEnvironmentVariable("LC_ALL", lcode);
-	sprintf(estr, "LC_ALL=%s", lcode);
-	putenv(estr);
-	SetEnvironmentVariable("LANG", lcode);
-	sprintf(estr, "LANG=%s", lcode);
-	putenv(estr);
+	gretl_setenv("LC_ALL", lcode);
+	gretl_setenv("LANG", lcode);
     }
 # elif defined(OSX_BUILD)
     if (langid != LANG_C) {
-	char estr[64];
-
-	sprintf(estr, "LANGUAGE=%s", lang_code_from_id(langid));
-	putenv(estr);
+	gretl_setenv("LANGUAGE", lang_code_from_id(langid));
     }
 # endif
 #endif
