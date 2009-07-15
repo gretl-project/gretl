@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-04 12:34-0400\n"
-"PO-Revision-Date: 2009-07-05 19:04-0300\n"
+"PO-Revision-Date: 2009-07-15 13:30-0300\n"
 "Last-Translator: Henrique Andrade <ch.andrade@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1407,7 +1407,7 @@ msgstr "'%s' -- número fora dos limites!"
 
 #: lib/src/dataset.c:577
 msgid "auto-generated constant"
-msgstr "constante auto-gerada"
+msgstr "constante gerada automaticamente"
 
 #: lib/src/dataset.c:1368
 #: gui2/fncall.c:761
@@ -5753,9 +5753,9 @@ msgid ""
 "      Variable     coefficients   coefficients   std. errors    std. errors\n"
 "\n"
 msgstr ""
-"                     média de      desv. padrão de     média de      desv. padrão de\n"
-"                    estimado      estimado      estimado      estimado\n"
-"      Variável     coeficientes   coeficientes   desv. padrão    erros padrão\n"
+"                     média dos    desv. padrão   média dos    desv. padrão\n"
+"                     coeficientes   coeficientes   err. padrão   dos err. padrão\n"
+"      Variável     estimados     estimados     estimados    estimados\n"
 "\n"
 
 #: lib/src/monte_carlo.c:2143
@@ -7425,7 +7425,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de julho de 2009."
+"Tradução de 15 de julho de 2009."
 
 #: gui2/about.c:172
 msgid "License"
@@ -14094,7 +14094,7 @@ msgid ""
 "OK to overwrite it?"
 msgstr ""
 "Já existe um arquivo de sessão com este nome.\n"
-"Está bem sobrescrever?"
+"Deseja sobrescrever?"
 
 #: gui2/session.c:1726
 #: gui2/session.c:1737
@@ -15629,7 +15629,7 @@ msgstr "amplitude"
 
 #: plugin/range-mean.c:133
 msgid "Sample is too small for range-mean graph\n"
-msgstr "A amostra é demasiado pequena para o gráfico amplitude-média\n"
+msgstr "A amostra é muito pequena para o gráfico amplitude-média\n"
 
 #: plugin/range-mean.c:152
 #, c-format
@@ -15765,7 +15765,7 @@ msgstr "Correção de média"
 
 #: plugin/tramo_options.c:565
 msgid "No mean correction"
-msgstr "Sem correcção da média"
+msgstr "Sem correção de média"
 
 #: plugin/tramo_options.c:594
 msgid "Outliers"
