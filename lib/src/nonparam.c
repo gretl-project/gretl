@@ -764,9 +764,8 @@ int runs_test (int v, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (n <= 1) {
-	pputs(prn, _("\nInsufficient data for runs test\n"));
 	free(x);
-	return 1;
+	return E_TOOFEW;
     }
 
     Np = (x[0] > 0);

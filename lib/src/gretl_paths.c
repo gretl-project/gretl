@@ -1694,6 +1694,11 @@ const char *gretl_tramo (void)
     return gretl_paths.tramo;
 }
 
+const char *gretl_tramo_dir (void)
+{
+    return gretl_paths.tramodir;
+}
+
 const char *gretl_x12_arima (void)
 {
     return gretl_paths.x12a;

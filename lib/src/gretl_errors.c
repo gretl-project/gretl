@@ -74,6 +74,7 @@ static const char *gretl_error_messages[] = {
     N_("No dataset is in place"),                                /* E_NODATA */
     N_("Matrix is not positive definite"),                       /* E_NOTPD */
     N_("Failed to calculate Jacobian"),                          /* E_JACOBIAN */
+    N_("Insufficient observations for this operation"),          /* E_TOOFEW */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */

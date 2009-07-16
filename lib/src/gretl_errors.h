@@ -68,9 +68,10 @@ enum gretl_error_codes {
     E_NODATA,      /* 44 */
     E_NOTPD,       /* 45 */
     E_JACOBIAN,    /* 46 */
-    E_DB_DUP,      /* 47 : duplicate vars found when saving to database */
-    E_OK,          /* 48 : not really an error */
-    E_MAX          /* 49 */
+    E_TOOFEW,      /* 47 */
+    E_DB_DUP,      /* 48 : duplicate vars found when saving to database */
+    E_OK,          /* 49 : not really an error */
+    E_MAX          /* 50 */
 }; 
 
 void errmsg (int err, PRN *prn);

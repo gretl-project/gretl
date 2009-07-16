@@ -707,6 +707,58 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     return err;
 }
 
+int seasonally_adjust_series (const double *x, double *y, 
+			      DATAINFO *pdinfo, int tramo)
+{
+    void *handle;
+    int (*adjust_series) (const double *, double *, 
+			  const DATAINFO *, int);
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int T, err = 0;
+
+    if (!quarterly_or_monthly(pdinfo)) {
+	gretl_errmsg_set("This analysis is applicable only to seasonal time series");	
+	return E_DATA;
+    }
+
+    array_adjust_t1t2(x, &t1, &t2);
+    T = t2 - t1 + 1;
+
+    if (T < pdinfo->pd * 3) {
+	return E_TOOFEW;
+    } else if (tramo && T > 600) {
+	gretl_errmsg_set(_("TRAMO can't handle more than 600 observations.\n"
+			   "Please select a smaller sample."));
+	return E_EXTERNAL;
+    } else if (!tramo && T > 720) {
+	gretl_errmsg_set(_("X-12-ARIMA can't handle more than 720 observations.\n"
+			   "Please select a smaller sample."));
+	return E_EXTERNAL;
+    }
+
+    adjust_series = get_plugin_function("adjust_series", &handle);
+    
+    if (adjust_series == NULL) {
+	err = E_FOPEN;
+    } else {
+	int save_t1 = pdinfo->t1;
+	int save_t2 = pdinfo->t2;
+
+	pdinfo->t1 = t1;
+	pdinfo->t2 = t2;
+
+	err = (*adjust_series) (x, y, pdinfo, tramo);
+
+	pdinfo->t1 = save_t1;
+	pdinfo->t2 = save_t2;
+
+	close_plugin(handle);
+    }
+
+    return err;
+}
+
 int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
 		     int k)
 {

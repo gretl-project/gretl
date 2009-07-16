@@ -235,8 +235,7 @@ kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
     /* count the non-missing observations */
     nobs = count_obs(Z[varnum] + pdinfo->t1, len);
     if (nobs < MINOBS) {
-	gretl_errmsg_set(_("Insufficient observations for density estimation"));
-	return E_DATA;
+	return E_TOOFEW;
     }
 
     x = malloc(nobs * sizeof *x);
@@ -274,8 +273,7 @@ array_kernel_density (const double *x, int n, const char *label)
     int err = 0;
 
     if (n < MINOBS) {
-	gretl_errmsg_set(_("Insufficient observations for density estimation"));
-	return E_DATA;
+	return E_TOOFEW;
     }
 
     /* get standard deviation and bandwidth */

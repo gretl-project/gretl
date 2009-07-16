@@ -4,6 +4,8 @@ version 1.8.3, in progress
   execution time of child processes
 - Add function "mreverse" to reverse rows or columns of
   a matrix
+- Add function "deseas" to deseasonalize a monthly or
+  quarterly time series using X-12-ARIMA or TRAMO/SEATS
 - Several small fixes and enhancements for interaction with
   TRAMO/SEATS and X-12-ARIMA
 - Several small GUI fixes

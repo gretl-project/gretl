@@ -2167,7 +2167,7 @@ void do_kernel (void)
     }
 
     if (sample_size(datainfo) < 30) {
-	errbox(_("Insufficient observations for density estimation"));
+	gui_errmsg(E_TOOFEW);
 	return;
     }
 
@@ -3369,7 +3369,7 @@ int do_vector_model (selector *sr)
 
     sscanf(buf, "%d", &order);
     if (order > var_max_order(libcmd.list, datainfo)) {
-	errbox(_("Insufficient degrees of freedom for regression"));
+	gui_errmsg(E_TOOFEW);
 	gretl_print_destroy(prn);
 	return 1;
     }    
@@ -4043,44 +4043,23 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     int oldv = datainfo->v;
     gchar *databuf;
     void *handle;
-    int (*write_tx_data) (char *, int, 
-			  double ***, DATAINFO *, gretlopt *,
-			  const char *, const char *, int *, 
-			  char *);
+    int (*write_tx_data) (char *, int, double ***, DATAINFO *,
+			  gretlopt *, int, int *, char *);
     PRN *prn;
     char fname[MAXLEN] = {0};
     char errtext[MAXLEN];
-    char *exepath = NULL, *workdir = NULL;
     const gchar *code;
+    int tramo = 0;
     int graph_ok = 1;
-    int prog, err;
+    int err = 0;
 
     code = gtk_action_get_name(action);
+
     if (!strcmp(code, "Tramo")) {
-	prog = TRAMO;
-    } else {
-	prog = X12A;
-    }
+	tramo = 1;
+    } 
 
-    code = gtk_action_get_name(action);
-
-    if (prog == TRAMO) {
-#ifdef HAVE_TRAMO
-	exepath = paths.tramo;
-	workdir = paths.tramodir;
-#else
-	return;
-#endif
-    } else {
-#ifdef HAVE_X12A
-	exepath = paths.x12a;
-	workdir = paths.x12adir;
-#else
-	return;
-#endif
-    }
-
-    if (prog != TRAMO) {
+    if (!tramo) {
 	/* we'll let tramo handle annual data */
 	if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
 	    errbox(_("This analysis is applicable only to seasonal time series"));
@@ -4096,8 +4075,8 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 
     *errtext = 0;
 
-    err = write_tx_data(fname, v, &Z, datainfo, &opt, exepath, 
-			workdir, &graph_ok, errtext);
+    err = write_tx_data(fname, v, &Z, datainfo, &opt, tramo, 
+			&graph_ok, errtext);
     
     close_plugin(handle);
 
@@ -4128,10 +4107,10 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 
 	prn = gretl_print_new_with_buffer(databuf);
 
-	view_buffer(prn, (opt == TRAMO)? 106 : 84, 500, 
-		    (opt == TRAMO)? _("gretl: TRAMO analysis") :
+	view_buffer(prn, (tramo)? 106 : 84, 500, 
+		    (tramo)? _("gretl: TRAMO analysis") :
 		    _("gretl: X-12-ARIMA analysis"),
-		    opt, NULL);
+		    (tramo)? TRAMO : X12A, NULL);
     }
 
     if (!err && graph_ok && (opt & OPT_G)) {

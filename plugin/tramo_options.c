@@ -856,14 +856,16 @@ int show_tramo_options (tx_request *request, GtkWidget *vbox)
 }
 
 /* Below: print then free the tramo options structure.
-   Return an indication of whether seats will be run (1) or not (0)
+   Return an indication of whether SEATS will be run (1) or not (0)
 */
 
 int print_tramo_options (tx_request *request, FILE *fp)
 {
     tramo_options *opts;
 
-    if (request->gui == NULL) return 0;
+    if (request->gui == NULL) {
+	return 0;
+    }
 
     opts = request->gui;
 

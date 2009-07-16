@@ -1186,6 +1186,29 @@
       </description>
     </function>
 
+    <function name="deseas" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+	<fnarg optional="true" type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Depends on having TRAMO/SEATS or X-12-ARIMA installed. Returns a
+	  deseasonalized (seasonally adjusted) version of the input series
+	  <argname>x</argname>, which must be a quarterly or monthly time
+	  series.  To use X-12-ARIMA give <lit>X</lit> as the second argument;
+	  to use TRAMO give <lit>T</lit>.  If the second argument is omitted
+	  then X-12-ARIMA is used.
+	</para>
+	<para>
+	  Note that if the input series has no detectable seasonal component
+	  this function will fail.  Also note that both TRAMO/SEATS and
+	  X-12-ARIMA offer numerous options; <lit>deseas</lit> calls them with
+	  all arguments at their default settings.
+	</para>
+      </description>
+    </function>
+
     <function name="det" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>

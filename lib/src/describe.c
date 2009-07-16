@@ -1478,7 +1478,7 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
 	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
 				"distribution for variable %s"), 
 		pdinfo->varname[v]);
-	return E_DATA;
+	return E_TOOFEW;
     }
 
     xrange = xmax - xmin;
@@ -1582,7 +1582,7 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
 	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
 				"distribution for variable %s"), 
 		pdinfo->varname[v]);
-	*err = E_DATA;
+	*err = E_TOOFEW;
 	goto bailout;
     }
 
@@ -2676,14 +2676,11 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     T = t2 - t1 + 1;
 
     if (missvals(Z[varno] + t1, T)) {
-	strcpy(gretl_errmsg, 
-		_("Missing values within sample -- can't do correlogram"));
 	return E_MISSDATA;
     }
 
     if (T < 4) {
-	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
-	return E_DATA;
+	return E_TOOFEW;
     }
 
     if (gretl_isconst(t1, t2, Z[varno])) {
@@ -2845,15 +2842,12 @@ gretl_matrix *acf_vec (const double *x, int order,
     }
 
     if (T < 4) {
-	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
-	*err = E_DATA;
+	*err = E_TOOFEW;
 	return NULL;
     }
 
     for (t=t1; t<=t2; t++) {
 	if (na(x[t])) {
-	    strcpy(gretl_errmsg, 
-		   _("Missing values within sample -- can't do correlogram"));
 	    *err = E_MISSDATA;
 	    return NULL;
 	}
@@ -3042,8 +3036,7 @@ static int xcf_data_check (const double *x, const double *y, int T,
     int t;
 
     if (T < 5) {
-	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
-	return E_DATA;
+	return E_TOOFEW;
     }
 
     for (t=0; t<T; t++) {
@@ -3684,20 +3677,16 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
     T = t2 - t1 + 1;
 
     if (missvals(Z[varno] + t1, T)) {
-	strcpy(gretl_errmsg, 
-	       _("Missing values within sample -- can't do periodogram"));
-	return 1;
+	return E_MISSDATA;
     }    
 
     if (T < 12) {
-	strcpy(gretl_errmsg,
-	       _("Insufficient observations for periodogram"));
-	return 1;
+	return E_TOOFEW;
     }
 
     if (gretl_isconst(t1, t2, Z[varno])) {
 	sprintf(gretl_errmsg, _("'%s' is a constant"), pdinfo->varname[varno]);
-	return 1;
+	return E_DATA;
     }
 
     /* Chatfield (1996); William Greene, 4e, p. 772 */

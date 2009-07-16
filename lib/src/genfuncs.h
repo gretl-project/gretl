@@ -52,6 +52,9 @@ int boxcox_series (const double *x, double *y, double d,
 int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
 		   gretl_matrix *A, gretl_matrix *C, double y0);
 
+int seasonally_adjust_series (const double *x, double *y, 
+			      DATAINFO *pdinfo, int tramo);
+
 int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
 		     int k);
 

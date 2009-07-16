@@ -3994,9 +3994,10 @@ static NODE *vector_values (NODE *l, parser *p)
     return ret;
 }
 
+#define tramo_string(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
+
 /* functions taking a series as argument and returning a series:
-   note that the 'r' node may contain an auxiliary scalar 
-   parameter 
+   note that the 'r' node may contain an auxiliary parameter 
 */
 
 static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
@@ -4006,7 +4007,10 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     if (f == F_SDIFF && !dataset_is_seasonal(p->dinfo)) {
 	p->err = E_PDWRONG;
 	return NULL;
-    } else if (r != NULL && r->t != EMPTY && r->t != NUM) {
+    } else if (f == F_DESEAS && (r->t != EMPTY && r->t != STR)) {
+	node_type_error(f, 2, STR, r, p);
+	return NULL;
+    } else if (f != F_DESEAS && r != NULL && r->t != EMPTY && r->t != NUM) {
 	node_type_error(f, 2, NUM, r, p);
 	return NULL;
     } else {
@@ -4054,6 +4058,15 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	case F_CUM:
 	    p->err = cum_series(x, y, p->dinfo); 
+	    break;
+	case F_DESEAS:
+	    if (r != NULL && r->t == STR) {
+		int tramo = tramo_string(r->v.str);
+
+		p->err = seasonally_adjust_series(x, y, p->dinfo, tramo); 
+	    } else {
+		p->err = seasonally_adjust_series(x, y, p->dinfo, 0);
+	    }
 	    break;
 	case F_RESAMPLE:
 	    if (r != NULL && r->t == NUM) {
@@ -6506,6 +6519,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PMEAN:
     case F_PSD:
     case F_RANKING:
+    case F_DESEAS:
 	/* series argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);

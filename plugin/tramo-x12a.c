@@ -35,19 +35,21 @@ enum prog_codes {
     X12A
 };
 
-const char *x12a_series_strings[] = {
+const char *x12a_save_strings[] = {
     "d11", /* seasonally adjusted */
     "d12", /* trend/cycle */
-    "d13"  /* irregular */
+    "d13", /* irregular */
+    NULL
 };
 
 static int tramo_got_irfin;
 
-const char *tramo_series_strings[] = {
+const char *tramo_save_strings[] = {
     "safin.t", /* final seasonally adjusted series */
     "trfin.t", /* final trend */
     "irfin.t", /* final irregular factor (component) */
-    "irreg.t"  /* irregular component (logs) */
+    "irreg.t", /* irregular component (logs) */
+    NULL
 };
 
 const char *tx_descrip_formats[] = {
@@ -421,30 +423,37 @@ static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
     strcpy(VARLABEL(targinfo, targv), VARLABEL(srcinfo, srcv));
 }
 
-static void clear_tramo_files (const char *tpath, const char *varname)
+static void clear_tramo_files (const char *path, const char *vname)
 {
-    char tfname[MAXLEN];
+    char fname[MAXLEN];
     int i;
 
-    for (i=TX_SA; i<=TRIGRAPH; i++) {
-	sprintf(tfname, "%s%cgraph%cseries%c%s", tpath, SLASH, SLASH, SLASH,
-		tramo_series_strings[i]);
-	gretl_remove(tfname);
+    for (i=0; tramo_save_strings[i] != NULL; i++) {
+	sprintf(fname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
+		tramo_save_strings[i]);
+	gretl_remove(fname);
     }
 
-    sprintf(tfname, "%s%coutput%c%s.out", tpath, SLASH, SLASH, varname);
-    gretl_remove(tfname);
+    sprintf(fname, "%s%coutput%c%s.out", path, SLASH, SLASH, vname);
+    gretl_remove(fname);
 }
 
-static void clear_x12a_files (const char *xpath, const char *varname)
+static void clear_x12a_files (const char *path, const char *vname)
 {
-    char xfname[MAXLEN];
+    char fname[MAXLEN];
+    int i;
 
-    sprintf(xfname, "%s%c%s.out", xpath, SLASH, varname);
-    gretl_remove(xfname);
+    for (i=0; x12a_save_strings[i] != NULL; i++) {
+	sprintf(fname, "%s%c%s.%s", path, SLASH, vname,
+		x12a_save_strings[i]);
+	gretl_remove(fname);
+    }    
 
-    sprintf(xfname, "%s%c%s.err", xpath, SLASH, varname);
-    gretl_remove(xfname);
+    sprintf(fname, "%s%c%s.out", path, SLASH, vname);
+    gretl_remove(fname);
+
+    sprintf(fname, "%s%c%s.err", path, SLASH, vname);
+    gretl_remove(fname);
 }
 
 static int add_series_from_file (const char *path, int src,
@@ -453,8 +462,8 @@ static int add_series_from_file (const char *path, int src,
 				 char *errmsg)
 {
     FILE *fp;
-    char *p, line[128], sfname[MAXLEN], date[8];
-    char varname[VNAMELEN];
+    char line[128], sfname[MAXLEN];
+    char varname[VNAMELEN], date[8];
     double x;
     int d, yr, per, err = 0;
     int t;
@@ -462,11 +471,15 @@ static int add_series_from_file (const char *path, int src,
     if (request->prog == TRAMO_SEATS) {
 	tramo_got_irfin = 1;
 	sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-		tramo_series_strings[src]);
+		tramo_save_strings[src]);
     } else {
+	char *p;
+
 	strcpy(sfname, path);
 	p = strrchr(sfname, '.');
-	if (p != NULL) strcpy(p + 1, x12a_series_strings[src]);
+	if (p != NULL) {
+	    strcpy(p + 1, x12a_save_strings[src]);
+	}
     }
 
     fp = gretl_fopen(sfname, "r");
@@ -485,7 +498,7 @@ static int add_series_from_file (const char *path, int src,
 	    if (src == TX_IR) { 
 		/* try "irreg" */
 		sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-			tramo_series_strings[src + 1]);
+			tramo_save_strings[src + 1]);
 		fp = gretl_fopen(sfname, "r");
 		if (fp != NULL) {
 		    gotit = 1;
@@ -512,10 +525,10 @@ static int add_series_from_file (const char *path, int src,
     /* formulate name of new variable to add */
     if (request->prog == TRAMO_SEATS) {
 	sprintf(varname, "%.5s_%.2s", pdinfo->varname[0], 
-		tramo_series_strings[src]);
+		tramo_save_strings[src]);
     } else {
 	sprintf(varname, "%.4s_%s", pdinfo->varname[0], 
-		x12a_series_strings[src]);
+		x12a_save_strings[src]);
     }
 
     /* copy varname and label into place */
@@ -568,6 +581,79 @@ static int add_series_from_file (const char *path, int src,
 		break;
 	    }
 	    Z[targv][t] = x;
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    return err;
+}
+
+static int grab_deseasonal_series (double *y, const DATAINFO *pdinfo,
+				   int prog, const char *path)
+{
+    FILE *fp;
+    char line[128], sfname[MAXLEN], date[8];
+    double yt;
+    int d, yr, per, err = 0;
+    int t;
+
+    if (prog == TRAMO_SEATS) {
+	sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
+		tramo_save_strings[TX_SA]);
+    } else {
+	char *p;
+
+	strcpy(sfname, path);
+	p = strrchr(sfname, '.');
+	if (p != NULL) {
+	    strcpy(p + 1, x12a_save_strings[TX_SA]);
+	}
+    }
+
+    fp = gretl_fopen(sfname, "r");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    gretl_push_c_numeric_locale();
+
+    if (prog == TRAMO_SEATS) {
+	int i = 0;
+
+	t = pdinfo->t1;
+	while (fgets(line, 127, fp)) {
+	    i++;
+	    if (i >= 7 && sscanf(line, " %lf", &yt) == 1) {
+		if (t >= pdinfo->n) {
+		    fprintf(stderr, "t = %d >= pdinfo->n = %d\n", t, pdinfo->n);
+		    err = E_DATA;
+		    break;
+		}		
+		y[t++] = yt;
+	    }
+	}
+    } else {
+	/* grab the data from the x12arima file */
+	while (fgets(line, 127, fp)) {
+	    if (*line == 'd' || *line == '-') {
+		continue;
+	    }
+	    if (sscanf(line, "%d %lf", &d, &yt) != 2) {
+		err = 1; 
+		break;
+	    }
+	    yr = d / 100;
+	    per = d % 100;
+	    sprintf(date, "%d.%d", yr, per);
+	    t = dateton(date, pdinfo);
+	    if (t < 0 || t >= pdinfo->n) {
+		err = E_DATA;
+		break;
+	    }
+	    y[t] = yt;
 	}
     }
 
@@ -631,10 +717,13 @@ static void cancel_savevars (tx_request *request)
 }
 
 static int write_tramo_file (const char *fname, 
-			     double **Z, DATAINFO *pdinfo,
-			     int v, tx_request *request) 
+			     const double *y, 
+			     const char *vname, 
+			     const DATAINFO *pdinfo,
+			     tx_request *request) 
 {
-    int startyr, startper, tsamp = pdinfo->t2 - pdinfo->t1 + 1; 
+    int startyr, startper;
+    int T = pdinfo->t2 - pdinfo->t1 + 1; 
     char *p, tmp[8];
     double x;
     FILE *fp;
@@ -657,21 +746,24 @@ static int write_tramo_file (const char *fname,
 	startper = 1;
     }
 
-    fprintf(fp, "%s\n", pdinfo->varname[v]);
-    fprintf(fp, "%d %d %d %d\n", tsamp, startyr, startper, pdinfo->pd);
+    fprintf(fp, "%s\n", vname);
+    fprintf(fp, "%d %d %d %d\n", T, startyr, startper, pdinfo->pd);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (t && t % pdinfo->pd == 0) fputc('\n', fp);
-	if (na(Z[v][t])) {
+	if (na(y[t])) {
 	    fputs("-99999 ", fp);
 	} else {
-	    fprintf(fp, "%g ", Z[v][t]);
+	    fprintf(fp, "%g ", y[t]);
 	}
     }
     fputc('\n', fp);
 
-    if (print_tramo_options(request, fp) == 0) {
-	request->prog = TRAMO_ONLY; /* not running SEATS */
+    if (request == NULL) {
+	fputs("$INPUT rsa=3,out=2,$\n", fp);
+    } else if (print_tramo_options(request, fp) == 0) {
+	/* not running SEATS */
+	request->prog = TRAMO_ONLY; 
     }
 
     gretl_pop_c_numeric_locale();
@@ -681,9 +773,10 @@ static int write_tramo_file (const char *fname,
     return 0;
 }
 
-static int write_spc_file (const char *fname, 
-			   double **Z, DATAINFO *pdinfo, 
-			   int v, int *varlist) 
+static int write_spc_file (const char *fname, const double *y,
+			   const char *vname,
+			   const DATAINFO *pdinfo, 
+			   const int *savelist) 
 {
     int startyr, startper;
     char *p, tmp[8];
@@ -708,17 +801,16 @@ static int write_spc_file (const char *fname,
 	startper = 1;
     }
 
-    fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, 
-	    pdinfo->varname[v]);
+    fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, vname);
     fprintf(fp, " start=%d.%d\n", startyr, startper);
     fputs(" data=(\n", fp);
 
     i = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (na(Z[v][t])) {
+	if (na(y[t])) {
 	    fputs("-99999 ", fp); /* FIXME? */
 	} else {
-	    fprintf(fp, "%g ", Z[v][t]);
+	    fprintf(fp, "%g ", y[t]);
 	}
 	if ((i + 1) % 7 == 0) {
 	    fputc('\n', fp);
@@ -727,16 +819,17 @@ static int write_spc_file (const char *fname,
     }
     fputs(" )\n}\n", fp);
 
-    /* FIXME: make these values configurable */
+    /* FIXME: make these values configurable? */
+
     fputs("automdl{}\nx11{", fp);
 
-    if (varlist[0] > 0) {
-	if (varlist[0] == 1) {
-	    fprintf(fp, " save=%s ", x12a_series_strings[varlist[1]]); 
+    if (savelist[0] > 0) {
+	if (savelist[0] == 1) {
+	    fprintf(fp, " save=%s ", x12a_save_strings[savelist[1]]); 
 	} else {
 	    fputs(" save=( ", fp);
-	    for (i=1; i<=varlist[0]; i++) {
-		fprintf(fp, "%s ", x12a_series_strings[varlist[i]]);
+	    for (i=1; i<=savelist[0]; i++) {
+		fprintf(fp, "%s ", x12a_save_strings[savelist[i]]);
 	    }
 	    fputs(") ", fp);
 	}
@@ -751,16 +844,16 @@ static int write_spc_file (const char *fname,
     return 0;
 }
 
-static void form_varlist (int *varlist, tx_request *request)
+static void form_savelist (int *list, tx_request *request)
 {
     int i, j = 1;
 
-    varlist[0] = 0;
+    list[0] = 0;
 
     for (i=0; i<TRIGRAPH; i++) {
 	if (request->opts[TRIGRAPH].save || request->opts[i].save) {
-	    varlist[0] += 1;
-	    varlist[j++] = i;
+	    list[0] += 1;
+	    list[j++] = i;
 	}
     }
 }
@@ -861,39 +954,79 @@ static int helper_spawn (const char *path, const char *vname,
 
 #endif
 
-int write_tx_data (char *fname, int varnum, 
-		   double ***pZ, DATAINFO *pdinfo, gretlopt *opt, 
-		   const char *prog, const char *workdir,
-		   int *graph_ok, char *errmsg)
+/* make a default x12a.mdl file if it doesn't already exist */
+
+static int check_x12a_model_file (const char *workdir, char *fname)
 {
-    int i, doit, err = 0;
-    char varname[VNAMELEN];
-    int varlist[4];
-    FILE *fp = NULL;
-    tx_request request;
-    double **tmpZ;
-    DATAINFO *tmpinfo;
+    FILE *fp;
+    int err = 0;
 
-    *errmsg = '\0';
+    sprintf(fname, "%s%cx12a.mdl", workdir, SLASH);
+    fp = gretl_fopen(fname, "r");
 
-    /* figure out which program we're using */
-    if (strstr(prog, "tramo") != NULL) {
-	request.prog = TRAMO_SEATS;
+    if (fp != NULL) {
+	fclose(fp); /* assume we're OK */
     } else {
-	request.prog = X12A;
-    }
+	fp = gretl_fopen(fname, "w");
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    fprintf(fp, "%s", default_mdl);
+	    fclose(fp);
+	}
+    } 
 
-    request_opts_init(&request);
+    return err;
+}
 
-    if (request.prog == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
+static int check_sample_bound (int prog, const DATAINFO *pdinfo,
+			       char *errmsg)
+{
+    if (prog == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
 	strcpy(errmsg, _("TRAMO can't handle more than 600 observations.\n"
 			 "Please select a smaller sample."));
 	return E_EXTERNAL;
-    } else if (request.prog == X12A && (pdinfo->t2 - pdinfo->t1) > 719) {
+    } else if (prog == X12A && (pdinfo->t2 - pdinfo->t1) > 719) {
 	strcpy(errmsg, _("X-12-ARIMA can't handle more than 720 observations.\n"
 			 "Please select a smaller sample."));
 	return E_EXTERNAL;
+    }
+
+    return 0;
+}
+
+int write_tx_data (char *fname, int varnum, 
+		   double ***pZ, DATAINFO *pdinfo, gretlopt *opt, 
+		   int tramo, int *graph_ok, char *errmsg)
+{
+    const char *exepath;
+    const char *workdir;
+    char vname[VNAMELEN];
+    int savelist[4];
+    tx_request request;
+    double **tmpZ;
+    DATAINFO *tmpinfo;
+    int i, doit;
+    int err = 0;
+
+    *errmsg = '\0';
+
+    if (tramo) {
+	request.prog = TRAMO_SEATS;
+	exepath = gretl_tramo();
+	workdir = gretl_tramo_dir();
+    } else {
+	request.prog = X12A;
+	exepath = gretl_x12_arima();
+	workdir = gretl_x12_arima_dir();
     }	
+	
+    request_opts_init(&request);
+
+    err = check_sample_bound(request.prog, pdinfo, errmsg);
+    if (err) {
+	return err;
+    }
 
     request.pd = pdinfo->pd;
     request.popt = opt;
@@ -923,37 +1056,30 @@ int write_tx_data (char *fname, int varnum,
     copy_basic_data_info(tmpinfo, pdinfo);
 
     if (request.prog == X12A) { 
-	/* make a default x12a.mdl file if it doesn't already exist */
-	sprintf(fname, "%s%cx12a.mdl", workdir, SLASH);
-	fp = gretl_fopen(fname, "r");
-	if (fp == NULL) {
-	    fp = gretl_fopen(fname, "w");
-	    if (fp == NULL) return 1;
-	    fprintf(fp, "%s", default_mdl);
-	    fclose(fp);
-	} else {
-	    fclose(fp);
+	err = check_x12a_model_file(workdir, fname);
+	if (err) {
+	    goto bailout;
 	}
     } 
 
-    sprintf(varname, pdinfo->varname[varnum]);
-    form_varlist(varlist, &request);
+    sprintf(vname, pdinfo->varname[varnum]);
+    form_savelist(savelist, &request);
 
     if (request.prog == X12A) { 
 	/* write out the .spc file for x12a */
-	sprintf(fname, "%s%c%s.spc", workdir, SLASH, varname);
-	write_spc_file(fname, *pZ, pdinfo, varnum, varlist);
+	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
+	write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist);
     } else { 
 	/* TRAMO, possibly plus SEATS */
-	lower(varname);
-	gretl_trunc(varname, 8);
-	sprintf(fname, "%s%c%s", workdir, SLASH, varname);
+	lower(vname);
+	gretl_trunc(vname, 8);
+	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
 	/* next line: this also sets request->prog = TRAMO_ONLY if
 	   SEATS is not to be run */
-	write_tramo_file(fname, *pZ, pdinfo, varnum, &request);
+	write_tramo_file(fname, (*pZ)[varnum], vname, pdinfo, &request);
 	if (request.prog == TRAMO_ONLY) {
 	    cancel_savevars(&request); /* FIXME later */
-	    varlist[0] = 0;
+	    savelist[0] = 0;
 	}
     }
 
@@ -962,17 +1088,17 @@ int write_tx_data (char *fname, int varnum,
     */
 
     if (request.prog == X12A) {
-	clear_x12a_files(workdir, varname);
-	err = helper_spawn(prog, varname, workdir, X12A);
+	clear_x12a_files(workdir, vname);
+	err = helper_spawn(exepath, vname, workdir, X12A);
     } else { 
 	char seats[MAXLEN];
 
-	clear_tramo_files(workdir, varname);
-	err = helper_spawn(prog, varname, workdir, TRAMO_ONLY);
+	clear_tramo_files(workdir, vname);
+	err = helper_spawn(exepath, vname, workdir, TRAMO_ONLY);
 
 	if (!err && request.prog == TRAMO_SEATS) {
-	    get_seats_command(seats, prog);
-	    err = helper_spawn(seats, varname, workdir, TRAMO_SEATS);
+	    get_seats_command(seats, exepath);
+	    err = helper_spawn(seats, vname, workdir, TRAMO_SEATS);
 	}
     }
 
@@ -981,15 +1107,15 @@ int write_tx_data (char *fname, int varnum,
 	*fname = '\0';
     } else if (err) {
 	if (request.prog == X12A) {
-	    sprintf(fname, "%s%c%s.err", workdir, SLASH, varname);
+	    sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
 	} else {
-	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, varname);
+	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, vname);
 	}
     } else {
 	if (request.prog == X12A) {
-	    sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
+	    sprintf(fname, "%s%c%s.out", workdir, SLASH, vname); 
 	} else {
-	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, varname);
+	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, vname);
 	    if (request.prog == TRAMO_ONLY) {
 		/* no graph offered */
 		request.opts[TRIGRAPH].save = 0;
@@ -998,19 +1124,19 @@ int write_tx_data (char *fname, int varnum,
 	} 
 
 	/* save vars locally if needed; graph if wanted */
-	if (varlist[0] > 0) {
+	if (savelist[0] > 0) {
 	    const char *path = (request.prog == X12A)? fname : workdir;
-	    
+
 	    copy_variable(tmpZ, tmpinfo, 0, *pZ, pdinfo, varnum);
 
-	    for (i=1; i<=varlist[0]; i++) {
-		err = add_series_from_file(path, varlist[i], tmpZ, tmpinfo,
+	    for (i=1; i<=savelist[0]; i++) {
+		err = add_series_from_file(path, savelist[i], tmpZ, tmpinfo,
 					   i, &request, errmsg);
 		if (err) {
 		    fprintf(stderr, "i = %d: add_series_from_file() failed\n", i);
 		    if (request.prog == X12A) {
 			/* switch to X12A error file */
-			sprintf(fname, "%s%c%s.err", workdir, SLASH, varname);
+			sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
 		    }
 		    break;
 		} 
@@ -1040,13 +1166,71 @@ int write_tx_data (char *fname, int varnum,
 
 	/* now save the local vars to main dataset, if wanted */
 	if (!err && request.savevars > 0) {
-	    err = save_vars_to_dataset(pZ, pdinfo, tmpZ, tmpinfo, varlist, 
+	    err = save_vars_to_dataset(pZ, pdinfo, tmpZ, tmpinfo, savelist, 
 				       &request, errmsg);
 	}
     }
+
+ bailout:
 
     destroy_dataset(tmpZ, tmpinfo);
 
     return err;
 }
 
+int adjust_series (const double *x, double *y, const DATAINFO *pdinfo, 
+		   int tramo)
+{
+    int prog = (tramo)? TRAMO_SEATS : X12A;
+    int savelist[2] = {1, TX_SA};
+    const char *vname = "x";
+    const char *exepath;
+    const char *workdir;
+    char fname[MAXLEN];
+    int err = 0;
+
+    if (prog == X12A) { 
+	exepath = gretl_x12_arima();
+	workdir = gretl_x12_arima_dir();
+    } else { 
+	exepath = gretl_tramo();
+	workdir = gretl_tramo_dir();
+    }    
+
+    if (prog == X12A) { 
+	err = check_x12a_model_file(workdir, fname);
+	if (err) {
+	    return err;
+	}
+    } 
+
+    if (prog == X12A) { 
+	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
+	write_spc_file(fname, x, vname, pdinfo, savelist);
+    } else { 
+	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
+	write_tramo_file(fname, x, vname, pdinfo, NULL); 
+    }
+
+    if (prog == X12A) {
+	clear_x12a_files(workdir, vname);
+	err = helper_spawn(exepath, vname, workdir, X12A);
+    } else { 
+	char seats[MAXLEN];
+
+	clear_tramo_files(workdir, vname);
+	err = helper_spawn(exepath, vname, workdir, TRAMO_ONLY);
+	if (!err) {
+	    get_seats_command(seats, exepath);
+	    err = helper_spawn(seats, vname, workdir, TRAMO_SEATS);
+	}
+    }
+
+    if (!err) {
+	const char *path = (prog == X12A)? fname : workdir;
+
+	err = grab_deseasonal_series(y, pdinfo, prog, path);
+    }
+
+    return err;
+}
