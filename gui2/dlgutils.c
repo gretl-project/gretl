@@ -814,9 +814,7 @@ static GtkWidget *build_edit_popup (dialog_t *d)
 static gboolean 
 edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, dialog_t *d)
 {
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    GdkModifierType mods = widget_get_pointer_mask(w);
 
     if (mods & GDK_BUTTON3_MASK) {
 	if (d->popup != NULL) {
@@ -1432,3 +1430,51 @@ gchar *gtk_combo_box_get_active_text (GtkComboBox *box)
 }
 
 #endif
+
+GdkModifierType widget_get_pointer_mask (GtkWidget *w)
+{
+    GdkModifierType mods = 0;
+    GdkWindow *window;
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)    
+    window = w->window;
+#else
+    window = gtk_widget_get_window(w);
+#endif
+    if (window != NULL) {
+	gdk_window_get_pointer(window, NULL, NULL, &mods);
+    }
+
+    return mods;
+}
+
+GdkModifierType parent_get_pointer_mask (GtkWidget *w)
+{
+    GdkWindow *window = gtk_widget_get_parent_window(w);
+    GdkModifierType mods = 0;
+
+    if (window != NULL) {
+	gdk_window_get_pointer(window, NULL, NULL, &mods);
+    }
+
+    return mods;
+}
+
+gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
+				  GdkModifierType *mask)
+{
+    GdkWindow *window;
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)    
+    window = w->window;
+#else
+    window = gtk_widget_get_window(w);
+#endif
+
+    if (window == NULL) {
+	return FALSE;
+    } else {
+	gdk_window_get_pointer(window, x, y, mask);
+	return TRUE;
+    }
+}

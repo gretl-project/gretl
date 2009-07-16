@@ -900,7 +900,7 @@ obs_button_motion_notify (GtkWidget      *widget,
     if (event->window == spin->panel) {
 	gint y;
       
-	gdk_window_get_pointer (spin->panel, NULL, &y, NULL);
+	gdk_window_get_pointer(spin->panel, NULL, &y, NULL);
   
 	if (y <= widget->requisition.height / 2 && 
 	    spin->in_child == GTK_ARROW_DOWN) {

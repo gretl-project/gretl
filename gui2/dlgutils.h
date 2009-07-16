@@ -132,5 +132,11 @@ gchar *gtk_combo_box_get_active_text (GtkComboBox *box);
 
 #endif
 
+GdkModifierType widget_get_pointer_mask (GtkWidget *w);
+
+GdkModifierType parent_get_pointer_mask (GtkWidget *w);
+
+gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
+				  GdkModifierType *mask);
 
 #endif /* DLGUTILS_H */

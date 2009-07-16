@@ -209,38 +209,6 @@ void save_as_callback (GtkWidget *w, windata_t *vwin)
     file_save(vwin, u);
 }
 
-static int vwin_selection_present (gpointer p)
-{
-    windata_t *vwin = (windata_t *) p;
-    GtkTextBuffer *buf;
-    int ret = 0;
-
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-
-    if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
-	ret = 1;
-    }
-
-    return ret;
-}
-
-#define copy_text_only(r) (vwin_editing_script(r) ||	\
-			   r == EDIT_FUNC_CODE ||	\
-			   r == EDIT_HEADER ||		\
-			   r == EDIT_NOTES)
-
-static void text_copy_callback (GtkWidget *w, windata_t *vwin)
-{
-    if (vwin_selection_present(vwin)) {
-	window_copy(vwin, GRETL_FORMAT_SELECTION);
-    } else if (vwin_is_editing(vwin)) {
-	/* FIXME? */
-	window_copy(vwin, GRETL_FORMAT_TXT);
-    } else {
-	copy_format_dialog(vwin, W_COPY);
-    } 
-}
-
 static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 {
     if (viewer_char_count(vwin) == 0) {
@@ -585,7 +553,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
 #endif
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
-    { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(text_copy_callback), COPY_ITEM }, 
+    { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
     { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), 0 },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, G_CALLBACK(text_replace), EDIT_ITEM },

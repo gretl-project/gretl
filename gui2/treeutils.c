@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "treeutils.h"
 #include "datafiles.h"
+#include "dlgutils.h"
 
 /* these live in dialogs.c */
 extern GtkWidget *active_edit_id; 
@@ -270,7 +271,7 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    return TRUE;
 	}
 
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	mods = widget_get_pointer_mask(w);
 	if (mods & GDK_CONTROL_MASK) {
 	    listbox_find(NULL, vwin);
 	    return TRUE;

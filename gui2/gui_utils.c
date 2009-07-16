@@ -457,22 +457,34 @@ void audio_render_window (windata_t *vwin, int key)
 
 #endif
 
-static gboolean Ctrl_C (windata_t *vwin)
+static int vwin_selection_present (gpointer p)
 {
-#ifdef G_OS_WIN32 
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    windata_t *vwin = (windata_t *) p;
+    GtkTextBuffer *buf;
+    int ret = 0;
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
-	window_copy(vwin, GRETL_FORMAT_SELECTION);
-    } else if (MULTI_FORMAT_ENABLED(vwin->role)) {
-	window_copy(vwin, GRETL_FORMAT_RTF);
-    } else {
-	window_copy(vwin, GRETL_FORMAT_TXT);
+	ret = 1;
     }
+
+    return ret;
+}
+
+gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin_selection_present(vwin)) {
+	window_copy(vwin, GRETL_FORMAT_SELECTION);
+    } else if (vwin_is_editing(vwin)) {
+	/* FIXME: Should we force plain text copy in some other cases
+	   too? */
+	window_copy(vwin, GRETL_FORMAT_TXT);
+    } else {
+	copy_format_dialog(vwin, W_COPY);
+    } 
+    
     return TRUE;
-#else
-    return FALSE;
-#endif
 }
 
 int vwin_is_editing (windata_t *vwin)
@@ -484,38 +496,50 @@ int vwin_is_editing (windata_t *vwin)
     }
 }
 
+/* Signal attached to editor/viewer windows: note that @w is always
+   the GtkWidget vwin->main.
+*/
+
 static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods;
     guint upkey;
-    int editing;
+    int editing, Ctrl;
 
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    mods = widget_get_pointer_mask(w);
     upkey = gdk_keyval_to_upper(key->keyval);
     editing = vwin_is_editing(vwin);
+    Ctrl = (mods & GDK_CONTROL_MASK);
 
-    if (mods & GDK_CONTROL_MASK) {
+    if (Ctrl) {
 	if (upkey == GDK_F) {
 	    /* Ctrl-F: find */
 	    text_find(NULL, vwin);
 	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
-	    return Ctrl_C(vwin);
+	    return vwin_copy_callback(NULL, vwin);
 	} else if (editing) {
+	    /* note that the standard Ctrl-key sequences for editing
+	       are handled by GTK, so we only need to put our own
+	       "specials" here
+	    */
 	    if (upkey == GDK_S) { 
 		/* Ctrl-S: save */
 		vwin_save_callback(NULL, vwin);
-	    } else if (upkey == GDK_Q || upkey == GDK_X) {
-		/* Ctrl-Q, Ctrl-X: quit, exit */
-		if (vwin->role == EDIT_SCRIPT && vwin_content_changed(vwin)) {
+		return TRUE;
+	    } else if (upkey == GDK_Q || upkey == GDK_W) {
+		/* Ctrl-Q or Ctrl-W, quit */
+		if (vwin_content_changed(vwin)) {
+		    /* conditional: we have unsaved changes */
 		    if (query_save_text(NULL, NULL, vwin) == FALSE) {
-			gtk_widget_destroy(vwin->main);
+			gtk_widget_destroy(w);
 		    }
 		} else { 
-		    /* eh? */
+		    /* unconditional */
 		    gtk_widget_destroy(w);
 		}
+		return TRUE;
 	    } 
 	} 
     }
@@ -526,16 +550,11 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	return FALSE;
     }
 
-    if (upkey == GDK_Q) { 
+    if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) { 
         gtk_widget_destroy(w);
     } else if (upkey == GDK_S && Z != NULL && vwin->role == VIEW_MODEL) {
 	model_add_as_icon(NULL, vwin);
-    } else if (upkey == GDK_W) {
-	if (mods & GDK_CONTROL_MASK) {
-	    gtk_widget_destroy(w);
-	    return TRUE;
-	}	
-    }
+    } 
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     /* respond to 'a' and 'x', but not if Alt-modified */
@@ -1306,9 +1325,7 @@ void free_windata (GtkWidget *w, gpointer data)
 static gboolean 
 text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    GdkModifierType mods = widget_get_pointer_mask(w);
 
     if (mods & GDK_BUTTON3_MASK) {
 	windata_t *vwin = (windata_t *) p;
@@ -1904,21 +1921,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     cursor_to_top(vwin);
 
     return 0;
-}
-
-void auto_save_plot (windata_t *vwin)
-{
-    gchar *buf;
-
-    buf = textview_get_text(vwin->text);
-    if (buf == NULL) {
-	return;
-    }
-
-    dump_plot_buffer(buf, vwin->fname, 1);
-    g_free(buf);
-
-    mark_vwin_content_saved(vwin);
 }
 
 #define dw_pval_ok(m) ((m->ci == OLS || m->ci == PANEL) && !na(pmod->dw))
@@ -3578,10 +3580,8 @@ int gui_validate_varname (const char *name, GretlType t)
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 			 gpointer data)
 {
-    GdkModifierType mods;
+    GdkModifierType mods = widget_get_pointer_mask(widget);
 
-    gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
-    
     if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
 	GdkEventButton *bevent = (GdkEventButton *) event; 
 

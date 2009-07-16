@@ -21,6 +21,7 @@
 #include "textbuf.h"
 #include "gretl_func.h"
 #include "toolbar.h"
+#include "dlgutils.h"
 
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourcelanguage.h>
@@ -481,10 +482,8 @@ static void set_source_tabs (GtkWidget *w, int cw)
 static gint 
 script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
-    GdkModifierType mods;
+    GdkModifierType mods = widget_get_pointer_mask(w);
     gboolean ret = FALSE;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
 
     if (mods & GDK_CONTROL_MASK) {
 	if (key->keyval == GDK_r)  {
@@ -1121,7 +1120,7 @@ cmdref_motion_notify (GtkWidget *tview, GdkEventMotion *event)
 					  GTK_TEXT_WINDOW_WIDGET,
 					  event->x, event->y, &x, &y);
     set_cursor_if_appropriate(GTK_TEXT_VIEW(tview), x, y);
-    gdk_window_get_pointer(tview->window, NULL, NULL, NULL);
+    widget_get_pointer_mask(tview);
 
     return FALSE;
 }
@@ -1130,8 +1129,8 @@ static gboolean
 cmdref_visibility_notify (GtkWidget *tview,  GdkEventVisibility *e)
 {
     gint wx, wy, bx, by;
-  
-    gdk_window_get_pointer(tview->window, &wx, &wy, NULL);
+
+    widget_get_pointer_info(tview, &wx, &wy, NULL);
     gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
 					  GTK_TEXT_WINDOW_WIDGET,
 					  wx, wy, &bx, &by);
@@ -1327,9 +1326,7 @@ static GtkWidget *build_help_popup (windata_t *hwin)
 gboolean 
 help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    GdkModifierType mods = widget_get_pointer_mask(w);
 
     if (mods & GDK_BUTTON3_MASK) {
 	windata_t *hwin = (windata_t *) p;
@@ -2304,9 +2301,7 @@ static gboolean destroy_textbit (GtkWidget **pw, struct textbit *tc)
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    GdkModifierType mods = widget_get_pointer_mask(w);
 
     if (mods & GDK_BUTTON3_MASK) {
 	windata_t *vwin = (windata_t *) p;

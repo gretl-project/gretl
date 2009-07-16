@@ -42,6 +42,7 @@
 #include "winstack.h"
 #include "datawiz.h"
 #include "varinfo.h"
+#include "dlgutils.h"
 
 #include <dirent.h>
 
@@ -732,10 +733,8 @@ static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
 
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
-    GdkModifierType mods;
+    GdkModifierType mods = widget_get_pointer_mask(w);
     int k = key->keyval;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     if (!(mods & GDK_MOD1_MASK)) {
@@ -1789,9 +1788,7 @@ int mdata_active_var (void)
 static gboolean 
 main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    GdkModifierType mods = widget_get_pointer_mask(w);
 
     if (mods & GDK_BUTTON3_MASK) {
 	/* ignore all but right-clicks */

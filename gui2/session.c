@@ -2552,7 +2552,7 @@ static gboolean session_view_click (GtkWidget *widget,
 	return TRUE;
     }
 
-    gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
+    mods = widget_get_pointer_mask(widget);
 
     if (mods & GDK_BUTTON3_MASK) {
 	if (obj->sort == GRETL_OBJ_EQN  || obj->sort == GRETL_OBJ_GRAPH || 

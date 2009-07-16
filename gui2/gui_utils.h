@@ -72,9 +72,9 @@ int latex_is_ok (void);
 
 gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 
-void auto_save_plot (windata_t *vwin);
-
 void vwin_save_callback (GtkWidget *w, windata_t *vwin);
+
+gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin);
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role,

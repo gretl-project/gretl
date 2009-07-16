@@ -1716,12 +1716,11 @@ static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event,
 				   gpointer data)
 {
     GtkWidget *view = GTK_WIDGET(data);
-    GdkWindow *top = gtk_widget_get_parent_window(view);
     GdkModifierType mods;
     GtkWidget *flag_popup;
     int i;
 
-    gdk_window_get_pointer(top, NULL, NULL, &mods); 
+    mods = parent_get_pointer_mask(view);
 
     if (mods & GDK_BUTTON3_MASK) {
 	flag_popup = gtk_menu_new();
@@ -1739,11 +1738,9 @@ static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event,
 static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data)
 {
-    GdkWindow *topwin;
     GdkModifierType mods;
 
-    topwin = gtk_widget_get_parent_window(GTK_WIDGET(data));
-    gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
+    mods = parent_get_pointer_mask(GTK_WIDGET(data));
 
     /* FIXME below: does this do anything useful?  I think
        it's dead code (AC, 2007-10-31). */
@@ -1765,11 +1762,7 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event, 
 			       selector *sr)
 {
-    GdkWindow *topwin;
-    GdkModifierType mods;
-
-    topwin = gtk_widget_get_parent_window(sr->lvars);
-    gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
+    GdkModifierType mods = parent_get_pointer_mask(sr->lvars);
 
     if (mods & GDK_BUTTON3_MASK) {
 	add_to_rvars1_callback(NULL, sr);

@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "console.h"
 #include "menustate.h"
+#include "dlgutils.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -532,9 +533,7 @@ static gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	g_free(bit);
 	ret = TRUE;
     } else {
-	GdkModifierType mods;
-
-	gdk_window_get_pointer(console_view->window, NULL, NULL, &mods);
+	GdkModifierType mods = widget_get_pointer_mask(console_view);
 
 	if (mods & GDK_CONTROL_MASK && 
 	    gdk_keyval_to_upper(key->keyval) == GDK_A) {
@@ -619,9 +618,7 @@ static gint console_click_handler (GtkWidget *w,
 				   GdkEventButton *event,
 				   gpointer p)
 {
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    GdkModifierType mods = widget_get_pointer_mask(w);
 
     if (mods & GDK_BUTTON2_MASK) {
 	return console_paste_text(GTK_TEXT_VIEW(w), 

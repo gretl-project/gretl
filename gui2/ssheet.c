@@ -2094,7 +2094,7 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	return FALSE;
     }
 
-    gdk_window_get_pointer(view->window, NULL, NULL, &mods);
+    mods = widget_get_pointer_mask(view);
 
     if (sheet->matrix == NULL && (mods & GDK_BUTTON3_MASK)) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
