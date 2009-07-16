@@ -3271,3 +3271,71 @@ void dataset_set_regular_markers (DATAINFO *pdinfo)
     pdinfo->markers = REGULAR_MARKERS;
 }
 
+struct filetype_info {
+    GretlFileType type;
+    const char *src;
+};
+
+#define NOTELEN 256
+
+/* on successful import of data from some "foreign" format,
+   add a note to the "descrip" member of the new dataset
+   saying ehere it came from and when
+*/
+
+void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
+			      GretlFileType type)
+{
+    struct filetype_info ftypes[] = {
+	{ GRETL_CSV,      "CSV" },
+	{ GRETL_GNUMERIC, "Gnumeric" },
+	{ GRETL_XLS,      "Excel" },
+	{ GRETL_WF1,      "Eviews" },
+	{ GRETL_DTA,      "Stata" },
+	{ GRETL_SAV,      "SPSS" },
+	{ GRETL_JMULTI,   "JMulTi" }
+    };
+    int i, nt = sizeof ftypes / sizeof ftypes[0];
+    const char *p, *src = NULL;
+    gchar *basename = NULL;
+    char note[NOTELEN], tstr[48];
+
+    for (i=0; i<nt; i++) {
+	if (type == ftypes[i].type) {
+	    src = ftypes[i].src;
+	    break;
+	}
+    }
+
+    p = strrchr(fname, SLASH);
+    if (p != NULL) {
+	basename = g_strdup(p + 1);
+    } 
+
+    print_time(tstr); 
+
+    if (src != NULL) {
+	snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
+		 src, (basename == NULL)? fname : basename, tstr);
+    } else {
+	snprintf(note, NOTELEN-1, "Data imported from '%s', %s\n",
+		 (basename == NULL)? fname : basename, tstr);
+    }
+
+    if (pdinfo->descrip == NULL) {
+	pdinfo->descrip = gretl_strdup(note);
+    } else {
+	int dlen = strlen(pdinfo->descrip);
+	int nlen = strlen(note);
+	char *tmp = realloc(pdinfo->descrip, dlen + nlen + 3);
+
+	if (tmp != NULL) {
+	    pdinfo->descrip = tmp;
+	    strcat(pdinfo->descrip, "\n\n");
+	    strncat(pdinfo->descrip, note, strlen(note));
+	}
+    }
+
+    g_free(basename);
+}
+

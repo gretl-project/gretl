@@ -812,6 +812,10 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
 
+	if (!err) {
+	    dataset_add_import_info(pdinfo, fname, GRETL_GNUMERIC);
+	}
+
 	if (!err && gui) {
 	    wbook_record_params(book, list);
 	}

@@ -1612,7 +1612,7 @@ char *print_time (char *s)
     struct tm *local;
 
     local = localtime(&now);
-    strftime(s, 47, "%Y/%m/%d %H:%M", local);
+    strftime(s, 47, "%Y-%m-%d %H:%M", local);
 
     return s;
 }

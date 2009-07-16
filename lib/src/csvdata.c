@@ -2066,6 +2066,10 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	c->descrip = NULL;
     }
 
+    if (!err) {
+	dataset_add_import_info(pdinfo, fname, GRETL_CSV);
+    }
+
  csv_bailout:
 
     if (fp != NULL) {

@@ -385,6 +385,10 @@ int jmulti_get_data (const char *fname,
 	descrip = NULL;
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+
+	if (!err) {
+	    dataset_add_import_info(pdinfo, fname, GRETL_JMULTI);
+	}
     }
 
  bailout:

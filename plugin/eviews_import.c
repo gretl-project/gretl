@@ -335,6 +335,10 @@ int wf1_get_data (const char *fname,
 	}
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+
+	if (!err) {
+	    dataset_add_import_info(pdinfo, fname, GRETL_WF1);
+	}
     }
 
     fclose(fp);

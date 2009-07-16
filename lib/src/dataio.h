@@ -139,4 +139,7 @@ int check_atoi (const char *numstr);
 
 int transpose_data (double ***pZ, DATAINFO *pdinfo);
 
+void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
+			      GretlFileType type);
+
 #endif /* DATAIO_H */
