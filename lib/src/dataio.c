@@ -3278,9 +3278,9 @@ struct filetype_info {
 
 #define NOTELEN 256
 
-/* on successful import of data from some "foreign" format,
+/* On successful import of data from some "foreign" format,
    add a note to the "descrip" member of the new dataset
-   saying ehere it came from and when
+   saying where it came from and when.
 */
 
 void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
@@ -3296,7 +3296,7 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 	{ GRETL_JMULTI,   "JMulTi" }
     };
     int i, nt = sizeof ftypes / sizeof ftypes[0];
-    const char *p, *src = NULL;
+    const char *p, *src = "unknown";
     gchar *basename = NULL;
     char note[NOTELEN], tstr[48];
 
@@ -3312,15 +3312,10 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 	basename = g_strdup(p + 1);
     } 
 
-    print_time(tstr); 
+    snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
+	     src, (basename == NULL)? fname : basename, print_time(tstr));
 
-    if (src != NULL) {
-	snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
-		 src, (basename == NULL)? fname : basename, tstr);
-    } else {
-	snprintf(note, NOTELEN-1, "Data imported from '%s', %s\n",
-		 (basename == NULL)? fname : basename, tstr);
-    }
+    g_free(basename);
 
     if (pdinfo->descrip == NULL) {
 	pdinfo->descrip = gretl_strdup(note);
@@ -3332,10 +3327,8 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 	if (tmp != NULL) {
 	    pdinfo->descrip = tmp;
 	    strcat(pdinfo->descrip, "\n\n");
-	    strncat(pdinfo->descrip, note, strlen(note));
+	    strncat(pdinfo->descrip, note, nlen);
 	}
     }
-
-    g_free(basename);
 }
 
