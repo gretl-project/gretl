@@ -1201,10 +1201,16 @@
 	  then X-12-ARIMA is used.
 	</para>
 	<para>
-	  Note that if the input series has no detectable seasonal component
-	  this function will fail.  Also note that both TRAMO/SEATS and
-	  X-12-ARIMA offer numerous options; <lit>deseas</lit> calls them with
-	  all arguments at their default settings.
+	  Note that if the input series has no detectable seasonal
+	  component this function will fail.  Also note that both
+	  TRAMO/SEATS and X-12-ARIMA offer numerous options;
+	  <lit>deseas</lit> calls them with all options at their default
+	  settings. For both programs, the seasonal factors are calculated
+	  on the basis of an automatically selected ARIMA model. One
+	  difference between the programs which can sometimes make a
+	  substantial difference to the results is that by default TRAMO
+	  performs a prior adjustment for outliers while X-12-ARIMA does
+	  not.
 	</para>
       </description>
     </function>
