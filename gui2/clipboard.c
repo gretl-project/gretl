@@ -29,17 +29,13 @@ GtkTargetEntry basic_targets[] = {
     { "COMPOUND_TEXT",   0, TARGET_COMPOUND_TEXT }
 };
 
-GtkTargetEntry full_targets[] = {
-    { "UTF8_STRING",     0, TARGET_UTF8_STRING },
-    { "STRING",          0, TARGET_STRING },
-    { "TEXT",            0, TARGET_TEXT }, 
-    { "COMPOUND_TEXT",   0, TARGET_COMPOUND_TEXT },
+GtkTargetEntry rtf_targets[] = {
     { "text/rtf",        0, TARGET_RTF },
     { "application/rtf", 0, TARGET_RTF }
 };
 
 static int n_basic = sizeof basic_targets / sizeof basic_targets[0];
-static int n_full = sizeof full_targets / sizeof full_targets[0];
+static int n_rtf = sizeof rtf_targets / sizeof rtf_targets[0];
 
 static void gretl_clipboard_set (int copycode);
 
@@ -170,8 +166,8 @@ static void gretl_clipboard_set (int fmt)
     }
 
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
-	targs = full_targets;
-	n_targs = n_full;
+	targs = rtf_targets;
+	n_targs = n_rtf;
     } else {
 	targs = basic_targets;
 	n_targs = n_basic;
