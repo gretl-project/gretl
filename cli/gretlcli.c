@@ -81,7 +81,7 @@ static int saved_object_action (const char *line, double ***pZ,
 
 static void usage (int err)
 {
-    logo();
+    logo(0);
 
     printf(_("\nYou may supply the name of a data file on the command line.\n"
 	     "Options:\n"
@@ -90,7 +90,7 @@ static void usage (int err)
 	     " -h or --help      Print this info and exit.\n"
 	     " -v or --version   Print version info and exit.\n"
 	     " -e or --english   Force use of English rather than translation.\n"
-	     " -q or --basque    Force use of Basque translation.\n"
+	     " -q or --quiet     Print less verbose program information.\n"
 	     "Example of batch mode usage:\n"
 	     " gretlcli -b myfile.inp >myfile.out\n"
 	     "Example of run mode usage:\n"
@@ -307,6 +307,7 @@ int main (int argc, char *argv[])
     MODEL **models = NULL;
     ExecState state;
     char *line = NULL;
+    int quiet = 0;
     int load_datafile = 1;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
@@ -328,49 +329,52 @@ int main (int argc, char *argv[])
     if (argc < 2) {
 	load_datafile = 0;
     } else {
-	int force_lang = 0;
-	int opt = parseopt(&argc, &argv, filearg, &force_lang);
+	gretlopt opt;
 
-	if (opt & OPT_ERROR) {
+	err = parseopt(&argc, &argv, &opt, filearg);
+
+	if (!err && (opt & (OPT_DBOPEN | OPT_WEBDB))) {
+	    /* catch GUI-only options */
+	    err = E_BADOPT;
+	}
+
+	if (err) {
 	    /* bad option */
 	    usage(1);
-	} else if (opt & (OPT_BATCH | OPT_RUNIT)) {
+	} else if (opt & (OPT_HELP | OPT_VERSION)) {
+	    /* we'll exit in these cases */
+	    if (opt & OPT_HELP) {
+		usage(0);
+	    } else {
+		logo(0);
+		exit(EXIT_SUCCESS);
+	    }
+	}
+	    
+	if (opt & (OPT_BATCH | OPT_RUNIT)) {
 	    if (*filearg == '\0') {
-		/* missing an argument */
+		/* we're missing a filename argument */
 		usage(1);
 	    } else {
 		/* record argument (not a datafile) */
 		strcpy(runfile, filearg);
 		load_datafile = 0;
+		if (opt & OPT_BATCH) {
+		    batch = 1;
+		} else {
+		    runit = 1;
+		}
 	    }
 	} else if (*filearg == '\0') {
 	    load_datafile = 0;
 	}
 
-	switch (opt) {
-	case OPT_BATCH:
-	    batch = 1;
-	    break;
-	case OPT_HELP:
-	    usage(0);
-	    break;
-	case OPT_DBOPEN:
-	case OPT_WEBDB:
-	    usage(1);
-	    break;
-	case OPT_VERSION:
-	    logo();
-	    exit(EXIT_SUCCESS);
-	    break;
-	case OPT_RUNIT:
-	    runit = 1;
-	    break;
-	default:
-	    break;
+	if (opt & OPT_QUIET) {
+	    quiet = 1;
 	}
 
-	if (force_lang) {
-	    force_language(force_lang);
+	if (opt & OPT_ENGLISH) {
+	    force_language(LANG_C);
 	}
     } 
 
@@ -381,7 +385,8 @@ int main (int argc, char *argv[])
 #endif
 
     libgretl_init();
-    logo(); 
+
+    logo(quiet); 
     session_time(NULL);
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);

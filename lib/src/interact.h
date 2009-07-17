@@ -45,7 +45,8 @@ typedef enum {
     OPT_WEBDB   = 1 << 5,
     OPT_DUMP    = 1 << 6,
     OPT_DEBUG   = 1 << 7,
-    OPT_ERROR   = 1 << 8
+    OPT_QUIET   = 1 << 8,
+    OPT_ENGLISH = 1 << 9
 } ProgramOptions;
 
 typedef enum {
@@ -86,7 +87,7 @@ int command_number (const char *cmd);
 
 int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn);
 
-int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang);
+int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname);
 
 void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       unsigned char flags, PRN *prn);

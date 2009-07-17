@@ -94,7 +94,10 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    gpointer            p);
 
 static char *optrun, *optdb, *optwebdb;
-static int opteng, optbasque, optdump, optver;
+static int opteng, optdump, optver;
+#ifndef OLD_GTK
+static int optswitch;
+#endif
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
@@ -116,7 +119,6 @@ static struct start_opts options[] = {
     { "db",      'd', N_("open a database on startup"),    "DATABASE"},
     { "webdb",   'w', N_("open a remote (web) database on startup"), "REMOTE_DB" },
     { "english", 'e', N_("force use of English"), NULL },
-    { "basque",  'q', N_("force use of Basque"), NULL },
     { "dump",    'c', N_("dump gretl configuration to file"), NULL },
     { "version", 'v', N_("print version information"), NULL }, 
     { NULL, 0, NULL, NULL },
@@ -143,20 +145,17 @@ static void gui_help (void)
 static void old_gretl_init (int *pargc, char ***pargv, char *filearg)
 {
     static char fname[FILENAME_MAX];
-    int force_lang = 0;
-    gretlopt opt;
+    gretlopt opt = 0;
+    int err;
 
-    opt = parseopt(pargc, pargv, fname, &force_lang);
+    err = parseopt(pargc, pargv, &opt, fname);
 
-    if (force_lang == LANG_C) {
+    if (opt & OPT_ENGLISH) {
 	opteng = 1;
-    } else if (force_lang == LANG_EU) {
-	optbasque = 1;
-    }
+    } 
 
-    if (opt & (OPT_HELP | OPT_VERSION | OPT_ERROR)) {
-	int ecode = (opt & OPT_ERROR)? EXIT_FAILURE :
-	    EXIT_SUCCESS;
+    if (err || (opt & (OPT_HELP | OPT_VERSION))) {
+	int ecode = (err)? EXIT_FAILURE : EXIT_SUCCESS;
 
 	gui_logo(NULL);
 	if (opt != OPT_VERSION) {
@@ -189,8 +188,6 @@ static GOptionEntry options[] = {
       N_("open a remote (web) database on startup"), "REMOTE_DB" },
     { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng, 
       N_("force use of English"), NULL },
-    { "basque", 'q', 0, G_OPTION_ARG_NONE, &optbasque, 
-      N_("force use of Basque"), NULL },
     { "dump", 'c', 0, G_OPTION_ARG_NONE, &optdump, 
       N_("dump gretl configuration to file"), NULL },
 #ifdef G_OS_WIN32
@@ -199,6 +196,8 @@ static GOptionEntry options[] = {
 #endif
     { "version", 'v', 0, G_OPTION_ARG_NONE, &optver, 
       N_("print version information"), NULL }, 
+    { "switch", 's', 0, G_OPTION_ARG_INT, &optswitch,
+      N_("pass integer value to script"), "value" },
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
@@ -475,6 +474,9 @@ int main (int argc, char **argv)
 	g_print("%s\n", opterr->message);
 	exit(EXIT_FAILURE);
     }
+    if (optswitch) {
+	set_script_switch(optswitch);
+    }
 #endif
 
     libgretl_init();
@@ -504,9 +506,7 @@ int main (int argc, char **argv)
     if (opteng) {
 	force_language(LANG_C);
 	force_english_help();
-    } else if (optbasque) {
-	force_language(LANG_EU);
-    }
+    } 
 
     set_workdir_callback(gui_set_working_dir);
 

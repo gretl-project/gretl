@@ -1697,7 +1697,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'n':
     case 'N':
     case '1':
-	pprintf(prn, "\n%s: ", _("Standard normal"));
+	pprintf(prn, "%s: ", _("Standard normal"));
 	err = print_pv_string(p[0], pv, prn);
 	if (err) return;
 	if (pv < 0.5) {
@@ -1713,7 +1713,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 
     case 't':
     case '2':
-	pprintf(prn, "\nt(%d): ", (int) p[0]);
+	pprintf(prn, "t(%d): ", (int) p[0]);
 	err = print_pv_string(p[1], pv, prn);
 	if (err) return;
 	if (pv < 0.5) {
@@ -1731,7 +1731,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'x':
     case 'c':
     case '3':
-	pprintf(prn, "\n%s(%d): ", _("Chi-square"), (int) p[0]);
+	pprintf(prn, "%s(%d): ", _("Chi-square"), (int) p[0]);
 	err = print_pv_string(p[1], pv, prn);
 	if (err) return;
 	pc = chisq_cdf(p[0], p[1]);
@@ -1741,7 +1741,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'F':
     case 'f':
     case '4':
-	pprintf(prn, "\nF(%d, %d): ", (int) p[0], (int) p[1]);
+	pprintf(prn, "F(%d, %d): ", (int) p[0], (int) p[1]);
 	err = print_pv_string(p[2], pv, prn);
 	if (err) return;
 	pc = snedecor_cdf((int) p[0], (int) p[1], p[2]);
@@ -1751,7 +1751,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'G':
     case 'g':
     case '5':
-	pprintf(prn, _("\nGamma (shape %g, scale %g, mean %g, variance %g):"
+	pprintf(prn, _("Gamma (shape %g, scale %g, mean %g, variance %g):"
 		       "\n area to the right of %g = %g\n"), 
 		p[0], p[1], p[0] * p[1], p[0] * p[1] * p[1],
 		p[2], pv);
@@ -1760,7 +1760,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'B':
     case 'b':
     case '6':
-	pprintf(prn, _("\nBinomial (p = %g, n = %d):"
+	pprintf(prn, _("Binomial (p = %g, n = %d):"
 		       "\n Prob(x > %d) = %g\n"), 
 		p[0], (int) p[1], (int) p[2], pv);
 	pc = binomial_cdf(p[0], p[1], p[2]);
@@ -1776,7 +1776,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'p':
     case 'P':
     case '8':
-	pprintf(prn, _("\nPoisson (mean = %g): "), p[0]);
+	pprintf(prn, _("Poisson (mean = %g): "), p[0]);
 	err = print_pv_string(p[1], pv, prn);
 	if (err) return;
 	pc = poisson_cdf(p[0], (int) p[1]);
@@ -1792,7 +1792,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'w':
     case 'W':
     case '9':
-	pprintf(prn, _("\nWeibull (shape = %g, scale = %g): "), 
+	pprintf(prn, _("Weibull (shape = %g, scale = %g): "), 
 		p[0], p[1]);
 	err = print_pv_string(p[2], pv, prn);
 	if (err) return;

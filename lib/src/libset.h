@@ -144,5 +144,8 @@ int iter_print_func_installed (void);
 
 void set_workdir_callback (int (*callback)());
 
+void set_script_switch (int s);
+int get_script_switch (void);
+
 #endif /* LIBSET_H */
 

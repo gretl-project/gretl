@@ -2907,24 +2907,26 @@ static int parse_criteria (const char *line, PRN *prn)
  * parseopt:
  * @pargc: pointer to count of arguments.
  * @pargv: pointer to command-line argument array.
+ * @popt: location to receive option(s).
  * @fname: optional filename argument.
- * @force_lang: pointer to store result of "force language" option.
  *
- * Returns: the gretl option code corresponding to the first "real"
- * option flag, or 0 if the option flag is not recognized.
+ * Parses options out of the command line into @popt and
+ * fills out @fname if applicable.
+ *
+ * Returns: 0 on success, non-zero in case of bad options.
  */
 
-int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
+int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname)
 {
     char **argv;
-    int opt = 0, extra = 0;
     int argc, gotfile = 0;
+    gretlopt opt = OPT_NONE;
+    int err = 0;
 
     *fname = '\0';
-    *force_lang = 0;
 
     if (pargv == NULL) {
-	return opt;
+	return 0;
     }
 
     argc = *pargc;
@@ -2934,34 +2936,28 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 	const char *s = *argv;
 
 	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
-	    *force_lang = LANG_C;
-	    argc--;
-	    continue;
-	} else if (!strcmp(s, "-q") || !strncmp(s, "--basque", 8)) { 
-	    *force_lang = LANG_EU;
-	    argc--;
-	    continue;
-	}
-
-	if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) { 
-	    opt = OPT_BATCH;
+	    opt |= OPT_ENGLISH;
+	} else if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) {
+	    opt |= OPT_BATCH;
 	} else if (!strcmp(s, "-h") || !strcmp(s, "--help")) { 
-	    opt = OPT_HELP;
+	    opt |= OPT_HELP;
 	} else if (!strcmp(s, "-v") || !strcmp(s, "--version")) { 
-	    opt = OPT_VERSION;
+	    opt |= OPT_VERSION;
 	} else if (!strcmp(s, "-r") || !strncmp(s, "--run", 5)) { 
-	    opt = OPT_RUNIT;
+	    opt |= OPT_RUNIT;
 	} else if (!strcmp(s, "-d") || !strncmp(s, "--db", 4)) { 
-	    opt = OPT_DBOPEN;
+	    opt |= OPT_DBOPEN;
 	} else if (!strcmp(s, "-w") || !strncmp(s, "--webdb", 7)) { 
-	    opt = OPT_WEBDB;
+	    opt |= OPT_WEBDB;
 	} else if (!strcmp(s, "-c") || !strncmp(s, "--dump", 6)) {
-	    opt = OPT_DUMP;
-	} else if (!strcmp(s, "-g") || !strncmp(s, "--debug", 7)) {
-	    extra |= OPT_DEBUG;
+	    opt |= OPT_DUMP;
+	} else if (!strcmp(s, "-q") || !strcmp(s, "--quiet")) { 
+	    opt |= OPT_QUIET;
+	} else if (!strncmp(s, "--switch=", 9)) {
+	    set_script_switch(atoi(s + 9));
 	} else if (*s == '-') {
 	    /* not a valid option */
-	    extra = OPT_ERROR;
+	    err = E_DATA;
 	    break;
 	} else if (!gotfile) {
 	    strncat(fname, s, MAXLEN - 1);
@@ -2971,12 +2967,16 @@ int parseopt (int *pargc, char ***pargv, char *fname, int *force_lang)
 	argc--;
     }
 
+    if (!err) {
+	err = incompatible_options(opt, OPT_BATCH | OPT_RUNIT | 
+				   OPT_DBOPEN | OPT_WEBDB);
+    }
+
     *pargc = argc;
     *pargv = argv;
+    *popt = opt;
 
-    opt |= extra;
-
-    return opt;
+    return err;
 }
 
 #ifndef WIN32

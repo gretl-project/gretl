@@ -2141,3 +2141,19 @@ int iter_print_callback (int i, PRN *prn)
 
     return ret;
 }
+
+/* mechanism for passing an integer parameter to
+   a gretl script, accessible via $switch
+*/
+
+static int script_switch;
+
+void set_script_switch (int s)
+{
+    script_switch = s;
+}
+
+int get_script_switch (void)
+{
+    return script_switch;
+}

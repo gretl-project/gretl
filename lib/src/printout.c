@@ -90,15 +90,20 @@ void session_time (PRN *prn)
 
 /**
  * logo:
+ * @quiet: if non-zero, just print version ID, else print
+ * copyright info also.
  *
  * Print to stdout gretl version information.
  */
 
-void logo (void)
+void logo (int quiet)
 {
     printf(_("gretl version %s\n"), GRETL_VERSION);
-    puts(_("Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"));
-    puts(_("This is free software with ABSOLUTELY NO WARRANTY"));
+
+    if (!quiet) {
+	puts(_("Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"));
+	puts(_("This is free software with ABSOLUTELY NO WARRANTY"));
+    }
 }
 
 /**

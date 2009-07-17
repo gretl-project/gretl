@@ -24,7 +24,7 @@
 
 void session_time (PRN *prn);
 
-void logo (void);
+void logo (int quiet);
 
 void lib_logo (void);
 
