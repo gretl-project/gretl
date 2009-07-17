@@ -6829,7 +6829,8 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	    sprintf(tmp, "%s.pdf", texbase);
 	    gretl_fork("viewpdf", tmp);
 	} else {
-	    gretl_fork("viewdvi", texbase);
+	    sprintf(tmp, "%s.dvi", texbase);
+	    gretl_fork("viewdvi", tmp);
 	}
 #endif
     }
