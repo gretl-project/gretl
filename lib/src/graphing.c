@@ -419,7 +419,7 @@ int gnuplot_has_utf8 (void)
     return 1;
 }
 
-#else
+#else /* !WIN32 */
 
 int gnuplot_has_ttf (int reset)
 {
@@ -515,6 +515,17 @@ static int gnuplot_has_x11 (void)
 
     if (err == -1) {
 	err = gnuplot_test_command("set term x11");
+    }
+
+    return !err;
+}
+
+int gnuplot_has_wxt (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term wxt");
     }
 
     return !err;
@@ -3079,13 +3090,14 @@ static int get_3d_output_file (FILE **fpp)
     return err;
 }
 
-static void 
-maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, char *surface)
+static gchar *maybe_get_surface (const int *list, 
+				 double ***pZ, DATAINFO *pdinfo, 
+				 gretlopt opt)
 {
     MODEL smod;
     double umin, umax, vmin, vmax;
     int olslist[5];
+    gchar *ret = NULL;
 
     olslist[0] = 4;
     olslist[1] = list[3];
@@ -3103,15 +3115,17 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
 	double uadj = (umax - umin) * 0.02;
 	double vadj = (vmax - vmin) * 0.02;
 
-	sprintf(surface, "[u=%g:%g] [v=%g:%g] "
-		"%g+(%g)*u+(%g)*v title '', ", 
-		umin - uadj, umax + uadj, 
-		vmin - vadj, vmax + vadj,
-		smod.coeff[0], smod.coeff[1],
-		smod.coeff[2]);
+	ret = g_strdup_printf("[u=%g:%g] [v=%g:%g] "
+			      "%g+(%g)*u+(%g)*v title ''", 
+			      umin - uadj, umax + uadj, 
+			      vmin - vadj, vmax + vadj,
+			      smod.coeff[0], smod.coeff[1],
+			      smod.coeff[2]);
     } 
 
     clear_model(&smod);
+
+    return ret;
 }
 
 /**
@@ -3137,11 +3151,12 @@ int gnuplot_3d (int *list, const char *literal,
     int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
     int lo = list[0];
     int datlist[4];
-    char surface[128] = {0};
+    int addstyle = 0;
+    gchar *surface = NULL;
 
     if (lo != 3) {
 	fprintf(stderr, "gnuplot_3d needs three variables (only)\n");
-	return -1;
+	return E_DATA;
     }
 
     if (get_3d_output_file(&fq)) {
@@ -3160,15 +3175,25 @@ int gnuplot_3d (int *list, const char *literal,
     pdinfo->t2 = t2;
 
 #ifndef WIN32
-    if (gnuplot_has_x11()) {
-	/* wxt is too slow/jerky? */
+    if (gnuplot_has_wxt()) {
+	fputs("set term wxt\n", fq);
+    } else if (gnuplot_has_x11()) {
 	fputs("set term x11\n", fq);
+    } else {
+	fclose(fq);
+	return E_EXTERNAL;
     }
 #endif
 
     gretl_push_c_numeric_locale();
 
-    maybe_add_surface(list, pZ, pdinfo, opt, surface);
+    surface = maybe_get_surface(list, pZ, pdinfo, opt);
+
+    if (gnuplot_has_rgb()) {
+	/* try to ensure we don't get "invisible" green datapoints */
+	fprintf(fq, "set style line 2 lc rgb \"#0000ff\"\n");
+	addstyle = 1;
+    }    
     
     print_axis_label('x', var_get_graph_name(pdinfo, list[2]), fq);
     print_axis_label('y', var_get_graph_name(pdinfo, list[1]), fq);
@@ -3180,11 +3205,19 @@ int gnuplot_3d (int *list, const char *literal,
 	print_gnuplot_literal_lines(literal, fq);
     }
 
-#ifdef WIN32
-    fprintf(fq, "splot %s'-' title '' w p lt 3\n", surface);
-#else
-    fprintf(fq, "splot %s'-' title ''\n", surface);
-#endif
+    if (surface != NULL) {
+	if (addstyle) {
+	    fprintf(fq, "splot %s, \\\n'-' title '' w p ls 2\n", surface);
+	} else {
+	    fprintf(fq, "splot %s, \\\n'-' title '' w p lt 3\n", surface);
+	}
+    } else {
+	if (addstyle) {
+	    fputs("splot '-' title '' w p ls 2\n", fq);
+	} else {
+	    fputs("splot '-' title '' w p lt 3\n", fq);
+	}
+    }
 
     datlist[0] = 3;
     datlist[1] = list[2];

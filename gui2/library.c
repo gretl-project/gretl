@@ -183,23 +183,33 @@ static void launch_gnuplot_interactive (void)
 			     gretl_plotfile());
     create_child_process(gpline);
     g_free(gpline);
-# else
+# else 
     char term[16];
     char plotfile[MAXLEN];
+    int err = 0;
 
     strcpy(plotfile, gretl_plotfile());
 
-    if (get_terminal(term)) {
-	return;
+    if (gnuplot_has_wxt()) {
+	*term = '\0';
     } else {
+	err = get_terminal(term);
+    } 
+
+    if (!err) {
 	GError *error = NULL;
-	gchar *argv[12] = { NULL };
+	gchar *argv[12];
 	int ok;
 
-	argv[0] = term;
-
-	if (strstr(term, "gnome")) {
+	if (*term == '\0') {
+	    /* no controller is needed */
+	    argv[0] = paths.gnuplot;
+	    argv[1] = plotfile;
+	    argv[2] = "-persist";
+	    argv[3] = NULL;
+	} else if (strstr(term, "gnome")) {
 	    /* gnome-terminal */
+	    argv[0] = term;
 	    argv[1] = "--geometry=40x4";
 	    argv[2] = "--title=\"gnuplot: type q to quit\"";
 	    argv[3] = "-x";
@@ -209,6 +219,7 @@ static void launch_gnuplot_interactive (void)
 	    argv[7] = NULL;
 	} else {	    
 	    /* xterm, rxvt, kterm */
+	    argv[0] = term;
 	    argv[1] = "+sb";
 	    argv[2] = "+ls";
 	    argv[3] = "-geometry";
@@ -233,9 +244,9 @@ static void launch_gnuplot_interactive (void)
 	if (!ok) {
 	    errbox(error->message);
 	    g_error_free(error);
-	}
+	} 
     }
-# endif
+#endif /* !G_OS_WIN32 */
 }
 
 int gretl_command_sprintf (const char *template, ...)
@@ -5682,22 +5693,20 @@ static int get_terminal (char *s)
     return 1;
 }
 
-#endif /* not G_OS_WIN32 */
+#endif /* !G_OS_WIN32 */
 
 int do_splot_from_selector (selector *sr)
 {
-    char line[MAXLINE];
     const char *buf = selector_list(sr);
-    int err;
+    int *list;
+    int err = 0;
 
-    if (buf == NULL) return 1;
-
-    sprintf(line, "gnuplot %s", buf);
-    if (check_specific_command(line) || libcmd.list[0] != 3) {
-	return 1;
+    list = gretl_list_from_string(buf, &err);
+    if (err) {
+	return err;
     }
 
-    err = gnuplot_3d(libcmd.list, NULL, &Z, datainfo, GPT_GUI);
+    err = gnuplot_3d(list, NULL, &Z, datainfo, GPT_GUI);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -5707,7 +5716,9 @@ int do_splot_from_selector (selector *sr)
 	launch_gnuplot_interactive();
     }
 
-    return 0;
+    free(list);
+
+    return err;
 }
 
 static int list_position (int v, const int *list)

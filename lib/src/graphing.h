@@ -274,5 +274,9 @@ int gnuplot_test_command (const char *cmd);
 
 void gnuplot_png_set_use_aa (int s);
 
+#ifndef WIN32
+int gnuplot_has_wxt (void);
+#endif
+
 #endif /* GRAPHING_H */
 
