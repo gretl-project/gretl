@@ -14,6 +14,8 @@ version 1.8.3, in progress
 - Ctrl-X in editing windows: cut text, don't exit
 - Data importers: add a comment to the imported dataset
   saying where it came from
+- 3-D graphs: use the wxt terminal in gnuplot if it's
+  available
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"

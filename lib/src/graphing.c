@@ -3187,8 +3187,6 @@ int gnuplot_3d (int *list, const char *literal,
 
     gretl_push_c_numeric_locale();
 
-    surface = maybe_get_surface(list, pZ, pdinfo, opt);
-
     if (gnuplot_has_rgb()) {
 	/* try to ensure we don't get "invisible" green datapoints */
 	fprintf(fq, "set style line 2 lc rgb \"#0000ff\"\n");
@@ -3205,12 +3203,15 @@ int gnuplot_3d (int *list, const char *literal,
 	print_gnuplot_literal_lines(literal, fq);
     }
 
+    surface = maybe_get_surface(list, pZ, pdinfo, opt);
+
     if (surface != NULL) {
 	if (addstyle) {
 	    fprintf(fq, "splot %s, \\\n'-' title '' w p ls 2\n", surface);
 	} else {
 	    fprintf(fq, "splot %s, \\\n'-' title '' w p lt 3\n", surface);
 	}
+	g_free(surface);
     } else {
 	if (addstyle) {
 	    fputs("splot '-' title '' w p ls 2\n", fq);
