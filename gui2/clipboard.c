@@ -30,8 +30,8 @@ GtkTargetEntry basic_targets[] = {
 };
 
 GtkTargetEntry rtf_targets[] = {
-    { "text/rtf",        0, TARGET_RTF },
-    { "application/rtf", 0, TARGET_RTF }
+    { "application/rtf", 0, TARGET_RTF },   
+    { "text/rtf",        0, TARGET_RTF }
 };
 
 static int n_basic = sizeof basic_targets / sizeof basic_targets[0];
