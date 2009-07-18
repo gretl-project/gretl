@@ -306,7 +306,16 @@ static int catch_command_alias (char *line, CMD *cmd)
 	strcpy(s, "ols");
 	cmd->ci = OLS;
 	cmd->opt |= OPT_J;
-    }	
+    } else if (!strcmp(s, "continue")) {
+	cmd->ci = FUNDEBUG;
+	cmd->opt |= OPT_C;
+    } else if (!strcmp(s, "next")) {
+	cmd->ci = FUNDEBUG;
+	cmd->opt |= OPT_N;
+    } else if (!strcmp(s, "undebug")) {
+	cmd->ci = FUNDEBUG;
+	cmd->opt |= OPT_Q;
+    }
 
     return cmd->ci;
 }
@@ -341,6 +350,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 		       c == FOREIGN || \
                        c == FUNC || \
                        c == FUNCERR || \
+		       c == FUNDEBUG || \
 	               c == GENR || \
                        c == GMM || \
 	               c == HAUSMAN || \
@@ -2337,8 +2347,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } 
 
     /* commands that never take a list of variables */
-    if (NO_VARLIST(cmd->ci) || 
-	(cmd->ci == DELEET && (cmd->opt & OPT_D))) { 
+    if (NO_VARLIST(cmd->ci) || (cmd->ci == DELEET && (cmd->opt & OPT_D))) { 
 	cmd_set_nolist(cmd);
 	if (cmd->ci != GENR) {
 	    capture_param(line, cmd, NULL);
@@ -3995,6 +4004,29 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
+static int do_debug_command (const char *param, gretlopt opt)
+{
+    int err = incompatible_options(opt, OPT_C | OPT_N | OPT_Q);
+
+    if (err) {
+	return err;
+    }
+
+    if (opt & (OPT_C | OPT_N)) {
+	/* continue, next */
+	if (!debugging_in_progress()) {
+	    gretl_errmsg_set("Debugging is not in progress");
+	    return E_DATA;
+	} else {
+	    /* handled in debug_command_loop */
+	    return 0;
+	}
+    } else {
+	/* OPT_Q quits debugging of the given function */
+	return user_function_set_debug(param, !(opt & OPT_Q));
+    } 
+}
+
 /* given the name of a discrete variable, perform one of a short list of
    commands for each value of the discrete variable
 */
@@ -4196,6 +4228,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case PERGM:
 	err = periodogram(cmd->list[1], cmd->order, Z, pdinfo, 
 			  cmd->opt | OPT_N, prn);
+	break;
+
+    case FUNDEBUG:
+	err = do_debug_command(cmd->param, cmd->opt);
 	break;
 
     case BREAK:

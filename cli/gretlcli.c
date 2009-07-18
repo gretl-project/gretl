@@ -210,11 +210,39 @@ static void get_a_filename (char *fname)
     fgets(fname, MAXLEN - 1, stdin);
 }
 
-static int 
-cli_get_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+/* this function is set up as it is to make it available for debugging
+   purposes */
+
+static int cli_get_interactive_line (void *p, char **pline)
 {
+    ExecState *s = (ExecState *) p;
     int coding = gretl_compiling_function() || 
 	gretl_compiling_loop();
+    int err = 0;
+
+#ifdef HAVE_READLINE
+    rl_gets(pline, (coding)? "> " : "? ");
+
+    if (*pline == NULL) {
+	strcpy(s->line, "quit");
+    } else if (strlen(*pline) > MAXLINE - 2) {
+	err = E_TOOLONG;
+    } else {
+	*s->line = '\0';
+	strncat(s->line, *pline, MAXLINE - 2);
+	strcat(s->line, "\n");
+    }
+#else
+    printf("%s", (coding)? "> " : "? ");
+    fflush(stdout);
+    file_get_line(s->line, s->cmd); /* note: "file" = stdin here */
+#endif
+
+    return err;
+}
+
+static int cli_get_input_line (ExecState *s)
+{
     int err = 0;
 
     if (runit || batch) {
@@ -222,22 +250,7 @@ cli_get_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = file_get_line(s->line, s->cmd);
     } else {
 	/* interactive use */
-#ifdef HAVE_READLINE
-	rl_gets(&line_read, (coding)? "> " : "? ");
-	if (line_read == NULL) {
-	    strcpy(s->line, "quit");
-	} else if (strlen(line_read) > MAXLINE - 2) {
-	    err = E_TOOLONG;
-	} else {
-	    *s->line = '\0';
-	    strncat(s->line, line_read, MAXLINE - 2);
-	    strcat(s->line, "\n");
-	}
-#else
-	printf("%s", (coding)? "> " : "? ");
-	fflush(stdout);
-	file_get_line(s->line, s->cmd); /* note: "file" = stdin here */
-#endif
+	err = cli_get_interactive_line(s, &line_read);
     }
 
     return err;
@@ -492,6 +505,7 @@ int main (int argc, char *argv[])
 
     gretl_cmd_init(&cmd);
     gretl_exec_state_init(&state, 0, line, &cmd, models, prn);
+    set_debug_read_func(cli_get_interactive_line);
 
     /* print list of variables */
     if (data_status) {
@@ -522,7 +536,8 @@ int main (int argc, char *argv[])
     }
 
 #ifdef HAVE_READLINE
-    if (!batch) initialize_readline();
+    /* note: this was conditional on !batch */
+    initialize_readline();
 #endif
 
     if (batch || runit) {
@@ -545,7 +560,7 @@ int main (int argc, char *argv[])
 		return 1;
 	    }
 	} else {
-	    err = cli_get_input_line(&state, &Z, datainfo);
+	    err = cli_get_input_line(&state);
 	    if (err) {
 		errmsg(err, prn);
 		break;

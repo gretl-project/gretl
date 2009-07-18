@@ -135,6 +135,9 @@ struct gretl_option gretl_opts[] = {
     { FREQ,     OPT_Q, "quiet", 0 },
     { FREQ,     OPT_S, "silent", 0 },
     { FREQ,     OPT_Z, "normal", 0 },
+    { FUNDEBUG, OPT_C, "continue", 0 },
+    { FUNDEBUG, OPT_N, "next", 0 },
+    { FUNDEBUG, OPT_Q, "quit", 0 },
     { GARCH,    OPT_A, "arma-init", 0 },
     { GARCH,    OPT_E, "stdresid", 0 },
     { GARCH,    OPT_F, "fcp", 0 }, 
@@ -1092,6 +1095,11 @@ const char *print_flags (gretlopt oflags, int ci)
     const char *parm;
     gretlopt opt;
     int i;
+
+    if (ci == FUNDEBUG) {
+	/* options are for internal use only */
+	return "";
+    }
 
     if (flagprn == NULL) {
 	int err = 0;

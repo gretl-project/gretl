@@ -2142,6 +2142,25 @@ int iter_print_callback (int i, PRN *prn)
     return ret;
 }
 
+/* mechanism for interactive debugging */
+
+static DEBUG_READLINE dbg_readline;
+
+void set_debug_read_func (DEBUG_READLINE dfunc) 
+{
+
+    if (check_for_state()) {
+	return;
+    }
+
+    dbg_readline = dfunc;
+}
+
+DEBUG_READLINE get_debug_read_func (void) 
+{
+    return dbg_readline;
+}
+
 /* mechanism for passing an integer parameter to
    a gretl script, accessible via $switch
 */
@@ -2157,3 +2176,5 @@ int get_script_switch (void)
 {
     return script_switch;
 }
+
+

@@ -145,6 +145,7 @@ typedef enum {
     WLS,
     XCORRGM,
     XTAB,
+    FUNDEBUG,
     NC
 } GretlCmdIndex;
 

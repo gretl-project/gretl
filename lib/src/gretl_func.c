@@ -80,6 +80,7 @@ struct ufunc_ {
     fn_param *params;
     int rettype;
     char *retname;
+    int debug;
 };
 
 struct fnpkg_ {
@@ -524,6 +525,13 @@ int current_func_pkgID (void)
     return (f == NULL)? 0 : f->pkgID;
 }
 
+int debugging_in_progress (void)
+{
+    ufunc *f = currently_called_function();
+
+    return (f != NULL && f->debug);
+}
+
 ufunc *get_user_function_by_name (const char *name)
 {
     ufunc *fun = NULL;
@@ -620,6 +628,8 @@ static ufunc *ufunc_new (void)
 
     fun->rettype = GRETL_TYPE_NONE;
     fun->retname = NULL;
+
+    fun->debug = 0;
 
     return fun;
 }
@@ -4071,6 +4081,89 @@ static int check_function_args (ufunc *u, fnargs *args,
     return err;
 }
 
+/**
+ * user_function_set_debug:
+ * @name: the name of the function.
+ * @debug: boolean, if 1 then start debugging function, if
+ * 0 then stop debugging.
+ *
+ * Enables or disables debugging for a user-defined function.
+ *
+ * Returns: 0 on success, non-zero if no function is specified
+ * or if the function is not found.
+ */
+
+int user_function_set_debug (const char *name, int debug)
+{
+    ufunc *fun;
+
+    if (name == NULL || *name == '\0') {
+	return E_ARGS;
+    } 
+
+    fun = get_user_function_by_name(name);
+
+    if (fun == NULL) {
+	return E_UNKVAR;
+    } else {
+	fun->debug = debug;
+	return 0;
+    }
+}
+
+#define debug_cont(c) (c->ci == FUNDEBUG && (c->opt == OPT_C))
+#define debug_next(c) (c->ci == FUNDEBUG && (c->opt == OPT_N))
+
+#define set_debug_cont(c) (c->ci = FUNDEBUG, c->opt = OPT_C)
+#define set_debug_next(c) (c->ci = FUNDEBUG, c->opt = OPT_N)
+
+/* loop for stepping through function commands; returns
+   1 if we're still debugging, otherwise 0 
+*/
+
+static int debug_command_loop (ExecState *state, double ***pZ,
+			       DATAINFO *datainfo)
+{
+    DEBUG_READLINE get_line = get_debug_read_func();
+
+    if (get_line == NULL) {
+	return 0;
+    } else {
+	int brk = 0;
+	char *line = NULL;
+	int err = 0;
+
+	while (!brk) {
+	    err = (*get_line) (state, &line);
+	    if (!err) {
+		err = parse_command_line(state->line, state->cmd, 
+					 pZ, datainfo);
+	    }
+	    if (err) {
+		if (!strcmp(state->line, "c")) {
+		    /* short for 'continue' */
+		    set_debug_cont(state->cmd);
+		    err = 0;
+		} else if (!strcmp(state->line, "n")) {
+		    /* short for 'next' */
+		    set_debug_next(state->cmd);
+		    err = 0;
+		}
+		if (err) {    
+		    break;
+		}
+	    }
+	    if (debug_cont(state->cmd) || debug_next(state->cmd)) {
+		brk = 1;
+	    } else {
+		err = gretl_cmd_exec(state, pZ, datainfo);
+	    }
+	}
+
+	return debug_next(state->cmd);
+    }
+}
+
 static void fn_state_init (CMD *cmd, ExecState *state, int *indent0)
 {
     cmd->list = NULL;
@@ -4099,6 +4192,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_t1 = 0;
     int orig_t2 = 0;
     int indent0, started = 0;
+    int debugging = u->debug;
     int i, err = 0;
 
     *funcerr_msg = '\0';
@@ -4175,6 +4269,11 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     fprintf(stderr, "start_fncall: err = %d\n", err);
 #endif
 
+    if (debugging) {
+	set_gretl_echo(1);
+	set_gretl_messages(1);
+    }
+
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
@@ -4188,6 +4287,12 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	err = maybe_exec_line(&state, pZ, pdinfo);
+
+	if (debugging && state.cmd->ci > 0 && 
+	    !gretl_compiling_loop() && !state.cmd->context) {
+	    pprintf(prn, "Debugging %s, line %d\n", u->name, i);
+	    debugging = debug_command_loop(&state, pZ, pdinfo);
+	}
 
 	if (err) {
 	    if (*gretl_errmsg == '\0') {

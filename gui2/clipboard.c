@@ -20,6 +20,8 @@
 #include "gretl.h"
 #include "textutil.h"
 
+#define CLIPDEBUG 0
+
 static gchar *clipboard_buf; 
 
 GtkTargetEntry text_targets[] = {
@@ -30,18 +32,18 @@ GtkTargetEntry text_targets[] = {
 };
 
 GtkTargetEntry rtf_targets[] = {
-    { "application/rtf", 0, TARGET_RTF },   
-    { "text/rtf",        0, TARGET_RTF },
-    { "STRING",          0, TARGET_STRING },
-    { "TEXT",            0, TARGET_TEXT } 
+    { "application/rtf",   0, TARGET_RTF },
+    { "application/x-rtf", 0, TARGET_RTF },
+    { "text/rtf",          0, TARGET_RTF },
+    { "text/richtext",     0, TARGET_RTF },
+    { "STRING",            0, TARGET_STRING },
+    { "TEXT",              0, TARGET_TEXT }
 };
 
 static int n_text = sizeof text_targets / sizeof text_targets[0];
 static int n_rtf = sizeof rtf_targets / sizeof rtf_targets[0];
 
 static void gretl_clipboard_set (int copycode);
-
-#define CLIPDEBUG 0
 
 static void gretl_clipboard_free (void)
 {
@@ -106,6 +108,27 @@ static gchar *minus_check (gchar *s)
     return ret;
 }
 
+#if CLIPDEBUG
+
+static const char *fmt_label (int f)
+{
+    if (f == TARGET_UTF8_STRING) {
+	return "TARGET_UTF8_STRING";
+    } else if (f == TARGET_STRING) {
+	return "TARGET_STRING";
+    } else if (f == TARGET_TEXT) {
+	return "TARGET_STRING";
+    } else if (f == TARGET_COMPOUND_TEXT) {
+	return "TARGET_COMPOUND_STRING";
+    } else if (f == TARGET_RTF) {
+	return "TARGET_RTF";
+    } else {
+	return "unknown";
+    }
+}
+
+#endif  
+
 static void gretl_clipboard_get (GtkClipboard *clip,
 				 GtkSelectionData *selection_data,
 				 guint info,
@@ -114,18 +137,8 @@ static void gretl_clipboard_get (GtkClipboard *clip,
     gchar *str = clipboard_buf; /* global */
 
 #if CLIPDEBUG
-    fprintf(stderr, "info = %d\n", (int) info);
-    if (info == TARGET_UTF8_STRING) {
-	fprintf(stderr, " = TARGET_UTF8_STRING\n");
-    } else if (info == TARGET_STRING) {
-	fprintf(stderr, " = TARGET_STRING\n");
-    } else if (info == TARGET_TEXT) {
-	fprintf(stderr, " = TARGET_STRING\n");
-    } else if (info == TARGET_COMPOUND_TEXT) {
-	fprintf(stderr, " = TARGET_COMPOUND_STRING\n");
-    } else if (info == TARGET_RTF) {
-	fprintf(stderr, " = TARGET_RTF\n");
-    }
+    fprintf(stderr, "gretl_clipboard_get: info = %d (%s)\n", 
+	    (int) info, fmt_label(info));
 #endif   
 
     if (str == NULL || *str == '\0') {
@@ -174,6 +187,10 @@ static void gretl_clipboard_set (int fmt)
 	targs = text_targets;
 	n_targs = n_text;
     }
+
+#if CLIPDEBUG
+    fprintf(stderr, "gretl_clipboard_set: fmt = %d\n", fmt);
+#endif
 
     if (!gtk_clipboard_set_with_owner(clip, targs, n_targs,
 				      gretl_clipboard_get,

@@ -155,6 +155,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { WLS,      "wls" },
     { XCORRGM,  "xcorrgm" },
     { XTAB,     "xtab" },
+    { FUNDEBUG, "debug" },
     { NC,       NULL}
 }; 
 
@@ -234,6 +235,7 @@ const char *gretl_command_complete_next (const char *s,
 	    return gretl_cmds[i].cword;
 	}
     }
+
     return NULL;
 }  
 

@@ -67,6 +67,7 @@ typedef enum {
 #define R_LIB            "R_lib"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
+typedef int (*DEBUG_READLINE) (void *, char **);
 
 #define set_nls_toler(x) (libset_set_double(NLS_TOLER, x))
 
@@ -141,6 +142,9 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn);
 void set_iter_print_func (ITER_PRINT_FUNC func);
 int iter_print_callback (int i, PRN *prn);
 int iter_print_func_installed (void);
+
+void set_debug_read_func (DEBUG_READLINE dfunc);
+DEBUG_READLINE get_debug_read_func (void);
 
 void set_workdir_callback (int (*callback)());
 
