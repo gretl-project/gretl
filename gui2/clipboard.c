@@ -22,7 +22,7 @@
 
 static gchar *clipboard_buf; 
 
-GtkTargetEntry basic_targets[] = {
+GtkTargetEntry text_targets[] = {
     { "UTF8_STRING",     0, TARGET_UTF8_STRING },
     { "STRING",          0, TARGET_STRING },
     { "TEXT",            0, TARGET_TEXT }, 
@@ -31,10 +31,12 @@ GtkTargetEntry basic_targets[] = {
 
 GtkTargetEntry rtf_targets[] = {
     { "application/rtf", 0, TARGET_RTF },   
-    { "text/rtf",        0, TARGET_RTF }
+    { "text/rtf",        0, TARGET_RTF },
+    { "STRING",          0, TARGET_STRING },
+    { "TEXT",            0, TARGET_TEXT } 
 };
 
-static int n_basic = sizeof basic_targets / sizeof basic_targets[0];
+static int n_text = sizeof text_targets / sizeof text_targets[0];
 static int n_rtf = sizeof rtf_targets / sizeof rtf_targets[0];
 
 static void gretl_clipboard_set (int copycode);
@@ -169,8 +171,8 @@ static void gretl_clipboard_set (int fmt)
 	targs = rtf_targets;
 	n_targs = n_rtf;
     } else {
-	targs = basic_targets;
-	n_targs = n_basic;
+	targs = text_targets;
+	n_targs = n_text;
     }
 
     if (!gtk_clipboard_set_with_owner(clip, targs, n_targs,
