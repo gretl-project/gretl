@@ -176,6 +176,21 @@ static void gretl_clipboard_set (int fmt)
     GtkTargetEntry *targs;
     gint n_targs;
 
+#ifdef OSX_BUILD
+    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
+	FILE *fp = popen("/usr/bin/pbcopy", "w");
+
+	if (fp != NULL) {
+# if CLIPDEBUG
+	    fprintf(stderr, "registering RTF via pbcopy\n");
+# endif
+	    fputs(clipboard_buf, fp);
+	    pclose(fp);
+	    return;
+	}
+    }
+#endif
+
     if (clip == NULL) {
 	clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     }

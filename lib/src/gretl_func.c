@@ -525,13 +525,6 @@ int current_func_pkgID (void)
     return (f == NULL)? 0 : f->pkgID;
 }
 
-int debugging_in_progress (void)
-{
-    ufunc *f = currently_called_function();
-
-    return (f != NULL && f->debug);
-}
-
 ufunc *get_user_function_by_name (const char *name)
 {
     ufunc *fun = NULL;
@@ -4111,6 +4104,13 @@ int user_function_set_debug (const char *name, int debug)
     }
 }
 
+static int debug_on;
+
+int debugging_in_progress (void)
+{
+    return debug_on;
+}
+
 #define debug_cont(c) (c->ci == FUNDEBUG && (c->opt == OPT_C))
 #define debug_next(c) (c->ci == FUNDEBUG && (c->opt == OPT_N))
 
@@ -4118,7 +4118,7 @@ int user_function_set_debug (const char *name, int debug)
 #define set_debug_next(c) (c->ci = FUNDEBUG, c->opt = OPT_N)
 
 /* loop for stepping through function commands; returns
-   1 if we're still debugging, otherwise 0 
+   1 if we're debugging, otherwise 0 
 */
 
 static int debug_command_loop (ExecState *state, double ***pZ,
@@ -4129,8 +4129,9 @@ static int debug_command_loop (ExecState *state, double ***pZ,
     if (get_line == NULL) {
 	return 0;
     } else {
-	int brk = 0;
-	int err = 0;
+	int brk = 0, err = 0;
+
+	debug_on = 1;
 
 	while (!brk) {
 	    err = (*get_line)(state);
@@ -4155,9 +4156,12 @@ static int debug_command_loop (ExecState *state, double ***pZ,
 	    if (debug_cont(state->cmd) || debug_next(state->cmd)) {
 		brk = 1;
 	    } else {
+		/* execute interpolated command */
 		err = gretl_cmd_exec(state, pZ, datainfo);
 	    }
 	}
+
+	debug_on = 0;
 
 	return debug_next(state->cmd);
     }

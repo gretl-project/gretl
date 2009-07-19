@@ -47,12 +47,6 @@ static void console_paste_handler (GtkWidget *w, gpointer p);
 static gint console_click_handler (GtkWidget *w, GdkEventButton *event,
 				   gpointer p);
 
-#define CDEBUG 0 /* not ready! */
-
-#if CDEBUG
-static int console_get_line (void *);
-#endif
-
 static ExecState *gretl_console_init (void)
 {
     ExecState *s;
@@ -91,9 +85,6 @@ static ExecState *gretl_console_init (void)
     hl = -1;
 
     set_gretl_echo(1);
-#if CDEBUG
-    set_debug_read_func(console_get_line);
-#endif
 
     gretl_exec_state_init(s, CONSOLE_EXEC, NULL, 
 			  get_lib_cmd(), models, NULL);
@@ -264,44 +255,6 @@ static void print_result_to_console (GtkTextBuffer *buf,
     }
 }
 
-static ExecState *dstate; /* for debugging */
-static int enter_pressed;
-
-#if CDEBUG
-
-static int console_get_line (void *p)
-{
-    dstate = (ExecState *) p;
-
-    fprintf(stderr, "console_get_line called\n"); 
-
-    while (!enter_pressed) {
-	fprintf(stderr, "waiting for enter...\n");
-	sleep(1);
-	if (gtk_events_pending()) {
-	    gtk_main_iteration();
-	}
-    }
-
-    fprintf(stderr, "got enter_pressed\n"); 	    
-
-    while (enter_pressed) {
-	fprintf(stderr, "waiting for !enter...\n");
-	sleep(1);
-	if (0 && gtk_events_pending()) {
-	    gtk_main_iteration();
-	}
-    }   
-
-    fprintf(stderr, "got !enter_pressed\n"); 
-
-    dstate = NULL;
-
-    return 0;
-}
-
-#endif
-
 /* callback from Enter key in gretl console */
 
 static void console_exec (GtkWidget *cview)
@@ -310,18 +263,10 @@ static void console_exec (GtkWidget *cview)
     GtkTextBuffer *buf;
     GtkTextIter start, end;
     char execline[MAXLINE];
-    int debugging = 0;
     int coding = 0;
     int err = 0;
 
-    if (dstate == NULL) {
-	state = g_object_get_data(G_OBJECT(cview), "ExecState");
-    } else {
-	fprintf(stderr, "enter_pressed\n");
-	enter_pressed = 1;
-	debugging = 1;
-	state = dstate;
-    }
+    state = g_object_get_data(G_OBJECT(cview), "ExecState");
 
     /* get into printing position */
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
@@ -333,17 +278,11 @@ static void console_exec (GtkWidget *cview)
        triggered by Enter */
     top_n_tail(cbuf, 0, NULL);
 
-    if (debugging) {
-	*state->line = '\0';
-	strncat(state->line, cbuf, MAXLINE - 2);
-	strcat(state->line, "\n");
+    if (state->prn == NULL && bufopen(&state->prn)) {
+	err = E_ALLOC;
     } else {
-	if (state->prn == NULL && bufopen(&state->prn)) {
-	    err = E_ALLOC;
-	} else {
-	    *execline = 0;
-	    strncat(execline, cbuf, MAXLINE - 1);
-	}
+	*execline = 0;
+	strncat(execline, cbuf, MAXLINE - 1);
     }
 
     g_free(cbuf);
@@ -353,18 +292,16 @@ static void console_exec (GtkWidget *cview)
 	return;
     }
 
-    if (!debugging) {
-	console_record_sample(datainfo);
-	push_history_line(execline);
-	state->line = execline;
-	state->flags = CONSOLE_EXEC;
+    console_record_sample(datainfo);
+    push_history_line(execline);
+    state->line = execline;
+    state->flags = CONSOLE_EXEC;
 
-	/* actually execute the command line */
-	err = gui_exec_line(state, &Z, datainfo);
+    /* actually execute the command line */
+    err = gui_exec_line(state, &Z, datainfo);
 
-	while (!err && gretl_execute_loop()) {
-	    err = gretl_loop_exec(state, &Z, datainfo);
-	}
+    while (!err && gretl_execute_loop()) {
+	err = gretl_loop_exec(state, &Z, datainfo);
     }
 
     gtk_text_buffer_get_end_iter(buf, &start);
@@ -403,8 +340,6 @@ static void console_exec (GtkWidget *cview)
     if (console_sample_changed(datainfo)) {
 	set_sample_label(datainfo);
     }
-
-    enter_pressed = 0;
 }
 
 void show_gretl_console (void)

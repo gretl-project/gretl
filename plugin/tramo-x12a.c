@@ -760,7 +760,7 @@ static int write_tramo_file (const char *fname,
     fputc('\n', fp);
 
     if (request == NULL) {
-	fputs("$INPUT rsa=3,out=2,$\n", fp);
+	fputs("$INPUT rsa=3,out=2,$END\n", fp);
     } else if (print_tramo_options(request, fp) == 0) {
 	/* not running SEATS */
 	request->prog = TRAMO_ONLY; 

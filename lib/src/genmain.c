@@ -262,15 +262,6 @@ int is_gretl_function_call (const char *s)
     }
 }
 
-/* "reserved word" data: 
-
-   smpl is special because it can legitimately be followed
-   by '+' or '-' and hence may be confused with the name
-   of a variable in parsing a command line: consider
-   "smpl +3 ;" (command) versus "smpl += 3" (revision of
-   value of variable).
-*/
-
 static const char *reswords[] = {
     /* constants */
     "const",
@@ -285,7 +276,10 @@ static const char *reswords[] = {
     "matrix",
     "string",
     "list",
-    "kalman"
+    "kalman",
+    /* debugging instructions */
+    "continue",
+    "next"
 };
 
 /**

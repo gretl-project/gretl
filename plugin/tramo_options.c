@@ -922,7 +922,7 @@ int print_tramo_options (tx_request *request, FILE *fp)
 	fprintf(fp, "out=%d,", opts->out);
     }
 
-    fputs("$\n", fp);
+    fputs("$END\n", fp);
 
     free(opts);
     request->gui = NULL;
