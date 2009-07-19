@@ -4130,11 +4130,10 @@ static int debug_command_loop (ExecState *state, double ***pZ,
 	return 0;
     } else {
 	int brk = 0;
-	char *line = NULL;
 	int err = 0;
 
 	while (!brk) {
-	    err = (*get_line) (state, &line);
+	    err = (*get_line)(state);
 	    if (!err) {
 		err = parse_command_line(state->line, state->cmd, 
 					 pZ, datainfo);

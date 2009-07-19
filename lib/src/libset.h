@@ -67,7 +67,7 @@ typedef enum {
 #define R_LIB            "R_lib"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
-typedef int (*DEBUG_READLINE) (void *, char **);
+typedef int (*DEBUG_READLINE) (void *);
 
 #define set_nls_toler(x) (libset_set_double(NLS_TOLER, x))
 

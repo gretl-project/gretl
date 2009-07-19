@@ -213,7 +213,7 @@ static void get_a_filename (char *fname)
 /* this function is set up as it is to make it available for debugging
    purposes */
 
-static int cli_get_interactive_line (void *p, char **pline)
+static int get_interactive_line (void *p)
 {
     ExecState *s = (ExecState *) p;
     int coding = gretl_compiling_function() || 
@@ -221,15 +221,15 @@ static int cli_get_interactive_line (void *p, char **pline)
     int err = 0;
 
 #ifdef HAVE_READLINE
-    rl_gets(pline, (coding)? "> " : "? ");
+    rl_gets(&line_read, (coding)? "> " : "? ");
 
-    if (*pline == NULL) {
+    if (line_read == NULL) {
 	strcpy(s->line, "quit");
-    } else if (strlen(*pline) > MAXLINE - 2) {
+    } else if (strlen(line_read) > MAXLINE - 2) {
 	err = E_TOOLONG;
     } else {
 	*s->line = '\0';
-	strncat(s->line, *pline, MAXLINE - 2);
+	strncat(s->line, line_read, MAXLINE - 2);
 	strcat(s->line, "\n");
     }
 #else
@@ -250,7 +250,7 @@ static int cli_get_input_line (ExecState *s)
 	err = file_get_line(s->line, s->cmd);
     } else {
 	/* interactive use */
-	err = cli_get_interactive_line(s, &line_read);
+	err = get_interactive_line(s);
     }
 
     return err;
@@ -505,7 +505,7 @@ int main (int argc, char *argv[])
 
     gretl_cmd_init(&cmd);
     gretl_exec_state_init(&state, 0, line, &cmd, models, prn);
-    set_debug_read_func(cli_get_interactive_line);
+    set_debug_read_func(get_interactive_line);
 
     /* print list of variables */
     if (data_status) {

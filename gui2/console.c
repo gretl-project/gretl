@@ -47,6 +47,12 @@ static void console_paste_handler (GtkWidget *w, gpointer p);
 static gint console_click_handler (GtkWidget *w, GdkEventButton *event,
 				   gpointer p);
 
+#define CDEBUG 0 /* not ready! */
+
+#if CDEBUG
+static int console_get_line (void *);
+#endif
+
 static ExecState *gretl_console_init (void)
 {
     ExecState *s;
@@ -85,6 +91,9 @@ static ExecState *gretl_console_init (void)
     hl = -1;
 
     set_gretl_echo(1);
+#if CDEBUG
+    set_debug_read_func(console_get_line);
+#endif
 
     gretl_exec_state_init(s, CONSOLE_EXEC, NULL, 
 			  get_lib_cmd(), models, NULL);
@@ -236,19 +245,85 @@ int console_sample_changed (const DATAINFO *pdinfo)
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
 
+static void print_result_to_console (GtkTextBuffer *buf,
+				     GtkTextIter *start,
+				     ExecState *s)
+{
+    const char *getbuf = gretl_print_get_buffer(s->prn);
+
+    if (!g_utf8_validate(getbuf, -1, NULL)) {
+	gchar *trbuf = my_locale_to_utf8(getbuf);
+
+	fprintf(stderr, "console text did not validate as utf8\n");
+	if (trbuf != NULL) {
+	    gtk_text_buffer_insert(buf, start, trbuf, -1);
+	    g_free(trbuf);
+	}
+    } else {
+	gtk_text_buffer_insert(buf, start, getbuf, -1);
+    }
+}
+
+static ExecState *dstate; /* for debugging */
+static int enter_pressed;
+
+#if CDEBUG
+
+static int console_get_line (void *p)
+{
+    dstate = (ExecState *) p;
+
+    fprintf(stderr, "console_get_line called\n"); 
+
+    while (!enter_pressed) {
+	fprintf(stderr, "waiting for enter...\n");
+	sleep(1);
+	if (gtk_events_pending()) {
+	    gtk_main_iteration();
+	}
+    }
+
+    fprintf(stderr, "got enter_pressed\n"); 	    
+
+    while (enter_pressed) {
+	fprintf(stderr, "waiting for !enter...\n");
+	sleep(1);
+	if (0 && gtk_events_pending()) {
+	    gtk_main_iteration();
+	}
+    }   
+
+    fprintf(stderr, "got !enter_pressed\n"); 
+
+    dstate = NULL;
+
+    return 0;
+}
+
+#endif
+
 /* callback from Enter key in gretl console */
 
 static void console_exec (GtkWidget *cview)
 {
-    ExecState *cstate;
+    ExecState *state;
     GtkTextBuffer *buf;
     GtkTextIter start, end;
     char execline[MAXLINE];
+    int debugging = 0;
     int coding = 0;
     int err = 0;
 
-    cstate = g_object_get_data(G_OBJECT(cview), "ExecState");
+    if (dstate == NULL) {
+	state = g_object_get_data(G_OBJECT(cview), "ExecState");
+    } else {
+	fprintf(stderr, "enter_pressed\n");
+	enter_pressed = 1;
+	debugging = 1;
+	state = dstate;
+    }
 
+    /* get into printing position */
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
     gtk_text_buffer_get_end_iter(buf, &end);
     start = end;
@@ -258,11 +333,17 @@ static void console_exec (GtkWidget *cview)
        triggered by Enter */
     top_n_tail(cbuf, 0, NULL);
 
-    if (cstate->prn == NULL && bufopen(&cstate->prn)) {
-	err = E_ALLOC;
+    if (debugging) {
+	*state->line = '\0';
+	strncat(state->line, cbuf, MAXLINE - 2);
+	strcat(state->line, "\n");
     } else {
-	*execline = 0;
-	strncat(execline, cbuf, MAXLINE - 1);
+	if (state->prn == NULL && bufopen(&state->prn)) {
+	    err = E_ALLOC;
+	} else {
+	    *execline = 0;
+	    strncat(execline, cbuf, MAXLINE - 1);
+	}
     }
 
     g_free(cbuf);
@@ -272,52 +353,39 @@ static void console_exec (GtkWidget *cview)
 	return;
     }
 
-    console_record_sample(datainfo);
+    if (!debugging) {
+	console_record_sample(datainfo);
+	push_history_line(execline);
+	state->line = execline;
+	state->flags = CONSOLE_EXEC;
 
-    push_history_line(execline);
+	/* actually execute the command line */
+	err = gui_exec_line(state, &Z, datainfo);
 
-    cstate->line = execline;
-    cstate->flags = CONSOLE_EXEC;
-
-    /* actually execute the command line */
-    err = gui_exec_line(cstate, &Z, datainfo);
-
-    while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(cstate, &Z, datainfo);
+	while (!err && gretl_execute_loop()) {
+	    err = gretl_loop_exec(state, &Z, datainfo);
+	}
     }
 
     gtk_text_buffer_get_end_iter(buf, &start);
     gtk_text_buffer_insert(buf, &start, "\n", 1);
 
-    if (printing_is_redirected(cstate->prn)) {
-	gretl_print_reset_buffer(cstate->prn);
+    if (printing_is_redirected(state->prn)) {
+	gretl_print_reset_buffer(state->prn);
     } else {
-	/* put results into console window */
-	const char *getbuf = gretl_print_get_buffer(cstate->prn);
-
-	if (!g_utf8_validate(getbuf, -1, NULL)) {
-	    gchar *trbuf = my_locale_to_utf8(getbuf);
-
-	    fprintf(stderr, "console text did not validate as utf8\n");
-	    if (trbuf != NULL) {
-		gtk_text_buffer_insert(buf, &start, trbuf, strlen(trbuf));
-		g_free(trbuf);
-	    }
-	} else {
-	    gtk_text_buffer_insert(buf, &start, getbuf, strlen(getbuf));
-	}
-
-	gretl_print_destroy(cstate->prn);
-	cstate->prn = NULL;
+	print_result_to_console(buf, &start, state);
+	gretl_print_destroy(state->prn);
+	state->prn = NULL;
     }
 
-    if (cstate->cmd->ci == QUIT) {
+    if (state->cmd->ci == QUIT) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(cview));
 	return;
     }
 
     coding = gretl_compiling_loop() || gretl_compiling_function();
 
+    /* set up promt for next command */
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
 					     (coding)? "> " : "? ", 
 					     2, "redtext", NULL);
@@ -335,6 +403,8 @@ static void console_exec (GtkWidget *cview)
     if (console_sample_changed(datainfo)) {
 	set_sample_label(datainfo);
     }
+
+    enter_pressed = 0;
 }
 
 void show_gretl_console (void)
