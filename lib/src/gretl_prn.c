@@ -397,10 +397,13 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
  * gretl_print_reset_buffer:
  * @prn: printing struct to operate on.
  * 
- * Write a NUL byte to the start of the buffer associated
- * with @prn, if any.
+ * If @prn has an attached buffer, write a NUL byte to
+ * the start of the buffer and reset the count of bytes
+ * printed to zero.  The next call to @pprintf or
+ * similar will then overwite rather than cumulating
+ * the printed content.
  *
- * Returns: 0 on success, 1 on error.
+ * Returns: 0 on success, 1 if @prn has no buufer.
  */
 
 int gretl_print_reset_buffer (PRN *prn)
