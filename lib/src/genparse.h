@@ -337,8 +337,7 @@ enum {
 #define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
 			    s == F_ISLIST   || s == F_LISTLEN || \
 			    s == F_ISSTRING || s == F_OBSNUM || \
-			    s == F_BACKTICK || s == F_VARNUM || \
-			    s == F_MREAD)
+			    s == F_BACKTICK || s == F_VARNUM)
 
 /* function with multiple args, string for first arg */
 #define string0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
@@ -347,7 +346,7 @@ enum {
 
 /* functions taking a string arg in last position */
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
-                             s == F_MWRITE || s == F_DESEAS)
+                             s == F_DESEAS)
 
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
