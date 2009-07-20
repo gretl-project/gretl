@@ -153,8 +153,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
     if (info == TARGET_RTF) {
 	gtk_selection_data_set(selection_data,
 			       GDK_SELECTION_TYPE_STRING,
-			       8 * sizeof(gchar), 
-			       (guchar *) str, 
+			       8, (guchar *) str, 
 			       strlen(str));
     } else {
 	gtk_selection_data_set_text(selection_data, str, -1);
