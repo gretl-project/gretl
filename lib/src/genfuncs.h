@@ -117,4 +117,7 @@ double gretl_round (double x);
 
 double gretl_bessel (char type, double v, double x, int *err);
 
+gretl_matrix *gretl_periodogram (const double *x, int t1, int t2, 
+				 int *err);
+
 #endif /* GENFUNCS_H */

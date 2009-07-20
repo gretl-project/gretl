@@ -534,6 +534,47 @@ void window_print (GtkAction *action, windata_t *vwin)
 
 #endif
 
+#define UTF_MINUS(u,i) (u[i] == 0xE2 && u[i+1] == 0x88 && u[i+2] == 0x92)
+
+/* check @s for UTF-8 minus signs (U+2212), and if any are found do an
+   in-place replacement with ASCII dashes
+*/
+
+char *strip_utf_minus (char *s)
+{
+    unsigned char *u = (unsigned char *) s;
+    int i, n = strlen(s);
+    int got_minus = 0;
+
+    for (i=0; i<n-3; i++) {
+	if (UTF_MINUS(u, i)) {
+	    got_minus = 1;
+	    break;
+	}
+    }
+
+    if (got_minus) {
+	char *tmp = calloc(n, 1);
+
+	if (tmp != NULL) {
+	    int j = 0;
+
+	    for (i=0; i<n; i++) {
+		if (i < n - 3 && UTF_MINUS(u, i)) {
+		    tmp[j++] = '-';
+		    i += 2;
+		} else {
+		    tmp[j++] = u[i];
+		}
+	    }
+	    strcpy(s, tmp);
+	    free(tmp);
+	} 
+    } 
+
+    return s;
+}
+
 /* print buf to file, trying to ensure it's not messed up */
 
 void system_print_buf (const gchar *buf, FILE *fp)

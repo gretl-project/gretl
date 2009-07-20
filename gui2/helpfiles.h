@@ -47,4 +47,6 @@ char *quoted_help_string (const char *s);
 
 int function_help_index_from_word (const char *s);
 
+int gui_console_help (const char *param);
+
 #endif /* HELPFILES_H */

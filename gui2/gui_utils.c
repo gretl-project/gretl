@@ -36,7 +36,6 @@
 
 #include "model_table.h"
 #include "series_view.h"
-#include "console.h"
 #include "session.h"
 #include "textbuf.h"
 #include "textutil.h"
@@ -1123,8 +1122,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	/* special: function package, sample script window */
 	update_sample_script(vwin);
 	mark_vwin_content_saved(vwin);
-    } else if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
-	/* newly created script: no real filename yet */
+    } else if (*vwin->fname == '\0' || strstr(vwin->fname, "script_tmp")) {
+	/* no real filename is available */
 	if (vwin->role == EDIT_SCRIPT) {
 	    file_selector(_("Save command script"), SAVE_SCRIPT, 
 			  FSEL_DATA_VWIN, vwin);
@@ -1136,6 +1135,9 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 			  FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_OX) {
 	    file_selector(_("Save"), SAVE_OX_CMDS, 
+			  FSEL_DATA_VWIN, vwin);
+	} else if (vwin->role == CONSOLE) {
+	    file_selector(_("Save"), SAVE_CONSOLE, 
 			  FSEL_DATA_VWIN, vwin);
 	}	    
     } else if ((vwin->flags & VWIN_SESSION_GRAPH) &&
@@ -1395,8 +1397,6 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup("gretl: command reference"); break;
     case VIEW_LOG:
 	title = g_strdup(_("gretl: command log")); break;
-    case CONSOLE:
-	title = g_strdup(_("gretl console")); break;
     case EDIT_SCRIPT:
     case VIEW_SCRIPT:	
     case VIEW_FILE:
@@ -1616,12 +1616,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
 #define record_on_winstack(r) (!vwin_editing_script(r) && \
                                r != VIEW_LOG && \
-                               r != VIEW_SCRIPT && \
-                               r != CONSOLE)
+                               r != VIEW_SCRIPT)
 
-#define text_out_ok(r) (r == VIEW_DATA ||	\
-			r == CONSOLE ||		\
-			r == VIEW_FILE)
+#define text_out_ok(r) (r == VIEW_DATA || r == VIEW_FILE)
 
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
@@ -1710,6 +1707,36 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     cursor_to_top(vwin);
     gtk_widget_grab_focus(vwin->text);
+
+    return vwin;
+}
+
+windata_t *console_window (int hsize, int vsize)
+{
+    windata_t *vwin;
+
+    vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL, 0);
+    if (vwin == NULL) {
+	return NULL;
+    }
+
+    viewer_box_config(vwin);
+    vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
+    create_text(vwin, hsize, vsize, 0, 1);
+    text_table_setup(vwin->vbox, vwin->text);
+
+    /* catch some special keystrokes */
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+		     G_CALLBACK(catch_viewer_key), vwin);
+
+    /* ?? */
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+
+    gtk_widget_show(vwin->vbox);
+    gtk_widget_show(vwin->main);
+
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+		     G_CALLBACK(text_popup_handler), vwin);
 
     return vwin;
 }

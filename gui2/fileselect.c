@@ -89,7 +89,7 @@ static struct extmap action_map[] = {
     { SAVE_DBDATA,       ".bin" },
     { SAVE_SCRIPT,       ".inp" },
     { SAVE_FUNCTIONS_AS, ".inp" },
-    { SAVE_CONSOLE,      ".inp" },
+    { SAVE_CONSOLE,      ".txt" },
     { SAVE_SESSION,      ".gretl" },
     { SAVE_GP_CMDS,      ".plt" },
     { SAVE_R_CMDS,       ".R" },
@@ -300,6 +300,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 
     trbuf = my_locale_from_utf8(buf);
     if (trbuf != NULL) {
+	/* UTF minuses? */
 	system_print_buf(trbuf, fp);
 	g_free(trbuf);
     }
@@ -597,6 +598,24 @@ static void correct_default_dir (char *s)
 
 #endif
 
+static void set_default_progs_path (GtkFileChooser *fsel)
+{
+#ifdef G_OS_WIN32
+    char *progs = program_files_path();
+
+    if (progs != NULL) {
+	gchar *path = my_filename_to_utf8(progs);
+
+	gtk_file_chooser_set_current_folder(fsel, path);
+	g_free(path);
+	free(progs);
+    }
+		
+#else
+    gtk_file_chooser_set_current_folder(fsel, "/usr/bin");
+#endif
+}
+
 static void gtk_file_selector (const char *msg, int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
@@ -698,8 +717,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
 					  strvar);
 	} else {
-	    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), 
-						"/usr/bin");
+	    set_default_progs_path(GTK_FILE_CHOOSER(filesel));
 	}	    
     } else if (action == SET_DIR) {
 	char *strvar = (char *) data;

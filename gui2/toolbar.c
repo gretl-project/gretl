@@ -589,7 +589,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define save_as_ok(r) (r != EDIT_HEADER && \
 	               r != EDIT_NOTES && \
-	               r != EDIT_FUNC_CODE)
+	               r != EDIT_FUNC_CODE && \
+	               r != CONSOLE)
 
 #define help_ok(r) (r == LEVERAGE || \
 		    r == COINT2 || \
@@ -759,9 +760,11 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
 
 	if (item->flag == SAVE_ITEM) { 
-	    g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button); 
-	    /* nothing to save just yet */
-	    gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+	    if (vwin->role != CONSOLE) {
+		/* nothing to save just yet */
+		g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button); 
+		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+	    }
 	} else if (item->flag == SAVE_AS_ITEM) {
 	    g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button", button);
 	    if (strstr(vwin->fname, "script_tmp")) {

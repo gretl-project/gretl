@@ -185,7 +185,7 @@ static char *entry_get_trimmed_text (GtkWidget *w)
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
     gchar *ret = g_strdup(s);
 
-    return g_strchug(g_strchomp(ret));
+    return g_strstrip(ret);
 }
 
 /* recreate a generated var in response to a change in

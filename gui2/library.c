@@ -7253,6 +7253,8 @@ static int script_open_append (ExecState *s, double ***pZ,
     return err;
 }
 
+#define try_gui_help(c) (c->param != NULL && *c->param != '\0' && !c->opt)
+
 /* gui_exec_line: this is called from the gretl console, from the
    command "minibuffer", from execute_script(), and when initiating a
    call to a function package (fncall.c).  Note that most commands get
@@ -7474,7 +7476,15 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case HELP:
-	cli_help(cmd->param, &paths, cmd->opt, prn);
+	if (s->flags == CONSOLE_EXEC && try_gui_help(cmd)) {
+	    err = gui_console_help(cmd->param);
+	    if (err) {
+		err = 0;
+		cli_help(cmd->param, &paths, cmd->opt, prn);
+	    }
+	} else {
+	    cli_help(cmd->param, &paths, cmd->opt, prn);
+	}
 	break;
 
     case OPEN:

@@ -4013,6 +4013,8 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     } else if (f != F_DESEAS && r != NULL && r->t != EMPTY && r->t != NUM) {
 	node_type_error(f, 2, NUM, r, p);
 	return NULL;
+    } else if (f == F_PERGM) {
+	ret = aux_matrix_node(p);
     } else {
 	ret = aux_vec_node(p, p->dinfo->n);
     }
@@ -4020,7 +4022,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     if (ret != NULL) {
 	gretl_matrix *tmp = NULL;
 	const double *x;
-	double *y;
+	double *y = NULL;
 
 	if (l->t == MAT) {
 	    cast_to_series(l, f, &tmp, p);
@@ -4030,7 +4032,10 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	}
 
 	x = l->v.xvec;
-	y = ret->v.xvec;
+
+	if (f != F_PERGM) {
+	    y = ret->v.xvec;
+	}
 
 	switch (f) {
 	case F_HPFILT:
@@ -4084,6 +4089,10 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	case F_RANKING:
 	    p->err = rank_series(x, y, F_SORT, p->dinfo); 
+	    break;
+	case F_PERGM:
+	    ret->v.m = gretl_periodogram(x, p->dinfo->t1, p->dinfo->t2,
+					 &p->err);
 	    break;
 	default:
 	    break;
@@ -6522,6 +6531,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PSD:
     case F_RANKING:
     case F_DESEAS:
+    case F_PERGM:
 	/* series argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);

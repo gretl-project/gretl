@@ -50,4 +50,6 @@ void system_print_buf (const gchar *buf, FILE *fp);
 
 char *dosify_buffer (const char *buf, int format);
 
+char *strip_utf_minus (char *s);
+
 #endif /* TEXTUTIL_H */

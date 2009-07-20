@@ -32,6 +32,7 @@
 #include "gretl_panel.h"
 #include "texprint.h"
 #include "forecast.h"
+#include "console.h"
 
 #include <errno.h>
 
@@ -119,7 +120,7 @@ gboolean exit_check (void)
     };
     int resp;
 
-    if (maybe_raise_dialog()) {
+    if (maybe_raise_dialog() || maybe_raise_console()) {
 	return TRUE;
     }
 

@@ -1466,6 +1466,31 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
     return FALSE;
 }
 
+/* First response to "help <param>" in GUI console, when given with no
+   option: if we got a command word or function name, pop open a
+   nicely formatted help window.  If this function returns non-zero
+   we'll fall back on the command-line help function.
+*/
+
+int gui_console_help (const char *param)
+{
+    int en = 0, hcode = 0, flags = HELP_CLI;
+    int pos, err = 0;
+
+    pos = help_pos_from_string(param, &en, &hcode, &flags);
+
+    if (pos <= 0) {
+	err = 1;
+    } else {
+	if (en) {
+	    flags |= HELP_EN;
+	}
+	real_do_help(hcode, pos, flags);
+    }
+
+    return err;
+}
+
 void text_find (gpointer unused, gpointer data)
 {
     find_string_dialog(find_in_text, data);

@@ -325,6 +325,7 @@ struct str_table funcs[] = {
     { F_FRACLAG,  "fraclag" },
     { F_MREVERSE, "mreverse" },
     { F_DESEAS,   "deseas" },
+    { F_PERGM,    "pergm" },
     { 0,          NULL }
 };
 

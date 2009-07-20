@@ -62,18 +62,19 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
     double *tmp = NULL;
     fftw_complex *out;
     int r = gretl_matrix_rows(y);
+    int c, m, odd, cr, ci;
+    int i, j;
 
-    if (r<2) {
+    if (r < 2) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    int c = gretl_matrix_cols(y);
-    int m = r / 2;
-    int odd = r % 2;
-    int cr = 0;
-    int ci = 1;
-    int i, j;
+    c = gretl_matrix_cols(y);
+    m = r / 2;
+    odd = r % 2;
+    cr = 0;
+    ci = 1;
 
     *err = fft_allocate(&tmp, &ft, &out, r, 2 * c);
     if (*err) {

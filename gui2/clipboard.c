@@ -70,44 +70,6 @@ int buf_to_clipboard (const char *buf)
     return err;
 }
 
-#define UTF_MINUS(u,i) (u[i] == 0xE2 && u[i+1] == 0x88 && u[i+2] == 0x92)
-
-static gchar *minus_check (gchar *s)
-{
-    guchar *u = (guchar *) s;
-    gchar *ret = s;
-    int i, n = strlen(s);
-    int got_minus = 0;
-
-    for (i=0; i<n-3; i++) {
-	if (UTF_MINUS(u, i)) {
-	    got_minus = 1;
-	    break;
-	}
-    }
-
-    if (got_minus) {
-	/* convert U+2212 into plain ASCII dash */
-	int j = 0;
-
-	ret = calloc(n, 1);
-	if (ret != NULL) {
-	    for (i=0; i<n; i++) {
-		if (i < n - 3 && UTF_MINUS(u, i)) {
-		    ret[j++] = '-';
-		    i += 2;
-		} else {
-		    ret[j++] = u[i];
-		}
-	    }
-	} else {
-	    ret = s;
-	}
-    } 
-
-    return ret;
-}
-
 #if CLIPDEBUG
 
 static const char *fmt_label (int f)
@@ -147,7 +109,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 
     if (info != TARGET_UTF8_STRING) {
 	/* need to remove any UTF-8 minuses? */
-	str = minus_check(str);
+	str = strip_utf_minus(str);
     }
 
     if (info == TARGET_RTF) {
@@ -157,10 +119,6 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 			       strlen(str));
     } else {
 	gtk_selection_data_set_text(selection_data, str, -1);
-    }
-
-    if (str != clipboard_buf) {
-	g_free(str);
     }
 }
 

@@ -763,10 +763,16 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	return FALSE;
     }
 
-    if (k == GDK_x && (mods & GDK_MOD1_MASK)) {
-	/* invoke command minibuffer */
-	minibuf_callback();
-	return FALSE;
+    if (mods & GDK_MOD1_MASK) {
+	if (k == GDK_x) {
+	    /* invoke command minibuffer */
+	    minibuf_callback();
+	    return FALSE;
+	} else if (k == GDK_c) {
+	    /* invoke console */
+	    show_gretl_console();
+	    return FALSE;
+	}
     }
 
     if (k == GDK_Return              /* display variable(s) */

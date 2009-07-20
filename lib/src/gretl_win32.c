@@ -412,6 +412,11 @@ char *mydocs_path (void)
     return win_special_path(CSIDL_PERSONAL);
 }
 
+char *program_files_path (void)
+{
+    return win_special_path(CSIDL_PROGRAM_FILES);
+}
+
 static char *compose_command_line (const char *arg)
 {
     CHAR cmddir[MAX_PATH];
