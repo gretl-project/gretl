@@ -32,9 +32,6 @@ GtkTargetEntry text_targets[] = {
 };
 
 GtkTargetEntry rtf_targets[] = {
-#ifdef OSX_BUILD
-    { kUTTypeRTF,          0, TARGET_RTF },
-#endif
     { "application/rtf",   0, TARGET_RTF },
     { "application/x-rtf", 0, TARGET_RTF },
     { "text/rtf",          0, TARGET_RTF },
