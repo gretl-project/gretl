@@ -100,8 +100,7 @@ static void beep (void)
 #ifdef G_OS_WIN32
     MessageBeep(MB_ICONEXCLAMATION);
 #else
-    putchar('\a');
-    fflush(stdout);
+    gdk_beep();
 #endif
 }
 
