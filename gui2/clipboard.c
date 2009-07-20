@@ -180,9 +180,6 @@ static void gretl_clipboard_set (int fmt)
 	FILE *fp = popen("/usr/bin/pbcopy", "w");
 
 	if (fp != NULL) {
-# if CLIPDEBUG
-	    fprintf(stderr, "registering RTF via pbcopy\n");
-# endif
 	    fputs(clipboard_buf, fp);
 	    pclose(fp);
 	    return;
