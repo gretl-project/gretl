@@ -67,6 +67,10 @@ static void utf_replace (unsigned char *s)
 	    /* &mu; */
 	    s[0] = 'm';
 	    s[1] = 'u';
+	} else if (s[0] == 0xcf && s[1] == 0x80) {
+	    /* &pi; */
+	    s[0] = 'p';
+	    s[1] = 'i';
 	} else if (s[0] == 0xcf && s[1] == 0x81) {
 	    /* rho; */
 	    memmove(s + 3, s + 2, strlen((char *) s + 2) + 1);
@@ -81,7 +85,15 @@ static void utf_replace (unsigned char *s)
 	    s[2] = 'g';
 	    s[3] = 'm';
 	    s[4] = 'a';
-	} 
+	} else if (s[0] == 0xcf && s[1] == 0x89) {
+	    /* &omega; */
+	    memmove(s + 5, s + 2, strlen((char *) s + 2) + 1);
+	    s[0] = 'o';
+	    s[1] = 'm';
+	    s[2] = 'e';
+	    s[3] = 'g';
+	    s[4] = 'a';
+	}
 	s++;
     }
 }

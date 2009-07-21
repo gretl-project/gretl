@@ -3996,8 +3996,8 @@ static NODE *vector_values (NODE *l, parser *p)
 
 #define tramo_string(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
 
-/* functions taking a series as argument and returning a series:
-   note that the 'r' node may contain an auxiliary parameter 
+/* Functions taking a series as argument and returning a series:
+   note that the 'r' node may contain an auxiliary parameter.
 */
 
 static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
@@ -4015,16 +4015,12 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     } 
 
-    if (f == F_PERGM) {
-	ret = aux_matrix_node(p);
-    } else {
-	ret = aux_vec_node(p, p->dinfo->n);
-    }
+    ret = aux_vec_node(p, p->dinfo->n);
 
     if (ret != NULL) {
 	gretl_matrix *tmp = NULL;
 	const double *x;
-	double *y = NULL;
+	double *y;
 
 	if (l->t == MAT) {
 	    cast_to_series(l, f, &tmp, p);
@@ -4034,10 +4030,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	}
 
 	x = l->v.xvec;
-
-	if (f != F_PERGM) {
-	    y = ret->v.xvec;
-	}
+	y = ret->v.xvec;
 
 	switch (f) {
 	case F_HPFILT:
@@ -4092,15 +4085,6 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_RANKING:
 	    p->err = rank_series(x, y, F_SORT, p->dinfo); 
 	    break;
-	case F_PERGM:
-	    if (r != NULL && r->t == NUM) {
-		int width = r->v.xval;
-
-		ret->v.m = periodogram_func(x, p->dinfo, width, &p->err);
-	    } else {
-		ret->v.m = periodogram_func(x, p->dinfo, -1, &p->err);
-	    }
-	    break;
 	default:
 	    break;
 	}
@@ -4108,6 +4092,52 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	if (l->t == MAT) {
 	    l->v.m = tmp;
 	}
+    }
+
+    return ret;
+}
+
+/* pergm function takes series or column vector arg, returns matrix:
+   if we come up with more functions on that pattern, the following
+   could be extended
+*/
+
+static NODE *do_pergm (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (r != NULL && r->t != EMPTY && r->t != NUM) {
+	/* optional 'r' node must be scalar */
+	node_type_error(F_PERGM, 2, NUM, r, p);
+    } else if (l->t == MAT && gretl_vector_get_length(l->v.m) == 0) {
+	/* if 'l' node is not a series, must be a vector */
+	node_type_error(F_PERGM, 1, VEC, l, p);
+    } else {
+	ret = aux_matrix_node(p);
+    }
+
+    if (!p->err) {
+	int save_t1 = p->dinfo->t1;
+	int save_t2 = p->dinfo->t2;
+	int width = -1;
+	const double *x;
+
+	if (l->t == VEC) {
+	    x = l->v.xvec;
+	} else if (l->t == MAT) {
+	    x = l->v.m->val;
+	    p->dinfo->t1 = 0;
+	    p->dinfo->t2 = gretl_vector_get_length(l->v.m) - 1;
+	} 
+
+	if (r != NULL && r->t == NUM) {
+	    width = r->v.xval;
+	}
+
+	ret->v.m = periodogram_func(x, p->dinfo, width, &p->err);
+
+	p->dinfo->t1 = save_t1;
+	p->dinfo->t2 = save_t2;
     }
 
     return ret;
@@ -6538,7 +6568,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_PSD:
     case F_RANKING:
     case F_DESEAS:
-    case F_PERGM:
 	/* series argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);
@@ -6563,9 +6592,12 @@ static NODE *eval (NODE *t, parser *p)
     case F_SORT:
     case F_DSORT:
     case F_VALUES:
+    case F_PERGM:
 	/* series or vector argument needed */
 	if (l->t == VEC || l->t == MAT) {
-	    if (t->t == F_VALUES) {
+	    if (t->t == F_PERGM) {
+		ret = do_pergm(l, r, p);
+	    } else if (t->t == F_VALUES) {
 		ret = vector_values(l, p);
 	    } else {
 		ret = vector_sort(l, t->t, p);

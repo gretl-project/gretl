@@ -5,9 +5,11 @@
 <!ENTITY ndash  "&#8211;">
 <!ENTITY lgr    "&#0955;">
 <!ENTITY mu     "&#0956;">
+<!ENTITY pi     "&#0960;">
 <!ENTITY sigma  "&#0963;">
 <!ENTITY tau    "&#0964;">
 <!ENTITY rgr    "&#0961;">
+<!ENTITY omega  "&#0969;">
 <!ENTITY hellip "&#8230;">
 <!ENTITY mdash  "&#8212;">
 <!ENTITY latex  "LaTeX">

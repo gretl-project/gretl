@@ -4104,13 +4104,6 @@ int user_function_set_debug (const char *name, int debug)
     }
 }
 
-static int debug_on;
-
-int debugging_in_progress (void)
-{
-    return debug_on;
-}
-
 #define debug_cont(c) (c->ci == FUNDEBUG && (c->opt == OPT_C))
 #define debug_next(c) (c->ci == FUNDEBUG && (c->opt == OPT_N))
 
@@ -4131,7 +4124,7 @@ static int debug_command_loop (ExecState *state, double ***pZ,
     } else {
 	int brk = 0, err = 0;
 
-	debug_on = 1;
+	state->flags |= DEBUG_EXEC;
 
 	while (!brk) {
 	    err = (*get_line)(state);
@@ -4161,7 +4154,7 @@ static int debug_command_loop (ExecState *state, double ***pZ,
 	    }
 	}
 
-	debug_on = 0;
+	state->flags &= ~DEBUG_EXEC;
 
 	return debug_next(state->cmd);
     }

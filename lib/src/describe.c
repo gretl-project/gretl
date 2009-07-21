@@ -3748,18 +3748,14 @@ static int real_periodogram (const double *x, int varno, int width,
 	int T2 = T / 2;
 	gretl_matrix *m;
 
-	m = gretl_matrix_alloc(T2, 3);
+	m = gretl_matrix_alloc(T2, 2);
 
 	if (m == NULL) {
 	    err = E_ALLOC;
 	} else {
-
-	    for (t=1; t<=T/2; t++) {
-		yy = M_2PI * t / (double) T;
-		xx = xvec[t];
-		gretl_matrix_set(m, t-1, 0, yy);
-		gretl_matrix_set(m, t-1, 1, (double) T / t);
-		gretl_matrix_set(m, t-1, 2, xvec[t]);
+	    for (t=1; t<=T2; t++) {
+		gretl_matrix_set(m, t-1, 0, M_2PI * t / (double) T);
+		gretl_matrix_set(m, t-1, 1, xvec[t]);
 	    }
 	}
 

@@ -4004,7 +4004,8 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-static int do_debug_command (const char *param, gretlopt opt)
+static int do_debug_command (ExecState *state, const char *param, 
+			     gretlopt opt)
 {
     int err = incompatible_options(opt, OPT_C | OPT_N | OPT_Q);
 
@@ -4014,7 +4015,7 @@ static int do_debug_command (const char *param, gretlopt opt)
 
     if (opt & (OPT_C | OPT_N)) {
 	/* continue, next */
-	if (!debugging_in_progress()) {
+	if (!(state->flags & DEBUG_EXEC)) {
 	    gretl_errmsg_set("Debugging is not in progress");
 	    return E_DATA;
 	} else {
@@ -4231,7 +4232,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case FUNDEBUG:
-	err = do_debug_command(cmd->param, cmd->opt);
+	err = do_debug_command(s, cmd->param, cmd->opt);
 	break;
 
     case BREAK:

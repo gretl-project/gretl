@@ -3356,6 +3356,27 @@
       </description>
     </function>
 
+    <function name="pergm" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg optional="true" type="scalar">bandwidth</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  If only the first argument is given, computes the sample periodogram
+	  for the given series or vector. If the second argument is given,
+	  computes an estimate of the spectrum of <argname>x</argname> using a
+	  Bartlett lag window of the given bandwidth, up to a maximum of half
+	  the number of observations (<math>T</math>/2).
+	</para>
+	<para>
+	  Returns a matrix with two columns and <math>T</math>/2 rows: the
+	  first column holds the frequency, &omega;, from 2&pi;/<math>T</math>
+	  to &pi;, and the second the corresponding spectral density.
+	</para>
+      </description>
+    </function>
+
     <function name="pmax" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>

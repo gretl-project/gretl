@@ -70,8 +70,6 @@ int user_function_index_by_name (const char *name);
 
 int user_function_set_debug (const char *name, int debug);
 
-int debugging_in_progress (void);
-
 void function_names_init (void);
 
 const char *next_free_function_name (void);
