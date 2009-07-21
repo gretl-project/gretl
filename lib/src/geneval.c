@@ -4120,7 +4120,7 @@ static NODE *do_pergm (NODE *l, NODE *r, parser *p)
 	int save_t1 = p->dinfo->t1;
 	int save_t2 = p->dinfo->t2;
 	int width = -1;
-	const double *x;
+	const double *x = NULL;
 
 	if (l->t == VEC) {
 	    x = l->v.xvec;

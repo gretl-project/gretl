@@ -6,6 +6,7 @@ version 1.8.3, in progress
   a matrix
 - Add function "deseas" to deseasonalize a monthly or
   quarterly time series using X-12-ARIMA or TRAMO/SEATS
+- Add function "pergm" corresponding to the pergm command
 - Several small fixes and enhancements for interaction with
   TRAMO/SEATS and X-12-ARIMA
 - Several small GUI fixes
@@ -16,6 +17,7 @@ version 1.8.3, in progress
   saying where it came from
 - 3-D graphs: use the wxt terminal in gnuplot if it's
   available
+- Fix for putting RTF onto clipboard on OS X
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"
