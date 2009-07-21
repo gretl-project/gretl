@@ -3632,8 +3632,7 @@ static int set_var_info (const char *line, gretlopt opt,
     int v;
 
     if (pdinfo == NULL || pdinfo->varinfo == NULL) {
-	gretl_errmsg_set(_("No dataset is in place"));
-	return E_DATA;
+	return E_NODATA;
     }
 
     /* skip command word plus space */

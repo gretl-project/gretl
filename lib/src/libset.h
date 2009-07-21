@@ -68,6 +68,7 @@ typedef enum {
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef int (*DEBUG_READLINE) (void *);
+typedef int (*DEBUG_OUTPUT) (void *);
 
 #define set_nls_toler(x) (libset_set_double(NLS_TOLER, x))
 
@@ -145,6 +146,9 @@ int iter_print_func_installed (void);
 
 void set_debug_read_func (DEBUG_READLINE dfunc);
 DEBUG_READLINE get_debug_read_func (void);
+
+void set_debug_output_func (DEBUG_OUTPUT dout);
+DEBUG_OUTPUT get_debug_output_func (void);
 
 void set_workdir_callback (int (*callback)());
 

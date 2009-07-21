@@ -37,7 +37,7 @@ static char **cmd_history;
 static int hpos, hlines;
 
 static gint console_key_handler (GtkWidget *cview, GdkEventKey *key, 
-				 char *cbuf);
+				 gpointer p);
 
 static void command_history_init (void)
 {
@@ -54,7 +54,7 @@ static void command_history_destroy (void)
     hlines = hpos = 0;
 }
 
-static ExecState *gretl_console_init (void)
+static ExecState *gretl_console_init (char *cbuf)
 {
     ExecState *s;
     PRN *prn;
@@ -62,7 +62,7 @@ static ExecState *gretl_console_init (void)
     s = mymalloc(sizeof *s);
     if (s == NULL) {
 	return NULL;
-    }   
+    }  
 
     if (bufopen(&prn)) {
 	free(s);
@@ -71,22 +71,13 @@ static ExecState *gretl_console_init (void)
 
     set_gretl_echo(1);
 
-    gretl_exec_state_init(s, CONSOLE_EXEC, NULL, 
+    *cbuf = '\0';
+    gretl_exec_state_init(s, CONSOLE_EXEC, cbuf, 
 			  get_lib_cmd(), models, prn);
 
     command_history_init();
 
     return s;
-}
-
-static void gretl_console_free (GtkWidget *cview, ExecState *s)
-{
-    command_history_destroy();
-
-    gretl_print_destroy(s->prn);
-    free(s);
-
-    gtk_main_quit();
 }
 
 static void push_history_line (const char *line)
@@ -149,6 +140,7 @@ static void console_scroll_to_end (GtkWidget *cview,
 
     mark = gtk_text_buffer_create_mark(buf, NULL, end, FALSE);
     gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(cview), mark);
+    gtk_text_buffer_delete_mark(buf, mark);
 }
 
 static gint on_last_line (GtkWidget *cview)
@@ -166,10 +158,8 @@ static gint on_last_line (GtkWidget *cview)
 static gint console_mouse_handler (GtkWidget *cview, GdkEventButton *event,
 				   gpointer p)
 {
-    int lline = on_last_line(cview);
-
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(cview), lline);
-
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(cview), 
+				     on_last_line(cview));
     return FALSE;
 }
 
@@ -226,6 +216,9 @@ enum {
     SAMPLE_CHECK
 };
 
+/* mechanism to check if a console action has altered the
+   current sample information */
+
 static int console_sample_handler (const DATAINFO *pdinfo, int code)
 {
     static int pd, t1, t2, ts;
@@ -251,6 +244,9 @@ static int console_sample_handler (const DATAINFO *pdinfo, int code)
     return ret;
 }
 
+/* the two functions below are public because they are
+   also used with the command 'minibuffer' */
+
 void console_record_sample (const DATAINFO *pdinfo)
 {
     console_sample_handler(pdinfo, SAMPLE_RECORD);
@@ -262,22 +258,24 @@ int console_sample_changed (const DATAINFO *pdinfo)
 }
 
 static void print_result_to_console (GtkTextBuffer *buf,
-				     GtkTextIter *start,
-				     ExecState *s)
+				     GtkTextIter *iter,
+				     ExecState *state)
 {
-    const char *getbuf = gretl_print_get_buffer(s->prn);
+    const char *prnbuf = gretl_print_get_buffer(state->prn);
 
-    if (!g_utf8_validate(getbuf, -1, NULL)) {
-	gchar *trbuf = my_locale_to_utf8(getbuf);
+    if (g_utf8_validate(prnbuf, -1, NULL)) {
+	gtk_text_buffer_insert(buf, iter, prnbuf, -1);
+    } else {
+	gchar *trbuf = my_locale_to_utf8(prnbuf);
 
 	fprintf(stderr, "console text did not validate as utf8\n");
 	if (trbuf != NULL) {
-	    gtk_text_buffer_insert(buf, start, trbuf, -1);
+	    gtk_text_buffer_insert(buf, iter, trbuf, -1);
 	    g_free(trbuf);
 	}
-    } else {
-	gtk_text_buffer_insert(buf, start, getbuf, -1);
-    }
+    } 
+
+    gretl_print_reset_buffer(state->prn);   
 }
 
 static void console_insert_prompt (GtkTextBuffer *buf,
@@ -289,61 +287,51 @@ static void console_insert_prompt (GtkTextBuffer *buf,
     gtk_text_buffer_place_cursor(buf, iter);
 }
 
-/* callback from Return/Enter key in gretl console */
-
-static void console_exec (GtkWidget *cview, char *cbuf)
+static int real_console_exec (ExecState *state)
 {
-    ExecState *state;
-    char execline[MAXLINE];
-    GtkTextBuffer *buf;
-    GtkTextIter start, end;
-    int coding = 0;
     int err = 0;
 
-    state = g_object_get_data(G_OBJECT(cview), "ExecState");
+    push_history_line(state->line);
 
-    /* get into printing position */
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
-    gtk_text_buffer_get_end_iter(buf, &end);
-    start = end;
-    gtk_text_iter_set_line_offset(&start, 2);
-
-    /* 'cbuf' contains the current command line: transcribe
-       it and zero it out */
-    strcpy(execline, cbuf);
-    *cbuf = '\0';
-
-    console_record_sample(datainfo);
-    push_history_line(execline);
-    state->line = execline;
-    state->flags = CONSOLE_EXEC;
-
-    /* actually execute the command line */
     err = gui_exec_line(state, &Z, datainfo);
 
     while (!err && gretl_execute_loop()) {
 	err = gretl_loop_exec(state, &Z, datainfo);
     }
 
-    gtk_text_buffer_get_end_iter(buf, &start);
-    gtk_text_buffer_insert(buf, &start, "\n", 1);
+    /* non-zero means exit console loop */
+    return (state->cmd->ci == QUIT);
+}
+
+/* called on recept of a completed command line */
+
+static void console_exec (ExecState *state, GtkWidget *cview)
+{
+    GtkTextBuffer *buf;
+    GtkTextIter iter;
+    int coding;
+
+    console_record_sample(datainfo);
+
+    if (!(state->flags & DEBUG_EXEC)) {
+	if (real_console_exec(state)) {
+	    return;
+	}
+    }
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
+
+    gtk_text_buffer_get_end_iter(buf, &iter);
+    gtk_text_buffer_insert(buf, &iter, "\n", 1);
 
     if (!printing_is_redirected(state->prn)) {
-	print_result_to_console(buf, &start, state);
+	print_result_to_console(buf, &iter, state);
     }
-
-    gretl_print_reset_buffer(state->prn);
-
-    if (state->cmd->ci == QUIT) {
-	gtk_widget_destroy(gtk_widget_get_toplevel(cview));
-	return;
-    }
-
-    coding = gretl_compiling_loop() || gretl_compiling_function();
-
+    
     /* set up prompt for next command and scroll to it */
-    console_insert_prompt(buf, &start, (coding)? "> " : "? ");
-    console_scroll_to_end(cview, buf, &start);
+    coding = gretl_compiling_loop() || gretl_compiling_function();
+    console_insert_prompt(buf, &iter, (coding)? "> " : "? ");
+    console_scroll_to_end(cview, buf, &iter);
 
     /* update variable listing in main window if needed */
     if (check_dataset_is_changed()) {
@@ -351,13 +339,79 @@ static void console_exec (GtkWidget *cview, char *cbuf)
 	populate_varlist();
     }
 
-    /* update sample info and options if needed */
+    /* update sample info if needed */
     if (console_sample_changed(datainfo)) {
 	set_sample_label(datainfo);
     }
+
+#ifdef G_OS_WIN32
+    gtk_window_present(GTK_WINDOW(gtk_widget_get_toplevel(cview)));
+    gtk_widget_grab_focus(cview);
+#endif
 }
 
+static int command_entered;
 static GtkWidget *console_main;
+static GtkWidget *console_text;
+
+/* callback for function debugger to flush output */
+
+static int console_update_callback (void *p)
+{
+    ExecState *state = (ExecState *) p;
+
+    fprintf(stderr, "*** console_update_callback\n");
+
+    if (console_text == NULL) {
+	return 1;
+    } else {
+	console_exec(state, console_text); 
+	return 0;
+    }
+}
+
+/* command-getter, used here but also passed as callback to 
+   the function debugger */
+
+static int console_get_line (void *p)
+{
+    ExecState *state = (ExecState *) p;
+    static int debug_bak;
+
+    if (console_text == NULL) {
+	return 1;
+    }
+
+    g_object_set_data(G_OBJECT(console_text), "ExecState", state);
+
+    if (state->flags & DEBUG_EXEC) {
+	fprintf(stderr, "we're in the debugger!\n");
+	if (!debug_bak) {
+	    /* the last regular command will not have been
+	       flushed yet */
+	    fprintf(stderr, "console_get_line calling console_update_callback\n");
+	    console_update_callback(state);
+	    debug_bak = 1;
+	}
+    } else {
+	debug_bak = 0;
+    }
+
+    *state->line = '\0';
+
+    /* wait for a command to be entered via the console */
+    while (!command_entered) {
+	if (gtk_events_pending()) {
+	    gtk_main_iteration();
+	}
+	/* is there a better way of doing this? */
+	g_usleep(2000);
+    }
+
+    command_entered = 0;
+
+    return 0;
+}
 
 int maybe_raise_console (void)
 {
@@ -366,6 +420,19 @@ int maybe_raise_console (void)
 	return 1;
     } else {
 	return 0;
+    }
+}
+
+static gboolean console_quit (GtkWidget *w, ExecState *s)
+{
+    if (s->cmd->ci != QUIT) {
+	/* defer the destroy */
+	s->cmd->ci = QUIT;
+	command_entered = 1;
+	return TRUE;
+    } else {
+	/* go with the flow */
+	return FALSE;
     }
 }
 
@@ -385,17 +452,15 @@ void show_gretl_console (void)
 	return;
     }
 
-    cstate = gretl_console_init();
+    cstate = gretl_console_init(cbuf);
     if (cstate == NULL) {
 	return;
     }
 
-    *cbuf = '\0';
-
     vwin = console_window(78, 400);
 
+    console_text = vwin->text;
     console_main = vwin->main;
-    g_object_set_data(G_OBJECT(vwin->text), "ExecState", cstate);
 
     g_signal_connect(G_OBJECT(vwin->text), "paste-clipboard",
 		     G_CALLBACK(console_paste_handler), NULL);
@@ -404,12 +469,17 @@ void show_gretl_console (void)
     g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 		     G_CALLBACK(console_mouse_handler), NULL);
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
-		     G_CALLBACK(console_key_handler), cbuf);
+		     G_CALLBACK(console_key_handler), NULL);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
-		     G_CALLBACK(gretl_console_free), cstate);
+		     G_CALLBACK(console_quit), cstate);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
-		     G_CALLBACK(gtk_widget_destroyed),
+		     G_CALLBACK(gtk_widget_destroyed), 
 		     &console_main);
+    g_signal_connect(G_OBJECT(vwin->main), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed), 
+		     &console_text);
+
+    g_object_set_data(G_OBJECT(vwin->text), "ExecState", cstate);
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_get_start_iter(buf, &iter);  
@@ -420,11 +490,29 @@ void show_gretl_console (void)
 
     gtk_widget_grab_focus(vwin->text);
 
-    /* Establish a main loop that exits when the console is destroyed.
-       We need the blocking to ensure that the state variables in this
-       function remain on the stack while the console is being used.
-    */
-    gtk_main();
+    set_debug_read_func(console_get_line);
+    set_debug_output_func(console_update_callback);
+
+    /* console command loop */
+    while (cstate->cmd->ci != QUIT) {
+	console_get_line(cstate);
+	if (cstate->cmd->ci != QUIT) {
+	    console_exec(cstate, vwin->text);
+	}
+    }
+
+    if (console_main != NULL) {
+	/* the user actually typed quit/exit */
+	gtk_widget_destroy(vwin->main);
+    }
+
+    command_history_destroy();
+    gretl_print_destroy(cstate->prn);
+    free(cstate);  
+    command_entered = 0;
+
+    set_debug_read_func(NULL);
+    set_debug_output_func(NULL);
 }
 
 /* handle backslash continuation of console command line */
@@ -471,7 +559,7 @@ const char *console_varname_complete (const char *s)
 #define IS_BACKKEY(k) (k == GDK_BackSpace || k == GDK_Left)
 
 static gint console_key_handler (GtkWidget *cview, GdkEventKey *key, 
-				 char *cbuf)
+				 gpointer p)
 {
     gint last_line, curr_line, line_pos;
     GtkTextIter iter, start, end;
@@ -504,18 +592,21 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
     if (key->keyval == GDK_Return) {
 	/* executes the command, unless backslash-continuation 
 	   is happening */
+	ExecState *state;
 	int contd = 0, err = 0;
-	gchar *line;
+	gchar *thisline;
+
+	state = g_object_get_data(G_OBJECT(cview), "ExecState");
 
 	start = end = iter;
 	gtk_text_iter_set_line_index(&start, 2);
 	gtk_text_iter_forward_to_line_end(&end);
-	line = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+	thisline = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 
-	if (line != NULL) {
-	    g_strstrip(line);
-	    contd = command_continues(cbuf, line, &err);
-	    g_free(line);
+	if (thisline != NULL) {
+	    g_strstrip(thisline);
+	    contd = command_continues(state->line, thisline, &err);
+	    g_free(thisline);
 	}
 
 	if (err) {
@@ -524,12 +615,8 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 	    console_insert_prompt(buf, &end, "\n> ");
 	    console_scroll_to_end(cview, buf, &end);
 	} else {
-	    /* execute the completed command */
-	    console_exec(cview, cbuf);
-#ifdef G_OS_WIN32
-	    gtk_window_present(GTK_WINDOW(gtk_widget_get_toplevel(cview)));
-	    gtk_widget_grab_focus(cview);
-#endif
+	    /* request execution of the completed command */
+	    command_entered = 1;
 	}
 
 	key->keyval = GDK_End;
@@ -597,4 +684,5 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 
     return ret;
 }
+
 

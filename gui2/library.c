@@ -3521,15 +3521,18 @@ void do_graph_model (const int *list, int fit)
     view_model(prn, pmod, 78, 420, title);  
 }
 
+/* budget version of gretl console */
+
 void do_minibuf (GtkWidget *w, dialog_t *dlg) 
 {
     const gchar *buf = edit_dialog_get_text(dlg);
     ExecState state;
     char cword[9];
-    int oldv = datainfo->v;
     int ci, err;
 
-    if (buf == NULL) return;
+    if (buf == NULL) {
+	return;
+    }
 
     sscanf(buf, "%8s", cword);
     ci = gretl_command_number(cword);
@@ -3566,9 +3569,10 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     }
 
     /* update variable listing in main window if needed */
-    if (datainfo->v != oldv || !strncmp(cmdline, "rename", 6)) {
+    if (check_dataset_is_changed()) {
+	mark_dataset_as_modified();
 	populate_varlist();
-    }
+    }    
 
     /* update sample info and options if needed */
     if (console_sample_changed(datainfo)) {
@@ -3594,7 +3598,9 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
     const gchar *s = edit_dialog_get_text(dlg);
     int err, edit = 0;
 
-    if (s == NULL) return;
+    if (s == NULL) {
+	return;
+    }
 
     while (isspace((unsigned char) *s)) s++;
 
@@ -3638,17 +3644,30 @@ void do_model_genr (GtkWidget *w, dialog_t *dlg)
     finish_genr(pmod, dlg);
 }
 
+/* Try for the most informative possible error message,
+   but also try to avoid duplication
+*/
+
 static void errmsg_plus (int err, const char *plus)
 {
-    if (plus != NULL && *plus != '\0') {
-	if (err == E_UNSPEC) {
-	    errbox(plus);
-	} else {
-	    const char *msg = errmsg_get_with_default(err);
+    int handled = 0;
 
-	    errbox("%s\n%s", msg, plus);
+    if (plus != NULL && *plus != '\0') {
+	const char *s1 = errmsg_get_with_default(err);
+	gchar *s2 = g_strstrip(g_strdup(plus));
+
+	if (*s1 != '\0' && *s2 != '\0' && strcmp(s1, s2)) {
+	    errbox("%s\n%s", s1, s2);
+	    handled = 1;
+	} else if (*s1 == '\0' && *s2 != '\0') {
+	    errbox(s2);
+	    handled = 1;
 	}
-    } else {
+
+	g_free(s2);
+    } 
+
+    if (!handled) {
 	gui_errmsg(err);
     }
 }

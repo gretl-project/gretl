@@ -2161,6 +2161,23 @@ DEBUG_READLINE get_debug_read_func (void)
     return dbg_readline;
 }
 
+static DEBUG_OUTPUT dbg_output;
+
+void set_debug_output_func (DEBUG_OUTPUT dout) 
+{
+
+    if (check_for_state()) {
+	return;
+    }
+
+    dbg_output = dout;
+}
+
+DEBUG_OUTPUT get_debug_output_func (void) 
+{
+    return dbg_output;
+}
+
 /* mechanism for passing an integer parameter to
    a gretl script, accessible via $switch
 */

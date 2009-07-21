@@ -4150,11 +4150,18 @@ static int debug_command_loop (ExecState *state, double ***pZ,
 		brk = 1;
 	    } else {
 		/* execute interpolated command */
+		DEBUG_OUTPUT put_func = get_debug_output_func();
+
 		err = gretl_cmd_exec(state, pZ, datainfo);
+		if (put_func != NULL) {
+		    (*put_func)(state);
+		}		
 	    }
 	}
 
-	state->flags &= ~DEBUG_EXEC;
+	if (!debug_next(state->cmd)) {
+	    state->flags &= ~DEBUG_EXEC;
+	}
 
 	return debug_next(state->cmd);
     }
@@ -4179,6 +4186,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 void *ret, char **descrip, 
 			 PRN *prn)
 {
+    DEBUG_OUTPUT put_func = NULL;
     ExecState state;
     fncall *call = NULL;
     MODEL **models = NULL;
@@ -4268,6 +4276,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     if (debugging) {
 	set_gretl_echo(1);
 	set_gretl_messages(1);
+	put_func = get_debug_output_func();
     }
 
     /* get function lines in sequence and check, parse, execute */
@@ -4286,7 +4295,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 	if (debugging && state.cmd->ci > 0 && 
 	    !gretl_compiling_loop() && !state.cmd->context) {
-	    pprintf(prn, "Debugging %s, line %d\n", u->name, i);
+	    pprintf(prn, "debugging %s, line %d\n", u->name, i);
 	    debugging = debug_command_loop(&state, pZ, pdinfo);
 	}
 
@@ -4300,10 +4309,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (state.funcerr) {
-#if EXEC_DEBUG
-	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", 
-		    i, line);
-#endif
 	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
 	    set_funcerr_message(u, state.cmd->param);
 	}
@@ -4330,6 +4335,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 #if EXEC_DEBUG
 	    fprintf(stderr, "gretl_function_exec: gretl_loop_exec done, err = %d\n", err);
 #endif
+	}
+
+	if (debugging && put_func != NULL) {
+	    (*put_func)(&state);
 	}
     }
 

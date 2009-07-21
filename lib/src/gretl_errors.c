@@ -167,7 +167,7 @@ void gretl_errmsg_set (const char *str)
 {
     if (*gretl_errmsg == '\0') {
 	strncat(gretl_errmsg, str, ERRLEN - 1);
-    } else {
+    } else if (strcmp(gretl_errmsg, str)) {
 	/* should we do the following? */
 	int n = strlen(gretl_errmsg);
 	int m = strlen(str);

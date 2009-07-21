@@ -736,16 +736,6 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     GdkModifierType mods = widget_get_pointer_mask(w);
     int k = key->keyval;
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-    if (!(mods & GDK_MOD1_MASK)) {
-	if (k == GDK_a) {
-	    audio_render_window(vwin, AUDIO_LISTBOX);
-	} else if (k == GDK_x) {
-	    stop_talking();
-	}
-    }
-#endif
-
     if (k == GDK_h || k == GDK_F1) {
 	/* invoke help */
 	plain_text_cmdref(NULL);
@@ -758,21 +748,34 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	return FALSE;
     }
 
-    if (k == GDK_r) {
-	refresh_data();
+    if (k == GDK_c) {
+	show_gretl_console();
 	return FALSE;
     }
 
-    if (mods & GDK_MOD1_MASK) {
-	if (k == GDK_x) {
-	    /* invoke command minibuffer */
-	    minibuf_callback();
-	    return FALSE;
-	} else if (k == GDK_c) {
-	    /* invoke console */
-	    show_gretl_console();
-	    return FALSE;
+    if ((mods & GDK_MOD1_MASK) && k == GDK_x) {
+	/* Alt-x: invoke command minibuffer */
+	minibuf_callback();
+	return FALSE;
+    }
+
+    if (datainfo->v == 0) {
+	goto suppress;
+    }
+
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+    if (!(mods & GDK_MOD1_MASK)) {
+	if (k == GDK_a) {
+	    audio_render_window(vwin, AUDIO_LISTBOX);
+	} else if (k == GDK_x) {
+	    stop_talking();
 	}
+    }
+#endif
+
+    if (k == GDK_r) {
+	refresh_data();
+	return FALSE;
     }
 
     if (k == GDK_Return              /* display variable(s) */
@@ -803,6 +806,8 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    }
 	}
     } 
+
+ suppress:
 
     /* suppress echo of useless keystrokes */
     if (k != GDK_Up && k != GDK_Down &&
@@ -984,9 +989,6 @@ void populate_varlist (void)
 			 mdata);
 	g_signal_connect(G_OBJECT(mdata->listbox), "button-press-event",
 			 G_CALLBACK(main_varclick),
-			 mdata);
-	g_signal_connect(G_OBJECT(mdata->listbox), "key-press-event",
-			 G_CALLBACK(catch_mdata_key),
 			 mdata);
 	click_connected = 1;
     }
@@ -1177,6 +1179,10 @@ static GtkWidget *make_main_window (void)
     g_signal_connect(G_OBJECT(mdata->listbox), "drag-data-received",
 		     G_CALLBACK(mdata_handle_drag),
 		     NULL);
+
+    g_signal_connect(G_OBJECT(mdata->listbox), "key-press-event",
+		     G_CALLBACK(catch_mdata_key),
+		     mdata);
 
     gtk_box_pack_start(GTK_BOX(main_vbox), box, TRUE, TRUE, 0);
     mdata->status = gtk_label_new("");

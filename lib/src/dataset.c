@@ -1746,9 +1746,8 @@ int dataset_drop_listed_variables (int *list, double ***pZ,
     int lastvar[2];
     int err = 0;
 
-    if (pdinfo->n == 0) {
-	strcpy(gretl_errmsg, _("No dataset is in place"));
-	return E_DATA;
+    if (pdinfo->n == 0 || pdinfo->v == 0) {
+	return E_NODATA;
     }
 
     if (list == NULL) {
