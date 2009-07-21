@@ -4013,7 +4013,9 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     } else if (f != F_DESEAS && r != NULL && r->t != EMPTY && r->t != NUM) {
 	node_type_error(f, 2, NUM, r, p);
 	return NULL;
-    } else if (f == F_PERGM) {
+    } 
+
+    if (f == F_PERGM) {
 	ret = aux_matrix_node(p);
     } else {
 	ret = aux_vec_node(p, p->dinfo->n);
@@ -4091,8 +4093,13 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = rank_series(x, y, F_SORT, p->dinfo); 
 	    break;
 	case F_PERGM:
-	    ret->v.m = gretl_periodogram(x, p->dinfo->t1, p->dinfo->t2,
-					 &p->err);
+	    if (r != NULL && r->t == NUM) {
+		int width = r->v.xval;
+
+		ret->v.m = periodogram_func(x, p->dinfo, width, &p->err);
+	    } else {
+		ret->v.m = periodogram_func(x, p->dinfo, -1, &p->err);
+	    }
 	    break;
 	default:
 	    break;

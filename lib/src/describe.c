@@ -3491,14 +3491,14 @@ int auto_spectrum_order (int T, gretlopt opt)
     return m;
 }
 
-static int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
+static int fract_int_LWE (const double *x, int m, int t1, int t2,
 			  PRN *prn)
 {
     gretl_matrix *X;
     double d, se, z;
     int T;
 
-    X = gretl_vector_from_series(Z[varno], t1, t2);
+    X = gretl_vector_from_series(x, t1, t2);
     if (X == NULL) {
 	return 1;
     }
@@ -3637,25 +3637,14 @@ pergm_print_header (const char *vname, int T, int L,
     }
 }
 
-/**
- * periodogram:
- * @varno: ID number of variable to process.
- * @width: width of window.
- * @Z: data array.
- * @pdinfo: information on the data set.
- * @opt: if includes %OPT_O, use Bartlett lag window for periodogram;
- * if includes %OPT_N, don't display gnuplot graph; if includes
- * %OPT_R, the variable is a model residual; %OPT_L, use log scale.
- * @prn: gretl printing struct.
- *
- * Computes and displays the periodogram for the variable specified 
- * by @varno.
- *
- * Returns: 0 on successful completion, error code on error.
- */
+/* if @pmat is non-NULL, we're filling out a matrix for the 
+   pergm() function, otherwise we're responding to the 
+   pergm command
+*/
 
-int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn)
+static int real_periodogram (const double *x, int varno, int width,
+			     const DATAINFO *pdinfo, gretlopt opt, 
+			     PRN *prn, gretl_matrix **pmat)
 {
     double *acov = NULL;
     double *omega = NULL;
@@ -3667,16 +3656,15 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
     double xx, yy, varx, sdx, w;
     int k, L, m, T, t; 
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int list[2] = { 1, varno };
     int window = (opt & OPT_O);
     int err = 0;
 
     gretl_error_clear();
 
-    varlist_adjust_sample(list, &t1, &t2, Z);
+    array_adjust_t1t2(x, &t1, &t2);
     T = t2 - t1 + 1;
 
-    if (missvals(Z[varno] + t1, T)) {
+    if (missvals(x + t1, T)) {
 	return E_MISSDATA;
     }    
 
@@ -3684,8 +3672,11 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
 	return E_TOOFEW;
     }
 
-    if (gretl_isconst(t1, t2, Z[varno])) {
-	sprintf(gretl_errmsg, _("'%s' is a constant"), pdinfo->varname[varno]);
+    if (gretl_isconst(t1, t2, x)) {
+	if (varno >= 0) {
+	    sprintf(gretl_errmsg, _("'%s' is a constant"), 
+		    pdinfo->varname[varno]);
+	}
 	return E_DATA;
     }
 
@@ -3719,13 +3710,13 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    xx = gretl_mean(t1, t2, Z[varno]);
-    varx = gretl_variance(t1, t2, Z[varno]);
+    xx = gretl_mean(t1, t2, x);
+    varx = gretl_variance(t1, t2, x);
     varx *= (double) (T - 1) / T;
     sdx = sqrt(varx);
 
     for (t=t1; t<=t2; t++) {
-	sdy[t-t1] = (Z[varno][t] - xx) / sdx;
+	sdy[t-t1] = (x[t] - xx) / sdx;
     }
 
     /* find autocovariances */
@@ -3752,6 +3743,30 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
 	}
     }
 
+    if (pmat != NULL) {
+	/* making a matrix */
+	int T2 = T / 2;
+	gretl_matrix *m;
+
+	m = gretl_matrix_alloc(T2, 3);
+
+	if (m == NULL) {
+	    err = E_ALLOC;
+	} else {
+
+	    for (t=1; t<=T/2; t++) {
+		yy = M_2PI * t / (double) T;
+		xx = xvec[t];
+		gretl_matrix_set(m, t-1, 0, yy);
+		gretl_matrix_set(m, t-1, 1, (double) T / t);
+		gretl_matrix_set(m, t-1, 2, xvec[t]);
+	    }
+	}
+
+	*pmat = m;
+	goto bailout;
+    }
+
     vname = var_get_graph_name(pdinfo, varno);
     pergm_print_header(vname, T, L, opt, prn);
 
@@ -3759,7 +3774,7 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
 	if (fract_int_GPH(m, hhat, omega, prn)) {
 	    pprintf(prn, "\n%s\n", _("Fractional integration test failed"));
 	}
-	fract_int_LWE(Z, varno, width, t1, t2, prn);
+	fract_int_LWE(x, width, t1, t2, prn);
     }
 
     if (opt & OPT_L) {
@@ -3772,7 +3787,7 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
 	yy = M_2PI * t / (double) T;
 	xx = (opt & OPT_L)? log(xvec[t]) : xvec[t];
 	pprintf(prn, " %.4f%9d%16.2f", yy, t, (double) T / t);
-	sprintf(dstr, "%#.4e", xx);
+	sprintf(dstr, "%#.5g", xx);
 	gretl_fix_exponent(dstr);
 	pprintf(prn, "%16s\n", dstr);
     }
@@ -3792,6 +3807,42 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
     free(xvec);
 
     return err;
+}
+
+/**
+ * periodogram:
+ * @varno: ID number of variable to process.
+ * @width: width of window.
+ * @Z: data array.
+ * @pdinfo: information on the data set.
+ * @opt: if includes %OPT_O, use Bartlett lag window for periodogram;
+ * if includes %OPT_N, don't display gnuplot graph; if includes
+ * %OPT_R, the variable is a model residual; %OPT_L, use log scale.
+ * @prn: gretl printing struct.
+ *
+ * Computes and displays the periodogram for the variable specified 
+ * by @varno.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int periodogram (int varno, int width, 
+		 const double **Z, const DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn)
+{
+    return real_periodogram(Z[varno], varno, width, 
+			    pdinfo, opt, prn, NULL);
+}
+
+gretl_matrix *periodogram_func (const double *x, const DATAINFO *pdinfo,
+				int width, int *err)
+{
+    gretlopt opt = (width < 0)? OPT_NONE : OPT_O;
+    gretl_matrix *m = NULL;
+
+    *err = real_periodogram(x, -1, width, pdinfo, opt, NULL, &m);
+
+    return m;
 }
 
 static void printf15 (double x, PRN *prn)

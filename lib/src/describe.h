@@ -178,6 +178,10 @@ int periodogram (int varno, int width,
 		 const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
+gretl_matrix *periodogram_func (const double *x, 
+				const DATAINFO *pdinfo,
+				int width, int *err);
+
 Summary *get_summary (const int *list, const double **Z, 
 		      const DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn, 
