@@ -4104,8 +4104,8 @@ int user_function_set_debug (const char *name, int debug)
     }
 }
 
-#define debug_cont(c) (c->ci == FUNDEBUG && (c->opt == OPT_C))
-#define debug_next(c) (c->ci == FUNDEBUG && (c->opt == OPT_N))
+#define debug_cont(c) (c->ci == FUNDEBUG && (c->opt & OPT_C))
+#define debug_next(c) (c->ci == FUNDEBUG && (c->opt & OPT_N))
 
 #define set_debug_cont(c) (c->ci = FUNDEBUG, c->opt = OPT_C)
 #define set_debug_next(c) (c->ci = FUNDEBUG, c->opt = OPT_N)
@@ -4114,11 +4114,12 @@ int user_function_set_debug (const char *name, int debug)
    1 if we're debugging, otherwise 0 
 */
 
-static int debug_command_loop (ExecState *state, double ***pZ,
-			       DATAINFO *datainfo)
+static int debug_command_loop (ExecState *state, 
+			       double ***pZ,
+			       DATAINFO *datainfo,
+			       DEBUG_READLINE get_line,
+			       DEBUG_OUTPUT put_func)
 {
-    DEBUG_READLINE get_line = get_debug_read_func();
-
     if (get_line == NULL) {
 	return 0;
     } else {
@@ -4150,8 +4151,6 @@ static int debug_command_loop (ExecState *state, double ***pZ,
 		brk = 1;
 	    } else {
 		/* execute interpolated command */
-		DEBUG_OUTPUT put_func = get_debug_output_func();
-
 		err = gretl_cmd_exec(state, pZ, datainfo);
 		if (put_func != NULL) {
 		    (*put_func)(state);
@@ -4186,6 +4185,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 void *ret, char **descrip, 
 			 PRN *prn)
 {
+    DEBUG_READLINE get_func = NULL;
     DEBUG_OUTPUT put_func = NULL;
     ExecState state;
     fncall *call = NULL;
@@ -4276,12 +4276,14 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     if (debugging) {
 	set_gretl_echo(1);
 	set_gretl_messages(1);
+	get_func = get_debug_read_func();
 	put_func = get_debug_output_func();
     }
 
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
+
 	if (*u->lines[i] == '\0') {
 	    continue;
 	}
@@ -4296,7 +4298,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	if (debugging && state.cmd->ci > 0 && 
 	    !gretl_compiling_loop() && !state.cmd->context) {
 	    pprintf(prn, "debugging %s, line %d\n", u->name, i);
-	    debugging = debug_command_loop(&state, pZ, pdinfo);
+	    debugging = debug_command_loop(&state, pZ, pdinfo,
+					   get_func, put_func);
 	}
 
 	if (err) {
@@ -4338,6 +4341,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (debugging && put_func != NULL) {
+	    fprintf(stderr, "gretl_function_exec calling put_func\n");
 	    (*put_func)(&state);
 	}
     }

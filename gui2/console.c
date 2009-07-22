@@ -33,6 +33,8 @@
 #include "gretl_func.h"
 #include "cmd_private.h"
 
+#define CDEBUG 0
+
 static char **cmd_history;
 static int hpos, hlines;
 
@@ -291,6 +293,10 @@ static int real_console_exec (ExecState *state)
 {
     int err = 0;
 
+#if CDEBUG
+    fprintf(stderr, "*** real_console_exec started\n");
+#endif
+
     push_history_line(state->line);
 
     err = gui_exec_line(state, &Z, datainfo);
@@ -299,13 +305,17 @@ static int real_console_exec (ExecState *state)
 	err = gretl_loop_exec(state, &Z, datainfo);
     }
 
+#if CDEBUG
+    fprintf(stderr, "*** real_console_exec returning\n");
+#endif
+
     /* non-zero means exit console loop */
     return (state->cmd->ci == QUIT);
 }
 
-/* called on recept of a completed command line */
+/* called on receipt of a completed command line */
 
-static void console_exec (ExecState *state, GtkWidget *cview)
+static void update_console (ExecState *state, GtkWidget *cview)
 {
     GtkTextBuffer *buf;
     GtkTextIter iter;
@@ -360,12 +370,14 @@ static int console_update_callback (void *p)
 {
     ExecState *state = (ExecState *) p;
 
+#if CDEBUG
     fprintf(stderr, "*** console_update_callback\n");
+#endif
 
     if (console_text == NULL) {
 	return 1;
     } else {
-	console_exec(state, console_text); 
+	update_console(state, console_text); 
 	return 0;
     }
 }
@@ -376,25 +388,26 @@ static int console_update_callback (void *p)
 static int console_get_line (void *p)
 {
     ExecState *state = (ExecState *) p;
-    static int debug_bak;
+
+#if CDEBUG
+    fprintf(stderr, "*** console_get_line entered\n");
+#endif
 
     if (console_text == NULL) {
 	return 1;
     }
 
-    g_object_set_data(G_OBJECT(console_text), "ExecState", state);
-
-    if (state->flags & DEBUG_EXEC) {
-	fprintf(stderr, "we're in the debugger!\n");
-	if (!debug_bak) {
+    if (state != g_object_get_data(G_OBJECT(console_text), "ExecState")) {
+	/* we have switched states */
+	if (state->flags & DEBUG_EXEC) {
 	    /* the last regular command will not have been
 	       flushed yet */
-	    fprintf(stderr, "console_get_line calling console_update_callback\n");
+#if CDEBUG
+	    fprintf(stderr, "*** entered debugger: flushing output\n");
+#endif
 	    console_update_callback(state);
-	    debug_bak = 1;
-	}
-    } else {
-	debug_bak = 0;
+	} 
+	g_object_set_data(G_OBJECT(console_text), "ExecState", state);
     }
 
     *state->line = '\0';
@@ -404,11 +417,14 @@ static int console_get_line (void *p)
 	if (gtk_events_pending()) {
 	    gtk_main_iteration();
 	}
-	/* is there a better way of doing this? */
-	g_usleep(2000);
+	g_usleep(1000);
     }
 
     command_entered = 0;
+
+#if CDEBUG
+    fprintf(stderr, "*** console_get_line: '%s'\n", state->line);
+#endif
 
     return 0;
 }
@@ -497,7 +513,7 @@ void show_gretl_console (void)
     while (cstate->cmd->ci != QUIT) {
 	console_get_line(cstate);
 	if (cstate->cmd->ci != QUIT) {
-	    console_exec(cstate, vwin->text);
+	    update_console(cstate, vwin->text);
 	}
     }
 
