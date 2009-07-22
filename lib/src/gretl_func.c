@@ -3967,7 +3967,7 @@ static int start_fncall (fncall *call, DATAINFO *pdinfo, PRN *prn)
 
     record_obs_info(&call->obs, pdinfo);
 
-    if (gretl_debugging_on()) {
+    if (gretl_debugging_on() || call->fun->debug) {
 	set_gretl_echo(1);
 	set_gretl_messages(1);
 	pprintf(prn, "*** executing function %s\n", call->fun->name);
@@ -4130,25 +4130,24 @@ static int debug_command_loop (ExecState *state,
 	fprintf(stderr, "--- debug_command_loop calling get_line\n"); 
 #endif
 	err = (*get_line)(state);
+
 	if (!err) {
 	    err = parse_command_line(state->line, state->cmd, 
 				     pZ, datainfo);
-	}
-	if (err) {
-	    if (!strcmp(state->line, "c")) {
-		/* short for 'continue' */
-		set_debug_cont(state->cmd);
-		err = 0;
-	    } else if (!strcmp(state->line, "n")) {
-		/* short for 'next' */
-		set_debug_next(state->cmd);
-		err = 0;
-	    }
-	    if (err) {    
-		break;
+	    if (err) {
+		if (!strcmp(state->line, "c")) {
+		    /* short for 'continue' */
+		    set_debug_cont(state->cmd);
+		    err = 0;
+		} else if (!strcmp(state->line, "n")) {
+		    /* short for 'next' */
+		    set_debug_next(state->cmd);
+		    err = 0;
+		}
 	    }
 	}
-	if (debug_cont(state->cmd) || debug_next(state->cmd)) {
+
+	if (err || debug_cont(state->cmd) || debug_next(state->cmd)) {
 	    brk = 1;
 	} else {
 	    /* execute interpolated command */
@@ -4188,7 +4187,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 void *ret, char **descrip, 
 			 PRN *prn)
 {
-    DEBUG_READLINE get_func = NULL;
+    DEBUG_READLINE get_line = NULL;
     DEBUG_OUTPUT put_func = NULL;
     ExecState state;
     fncall *call = NULL;
@@ -4277,11 +4276,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 #endif
 
     if (debugging) {
-	set_gretl_echo(1);
-	set_gretl_messages(1);
-	get_func = get_debug_read_func();
+	get_line = get_debug_read_func();
 	put_func = get_debug_output_func();
-	if (get_func != NULL) {
+	if (get_line != NULL) {
 	    debugging = 2;
 	}
     }
@@ -4310,11 +4307,13 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 #if DDEBUG
 		fprintf(stderr, "--- gretl_function_exec calling put_func\n");
 #endif
+		pprintf(prn, "-- debugging %s, line %d --\n", u->name, i + 1);
 		(*put_func)(&state);
+	    } else {
+		pprintf(prn, "-- debugging %s, line %d --\n", u->name, i + 1);
 	    }
-	    pprintf(prn, "-- debugging %s, line %d --\n", u->name, i + 1);
 	    debugging = debug_command_loop(&state, pZ, pdinfo,
-					   get_func, put_func);
+					   get_line, put_func);
 	}
 
 	if (err) {

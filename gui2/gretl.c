@@ -739,24 +739,19 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (k == GDK_h || k == GDK_F1) {
 	/* invoke help */
 	plain_text_cmdref(NULL);
-	return FALSE;
-    }
-
-    if (k == GDK_g) {
+	return TRUE;
+    } else if (k == GDK_g) {
 	/* invoke genr */
 	genr_callback();
-	return FALSE;
-    }
-
-    if (k == GDK_c) {
+	return TRUE;
+    } else if (k == GDK_c) {
+	/* launch the console */
 	gretl_console();
-	return FALSE;
-    }
-
-    if ((mods & GDK_MOD1_MASK) && k == GDK_x) {
+	return TRUE;
+    } else if ((mods & GDK_MOD1_MASK) && k == GDK_x) {
 	/* Alt-x: invoke command minibuffer */
 	minibuf_callback();
-	return FALSE;
+	return TRUE;
     }
 
     if (datainfo->v == 0) {
@@ -767,15 +762,17 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (!(mods & GDK_MOD1_MASK)) {
 	if (k == GDK_a) {
 	    audio_render_window(vwin, AUDIO_LISTBOX);
+	    return TRUE;
 	} else if (k == GDK_x) {
 	    stop_talking();
+	    return TRUE;
 	}
     }
 #endif
 
     if (k == GDK_r) {
 	refresh_data();
-	return FALSE;
+	return TRUE;
     }
 
     if (k == GDK_Return              /* display variable(s) */
@@ -805,6 +802,8 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		display_selected();
 	    }
 	}
+
+	return TRUE;
     } 
 
  suppress:

@@ -664,7 +664,7 @@ int gretl_setenv (const char *name, const char *value)
 {
 #ifdef WIN32
     char estr[1024];
-    int n, ok;
+    int ok;
 
     /* belt and braces */
     if (strlen(name) + strlen(value) + 1 < 1024) {

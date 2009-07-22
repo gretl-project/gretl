@@ -50,6 +50,8 @@ static void reset_console_globals (void)
 {
     console_state = NULL;
     command_entered = 0;
+    console_main = NULL;
+    console_text = NULL;
 }
 
 static void command_history_init (void)
@@ -87,6 +89,7 @@ static ExecState *gretl_console_init (char *cbuf)
     *cbuf = '\0';
     gretl_exec_state_init(s, CONSOLE_EXEC, cbuf, 
 			  get_lib_cmd(), models, prn);
+    s->cmd->ci = 0;
 
     command_history_init();
 
@@ -305,8 +308,7 @@ static int real_console_exec (ExecState *state)
     int err = 0;
 
 #if CDEBUG
-    fprintf(stderr, "*** real_console_exec started:\n '%s'\n", 
-	    state->line);
+    fprintf(stderr, "*** real_console_exec: '%s'\n", state->line);
 #endif
 
     push_history_line(state->line);
@@ -321,8 +323,19 @@ static int real_console_exec (ExecState *state)
     fprintf(stderr, "*** real_console_exec returning\n");
 #endif
 
-    /* non-zero means exit console loop */
-    return (state->cmd->ci == QUIT);
+    return err;
+}
+
+static const char *console_prompt (ExecState *s)
+{
+    if (s != console_state) {
+	return "$ ";
+    } else if (gretl_compiling_function() ||
+	       gretl_compiling_loop()) {
+	return "> ";
+    } else {
+	return "? ";
+    }
 }
 
 /* called on receipt of a completed command line */
@@ -331,12 +344,12 @@ static void update_console (ExecState *state, GtkWidget *cview)
 {
     GtkTextBuffer *buf;
     GtkTextIter iter;
-    int coding;
 
     console_record_sample(datainfo);
 
     if (state == console_state) {
-	if (real_console_exec(state)) {
+	real_console_exec(state);
+	if (state->cmd->ci == QUIT) {
 	    return;
 	}
     }
@@ -351,8 +364,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
     }
     
     /* set up prompt for next command and scroll to it */
-    coding = gretl_compiling_loop() || gretl_compiling_function();
-    console_insert_prompt(buf, &iter, (coding)? "> " : "? ");
+    console_insert_prompt(buf, &iter, console_prompt(state));
     console_scroll_to_end(cview, buf, &iter);
 
     /* update variable listing in main window if needed */
@@ -406,15 +418,13 @@ static int console_get_line (void *p)
     }
 
     if (state != g_object_get_data(G_OBJECT(console_text), "ExecState")) {
-	/* we have switched states */
-	if (state != console_state) {
-	    /* the last regular command will not have been
-	       flushed yet */
 #if CDEBUG
+	if (state != console_state) {    
 	    fprintf(stderr, "*** entered debugger\n");
+	} else {
+	    fprintf(stderr, "*** exited debugger\n");
+	}
 #endif
-	    /* console_update_callback(state); */
-	} 
 	g_object_set_data(G_OBJECT(console_text), "ExecState", state);
     }
 
@@ -543,6 +553,9 @@ void gretl_console (void)
 #if CDEBUG
     fprintf(stderr, "gretl_console: returning\n");
 #endif
+
+    gtk_window_present(GTK_WINDOW(mdata->main));
+    gtk_widget_grab_focus(mdata->listbox);
 }
 
 /* handle backslash continuation of console command line */
