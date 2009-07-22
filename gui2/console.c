@@ -35,11 +35,22 @@
 
 #define CDEBUG 0
 
+/* file-scope globals */
 static char **cmd_history;
 static int hpos, hlines;
+static ExecState *console_state;
+static int command_entered;
+static GtkWidget *console_main;
+static GtkWidget *console_text;
 
 static gint console_key_handler (GtkWidget *cview, GdkEventKey *key, 
 				 gpointer p);
+
+static void reset_console_globals (void)
+{
+    console_state = NULL;
+    command_entered = 0;
+}
 
 static void command_history_init (void)
 {
@@ -294,7 +305,8 @@ static int real_console_exec (ExecState *state)
     int err = 0;
 
 #if CDEBUG
-    fprintf(stderr, "*** real_console_exec started\n");
+    fprintf(stderr, "*** real_console_exec started:\n '%s'\n", 
+	    state->line);
 #endif
 
     push_history_line(state->line);
@@ -323,7 +335,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
 
     console_record_sample(datainfo);
 
-    if (!(state->flags & DEBUG_EXEC)) {
+    if (state == console_state) {
 	if (real_console_exec(state)) {
 	    return;
 	}
@@ -360,10 +372,6 @@ static void update_console (ExecState *state, GtkWidget *cview)
 #endif
 }
 
-static int command_entered;
-static GtkWidget *console_main;
-static GtkWidget *console_text;
-
 /* callback for function debugger to flush output */
 
 static int console_update_callback (void *p)
@@ -399,13 +407,13 @@ static int console_get_line (void *p)
 
     if (state != g_object_get_data(G_OBJECT(console_text), "ExecState")) {
 	/* we have switched states */
-	if (state->flags & DEBUG_EXEC) {
+	if (state != console_state) {
 	    /* the last regular command will not have been
 	       flushed yet */
 #if CDEBUG
-	    fprintf(stderr, "*** entered debugger: flushing output\n");
+	    fprintf(stderr, "*** entered debugger\n");
 #endif
-	    console_update_callback(state);
+	    /* console_update_callback(state); */
 	} 
 	g_object_set_data(G_OBJECT(console_text), "ExecState", state);
     }
@@ -454,13 +462,13 @@ static gboolean console_quit (GtkWidget *w, ExecState *s)
 
 /* callback from menu/button: launch the console */
 
-void show_gretl_console (void)
+void gretl_console (void)
 {
     char cbuf[MAXLINE];
     windata_t *vwin;
     GtkTextBuffer *buf;
     GtkTextIter iter;
-    ExecState *cstate;
+    ExecState *state;
     const gchar *intro = 
 	N_("gretl console: type 'help' for a list of commands");
 
@@ -468,10 +476,12 @@ void show_gretl_console (void)
 	return;
     }
 
-    cstate = gretl_console_init(cbuf);
-    if (cstate == NULL) {
+    state = gretl_console_init(cbuf);
+    if (state == NULL) {
 	return;
     }
+
+    console_state = state;
 
     vwin = console_window(78, 400);
 
@@ -487,7 +497,7 @@ void show_gretl_console (void)
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(console_key_handler), NULL);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
-		     G_CALLBACK(console_quit), cstate);
+		     G_CALLBACK(console_quit), state);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed), 
 		     &console_main);
@@ -495,7 +505,7 @@ void show_gretl_console (void)
 		     G_CALLBACK(gtk_widget_destroyed), 
 		     &console_text);
 
-    g_object_set_data(G_OBJECT(vwin->text), "ExecState", cstate);
+    g_object_set_data(G_OBJECT(vwin->text), "ExecState", state);
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_get_start_iter(buf, &iter);  
@@ -510,10 +520,10 @@ void show_gretl_console (void)
     set_debug_output_func(console_update_callback);
 
     /* console command loop */
-    while (cstate->cmd->ci != QUIT) {
-	console_get_line(cstate);
-	if (cstate->cmd->ci != QUIT) {
-	    update_console(cstate, vwin->text);
+    while (state->cmd->ci != QUIT) {
+	console_get_line(state);
+	if (state->cmd->ci != QUIT) {
+	    update_console(state, vwin->text);
 	}
     }
 
@@ -523,12 +533,16 @@ void show_gretl_console (void)
     }
 
     command_history_destroy();
-    gretl_print_destroy(cstate->prn);
-    free(cstate);  
-    command_entered = 0;
+    gretl_print_destroy(state->prn);
+    free(state);  
 
     set_debug_read_func(NULL);
     set_debug_output_func(NULL);
+    reset_console_globals();
+
+#if CDEBUG
+    fprintf(stderr, "gretl_console: returning\n");
+#endif
 }
 
 /* handle backslash continuation of console command line */

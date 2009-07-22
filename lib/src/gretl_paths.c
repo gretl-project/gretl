@@ -663,7 +663,16 @@ int gretl_deltree (const char *path)
 int gretl_setenv (const char *name, const char *value)
 {
 #ifdef WIN32
-    int ok = SetEnvironmentVariable(name, value);
+    char estr[1024];
+    int n, ok;
+
+    /* belt and braces */
+    if (strlen(name) + strlen(value) + 1 < 1024) {
+	sprintf(estr, "%s=%s", name, value);
+	putenv(estr);
+    }
+
+    ok = SetEnvironmentVariable(name, value);
 
     return !ok;
 #else

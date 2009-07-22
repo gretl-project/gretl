@@ -749,7 +749,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 
     if (k == GDK_c) {
-	show_gretl_console();
+	gretl_console();
 	return FALSE;
     }
 
@@ -1305,7 +1305,7 @@ GtkActionEntry main_entries[] = {
     { "NonparamTests", NULL, N_("_Nonparametric tests"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "SetSeed", NULL, N_("_Seed for random numbers"), NULL, NULL, G_CALLBACK(rand_seed_dialog) },
     { "CommandLog", NULL, N_("_Command log"), NULL, NULL, G_CALLBACK(view_command_log) },
-    { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(show_gretl_console) },
+    { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_console) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },

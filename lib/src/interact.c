@@ -4862,8 +4862,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     default:
-	pprintf(prn, _("Sorry, the %s command is not yet implemented "
-		       "in libgretl\n"), cmd->word);
+	if (*cmd->word != '\0') {
+	    pprintf(prn, _("Sorry, the %s command is not yet implemented "
+			   "in libgretl\n"), cmd->word);
+	} else {
+	    pprintf(prn, "What?\n");
+	}
 	err = 1;
 	break;
     }

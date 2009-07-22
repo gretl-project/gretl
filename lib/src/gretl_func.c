@@ -36,6 +36,7 @@
 #define UDEBUG 0        /* debug handling of args */
 #define PKG_DEBUG 0     /* debug handling of function packages */
 #define FN_DEBUG 0      /* miscellaneous debugging */
+#define DDEBUG 0        /* debug the debugger */
 
 typedef struct fn_param_ fn_param;
 
@@ -4120,50 +4121,52 @@ static int debug_command_loop (ExecState *state,
 			       DEBUG_READLINE get_line,
 			       DEBUG_OUTPUT put_func)
 {
-    if (get_line == NULL) {
-	return 0;
-    } else {
-	int brk = 0, err = 0;
+    int brk = 0, err = 0;
 
-	state->flags |= DEBUG_EXEC;
+    state->flags |= DEBUG_EXEC;
 
-	while (!brk) {
-	    err = (*get_line)(state);
-	    if (!err) {
-		err = parse_command_line(state->line, state->cmd, 
-					 pZ, datainfo);
+    while (!brk) {
+#if DDEBUG
+	fprintf(stderr, "--- debug_command_loop calling get_line\n"); 
+#endif
+	err = (*get_line)(state);
+	if (!err) {
+	    err = parse_command_line(state->line, state->cmd, 
+				     pZ, datainfo);
+	}
+	if (err) {
+	    if (!strcmp(state->line, "c")) {
+		/* short for 'continue' */
+		set_debug_cont(state->cmd);
+		err = 0;
+	    } else if (!strcmp(state->line, "n")) {
+		/* short for 'next' */
+		set_debug_next(state->cmd);
+		err = 0;
 	    }
-	    if (err) {
-		if (!strcmp(state->line, "c")) {
-		    /* short for 'continue' */
-		    set_debug_cont(state->cmd);
-		    err = 0;
-		} else if (!strcmp(state->line, "n")) {
-		    /* short for 'next' */
-		    set_debug_next(state->cmd);
-		    err = 0;
-		}
-		if (err) {    
-		    break;
-		}
-	    }
-	    if (debug_cont(state->cmd) || debug_next(state->cmd)) {
-		brk = 1;
-	    } else {
-		/* execute interpolated command */
-		err = gretl_cmd_exec(state, pZ, datainfo);
-		if (put_func != NULL) {
-		    (*put_func)(state);
-		}		
+	    if (err) {    
+		break;
 	    }
 	}
-
-	if (!debug_next(state->cmd)) {
-	    state->flags &= ~DEBUG_EXEC;
+	if (debug_cont(state->cmd) || debug_next(state->cmd)) {
+	    brk = 1;
+	} else {
+	    /* execute interpolated command */
+	    err = gretl_cmd_exec(state, pZ, datainfo);
+	    if (put_func != NULL) {
+#if DDEBUG		
+		fprintf(stderr, "--- debug_command_loop calling put_func\n"); 
+#endif
+		(*put_func)(state);
+	    }		
 	}
-
-	return debug_next(state->cmd);
     }
+
+    if (!debug_next(state->cmd)) {
+	state->flags &= ~DEBUG_EXEC;
+    }
+
+    return 1 + debug_next(state->cmd);
 }
 
 static void fn_state_init (CMD *cmd, ExecState *state, int *indent0)
@@ -4278,6 +4281,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	set_gretl_messages(1);
 	get_func = get_debug_read_func();
 	put_func = get_debug_output_func();
+	if (get_func != NULL) {
+	    debugging = 2;
+	}
     }
 
     /* get function lines in sequence and check, parse, execute */
@@ -4289,15 +4295,24 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	strcpy(line, u->lines[i]);
-	if (gretl_echo_on()) {
+
+	if (debugging) {
+	    pprintf(prn, "%s> %s\n", u->name, line);
+	} else if (gretl_echo_on()) {
 	    pprintf(prn, "? %s\n", line);
 	}
 
 	err = maybe_exec_line(&state, pZ, pdinfo);
 
-	if (debugging && state.cmd->ci > 0 && 
+	if (debugging > 1 && state.cmd->ci > 0 && 
 	    !gretl_compiling_loop() && !state.cmd->context) {
-	    pprintf(prn, "debugging %s, line %d\n", u->name, i);
+	    if (put_func != NULL) {
+#if DDEBUG
+		fprintf(stderr, "--- gretl_function_exec calling put_func\n");
+#endif
+		(*put_func)(&state);
+	    }
+	    pprintf(prn, "-- debugging %s, line %d --\n", u->name, i + 1);
 	    debugging = debug_command_loop(&state, pZ, pdinfo,
 					   get_func, put_func);
 	}
@@ -4338,11 +4353,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 #if EXEC_DEBUG
 	    fprintf(stderr, "gretl_function_exec: gretl_loop_exec done, err = %d\n", err);
 #endif
-	}
-
-	if (debugging && put_func != NULL) {
-	    fprintf(stderr, "gretl_function_exec calling put_func\n");
-	    (*put_func)(&state);
 	}
     }
 

@@ -210,18 +210,29 @@ static void get_a_filename (char *fname)
     fgets(fname, MAXLEN - 1, stdin);
 }
 
+static const char *get_prompt (ExecState *s)
+{
+    if (s->flags & DEBUG_EXEC) {
+	return "$ ";
+    } else if (gretl_compiling_function() ||
+	       gretl_compiling_loop()) {
+	return "> ";
+    } else {
+	return "? ";
+    }
+}
+
 /* this function is set up as it is to make it available for debugging
    purposes */
 
 static int get_interactive_line (void *p)
 {
     ExecState *s = (ExecState *) p;
-    int coding = gretl_compiling_function() || 
-	gretl_compiling_loop();
+    const char *prompt = get_prompt(s);
     int err = 0;
 
 #ifdef HAVE_READLINE
-    rl_gets(&line_read, (coding)? "> " : "? ");
+    rl_gets(&line_read, prompt);
 
     if (line_read == NULL) {
 	strcpy(s->line, "quit");
@@ -233,7 +244,7 @@ static int get_interactive_line (void *p)
 	strcat(s->line, "\n");
     }
 #else
-    printf("%s", (coding)? "> " : "? ");
+    printf("%s", prompt);
     fflush(stdout);
     file_get_line(s->line, s->cmd); /* note: "file" = stdin here */
 #endif
