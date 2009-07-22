@@ -120,7 +120,7 @@ gboolean exit_check (void)
     };
     int resp;
 
-    if (maybe_raise_dialog() || maybe_raise_console()) {
+    if (maybe_raise_dialog() || console_is_busy()) {
 	return TRUE;
     }
 

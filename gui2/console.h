@@ -26,6 +26,6 @@ void console_record_sample (const DATAINFO *pdinfo);
 
 int console_sample_changed (const DATAINFO *pdinfo);
 
-int maybe_raise_console (void);
+int console_is_busy (void);
 
 #endif /* CONSOLE_H */

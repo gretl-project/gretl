@@ -5192,8 +5192,16 @@ void gretl_exec_state_init (ExecState *s,
 			    PRN *prn)
 {
     s->flags = flags;
+
     s->line = line;
+    if (s->line != NULL) {
+	*s->line = '\0';
+    }    
+
     s->cmd = cmd;
+    if (s->cmd != NULL) {
+	s->cmd->ci = 0;
+    }    
 
     *s->runfile = '\0';
 

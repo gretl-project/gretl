@@ -421,20 +421,20 @@ void model_tex_copy (GtkAction *action, gpointer data)
 
 static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 {
-    gchar *cpybuf = NULL;
+    gchar *cpy = NULL;
 
     if (select) {
-	GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-	GtkTextIter selstart, selend;
+	GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+	GtkTextIter start, end;
 
-	if (gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend)) {
-	    cpybuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
+	if (gtk_text_buffer_get_selection_bounds(buf, &start, &end)) {
+	    cpy = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 	}
     } else {	
-	cpybuf = textview_get_text(vwin->text); 
+	cpy = textview_get_text(vwin->text); 
     }
 
-    return cpybuf;
+    return cpy;
 }
 
 static gchar *maybe_amend_buffer (gchar *inbuf, int fmt)

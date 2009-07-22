@@ -4119,7 +4119,8 @@ static int debug_command_loop (ExecState *state,
 			       double ***pZ,
 			       DATAINFO *datainfo,
 			       DEBUG_READLINE get_line,
-			       DEBUG_OUTPUT put_func)
+			       DEBUG_OUTPUT put_func,
+			       int *errp)
 {
     int brk = 0, err = 0;
 
@@ -4129,21 +4130,24 @@ static int debug_command_loop (ExecState *state,
 #if DDEBUG
 	fprintf(stderr, "--- debug_command_loop calling get_line\n"); 
 #endif
-	err = (*get_line)(state);
+	*errp = (*get_line)(state);
+	if (*errp) {
+	    /* the debugger failed: get out right away */
+	    state->flags &= ~DEBUG_EXEC;
+	    return 0;
+	}
 
-	if (!err) {
-	    err = parse_command_line(state->line, state->cmd, 
-				     pZ, datainfo);
-	    if (err) {
-		if (!strcmp(state->line, "c")) {
-		    /* short for 'continue' */
-		    set_debug_cont(state->cmd);
-		    err = 0;
-		} else if (!strcmp(state->line, "n")) {
-		    /* short for 'next' */
-		    set_debug_next(state->cmd);
-		    err = 0;
-		}
+	err = parse_command_line(state->line, state->cmd, 
+				 pZ, datainfo);
+	if (err) {
+	    if (!strcmp(state->line, "c")) {
+		/* short for 'continue' */
+		set_debug_cont(state->cmd);
+		err = 0;
+	    } else if (!strcmp(state->line, "n")) {
+		/* short for 'next' */
+		set_debug_next(state->cmd);
+		err = 0;
 	    }
 	}
 
@@ -4304,16 +4308,14 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	if (debugging > 1 && state.cmd->ci > 0 && 
 	    !gretl_compiling_loop() && !state.cmd->context) {
 	    if (put_func != NULL) {
-#if DDEBUG
-		fprintf(stderr, "--- gretl_function_exec calling put_func\n");
-#endif
 		pprintf(prn, "-- debugging %s, line %d --\n", u->name, i + 1);
 		(*put_func)(&state);
 	    } else {
 		pprintf(prn, "-- debugging %s, line %d --\n", u->name, i + 1);
 	    }
 	    debugging = debug_command_loop(&state, pZ, pdinfo,
-					   get_line, put_func);
+					   get_line, put_func, 
+					   &err);
 	}
 
 	if (err) {
