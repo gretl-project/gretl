@@ -2395,48 +2395,47 @@ static void pd_buttons (GtkWidget *dlg, int spd, struct compaction_info *cinfo)
 {    
     GtkWidget *button;
     GtkWidget *vbox;
-    GSList *group;
-    gint f1, f2;
-    const char *f1str, *f2str;
+    GSList *group = NULL;
+    gint f[3] = {0};
+    const char *fstr[3] = { NULL };
 
     if (spd == 12) {
-	f1 = 4;
-	f2 = 1;
-	f1str = N_("Quarterly");
-	f2str = N_("Annual");
+	f[0] = 4;
+	f[1] = 1;
+	fstr[0] = N_("Quarterly");
+	fstr[1] = N_("Annual");
     } else if (spd == 5 || spd == 7) {
-	f1 = 52;
-	f2 = 12;
-	f1str = N_("Weekly");
-	f2str = N_("Monthly");
+	f[0] = 52;
+	f[1] = 12;
+	fstr[0] = N_("Weekly");
+	fstr[1] = N_("Monthly");
+    } else if (spd == 24) {
+	f[0] = 7;
+	f[1] = 5;
+	f[2] = 6;
+	fstr[0] = N_("7-day week");
+	fstr[1] = N_("5-day week");
+	fstr[2] = N_("6-day week");
     } else {
 	return;
     }
+    int i;
 
     vbox = GTK_DIALOG(dlg)->vbox;
 
-    button = gtk_radio_button_new_with_label(NULL, _(f1str));
-    gtk_box_pack_start (GTK_BOX(vbox), button, TRUE, TRUE, 0);
-
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_target_pd), cinfo);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(f1));
-
-    gtk_widget_show (button);
-
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label (group, _(f2str));
-    gtk_box_pack_start (GTK_BOX(vbox), button, TRUE, TRUE, 0);
-
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_target_pd), cinfo);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(f2));
-
-    gtk_widget_show (button);
+    for (i=0; f[i]>0; i++) {
+	button = gtk_radio_button_new_with_label(group, _(fstr[i]));
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	if (i == 0) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	}
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_target_pd), cinfo);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(f[i]));
+	gtk_widget_show(button);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
 }
 
 static void monday_buttons (GtkWidget *dlg, int *mon_start,
@@ -2676,13 +2675,10 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	} else if (spd == 24) {
 	    labelstr = g_strdup(_("Compact hourly data to daily"));
 	    *target_pd = 7;
+	    show_pd_buttons = 1;
 	}
 	methods_set = compact_methods_set();
     }
-
-#if 0
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(d)->action_area), 15);
-#endif
 
     tempwid = gtk_label_new(labelstr);
     g_free(labelstr);
@@ -2692,8 +2688,9 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     show_method_buttons = (methods_set != ALL_METHODS_SET);
 
-    /* monthly data: give choice of going to quarterly or annual
-       dated daily: choice of going to weekly or monthly */
+    /* Monthly data: give choice of going to quarterly or annual.
+       Dated daily: give choice of going to weekly or monthly 
+    */
     if (show_pd_buttons) {
 	pd_buttons(d, spd, &cinfo);
 	if (show_monday_buttons || show_method_buttons) {
