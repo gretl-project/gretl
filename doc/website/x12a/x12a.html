@@ -19,36 +19,26 @@ for seasonal adjustment.  The home page for this program is at <a
   href="http://www.census.gov/srd/www/x12a/">www.census.gov</a>.
 Please look there for documentation and details.</p>
 
-<p>If you wish to install X-12-ARIMA for use with gretl under
-  <b>GNU/Linux</b> you can</p>
+<p>Various packages are available that bundle X-12-ARIMA for use with gretl.
+These include suitable executables for each platform plus documentation.
+The version of X-12-ARIMA is 0.3 unless otherwise noted.</p>
 
-<ul>
-<li><p>Compile the source yourself, in which case 
-I suggest running the shell script
-  <kbd>x12arima.sh</kbd>.   This is supplied in the gretl source
-  package; you can also <a href="x12arima.sh.txt">view it</a> or <a
-  href="./x12arima.sh">download it</a> from here.  This script
-  downloads the necessary files, makes some slight modifications that
-  are needed for compilation under Linux, compiles the program (for
-  this you need the GNU Fortran compiler, <kbd>g77</kbd>), and installs
-  it in a location of your choice.</p></li>  
-<li><p>Install a binary rpm package, <a
-href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.2.10-1.i386.rpm">x12a-0.2.10-1.i386.rpm</a>
-(this package was built on Red Hat Linux 7.3).</p></li>    
-</ul>
+For <b>Linux</b> there's an rpm,
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.3-1.i586.rpm">x12a-0.3-1.i586.rpm</a>
+or a a plain <kbd>tar.gz</kbd> package,
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12arima-linux.tar.gz">x12arima-linux.tar.gz</a>.
+There's also an older rpm of version 0.2.10,
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.2.10-1.i386.rpm">x12a-0.2.10-1.i386.rpm</a>
+(built on Red Hat Linux 7.3).</p>
+   
+<p>Self-installer for <b>MS Windows</b>, <a
+  href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a>.
+  Contains the program in win32 console form.</p>
 
+<p>Disk image for <b>MAC OS X</b>, <a
+  href="http://ricardo.ecn.wfu.edu/pub/gretl/x12arima.dmg">x12arima.dmg</a>.</p>
 
-<p>If you wish to use X-12-ARIMA with gretl on <b>Windows</b>, you
-should download the self-installer, <a
-  href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a>
-  and run it.  You will be prompted for an installation directory, by
-  default <kbd>c:\userdata\x12arima</kbd>.  This package contains
-  the program <kbd>x12a.exe</kbd> in win32 console form, along with
-  examples and documentation in PDF format.  I am grateful to Brian
-Monsell, at the Statistical Research Division of the U.S. Census
-Bureau, for permission to redistribute X-12-ARIMA in this form.</p>
-
-<p>Support for X-12-ARIMA is new in version 1.0.2 of gretl and at
+<p>Support for X-12-ARIMA arrived in version 1.0.2 of gretl and at
 present it is quite limited, but if there is interest in this feature
 I will probably aim to develop it further.  The following pictures
 illustrate what you can do as of now.</p>
