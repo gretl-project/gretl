@@ -1437,45 +1437,6 @@ void free_strings_array (char **strs, int nstrs)
     }
 }
 
-static int maybe_year_plus (const char *s)
-{
-    int n = strlen(s);
-
-    if (n > 8 && isdigit(s[0]) && isdigit(s[1]) &&
-	isdigit(s[2]) && isdigit(s[3]) && !isdigit(s[4])) {
-	return 1;
-    }
-
-    return 0;
-}
-
-static char *
-real_get_obs_string (char *s, int t, const DATAINFO *pdinfo, int full)
-{
-    if (pdinfo->markers && pdinfo->S != NULL) { 
-	/* data marker strings present */
-	if (full) {
-	    strcpy(s, pdinfo->S[t]);
-	} else {
-	    *s = '\0';
-	    if (maybe_year_plus(pdinfo->S[t])) {
-		/* daily date, year first? */
-		strncat(s, pdinfo->S[t] + 2, 8);
-	    } else {
-		strncat(s, pdinfo->S[t], 8);
-	    }
-	}
-    } else {
-	if (full) {
-	    ntodate_full(s, t, pdinfo);
-	} else {
-	    ntodate(s, t, pdinfo);
-	}
-    }
-
-    return s;
-}
-
 /**
  * get_obs_string:
  * @obs: char array big enough to hold the observation (#OBSLEN).
@@ -1487,22 +1448,14 @@ real_get_obs_string (char *s, int t, const DATAINFO *pdinfo, int full)
 
 char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo)
 {
-    return real_get_obs_string(obs, t, pdinfo, 0);
-}
+    if (pdinfo->markers && pdinfo->S != NULL) { 
+	/* data marker strings present */
+	strcpy(obs, pdinfo->S[t]);
+    } else {
+	ntodate(obs, t, pdinfo);
+    }
 
-/**
- * get_full_obs_string:
- * @obs: char array big enough to hold the observation (#OBSLEN).
- * @t: zero-based observation number.
- * @pdinfo: pointer to dataset information.
- *
- * Returns: the observation string corresponding to @t, using
- * a four-digit year in case of dated daily data.
- */
-
-char *get_full_obs_string (char *obs, int t, const DATAINFO *pdinfo)
-{
-    return real_get_obs_string(obs, t, pdinfo, 1);
+    return obs;
 }
 
 /**
@@ -1590,7 +1543,7 @@ void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn)
     } else if (pdinfo->structure != CROSS_SECTION) {
 	char tmp[OBSLEN];
 
-	ntodate_full(tmp, t, pdinfo);
+	ntodate(tmp, t, pdinfo);
 	if (quarterly_or_monthly(pdinfo)) {
 	    modify_date_for_csv(tmp, pdinfo->pd);
 	}

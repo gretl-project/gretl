@@ -337,7 +337,7 @@ static int write_data_for_R (const double **Z,
 	char *p, datestr[OBSLEN];
 	int subper = 1;
 	    
-	ntodate_full(datestr, pdinfo->t1, pdinfo);
+	ntodate(datestr, pdinfo->t1, pdinfo);
 	p = strchr(datestr, ':');
 	if (p != NULL) {
 	    subper = atoi(p + 1);

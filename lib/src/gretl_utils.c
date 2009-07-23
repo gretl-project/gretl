@@ -1001,8 +1001,8 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	dataset_destroy_panel_info(pdinfo);
     }
 
-    ntodate_full(pdinfo->stobs, 0, pdinfo); 
-    ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    ntodate(pdinfo->stobs, 0, pdinfo); 
+    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 
     /* pre-process stacked cross-sectional panels: put into canonical
        stacked time series form

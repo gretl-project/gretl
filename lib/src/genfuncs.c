@@ -1610,7 +1610,7 @@ int gen_wkday (double ***pZ, DATAINFO *pdinfo)
     strcpy(VARLABEL(pdinfo, i), _("day of week (1 = Monday)"));
     
     for (t=0; t<pdinfo->n; t++) {
-	ntodate_full(datestr, t, pdinfo);
+	ntodate(datestr, t, pdinfo);
 	(*pZ)[i][t] = get_day_of_week(datestr);
     }
 

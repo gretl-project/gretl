@@ -208,11 +208,11 @@ int gretl_odbc_check_dsn (ODBC_info *odinfo)
 
 int gretl_odbc_get_data (ODBC_info *odinfo)
 {
-    SQLHENV OD_env = NULL;       /* ODBC environment handle */
-    SQLHDBC dbc = NULL;          /* connection handle */
-    SQLHSTMT stmt = NULL;        /* statement handle */
-    long ret;                    /* return value from functions */
-    unsigned char status[10];    /* SQL status */
+    SQLHENV OD_env = NULL;    /* ODBC environment handle */
+    SQLHDBC dbc = NULL;       /* connection handle */
+    SQLHSTMT stmt = NULL;     /* statement handle */
+    long ret;                 /* return value from functions */
+    unsigned char status[10]; /* SQL status */
     SQLINTEGER OD_err, nrows;
     SQLSMALLINT mlen, ncols;
     double xt;

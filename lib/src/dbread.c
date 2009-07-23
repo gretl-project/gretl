@@ -2989,7 +2989,7 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
 
     for (s=0; s<pdinfo->n; s++) {
 	/* loop across the weekly obs in this month */
-	ntodate_full(obsstr, s, pdinfo);
+	ntodate(obsstr, s, pdinfo);
 	sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day);
 	if (monbak > 0 && mon != monbak) {
 	    /* new month: finalize the previous one */
@@ -3061,7 +3061,7 @@ weeks_to_months_check (const DATAINFO *pdinfo, int *startyr, int *endyr,
     int t, err = 0;
 
     for (t=0; t<pdinfo->n; t++) {
-	ntodate_full(obsstr, t, pdinfo);
+	ntodate(obsstr, t, pdinfo);
 	if (sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day) != 3) {
 	    err = 1;
 	    break;
@@ -3173,7 +3173,7 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
     fprintf(stderr, "daily_dataset_to_weekly: repday = %d\n", repday);
 
     for (t=0; t<pdinfo->n; t++) {
-	ntodate_full(obs, t, pdinfo);
+	ntodate(obs, t, pdinfo);
 	wday = get_day_of_week(obs);
 	if (wday == repday) {
 	    ok = 0;
@@ -3212,7 +3212,7 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
 	int s = 0;
 
 	for (t=0; t<pdinfo->n; t++) {
-	    ntodate_full(obs, t, pdinfo);
+	    ntodate(obs, t, pdinfo);
 	    wday = get_day_of_week(obs);
 	    if (wday == repday) {
 		x[s++] = Z[i][t];
@@ -3239,7 +3239,7 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
 	pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
 	pdinfo->t1 = 0;
 	pdinfo->t2 = pdinfo->n - 1;
-	ntodate_full(pdinfo->endobs, pdinfo->t2, pdinfo);
+	ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
 
 	dataset_destroy_obs_markers(pdinfo);
     }    
@@ -3356,7 +3356,7 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	dataset_destroy_obs_markers(pdinfo);
 	pdinfo->t2 = pdinfo->n - 1;
-	ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+	ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
     }
 
     return err;

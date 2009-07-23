@@ -258,7 +258,7 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 
     /* preliminaries */
     if (time_series(dwinfo)) {
-	ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
+	ntodate(dwinfo->stobs, dwinfo->t1, dwinfo);
     } else if (known_panel(dwinfo)) {
 	if (!dataset_is_panel(datainfo)) {
 	    /* Turning a subset of a non-panel dataset into a panel:
@@ -557,8 +557,8 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo, gretlopt *flag
 	    dwinfo->n = lastobs + 1;
 	}
 
-	ntodate_full(stobs, dwinfo->t1, dwinfo);
-	ntodate_full(endobs, lastobs, dwinfo);
+	ntodate(stobs, dwinfo->t1, dwinfo);
+	ntodate(endobs, lastobs, dwinfo);
 	sprintf(ctxt, _("%s, %s to %s"), tslabel, stobs, endobs);
     } else if (dwinfo->structure == PANEL_UNKNOWN) {
 	sprintf(ctxt, _("Panel data (%s)\n"
@@ -698,15 +698,15 @@ static void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 	dwinfo->t1 = dateton(datainfo->stobs, dwinfo);
     }
 
-    ntodate_full(dwinfo->endobs, dwinfo->n - 1, dwinfo);
+    ntodate(dwinfo->endobs, dwinfo->n - 1, dwinfo);
 
 #if DWDEBUG
-    ntodate_full(obsstr, dwinfo->t1, dwinfo);
+    ntodate(obsstr, dwinfo->t1, dwinfo);
     fprintf(stderr, "dwinfo: v=%d, pd=%d, stobs='%s', endobs='%s', sd0=%g, t1=%d (%s)\n",
 	    dwinfo->v, dwinfo->pd, dwinfo->stobs, dwinfo->endobs, dwinfo->sd0, 
 	    dwinfo->t1, obsstr);
 
-    ntodate_full(obsstr, datainfo->t1, datainfo);
+    ntodate(obsstr, datainfo->t1, datainfo);
     fprintf(stderr, "datainfo: pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
 	    datainfo->pd, datainfo->stobs, datainfo->sd0, datainfo->t1, obsstr);
 #endif
@@ -1336,7 +1336,7 @@ static void set_up_dw_opts (dw_opts *opts, int step,
 
 /* make two or more radio buttons based on the current setings in
    the "opts" structure
- */
+*/
 
 static void dwiz_build_radios (int step, DATAINFO *dwinfo, 
 			       dw_opts *opts, 

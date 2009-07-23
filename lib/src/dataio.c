@@ -825,8 +825,19 @@ out_of_range_panel_obs (char *s, int t, const DATAINFO *pdinfo)
     return s;
 }
 
-static char *
-real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
+/**
+ * ntodate:
+ * @datestr: string to which date is to be printed.
+ * @t: an observation number (zero-based).
+ * @pdinfo: data information struct.
+ * 
+ * print to @datestr the calendar representation of observation
+ * number @t.
+ * 
+ * Returns: the observation string.
+ */
+
+char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 {
     double x;
 
@@ -841,12 +852,6 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 	    strcpy(datestr, pdinfo->S[t]);
 	} else {
 	    calendar_date_string(datestr, t, pdinfo);
-	}
-	if (!full && strlen(datestr) > 8) {
-	    char tmp[12];
-
-	    strcpy(tmp, datestr);
-	    strcpy(datestr, tmp + 2);
 	}
 	return datestr;
     } else if (dataset_is_daily(pdinfo) || 
@@ -885,28 +890,6 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
     }
     
     return datestr;
-}
-
-/**
- * ntodate:
- * @datestr: string to which date is to be printed.
- * @t: an observation number (zero-based).
- * @pdinfo: data information struct.
- * 
- * print to @datestr the calendar representation of observation
- * number @t.
- * 
- * Returns: the observation string.
- */
-
-char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
-{
-    return real_ntodate(datestr, t, pdinfo, 0);
-}
-
-char *ntodate_full (char *datestr, int t, const DATAINFO *pdinfo)
-{
-    return real_ntodate(datestr, t, pdinfo, 1);
 }
 
 #define xround(x) (((x-floor(x))>.5)? ceil(x) : floor(x))
@@ -1054,8 +1037,8 @@ static int writehdr (const char *hdrfile, const int *list,
 	binary = 2;
     }
 
-    ntodate_full(startdate, pdinfo->t1, pdinfo);
-    ntodate_full(enddate, pdinfo->t2, pdinfo);
+    ntodate(startdate, pdinfo->t1, pdinfo);
+    ntodate(enddate, pdinfo->t2, pdinfo);
 
     fp = gretl_fopen(hdrfile, "w");
     if (fp == NULL) {
@@ -1404,7 +1387,7 @@ int write_data (const char *fname, int *list,
 	if (fmt == GRETL_FMT_R && dataset_is_time_series(pdinfo)) {
 	    char datestr[OBSLEN];
 
-	    ntodate_full(datestr, pdinfo->t1, pdinfo);
+	    ntodate(datestr, pdinfo->t1, pdinfo);
 	    fprintf(fp, "# time-series data: start = %s, frequency = %d\n",
 		    datestr, pdinfo->pd);
 	}
@@ -1426,7 +1409,7 @@ int write_data (const char *fname, int *list,
 		} else {
 		    char tmp[OBSLEN];
 
-		    ntodate_full(tmp, t, pdinfo);
+		    ntodate(tmp, t, pdinfo);
 		    if (quarterly_or_monthly(pdinfo)) {
 			modify_date_for_csv(tmp, pdinfo->pd);
 		    }
@@ -1613,8 +1596,8 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     char tstr[48];
     int i;
 
-    ntodate_full(startdate, 0, pdinfo);
-    ntodate_full(enddate, pdinfo->n - 1, pdinfo);
+    ntodate(startdate, 0, pdinfo);
+    ntodate(enddate, pdinfo->n - 1, pdinfo);
 
     sprintf(tmp, _("Data file %s\nas of"), 
 	    strlen(ppaths->datfile)? ppaths->datfile : _("(unsaved)"));
@@ -2402,7 +2385,7 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	    merge_error(_("Out of memory!\n"), prn);
 	} else {
 	    pdinfo->n = new_n;
-	    ntodate_full(pdinfo->endobs, new_n - 1, pdinfo);
+	    ntodate(pdinfo->endobs, new_n - 1, pdinfo);
 	    pdinfo->t2 = pdinfo->n - 1;
 	}
     }

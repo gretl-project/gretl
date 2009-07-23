@@ -1516,8 +1516,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
     }
 
-    ntodate_full(startdate, pdinfo->t1, pdinfo);
-    ntodate_full(enddate, pdinfo->t2, pdinfo);
+    ntodate(startdate, pdinfo->t1, pdinfo);
+    ntodate(enddate, pdinfo->t2, pdinfo);
 
     simple_fname(datname, fname);
     uerr = gretl_xml_encode_to_buf(xmlbuf, datname, sizeof xmlbuf);

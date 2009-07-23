@@ -126,8 +126,6 @@ void free_strings_array (char **strs, int nstrs);
 
 char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo);
 
-char *get_full_obs_string (char *obs, int t, const DATAINFO *pdinfo);
-
 double obs_str_to_double (const char *obs);
 
 char *colonize_obs (char *obs);

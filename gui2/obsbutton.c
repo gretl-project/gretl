@@ -1098,7 +1098,7 @@ obs_button_default_output (ObsButton *obs_button)
     gchar buf[OBSLEN];
     gpointer data;
 
-    ntodate_full(buf, ival, obs_button->pdinfo);
+    ntodate(buf, ival, obs_button->pdinfo);
 
     if (strcmp(buf, gtk_entry_get_text(GTK_ENTRY(obs_button))))
 	gtk_entry_set_text(GTK_ENTRY(obs_button), buf);

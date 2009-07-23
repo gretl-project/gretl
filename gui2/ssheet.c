@@ -697,7 +697,7 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 					    pstr);
 	for (j=0; j<n; j++) {
 	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
-	    get_full_obs_string(rowlabel, sheet->datarows + j, datainfo);
+	    get_obs_string(rowlabel, sheet->datarows + j, datainfo);
 	    gtk_list_store_set(store, &iter, 0, rowlabel, -1);
 	}
     }
@@ -721,7 +721,7 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 
     if (sheet->point == SHEET_AT_POINT && !datainfo->markers) {
 	for (i=rownum; i<sheet->datarows; i++) {
-	    get_full_obs_string(rowlabel, i, datainfo);
+	    get_obs_string(rowlabel, i, datainfo);
 	    gtk_list_store_set(store, &iter, 0, rowlabel, -1);
 	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
 	}
@@ -1738,7 +1738,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	get_full_obs_string(rowlabel, t, datainfo);
+	get_obs_string(rowlabel, t, datainfo);
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, rowlabel, -1);
     }

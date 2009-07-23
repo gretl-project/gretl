@@ -251,7 +251,10 @@ int max_obs_label_length (const DATAINFO *pdinfo)
 	get_obs_string(s, pdinfo->t2, pdinfo);
 	nmax = strlen(s);
     } else {
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	int T = pdinfo->t2 - pdinfo->t1 + 1;
+	int incr = (T < 120)? 1 : (T / 100.0);
+
+	for (t=pdinfo->t1; t<=pdinfo->t2; t+=incr) {
 	    get_obs_string(s, t, pdinfo);
 	    n = strlen(s);
 	    if (n > nmax) {
@@ -609,8 +612,8 @@ static void print_sample_obs (const DATAINFO *pdinfo, PRN *prn)
 {
     char d1[OBSLEN], d2[OBSLEN];
 
-    ntodate_full(d1, pdinfo->t1, pdinfo);
-    ntodate_full(d2, pdinfo->t2, pdinfo);
+    ntodate(d1, pdinfo->t1, pdinfo);
+    ntodate(d2, pdinfo->t2, pdinfo);
 
     pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
     pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
@@ -665,8 +668,8 @@ static void print_var_smpl (int v, const double **Z,
 
     if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1) {
 	char d1[OBSLEN], d2[OBSLEN];
-	ntodate_full(d1, pdinfo->t1, pdinfo);
-	ntodate_full(d2, pdinfo->t2, pdinfo);
+	ntodate(d1, pdinfo->t1, pdinfo);
+	ntodate(d2, pdinfo->t2, pdinfo);
 
 	pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
     } else {

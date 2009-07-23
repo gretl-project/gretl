@@ -4381,8 +4381,8 @@ static void finalize_panel_datainfo (DATAINFO *pdinfo, int nperiods)
     pdinfo->structure = STACKED_TIME_SERIES;
     pdinfo->pd = nperiods;
     pdinfo->sd0 = 1.0 + 1.0 / den;
-    ntodate_full(pdinfo->stobs, 0, pdinfo); 
-    ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    ntodate(pdinfo->stobs, 0, pdinfo); 
+    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 }
 
 int set_panel_structure_from_vars (int uv, int tv, 
