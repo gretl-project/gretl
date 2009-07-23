@@ -164,6 +164,8 @@ static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
     if (daily_frequency(pdinfo->pd)) {
 	int t, maj, min;
 
+	/* FIXME! */
+
 	sscanf(s, "%1d%2d", &maj, &min);
 	t = (maj - 1) * pdinfo->pd + min - 1;
 	return t;
@@ -580,9 +582,9 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
 
     if (daily_frequency(pdinfo->pd)) {
 	int maj = t / pdinfo->pd + 1;
-	int min = (t + 1) % pdinfo->pd;
+	int min = t % pdinfo->pd + 1;
 
-	sprintf(str, "%04d.%d", maj, min);
+	sprintf(str, "%d.%d", maj, min);
 	return;
     } 
 
@@ -599,9 +601,9 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
     } 
 
     if (subper > 0) {
-	sprintf(str, "%04d.%d", yr, subper);
+	sprintf(str, "%d.%d", yr, subper);
     } else {
-	sprintf(str, "%04d", yr);
+	sprintf(str, "%d", yr);
     }    
 }
 
