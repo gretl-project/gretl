@@ -20,6 +20,8 @@ version 1.8.3, in progress
 - Fix for putting RTF onto clipboard on OS X
 - Observation labels ("case markers"): print up to 15
   characters of such labels
+- Support compaction of hourly (24 hours per day) data
+  to daily
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"

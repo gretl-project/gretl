@@ -578,12 +578,11 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
     int yr, subper = 0;
     char *s;
 
-    /* daily data: FIXME when dated? */
     if (daily_frequency(pdinfo->pd)) {
 	int maj = t / pdinfo->pd + 1;
 	int min = (t + 1) % pdinfo->pd;
 
-	sprintf(str, "%d.%d", maj, min);
+	sprintf(str, "%04d.%d", maj, min);
 	return;
     } 
 
@@ -600,9 +599,9 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
     } 
 
     if (subper > 0) {
-	sprintf(str, "%d.%d", yr, subper);
+	sprintf(str, "%04d.%d", yr, subper);
     } else {
-	sprintf(str, "%d", yr);
+	sprintf(str, "%04d", yr);
     }    
 }
 

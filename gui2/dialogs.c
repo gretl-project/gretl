@@ -2413,9 +2413,9 @@ static void pd_buttons (GtkWidget *dlg, int spd, struct compaction_info *cinfo)
 	f[0] = 7;
 	f[1] = 5;
 	f[2] = 6;
-	fstr[0] = N_("7-day week");
-	fstr[1] = N_("5-day week");
-	fstr[2] = N_("6-day week");
+	fstr[0] = N_("Daily (7 days)");
+	fstr[1] = N_("Daily (5 days)");
+	fstr[2] = N_("Daily (6 days)");
     } else {
 	return;
     }
@@ -2501,9 +2501,22 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 				    int current_pd, int methods_set,
 				    struct compaction_info *cinfo)
 {
+    const char *cstrs[] = {
+	N_("Compact by averaging"),
+	N_("Compact by summing"),
+	N_("Use end-of-period values"),
+	N_("Use start-of-period values")	
+    };
+    int ccodes[] = {
+	COMPACT_AVG,
+	COMPACT_SUM,
+	COMPACT_EOP,
+	COMPACT_SOP
+    };
     GtkWidget *button;
     GtkWidget *vbox;
-    GSList *group;
+    GSList *group = NULL;
+    int i;
 
     vbox = GTK_DIALOG(dlg)->vbox;
 
@@ -2515,54 +2528,23 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	gtk_widget_show(label);
     }
 
-    button = gtk_radio_button_new_with_label (NULL, _("Compact by averaging"));
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_compact_type), method);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(COMPACT_AVG));
-    gtk_widget_show(button);
-
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label (group, _("Compact by summing"));
-    gtk_box_pack_start (GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_compact_type), method);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(COMPACT_SUM));
-    gtk_widget_show(button);
-    if (current_pd == 52) {
-	gtk_widget_set_sensitive(button, FALSE);
-    }
-
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, _("Use end-of-period values"));
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_compact_type), method);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(COMPACT_EOP));
-    gtk_widget_show(button);
-    if (current_pd == 52) {
-	gtk_widget_set_sensitive(button, FALSE);
-    }
-
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, _("Use start-of-period values"));
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_compact_type), method);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(COMPACT_SOP));
-    gtk_widget_show(button);
-    if (current_pd == 52) {
-	gtk_widget_set_sensitive(button, FALSE);
+    for (i=0; i<4; i++) {
+	button = gtk_radio_button_new_with_label(group, _(cstrs[i]));
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), (i == 0));
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_compact_type), method);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(ccodes[i]));
+	gtk_widget_show(button);
+	if (i > 0 && current_pd == 52) {
+	    gtk_widget_set_sensitive(button, FALSE);
+	}	
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
     if (dated_daily_data(datainfo) && cinfo->repday != NULL) {
 	GtkWidget *hbox, *daymenu;
-	int i;
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
@@ -2673,7 +2655,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	    labelstr = g_strdup(_("Compact weekly data to monthly"));
 	    *target_pd = 12;
 	} else if (spd == 24) {
-	    labelstr = g_strdup(_("Compact hourly data to daily"));
+	    labelstr = g_strdup(_("Compact hourly data to:"));
 	    *target_pd = 7;
 	    show_pd_buttons = 1;
 	}

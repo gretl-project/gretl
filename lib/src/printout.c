@@ -232,13 +232,16 @@ int max_obs_label_length (const DATAINFO *pdinfo)
     if (pdinfo->S == NULL) {
 	if (dataset_is_time_series(pdinfo)) {
 	    switch (pdinfo->pd) {
-	    case 1:
-	    case 10:
-		nmax = 4; break;
-	    case 4:
-		nmax = 6; break;
-	    case 12:
-		nmax = 7; break;
+	    case 1:   /* annual: YYYY */
+	    case 10:  /* decennial: YYYY */
+		nmax = 4; 
+		break;
+	    case 4:   /* quarterly: YYYY:Q */
+		nmax = 6; 
+		break;
+	    case 12:  /* monthly: YYYY:MM */
+		nmax = 7; 
+		break;
 	    default:
 		break;
 	    }
