@@ -2673,6 +2673,9 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	} else if (dated_weekly_data(datainfo)) {
 	    labelstr = g_strdup(_("Compact weekly data to monthly"));
 	    *target_pd = 12;
+	} else if (spd == 24) {
+	    labelstr = g_strdup(_("Compact hourly data to daily"));
+	    *target_pd = 7;
 	}
 	methods_set = compact_methods_set();
     }

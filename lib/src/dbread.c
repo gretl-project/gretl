@@ -3447,6 +3447,12 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	} else {
 	    startmin = 1;
 	}
+    } else if (oldpd == 24 && newpd >= 5 && newpd <= 7) {
+	/* hourly to daily */
+	compfac = 24;
+	if (!get_obs_maj_min(pdinfo->stobs, &startmaj, &startmin)) {
+	    return 1;
+	}
     } else {
 	compfac = oldpd / newpd;
 	/* get starting obs major and minor components */
