@@ -30,6 +30,8 @@
 #include "tsls.h"
 #include "nls.h"
 
+#include <glib.h>
+
 /* Comment on 'TINY': It's the minimum value for 'test' (see below)
    that libgretl's Cholesky decomposition routine will accept before
    rejecting a data matrix as too highly collinear.  If you set it too
@@ -3929,6 +3931,36 @@ MODEL quantreg (const char *parm, const int *list,
     return qmod;
 }
 
+int get_x12a_maxpd (void)
+{
+    static int n;
+
+    if (n == 0) {
+	const char *x12a = gretl_x12_arima();
+	gchar *argv[] = { (gchar *) x12a, NULL };
+	gchar *sout = NULL;
+	int ok;
+
+	ok = g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+			  NULL, NULL, &sout, NULL,
+			  NULL, NULL);
+	if (ok && sout != NULL) {
+	    char *p = strstr(sout, "PSP = ");
+
+	    if (p != NULL) {
+		n = atoi(p + 6);
+	    } 
+	}
+	g_free(sout);
+
+	if (n <= 0) {
+	    n = 12;
+	}
+    }
+
+    return n;
+}
+
 /**
  * arma:
  * @list: dependent variable, AR and MA orders, and any exogenous
@@ -3953,36 +3985,54 @@ MODEL arma (const int *list, const char *pqspec,
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_func) (const int *, const char *,
-			const double **, const DATAINFO *, 
-			gretlopt, PRN *);
+    MODEL (*arma_model) (const int *, const char *,
+			 const double **, const DATAINFO *, 
+			 gretlopt, PRN *);
+    MODEL (*arma_x12_model) (const int *, const char *,
+			     const double **, const DATAINFO *, 
+			     int, gretlopt, PRN *);
 
-    gretl_error_clear();
+    int plugerr = 0;
 
-    if (opt & OPT_X && (pdinfo->t2 - pdinfo->t1) > 719) {
-	strcpy(gretl_errmsg, _("X-12-ARIMA can't handle more than 720 observations.\n"
-			       "Please select a smaller sample."));
-	armod.errcode = E_DATA;
-	return armod;
-    }	
+    gretl_model_init(&armod);
 
     if (opt & OPT_X) {
-	arma_func = get_plugin_function("arma_x12_model", &handle);
+	int pdmax = get_x12a_maxpd();
+
+	if ((pdinfo->t2 - pdinfo->t1 + 1) > pdmax * 50) {
+	    gretl_errmsg_sprintf(_("X-12-ARIMA can't handle more than %d observations.\n"
+				   "Please select a smaller sample."), pdmax * 50);
+	    armod.errcode = E_DATA;
+	    return armod;
+	}
+
+	arma_x12_model = get_plugin_function("arma_x12_model", &handle);
+
+	if (arma_x12_model == NULL) {
+	    plugerr = E_FOPEN;
+	} else {
+	    armod = (*arma_x12_model) (list, pqspec, Z, pdinfo, pdmax, opt, prn);
+	}
     } else {
-	arma_func = get_plugin_function("arma_model", &handle);
+	arma_model = get_plugin_function("arma_model", &handle);
+	if (arma_model == NULL) {
+	    plugerr = E_FOPEN;
+	} else {
+	    armod = (*arma_model) (list, pqspec, Z, pdinfo, opt, prn);
+	}
     }
 
-    if (arma_func == NULL) {
+    if (plugerr) {
 	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	gretl_model_init(&armod);
-	armod.errcode = E_FOPEN;
+	armod.errcode = plugerr;
 	return armod;
     }
 
-    armod = (*arma_func) (list, pqspec, Z, pdinfo, opt, prn);
-
     close_plugin(handle);
-    set_model_id(&armod);
+
+    if (!armod.errcode) {
+	set_model_id(&armod);
+    }
 
     return armod;
 } 

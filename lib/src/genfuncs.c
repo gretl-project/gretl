@@ -732,10 +732,14 @@ int seasonally_adjust_series (const double *x, double *y,
 	gretl_errmsg_set(_("TRAMO can't handle more than 600 observations.\n"
 			   "Please select a smaller sample."));
 	return E_EXTERNAL;
-    } else if (!tramo && T > 720) {
-	gretl_errmsg_set(_("X-12-ARIMA can't handle more than 720 observations.\n"
-			   "Please select a smaller sample."));
-	return E_EXTERNAL;
+    } else if (!tramo) {
+	int pdmax = get_x12a_maxpd();
+
+	if (T > 50 * pdmax) {
+	    gretl_errmsg_sprintf(_("X-12-ARIMA can't handle more than %d observations.\n"
+				   "Please select a smaller sample."), 50 * pdmax);
+	    return E_EXTERNAL;
+	}
     }
 
     adjust_series = get_plugin_function("adjust_series", &handle);

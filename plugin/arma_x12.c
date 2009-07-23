@@ -155,19 +155,23 @@ static int print_iterations (const char *path, PRN *prn)
     return err;
 }
 
-#define daily_frequency(f) (f == 5 || f == 6 || f == 7)
+#define non_yearly_frequency(f) (f != 1 && f != 4 && f != 12)
 
 static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
 {
     char date[12] = {0};
 
-    if (daily_frequency(pdinfo->pd)) {
-	int t, maj, min;
+    if (non_yearly_frequency(pdinfo->pd)) {
+	int t, maj = 0, min = 0, n = strlen(s);
+	char fmt[16];
 
-	/* FIXME! */
+	sprintf(fmt, "%%%dd%%2d", n - 2);
+	if (sscanf(s, fmt, &maj, &min) == 2) {
+	    t = (maj - 1) * pdinfo->pd + min - 1;
+	} else {
+	    t = -1;
+	}
 
-	sscanf(s, "%1d%2d", &maj, &min);
-	t = (maj - 1) * pdinfo->pd + min - 1;
 	return t;
     }
 
@@ -546,7 +550,7 @@ output_series_to_spc (const int *list, const double **Z,
 	    if (na(Z[list[i]][t])) {
 		fputs("-9999.0 ", fp);
 	    } else {
-		fprintf(fp, "%g ", Z[list[i]][t]);
+		fprintf(fp, "%.15g ", Z[list[i]][t]);
 	    }
 	}
 	fputc('\n', fp);
@@ -580,7 +584,7 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
     int yr, subper = 0;
     char *s;
 
-    if (daily_frequency(pdinfo->pd)) {
+    if (non_yearly_frequency(pdinfo->pd)) {
 	int maj = t / pdinfo->pd + 1;
 	int min = t % pdinfo->pd + 1;
 
@@ -650,14 +654,13 @@ static void x12_pdq_string (struct arma_info *ainfo, FILE *fp)
     fputc(')', fp);
 }
 
-#define MAXOBS 720
-#define MAXFCAST 60
-
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo,
 			   struct arma_info *ainfo, const int *alist,
-			   gretlopt opt)
+			   int pdmax, gretlopt opt)
 {
+    int maxobs = pdmax * 50;
+    int maxfcast = pdmax * 5;
     int ylist[2];
     int *xlist = NULL;
     FILE *fp;
@@ -682,8 +685,8 @@ static int write_spc_file (const char *fname,
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
-	    pdinfo->varname[ainfo->yno]);
+    fprintf(fp, "series {\n title = \"%s\"\n period = %d\n", 
+	    pdinfo->varname[ainfo->yno], pdinfo->pd);
 
     if (!arma_exact_ml(ainfo)) {
 	t1 -= ainfo->maxlag;
@@ -704,13 +707,13 @@ static int write_spc_file (const char *fname,
 
 	tmax = pdinfo->n - 1;
 	nobs = tmax - ainfo->t1 + 1; /* t1? */
-	if (nobs > MAXOBS) {
-	    tmax -= nobs - MAXOBS;
+	if (nobs > maxobs) {
+	    tmax -= nobs - maxobs;
 	}
 	nfcast = tmax - ainfo->t2;
-	if (nfcast > MAXFCAST) {
-	    tmax -= nfcast - MAXFCAST;
-	    nfcast -= nfcast - MAXFCAST;
+	if (nfcast > maxfcast) {
+	    tmax -= nfcast - maxfcast;
+	    nfcast -= nfcast - maxfcast;
 	}
 #if 0
 	fprintf(stderr, "x12a: doing forecast: nfcast = %d\n", nfcast);
@@ -783,6 +786,20 @@ static int write_spc_file (const char *fname,
     return 0;
 }
 
+static void print_x12a_error_file (const char *fname, PRN *prn)
+{
+    FILE *fp = gretl_fopen(fname, "r");
+
+    if (fp != NULL) {
+	char line[512];
+
+	while (fgets(line, sizeof line, fp)) {
+	    pputs(prn, line);
+	}
+	fclose(fp);
+    }
+}
+
 static void delete_old_files (const char *path)
 {
     const char *exts[] = {
@@ -802,7 +819,7 @@ static void delete_old_files (const char *path)
 
 MODEL arma_x12_model (const int *list, const char *pqspec,
 		      const double **Z, const DATAINFO *pdinfo,
-		      gretlopt opt, PRN *prn)
+		      int pdmax, gretlopt opt, PRN *prn)
 {
     int verbose = (opt & OPT_V);
     const char *prog = gretl_x12_arima();
@@ -865,7 +882,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);
-    write_spc_file(path, Z, pdinfo, &ainfo, alist, opt);
+    write_spc_file(path, Z, pdinfo, &ainfo, alist, pdmax, opt);
 
     /* remove any files from on old run, in case of error */
     delete_old_files(path);
@@ -897,6 +914,11 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     } else {
 	armod.errcode = E_UNSPEC;
 	gretl_errmsg_set(_("Failed to execute x12arima"));
+    }
+
+    if (armod.errcode && vprn != NULL) {
+	sprintf(path, "%s%c%s.err", workdir, SLASH, yname);
+	print_x12a_error_file(path, vprn);
     }
 
     if (vprn != NULL && vprn != prn) {

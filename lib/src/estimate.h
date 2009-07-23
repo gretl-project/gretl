@@ -98,6 +98,8 @@ double *gretl_XTX (const MODEL *pmod, const double **Z, int *err);
 int anova (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	   gretlopt opt, PRN *prn);
 
+int get_x12a_maxpd (void);
+
 #endif /* ESTIMATE_H */
 
 
