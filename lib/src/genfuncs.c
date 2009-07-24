@@ -719,8 +719,8 @@ int seasonally_adjust_series (const double *x, double *y,
     int T, err = 0;
 
     if (!quarterly_or_monthly(pdinfo)) {
-	gretl_errmsg_set("This analysis is applicable only to seasonal time series");	
-	return E_DATA;
+	gretl_errmsg_set(_("Input must be a monthly or quarterly time series"));	
+	return E_PDWRONG;
     }
 
     array_adjust_t1t2(x, &t1, &t2);

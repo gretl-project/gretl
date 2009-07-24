@@ -4092,7 +4092,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     if (!tramo) {
 	/* we'll let tramo handle annual data */
 	if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
-	    errbox(_("This analysis is applicable only to seasonal time series"));
+	    errbox(_("Input must be a monthly or quarterly time series"));
 	    return;
 	}
     }

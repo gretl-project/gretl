@@ -982,14 +982,20 @@ static int check_x12a_model_file (const char *workdir, char *fname)
 static int check_sample_bound (int prog, const DATAINFO *pdinfo,
 			       char *errmsg)
 {
-    if (prog == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+
+    if (prog == TRAMO_SEATS && T > 600) {
 	strcpy(errmsg, _("TRAMO can't handle more than 600 observations.\n"
 			 "Please select a smaller sample."));
 	return E_EXTERNAL;
-    } else if (prog == X12A && (pdinfo->t2 - pdinfo->t1) > 719) {
-	strcpy(errmsg, _("X-12-ARIMA can't handle more than 720 observations.\n"
-			 "Please select a smaller sample."));
-	return E_EXTERNAL;
+    } else if (prog == X12A) {
+	int pdmax = get_x12a_maxpd();
+
+	if (T > 50 * pdmax) {
+	    sprintf(errmsg, _("X-12-ARIMA can't handle more than %d observations.\n"
+			      "Please select a smaller sample."), 50 * pdmax);
+	    return E_EXTERNAL;
+	}
     }
 
     return 0;
