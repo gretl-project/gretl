@@ -20,28 +20,47 @@ for seasonal adjustment.  The home page for this program is at <a
 Please look there for documentation and details.</p>
 
 <p>Various packages are available that bundle X-12-ARIMA for use with gretl.
-These include suitable executables for each platform plus documentation.
 The version of X-12-ARIMA is 0.3 unless otherwise noted.</p>
 
 For <b>Linux</b> there's an rpm,
 <a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.3-1.i586.rpm">x12a-0.3-1.i586.rpm</a>
-or a a plain <kbd>tar.gz</kbd> package,
+or a plain <kbd>tar.gz</kbd> package,
 <a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12arima-linux.tar.gz">x12arima-linux.tar.gz</a>.
-There's also an older rpm of version 0.2.10,
+There's also an older rpm containing version 0.2.10 of the program,
 <a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.2.10-1.i386.rpm">x12a-0.2.10-1.i386.rpm</a>
 (built on Red Hat Linux 7.3).</p>
    
-<p>Self-installer for <b>MS Windows</b>, <a
+<p>Self-installer for <b>MS Windows</b>: <a
   href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a>.
   Contains the program in win32 console form.</p>
 
-<p>Disk image for <b>MAC OS X</b>, <a
-  href="http://ricardo.ecn.wfu.edu/pub/gretl/x12arima.dmg">x12arima.dmg</a>.</p>
+<p>Disk image for <b>MAC OS X</b>: either
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12arima-intel.dmg">x12arima-intel.dmg</a>
+for the Intel architecture or
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12arima.dmg">x12arima-ppc.dmg</a> for PPC.
+</p>
 
-<p>Support for X-12-ARIMA arrived in version 1.0.2 of gretl and at
-present it is quite limited, but if there is interest in this feature
-I will probably aim to develop it further.  The following pictures
-illustrate what you can do as of now.</p>
+<p>Support for X-12-ARIMA has been available since version 1.0.2 of gretl 
+(December 2002) and currently has three aspects.</p>
+
+<ul>
+
+<li><p>In the gretl GUI, you can call for an X-12-ARIMA analysis of a quarterly 
+or monthly time series.  The seasonal, trend/cycle and irregular components
+can be graped and/or saved to the dataset.
+</p></li>
+
+<li><p>In gretl's <kbd>arma</kbd> command there is an option to use X-12-ARIMA.
+(The default is to use native gretl code.)  
+</p></li>
+
+<li><p>In current gretl CVS there is a function, <kbd>deseas</kbd>, which can
+be used to produce a seasonally adjusted series via X-12-ARIMA.
+</p></li>
+
+</ul>
+
+<p>The following screenshots illustrate the first of these features.</p>
 
 <p>After opening a suitable data set (i.e. containing seasonal time
 series), select a variable in the gretl main window and pull down the
