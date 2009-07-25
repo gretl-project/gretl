@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-24 09:36-0400\n"
-"PO-Revision-Date: 2009-07-24 10:14-0400\n"
+"PO-Revision-Date: 2009-07-25 10:27+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -9462,11 +9462,11 @@ msgstr "mostra informazioni sulla versione"
 
 #: gui2/gretl.c:195
 msgid "send debugging info to console"
-msgstr "invio dell'output di debug alla console"
+msgstr "invia l'output di debug alla console"
 
 #: gui2/gretl.c:200
 msgid "pass integer value to script"
-msgstr ""
+msgstr "passa un valore intero a uno script"
 
 #: gui2/gretl.c:298
 #, c-format
@@ -13172,7 +13172,7 @@ msgstr "Mostra automaticamente la finestra icone"
 
 #: gui2/settings.c:176
 msgid "Enable Ox support"
-msgstr ""
+msgstr "Abilita il supporto per Ox"
 
 #: gui2/settings.c:179
 msgid "Set working directory from shell"
@@ -13223,9 +13223,8 @@ msgid "path to tramo"
 msgstr "Comando per eseguire TRAMO"
 
 #: gui2/settings.c:216
-#, fuzzy
 msgid "path to R library"
-msgstr "Comando per eseguire TRAMO"
+msgstr "Percorso per la libreria R"
 
 #: gui2/settings.c:219
 msgid "gretl database directory"
