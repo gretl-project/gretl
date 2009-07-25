@@ -1774,14 +1774,14 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	    strcpy(ppaths->gretldir, home);
 	    ensure_slash(ppaths->gretldir);
 	} else {
-	    strcpy(ppaths->gretldir, "c:\\userdata\\gretl\\");
+	    strcpy(ppaths->gretldir, "c:\\program files\\gretl\\");
 	}
 
 	sprintf(ppaths->binbase, "%sdb\\", ppaths->gretldir);
 	strcpy(ppaths->ratsbase, "f:\\"); 
 
-	strcpy(ppaths->x12a, "c:\\userdata\\x12arima\\x12a.exe");
-	strcpy(ppaths->tramo, "c:\\userdata\\tramo\\tramo.exe");
+	strcpy(ppaths->x12a, "c:\\program files\\x12arima\\x12a.exe");
+	strcpy(ppaths->tramo, "c:\\program files\\tramo\\tramo.exe");
 	R_path_from_registry(ppaths->rlibpath, RLIB);
 
 	if (opt & OPT_X) {
