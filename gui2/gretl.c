@@ -303,9 +303,11 @@ static void get_runfile (char *fname)
     }
 }
 
-static int foreign_script_type (const char *fname)
+static int script_type (const char *fname)
 {
-    if (has_suffix(fname, ".R")) {
+    if (has_suffix(fname, ".inp")) {
+	return EDIT_SCRIPT;
+    } else if (has_suffix(fname, ".R")) {
 	return EDIT_R;
     } else if (has_suffix(fname, ".plt") ||
 	       has_suffix(fname, ".gp")) {
@@ -648,7 +650,7 @@ int main (int argc, char **argv)
 	}
 	if (ftype == GRETL_SESSION) {
 	    do_open_session();
-	} else if ((ftype = foreign_script_type(tryfile))) {
+	} else if ((ftype = script_type(tryfile))) {
 	    do_open_script(ftype);
 	} else {
 	    do_open_script(EDIT_SCRIPT);
@@ -1752,7 +1754,7 @@ mdata_handle_drag  (GtkWidget *widget,
 
     if (has_suffix(tryfile, ".gretl") && gretl_is_pkzip_file(tryfile)) {
 	verify_open_session();
-    } else if ((ftype = foreign_script_type(tryfile))) {
+    } else if ((ftype = script_type(tryfile))) {
 	do_open_script(ftype);
     } else {
 	verify_open_data(NULL, 0);
