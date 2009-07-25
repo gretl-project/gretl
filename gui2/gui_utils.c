@@ -3696,7 +3696,37 @@ static void run_R_sync (void)
 
 void run_ox_script (gchar *buf)
 {
+#if 1
     dummy_call();
+#else
+    int err = write_gretl_ox_file(buf, OPT_G);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	char oxpath[FILENAME_MAX];
+	gchar *fname, *cmd;
+
+	strcpy(oxpath, "C:\\Program Files\\OxMetrics5\\Ox\\bin\\oxl.exe"); /* FIXME */
+
+	fname = g_strdup_printf("%sgretltmp.ox", paths.dotdir);
+	cmd = g_strdup_printf("\"%s\" \"%s\"", oxpath, fname);
+
+	err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    gchar *out = g_strdup_printf("%sox.out", paths.dotdir);
+
+	    view_file(out, 0, 1, 78, 350, VIEW_FILE);
+	    g_free(out);
+	}	
+
+	g_free(cmd);
+	g_free(fname);    
+    }
+#endif
 }
 
 #else /* some non-Windows functions follow */
@@ -3885,7 +3915,6 @@ void run_ox_script (gchar *buf)
 	g_free(fname);    
     }
 }
-
 
 #endif /* !G_OS_WIN32 */
 

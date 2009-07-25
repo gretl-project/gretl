@@ -30,7 +30,6 @@ CARBONLIB = @CARBONLIB@
 
 GRETL_LANG = gretl.lang
 GNUPLOT_LANG = gnuplot.lang
-R_LANG = R.lang
 
 # Bundled gtksourceview subset?
 ifeq ($(have_sourceview),no)
@@ -38,7 +37,7 @@ ifeq ($(have_sourceview),no)
   GTKSOURCEVIEW_LIBS = -L./gtksourceview -lgtksourceview-lite
   langdir = $(prefix)/share/gretl/gtksourceview
   GTKSOURCEVIEW_LITE = gtksourceview/libgtksourceview-lite.a
-  query_install_Rlang = install-Rlang
+  query_install_extra_lang = install-extra-lang
 endif
 
 ifeq ($(have_sourceview),2.0)
@@ -204,10 +203,11 @@ install-exec: $(PROG) installdirs
 install-gnome: $(PROG) installdirs 
 	$(MAKE) -C ../gnome install 
 
-install-Rlang: $(topsrc)/gui2/R.lang
+install-extra-lang: $(topsrc)/gui2/R.lang $(topsrc)/gui2/cpp.lang
 	$(INSTALL_DATA) $(topsrc)/gui2/R.lang $(DESTDIR)$(langdir)
+	$(INSTALL_DATA) $(topsrc)/gui2/cpp.lang $(DESTDIR)$(langdir)
 
-install-lang: $(GRETL_LANG) installdirs $(query_install_Rlang)
+install-lang: $(GRETL_LANG) installdirs $(query_install_extra_lang)
 	$(INSTALL_DATA) $(GRETL_LANG) $(DESTDIR)$(langdir)/gretl.lang
 	$(INSTALL_DATA) $(topsrc)/gui2/$(GNUPLOT_LANG) $(DESTDIR)$(langdir)/gnuplot.lang
 
