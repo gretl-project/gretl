@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-24 09:36-0400\n"
-"PO-Revision-Date: 2009-07-24 10:35-0400\n"
+"PO-Revision-Date: 2009-07-26 10:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -419,15 +419,15 @@ msgstr "Wyeliminowano nieistotną zmienną: %-16s (wartość p = %.3f)\n"
 #: lib/src/compare.c:1573 lib/src/estimate.c:2706 lib/src/gretl_model.c:2885
 #: lib/src/gretl_model.c:2891 lib/src/modelprint.c:606 gui2/library.c:2319
 msgid "squares only"
-msgstr "tylko kwadrat zmiennej yhat"
+msgstr "tylko kwadrat zmiennej"
 
 #: lib/src/compare.c:1576 lib/src/gretl_model.c:2887 gui2/library.c:2320
 msgid "cubes only"
-msgstr "tylko sześcian zmiennej yhat"
+msgstr "tylko sześcian zmiennej"
 
 #: lib/src/compare.c:1579 gui2/library.c:2318
 msgid "squares and cubes"
-msgstr "kwadrat i sześcian zmiennej yhat"
+msgstr "kwadrat i sześcian zmiennej"
 
 #: lib/src/compare.c:1645 lib/src/gretl_model.c:2843
 msgid "RESET test for specification"
@@ -2803,7 +2803,6 @@ msgid "Failed to calculate Jacobian"
 msgstr "Błąd w wyznaczaniu Jacobianu"
 
 #: lib/src/gretl_errors.c:77
-#, fuzzy
 msgid "Insufficient observations for this operation"
 msgstr "Niewystarczająca liczba obserwacji dla tej operacji"
 
@@ -8481,9 +8480,8 @@ msgid "Compact weekly data to monthly"
 msgstr "Agregowanie danych tygodniowych do miesięcznych"
 
 #: gui2/dialogs.c:2658
-#, fuzzy
 msgid "Compact hourly data to:"
-msgstr "Agregowanie danych miesięcznych do:"
+msgstr "Agregowanie danych godzinowych do:"
 
 #: gui2/dialogs.c:2787
 msgid "gretl: expand data"
@@ -9441,7 +9439,7 @@ msgstr "Prześlij wyniki debuggingu do konsoli"
 
 #: gui2/gretl.c:200
 msgid "pass integer value to script"
-msgstr ""
+msgstr "pass integer value to script"
 
 #: gui2/gretl.c:298
 #, c-format
@@ -9590,9 +9588,8 @@ msgid "R script"
 msgstr "skrypty R"
 
 #: gui2/gretl.c:1274 gui2/gretl.c:1533
-#, fuzzy
 msgid "Ox program"
-msgstr "Programy"
+msgstr "Ox program"
 
 #: gui2/gretl.c:1277
 msgid "_Session files"
@@ -10833,9 +10830,8 @@ msgid "gretl: edit R commands"
 msgstr "gretl: edycja skryptu R"
 
 #: gui2/gui_utils.c:1417
-#, fuzzy
 msgid "gretl: edit Ox program"
-msgstr "gretl: edycja"
+msgstr "gretl: edycja skryptu Ox"
 
 #: gui2/gui_utils.c:1419 gui2/gui_utils.c:3846
 msgid "gretl: script output"
@@ -13133,7 +13129,7 @@ msgstr "Pokaż ikony automatycznie"
 
 #: gui2/settings.c:176
 msgid "Enable Ox support"
-msgstr ""
+msgstr "Enable Ox support"
 
 #: gui2/settings.c:179
 msgid "Set working directory from shell"
@@ -13184,9 +13180,8 @@ msgid "path to tramo"
 msgstr "Program tramo"
 
 #: gui2/settings.c:216
-#, fuzzy
 msgid "path to R library"
-msgstr "Program tramo"
+msgstr "katalog R - library"
 
 #: gui2/settings.c:219
 msgid "gretl database directory"
@@ -14758,35 +14753,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "Insufficient observations for correlogram"
-#~ msgstr "Niewystarczająca liczba obserwacji do wyznaczenia korelogramu"
-
-#~ msgid "Missing values within sample -- can't do periodogram"
-#~ msgstr ""
-#~ "Brak danych wewnątrz okresu próby -- niemożliwe wyznaczenie periodogramu"
-
-#~ msgid "Insufficient observations for periodogram"
-#~ msgstr "Niewystarczająca liczba obserwacji do wyznaczenia periodogramu"
-
-#~ msgid ""
-#~ "\n"
-#~ "Insufficient data for runs test\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Nieodpowiednie dane dla testu serii\n"
-
-#~ msgid "Closing redirected output file"
-#~ msgstr "Zamykanie przekierowanego pliku wyników"
-
-#~ msgid "force use of Basque"
-#~ msgstr "użyj wersji baskijskiej"
-
-#~ msgid "Can't open file for writing"
-#~ msgstr "Niemożliwe otwarcie pliku do pisania"
-
-#~ msgid "R output"
-#~ msgstr "Wyniki R"
-
-#~ msgid "Failed to allocate memory for new data"
-#~ msgstr "Błąd w alokacji pamięci dla nowego zbioru"
