@@ -401,7 +401,7 @@ static void sourceview_apply_language (windata_t *vwin)
     } else if (vwin->role == EDIT_R) {
 	mtype = "text/x-R";
     } else if (vwin->role == EDIT_OX) {
-	mtype = "text/x-cpp";
+	mtype = "text/x-c++src";
     } else {
 	mtype = "application/x-gretlscript";
     }
