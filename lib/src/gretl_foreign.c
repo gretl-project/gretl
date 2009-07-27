@@ -156,39 +156,21 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 {
     char oxpath[MAX_PATH];
     const gchar *fname;
-    gchar *cmd, *oxout = NULL;
-    int err = 0;
+    gchar *cmd, *sout = NULL;
+    int err;
 
-    strcpy(oxpath, "oxl.exe"); /* FIXME? */
-    fname = gretl_ox_filename();   
+    strcpy(oxpath, "oxl.exe"); /* FIXME */
+    fname = gretl_ox_filename(); 
 
-    if (opt & OPT_Q) {
-	cmd = g_strdup_printf("\"%s\" \"%s\"", oxpath, fname);
-    } else {
-	oxout = g_strdup_printf("%sox.out", gretl_dot_dir());
-	cmd = g_strdup_printf("\"%s\" \"%s\" > \"%s\"", 
-			      oxpath, fname, oxout);
+    cmd = g_strdup_printf("\"%s\" \"%s\"", oxpath, fname);
+
+    err = gretl_win32_grab_output(cmd, &sout);
+
+    if (!err) {
+	pputs(prn, sout);
     }
 
-    err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
-
-    if (!err && oxout != NULL) {
-	FILE *fp;
-
-	fp = gretl_fopen(oxout, "r");
-	if (fp == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    char line[1024];
-
-	    while (fgets(line, sizeof line, fp)) {
-		pputs(prn, line);
-	    }
-	    fclose(fp);
-	}
-    }
-
-    g_free(oxout);
+    g_free(sout);
     g_free(cmd);
 
     return err;
@@ -276,6 +258,7 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
  * write_gretl_ox_file:
  * @buf: text buffer containing Ox code.
  * @opt: should contain %OPT_G for use from GUI.
+ * @fname: location to receive name of file written, or %NULL.
  *
  * Writes the content of @buf into a file in the gretl user's
  * "dotdir".
@@ -283,7 +266,7 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
  * Returns: 0 on success, non-zero on error.
  */
 
-int write_gretl_ox_file (const char *buf, gretlopt opt)
+int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 {
     const gchar *fname = gretl_ox_filename();
     FILE *fp;
@@ -303,6 +286,9 @@ int write_gretl_ox_file (const char *buf, gretlopt opt)
 	    }
 	}
 	fclose(fp);
+	if (pfname != NULL) {
+	    *pfname = fname;
+	}
     }
 
     return err;
@@ -1256,7 +1242,7 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 	}
 #endif	    
     } else if (foreign_lang == LANG_OX) {
-	err = write_gretl_ox_file(NULL, foreign_opt);
+	err = write_gretl_ox_file(NULL, foreign_opt, NULL);
 	if (err) {
 	    delete_gretl_ox_file();
 	} else {

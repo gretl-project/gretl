@@ -3696,37 +3696,33 @@ static void run_R_sync (void)
 
 void run_ox_script (gchar *buf)
 {
-#if 1
-    dummy_call();
-#else
-    int err = write_gretl_ox_file(buf, OPT_G);
+    const char *fname;
+    int err;
+
+    err = write_gretl_ox_file(buf, OPT_G, &fname);
 
     if (err) {
 	gui_errmsg(err);
     } else {
-	char oxpath[FILENAME_MAX];
-	gchar *fname, *cmd;
+	char *sout = NULL;
+	gchar *cmd;
 
-	strcpy(oxpath, "C:\\Program Files\\OxMetrics5\\Ox\\bin\\oxl.exe"); /* FIXME */
-
-	fname = g_strdup_printf("%sgretltmp.ox", paths.dotdir);
-	cmd = g_strdup_printf("\"%s\" \"%s\"", oxpath, fname);
-
-	err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
-
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    gchar *out = g_strdup_printf("%sox.out", paths.dotdir);
-
-	    view_file(out, 0, 1, 78, 350, VIEW_FILE);
-	    g_free(out);
-	}	
-
+	cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_ox_path(), fname);
+	err = gretl_win32_grab_output(cmd, &sout);
 	g_free(cmd);
-	g_free(fname);    
+
+	if (sout == NULL) {
+	    warnbox("Got no output");
+	} else {
+	    PRN *prn = gretl_print_new_with_buffer(sout);
+    
+	    if (prn != NULL) {
+		view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+	    } else {
+		free(sout);
+	    }
+	}
     }
-#endif
 }
 
 #else /* some non-Windows functions follow */
@@ -3839,7 +3835,7 @@ static void start_R_async (void)
 
 static void run_prog_sync (char **argv)
 {
-    gchar *out = NULL;
+    gchar *sout = NULL;
     gchar *errout = NULL;
     gint status = 0;
     GError *gerr = NULL;
@@ -3848,7 +3844,7 @@ static void run_prog_sync (char **argv)
     signal(SIGCHLD, SIG_DFL);
 
     g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-		 NULL, NULL, &out, &errout,
+		 NULL, NULL, &sout, &errout,
 		 &status, &gerr);
 
     if (gerr != NULL) {
@@ -3861,13 +3857,13 @@ static void run_prog_sync (char **argv)
 	    } else if (strlen(errout) < MAXLEN) {
 		errbox(errout);
 	    } else {
-		prn = gretl_print_new_with_buffer(errout);
-		errout = NULL;
+		bufopen(&prn);
+		pputs(prn, errout);
 	    }
 	}
-    } else if (out != NULL) {
-	prn = gretl_print_new_with_buffer(out);
-	out = NULL;
+    } else if (sout != NULL) {
+	bufopen(&prn);
+	pputs(prn, sout);
     } else {
 	warnbox("Got no output");
     }
@@ -3876,7 +3872,7 @@ static void run_prog_sync (char **argv)
 	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
     }
 
-    g_free(out);
+    g_free(sout);
     g_free(errout);
 }
 
@@ -3896,23 +3892,21 @@ static void run_R_sync (void)
 
 void run_ox_script (gchar *buf)
 {
-    int err = write_gretl_ox_file(buf, OPT_G);
+    const char *fname;
+    int err;
+
+    err = write_gretl_ox_file(buf, OPT_G, &fname);
 
     if (err) {
 	gui_errmsg(err);
     } else {
-	const char *dotdir = gretl_dot_dir();
-	gchar *fname;
-	gchar *argv[] = {
-	    "oxl",
-	    NULL,
-	    NULL
-	};
+	gchar *argv[3];
 
-	fname = g_strdup_printf("%sgretltmp.ox", dotdir);
-	argv[1] = fname;
+	argv[0] = (gchar *) gretl_ox_path();
+	argv[1] = (gchar *) fname;
+	argv[2] = NULL;
+
 	run_prog_sync(argv);
-	g_free(fname);    
     }
 }
 

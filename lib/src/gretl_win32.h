@@ -60,6 +60,8 @@ int gretl_spawn (char *cmdline);
 
 int gretl_shell (const char *arg, PRN *prn);
 
+int gretl_win32_grab_output (const char *cmdline, char **sout);
+
 char *slash_convert (char *str, int which);
 
 char *desktop_path (void);

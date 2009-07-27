@@ -106,6 +106,10 @@ extern int use_wimp;
 char midiplayer[MAXSTR] = "timidity -ig";
 #endif
 
+#ifdef USE_OX
+char oxpath[MAXSTR];
+#endif
+
 typedef enum {
     ROOTSET  = 1 << 0,
     USERSET  = 1 << 1, 
@@ -214,6 +218,10 @@ RCVAR rc_vars[] = {
 #endif
 #ifdef USE_RLIB
     { "Rlib", N_("path to R library"), NULL, paths.rlibpath, 
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+#endif
+#ifdef USE_OX
+    { "ox", N_("path to oxl executable"), NULL, oxpath, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
     { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
@@ -1183,6 +1191,13 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    continue;
 	}
 
+#ifdef USE_OX
+	if (!ox_support && rc->var == oxpath) {
+	    /* don't show ox path entry if support is not enabled */
+	    continue;
+	}
+#endif
+
 	if ((rc->flags & BOOLSET) && rc->link == NULL) { 
 	    /* simple boolean variable (check box) */
 	    int rcval = *(int *) (rc->var);
@@ -1707,6 +1722,9 @@ static int common_read_rc_setup (void)
     set_garch_robust_vcv(hc_garch);
 
     err = gretl_set_paths(&paths, set_paths_opt);
+#ifdef USE_OX
+    set_gretl_ox_path(oxpath);
+#endif
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
     set_tex_use_pdf(latex);
@@ -1780,6 +1798,9 @@ void write_rc (void)
 
     save_file_lists();
     gretl_set_paths(&paths, set_paths_opt);
+#ifdef USE_OX
+    set_gretl_ox_path(oxpath);
+#endif
 }
 
 static int get_network_settings (void)
@@ -1922,6 +1943,9 @@ void write_rc (void)
     if (!err) {
 	gretl_set_paths(&paths, set_paths_opt);
 	record_shell_opt();
+#ifdef USE_OX
+	set_gretl_ox_path(oxpath);
+#endif
     }
 }
 

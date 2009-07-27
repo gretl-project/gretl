@@ -3931,6 +3931,36 @@ MODEL quantreg (const char *parm, const int *list,
     return qmod;
 }
 
+#ifdef WIN32
+
+int get_x12a_maxpd (void)
+{
+    static int n;
+
+    if (n == 0) {
+	char *sout = NULL;
+
+	gretl_win32_grab_output(gretl_x12_arima(), &sout);
+
+	if (sout != NULL) {
+	    char *p = strstr(sout, "PSP = ");
+
+	    if (p != NULL) {
+		n = atoi(p + 6);
+	    } 
+	    free(sout);
+	}
+
+	if (n <= 0) {
+	    n = 12;
+	}
+    }
+
+    return n;
+}
+
+#else
+
 int get_x12a_maxpd (void)
 {
     static int n;
@@ -3960,6 +3990,8 @@ int get_x12a_maxpd (void)
 
     return n;
 }
+
+#endif
 
 /**
  * arma:

@@ -584,7 +584,6 @@ static void set_default_progs_path (GtkFileChooser *fsel)
 	g_free(path);
 	free(progs);
     }
-		
 #else
     gtk_file_chooser_set_current_folder(fsel, "/usr/bin");
 #endif

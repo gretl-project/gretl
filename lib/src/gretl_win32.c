@@ -108,8 +108,7 @@ int write_reg_val (HKEY tree, const char *base,
 
     sprintf(regpath, "Software\\%s", base);
 
-    if (RegCreateKeyEx(
-                       tree,
+    if (RegCreateKeyEx(tree,
                        regpath,
                        0,
                        NULL, 
@@ -117,19 +116,17 @@ int write_reg_val (HKEY tree, const char *base,
                        KEY_ALL_ACCESS,
                        NULL,
                        &regkey,
-                       NULL                         
-                       ) != ERROR_SUCCESS) {
+                       NULL) != ERROR_SUCCESS) {
 	fprintf(stderr, "RegCreateKeyEx: failed on '%s'\n", regpath);
         return 1;
     }
 
-    if (RegSetValueEx(
-                  regkey,
-                  keyname,
-                  0,
-                  REG_SZ,
-                  keyval,
-                  strlen(keyval) + 1) != ERROR_SUCCESS) {
+    if (RegSetValueEx(regkey,
+		      keyname,
+		      0,
+		      REG_SZ,
+		      keyval,
+		      strlen(keyval) + 1) != ERROR_SUCCESS) {
 	fprintf(stderr, "RegSetValueEx: failed on '%s'\n", keyname);
         err = 1;
     }
@@ -278,8 +275,7 @@ void win_show_last_error (void)
     DWORD dw = GetLastError();
     LPVOID buf;
 
-    FormatMessage( 
-		  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | 
 		  FORMAT_MESSAGE_FROM_SYSTEM | 
 		  FORMAT_MESSAGE_IGNORE_INSERTS,
 		  NULL,
@@ -287,8 +283,7 @@ void win_show_last_error (void)
 		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		  (LPTSTR) &buf,
 		  0,
-		  NULL 
-		  );
+		  NULL); 
 
     MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
     LocalFree(buf);
@@ -299,8 +294,7 @@ void win_copy_last_error (void)
     DWORD dw = GetLastError();
     LPVOID buf;
 
-    FormatMessage( 
-		  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | 
 		  FORMAT_MESSAGE_FROM_SYSTEM | 
 		  FORMAT_MESSAGE_IGNORE_INSERTS,
 		  NULL,
@@ -308,8 +302,7 @@ void win_copy_last_error (void)
 		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		  (LPTSTR) &buf,
 		  0,
-		  NULL 
-		  );
+		  NULL);
 
     gretl_errmsg_set((const char *) buf);
     LocalFree(buf);
@@ -321,8 +314,7 @@ int winfork (char *cmdline, const char *dir,
     STARTUPINFO si;
     PROCESS_INFORMATION pi; 
     DWORD exitcode;
-    int child;
-    int err = 0;
+    int ok, err = 0;
 
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);  
@@ -332,13 +324,13 @@ int winfork (char *cmdline, const char *dir,
     si.wShowWindow = wshow;
 
     /* zero return means failure */
-    child = CreateProcess(NULL, cmdline, 
-			  NULL, NULL, FALSE,
-			  flags,
-			  NULL, dir,
-			  &si, &pi);
+    ok = CreateProcess(NULL, cmdline, 
+		       NULL, NULL, FALSE,
+		       flags,
+		       NULL, dir,
+		       &si, &pi);
 
-    if (!child) {
+    if (!ok) {
 	win_copy_last_error();
 	err = 1;
     } else {
@@ -458,8 +450,8 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 	/* read output from the child process */
 	while (1) { 
 	    memset(buf, '\0', BUFSIZE);
-	    if (!ReadFile(hread, buf, BUFSIZE, &dwread, NULL) || 
-		dwread == 0) {
+	    ok = ReadFile(hread, buf, BUFSIZE-1, &dwread, NULL);
+	    if (!ok || dwread == 0) {
 		break;
 	    }
 	    pputs(prn, buf);
@@ -474,15 +466,25 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     return ok;
 } 
 
+enum {
+    SHELL_RUN,
+    PROG_RUN
+};
+
 static int 
-run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread) 
+run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread,
+		     int flag) 
 { 
     PROCESS_INFORMATION pinfo; 
     STARTUPINFO sinfo;
     char *cmdline = NULL;
     int ok;
-    
-    cmdline = compose_command_line(arg);
+
+    if (flag == SHELL_RUN) {
+	cmdline = compose_command_line(arg);
+    } else {
+	cmdline = g_strdup(arg);
+    }
  
     ZeroMemory(&pinfo, sizeof pinfo);
     ZeroMemory(&sinfo, sizeof sinfo);
@@ -496,11 +498,11 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
  
     ok = CreateProcess(NULL, 
 		       cmdline,
-		       NULL,          // process security attributes 
-		       NULL,          // primary thread security attributes 
-		       TRUE,          // handles are inherited 
+		       NULL,          /* process security attributes */
+		       NULL,          /* primary thread security attributes */
+		       TRUE,          /* handles are inherited */
 		       CREATE_NO_WINDOW,
-		       NULL,          // use parent's environment 
+		       NULL,          /* use parent's environment */
 		       get_shelldir(),          
 		       &sinfo,
 		       &pinfo);
@@ -517,7 +519,8 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
     return ok;
 }
 
-static int run_cmd_with_pipes (const char *arg, char **sout, PRN *prn) 
+static int run_cmd_with_pipes (const char *arg, char **sout, PRN *prn,
+			       int flag) 
 { 
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sa; 
@@ -537,7 +540,7 @@ static int run_cmd_with_pipes (const char *arg, char **sout, PRN *prn)
 	/* ensure that the read handle to the child process's pipe for 
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
-	ok = run_child_with_pipe(arg, hwrite, hread);
+	ok = run_child_with_pipe(arg, hwrite, hread, flag);
 	if (ok) {
 	    /* read from child's output pipe */
 	    read_from_pipe(hwrite, hread, sout, prn); 
@@ -583,9 +586,14 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     return err;
 }
 
+int gretl_win32_grab_output (const char *cmdline, char **sout)
+{
+    return run_cmd_with_pipes(cmdline, sout, NULL, PROG_RUN);
+}
+
 int gretl_shell_grab (const char *arg, char **sout)
 {
-    return run_cmd_with_pipes(arg, sout, NULL);
+    return run_cmd_with_pipes(arg, sout, NULL, SHELL_RUN);
 }
 
 int gretl_shell (const char *arg, PRN *prn)
@@ -618,7 +626,7 @@ int gretl_shell (const char *arg, PRN *prn)
 	    err = 1;
 	}
     } else if (getenv("GRETL_SHELL_NEW")) {
-	err = run_cmd_with_pipes(arg, NULL, prn);
+	err = run_cmd_with_pipes(arg, NULL, prn, SHELL_RUN);
     } else {
 	err = run_cmd_wait(arg, prn);
     } 

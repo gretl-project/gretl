@@ -1734,6 +1734,47 @@ void set_gretl_png_font (const char *s, PATHS *ppaths)
     strcpy(ppaths->pngfont, s);
 }
 
+static char ox_path[MAXLEN];
+
+#ifdef USE_OX
+static void set_default_ox_path (char *s)
+{
+    if (s == NULL) {
+	s = ox_path;
+    }
+
+# ifdef WIN32
+    sprintf(s, "%s\\OxMetrics5\\Ox\\bin\\oxl.exe", program_files_path());
+# else
+    strcpy(s, "oxl");
+# endif
+}
+#else
+static void set_default_ox_path (char *s)
+{
+    return;
+}
+#endif
+
+const char *gretl_ox_path (void)
+{
+    if (*ox_path == '\0') {
+	set_default_ox_path(ox_path);
+    }
+    
+    return ox_path;
+}
+
+void set_gretl_ox_path (char *path)
+{
+    if (*path != '\0') {
+	*ox_path = '\0';
+	strncat(ox_path, path, MAXLEN - 1);
+    } else {
+	set_default_ox_path(path);
+    }
+}
+
 void set_string_table_written (void)
 {
     gretl_paths.status |= STRING_TABLE_WRITTEN;
@@ -1796,6 +1837,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	ppaths->workdir[0] = '\0';
 	gretl_paths.plotfile[0] = '\0';
 	strcpy(ppaths->pngfont, "verdana 8");
+	set_default_ox_path(NULL);
     } else {
 	/* not defaults: after reading from registry */
 	ensure_slash(ppaths->gretldir);
@@ -1972,6 +2014,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->tramo, "tramo"); 	 
 #endif
 
+	set_default_ox_path(NULL);
 	*gretl_paths.plotfile = '\0';
     } else {
 	/* check validity of main directories */
