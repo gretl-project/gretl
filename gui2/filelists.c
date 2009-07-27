@@ -483,7 +483,7 @@ static void open_file_from_filelist (GtkAction *action)
     if (!strcmp(ftype, "Data")) {
 	strcpy(tryfile, datap[i]);
 	if (strstr(tryfile, ".csv")) {
-	    if (delimiter_dialog(NULL)) {
+	    if (csv_options_dialog(NULL)) {
 		return;
 	    }
 	}

@@ -98,6 +98,7 @@ struct set_vars_ {
     gretl_matrix *initvals;     /* parameter initializer */
     struct robust_opts ropts;   /* robust standard error options */
     char shelldir[MAXLEN];      /* working dir for shell commands */
+    char csv_na[8];             /* representation of NA in CSV output */
 };
 
 #define ECHO "echo"
@@ -348,6 +349,7 @@ static void state_vars_copy (set_vars *sv)
 
     sv->initvals = gretl_matrix_copy(state->initvals);
     strcpy(sv->shelldir, state->shelldir);
+    strcpy(sv->csv_na, state->csv_na);
 
     robust_opts_copy(&sv->ropts);
 }
@@ -384,6 +386,7 @@ static void state_vars_init (set_vars *sv)
     sv->bkbp_p1 = UNSET_INT;
 
     *sv->shelldir = '\0';
+    *sv->csv_na = '\0';
 
     robust_opts_init(&sv->ropts);
 }
@@ -1237,6 +1240,7 @@ static int display_settings (PRN *prn)
     libset_header(_("Program interaction and behavior"), prn);
 
     pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
+    pprintf(prn, " csv_na = %s\n", get_csv_na_string());
 
     libset_print_bool(ECHO, prn);
     libset_print_bool(FORCE_DECP, prn);
@@ -1260,6 +1264,9 @@ static int display_settings (PRN *prn)
     libset_print_bool(PROTECT_LISTS, prn);
     libset_print_bool(VERBOSE_INCLUDE, prn);
     libset_print_bool(SKIP_MISSING, prn);
+
+    libset_print_bool(R_LIB, prn);
+    libset_print_bool(R_FUNCTIONS, prn);
 
     libset_header(_("Numerical methods"), prn);
 
@@ -1422,6 +1429,11 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 	    return libset_query_settings(setobj, prn);
 	}
     } else if (nw == 2) {
+	if (!strcmp(setobj, "csv_na")) {
+	    set_csv_na_string(setarg);
+	    return 0;
+	}
+
 	lower(setarg);
 
 	if (libset_boolvar(setobj)) {
@@ -2194,4 +2206,23 @@ int get_script_switch (void)
     return script_switch;
 }
 
+/* for setting wht we print for NAs on CSV output */
 
+const char *get_csv_na_string (void)
+{
+    if (check_for_state() || *state->csv_na == '\0') {
+	return "NA";
+    } else {
+	return state->csv_na;
+    }
+}
+
+void set_csv_na_string (const char *s)
+{
+    if (check_for_state()) {
+	return;
+    }
+
+    *state->csv_na = '\0';
+    strncat(state->csv_na, s, 7);
+}

@@ -33,6 +33,7 @@
 #include "texprint.h"
 #include "forecast.h"
 #include "console.h"
+#include "libset.h"
 
 #include <errno.h>
 
@@ -58,7 +59,7 @@ void menu_exit_check (void)
 
 static void save_data_callback (void)
 {
-    data_save_selection_wrapper(SAVE_DATA, NULL);
+    data_save_selection_wrapper(SAVE_DATA);
     if (data_status & MODIFIED_DATA)
 	data_status ^= MODIFIED_DATA;
     /* FIXME: need to do more here? */
@@ -199,6 +200,50 @@ double gui_double_from_string (const char *str, int *err)
     return x;
 }
 
+static void csv_na_callback (GtkComboBox *box, gpointer p)
+{
+    char *s = gtk_combo_box_get_active_text(box);
+
+    set_csv_na_string(s);
+}
+
+static GtkWidget *csv_na_combo (void)
+{
+    GtkWidget *hbox, *label, *combo;
+    const char *na_strs[] = {
+	"NA", ".NaN", "-999", "-9999.0", "?", "."
+    };
+    const char *setna = get_csv_na_string();
+    int i, n = G_N_ELEMENTS(na_strs);
+    int matched = 0;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_("Print missing values as:"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+
+    combo = gtk_combo_box_new_text();
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+
+    for (i=0; i<n; i++) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), na_strs[i]);
+	if (!strcmp(setna, na_strs[i])) {
+	    matched = 1;
+	}
+    }
+
+    if (!matched) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), setna);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), i);
+    } else {
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    }
+
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(csv_na_callback), NULL);
+
+    return hbox;
+}
+
 /* CSV files: setting the delimiter */
 
 typedef struct {
@@ -250,7 +295,7 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
     free(p);
 }
 
-int delimiter_dialog (gretlopt *optp)
+int csv_options_dialog (gretlopt *optp)
 {
     GtkWidget *dialog, *tmp, *button, *hbox;
     GtkWidget *myvbox;
@@ -264,7 +309,7 @@ int delimiter_dialog (gretlopt *optp)
 
     csvp = mymalloc(sizeof *csvp);
     if (csvp == NULL) {
-	return - 1;
+	return -1;
     }
 
     csvp->delim = datainfo->delim;
@@ -375,12 +420,19 @@ int delimiter_dialog (gretlopt *optp)
     }
 
     if (optp != NULL) {
+	/* on output only */
 	vbox_add_hsep(myvbox);
 	tmp = gretl_option_check_button_switched(_("include observations column"),
 						 optp, OPT_X);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
 	gtk_box_pack_start(GTK_BOX(myvbox), tmp, TRUE, TRUE, 0);
 	gtk_widget_show(tmp);
+
+	if (any_missing_user_values((const double **) Z, datainfo)) {
+	    tmp = csv_na_combo();
+	    gtk_box_pack_start(GTK_BOX(myvbox), tmp, TRUE, TRUE, 0);
+	    gtk_widget_show_all(tmp);
+	}
     }
 
     hbox = gtk_hbox_new(FALSE, 5);

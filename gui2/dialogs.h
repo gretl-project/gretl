@@ -56,7 +56,7 @@ void menu_exit_check (void);
 
 double gui_double_from_string (const char *str, int *err);
 
-int delimiter_dialog (gretlopt *optp);
+int csv_options_dialog (gretlopt *optp);
 
 void rand_seed_dialog (void);
 

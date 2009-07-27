@@ -43,7 +43,7 @@ void selector_from_model (void *ptr, int ci);
 
 char *main_window_selection_as_string (void);
 
-void data_save_selection_wrapper (int file_code, gpointer p);
+void data_save_selection_wrapper (int file_code);
 
 int selector_code (const selector *sr);
 

@@ -1007,7 +1007,7 @@ windata_t *get_local_viewer (int remote_role)
 
 static void new_package_callback (GtkWidget *w , gpointer p)
 {
-    data_save_selection_wrapper(SAVE_FUNCTIONS, NULL);
+    data_save_selection_wrapper(SAVE_FUNCTIONS);
 }
 
 static void close_files_viewer (GtkWidget *w, windata_t *vwin)

@@ -70,9 +70,9 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 {
     int err = 0;
 
-    if (!strcmp(lang, "R")) {
+    if (g_ascii_strcasecmp(lang, "R") == 0) {
 	foreign_lang = LANG_R;
-    } else if (!strcmp(lang, "ox")) {
+    } else if (g_ascii_strcasecmp(lang, "ox") == 0) {
 #ifdef USE_OX
 	foreign_lang = LANG_OX;
 #else

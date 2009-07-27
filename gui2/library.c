@@ -6546,11 +6546,13 @@ int do_store (char *savename, gretlopt opt)
     }
 
     err = check_specific_command(tmp);
-    if (err) goto store_get_out;
 
-    if (!WRITING_DB(opt)) {
+    if (!err && !WRITING_DB(opt)) {
 	err = cmd_init(tmp, 0);
-	if (err) goto store_get_out;
+    }
+
+    if (err) {
+	goto store_get_out;
     }
 
     /* back up existing datafile if need be (not for databases) */

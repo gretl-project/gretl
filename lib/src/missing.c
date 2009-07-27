@@ -873,3 +873,33 @@ double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo)
 
     return (double) totmiss / pdinfo->n;
 }
+
+/**
+ * any_missing_user_values:
+ * @Z: data array.
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Returns: 1 if there are missing values for any non-hidden
+ * variables within the current sample range, otherwise 0.
+ */
+
+int any_missing_user_values (const double **Z, const DATAINFO *pdinfo)
+{
+    int i, t;
+
+    if (pdinfo->n == 0) {
+	return 0;
+    }
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (!var_is_hidden(pdinfo, i)) {
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		if (na(Z[i][t])) {
+		    return 1;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}

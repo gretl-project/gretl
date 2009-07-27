@@ -3325,15 +3325,18 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
    is at least one greater than the lag order for y ('arlag')
 */
 
-static void arbond_cross_connect (GtkSpinButton *s1,
-				  GtkSpinButton *s2)
+static void arbond_cross_connect (GtkSpinButton *spin,
+				  selector *sr)
 {
-    gint arlag = gtk_spin_button_get_value_as_int(s1);
-    gint maxinst = gtk_spin_button_get_value_as_int(s2);
+    GtkSpinButton *s0 = GTK_SPIN_BUTTON(sr->extra[0]);
+    GtkSpinButton *s1 = GTK_SPIN_BUTTON(sr->extra[1]);
+    gint p = gtk_spin_button_get_value_as_int(s0);
+    gint qmax = gtk_spin_button_get_value_as_int(s1);
 
-    if (maxinst < arlag + 1) {
-	maxinst = arlag + 1;
-	gtk_spin_button_set_value(s2, maxinst);
+    if (qmax < p + 1) {
+	/* needs fixing */
+	qmax = p + 1;
+	gtk_spin_button_set_value(s1, qmax);
     }
 }
 
@@ -3354,8 +3357,8 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("AR order:"));
 	val = 1;
 	maxlag = 10;
-	if (maxlag < datainfo->pd - 1) {
-	    maxlag = datainfo->pd - 1;
+	if (maxlag < datainfo->pd - 2) {
+	    maxlag = datainfo->pd - 2;
 	}
     }
 
@@ -3390,7 +3393,7 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 	gtk_widget_show_all(hbox); 
 
 	g_signal_connect(G_OBJECT(sr->extra[0]), "value-changed",
-			 G_CALLBACK(arbond_cross_connect), sr->extra[1]);
+			 G_CALLBACK(arbond_cross_connect), sr);
     }
 }
 
@@ -5719,7 +5722,7 @@ static const char *data_save_title (int ci)
 
 static int data_save_selection_callback (selector *sr)
 {
-    gpointer data = sr->data;
+    gpointer data = NULL;
     int ci = sr->ci;
 
     if ((sr->cmdlist == NULL || *sr->cmdlist == 0) && sr->n_left == 0) {
@@ -5738,6 +5741,18 @@ static int data_save_selection_callback (selector *sr)
 
     gtk_widget_destroy(sr->dlg);
 
+    if (ci == EXPORT_CSV) {
+	gretlopt opt = OPT_NONE;
+	int cancel;
+
+	cancel = csv_options_dialog(&opt);
+	if (cancel) {
+	    return 0;
+	} else {
+	    data = GINT_TO_POINTER(opt);
+	}
+    }
+
     if (ci == SAVE_FUNCTIONS) {
 	prepare_functions_save();
     } else if (ci != COPY_CSV) {
@@ -5747,7 +5762,7 @@ static int data_save_selection_callback (selector *sr)
     return 0;
 }
 
-void data_save_selection_wrapper (int file_ci, gpointer p)
+void data_save_selection_wrapper (int file_ci)
 {
     if (file_ci == SAVE_FUNCTIONS) {
 	if (no_user_functions_check()) {
@@ -5758,7 +5773,7 @@ void data_save_selection_wrapper (int file_ci, gpointer p)
     } else {
 	simple_selection((file_ci == COPY_CSV)? 
 			 _("Copy data") : _("Save data"), 
-			 data_save_selection_callback, file_ci, p);
+			 data_save_selection_callback, file_ci, NULL);
     }
 
     gtk_main(); /* the corresponding gtk_main_quit() is in

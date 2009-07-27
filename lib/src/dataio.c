@@ -1369,6 +1369,7 @@ int write_data (const char *fname, int *list,
 	}
     } else if (fmt == GRETL_FMT_CSV || fmt == GRETL_FMT_R) { 
 	/* export CSV or GNU R (dataframe) */
+	char na_string[8] = "NA";
 	int print_obs = 0;
 
 	if (fmt == GRETL_FMT_CSV) {
@@ -1379,6 +1380,7 @@ int write_data (const char *fname, int *list,
 	    if (!delim) {
 		delim = get_csv_delim(pdinfo);
 	    }
+	    strcpy(na_string, get_csv_na_string());
 	} else {
 	    print_obs = (pdinfo->S != NULL);
 	    delim = ' ';
@@ -1420,7 +1422,7 @@ int write_data (const char *fname, int *list,
 		v = list[i];
 		xx = Z[v][t];
 		if (na(xx)) {
-		    fprintf(fp, "NA");
+		    fputs(na_string, fp);
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.12g", xx);
 		} else {

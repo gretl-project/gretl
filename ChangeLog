@@ -1,5 +1,5 @@
 version 1.8.3, in progress
-- Fix bug 2819633
+- Fix bugs 2819633, 2827358
 - $stopwatch: use times() function if available, to include
   execution time of child processes
 - Add function "mreverse" to reverse rows or columns of
@@ -22,6 +22,8 @@ version 1.8.3, in progress
   characters of such labels
 - Support compaction of hourly (24 hours per day) data
   to daily
+- Add "set" variable "csv_na" to control the representation
+  of NA values in CSV output (also GUI selector for same)
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"

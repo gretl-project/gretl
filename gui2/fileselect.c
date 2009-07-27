@@ -167,28 +167,6 @@ static const char *get_gp_ext (int ttype)
     else return "*";
 }
 
-static int dat_ext (const char *str, int showerr)
-{
-    const char *suff;
-    int err = 0;
-
-    if (str == NULL) {
-	return 0;
-    }
-
-    suff = strrchr(str, '.');
-
-    if (suff != NULL && !strcmp(suff, ".gdt")) {
-	if (showerr) {
-	    errbox(_("The suffix you selected should be used\n"
-		   "only for gretl datafiles"));
-	}
-	err = 1;
-    }
-
-    return err;
-}
-
 static const char *get_ext (int action, gpointer data)
 {
     const char *s = NULL;
@@ -498,10 +476,6 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     }
 
     /* now for the save/export options */
-
-    if (action > SAVE_DBDATA && action != EXPORT_DAT && dat_ext(fname, 1)) { 
-	return;
-    }
 
     if (check_maybe_add_ext(fname, action, data)) {
 	return;

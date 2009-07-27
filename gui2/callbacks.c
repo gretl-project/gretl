@@ -218,7 +218,7 @@ void open_data (GtkAction *action)
 	break;
     case OPEN_CSV:
     case APPEND_CSV:
-	if (delimiter_dialog(NULL)) {
+	if (csv_options_dialog(NULL)) {
 	    return;
 	}
 	file_selector(_("Open CSV file"), code, FSEL_DATA_NONE, NULL);
@@ -282,9 +282,6 @@ void open_script (GtkAction *action)
 
 void file_save (windata_t *vwin, int ci)
 {
-    gretlopt opt = OPT_NONE;
-    gpointer p = NULL;
-
     switch (ci) {
     case SAVE_OUTPUT:
 	file_selector(_("Save output file"), ci, FSEL_DATA_VWIN, vwin);
@@ -299,18 +296,12 @@ void file_save (windata_t *vwin, int ci)
     case SAVE_DATA_AS:
     case SAVE_DBDATA:
     case SAVE_FUNCTIONS:	
-	data_save_selection_wrapper(ci, NULL);
-	break;
     case EXPORT_CSV:
-	if (delimiter_dialog(&opt)) {
-	    return;
-	}
-	p = GINT_TO_POINTER(opt);
     case EXPORT_R:
     case EXPORT_OCTAVE:
     case EXPORT_DAT:
     case EXPORT_JM:
-	data_save_selection_wrapper(ci, p);
+	data_save_selection_wrapper(ci);
 	break;
     case SAVE_TEX:
 	file_selector(_("Save LaTeX file"), ci, FSEL_DATA_MISC, vwin->data);

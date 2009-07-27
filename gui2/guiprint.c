@@ -1788,42 +1788,43 @@ static int real_csv_to_clipboard (const int *list)
     return err;
 }
 
-int csv_to_clipboard (void)
-{
-    gretlopt opt = OPT_NONE;
-    int *list = NULL;
-    int err = 0;
-
-    if (delimiter_dialog(&opt)) {
-	return 0;
-    }
-
-    data_save_selection_wrapper(COPY_CSV, GINT_TO_POINTER(opt));
-
-    if (storelist != NULL && *storelist != '\0') {
-	list = gretl_list_from_string(storelist, &err);	
-	if (!err && list != NULL) {
-	    err = real_csv_to_clipboard(list);
-	    free(list);
-	}
-	free(storelist);
-	storelist = NULL;
-    }
-
-    return err;
-}
-
 int csv_selected_to_clipboard (void)
 {
     int *list = main_window_selection_as_list();
     int err = 0;
 
     if (list != NULL) {
-	if (delimiter_dialog(NULL)) {
+	if (csv_options_dialog(NULL)) {
 	    return 0;
 	}
 	err = real_csv_to_clipboard(list);
 	free(list);
+    }
+
+    return err;
+}
+
+/* called from session.c: copy entire dataset to clipboard */
+
+int csv_to_clipboard (void)
+{
+    int cancel, err = 0;
+
+    data_save_selection_wrapper(COPY_CSV);
+
+    if (storelist != NULL && *storelist != '\0') {
+	int *list = gretl_list_from_string(storelist, &err);	
+
+	if (list != NULL) {
+	    cancel = csv_options_dialog(NULL);
+	    if (!cancel) {
+		err = real_csv_to_clipboard(list);
+	    }
+	    free(list);
+	}
+
+	free(storelist);
+	storelist = NULL;
     }
 
     return err;
@@ -1839,7 +1840,7 @@ int scalars_to_clipboard_as_csv (void)
 	return 0;
     }
 
-    if (delimiter_dialog(NULL)) {
+    if (csv_options_dialog(NULL)) {
 	return 0;
     }
 

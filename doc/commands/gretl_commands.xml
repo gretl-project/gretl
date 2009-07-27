@@ -7925,9 +7925,15 @@
       </para>
       <ilist>
 	<li>
-	  <para><lit>csv_delim</lit>: either <lit>comma</lit> (the
-	  default), <lit>space</lit> or <lit>tab</lit>.  Sets the column
-	  delimiter used when saving data to file in CSV format.
+	  <para><lit>csv_delim</lit>: either <lit>comma</lit> (the default),
+	    <lit>space</lit>, <lit>tab</lit> or <lit>semicolon</lit>.  Sets
+	    the column delimiter used when saving data to file in CSV format.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>csv_na</lit>: string to represent missing values when
+	    writing to file in CSV format.  Maximum 7 characters; the default
+	    is <lit>NA</lit>.
 	  </para>
 	</li>
 	<li>

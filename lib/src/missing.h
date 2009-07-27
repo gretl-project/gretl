@@ -65,4 +65,6 @@ int set_miss (const int *list, const char *param, double **Z,
 
 double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo);
 
+int any_missing_user_values (const double **Z, const DATAINFO *pdinfo);
+
 #endif /* MISSING_H */
