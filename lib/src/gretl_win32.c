@@ -447,7 +447,8 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     if (!ok) {
 	fputs("Closing handle failed\n", stderr); 
     } else {
-	/* read output from the child process */
+	/* read output from the child process: note that the buffer
+	   must be NUL-terminated for use with pputs() */
 	while (1) { 
 	    memset(buf, '\0', BUFSIZE);
 	    ok = ReadFile(hread, buf, BUFSIZE-1, &dwread, NULL);
