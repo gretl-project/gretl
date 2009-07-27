@@ -113,6 +113,7 @@ void preamble (const char *s)
     printf("AppName=gretl\n");
     printf("AppVerName=gretl version %s\n", s);
     printf("AppVersion=%s\n", s);
+    printf("AppPublisher=The gretl team\n");
     printf("AppPublisherURL=http://gretl.sourceforge.net/\n");
     printf("AppSupportURL=http://gretl.sourceforge.net/\n");
     printf("DefaultDirName={pf}\\gretl\n");

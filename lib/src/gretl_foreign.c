@@ -154,16 +154,12 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 {
-    char oxpath[MAX_PATH];
-    const gchar *fname;
+    const char *path = gretl_ox_path();
+    const char *fname = gretl_ox_filename();
     gchar *cmd, *sout = NULL;
     int err;
 
-    strcpy(oxpath, "oxl.exe"); /* FIXME */
-    fname = gretl_ox_filename(); 
-
-    cmd = g_strdup_printf("\"%s\" \"%s\"", oxpath, fname);
-
+    cmd = g_strdup_printf("\"%s\" \"%s\"", path, fname);
     err = gretl_win32_grab_output(cmd, &sout);
 
     if (!err) {
@@ -239,14 +235,13 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 {
-    char *argv[] = {
-	"oxl", 
-	NULL,
-	NULL
-    };
+    char *argv[3];
     int err;
 
+    argv[0] = (char *) gretl_ox_path();
     argv[1] = (char *) gretl_ox_filename();
+    argv[2] = NULL;
+
     err = lib_run_prog_sync(argv, opt, prn);
 
     return err;
