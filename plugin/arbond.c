@@ -326,12 +326,19 @@ static int dpd_process_list (dpd *ab, const int *list)
     }
 
     if (!err) {
-	if (ab->p < 1 || 
-	    (ab->qmax != 0 && ab->qmax < ab->p + 1) ||
-	    (ab->qmax != 0 && ab->qmin > ab->qmax)) {
-	    /* are these tests all valid? */
+	/* FIXME: are these tests all valid? */
+	if (ab->p < 1) {
+	    fprintf(stderr, "arbond lag order = %d < 1\n", ab->p);
 	    err = E_INVARG;
-	}  
+	} else if (ab->qmax != 0 && ab->qmax < ab->p + 1) {
+	    fprintf(stderr, "arbond qmax = %d < ab->p + 1 = %d\n", 
+		    ab->qmax, ab->p + 1);
+	    err = E_INVARG;
+	} else if (ab->qmax != 0 && ab->qmin > ab->qmax) {
+	    fprintf(stderr, "arbond qmin = %d > ab->qmax = %d\n", 
+		    ab->qmin, ab->qmax);
+	    err = E_INVARG;
+	}
     }
 
     if (!err && list[0] >= xpos) {
@@ -423,7 +430,7 @@ static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    /* NULL pointer members just in case */
+    /* set pointer members to NULL just in case */
     ab->xlist = ab->ilist = NULL;
     ab->B1 = ab->B2 = NULL;
     ab->V = NULL;
@@ -669,7 +676,7 @@ static void dpd_compute_Z_cols (dpd *ab, int t1min, int t2max)
 	cols = (ab->p + i > ab->qmax - 1)? ab->qmax - 1 : ab->p + i;
 	ab->m += cols;
 #if ADEBUG
-	fprintf(stderr, "block i: adding %d cols for y lags\n", i, cols);
+	fprintf(stderr, "block %d: adding %d cols for y lags\n", i, cols);
 #endif
 	if (ab->nzb > 0) {
 	    /* other block-diagonal instruments */
@@ -829,7 +836,7 @@ static int dpd_wald_test (dpd *ab)
     gretl_matrix_block *B;
     gretl_matrix *vcv = NULL;
     gretl_vector *b = NULL;
-    double x;
+    double x = 0.0;
     int cpos = dpd_const_pos(ab);
     int i, j, k, kc = ab->p + ab->nx;
     int ri, rj;

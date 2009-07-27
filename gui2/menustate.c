@@ -205,6 +205,9 @@ void panel_menu_state (gboolean s)
 	flip(mdata->ui, "/MenuBar/Add/UnitDums", s);
 	flip(mdata->ui, "/MenuBar/Add/TimeDums", s);
 	flip(mdata->ui, "/MenuBar/Model/PanelModels", s);
+	if (s && datainfo->pd <= 2) {
+	    flip(mdata->ui, "/MenuBar/Model/PanelModels/arbond", 0);
+	}
     }
 }
 

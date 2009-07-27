@@ -2034,8 +2034,9 @@ static void add_pdq_vals_to_cmdlist (selector *sr)
 	sprintf(s, "%d %d ; ", garch_p, garch_q);
     } else if (sr->ci == ARBOND) {
 	int p = spinner_get_int(sr->extra[0]);
+	int q = spinner_get_int(sr->extra[1]);
 
-	sprintf(s, "%d ; ", p);
+	sprintf(s, "%d %d ; ", p, q);
     } else if (sr->ci == ARCH) {
 	int p = spinner_get_int(sr->extra[0]);
 
@@ -3320,6 +3321,22 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
     }
 }
 
+/* ensure that the max lag of the level of y as instrument ('maxlag')
+   is at least one greater than the lag order for y ('arlag')
+*/
+
+static void arbond_cross_connect (GtkSpinButton *s1,
+				  GtkSpinButton *s2)
+{
+    gint arlag = gtk_spin_button_get_value_as_int(s1);
+    gint maxinst = gtk_spin_button_get_value_as_int(s2);
+
+    if (maxinst < arlag + 1) {
+	maxinst = arlag + 1;
+	gtk_spin_button_set_value(s2, maxinst);
+    }
+}
+
 static void AR_order_spin (selector *sr, GtkWidget *vbox)
 {
     GtkWidget *tmp, *hbox;
@@ -3337,8 +3354,8 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("AR order:"));
 	val = 1;
 	maxlag = 10;
-	if (maxlag < datainfo->pd) {
-	    maxlag = datainfo->pd;
+	if (maxlag < datainfo->pd - 1) {
+	    maxlag = datainfo->pd - 1;
 	}
     }
 
@@ -3357,6 +3374,24 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox); 
+
+    if (sr->ci == ARBOND) {
+	int maxinst = datainfo->pd - 1;
+	int defmax = (maxinst > 6)? 6 : maxinst;
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new(_("Maximum lag:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
+	adj = gtk_adjustment_new(defmax, 2, maxinst, 1, 1, 0);
+	sr->extra[1] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[1], FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+	gtk_widget_show_all(hbox); 
+
+	g_signal_connect(G_OBJECT(sr->extra[0]), "value-changed",
+			 G_CALLBACK(arbond_cross_connect), sr->extra[1]);
+    }
 }
 
 static void third_var_box (selector *sr, GtkWidget *vbox)

@@ -611,6 +611,12 @@
 	If the third argument is given as 0, all available lags are used.
       </para>
       <para context="gui">
+	The <quote>Maximum lag</quote> button sets the greatest lag of the
+	level of the dependent variable to be used as an instrument.
+	Please note that using an excessive number of lags will slow the
+	analysis substantially and may jeopardize its validity.
+      </para>
+      <para context="gui">
 	As regards the handling of instruments, please see the
 	documentation for the script version of this command.  Currently
 	you cannot specify instruments explicitly in the GUI: all the
