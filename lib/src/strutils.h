@@ -161,10 +161,6 @@ char *trim_slash (char *s);
 
 int gretl_string_ends_with (const char *s, const char *test);
 
-int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);
-
-int varname_match_any (const DATAINFO *pdinfo, const char *pattern);
-
 void get_column_widths (const char **strs, int *widths, int n);
 
 #endif /* STRUTILS_H */

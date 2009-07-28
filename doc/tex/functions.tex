@@ -446,16 +446,6 @@ of'' such variables you need to use the form of identification just
 mentioned: the name of the list, followed by a dot, followed by the
 name of the variable.
 
-\tip{The treatment of list-argument variables described above is new
-  in \app{gretl} 1.7.6.  The problem it addresses is quite subtle, and
-  was discovered only recently.  Existing functions that use
-  \texttt{foreach} loops on list arguments may need to be modified.
-  For a limited time, there is a special switch available that
-  restores the old behavior: that is, it enables support for functions
-  that do not use the \textsl{listname.varname} syntax.  The command
-  to use is \texttt{set protect\_lists off}.  But we recommend
-  updating old functions as soon as possible.}
-
 \paragraph{Constancy of list arguments} When a named list of
 variables is passed to a function, the function is actually provided
 with a copy of the list.  The function may modify this copy (for

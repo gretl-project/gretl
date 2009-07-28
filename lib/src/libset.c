@@ -106,7 +106,6 @@ struct set_vars_ {
 #define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
 #define BLAS_NMK_MIN "blas_nmk_min"
-#define PROTECT_LISTS "protect_lists"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
@@ -122,7 +121,6 @@ struct set_vars_ {
 			   !strcmp(s, SHELL_OK) || \
 			   !strcmp(s, USE_CWD) || \
 			   !strcmp(s, USE_FCP) || \
-                           !strcmp(s, PROTECT_LISTS) || \
                            !strcmp(s, VERBOSE_INCLUDE) || \
                            !strcmp(s, SKIP_MISSING) || \
 			   !strcmp(s, R_FUNCTIONS) || \
@@ -151,7 +149,6 @@ struct set_vars_ {
 /* global state */
 set_vars *state;
 static int gretl_debug;
-static int protect_lists = 1;
 static int user_mp_bits;
 static int R_functions;
 static int R_lib;
@@ -524,11 +521,6 @@ int gretl_warnings_on (void)
 int gretl_debugging_on (void)
 {
     return gretl_debug;
-}
-
-int lists_protected (void)
-{
-    return protect_lists;
 }
 
 #define DEFAULT_MP_BITS 256
@@ -1261,7 +1253,6 @@ static int display_settings (PRN *prn)
     }
 
     libset_print_bool(USE_CWD, prn);
-    libset_print_bool(PROTECT_LISTS, prn);
     libset_print_bool(VERBOSE_INCLUDE, prn);
     libset_print_bool(SKIP_MISSING, prn);
 
@@ -1807,9 +1798,7 @@ int libset_get_bool (const char *key)
 
     /* global specials */
 
-    if (!strcmp(key, PROTECT_LISTS)) {
-	return protect_lists;
-    } else if (!strcmp(key, R_FUNCTIONS)) {
+    if (!strcmp(key, R_FUNCTIONS)) {
 	return R_functions;
     } else if (!strcmp(key, R_LIB)) {
 	return R_lib;
@@ -1883,10 +1872,7 @@ int libset_set_bool (const char *key, int val)
 
     /* global specials */
 
-    if (!strcmp(key, PROTECT_LISTS)) {
-	protect_lists = val;
-	return 0;
-    } else if (!strcmp(key, R_FUNCTIONS)) {
+    if (!strcmp(key, R_FUNCTIONS)) {
 	return check_R_setting(&R_functions, val, key);
     } else if (!strcmp(key, R_LIB)) {
 	return check_R_setting(&R_lib, val, key);

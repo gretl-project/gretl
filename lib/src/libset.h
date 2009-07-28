@@ -131,7 +131,6 @@ int gretl_messages_on (void);
 
 int gretl_warnings_on (void);
 int gretl_debugging_on (void);
-int lists_protected (void);
 
 void shelldir_init (const char *s);
 char *get_shelldir (void);

@@ -24,6 +24,7 @@
 #include "gretl_xml.h"
 
 #include <errno.h>
+#include <glib.h>
 
 #define LDEBUG 0
 
@@ -2632,4 +2633,88 @@ void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
 	pputc(prn, '\n');
     }
 }
+
+/**
+ * varname_match_list:
+ * @pdinfo: pointer to dataset information.
+ * @pattern: pattern to be matched.
+ *
+ * Returns: a list of ID numbers of variables whose names
+ * match @pattern, or %NULL if there are no matches.
+ */
+
+int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
+{
+    GPatternSpec *pspec;
+    int *list = NULL;
+    int i, fd, n = 0;
+
+    if (pdinfo == NULL || pdinfo->v == 0) {
+	return NULL;
+    }
+
+    fd = gretl_function_depth();
+
+    pspec = g_pattern_spec_new(pattern);
+
+    for (i=1; i<pdinfo->v; i++) { 
+	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
+	    if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
+		n++;
+	    }
+	}
+    }
+
+    if (n > 0) {
+	list = gretl_list_new(n);
+	if (list != NULL) {
+	    int j = 1;
+
+	    for (i=1; i<pdinfo->v; i++) { 
+		if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
+		    if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
+			list[j++] = i;
+		    }
+		}
+	    }
+	}
+    }
+
+    g_pattern_spec_free(pspec);
+
+    return list;
+}
+
+/**
+ * varname_match_any:
+ * @pdinfo: pointer to dataset information.
+ * @pattern: pattern to be matched.
+ *
+ * Returns: 1 if at least one variable in the dataset has a
+ * name that matches @pattern, otherwise 0.
+ */
+
+int varname_match_any (const DATAINFO *pdinfo, const char *pattern)
+{
+    GPatternSpec *pspec;
+    int i, fd, ret = 0;
+
+    fd = gretl_function_depth();
+
+    pspec = g_pattern_spec_new(pattern);
+
+    for (i=1; i<pdinfo->v; i++) { 
+	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
+	    if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
+		ret = 1;
+		break;
+	    }
+	}
+    }
+
+    g_pattern_spec_free(pspec);
+
+    return ret;
+}
+
 

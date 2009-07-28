@@ -1980,62 +1980,6 @@ int gretl_string_ends_with (const char *s, const char *test)
     return ret;
 }
 
-int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
-{
-    GPatternSpec *pspec;
-    int *list = NULL;
-    int i, n = 0;
-
-    if (pdinfo == NULL) {
-	return NULL;
-    }
-
-    pspec = g_pattern_spec_new(pattern);
-
-    for (i=1; i<pdinfo->v; i++) { 
-	if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
-	    n++;
-	}
-    }
-
-    if (n > 0) {
-	list = malloc((n + 1) * sizeof *list);
-	if (list != NULL) {
-	    int j = 1;
-
-	    list[0] = n;
-	    for (i=1; i<pdinfo->v; i++) { 
-		if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
-		    list[j++] = i;
-		}
-	    }
-	}
-    }
-
-    g_pattern_spec_free(pspec);
-
-    return list;
-}
-
-int varname_match_any (const DATAINFO *pdinfo, const char *pattern)
-{
-    GPatternSpec *pspec;
-    int i, ret = 0;
-
-    pspec = g_pattern_spec_new(pattern);
-
-    for (i=1; i<pdinfo->v; i++) { 
-	if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
-	    ret = 1;
-	    break;
-	}
-    }
-
-    g_pattern_spec_free(pspec);
-
-    return ret;
-}
-
 /**
  * get_column_widths:
  * @strs: array of @n strings.

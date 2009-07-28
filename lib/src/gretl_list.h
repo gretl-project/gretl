@@ -140,4 +140,8 @@ void gretl_list_print (const char *lname,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
 
+int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);
+
+int varname_match_any (const DATAINFO *pdinfo, const char *pattern);
+
 #endif /* GRETL_LIST_H */

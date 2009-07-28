@@ -401,7 +401,7 @@ int series_index (const DATAINFO *pdinfo, const char *varname)
     for (i=1; i<pdinfo->v; i++) { 
 	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
 	    if (!strcmp(pdinfo->varname[i], s)) {
-		if (lists_protected() && var_is_listarg(pdinfo, i)) {
+		if (var_is_listarg(pdinfo, i)) {
 		    /* variable is not visible by name in context */
 		    ;
 #if 0
