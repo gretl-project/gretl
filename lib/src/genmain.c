@@ -398,19 +398,27 @@ int series_index (const DATAINFO *pdinfo, const char *varname)
 
     fd = gretl_function_depth();
 
-    for (i=1; i<pdinfo->v; i++) { 
-	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
-	    if (!strcmp(pdinfo->varname[i], s)) {
-		if (var_is_listarg(pdinfo, i)) {
-		    /* variable is not visible by name in context */
-		    ;
-#if 0
-		    fprintf(stderr, "var %d (%s) is invisible\n", i, s);
-#endif
-		} else {
-		    ret = i;
-		    break;
-		}
+    if (fd == 0) {
+	/* not inside a user function: easy */
+	for (i=1; i<pdinfo->v; i++) { 
+	    if (strcmp(pdinfo->varname[i], s) == 0) {
+		ret = i;
+		break;
+	    }
+	}
+    } else {
+	/* The condition for recognizing a series by name, if we're
+	   inside a user function: it must exist at the current level
+	   of function execution, and its tenure at that level must
+	   not just be the result of its being a member of a list
+	   that was passed as an argument.
+	*/
+	for (i=1; i<pdinfo->v; i++) { 
+	    if (fd == STACK_LEVEL(pdinfo, i) &&
+		!var_is_listarg(pdinfo, i) && 
+		strcmp(pdinfo->varname[i], s) == 0) {
+		ret = i;
+		break;
 	    }
 	}
     }
