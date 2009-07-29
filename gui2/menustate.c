@@ -717,8 +717,3 @@ void vwin_menu_add_separator (windata_t *vwin, const gchar *path)
     gtk_ui_manager_add_ui(vwin->ui, id, path, NULL, NULL,
 			  GTK_UI_MANAGER_SEPARATOR, FALSE);
 }
-
-
-
-
-

@@ -75,6 +75,40 @@ static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
+#define HWIN_USE_TOOLBAR 0
+
+#if HWIN_USE_TOOLBAR
+
+const gchar *help_menu_path = "/MenuBar/TopicsButton/Topics";
+
+const gchar *help_ui = 
+    "<ui>"
+    " <toolbar name='MenuBar'>"
+    "   <toolitem action='TopicsButton'>"
+    "     <menu action='Topics'>"
+    "      <placeholder name='TopicsMenuItems'/>"
+    "     </menu>"
+    "   </toolitem>"
+    "   <toolitem action='WindowFind'/>"
+    "   <toolitem action='ZoomIn'/>"
+    "   <toolitem action='ZoomOut'/>"
+    " </toolbar>"
+    "</ui>";
+
+GtkActionEntry help_menu_items[] = {
+    { "Topics", NULL, NULL, NULL, NULL, NULL },
+    { "WindowFind", GTK_STOCK_FIND, N_("_Find in window"), NULL, NULL,
+      G_CALLBACK(text_find) },
+    { "ZoomIn", GTK_STOCK_ZOOM_IN, N_("_Larger"), NULL, NULL,
+      G_CALLBACK(text_zoom) },
+    { "ZoomOut", GTK_STOCK_ZOOM_OUT, N_("_Smaller"), NULL, NULL,
+      G_CALLBACK(text_zoom) }
+};
+
+#else
+
+const gchar *help_menu_path = "/MenuBar/Topics";
+
 const gchar *help_ui = 
     "<ui>"
     " <menubar name='MenuBar'>"
@@ -98,9 +132,12 @@ GtkActionEntry help_menu_items[] = {
     { "ZoomIn", GTK_STOCK_ZOOM_IN, N_("_Larger"), NULL, NULL,
       G_CALLBACK(text_zoom) },
     { "ZoomOut", GTK_STOCK_ZOOM_OUT, N_("_Smaller"), NULL, NULL,
-      G_CALLBACK(text_zoom) },
-    { NULL, NULL, NULL, NULL, NULL, NULL }
+      G_CALLBACK(text_zoom) }
 };
+
+#endif
+
+gint n_help_items = G_N_ELEMENTS(help_menu_items);
 
 struct gui_help_item {
     int code;
@@ -1053,7 +1090,7 @@ static int help_menu_add_item (windata_t *vwin, const gchar *path,
 static void add_help_topics (windata_t *hwin, int flags)
 {
     GtkActionEntry hitem;
-    const gchar *mpath = "/MenuBar/Topics";
+    const gchar *mpath = help_menu_path;
     help_head **hds = NULL;
     int en = (flags & HELP_EN);
     int cli = (flags & HELP_CLI);
@@ -1126,6 +1163,46 @@ static void add_help_topics (windata_t *hwin, int flags)
     }
 }
 
+void set_up_helpview_menu (windata_t *hwin) 
+{
+#if HWIN_USE_TOOLBAR
+    GtkAction *action;
+    GtkToolItem *proxy;
+#endif
+    GtkActionGroup *actions;
+    GError *err = NULL;
+
+    actions = gtk_action_group_new("MyActions");
+    gtk_action_group_set_translation_domain(actions, "gretl");
+
+    gtk_action_group_add_actions(actions, help_menu_items, 
+				 n_help_items, hwin);
+
+#if HWIN_USE_TOOLBAR
+    action = gtk_action_new("TopicsButton", NULL, N_("_Topics"), 
+			    GTK_STOCK_INDEX);
+    /* proxy = gtk_menu_tool_button_new_from_stock(GTK_STOCK_INDEX); */
+    proxy = gtk_menu_tool_button_new(NULL, NULL);
+    gtk_action_connect_proxy(action, GTK_WIDGET(proxy));
+    gtk_action_group_add_action_with_accel(actions, action, NULL);
+#endif
+
+    hwin->ui = gtk_ui_manager_new();
+    gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    gtk_window_add_accel_group(GTK_WINDOW(hwin->main), 
+			       gtk_ui_manager_get_accel_group(hwin->ui));
+
+    gtk_ui_manager_add_ui_from_string(hwin->ui, help_ui, -1, &err);
+    if (err != NULL) {
+	g_message("building helpview menus failed: %s", err->message);
+	g_error_free(err);
+    }
+
+    hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/MenuBar");
+}
+
 static char *funcs_helpfile (void)
 {
     static char fname[MAXLEN];
@@ -1158,7 +1235,7 @@ static windata_t *make_helpwin (int flags)
     }
 
     if (helpfile != NULL) {
-	vwin = view_help_file(helpfile, role, help_menu_items, help_ui);
+	vwin = view_help_file(helpfile, role);
     }
 
     if (vwin != NULL) {

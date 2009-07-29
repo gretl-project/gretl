@@ -1741,9 +1741,7 @@ windata_t *console_window (int hsize, int vsize)
     return vwin;
 }
 
-windata_t *
-view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
-		const gchar *ui_info)
+windata_t *view_help_file (const char *filename, int role)
 {
     windata_t *vwin;
     gchar *fbuf = NULL;
@@ -1766,7 +1764,7 @@ view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
     vwin->data = fbuf;
 
     viewer_box_config(vwin);
-    set_up_viewer_menu(vwin->main, vwin, menu_items, ui_info);
+    set_up_helpview_menu(vwin);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 

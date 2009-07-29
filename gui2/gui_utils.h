@@ -85,9 +85,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
 windata_t *console_window (int hsize, int vsize);
 
-windata_t *
-view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
-		const gchar *ui_info);
+windata_t *view_help_file (const char *filename, int role);
 
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role);
