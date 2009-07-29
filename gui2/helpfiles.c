@@ -84,17 +84,21 @@ const gchar *help_menu_path = "/toolbar/TopicsButton/Topics";
 const gchar *help_ui = 
     "<ui>"
     " <toolbar>"
-    "   <toolitem action='TopicsButton'>"
-    "     <menu action='Topics'/>"
-    "   </toolitem>"
-    "   <toolitem action='WindowFind'/>"
-    "   <toolitem action='ZoomIn'/>"
-    "   <toolitem action='ZoomOut'/>"
+    "  <toolitem action='TopicsButton'>"
+    "   <menu action='Topics'>"
+    "    <menuitem action='Foo'/>"
+    "   </menu>"
+    "  </toolitem>"
+    "  <toolitem action='WindowFind'/>"
+    "  <toolitem action='ZoomIn'/>"
+    "  <toolitem action='ZoomOut'/>"
     " </toolbar>"
     "</ui>";
 
 GtkActionEntry help_menu_items[] = {
+    { "TopicsButton", GTK_STOCK_INDEX, NULL, NULL, NULL, NULL },
     { "Topics", NULL, NULL, NULL, NULL, NULL },
+    { "Foo", NULL, NULL, NULL, NULL, NULL },
     { "WindowFind", GTK_STOCK_FIND, NULL, NULL, N_("Find in window"),
       G_CALLBACK(text_find) },
     { "ZoomIn", GTK_STOCK_ZOOM_IN, NULL, NULL, N_("Larger"),
@@ -1173,15 +1177,11 @@ void set_up_helpview_menu (windata_t *hwin)
     actions = gtk_action_group_new("HelpActions");
     gtk_action_group_set_translation_domain(actions, "gretl");
 
-    action = gtk_action_new("TopicsButton", NULL, N_("Topics"), GTK_STOCK_INDEX);
-    /* proxy = gtk_menu_tool_button_new_from_stock(GTK_STOCK_INDEX); */
-    proxy = gtk_menu_tool_button_new(NULL, NULL);
-    gtk_action_connect_proxy(action, GTK_WIDGET(proxy));
-    gtk_action_group_add_action_with_accel(actions, action, NULL);
-
-    /* now add the other predefined items */
     gtk_action_group_add_actions(actions, help_menu_items, 
 				 n_help_items, hwin);
+    action = gtk_action_group_get_action(actions, "TopicsButton");
+    proxy = gtk_menu_tool_button_new(NULL, NULL);
+    gtk_action_connect_proxy(action, GTK_WIDGET(proxy));
 
     hwin->ui = gtk_ui_manager_new();
     gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
@@ -1193,12 +1193,13 @@ void set_up_helpview_menu (windata_t *hwin)
 #endif
 
     gtk_ui_manager_add_ui_from_string(hwin->ui, help_ui, -1, &err);
-    fprintf(stderr, "Added ui from string\n");
     if (err != NULL) {
 	fprintf(stderr, "building helpview menus failed: %s", err->message);
 	g_error_free(err);
     } else {
+	fprintf(stderr, "getting mbar\n");
 	hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/toolbar");
+	fprintf(stderr, "got mbar\n");
 	gtk_toolbar_set_icon_size(GTK_TOOLBAR(hwin->mbar), GTK_ICON_SIZE_MENU);
     }
 
