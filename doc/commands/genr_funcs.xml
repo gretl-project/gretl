@@ -4294,7 +4294,7 @@
 	</para>
 	<para> Note that is you just want to compare two strings for
 	  equality, that can be done without using a function, as in
-	  <lit>if (s1 == s2) ...</lit>.
+	  <lit>if (s1 == s2) ...</lit>
 	</para>
       </description>
     </function>
