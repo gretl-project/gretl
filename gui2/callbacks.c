@@ -209,64 +209,13 @@ void open_data (GtkAction *action)
 
     code = open_data_code(gtk_action_get_name(action));
 
-    switch (code) {
-    case OPEN_DATA:
-    case APPEND_DATA:
-    case OPEN_ASCII:
-    case APPEND_ASCII:
-	file_selector(_("Open data file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_CSV:
-    case APPEND_CSV:
+    if (code == OPEN_CSV || code == APPEND_CSV) {
 	if (csv_options_dialog(NULL)) {
 	    return;
 	}
-	file_selector(_("Open CSV file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_OCTAVE:
-    case APPEND_OCTAVE:
-	file_selector(_("Open Octave file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_GNUMERIC:
-    case APPEND_GNUMERIC:
-	file_selector(_("Open Gnumeric file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_XLS:
-    case APPEND_XLS:
-	file_selector(_("Open Excel file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_WF1:
-    case APPEND_WF1:
-	file_selector(_("Open Eviews workfile"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_DTA:
-    case APPEND_DTA:
-	file_selector(_("Open Stata file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_SAV:
-    case APPEND_SAV:
-	file_selector(_("Open SPSS file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_JMULTI:
-    case APPEND_JMULTI:
-	file_selector(_("Open JMulTi file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_ODS:
-    case APPEND_ODS:
-	file_selector(_("Open ODS file"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_MARKERS:
-	file_selector(_("gretl: add markers"), code, FSEL_DATA_NONE, NULL);
-	break;
-    case OPEN_RATS_DB:
-    case OPEN_PCGIVE_DB:
-	file_selector(_("gretl: open database"), code, FSEL_DATA_NONE, NULL);
-	break;
-    default:
-	fprintf(stderr, "open_data: unrecognized action '%s'\n",
-		gtk_action_get_name(action));
-	break;
     }
+
+    file_selector(code, FSEL_DATA_NONE, NULL);
 }
 
 void open_script (GtkAction *action)
@@ -274,9 +223,9 @@ void open_script (GtkAction *action)
     const gchar *s = gtk_action_get_name(action);
 
     if (!strcmp(s, "OpenScript")) {
-	file_selector(_("Open script file"), OPEN_SCRIPT, FSEL_DATA_NONE, NULL);
+	file_selector(OPEN_SCRIPT, FSEL_DATA_NONE, NULL);
     } else if (!strcmp(s, "OpenSession")) {
-	file_selector(_("Open session file"), OPEN_SESSION, FSEL_DATA_NONE, NULL);
+	file_selector(OPEN_SESSION, FSEL_DATA_NONE, NULL);
     }
 }
 
@@ -284,13 +233,11 @@ void file_save (windata_t *vwin, int ci)
 {
     switch (ci) {
     case SAVE_OUTPUT:
-	file_selector(_("Save output file"), ci, FSEL_DATA_VWIN, vwin);
-	break;
     case SAVE_CONSOLE:
-	file_selector(_("Save console output"), ci, FSEL_DATA_VWIN, vwin);
-	break;
     case SAVE_SCRIPT:
-	file_selector(_("Save command script"), ci, FSEL_DATA_VWIN, vwin);
+    case SAVE_GP_CMDS:
+    case SAVE_R_CMDS:
+	file_selector(ci, FSEL_DATA_VWIN, vwin);
 	break;
     case SAVE_DATA:
     case SAVE_DATA_AS:
@@ -304,16 +251,8 @@ void file_save (windata_t *vwin, int ci)
 	data_save_selection_wrapper(ci);
 	break;
     case SAVE_TEX:
-	file_selector(_("Save LaTeX file"), ci, FSEL_DATA_MISC, vwin->data);
-	break;
     case SAVE_TEXT:
-	file_selector(_("Save text"), ci, FSEL_DATA_MISC, vwin->data);
-	break;
-    case SAVE_GP_CMDS:
-	file_selector(_("Save gnuplot commands"), ci, FSEL_DATA_VWIN, vwin);
-	break;
-    case SAVE_R_CMDS:
-	file_selector(_("Save R commands"), ci, FSEL_DATA_VWIN, vwin);
+	file_selector(ci, FSEL_DATA_MISC, vwin->data);
 	break;
     default:
 	dummy_call();

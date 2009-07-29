@@ -2743,12 +2743,12 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 
     if (!strcmp(up_item, _("Save as postscript (EPS)..."))) {
 	plot->spec->termtype = GP_TERM_EPS;
-	file_selector_with_parent(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-				  FSEL_DATA_MISC, plot->spec, plot->shell);
+	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
+				  plot->spec, plot->shell);
     } else if (!strcmp(up_item, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
-	file_selector_with_parent(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-				  FSEL_DATA_MISC, plot->spec, plot->shell);
+	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
+				  plot->spec, plot->shell);
     } 
 #ifdef G_OS_WIN32
     else if (!strcmp(up_item, _("Copy to clipboard"))) {
@@ -2911,12 +2911,12 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	dist_graph_add(plot);
     } else if (!strcmp(item, _("Save as PNG..."))) {
 	plot->spec->termtype = GP_TERM_PNG;
-        file_selector_with_parent(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-				  FSEL_DATA_MISC, plot->spec, plot->shell);
+        file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
+				  plot->spec, plot->shell);
     } else if (!strcmp(item, _("Save as PDF..."))) {
 	plot->spec->termtype = GP_TERM_PDF;
-        file_selector_with_parent(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-				  FSEL_DATA_MISC, plot->spec, plot->shell);
+        file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
+				  plot->spec, plot->shell);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_to_session_callback(plot->spec);
     } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
@@ -3878,12 +3878,14 @@ static png_plot *png_plot_new (void)
     return plot;
 }
 
-static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
+static int gnuplot_show_png (const char *plotfile, const char *name,
+			     GPT_SPEC *spec, int saved)
 {
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
     GtkWidget *label_frame = NULL;
     GtkWidget *status_hbox = NULL;
+    gchar *title = NULL;
     png_plot *plot;
     int polar = 0;
     int err = 0;
@@ -3960,7 +3962,15 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     /* note need for corresponding unref */
     g_object_ref(plot->shell);
 
-    gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: gnuplot graph")); 
+    if (name != NULL) {
+	title = g_strdup_printf("gretl: %s", name);
+    } else {
+	title = g_strdup(_("gretl: graph"));
+    }
+
+    gtk_window_set_title(GTK_WINDOW(plot->shell), title);
+    g_free(title);
+
     gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);
 
     vbox = gtk_vbox_new(FALSE, 2);
@@ -4085,12 +4095,17 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     return err;
 }
 
-int gnuplot_show_png_by_name (const char *fname)
+/* @fname is the name of a pre-made PNG file */
+
+int display_graph_file (const char *fname)
 {
-    return gnuplot_show_png(fname, NULL, 0);
+    return gnuplot_show_png(fname, NULL, NULL, 0);
 }
 
-void display_session_graph_png (const char *fname) 
+/* @fname is the name of a plot command file from the
+   current session, and @title is its display name */
+
+void display_session_graph (const char *fname, const char *title) 
 {
     char fullname[MAXLEN];
     gchar *plotcmd;
@@ -4111,12 +4126,12 @@ void display_session_graph_png (const char *fname)
     g_free(plotcmd);
 
     if (err) {
-	/* display the bad graph file */
+	/* display the bad plot file */
 	view_file(fullname, 0, 0, 78, 350, VIEW_FILE);
     }
 
     if (!err) {
-	err = gnuplot_show_png(fullname, NULL, 1);
+	err = gnuplot_show_png(fullname, title, NULL, 1);
     }
 
     if (err) {

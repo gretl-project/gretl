@@ -764,7 +764,7 @@ static void set_up_db_menu (windata_t *vwin, int cb, int del)
     };
     const gchar *db_ui = 
 	"<ui>"
-	"  <menubar name='MenuBar'>"
+	"  <menubar>"
 	"    <menu action='File'>"
 	"      <menuitem action='FileClose'/>"
 	"    </menu>"
@@ -783,12 +783,12 @@ static void set_up_db_menu (windata_t *vwin, int cb, int del)
     vwin_add_ui(vwin, db_items, G_N_ELEMENTS(db_items), db_ui);
 
     if (cb) {
-	vwin_menu_add_menu(vwin, "/MenuBar", &cb_items[0]);
-	vwin_menu_add_item(vwin, "/MenuBar/Codebook", &cb_items[1]);
+	vwin_menu_add_menu(vwin, "/menubar", &cb_items[0]);
+	vwin_menu_add_item(vwin, "/menubar/Codebook", &cb_items[1]);
     }
 
     if (!del) {
-	flip(vwin->ui, "/MenuBar/Series/SeriesDelete", FALSE);
+	flip(vwin->ui, "/menubar/Series/SeriesDelete", FALSE);
     }
 }
 

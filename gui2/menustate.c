@@ -60,13 +60,13 @@ void flip (GtkUIManager *ui, const char *path, gboolean s)
 
 void edit_info_state (gboolean s)
 {
-    flip(mdata->ui, "/MenuBar/Data/EditInfo", s);
+    flip(mdata->ui, "/menubar/Data/EditInfo", s);
 }
 
 void add_remove_markers_state (gboolean s)
 {
-    flip(mdata->ui, "/MenuBar/Data/AddMarkers", !s);
-    flip(mdata->ui, "/MenuBar/Data/RemoveMarkers", s);
+    flip(mdata->ui, "/menubar/Data/AddMarkers", !s);
+    flip(mdata->ui, "/menubar/Data/RemoveMarkers", s);
 }
 
 /* by using gretl_set_window_modal() we make the main
@@ -115,8 +115,8 @@ void variable_menu_state (gboolean s)
 {
     if (mdata == NULL || mdata->ui == NULL) return;
 
-    flip(mdata->ui, "/MenuBar/Variable", s);
-    flip(mdata->ui, "/MenuBar/View/xcorrgm",  
+    flip(mdata->ui, "/menubar/Variable", s);
+    flip(mdata->ui, "/menubar/View/xcorrgm",  
 	 dataset_is_time_series(datainfo));
 }
 
@@ -124,20 +124,20 @@ void main_menubar_state (gboolean s)
 {
     if (mdata == NULL || mdata->ui == NULL) return;
 
-    flip(mdata->ui, "/MenuBar/File/AppendData", s);
-    flip(mdata->ui, "/MenuBar/File/ClearData", s);
-    flip(mdata->ui, "/MenuBar/File/SaveData", s);
-    flip(mdata->ui, "/MenuBar/File/SaveDataAs", s);
-    flip(mdata->ui, "/MenuBar/File/ExportData", s);
-    flip(mdata->ui, "/MenuBar/File/MailData", s);
-    flip(mdata->ui, "/MenuBar/Data", s);
-    flip(mdata->ui, "/MenuBar/View", s);
-    flip(mdata->ui, "/MenuBar/Add", s);
-    flip(mdata->ui, "/MenuBar/Sample", s);
-    flip(mdata->ui, "/MenuBar/Variable", s);
-    flip(mdata->ui, "/MenuBar/Model", s);
+    flip(mdata->ui, "/menubar/File/AppendData", s);
+    flip(mdata->ui, "/menubar/File/ClearData", s);
+    flip(mdata->ui, "/menubar/File/SaveData", s);
+    flip(mdata->ui, "/menubar/File/SaveDataAs", s);
+    flip(mdata->ui, "/menubar/File/ExportData", s);
+    flip(mdata->ui, "/menubar/File/MailData", s);
+    flip(mdata->ui, "/menubar/Data", s);
+    flip(mdata->ui, "/menubar/View", s);
+    flip(mdata->ui, "/menubar/Add", s);
+    flip(mdata->ui, "/menubar/Sample", s);
+    flip(mdata->ui, "/menubar/Variable", s);
+    flip(mdata->ui, "/menubar/Model", s);
 
-    flip(mdata->ui, "/MenuBar/File/NewData", !s);
+    flip(mdata->ui, "/menubar/File/NewData", !s);
 
     if (s) {
 	edit_info_state(!(data_status & BOOK_DATA));
@@ -170,43 +170,43 @@ void time_series_menu_state (gboolean s)
     }
 
     /* File menu */
-    flip(mdata->ui, "/MenuBar/File/SaveDataAs/SaveAsDb", DATASET_DB_OK(datainfo));
+    flip(mdata->ui, "/menubar/File/SaveDataAs/SaveAsDb", DATASET_DB_OK(datainfo));
 
     /* Plots */
-    flip(mdata->ui, "/MenuBar/View/GraphVars/TSPlot", sx);
-    flip(mdata->ui, "/MenuBar/View/MultiPlots/MultiTS", sx);
-    flip(mdata->ui, "/MenuBar/Variable/VarTSPlot", sx);
+    flip(mdata->ui, "/menubar/View/GraphVars/TSPlot", sx);
+    flip(mdata->ui, "/menubar/View/MultiPlots/MultiTS", sx);
+    flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx);
 
     /* Variable menu */
-    flip(mdata->ui, "/MenuBar/Variable/corrgm", s);
-    flip(mdata->ui, "/MenuBar/Variable/Spectrum", s);
-    flip(mdata->ui, "/MenuBar/Variable/ADF", s);
-    flip(mdata->ui, "/MenuBar/Variable/DFGLS", s);
-    flip(mdata->ui, "/MenuBar/Variable/KPSS", s);
-    flip(mdata->ui, "/MenuBar/Variable/Filter", s);
+    flip(mdata->ui, "/menubar/Variable/corrgm", s);
+    flip(mdata->ui, "/menubar/Variable/Spectrum", s);
+    flip(mdata->ui, "/menubar/Variable/ADF", s);
+    flip(mdata->ui, "/menubar/Variable/DFGLS", s);
+    flip(mdata->ui, "/menubar/Variable/KPSS", s);
+    flip(mdata->ui, "/menubar/Variable/Filter", s);
 #ifdef HAVE_X12A
-    flip(mdata->ui, "/MenuBar/Variable/X12A", get_x12a_ok());
+    flip(mdata->ui, "/menubar/Variable/X12A", get_x12a_ok());
 #endif
 #ifdef HAVE_TRAMO
-    flip(mdata->ui, "/MenuBar/Variable/Tramo", get_tramo_ok());
+    flip(mdata->ui, "/menubar/Variable/Tramo", get_tramo_ok());
 #endif
-    flip(mdata->ui, "/MenuBar/Variable/Hurst", s);
+    flip(mdata->ui, "/menubar/Variable/Hurst", s);
     /* Model menu */
-    flip(mdata->ui, "/MenuBar/Model/TSModels", s);
+    flip(mdata->ui, "/menubar/Model/TSModels", s);
     /* Sample menu */
-    flip(mdata->ui, "/MenuBar/Data/DataCompact", 
+    flip(mdata->ui, "/menubar/Data/DataCompact", 
 	 s && (COMPACTABLE(datainfo) || dated_weekly_data(datainfo)));
-    flip(mdata->ui, "/MenuBar/Data/DataExpand", s && EXPANSIBLE(datainfo));
+    flip(mdata->ui, "/menubar/Data/DataExpand", s && EXPANSIBLE(datainfo));
 }
 
 void panel_menu_state (gboolean s)
 {
     if (mdata->ui != NULL) {
-	flip(mdata->ui, "/MenuBar/Add/UnitDums", s);
-	flip(mdata->ui, "/MenuBar/Add/TimeDums", s);
-	flip(mdata->ui, "/MenuBar/Model/PanelModels", s);
+	flip(mdata->ui, "/menubar/Add/UnitDums", s);
+	flip(mdata->ui, "/menubar/Add/TimeDums", s);
+	flip(mdata->ui, "/menubar/Model/PanelModels", s);
 	if (s && datainfo->pd <= 2) {
-	    flip(mdata->ui, "/MenuBar/Model/PanelModels/arbond", 0);
+	    flip(mdata->ui, "/menubar/Model/PanelModels/arbond", 0);
 	}
     }
 }
@@ -215,24 +215,24 @@ void ts_or_panel_menu_state (gboolean s)
 {
     if (mdata->ui == NULL) return;
 
-    flip(mdata->ui, "/MenuBar/Data/DataSort", !s);
+    flip(mdata->ui, "/menubar/Data/DataSort", !s);
 
-    flip(mdata->ui, "/MenuBar/Add/AddTime", s);
-    flip(mdata->ui, "/MenuBar/Add/lags", s);
-    flip(mdata->ui, "/MenuBar/Add/diff", s);
-    flip(mdata->ui, "/MenuBar/Add/ldiff", s);
+    flip(mdata->ui, "/menubar/Add/AddTime", s);
+    flip(mdata->ui, "/menubar/Add/lags", s);
+    flip(mdata->ui, "/menubar/Add/diff", s);
+    flip(mdata->ui, "/menubar/Add/ldiff", s);
 
     s = dataset_is_seasonal(datainfo);
-    flip(mdata->ui, "/MenuBar/Add/sdiff", s);
-    flip(mdata->ui, "/MenuBar/Add/PeriodDums", s);
+    flip(mdata->ui, "/menubar/Add/sdiff", s);
+    flip(mdata->ui, "/menubar/Add/PeriodDums", s);
 }
 
 void session_menu_state (gboolean s)
 {
     if (mdata->ui != NULL) {
-	flip(mdata->ui, "/MenuBar/View/IconView", s);
-	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", s);
-	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSessionAs", s);
+	flip(mdata->ui, "/menubar/View/IconView", s);
+	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", s);
+	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSessionAs", s);
     }
 
     if (!s && mdata->main != NULL) {
@@ -243,35 +243,35 @@ void session_menu_state (gboolean s)
 void restore_sample_state (gboolean s)
 {
     if (mdata->ui != NULL) {
-	flip(mdata->ui, "/MenuBar/Sample/FullRange", s);
+	flip(mdata->ui, "/menubar/Sample/FullRange", s);
     }
 }
 
 void drop_obs_state (gboolean s)
 {
     if (mdata->ui != NULL) {
-	flip(mdata->ui, "/MenuBar/Data/RemoveObs", s);
+	flip(mdata->ui, "/menubar/Data/RemoveObs", s);
     }
 }
 
 void compact_data_state (gboolean s)
 {
     if (mdata->ui != NULL) {
-	flip(mdata->ui, "/MenuBar/Data/DataCompact", s);
+	flip(mdata->ui, "/menubar/Data/DataCompact", s);
     }
 }
 
 void main_menus_enable (gboolean s)
 {
     if (mdata->ui != NULL) {
-	flip(mdata->ui, "/MenuBar/File", s);
-	flip(mdata->ui, "/MenuBar/Tools", s);
-	flip(mdata->ui, "/MenuBar/Data", s);
-	flip(mdata->ui, "/MenuBar/View", s);
-	flip(mdata->ui, "/MenuBar/Add", s);
-	flip(mdata->ui, "/MenuBar/Sample", s);
-	flip(mdata->ui, "/MenuBar/Variable", s);
-	flip(mdata->ui, "/MenuBar/Model", s);
+	flip(mdata->ui, "/menubar/File", s);
+	flip(mdata->ui, "/menubar/Tools", s);
+	flip(mdata->ui, "/menubar/Data", s);
+	flip(mdata->ui, "/menubar/View", s);
+	flip(mdata->ui, "/menubar/Add", s);
+	flip(mdata->ui, "/menubar/Sample", s);
+	flip(mdata->ui, "/menubar/Variable", s);
+	flip(mdata->ui, "/menubar/Model", s);
     }
 }
 
@@ -534,7 +534,7 @@ void set_sample_label (DATAINFO *pdinfo)
     ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
 			   dataset_is_panel(pdinfo));
 
-    flip(mdata->ui, "/MenuBar/Data/DataTranspose", !dataset_is_panel(pdinfo));
+    flip(mdata->ui, "/menubar/Data/DataTranspose", !dataset_is_panel(pdinfo));
 
     if (complex_subsampled() && pdinfo->t1 == 0 && 
 	pdinfo->t2 == pdinfo->n - 1 && 
@@ -622,7 +622,7 @@ int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
 	g_error_free(err);
     }
 
-    vwin->mbar = gtk_ui_manager_get_widget(vwin->ui, "/MenuBar");
+    vwin->mbar = gtk_ui_manager_get_widget(vwin->ui, "/menubar");
 
     return 0;
 }

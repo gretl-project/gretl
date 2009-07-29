@@ -1130,7 +1130,7 @@ static void show_local_funcs (GtkWidget *w, gpointer p)
 
 static void alt_funcs_dir (GtkWidget *w, windata_t *vwin)
 {
-    file_selector_with_parent(NULL, SET_FDIR, FSEL_DATA_VWIN, vwin, 
+    file_selector_with_parent(SET_FDIR, FSEL_DATA_VWIN, vwin, 
                               vwin->main);
 }
 

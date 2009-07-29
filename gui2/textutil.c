@@ -349,7 +349,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	} else if (what == W_SAVE) {
 	    int action = (fmt & GRETL_FORMAT_TEX)? SAVE_TEX : SAVE_RTF;
 
-	    file_selector_with_parent(_("Save"), action, FSEL_DATA_PRN, 
+	    file_selector_with_parent(action, FSEL_DATA_PRN, 
 				      prn, vwin->main);
 	}
     }
@@ -495,7 +495,7 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	    int fcode = (fmt == GRETL_FORMAT_RTF_TXT)? 
 		SAVE_RTF : SAVE_OUTPUT;
 
-	    file_selector_with_parent(_("Save"), fcode, FSEL_DATA_PRN, 
+	    file_selector_with_parent(fcode, FSEL_DATA_PRN, 
 				      textprn, vwin->main);
 	}
 	gretl_print_destroy(textprn);

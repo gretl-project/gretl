@@ -229,7 +229,7 @@ static void file_open_callback (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    file_selector(_("Open script file"), OPEN_SCRIPT, FSEL_DATA_VWIN, vwin);
+    file_selector(OPEN_SCRIPT, FSEL_DATA_VWIN, vwin);
 
     if (vwin->flags & VWIN_CONTENT_CHANGED) {
 	mark_vwin_content_saved(vwin);

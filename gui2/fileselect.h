@@ -25,7 +25,7 @@ typedef enum {
     FSEL_DATA_FNPKG
 } FselDataSrc;
 
-void file_selector (const char *msg, int action, FselDataSrc src, gpointer data);
+void file_selector (int action, FselDataSrc src, gpointer data);
 
-void file_selector_with_parent (const char *msg, int action, FselDataSrc src, 
+void file_selector_with_parent (int action, FselDataSrc src, 
 				gpointer data, GtkWidget *w);

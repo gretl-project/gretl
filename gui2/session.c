@@ -264,7 +264,7 @@ void mark_session_changed (void)
     session.status = SESSION_CHANGED;
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, TRUE);
-	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", TRUE);
+	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", TRUE);
 	if (*session.name != '\0') {
 	    set_main_window_title(session.name, TRUE);
 	}
@@ -276,7 +276,7 @@ static void mark_session_saved (void)
     session.status = SESSION_SAVED;
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, FALSE);
-	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", FALSE);
+	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", FALSE);
 	set_main_window_title(session.name, FALSE);
     }
 }
@@ -1682,7 +1682,7 @@ void save_session_callback (GtkAction *action)
     if (as_is) {
 	save_session(sessionfile);
     } else {
-	file_selector(_("Save session"), SAVE_SESSION, FSEL_DATA_NONE, NULL);
+	file_selector(SAVE_SESSION, FSEL_DATA_NONE, NULL);
     }
 }
 
@@ -2483,7 +2483,7 @@ static void graph_page_save_wrapper (void)
     if (graph_page_get_n_graphs() == 0) {
 	warnbox(_("The graph page is empty"));
     } else {
-	file_selector(_("Save LaTeX file"), SAVE_TEX, FSEL_DATA_NONE, NULL);
+	file_selector(SAVE_TEX, FSEL_DATA_NONE, NULL);
     }
 }
 
@@ -2581,7 +2581,7 @@ static void global_popup_callback (GtkWidget *widget, gpointer data)
 		mark_session_saved();
 	    }
 	} else {
-	    file_selector(_("Save session"), SAVE_SESSION, FSEL_DATA_NONE, NULL);
+	    file_selector(SAVE_SESSION, FSEL_DATA_NONE, NULL);
 	}
     } else if (!strcmp(item, _("Arrange icons"))) {
 	rearrange_icons();
@@ -3239,22 +3239,22 @@ static gui_obj *gui_object_new (gchar *name, int sort, gpointer data)
     return obj;
 } 
 
-static void open_gui_graph (gui_obj *obj)
+static void real_open_session_graph (SESSION_GRAPH *graph)
 {
-    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
     char tmp[MAXLEN];
 
     session_file_make_path(tmp, graph->fname);
-    display_session_graph_png(tmp);
+    display_session_graph(tmp, graph->name);
+}
+
+static void open_gui_graph (gui_obj *obj)
+{
+    real_open_session_graph((SESSION_GRAPH *) obj->data);
 }
 
 void display_session_graph_by_data (void *p)
 {
-    SESSION_GRAPH *graph = (SESSION_GRAPH *) p;
-    char tmp[MAXLEN];
-
-    session_file_make_path(tmp, graph->fname);
-    display_session_graph_png(tmp);
+    real_open_session_graph((SESSION_GRAPH *) p);
 }
 
 static int is_idempotent (const gretl_matrix *m,

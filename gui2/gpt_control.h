@@ -26,9 +26,9 @@ typedef struct png_plot_t png_plot;
 
 int remove_png_term_from_plotfile_by_name (const char *fname);
 
-void display_session_graph_png (const char *pltname);
+void display_session_graph (const char *path, const char *title);
 
-int gnuplot_show_png_by_name (const char *fname);
+int display_graph_file (const char *fname);
 
 void plot_label_position_click (GtkWidget *w, png_plot *plot);
 

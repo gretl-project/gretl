@@ -626,7 +626,7 @@ static void set_tramo_status (void)
     tramo_ok = ok;
 
     if (gui_up) {
-	flip(mdata->ui, "/MenuBar/Variable/Tramo", 
+	flip(mdata->ui, "/menubar/Variable/Tramo", 
 	     get_tramo_ok());
     }
 }
@@ -666,7 +666,7 @@ static void set_x12a_status (void)
     x12a_ok = ok;
 
     if (gui_up) {
-	flip(mdata->ui, "/MenuBar/Variable/X12A", 
+	flip(mdata->ui, "/menubar/Variable/X12A", 
 	     get_x12a_ok());
     }    
 }
@@ -966,8 +966,7 @@ static void browse_button_callback (GtkWidget *w, RCVAR *rc)
 	code = SET_DIR;
     }
 
-    file_selector_with_parent(_(rc->description), code, 
-			      FSEL_DATA_MISC, rc->var, top);
+    file_selector_with_parent(code, FSEL_DATA_MISC, rc->var, top);
 }
 
 static GtkWidget *make_path_browse_button (RCVAR *rc, GtkWidget *w)
@@ -2212,9 +2211,8 @@ void set_working_dir_callback (GtkWidget *w, char *path)
 static void wdir_browse_callback (GtkWidget *w, struct wdir_setter *wset)
 {
     GtkWidget *combo = wset->wdir_combo;
-    const char *s = N_("gretl working directory");
 
-    file_selector_with_parent(_(s), SET_WDIR, FSEL_DATA_MISC, combo, 
+    file_selector_with_parent(SET_WDIR, FSEL_DATA_MISC, combo, 
 			      wset->dialog);
 }
 

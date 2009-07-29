@@ -112,7 +112,7 @@ spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col);
 
 const gchar *sheet_ui = 
     "<ui>"
-    "  <menubar name='MenuBar'>"
+    "  <menubar>"
     "    <menu action='ObsMenu'>"
     "      <menuitem action='AppendObs'/>"
     "      <menuitem action='InsertObs'/>"
@@ -133,7 +133,7 @@ static GtkActionEntry sheet_items[] = {
 
 const gchar *matrix_ui = 
     "<ui>"
-    "  <menubar name='MenuBar'>"
+    "  <menubar>"
     "    <menu action='Fill'>"
     "      <menuitem action='FillIdentity'/>"
     "      <menuitem action='FillUniform'/>"
@@ -188,7 +188,7 @@ static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
 
 static void disable_obs_menu (GtkUIManager *ui)
 {
-    const gchar *path = "/MenuBar/ObsMenu";
+    const gchar *path = "/menubar/ObsMenu";
     GtkWidget *w = gtk_ui_manager_get_widget(ui, path);
 
     if (w != NULL) {
@@ -200,7 +200,7 @@ static void disable_obs_menu (GtkUIManager *ui)
 
 static void disable_insert_obs_item (GtkUIManager *ui)
 {
-    const gchar *path = "/MenuBar/ObsMenu/InsertObs";
+    const gchar *path = "/menubar/ObsMenu/InsertObs";
     GtkWidget *w = gtk_ui_manager_get_widget(ui, path);
 
     if (w != NULL) {
@@ -1502,15 +1502,15 @@ static void set_ok_transforms (Spreadsheet *sheet)
     int z = gretl_is_zero_matrix(sheet->matrix);
     int s = gretl_matrix_get_structure(sheet->matrix);
 
-    flip(sheet->ui, "/MenuBar/Transform/ScalarMult", !z);
-    flip(sheet->ui, "/MenuBar/Transform/ScalarDiv", !z);
-    flip(sheet->ui, "/MenuBar/Transform/XTX", 
+    flip(sheet->ui, "/menubar/Transform/ScalarMult", !z);
+    flip(sheet->ui, "/menubar/Transform/ScalarDiv", !z);
+    flip(sheet->ui, "/menubar/Transform/XTX", 
 	 s == 0 || (!z && s != GRETL_MATRIX_IDENTITY));
-    flip(sheet->ui, "/MenuBar/Transform/Cholesky", 
+    flip(sheet->ui, "/menubar/Transform/Cholesky", 
 	 s == GRETL_MATRIX_SYMMETRIC && !z);
-    flip(sheet->ui, "/MenuBar/Transform/Invert", s > 0 && !z &&
+    flip(sheet->ui, "/menubar/Transform/Invert", s > 0 && !z &&
 	 s != GRETL_MATRIX_IDENTITY);
-    flip(sheet->ui, "/MenuBar/Transform/Transpose", 
+    flip(sheet->ui, "/menubar/Transform/Transpose", 
 	 s < GRETL_MATRIX_SYMMETRIC);
 }
 
@@ -2644,7 +2644,7 @@ static void sheet_add_menubar (Spreadsheet *sheet, GtkWidget *vbox)
     gtk_ui_manager_insert_action_group(sheet->ui, actions, 0);
     g_object_unref(actions);
 
-    mbar = gtk_ui_manager_get_widget(sheet->ui, "/MenuBar");
+    mbar = gtk_ui_manager_get_widget(sheet->ui, "/menubar");
     gtk_box_pack_start(GTK_BOX(vbox), mbar, FALSE, FALSE, 0);
     gtk_widget_show(mbar);
 }
@@ -3415,7 +3415,7 @@ static int locked;
 void set_dataset_locked (gboolean s)
 {
     locked = s;
-    flip(mdata->ui, "/MenuBar/Sample", !s);
+    flip(mdata->ui, "/menubar/Sample", !s);
 }
 
 int dataset_locked (void)

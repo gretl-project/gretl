@@ -60,8 +60,6 @@
 
 char *storelist = NULL;
 
-static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
-				GtkActionEntry *items, const gchar *ui_info);
 static void set_up_model_view_menu (GtkWidget *window, windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_x12_output_menu_item (windata_t *vwin);
@@ -203,7 +201,7 @@ static GtkActionEntry ivreg_hsk_items[] = {
 
 const gchar *model_tex_ui = 
     "<ui>"
-    "  <menubar name='MenuBar'>"
+    "  <menubar>"
     "    <menu action='LaTeX'>"
     "      <menu action='TeXView'>"
     "        <menuitem action='TabView'/>"
@@ -228,7 +226,7 @@ const gchar *model_tex_ui =
 
 const gchar *missing_tex_ui =
     "<ui>"
-    "  <menubar name='MenuBar'>"
+    "  <menubar>"
     "    <menu action='LaTeX'>"
     "      <menuitem action='notex'/>"
     "    </menu>"
@@ -278,8 +276,9 @@ static GtkActionEntry system_items[] = {
     { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
     { "Analysis", NULL, N_("_Analysis"), NULL, NULL, NULL },  
     { "Forecasts", NULL, N_("_Forecasts"), NULL, NULL, NULL },  
-    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
+
+static gint n_system_items = G_N_ELEMENTS(system_items);
 
 static GtkActionEntry sys_tex_items[] = {
     { "LaTeX",   NULL, N_("_LaTeX"), NULL, NULL, NULL },  
@@ -290,7 +289,7 @@ static GtkActionEntry sys_tex_items[] = {
 
 static const gchar *sys_ui =
     "<ui>"
-    "  <menubar name='MenuBar'>"
+    "  <menubar>"
     "    <menu action='File'>"
     "      <menuitem action='SaveAs'/>"
     "      <menuitem action='SaveAsIcon'/>"
@@ -1125,20 +1124,15 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
     } else if (*vwin->fname == '\0' || strstr(vwin->fname, "script_tmp")) {
 	/* no real filename is available */
 	if (vwin->role == EDIT_SCRIPT) {
-	    file_selector(_("Save command script"), SAVE_SCRIPT, 
-			  FSEL_DATA_VWIN, vwin);
+	    file_selector(SAVE_SCRIPT, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_GP) {
-	    file_selector(_("Save gnuplot commands"), SAVE_GP_CMDS, 
-			  FSEL_DATA_VWIN, vwin);
+	    file_selector(SAVE_GP_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_R) {
-	    file_selector(_("Save R commands"), SAVE_R_CMDS, 
-			  FSEL_DATA_VWIN, vwin);
+	    file_selector(SAVE_R_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_OX) {
-	    file_selector(_("Save"), SAVE_OX_CMDS, 
-			  FSEL_DATA_VWIN, vwin);
+	    file_selector(SAVE_OX_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
-	    file_selector(_("Save"), SAVE_CONSOLE, 
-			  FSEL_DATA_VWIN, vwin);
+	    file_selector(SAVE_CONSOLE, FSEL_DATA_VWIN, vwin);
 	}	    
     } else if ((vwin->flags & VWIN_SESSION_GRAPH) &&
 	       vwin->role == EDIT_GP) {
@@ -1504,6 +1498,12 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
     return vwin;
 }
 
+static void model_save_state (GtkUIManager *ui, gboolean s)
+{
+    flip(ui, "/menubar/File/SaveAsIcon", s);
+    flip(ui, "/menubar/File/SaveAndClose", s);
+}
+
 static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
 {
     *pvwin = NULL;
@@ -1538,7 +1538,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
-	set_up_viewer_menu(vwin->main, vwin, system_items, sys_ui);
+	vwin_add_ui(vwin, system_items, n_system_items, sys_ui);
+	model_save_state(vwin->ui, !is_session_model(vwin->data));
 	add_system_menu_items(vwin, role);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
@@ -1968,7 +1969,7 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 
     if (pmod->ci == MPOLS) {
 	/* can we relax this? */
-	flip(ui, "/MenuBar/Tests", FALSE);
+	flip(ui, "/menubar/Tests", FALSE);
 	return;
     }
 
@@ -1980,32 +1981,26 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 	if (strchr(s, ':')) {
 	    get_ci_and_opt(s, &ci, &opt);
 	} else if (!strcmp(s, "dwpval")) {
-	    sprintf(path, "/MenuBar/Tests/%s", s);
+	    sprintf(path, "/menubar/Tests/%s", s);
 	    flip(ui, path, dw_pval_ok(pmod));
 	    continue;
 	} else {
 	    ci = gretl_command_number(s);
 	}
-	sprintf(path, "/MenuBar/Tests/%s", s);
+	sprintf(path, "/menubar/Tests/%s", s);
 	flip(ui, path, model_test_ok(ci, opt, pmod, datainfo));
     }
 }
 
-static void model_save_state (GtkUIManager *ui, gboolean s)
-{
-    flip(ui, "/MenuBar/File/SaveAsIcon", s);
-    flip(ui, "/MenuBar/File/SaveAndClose", s);
-}
-
 static void arma_x12_menu_mod (windata_t *vwin)
 {
-    flip(vwin->ui, "/MenuBar/Analysis/Covariance", FALSE);
+    flip(vwin->ui, "/menubar/Analysis/Covariance", FALSE);
     add_x12_output_menu_item(vwin);
 }
 
 static void rq_coeff_intervals_mod (windata_t *vwin)
 {
-    flip(vwin->ui, "/MenuBar/Analysis/ConfIntervals", FALSE);
+    flip(vwin->ui, "/menubar/Analysis/ConfIntervals", FALSE);
 }
 
 #define intervals_model(m) (m->ci == LAD && \
@@ -2022,9 +2017,9 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (RQ_SPECIAL_MODEL(pmod)) {
 	/* can we relax this later? */
-	flip(vwin->ui, "/MenuBar/Tests", FALSE);
-	flip(vwin->ui, "/MenuBar/Save", FALSE);
-	flip(vwin->ui, "/MenuBar/Analysis", FALSE);
+	flip(vwin->ui, "/menubar/Tests", FALSE);
+	flip(vwin->ui, "/menubar/Save", FALSE);
+	flip(vwin->ui, "/menubar/Analysis", FALSE);
 	return;
     }
 
@@ -2034,52 +2029,34 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (pmod->ci == MLE || pmod->ci == GMM) {
 	/* can we relax some of this later? */
-	flip(vwin->ui, "/MenuBar/Analysis/DisplayAFR", FALSE);
-	flip(vwin->ui, "/MenuBar/Analysis/Forecasts", FALSE);
-	flip(vwin->ui, "/MenuBar/Graphs", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/DisplayAFR", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
+	flip(vwin->ui, "/menubar/Graphs", FALSE);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
     } 
 
     if (pmod->ci == GMM) {
 	/* FIXME? */
-	flip(vwin->ui, "/MenuBar/Save", FALSE);
+	flip(vwin->ui, "/menubar/Save", FALSE);
     }
 
     if (pmod->ncoeff == 1) {
-	flip(vwin->ui, "/MenuBar/Analysis/ConfEllipse", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/ConfEllipse", FALSE);
     }
 
     if (pmod->ci == ARBOND) {
-	flip(vwin->ui, "/MenuBar/Analysis/Forecasts", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
     } else if (pmod->ci == GARCH) {
-	flip(vwin->ui, "/MenuBar/Tests/Hsk", FALSE);
+	flip(vwin->ui, "/menubar/Tests/Hsk", FALSE);
     }
 
     if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) || na(pmod->tss)) {
-	flip(vwin->ui, "/MenuBar/Analysis/ANOVA", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/ANOVA", FALSE);
     }
 
     if (!bootstrap_ok(pmod->ci)) {
-	flip(vwin->ui, "/MenuBar/Analysis/Bootstrap", FALSE);
-    }
-}
-
-static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
-				GtkActionEntry *items,
-				const gchar *ui_info)
-{
-    gint n = 0;
-
-    while (items[n].name != NULL) {
-	n++;
-    }
-
-    vwin_add_ui(vwin, items, n, ui_info);
-
-    if (vwin->role == VAR || vwin->role == VECM || 
-	vwin->role == SYSTEM) {
-	model_save_state(vwin->ui, !is_session_model(vwin->data));
+	flip(vwin->ui, "/menubar/Analysis/Bootstrap", FALSE);
     }
 }
 
@@ -2151,7 +2128,7 @@ static int criteria_available (const MODEL *pmod)
 
 static void add_model_dataset_items (windata_t *vwin)
 {
-    const gchar *path = "/MenuBar/Save";
+    const gchar *path = "/menubar/Save";
     MODEL *pmod = vwin->data;
 
     vwin_menu_add_items(vwin, path, model_data_base_items,
@@ -2228,14 +2205,14 @@ static void add_model_tex_items (windata_t *vwin)
     }
 
     if (!eqn_ok || pmod->errcode) {
-	flip(vwin->ui, "/MenuBar/LaTeX/TeXView/EqnView", FALSE);
-	flip(vwin->ui, "/MenuBar/LaTeX/TeXCopy/EqnCopy", FALSE);
-	flip(vwin->ui, "/MenuBar/LaTeX/TeXSave/EqnSave", FALSE);
-	flip(vwin->ui, "/MenuBar/LaTeX/EqnOpts", FALSE);
+	flip(vwin->ui, "/menubar/LaTeX/TeXView/EqnView", FALSE);
+	flip(vwin->ui, "/menubar/LaTeX/TeXCopy/EqnCopy", FALSE);
+	flip(vwin->ui, "/menubar/LaTeX/TeXSave/EqnSave", FALSE);
+	flip(vwin->ui, "/menubar/LaTeX/EqnOpts", FALSE);
     }
 
     if (imod) {
-	flip(vwin->ui, "/MenuBar/LaTeX/TabOpts", FALSE);
+	flip(vwin->ui, "/menubar/LaTeX/TabOpts", FALSE);
     }
 }
 
@@ -2260,7 +2237,7 @@ static void add_missing_tex_items (windata_t *vwin)
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
 
-    flip(vwin->ui, "/MenuBar/LaTeX", FALSE);
+    flip(vwin->ui, "/menubar/LaTeX", FALSE);
 }
 
 #define VNAMELEN2 32
@@ -2269,8 +2246,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 {
     GtkActionEntry entry;
     const gchar *mpath[] = {
-	"/MenuBar/Graphs/ResidPlot", 
-	"/MenuBar/Graphs/FittedActualPlot"
+	"/menubar/Graphs/ResidPlot", 
+	"/menubar/Graphs/FittedActualPlot"
     };
     MODEL *pmod = vwin->data;
     char tmp[VNAMELEN2], aname[16];
@@ -2350,15 +2327,15 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 
     /* time series models: residual correlogram, spectrum */
     if (dataset_is_time_series(datainfo)) {
-	vwin_menu_add_separator(vwin, "/MenuBar/Graphs");
+	vwin_menu_add_separator(vwin, "/menubar/Graphs");
 	entry.name = "Correlogram";
 	entry.label = _("Residual _correlogram");
 	entry.callback = G_CALLBACK(residual_correlogram);
-	vwin_menu_add_item(vwin, "/MenuBar/Graphs", &entry);
+	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
 	entry.name = "Spectrum";
 	entry.label = _("Residual _spectrum");
 	entry.callback = G_CALLBACK(residual_periodogram);
-	vwin_menu_add_item(vwin, "/MenuBar/Graphs", &entry);
+	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
     }
 
     /* 3-D fitted versus actual plot? */
@@ -2408,8 +2385,8 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     GtkActionEntry item;
     GtkRadioActionEntry *items;
     MODEL *pmod = vwin->data;
-    const gchar *gpath = "/MenuBar/Graphs/ResidPlot";
-    const gchar *spath = "/MenuBar/Graphs/ResidPlot/Separation";
+    const gchar *gpath = "/menubar/Graphs/ResidPlot";
+    const gchar *spath = "/menubar/Graphs/ResidPlot/Separation";
     char tmp[VNAMELEN2];
     int *dlist = NULL;
     int i, vi, ndums;
@@ -2506,7 +2483,7 @@ static void add_tau_plot_menu (windata_t *vwin)
     action_entry_init(&item);
     item.name = "TauMenu";
     item.label = _("tau sequence");
-    vwin_menu_add_menu(vwin, "/MenuBar/Graphs", &item);
+    vwin_menu_add_menu(vwin, "/menubar/Graphs", &item);
     
     item.callback = G_CALLBACK(tau_plot_call);
 
@@ -2516,7 +2493,7 @@ static void add_tau_plot_menu (windata_t *vwin)
 	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
 	item.name = aname;
 	item.label = tmp;
-	vwin_menu_add_item(vwin, "/MenuBar/Graphs/TauMenu", &item);
+	vwin_menu_add_item(vwin, "/menubar/Graphs/TauMenu", &item);
     }
 }
 
@@ -2545,7 +2522,7 @@ static void x12_output_callback (GtkAction *action, gpointer p)
 
 static const gchar *model_ui =
     "<ui>"
-    " <menubar name='MenuBar'>"
+    " <menubar>"
     "  <menu action='File'>"
     "   <menuitem action='SaveAs'/>"
     "   <menuitem action='SaveAsIcon'/>"
@@ -2639,19 +2616,19 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
     }
 
     if (dataset_is_panel(datainfo) && pmod->ci == OLS) {
-	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
+	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
 			    panel_hsk_items, 
 			    G_N_ELEMENTS(panel_hsk_items));
     } else if (pmod->ci == IVREG) {
-	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
+	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
 			    ivreg_hsk_items, 
 			    G_N_ELEMENTS(ivreg_hsk_items));
     } else if (model_test_ok(MODTEST, OPT_W, pmod, datainfo)) {
-	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
+	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
 			    base_hsk_items, 
 			    G_N_ELEMENTS(base_hsk_items));
 	if (pmod->ncoeff == 1 || (pmod->ifc && pmod->ncoeff == 2)) {
-	    flip(vwin->ui, "/MenuBar/Tests/Hsk/WhiteSquares", FALSE);
+	    flip(vwin->ui, "/menubar/Tests/Hsk/WhiteSquares", FALSE);
 	}
     } 
 
@@ -2672,7 +2649,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 				   gtk_ui_manager_get_accel_group(vwin->ui));
     }
 
-    vwin->mbar = gtk_ui_manager_get_widget(vwin->ui, "/MenuBar");
+    vwin->mbar = gtk_ui_manager_get_widget(vwin->ui, "/menubar");
 
     /* disable some menu items if need be */
     adjust_model_menu_state(vwin, pmod);
@@ -2856,7 +2833,7 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
 
 static void add_x12_output_menu_item (windata_t *vwin)
 {
-    const gchar *mpath = "/MenuBar/Analysis";
+    const gchar *mpath = "/menubar/Analysis";
     GtkActionEntry entry;
 
     vwin_menu_add_separator(vwin, mpath);
@@ -3248,11 +3225,11 @@ static void system_resid_mplot_call (GtkAction *action, gpointer p)
 static void add_system_menu_items (windata_t *vwin, int ci)
 {
     GtkActionEntry item;
-    const gchar *top = "/MenuBar";
-    const gchar *tests = "/MenuBar/Tests";
-    const gchar *save = "/MenuBar/Save";
-    const gchar *graphs = "/MenuBar/Graphs";
-    const gchar *analysis = "/MenuBar/Analysis";
+    const gchar *top = "/menubar";
+    const gchar *tests = "/menubar/Tests";
+    const gchar *save = "/menubar/Save";
+    const gchar *graphs = "/menubar/Graphs";
+    const gchar *analysis = "/menubar/Analysis";
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     int neqns, nfc, vtarg, vshock;
@@ -3401,7 +3378,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	item.name = istr;
 	item.label = tmp;
 	item.callback = G_CALLBACK(system_forecast_callback);
-	vwin_menu_add_item(vwin, "/MenuBar/Analysis/Forecasts", &item);
+	vwin_menu_add_item(vwin, "/menubar/Analysis/Forecasts", &item);
 
 	if (var == NULL) {
 	    continue;
@@ -3418,7 +3395,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_menu(vwin, graphs, &item);
 
 	/* path under which to add shocks */
-	sprintf(newpath, "/MenuBar/Graphs/targ_%d", i);
+	sprintf(newpath, "/menubar/Graphs/targ_%d", i);
 	
 	for (j=0; j<neqns; j++) {
 	    /* impulse responses: subitems for shocks */
@@ -3449,7 +3426,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	int n = G_N_ELEMENTS(sys_tex_items);
 
 	vwin_menu_add_menu(vwin, top, &sys_tex_items[0]);
-	vwin_menu_add_items(vwin, "/MenuBar/LaTeX",
+	vwin_menu_add_items(vwin, "/menubar/LaTeX",
 			    sys_tex_items + 1, n - 1);
     }
 }
@@ -3468,12 +3445,12 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     }
 
     if (Z == NULL) {
-	flip(mwin->ui, "/MenuBar/File/SaveAsIcon", FALSE);
-	flip(mwin->ui, "/MenuBar/File/SaveAndClose", FALSE);
-	flip(mwin->ui, "/MenuBar/Edit/Copy", FALSE);
-	flip(mwin->ui, "/MenuBar/Tests", FALSE);
-	flip(mwin->ui, "/MenuBar/Graphs", FALSE);
-	flip(mwin->ui, "/MenuBar/Analysis", FALSE);
+	flip(mwin->ui, "/menubar/File/SaveAsIcon", FALSE);
+	flip(mwin->ui, "/menubar/File/SaveAndClose", FALSE);
+	flip(mwin->ui, "/menubar/Edit/Copy", FALSE);
+	flip(mwin->ui, "/menubar/Tests", FALSE);
+	flip(mwin->ui, "/menubar/Graphs", FALSE);
+	flip(mwin->ui, "/menubar/Analysis", FALSE);
 	return FALSE;
     }
 
@@ -3489,22 +3466,22 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	}
     }
 
-    action = gtk_ui_manager_get_action(mwin->ui, "/MenuBar/Tests");
+    action = gtk_ui_manager_get_action(mwin->ui, "/menubar/Tests");
     s = gtk_action_is_sensitive(action);
     if ((s && ok) || (!s && !ok)) {
 	/* no need to flip state */
 	return FALSE;
     }
 
-    flip(mwin->ui, "/MenuBar/Tests", ok);
-    flip(mwin->ui, "/MenuBar/Graphs", graphs_ok);
-    flip(mwin->ui, "/MenuBar/Analysis/DisplayAFR", ok);
-    flip(mwin->ui, "/MenuBar/Analysis/Forecasts", ok);
-    flip(mwin->ui, "/MenuBar/Analysis/ConfIntervals", ok);
-    flip(mwin->ui, "/MenuBar/Save/yhat", ok);
-    flip(mwin->ui, "/MenuBar/Save/uhat", ok);
-    flip(mwin->ui, "/MenuBar/Save/uhat2", ok);
-    flip(mwin->ui, "/MenuBar/Save/NewVar", ok);
+    flip(mwin->ui, "/menubar/Tests", ok);
+    flip(mwin->ui, "/menubar/Graphs", graphs_ok);
+    flip(mwin->ui, "/menubar/Analysis/DisplayAFR", ok);
+    flip(mwin->ui, "/menubar/Analysis/Forecasts", ok);
+    flip(mwin->ui, "/menubar/Analysis/ConfIntervals", ok);
+    flip(mwin->ui, "/menubar/Save/yhat", ok);
+    flip(mwin->ui, "/menubar/Save/uhat", ok);
+    flip(mwin->ui, "/menubar/Save/uhat2", ok);
+    flip(mwin->ui, "/menubar/Save/NewVar", ok);
 
     if (!ok) {
 	const char *msg = gretl_errmsg_get();

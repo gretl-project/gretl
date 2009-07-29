@@ -160,7 +160,7 @@ void register_graph (void)
 
     /* if this gives an error, the message will be
        handled downstream */
-    gnuplot_show_png_by_name(gretl_plotfile());
+    display_graph_file(gretl_plotfile());
 }
 
 static void gui_graph_handler (int err)
@@ -1561,8 +1561,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
 	    make_and_display_graph();
 	}
 	if (opt & OPT_S) {
-	    file_selector(_("Save bootstrap data to file"), SAVE_BOOT_DATA, 
-			  FSEL_DATA_VWIN, bootwin);
+	    file_selector(SAVE_BOOT_DATA, FSEL_DATA_VWIN, bootwin);
 	}
     }
 }
@@ -6200,7 +6199,7 @@ int dataset_is_subsampled (void)
 
     if (mdata->ui != NULL) {
 	GtkWidget *w = gtk_ui_manager_get_widget(mdata->ui, 
-						 "/MenuBar/Sample/FullRange");
+						 "/menubar/Sample/FullRange");
 
 	if (w != NULL && GTK_IS_WIDGET(w) && GTK_WIDGET_IS_SENSITIVE(w)) {
 	    ret = 1;

@@ -1,5 +1,5 @@
 <ui>
-  <menubar name='MenuBar'>
+  <menubar>
     <menu action='File'>
       <menu action='OpenData'>
 	<menuitem action='OpenGdt'/>

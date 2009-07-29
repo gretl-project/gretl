@@ -514,7 +514,6 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     }
 }
 
-
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
 {
     
@@ -589,7 +588,48 @@ static void set_default_progs_path (GtkFileChooser *fsel)
 #endif
 }
 
-static void gtk_file_selector (const char *msg, int action, FselDataSrc src, 
+static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
+					    int action, FselDataSrc src,
+					    gpointer data)
+{
+    gchar *currname;
+
+    if (action == SAVE_DATA && *paths.datfile != '\0') {
+	currname = suggested_savename(paths.datfile);
+	gtk_file_chooser_set_current_name(filesel, currname);
+	g_free(currname);
+    } else if (EXPORT_ACTION(action, src) && *paths.datfile != '\0') {
+	currname = suggested_exportname(paths.datfile, action);
+	gtk_file_chooser_set_current_name(filesel, currname);
+	g_free(currname);
+    } else if (action == SET_PROG || action == SET_DIR) {
+	currname = (gchar *) data;
+	if (currname != NULL && g_path_is_absolute(currname)) {
+	    gtk_file_chooser_set_filename(filesel, currname);
+	} else if (action == SET_PROG) {
+	    set_default_progs_path(filesel);
+	}	    
+    } else if (action == SAVE_FUNCTIONS || action == SAVE_FUNCTIONS_AS) {
+	char fname[MAXLEN];
+
+	*fname = '\0';
+	get_default_package_name(fname, data, action);
+	gtk_file_chooser_set_current_name(filesel, fname);
+    } 
+}
+
+static void filesel_add_filter (GtkWidget *filesel,
+				const char *desc, 
+				const char *pat)
+{
+    GtkFileFilter *filt = gtk_file_filter_new();
+
+    gtk_file_filter_set_name(filt, desc);
+    gtk_file_filter_add_pattern(filt, pat);
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
+}
+
+static void gtk_file_selector (int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
     GtkWidget *filesel;
@@ -623,7 +663,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	parent = mdata->main;
     }
 
-    filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(parent), fa,
+    filesel = gtk_file_chooser_dialog_new(NULL, GTK_WINDOW(parent), fa,
 					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					  okstr, GTK_RESPONSE_ACCEPT,
 					  NULL);
@@ -643,70 +683,21 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
 
     if (action == OPEN_ASCII || action == APPEND_ASCII) {
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("all files (*.*)"));
-	gtk_file_filter_add_pattern(filter, "*");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+	filesel_add_filter(filesel, _("all files (*.*)"), "*");
     } else if (action == OPEN_SCRIPT && src != FSEL_DATA_FNPKG) {
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("GNU R files (*.R)"));
-	gtk_file_filter_add_pattern(filter, "*.R");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("gnuplot files (*.plt)"));
-	gtk_file_filter_add_pattern(filter, "*.plt");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+	filesel_add_filter(filesel, _("GNU R files (*.R)"), "*.R");
+	filesel_add_filter(filesel, _("gnuplot files (*.plt)"), "*.plt");		   
 #ifdef USE_OX
 	if (ox_support) {
-	    filter = gtk_file_filter_new();
-	    gtk_file_filter_set_name(filter, _("Ox files (*.ox)"));
-	    gtk_file_filter_add_pattern(filter, "*.ox");
-	    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+	    filesel_add_filter(filesel, _("Ox files (*.ox)"), "*.ox");
 	}
 #endif
     } 
 
-    /* FIXME session dir */
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 
-    /* special cases */
-
-    if (action == SAVE_DATA && *paths.datfile != '\0') {
-	char *savename = suggested_savename(paths.datfile);
-
-	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
-					  savename);
-	g_free(savename);
-    } else if (EXPORT_ACTION(action, src) && *paths.datfile != '\0') {
-	char *savename = suggested_exportname(paths.datfile, action);
-
-	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
-					  savename);
-	g_free(savename);
-    } else if (action == SET_PROG) {
-	char *strvar = (char *) data;
-
-	if (strvar != NULL && g_path_is_absolute(strvar)) {
-	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
-					  strvar);
-	} else {
-	    set_default_progs_path(GTK_FILE_CHOOSER(filesel));
-	}	    
-    } else if (action == SET_DIR) {
-	char *strvar = (char *) data;
-
-	if (strvar != NULL && g_path_is_absolute(strvar)) {
-	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
-					  strvar);
-	} 
-    } else if (action == SAVE_FUNCTIONS || action == SAVE_FUNCTIONS_AS) {
-	char fname[MAXLEN];
-
-	*fname = '\0';
-	get_default_package_name(fname, data, action);
-	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
-					  fname);
-    } 
+    filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
+				   src, data);
 
     response = gtk_dialog_run(GTK_DIALOG(filesel));
 
@@ -732,7 +723,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     }
 }
 
-void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
+void file_selector (int action, FselDataSrc src, gpointer data)
 {
     GtkWidget *w = NULL;
 
@@ -742,11 +733,11 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	w = vwin->main;
     }
 
-    gtk_file_selector(msg, action, src, data, w);
+    gtk_file_selector(action, src, data, w);
 }
 
-void file_selector_with_parent (const char *msg, int action, FselDataSrc src, 
+void file_selector_with_parent (int action, FselDataSrc src, 
 				gpointer data, GtkWidget *w)
 {
-    gtk_file_selector(msg, action, src, data, w);
+    gtk_file_selector(action, src, data, w);
 }

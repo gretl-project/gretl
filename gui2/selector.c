@@ -5705,21 +5705,6 @@ char *main_window_selection_as_string (void)
     return lmkr.liststr;
 }
 
-static const char *data_save_title (int ci)
-{
-    switch (ci) {
-    case EXPORT_CSV:
-	return _("Save CSV data file");
-    case EXPORT_R:
-	return _("Save R data file");
-    case EXPORT_OCTAVE:
-	return _("Save octave data file");
-    default:
-	return _("Save data file");
-    }
-    return "";
-}
-
 static int data_save_selection_callback (selector *sr)
 {
     gpointer data = NULL;
@@ -5756,7 +5741,7 @@ static int data_save_selection_callback (selector *sr)
     if (ci == SAVE_FUNCTIONS) {
 	prepare_functions_save();
     } else if (ci != COPY_CSV) {
-	file_selector(data_save_title(ci), ci, FSEL_DATA_MISC, data);
+	file_selector(ci, FSEL_DATA_MISC, data);
     }
 
     return 0;

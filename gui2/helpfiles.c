@@ -79,15 +79,13 @@ static char *needle;
 
 #if HWIN_USE_TOOLBAR
 
-const gchar *help_menu_path = "/MenuBar/TopicsButton/Topics";
+const gchar *help_menu_path = "/toolbar/TopicsButton/Topics";
 
 const gchar *help_ui = 
     "<ui>"
-    " <toolbar name='MenuBar'>"
+    " <toolbar>"
     "   <toolitem action='TopicsButton'>"
-    "     <menu action='Topics'>"
-    "      <placeholder name='TopicsMenuItems'/>"
-    "     </menu>"
+    "     <menu action='Topics'/>"
     "   </toolitem>"
     "   <toolitem action='WindowFind'/>"
     "   <toolitem action='ZoomIn'/>"
@@ -97,21 +95,21 @@ const gchar *help_ui =
 
 GtkActionEntry help_menu_items[] = {
     { "Topics", NULL, NULL, NULL, NULL, NULL },
-    { "WindowFind", GTK_STOCK_FIND, N_("_Find in window"), NULL, NULL,
+    { "WindowFind", GTK_STOCK_FIND, NULL, NULL, N_("Find in window"),
       G_CALLBACK(text_find) },
-    { "ZoomIn", GTK_STOCK_ZOOM_IN, N_("_Larger"), NULL, NULL,
+    { "ZoomIn", GTK_STOCK_ZOOM_IN, NULL, NULL, N_("Larger"),
       G_CALLBACK(text_zoom) },
-    { "ZoomOut", GTK_STOCK_ZOOM_OUT, N_("_Smaller"), NULL, NULL,
+    { "ZoomOut", GTK_STOCK_ZOOM_OUT, NULL, NULL, N_("Smaller"),
       G_CALLBACK(text_zoom) }
 };
 
 #else
 
-const gchar *help_menu_path = "/MenuBar/Topics";
+const gchar *help_menu_path = "/menubar/Topics";
 
 const gchar *help_ui = 
     "<ui>"
-    " <menubar name='MenuBar'>"
+    " <menubar>"
     "   <menu action='Topics'/>"
     "   <menu action='Find'>"
     "     <menuitem action='WindowFind'/>"
@@ -1039,14 +1037,14 @@ static void add_en_help_item (windata_t *hwin, int cli)
 
     action_entry_init(&item);
 
-    path = "/MenuBar/English";
+    path = "/menubar/English";
     item.name = item.label = "English";
     vwin_menu_add_menu(hwin, path, &item);
 
     item.name = "EnCliHelp";
     item.label = _("Show English help");
     item.callback = G_CALLBACK(en_help_callback); 
-    vwin_menu_add_item(hwin, "/MenuBar/English", &item);
+    vwin_menu_add_item(hwin, "/menubar/English", &item);
 }
 
 static const gchar *help_item_get_word (help_head **hds,
@@ -1163,12 +1161,54 @@ static void add_help_topics (windata_t *hwin, int flags)
     }
 }
 
+#if HWIN_USE_TOOLBAR
+
 void set_up_helpview_menu (windata_t *hwin) 
 {
-#if HWIN_USE_TOOLBAR
     GtkAction *action;
     GtkToolItem *proxy;
+    GtkActionGroup *actions;
+    GError *err = NULL;
+
+    actions = gtk_action_group_new("HelpActions");
+    gtk_action_group_set_translation_domain(actions, "gretl");
+
+    action = gtk_action_new("TopicsButton", NULL, N_("Topics"), GTK_STOCK_INDEX);
+    /* proxy = gtk_menu_tool_button_new_from_stock(GTK_STOCK_INDEX); */
+    proxy = gtk_menu_tool_button_new(NULL, NULL);
+    gtk_action_connect_proxy(action, GTK_WIDGET(proxy));
+    gtk_action_group_add_action_with_accel(actions, action, NULL);
+
+    /* now add the other predefined items */
+    gtk_action_group_add_actions(actions, help_menu_items, 
+				 n_help_items, hwin);
+
+    hwin->ui = gtk_ui_manager_new();
+    gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
+    g_object_unref(actions);
+
+#if 0    
+    gtk_window_add_accel_group(GTK_WINDOW(hwin->main), 
+			       gtk_ui_manager_get_accel_group(hwin->ui));
 #endif
+
+    gtk_ui_manager_add_ui_from_string(hwin->ui, help_ui, -1, &err);
+    fprintf(stderr, "Added ui from string\n");
+    if (err != NULL) {
+	fprintf(stderr, "building helpview menus failed: %s", err->message);
+	g_error_free(err);
+    } else {
+	hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/toolbar");
+	gtk_toolbar_set_icon_size(GTK_TOOLBAR(hwin->mbar), GTK_ICON_SIZE_MENU);
+    }
+
+    fprintf(stderr, "exiting set_up_helpview_menu\n");
+}
+
+#else
+
+void set_up_helpview_menu (windata_t *hwin) 
+{
     GtkActionGroup *actions;
     GError *err = NULL;
 
@@ -1177,15 +1217,6 @@ void set_up_helpview_menu (windata_t *hwin)
 
     gtk_action_group_add_actions(actions, help_menu_items, 
 				 n_help_items, hwin);
-
-#if HWIN_USE_TOOLBAR
-    action = gtk_action_new("TopicsButton", NULL, N_("_Topics"), 
-			    GTK_STOCK_INDEX);
-    /* proxy = gtk_menu_tool_button_new_from_stock(GTK_STOCK_INDEX); */
-    proxy = gtk_menu_tool_button_new(NULL, NULL);
-    gtk_action_connect_proxy(action, GTK_WIDGET(proxy));
-    gtk_action_group_add_action_with_accel(actions, action, NULL);
-#endif
 
     hwin->ui = gtk_ui_manager_new();
     gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
@@ -1200,8 +1231,10 @@ void set_up_helpview_menu (windata_t *hwin)
 	g_error_free(err);
     }
 
-    hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/MenuBar");
+    hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/menubar");
 }
+
+#endif
 
 static char *funcs_helpfile (void)
 {

@@ -1504,7 +1504,7 @@ GtkActionEntry main_entries[] = {
 static void add_conditional_items (GtkUIManager *ui)
 {
     gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
-			  "/MenuBar/Tools/Preferences",
+			  "/menubar/Tools/Preferences",
 			  N_("_Menu font..."),
 			  "MenuFont",
 			  GTK_UI_MANAGER_MENUITEM, 
@@ -1512,7 +1512,7 @@ static void add_conditional_items (GtkUIManager *ui)
 
 #ifdef HAVE_X12A
     gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
-			  "/MenuBar/Variable/X12A",
+			  "/menubar/Variable/X12A",
 			  N_("_X-12-ARIMA analysis"),
 			  "X12A",
 			  GTK_UI_MANAGER_MENUITEM, 
@@ -1521,7 +1521,7 @@ static void add_conditional_items (GtkUIManager *ui)
 
 #ifdef HAVE_TRAMO
     gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
-			  "/MenuBar/Variable/Tramo",
+			  "/menubar/Variable/Tramo",
 			  N_("_TRAMO analysis"),
 			  "Tramo",
 			  GTK_UI_MANAGER_MENUITEM, 
@@ -1531,7 +1531,7 @@ static void add_conditional_items (GtkUIManager *ui)
 #ifdef USE_OX
     if (ox_support) {
 	gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
-			      "/MenuBar/File/ScriptFiles/NewScript/OxScript",
+			      "/menubar/File/ScriptFiles/NewScript/OxScript",
 			      N_("Ox program"),
 			      "OxScript",
 			      GTK_UI_MANAGER_MENUITEM, 
@@ -1582,7 +1582,7 @@ static int set_up_main_menu (void)
     }
 
     g_free(main_ui);
-    mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/MenuBar");
+    mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
 
     return 0;
 }
@@ -1776,7 +1776,7 @@ static void auto_store (void)
     if ((data_status & USER_DATA) && has_suffix(paths.datfile, ".gdt")) {
 	do_store(paths.datfile, oflag);
     } else {
-	file_selector(_("Save data file"), SAVE_DATA, FSEL_DATA_NONE, NULL);
+	file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
     }	
 }
 

@@ -1906,9 +1906,9 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 	    if (action == W_COPY) {
 		err = prn_to_clipboard(prn, fmt);
 	    } else if (fmt == GRETL_FORMAT_RTF) {
-		file_selector(_("Save"), SAVE_RTF, FSEL_DATA_PRN, prn);
+		file_selector(SAVE_RTF, FSEL_DATA_PRN, prn);
 	    } else {
-		file_selector(_("Save data"), EXPORT_CSV, FSEL_DATA_PRN, prn);
+		file_selector(EXPORT_CSV, FSEL_DATA_PRN, prn);
 	    }
 	}
 
