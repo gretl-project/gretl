@@ -4266,22 +4266,6 @@
       </description>
     </function>
 
-    <function name="strcmp" section="strings" output="scalar">
-      <fnargs>
-	<fnarg type="string">s1</fnarg>
-	<fnarg type="string">s2</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  Compares the strings <argname>s1</argname> and <argname>s2</argname>
-	  and returns 0 if they match, otherwise a non-zero integer.
-	  <seelist> 
-	    <fncref targ="strncmp"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="strlen" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -4297,13 +4281,20 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
-	<fnarg type="scalar">n</fnarg>
+	<fnarg optional="true" type="scalar">n</fnarg>
       </fnargs>  
       <description>
 	<para>
-	  Works as <fncref targ="strcmp"/> except that it compares at most the
-	  first <argname>n</argname> characters of <argname>s1</argname> and
-	  <argname>s2</argname>.
+	  Compares the two string arguments and returns an integer less
+	  than, equal to, or greater than zero if <argname>s1</argname> is
+	  found, respectively, to be less than, to match, or be greater
+	  than <argname>s2</argname>, up to the first <argname>n</argname>
+	  characters.  If <argname>n</argname> is omitted the comparison
+	  proceeds as far as possible.
+	</para>
+	<para> Note that is you just want to compare two strings for
+	  equality, that can be done without using a function, as in
+	  <lit>if (s1 == s2) ...</lit>.
 	</para>
       </description>
     </function>

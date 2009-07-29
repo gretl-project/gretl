@@ -1,3 +1,13 @@
+version 1.8.3
+
+Remove redundant function strcmp: strncmp may be used with 
+the third argument omitted, or strings can be compared for
+equality directly.
+
+Remove the temporary "set" variable "protect_lists".  Lists
+given as arguments to user-defined functions are now
+always protected.
+
 7/8/2009 version 1.8.2
 
 No intentional backward-incompatible changes

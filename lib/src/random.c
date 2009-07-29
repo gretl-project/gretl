@@ -27,8 +27,6 @@
 static GRand *gretl_rand;
 static unsigned int useed;
 
-#undef OLD_NORMAL
-
 /**
  * gretl_rand_get_seed:
  *
@@ -229,14 +227,8 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 
 void gretl_rand_normal (double *a, int t1, int t2) 
 {
-    int t;
-
-#ifdef OLD_NORMAL
-    for (t=t1; t<=t2; t++) {
-	a[t] = gretl_one_snormal();
-    }
-#else
     double z1, z2;
+    int t;
 
     for (t=t1; t<=t2; t++) {
 	gretl_two_snormals(&z1, &z2);
@@ -245,7 +237,6 @@ void gretl_rand_normal (double *a, int t1, int t2)
 	    a[++t] = z2;
 	}
     }
-#endif
 }
 
 /**

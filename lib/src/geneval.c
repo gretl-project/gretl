@@ -62,7 +62,11 @@
 
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
 
-#define scalar_node(n) (n->t == NUM || (n->t == MAT && gretl_matrix_is_scalar(n->v.m)))
+#define scalar_node(n) (n->t == NUM || \
+			(n->t == MAT &&	gretl_matrix_is_scalar(n->v.m)))
+
+#define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
+#define empty_or_str(n) (n == NULL || n->t == EMPTY || n->t == STR)
 
 #define lhscalar(p) (p->flags & P_LHSCAL)
 #define lhlist(p) (p->flags & P_LHLIST)
@@ -2035,8 +2039,6 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
     *idx = (f == F_IMINR || f == F_IMINC || f == F_IMAXR || f == F_IMAXC);
 }
 
-#define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
-
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -3524,19 +3526,13 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	const char *sl = l->v.str;
 	const char *sr = r->v.str;
 
-	if (f == F_STRCMP) {
-	    ret = aux_scalar_node(p);
-	} else {
-	    ret = aux_string_node(p);
-	}
+	ret = aux_string_node(p);
 
 	if (ret == NULL) {
 	    return NULL;
 	}
 
-	if (f == F_STRCMP) {
-	    ret->v.xval = strcmp(sl, sr);
-	} else if (f == F_STRSTR) {
+	if (f == F_STRSTR) {
 	    char *sret = strstr(sl, sr);
 
 	    if (sret != NULL) {
@@ -3558,7 +3554,7 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = E_DATA;
 	}
 
-	if (f != F_STRCMP && !p->err && ret->v.str == NULL) {
+	if (!p->err && ret->v.str == NULL) {
 	    p->err = E_ALLOC;
 	}
     } else {
@@ -4007,10 +4003,10 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     if (f == F_SDIFF && !dataset_is_seasonal(p->dinfo)) {
 	p->err = E_PDWRONG;
 	return NULL;
-    } else if (f == F_DESEAS && (r->t != EMPTY && r->t != STR)) {
+    } else if (f == F_DESEAS && !empty_or_str(r)) {
 	node_type_error(f, 2, STR, r, p);
 	return NULL;
-    } else if (f != F_DESEAS && r != NULL && r->t != EMPTY && r->t != NUM) {
+    } else if (f != F_DESEAS && !empty_or_num(r)) {
 	node_type_error(f, 2, NUM, r, p);
 	return NULL;
     } 
@@ -4106,7 +4102,7 @@ static NODE *do_pergm (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
-    if (r != NULL && r->t != EMPTY && r->t != NUM) {
+    if (!empty_or_num(r)) {
 	/* optional 'r' node must be scalar */
 	node_type_error(F_PERGM, 2, NUM, r, p);
     } else if (l->t == MAT && gretl_vector_get_length(l->v.m) == 0) {
@@ -4853,19 +4849,22 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    node_type_error(f, 0, STR, l, p);
 	} else if (m->t != STR) {
 	    node_type_error(f, 1, STR, m, p);
-	} else if (r->t != NUM) {
+	} else if (!empty_or_num(r)) {
 	    node_type_error(f, 2, NUM, r, p);
 	} else {
-	    int len = r->v.xval;
-
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
-		ret->v.xval = strncmp(l->v.str, m->v.str, len);
+		if (r != NULL && r->t == NUM) {
+		    ret->v.xval = strncmp(l->v.str, m->v.str, 
+					  (int) r->v.xval);
+		} else {
+		    ret->v.xval = strcmp(l->v.str, m->v.str);
+		}
 	    }
 	}
     }	    
 
-    if (f !=  F_STRNCMP) {
+    if (f != F_STRNCMP) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -7020,7 +7019,6 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSTR:
-    case F_STRCMP:
 	if (l->t == STR && r->t == STR) {
 	    ret = two_string_func(l, r, t->t, p);
 	} else {

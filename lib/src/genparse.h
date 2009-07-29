@@ -278,7 +278,6 @@ enum {
     F_WVAR,
     F_WSD,
     F_STRSTR,
-    F_STRCMP,
     F_COLNAMES,
     F_LJUNGBOX,
     F_MSORTBY,
