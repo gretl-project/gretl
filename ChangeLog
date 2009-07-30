@@ -6,10 +6,11 @@ version 1.8.3, in progress
   a matrix
 - Add function "deseas" to deseasonalize a monthly or
   quarterly time series using X-12-ARIMA or TRAMO/SEATS
+- Remove function "strcmp" as redundant
 - Add function "pergm" corresponding to the pergm command
 - Several small fixes and enhancements for interaction with
   TRAMO/SEATS and X-12-ARIMA
-- Several small GUI fixes
+- Many small GUI fixes
 - Add (optional) support for Ox programs via the "foreign"
   command
 - Ctrl-X in editing windows: cut text, don't exit
@@ -25,6 +26,8 @@ version 1.8.3, in progress
 - Add "set" variable "csv_na" to control the representation
   of NA values in CSV output (also GUI selector for same)
 - Remove temporary "set" variable "protect_lists"
+- Help windows: use GUI toolbar, plus fixes for dealing
+  with translated helpfiles
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"
