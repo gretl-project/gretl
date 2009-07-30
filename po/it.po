@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-24 09:36-0400\n"
-"PO-Revision-Date: 2009-07-25 10:27+0200\n"
+"PO-Revision-Date: 2009-07-30 23:07+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -10143,13 +10143,11 @@ msgstr "_WLS - Minimi quadrati ponderati..."
 
 #: gui2/gretl.c:1445
 msgid "H_eteroskedasticity corrected..."
-msgstr ""
-"/Modello/Altri modelli lineari/H_SK - WLS corretti per eteroschedasticità..."
+msgstr "H_SK - WLS corretti per eteroschedasticità..."
 
 #: gui2/gretl.c:1447
 msgid "High _precision OLS..."
-msgstr ""
-"/Modello/Altri modelli lineari/_MPOLS - Minimi quadrati in alta precisione..."
+msgstr "_MPOLS - Minimi quadrati in alta precisione..."
 
 #: gui2/gretl.c:1449
 msgid "ANOVA..."
