@@ -2550,8 +2550,10 @@ static char *grab_topic_buffer (const char *s)
     return buf;
 }
 
-/* pull the appropriate chunk of help text out of the buffer attached
-   to the help viewer and display it */
+/* Pull the appropriate chunk of help text out of the buffer attached
+   to the help viewer and display it.  Also set the active_var member
+   of hwin to represent the topic displayed.
+*/
 
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 {

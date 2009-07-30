@@ -34,6 +34,7 @@
 #define GRETL_STOCK_FUNC    "gretl-func"
 #define GRETL_STOCK_PIN     "gretl-pin"
 #define GRETL_STOCK_ALPHA   "gretl-alpha"
+#define GRETL_STOCK_EN      "gretl-en"
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # define NO_INFO_ICON 1

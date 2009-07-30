@@ -47,6 +47,7 @@
 #include "../pixmaps/mini.manual.xpm"
 #include "../pixmaps/mini.pin.xpm"
 #include "../pixmaps/mini.alpha.xpm"
+#include "../pixmaps/mini.en.xpm"
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # include "../pixmaps/info_24.xpm"
 #endif
@@ -113,7 +114,8 @@ void gretl_stock_icons_init (void)
 	mini_model_xpm,
 	mini_func_xpm,
 	mini_pin_xpm,
-	mini_alpha_xpm
+	mini_alpha_xpm,
+	mini_en_xpm
     };
     const char *stocks[] = {
 #if NO_INFO_ICON
@@ -136,7 +138,8 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_MODEL,
 	GRETL_STOCK_FUNC,
 	GRETL_STOCK_PIN,
-	GRETL_STOCK_ALPHA
+	GRETL_STOCK_ALPHA,
+	GRETL_STOCK_EN
     };
     int n = G_N_ELEMENTS(stocks);
 

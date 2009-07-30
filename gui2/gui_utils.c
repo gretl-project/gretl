@@ -1766,8 +1766,6 @@ windata_t *view_help_file (const char *filename, int role)
 
     viewer_box_config(vwin);
     set_up_helpview_menu(vwin);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
-    gtk_widget_show(vwin->mbar);
 
     if (role == FUNCS_HELP) {
 	hsize = 82;

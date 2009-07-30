@@ -75,71 +75,49 @@ static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
-#define HWIN_USE_TOOLBAR 0
-
-#if HWIN_USE_TOOLBAR
-
-const gchar *help_menu_path = "/toolbar/TopicsButton/Topics";
-
-const gchar *help_ui = 
+const gchar *help_menu_ui = 
     "<ui>"
-    " <toolbar>"
-    "  <toolitem action='TopicsButton'>"
-    "   <menu action='Topics'>"
-    "    <menuitem action='Foo'/>"
-    "   </menu>"
-    "  </toolitem>"
-    "  <toolitem action='WindowFind'/>"
-    "  <toolitem action='ZoomIn'/>"
-    "  <toolitem action='ZoomOut'/>"
-    " </toolbar>"
+    "  <menubar>"
+    "    <menu action='Topics'/>"
+    "  </menubar>"
+    "</ui>";
+
+const gchar *help_tools_ui = 
+    "<ui>"
+    "  <toolbar>"
+    "    <toolitem action='Index'/>"
+    "    <toolitem action='WindowFind'/>"
+    "    <toolitem action='ZoomIn'/>"
+    "    <toolitem action='ZoomOut'/>"
+    "  </toolbar>"
+    "</ui>";
+
+const gchar *gui_help_tools_ui = 
+    "<ui>"
+    "  <toolbar>"
+    "    <toolitem action='WindowFind'/>"
+    "    <toolitem action='ZoomIn'/>"
+    "    <toolitem action='ZoomOut'/>"
+    "  </toolbar>"
     "</ui>";
 
 GtkActionEntry help_menu_items[] = {
-    { "TopicsButton", GTK_STOCK_INDEX, NULL, NULL, NULL, NULL },
-    { "Topics", NULL, NULL, NULL, NULL, NULL },
-    { "Foo", NULL, NULL, NULL, NULL, NULL },
+    { "Topics", NULL, N_("_Topics"), NULL, NULL, NULL },
+};
+
+static gint n_help_menu_items = G_N_ELEMENTS(help_menu_items);
+
+GtkActionEntry help_tools[] = {
+    { "Index", GTK_STOCK_INDEX, NULL, NULL, N_("Index"), NULL },
     { "WindowFind", GTK_STOCK_FIND, NULL, NULL, N_("Find in window"),
       G_CALLBACK(text_find) },
     { "ZoomIn", GTK_STOCK_ZOOM_IN, NULL, NULL, N_("Larger"),
       G_CALLBACK(text_zoom) },
     { "ZoomOut", GTK_STOCK_ZOOM_OUT, NULL, NULL, N_("Smaller"),
-      G_CALLBACK(text_zoom) }
-};
-
-#else
-
-const gchar *help_menu_path = "/menubar/Topics";
-
-const gchar *help_ui = 
-    "<ui>"
-    " <menubar>"
-    "   <menu action='Topics'/>"
-    "   <menu action='Find'>"
-    "     <menuitem action='WindowFind'/>"
-    "   </menu>"
-    "   <menu action='Zoom'>"
-    "     <menuitem action='ZoomIn'/>"
-    "     <menuitem action='ZoomOut'/>"
-    "   </menu>"
-    " </menubar>"
-    "</ui>";
-
-GtkActionEntry help_menu_items[] = {
-    { "Topics", NULL, N_("_Topics"), NULL, NULL, NULL },
-    { "Find", NULL, N_("_Find"), NULL, NULL, NULL },
-    { "WindowFind", GTK_STOCK_FIND, N_("_Find in window"), NULL, NULL,
-      G_CALLBACK(text_find) },
-    { "Zoom", NULL, N_("_Text"), NULL, NULL, NULL },
-    { "ZoomIn", GTK_STOCK_ZOOM_IN, N_("_Larger"), NULL, NULL,
       G_CALLBACK(text_zoom) },
-    { "ZoomOut", GTK_STOCK_ZOOM_OUT, N_("_Smaller"), NULL, NULL,
-      G_CALLBACK(text_zoom) }
 };
 
-#endif
-
-gint n_help_items = G_N_ELEMENTS(help_menu_items);
+static gint n_help_tools = G_N_ELEMENTS(help_tools);
 
 struct gui_help_item {
     int code;
@@ -1015,42 +993,6 @@ static int cli_pos_from_cmd (int cmd, int en)
     return -1;
 }
 
-static void en_help_callback (gpointer p, int cli, GtkWidget *w)
-{
-    windata_t *hwin = (windata_t *) p;
-    int pos, hc = hwin->active_var;
-    int flags = HELP_EN;
-
-    if (cli) {
-	flags |= HELP_CLI;
-	pos = cli_pos_from_cmd(hc, 1);
-	if (pos < 0) {
-	    pos = 0;
-	}
-    } else {
-	pos = gui_pos_from_cmd(hc, 1);
-    }
-
-    real_do_help(hc, pos, flags);
-}
-
-static void add_en_help_item (windata_t *hwin, int cli)
-{
-    GtkActionEntry item;
-    const gchar *path;
-
-    action_entry_init(&item);
-
-    path = "/menubar/English";
-    item.name = item.label = "English";
-    vwin_menu_add_menu(hwin, path, &item);
-
-    item.name = "EnCliHelp";
-    item.label = _("Show English help");
-    item.callback = G_CALLBACK(en_help_callback); 
-    vwin_menu_add_item(hwin, "/menubar/English", &item);
-}
-
 static const gchar *help_item_get_word (help_head **hds,
 					int i, int j, int tnum,
 					int cli)
@@ -1073,14 +1015,14 @@ static const gchar *help_item_get_word (help_head **hds,
 }
 
 static int help_menu_add_item (windata_t *vwin, const gchar *path, 
-			       GtkActionEntry *entry)
+			       GtkActionEntry *entry, int hcode)
 {
     guint id = gtk_ui_manager_new_merge_id(vwin->ui);
     GtkActionGroup *actions;
 
     actions = gtk_action_group_new("AdHoc");
 
-    gtk_action_group_add_actions(actions, entry, 1, vwin);
+    gtk_action_group_add_actions(actions, entry, 1, GINT_TO_POINTER(hcode));
     gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
 			  GTK_UI_MANAGER_MENUITEM, FALSE);
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
@@ -1092,50 +1034,37 @@ static int help_menu_add_item (windata_t *vwin, const gchar *path,
 static void add_help_topics (windata_t *hwin, int flags)
 {
     GtkActionEntry hitem;
-    const gchar *mpath = help_menu_path;
+    const gchar *mpath = "/menubar/Topics";
     help_head **hds = NULL;
     int en = (flags & HELP_EN);
     int cli = (flags & HELP_CLI);
-    int funcs = (flags & HELP_FUNCS);
     const gchar *hword;
     gchar *path;
     int i, j;
 
     if (en) {
-	hds = (cli)? en_cli_heads : (funcs)? NULL : en_gui_heads;
+	hds = (cli)? en_cli_heads : en_gui_heads;
     } else {
-	hds = (cli)? cli_heads : (funcs)? NULL : gui_heads;
-    }
-
-    action_entry_init(&hitem);
-
-    if (cli || funcs) {
-	/* Add general index as (first) "topic" */
-	hitem.name = "0";
-	hitem.label = N_("Index");
-	if (funcs) {
-	    hitem.callback = G_CALLBACK(genr_funcs_ref);
-	} else {
-	    hitem.callback = (en)? G_CALLBACK(en_text_cmdref) : 
-		G_CALLBACK(plain_text_cmdref);
-	}
-	vwin_menu_add_item(hwin, mpath, &hitem);
+	hds = (cli)? cli_heads : gui_heads;
     }
 
     /* Are there any actual topics to add? */
     if (hds == NULL) {
 	return;
-    }
+    }    
+
+    action_entry_init(&hitem);
 
     /* put the topics under the menu heading */
     for (i=0; hds[i] != NULL; i++) {
-	const char *headname = (en)? hds[i]->name : _(hds[i]->name);
+	const char *headname;
 	char aname[16];
 
 	if (hds[i]->ntopics == 0) {
 	    continue;
 	}
 
+	headname = (en)? hds[i]->name : _(hds[i]->name);	
 	hitem.name = headname;
 	hitem.label = _(headname);
 	hitem.callback = NULL;
@@ -1158,84 +1087,161 @@ static void add_help_topics (windata_t *hwin, int flags)
 		    hitem.callback = (cli)? G_CALLBACK(do_cli_help) : 
 			G_CALLBACK(do_gui_help); 
 		}
-		help_menu_add_item(hwin, path, &hitem);
+		help_menu_add_item(hwin, path, &hitem, tnum);
 		g_free(path);
 	    }
 	}
     }
 }
 
-#if HWIN_USE_TOOLBAR
+static void en_help_callback (GtkAction *action, windata_t *hwin)
+{
+    int pos, hcode = hwin->active_var;
+    int flags = HELP_EN;
+
+    if (hwin->role == CLI_HELP) {
+	flags |= HELP_CLI;
+	pos = cli_pos_from_cmd(hcode, 1);
+	if (pos < 0) {
+	    pos = 0;
+	}	
+    } else {
+	pos = gui_pos_from_cmd(hcode, 1);
+    }
+
+    real_do_help(hcode, pos, flags);
+}
+
+static void delete_help_viewer (GtkAction *a, windata_t *hwin) 
+{
+    gtk_widget_destroy(hwin->main); 
+}
+
+/* Add a 'Close' button in all cases button, but possibly add a button
+   to show English-language help first.
+*/
+
+static void finalize_helpwin_toolbar (windata_t *hwin)
+{
+    GtkActionEntry items[] = {
+	{ "EnHelp", GRETL_STOCK_EN, NULL, NULL, N_("Show English help"), 
+	  G_CALLBACK(en_help_callback) },
+	{ "Close", GTK_STOCK_CLOSE, NULL, NULL, N_("Close"),
+	  G_CALLBACK(delete_help_viewer) }
+    };
+    guint id = gtk_ui_manager_new_merge_id(hwin->ui);
+    GtkActionGroup *actions;
+    int i, offset = 1, n_items = 1;
+
+    if (translated_helpfile && hwin->role != CLI_HELP_EN && 
+	hwin->role != GUI_HELP_EN && hwin->role != FUNCS_HELP) {
+	n_items = 2;
+	offset = 0;
+    }
+
+    actions = gtk_action_group_new("AdHoc");
+    gtk_action_group_set_translation_domain(actions, "gretl");
+
+    gtk_action_group_add_actions(actions, items + offset, 
+				 n_items, hwin);
+
+    for (i=0; i<n_items; i++) {
+	gtk_ui_manager_add_ui(hwin->ui, id, "/toolbar", 
+			      items[i+offset].name, items[i+offset].name,
+			      GTK_UI_MANAGER_TOOLITEM, FALSE);
+    }
+
+    gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
+    gtk_ui_manager_ensure_update(hwin->ui);
+    g_object_unref(actions);
+}
 
 void set_up_helpview_menu (windata_t *hwin) 
 {
-    GtkAction *action;
-    GtkToolItem *proxy;
     GtkActionGroup *actions;
+    GtkWidget *hbox, *tbar;
     GError *err = NULL;
 
-    actions = gtk_action_group_new("HelpActions");
+    hwin->ui = gtk_ui_manager_new();
+
+    actions = gtk_action_group_new("HelpMenuActions");
     gtk_action_group_set_translation_domain(actions, "gretl");
 
-    gtk_action_group_add_actions(actions, help_menu_items, 
-				 n_help_items, hwin);
-    action = gtk_action_group_get_action(actions, "TopicsButton");
-    proxy = gtk_menu_tool_button_new(NULL, NULL);
-    gtk_action_connect_proxy(action, GTK_WIDGET(proxy));
+    if (hwin->role != FUNCS_HELP) {
+	/* make slot for detailed topics menu */
+	actions = gtk_action_group_new("HelpMenuActions");
+	gtk_action_group_set_translation_domain(actions, "gretl");
+	gtk_action_group_add_actions(actions, help_menu_items, 
+				     n_help_menu_items, hwin);
+	gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
+	g_object_unref(actions);
+    } 
 
-    hwin->ui = gtk_ui_manager_new();
+    /* set up for "Index" button if applicable */
+    if (hwin->role == FUNCS_HELP) {
+	help_tools[0].callback = G_CALLBACK(genr_funcs_ref);
+    } else if (hwin->role == CLI_HELP) {
+	help_tools[0].callback = G_CALLBACK(plain_text_cmdref);
+    } else if (hwin->role == CLI_HELP_EN) {
+	help_tools[0].callback = G_CALLBACK(en_text_cmdref);
+    }
+
+    /* add toolbar */
+    actions = gtk_action_group_new("HelpToolActions");
+    gtk_action_group_set_translation_domain(actions, "gretl");
+    if (hwin->role == GUI_HELP || hwin->role == GUI_HELP_EN) {
+	/* no Index item on toolbar */
+	gtk_action_group_add_actions(actions, help_tools + 1, 
+				     n_help_tools - 1, hwin);
+    } else {
+	gtk_action_group_add_actions(actions, help_tools, 
+				     n_help_tools, hwin);
+    }
+
     gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
     g_object_unref(actions);
 
-#if 0    
     gtk_window_add_accel_group(GTK_WINDOW(hwin->main), 
 			       gtk_ui_manager_get_accel_group(hwin->ui));
-#endif
 
-    gtk_ui_manager_add_ui_from_string(hwin->ui, help_ui, -1, &err);
+    if (hwin->role != FUNCS_HELP) {
+	/* add topics menu ui */
+	gtk_ui_manager_add_ui_from_string(hwin->ui, help_menu_ui, -1, &err);
+    }
+
+    if (hwin->role == GUI_HELP || hwin->role == GUI_HELP_EN) {
+	gtk_ui_manager_add_ui_from_string(hwin->ui, gui_help_tools_ui, -1, &err);
+    } else {
+	gtk_ui_manager_add_ui_from_string(hwin->ui, help_tools_ui, -1, &err);
+    }
+
     if (err != NULL) {
 	fprintf(stderr, "building helpview menus failed: %s", err->message);
 	g_error_free(err);
-    } else {
-	fprintf(stderr, "getting mbar\n");
-	hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/toolbar");
-	fprintf(stderr, "got mbar\n");
-	gtk_toolbar_set_icon_size(GTK_TOOLBAR(hwin->mbar), GTK_ICON_SIZE_MENU);
+	return;
     }
 
-    fprintf(stderr, "exiting set_up_helpview_menu\n");
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hwin->vbox), hbox, FALSE, FALSE, 0);
+
+    if (hwin->role != FUNCS_HELP) {
+	/* menubar plus toolbar */
+	hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/menubar");
+	gtk_box_pack_start(GTK_BOX(hbox), hwin->mbar, FALSE, FALSE, 0);
+	tbar = gtk_ui_manager_get_widget(hwin->ui, "/toolbar");
+	gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 5);
+    } else {	
+	/* just a toolbar */
+	tbar = hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/toolbar");
+	gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+    } 
+
+    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tbar), GTK_ICON_SIZE_MENU);
+    gtk_toolbar_set_style(GTK_TOOLBAR(tbar), GTK_TOOLBAR_ICONS);
+    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tbar), FALSE);
+    finalize_helpwin_toolbar(hwin);
+    gtk_widget_show_all(hbox);
 }
-
-#else
-
-void set_up_helpview_menu (windata_t *hwin) 
-{
-    GtkActionGroup *actions;
-    GError *err = NULL;
-
-    actions = gtk_action_group_new("MyActions");
-    gtk_action_group_set_translation_domain(actions, "gretl");
-
-    gtk_action_group_add_actions(actions, help_menu_items, 
-				 n_help_items, hwin);
-
-    hwin->ui = gtk_ui_manager_new();
-    gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
-    g_object_unref(actions);
-
-    gtk_window_add_accel_group(GTK_WINDOW(hwin->main), 
-			       gtk_ui_manager_get_accel_group(hwin->ui));
-
-    gtk_ui_manager_add_ui_from_string(hwin->ui, help_ui, -1, &err);
-    if (err != NULL) {
-	g_message("building helpview menus failed: %s", err->message);
-	g_error_free(err);
-    }
-
-    hwin->mbar = gtk_ui_manager_get_widget(hwin->ui, "/menubar");
-}
-
-#endif
 
 static char *funcs_helpfile (void)
 {
@@ -1272,11 +1278,8 @@ static windata_t *make_helpwin (int flags)
 	vwin = view_help_file(helpfile, role);
     }
 
-    if (vwin != NULL) {
+    if (vwin != NULL && !funcs) {
 	add_help_topics(vwin, flags);
-	if (!funcs && translated_helpfile && !en) {
-	    add_en_help_item(vwin, cli);
-	} 
     }   
 
     return vwin;
