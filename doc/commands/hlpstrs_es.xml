@@ -4,6 +4,7 @@
  <gentext key="args"          text="Argumentos: "/>
  <gentext key="arg"           text="Argumento:  "/>
  <gentext key="altforms"      text="Variantes:  "/>
+ <gentext key="syntax"        text="Sintaxis:   "/>
  <gentext key="opts"          text="Opciones:   "/>
  <gentext key="opt"           text="Opción:     "/>
  <gentext key="examples"      text="Ejemplos:   "/>

@@ -1492,11 +1492,10 @@ GtkActionEntry main_entries[] = {
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
-    { "CommandRef", NULL, N_("_Command reference"), NULL, NULL, NULL },
-    { "TextCmdRef", GRETL_STOCK_BOOK, N_("Plain _text"), NULL, NULL, G_CALLBACK(plain_text_cmdref) },
-    { "PDFCmdRef", GRETL_STOCK_PDF, N_("_PDF"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "TextCmdRef", GRETL_STOCK_BOOK, N_("_Command reference"), NULL, NULL, G_CALLBACK(plain_text_cmdref) },
     { "FuncRef",   NULL, N_("Function reference"), NULL, NULL, G_CALLBACK(genr_funcs_ref) },
     { "UserGuide", GRETL_STOCK_PDF, N_("_User's guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "PDFCmdRef", GRETL_STOCK_PDF, N_("_Command reference"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
 };

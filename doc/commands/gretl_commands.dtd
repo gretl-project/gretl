@@ -41,7 +41,7 @@
    context (cli | gui | both) "both"
 >
 
-<!ELEMENT usage (altforms?, arguments?, options?, examples?)>
+<!ELEMENT usage (syntax?, altforms?, arguments?, options?, examples?)>
 
 <!ELEMENT arguments    (argument | argblock | argpunct)+>
 <!ELEMENT argblock     (argument | argpunct)+>
@@ -66,6 +66,7 @@
 >
 
 <!ELEMENT altform (#PCDATA | repl | lit)*>
+<!ELEMENT syntax (#PCDATA | repl | lit)*>
 
 <!ELEMENT option   (flag?, optparm?, effect?, note?)>
 
@@ -76,13 +77,18 @@
 <!ELEMENT optparm  (#PCDATA)>
 <!ELEMENT note     (#PCDATA)>
 
+<!ATTLIST optparm 
+    optional (true | false) "false"
+>
+
 <!ELEMENT menu-path    (#PCDATA)>
 <!ELEMENT other-access (#PCDATA)>
 
 <!ELEMENT para (#PCDATA | repl | program | math | equation |
                 lit | emphasis | book | quote | filename | by |
                 func | guideref | cmdref| fncref | tabref | 
-                sub | sup | flag | footnote | refnote | cmd)*>
+                sub | sup | flag | footnote | refnote | 
+                cmd | seelist)*>
 <!ATTLIST para
    context (cli | gui | tex | notex | all) "all"
 >
@@ -119,7 +125,7 @@
    status (inline | display) "inline"
    tex     CDATA #REQUIRED
    ascii   CDATA #REQUIRED
-   graphic CDATA #REQUIRED
+   graphic CDATA #IMPLIED
 >
 
 <!ELEMENT guideref EMPTY>
@@ -131,6 +137,8 @@
 <!ATTLIST cmdref
    targ    CDATA #REQUIRED
 >
+
+<!ELEMENT seelist (fncref)+>
 
 <!ELEMENT fncref EMPTY>
 <!ATTLIST fncref
@@ -169,7 +177,7 @@
 <!ELEMENT lit      (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
-<!ELEMENT quote    (#PCDATA | lit)*>
+<!ELEMENT quote    (#PCDATA | lit | math)*>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>

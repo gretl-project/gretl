@@ -287,12 +287,11 @@
       <menuitem action='system'/>
     </menu>
     <menu action='Help'>
-      <menu action='CommandRef'>
-	<menuitem action='TextCmdRef'/>
-	<menuitem action='PDFCmdRef'/>
-      </menu>
+      <menuitem action='TextCmdRef'/>
       <menuitem action='FuncRef'/>
+      <separator/>
       <menuitem action='UserGuide'/>
+      <menuitem action='PDFCmdRef'/>
       <separator/>
       <menuitem action='UpdateCheck'/>
       <menuitem action='About'/>

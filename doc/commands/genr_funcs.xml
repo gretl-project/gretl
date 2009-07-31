@@ -1425,18 +1425,19 @@
       <description>
 	<para>
 	  Computes the eigenvalues, and optionally the right eigenvectors, of
-	  the <by r="n" c="n"/> symmetrix matrix <argname>A</argname>; the
-	  second argument must be either the name of an existing matrix
-	  preceded by <lit>&amp;</lit> (to indicate the <quote>address</quote>
-	  of the matrix in question), in which case an auxiliary result is
-	  written to that matrix, or the keyword <lit>null</lit>, in which
-	  case the auxiliary result is not produced.
+	  the <by r="n" c="n"/> symmetric matrix <argname>A</argname>.
 	</para>
 	<para>
-	  If the second argument is not <lit>null</lit>, the specified
-	  matrix will be over-written with the auxiliary result.  (It is
-	  not required that the existing matrix be of the right dimensions
+	  If you want the eigenvectors, give as the second argument the name
+	  of an existing matrix preceded by <lit>&amp;</lit> (to indicate the
+	  <quote>address</quote> of the matrix in question).  In that case the
+	  specified matrix will be over-written with the auxiliary result. (It
+	  is not required that the existing matrix be of the right dimensions
 	  to receive the result.)
+	</para>
+	<para>
+	  If you don't want the eigenvectors, give the keyword <lit>null</lit>
+	  in place of the second argument.
 	</para>
 	<para>
 	  <seelist>

@@ -193,7 +193,7 @@ audioprint_confints (const CoeffIntervals *cf, PRN *prn)
 static int speak_buffer (const char *buf, int (*should_stop)())
 {
     cst_voice *v;
-    char line[128];
+    char line[2048];
 
     flite_init();
     v = register_cmu_us_kal();
@@ -263,7 +263,7 @@ static int speak_buffer (const char *buf, int (*should_stop)())
 {
     ISpVoice *v = NULL;
     WCHAR *w;
-    char line[128];
+    char line[2048];
 
     v = get_sapi_voice();
     if (v == NULL) return 1;

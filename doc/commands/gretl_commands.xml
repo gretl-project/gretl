@@ -2692,9 +2692,7 @@
     label="Non-native script" context="cli">
 
     <usage>
-      <arguments>
-        <argument optional="true">language-spec</argument>
-      </arguments>
+      <syntax><lit>foreign language=</lit><repl>lang</repl></syntax>
       <options>
 	<option>
 	  <flag>--send-data</flag>
@@ -2714,10 +2712,10 @@
 	  foreign</lit>; at this point the stacked commands are executed.
       </para>
       <para>
-	At present the only <quote>foreign</quote> program supported in this
-	way is GNU R, and the only acceptable <repl>language-spec</repl> is
-	<lit>language=R</lit> (which is implicit, and may be omitted).  In
-	future other programs may be supported.
+	At present two <quote>foreign</quote> programs supported in this way,
+	GNU R (<lit>foreign language=R</lit>) and Jurgen Doornik's Ox
+	(<lit>foreign language=Ox</lit>). Note that the <lit>--send-data</lit>
+	is not available in connection with Ox.
       </para>
       <para>
 	See <guideref targ="chap:gretlR"/> for details and examples.
@@ -6330,7 +6328,7 @@
 	With plain text files, gretl generally expects to find the data
 	columns delimited in some standard manner.  But there is also a
 	special facility for reading <quote>fixed format</quote> files, in
-	which there are no delimiters but there is known specification of the
+	which there are no delimiters but there is a known specification of the
 	form, &eg;, <quote>variable <math>k</math> occupies 8 columns starting
 	at column 24</quote>.  To read such files, you should append a string
 	<lit>--cols=</lit><repl>colspec</repl>, where <repl>colspec</repl> is

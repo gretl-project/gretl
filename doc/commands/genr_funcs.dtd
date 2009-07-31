@@ -41,7 +41,8 @@
             matshape | numerical | probdist | stats | strings | 
             transforms | access) "math" 
    output  (scalar | series | matrix | smatrix | string | seebelow |
-            rvec | cvec | list | asinput | scalar-or-series) "series"
+            rvec | cvec | list | asinput | scalar-or-series |
+            scalar-or-matrix) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 
@@ -56,7 +57,8 @@
                matrixref | anyfloat | scalar-or-series | series-or-vec | 
                series-or-mat | list | coeffname | string | char | sslist | 
                series-or-list | smlist | pscalar | seebelow |
-               anyfloat-or-list | list-or-string| scalar-or-vec) "series"
+               anyfloat-or-list | list-or-string| scalar-or-vec |
+               scalar-or-list) "series"
     optional  (true | false) "false"
 >
 
@@ -104,7 +106,7 @@
    targ    CDATA #REQUIRED
 >
 
-<!ELEMENT seelist (fncref)+>
+<!ELEMENT seelist (fncref | cmdref)+>
 
 <!ELEMENT fncref EMPTY>
 <!ATTLIST fncref

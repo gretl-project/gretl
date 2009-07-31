@@ -605,6 +605,12 @@ with the shared library enabled (specify \verb|--enable-R-shlib| when
 configuring your build of \app{R}), and (b) that the \verb|pkg-config|
 program is able to detect your \app{R} installation.
 
+If you have the \app{R} shared library installed but want to force
+\app{gretl} to call the \app{R} executable instead, you can do
+\begin{code}
+set R_lib off
+\end{code}
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"

@@ -544,6 +544,15 @@
   <xsl:text>\\&#xa;</xsl:text>
 </xsl:template>
 
+<xsl:template match="syntax">
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'syntax'"/>
+  </xsl:call-template>
+  <xsl:text> &amp; </xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>\\&#xa;</xsl:text>
+</xsl:template>
+
 <xsl:template match="lit|filename|varname">
   <xsl:variable name="escape">
     <xsl:call-template name="needs-verb">

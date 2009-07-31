@@ -256,6 +256,15 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="syntax">
+  <xsl:call-template name="nl"/>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'syntax'"/>
+  </xsl:call-template>
+  <xsl:text>&#x9;</xsl:text>
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="examples">
   <xsl:if test="ancestor::command">
     <xsl:call-template name="nl"/>

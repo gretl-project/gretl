@@ -511,9 +511,13 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     if (Ctrl) {
 	if (upkey == GDK_F) {
-	    /* Ctrl-F: find */
-	    text_find(NULL, vwin);
-	    return TRUE;
+	    /* Ctrl-F: find -- we do this specially in help windows */
+	    if (help_role(vwin->role)) {
+		return FALSE;
+	    } else {
+		text_find(NULL, vwin);
+		return TRUE;
+	    }
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
 	    return vwin_copy_callback(NULL, vwin);
@@ -1775,7 +1779,7 @@ windata_t *view_help_file (const char *filename, int role)
     create_text(vwin, hsize, vsize, 0, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN ||
