@@ -394,34 +394,41 @@
       <xsl:text>&amp; </xsl:text>
     </xsl:otherwise>
   </xsl:choose>
-  <xsl:text>\textsl{</xsl:text>
-  <xsl:if test="substring(., 1, 1) = '&amp;'">
-    <xsl:text>\</xsl:text>
-  </xsl:if>
-  <xsl:apply-templates/>
-  <xsl:text>}</xsl:text>
-  <xsl:text> (</xsl:text>
-  <xsl:call-template name="gettext">
-    <xsl:with-param name="key" select="@type"/>
-  </xsl:call-template>
-  <xsl:if test="(@optional)">
-    <xsl:choose>
-      <xsl:when test="@type='matrixref'">
-        <xsl:text>,</xsl:text>
-        <xsl:call-template name="gettext">
-          <xsl:with-param name="key" select="'or'"/>
-        </xsl:call-template>
-        <xsl:text>\texttt{null}</xsl:text>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:text>, </xsl:text>
-        <xsl:call-template name="gettext">
-          <xsl:with-param name="key" select="'optional'"/>
-        </xsl:call-template>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:if> 
-  <xsl:text>)</xsl:text>
+  <xsl:choose>
+    <xsl:when test="@type='varargs'">
+      <xsl:text>. . .</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>\textsl{</xsl:text>
+      <xsl:if test="substring(., 1, 1) = '&amp;'">
+        <xsl:text>\</xsl:text>
+      </xsl:if>
+      <xsl:apply-templates/>
+      <xsl:text>}</xsl:text>
+      <xsl:text> (</xsl:text>
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="@type"/>
+      </xsl:call-template>
+      <xsl:if test="(@optional)">
+        <xsl:choose>
+          <xsl:when test="@type='matrixref'">
+            <xsl:text>,</xsl:text>
+            <xsl:call-template name="gettext">
+              <xsl:with-param name="key" select="'or'"/>
+            </xsl:call-template>
+            <xsl:text>\texttt{null}</xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:text>, </xsl:text>
+            <xsl:call-template name="gettext">
+              <xsl:with-param name="key" select="'optional'"/>
+            </xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:if> 
+      <xsl:text>)</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:text>\\&#10;</xsl:text>
 </xsl:template>
 

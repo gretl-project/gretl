@@ -464,8 +464,9 @@ static NODE *listvar_node (parser *p)
    parenthesis and flag an error if we don't find one.
 */
 
-static NODE *get_string_arg (parser *p)
+static NODE *get_string_arg (parser *p, int fn)
 {
+    const char *src = NULL;
     int wrapped = 0;
 
     while (p->ch == ' ') {
@@ -474,6 +475,10 @@ static NODE *get_string_arg (parser *p)
 
     if (p->ch == '"') {
 	wrapped = 1;
+	if (fn == F_SSCANF) {
+	    /* don't lose the leading quote */
+	    src = p->point - 1;
+	}
 	parser_getc(p);
     }
 
@@ -507,9 +512,15 @@ static NODE *get_string_arg (parser *p)
 	    return NULL;
 	}
 
+	if (fn == F_SSCANF) {
+	    p->idstr = gretl_strndup(src, close + 2);
+	    started = 1;
+	}
+
 	for (i=0; i<=close; i++) {
 	    if (!started && !isspace(p->ch)) {
-		p->idstr = gretl_strndup(p->point - 1, close - i + 1);
+		src = p->point - 1;
+		p->idstr = gretl_strndup(src, close - i + 1);
 		started = 1;
 	    }
 	    parser_getc(p);
@@ -526,7 +537,7 @@ static NODE *get_string_arg (parser *p)
 
     tailstrip(p->idstr);
 
-    if (wrapped) {
+    if (wrapped && fn != F_SSCANF) {
 	int n = strlen(p->idstr);
 
 	if (p->idstr[n-1] == '"') {
@@ -759,7 +770,7 @@ static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 	    p->flags &= ~P_GETSTR;
 	    /* and handle final string arg if relevant */
 	    if (i == k - 1 && opt == RIGHT_STR) {
-		child = get_string_arg(p);
+		child = get_string_arg(p, 0);
 		attach_child(t, child, k, i++, p);
 	    } else {
 		lex(p);
@@ -885,7 +896,7 @@ static NODE *powterm (parser *p)
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = get_string_arg(p);
+	    t->v.b1.b = get_string_arg(p, sym);
 	}	
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
@@ -922,7 +933,7 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
-	    t->v.b2.r = get_string_arg(p);
+	    t->v.b2.r = get_string_arg(p, sym);
 	}
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);

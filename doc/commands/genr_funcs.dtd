@@ -58,7 +58,7 @@
                series-or-mat | list | coeffname | string | char | sslist | 
                series-or-list | smlist | pscalar | seebelow |
                anyfloat-or-list | list-or-string| scalar-or-vec |
-               scalar-or-list) "series"
+               scalar-or-list | varargs) "series"
     optional  (true | false) "false"
 >
 

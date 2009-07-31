@@ -1049,28 +1049,16 @@ static int get_literal_length (const char *s)
     return n;
 }
 
-/* split line into source string, format and arguments: 
-   acceptable sources are string literals or string variables
-*/
-
-static int 
-split_scanf_line (const char *s, char **src, char **format, 
-		  char **args, int *literal)
+static char *get_literal_or_stringvar (const char **src, int *err)
 {
-    const char *p;
-    char *srcname;
-    int gotcom = 0;
+    const char *s = *src;
+    char *ret = NULL;
+    char *tmp = NULL;
+    int literal = 0;
     int n = 0;
 
-    if (!strncmp(s, "sscanf ", 7)) {
-	s += 7;
-    } 
-
-    s += strspn(s, " ");
-
-    /* string literal or string variable as source */
     if (*s == '"') {
-	*literal = 1;
+	literal = 1;
 	s++;
 	n = get_literal_length(s);
     } else {
@@ -1079,76 +1067,103 @@ split_scanf_line (const char *s, char **src, char **format,
     } 
 
     if (n == 0) {
-	return E_PARSE;
+	/* nothing there */
+	*err = E_PARSE;
+	return NULL;
     }
 
-    srcname = gretl_strndup(s, n);
-    if (srcname == NULL) {
-	return E_ALLOC;
+    tmp = gretl_strndup(s, n);
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
     }
 
-    if (*literal) {
-	*src = srcname;
+    if (literal) {
+	ret = tmp;
 	s++;
     } else {
-	*src = get_string_by_name(srcname);
-	free(srcname);
-	if (*src == NULL) {
-	    return E_UNKVAR;
+	char *svar = get_string_by_name(tmp);
+
+	if (svar == NULL) {
+	    *err = E_UNKVAR;
+	} else {
+	    ret = gretl_strdup(svar);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    }
 	}
+	free(tmp);
     }
 
-    s += n;
-    if (*s == ',') {
-	gotcom = 1;
-	s++;
-    }
+    /* advance the caller's pointer */
+    *src = s + n;
 
-    /* skip to next field */
+    return ret;
+}
+
+/* Eat white space; detect comma and eat if found; eat more white
+   space.  Return 1 if comma was found else 0.
+*/
+
+int eat_comma (const char **src) 
+{
+    const char *s = *src;
+    int ret = 0;
+
     s += strspn(s, " ");
-    if (!gotcom && *s == ',') {
+
+    if (*s == ',') {
+	ret = 1;
 	s++;
 	s += strspn(s, " ");
     }
 
-    /* get format string */
-    if (*s != '"' || *(s+1) == '\0') {
+    *src = s;
+
+    return ret;
+}
+
+/* split line into source string, format and arguments: 
+   acceptable sources are string literals or string variables
+*/
+
+static int 
+split_scanf_line (const char *s, char **psrc, char **pfmt, 
+		  char **args)
+{
+    int gotcom, err = 0;
+
+    if (!strncmp(s, "sscanf ", 7)) {
+	s += 7;
+    } 
+
+    s += strspn(s, " ");
+
+    /* get the source string */
+    *psrc = get_literal_or_stringvar(&s, &err);
+    if (err) {
+	return err;
+    }
+    
+    /* skip to format string */
+    gotcom = eat_comma(&s);
+    if (!gotcom) {
+	/* empty format */
 	return E_PARSE;
     }
 
-    s++;
-    p = s;
-
-    n = 0;
-    while (*s) {
-	if (*s == '"' && *(s-1) != '\\') {
-	    break;
-	}
-	n++;
-	s++;
+    /* get format string */
+    *pfmt = get_literal_or_stringvar(&s, &err);
+    if (err) {
+	return err;
     }
 
-    if (n == 0) {
-	/* empty format string */
-	return 0; 
-    }
-
-    *format = gretl_strndup(p, n);
-    if (*format == NULL) {
-	return E_ALLOC;
-    }
-
-    s++;
-    s += strspn(s, " ");
-
-    if (*s != ',') {
+    /* skip to first arg */
+    gotcom = eat_comma(&s);
+    if (!gotcom) {
 	/* empty args */
-	*args = NULL;
-	return 0;
+	return E_PARSE;
     }
-
-    s++;
-    s += strspn(s, " ");
 
     *args = gretl_strdup(s);
     if (*args == NULL) {
@@ -1185,19 +1200,21 @@ int do_sscanf (const char *line, double ***pZ,
     char *src = NULL;
     char *format = NULL;
     char *args = NULL;
-    int literal = 0;
     int err = 0;
 
     nscan = 0;
     gretl_error_clear();
 
-    err = split_scanf_line(line, &src, &format, &args, &literal);
+#if PSDEBUG
+    fprintf(stderr, "do_sscanf: line = '%s'\n", line);
+#endif
+
+    err = split_scanf_line(line, &src, &format, &args);
     if (err) {
 	return err;
     }
 
 #if PSDEBUG
-    fprintf(stderr, "do_sscanf: line = '%s'\n", line);
     fprintf(stderr, " src = '%s'\n", src);
     fprintf(stderr, " format = '%s'\n", format);
     fprintf(stderr, " args = '%s'\n", args);
@@ -1228,10 +1245,7 @@ int do_sscanf (const char *line, double ***pZ,
 	}
     }
 
-    if (literal) {
-	free(src);
-    }
-
+    free(src);
     free(format);
     free(args);
 

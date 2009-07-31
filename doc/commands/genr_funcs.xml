@@ -4252,6 +4252,23 @@
       </description>
     </function>
 
+    <function name="sscanf" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">src</fnarg>
+	<fnarg type="string">format</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>  
+      <description>
+	<para>
+	  Reads values from <argname>src</argname> under the control of
+	  <argname>format</argname> and assigns these values to one or more
+	  trailing arguments, indicated by the dots above.  Returns the number
+	  of values assigned.  For more details see the <cmdref
+	    targ="sscanf"/> command.
+	</para>
+      </description>
+    </function>
+
     <function name="sst" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>

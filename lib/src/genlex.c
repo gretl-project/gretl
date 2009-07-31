@@ -306,6 +306,7 @@ struct str_table funcs[] = {
     { F_STRSTR,   "strstr" },
     { F_STRNCMP,  "strncmp" },
     { F_STRLEN,   "strlen" },
+    { F_SSCANF,   "sscanf" },
     { F_VARNAME,  "varname" },
     { F_VARNUM,   "varnum" },
     { F_TOLOWER,  "tolower" },
