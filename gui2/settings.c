@@ -209,19 +209,19 @@ RCVAR rc_vars[] = {
     { "calculator", N_("Calculator"), NULL, calculator, 
       USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef HAVE_X12A
-    { "x12a", N_("path to x12arima"), NULL, paths.x12a, 
+    { "x12a", N_("Path to x12arima"), NULL, paths.x12a, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
 #ifdef HAVE_TRAMO
-    { "tramo", N_("path to tramo"), NULL, paths.tramo, 
+    { "tramo", N_("Path to tramo"), NULL, paths.tramo, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
 #ifdef USE_RLIB
-    { "Rlib", N_("path to R library"), NULL, paths.rlibpath, 
+    { "Rlib", N_("Path to R library"), NULL, paths.rlibpath, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
 #ifdef USE_OX
-    { "ox", N_("path to oxl executable"), NULL, oxpath, 
+    { "ox", N_("Path to oxl executable"), NULL, oxpath, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
     { "binbase", N_("gretl database directory"), NULL, paths.binbase, 

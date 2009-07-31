@@ -65,6 +65,7 @@ static help_head **en_cli_heads, **en_gui_heads;
 static windata_t *make_helpwin (int flags);
 static void real_do_help (int hcode, int pos, int flags);
 static void en_text_cmdref (GtkAction *a);
+static void help_back_page (GtkAction *a, gpointer p);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *widget, gpointer data);
@@ -86,6 +87,7 @@ const gchar *help_tools_ui =
     "<ui>"
     "  <toolbar>"
     "    <toolitem action='Index'/>"
+    "    <toolitem action='Back'/>"
     "    <toolitem action='WindowFind'/>"
     "    <toolitem action='ZoomIn'/>"
     "    <toolitem action='ZoomOut'/>"
@@ -95,6 +97,7 @@ const gchar *help_tools_ui =
 const gchar *gui_help_tools_ui = 
     "<ui>"
     "  <toolbar>"
+    "    <toolitem action='Back'/>"
     "    <toolitem action='WindowFind'/>"
     "    <toolitem action='ZoomIn'/>"
     "    <toolitem action='ZoomOut'/>"
@@ -109,6 +112,8 @@ static gint n_help_menu_items = G_N_ELEMENTS(help_menu_items);
 
 GtkActionEntry help_tools[] = {
     { "Index", GTK_STOCK_INDEX, NULL, NULL, N_("Index"), NULL },
+    { "Back", GTK_STOCK_GO_BACK, NULL, NULL, N_("Back"), 
+      G_CALLBACK(help_back_page) },
     { "WindowFind", GTK_STOCK_FIND, NULL, NULL, N_("Find in window"),
       G_CALLBACK(text_find) },
     { "ZoomIn", GTK_STOCK_ZOOM_IN, NULL, NULL, N_("Larger"),
@@ -1091,6 +1096,26 @@ static void add_help_topics (windata_t *hwin, int flags)
 		g_free(path);
 	    }
 	}
+    }
+}
+
+static int pop_backpage (GtkWidget *w)
+{
+    gpointer p = g_object_get_data(G_OBJECT(w), "backpage");
+
+    return GPOINTER_TO_INT(p);
+}
+
+static void help_back_page (GtkAction *a, gpointer p)
+{
+    windata_t *hwin = (windata_t *) p;
+    int en = (hwin->role == CLI_HELP_EN || hwin->role == GUI_HELP_EN);
+    int pg = pop_backpage(hwin->text); 
+
+    if (hwin->role == FUNCS_HELP) {
+	function_help_callback(pg);
+    } else {
+	command_help_callback(pg, en);
     }
 }
 

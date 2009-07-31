@@ -1279,6 +1279,20 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     maybe_set_help_tabs(hwin);
 }
 
+static void push_backpage (GtkWidget *w, int pg)
+{
+    gpointer p = GINT_TO_POINTER(pg);
+
+    g_object_set_data(G_OBJECT(w), "backpage", p);
+}
+
+static int pop_backpage (GtkWidget *w)
+{
+    gpointer p = g_object_get_data(G_OBJECT(w), "backpage");
+
+    return GPOINTER_TO_INT(p);
+}
+
 static gint help_popup_click (GtkWidget *w, gpointer p)
 {
     windata_t *hwin = (windata_t *) p;
@@ -1287,8 +1301,7 @@ static gint help_popup_click (GtkWidget *w, gpointer p)
     int page = 0;
 
     if (action == 2) {
-	page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text), 
-						 "backpage"));
+	page = pop_backpage(hwin->text); 
     }
 
     if (hwin->role == FUNCS_HELP) {
@@ -1308,9 +1321,13 @@ static GtkWidget *build_help_popup (windata_t *hwin)
     };
     GtkWidget *pmenu = gtk_menu_new();
     GtkWidget *item;
-    int i;
+    int i, imin = 0;
 
-    for (i=0; i<2; i++) {
+    if (hwin->active_var == 0) {
+	imin = 1;
+    }
+
+    for (i=imin; i<2; i++) {
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_object_set_data(G_OBJECT(item), "action", GINT_TO_POINTER(i+1));
 	g_signal_connect(G_OBJECT(item), "activate",
@@ -1331,7 +1348,7 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     if (mods & GDK_BUTTON3_MASK) {
 	windata_t *hwin = (windata_t *) p;
 
-	if (hwin->active_var == 0) {
+	if (hwin->active_var == 0 && pop_backpage(w) == 0) {
 	    return TRUE;
 	}
 
@@ -2629,8 +2646,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     free(buf);
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), textb);
-    g_object_set_data(G_OBJECT(hwin->text), "backpage", 
-		      GINT_TO_POINTER(hwin->active_var));
+    push_backpage(hwin->text, hwin->active_var);
     maybe_connect_help_signals(hwin, en);
     cursor_to_top(hwin);
     hwin->active_var = hcode;
