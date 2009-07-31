@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-30 20:14-0400\n"
-"PO-Revision-Date: 2009-07-30 20:41-0400\n"
+"PO-Revision-Date: 2009-07-31 10:14+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2158,7 +2158,7 @@ msgstr "'%s' : non implementato per questo tipo"
 
 #: lib/src/genfuncs.c:722 gui2/library.c:4094
 msgid "Input must be a monthly or quarterly time series"
-msgstr ""
+msgstr "L'input deve essere una serie mensile o trimestrale"
 
 #: lib/src/genfuncs.c:732 plugin/tramo-x12a.c:988
 msgid ""
@@ -8120,9 +8120,8 @@ msgstr ""
 "dataset attuale?"
 
 #: gui2/dialogs.c:221
-#, fuzzy
 msgid "Print missing values as:"
-msgstr "_Conta valori mancanti"
+msgstr "Mostra valori mancanti come:"
 
 #: gui2/dialogs.c:319
 msgid "gretl: data delimiter"
@@ -13110,9 +13109,8 @@ msgid "Path to R library"
 msgstr "Percorso per la libreria R"
 
 #: gui2/settings.c:224
-#, fuzzy
 msgid "Path to oxl executable"
-msgstr "Aggiungi alla tabella modelli"
+msgstr "Percorso per l'eseguibile oxl"
 
 #: gui2/settings.c:227
 msgid "gretl database directory"
