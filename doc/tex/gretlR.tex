@@ -274,11 +274,11 @@ in the previous section: your data will be pre-loaded (if the
 be executed. Once this is done, you will find yourself at the \app{R}
 prompt, where you can enter more commands.
 
-A non-interactive run, on the other hand, will execute your script, collect the
-output from \app{R} and present it to you in an output window; \app{R}
-will be run in the background. If, for example, the script in
-Figure~\ref{fig:R-edit1} is run non-interactively, a window similar to
-Figure~\ref{fig:R-output1} will appear.
+A non-interactive run, on the other hand, will execute your script,
+collect the output from \app{R} and present it to you in an output
+window; \app{R} will be run in the background. If, for example, the
+script in Figure~\ref{fig:R-edit1} is run non-interactively, a window
+similar to Figure~\ref{fig:R-output1} will appear.
 
 \begin{figure}[htbp]
   \centering
@@ -584,15 +584,26 @@ its full power when it is used in conjunction with user-written
 functions.  Example~\ref{RStructTS-func} shows how to define a
 \app{gretl} function that calls \app{R} internally.
 
-A note on performance: at present, when \app{R} is called from within
-\app{gretl} using a \texttt{foreign} block, the \app{R} program is
-started up on each invocation, which can be quite time consuming.  For
-maximum performance, you should organize your script so as to group
-together as many \app{R} operations as possible, hence minimizing the
-number of distinct \texttt{foreign} blocks.\footnote{In future we may
-  be able to improve on this, using calls to the \app{R} shared
-  library in place of invocations of the program.}
+\section{Performance issues with \app{R}}
+\label{sec:R-performance}
 
+\app{R} is a large and complex program, which takes an appreciable
+time to initialize itself.\footnote{About one third of a second on an
+  Intel Core Duo machine of 2009 vintage.}  In interactive use this
+not a significant problem, but if you have a \app{gretl} script that
+calls \app{R} repeatedly the cumulated start-up costs can become
+bothersome.  To get around this, \app{gretl} calls the \app{R} shared
+library by preference; in this case the start-up cost is borne only
+once, on the first invocation of \app{R} code from within \app{gretl}.
+
+Support for the \app{R} shared library is built into the \app{gretl}
+packages for MS Windows and OS X --- but the advantage is realized
+only if the library is in fact available at run time.  If you are
+building \app{gretl} yourself on Linux and wish to make use of the
+\app{R} library, you should ensure (a) that \app{R} has been built
+with the shared library enabled (specify \verb|--enable-R-shlib| when
+configuring your build of \app{R}), and (b) that the \verb|pkg-config|
+program is able to detect your \app{R} installation.
 
 %%% Local Variables: 
 %%% mode: latex
