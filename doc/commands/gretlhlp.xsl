@@ -67,7 +67,8 @@
       <xsl:text> </xsl:text>
       <xsl:value-of select="$cmd-count"/>
       <xsl:text>&#10;</xsl:text>
-      <xsl:for-each select="/commandlist/command[@section = current()/@section and (not(@context) or @context=$hlp)]">
+      <xsl:for-each select="/commandlist/command[@section = current()/@section 
+                            and (not(@context) or @context=$hlp)]">
         <xsl:value-of select="@name"/>
         <xsl:if test="$hlp='gui'">
           <xsl:text> "</xsl:text>
@@ -78,6 +79,35 @@
       </xsl:for-each>      
     </xsl:if>
   </xsl:for-each>
+  <xsl:apply-templates/> 
+</xsl:template>
+
+<xsl:template match="funclist">
+  <!-- the following disabled for now: use '= 1' to activate -->
+  <xsl:if test="position() &lt; 0">
+    <xsl:text>headings </xsl:text>
+    <xsl:value-of select="count(/funcref/funclist/function[not(@section = preceding-sibling::function/@section)])"/>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:for-each select="/funcref/funclist/function[not(@section = preceding-sibling::function/@section)]">
+      <xsl:variable name="fun-count">
+        <xsl:value-of select="count(/funcref/funclist/function[@section = current()/@section])"/>
+      </xsl:variable>
+      <xsl:if test="$fun-count &gt; 0">
+        <xsl:value-of select="@section"/>
+        <xsl:text> </xsl:text>
+        <xsl:value-of select="$fun-count"/>
+        <xsl:text>&#10;</xsl:text>
+        <xsl:for-each select="/funcref/funclist/function[@section = current()/@section]">
+          <xsl:value-of select="@name"/>
+          <xsl:text>&#10;</xsl:text>
+        </xsl:for-each>      
+      </xsl:if>
+    </xsl:for-each>
+  </xsl:if>
+  <xsl:text>&#10;</xsl:text>
+  <xsl:text>## </xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>&#10;&#10;</xsl:text>
   <xsl:apply-templates/> 
 </xsl:template>
 
@@ -301,6 +331,7 @@
   <xsl:apply-templates/> 
 </xsl:template>
 
+<!--
 <xsl:template match="funclist">
   <xsl:text>&#10;</xsl:text>
   <xsl:text>## </xsl:text>
@@ -308,6 +339,7 @@
   <xsl:text>&#10;&#10;</xsl:text>
   <xsl:apply-templates/> 
 </xsl:template>
+-->
 
 <xsl:template match="function">
   <xsl:if test="position() > 1">

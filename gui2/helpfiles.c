@@ -55,7 +55,7 @@ struct help_head_t {
     int *topics;       /* array of topics under heading by command number */
     char **topicnames; /* array of descriptive topic names (GUI help only) */
     int *pos;          /* array of byte offsets into file for topics */
-    int ntalloc;       /* number of topics initally allocated */
+    int ntalloc;       /* number of topics initially allocated */
     int ntopics;       /* actual number of topics under this heading */
 };
 
@@ -343,21 +343,22 @@ static int get_following_word (char *s, int len, int *b, FILE *fp)
 
 static int help_topic_number (const char *word, int gui)
 {
-    int hnum = gretl_command_number(word);
+    int h = gretl_command_number(word);
 
-    if (hnum == 0 && gui) {
-	hnum = extra_command_number(word);
+    if (h == 0 && gui) {
+	h = extra_command_number(word);
     }
 
-    if (hnum <= 0) {
-	hnum = compat_command_number(word);
+    if (h <= 0) {
+	h = compat_command_number(word);
     }
 
-    return hnum;
+    return h;
 }
 
 static int 
-get_help_word (char *s, help_head **heads, int nh, int gui, int *pi, int *pj)
+get_help_word (char *s, help_head **heads, int nh, int gui, 
+	       int *pi, int *pj)
 {
     int hnum;
     int i, j;
