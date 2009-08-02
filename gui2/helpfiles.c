@@ -1110,7 +1110,7 @@ static void delete_help_viewer (GtkAction *a, windata_t *hwin)
     gtk_widget_destroy(hwin->main); 
 }
 
-static void helpwin_find_callback (GtkEntry *entry, windata_t *hwin)
+static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 {
     gboolean found;
 
@@ -1119,18 +1119,16 @@ static void helpwin_find_callback (GtkEntry *entry, windata_t *hwin)
 	return;
     }
 
-    found = real_find_in_text(GTK_TEXT_VIEW(hwin->text), needle, TRUE);
+    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE);
 
     if (!found) {
-	if (hwin->role == CLI_HELP || hwin->role == CLI_HELP_EN) {
+	if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN) {
 	    /* are we looking for a command? */
 	    int hcode = help_topic_number(needle, 0);
 
 	    if (hcode > 0) {
-		int en = (hwin->role == CLI_HELP_EN);
+		int en = (vwin->role == CLI_HELP_EN);
 		int pos = cli_pos_from_cmd(hcode, en);
-
-		fprintf(stderr, "hcode = %d, pos = %d\n", hcode, pos);
 
 		if (pos > 0) {
 		    real_do_help(hcode, pos, (en)? (HELP_CLI | HELP_EN) : 
@@ -1138,7 +1136,7 @@ static void helpwin_find_callback (GtkEntry *entry, windata_t *hwin)
 		    found = TRUE;
 		}
 	    }
-	} else if (hwin->role == FUNCS_HELP) {
+	} else if (vwin->role == FUNCS_HELP) {
 	    /* are we looking for a function? */
 	    int fnum = function_help_index_from_word(needle);
 
@@ -1159,17 +1157,16 @@ static void helpwin_find_callback (GtkEntry *entry, windata_t *hwin)
 }
 
 static gint catch_find_key (GtkWidget *w, GdkEventKey *key, 
-			    windata_t *hwin)
+			    windata_t *vwin)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
     guint upkey = gdk_keyval_to_upper(key->keyval);
 
     if ((mods & GDK_CONTROL_MASK) && upkey == GDK_F) {
-	GtkWidget *entry = g_object_get_data(G_OBJECT(hwin->main),
-					     "find_entry");
-	if (entry != NULL) {
-	    gtk_widget_grab_focus(entry);
-	    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+	if (vwin->finder != NULL) {
+	    gtk_widget_grab_focus(vwin->finder);
+	    gtk_editable_select_region(GTK_EDITABLE(vwin->finder), 
+				       0, -1);
 	    return TRUE;
 	}
     }
@@ -1178,24 +1175,25 @@ static gint catch_find_key (GtkWidget *w, GdkEventKey *key,
 }
 
 #if (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16)
-# define USE_ENTRY_ICON 1
-#else
-# undef USE_ENTRY_ICON
+# define USE_ENTRY_ICON
 #endif
 
-static void helpwin_add_finder (windata_t *hwin, GtkWidget *hbox)
+static void vwin_add_finder (windata_t *vwin)
 {
 #ifndef USE_ENTRY_ICON
     GtkWidget *label;
 #endif
     GtkWidget *entry;
+    GtkWidget *hbox;
+
+    hbox = gtk_widget_get_parent(vwin->mbar);
 
     entry = gtk_entry_new();
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 16);
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-    g_object_set_data(G_OBJECT(hwin->main), "find_entry", entry);
+    vwin->finder = entry;
 
-#if USE_ENTRY_ICON
+#ifdef USE_ENTRY_ICON
     gtk_entry_set_icon_from_stock(GTK_ENTRY(entry), 
 				  GTK_ENTRY_ICON_SECONDARY,
 				  GTK_STOCK_FIND);
@@ -1205,8 +1203,8 @@ static void helpwin_add_finder (windata_t *hwin, GtkWidget *hbox)
 #endif    
 
     g_signal_connect(G_OBJECT(entry), "activate",
-		     G_CALLBACK(helpwin_find_callback),
-		     hwin);
+		     G_CALLBACK(vwin_finder_callback),
+		     vwin);
 }
 
 static void add_help_tool_by_name (windata_t *hwin, 
@@ -1317,7 +1315,7 @@ void set_up_helpview_menu (windata_t *hwin)
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tbar), FALSE);
 
     if (SHOW_FIND_BUTTON(hwin->role)) {
-	helpwin_add_finder(hwin, hbox);
+	vwin_add_finder(hwin);
     }
 
     gtk_widget_show_all(hbox);
@@ -1699,12 +1697,28 @@ int gui_console_help (const char *param)
 
 void text_find (gpointer unused, gpointer data)
 {
-    find_string_dialog(find_in_text, data);
+    windata_t *vwin = (windata_t *) data;
+
+    if (vwin->finder != NULL) {
+	gtk_widget_grab_focus(vwin->finder);
+	gtk_editable_select_region(GTK_EDITABLE(vwin->finder), 
+				   0, -1);
+    } else {
+	find_string_dialog(find_in_text, data);
+    }
 }
 
 void listbox_find (gpointer unused, gpointer data)
 {
-    find_string_dialog(find_in_listbox, data);
+    windata_t *vwin = (windata_t *) data;
+
+    if (vwin->finder != NULL) {
+	gtk_widget_grab_focus(vwin->finder);
+	gtk_editable_select_region(GTK_EDITABLE(vwin->finder), 
+				   0, -1);
+    } else {
+	find_string_dialog(find_in_listbox, data);
+    }
 }
 
 static gint close_find_dialog (GtkWidget *widget, gpointer data)

@@ -69,6 +69,7 @@ struct _windata_t {
     GtkWidget *text;      /* text or sourceview object */
     GtkWidget *listbox;   /* or: box containing tree or list */
     GtkWidget *mbar;      /* menubar, or toolbar */
+    GtkWidget *finder;    /* search entry in top bar */
     GtkWidget *status;    /* status label */
     GtkWidget *popup;     /* popup menu */
     GtkUIManager *ui;     /* UI definition */

@@ -230,6 +230,7 @@ static void windata_init (windata_t *vwin, int role, gpointer data)
     vwin->text = NULL;
     vwin->listbox = NULL;
     vwin->mbar = NULL;
+    vwin->finder = NULL;
     vwin->status = NULL;
     vwin->popup = NULL;
     vwin->ui = NULL;
