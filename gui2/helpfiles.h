@@ -43,6 +43,8 @@ void listbox_find (gpointer unused, gpointer data);
 
 void text_find (gpointer unused, gpointer data);
 
+void vwin_add_finder (windata_t *vwin);
+
 char *quoted_help_string (const char *s);
 
 int function_help_index_from_word (const char *s);

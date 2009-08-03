@@ -69,13 +69,15 @@ static void en_help_callback (GtkAction *action, windata_t *hwin);
 static void delete_help_viewer (GtkAction *a, windata_t *hwin);
 
 /* searching stuff */
-static void find_in_text (GtkWidget *widget, gpointer data);
-static void find_in_listbox (GtkWidget *widget, gpointer data);
+static void find_in_text (GtkWidget *button, GtkWidget *dialog);
+static void find_in_listbox (GtkWidget *button, GtkWidget *dialog);
 static void find_string_dialog (void (*findfunc)(), windata_t *vwin);
 static gboolean real_find_in_text (GtkTextView *view, const gchar *s, 
 				   gboolean from_cursor);
+static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, 
+				      gboolean vnames);
 
-static GtkWidget *find_window = NULL;
+static GtkWidget *find_dialog = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
@@ -1119,7 +1121,11 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 	return;
     }
 
-    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE);
+    if (vwin->text != NULL) {
+	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE);
+    } else {
+	found = real_find_in_listbox(vwin, needle, FALSE);
+    }
 
     if (!found) {
 	if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN) {
@@ -1160,7 +1166,9 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 # define USE_ENTRY_ICON
 #endif
 
-static void vwin_add_finder (windata_t *vwin)
+/* add a "search box" to the right of a viewer window's toolbar */
+
+void vwin_add_finder (windata_t *vwin)
 {
 #ifndef USE_ENTRY_ICON
     GtkWidget *label;
@@ -1700,7 +1708,7 @@ void listbox_find (gpointer unused, gpointer data)
 
 static gint close_find_dialog (GtkWidget *widget, gpointer data)
 {
-    find_window = NULL;
+    find_dialog = NULL;
     return FALSE;
 }
 
@@ -1788,9 +1796,9 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
     return found;
 }
 
-static void find_in_text (GtkWidget *widget, gpointer data)
+static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 {
-    windata_t *vwin = g_object_get_data(G_OBJECT(data), "windat");
+    windata_t *vwin = g_object_get_data(G_OBJECT(dialog), "windat");
     gboolean found;
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
@@ -1823,17 +1831,14 @@ get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
     }
 }
 
-static void find_in_listbox (GtkWidget *w, gpointer p)
+static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames)
 {
-    windata_t *vwin = g_object_get_data(G_OBJECT(p), "windat");
     int minvar, wrapped = 0;
     char haystack[MAXLEN];
     char pstr[16];
     GtkTreeModel *model = NULL;
     GtkTreeIter iter;
     gboolean got_iter;
-    gpointer vp;
-    int vnames = 0;
     int found = -1;
 
     /* first check that there's something to search */
@@ -1842,26 +1847,14 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     }
 
     if (model == NULL) {
-	return;
+	return FALSE;
     }
 
     /* if searching in the main gretl window, start on line 1 */
     minvar = (vwin == mdata)? 1 : 0;
 
-    /* are we confining the search to variable names? */
-    vp = g_object_get_data(G_OBJECT(p), "vnames_only");
-    if (vp != NULL) {
-	vnames = GPOINTER_TO_INT(vp);
-    }
-
-    if (needle != NULL) {
-	g_free(needle);
-	needle = NULL;
-    }
-
-    needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
-    if (!vnames) {
-	lower(needle);
+    if (vnames) {
+	lower(s);
     }
 
     /* first try to get the current line plus one as starting point */
@@ -1878,9 +1871,8 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
 
     if (!got_iter) {
 	/* failed totally, get out */
-	gtk_widget_destroy(GTK_WIDGET(p));
 	infobox(_("String was not found."));
-	return;
+	return FALSE;
     }
 
  search_wrap:
@@ -1933,13 +1925,43 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     } else {
 	infobox(_("String was not found."));
     }
+
+    return (found >= 0);
 }
 
-static void cancel_find (GtkWidget *widget, gpointer data)
+/* used for windows that do not have a built-in search entry,
+   but which call the function find_string_dialog() */
+
+static void find_in_listbox (GtkWidget *w, GtkWidget *dialog)
 {
-    if (find_window != NULL) {
-	gtk_widget_destroy(GTK_WIDGET(data));
-	find_window = NULL;
+    windata_t *vwin = g_object_get_data(G_OBJECT(dialog), "windat");
+    gboolean vnames = FALSE;
+    gpointer vp;
+
+    if (needle != NULL) {
+	g_free(needle);
+	needle = NULL;
+    }
+
+    needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
+    if (needle == NULL || *needle == '\0') {
+	return;
+    }
+
+    /* are we confining the search to variable names? */
+    vp = g_object_get_data(G_OBJECT(dialog), "vnames_only");
+    if (vp != NULL) {
+	vnames = GPOINTER_TO_INT(vp);
+    }
+
+    real_find_in_listbox(vwin, needle, vnames);
+}
+
+static void cancel_find (GtkWidget *button, GtkWidget *dialog)
+{
+    if (find_dialog != NULL) {
+	gtk_widget_destroy(dialog);
+	find_dialog = NULL;
     }
 }
 
@@ -1970,20 +1992,20 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     GtkWidget *button;
     GtkWidget *hbox;
 
-    if (find_window != NULL) {
-	g_object_set_data(G_OBJECT(find_window), "windat", vwin);
-	parent_find(find_window, vwin);
-	gdk_window_raise(find_window->window);
+    if (find_dialog != NULL) {
+	g_object_set_data(G_OBJECT(find_dialog), "windat", vwin);
+	parent_find(find_dialog, vwin);
+	gdk_window_raise(find_dialog->window);
 	return;
     }
 
-    find_window = gretl_dialog_new(_("gretl: find"), NULL, 0);
-    g_object_set_data(G_OBJECT(find_window), "windat", vwin);
-    parent_find(find_window, vwin);
+    find_dialog = gretl_dialog_new(_("gretl: find"), NULL, 0);
+    g_object_set_data(G_OBJECT(find_dialog), "windat", vwin);
+    parent_find(find_dialog, vwin);
 
-    g_signal_connect(G_OBJECT(find_window), "destroy",
+    g_signal_connect(G_OBJECT(find_dialog), "destroy",
 		     G_CALLBACK(close_find_dialog),
-		     find_window);
+		     find_dialog);
 
     hbox = gtk_hbox_new(FALSE, 5);
     label = gtk_label_new(_(" Find what:"));
@@ -1996,7 +2018,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     }
 
     g_signal_connect(G_OBJECT(find_entry), "activate", 
-		     G_CALLBACK(findfunc), find_window);
+		     G_CALLBACK(findfunc), find_dialog);
 
     gtk_widget_show(find_entry);
 
@@ -2004,26 +2026,26 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     gtk_box_pack_start(GTK_BOX(hbox), find_entry, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_window)->vbox), 
+    gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_dialog)->vbox), 
 		       hbox, TRUE, TRUE, 5);
 
     if (vwin == mdata) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	button = gtk_check_button_new_with_label(_("Variable names only (case sensitive)"));
 	g_signal_connect(G_OBJECT(button), "toggled",
-			 G_CALLBACK(toggle_vname_search), find_window);
+			 G_CALLBACK(toggle_vname_search), find_dialog);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 	gtk_widget_show_all(hbox);
-	gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_window)->vbox), 
+	gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_dialog)->vbox), 
 			   hbox, FALSE, FALSE, 0);
     }
 
-    hbox = GTK_DIALOG(find_window)->action_area;
+    hbox = GTK_DIALOG(find_dialog)->action_area;
 
     /* cancel button */
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(cancel_find), find_window);
+		     G_CALLBACK(cancel_find), find_dialog);
     gtk_widget_show(button);
 
     /* find button */
@@ -2031,12 +2053,12 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(findfunc), find_window);
+		     G_CALLBACK(findfunc), find_dialog);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(find_entry);
-    gtk_widget_show(find_window);
+    gtk_widget_show(find_dialog);
 }
 
 enum {

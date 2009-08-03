@@ -98,6 +98,44 @@ static gint list_id_compare (GtkTreeModel *model,
     return ret;
 }
 
+/* special comparator to put the series in a database window back into
+   "natural" order (by position in the database) in place of a
+   descending sort action in the first (series name) column
+*/
+
+static gint db_series_compare (GtkTreeModel *model, 
+			       GtkTreeIter *a, GtkTreeIter *b,
+			       GtkTreeViewColumn *col)
+{
+    GtkSortType order;
+    gint scol, ret;
+
+    gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
+					 &scol, &order);
+
+    if (order == GTK_SORT_ASCENDING) {
+	/* alphabetize as usual */
+	gchar *sa, *sb;
+
+	gtk_tree_model_get(model, a, 0, &sa, -1);
+	gtk_tree_model_get(model, b, 0, &sb, -1);
+	ret = strcmp(sa, sb);
+	g_free(sa);
+	g_free(sb);
+    } else {
+	/* 'natural' order in place of descending sort:
+	   use the last (integer) column */
+	gint ia, ib;
+
+	gtk_tree_model_get(model, a, 3, &ia, -1);
+	gtk_tree_model_get(model, b, 3, &ib, -1);
+	ret = ib - ia;
+	gtk_tree_view_column_set_sort_indicator(col, FALSE);
+    }
+    
+    return ret;
+}
+
 static gboolean no_select_row_zero (GtkTreeSelection *selection,
 				    GtkTreeModel *model,
 				    GtkTreePath *path,
@@ -403,13 +441,27 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 							      "text", i, 
 							      NULL);
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-	    if (vwin != mdata) {
-		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
+
+	    if ((vwin->role == FUNC_FILES || vwin->role == REMOTE_FUNC_FILES) && i == 1) {
+		; /* sorting functions by version number is not meaningful */
 	    } else {
 		gtk_tree_view_column_set_sort_column_id(GTK_TREE_VIEW_COLUMN(column), i);
-		if (i == 0) {
+	    }
+
+	    if (vwin != mdata) {
+		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
+	    }
+
+	    /* special actions on first column */
+	    if (i == 0) {
+		if (vwin == mdata) {
 		    g_signal_connect(G_OBJECT(column), "clicked",
 				     G_CALLBACK(id_col_clicked), view);
+		} else if (db_series_window(vwin)) {
+		    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(lstore), 0, 
+						    (GtkTreeIterCompareFunc) 
+						    db_series_compare,
+						    column, NULL);
 		}
 	    }
 	}	

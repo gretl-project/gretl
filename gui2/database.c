@@ -28,6 +28,7 @@
 #include "menustate.h"
 #include "treeutils.h"
 #include "winstack.h"
+#include "toolbar.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -432,17 +433,17 @@ add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
     }
 }
 
-static void gui_display_series (GtkWidget *w, windata_t *vwin)
+static void db_display_series (GtkWidget *w, windata_t *vwin)
 {
     gui_get_db_series(vwin, DB_DISPLAY);
 }
 
-static void gui_graph_series (GtkWidget *w, windata_t *vwin)
+static void db_graph_series (GtkWidget *w, windata_t *vwin)
 {
     gui_get_db_series(vwin, DB_GRAPH);
 }
 
-static void gui_import_series (GtkWidget *w, windata_t *vwin)
+static void db_import_series (GtkWidget *w, windata_t *vwin)
 {
     gui_get_db_series(vwin, DB_IMPORT);
 }
@@ -465,18 +466,23 @@ void sync_db_windows (void)
     }
 }
 
-static void gui_delete_series (GtkWidget *w, windata_t *vwin)
+static void db_delete_callback (GtkWidget *w, windata_t *vwin)
 {
     int *list = db_get_selection_list(vwin);
+    gchar *query;
     int resp, err = 0;
 
     if (list == NULL) {
 	return;
     }
 
-    resp = yes_no_dialog ("gretl", 
-			  _("Really delete the selected series?"),
-			  0);
+    query = g_strdup_printf(_("Really delete the selected series\n"
+			      "from the database '%s'?"), 
+			    gtk_window_get_title(GTK_WINDOW(vwin->main)));
+
+    resp = yes_no_dialog ("gretl", query, 0);
+
+    g_free(query);
 
     if (resp == GRETL_YES) { 	
 	err = db_delete_series_by_number(list, vwin->fname);
@@ -662,27 +668,11 @@ static void gui_get_db_series (windata_t *vwin, int cmd)
     dbwrapper_destroy(dw);
 }
 
-static int get_db_command (GtkAction *action)
-{
-    if (action == NULL) {
-	return DB_DISPLAY;
-    } else {
-	const gchar *s = gtk_action_get_name(action);
+/* double-click callback */
 
-	if (!strcmp(s, "SeriesDisplay"))
-	    return DB_DISPLAY;
-	else if (!strcmp(s, "SeriesGraph"))
-	    return DB_GRAPH;
-	if (!strcmp(s, "SeriesImport"))
-	    return DB_IMPORT;
-	else
-	    return DB_DISPLAY;
-    }
-}
-
-void db_series_callback (GtkAction *action, gpointer data)
+void display_db_series (windata_t *vwin)
 {
-    gui_get_db_series((windata_t *) data, get_db_command(action));
+    gui_get_db_series(vwin, DB_DISPLAY);
 } 
 
 static void db_view_codebook (GtkWidget *w, windata_t *vwin)
@@ -695,12 +685,6 @@ static void db_view_codebook (GtkWidget *w, windata_t *vwin)
     view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
 }
 
-static void 
-book_callback_wrapper (GtkAction *action, gpointer p)
-{
-    db_view_codebook(NULL, p);
-}
-
 static void build_db_popup (windata_t *vwin, int cb, int del)
 {
     if (vwin->popup != NULL) {
@@ -710,23 +694,19 @@ static void build_db_popup (windata_t *vwin, int cb, int del)
     vwin->popup = gtk_menu_new();
 
     add_popup_item(_("Display"), vwin->popup, 
-		   G_CALLBACK(gui_display_series), 
+		   G_CALLBACK(db_display_series), 
 		   vwin);
     add_popup_item(_("Graph"), vwin->popup, 
-		   G_CALLBACK(gui_graph_series), 
+		   G_CALLBACK(db_graph_series), 
 		   vwin);
     add_popup_item(_("Import"), vwin->popup, 
-		   G_CALLBACK(gui_import_series), 
+		   G_CALLBACK(db_import_series), 
 		   vwin);
     if (del) {
 	add_popup_item(_("Delete"), vwin->popup, 
-		       G_CALLBACK(gui_delete_series), 
+		       G_CALLBACK(db_delete_callback), 
 		       vwin);
     }	
-
-    add_popup_item(_("Find..."), vwin->popup, 
-		   G_CALLBACK(listbox_find), 
-		   vwin);
 
     if (cb) {
 	add_popup_item(_("Codebook"), vwin->popup, 
@@ -735,61 +715,51 @@ static void build_db_popup (windata_t *vwin, int cb, int del)
     }
 }
 
-static void delete_series_callback (GtkAction *action, windata_t *vwin)
-{
-    gui_delete_series(NULL, vwin);
-}
-
-static void close_db_callback (GtkAction *action, windata_t *vwin)
+static void db_close (GtkWidget *w, windata_t *vwin)
 {
     gtk_widget_destroy(vwin->main);
 }
 
-static void set_up_db_menu (windata_t *vwin, int cb, int del)
+enum {
+    DEL_BTN = 1,
+    CB_BTN
+};
+
+static GretlToolItem db_items[] = {
+    { N_("Display values"), GTK_STOCK_OPEN,   G_CALLBACK(db_display_series), 0 },
+    { N_("Graph"),          GRETL_STOCK_TS,   G_CALLBACK(db_graph_series), 0 },
+    { N_("Add to dataset"), GTK_STOCK_ADD,    G_CALLBACK(db_import_series), 0 },
+    { N_("Delete"),         GTK_STOCK_DELETE, G_CALLBACK(db_delete_callback), DEL_BTN },
+    { N_("Codebook"),       GRETL_STOCK_BOOK, G_CALLBACK(db_view_codebook), CB_BTN },
+    { N_("Close"),          GTK_STOCK_CLOSE,  G_CALLBACK(db_close), 0 }
+};
+
+static int n_db_items = G_N_ELEMENTS(db_items);
+
+static void make_db_toolbar (windata_t *vwin, int cb, int del)
 {
-    GtkActionEntry db_items[] = {
-	{ "File", NULL, N_("_File"), NULL, NULL, NULL },
-	{ "FileClose", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_db_callback) },
-	{ "Series", NULL, N_("_Series"), NULL, NULL, NULL },
-	{ "SeriesDisplay", NULL, N_("_Display"), NULL, NULL, G_CALLBACK(db_series_callback) },
-	{ "SeriesGraph", NULL, N_("_Graph"), NULL, NULL, G_CALLBACK(db_series_callback) },
-	{ "SeriesImport", NULL, N_("_Import"), NULL, NULL, G_CALLBACK(db_series_callback) },
-	{ "SeriesDelete", NULL, N_("_Delete"), NULL, NULL, G_CALLBACK(delete_series_callback) },
-	{ "Find", NULL, N_("_Find"), NULL, NULL, NULL },
-	{ "WindowFind", GTK_STOCK_FIND, N_("_Find in window"), NULL, NULL, G_CALLBACK(listbox_find) },
-    };
-    GtkActionEntry cb_items[] = {
-	{ "Codebook", NULL, N_("_Codebook"), NULL, NULL, NULL },
-	{ "CodebookOpen", GTK_STOCK_OPEN, N_("_Open"), NULL, NULL, G_CALLBACK(book_callback_wrapper) },
-    };
-    const gchar *db_ui = 
-	"<ui>"
-	"  <menubar>"
-	"    <menu action='File'>"
-	"      <menuitem action='FileClose'/>"
-	"    </menu>"
-	"    <menu action='Series'>"
-	"      <menuitem action='SeriesDisplay'/>"
-	"      <menuitem action='SeriesGraph'/>"
-	"      <menuitem action='SeriesImport'/>"
-	"      <menuitem action='SeriesDelete'/>"
-	"    </menu>"
-	"    <menu action='Find'>"
-	"      <menuitem action='WindowFind'/>"
-	"    </menu>"
-	"  </menubar>"
-	"</ui>";
+    GtkWidget *hbox;
+    GretlToolItem *item;
+    int i;
 
-    vwin_add_ui(vwin, db_items, G_N_ELEMENTS(db_items), db_ui);
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
-    if (cb) {
-	vwin_menu_add_menu(vwin, "/menubar", &cb_items[0]);
-	vwin_menu_add_item(vwin, "/menubar/Codebook", &cb_items[1]);
+    vwin->mbar = gretl_toolbar_new();
+
+    for (i=0; i<n_db_items; i++) {
+	item = &db_items[i];
+	if (!del && item->flag == DEL_BTN) {
+	    continue;
+	} if (!cb && item->flag == CB_BTN) {
+	    continue;
+	}
+	gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
     }
 
-    if (!del) {
-	flip(vwin->ui, "/menubar/Series/SeriesDelete", FALSE);
-    }
+    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+    vwin_add_finder(vwin);
+    gtk_widget_show_all(hbox);
 }
 
 static void destroy_db_win (GtkWidget *w, windata_t *vwin)
@@ -892,8 +862,7 @@ static void db_select_first_series (windata_t *vwin)
 static int 
 make_db_series_window (int action, char *fname, char *buf)
 {
-    GtkWidget *listbox;
-    GtkWidget *w, *main_vbox;
+    GtkWidget *w, *listbox;
     gchar *title;
     windata_t *vwin;
     int db_width = 700, db_height = 420;
@@ -937,29 +906,26 @@ make_db_series_window (int action, char *fname, char *buf)
     }
 
     strcpy(vwin->fname, fname);
-    
-    /* set up grids */
-    main_vbox = gtk_vbox_new(FALSE, 5);
-    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 10);
-    gtk_container_add(GTK_CONTAINER(vwin->main), main_vbox);
+
+    vwin->vbox = gtk_vbox_new(FALSE, 1);
+    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
+    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
     cb = db_has_codebook(fname);
     del = db_is_writable(action, fname);
 
-    set_up_db_menu(vwin, cb, del);
+    make_db_toolbar(vwin, cb, del);
     build_db_popup(vwin, cb, del);
 
-    gtk_box_pack_start(GTK_BOX(main_vbox), vwin->mbar, FALSE, TRUE, 0);
-    gtk_widget_show(vwin->mbar);
-
     listbox = database_window(vwin);
-    gtk_box_pack_start(GTK_BOX(main_vbox), listbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), listbox, TRUE, TRUE, 0);
 
     if (action == REMOTE_SERIES) {
 	GtkWidget *hbox; 
 
 	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(main_vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 	vwin->status = gtk_label_new(_("Network status: OK"));
 	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
@@ -1838,6 +1804,11 @@ enum {
     REAL_INSTALL,
     TMP_INSTALL
 };
+
+/* try to find a suitable path, for which the user has write
+   permission, for installing a database, collection of
+   data files, or function package 
+*/
 
 static char *get_writable_target (int code, int op, char *objname)
 {

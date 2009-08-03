@@ -151,7 +151,7 @@ set_vars *state;
 static int gretl_debug;
 static int user_mp_bits;
 static int R_functions;
-static int R_lib;
+static int R_lib = 1;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);

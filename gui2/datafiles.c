@@ -1168,7 +1168,6 @@ static GretlToolItem files_items[] = {
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
     { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(new_package_callback), BTN_NEW },
-    { N_("Find..."),        GTK_STOCK_FIND,       G_CALLBACK(listbox_find),       BTN_FIND },
     { N_("Close"),          GTK_STOCK_CLOSE,      G_CALLBACK(close_files_viewer), BTN_CLOSE }
 };
 
@@ -1237,7 +1236,7 @@ static int files_item_get_callback (GretlToolItem *item, int role)
     return (item->func != NULL);
 }
 
-static void make_filesbar (windata_t *vwin)
+static void make_files_toolbar (windata_t *vwin)
 {
     GtkWidget *hbox;
     GretlToolItem *item;
@@ -1256,8 +1255,17 @@ static void make_filesbar (windata_t *vwin)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+    vwin_add_finder(vwin);
     gtk_widget_show_all(hbox);
 }
+
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8
+/* we'll have to fake g_get_host_name */
+static const gchar *g_get_host_name (void)
+{
+    return _("local machine");
+}
+#endif
 
 static gchar *files_title (int code)
 {
@@ -1265,10 +1273,6 @@ static gchar *files_title (int code)
     gchar *ret = NULL;
 
     if (*hname == '\0') {
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8
-	/* no g_get_host_name() */
-	strcpy(hname, _("local machine"));
-#else
 	const gchar *s = g_get_host_name();
 
 	if (s != NULL && strlen(s) < 48) {
@@ -1276,7 +1280,6 @@ static gchar *files_title (int code)
 	} else {
 	    strcpy(hname, _("local machine"));
 	}
-#endif
     }
 
     if (code == NATIVE_DB) {
@@ -1387,13 +1390,12 @@ void display_files (int code, gpointer p)
 	gtk_window_set_default_size(GTK_WINDOW(vwin->main), 640, 480);
     }
 
-    /* set up grids */
     vwin->vbox = gtk_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
-    make_filesbar(vwin);
+    make_files_toolbar(vwin);
 
     if (code == TEXTBOOK_DATA || code == PS_FILES) {
 	/* we'll need more than one tab */

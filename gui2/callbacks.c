@@ -66,7 +66,7 @@ static void doubleclick_action (windata_t *vwin)
     case RATS_SERIES:
     case PCGIVE_SERIES:
     case REMOTE_SERIES:
-	db_series_callback(NULL, vwin);
+	display_db_series(vwin);
 	break;
     default:
 	break;
