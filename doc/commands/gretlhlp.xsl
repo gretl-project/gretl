@@ -347,6 +347,8 @@
   </xsl:if>
   <xsl:text># </xsl:text>
   <xsl:value-of select="@name"/>
+  <xsl:text> </xsl:text>
+  <xsl:value-of select="@section"/>
   <xsl:text>&#10;</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'output'"/>

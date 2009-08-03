@@ -1230,6 +1230,7 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     const gchar *s;
     GtkTextIter iter;
     char funword[12];
+    int llen_max = 5; /* was 7 */
     int llen;
     int i, j, n;
 
@@ -1249,7 +1250,7 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 		/* category divider */
 		if (i > 1) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
-		    if (llen < 7) {
+		    if (llen < llen_max) {
 			gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 			llen = 0;
 		    }
@@ -1258,7 +1259,7 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 	    } else if (sscanf(s + 2, "%10s", funword)) {
 		/* function name */
 		insert_link(tbuf, &iter, funword, i, NULL);
-		if (++llen == 7) {
+		if (++llen == llen_max) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 		    llen = 0;
 		} else {

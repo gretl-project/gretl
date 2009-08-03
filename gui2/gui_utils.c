@@ -1438,14 +1438,13 @@ static void viewer_box_config (windata_t *vwin)
     vwin->vbox = gtk_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
 #ifndef G_OS_WIN32
     g_signal_connect_after(G_OBJECT(vwin->main), "realize", 
 			   G_CALLBACK(set_wm_icon), 
 			   NULL);
 #endif
-
-    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 }
 
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
@@ -1741,6 +1740,27 @@ windata_t *console_window (int hsize, int vsize)
     return vwin;
 }
 
+void funcs_help_setup (GtkWidget *vbox, GtkWidget *text)
+{
+    GtkWidget *hp = gtk_hpaned_new();
+    GtkWidget *sw;
+
+    gtk_container_add(GTK_CONTAINER(vbox), hp);
+
+    add_help_navigator(hp);
+
+    sw = gtk_scrolled_window_new(NULL, NULL);
+    gtk_paned_pack2(GTK_PANED(hp), sw, TRUE, TRUE);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+				   GTK_POLICY_AUTOMATIC,
+				   GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
+					GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(sw), text); 
+
+    gtk_widget_show_all(hp);
+}
+
 windata_t *view_help_file (const char *filename, int role)
 {
     windata_t *vwin;
@@ -1772,7 +1792,12 @@ windata_t *view_help_file (const char *filename, int role)
     }
 
     create_text(vwin, hsize, vsize, 0, FALSE);
-    text_table_setup(vwin->vbox, vwin->text);
+
+    if (role == FUNCS_HELP) {
+	funcs_help_setup(vwin->vbox, vwin->text);
+    } else {
+	text_table_setup(vwin->vbox, vwin->text);
+    }
 
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);

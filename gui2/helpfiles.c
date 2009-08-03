@@ -67,6 +67,7 @@ static void real_do_help (int hcode, int pos, int flags);
 static void en_text_cmdref (GtkAction *a);
 static void en_help_callback (GtkAction *action, windata_t *hwin);
 static void delete_help_viewer (GtkAction *a, windata_t *hwin);
+static char *funcs_helpfile (void);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *button, GtkWidget *dialog);
@@ -163,7 +164,7 @@ static struct gui_help_item gui_help_items[] = {
     { WORKDIR,        "working-dir" },
     { DFGLS,          "dfgls" },
     { GPT_ADDLINE,    "addline" }, 
-    { GPT_CURVE  ,    "curve" }, 
+    { GPT_CURVE,      "curve" }, 
     { -1,             NULL },
 };
 
@@ -743,124 +744,272 @@ void helpfile_init (void)
     }
 }
 
-/* apparatus for genr functions help */
-
-typedef struct func_finder_ func_finder;
-
-struct func_finder_ {
-    int pos;
-    char word[12];
+enum {
+    STRING_COL,
+    POSITION_COL,
+    INDEX_COL,
+    NUM_COLS
 };
 
-static func_finder *ffinder;
-static int n_help_funcs;
-
-/* read the functions helpfile and build a mapping from
-   function name to offset in file */
-
-static int make_func_help_mapping (void)
+gint help_tree_click (GtkWidget *view, GdkEventButton *event,
+		      windata_t *vwin)
 {
-    int err = 0;
+    if (event != NULL && event->type == GDK_2BUTTON_PRESS &&
+	event->button == 1) {
+	GtkTreePath *path;
 
-    if (ffinder == NULL) {
-	gchar *fname = NULL;
-	gchar *s, *buf = NULL;
-	char word[12];
-	int i = 0, pos = 0;
-	int err;
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, NULL);
+	if (path != NULL) {
+	    GtkTreeModel *model;
+	    GtkTreeIter iter;
+	    int pos, idx;
 
-	fname = g_strdup_printf("%s%s", paths.gretldir, _("genrgui.hlp"));
-
-	err = gretl_file_get_contents(fname, &buf);
-	if (err) {
-	    g_free(fname);
-	    return err;
-	}
-
-	s = buf;
-	while (*s) {
-	    if (*s == '\n' && *(s+1) == '#' && *(s+2) != '#') {
-		n_help_funcs++;
+	    model = gtk_tree_view_get_model(GTK_TREE_VIEW(view));
+	    gtk_tree_model_get_iter(model, &iter, path);
+	    if (!gtk_tree_model_iter_has_child(model, &iter)) {
+		gtk_tree_model_get(model, &iter, 
+				   POSITION_COL, &pos, 
+				   INDEX_COL, &idx,
+				   -1);
+		real_do_help(idx, pos, HELP_FUNCS);
 	    }
-	    s++;
+	    gtk_tree_path_free(path);
 	}
+    }
 
-	ffinder = mymalloc(n_help_funcs * sizeof *ffinder);
+    return FALSE;
+}
 
-	if (ffinder != NULL) {
-	    s = buf;
-	    while (*s) {
-		if (*s == '\n' && *(s+1) == '#' && 
-		    *(s+2) != '#' && *(s+2) != '\0') {
-		    if (sscanf(s+2, "%10s", word)) {
-			ffinder[i].pos = pos + 1;
-			strcpy(ffinder[i].word, word);
-			i++;
-		    }
+static int get_section_iter (GtkTreeModel *model, const char *s, 
+			     GtkTreeIter *iter)
+{
+    gchar *sect;
+    int found = 0;
+
+    if (!gtk_tree_model_get_iter_first(model, iter)) {
+	return 0;
+    }
+
+    while (!found && gtk_tree_model_iter_next(model, iter)) {
+	if (gtk_tree_model_iter_has_child(model, iter)) {
+	    gtk_tree_model_get(model, iter, STRING_COL, &sect, -1);
+	    if (!strcmp(s, sect)) {
+		found = 1;
+	    }
+	    g_free(sect);
+	}
+    }
+
+    return found;
+}
+
+static const char *real_funcs_heading (const char *s)
+{
+    if (!strcmp(s, "access")) {
+	return _("Accessors");
+    } else if (!strcmp(s, "math")) {
+	return _("Mathematical");
+    } else if (!strcmp(s, "numerical")) {
+	return _("Numerical methods");
+    } else if (!strcmp(s, "filters")) {
+	return _("Filters");
+    } else if (!strcmp(s, "stats")) {
+	return _("Statistical");
+    } else if (!strcmp(s, "probdist")) {
+	return _("Probability");
+    } else if (!strcmp(s, "linalg")) {
+	return _("Linear algebra");
+    } else if (!strcmp(s, "matbuild")) {
+	return _("Matrx building");
+    } else if (!strcmp(s, "matshape")) {
+	return _("Matrix shaping");
+    } else if (!strcmp(s, "transforms")) {
+	return _("Transformations");
+    } else if (!strcmp(s, "data-utils")) {
+	return _("Data utilities");
+    } else if (!strcmp(s, "strings")) {
+	return _("Strings");
+    } else {
+	return "??";
+    }
+}
+
+static GtkTreeStore *make_help_topics_tree (void)
+{
+    GtkTreeStore *store;
+    GtkTreeIter iter, parent;
+    gchar *s, *buf = NULL;
+    char word[12], sect[16];
+    const char *heading;
+    int pos = 0, idx = 0;
+    int err;    
+
+    err = gretl_file_get_contents(funcs_helpfile(), &buf);
+    if (err) {
+	return NULL;
+    }
+
+    store = gtk_tree_store_new(NUM_COLS, G_TYPE_STRING,
+			       G_TYPE_INT, G_TYPE_INT);
+
+    gtk_tree_store_append(store, &iter, NULL);
+    gtk_tree_store_set(store, &iter, STRING_COL, _("Index"),
+		       POSITION_COL, 0, -1);
+
+    s = buf;
+
+    while (*s) {
+	if (*s == '\n' && *(s+1) == '#' && 
+	    *(s+2) != '#' && *(s+2) != '\0') {
+	    if (sscanf(s+2, "%10s %15s", word, sect) == 2) {
+		heading = real_funcs_heading(sect);
+		if (!get_section_iter(GTK_TREE_MODEL(store), heading, &parent)) {
+		    gtk_tree_store_append(store, &parent, NULL);
+		    gtk_tree_store_set(store, &parent, 
+				       STRING_COL, heading,
+				       POSITION_COL, 0, 
+				       INDEX_COL, 0,
+				       -1);
+		} 
+		gtk_tree_store_append(store, &iter, &parent);
+		gtk_tree_store_set(store, &iter, 
+				   STRING_COL, word,
+				   POSITION_COL, pos + 1, 
+				   INDEX_COL, ++idx,
+				   -1);
+	    }
+	}
+	s++;
+	pos++;
+    }
+    
+    g_free(buf);
+
+    return store;
+}
+
+static GtkTreeStore *get_help_topics_tree (void)
+{
+    static GtkTreeStore *store;
+
+    if (store == NULL) {
+	store = make_help_topics_tree();
+    }
+
+    return store;
+}
+
+int add_help_navigator (GtkWidget *hp)
+{
+    GtkTreeStore *store;
+    GtkWidget *view, *sw;
+    GtkCellRenderer *renderer;
+    GtkTreeViewColumn *column;
+
+    store = get_help_topics_tree();
+    if (store == NULL) {
+	return 1;
+    }
+
+    view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
+    g_object_set(view, "enable-tree-lines", TRUE, NULL);
+
+    renderer = gtk_cell_renderer_text_new();
+    
+    column = gtk_tree_view_column_new_with_attributes("",
+						      renderer,
+						      "text", 0,
+						      NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+
+    g_signal_connect(G_OBJECT(view), "button-press-event",
+		     G_CALLBACK(help_tree_click), NULL);
+
+    sw = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
+					GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(sw), view);
+    gtk_paned_pack1(GTK_PANED(hp), sw, FALSE, TRUE);
+    gtk_widget_set_size_request(sw, 140, -1);
+    gtk_tree_view_columns_autosize(GTK_TREE_VIEW(view));
+
+    return 0;
+}
+
+static int function_help_attr_from_word (const char *word, int col)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter, child;
+    gchar *s;
+    int attr = 0;
+
+    model = GTK_TREE_MODEL(get_help_topics_tree());
+
+    if (!model || !gtk_tree_model_get_iter_first(model, &iter)) {
+	return 0;
+    }
+
+    while (gtk_tree_model_iter_next(model, &iter)) {
+	if (gtk_tree_model_iter_children(model, &child, &iter)) {
+	    while (1) {
+		gtk_tree_model_get(model, &child, STRING_COL, &s, -1);
+		if (!strcmp(s, word)) {
+		    gtk_tree_model_get(model, &child, col, &attr, -1);
+		    g_free(s);
+		    return attr;
+		} 
+		g_free(s);
+		if (!gtk_tree_model_iter_next(model, &child)) {
+		    break;
 		}
-		s++;
-		pos++;
 	    }
-	} else {
-	    err = 1;
-	    n_help_funcs = 0;
-	}
-
-	g_free(buf);
-	g_free(fname);
-    }
-
-    return err;
-}
-
-int function_help_index_from_word (const char *s)
-{
-    int i, idx = 0;
-
-    if (n_help_funcs == 0) {
-	make_func_help_mapping();
-    }
-
-    for (i=0; i<n_help_funcs; i++) {
-	if (!strcmp(ffinder[i].word, s)) {
-	    idx = i+1;
-	    break;
 	}
     }
 
-    return idx;
+    return 0;
 }
 
-static int function_help_pos_from_word (const char *s)
+int function_help_index_from_word (const char *word)
 {
-    int i, pos = 0;
+    return function_help_attr_from_word(word, INDEX_COL);
+}
 
-    if (n_help_funcs == 0) {
-	make_func_help_mapping();
+static int function_help_pos_from_word (const char *word)
+{
+    return function_help_attr_from_word(word, POSITION_COL);
+}
+
+static int help_pos_from_function_index (int idx)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter, child;
+    int pos, fnum;
+
+    model = GTK_TREE_MODEL(get_help_topics_tree());
+
+    if (!model || !gtk_tree_model_get_iter_first(model, &iter)) {
+	return 0;
     }
 
-    for (i=0; i<n_help_funcs; i++) {
-	if (!strcmp(ffinder[i].word, s)) {
-	    pos = ffinder[i].pos;
+    while (gtk_tree_model_iter_next(model, &iter)) {
+	if (gtk_tree_model_iter_children(model, &child, &iter)) {
+	    while (1) {
+		gtk_tree_model_get(model, &child, INDEX_COL, &fnum, -1);
+		if (idx == fnum) {
+		    gtk_tree_model_get(model, &child, POSITION_COL, &pos, -1);
+		    return pos;
+		} 
+		if (!gtk_tree_model_iter_next(model, &child)) {
+		    break;
+		}
+	    }
 	}
     }
 
-    return pos;
-}
-
-static int help_pos_from_function_index (int fnum)
-{
-    int pos = 0;
-
-    if (n_help_funcs == 0) {
-	make_func_help_mapping();
-    }
-
-    if (fnum > 0 && fnum <= n_help_funcs) {
-	pos = ffinder[fnum-1].pos;
-    } 
-
-    return pos;
+    return 0;
 }
 
 /* end apparatus for genr functions help */
@@ -1112,6 +1261,23 @@ static void delete_help_viewer (GtkAction *a, windata_t *hwin)
     gtk_widget_destroy(hwin->main); 
 }
 
+static void normalize_base (GtkWidget *w, gpointer p)
+{
+    gtk_widget_modify_base(w, GTK_STATE_SELECTED, NULL);
+}
+
+static void notify_not_found (GtkWidget *entry)
+{
+    GdkColor color;
+
+    gdk_color_parse("red", &color);
+    gtk_widget_grab_focus(entry);
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    gtk_widget_modify_base(entry, GTK_STATE_SELECTED, &color);
+    g_signal_connect(G_OBJECT(entry), "changed",
+		     G_CALLBACK(normalize_base), NULL);
+}
+
 static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 {
     gboolean found;
@@ -1158,7 +1324,7 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     }
 
     if (!found) {
-	infobox(_("String was not found."));
+	notify_not_found(GTK_WIDGET(entry));
     }
 }
 
@@ -1712,8 +1878,8 @@ static gint close_find_dialog (GtkWidget *widget, gpointer data)
     return FALSE;
 }
 
-static int look_for_string (const char *haystack, const char *needle, 
-			    int start)
+static int string_match_pos (const char *haystack, const char *needle, 
+			     int start)
 {
     int hlen = strlen(haystack);
     int nlen = strlen(needle);
@@ -1809,7 +1975,7 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
     found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE);
 
     if (!found) {
-	infobox(_("String was not found."));
+	notify_not_found(find_entry);
     }
 }
 
@@ -1839,7 +2005,7 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
     GtkTreeModel *model = NULL;
     GtkTreeIter iter;
     gboolean got_iter;
-    int found = -1;
+    int pos = -1;
 
     /* first check that there's something to search */
     if (vwin->listbox != NULL) {
@@ -1871,19 +2037,18 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
 
     if (!got_iter) {
 	/* failed totally, get out */
-	infobox(_("String was not found."));
 	return FALSE;
     }
 
  search_wrap:
 
-    while (found < 0) {
+    while (pos < 0) {
 	/* try looking in column 1 first */
 	get_tree_model_haystack(model, &iter, 1, haystack, vnames);
 
-	found = look_for_string(haystack, needle, 0);
+	pos = string_match_pos(haystack, needle, 0);
 
-	if (found < 0 && !vnames) {
+	if (pos < 0 && !vnames) {
 	    if (vwin == mdata) {
 		/* then column 2 */
 		get_tree_model_haystack(model, &iter, 2, haystack, vnames);
@@ -1891,15 +2056,15 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
 		/* then column 0 */
 		get_tree_model_haystack(model, &iter, 0, haystack, vnames);
 	    }
-	    found = look_for_string(haystack, needle, 0);
+	    pos = string_match_pos(haystack, needle, 0);
 	}
 
-	if (found >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
+	if (pos >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
 	    break;
 	}
     }
 
-    if (found < 0 && vwin->active_var > minvar && !wrapped) {
+    if (pos < 0 && vwin->active_var > minvar && !wrapped) {
 	/* try wrapping to start */
 	gtk_tree_model_get_iter_first(model, &iter);
 	if (minvar > 0 && !gtk_tree_model_iter_next(model, &iter)) {
@@ -1910,7 +2075,7 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
 	}
     }
     
-    if (found >= 0) {
+    if (pos >= 0) {
 	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
 
 	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
@@ -1922,11 +2087,9 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
 	if (wrapped) {
 	    infobox(_("Search wrapped"));
 	}
-    } else {
-	infobox(_("String was not found."));
-    }
+    } 
 
-    return (found >= 0);
+    return (pos >= 0);
 }
 
 /* used for windows that do not have a built-in search entry,
@@ -1935,8 +2098,9 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
 static void find_in_listbox (GtkWidget *w, GtkWidget *dialog)
 {
     windata_t *vwin = g_object_get_data(G_OBJECT(dialog), "windat");
-    gboolean vnames = FALSE;
     gpointer vp;
+    gboolean vnames = FALSE;
+    gboolean found;
 
     if (needle != NULL) {
 	g_free(needle);
@@ -1954,7 +2118,11 @@ static void find_in_listbox (GtkWidget *w, GtkWidget *dialog)
 	vnames = GPOINTER_TO_INT(vp);
     }
 
-    real_find_in_listbox(vwin, needle, vnames);
+    found = real_find_in_listbox(vwin, needle, vnames);
+
+    if (!found) {
+	notify_not_found(find_entry);
+    }
 }
 
 static void cancel_find (GtkWidget *button, GtkWidget *dialog)
