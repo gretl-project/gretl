@@ -1156,24 +1156,6 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     }
 }
 
-static gint catch_find_key (GtkWidget *w, GdkEventKey *key, 
-			    windata_t *vwin)
-{
-    GdkModifierType mods = widget_get_pointer_mask(w);
-    guint upkey = gdk_keyval_to_upper(key->keyval);
-
-    if ((mods & GDK_CONTROL_MASK) && upkey == GDK_F) {
-	if (vwin->finder != NULL) {
-	    gtk_widget_grab_focus(vwin->finder);
-	    gtk_editable_select_region(GTK_EDITABLE(vwin->finder), 
-				       0, -1);
-	    return TRUE;
-	}
-    }
-
-    return FALSE;
-}
-
 #if (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16)
 # define USE_ENTRY_ICON
 #endif
@@ -1366,11 +1348,6 @@ static windata_t *make_helpwin (int flags)
     if (!funcs) {
 	add_help_topics(hwin, flags);
     }   
-
-    if (SHOW_FIND_BUTTON(hwin->role)) {
-	g_signal_connect(G_OBJECT(hwin->text), "key-press-event", 
-			 G_CALLBACK(catch_find_key), hwin);
-    }
 
     return hwin;
 }
@@ -1848,7 +1825,7 @@ get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
 
 static void find_in_listbox (GtkWidget *w, gpointer p)
 {
-    windata_t *win = g_object_get_data(G_OBJECT(p), "windat");
+    windata_t *vwin = g_object_get_data(G_OBJECT(p), "windat");
     int minvar, wrapped = 0;
     char haystack[MAXLEN];
     char pstr[16];
@@ -1860,8 +1837,8 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     int found = -1;
 
     /* first check that there's something to search */
-    if (win->listbox != NULL) {
-	model = gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox));
+    if (vwin->listbox != NULL) {
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
     }
 
     if (model == NULL) {
@@ -1869,7 +1846,7 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     }
 
     /* if searching in the main gretl window, start on line 1 */
-    minvar = (win == mdata)? 1 : 0;
+    minvar = (vwin == mdata)? 1 : 0;
 
     /* are we confining the search to variable names? */
     vp = g_object_get_data(G_OBJECT(p), "vnames_only");
@@ -1888,7 +1865,7 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     }
 
     /* first try to get the current line plus one as starting point */
-    sprintf(pstr, "%d", win->active_var);
+    sprintf(pstr, "%d", vwin->active_var);
     got_iter = gtk_tree_model_get_iter_from_string(model, &iter, pstr);
     if (got_iter) {
 	got_iter = gtk_tree_model_iter_next(model, &iter);
@@ -1915,7 +1892,7 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
 	found = look_for_string(haystack, needle, 0);
 
 	if (found < 0 && !vnames) {
-	    if (win == mdata) {
+	    if (vwin == mdata) {
 		/* then column 2 */
 		get_tree_model_haystack(model, &iter, 2, haystack, vnames);
 	    } else {
@@ -1930,7 +1907,7 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
 	}
     }
 
-    if (found < 0 && win->active_var > minvar && !wrapped) {
+    if (found < 0 && vwin->active_var > minvar && !wrapped) {
 	/* try wrapping to start */
 	gtk_tree_model_get_iter_first(model, &iter);
 	if (minvar > 0 && !gtk_tree_model_iter_next(model, &iter)) {
@@ -1944,11 +1921,11 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     if (found >= 0) {
 	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
 
-	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(win->listbox),
+	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
 				     path, NULL, FALSE, 0, 0);
-	gtk_tree_view_set_cursor(GTK_TREE_VIEW(win->listbox),
+	gtk_tree_view_set_cursor(GTK_TREE_VIEW(vwin->listbox),
 				 path, NULL, FALSE);
-	win->active_var = tree_path_get_row_number(path);
+	vwin->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
 	if (wrapped) {
 	    infobox(_("Search wrapped"));
