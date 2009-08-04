@@ -507,18 +507,20 @@ int add_help_navigator (windata_t *vwin, GtkWidget *hp)
     gtk_widget_set_size_request(sw, 150, -1);
     gtk_tree_view_columns_autosize(GTK_TREE_VIEW(view));
 
+    g_object_set_data(G_OBJECT(vwin->text), "tview", view);
+
     return 0;
 }
 
 static int help_attr_from_word (const char *word, 
-				int code, int col)
+				int role, int col)
 {
     GtkTreeModel *model;
     GtkTreeIter iter, child;
     gchar *s;
     int attr = 0;
 
-    model = GTK_TREE_MODEL(get_help_topics_tree(code));
+    model = GTK_TREE_MODEL(get_help_topics_tree(role));
 
     if (!model || !gtk_tree_model_get_iter_first(model, &iter)) {
 	return 0;
@@ -554,13 +556,13 @@ static int function_help_pos_from_word (const char *word)
     return help_attr_from_word(word, FUNCS_HELP, POSITION_COL);
 }
 
-static int help_pos_from_index (int idx, int code)
+static int help_pos_from_index (int idx, int role)
 {
     GtkTreeModel *model;
     GtkTreeIter iter, child;
     int pos, fnum;
 
-    model = GTK_TREE_MODEL(get_help_topics_tree(code));
+    model = GTK_TREE_MODEL(get_help_topics_tree(role));
 
     if (!model || !gtk_tree_model_get_iter_first(model, &iter)) {
 	return 0;
@@ -584,7 +586,35 @@ static int help_pos_from_index (int idx, int code)
     return 0;
 }
 
-/* end apparatus for genr functions help */
+static gboolean help_iter_from_index (int idx, int role,
+				      GtkTreeIter *iter,
+				      GtkTreeIter *parent)
+{
+    GtkTreeModel *model;
+    int fnum;
+
+    model = GTK_TREE_MODEL(get_help_topics_tree(role));
+
+    if (!model || !gtk_tree_model_get_iter_first(model, parent)) {
+	return 0;
+    }
+
+    while (gtk_tree_model_iter_next(model, parent)) {
+	if (gtk_tree_model_iter_children(model, iter, parent)) {
+	    while (1) {
+		gtk_tree_model_get(model, iter, INDEX_COL, &fnum, -1);
+		if (idx == fnum) {
+		    return TRUE;
+		} 
+		if (!gtk_tree_model_iter_next(model, iter)) {
+		    break;
+		}
+	    }
+	}
+    }
+
+    return FALSE;
+}
 
 static void en_help_callback (GtkAction *action, windata_t *hwin)
 {
@@ -821,6 +851,47 @@ static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
     return FALSE;
 }
 
+/* sync the tree index view with the currently selected topic, if it's
+   not already in sync */
+
+static void helpwin_set_topic_index (windata_t *hwin, int idx)
+{
+    GtkWidget *w = 
+	g_object_get_data(G_OBJECT(hwin->text), "tview");
+    GtkTreeView *view = GTK_TREE_VIEW(w);
+
+    hwin->active_var = idx;
+
+    if (view != NULL) {
+	GtkTreeModel *model = gtk_tree_view_get_model(view);
+	GtkTreeIter iter, parent;
+	gboolean ok;
+
+	if (idx == 0) {
+	    ok = gtk_tree_model_get_iter_first(model, &iter);
+	} else {
+	    ok = help_iter_from_index(idx, hwin->role, &iter, 
+				      &parent);
+	}
+
+	if (ok) {
+	    GtkTreeSelection *sel;
+
+	    sel = gtk_tree_view_get_selection(view);
+	    if (!gtk_tree_selection_iter_is_selected(sel, &iter)) {
+		GtkTreePath *path;
+
+		/* gtk_tree_view_collapse_all(view); should we? */
+		gtk_tree_selection_select_iter(sel, &iter);
+		path = gtk_tree_model_get_path(model, &iter);
+		gtk_tree_view_expand_to_path(view, path);
+		gtk_tree_view_set_cursor(view, path, NULL, FALSE);
+		gtk_tree_path_free(path);
+	    }
+	}
+    }
+}
+
 static void real_do_help (int idx, int pos, int role)
 {
     static windata_t *gui_hwin;
@@ -901,8 +972,11 @@ static void real_do_help (int idx, int pos, int role)
 
     if (hwin != NULL) {
 	int en = (role == CLI_HELP_EN || role == GUI_HELP_EN);
+	int ret = set_help_topic_buffer(hwin, pos, en);
 
-	set_help_topic_buffer(hwin, idx, pos, en);
+	if (ret >= 0) {
+	    helpwin_set_topic_index(hwin, idx);
+	}
     }
 }
 

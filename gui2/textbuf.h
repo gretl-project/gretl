@@ -76,7 +76,7 @@ void text_set_word_wrap (GtkWidget *w, gboolean wrap);
 
 void text_table_setup (GtkWidget *vbox, GtkWidget *w);
 
-void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
+int set_help_topic_buffer (windata_t *hwin, int pos, int en);
 
 gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event, 
 			     gpointer p);

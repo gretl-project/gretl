@@ -2570,11 +2570,11 @@ static char *grab_topic_buffer (const char *s)
 }
 
 /* Pull the appropriate chunk of help text out of the buffer attached
-   to the help viewer and display it.  Also set the active_var member
-   of hwin to represent the topic displayed.
+   to the help viewer and display it, if possible.  Return >= 0
+   if we did OK, < 0 on failure.
 */
 
-void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
+int set_help_topic_buffer (windata_t *hwin, int pos, int en)
 {
     GtkTextBuffer *textb;
     GtkTextIter iter;
@@ -2592,11 +2592,10 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 	    cmdref_index_page(hwin, textb, en);
 	}
 	cursor_to_top(hwin);
-	hwin->active_var = 0;
-	return;
+	return 0;
     }
 
-    /* OK, pos is non-zero */
+    /* OK, so pos is non-zero */
 
     maybe_connect_help_signals(hwin, en);
     maybe_set_help_tabs(hwin);
@@ -2610,7 +2609,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     bufgets_finalize(hbuf);
 
     if (buf == NULL) {
-	return;
+	return -1;
     }
 
     tailstrip(line);
@@ -2641,7 +2640,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 
     buf = grab_topic_buffer(hbuf + strlen(line) + 1);
     if (buf == NULL) {
-	return;
+	return -1;
     }
 
     insert_text_with_markup(textb, &iter, buf, hwin->role);
@@ -2651,7 +2650,8 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     push_backpage(hwin->text, hwin->active_var);
     maybe_connect_help_signals(hwin, en);
     cursor_to_top(hwin);
-    hwin->active_var = hcode;
+
+    return 1;
 }
 
 static int get_screen_height (void)
