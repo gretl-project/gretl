@@ -1740,14 +1740,14 @@ windata_t *console_window (int hsize, int vsize)
     return vwin;
 }
 
-void funcs_help_setup (GtkWidget *vbox, GtkWidget *text)
+void help_panes_setup (windata_t *vwin, GtkWidget *text)
 {
     GtkWidget *hp = gtk_hpaned_new();
     GtkWidget *sw;
 
-    gtk_container_add(GTK_CONTAINER(vbox), hp);
+    gtk_container_add(GTK_CONTAINER(vwin->vbox), hp);
 
-    add_help_navigator(hp);
+    add_help_navigator(vwin, hp);
 
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_paned_pack2(GTK_PANED(hp), sw, TRUE, TRUE);
@@ -1793,8 +1793,8 @@ windata_t *view_help_file (const char *filename, int role)
 
     create_text(vwin, hsize, vsize, 0, FALSE);
 
-    if (role == FUNCS_HELP) {
-	funcs_help_setup(vwin->vbox, vwin->text);
+    if (role != GUI_HELP && role != GUI_HELP_EN) {
+	help_panes_setup(vwin, vwin->text);
     } else {
 	text_table_setup(vwin->vbox, vwin->text);
     }

@@ -45,7 +45,7 @@ void text_find (gpointer unused, gpointer data);
 
 void vwin_add_finder (windata_t *vwin);
 
-int add_help_navigator (GtkWidget *hp);
+int add_help_navigator (windata_t *vwin, GtkWidget *hp);
 
 char *quoted_help_string (const char *s);
 

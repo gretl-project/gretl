@@ -1184,10 +1184,11 @@ static void maybe_set_help_tabs (windata_t *hwin)
     }
 }
 
-static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
+static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Command Reference");
     GtkTextIter iter;
+    int jmax = 6;
     int i, j, k;
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
@@ -1207,7 +1208,7 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 
 	word = gretl_command_word(i);
 	insert_link(tbuf, &iter, gretl_command_word(i), i, NULL);
-	if (j++ % 8 == 0) {
+	if (j++ % jmax == 0) {
 	    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 	} else {
 	    int n = 10 - strlen(word);
@@ -1224,13 +1225,13 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     maybe_set_help_tabs(hwin);
 }
 
-static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
+static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Function Reference");
     const gchar *s;
     GtkTextIter iter;
     char funword[12];
-    int llen_max = 5; /* was 7 */
+    int llen_max = 5;
     int llen;
     int i, j, n;
 
@@ -2586,9 +2587,9 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     if (pos == 0) {
 	/* no topic selected */
 	if (hwin->role == FUNCS_HELP) {
-	    funcref_title_page(hwin, textb, en);
+	    funcref_index_page(hwin, textb, en);
 	} else {
-	    cmdref_title_page(hwin, textb, en);
+	    cmdref_index_page(hwin, textb, en);
 	}
 	cursor_to_top(hwin);
 	hwin->active_var = 0;
