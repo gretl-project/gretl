@@ -603,13 +603,60 @@ building \app{gretl} yourself on Linux and wish to make use of the
 \app{R} library, you should ensure (a) that \app{R} has been built
 with the shared library enabled (specify \verb|--enable-R-shlib| when
 configuring your build of \app{R}), and (b) that the \verb|pkg-config|
-program is able to detect your \app{R} installation.
+program is able to detect your \app{R} installation.  We do not link
+to the \app{R} library at build time, rather we open it dynamically on
+demand. The \app{gretl} GUI has an item under the
+\textsf{Tools/Preferences} menu which enables you to select the
+path to the library, if it is not detected automatically.  
 
 If you have the \app{R} shared library installed but want to force
 \app{gretl} to call the \app{R} executable instead, you can do
 \begin{code}
 set R_lib off
 \end{code}
+
+\section{Further use of the \app{R} library}
+\label{sec:R-functions}
+
+Besides improving performance, as noted above, use of the \app{R}
+shared library makes possible a further refinement.  That is, you can
+define functions in \app{R}, within a \texttt{foreign} block, then
+call those functions later in your script much as if they were
+\app{gretl} functions.  This is illustrated below.  
+%
+\begin{code}
+set R_functions on
+foreign language=R
+  plus_one <- function(q) {
+     z = q+1
+     invisible(z)
+  }
+end foreign
+
+scalar b=R.plus_one(2)
+\end{code}
+%
+The \app{R} function \verb|plus_one| is obviously trivial in itself,
+but the example shows a couple of points.  First, for this mechanism
+to work you need to enable \verb|R_functions| via the \texttt{set}
+command.  Second, to avoid collision with the \app{gretl} function
+namespace, calls to functions defined in this way must be prefixed
+with ``\texttt{R.}'', as in \verb|R.plus_one|.
+
+Built-in \app{R} functions may also be called in this way, once
+\verb|R_functions| is set \texttt{on}.  For example one can invoke
+\app{R}'s \texttt{choose} function, which computes binomial
+coefficients:
+%
+\begin{code}
+set R_functions on
+scalar b=R.choose(10,4)
+\end{code}
+%
+Note, however, that the possibilities for use of built-in \app{R}
+functions are limited; only functions whose arguments and return
+values are sufficiently generic (basically scalars or matrices) will
+work.
 
 %%% Local Variables: 
 %%% mode: latex
