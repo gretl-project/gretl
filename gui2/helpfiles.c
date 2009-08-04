@@ -342,7 +342,7 @@ static const char *real_funcs_heading (const char *s)
     } else if (!strcmp(s, "linalg")) {
 	return _("Linear algebra");
     } else if (!strcmp(s, "matbuild")) {
-	return _("Matrx building");
+	return _("Matrix building");
     } else if (!strcmp(s, "matshape")) {
 	return _("Matrix shaping");
     } else if (!strcmp(s, "transforms")) {
