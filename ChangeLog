@@ -26,8 +26,8 @@ version 1.8.3, in progress
 - Add "set" variable "csv_na" to control the representation
   of NA values in CSV output (also GUI selector for same)
 - Remove temporary "set" variable "protect_lists"
-- Help windows: use GUI toolbar, plus fixes for dealing
-  with translated helpfiles
+- Help windows: substantial revamp of GUI, plus fixes for 
+  dealing with translated helpfiles
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"
