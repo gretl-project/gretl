@@ -43,6 +43,7 @@
  <gentext key="smlist"        text="série, matriz ou lista"/>
  <gentext key="optional"      text="opcional"/>
  <gentext key="seebelow"      text="ver abaixo"/>
+ <gentext key="varargs"       text="ver abaixo"/>
  <gentext key="chapter"       text="Capítulo"/>
  
 </localization>
