@@ -607,6 +607,8 @@ void text_zoom (GtkAction *action, gpointer data)
     gtk_widget_modify_font(vwin->text, hpf);
 }
 
+#define helpfont "sans"
+
 static GtkTextTagTable *gretl_tags_new (void)
 {
     GtkTextTagTable *table;
@@ -625,24 +627,24 @@ static GtkTextTagTable *gretl_tags_new (void)
     tag = gtk_text_tag_new("title");
     g_object_set(tag, "justification", GTK_JUSTIFY_CENTER,
 		 "pixels_above_lines", 15,
-		 "family", "sans",
+		 "family", helpfont,
 		 "size", 15 * PANGO_SCALE, NULL);
     gtk_text_tag_table_add(table, tag);
 
-    tag = gtk_text_tag_new("sansbold");
-    g_object_set(tag, "family", "sans", 
+    tag = gtk_text_tag_new("heading");
+    g_object_set(tag, "family", helpfont, 
 		 "weight", PANGO_WEIGHT_BOLD, 
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("italic");
-    g_object_set(tag, "family", "sans",
+    g_object_set(tag, "family", helpfont,
 		 "style", PANGO_STYLE_ITALIC, 
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("replaceable");
-    g_object_set(tag, "family", "sans",
+    g_object_set(tag, "family", helpfont,
 		 "style", PANGO_STYLE_ITALIC, 
 		 NULL);
 
@@ -668,7 +670,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("text");
-    g_object_set(tag, "family", "sans", NULL);
+    g_object_set(tag, "family", helpfont, NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("indented");
@@ -2620,7 +2622,7 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
 
 	gtk_text_buffer_insert_with_tags_by_name(textb, &iter,
 						 p, -1,
-						 "sansbold", NULL);
+						 "heading", NULL);
 	free(p);
     } else {
 	/* topic heading: plain command word */
