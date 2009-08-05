@@ -40,9 +40,23 @@ the state space models.\footnote{For a review of \app{Ox}, see
 
 The support offered for \app{Ox} in \app{gretl} is similar to that
 offered for \app{R}, as discussed in chapter~\ref{chap:gretlR}, but
-with a few differences.  You can open and edit \app{Ox} programs in
-the \app{gretl} GUI.  Clicking the ``execute'' icon in the editor
-window will send your code to \app{Ox} for execution.
+with a few differences.  The first difference to note is that 
+\app{Ox} support is not on by default; it must be enabled explicitly.
+
+\tip{To enable support for \app{Ox}, go to the
+  Tools/Preferences/General menu item and check the item labeled
+  ``Enable Ox support''.  A notification box will appear, telling you
+  that this requires restarting \app{gretl}.  Close that box, click
+  ``OK'' in the preferences dialog, then quit and restart \app{gretl}.
+  You will now find, under the Programs tab in the
+  Tools/Preferences/General dialog, an entry for specifying the path
+  to the \texttt{oxl} executable (i.e., the program that runs \app{Ox}
+  files (on MS Windows it is called \texttt{oxl.exe}).  Make sure that
+  is right, and you're ready to go.}
+  
+With support enabled, you can open and edit \app{Ox} programs in the
+\app{gretl} GUI.  Clicking the ``execute'' icon in the editor window
+will send your code to \app{Ox} for execution.
 Figures~\ref{fig:Oxedit} and Figure~\ref{fig:Oxout} show an \app{Ox}
 program and part of its output.
 
