@@ -1,5 +1,5 @@
 /*
-   Reader for Stata .dta files, versions 8.0, 7.0, 7/SE, 6.0 and 5.0.
+   Reader for Stata .dta files, versions 5.0 to 11.
 
    Based on stataread.c from the GNU R "foreign" package with the 
    following original info:
@@ -21,7 +21,9 @@
      Versions of Stata before 4.0 used different file formats.
 
   This version was fairly substantially modified for gretl 
-  by Allin Cottrell, July 2005.
+  by Allin Cottrell, July 2005, then modified again in August
+  2009 to support "format 114" .dta files as written by Stata
+  10 and 11.
 */
 
 #include <stdio.h>
@@ -90,6 +92,7 @@
 
 /* it's convenient to have these as file-scope globals */
 static int stata_version;
+static int stata_SE;
 static int stata_endian;
 static int swapends;
 
@@ -128,12 +131,8 @@ static int stata_read_signed_byte (FILE *fp, int naok, int *err)
     } else {
 	ret = (int) b;
 
-	if (!naok) {
-	    int v = abs(stata_version);
-
-	    if (STATA_BYTE_NA(b, v)) {
-		ret = NA_INT;
-	    }
+	if (!naok && STATA_BYTE_NA(b, stata_version)) {
+	    ret = NA_INT;
 	}
     }
 
@@ -218,8 +217,6 @@ stata_get_version_and_namelen (unsigned char u, int *vnamelen)
 {
     int err = 0;
 
-    /* a negative value of stata_version indicates "SE" */
-
     switch (u) {
     case VERSION_5:
         stata_version = 5;
@@ -234,15 +231,18 @@ stata_get_version_and_namelen (unsigned char u, int *vnamelen)
 	*vnamelen = 32;
 	break;
     case VERSION_7SE:
-	stata_version = -7;
+	stata_version = 7;
+	stata_SE = 1;
 	*vnamelen = 32; 
 	break;
     case VERSION_8:
-	stata_version = -8; /* versions >= 8 automatically use SE format */
+	stata_version = 8; /* versions >= 8 automatically use 'SE' format */
+	stata_SE = 1;
 	*vnamelen = 32; 
 	break;
     case VERSION_10:
-	stata_version = -10;  
+	stata_version = 10;
+	stata_SE = 1;
 	*vnamelen = 32; 
 	break;
     default:
@@ -259,12 +259,12 @@ static int stata_get_endianness (FILE *fp, int *err)
     return (i == 0x01)? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
 }
 
-#define stata_type_float(t)  ((stata_version > 0 && t == STATA_FLOAT) || t == STATA_SE_FLOAT)
-#define stata_type_double(t) ((stata_version > 0 && t == STATA_DOUBLE) || t == STATA_SE_DOUBLE)
-#define stata_type_long(t)   ((stata_version > 0 && t == STATA_LONG) || t == STATA_SE_LONG)
-#define stata_type_int(t)    ((stata_version > 0 && t == STATA_INT) || t == STATA_SE_INT)
-#define stata_type_byte(t)   ((stata_version > 0 && t == STATA_BYTE) || t == STATA_SE_BYTE)
-#define stata_type_string(t) ((stata_version > 0 && t >= STATA_STRINGOFFSET) || t <= 244)
+#define stata_type_float(t)  ((stata_SE && t == STATA_SE_FLOAT)  || t == STATA_FLOAT)
+#define stata_type_double(t) ((stata_SE && t == STATA_SE_DOUBLE) || t == STATA_DOUBLE)
+#define stata_type_long(t)   ((stata_SE && t == STATA_SE_LONG)   || t == STATA_LONG)
+#define stata_type_int(t)    ((stata_SE && t == STATA_SE_INT)    || t == STATA_INT)
+#define stata_type_byte(t)   ((stata_SE && t == STATA_SE_BYTE)   || t == STATA_BYTE)
+#define stata_type_string(t) ((stata_SE && t <= 244) || t >= STATA_STRINGOFFSET)
 
 static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
 {
@@ -493,8 +493,8 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     int err = 0;
 
     labellen = (stata_version == 5)? 32 : 81;
-    fmtlen = (abs(stata_version) < 10)? 12 : 49;
-    soffset = (stata_version > 0)? STATA_STRINGOFFSET : STATA_SE_STRINGOFFSET;
+    fmtlen = (stata_version < 10)? 12 : 49;
+    soffset = (stata_SE)? STATA_SE_STRINGOFFSET : STATA_STRINGOFFSET;
     *nvread = nvar;
 
     printf("Max length of labels = %d\n", labellen);
@@ -598,7 +598,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     /* variable 'characteristics' -- not handled */
     if (!err) {
 	while (stata_read_byte(fp, &err)) {
-	    if (abs(stata_version) >= 7) { /* manual is wrong here */
+	    if (stata_version >= 7) { /* manual is wrong here */
 		clen = stata_read_long(fp, 1, &err);
 	    } else {
 		clen = stata_read_int(fp, 1, &err);
@@ -607,7 +607,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		stata_read_signed_byte(fp, 1, &err);
 	    }
 	}
-	if (abs(stata_version) >= 7) {
+	if (stata_version >= 7) {
 	    clen = stata_read_long(fp, 1, &err);
 	} else {
 	    clen = stata_read_int(fp, 1, &err);
@@ -665,7 +665,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* value labels */
 
-    if (!err && !st_err && lvars != NULL && abs(stata_version) > 5) {
+    if (!err && !st_err && lvars != NULL && stata_version > 5) {
 	PRN *st_prn = NULL;
 	double *level;
 	
@@ -776,7 +776,7 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
 	return err;
     } 
 
-    printf("Stata file version %d\n", abs(stata_version));
+    printf("Stata file version %d\n", stata_version);
 
     /* these are file-scope globals */
     stata_endian = stata_get_endianness(fp, &err);
