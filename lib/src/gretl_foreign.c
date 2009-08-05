@@ -266,27 +266,29 @@ static int write_ox_gretl_io_file (void)
 	if (fp == NULL) {
 	    return E_FOPEN;
 	} else {
-	    fputs("gretl_export (const X, const str)\n{\n", fp);
 #ifdef G_OS_WIN32
             gchar *dotcpy = g_strdup(dotdir);
-            charsub(dotcpy, '\\', '/');
-            fprintf(fp, "  decl fname = \"%s\" ~ str;\n", dotcpy);
+
+	    charsub(dotcpy, '\\', '/');
+	    fputs("gretl_dotdir ()\n{\n", fp);
+	    fprintf(fp, "  return \"%s\";\n", dotcpy);
+	    g_free(dotcpy);
 #else
-	    fprintf(fp, "  decl fname = \"%s\" ~ str;\n", dotdir);
-#endif
-	    fputs("  decl fp = fopen(fname, \"w\");\n", fp);
+	    fputs("gretl_dotdir ()\n{\n", fp);
+	    fprintf(fp, "  return \"%s\";\n", dotdir);
+#endif	
+	    fputs("}\n\n", fp);
+
+	    fputs("gretl_export (const X, const str)\n{\n", fp);
+            fputs("  decl dname = gretl_dotdir();\n", fp);
+	    fputs("  decl fp = fopen(dname ~ str, \"w\");\n", fp);
 	    fputs("  fprint(fp, \"%d %d\", rows(X), columns(X));\n", fp);
 	    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
 	    fputs("  fclose(fp);\n}\n\n", fp);
 
 	    fputs("gretl_loadmat (const str)\n{\n", fp);
-#ifdef G_OS_WIN32
-            fprintf(fp, "  decl fname = \"%s\" ~ str;\n", dotcpy);
-            g_free(dotcpy);
-#else
-	    fprintf(fp, "  decl fname = \"%s\" ~ str;\n", dotdir);
-#endif
-	    fputs("  decl X = loadmat(fname);\n", fp);
+            fputs("  decl dname = gretl_dotdir();\n", fp);
+	    fputs("  decl X = loadmat(dname ~str);\n", fp);
 	    fputs("  return X;\n}\n", fp);
 
 	    fclose(fp);
