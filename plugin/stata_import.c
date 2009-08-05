@@ -46,6 +46,7 @@
 #define VERSION_7   0x6e
 #define VERSION_7SE  111
 #define VERSION_8    113
+#define VERSION_10   114
 
 /* Stata format constants */
 #define STATA_STRINGOFFSET 0x7f
@@ -237,7 +238,11 @@ stata_get_version_and_namelen (unsigned char u, int *vnamelen)
 	*vnamelen = 32; 
 	break;
     case VERSION_8:
-	stata_version = -8;  /* version 8 automatically uses SE format */
+	stata_version = -8; /* versions >= 8 automatically use SE format */
+	*vnamelen = 32; 
+	break;
+    case VERSION_10:
+	stata_version = -10;  
 	*vnamelen = 32; 
 	break;
     default:
@@ -474,9 +479,10 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 {
     int i, j, t, clen;
     int labellen, nlabels, totlen;
+    int fmtlen;
     int nvar = dinfo->v - 1, nsv = 0;
     int soffset, pd = 0, tnum = -1;
-    char datalabel[81], c18[18], aname[33];
+    char datalabel[81], c50[50], aname[33];
     int *types = NULL;
     int *lvars = NULL;
     char **lnames = NULL;
@@ -487,6 +493,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     int err = 0;
 
     labellen = (stata_version == 5)? 32 : 81;
+    fmtlen = (abs(stata_version) < 10)? 12 : 49;
     soffset = (stata_version > 0)? STATA_STRINGOFFSET : STATA_SE_STRINGOFFSET;
     *nvread = nvar;
 
@@ -497,11 +504,11 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     printf("datalabel: '%s'\n", datalabel);
 
     /* file creation time - zero terminated string */
-    stata_read_string(fp, 18, c18, &err);  
-    printf("timestamp: '%s'\n", c18);
+    stata_read_string(fp, 18, c50, &err);  
+    printf("timestamp: '%s'\n", c50);
 
-    if (*datalabel != '\0' || *c18 != '\0') {
-	save_dataset_info(dinfo, datalabel, c18);
+    if (*datalabel != '\0' || *c50 != '\0') {
+	save_dataset_info(dinfo, datalabel, c50);
     }
   
     /** read variable descriptors **/
@@ -542,16 +549,16 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     
     /* format list (use it to identify date variables?) */
     for (i=0; i<nvar && !err; i++){
-        stata_read_string(fp, 12, c18, &err);
-	if (*c18 != '\0' && c18[strlen(c18)-1] != 'g') {
-	    printf("variable %d: format = '%s'\n", i+1, c18);
-	    if (!strcmp(c18, "%tm")) {
+        stata_read_string(fp, fmtlen, c50, &err);
+	if (*c50 != '\0' && c50[strlen(c50)-1] != 'g') {
+	    printf("variable %d: format = '%s'\n", i+1, c50);
+	    if (!strcmp(c50, "%tm")) {
 		pd = 12;
 		tnum = i;
-	    } else if (!strcmp(c18, "%tq")) {
+	    } else if (!strcmp(c50, "%tq")) {
 		pd = 4;
 		tnum = i;
-	    } else if (!strcmp(c18, "%ty")) {
+	    } else if (!strcmp(c50, "%ty")) {
 		pd = 1;
 		tnum = i;
 	    }
@@ -758,14 +765,14 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     unsigned char u;
     int err = 0;
     
-    u = stata_read_byte(fp, &err);   /* release version */
+    u = stata_read_byte(fp, &err); /* release version */
 
     if (!err) {
 	err = stata_get_version_and_namelen(u, namelen);
     }
 
     if (err) {
-	fputs("not a Stata version 5-8 .dta file\n", stderr);
+	fputs("not a Stata version 5-11 .dta file\n", stderr);
 	return err;
     } 
 
@@ -877,8 +884,3 @@ int dta_get_data (const char *fname,
 
     return err;
 }  
-
-
-
-
-

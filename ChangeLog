@@ -2,13 +2,13 @@ version 1.8.3, in progress
 - Fix bugs 2819633, 2827358, 2828349
 - $stopwatch: use times() function if available, to include
   execution time of child processes
-- Add function "mreverse" to reverse rows or columns of
-  a matrix
+- Add function "mreverse" to reverse rows of a matrix
 - Add function "deseas" to deseasonalize a monthly or
   quarterly time series using X-12-ARIMA or TRAMO/SEATS
 - Remove function "strcmp" as redundant
+- Add "sscanf" function
 - Add function "pergm" corresponding to the pergm command
-- Several small fixes and enhancements for interaction with
+- Several fixes and enhancements for interaction with
   TRAMO/SEATS and X-12-ARIMA
 - Many small GUI fixes
 - Add (optional) support for Ox programs via the "foreign"
@@ -25,9 +25,12 @@ version 1.8.3, in progress
   to daily
 - Add "set" variable "csv_na" to control the representation
   of NA values in CSV output (also GUI selector for same)
-- Remove temporary "set" variable "protect_lists"
+- Remove old "set" variable "protect_lists"
 - Help windows: substantial revamp of GUI, plus fixes for 
   dealing with translated helpfiles
+- Add experimental function debugger: new "debug" command
+- Stata importer: support current format 114 .dta files
+- MS Windows: update the GTK+ stack
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"
