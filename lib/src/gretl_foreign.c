@@ -162,7 +162,7 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
     cmd = g_strdup_printf("\"%s\" \"%s\"", path, fname);
     err = gretl_win32_grab_output(cmd, &sout);
 
-    if (!err) {
+    if (sout != NULL && *sout != '\0') {
 	pputs(prn, sout);
     }
 
@@ -172,11 +172,11 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-#else
+#else /* !G_OS_WIN32 */
 
 static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
 {
-    gchar *out = NULL;
+    gchar *sout = NULL;
     gchar *errout = NULL;
     gint status = 0;
     GError *gerr = NULL;
@@ -185,7 +185,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     signal(SIGCHLD, SIG_DFL);
 
     g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-		 NULL, NULL, &out, &errout,
+		 NULL, NULL, &sout, &errout,
 		 &status, &gerr);
 
     if (gerr != NULL) {
@@ -193,27 +193,28 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
 	g_error_free(gerr);
 	err = 1;
     } else if (status != 0) {
-	if (errout != NULL) {
-	    if (*errout == '\0') {
-		pprintf(prn, "%s exited with status %d", argv[0], status);
-	    } else {
-		pputs(prn, errout);
-		pputc(prn, '\n');
-	    } 
-	}
+	pprintf(prn, "%s exited with status %d", argv[0], status);
+	if (sout != NULL && *sout != '\0') {
+	    pputs(prn, sout);
+	    pputc(prn, '\n');
+	} 
+	if (errout != NULL && *errout != '\0') {
+	    pputs(prn, errout);
+	    pputc(prn, '\n');
+	}	
 	err = 1;
-    } else if (out != NULL) {
+    } else if (sout != NULL) {
 	if (!(opt & OPT_Q)) {
 	    /* with OPT_Q, don't print non-error output */
-	    pputs(prn, out);
+	    pputs(prn, sout);
 	    pputc(prn, '\n');
 	}
     } else {
-	pprintf(prn, "%s\n", "Got no output");
+	pprintf(prn, "%s: %s\n", argv[0], "Got no output");
 	err = 1;
     }
 
-    g_free(out);
+    g_free(sout);
     g_free(errout);
 
     return err;
@@ -247,7 +248,54 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-#endif
+#endif /* switch on MS Windows or not */
+
+static int write_ox_gretl_io_file (void)
+{
+    static int written;
+
+    if (!written) {
+	const char *dotdir = gretl_dot_dir();
+	gchar *fname;
+	FILE *fp;
+
+	fname = g_strdup_printf("%sgretl_io.ox", dotdir);
+	fp = gretl_fopen(fname, "w");
+	g_free(fname);
+
+	if (fp == NULL) {
+	    return E_FOPEN;
+	} else {
+	    fputs("gretl_export (const X, const str)\n{\n", fp);
+	    fprintf(fp, "  decl fname = \"%s\" ~ str;\n", dotdir);
+	    fputs("  decl fp = fopen(fname, \"w\");\n", fp);
+	    fputs("  fprint(fp, \"%d %d\", rows(X), columns(X));\n", fp);
+	    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
+	    fputs("  fclose(fp);\n}\n\n", fp);
+
+	    fputs("gretl_loadmat (const str)\n{\n", fp);
+	    fprintf(fp, "  decl fname = \"%s\" ~ str;\n", dotdir);
+	    fputs("  decl X = loadmat(fname);\n", fp);
+	    fputs("  return X;\n}\n", fp);
+
+	    fclose(fp);
+	    written = 1;
+	}
+    }
+
+    return 0;
+}
+
+static void add_gretl_include (FILE *fp)
+{
+    const char *dotdir = gretl_dot_dir();
+
+    if (strchr(dotdir, ' ')) {
+	fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotdir);
+    } else {
+	fprintf(fp, "#include <%sgretl_io.ox>\n", dotdir);
+    }
+}
 
 /**
  * write_gretl_ox_file:
@@ -265,19 +313,36 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 {
     const gchar *fname = gretl_ox_filename();
     FILE *fp;
-    int i, err = 0;
+    int err;
+
+    err = write_ox_gretl_io_file();
 
     fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
-	err = E_FOPEN;
+	return E_FOPEN;
     } else {
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
-	    fputs(buf, fp);
+	    char line[1024];
+
+	    bufgets_init(buf);
+	    while (bufgets(line, sizeof line, buf)) {
+		fputs(line, fp);
+		if (!err && strstr(line, "oxstd.h")) {
+		    add_gretl_include(fp);
+		}
+	    }
+	    bufgets_finalize(buf);
 	} else {
+	    /* put out the stored 'foreign' lines */
+	    int i;
+
 	    for (i=0; i<foreign_n_lines; i++) { 
 		fprintf(fp, "%s\n", foreign_lines[i]);
+		if (!err && strstr(foreign_lines[i], "oxstd.h")) {
+		    add_gretl_include(fp);
+		}
 	    }
 	}
 	fclose(fp);
@@ -286,7 +351,7 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 	}
     }
 
-    return err;
+    return 0;
 }
 
 /* write out current dataset in R format, and, if this succeeds,

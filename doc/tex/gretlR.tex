@@ -332,7 +332,7 @@ path is specified in the file name, \app{gretl} stores matrix files in
 the current work directory. However, it may be wise for the purpose at
 hand to use the directory in which \app{gretl} stores all its
 temporary files, whose name is stored in the built-in string
-\texttt{dotdir} (see section \ref{sec:named-strings}). The value of
+\texttt{dotdir} (see section~\ref{sec:named-strings}). The value of
 this string is automatically passed to \app{R} as the string variable
 \texttt{gretl.dotdir}, so the above example may be rewritten more
 cleanly as
@@ -498,9 +498,7 @@ Up to this point we have spoken only of interaction with \app{R} via
 the GUI program. In order to do the same from the command line
 interface, \app{gretl} provides the \texttt{foreign} command. This
 enables you to embed non-native commands within a \app{gretl}
-script.\footnote{In future this facility may be extended to handle
-  interaction with other programs, but for the present only \app{R}
-  commands are accepted.} 
+script.
 
 A ``foreign'' block takes the form
 \begin{code}
