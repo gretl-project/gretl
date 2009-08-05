@@ -2973,15 +2973,16 @@
     <function name="mreverse" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">c</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If the second argument is omitted, or is zero, returns a matrix
-	  containing the rows of <argname>X</argname> in reverse order.  If
-	  <argname>c</argname> is non-zero, returns a matrix containing the
-	  columns of <argname>X</argname> in reverse order.
+	  Returns a matrix containing the rows of <argname>X</argname> in
+	  reverse order.  If you wish to obtain a matrix in which the columns
+	  of <argname>X</argname> appear in reverse order you can do:
 	</para>
+	<code>
+	  matrix Y = mreverse(X')'
+	</code>
       </description>
     </function>    
 
