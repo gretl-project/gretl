@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.8.1cvs
+# Polish translation for gretl-1.8.2cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2009
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2009
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-04 12:23-0400\n"
-"PO-Revision-Date: 2009-08-04 12:30-0400\n"
+"PO-Revision-Date: 2009-08-05 23:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2155,7 +2155,7 @@ msgstr "'%s' : nie jest zaimplementowane dla tego typu"
 
 #: lib/src/genfuncs.c:722 gui2/library.c:4094
 msgid "Input must be a monthly or quarterly time series"
-msgstr ""
+msgstr "Muszą być miesięczne lub kwartalne szeregi danych"
 
 #: lib/src/genfuncs.c:732 plugin/tramo-x12a.c:988
 msgid ""
@@ -6179,7 +6179,7 @@ msgstr "Test Hansena-Sargana nadmiernej identyfikacji"
 #: lib/src/system.c:2688 lib/src/system.c:2692
 msgid "LR test for diagonal covariance matrix"
 msgstr ""
-"Test ilorazu wiarygodności dla diagonalnych elementów macierzy kowariancji"
+"Test ilorazu wiarygodności (LR) dla diagonalnych elementów macierzy kowariancji"
 
 #: lib/src/system.c:2704
 msgid "Breusch--Pagan test for diagonal covariance matrix"
@@ -7521,11 +7521,12 @@ msgstr ""
 "Czy zastąpić ją?"
 
 #: gui2/database.c:479
-#, fuzzy, c-format
+#,c-format
 msgid ""
 "Really delete the selected series\n"
 "from the database '%s'?"
-msgstr "Czy rzeczywiście usunąć wybrane szeregi?"
+msgstr "Czy rzeczywiście usunąć wybrane szeregi\n"
+"z bazy danych '%s'?"
 
 #: gui2/database.c:641
 msgid "Warning: series has missing observations"
@@ -8064,9 +8065,8 @@ msgstr ""
 "w zbiorze danych?"
 
 #: gui2/dialogs.c:221
-#, fuzzy
 msgid "Print missing values as:"
-msgstr "_Informacje o brakujących danych"
+msgstr "_Informacje o brakujących danych:"
 
 #: gui2/dialogs.c:319
 msgid "gretl: data delimiter"
@@ -11052,36 +11052,31 @@ msgstr "Dodatki"
 
 #: gui2/helpfiles.c:333
 msgid "Mathematical"
-msgstr ""
+msgstr "Matematyczne"
 
 #: gui2/helpfiles.c:337 doc/commands/matfuncs.c:56
 msgid "Filters"
 msgstr "Filtry"
 
 #: gui2/helpfiles.c:339
-#, fuzzy
 msgid "Statistical"
-msgstr "Statystyki"
+msgstr "Statystyczne"
 
 #: gui2/helpfiles.c:341
-#, fuzzy
 msgid "Probability"
-msgstr "Probit"
+msgstr "Prawdopodobieństwo"
 
 #: gui2/helpfiles.c:343
-#, fuzzy
 msgid "Linear algebra"
-msgstr "Algiebra macierzy"
+msgstr "Algiebra liniowa"
 
 #: gui2/helpfiles.c:345
-#, fuzzy
 msgid "Matrix building"
-msgstr "Algiebra macierzy"
+msgstr "Budowa macierzy"
 
 #: gui2/helpfiles.c:347
-#, fuzzy
 msgid "Matrix shaping"
-msgstr "Algiebra macierzy"
+msgstr "Projektowanie macierzy"
 
 #: gui2/helpfiles.c:351 doc/commands/matfuncs.c:55
 msgid "Data utilities"
@@ -13065,9 +13060,8 @@ msgid "Path to R library"
 msgstr "Katalog R - library"
 
 #: gui2/settings.c:224
-#, fuzzy
 msgid "Path to oxl executable"
-msgstr "Dodaj do tabeli modeli"
+msgstr "Katalog oxl executable"
 
 #: gui2/settings.c:227
 msgid "gretl database directory"
@@ -14615,150 +14609,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "_Series"
-#~ msgstr "_Szeregi danych"
-
-#~ msgid "_Display"
-#~ msgstr "_Pokaż"
-
-#~ msgid "_Graph"
-#~ msgstr "_Wykres"
-
-#~ msgid "_Delete"
-#~ msgstr "_Usuwanie"
-
-#~ msgid "_Find"
-#~ msgstr "_Znajdź"
-
-#~ msgid "_Find in window"
-#~ msgstr "_Znajdź w oknie"
-
-#~ msgid "_Codebook"
-#~ msgstr "_Opis"
-
-#~ msgid "_Open"
-#~ msgstr "_Otwórz plik"
-
-#~ msgid "Plain _text"
-#~ msgstr "tekst ASCII"
-
-#~ msgid "_PDF"
-#~ msgstr "plik PDF"
-
-#~ msgid "_Topics"
-#~ msgstr "_Tematy"
-
-#~ msgid "Find in window"
-#~ msgstr "Znajdź w oknie"
-
-#~ msgid "help file %s is not up to date\n"
-#~ msgstr "plik pomocy %s nie do aktualizacji\n"
-
-#~ msgid "String was not found."
-#~ msgstr "Łańcuch znaków nie został znaleziony."
-
-#~ msgid "Open data file"
-#~ msgstr "Otwórz plik danych gretla"
-
-#~ msgid "Open CSV file"
-#~ msgstr "Otwórz plik danych CSV"
-
-#~ msgid "Open Octave file"
-#~ msgstr "Otwórz plik danych Octave"
-
-#~ msgid "Open Gnumeric file"
-#~ msgstr "Otwórz plik danych Gnumeric"
-
-#~ msgid "Open Excel file"
-#~ msgstr "Otwórz plik Excela"
-
-#~ msgid "Open Eviews workfile"
-#~ msgstr "Otwórz plik Eviews"
-
-#~ msgid "Open Stata file"
-#~ msgstr "Otwórz plik Stata"
-
-#~ msgid "Open SPSS file"
-#~ msgstr "Otwórz plik danych SPSS"
-
-#~ msgid "Open JMulTi file"
-#~ msgstr "Otwórz plik LMulTi"
-
-#~ msgid "Open ODS file"
-#~ msgstr "Otwórz plik danych ODS"
-
-#~ msgid "gretl: add markers"
-#~ msgstr "gretl: dodawanie opisów przypadków"
-
-#~ msgid "gretl: open database"
-#~ msgstr "gretl: otwórz plik bazy danych"
-
-#~ msgid "Open script file"
-#~ msgstr "Otwórz plik poleceń skryptowych"
-
-#~ msgid "Open session file"
-#~ msgstr "Otwórz plik sesji"
-
-#~ msgid "Save output file"
-#~ msgstr "Zapisz okno wyników"
-
-#~ msgid "Save console output"
-#~ msgstr "Zapisz okno wyników konsoli"
-
-#~ msgid "Save command script"
-#~ msgstr "Zapisz polecenia skryptowe"
-
-#~ msgid "Save LaTeX file"
-#~ msgstr "Zapisz plik LaTeX"
-
-#~ msgid "Save gnuplot commands"
-#~ msgstr "Zapisz polecenia gnuplot"
-
-#~ msgid "Save R commands"
-#~ msgstr "Zapisz polecenia R"
-
-#~ msgid ""
-#~ "The suffix you selected should be used\n"
-#~ "only for gretl datafiles"
-#~ msgstr ""
-#~ "Wybrany przyrostek może być wykorzystany\n"
-#~ "tylko w bazie danych gretla."
-
-#~ msgid "Save function package"
-#~ msgstr "Zapisz pakiet funkcji"
-
-#~ msgid "Save gnuplot graph"
-#~ msgstr "Zapisz plik graficzny gnuplot"
-
-#~ msgid "gretl: gnuplot graph"
-#~ msgstr "gretl: wykres gnuplot"
-
-#~ msgid "Save data file"
-#~ msgstr "Zapisz plik danych"
-
-#~ msgid "_Text"
-#~ msgstr "_Rozmiar tekstu"
-
-#~ msgid "This analysis is applicable only to seasonal time series"
-#~ msgstr ""
-#~ "Tą analizę możlna zastosować tylko dla sezonowych szeregów czasowych"
-
-#~ msgid "Save CSV data file"
-#~ msgstr "Zapisywanie pliku danych CSV"
-
-#~ msgid "Save R data file"
-#~ msgstr "Zapisywanie pliku danych R"
-
-#~ msgid "Save octave data file"
-#~ msgstr "Zapisywanie pliku danych Octave"
-
-#~ msgid "gretl working directory"
-#~ msgstr "gretl: katalog roboczy"
-
-#~ msgid ""
-#~ "X-12-ARIMA can't handle more than 720 observations.\n"
-#~ "Please select a smaller sample."
-#~ msgstr ""
-#~ "Procedura X-12-ARIMA estymuje do 720 obserwacji.\n"
-#~ "Proszę wybrać mniejszy zakres próby."
