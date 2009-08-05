@@ -1189,9 +1189,11 @@ static void maybe_set_help_tabs (windata_t *hwin)
 static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Command Reference");
+    const gchar *s = (const gchar *) hwin->data;
     GtkTextIter iter;
-    int jmax = 6;
-    int i, j, k;
+    char word[10];
+    int llen, llen_max = 6;
+    int idx, j, n;
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
@@ -1199,26 +1201,25 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 					     "title", NULL);
     gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
 
-    j = 1;
+    llen = 0;
 
-    for (i=1; i<NC; i++) {
-	const char *word;
-
-	if (HIDDEN_COMMAND(i)) {
-	    continue;
-	}
-
-	word = gretl_command_word(i);
-	insert_link(tbuf, &iter, gretl_command_word(i), i, NULL);
-	if (j++ % jmax == 0) {
-	    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
-	} else {
-	    int n = 10 - strlen(word);
-
-	    for (k=0; k<n; k++) {
-		gtk_text_buffer_insert(tbuf, &iter, " ", -1);
+    while (*s) {
+	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
+	    if (sscanf(s + 2, "%8s", word)) {
+		idx = command_help_index(word);
+		insert_link(tbuf, &iter, word, idx, NULL);
+		if (++llen == llen_max) {
+		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+		    llen = 0;
+		} else {
+		    n = 10 - strlen(word);
+		    for (j=0; j<n; j++) {
+			gtk_text_buffer_insert(tbuf, &iter, " ", -1);
+		    }
+		}
 	    }
 	}
+	s++;
     }
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), tbuf);
@@ -1230,11 +1231,10 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Function Reference");
-    const gchar *s;
+    const gchar *s = (const gchar *) hwin->data;
     GtkTextIter iter;
-    char funword[12];
-    int llen_max = 5;
-    int llen;
+    char word[12];
+    int llen, llen_max = 5;
     int i, j, n;
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
@@ -1243,7 +1243,6 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 					     "title", NULL);
     gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
 
-    s = (const gchar *) hwin->data;
     i = 1;
     llen = 0;
 
@@ -1259,14 +1258,14 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 		    }
 		}
 		s += 2;
-	    } else if (sscanf(s + 2, "%10s", funword)) {
+	    } else if (sscanf(s + 2, "%10s", word)) {
 		/* function name */
-		insert_link(tbuf, &iter, funword, i, NULL);
+		insert_link(tbuf, &iter, word, i, NULL);
 		if (++llen == llen_max) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 		    llen = 0;
 		} else {
-		    n = 12 - strlen(funword);
+		    n = 12 - strlen(word);
 		    for (j=0; j<n; j++) {
 			gtk_text_buffer_insert(tbuf, &iter, " ", -1);
 		    }

@@ -114,11 +114,12 @@ to get the right representation of missing values for use with
 \texttt{foreign} command is not available in connection with Ox.
 
 We get the parameter estimates back from \app{Ox} using
-\verb|gretl_export| on the \app{Ox} side and mread on the \app{gretl}
-side.  The \verb|gretl_export| function takes two arguments, a
-matrix and a file name.  The file is written into the user's dotdir,
-from where it can be picked up using \texttt{mread}.  The final
-portion of the output from Example~\ref{Ox-DPD} is shown below:
+\verb|gretl_export| on the \app{Ox} side and \texttt{mread} on the
+\app{gretl} side.  The \verb|gretl_export| function takes two
+arguments, a matrix and a file name.  The file is written into the
+user's dotdir, from where it can be picked up using \texttt{mread}.
+The final portion of the output from Example~\ref{Ox-DPD} is shown
+below:
 %
 \begin{code}
 ? matrix oxparm = mread("/home/cottrell/.gretl/oxparm.mat")

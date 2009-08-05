@@ -26,6 +26,8 @@ void context_help (GtkWidget *widget, gpointer data);
 
 void command_help_callback (int cmdnum, int en);
 
+int command_help_index (const char *word);
+
 void function_help_callback (int fnum);
 
 void plain_text_cmdref (GtkAction *action);

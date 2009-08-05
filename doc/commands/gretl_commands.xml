@@ -1928,6 +1928,36 @@
     </description>
   </command>
 
+  <command name="debug" section="Programming" context="cli"
+    label="Debugging">
+
+    <usage>
+      <arguments>
+        <argument>function</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Experimental debugger for user-defined functions, available in the
+	command-line program, gretlcli, and in the GUI console.  The
+	<lit>debug</lit> command should be invoked after the function in
+	question is defined but before it is called.  The effect is that
+	execution pauses when the function is called and a special prompt is
+	shown.
+      </para>
+      <para>
+	At the debugging prompt you can type <lit>next</lit> to execute the
+	next command in the function, or <lit>continue</lit> to allow
+	execution of the function to continue unimpeded. These commands can be
+	abbreviated as <lit>n</lit> and <lit>c</lit> respectively.  You can
+	also interpolate an instruction at this prompt, for example a
+	<lit>print</lit> command to reveal the current value of some variable
+	of interest.
+      </para>
+    </description>
+  </command>  
+
   <command name="delete" section="Dataset" 
     label="Delete variables" context="cli">
 

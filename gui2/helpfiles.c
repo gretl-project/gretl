@@ -260,11 +260,22 @@ char *quoted_help_string (const char *s)
     return g_strdup("Missing string");
 }
 
-static int help_topic_number (const char *word, int gui)
+int command_help_index (const char *word)
 {
     int h = gretl_command_number(word);
 
-    if (h == 0 && gui) {
+    if (h == 0) {
+	h = compat_command_number(word);
+    }
+
+    return h;
+}
+
+static int gui_help_topic_index (const char *word)
+{
+    int h = gretl_command_number(word);
+
+    if (h == 0) {
 	h = extra_command_number(word);
     }
 
@@ -415,10 +426,10 @@ static GtkTreeStore *make_help_topics_tree (int role)
 		gtk_tree_store_append(store, &iter, &parent);
 		if (role == FUNCS_HELP) {
 		    ++idx;
+		} else if (role == GUI_HELP || role == GUI_HELP_EN) {
+		    idx = gui_help_topic_index(word);
 		} else {
-		    int gui = (role == GUI_HELP || role == GUI_HELP_EN);
-
-		    idx = help_topic_number(word, gui);
+		    idx = command_help_index(word);
 		} 
 		gtk_tree_store_set(store, &iter, 
 				   STRING_COL, word,
@@ -672,7 +683,7 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     if (!found) {
 	if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN) {
 	    /* are we looking for a command? */
-	    int idx = help_topic_number(needle, 0);
+	    int idx = command_help_index(needle);
 
 	    if (idx > 0) {
 		int pos = help_pos_from_index(idx, vwin->role);
