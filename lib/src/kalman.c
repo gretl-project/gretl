@@ -3391,7 +3391,6 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 
 /**
  * user_kalman_get_loglik:
- * @K: pointer to Kalman struct.
  * 
  * Retrieves the log-likelhood calculated via the last run of 
  * a kalman forecast, if applicable.
@@ -3412,7 +3411,6 @@ double user_kalman_get_loglik (void)
 
 /**
  * user_kalman_get_matrix:
- * @K: pointer to Kalman struct.
  * @idx: identifier for matrix.
  * @err: location to receive error code.
  * 
@@ -3453,7 +3451,6 @@ gretl_matrix *user_kalman_get_matrix (int idx, int *err)
 
 /**
  * user_kalman_get_s2:
- * @K: pointer to Kalman struct.
  * 
  * Retrieves the scale factor, \hat{\sigma}^2, calculated 
  * via the last run of a kalman forecast, if applicable.
@@ -3474,7 +3471,6 @@ double user_kalman_get_s2 (void)
 
 /**
  * user_kalman_get_time_step:
- * @K: pointer to Kalman struct.
  * 
  * Retrieves the time step, t, from the current run of a
  * kalman forecast, if applicable.

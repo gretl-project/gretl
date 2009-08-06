@@ -4511,13 +4511,13 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 /**
  * anova:
- * @x: list: must contain the response and treatment variables.
+ * @list: must contain the response and treatment variables.
  * @Z: data array.
  * @pdinfo: dataset information.
  * @opt: not used yet.
  * @prn: printing struct.
  * 
- * Does one-way Analysis of Variance (prints table and F-test).
+ * Does one-way or two-way Analysis of Variance (prints table and F-test).
  * 
  * Returns: 0 on success, non-zero on failure.
 */

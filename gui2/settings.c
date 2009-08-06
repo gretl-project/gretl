@@ -120,7 +120,8 @@ typedef enum {
     INVISET  = 1 << 6,
     FIXSET   = 1 << 7,  /* setting fixed by admin (Windows network use) */
     MACHSET  = 1 << 8,  /* "local machine" setting */
-    BROWSER  = 1 << 9   /* wants "Browse" button */
+    BROWSER  = 1 << 9,  /* wants "Browse" button */
+    RESTART  = 1 << 10
 } rcflags;
 
 typedef struct {
@@ -136,6 +137,7 @@ typedef struct {
 			  LISTSET user string, from fixed menu
                           RADIOSET user int, from fixed menu
 			  INVISET not visible in Prefs dialog
+			  RESTART needs restart to take effect
 		       */
     int len;           /* storage size for string variable (also see Note) */
     short tab;         /* which tab (if any) does the item fall under? */
@@ -162,11 +164,11 @@ RCVAR rc_vars[] = {
 #endif
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
-      BOOLSET, 0, TAB_MAIN, NULL },
+      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
 #endif
 #ifdef G_OS_WIN32 	 
     { "wimp", N_("Emulate Windows look"), NULL, &use_wimp, 	 
-      BOOLSET, 0, TAB_MAIN, NULL }, 	 
+      BOOLSET | RESTART, 0, TAB_MAIN, NULL }, 	 
 #endif
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "browser", N_("Web browser"), NULL, Browser, 
@@ -178,13 +180,13 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
 #ifdef USE_OX
     { "oxsupport", N_("Enable Ox support"), NULL, &ox_support, 
-      BOOLSET, 0, TAB_MAIN, NULL },
+      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
 #endif
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
-      INVISET | BOOLSET, 0, TAB_NONE, NULL },
+      INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
 #ifdef ENABLE_NLS
     { "langpref", N_("Language preference"), NULL, langpref, 
-      LISTSET, 32, TAB_MAIN, NULL },
+      LISTSET | RESTART, 32, TAB_MAIN, NULL },
 #endif
 #ifndef G_OS_WIN32 
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
@@ -982,12 +984,6 @@ static GtkWidget *make_path_browse_button (RCVAR *rc, GtkWidget *w)
     return b;
 }
 
-static gboolean takes_effect_on_restart (void)
-{
-    infobox(_("This change will take effect when you restart gretl"));
-    return FALSE;
-}
-
 static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 {
     static int lasterr;
@@ -1008,9 +1004,7 @@ static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 	gui_errmsg(err);
 	gretl_error_clear();
 	gtk_combo_box_set_active(box, 0);
-    } else {
-	infobox(_("This change will take effect when you restart gretl"));
-    }
+    } 
 
     return FALSE;
 }
@@ -1209,16 +1203,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), TRUE);
 	    } else {
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), FALSE);
-	    }
-
-	    /* special case: deferred processing */
-	    if (!strcmp(rc->key, "lcnumeric") ||
-		!strcmp(rc->key, "usecwd") ||
-		!strcmp(rc->key, "oxsupport") ||
-		!strcmp(rc->key, "wimp")) {
-		g_signal_connect(G_OBJECT(rc->widget), "toggled",
-				 G_CALLBACK(takes_effect_on_restart), 
-				 NULL);
 	    }
 
 	    /* special case: link between toggle and preceding entry */
@@ -1511,52 +1495,80 @@ static void maybe_revise_tramo_x12a_status (void)
 
 #endif
 
+static void flag_changed (RCVAR *rcvar, int *changed)
+{
+    if (rcvar->flags & RESTART) {
+	*changed = 2;
+    } else if (*changed == 0) {
+	*changed = 1;
+    }
+}
+
 /* register and react to changes from Preferences dialog */
 
 static void apply_changes (GtkWidget *widget, gpointer data) 
 {
-    const gchar *str;
+    RCVAR *rcvar;
+    GtkWidget *w;
+    int changed = 0;
     char *strvar;
     int *intvar;
-    int i = 0;
+    int i;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
-	if (rc_vars[i].widget != NULL) {
-	    if (rc_vars[i].flags & BOOLSET) {
-		intvar = (int *) rc_vars[i].var;
-		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active) {
-		    *intvar = TRUE;
-		} else {
-		    *intvar = FALSE;
+	rcvar = &rc_vars[i];
+	w = rcvar->widget;
+	if (w != NULL) {
+	    if (rcvar->flags & BOOLSET) {
+		int bval = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+		intvar = (int *) rcvar->var;
+		if (bval != *intvar) {
+		    flag_changed(rcvar, &changed);
+		    *intvar = bval;
 		}
-	    } else if ((rc_vars[i].flags & USERSET) || 
-		       (rc_vars[i].flags & ROOTSET) ||
-		       (rc_vars[i].flags & MACHSET)) {
-		str = gtk_entry_get_text(GTK_ENTRY(rc_vars[i].widget));
+	    } else if ((rcvar->flags & USERSET) || 
+		       (rcvar->flags & ROOTSET) ||
+		       (rcvar->flags & MACHSET)) {
+		const gchar *str = gtk_entry_get_text(GTK_ENTRY(w));
+
 		if (str != NULL && *str != '\0') { 
-		    strvar = (char *) rc_vars[i].var;
-		    *strvar = '\0';
-		    strncat(strvar, str, rc_vars[i].len - 1);
+		    strvar = (char *) rcvar->var;
+		    if (strcmp(str, strvar)) {
+			flag_changed(rcvar, &changed);
+			*strvar = '\0';
+			strncat(strvar, str, rcvar->len - 1);
+		    }
 		}
-	    } else if (rc_vars[i].flags & LISTSET) {
-		GtkComboBox *box = GTK_COMBO_BOX(rc_vars[i].widget);
+	    } else if (rcvar->flags & LISTSET) {
+		GtkComboBox *box = GTK_COMBO_BOX(w);
 
-		if (rc_vars[i].flags & INTSET) {
-		    int boxval = gtk_combo_box_get_active(box);
+		if (rcvar->flags & INTSET) {
+		    int bval = gtk_combo_box_get_active(box);
 		    
-		    intvar = (int *) rc_vars[i].var;
-		    *intvar = boxval;
+		    intvar = (int *) rcvar->var;
+		    if (bval != *intvar) {
+			flag_changed(rcvar, &changed);
+			*intvar = bval;
+		    }
 		} else {
-		    gchar *boxval;
+		    gchar *boxstr;
 
-		    boxval = gtk_combo_box_get_active_text(box);
-		    strvar = (char *) rc_vars[i].var;
-		    *strvar = '\0';
-		    strcat(strvar, boxval);
-		    g_free(boxval);
+		    boxstr = gtk_combo_box_get_active_text(box);
+		    strvar = (char *) rcvar->var;
+		    if (strcmp(boxstr, strvar)) {
+			flag_changed(rcvar, &changed);
+			*strvar = '\0';
+			strcat(strvar, boxstr);
+		    }
+		    g_free(boxstr);
 		}
 	    }
 	}
+    }
+
+    if (changed > 1) {
+	infobox(_("This change will take effect when you restart gretl"));
     }
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)

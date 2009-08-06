@@ -314,7 +314,7 @@ static void add_gretl_include (FILE *fp)
  * write_gretl_ox_file:
  * @buf: text buffer containing Ox code.
  * @opt: should contain %OPT_G for use from GUI.
- * @fname: location to receive name of file written, or %NULL.
+ * @pfname: location to receive name of file written, or %NULL.
  *
  * Writes the content of @buf into a file in the gretl user's
  * "dotdir".

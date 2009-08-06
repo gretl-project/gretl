@@ -3111,7 +3111,9 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if ((cant_do_labels(plot) || showing_all_labels(plot)) &&
+	if ((cant_edit(plot->spec->code) || 
+	     cant_do_labels(plot) || 
+	     showing_all_labels(plot)) && 
 	    !strcmp(plot_items[i], "All data labels")) {
 	    i++;
 	    continue;
