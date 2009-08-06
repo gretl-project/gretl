@@ -1592,12 +1592,13 @@ static int *real_gretl_list_omit (const int *orig, const int *omit,
 
     *err = 0;
 
-    /* check for spurious "omissions" */
+    /* check how many terms we're omitting */
     for (i=1; i<=nomit; i++) {
 	int pos = in_gretl_list(orig, omit[i]);
 
 	if (pos < minpos) {
 	    if (mode == LIST_OMIT_TIGHT) {
+		/* "omission" is spurious */
 		sprintf(gretl_errmsg, _("Variable %d was not in the original list"),
 			omit[i]);
 		*err = 1;
@@ -1665,7 +1666,8 @@ static int *real_gretl_list_omit (const int *orig, const int *omit,
  * @err: pointer to receive error code.
  *
  * Creates a list containing the elements of @orig that are not
- * present in @omit.
+ * present in @omit.  It is an error if the @omit list contains
+ * members that are not present in @orig.
  *
  * Returns: new list on success, %NULL on error.
  */
@@ -1673,6 +1675,26 @@ static int *real_gretl_list_omit (const int *orig, const int *omit,
 int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 {
     return real_gretl_list_omit(orig, omit, minpos, LIST_OMIT_TIGHT, err);
+}
+
+/**
+ * gretl_list_drop:
+ * @orig: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ * @drop: list of variables to drop.
+ * @err: pointer to receive error code.
+ *
+ * Creates a list containing the elements of @orig that are not
+ * present in @drop.  Unlike gretl_list_omit(), processing always
+ * starts from position 1 in @orig, and it is not an error if
+ * some members of @drop are not present in @orig.  
+ *
+ * Returns: new list on success, %NULL on error.
+ */
+
+int *gretl_list_drop (const int *orig, const int *drop, int *err)
+{
+    return real_gretl_list_omit(orig, drop, 1, LIST_OMIT_SLOPPY, err);
 }
 
 /**

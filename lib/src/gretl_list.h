@@ -61,6 +61,8 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err);
 
 int *gretl_list_omit_last (const int *orig, int *err);
 
+int *gretl_list_drop (const int *orig, const int *drop, int *err);
+
 int gretl_list_diff (int *targ, const int *biglist, const int *sublist);
 
 int *gretl_list_diff_new (const int *biglist, const int *sublist, int minpos);

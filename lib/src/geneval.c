@@ -2984,6 +2984,8 @@ static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
 		list = gretl_list_intersection(llist, rlist, &p->err);
 	    } else if (f == B_OR) {
 		list = gretl_list_union(llist, rlist, &p->err);
+	    } else if (f == B_SUB) {
+		list = gretl_list_drop(llist, rlist, &p->err);
 	    }
 	}
 	ret->v.ivec = list;
@@ -6347,7 +6349,7 @@ static NODE *eval (NODE *t, parser *p)
 		   (l->t == VEC || l->t == NUM) && 
 		   r->t == STR) {
 	    ret = number_string_calc(l, r, t->t, p);
-	} else if ((t->t == B_AND || t->t == B_OR) &&
+	} else if ((t->t == B_AND || t->t == B_OR || t->t == B_SUB) &&
 		   ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_and_or(l, r, t->t, p);
 	} else if (bool_comp(t->t)) {

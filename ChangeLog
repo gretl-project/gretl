@@ -31,6 +31,10 @@ version 1.8.3, in progress
 - Add experimental function debugger: new "debug" command
 - Stata importer: support current format 114 .dta files
 - MS Windows: update the GTK+ stack
+- Lists: allow formation of a new list by subtraction of
+  one list from another
+- "omit" command with --auto option: allow specification
+  of a list of candidates for omission
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"

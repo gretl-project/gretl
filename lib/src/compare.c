@@ -41,10 +41,10 @@ enum {
 };
 
 enum {
-    ADD_TEST,
-    OMIT_TEST,
-    OMIT_WALD,
-    ADD_WALD
+    COMPARE_ADD,
+    COMPARE_OMIT,
+    COMPARE_OMIT_WALD,
+    COMPARE_ADD_WALD
 };
 
 struct COMPARE {
@@ -486,7 +486,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     cmp.err = 0;
 
-    if (flag == ADD_TEST || flag == ADD_WALD) {
+    if (flag == COMPARE_ADD || flag == COMPARE_ADD_WALD) {
 	umod = pmodB;
 	rmod = pmodA;
 	cmp.cmd = ADD;
@@ -522,7 +522,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     cmp.dfd = umod->dfd;
 
-    if (flag == OMIT_WALD || flag == ADD_WALD) {
+    if (flag == COMPARE_OMIT_WALD || flag == COMPARE_ADD_WALD) {
 	cmp.err = wald_test(testvars, umod, &cmp.wald, &cmp.F);
     } else if (pmodA != NULL && (pmodA->opt & OPT_R)) {
 	cmp.F = wald_omit_F(testvars, umod);
@@ -535,7 +535,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.err = wald_test(testvars, umod, &cmp.wald, NULL);
     }
 
-    if (pmodA != NULL && pmodB != NULL && flag != ADD_WALD) {
+    if (pmodA != NULL && pmodB != NULL && flag != COMPARE_ADD_WALD) {
 	int miss = 0;
 
 	cmp.score = 0;
@@ -1105,7 +1105,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
     }
 
     if (!err) {
-	int flag = ADD_WALD;
+	int flag = COMPARE_ADD_WALD;
 	struct COMPARE cmp;
 	MODEL *origmod = orig;
 	int *addlist;
@@ -1117,7 +1117,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 	}
 
 	if (orig->ci == OLS && pmod->nobs == orig->nobs) {
-	    flag = ADD_TEST;
+	    flag = COMPARE_ADD;
 	} else if (opt & OPT_B) {
 	    /* ivreg: adding as both regressor and instrument */
 	    origmod = NULL;
@@ -1167,7 +1167,7 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 
     free(test);
 
-    cmp = add_or_omit_compare(pmod, NULL, OMIT_WALD, list);
+    cmp = add_or_omit_compare(pmod, NULL, COMPARE_OMIT_WALD, list);
     if (cmp.err) {
 	return cmp.err;
     }
@@ -1177,14 +1177,47 @@ static int wald_omit_test (const int *list, MODEL *pmod,
     return err;
 }
 
-/* determine if a model contains a variable with p-value
-   greater than some cutoff alpha_max; and if so, remove
-   this variable from the regression list 
+/* Check whether coefficient @i corresponds to a variable
+   that is removable from the model: this is the case if either
+   (a) the @cands list is NULL, or (b) coefficient @i is the
+   coefficient on one of the variables in @cands.
 */
 
-static int auto_drop_var (const MODEL *pmod, int *list,
-			  DATAINFO *pdinfo, double alpha_max,
-			  int d0, PRN *prn, int *err)
+static int coeff_is_removable (const int *cands, const MODEL *pmod,
+			       DATAINFO *pdinfo, int i)
+{
+    int ret = 1;
+
+    if (cands != NULL) {
+	const char *vname;
+	int j, pj;
+
+	ret = 0; /* reverse the presumption */
+
+	for (j=1; j<=cands[0]; j++) {
+	    vname = pdinfo->varname[cands[j]];
+	    pj = gretl_model_get_param_number(pmod, pdinfo, vname);
+	    if (pj == i) {
+		ret = 1;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/* Determine if a model contains a variable with p-value
+   greater than some cutoff alpha_max; and if so, remove
+   this variable from the regression list.  If the list
+   @cands is non-NULL then confine the search to candidate
+   variables in that list.
+*/
+
+static int auto_drop_var (const int *cands, const MODEL *pmod, 
+			  int *list, DATAINFO *pdinfo, 
+			  double alpha_max, int d0, 
+			  PRN *prn, int *err)
 {
     double tstat, pv = 0.0, tmin = 4.0;
     int i, k = -1;
@@ -1195,10 +1228,12 @@ static int auto_drop_var (const MODEL *pmod, int *list,
     }
     
     for (i=pmod->ifc; i<pmod->ncoeff; i++) {
-	tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
-	if (tstat < tmin) {
-	    tmin = tstat;
-	    k = i;
+	if (coeff_is_removable(cands, pmod, pdinfo, i)) {
+	    tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
+	    if (tstat < tmin) {
+		tmin = tstat;
+		k = i;
+	    }
 	}
     }
 
@@ -1237,10 +1272,12 @@ static void list_copy_values (int *targ, const int *src)
 /* run a loop in which the least significant variable is dropped
    from the regression list, provided its p-value exceeds some
    specified cutoff.  FIXME this probably still needs work for 
-   estimators other than OLS.
+   estimators other than OLS.  If @omitlist is non-NULL the
+   routine is confined to members of the list.
 */
 
-static int auto_omit (MODEL *orig, MODEL *pmod, 
+static int auto_omit (const int *omitlist, 
+		      MODEL *orig, MODEL *pmod, 
 		      double ***pZ, DATAINFO *pdinfo, 
 		      gretlopt est_opt, gretlopt opt,
 		      PRN *prn)
@@ -1259,7 +1296,7 @@ static int auto_omit (MODEL *orig, MODEL *pmod,
 	amax = 0.10;
     }
 
-    if (!auto_drop_var(orig, tmplist, pdinfo, amax, 1, prn, &err)) {
+    if (!auto_drop_var(omitlist, orig, tmplist, pdinfo, amax, 1, prn, &err)) {
 	free(tmplist);
 	return (err)? err : E_NOOMIT;
     }    
@@ -1275,7 +1312,8 @@ static int auto_omit (MODEL *orig, MODEL *pmod,
 	    fprintf(stderr, "auto_omit: error %d from replicate_estimator\n", err);
 	} else {
 	    list_copy_values(tmplist, pmod->list);
-	    if (auto_drop_var(pmod, tmplist, pdinfo, amax, 0, prn, &err)) {
+	    if (auto_drop_var(omitlist, pmod, tmplist, pdinfo, 
+			      amax, 0, prn, &err)) {
 		model_count_minus();
 		clear_model(pmod);
 	    } else {
@@ -1423,7 +1461,11 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
     remove_special_flags(&est_opt);
 
     if (opt & OPT_A) {
-	err = auto_omit(orig, pmod, pZ, pdinfo, est_opt, opt, prn);
+	if (omitvars != NULL && omitvars[0] > 0) {
+	    err = auto_omit(omitvars, orig, pmod, pZ, pdinfo, est_opt, opt, prn);
+	} else {
+	    err = auto_omit(NULL, orig, pmod, pZ, pdinfo, est_opt, opt, prn);
+	}
     } else {
 	*pmod = replicate_estimator(orig, &tmplist, pZ, pdinfo, est_opt, prn);
 	err = pmod->errcode;
@@ -1441,7 +1483,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	}	
 
 	if (!omitlast) {
-	    int flag = OMIT_TEST;
+	    int flag = COMPARE_OMIT;
 	    MODEL *newmod = pmod;
 	    struct COMPARE cmp;
 	    int *omitlist;
@@ -1449,7 +1491,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	    if (opt & OPT_B) {
 		/* ivreg: omitting both as regressor and instrument */
 		newmod = NULL;
-		flag = OMIT_WALD;
+		flag = COMPARE_OMIT_WALD;
 	    } 
 
 	    omitlist = gretl_list_diff_new(orig->list, pmod->list, 2);

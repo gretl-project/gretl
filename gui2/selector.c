@@ -26,12 +26,16 @@
 #include "fileselect.h"
 #include "fnsave.h"
 #include "treeutils.h"
+#include "toolbar.h"
 #include "lagpref.h"
 
 #include "var.h"
 #include "gretl_func.h"
 #include "libset.h"
 #include "johansen.h"
+
+/* for selector add/remove buttons */
+#include "arrows.h"
 
 #if 0
 # include "bootstrap.h"
@@ -3455,11 +3459,17 @@ static gboolean accept_right_arrow (GtkWidget *w, GdkEventKey *key,
 
 static GtkWidget *add_button (selector *sr, GtkWidget *box)
 {
-    GtkWidget *w = gtk_button_new_with_label(_("Add ->"));
+    GdkPixbuf *pbuf = gdk_pixbuf_new_from_inline(-1, add_inline, FALSE, NULL);
+    GtkWidget *img = gtk_image_new_from_pixbuf(pbuf);
+    GtkWidget *w = gtk_button_new();
 
+    gtk_container_add(GTK_CONTAINER(w), img);
+    g_object_unref(pbuf);
     g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
 		     G_CALLBACK(accept_right_arrow), w);
+    gretl_tooltips_add(w, _("Add"));
     gtk_box_pack_start(GTK_BOX(box), w, TRUE, FALSE, 0);
+
     return w;
 }
 
@@ -3476,11 +3486,17 @@ static gboolean accept_left_arrow (GtkWidget *w, GdkEventKey *key,
 
 static GtkWidget *remove_button (selector *sr, GtkWidget *box)
 {
-    GtkWidget *w = gtk_button_new_with_label(_("<- Remove"));
+    GdkPixbuf *pbuf = gdk_pixbuf_new_from_inline(-1, remove_inline, FALSE, NULL);
+    GtkWidget *img = gtk_image_new_from_pixbuf(pbuf);
+    GtkWidget *w = gtk_button_new();
 
+    gtk_container_add(GTK_CONTAINER(w), img);
+    g_object_unref(pbuf);
     g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
 		     G_CALLBACK(accept_left_arrow), w);
+    gretl_tooltips_add(w, _("Remove"));
     gtk_box_pack_start(GTK_BOX(box), w, TRUE, FALSE, 0);
+
     return w;
 }
 
@@ -4501,22 +4517,48 @@ static void build_scatters_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void auto_omit_restrict_callback (GtkWidget *w, selector *sr)
+{
+    gboolean r = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+    if (sr->lvars != NULL) {
+	gtk_widget_set_sensitive(sr->lvars, r);
+    }
+
+    if (sr->rvars1 != NULL) {
+	gtk_widget_set_sensitive(sr->rvars1, r);
+    }
+
+    gtk_widget_set_sensitive(sr->add_button, r);
+    gtk_widget_set_sensitive(sr->remove_button, r);
+}
+
 static void auto_omit_callback (GtkWidget *w, selector *sr)
 {
     gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean arrows = !s;
 
     if (sr->extra[0] != NULL) {
 	gtk_widget_set_sensitive(sr->extra[0], s);
     }
-    if (sr->lvars != NULL) {
-	gtk_widget_set_sensitive(sr->lvars, !s);
-    }
-    if (sr->rvars1 != NULL) {
-	gtk_widget_set_sensitive(sr->rvars1, !s);
+
+    if (sr->extra[1] != NULL) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sr->extra[1]))) {
+	    arrows = TRUE;
+	}
+	gtk_widget_set_sensitive(sr->extra[1], s);
     }
 
-    gtk_widget_set_sensitive(sr->add_button, !s);
-    gtk_widget_set_sensitive(sr->remove_button, !s);
+    if (sr->lvars != NULL) {
+	gtk_widget_set_sensitive(sr->lvars, arrows);
+    }
+
+    if (sr->rvars1 != NULL) {
+	gtk_widget_set_sensitive(sr->rvars1, arrows);
+    }
+
+    gtk_widget_set_sensitive(sr->add_button, arrows);
+    gtk_widget_set_sensitive(sr->remove_button, arrows);
 }
 
 static void build_omit_test_radios (selector *sr)
@@ -4547,6 +4589,12 @@ static void build_omit_test_radios (selector *sr)
 	sr->extra[0] = alpha_spinner(0.10, 0.01);
 	pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0], NULL);
 	gtk_widget_set_sensitive(sr->extra[0], FALSE);
+
+	sr->extra[1] = gtk_check_button_new_with_label(_("Test only selected variables"));
+	pack_switch(sr->extra[1], sr, FALSE, FALSE, OPT_NONE, 1);
+	gtk_widget_set_sensitive(sr->extra[1], FALSE);
+	g_signal_connect(G_OBJECT(sr->extra[1]), "toggled",
+			 G_CALLBACK(auto_omit_restrict_callback), sr);
 
 	sr->radios[2] = b3;
     }

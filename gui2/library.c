@@ -1611,11 +1611,10 @@ int do_add_omit (selector *sr)
     int ci = selector_code(sr);
     gretlopt opt = OPT_S | selector_get_opts(sr);
     int auto_omit = (ci == OMIT && (opt & OPT_A));
-    PRN *prn;
     const char *flagstr = NULL;
-    char title[48];
     MODEL *orig, *pmod = NULL;
-    gint err;
+    PRN *prn;
+    int err;
 
     if (buf == NULL && !auto_omit) {
 	return 1;
@@ -1627,7 +1626,7 @@ int do_add_omit (selector *sr)
 
     if (ci == ADD) {
         gretl_command_sprintf("add %s%s", buf, flagstr);
-    } else if (auto_omit) {
+    } else if (buf == NULL) {
 	gretl_command_sprintf("omit %s", flagstr);
     } else {
         gretl_command_sprintf("omit %s%s", buf, flagstr);
@@ -1665,6 +1664,8 @@ int do_add_omit (selector *sr)
     update_model_tests(vwin);
 
     if (pmod != NULL) {
+	char title[48];
+
 	/* record sub-sample info (if any) with the model */
 	attach_subsample_to_model(pmod, datainfo);
 	gretl_object_ref(pmod, GRETL_OBJ_EQN);
