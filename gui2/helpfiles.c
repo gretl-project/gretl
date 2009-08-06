@@ -164,6 +164,40 @@ const char *intl_topics[] = {
     N_("Utilities")
 };
 
+/* Handle non-uniqueness of map from extra command words to codes
+   (e.g. both GR_PLOT and GR_XY correspond to "graphing").  We want
+   the first code, to find the right place in the help file
+   when responding to a "context help" request.
+*/
+
+static int gui_ci_to_index (int ci)
+{
+    if (ci < NC) {
+	/* regular command, no problem */
+	return ci;
+    } else {
+	int i, k, ret = ci;
+
+	for (i=1; gui_help_items[i].code > 0; i++) {
+	    if (ci == gui_help_items[i].code) {
+		for (k=i-1; k>0; k--) {
+		    /* back up the list so long as the word above
+		       is the same as the current one */
+		    if (!strcmp(gui_help_items[k].string,
+				gui_help_items[i].string)) {
+			ret = gui_help_items[k].code;
+		    } else {
+			break;
+		    }
+		}
+		return ret;
+	    }
+	}
+    }
+
+    return -1;
+}
+
 static int extra_command_number (const char *s)
 {
     int i;
@@ -373,7 +407,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
     GtkTreeStore *store;
     GtkTreeIter iter, parent;
     gchar *s, *buf = NULL;
-    char word[12], sect[32];
+    char word[16], sect[32];
     const char *heading;
     int pos = 0, idx = 0;
     int err; 
@@ -409,7 +443,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
     while (*s) {
 	if (*s == '\n' && *(s+1) == '#' && 
 	    *(s+2) != '#' && *(s+2) != '\0') {
-	    if (sscanf(s+2, "%10s %31s", word, sect) == 2) {
+	    if (sscanf(s+2, "%15s %31s", word, sect) == 2) {
 		if (role == FUNCS_HELP) {
 		    heading = real_funcs_heading(sect);
 		} else {
@@ -841,6 +875,7 @@ void context_help (GtkWidget *widget, gpointer data)
     int pos, idx = GPOINTER_TO_INT(data);
     int role = GUI_HELP;
 
+    idx = gui_ci_to_index(idx);
     pos = help_pos_from_index(idx, role);
 
     if (pos < 0 && translated_helpfile) {

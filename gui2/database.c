@@ -857,6 +857,7 @@ static void db_select_first_series (windata_t *vwin)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     selection = gtk_tree_view_get_selection(view);
     gtk_tree_selection_select_iter(selection, &iter);
+    gtk_widget_grab_focus(vwin->listbox);
 }
 
 static int 
