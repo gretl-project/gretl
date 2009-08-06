@@ -34,7 +34,7 @@
 #include "libset.h"
 #include "johansen.h"
 
-/* for selector add/remove buttons */
+/* for graphical selector buttons */
 #include "arrows.h"
 
 #if 0
@@ -3071,6 +3071,21 @@ static void build_gmm_popdown (selector *sr)
     gtk_widget_show(hbox);    
 }
 
+static GtkWidget *choose_button (void)
+{
+    GdkPixbuf *pbuf = gdk_pixbuf_new_from_inline(-1, choose_inline, FALSE, NULL);
+    GtkWidget *img = gtk_image_new_from_pixbuf(pbuf);
+    GtkWidget *w = gtk_button_new();
+
+    gtk_widget_show(img);
+    gtk_widget_set_size_request(w, 64, -1);
+    gtk_container_add(GTK_CONTAINER(w), img);
+    gretl_tooltips_add(w, _("Choose"));
+    g_object_unref(pbuf);
+
+    return w;
+}
+
 static GtkWidget *
 entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
 			      gchar *label_string,
@@ -3092,7 +3107,7 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
 
     x_hbox = gtk_hbox_new(FALSE, 5); 
 
-    tmp = gtk_button_new_with_label (_("Choose->"));
+    tmp = choose_button();
     gtk_box_pack_start(GTK_BOX(x_hbox), tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT(tmp), "clicked", 
 		      G_CALLBACK(clickfunc), sr);
@@ -3171,7 +3186,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 
     depvar_hbox = gtk_hbox_new(FALSE, 5); 
 
-    tmp = gtk_button_new_with_label (_("Choose ->"));
+    tmp = choose_button();
     gtk_box_pack_start(GTK_BOX(depvar_hbox), tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT(tmp), "clicked", 
                       G_CALLBACK(set_dependent_var_callback), sr);
@@ -3218,7 +3233,7 @@ build_public_iface_section (selector *sr, GtkWidget *right_vbox)
 
     pub_hbox = gtk_hbox_new(FALSE, 5); 
 
-    tmp = gtk_button_new_with_label(_("Choose ->"));
+    tmp = choose_button();
     gtk_box_pack_start(GTK_BOX(pub_hbox), tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT(tmp), "clicked", 
                       G_CALLBACK(set_dependent_var_callback), sr);
@@ -4507,11 +4522,11 @@ static void build_scatters_radios (selector *sr)
     GSList *group;
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Use points"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Use lines"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_L, 1);
+    pack_switch(b2, sr, FALSE, FALSE, OPT_L, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;

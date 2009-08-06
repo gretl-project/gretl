@@ -250,7 +250,7 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 
 #endif /* switch on MS Windows or not */
 
-static int write_ox_gretl_io_file (void)
+static int write_ox_io_file (void)
 {
     static int written;
 
@@ -288,7 +288,7 @@ static int write_ox_gretl_io_file (void)
 
 	    fputs("gretl_loadmat (const str)\n{\n", fp);
             fputs("  decl dname = gretl_dotdir();\n", fp);
-	    fputs("  decl X = loadmat(dname ~str);\n", fp);
+	    fputs("  decl X = loadmat(dname ~ str);\n", fp);
 	    fputs("  return X;\n}\n", fp);
 
 	    fclose(fp);
@@ -328,7 +328,7 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
     FILE *fp;
     int err;
 
-    err = write_ox_gretl_io_file();
+    err = write_ox_io_file();
 
     fp = gretl_fopen(fname, "w");
 
