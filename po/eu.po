@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-06 21:01-0400\n"
+"POT-Creation-Date: 2009-08-07 11:48-0400\n"
 "PO-Revision-Date: 2009-08-06 21:07-0400\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>, Marian Zubia <marian."
 "zubia@ehu.es>\n"
@@ -155,8 +155,8 @@ msgstr "Atzerapenen moztura-parametroa = %d\n"
 #: lib/src/compare.c:3058 lib/src/describe.c:4851 lib/src/estimate.c:2689
 #: lib/src/estimate.c:2702 lib/src/estimate.c:2710 lib/src/estimate.c:3491
 #: lib/src/gretl_intl.c:103 lib/src/gretl_model.c:3169
-#: lib/src/gretl_panel.c:3741 lib/src/gretl_restrict.c:1855
-#: lib/src/gretl_restrict.c:1862 lib/src/modelprint.c:2075
+#: lib/src/gretl_panel.c:3741 lib/src/gretl_restrict.c:1924
+#: lib/src/gretl_restrict.c:1931 lib/src/modelprint.c:2075
 #: lib/src/modelprint.c:2079 lib/src/modelprint.c:2084
 #: lib/src/modelprint.c:2102 lib/src/modelprint.c:2106
 #: lib/src/modelprint.c:2111 lib/src/modelprint.c:2123
@@ -232,7 +232,7 @@ msgstr "bootstrap t-arrazoia"
 msgid "bootstrap coefficient"
 msgstr "bootstrap koefizientea"
 
-#: lib/src/boxplots.c:159 gui2/gpt_control.c:2959 gui2/gpt_control.c:3036
+#: lib/src/boxplots.c:159 gui2/gpt_control.c:2931 gui2/gpt_control.c:3008
 msgid "Numerical summary"
 msgstr "Zenbaki-laburpena"
 
@@ -326,8 +326,8 @@ msgstr "chi-karratua"
 
 #: lib/src/compare.c:403 lib/src/compare.c:413 lib/src/compare.c:418
 #: lib/src/compare.c:426 lib/src/compare.c:452 lib/src/compare.c:3060
-#: lib/src/gretl_restrict.c:1867 lib/src/gretl_restrict.c:2255
-#: lib/src/gretl_restrict.c:2265
+#: lib/src/gretl_restrict.c:1937 lib/src/gretl_restrict.c:2420
+#: lib/src/gretl_restrict.c:2430
 #, c-format
 msgid "with p-value = %g\n"
 msgstr "p-balioarekin = %g\n"
@@ -359,7 +359,7 @@ msgstr "Egiantz arrazoiaren kontrastea"
 msgid "Chi-square"
 msgstr "Chi-karratua"
 
-#: lib/src/compare.c:424 lib/src/gretl_restrict.c:1863
+#: lib/src/compare.c:424 lib/src/gretl_restrict.c:1932
 msgid "Robust F"
 msgstr "F sendoa"
 
@@ -1324,8 +1324,8 @@ msgstr "Baliogarriak ez diren serieak aurkitu dira"
 #: lib/src/dbread.c:1070 lib/src/dbread.c:1122 lib/src/dbread.c:1137
 #: lib/src/dbread.c:2089 lib/src/dbread.c:2444 lib/src/dbread.c:2448
 #: lib/src/dbread.c:2476 lib/src/genfuncs.c:1300 lib/src/gretl_errors.c:43
-#: lib/src/gretl_restrict.c:1594 lib/src/gretl_restrict.c:1620
-#: lib/src/gretl_restrict.c:1643 lib/src/monte_carlo.c:1154
+#: lib/src/gretl_restrict.c:1660 lib/src/gretl_restrict.c:1686
+#: lib/src/gretl_restrict.c:1709 lib/src/monte_carlo.c:1154
 #: lib/src/monte_carlo.c:1888 lib/src/monte_carlo.c:1895 gui2/gui_utils.c:574
 msgid "Out of memory!"
 msgstr "Memoriatik kanpo!"
@@ -2246,7 +2246,7 @@ msgstr "banako bakoitzaren jatorriak %d eredutik"
 msgid "Invalid declaration"
 msgstr "Baliogabeko deklarazioa"
 
-#: lib/src/genlex.c:607
+#: lib/src/genlex.c:607 lib/src/gretl_restrict.c:2198
 #, c-format
 msgid "The symbol '%s' is undefined\n"
 msgstr "'%s' sinboloa ez dago definiturik\n"
@@ -3126,7 +3126,7 @@ msgstr ""
 "eragin finkoak izatearen aukeraren alde egonik.)\n"
 "\n"
 
-#: lib/src/gretl_panel.c:1631 lib/src/gretl_restrict.c:1982
+#: lib/src/gretl_panel.c:1631 lib/src/gretl_restrict.c:2053
 #, c-format
 msgid "Failed to compute test statistic\n"
 msgstr "Kontrasteko estatistikoa kalkulatzean huts egin du\n"
@@ -3296,81 +3296,81 @@ msgstr "gretlcmd.hlp"
 msgid "gretl_prn_new: Must supply a filename\n"
 msgstr "gretl_prn_new: Fitxategi izen bat behar du\n"
 
-#: lib/src/gretl_restrict.c:98
+#: lib/src/gretl_restrict.c:101
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
 msgstr ""
 "Matrizea alderantzikatzean huts egin du: murrizketak agian ez tinkoak edo "
 "erredundanteak dira"
 
-#: lib/src/gretl_restrict.c:766
+#: lib/src/gretl_restrict.c:769
 msgid "Please give a coefficient number"
 msgstr "Eman mesedez koefiziente zenbaki bat"
 
-#: lib/src/gretl_restrict.c:773
+#: lib/src/gretl_restrict.c:776
 #, c-format
 msgid "%s: not a valid parameter name"
 msgstr "%s: parametroaren  izena baliogabea"
 
-#: lib/src/gretl_restrict.c:865
+#: lib/src/gretl_restrict.c:868
 #, c-format
 msgid "%s: division not allowed here"
 msgstr "%s: hemen zatiketa ezin daiteke egin"
 
-#: lib/src/gretl_restrict.c:903 lib/src/gretl_restrict.c:1361
-#: lib/src/gretl_restrict.c:1387
+#: lib/src/gretl_restrict.c:906 lib/src/gretl_restrict.c:1370
+#: lib/src/gretl_restrict.c:1396
 #, c-format
 msgid "Coefficient number (%d) is out of range"
 msgstr " (%d) koefiziente kopurua tartetik kanpo dago"
 
-#: lib/src/gretl_restrict.c:919 lib/src/gretl_restrict.c:1357
-#: lib/src/gretl_restrict.c:1371 lib/src/gretl_restrict.c:1383
+#: lib/src/gretl_restrict.c:922 lib/src/gretl_restrict.c:1366
+#: lib/src/gretl_restrict.c:1380 lib/src/gretl_restrict.c:1392
 #, c-format
 msgid "Equation number (%d) is out of range"
 msgstr "(%d)  ekuazio kopurua tartetik kanpo dago"
 
-#: lib/src/gretl_restrict.c:1000 lib/src/gretl_restrict.c:1602
-#: lib/src/gretl_restrict.c:1625 lib/src/gretl_restrict.c:1648
-#: lib/src/gretl_restrict.c:1703 lib/src/nls.c:2537
+#: lib/src/gretl_restrict.c:1003 lib/src/gretl_restrict.c:1668
+#: lib/src/gretl_restrict.c:1691 lib/src/gretl_restrict.c:1714
+#: lib/src/gretl_restrict.c:1769 lib/src/nls.c:2537
 #, c-format
 msgid "parse error in '%s'\n"
 msgstr " '%s' pasatzean huts egin du\n"
 
-#: lib/src/gretl_restrict.c:1177
+#: lib/src/gretl_restrict.c:1184
 msgid "Restriction set"
 msgstr "Murrizketa multzoa"
 
-#: lib/src/gretl_restrict.c:1179
+#: lib/src/gretl_restrict.c:1186
 msgid "Restriction"
 msgstr "Murrizketa"
 
-#: lib/src/gretl_restrict.c:1374
+#: lib/src/gretl_restrict.c:1383
 #, c-format
 msgid "Coefficient number (%d) out of range for equation %d"
 msgstr "Koefiziente kopurua (%d) eremutik  kanpo dago %d ekuazioarentzat"
 
-#: lib/src/gretl_restrict.c:1576
+#: lib/src/gretl_restrict.c:1642
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
 msgstr "Murrizketa gehiegi (maximoa %d da)"
 
-#: lib/src/gretl_restrict.c:1739
+#: lib/src/gretl_restrict.c:1805
 msgid "Restricted estimates"
 msgstr "Murriztutako estimazioa"
 
-#: lib/src/gretl_restrict.c:1751 lib/src/modelprint.c:2467
+#: lib/src/gretl_restrict.c:1817 lib/src/modelprint.c:2467
 #: lib/src/printout.c:1186 gui2/library.c:4893
 msgid "Standard error of the regression"
 msgstr "Erregresioaren desbideratze tipikoa"
 
-#: lib/src/gretl_restrict.c:1856
+#: lib/src/gretl_restrict.c:1925
 msgid "Robust chi^2"
 msgstr "Chi^2 sendoa"
 
-#: lib/src/gretl_restrict.c:1871
+#: lib/src/gretl_restrict.c:1942
 msgid "restriction"
 msgstr "murrizketa"
 
-#: lib/src/gretl_restrict.c:1975
+#: lib/src/gretl_restrict.c:2046
 msgid ""
 "Matrix inversion failed:\n"
 " restrictions may be inconsistent or redundant\n"
@@ -3378,24 +3378,24 @@ msgstr ""
 "Matrizea alderantzikatzean huts egin du:\n"
 "  murrizketak agian ez tinkoak edo erredundanteak dira\n"
 
-#: lib/src/gretl_restrict.c:2193
+#: lib/src/gretl_restrict.c:2358
 msgid "Invalid input\n"
 msgstr "Sarrera baliogabea\n"
 
-#: lib/src/gretl_restrict.c:2240
+#: lib/src/gretl_restrict.c:2405
 msgid "Variables"
 msgstr "Aldagaiak"
 
-#: lib/src/gretl_restrict.c:2246 gui2/library.c:1600
+#: lib/src/gretl_restrict.c:2411 gui2/library.c:1600
 msgid "Sum of coefficients"
 msgstr "Koefizienteen batura"
 
-#: lib/src/gretl_restrict.c:2249 lib/src/gretl_restrict.c:2258
+#: lib/src/gretl_restrict.c:2414 lib/src/gretl_restrict.c:2423
 #: gui2/dialogs.c:3875
 msgid "Standard error"
 msgstr "Desbideratze tipikoa"
 
-#: lib/src/gretl_restrict.c:2256 lib/src/gretl_restrict.c:2266
+#: lib/src/gretl_restrict.c:2421 lib/src/gretl_restrict.c:2431
 msgid "sum"
 msgstr "batura"
 
@@ -7594,8 +7594,8 @@ msgstr "Bistaratu balioak"
 msgid "Add to dataset"
 msgstr "Gehitu datu-multzora"
 
-#: gui2/database.c:734 gui2/datafiles.c:1171 gui2/gpt_control.c:2963
-#: gui2/gpt_control.c:3039 gui2/gpt_control.c:3044 gui2/helpfiles.c:75
+#: gui2/database.c:734 gui2/datafiles.c:1171 gui2/gpt_control.c:2935
+#: gui2/gpt_control.c:3011 gui2/gpt_control.c:3016 gui2/helpfiles.c:75
 #: gui2/toolbar.c:580
 msgid "Close"
 msgstr "Itxi"
@@ -7699,8 +7699,8 @@ msgstr "Informazioa"
 msgid "Open"
 msgstr "Ireki"
 
-#: gui2/datafiles.c:1038 gui2/datafiles.c:1161 gui2/gpt_control.c:2961
-#: gui2/gpt_control.c:3037 gui2/session.c:184 gui2/session.c:191
+#: gui2/datafiles.c:1038 gui2/datafiles.c:1161 gui2/gpt_control.c:2933
+#: gui2/gpt_control.c:3009 gui2/session.c:184 gui2/session.c:191
 #: gui2/session.c:197 gui2/session.c:202 gui2/session.c:2599
 #: gui2/session.c:2620 gui2/session.c:2636 gui2/session.c:2651
 msgid "Edit"
@@ -8958,128 +8958,128 @@ msgid "Gnuplot error creating graph"
 msgstr "Gnuplot grafikoa sortzean huts egin du"
 
 #: gui2/gpt_control.c:1461 gui2/gpt_control.c:1515 gui2/gpt_control.c:1521
-#: gui2/gpt_control.c:1527 gui2/gpt_control.c:2177
+#: gui2/gpt_control.c:1527 gui2/gpt_control.c:2153
 msgid "Failed to parse gnuplot file"
 msgstr "gnuplot fitxategia pasatzean huts egin du"
 
-#: gui2/gpt_control.c:2122
+#: gui2/gpt_control.c:2098
 msgid "Plot file is corrupted"
 msgstr "Grafiko fitxategia hondatuta"
 
-#: gui2/gpt_control.c:2683
+#: gui2/gpt_control.c:2655
 msgid "Couldn't access graph info"
 msgstr "Ez dago sarbiderik grafikoaren informazioan"
 
-#: gui2/gpt_control.c:2740 gui2/gpt_control.c:2979 gui2/graph_page.c:594
+#: gui2/gpt_control.c:2712 gui2/gpt_control.c:2951 gui2/graph_page.c:594
 msgid "monochrome"
 msgstr "zuri-beltza"
 
-#: gui2/gpt_control.c:2744 gui2/gpt_control.c:3015
+#: gui2/gpt_control.c:2716 gui2/gpt_control.c:2987
 msgid "Save as postscript (EPS)..."
 msgstr "Gorde postscript (EPS) bezala..."
 
-#: gui2/gpt_control.c:2748 gui2/gpt_control.c:3012 gui2/gpt_control.c:3018
+#: gui2/gpt_control.c:2720 gui2/gpt_control.c:2984 gui2/gpt_control.c:2990
 msgid "Save as Windows metafile (EMF)..."
 msgstr "Gorde Windows metafitxategia (EMF) bezala..."
 
-#: gui2/gpt_control.c:2754 gui2/gpt_control.c:3021 gui2/menustate.c:314
+#: gui2/gpt_control.c:2726 gui2/gpt_control.c:2993 gui2/menustate.c:314
 #: gui2/menustate.c:350 gui2/menustate.c:379 gui2/menustate.c:423
 msgid "Copy to clipboard"
 msgstr "Gorde arbelan"
 
-#: gui2/gpt_control.c:2756 gui2/gpt_control.c:3031
+#: gui2/gpt_control.c:2728 gui2/gpt_control.c:3003
 msgid "Print"
 msgstr "Inprimatu"
 
-#: gui2/gpt_control.c:2777
+#: gui2/gpt_control.c:2749
 msgid "VAR roots (real, imaginary, modulus, frequency)"
 msgstr "VAR erroak (erreala, irudikaria, modulua, maiztasuna)"
 
-#: gui2/gpt_control.c:2814
+#: gui2/gpt_control.c:2786
 msgid "VAR roots"
 msgstr "VAR erroak"
 
-#: gui2/gpt_control.c:2836
+#: gui2/gpt_control.c:2808
 msgid "gretl: boxplot data"
 msgstr "gretl: kaxa-grafikoaren datuak"
 
-#: gui2/gpt_control.c:2910 gui2/gpt_control.c:3010
+#: gui2/gpt_control.c:2882 gui2/gpt_control.c:2982
 msgid "Add another curve..."
 msgstr "Erantsi beste kurba bat..."
 
-#: gui2/gpt_control.c:2912 gui2/gpt_control.c:3014
+#: gui2/gpt_control.c:2884 gui2/gpt_control.c:2986
 msgid "Save as PNG..."
 msgstr "Gorde PNG bezala..."
 
-#: gui2/gpt_control.c:2916 gui2/gpt_control.c:3016
+#: gui2/gpt_control.c:2888 gui2/gpt_control.c:2988
 msgid "Save as PDF..."
 msgstr "Gorde PDF bezala..."
 
-#: gui2/gpt_control.c:2920 gui2/gpt_control.c:3023 gui2/toolbar.c:180
+#: gui2/gpt_control.c:2892 gui2/gpt_control.c:2995 gui2/toolbar.c:180
 msgid "Save to session as icon"
 msgstr "Gorde ikono bezala saioan"
 
-#: gui2/gpt_control.c:2922 gui2/gpt_control.c:2924 gui2/gpt_control.c:3038
+#: gui2/gpt_control.c:2894 gui2/gpt_control.c:2896 gui2/gpt_control.c:3010
 #: gui2/session.c:160 gui2/session.c:167 gui2/session.c:2719
 #: gui2/toolbar.c:578 gui2/toolbar.c:579
 msgid "Help"
 msgstr "Laguntza"
 
-#: gui2/gpt_control.c:2926 gui2/gpt_control.c:3024
+#: gui2/gpt_control.c:2898 gui2/gpt_control.c:2996
 msgid "Freeze data labels"
 msgstr "Blokeatu datu etiketak"
 
-#: gui2/gpt_control.c:2929 gui2/gpt_control.c:3026
+#: gui2/gpt_control.c:2901 gui2/gpt_control.c:2998
 msgid "Clear data labels"
 msgstr "Garbitu datu etiketak"
 
-#: gui2/gpt_control.c:2931 gui2/gpt_control.c:3025
+#: gui2/gpt_control.c:2903 gui2/gpt_control.c:2997
 #, fuzzy
 msgid "All data labels"
 msgstr "Garbitu datu etiketak"
 
-#: gui2/gpt_control.c:2933 gui2/gpt_control.c:3027
+#: gui2/gpt_control.c:2905 gui2/gpt_control.c:2999
 msgid "Zoom..."
 msgstr "Zoom..."
 
-#: gui2/gpt_control.c:2941
+#: gui2/gpt_control.c:2913
 msgid " Drag to define zoom rectangle"
 msgstr "Arrastatu zoom laukia definitzeko"
 
-#: gui2/gpt_control.c:2943 gui2/gpt_control.c:3043
+#: gui2/gpt_control.c:2915 gui2/gpt_control.c:3015
 msgid "Restore full view"
 msgstr "Berreraiki ikuspegi osoa"
 
-#: gui2/gpt_control.c:2947 gui2/gpt_control.c:3029 gui2/toolbar.c:556
+#: gui2/gpt_control.c:2919 gui2/gpt_control.c:3001 gui2/toolbar.c:556
 msgid "Print..."
 msgstr "Inprimatu..."
 
-#: gui2/gpt_control.c:2951 gui2/gpt_control.c:3033
+#: gui2/gpt_control.c:2923 gui2/gpt_control.c:3005
 msgid "Display PDF"
 msgstr "Bistaratu PDF"
 
-#: gui2/gpt_control.c:2953 gui2/gpt_control.c:3034
+#: gui2/gpt_control.c:2925 gui2/gpt_control.c:3006
 msgid "OLS estimates"
 msgstr "KTAko estimazioak"
 
-#: gui2/gpt_control.c:2957 gui2/gpt_control.c:3035
+#: gui2/gpt_control.c:2929 gui2/gpt_control.c:3007
 msgid "Numerical values"
 msgstr "Balio numerikoak"
 
-#: gui2/gpt_control.c:2978 gui2/gpt_dialog.c:2220 gui2/graph_page.c:593
+#: gui2/gpt_control.c:2950 gui2/gpt_dialog.c:2220 gui2/graph_page.c:593
 msgid "color"
 msgstr "kolorez"
 
-#: gui2/gpt_control.c:3470
+#: gui2/gpt_control.c:3442
 msgid "Malformed PNG file for graph"
 msgstr "Marrazteko gaizki osatutako PNG fitxategia da"
 
-#: gui2/gpt_control.c:3970
+#: gui2/gpt_control.c:3942
 #, fuzzy
 msgid "gretl: graph"
 msgstr "gretl: definitu grafikoa"
 
-#: gui2/gpt_control.c:4043
+#: gui2/gpt_control.c:4015
 msgid " Click on graph for pop-up menu"
 msgstr "Klikatu grafikoan menua azaltzeko"
 
