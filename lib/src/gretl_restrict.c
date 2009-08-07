@@ -26,6 +26,8 @@
 #include "gretl_restrict.h"
 #include "bootstrap.h"
 #include "gretl_scalar.h"
+#include "gretl_func.h"
+#include "gretl_bfgs.h"
 
 #define RDEBUG 0
 
@@ -61,12 +63,13 @@ struct gretl_restriction_ {
     gretl_matrix *Ra;             /* second LHS restriction matrix */
     gretl_matrix *qa;             /* second RHS restriction matrix */
     char *mask;                   /* selection mask for coeffs */
-    rrow **rows;
-    void *obj;
-    GretlObjType type;
-    gretlopt opt;
-    double test;
-    double pval;
+    rrow **rows;                  /* rows of constructed restriction matrix */
+    void *obj;                    /* pointer to model, system */
+    GretlObjType otype;           /* type of model, system */
+    gretlopt opt;                 /* OPT_C is used for "coeffsum" */
+    char *rfunc;                  /* name of nonlinear restriction function */
+    double test;                  /* test statistic */
+    double pval;                  /* p-value of test statistic */
     double lnl;
     double bsum;
     double bsd;
@@ -285,7 +288,7 @@ restriction_set_form_full_matrices (gretl_restriction *rset)
     double x;
     int i, j, k;
 
-    if (rset->type != GRETL_OBJ_EQN || rset->obj == NULL) {
+    if (rset->otype != GRETL_OBJ_EQN || rset->obj == NULL) {
 	return 1;
     }
 
@@ -689,9 +692,9 @@ restriction_set_form_matrices (gretl_restriction *rset)
 
     if (rset->R != NULL || rset->q != NULL) {
 	err = test_user_matrices(rset);
-    } else if (rset->type == GRETL_OBJ_EQN) {
+    } else if (rset->otype == GRETL_OBJ_EQN) {
 	err = equation_form_matrices(rset);
-    } else if (rset->type == GRETL_OBJ_VAR) {
+    } else if (rset->otype == GRETL_OBJ_VAR) {
 	err = vecm_form_matrices(rset);
     } else {
 	err = sys_form_matrices(rset);
@@ -716,7 +719,7 @@ static int restriction_set_make_mask (gretl_restriction *rset)
     rrow *r;
     int i, j;
 
-    if (rset->type != GRETL_OBJ_EQN || rset->obj == NULL) {
+    if (rset->otype != GRETL_OBJ_EQN || rset->obj == NULL) {
 	return 1;
     }
 
@@ -762,7 +765,7 @@ bnum_from_name (gretl_restriction *r, const DATAINFO *pdinfo,
 {
     int k = -1;
 
-    if (pdinfo == NULL || r->type != GRETL_OBJ_EQN || r->obj == NULL) {
+    if (pdinfo == NULL || r->otype != GRETL_OBJ_EQN || r->obj == NULL) {
 	strcpy(gretl_errmsg, _("Please give a coefficient number"));
     } else {
 	const MODEL *pmod = r->obj;
@@ -890,7 +893,7 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 	if (bbit_trailing_garbage(test)) {
 	    return err;
 	}
-	if (r->type == GRETL_OBJ_VAR) {
+	if (r->otype == GRETL_OBJ_VAR) {
 	    *eq = EQN_UNSPEC;
 	}
 	err = 0;
@@ -910,9 +913,9 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 
     if (*eq == EQN_UNSPEC) {
 	/* didn't get an equation number */
-	if (r->type == GRETL_OBJ_EQN) {
+	if (r->otype == GRETL_OBJ_EQN) {
 	    *eq = 0;
-	} else if (r->type != GRETL_OBJ_VAR) {
+	} else if (r->otype != GRETL_OBJ_VAR) {
 	    err = E_PARSE;
 	}
     } else if (*eq < 1) {
@@ -1021,13 +1024,15 @@ static void destroy_restriction (rrow *r)
 
 void destroy_restriction_set (gretl_restriction *rset)
 {
-    int i;
+    if (rset->rows != NULL) {
+	int i;
 
-    for (i=0; i<rset->k; i++) {
-	destroy_restriction(rset->rows[i]);
+	for (i=0; i<rset->k; i++) {
+	    destroy_restriction(rset->rows[i]);
+	}
+	free(rset->rows);
     }
 
-    free(rset->rows);
     free(rset->mask);
 
 #if RDEBUG
@@ -1039,6 +1044,8 @@ void destroy_restriction_set (gretl_restriction *rset)
     gretl_matrix_free(rset->q);
     gretl_matrix_free(rset->Ra);
     gretl_matrix_free(rset->qa);
+
+    free(rset->rfunc);
 
     free(rset);
 }
@@ -1146,7 +1153,7 @@ static void print_restriction (const gretl_restriction *rset,
 	print_mult(r->mult[j], j == 0, prn);
 	if (eqn_specified(rset, i, j, letter)) {
 	    pprintf(prn, "%c[%d,%d]", letter, r->eq[j] + 1, k + 1);
-	} else if (rset->type == GRETL_OBJ_VAR) {
+	} else if (rset->otype == GRETL_OBJ_VAR) {
 	    pprintf(prn, "%c[%d]", letter, k + 1);
 	} else {
 	    MODEL *pmod = rset->obj;
@@ -1292,7 +1299,7 @@ restriction_set_new (void *ptr, GretlObjType type,
     if (rset == NULL) return NULL;
 
     rset->obj = ptr;
-    rset->type = type;
+    rset->otype = type;
     rset->opt = opt;
 
     rset->test = NADBL;
@@ -1310,6 +1317,8 @@ restriction_set_new (void *ptr, GretlObjType type,
     rset->mask = NULL;
     rset->rows = NULL;
 
+    rset->rfunc = NULL;
+
     rset->bmulti = 0;
     rset->amulti = 0;
     rset->bcols = 0;
@@ -1317,14 +1326,14 @@ restriction_set_new (void *ptr, GretlObjType type,
     rset->vecm = 0;
     rset->code = GRETL_STAT_NONE;
 
-    if (rset->type == GRETL_OBJ_EQN) {
+    if (rset->otype == GRETL_OBJ_EQN) {
 	MODEL *pmod = ptr;
 
 	rset->kmax = pmod->ncoeff;
-    } else if (rset->type == GRETL_OBJ_SYS) {
+    } else if (rset->otype == GRETL_OBJ_SYS) {
 	rset->kmax = system_n_indep_vars(ptr);
 	rset->bmulti = 1;
-    } else if (rset->type == GRETL_OBJ_VAR) {
+    } else if (rset->otype == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = ptr;
 
 	if (var != NULL && gretl_VECM_rank(var) > 1) {
@@ -1350,7 +1359,7 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 {
     int ret = 1;
 
-    if (rset->type == GRETL_OBJ_VAR) {
+    if (rset->otype == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = rset->obj;
 
 	if (i >= gretl_VECM_rank(var)) {
@@ -1363,7 +1372,7 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 	} else {
 	    ret = 0;
 	}
-    } else if (rset->type == GRETL_OBJ_SYS) {
+    } else if (rset->otype == GRETL_OBJ_SYS) {
 	equation_system *sys = rset->obj;
 	const int *list = system_get_list(sys, i);
 
@@ -1443,6 +1452,46 @@ read_matrix_line (const char *s, gretl_restriction *rset)
     return err;
 }
 
+/* Try to read the name of a function to be called for testing
+   a nonlinear restriction, as in "rfunc = <fname>".  This is
+   admissable only if it's not mixed with any other sort
+   of restriction.
+*/
+
+static int read_fncall_line (const char *s, gretl_restriction *rset)
+{
+    char fname[FN_NAMELEN];
+
+    if (rset->k > 0 || rset->R != NULL || rset->q != NULL) {
+	/* other stuff is in the way! */
+	return E_PARSE;
+    }
+
+    s += strspn(s, " ");
+
+    if (*s != '=') {
+	return E_PARSE;
+    }
+
+    s++;
+    s += strspn(s, " ");
+
+    if (sscanf(s, "%31s", fname) != 1) {
+	return E_PARSE;
+    }
+
+    s += strlen(fname);
+
+    if (!string_is_blank(s)) {
+	/* there should be no trailing junk */
+	return E_PARSE;
+    }
+
+    rset->rfunc = gretl_strdup(fname);
+
+    return 0;
+}
+
 static int 
 real_restriction_set_parse_line (gretl_restriction *rset, 
 				 const char *line,
@@ -1460,6 +1509,13 @@ real_restriction_set_parse_line (gretl_restriction *rset,
     fprintf(stderr, "parse restriction line: got '%s'\n", line);
 #endif
 
+    /* if we have a function name specified already, nothing else
+       should be supplied */
+    if (rset->rfunc != NULL) {
+	destroy_restriction_set(rset);
+	return E_PARSE;
+    }
+
     if (!strncmp(p, "restrict", 8)) {
 	if (strlen(line) == 8) {
 	    if (first) {
@@ -1472,7 +1528,17 @@ real_restriction_set_parse_line (gretl_restriction *rset,
 	while (isspace((unsigned char) *p)) p++;
     }
 
+    if (!strncmp(p, "rfunc", 5)) {
+	/* nonlinear function given */
+	err = read_fncall_line(p + 5, rset);
+	if (err) {
+	    destroy_restriction_set(rset);
+	}
+	return err;
+    }
+
     if (*p == 'R' || *p == 'q') {
+	/* restrictions given in matrix form */
 	err = read_matrix_line(p, rset);
 	if (err) {
 	    destroy_restriction_set(rset);
@@ -1844,10 +1910,13 @@ restriction_set_print_result (gretl_restriction *rset,
 			      PRN *prn)
 {
     MODEL *pmod = rset->obj;
-    int robust, asym;
+    int robust, asym = 0;
 
     robust = (pmod->opt & OPT_R);
-    asym = ASYMPTOTIC_MODEL(pmod->ci);
+
+    if (ASYMPTOTIC_MODEL(pmod->ci) || rset->rfunc != NULL) {
+	asym = 1;
+    }
 
     if (asym) {
 	rset->code = GRETL_STAT_WALD_CHISQ;
@@ -1864,7 +1933,9 @@ restriction_set_print_result (gretl_restriction *rset,
 		rset->k, pmod->dfd, rset->test);
     }
 
-    pprintf(prn, _("with p-value = %g\n"), rset->pval);
+    if (!na(rset->pval)) {
+	pprintf(prn, _("with p-value = %g\n"), rset->pval);
+    }
     pputc(prn, '\n');
 
     if (!(rset->opt & OPT_C)) {
@@ -2087,7 +2158,7 @@ gretl_restricted_vecm (gretl_restriction *rset,
     fprintf(stderr, "gretl_restricted_vecm()\n");
 #endif
 
-    if (rset == NULL || rset->type != GRETL_OBJ_VAR) {
+    if (rset == NULL || rset->otype != GRETL_OBJ_VAR) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -2108,6 +2179,100 @@ gretl_restricted_vecm (gretl_restriction *rset,
     return jvar;
 }
 
+#define RCOEFFNAME "restr__b"
+
+static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
+				PRN *prn)
+{
+    MODEL *pmod;
+    gretl_matrix *coeff = NULL;
+    gretl_matrix *vcv = NULL;
+    gretl_matrix *J = NULL;
+    gretl_matrix *bread = NULL;
+    gretl_matrix *ham = NULL;
+    char fncall[64];
+    int published = 0;
+    int err = 0;
+
+    if (get_user_function_by_name(rset->rfunc) == NULL) {
+	sprintf(gretl_errmsg, _("The symbol '%s' is undefined\n"), rset->rfunc);
+	return E_UNKVAR;
+    }
+
+    if (rset->otype != GRETL_OBJ_EQN) {
+	return E_NOTIMP; /* relax this later? */
+    }
+
+    pmod = rset->obj;
+
+    coeff = gretl_coeff_vector_from_model(pmod, NULL, &err);
+
+    if (!err) {
+	vcv = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+    }
+
+    if (!err) {
+	/* "publish" the coeff matrix temporarily */
+	err = private_matrix_add(coeff, RCOEFFNAME);
+	if (!err) {
+	    published = 1;
+	}
+    }
+
+    if (!err) {
+	/* formulate function call string and make the call:
+	   should get a row vector */
+	sprintf(fncall, "%s(&%s)", rset->rfunc, RCOEFFNAME);
+	bread = generate_matrix(fncall, NULL, NULL, &err);
+    }
+
+    if (!err) {
+	rset->k = gretl_vector_get_length(bread);
+	if (rset->k == 0) {
+	    err = E_NONCONF;
+	}
+    }
+
+    if (!err) {
+	J = fdjac(coeff, fncall, NULL, NULL, &err);
+    }
+
+    if (!err) {
+	ham = gretl_matrix_alloc(J->rows, J->rows);
+	if (ham == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_matrix_qform(J, GRETL_MOD_NONE, vcv, 
+				     ham, GRETL_MOD_NONE);
+	}
+    }
+
+    if (!err) {
+	err = gretl_invpd(ham);
+    }
+
+    if (!err) {
+	rset->test = gretl_scalar_qform(bread, ham, &err);
+    }
+
+    if (!err) {
+	restriction_set_print_result(rset, NULL, NULL, prn);
+    }
+
+    gretl_matrix_free(vcv);
+    gretl_matrix_free(J);
+    gretl_matrix_free(bread);
+    gretl_matrix_free(ham);
+
+    if (published) {
+	destroy_private_matrices();
+    } else {
+	gretl_matrix_free(coeff);
+    }
+
+    return err;
+}
+
 /* Respond to "end restrict": in the case of a single equation, go
    ahead and do the test; in the case of a system of equations,
    form the restriction matrices R and q and attach these to the
@@ -2121,7 +2286,7 @@ gretl_restriction_finalize (gretl_restriction *rset,
 			    gretlopt opt,
 			    PRN *prn)
 {
-    int t = rset->type;
+    int t = rset->otype;
     int err = 0;
 
 #if RDEBUG
@@ -2133,6 +2298,12 @@ gretl_restriction_finalize (gretl_restriction *rset,
     }
 
     rset->opt |= opt;
+
+    if (rset->rfunc != NULL) {
+	err = nonlinear_wald_test(rset, opt, prn);
+	destroy_restriction_set(rset);
+	return err;
+    }
 
     if (t != GRETL_OBJ_EQN) {
 	err = restriction_set_form_matrices(rset);
