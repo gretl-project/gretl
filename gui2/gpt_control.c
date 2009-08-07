@@ -1566,29 +1566,15 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 
 static int allocate_plotspec_markers (GPT_SPEC *spec)
 {
-    int i, j;
-
-    spec->markers = mymalloc(spec->nobs * sizeof *spec->markers);
+    spec->markers = strings_array_new_with_length(spec->nobs,
+						  OBSLEN);
     if (spec->markers == NULL) {
-	return 1;
+	spec->n_markers = 0;
+	return E_ALLOC;
+    } else {
+	spec->n_markers = spec->nobs;
+	return 0;
     }
-
-    for (i=0; i<spec->nobs; i++) {
-	spec->markers[i] = malloc(OBSLEN);
-	if (spec->markers[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(spec->markers[j]);
-	    }
-	    free(spec->markers);
-	    spec->n_markers = 0;
-	    return 1;
-	}
-	spec->markers[i][0] = 0;
-    }
-
-    spec->n_markers = spec->nobs;
-
-    return 0;
 }
 
 /* Determine the number of data points in a plot.  While we're at it,
@@ -1599,7 +1585,7 @@ static int allocate_plotspec_markers (GPT_SPEC *spec)
 static int get_plot_nobs (const char *buf, PlotType *ptype, int *do_markers)
 {
     int n = 0, started = -1;
-    char line[MAXLEN], label[9];
+    char line[MAXLEN], test[9];
     char *p;
 
     *ptype = PLOT_REGULAR;
@@ -1623,7 +1609,7 @@ static int get_plot_nobs (const char *buf, PlotType *ptype, int *do_markers)
 
 	if (started == 1) {
 	    if (*do_markers == 0 && (p = strchr(line, '#')) != NULL) {
-		if (sscanf(p + 1, "%8s", label) == 1) {
+		if (sscanf(p + 1, "%8s", test) == 1) {
 		    *do_markers = 1;
 		}
 	    }
@@ -1831,18 +1817,6 @@ static int plot_ols_var_ok (const char *vname)
     return 0;
 }
 
-static void maybe_set_markers_ok (GPT_SPEC *spec)
-{
-    if (spec->n_lines <= 2 &&
-	spec->lines[0].ncols == 2 &&
-	(spec->n_lines == 1 || spec->lines[1].ncols == 0) &&
-	spec->n_markers > 0) {
-	spec->flags |= GPT_MARKERS_OK;
-    } else {
-	spec->flags &= ~GPT_MARKERS_OK;
-    }
-}
-
 static void maybe_set_add_fit_ok (GPT_SPEC *spec)
 {
     if (spec->n_lines == 2 && spec->fit != PLOT_FIT_NONE) {
@@ -1898,6 +1872,12 @@ plot_get_data_and_markers (GPT_SPEC *spec, const char *buf,
     return err;
 }
 
+/* Get data markers from a "non-editable" plot and set the polar flag,
+   if relevant.  The only case where we're able to use brush-on
+   markers with non-editable plots is where we're showing numerical
+   values for the roots in a VAR roots plot.
+*/
+
 static int uneditable_get_markers (GPT_SPEC *spec, const char *buf, int *polar)
 {
     char line[256];
@@ -1930,10 +1910,6 @@ static int uneditable_get_markers (GPT_SPEC *spec, const char *buf, int *polar)
     if (!err) {
 	spec->lines[0].ncols = 2;
 	err = plot_get_data_and_markers(spec, buf, 2, 1);
-    }
-
-    if (!err) {
-	maybe_set_markers_ok(spec);
     }
 
     return err;
@@ -2228,10 +2204,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     if (!err && reglist != NULL && reglist[0] > 0) {
 	spec->reglist = gretl_list_copy(reglist);
-    }
-
-    if (!err && spec->markers != NULL) {
-	maybe_set_markers_ok(spec);
     }
 
     if (!err && spec->fit == PLOT_FIT_NONE) {

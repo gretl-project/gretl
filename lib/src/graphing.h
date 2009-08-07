@@ -45,14 +45,13 @@ typedef enum {
     GPT_FIT_HIDDEN     = 1 << 15, /* autofit line calculated, but suppressed */
     GPT_PNG_OUTPUT     = 1 << 16, /* output is to PNG file */
     GPT_PRINT_MARKERS  = 1 << 17, /* print observation markers */
-    GPT_MARKERS_OK     = 1 << 18, /* OK to print observation markers */
-    GPT_LETTERBOX      = 1 << 19, /* special format for time series graphs */
-    GPT_PARAMETRIC     = 1 << 20, /* gnuplot should be in parametric mode */
-    GPT_XZEROAXIS      = 1 << 21, /* show x = 0 line */
-    GPT_YZEROAXIS      = 1 << 22, /* show y = 0 line */
-    GPT_FILL_SWITCH    = 1 << 23, /* switching from errorbars to fill */
-    GPT_ERR_SWITCH     = 1 << 24, /* switching from fill to errorbars */
-    GPT_MONO           = 1 << 25  /* monochrome output */
+    GPT_LETTERBOX      = 1 << 18, /* special format for time series graphs */
+    GPT_PARAMETRIC     = 1 << 19, /* gnuplot should be in parametric mode */
+    GPT_XZEROAXIS      = 1 << 20, /* show x = 0 line */
+    GPT_YZEROAXIS      = 1 << 21, /* show y = 0 line */
+    GPT_FILL_SWITCH    = 1 << 22, /* switching from errorbars to fill */
+    GPT_ERR_SWITCH     = 1 << 23, /* switching from fill to errorbars */
+    GPT_MONO           = 1 << 24  /* monochrome output */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;
