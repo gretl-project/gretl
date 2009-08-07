@@ -9,13 +9,13 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-04 12:23-0400\n"
-"PO-Revision-Date: 2009-07-30 20:49-0400\n"
-"Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
-"Language-Team: Turkish <tr@li.org>\n"
+"PO-Revision-Date: 2009-08-07 14:53+0300\n"
+"Last-Translator: \n"
+"Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"X-Generator: Lokalize 0.3\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: lib/src/adf_kpss.c:245
@@ -1958,11 +1958,11 @@ msgstr "               YİNELEME     RO        HKT"
 
 #: lib/src/estimate.c:2688 lib/src/gretl_model.c:2873 lib/src/modelprint.c:611
 msgid "Pesaran-Taylor test for heteroskedasticity"
-msgstr "Peseran-Taylor çokluserpilim sınaması"
+msgstr "Peseran-Taylor farklıserpilimsellik sınaması"
 
 #: lib/src/estimate.c:2698 lib/src/gretl_model.c:2852 lib/src/modelprint.c:609
 msgid "Breusch-Pagan test for heteroskedasticity"
-msgstr "Breusch-Pagan çokluserpilim sınaması"
+msgstr "Breusch-Pagan farklıserpilimsellik sınaması"
 
 #: lib/src/estimate.c:2700
 msgid "with Koenker robust variance estimator"
@@ -1970,7 +1970,7 @@ msgstr "Koenker sağlam varyans tahmincisi ile"
 
 #: lib/src/estimate.c:2704 lib/src/gretl_model.c:2849 lib/src/modelprint.c:604
 msgid "White's test for heteroskedasticity"
-msgstr "White çokluserpilim sınaması"
+msgstr "White farklıserpilimsellik sınaması"
 
 #: lib/src/estimate.c:2875
 msgid "HET_1"
@@ -2138,7 +2138,7 @@ msgstr "'%s': bu tür için eklenmedi"
 
 #: lib/src/genfuncs.c:722 gui2/library.c:4094
 msgid "Input must be a monthly or quarterly time series"
-msgstr ""
+msgstr "Girdi, aylık ya da üç aylık bir zaman serisi olmalıdır"
 
 #: lib/src/genfuncs.c:732 plugin/tramo-x12a.c:988
 msgid ""
@@ -2286,12 +2286,12 @@ msgstr "%s adlı sayıl oluşturuldu"
 #: lib/src/genmain.c:60
 #, c-format
 msgid "Modified series %s (ID %d)"
-msgstr "%s serisi (Kimlik# %d) değiştirildi"
+msgstr "%s serisi (Kimlik# %d) kiplendi"
 
 #: lib/src/genmain.c:76
 #, c-format
 msgid "Modified matrix %s"
-msgstr "%s dizeyi değiştirildi"
+msgstr "%s dizeyi kiplendi"
 
 #: lib/src/genmain.c:78
 #, c-format
@@ -2791,9 +2791,8 @@ msgid "Failed to calculate Jacobian"
 msgstr "Jacobyen hesaplaması başarısız"
 
 #: lib/src/gretl_errors.c:77
-#, fuzzy
 msgid "Insufficient observations for this operation"
-msgstr "Yoğunluk tahmini için yetersiz gözlem"
+msgstr "Gözlem sayısı bu işlem için yetersiz"
 
 #: lib/src/gretl_func.c:2428
 msgid "No description available"
@@ -2933,7 +2932,7 @@ msgstr "QOO (QLR)yapısal kırılma sınaması"
 
 #: lib/src/gretl_model.c:2831
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
-msgstr "Kümeli çokluserpilim için olabilirlik oranı sınaması"
+msgstr "Kümeli farklıserpilimsellik için olabilirlik oranı sınaması"
 
 #: lib/src/gretl_model.c:2832
 msgid "the units have a common error variance"
@@ -2970,7 +2969,7 @@ msgstr "Doğrusal-dışılık sınaması (kareler)"
 #: lib/src/gretl_model.c:2850 lib/src/gretl_model.c:2853
 #: lib/src/gretl_model.c:2874
 msgid "heteroskedasticity not present"
-msgstr "çokluserpilim yok"
+msgstr "farklıserpilimsellik bulunmuyor"
 
 #: lib/src/gretl_model.c:2855 lib/src/modelprint.c:325
 msgid "Sargan over-identification test"
@@ -3208,7 +3207,7 @@ msgstr "Küme ortalamaları bağlanımı tahmin edilemedi\n"
 
 #: lib/src/gretl_panel.c:3223
 msgid "Distribution free Wald test for heteroskedasticity"
-msgstr "Çokluserpilim için dağılımdan bağımsız Wald sınaması"
+msgstr "Farklıserpilimsellik için dağılımdan bağımsız Wald sınaması"
 
 #: lib/src/gretl_panel.c:3224
 msgid "based on the FGLS residuals"
@@ -4034,7 +4033,7 @@ msgstr "Koşulsuz hata varyansı"
 
 #: lib/src/modelprint.c:162 lib/src/printout.c:1184
 msgid "The residuals are standardized"
-msgstr "Kalıntılar ölçünlü"
+msgstr "Kalıntılar ölçünlendi"
 
 #: lib/src/modelprint.c:165
 msgid "Likelihood ratio test for (G)ARCH terms"
@@ -4180,7 +4179,7 @@ msgstr "RESET belirtim sınaması için yan bağlanım"
 
 #: lib/src/modelprint.c:637
 msgid "Groupwise heteroskedasticity"
-msgstr "kümeli çokluserpilim"
+msgstr "kümeli farklıserpilimsellik"
 
 #: lib/src/modelprint.c:639
 msgid "Augmented regression for common factor test"
@@ -4202,7 +4201,7 @@ msgstr "AEK - ÖBKÇ (WLS - ARCH)"
 
 #: lib/src/modelprint.c:660
 msgid "Heteroskedasticity-corrected"
-msgstr "çokluserpilim-düzeltmeli bağlanım"
+msgstr "farklıserpilimsellik-düzeltmeli bağlanım"
 
 #: lib/src/modelprint.c:661 lib/src/modelprint.c:4440
 msgid "AR"
@@ -4509,7 +4508,7 @@ msgstr "önbeyazlatmalı"
 
 #: lib/src/modelprint.c:1136
 msgid "Heteroskedasticity-robust standard errors"
-msgstr "Çokluserpilim-sağlam ölçünlü hatalar"
+msgstr "Farklıserpilimsellik-sağlam ölçünlü hatalar"
 
 #: lib/src/modelprint.c:1137
 msgid "variant"
@@ -4694,7 +4693,7 @@ msgstr "ölçekli %s"
 
 #: lib/src/modelprint.c:1754
 msgid "Allowing for groupwise heteroskedasticity"
-msgstr "Kümeli çokluserpilim göz önüne alındı"
+msgstr "Kümeli farklıserpilimsellik göz önüne alındı"
 
 #: lib/src/modelprint.c:1756
 msgid "Weights based on per-unit error variances"
@@ -6540,8 +6539,7 @@ msgstr ""
 msgid "Freed %s\n"
 msgstr "%s serbest bırakıldı\n"
 
-#: cli/gretlcli.c:86
-#, fuzzy, c-format
+#: cli/gretlcli.c:86, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -6558,14 +6556,14 @@ msgid ""
 " gretlcli -r myfile.inp\n"
 msgstr ""
 "\n"
-"Komut satırından bir veri dosyası adını sağlayabilirsiniz.\n"
+"Komut satırından bir veri dosyası adı sağlayabilirsiniz.\n"
 "Seçenekler:\n"
 " -b veya --batch     Bir komut betiği işle ve çık.\n"
 " -r veya --run       Bir betik çalıştır ve denetimi komut satırına ver.\n"
 " -h veya --help      Bu bilgiyi yaz ve çık.\n"
 " -v veya --version   Sürüm bilgisini yaz ve çık.\n"
-" -e veya --english   Çeviri yerine İngilizce kullanmaya zorla.\n"
-" -q veya --basque    Bask çevirisini kullanmaya zorla.\n"
+" -e veya --english   Çeviri yerine İngilizce kullanımını zorla.\n"
+" -q veya --quiet    Program bilgisini daha az ayrıntılı yaz.\n"
 "Batch kipi kullanımına örnek:\n"
 " gretlcli -b myfile.inp >myfile.out\n"
 "Run kipi kullanımına örnek:\n"
@@ -7491,12 +7489,13 @@ msgstr ""
 "Bu adda bir değişken veri setinde zaten var.\n"
 "Üzerine yazılsın mı?"
 
-#: gui2/database.c:479
-#, fuzzy, c-format
+#: gui2/database.c:479, c-format
 msgid ""
 "Really delete the selected series\n"
 "from the database '%s'?"
-msgstr "Seçili seri gerçekten silinsin mi?"
+msgstr ""
+"Seçili seri, '%s' veri tabanından \n"
+"gerçekten silinsin mi?"
 
 #: gui2/database.c:641
 msgid "Warning: series has missing observations"
@@ -7539,9 +7538,8 @@ msgid "Display values"
 msgstr "Değerleri _göster"
 
 #: gui2/database.c:731
-#, fuzzy
 msgid "Add to dataset"
-msgstr "Veri setine ekle..."
+msgstr "Veri setine ekle"
 
 #: gui2/database.c:734 gui2/datafiles.c:1171 gui2/gpt_control.c:2963
 #: gui2/gpt_control.c:3039 gui2/gpt_control.c:3044 gui2/helpfiles.c:75
@@ -8036,9 +8034,8 @@ msgstr ""
 "kaydetmek ister misiniz?"
 
 #: gui2/dialogs.c:221
-#, fuzzy
 msgid "Print missing values as:"
-msgstr "Eksik değerleri _say"
+msgstr "Eksik değerleri şöyle yazdır:"
 
 #: gui2/dialogs.c:319
 msgid "gretl: data delimiter"
@@ -8345,9 +8342,8 @@ msgid "Compact weekly data to monthly"
 msgstr "Haftalık verileri aylığa daralt"
 
 #: gui2/dialogs.c:2710
-#, fuzzy
 msgid "Compact hourly data to:"
-msgstr "Aylık verileri daralt:"
+msgstr "Saatlik verileri şuna daralt:"
 
 #: gui2/dialogs.c:2839
 msgid "gretl: expand data"
@@ -9015,9 +9011,8 @@ msgid "Malformed PNG file for graph"
 msgstr "Çizim için kusurlu PNG dosyası"
 
 #: gui2/gpt_control.c:3968
-#, fuzzy
 msgid "gretl: graph"
-msgstr "gretl: çizim tanımla"
+msgstr "gretl: çizit"
 
 #: gui2/gpt_control.c:4041
 msgid " Click on graph for pop-up menu"
@@ -9289,7 +9284,7 @@ msgstr "ayıklama bilgilerini uçbirime gönder"
 
 #: gui2/gretl.c:200
 msgid "pass integer value to script"
-msgstr ""
+msgstr "tamsayı değerini betiğe geçir"
 
 #: gui2/gretl.c:298
 #, c-format
@@ -9446,9 +9441,8 @@ msgid "R script"
 msgstr "gnu R betiği"
 
 #: gui2/gretl.c:1276 gui2/gretl.c:1534
-#, fuzzy
 msgid "Ox program"
-msgstr "Programlar"
+msgstr "Ox programı"
 
 #: gui2/gretl.c:1279
 msgid "_Session files"
@@ -9721,7 +9715,7 @@ msgstr "Çapraz çi_zelgeleme"
 
 #: gui2/gretl.c:1361
 msgid "_Principal components"
-msgstr "_Ana bileşenler"
+msgstr "_Baş bileşenler"
 
 #: gui2/gretl.c:1362
 msgid "_Mahalanobis distances"
@@ -10400,7 +10394,7 @@ msgstr "_Kopyala"
 
 #: gui2/gui_utils.c:144
 msgid "_Modify model..."
-msgstr "_Modelde değişiklik yap..."
+msgstr "_Modeli kiple..."
 
 #: gui2/gui_utils.c:146 gui2/gui_utils.c:275
 msgid "_Tests"
@@ -10485,7 +10479,7 @@ msgstr "Ramsey _RESET"
 
 #: gui2/gui_utils.c:171
 msgid "_Heteroskedasticity"
-msgstr "_Çokluserpilim"
+msgstr "_Farklıserpilimsellik"
 
 #: gui2/gui_utils.c:172
 msgid "_Normality of residual"
@@ -10666,9 +10660,8 @@ msgid "gretl: edit R commands"
 msgstr "gretl: R komutlarını düzenle"
 
 #: gui2/gui_utils.c:1410
-#, fuzzy
 msgid "gretl: edit Ox program"
-msgstr "gretl: dönemçizit"
+msgstr "gretl: Ox programı düzenle"
 
 #: gui2/gui_utils.c:1412 gui2/gui_utils.c:3717 gui2/gui_utils.c:3869
 msgid "gretl: script output"
@@ -11023,36 +11016,31 @@ msgstr "Erişiciler"
 
 #: gui2/helpfiles.c:333
 msgid "Mathematical"
-msgstr ""
+msgstr "Matematiksel"
 
 #: gui2/helpfiles.c:337 doc/commands/matfuncs.c:56
 msgid "Filters"
 msgstr "Süzgeçler"
 
 #: gui2/helpfiles.c:339
-#, fuzzy
 msgid "Statistical"
-msgstr "İstatistikler"
+msgstr "İstatistiksel"
 
 #: gui2/helpfiles.c:341
-#, fuzzy
 msgid "Probability"
-msgstr "olabirim"
+msgstr "Olasılık"
 
 #: gui2/helpfiles.c:343
-#, fuzzy
 msgid "Linear algebra"
-msgstr "Dizey cebiri"
+msgstr "Doğrusal cebir"
 
 #: gui2/helpfiles.c:345
-#, fuzzy
 msgid "Matrix building"
-msgstr "Dizey cebiri"
+msgstr "Dizey kurma"
 
 #: gui2/helpfiles.c:347
-#, fuzzy
 msgid "Matrix shaping"
-msgstr "Dizey cebiri"
+msgstr "Dizey şekillendirme"
 
 #: gui2/helpfiles.c:351 doc/commands/matfuncs.c:55
 msgid "Data utilities"
@@ -11122,7 +11110,7 @@ msgstr "ilinti dizeyi"
 
 #: gui2/library.c:700
 msgid "principal components"
-msgstr "ana bileşenler"
+msgstr "baş bileşenler"
 
 #: gui2/library.c:709
 msgid "cross tabulation"
@@ -11274,11 +11262,11 @@ msgstr "gretl: LM sınaması "
 
 #: gui2/library.c:1865 gui2/library.c:1874 gui2/library.c:1887
 msgid "(heteroskedasticity)"
-msgstr "(çokluserpilim)"
+msgstr "(farklıserpilimsellik)"
 
 #: gui2/library.c:1896
 msgid "gretl: groupwise heteroskedasticity"
-msgstr "gretl: kümeli çokluserpilim"
+msgstr "gretl: kümeli farklıserpilimsellik"
 
 #: gui2/library.c:1912
 msgid "(non-linearity)"
@@ -12114,7 +12102,7 @@ msgstr "Seçim denklemi için bağımlı değişkenler belirtmelisiniz"
 
 #: gui2/selector.c:2903
 msgid "Heteroskedasticity corrected"
-msgstr "Çokluserpilim-düzeltmeli"
+msgstr "Farklıserpilimsellik-düzeltmeli"
 
 #: gui2/selector.c:2929
 msgid "Panel model"
@@ -12975,7 +12963,7 @@ msgstr "Simge görünümünü kendiliğinden göster"
 
 #: gui2/settings.c:180
 msgid "Enable Ox support"
-msgstr ""
+msgstr "Ox desteğini etkinleştir"
 
 #: gui2/settings.c:183
 msgid "Set working directory from shell"
@@ -13026,14 +13014,12 @@ msgid "Path to tramo"
 msgstr "tramo yolu"
 
 #: gui2/settings.c:220
-#, fuzzy
 msgid "Path to R library"
-msgstr "tramo yolu"
+msgstr "R kütüphanesi yolu"
 
 #: gui2/settings.c:224
-#, fuzzy
 msgid "Path to oxl executable"
-msgstr "Model çizelgesine ekle"
+msgstr "oxl programı yolu"
 
 #: gui2/settings.c:227
 msgid "gretl database directory"
@@ -14229,7 +14215,7 @@ msgstr "Tüm bileşenler"
 
 #: plugin/pca.c:172
 msgid "Principal Components Analysis"
-msgstr "Ana Bileşen Çözümlemesi"
+msgstr "Baş Bileşen Çözümlemesi"
 
 #: plugin/pca.c:175
 msgid "Eigenanalysis of the Correlation Matrix"
