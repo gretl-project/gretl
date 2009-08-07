@@ -9200,12 +9200,10 @@
 	<equation status="display"
 	  tex="\[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]"
 	  ascii="Gamma y(t) = A y(t-1) + B x(t) + e(t)"
-	  graphic="structural"/> If there are <math>n</math> endogenous
-	variables and <math>k</math> exogenous variables, 
-	<equation status="inline"
-	  tex="$\Gamma$"
-	  ascii="Gamma"
-	  graphic="Gamma"/> is an <by r="n" c="n"/> matrix and <math>B</math>
+	  graphic="structural"/> 
+	If there are <math>n</math> endogenous variables and
+	<math>k</math> exogenous variables, 
+	&Gamma; is an <by r="n" c="n"/> matrix and <math>B</math>
 	is <by r="n" c="k"/>. If the system contains no lags of the endogenous
 	variables then the <math>A</math> matrix is not present.  If the
 	maximum lag of an endogenous regressor is <math>p</math>,

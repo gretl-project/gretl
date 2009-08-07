@@ -54,6 +54,14 @@ static void utf_replace (unsigned char *s)
 		s[1] = '.';
 		s[2] = '.';
 	    }
+	} else if (s[0] == 0xce && s[1] == 0x93) {
+	    /* &Gamma */
+	    memmove(s + 5, s + 2, strlen((char *) s + 2) + 1);
+	    s[0] = 'G';
+	    s[1] = 'a';
+	    s[2] = 'm';
+	    s[3] = 'm';
+	    s[4] = 'a';
 	} else if (s[0] == 0xce && s[1] == 0xbb) {
 	    /* &lambda; */
 	    memmove(s + 6, s + 2, strlen((char *) s + 2) + 1);

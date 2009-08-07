@@ -1,5 +1,5 @@
 version 1.8.3, in progress
-- Fix bugs 2819633, 2827358, 2828349
+- Fix bugs 2819633, 2827358, 2828349, 2833434
 - $stopwatch: use times() function if available, to include
   execution time of child processes
 - Add function "mreverse" to reverse rows of a matrix
