@@ -110,7 +110,7 @@ static double lambda_min (const gretl_matrix *lambda, int k)
 
 static int *
 liml_make_reglist (const equation_system *sys, const int *list, 
-		   int *k)
+		   int *k, int *err)
 {
     const int *exlist = system_get_instr_vars(sys);
     int nexo = exlist[0];
@@ -119,6 +119,7 @@ liml_make_reglist (const equation_system *sys, const int *list,
 
     reglist = gretl_list_new(nexo + 1);
     if (reglist == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -134,6 +135,12 @@ liml_make_reglist (const equation_system *sys, const int *list,
     j = 2;
     for (i=2; i<=list[0]; i++) {
 	if (in_gretl_list(exlist, list[i])) {
+	    if (reglist[0] == nexo) {
+		fprintf(stderr, "liml_make_reglist: somthing funny going on!\n");
+		free(reglist);
+		*err = E_DATA;
+		return NULL;
+	    }
 	    reglist[0] += 1;
 	    reglist[j++] = list[i];
 	} else {
@@ -246,9 +253,9 @@ static int liml_do_equation (equation_system *sys, int eq,
     }
 
     /* first make regression list using only included instruments */
-    reglist = liml_make_reglist(sys, list, &k);
-    if (reglist == NULL) {
-	return E_ALLOC;
+    reglist = liml_make_reglist(sys, list, &k, &err);
+    if (err) {
+	return err;
     }
 
 #if LDEBUG

@@ -4232,6 +4232,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     call = fncall_new(u);
     if (call == NULL) {
+	fprintf(stderr, "fncall_new() returned NULL\n");
 	return E_ALLOC;
     }
 
@@ -4247,7 +4248,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	/* get out before allocating further storage */
 	fncall_free(call);
 	return err;
-    }    
+    }  
 
     models = allocate_working_models(2);
     if (models == NULL) {

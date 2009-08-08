@@ -2444,6 +2444,8 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
 
 void gretl_matrix_print (const gretl_matrix *m, const char *msg) 
 {
+    char *fmt = "%#12.5g ";
+    char *envstr;
     int i, j;
 
     if (m == NULL || m->val == NULL) {
@@ -2453,6 +2455,11 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 	    fputs("matrix is NULL\n", stderr);
 	}
 	return;
+    }
+
+    envstr = getenv("GRETL_MATRIX_DEBUG");
+    if (envstr != NULL && atoi(envstr) > 0) {
+	fmt = "%#24.15g ";
     }
 
     if (msg != NULL && *msg != '\0') {
@@ -2468,7 +2475,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<m->cols; j++) {
-	    fprintf(stderr, "%#12.5g ", gretl_matrix_get(m, i, j));
+	    fprintf(stderr, fmt, gretl_matrix_get(m, i, j));
 	}
 	fputc('\n', stderr);
     }

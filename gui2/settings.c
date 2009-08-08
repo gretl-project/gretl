@@ -1504,6 +1504,27 @@ static void flag_changed (RCVAR *rcvar, int *changed)
     }
 }
 
+static void rcvar_set_int (RCVAR *rcvar, int ival, int *changed)
+{
+    int *intvar = (int *) rcvar->var;
+
+    if (ival != *intvar) {
+	flag_changed(rcvar, changed);
+	*intvar = ival;
+    }
+}
+
+static void rcvar_set_string (RCVAR *rcvar, const char *sval, int *changed)
+{
+    char *strvar = (char *) rcvar->var;
+
+    if (sval != NULL && *sval != '\0' && strcmp(sval, strvar)) {
+	flag_changed(rcvar, changed);
+	*strvar = '\0';
+	strncat(strvar, sval, rcvar->len - 1);
+    }
+}
+
 /* register and react to changes from Preferences dialog */
 
 static void apply_changes (GtkWidget *widget, gpointer data) 
@@ -1511,8 +1532,6 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     RCVAR *rcvar;
     GtkWidget *w;
     int changed = 0;
-    char *strvar;
-    int *intvar;
     int i;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1522,46 +1541,25 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	    if (rcvar->flags & BOOLSET) {
 		int bval = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
-		intvar = (int *) rcvar->var;
-		if (bval != *intvar) {
-		    flag_changed(rcvar, &changed);
-		    *intvar = bval;
-		}
+		rcvar_set_int(rcvar, bval, &changed);
 	    } else if ((rcvar->flags & USERSET) || 
 		       (rcvar->flags & ROOTSET) ||
 		       (rcvar->flags & MACHSET)) {
 		const gchar *str = gtk_entry_get_text(GTK_ENTRY(w));
 
-		if (str != NULL && *str != '\0') { 
-		    strvar = (char *) rcvar->var;
-		    if (strcmp(str, strvar)) {
-			flag_changed(rcvar, &changed);
-			*strvar = '\0';
-			strncat(strvar, str, rcvar->len - 1);
-		    }
-		}
+		rcvar_set_string(rcvar, str, &changed);
 	    } else if (rcvar->flags & LISTSET) {
 		GtkComboBox *box = GTK_COMBO_BOX(w);
 
 		if (rcvar->flags & INTSET) {
-		    int bval = gtk_combo_box_get_active(box);
-		    
-		    intvar = (int *) rcvar->var;
-		    if (bval != *intvar) {
-			flag_changed(rcvar, &changed);
-			*intvar = bval;
-		    }
-		} else {
-		    gchar *boxstr;
+		    int ival = gtk_combo_box_get_active(box);
 
-		    boxstr = gtk_combo_box_get_active_text(box);
-		    strvar = (char *) rcvar->var;
-		    if (strcmp(boxstr, strvar)) {
-			flag_changed(rcvar, &changed);
-			*strvar = '\0';
-			strcat(strvar, boxstr);
-		    }
-		    g_free(boxstr);
+		    rcvar_set_int(rcvar, ival, &changed);
+		} else {
+		    gchar *str = gtk_combo_box_get_active_text(box);
+
+		    rcvar_set_string(rcvar, str, &changed);
+		    g_free(str);
 		}
 	    }
 	}
@@ -1600,6 +1598,7 @@ static void boolvar_to_str (void *b, char *s)
 
 static int write_plain_text_rc (void) 
 {
+    RCVAR *rcvar;
     FILE *rc;
     char val[6];
     char *strvar;
@@ -1614,15 +1613,16 @@ static int write_plain_text_rc (void)
     fprintf(rc, "# gretl config file\n");
 
     for (i=0; rc_vars[i].var != NULL; i++) {
-	fprintf(rc, "# %s\n", rc_vars[i].description);
-	if (rc_vars[i].flags & BOOLSET) {
-	    boolvar_to_str(rc_vars[i].var, val);
-	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
-	} else if (rc_vars[i].flags & INTSET) {
-	    fprintf(rc, "%s = %d\n", rc_vars[i].key, *(int *) rc_vars[i].var);
+	rcvar = &rc_vars[i];
+	fprintf(rc, "# %s\n", rcvar->description);
+	if (rcvar->flags & BOOLSET) {
+	    boolvar_to_str(rcvar->var, val);
+	    fprintf(rc, "%s = %s\n", rcvar->key, val);
+	} else if (rcvar->flags & INTSET) {
+	    fprintf(rc, "%s = %d\n", rcvar->key, *(int *) rcvar->var);
 	} else {
-	    strvar = (char *) rc_vars[i].var;
-	    fprintf(rc, "%s = %s\n", rc_vars[i].key, strvar);
+	    strvar = (char *) rcvar->var;
+	    fprintf(rc, "%s = %s\n", rcvar->key, strvar);
 	}
     }
 
@@ -1768,41 +1768,43 @@ static int common_read_rc_setup (void)
 
 void write_rc (void) 
 {
+    RCVAR *rcvar;
     char bval[6];
     char ival[16];
     char *strval;
     int i = 0, err = 0;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
+	rcvar = &rc_vars[i];
 
-	if (rc_vars[i].flags & (FIXSET | ROOTSET)) {
+	if (rcvar->flags & (FIXSET | ROOTSET)) {
 	    /* read-only variables */
 	    continue;
 	}
 
-	if (rc_vars[i].flags & BOOLSET) {
-	    boolvar_to_str(rc_vars[i].var, bval);
+	if (rcvar->flags & BOOLSET) {
+	    boolvar_to_str(rcvar->var, bval);
 	    err += write_reg_val(HKEY_CURRENT_USER, 
 				 "gretl", 
-				 rc_vars[i].key, 
+				 rcvar->key, 
 				 bval, GRETL_TYPE_BOOL);
-	} else if (rc_vars[i].flags & INTSET) {
-	    sprintf(ival, "%d", *(int *) rc_vars[i].var);
+	} else if (rcvar->flags & INTSET) {
+	    sprintf(ival, "%d", *(int *) rcvar->var);
 	    err += write_reg_val(HKEY_CURRENT_USER, 
 				 "gretl", 
-				 rc_vars[i].key, 
+				 rcvar->key, 
 				 ival, GRETL_TYPE_INT);	    
-	} else if (rc_vars[i].flags & MACHSET) {
-	    strval = (char *) rc_vars[i].var;
+	} else if (rcvar->flags & MACHSET) {
+	    strval = (char *) rcvar->var;
 	    err += write_reg_val(HKEY_LOCAL_MACHINE, 
-				 get_reg_base(rc_vars[i].key),
-				 rc_vars[i].key, 
+				 get_reg_base(rcvar->key),
+				 rcvar->key, 
 				 strval, GRETL_TYPE_STRING);
 	} else {
-	    strval = (char *) rc_vars[i].var;
+	    strval = (char *) rcvar->var;
 	    err += write_reg_val(HKEY_CURRENT_USER, 
-				 get_reg_base(rc_vars[i].key),
-				 rc_vars[i].key, 
+				 get_reg_base(rcvar->key),
+				 rcvar->key, 
 				 strval, GRETL_TYPE_STRING);
 	}
     }
@@ -1871,6 +1873,7 @@ static int get_network_settings (void)
 
 void read_rc (int debug) 
 {
+    RCVAR *rcvar;
     char value[MAXSTR];
     char *strvar;
     int i;
@@ -1896,44 +1899,46 @@ void read_rc (int debug)
     for (i=0; rc_vars[i].key != NULL; i++) {
 	int err = 0;
 
-	if (rc_vars[i].flags & FIXSET) {
+	rcvar = &rc_vars[i];
+
+	if (rcvar->flags & FIXSET) {
 	    continue;
 	}
 
 	*value = '\0';
 
-	if (rc_vars[i].flags & ROOTSET) {
+	if (rcvar->flags & ROOTSET) {
 	    err = read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, 
 					     HKEY_CLASSES_ROOT,
-					     get_reg_base(rc_vars[i].key),
-					     rc_vars[i].key, 
+					     get_reg_base(rcvar->key),
+					     rcvar->key, 
 					     value);
-	} else if (rc_vars[i].flags & MACHSET) {
+	} else if (rcvar->flags & MACHSET) {
 	    err = read_reg_val(HKEY_LOCAL_MACHINE, 
-			       get_reg_base(rc_vars[i].key),
-			       rc_vars[i].key, 
+			       get_reg_base(rcvar->key),
+			       rcvar->key, 
 			       value);
 	} else {
 	    err = read_reg_val(HKEY_CURRENT_USER, 
-			       get_reg_base(rc_vars[i].key),
-			       rc_vars[i].key, 
+			       get_reg_base(rcvar->key),
+			       rcvar->key, 
 			       value);
 	}
 
         if (debug) {
-            fprintf(stderr, "reg: err = %d, '%s' -> '%s'\n", err, rc_vars[i].key,
+            fprintf(stderr, "reg: err = %d, '%s' -> '%s'\n", err, rcvar->key,
                     value);
         }
 	    
 	if (!err && *value != '\0') {
-	    if (rc_vars[i].flags & BOOLSET) {
-		str_to_boolvar(value, rc_vars[i].var);
-	    } else if (rc_vars[i].flags & INTSET) {
-		str_to_int(value, rc_vars[i].var);
+	    if (rcvar->flags & BOOLSET) {
+		str_to_boolvar(value, rcvar->var);
+	    } else if (rcvar->flags & INTSET) {
+		str_to_int(value, rcvar->var);
 	    } else {
-		strvar = (char *) rc_vars[i].var;
+		strvar = (char *) rcvar->var;
 		*strvar = '\0';
-		strncat(strvar, value, rc_vars[i].len - 1);
+		strncat(strvar, value, rcvar->len - 1);
 	    }
 	}
     }
@@ -1962,19 +1967,21 @@ void write_rc (void)
 
 static void find_and_write_var (const char *key, const char *val)
 {
+    RCVAR *rcvar;
     char *strvar;
-    int j;
+    int i;
 
-    for (j=0; rc_vars[j].key != NULL; j++) {
-	if (!strcmp(key, rc_vars[j].key)) {
-	    if (rc_vars[j].flags & BOOLSET) {
-		str_to_boolvar(val, rc_vars[j].var);
-	    } else if (rc_vars[j].flags & INTSET) {
-		str_to_int(val, rc_vars[j].var);
+    for (i=0; rc_vars[i].key != NULL; i++) {
+	rcvar = &rc_vars[i];
+	if (!strcmp(key, rcvar->key)) {
+	    if (rcvar->flags & BOOLSET) {
+		str_to_boolvar(val, rcvar->var);
+	    } else if (rcvar->flags & INTSET) {
+		str_to_int(val, rcvar->var);
 	    } else {
-		strvar = (char *) rc_vars[j].var;
+		strvar = (char *) rcvar->var;
 		*strvar = '\0';
-		strncat(strvar, val, rc_vars[j].len - 1);
+		strncat(strvar, val, rcvar->len - 1);
 	    }
 	    break;
 	}

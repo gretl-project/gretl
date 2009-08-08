@@ -1013,13 +1013,13 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 
 static void destroy_restriction (rrow *r)
 {
-    if (r == NULL) return;
-
-    free(r->mult);
-    free(r->eq);
-    free(r->bnum);
-    free(r->letter);
-    free(r);
+    if (r != NULL) {
+	free(r->mult);
+	free(r->eq);
+	free(r->bnum);
+	free(r->letter);
+	free(r);
+    }
 }
 
 void destroy_restriction_set (gretl_restriction *rset)
@@ -1492,75 +1492,29 @@ static int read_fncall_line (const char *s, gretl_restriction *rset)
     return 0;
 }
 
-static int 
-real_restriction_set_parse_line (gretl_restriction *rset, 
-				 const char *line,
-				 const DATAINFO *pdinfo,
-				 int first)
-{
-    const char *p = line;
-    rrow *r;
-    int sgn = 1;
-    int i, j, nt, err = 0;
+static int restriction_set_parse_restriction (gretl_restriction *rset,
+					      const char *s,
+					      const DATAINFO *pdinfo)
+{ 
+    rrow *row;
+    int nt, sgn = 1;
+    int i, j;
+    int err = 0;
 
-    gretl_error_clear();
-
-#if RDEBUG
-    fprintf(stderr, "parse restriction line: got '%s'\n", line);
-#endif
-
-    /* if we have a function name specified already, nothing else
-       should be supplied */
-    if (rset->rfunc != NULL) {
-	destroy_restriction_set(rset);
-	return E_PARSE;
+    if (*s == '+' || *s == '-') {
+	sgn = (*s == '+')? 1 : -1;
+	s++;
     }
 
-    if (!strncmp(p, "restrict", 8)) {
-	if (strlen(line) == 8) {
-	    if (first) {
-		return 0;
-	    } else {
-		return E_PARSE;
-	    }
-	}
-	p += 8;
-	while (isspace((unsigned char) *p)) p++;
-    }
-
-    if (!strncmp(p, "rfunc", 5)) {
-	/* nonlinear function given */
-	err = read_fncall_line(p + 5, rset);
-	if (err) {
-	    destroy_restriction_set(rset);
-	}
-	return err;
-    }
-
-    if (*p == 'R' || *p == 'q') {
-	/* restrictions given in matrix form */
-	err = read_matrix_line(p, rset);
-	if (err) {
-	    destroy_restriction_set(rset);
-	}
-	return err;
-    }
-
-    if (*p == '+' || *p == '-') {
-	sgn = (*p == '+')? 1 : -1;
-	p++;
-    }
-
-    nt = 1 + count_ops(p);
+    nt = 1 + count_ops(s);
 
 #if RDEBUG
     fprintf(stderr, "restriction line: assuming %d terms\n", nt);
 #endif
 
-    r = augment_restriction_set(rset, nt);
+    row = augment_restriction_set(rset, nt);
 
-    if (r == NULL) {
-	destroy_restriction_set(rset);
+    if (row == NULL) {
 	return E_ALLOC;
     }
 
@@ -1573,15 +1527,15 @@ real_restriction_set_parse_line (gretl_restriction *rset,
 	char letter = 'b';
 	double mult;
 
-	len = strcspn(p, "+-=");
+	len = strcspn(s, "+-=");
 	if (len > 31) {
 	    err = 1;
 	    break;
 	}
 
 	*chunk = 0;
-	strncat(chunk, p, len);
-	p += len;
+	strncat(chunk, s, len);
+	s += len;
 
 #if RDEBUG
 	fprintf(stderr, " working on chunk %d, '%s'\n", i, chunk);
@@ -1602,34 +1556,82 @@ real_restriction_set_parse_line (gretl_restriction *rset,
 
 	if (numeric) {
 	    /* got a numeric constant */
-	    r->rhs -= mult;
-	    r->nterms -= 1;
+	    row->rhs -= mult;
+	    row->nterms -= 1;
 	} else {
-	    add_term_to_restriction(r, mult, eq, bnum, letter, j++);
+	    add_term_to_restriction(row, mult, eq, bnum, letter, j++);
 	}
 
-	if (*p == '+') {
+	if (*s == '+') {
 	    sgn = 1.0;
-	    p++;
-	} else if (*p == '-') {
+	    s++;
+	} else if (*s == '-') {
 	    sgn = -1.0;
-	    p++;
+	    s++;
 	}
     }
 
     if (!err) {
 	double rhs = 0.0;
 
-	if (!sscanf(p, " = %lf", &rhs)) {
+	if (!sscanf(s, " = %lf", &rhs)) {
 	    err = E_PARSE;
 	} else {
-	    r->rhs += rhs;
+	    row->rhs += rhs;
 	}
+    }
+
+    return err;
+}
+
+static int 
+real_restriction_set_parse_line (gretl_restriction *rset, 
+				 const char *line,
+				 const DATAINFO *pdinfo,
+				 int first)
+{
+    const char *s = line;
+    int err = 0;
+
+    gretl_error_clear();
+
+#if RDEBUG
+    fprintf(stderr, "parse restriction line: got '%s'\n", line);
+#endif
+
+    /* if we have a function name specified already, nothing else
+       should be supplied */
+    if (rset->rfunc != NULL) {
+	destroy_restriction_set(rset);
+	return E_PARSE;
+    }
+
+    if (!strncmp(s, "restrict", 8)) {
+	if (strlen(line) == 8) {
+	    if (first) {
+		return 0;
+	    } else {
+		return E_PARSE;
+	    }
+	}
+	s += 8;
+	while (isspace((unsigned char) *s)) s++;
+    }
+
+    if (!strncmp(s, "rfunc", 5)) {
+	/* nonlinear function given */
+	err = read_fncall_line(s + 5, rset);
+    } else if (*s == 'R' || *s == 'q') {
+	/* restrictions given in matrix form */
+	err = read_matrix_line(s, rset);
+    } else {
+	/* a regular linear restriction */
+	err = restriction_set_parse_restriction(rset, s, pdinfo);
     }
 
     if (err) {
 	destroy_restriction_set(rset);
-    } 
+    }    
     
     return err;
 }
@@ -1749,6 +1751,10 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 	*err = E_DATA;
 	goto bailout;
     }
+
+#if RDEBUG
+    fprintf(stderr, " restriction: ptr = %p, type = %d\n", ptr, type);
+#endif
 
     if (type != GRETL_OBJ_EQN && type != GRETL_OBJ_SYS &&
 	type != GRETL_OBJ_VAR) {
@@ -2226,6 +2232,11 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
 	bread = generate_matrix(fncall, NULL, NULL, &err);
     }
 
+#if RDEBUG
+    fprintf(stderr, "nonlinear_wald_test: fncall = '%s'\n", fncall);
+    gretl_matrix_print(bread, "'bread'");
+#endif
+
     if (!err) {
 	rset->k = gretl_vector_get_length(bread);
 	if (rset->k == 0) {
@@ -2236,6 +2247,10 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
     if (!err) {
 	J = fdjac(coeff, fncall, NULL, NULL, &err);
     }
+
+#if RDEBUG
+    gretl_matrix_print(J, "J");
+#endif
 
     if (!err) {
 	ham = gretl_matrix_alloc(J->rows, J->rows);

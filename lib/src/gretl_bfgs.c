@@ -866,42 +866,51 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     }
 }
 
-/* user-level access to BFGS */
+/* user-level access to BFGS and fdjac */
 
 typedef struct umax_ umax;
 
 struct umax_ {
-    GretlType gentype;
-    gretl_matrix *b;
-    int ncoeff;
-    GENERATOR *g;
-    double x_out;
-    gretl_matrix *m_out;
-    double ***Z;
-    DATAINFO *dinfo;
-    PRN *prn;
+    GretlType gentype;   /* GRETL_TYPE_DOUBLE or GRETL_TYPE_MATRIX */
+    gretl_matrix *b;     /* parameter vector */
+    int ncoeff;          /* number of coefficients */
+    GENERATOR *g;        /* for generating scalar or matrix result */
+    double x_out;        /* generated double value */
+    gretl_matrix *m_out; /* generated matrix value */
+    double ***Z;         /* pointer to data array */
+    DATAINFO *dinfo;     /* dataset info */
+    PRN *prn;            /* optional printing struct */
 };
 
-static void umax_init (umax *u, GretlType t)
+static umax *umax_new (GretlType t)
 {
-    u->gentype = t;
-    u->b = NULL;
-    u->ncoeff = 0;
-    u->g = NULL;
-    u->x_out = NADBL;
-    u->m_out = NULL;
-    u->Z = NULL;
-    u->dinfo = NULL;
-    u->prn = NULL;
+    umax *u = malloc(sizeof *u);
+
+    if (u != NULL) {
+	u->gentype = t;
+	u->b = NULL;
+	u->ncoeff = 0;
+	u->g = NULL;
+	u->x_out = NADBL;
+	u->m_out = NULL;
+	u->Z = NULL;
+	u->dinfo = NULL;
+	u->prn = NULL;
+    }
+
+    return u;
 }
 
-static void umax_clear (umax *u)
+static void umax_destroy (umax *u)
 {
     if (u->dinfo != NULL) {
-	/* drop any "$" variables created */
+	/* drop any private "$" variables created */
 	dataset_drop_listed_variables(NULL, u->Z, u->dinfo, NULL, NULL);
     }
+
     destroy_genr(u->g);
+
+    free(u);
 }
 
 static double user_get_criterion (const double *b, void *p)
@@ -927,7 +936,7 @@ static double user_get_criterion (const double *b, void *p)
     } else if (t == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = genr_get_output_matrix(u->g);
 
-	if (m != NULL && m->rows == 1 && m->cols == 1) {
+	if (gretl_matrix_is_scalar(m)) {
 	    x = m->val[0];
 	}
     } else {
@@ -977,24 +986,28 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
 		  double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn, int *err)
 {
-    umax u;
+    umax *u;
     double ret = NADBL;
     gretlopt opt = OPT_NONE;
     int maxit = 500;
     int fcount = 0, gcount = 0;
     double tol;
 
-    umax_init(&u, GRETL_TYPE_DOUBLE);
+    u = umax_new(GRETL_TYPE_DOUBLE);
+    if (u == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
 
-    u.ncoeff = gretl_vector_get_length(b);
-    if (u.ncoeff == 0) {
+    u->ncoeff = gretl_vector_get_length(b);
+    if (u->ncoeff == 0) {
 	*err = E_DATA;
 	goto bailout;
     }
 
-    u.b = b;
+    u->b = b;
 
-    *err = user_gen_setup(&u, fncall, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, pZ, pdinfo);
     if (*err) {
 	return NADBL;
     }
@@ -1003,11 +1016,11 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
 
     if (libset_get_bool(MAX_VERBOSE)) {
 	opt = OPT_V;
-	u.prn = prn;
+	u->prn = prn;
     }
 
-    *err = BFGS_max(b->val, u.ncoeff, maxit, tol, &fcount, &gcount,
-		    user_get_criterion, C_OTHER, NULL, &u, opt, prn);
+    *err = BFGS_max(b->val, u->ncoeff, maxit, tol, &fcount, &gcount,
+		    user_get_criterion, C_OTHER, NULL, u, opt, prn);
 
     if (fcount > 0) {
 	pprintf(prn, _("Function evaluations: %d\n"), fcount);
@@ -1015,15 +1028,17 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
     }
 
     if (!*err) {
-	ret = u.x_out;
+	ret = u->x_out;
     }
 
  bailout:
 
-    umax_clear(&u);
+    umax_destroy(u);
 
     return ret;
 }
+
+#define JAC_DEBUG 0
 
 static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
 			   integer *iflag, void *p)
@@ -1036,6 +1051,10 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
 	u->b->val[i] = x[i];
     }
 
+#if JAC_DEBUG
+    gretl_matrix_print(u->b, "user_calc_fvec: u->b");
+#endif
+
     err = execute_genr(u->g, u->Z, u->dinfo, OPT_S, u->prn); 
     if (err) {
 	fprintf(stderr, "execute_genr: err = %d\n", err); 
@@ -1047,6 +1066,10 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
     }
 
     v = genr_get_output_matrix(u->g);
+
+#if JAC_DEBUG
+    gretl_matrix_print(v, "matrix from u->g");
+#endif
 
     if (v == NULL || gretl_vector_get_length(v) != *m) {
 	fprintf(stderr, "user_calc_fvec: got bad matrix\n"); 
@@ -1083,7 +1106,7 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     double ***pZ, DATAINFO *pdinfo,
 		     int *err)
 {
-    umax u;
+    umax *u;
     gretl_matrix *J = NULL;
     integer m, n;
     integer iflag = 0;
@@ -1094,7 +1117,11 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 
     *err = 0;
 
-    umax_init(&u, GRETL_TYPE_MATRIX);
+    u = umax_new(GRETL_TYPE_MATRIX);
+    if (u == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
     n = gretl_vector_get_length(theta);
     if (n == 0) {
@@ -1104,22 +1131,22 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	return NULL;
     }
 
-    u.b = theta;
-    u.ncoeff = n;
+    u->b = theta;
+    u->ncoeff = n;
 
-    *err = user_gen_setup(&u, fncall, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, pZ, pdinfo);
     if (*err) {
 	fprintf(stderr, "fdjac: error %d from user_gen_setup\n", *err);
 	goto bailout;
     }
 
-    if (u.m_out == NULL) {
+    if (u->m_out == NULL) {
 	fprintf(stderr, "fdjac: u.m_out is NULL\n");
-	*err = E_TYPES; /* FIXME */
+	*err = E_DATA; /* FIXME */
 	goto bailout;
     }
 
-    m = gretl_vector_get_length(u.m_out);
+    m = gretl_vector_get_length(u->m_out);
     if (m == 0) {
 	*err = E_DATA;
 	goto bailout;
@@ -1131,11 +1158,11 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     }
 
     for (i=0; i<m; i++) {
-	fvec[i] = u.m_out->val[i];
+	fvec[i] = u->m_out->val[i];
     }
 
     fdjac2_(user_calc_fvec, &m, &n, theta->val, fvec, J->val, 
-	    &m, &iflag, &epsfcn, wa, &u);
+	    &m, &iflag, &epsfcn, wa, u);
 
  bailout:
 
@@ -1147,7 +1174,7 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	J = NULL;
     }
 
-    umax_clear(&u);
+    umax_destroy(u);
 
     return J;
 }

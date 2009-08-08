@@ -32,6 +32,7 @@
 struct user_matrix_ {
     gretl_matrix *M;
     int level;
+    int private;
     char name[VNAMELEN];
     char **colnames;
 };
@@ -82,6 +83,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
 
     u->M = M;
     u->level = gretl_function_depth();
+    u->private = 0;
     *u->name = '\0';
     strncat(u->name, name, VNAMELEN - 1);
     u->colnames = NULL;
@@ -122,10 +124,11 @@ void set_matrix_add_callback (void (*callback))
     matrix_add_callback = callback; 
 }
 
-static int real_user_matrix_add (gretl_matrix *M, const char *name,
-				 int callback_ok)
+static user_matrix *real_user_matrix_add (gretl_matrix *M, const char *name,
+					  int callback_ok)
 {
     user_matrix **tmp;
+    user_matrix *u;
     int n = n_matrices;
 
     if (M == NULL) {
@@ -134,7 +137,7 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 
     tmp = realloc(matrices, (n + 1) * sizeof *tmp);
     if (tmp == NULL) {
-	return E_ALLOC;
+	return NULL;
     } else {
 	matrices = tmp;
     }
@@ -144,15 +147,15 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 	gretl_matrix *Mcpy = gretl_matrix_copy(M);
 
 	if (Mcpy == NULL) {
-	    return E_ALLOC;
+	    return NULL;
 	}
 	M = Mcpy;
     }
 
-    matrices[n] = user_matrix_new(M, name);
+    matrices[n] = u = user_matrix_new(M, name);
 
     if (matrices[n] == NULL) {
-	return E_ALLOC;
+	return NULL;
     }
 
     n_matrices++;
@@ -168,17 +171,26 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 	(*matrix_add_callback)();
     }
 
-    return 0;
+    return u;
 }
 
 int user_matrix_add (gretl_matrix *M, const char *name)
 {
-    return real_user_matrix_add(M, name, 1);
+    user_matrix *u = real_user_matrix_add(M, name, 1);
+
+    return (u == NULL)? E_ALLOC : 0;
 }
 
 int private_matrix_add (gretl_matrix *M, const char *name)
 {
-    return real_user_matrix_add(M, name, 0);
+    user_matrix *u = real_user_matrix_add(M, name, 0);
+
+    if (u == NULL) {
+	return E_ALLOC;
+    } else {
+	u->private = 1;
+	return 0;
+    }
 }
 
 static int 
@@ -493,19 +505,18 @@ int copy_named_matrix_as (const char *orig, const char *newname)
 int copy_matrix_as (const gretl_matrix *m, const char *newname)
 {
     gretl_matrix *m2 = gretl_matrix_copy(m);
-    int err;
+    user_matrix *u;
+    int err = 0;
 
     if (m2 == NULL) {
 	err = E_ALLOC;
     } else {
-	err = real_user_matrix_add(m2, newname, 0);
-    }
-
-    if (!err) {
-	/* increment level of last-added matrix */
-	user_matrix *u = matrices[n_matrices - 1];
-
-	u->level += 1;
+	u = real_user_matrix_add(m2, newname, 0);
+	if (u == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    u->level += 1;
+	}
     }
 
     return err;
@@ -890,15 +901,17 @@ static void destroy_user_matrix (user_matrix *u)
 
 #define LEV_PRIVATE -1
 
-static int levels_match (user_matrix *u, int lev)
+static int matrix_levels_match (user_matrix *u, int lev)
 {
+    int ret = 0;
+
     if (u->level == lev) {
-	return 1;
-    } else if (lev == LEV_PRIVATE && *u->name == '$') {
-	return 1;
+	ret = 1;
+    } else if (lev == LEV_PRIVATE && (u->private || *u->name == '$')) {
+	ret = 1;
     }
 
-    return 0;
+    return ret;
 }
 
 /**
@@ -931,7 +944,7 @@ int destroy_user_matrices_at_level (int level)
 	if (matrices[i] == NULL) {
 	    break;
 	}
-	if (levels_match(matrices[i], level)) {
+	if (matrix_levels_match(matrices[i], level)) {
 #if MDEBUG
 	    fprintf(stderr, "destroying matrix[%d] ('%s' at %p)\n",
 		    i, matrices[i]->name, (void *) matrices[i]->M);

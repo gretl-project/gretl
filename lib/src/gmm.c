@@ -824,6 +824,10 @@ void maybe_add_gmm_residual (MODEL *pmod, const nlspec *spec,
     if (spec->oc != NULL && spec->oc->e != NULL && spec->oc->e->cols == 1) {
 	int t, s = 0;
 
+	if (pmod->uhat != NULL) {
+	    free(pmod->uhat);
+	}
+
 	pmod->uhat = malloc(pdinfo->n * sizeof *pmod->uhat);
 
 	if (pmod->uhat != NULL) {

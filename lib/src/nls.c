@@ -3225,10 +3225,19 @@ static int finalize_ivreg_model (MODEL *pmod, MODEL *ols,
     pmod->ybar = ols->ybar;
     pmod->sdy = ols->sdy;
 
-    /* and steal uhat, yhat */
+    /* steal uhat */
+    if (pmod->uhat != NULL) {
+	free(pmod->uhat);
+    }
     pmod->uhat = ols->uhat;
+    ols->uhat = NULL;
+
+    /* and yhat */
+    if (pmod->yhat != NULL) {
+	free(pmod->yhat);
+    }    
     pmod->yhat = ols->yhat;
-    ols->uhat = ols->yhat = NULL;
+    ols->yhat = NULL;
 
     /* insert residuals and fitted */
     for (t=pmod->t1; t<=pmod->t2; t++) {
