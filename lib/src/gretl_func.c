@@ -31,7 +31,7 @@
 
 #include <glib.h>
 
-#define FNPARSE_DEBUG 2 /* debug parsing of function code */
+#define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
 #define UDEBUG 0        /* debug handling of args */
 #define PKG_DEBUG 0     /* debug handling of function packages */
