@@ -3279,6 +3279,29 @@ static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
     }
 }
 
+static int maybe_localize_const_matrix (struct fnarg *arg, 
+					fn_param *fp)
+{
+    user_matrix *u = get_user_matrix_by_data(arg->val.m);
+    int err = 0;
+
+    if (u == NULL) {
+	err = copy_matrix_as(arg->val.m, fp->name);
+    } else {
+	arg->upname = gretl_strdup(user_matrix_get_name(u));
+	if (arg->upname == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    user_matrix_adjust_level(u, 1);
+	    user_matrix_set_name(u, fp->name);
+	    arg->name = fp->name;
+	    arg->flags |= ARG_CONST;
+	}
+    }
+
+    return err;
+}
+
 static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
 {
     user_matrix *u = arg->val.um;
@@ -3417,7 +3440,11 @@ static int allocate_function_args (fncall *call,
 					    pZ, pdinfo);
 	    }	    
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
-	    err = copy_matrix_as(arg->val.m, fp->name);
+	    if (fp->flags & ARG_CONST) {
+		err = maybe_localize_const_matrix(arg, fp);
+	    } else {
+		err = copy_matrix_as(arg->val.m, fp->name);
+	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    if (arg->type == GRETL_TYPE_NONE) {
 		err = create_named_null_list(fp->name);
@@ -3804,6 +3831,11 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 		user_matrix_adjust_level(u, -1);
 		user_matrix_set_name(u, arg->upname);
 	    }
+	} else if (fp->type == GRETL_TYPE_MATRIX && arg->upname != NULL) {
+	    user_matrix *u = get_user_matrix_by_data(arg->val.m);
+
+	    user_matrix_adjust_level(u, -1);
+	    user_matrix_set_name(u, arg->upname);
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, LIST_WAS_ARG, Z, pdinfo);
 	}

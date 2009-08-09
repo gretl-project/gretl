@@ -64,6 +64,8 @@ user_matrix *get_user_matrix_by_name (const char *name);
 
 user_matrix *get_user_matrix_by_index (int idx);
 
+user_matrix *get_user_matrix_by_data (const gretl_matrix *M);
+
 int user_matrix_add (gretl_matrix *M, const char *name);
 
 int private_matrix_add (gretl_matrix *M, const char *name);

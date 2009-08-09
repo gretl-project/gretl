@@ -326,7 +326,7 @@ int user_matrix_replace_matrix_by_name (const char *name,
     return user_matrix_replace_matrix(u, M);
 }
 
-static user_matrix *get_user_matrix_by_data (const gretl_matrix *M)
+user_matrix *get_user_matrix_by_data (const gretl_matrix *M)
 {
     int level = gretl_function_depth();
     int i;
