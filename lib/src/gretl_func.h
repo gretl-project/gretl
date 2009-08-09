@@ -97,6 +97,8 @@ void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2);
 
 const char *get_funcerr_message (void);
 
+int function_return_type_from_string (const char *s);
+
 int gretl_function_set_info (int i, const char *help);
 
 int gretl_function_get_info (int i, const char *key, char const **value);

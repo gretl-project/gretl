@@ -29,16 +29,24 @@
 #define MDEBUG 0
 #define LEVEL_AUTO -1
 
+typedef enum {
+    UM_PRIVATE = 1 << 0,
+    UM_SHELL   = 1 << 1
+} UMFlags;
+
 struct user_matrix_ {
     gretl_matrix *M;
     int level;
-    int private;
+    UMFlags flags;
     char name[VNAMELEN];
     char **colnames;
 };
 
 static user_matrix **matrices;
 static int n_matrices;
+
+#define matrix_is_private(u) ((u->flags & UM_PRIVATE) || *u->name == '$')
+#define matrix_is_shell(u) (u->flags & UM_SHELL)
 
 #if MDEBUG > 1
 static void print_matrix_stack (const char *msg)
@@ -83,7 +91,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
 
     u->M = M;
     u->level = gretl_function_depth();
-    u->private = 0;
+    u->flags = 0;
     *u->name = '\0';
     strncat(u->name, name, VNAMELEN - 1);
     u->colnames = NULL;
@@ -188,7 +196,7 @@ int private_matrix_add (gretl_matrix *M, const char *name)
     if (u == NULL) {
 	return E_ALLOC;
     } else {
-	u->private = 1;
+	u->flags |= UM_PRIVATE;
 	return 0;
     }
 }
@@ -517,6 +525,37 @@ int copy_matrix_as (const gretl_matrix *m, const char *newname)
 	} else {
 	    u->level += 1;
 	}
+    }
+
+    return err;
+}
+
+/**
+ * matrix_add_as_shell:
+ * @M: the matrix to add.
+ * @name: the name to be given to the shell.
+ *
+ * Matrix @M is added to the stack of saved matrices under
+ * the name @name with the shell flag set.  This is used
+ * when an anonymous matrix is given as a %const argument to a 
+ * user-defined function: it is temporarily given a named shell, 
+ * such that it is accessible by name within the function but 
+ * the content @M will not be destroyed on exit from the 
+ * function.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int matrix_add_as_shell (gretl_matrix *M, const char *name)
+{
+    user_matrix *u = real_user_matrix_add(M, name, 0);
+    int err = 0;
+
+    if (u == NULL) {
+	err = E_ALLOC;
+    } else {
+	u->flags |= UM_SHELL;
+	u->level += 1;
     }
 
     return err;
@@ -883,6 +922,12 @@ static void destroy_user_matrix (user_matrix *u)
 	return;
     }
 
+    if (matrix_is_shell(u)) {
+	/* don't free content */
+	free(u);
+	return;
+    }
+
 #if MDEBUG
     fprintf(stderr, "destroy_user_matrix: freeing matrix at %p...", 
 	    (void *) u->M);
@@ -907,7 +952,7 @@ static int matrix_levels_match (user_matrix *u, int lev)
 
     if (u->level == lev) {
 	ret = 1;
-    } else if (lev == LEV_PRIVATE && (u->private || *u->name == '$')) {
+    } else if (lev == LEV_PRIVATE && matrix_is_private(u)) {
 	ret = 1;
     }
 

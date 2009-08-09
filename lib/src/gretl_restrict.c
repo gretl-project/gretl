@@ -2227,8 +2227,8 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
 
     if (!err) {
 	/* formulate function call string and make the call:
-	   should get a row vector */
-	sprintf(fncall, "%s(&%s)", rset->rfunc, RCOEFFNAME);
+	   should get a vector */
+	sprintf(fncall, "%s(%s)", rset->rfunc, RCOEFFNAME);
 	bread = generate_matrix(fncall, NULL, NULL, &err);
     }
 

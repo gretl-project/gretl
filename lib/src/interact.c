@@ -1661,6 +1661,29 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
     return ret;
 }
 
+/* look for, e.g., "matrix foo(..." or "matrix foo (...",
+   where the first character after a type name and a 
+   potential identifier is '('
+*/
+
+static int genr_is_function_def (const char *line, CMD *cmd)
+{
+    int ret = 0;
+
+    if (function_return_type_from_string(cmd->word) > 0) {
+	int n;
+
+	line += strlen(cmd->word);
+	line += strspn(line, " ");
+	n = gretl_namechar_spn(line);
+	if (n > 0 && *(line + n + 1)  == '(') {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 /* if we find a semicolon without a preceding or following space,
    insert a space so that we can count the fields in the line
    correctly */
@@ -2290,7 +2313,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == 0) {
 	cmd->ci = gretl_command_number(cmd->word);
-	if (cmd->ci == 0) {
+	if (cmd->ci == GENR) {
+	    if (genr_is_function_def(line, cmd)) {
+		cmd->ci = FUNC;
+	    }
+	} else if (cmd->ci == 0) {
 	    if (plausible_genr_start(line, pdinfo)) {
 		cmd->ci = GENR;
 	    } else if (get_user_function_by_name(cmd->word)) {

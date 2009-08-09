@@ -38,18 +38,6 @@
 #define FN_DEBUG 0      /* miscellaneous debugging */
 #define DDEBUG 0        /* debug the debugger */
 
-typedef struct fn_param_ fn_param;
-
-struct fn_param_ {
-    char *name;
-    char *descrip;
-    char type;
-    char flags;
-    double deflt;
-    double min;
-    double max;
-};
-
 typedef struct obsinfo_ obsinfo;
 
 struct obsinfo_ {
@@ -60,15 +48,33 @@ struct obsinfo_ {
     char stobs[OBSLEN];
 };
 
+/* structure representing a parameter of a user-defined function */
+
+typedef struct fn_param_ fn_param;
+
+struct fn_param_ {
+    char *name;     /* the name of the parameter */
+    char *descrip;  /* its description */
+    char type;      /* its type */
+    char flags;     /* additional information (e.g. "const" flag) */
+    double deflt;   /* default value */
+    double min;     /* minimum value (scalar parameters only) */
+    double max;     /* maximum value (scalar parameters only) */
+};
+
+/* structure representing a call to a user-defined function */
+
 typedef struct fncall_ fncall;
 
 struct fncall_ {
-    ufunc *fun;
-    fnargs *args;
+    ufunc *fun;    /* the function called */
+    fnargs *args;  /* argument array */
     int *ptrvars;
     int *listvars;
     obsinfo obs;
 };
+
+/* structure representing a user-defined function */
 
 struct ufunc_ {
     char name[FN_NAMELEN];
@@ -83,6 +89,8 @@ struct ufunc_ {
     char *retname;
     int debug;
 };
+
+/* structure representing a function "package" */
 
 struct fnpkg_ {
     int ID;
@@ -100,9 +108,16 @@ struct fnpkg_ {
     int n_priv;
 };
 
+enum {
+    ARG_OPTIONAL = 1 << 0,
+    ARG_CONST    = 1 << 1
+};
+
+/* structure representing an argument to a user-defined function */
+
 struct fnarg {
     char type;
-    char flags;
+    char flags;       /* ARG_OPTIONAL, ARG_CONST as appropriate */
     const char *name; /* name as function param */
     char *upname;     /* name of supplied arg at caller level */
     union {
@@ -118,11 +133,6 @@ struct fnarg {
 struct fnargs_ {
     int argc;
     struct fnarg **arg;
-};
-
-enum {
-    ARG_OPTIONAL = 1 << 0,
-    ARG_CONST    = 1 << 1
 };
 
 static int n_ufuns;
@@ -782,6 +792,23 @@ static int arg_type_from_string (const char *s)
     if (!strcmp(s, "string")) return GRETL_TYPE_STRING;
 
     return 0;
+}
+
+#define ok_return_type(r) (r == GRETL_TYPE_DOUBLE || \
+	                   r == GRETL_TYPE_SERIES || \
+	                   r == GRETL_TYPE_MATRIX || \
+	                   r == GRETL_TYPE_LIST || \
+                           r == GRETL_TYPE_STRING)
+
+int function_return_type_from_string (const char *s)
+{
+    int t = arg_type_from_string(s);
+
+    if (ok_return_type(t)) {
+	return t;
+    } else {
+	return 0;
+    }
 }
 
 /* backward compatibility for nasty old numeric type references */
@@ -2778,7 +2805,9 @@ static void arg_tail_strip (char *s)
 static int parse_fn_definition (char *fname, 
 				fn_param **pparams,
 				int *pnp,
+				int *rettype,
 				const char *str, 
+				const char *word,
 				ufunc **pfun, 
 				PRN *prn)
 {
@@ -2786,6 +2815,19 @@ static int parse_fn_definition (char *fname,
     char *p, *s = NULL;
     int i, len, np = 0;
     int err = 0;
+
+    if (strcmp(word, "function")) {
+	/* should be type specifier */
+	*rettype = arg_type_from_string(word);
+	if (*rettype == 0) {
+	    return E_PARSE;
+	} else if (!ok_return_type(*rettype)) {
+	    gretl_errmsg_set("Invalid return type for function");
+	    return E_TYPES;
+	}
+    }
+
+    str += strlen(word);
 
     while (isspace(*str)) str++;
 
@@ -2886,16 +2928,18 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     ufunc *fun = NULL;
     fn_param *params = NULL;
     int nf, n_params = 0;
+    int rettype = 0;
+    char word[10];
     char fname[FN_NAMELEN];
     char extra[8];
     int err = 0;
 
-    nf = sscanf(line, "function %31s %7s", fname, extra);
-    if (nf <= 0) {
+    nf = sscanf(line, "%9s %31s %7s", word, fname, extra);
+    if (nf <= 1) {
 	return E_PARSE;
     } 
 
-    if (nf == 2) {
+    if (!strcmp(word, "function") && nf == 3) {
 	if (!strcmp(extra, "clear") || !strcmp(extra, "delete")) {
 	    return maybe_delete_function(fname, prn);
 	}
@@ -2905,8 +2949,8 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
        of the same name, if any */
 
     *fname = '\0';
-    err = parse_fn_definition(fname, &params, &n_params,
-			      line + 8, &fun, prn);
+    err = parse_fn_definition(fname, &params, &n_params, &rettype,
+			      line, word, &fun, prn);
 
     if (!err && fun == NULL) {
 	fun = add_ufunc(fname);
@@ -2920,6 +2964,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	strcpy(fun->name, fname);
 	fun->params = params;
 	fun->n_params = n_params;
+	fun->rettype = rettype;
 	current_ufun = fun;
 	set_compiling_on();
     } else {
@@ -2932,40 +2977,51 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 static int add_function_return (ufunc *fun, const char *line)
 {
     char s1[16], s2[VNAMELEN];
-    int type;
+    int type, n;
     int err = 0;
 
-    if (fun->rettype != GRETL_TYPE_NONE) {
-	sprintf(gretl_errmsg, "Function %s: return value is already defined",
-		fun->name);
-	return 1;
-    }
-
-    if (sscanf(line, "%15s %15s", s1, s2) != 2) {
-	return E_PARSE;
-    }
-
-    type = field_to_type(s1);
-
 #if FNPARSE_DEBUG
-    fprintf(stderr, "add_function_return: s1='%s', s2='%s'\n", s1, s2);
-    fprintf(stderr, "field_to_type on '%s' gives %d\n", s1, type);
+    fprintf(stderr, "add_function_return: line = '%s'\n", line);
 #endif
 
-    if (type == 0) {
+    n = sscanf(line, "%15s %15s", s1, s2);
+
+    type = arg_type_from_string(s1);
+
+    if (type > 0 && fun->rettype != GRETL_TYPE_NONE) {
+	sprintf(gretl_errmsg, "Function %s: return value is already defined",
+		fun->name);
 	return E_PARSE;
-    } 
-
-    err = check_varname(s2);
-
-    if (!err) {
-	fun->retname = gretl_strdup(s2);
-	if (fun->retname == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    fun->rettype = type;
-	}
     }
+
+    if (fun->rettype == GRETL_TYPE_NONE) {
+	/* return type should be specified inline */
+	if (type == 0) {
+	    err = E_PARSE;
+	} else if (!ok_return_type(type)) {
+	    gretl_errmsg_sprintf("%s: invalid return type '%s'\n", fun->name, s1);
+	    err = E_TYPES;
+	} else {
+	    err = check_varname(s2);
+	    if (!err) {
+		fun->retname = gretl_strdup(s2);
+		if (fun->retname == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    fun->rettype = type;
+		}
+	    }
+	}
+    } else {
+	/* return type was pre-defined */
+	err = check_varname(s1);
+	if (!err) {
+	    fun->retname = gretl_strdup(s1);
+	    if (fun->retname == NULL) {
+		err = E_ALLOC;
+	    } 
+	}
+    }	
 
     return err;
 }
@@ -3180,8 +3236,8 @@ int update_function_from_script (const char *fname, int idx)
 		err = fndef_maybe_append_next(s, fp);
 		if (!err) {
 		    err = parse_fn_definition(fun->name, &fun->params,
-					      &fun->n_params, s + 8, 
-					      NULL, NULL);
+					      &fun->n_params, &fun->rettype,
+					      s, "function", NULL, NULL);
 		}
 	    }
 	} else {
@@ -3279,24 +3335,28 @@ static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
     }
 }
 
-static int maybe_localize_const_matrix (struct fnarg *arg, 
-					fn_param *fp)
+static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
 {
     user_matrix *u = get_user_matrix_by_data(arg->val.m);
     int err = 0;
 
     if (u == NULL) {
-	err = copy_matrix_as(arg->val.m, fp->name);
+	/* the const argument is an anonymous matrix */
+	err = matrix_add_as_shell(arg->val.m, fp->name);
     } else {
+	/* the const argument is a named matrix */
 	arg->upname = gretl_strdup(user_matrix_get_name(u));
 	if (arg->upname == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    user_matrix_adjust_level(u, 1);
 	    user_matrix_set_name(u, fp->name);
-	    arg->name = fp->name;
-	    arg->flags |= ARG_CONST;
 	}
+    }
+
+    if (!err) {
+	arg->name = fp->name;
+	arg->flags |= ARG_CONST;
     }
 
     return err;
@@ -3441,7 +3501,7 @@ static int allocate_function_args (fncall *call,
 	    }	    
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
 	    if (fp->flags & ARG_CONST) {
-		err = maybe_localize_const_matrix(arg, fp);
+		err = localize_const_matrix(arg, fp);
 	    } else {
 		err = copy_matrix_as(arg->val.m, fp->name);
 	    }
@@ -3808,8 +3868,8 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
-    /* "indirect return" values: these should be restored even if the
-       function bombed.
+    /* "indirect return" values and other pointerized args: 
+       these should be handled even if the function bombed.
     */
 
     for (i=0; i<args->argc; i++) {
