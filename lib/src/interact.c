@@ -1661,9 +1661,11 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
     return ret;
 }
 
-/* look for, e.g., "matrix foo(..." or "matrix foo (...",
+/* Look for, e.g., "matrix foo(..." or "matrix foo (...",
    where the first character after a type name and a 
-   potential identifier is '('
+   potential identifier is '('.  Such a line can't be a
+   regular genr command, but it could be the first line of
+   a function definition.
 */
 
 static int genr_is_function_def (const char *line, CMD *cmd)
@@ -1675,9 +1677,14 @@ static int genr_is_function_def (const char *line, CMD *cmd)
 
 	line += strlen(cmd->word);
 	line += strspn(line, " ");
+
 	n = gretl_namechar_spn(line);
-	if (n > 0 && *(line + n + 1)  == '(') {
-	    ret = 1;
+	if (n > 0) {
+	    line += n;
+	    line += strspn(line, " ");
+	    if (*line == '(') {
+		ret = 1;
+	    }
 	}
     }
 

@@ -533,15 +533,15 @@ int copy_matrix_as (const gretl_matrix *m, const char *newname)
 /**
  * matrix_add_as_shell:
  * @M: the matrix to add.
- * @name: the name to be given to the shell.
+ * @name: the name to be given to the "shell".
  *
  * Matrix @M is added to the stack of saved matrices under
  * the name @name with the shell flag set.  This is used
  * when an anonymous matrix is given as a %const argument to a 
- * user-defined function: it is temporarily given a named shell, 
- * such that it is accessible by name within the function but 
- * the content @M will not be destroyed on exit from the 
- * function.
+ * user-defined function: it is temporarily given user_matrix, 
+ * status, so that it is accessible by name within the function,
+ * but the content @M is protected from destruction on exit 
+ * from the function.
  *
  * Returns: 0 on success, non-zero on error.
  */
