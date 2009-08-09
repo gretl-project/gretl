@@ -107,7 +107,8 @@ typedef enum {
     GRETL_TYPE_MATRIX_REF,
     GRETL_TYPE_USCALAR,
     GRETL_TYPE_USERIES,
-    GRETL_TYPE_DATE
+    GRETL_TYPE_DATE,
+    GRETL_TYPE_VOID
 } GretlType;
 
 #define gretl_scalar_type(t) (t == GRETL_TYPE_BOOL || \

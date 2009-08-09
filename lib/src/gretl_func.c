@@ -31,7 +31,7 @@
 
 #include <glib.h>
 
-#define FNPARSE_DEBUG 0 /* debug parsing of function code */
+#define FNPARSE_DEBUG 2 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
 #define UDEBUG 0        /* debug handling of args */
 #define PKG_DEBUG 0     /* debug handling of function packages */
@@ -2802,12 +2802,17 @@ static void arg_tail_strip (char *s)
     }
 }
 
+/* Here we're parsing what follows "function ".  The
+   traditional expectation is <funcname> (<args>),
+   but in a new-style definition we can have
+   <return-type> <funcname> (<args>)
+*/
+
 static int parse_fn_definition (char *fname, 
 				fn_param **pparams,
 				int *pnp,
 				int *rettype,
 				const char *str, 
-				const char *word,
 				ufunc **pfun, 
 				PRN *prn)
 {
@@ -2816,27 +2821,45 @@ static int parse_fn_definition (char *fname,
     int i, len, np = 0;
     int err = 0;
 
-    if (strcmp(word, "function")) {
-	/* should be type specifier */
-	*rettype = arg_type_from_string(word);
-	if (*rettype == 0) {
-	    return E_PARSE;
-	} else if (!ok_return_type(*rettype)) {
-	    gretl_errmsg_set("Invalid return type for function");
-	    return E_TYPES;
-	}
-    }
-
-    str += strlen(word);
-
+    /* skip to next word */
     while (isspace(*str)) str++;
 
-    /* get the length of the function name */
-    len = strcspn(str, " (");
-    if (len == 0) {
-	return E_PARSE;
-    } 
+    /* and find its length */
+    len = gretl_namechar_spn(str);
 
+    if (len == 0 || len >= FN_NAMELEN) {
+	return E_PARSE;
+    }
+
+    if (len <= 8) {
+	/* see if we have a type specifier: is so, record
+	   it and move on to the next word
+	*/
+	char typeword[9] = {0};
+	int t;
+
+	strncat(typeword, str, len);
+	if (!strcmp(typeword, "void")) {
+	    t = GRETL_TYPE_VOID;
+	} else {
+	    t = arg_type_from_string(typeword);
+	    if (t > 0 && !ok_return_type(t)) {
+		gretl_errmsg_set("Invalid return type for function");
+		return E_TYPES;
+	    }		
+	}
+
+	if (t > 0) {
+	    *rettype = t;
+	    str += len;
+	    str += strspn(str, " ");
+	    len = gretl_namechar_spn(str);
+	    if (len == 0 || len >= FN_NAMELEN) {
+		return E_PARSE;
+	    }
+	}
+    }
+	    
     if (*fname == '\0') {
 	char fmt[8] = "%31s";
 
@@ -2929,19 +2952,19 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     fn_param *params = NULL;
     int nf, n_params = 0;
     int rettype = 0;
-    char word[10];
     char fname[FN_NAMELEN];
-    char extra[8];
+    char s1[FN_NAMELEN];
+    char s2[FN_NAMELEN];
     int err = 0;
 
-    nf = sscanf(line, "%9s %31s %7s", word, fname, extra);
-    if (nf <= 1) {
+    nf = sscanf(line, "function %31s %31s", s1, s2);
+    if (nf <= 0) {
 	return E_PARSE;
     } 
 
-    if (!strcmp(word, "function") && nf == 3) {
-	if (!strcmp(extra, "clear") || !strcmp(extra, "delete")) {
-	    return maybe_delete_function(fname, prn);
+    if (nf == 2) {
+	if (!strcmp(s2, "clear") || !strcmp(s2, "delete")) {
+	    return maybe_delete_function(s1, prn);
 	}
     } 
 
@@ -2950,7 +2973,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 
     *fname = '\0';
     err = parse_fn_definition(fname, &params, &n_params, &rettype,
-			      line, word, &fun, prn);
+			      line + 8, &fun, prn);
 
     if (!err && fun == NULL) {
 	fun = add_ufunc(fname);
@@ -2974,22 +2997,23 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     return err;
 }
 
-static int add_function_return (ufunc *fun, const char *line)
+static int function_parse_return (ufunc *fun, const char *line)
 {
+    const char *s = line + 7; /* skip "return" */
     char s1[16], s2[VNAMELEN];
     int type, n;
     int err = 0;
 
 #if FNPARSE_DEBUG
-    fprintf(stderr, "add_function_return: line = '%s'\n", line);
+    fprintf(stderr, "function_parse_return: line = '%s'\n", line);
 #endif
 
-    n = sscanf(line, "%15s %15s", s1, s2);
+    n = sscanf(s, "%15s %15s", s1, s2);
 
     type = arg_type_from_string(s1);
 
-    if (type > 0 && fun->rettype != GRETL_TYPE_NONE) {
-	sprintf(gretl_errmsg, "Function %s: return value is already defined",
+    if (type > 0 && fun->retname != NULL) {
+	sprintf(gretl_errmsg, "%s: return value is already defined",
 		fun->name);
 	return E_PARSE;
     }
@@ -2997,9 +3021,12 @@ static int add_function_return (ufunc *fun, const char *line)
     if (fun->rettype == GRETL_TYPE_NONE) {
 	/* return type should be specified inline */
 	if (type == 0) {
-	    err = E_PARSE;
+	    gretl_errmsg_sprintf("%s: return type not specified\n", 
+				 fun->name);
+	    err = E_TYPES;
 	} else if (!ok_return_type(type)) {
-	    gretl_errmsg_sprintf("%s: invalid return type '%s'\n", fun->name, s1);
+	    gretl_errmsg_sprintf("%s: invalid return type '%s'\n", 
+				 fun->name, s1);
 	    err = E_TYPES;
 	} else {
 	    err = check_varname(s2);
@@ -3013,14 +3040,8 @@ static int add_function_return (ufunc *fun, const char *line)
 	    }
 	}
     } else {
-	/* return type was pre-defined */
-	err = check_varname(s1);
-	if (!err) {
-	    fun->retname = gretl_strdup(s1);
-	    if (fun->retname == NULL) {
-		err = E_ALLOC;
-	    } 
-	}
+	/* return type was pre-defined: treat as normal line */
+	err = strings_array_add(&fun->lines, &fun->n_lines, line);
     }	
 
     return err;
@@ -3122,7 +3143,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
 	strcpy(gretl_errmsg, "You can't define a function within a function");
 	err = 1;
     } else if (function_return_line(line) && !ignore_line(fun)) {
-	err = add_function_return(fun, line + 7);
+	err = function_parse_return(fun, line);
     } else {  
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
     }
@@ -3237,7 +3258,7 @@ int update_function_from_script (const char *fname, int idx)
 		if (!err) {
 		    err = parse_fn_definition(fun->name, &fun->params,
 					      &fun->n_params, &fun->rettype,
-					      s, "function", NULL, NULL);
+					      s + 8, NULL, NULL);
 		}
 	    }
 	} else {
@@ -4264,6 +4285,57 @@ static int debug_command_loop (ExecState *state,
     return 1 + debug_next(state->cmd);
 }
 
+#define void_function(f) (f->rettype == 0 || f->rettype == GRETL_TYPE_VOID)
+
+static int handle_return_statement (ufunc *fun,
+				    ExecState *state,
+				    double ***pZ,
+				    DATAINFO *pdinfo)
+{
+    const char *s = state->line + 7;
+    int err = 0;
+
+#if EXEC_DEBUG
+    fprintf(stderr, "%s: return: s = '%s'\n", fun->name, s);
+#endif
+
+    s += strspn(s, " ");
+
+    if (*s == '\0' && void_function(fun)) {
+	/* plain "return" from void function: OK */
+	return 0;
+    } else if (*s == '\0' && !void_function(fun)) {
+	gretl_errmsg_sprintf("%s: return value is missing", fun->name);
+	err = E_TYPES;
+    } else if (*s != '\0' && void_function(fun)) {
+	gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid", 
+			     fun->name, s);
+	err = E_TYPES;
+    } else {
+	int len = gretl_namechar_spn(s);
+
+	if (len == strlen(s)) {
+	    /* returning a named variable */
+	    fun->retname = gretl_strndup(s, len);
+	} else {
+	    const char *typestr = arg_type_string(fun->rettype);
+	    char formula[MAXLINE];
+	    
+	    sprintf(formula, "%s $retval=%s", typestr, s);
+	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+	    if (!err) {
+		fun->retname = gretl_strdup("$retval");
+	    }
+	}
+    }
+
+    if (!err && fun->retname == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
+
 static void fn_state_init (CMD *cmd, ExecState *state, int *indent0)
 {
     cmd->list = NULL;
@@ -4294,6 +4366,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_t1 = 0;
     int orig_t2 = 0;
     int indent0, started = 0;
+    int retline = -1;
     int debugging = u->debug;
     int i, err = 0;
 
@@ -4388,6 +4461,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    continue;
 	}
 
+	memset(line, '\0', sizeof line);
 	strcpy(line, u->lines[i]);
 
 	if (debugging) {
@@ -4397,6 +4471,12 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	err = maybe_exec_line(&state, pZ, pdinfo);
+
+	if (!err && state.cmd->ci == FUNCRET) {
+	    err = handle_return_statement(u, &state, pZ, pdinfo); 
+	    retline = i;
+	    break;
+	}
 
 	if (debugging > 1 && state.cmd->ci > 0 && 
 	    !gretl_compiling_loop() && !state.cmd->context) {
@@ -4471,7 +4551,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	pdinfo->t2 = orig_t2;
     }
 
-    if (err) {
+    if (err || retline >= 0) {
 	gretl_if_state_clear();
     } else {
 	err = gretl_if_state_check(indent0);

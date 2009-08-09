@@ -146,6 +146,7 @@ typedef enum {
     XCORRGM,
     XTAB,
     FUNDEBUG,
+    FUNCRET,
     NC
 } GretlCmdIndex;
 

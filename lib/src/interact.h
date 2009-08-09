@@ -57,7 +57,7 @@ typedef enum {
     DEBUG_EXEC        = 1 << 4
 } ExecFlags;
 
-#define HIDDEN_COMMAND(c) (c == FUNCERR)
+#define HIDDEN_COMMAND(c) (c == FUNCERR || c == FUNCRET)
     
 /* functions follow */
 

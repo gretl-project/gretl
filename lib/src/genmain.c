@@ -277,6 +277,7 @@ static const char *reswords[] = {
     "string",
     "list",
     "kalman",
+    "void",
     /* debugging instructions */
     "continue",
     "next"
