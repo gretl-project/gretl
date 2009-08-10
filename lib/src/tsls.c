@@ -834,7 +834,7 @@ static void tsls_extra_stats (MODEL *pmod, int overid, const double **Z,
     pmod->criterion[C_BIC] = NADBL;
     pmod->criterion[C_HQC] = NADBL;
     
-     if (dataset_is_time_series(pdinfo) && pmod->missmask == NULL) {
+    if (dataset_is_time_series(pdinfo) && pmod->missmask == NULL) {
 	/* time series, no missing obs within sample range */
 	pmod->rho = rhohat(1, pmod->t1, pmod->t2, pmod->uhat);
 	pmod->dw = dwstat(1, pmod, Z);
@@ -1511,7 +1511,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (nendo == 1) {
 	    /* handles robust estimation, for single endogenous regressor */
 	    compute_first_stage_F(&tsls, ev, reglist, instlist, pZ, pdinfo, opt);
-	} else if (!(opt & OPT_R)) {
+	} else if (!(opt & OPT_R) && nendo > 0) {
 	    /* at present, only handles case of i.i.d. errors */
 	    compute_stock_yogo(&tsls, endolist, instlist, hatlist,
 			       (const double **) *pZ);
@@ -1524,9 +1524,11 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	reglist_remove_redundant_vars(&tsls, s2list, reglist);
     }
 
-    /* special: we need to use the original RHS vars to compute
-       residuals and associated statistics */
-    tsls_residuals(&tsls, reglist, (const double **) *pZ, opt);
+    if (nendo > 0) {
+	/* special: we need to use the original RHS vars to compute
+	   residuals and associated statistics */
+	tsls_residuals(&tsls, reglist, (const double **) *pZ, opt);
+    }
 
     if (opt & OPT_R) {
 	/* robust standard errors called for */
@@ -1536,10 +1538,12 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}	
     } 
 
-    /* compute additional statistics (R^2, F, etc.) */
-    tsls_extra_stats(&tsls, OverIdRank, (const double **) *pZ, pdinfo);
+    if (nendo > 0) {
+	/* compute additional statistics (R^2, F, etc.) */
+	tsls_extra_stats(&tsls, OverIdRank, (const double **) *pZ, pdinfo);
+    }
 
-    if (!sysest) {
+    if (!sysest && nendo > 0) {
 	if (hatlist != NULL) {
 	    tsls_hausman_test(&tsls, reglist, hatlist, pZ, pdinfo);
 	}

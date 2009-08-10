@@ -133,12 +133,6 @@ liml_make_reglist (const equation_system *sys, const int *list,
     j = 2;
     for (i=2; i<=list[0]; i++) {
 	if (in_gretl_list(exlist, list[i])) {
-	    if (reglist[0] == nexo) {
-		fprintf(stderr, "liml_make_reglist: somthing funny going on!\n");
-		free(reglist);
-		*err = E_DATA;
-		return NULL;
-	    }
 	    reglist[0] += 1;
 	    reglist[j++] = list[i];
 	} else {
@@ -254,7 +248,6 @@ static int liml_do_equation (equation_system *sys, int eq,
 	}
 	freelists = 1;
     } else {
-	list = system_get_list(sys, eq);
 	exlist = system_get_instr_vars(sys);
     }
 

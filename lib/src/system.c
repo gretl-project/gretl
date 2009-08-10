@@ -1388,6 +1388,7 @@ static int sys_check_lists (equation_system *sys, const double **Z,
 #endif
 
     if (!err && sys->ylist[0] != nlhs) {
+	/* Note: added 2009-08-10 */
 	sprintf(gretl_errmsg, "Found %d endogenous variables but %d equations",
 		sys->ylist[0], nlhs);
 	err = E_DATA;
