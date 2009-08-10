@@ -1136,7 +1136,8 @@ static double getdbl (parser *p)
 
 #define word_start_special(c) (c == '$' || c == '@' || c == '_')
 
-#define lag_range_sym(p) (p->ch == 't' && *p->point == 'o' && \
+#define lag_range_sym(p) ((p->sym == NUM || p->sym == USCALAR) && \
+                          p->ch == 't' && *p->point == 'o' && \
 			  *(p->point + 1) == ' ')
 
 void lex (parser *p)

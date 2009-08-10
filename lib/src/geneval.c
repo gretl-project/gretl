@@ -6546,7 +6546,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case SUBSL:
     case B_RANGE:
-	/* matrix sub-slice, x:y or lag range 'p to q' */
+	/* matrix sub-slice, x:y, or lag range, 'p to q' */
 	ret = process_subslice(l, r, p);
 	break;
     case F_LDIFF:
