@@ -123,12 +123,16 @@ static void noalloc (void)
 
 static int file_get_line (char *line, CMD *cmd)
 {
+    int len;
+
     clear(line, MAXLINE);
     fgets(line, MAXLINE, fb);
 
+    len = strlen(line);
+
     if (*line == '\0') {
 	strcpy(line, "quit");
-    } else if (line[strlen(line)-1] != '\n') {
+    } else if (len == MAXLINE - 1 && line[len-1] != '\n') {
 	return E_TOOLONG;
     } else {
 	*linebak = 0;
