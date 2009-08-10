@@ -954,9 +954,19 @@ static void link_open_script (GtkTextTag *tag)
 {
     const char *fname = g_object_get_data(G_OBJECT(tag), "fname");
     char fullname[MAXLEN];
+    FILE *fp;
 
     sprintf(fullname, "%sscripts%cmisc%c%s", paths.gretldir, 
 	    SLASH, SLASH, fname);
+
+    fp = gretl_fopen(fullname, "r");
+    if (fp != NULL) {
+	fclose(fp);
+    } else {
+	sprintf(fullname, "%sscripts%c%s", paths.gretldir, 
+		SLASH, fname);
+    }
+
     view_file(fullname, 0, 0, 78, 370, VIEW_SCRIPT);
 }
 
