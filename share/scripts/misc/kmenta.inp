@@ -8,7 +8,7 @@
 
 open kmenta.gdt
 
-system name=Kmenta
+Kmenta <- system
   equation Q 0 P D
   equation Q 0 P F A
   endog Q P

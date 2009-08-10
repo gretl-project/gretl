@@ -9,7 +9,7 @@ genr A = t - 1931
 genr K1 = K(-1)
 
 # set the model up as a system
-system name="Klein Model 1"
+"Klein Model 1" <- system
  equation C 0 P P(-1) W 
  equation I 0 P P(-1) K1
  equation Wp 0 X X(-1) A
