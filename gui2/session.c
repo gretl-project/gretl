@@ -1192,7 +1192,8 @@ void do_open_session (void)
 	err = dataset_resample(sinfo.resample_n, sinfo.seed, &Z, 
 			       datainfo);
     } else if (sinfo.mask != NULL) {
-	err = restrict_sample_from_mask(sinfo.mask, &Z, datainfo);
+	err = restrict_sample_from_mask(sinfo.mask, &Z, datainfo,
+					OPT_NONE);
     }
 
     if (err) {

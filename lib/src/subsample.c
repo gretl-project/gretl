@@ -575,7 +575,8 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
     if (!err && state != NULL) {
 	/* "full" really means, relative to the original state */
 	if (state->submask != NULL) {
-	    err = restrict_sample_from_mask(state->submask, pZ, pdinfo);
+	    err = restrict_sample_from_mask(state->submask, pZ, pdinfo,
+					    OPT_NONE);
 	} else {
 	    int t1min, t2max;
 
@@ -986,6 +987,78 @@ int get_restriction_mode (gretlopt opt)
     return mode;
 }
 
+/* Copy list of panel periods from Ti to T0; return 1 if members of
+   the list Ti are consecutive, 0 if they are not. 
+*/
+
+static int copy_periods_list (int *T0, const int *Ti)
+{
+    int j, ret = 1;
+
+    for (j=0; j<=Ti[0] && ret; j++) {
+	if (j > 1 && Ti[j] != Ti[j-1] + 1) {
+	    ret = 0;
+	} else {
+	    T0[j] = Ti[j];
+	}
+    }
+
+    return ret;
+}
+
+/* When sub-sampling panel data with the "--no-missing" option: see if
+   the exclusion of missing values leaves a balanced panel.  Note that
+   the requirement is not simply that each unit has the same number of
+   temporal observations -- they must have the _same_ observations, 
+   and in addition the observations must be temporally contiguous.
+*/
+
+static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
+{
+    int *T0, *Ti;
+    int i, u, ubak = -1;
+    int ret = 1;
+
+    T0 = gretl_list_new(pdinfo->paninfo->Tmax);
+    Ti = gretl_list_new(pdinfo->paninfo->Tmax);
+
+    if (T0 == NULL || Ti == NULL) {
+	free(T0);
+	free(Ti);
+	return 0;
+    }
+
+    T0[0] = Ti[0] = 0;
+
+    for (i=0; i<pdinfo->n && ret; i++) {
+	if (mask[i]) {
+	    u = pdinfo->paninfo->unit[i];
+	    if (u != ubak) {
+		if (Ti[0] > 0) {
+		    if (T0[0] == 0) {
+			/* we haven't made the reference list, T0, yet */
+			ret = copy_periods_list(T0, Ti);
+		    } else if (gretl_list_cmp(Ti, T0)) {
+			/* the current list differs from the reference one */
+			ret = 0;
+		    }
+		}
+		Ti[0] = 1;
+		Ti[1] = pdinfo->paninfo->period[i];
+	    } else {
+		Ti[0] += 1;
+		Ti[Ti[0]] = pdinfo->paninfo->period[i];
+	    }
+	    ubak = u;
+	}
+    }
+
+    free(T0);
+    free(Ti);
+
+    return ret;
+}
+
 static int 
 make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
 {
@@ -1115,7 +1188,8 @@ make_restriction_mask (int mode, const char *s, const int *list,
 */
 
 int 
-restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
+restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
+			   gretlopt opt)
 {
     double **subZ = NULL;
     DATAINFO *subinfo;
@@ -1141,19 +1215,28 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
 
     if (dataset_is_panel(pdinfo)) {
 	/* are we able to reconstitute a panel? */
-	int npad, nunits = count_panel_units(mask, pdinfo);
+	int nunits = count_panel_units(mask, pdinfo);
+	int ok = 0, npad = 0;
 
 	if (nunits > 1 && subinfo->n > nunits) {
-	    /* add padding rows if need be */
-	    npad = make_panel_submask(mask, pdinfo, &err);
-	    if (err) {
-		free(subinfo);
-		return err;
+	    if (opt & OPT_M) {
+		/* "no-missing" option: don't do padding! */
+		ok = mask_leaves_balanced_panel(mask, pdinfo);
+	    } else {
+		/* add padding rows if need be */
+		npad = make_panel_submask(mask, pdinfo, &err);
+		if (err) {
+		    free(subinfo);
+		    return err;
+		}
+		ok = 1;
 	    }
-	    subinfo->structure = STACKED_TIME_SERIES;
-	    subinfo->n += npad;
-	    subinfo->pd = subinfo->n / nunits;
-	    /* note: panel indices are added below */
+	    if (ok) {
+		subinfo->structure = STACKED_TIME_SERIES;
+		subinfo->n += npad;
+		subinfo->pd = subinfo->n / nunits;
+		/* note: revised panel indices are added below */
+	    }
 	} else if (nunits == 1 && subinfo->n == pdinfo->pd) {
 	    /* time series for single panel unit */
 	    subinfo->structure = SPECIAL_TIME_SERIES;
@@ -1397,7 +1480,7 @@ int restrict_sample (const char *line, const int *list,
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: using mask\n");
 #endif
-	    err = restrict_sample_from_mask(mask, pZ, pdinfo);
+	    err = restrict_sample_from_mask(mask, pZ, pdinfo, opt);
 	}
     }
 

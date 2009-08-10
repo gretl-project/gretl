@@ -1103,7 +1103,7 @@ equation_system_estimate (equation_system *sys,
 int system_adjust_t1t2 (equation_system *sys, const double **Z, 
 			const DATAINFO *pdinfo)
 {
-    int err = 0;
+    int err;
 
     if (sys->biglist == NULL) {
 	fprintf(stderr, "system_adjust_t1t2: no 'biglist' present!\n");
@@ -1113,7 +1113,7 @@ int system_adjust_t1t2 (equation_system *sys, const double **Z,
     sys->t1 = pdinfo->t1;
     sys->t2 = pdinfo->t2;
 
-    err = check_for_missing_obs(sys->biglist, &sys->t1, &sys->t2, Z, NULL);
+    err = check_for_missing_obs(sys->biglist, &sys->t1, &sys->t2, Z);
 
     if (!err) {
 	sys->T = sys->t2 - sys->t1 + 1;
@@ -1473,20 +1473,20 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     if (strlen(line) < 12) {
 	strcpy(gretl_errmsg, "estimate: no system name was provided");
-	return 1;
+	return E_DATA;
     }
 
     sysname = get_system_name_from_line(line, SYSNAME_EST);
     if (sysname == NULL) {
 	strcpy(gretl_errmsg, "estimate: no system name was provided");
-	return 1;
+	return E_DATA;
     }
 
     sys = get_equation_system_by_name(sysname);
     if (sys == NULL) {
 	sprintf(gretl_errmsg, _("'%s': unrecognized name"), sysname);
 	free(sysname);
-	return 1;
+	return E_UNKVAR;
     }
 
     free(sysname);
@@ -1498,7 +1498,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     if (method < 0 || method >= SYS_METHOD_MAX) {
 	strcpy(gretl_errmsg, "estimate: no valid method was specified");
-	return 1;
+	return E_DATA;
     }
 
     sys->method = method;

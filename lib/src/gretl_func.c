@@ -2997,15 +2997,15 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     return err;
 }
 
-static int function_parse_return (ufunc *fun, const char *line)
+static int parse_function_return (ufunc *fun, const char *line)
 {
-    const char *s = line + 7; /* skip "return" */
+    const char *s = line + 6; /* skip "return" */
     char s1[16], s2[VNAMELEN];
     int type, n;
     int err = 0;
 
 #if FNPARSE_DEBUG
-    fprintf(stderr, "function_parse_return: line = '%s'\n", line);
+    fprintf(stderr, "parse_function_return: line = '%s'\n", line);
 #endif
 
     n = sscanf(s, "%15s %15s", s1, s2);
@@ -3062,10 +3062,8 @@ static int end_of_function (const char *s)
     return ret;
 }
 
-static int function_return_line (const char *s)
-{
-    return !strncmp(s, "return ", 7);
-}
+#define function_return_line(s) (strncmp(s, "return", 6) == 0 && \
+	                         (*(s + 6) == ' ' || *(s + 6) == '\0'))
 
 #define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
 #define starts_comment(p) (*p == '/' && *(p+1) == '*')
@@ -3104,6 +3102,46 @@ static int ignore_line (ufunc *fun)
     return ignore;
 }
 
+#define NEEDS_IF(c) (c == ELSE || c == ELIF || c == ENDIF)
+
+/* Rather minimal check for syntatic validity of "compiled" function.
+   FIXME: it would be good to check here for messed up block structure
+   too (e.g. "system" without "end system").
+*/
+
+static int check_function_structure (ufunc *fun)
+{
+    CMD cmd;
+    int ifdepth = 0;
+    int i, err = 0;
+
+    gretl_cmd_init(&cmd);
+
+    for (i=0; i<fun->n_lines && !err; i++) {
+	get_command_index(fun->lines[i], &cmd);
+	if (cmd.ci == FUNC) {
+	    gretl_errmsg_set("You can't define a function within a function");
+	    err = E_PARSE;
+	} else if (cmd.ci == IF) {
+	    ifdepth++;
+	} else if (NEEDS_IF(cmd.ci) && ifdepth == 0) {
+	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	    err = E_PARSE;
+	} else if (cmd.ci == ENDIF) {
+	    ifdepth--;
+	} 
+    }
+
+    if (!err && ifdepth != 0) {
+	gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	err = E_PARSE;
+    }
+
+    gretl_cmd_free(&cmd);
+
+    return err;
+}
+
 static int real_function_append_line (const char *line, ufunc *fun)
 {
     int editing = 1;
@@ -3139,18 +3177,24 @@ static int real_function_append_line (const char *line, ufunc *fun)
 	    delete_ufunc_from_list(fun);
 	}
 	set_compiling_off();
-    } else if (!strncmp(line, "function", 8)) {
-	strcpy(gretl_errmsg, "You can't define a function within a function");
-	err = 1;
+	return 0; /* handled */
     } else if (function_return_line(line) && !ignore_line(fun)) {
-	err = function_parse_return(fun, line);
+	err = parse_function_return(fun, line);
     } else {  
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
     }
 
     if (err && !editing) {
-	delete_ufunc_from_list(fun);
 	set_compiling_off();
+    }	
+
+    if (!err && !compiling) {
+	/* finished composing function */
+	err = check_function_structure(fun);
+    }
+
+    if (err && !editing) {
+	delete_ufunc_from_list(fun);
     }	
 
     return err;
@@ -4292,7 +4336,7 @@ static int handle_return_statement (ufunc *fun,
 				    double ***pZ,
 				    DATAINFO *pdinfo)
 {
-    const char *s = state->line + 7;
+    const char *s = state->line + 6; /* skip "return" */
     int err = 0;
 
 #if EXEC_DEBUG
@@ -4461,7 +4505,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    continue;
 	}
 
-	memset(line, '\0', sizeof line);
 	strcpy(line, u->lines[i]);
 
 	if (debugging) {
@@ -4544,7 +4587,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    } else if (submask_cmp(state.submask, pdinfo->submask)) {
 		/* we were sub-sampled differently on entry */
 		restore_full_sample(pZ, pdinfo, NULL);
-		restrict_sample_from_mask(state.submask, pZ, pdinfo);
+		restrict_sample_from_mask(state.submask, pZ, pdinfo, OPT_NONE);
 	    } 
 	}
 	pdinfo->t1 = orig_t1;

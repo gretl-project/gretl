@@ -280,7 +280,11 @@ static const char *reswords[] = {
     "void",
     /* debugging instructions */
     "continue",
-    "next"
+    "next",
+    /* range operator for lists */
+    "to",
+    /* other */
+    "function"
 };
 
 /**

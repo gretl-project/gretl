@@ -82,7 +82,7 @@ void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
 int parse_command_line (char *line, CMD *cmd, double ***pZ, 
 			DATAINFO *pdinfo); 
 
-int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo);
+int get_command_index (char *line, CMD *cmd);
 
 int command_number (const char *cmd);
 

@@ -58,7 +58,7 @@ int set_reference_missmask_from_list (const int *list, const double **Z,
 				      const DATAINFO *pdinfo);
 
 int check_for_missing_obs (const int *list, int *t1, int *t2,
-			   const double **Z, int *misst);
+			   const double **Z);
 
 int set_miss (const int *list, const char *param, double **Z,
 	      DATAINFO *pdinfo, PRN *prn);

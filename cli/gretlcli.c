@@ -776,7 +776,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     /* if we're stacking commands for a loop, parse "lightly" */
     if (gretl_compiling_loop()) {
-	err = get_command_index(line, cmd, pdinfo);
+	err = get_command_index(line, cmd);
     } else {
 	err = parse_command_line(line, cmd, pZ, pdinfo);
     }

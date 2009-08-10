@@ -187,6 +187,8 @@ int function_lookup (const char *s);
 
 int const_lookup (const char *s);
 
+const char *gretl_function_complete (const char *s);
+
 void gretl_function_hash_cleanup (void);
 
 #endif /* GENMAIN_H */

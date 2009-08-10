@@ -641,39 +641,25 @@ int varlist_adjust_sample (const int *list, int *t1, int *t2,
  * @t2: on entry, initial end of sample range; on exit, end
  *      of sample range adjusted for missing values.
  * @Z: data array.
- * @misst: return location for index of the first missing observation
- *         inside the (possibly reduced) sample range, or %NULL.
  *
  * Drops leading or trailing observations from the sample range
  * initially given by the values in @t1 and @t2, if missing values are 
  * found among the variables given in @list.  Then checks for any
- * missing values within the adjusted range.  If such are found,
- * the return will be non-zero (see below).  In addition, if
- * @misst is non-%NULL it will receive the index number of the
- * observation where the first such missing value was found.
+ * missing values within the adjusted range.
  * 
  * If you don't care about missing values inside the sample range,
- * use the simpler varlist_adjust_sample().
+ * use varlist_adjust_sample().
  *
- * Returns: the (non-zero) ID number of the first variable for 
- * which a missing value is first found inside the adjusted sample 
- * range or 0 if there is no such variable.
+ * Returns: %E_MISSDATA if missing values are found inside the
+ * (possible adjusted) sample range, else 0.
  */
 
 int check_for_missing_obs (const int *list, int *t1, int *t2,
-			   const double **Z, int *misst)
+			   const double **Z)
 {
-    int missv = 0;
+    int missv = adjust_t1t2(NULL, list, t1, t2, 0, Z, NULL);
 
-    if (misst != NULL) {
-	missv = adjust_t1t2(NULL, list, t1, t2, 0, Z, misst);
-    } else {
-	int tmp;
-
-	missv = adjust_t1t2(NULL, list, t1, t2, 0, Z, &tmp);
-    }
-
-    return missv;
+    return (missv > 0)? E_MISSDATA : 0;
 }
 
 /* For handling the "omit" command, applied to a model that has

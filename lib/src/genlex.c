@@ -211,10 +211,10 @@ struct str_table funcs[] = {
     { F_REPLACE,  "replace" },
     { F_MUNIF,    "muniform" },
     { F_MNORM,    "mnormal" },
-    { F_SUMR,     "sumr" },
     { F_SUMC,     "sumc" },
-    { F_MEANR,    "meanr" },
+    { F_SUMR,     "sumr" },
     { F_MEANC,    "meanc" },
+    { F_MEANR,    "meanr" },
     { F_SDC,      "sdc" },
     { F_MINC,     "minc" },
     { F_MAXC,     "maxc" },
@@ -285,8 +285,8 @@ struct str_table funcs[] = {
     { F_MPOLS,    "mpols" },
     { F_MREAD,    "mread" },
     { F_MWRITE,   "mwrite" },
-    { F_MRSEL,    "selifr" },
     { F_MCSEL,    "selifc" },
+    { F_MRSEL,    "selifr" },
     { F_POLROOTS, "polroots" },
     { F_DUMIFY,   "dummify" },
     { F_WMEAN,    "wmean" },
@@ -495,6 +495,20 @@ int data_var_count (void)
 const char *data_var_name (int i)
 {
     return dvars[i].str;
+}
+
+const char *gretl_function_complete (const char *s)
+{
+    size_t n = strlen(s);
+    int i;
+
+    for (i=0; funcs[i].str != NULL; i++) {
+	if (!strncmp(s, funcs[i].str, n)) {
+	    return funcs[i].str;
+	}
+    }
+
+    return NULL;
 }
 
 /* end external stuff */

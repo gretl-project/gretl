@@ -699,6 +699,39 @@ static void notify_not_found (GtkWidget *entry)
 		     G_CALLBACK(normalize_base), NULL);
 }
 
+#define help_index_ok(r) (r == CLI_HELP || \
+                          r == CLI_HELP_EN || \
+                          r == FUNCS_HELP)
+
+static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *key,
+				    windata_t *vwin)
+{
+    if (key->keyval == GDK_Tab && help_index_ok(vwin->role) &&
+	vwin->active_var == 0) {
+	/* tab-completion in help index mode */
+	const gchar *s = gtk_entry_get_text(entry);
+
+	if (s != NULL && *s != '\0') {
+	    const char *comp = NULL;
+
+	    if (vwin->role == CLI_HELP) {
+		comp = gretl_command_complete(s);
+	    } else if (vwin->role == FUNCS_HELP) {
+		comp = gretl_function_complete(s);
+	    }
+
+	    if (comp != NULL) {
+		gtk_entry_set_text(entry, comp);
+		gtk_editable_set_position(GTK_EDITABLE(entry), -1);
+	    }
+
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
 static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 {
     gboolean found;
@@ -775,8 +808,10 @@ void vwin_add_finder (windata_t *vwin)
 #else
     label = gtk_label_new(_("Find:"));
     gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-#endif    
+#endif  
 
+    g_signal_connect(G_OBJECT(entry), "key-press-event",
+		     G_CALLBACK(finder_key_handler), vwin);
     g_signal_connect(G_OBJECT(entry), "activate",
 		     G_CALLBACK(vwin_finder_callback),
 		     vwin);

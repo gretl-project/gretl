@@ -4112,7 +4112,7 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 	} else if (submask_cmp(state.submask, pdinfo->submask)) {
 	    /* we were sub-sampled differently on entry */
 	    restore_full_sample(pZ, pdinfo, NULL);
-	    restrict_sample_from_mask(state.submask, pZ, pdinfo);
+	    restrict_sample_from_mask(state.submask, pZ, pdinfo, OPT_NONE);
 	} 
     }
 
@@ -4913,7 +4913,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (gretl_compiling_loop()) { 
-	err = get_command_index(s->line, s->cmd, pdinfo);
+	err = get_command_index(s->line, s->cmd);
     } else {
 	err = parse_command_line(s->line, s->cmd, pZ, pdinfo);
     }
@@ -4983,11 +4983,17 @@ static int could_be_varname (const char *s)
     return 0;
 }
 
+static int is_endif (const char *s)
+{
+    char s1[4], s2[4];
+
+    return sscanf(s, "%3s %3s", s1, s2) == 2 && !strcmp(s2, "if");
+}
+
 /**
  * get_command_index:
  * @line: command line.
  * @cmd: pointer to gretl command struct.
- * @pdinfo: dataset information.
  *
  * Parse @line and assign to the %ci field of @cmd the index number of
  * the command embedded in @line.  Note: this is a "lite" version of
@@ -4998,7 +5004,7 @@ static int could_be_varname (const char *s)
  * Returns: 1 on error, otherwise 0.
  */
 
-int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
+int get_command_index (char *line, CMD *cmd)
 {
     static int context;
     int done = 0;
@@ -5038,10 +5044,14 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     fprintf(stderr, " got command word = '%s'\n", cmd->word);
 #endif
 
-    /* subsetted commands (e.g. "deriv" in relation to "nls") */
     if (!strcmp(cmd->word, "end")) {
-	context = 0;
-	cmd->ci = END;
+	/* support old-style sloppiness for now */
+	if (is_endif(line)) {
+	    cmd->ci = ENDIF;
+	} else {
+	    context = 0;
+	    cmd->ci = END;
+	}
 	done = 1;
     } else if (context && strcmp(cmd->word, "equation")) {
 	/* "equation" occurs in the SYSTEM context, but it is
