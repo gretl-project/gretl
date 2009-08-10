@@ -25,7 +25,7 @@ version 1.8.3, in progress
   to daily
 - Add "set" variable "csv_na" to control the representation
   of NA values in CSV output (also GUI selector for same)
-- Remove old "set" variable "protect_lists"
+- Remove old "set" variable, "protect_lists"
 - Help windows: substantial revamp of GUI, plus fixes for 
   dealing with translated helpfiles
 - Add experimental function debugger: new "debug" command
@@ -35,6 +35,14 @@ version 1.8.3, in progress
   one list from another
 - "omit" command with --auto option: allow specification
   of a list of candidates for omission
+- fix bug: "smpl --no-missing" was not always purging
+  missing values in the case of panel data
+- fix bug: possible confusion when creating a named list if
+  the dataset contains a variable named "to"
+- fix bug: wrong error message given by "system" command
+  on encountering missing values
+- fix bug: crash in estimating a system via LIML when the
+  equations are given in TSLS fashion (i.e., y X ; Z)
 
 7/8/2009 version 1.8.2
 - Fixes for GARCH "corner cases"

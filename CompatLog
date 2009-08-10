@@ -8,6 +8,15 @@ Remove the temporary "set" variable "protect_lists".  Lists
 given as arguments to user-defined functions are now
 always protected.
 
+Add a reserved word: "to" can no longer be used as the name
+of a variable.
+
+Warning: although it's not recognized in the manual, we have
+up till now accepted "end if" as an alias for the correct
+termination of an "if" clause, namely "endif" (with no space).
+This will be removed in the next release, 1.8.4; please update
+scripts.
+
 7/8/2009 version 1.8.2
 
 No intentional backward-incompatible changes
