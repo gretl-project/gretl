@@ -2853,8 +2853,6 @@ static int sys_add_structural_form (equation_system *sys,
 #endif
 
     if (n != ylist[0]) {
-	fprintf(stderr, "The number of endogenous variables (%d) does "
-		"not match the number of equations (%d)\n", ylist[0], n);
 	return E_DATA;
     }
 
