@@ -110,9 +110,8 @@ static double lambda_min (const gretl_matrix *lambda, int k)
 
 static int *
 liml_make_reglist (const equation_system *sys, const int *list, 
-		   int *k, int *err)
+		   const int *exlist, int *k, int *err)
 {
-    const int *exlist = system_get_instr_vars(sys);
     int nexo = exlist[0];
     int *reglist;
     int i, j;
@@ -123,9 +122,8 @@ liml_make_reglist (const equation_system *sys, const int *list,
 	return NULL;
     }
 
-#if LDEBUG > 1
-    fprintf(stderr, "Found %d exog vars; reglist allocated at length %d\n",
-	    nexo, nexo + 2);
+#if LDEBUG
+    fprintf(stderr, "liml_make_reglist: found %d exog vars\n", nexo);
 #endif
 
     /* at first, put all _included_ exog vars in reglist */
@@ -149,6 +147,10 @@ liml_make_reglist (const equation_system *sys, const int *list,
 	}
     }
 
+#if LDEBUG
+    printlist(reglist, "liml_make_reglist, reglist");
+#endif
+
     return reglist;
 }
 
@@ -166,9 +168,12 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     double *Xi = NULL;
     double *ymod = NULL;
     double yt, xit, eit;
-    int m = list[0] - 1;
+    int pos, m;
     int i, vi, j, s, t;
     int err = 0;
+
+    pos = gretl_list_separator_position(list);
+    m = (pos > 0)? (pos - 2) : list[0] - 1;
 
     ymod = malloc(n * sizeof *ymod);
     if (ymod == NULL) {
@@ -219,23 +224,39 @@ static int liml_do_equation (equation_system *sys, int eq,
 			     double ***pZ, DATAINFO *pdinfo, 
 			     PRN *prn)
 {
-    const int *exlist = system_get_instr_vars(sys);
-    const int *list = system_get_list(sys, eq);
+    int *list = system_get_list(sys, eq);
+    int *exlist = NULL;
+    gretl_matrix_block *B = NULL;
     gretl_matrix *E, *W0, *W1, *W2, *Inv;
     gretl_matrix *lambda = NULL;
     double lmin = 1.0;
     MODEL *pmod;
     MODEL lmod;
     int *reglist;
-    int idf;
+    int freelists = 0;
+    int idf, i, k;
     int T = sys->T;
-    int i, k;
     int err = 0;
 
 #if LDEBUG
     fprintf(stderr, "\nWorking on equation for %s\n", pdinfo->varname[list[1]]);
     printlist(list, "original equation list");
 #endif
+
+    if (gretl_list_has_separator(list)) {
+	/* we got a TSLS-style list */
+	const int *elist = list;
+
+	list = NULL;
+	err = gretl_list_split_on_separator(elist, &list, &exlist);
+	if (err) {
+	    return err;
+	}
+	freelists = 1;
+    } else {
+	list = system_get_list(sys, eq);
+	exlist = system_get_instr_vars(sys);
+    }
 
     /* get pointer to model (initialized via TSLS) */
     pmod = system_get_model(sys, eq);
@@ -246,32 +267,35 @@ static int liml_do_equation (equation_system *sys, int eq,
        which case we skip the usual over-id test)
     */
     if (system_n_restrictions(sys) == 0) {
-	idf = exlist[0] - (list[0] - 1);
+	idf = exlist[0] - pmod->ncoeff;
     } else {
 	idf = -1;
 	gretl_model_set_int(pmod, "restricted", 1);
     }
 
     /* first make regression list using only included instruments */
-    reglist = liml_make_reglist(sys, list, &k, &err);
+    reglist = liml_make_reglist(sys, list, exlist, &k, &err);
     if (err) {
+	if (freelists) {
+	    free(list);
+	    free(exlist);
+	}
 	return err;
     }
 
 #if LDEBUG
-    printf("number of endogenous vars in equation: k = %d\n", k);
+    fprintf(stderr, "number of endogenous vars in equation: k = %d\n", k);
 #endif
 
-    clear_gretl_matrix_err();
+    B = gretl_matrix_block_new(&E, T, k,
+			       &W0, k, k,
+			       &W1, k, k,
+			       &W2, k, k,
+			       &Inv, k, k,
+			       NULL);
 
-    E = gretl_matrix_alloc(T, k);
-    W0 = gretl_matrix_alloc(k, k);
-    W1 = gretl_matrix_alloc(k, k);    
-    W2 = gretl_matrix_alloc(k, k);
-    Inv = gretl_matrix_alloc(k, k);
-
-    err = get_gretl_matrix_err();
-    if (err) {
+    if (B == NULL) {
+	err = E_ALLOC;
 	goto bailout;
     }
 
@@ -354,12 +378,13 @@ static int liml_do_equation (equation_system *sys, int eq,
  bailout:
 
     free(reglist);
-    gretl_matrix_free(E);
-    gretl_matrix_free(W0);
-    gretl_matrix_free(W1);
-    gretl_matrix_free(W2);
-    gretl_matrix_free(Inv);
-    gretl_matrix_free(lambda);
+
+    gretl_matrix_block_destroy(B);
+
+    if (freelists) {
+	free(list);
+	free(exlist);
+    }
 
     return err;
 }

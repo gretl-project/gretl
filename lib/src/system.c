@@ -1218,7 +1218,7 @@ static int sys_check_lists (equation_system *sys, const double **Z,
     int user_ylist = (sys->ylist != NULL);
     int *ylist = NULL;
     int *xplist = NULL;
-    int src, lag, nxp;
+    int src, lag, nlhs, nxp;
     int i, j, k, vj;
     int err = 0;
 
@@ -1234,7 +1234,8 @@ static int sys_check_lists (equation_system *sys, const double **Z,
        of structural equations or identities.
     */
 
-    ylist = gretl_list_new(sys->neqns + sys->nidents);
+    nlhs = sys->neqns + sys->nidents;
+    ylist = gretl_list_new(nlhs);
     if (ylist == NULL) {
 	return E_ALLOC;
     }
@@ -1385,6 +1386,12 @@ static int sys_check_lists (equation_system *sys, const double **Z,
 #if SYSDEBUG
     printlist(xplist, "final system exog list");
 #endif
+
+    if (!err && sys->ylist[0] != nlhs) {
+	sprintf(gretl_errmsg, "Found %d endogenous variables but %d equations",
+		sys->ylist[0], nlhs);
+	err = E_DATA;
+    }
 
     if (!err) {
 	free(sys->xlist);
@@ -2775,10 +2782,10 @@ static int get_col_and_lag (int vnum, const equation_system *sys,
 
 /* reduced-form error covariance matrix */
 
-static int sys_add_RF_covariance_matrix (equation_system *sys)
+static int sys_add_RF_covariance_matrix (equation_system *sys,
+					 int n)
 {
     gretl_matrix *G = NULL, *S = NULL;
-    int n = sys->neqns + sys->nidents;
     int err = 0;
 
     if (!gretl_is_identity_matrix(sys->Gamma)) {
@@ -2805,10 +2812,12 @@ static int sys_add_RF_covariance_matrix (equation_system *sys)
     }
 
     if (G != NULL) {
-	gretl_SVD_invert_matrix(G);
-	gretl_matrix_qform(G, GRETL_MOD_NONE,
-			   (S != NULL)? S : sys->S,
-			   sys->Sr, GRETL_MOD_NONE);
+	err = gretl_SVD_invert_matrix(G);
+	if (!err) {
+	    err = gretl_matrix_qform(G, GRETL_MOD_NONE,
+				     (S != NULL)? S : sys->S,
+				     sys->Sr, GRETL_MOD_NONE);
+	}
 	gretl_matrix_free(G);
     } else {
 	gretl_matrix_copy_values(sys->Sr, (S != NULL)? S : sys->S);
@@ -2842,6 +2851,12 @@ static int sys_add_structural_form (equation_system *sys,
     printlist(ylist, "endogenous vars");
     printlist(xlist, "exogenous vars");
 #endif
+
+    if (n != ylist[0]) {
+	fprintf(stderr, "The number of endogenous variables (%d) does "
+		"not match the number of equations (%d)\n", ylist[0], n);
+	return E_DATA;
+    }
 
     sys->order = sys_max_predet_lag(sys);
 
@@ -2931,7 +2946,7 @@ static int sys_add_structural_form (equation_system *sys,
     }
 
     if (!err) {
-	err = sys_add_RF_covariance_matrix(sys);
+	err = sys_add_RF_covariance_matrix(sys, n);
 	if (err) {
 	    fprintf(stderr, "error %d in sys_add_RF_covariance_matrix\n", err);
 	}
