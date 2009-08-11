@@ -846,20 +846,6 @@ maybe_adjust_descrip_column (windata_t *vwin)
     }
 }
 
-static void db_select_first_series (windata_t *vwin)
-{
-    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
-    GtkTreeModel *model;
-    GtkTreeSelection *selection;
-    GtkTreeIter iter;
-
-    model = gtk_tree_view_get_model(view);
-    gtk_tree_model_get_iter_first(model, &iter);
-    selection = gtk_tree_view_get_selection(view);
-    gtk_tree_selection_select_iter(selection, &iter);
-    gtk_widget_grab_focus(vwin->listbox);
-}
-
 static int 
 make_db_series_window (int action, char *fname, char *buf)
 {
@@ -947,7 +933,7 @@ make_db_series_window (int action, char *fname, char *buf)
     } else {
 	gtk_widget_show_all(vwin->main); 
 	maybe_adjust_descrip_column(vwin);
-	db_select_first_series(vwin);
+	listbox_select_first(vwin);
     }
 
     return err;

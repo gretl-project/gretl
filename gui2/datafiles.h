@@ -50,4 +50,6 @@ void set_funcs_dir_callback (windata_t *vwin, char *path);
 
 windata_t *get_local_viewer (int remote_role);
 
+void listbox_select_first (windata_t *vwin);
+
 #endif /* DATAFILES_H */

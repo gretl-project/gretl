@@ -1349,7 +1349,7 @@ static void set_up_viewer_drag_target (windata_t *vwin)
 		     callback, NULL);
 }
 
-static void listbox_select_first (windata_t *vwin)
+void listbox_select_first (windata_t *vwin)
 {
     GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
     GtkTreeModel *model;
