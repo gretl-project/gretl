@@ -849,12 +849,12 @@ maybe_adjust_descrip_column (windata_t *vwin)
 static void db_select_first_series (windata_t *vwin)
 {
     GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
+    GtkTreeModel *model;
     GtkTreeSelection *selection;
     GtkTreeIter iter;
-    GtkListStore *store;
 
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    model = gtk_tree_view_get_model(view);
+    gtk_tree_model_get_iter_first(model, &iter);
     selection = gtk_tree_view_get_selection(view);
     gtk_tree_selection_select_iter(selection, &iter);
     gtk_widget_grab_focus(vwin->listbox);
