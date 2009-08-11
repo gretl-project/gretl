@@ -1,4 +1,4 @@
-version 1.8.3
+8/10/2009 version 1.8.3
 
 Remove redundant function strcmp: strncmp may be used with 
 the third argument omitted, or strings can be compared for

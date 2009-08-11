@@ -1,4 +1,4 @@
-version 1.8.3, in progress
+8/10/09 version 1.8.3
 - Fix bugs 2819633, 2827358, 2828349, 2833434
 - $stopwatch: use times() function if available, to include
   execution time of child processes
