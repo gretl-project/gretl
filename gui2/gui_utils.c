@@ -2006,6 +2006,9 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 	    sprintf(path, "/menubar/Tests/%s", s);
 	    flip(ui, path, dw_pval_ok(pmod));
 	    continue;
+	} else if (!strcmp(s, "Hsk")) {
+	    ci = MODTEST;
+	    opt = OPT_W;
 	} else {
 	    ci = gretl_command_number(s);
 	}
@@ -2636,6 +2639,10 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	}
 	add_model_dataset_items(vwin);
     }
+
+    /* heteroskedasticity tests: the permissible options vary
+       depending on the nature of the model
+    */
 
     if (dataset_is_panel(datainfo) && pmod->ci == OLS) {
 	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 

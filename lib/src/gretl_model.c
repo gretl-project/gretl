@@ -4418,7 +4418,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	} else if (opt & OPT_C) {
 	    ok = (mci == AR1);
 	} else if (opt & OPT_N) {
-	    /* normality: do we really need to exclude garch? */
+	    /* normality */
 	    if (mci == TOBIT || mci == PROBIT ||
 		mci == LOGIT || mci == INTREG) {
 		ok = 0;
@@ -4428,7 +4428,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 		/* Autocorr. and H'sked. supported for IVREG */
 		ok = 1; 
 	    } else {
-		ok = 0; /* FIXME */
+		ok = 0; /* FIXME? */
 	    }
 	}
 	break;
