@@ -1031,6 +1031,18 @@ void set_matrix_slice_off (void)
     doing_matrix_slice = 0;
 }
 
+static int doing_lag_parse;
+
+void set_lag_parse_on (void)
+{
+    doing_lag_parse = 1;
+}
+
+void set_lag_parse_off (void)
+{
+    doing_lag_parse = 0;
+}
+
 static int colon_ok (char *s, int n)
 {
     int i;
@@ -1136,8 +1148,8 @@ static double getdbl (parser *p)
 
 #define word_start_special(c) (c == '$' || c == '@' || c == '_')
 
-#define lag_range_sym(p) ((p->sym == NUM || p->sym == USCALAR) && \
-                          p->ch == 't' && *p->point == 'o' && \
+#define lag_range_sym(p) (doing_lag_parse && p->ch == 't' && \
+                          *p->point == 'o' && \
 			  *(p->point + 1) == ' ')
 
 void lex (parser *p)

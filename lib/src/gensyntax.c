@@ -908,12 +908,18 @@ static NODE *powterm (parser *p)
 	    }
 	}
     } else if (sym == LAG || sym == OBS) {
+	if (sym == LAG) {
+	    set_lag_parse_on();
+	}
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, USERIES); 
 	    lex(p);
 	    t->v.b2.r = base(p, t);
 	}
+	if (sym == LAG) {
+	    set_lag_parse_off();
+	}	
     } else if (sym == MSL || sym == DMSL) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
@@ -945,6 +951,8 @@ static NODE *powterm (parser *p)
 	t = listvar_node(p);
 	if (t != NULL && (p->sym == G_LPR || p->sym == G_LBR)) {
 	    /* list.series node may be "inflected" as lag or obs */
+	    if (p->sym == G_LPR) 
+		fprintf(stderr, "*** listvar: setting LAG\n");
 	    p->sym = (p->sym == G_LPR)? LAG : OBS;
 	    t = newb2(p->sym, t, NULL);
 	    if (t != NULL) {

@@ -5,6 +5,7 @@
 <!ENTITY ndash  "&#8211;">
 <!ENTITY Gamma  "&#0915;">
 <!ENTITY agr    "&#0945;">
+<!ENTITY bgr    "&#0946;">
 <!ENTITY lgr    "&#0955;">
 <!ENTITY mu     "&#0956;">
 <!ENTITY sigma  "&#0963;">

@@ -6149,8 +6149,8 @@
       </examples>
     </usage>
 
-    <description>
-      <para context="gui">
+    <description context="gui">
+      <para>
 	This command re-estimates the given model after omitting the specified
 	variables, or after sequentially omitting insignificant variables if
 	the relevant box is available and is checked.  Besides the usual model
@@ -6158,7 +6158,7 @@
 	variables. The null hypothesis is that the true coefficients on all
 	the omitted variables equal zero.
       </para>
-      <para context="gui">
+      <para>
 	When the original model was estimated by OLS, the default test
 	statistic is an <math>F</math>-value, based on the sums of
 	squared residuals for the restricted and unrestricted models. For
@@ -6166,27 +6166,37 @@
 	statistic is an asymptotic Wald chi-square value based on the
 	covariance matrix of the original model.
       </para>
-      <para context="gui">
-	Sequential elimination works as follows: at each step the
-	variable with the highest p-value is omitted, until all remaining
-	variables have a p-value no greater than some cutoff.  The default
-	cutoff is 10 percent (two-sided); this can be adjusted via the
-	spin button.
+      <para>
+	Sequential elimination works as follows: at each step the variable
+	with the highest p-value is omitted, until all remaining variables
+	have a p-value no greater than some cutoff.  The default cutoff is 10
+	percent (two-sided); this can be adjusted via the spin button.  By
+	default this process operates on all variables in the model (apart
+	from the constant).  If you want to confine it to a subset of the
+	variables, check the box labeled <quote>Test only selected
+	  variables</quote> and make a selection.
       </para>
-      <para context="cli">
+    </description>
+
+    <description context="cli">
+      <para>
 	This command must follow an estimation command.  It calculates a
 	test for the joint significance of the variables in
 	<repl>varlist</repl>, which should be a subset of the independent
-	variables in the model previously estimated. Alternatively, if the
-	<lit>--auto</lit> flag is given, sequential elimination is
-	performed: at each step the variable with the highest p-value is
-	omitted, until all remaining variables have a p-value no greater
-	than some cutoff.  The default cutoff is 10 percent (two-sided);
-	this can be adjusted by appending <quote><lit>=</lit></quote> and
-	a value between 0 and 1 (with no spaces), as in the fourth example
-	above.
+	variables in the model last estimated. 
       </para>
-      <para context="cli">
+      <para>
+	Alternatively, if the <lit>--auto</lit> flag is given, sequential
+	elimination is performed: at each step the variable with the highest
+	p-value is omitted, until all remaining variables have a p-value no
+	greater than some cutoff.  The default cutoff is 10 percent
+	(two-sided); this can be adjusted by appending
+	<quote><lit>=</lit></quote> and a value between 0 and 1 (with no
+	spaces), as in the fourth example above.  If a <repl>varlist</repl> is
+	given this process is confined to the listed variables, otherwise all
+	variables are treated as condidates for omission.
+      </para>
+      <para>
 	If the original model was estimated by OLS, the test statistic is
 	by default an <math>F</math>-value.  This is based on the
 	sums of squared residuals for the restricted and unrestricted
@@ -6196,12 +6206,12 @@
 	original model.  (It is the <math>F</math>-form of a Wald
 	test).
       </para>
-      <para context="cli">
+      <para>
 	For estimators other than OLS, or if the <lit>--wald</lit> option
 	is given, the statistic is an asymptotic Wald chi-square value
 	based on the covariance matrix of the original model.
       </para>
-      <para context="cli">
+      <para>
 	By default, the restricted model is estimated, the estimates
 	are printed, and the restricted model replaces the original as
 	the <quote>current model</quote> for the purposes of, for
@@ -6209,7 +6219,7 @@
 	doing further tests such as <cmd>add</cmd> or
 	<cmd>omit</cmd>).  
       </para>
-      <para context="cli">
+      <para>
 	If the Wald option is selected, the restricted model is not
 	estimated (and so the current model is not replaced). The
 	<lit>--quiet</lit> option suppresses the printout of the
@@ -6219,12 +6229,12 @@
 	covariance matrix for the coefficients in the restricted model,
 	otherwise this option is ignored.
       </para>
-      <para context="cli">
+      <para>
 	If the <lit>--silent</lit> option is given, nothing is printed;
 	nonetheless, the results of the test can be retrieved using the
 	special variables <lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
-      <para context="cli">
+      <para>
 	If the original model was estimated using two-stage least
 	squares, an ambiguity arises: should the selected variables be
 	omitted as regressors, as instruments, or as both?  This is
@@ -7414,57 +7424,64 @@
   </command>
 
   <command name="restrict" section="Tests" context="cli"
-    label="Linear restrictions">
+    label="Testing restrictions">
+
+    <usage>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print restricted estimates</effect>
+	</option>
+	<option>
+	  <flag>--bootstrap</flag>
+	  <effect>bootstrap the test if possible</effect>
+	</option>
+      </options>
+    </usage>    
 
     <description>
       <para>
-	Imposes a set of linear restrictions on either (a) the model
-	last estimated or (b) a system of equations previously defined
-	and named.  The syntax and effects of the command differ
-	slightly in the two cases.
+	Imposes a set of (usually linear) restrictions on either (a) the model
+	last estimated or (b) a system of equations previously defined and
+	named. In all cases the set of restrictions should be started with the
+	keyword <quote>restrict</quote> and terminated with <quote>end
+	  restrict</quote>.
       </para>
-
       <para>
-	In both cases the set of restrictions should be started with
-	the keyword <quote>restrict</quote> and terminated with
-	<quote>end restrict</quote>.  In the single equation case the
-	restrictions are implicitly to be applied to the last model,
-	and they are evaluated as soon as the <lit>restrict</lit>
-	command is terminated.  In the system case the initial
-	<quote>restrict</quote> must be followed by the name of a
-	previously defined system of equations (see <cmdref
-	  targ="system"/>).  The restrictions are evaluated when
-	the system is next estimated, using the <cmdref
-	targ="estimate"/> command.
+	In the single equation case the restrictions are implicitly to be
+	applied to the last model, and they are evaluated as soon as the
+	<lit>restrict</lit> block is closed. In the case of a system of
+	equations the initial <quote>restrict</quote> must be followed by the
+	name of a previously defined system of equations (see <cmdref
+	  targ="system"/>).  The restrictions are evaluated when the system 
+	is next estimated, using the <cmdref targ="estimate"/> command.
       </para>
-
       <para>
-	Each restriction in the set should be expressed as an equation,
-	with a linear combination of parameters on the left and a
-	scalar value to the right of the equals sign (either a
-	numerical constant or the name of a scalar variable). In the
-	single-equation case, parameters may be referenced in the form
+	Depending on the context, the restrictions to be tested may be
+	expressed in various ways.  The simplest form is as follows: each
+	restriction is given as an equation, with a linear combination of
+	parameters on the left and a scalar value to the right of the equals
+	sign (either a numerical constant or the name of a scalar variable).
+      </para>
+      <para>
+	In the single-equation case, parameters may be referenced in the form
 	<lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
-	represents the position in the list of regressors (starting at 1),
-	or <lit>b[</lit><repl>varname</repl><lit>]</lit>, where
-	<repl>varname</repl> is the name of the regressor in question. In
-	the system case, parameters are referenced using <lit>b</lit> plus
-	two numbers in square brackets. The leading number represents the
-	position of the equation within the system and the second number
-	indicates position in the list of regressors.  For example
-	<lit>b[2,1]</lit> denotes the first parameter in the second
-	equation, and <lit>b[3,2]</lit> the second parameter in the third
-	equation.
+	represents the position in the list of regressors (starting at 1), or
+	<lit>b[</lit><repl>varname</repl><lit>]</lit>, where
+	<repl>varname</repl> is the name of the regressor in question. In the
+	system case, parameters are referenced using <lit>b</lit> plus two
+	numbers in square brackets. The leading number represents the position
+	of the equation within the system and the second number indicates
+	position in the list of regressors.  For example <lit>b[2,1]</lit>
+	denotes the first parameter in the second equation, and
+	<lit>b[3,2]</lit> the second parameter in the third equation.
+	The <lit>b</lit> terms in the equation representing a restriction may
+	be prefixed with a numeric multiplier, for example
+	<lit>3.5*b[4]</lit>.
       </para>
-
-      <para>The <lit>b</lit> terms in the equation representing a
-	restriction equation may be prefixed with a numeric
-	multiplier, using <lit>*</lit> to represent multiplication,
-	for example <lit>3.5*b[4]</lit>.
-      </para>
-
-      <para>Here is an example of a set of restrictions for a
-	previously estimated model:
+      <para>
+	Here is an example of a set of restrictions for a previously estimated
+	model:
       </para>
       <code>
 	restrict
@@ -7473,10 +7490,10 @@
 	 b[4] + 2*b[5] = 1
 	end restrict
       </code>
-
-      <para>And here is an example of a set of restrictions to be
-	applied to a named system.  (If the name of the system does
-	not contain spaces, the surrounding quotes are not required.)
+      <para>
+	And here is an example of a set of restrictions to be applied to a
+	named system.  (If the name of the system does not contain spaces, the
+	surrounding quotes are not required.)
       </para>
       <code>
 	restrict "System 1"
@@ -7485,23 +7502,74 @@
 	 b[3,4] + 2*b[3,5] = 1
 	end restrict
       </code>
-
       <para>
-	In the single-equation case the restrictions are evaluated via
-	a Wald <math>F</math>-test, using the coefficient covariance
-	matrix of the model in question.  By default, the restricted
-	coefficient estimates are printed; if you just want the test
-	statistic, you can append the <lit>--quiet</lit> option flag
-	to the initial <lit>restrict</lit> command.
+	In the single-equation case the restrictions are by default evaluated
+	via a Wald test, using the covariance matrix of the model in question.
+	If the original model was estimated via OLS then the restricted
+	coefficient estimates are printed; to suppress this, append the
+	<lit>--quiet</lit> option flag to the initial <lit>restrict</lit>
+	command.  As an alternative to the Wald test, for models estimated via
+	OLS or WLS only, you can give the <lit>--bootstrap</lit> option to
+	perform a bootstrapped test of the restriction.
       </para>
-
       <para>
 	In the system case, the test statistic depends on the estimator
 	chosen: a Likelihood Ratio test if the system is estimated using a
-	Maximum Likelihood method, or an asymptotic
-	<math>F</math>-test otherwise.
+	Maximum Likelihood method, or an asymptotic <math>F</math>-test
+	otherwise.
       </para>
-
+      <para>
+	There are two alternatives to the method of expressing restrictions
+	discussed above.  First, a set of <math>g</math> linear restrictions
+	on a <math>k</math>-vector of parameters, &bgr;, may be written
+	compactly as <math>R</math>&bgr; &minus; <math>q</math> = 0, where
+	<math>R</math> is an <by r="g" c="k"/> matrix and <math>q</math> is a
+	<math>g</math>-vector.  You can specify a restriction by giving the
+	names of pre-defined, conformable matrices to be used as
+	<math>R</math> and <math>q</math>, as in
+      </para>
+      <code>
+	restrict 
+	  R = Rmat
+	  q = qvec
+	end restrict
+      </code>
+      <para>
+	Secondly, if you wish to test a nonlinear restriction (this is
+	currently available for single-equation models only) you should give
+	the restriction as the name of a function, preceded by
+	<quote><lit>rfunc = </lit></quote>, as in
+      </para>
+      <code>
+	restrict
+	  rfunc = myfunction
+	end restrict
+      </code>
+      <para>
+	The constraint function should take a single <lit>const matrix</lit>
+	argument; this will be automatically filled out with the parameter
+	vector.  And it should return a vector which is zero under the null
+	hypothesis, non-zero otherwise.  The length of the vector is the
+	number of restrictions. This function is used as a
+	<quote>callback</quote> by gretl's numerical Jacobian routine, which
+	calculates a Wald test statistic via the delta method.
+      </para>
+      <para>
+	Here is a simple example of a function suitable for testing one
+	nonlinear restriction, namely that two pairs of parameter values have
+	a common ratio. 
+      </para>
+      <code>
+	function restr (const matrix b)
+	  matrix v = b[1]/b[2] - b[4]/b[5]
+	  return matrix v
+	end function
+      </code>
+      <para>
+	Note that some special considerations apply in the case of testing
+	restrictions on Vector Error Correction Models. Please see <guideref
+	targ="chap:vecm"/> for details.
+      </para>
     </description>
 
     <gui-access>
@@ -7514,30 +7582,28 @@
     label="Restrictions on a model">
 
     <description>
-
-      <para>Each restriction in the set should be expressed as an
-	equation, with a linear combination of parameters on the left and
-	a numeric value to the right of the equals sign. Parameters may be
-	referenced in the form <lit>b[</lit><repl>i</repl><lit>]</lit>,
-	where <repl>i</repl> represents the position in the list of
-	regressors (starting at 1), or
+      <para>
+	Each restriction in the set should be expressed as an equation, with a
+	linear combination of parameters on the left and a numeric value to
+	the right of the equals sign. Parameters may be referenced in the form
+	<lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
+	represents the position in the list of regressors (starting at 1), or
 	<lit>b[</lit><repl>varname</repl><lit>]</lit>, where
 	<repl>varname</repl> is the name of the regressor in question.
       </para>
-
-      <para>The <lit>b</lit> terms in the equation representing a restriction
-	may be prefixed with a numeric multiplier, using <lit>*</lit>
-	to represent multiplication, for example <lit>3.5*b[4]</lit>.
+      <para>
+	The <lit>b</lit> terms in the equation representing a restriction may
+	be prefixed with a numeric multiplier, using <lit>*</lit> to represent
+	multiplication, for example <lit>3.5*b[4]</lit>.
       </para>
-
-      <para>Here is an example of a set of restrictions:
+      <para>
+	Here is an example of a set of restrictions:
       </para>
       <code>
 	b[1] = 0
 	b[2] - b[3] = 0
 	b[4] + 2*b[5] = 1
       </code>
-
     </description>
 
   </command>
@@ -7546,24 +7612,22 @@
     label="Restrictions on a system of equations">
 
     <description>
-
-      <para>Each restriction in the set should be expressed as an
-	equation, with a linear combination of parameters on the left and
-	a numeric value to the right of the equals sign.  Parameters are
-	referenced using <lit>b</lit> plus two numbers in square brackets.
-	The leading number represents the position of the equation within
-	the system and the second number indicates position in the list of
-	regressors, starting at 1 in both cases.  For example
-	<lit>b[2,1]</lit> denotes the first parameter in the second
-	equation, and <lit>b[3,2]</lit> the second parameter in the third
-	equation.
+      <para>
+	Each restriction in the set should be expressed as an equation, with a
+	linear combination of parameters on the left and a numeric value to
+	the right of the equals sign.  Parameters are referenced using
+	<lit>b</lit> plus two numbers in square brackets. The leading number
+	represents the position of the equation within the system and the
+	second number indicates position in the list of regressors, starting
+	at 1 in both cases.  For example <lit>b[2,1]</lit> denotes the first
+	parameter in the second equation, and <lit>b[3,2]</lit> the second
+	parameter in the third equation.
       </para>
-
-      <para>The <lit>b</lit> terms in the equation representing a restriction
-	may be prefixed with a numeric multiplier, using <lit>*</lit>
-	to represent multiplication, for example <lit>3.5*b[1,4]</lit>.
+      <para>
+	The <lit>b</lit> terms in the equation representing a restriction may
+	be prefixed with a numeric multiplier, using <lit>*</lit> to represent
+	multiplication, for example <lit>3.5*b[1,4]</lit>.
       </para>
-
       <para>Here is an example of a set of restrictions:
       </para>
       <code>
@@ -7571,7 +7635,6 @@
 	b[1,2] - b[2,2] = 0
 	b[3,4] + 2*b[3,5] = 1
       </code>
-
     </description>
 
   </command>
@@ -7580,55 +7643,45 @@
     label="Restrictions on a VECM">
 
     <description>
-
       <para>
 	Use this command to place linear restrictions on the cointegrating
-	relations (beta) and/or adjustment coefficients (alpha) in a
-	vector error-correction model (VECM).
+	relations (beta) and/or adjustment coefficients (alpha) in a vector
+	error-correction model (VECM).
       </para>
-
       <para>
 	Each restriction should be expressed as an equation, with a linear
 	combination of parameters to the left of the equals sign and a
 	numerical value on the right.  Restrictions on beta may be
-	non-homogeneous (non-zero on the right), but alpha restrictions
-	must be homogeneous (zero on the right).  
+	non-homogeneous (non-zero on the right), but alpha restrictions must
+	be homogeneous (zero on the right).  
       </para>
-
       <para>
-	If the VECM is of rank 1, the elements of beta are referenced in
-	the form <lit>b[</lit><repl>i</repl><lit>]</lit>, where
-	<repl>i</repl> represents position in the cointegrating vector,
-	starting at 1. For example, <lit>b[2]</lit> denotes the second
-	element in beta. If the rank is greater than 1, use <lit>b</lit>
-	plus two numbers in square brackets.  For example,
-	<lit>b[2,1]</lit> denotes the first element in the second
-	cointegrating vector.
+	If the VECM is of rank 1, the elements of beta are referenced in the
+	form <lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
+	represents position in the cointegrating vector, starting at 1. For
+	example, <lit>b[2]</lit> denotes the second element in beta. If the
+	rank is greater than 1, use <lit>b</lit> plus two numbers in square
+	brackets.  For example, <lit>b[2,1]</lit> denotes the first element in
+	the second cointegrating vector.
       </para>
-
       <para>
 	To reference elements of alpha, use <lit>a</lit> instead of
 	<lit>b</lit>.
       </para>
-
       <para>
-	The parameter identifiers in the equation representing a
-	restriction may be prefixed with a numeric multiplier, using
-	<lit>*</lit> to represent multiplication, for example
-	<lit>3.5*b[4]</lit>.
+	The parameter identifiers in the equation representing a restriction
+	may be prefixed with a numeric multiplier, using <lit>*</lit> to
+	represent multiplication, for example <lit>3.5*b[4]</lit>.
       </para>
-
       <para>Here is an example of a set of restrictions on a VECM of rank 1.
       </para>
       <code>
 	b[1] + b[2] = 0
 	b[1] + b[3] = 0
       </code>
-
       <para>
 	See also <guideref targ="chap:vecm"/>.
       </para>
-
     </description>
 
   </command>

@@ -10,6 +10,7 @@
 <!ENTITY sigma "$\sigma$">
 <!ENTITY tau "$\tau$">
 <!ENTITY agr "\ensuremath{\alpha}">
+<!ENTITY bgr "\ensuremath{\beta}">
 <!ENTITY lgr "$\lambda$">
 <!ENTITY rgr "$\rho$">
 <!ENTITY omega "$\omega$">

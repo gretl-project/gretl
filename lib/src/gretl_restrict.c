@@ -51,11 +51,11 @@ struct rrow_ {
 };
 
 struct gretl_restriction_ {
-    int k;                        /* number of restrictions (rows) */
-    int kmax;                     /* max. possible restrictions */
+    int g;                        /* number of restrictions (rows of R) */
+    int gmax;                     /* max. possible restrictions */
     int bmulti;                   /* pertains to multi-equation system? */
     int amulti;                   /* VECM only */
-    int kb, ka;                   /* VECM only */
+    int gb, ga;                   /* VECM only */
     int bcols, acols;             /* VECM only */
     int vecm;                     /* pertains to VECM beta or alpha? */
     gretl_matrix *R;              /* LHS restriction matrix */
@@ -63,7 +63,7 @@ struct gretl_restriction_ {
     gretl_matrix *Ra;             /* second LHS restriction matrix */
     gretl_matrix *qa;             /* second RHS restriction matrix */
     char *mask;                   /* selection mask for coeffs */
-    rrow **rows;                  /* rows of constructed restriction matrix */
+    rrow **rows;                  /* "atomic" restrictions */
     void *obj;                    /* pointer to model, system */
     GretlObjType otype;           /* type of model, system */
     gretlopt opt;                 /* OPT_C is used for "coeffsum" */
@@ -80,13 +80,16 @@ struct gretl_restriction_ {
                                 && r->rows[i]->eq != NULL \
                                 && r->rows[i]->eq[j] != EQN_UNSPEC)
 
+/* @R is putatively the matrix in R \beta -q = 0.  Check that it makes
+   sense in that role, i.e., that RR' is non-singular. */
+
 static int check_R_matrix (const gretl_matrix *R)
 {
     gretl_matrix *m;
-    int k = gretl_matrix_rows(R);
+    int g = gretl_matrix_rows(R);
     int err = 0;
 
-    m = gretl_matrix_alloc(k, k);
+    m = gretl_matrix_alloc(g, g);
     if (m == NULL) {
 	return E_ALLOC;
     }
@@ -107,12 +110,13 @@ static int check_R_matrix (const gretl_matrix *R)
     return err;
 }
 
-/* adding to an existing restriction on a VECM, either in
-   respect of beta or in respect of alpha */
+/* Here we're adding to an existing restriction on a VECM, either in
+   respect of beta (@letter = 'b') or in respect of alpha 
+   (@letter = 'a').
+*/
 
-static int 
-augment_vecm_restriction (gretl_restriction *rset,
-			  char letter)
+static int augment_vecm_restriction (gretl_restriction *rset,
+				     char letter)
 {
     GRETL_VAR *vecm = rset->obj;
     const gretl_matrix *R0, *q0;
@@ -155,10 +159,7 @@ augment_vecm_restriction (gretl_restriction *rset,
 
     if (err) {
 	gretl_matrix_free(R2);
-	return err;
-    }
-
-    if (letter == 'b') {
+    } else if (letter == 'b') {
 	gretl_matrix_free(rset->R);
 	rset->R = R2;
 	gretl_matrix_free(rset->q);
@@ -170,16 +171,15 @@ augment_vecm_restriction (gretl_restriction *rset,
 	rset->qa = q2;
     }	
 
-    return 0;
+    return err;
 }
 
-/* adding an existing restriction on a VECM, in respect of beta or
+/* Adding an existing restriction on a VECM, in respect of beta or
    alpha, to a new restriction in respect of the other matrix.
 */
 
-static int 
-add_old_vecm_restriction (gretl_restriction *rset,
-			  char letter)
+static int add_old_vecm_restriction (gretl_restriction *rset,
+				     char letter)
 {
     GRETL_VAR *vecm = rset->obj; 
     const gretl_matrix *R;
@@ -219,9 +219,8 @@ add_old_vecm_restriction (gretl_restriction *rset,
    R_b * vec(beta) = q; R_a * vec(alpha') = 0.
 */
 
-static int 
-get_R_vecm_column (const gretl_restriction *rset, 
-		   int i, int j, char letter)
+static int get_R_vecm_column (const gretl_restriction *rset, 
+			      int i, int j, char letter)
 {
     const rrow *r = rset->rows[i];
     GRETL_VAR *var = rset->obj;
@@ -242,8 +241,8 @@ get_R_vecm_column (const gretl_restriction *rset,
     return col;
 }
 
-static int 
-get_R_sys_column (const gretl_restriction *rset, int i, int j)
+static int get_R_sys_column (const gretl_restriction *rset, 
+			     int i, int j)
 {
     const rrow *r = rset->rows[i];
     equation_system *sys = rset->obj;
@@ -275,11 +274,10 @@ static double get_restriction_param (const rrow *r, int k)
     return x;
 }
 
-/* Used when generating restricted estimates (single-equation OLS
-   only) */
+/* Used when generating restricted estimates, which we do for
+   single-equation OLS only. */
 
-static int 
-restriction_set_form_full_matrices (gretl_restriction *rset)
+static int restriction_set_form_full_matrices (gretl_restriction *rset)
 {
     MODEL *pmod;
     gretl_matrix *R = NULL;
@@ -295,12 +293,12 @@ restriction_set_form_full_matrices (gretl_restriction *rset)
     pmod = rset->obj;
     k = pmod->ncoeff;
 
-    R = gretl_matrix_alloc(rset->k, k);
+    R = gretl_matrix_alloc(rset->g, k);
     if (R == NULL) {
 	return E_ALLOC;
     }
 
-    q = gretl_column_vector_alloc(rset->k);
+    q = gretl_column_vector_alloc(rset->g);
     if (q == NULL) {
 	gretl_matrix_free(R);
 	return E_ALLOC;
@@ -309,7 +307,7 @@ restriction_set_form_full_matrices (gretl_restriction *rset)
     gretl_matrix_zero(R);
     gretl_matrix_zero(q);
 
-    for (i=0; i<rset->k; i++) { 
+    for (i=0; i<rset->g; i++) { 
 	r = rset->rows[i];
 	for (j=0; j<k; j++) {
 	    if (rset->mask[j]) {
@@ -339,8 +337,8 @@ static void vecm_cross_error (void)
 	   "not handled");
 }
 
-/* see if we have both beta and alpha terms; check that there
-   are no cross beta/alpha restrictions */
+/* See if we have both beta and alpha terms; check that there
+   are no cross beta/alpha restrictions. */
 
 static int vecm_ab_check (gretl_restriction *rset)
 {
@@ -348,7 +346,7 @@ static int vecm_ab_check (gretl_restriction *rset)
     int atotal = 0, btotal = 0;
     int i, j, err = 0;
 
-    for (i=0; i<rset->k && !err; i++) {
+    for (i=0; i<rset->g && !err; i++) {
 	int a = 0, b = 0;
 
 	r = rset->rows[i];
@@ -386,11 +384,11 @@ static int vecm_x_check (gretl_restriction *rset, char letter)
 {
     rrow *r;
     int *multi = (letter == 'a')? &rset->amulti : &rset->bmulti;
-    int *ki = (letter == 'a')? &rset->ka : &rset->kb;
+    int *ki = (letter == 'a')? &rset->ga : &rset->gb;
     int unspec = 0, anyspec = 0;
     int i, j, err = 0;
 
-    for (i=0; i<rset->k && !err; i++) {
+    for (i=0; i<rset->g && !err; i++) {
 	r = rset->rows[i];
 	if (r->letter[0] != letter) {
 	    continue;
@@ -411,7 +409,7 @@ static int vecm_x_check (gretl_restriction *rset, char letter)
     }
 
     if (!err && unspec && *multi) {
-	for (i=0; i<rset->k; i++) {
+	for (i=0; i<rset->g; i++) {
 	    if (rset->rows[i]->letter[0] == letter) {
 		free(rset->rows[i]->eq);
 		rset->rows[i]->eq = NULL;
@@ -455,12 +453,12 @@ static int vecm_restriction_check (gretl_restriction *rset)
     }    
 
     if (!err) {
-	if (rset->kb > rset->bcols) {
+	if (rset->gb > rset->bcols) {
 	    strcpy(gretl_errmsg, "Too many restrictions");
 	    err = E_NONCONF;
-	} else if (rset->ka > rset->acols) {
-	    fprintf(stderr, "rset->ka = %d, rset->acols = %d\n",
-		    rset->ka, rset->acols);
+	} else if (rset->ga > rset->acols) {
+	    fprintf(stderr, "rset->ga = %d, rset->acols = %d\n",
+		    rset->ga, rset->acols);
 	    strcpy(gretl_errmsg, "Too many restrictions");
 	    err = E_NONCONF;
 	}
@@ -469,14 +467,17 @@ static int vecm_restriction_check (gretl_restriction *rset)
     return err;
 }
 
-static int rset_alloc_matrices (gretl_restriction *rset, int nc)
+/* If we have been given restrictions in row-wise fashion,
+   allocate the required R and q matrices */
+
+static int rset_allocate_R_q (gretl_restriction *rset, int nc)
 {
-    rset->R = gretl_zero_matrix_new(rset->k, nc);
-    rset->q = gretl_zero_matrix_new(rset->k, 1);
+    rset->R = gretl_zero_matrix_new(rset->g, nc);
+    rset->q = gretl_zero_matrix_new(rset->g, 1);
 
 #if RDEBUG
-    fprintf(stderr, "rset_alloc_matrices: on output R=%p (%dx%d), q=%p (%dx%d)\n",
-	    (void *) rset->R, rset->k, nc, (void *) rset->q, rset->k, 1);
+    fprintf(stderr, "rset_allocate_R_q: on output R=%p (%dx%d), q=%p (%dx%d)\n",
+	    (void *) rset->R, rset->g, nc, (void *) rset->q, rset->g, 1);
 #endif
 
     if (rset->R == NULL || rset->q == NULL) {
@@ -488,6 +489,9 @@ static int rset_alloc_matrices (gretl_restriction *rset, int nc)
 
     return 0;
 }
+
+/* For the single-equation case, allocate and fill out the
+   R and q matrices. */
 
 static int equation_form_matrices (gretl_restriction *rset)
 {
@@ -507,11 +511,11 @@ static int equation_form_matrices (gretl_restriction *rset)
 	}
     }
 
-    if (rset_alloc_matrices(rset, nc)) {
+    if (rset_allocate_R_q(rset, nc)) {
 	return E_ALLOC;
     }
 
-    for (i=0; i<rset->k; i++) { 
+    for (i=0; i<rset->g; i++) { 
 	r = rset->rows[i];
 	col = 0;
 	for (j=0; j<pmod->ncoeff; j++) {
@@ -526,6 +530,9 @@ static int equation_form_matrices (gretl_restriction *rset)
     return 0;
 }
 
+/* For the equation-system case, allocate and fill out the
+   R and q matrices. */
+
 static int sys_form_matrices (gretl_restriction *rset)
 {
     rrow *r;
@@ -535,11 +542,11 @@ static int sys_form_matrices (gretl_restriction *rset)
 
     nc = system_n_indep_vars(rset->obj);
 
-    if (rset_alloc_matrices(rset, nc)) {
+    if (rset_allocate_R_q(rset, nc)) {
 	return E_ALLOC;
     }
 
-    for (i=0; i<rset->k; i++) { 
+    for (i=0; i<rset->g; i++) { 
 	r = rset->rows[i];
 	for (j=0; j<r->nterms; j++) {
 	    col = get_R_sys_column(rset, i, j);
@@ -554,6 +561,9 @@ static int sys_form_matrices (gretl_restriction *rset)
     return err;
 }
 
+/* For the VECM case, allocate and fill out the restriction
+   matrices. */
+
 static int vecm_form_matrices (gretl_restriction *rset)
 {
     int i, j, m, err;
@@ -564,16 +574,16 @@ static int vecm_form_matrices (gretl_restriction *rset)
     }
 
     if (rset->vecm & VECM_B) {
-	rset->R = gretl_zero_matrix_new(rset->kb, rset->bcols);
-	rset->q = gretl_zero_matrix_new(rset->kb, 1);
+	rset->R = gretl_zero_matrix_new(rset->gb, rset->bcols);
+	rset->q = gretl_zero_matrix_new(rset->gb, 1);
 	if (rset->R == NULL || rset->q == NULL) {
 	    return E_ALLOC;
 	}
     }
 
     if (rset->vecm & VECM_A) {
-	rset->Ra = gretl_zero_matrix_new(rset->ka, rset->acols);
-	rset->qa = gretl_zero_matrix_new(rset->ka, 1);
+	rset->Ra = gretl_zero_matrix_new(rset->ga, rset->acols);
+	rset->qa = gretl_zero_matrix_new(rset->ga, 1);
 	if (rset->Ra == NULL || rset->qa == NULL) {
 	    return E_ALLOC;
 	}
@@ -595,7 +605,7 @@ static int vecm_form_matrices (gretl_restriction *rset)
 	    continue;
 	}
 
-	for (i=0; i<rset->k; i++) { 
+	for (i=0; i<rset->g; i++) { 
 	    r = rset->rows[i];
 	    if (r->letter[0] != letter) {
 		continue;
@@ -639,8 +649,8 @@ static int vecm_form_matrices (gretl_restriction *rset)
     return err;
 }
 
-/* we were given R and/or q directly by the user: check them
-   for basic sanity */
+/* We were given R and/or q directly by the user: check them
+   for sanity. */
 
 static int test_user_matrices (gretl_restriction *rset)
 {
@@ -652,12 +662,12 @@ static int test_user_matrices (gretl_restriction *rset)
 	return E_DATA;
     }
 
-    if ((R->rows != q->rows) || q->cols != 1) {
+    if (R->rows != q->rows || q->cols != 1) {
 	/* R and q don't work */
 	return E_NONCONF;
     }
 
-    if (R->rows > rset->kmax) {
+    if (R->rows > rset->gmax) {
 	/* too many restrictions */
 	return E_NONCONF;
     }    
@@ -666,7 +676,7 @@ static int test_user_matrices (gretl_restriction *rset)
 	rset->bcols = R->cols;
     }
 
-    if (R->cols != rset->kmax) {
+    if (R->cols != rset->gmax) {
 	if (rset->vecm) {
 	    int nb = gretl_VECM_n_beta(rset->obj);
 
@@ -683,10 +693,11 @@ static int test_user_matrices (gretl_restriction *rset)
     return 0;
 }
 
-/* create the matrices needed for testing a set of restrictions */
+/* Set up the matrices needed for testing a set of restrictions:
+   general driver function that calls more specific functions
+   depending on the case. */
 
-static int 
-restriction_set_form_matrices (gretl_restriction *rset)
+static int restriction_set_form_matrices (gretl_restriction *rset)
 {
     int err = 0;
 
@@ -710,7 +721,8 @@ restriction_set_form_matrices (gretl_restriction *rset)
 
 /* Make a mask with 1s in positions in the array of coeffs where
    a coeff is referenced in one or more restrictions, 0s otherwise.
-   We do this only for single-equation restriction sets.
+   We do this only for single-equation restriction sets, and
+   only when the restrictions are given in row-wise form.
 */
 
 static int restriction_set_make_mask (gretl_restriction *rset)
@@ -720,7 +732,7 @@ static int restriction_set_make_mask (gretl_restriction *rset)
     int i, j;
 
     if (rset->otype != GRETL_OBJ_EQN || rset->obj == NULL) {
-	return 1;
+	return E_DATA;
     }
 
     pmod = rset->obj;
@@ -731,7 +743,7 @@ static int restriction_set_make_mask (gretl_restriction *rset)
 	return E_ALLOC;
     }
 
-    for (i=0; i<rset->k; i++) {
+    for (i=0; i<rset->g; i++) {
 	r = rset->rows[i];
 	for (j=0; j<r->nterms; j++) {
 	    rset->mask[r->bnum[j]] = 1;
@@ -755,8 +767,8 @@ static int count_ops (const char *p)
 }
 
 /* Try to retrieve the coefficient number in a model to be restricted,
-   based on the parameter name.  We don't yet attempt this for
-   anything other than single-equation models.
+   based on the parameter name.  We attempt this only for
+   single-equation models.
 */
 
 static int 
@@ -794,8 +806,8 @@ bnum_from_name (gretl_restriction *r, const DATAINFO *pdinfo,
    be a coefficient number or the name of a variable.  If the ",Y" is
    not present, "X" may be a coefficient number or the name of a
    variable.  This function is actually fed the string in question at
-   an offset of 1 beyond the "[".  In parsing, we skip any white space
-   in the string.
+   an offset of 1 beyond the "[".  We skip any white space in the 
+   string.
 */
 
 static int pick_apart (gretl_restriction *r, const char *s, 
@@ -1027,7 +1039,7 @@ void destroy_restriction_set (gretl_restriction *rset)
     if (rset->rows != NULL) {
 	int i;
 
-	for (i=0; i<rset->k; i++) {
+	for (i=0; i<rset->g; i++) {
 	    destroy_restriction(rset->rows[i]);
 	}
 	free(rset->rows);
@@ -1099,11 +1111,11 @@ static rrow *restriction_new (int n, int multi, int vecm)
     return r;
 }
 
-static rrow *
-augment_restriction_set (gretl_restriction *rset, int n_terms)
+static rrow *restriction_set_add_row (gretl_restriction *rset, 
+				      int n_terms)
 {
     rrow **rows = NULL;
-    int n = rset->k;
+    int n = rset->g;
 
     rows = realloc(rset->rows, (n + 1) * sizeof *rows);
     if (rows == NULL) {
@@ -1117,7 +1129,7 @@ augment_restriction_set (gretl_restriction *rset, int n_terms)
 	return NULL;
     }
 
-    rset->k += 1;
+    rset->g += 1;
 
     return rset->rows[n];
 }
@@ -1170,25 +1182,25 @@ static void print_restriction (const gretl_restriction *rset,
     pprintf(prn, " = %g\n", r->rhs);
 }
 
-static void 
-print_restriction_set (const gretl_restriction *rset, 
-		       const DATAINFO *pdinfo, PRN *prn)
+/* Pretty-print the set of restrictions.  We do this only if
+   the restrictions were given row-wise by the user.
+*/
+
+static void print_restriction_set (const gretl_restriction *rset, 
+				   const DATAINFO *pdinfo, 
+				   PRN *prn)
 {
     int i;
 
-    if (rset->k == 0) {
-	return;
-    }
-
-    if (rset->k > 1) {
+    if (rset->g > 1) {
 	pputs(prn, _("Restriction set"));
     } else {
 	pprintf(prn, "%s:", _("Restriction"));
     }
     pputc(prn, '\n');
 
-    for (i=0; i<rset->k; i++) {
-	if (rset->k > 1) {
+    for (i=0; i<rset->g; i++) {
+	if (rset->g > 1) {
 	    pprintf(prn, " %d: ", i + 1);
 	} else {
 	    pputc(prn, ' ');
@@ -1289,9 +1301,9 @@ add_term_to_restriction (rrow *r, double mult, int eq, int bnum,
     return 0;
 }
 
-static gretl_restriction *
-restriction_set_new (void *ptr, GretlObjType type,
-		     gretlopt opt)
+static gretl_restriction *restriction_set_new (void *ptr, 
+					       GretlObjType type,
+					       gretlopt opt)
 {
     gretl_restriction *rset;
 
@@ -1308,8 +1320,8 @@ restriction_set_new (void *ptr, GretlObjType type,
     rset->bsum = NADBL;
     rset->bsd = NADBL;
 
-    rset->k = rset->kmax = 0;
-    rset->kb = rset->ka = 0;
+    rset->g = rset->gmax = 0;
+    rset->gb = rset->ga = 0;
     rset->R = NULL;
     rset->q = NULL;
     rset->Ra = NULL;
@@ -1329,9 +1341,9 @@ restriction_set_new (void *ptr, GretlObjType type,
     if (rset->otype == GRETL_OBJ_EQN) {
 	MODEL *pmod = ptr;
 
-	rset->kmax = pmod->ncoeff;
+	rset->gmax = pmod->ncoeff;
     } else if (rset->otype == GRETL_OBJ_SYS) {
-	rset->kmax = system_n_indep_vars(ptr);
+	rset->gmax = system_n_indep_vars(ptr);
 	rset->bmulti = 1;
     } else if (rset->otype == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = ptr;
@@ -1341,9 +1353,9 @@ restriction_set_new (void *ptr, GretlObjType type,
 	    rset->amulti = 1;
 	}
 	rset->vecm = VECM_B;
-	rset->kmax = gretl_VECM_n_beta(var) *
+	rset->gmax = gretl_VECM_n_beta(var) *
 	    gretl_VECM_rank(var);
-	rset->kmax += gretl_VECM_n_alpha(var) *
+	rset->gmax += gretl_VECM_n_alpha(var) *
 	    gretl_VECM_rank(var);
     } 
 
@@ -1404,19 +1416,28 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
     return ret;
 }
 
-static int 
-read_matrix_line (const char *s, gretl_restriction *rset)
+/* Parse a matrix specification for a restriction set.  This should
+   take the form "R = <matrix>" or "q = <matrix>", where <matrix> is
+   the name of a pre-defined matrix.  On this approach we want exactly
+   one R definition and exactly one q definition, and no other sort
+   of specification can be given.
+*/
+
+static int read_matrix_line (const char *s, gretl_restriction *rset)
 {
     const gretl_matrix *m;
     char mname[VNAMELEN];
     char job = *s;
     int err = 0;
 
-    if (rset->k > 0) {
+    if (rset->rows != NULL) {
+	/* we already have "row-wise" restrictions */
 	return E_PARSE;
     } else if (job == 'R' && rset->R != NULL) {
+	/* duplicate entry for R matrix */
 	return E_PARSE;
     } else if (job == 'q' && rset->q != NULL) {
+	/* duplicate entry for q matrix */
 	return E_PARSE;
     }
 
@@ -1462,7 +1483,7 @@ static int read_fncall_line (const char *s, gretl_restriction *rset)
 {
     char fname[FN_NAMELEN];
 
-    if (rset->k > 0 || rset->R != NULL || rset->q != NULL) {
+    if (rset->rows != NULL || rset->R != NULL || rset->q != NULL) {
 	/* other stuff is in the way! */
 	return E_PARSE;
     }
@@ -1492,14 +1513,19 @@ static int read_fncall_line (const char *s, gretl_restriction *rset)
     return 0;
 }
 
-static int restriction_set_parse_restriction (gretl_restriction *rset,
-					      const char *s,
-					      const DATAINFO *pdinfo)
+static int parse_restriction_row (gretl_restriction *rset,
+				  const char *s,
+				  const DATAINFO *pdinfo)
 { 
     rrow *row;
     int nt, sgn = 1;
     int i, j;
     int err = 0;
+
+    if (rset->R != NULL || rset->q != NULL) {
+	/* can't mix row-wise spec with matrix spec */
+	return E_PARSE;
+    }
 
     if (*s == '+' || *s == '-') {
 	sgn = (*s == '+')? 1 : -1;
@@ -1512,7 +1538,7 @@ static int restriction_set_parse_restriction (gretl_restriction *rset,
     fprintf(stderr, "restriction line: assuming %d terms\n", nt);
 #endif
 
-    row = augment_restriction_set(rset, nt);
+    row = restriction_set_add_row(rset, nt);
 
     if (row == NULL) {
 	return E_ALLOC;
@@ -1626,7 +1652,7 @@ real_restriction_set_parse_line (gretl_restriction *rset,
 	err = read_matrix_line(s, rset);
     } else {
 	/* a regular linear restriction */
-	err = restriction_set_parse_restriction(rset, s, pdinfo);
+	err = parse_restriction_row(rset, s, pdinfo);
     }
 
     if (err) {
@@ -1640,9 +1666,9 @@ int
 restriction_set_parse_line (gretl_restriction *rset, const char *line,
 			    const DATAINFO *pdinfo)
 {
-    if (rset->k > rset->kmax) {
+    if (rset->g > rset->gmax) {
 	sprintf(gretl_errmsg, _("Too many restrictions (maximum is %d)"), 
-		rset->kmax);
+		rset->gmax);
 	destroy_restriction_set(rset);
 	return E_DATA;
     }
@@ -1829,6 +1855,15 @@ static int print_restricted_estimates (MODEL *pmod,
     return 0;
 }
 
+static int matrices_are_full_size (gretl_restriction *rset, int k)
+{
+    int Rr = gretl_matrix_rows(rset->R);
+    int Rc = gretl_matrix_cols(rset->R);
+    int qr = gretl_matrix_rows(rset->q);
+
+    return (Rr == rset->g && Rc == k && qr == rset->g);
+}
+
 /* generate full restricted estimates: this function is used
    only for single-equation models, estimated via OLS */
 
@@ -1838,10 +1873,8 @@ do_restricted_estimates (gretl_restriction *rset,
 			 PRN *prn)
 {
     MODEL *pmod = rset->obj;
-    gretl_matrix *X = NULL;
-    gretl_matrix *y = NULL;
-    gretl_matrix *b = NULL;
-    gretl_matrix *S = NULL;
+    gretl_matrix_block *B;
+    gretl_matrix *X, *y, *b, *S;
     int *xlist = NULL;
     double s2 = 0.0;
     int T = pmod->nobs;
@@ -1849,19 +1882,21 @@ do_restricted_estimates (gretl_restriction *rset,
     int i, s, t;
     int yno, err = 0;
 
-    X = gretl_matrix_alloc(T, k);
-    y = gretl_matrix_alloc(T, 1);
-    b = gretl_matrix_alloc(k, 1);
-    S = gretl_matrix_alloc(k, k);
+    B = gretl_matrix_block_new(&X, T, k,
+			       &y, T, 1,
+			       &b, k, 1,
+			       &S, k, k,
+			       NULL);
 
-    if (X == NULL || y == NULL || b == NULL || S == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    if (B == NULL) {
+	return E_ALLOC;
     }
 
-    err = restriction_set_form_full_matrices(rset);
-    if (err) {
-	goto bailout;
+    if (!matrices_are_full_size(rset, k)) {
+	err = restriction_set_form_full_matrices(rset);
+	if (err) {
+	    goto bailout;
+	}
     }
 
     yno = gretl_model_get_depvar(pmod);
@@ -1884,8 +1919,8 @@ do_restricted_estimates (gretl_restriction *rset,
     }
 
 #if RDEBUG
-    gretl_matrix_print(rset->R, "R");
-    gretl_matrix_print(rset->q, "q");
+    gretl_matrix_print(rset->R, "R (for restricted estimates)");
+    gretl_matrix_print(rset->q, "q (for restricted estimates)");
 #endif
 
     err = gretl_matrix_restricted_ols(y, X, rset->R, rset->q, 
@@ -1893,16 +1928,12 @@ do_restricted_estimates (gretl_restriction *rset,
 
     if (!err) {
 	print_restricted_estimates(pmod, pdinfo, b, S, s2,
-				   k, rset->k, prn);
+				   k, rset->g, prn);
     }
 
  bailout:
     
-    gretl_matrix_free(X);
-    gretl_matrix_free(y);
-    gretl_matrix_free(b);
-    gretl_matrix_free(S);
-
+    gretl_matrix_block_destroy(B);
     free(xlist);
 
     return err;
@@ -1926,17 +1957,17 @@ restriction_set_print_result (gretl_restriction *rset,
 
     if (asym) {
 	rset->code = GRETL_STAT_WALD_CHISQ;
-	rset->pval = chisq_cdf_comp(rset->k, rset->test);
+	rset->pval = chisq_cdf_comp(rset->g, rset->test);
 	pprintf(prn, "\n%s: %s(%d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust chi^2"): "chi^2",
-		rset->k, rset->test);
+		rset->g, rset->test);
     } else {
 	rset->code = GRETL_STAT_F;
-	rset->test /= rset->k;
-	rset->pval = snedecor_cdf_comp(rset->k, pmod->dfd, rset->test);
+	rset->test /= rset->g;
+	rset->pval = snedecor_cdf_comp(rset->g, pmod->dfd, rset->test);
 	pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust F"): "F",
-		rset->k, pmod->dfd, rset->test);
+		rset->g, pmod->dfd, rset->test);
     }
 
     if (!na(rset->pval)) {
@@ -1992,7 +2023,11 @@ test_restriction_set (gretl_restriction *rset, PRN *prn)
 	goto bailout;
     }
 
-    br = gretl_column_vector_alloc(rset->k);
+    if (rset->g == 0) {
+	rset->g = gretl_matrix_rows(rset->q);
+    }
+
+    br = gretl_column_vector_alloc(rset->g);
     if (br == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -2079,12 +2114,12 @@ static int rset_expand_R (gretl_restriction *rset, int k)
     double rij;
     int i, j, jj;
 
-    R = gretl_zero_matrix_new(rset->k, k);
+    R = gretl_zero_matrix_new(rset->g, k);
     if (R == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=0; i<rset->k; i++) {
+    for (i=0; i<rset->g; i++) {
 	jj = 0;
 	for (j=0; j<k; j++) {
 	    if (rset->mask[j]) {
@@ -2101,46 +2136,87 @@ static int rset_expand_R (gretl_restriction *rset, int k)
     return 0;
 }
 
+static int bootstrap_zero_restriction (gretl_restriction *rset,
+				       MODEL *pmod,
+				       const double **Z,
+				       const DATAINFO *pdinfo,
+				       PRN *prn)
+{
+    rrow *r = rset->rows[0];
+    gretlopt bopt = OPT_P | OPT_R;
+    int B = 0;
+    int err = 0;
+
+    gretl_restriction_get_boot_params(&B, &bopt);
+    err = bootstrap_analysis(pmod, r->bnum[0], B, Z, pdinfo, 
+			     bopt, prn);
+    return err;
+}
+
+/* Are we able to do a bootstrap test of the restrictions on
+   the given model?  Return non-zero if not. */
+
+static int check_bootstrap (MODEL *pmod, PRN *prn)
+{
+    int ok = bootstrap_ok(pmod->ci);
+
+    if (!ok) {
+	pputs(prn, "Sorry, the bootstrap option is not supported for this test");
+	pputc(prn, '\n');
+    }
+
+    return (ok)? 0 : E_NOTIMP;
+}
+
+/* Do we have a simple b[i] = 0? */
+
+static int is_simple_zero_restriction (gretl_restriction *rset)
+{
+    if (rset->rows != NULL && rset->g == 1) {
+	return (rset->rows[0]->nterms == 1 && rset->rows[0]->rhs == 0);
+    } else {
+	return 0;
+    }
+}
+
 static int do_single_equation_test (gretl_restriction *rset,
 				    const double **Z,
 				    const DATAINFO *pdinfo,
 				    PRN *prn)
 {
-    int err, done = 0;
+    int err = 0;
 
-    if (rset->opt & OPT_B) {
-	MODEL *pmod = rset->obj;
-
-	if (!bootstrap_ok(pmod->ci)) {
-	    pputs(prn, "Sorry, the bootstrap option is not supported for this test");
-	} else {
-	    rrow *r = rset->rows[0];
-
-	    if (rset->k == 1 && r->nterms == 1 && r->rhs == 0) {
-		/* a simple zero restriction */
-		gretlopt bopt = OPT_P | OPT_R;
-		int B = 0;
-
-		gretl_restriction_get_boot_params(&B, &bopt);
-		err = bootstrap_analysis(pmod, r->bnum[0], B, Z, pdinfo, 
-					 bopt, prn);
-		done = 1;
-	    } else {
-		/* a more complex restriction */
-		err = test_restriction_set(rset, prn);
-		if (!err) {
-		    rset->test /= rset->k;
-		    rset_expand_R(rset, pmod->ncoeff);
-		    err = bootstrap_test_restriction(pmod, rset->R, rset->q,
-						     rset->test, rset->k, Z, 
-						     pdinfo, prn);
-		}
-	    }
-	    done = 1;
+    if (rset->rows != NULL) {
+	err = restriction_set_make_mask(rset);
+	if (err) {
+	    return err;
 	}
     }
 
-    if (!done) {
+    if (rset->opt & OPT_B) {
+	/* bootstrapping, if possible */
+	MODEL *pmod = rset->obj;
+	
+	err = check_bootstrap(pmod, prn);
+	if (err) {
+	    return err;
+	}
+
+	if (is_simple_zero_restriction(rset)) {
+	    err = bootstrap_zero_restriction(rset, pmod, Z, pdinfo, prn);
+	} else {
+	    err = test_restriction_set(rset, prn);
+	    if (!err && rset->R->cols != pmod->ncoeff) {
+		err = rset_expand_R(rset, pmod->ncoeff);
+	    }
+	    if (!err) {
+		rset->test /= rset->g;
+		err = bootstrap_test_restriction(pmod, rset->R, rset->q,
+						 rset->test, rset->g, Z, 
+						 pdinfo, prn);
+	    }
+	}
+    } else {
 	err = test_restriction_set(rset, prn);
 	if (!err) {
 	    restriction_set_print_result(rset, Z, pdinfo, prn);
@@ -2173,7 +2249,9 @@ gretl_restricted_vecm (gretl_restriction *rset,
 
     *err = restriction_set_form_matrices(rset);
 
-    print_restriction_set(rset, pdinfo, prn);
+    if (rset->rows != NULL) {
+	print_restriction_set(rset, pdinfo, prn);
+    }
 
     if (!*err) {
 	jvar = real_gretl_restricted_vecm(rset->obj, rset, Z, pdinfo, 
@@ -2238,8 +2316,8 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
 #endif
 
     if (!err) {
-	rset->k = gretl_vector_get_length(bread);
-	if (rset->k == 0) {
+	rset->g = gretl_vector_get_length(bread);
+	if (rset->g == 0) {
 	    err = E_NONCONF;
 	}
     }
@@ -2327,27 +2405,25 @@ gretl_restriction_finalize (gretl_restriction *rset,
 	    return err;
 	}
     }
-    
-    print_restriction_set(rset, pdinfo, prn);
+
+    if (rset->rows != NULL) {
+	print_restriction_set(rset, pdinfo, prn);
+    }
 
     if (t == GRETL_OBJ_VAR) {
 	err = gretl_VECM_test(rset->obj, rset, pdinfo, rset->opt, prn);
-	destroy_restriction_set(rset);
     } else if (t == GRETL_OBJ_SYS) {
 	system_set_restriction_matrices(rset->obj, rset->R, rset->q);
 	rset->R = NULL;
 	rset->q = NULL;
-	destroy_restriction_set(rset);
     } else {
 	/* single-equation model */
-	err = restriction_set_make_mask(rset);
-	if (!err) {
-	    err = do_single_equation_test(rset, Z, pdinfo, prn);
-	    if (!(rset->opt & OPT_C)) {
-		destroy_restriction_set(rset);
-	    }
-	}
-    }	
+	err = do_single_equation_test(rset, Z, pdinfo, prn);
+    }
+
+    if (!(rset->opt & OPT_C)) {
+	destroy_restriction_set(rset);
+    }
 
     return err;
 }
@@ -2491,62 +2567,34 @@ gretlopt gretl_restriction_get_options (const gretl_restriction *rset)
     return (rset != NULL)? rset->opt : OPT_NONE;
 }
 
-const gretl_matrix *
-rset_get_R_matrix (const gretl_restriction *rset)
+const gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset)
 {
-    if (rset != NULL) {
-	return rset->R;
-    } else {
-	return NULL;
-    }
+    return (rset != NULL)? rset->R : NULL;
 }
 
-const gretl_matrix *
-rset_get_q_matrix (const gretl_restriction *rset)
+const gretl_matrix *rset_get_q_matrix (const gretl_restriction *rset)
 {
-    if (rset != NULL) {
-	return rset->q;
-    } else {
-	return NULL;
-    }
+    return (rset != NULL)? rset->q : NULL;
 }
 
-const gretl_matrix *
-rset_get_Ra_matrix (const gretl_restriction *rset)
+const gretl_matrix *rset_get_Ra_matrix (const gretl_restriction *rset)
 {
-    if (rset != NULL) {
-	return rset->Ra;
-    } else {
-	return NULL;
-    }
+    return (rset != NULL)? rset->Ra : NULL;
 }
 
-const gretl_matrix *
-rset_get_qa_matrix (const gretl_restriction *rset)
+const gretl_matrix *rset_get_qa_matrix (const gretl_restriction *rset)
 {
-    if (rset != NULL) {
-	return rset->qa;
-    } else {
-	return NULL;
-    }
+    return (rset != NULL)? rset->qa : NULL;
 }
 
 int rset_VECM_bcols (const gretl_restriction *rset)
 {
-    if (rset == NULL || rset->R == NULL) {
-	return 0;
-    } else {
-	return rset->R->cols;
-    }
+    return (rset == NULL || rset->R == NULL)? 0 : rset->R->cols;
 }
 
 int rset_VECM_acols (const gretl_restriction *rset)
 {
-    if (rset == NULL || rset->Ra == NULL) {
-	return 0;
-    } else {
-	return rset->Ra->cols;
-    }
+    return (rset == NULL || rset->Ra == NULL)? 0 : rset->Ra->cols;
 }
 
 void rset_add_results (gretl_restriction *rset,

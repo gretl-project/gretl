@@ -4,11 +4,10 @@
 \section{Defining a function}
 \label{func-define}
 
-Since version 1.3.3, \app{gretl} has contained a mechanism for
-defining functions, which may be called via the command line, in
-the context of a script, or (if packaged appropriately, see
-section~\ref{sec:func-packages}) via the program's graphical
-interface.
+\app{Gretl} offers a mechanism for defining functions, which may be
+called via the command line, in the context of a script, or (if
+packaged appropriately, see section~\ref{sec:func-packages}) via the
+program's graphical interface.
 
 The syntax for defining a function looks like this:
     
@@ -91,7 +90,13 @@ For a parameter of type \texttt{bool}, you can specify a default of
 \begin{code}
 bool verbose[0]
 \end{code} 
-%
+
+In addition, a parameter may be prefixed by the keyword
+\texttt{const}.  This constitutes a promise that the corresponding
+argument will not be modified within the function.  This qualifier is
+allowed for all parameters, but is in fact only meaningful if the
+argument is such that it \textit{could} be modified in the function.
+See section~\ref{func-details} for details.
 
 Finally, for a parameter of any type you can append a short
 \textsl{descriptive string}.  This will show up as an aid to the user
@@ -259,7 +264,7 @@ the function as arguments.
 By default, when a variable is passed to a function as an argument,
 what the function actually ``gets'' is a \emph{copy} of the outer
 variable, which means that the value of the outer variable is not
-modified by whatever goes on inside the function.  But the use of
+modified by anything that goes on inside the function.  But the use of
 pointers allows a function and its caller to ``cooperate'' such that
 an outer variable can be modified by the function.  In effect, this
 allows a function to ``return'' more than one value (although only one
@@ -288,7 +293,7 @@ of the scalar variable \texttt{SSR}, and it assigns a value to that
 variable (under the local name \texttt{ess}).  (For anyone used to
 programming in C: note that it is not necessary, or even possible, to
 ``dereference'' the variable in question within the function using the
-\texttt{*} operator.  Unembellished use of the name of the variable is
+\texttt{*} operator.  Unadorned use of the name of the variable is
 sufficient to access the variable in outer scope.)
 
 An ``address'' parameter of this sort can be used as a means of

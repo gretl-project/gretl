@@ -94,7 +94,7 @@ enum {
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
-	      LAG,	  
+	      LAG,        /* variable plus lag length */	  
 	      DVAR,	  /* $ dataset variable (scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      OVAR,	  /* object variable: variable "under" an object */
@@ -541,6 +541,8 @@ void parser_free_aux_nodes (parser *p);
 
 void set_matrix_slice_on (void);
 void set_matrix_slice_off (void);
+void set_lag_parse_on (void);
+void set_lag_parse_off (void);
 
 /* name lookup functions */
 const char *constname (int c);
