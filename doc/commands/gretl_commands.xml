@@ -6192,9 +6192,9 @@
 	greater than some cutoff.  The default cutoff is 10 percent
 	(two-sided); this can be adjusted by appending
 	<quote><lit>=</lit></quote> and a value between 0 and 1 (with no
-	spaces), as in the fourth example above.  If a <repl>varlist</repl> is
+	spaces), as in the fourth example above.  If <repl>varlist</repl> is
 	given this process is confined to the listed variables, otherwise all
-	variables are treated as condidates for omission.
+	variables are treated as candidates for omission.
       </para>
       <para>
 	If the original model was estimated by OLS, the test statistic is

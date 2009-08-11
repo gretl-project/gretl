@@ -274,63 +274,6 @@ static double get_restriction_param (const rrow *r, int k)
     return x;
 }
 
-/* Used when generating restricted estimates, which we do for
-   single-equation OLS only. */
-
-static int restriction_set_form_full_matrices (gretl_restriction *rset)
-{
-    MODEL *pmod;
-    gretl_matrix *R = NULL;
-    gretl_vector *q = NULL;
-    rrow *r;
-    double x;
-    int i, j, k;
-
-    if (rset->otype != GRETL_OBJ_EQN || rset->obj == NULL) {
-	return 1;
-    }
-
-    pmod = rset->obj;
-    k = pmod->ncoeff;
-
-    R = gretl_matrix_alloc(rset->g, k);
-    if (R == NULL) {
-	return E_ALLOC;
-    }
-
-    q = gretl_column_vector_alloc(rset->g);
-    if (q == NULL) {
-	gretl_matrix_free(R);
-	return E_ALLOC;
-    }
-
-    gretl_matrix_zero(R);
-    gretl_matrix_zero(q);
-
-    for (i=0; i<rset->g; i++) { 
-	r = rset->rows[i];
-	for (j=0; j<k; j++) {
-	    if (rset->mask[j]) {
-		x = get_restriction_param(r, j);
-		gretl_matrix_set(R, i, j, x);
-	    }
-	}
-	gretl_vector_set(q, i, r->rhs);
-    }
-
-    if (rset->R != NULL) {
-	gretl_matrix_free(rset->R);
-    }
-    rset->R = R;
-
-    if (rset->q != NULL) {
-	gretl_matrix_free(rset->q);
-    }
-    rset->q = q;
-
-    return 0;
-}
-
 static void vecm_cross_error (void)
 {
     strcpy(gretl_errmsg, "VECM: beta/alpha cross restrictions are "
@@ -1855,13 +1798,35 @@ static int print_restricted_estimates (MODEL *pmod,
     return 0;
 }
 
-static int matrices_are_full_size (gretl_restriction *rset, int k)
-{
-    int Rr = gretl_matrix_rows(rset->R);
-    int Rc = gretl_matrix_cols(rset->R);
-    int qr = gretl_matrix_rows(rset->q);
+/* Used when generating restricted estimates or bootstrapping, which
+   we do for single-equation OLS/WLS only. */
 
-    return (Rr == rset->g && Rc == k && qr == rset->g);
+static int rset_expand_R (gretl_restriction *rset, int k)
+{
+    gretl_matrix *R = NULL;
+    double rij;
+    int i, j, jj;
+
+    R = gretl_zero_matrix_new(rset->g, k);
+    if (R == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<rset->g; i++) {
+	jj = 0;
+	for (j=0; j<k; j++) {
+	    if (rset->mask[j]) {
+		rij = gretl_matrix_get(rset->R, i, jj);
+		gretl_matrix_set(R, i, j, rij);
+		jj++;
+	    }
+	}
+    }
+
+    gretl_matrix_free(rset->R);
+    rset->R = R;
+
+    return 0;
 }
 
 /* generate full restricted estimates: this function is used
@@ -1892,8 +1857,8 @@ do_restricted_estimates (gretl_restriction *rset,
 	return E_ALLOC;
     }
 
-    if (!matrices_are_full_size(rset, k)) {
-	err = restriction_set_form_full_matrices(rset);
+    if (gretl_matrix_cols(rset->R) != k) {
+	err = rset_expand_R(rset, k);
 	if (err) {
 	    goto bailout;
 	}
@@ -1987,8 +1952,7 @@ restriction_set_print_result (gretl_restriction *rset,
 
 /* execute the test, for a single equation */
 
-static int 
-test_restriction_set (gretl_restriction *rset, PRN *prn)
+static int test_restriction_set (gretl_restriction *rset, PRN *prn)
 {
     MODEL *pmod = rset->obj;
     gretl_matrix *vcv = NULL;
@@ -2108,34 +2072,6 @@ test_restriction_set (gretl_restriction *rset, PRN *prn)
     return err;
 }
 
-static int rset_expand_R (gretl_restriction *rset, int k)
-{
-    gretl_matrix *R = NULL;
-    double rij;
-    int i, j, jj;
-
-    R = gretl_zero_matrix_new(rset->g, k);
-    if (R == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<rset->g; i++) {
-	jj = 0;
-	for (j=0; j<k; j++) {
-	    if (rset->mask[j]) {
-		rij = gretl_matrix_get(rset->R, i, jj);
-		gretl_matrix_set(R, i, j, rij);
-		jj++;
-	    }
-	}
-    }
-
-    gretl_matrix_free(rset->R);
-    rset->R = R;
-
-    return 0;
-}
-
 static int bootstrap_zero_restriction (gretl_restriction *rset,
 				       MODEL *pmod,
 				       const double **Z,
@@ -2251,7 +2187,7 @@ gretl_restricted_vecm (gretl_restriction *rset,
 
     if (rset->rows != NULL) {
 	print_restriction_set(rset, pdinfo, prn);
-    }
+    } 
 
     if (!*err) {
 	jvar = real_gretl_restricted_vecm(rset->obj, rset, Z, pdinfo, 
