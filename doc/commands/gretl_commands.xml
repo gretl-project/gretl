@@ -7991,10 +7991,10 @@
 	current settings for all the relevant variables are printed.
       </para>
       <para>
-	The available settings are grouped under six categories:
-	program interaction and behavior, numerical methods, random
-	number generation, robust estimation, filtering and time series
-	models estimation.
+	The available settings are grouped under the following categories:
+	program interaction and behavior, numerical methods, random number
+	generation, robust estimation, filtering, time series 
+	estimation, and interaction with GNU R.
       </para>
 
       <para>
@@ -8354,16 +8354,44 @@
 
       <ilist>
 	<li>
-	  <para><lit>horizon</lit>: one integer (the default is based on
-	    the frequency of the data).  Sets the horizon for impulse
-	    responses and forecast variance decompositions in the context
-	    of vector autoregressions.
+	  <para>
+	    <lit>horizon</lit>: one integer (the default is based on the
+	    frequency of the data).  Sets the horizon for impulse responses
+	    and forecast variance decompositions in the context of vector
+	    autoregressions.
 	  </para>
-	  <para><lit>vecm_norm</lit>: <lit>phillips</lit> (the
-	  default), <lit>diag</lit>, <lit>first</lit> or
-	  <lit>none</lit>. Used in the context of VECM estimation via
-	  the <cmdref targ="vecm"/> command for identifying the
-	  cointegration vectors. See the User's Guide for details.
+	</li>
+	<li>
+	  <para>
+	    <lit>vecm_norm</lit>: <lit>phillips</lit> (the default),
+	    <lit>diag</lit>, <lit>first</lit> or <lit>none</lit>. Used in the
+	    context of VECM estimation via the <cmdref targ="vecm"/> command
+	    for identifying the cointegration
+	    vectors. See the <guideref targ="chap:vecm"/> for
+	    details.
+	  </para>
+	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Interaction with R</emphasis>
+      </para>
+
+      <ilist>
+	<li>
+	  <para><lit>R_lib</lit>: <lit>on </lit>(the default) or
+	    <lit>off</lit>.  When sending instructions to be executed by R,
+	    use the R shared library by preference to the R executable, if the
+	    library is available.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>R_functions</lit>: <lit>off</lit> (the default) or
+	    <lit>on</lit>. Recognize functions defined in R as if they were
+	    native functions (the namespace prefix
+	    <quote><lit>R.</lit></quote> is required). See <guideref
+	      targ="chap:gretlR"/> for details on this and the
+	    previous item.
 	  </para>
 	</li>
       </ilist>
