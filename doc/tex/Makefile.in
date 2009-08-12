@@ -45,26 +45,28 @@ TEXSRC = cli.tex \
 	gretlR.tex \
 	gretlOx.tex
 
-WEBDIR = /home/cottrell/stats/esl/website
+STYSRC = $(docsrc)/gretl.sty.in
+
+ALLSRC = $(docsrc)/*.tex $(STYSRC)
 
 all: $(GUIDE) $(REF) $(ALTGUIDE) $(ALTREF)
 
-$(GUIDE): gretl-guide.tex links textables date.tex
+$(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref.tex links cmdtex functex textables topiclist date.tex
+$(REF): gretl-ref.tex links cmdtex functex textables topiclist date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(ALTGUIDE): gretl-guide-a4.tex links
+$(ALTGUIDE): gretl-guide-a4.tex links textables date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(ALTREF): gretl-ref-a4.tex links
+$(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -105,7 +107,7 @@ textables:
 functex:
 	make -C ../commands functex
 
-date.tex:
+date.tex: $(ALLSRC)
 	date "+%B, %Y" > $@
 
 alt: gretl-guide-a4.pdf gretl-ref-a4.pdf
@@ -115,9 +117,6 @@ onepass: gretl-guide.tex links textables
 
 refpass: gretl-ref.tex links cmdtex textables functex topiclist
 	pdflatex $<
-
-install: $(GUIDE) $(REF)
-	cp $(GUIDE) $(REF) $(WEBDIR)
 
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
