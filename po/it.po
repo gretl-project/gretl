@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-07 11:48-0400\n"
-"PO-Revision-Date: 2009-08-06 21:10-0400\n"
+"PO-Revision-Date: 2009-08-12 10:48+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -7545,11 +7545,13 @@ msgstr ""
 "nel dataset.  OK per sovrascriverla?"
 
 #: gui2/database.c:479
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Really delete the selected series\n"
 "from the database '%s'?"
-msgstr "Eliminare davvero le serie selezionate?"
+msgstr ""
+"Eliminare davvero le serie selezionate\n"
+"dal database \"%s\"?"
 
 #: gui2/database.c:641
 msgid "Warning: series has missing observations"
@@ -11081,7 +11083,7 @@ msgstr "Accessori"
 
 #: gui2/helpfiles.c:378
 msgid "Mathematical"
-msgstr ""
+msgstr "Matematica"
 
 #: gui2/helpfiles.c:382 doc/commands/matfuncs.c:56
 msgid "Filters"
@@ -11092,23 +11094,20 @@ msgid "Statistical"
 msgstr "Statistiche"
 
 #: gui2/helpfiles.c:386
-#, fuzzy
 msgid "Probability"
-msgstr "Probit"
+msgstr "Probabilità"
 
 #: gui2/helpfiles.c:388
 msgid "Linear algebra"
 msgstr "Algebra matriciale"
 
 #: gui2/helpfiles.c:390
-#, fuzzy
 msgid "Matrix building"
-msgstr "Algebra matriciale"
+msgstr "Costruzione matrici"
 
 #: gui2/helpfiles.c:392
-#, fuzzy
 msgid "Matrix shaping"
-msgstr "Algebra matriciale"
+msgstr "Modifica matrici"
 
 #: gui2/helpfiles.c:396 doc/commands/matfuncs.c:55
 msgid "Data utilities"
@@ -12525,9 +12524,8 @@ msgstr ""
 "usando p-value a due code:"
 
 #: gui2/selector.c:4608
-#, fuzzy
 msgid "Test only selected variables"
-msgstr "_Logaritmi delle variabili selezionate"
+msgstr "Testa solo le variabili selezionate"
 
 #: gui2/selector.c:4633
 msgid "Fixed effects"
