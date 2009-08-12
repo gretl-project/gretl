@@ -650,7 +650,7 @@ zip(y, X)
   user-level function: estimate the model and print out
   the results
 */
-function zip(series y, list X)
+function void zip(series y, list X)
     matrix coef_stde = zip_estimate(y, X)
     printf "\nZero-inflated Poisson model:\n"
     string parnames = "alpha,"
@@ -675,19 +675,14 @@ coming from another user-written function, namely
   \caption{Zero-inflated Poisson Model --- internal functions}
   \label{mle-zip-inc}
 \begin{scode}
-/*
-  compute the log probabilities for the plain Poisson model
-*/
-function ln_poi_prob(series y, list X, matrix beta)
+/* compute log probabilities for the plain Poisson model */
+function series ln_poi_prob(series y, list X, matrix beta)
     series xb = lincomb(X, beta)
-    series ret = -exp(xb) + y*xb - lngamma(y+1)
-    return series ret
+    return -exp(xb) + y*xb - lngamma(y+1)
 end function  
 
-/*
-  compute the log probabilities for the zero-inflated Poisson model
-*/
-function ln_zip_prob(series y, list X, matrix beta, scalar p0)
+/* compute log probabilities for the zero-inflated Poisson model */
+function series ln_zip_prob(series y, list X, matrix beta, scalar p0)
     # check if the probability is in [0,1]; otherwise, return NA
     if (p0>1) || (p0<0)
         series ret = NA
@@ -695,13 +690,11 @@ function ln_zip_prob(series y, list X, matrix beta, scalar p0)
         series ret = ln_poi_prob(y, X, beta) + ln(1-p0)
         series ret = (y=0) ? ln(p0 + exp(ret)) : ret
     endif
-    return series ret
+    return ret
 end function  
 
-/*
-  do the actual estimation (silently)
-*/
-function zip_estimate(series y, list X)
+/* do the actual estimation (silently) */
+function matrix zip_estimate(series y, list X)
     # initialize alpha to a "sensible" value: half the frequency
     # of zeros in the sample
     scalar alpha = mean(y=0)/2
@@ -713,8 +706,7 @@ function zip_estimate(series y, list X)
     mle ll = ln_zip_prob(y, X, coef, alpha)
         params alpha coef
     end mle --hessian --quiet
-    matrix ret = $coeff ~ $stderr
-    return matrix ret
+    return $coeff ~ $stderr
 end function
 \end{scode}
 \end{script}
@@ -730,13 +722,10 @@ in the panel \ref{mle-zip-inc}.
 All the functions shown in \ref{mle-zip-main} and \ref{mle-zip-inc} can
 be stored in a separate \texttt{inp} file and executed once, at the
 beginning of our job, by means of the \texttt{include}
-command. Assuming the name of this script file is
+command.  Assuming the name of this script file is
 \texttt{zip\_est.inp}, the following is an example script which
-\begin{itemize}
-\item includes the script file;
-\item generates a simulated dataset;
-\item performs the estimation of a ZIP model on the artificial data.
-\end{itemize}
+(a) includes the script file, (b) generates a simulated dataset,
+and (c) performs the estimation of a ZIP model on the artificial data.
 
 % \begin{script}[htbp]
 %   \caption{Zero-inflated Poisson Model --- example \texttt{.inp} file}

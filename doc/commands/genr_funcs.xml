@@ -69,8 +69,9 @@
 	<para>
 	  If the <quote>model</quote> in question is actually a system (a
 	  VAR or VECM, or system of simultaneous equations),
-	  <lit>$coeff</lit> with no parameters returns the matrix of
-	  coefficients, one column per equation.
+	  the returned column vector contains the coefficients from
+	  the first equation followed by those from the second equation,
+	  and so on.
 	</para>
       </description>
     </function>

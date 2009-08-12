@@ -1,4 +1,5 @@
-function perron_test (series y, int maxlag, scalar testsig, int verbose)
+function scalar perron_test (series y, int maxlag, scalar testsig, 
+                             int verbose)
 
    # generate trend, first lag, first difference
    genr time
@@ -91,7 +92,7 @@ function perron_test (series y, int maxlag, scalar testsig, int verbose)
    genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
    printf "check: t_alpha = %g\n", t_alpha
 
-   return scalar t_alpha
+   return t_alpha
     
 end function
 

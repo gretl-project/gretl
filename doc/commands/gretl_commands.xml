@@ -4771,139 +4771,6 @@
 
   </command>
 
-  <command name="modtest" section="Tests" label="Model tests">
-
-    <usage>
-      <arguments>
-        <argument optional="true">order</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--normality</flag>
-	  <effect>normality of residual</effect>
-        </option>
-        <option>
-	  <flag>--logs</flag>
-	  <effect>non-linearity, logs</effect>
-        </option>
-        <option>
-	  <flag>--autocorr</flag>
-	  <effect>serial correlation</effect>
-        </option>
-        <option>
-	  <flag>--arch</flag>
-	  <effect>ARCH</effect>
-        </option>
-        <option>
-	  <flag>--squares</flag>
-	  <effect>non-linearity, squares</effect>
-        </option>
-        <option>
-	  <flag>--white</flag>
-	  <effect>heteroskedasticity, White's test</effect>
-        </option>
-        <option>
-	  <flag>--white-nocross</flag>
-	  <effect>heteroskedasticity, White's test (squares only)</effect>
-        </option>
-        <option>
-	  <flag>--breusch-pagan</flag>
-	  <effect>heteroskedasticity, Breusch&ndash;Pagan</effect>
-        </option>
-        <option>
-	  <flag>--robust</flag>
-	  <effect>robust variance estimate for Breusch&ndash;Pagan</effect>
-        </option>
-        <option>
-	  <flag>--panel</flag>
-	  <effect>heteroskedasticity, groupwise</effect>
-        </option>
-        <option>
-	  <flag>--comfac</flag>
-	  <effect>common factor restriction, AR1 models only</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>don't print details</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description context="gui">
-      <para>
-	Under this heading fall several diagnostic tests.  In each case the
-	null hypothesis is that the model under test does not exhibit some
-	problematic condition (heteroskedasticity, autocorrelation, etc.). A
-	<quote>large</quote> test statistic value (small p-value) suggests
-	that the null hypothesis should be rejected, or in other words the
-	problem is present.
-      </para>
-    </description>
-
-    <description context="cli">
-      <para>
-	Must immediately follow an estimation command. Depending on the option
-	given, this command carries out one of the following: the
-	Doornik&ndash;Hansen test for the normality of the error term; a
-	Lagrange Multiplier test for nonlinearity (logs or squares); White's
-	test (with or without cross-products) or the Breusch&ndash;Pagan test
-	for heteroskedasticity; the LMF test for serial correlation (Kiviet,
-	1986); a test for ARCH (Autoregressive Conditional Heteroskedasticity;
-	see also the <cmd>arch</cmd> command); or a test of the common factor
-	restriction implied by AR(1) estimation.  With the exception of the
-	normality and common factor test most of the options are only
-	available for models estimated via OLS, but see below for details
-	regarding two-stage least squares.
-      </para>
-      <para>
-	The optional <lit>order</lit> argument is relevant only in case
-	the <lit>--autocorr</lit> or <lit>--arch</lit> options are
-	selected.  The default is to run these tests using a lag order
-	equal to the periodicity of the data, but this can be adjusted by
-	supplying a specific lag order.
-      </para>
-      <para>
-	The <lit>--robust</lit> option applies only when the
-	Breusch&ndash;Pagan test is selected; its effect is to use the robust
-	variance estimator proposed by Koenker (1981), making the test less
-	sensitive to the assumption of normality.
-      </para>
-      <para>
-	The <lit>--panel</lit> option is available only when the model
-	is estimated on panel data: in this case a test for groupwise
-	heteroskedasticity is performed (that is, for a differing
-	error variance across the cross-sectional units).
-      </para>
-      <para>
-	The <lit>--comfac</lit> option is available only when the model is
-	estimated via an AR(1) method such as Hildreth&ndash;Lu.  The
-	auxiliary regression takes the form of a relatively unrestricted
-	dynamic model, which is used to test the common factor restriction
-	implicit in the AR(1) specification.
-      </para>
-      <para>
-	By default, the program prints the auxiliary regression on which the
-	test statistic is based, where applicable.  This may be suppressed by
-	using the <lit>--quiet</lit> flag.  The test statistic and its p-value
-	may be retrieved using the accessors <lit>$test</lit> and
-	<lit>$pvalue</lit> respectively.
-      </para>
-      <para>
-	When a model has been estimated by two-stage least squares (see
-	<cmdref targ="tsls"/>), the LM principle breaks down and gretl offers
-	some equivalents: the <flag>--autocorr</flag> option computes
-	Godfrey's test for autocorrelation (Godfrey, 1994) while the
-	<flag>--white</flag> option yields the HET1 heteroskedasticity test
-	(Pesaran and Taylor, 1999).
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Model window, /Tests</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="logistic" section="Estimation"
     label="Logistic regression">
 
@@ -5637,6 +5504,139 @@
 	statistics.
       </para>
     </description>
+
+  </command>
+
+  <command name="modtest" section="Tests" label="Model tests">
+
+    <usage>
+      <arguments>
+        <argument optional="true">order</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--normality</flag>
+	  <effect>normality of residual</effect>
+        </option>
+        <option>
+	  <flag>--logs</flag>
+	  <effect>non-linearity, logs</effect>
+        </option>
+        <option>
+	  <flag>--autocorr</flag>
+	  <effect>serial correlation</effect>
+        </option>
+        <option>
+	  <flag>--arch</flag>
+	  <effect>ARCH</effect>
+        </option>
+        <option>
+	  <flag>--squares</flag>
+	  <effect>non-linearity, squares</effect>
+        </option>
+        <option>
+	  <flag>--white</flag>
+	  <effect>heteroskedasticity, White's test</effect>
+        </option>
+        <option>
+	  <flag>--white-nocross</flag>
+	  <effect>heteroskedasticity, White's test (squares only)</effect>
+        </option>
+        <option>
+	  <flag>--breusch-pagan</flag>
+	  <effect>heteroskedasticity, Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>robust variance estimate for Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
+	  <flag>--panel</flag>
+	  <effect>heteroskedasticity, groupwise</effect>
+        </option>
+        <option>
+	  <flag>--comfac</flag>
+	  <effect>common factor restriction, AR1 models only</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print details</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description context="gui">
+      <para>
+	Under this heading fall several diagnostic tests.  In each case the
+	null hypothesis is that the model under test does not exhibit some
+	problematic condition (heteroskedasticity, autocorrelation, etc.). A
+	<quote>large</quote> test statistic value (small p-value) suggests
+	that the null hypothesis should be rejected, or in other words the
+	problem is present.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+	Must immediately follow an estimation command. Depending on the option
+	given, this command carries out one of the following: the
+	Doornik&ndash;Hansen test for the normality of the error term; a
+	Lagrange Multiplier test for nonlinearity (logs or squares); White's
+	test (with or without cross-products) or the Breusch&ndash;Pagan test
+	for heteroskedasticity; the LMF test for serial correlation (Kiviet,
+	1986); a test for ARCH (Autoregressive Conditional Heteroskedasticity;
+	see also the <cmd>arch</cmd> command); or a test of the common factor
+	restriction implied by AR(1) estimation.  With the exception of the
+	normality and common factor test most of the options are only
+	available for models estimated via OLS, but see below for details
+	regarding two-stage least squares.
+      </para>
+      <para>
+	The optional <lit>order</lit> argument is relevant only in case
+	the <lit>--autocorr</lit> or <lit>--arch</lit> options are
+	selected.  The default is to run these tests using a lag order
+	equal to the periodicity of the data, but this can be adjusted by
+	supplying a specific lag order.
+      </para>
+      <para>
+	The <lit>--robust</lit> option applies only when the
+	Breusch&ndash;Pagan test is selected; its effect is to use the robust
+	variance estimator proposed by Koenker (1981), making the test less
+	sensitive to the assumption of normality.
+      </para>
+      <para>
+	The <lit>--panel</lit> option is available only when the model
+	is estimated on panel data: in this case a test for groupwise
+	heteroskedasticity is performed (that is, for a differing
+	error variance across the cross-sectional units).
+      </para>
+      <para>
+	The <lit>--comfac</lit> option is available only when the model is
+	estimated via an AR(1) method such as Hildreth&ndash;Lu.  The
+	auxiliary regression takes the form of a relatively unrestricted
+	dynamic model, which is used to test the common factor restriction
+	implicit in the AR(1) specification.
+      </para>
+      <para>
+	By default, the program prints the auxiliary regression on which the
+	test statistic is based, where applicable.  This may be suppressed by
+	using the <lit>--quiet</lit> flag.  The test statistic and its p-value
+	may be retrieved using the accessors <lit>$test</lit> and
+	<lit>$pvalue</lit> respectively.
+      </para>
+      <para>
+	When a model has been estimated by two-stage least squares (see
+	<cmdref targ="tsls"/>), the LM principle breaks down and gretl offers
+	some equivalents: the <flag>--autocorr</flag> option computes
+	Godfrey's test for autocorrelation (Godfrey, 1994) while the
+	<flag>--white</flag> option yields the HET1 heteroskedasticity test
+	(Pesaran and Taylor, 1999).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests</menu-path>
+    </gui-access>
 
   </command>
 

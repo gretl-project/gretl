@@ -600,9 +600,9 @@ It is assumed here that \texttt{ObjFunc} is a user-defined function
 (see Chapter~\ref{chap:functions}) with the following general set-up:
 %
 \begin{code}
-function ObjFunc (matrix *theta, matrix *X)
+function scalar ObjFunc (matrix *theta, matrix *X)
   scalar val = ...  # do some computation
-  return scalar val
+  return val
 end function
 \end{code}
 
@@ -610,11 +610,10 @@ end function
   \caption{Finding the minimum of the Rosenbrock function}
   \label{rosenbrock}
 \begin{scode}
-function Rosenbrock(matrix *param)
+function scalar Rosenbrock(matrix *param)
   scalar x = param[1]
   scalar y = param[2]
-  scalar f = -(1-x)^2 - 100 * (y - x^2)^2
-  return scalar f 
+  return -(1-x)^2 - 100 * (y - x^2)^2
 end function
 
 nulldata 10
@@ -667,9 +666,9 @@ where we assume that \texttt{SumOC} is a user-defined function with
 the following structure:
 %
 \begin{code}
-function SumOC (matrix *theta, matrix *X)
+function matrix SumOC (matrix *theta, matrix *X)
   matrix V = ...  # do some computation
-  return matrix V
+  return V
 end function
 \end{code}
 
@@ -707,12 +706,11 @@ $\left.\pder{g(x)}{x}\right|_{x = \theta}$.
   \caption{Delta Method}
   \label{delta-method}
 \begin{scode}
-function MPC(matrix *param, matrix *Y)
+function matrix MPC(matrix *param, matrix *Y)
   beta = param[2]
   gamma = param[3]
   y = Y[1]
-  matrix ret = beta*gamma*y^(gamma-1)
-  return matrix ret
+  return beta*gamma*y^(gamma-1)
 end function
 
 # William Greene, Econometric Analysis, 5e, Chapter 9

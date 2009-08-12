@@ -9,24 +9,40 @@ called via the command line, in the context of a script, or (if
 packaged appropriately, see section~\ref{sec:func-packages}) via the
 program's graphical interface.
 
-The syntax for defining a function looks like this:
-    
-\begin{code}
-function function-name(parameters)
-   function body
-end function
-\end{code}
+The syntax for defining a function looks like this:\footnote{The
+  syntax given here differs from the standard prior to \app{gretl}
+  version 1.8.4.  For reasons of backward compatibility the old syntax
+  is still supported; an account of the changes can be found in
+  section~\ref{sec:old-func} below.}
 
-\textsl{function-name} is the unique identifier for the function.
-Names must start with a letter. They have a maximum length of 31
-characters; if you type a longer name it will be truncated.  Function
-names cannot contain spaces.  You will get an error if you try to
-define a function having the same name as an existing \app{gretl}
-command.
+\begin{raggedright}
+\texttt{function} \textsl{return-type} \textsl{function-name}
+\texttt{(}\textsl{parameters}\texttt{)} \\
+\qquad  \textsl{function body} \\
+\texttt{end function}
+\end{raggedright}
 
-The \textsl{parameters} for a function are given in the form of a
-comma-separated list.  Parameters can be of any of the types shown
-below.
+The opening line of a function definition contains these elements, in
+strict order:
+
+\begin{enumerate}
+\item The keyword \texttt{function}.
+\item \textsl{return-type}, which states the type of value returned by
+  the function, if any.  This must be one of \texttt{void} (if the
+  function does not return anything), \texttt{scalar},
+  \texttt{series}, \texttt{matrix}, \texttt{list} or \texttt{string}.
+\item \textsl{function-name}, the unique identifier for the
+  function.  Names must start with a letter. They have a maximum
+  length of 31 characters; if you type a longer name it will be
+  truncated.  Function names cannot contain spaces.  You will get an
+  error if you try to define a function having the same name as an
+  existing \app{gretl} command.
+\item The functions's \textsl{parameters}, in the form of a
+  comma-separated list enclosed in parentheses.  This may be run
+  into the function name, or separated by white space as shown.
+\end{enumerate}
+
+Function parameters can be of any of the types shown below.
 
 \begin{center}
 \begin{tabular}{ll}
@@ -47,7 +63,7 @@ type specifier, and the name by which the parameter shall be known
 within the function.  An example follows:
 %    
 \begin{code}
-function myfunc(series y, list xvars, bool verbose)
+function scalar myfunc (series y, list xvars, bool verbose)
 \end{code}
 
 Each of the type-specifiers, with the exception of \texttt{list} and
@@ -55,7 +71,7 @@ Each of the type-specifiers, with the exception of \texttt{list} and
 associated parameter name, as in
 %    
 \begin{code}
-function myfunc(series *y, scalar *b)
+function scalar myfunc (series *y, scalar *b)
 \end{code}
 
 The meaning of this modification is explained below (see section
@@ -108,18 +124,18 @@ parenthesis of the function definition, in the case of the last
 parameter), as illustrated in the following example.
 
 \begin{code}
-function myfun (series y "dependent variable", 
-                series x "independent variable")
+function scalar myfun (series y "dependent variable", 
+                       series x "independent variable")
 \end{code} 
 
-\subsection{Void functions}
+\subsection{Functions taking no parameters}
 
 You may define a function that has no parameters (these are called
 ``routines'' in some programming languages).  In this case,  
 use the keyword \texttt{void} in place of the listing of parameters:
 %    
 \begin{code}
-function myfunc2(void)
+function matrix myfunc2 (void)
 \end{code}
 
 
@@ -163,11 +179,11 @@ correctly matches the function definition.
     
 \begin{code}
 # function definition
-function ols_ess(series y, list xvars)
+function scalar ols_ess(series y, list xvars)
   ols y 0 xvars --quiet
   scalar myess = $ess
   printf "ESS = %g\n", myess
-  return scalar myess
+  return myess
 end function
 # main script
 open data4-1
@@ -190,10 +206,10 @@ a return value to a variable in the caller:
     
 \begin{code}
 # function definition
-function get_uhat(series y, list xvars)
+function series get_uhat(series y, list xvars)
   ols y 0 xvars --quiet
   series uh = $uhat
-  return series uh
+  return uh
 end function
 # main script
 open data4-1
@@ -228,14 +244,12 @@ Series, scalar, and matrix arguments to functions can be passed in two
 ways: ``as they are'', or as pointers. For example, consider the
 following:
 \begin{code}
-function triple1(series x)
-  series ret = 3*x
-  return series ret
+function series triple1(series x)
+  return 3*x
 end function
   
-function triple2(series *x)
-  series ret = 3*x
-  return series ret
+function series triple2(series *x)
+  return 3*x
 end function
 \end{code}
 
@@ -245,8 +259,8 @@ the only difference is that you need to feed a series into
 \texttt{triple2} must be supplied a \emph{pointer} to a series, as in
 \texttt{triple2(\&myseries)}. 
 
-Why make the distinction, then? There are two main reasons for doing
-so: modularity and performance.
+Why make the distinction? There are two main reasons for doing so:
+modularity and performance.
 
 By modularity we mean the insulation of a function from the rest of
 the script which calls it.  One of the many benefits of this approach
@@ -274,11 +288,11 @@ definition, and the corresponding argument is marked with the
 complementary prefix \verb+&+ in the caller.  For example,
 %
 \begin{code}
-function get_uhat_and_ess(series y, list xvars, scalar *ess)
+function series get_uhat_and_ess(series y, list xvars, scalar *ess)
   ols y 0 xvars --quiet
   ess = $ess
   series uh = $uhat
-  return series uh
+  return uh
 end function
 # main script
 open data4-1
@@ -307,13 +321,12 @@ above, modified to make the filling out of the \texttt{ess} value
 optional.
 %
 \begin{code}
-function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
+function series get_uhat_and_ess(series y, list xvars, scalar *ess[null])
   ols y 0 xvars --quiet
   if !isnull(ess) 
      ess = $ess
   endif
-  series uh = $uhat
-  return series uh
+  return $uhat
 end function
 \end{code}
 %
@@ -359,14 +372,12 @@ Elapsed time:
   \caption{Performance comparison: values versus pointer}
   \label{ex:perf-pointers}
   \begin{scode}
-function a(matrix X)
-  r = rows(X)
-  return scalar r
+function scalar a(matrix X)
+  return rows(X)
 end function
 
-function b(const matrix *X)
-  r = rows(X)
-  return scalar r
+function scalar b(const matrix *X)
+  return rows(X)
 end function
 
 nulldata 10
@@ -378,13 +389,13 @@ r = 0
 set stopwatch
 loop 100
   r = a(X)
-end loop
+endloop
 fa = $stopwatch
 
 set stopwatch
 loop 100
   r = b(&X)
-end loop
+endloop
 fb = $stopwatch
 
 printf "Elapsed time:\n\
@@ -418,7 +429,7 @@ variable in the list.  You can do:
 \begin{code}
 loop foreach i X
    scalar sd_$i = sd(X.$i)
-end loop
+endloop
 \end{code}
 
 \textit{Please note}: a special piece of syntax is needed in this
@@ -428,7 +439,7 @@ regular script (not inside a function), we could do
 \begin{code}
 loop foreach i X
    scalar sd_$i = sd($i)
-end loop
+endloop
 \end{code}
 %
 where \dollar{i} gets the name of the variable at position $i$ in the
@@ -462,7 +473,7 @@ optional, this should be indicated by appending a default value of
 \texttt{null}, as in
 %
 \begin{code}
-function myfunc (scalar y, list X[null])
+function scalar myfunc (scalar y, list X[null])
 \end{code}
 %
 In that case, if the caller gives \texttt{null} as the list argument
@@ -479,11 +490,11 @@ moving averages constructed from an input series, with the names of
 the newly created variables governed by the string argument.
 %
 \begin{code}
-function mavg (series y, string vname)
+function list mavg (series y, string vname)
    series @vname_2 = (y+y(-1)) / 2
    series @vname_4 = (y+y(-1)+y(-2)+y(-3)) / 4
    list retlist = @vname_2 @vname_4
-   return list retlist
+   return retlist
 end function
 
 open data9-9
@@ -499,7 +510,7 @@ If a string argument is considered optional, it may be given a
 \texttt{null} default value, as in
 %
 \begin{code}
-function foo (series y, string vname[null])
+function scalar foo (series y, string vname[null])
 \end{code}
 
 \subsection{Retrieving the names of arguments}
@@ -509,7 +520,7 @@ function by the names of the corresponding parameters.  For example,
 within the function whose signature is
 %
 \begin{code}
-function somefun (series y)
+function void somefun (series y)
 \end{code}
 %
 we have the series known as \texttt{y}.  It may be useful, however, to
@@ -519,7 +530,7 @@ name of a function parameter as its single argument and returns a
 string.  Here is a simple illustration:
 %
 \begin{code}
-function namefun (series y)
+function void namefun (series y)
   printf "the series given as 'y' was named %s\n", argname(y)
 end function
 
@@ -541,21 +552,16 @@ writers who wish to make use of this facility should check the return
 from \texttt{argname} using the \texttt{isstring()} function, which
 returns 1 when given the name of a string variable, 0 otherwise.
 
-
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
 they can return a single variable --- a scalar, series, list, matrix
 or string.  The return value, if any, is specified via a statement
-within the function body beginning with the keyword \verb+return+,
-followed by a type specifier and the name of a variable (as in the
-listing of parameters).  There can be only one such statement.  An
-example of a valid return statement is shown below:
-%    
-\begin{code}
-return scalar SSR
-\end{code}
-%
+within the function body beginning with the keyword \texttt{return},
+followed by either the name of a variable (which must be of the type
+announced on the first line of the function definition) or an
+expression which produces a value of the correct type.
+
 Having a function return a list is one way of permitting the
 ``return'' of more than one variable.  That is, you can define several
 variable inside a function and package them as a list; in this case
@@ -564,14 +570,14 @@ example, which also illustrates the possibility of setting the
 descriptive labels for variables generated in a function.
 %    
 \begin{code}
-function make_cubes (list xlist)
+function list make_cubes (list xlist)
    list cubes = null
    loop foreach i xlist --quiet
       series $i3 = (xlist.$i)^3
       setinfo $i3 -d "cube of $i"
       list cubes += $i3
-    end loop
-    return list cubes
+   endloop
+   return cubes
 end function
 
 open data4-1
@@ -582,12 +588,12 @@ labels
 \end{code}
 %$
 
-Note that the \verb+return+ statement does \emph{not} cause the
-function to return (exit) at the point where it appears within the
-body of the function. Rather, it specifies which variable is available
-for assignment when the function exits, and a function exits only when
-(a) the end of the function code is reached, (b) a \app{gretl} error
-occurs, or (c) a \verb+funcerr+ statement is reached.
+A \texttt{return} statement causes the function to return (exit) at
+the point where it appears within the body of the function.  A
+function may also exit when (a) the end of the function code is
+reached (in the case of a function with no return value), (b) a
+\app{gretl} error occurs, or (c) a \verb+funcerr+ statement is
+reached.
 
 The \verb+funcerr+ keyword, which may be followed by a string enclosed
 in double quotes, causes a function to exit with an error flagged.  If
@@ -599,7 +605,29 @@ specific and helpful error message.  For example,
 \begin{code}
 if nelem(xlist) = 0
    funcerr "xlist must not be empty"
-end if
+endif
+\end{code}
+
+A function may contain more than one \texttt{return} statement, as in
+%
+\begin{code}
+function scalar multi (bool s)
+   if s
+      return 1000
+   else
+      return 10
+   endif
+end function
+\end{code}
+%
+However, it is recommended programming practice to have a single
+return point from a function unless this is very inconvenient.  The
+simple example above would be better written as
+%
+\begin{code}
+function scalar multi (bool s)
+   return s ? 1000 : 10
+end function
 \end{code}
     
 
@@ -610,7 +638,7 @@ minimal error-checking: the only checks are that the function name is
 acceptable, and, so far as the body is concerned, that you are not
 trying to define a function inside a function (see Section
 \ref{func-define}). Otherwise, if the function body contains invalid
-commands this will become apparent only when the function is called,
+commands this will become apparent only when the function is called
 and its commands are executed.
 
 \subsection{Debugging}
@@ -640,13 +668,54 @@ and the printing of messages, this is equivalent to setting
 \verb|max_verbose| (which produces verbose output from the BFGS
 maximizer) at all levels of function execution.
 
+\section{Old-style function syntax}
+\label{sec:old-func}
+
+Prior to \app{gretl} 1.8.3 different rules were in force for defining
+functions.  As mentioned above, the old syntax is still supported for
+reasons of backward compatibility.  The differences in relation to the
+currently recommended syntax concern the way in which a function's
+return type is specified, and the syntax and semantics of the
+\texttt{return} statement.
+
+\begin{itemize}
+\item In the old version there was no place for specifying a
+  function's return type in the first line of its definition.  You had
+  to give the type as part of the \texttt{return} statement, as in
+  \texttt{return scalar x}.
+\item The final element in the \texttt{return} statement could not be
+  an expression; it had to be the name of a pre-defined variable.
+\item There could be only one \texttt{return} statement in a given
+  function.
+\item The \texttt{return} statement did not actually cause the
+  function to exit, it just announced the variable available for
+  assignment by the caller (although usually such a statement
+  would occur at the end of the function anyway).
+\end{itemize}
+
+Here is a comparison of the old and the new syntax for a trivial
+example:
+%
+\begin{code}
+# old style
+function triple (series x)
+  y = 3*x
+  return series y
+end function
+
+# new style  
+function series triple (series x)
+  return 3*x
+end function
+\end{code}
+
 
 \section{Function packages}
 \label{sec:func-packages}
 
-As of \app{gretl} 1.6.0, there is a mechanism to package functions and
-make them available to other users of \app{gretl}.  Here is a
-walk-through of the process.
+Since \app{gretl} 1.6.0 there has been a mechanism to package
+functions and make them available to other users of \app{gretl}.  Here
+is a walk-through of the process.
 
 \subsection{Load a function in memory}
 
@@ -665,9 +734,8 @@ There are several ways to load a function:
 For example, suppose you decide to package a function that returns the
 percentage change of a time series. Open a script file and type
 \begin{code}
-function pc(series y "Series to process")
-  series foo = 100 * diff(y)/y(-1)
-  return series foo
+function series pc(series y "Series to process")
+  return 100 * diff(y)/y(-1)
 end function
 \end{code}
 In this case, we have appended a string to the function argument, as

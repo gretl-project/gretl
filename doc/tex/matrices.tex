@@ -989,7 +989,7 @@ to first position.
   \caption{Manipulating a list}
   \label{normalize-list}
 \begin{scode}
-function normalize_list (matrix *x)
+function void normalize_list (matrix *x)
   # If the matrix (representing a list) contains var 0,
   # but not in first position, move it to first position
 
@@ -1001,8 +1001,8 @@ function normalize_list (matrix *x)
             x[1] = 0
             break
          endif
-     end loop
-  end if
+     endloop
+  endif
 end function
 
 open data9-7

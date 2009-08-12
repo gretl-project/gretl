@@ -698,7 +698,7 @@ is shown in script~\ref{script:armaest}.
   \caption{ARMA estimation}
   \label{script:armaest}
 \begin{scode}
-function arma11_via_kalman(series y)
+function void arma11_via_kalman(series y)
     /* parameter initalization */
     phi = 0
     theta = 0
@@ -773,7 +773,7 @@ Figure~\ref{fig:loclev}.
   \caption{Local level model}
   \label{script:loclev}
 \begin{scode}
-function local_level (series y)
+function matrix local_level (series y)
     /* starting values */
     scalar s1 = 1
     scalar s2 = 1
@@ -793,11 +793,10 @@ function local_level (series y)
         params s1 s2
     end mle
 
-    matrix ret = s1 ~ s2
-    return matrix ret
+    return s1 ~ s2
 end function
 
-function loclev_sm (series y, scalar s1, scalar s2)
+function series loclev_sm (series y, scalar s1, scalar s2)
     /* return the smoothed estimate of \mu_t */
     kalman
        obsy y
@@ -807,7 +806,7 @@ function loclev_sm (series y, scalar s1, scalar s2)
        obsvar s1
     end kalman --diffuse
     series ret = ksmooth()
-    return series ret
+    return ret
 end function
 
 /* -------------------- main script -------------------- */

@@ -1,3 +1,10 @@
+version 1.8.4, in progress
+- Add "to" to the list of reserved words
+- Enable testing of nonlinear restrictions on simultaneous
+  equation systems
+- Update docs and examples for the "new style" definition
+  of functions
+
 8/10/09 version 1.8.3
 - Fix bugs 2819633, 2827358, 2828349, 2833434
 - $stopwatch: use times() function if available, to include

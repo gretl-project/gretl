@@ -53,9 +53,9 @@ struct rrow_ {
 struct gretl_restriction_ {
     int g;                        /* number of restrictions (rows of R) */
     int gmax;                     /* max. possible restrictions */
-    int bmulti;                   /* pertains to multi-equation system? */
+    int bmulti;                   /* flag for coeffs need two indices */
     int amulti;                   /* VECM only */
-    int gb, ga;                   /* VECM only */
+    int gb, ga;                   /* restrictions on beta, alpha (VECM only) */
     int bcols, acols;             /* VECM only */
     int vecm;                     /* pertains to VECM beta or alpha? */
     gretl_matrix *R;              /* LHS restriction matrix */
@@ -2204,7 +2204,6 @@ gretl_restricted_vecm (gretl_restriction *rset,
 static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
 				PRN *prn)
 {
-    MODEL *pmod;
     gretl_matrix *coeff = NULL;
     gretl_matrix *vcv = NULL;
     gretl_matrix *J = NULL;
@@ -2219,16 +2218,22 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
 	return E_UNKVAR;
     }
 
-    if (rset->otype != GRETL_OBJ_EQN) {
+    if (rset->otype == GRETL_OBJ_EQN) {
+	MODEL *pmod = rset->obj;
+
+	coeff = gretl_coeff_vector_from_model(pmod, NULL, &err);
+	if (!err) {
+	    vcv = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+	}
+    } else if (rset->otype == GRETL_OBJ_SYS) {
+	equation_system *sys = rset->obj;
+
+	coeff = equation_system_get_matrix(sys, M_COEFF, &err);
+	if (!err) {
+	    vcv = equation_system_get_matrix(sys, M_VCV, &err);
+	}
+    } else {
 	return E_NOTIMP; /* relax this later? */
-    }
-
-    pmod = rset->obj;
-
-    coeff = gretl_coeff_vector_from_model(pmod, NULL, &err);
-
-    if (!err) {
-	vcv = gretl_vcv_matrix_from_model(pmod, NULL, &err);
     }
 
     if (!err) {

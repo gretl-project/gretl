@@ -1,3 +1,8 @@
+version 1.8.4, in progress
+
+Gretl uses "to" as a syntactic element in some contexts;
+this has now been added to the list of reserved words.
+
 8/10/2009 version 1.8.3
 
 Remove redundant function strcmp: strncmp may be used with 

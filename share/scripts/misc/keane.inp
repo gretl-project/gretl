@@ -1,4 +1,4 @@
-function mlogitlogprobs(series y, matrix X, matrix theta)
+function series mlogitlogprobs(series y, matrix X, matrix theta)
   set warnings off
   scalar n = max(y)
   scalar k = cols(X)
@@ -9,9 +9,9 @@ function mlogitlogprobs(series y, matrix X, matrix theta)
   loop for i=1..n --quiet
     series x = tmp[,i]
     ret += (y=$i) ? x : 0 
-  end loop
+  endloop
 
-  return series ret
+  return ret
 end function
 
 # Replicate the multinomial logit example from Table 15.2 in 

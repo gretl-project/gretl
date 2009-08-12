@@ -155,7 +155,7 @@ loop i=1..n
   smpl (Z8=xi) --restrict --replace
   printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \
     xi, mean(Y), xi, sd(Y)
-end loop
+endloop
 \end{code}
 
 In this case, we evaluate the conditional mean and standard deviation

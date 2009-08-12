@@ -88,8 +88,8 @@ loop for i=1..m
   scalar sel = vd[i]
   smpl (d=sel) --restrict --replace
   ols y const x
-end loop
-smpl full
+endloop
+smpl --full
 \end{code}
 
 \emph{Comment:} The main ingredient here is a loop.  You can have
@@ -266,7 +266,7 @@ list dZ = null
 loop foreach i Z
   series d$i = d * $i
   list dZ = dZ d$i
-end loop 
+endloop 
 
 ols y X Z d dZ
 \end{code} 
@@ -283,7 +283,7 @@ you, isn't it?
 
 \emph{Solution:}
 \begin{code}
-smpl full
+smpl --full
 genr time
 genr minute = int(time/60) + 1
 genr second = time % 60
@@ -321,9 +321,9 @@ loop foreach i L1 --quiet
             ols $i 0 $j
         endif
         k2++
-    end loop
+    endloop
     k1++
-end loop
+endloop
 \end{code}
 
 \emph{Comment:} The simplest way to achieve the result is to loop over
@@ -338,7 +338,7 @@ looping over the integers is quite intuitive and certainly more elegant:
 \begin{code}
   loop for i=1..3
     ols y$i const x$i
-  end loop
+  endloop
 \end{code}
 
 %%% Local Variables: 

@@ -403,7 +403,7 @@ chapter~\ref{chap:matrices}.
   \caption{Multinomial logit}
   \label{ex:mlogit}
 \begin{scode}
-function mlogitlogprobs (series y, matrix X, matrix theta)
+function series mlogitlogprobs (series y, matrix X, matrix theta)
   scalar n = max(y)
   scalar k = cols(X)
   matrix b = mshape(theta,k,n)
@@ -413,9 +413,9 @@ function mlogitlogprobs (series y, matrix X, matrix theta)
   loop for i=1..n --quiet
     series x = tmp[,i]
     ret += (y=$i)? x : 0 
-  end loop
+  endloop
 
-  return series ret
+  return ret
 end function
 
 open keane.gdt
@@ -435,7 +435,7 @@ end mle --hessian
 
 # Compare the built-in command (in this case we don't need
 # status to be 0-based, and NAs are handled correctly)
-smpl full
+smpl --full
 status = status + 1
 smpl (year=87) --restrict
 logit status 0 educ exper expersq black --multinomial

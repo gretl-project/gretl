@@ -547,7 +547,7 @@ block; see example \ref{RStructTS-simple}.
 \begin{script}[htbp]
   \caption{Estimation of the Basic Structural Model --- via a function}
 \begin{scode}
-function RStructTS(series myseries)
+function list RStructTS(series myseries)
 
     smpl ok(myseries) --restrict
     sx = argname(myseries)
@@ -565,7 +565,7 @@ function RStructTS(series myseries)
     rename sea @sx_seas
 
     list ret = @sx_level @sx_slope @sx_seas
-    return list ret
+    return ret
 end function
 
 # ------------ main -------------------------
