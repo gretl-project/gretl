@@ -5540,7 +5540,7 @@
         </option>
         <option>
 	  <flag>--white-nocross</flag>
-	  <effect>heteroskedasticity, White's test (squares only)</effect>
+	  <effect>White's test, squares only</effect>
         </option>
         <option>
 	  <flag>--breusch-pagan</flag>
