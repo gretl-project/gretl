@@ -47,7 +47,7 @@ TEXSRC = cli.tex \
 
 STYSRC = $(docsrc)/gretl.sty.in
 
-ALLSRC = $(docsrc)/*.tex $(STYSRC)
+ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
 all: $(GUIDE) $(REF) $(ALTGUIDE) $(ALTREF)
 
