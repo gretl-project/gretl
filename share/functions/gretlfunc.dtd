@@ -31,6 +31,7 @@
 <!ELEMENT gretl-function (help?, params?, return?, code)>
 <!ATTLIST gretl-function
    name CDATA #REQUIRED
+   type (void | scalar | series | matrix | list | string) 'void'
    private (0|1) '0'
 >
 
@@ -57,8 +58,7 @@
 <!ELEMENT return EMPTY>
 <!ATTLIST return
    name CDATA #REQUIRED
-   type (bool | boolean | int | scalar | series | list | 
-         matrix | string) 'series'
+   type (scalar | series | matrix | list | string) 'series'
 >
 
 <!ELEMENT sample-script (#PCDATA)>
