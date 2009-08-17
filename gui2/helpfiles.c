@@ -1580,7 +1580,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     if (find_dialog != NULL) {
 	g_object_set_data(G_OBJECT(find_dialog), "windat", vwin);
 	parent_find(find_dialog, vwin);
-	gdk_window_raise(find_dialog->window);
+	gtk_window_present(GTK_WINDOW(find_dialog));
 	return;
     }
 

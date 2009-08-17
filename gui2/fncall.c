@@ -493,7 +493,7 @@ static void launch_matrix_maker (GtkWidget *w, call_info *cinfo)
 	update_matrix_selectors(cinfo);
     }
 
-    gdk_window_raise(cinfo->dlg->window);
+    gtk_window_present(GTK_WINDOW(cinfo->dlg));
 }
 
 static int spinner_arg (call_info *cinfo, int i)

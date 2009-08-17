@@ -1,4 +1,8 @@
 version 1.8.4, in progress
+- Fix breakage in GUI interface for calling user-defined
+  functions
+- Patches from Mandriva: build OK with -Wformat-security,
+  and respect LDFLAGS as supplied by user
 - Add "to" to the list of reserved words
 - Enable testing of nonlinear restrictions on simultaneous
   equation systems

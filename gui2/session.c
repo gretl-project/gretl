@@ -471,8 +471,7 @@ static void edit_session_notes (void)
 			 G_CALLBACK(gtk_widget_destroyed),
 			 &notes_window);
     } else {
-	gdk_window_show(notes_window->window);
-	gdk_window_raise(notes_window->window);
+	gtk_window_present(GTK_WINDOW(notes_window));
     }
 }
 

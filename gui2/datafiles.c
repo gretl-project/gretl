@@ -975,11 +975,10 @@ static int browser_busy (guint code)
     int ret = 0;
 
     if (code >= TEXTBOOK_DATA && code <= REMOTE_DB) {
-	GtkWidget *w;
+	GtkWidget *w = browsers[code - TEXTBOOK_DATA];
 
-	w = browsers[code - TEXTBOOK_DATA];
 	if (w != NULL) {
-	    gdk_window_raise(w->window);
+	    gtk_window_present(GTK_WINDOW(w));
 	    ret = 1;
 	}
     }

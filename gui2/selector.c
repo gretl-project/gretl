@@ -5125,7 +5125,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci)
     presel = 0;
 
     if (open_selector != NULL) {
-	gdk_window_raise(open_selector->dlg->window);
+	gtk_window_present(GTK_WINDOW(open_selector->dlg));
 	return;
     }
 
@@ -5540,7 +5540,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     int i;
 
     if (open_selector != NULL) {
-	gdk_window_raise(open_selector->dlg->window);
+	gtk_window_present(GTK_WINDOW(open_selector->dlg));
 	return;
     }
 

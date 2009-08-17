@@ -2859,7 +2859,7 @@ void show_spreadsheet (SheetCmd c)
     }
 
     if (sheet != NULL) {
-	gdk_window_raise(sheet->win->window);
+	gtk_window_present(GTK_WINDOW(sheet->win));
 	return;
     }
 
@@ -2917,7 +2917,7 @@ static void real_edit_scalars (const char *vname)
     int ns;
 
     if (sheet != NULL) {
-	gdk_window_raise(sheet->win->window);
+	gtk_window_present(GTK_WINDOW(sheet->win));
 	return;
     }
 
