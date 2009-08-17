@@ -35,6 +35,7 @@
 
 #include "gretl.h" /* this must provide standard and GTK headers and
 		      deal with gettext */
+#include "dlgutils.h"
 #include "gtkfontselhack.h"
 
 #define GTK_TYPE_FONTSEL_HACK              (gtk_fontsel_hack_get_type ())

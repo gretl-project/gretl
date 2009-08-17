@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "dlgutils.h"
 #include "varprint.h"
 #include "textutil.h"
 #include "textbuf.h"
