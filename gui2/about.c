@@ -86,16 +86,17 @@ void about_dialog (void)
 {
     GtkWidget *vbox, *hbox, *label;
     GtkWidget *dialog, *image, *button;
-    GtkWidget *ebox;
+    GtkWidget *ebox, *abox;
     gchar *buf;
 
     dialog = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl")); 
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dialog)->vbox), 5);
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    abox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
+    gtk_box_set_spacing(GTK_BOX(vbox), 5);
+    gtk_container_set_border_width(GTK_CONTAINER(abox), 5);
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7)
@@ -106,7 +107,8 @@ void about_dialog (void)
     /* arrange for a little horizontal padding */
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
     
@@ -117,11 +119,10 @@ void about_dialog (void)
     }
 
     /* Program label */
-    buf = 
-	g_markup_printf_escaped("<span weight=\"bold\" size=\"xx-large\">"
-				"gretl %s</span>\n"
-				"%s\n%s",
-				GRETL_VERSION, BUILD_DATE, _(bonmot));
+    buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"xx-large\">"
+				  "gretl %s</span>\n"
+				  "%s\n%s",
+				  GRETL_VERSION, BUILD_DATE, _(bonmot));
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
     g_free(buf);
@@ -130,9 +131,8 @@ void about_dialog (void)
 
     /* Website link */
     ebox = gtk_event_box_new();
-    buf = 
-	g_markup_printf_escaped("<span color=\"blue\"><u>%s</u></span>",
-				website);
+    buf = g_markup_printf_escaped("<span color=\"blue\"><u>%s</u></span>",
+				  website);
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
     g_free(buf);
@@ -145,9 +145,8 @@ void about_dialog (void)
 		     G_CALLBACK(show_link_cursor), NULL);
 
     /* Copyright label */
-    buf = 
-	g_markup_printf_escaped("<span size=\"small\">%s</span>",
-				copyright);
+    buf = g_markup_printf_escaped("<span size=\"small\">%s</span>",
+				  copyright);
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
     g_free(buf);
@@ -156,9 +155,8 @@ void about_dialog (void)
 
     /* Translator credits */
     if (strcmp(_("translator_credits"), "translator_credits")) {
-	buf = 
-	    g_markup_printf_escaped("<span size=\"small\">%s</span>",
-				    _("translator_credits"));
+	buf = g_markup_printf_escaped("<span size=\"small\">%s</span>",
+				      _("translator_credits"));
 	label = gtk_label_new(NULL);
 	gtk_label_set_markup(GTK_LABEL(label), buf);
 	g_free(buf);
@@ -169,8 +167,7 @@ void about_dialog (void)
     /* GPL button */
     button = gtk_button_new_with_label(_("License"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       button, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(license_callback), 
 		     NULL);
@@ -178,8 +175,7 @@ void about_dialog (void)
     /* OK button */
     button = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       button, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);

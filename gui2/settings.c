@@ -868,6 +868,7 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
     GtkWidget *notebook;
     GtkWidget *button;
     GtkWidget *hbox;
+    GtkWidget *vbox;
     int canceled = 0;
 
     if (dialog != NULL) {
@@ -877,15 +878,15 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
 
     dialog = gretl_dialog_new(_("gretl: options"), parent, GRETL_DLG_BLOCK);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 2);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_box_set_spacing(GTK_BOX(vbox), 2);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(gtk_widget_destroyed), 
 		     &dialog);
 
     notebook = gtk_notebook_new();
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), notebook, 
-		       TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
     gtk_widget_show(notebook);
 
     make_prefs_tab(notebook, TAB_MAIN);
@@ -2248,7 +2249,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     GList *list = NULL;
     char tmp[MAXLEN];
 
-    vbox = GTK_DIALOG(dialog)->vbox;
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     list = get_working_dir_list();
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -2330,7 +2331,7 @@ void working_dir_dialog (void)
     static GtkWidget *dialog;
     struct wdir_setter wset;
     GtkWidget *button;
-    GtkWidget *hbox;
+    GtkWidget *hbox, *vbox;
 
     if (dialog != NULL) {
 	gtk_window_present(GTK_WINDOW(dialog));
@@ -2339,7 +2340,8 @@ void working_dir_dialog (void)
 
     dialog = gretl_dialog_new(_("gretl: working directory"), 
 			      mdata->main, GRETL_DLG_BLOCK);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_box_set_spacing(GTK_BOX(vbox), 5);
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(gtk_widget_destroyed), 
 		     &dialog);

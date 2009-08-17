@@ -6123,7 +6123,7 @@ static int
 lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr) 
 {
     GtkWidget *lbl, *dialog, *myvbox;
-    GtkWidget *tbl, *tmp, *hbox;
+    GtkWidget *tbl, *tmp, *vbox, *hbox;
     GtkWidget *y_check = NULL;
     gint tbl_len;
     double lmax, ldef;
@@ -6280,6 +6280,8 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);
 
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
     if (list[0] > 10) {
 	GtkWidget *scroller = gtk_scrolled_window_new(NULL, NULL);
 
@@ -6287,15 +6289,15 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
 					      hbox);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), scroller, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), scroller, TRUE, TRUE, 5);
 	gtk_widget_show_all(scroller);
 	gtk_widget_set_size_request(scroller, -1, 360);
     } else {
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 	gtk_widget_show_all(hbox);
     }
     
-    hbox = GTK_DIALOG(dialog)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 	
     /* "Cancel" button */
     tmp = cancel_delete_button(hbox, dialog, NULL);

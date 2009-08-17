@@ -1575,6 +1575,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 {
     GtkWidget *label;
     GtkWidget *button;
+    GtkWidget *vbox;
     GtkWidget *hbox;
 
     if (find_dialog != NULL) {
@@ -1611,8 +1612,9 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     gtk_box_pack_start(GTK_BOX(hbox), find_entry, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_dialog)->vbox), 
-		       hbox, TRUE, TRUE, 5);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(find_dialog));
+
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     if (vwin == mdata) {
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -1621,11 +1623,10 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 			 G_CALLBACK(toggle_vname_search), find_dialog);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 	gtk_widget_show_all(hbox);
-	gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_dialog)->vbox), 
-			   hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     }
 
-    hbox = GTK_DIALOG(find_dialog)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(find_dialog));
 
     /* cancel button */
     button = cancel_button(hbox);

@@ -1513,7 +1513,7 @@ gtk_fontsel_hack_dialog_init (GtkFontselHackDialog *fontseldiag)
     gtk_container_set_border_width (GTK_CONTAINER (fontseldiag), 4);
     gtk_window_set_resizable (GTK_WINDOW (fontseldiag), FALSE);
   
-    fontseldiag->main_vbox = dialog->vbox;
+    fontseldiag->main_vbox = gtk_dialog_get_content_area (dialog);
   
     fontseldiag->fontsel = gtk_fontsel_hack_new ();
     gtk_container_set_border_width (GTK_CONTAINER (fontseldiag->fontsel), 4);
@@ -1522,7 +1522,7 @@ gtk_fontsel_hack_dialog_init (GtkFontselHackDialog *fontseldiag)
 			fontseldiag->fontsel, TRUE, TRUE, 0);
   
     /* Create the action area */
-    fontseldiag->action_area = dialog->action_area;
+    fontseldiag->action_area = gtk_dialog_get_action_area (dialog);
 
     fontseldiag->cancel_button = gtk_dialog_add_button (dialog,
 							GTK_STOCK_CANCEL,

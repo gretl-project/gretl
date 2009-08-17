@@ -3077,7 +3077,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
 
     dlg = gretl_dialog_new("Matrix", mdata->main, 
 			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
-    vbox = GTK_DIALOG(dlg)->vbox;
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     mdlg.dlg = dlg;
     mdlg.spec = spec;
     mdlg.numerics = NULL;
@@ -3189,7 +3189,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     mdlg.formula = w;
 
     /* control buttons */
-    hbox = GTK_DIALOG(dlg)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     w = cancel_delete_button(hbox, dlg, &canceled);
     w = ok_button(hbox);
     g_signal_connect(G_OBJECT(w), "clicked", G_CALLBACK(matrix_dialog_ok), &mdlg);

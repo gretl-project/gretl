@@ -62,7 +62,7 @@ static void trash_replace (GtkWidget *widget,
 
 static void replace_string_dialog (struct search_replace *s)
 {
-    GtkWidget *label, *button, *hbox;
+    GtkWidget *label, *button, *vbox, *hbox, *abox;
 
     s->w = gtk_dialog_new();
 
@@ -74,6 +74,8 @@ static void replace_string_dialog (struct search_replace *s)
 		     G_CALLBACK(esc_kills_window), NULL);
 #endif
 
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(s->w));
+
     /* Find part */
     hbox = gtk_hbox_new(TRUE, TRUE);
     label = gtk_label_new(_("Find:"));
@@ -83,8 +85,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), s->f_entry, TRUE, TRUE, 0);
     gtk_widget_show(hbox);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->vbox), 
-		       hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     /* Replace part */
     hbox = gtk_hbox_new(TRUE, TRUE);
@@ -98,12 +99,12 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), s->r_entry, TRUE, TRUE, 0);
     gtk_widget_show(hbox);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->vbox), 
-		       hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(s->w)->action_area), 15);
-    gtk_box_set_homogeneous(GTK_BOX 
-			    (GTK_DIALOG(s->w)->action_area), TRUE);
+    abox = gtk_dialog_get_action_area(GTK_DIALOG(s->w));
+
+    gtk_box_set_spacing(GTK_BOX(abox), 15);
+    gtk_box_set_homogeneous(GTK_BOX(abox), TRUE);
     gtk_window_set_position(GTK_WINDOW(s->w), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(s->w), "destroy",
@@ -112,8 +113,7 @@ static void replace_string_dialog (struct search_replace *s)
     /* replace button -- make this the default */
     button = gtk_button_new_with_label(_("Replace all"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->action_area), 
-		       button, TRUE, TRUE, FALSE);
+    gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(replace_string_setup), s);
     gtk_widget_grab_default(button);
@@ -122,8 +122,7 @@ static void replace_string_dialog (struct search_replace *s)
     /* cancel button */
     button = gtk_button_new_with_label(_("Cancel"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->action_area), 
-		       button, TRUE, TRUE, FALSE);
+    gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(trash_replace), s);
     gtk_widget_show(button);

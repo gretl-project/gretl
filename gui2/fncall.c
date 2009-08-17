@@ -121,16 +121,14 @@ static const char *arg_type_string (int t)
     if (t == GRETL_TYPE_BOOL)   return "boolean";
     if (t == GRETL_TYPE_INT)    return "int";
     if (t == GRETL_TYPE_LIST)   return "list";
-
     if (t == GRETL_TYPE_DOUBLE) return "scalar";
     if (t == GRETL_TYPE_SERIES) return "series";
     if (t == GRETL_TYPE_MATRIX) return "matrix";
+    if (t == GRETL_TYPE_STRING) return "string";
     
     if (t == GRETL_TYPE_SCALAR_REF) return "scalar *";
     if (t == GRETL_TYPE_SERIES_REF) return "series *";
     if (t == GRETL_TYPE_MATRIX_REF) return "matrix *";
-
-    if (t == GRETL_TYPE_STRING) return "string";
 
     return "";
 }
@@ -189,8 +187,7 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt, int center)
 static gboolean update_int_arg (GtkWidget *w, call_info *cinfo)
 {
     int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
-    int i = 
-	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
 
     free(cinfo->args[i]);
     cinfo->args[i] = g_strdup_printf("%d", val);
@@ -200,8 +197,7 @@ static gboolean update_int_arg (GtkWidget *w, call_info *cinfo)
 
 static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
 {
-    int i = 
-	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
 
     free(cinfo->args[i]);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
@@ -242,8 +238,7 @@ static char *combo_box_get_trimmed_text (GtkComboBox *combo)
 static gboolean update_arg (GtkComboBox *combo, 
 			    call_info *cinfo)
 {
-    int i = 
-	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo), "argnum"));
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo), "argnum"));
     char *s;
 
     free(cinfo->args[i]);
@@ -325,8 +320,7 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 
 static void fncall_help (GtkWidget *w, call_info *cinfo)
 {
-    const char *fnname = 
-	user_function_name_by_index(cinfo->iface);
+    const char *fnname = user_function_name_by_index(cinfo->iface);
     PRN *prn;
     int err;
 
@@ -583,7 +577,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
-    GtkWidget *tbl, *hbox;
+    GtkWidget *tbl, *vbox, *hbox;
     GtkWidget *sel;
     gchar *txt;
     const char *fnname;
@@ -597,10 +591,11 @@ static void function_call_dialog (call_info *cinfo)
 
     cinfo->dlg = gretl_dialog_new(_("gretl: function call"), NULL, 
 				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(cinfo->dlg));
 
     fnname = user_function_name_by_index(cinfo->iface);
     txt = g_strdup_printf(_("Call to function %s"), fnname);
-    hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, txt, 1);
+    hbox = label_hbox(vbox, txt, 1);
     gtk_widget_show(hbox);
 
     /* function argument selection */
@@ -608,12 +603,11 @@ static void function_call_dialog (call_info *cinfo)
     if (cinfo->n_params > 0) {
 	int tcols = (cinfo->extracol)? 4 : 3;
 
-	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, _("Arguments:"), 0);
+	hbox = label_hbox(vbox, _("Arguments:"), 0);
 	gtk_widget_show(hbox);
 
 	tbl = gtk_table_new(cinfo->n_params + 1, tcols, FALSE);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
-			   tbl, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
 
 	label = gtk_label_new(_("selection"));
 	gtk_table_attach(GTK_TABLE(tbl), label, 2, 3, 0, 1,
@@ -677,23 +671,21 @@ static void function_call_dialog (call_info *cinfo)
     if (cinfo->n_params > 0 && cinfo->rettype != GRETL_TYPE_NONE) {
 	GtkWidget *hsep = gtk_hseparator_new();
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
-			   hsep, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 5);
 	gtk_widget_show(hsep);
     }
 
     /* function return(s) assignment */
 
     if (cinfo->rettype != GRETL_TYPE_NONE) {
+	GtkWidget *child;
 	GList *list = NULL;
 
-	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, 
-			  _("Assign return value (optional):"), 0);
+	hbox = label_hbox(vbox, _("Assign return value (optional):"), 0);
 	gtk_widget_show(hbox);
 
 	tbl = gtk_table_new(1, 2, FALSE);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
-			   tbl, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
 
 	label = gtk_label_new("type");
 	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, 0, 1,
@@ -719,6 +711,8 @@ static void function_call_dialog (call_info *cinfo)
 	    set_combo_box_strings_from_list(GTK_COMBO_BOX(sel), list);
 	    g_list_free(list);
 	}
+	child = gtk_bin_get_child(GTK_BIN(sel));
+	gtk_entry_set_activates_default(GTK_ENTRY(child), TRUE);
 	gtk_table_attach(GTK_TABLE(tbl), sel, 1, 2, 1, 2,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(sel);
@@ -726,14 +720,16 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(tbl);
     }
 
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(cinfo->dlg));
+
     /* Cancel button */
-    button = cancel_button(GTK_DIALOG(cinfo->dlg)->action_area);
+    button = cancel_button(hbox);
     g_signal_connect(G_OBJECT (button), "clicked", 
 		     G_CALLBACK(fncall_cancel), cinfo);
     gtk_widget_show(button);
 
     /* "OK" button */
-    button = ok_button(GTK_DIALOG(cinfo->dlg)->action_area);
+    button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(fncall_finalize), cinfo);
     gtk_widget_grab_default(button);
@@ -741,7 +737,7 @@ static void function_call_dialog (call_info *cinfo)
 
     /* Help button? */
     if (cinfo->n_params > 0 || cinfo->rettype != GRETL_TYPE_NONE) {
-	button = context_help_button(GTK_DIALOG(cinfo->dlg)->action_area, -1);
+	button = context_help_button(hbox, -1);
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(fncall_help), cinfo);
 	gtk_widget_show(button);

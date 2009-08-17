@@ -575,7 +575,7 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     dlg = gretl_dialog_new(_("gretl: data format"), NULL,
 			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
 
-    vbox = GTK_DIALOG(dlg)->vbox;
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     std = (sview->view == VIEW_STANDARD);
     vt.view = &sview->view;
@@ -636,10 +636,11 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     gtk_widget_show_all(hbox);
 
     /* Cancel button */
-    cancel_options_button(GTK_DIALOG(dlg)->action_area, dlg, &sview->digits);
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+    cancel_options_button(hbox, dlg, &sview->digits);
    
     /* OK button */
-    tmp = ok_button(GTK_DIALOG(dlg)->action_area);
+    tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);

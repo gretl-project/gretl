@@ -1738,7 +1738,7 @@ static void free_dw_opts (GtkWidget *w, dw_opts *opts)
 
 static void build_dwiz_buttons (GtkWidget *dlg, DATAINFO *dwinfo)
 {
-    GtkWidget *hbox = GTK_DIALOG(dlg)->action_area;
+    GtkWidget *hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     GtkWidget *b;
 
     /* "Cancel" button */
@@ -1855,7 +1855,7 @@ static void data_structure_wizard (int create)
 			      GRETL_DLG_QUASI_MODAL);
     g_object_set_data(G_OBJECT(dialog), "dwinfo", dwinfo);
     g_object_set_data(G_OBJECT(dialog), "opts", opts);
-    vbox = GTK_DIALOG(dialog)->vbox;
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     /* notebook to hold the steps */
     nb = gtk_notebook_new();

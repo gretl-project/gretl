@@ -589,7 +589,7 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
 
 void varinfo_dialog (int varnum, int full)
 {
-    GtkWidget *tmp, *hbox;
+    GtkWidget *tmp, *vbox, *hbox;
     gui_varinfo *vset;
     unsigned char flags;
     int is_parent = 0;
@@ -649,9 +649,9 @@ void varinfo_dialog (int varnum, int full)
 	/* Apply, Up and Down buttons */
 	varinfo_add_toolbar(vset, hbox);
     }
-    
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-		       hbox, FALSE, FALSE, 5);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(vset->dlg));
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
     
     /* read/set descriptive string, or genr formula */
@@ -680,8 +680,7 @@ void varinfo_dialog (int varnum, int full)
 	gtk_widget_show(tmp);
     }
 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-		       hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -695,8 +694,7 @@ void varinfo_dialog (int varnum, int full)
     gtk_widget_show(vset->label_entry);
     gtk_entry_set_activates_default(GTK_ENTRY(vset->label_entry), TRUE);
 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-		       hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox);  
 
     /* Of editing actions, editing the descriptive string is the most
@@ -724,8 +722,7 @@ void varinfo_dialog (int varnum, int full)
 	gtk_widget_show(vset->display_entry); 
 	gtk_entry_set_activates_default(GTK_ENTRY(vset->display_entry), TRUE);
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	gtk_widget_show(hbox); 
     }
 
@@ -752,8 +749,7 @@ void varinfo_dialog (int varnum, int full)
 	gtk_box_pack_start(GTK_BOX(hbox), vset->compaction_menu, FALSE, FALSE, 5);
 	gtk_widget_show(vset->compaction_menu); 
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	gtk_widget_show(hbox); 
     }
 
@@ -777,8 +773,7 @@ void varinfo_dialog (int varnum, int full)
 	gtk_widget_show(tmp);
 	vset->line_spin = tmp;
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	gtk_widget_show(hbox); 
     }    
 
@@ -797,13 +792,12 @@ void varinfo_dialog (int varnum, int full)
 			 G_CALLBACK(varinfo_discrete_changed), vset);
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	vset->discrete_check = tmp;
 	gtk_widget_show(hbox); 
     }
 
-    hbox = GTK_DIALOG(vset->dlg)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(vset->dlg));
 
     /* Cancel/Close button */
     tmp = (full)? close_button(hbox) : cancel_button(hbox);

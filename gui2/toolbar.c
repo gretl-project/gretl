@@ -419,11 +419,12 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     hb2 = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Confidence level"));
     gtk_box_pack_start(GTK_BOX(hb2), tmp, FALSE, FALSE, 0);
+
     tmp = gtk_label_new("1 - α :");
     gtk_box_pack_start(GTK_BOX(hb2), tmp, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), hb2, TRUE, TRUE, 10);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       hbox, FALSE, FALSE, 5);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
     vbox = gtk_vbox_new(FALSE, 5);
@@ -468,17 +469,20 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     gtk_box_pack_start(GTK_BOX(vbox), hb2, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 10);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       hbox, FALSE, FALSE, 0);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     /* Cancel button */
-    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
+    cancel_options_button(hbox, dialog, NULL);
 
     g_object_set_data(G_OBJECT(dialog), "vwin", vwin);
     g_object_set_data(G_OBJECT(dialog), "xptr", &x);
 
     /* "OK" button */
-    tmp = ok_button(GTK_DIALOG(dialog)->action_area);
+    tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(real_coeffint_set_alpha), dialog);
     gtk_widget_grab_default(tmp);

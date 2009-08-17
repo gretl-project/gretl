@@ -1502,7 +1502,7 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
     int tbl_len, tbl_num, tbl_col;
     char label_text[32];
 
-    vbox = GTK_DIALOG(nlinfo->dlg)->vbox;
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(nlinfo->dlg));
     hbox = gtk_hbox_new(FALSE, 5);
 
     tbl_len = 1;
@@ -1699,7 +1699,7 @@ static void add_line_callback (GtkWidget *w, plot_editor *ed)
 
     gpt_tab_new_line(ed, nlinfo);
 
-    hbox = GTK_DIALOG(nlinfo->dlg)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(nlinfo->dlg));
 
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
@@ -2839,7 +2839,7 @@ GtkWidget *plot_add_editor (png_plot *plot)
     GPT_SPEC *spec = plot_get_spec(plot);
     GtkWidget *plotshell = plot_get_shell(plot);
     plot_editor *editor;
-    GtkWidget *dialog, *hbox;
+    GtkWidget *dialog, *vbox, *hbox;
     GtkWidget *button, *notebook;
 
     editor = plot_editor_new(spec);
@@ -2850,7 +2850,8 @@ GtkWidget *plot_add_editor (png_plot *plot)
 
     dialog = gretl_dialog_new(_("gretl plot controls"), plotshell, 
 			      GRETL_DLG_RESIZE);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 2);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_box_set_spacing(GTK_BOX(vbox), 2);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
     
     if (plot != NULL) {
@@ -2865,8 +2866,7 @@ GtkWidget *plot_add_editor (png_plot *plot)
 			     editor);
    
     editor->notebook = notebook = gtk_notebook_new();
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       notebook, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
     gtk_widget_show(notebook);
 
     gpt_tab_main(editor, spec);
@@ -2887,7 +2887,7 @@ GtkWidget *plot_add_editor (png_plot *plot)
 	gpt_tab_palette(notebook);
     }
 
-    hbox = GTK_DIALOG(dialog)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     /* "Apply" button */
     button = apply_button(hbox);

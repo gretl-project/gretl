@@ -279,25 +279,28 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 
 static void filter_dialog_hsep (GtkWidget *dlg)
 {
+    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     GtkWidget *hs = gtk_hseparator_new();
     
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hs, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hs, TRUE, TRUE, 0);
 }
 
 static void filter_graph_check_button (GtkWidget *dlg, filter_info *finfo,
 				       const char *txt, gretlopt g)
 {
+    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     GtkWidget *hbox, *w;
 
     hbox = gtk_hbox_new(FALSE, 5);
     w = gretl_option_check_button(txt, &finfo->graph_opt, g);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), finfo->graph_opt & g);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
 static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
 {
+    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     GtkWidget *hbox, *tab, *w;
     int i, imax = 2;
 
@@ -339,11 +342,12 @@ static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 5);  
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
 static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
 {
+    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     GtkWidget *tab, *hbox, *w;
     GtkWidget *s1, *s2;
 
@@ -377,16 +381,19 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
 
     /* pack everything */
     gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 5);  
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
 static void use_submean (GtkWidget *w, GtkWidget *s)
 {
-    gtk_widget_set_sensitive(s, GTK_TOGGLE_BUTTON(w)->active);
+    gboolean t = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+    gtk_widget_set_sensitive(s, t);
 }
 
 static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
 {
+    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));    
     GtkWidget *tab, *hbox, *w;
     GtkWidget *r1, *r2;
     GSList *group;
@@ -394,7 +401,7 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new(_("The first EMA value is"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     hbox = gtk_hbox_new(FALSE, 5);
     tab = gtk_table_new(2, 2, FALSE);
@@ -418,12 +425,13 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
 
     /* pack everything */
     gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 10);  
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
 static int filter_dialog (filter_info *finfo)
 {
     GtkWidget *dlg;
+    GtkWidget *vbox;
     GtkWidget *hbox;
     GtkWidget *w;
     int ret = 0;
@@ -435,8 +443,9 @@ static int filter_dialog (filter_info *finfo)
     /* box title */
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new(_(filter_get_title(finfo->ftype)));
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);  
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     if (finfo->ftype == FILTER_SMA) {
 	GtkWidget *nspin;
@@ -452,7 +461,7 @@ static int filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(nspin), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->nobs);
 	gtk_box_pack_start(GTK_BOX(hbox), nspin, TRUE, TRUE, 5);    
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
 	/* select centered or not */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -463,7 +472,7 @@ static int filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "toggled", 
 			 G_CALLBACK(sma_center_callback), &finfo->center);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_EMA) {
 	/* set weight on current observation */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -474,7 +483,7 @@ static int filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
 	/* set calculation of initial EMA value */
 	ema_obs_radios(dlg, finfo);
@@ -488,7 +497,7 @@ static int filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_BK) {
 	/* set "k" */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -499,7 +508,7 @@ static int filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->k);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
 	/* set periods */
 	bkbp_frequencies_table(dlg, finfo);
@@ -513,7 +522,7 @@ static int filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     }	
 
     filter_dialog_hsep(dlg);
@@ -534,7 +543,7 @@ static int filter_dialog (filter_info *finfo)
 	gtk_entry_set_text(GTK_ENTRY(w), finfo->save2);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	finfo->entry2 = w;
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_FD) {
 	/* graphical output? */
 	filter_graph_check_button(dlg, finfo, _("Graph differenced series"),

@@ -244,13 +244,13 @@ GtkWidget *back_button (GtkWidget *hbox)
 
 static void set_dialog_border_widths (GtkWidget *dlg)
 {
+    GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     int w1 = 10, w2 = 5;
 
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dlg)->vbox), w1);
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dlg)->action_area), w2);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
+    gtk_container_set_border_width(GTK_CONTAINER(box), w1);
+    gtk_box_set_spacing(GTK_BOX(box), w2);
+    box = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+    gtk_container_set_border_width(GTK_CONTAINER(box), w2);
 }
 
 static void gretl_dialog_set_resizeable (GtkWidget *w, gboolean s)
@@ -660,12 +660,12 @@ gpointer edit_dialog_get_data (dialog_t *dlg)
 
 static void dialog_table_setup (dialog_t *dlg, int hsize)
 {
-    GtkWidget *sw;
+    GtkWidget *vbox, *sw;
 
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_widget_set_size_request(sw, hsize, 200);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg->dialog)->vbox), 
-		       sw, TRUE, TRUE, FALSE);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg->dialog));
+    gtk_box_pack_start(GTK_BOX(vbox), sw, TRUE, TRUE, FALSE);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (sw),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
@@ -1085,10 +1085,12 @@ static void dlg_display_sys (dialog_t *d)
 
     if (d->code == ESTIMATE) {
 	/* estimating an existing system, not editing */
+	GtkWidget *vbox;
+
 	w = gtk_label_new(sys->name);
 	gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
-			   w, TRUE, TRUE, 10);
+	vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
+	gtk_box_pack_start(GTK_BOX(vbox), w, TRUE, TRUE, 10);
 	gtk_widget_show(w);
     }
 
@@ -1206,8 +1208,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     gretl_dialog_set_resizeable(d->dialog, FALSE);
 
     /* convenience pointers */
-    top_vbox = GTK_DIALOG(d->dialog)->vbox;
-    button_box = GTK_DIALOG(d->dialog)->action_area;
+    top_vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
+    button_box = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
 			      GTK_BUTTONBOX_END);
 

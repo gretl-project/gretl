@@ -876,20 +876,19 @@ static void web_get_login (GtkWidget *w, gpointer p)
 static void login_dialog (login_info *linfo)
 {
     GtkWidget *button, *label;
-    GtkWidget *tbl, *hbox;
+    GtkWidget *tbl, *vbox, *hbox;
     int i;
 
     login_init(linfo);
 
-    linfo->dlg = 
-	gretl_dialog_new(_("gretl: upload"), NULL, GRETL_DLG_BLOCK);
+    linfo->dlg = gretl_dialog_new(_("gretl: upload"), NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(linfo->dlg));
 
-    hbox = label_hbox(GTK_DIALOG(linfo->dlg)->vbox, _("Upload function package"));
+    hbox = label_hbox(vbox, _("Upload function package"));
     gtk_widget_show(hbox);
 
     tbl = gtk_table_new(2, 2, FALSE);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(linfo->dlg)->vbox), tbl, 
-		       FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
 
     for (i=0; i<2; i++) {
 	char *src = (i == 0)? linfo->login : linfo->pass;
@@ -920,7 +919,7 @@ static void login_dialog (login_info *linfo)
 
     gtk_widget_show(tbl);
 
-    hbox = label_hbox(GTK_DIALOG(linfo->dlg)->vbox, 
+    hbox = label_hbox(vbox, 
 		      _("If you don't have a login to the gretl server\n"
 			"please see http://gretl.ecn.wfu.edu/apply/.\n"
 			"The 'Website' button below should open this page\n"
@@ -929,7 +928,7 @@ static void login_dialog (login_info *linfo)
 
     /* control button area */
 
-    hbox = GTK_DIALOG(linfo->dlg)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(linfo->dlg));
 
     /* Cancel */
     button = cancel_button(hbox);

@@ -3115,7 +3115,7 @@ static void plot_curve (void)
 	plotter.xrange = 10;
     }
 
-    vbox = GTK_DIALOG(dialog)->vbox;
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     /* gnuplot formula entry box */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3149,18 +3149,20 @@ static void plot_curve (void)
 		     G_CALLBACK(set_double_from_spinner), &plotter.xrange);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0); 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     
     /* "Cancel" button */
-    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
+    cancel_delete_button(hbox, dialog, NULL);
 
     /* "OK" button */
-    button = ok_button(GTK_DIALOG(dialog)->action_area);
+    button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(do_plot_curve), &plotter);
     gtk_widget_grab_default(button);
 
     /* Help button */
-    context_help_button(GTK_DIALOG(dialog)->action_area, GPT_CURVE);
+    context_help_button(hbox, GPT_CURVE);
 
     gtk_widget_show_all(dialog);
 }
