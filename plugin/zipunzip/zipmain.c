@@ -224,7 +224,7 @@ static void make_gerr (int err, GError **pgerr)
 
     dom = g_quark_from_string("ZIP_ERROR");
     transcribe_zip_error(err);
-    gerr = g_error_new(dom, err, zerrbuf);
+    gerr = g_error_new(dom, err, "%s", zerrbuf);
     *pgerr = gerr;
 }
 

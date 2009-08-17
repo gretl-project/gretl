@@ -3857,7 +3857,7 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
     lad_driver = get_plugin_function("lad_driver", &handle);
 
     if (lad_driver == NULL) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
+	fputs(I_("Couldn't load plugin function\n"), stderr);
 	lmod.errcode = E_FOPEN;
 	return lmod;
     }
@@ -3916,7 +3916,7 @@ MODEL quantreg (const char *parm, const int *list,
     rq_driver = get_plugin_function("rq_driver", &handle);
 
     if (rq_driver == NULL) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
+	fputs(I_("Couldn't load plugin function\n"), stderr);
 	qmod.errcode = E_FOPEN;
 	return qmod;
     }
@@ -4055,7 +4055,7 @@ MODEL arma (const int *list, const char *pqspec,
     }
 
     if (plugerr) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
+	fputs(I_("Couldn't load plugin function\n"), stderr);
 	armod.errcode = plugerr;
 	return armod;
     }

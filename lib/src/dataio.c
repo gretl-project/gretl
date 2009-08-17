@@ -567,7 +567,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 	    }
 	    free(dbuf);
 	} else if (lines < 0) {
-	    fprintf(stderr, I_("Failed to store data comments\n"));
+	    fputs(I_("Failed to store data comments\n"), stderr);
 	}
 	fclose(fp);
     } 
@@ -1311,12 +1311,12 @@ int write_data (const char *fname, int *list,
 	    gz_switch_ext(lblfile, datfile, "lbl");
 	}
 	if (writehdr(hdrfile, list, pdinfo, fmt)) {
-	    fprintf(stderr, I_("Write of header file failed"));
+	    fputs(I_("Write of header file failed"), stderr);
 	    err = E_FOPEN;
 	    goto write_exit;
 	}
 	if (writelbl(lblfile, list, pdinfo)) {
-	    fprintf(stderr, I_("Write of labels file failed"));
+	    fputs(I_("Write of labels file failed"), stderr);
 	    err = E_FOPEN;
 	    goto write_exit;
 	}

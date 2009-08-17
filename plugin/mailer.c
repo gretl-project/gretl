@@ -855,6 +855,7 @@ static void mail_infobox (const char *msg, int err)
 				     GTK_DIALOG_DESTROY_WITH_PARENT,
 				     (err)? GTK_MESSAGE_ERROR : GTK_MESSAGE_INFO,
 				     GTK_BUTTONS_CLOSE,
+				     "%s",
 				     msg);
     gtk_dialog_run(GTK_DIALOG (dialog));
     gtk_widget_destroy(dialog);

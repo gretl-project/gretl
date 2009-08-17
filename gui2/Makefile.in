@@ -160,7 +160,7 @@ all: $(PROG) $(GRETL_LANG)
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
 $(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKSOURCEVIEW_LITE) 
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(LDFLAGS) $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<

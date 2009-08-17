@@ -3596,6 +3596,7 @@ static void msgbox (const char *msg, int msgtype)
 				    0,    /* GTK_DIALOG_DESTROY_WITH_PARENT */
 				    msgtype,
 				    GTK_BUTTONS_CLOSE,
+				    "%s",
 				    (trmsg != NULL)? trmsg : msg);
 
     title = (msgtype == GTK_MESSAGE_ERROR)? titles[0] :

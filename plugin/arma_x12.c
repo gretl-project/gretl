@@ -878,7 +878,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	err = arima_difference(Z[ainfo.yno], &ainfo);
     }  
 
-    sprintf(yname, pdinfo->varname[ainfo.yno]);
+    strcpy(yname, pdinfo->varname[ainfo.yno]);
 
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);

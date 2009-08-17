@@ -638,7 +638,7 @@ int excel_book_get_info (const char *fname, wbook *book)
 	      "old for gretl to read\n")
 	    : _("Unexpected error reading the file\n");
 	ms_ole_destroy(&f);
-	fprintf(stderr, msg);
+	fputs(msg, stderr);
 	return 1;
     }
 

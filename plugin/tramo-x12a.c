@@ -1068,7 +1068,7 @@ int write_tx_data (char *fname, int varnum,
 	}
     } 
 
-    sprintf(vname, pdinfo->varname[varnum]);
+    strcpy(vname, pdinfo->varname[varnum]);
     form_savelist(savelist, &request);
 
     if (request.prog == X12A) { 

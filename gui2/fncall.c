@@ -928,13 +928,11 @@ void call_function_package (const char *fname, GtkWidget *w,
     if (strstr(fname, ".gfn") == NULL) {
 	/* not a full filename -> a function package on server */
 	err = temp_install_remote_fnpkg(fname, tmpfile);
-    } else {
-	if (!function_package_is_loaded(fname)) {
-	    err = load_user_function_file(fname);
-	    if (err) {
-		file_read_errbox(fname);
-		*loaderr = 1;
-	    }
+    } else if (!function_package_is_loaded(fname)) {
+	err = load_user_function_file(fname);
+	if (err) {
+	    file_read_errbox(fname);
+	    *loaderr = 1;
 	}
     }
 
@@ -1045,9 +1043,12 @@ void call_function_package (const char *fname, GtkWidget *w,
     strcat(fnline, ")");
     pprintf(prn, "? %s\n", fnline);
 
-    gretl_exec_state_init(&state, SCRIPT_EXEC, fnline, get_lib_cmd(),
+    gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
 			  models, prn);
 
+    /* note:gretl_exec_state_init zeros the first byte of the
+       supplied 'line' */
+    state.line = fnline;
     err = gui_exec_line(&state, &Z, datainfo);
     view_buffer(prn, 80, 400, fnname, PRINT, NULL);
 
