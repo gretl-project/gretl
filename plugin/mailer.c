@@ -31,6 +31,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+# include "gtk_compat.h"
+#endif
+
 extern int h_errno;
 
 #include "mpack/mpack.h"
@@ -470,11 +474,14 @@ static void border_width (GtkWidget *w, int b)
 
 static void set_dialog_border_widths (GtkWidget *dlg)
 {
+    GtkWidget *box;
     int w1 = 10, w2 = 5;
 
-    border_width(GTK_DIALOG(dlg)->vbox, w1);
-    border_width(GTK_DIALOG(dlg)->action_area, w2);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
+    box = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+    border_width(box, w1);
+    gtk_box_set_spacing(GTK_BOX(box), w2);
+    box = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+    border_width(box, w2);
 }
 
 static void get_email_info (struct mail_info *minfo)
@@ -599,7 +606,8 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
     gtk_window_set_position(GTK_WINDOW(md.dlg), GTK_WIN_POS_MOUSE);
 
     nb = gtk_notebook_new();
-    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(md.dlg)->vbox), nb);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(md.dlg));
+    gtk_container_add(GTK_CONTAINER(vbox), nb);
     hbox = gtk_hbox_new(FALSE, 5);
     border_width(hbox, 5);
     vbox = gtk_vbox_new(FALSE, 5);
@@ -727,7 +735,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
     lbl = gtk_label_new("                     ");
     gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, 1, 2);
 
-    hbox = GTK_DIALOG(md.dlg)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(md.dlg));
 
     /* Cancel button */
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
@@ -780,7 +788,7 @@ static void pop_info_dialog (struct mail_info *minfo)
     set_dialog_border_widths(pd.dlg);
     gtk_window_set_position(GTK_WINDOW(pd.dlg), GTK_WIN_POS_MOUSE);
 
-    vbox = GTK_DIALOG(pd.dlg)->vbox;
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(pd.dlg));
 
     tbl = gtk_table_new(3, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
@@ -823,7 +831,7 @@ static void pop_info_dialog (struct mail_info *minfo)
 	} 
     }
 
-    hbox = GTK_DIALOG(pd.dlg)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(pd.dlg));
 
     /* Cancel button */
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);

@@ -22,6 +22,10 @@
 
 #include <gtk/gtk.h>
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+# include "gtk_compat.h"
+#endif
+
 #define PCA_DEBUG 0
 
 struct flag_info {
@@ -67,7 +71,7 @@ static gretlopt pca_flag_dialog (void)
 {
     struct flag_info *finfo;
     GtkWidget *dialog, *tmp, *button, *hbox;
-    GtkWidget *internal_vbox;
+    GtkWidget *vbox, *internal_vbox;
     GSList *group;
     gint flag = PCA_SAVE_MAIN;
 
@@ -78,12 +82,13 @@ static gretlopt pca_flag_dialog (void)
 
     finfo->dialog = dialog;
     finfo->flag = &flag;
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     
     gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save data")); 
     gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dialog)->vbox), 10);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_box_set_spacing(GTK_BOX(vbox), 5);
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
@@ -124,10 +129,10 @@ static gretlopt pca_flag_dialog (void)
 
     gtk_widget_show(internal_vbox);
 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
-    hbox = GTK_DIALOG(dialog)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
     gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
 

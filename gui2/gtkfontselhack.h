@@ -35,8 +35,10 @@
 #include <gtk/gtkdialog.h>
 #include <gtk/gtkvbox.h>
 
+#include <glib-object.h>
+
 #define GTK_TYPE_FONTSEL_HACK_DIALOG  (gtk_fontsel_hack_dialog_get_type ())
-#define GTK_FONTSEL_HACK_DIALOG(obj)  (GTK_CHECK_CAST((obj), GTK_TYPE_FONTSEL_HACK_DIALOG, \
+#define GTK_FONTSEL_HACK_DIALOG(obj)  (G_TYPE_CHECK_INSTANCE_CAST((obj), GTK_TYPE_FONTSEL_HACK_DIALOG, \
 				       GtkFontselHackDialog))
 
 typedef struct _GtkFontselHack GtkFontselHack;
@@ -51,7 +53,7 @@ typedef enum {
     GTK_FONT_HACK_LATIN_MONO
 } GtkFontFilterType;
 
-GtkType	   gtk_fontsel_hack_get_type		(void) G_GNUC_CONST;
+GType	   gtk_fontsel_hack_get_type		(void) G_GNUC_CONST;
 GtkWidget* gtk_fontsel_hack_new		        (void);
 gchar*	   gtk_fontsel_hack_get_font_name	(GtkFontselHack *fontsel);
 
@@ -64,7 +66,7 @@ gint gtk_fontsel_hack_get_filter (GtkFontselHack *fontsel);
 void gtk_fontsel_hack_set_filter (GtkFontselHack *fontsel,
 				  GtkFontFilterType filter);
 
-GtkType	   gtk_fontsel_hack_dialog_get_type (void) G_GNUC_CONST;
+GType	   gtk_fontsel_hack_dialog_get_type (void) G_GNUC_CONST;
 
 GtkWidget* gtk_fontsel_hack_dialog_new (const gchar *title);
 

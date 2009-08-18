@@ -38,17 +38,20 @@
 #include "dlgutils.h"
 #include "gtkfontselhack.h"
 
-#define GTK_TYPE_FONTSEL_HACK              (gtk_fontsel_hack_get_type ())
-#define GTK_FONTSEL_HACK(obj)              (GTK_CHECK_CAST ((obj), GTK_TYPE_FONTSEL_HACK, GtkFontselHack))
-#define GTK_FONTSEL_HACK_CLASS(klass)      (GTK_CHECK_CLASS_CAST ((klass), GTK_TYPE_FONTSEL_HACK, GtkFontselHackClass))
-#define GTK_IS_FONTSEL_HACK(obj)           (GTK_CHECK_TYPE ((obj), GTK_TYPE_FONTSEL_HACK))
-#define GTK_IS_FONTSEL_HACK_CLASS(klass)   (GTK_CHECK_CLASS_TYPE ((klass), GTK_TYPE_FONTSEL_HACK))
-#define GTK_FONTSEL_HACK_GET_CLASS(obj)    (GTK_CHECK_GET_CLASS ((obj), GTK_TYPE_FONTSEL_HACK, GtkFontselHackClass))
+#define GTK_TYPE_FNTHACK              (gtk_fontsel_hack_get_type ())
+#define GTK_FNTHACK(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_FNTHACK, GtkFontselHack))
+#define GTK_FNTHACK_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_FNTHACK, GtkFontselHackClass))
+#define GTK_IS_FNTHACK(obj)           (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_FNTHACK))
+#define GTK_IS_FNTHACK_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_FNTHACK))
+#define GTK_FNTHACK_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_FNTHACK, GtkFontselHackClass))
 
-#define GTK_FONTSEL_HACK_DIALOG_CLASS(klass)      (GTK_CHECK_CLASS_CAST ((klass), GTK_TYPE_FONTSEL_HACK_DIALOG, GtkFontselHackDialogClass))
-#define GTK_IS_FONTSEL_HACK_DIALOG(obj)           (GTK_CHECK_TYPE ((obj), GTK_TYPE_FONTSEL_HACK_DIALOG))
-#define GTK_IS_FONTSEL_HACK_DIALOG_CLASS(klass)   (GTK_CHECK_CLASS_TYPE ((klass), GTK_TYPE_FONTSEL_HACK_DIALOG))
-#define GTK_FONTSEL_HACK_DIALOG_GET_CLASS(obj)    (GTK_CHECK_GET_CLASS ((obj), GTK_TYPE_FONTSEL_HACK_DIALOG, GtkFontselHackDialogClass))
+
+#define GTK_TYPE_FNTHACK_DIALOG              (gtk_fontsel_hack_dialog_get_type ())
+#define GTK_FNTHACK_DIALOG(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_FNTHACK_DIALOG, GtkFontselHackDialog))
+#define GTK_FNTHACK_DIALOG_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_FNTHACK_DIALOG, GtkFontselHackDialogClass))
+#define GTK_IS_FNTHACK_DIALOG(obj)           (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_FNTHACK_DIALOG))
+#define GTK_IS_FNTHACK_DIALOG_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_FNTHACK_DIALOG))
+#define GTK_FNTHACK_DIALOG_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_FNTHACK_DIALOG, GtkFontselHackDialogClass))
 
 #define GTK_TYPE_FONT_FILTER (gtk_font_filter_get_type())
 
@@ -278,7 +281,7 @@ gtk_fontsel_hack_set_property (GObject *object,
 {
     GtkFontselHack *fontsel;
 
-    fontsel = GTK_FONTSEL_HACK(object);
+    fontsel = GTK_FNTHACK(object);
 
     switch (prop_id) {
     case PROP_FONT_NAME:
@@ -303,7 +306,7 @@ static void gtk_fontsel_hack_get_property (GObject *object,
 {
     GtkFontselHack *fontsel;
 
-    fontsel = GTK_FONTSEL_HACK(object);
+    fontsel = GTK_FNTHACK(object);
 
     switch (prop_id) {
     case PROP_FONT_NAME:
@@ -544,7 +547,7 @@ gtk_fontsel_hack_new (void)
 {
     GtkFontselHack *fontsel;
   
-    fontsel = g_object_new(GTK_TYPE_FONTSEL_HACK, NULL);
+    fontsel = g_object_new(GTK_TYPE_FNTHACK, NULL);
   
     return GTK_WIDGET(fontsel);
 }
@@ -554,9 +557,9 @@ gtk_fontsel_hack_finalize (GObject *object)
 {
     GtkFontselHack *fontsel;
   
-    g_return_if_fail(GTK_IS_FONTSEL_HACK(object));
+    g_return_if_fail(GTK_IS_FNTHACK(object));
   
-    fontsel = GTK_FONTSEL_HACK(object);
+    fontsel = GTK_FNTHACK(object);
 
     (* G_OBJECT_CLASS (gtk_fontsel_hack_parent_class)->finalize) (object);
 }
@@ -565,7 +568,7 @@ static void
 gtk_fontsel_hack_screen_changed (GtkWidget *widget,
 				 GdkScreen *previous_screen)
 {
-    GtkFontselHack *fontsel = GTK_FONTSEL_HACK(widget);
+    GtkFontselHack *fontsel = GTK_FNTHACK(widget);
 
     if (gtk_widget_has_screen (GTK_WIDGET (fontsel))) {
 	gtk_fontsel_hack_show_available_fonts (fontsel, HACK_INIT);
@@ -618,7 +621,7 @@ gtk_fontsel_hack_scroll_on_map (GtkWidget *widget,
 {
     GtkFontselHack *fontsel;
   
-    fontsel = GTK_FONTSEL_HACK (data);
+    fontsel = GTK_FNTHACK (data);
   
     /* Try to scroll the font family list to the selected item */
     scroll_to_selection (GTK_TREE_VIEW (fontsel->family_list));
@@ -640,7 +643,7 @@ gtk_fontsel_hack_select_font (GtkTreeSelection *selection,
     GtkTreeIter iter;
     const gchar *family_name;
   
-    fontsel = GTK_FONTSEL_HACK (data);
+    fontsel = GTK_FNTHACK (data);
 
     if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
 	PangoFontFamily *family;
@@ -1066,7 +1069,7 @@ static void
 gtk_fontsel_hack_select_style (GtkTreeSelection *selection,
 			       gpointer          data)
 {
-    GtkFontselHack *fontsel = GTK_FONTSEL_HACK(data);
+    GtkFontselHack *fontsel = GTK_FNTHACK(data);
     GtkTreeModel *model;
     GtkTreeIter iter;
   
@@ -1177,7 +1180,7 @@ gtk_fontsel_hack_size_activate (GtkWidget *w,
     gint new_size;
     const gchar *text;
   
-    fontsel = GTK_FONTSEL_HACK(data);
+    fontsel = GTK_FNTHACK(data);
 
     text = gtk_entry_get_text(GTK_ENTRY(fontsel->size_entry));
     new_size = MAX(0.1, atof(text) * PANGO_SCALE + 0.5);
@@ -1206,7 +1209,7 @@ gtk_fontsel_hack_select_size (GtkTreeSelection *selection,
     GtkTreeIter iter;
     gint new_size;
   
-    fontsel = GTK_FONTSEL_HACK (data);
+    fontsel = GTK_FNTHACK (data);
   
     if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
 	gtk_tree_model_get (model, &iter, SIZE_COLUMN, &new_size, -1);
@@ -1309,7 +1312,7 @@ gtk_fontsel_hack_set_font_name (GtkFontselHack *fontsel,
     GtkTreeIter match_iter;
     gboolean valid;
   
-    g_return_val_if_fail (GTK_IS_FONTSEL_HACK (fontsel), FALSE);
+    g_return_val_if_fail (GTK_IS_FNTHACK (fontsel), FALSE);
   
     new_desc = pango_font_description_from_string (fontname);
 
@@ -1476,13 +1479,13 @@ gtk_fontsel_hack_dialog_buildable_get_internal_child (GtkBuildable *buildable,
 						      const gchar  *childname)
 {
     if (strcmp(childname, "ok_button") == 0)
-	return G_OBJECT (GTK_FONTSEL_HACK_DIALOG(buildable)->ok_button);
+	return G_OBJECT (GTK_FNTHACK_DIALOG(buildable)->ok_button);
     else if (strcmp(childname, "cancel_button") == 0)
-	return G_OBJECT (GTK_FONTSEL_HACK_DIALOG (buildable)->cancel_button);
+	return G_OBJECT (GTK_FNTHACK_DIALOG (buildable)->cancel_button);
     else if (strcmp(childname, "apply_button") == 0)
-	return G_OBJECT (GTK_FONTSEL_HACK_DIALOG(buildable)->apply_button);
+	return G_OBJECT (GTK_FNTHACK_DIALOG(buildable)->apply_button);
     else if (strcmp(childname, "font_selection") == 0)
-	return G_OBJECT (GTK_FONTSEL_HACK_DIALOG(buildable)->fontsel);
+	return G_OBJECT (GTK_FNTHACK_DIALOG(buildable)->fontsel);
 
     return parent_buildable_iface->get_internal_child (buildable, builder, childname);
 }
@@ -1551,7 +1554,7 @@ gtk_fontsel_hack_dialog_new (const gchar *title)
 {
     GtkFontselHackDialog *fontseldiag;
   
-    fontseldiag = g_object_new (GTK_TYPE_FONTSEL_HACK_DIALOG, NULL);
+    fontseldiag = g_object_new (GTK_TYPE_FNTHACK_DIALOG, NULL);
 
     if (title)
 	gtk_window_set_title (GTK_WINDOW (fontseldiag), title);
@@ -1562,50 +1565,50 @@ gtk_fontsel_hack_dialog_new (const gchar *title)
 gchar*
 gtk_fontsel_hack_dialog_get_font_name (GtkFontselHackDialog *fsd)
 {
-    return gtk_fontsel_hack_get_font_name(GTK_FONTSEL_HACK(fsd->fontsel));
+    return gtk_fontsel_hack_get_font_name(GTK_FNTHACK(fsd->fontsel));
 }
 
 gboolean
 gtk_fontsel_hack_dialog_set_font_name (GtkFontselHackDialog *fsd,
 				       const gchar *fontname)
 {
-    return gtk_fontsel_hack_set_font_name(GTK_FONTSEL_HACK(fsd->fontsel), fontname);
+    return gtk_fontsel_hack_set_font_name(GTK_FNTHACK(fsd->fontsel), fontname);
 }
 
 gint
 gtk_fontsel_hack_dialog_get_filter (GtkFontselHackDialog *fsd)
 {
-    return gtk_fontsel_hack_get_filter (GTK_FONTSEL_HACK (fsd->fontsel));
+    return gtk_fontsel_hack_get_filter (GTK_FNTHACK (fsd->fontsel));
 }
 
 void
 gtk_fontsel_hack_dialog_set_filter (GtkFontselHackDialog *fsd,
 				    GtkFontFilterType	  filter)
 {
-    gtk_fontsel_hack_set_filter(GTK_FONTSEL_HACK(fsd->fontsel), filter);
+    gtk_fontsel_hack_set_filter(GTK_FNTHACK(fsd->fontsel), filter);
 }
 
 G_CONST_RETURN gchar*
 gtk_fontsel_hack_dialog_get_preview_text (GtkFontselHackDialog *fsd)
 {
-    return gtk_fontsel_hack_get_preview_text(GTK_FONTSEL_HACK(fsd->fontsel));
+    return gtk_fontsel_hack_get_preview_text(GTK_FNTHACK(fsd->fontsel));
 }
 
 void
 gtk_fontsel_hack_dialog_set_preview_text (GtkFontselHackDialog *fsd,
 					  const gchar *text)
 {
-    gtk_fontsel_hack_set_preview_text(GTK_FONTSEL_HACK(fsd->fontsel), text);
+    gtk_fontsel_hack_set_preview_text(GTK_FNTHACK(fsd->fontsel), text);
 }
 
 GtkWidget *gtk_fontsel_hack_dialog_ok_button (GtkWidget *fsd)
 {
-    return GTK_FONTSEL_HACK_DIALOG(fsd)->ok_button;
+    return GTK_FNTHACK_DIALOG(fsd)->ok_button;
 }
 
 GtkWidget *gtk_fontsel_hack_dialog_cancel_button (GtkWidget *fsd)
 {
-    return GTK_FONTSEL_HACK_DIALOG(fsd)->cancel_button;
+    return GTK_FNTHACK_DIALOG(fsd)->cancel_button;
 }
 
 /* This turns auto-shrink off if the user resizes the width of the dialog.

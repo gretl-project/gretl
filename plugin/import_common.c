@@ -17,6 +17,10 @@
  * 
  */
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+# include "gtk_compat.h"
+#endif
+
 static void invalid_varname (PRN *prn)
 {
     pputs(prn, gretl_errmsg_get());
@@ -419,7 +423,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     g_signal_connect(G_OBJECT(w), "realize",
 		     G_CALLBACK(make_wmenu_modal), NULL);
 
-    vbox = GTK_DIALOG(w)->vbox;
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(w));
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
 
     /* selection of starting column and row */
@@ -474,7 +478,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 #endif
 
-    hbox = GTK_DIALOG(w)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(w));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
     gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
 

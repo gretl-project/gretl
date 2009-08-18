@@ -25,6 +25,10 @@
 
 #include <gtk/gtk.h>
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+# include "gtk_compat.h"
+#endif
+
 struct flag_info {
     GtkWidget *dialog;
     GtkWidget *levcheck;
@@ -83,7 +87,7 @@ static gboolean save_dialog_finalize (GtkWidget *w, struct flag_info *finfo)
 unsigned char leverage_data_dialog (void)
 {
     struct flag_info *finfo;
-    GtkWidget *dialog, *tmp, *button, *hbox;
+    GtkWidget *dialog, *tmp, *button, *vbox, *hbox;
     GtkWidget *internal_vbox;
     unsigned char flag = SAVE_LEVERAGE | SAVE_INFLUENCE | SAVE_DFFITS;
 
@@ -94,14 +98,15 @@ unsigned char leverage_data_dialog (void)
 
     finfo->dialog = dialog;
     finfo->flag = &flag;
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     
-    gtk_window_set_title(GTK_WINDOW (dialog), _("gretl: save data")); 
+    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save data")); 
     gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dialog)->vbox), 10);
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG (dialog)->vbox), 5);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
+    gtk_box_set_spacing(GTK_BOX(vbox), 5);
 
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
@@ -149,10 +154,10 @@ unsigned char leverage_data_dialog (void)
     gtk_widget_show(hbox);
 
     gtk_widget_show(internal_vbox);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
-    hbox = GTK_DIALOG(dialog)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
     gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
 

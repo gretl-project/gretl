@@ -23,6 +23,10 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+# include "gtk_compat.h"
+#endif
+
 #ifdef WIN32
 # include <windows.h>
 #else
@@ -235,8 +239,9 @@ static int tx_dialog (tx_request *request)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(request->dialog)->vbox),
-		       hbox, FALSE, FALSE, 5);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(request->dialog));
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     ret = gtk_dialog_run(GTK_DIALOG(request->dialog));
 
