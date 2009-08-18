@@ -3002,7 +3002,7 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 
 static gint choose_series (GtkWidget *w, struct mdialog *mdlg)
 {
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	if (mdlg->numerics != NULL) {
 	    gtk_widget_set_sensitive(mdlg->numerics, FALSE);
 	} 
@@ -3016,7 +3016,7 @@ static gint choose_series (GtkWidget *w, struct mdialog *mdlg)
 
 static gint choose_numeric (GtkWidget *w, struct mdialog *mdlg)
 {
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	if (mdlg->numerics != NULL) {
 	    gtk_widget_set_sensitive(mdlg->numerics, TRUE);
 	} 
@@ -3030,7 +3030,7 @@ static gint choose_numeric (GtkWidget *w, struct mdialog *mdlg)
 
 static gint choose_formula (GtkWidget *w, struct mdialog *mdlg)
 {
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	if (mdlg->numerics != NULL) {
 	    gtk_widget_set_sensitive(mdlg->numerics, FALSE);
 	} 

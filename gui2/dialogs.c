@@ -257,13 +257,13 @@ static void set_dec (GtkWidget *w, csv_stuff *csv)
 {
     gint i;
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 	csv->decpoint = i;
 	if (csv->decpoint == ',' && csv->delim == ',') {
 	    csv->delim = ' ';
-	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (csv->space_button), 
-					  TRUE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(csv->space_button), 
+					 TRUE);
 	}
     }
 }
@@ -2391,7 +2391,7 @@ static void set_compact_type (GtkWidget *w, gpointer data)
 {
     gint *method = (gint *) data;
 
-    if (GTK_TOGGLE_BUTTON (w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
         *method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
     }
 }
@@ -2401,7 +2401,7 @@ static void set_target_pd (GtkWidget *w, gpointer data)
     struct compaction_info *cinfo = data;
     gboolean wtarg;
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	*cinfo->target_pd = 
 	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
     }
@@ -2429,7 +2429,7 @@ static void set_mon_start (GtkWidget *w, gpointer data)
 {
     gint *ms = (gint *) data;
 
-    if (GTK_TOGGLE_BUTTON (w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
         *ms = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
     }
 }
@@ -2767,7 +2767,7 @@ static void set_expand_target_pd (GtkWidget *w, gpointer data)
 {
     int *targ_pd = (int *) data;
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	*targ_pd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
     }
 }
@@ -3338,7 +3338,7 @@ static void freq_set_dist (GtkWidget *w, int *dist)
 {
     int fopt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "fopt"));
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	if (fopt == 0) *dist = D_NONE;
 	else if (fopt == 1) *dist = D_NORMAL;
 	else if (fopt == 2) *dist = D_GAMMA;
@@ -3349,7 +3349,7 @@ static void freq_info_control (GtkWidget *w, struct freqdist_info *f)
 {
     int snum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "snum"));
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	gtk_widget_set_sensitive(f->spin[0], snum == 0);
 	gtk_widget_set_sensitive(f->spin[1], snum == 1);
 	gtk_widget_set_sensitive(f->spin[2], snum == 1);
@@ -3766,7 +3766,7 @@ struct tex_formatter {
 static void activate_row (GtkWidget *w, struct tex_formatter *tf)
 {
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "row"));
-    int s = GTK_TOGGLE_BUTTON(w)->active;
+    int s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
     if (tf->spin[i] != NULL) {
 	gtk_widget_set_sensitive(tf->spin[i], s);
@@ -3777,7 +3777,7 @@ static void activate_row (GtkWidget *w, struct tex_formatter *tf)
 
 static void toggle_tex_custom (GtkWidget *w, struct tex_formatter *tf)
 {
-    int s = GTK_TOGGLE_BUTTON(w)->active;
+    int s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
     int i;
 
     if (tf->spin[0] != NULL) {
@@ -3792,18 +3792,20 @@ static void toggle_tex_custom (GtkWidget *w, struct tex_formatter *tf)
     }
 }
 
+#define button_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
+
 static gboolean record_tex_format (GtkWidget *w, struct tex_formatter *tf)
 {
-    if (GTK_TOGGLE_BUTTON(tf->custom)->active) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(tf->custom))) {
 	char c, bit[8], fmt[32];
 	int i, p;
 
 	*fmt = '\0';
 
 	for (i=0; i<4; i++) {
-	    if (i == 0 || GTK_TOGGLE_BUTTON(tf->show[i-1])->active) {
+	    if (i == 0 || button_active(tf->show[i-1])) {
 		p = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(tf->spin[i]));
-		if (GTK_TOGGLE_BUTTON(tf->radio[i].b[1])->active) {
+		if (button_active(tf->radio[i].b[1])) {
 		    c = 'g';
 		} else {
 		    c = 'f';
