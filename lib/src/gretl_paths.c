@@ -1036,11 +1036,7 @@ static char *fname_strstr (char *fname, char *dname)
 #endif
 }
 
-/* note: for our purposes we count filenames beginning with "./" or
-   "../" as absolute 
-*/
-
-int gretl_path_is_absolute (const char *fname)
+int fname_has_path (const char *fname)
 {
     return g_path_is_absolute(fname) || dotpath(fname);
 }
@@ -1104,7 +1100,7 @@ static int shelldir_open_dotfile (char *fname, char *orig)
  * Elementary path-searching: try adding various paths to the given
  * @fname and see if it can be opened.  Usually called by getopenfile().
  *
- * Returns: the full name of the file that was found, or NULL if no
+ * Returns: the full name of the file that was found, or %NULL if no
  * file could be found.
  */
 
@@ -1124,11 +1120,11 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     test = gretl_fopen(fname, "r");
     if (test != NULL) { 
 	fclose(test); 
-	if (!gretl_path_is_absolute(fname)) {
+	if (!fname_has_path(fname)) {
 	    make_path_absolute(fname, orig);
 	}
 	return fname;
-    } else if (gretl_path_is_absolute(fname)) {  
+    } else if (g_path_is_absolute(fname)) {  
 	/* unable to open file as given: if the path was absolute, fail */
 	return NULL;
     }

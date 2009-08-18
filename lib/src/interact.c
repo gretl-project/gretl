@@ -515,7 +515,7 @@ static int filename_to_param (CMD *cmd, char *s, int *len,
 	}
     }
 
-    if (libset_get_bool(USE_CWD) || gretl_path_is_absolute(fname)) {
+    if (libset_get_bool(USE_CWD) || fname_has_path(fname)) {
 	cmd->param = fname;
     } else if (cmd->ci == OUTFILE && !strcmp(fname, "null")) {
 	cmd->param = fname;
@@ -3599,7 +3599,7 @@ static void get_optional_filename_etc (const char *line, CMD *cmd)
 
     if (p != NULL && *p != '\0') {
 	free(cmd->param);
-	if (libset_get_bool(USE_CWD) || gretl_path_is_absolute(p)) {
+	if (libset_get_bool(USE_CWD) || fname_has_path(p)) {
 	    cmd->param = p;
 	} else {
 	    cmd->param = gretl_strdup_printf("%s%s", gretl_work_dir(), p);

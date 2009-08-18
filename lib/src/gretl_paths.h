@@ -75,7 +75,7 @@ char *addpath (char *fname, PATHS *ppaths, int script);
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 gretlopt opt);
 
-int gretl_path_is_absolute (const char *fname);
+int fname_has_path (const char *fname);
 
 int has_system_prefix (const char *fname, const PATHS *ppaths,
 		       int locus);

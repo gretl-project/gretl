@@ -2323,7 +2323,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 	mkfilelist(FILE_LIST_WDIR, tmp);
     }
 
-    usecwd = GTK_TOGGLE_BUTTON(wset->r2)->active;
+    usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->r2));
 }
 
 void working_dir_dialog (void) 
