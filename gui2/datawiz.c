@@ -1794,7 +1794,7 @@ static void dwiz_page_add_title (GtkWidget *vbox, int i, int smax)
 				  "weight=\"bold\" "
 				  "color=\"white\" "
 				  "background=\"#6C7B8A\" "
-				  "size=\"xx-large\"> %-*s </span>", 
+				  "size=\"x-large\"> %-*s </span>", 
 				  smax, _(wizcode_string(i)));
     gtk_label_set_markup(GTK_LABEL(label), buf);
     g_free(buf);
