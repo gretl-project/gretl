@@ -920,10 +920,6 @@ void filter_callback (GtkAction *action)
     int code, cancel = 0;
     int err = 0;
 
-    if (reject_scalar(v)) {
-	return;
-    }
-
     code = filter_code(action);
 
     err = array_adjust_t1t2(Z[v], &t1, &t2);

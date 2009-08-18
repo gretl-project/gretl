@@ -709,8 +709,8 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
     }
 }
 
-/* if a keystroke would take us to row 0 (e.g. page up), countermand
-   and go to row 1 instead
+/* if a keystroke (e.g. page up) would take us to row 0, countermand
+   this and go to row 1 instead
 */
 
 static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
@@ -732,6 +732,8 @@ static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
 	gtk_tree_path_free(path);
     }
 }
+
+/* keystrokes recognized in the main gretl window */
 
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
@@ -877,6 +879,8 @@ static int get_line_pos (GtkTreeModel *mod)
 
     return pos;
 }
+
+/* populate the list of series in the main gretl window */
 
 void populate_varlist (void)
 {
@@ -1539,6 +1543,8 @@ static void add_conditional_items (GtkUIManager *ui)
 #endif
 }
 
+/* retrieve the XML description of the main window menus */
+
 static gchar *get_main_ui (void)
 {
     char fname[FILENAME_MAX];
@@ -1694,7 +1700,7 @@ void set_wm_icon (GtkWidget *w, gpointer data)
 
 #endif
 
-/* Drag 'n' drop */
+/* Drag 'n' drop: respond to data dropped into the main window */
 
 static void  
 mdata_handle_drag  (GtkWidget *widget,

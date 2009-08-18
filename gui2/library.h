@@ -179,8 +179,6 @@ int out_of_sample_info (int add_ok, int *t2);
 
 /* variable-related functions */
 
-int reject_scalar (int vnum);
-
 void do_minibuf (GtkWidget *w, dialog_t *dlg);
 
 void do_genr (GtkWidget *w, dialog_t *dlg);

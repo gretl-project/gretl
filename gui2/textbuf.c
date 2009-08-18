@@ -1196,6 +1196,8 @@ static void maybe_set_help_tabs (windata_t *hwin)
     }
 }
 
+/* construct the index page for the gretl command reference */
+
 static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Command Reference");
@@ -1237,6 +1239,8 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     maybe_connect_help_signals(hwin, en);
     maybe_set_help_tabs(hwin);
 }
+
+/* construct the index page for the gretl function reference */
 
 static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
@@ -1291,6 +1295,8 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     maybe_connect_help_signals(hwin, en);
     maybe_set_help_tabs(hwin);
 }
+
+/* apparatus to support the 'Back' popup menu item */
 
 static void push_backpage (GtkWidget *w, int pg)
 {

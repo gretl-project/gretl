@@ -407,7 +407,7 @@ static int console_cmd_init (char *s, int *crun)
     return ret;
 }
 
-/* checks command line s for validity, but does not
+/* checks command line @s for validity, but does not
    of itself record the command */
 
 int check_specific_command (char *s)
@@ -2128,22 +2128,12 @@ void do_vif (GtkAction *action, gpointer p)
     } 
 }
 
-int reject_scalar (int vnum)
-{
-    /* FIXME redundant */
-    return 0;
-}
-
 void do_gini (void)
 {
     gretlopt opt = OPT_NONE;
     PRN *prn;
     int v = mdata_active_var();
     int err;
-
-    if (reject_scalar(v)) {
-	return;
-    }
 
     if (bufopen(&prn)) {
 	return;
@@ -2172,10 +2162,6 @@ void do_kernel (void)
     double bw = 1.0;
     int v = mdata_active_var();
     int err;
-
-    if (reject_scalar(v)) {
-	return;
-    }
 
     if (sample_size(datainfo) < 30) {
 	gui_errmsg(E_TOOFEW);
@@ -3951,10 +3937,6 @@ void do_freq_dist (int plot)
     int nbins = 0;
     int err = 0;
 
-    if (reject_scalar(v)) {
-	return;
-    }
-
     if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[v])) {
 	nbins = 3;
     } else if (var_is_discrete(datainfo, v) ||
@@ -4164,10 +4146,6 @@ void do_range_mean (void)
 			     const DATAINFO *, PRN *);
     PRN *prn;
 
-    if (reject_scalar(v)) {
-	return;
-    }
-
     range_mean_graph = gui_get_plugin_function("range_mean_graph", 
 					       &handle);
     if (range_mean_graph == NULL) {
@@ -4200,10 +4178,6 @@ void do_hurst (void)
     int (*hurst_exponent) (int, const double **, 
 			   const DATAINFO *, PRN *);
     PRN *prn;
-
-    if (reject_scalar(v)) {
-	return;
-    }
 
     hurst_exponent = gui_get_plugin_function("hurst_exponent", 
 					     &handle);
@@ -5335,14 +5309,6 @@ static void real_delete_vars (int id, int *dlist)
     if (dataset_locked()) {
 	return;
     }
-
-#if 0
-    if (complex_subsampled()) {
-	errbox(_("Can't delete a variable when in sub-sample"
-		 " mode\n"));
-	return;
-    }
-#endif
 
     if (id > 0) {
 	/* delete single specified var */

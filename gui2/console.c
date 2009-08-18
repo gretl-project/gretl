@@ -688,7 +688,7 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
 
-    /* first out where the insert point and end are */
+    /* first find out where the insertion point and end are */
     mark = gtk_text_buffer_get_insert(buf);
     gtk_text_buffer_get_iter_at_mark(buf, &ins, mark);
     gtk_text_buffer_get_end_iter(buf, &end);
@@ -701,7 +701,7 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
     }
 
     if (IS_BACKKEY(key->keyval)) {
-	/* if at start of input line, block backspacing */
+	/* if we're at the start of the input line, block backspacing */
 	if (gtk_text_iter_get_line_index(&ins) < 3) {
 	    return TRUE;
 	}
@@ -719,7 +719,7 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
     */
 
     if (key->keyval == GDK_Return) {
-	/* executes the command, unless backslash-continuation 
+	/* execute the command, unless backslash-continuation 
 	   is happening */
 	ExecState *state;
 	gchar *thisline;

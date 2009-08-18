@@ -46,10 +46,8 @@ struct search_replace {
 static void replace_string_setup (GtkWidget *widget, 
 				  struct search_replace *s)
 {
-    s->find = 
-	gtk_editable_get_chars(GTK_EDITABLE(s->f_entry), 0, -1);
-    s->replace = 
-	gtk_editable_get_chars(GTK_EDITABLE(s->r_entry), 0, -1);
+    s->find = gtk_editable_get_chars(GTK_EDITABLE(s->f_entry), 0, -1);
+    s->replace = gtk_editable_get_chars(GTK_EDITABLE(s->r_entry), 0, -1);
     gtk_widget_destroy(s->w);
 }
 
@@ -63,7 +61,8 @@ static void trash_replace (GtkWidget *widget,
 
 static void replace_string_dialog (struct search_replace *s)
 {
-    GtkWidget *label, *button, *vbox, *hbox, *abox;
+    GtkWidget *label, *button;
+    GtkWidget *vbox, *hbox, *abox;
 
     s->w = gtk_dialog_new();
 
@@ -77,7 +76,7 @@ static void replace_string_dialog (struct search_replace *s)
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(s->w));
 
-    /* Find part */
+    /* 'Find' part */
     hbox = gtk_hbox_new(TRUE, TRUE);
     label = gtk_label_new(_("Find:"));
     gtk_widget_show(label);
@@ -88,7 +87,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_widget_show(hbox);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
-    /* Replace part */
+    /* 'Replace' part */
     hbox = gtk_hbox_new(TRUE, TRUE);
     label = gtk_label_new(_("Replace with:"));
     gtk_widget_show(label);

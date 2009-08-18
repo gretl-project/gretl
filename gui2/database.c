@@ -2263,7 +2263,7 @@ static int read_remote_filetime (char *line, char *fname, time_t *date,
     return 0;
 }
 
-/* below: mechanism for tucking individual databases under a twisty,
+/* below: mechanism for tucking individual databases under a 'twisty',
    when there's a large number of databases from a single source.
 */
 

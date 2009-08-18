@@ -675,7 +675,6 @@ cmp_families (const void *a, const void *b)
 
 static GtkWidget *font_test_widget;
 static PangoContext *font_test_context;
-static PangoLayout *font_test_layout;
 static PangoLanguage *font_test_lang;
 
 static int create_font_test_rig (void)
@@ -688,13 +687,6 @@ static int create_font_test_rig (void)
 	return 1;
     }    
 
-    font_test_layout = pango_layout_new(font_test_context); 
-    if (font_test_layout == NULL) {
-	g_object_unref(G_OBJECT(font_test_context));
-	gtk_widget_destroy(font_test_widget);
-	return 1;
-    }	
-
     font_test_lang = pango_language_from_string("eng");
 
     return 0;
@@ -702,7 +694,6 @@ static int create_font_test_rig (void)
 
 static void destroy_font_test_rig (void)
 {
-    g_object_unref(G_OBJECT(font_test_layout));
     g_object_unref(G_OBJECT(font_test_context));
     gtk_widget_destroy(font_test_widget);    
 }
@@ -719,7 +710,8 @@ enum {
    by checking whether or not the letters 'i' and 'W' come out the
    same width. */
 
-static int get_font_characteristics (PangoFontDescription *desc)
+static int get_font_characteristics (PangoFontFamily *family,
+				     PangoFontDescription *desc)
 {
     PangoCoverage *coverage = NULL;
     PangoFont *pfont = NULL;
@@ -737,20 +729,9 @@ static int get_font_characteristics (PangoFontDescription *desc)
 
     if (pango_coverage_get(coverage, 'i') == PANGO_COVERAGE_EXACT &&
 	pango_coverage_get(coverage, 'W') == PANGO_COVERAGE_EXACT) {
-	int x1, x2;
-
 	ret = HACK_LATIN_FONT;
-	
-	if (font_test_context != NULL && font_test_layout != NULL) {
-	    pango_context_set_font_description(font_test_context, desc);
-	    pango_layout_set_text(font_test_layout, "i", 1);
-	    pango_layout_get_pixel_size(font_test_layout, &x1, NULL);
-	    pango_layout_set_text(font_test_layout, "W", 1);
-	    pango_layout_get_pixel_size(font_test_layout, &x2, NULL);
-
-	    if (x1 == x2) {
-		ret |= HACK_MONO_FONT;
-	    }
+	if (pango_font_family_is_monospace(family)) {
+	    ret |= HACK_MONO_FONT;
 	}
     }
 
@@ -803,7 +784,8 @@ static void font_progress_bar (int i, int nf)
    in respect of the criterion in filter.
 */
 
-static int validate_font_family (const gchar *famname, 
+static int validate_font_family (PangoFontFamily *family,
+				 const gchar *famname, 
 				 gint i, gint nf,
 				 gint filter, gint *err)
 {
@@ -835,7 +817,7 @@ static int validate_font_family (const gchar *famname,
 	    PangoFontDescription *desc = pango_font_description_from_string(font);
 
 	    if (desc != NULL) {
-		fcache[i] = get_font_characteristics(desc);
+		fcache[i] = get_font_characteristics(family, desc);
 		pango_font_description_free(desc);
 	    }
 	    g_free(font);
@@ -887,7 +869,7 @@ gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel,
 	fprintf(stderr, "Examining font family '%s'\n", famname);
 #endif
 
-	if (!validate_font_family(famname, i, nf, fontsel->filter, &err)) { 
+	if (!validate_font_family(families[i], famname, i, nf, fontsel->filter, &err)) { 
 	    continue;
 	}
 
@@ -1088,7 +1070,7 @@ gtk_fontsel_hack_select_style (GtkTreeSelection *selection,
 
 static void
 gtk_fontsel_hack_show_available_sizes (GtkFontselHack *fontsel,
-				       gboolean          first_time)
+				       gboolean first_time)
 {
     size_t i;
     GtkListStore *model;
@@ -1103,16 +1085,15 @@ gtk_fontsel_hack_show_available_sizes (GtkFontselHack *fontsel,
     if (first_time) {
 	gtk_list_store_clear (model);
 
-	for (i = 0; i < G_N_ELEMENTS (font_sizes); i++)
-	    {
-		GtkTreeIter iter;
+	for (i = 0; i < G_N_ELEMENTS (font_sizes); i++) {
+	    GtkTreeIter iter;
 	  
-		gtk_list_store_append (model, &iter);
-		gtk_list_store_set (model, &iter, SIZE_COLUMN, font_sizes[i], -1);
+	    gtk_list_store_append (model, &iter);
+	    gtk_list_store_set (model, &iter, SIZE_COLUMN, font_sizes[i], -1);
 	  
-		if (font_sizes[i] * PANGO_SCALE == fontsel->size)
-		    set_cursor_to_iter (GTK_TREE_VIEW (fontsel->size_list), &iter);
-	    }
+	    if (font_sizes[i] * PANGO_SCALE == fontsel->size)
+		set_cursor_to_iter (GTK_TREE_VIEW (fontsel->size_list), &iter);
+	}
     } else {
 	GtkTreeIter iter;
 	gboolean found = FALSE;
@@ -1301,7 +1282,7 @@ gtk_fontsel_hack_get_font_name (GtkFontselHack *fontsel)
 
 gboolean
 gtk_fontsel_hack_set_font_name (GtkFontselHack *fontsel,
-				const gchar      *fontname)
+				const gchar *fontname)
 {
     PangoFontFamily *new_family = NULL;
     PangoFontFace *new_face = NULL;
