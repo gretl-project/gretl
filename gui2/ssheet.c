@@ -25,6 +25,7 @@
 #include "selector.h"
 #include "session.h"
 #include "winstack.h"
+#include "toolbar.h"
 #include "usermat.h"
 #include "matrix_extra.h"
 #include "gretl_scalar.h"
@@ -91,9 +92,6 @@ typedef struct {
 
 #define MATRIX_DIGITS DBL_DIG
 
-static void sheet_add_var_callback (GtkAction *action, gpointer data);
-static void sheet_add_obs_callback (GtkAction *action, gpointer data);
-static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet);
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width, 
 				 gboolean expand);
 static gint get_data_col_width (void);
@@ -107,29 +105,25 @@ static int update_sheet_from_matrix (Spreadsheet *sheet);
 static void size_matrix_window (Spreadsheet *sheet);
 static void set_ok_transforms (Spreadsheet *sheet);
 
+static void sheet_show_popup (GtkWidget *w, Spreadsheet *sheet);
+static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet);
+static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet);
+
 static void 
 spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col);
 
-const gchar *sheet_ui = 
-    "<ui>"
-    "  <menubar>"
-    "    <menu action='ObsMenu'>"
-    "      <menuitem action='AppendObs'/>"
-    "      <menuitem action='InsertObs'/>"
-    "    </menu>"
-    "    <menu action='VarMenu'>"
-    "      <menuitem action='VarAdd'/>"
-    "    </menu>"
-    "  </menubar>"
-    "</ui>";
-
-static GtkActionEntry sheet_items[] = {
-    { "ObsMenu", NULL, N_("_Observation"), NULL, NULL, NULL },
-    { "AppendObs", NULL, N_("_Append obs"), NULL, NULL, G_CALLBACK(sheet_add_obs_callback) },
-    { "InsertObs", NULL, N_("_Insert obs"), NULL, NULL, G_CALLBACK(sheet_add_obs_callback) },
-    { "VarMenu", NULL, N_("_Variable"), NULL, NULL, NULL },
-    { "VarAdd", NULL, N_("_Add"), NULL, NULL, G_CALLBACK(sheet_add_var_callback) }
+enum {
+    SERIES_ADD_BTN,
+    SERIES_APPLY_BTN
 };
+
+static GretlToolItem series_items[] = {
+    { N_("Add..."), GTK_STOCK_ADD,    G_CALLBACK(sheet_show_popup),    SERIES_ADD_BTN },
+    { N_("Apply"),  GTK_STOCK_APPLY,  G_CALLBACK(get_data_from_sheet), SERIES_APPLY_BTN },
+    { N_("Close"),  GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet),    0 }
+};
+
+static int n_series_items = G_N_ELEMENTS(series_items);
 
 const gchar *matrix_ui = 
     "<ui>"
@@ -183,30 +177,6 @@ static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
 	gtk_widget_set_sensitive(sheet->save, s);
     } else if (sheet->apply != NULL) {
 	gtk_widget_set_sensitive(sheet->apply, s);
-    }
-}
-
-static void disable_obs_menu (GtkUIManager *ui)
-{
-    const gchar *path = "/menubar/ObsMenu";
-    GtkWidget *w = gtk_ui_manager_get_widget(ui, path);
-
-    if (w != NULL) {
-	gtk_widget_set_sensitive(w, FALSE);
-    } else {
-	fprintf(stderr, "Couldn't get widget for '%s'\n", path);
-    }
-}
-
-static void disable_insert_obs_item (GtkUIManager *ui)
-{
-    const gchar *path = "/menubar/ObsMenu/InsertObs";
-    GtkWidget *w = gtk_ui_manager_get_widget(ui, path);
-
-    if (w != NULL) {
-	gtk_widget_set_sensitive(w, FALSE);
-    } else {
-	fprintf(stderr, "Couldn't get widget for '%s'\n", path);
     }
 }
 
@@ -1085,13 +1055,6 @@ static void matrix_fill_callback (GtkAction *action, gpointer data)
     update_sheet_from_matrix(sheet);
 }
 
-static void sheet_add_var_callback (GtkAction *action, gpointer data)
-{
-    Spreadsheet *sheet = (Spreadsheet *) data;
-
-    name_var_dialog(sheet);
-}
-
 static void sheet_add_obs_direct (Spreadsheet *sheet)
 {
     if (datainfo->markers) {
@@ -1105,20 +1068,6 @@ static void sheet_add_obs_direct (Spreadsheet *sheet)
     } else {
 	real_add_new_obs(sheet, NULL, 1);
     }
-}
-
-static void sheet_add_obs_callback (GtkAction *action, gpointer data)
-{
-    const gchar *s = gtk_action_get_name(action);
-    Spreadsheet *sheet = (Spreadsheet *) data;
-
-    if (!strcmp(s, "AppendObs")) {
-	sheet->point = SHEET_AT_END;
-    } else {
-	sheet->point = SHEET_AT_POINT;
-    }
-
-    sheet_add_obs_direct(sheet);
 }
 
 static void popup_sheet_add_obs (GtkWidget *w, Spreadsheet *sheet)
@@ -1938,9 +1887,7 @@ static void cell_edit_start (GtkCellRenderer *r,
     fprintf(stderr, "*** editing-started\n");
 #endif
     if (GTK_IS_ENTRY(ed)) {
-#if 1 /* produces "random" broken behaviour */
 	sheet->entry = GTK_WIDGET(ed);
-#endif
 	g_signal_connect(G_OBJECT(ed), "key-press-event",
 			 G_CALLBACK(catch_sheet_edit_key), sheet);
 	g_signal_connect(GTK_OBJECT(ed), "destroy",
@@ -1962,6 +1909,7 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
     r = gtk_cell_renderer_text_new();
     g_object_set(r, "ypad", 1, 
 		 "xalign", 1.0, 
+		 "family", "Monospace",
 		 "editable", TRUE, 
 		 "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 NULL);
@@ -2173,6 +2121,16 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     return ret;
 }
 
+static void sheet_show_popup (GtkWidget *w, Spreadsheet *sheet)
+{
+    if (sheet->popup == NULL) {
+	build_sheet_popup(sheet);
+    }
+
+    gtk_menu_popup(GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
+		   1, gtk_get_current_event_time());
+}
+
 static int build_sheet_view (Spreadsheet *sheet)
 {
     GtkListStore *store; 
@@ -2306,6 +2264,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	g_signal_connect(G_OBJECT(view), "cursor-changed",
 			 G_CALLBACK(update_cell_position), sheet);
     }
+
     g_signal_connect(G_OBJECT(view), "key-press-event",
 		     G_CALLBACK(catch_spreadsheet_key), sheet);
 
@@ -2521,22 +2480,6 @@ static gint simple_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
     return FALSE;
 }
 
-static void 
-sheet_adjust_menu_state (Spreadsheet *sheet)
-{
-    sheet->flags |= SHEET_ADD_OBS_OK | SHEET_INSERT_OBS_OK;
-
-    if (complex_subsampled() || datainfo->t2 < datainfo->n - 1) {
-	sheet->flags &= ~SHEET_ADD_OBS_OK;
-	sheet->flags &= ~SHEET_INSERT_OBS_OK;
-	disable_obs_menu(sheet->ui);
-    } else if ((sheet->flags & SHEET_SHORT_VARLIST) ||
-	       dataset_is_panel(datainfo)) {
-	sheet->flags &= ~SHEET_INSERT_OBS_OK;
-	disable_insert_obs_item(sheet->ui);
-    }
-}
-
 static void size_matrix_window (Spreadsheet *sheet)
 {
     int nc = sheet->datacols;
@@ -2620,7 +2563,49 @@ button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
     return FALSE;
 }
 
-static void sheet_add_menubar (Spreadsheet *sheet, GtkWidget *vbox)
+static void adjust_add_menu_state (Spreadsheet *sheet)
+{
+    sheet->flags |= SHEET_ADD_OBS_OK | SHEET_INSERT_OBS_OK;
+
+    if (complex_subsampled() || datainfo->t2 < datainfo->n - 1) {
+	sheet->flags &= ~SHEET_ADD_OBS_OK;
+	sheet->flags &= ~SHEET_INSERT_OBS_OK;
+    } else if ((sheet->flags & SHEET_SHORT_VARLIST) ||
+	       dataset_is_panel(datainfo)) {
+	sheet->flags &= ~SHEET_INSERT_OBS_OK;
+    }
+}
+
+static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
+{
+    GtkWidget *hbox, *tbar;
+    GretlToolItem *item;
+    GtkToolItem *button;
+    int i;
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    tbar = gretl_toolbar_new();
+
+    for (i=0; i<n_series_items; i++) {
+	item = &series_items[i];
+	button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
+	if (item->flag == SERIES_APPLY_BTN) {
+	    sheet->apply = GTK_WIDGET(button);
+	    gtk_widget_set_sensitive(sheet->apply, FALSE);
+	} 
+	if (item->flag != SERIES_ADD_BTN) {
+	    g_signal_connect(G_OBJECT(button), "enter-notify-event",
+			     G_CALLBACK(button_entered), sheet);
+	}
+    }
+
+    gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    adjust_add_menu_state(sheet);
+}
+
+static void sheet_add_matrix_menu (Spreadsheet *sheet, GtkWidget *vbox)
 {
     GtkActionGroup *actions;
     GtkWidget *mbar;
@@ -2629,24 +2614,16 @@ static void sheet_add_menubar (Spreadsheet *sheet, GtkWidget *vbox)
     actions = gtk_action_group_new("SheetActions");
     gtk_action_group_set_translation_domain(actions, "gretl");
 
-    if (sheet->matrix != NULL) {
-	gtk_action_group_add_actions(actions, matrix_items, 
-				     sizeof matrix_items / sizeof matrix_items[0],
-				     sheet);
-	gtk_ui_manager_add_ui_from_string(sheet->ui, matrix_ui, -1, NULL);
-    } else {
-	gtk_action_group_add_actions(actions, sheet_items, 
-				     sizeof sheet_items / sizeof sheet_items[0],
-				     sheet);
-	gtk_ui_manager_add_ui_from_string(sheet->ui, sheet_ui, -1, NULL);
-    }
+    gtk_action_group_add_actions(actions, matrix_items, 
+				 sizeof matrix_items / sizeof matrix_items[0],
+				 sheet);
+    gtk_ui_manager_add_ui_from_string(sheet->ui, matrix_ui, -1, NULL);
 
     gtk_ui_manager_insert_action_group(sheet->ui, actions, 0);
     g_object_unref(actions);
 
     mbar = gtk_ui_manager_get_widget(sheet->ui, "/menubar");
     gtk_box_pack_start(GTK_BOX(vbox), mbar, FALSE, FALSE, 0);
-    gtk_widget_show(mbar);
 }
 
 static void sheet_add_locator (Spreadsheet *sheet, GtkWidget *vbox)
@@ -2657,7 +2634,6 @@ static void sheet_add_locator (Spreadsheet *sheet, GtkWidget *vbox)
     status_box = gtk_hbox_new(FALSE, 1);
     gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);
     gtk_box_pack_start(GTK_BOX(vbox), status_box, FALSE, FALSE, 0);
-    gtk_widget_show(status_box);
 
     sheet->locator = gtk_statusbar_new(); 
     w = (sheet->matrix == NULL)? get_obs_col_width() : get_row_label_width();
@@ -2666,7 +2642,6 @@ static void sheet_add_locator (Spreadsheet *sheet, GtkWidget *vbox)
     sheet->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(sheet->locator), 
 					      "current row and column");
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
-    gtk_widget_show(sheet->locator);
 }
 
 /* this has to block when the user is defining a matrix in the
@@ -2678,8 +2653,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 				   int block)
 {
     Spreadsheet *sheet = *psheet;
-    GtkWidget *tmp, *button_box;
-    GtkWidget *scroller, *main_vbox;
+    GtkWidget *tmp, *scroller, *main_vbox;
     int err = 0;
 
     sheet->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -2711,18 +2685,23 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(gtk_main_quit), NULL);
     }
+
     g_signal_connect(G_OBJECT(sheet->win), "delete-event",
 		     G_CALLBACK(sheet_delete_event), sheet);
 
     main_vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 5); 
     gtk_container_add(GTK_CONTAINER(sheet->win), main_vbox);
-    gtk_widget_show(main_vbox);
 
-    if (c != SHEET_EDIT_SCALARS) {
-	sheet_add_menubar(sheet, main_vbox);
+    if (sheet->matrix != NULL) {
+	sheet_add_matrix_menu(sheet, main_vbox);
+	sheet_add_locator(sheet, main_vbox);
+    } else if (c != SHEET_EDIT_SCALARS) {
+	sheet_add_toolbar(sheet, main_vbox);
 	sheet_add_locator(sheet, main_vbox);
     }
+
+    gtk_widget_show_all(main_vbox);
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
@@ -2744,77 +2723,78 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_spreadsheet), psheet); /* FIXME? */
     } else {
-	sheet_adjust_menu_state(sheet);
-
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_spreadsheet), psheet);
     } 
 
-    /* control buttons */
+    if (sheet->matrix != NULL || c == SHEET_EDIT_SCALARS) {
+	/* control buttons (we don't use these for editing series) */
+	GtkWidget *button_box;
 
-    button_box = gtk_hbutton_box_new();
-    gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
-			      GTK_BUTTONBOX_END);
-    gtk_box_set_spacing(GTK_BOX(button_box), 10);
-    gtk_widget_show(button_box);
-    gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
+	button_box = gtk_hbutton_box_new();
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
+				  GTK_BUTTONBOX_END);
+	gtk_box_set_spacing(GTK_BOX(button_box), 10);
+	gtk_widget_show(button_box);
+	gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
+	gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
 
-    if (sheet->matrix != NULL && sheet->oldmat == NULL) {
-	tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(get_data_from_sheet), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(simple_exit_sheet), sheet);
-	gtk_widget_show(tmp);
-    } else if (sheet->matrix != NULL) {
-	/* editing a new matrix */
-	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(matrix_save_as), sheet);
-	gtk_widget_show(tmp);
+	if (sheet->matrix != NULL && sheet->oldmat == NULL) {
+	    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
+	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			     G_CALLBACK(button_entered), sheet);
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(get_data_from_sheet), sheet);
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(simple_exit_sheet), sheet);
+	    gtk_widget_show(tmp);
+	} else if (sheet->matrix != NULL) {
+	    /* editing a new matrix */
+	    tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
+	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			     G_CALLBACK(button_entered), sheet);
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(matrix_save_as), sheet);
+	    gtk_widget_show(tmp);
 
-	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(get_data_from_sheet), sheet);
-	gtk_widget_show(tmp);
-	sheet->save = tmp;
-	gtk_widget_set_sensitive(sheet->save, FALSE);
+	    tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
+	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			     G_CALLBACK(button_entered), sheet);
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(get_data_from_sheet), sheet);
+	    gtk_widget_show(tmp);
+	    sheet->save = tmp;
+	    gtk_widget_set_sensitive(sheet->save, FALSE);
 
-	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(maybe_exit_sheet), sheet);
-	gtk_widget_show(tmp);
-    } else {
-	tmp = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(get_data_from_sheet), sheet);
-	gtk_widget_show(tmp);
-	sheet->apply = tmp;
-	gtk_widget_set_sensitive(sheet->apply, FALSE);
+	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			     G_CALLBACK(button_entered), sheet);
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(maybe_exit_sheet), sheet);
+	    gtk_widget_show(tmp);
+	} else {
+	    tmp = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			     G_CALLBACK(button_entered), sheet);
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(get_data_from_sheet), sheet);
+	    gtk_widget_show(tmp);
+	    sheet->apply = tmp;
+	    gtk_widget_set_sensitive(sheet->apply, FALSE);
 
-	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(maybe_exit_sheet), sheet);
-	gtk_widget_show(tmp);
+	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			     G_CALLBACK(button_entered), sheet);
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(maybe_exit_sheet), sheet);
+	    gtk_widget_show(tmp);
+	}
     }
 
     g_signal_connect(G_OBJECT(sheet->view), "button-press-event",

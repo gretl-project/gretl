@@ -83,6 +83,9 @@ struct gui_help_item {
     char *string;
 };
 
+/* codes and strings for GUI help items other than
+   regular gretl commands */
+
 static struct gui_help_item gui_help_items[] = {
     { 0,              "nothing" },
     { GR_PLOT,        "graphing" },
@@ -164,7 +167,7 @@ const char *intl_topics[] = {
     N_("Utilities")
 };
 
-/* Handle non-uniqueness of map from extra command words to codes
+/* Handle non-uniqueness of map from 'extra' command words to codes
    (e.g. both GR_PLOT and GR_XY correspond to "graphing").  We want
    the first code, to find the right place in the help file
    when responding to a "context help" request.
@@ -173,7 +176,7 @@ const char *intl_topics[] = {
 static int gui_ci_to_index (int ci)
 {
     if (ci < NC) {
-	/* regular command, no problem */
+	/* regular gretl command, no problem */
 	return ci;
     } else {
 	int i, k, ret = ci;
@@ -511,6 +514,9 @@ static GtkTreeStore *get_help_topics_tree (int role)
     return *ptree;
 }
 
+/* add a tree-style navigation pane to the left of the help index or
+   text */
+
 int add_help_navigator (windata_t *vwin, GtkWidget *hp)
 {
     GtkTreeStore *store;
@@ -731,6 +737,8 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *key,
 
     return FALSE;
 }
+
+/* respond to Enter key in the 'finder' entry */
 
 static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 {
