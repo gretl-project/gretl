@@ -3265,7 +3265,12 @@ static int extract_funcname (char *name, const char *s)
 
     *word = '\0';
     strncat(word, s, n);
-    type = arg_type_from_string(word);
+
+    if (!strcmp(word, "void")) {
+	type = GRETL_TYPE_VOID;
+    } else {
+	type = arg_type_from_string(word);
+    }
 
     if (type == 0) {
 	/* old-style */
@@ -3367,6 +3372,8 @@ int update_function_from_script (const char *fname, int idx)
 		err = E_DATA;
 		strcpy(gretl_errmsg, 
 		       _("You can't change the name of a function here"));
+		fprintf(stderr, "orig->name='%s', fun->name='%s'\n",
+		       orig->name, fun->name);
 	    } else {
 		gotfn = 1;
 		while (!err && fndef_continues(s)) {
