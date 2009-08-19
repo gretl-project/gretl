@@ -141,11 +141,46 @@ endloop
 \end{code}
 
 
+\subsection{Static, dynamic and rolling forecasts}
 
-\subsection{Forecasting methods}
+The distinction between static and dynamic forecasts applies only to
+dynamic models, i.e., those that feature one or more lags of the
+dependent variable. The simplest case is the AR(1) model,
+%
+\begin{equation}
+\label{eq:ar1}
+y_t = \alpha_0 + \alpha_1 y_{t-1} + \epsilon_t
+\end{equation}
+%
+In some cases the presence of a lagged dependent variable is implicit
+in the dynamics of the error term, for example
+%
+\begin{align*}
+  y_t &=  \beta + u_t \\
+  u_t &= \rho u_{t-1} + \epsilon_t
+\end{align*}
+%
+which implies that
+%
+\[
+y_t = (1-\rho) \beta + \rho y_{t-1} + \epsilon_t
+\]
 
-Static vs dynamic.  Rolling forecasts.  To be written.
-
+Suppose we want to forecast $y$ for period $s$ using a dynamic model,
+say (\ref{eq:ar1}) for example.  If we have data on $y$ available for
+period $s-1$ we could form a fitted value in the usual way: $\hat{y}_s
+= \hat{\alpha}_0 + \hat{\alpha}_1 y_{s-1}$.  But suppose that data are
+available only up to $s-2$.  In that case we can apply the chain rule
+of forecasting:
+%
+\begin{align*}
+  \hat{y}_{s-1} &= \hat{\alpha}_0 + \hat{\alpha}_1 y_{s-2} \\
+  \hat{y}_{s} &= \hat{\alpha}_0 + \hat{\alpha}_1 \hat{y}_{s-1}
+\end{align*}
+%
+This is what is called a dynamic forecast.  A static forecast, on the
+other hand, is simply a fitted value (even if it happens to be computed
+out-of-sample).
 
 \subsection{Printing and saving forecasts}
 
