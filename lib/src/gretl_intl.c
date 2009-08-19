@@ -556,6 +556,36 @@ void set_lcnumeric (int langid, int lcnumeric)
 #endif
 }
 
+#ifdef ENABLE_NLS
+
+static int set_locale_with_workaround (const char *lcode)
+{
+    char *test = setlocale(LC_ALL, lcode);
+
+# ifndef WIN32    
+    if (test == NULL) {
+	char lfix[32];
+
+	sprintf(lfix, "%s.UTF-8", lcode); /* Ubuntu, grr */
+	test = setlocale(LC_ALL, lfix);
+    }
+# endif
+
+    if (test != NULL) {
+	fprintf(stderr, "setlocale: '%s' -> '%s'\n", lcode, test);
+    }
+
+    return test == NULL;
+}
+
+# ifdef WIN32
+# define get_setlocale_string(i) (locale_code_from_id(i))
+# else
+# define get_setlocale_string(i) (lang_code_from_id(i))
+# endif
+
+#endif /* ENABLE_NLS */
+
 /* arg should be long English form of language, as displayed
    in GUI, e.g. "German", "French" */
 
@@ -565,17 +595,11 @@ int test_locale (const char *langstr)
     return 1;
 #else
     const char *lcode;
-    int langid;
-    char *orig, *test;
-    char ocpy[64];
+    char *orig, ocpy[64];
+    int langid, err = 0;
 
     langid = lang_id_from_name(langstr);
-
-# ifdef WIN32
-    lcode = locale_code_from_id(langid);
-# else
-    lcode = lang_code_from_id(langid);
-# endif
+    lcode = get_setlocale_string(langid);
     orig = setlocale(LC_ALL, NULL);
 
     gretl_error_clear();
@@ -583,15 +607,16 @@ int test_locale (const char *langstr)
     *ocpy = '\0';
     strncat(ocpy, orig, 63);
 
-    if ((test = setlocale(LC_ALL, lcode)) != NULL) {
-        fprintf(stderr, "test_locale: '%s' -> '%s'\n", lcode, test);
-	setlocale(LC_ALL, ocpy); /* restore the original locale */
-	return 0;
-    } else {
+    err = set_locale_with_workaround(lcode);
+
+    if (err) {
 	gretl_errmsg_sprintf(_("%s: locale is not supported "
 			       "on this system"), lcode);
-	return 1;
-    }
+    } else {
+	setlocale(LC_ALL, ocpy); /* restore the original locale */
+    } 
+
+    return err;
 #endif
 }
 
@@ -606,19 +631,17 @@ void force_language (int langid)
 	putenv("LANGUAGE=english");
 	setlocale(LC_ALL, "C");
     } else {
-# ifdef WIN32
-        lcode = locale_code_from_id(langid);
-# else
-	lcode = lang_code_from_id(langid);
-# endif
+	lcode = get_setlocale_string(langid);
 	if (lcode != NULL) {  
+# ifdef WIN32
 	    char *newloc = setlocale(LC_ALL, lcode);
 
             fprintf(stderr, "lcode='%s', newloc='%s'\n", lcode, newloc);
-# ifdef WIN32
 	    if (newloc != NULL) {
 		set_cp_from_locale(newloc);
 	    }
+# else
+	    set_locale_with_workaround(lcode);
 # endif
 	}
     }
@@ -647,7 +670,7 @@ void force_language (int langid)
 	putenv(estr);
     }
 # endif
-#endif
+#endif /* ENABLE_NLS */
 }
 
 static void 

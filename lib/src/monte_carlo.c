@@ -1951,6 +1951,13 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
     LOOPSET *newloop = currloop;
     int err = 0;
 
+#if 0
+    if (compile_level > 0) {
+	/* not starting from scratch */
+	get_command_index(s->line, s->cmd);
+    }
+#endif
+
     gretl_error_clear();
 
 #if LOOP_DEBUG > 1

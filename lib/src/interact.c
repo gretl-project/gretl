@@ -4267,6 +4267,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = gretl_start_compiling_function(line, prn);
 	break;
 
+#if 0
+    case LOOP:
+	err = gretl_loop_append_line(s, pZ, pdinfo);
+	break;
+#endif
+
     case GENR:
 	err = generate(line, pZ, pdinfo, cmd->opt, prn);
 	break;
