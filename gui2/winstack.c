@@ -152,7 +152,7 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
 	    for (i=0; i<n_windows; i++) {
 		if (wstack[i] != NULL) {
 		    windata_t *vwin = 
-			g_object_get_data(G_OBJECT(wstack[i]), "object");
+			g_object_get_data(G_OBJECT(wstack[i]), "vwin");
 
 		    if (vwin != NULL && strstr(ctest, vwin->fname)) {
 			if (pw != NULL) {
@@ -290,7 +290,7 @@ windata_t *gretl_browser_new (int role, const gchar *title, int record)
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
 
     if (record) {
-	g_object_set_data(G_OBJECT(vwin->main), "object", vwin);
+	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 	g_object_set_data(G_OBJECT(vwin->main), "role", 
 			  GINT_TO_POINTER(vwin->role));
 	winstack_add(vwin->main);

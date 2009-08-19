@@ -60,6 +60,7 @@ struct function_info_ {
     int minver;
     int upload;
     int saveas;
+    int modified;
     const char *openscript;
 };
 
@@ -91,6 +92,7 @@ function_info *finfo_new (void)
     finfo->upload = 0;
     finfo->saveas = 0;
     finfo->iface = -1;
+    finfo->modified = 0;
 
     finfo->samplewin = NULL;
 
@@ -289,6 +291,10 @@ static void real_finfo_save (function_info *finfo)
 	maybe_revise_package_name(finfo);
 	err = save_user_functions(finfo->fname, finfo);
     }
+
+    if (!err) {
+	finfo->modified = 0;
+    }
 }
 
 static void finfo_save (GtkWidget *w, function_info *finfo)
@@ -327,22 +333,47 @@ static gboolean update_iface (GtkComboBox *menu,
     return FALSE;
 }
 
+/* callback used when editing a function in the context of
+   the package editor */
+
+int update_func_code (windata_t *vwin)
+{
+    int iface, err = 0;
+
+    iface = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->text), "iface"));
+    err = update_function_from_script(vwin->fname, iface);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	function_info *finfo = vwin->data;
+
+	finfo->modified = 1;
+    }
+
+    return err;
+}
+
 static void edit_code_callback (GtkWidget *w, function_info *finfo)
 {
+    char fname[FILENAME_MAX];
     windata_t *vwin;
     GtkWidget *orig;
     const char *funname;
-    GQuark q;
     PRN *prn = NULL;
 
     if (finfo->iface < 0) {
 	return;
     }
 
+    build_path(fname, paths.dotdir, "pkgedit", NULL);
     funname = user_function_name_by_index(finfo->iface);
-    q = g_quark_from_string(funname);
+    strcat(fname, ".");
+    strcat(fname, funname);
 
-    orig = match_window_by_data(GINT_TO_POINTER(q));
+    fprintf(stderr, "fname='%s'\n", fname);
+
+    orig = match_window_by_filename(fname);
     if (orig != NULL) {
 	gtk_window_present(GTK_WINDOW(orig));
 	return;
@@ -355,11 +386,10 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
     gretl_function_print_code(finfo->iface, prn);
 
     vwin = view_buffer(prn, 78, 350, funname,
-		       EDIT_FUNC_CODE, GINT_TO_POINTER(q));
+		       EDIT_FUNC_CODE, finfo);
 
     if (vwin != NULL) {
-	build_path(vwin->fname, paths.dotdir, "pkgedit", NULL);
-	gretl_tempname(vwin->fname);
+	strcpy(vwin->fname, fname);
 	g_object_set_data(G_OBJECT(vwin->text), "iface", 
 			  GINT_TO_POINTER(finfo->iface));
     }
@@ -377,6 +407,7 @@ void update_sample_script (windata_t *vwin)
 	free(finfo->sample);
 	finfo->sample = gretl_strdup(text);
 	g_free(text);
+	finfo->modified = 1;
     }
 }
 
@@ -685,7 +716,12 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     gtk_widget_show_all(hbox);
 }
 
-static GtkWidget *editable_text_box (void)
+static void pkg_content_changed (GtkTextBuffer *tbuf, function_info *finfo)
+{
+    finfo->modified = 1;
+}
+
+static GtkWidget *editable_text_box (GtkTextBuffer **pbuf)
 {
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
@@ -696,6 +732,8 @@ static GtkWidget *editable_text_box (void)
     gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), TRUE);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), TRUE);
+
+    *pbuf = tbuf;
 
     return w;
 }
@@ -712,10 +750,40 @@ static const gchar *get_user_string (void)
     return name;
 }
 
+static gint query_save_package (GtkWidget *w, GdkEvent *event, 
+				function_info *finfo)
+{
+    if (finfo->modified) {
+	int resp = yes_no_dialog("gretl", _("Save changes?"), 1);
+
+	if (resp == GRETL_CANCEL) {
+	    return TRUE;
+	} else if (resp == GRETL_YES) {
+	    finfo_save(NULL, finfo);
+	}
+    }
+
+    return FALSE;
+}
+
+static void delete_pkg_editor (GtkWidget *widget, function_info *finfo) 
+{
+    gint resp = 0;
+
+    if (finfo->modified) {
+	resp = query_save_package(NULL, NULL, finfo);
+    }
+
+    if (!resp) {
+	gtk_widget_destroy(finfo->dlg); 
+    }
+}
+
 static void finfo_dialog (function_info *finfo)
 {
     GtkWidget *button, *label;
     GtkWidget *tbl, *vbox, *hbox;
+    GtkTextBuffer *hbuf = NULL;
     const char *entry_labels[] = {
 	N_("Author"),
 	N_("Version"),
@@ -735,13 +803,14 @@ static void finfo_dialog (function_info *finfo)
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-    g_signal_connect(G_OBJECT(finfo->dlg), "destroy", 
-		     G_CALLBACK(finfo_destroy), finfo);
-
     gtk_window_set_title(GTK_WINDOW(finfo->dlg), 
 			 _("gretl: function package editor")); 
     gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 500);
+
+    g_signal_connect(G_OBJECT(finfo->dlg), "delete-event",
+		     G_CALLBACK(query_save_package), finfo);
+    g_signal_connect(G_OBJECT(finfo->dlg), "destroy", 
+		     G_CALLBACK(finfo_destroy), finfo);
 
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
@@ -798,11 +867,13 @@ static void finfo_dialog (function_info *finfo)
     gtk_widget_show(hbox);
     g_free(ltxt);
 
-    finfo->text = editable_text_box();
+    finfo->text = editable_text_box(&hbuf);
     text_table_setup(vbox, finfo->text);
 
     gretl_function_get_info(finfo->pub, "help", &hlp);
     textview_set_text(finfo->text, hlp);
+    g_signal_connect(G_OBJECT(hbuf), "changed", 
+		     G_CALLBACK(pkg_content_changed), finfo);
 
     /* edit code button, possibly with selector */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -861,7 +932,7 @@ static void finfo_dialog (function_info *finfo)
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT (button), "clicked", 
-		     G_CALLBACK(delete_widget), finfo->dlg);
+		     G_CALLBACK(delete_pkg_editor), finfo);
 
     gtk_widget_show_all(hbox);
 

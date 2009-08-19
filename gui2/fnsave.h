@@ -36,4 +36,6 @@ void update_sample_script (windata_t *vwin);
 
 void fnsave_set_script (const char *fname, gpointer p);
 
+int update_func_code (windata_t *vwin);
+
 #endif /* FNSAVE_H */

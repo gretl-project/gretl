@@ -1098,22 +1098,6 @@ static void buf_edit_save (GtkWidget *w, windata_t *vwin)
     }
 }
 
-static int update_func_code (windata_t *vwin)
-{
-    int iface, err = 0;
-
-    /* callback used when editing a function in the context of
-       the "function package editor" */
-	
-    iface = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->text), "iface"));
-    err = update_function_from_script(vwin->fname, iface);
-    if (err) {
-	gui_errmsg(err);
-    }
-
-    return err;
-}
-
 static void file_edit_save (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == EDIT_FUNC_CODE && *vwin->fname == '\0') {
@@ -1542,9 +1526,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
-    } else if (role == VIEW_FUNC_CODE || 
-	       role == EDIT_FUNC_CODE ||
-	       role == VIEW_MODELTABLE) {
+    } else if (role == VIEW_FUNC_CODE || role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
     } else if (role == EDIT_FUNC_CODE) {
 	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
@@ -1573,13 +1555,12 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     text_table_setup(vwin->vbox, vwin->text);
 
-    if (role == SCRIPT_OUT && data != NULL) {
-	/* partial output window for script */
-	vwin_add_child((windata_t *) data, vwin);
-    }
-
-    /* register destruction of script output viewer */
     if (role == SCRIPT_OUT) {
+	if (data != NULL) {
+	    /* partial output window for script */
+	    vwin_add_child((windata_t *) data, vwin);
+	}
+	/* register destruction of script output viewer */
 	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 			 G_CALLBACK(nullify_script_out), &script_out);
 	script_out = vwin;

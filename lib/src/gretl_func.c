@@ -775,17 +775,22 @@ static const char *arg_type_xml_string (int t)
 
 static int arg_type_from_string (const char *s)
 {
-    if (!strncmp(s, "bool", 4)) return GRETL_TYPE_BOOL;
+    if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
+    if (!strcmp(s, "boolean"))  return GRETL_TYPE_BOOL;
     if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
     if (!strcmp(s, "scalar"))   return GRETL_TYPE_DOUBLE;
     if (!strcmp(s, "series"))   return GRETL_TYPE_SERIES;
     if (!strcmp(s, "matrix"))   return GRETL_TYPE_MATRIX;
     if (!strcmp(s, "list"))     return GRETL_TYPE_LIST;
-    if (!strcmp(s, "string")) return GRETL_TYPE_STRING;
+    if (!strcmp(s, "string"))   return GRETL_TYPE_STRING;
 
     if (!strcmp(s, "scalar *"))  return GRETL_TYPE_SCALAR_REF;
     if (!strcmp(s, "series *"))  return GRETL_TYPE_SERIES_REF;
     if (!strcmp(s, "matrix *"))  return GRETL_TYPE_MATRIX_REF;
+
+    if (!strcmp(s, "scalarref"))  return GRETL_TYPE_SCALAR_REF;
+    if (!strcmp(s, "seriesref"))  return GRETL_TYPE_SERIES_REF;
+    if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
 
     return 0;
 }
@@ -3169,6 +3174,7 @@ static int check_function_structure (ufunc *fun)
 
     if (!err && ifdepth != 0) {
 	gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	fprintf(stderr, "After reading, ifdepth = %d\n", ifdepth);
 	err = E_PARSE;
     }
 
@@ -3223,7 +3229,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
 	set_compiling_off();
     }	
 
-    if (!err && !compiling) {
+    if (!err && !compiling && !editing) {
 	/* finished composing function */
 	err = check_function_structure(fun);
     }
@@ -3240,47 +3246,77 @@ int gretl_function_append_line (const char *line)
     return real_function_append_line(line, NULL);
 }
 
+/* Given a line "function ..." get the function name, with
+   some error checking.  The @s we are given here is at an 
+   offset of 9 bytes into the line.
+*/
+
 static int extract_funcname (char *name, const char *s)
 {
-    int n = strcspn(s, " (");
+    char word[FN_NAMELEN];
+    int n, type, err = 0;
 
-    if (n == 0 || n >= FN_NAMELEN) {
+    s += strspn(s, " ");
+    n = strcspn(s, " (");
+
+    if (n == 0 || n > FN_NAMELEN - 1) {
+	return E_DATA;
+    }
+
+    *word = '\0';
+    strncat(word, s, n);
+    type = arg_type_from_string(word);
+
+    if (type == 0) {
+	/* old-style */
+	strcpy(name, word);
+    } else if (!ok_return_type(type)) {
+	err = E_DATA;
+    } else {
+	s += n;
+	s += strspn(s, " ");
+	n = strcspn(s, " (");
+	if (n == 0 || n > FN_NAMELEN - 1) {
+	    err = E_DATA;
+	} else {
+	    *name = '\0';
+	    strncat(name, s, n);
+	}
+    }
+
+    return err;
+}
+
+static int fndef_append_next (char *s, FILE *fp)
+{
+    char line[MAXLINE];
+    int n = strlen(s);
+
+    if (fgets(line, sizeof line, fp) == NULL) {  
+	return E_PARSE;
+    }
+
+    if (s[n-1] == '\\') {
+	s[n-1] = '\0';
+	n--;
+    }	
+
+    tailstrip(line);   
+    n += strlen(line);
+
+    if (n >= MAXLINE) {
 	return E_DATA;
     } else {
-	*name = '\0';
-	strncat(name, s, n);
+	strcat(s, line);
 	return 0;
     }
 }
 
-static int fndef_maybe_append_next (char *s, FILE *fp)
+static int fndef_continues (const char *s)
 {
     int n = strlen(s);
 
-    if (s[n-1] == ',' || s[n-1] == '\\') {
-	/* definition continues? */
-	char line[MAXLINE];
-
-	if (fgets(line, sizeof line, fp) == NULL) {  
-	    return E_PARSE;
-	}
-
-	if (s[n-1] == '\\') {
-	    s[n-1] = '\0';
-	    n--;
-	}	
-
-	tailstrip(line);   
-	n += strlen(line);
-
-	if (n >= MAXLINE) {
-	    return E_DATA;
-	}
-
-	strcat(s, line);
-    }
-
-    return 0;
+    return (s[n-1] == ',' || s[n-1] == '\\');
 }
 
 /* Called from GUI window within the package-editing apparatus: the
@@ -3326,14 +3362,16 @@ int update_function_from_script (const char *fname, int idx)
 	tailstrip(s);
 	if (!strncmp(s, "function ", 9)) {
 	    if (gotfn || extract_funcname(fun->name, s + 9)) {
-		err = 1;
+		err = E_DATA;
 	    } else if (strcmp(fun->name, orig->name)) {
-		err = 1;
+		err = E_DATA;
 		strcpy(gretl_errmsg, 
 		       _("You can't change the name of a function here"));
 	    } else {
 		gotfn = 1;
-		err = fndef_maybe_append_next(s, fp);
+		while (!err && fndef_continues(s)) {
+		    err = fndef_append_next(s, fp);
+		}
 		if (!err) {
 		    err = parse_fn_definition(fun->name, &fun->params,
 					      &fun->n_params, &fun->rettype,
@@ -3346,6 +3384,10 @@ int update_function_from_script (const char *fname, int idx)
     }
 
     fclose(fp);
+
+    if (!err) {
+	err = check_function_structure(fun);
+    }
 
     if (!err) {
 	/* actually replace function content */

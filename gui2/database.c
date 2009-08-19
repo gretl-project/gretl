@@ -457,7 +457,7 @@ void sync_db_windows (void)
 	windata_t *vwin = NULL;
 
 	if (w != NULL) {
-	    vwin = g_object_get_data(G_OBJECT(w), "object");
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
 	}
 
 	if (vwin != NULL) {
