@@ -431,7 +431,7 @@ static GdkPixbuf *get_pixbuf_for_line (int dots)
 static void flip_manual_range (GtkWidget *widget, plot_editor *ed)
 {
     gint i = widget_get_int(widget, "axis");
-    gboolean s = GTK_TOGGLE_BUTTON(ed->axis_range[i].isauto)->active;
+    gboolean s = button_is_active(ed->axis_range[i].isauto);
 
     gtk_widget_set_sensitive(ed->axis_range[i].min, !s);
     gtk_widget_set_sensitive(ed->axis_range[i].max, !s);
@@ -527,8 +527,7 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 	g_free(title);
     }
 
-    /* also re-jig the "Lines" tab entries for the fitted
-       line */
+    /* also re-jig the "Lines" tab entries for the fitted line */
 
     if (ed->fitformula != NULL && ed->fitlegend != NULL) {
 	fittype_from_combo(box, spec);
@@ -737,7 +736,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     spec->flags &= ~GPT_Y2AXIS;
 
-    if (ed->y2_check != NULL && GTK_TOGGLE_BUTTON(ed->y2_check)->active) {
+    if (ed->y2_check != NULL && button_is_active(ed->y2_check)) {
 	suppress_y2 = 1;
     } 
 
@@ -760,7 +759,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	k = (spec->flags & GPT_Y2AXIS)? 3 : 2;
 	for (i=0; i<k; i++) {
 	    if (ed->axis_range[i].isauto != NULL) {
-		if (GTK_TOGGLE_BUTTON(ed->axis_range[i].isauto)->active) {
+		if (button_is_active(ed->axis_range[i].isauto)) {
 		    spec->range[i][0] = NADBL;
 		    spec->range[i][1] = NADBL;
 		} else {
@@ -833,7 +832,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     } 
 
     if (!err && ed->border_check != NULL) {
-	if (GTK_TOGGLE_BUTTON(ed->border_check)->active) {
+	if (button_is_active(ed->border_check)) {
 	    /* full border */
 	    spec->border = GP_BORDER_DEFAULT;
 	} else {
@@ -1089,7 +1088,7 @@ static void strip_lr (gchar *txt)
 
 static void toggle_axis_selection (GtkWidget *w, plot_editor *ed)
 {
-    int no_y2 = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    int no_y2 = button_is_active(w);
     int i;
 
     for (i=0; i<ed->gui_nlines; i++) {
@@ -1202,7 +1201,7 @@ static void add_color_selector (int i, GtkWidget *tbl, int cols,
 
 static void set_aa_status (GtkWidget *w, int *ok)
 {
-    *ok = GTK_TOGGLE_BUTTON(w)->active;
+    *ok = button_is_active(w);
 
     gnuplot_png_set_use_aa(*ok);
 }
@@ -1822,9 +1821,8 @@ static void print_label_label (GtkWidget *tbl, int row, GPT_SPEC *spec,
 static void print_field_label (GtkWidget *tbl, int row,
 			       const gchar *text)
 {
-    GtkWidget *label; 
+    GtkWidget *label = gtk_label_new(text);
 
-    label = gtk_label_new(text);
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      label, 1, 2, row - 1, row);
@@ -2660,10 +2658,8 @@ static void plot_editor_destroy (plot_editor *ed)
 
 static GtkWidget **widget_array_new (int n, int *err)
 {
-    GtkWidget **pw;
+    GtkWidget **pw = malloc(n * sizeof *pw);
     int i;
-
-    pw = malloc(n * sizeof *pw);
 
     if (pw != NULL) {
 	for (i=0; i<n; i++) {
@@ -2700,12 +2696,12 @@ static int add_line_widget (plot_editor *ed)
     int n = ed->gui_nlines + 1;
     int err = 0;
 
-    ed->linetitle = widget_array_expand(&ed->linetitle, n, &err);
+    ed->linetitle   = widget_array_expand(&ed->linetitle, n, &err);
     ed->lineformula = widget_array_expand(&ed->lineformula, n, &err);
-    ed->stylecombo = widget_array_expand(&ed->stylecombo, n, &err);
-    ed->yaxiscombo = widget_array_expand(&ed->yaxiscombo, n, &err);
-    ed->linescale = widget_array_expand(&ed->linescale, n, &err);
-    ed->linewidth = widget_array_expand(&ed->linewidth, n, &err);
+    ed->stylecombo  = widget_array_expand(&ed->stylecombo, n, &err);
+    ed->yaxiscombo  = widget_array_expand(&ed->yaxiscombo, n, &err);
+    ed->linescale   = widget_array_expand(&ed->linescale, n, &err);
+    ed->linewidth   = widget_array_expand(&ed->linewidth, n, &err);
     
     if (!err) {
 	ed->gui_nlines = n;
@@ -2719,12 +2715,12 @@ static int allocate_line_widgets (plot_editor *ed, int n)
     int err = 0;
 
     if (n > 0) {
-	ed->linetitle = widget_array_new(n, &err);
+	ed->linetitle   = widget_array_new(n, &err);
 	ed->lineformula = widget_array_new(n, &err);
-	ed->stylecombo = widget_array_new(n, &err);
-	ed->yaxiscombo = widget_array_new(n, &err);
-	ed->linescale = widget_array_new(n, &err);
-	ed->linewidth = widget_array_new(n, &err);
+	ed->stylecombo  = widget_array_new(n, &err);
+	ed->yaxiscombo  = widget_array_new(n, &err);
+	ed->linescale   = widget_array_new(n, &err);
+	ed->linewidth   = widget_array_new(n, &err);
 	if (!err) {
 	    ed->gui_nlines = n;
 	}
@@ -2739,7 +2735,7 @@ static int add_label_widget (plot_editor *ed)
     int err = 0;
 
     ed->labeltext = widget_array_expand(&ed->labeltext, n, &err);
-    ed->labelpos = widget_array_expand(&ed->labelpos, n, &err);
+    ed->labelpos  = widget_array_expand(&ed->labelpos, n, &err);
     ed->labeljust = widget_array_expand(&ed->labeljust, n, &err);
     
     if (!err) {
@@ -2755,7 +2751,7 @@ static int allocate_label_widgets (plot_editor *ed, int n)
 
     if (n > 0) {
 	ed->labeltext = widget_array_new(n, &err);
-	ed->labelpos = widget_array_new(n, &err);
+	ed->labelpos  = widget_array_new(n, &err);
 	ed->labeljust = widget_array_new(n, &err);
 	if (!err) {
 	    ed->gui_nlabels = n;

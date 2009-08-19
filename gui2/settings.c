@@ -732,13 +732,11 @@ int check_for_prog (const char *prog)
 {
     uid_t myid = getuid();
     gid_t mygrp = getgid();
-
     char *path;
     char *pathcpy;
     char **dirs;
     char *fullpath;
     char *p;
-
     int max_dlen = 0;
     int found = 0;
     int i, ndirs;

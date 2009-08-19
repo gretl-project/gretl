@@ -17,7 +17,7 @@
  * 
  */
 
-/*  monte_carlo.c - loop simulation procedures */
+/*  monte_carlo.c - loop procedures */
 
 #include "libgretl.h" 
 #include "monte_carlo.h"
@@ -74,7 +74,7 @@ typedef struct {
     int *diff;     /* indicator for difference */
 } LOOP_PRINT;  
 
-/* below: used for special "progressive" loop */ 
+/* below: used only in "progressive" loops */ 
 
 typedef struct {
     int linenum;            /* location: line number in loop */
@@ -365,7 +365,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
 
     children = realloc(loop->children, (nc + 1) * sizeof *children);
     if (children == NULL) {
-	return 1;
+	return E_ALLOC;
     } 
 
     loop->children = children;
@@ -1084,7 +1084,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     }
 
     /* syntactic slop: accept "for i=lo..hi" -> "i=lo..hi" */
-    if (!strncmp(s, "for ", 4) && !strstr(s, ";")) {
+    if (!strncmp(s, "for ", 4) && !strchr(s, ';')) {
 	s += 4;
     }
 
@@ -1950,13 +1950,6 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
     LOOPSET *loop = currloop;
     LOOPSET *newloop = currloop;
     int err = 0;
-
-#if 0
-    if (compile_level > 0) {
-	/* not starting from scratch */
-	get_command_index(s->line, s->cmd);
-    }
-#endif
 
     gretl_error_clear();
 
@@ -2900,11 +2893,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	set_loop_off();
     }
 
-    if (libset_get_bool(HALT_ON_ERR)) {
-	return err;
-    } else {
-	return 0;
-    }
+    return (libset_get_bool(HALT_ON_ERR))? err : 0;
 }
 
 

@@ -329,23 +329,57 @@ dta_make_string_table (int *types, int nvar, int ncols)
     return st;
 }
 
-static int 
-save_dataset_info (DATAINFO *dinfo, const char *s1, const char *s2)
+static gchar *recode_stata_string (const char *s)
 {
-    int len = strlen(s1) + strlen(s2) + 2;
-    int err = 0;
+    const gchar *cset;
+    gchar *tr = NULL;
+    gsize bw;
 
-    dinfo->descrip = malloc(len);
-    if (dinfo->descrip != NULL) {
-	*dinfo->descrip = '\0';
-	strcat(dinfo->descrip, s1);
-	strcat(dinfo->descrip, "\n");
-	strcat(dinfo->descrip, s2);
-    } else {
-	err = 1;
+    if (!g_get_charset(&cset)) {
+	/* try recoding from current locale */
+	tr = g_locale_to_utf8(s, -1, NULL, &bw, NULL);
     }
 
-    return err;
+    if (tr == NULL) {
+	/* wild guess: try Windows CP 1252? */
+	tr = g_convert(s, -1, "UTF-8", "CP1252", NULL, &bw, NULL);
+    }
+
+    return tr;
+}
+
+static void
+save_dataset_info (DATAINFO *dinfo, const char *label, const char *stamp)
+{
+    int dlen = strlen(stamp);
+    gchar *tr = NULL;
+
+    if (*label != '\0') {
+	if (g_utf8_validate(label, -1, NULL)) {
+	    tr = g_strdup(label);
+	} else {
+	    tr = recode_stata_string(label);
+	}
+    }
+
+    if (tr != NULL) {
+	dlen += strlen(tr);
+    }
+
+    if (dlen > 0) {
+	dinfo->descrip = malloc(dlen + 2);
+    }
+
+    if (dinfo->descrip != NULL) {
+	*dinfo->descrip = '\0';
+	if (tr != NULL) {
+	    strcat(dinfo->descrip, tr);
+	    strcat(dinfo->descrip, "\n");
+	} 
+	strcat(dinfo->descrip, stamp);
+    } 
+
+    g_free(tr);
 }
 
 static int try_fix_varname (char *name)
@@ -482,7 +516,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     int fmtlen;
     int nvar = dinfo->v - 1, nsv = 0;
     int soffset, pd = 0, tnum = -1;
-    char datalabel[81], c50[50], aname[33];
+    char label[81], c50[50], aname[33];
     int *types = NULL;
     int *lvars = NULL;
     char **lnames = NULL;
@@ -499,16 +533,16 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     printf("Max length of labels = %d\n", labellen);
 
-    /* data label - zero terminated string */
-    stata_read_string(fp, labellen, datalabel, &err);
-    printf("datalabel: '%s'\n", datalabel);
+    /* dataset label - zero terminated string */
+    stata_read_string(fp, labellen, label, &err);
+    printf("dataset label: '%s'\n", label);
 
     /* file creation time - zero terminated string */
     stata_read_string(fp, 18, c50, &err);  
     printf("timestamp: '%s'\n", c50);
 
-    if (*datalabel != '\0' || *c50 != '\0') {
-	save_dataset_info(dinfo, datalabel, c50);
+    if (*label != '\0' || *c50 != '\0') {
+	save_dataset_info(dinfo, label, c50);
     }
   
     /** read variable descriptors **/
@@ -577,21 +611,19 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* variable descriptive labels */
     for (i=0; i<nvar && !err; i++) {
-	stata_read_string(fp, labellen, datalabel, &err);
-	if (*datalabel != '\0') {
-	    printf("variable %d: label = '%s'\n", i+1, datalabel);
-	    if (!g_utf8_validate(datalabel, -1, NULL)) {
-		gsize b;
-		gchar *tr = g_locale_to_utf8(datalabel, -1, NULL,
-					     &b, NULL); 
+	stata_read_string(fp, labellen, label, &err);
+	if (*label != '\0') {
+	    printf("variable %d: label = '%s'\n", i+1, label);
+	    if (g_utf8_validate(label, -1, NULL)) {
+		strncat(VARLABEL(dinfo, i+1), label, MAXLABEL - 1);
+	    } else {
+		gchar *tr = recode_stata_string(label);
 
 		if (tr != NULL) {
 		    strncat(VARLABEL(dinfo, i+1), tr, MAXLABEL - 1);
 		    g_free(tr);
 		}
-	    } else {
-		strncat(VARLABEL(dinfo, i+1), datalabel, MAXLABEL - 1);
-	    }
+	    } 
 	}
     }
 
@@ -667,6 +699,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     if (!err && !st_err && lvars != NULL && stata_version > 5) {
 	PRN *st_prn = NULL;
+	const char *vlabel;
 	double *level;
 	
 	for (j=0; j<nvar; j++) {
@@ -732,9 +765,22 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	    }	    
 
 	    stata_read_string(fp, totlen, txt, &err);
+
 	    for (i=0; i<nlabels; i++) {
-		printf(" label %d = '%s'\n", i, txt + off[i]);
-		pprintf(st_prn, "%10g -> '%s'\n", level[i], txt + off[i]);
+		vlabel = txt + off[i];
+		printf(" label %d = '%s'\n", i, vlabel);
+		if (g_utf8_validate(vlabel, -1, NULL)) {
+		    pprintf(st_prn, "%10g -> '%s'\n", level[i], vlabel);
+		} else {
+		    gchar *tr = recode_stata_string(vlabel);
+
+		    if (tr != NULL) {
+			pprintf(st_prn, "%10g -> '%s'\n", level[i], tr);
+			g_free(tr);
+		    } else {
+			pprintf(st_prn, "%10g -> 'unknown'\n", level[i]);
+		    }
+		}
 	    }
 
 	    free(off);
@@ -805,9 +851,8 @@ int dta_get_data (const char *fname,
 		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
-    int namelen = 0;
-    int nvar = 0, nobs = 0;
-    int nvread = 0;
+    int namelen = 0, nobs = 0;
+    int nvar = 0, nvread = 0;
     FILE *fp;
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
@@ -840,7 +885,6 @@ int dta_get_data (const char *fname,
 
     newinfo->v = nvar + 1;
     newinfo->n = nobs;
-    /* time-series info?? */
 
     err = start_new_Z(&newZ, newinfo, 0);
     if (err) {

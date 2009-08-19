@@ -78,7 +78,7 @@ void set_lcnumeric (int langid, int lcnumeric);
 
 int gretl_is_ascii (const char *buf);
 
-void force_language (int langid);
+int force_language (int langid);
 
 int test_locale (const char *langstr);
 

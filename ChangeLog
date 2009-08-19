@@ -9,6 +9,12 @@ version 1.8.4, in progress
 - Update docs and examples for the "new style" definition
   of functions
 - Small modification to GUI series editor
+- Try to make path-searching a little smarter for files
+  referenced in scripts
+- GUI language switcher: add a workaround for platforms
+  missing proper locale aliases
+- Stata dta importer: try to work around missing character
+  encoding information
 
 8/10/09 version 1.8.3
 - Fix bugs 2819633, 2827358, 2828349, 2833434

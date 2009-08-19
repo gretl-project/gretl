@@ -37,6 +37,8 @@
 
 #include <errno.h>
 
+#define widget_get_int(w,s) GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), s))
+
 static int all_done;
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
@@ -257,8 +259,8 @@ static void set_dec (GtkWidget *w, csv_stuff *csv)
 {
     gint i;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    if (button_is_active(w)) {
+	i = widget_get_int(w, "action");
 	csv->decpoint = i;
 	if (csv->decpoint == ',' && csv->delim == ',') {
 	    csv->delim = ' ';
@@ -272,8 +274,8 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
 {
     gint i;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    if (button_is_active(w)) {
+	i = widget_get_int(w, "action");
 	csv->delim = i;
 	if (csv->point_button != NULL && 
 	    csv->delim == ',' && csv->decpoint == ',') {
@@ -726,7 +728,7 @@ enum {
 
 static void set_bs_opt (GtkWidget *w, gretlopt *opt)
 {
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    int i = widget_get_int(w, "action");
 
     switch (i) {
     case SET_CI:
@@ -1835,7 +1837,7 @@ static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
 static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
 {
     int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    int i = widget_get_int(w, "action");
 
     if (rset->pmod == NULL) {
 	return;
@@ -1884,7 +1886,7 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
 
     cb = g_object_get_data(G_OBJECT(dlg), "checkbox");
     if (cb != NULL) {
-	gboolean ok = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(cb));
+	gboolean ok = button_is_active(cb);
 
 	gtk_widget_set_sensitive(hbox, ok);
 	sensitize_conditional_on(hbox, cb);
@@ -2258,9 +2260,9 @@ static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
 
 static void dialog_option_callback (GtkWidget *w, dialog_opts *opts)
 {
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "i"));
+    int i = widget_get_int(w, "i");
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+    if (button_is_active(w)) {
 	*opts->optp |= opts->vals[i];
     } else {
 	*opts->optp &= ~(opts->vals[i]);
@@ -2391,8 +2393,8 @@ static void set_compact_type (GtkWidget *w, gpointer data)
 {
     gint *method = (gint *) data;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-        *method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    if (button_is_active(w)) {
+        *method = widget_get_int(w, "action");
     }
 }
 
@@ -2401,9 +2403,8 @@ static void set_target_pd (GtkWidget *w, gpointer data)
     struct compaction_info *cinfo = data;
     gboolean wtarg;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	*cinfo->target_pd = 
-	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    if (button_is_active(w)) {
+	*cinfo->target_pd = widget_get_int(w, "action");
     }
 
     wtarg = *cinfo->target_pd == 52;
@@ -2429,8 +2430,8 @@ static void set_mon_start (GtkWidget *w, gpointer data)
 {
     gint *ms = (gint *) data;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-        *ms = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    if (button_is_active(w)) {
+        *ms = widget_get_int(w, "action");
     }
 }
 
@@ -2767,8 +2768,8 @@ static void set_expand_target_pd (GtkWidget *w, gpointer data)
 {
     int *targ_pd = (int *) data;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	*targ_pd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    if (button_is_active(w)) {
+	*targ_pd = widget_get_int(w, "action");
     }
 }
 
@@ -2887,7 +2888,7 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
 
 static void set_radio_opt (GtkWidget *w, int *opt)
 {
-    *opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    *opt = widget_get_int(w, "action");
 }
 
 int real_radio_dialog (const char *title, const char *label,
@@ -3131,7 +3132,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 
 static void option_check_set (GtkWidget *w, int *checkvar)
 {
-    *checkvar = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    *checkvar = button_is_active(w);
 }
 
 static GtkWidget *option_checkbox (int *checkvar, const char *checktxt)
@@ -3153,9 +3154,9 @@ static GtkWidget *option_checkbox (int *checkvar, const char *checktxt)
 
 static void set_checks_opt (GtkWidget *w, int *active)
 {
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "optnum"));
+    int i = widget_get_int(w, "optnum");
 
-    active[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    active[i] = button_is_active(w);
 }
 
 GtkWidget *
@@ -3302,7 +3303,7 @@ struct freqdist_info {
 
 static gboolean freq_info_set (GtkWidget *w, struct freqdist_info *f)
 {
-    int snum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "snum"));
+    int snum = widget_get_int(w, "snum");
     double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
 
     if (snum == 0) {
@@ -3336,9 +3337,9 @@ static gboolean freq_info_set (GtkWidget *w, struct freqdist_info *f)
 
 static void freq_set_dist (GtkWidget *w, int *dist)
 {
-    int fopt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "fopt"));
+    int fopt = widget_get_int(w, "fopt");
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+    if (button_is_active(w)) {
 	if (fopt == 0) *dist = D_NONE;
 	else if (fopt == 1) *dist = D_NORMAL;
 	else if (fopt == 2) *dist = D_GAMMA;
@@ -3347,9 +3348,9 @@ static void freq_set_dist (GtkWidget *w, int *dist)
 
 static void freq_info_control (GtkWidget *w, struct freqdist_info *f)
 {
-    int snum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "snum"));
+    int snum = widget_get_int(w, "snum");
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+    if (button_is_active(w)) {
 	gtk_widget_set_sensitive(f->spin[0], snum == 0);
 	gtk_widget_set_sensitive(f->spin[1], snum == 1);
 	gtk_widget_set_sensitive(f->spin[2], snum == 1);
@@ -3765,8 +3766,8 @@ struct tex_formatter {
 
 static void activate_row (GtkWidget *w, struct tex_formatter *tf)
 {
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "row"));
-    int s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    int i = widget_get_int(w, "row");
+    int s = button_is_active(w);
 
     if (tf->spin[i] != NULL) {
 	gtk_widget_set_sensitive(tf->spin[i], s);
@@ -3777,7 +3778,7 @@ static void activate_row (GtkWidget *w, struct tex_formatter *tf)
 
 static void toggle_tex_custom (GtkWidget *w, struct tex_formatter *tf)
 {
-    int s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    int s = button_is_active(w);
     int i;
 
     if (tf->spin[0] != NULL) {
@@ -3792,20 +3793,18 @@ static void toggle_tex_custom (GtkWidget *w, struct tex_formatter *tf)
     }
 }
 
-#define button_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
-
 static gboolean record_tex_format (GtkWidget *w, struct tex_formatter *tf)
 {
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(tf->custom))) {
+    if (button_is_active(tf->custom)) {
 	char c, bit[8], fmt[32];
 	int i, p;
 
 	*fmt = '\0';
 
 	for (i=0; i<4; i++) {
-	    if (i == 0 || button_active(tf->show[i-1])) {
+	    if (i == 0 || button_is_active(tf->show[i-1])) {
 		p = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(tf->spin[i]));
-		if (button_active(tf->radio[i].b[1])) {
+		if (button_is_active(tf->radio[i].b[1])) {
 		    c = 'g';
 		} else {
 		    c = 'f';

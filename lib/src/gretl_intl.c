@@ -586,8 +586,9 @@ static int set_locale_with_workaround (const char *lcode)
 
 #endif /* ENABLE_NLS */
 
-/* arg should be long English form of language, as displayed
-   in GUI, e.g. "German", "French" */
+/* @langstr should be the English name of the selected language
+   as displayed in the GUI (e.g. "German", "French") 
+*/
 
 int test_locale (const char *langstr)
 {
@@ -620,12 +621,13 @@ int test_locale (const char *langstr)
 #endif
 }
 
-void force_language (int langid)
+int force_language (int langid)
 {
 #ifndef ENABLE_NLS
-    return;
+    return 1;
 #else
     const char *lcode = NULL;
+    int err = 0;
 
     if (langid == LANG_C) {
 	putenv("LANGUAGE=english");
@@ -639,9 +641,11 @@ void force_language (int langid)
             fprintf(stderr, "lcode='%s', newloc='%s'\n", lcode, newloc);
 	    if (newloc != NULL) {
 		set_cp_from_locale(newloc);
+	    } else {
+		err = 1;
 	    }
 # else
-	    set_locale_with_workaround(lcode);
+	    err = set_locale_with_workaround(lcode);
 # endif
 	}
     }
@@ -670,6 +674,8 @@ void force_language (int langid)
 	putenv(estr);
     }
 # endif
+
+    return err;
 #endif /* ENABLE_NLS */
 }
 

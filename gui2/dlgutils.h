@@ -144,4 +144,6 @@ GdkModifierType parent_get_pointer_mask (GtkWidget *w);
 gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
 				  GdkModifierType *mask);
 
+#define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
+
 #endif /* DLGUTILS_H */
