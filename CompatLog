@@ -16,8 +16,7 @@ always protected.
 Warning: although it's not recognized in the manual, we have
 up till now accepted "end if" as an alias for the correct
 termination of an "if" clause, namely "endif" (with no space).
-This will be removed in the next release, 1.8.4; please update
-scripts.
+This is slated for removal before long; please update scripts.
 
 7/8/2009 version 1.8.2
 
