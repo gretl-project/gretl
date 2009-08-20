@@ -501,6 +501,8 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
 	} else {
 	    bufopen(&prn);
 	}
+    } else {
+	bufopen(&prn);
     }
 
     finfo->samplewin = view_buffer(prn, 78, 350, title,
