@@ -166,12 +166,13 @@ static void fncall_cancel (GtkWidget *w, call_info *cinfo)
     gtk_widget_destroy(cinfo->dlg);
 }
 
-static GtkWidget *label_hbox (GtkWidget *w, const char *txt, int center)
+static GtkWidget *label_hbox (GtkWidget *w, const char *txt, 
+			      int vspace, int center)
 {
     GtkWidget *hbox, *label;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, vspace);
 
     label = gtk_label_new(txt);
     if (center) {
@@ -608,7 +609,7 @@ static void function_call_dialog (call_info *cinfo)
 
     fnname = user_function_name_by_index(cinfo->iface);
     txt = g_strdup_printf(_("Call to function %s"), fnname);
-    hbox = label_hbox(vbox, txt, 1);
+    hbox = label_hbox(vbox, txt, 5, 1);
     gtk_widget_show(hbox);
 
     /* function argument selection */
@@ -616,16 +617,11 @@ static void function_call_dialog (call_info *cinfo)
     if (cinfo->n_params > 0) {
 	int tcols = (cinfo->extracol)? 4 : 3;
 
-	hbox = label_hbox(vbox, _("Arguments:"), 0);
+	hbox = label_hbox(vbox, _("Select arguments:"), 5, 0);
 	gtk_widget_show(hbox);
 
-	tbl = gtk_table_new(cinfo->n_params + 1, tcols, FALSE);
+	tbl = gtk_table_new(cinfo->n_params, tcols, FALSE);
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
-
-	label = gtk_label_new(_("selection"));
-	gtk_table_attach(GTK_TABLE(tbl), label, 2, 3, 0, 1,
-			 GTK_EXPAND, GTK_FILL, 5, 5);
-	gtk_widget_show(label);
 
 	for (i=0; i<cinfo->n_params; i++) {
 	    const char *desc = fn_param_descrip(cinfo->func, i);
@@ -641,7 +637,7 @@ static void function_call_dialog (call_info *cinfo)
 		g_free(tmp);			     
 	    }
 
-	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 2, i+1, i+2,
+	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 2, i, i+1,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);
 
@@ -653,14 +649,14 @@ static void function_call_dialog (call_info *cinfo)
 		sel = combo_arg_selector(cinfo, ptype, i);
 	    }
 
-	    gtk_table_attach(GTK_TABLE(tbl), sel, 2, 3, i+1, i+2,
+	    gtk_table_attach(GTK_TABLE(tbl), sel, 2, 3, i, i+1,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(sel);
 
 	    if (ptype == GRETL_TYPE_LIST) {
 		cinfo->lsels = g_list_append(cinfo->lsels, sel);
 		button = gtk_button_new_with_label(_("More..."));
-		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
+		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i, i+1,
 				 GTK_EXPAND, GTK_FILL, 5, 5);
 		g_signal_connect(G_OBJECT(button), "clicked", 
 				 G_CALLBACK(launch_list_maker),
@@ -669,7 +665,7 @@ static void function_call_dialog (call_info *cinfo)
 	    } else if (ptype == GRETL_TYPE_MATRIX) {
 		cinfo->msels = g_list_append(cinfo->msels, sel);
 		button = gtk_button_new_with_label(_("New..."));
-		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
+		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i, i+1,
 				 GTK_EXPAND, GTK_FILL, 5, 5);
 		g_signal_connect(G_OBJECT(button), "clicked", 
 				 G_CALLBACK(launch_matrix_maker), 
@@ -691,7 +687,7 @@ static void function_call_dialog (call_info *cinfo)
 	    vbox_add_hsep(vbox);
 	}
 
-	hbox = label_hbox(vbox, _("Assign return value (optional):"), 0);
+	hbox = label_hbox(vbox, _("Assign return value (optional):"), 5, 0);
 	gtk_widget_show(hbox);
 
 	tbl = gtk_table_new(1, 2, FALSE);
