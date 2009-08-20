@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.8.2cvs
+# Polish translation for gretl-1.8.3cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2009
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2009
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.8.1\n"
+"Project-Id-Version: gretl-1.8.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-20 15:02-0400\n"
-"PO-Revision-Date: 2009-08-06 21:13-0400\n"
+"PO-Revision-Date: 2009-08-20 23:15-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -8775,9 +8775,8 @@ msgid "Call to function %s"
 msgstr "Wywołanie funkcji %s"
 
 #: gui2/fncall.c:620
-#, fuzzy
 msgid "Select arguments:"
-msgstr "Argumenty:"
+msgstr "Wybór argumentów:"
 
 #: gui2/fncall.c:658
 msgid "More..."
@@ -12479,9 +12478,8 @@ msgstr ""
 "przy dwustronnym obszarze krytycznym, alfa ="
 
 #: gui2/selector.c:4608
-#, fuzzy
 msgid "Test only selected variables"
-msgstr "_logarytmy dla wybranych zmiennych"
+msgstr "Selekcja tylko wśród wybranych zmiennych"
 
 #: gui2/selector.c:4633
 msgid "Fixed effects"
@@ -13198,7 +13196,7 @@ msgstr "gretl: katalog roboczy"
 
 #: gui2/ssheet.c:122
 msgid "Apply"
-msgstr ""
+msgstr "Zastosuj"
 
 #: gui2/ssheet.c:151
 msgid "_Fill"
@@ -14594,27 +14592,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "selection"
-#~ msgstr "wybór"
-
-#~ msgid "Can't delete a variable when in sub-sample mode\n"
-#~ msgstr "Niemożliwe usunięcie zmiennej, ponieważ utworzono podpróbę\n"
-
-#~ msgid "_Observation"
-#~ msgstr "_Obserwacje"
-
-#~ msgid "_Append obs"
-#~ msgstr "_Dołącz obserwację"
-
-#~ msgid "_Insert obs"
-#~ msgstr "_Wstaw obserwację"
-
-#~ msgid "Choose ->"
-#~ msgstr "Wybór ->"
-
-#~ msgid "Add ->"
-#~ msgstr "Dodaj ->"
-
-#~ msgid "<- Remove"
-#~ msgstr "<- Usuń"
