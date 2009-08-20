@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-07 11:48-0400\n"
-"PO-Revision-Date: 2009-08-07 14:53+0300\n"
+"PO-Revision-Date: 2009-08-20 12:58+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -1991,17 +1991,17 @@ msgstr "YİNELEME         HKT           DEĞİŞİM%"
 
 #: lib/src/estimate.c:3490
 msgid "Test for ARCH of order"
-msgstr "ÖBKÇ (ARCH) sınaması derece"
+msgstr "ÖBKF (ARCH) sınaması derece"
 
 #: lib/src/estimate.c:3515 lib/src/modelprint.c:1549
 #, c-format
 msgid "Test for ARCH of order %d"
-msgstr "%d. dereceden ÖBKÇ (ARCH) sınaması"
+msgstr "%d. dereceden ÖBKF (ARCH) sınaması"
 
 #: lib/src/estimate.c:3572 lib/src/estimate.c:3718
 #, c-format
 msgid "Invalid lag order for arch (%d)"
-msgstr "arch (%d) için geçersiz gecikme derecesi"
+msgstr "ÖBKF (%d) için geçersiz gecikme derecesi"
 
 #: lib/src/estimate.c:3860 lib/src/estimate.c:3919 lib/src/estimate.c:4058
 msgid "Couldn't load plugin function\n"
@@ -2286,12 +2286,12 @@ msgstr "%s adlı sayıl oluşturuldu"
 #: lib/src/genmain.c:60
 #, c-format
 msgid "Modified series %s (ID %d)"
-msgstr "%s serisi (Kimlik# %d) kiplendi"
+msgstr "%s serisi (Kimlik# %d) kiplendi (modified)"
 
 #: lib/src/genmain.c:76
 #, c-format
 msgid "Modified matrix %s"
-msgstr "%s dizeyi kiplendi"
+msgstr "%s dizeyi kiplendi (modified)"
 
 #: lib/src/genmain.c:78
 #, c-format
@@ -2895,11 +2895,11 @@ msgstr "Değişkenler için katsayılar sıfırdır"
 #: lib/src/gretl_model.c:2813
 #, c-format
 msgid "Test for ARCH of order %s"
-msgstr "%s. dereceden ÖBKÇ (ARCH) sınaması"
+msgstr "%s. dereceden ÖBKF (ARCH) sınaması"
 
 #: lib/src/gretl_model.c:2814
 msgid "no ARCH effect is present"
-msgstr "ÖBKÇ etkisi bulunmamaktadır"
+msgstr "ÖBKF (ARCH) etkisi bulunmamaktadır"
 
 #: lib/src/gretl_model.c:2816
 #, c-format
@@ -4037,7 +4037,7 @@ msgstr "Kalıntılar ölçünlendi"
 
 #: lib/src/modelprint.c:165
 msgid "Likelihood ratio test for (G)ARCH terms"
-msgstr "(G)ÖBKÇ terimleri için olabilirlik oranı sınaması"
+msgstr "(G)ÖBKF terimleri için olabilirlik oranı sınaması"
 
 #: lib/src/modelprint.c:182
 msgid "Left-unbounded observations"
@@ -4197,7 +4197,7 @@ msgstr "AEK (WLS)"
 
 #: lib/src/modelprint.c:659
 msgid "WLS (ARCH)"
-msgstr "AEK - ÖBKÇ (WLS - ARCH)"
+msgstr "AEK (ÖBKF)"
 
 #: lib/src/modelprint.c:660
 msgid "Heteroskedasticity-corrected"
@@ -4253,7 +4253,7 @@ msgstr "lojistik"
 
 #: lib/src/modelprint.c:673 gui2/selector.c:2955
 msgid "GARCH"
-msgstr "GÖBKÇ (GARCH)"
+msgstr "GÖBKF (GARCH)"
 
 #: lib/src/modelprint.c:674
 msgid "Interval estimates"
@@ -4465,7 +4465,7 @@ msgstr "Kavuşmazsal ölçünlü hatalar (güvenilir değil)"
 #: lib/src/modelprint.c:1071 lib/src/modelprint.c:1073
 #: lib/src/modelprint.c:1075
 msgid "Robust (HAC) standard errors"
-msgstr "Sağlam ÇÖT (HAC) ölçünlü hatalar"
+msgstr "Sağlam FÖT (HAC) ölçünlü hatalar"
 
 #: lib/src/modelprint.c:1080 lib/src/modelprint.c:1082
 #: lib/src/modelprint.c:1086
@@ -4495,12 +4495,12 @@ msgstr "QS çekirdeği"
 #: lib/src/modelprint.c:1109
 #, c-format
 msgid "HAC standard errors, bandwidth %.2f"
-msgstr "ÇÖT (HAC) ölçünlü hatalar, kuşakgenişliği %.2f"
+msgstr "FÖT (HAC) ölçünlü hatalar, kuşakgenişliği %.2f"
 
 #: lib/src/modelprint.c:1112
 #, c-format
 msgid "HAC standard errors, bandwidth %d"
-msgstr "ÇÖT (HAC) ölçünlü hatalar, kuşakgenişliği %d"
+msgstr "FÖT (HAC) ölçünlü hatalar, kuşakgenişliği %d"
 
 #: lib/src/modelprint.c:1119
 msgid "prewhitened"
@@ -6401,7 +6401,7 @@ msgstr "P(Ki-Kare(%d) > %g) = %g"
 
 #: lib/src/varprint.c:865 lib/src/varprint.c:867
 msgid "Relative to prior restriction"
-msgstr "Önceki sınırlama ile göreli olarak"
+msgstr "Önsel sınırlama ile göreli olarak"
 
 #: lib/src/varprint.c:879
 #, c-format
@@ -10005,11 +10005,11 @@ msgstr "ÖB_BHO (ARIMA)..."
 
 #: gui2/gretl.c:1458
 msgid "_ARCH..."
-msgstr "ÖB_KÇ (ARCH)..."
+msgstr "ÖB_KF (ARCH)..."
 
 #: gui2/gretl.c:1459
 msgid "_GARCH..."
-msgstr "_GÖBKÇ (GARCH)..."
+msgstr "_GÖBKF (GARCH)..."
 
 #: gui2/gretl.c:1460
 msgid "_Vector Autoregression..."
@@ -10396,7 +10396,7 @@ msgstr "_Kopyala"
 
 #: gui2/gui_utils.c:144
 msgid "_Modify model..."
-msgstr "_Modeli kiple..."
+msgstr "_Modeli kiple (modify)..."
 
 #: gui2/gui_utils.c:146 gui2/gui_utils.c:275
 msgid "_Tests"
@@ -10509,7 +10509,7 @@ msgstr "_Durbin-Watson p-değeri"
 
 #: gui2/gui_utils.c:178 gui2/gui_utils.c:3286
 msgid "A_RCH"
-msgstr "_ÖBKÇ (ARCH)"
+msgstr "_ÖBKF (ARCH)"
 
 #: gui2/gui_utils.c:179
 msgid "_QLR test"
@@ -10832,7 +10832,7 @@ msgstr "gretl: özilinti"
 #: gui2/gui_utils.c:3141 gui2/gui_utils.c:3162 gui2/library.c:1947
 #: gui2/library.c:1969
 msgid "gretl: ARCH test"
-msgstr "gretl: ÖBKÇ (ARCH) sınaması"
+msgstr "gretl: ÖBKF (ARCH) sınaması"
 
 #: gui2/gui_utils.c:3142 gui2/library.c:2395
 msgid "Lag order for test:"
@@ -11280,7 +11280,7 @@ msgstr "gretl: ortak çarpan sınaması"
 
 #: gui2/library.c:1948
 msgid "Lag order for ARCH test:"
-msgstr "ÖBKÇ sınaması için gecikme derecesi:"
+msgstr "ÖBKF sınaması için gecikme derecesi:"
 
 #: gui2/library.c:1990
 msgid "gretl: panel model diagnostics"
@@ -11352,7 +11352,7 @@ msgstr "Üzgünüm, daha eklenmedi!"
 
 #: gui2/library.c:3250
 msgid "gretl: GARCH"
-msgstr "gretl: GÖBKÇ (GARCH)"
+msgstr "gretl: GÖBKF (GARCH)"
 
 #: gui2/library.c:3511
 msgid "Error saving model information"
@@ -11880,11 +11880,11 @@ msgstr "Model çizelgeye eklendi"
 
 #: gui2/model_table.c:356
 msgid "HSK"
-msgstr "ÇTS (HSK)"
+msgstr "FSP (HSK)"
 
 #: gui2/model_table.c:357 gui2/selector.c:2953
 msgid "ARCH"
-msgstr "ÖBKÇ (ARCH)"
+msgstr "ÖBKF (ARCH)"
 
 #: gui2/model_table.c:360
 msgid "MLE"
@@ -12199,9 +12199,8 @@ msgid "X-axis variables"
 msgstr "X-ekseni değişkenleri"
 
 #: gui2/selector.c:3083
-#, fuzzy
 msgid "Choose"
-msgstr "Seçiniz ->"
+msgstr "Seçiniz"
 
 #: gui2/selector.c:3177
 msgid "Lower bound variable"
@@ -12233,7 +12232,7 @@ msgstr "ençok gecikme:"
 
 #: gui2/selector.c:3371
 msgid "ARCH order:"
-msgstr "ÖBKÇ derecesi:"
+msgstr "ÖBKF derecesi:"
 
 #: gui2/selector.c:3376 gui2/selector.c:3940
 msgid "AR order:"
@@ -12256,9 +12255,8 @@ msgid "Block variable (optional)"
 msgstr "Blok değişkeni (isteğe bağlı)"
 
 #: gui2/selector.c:3485
-#, fuzzy
 msgid "Add"
-msgstr "_Ekle"
+msgstr "Ekle"
 
 #: gui2/selector.c:3528
 msgid "Exogenous variables"
@@ -12274,11 +12272,11 @@ msgstr "Gecikmeler..."
 
 #: gui2/selector.c:3871
 msgid "GARCH p:"
-msgstr "GÖBKÇ p:"
+msgstr "GÖBKF p:"
 
 #: gui2/selector.c:3872
 msgid "ARCH q:"
-msgstr "ÖBKÇ q:"
+msgstr "ÖBKF q:"
 
 #: gui2/selector.c:3898
 msgid "Non-seasonal"
@@ -12445,9 +12443,8 @@ msgstr ""
 "(iki-taraflı p-değeri kullanılarak):"
 
 #: gui2/selector.c:4608
-#, fuzzy
 msgid "Test only selected variables"
-msgstr "Seçili değişken _logları"
+msgstr "Yanlızca seçili değişkenleri sına"
 
 #: gui2/selector.c:4633
 msgid "Fixed effects"
@@ -13076,7 +13073,7 @@ msgstr "Panel verileri için"
 
 #: gui2/settings.c:271
 msgid "For GARCH estimation"
-msgstr "GÖBKÇ tahmini için"
+msgstr "GÖBKF tahmini için"
 
 #: gui2/settings.c:273
 msgid "PDF manual preference"
@@ -13922,11 +13919,11 @@ msgstr "Tahmin edilen Hurst üstü"
 
 #: plugin/garch.c:630
 msgid "GARCH: p > 0 and q = 0: the model is unidentified"
-msgstr "GÖBKÇ: p > 0 ve q = 0: model özdeşlemesiz"
+msgstr "GÖBKF: p > 0 ve q = 0: model özdeşlemesiz"
 
 #: plugin/garch.c:637
 msgid "GARCH: p + q must be less than 6"
-msgstr "GÖBKÇ: p + q 6'dan küçük olmalı"
+msgstr "GÖBKF: p + q 6'dan küçük olmalı"
 
 #: plugin/gnumeric_import.c:292
 #, c-format
@@ -14058,7 +14055,7 @@ msgstr "Sınırlamasız log-olabilirlik (lr) = %.8g\n"
 #: plugin/johansen.c:1620 plugin/jrestrict.c:1838
 #, c-format
 msgid "Allowing for prior restriction, df = %d\n"
-msgstr "Önceki sınırlama  (sd = %d) göz önüne alındı\n"
+msgstr "Önsel sınırlama  (sd = %d) göz önüne alındı\n"
 
 #: plugin/johansen.c:1622 plugin/jrestrict.c:2766
 #, c-format
