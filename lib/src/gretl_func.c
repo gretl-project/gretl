@@ -1362,6 +1362,7 @@ static int real_function_print_code (ufunc *fun, PRN *prn)
     print_function_start(fun, prn);
 
     for (i=0; i<fun->n_lines; i++) {
+	fprintf(stderr, "print_code: line='%s'\n", fun->lines[i]);
 	adjust_indent(fun->lines[i], &this_indent, &next_indent);
 	for (j=0; j<=this_indent; j++) {
 	    pputs(prn, "  ");
@@ -3151,6 +3152,7 @@ static int ignore_line (ufunc *fun)
 
 static int check_function_structure (ufunc *fun)
 {
+    char line[MAXLINE];
     CMD cmd;
     int ifdepth = 0;
     int i, err = 0;
@@ -3158,7 +3160,9 @@ static int check_function_structure (ufunc *fun)
     gretl_cmd_init(&cmd);
 
     for (i=0; i<fun->n_lines && !err; i++) {
-	get_command_index(fun->lines[i], &cmd);
+	/* avoid losing comment lines */
+	strcpy(line, fun->lines[i]);
+	get_command_index(line, &cmd);
 	if (cmd.ci == FUNC) {
 	    gretl_errmsg_set("You can't define a function within a function");
 	    err = E_PARSE;
@@ -3193,7 +3197,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
 	editing = 0;
     } 
 
-#if FNPARSE_DEBUG
+#if 1 || FNPARSE_DEBUG
     fprintf(stderr, "gretl_function_append_line: '%s'\n", line);
 #endif
 
@@ -3221,7 +3225,8 @@ static int real_function_append_line (const char *line, ufunc *fun)
 	return 0; /* handled */
     } else if (function_return_line(line) && !ignore_line(fun)) {
 	err = parse_function_return(fun, line);
-    } else {  
+    } else {
+	fprintf(stderr, "append line: '%s'\n", line);
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
     }
 

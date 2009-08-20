@@ -675,9 +675,10 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(hsep);
     }
 
-    /* function return(s) assignment */
+    /* function return assignment */
 
-    if (cinfo->rettype != GRETL_TYPE_NONE) {
+    if (cinfo->rettype != GRETL_TYPE_NONE && 
+	cinfo->rettype != GRETL_TYPE_VOID) {
 	GtkWidget *child;
 	GList *list = NULL;
 
@@ -687,7 +688,7 @@ static void function_call_dialog (call_info *cinfo)
 	tbl = gtk_table_new(1, 2, FALSE);
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
 
-	label = gtk_label_new("type");
+	label = gtk_label_new(_("type"));
 	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, 0, 1,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
