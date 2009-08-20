@@ -269,8 +269,6 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
     const char *name;
     int n, optional = 0;
 
-    /* FIXME int, bool arguments */
-
     if (i >= 0) {
 	optional = fn_param_optional(cinfo->func, i);
     }
@@ -353,6 +351,25 @@ static int combo_list_index (const gchar *s, GList *list)
     return -1;
 }
 
+static void depopulate_combo (GtkComboBox *cbox)
+{
+    GtkTreeModel *model = gtk_combo_box_get_model(cbox);
+    GtkTreeIter iter;
+    gboolean ok = TRUE;
+    int i;
+
+    for (i=0; ok; i++) {
+	if (i == 0) {
+	    ok = gtk_tree_model_get_iter_first(model, &iter);
+	} else {
+	    ok = gtk_tree_model_iter_next(model, &iter);
+	}
+	if (ok) {
+	    gtk_combo_box_remove_text(cbox, i);
+	}
+    }
+}
+
 static void update_matrix_selectors (call_info *cinfo)
 {
     GList *slist = cinfo->msels;
@@ -371,6 +388,7 @@ static void update_matrix_selectors (call_info *cinfo)
     while (slist != NULL) {
 	sel = GTK_COMBO_BOX(slist->data);
 	saved = gtk_combo_box_get_active_text(sel);
+	depopulate_combo(sel);
 	set_combo_box_strings_from_list(sel, mlist);
 	if (saved != NULL) {
 	    old = combo_list_index(saved, mlist);
@@ -401,6 +419,7 @@ static void update_list_selectors (call_info *cinfo)
     while (slist != NULL) {
 	sel = GTK_COMBO_BOX(slist->data);
 	saved = gtk_combo_box_get_active_text(sel);
+	depopulate_combo(sel);
 	set_combo_box_strings_from_list(sel, llist);
 	if (saved != NULL) {
 	    old = combo_list_index(saved, llist);
