@@ -2576,6 +2576,25 @@ static void adjust_add_menu_state (Spreadsheet *sheet)
     }
 }
 
+static void series_sheet_add_locator (Spreadsheet *sheet, 
+				      GtkWidget *hbox)
+{
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 1);
+    GtkWidget *status_box = gtk_hbox_new(FALSE, 1);
+    gint w = get_obs_col_width();
+
+    gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);
+    gtk_box_pack_start(GTK_BOX(vbox), status_box, FALSE, FALSE, 0);
+
+    sheet->locator = gtk_statusbar_new(); 
+    gtk_widget_set_size_request(sheet->locator, 2 * w, 20);
+    gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(sheet->locator), FALSE);
+    sheet->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(sheet->locator), 
+					      "current row and column");
+    gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
+    gtk_box_pack_end(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+}
+
 static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 {
     GtkWidget *hbox, *tbar;
@@ -2600,6 +2619,8 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+    series_sheet_add_locator(sheet, hbox);
+
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     adjust_add_menu_state(sheet);
@@ -2626,17 +2647,15 @@ static void sheet_add_matrix_menu (Spreadsheet *sheet, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(vbox), mbar, FALSE, FALSE, 0);
 }
 
-static void sheet_add_locator (Spreadsheet *sheet, GtkWidget *vbox)
+static void sheet_add_matrix_locator (Spreadsheet *sheet, GtkWidget *vbox)
 {
-    GtkWidget *status_box;
-    gint w;
+    GtkWidget *status_box = gtk_hbox_new(FALSE, 1);
+    gint w = get_row_label_width();
 
-    status_box = gtk_hbox_new(FALSE, 1);
     gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);
     gtk_box_pack_start(GTK_BOX(vbox), status_box, FALSE, FALSE, 0);
 
     sheet->locator = gtk_statusbar_new(); 
-    w = (sheet->matrix == NULL)? get_obs_col_width() : get_row_label_width();
     gtk_widget_set_size_request(sheet->locator, 2 * w, 20);
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(sheet->locator), FALSE);
     sheet->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(sheet->locator), 
@@ -2695,10 +2714,9 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
     if (sheet->matrix != NULL) {
 	sheet_add_matrix_menu(sheet, main_vbox);
-	sheet_add_locator(sheet, main_vbox);
+	sheet_add_matrix_locator(sheet, main_vbox);
     } else if (c != SHEET_EDIT_SCALARS) {
 	sheet_add_toolbar(sheet, main_vbox);
-	sheet_add_locator(sheet, main_vbox);
     }
 
     gtk_widget_show_all(main_vbox);
