@@ -355,18 +355,9 @@ static void depopulate_combo (GtkComboBox *cbox)
 {
     GtkTreeModel *model = gtk_combo_box_get_model(cbox);
     GtkTreeIter iter;
-    gboolean ok = TRUE;
-    int i;
 
-    for (i=0; ok; i++) {
-	if (i == 0) {
-	    ok = gtk_tree_model_get_iter_first(model, &iter);
-	} else {
-	    ok = gtk_tree_model_iter_next(model, &iter);
-	}
-	if (ok) {
-	    gtk_combo_box_remove_text(cbox, i);
-	}
+    while (gtk_tree_model_get_iter_first(model, &iter)) {
+	gtk_combo_box_remove_text(cbox, 0);
     }
 }
 
@@ -593,6 +584,9 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     return combo;
 }
 
+#define cinfo_has_return(c) (c->rettype != GRETL_TYPE_NONE && \
+			     c->rettype != GRETL_TYPE_VOID)
+
 static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
@@ -626,7 +620,7 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(hbox);
 
 	tbl = gtk_table_new(cinfo->n_params + 1, tcols, FALSE);
-	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
 
 	label = gtk_label_new(_("selection"));
 	gtk_table_attach(GTK_TABLE(tbl), label, 2, 3, 0, 1,
@@ -687,19 +681,15 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(tbl);
     }
 
-    if (cinfo->n_params > 0 && cinfo->rettype != GRETL_TYPE_NONE) {
-	GtkWidget *hsep = gtk_hseparator_new();
-
-	gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 5);
-	gtk_widget_show(hsep);
-    }
-
     /* function return assignment */
 
-    if (cinfo->rettype != GRETL_TYPE_NONE && 
-	cinfo->rettype != GRETL_TYPE_VOID) {
+    if (cinfo_has_return(cinfo)) {
 	GtkWidget *child;
 	GList *list = NULL;
+
+	if (cinfo->n_params > 0) {
+	    vbox_add_hsep(vbox);
+	}
 
 	hbox = label_hbox(vbox, _("Assign return value (optional):"), 0);
 	gtk_widget_show(hbox);
