@@ -1115,13 +1115,21 @@ static int set_ods_params_from_cli (ods_sheet *sheet,
 	for (i=0; i<sheet->n_tables; i++) {
 	    if (!strcmp(sheetname, sheet->tables[i]->name)) {
 		sheet->seltab = i;
+		break;
+	    }
+	}
+	if (sheet->seltab < 0 && integer_string(sheetname)) {
+	    i = atoi(sheetname);
+	    if (i >= 1 && i <= sheet->n_tables) {
+		sheet->seltab = i - 1;
 	    }
 	}
     }
 
     if (gotlist) {
 	if (!gotname) {
-	    sheet->seltab = list[1];
+	    /* convert to zero-based */
+	    sheet->seltab = list[1] - 1;
 	}
 	sheet->xoffset = list[2];
 	sheet->yoffset = list[3];
@@ -1319,6 +1327,9 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
     if (!err) {
 	err = ods_sheet_prune(sheet, prn);
     }
+
+    printlist(list, "ods list");
+    fprintf(stderr, "sheetname='%s'\n", sheetname);
 
     if (!err) {
 	if (gui) {

@@ -902,7 +902,8 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	    if (match > 0) {
 		/* recognized an acceptable option flag */
 		ret |= match;
-	    } else if (ci == OPEN && data_open_special(longopt)) {
+	    } else if ((ci == OPEN || ci == APPEND) && 
+		       data_open_special(longopt)) {
 		; /* no-op here: handled elsewhere (FIXME) */
 	    } else {
 		/* not a valid flag, or not applicable in context */
