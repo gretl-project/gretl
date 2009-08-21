@@ -265,7 +265,7 @@ static void expected_symbol_error (int c, parser *p)
 	pputs(p->prn, "(for logical OR, please use \"||\")\n");
     }
 
-    p->err = 1;
+    p->err = E_PARSE;
 }
 
 static void unmatched_symbol_error (int c, parser *p)

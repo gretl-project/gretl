@@ -585,17 +585,45 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     return combo;
 }
 
+static void add_table_hsep (GtkWidget *tbl, int cols, int r0)
+{
+    GtkWidget *hsep = gtk_hseparator_new();
+
+    gtk_table_attach(GTK_TABLE(tbl), hsep, 0, cols, r0, r0 + 1,
+		     GTK_FILL, GTK_FILL, 5, 5);
+}
+
+static void add_table_header (GtkWidget *tbl, gchar *txt,
+			      int cols, int r0)
+{
+    GtkWidget *label = gtk_label_new(txt);
+    GtkWidget *align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+
+    gtk_container_add(GTK_CONTAINER(align), label);
+    gtk_table_attach(GTK_TABLE(tbl), align, 0, cols, r0, r0 + 1,
+		     GTK_FILL, GTK_FILL, 5, 5);
+}
+
+static void add_table_cell (GtkWidget *tbl, GtkWidget *w,
+			    int c0, int c1, int r0)
+{
+    gtk_table_attach(GTK_TABLE(tbl), w, c0, c1, r0, r0 + 1,
+		     GTK_FILL, GTK_FILL, 5, 3);
+}
+
 #define cinfo_has_return(c) (c->rettype != GRETL_TYPE_NONE && \
 			     c->rettype != GRETL_TYPE_VOID)
 
 static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
-    GtkWidget *tbl, *vbox, *hbox;
-    GtkWidget *sel;
+    GtkWidget *sel, *tbl = NULL;
+    GtkWidget *vbox, *hbox;
     gchar *txt;
     const char *fnname;
-    int i, err;
+    int trows = 0, tcols = 0;
+    int i, row = 0;
+    int err;
 
     err = cinfo_args_init(cinfo);
     if (err) {
@@ -611,17 +639,30 @@ static void function_call_dialog (call_info *cinfo)
     txt = g_strdup_printf(_("Call to function %s"), fnname);
     hbox = label_hbox(vbox, txt, 5, 1);
     gtk_widget_show(hbox);
-
-    /* function argument selection */
+    g_free(txt);
 
     if (cinfo->n_params > 0) {
-	int tcols = (cinfo->extracol)? 4 : 3;
+	tcols = (cinfo->extracol)? 3 : 2;
+	trows = cinfo->n_params + 1;
+	if (cinfo_has_return(cinfo)) { 
+	    trows += 4;
+	}
+    } else if (cinfo_has_return(cinfo)) {
+	tcols = 2;
+	trows = 3;
+    }
 
-	hbox = label_hbox(vbox, _("Select arguments:"), 5, 0);
-	gtk_widget_show(hbox);
+    if (trows > 0 && tcols > 0) {
+	tbl = gtk_table_new(trows, tcols, FALSE);
+#if 0
+	gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+	gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+#endif
+    }
 
-	tbl = gtk_table_new(cinfo->n_params, tcols, FALSE);
-	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    if (cinfo->n_params > 0) {
+
+	add_table_header(tbl, _("Select arguments:"), tcols, row);
 
 	for (i=0; i<cinfo->n_params; i++) {
 	    const char *desc = fn_param_descrip(cinfo->func, i);
@@ -630,16 +671,16 @@ static void function_call_dialog (call_info *cinfo)
 	    if (desc != NULL) {
 		label = gtk_label_new(desc);
 	    } else {
-		gchar *tmp = g_strdup_printf("%s (%s)",
-					     fn_param_name(cinfo->func, i), 
-					     arg_type_string(ptype));
-		label = gtk_label_new(tmp);
-		g_free(tmp);			     
+		txt = g_strdup_printf("%s (%s)",
+				      fn_param_name(cinfo->func, i), 
+				      arg_type_string(ptype));
+		label = gtk_label_new(txt);
+		g_free(txt);			     
 	    }
 
-	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 2, i, i+1,
-			     GTK_EXPAND, GTK_FILL, 5, 5);
-	    gtk_widget_show(label);
+	    row++;
+	    gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
+	    add_table_cell(tbl, label, 0, 1, row);
 
 	    if (ptype == GRETL_TYPE_BOOL) {
 		sel = bool_arg_selector(cinfo, i);
@@ -649,65 +690,45 @@ static void function_call_dialog (call_info *cinfo)
 		sel = combo_arg_selector(cinfo, ptype, i);
 	    }
 
-	    gtk_table_attach(GTK_TABLE(tbl), sel, 2, 3, i, i+1,
-			     GTK_EXPAND, GTK_FILL, 5, 5);
-	    gtk_widget_show(sel);
+	    add_table_cell(tbl, sel, 1, 2, row);
 
 	    if (ptype == GRETL_TYPE_LIST) {
 		cinfo->lsels = g_list_append(cinfo->lsels, sel);
 		button = gtk_button_new_with_label(_("More..."));
-		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i, i+1,
-				 GTK_EXPAND, GTK_FILL, 5, 5);
+		add_table_cell(tbl, button, 2, 3, row);
 		g_signal_connect(G_OBJECT(button), "clicked", 
 				 G_CALLBACK(launch_list_maker),
 				 gtk_bin_get_child(GTK_BIN(sel)));
-		gtk_widget_show(button);
 	    } else if (ptype == GRETL_TYPE_MATRIX) {
 		cinfo->msels = g_list_append(cinfo->msels, sel);
 		button = gtk_button_new_with_label(_("New..."));
-		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i, i+1,
-				 GTK_EXPAND, GTK_FILL, 5, 5);
+		add_table_cell(tbl, button, 2, 3, row);
 		g_signal_connect(G_OBJECT(button), "clicked", 
 				 G_CALLBACK(launch_matrix_maker), 
 				 cinfo);
-		gtk_widget_show(button);
 	    } 
 	}
 
-	gtk_widget_show(tbl);
+	if (cinfo_has_return(cinfo)) {
+	    row++;
+	    add_table_hsep(tbl, tcols, row++);
+	}
     }
-
-    /* function return assignment */
-
+	
     if (cinfo_has_return(cinfo)) {
 	GtkWidget *child;
 	GList *list = NULL;
 
-	if (cinfo->n_params > 0) {
-	    vbox_add_hsep(vbox);
-	}
-
-	hbox = label_hbox(vbox, _("Assign return value (optional):"), 5, 0);
-	gtk_widget_show(hbox);
-
-	tbl = gtk_table_new(1, 2, FALSE);
-	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
-
-	label = gtk_label_new(_("type"));
-	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, 0, 1,
-			 GTK_EXPAND, GTK_FILL, 5, 5);
-	gtk_widget_show(label);
+	add_table_header(tbl, _("Assign return value (optional):"), tcols, row);
+	row++;
 
 	label = gtk_label_new(_("selection (or new variable)"));
-	gtk_table_attach(GTK_TABLE(tbl), label, 1, 2, 0, 1,
-			 GTK_EXPAND, GTK_FILL, 5, 5);
-	gtk_widget_show(label);
+	add_table_cell(tbl, label, 1, 2, row);
+	row++;
 
 	label = gtk_label_new(arg_type_string(cinfo->rettype));
-	gtk_misc_set_alignment(GTK_MISC(label), 0.75, 0.5);
-	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, 1, 2,
-			 GTK_EXPAND, GTK_FILL, 5, 5);
-	gtk_widget_show(label);
+	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
+	add_table_cell(tbl, label, 0, 1, row);
 
 	sel = gtk_combo_box_entry_new_text();
 	g_signal_connect(G_OBJECT(sel), "changed",
@@ -719,11 +740,12 @@ static void function_call_dialog (call_info *cinfo)
 	}
 	child = gtk_bin_get_child(GTK_BIN(sel));
 	gtk_entry_set_activates_default(GTK_ENTRY(child), TRUE);
-	gtk_table_attach(GTK_TABLE(tbl), sel, 1, 2, 1, 2,
-			 GTK_EXPAND, GTK_FILL, 5, 5);
-	gtk_widget_show(sel);
+	add_table_cell(tbl, sel, 1, 2, row);
+    }
 
-	gtk_widget_show(tbl);
+    if (tbl != NULL) {
+	gtk_widget_show_all(tbl);
+	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     }
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(cinfo->dlg));

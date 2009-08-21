@@ -172,7 +172,7 @@ void gretl_errmsg_set (const char *str)
 	int n = strlen(gretl_errmsg);
 	int m = strlen(str);
 
-	if (n + m + 1 < ERRLEN) {
+	if (n + m + 2 < ERRLEN) {
 	    strcat(gretl_errmsg, "\n");
 	    strcat(gretl_errmsg, str);
 	}

@@ -1285,7 +1285,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     line += strspn(line, " ");
 
     if (get_quoted_filename(line, fname)) {
-	/* if the filename was quoted, we'll leave it as is */
+	/* if the filename was quoted, leave it as is */
 	return 0; 
     }
 
@@ -1300,6 +1300,10 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     /* handle tilde == HOME */
     if (fname[0] == '~' && fname[1] == '/') {
 	substitute_homedir(fname);
+    }
+
+    if (g_path_is_absolute(fname)) {
+	return 0;
     }
 
     /* try a basic path search on this filename */

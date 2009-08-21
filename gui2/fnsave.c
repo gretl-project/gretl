@@ -44,6 +44,7 @@ struct function_info_ {
     GtkWidget *ifsel;
     GtkWidget *codesel;
     GtkWidget *check;
+    GtkWidget *popup;
     windata_t *samplewin;
     fnpkg *pkg;
     char *fname;
@@ -95,6 +96,7 @@ function_info *finfo_new (void)
     finfo->modified = 0;
 
     finfo->samplewin = NULL;
+    finfo->popup = NULL;
 
     finfo->help = NULL;
     finfo->pub = -1;
@@ -120,6 +122,10 @@ static void finfo_free (function_info *finfo)
 
     if (finfo->samplewin != NULL) {
 	gtk_widget_destroy(finfo->samplewin->main);
+    }
+
+    if (finfo->popup != NULL) {
+	gtk_widget_destroy(finfo->popup);
     }
 
     free(finfo);
@@ -354,6 +360,12 @@ int update_func_code (windata_t *vwin)
     return err;
 }
 
+static GtkWidget *sample_script_window (function_info *finfo)
+{
+    return (finfo->samplewin == NULL)? NULL :
+	finfo->samplewin->main;
+}
+
 static void edit_code_callback (GtkWidget *w, function_info *finfo)
 {
     char fname[FILENAME_MAX];
@@ -371,10 +383,8 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
     strcat(fname, ".");
     strcat(fname, funname);
 
-    fprintf(stderr, "fname='%s'\n", fname);
-
     orig = match_window_by_filename(fname);
-    if (orig != NULL) {
+    if (orig != NULL && orig != sample_script_window(finfo)) {
 	gtk_window_present(GTK_WINDOW(orig));
 	return;
     }
@@ -438,6 +448,7 @@ static int maybe_open_script (function_info *finfo, char **fname)
     resp = yes_no_dialog("gretl",
 			 "Start from an existing script?",
 			 1);
+
     if (resp == GRETL_CANCEL) {
 	return GRETL_CANCEL;
     } else if (resp == GRETL_YES) {
@@ -627,6 +638,7 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
     int j;
 
     tmp = gtk_label_new(_("Data requirement"));
+    gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
     gtk_widget_show(tmp);
 
@@ -678,6 +690,7 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     get_maj_min_pl(finfo->minver, &maj, &min, &pl);
 
     tmp = gtk_label_new(_("Minimum gretl version"));
+    gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
     gtk_widget_show(tmp);
 
@@ -752,6 +765,36 @@ static const gchar *get_user_string (void)
     return name;
 }
 
+static void insert_today (GtkWidget *w, GtkWidget *entry)
+{
+    gtk_entry_set_text(GTK_ENTRY(entry), print_today());    
+}
+
+static gint today_popup (GtkWidget *entry, GdkEventButton *event,
+			 GtkWidget **popup)
+{
+    GdkModifierType mods = parent_get_pointer_mask(entry);
+
+    if (mods & GDK_BUTTON3_MASK) {
+	if (*popup == NULL) {
+	    GtkWidget *menu = gtk_menu_new();
+	    GtkWidget *item;
+
+	    item = gtk_menu_item_new_with_label(_("Insert today's date"));
+	    g_signal_connect(G_OBJECT(item), "activate",
+			     G_CALLBACK(insert_today), entry);
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	    *popup = menu;
+	}
+
+	gtk_menu_popup(GTK_MENU(*popup), NULL, NULL, NULL, NULL, 
+		       event->button, event->time);
+    }
+
+    return TRUE;
+}
+
 static gint query_save_package (GtkWidget *w, GdkEvent *event, 
 				function_info *finfo)
 {
@@ -820,6 +863,7 @@ static void finfo_dialog (function_info *finfo)
     gtk_widget_show(vbox);
 			 
     tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);
     gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
 
@@ -827,6 +871,7 @@ static void finfo_dialog (function_info *finfo)
 	GtkWidget *entry;
 
 	label = gtk_label_new(_(entry_labels[i]));
+	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, i, i+1);
 	gtk_widget_show(label);
 
@@ -839,6 +884,10 @@ static void finfo_dialog (function_info *finfo)
 
 	if (entry_texts[i] != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), entry_texts[i]);
+	    if (i == 2) {
+		g_signal_connect(G_OBJECT(entry), "button-press-event",
+				 G_CALLBACK(today_popup), &finfo->popup);
+	    }
 	} else if (i == 0) {
 	    const gchar *s = get_user_string();
 

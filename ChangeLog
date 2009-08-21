@@ -16,6 +16,7 @@ version 1.8.4, in progress
 - Stata dta importer: try to work around missing character
   encoding information
 - ODS import: fix bug 2841292
+- win32: update GTK+ stack to 2.16.5
 
 8/10/09 version 1.8.3
 - Fix bugs 2819633, 2827358, 2828349, 2833434

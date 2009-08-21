@@ -631,7 +631,7 @@ static void function_noargs_error (const char *s, parser *p)
     pprintf(p->prn, _("'%s': no argument was given\n"), s);
     sprintf(gretl_errmsg, _("'%s': no argument was given\n"), s);
 
-    p->err = 1;
+    p->err = E_ARGS;
 }
 
 void context_error (int c, parser *p)
@@ -871,7 +871,7 @@ static void look_up_word (const char *s, parser *p)
 		    p->sym = RFUN;
 		    p->idstr = gretl_strdup(s + 2);
 		} else {
-		    err = 1;
+		    err = E_UNKVAR;
 		}
 	    }
 	}
@@ -911,7 +911,7 @@ static void word_check_next_char (const char *s, parser *p)
 		   !funcn_symb(p->sym) && 
 		   p->sym != UFUN && 
 		   p->sym != RFUN) {
-	    p->err = 1;
+	    p->err = E_PARSE;
 	} 
     } else if (p->ch == '[') {
 	if (p->sym == UMAT) {
@@ -924,7 +924,7 @@ static void word_check_next_char (const char *s, parser *p)
 	    /* observation from series */
 	    p->sym = OBS;
 	} else {
-	    p->err = 1;
+	    p->err = E_PARSE;
 	} 
     } else if (p->ch == '.' && *p->point == '$') {
 	if (p->sym == UOBJ) {
@@ -935,13 +935,13 @@ static void word_check_next_char (const char *s, parser *p)
 	       dollar variable? */
 	    p->sym = OVAR;
 	} else {
-	    p->err = 1;
+	    p->err = E_PARSE;
 	}	    
     } else if (p->ch == '.' && isalpha(*p->point)) {
 	if (p->sym == LIST) {
 	    p->sym = LISTVAR;
 	} else {
-	    p->err = 1;
+	    p->err = E_PARSE;
 	}
     }
 
@@ -1379,7 +1379,7 @@ void lex (parser *p)
 	    } else {
 		parser_print_input(p);
 		pprintf(p->prn, _("Invalid character '%c'\n"), p->ch);
-		p->err = 1;
+		p->err = E_PARSE;
 		return;
 	    }
 	} /* end ch switch */

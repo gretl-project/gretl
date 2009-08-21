@@ -779,7 +779,7 @@ static double scalar_pdist (int t, char d, double *parm,
     } else if (t == F_CRIT) {
 	x = gretl_get_critval(d, parm);
     } else {
-	p->err = 1;
+	p->err = E_PARSE;
     }
 
     return x;
@@ -1195,7 +1195,7 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
 	    yt = t + 1;
 	} else {
 	    gretl_errmsg_sprintf("%s: not a valid observation", r->v.str);
-	    p->err = 1;
+	    p->err = E_PARSE;
 	    return NULL;
 	}
     }
@@ -1969,7 +1969,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_matrix_rank(m, &p->err);
 	    break;
 	default:
-	    p->err = 1;
+	    p->err = E_PARSE;
 	    break;
 	}
 
@@ -2223,7 +2223,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	    if (r->t == UMAT) {
 		rname = r->v.str;
 	    } else {
-		p->err = 1;
+		p->err = E_PARSE;
 		strcpy(gretl_errmsg, "Expected the address of a matrix");
 		return ret;
 	    }
@@ -3641,7 +3641,7 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp, parser *p)
 	p->err = E_DATA;
     } else if (gretl_vector_get_length(m) != p->dinfo->n) {
 	if (series_cast_optional(f)) {
-	    p->err = 1;
+	    p->err = E_TYPES;
 	} else {
 	    node_type_error(f, 1, VEC, n, p);
 	}
@@ -4236,14 +4236,14 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     /* check that all rows are the same length */
 
     if (nelem != r * c) {
-	p->err = 1;
+	p->err = E_PARSE;
     } else if (nsep > 0) {
 	k = 0;
 	for (i=0; i<m; i++) {
 	    n = t->v.bn.n[i];
 	    if (n->t == EMPTY) {
 		if (i - k != seppos) {
-		    p->err = 1;
+		    p->err = E_PARSE;
 		    break;
 		}
 		k = i + 1;
@@ -4372,7 +4372,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     uf = get_user_function_by_name(funname);
     if (uf == NULL) {
 	fprintf(stderr, "%s: couldn't find a function of this name\n", funname);
-	p->err = 1;
+	p->err = E_UNKVAR;
 	return NULL;
     }
 
@@ -4395,7 +4395,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 			  "match the number of\nparameters for "
 			  "function %s (%d)"),
 		m, funname, argc);
-	p->err = 1;
+	pputc(p->prn, '\n');
+	p->err = E_ARGS;
 	return NULL;
     }
 
@@ -4459,7 +4460,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		pputs(p->prn, _("Wrong type of operand for unary '&'"));
 		pputc(p->prn, '\n');
 		fprintf(stderr, "bad type %d\n", u->t);
-		p->err = 1;
+		p->err = E_TYPES;
 	    }
 	} else if (n->t == DUM) {
 	    if (n->v.idnum == DUM_NULL) {
@@ -4634,7 +4635,7 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 	    p->err = gretl_R_function_add_matrix(n->v.m);
 	} else {
 	    fprintf(stderr, "eval_Rfunc: argument not supported\n");
-	    p->err = 1;
+	    p->err = E_TYPES;
 	    return NULL;
 	}
 	if (p->err) {
@@ -5071,7 +5072,7 @@ static void n_args_error (int k, int n, const char *s, parser *p)
 		      "match the number of\nparameters for "
 		      "function %s (%d)"),
 	    k, s, n);
-    p->err = 1;
+    p->err = E_ARGS;
 }
 
 /* evaluate a built-in function that has more than three arguments */
@@ -5992,7 +5993,7 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
 	}
 
 	if (na(ret->v.xval)) {
-	    p->err = 1;
+	    p->err = E_INVARG;
 	    pprintf(p->prn, _("'%s': invalid argument for %s()\n"), 
 		    r->v.str, mvarname(l->v.idnum));
 	}
@@ -8814,12 +8815,16 @@ void gen_save_or_print (parser *p, PRN *prn)
 
 void gen_cleanup (parser *p)
 {
+    if (p == NULL) {
+	return;
+    }
+
 #if EDEBUG
     fprintf(stderr, "gen cleanup: reusable = %d, err = %d\n", 
 	    reusable(p), p->err);
 #endif
 
-    if (reusable(p)) {
+    if (!p->err && reusable(p)) {
 	/* just do limited cleanup */
 	if (p->ret != p->tree) {
 	    free_tree(p->ret, p, "p->ret");

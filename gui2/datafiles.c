@@ -796,6 +796,9 @@ windata_t *gui_show_function_info (const char *fname, int role)
     }
 
     if (role == VIEW_FUNC_INFO) {
+	if (g_path_is_absolute(fname)) {
+	    pprintf(prn, "File: %s\n", fname);
+	}
 	err = get_function_file_info(fname, prn, &pkgname);
     } else {
 	err = get_function_file_code(fname, prn, &pkgname);
@@ -827,22 +830,40 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
     DIR *dir = opendir(path);
 
     if (dir != NULL) {
+	const char *opts[] = {
+	    N_("Add to functions shown"),
+	    N_("Replace functions shown")
+	};
 	GtkListStore *store;
 	GtkTreeIter iter;
 	int maxlen = 0;
 	int nfn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->listbox), "nfn"));
 	int nfn0 = nfn;	
+	int resp;
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+
+	resp = radio_dialog("gretl", NULL, opts, 2, 0, 0);
+	if (resp < 0) {
+	    return;
+	} else if (resp > 0) {
+	    gtk_list_store_clear(store);
+	    nfn = nfn0 = 0;
+	}
+
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	read_fn_files_in_dir(vwin->role, dir, path, store, &iter,
 			     &nfn, &maxlen);
 	if (nfn > nfn0) {
-	    infobox("Found %d additional function file(s)", nfn - nfn0);
+	    infobox(_("Found %d function file(s)"), nfn - nfn0);
 	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
+	    if (resp > 0) {
+		g_object_set_data(G_OBJECT(vwin->listbox), "keepdir", GINT_TO_POINTER(1));
+	    }
 	} else {
-	    warnbox("No additional function files were found");
+	    warnbox(_("No function files were found"));
 	}
+	    
 	closedir(dir);
     }
 }
@@ -1661,68 +1682,103 @@ static void sort_pkglist (windata_t *vwin)
 				    compare_pkgnames, NULL, NULL);
 }
 
+static int dirname_done (char **dnames, int ndirs, char *dirname)
+{
+    int i;
+
+    for (i=0; i<ndirs; i++) {
+	if (!strcmp(dnames[i], dirname)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    char fndir[FILENAME_MAX];
-    char *tmp;
+    char **dnames = NULL;
+    int ndirs = 0;
     DIR *dir;
-    int maxlen = 0;
-    int nfn = 0;
+    int i, nfn, maxlen = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    nfn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->listbox), "nfn"));
+
+    if (nfn > 0) {
+	/* we're repopulating an existing list */
+	GtkTreeModel *model = GTK_TREE_MODEL(store);
+	gchar *dirname;
+
+	gtk_tree_model_get_iter_first(model, &iter);
+	gtk_tree_model_get(model, &iter, 4, &dirname, -1);
+	strings_array_add(&dnames, &ndirs, dirname);
+	g_free(dirname);
+
+	while (gtk_tree_model_iter_next(model, &iter)) {
+	    gtk_tree_model_get(model, &iter, 4, &dirname, -1);
+	    if (!dirname_done(dnames, ndirs, dirname)) {
+		strings_array_add(&dnames, &ndirs, dirname);
+	    }
+	    g_free(dirname);
+	}
+    }
+
+    nfn = 0;
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    /* pick up any function files in system dir */
-    build_path(fndir, paths.gretldir, "functions", NULL);
-    dir = opendir(fndir);
-    if (dir != NULL) {
-	read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-			     &nfn, &maxlen);
-	closedir(dir);
-    }
-
-    /* plus any function files in the user's working dir */
-    strcpy(fndir, paths.workdir);
-    dir = opendir(fndir);
-    if (dir != NULL) {
-	read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-			     &nfn, &maxlen);
-	closedir(dir);
-    }    
-
-    /* plus any function files under "functions" in the user's working dir */
-    build_path(fndir, paths.workdir, "functions", NULL);
-    dir = opendir(fndir);
-    if (dir != NULL) {
-	read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-			     &nfn, &maxlen);
-	closedir(dir);
-    }
-
-    /* plus any function files in the user's personal data dir */
-    build_path(fndir, paths.dotdir, "functions", NULL);
-    dir = opendir(fndir);
-    if (dir != NULL) {
-	read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-			     &nfn, &maxlen);
-	closedir(dir);
-    } 
-
-    /* plus any in the default working dir, if not already searched */
-    tmp = gretl_default_workdir(&paths);
-    if (tmp != NULL) {
-	build_path(fndir, tmp, "functions", NULL);
-	dir = opendir(fndir);
-	if (dir != NULL) {
-	    read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
-				 &nfn, &maxlen);
-	    closedir(dir);
+    if (ndirs > 0) {
+	for (i=0; i<ndirs; i++) {
+	    dir = opendir(dnames[i]);
+	    if (dir != NULL) {
+		read_fn_files_in_dir(vwin->role, dir, dnames[i], store, &iter,
+				     &nfn, &maxlen);
+		closedir(dir);
+	    }
 	}
-	free(tmp);
-    }
+
+	free_strings_array(dnames, ndirs);
+    } else {
+	char fndir[FILENAME_MAX];
+
+	for (i=0; i<5; i++) {
+	    *fndir = '\0';
+
+	    if (i == 0) {
+		/* pick up any function files in system dir */
+		build_path(fndir, paths.gretldir, "functions", NULL);
+	    } else if (i == 1) {
+		/* plus any function files in the user's working dir... */
+		strcpy(fndir, paths.workdir);
+	    } else if (i == 2) {
+		/* and any "functions" subdir thereof */
+		build_path(fndir, paths.workdir, "functions", NULL);
+	    } else if (i == 3) {
+		/* plus any in the user's dotdir */
+		build_path(fndir, paths.dotdir, "functions", NULL);
+	    } else {
+		/* plus any in the default working dir, if not already searched */
+		char *tmp = gretl_default_workdir(&paths);
+
+		if (tmp != NULL) {
+		    build_path(fndir, tmp, "functions", NULL);
+		    g_free(tmp);
+		} 
+	    }
+
+	    if (*fndir != '\0') {
+		dir = opendir(fndir);
+		if (dir != NULL) {
+		    read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+					 &nfn, &maxlen);
+		    closedir(dir);
+		}
+	    }
+	}
+    }	    
 
     if (nfn == 0) {
 	if (fresp->try_server == 0) {
@@ -1764,10 +1820,6 @@ void maybe_update_func_files_window (int editing)
     }
 
     if (editing && lbox != NULL) {
-	GtkListStore *store;
-
-	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lbox)));	
-	gtk_list_store_clear(store);
 	populate_func_list(vwin, NULL);
 	return;
     }

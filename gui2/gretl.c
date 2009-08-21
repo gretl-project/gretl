@@ -1151,7 +1151,7 @@ static GtkWidget *make_main_window (void)
 #endif
 
     main_vbox = gtk_vbox_new(FALSE, 4);
-    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 8);
+    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 4); /* was 8 */
     gtk_container_add(GTK_CONTAINER(mdata->main), main_vbox);
     g_object_set_data(G_OBJECT(mdata->main), "vbox", main_vbox);
 

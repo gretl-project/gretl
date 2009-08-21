@@ -2574,7 +2574,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
 static char *grab_topic_buffer (const char *s)
 {
-    const char *p = strstr(s, "\n# ");
+    const char *p = strstr(s, "\n#");
     char *buf;
 
     if (p != NULL) {
