@@ -1754,12 +1754,12 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 		/* plus any function files in the user's working dir... */
 		strcpy(fndir, paths.workdir);
 	    } else if (i == 2) {
-		/* and any "functions" subdir thereof */
+		/* and in any "functions" subdir thereof */
 		build_path(fndir, paths.workdir, "functions", NULL);
 	    } else if (i == 3) {
 		/* plus any in the user's dotdir */
 		build_path(fndir, paths.dotdir, "functions", NULL);
-	    } else {
+	    } else if (i == 4) {
 		/* plus any in the default working dir, if not already searched */
 		char *tmp = gretl_default_workdir(&paths);
 
