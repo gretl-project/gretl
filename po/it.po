@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.8.2\n"
+"Project-Id-Version: gretl 1.8.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-20 15:02-0400\n"
-"PO-Revision-Date: 2009-08-12 10:48+0200\n"
+"PO-Revision-Date: 2009-08-21 15:37+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -8801,9 +8801,8 @@ msgid "Call to function %s"
 msgstr "Chiamata alla funzione %s"
 
 #: gui2/fncall.c:620
-#, fuzzy
 msgid "Select arguments:"
-msgstr "Argomenti richiesti:"
+msgstr "Scelta argomenti:"
 
 #: gui2/fncall.c:658
 msgid "More..."
