@@ -44,6 +44,7 @@ struct function_info_ {
     GtkWidget *ifsel;
     GtkWidget *codesel;
     GtkWidget *check;
+    GtkWidget *save;
     GtkWidget *popup;
     windata_t *samplewin;
     fnpkg *pkg;
@@ -102,7 +103,7 @@ function_info *finfo_new (void)
     finfo->pub = -1;
     finfo->privlist = NULL;
     finfo->dreq = 0;
-    finfo->minver = 10600;
+    finfo->minver = 10804;
 
     finfo->openscript = NULL;
 
@@ -129,6 +130,12 @@ static void finfo_free (function_info *finfo)
     }
 
     free(finfo);
+}
+
+static void finfo_set_modified (function_info *finfo, gboolean s)
+{
+    finfo->modified = s;
+    gtk_widget_set_sensitive(finfo->save, s);
 }
 
 static void login_init_or_free (login_info *linfo, int freeit)
@@ -299,7 +306,7 @@ static void real_finfo_save (function_info *finfo)
     }
 
     if (!err) {
-	finfo->modified = 0;
+	finfo_set_modified(finfo, FALSE);
     }
 }
 
@@ -354,7 +361,7 @@ int update_func_code (windata_t *vwin)
     } else {
 	function_info *finfo = vwin->data;
 
-	finfo->modified = 1;
+	finfo_set_modified(finfo, TRUE);
     }
 
     return err;
@@ -417,7 +424,7 @@ void update_sample_script (windata_t *vwin)
 	free(finfo->sample);
 	finfo->sample = gretl_strdup(text);
 	g_free(text);
-	finfo->modified = 1;
+	finfo_set_modified(finfo, TRUE);
     }
 }
 
@@ -623,6 +630,7 @@ static GtkWidget *interface_selector (function_info *finfo, int iface)
 static void dreq_select (GtkComboBox *menu, function_info *finfo)
 {
     finfo->dreq = gtk_combo_box_get_active(menu);
+    finfo_set_modified(finfo, TRUE);
 }
 
 static void add_data_requirement_menu (GtkWidget *tbl, int i, 
@@ -679,6 +687,8 @@ static void adjust_minver (GtkWidget *w, function_info *finfo)
     } else if (lev == 3) {
 	finfo->minver = 10000 * maj + 100 * min + val;
     }
+
+    finfo_set_modified(finfo, TRUE);
 }
 
 static void add_minver_selector (GtkWidget *tbl, int i, 
@@ -731,9 +741,9 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     gtk_widget_show_all(hbox);
 }
 
-static void pkg_content_changed (GtkTextBuffer *tbuf, function_info *finfo)
+static void pkg_changed (gpointer p, function_info *finfo)
 {
-    finfo->modified = 1;
+    finfo_set_modified(finfo, TRUE);
 }
 
 static GtkWidget *editable_text_box (GtkTextBuffer **pbuf)
@@ -848,9 +858,17 @@ static void finfo_dialog (function_info *finfo)
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(finfo->dlg), 
-			 _("gretl: function package editor")); 
     gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 500);
+
+    if (finfo->fname != NULL) {
+	gchar *title = title_from_filename(finfo->fname);
+
+	gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
+	g_free(title);
+    } else {
+	gtk_window_set_title(GTK_WINDOW(finfo->dlg), 
+			     _("gretl: function package editor"));
+    } 
 
     g_signal_connect(G_OBJECT(finfo->dlg), "delete-event",
 		     G_CALLBACK(query_save_package), finfo);
@@ -906,6 +924,9 @@ static void finfo_dialog (function_info *finfo)
 	} else if (i == 1 && !focused) {
 	    gtk_widget_grab_focus(entry);
 	}
+
+	g_signal_connect(GTK_EDITABLE(entry), "changed",
+			 G_CALLBACK(pkg_changed), finfo);
     }
 
     add_minver_selector(tbl, i++, finfo);
@@ -924,7 +945,7 @@ static void finfo_dialog (function_info *finfo)
     gretl_function_get_info(finfo->pub, "help", &hlp);
     textview_set_text(finfo->text, hlp);
     g_signal_connect(G_OBJECT(hbuf), "changed", 
-		     G_CALLBACK(pkg_content_changed), finfo);
+		     G_CALLBACK(pkg_changed), finfo);
 
     /* edit code button, possibly with selector */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -976,7 +997,8 @@ static void finfo_dialog (function_info *finfo)
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(finfo_save), finfo);
-    gtk_widget_grab_default(button);
+    gtk_widget_set_sensitive(button, finfo->fname == NULL);
+    finfo->save = button;
 
     /* Close button */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
@@ -1411,7 +1433,9 @@ void edit_function_package (const char *fname, int *loaderr)
 	if (err) {
 	    fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
 	    file_read_errbox(fname);
-	    *loaderr = 1;
+	    if (loaderr != NULL) {
+		*loaderr = 1;
+	    }
 	    return;
 	}
     }
@@ -1450,6 +1474,18 @@ void edit_function_package (const char *fname, int *loaderr)
     finfo->fname = g_strdup(fname);
 
     finfo_dialog(finfo);
+}
+
+void edit_package_at_startup (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "r");
+
+    if (fp == NULL) {
+	file_read_errbox(fname);
+    } else {
+	fclose(fp);
+	edit_function_package(fname, NULL);
+    }
 }
 
 int no_user_functions_check (void)

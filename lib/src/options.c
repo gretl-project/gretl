@@ -943,9 +943,25 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
     return ret;
 }
 
+/* Try to get the command word, skipping a possible assignment to a
+   named object as in "<objectname> <- command", and bearing in mind
+   that <objectname> may have embedded spaces (in which case it will
+   be wrapped in quotes).
+*/
+
 static void get_cmdword (const char *line, char *word)
 {
-    if (!sscanf(line, "%*s <- %8s", word)) {
+    if (*line == '"') {
+	/* skip to closing quote */
+	line++;
+	line += strcspn(line, "\"");
+	if (*line) line++;
+	line += strspn(line, " ");
+	if (!strncmp(line, "<-", 2)) {
+	    line += 2;
+	}
+	sscanf(line, "%8s", word);
+    } else if (!sscanf(line, "%*s <- %8s", word)) {
 	sscanf(line, "%8s", word);
     }
 }

@@ -557,7 +557,7 @@ static gchar *inplace_windows_filename (gchar *s)
     return s;
 }
 
-static void correct_default_dir (char *s)
+static char *win32_correct_path (char *s)
 {
     if (!g_utf8_validate(s, -1, NULL)) {
 	gchar *tmp = my_locale_to_utf8(s);
@@ -567,6 +567,8 @@ static void correct_default_dir (char *s)
 	    g_free(tmp);
 	}
     }
+
+    return s;
 }
 
 #endif
@@ -615,7 +617,16 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	*fname = '\0';
 	get_default_package_name(fname, data, action);
 	gtk_file_chooser_set_current_name(filesel, fname);
-    } 
+    } else if (action == SET_FDIR) {
+#ifdef G_OS_WIN32
+	char fname[MAXLEN];
+
+	strcpy(fname, paths.workdir);
+	gtk_file_chooser_set_filename(filesel, win32_correct_path(fname));
+#else
+	gtk_file_chooser_set_filename(filesel, paths.workdir);
+#endif
+    }
 }
 
 static void filesel_add_filter (GtkWidget *filesel,
@@ -642,7 +653,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     get_default_dir(startdir, action);
 
 #ifdef G_OS_WIN32
-    correct_default_dir(startdir);
+    win32_correct_path(startdir);
 #endif
 
     if (SET_DIR_ACTION(action)) {

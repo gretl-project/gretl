@@ -38,4 +38,6 @@ void fnsave_set_script (const char *fname, gpointer p);
 
 int update_func_code (windata_t *vwin);
 
+void edit_package_at_startup (const char *fname);
+
 #endif /* FNSAVE_H */

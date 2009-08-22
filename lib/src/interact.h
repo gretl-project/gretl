@@ -43,10 +43,11 @@ typedef enum {
     OPT_RUNIT   = 1 << 3,
     OPT_DBOPEN  = 1 << 4,
     OPT_WEBDB   = 1 << 5,
-    OPT_DUMP    = 1 << 6,
-    OPT_DEBUG   = 1 << 7,
-    OPT_QUIET   = 1 << 8,
-    OPT_ENGLISH = 1 << 9
+    OPT_FNPKG   = 1 << 6,
+    OPT_DUMP    = 1 << 7,
+    OPT_DEBUG   = 1 << 8,
+    OPT_QUIET   = 1 << 9,
+    OPT_ENGLISH = 1 << 10
 } ProgramOptions;
 
 typedef enum {

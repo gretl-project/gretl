@@ -30,8 +30,6 @@
 
 #define vwin_content_changed(v) (v->flags & VWIN_CONTENT_CHANGED)
 
-/* FIXME FUNC stuff */
-
 int vwin_is_editing (windata_t *vwin);
 
 int copyfile (const char *src, const char *dest);
@@ -82,6 +80,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role);
+
+gchar *title_from_filename (const char *fname);
 
 windata_t *console_window (int hsize, int vsize);
 

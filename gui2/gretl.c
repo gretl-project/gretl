@@ -93,7 +93,7 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    guint               time,
 		    gpointer            p);
 
-static char *optrun, *optdb, *optwebdb;
+static char *optrun, *optdb, *optwebdb, *optpkg;
 static int opteng, optdump, optver;
 #ifndef OLD_GTK
 static int optswitch;
@@ -118,6 +118,7 @@ static struct start_opts options[] = {
     { "run",     'r', N_("open a script file on startup"), "SCRIPT" },
     { "db",      'd', N_("open a database on startup"),    "DATABASE"},
     { "webdb",   'w', N_("open a remote (web) database on startup"), "REMOTE_DB" },
+    { "pkg",     'p', N_("open (edit) a function package on startup"), "FUNCPKG" },
     { "english", 'e', N_("force use of English"), NULL },
     { "dump",    'c', N_("dump gretl configuration to file"), NULL },
     { "version", 'v', N_("print version information"), NULL }, 
@@ -170,6 +171,8 @@ static void old_gretl_init (int *pargc, char ***pargv, char *filearg)
 	optdb = fname;
     } else if (opt & OPT_WEBDB) {
 	optwebdb = fname;
+    } else if (opt & OPT_FNPKG) {
+	optpkg = fname;
     } else if (*fname != '\0') {
 	/* got a data file argument? */
 	*pargc += 1;
@@ -186,6 +189,8 @@ static GOptionEntry options[] = {
       N_("open a database on startup"), "DATABASE" },
     { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optwebdb, 
       N_("open a remote (web) database on startup"), "REMOTE_DB" },
+    { "pkg", 'p', 0, G_OPTION_ARG_STRING, &optpkg, 
+      N_("open (edit) a function package on startup"), "FUNCPKG" },
     { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng, 
       N_("force use of English"), NULL },
     { "dump", 'c', 0, G_OPTION_ARG_NONE, &optdump, 
@@ -452,7 +457,7 @@ int main (int argc, char **argv)
     char *callname = argv[0];
 #endif
     int ftype = 0;
-    char dbname[MAXLEN];
+    char auxname[MAXLEN];
     char filearg[MAXLEN];
 #ifndef OLD_GTK
     GError *opterr = NULL;
@@ -464,7 +469,7 @@ int main (int argc, char **argv)
     *tryfile = '\0';
     *scriptfile = '\0';
     *paths.datfile = '\0';
-    *dbname = '\0';
+    *auxname = '\0';
     *filearg = '\0';
 
 #ifdef OLD_GTK 
@@ -499,11 +504,13 @@ int main (int argc, char **argv)
     } else if (optrun) {
 	get_runfile(optrun);
     } else if (optdb != NULL) {
-	strncat(dbname, optdb, MAXLEN - 1);
-	fix_dbname(dbname);
+	strncat(auxname, optdb, MAXLEN - 1);
+	fix_dbname(auxname);
     } else if (optwebdb != NULL) {
-	strncat(dbname, optdb, MAXLEN - 1);
-    } 
+	strncat(auxname, optdb, MAXLEN - 1);
+    } else if (optpkg != NULL) {
+	strncat(auxname, optpkg, MAXLEN - 1);
+    }
 
     if (opteng) {
 	force_language(LANG_C);
@@ -591,11 +598,11 @@ int main (int argc, char **argv)
 	case GRETL_NATIVE_DB:
 	case GRETL_RATS_DB:  
 	case GRETL_PCGIVE_DB:
-	    strcpy(dbname, paths.datfile);
+	    strcpy(auxname, paths.datfile);
 	    *tryfile = '\0';
 	    *paths.datfile = '\0';
-	    fix_dbname(dbname);
-	    optdb = dbname;
+	    fix_dbname(auxname);
+	    optdb = auxname;
 	    break;
 	case GRETL_UNRECOGNIZED:
 	default:
@@ -662,11 +669,13 @@ int main (int argc, char **argv)
 	silent_update_query(); 
     }
 
-    /* try opening specified database */
+    /* try opening specified database or package */
     if (optdb != NULL) {
-	open_named_db_index(dbname);
+	open_named_db_index(auxname);
     } else if (optwebdb != NULL) {
-	open_named_remote_db_index(dbname);
+	open_named_remote_db_index(auxname);
+    } else if (optpkg != NULL) {
+	edit_package_at_startup(auxname);
     }
 
     /* Enter the event loop */

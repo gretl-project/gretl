@@ -1330,7 +1330,7 @@ text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
-static gchar *title_from_filename (const char *fname)
+gchar *title_from_filename (const char *fname)
 {
     const char *p = strrchr(fname, SLASH);
     gchar *trfname, *title = NULL;
