@@ -95,17 +95,17 @@ struct ufunc_ {
 struct fnpkg_ {
     int ID;
     char name[FN_NAMELEN];
-    char *fname;
-    char *author;
-    char *version;
-    char *date;
-    char *descrip;
-    char *sample; /* sample caller script */
-    int minver;
-    FuncDataReq dreq;
-    ufunc *iface;
-    ufunc **priv;
-    int n_priv;
+    char *fname;      /* filename */
+    char *author;     /* author's name */
+    char *version;    /* package version string */
+    char *date;       /* last revision date */
+    char *descrip;    /* package description */
+    char *sample;     /* sample caller script */
+    int minver;       /* minimum required gretl version */
+    FuncDataReq dreq; /* data requirement */
+    ufunc *iface;     /* public interface */
+    ufunc **priv;     /* private functions */
+    int n_priv;       /* number of private functions */
 };
 
 enum {
@@ -964,9 +964,6 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf) && !err) {
-	if (string_is_blank(line)) {
-	    continue;
-	}
 	s = line;
 	while (isspace(*s)) s++;
 	tailstrip(s);
@@ -1266,7 +1263,7 @@ static void maybe_correct_line (char *line)
     }
 
     if (p != NULL && (p == line || *(p-1) == ' ')) {
-	shift_string_left(p + 4, 1);
+	shift_string_left(p + 3, 1);
     }
 }
 
@@ -4603,8 +4600,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	err = maybe_exec_line(&state, pZ, pdinfo);
 
 	if (!err && state.cmd->ci == FUNCRET) {
-	    err = handle_return_statement(u, &state, pZ, pdinfo); 
-	    retline = i;
+	    err = handle_return_statement(u, &state, pZ, pdinfo);
+	    if (i < u->n_lines - 1) {
+		retline = i;
+	    }
 	    break;
 	}
 
@@ -4681,8 +4680,11 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	pdinfo->t2 = orig_t2;
     }
 
-    if (err || retline >= 0) {
+    if (err && retline >= 0) {
 	gretl_if_state_clear();
+    } else if (retline >= 0) {
+	/* we returned prior to the end of the function */
+	gretl_if_state_reset(indent0);
     } else {
 	err = gretl_if_state_check(indent0);
     }

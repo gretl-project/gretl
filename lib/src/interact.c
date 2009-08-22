@@ -4926,7 +4926,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (err) {
         errmsg(err, s->prn);
-        return 1;
+        return err;
     }
     
     s->in_comment = cmd_ignore(s->cmd)? 1 : 0;
@@ -4944,7 +4944,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = gretl_loop_append_line(s, pZ, pdinfo);
 	if (err) {
 	    errmsg(err, s->prn);
-	    return 1;
+	    return err;
 	} 
 	return 0;
     } 

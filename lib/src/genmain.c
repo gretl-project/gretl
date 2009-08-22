@@ -897,11 +897,6 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 
     *err = realgen(s, p, pZ, pdinfo, NULL, flags);
 
-    if (*err == 1) {
-	*err = E_PARSE;
-	p->err = *err;
-    }
-
     if (*err) {
 	gen_cleanup(p);
 	free(p);

@@ -35,7 +35,8 @@ enum {
     IS_TRUE,
     UNINDENT,
     GETINDENT,
-    RELAX
+    RELAX,
+    IFRESET
 };
 
 static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err)
@@ -92,6 +93,7 @@ static const char *ifstr (int c)
     if (c == UNINDENT)  return "UNINDENT";
     if (c == GETINDENT) return "GETINDENT";
     if (c == RELAX)     return "RELAX";
+    if (c == IFRESET)   return "RESET";
     return "UNKNOWN";
 }
 #endif
@@ -105,7 +107,7 @@ static void unmatched_message (int code)
 
 #define IF_DEPTH 32
 
-static int ifstate (int code, int *err)
+static int ifstate (int code, int val, int *err)
 {
     static unsigned char T[IF_DEPTH];
     static unsigned char got_if[IF_DEPTH];
@@ -120,6 +122,8 @@ static int ifstate (int code, int *err)
 
     if (code == RELAX) {
 	indent = 0;
+    } else if (code == IFRESET) {
+	indent = val;
     } else if (code == GETINDENT) {
 	ret = indent;
     } else if (code == UNINDENT) {
@@ -180,7 +184,7 @@ static int set_if_state (int code)
 {
     int err = 0;
 
-    ifstate(code, &err);
+    ifstate(code, 0, &err);
     return err;
 }
 
@@ -188,22 +192,25 @@ static int get_if_state (int code)
 {
     int err = 0;
 
-    return ifstate(code, &err);
+    return ifstate(code, 0, &err);
 }
 
 void gretl_if_state_clear (void)
 {
-    ifstate(RELAX, NULL);
+#if IFDEBUG
+    fprintf(stderr, "gretl_if_state_clear called\n");
+#endif    
+    ifstate(RELAX, 0, NULL);
 }
 
 int gretl_if_state_finalize (void)
 {
     int ret, err = 0;
 
-    ret = ifstate(IS_TRUE, NULL);
+    ret = ifstate(IS_TRUE, 0, NULL);
 
     if (!ret) {
-	ifstate(RELAX, NULL);
+	ifstate(RELAX, 0, NULL);
 	err = E_PARSE;
     }
 
@@ -212,7 +219,12 @@ int gretl_if_state_finalize (void)
 
 int gretl_if_state_record (void)
 {
-    return ifstate(GETINDENT, NULL);
+    return ifstate(GETINDENT, 0, NULL);
+}
+
+void gretl_if_state_reset (int indent)
+{
+    ifstate(IFRESET, indent, NULL);
 }
 
 int gretl_if_state_false (void)
@@ -222,12 +234,12 @@ int gretl_if_state_false (void)
 
 int gretl_if_state_check (int indent0)
 {
-    int indent = ifstate(GETINDENT, NULL);
+    int indent = ifstate(GETINDENT, 0, NULL);
     int err = 0;
 
     if (indent != indent0) {
 	gretl_errmsg_sprintf(_("Unmatched \"%s\""), "if");
-	ifstate(RELAX, NULL);
+	ifstate(RELAX, 0, NULL);
 	err = E_PARSE;
     }
 

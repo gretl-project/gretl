@@ -8815,16 +8815,18 @@ void gen_save_or_print (parser *p, PRN *prn)
 
 void gen_cleanup (parser *p)
 {
-    if (p == NULL) {
-	return;
-    }
+    int protect = reusable(p);
 
 #if EDEBUG
     fprintf(stderr, "gen cleanup: reusable = %d, err = %d\n", 
 	    reusable(p), p->err);
 #endif
 
-    if (!p->err && reusable(p)) {
+    if (p->err && (p->flags & P_COMPILE)) {
+	protect = 0;
+    }
+
+    if (protect) {
 	/* just do limited cleanup */
 	if (p->ret != p->tree) {
 	    free_tree(p->ret, p, "p->ret");
