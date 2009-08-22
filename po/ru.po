@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-20 15:02-0400\n"
-"PO-Revision-Date: 2009-08-06 21:22-0400\n"
+"PO-Revision-Date: 2009-08-23 01:40+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -416,8 +416,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1249
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1255
 #, c-format
@@ -628,8 +627,7 @@ msgstr "Интегральная сумма масштабированных о�
 #: lib/src/compare.c:2887
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
-msgstr ""
-"('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
+msgstr "('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
 
 #: lib/src/compare.c:3055 lib/src/gretl_model.c:2876
 msgid "Test of common factor restriction"
@@ -779,8 +777,7 @@ msgstr "   похоже на заголовок столбца данных\n"
 
 #: lib/src/csvdata.c:1203
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 "   пустая ячейка для переменной %d, наблюдение %d: отмечена как пропущенное "
 "значение\n"
@@ -821,8 +818,7 @@ msgstr "   количество столбцов данных = %d\n"
 #: lib/src/csvdata.c:1504
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr ""
-"   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
+msgstr "   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
 
 #: lib/src/csvdata.c:1552
 msgid "scanning for variable names...\n"
@@ -1418,8 +1414,7 @@ msgstr "Из всех переменных для сохранения, %d уж�
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2687 lib/src/describe.c:3185
 #, c-format
@@ -3298,8 +3293,7 @@ msgstr "gretl_prn_new: Необходимо указать имя файла\n"
 
 #: lib/src/gretl_restrict.c:104
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Не удалось обратить матрицу: ограничения либо ошибочные, либо избыточные"
+msgstr "Не удалось обратить матрицу: ограничения либо ошибочные, либо избыточные"
 
 #: lib/src/gretl_restrict.c:724
 msgid "Please give a coefficient number"
@@ -4143,8 +4137,7 @@ msgstr "theta, использованная для квази-деусредне
 #: lib/src/modelprint.c:564
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:567
 #, c-format
@@ -4395,8 +4388,7 @@ msgstr "2МНК"
 
 #: lib/src/modelprint.c:818
 msgid "Critical values for TSLS bias relative to OLS:\n"
-msgstr ""
-"Критические значения для смещения 2МНК-оценок относитлельно МНК-оценок:\n"
+msgstr "Критические значения для смещения 2МНК-оценок относитлельно МНК-оценок:\n"
 
 #: lib/src/modelprint.c:821
 #, no-c-format
@@ -4525,8 +4517,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1136
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
-"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:1137
 msgid "variant"
@@ -4632,8 +4623,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1440
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1443
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -5359,10 +5349,8 @@ msgid "not significant at the 10% level\n"
 msgstr "не значим на 10% уровне\n"
 
 #: lib/src/nonparam.c:344
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Выборка слишком мала для расчета р-значения для нормального распределения\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Выборка слишком мала для расчета р-значения для нормального распределения\n"
 
 #: lib/src/nonparam.c:805
 msgid "Runs test (first difference)"
@@ -5589,8 +5577,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:104
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:105 lib/src/printout.c:129
@@ -5697,8 +5684,7 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:603
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:621 lib/src/printout.c:677
@@ -6037,8 +6023,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1740
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Общее количество пропущенных значений = %d (%.2f%% всех данных)\n"
 
 #: lib/src/subsample.c:1751
@@ -6167,13 +6152,11 @@ msgstr "LR-тест для диагональной ковариационной
 
 #: lib/src/system.c:2712
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr ""
-"Тест Бриша--Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
+msgstr "Тест Бриша--Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:2718
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr ""
-"Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
+msgstr "Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:3670 lib/src/system.c:3674 lib/src/system.c:3680
 #: lib/src/system.c:3684
@@ -6925,8 +6908,7 @@ msgstr "Тестовая статистика: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:1707
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr ""
-"Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
+msgstr "Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
 
 #: gui2/calculator.c:1710
 #, c-format
@@ -7370,8 +7352,7 @@ msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:619 gui2/callbacks.c:672
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr ""
-"Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
+msgstr "Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
 
 #: gui2/callbacks.c:625 gui2/callbacks.c:688 gui2/library.c:2805
 msgid "gretl: simultaneous equations system"
@@ -8579,8 +8560,7 @@ msgstr "Экспоненциальное скользящее среднее д�
 #: gui2/filters.c:185
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
-msgstr ""
-"Остатки экспоненциального скользящего среднего для %s (фактор затухания = %g)"
+msgstr "Остатки экспоненциального скользящего среднего для %s (фактор затухания = %g)"
 
 #: gui2/filters.c:190
 #, c-format
@@ -8732,7 +8712,6 @@ msgid "Call to function %s"
 msgstr "Вызвать функцию %s"
 
 #: gui2/fncall.c:620
-#, fuzzy
 msgid "Select arguments:"
 msgstr "Аргументы:"
 
@@ -11379,8 +11358,7 @@ msgstr "распределение частот"
 
 #: gui2/library.c:4014
 msgid "Data contain negative values: gamma distribution not appropriate"
-msgstr ""
-"Гамма распределение не подходит, т.к. данные содержат отрицательные значения"
+msgstr "Гамма распределение не подходит, т.к. данные содержат отрицательные значения"
 
 #: gui2/library.c:4123
 msgid "gretl: TRAMO analysis"
@@ -11838,8 +11816,7 @@ msgid "Sorry, ARMA models can't be put in the model table"
 msgstr "Модели ARMA не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:178
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -11944,8 +11921,7 @@ msgstr "gretl: список моделей"
 
 #: gui2/model_table.c:929
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr ""
-"Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
+msgstr "Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
 
 #: gui2/model_table.c:1033
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
@@ -12421,9 +12397,8 @@ msgstr ""
 "с использованием двухстороннего р-значения:"
 
 #: gui2/selector.c:4608
-#, fuzzy
 msgid "Test only selected variables"
-msgstr "_Логарифмы выделенных переменных"
+msgstr "Тестировать только выделенные переменные"
 
 #: gui2/selector.c:4633
 msgid "Fixed effects"
@@ -13642,8 +13617,7 @@ msgstr ""
 #: gui2/update.c:148
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
-"Этот файл является частью системы gretl для автоматичесгого обновления\n"
+msgstr "Этот файл является частью системы gretl для автоматичесгого обновления\n"
 
 #: gui2/update.c:210
 msgid "No new files"
@@ -14523,26 +14497,3 @@ msgstr "Статистика/преобразования"
 msgid "Probability distributions"
 msgstr "Распределения вероятностей"
 
-#~ msgid "selection"
-#~ msgstr "Выбрать из списка:"
-
-#~ msgid "Can't delete a variable when in sub-sample mode\n"
-#~ msgstr "Невозможно удалить переменную в режиме частичной выборки\n"
-
-#~ msgid "_Observation"
-#~ msgstr "_Наблюдения"
-
-#~ msgid "_Append obs"
-#~ msgstr "_Добавить"
-
-#~ msgid "_Insert obs"
-#~ msgstr "_Вставить"
-
-#~ msgid "Choose ->"
-#~ msgstr "Выбрать ->"
-
-#~ msgid "Add ->"
-#~ msgstr "Добавить ->"
-
-#~ msgid "<- Remove"
-#~ msgstr "<- Удалить"
