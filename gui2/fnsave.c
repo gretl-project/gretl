@@ -242,12 +242,13 @@ static int check_version_string (const char *s)
 static int maybe_revise_package_name (function_info *finfo)
 {
     gchar *base = g_strdup(finfo->fname);
+    char *p = strrchr(base, SLASH);
     const char *pubname;
-    char *p;
 
-    p = strrchr(base, SLASH);
     if (p != NULL) {
 	*(p + 1) = '\0';
+    } else {
+	*base = '\0';
     }
 
     free(finfo->fname);
@@ -619,6 +620,9 @@ static GtkWidget *interface_selector (function_info *finfo, int iface)
 	    fnname = user_function_name_by_index(finfo->privlist[i]);
 	    gtk_combo_box_append_text(GTK_COMBO_BOX(ifmenu), fnname);
 	}
+#if 0 /* not yet */
+	gtk_combo_box_append_text(GTK_COMBO_BOX(ifmenu), _("Add..."));
+#endif
     }
 
     gtk_combo_box_set_active(GTK_COMBO_BOX(ifmenu), 0);

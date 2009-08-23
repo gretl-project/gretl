@@ -3771,7 +3771,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	case F_QUANTILE:
 	    ret->v.xval = gretl_quantile(p->dinfo->t1, p->dinfo->t2, xvec, 
-					 rval);
+					 rval, &p->err);
 	    break;
 	default:
 	    break;

@@ -384,13 +384,15 @@ static double find_hoare_inexact (double *a, double p,
  * @t2: ending observation.
  * @x: data series.
  * @p: probability.
+ * @err: location to receive error code.
  *
  * Returns: the @p quantile of the series @x from obs
  * @t1 to obs @t2, skipping any missing values, or #NADBL 
  * on failure.
  */
 
-double gretl_quantile (int t1, int t2, const double *x, double p)
+double gretl_quantile (int t1, int t2, const double *x, double p,
+		       int *err)
 {
     double *a = NULL;
     double xmin, xmax;
@@ -400,16 +402,19 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
 
     if (p <= 0 || p >= 1) {
 	/* sanity check */
+	*err = E_DATA;
 	return NADBL;
     }
 
     n = gretl_minmax(t1, t2, x, &xmin, &xmax);
     if (n == 0) {
+	*err = E_DATA;
 	return NADBL;
     }
 
     a = malloc(n * sizeof *a);
     if (a == NULL) {
+	*err = E_ALLOC;
 	return NADBL;
     }
 
@@ -426,8 +431,10 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
 
     if (nh == 0 || nh == n) {
 	/* too few usable observations for such an extreme 
-	   quantile 
-	*/
+	   quantile */
+	*err = E_DATA;
+	fprintf(stderr, "n = %d: not enough data for %g quantile\n",
+		n, p);
 	free(a);
 	return NADBL;
     }
@@ -531,7 +538,9 @@ double gretl_array_quantile (double *a, int n, double p)
 
 double gretl_median (int t1, int t2, const double *x)
 {
-    return gretl_quantile(t1, t2, x, 0.5);
+    int err = 0;
+
+    return gretl_quantile(t1, t2, x, 0.5, &err);
 }
 
 /**

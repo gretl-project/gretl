@@ -89,7 +89,8 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
 			      const double *y, GretlOp yop, 
 			      double yval);
 
-double gretl_quantile (int t1, int t2, const double *x, double p);
+double gretl_quantile (int t1, int t2, const double *x, 
+		       double p, int *err);
 
 int gretl_array_quantiles (double *a, int n, double *p, int k);
 
