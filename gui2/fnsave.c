@@ -61,7 +61,6 @@ struct function_info_ {
     FuncDataReq dreq;
     int minver;
     int upload;
-    int saveas;
     int modified;
     const char *openscript;
 };
@@ -92,7 +91,6 @@ function_info *finfo_new (void)
     finfo->pkgdesc = NULL;
     finfo->sample = NULL;
     finfo->upload = 0;
-    finfo->saveas = 0;
     finfo->iface = -1;
     finfo->modified = 0;
 
@@ -259,7 +257,14 @@ static int maybe_revise_package_name (function_info *finfo)
     return 0;
 }
 
-static void real_finfo_save (function_info *finfo)
+/* Callback from the Save button when editing a function package.  We
+   assemble the relevant info then if the package is new and has not
+   been saved yet (which is flagged by finfo->fname being NULL) we
+   offer a file selector, else we go ahead and save using the
+   package's filename.  
+*/
+
+static void finfo_save (GtkWidget *w, function_info *finfo)
 {
     char **fields[] = {
 	&finfo->author,
@@ -298,23 +303,13 @@ static void real_finfo_save (function_info *finfo)
 	free(tmp);
     }
 
-    if (finfo->saveas) {
+    if (finfo->fname == NULL) {
 	file_selector_with_parent(SAVE_FUNCTIONS, FSEL_DATA_MISC, 
 				  finfo, finfo->dlg);
     } else {
 	maybe_revise_package_name(finfo);
-	err = save_user_functions(finfo->fname, finfo);
+	err = save_function_package(finfo->fname, finfo);
     }
-
-    if (!err) {
-	finfo_set_modified(finfo, FALSE);
-    }
-}
-
-static void finfo_save (GtkWidget *w, function_info *finfo)
-{
-    finfo->saveas = (finfo->fname == NULL);
-    real_finfo_save(finfo);
 }
 
 static void finfo_destroy (GtkWidget *w, function_info *finfo)
@@ -1272,10 +1267,12 @@ fnpkg_check_filename (function_info *finfo, const char *fname)
     return err;
 }
 
-int save_user_functions (const char *fname, gpointer p)
+/* callback from file selector when saving a function package */
+
+int save_function_package (const char *fname, gpointer p)
 {
     function_info *finfo = p;
-    int i, err;
+    int err = 0;
 
     /* sync/check filename with functions editor */
     if (finfo->fname == NULL) {
@@ -1286,41 +1283,40 @@ int save_user_functions (const char *fname, gpointer p)
 	finfo->fname = g_strdup(fname);
     } 
 
-    if (finfo->privlist != NULL) {
-	for (i=1; i<=finfo->privlist[0]; i++) {
-	    gretl_function_set_private(finfo->privlist[i], TRUE);
-	}
+    gretl_function_set_info(finfo->pub, finfo->help);
+
+    if (finfo->pkg == NULL) {
+	/* starting from scratch */
+	finfo->pkg = function_package_new(fname, finfo->pub, finfo->privlist, &err);
+    } else {
+	err = function_package_connect_funcs(finfo->pkg, finfo->pub, finfo->privlist);
     }
 
-    gretl_function_set_info(finfo->pub, finfo->help);
-    gretl_function_set_private(finfo->pub, FALSE);
+    if (!err) {
+	err = function_package_set_properties(finfo->pkg,
+					      "author", finfo->author,
+					      "version", finfo->version,
+					      "date", finfo->date,
+					      "description", finfo->pkgdesc,
+					      "sample-script", finfo->sample,
+					      "data-requirement", finfo->dreq,
+					      "min-version", finfo->minver,
+					      NULL);
+    }
 
-#if 0
-    fprintf(stderr, "author='%s'\n", finfo->author);
-    fprintf(stderr, "version='%s'\n", finfo->version);
-    fprintf(stderr, "date='%s'\n", finfo->date);
-    fprintf(stderr, "pkgdesc='%s'\n", finfo->pkgdesc);
-    fprintf(stderr, "finfo->pub = %d\n", finfo->pub);
-    printlist(finfo->privlist, "finfo->privlist");
-    fprintf(stderr, "dreq=%d\n", finfo->dreq);
-    fprintf(stderr, "minver=%d\n", finfo->minver);
-#endif
-		
-    err = write_function_package(finfo->pkg,
-				 fname,
-				 finfo->pub, 
-				 finfo->privlist,
-				 finfo->author,
-				 finfo->version,
-				 finfo->date,
-				 finfo->pkgdesc,
-				 finfo->sample,
-				 finfo->dreq,
-				 finfo->minver);
+    /* Note: if we allow "save as..." for existing, named function
+       packages then we'll need a function to reset the package
+       ID, in gretl_func.c.
+    */
+
+    if (!err) {
+	err = write_function_package(finfo->pkg);
+    }
 
     if (err) {
 	gui_errmsg(err);
     } else {
+	finfo_set_modified(finfo, FALSE);
 	maybe_update_func_files_window(1);
 	if (finfo->upload) {
 	    if (finfo->sample == NULL) {
@@ -1334,7 +1330,10 @@ int save_user_functions (const char *fname, gpointer p)
     return err;
 }
 
-int save_user_functions_as_script (const char *fname, gpointer p)
+/* callback from file selector when exporting a package in the form
+   of a regular script */
+
+int save_function_package_as_script (const char *fname, gpointer p)
 {
     function_info *finfo = p;
     PRN *prn;
@@ -1449,24 +1448,24 @@ void edit_function_package (const char *fname, int *loaderr)
 	return;
     }
 
-    err = function_package_get_info(fname,
-				    &finfo->pkg,
-				    &finfo->pub,
-				    &finfo->privlist,
-				    &finfo->author,
-				    &finfo->version,
-				    &finfo->date,
-				    &finfo->pkgdesc,
-				    &finfo->sample,
-				    &finfo->dreq,
-				    &finfo->minver);
-
+    err = function_package_get_properties(fname,
+					  "package",  &finfo->pkg,
+					  "pubnum",   &finfo->pub,
+					  "privlist", &finfo->privlist,
+					  "author",   &finfo->author,
+					  "version",  &finfo->version,
+					  "date",     &finfo->date,
+					  "description", &finfo->pkgdesc,
+					  "sample-script",    &finfo->sample,
+					  "data-requirement", &finfo->dreq,
+					  "min-version", &finfo->minver,
+					  NULL);
     if (err) {
 	fprintf(stderr, "function_package_get_info: failed on %s\n", fname);
 	errbox("Couldn't get function package information");
 	finfo_free(finfo);
 	return;
-    }
+    }    
 
     p = strrchr(fname, SLASH);
     if (p == NULL) {

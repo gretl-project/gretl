@@ -105,31 +105,16 @@ int gretl_function_get_info (int i, const char *key, char const **value);
 
 int gretl_function_print_code (int i, PRN *prn);
 
-void gretl_function_set_private (int i, int priv);
+fnpkg *function_package_new (const char *fname, int pub, 
+			     const int *privlist, int *err);
 
-int write_function_package (fnpkg *pkg,
-			    const char *fname,
-			    int pub, 
-			    const int *privlist, 
-			    const char *author,
-			    const char *version,
-			    const char *date,
-			    const char *descrip,
-			    char *sample,
-			    FuncDataReq dreq,
-			    int minver);
+int function_package_connect_funcs (fnpkg *pkg, int pub, const int *privlist);
 
-int function_package_get_info (const char *fname,
-			       fnpkg **ppkg,
-			       int *pub, 
-			       int **privlist,
-			       char **author,
-			       char **version,
-			       char **date,
-			       char **descrip,
-			       char **sample,
-			       FuncDataReq *dreq,
-			       int *minver);
+int function_package_set_properties (fnpkg *pkg, ...);
+
+int function_package_get_properties (const char *fname, ...);
+
+int write_function_package (fnpkg *pkg);
 
 int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 			  int minver);

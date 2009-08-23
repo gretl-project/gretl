@@ -496,9 +496,9 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
     } else if (action == SAVE_FUNCTIONS) {
-	save_user_functions(fname, data);
+	save_function_package(fname, data);
     } else if (action == SAVE_FUNCTIONS_AS) {
-	save_user_functions_as_script(fname, data);
+	save_function_package_as_script(fname, data);
     } else if (action == SAVE_BOOT_DATA) {
 	bootstrap_save_callback(fname);
     } else if (action == SET_PROG || action == SET_DIR) {

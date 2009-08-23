@@ -970,18 +970,11 @@ void call_function_package (const char *fname, GtkWidget *w,
     }
 
     /* get interface for package */
-    err = function_package_get_info((*tmpfile)? tmpfile : fname,
-				    NULL,
-				    &cinfo->iface,
-				    NULL,
-				    NULL,
-				    NULL,
-				    NULL,
-				    NULL,
-				    NULL,
-				    &dreq,
-				    &minver);
-
+    err = function_package_get_properties((*tmpfile)? tmpfile : fname,
+					  "pubnum", &cinfo->iface,
+					  "data-requirement", &dreq,
+					  "min-version", &minver,
+					  NULL);
     if (*tmpfile) {
 	gretl_remove(tmpfile);
     }

@@ -24,9 +24,9 @@ void edit_function_package (const char *fname, int *loaderr);
 
 void prepare_functions_save (void);
 
-int save_user_functions (const char *fname, gpointer p);
+int save_function_package (const char *fname, gpointer p);
 
-int save_user_functions_as_script (const char *fname, gpointer p);
+int save_function_package_as_script (const char *fname, gpointer p);
 
 int no_user_functions_check (void);
 

@@ -145,8 +145,8 @@ static fnpkg **pkgs;
 
 static void real_user_function_help (ufunc *fun, int ci, PRN *prn);
 static void delete_ufunc_from_list (ufunc *fun);
-static fnpkg *function_package_new (const char *fname);
-static int function_package_add (fnpkg *pkg);
+static fnpkg *function_package_alloc (const char *fname);
+static int function_package_record (fnpkg *pkg);
 static int function_package_remove_by_ID (int ID);
 
 /* record of state, and communication of state with outside world */
@@ -1471,13 +1471,6 @@ int gretl_function_get_info (int i, const char *key, char const **value)
     return 0;
 }
 
-void gretl_function_set_private (int i, int priv)
-{
-    if (i >= 0 && i < n_ufuns) {
-	ufuns[i]->private = (priv != 0);
-    }
-}
-
 static char *get_version_string (char *s, int v)
 {
     int x, y, z;
@@ -1490,29 +1483,92 @@ static char *get_version_string (char *s, int v)
     return s;
 }
 
-static fnpkg *new_package_with_funcs (const char *fname, int pub, 
-				      const int *privlist)
+int function_package_connect_funcs (fnpkg *pkg, int pub, const int *privlist)
 {
-    fnpkg *pkg = function_package_new(fname);
-    int i;
+    int err = 0;
 
+    if (pub < 0 || pub >= n_ufuns) {
+	err = E_DATA;
+    } else {
+	ufuns[pub]->pkgID = pkg->ID;
+	ufuns[pub]->private = 0;
+	pkg->iface = ufuns[pub];
+    }
+
+    if (!err && privlist != NULL && privlist[0] > 0) {
+	ufunc **priv;
+
+	priv = realloc(pkg->priv, privlist[0] * sizeof *priv);
+	if (priv == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    int i, fi;
+
+	    pkg->priv = priv;
+	    pkg->n_priv = privlist[0];
+
+	    for (i=1; i<=privlist[0] && !err; i++) {
+		fi = privlist[i];
+		if (fi < 0 || fi >= n_ufuns) {
+		    err = E_DATA;
+		} else {
+		    pkg->priv[i-1] = ufuns[fi];
+		    ufuns[fi]->pkgID = pkg->ID;
+		    ufuns[fi]->private = 1;
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* Allocate a new function package: @fname is the filename it will be
+   given, @pub is the ID number of the public interface function, and
+   @privlist is the list of ID numbers of private functions (if
+   applicable, otherwise NULL).  The function ID numbers are cashed
+   out into pointers to user-functions in the returned fnpkg struct.
+*/
+
+fnpkg *function_package_new (const char *fname, int pub, 
+			     const int *privlist, int *err)
+{
+    fnpkg *pkg;
+    int i, fi;
+
+    /* first check that all the given function ID numbers are in
+       bounds */
+
+    if (pub < 0 || pub >= n_ufuns) {
+	fprintf(stderr, "function ID %d is out of bounds\n", pub);
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (privlist != NULL) {
+	for (i=1; i<=privlist[0]; i++) {
+	    fi = privlist[i];
+	    if (fi < 0 || fi >= n_ufuns) {
+		fprintf(stderr, "function ID %d is out of bounds\n", fi);
+		*err = E_DATA;
+		return NULL;
+	    }
+	}
+    }
+
+    pkg = function_package_alloc(fname);
     if (pkg == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     } 
 
-    if (privlist != NULL && privlist[0] > 0) {
-	pkg->priv = malloc(privlist[0] * sizeof *pkg->priv);
-	if (pkg->priv == NULL) {
-	    free(pkg);
-	    return NULL;
-	}
-	for (i=1; i<=privlist[0]; i++) {
-	    pkg->priv[i-1] = ufuns[privlist[i]];
-	}
-	pkg->n_priv = privlist[0];
-    }
+    *err = function_package_connect_funcs(pkg, pub, privlist);
 
-    pkg->iface = ufuns[pub];
+    if (*err) {
+	free(pkg->fname);
+	free(pkg);
+	pkg = NULL;
+    }
 
     return pkg;
 }
@@ -1523,60 +1579,18 @@ static char *trim_script (char *s)
     return tailstrip(s);
 }
 
-/* Three cases should be distinguished below: (a) saving a totally new
-   package; (b) saving changes to an existing package with no change
-   to the version; and (c) saving changes to an existing package with
-   a version change.  
+/* write out a function package as an XML file, using the filename
+   given in the package struct */
 
-   In case (a) the "pkg" argument will be NULL, otherwise it will be
-   non-NULL.  We can tell cases (b) and (c) apart by checking whether
-   the given "fname" differs from the existing package's filename: if
-   so, we're in case (c), which we mark using "saveas".
-*/
-
-int write_function_package (fnpkg *pkg,
-			    const char *fname,
-			    int pub, 
-			    const int *privlist,
-			    const char *author,
-			    const char *version,
-			    const char *date,
-			    const char *descrip,
-			    char *sample,
-			    FuncDataReq dreq,
-			    int minver)
+int write_function_package (fnpkg *pkg)
 {
     char *pkgname;
     FILE *fp;
-    int newpkg = 0;
-    int saveas = 0;
-    int i, fi;
     int err = 0;
 
-    if (n_ufuns == 0) {
-	fprintf(stderr, "No functions are defined\n");
-	return 0;
-    }
-
-    if (author == NULL || version == NULL || date == NULL || 
-	descrip == NULL || pub < 0) {
-	strcpy(gretl_errmsg, "Function information is incomplete");
-	return E_DATA;
-    }
-
-    if (pkg == NULL) {
-	pkg = new_package_with_funcs(fname, pub, privlist);
-	if (pkg == NULL) {
-	    return E_ALLOC;
-	} 
-	newpkg = 1;
-    } else if (strcmp(fname, pkg->fname)) {
-	saveas = 1;
-    }
-
-    fp = gretl_fopen(fname, "w");
+    fp = gretl_fopen(pkg->fname, "w");
     if (fp == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
+	sprintf(gretl_errmsg, _("Couldn't open %s"), pkg->fname);
 	return E_FOPEN;
     }
 
@@ -1585,55 +1599,49 @@ int write_function_package (fnpkg *pkg,
     fputs("<gretl-functions>\n", fp);
     fputs("<gretl-function-package", fp);
 
-    pkgname = make_pkgname(fname);
+    /* FIXME what about pkg->name? */
+    pkgname = make_pkgname(pkg->fname);
     if (pkgname != NULL) {
 	fprintf(fp, " name=\"%s\"", pkgname);
 	free(pkgname);
     }
 
-    if (newpkg || saveas) {
-	pkg->ID = (int) time(NULL);
-    } 
-
     fprintf(fp, " ID=\"%d\"", pkg->ID);
 
-    if (dreq == FN_NEEDS_TS) {
+    if (pkg->dreq == FN_NEEDS_TS) {
 	fprintf(fp, " %s=\"true\"", NEEDS_TS);
-    } else if (dreq == FN_NEEDS_QM) {
+    } else if (pkg->dreq == FN_NEEDS_QM) {
 	fprintf(fp, " %s=\"true\"", NEEDS_QM);
-    } else if (dreq == FN_NEEDS_PANEL) {
+    } else if (pkg->dreq == FN_NEEDS_PANEL) {
 	fprintf(fp, " %s=\"true\"", NEEDS_PANEL);
     }
 
-    if (minver > 0) {
+    if (pkg->minver > 0) {
 	char vstr[8];
 
-	fprintf(fp, " minver=\"%s\"", get_version_string(vstr, minver));
+	fprintf(fp, " minver=\"%s\"", get_version_string(vstr, pkg->minver));
     }
 
     fputs(">\n", fp);
 
-    gretl_xml_put_tagged_string("author", author, fp);
-    gretl_xml_put_tagged_string("version", version, fp);
-    gretl_xml_put_tagged_string("date", date, fp);
-    gretl_xml_put_tagged_string("description", descrip, fp);
+    gretl_xml_put_tagged_string("author", pkg->author, fp);
+    gretl_xml_put_tagged_string("version", pkg->version, fp);
+    gretl_xml_put_tagged_string("date", pkg->date, fp);
+    gretl_xml_put_tagged_string("description", pkg->descrip, fp);
 
-    ufuns[pub]->pkgID = pkg->ID;
-    write_function_xml(ufuns[pub], fp);
+    write_function_xml(pkg->iface, fp);
 
-    if (privlist != NULL) {
-	for (i=1; i<=privlist[0]; i++) {
-	    fi = privlist[i];
-	    if (fi >= 0 && fi < n_ufuns) {
-		ufuns[fi]->pkgID = pkg->ID;
-		write_function_xml(ufuns[fi], fp);
-	    }
+    if (pkg->priv != NULL) {
+	int i;
+
+	for (i=0; i<pkg->n_priv; i++) {
+	    write_function_xml(pkg->priv[i], fp);
 	}
     }
 
-    if (sample != NULL) {
+    if (pkg->sample != NULL) {
  	/* escapes may be needed; also perhaps trimming */
-	char *s = trim_script(sample);
+	char *s = trim_script(pkg->sample);
 
 	fputs("<sample-script>\n", fp);
 	gretl_xml_put_raw_string(s, fp);
@@ -1643,77 +1651,94 @@ int write_function_package (fnpkg *pkg,
     fputs("</gretl-function-package>\n", fp);
     fputs("</gretl-functions>\n", fp);
 
-    fclose(fp);
-
-    if (newpkg) {
-	pkg->author = gretl_strdup(author);
-	pkg->version = gretl_strdup(version);
-	pkg->date = gretl_strdup(date);
-	pkg->descrip = gretl_strdup(descrip);
-	pkg->sample = gretl_strdup(sample);
-    } else {
-	if (strcmp(fname, pkg->fname)) {
-	    free(pkg->fname);
-	    pkg->fname = gretl_strdup(fname);
-	}
-	if (strcmp(author, pkg->author)) {
-	    free(pkg->author);
-	    pkg->author = gretl_strdup(author);
-	}
-	if (strcmp(version, pkg->version)) {
-	    free(pkg->version);
-	    pkg->version = gretl_strdup(version);
-	}
-	if (strcmp(date, pkg->date)) {
-	    free(pkg->date);
-	    pkg->date = gretl_strdup(date);
-	}
-	if (strcmp(descrip, pkg->descrip)) {
-	    free(pkg->descrip);
-	    pkg->descrip = gretl_strdup(descrip);
-	}
-	if (sample != NULL && 
-	    (pkg->sample == NULL || strcmp(sample, pkg->sample))) {
-	    free(pkg->sample);
-	    pkg->sample = gretl_strdup(sample);
-	}
-    } 
-
-    if (pkg->author == NULL || pkg->version == NULL ||
-	pkg->date == NULL || pkg->descrip == NULL ||
-	pkg->fname == NULL) {
-	err = E_ALLOC;
-    } else {
-	pkg->dreq = dreq;
-	pkg->minver = minver;
-	if (newpkg) {
-	    err = function_package_add(pkg);
-	}
-    }
+    fclose(fp);    
 
     return err;
 }
 
-int function_package_get_info (const char *fname,
-			       fnpkg **ppkg,
-			       int *pub, 
-			       int **privlist,
-			       char **author,
-			       char **version,
-			       char **date,
-			       char **descrip,
-			       char **sample,
-			       FuncDataReq *dreq,
-			       int *minver)
+static int maybe_replace_string_var (char **svar, const char *src)
 {
+    if (*svar == NULL) {
+	*svar = gretl_strdup(src);
+    } else if (strcmp(*svar, src)) {
+	free(*svar);
+	*svar = gretl_strdup(src);
+    }
+
+    return (*svar == NULL)? E_ALLOC : 0;
+}
+
+static int is_string_property (const char *key)
+{
+    return !strcmp(key, "fname") ||
+	!strcmp(key, "author")   ||
+	!strcmp(key, "version")  ||
+	!strcmp(key, "date")     ||
+	!strcmp(key, "description") ||
+	!strcmp(key, "sample-script");
+}
+
+int function_package_set_properties (fnpkg *pkg, ...)
+{
+    va_list ap;
+    const char *key;
+    int i, err = 0;
+
+    va_start(ap, pkg);
+
+    for (i=1; !err; i++) {
+	key = va_arg(ap, const char *);
+	if (key == NULL) {
+	    break;
+	}
+	if (is_string_property(key)) {
+	    const char *cval = va_arg(ap, const char *);
+
+	    if (!strcmp(key, "fname")) {
+		err = maybe_replace_string_var(&pkg->fname, cval);
+	    } else if (!strcmp(key, "author")) {
+		err = maybe_replace_string_var(&pkg->author, cval);
+	    } else if (!strcmp(key, "date")) {
+		err = maybe_replace_string_var(&pkg->date, cval);
+	    } else if (!strcmp(key, "version")) {
+		err = maybe_replace_string_var(&pkg->version, cval);
+	    } else if (!strcmp(key, "description")) {
+		err = maybe_replace_string_var(&pkg->descrip, cval);
+	    } else if (!strcmp(key, "sample-script")) {
+		err = maybe_replace_string_var(&pkg->sample, cval);
+	    }
+	} else {
+	    int ival = va_arg(ap, int);
+
+	    if (!strcmp(key, "data-requirement")) {
+		pkg->dreq = ival;
+	    } else if (!strcmp(key, "min-version")) {
+		pkg->minver = ival;
+	    }
+	} 
+    }
+
+    va_end(ap);
+
+    return err;
+}
+
+int function_package_get_properties (const char *fname, ...)
+{
+    va_list ap;
     fnpkg *pkg = NULL;
-    int pubnum = -1;
+    int npub = 0;
     int npriv = 0;
-    int *list = NULL;
-    int i, j, err = 0;
+    int pubnum = -1;
+    int **plist = NULL;
+    const char *key;
+    void *ptr;
+    char **ps;
+    int *pi;
+    int i, err = 0;
 
     if (n_pkgs == 0 || n_ufuns == 0) {
-	fprintf(stderr, "function_package_get_info: no functions loaded\n");
+	fprintf(stderr, "function_package_get_properties: no functions loaded\n");
 	return 1;
     }
 
@@ -1733,31 +1758,6 @@ int function_package_get_info (const char *fname,
     fprintf(stderr, "Found package, ID = %d\n", pkg->ID);
 #endif
 
-    if (ppkg != NULL) {
-	*ppkg = pkg;
-    }
-    if (author != NULL) {
-	*author = gretl_strdup(pkg->author);
-    }
-    if (date != NULL) {
-	*date = gretl_strdup(pkg->date);
-    }
-    if (version != NULL) {
-	*version = gretl_strdup(pkg->version);
-    }
-    if (descrip != NULL) {
-	*descrip = gretl_strdup(pkg->descrip);
-    }
-    if (sample != NULL) {
-	*sample = gretl_strdup(pkg->sample);
-    }
-    if (dreq != NULL) {
-	*dreq = pkg->dreq;
-    }
-    if (minver != NULL) {
-	*minver = pkg->minver;
-    }
-
     for (i=0; i<n_ufuns; i++) {
 #if PKG_DEBUG
 	fprintf(stderr, "checking func %i, pkgID = %d\n", i, 
@@ -1767,34 +1767,85 @@ int function_package_get_info (const char *fname,
 	    if (ufuns[i]->private) {
 		npriv++;
 	    } else {
+		npub++;
 		pubnum = i;
 	    }
 	}
     }
 
 #if PKG_DEBUG
-    fprintf(stderr, "npriv = %d, pubnum = %d\n", npriv, pubnum);
+    fprintf(stderr, "npub = %d, npriv = %d, pubnum = %d\n", npub, npriv, pubnum);
 #endif
 
-    if (!err && pub != NULL && pubnum >= 0) {
-	*pub = pubnum;
+    va_start(ap, fname);
+
+    for (i=1; ; i++) {
+	key = va_arg(ap, const char *);
+	if (key == NULL) {
+	    break;
+	}
+	ptr = va_arg(ap, void *);
+	if (ptr == NULL) {
+	    break;
+	}
+	if (!strcmp(key, "package")) {
+	    fnpkg **ppkg = (fnpkg **) ptr;
+
+	    *ppkg = pkg;
+	} else if (!strcmp(key, "author")) {
+	    ps = (char **) ptr;
+	    *ps = gretl_strdup(pkg->author);
+	} else if (!strcmp(key, "date")) {
+	    ps = (char **) ptr;
+	    *ps = gretl_strdup(pkg->date);
+	} else if (!strcmp(key, "version")) {
+	    ps = (char **) ptr;
+	    *ps = gretl_strdup(pkg->version);
+	} else if (!strcmp(key, "description")) {
+	    ps = (char **) ptr;
+	    *ps = gretl_strdup(pkg->descrip);
+	} else if (!strcmp(key, "sample-script")) {
+	    ps = (char **) ptr;
+	    *ps = gretl_strdup(pkg->sample);
+	} else if (!strcmp(key, "data-requirement")) {
+	    pi = (int *) ptr;
+	    *pi = pkg->dreq;
+	} else if (!strcmp(key, "min-version")) {
+	    pi = (int *) ptr;
+	    *pi = pkg->minver;
+	} else if (!strcmp(key, "n-public")) {
+	    pi = (int *) ptr;
+	    *pi = npub;
+	} else if (!strcmp(key, "n-private")) {
+	    pi = (int *) ptr;
+	    *pi = npriv;
+	} else if (!strcmp(key, "pubnum")) {
+	    pi = (int *) ptr;
+	    *pi = pubnum;
+	} else if (!strcmp(key, "privlist")) {
+	    plist = (int **) ptr;
+	}
     }
 
-    if (!err && privlist != NULL && npriv > 0) {
-	list = gretl_list_new(npriv);
+    va_end(ap);
+
+    if (plist != NULL && npriv > 0) {
+ 	int *list = gretl_list_new(npriv);
+
 	if (list != NULL) {
-	    j = 1;
+	    int j = 1;
+
 	    for (i=0; i<n_ufuns; i++) {
 		if (ufuns[i]->pkgID == pkg->ID && ufuns[i]->private) {
 		    list[j++] = i;
 		}
 	    }	    
-	    *privlist = list;
+	    *plist = list;
 	} else {
 	    err = E_ALLOC;
 	}
-    }
-	    
+    }	
+
     return err;
 }
 
@@ -1948,7 +1999,7 @@ static int function_package_remove_by_ID (int ID)
     return err;
 }
 
-static int function_package_add (fnpkg *pkg)
+static int function_package_record (fnpkg *pkg)
 {
     fnpkg **tmp;
     int err = 0;
@@ -2010,15 +2061,16 @@ static int fname_is_tmpfile (const char *fname)
     return strncmp(p, "dltmp.", 6) == 0;
 }
 
-static fnpkg *function_package_new (const char *fname)
+static fnpkg *function_package_alloc (const char *fname)
 {
     fnpkg *pkg = malloc(sizeof *pkg);
+    int err = 0;
 
     if (pkg == NULL) {
 	return NULL;
     }
 
-    pkg->ID = n_pkgs + 1; /* FIXME? */
+    pkg->ID = (int) time(NULL);
     *pkg->name = '\0';
     pkg->author = NULL;
     pkg->version = NULL;
@@ -2033,11 +2085,19 @@ static fnpkg *function_package_new (const char *fname)
     pkg->n_priv = 0;
 
     pkg->fname = gretl_strdup(fname);
+
     if (pkg->fname == NULL) {
 	free(pkg);
 	pkg = NULL;
     } else if (!fname_is_tmpfile(fname)) {
 	pkg_name_from_filename(pkg);
+    }
+
+    err = function_package_record(pkg);
+    if (err) {
+	free(pkg->fname);
+	free(pkg);
+	pkg = NULL;
     }
 
     return pkg;
@@ -2079,16 +2139,14 @@ static void maybe_clear_out_duplicate (ufunc *fun)
 
 static int real_load_package (fnpkg *pkg)
 {
-    int i, err;
+    int i, err = 0;
 
 #if PKG_DEBUG
     fprintf(stderr, "real_load_package: name='%s', ID = %d\n",
 	    pkg->name, pkg->ID);
 #endif
 
-    err = function_package_add(pkg);
-
-    if (!err && pkg->priv != NULL) {
+    if (pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv && !err; i++) {
 	    maybe_clear_out_duplicate(pkg->priv[i]);
 	    err = add_allocated_ufunc(pkg->priv[i]);
@@ -2168,7 +2226,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
     fprintf(stderr, "real_read_package: fname='%s'\n", fname);
 #endif
 
-    pkg = function_package_new(fname);
+    pkg = function_package_alloc(fname);
     if (pkg == NULL) {
 	*err = E_ALLOC;
 	return NULL;
