@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-20 15:02-0400\n"
-"PO-Revision-Date: 2009-08-06 21:06-0400\n"
+"PO-Revision-Date: 2009-08-23 18:42+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -12525,9 +12525,8 @@ msgstr ""
 "utilizando el valor p a dos colas:"
 
 #: gui2/selector.c:4608
-#, fuzzy
 msgid "Test only selected variables"
-msgstr "_Logaritmos de las variables seleccionadas"
+msgstr "Contrastar sólo las variables seleccionadas"
 
 #: gui2/selector.c:4633
 msgid "Fixed effects"
@@ -13044,7 +13043,7 @@ msgstr "Mostrar automáticamente la vista de iconos"
 
 #: gui2/settings.c:182
 msgid "Enable Ox support"
-msgstr ""
+msgstr "Permitir el soporte de Ox"
 
 #: gui2/settings.c:185
 msgid "Set working directory from shell"
@@ -13097,14 +13096,12 @@ msgid "Path to tramo"
 msgstr "Camino a tramo"
 
 #: gui2/settings.c:222
-#, fuzzy
 msgid "Path to R library"
-msgstr "camino a tramo"
+msgstr "Camino a la biblioteca de R"
 
 #: gui2/settings.c:226
-#, fuzzy
 msgid "Path to oxl executable"
-msgstr "Añadir a la tabla de modelos"
+msgstr "Camino al ejecutable de oxl"
 
 #: gui2/settings.c:229
 msgid "gretl database directory"
@@ -13251,7 +13248,7 @@ msgstr "gretl: directorio de trabajo"
 
 #: gui2/ssheet.c:122
 msgid "Apply"
-msgstr ""
+msgstr "Aplicar"
 
 #: gui2/ssheet.c:151
 msgid "_Fill"
