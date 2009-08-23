@@ -14,6 +14,7 @@
 "ects_nls","Nonlinear least squares example"
 "engel","Engel's income and food expenditure data"
 "galton","Francis Galton's heights data"
+"gear","NIST data for variance tests"
 "hall","Consumption and asset returns, U.S."
 "hamilton","Prices and exchange rate, U.S. and Italy"
 "hendry_jae","David Hendry, JAE 2001, UK macro data"
