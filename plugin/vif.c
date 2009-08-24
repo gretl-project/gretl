@@ -204,8 +204,7 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
     return vif;
 }
 
-#define xtx_ok(c) (c == OLS || c == AR1 || \
-		   c == WLS || c == HSK) 
+#define xtx_ok(c) (c == OLS || c == AR1 || c == WLS) 
 
 int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		PRN *prn)
