@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-20 15:02-0400\n"
-"PO-Revision-Date: 2009-08-20 12:58+0300\n"
+"PO-Revision-Date: 2009-08-24 09:43+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -8744,9 +8744,8 @@ msgid "Call to function %s"
 msgstr "Çağırılan işlev %s"
 
 #: gui2/fncall.c:620
-#, fuzzy
 msgid "Select arguments:"
-msgstr "Argümanlar:"
+msgstr "Argümanları seçiniz:"
 
 #: gui2/fncall.c:658
 msgid "More..."
@@ -13157,7 +13156,7 @@ msgstr "gretl: çalışma dizini"
 
 #: gui2/ssheet.c:122
 msgid "Apply"
-msgstr ""
+msgstr "Uygula"
 
 #: gui2/ssheet.c:151
 msgid "_Fill"
