@@ -1413,31 +1413,41 @@ static fnpkg *ufunc_get_parent_package (const ufunc *fun)
     return NULL;
 }
 
-static char *make_pkgname (const char *fname)
+static void name_package_from_filename (fnpkg *pkg)
 {
-    char *p = strrchr(fname, SLASH);
-    char *ret;
+    char *p = strrchr(pkg->fname, SLASH);
+    char *tmp;
 
     if (p != NULL) {
-	ret = gretl_strdup(p + 1);
+	tmp = gretl_strdup(p + 1);
     } else {
-	ret = gretl_strdup(fname);
+	tmp = gretl_strdup(pkg->fname);
     }
 
-    if (ret == NULL) {
-	return NULL;
+    if (tmp == NULL) {
+	if (*pkg->name == '\0') {
+	    strcpy(pkg->name, "unknown");
+	}
+	return;
     }
 
-    p = strrchr(ret, '-');
+    p = strrchr(tmp, '-');
     if (p == NULL) {
-	p = strstr(ret, ".gfn");
+	p = strstr(tmp, ".gfn");
     }
 
     if (p != NULL) {
-	*p = 0;
-    } 
+	*p = '\0';
+    }
 
-    return ret;
+    *pkg->name = '\0';
+    strncat(pkg->name, tmp, FN_NAMELEN-1);
+    free(tmp);
+
+#if PKG_DEBUG
+    fprintf(stderr, "filename '%s' -> pkgname '%s'\n",
+	    fname, pkg->name);
+#endif
 }
 
 int gretl_function_get_info (int i, const char *key, char const **value)
@@ -1584,7 +1594,6 @@ static char *trim_script (char *s)
 
 int write_function_package (fnpkg *pkg)
 {
-    char *pkgname;
     FILE *fp;
     int err = 0;
 
@@ -1599,12 +1608,8 @@ int write_function_package (fnpkg *pkg)
     fputs("<gretl-functions>\n", fp);
     fputs("<gretl-function-package", fp);
 
-    /* FIXME what about pkg->name? */
-    pkgname = make_pkgname(pkg->fname);
-    if (pkgname != NULL) {
-	fprintf(fp, " name=\"%s\"", pkgname);
-	free(pkgname);
-    }
+    name_package_from_filename(pkg);
+    fprintf(fp, " name=\"%s\"", pkg->name);
 
     fprintf(fp, " ID=\"%d\"", pkg->ID);
 
@@ -1794,19 +1799,19 @@ int function_package_get_properties (const char *fname, ...)
 	    *ppkg = pkg;
 	} else if (!strcmp(key, "author")) {
 	    ps = (char **) ptr;
-	    *ps = gretl_strdup(pkg->author);
+	    *ps = g_strdup(pkg->author);
 	} else if (!strcmp(key, "date")) {
 	    ps = (char **) ptr;
-	    *ps = gretl_strdup(pkg->date);
+	    *ps = g_strdup(pkg->date);
 	} else if (!strcmp(key, "version")) {
 	    ps = (char **) ptr;
-	    *ps = gretl_strdup(pkg->version);
+	    *ps = g_strdup(pkg->version);
 	} else if (!strcmp(key, "description")) {
 	    ps = (char **) ptr;
-	    *ps = gretl_strdup(pkg->descrip);
+	    *ps = g_strdup(pkg->descrip);
 	} else if (!strcmp(key, "sample-script")) {
 	    ps = (char **) ptr;
-	    *ps = gretl_strdup(pkg->sample);
+	    *ps = g_strdup(pkg->sample);
 	} else if (!strcmp(key, "data-requirement")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->dreq;
@@ -2016,38 +2021,6 @@ static int function_package_record (fnpkg *pkg)
     return err;
 }
 
-static int pkg_name_from_filename (fnpkg *pkg)
-{
-    const char *p = strrchr(pkg->fname, SLASH);
-    int n, err = 0;
-
-    if (p != NULL) {
-	p++;
-    } else {
-	p = pkg->fname;
-    }
-
-    n = strcspn(p, "-");
-
-    if (n == strlen(p) && has_suffix(p, ".gfn")) {
-	n -= 4;
-    }
-
-    if (n >= FN_NAMELEN) {
-	fprintf(stderr, "pkg_name_from_filename: name is too long\n");
-	n = FN_NAMELEN - 1;
-	err = 1;
-    }
-
-    strncat(pkg->name, p, n);
-
-#if PKG_DEBUG
-    fprintf(stderr, "pkg_name_from_filename: calculated '%s'\n", pkg->name);
-#endif
-
-    return err;
-}
-
 static int fname_is_tmpfile (const char *fname)
 {
     const char *p = strrchr(fname, SLASH);
@@ -2090,7 +2063,7 @@ static fnpkg *function_package_alloc (const char *fname)
 	free(pkg);
 	pkg = NULL;
     } else if (!fname_is_tmpfile(fname)) {
-	pkg_name_from_filename(pkg);
+	name_package_from_filename(pkg);
     }
 
     err = function_package_record(pkg);
@@ -3387,7 +3360,7 @@ static int fndef_continues (const char *s)
    passed the filename, along with the index number of the function
    interface that is being edited.  We parse the new function
    definition, but hold off replacing the original definition until we
-   know there are no compilation errors.
+   know there are no (obvious) compilation errors.
 */
 
 int update_function_from_script (const char *fname, int idx)
@@ -4738,7 +4711,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	pdinfo->t2 = orig_t2;
     }
 
-    if (err && retline >= 0) {
+    if (err) {
 	gretl_if_state_clear();
     } else if (retline >= 0) {
 	/* we returned prior to the end of the function */

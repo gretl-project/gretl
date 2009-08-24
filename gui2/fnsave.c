@@ -110,14 +110,15 @@ function_info *finfo_new (void)
 
 static void finfo_free (function_info *finfo)
 {
-    free(finfo->fname);
-    free(finfo->author);
-    free(finfo->version);
-    free(finfo->date);
-    free(finfo->pkgdesc);
-    free(finfo->sample);
+    g_free(finfo->fname);
+    g_free(finfo->author);
+    g_free(finfo->version);
+    g_free(finfo->date);
+    g_free(finfo->pkgdesc);
+    g_free(finfo->sample);
+    g_free(finfo->help);
+
     free(finfo->privlist);
-    free(finfo->help);
 
     if (finfo->samplewin != NULL) {
 	gtk_widget_destroy(finfo->samplewin->main);
@@ -138,18 +139,18 @@ static void finfo_set_modified (function_info *finfo, gboolean s)
 
 static void login_init_or_free (login_info *linfo, int freeit)
 {
-    static char *login;
-    static char *pass;
+    static gchar *login;
+    static gchar *pass;
 
     if (freeit) {
 	if (!linfo->canceled) {
-	    free(login);
-	    free(pass);
+	    g_free(login);
+	    g_free(pass);
 	    login = g_strdup(linfo->login);
 	    pass = g_strdup(linfo->pass);
 	}
-	free(linfo->login);
-	free(linfo->pass);
+	g_free(linfo->login);
+	g_free(linfo->pass);
     } else {
 	linfo->login = (login == NULL)? NULL : g_strdup(login);
 	linfo->pass = (pass == NULL)? NULL : g_strdup(pass);
@@ -288,6 +289,11 @@ static void finfo_save (GtkWidget *w, function_info *finfo)
 	return;
     }
 
+    if (finfo->sample == NULL) {
+	infobox(_("Please add a sample script for this package"));
+	return;
+    }
+
     if (check_version_string(finfo->version)) {
 	errbox(_("Invalid version string: use numbers and '.' only"));
 	return;
@@ -297,10 +303,10 @@ static void finfo_save (GtkWidget *w, function_info *finfo)
 	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->check));
 
     if (hidx >= 0) {
-	char *tmp = textview_get_text(finfo->text);
+	gchar *tmp = textview_get_text(finfo->text);
 
 	finfo->help = trim_text(tmp);
-	free(tmp);
+	g_free(tmp);
     }
 
     if (finfo->fname == NULL) {
@@ -1294,9 +1300,9 @@ int save_function_package (const char *fname, gpointer p)
 
     if (!err) {
 	err = function_package_set_properties(finfo->pkg,
-					      "author", finfo->author,
+					      "author",  finfo->author,
 					      "version", finfo->version,
-					      "date", finfo->date,
+					      "date",    finfo->date,
 					      "description", finfo->pkgdesc,
 					      "sample-script", finfo->sample,
 					      "data-requirement", finfo->dreq,
@@ -1319,11 +1325,7 @@ int save_function_package (const char *fname, gpointer p)
 	finfo_set_modified(finfo, FALSE);
 	maybe_update_func_files_window(1);
 	if (finfo->upload) {
-	    if (finfo->sample == NULL) {
-		warnbox("Please add a sample script for this package");
-	    } else {
-		do_upload(fname);
-	    }
+	    do_upload(fname);
 	}
     }
 
