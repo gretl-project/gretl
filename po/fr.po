@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-20 15:02-0400\n"
-"PO-Revision-Date: 2009-08-24 14:28+0100\n"
+"PO-Revision-Date: 2009-08-24 14:46+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -5399,6 +5399,7 @@ msgstr "Critère bayesien de Schwarz"
 msgid "Hannan-Quinn Information Criterion"
 msgstr "Critère d'information d'Hannan-Quinn"
 
+# Ne pas traduire
 #. TRANSLATORS: please do not translate literally: this is for
 #. your use in describing locale-specific abbreviations. It is
 #. OK to leave it untranslated, in which case it will not be
@@ -5406,7 +5407,7 @@ msgstr "Critère d'information d'Hannan-Quinn"
 #.
 #: lib/src/modelprint.c:2504
 msgid "note on model statistics abbreviations here"
-msgstr "note sur les abréviations des modèles statistiques ici"
+msgstr "note on model statistics abbreviations here"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2511
