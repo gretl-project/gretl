@@ -2891,6 +2891,9 @@ static void set_radio_opt (GtkWidget *w, int *opt)
     *opt = widget_get_int(w, "action");
 }
 
+/* Returns -1 on cancel, otherwise the 0-based index of the radio
+   option selected */
+
 int real_radio_dialog (const char *title, const char *label,
 		       const char **opts, int nopts, int deflt, int hcode,
 		       int *extravar, const char *extratxt,

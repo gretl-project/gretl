@@ -22,7 +22,7 @@
 
 void edit_function_package (const char *fname, int *loaderr);
 
-void prepare_functions_save (void);
+void edit_new_function_package (void);
 
 int save_function_package (const char *fname, gpointer p);
 

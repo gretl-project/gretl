@@ -40,7 +40,8 @@ struct call_info_ {
     GList *lsels; /* list arg selectors */
     GList *msels; /* matrix arg selectors */
     GList *ssels; /* string arg selectors */
-    int iface;
+    int *publist; /* list of public interfaces */
+    int iface;    /* selected interface */
     int extracol;
     const ufunc *func;
     int n_params;
@@ -62,6 +63,7 @@ static call_info *cinfo_new (void)
 	return NULL;
     }
 
+    cinfo->publist = NULL;
     cinfo->iface = -1;
 
     cinfo->lsels = NULL;
@@ -112,7 +114,8 @@ static void cinfo_free (call_info *cinfo)
     if (cinfo->msels != NULL) {
 	g_list_free(cinfo->msels);
     }
-
+    
+    free(cinfo->publist);
     free(cinfo);
 }
 
@@ -654,10 +657,6 @@ static void function_call_dialog (call_info *cinfo)
 
     if (trows > 0 && tcols > 0) {
 	tbl = gtk_table_new(trows, tcols, FALSE);
-#if 0
-	gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-	gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-#endif
     }
 
     if (cinfo->n_params > 0) {
@@ -933,21 +932,105 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
     return err;
 }
 
+static int real_GUI_function_call (call_info *cinfo, PRN *prn)
+{
+    ExecState state;
+    char fnline[MAXLINE];
+    const char *funname;
+    int orig_v = datainfo->v;
+    int i, err = 0;
+
+    funname = user_function_name_by_index(cinfo->iface);
+    *fnline = 0;
+
+    if (cinfo->ret != NULL) {
+	strcat(fnline, cinfo->ret);
+	strcat(fnline, " = ");
+    }    
+
+    strcat(fnline, funname);
+    strcat(fnline, "(");
+
+    if (cinfo->args != NULL) {
+	for (i=0; i<cinfo->n_params; i++) {
+	    strcat(fnline, cinfo->args[i]);
+	    if (i < cinfo->n_params - 1) {
+		strcat(fnline, ", ");
+	    }
+	}
+    }
+
+    /* destroy any "ARG" vars or matrices that were created? */
+
+    strcat(fnline, ")");
+    pprintf(prn, "? %s\n", fnline);
+
+    gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
+			  models, prn);
+
+    /* note: gretl_exec_state_init zeros the first byte of the
+       supplied 'line' */
+    state.line = fnline;
+    err = gui_exec_line(&state, &Z, datainfo);
+    view_buffer(prn, 80, 400, funname, PRINT, NULL);
+
+    if (err) {
+	gui_errmsg(err);
+    }    
+
+    if (datainfo->v > orig_v) {
+	mark_dataset_as_modified();
+	populate_varlist();
+    }
+
+    return err;
+}
+
+/* In case a function package offers more than one public
+   interface, put up a radio-button selector */
+
+static void select_interface (call_info *cinfo)
+{
+    const char *funname;
+    char **opts = NULL;
+    int nopts = 0;
+    int i, err = 0;
+
+    for (i=1; i<=cinfo->publist[0] && !err; i++) {
+	funname = user_function_name_by_index(cinfo->publist[i]);
+	if (funname == NULL) {
+	    err = E_DATA;
+	} else {
+	    err = strings_array_add(&opts, &nopts, funname);
+	}
+    }
+
+    if (err) {
+	cinfo->iface = -1;
+	gui_errmsg(err);
+    } else {
+	cinfo->iface = radio_dialog("gretl", "select function", 
+				    (const char **) opts, 
+				    nopts, 0, 0);
+    }
+
+    free_strings_array(opts, nopts);
+}
+
 void call_function_package (const char *fname, GtkWidget *w,
 			    int *loaderr)
 {
-    ExecState state;
     char tmpfile[FILENAME_MAX];
-    char fnline[MAXLINE];
-    const char *fnname;
     FuncDataReq dreq;
     int minver;
-    PRN *prn = NULL;
     call_info *cinfo = NULL;
-    int orig_v;
-    int i, err = 0;
+    PRN *prn = NULL;
+    int err = 0;
 
     *tmpfile = 0;
+
+    /* load the specified package (which may require reading
+       from the server) */
 
     if (strstr(fname, ".gfn") == NULL) {
 	/* not a full filename -> a function package on server */
@@ -969,9 +1052,10 @@ void call_function_package (const char *fname, GtkWidget *w,
 	return;
     }
 
-    /* get interface for package */
+    /* get interface list and other info for package */
+
     err = function_package_get_properties((*tmpfile)? tmpfile : fname,
-					  "pubnum", &cinfo->iface,
+					  "publist", &cinfo->publist,
 					  "data-requirement", &dreq,
 					  "min-version", &minver,
 					  NULL);
@@ -979,111 +1063,87 @@ void call_function_package (const char *fname, GtkWidget *w,
 	gretl_remove(tmpfile);
     }
 
-    if (cinfo->iface < 0) {
-	errbox(_("Function package is broken"));
-	goto bailout;
-    }
-
-    err = check_function_needs(datainfo, dreq, minver);
     if (err) {
 	gui_errmsg(err);
-	goto bailout;
+    } else if (cinfo->publist == NULL) {
+	/* no available interfaces */
+	err = E_DATA;
+	errbox(_("Function package is broken"));
     }
 
-    cinfo->func = get_user_function_by_index(cinfo->iface);
-
-    if (cinfo->func == NULL) {
-	fprintf(stderr, "get_user_function_by_index: got NULL for idx = %d\n", 
-		cinfo->iface);
-	errbox(_("Couldn't get function package information"));
-	goto bailout;
+    if (!err) {
+	/* do we have suitable data in place? */
+	err = check_function_needs(datainfo, dreq, minver);
+	if (err) {
+	    gui_errmsg(err);
+	}
     }
 
-    cinfo->n_params = fn_n_params(cinfo->func);
-
-    if (function_data_check(cinfo)) {
-	goto bailout;
+    if (!err) {
+	if (cinfo->publist[0] > 1) {
+	    select_interface(cinfo);
+	    if (cinfo->iface < 0) {
+		/* failed, or cancelled */
+		cinfo_free(cinfo);
+		return; /* note: handled */
+	    }
+	} else {
+	    cinfo->iface = cinfo->publist[1];
+	}
     }
 
-    cinfo->rettype = user_func_get_return_type(cinfo->func);
-
-    if (err) {
-	fprintf(stderr, "user_func_get_return_types: failed for idx = %d\n",
-		cinfo->iface);
-	errbox(_("Couldn't get function package information"));
-	goto bailout;
+    if (!err) {
+	cinfo->func = get_user_function_by_index(cinfo->iface);
+	if (cinfo->func == NULL) {
+	    fprintf(stderr, "get_user_function_by_index: failed\n");
+	    errbox(_("Couldn't get function package information"));
+	}
+    }	
+    
+    if (!err) {
+	cinfo->n_params = fn_n_params(cinfo->func);
+	err = function_data_check(cinfo);
     }
 
-    function_call_dialog(cinfo);
-
-    if (!cinfo->ok || check_args(cinfo) || bufopen(&prn)) {
-	goto bailout;
+    if (!err) {
+	cinfo->rettype = user_func_get_return_type(cinfo->func);
+	if (err) {
+	    fprintf(stderr, "user_func_get_return_type: failed\n");
+	    errbox(_("Couldn't get function package information"));
+	}
     }
 
-#if 0
-    /* kill the launcher window? */
-    gtk_widget_destroy(w);
-#endif
+    if (!err) {
+	/* construct GUI for argument selection: note that cinfo->ok
+	   is initialized to 0, and is set to 1 on clicking "OK" in
+	   the dialog, provided the args check out alright.  If
+	   cinfo->ok == 0, the user cancelled.
+	*/
+	function_call_dialog(cinfo);
+	if (!cinfo->ok) {
+	    cinfo_free(cinfo);
+	    return; /* note: handled */
+	}
+    }
 
-    if (cinfo->args != NULL) {
+    if (!err) {
+	err = bufopen(&prn);
+    }
+
+    if (!err && cinfo->args != NULL) {
 	err = pre_process_args(cinfo, prn);
 	if (err) {
 	    gui_errmsg(err);
-	    goto bailout;
 	}
     }
 
-    fnname = user_function_name_by_index(cinfo->iface);
-    *fnline = 0;
-
-    if (cinfo->ret != NULL) {
-	strcat(fnline, cinfo->ret);
-	strcat(fnline, " = ");
-    }    
-
-    strcat(fnline, fnname);
-    orig_v = datainfo->v;
-
-    strcat(fnline, "(");
-
-    if (cinfo->args != NULL) {
-	for (i=0; i<cinfo->n_params; i++) {
-	    strcat(fnline, cinfo->args[i]);
-	    if (i < cinfo->n_params - 1) {
-		strcat(fnline, ", ");
-	    }
-	}
-    } 
-
-    /* destroy any "ARG" vars or matrices that were created? */
-
-    strcat(fnline, ")");
-    pprintf(prn, "? %s\n", fnline);
-
-    gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
-			  models, prn);
-
-    /* note:gretl_exec_state_init zeros the first byte of the
-       supplied 'line' */
-    state.line = fnline;
-    err = gui_exec_line(&state, &Z, datainfo);
-    view_buffer(prn, 80, 400, fnname, PRINT, NULL);
-
-    if (err) {
-	gui_errmsg(err);
-    }    
-
-    if (datainfo->v > orig_v) {
-	mark_dataset_as_modified();
-	populate_varlist();
+    if (!err) {
+	err = real_GUI_function_call(cinfo, prn);
+    } else {
+	gretl_print_destroy(prn);
     }
 
     cinfo_free(cinfo);
 
     return;
-
- bailout:
-
-    cinfo_free(cinfo);
-    gretl_print_destroy(prn);
 }

@@ -142,6 +142,33 @@ gchar *textview_get_text (GtkWidget *view)
     return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 }
 
+gchar *textview_get_trimmed_text (GtkWidget *view)
+{
+    gchar *s = textview_get_text(view);
+    gchar *ret = NULL;
+
+    if (s != NULL && *s != '\0') {
+	while (isspace(*s)) s++;
+
+	if (*s != '\0') {
+	    int i, len = strlen(s);
+
+	    for (i=len-1; i>0; i--) {
+		if (!isspace(s[i])) break;
+		len--;
+	    }
+
+	    if (len > 0) {
+		ret = g_strndup(s, len);
+	    }
+	}
+    }
+
+    g_free(s);
+
+    return ret;
+}
+
 gchar *textview_get_selection_or_all (GtkWidget *view,
 				      int *sel)
 {
@@ -166,7 +193,8 @@ gchar *textview_get_selection_or_all (GtkWidget *view,
     return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 }
 
-int textview_set_text (GtkWidget *view, const gchar *text)
+int real_textview_set_text (GtkWidget *view, const gchar *text,
+			    int select)
 {
     GtkTextBuffer *tbuf;
 
@@ -175,13 +203,30 @@ int textview_set_text (GtkWidget *view, const gchar *text)
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     g_return_val_if_fail(tbuf != NULL, 1);
 
-    if (text != NULL) {
+    if (text != NULL && select) {
+	GtkTextIter start, end;
+
+	gtk_text_buffer_set_text(tbuf, text, -1);
+	gtk_text_buffer_get_start_iter(tbuf, &start);
+	gtk_text_buffer_get_end_iter(tbuf, &end);
+	gtk_text_buffer_select_range(tbuf, &start, &end);
+    } else if (text != NULL) {
 	gtk_text_buffer_set_text(tbuf, text, -1);
     } else {
 	gtk_text_buffer_set_text(tbuf, "", -1);
     }
 
     return 0;
+}
+
+int textview_set_text (GtkWidget *view, const gchar *text)
+{
+    return real_textview_set_text(view, text, 0);
+}
+
+int textview_set_text_selected (GtkWidget *view, const gchar *text)
+{
+    return real_textview_set_text(view, text, 1);
 }
 
 int textview_set_cursor_at_line (GtkWidget *view, int line)

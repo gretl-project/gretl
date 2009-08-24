@@ -1068,8 +1068,16 @@ int *gretl_list_from_string (const char *str, int *err)
     n = 0; /* value counter */
 
     while (*s && !*err) {
+	s += strspn(s, " ");
+	if (n > 0 && *s == ';') {
+	    /* list separator */
+	    n++;
+	    s++;
+	    continue;
+	}
 	r1 = strtol(s, &next, 10);
 	if (errno || next == s) {
+	    fprintf(stderr, "gretl_list_from_string: '%s'\n", s);
 	    *err = E_PARSE;
 	} else {
 	    s = next;
@@ -1112,6 +1120,12 @@ int *gretl_list_from_string (const char *str, int *err)
     n = 1; /* list position indicator */
 
     while (*s) {
+	s += strspn(s, " ");
+	if (*s == ';') {
+	    list[n++] = LISTSEP;
+	    s++;
+	    continue;
+	}
 	r1 = strtol(s, &s, 10);
 	if (*s == '-') {
 	    s++;

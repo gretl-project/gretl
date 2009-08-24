@@ -292,10 +292,11 @@ char *comma_separate_numbers (char *s)
 /**
  * has_suffix:
  * @str: the string to check.
- * @sfx: the suffix to check for.
+ * @sfx: the suffix to check for, including a leading '.'
+ * if applicable.
  *
  * Returns: 1 if @str ends with @sfx (on a case-insensitive
- * comparison), 0 otherwise.
+ * comparison), 0 otherwise.  
  */
 
 int has_suffix (const char *str, const char *sfx)

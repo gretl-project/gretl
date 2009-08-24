@@ -30,10 +30,11 @@ struct iterinfo_t {
 
 void clear_selector (void);
 
-void selection_dialog (const char *title, int (*callback)(), guint cmdcode);
+selector *selection_dialog (const char *title, int (*callback)(), 
+			    guint cmdcode);
 
-void simple_selection (const char *title, int (*callback)(), guint cmdcode,
-		       gpointer p);
+selector *simple_selection (const char *title, int (*callback)(), 
+			    guint cmdcode, gpointer p);
 
 void modelspec_dialog (int ci);
 
