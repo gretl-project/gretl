@@ -4,13 +4,14 @@
   at least one gretl-function.  The latter must have a name and must
   include function code; it may also have help text, zero or more 
   parameters, and zero or one return values. And the package must
-  contain a sample script which illustrates a correct call.
+  contain a sample script which illustrates a correct call, and
+  may contain help text.
  -->
 
 <!ELEMENT gretl-functions (gretl-function-package?)>
 
 <!ELEMENT gretl-function-package (author, version, date, description, 
-                                  gretl-function+, sample-script)>
+                                  gretl-function+, help?, sample-script)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED

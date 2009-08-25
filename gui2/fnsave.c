@@ -449,8 +449,7 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     }
 
     if (finfo->pkg != NULL) {
-	/* FIXME */
-	gretl_function_get_info(finfo->pubnames[0], "pkgname", &pkgname);
+	pkgname = function_package_get_name(finfo->pkg);
     } 
 
     if (pkgname != NULL) {
@@ -808,8 +807,7 @@ static void toggle_upload (GtkToggleButton *b, function_info *finfo)
 /* Dialog for editing function package.  The user can get here in
    either of two ways: after selecting functions to put into a
    newly created package, or upon selecting an existing package
-   for editing.  In either case it's important that the "publist"
-   member of the finfo struct is not NULL.
+   for editing.
 */
 
 static void finfo_dialog (function_info *finfo)
@@ -830,7 +828,6 @@ static void finfo_dialog (function_info *finfo)
 	finfo->pkgdesc
     };
     int focused = 0;
-    const char *hlp;
     gchar *ltxt;
     int i;
 
@@ -924,8 +921,9 @@ static void finfo_dialog (function_info *finfo)
     finfo->text = editable_text_box(&hbuf);
     text_table_setup(vbox, finfo->text);
 
-    gretl_function_get_info(finfo->pubnames[0], "help", &hlp);
-    textview_set_text(finfo->text, hlp);
+    if (finfo->help != NULL) {
+	textview_set_text(finfo->text, finfo->help);
+    }
     g_signal_connect(G_OBJECT(hbuf), "changed", 
 		     G_CALLBACK(pkg_changed), finfo);
 
@@ -1263,8 +1261,6 @@ int save_function_package (const char *fname, gpointer p)
 	finfo->fname = g_strdup(fname);
     } 
 
-    gretl_function_set_info(finfo->pubnames[0], finfo->help);
-
     if (finfo->pkg == NULL) {
 	/* starting from scratch */
 	finfo->pkg = function_package_new(fname, finfo->pubnames, finfo->n_pub,
@@ -1281,6 +1277,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "version", finfo->version,
 					      "date",    finfo->date,
 					      "description", finfo->pkgdesc,
+					      "help", finfo->help,
 					      "sample-script", finfo->sample,
 					      "data-requirement", finfo->dreq,
 					      "min-version", finfo->minver,
@@ -1430,10 +1427,13 @@ void edit_function_package (const char *fname, int *loaderr)
     function_info *finfo;
     int *publist = NULL;
     int *privlist = NULL;
+    fnpkg *pkg;
     const char *p;
     int err = 0;
 
-    if (!function_package_is_loaded(fname)) {
+    pkg = get_function_package_by_filename(fname);
+
+    if (pkg == NULL) {
 	err = load_user_function_file(fname);
 	if (err) {
 	    fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
@@ -1442,6 +1442,8 @@ void edit_function_package (const char *fname, int *loaderr)
 		*loaderr = 1;
 	    }
 	    return;
+	} else {
+	    pkg = get_function_package_by_filename(fname);
 	}
     }
 
@@ -1450,14 +1452,16 @@ void edit_function_package (const char *fname, int *loaderr)
 	return;
     }
 
-    err = function_package_get_properties(fname,
-					  "package",  &finfo->pkg,
+    finfo->pkg = pkg;
+
+    err = function_package_get_properties(finfo->pkg,
 					  "publist",  &publist,
 					  "privlist", &privlist,
 					  "author",   &finfo->author,
 					  "version",  &finfo->version,
 					  "date",     &finfo->date,
 					  "description", &finfo->pkgdesc,
+					  "help", &finfo->help,
 					  "sample-script", &finfo->sample,
 					  "data-requirement", &finfo->dreq,
 					  "min-version", &finfo->minver,

@@ -79,7 +79,6 @@ struct fncall_ {
 struct ufunc_ {
     char name[FN_NAMELEN];
     int pkgID;
-    char *help;
     int private;
     int n_lines;
     char **lines;
@@ -88,6 +87,11 @@ struct ufunc_ {
     int rettype;
     char *retname; /* used only with "old-style" function syntax */
     int debug;
+};
+
+enum {
+    PKG_FREE_PKG,
+    PKG_FREE_ALL
 };
 
 /* structure representing a function "package" */
@@ -100,6 +104,7 @@ struct fnpkg_ {
     char *version;    /* package version string */
     char *date;       /* last revision date */
     char *descrip;    /* package description */
+    char *help;       /* package help text */
     char *sample;     /* sample caller script */
     int minver;       /* minimum required gretl version */
     FuncDataReq dreq; /* data requirement */
@@ -144,11 +149,11 @@ static GList *callstack;
 static int n_pkgs;
 static fnpkg **pkgs;
 
-static void real_user_function_help (ufunc *fun, int ci, PRN *prn);
 static void delete_ufunc_from_list (ufunc *fun);
 static fnpkg *function_package_alloc (const char *fname);
 static int function_package_record (fnpkg *pkg);
 static int function_package_remove_by_ID (int ID);
+static void function_package_free (fnpkg *pkg, int mode);
 
 /* record of state, and communication of state with outside world */
 
@@ -623,8 +628,6 @@ static ufunc *ufunc_new (void)
     fun->pkgID = 0;
     fun->private = 0;
 
-    fun->help = NULL;
-
     fun->n_lines = 0;
     fun->lines = NULL;
 
@@ -654,12 +657,10 @@ static void free_params_array (fn_param *params, int n)
 
 static void clear_ufunc_data (ufunc *fun)
 {
-    free(fun->help);
     free_strings_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
     free(fun->retname);
     
-    fun->help = NULL;
     fun->lines = NULL;
     fun->params = NULL;
 
@@ -672,7 +673,6 @@ static void clear_ufunc_data (ufunc *fun)
 
 static void free_ufunc (ufunc *fun)
 {
-    free(fun->help);
     free_strings_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
     free(fun->retname);
@@ -771,8 +771,6 @@ static const char *arg_type_xml_string (int t)
 	return arg_type_string(t);
     }
 }
-
-/* FIXME updating and placement of these function */
 
 static int arg_type_from_string (const char *s)
 {
@@ -1172,7 +1170,11 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "help")) {
-	    gretl_xml_node_get_string(cur, doc, &fun->help);
+	    /* backward compatibility */
+	    if (pkg->help != NULL) {
+		free(pkg->help);
+	    }
+	    gretl_xml_node_get_string(cur, doc, &pkg->help);
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
 	    err = func_read_params(cur, doc, fun);
 	    if (err) {
@@ -1289,10 +1291,6 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\" private=\"%d\">\n", 
 	    fun->name, arg_type_string(rtype), fun->private);
 
-    if (fun->help != NULL) {
-	gretl_xml_put_tagged_string("help", fun->help, fp);
-    }
-
     if (fun->n_params > 0) {
 
 	gretl_push_c_numeric_locale();
@@ -1382,23 +1380,6 @@ int gretl_function_print_code (ufunc *fun, PRN *prn)
     return 0;
 }
 
-int gretl_function_set_info (const char *funname, const char *help)
-{
-    ufunc *fun = get_user_function_by_name(funname);
-
-    if (fun == NULL) {
-	return E_DATA;
-    } else {
-	free(fun->help);
-	if (help != NULL) {
-	    fun->help = gretl_strdup(help);
-	} else {
-	    fun->help = NULL;
-	}
-	return 0;
-    } 
-}
-
 static fnpkg *ufunc_get_parent_package (const ufunc *fun)
 {
     int i;
@@ -1445,42 +1426,8 @@ static void name_package_from_filename (fnpkg *pkg)
 
 #if PKG_DEBUG
     fprintf(stderr, "filename '%s' -> pkgname '%s'\n",
-	    fname, pkg->name);
+	    pkg->fname, pkg->name);
 #endif
-}
-
-int gretl_function_get_info (const char *funname, const char *key, 
-			     char const **value)
-{
-    ufunc *fun = get_user_function_by_name(funname);
-
-    if (fun == NULL) {
-	return E_DATA;
-    }
-
-    if (!strcmp(key, "help")) {
-	*value = fun->help;
-    } else {
-	fnpkg *pkg = ufunc_get_parent_package(fun);
-
-	if (pkg == NULL) {
-	    *value = NULL;
-	} else if (!strcmp(key, "author")) {
-	    *value = pkg->author;
-	} else if (!strcmp(key, "version")) {
-	    *value = pkg->version;
-	} else if (!strcmp(key, "date")) {
-	    *value = pkg->date;
-	} else if (!strcmp(key, "pkgdesc")) {
-	    *value = pkg->descrip;
-	} else if (!strcmp(key, "sample")) {
-	    *value = pkg->sample;
-	} else if (!strcmp(key, "pkgname")) {
-	    *value = pkg->name;
-	}
-    }
-
-    return 0;
 }
 
 static char *get_version_string (char *s, int v)
@@ -1495,7 +1442,8 @@ static char *get_version_string (char *s, int v)
     return s;
 }
 
-static int add_uf_array_from_names (fnpkg *pkg, char **names, int n, int priv)
+static int add_uf_array_from_names (fnpkg *pkg, char **names, 
+				    int n, int priv)
 {
     ufunc **uf;
     ufunc *fun;
@@ -1574,17 +1522,19 @@ fnpkg *function_package_new (const char *fname,
     *err = function_package_connect_funcs(pkg, pubnames, n_pub,
 					  privnames, n_priv);
 
+    if (!*err) {
+	*err = function_package_record(pkg);
+    }
+
     if (*err) {
-	free(pkg->fname);
-	free(pkg);
-	/* FIXME: "unrecord" pkg too */
+	function_package_free(pkg, PKG_FREE_PKG);
 	pkg = NULL;
     }
 
     return pkg;
 }
 
-static char *trim_script (char *s)
+static char *trim_text (char *s)
 {
     while (isspace(*s)) s++;
     return tailstrip(s);
@@ -1652,9 +1602,16 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	}
     }
 
+    if (pkg->help != NULL) {
+	char *s = trim_text(pkg->help);
+
+	fputs("<help>\n", fp);
+	gretl_xml_put_raw_string(s, fp);
+	fputs("\n</help>\n", fp);	
+    }    
+
     if (pkg->sample != NULL) {
- 	/* escapes may be needed; also perhaps trimming */
-	char *s = trim_script(pkg->sample);
+	char *s = trim_text(pkg->sample);
 
 	fputs("<sample-script>\n", fp);
 	gretl_xml_put_raw_string(s, fp);
@@ -1703,6 +1660,7 @@ static int is_string_property (const char *key)
 	!strcmp(key, "version")  ||
 	!strcmp(key, "date")     ||
 	!strcmp(key, "description") ||
+	!strcmp(key, "help") ||
 	!strcmp(key, "sample-script");
 }
 
@@ -1732,6 +1690,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		err = maybe_replace_string_var(&pkg->version, cval);
 	    } else if (!strcmp(key, "description")) {
 		err = maybe_replace_string_var(&pkg->descrip, cval);
+	    } else if (!strcmp(key, "help")) {
+		err = maybe_replace_string_var(&pkg->help, cval);
 	    } else if (!strcmp(key, "sample-script")) {
 		err = maybe_replace_string_var(&pkg->sample, cval);
 	    }
@@ -1771,23 +1731,9 @@ static int *function_package_get_list (fnpkg *pkg, int n, int priv)
     return list;
 }	
 
-static fnpkg *get_package_by_filename (const char *fname)
-{
-    int i;
-
-    for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(fname, pkgs[i]->fname)) {
-	    return pkgs[i];
-	}
-    }
-
-    return NULL;
-}
-
-int function_package_get_properties (const char *fname, ...)
+int function_package_get_properties (fnpkg *pkg, ...)
 {
     va_list ap;
-    fnpkg *pkg = NULL;
     int npub = 0;
     int npriv = 0;
     int **plist;
@@ -1797,15 +1743,7 @@ int function_package_get_properties (const char *fname, ...)
     int *pi;
     int i, err = 0;
 
-    pkg = get_package_by_filename(fname);
-    if (pkg == NULL) {
-	gretl_errmsg_sprintf("'%s': no package with that filename is loaded", fname);
-	return E_DATA;
-    }
-
-#if PKG_DEBUG
-    fprintf(stderr, "Found package, ID = %d\n", pkg->ID);
-#endif
+    g_return_val_if_fail(pkg != NULL, E_DATA);
 
     for (i=0; i<n_ufuns; i++) {
 #if PKG_DEBUG
@@ -1825,7 +1763,7 @@ int function_package_get_properties (const char *fname, ...)
     fprintf(stderr, "npub = %d, npriv = %d\n", npub, npriv);
 #endif
 
-    va_start(ap, fname);
+    va_start(ap, pkg);
 
     for (i=1; ; i++) {
 	key = va_arg(ap, const char *);
@@ -1836,10 +1774,9 @@ int function_package_get_properties (const char *fname, ...)
 	if (ptr == NULL) {
 	    break;
 	}
-	if (!strcmp(key, "package")) {
-	    fnpkg **ppkg = (fnpkg **) ptr;
-
-	    *ppkg = pkg;
+	if (!strcmp(key, "name")) {
+	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->name);
 	} else if (!strcmp(key, "author")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->author);
@@ -1852,6 +1789,9 @@ int function_package_get_properties (const char *fname, ...)
 	} else if (!strcmp(key, "description")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->descrip);
+	} else if (!strcmp(key, "help")) {
+	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->help);
 	} else if (!strcmp(key, "sample-script")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->sample);
@@ -1861,12 +1801,6 @@ int function_package_get_properties (const char *fname, ...)
 	} else if (!strcmp(key, "min-version")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->minver;
-	} else if (!strcmp(key, "n-public")) {
-	    pi = (int *) ptr;
-	    *pi = npub;
-	} else if (!strcmp(key, "n-private")) {
-	    pi = (int *) ptr;
-	    *pi = npriv;
 	} else if (!strcmp(key, "publist")) {
 	    plist = (int **) ptr;
 	    *plist = function_package_get_list(pkg, npub, 0);
@@ -1930,11 +1864,6 @@ int write_user_function_file (const char *fname)
     return 0;
 }
 
-enum {
-    PKG_FREE_PKG,
-    PKG_FREE_ALL
-};
-
 static void function_package_free (fnpkg *pkg, int mode)
 {
     if (pkg != NULL) {
@@ -1970,17 +1899,27 @@ static void function_package_free (fnpkg *pkg, int mode)
 	free(pkg->version);
 	free(pkg->date);
 	free(pkg->descrip);
+	free(pkg->help);
 	free(pkg->sample);
 	free(pkg);
     }
 }
 
-static int function_package_remove_by_ID (int ID)
+static int package_matches (int refID, fnpkg *refpkg, fnpkg *pkg)
+{
+    if (refpkg != NULL) {
+	return (refpkg == pkg);
+    } else {
+	return (refID == pkg->ID);
+    }
+}
+
+static int real_function_package_remove (int ID, fnpkg *pkg)
 {
     int i, j, err = E_DATA;
 
     for (i=0; i<n_pkgs; i++) {
-	if (pkgs[i]->ID == ID) {
+	if (package_matches(ID, pkg, pkgs[i])) {
 	    function_package_free(pkgs[i], PKG_FREE_PKG);
 	    for (j=i; j<n_pkgs-1; j++) {
 		pkgs[j] = pkgs[j+1];
@@ -2013,6 +1952,11 @@ static int function_package_remove_by_ID (int ID)
     return err;
 }
 
+static int function_package_remove_by_ID (int ID)
+{
+    return real_function_package_remove(ID, NULL);
+}
+
 static int function_package_record (fnpkg *pkg)
 {
     fnpkg **tmp;
@@ -2040,24 +1984,24 @@ static int fname_is_tmpfile (const char *fname)
 	p++;
     }
 
-    return strncmp(p, "dltmp.", 6) == 0;
+    return (strncmp(p, "dltmp.", 6) == 0);
 }
 
 static fnpkg *function_package_alloc (const char *fname)
 {
     fnpkg *pkg = malloc(sizeof *pkg);
-    int err = 0;
 
     if (pkg == NULL) {
 	return NULL;
     }
 
     pkg->ID = (int) time(NULL);
-    *pkg->name = '\0';
+    pkg->name[0] = '\0';
     pkg->author = NULL;
     pkg->version = NULL;
     pkg->date = NULL;
     pkg->descrip = NULL;
+    pkg->help = NULL;
     pkg->sample = NULL;
     pkg->dreq = 0;
     pkg->minver = 0;
@@ -2072,13 +2016,6 @@ static fnpkg *function_package_alloc (const char *fname)
 	pkg = NULL;
     } else if (!fname_is_tmpfile(fname)) {
 	name_package_from_filename(pkg);
-    }
-
-    err = function_package_record(pkg);
-    if (err) {
-	free(pkg->fname);
-	free(pkg);
-	pkg = NULL;
     }
 
     return pkg;
@@ -2139,7 +2076,11 @@ static int real_load_package (fnpkg *pkg)
 	    maybe_clear_out_duplicate(pkg->pub[i]);
 	    err = add_allocated_ufunc(pkg->pub[i]);
 	}
-    }    
+    } 
+
+    if (!err) {
+	err = function_package_record(pkg);
+    }
 
     return err;
 }
@@ -2163,9 +2104,10 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
 
     pputs(prn, "\n\n");
 
-    if (pkg->pub != NULL) {
-	/* FIXME multiple interfaces */
-	real_user_function_help(pkg->pub[0], 0, prn);
+    if (pkg->help != NULL) {
+	pputs(prn, "Help text:\n");
+	pputs(prn, pkg->help);
+	pprintf(prn, "\n\n");
     }
 
     if (pkg->sample != NULL) {
@@ -2265,6 +2207,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->date);
 	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->descrip);
+	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->help);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
 	} 
@@ -2355,7 +2299,7 @@ static fnpkg *read_package_file (const char *fname, int *err)
     xmlNodePtr cur;
 
 #if PKG_DEBUG
-    fprintf(stderr, "read_function_package: starting on '%s'\n", fname);
+    fprintf(stderr, "read_function_package: got '%s'\n", fname);
 #endif
 
     xmlKeepBlanksDefault(0);
@@ -2386,17 +2330,17 @@ static fnpkg *read_package_file (const char *fname, int *err)
     return pkg;
 }
 
-int function_package_is_loaded (const char *fname)
+fnpkg *get_function_package_by_filename (const char *fname)
 {
     int i;
 
     for (i=0; i<n_pkgs; i++) {
 	if (!strcmp(fname, pkgs[i]->fname)) {
-	    return 1;
+	    return pkgs[i];
 	}
     }
 
-    return 0;
+    return NULL;
 }
 
 const char *function_package_description (const char *fname)
@@ -2412,57 +2356,48 @@ const char *function_package_description (const char *fname)
     return NULL;
 }
 
-static fnpkg *get_loaded_package (const char *fname)
-{
-    int i;
-
-    for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(fname, pkgs[i]->fname)) {
-	    return pkgs[i];
-	}
-    }
-
-    return NULL;
-}
-
 /* read functions from file into gretl's workspace */
 
 int load_user_function_file (const char *fname)
 {
-    fnpkg *pkg = NULL;
     int err = 0;
 
-    if (get_loaded_package(fname)) {
-	/* no-op */
-	return 0;
+    if (get_function_package_by_filename(fname) != NULL) {
+	; /* no-op */
+    } else {
+	fnpkg *pkg = read_package_file(fname, &err);
+
+	if (!err) {
+	    err = real_load_package(pkg);
+	} 
     }
 
-    pkg = read_package_file(fname, &err);
-    if (err) {
-	return err;
-    } 
-
-    return real_load_package(pkg);
+    return err;
 }
 
 /* Retrieve summary info or code listing for a function package,
-   identified by its filename.  If the package is loaded in memory, we
-   read from the package file.
+   identified by its filename.  If the package is not already loaded
+   in memory we read from the package file.
 */
 
 static int 
 real_get_function_file_info (const char *fname, PRN *prn, char **pname,
 			     int task)
 {
-    fnpkg *pkg = NULL;
+    fnpkg *pkg;
     int free_pkg = 0;
     int err = 0;
 
-    pkg = get_loaded_package(fname);
+#if PKG_DEBUG
+    fprintf(stderr, "*** real_get_function_file_info: "
+	    "fname = '%s'\n", fname);
+#endif
+
+    pkg = get_function_package_by_filename(fname);
 
 #if PKG_DEBUG
-    fprintf(stderr, "real_get_function_file_info: get_loaded_package gave %p\n",
-	    (void *) pkg);
+    fprintf(stderr, "*** real_get_function_file_info: "
+	    "got package at %p\n", (void *) pkg);
 #endif
 
     if (pkg == NULL) {
@@ -2500,19 +2435,19 @@ int get_function_file_code (const char *fname, PRN *prn, char **pname)
    version number (as a string) into *pver.
 */
 
-char *get_function_file_header (const char *fname, char **pver,
-				int *err)
+int get_function_file_header (const char *fname, char **pdesc, 
+			      char **pver)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
     xmlNodePtr sub;
-    char *descrip = NULL;
+    int err = 0;
 
     xmlKeepBlanksDefault(0);
 
-    *err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
-    if (*err) {
-	return NULL;
+    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    if (err) {
+	return err;
     }
 
     node = node->xmlChildrenNode;
@@ -2521,16 +2456,17 @@ char *get_function_file_header (const char *fname, char **pver,
 	    sub = node->xmlChildrenNode;
 	    while (sub != NULL) {
 		if (!xmlStrcmp(sub->name, (XUC) "description")) {
-		    gretl_xml_node_get_trimmed_string(sub, doc, &descrip);
+		    gretl_xml_node_get_trimmed_string(sub, doc, pdesc);
 		} else if (!xmlStrcmp(sub->name, (XUC) "version")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pver);
 		}
-		if (descrip != NULL && *pver != NULL) {
+		if (*pdesc != NULL && *pver != NULL) {
 		    break;
 		}
 		sub = sub->next;
 	    }
-	    if (descrip != NULL && *pver != NULL) {
+	    if (*pdesc != NULL && *pver != NULL) {
+		/* already got what we want */
 		break;
 	    }
 	}
@@ -2542,18 +2478,19 @@ char *get_function_file_header (const char *fname, char **pver,
 	xmlCleanupParser();
     }
 
-    if (descrip == NULL) {
-	descrip = gretl_strdup(_("No description available"));
+    if (*pdesc == NULL) {
+	*pdesc = gretl_strdup(_("No description available"));
     }
+
     if (*pver == NULL) {
 	*pver = gretl_strdup("unknown");
     }
 
-    if (descrip == NULL || *pver == NULL) {
-	*err = 1;
+    if (*pdesc == NULL || *pver == NULL) {
+	err = E_ALLOC;
     }
 
-    return descrip;
+    return err;
 }
 
 int gretl_is_public_user_function (const char *name)
@@ -4827,14 +4764,10 @@ void gretl_functions_cleanup (void)
     packages_destroy();
 }
 
-static void real_user_function_help (ufunc *fun, int ci, PRN *prn)
+static void real_user_function_help (ufunc *fun, PRN *prn)
 {
-    fnpkg *pkg = NULL;
+    fnpkg *pkg = ufunc_get_parent_package(fun);
     int i;
-
-    if (ci == HELP) {
-	pkg = ufunc_get_parent_package(fun);
-    }
 
     pprintf(prn, "function %s\n\n", fun->name);
 
@@ -4861,9 +4794,9 @@ static void real_user_function_help (ufunc *fun, int ci, PRN *prn)
 	pputs(prn, "Return value: none\n\n");
     }
 	
-    if (fun->help != NULL) {
+    if (pkg != NULL && pkg->help != NULL) {
 	pputs(prn, "Help text:\n");
-	pputs(prn, fun->help);
+	pputs(prn, pkg->help);
 	pprintf(prn, "\n\n");
     }
 
@@ -4883,7 +4816,7 @@ int user_function_help (const char *fnname, PRN *prn)
 	pprintf(prn, _("\"%s\" is not defined.\n"), fnname);
 	err = 1;
     } else {
-	real_user_function_help(fun, HELP, prn);
+	real_user_function_help(fun, prn);
     }
 
     return err;

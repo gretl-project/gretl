@@ -99,11 +99,6 @@ const char *get_funcerr_message (void);
 
 int function_return_type_from_string (const char *s);
 
-int gretl_function_set_info (const char *funname, const char *help);
-
-int gretl_function_get_info (const char *funname, const char *key, 
-			     char const **value);
-
 int gretl_function_print_code (ufunc *u, PRN *prn);
 
 fnpkg *function_package_new (const char *fname, 
@@ -117,7 +112,7 @@ int function_package_connect_funcs (fnpkg *pkg,
 
 int function_package_set_properties (fnpkg *pkg, ...);
 
-int function_package_get_properties (const char *fname, ...);
+int function_package_get_properties (fnpkg *pkg, ...);
 
 const char *function_package_get_name (fnpkg *pkg);
 
@@ -128,7 +123,7 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 
 int write_user_function_file (const char *fname);
 
-int function_package_is_loaded (const char *fname);
+fnpkg *get_function_package_by_filename (const char *fname);
 
 const char *function_package_description (const char *fname);
 
@@ -140,8 +135,7 @@ int get_function_file_info (const char *fname, PRN *prn, char **pname);
 
 int get_function_file_code (const char *fname, PRN *prn, char **pname);
 
-char *get_function_file_header (const char *fname, char **pver,
-				int *err);
+int get_function_file_header (const char *fname, char **pdesc, char **pver);
 
 int update_function_from_script (const char *funname, const char *path);
 

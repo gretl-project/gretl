@@ -795,8 +795,10 @@ windata_t *gui_show_function_info (const char *fname, int role)
 	return NULL;
     }
 
+    fprintf(stderr, "gui_show_function_info: starting\n");
+
     if (role == VIEW_FUNC_INFO) {
-	if (g_path_is_absolute(fname)) {
+	if (g_path_is_absolute(fname) && !strstr(fname, "dltmp.")) {
 	    pprintf(prn, "File: %s\n", fname);
 	}
 	err = get_function_file_info(fname, prn, &pkgname);
@@ -871,7 +873,7 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 static void browser_functions_handler (windata_t *vwin, int task)
 {
     char fnfile[FILENAME_MAX];
-    gchar *fname;
+    gchar *fname = NULL;
     gchar *dir;
     int dircol = 0;
     int err = 0;
@@ -894,6 +896,9 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else {
 	strcpy(fnfile, fname);
     }
+
+    fprintf(stderr, "browser_functions_handler: fnfile='%s'\n",
+	    fnfile);
 
     g_free(fname);
 
@@ -1544,14 +1549,11 @@ void show_files (GtkAction *action, gpointer p)
     display_files(code, p);
 }
 
-static int get_func_info (const char *fname, const char *fndir,
-			  char **pdesc, char **pver)
+static int get_func_info (const char *fullname, char **pdesc, 
+			  char **pver)
 {
-    char fullname[FILENAME_MAX];
-    int err = 0;
+    int err = get_function_file_header(fullname, pdesc, pver);
 
-    build_path(fullname, fndir, fname, NULL);
-    *pdesc = get_function_file_header(fullname, pver, &err);
     if (err) {
 	gui_errmsg(err);
     }
@@ -1597,6 +1599,8 @@ static int fn_file_is_duplicate (const char *fname,
     return ret;
 }
 
+#define pkg_is_loaded(n) (get_function_package_by_filename(n) != NULL)
+
 static void
 read_fn_files_in_dir (int role, DIR *dir, const char *path, 
 		      GtkListStore *store, GtkTreeIter *iter,
@@ -1604,10 +1608,7 @@ read_fn_files_in_dir (int role, DIR *dir, const char *path,
 {
     struct dirent *dirent;
     char fullname[MAXLEN];
-    gboolean loaded;
-    char *fname;
-    char *descrip;
-    char *version;
+    gchar *fname;
     int n, imax = *nfn;
     int err;
 
@@ -1617,27 +1618,26 @@ read_fn_files_in_dir (int role, DIR *dir, const char *path,
 	    continue;
 	}
 	fname = g_strdup(dirent->d_name);
-	if (fname == NULL) {
-	    break;
-	}
 	n = strlen(fname);
 	if (!g_ascii_strcasecmp(fname + n - 4, ".gfn")) {
-	    err = get_func_info(fname, path, &descrip, &version);
+	    char *descrip = NULL, *version = NULL;
+
+	    build_path(fullname, path, fname, NULL);
+	    err = get_func_info(fullname, &descrip, &version);
+
 	    if (!err) {
 		if (!fn_file_is_duplicate(fname, version, store, imax)) {
 		    gtk_list_store_append(store, iter);
-		    build_path(fullname, path, fname, NULL);
 		    n -= 4;
 		    fname[n] = '\0';
 		    if (n > *maxlen) {
 			*maxlen = n;
 		    }
-		    loaded = function_package_is_loaded(fullname);
 		    gtk_list_store_set(store, iter, 
 				       0, fname, 
 				       1, version,
 				       2, descrip, 
-				       3, loaded, 
+				       3, pkg_is_loaded(fullname), 
 				       4, path, -1);
 		    *nfn += 1;
 		}
@@ -1831,7 +1831,6 @@ void maybe_update_func_files_window (int editing)
 	char fullname[MAXLEN];
 	gchar *fname;
 	gchar *fdir;
-	gboolean loaded;
 
 	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
 	    return;
@@ -1843,8 +1842,9 @@ void maybe_update_func_files_window (int editing)
 	    sprintf(fullname, "%s%c%s.gfn", fdir, SLASH, fname);
 	    g_free(fname);
 	    g_free(fdir);
-	    loaded = function_package_is_loaded(fullname);
-	    gtk_list_store_set(store, &iter, 3, loaded, -1);
+	    gtk_list_store_set(store, &iter, 
+			       3, pkg_is_loaded(fullname), 
+			       -1);
 	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
 		break;
 	    }

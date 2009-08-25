@@ -1024,6 +1024,7 @@ void call_function_package (const char *fname, GtkWidget *w,
     FuncDataReq dreq;
     int minver;
     call_info *cinfo = NULL;
+    fnpkg *pkg = NULL;
     PRN *prn = NULL;
     int err = 0;
 
@@ -1035,15 +1036,27 @@ void call_function_package (const char *fname, GtkWidget *w,
     if (strstr(fname, ".gfn") == NULL) {
 	/* not a full filename -> a function package on server */
 	err = temp_install_remote_fnpkg(fname, tmpfile);
-    } else if (!function_package_is_loaded(fname)) {
-	err = load_user_function_file(fname);
-	if (err) {
-	    file_read_errbox(fname);
-	    *loaderr = 1;
+	if (!err) {
+	    pkg = get_function_package_by_filename(tmpfile); 
+	}
+    } else {
+	pkg = get_function_package_by_filename(fname);
+	if (pkg == NULL) {
+	    err = load_user_function_file(fname);
+	    if (err) {
+		file_read_errbox(fname);
+		*loaderr = 1;
+	    } else {
+		pkg = get_function_package_by_filename(fname);
+	    }
 	}
     }
 
-    if (err) {
+    if (!err) {
+	pkg = get_function_package_by_filename(fname);
+    }
+
+    if (err || pkg == NULL) {
 	return;
     }
 
@@ -1054,7 +1067,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 
     /* get interface list and other info for package */
 
-    err = function_package_get_properties((*tmpfile)? tmpfile : fname,
+    err = function_package_get_properties(pkg,
 					  "publist", &cinfo->publist,
 					  "data-requirement", &dreq,
 					  "min-version", &minver,
