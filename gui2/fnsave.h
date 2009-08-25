@@ -34,8 +34,6 @@ void get_default_package_name (char *fname, gpointer p, int mode);
 
 void update_sample_script (windata_t *vwin);
 
-void fnsave_set_script (const char *fname, gpointer p);
-
 int update_func_code (windata_t *vwin);
 
 void edit_package_at_startup (const char *fname);

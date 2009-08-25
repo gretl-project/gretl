@@ -454,9 +454,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	strcpy(tryfile, fname);
 	do_open_data(NULL, action);
     } else if (action == OPEN_SCRIPT) {
-	if (src == FSEL_DATA_FNPKG) {
-	    fnsave_set_script(fname, data);
-	} else if (src == FSEL_DATA_VWIN) {
+	if (src == FSEL_DATA_VWIN) {
 	    filesel_open_script(fname, data);
 	} else {
 	    filesel_open_script(fname, NULL);

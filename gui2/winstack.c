@@ -154,7 +154,8 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
 		    windata_t *vwin = 
 			g_object_get_data(G_OBJECT(wstack[i]), "vwin");
 
-		    if (vwin != NULL && strstr(ctest, vwin->fname)) {
+		    if (vwin != NULL && *vwin->fname != '\0' &&
+			strstr(ctest, vwin->fname) != NULL) {
 			if (pw != NULL) {
 			    *pw = wstack[i];
 			}
