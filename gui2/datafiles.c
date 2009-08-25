@@ -744,9 +744,8 @@ enum {
 
 static int gui_load_user_functions (const char *fname)
 {
-    int err;
+    int err = load_function_package_from_file(fname);
 
-    err = load_user_function_file(fname);
     if (err) {
 	gui_errmsg(err);
     } 
@@ -784,12 +783,13 @@ static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
     return err;
 }
 
-windata_t *gui_show_function_info (const char *fname, int role)
+windata_t *display_function_package_data (const char *pkgname,
+					  const char *path, 
+					  int role)
 {
-    char *pkgname = NULL;
     windata_t *vwin = NULL;
-    PRN *prn;
-    int err;
+    PRN *prn = NULL;
+    int err = 0;
 
     if (bufopen(&prn)) {
 	return NULL;
@@ -798,31 +798,27 @@ windata_t *gui_show_function_info (const char *fname, int role)
     fprintf(stderr, "gui_show_function_info: starting\n");
 
     if (role == VIEW_FUNC_INFO) {
-	if (g_path_is_absolute(fname) && !strstr(fname, "dltmp.")) {
-	    pprintf(prn, "File: %s\n", fname);
+	if (g_path_is_absolute(path) && !strstr(path, "dltmp.")) {
+	    pprintf(prn, "File: %s\n", path);
 	}
-	err = get_function_file_info(fname, prn, &pkgname);
+	err = print_function_package_info(path, prn);
     } else {
-	err = get_function_file_code(fname, prn, &pkgname);
+	err = print_function_package_code(path, prn);
     }
 	
     if (err) {
 	gretl_print_destroy(prn);
 	gui_errmsg(err);
     } else {
-	gchar *title;
+	gchar *title = g_strdup_printf("gretl: %s", pkgname);
 
-	title = g_strdup_printf("gretl: %s", (pkgname)? 
-				pkgname : _("function code"));
 	vwin = view_buffer(prn, 78, 350, title, role, NULL);
-	strcpy(vwin->fname, fname);
-	if (strstr(fname, "dltmp")) {
+	strcpy(vwin->fname, path);
+	if (strstr(path, "dltmp")) {
 	    set_window_delete_filename(vwin);
 	}
 	g_free(title);
     }
-
-    free(pkgname);
 
     return vwin;
 }
@@ -872,8 +868,8 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 
 static void browser_functions_handler (windata_t *vwin, int task)
 {
-    char fnfile[FILENAME_MAX];
-    gchar *fname = NULL;
+    char path[FILENAME_MAX];
+    gchar *pkgname = NULL;
     gchar *dir;
     int dircol = 0;
     int err = 0;
@@ -886,35 +882,34 @@ static void browser_functions_handler (windata_t *vwin, int task)
     }
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
-			 0, &fname);
+			 0, &pkgname);
 
     if (dircol != 0) {
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			     dircol, &dir);
-	build_path(fnfile, dir, fname, ".gfn");
+	build_path(path, dir, pkgname, ".gfn");
 	g_free(dir);
     } else {
-	strcpy(fnfile, fname);
+	strcpy(path, pkgname);
     }
 
-    fprintf(stderr, "browser_functions_handler: fnfile='%s'\n",
-	    fnfile);
-
-    g_free(fname);
+    fprintf(stderr, "browser_functions_handler: path='%s'\n", path);
 
     if (task == LOAD_FN_PKG) {
-	err = gui_load_user_functions(fnfile);
+	err = gui_load_user_functions(path);
     } else if (task == DELETE_FN_PKG) {
-	err = gui_delete_fn_pkg(fnfile, vwin);
+	err = gui_delete_fn_pkg(path, vwin);
     } else if (task == VIEW_FN_PKG_INFO) {
-	gui_show_function_info(fnfile, VIEW_FUNC_INFO);
+	display_function_package_data(pkgname, path, VIEW_FUNC_INFO);
     } else if (task == VIEW_FN_PKG_CODE) {
-	gui_show_function_info(fnfile, VIEW_FUNC_CODE);
+	display_function_package_data(pkgname, path, VIEW_FUNC_CODE);
     } else if (task == EDIT_FN_PKG) {
-	edit_function_package(fnfile, &err);
+	edit_function_package(path, &err);
     } else if (task == CALL_FN_PKG) {
-	call_function_package(fnfile, vwin->main, &err);
+	call_function_package(path, vwin->main, &err);
     }
+
+    g_free(pkgname);
 
     if (!err && (task == EDIT_FN_PKG || task == CALL_FN_PKG)) {
 	maybe_update_func_files_window(0);
@@ -1060,6 +1055,7 @@ static void build_funcfiles_popup (windata_t *vwin)
 	vwin->popup = gtk_menu_new();
 
 	if (vwin->role == FUNC_FILES) {
+	    /* local function files: full menu */
 	    add_popup_item(_("Edit"), vwin->popup, 
 			   G_CALLBACK(browser_edit_func), 
 			   vwin);
@@ -1079,14 +1075,12 @@ static void build_funcfiles_popup (windata_t *vwin)
 			   G_CALLBACK(new_package_callback), 
 			   vwin);
 	} else {
+	    /* files on server: limited menu */
 	    add_popup_item(_("Info"), vwin->popup, 
-			   G_CALLBACK(file_info_from_server), 
+			   G_CALLBACK(pkg_info_from_server), 
 			   vwin);
 	    add_popup_item(_("Install"), vwin->popup, 
 			   G_CALLBACK(install_file_from_server), 
-			   vwin);
-	    add_popup_item(_("Execute"), vwin->popup, 
-			   G_CALLBACK(browser_call_func), 
 			   vwin);
 	}
     }
@@ -1214,7 +1208,7 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 		role == REMOTE_FUNC_FILES ||
 		role == REMOTE_DATA_PKGS);
     } else if (item->flag == BTN_EXEC) {
-	return (role == FUNC_FILES || role == REMOTE_FUNC_FILES);
+	return (role == FUNC_FILES);
     }
 
     item->func = NULL;
@@ -1232,7 +1226,7 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	} else if (role == FUNC_FILES) {
 	    item->func = G_CALLBACK(show_function_info);
 	} else if (role == REMOTE_FUNC_FILES) {
-	    item->func = G_CALLBACK(file_info_from_server);
+	    item->func = G_CALLBACK(pkg_info_from_server);
 	} 
     } else if (item->flag == BTN_INDX) {
 	/* index: databases only */

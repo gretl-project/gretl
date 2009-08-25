@@ -625,7 +625,7 @@ static int maybe_write_function_file (void)
     char fullname[MAXLEN];
 
     session_file_make_path(fullname, "functions.xml");
-    return write_user_function_file(fullname);
+    return write_session_functions_file(fullname);
 }
 
 static int maybe_write_lists_file (void)

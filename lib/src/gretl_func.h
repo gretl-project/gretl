@@ -66,8 +66,6 @@ int user_func_get_return_type (const ufunc *fun);
 
 const char *user_function_name_by_index (int i);
 
-int user_function_index_by_name (const char *name);
-
 int user_function_set_debug (const char *name, int debug);
 
 void function_names_init (void);
@@ -116,24 +114,22 @@ int function_package_get_properties (fnpkg *pkg, ...);
 
 const char *function_package_get_name (fnpkg *pkg);
 
-int write_function_package (fnpkg *pkg);
+int function_package_write_file (fnpkg *pkg);
 
 int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 			  int minver);
 
-int write_user_function_file (const char *fname);
-
-fnpkg *get_function_package_by_filename (const char *fname);
-
-const char *function_package_description (const char *fname);
+int write_session_functions_file (const char *fname);
 
 int read_session_functions_file (const char *fname);
 
-int load_user_function_file (const char *fname);
+fnpkg *get_function_package_by_filename (const char *fname);
 
-int get_function_file_info (const char *fname, PRN *prn, char **pname);
+int load_function_package_from_file (const char *fname);
 
-int get_function_file_code (const char *fname, PRN *prn, char **pname);
+int print_function_package_info (const char *fname, PRN *prn);
+
+int print_function_package_code (const char *fname, PRN *prn);
 
 int get_function_file_header (const char *fname, char **pdesc, char **pver);
 
@@ -151,6 +147,5 @@ int push_fn_arg (fnargs *args, int type, void *p);
 
 void adjust_indent (const char *line, int *this_indent,
 		    int *next_indent);
-
 
 #endif /* GRETL_FUNC_H */

@@ -1896,10 +1896,10 @@ static int unpack_book_data (const char *fname)
    that is being installed onto the local machine.
 */
 
-static int real_install_file_from_server (windata_t *vwin, int op)
+void install_file_from_server (GtkWidget *w, windata_t *vwin)
 {
     gchar *objname = NULL;
-    char *target = NULL;
+    char *path = NULL;
     int err = 0;
 
     if (vwin->role == REMOTE_DB) {
@@ -1919,24 +1919,24 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 
     if (objname == NULL || *objname == '\0') {
 	g_free(objname);
-	return 1;
+	return;
     }    
 
-    target = get_writable_target(vwin->role, op, objname);
-    if (target == NULL) {
+    path = get_writable_target(vwin->role, REAL_INSTALL, objname);
+    if (path == NULL) {
 	g_free(objname);
-	return 1;
+	return;
     }
 
     if (vwin->role == REMOTE_FUNC_FILES) {
-	err = retrieve_remote_function_package(objname, target);
+	err = retrieve_remote_function_package(objname, path);
     } else if (vwin->role == REMOTE_DATA_PKGS) {
-	err = retrieve_remote_datafiles_package(objname, target);
+	err = retrieve_remote_datafiles_package(objname, path);
     } else {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-	err = retrieve_remote_db(objname, target, GRAB_NBO_DATA);
+	err = retrieve_remote_db(objname, path, GRAB_NBO_DATA);
 #else
-	err = retrieve_remote_db(objname, target, GRAB_DATA);
+	err = retrieve_remote_db(objname, path, GRAB_DATA);
 #endif
     }
 
@@ -1946,28 +1946,24 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	windata_t *local = get_local_viewer(vwin->role);
 
 	if (vwin->role == REMOTE_FUNC_FILES) {
-	    if (op == REAL_INSTALL) {
-		list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
-				      vwin->active_var, 3,
-				      _("Up to date"));
-		if (local != NULL) {
-		    populate_filelist(local, NULL);
-		} 
-	    } else {
-		gui_show_function_info(target, VIEW_FUNC_INFO);
-	    }
+	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
+				  vwin->active_var, 3,
+				  _("Up to date"));
+	    if (local != NULL) {
+		populate_filelist(local, NULL);
+	    } 
 	} else if (vwin->role == REMOTE_DATA_PKGS) {
-	    fprintf(stderr, "downloaded '%s'\n", target);
-	    err = unpack_book_data(target);
-	    remove(target);
+	    fprintf(stderr, "downloaded '%s'\n", path);
+	    err = unpack_book_data(path);
+	    remove(path);
 	    if (err) {
 		errbox(_("Error unzipping compressed data"));
 	    } else {
 		infobox("Restart gretl to access this database");
 	    }
 	} else {
-	    fprintf(stderr, "downloaded '%s'\n", target);
-	    err = ggz_extract(target);
+	    fprintf(stderr, "downloaded '%s'\n", path);
+	    err = ggz_extract(path);
 	    if (err) {
 		if (err != E_FOPEN) {
 		    errbox(_("Error unzipping compressed data"));
@@ -1979,30 +1975,41 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 		if (local != NULL) {
 		    populate_filelist(local, NULL);
 		} else {
-		    offer_db_open(target);
+		    offer_db_open(path);
 		}
 	    }
 	}
     }
 
     g_free(objname);
-    free(target);
-
-    return err;
+    free(path);
 }
 
-void install_file_from_server (GtkWidget *w, gpointer data)
+void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
 {
-    windata_t *vwin = (windata_t *) data;
+    gchar *objname = NULL;
+    char *path = NULL;
+    int err = 0;
 
-    real_install_file_from_server(vwin, REAL_INSTALL);
-}
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			 vwin->active_var, 0, &objname);
 
-void file_info_from_server (GtkWidget *w, gpointer data)
-{
-    windata_t *vwin = (windata_t *) data;
+    path = get_writable_target(vwin->role, TMP_INSTALL, objname);
+    if (path == NULL) {
+	g_free(objname);
+	return;
+    }
 
-    real_install_file_from_server(vwin, TMP_INSTALL);
+    err = retrieve_remote_function_package(objname, path);
+
+    if (err) {
+	show_network_error(NULL);
+    } else {
+	display_function_package_data(objname, path, VIEW_FUNC_INFO);
+    }
+
+    g_free(objname);
+    free(path);
 }
 
 static gchar *

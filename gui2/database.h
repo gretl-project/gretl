@@ -9,9 +9,9 @@ void open_remote_db_index (GtkWidget *w, gpointer data);
 
 void open_named_remote_db_index (char *dbname);
 
-void install_file_from_server (GtkWidget *w, gpointer data);
+void install_file_from_server (GtkWidget *w, windata_t *vwin);
 
-void file_info_from_server (GtkWidget *w, gpointer data);
+void pkg_info_from_server (GtkWidget *w, windata_t *vwin);
 
 gint populate_dbfilelist (windata_t *ddata);
 

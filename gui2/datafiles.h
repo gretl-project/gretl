@@ -42,7 +42,9 @@ gint populate_filelist (windata_t *fdata, gpointer p);
 
 char *strip_extension (char *s);
 
-windata_t *gui_show_function_info (const char *fname, int role);
+windata_t *display_function_package_data (const char *pkgname, 
+					  const char *path,
+					  int role);
 
 void maybe_update_func_files_window (int code);
 

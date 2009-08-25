@@ -806,35 +806,6 @@ static int function_data_check (call_info *cinfo)
     return err;
 }
 
-static int temp_install_remote_fnpkg (const char *fname, char *target)
-{
-    int err = 0;
-
-    build_path(target, paths.dotdir, "dltmp", NULL);
-    err = gretl_tempname(target);
-    if (err) {
-	return err;
-    }
-
-    err = retrieve_remote_function_package(fname, target);
-    if (err) {
-	show_network_error(NULL);
-	return err;
-    } 
-
-    err = load_user_function_file(target);
-    if (err) {
-	fprintf(stderr, "load_user_function_file: failed on %s\n", target);
-	file_read_errbox(target);
-    }
-
-    if (err) {
-	gretl_remove(target);
-    }
-
-    return err;
-}
-
 /* detect the case where we need a "pointer" variable but
    have been given a scalar or matrix constant 
 */
@@ -1017,43 +988,31 @@ static void select_interface (call_info *cinfo)
     free_strings_array(opts, nopts);
 }
 
+/* call to execute a function from the specified package: we do
+   this only for locally installed packages */
+
 void call_function_package (const char *fname, GtkWidget *w,
 			    int *loaderr)
 {
-    char tmpfile[FILENAME_MAX];
-    FuncDataReq dreq;
-    int minver;
-    call_info *cinfo = NULL;
-    fnpkg *pkg = NULL;
+    FuncDataReq dreq = 0;
+    int minver = 0;
+    call_info *cinfo;
+    fnpkg *pkg;
     PRN *prn = NULL;
     int err = 0;
 
-    *tmpfile = 0;
+    pkg = get_function_package_by_filename(fname);
 
-    /* load the specified package (which may require reading
-       from the server) */
-
-    if (strstr(fname, ".gfn") == NULL) {
-	/* not a full filename -> a function package on server */
-	err = temp_install_remote_fnpkg(fname, tmpfile);
-	if (!err) {
-	    pkg = get_function_package_by_filename(tmpfile); 
+    if (pkg == NULL) {
+	/* not already loaded */
+	err = load_function_package_from_file(fname);
+	if (err) {
+	    file_read_errbox(fname);
+	    *loaderr = 1;
+	} else {
+	    /* should be OK now */
+	    pkg = get_function_package_by_filename(fname);
 	}
-    } else {
-	pkg = get_function_package_by_filename(fname);
-	if (pkg == NULL) {
-	    err = load_user_function_file(fname);
-	    if (err) {
-		file_read_errbox(fname);
-		*loaderr = 1;
-	    } else {
-		pkg = get_function_package_by_filename(fname);
-	    }
-	}
-    }
-
-    if (!err) {
-	pkg = get_function_package_by_filename(fname);
     }
 
     if (err || pkg == NULL) {
@@ -1065,16 +1024,13 @@ void call_function_package (const char *fname, GtkWidget *w,
 	return;
     }
 
-    /* get interface list and other info for package */
+    /* get the interface list and other info for package */
 
     err = function_package_get_properties(pkg,
 					  "publist", &cinfo->publist,
 					  "data-requirement", &dreq,
 					  "min-version", &minver,
 					  NULL);
-    if (*tmpfile) {
-	gretl_remove(tmpfile);
-    }
 
     if (err) {
 	gui_errmsg(err);
@@ -1101,6 +1057,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 		return; /* note: handled */
 	    }
 	} else {
+	    /* only one interface available */
 	    cinfo->iface = cinfo->publist[1];
 	}
     }

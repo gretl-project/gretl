@@ -385,7 +385,6 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
     }
 
     filename_from_funname(fname, finfo->active);
-
     orig = match_window_by_filename(fname);
 
     if (orig != NULL) {
@@ -1290,7 +1289,7 @@ int save_function_package (const char *fname, gpointer p)
     */
 
     if (!err) {
-	err = write_function_package(finfo->pkg);
+	err = function_package_write_file(finfo->pkg);
     }
 
     if (err) {
@@ -1434,9 +1433,8 @@ void edit_function_package (const char *fname, int *loaderr)
     pkg = get_function_package_by_filename(fname);
 
     if (pkg == NULL) {
-	err = load_user_function_file(fname);
+	err = load_function_package_from_file(fname);
 	if (err) {
-	    fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
 	    file_read_errbox(fname);
 	    if (loaderr != NULL) {
 		*loaderr = 1;

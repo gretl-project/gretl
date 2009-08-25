@@ -2684,6 +2684,11 @@ int load_user_scalars_file (const char *fname)
     return err;
 }
 
+/* This is called in response to the "include" command in
+   the CLI program, the GUI program, and in interact.c,
+   if we detect that the named file is XML.
+*/
+
 int load_user_XML_file (const char *fname)
 {
     char *rootname = NULL;
@@ -2692,7 +2697,7 @@ int load_user_XML_file (const char *fname)
     rootname = gretl_xml_get_doc_type(fname, &err);
 
     if (!strcmp(rootname, "gretl-functions")) {
-	err = load_user_function_file(fname);
+	err = load_function_package_from_file(fname);
     } else if (!strcmp(rootname, "gretl-matrices")) {
 	err = load_user_matrix_file(fname);
     } else if (!strcmp(rootname, "gretl-scalars")) {

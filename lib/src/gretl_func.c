@@ -38,19 +38,11 @@
 #define FN_DEBUG 0      /* miscellaneous debugging */
 #define DDEBUG 0        /* debug the debugger */
 
+typedef struct fn_param_ fn_param;
 typedef struct obsinfo_ obsinfo;
-
-struct obsinfo_ {
-    int structure;
-    int pd;
-    int t1, t2;
-    char changed;
-    char stobs[OBSLEN];
-};
+typedef struct fncall_ fncall;
 
 /* structure representing a parameter of a user-defined function */
-
-typedef struct fn_param_ fn_param;
 
 struct fn_param_ {
     char *name;     /* the name of the parameter */
@@ -62,43 +54,47 @@ struct fn_param_ {
     double max;     /* maximum value (scalar parameters only) */
 };
 
-/* structure representing a call to a user-defined function */
+/* structure representing sample information at start of
+   a function call */
 
-typedef struct fncall_ fncall;
+struct obsinfo_ {
+    int structure;      /* time-series, etc. */
+    int pd;             /* data frequency */
+    int t1, t2;         /* starting and ending observations */
+    char changed;       /* sample has been changed within the function call? */
+    char stobs[OBSLEN]; /* string representation of starting obs */
+};
+
+/* structure representing a call to a user-defined function */
 
 struct fncall_ {
     ufunc *fun;    /* the function called */
     fnargs *args;  /* argument array */
-    int *ptrvars;
-    int *listvars;
-    obsinfo obs;
+    int *ptrvars;  /* list of pointer arguments */
+    int *listvars; /* list of series included in a list argument */
+    obsinfo obs;   /* sample info */
 };
 
 /* structure representing a user-defined function */
 
 struct ufunc_ {
-    char name[FN_NAMELEN];
-    int pkgID;
-    int private;
-    int n_lines;
-    char **lines;
-    int n_params;
-    fn_param *params;
-    int rettype;
-    char *retname; /* used only with "old-style" function syntax */
-    int debug;
+    char name[FN_NAMELEN]; /* identifier */
+    fnpkg *pkg;            /* pointer to parent package, or NULL */
+    int private;           /* is this function a private one? */
+    int n_lines;           /* number of lines of code */
+    char **lines;          /* array of lines of code */
+    int n_params;          /* number of parameters */
+    fn_param *params;      /* parameter info array */
+    int rettype;           /* return type (if any) */
+    char *retname;         /* used only with "old-style" function syntax */
+    int debug;             /* are we debugging this function? */
 };
 
-enum {
-    PKG_FREE_PKG,
-    PKG_FREE_ALL
-};
-
-/* structure representing a function "package" */
+/* structure representing a function package */
 
 struct fnpkg_ {
-    int ID;
-    char name[FN_NAMELEN];
+    int ID;           /* unique ID (time stamp) */
+    char name[FN_NAMELEN]; /* package name */
     char *fname;      /* filename */
     char *author;     /* author's name */
     char *version;    /* package version string */
@@ -108,8 +104,8 @@ struct fnpkg_ {
     char *sample;     /* sample caller script */
     int minver;       /* minimum required gretl version */
     FuncDataReq dreq; /* data requirement */
-    ufunc **pub;      /* public interfaces */
-    ufunc **priv;     /* private functions */
+    ufunc **pub;      /* pointers to public interfaces */
+    ufunc **priv;     /* pointers to private functions */
     int n_pub;        /* number of public functions */
     int n_priv;       /* number of private functions */
 };
@@ -122,43 +118,39 @@ enum {
 /* structure representing an argument to a user-defined function */
 
 struct fnarg {
-    char type;
-    char flags;       /* ARG_OPTIONAL, ARG_CONST as appropriate */
-    const char *name; /* name as function param */
-    char *upname;     /* name of supplied arg at caller level */
+    char type;         /* argument type */
+    char flags;        /* ARG_OPTIONAL, ARG_CONST as appropriate */
+    const char *name;  /* name as function param */
+    char *upname;      /* name of supplied arg at caller level */
     union {
-	int idnum;
-	double x;
-	double *px;
-	gretl_matrix *m;
-	user_matrix *um;
-	char *str;
+	int idnum;        /* named series arg: series ID */
+	double x;         /* scalar arg: value */
+	double *px;       /* anonymous series arg: value */
+	gretl_matrix *m;  /* matrix arg: value */
+	user_matrix *um;  /* named matrix arg: value */
+	char *str;        /* string arg: value */
     } val;
 };
 
 struct fnargs_ {
-    int argc;
-    struct fnarg **arg;
+    int argc;           /* count of arguments */
+    struct fnarg **arg; /* array of arguments */
 };
 
-static int n_ufuns;
-static ufunc **ufuns;
-static ufunc *current_ufun;
-static GList *callstack;
+static int n_ufuns;         /* number of user-defined functions in memory */
+static ufunc **ufuns;       /* array of pointers to user-defined functions */
+static ufunc *current_ufun; /* pointer to currently executing function */
+static GList *callstack;    /* stack of function calls */
+static int n_pkgs;          /* number of loaded function packages */
+static fnpkg **pkgs;        /* array of pointers to loaded packages */
 
-static int n_pkgs;
-static fnpkg **pkgs;
-
-static void delete_ufunc_from_list (ufunc *fun);
-static fnpkg *function_package_alloc (const char *fname);
 static int function_package_record (fnpkg *pkg);
-static int function_package_remove_by_ID (int ID);
-static void function_package_free (fnpkg *pkg, int mode);
+static void function_package_free (fnpkg *pkg);
 
 /* record of state, and communication of state with outside world */
 
-static int compiling;
-static int fn_executing;
+static int compiling;    /* boolean: are we compiling a function currently? */
+static int fn_executing; /* depth of function call stack */
 
 int gretl_compiling_function (void)
 {
@@ -180,7 +172,17 @@ int gretl_function_depth (void)
     return fn_executing;
 }
 
-/* handling of function arguments */
+/**
+ * fn_arg_new:
+ * @type: type of argument
+ * @p: pointer to value for argument.
+ * @err: location to receive error code.
+ *
+ * Allocates a new function argument of the specified @type
+ * and assigns it the value given in @p.
+ *
+ * Returns: the allocated argument, or %NULL of failure.
+ */
 
 struct fnarg *fn_arg_new (int type, void *p, int *err)
 {
@@ -224,6 +226,13 @@ struct fnarg *fn_arg_new (int type, void *p, int *err)
     return arg;
 }
 
+/**
+ * fn_args_new:
+ *
+ * Returns: a newly allocated, empty array of function
+ * arguments, or %NULL of failure.
+ */
+
 fnargs *fn_args_new (void)
 {
     fnargs *args = malloc(sizeof *args);
@@ -259,6 +268,18 @@ void fn_args_free (fnargs *args)
     free(args->arg);
     free(args);
 }
+
+/**
+ * push_fn_arg:
+ * @args: existing array of function arguments.
+ * @type: type of argument to add.
+ * @p: pointer to value to add.
+ *
+ * Appends a new argument of the specified type and value to the
+ * array @args.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
 
 int push_fn_arg (fnargs *args, int type, void *p)
 {
@@ -312,6 +333,42 @@ static void fncall_free (fncall *call)
     }
 }
 
+static fnpkg *function_package_alloc (const char *fname)
+{
+    fnpkg *pkg = malloc(sizeof *pkg);
+
+    if (pkg == NULL) {
+	return NULL;
+    }
+
+    pkg->fname = gretl_strdup(fname);
+    if (pkg->fname == NULL) {
+	free(pkg);
+	return NULL;
+    }     
+
+    pkg->ID = (int) time(NULL);
+    pkg->name[0] = '\0';
+    pkg->author = NULL;
+    pkg->version = NULL;
+    pkg->date = NULL;
+    pkg->descrip = NULL;
+    pkg->help = NULL;
+    pkg->sample = NULL;
+    pkg->dreq = 0;
+    pkg->minver = 0;
+    
+    pkg->pub = pkg->priv = NULL;
+    pkg->n_pub = pkg->n_priv = 0;
+
+    return pkg;
+}
+
+/* For function call @call, set the 'listarg' status of any named
+   series provided to the called function via list arguments.  This is
+   required for correct handling of namespaces.  
+*/
+
 static void set_listargs_from_call (fncall *call, DATAINFO *pdinfo)
 {
     int i, v;
@@ -363,14 +420,20 @@ static void set_executing_off (fncall *call, DATAINFO *pdinfo)
     }
 }
 
-/* general info accessors */
+/**
+ * n_free_functions:
+ *
+ * Returns: the number of functions loaded in memory
+ * that are not currently attached to any function package,
+ * and are therefore available for packaging.
+ */
 
 int n_free_functions (void)
 {
     int i, n = 0;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkgID == 0) {
+	if (ufuns[i]->pkg == NULL) {
 	    n++;
 	}
     }
@@ -378,15 +441,40 @@ int n_free_functions (void)
     return n;
 }
 
+/**
+ * get_user_function_by_index:
+ * @idx: index number.
+ *
+ * Returns: pointer to the user-function that currently
+ * occupies (0-based) slot @idx in the array of loaded
+ * functions, or %NULL if @idx is out of bounds.
+ */
+
 const ufunc *get_user_function_by_index (int idx)
 {
     return (idx < 0 || idx >= n_ufuns)? NULL : ufuns[idx];
 }
 
+/**
+ * fn_n_params:
+ * @fun: pointer to user-function.
+ *
+ * Returns: the number of parameters associated with @fun.
+ */
+
 int fn_n_params (const ufunc *fun)
 {
     return fun->n_params;
 }
+
+/**
+ * fn_param_type:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: the type of parameter @i of function
+ * @fun.
+ */
 
 int fn_param_type (const ufunc *fun, int i)
 {
@@ -394,11 +482,29 @@ int fn_param_type (const ufunc *fun, int i)
 	fun->params[i].type;
 }
 
+/**
+ * fn_param_name:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: the name of parameter @i of function
+ * @fun.
+ */
+
 const char *fn_param_name (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NULL :
 	fun->params[i].name;
 }
+
+/**
+ * fn_param_descrip:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: the description of parameter @i of function
+ * @fun (if any), otherwise %NULL.
+ */
 
 const char *fn_param_descrip (const ufunc *fun, int i)
 {
@@ -406,11 +512,29 @@ const char *fn_param_descrip (const ufunc *fun, int i)
 	fun->params[i].descrip;
 }
 
+/**
+ * fn_param_default:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: the default value of (scalar) parameter @i of
+ * function @fun (if any), otherwise #NADBL.
+ */
+
 double fn_param_default (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NADBL :
 	fun->params[i].deflt;
 }    
+
+/**
+ * fn_param_minval:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: the minimum value of (scalar) parameter @i of
+ * function @fun (if any), otherwise #NADBL.
+ */
 
 double fn_param_minval (const ufunc *fun, int i)
 {
@@ -418,17 +542,37 @@ double fn_param_minval (const ufunc *fun, int i)
 	fun->params[i].min;
 }
 
+/**
+ * fn_param_maxval:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: the maximum value of (scalar) parameter @i of
+ * function @fun (if any), otherwise #NADBL.
+ */
+
 double fn_param_maxval (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NADBL :
 	fun->params[i].max;
 }
 
+/**
+ * fn_param_optional:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: 1 if parameter @i of function @fun is optional,
+ * otherwise 0.
+ */
+
 int fn_param_optional (const ufunc *fun, int i)
 {
     int t;
 
-    if (i < 0 || i >= fun->n_params) return 0;
+    if (i < 0 || i >= fun->n_params) {
+	return 0;
+    }
 
     t = fun->params[i].type;
 
@@ -437,6 +581,13 @@ int fn_param_optional (const ufunc *fun, int i)
 	     t == GRETL_TYPE_STRING) && 
 	    (fun->params[i].flags & ARG_OPTIONAL));
 }
+
+/**
+ * user_func_get_return_type:
+ * @fun: pointer to user-function.
+ * 
+ * Returns: the return type of function @fun.
+ */
 
 int user_func_get_return_type (const ufunc *fun)
 {
@@ -447,6 +598,15 @@ int user_func_get_return_type (const ufunc *fun)
     }
 }
 
+/**
+ * user_function_name_by_index:
+ * @i: the position of a user-function in the array of
+ * loaded functions.
+ * 
+ * Returns: the name of the function, or %NULL if
+ * @i is out of bounds.
+ */
+
 const char *user_function_name_by_index (int i)
 {
     if (i >= 0 && i < n_ufuns) {
@@ -456,20 +616,18 @@ const char *user_function_name_by_index (int i)
     }
 }
 
-int user_function_index_by_name (const char *name)
-{
-    int i;
-
-    for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, ufuns[i]->name)) {
-	    return i;
-	}
-    }
-
-    return -1;
-}
+/* Apparatus used in the GUI selector for composing a new function
+   package.  We want a list of the names of currently unpackaged
+   functions: we first call function_names_init(), then keep calling
+   next_free_function_name() until it returns %NULL.  
+*/
 
 static int fname_idx;
+
+void function_names_init (void)
+{
+    fname_idx = 0;
+}
 
 const char *next_free_function_name (void)
 {
@@ -483,7 +641,7 @@ const char *next_free_function_name (void)
 
     while (fname_idx < n_ufuns) {
 	fun = ufuns[fname_idx++];
-	if (fun->pkgID == 0) {
+	if (fun->pkg == NULL) {
 	    ret = fun->name;
 	    break;
 	}
@@ -492,10 +650,7 @@ const char *next_free_function_name (void)
     return ret;
 }
 
-void function_names_init (void)
-{
-    fname_idx = 0;
-}
+/* end GUI function-name apparatus */
 
 static fncall *current_function_call (void)
 {
@@ -512,12 +667,10 @@ static ufunc *currently_called_function (void)
 {
     fncall *call = current_function_call();
 
-    if (call != NULL) {
-	return call->fun;
-    } else {
-	return NULL;
-    }
+    return (call != NULL)? call->fun : NULL;
 }
+
+/* see if a function is currently employed in the call stack */
 
 static int function_in_use (ufunc *fun)
 {
@@ -535,48 +688,44 @@ static int function_in_use (ufunc *fun)
     return 0;
 }
 
-int current_func_pkgID (void)
-{
-    ufunc *f = currently_called_function();
-
-    return (f == NULL)? 0 : f->pkgID;
-}
-
 ufunc *get_user_function_by_name (const char *name)
 {
-    ufunc *fun = NULL;
-    int i, ID;
+    fnpkg *pkg = NULL;
+    ufunc *fun;
+    int i;
 
     if (n_ufuns == 0) {
 	return NULL;
     }
 
-    ID = current_func_pkgID();
+    fun = currently_called_function();
 
-    /* if we're currently exec'ing a function from a package,
-       look first for functions from the same package */
+    if (fun != NULL) {
+	pkg = fun->pkg;
+	fun = NULL;
+    }
+
+    /* if we're currently exec'ing a packaged function,
+       look first for functions from the same package 
+    */
 
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, ufuns[i]->name)) {
-	    fun = ufuns[i];
-	    if (fun->pkgID == ID || ID == 0) {
+	if (!strcmp(name, ufuns[i]->name)) { 
+	    if (pkg == NULL || ufuns[i]->pkg == pkg) {
+		fun = ufuns[i];
 		break;
-	    } else {
-		fun = NULL;
 	    }
 	}
     }
 
-    if (ID > 0 && fun == NULL) {
-	/* fall back on unpackaged functions */
+    if (pkg != NULL && fun == NULL) {
+	/* fall back on unpackaged functions, or functions from
+	   other packages so long as they're not private
+	 */
 	for (i=0; i<n_ufuns; i++) {
-	    if (!strcmp(name, ufuns[i]->name)) {
+	    if (!strcmp(name, ufuns[i]->name) && !ufuns[i]->private) {
 		fun = ufuns[i];
-		if (fun->pkgID == 0) {
-		    break;
-		} else {
-		    fun = NULL;
-		}
+		break;
 	    }
 	}
     }	
@@ -591,7 +740,7 @@ ufunc *get_user_function_by_name (const char *name)
     return fun;
 }
 
-/* constructors and destructors */
+/* allocate and initialize a new array of @n parameters */
 
 static fn_param *allocate_params (int n)
 {
@@ -625,7 +774,7 @@ static ufunc *ufunc_new (void)
     }
 
     fun->name[0] = '\0';
-    fun->pkgID = 0;
+    fun->pkg = NULL;
     fun->private = 0;
 
     fun->n_lines = 0;
@@ -671,7 +820,7 @@ static void clear_ufunc_data (ufunc *fun)
     fun->retname = NULL;
 }
 
-static void free_ufunc (ufunc *fun)
+static void ufunc_free (ufunc *fun)
 {
     free_strings_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
@@ -710,25 +859,12 @@ static ufunc *add_ufunc (const char *fname)
     if (fun != NULL) {
 	strncat(fun->name, fname, FN_NAMELEN - 1);
 	if (add_allocated_ufunc(fun)) {
-	    free_ufunc(fun);
+	    ufunc_free(fun);
 	    fun = NULL;
 	}
     }
 
     return fun;
-}
-
-static void ufuncs_destroy (void)
-{
-    int i;
-
-    for (i=0; i<n_ufuns; i++) {
-	free_ufunc(ufuns[i]);
-    }
-    free(ufuns);
-
-    ufuns = NULL;
-    n_ufuns = 0;
 }
 
 /* handling of XML function packages */
@@ -794,6 +930,9 @@ static int arg_type_from_string (const char *s)
     return 0;
 }
 
+/* the subset of gretl types that are acceptable as
+   function return values */
+
 #define ok_return_type(r) (r == GRETL_TYPE_DOUBLE || \
 	                   r == GRETL_TYPE_SERIES || \
 	                   r == GRETL_TYPE_MATRIX || \
@@ -843,11 +982,14 @@ static int param_field_to_type (const char *s)
 #endif
 
     if (isdigit(*s)) {
+	/* backward compat */
 	return arg_type_from_int(s);
     } else {
 	return arg_type_from_string(s);
     }
 }    
+
+/* read the parameter info for a function from XML file */
 
 static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 			     ufunc *fun)
@@ -924,7 +1066,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-/* used only with old-style function definitions */
+/* we use this only with old-style function definitions */
 
 static int func_read_return (xmlNodePtr node, ufunc *fun)
 {
@@ -948,6 +1090,9 @@ static int func_read_return (xmlNodePtr node, ufunc *fun)
 
     return err;
 }
+
+/* read the actual code lines from the XML representation of a 
+   function */
 
 static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 {
@@ -1009,86 +1154,83 @@ static void print_min_max_deflt (fn_param *param, PRN *prn)
     pputc(prn, ']');
 }
 
-static void print_function_start (ufunc *fun, PRN *prn)
+/* free @fun and also remove it from the list of loaded
+   functions */
+
+static void ufunc_unload (ufunc *fun)
 {
-    const char *s;
-    int i;
+    int i, j, found = 0;
 
-    if (fun->rettype == GRETL_TYPE_NONE) {
-	pprintf(prn, "function void %s ", fun->name);
-    } else {
-	const char *typestr = arg_type_string(fun->rettype);
-
-	pprintf(prn, "function %s %s ", typestr, fun->name);
+    if (n_ufuns == 0 || fun == NULL) {
+	/* "can't happen" */
+	return;
     }
 
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<fun->n_params; i++) {
-	if (i == 0) {
-	    pputc(prn, '(');
-	}
-	if (fun->params[i].flags & ARG_CONST) {
-	    pputs(prn, "const ");
-	}
-	s = arg_type_string(fun->params[i].type);
-	if (s[strlen(s) - 1] == '*') {
-	    pprintf(prn, "%s%s", s, fun->params[i].name);
-	} else {
-	    pprintf(prn, "%s %s", s, fun->params[i].name);
-	}
-	if (fun->params[i].type == GRETL_TYPE_BOOL) {
-	    if (!na(fun->params[i].deflt)) {
-		pprintf(prn, "[%g]", fun->params[i].deflt);
-	    }
-	} else if (gretl_scalar_type(fun->params[i].type)) {
-	    print_min_max_deflt(&fun->params[i], prn);
-	} else if (gretl_ref_type(fun->params[i].type) || 
-		   fun->params[i].type == GRETL_TYPE_LIST ||
-		   fun->params[i].type == GRETL_TYPE_STRING) {
-	    print_opt_flags(&fun->params[i], prn);
-	}
-	print_param_description(&fun->params[i], prn);
-	if (i == fun->n_params - 1) {
-	    pputc(prn, ')');
-	} else {
-	    pputs(prn, ", ");
-	}
-    }
-
-    pputc(prn, '\n');
-
-    gretl_pop_c_numeric_locale();
-}
-
-static void print_function_end (ufunc *fun, PRN *prn)
-{
-    if (fun->retname != NULL) {
-	/* support old-style */
-	pprintf(prn, "  return %s\n", fun->retname);
-    }
-
-    pputs(prn, "end function\n");
-}
-
-static int unload_package_by_ID (int ID)
-{
-    int i;
-
-#if PKG_DEBUG
-    fprintf(stderr, "unload_package_by_ID: unloading %d\n", ID);
-#endif
+    /* remove this function from the array of loaded functions */
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkgID == ID) {
-	    delete_ufunc_from_list(ufuns[i]);
+	if (ufuns[i] == fun) {
+	    for (j=i; j<n_ufuns-1; j++) {
+		ufuns[j] = ufuns[j+1];
+	    }
+	    found = 1;
+	    break;
 	}
     }
 
-    function_package_remove_by_ID(ID);
+    ufunc_free(fun);
 
-    return 0;
+    if (found) {
+	n_ufuns--;
+    }
 }
+
+/* note: called only when clearing out duplicate function
+   definitions */
+
+static void function_package_unload (fnpkg *pkg)
+{
+    int i, j, found = 0;
+
+#if PKG_DEBUG
+    fprintf(stderr, "function_package_unload: unloading '%s'\n", pkg->name);
+#endif
+
+    /* destroy children and remove them from the array of loaded
+       functions */
+
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkg == pkg) {
+	    ufunc_unload(ufuns[i]);
+	}
+    }
+
+    /* remove this package from the array of loaded packages */
+
+    for (i=0; i<n_pkgs; i++) {
+	if (pkgs[i] == pkg) {
+	    for (j=i; j<n_pkgs-1; j++) {
+		pkgs[j] = pkgs[j+1];
+	    }
+	    found = 1;
+	    break;
+	}
+    }
+
+    /* free the package itself */
+    function_package_free(pkg);
+
+    if (found) {
+	n_pkgs--;
+    }
+}
+
+/* Append a pointer to @fun to the array of child-pointers in @pkg: we
+   do this when reading the definition of a packaged function from an
+   XML file.  Note that this action does not add the functions to the
+   array of loaded functions -- that's done separately, if we're
+   loading the package 'for real'.
+*/
 
 static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
 {
@@ -1118,16 +1260,18 @@ static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
     } 
 
 #if PKG_DEBUG
-    fprintf(stderr, "attach_ufunc_to_package: id = %d, "
-	    "private = %d, err = %d\n", fun->pkgID, 
+    fprintf(stderr, "attach_ufunc_to_package: package = %s, "
+	    "private = %d, err = %d\n", pkg->name, 
 	    fun->private, err);
 #endif
 
     return err;
 }
 
-/* for now we'll support old-style function definitions on
-   reading from gfn XML */
+/* read a single user-function definition from XML file: if the
+   function is a child of a package, the @pkg argument will
+   be non-NULL
+*/
 
 static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 {
@@ -1141,7 +1285,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     if (!gretl_xml_get_prop_as_string(node, "name", &tmp)) {
-	free_ufunc(fun);
+	ufunc_free(fun);
 	return E_DATA;
     }
 
@@ -1149,7 +1293,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     free(tmp);
 
     if (pkg != NULL) {
-	fun->pkgID = pkg->ID;
+	fun->pkg = pkg;
     }
 
     if (gretl_xml_get_prop_as_string(node, "type", &tmp)) {
@@ -1196,14 +1340,16 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 
     if (!err) {
 	if (pkg != NULL) {
+	    /* function belongs to a package */
 	    err = attach_ufunc_to_package(fun, pkg);
 	} else {
+	    /* reading a standalone function from session file */
 	    err = add_allocated_ufunc(fun);
 	}
     }
 
     if (err) {
-	free_ufunc(fun);
+	ufunc_free(fun);
     } 
 
 #if PKG_DEBUG
@@ -1275,7 +1421,8 @@ static void maybe_correct_line (char *line)
     }
 }
 
-/* on writing functions as XML, use new-style function syntax */
+/* write out a single user-defined function as XML, according to
+   gretlfunc.dtd */
 
 static int write_function_xml (const ufunc *fun, FILE *fp)
 {
@@ -1343,7 +1490,7 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     }
 
     if (fun->rettype != GRETL_TYPE_NONE && fun->retname != NULL) {
-	/* old-style */
+	/* handle old-style definition */
 	fprintf(fp, "  return %s\n", fun->retname);
     }
 
@@ -1353,6 +1500,82 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     
     return 0;
 }
+
+/* script-style output */
+
+static void print_function_start (ufunc *fun, PRN *prn)
+{
+    const char *s;
+    int i;
+
+    if (fun->rettype == GRETL_TYPE_NONE) {
+	pprintf(prn, "function void %s ", fun->name);
+    } else {
+	const char *typestr = arg_type_string(fun->rettype);
+
+	pprintf(prn, "function %s %s ", typestr, fun->name);
+    }
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<fun->n_params; i++) {
+	if (i == 0) {
+	    pputc(prn, '(');
+	}
+	if (fun->params[i].flags & ARG_CONST) {
+	    pputs(prn, "const ");
+	}
+	s = arg_type_string(fun->params[i].type);
+	if (s[strlen(s) - 1] == '*') {
+	    pprintf(prn, "%s%s", s, fun->params[i].name);
+	} else {
+	    pprintf(prn, "%s %s", s, fun->params[i].name);
+	}
+	if (fun->params[i].type == GRETL_TYPE_BOOL) {
+	    if (!na(fun->params[i].deflt)) {
+		pprintf(prn, "[%g]", fun->params[i].deflt);
+	    }
+	} else if (gretl_scalar_type(fun->params[i].type)) {
+	    print_min_max_deflt(&fun->params[i], prn);
+	} else if (gretl_ref_type(fun->params[i].type) || 
+		   fun->params[i].type == GRETL_TYPE_LIST ||
+		   fun->params[i].type == GRETL_TYPE_STRING) {
+	    print_opt_flags(&fun->params[i], prn);
+	}
+	print_param_description(&fun->params[i], prn);
+	if (i == fun->n_params - 1) {
+	    pputc(prn, ')');
+	} else {
+	    pputs(prn, ", ");
+	}
+    }
+
+    pputc(prn, '\n');
+
+    gretl_pop_c_numeric_locale();
+}
+
+/* script-style output */
+
+static void print_function_end (ufunc *fun, PRN *prn)
+{
+    if (fun->retname != NULL) {
+	/* support old-style */
+	pprintf(prn, "  return %s\n", fun->retname);
+    }
+
+    pputs(prn, "end function\n");
+}
+
+/**
+ * gretl_function_print_code:
+ * @fun: pointer to user-function.
+ * @prn: printing struct.
+ *
+ * Prints out function @fun to @prn, script-style.
+ *
+ * Returns: 0 on success, non-zero if @fun is %NULL.
+ */
 
 int gretl_function_print_code (ufunc *fun, PRN *prn)
 {
@@ -1380,49 +1603,32 @@ int gretl_function_print_code (ufunc *fun, PRN *prn)
     return 0;
 }
 
-static fnpkg *ufunc_get_parent_package (const ufunc *fun)
-{
-    int i;
-
-    for (i=0; i<n_pkgs; i++) {
-	if (fun->pkgID == pkgs[i]->ID) {
-	    return pkgs[i];
-	}
-    }
-
-    return NULL;
-}
+/* construct a name for @pkg based on its filename member:
+   take the basename and knock off ".gfn"
+*/
 
 static void name_package_from_filename (fnpkg *pkg)
 {
     char *p = strrchr(pkg->fname, SLASH);
-    char *tmp;
+    int n;
 
     if (p != NULL) {
-	tmp = gretl_strdup(p + 1);
+	p++;
     } else {
-	tmp = gretl_strdup(pkg->fname);
+	p = pkg->fname;
     }
 
-    if (tmp == NULL) {
-	if (*pkg->name == '\0') {
-	    strcpy(pkg->name, "unknown");
-	}
-	return;
+    n = strlen(p);
+    if (has_suffix(p, ".gfn")) {
+	n -= 4;
     }
 
-    p = strrchr(tmp, '-');
-    if (p == NULL) {
-	p = strstr(tmp, ".gfn");
-    }
-
-    if (p != NULL) {
-	*p = '\0';
+    if (n > FN_NAMELEN - 1) {
+	n = FN_NAMELEN - 1;
     }
 
     *pkg->name = '\0';
-    strncat(pkg->name, tmp, FN_NAMELEN-1);
-    free(tmp);
+    strncat(pkg->name, p, n);
 
 #if PKG_DEBUG
     fprintf(stderr, "filename '%s' -> pkgname '%s'\n",
@@ -1430,17 +1636,11 @@ static void name_package_from_filename (fnpkg *pkg)
 #endif
 }
 
-static char *get_version_string (char *s, int v)
-{
-    int x, y, z;
-
-    x = v / 10000;
-    y = (v - x * 10000) / 100;
-    z = v % 100;
-
-    sprintf(s, "%d.%d.%d", x, y, z);
-    return s;
-}
+/* Given an array of @n function names in @names, create a
+   corresponding array of pointers to the named functions in @pkg,
+   Flag an error if any of the function names are bad, or if
+   allocation fails.
+*/
 
 static int add_uf_array_from_names (fnpkg *pkg, char **names, 
 				    int n, int priv)
@@ -1467,7 +1667,7 @@ static int add_uf_array_from_names (fnpkg *pkg, char **names,
 
     for (i=0; i<n; i++) {
 	fun = get_user_function_by_name(names[i]);
-	fun->pkgID = pkg->ID;
+	fun->pkg = pkg;
 	fun->private = priv;
 	uf[i] = fun;
     }
@@ -1482,6 +1682,21 @@ static int add_uf_array_from_names (fnpkg *pkg, char **names,
 
     return 0;
 }
+
+/**
+ * function_package_connect_funcs:
+ * @pkg: function package.
+ * @pubnames: array of names of public functions.
+ * @n_pub: number of strings in @pubnames.
+ * @privnames: array of names of private functions (or %NULL).
+ * @n_priv: number of strings in @privnames (may be 0).
+ *
+ * Looks up the functions named in @pubnames and @privnames
+ * and adds pointers to these functions to @pkg, hence marking
+ * the functions as belonging to @pkg.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int function_package_connect_funcs (fnpkg *pkg, 
 				    char **pubnames, int n_pub,
@@ -1500,12 +1715,23 @@ int function_package_connect_funcs (fnpkg *pkg,
     return err;
 }
 
-/* Allocate a new function package: @fname is the filename it will be
-   given, @publist is the list of ID number of the public interfaces,
-   and @privlist is the list of ID numbers of private functions (if
-   applicable, otherwise NULL).  The function ID numbers are cashed
-   out into pointers to user-functions in the returned fnpkg struct.
-*/
+/**
+ * function_package_new:
+ * @fname: filename for package.
+ * @pubnames: array of names of public functions.
+ * @n_pub: number of strings in @pubnames.
+ * @privnames: array of names of private functions (or %NULL).
+ * @n_priv: number of strings in @privnames (may be 0).
+ * @err: location to receive error code.
+ *
+ * Allocates a new package with filename-member @fname, including
+ * the public and private functions named in @pubnames and
+ * @privnames.  Note that this function does not cause the
+ * package to be written to file; for that, see
+ * write_function_package().
+ *
+ * Returns: pointer to package on success, %NULL on error.
+ */
 
 fnpkg *function_package_new (const char *fname, 
 			     char **pubnames, int n_pub,
@@ -1519,6 +1745,8 @@ fnpkg *function_package_new (const char *fname,
 	return NULL;
     } 
 
+    name_package_from_filename(pkg);
+
     *err = function_package_connect_funcs(pkg, pubnames, n_pub,
 					  privnames, n_priv);
 
@@ -1527,11 +1755,24 @@ fnpkg *function_package_new (const char *fname,
     }
 
     if (*err) {
-	function_package_free(pkg, PKG_FREE_PKG);
+	/* note: this does not free the packaged functions, if any */
+	function_package_free(pkg);
 	pkg = NULL;
     }
 
     return pkg;
+}
+
+static char *get_version_string (char *s, int v)
+{
+    int x, y, z;
+
+    x = v / 10000;
+    y = (v - x * 10000) / 100;
+    z = v % 100;
+
+    sprintf(s, "%d.%d.%d", x, y, z);
+    return s;
 }
 
 static char *trim_text (char *s)
@@ -1540,10 +1781,11 @@ static char *trim_text (char *s)
     return tailstrip(s);
 }
 
-/* Write out a function package as XML. If @fp is NULL, then we
-   write this as a package file in it's own right, using the
-   filename given in the package, otherwise we're writing it as a
-   component of the functions listing in a gretl session file.  
+/* Write out a function package as XML. If @fp is NULL, then we write
+   this as a package file in its own right, using the filename given
+   in the package (the 'standalone' case), otherwise we're writing it
+   as a component of the functions listing in a gretl session file,
+   which already has an associated open stream.  
 */
 
 static int real_write_function_package (fnpkg *pkg, FILE *fp)
@@ -1603,18 +1845,14 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     }
 
     if (pkg->help != NULL) {
-	char *s = trim_text(pkg->help);
-
 	fputs("<help>\n", fp);
-	gretl_xml_put_raw_string(s, fp);
+	gretl_xml_put_raw_string(trim_text(pkg->help), fp);
 	fputs("\n</help>\n", fp);	
     }    
 
     if (pkg->sample != NULL) {
-	char *s = trim_text(pkg->sample);
-
 	fputs("<sample-script>\n", fp);
-	gretl_xml_put_raw_string(s, fp);
+	gretl_xml_put_raw_string(trim_text(pkg->sample), fp);
 	fputs("\n</sample-script>\n", fp);	
     }
 
@@ -1628,13 +1866,27 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     return err;
 }
 
-/* write out a function package as an XML file, using the filename
-   recorded in the package */
+/**
+ * function_package_write_file:
+ * @pkg: function package.
+ *
+ * Write out @pkg as an XML file, using the filename
+ * recorded in the package.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
-int write_function_package (fnpkg *pkg)
+int function_package_write_file (fnpkg *pkg)
 {
     return real_write_function_package(pkg, NULL);
 }
+
+/**
+ * function_package_get_name:
+ * @pkg: function package.
+ *
+ * Returns: the name of the package.
+ */
 
 const char *function_package_get_name (fnpkg *pkg)
 {
@@ -1663,6 +1915,11 @@ static int is_string_property (const char *key)
 	!strcmp(key, "help") ||
 	!strcmp(key, "sample-script");
 }
+
+/* varargs function for setting the properties of a function
+   package: the settings take the form of a NULL-terminated
+   set of (key, value) pairs.
+*/
 
 int function_package_set_properties (fnpkg *pkg, ...)
 {
@@ -1711,6 +1968,14 @@ int function_package_set_properties (fnpkg *pkg, ...)
     return err;
 }
 
+/* From a function package get a list of either its public or its
+   private functions, in the form of a simple gretl list.  The
+   elements of this list are just the positions of these functions in
+   the current recorder array for user-functions.  This is fine for
+   immediate use, but it should _not_ be assumed that the indentifiers
+   will remain valid.
+*/
+
 static int *function_package_get_list (fnpkg *pkg, int n, int priv)
 {
     int *list = NULL;
@@ -1721,7 +1986,7 @@ static int *function_package_get_list (fnpkg *pkg, int n, int priv)
 	    int i, j = 1;
 
 	    for (i=0; i<n_ufuns; i++) {
-		if (ufuns[i]->pkgID == pkg->ID && ufuns[i]->private == priv) {
+		if (ufuns[i]->pkg == pkg && ufuns[i]->private == priv) {
 		    list[j++] = i;
 		}
 	    }	    
@@ -1729,7 +1994,13 @@ static int *function_package_get_list (fnpkg *pkg, int n, int priv)
     }
 
     return list;
-}	
+}
+
+/* varargs function for retrieving the properties of a function
+   package: the arguments after @pkg take the form of a
+   NULL-terminated set of (key, pointer) pairs; values are written to
+   the locations given by the pointers.
+*/
 
 int function_package_get_properties (fnpkg *pkg, ...)
 {
@@ -1746,11 +2017,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
     g_return_val_if_fail(pkg != NULL, E_DATA);
 
     for (i=0; i<n_ufuns; i++) {
-#if PKG_DEBUG
-	fprintf(stderr, "checking func %i, pkgID = %d\n", i, 
-		ufuns[i]->pkgID);
-#endif
-	if (ufuns[i]->pkgID == pkg->ID) {
+	if (ufuns[i]->pkg == pkg) {
 	    if (ufuns[i]->private) {
 		npriv++;
 	    } else {
@@ -1758,10 +2025,6 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	    }
 	}
     }
-
-#if PKG_DEBUG
-    fprintf(stderr, "npub = %d, npriv = %d\n", npub, npriv);
-#endif
 
     va_start(ap, pkg);
 
@@ -1815,6 +2078,8 @@ int function_package_get_properties (fnpkg *pkg, ...)
     return err;
 }
 
+/* quick check to see if there's a gross problem with a package */
+
 static int validate_function_package (fnpkg *pkg)
 {
     if (pkg->pub == NULL || pkg->author == NULL ||
@@ -1826,9 +2091,10 @@ static int validate_function_package (fnpkg *pkg)
     return 1;
 }
 
-/* for session file use: dump all currently defined functions */
+/* for session file use: dump all currently defined functions,
+   packaged or not, into a single XML file */
 
-int write_user_function_file (const char *fname)
+int write_session_functions_file (const char *fname)
 {
     FILE *fp;
     int i;
@@ -1845,14 +2111,18 @@ int write_user_function_file (const char *fname)
     gretl_xml_header(fp);  
     fputs("<gretl-functions>\n", fp);
 
+    /* first write any loaded function packages */
+
     for (i=0; i<n_pkgs; i++) {
 	if (validate_function_package(pkgs[i])) {
 	    real_write_function_package(pkgs[i], fp);
 	}
     }
 
+    /* then any unpackaged functions */
+
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkgID == 0) {
+	if (ufuns[i]->pkg == NULL) {
 	    write_function_xml(ufuns[i], fp);
 	}
     }
@@ -1864,36 +2134,32 @@ int write_user_function_file (const char *fname)
     return 0;
 }
 
-static void function_package_free (fnpkg *pkg, int mode)
+/* De-allocate a function package: this can be done in either of two
+   modes.  If 'full' is non-zero then we destroy all functions that
+   are children of the given package, otherwise we leave the
+   function-children alone (just 'detaching' them from the parent
+   package).
+*/
+
+static void real_function_package_free (fnpkg *pkg, int full)
 {
     if (pkg != NULL) {
 	int i;
 
 	for (i=0; i<n_ufuns; i++) {
-	    /* remove package IDs from functions */
-	    if (ufuns[i]->pkgID == pkg->ID) {
-		ufuns[i]->pkgID = 0;
-	    }
-	}
-
-	if (pkg->pub != NULL) {
-	    if (mode == PKG_FREE_ALL) {
-		for (i=0; i<pkg->n_pub; i++) {
-		    free_ufunc(pkg->pub[i]);
+	    if (ufuns[i]->pkg == pkg) {
+		if (full) {
+		    ufunc_free(ufuns[i]);
+		} else {
+		    /* remove package info */
+		    ufuns[i]->pkg = NULL;
+		    ufuns[i]->private = 0;
 		}
 	    }
-	    free(pkg->pub);
 	}
 
-	if (pkg->priv != NULL) {
-	    if (mode == PKG_FREE_ALL) {
-		for (i=0; i<pkg->n_priv; i++) {
-		    free_ufunc(pkg->priv[i]);
-		}
-	    }
-	    free(pkg->priv);
-	}
-
+	free(pkg->pub);
+	free(pkg->priv);
 	free(pkg->fname);
 	free(pkg->author);
 	free(pkg->version);
@@ -1905,57 +2171,18 @@ static void function_package_free (fnpkg *pkg, int mode)
     }
 }
 
-static int package_matches (int refID, fnpkg *refpkg, fnpkg *pkg)
+static void function_package_free (fnpkg *pkg)
 {
-    if (refpkg != NULL) {
-	return (refpkg == pkg);
-    } else {
-	return (refID == pkg->ID);
-    }
+    real_function_package_free(pkg, 0);
 }
 
-static int real_function_package_remove (int ID, fnpkg *pkg)
+static void function_package_free_full (fnpkg *pkg)
 {
-    int i, j, err = E_DATA;
-
-    for (i=0; i<n_pkgs; i++) {
-	if (package_matches(ID, pkg, pkgs[i])) {
-	    function_package_free(pkgs[i], PKG_FREE_PKG);
-	    for (j=i; j<n_pkgs-1; j++) {
-		pkgs[j] = pkgs[j+1];
-	    }
-	    err = 0;
-	    break;
-	}
-    }
-
-    if (err) {
-	return err;
-    }
-
-    if (n_pkgs == 1) {
-	free(pkgs);
-	pkgs = NULL;
-	n_pkgs = 0;
-    } else {
-	fnpkg **tmp;
-
-	tmp = realloc(pkgs, (n_pkgs - 1) * sizeof *tmp);
-	if (tmp == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    pkgs = tmp;
-	    n_pkgs--;
-	}
-    }
-
-    return err;
+    real_function_package_free(pkg, 1);
 }
 
-static int function_package_remove_by_ID (int ID)
-{
-    return real_function_package_remove(ID, NULL);
-}
+/* append a function package to the recorder array of loaded
+   packages */
 
 static int function_package_record (fnpkg *pkg)
 {
@@ -1963,6 +2190,7 @@ static int function_package_record (fnpkg *pkg)
     int err = 0;
 
     tmp = realloc(pkgs, (n_pkgs + 1) * sizeof *tmp);
+
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
@@ -1974,65 +2202,10 @@ static int function_package_record (fnpkg *pkg)
     return err;
 }
 
-static int fname_is_tmpfile (const char *fname)
-{
-    const char *p = strrchr(fname, SLASH);
 
-    if (p == NULL) {
-	p = fname;
-    } else {
-	p++;
-    }
 
-    return (strncmp(p, "dltmp.", 6) == 0);
-}
-
-static fnpkg *function_package_alloc (const char *fname)
-{
-    fnpkg *pkg = malloc(sizeof *pkg);
-
-    if (pkg == NULL) {
-	return NULL;
-    }
-
-    pkg->ID = (int) time(NULL);
-    pkg->name[0] = '\0';
-    pkg->author = NULL;
-    pkg->version = NULL;
-    pkg->date = NULL;
-    pkg->descrip = NULL;
-    pkg->help = NULL;
-    pkg->sample = NULL;
-    pkg->dreq = 0;
-    pkg->minver = 0;
-    
-    pkg->pub = pkg->priv = NULL;
-    pkg->n_pub = pkg->n_priv = 0;
-
-    pkg->fname = gretl_strdup(fname);
-
-    if (pkg->fname == NULL) {
-	free(pkg);
-	pkg = NULL;
-    } else if (!fname_is_tmpfile(fname)) {
-	name_package_from_filename(pkg);
-    }
-
-    return pkg;
-}
-
-static void packages_destroy (void)
-{
-    int i;
-
-    for (i=0; i<n_pkgs; i++) {
-	function_package_free(pkgs[i], PKG_FREE_PKG);
-    }
-    free(pkgs);
-
-    pkgs = NULL;
-    n_pkgs = 0;
-}
+/* when doing a full 'load' on a function package from file: be sure
+   to remove any duplicate function definitions */
 
 static void maybe_clear_out_duplicate (ufunc *fun)
 {
@@ -2040,20 +2213,33 @@ static void maybe_clear_out_duplicate (ufunc *fun)
 
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(fun->name, ufuns[i]->name)) {
-	    if (fun->pkgID == ufuns[i]->pkgID) {
+	    if (fun->pkg == ufuns[i]->pkg) {
+		/* can't happen? */
 		fprintf(stderr, "Redefining function '%s'\n", fun->name);
-		delete_ufunc_from_list(ufuns[i]);
+		ufunc_unload(ufuns[i]);
 	    } else if (!fun->private && !ufuns[i]->private) {
+		/* both functions are public but not attached to the
+		   same package */
 		fprintf(stderr, "Redefining function '%s'\n", fun->name);
-		if (ufuns[i]->pkgID == 0) {
-		    delete_ufunc_from_list(ufuns[i]);
+		if (ufuns[i]->pkg == NULL) {
+		    /* the conflicting function is not packaged */
+		    ufunc_unload(ufuns[i]);
 		} else {
-		    unload_package_by_ID(ufuns[i]->pkgID);
+		    /* conflicting function belongs to another package: 
+		       so scrap the conflicting package altogether */
+		    function_package_unload(ufuns[i]->pkg);
 		}
 	    } 
 	}
     }
 }
+
+/* A 'real load' is in contrast to just reading some info from a
+   package, as is done in various GUI contexts.  We do the real load
+   in response to some GUI commands, the "include" command, and also
+   when re-opening a gretl session file that contains function
+   packages.
+*/
 
 static int real_load_package (fnpkg *pkg)
 {
@@ -2079,6 +2265,7 @@ static int real_load_package (fnpkg *pkg)
     } 
 
     if (!err) {
+	/* add to array of loaded packages */
 	err = function_package_record(pkg);
     }
 
@@ -2136,14 +2323,6 @@ static void print_package_code (const fnpkg *pkg, PRN *prn)
     }
 }
 
-static void check_package_name (const char *correct, char *pname)
-{
-    if (pname != NULL && strcmp(correct, pname)) {
-	fprintf(stderr, "Got old package name '%s', should be '%s'\n",
-		pname, correct);
-    }
-}
-
 /* allocate a fnpkg structure and read from XML file into it */
 
 static fnpkg * 
@@ -2167,17 +2346,13 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
     gretl_xml_get_prop_as_string(node, "name", &tmp);
 
     if (tmp == NULL) {
+	fprintf(stderr, "real_read_package: package has no name\n");
 	*err = E_DATA;
-	function_package_free(pkg, PKG_FREE_PKG);
+	function_package_free(pkg);
 	return NULL;
     }
 
-    if (fname_is_tmpfile(fname)) {
-	strncat(pkg->name, tmp, FN_NAMELEN - 1);
-    } else {
-	check_package_name(pkg->name, tmp);
-    }
-
+    strncat(pkg->name, tmp, FN_NAMELEN - 1);
     free(tmp);
 
     if (gretl_xml_get_prop_as_bool(node, NEEDS_TS)) {
@@ -2343,27 +2518,16 @@ fnpkg *get_function_package_by_filename (const char *fname)
     return NULL;
 }
 
-const char *function_package_description (const char *fname)
-{
-    int i;
+/* read functions from file into gretl's workspace: called via
+   GUI means and also in response to the "include" command
+   for a .gfn filename */
 
-    for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(fname, pkgs[i]->fname)) {
-	    return pkgs[i]->descrip;
-	}
-    }
-
-    return NULL;
-}
-
-/* read functions from file into gretl's workspace */
-
-int load_user_function_file (const char *fname)
+int load_function_package_from_file (const char *fname)
 {
     int err = 0;
 
     if (get_function_package_by_filename(fname) != NULL) {
-	; /* no-op */
+	; /* already loaded: no-op */
     } else {
 	fnpkg *pkg = read_package_file(fname, &err);
 
@@ -2372,67 +2536,69 @@ int load_user_function_file (const char *fname)
 	} 
     }
 
+    if (err) {
+	fprintf(stderr, "load_function_package_from_file: failed on %s\n", fname);
+    }
+
     return err;
 }
 
 /* Retrieve summary info or code listing for a function package,
-   identified by its filename.  If the package is not already loaded
-   in memory we read from the package file.
+   identified by its filename.  This is called (indirectly) from the
+   GUI (see below for the actual callbacks).
 */
 
 static int 
-real_get_function_file_info (const char *fname, PRN *prn, char **pname,
-			     int task)
+real_print_function_package_data (const char *fname, PRN *prn, int task)
 {
     fnpkg *pkg;
     int free_pkg = 0;
     int err = 0;
 
 #if PKG_DEBUG
-    fprintf(stderr, "*** real_get_function_file_info: "
-	    "fname = '%s'\n", fname);
+    fprintf(stderr, "real_get_function_file_info: fname = '%s'\n", fname);
 #endif
 
     pkg = get_function_package_by_filename(fname);
 
-#if PKG_DEBUG
-    fprintf(stderr, "*** real_get_function_file_info: "
-	    "got package at %p\n", (void *) pkg);
-#endif
-
     if (pkg == NULL) {
+	/* package is not loaded, read it now */
 	pkg = read_package_file(fname, &err);
 	free_pkg = 1;
     }
 
     if (!err) {
-	*pname = gretl_strdup(pkg->name);
 	if (task == FUNCS_INFO) {
 	    print_package_info(pkg, prn);
 	} else {
 	    print_package_code(pkg, prn);
 	}
 	if (free_pkg) {
-	    function_package_free(pkg, PKG_FREE_ALL);
+	    function_package_free_full(pkg);
 	}
     }
 
     return err;
 }
 
-int get_function_file_info (const char *fname, PRN *prn, char **pname)
+/* callback used in the  GUI function package browser */
+
+int print_function_package_info (const char *fname, PRN *prn)
 {
-    return real_get_function_file_info(fname, prn, pname, FUNCS_INFO);
+    return real_print_function_package_data(fname, prn, FUNCS_INFO);
 }
 
-int get_function_file_code (const char *fname, PRN *prn, char **pname)
+/* callback used in the  GUI function package browser */
+
+int print_function_package_code (const char *fname, PRN *prn)
 {
-    return real_get_function_file_info(fname, prn, pname, FUNCS_CODE);
+    return real_print_function_package_data(fname, prn, FUNCS_CODE);
 }
 
-/* Just read the header from a function package file -- this is
-   used when displaying the available packages.  We write the
-   version number (as a string) into *pver.
+/* Read the header from a function package file -- this is used when
+   displaying the available packages in the GUI.  We write the
+   description into *pdesc and a string representation of version
+   number into *pver.
 */
 
 int get_function_file_header (const char *fname, char **pdesc, 
@@ -2493,6 +2659,15 @@ int get_function_file_header (const char *fname, char **pdesc,
     return err;
 }
 
+/**
+ * gretl_is_public_user_function:
+ * @name: name to test.
+ *
+ * Returns: 1 if @name is the name of a user-defined
+ * function that is not a private member of a function
+ * package, otherwise 0.
+ */
+
 int gretl_is_public_user_function (const char *name)
 {
     ufunc *fun = get_user_function_by_name(name);
@@ -2501,36 +2676,6 @@ int gretl_is_public_user_function (const char *name)
 	return 1;
     } else {
 	return 0;
-    }
-}
-
-static void delete_ufunc_from_list (ufunc *fun)
-{
-    if (n_ufuns == 0 || fun == NULL) {
-	/* "can't happen" */
-	return;
-    }
-
-    if (n_ufuns == 1) {
-	free_ufunc(fun);
-	free(ufuns);
-	ufuns = NULL;
-	n_ufuns = 0;
-    } else {
-	int i, gotit = 0;
-
-	for (i=0; i<n_ufuns; i++) {
-	    if (gotit) {
-		ufuns[i-1] = ufuns[i];
-	    }
-	    if (!gotit && ufuns[i] == fun) {
-		gotit = 1;
-		free_ufunc(fun);
-	    }
-	}
-	
-	ufuns = realloc(ufuns, (n_ufuns - 1) * sizeof *ufuns);
-	n_ufuns--;
     }
 }
 
@@ -2560,7 +2705,7 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
 		    clear_ufunc_data(ufuns[i]);
 		    *pfun = ufuns[i];
 		} else {
-		    delete_ufunc_from_list(ufuns[i]);
+		    ufunc_unload(ufuns[i]);
 		}
 		break;
 	    }
@@ -2580,11 +2725,11 @@ static int maybe_delete_function (const char *fname, PRN *prn)
     } else if (function_in_use(fun)) {
 	sprintf(gretl_errmsg, "%s: function is in use", fname);
 	err = 1;
-    } else if (fun->pkgID != 0) {
+    } else if (fun->pkg != NULL) {
 	sprintf(gretl_errmsg, "%s: function belongs to package", fname);
 	err = 1;
     } else {
-	delete_ufunc_from_list(fun);
+	ufunc_unload(fun);
 	if (gretl_messages_on()) {
 	    pprintf(prn, _("Deleted function '%s'\n"), fname);
 	}
@@ -2592,6 +2737,8 @@ static int maybe_delete_function (const char *fname, PRN *prn)
 
     return err;
 }
+
+/* next: apparatus for parsing function definitions */
 
 static int comma_count (const char *s)
 {
@@ -2972,6 +3119,18 @@ static int parse_fn_definition (char *fname,
     return err;
 }
 
+/**
+ * gretl_start_compiling_function:
+ * @line: command line.
+ * @prn: printing struct for feedback.
+ *
+ * Responds to a command of the form "function ...".  In most
+ * cases, embarks on compilation of a function, but this
+ * also handles the construction "function foo delete".
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
 int gretl_start_compiling_function (const char *line, PRN *prn)
 {
     ufunc *fun = NULL;
@@ -3168,6 +3327,13 @@ static int check_function_structure (ufunc *fun)
     return err;
 }
 
+/* Note: the input @fun may be NULL; in that case the assumption is
+   that we're appending to a function-in-progress that is
+   represented by the internal variable 'current_ufun'.  If
+   the @fun argument is non-NULL that means we're editing an
+   existing function.
+*/
+
 static int real_function_append_line (const char *line, ufunc *fun)
 {
     int editing = 1;
@@ -3179,12 +3345,12 @@ static int real_function_append_line (const char *line, ufunc *fun)
     } 
 
 #if FNPARSE_DEBUG
-    fprintf(stderr, "gretl_function_append_line: '%s'\n", line);
+    fprintf(stderr, "real_function_append_line: '%s'\n", line);
 #endif
 
     if (fun == NULL) {
 #if FN_DEBUG
-	fprintf(stderr, " fun == NULL!\n");
+	fprintf(stderr, "real_function_append_line: fun is NULL\n");
 #endif
 	return 1;
     }
@@ -3200,7 +3366,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
     } else if (!strncmp(line, "quit", 4)) {
 	/* abort compilation */
 	if (!editing) {
-	    delete_ufunc_from_list(fun);
+	    ufunc_unload(fun);
 	}
 	set_compiling_off();
 	return 0; /* handled */
@@ -3220,11 +3386,20 @@ static int real_function_append_line (const char *line, ufunc *fun)
     }
 
     if (err && !editing) {
-	delete_ufunc_from_list(fun);
+	ufunc_unload(fun);
     }	
 
     return err;
 }
+
+/**
+ * gretl_function_append_line:
+ * @line: line of code to append.
+ *
+ * Continuation of definition of user-function.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int gretl_function_append_line (const char *line)
 {
@@ -3233,7 +3408,7 @@ int gretl_function_append_line (const char *line)
 
 /* Given a line "function ..." get the function name, with
    some error checking.  The @s we are given here is at an 
-   offset of 9 bytes into the line.
+   offset of 9 bytes into the line, skipping "function ".
 */
 
 static int extract_funcname (char *name, const char *s)
@@ -3277,6 +3452,8 @@ static int extract_funcname (char *name, const char *s)
     return err;
 }
 
+/* allow for line-continuation in a function definition */
+
 static int fndef_append_next (char *s, FILE *fp)
 {
     char line[MAXLINE];
@@ -3309,12 +3486,14 @@ static int fndef_continues (const char *s)
     return (s[n-1] == ',' || s[n-1] == '\\');
 }
 
-/* Called from GUI window within the package-editing apparatus: the
-   content of the script-editing window is dumped to file and we're
-   passed the name of the function being edited along with the path to
-   the file containing the update.  We parse the new function
-   definition, but hold off replacing the original definition until we
-   know there are no (obvious) compilation errors. 
+/* Called from the GUI package-editing apparatus.  The user is editing
+   a function named @funname, and the content of the script-editing
+   window has been dumped to file (given by @path).  We open the file
+   and parse the new function definition, but hold off replacing the
+   original definition until we know there are no (obvious)
+   compilation errors.  We try to detect if the name of the function
+   itself has been changed in the GUI editor window: that is not
+   acceptable.
 */
 
 int update_function_from_script (const char *funname, const char *path)
@@ -3336,14 +3515,14 @@ int update_function_from_script (const char *funname, const char *path)
 	return E_FOPEN;
     }
 
+    /* temporary function struct */
     fun = ufunc_new();
     if (fun == NULL) {
 	fclose(fp);
 	return E_ALLOC;
     }
 
-    fprintf(stderr, "Going to update function '%s' from %s\n",
-	    funname, path);
+    fprintf(stderr, "Updating function '%s' from %s\n", funname, path);
 
     while (fgets(line, sizeof line, fp) && !err) {
 	s = line;
@@ -3380,8 +3559,13 @@ int update_function_from_script (const char *funname, const char *path)
 	err = check_function_structure(fun);
     }
 
-    if (!err) {
-	/* actually replace function content */
+    if (err) {
+	/* didn't work: trash the attempt */
+	free_strings_array(fun->lines, fun->n_lines);
+	free_params_array(fun->params, fun->n_params);
+	free(fun->retname);
+    } else {	
+	/* really replace the original function content */
 	free_strings_array(orig->lines, orig->n_lines);
 	orig->n_lines = fun->n_lines;
 	orig->lines = fun->lines;
@@ -3396,17 +3580,14 @@ int update_function_from_script (const char *funname, const char *path)
 	free(orig->retname);
 	orig->retname = fun->retname;
 	fun->retname = NULL;
-    } else {
-	/* just trash the attempt */
-	free_strings_array(fun->lines, fun->n_lines);
-	free_params_array(fun->params, fun->n_params);
-	free(fun->retname);
-    }
+    } 
 
     free(fun);
 
     return err;
 }
+
+/* next block: handling function arguments */
 
 /* Given a named list of variables supplied as an argument to a
    function, copy the list under the name assigned by the function,
@@ -3450,6 +3631,8 @@ static int localize_list (fncall *call, const char *oldname,
 
     return err;
 }
+
+/* coerce scalar value to boolean, as per parameter spec */
 
 static void boolify_local_var (const char *vname)
 {
@@ -3556,7 +3739,7 @@ static int localize_series_ref (fncall *call, struct fnarg *arg,
 }
 
 /* Scalar function arguments only: if the arg is not supplied, use the
-   default that is contained in the function specification, if any.
+   default that is found in the function specification, if any.
 */
 
 static int add_scalar_arg_default (fn_param *param)
@@ -3698,6 +3881,19 @@ static int allocate_function_args (fncall *call,
     return err;
 }
 
+/**
+ * check_function_needs:
+ * @pdinfo: pointer to dataset info.
+ * @dreq: function data requirements flag.
+ * @minver: function minimum program version requirement.
+ *
+ * Checks whether the requirements in @dreq and @minver
+ * are jointly satisfied by the current dataset and gretl
+ * version.
+ *
+ * Returns: 0 if all is OK, 1 otherwise.
+ */
+
 int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 			  int minver)
 {
@@ -3740,14 +3936,15 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 static int maybe_check_function_needs (const DATAINFO *pdinfo,
 				       const ufunc *fun)
 {
-    const fnpkg *pkg = ufunc_get_parent_package(fun);
-
-    if (pkg == NULL) {
+    if (fun->pkg == NULL) {
 	return 0;
     } else {
-	return check_function_needs(pdinfo, pkg->dreq, pkg->minver);
+	return check_function_needs(pdinfo, fun->pkg->dreq, 
+				    fun->pkg->minver);
     }
 }
+
+/* next block: handling function return values */
 
 static double get_scalar_return (const char *vname, int *err)
 {
@@ -4041,6 +4238,9 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
     return err;
 }
 
+/* make a record of the sample information at the time a function is
+   called */
+
 static void record_obs_info (obsinfo *o, DATAINFO *pdinfo)
 {
     o->changed = 0;
@@ -4053,6 +4253,9 @@ static void record_obs_info (obsinfo *o, DATAINFO *pdinfo)
 	strcpy(o->stobs, pdinfo->stobs);
     }
 }
+
+/* on function exit, restore the sample information that was in force
+   on entry */
 
 static int restore_obs_info (obsinfo *o, double ***pZ, DATAINFO *pdinfo)
 {
@@ -4073,6 +4276,10 @@ static int restore_obs_info (obsinfo *o, double ***pZ, DATAINFO *pdinfo)
 
     return set_obs(line, pZ, pdinfo, opt);
 }
+
+/* do the basic housekeeping that is required when a function exits:
+   destroy local variables, restore previous sample info, etc.
+*/
 
 static int stop_fncall (fncall *call, int rtype, void *ret,
 			double ***pZ, DATAINFO *pdinfo,
@@ -4725,6 +4932,17 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
     return ret;
 }
 
+/**
+ * object_is_const:
+ * @name: name of object (e.g. matrix).
+ *
+ * Checks whether the named object currently has 'const' status,
+ * by virtue of it's being made available as a const argument
+ * to a user function.
+ *
+ * Returns: non-zero if the object is const, 0 if it is not.
+ */
+
 int object_is_const (const char *name)
 {
     fncall *call = current_function_call();
@@ -4745,6 +4963,18 @@ int object_is_const (const char *name)
     return 0;
 }
 
+/**
+ * sample_range_get_extrema:
+ * @pdinfo: dataset info.
+ * @t1: location to receive earliest possible starting observation.
+ * @t2: location to receive latest possible ending observation.
+ *
+ * Fills out @t1 and @t2, making allowance for the possibility
+ * that we're currently executing a function, on entry to 
+ * which the sample range was restricted: within the function,
+ * we are not allowed to overstep the bounds set on entry. 
+ */
+
 void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2)
 {
     fncall *call = current_function_call();
@@ -4758,15 +4988,37 @@ void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2)
     }
 }
 
+/**
+ * gretl_functions_cleanup:
+ * 
+ * For internal use: frees all resources associated with
+ * user-defined functions and function packages.
+ */
+
 void gretl_functions_cleanup (void)
 {
-    ufuncs_destroy();
-    packages_destroy();
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	ufunc_free(ufuns[i]);
+    }
+
+    free(ufuns);
+    ufuns = NULL;
+    n_ufuns = 0;
+
+    for (i=0; i<n_pkgs; i++) {
+	function_package_free(pkgs[i]);
+    }
+
+    free(pkgs);
+    pkgs = NULL;
+    n_pkgs = 0;
 }
 
 static void real_user_function_help (ufunc *fun, PRN *prn)
 {
-    fnpkg *pkg = ufunc_get_parent_package(fun);
+    fnpkg *pkg = fun->pkg;
     int i;
 
     pprintf(prn, "function %s\n\n", fun->name);
@@ -4806,6 +5058,18 @@ static void real_user_function_help (ufunc *fun, PRN *prn)
 	pprintf(prn, "\n\n");
     }	
 }
+
+/**
+ * user_function_help:
+ * @fnname: name of function.
+ * @prn: printing struct.
+ * 
+ * Looks for a function named @fnname and prints
+ * as much help information as possible.  
+ *
+ * Returns: 0 on success, non-zero if the function is not
+ * found.
+ */
 
 int user_function_help (const char *fnname, PRN *prn)
 {
