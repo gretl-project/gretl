@@ -584,7 +584,6 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     tmp = gtk_label_new(_("Select data format"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show_all(hbox);
 
     /* standard format radio option */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -593,7 +592,6 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), std);
     gtk_box_pack_start(GTK_BOX(hbox), b1, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show_all(hbox);
 
     /* custom format radio option */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -633,10 +631,10 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
 
     /* pack the custom line */
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show_all(hbox);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
     /* Cancel button */
-    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     cancel_options_button(hbox, dlg, &sview->digits);
    
     /* OK button */
@@ -644,9 +642,8 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
 
-    gtk_widget_show(dlg);
+    gtk_widget_show_all(dlg);
 
     if (sview->digits > 0) {
 	if (sview->list != NULL) {

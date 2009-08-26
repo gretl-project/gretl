@@ -819,6 +819,8 @@ void varinfo_dialog (int varnum, int full)
 	active_varinfo = vset;
     }
 
+    gtk_widget_show_all(hbox);
+
     gtk_widget_show(vset->dlg);
 }
 

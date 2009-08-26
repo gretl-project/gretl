@@ -2763,26 +2763,19 @@ static void expand_pd_buttons (GtkWidget *dlg, int spd, int *target_pd)
 
     button = gtk_radio_button_new_with_label(NULL, _(f1str));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_expand_target_pd), target_pd);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(f1));
 
-    gtk_widget_show (button);
-
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _(f2str));
     gtk_box_pack_start (GTK_BOX(vbox), button, TRUE, TRUE, 0);
-
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_expand_target_pd), target_pd);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(f2));
-
-    gtk_widget_show (button);
 }
 
 static void abort_expand (GtkWidget *w, gpointer data)
@@ -2823,7 +2816,6 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
     tmp = gtk_label_new(labelstr);
     g_free(labelstr);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
-    gtk_widget_show(tmp);
 
     /* annual data: give choice of going to quarterly or monthly */
     if (show_pd_buttons) {
@@ -2836,10 +2828,9 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
     tmp = cancel_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(abort_expand), target_pd);
-    g_signal_connect (G_OBJECT(tmp), "clicked", 
-		      G_CALLBACK(delete_widget), 
-		      G_OBJECT(d));
-    gtk_widget_show(tmp);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     G_OBJECT(d));
 
     /* "OK" button */
     tmp = ok_button(hbox);
@@ -2847,12 +2838,11 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
 		     G_CALLBACK(delete_widget), 
 		     G_OBJECT(d));
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
 
     /* Create a "Help" button */
     context_help_button(hbox, EXPAND);
 
-    gtk_widget_show(d);
+    gtk_widget_show_all(d);
 }
 
 static void set_radio_opt (GtkWidget *w, int *opt)
@@ -2889,7 +2879,6 @@ int real_radio_dialog (const char *title, const char *label,
 	gtk_widget_show(hbox);
 	tmp = gtk_label_new(label);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-	gtk_widget_show(tmp);
     }
 
     for (i=0; i<nopts; i++) {
@@ -2903,7 +2892,6 @@ int real_radio_dialog (const char *title, const char *label,
 			 G_CALLBACK(set_radio_opt), &ret);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(i));
-	gtk_widget_show(button);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
@@ -2916,7 +2904,6 @@ int real_radio_dialog (const char *title, const char *label,
 	    /* create spinner */
 	    tmp = option_spinbox(extravar, extratxt, spinmin, spinmax, 0, NULL);
 	}
-	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     }
 
@@ -2930,14 +2917,13 @@ int real_radio_dialog (const char *title, const char *label,
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), dialog);
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
 
     /* Create a "Help" button? */
     if (hcode) {
 	context_help_button(hbox, hcode);
     }
 
-    gtk_widget_show(dialog);
+    gtk_widget_show_all(dialog);
 
     return ret;
 }
@@ -3944,7 +3930,8 @@ void tex_format_dialog (void)
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
+
+    gtk_widget_show_all(hbox);
 
     gtk_widget_show(dlg);
 }

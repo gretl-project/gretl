@@ -562,10 +562,10 @@ static int filter_dialog (filter_info *finfo)
     }
 
     /* convenience pointer for button box */
-    hbox = GTK_DIALOG(dlg)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
     /* Cancel button */
-    w = cancel_delete_button(hbox, dlg, &ret);
+    cancel_delete_button(hbox, dlg, &ret);
 
     /* "OK" button */
     w = ok_button(hbox);

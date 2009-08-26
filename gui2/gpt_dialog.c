@@ -1703,17 +1703,15 @@ static void add_line_callback (GtkWidget *w, plot_editor *ed)
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), nlinfo->dlg);
-    gtk_widget_show(button);
 
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(real_add_line), nlinfo);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
 
     context_help_button(hbox, GPT_ADDLINE);
 
-    gtk_widget_show(nlinfo->dlg);
+    gtk_widget_show_all(nlinfo->dlg);
 
     free(nlinfo);
 }
@@ -2890,7 +2888,6 @@ GtkWidget *plot_add_editor (png_plot *plot)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_gpt_changes), editor);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
 
     /* "OK" button (apply and close) */
     button = ok_button(hbox);
@@ -2899,7 +2896,6 @@ GtkWidget *plot_add_editor (png_plot *plot)
     g_signal_connect_swapped(G_OBJECT(button), "clicked",
 			     G_CALLBACK(gtk_widget_destroy), 
 			     dialog);
-    gtk_widget_show(button);
 
     /* Close button (do not apply changes) */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
@@ -2908,13 +2904,13 @@ GtkWidget *plot_add_editor (png_plot *plot)
     g_signal_connect_swapped(G_OBJECT(button), "clicked",
 			     G_CALLBACK(gtk_widget_destroy), 
 			     dialog);
-    gtk_widget_show(button);
 
     /* Help button */
     context_help_button(hbox, GR_PLOT);
 
     set_keyspec_sensitivity(editor);
 
+    gtk_widget_show_all(hbox);
     gtk_widget_show(dialog);
 
     return dialog;

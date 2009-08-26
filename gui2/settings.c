@@ -2347,6 +2347,7 @@ void working_dir_dialog (void)
 
     dialog = gretl_dialog_new(_("gretl: working directory"), 
 			      mdata->main, GRETL_DLG_BLOCK);
+
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     gtk_box_set_spacing(GTK_BOX(vbox), 5);
     g_signal_connect(G_OBJECT(dialog), "destroy", 
@@ -2356,7 +2357,7 @@ void working_dir_dialog (void)
     wset.dialog = dialog;
     add_wdir_content(dialog, &wset);
 
-    hbox = GTK_DIALOG(dialog)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 

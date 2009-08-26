@@ -1316,7 +1316,6 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	gtk_container_add(GTK_CONTAINER(button_box), w);
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(clear_dlg_previous), d);
-	gtk_widget_show(w);  
     }    
 
     /* "Cancel" button */
@@ -1331,9 +1330,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(edit_dialog_ok), d);
     }
-	
     gtk_widget_grab_default(w);
-    gtk_widget_show(w);    
 
     /* "Help" button, if wanted */
     hlpcode = edit_dialog_help_code(ci, okptr);
@@ -1341,6 +1338,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	context_help_button(button_box, hlpcode);
 	modal = 0;
     }
+
+    gtk_widget_show_all(button_box); 
 
     if (ci == MODEL_GENR || ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) okptr;
