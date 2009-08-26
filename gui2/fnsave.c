@@ -243,7 +243,7 @@ void get_default_package_name (char *fname, gpointer p, int mode)
     }	
 }
 
-/* Check the user-supplied version string for the package: shoould be
+/* Check the user-supplied version string for the package: should be
    something like "1" or "1.2" or maybe "1.2.3" 
 */
 
@@ -828,7 +828,6 @@ static void finfo_dialog (function_info *finfo)
 	finfo->pkgdesc
     };
     int focused = 0;
-    gchar *ltxt;
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -907,16 +906,8 @@ static void finfo_dialog (function_info *finfo)
     add_data_requirement_menu(tbl, i, finfo);
     gtk_widget_show(tbl);
 
-    if (finfo->pkg != NULL) {
-	const char *pkgname = function_package_get_name(finfo->pkg);
-
-	ltxt = g_strdup_printf(_("Help text for %s:"), pkgname);
-    } else {
-	ltxt = g_strdup(_("Help text:"));
-    }
-    hbox = label_hbox(vbox, ltxt);
+    hbox = label_hbox(vbox, _("Help text:"));
     gtk_widget_show(hbox);
-    g_free(ltxt);
 
     finfo->text = editable_text_box(&hbuf);
     text_table_setup(vbox, finfo->text);
