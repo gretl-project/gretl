@@ -688,6 +688,17 @@ static int function_in_use (ufunc *fun)
     return 0;
 }
 
+/**
+ * get_ufunc_by_name:
+ * @name: name to test.
+ *
+ * Returns: pointer to a user-function, if there exists a
+ * function of the given name and it is accessible in
+ * context (i.e. it's not private to a package other than
+ * the one that's currently active, if any), otherwise
+ * %NULL.
+ */
+
 ufunc *get_user_function_by_name (const char *name)
 {
     fnpkg *pkg = NULL;
@@ -705,25 +716,29 @@ ufunc *get_user_function_by_name (const char *name)
 	fun = NULL;
     }
 
-    /* if we're currently exec'ing a packaged function,
-       look first for functions from the same package 
+    /* First pass: if there's no active function package, match any
+       non-private function, but if there is an active package match
+       only its member functions.  Try to optimize by putting the
+       cheapest comparisons first.
     */
 
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, ufuns[i]->name)) { 
-	    if (pkg == NULL || ufuns[i]->pkg == pkg) {
+	if ((pkg == NULL && !ufuns[i]->private) || ufuns[i]->pkg == pkg) {
+	    if (!strcmp(name, ufuns[i]->name)) { 
 		fun = ufuns[i];
 		break;
 	    }
 	}
     }
 
-    if (pkg != NULL && fun == NULL) {
-	/* fall back on unpackaged functions, or functions from
-	   other packages so long as they're not private
-	 */
+    /* Second pass, if the first didn't work: match unpackaged
+       functions or functions from other packages, so long as they're
+       not private.
+    */
+
+    if (fun == NULL && pkg != NULL) {
 	for (i=0; i<n_ufuns; i++) {
-	    if (!strcmp(name, ufuns[i]->name) && !ufuns[i]->private) {
+	    if (!ufuns[i]->private && !strcmp(name, ufuns[i]->name)) {
 		fun = ufuns[i];
 		break;
 	    }
@@ -738,6 +753,32 @@ ufunc *get_user_function_by_name (const char *name)
 #endif
 
     return fun;
+}
+
+/**
+ * get_packaged_ufunc_by_name:
+ * @name: name to test.
+ * @pkg: function package.
+ *
+ * Returns: pointer to a user-function, if there exists a
+ * function of the given @name that is associated with
+ * function package @pkg, otherwise %NULL.  This is used
+ * in the gretl function package editor.
+ */
+
+ufunc *get_packaged_function_by_name (const char *name,
+				      fnpkg *pkg)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkg == pkg && 
+	    !strcmp(name, ufuns[i]->name)) {
+	    return ufuns[i];
+	}
+    }
+
+    return NULL;
 }
 
 /* allocate and initialize a new array of @n parameters */
@@ -2202,36 +2243,79 @@ static int function_package_record (fnpkg *pkg)
     return err;
 }
 
-
-
-/* when doing a full 'load' on a function package from file: be sure
-   to remove any duplicate function definitions */
-
-static void maybe_clear_out_duplicate (ufunc *fun)
+static int broken_package_error (fnpkg *pkg)
 {
-    int i;
+    gretl_errmsg_sprintf("'%s': package contains "
+			 "duplicated function names",
+			 pkg->name);
+    return E_DATA;
+}
+
+#define fn_redef_msg(s) fprintf(stderr, "Redefining function '%s'\n", s)
+
+/* When loading a private function the only real conflict would be
+   with a function of the same name owned by the same package.
+   Obviously this shouldn't happen but we'll whack it if it does.
+*/
+
+static int load_private_function (ufunc *fun)
+{
+    const char *targ = fun->name;
+    int i, err = 0;
 
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(fun->name, ufuns[i]->name)) {
+	if (!strcmp(targ, ufuns[i]->name)) {
 	    if (fun->pkg == ufuns[i]->pkg) {
-		/* can't happen? */
-		fprintf(stderr, "Redefining function '%s'\n", fun->name);
-		ufunc_unload(ufuns[i]);
-	    } else if (!fun->private && !ufuns[i]->private) {
-		/* both functions are public but not attached to the
-		   same package */
-		fprintf(stderr, "Redefining function '%s'\n", fun->name);
-		if (ufuns[i]->pkg == NULL) {
-		    /* the conflicting function is not packaged */
-		    ufunc_unload(ufuns[i]);
-		} else {
-		    /* conflicting function belongs to another package: 
-		       so scrap the conflicting package altogether */
-		    function_package_unload(ufuns[i]->pkg);
-		}
+		err = broken_package_error(fun->pkg);
+		break;
+	    }
+	}
+    }
+
+    if (!err) {
+	err = add_allocated_ufunc(fun);
+    }
+
+    return err;
+}
+
+/* When loading a public, packaged function we want to avoid conflicts
+   with any non-private functions of the same name.  In case we get a
+   conflict with a public member of another package we'd best delete
+   the entire conflicting package.
+*/
+
+static int load_public_function (ufunc *fun)
+{
+    const char *targ = fun->name;
+    int i, done = 0;
+    int err = 0;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (!strcmp(targ, ufuns[i]->name)) {
+	    if (ufuns[i]->pkg == fun->pkg) {
+		/* name duplication in package */
+		err = broken_package_error(fun->pkg);
+	    } else if (ufuns[i]->pkg == NULL) {
+		/* conflicting unpackaged function */
+		ufunc_free(ufuns[i]);
+		ufuns[i] = fun;
+		done = 1;
+	    } else if (!ufuns[i]->private) {
+		/* got a conflicting package */
+		fprintf(stderr, "unloading conflicting package '%s'\n",
+			ufuns[i]->pkg->name);
+		function_package_unload(ufuns[i]->pkg);
+		break;
 	    } 
 	}
     }
+
+    if (!err && !done) {
+	err = add_allocated_ufunc(fun);
+    }
+
+    return err;
 }
 
 /* A 'real load' is in contrast to just reading some info from a
@@ -2252,15 +2336,13 @@ static int real_load_package (fnpkg *pkg)
 
     if (pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv && !err; i++) {
-	    maybe_clear_out_duplicate(pkg->priv[i]);
-	    err = add_allocated_ufunc(pkg->priv[i]);
+	    err = load_private_function(pkg->priv[i]);
 	}
     }
 
     if (!err && pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub && !err; i++) {
-	    maybe_clear_out_duplicate(pkg->pub[i]);
-	    err = add_allocated_ufunc(pkg->pub[i]);
+	    err = load_public_function(pkg->pub[i]);
 	}
     } 
 
@@ -2672,11 +2754,7 @@ int gretl_is_public_user_function (const char *name)
 {
     ufunc *fun = get_user_function_by_name(name);
 
-    if (fun != NULL && !fun->private) {
-	return 1;
-    } else {
-	return 0;
-    }
+    return (fun != NULL && !fun->private);
 }
 
 static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)

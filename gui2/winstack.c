@@ -37,6 +37,7 @@ enum winstack_codes {
     STACK_DESTROY,
     STACK_QUERY,
     STACK_MATCH_FNAME,
+    STACK_MATCH_PARTIAL_FNAME,
     STACK_MAXVAR
 };
 
@@ -72,6 +73,22 @@ static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
     }    
 
     return vmax;
+}
+
+static int got_filename_match (GtkWidget *w, const char *s,
+			       int code)
+{
+    windata_t *vwin = g_object_get_data(G_OBJECT(w), "vwin");
+
+    if (vwin != NULL && *vwin->fname != '\0') {
+	if (code == STACK_MATCH_FNAME) {
+	    return !strcmp(s, vwin->fname);
+	} else {
+	    return strstr(s, vwin->fname) != NULL;
+	}
+    } else {
+	return 0;
+    }
 }
 
 static int 
@@ -146,16 +163,13 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
 	break;
 
     case STACK_MATCH_FNAME:
+    case STACK_MATCH_PARTIAL_FNAME:
 	if (wstack != NULL) {
 	    const char *ctest = (const char *) ptest;
 
 	    for (i=0; i<n_windows; i++) {
 		if (wstack[i] != NULL) {
-		    windata_t *vwin = 
-			g_object_get_data(G_OBJECT(wstack[i]), "vwin");
-
-		    if (vwin != NULL && *vwin->fname != '\0' &&
-			strstr(ctest, vwin->fname) != NULL) {
+		    if (got_filename_match(wstack[i], ctest, code)) {
 			if (pw != NULL) {
 			    *pw = wstack[i];
 			}
@@ -206,6 +220,14 @@ GtkWidget *match_window_by_filename (const char *fname)
     GtkWidget *w = NULL;
 
     winstack(STACK_MATCH_FNAME, NULL, fname, &w);
+    return w;
+}
+
+GtkWidget *match_window_by_partial_filename (const char *fname)
+{
+    GtkWidget *w = NULL;
+
+    winstack(STACK_MATCH_PARTIAL_FNAME, NULL, fname, &w);
     return w;
 }
 

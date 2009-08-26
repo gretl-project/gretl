@@ -131,6 +131,9 @@ int print_function_package_info (const char *fname, PRN *prn);
 
 int print_function_package_code (const char *fname, PRN *prn);
 
+ufunc *get_packaged_function_by_name (const char *name,
+				      fnpkg *pkg);
+
 int get_function_file_header (const char *fname, char **pdesc, char **pver);
 
 int update_function_from_script (const char *funname, const char *path);

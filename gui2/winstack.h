@@ -34,6 +34,8 @@ GtkWidget *match_window_by_data (const gpointer p);
 
 GtkWidget *match_window_by_filename (const char *fname);
 
+GtkWidget *match_window_by_partial_filename (const char *fname);
+
 int highest_numbered_variable_in_winstack (void);
 
 windata_t *gretl_viewer_new (int role, const gchar *title, 

@@ -392,7 +392,8 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 	return;
     }
 
-    fun = get_user_function_by_name(finfo->active);
+    fun = get_packaged_function_by_name(finfo->active,
+					finfo->pkg);
     if (fun == NULL) {
 	errbox("Can't find the function '%s'", finfo->active);
     }
@@ -1332,7 +1333,8 @@ int save_function_package_as_script (const char *fname, gpointer p)
     pprintf(prn, "# date='%s'\n", finfo->date);
 
     for (i=0; i<finfo->n_priv; i++) {
-	fun = get_user_function_by_name(finfo->privnames[i]);
+	fun = get_packaged_function_by_name(finfo->privnames[i],
+					    finfo->pkg);
 	if (fun != NULL) {
 	    pputc(prn, '\n');
 	    gretl_function_print_code(fun, prn);
@@ -1340,7 +1342,8 @@ int save_function_package_as_script (const char *fname, gpointer p)
     }
 
     for (i=0; i<finfo->n_pub; i++) {
-	fun = get_user_function_by_name(finfo->pubnames[i]);
+	fun = get_packaged_function_by_name(finfo->pubnames[i],
+					    finfo->pkg);
 	if (fun != NULL) {
 	    pputc(prn, '\n');
 	    gretl_function_print_code(fun, prn);

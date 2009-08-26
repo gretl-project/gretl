@@ -453,7 +453,7 @@ void sync_db_windows (void)
     const char *dname = get_db_name();
 
     if (*dname != '\0') {
-	GtkWidget *w = match_window_by_filename(dname);
+	GtkWidget *w = match_window_by_partial_filename(dname);
 	windata_t *vwin = NULL;
 
 	if (w != NULL) {
@@ -856,7 +856,7 @@ make_db_series_window (int action, char *fname, char *buf)
     int cb = 0, del = 0;
     int record, err = 0;
 
-    w = match_window_by_filename(fname);
+    w = match_window_by_partial_filename(fname);
     if (w != NULL) {
 	gtk_window_present(GTK_WINDOW(w));
 	return 0;
