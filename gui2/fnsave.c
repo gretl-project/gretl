@@ -109,7 +109,7 @@ function_info *finfo_new (void)
     finfo->n_priv = 0;
 
     finfo->dreq = 0;
-    finfo->minver = 10804;
+    finfo->minver = 10803;
 
     return finfo;
 }
@@ -321,6 +321,7 @@ static void finfo_save (GtkWidget *w, function_info *finfo)
 	file_selector_with_parent(SAVE_FUNCTIONS, FSEL_DATA_MISC, 
 				  finfo, finfo->dlg);
     } else {
+	fprintf(stderr, "Calling save_function_package\n");
 	err = save_function_package(finfo->fname, finfo);
     }
 }
@@ -1260,6 +1261,9 @@ int save_function_package (const char *fname, gpointer p)
     } else {
 	err = function_package_connect_funcs(finfo->pkg, finfo->pubnames, finfo->n_pub,
 					     finfo->privnames, finfo->n_priv);
+	if (err) {
+	    fprintf(stderr, "function_package_connect_funcs: err = %d\n", err);
+	}
     }
 
     if (!err) {
@@ -1273,6 +1277,9 @@ int save_function_package (const char *fname, gpointer p)
 					      "data-requirement", finfo->dreq,
 					      "min-version", finfo->minver,
 					      NULL);
+	if (err) {
+	    fprintf(stderr, "function_package_set_properties: err = %d\n", err);
+	}
     }
 
     /* Note: if we allow "save as..." for existing, named function
@@ -1282,6 +1289,9 @@ int save_function_package (const char *fname, gpointer p)
 
     if (!err) {
 	err = function_package_write_file(finfo->pkg);
+	if (err) {
+	    fprintf(stderr, "function_package_write_file: err = %d\n", err);
+	}
     }
 
     if (err) {

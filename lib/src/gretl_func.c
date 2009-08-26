@@ -1677,6 +1677,24 @@ static void name_package_from_filename (fnpkg *pkg)
 #endif
 }
 
+/* when "connecting" functions to a package on saving the package
+   (a new package, or editing an existing one), we need to
+   allow for the fact that the functions may or may not
+   already be connected.
+*/
+
+static ufunc *get_uf_array_member (const char *name, fnpkg *pkg)
+{
+    ufunc *u = get_packaged_function_by_name(name, pkg);
+
+    if (u == NULL) {
+	/* function not already attached */
+	u = get_user_function_by_name(name);
+    }
+
+    return u;
+}
+
 /* Given an array of @n function names in @names, create a
    corresponding array of pointers to the named functions in @pkg,
    Flag an error if any of the function names are bad, or if
@@ -1691,7 +1709,7 @@ static int add_uf_array_from_names (fnpkg *pkg, char **names,
     int i;
 
     for (i=0; i<n; i++) {
-	if (get_user_function_by_name(names[i]) == NULL) {
+	if (get_uf_array_member(names[i], pkg) == NULL) {
 	    return E_DATA;
 	}
     }
@@ -1700,14 +1718,14 @@ static int add_uf_array_from_names (fnpkg *pkg, char **names,
 	uf = realloc(pkg->priv, n * sizeof *uf);
     } else {
 	uf = realloc(pkg->pub, n * sizeof *uf);
-    }
+    } 
 
     if (uf == NULL) {
 	return E_ALLOC;
     }
 
     for (i=0; i<n; i++) {
-	fun = get_user_function_by_name(names[i]);
+	fun = get_uf_array_member(names[i], pkg);
 	fun->pkg = pkg;
 	fun->private = priv;
 	uf[i] = fun;
@@ -1873,6 +1891,12 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     gretl_xml_put_tagged_string("date",    pkg->date, fp);
     gretl_xml_put_tagged_string("description", pkg->descrip, fp);
 
+    if (pkg->help != NULL) {
+	fputs("<help>\n", fp);
+	gretl_xml_put_raw_string(trim_text(pkg->help), fp);
+	fputs("\n</help>\n", fp);	
+    }  
+
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
 	    write_function_xml(pkg->pub[i], fp);
@@ -1884,12 +1908,6 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	    write_function_xml(pkg->priv[i], fp);
 	}
     }
-
-    if (pkg->help != NULL) {
-	fputs("<help>\n", fp);
-	gretl_xml_put_raw_string(trim_text(pkg->help), fp);
-	fputs("\n</help>\n", fp);	
-    }    
 
     if (pkg->sample != NULL) {
 	fputs("<sample-script>\n", fp);
@@ -2464,7 +2482,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->date);
 	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->descrip);
-	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
+	} else if (!xmlStrcmp(cur->name, (XUC) "help")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->help);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
