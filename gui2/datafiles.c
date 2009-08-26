@@ -762,11 +762,16 @@ static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
         return 0;
     }
 
+    /* unload the package from memory */
+    function_package_unload_by_filename(fname);
+
+    /* scratch the package file */
     err = gretl_remove(fname);
 
     if (err) {
 	file_write_errbox(fname);
     } else {
+	/* remove package from GUI listing */
 	GtkTreeModel *mod;
 	GtkTreeIter iter;
 	int i = 0;
@@ -893,7 +898,9 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	strcpy(path, pkgname);
     }
 
+#if 0
     fprintf(stderr, "browser_functions_handler: path='%s'\n", path);
+#endif
 
     if (task == LOAD_FN_PKG) {
 	err = gui_load_user_functions(path);

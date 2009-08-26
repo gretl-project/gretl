@@ -127,6 +127,8 @@ fnpkg *get_function_package_by_filename (const char *fname);
 
 int load_function_package_from_file (const char *fname);
 
+void function_package_unload_by_filename (const char *fname);
+
 int print_function_package_info (const char *fname, PRN *prn);
 
 int print_function_package_code (const char *fname, PRN *prn);

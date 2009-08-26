@@ -1226,10 +1226,11 @@ static void ufunc_unload (ufunc *fun)
     }
 }
 
-/* note: called only when clearing out duplicate function
-   definitions */
+/* remove a package from the current listing and free it; 
+   if @full is non-zero, also unload any member functions
+*/
 
-static void function_package_unload (fnpkg *pkg)
+static void real_function_package_unload (fnpkg *pkg, int full)
 {
     int i, j, found = 0;
 
@@ -1237,14 +1238,15 @@ static void function_package_unload (fnpkg *pkg)
     fprintf(stderr, "function_package_unload: unloading '%s'\n", pkg->name);
 #endif
 
-    /* destroy children and remove them from the array of loaded
-       functions */
+    /* unload children? */
 
-    for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg) {
-	    ufunc_unload(ufuns[i]);
-	}
-    }
+    if (full) {
+	for (i=0; i<n_ufuns; i++) {
+	    if (ufuns[i]->pkg == pkg) {
+		ufunc_unload(ufuns[i]);
+	    }
+	}  
+    }  
 
     /* remove this package from the array of loaded packages */
 
@@ -1264,6 +1266,11 @@ static void function_package_unload (fnpkg *pkg)
     if (found) {
 	n_pkgs--;
     }
+}
+
+static void function_package_unload_full (fnpkg *pkg)
+{
+    real_function_package_unload(pkg, 1);
 }
 
 /* Append a pointer to @fun to the array of child-pointers in @pkg: we
@@ -1355,7 +1362,8 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "help")) {
-	    /* backward compatibility */
+	    /* backward compatibility: help used to be attached to
+	       a package's public interface */
 	    if (pkg->help != NULL) {
 		free(pkg->help);
 	    }
@@ -2240,6 +2248,25 @@ static void function_package_free_full (fnpkg *pkg)
     real_function_package_free(pkg, 1);
 }
 
+/**
+ * function_package_unload_by_filename:
+ * @fname: package filename.
+ *
+ * Unloads the specified function package from memory, if it
+ * is currently loaded.  The functions 'owned' by the package
+ * are not destroyed; they become available for inclusion in
+ * other packages.
+ */
+
+void function_package_unload_by_filename (const char *fname)
+{
+    fnpkg *pkg = get_function_package_by_filename(fname);
+
+    if (pkg != NULL) {
+	real_function_package_unload(pkg, 0);
+    }
+}
+
 /* append a function package to the recorder array of loaded
    packages */
 
@@ -2323,7 +2350,7 @@ static int load_public_function (ufunc *fun)
 		/* got a conflicting package */
 		fprintf(stderr, "unloading conflicting package '%s'\n",
 			ufuns[i]->pkg->name);
-		function_package_unload(ufuns[i]->pkg);
+		function_package_unload_full(ufuns[i]->pkg);
 		break;
 	    } 
 	}
