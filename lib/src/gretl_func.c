@@ -1688,19 +1688,22 @@ static void name_package_from_filename (fnpkg *pkg)
 /* when "connecting" functions to a package on saving the package
    (a new package, or editing an existing one), we need to
    allow for the fact that the functions may or may not
-   already be connected.
+   already be connected to the package
 */
 
 static ufunc *get_uf_array_member (const char *name, fnpkg *pkg)
 {
-    ufunc *u = get_packaged_function_by_name(name, pkg);
+    int i;
 
-    if (u == NULL) {
-	/* function not already attached */
-	u = get_user_function_by_name(name);
-    }
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkg == pkg || ufuns[i]->pkg == NULL) {
+	    if (!strcmp(name, ufuns[i]->name)) {
+		return ufuns[i];
+	    }
+	}
+    }   
 
-    return u;
+    return NULL;
 }
 
 /* Given an array of @n function names in @names, create a
