@@ -88,11 +88,12 @@ gint yes_no_dialog (const char *title, const char *msg, int cancel)
 			      GTK_RESPONSE_REJECT);
     }
 
+    hbox = gtk_hbox_new(FALSE, 0);
     label = gtk_label_new(msg);
     gtk_widget_show(label);
-    hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 12);
     gtk_widget_show(hbox);
+
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 12);
 
@@ -526,7 +527,6 @@ TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 		      GINT_TO_POINTER(GRETL_FORMAT_TEX));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
 				 (pref == GRETL_FORMAT_TEX));
-    gtk_widget_show(button); 
 
     return button;
 }  
@@ -559,7 +559,6 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
 				 (pref == GRETL_FORMAT_RTF || 
 				  pref == GRETL_FORMAT_RTF_TXT));
-    gtk_widget_show(button);
 
     return button;
 }
@@ -579,7 +578,6 @@ tab_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
 				 (pref == GRETL_FORMAT_TAB));
-    gtk_widget_show(button);
 
     return button;
 }
@@ -599,7 +597,6 @@ CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
 				 (pref == GRETL_FORMAT_CSV));
-    gtk_widget_show(button);
 
     return button;
 }
@@ -619,7 +616,6 @@ plain_text_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
 				 (pref == GRETL_FORMAT_TXT));
-    gtk_widget_show(button);
 
     return button;
 }
@@ -858,7 +854,6 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     tmp = gtk_label_new(tmpstr);
     g_free(tmpstr);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    gtk_widget_show(tmp);
 
     if (htest) {
 	/* not selecting coeff, or conf int vs p-value */
@@ -870,10 +865,8 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     g_signal_connect(G_OBJECT(popdown), "changed",
 		     G_CALLBACK(bs_select_coeff), pp);
     gtk_box_pack_start(GTK_BOX(hbox), popdown, TRUE, TRUE, 5);
-    gtk_widget_show(popdown);
     
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox); 
 
     vbox_add_hsep(vbox);
 
@@ -885,7 +878,6 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_CI));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_opt), popt);
-    gtk_widget_show(button);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("Studentized confidence interval"));
@@ -894,7 +886,6 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_STUDENT));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_opt), popt);
-    gtk_widget_show(button);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("P-value"));
@@ -903,7 +894,6 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_PVAL));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_opt), popt);
-    gtk_widget_show(button);
 
     vbox_add_hsep(vbox);
 
@@ -917,7 +907,6 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(UNSET_NORMAL));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_opt), popt);
-    gtk_widget_show(button);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("Simulate normal errors"));
@@ -926,7 +915,6 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_NORMAL));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_opt), popt);
-    gtk_widget_show(button);
 
     vbox_add_hsep(vbox);
 
@@ -935,7 +923,6 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Number of replications:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
 
     rs.B = pB;
     rs.w = gtk_combo_box_entry_new_text();
@@ -943,10 +930,8 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     tmp = gtk_bin_get_child(GTK_BIN(rs.w));
     gtk_entry_set_width_chars(GTK_ENTRY(tmp), 7);
     gtk_box_pack_start(GTK_BOX(hbox), rs.w, FALSE, FALSE, 5);
-    gtk_widget_show(rs.w);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox); 
 
     if (!htest) {
 	/* graph check box */
@@ -954,26 +939,20 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 					     "distribution"),
 					   popt, OPT_G);
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
-	gtk_widget_show(button);
     }
 
     /* save output switch */
     button = gretl_option_check_button(_("Save bootstrap data to file"),
 				       popt, OPT_S);
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
-    gtk_widget_show(button);    
 
     /* pack all of the above */
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox);
-    gtk_widget_show(vbox);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
@@ -985,14 +964,13 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_replics), &rs);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
 
     if (!htest) {
 	/* Help button */
 	context_help_button(hbox, BOOTSTRAP);
     }
 
-    gtk_widget_show(dialog);
+    gtk_widget_show_all(dialog);
 }
 
 static void db_descrip_callback (GtkWidget *w, GtkWidget *dlg)
@@ -1921,11 +1899,14 @@ forecast_integrate_option (const MODEL *pmod,
 	hbox = gtk_hbox_new(FALSE, 5);
 	tbl = gtk_table_new(2, 2, FALSE);
 	gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+
 	w = gtk_label_new(_("Produce forecast for"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 0, 1, 0, 1);
+
 	s = datainfo->varname[dv];
 	w = gtk_radio_button_new_with_label(NULL, s);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, 0, 1);
+
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
 	s = datainfo->varname[dvp];
 	w = gtk_radio_button_new_with_label(group, s);
@@ -2293,7 +2274,6 @@ static void dialog_add_opts (dialog_opts *opts, GtkWidget *vbox)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	gtk_widget_show(hbox);
 	gtk_widget_show(v2);
-
     } else {
 	/* handle combo eventually? */
 	dummy_call();
@@ -2477,7 +2457,6 @@ static void pd_buttons (GtkWidget *dlg, int spd, struct compaction_info *cinfo)
 			 G_CALLBACK(set_target_pd), cinfo);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(f[i]));
-	gtk_widget_show(button);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 }
@@ -2501,8 +2480,6 @@ static void monday_buttons (GtkWidget *dlg, int *mon_start,
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(1));
 
-    gtk_widget_show (button);
-
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("Week starts on Sunday"));
     cinfo->sunday_button = button;
@@ -2512,8 +2489,6 @@ static void monday_buttons (GtkWidget *dlg, int *mon_start,
 		     G_CALLBACK(set_mon_start), mon_start);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(0));
-
-    gtk_widget_show(button);
 }
 
 static const char *weekdays[] = {
@@ -2569,7 +2544,6 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 
 	label = gtk_label_new(_("Default method:"));
 	gtk_box_pack_start(GTK_BOX(vbox), label, TRUE, TRUE, 0);
-	gtk_widget_show(label);
     }
 
     for (i=0; i<4; i++) {
@@ -2580,7 +2554,6 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 			 G_CALLBACK(set_compact_type), method);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(ccodes[i]));
-	gtk_widget_show(button);
 	if (i > 0 && current_pd == 52) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	}	
@@ -2620,7 +2593,6 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	g_object_set_data(G_OBJECT(button), "daymenu", daymenu);
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
-	gtk_widget_show_all(hbox);
     }
 }
 
@@ -2648,7 +2620,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 			  int *mon_start, CompactMethod *method,
 			  int *repday)
 {
-    GtkWidget *d, *tmp, *vbox, *hbox;
+    GtkWidget *dlg, *tmp, *vbox, *hbox;
     int show_pd_buttons = 0;
     int show_monday_buttons = 0;
     int show_method_buttons = 0;
@@ -2656,7 +2628,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     struct compaction_info cinfo;
     gchar *labelstr = NULL;
 
-    d = gretl_dialog_new(_("gretl: compact data"), w, GRETL_DLG_BLOCK);
+    dlg = gretl_dialog_new(_("gretl: compact data"), w, GRETL_DLG_BLOCK);
 
     cinfo.target_pd = target_pd;
     cinfo.repday = repday;
@@ -2706,12 +2678,11 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	methods_set = compact_methods_set();
     }
 
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(d));
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     tmp = gtk_label_new(labelstr);
     g_free(labelstr);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
-    gtk_widget_show(tmp);
 
     show_method_buttons = (methods_set != ALL_METHODS_SET);
 
@@ -2719,7 +2690,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
        Dated daily: give choice of going to weekly or monthly 
     */
     if (show_pd_buttons) {
-	pd_buttons(d, spd, &cinfo);
+	pd_buttons(dlg, spd, &cinfo);
 	if (show_monday_buttons || show_method_buttons) {
 	    vbox_add_hsep(vbox);
 	}	
@@ -2727,7 +2698,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     /* 7-day daily data: give choice of when the week starts */
     if (show_monday_buttons) {
-	monday_buttons(d, mon_start, &cinfo);
+	monday_buttons(dlg, mon_start, &cinfo);
 	if (show_method_buttons) {
 	    vbox_add_hsep(vbox);
 	}	
@@ -2736,10 +2707,10 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     /* per-variable compaction methods not all set already: 
        give choice of default compaction method */
     if (show_method_buttons) {
-	compact_method_buttons(d, method, spd, methods_set, &cinfo);
+	compact_method_buttons(dlg, method, spd, methods_set, &cinfo);
     } 
 
-    hbox = gtk_dialog_get_action_area(GTK_DIALOG(d));
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
     /* "Cancel" button */
     tmp = cancel_button(hbox);
@@ -2747,21 +2718,19 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 		     G_CALLBACK(abort_compact), method);
     g_signal_connect (G_OBJECT(tmp), "clicked", 
 		      G_CALLBACK(delete_widget), 
-		      G_OBJECT(d));
-    gtk_widget_show(tmp);
+		      G_OBJECT(dlg));
 
     /* "OK" button */
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), 
-		     G_OBJECT(d));
+		     G_OBJECT(dlg));
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
 
     /* Create a "Help" button */
     context_help_button(hbox, COMPACT);
 
-    gtk_widget_show(d);
+    gtk_widget_show_all(dlg);
 }
 
 static void set_expand_target_pd (GtkWidget *w, gpointer data)
@@ -3254,8 +3223,6 @@ build_checks_dialog (const char *title, const char *blurb,
 	context_help_button(hbox, hcode);
     }
 
-    gtk_widget_show_all(dialog);
-
     return dialog;
 }
 
@@ -3279,7 +3246,7 @@ int checks_dialog (const char *title, const char *blurb,
 	return -1;
     }
 
-    gtk_widget_show(dlg);
+    gtk_widget_show_all(dlg);
 
     return ret;
 }

@@ -1898,6 +1898,9 @@ static void data_structure_wizard (int create)
     dwiz_prepare_page(GTK_NOTEBOOK(nb), 0, dwinfo);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(nb), 0);
 
+    /* note: we can't use gtk_widget_show_all() here
+       because component widgets may be displayed 
+       selectively */
     gtk_widget_show(dialog);
 }
 

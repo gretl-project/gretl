@@ -1467,28 +1467,25 @@ static void np_test (GtkWidget *w, test_t *test)
     if (test->code == NP_DIFF) {
 	int list[3] = { 2, v1, v2 };
 
-	if (test->extra != NULL &&
-	    GTK_TOGGLE_BUTTON(test->extra)->active) {
+	if (test->extra != NULL && button_is_active(test->extra)) {
 	    opt |= OPT_V;
 	}
 
-	if (GTK_TOGGLE_BUTTON(test->radio[0])->active) {
+	if (button_is_active(test->radio[0])) {
 	    opt |= OPT_G;
-	} else if (GTK_TOGGLE_BUTTON(test->radio[1])->active) {
+	} else if (button_is_active(test->radio[1])) {
 	    opt |= OPT_R;
-	} else if (GTK_TOGGLE_BUTTON(test->radio[2])->active) {
+	} else if (button_is_active(test->radio[2])) {
 	    opt |= OPT_I;
 	}
 
 	err = diff_test(list, (const double **) Z, datainfo, 
 			opt, prn);
     } else if (test->code == NP_RUNS) {
-	if (test->extra != NULL &&
-	    GTK_TOGGLE_BUTTON(test->extra)->active) {
+	if (test->extra != NULL && button_is_active(test->extra)) {
 	    opt |= OPT_D;
 	}
-	if (test->check != NULL &&
-	    GTK_TOGGLE_BUTTON(test->check)->active) {
+	if (test->check != NULL && button_is_active(test->check)) {
 	    opt |= OPT_E;
 	}	
 	err = runs_test(v1, (const double **) Z, datainfo, 
@@ -1516,7 +1513,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	return;
     }
 
-    grf = GTK_TOGGLE_BUTTON(test->extra)->active;
+    grf = button_is_active(test->extra);
 
     switch (test->code) {
 
@@ -1529,7 +1526,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	pprintf(prn, _("Sample mean = %g, std. deviation = %g\n"), 
 		x[0], x[1]);
 
-	if (GTK_TOGGLE_BUTTON(test->check)->active) {
+	if (button_is_active(test->check)) {
 	    pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
 		    x[0], x[2], se, ts);
 	    pv = normal_pvalue_2(ts);
@@ -1615,7 +1612,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 		x[2] - z, x[2] + z);
 	pputc(prn, '\n');
 
-	if (GTK_TOGGLE_BUTTON(test->check)->active) {
+	if (button_is_active(test->check)) {
 	    /* the user specified a common variance */
 	    j = 1;
 	} else if (n1 < 30 || n2 < 30) {
@@ -2983,14 +2980,12 @@ static void real_stats_calculator (int code, gpointer data)
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     child->dlg);
-    gtk_widget_show(tmp);
 
     /* OK button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", child->callback, child);
-    gtk_widget_show(tmp);
 
     /* Help button? */
     hcode = calc_help_code(code);
@@ -3003,10 +2998,9 @@ static void real_stats_calculator (int code, gpointer data)
 	g_signal_connect(G_OBJECT(tmp), "clicked", 
 			 G_CALLBACK(context_help), 
 			 GINT_TO_POINTER(hcode));
-	gtk_widget_show(tmp);
     }
 
-    gtk_widget_show(child->dlg);
+    gtk_widget_show_all(child->dlg);
 }
 
 /* for gnuplot: convert '^' to '**' for exonentiation */

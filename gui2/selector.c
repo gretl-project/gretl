@@ -3059,10 +3059,7 @@ static void build_gmm_popdown (selector *sr)
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
-    gtk_widget_show(w);
-
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);    
 }
 
 static GtkWidget *choose_button (void)
@@ -3092,11 +3089,9 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
     if (label_active) {
 	tmp = multiplot_popdown(sr->ci);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show_all(tmp);
     } else if (label_string != NULL) {
 	tmp = gtk_label_new(label_string);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
     }
 
     x_hbox = gtk_hbox_new(FALSE, 5); 
@@ -3105,17 +3100,13 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
     gtk_box_pack_start(GTK_BOX(x_hbox), tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT(tmp), "clicked", 
 		      G_CALLBACK(clickfunc), sr);
-    gtk_widget_show(tmp); 
 
     entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN - 1);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN + 3);
 
     gtk_box_pack_start(GTK_BOX(x_hbox), entry, FALSE, FALSE, 0);
-    gtk_widget_show(entry); 
-
     gtk_box_pack_start(GTK_BOX(vbox), x_hbox, FALSE, FALSE, 0);
-    gtk_widget_show(x_hbox); 
 
     if (label_active || label_string != NULL) {
 	if (clickfunc != set_third_var_callback) {
@@ -3176,7 +3167,6 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     }
 
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
-    gtk_widget_show(tmp);
 
     depvar_hbox = gtk_hbox_new(FALSE, 5); 
 
@@ -3184,7 +3174,6 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_box_pack_start(GTK_BOX(depvar_hbox), tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT(tmp), "clicked", 
                       G_CALLBACK(set_dependent_var_callback), sr);
-    gtk_widget_show(tmp); 
 
     sr->depvar = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN - 1);
@@ -3198,15 +3187,11 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     }
 
     gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, FALSE, FALSE, 0);
-    gtk_widget_show(sr->depvar); 
-
     gtk_box_pack_start(GTK_BOX(right_vbox), depvar_hbox, FALSE, FALSE, 0);
-    gtk_widget_show(depvar_hbox); 
 
     if (sr->ci != INTREG) {
 	sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
-	gtk_widget_show(sr->default_check); 
     } 
 
     if (sr->ci != ARBOND) {
@@ -3275,7 +3260,6 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 	}
 
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-	gtk_widget_show(tmp);
 	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
 	
 	if (i == 0) {
@@ -3288,7 +3272,6 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
-	gtk_widget_show(sr->extra[i]);
 
 	if (i == 0) {
 	    /* cross-connect with lag preferences dialog */
@@ -3300,7 +3283,6 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 	}
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-	gtk_widget_show(hbox); 
     }
 }
 
@@ -3350,16 +3332,13 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    gtk_widget_show(tmp);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
     adj = gtk_adjustment_new(val, 1, maxlag, 1, 1, 0);
 
     sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
-    gtk_widget_show(sr->extra[0]);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox); 
 
     if (sr->ci == ARBOND) {
 	int maxinst = datainfo->pd - 1;
@@ -3373,7 +3352,6 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 	sr->extra[1] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[1], FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-	gtk_widget_show_all(hbox); 
 
 	g_signal_connect(G_OBJECT(sr->extra[0]), "value-changed",
 			 G_CALLBACK(arbond_cross_connect), sr);
@@ -3500,7 +3478,6 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
     if (tmp != NULL) {
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3522,7 +3499,6 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), bvbox, TRUE, TRUE, 0);
-    gtk_widget_show_all(bvbox);
 
     /* then the listing */
     sr->rvars2 = var_list_box_new(GTK_BOX(hbox), sr, SR_RVARS2);
@@ -3561,7 +3537,6 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 		     sr->rvars2);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
-    gtk_widget_show(hbox); 
 }
 
 static void make_tau_list (GtkWidget *w)
@@ -3591,7 +3566,6 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     if (str != NULL) {
 	tmp = gtk_label_new(str);
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
     }	
 
     if (sr->ci == HECKIT) {
@@ -3608,14 +3582,12 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
 	maybe_set_entry_text(sr->extra[0], arlags);
-	gtk_widget_show(sr->extra[0]); 
     } else if (sr->ci == QUANTREG) {
 	sr->extra[0] = gtk_combo_box_entry_new_text();
 	make_tau_list(sr->extra[0]);
 	gtk_entry_set_text(GTK_ENTRY(GTK_BIN(sr->extra[0])->child), "0.5");
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
-	gtk_widget_show(sr->extra[0]); 
     } else if (sr->ci == VAR || sr->ci == VLAGSEL) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
 	vbox_add_hsep(right_vbox);
@@ -3754,10 +3726,8 @@ static void selector_init (selector *sr, guint ci, const char *title,
     /* create equivalent of gtkdialog structure */
     base = gtk_vbox_new(FALSE, 5);
     gtk_container_add(GTK_CONTAINER(sr->dlg), base);
-    gtk_widget_show(base);
 
     sr->vbox = gtk_vbox_new(FALSE, 0);
-    gtk_widget_show(sr->vbox);
 
     /* make (upper) vbox expansible */
     gtk_box_pack_start(GTK_BOX(base), sr->vbox, TRUE, TRUE, 0);
@@ -3770,7 +3740,6 @@ static void selector_init (selector *sr, guint ci, const char *title,
     gtk_button_box_set_layout(GTK_BUTTON_BOX(sr->action_area), 
 			      GTK_BUTTONBOX_END);
     gtk_box_set_spacing(GTK_BOX(sr->action_area), 10);
-    gtk_widget_show(sr->action_area);
     gtk_box_pack_start(GTK_BOX(base), sr->action_area,
 		       FALSE, FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(sr->action_area), 5);
@@ -3854,7 +3823,6 @@ static void build_garch_spinners (selector *sr)
     }
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show_all(hbox);
 }
 
 static GtkWidget *arma_aux_label (int i)
@@ -3869,7 +3837,6 @@ static GtkWidget *arma_aux_label (int i)
     hbox = gtk_hbox_new(FALSE, 5);
     lbl = gtk_label_new(_(strs[i]));
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
-    gtk_widget_show(lbl);
 
     return hbox;
 }
@@ -3913,7 +3880,6 @@ static void build_arma_spinners (selector *sr)
     if (datainfo->pd > 1) {
 	lbl = arma_aux_label(0);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
-	gtk_widget_show(lbl);
     }
 
     tab = gtk_table_new(3, 4, FALSE);
@@ -3930,6 +3896,7 @@ static void build_arma_spinners (selector *sr)
     chk = gtk_check_button_new_with_label(_("or specific lags"));
     g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_p), sr);
     gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 0, 1);
+
     /* or free-form lags */
     sr->extra[1] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[1]), 16);
@@ -3956,6 +3923,7 @@ static void build_arma_spinners (selector *sr)
     chk = gtk_check_button_new_with_label(_("or specific lags"));
     g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_q), sr);
     gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 2, 3);
+
     /* or free-form lags */
     sr->extra[4] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[4]), 16);
@@ -3966,8 +3934,6 @@ static void build_arma_spinners (selector *sr)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), TRUE);
     }
 
-    gtk_widget_show_all(tab);
-
     j = 5;
 
     if (datainfo->pd > 1) {
@@ -3975,7 +3941,6 @@ static void build_arma_spinners (selector *sr)
 
 	lbl = arma_aux_label(1);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
-	gtk_widget_show(lbl);
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	for (i=0; i<3; i++) {
@@ -3989,7 +3954,6 @@ static void build_arma_spinners (selector *sr)
 	}
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-	gtk_widget_show_all(hbox);    
     }
 }
 
@@ -4027,10 +3991,7 @@ static void pack_switch (GtkWidget *b, selector *sr,
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, offset);
-    gtk_widget_show(b);
-
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox);
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
@@ -4174,7 +4135,6 @@ static void build_selector_switches (selector *sr)
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 0);
-	gtk_widget_show(b1);
 
 	if (robust_conf(sr->ci)) {
 	    GtkWidget *b2;
@@ -4185,11 +4145,9 @@ static void build_selector_switches (selector *sr)
 	    gtk_widget_set_sensitive(b2, using_hc_by_default());
 	    sensitize_conditional_on(b2, b1);
 	    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
-	    gtk_widget_show(b2);
 	}
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-	gtk_widget_show(hbox);
     }
 
     if (sr->ci == TOBIT || sr->ci == ARMA || sr->ci == GARCH ||
@@ -4207,7 +4165,6 @@ static void build_selector_switches (selector *sr)
 			 G_CALLBACK(call_iters_dialog), sr);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-	gtk_widget_show_all(hbox);
 #else
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
@@ -4276,7 +4233,6 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == MPOLS) {
 	hbox = mpols_bits_selector();
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-	gtk_widget_show_all(hbox);
     }
 } 
 
@@ -4313,7 +4269,6 @@ static void unhide_lags_switch (selector *sr)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show_all(hbox);
 }
 
 #if 0 /* not ready */ 
@@ -4341,7 +4296,6 @@ static void test_boot_switch (selector *sr)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show_all(hbox);
 }
 
 #endif 
@@ -4366,20 +4320,15 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, offset);
-    gtk_widget_show(b);
 
     if (extra_text != NULL) {
 	GtkWidget *w = gtk_label_new(extra_text);
 
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	gtk_widget_show(w);
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), extra, TRUE, TRUE, offset);
-    gtk_widget_show(extra);
-
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox);
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
@@ -4421,18 +4370,17 @@ static void build_ellipse_spinner (selector *sr)
 
     label = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
-    gtk_widget_show(label);
+
     label = gtk_label_new(_("Confidence level"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    gtk_widget_show(label);
+
     label = gtk_label_new("1 - α =");
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    gtk_widget_show(label);
+
     sr->extra[0] = alpha_spinner(0.95, 0.70);
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 0);
-    gtk_widget_show(sr->extra[0]);
+
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox);
 }
 
 static void build_rankcorr_radios (selector *sr)
@@ -4712,10 +4660,7 @@ static void build_arma_combo (selector *sr)
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
-    gtk_widget_show(combo);
-
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);
 }
 
 static void build_coint_combo (selector *sr)
@@ -4745,10 +4690,7 @@ static void build_coint_combo (selector *sr)
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
-    gtk_widget_show(combo);
-
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);    
 }
 
 static void build_vecm_combo (selector *sr)
@@ -4779,10 +4721,8 @@ static void build_vecm_combo (selector *sr)
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
-    gtk_widget_show(combo);
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);
 }
 
 static void build_selector_radios (selector *sr)
@@ -4836,10 +4776,7 @@ static void lag_selector_button (selector *sr)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), sr->lags_button, FALSE, FALSE, 0);
-    gtk_widget_show(sr->lags_button);
-
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox);
 }    
 
 static void selector_doit (GtkWidget *w, selector *sr)
@@ -4880,7 +4817,6 @@ static void build_selector_buttons (selector *sr)
 	g_signal_connect(G_OBJECT(tmp), "clicked", 
 			 G_CALLBACK(context_help), 
 			 GINT_TO_POINTER(ci));
-	gtk_widget_show(tmp);
     }
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
@@ -4888,21 +4824,18 @@ static void build_selector_buttons (selector *sr)
     gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(clear_vars), sr);
-    gtk_widget_show(tmp);
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(cancel_selector), sr);
-    gtk_widget_show(tmp);
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(selector_doit), sr);
-    gtk_widget_show(tmp);
     gtk_widget_grab_default(tmp);
 }
 
@@ -5000,7 +4933,6 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
     if (tmp != NULL) {
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -5028,7 +4960,6 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), bvbox, TRUE, TRUE, 0);
-    gtk_widget_show_all(bvbox);
 
     /* then the actual primary RHS listbox */
     sr->rvars1 = var_list_box_new(GTK_BOX(hbox), sr, SR_RVARS1);
@@ -5074,7 +5005,6 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 		     sr->rvars1);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
-    gtk_widget_show(hbox);
 }
 
 selector *selection_dialog (const char *title, int (*callback)(), guint ci)
@@ -5106,7 +5036,6 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 
     tmp = selection_dialog_top_label(ci);
     gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
 
     /* the following encloses LHS lvars, depvar and indepvar stuff */
     big_hbox = gtk_hbox_new(FALSE, 5); 
@@ -5160,11 +5089,9 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 
     /* pack the whole RHS to the right of the LHS lvars */
     gtk_box_pack_start(GTK_BOX(big_hbox), right_vbox, TRUE, TRUE, 0);
-    gtk_widget_show(right_vbox);
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
-    gtk_widget_show(big_hbox);
 
     if (ci == ARMA) {
 	/* AR, D, MA for ARIMA */
@@ -5207,7 +5134,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     /* buttons: Help, Clear, Cancel, OK */
     build_selector_buttons(sr);
 
-    gtk_widget_show(sr->dlg);
+    gtk_widget_show_all(sr->dlg);
 
     return sr;
 }
@@ -5526,7 +5453,6 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     tmp = simple_selection_top_label(ci);
     if (tmp != NULL) {
 	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
     } 
 
     /* entry field for some uses */
@@ -5540,18 +5466,14 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
 
     tmp = gtk_label_new(_("Available vars"));
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
 
     tmp = gtk_label_new(" ");
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
 
     tmp = gtk_label_new(_("Selected vars"));
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), top_hbox, FALSE, FALSE, 5);
-    gtk_widget_show(top_hbox);
 
     /* the following will enclose 3 or more vboxes */
     big_hbox = gtk_hbox_new(FALSE, 5); 
@@ -5584,7 +5506,6 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     sr->n_left = nleft;
 
     gtk_box_pack_start(GTK_BOX(big_hbox), left_vbox, TRUE, TRUE, 0);
-    gtk_widget_show(left_vbox);
     
     /* middle: vertical holder for push/pull buttons */
     button_vbox = gtk_vbox_new(TRUE, 0);
@@ -5603,7 +5524,6 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     sr->remove_button = remove_button(sr, button_vbox);
 
     gtk_box_pack_start(GTK_BOX(big_hbox), button_vbox, TRUE, TRUE, 0);
-    gtk_widget_show_all(button_vbox);
 
     /* RHS: vertical holder for selected vars */
     right_vbox = gtk_vbox_new(FALSE, 5);
@@ -5612,7 +5532,6 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
 
     gtk_box_pack_start(GTK_BOX(big_hbox), right_vbox, TRUE, TRUE, 0);
-    gtk_widget_show(right_vbox);
 
     /* pre-fill RHS box? Only if we have 2 or more vars selected in the
        main window and if the command is "suitable"
@@ -5628,7 +5547,6 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
-    gtk_widget_show(big_hbox);
 
     /* unhide lags check box? */
     if (SAVE_DATA_ACTION(sr->ci) && lags_hidden) {
@@ -5677,7 +5595,7 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
 	gtk_widget_destroy(sr->dlg);
 	warnbox(_("No suitable data are available"));
     } else {
-	gtk_widget_show(sr->dlg);
+	gtk_widget_show_all(sr->dlg);
     }
 
     if (sr->ci == DEFINE_MATRIX) {
@@ -6265,11 +6183,9 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
 					      hbox);
 	gtk_box_pack_start(GTK_BOX(vbox), scroller, TRUE, TRUE, 5);
-	gtk_widget_show_all(scroller);
 	gtk_widget_set_size_request(scroller, -1, 360);
     } else {
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-	gtk_widget_show_all(hbox);
     }
     
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
@@ -6288,13 +6204,12 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), dialog);
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
 
     /* "Help" button */
     context_help_button(hbox, LAGS_DIALOG);
 
     gtk_widget_set_sensitive(sr->dlg, FALSE);
-    gtk_widget_show(dialog);   
+    gtk_widget_show_all(dialog);   
 
     return ret;
 }

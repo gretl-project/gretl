@@ -641,7 +641,6 @@ static void function_call_dialog (call_info *cinfo)
     fnname = user_function_name_by_index(cinfo->iface);
     txt = g_strdup_printf(_("Call to function %s"), fnname);
     hbox = label_hbox(vbox, txt, 5, 1);
-    gtk_widget_show(hbox);
     g_free(txt);
 
     if (cinfo->n_params > 0) {
@@ -743,7 +742,6 @@ static void function_call_dialog (call_info *cinfo)
     }
 
     if (tbl != NULL) {
-	gtk_widget_show_all(tbl);
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     }
 
@@ -753,24 +751,21 @@ static void function_call_dialog (call_info *cinfo)
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT (button), "clicked", 
 		     G_CALLBACK(fncall_cancel), cinfo);
-    gtk_widget_show(button);
 
     /* "OK" button */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(fncall_finalize), cinfo);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
 
     /* Help button? */
     if (cinfo->n_params > 0 || cinfo->rettype != GRETL_TYPE_NONE) {
 	button = context_help_button(hbox, -1);
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(fncall_help), cinfo);
-	gtk_widget_show(button);
     }  
 
-    gtk_widget_show(cinfo->dlg);
+    gtk_widget_show_all(cinfo->dlg);
 }
 
 static int function_data_check (call_info *cinfo)
