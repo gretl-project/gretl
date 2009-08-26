@@ -37,7 +37,7 @@ enum winstack_codes {
     STACK_DESTROY,
     STACK_QUERY,
     STACK_MATCH_FNAME,
-    STACK_MATCH_STRSTR_FNAME,
+    STACK_MATCH_FNAME_MOD,
     STACK_MAXVAR
 };
 
@@ -84,10 +84,8 @@ static int got_filename_match (GtkWidget *w, const char *s,
 	if (code == STACK_MATCH_FNAME) {
 	    return !strcmp(s, vwin->fname);
 	} else {
-	    /* vwin->fname may be a sub-string of s
-	       (database filename with suffix removed)
-	    */
-	    return strstr(s, vwin->fname) != NULL;
+	    /* vwin->fname may the suffix removed */
+	    return !strncmp(s, vwin->fname, strlen(vwin->fname));
 	}
     } else {
 	return 0;
@@ -166,7 +164,7 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
 	break;
 
     case STACK_MATCH_FNAME:
-    case STACK_MATCH_STRSTR_FNAME:
+    case STACK_MATCH_FNAME_MOD:
 	if (wstack != NULL) {
 	    const char *ctest = (const char *) ptest;
 
@@ -230,7 +228,7 @@ GtkWidget *match_db_window_by_filename (const char *fname)
 {
     GtkWidget *w = NULL;
 
-    winstack(STACK_MATCH_STRSTR_FNAME, NULL, fname, &w);
+    winstack(STACK_MATCH_FNAME_MOD, NULL, fname, &w);
     return w;
 }
 
