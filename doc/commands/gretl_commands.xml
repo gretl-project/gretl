@@ -5902,7 +5902,7 @@
       <options>
 	<option>
 	  <flag>--dhansen</flag>
-	  <effect>Doornik&ndash;Hansen test</effect>
+	  <effect>Doornik&ndash;Hansen test, the default</effect>
         </option>
 	<option>
 	  <flag>--swilk</flag>

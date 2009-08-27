@@ -542,15 +542,6 @@ void get_default_dir (char *s, int action)
 	get_pkg_dir(s, action);
     } else if (action == OPEN_RATS_DB) {
 	strcpy(s, paths.ratsbase);
-    } else if (action == SET_FDIR) {
-	/* go one level above workdir */
-	char *p;
-
-	strcpy(s, paths.workdir);
-	p = strrchr(s, SLASH);
-	if (p != NULL) {
-	    *p = '\0';
-	}
     } else {
 	strcpy(s, paths.workdir);
     }

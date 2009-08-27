@@ -5798,19 +5798,28 @@ static void print_normality_stat (double test, double pval,
     }
 }
 
+/* OPT_A: all tests
+   OPT_D: Doornik-Hansen
+   OPT_W: Shapiro-Wilk
+   OPT_D: Jarque-Bera
+   OPT_W: Lilliefors
+   OPT_Q: quiet
+*/
+
 int gretl_normality_test (const char *param,
 			  const double **Z,
 			  const DATAINFO *pdinfo,
 			  gretlopt opt,
 			  PRN *prn)
 {
+    gretlopt alltests = OPT_D | OPT_W | OPT_J | OPT_L;
     double test = NADBL;
     double pval = NADBL;
     double trec = NADBL;
     double pvrec = NADBL;
     int v, err;
 
-    err = incompatible_options(opt, OPT_A|OPT_D|OPT_W|OPT_J|OPT_L);
+    err = incompatible_options(opt, OPT_A | alltests);
 
     if (!err) {
 	v = current_series_index(pdinfo, param);
@@ -5824,7 +5833,13 @@ int gretl_normality_test (const char *param,
     }
 
     if (opt & OPT_A) {
-	opt |= OPT_D | OPT_W | OPT_J | OPT_L;
+	/* show all tests */
+	opt |= alltests;
+    }
+
+    if (!(opt & alltests)) {
+	/* no method selected: use Doornik-Hansen */
+	opt |= OPT_D;
     }
 
     if (!(opt & OPT_Q)) {

@@ -615,16 +615,7 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	*fname = '\0';
 	get_default_package_name(fname, data, action);
 	gtk_file_chooser_set_current_name(filesel, fname);
-    } else if (action == SET_FDIR) {
-#ifdef G_OS_WIN32
-	char fname[MAXLEN];
-
-	strcpy(fname, paths.workdir);
-	gtk_file_chooser_set_filename(filesel, win32_correct_path(fname));
-#else
-	gtk_file_chooser_set_filename(filesel, paths.workdir);
-#endif
-    }
+    } 
 }
 
 static void filesel_add_filter (GtkWidget *filesel,
@@ -638,12 +629,39 @@ static void filesel_add_filter (GtkWidget *filesel,
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 }
 
+static void filesel_set_filters (GtkWidget *filesel, int action,
+				 FselDataSrc src, gpointer data)
+{
+    GtkFileFilter *filter = get_file_filter(action, data);
+
+    if (action == OPEN_ASCII || action == APPEND_ASCII) {
+	gtk_file_filter_set_name(filter, _("ASCII files (*.txt)"));
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+    } else if (action == OPEN_SCRIPT) {
+	gtk_file_filter_set_name(filter, _("gretl script files (*.inp)"));
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+    }	
+
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
+
+    if (action == OPEN_ASCII || action == APPEND_ASCII) {
+	filesel_add_filter(filesel, _("all files (*.*)"), "*");
+    } else if (action == OPEN_SCRIPT && src != FSEL_DATA_FNPKG) {
+	filesel_add_filter(filesel, _("GNU R files (*.R)"), "*.R");
+	filesel_add_filter(filesel, _("gnuplot files (*.plt)"), "*.plt");		   
+#ifdef USE_OX
+	if (ox_support) {
+	    filesel_add_filter(filesel, _("Ox files (*.ox)"), "*.ox");
+	}
+#endif
+    } 
+}
+
 static void gtk_file_selector (int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
     GtkWidget *filesel;
     char startdir[MAXLEN];
-    GtkFileFilter *filter;
     GtkFileChooserAction fa;
     const gchar *okstr;
     gint response;
@@ -679,34 +697,14 @@ static void gtk_file_selector (int action, FselDataSrc src,
 
     gtk_dialog_set_default_response(GTK_DIALOG(filesel), GTK_RESPONSE_ACCEPT);
 
-    filter = get_file_filter(action, data);
-
-    if (action == OPEN_ASCII || action == APPEND_ASCII) {
-	gtk_file_filter_set_name(filter, _("ASCII files (*.txt)"));
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
-    } else if (action == OPEN_SCRIPT) {
-	gtk_file_filter_set_name(filter, _("gretl script files (*.inp)"));
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
-    }	
-
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
-
-    if (action == OPEN_ASCII || action == APPEND_ASCII) {
-	filesel_add_filter(filesel, _("all files (*.*)"), "*");
-    } else if (action == OPEN_SCRIPT && src != FSEL_DATA_FNPKG) {
-	filesel_add_filter(filesel, _("GNU R files (*.R)"), "*.R");
-	filesel_add_filter(filesel, _("gnuplot files (*.plt)"), "*.plt");		   
-#ifdef USE_OX
-	if (ox_support) {
-	    filesel_add_filter(filesel, _("Ox files (*.ox)"), "*.ox");
-	}
-#endif
-    } 
-
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
-
-    filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
-				   src, data);
+    if (SET_DIR_ACTION(action)) {
+	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), startdir);
+    } else {
+	filesel_set_filters(filesel, action, src, data);
+	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
+	filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
+				       src, data);
+    }
 
     response = gtk_dialog_run(GTK_DIALOG(filesel));
 
@@ -714,7 +712,6 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	gchar *fname;
 	
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
-
 	gtk_widget_destroy(filesel);
 	filesel = NULL;
 
