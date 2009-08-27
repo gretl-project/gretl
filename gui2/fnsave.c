@@ -33,6 +33,7 @@
 
 #include "gretl_func.h"
 
+#define PKG_DEBUG 0
 #define NENTRIES 4
 
 typedef struct function_info_ function_info;
@@ -46,6 +47,7 @@ struct function_info_ {
     GtkWidget *text;       /* text box for help */
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *save;       /* Save button in dialog */
+    GtkWidget *saveas;     /* "Save as" button in dialog */
     GtkWidget *popup;      /* popup menu */
     windata_t *samplewin;  /* window for editing sample script */
     fnpkg *pkg;            /* pointer to package being edited */
@@ -272,14 +274,15 @@ static int check_version_string (const char *s)
     return err;
 }
 
-/* Callback from the Save button when editing a function package.  We
-   assemble the relevant info then if the package is new and has not
-   been saved yet (which is flagged by finfo->fname being NULL) we
-   offer a file selector, otherwise we go ahead and save using the
-   package's recorded filename.  
+/* Callback from the Save button, or "Save as" button, when editing a
+   function package.  We first assemble and check the relevant info
+   then if the package is new and has not been saved yet (which is
+   flagged by finfo->fname being NULL), or if we're called from "Save
+   as", we offer a file selector, otherwise we go ahead and save using
+   the package's recorded filename.
 */
 
-static void finfo_save (GtkWidget *w, function_info *finfo)
+static int finfo_save (function_info *finfo, int saveas)
 {
     char **fields[] = {
 	&finfo->author,
@@ -296,7 +299,7 @@ static void finfo_save (GtkWidget *w, function_info *finfo)
 	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[i]), "missing");
 	    gtk_editable_select_region(GTK_EDITABLE(finfo->entries[i]), 0, -1);
 	    gtk_widget_grab_focus(finfo->entries[i]);
-	    return;
+	    return 1;
 	} 
     }
 
@@ -305,26 +308,35 @@ static void finfo_save (GtkWidget *w, function_info *finfo)
     if (finfo->help == NULL || !strcmp(finfo->help, "missing")) {
 	textview_set_text_selected(finfo->text, "missing");
 	gtk_widget_grab_focus(finfo->text);
-	return;
+	return 1;
     }
 
     if (finfo->sample == NULL) {
 	infobox(_("Please add a sample script for this package"));
-	return;
+	return 1;
     }
 
     if (check_version_string(finfo->version)) {
 	errbox(_("Invalid version string: use numbers and '.' only"));
-	return;
+	return 1;
     }
 
-    if (finfo->fname == NULL) {
+    if (finfo->fname == NULL || saveas) {
 	file_selector_with_parent(SAVE_FUNCTIONS, FSEL_DATA_MISC, 
 				  finfo, finfo->dlg);
     } else {
 	fprintf(stderr, "Calling save_function_package\n");
 	err = save_function_package(finfo->fname, finfo);
     }
+
+    return err;
+}
+
+static void finfo_save_callback (GtkWidget *w, function_info *finfo)
+{
+    int saveas = (w == finfo->saveas);
+
+    finfo_save(finfo, saveas);
 }
 
 static void finfo_destroy (GtkWidget *w, function_info *finfo)
@@ -554,24 +566,59 @@ static char **get_function_names (const int *list, int *err)
     return names;
 }
 
+/* Convert from lists of functions by index numbers, @publist and
+   @privlist, to arrays of public and private functions by name.
+   Record in the @changed location whether or not there's any change
+   relative to the existing lists of function names in @finfo.
+*/
+
 static int finfo_set_function_names (function_info *finfo,
 				     const int *publist,
-				     const int *privlist)
+				     const int *privlist,
+				     int *changed)
 {
+    char **pubnames = NULL;
+    char **privnames = NULL;
+    int npub = publist[0];
+    int npriv = (privlist == NULL)? 0 : privlist[0];
     int err = 0;
 
-    finfo->pubnames = get_function_names(publist, &err);
+    *changed = 0;
 
-    if (!err && privlist != NULL) {
-	finfo->privnames = get_function_names(privlist, &err);
+    pubnames = get_function_names(publist, &err);
+
+    if (!err && npriv > 0) {
+	privnames = get_function_names(privlist, &err);
     }
 
     if (!err) {
-	finfo->n_pub = publist[0];
-	finfo->active = finfo->pubnames[0];
-	if (privlist != NULL) {
-	    finfo->n_priv = privlist[0];
+	if (npub != finfo->n_pub || npriv != finfo->n_priv) {
+	    /* we know that something has changed */
+	    *changed = 1;
+	} else {
+	    /* we'll have to check for any changes */
+	    *changed = strings_array_cmp(pubnames, finfo->pubnames, npub);
+	    if (!*changed && npriv > 0) {
+		*changed = strings_array_cmp(privnames, finfo->privnames,
+					     npriv);
+	    }
 	}
+    }
+
+    if (!*changed) {
+	free_strings_array(pubnames, npub);
+	free_strings_array(privnames, npriv);
+    }
+
+    if (!err && *changed) {
+	free(finfo->pubnames);
+	finfo->pubnames = pubnames;
+	finfo->n_pub = npub;
+	finfo->active = finfo->pubnames[0];
+
+	free(finfo->privnames);
+	finfo->privnames = privnames;
+	finfo->n_priv = npriv;
     }
 
     return err;
@@ -794,7 +841,7 @@ static gint query_save_package (GtkWidget *w, GdkEvent *event,
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;
 	} else if (resp == GRETL_YES) {
-	    finfo_save(NULL, finfo);
+	    return finfo_save(finfo, 0);
 	}
     }
 
@@ -866,7 +913,6 @@ static void finfo_dialog (function_info *finfo)
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
-    gtk_widget_show(vbox);
 			 
     tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
@@ -879,12 +925,10 @@ static void finfo_dialog (function_info *finfo)
 	label = gtk_label_new(_(entry_labels[i]));
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, i, i+1);
-	gtk_widget_show(label);
 
 	entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 40);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
-	gtk_widget_show(entry); 
 
 	finfo->entries[i] = entry;
 
@@ -919,10 +963,8 @@ static void finfo_dialog (function_info *finfo)
 
     add_minver_selector(tbl, i++, finfo);
     add_data_requirement_menu(tbl, i, finfo);
-    gtk_widget_show(tbl);
 
     hbox = label_hbox(vbox, _("Help text:"));
-    gtk_widget_show(hbox);
 
     finfo->text = editable_text_box(&hbuf);
     text_table_setup(vbox, finfo->text);
@@ -954,8 +996,6 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(gfn_to_script_callback), finfo);
 
-    gtk_widget_show_all(hbox);
-
     /* edit sample script button */
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -964,14 +1004,11 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(edit_sample_callback), finfo);
 
-#if 0 /* not just yet */
-    button = gtk_button_new_with_label(_("Add/Remove functions"));
+    /* add/remove functions button */
+    button = gtk_button_new_with_label(_("Add/remove functions"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
-#endif    
-
-    gtk_widget_show_all(hbox);
 
     /* check box for upload option */
     button = button_in_hbox(vbox, CHECK_BUTTON, 
@@ -985,13 +1022,21 @@ static void finfo_dialog (function_info *finfo)
     gtk_box_set_spacing(GTK_BOX(hbox), 10);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
+    /* "Save as" button */
+    button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(finfo_save_callback), finfo);
+    gtk_widget_set_sensitive(button, finfo->fname != NULL);
+    finfo->saveas = button;
+
     /* Save button */
     button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(finfo_save), finfo);
-    gtk_widget_set_sensitive(button, finfo->fname == NULL);
+		     G_CALLBACK(finfo_save_callback), finfo);
     finfo->save = button;
 
     /* Close button */
@@ -1001,9 +1046,9 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT (button), "clicked", 
 		     G_CALLBACK(delete_pkg_editor), finfo);
 
-    gtk_widget_show_all(hbox);
+    finfo_set_modified(finfo, finfo->fname == NULL);
 
-    gtk_widget_show(finfo->dlg);
+    gtk_widget_show_all(finfo->dlg);
 }
 
 static void web_get_login (GtkWidget *w, gpointer p)
@@ -1260,28 +1305,59 @@ static int check_package_filename (function_info *finfo, const char *fname)
     return err;
 }
 
-/* callback from file selector when saving a function package */
+static int dont_overwrite_pkg (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "r");
+    int ret = 0;
+
+    if (fp != NULL) {
+	int resp = yes_no_dialog("gretl", _("OK to overwrite?"), 0);
+
+	ret = (resp == GRETL_NO);
+	fclose(fp);
+    }
+
+    return ret;
+}
+
+/* callback from file selector when saving a function package, or
+   directly from the package editor if using the package's
+   existing filename */
 
 int save_function_package (const char *fname, gpointer p)
 {
     function_info *finfo = p;
     int err = 0;
 
-    if (finfo->fname == NULL) {
-	/* no filename recorded yet */
+    if (finfo->fname == NULL || strcmp(finfo->fname, fname)) {
+	/* new or save as */
+	if (dont_overwrite_pkg(fname)) {
+	    return 1;
+	}
 	err = check_package_filename(finfo, fname);
 	if (err) {
 	    return err;
 	}
+    }	
+
+    if (finfo->fname == NULL) {
+	/* no filename recorded yet */
 	finfo->fname = g_strdup(fname);
-    } 
+    } else if (strcmp(finfo->fname, fname)) {
+	/* doing "Save as" */
+	function_package_unload_by_filename(finfo->fname);
+	free(finfo->fname);
+	finfo->fname = g_strdup(fname);
+	finfo->pkg = NULL;
+    }
 
     if (finfo->pkg == NULL) {
-	/* starting from scratch */
+	/* starting from scratch, or save as */
 	finfo->pkg = function_package_new(fname, finfo->pubnames, finfo->n_pub,
 					  finfo->privnames, finfo->n_priv,
 					  &err);
     } else {
+	/* revising an existing package */
 	err = function_package_connect_funcs(finfo->pkg, finfo->pubnames, finfo->n_pub,
 					     finfo->privnames, finfo->n_priv);
 	if (err) {
@@ -1305,11 +1381,6 @@ int save_function_package (const char *fname, gpointer p)
 	}
     }
 
-    /* Note: if we allow "save as..." for existing, named function
-       packages then we'll need a function to reset the package
-       ID, in gretl_func.c.
-    */
-
     if (!err) {
 	err = function_package_write_file(finfo->pkg);
 	if (err) {
@@ -1327,7 +1398,8 @@ int save_function_package (const char *fname, gpointer p)
 	gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
 	g_free(title);
 	finfo_set_modified(finfo, FALSE);
-	maybe_update_func_files_window(1);
+	gtk_widget_set_sensitive(finfo->saveas, TRUE);
+	maybe_update_func_files_window(EDIT_FN_PKG);
 	if (finfo->upload) {
 	    do_upload(fname);
 	}
@@ -1423,6 +1495,7 @@ void edit_new_function_package (void)
     function_info *finfo;
     int *publist = NULL;
     int *privlist = NULL;
+    int changed = 0;
     int err = 0;
 
     err = get_lists_from_selector(&publist, &privlist);
@@ -1436,7 +1509,8 @@ void edit_new_function_package (void)
     }
 
     if (!err) {
-	err = finfo_set_function_names(finfo, publist, privlist);
+	err = finfo_set_function_names(finfo, publist, privlist,
+				       &changed);
 	if (err) {
 	    gretl_errmsg_set("Couldn't find the requested functions");
 	}
@@ -1454,33 +1528,34 @@ void edit_new_function_package (void)
     }
 }
 
+/* callback from GUI selector to add/remove functions 
+   when editing a package */
+
 void revise_function_package (void *p)
 {
     function_info *finfo = p;
     int *publist = NULL;
     int *privlist = NULL;
+    int changed = 0;
     int err = 0;
-
-    /* FIXME find a way to tell if any changes have
-       really been made: compare strings arrays?
-    */
 
     err = get_lists_from_selector(&publist, &privlist);
     if (err) {
 	return;
     }
 
+#if PKG_DEBUG
     printlist(publist, "new publist");
     printlist(privlist, "new privlist");
+#endif
 
-    free_strings_array(finfo->pubnames, finfo->n_pub);
-    free_strings_array(finfo->privnames, finfo->n_priv);
+    err = finfo_set_function_names(finfo, publist, privlist,
+				   &changed);
 
-    err = finfo_set_function_names(finfo, publist, privlist);
-
-    if (!err) {
+    if (!err && changed) {
 	depopulate_combo_box(GTK_COMBO_BOX(finfo->codesel));
 	func_selector_set_strings(finfo, finfo->codesel);
+	finfo_set_modified(finfo, TRUE);
     }
 
     free(publist);
@@ -1492,6 +1567,7 @@ void edit_function_package (const char *fname, int *loaderr)
     function_info *finfo;
     int *publist = NULL;
     int *privlist = NULL;
+    int changed = 0;
     fnpkg *pkg;
     const char *p;
     int err = 0;
@@ -1532,11 +1608,14 @@ void edit_function_package (const char *fname, int *loaderr)
 					  NULL);
 
     if (!err && publist != NULL) {
-	err = finfo_set_function_names(finfo, publist, privlist);
+	err = finfo_set_function_names(finfo, publist, privlist,
+				       &changed);
     }
 
+#if PKG_DEBUG
     printlist(publist, "publist");
     printlist(privlist, "privlist");
+#endif
 
     free(publist);
     free(privlist);

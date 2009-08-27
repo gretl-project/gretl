@@ -5737,18 +5737,6 @@ void data_save_selection_wrapper (int file_ci)
     }
 }
 
-static void tree_model_get_iter_last (GtkTreeModel *mod,
-				      GtkTreeIter *last)
-{
-    GtkTreeIter iter;
-
-    gtk_tree_model_get_iter_first(mod, &iter);
-    *last = iter;
-    while (gtk_tree_model_iter_next(mod, &iter)) {
-	*last = iter;
-    }
-}
-
 void add_remove_functions_dialog (char **names1, int n1,
 				  char **names2, int n2,
 				  void *p1, void *p2)
@@ -5771,16 +5759,22 @@ void add_remove_functions_dialog (char **names1, int n1,
     if (sr != NULL) {
 	GtkWidget *w;
 	GtkTreeModel *model;
-	GtkListStore *store, *lstore;
+	GtkListStore *store;
+	GtkListStore *lstore = NULL;
 	GtkTreeIter iter, liter;
 	char **names;
 	int i, j, n, idx;
 
 	sr->data = p2;
 
-	model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars));
-	lstore = GTK_LIST_STORE(model);
-	tree_model_get_iter_last(model, &liter);
+	if (pkg != NULL) {
+	    /* some functions will be attached to pkg, and we'll
+	       want to ad these on the left, below
+	    */
+	    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars));
+	    lstore = GTK_LIST_STORE(model);
+	    tree_model_get_iter_last(model, &liter);
+	}
 
 	for (j=0; j<2; j++) {
 	    if (j == 0) {
@@ -5806,10 +5800,12 @@ void add_remove_functions_dialog (char **names1, int n1,
 		gtk_list_store_set(store, &iter,
 				   0, idx, 1, 0,
 				   2, names[i], -1);
-		gtk_list_store_append(lstore, &liter);
-		gtk_list_store_set(lstore, &liter,
-				   0, idx, 1, 0,
-				   2, names[i], -1);
+		if (lstore != NULL) {
+		    gtk_list_store_append(lstore, &liter);
+		    gtk_list_store_set(lstore, &liter,
+				       0, idx, 1, 0,
+				       2, names[i], -1);
+		}
 	    }
 	}
 	

@@ -1418,6 +1418,33 @@ char **strings_array_dup (char **strs, int n)
 }
 
 /**
+ * strings_array_cmp:
+ * @strs1: first array of strings.
+ * @strs2: second array of strings.
+ * @n: number of strings to examine.
+ *
+ * Compares for equality two arrays of strings, each of
+ * which must contain at least @n elements.  Equality
+ * of the arrays means that %strcmp returns 0 for
+ * each pair of strings @strs1[i], @strs2[i], for i
+ * equals 0 to @n - 1.
+ *
+ * Returns: 0 if the arrays compare equal, non-zero
+ * otherwise.
+ */
+
+int strings_array_cmp (char **strs1, char **strs2, int n)
+{
+    int i, ret = 0;
+
+    for (i=0; i<n && !ret; i++) {
+	ret = strcmp(strs1[i], strs2[i]);
+    }
+
+    return ret;
+}
+
+/**
  * free_strings_array:
  * @strs: array of allocated strings.
  * @nstrs: number of strings in array.

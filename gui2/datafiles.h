@@ -22,6 +22,15 @@
 #ifndef DATAFILES_H
 #define DATAFILES_H
 
+enum {
+    VIEW_FN_PKG_INFO,
+    VIEW_FN_PKG_CODE,
+    LOAD_FN_PKG,
+    EDIT_FN_PKG,
+    DELETE_FN_PKG,
+    CALL_FN_PKG
+};
+
 void browser_open_data (GtkWidget *w, gpointer data);
 
 void browser_open_ps (GtkWidget *w, gpointer data);

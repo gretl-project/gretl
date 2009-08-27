@@ -1533,8 +1533,6 @@ void open_named_remote_db_index (char *dbname)
     free(getbuf);
 }
 
-#define KEEP_BROWSER_OPEN 1
-
 void open_db_index (GtkWidget *w, gpointer data)
 {
     gchar *fname = NULL, *dbdir = NULL;
@@ -1558,12 +1556,6 @@ void open_db_index (GtkWidget *w, gpointer data)
     g_free(dbdir);
 
     make_db_series_window(action, dbfile, NULL); 
-
-#ifndef KEEP_BROWSER_OPEN
-    if (vwin != NULL && vwin->main != NULL && GTK_IS_WIDGET(vwin->main)) {
-	gtk_widget_destroy(GTK_WIDGET(vwin->main));
-    }
-#endif
 }
 
 void open_remote_db_index (GtkWidget *w, gpointer data)

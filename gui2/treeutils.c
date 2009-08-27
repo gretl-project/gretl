@@ -613,6 +613,18 @@ int tree_path_get_row_number (GtkTreePath *path)
     return gtk_tree_path_get_indices(path)[0];
 }
 
+void tree_model_get_iter_last (GtkTreeModel *mod, GtkTreeIter *iter)
+{
+    GtkTreeIter first;
+    gboolean s;
+
+    s = gtk_tree_model_get_iter_first(mod, &first);
+    *iter = first;
+    while (s && gtk_tree_model_iter_next(mod, &first)) {
+	*iter = first;
+    }
+}
+
 static void add_to_selection_count (GtkTreeModel *model, GtkTreePath *path,
 				    GtkTreeIter *iter, int *count)
 {

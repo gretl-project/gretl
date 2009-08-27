@@ -733,15 +733,6 @@ static gint enter_opens_file (GtkWidget *w, GdkEventKey *key,
     }
 }
 
-enum {
-    VIEW_FN_PKG_INFO,
-    VIEW_FN_PKG_CODE,
-    LOAD_FN_PKG,
-    EDIT_FN_PKG,
-    DELETE_FN_PKG,
-    CALL_FN_PKG
-};
-
 static int gui_load_user_functions (const char *fname)
 {
     int err = load_function_package_from_file(fname);
@@ -799,8 +790,6 @@ windata_t *display_function_package_data (const char *pkgname,
     if (bufopen(&prn)) {
 	return NULL;
     }
-
-    fprintf(stderr, "gui_show_function_info: starting\n");
 
     if (role == VIEW_FUNC_INFO) {
 	if (g_path_is_absolute(path) && !strstr(path, "dltmp.")) {
@@ -919,7 +908,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     g_free(pkgname);
 
     if (!err && (task == EDIT_FN_PKG || task == CALL_FN_PKG)) {
-	maybe_update_func_files_window(0);
+	maybe_update_func_files_window(CALL_FN_PKG);
     }
 }
 
@@ -1804,9 +1793,40 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     return 0;
 }
 
-/* update loaded status after run, edit calls */
+static void revise_loaded_status (GtkWidget *lbox)
+{
+    char fullname[MAXLEN];
+    GtkTreeModel *model;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    gchar *fname;
+    gchar *fdir;
 
-void maybe_update_func_files_window (int editing)
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(lbox));
+    store = GTK_LIST_STORE(model);
+
+    if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
+	return;
+    }
+
+    while (1) {
+	gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &fname, 
+			   4, &fdir, -1);
+	sprintf(fullname, "%s%c%s.gfn", fdir, SLASH, fname);
+	g_free(fname);
+	g_free(fdir);
+	gtk_list_store_set(store, &iter, 
+			   3, pkg_is_loaded(fullname), 
+			   -1);
+	if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
+	    break;
+	}
+    }
+}
+
+/* update function package status after run, edit calls */
+
+void maybe_update_func_files_window (int action)
 {
     GtkWidget *w = get_browser(FUNC_FILES);
     windata_t *vwin = NULL;
@@ -1820,35 +1840,11 @@ void maybe_update_func_files_window (int editing)
 	lbox = vwin->listbox;
     }
 
-    if (editing && lbox != NULL) {
-	populate_func_list(vwin, NULL);
-	return;
-    }
-
     if (lbox != NULL) {
-	GtkListStore *store = 
-	    GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lbox)));
-	GtkTreeIter iter;
-	char fullname[MAXLEN];
-	gchar *fname;
-	gchar *fdir;
-
-	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
-	    return;
-	}
-
-	while (1) {
-	    gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &fname, 
-			       4, &fdir, -1);
-	    sprintf(fullname, "%s%c%s.gfn", fdir, SLASH, fname);
-	    g_free(fname);
-	    g_free(fdir);
-	    gtk_list_store_set(store, &iter, 
-			       3, pkg_is_loaded(fullname), 
-			       -1);
-	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
-		break;
-	    }
+	if (action == EDIT_FN_PKG) {
+	    populate_func_list(vwin, NULL);
+	} else {
+	    revise_loaded_status(lbox);
 	}
     }
 }

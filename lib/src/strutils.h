@@ -122,6 +122,8 @@ char **strings_array_new_with_length (int nstrs, int len);
 
 char **strings_array_dup (char **strs, int n);
 
+int strings_array_cmp (char **strs1, char **strs2, int n);
+
 void free_strings_array (char **strs, int nstrs);
 
 char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo);

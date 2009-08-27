@@ -1714,11 +1714,9 @@ static void name_package_from_filename (fnpkg *pkg)
 #endif
 }
 
-/* when "connecting" functions to a package on saving the package
-   (a new package, or editing an existing one), we need to
-   allow for the fact that the functions may or may not
-   already be connected to the package
-*/
+/* name lookup for functions to be connected to a package,
+   allowing for the possibility that they're already
+   connected */
 
 static ufunc *get_uf_array_member (const char *name, fnpkg *pkg)
 {
@@ -1735,24 +1733,42 @@ static ufunc *get_uf_array_member (const char *name, fnpkg *pkg)
     return NULL;
 }
 
-/* Given an array of @n function names in @names, create a
+/* Given an array of @n function names in @names, set up a
    corresponding array of pointers to the named functions in @pkg,
    Flag an error if any of the function names are bad, or if
-   allocation fails.
+   allocation fails.  If we're revising an existing function package
+   we start by unconnecting the currently connected functions.  
 */
 
-static int add_uf_array_from_names (fnpkg *pkg, char **names, 
+static int set_uf_array_from_names (fnpkg *pkg, char **names, 
 				    int n, int priv)
 {
     ufunc **uf;
     ufunc *fun;
     int i;
 
+    /* error-checking first */
+    
     for (i=0; i<n; i++) {
 	if (get_uf_array_member(names[i], pkg) == NULL) {
 	    return E_DATA;
 	}
-    }
+    }    
+
+    /* then disconnect current functions, if any */
+
+    if (priv) {
+	for (i=0; i<pkg->n_priv; i++) {
+	    pkg->priv[i]->pkg = NULL;
+	    pkg->priv[i]->private = 0;
+	}
+    } else {
+	for (i=0; i<pkg->n_pub; i++) {
+	    pkg->pub[i]->pkg = NULL;
+	}
+    }	
+
+    /* then connect the specified functions */
 
     if (priv) {
 	uf = realloc(pkg->priv, n * sizeof *uf);
@@ -1765,7 +1781,7 @@ static int add_uf_array_from_names (fnpkg *pkg, char **names,
     }
 
     for (i=0; i<n; i++) {
-	fun = get_uf_array_member(names[i], pkg);
+	fun = get_uf_array_member(names[i], NULL);
 	fun->pkg = pkg;
 	fun->private = priv;
 	uf[i] = fun;
@@ -1804,11 +1820,11 @@ int function_package_connect_funcs (fnpkg *pkg,
     int err = 0;
 
     if (n_pub > 0) {
-	err = add_uf_array_from_names(pkg, pubnames, n_pub, 0);
+	err = set_uf_array_from_names(pkg, pubnames, n_pub, 0);
     }
 
     if (!err && n_priv > 0) {
-	err = add_uf_array_from_names(pkg, privnames, n_priv, 1);
+	err = set_uf_array_from_names(pkg, privnames, n_priv, 1);
     }
 
     return err;
@@ -2058,7 +2074,7 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		pkg->dreq = ival;
 	    } else if (!strcmp(key, "min-version")) {
 		pkg->minver = ival;
-	    }
+	    } 
 	} 
     }
 
