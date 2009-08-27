@@ -46,6 +46,10 @@ char *main_window_selection_as_string (void);
 
 void data_save_selection_wrapper (int file_code);
 
+void add_remove_functions_dialog (char **pubnames, int npub,
+				  char **privnames, int npriv,
+				  void *p1, void *p2);
+
 int selector_code (const selector *sr);
 
 const char *selector_list (const selector *sr);

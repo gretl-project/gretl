@@ -38,4 +38,6 @@ int update_func_code (windata_t *vwin);
 
 void edit_package_at_startup (const char *fname);
 
+void revise_function_package (void *p);
+
 #endif /* FNSAVE_H */

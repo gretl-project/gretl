@@ -159,6 +159,7 @@ enum file_ops {
     SAVE_FUNCTIONS,
     SAVE_FUNCTIONS_AS,
     SAVE_BOOT_DATA,
+    EDIT_FUNCTIONS,
     SET_PROG,
     SET_DIR,
     SET_WDIR,

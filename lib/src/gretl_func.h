@@ -66,11 +66,14 @@ int user_func_get_return_type (const ufunc *fun);
 
 const char *user_function_name_by_index (int i);
 
+int user_function_index_by_name (const char *name, 
+				 fnpkg *pkg);
+
 int user_function_set_debug (const char *name, int debug);
 
 void function_names_init (void);
 
-const char *next_free_function_name (void);
+const char *next_available_function_name (int *idxp);
 
 int gretl_compiling_function (void);
 

@@ -995,6 +995,16 @@ GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt)
     return gretl_opts_combo_full(opts, deflt, NULL, NULL);
 }
 
+void depopulate_combo_box (GtkComboBox *box)
+{
+    GtkTreeModel *model = gtk_combo_box_get_model(box);
+    GtkTreeIter iter;
+
+    while (gtk_tree_model_get_iter_first(model, &iter)) {
+	gtk_combo_box_remove_text(box, 0);
+    }
+}
+
 static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
 {
     GtkWidget *combo, *hbox;

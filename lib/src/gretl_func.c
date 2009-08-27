@@ -616,10 +616,38 @@ const char *user_function_name_by_index (int i)
     }
 }
 
+/**
+ * user_function_index_by_name:
+ * @name: function name.
+ * @pkg: reference function package.
+ * 
+ * Returns: the 0-based position of a function of name
+ * @name belonging to package @pkg, or -1 if there is
+ * no such function.
+ */
+
+int user_function_index_by_name (const char *name,
+				 fnpkg *pkg)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkg == pkg && 
+	    !strcmp(name, ufuns[i]->name)) {
+	    return i;
+	}
+    }
+
+    return -1;
+}	
+
 /* Apparatus used in the GUI selector for composing a new function
    package.  We want a list of the names of currently unpackaged
    functions: we first call function_names_init(), then keep calling
-   next_free_function_name() until it returns %NULL.  
+   next_available_function_name() until it returns %NULL.  The pointer
+   argument @idxp provides a means to grab the "index number"
+   (position in the current functions array) corresponding to the
+   returned function name.
 */
 
 static int fname_idx;
@@ -629,7 +657,7 @@ void function_names_init (void)
     fname_idx = 0;
 }
 
-const char *next_free_function_name (void)
+const char *next_available_function_name (int *idxp)
 {
     const char *ret = NULL;
     ufunc *fun;
@@ -643,6 +671,7 @@ const char *next_free_function_name (void)
 	fun = ufuns[fname_idx++];
 	if (fun->pkg == NULL) {
 	    ret = fun->name;
+	    *idxp = fname_idx - 1;
 	    break;
 	}
     }

@@ -24,6 +24,7 @@
 #include "fileselect.h"
 #include "gretl_www.h"
 #include "winstack.h"
+#include "selector.h"
 #include "fnsave.h"
 
 #ifdef G_OS_WIN32
@@ -56,7 +57,7 @@ struct function_info_ {
     gchar *sample;         /* sample script for package */
     gchar *help;           /* package help text */
     char **pubnames;       /* names of public functions */
-    char **privnames;      /* name sof private functions */
+    char **privnames;      /* names of private functions */
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
     char *active;          /* name of 'active' function */
@@ -475,6 +476,13 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     g_free(title);
 }
 
+static void add_remove_callback (GtkWidget *w, function_info *finfo)
+{
+    add_remove_functions_dialog(finfo->pubnames, finfo->n_pub,
+				finfo->privnames, finfo->n_priv,
+				finfo->pkg, finfo);
+}
+
 static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
 {
     if (finfo->n_pub + finfo->n_priv == 0) {
@@ -546,7 +554,7 @@ static char **get_function_names (const int *list, int *err)
     return names;
 }
 
-static int finfo_add_function_names (function_info *finfo,
+static int finfo_set_function_names (function_info *finfo,
 				     const int *publist,
 				     const int *privlist)
 {
@@ -569,12 +577,10 @@ static int finfo_add_function_names (function_info *finfo,
     return err;
 }
 
-static GtkWidget *active_func_selector (function_info *finfo)
+static void func_selector_set_strings (function_info *finfo, 
+				       GtkWidget *ifmenu)
 {
-    GtkWidget *ifmenu;
     int i;
-
-    ifmenu = gtk_combo_box_new_text();
 
     for (i=0; i<finfo->n_pub; i++) {
 	gtk_combo_box_append_text(GTK_COMBO_BOX(ifmenu), finfo->pubnames[i]);
@@ -588,6 +594,14 @@ static GtkWidget *active_func_selector (function_info *finfo)
     }
 
     gtk_combo_box_set_active(GTK_COMBO_BOX(ifmenu), 0);
+}
+
+static GtkWidget *active_func_selector (function_info *finfo)
+{
+    GtkWidget *ifmenu;
+
+    ifmenu = gtk_combo_box_new_text();
+    func_selector_set_strings(finfo, ifmenu);
     gtk_widget_show_all(ifmenu);
 
     return ifmenu;
@@ -949,6 +963,14 @@ static void finfo_dialog (function_info *finfo)
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(edit_sample_callback), finfo);
+
+#if 0 /* not just yet */
+    button = gtk_button_new_with_label(_("Add/Remove functions"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(add_remove_callback), finfo);
+#endif    
+
     gtk_widget_show_all(hbox);
 
     /* check box for upload option */
@@ -1166,7 +1188,8 @@ static void do_upload (const char *fname)
 	upass = url_encode_string(linfo.pass);
 	ufname = url_encode_string(path_last_element(fname));
 	
-	if (ubuf == NULL || ulogin == NULL || upass == NULL || ufname == NULL) {
+	if (ubuf == NULL || ulogin == NULL || 
+	    upass == NULL || ufname == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -1366,6 +1389,31 @@ int save_function_package_as_script (const char *fname, gpointer p)
     return 0;
 }
 
+static int get_lists_from_selector (int **l1, int **l2)
+{
+    int *list;
+    int err = 0;
+
+    if (storelist == NULL) {
+	return E_DATA;
+    }
+
+    list = gretl_list_from_string(storelist, &err);
+    
+    if (!err) {
+	if (gretl_list_has_separator(list)) {
+	    err = gretl_list_split_on_separator(list, l1, l2);
+	} else {
+	    *l1 = list;
+	    list = NULL;
+	}
+    }
+
+    free(list);
+
+    return err;
+}
+
 /* called from function selection dialog: a set of functions has been
    selected and now we need to add info on author, version, etc.
 */
@@ -1375,10 +1423,10 @@ void edit_new_function_package (void)
     function_info *finfo;
     int *publist = NULL;
     int *privlist = NULL;
-    int *list = NULL;
     int err = 0;
 
-    if (storelist == NULL) {
+    err = get_lists_from_selector(&publist, &privlist);
+    if (err) {
 	return;
     }
 
@@ -1387,27 +1435,8 @@ void edit_new_function_package (void)
 	return;
     }
 
-    list = gretl_list_from_string(storelist, &err);
-
-    if (!err && (list == NULL || list[0] == 0)) {
-	gretl_errmsg_set("No functions are selected");
-	err = E_DATA;
-    }
-
     if (!err) {
-	if (gretl_list_has_separator(list)) {
-	    err = gretl_list_split_on_separator(list, &publist,
-						&privlist);
-	} else {
-	    publist = list;
-	    list = NULL;
-	}
-    }
-
-    free(list);
-
-    if (!err) {
-	err = finfo_add_function_names(finfo, publist, privlist);
+	err = finfo_set_function_names(finfo, publist, privlist);
 	if (err) {
 	    gretl_errmsg_set("Couldn't find the requested functions");
 	}
@@ -1423,6 +1452,39 @@ void edit_new_function_package (void)
 	/* set up dialog to do the actual editing */
 	finfo_dialog(finfo);
     }
+}
+
+void revise_function_package (void *p)
+{
+    function_info *finfo = p;
+    int *publist = NULL;
+    int *privlist = NULL;
+    int err = 0;
+
+    /* FIXME find a way to tell if any changes have
+       really been made: compare strings arrays?
+    */
+
+    err = get_lists_from_selector(&publist, &privlist);
+    if (err) {
+	return;
+    }
+
+    printlist(publist, "new publist");
+    printlist(privlist, "new privlist");
+
+    free_strings_array(finfo->pubnames, finfo->n_pub);
+    free_strings_array(finfo->privnames, finfo->n_priv);
+
+    err = finfo_set_function_names(finfo, publist, privlist);
+
+    if (!err) {
+	depopulate_combo_box(GTK_COMBO_BOX(finfo->codesel));
+	func_selector_set_strings(finfo, finfo->codesel);
+    }
+
+    free(publist);
+    free(privlist);
 }
 
 void edit_function_package (const char *fname, int *loaderr)
@@ -1470,8 +1532,11 @@ void edit_function_package (const char *fname, int *loaderr)
 					  NULL);
 
     if (!err && publist != NULL) {
-	err = finfo_add_function_names(finfo, publist, privlist);
+	err = finfo_set_function_names(finfo, publist, privlist);
     }
+
+    printlist(publist, "publist");
+    printlist(privlist, "privlist");
 
     free(publist);
     free(privlist);

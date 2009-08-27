@@ -126,6 +126,8 @@ void set_combo_box_strings_from_list (GtkComboBox *box, GList *list);
 
 void set_combo_box_default_text (GtkComboBox *box, const char *s);
 
+void depopulate_combo_box (GtkComboBox *box);
+
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
 
 gchar *gtk_combo_box_get_active_text (GtkComboBox *box);

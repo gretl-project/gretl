@@ -110,6 +110,8 @@ struct _selector {
 #define THREE_VARS_CODE(c) (c == GR_DUMMY || c == GR_XYZ || \
 			    c == GR_3D || c == ANOVA)
 
+#define FNPKG_CODE(c) (c == SAVE_FUNCTIONS || c == EDIT_FUNCTIONS)
+
 #define WANT_TOGGLES(c) (c == ARBOND || \
                          c == ARMA || \
                          c == COINT || \
@@ -152,7 +154,8 @@ struct _selector {
                      c == VLAGSEL || \
                      c == VECM || \
                      c == COINT2 || \
-                     c == SAVE_FUNCTIONS)
+                     c == SAVE_FUNCTIONS || \
+		     c == EDIT_FUNCTIONS)
 
 #define USE_ZLIST(c) (c == IVREG || c == IV_LIML || c == IV_GMM || c == HECKIT)
 
@@ -232,7 +235,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data);
 static int list_show_var (int v, int ci, int show_lags);
-static int functions_list (selector *sr);
+static void functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 
@@ -1499,7 +1502,7 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	}
     }
 
-    if (USE_VECXLIST(sr->ci) || sr->ci == SAVE_FUNCTIONS) {
+    if (USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
 	dual_selection_fix_conflicts(sr, locus);
     }
 }
@@ -2770,7 +2773,7 @@ static void compose_cmdlist (selector *sr)
 	warnbox(_("You must select a dependent variable"));
 	sr->error = 1;
 	return;
-    } else if (sr->ci == SAVE_FUNCTIONS && rows < 1) {
+    } else if (FNPKG_CODE(sr->ci) && rows < 1) {
 	warnbox(_("You must specify a public interface"));
 	sr->error = 1;
 	return;
@@ -2785,7 +2788,7 @@ static void compose_cmdlist (selector *sr)
     get_rvars1_data(sr, rows, context);
 
     /* cases with a (possibly optional) secondary RHS list */
-    if (USE_ZLIST(sr->ci) || USE_VECXLIST(sr->ci) || sr->ci == SAVE_FUNCTIONS) {
+    if (USE_ZLIST(sr->ci) || USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
 	rows = varlist_row_count(sr, SR_RVARS2, &realrows);
 	if (rows > 0) {
 	    if (realrows > 0) {
@@ -3472,7 +3475,7 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("Instruments"));
     } else if (sr->ci == HECKIT) {
 	tmp = gtk_label_new(_("Selection equation regressors"));
-    } else if (sr->ci == SAVE_FUNCTIONS) {
+    } else if (FNPKG_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Helper functions"));
     }
 
@@ -3527,7 +3530,7 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	    }
 	}
 	set_varflag(UNRESTRICTED);
-    } else if (!VEC_CODE(sr->ci) && sr->ci != SAVE_FUNCTIONS) {
+    } else if (!VEC_CODE(sr->ci) && !FNPKG_CODE(sr->ci)) {
 	list_append_var(mod, &iter, 0, sr, SR_RVARS2);
     }
 
@@ -3710,7 +3713,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     x = (double) dlgy * gui_scale;
     dlgy = x;
 
-    if (ci == SAVE_FUNCTIONS) {
+    if (FNPKG_CODE(ci)) {
 	x = (double) 460 * gui_scale;
 	dlgx = x;
     }
@@ -4796,7 +4799,7 @@ static void build_selector_buttons (selector *sr)
 {
     GtkWidget *tmp;
 
-    if (sr->ci != PRINT && sr->ci != SAVE_FUNCTIONS &&
+    if (sr->ci != PRINT && !FNPKG_CODE(sr->ci) &&
 	sr->ci != DEFINE_LIST && sr->ci != DEFINE_MATRIX &&
 	sr->ci != ELLIPSE && !SAVE_DATA_ACTION(sr->ci)) {
 	int ci = sr->ci;
@@ -4819,11 +4822,13 @@ static void build_selector_buttons (selector *sr)
 			 GINT_TO_POINTER(ci));
     }
 
-    tmp = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(clear_vars), sr);
+    if (sr->ci != EDIT_FUNCTIONS) {
+	tmp = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
+	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
+	g_signal_connect(G_OBJECT(tmp), "clicked", 
+			 G_CALLBACK(clear_vars), sr);
+    }
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
@@ -4867,7 +4872,7 @@ static int list_show_var (int v, int ci, int show_lags)
 
 static GtkWidget *selection_dialog_top_label (int ci)
 {
-    gchar *s;
+    gchar *s = NULL;
 
     if (MODEL_CODE(ci) || VEC_CODE(ci))
 	s = _(est_str(ci));
@@ -4887,10 +4892,8 @@ static GtkWidget *selection_dialog_top_label (int ci)
 	s = _("functions to package");
     else if (ci == ANOVA) 
 	s = _("ANOVA");
-    else
-	s = "fixme need string";
 
-    return gtk_label_new(s);
+    return (s != NULL)? gtk_label_new(s) : NULL;
 }
 
 static int has_0 (const int *list)
@@ -4927,7 +4930,7 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("Y-axis variables"));
     } else if (sr->ci == SCATTERS) {
 	multiplot_label = tmp = gtk_label_new(_("X-axis variables"));
-    } else if (sr->ci == SAVE_FUNCTIONS) {
+    } else if (FNPKG_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Public functions"));
     }
 
@@ -5035,7 +5038,9 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     selector_init(sr, ci, title, NULL, callback);
 
     tmp = selection_dialog_top_label(ci);
-    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 5);
+    if (tmp != NULL) {
+	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 5);
+    }
 
     /* the following encloses LHS lvars, depvar and indepvar stuff */
     big_hbox = gtk_hbox_new(FALSE, 5); 
@@ -5046,7 +5051,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (ci == SAVE_FUNCTIONS) {
+    if (FNPKG_CODE(ci)) {
 	functions_list(sr);
     } else {
 	for (i=0; i<datainfo->v; i++) {
@@ -5066,7 +5071,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ) {
 	/* graphs: top right -> x-axis variable */
 	build_x_axis_section(sr, right_vbox);
-    } else if (ci == SAVE_FUNCTIONS) {
+    } else if (FNPKG_CODE(ci)) {
 	primary_rhs_varlist(sr, right_vbox);
     }
 
@@ -5275,12 +5280,12 @@ static int add_omit_list (gpointer p, selector *sr)
     return nvars;
 }
 
-static int functions_list (selector *sr)
+static void functions_list (selector *sr)
 {
     GtkListStore *store;
     GtkTreeIter iter;
     const char *fnname;
-    int n = 0;
+    int idx;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
@@ -5288,17 +5293,15 @@ static int functions_list (selector *sr)
 
     function_names_init();
     
-    while ((fnname = next_free_function_name()) != NULL) {
+    while ((fnname = next_available_function_name(&idx)) != NULL) {
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter,
-			   0, n++, 1, 0,
+			   0, idx, 1, 0,
 			   2, fnname, -1);
     }
 
     g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
 		      GINT_TO_POINTER(1));
-
-    return n;
 }
 
 static GtkWidget *simple_selection_top_label (int ci)
@@ -5658,6 +5661,19 @@ char *main_window_selection_as_string (void)
     return lmkr.liststr;
 }
 
+static int pkg_add_remove_callback (selector *sr)
+{
+    void *p = sr->data;
+
+    g_free(storelist);
+    storelist = g_strdup(sr->cmdlist);
+    gtk_widget_destroy(sr->dlg);
+
+    revise_function_package(p);
+
+    return 0;
+}
+
 static int data_save_selection_callback (selector *sr)
 {
     gpointer data = NULL;
@@ -5719,6 +5735,86 @@ void data_save_selection_wrapper (int file_ci)
     if (sr != NULL) {
 	selector_set_blocking(sr);
     }
+}
+
+static void tree_model_get_iter_last (GtkTreeModel *mod,
+				      GtkTreeIter *last)
+{
+    GtkTreeIter iter;
+
+    gtk_tree_model_get_iter_first(mod, &iter);
+    *last = iter;
+    while (gtk_tree_model_iter_next(mod, &iter)) {
+	*last = iter;
+    }
+}
+
+void add_remove_functions_dialog (char **names1, int n1,
+				  char **names2, int n2,
+				  void *p1, void *p2)
+{
+    fnpkg *pkg = p1;
+    const char *title = NULL;
+    selector *sr = NULL;
+
+    if (pkg != NULL) {
+	title = function_package_get_name(pkg);
+    }
+
+    if (title == NULL || *title == '\0') {
+	title = _("Edit package list");
+    }
+
+    sr = selection_dialog(title, pkg_add_remove_callback, 
+			  EDIT_FUNCTIONS);
+
+    if (sr != NULL) {
+	GtkWidget *w;
+	GtkTreeModel *model;
+	GtkListStore *store, *lstore;
+	GtkTreeIter iter, liter;
+	char **names;
+	int i, j, n, idx;
+
+	sr->data = p2;
+
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars));
+	lstore = GTK_LIST_STORE(model);
+	tree_model_get_iter_last(model, &liter);
+
+	for (j=0; j<2; j++) {
+	    if (j == 0) {
+		w = sr->rvars1;
+		names = names1;
+		n = n1;
+	    } else {
+		w = sr->rvars2;
+		names = names2;
+		n = n2;
+	    }
+
+	    if (n == 0) continue;
+
+	    model = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
+	    store = GTK_LIST_STORE(model);
+	    gtk_tree_model_get_iter_first(model, &iter);
+
+	    for (i=0; i<n; i++) {
+		idx = user_function_index_by_name(names[i], pkg);
+		if (idx < 0) continue;
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter,
+				   0, idx, 1, 0,
+				   2, names[i], -1);
+		gtk_list_store_append(lstore, &liter);
+		gtk_list_store_set(lstore, &liter,
+				   0, idx, 1, 0,
+				   2, names[i], -1);
+	    }
+	}
+	
+	selector_set_blocking(sr);
+    }    
 }
 
 /* accessor functions */
