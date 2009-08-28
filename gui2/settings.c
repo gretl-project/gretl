@@ -426,15 +426,6 @@ void set_app_font (const char *fontname)
     }
 }
 
-static void slash_terminate (char *path)
-{
-    if (path == NULL || *path == '\0') return;
-
-    if (path[strlen(path) - 1] != SLASH) {
-	strcat(path, SLASHSTR);
-    }
-}
-
 static void get_pkg_dir (char *dirname, int action)
 {
     const char *subdir = NULL;

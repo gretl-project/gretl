@@ -152,6 +152,7 @@ static int gretl_debug;
 static int user_mp_bits;
 static int R_functions;
 static int R_lib = 1;
+static char include_path[MAXLEN];
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -535,7 +536,7 @@ void set_mp_bits (int b)
 
 int get_mp_bits (void)
 {
-    if (user_mp_bits >= 256) {
+    if (user_mp_bits >= DEFAULT_MP_BITS) {
 	return user_mp_bits;
     } else {
 	char *s = getenv("GRETL_MP_BITS");
@@ -1259,6 +1260,12 @@ static int display_settings (PRN *prn)
     libset_print_bool(R_LIB, prn);
     libset_print_bool(R_FUNCTIONS, prn);
 
+    if (*include_path) {
+	pprintf(prn, " include_path = '%s'\n", include_path);
+    } else {
+	pputs(prn, " include_path = unset\n");
+    }
+
     libset_header(_("Numerical methods"), prn);
 
     libset_print_int(BFGS_MAXITER, prn);
@@ -1406,6 +1413,9 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 	    return set_codevars(line);
 	} else if (!strcmp(setobj, "workdir")) {
 	    return set_workdir(line);
+	} else if (!strcmp(setobj, "include_path")) {
+	    set_include_path(line);
+	    return 0;
 	}
     }
 
@@ -1423,7 +1433,7 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 	if (!strcmp(setobj, "csv_na")) {
 	    set_csv_na_string(setarg);
 	    return 0;
-	}
+	} 	    
 
 	lower(setarg);
 
@@ -2192,7 +2202,7 @@ int get_script_switch (void)
     return script_switch;
 }
 
-/* for setting wht we print for NAs on CSV output */
+/* for setting what we print for NAs on CSV output */
 
 const char *get_csv_na_string (void)
 {
@@ -2211,4 +2221,38 @@ void set_csv_na_string (const char *s)
 
     *state->csv_na = '\0';
     strncat(state->csv_na, s, 7);
+}
+
+void set_include_path (const char *s)
+{
+    if (gretl_function_depth() > 0) {
+	gretl_errmsg_set("set include_path: cannot be done inside a function");
+	return;
+    }
+
+    /* skip past "include_path" and space */
+    s += 16;
+    s += strspn(s, " ");
+
+    if (*s != '\0') {
+	char tmp[MAXLEN];
+	int n = 0;
+
+	if (*s == '"') {
+	    n = sscanf(s+1, "%511[^\"]", tmp);
+	} else {
+	    n = sscanf(s, "%511s", tmp);
+	}
+
+	if (n > 0) {
+	    *include_path = '\0';
+	    strncat(include_path, tmp, MAXLEN - 2);
+	    slash_terminate(include_path);
+	}
+    }
+}
+
+const char *get_include_path (void)
+{
+    return (*include_path == '\0')? NULL : include_path;
 }

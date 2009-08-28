@@ -1100,7 +1100,7 @@ static void buf_edit_save (GtkWidget *w, windata_t *vwin)
 
 static void file_edit_save (GtkWidget *w, windata_t *vwin)
 {
-    if (vwin->role == EDIT_FUNC_CODE && *vwin->fname == '\0') {
+    if (vwin->role == EDIT_PKG_SAMPLE) {
 	/* special: function package, sample script window */
 	update_sample_script(vwin);
 	mark_vwin_content_saved(vwin);
@@ -1140,7 +1140,7 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    fclose(fp);
 	    g_free(text);
 	    mark_vwin_content_saved(vwin);
-	    if (vwin->role == EDIT_FUNC_CODE) {
+	    if (vwin->role == EDIT_PKG_CODE) {
 		update_func_code(vwin);
 	    }
 	}
@@ -1292,7 +1292,7 @@ void free_windata (GtkWidget *w, gpointer data)
 		    gretl_remove(vwin->fname);
 		}
 	    }
-	} else if (vwin->role == EDIT_FUNC_CODE) {
+	} else if (vwin->role == EDIT_PKG_CODE) {
 	    gretl_remove(vwin->fname);
 	}
 
@@ -1431,12 +1431,16 @@ static void viewer_box_config (windata_t *vwin)
 #endif
 }
 
+#define viewing_source(r) (r == VIEW_PKG_CODE || \
+			   r == EDIT_PKG_CODE || \
+			   r == EDIT_PKG_SAMPLE)
+
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
     if (prn != NULL) {
 	const char *buf = gretl_print_get_trimmed_buffer(prn);
 
-	if (vwin->role == VIEW_FUNC_CODE || vwin->role == EDIT_FUNC_CODE) {
+	if (viewing_source(vwin->role)) {
 	    sourceview_insert_buffer(vwin, buf);
 	} else if (vwin->role == SCRIPT_OUT) {
 	    textview_set_text_colorized(vwin->text, buf);
@@ -1526,9 +1530,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
-    } else if (role == VIEW_FUNC_CODE || role == VIEW_MODELTABLE) {
+    } else if (role == VIEW_PKG_CODE || role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
-    } else if (role == EDIT_FUNC_CODE) {
+    } else if (role == EDIT_PKG_CODE ||
+	       role == EDIT_PKG_SAMPLE) {
 	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
     } else if (role != IMPORT) {
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
@@ -1541,9 +1546,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     }
 #endif
 
-    if (role == VIEW_FUNC_CODE) {
+    if (role == VIEW_PKG_CODE) {
 	create_source(vwin, hsize, vsize, FALSE);
-    } else if (role == EDIT_FUNC_CODE) {
+    } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
 	create_source(vwin, hsize, vsize, TRUE);
     } else {
 	create_text(vwin, hsize, vsize, nlines, FALSE);
@@ -1576,7 +1581,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
 
-    if (role == EDIT_FUNC_CODE) {
+    if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
 	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 

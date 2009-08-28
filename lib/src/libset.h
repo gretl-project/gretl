@@ -136,8 +136,12 @@ void shelldir_init (const char *s);
 char *get_shelldir (void);
 
 char get_csv_delim (const DATAINFO *pdinfo);
+
 const char *get_csv_na_string (void);
 void set_csv_na_string (const char *s);
+
+const char *get_include_path (void);
+void set_include_path (const char *s);
 
 int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn);
 

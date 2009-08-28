@@ -791,7 +791,7 @@ windata_t *display_function_package_data (const char *pkgname,
 	return NULL;
     }
 
-    if (role == VIEW_FUNC_INFO) {
+    if (role == VIEW_PKG_INFO) {
 	if (g_path_is_absolute(path) && !strstr(path, "dltmp.")) {
 	    pprintf(prn, "File: %s\n", path);
 	}
@@ -896,9 +896,9 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == DELETE_FN_PKG) {
 	err = gui_delete_fn_pkg(path, vwin);
     } else if (task == VIEW_FN_PKG_INFO) {
-	display_function_package_data(pkgname, path, VIEW_FUNC_INFO);
+	display_function_package_data(pkgname, path, VIEW_PKG_INFO);
     } else if (task == VIEW_FN_PKG_CODE) {
-	display_function_package_data(pkgname, path, VIEW_FUNC_CODE);
+	display_function_package_data(pkgname, path, VIEW_PKG_CODE);
     } else if (task == EDIT_FN_PKG) {
 	edit_function_package(path, &err);
     } else if (task == CALL_FN_PKG) {

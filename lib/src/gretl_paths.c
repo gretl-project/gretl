@@ -1116,6 +1116,16 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	return fname;
     }  
 
+    if (!g_path_is_absolute(orig) && has_suffix(orig, ".gfn")) {
+	/* new as of 2009-08-27, AC */
+	const char *gfnpath = get_include_path();
+
+	if (gfnpath != NULL) {
+	    sprintf(fname, "%s%s", gfnpath, orig);
+	    return fname;
+	}
+    }
+
     /* try opening filename as given */
     test = gretl_fopen(fname, "r");
     if (test != NULL) { 
@@ -2215,6 +2225,15 @@ int gretl_normalize_path (char *path)
     free(pcpy);
     
     return err;
+}
+
+void slash_terminate (char *path)
+{
+    if (path == NULL || *path == '\0') return;
+
+    if (path[strlen(path) - 1] != SLASH) {
+	strcat(path, SLASHSTR);
+    }
 }
 
 #ifndef WIN32

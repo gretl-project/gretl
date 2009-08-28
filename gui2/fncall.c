@@ -335,7 +335,7 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
 	gretl_print_destroy(prn);
 	dummy_call();
     } else {
-	view_buffer(prn, 80, 400, fnname, VIEW_FUNC_INFO, NULL);
+	view_buffer(prn, 80, 400, fnname, VIEW_PKG_INFO, NULL);
     }
 }
 

@@ -194,7 +194,7 @@ void save_as_callback (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == EDIT_SCRIPT ||
 	       vwin->role == VIEW_SCRIPT ||
 	       vwin->role == VIEW_LOG ||
-	       vwin->role == VIEW_FUNC_CODE) {
+	       vwin->role == VIEW_PKG_CODE) {
 	u = SAVE_SCRIPT;
     } else if (vwin->role == EDIT_GP) {
 	u = SAVE_GP_CMDS;
@@ -586,17 +586,22 @@ static GretlToolItem viewbar_items[] = {
 
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
-#define exec_ok(r) (vwin_editing_script(r) || r == VIEW_SCRIPT)
+#define exec_ok(r) (vwin_editing_script(r) || \
+		    r == VIEW_SCRIPT)
+
+/* FIXME add EDIT_PKG_SAMPLE to exec_ok() when the bugs are fixed */
 
 #define open_ok(r) (vwin_editing_script(r))
 
 #define edit_ok(r) (vwin_editing_script(r) || \
 		    vwin_editing_buffer(r) || \
-                    r == EDIT_FUNC_CODE)
+                    r == EDIT_PKG_CODE || \
+		    r == EDIT_PKG_SAMPLE)
 
 #define save_as_ok(r) (r != EDIT_HEADER && \
 	               r != EDIT_NOTES && \
-	               r != EDIT_FUNC_CODE && \
+	               r != EDIT_PKG_CODE && \
+		       r != EDIT_PKG_SAMPLE && \
 	               r != CONSOLE)
 
 #define help_ok(r) (r == LEVERAGE || \
@@ -655,7 +660,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!format_ok && f == FORMAT_ITEM) {
 	return NULL;
-    } else if (r != EDIT_SCRIPT && r != EDIT_FUNC_CODE && f == EDIT_SCRIPT_ITEM) {
+    } else if (r != EDIT_SCRIPT && r != EDIT_PKG_CODE && 
+	       r != EDIT_PKG_SAMPLE && f == EDIT_SCRIPT_ITEM) {
 	return NULL;
     } else if (r != VIEW_SCRIPT && f == INDEX_ITEM) {
 	return NULL;

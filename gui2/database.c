@@ -1997,7 +1997,7 @@ void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
     if (err) {
 	show_network_error(NULL);
     } else {
-	display_function_package_data(objname, path, VIEW_FUNC_INFO);
+	display_function_package_data(objname, path, VIEW_PKG_INFO);
     }
 
     g_free(objname);

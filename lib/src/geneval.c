@@ -4382,7 +4382,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	if (rtype != GRETL_TYPE_DOUBLE && rtype != GRETL_TYPE_SERIES &&
 	    rtype != GRETL_TYPE_MATRIX && rtype != GRETL_TYPE_LIST &&
 	    rtype != GRETL_TYPE_STRING) {
-	    fprintf(stderr, "%s: invalid return type %d\n", funname, rtype);
+	    fprintf(stderr, "eval_ufunc: %s: invalid return type %d\n", 
+		    funname, rtype);
 	    p->err = E_TYPES;
 	    return NULL;
 	}

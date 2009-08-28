@@ -97,12 +97,25 @@ static const char *file_sections[] = {
     "recent_working_dirs"
 };
 
+static void write_filename_to_list (int filetype, int i, char *fname)
+{
+    if (filetype == FILE_LIST_DATA) {
+	strcpy(datalist[i], fname);
+    } else if (filetype == FILE_LIST_SESSION) {
+	strcpy(sessionlist[i], fname);
+    } else if (filetype == FILE_LIST_SCRIPT) {
+	strcpy(scriptlist[i], fname);
+    } else if (filetype == FILE_LIST_WDIR) {
+	strcpy(wdirlist[i], fname);
+    }
+}
+
 #ifdef G_OS_WIN32
 
 /* we're not exactly "printing" here, but writing to the
    Windows registry */
 
-static void printfilelist (int filetype)
+static void print_filelist (int filetype)
 {
     char rpath[MAXLEN];
     char **filep;
@@ -124,10 +137,10 @@ static void printfilelist (int filetype)
 
 void save_file_lists (void)
 {
-    printfilelist(FILE_LIST_DATA);
-    printfilelist(FILE_LIST_SESSION);
-    printfilelist(FILE_LIST_SCRIPT);
-    printfilelist(FILE_LIST_WDIR);
+    print_filelist(FILE_LIST_DATA);
+    print_filelist(FILE_LIST_SESSION);
+    print_filelist(FILE_LIST_SCRIPT);
+    print_filelist(FILE_LIST_WDIR);
 }
 
 void read_file_lists (void)
@@ -156,7 +169,7 @@ void read_file_lists (void)
 
 #else /* "plain" GTK version follows */
 
-static void printfilelist (int filetype, FILE *fp)
+static void print_filelist (int filetype, FILE *fp)
 {
     char **filep;
     int i;
@@ -175,10 +188,10 @@ static void printfilelist (int filetype, FILE *fp)
 
 void rc_save_file_lists (FILE *fp)
 {
-    printfilelist(FILE_LIST_DATA, fp);
-    printfilelist(FILE_LIST_SESSION, fp);
-    printfilelist(FILE_LIST_SCRIPT, fp);
-    printfilelist(FILE_LIST_WDIR, fp);
+    print_filelist(FILE_LIST_DATA, fp);
+    print_filelist(FILE_LIST_SESSION, fp);
+    print_filelist(FILE_LIST_SCRIPT, fp);
+    print_filelist(FILE_LIST_WDIR, fp);
 }    
 
 void read_file_lists (FILE *fp, char *prev)
@@ -423,19 +436,6 @@ void mkfilelist (int filetype, char *fname)
     add_files_to_menu(filetype);
 }
 
-void write_filename_to_list (int filetype, int i, char *fname)
-{
-    if (filetype == FILE_LIST_DATA) {
-	strcpy(datalist[i], fname);
-    } else if (filetype == FILE_LIST_SESSION) {
-	strcpy(sessionlist[i], fname);
-    } else if (filetype == FILE_LIST_SCRIPT) {
-	strcpy(scriptlist[i], fname);
-    } else if (filetype == FILE_LIST_WDIR) {
-	strcpy(wdirlist[i], fname);
-    }
-}
-
 void delete_from_filelist (int filetype, const char *fname)
 {
     char *tmp[MAXRECENT];
@@ -538,7 +538,7 @@ static void real_add_files_to_menus (int ftype)
     gchar *aname, *alabel;
     int jmin = 0, jmax = NFILELISTS - 1;
     GtkWidget *w;
-    int i, j;
+    int i, j, k;
 
     if (mdata == NULL || mdata->ui == NULL) {
 	return;
@@ -578,6 +578,8 @@ static void real_add_files_to_menus (int ftype)
 	/* put the files under the menu separator: ensure valid UTF-8
 	   for display purposes */
 
+	k = 0;
+
 	for (i=0; i<MAXRECENT && filep[i][0]; i++) {
 	    gchar *fname, *apath;
 
@@ -587,10 +589,15 @@ static void real_add_files_to_menus (int ftype)
 	    fname = my_filename_to_utf8(filep[i]);
 
 	    if (fname == NULL) {
-		break;
+		/* We got a rubbish 'filename'.  It would be nice to
+		   know how that happened, but we'll try to recover by
+		   blanking out the rubbish and continuing.
+		*/
+		filep[i][0] = '\0';
+		continue;
 	    } else {
-		aname = g_strdup_printf("%s %d", fword, i);
-		alabel = g_strdup_printf("%d. %s", i+1, endbit(tmp, fname, 1));
+		aname = g_strdup_printf("%s %d", fword, k);
+		alabel = g_strdup_printf("%d. %s", k+1, endbit(tmp, fname, 1));
 		entry.name = aname;
 		entry.label = alabel;
 		id[i] = vwin_menu_add_item(mdata, mpath[j], &entry);
@@ -606,6 +613,7 @@ static void real_add_files_to_menus (int ftype)
 		g_free(aname);
 		g_free(alabel);
 		g_free(apath);
+		k++;
 	    }
 	}
     }

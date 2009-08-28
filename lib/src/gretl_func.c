@@ -2398,6 +2398,7 @@ static int load_public_function (ufunc *fun)
 		/* got a conflicting package */
 		fprintf(stderr, "unloading conflicting package '%s'\n",
 			ufuns[i]->pkg->name);
+		fprintf(stderr, "(filename '%s')\n", ufuns[i]->pkg->fname); 
 		function_package_unload_full(ufuns[i]->pkg);
 		break;
 	    } 
@@ -2422,10 +2423,7 @@ static int real_load_package (fnpkg *pkg)
 {
     int i, err = 0;
 
-#if PKG_DEBUG
-    fprintf(stderr, "real_load_package: name='%s', ID = %d\n",
-	    pkg->name, pkg->ID);
-#endif
+    fprintf(stderr, "real_load_package:\n loading '%s'\n", pkg->fname);
 
     if (pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv && !err; i++) {
@@ -2501,7 +2499,8 @@ static void print_package_code (const fnpkg *pkg, PRN *prn)
 /* allocate a fnpkg structure and read from XML file into it */
 
 static fnpkg * 
-real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
+real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, 
+		   int *err)
 {
     xmlNodePtr cur;
     fnpkg *pkg;
@@ -2702,7 +2701,9 @@ int load_function_package_from_file (const char *fname)
     int err = 0;
 
     if (get_function_package_by_filename(fname) != NULL) {
-	; /* already loaded: no-op */
+	/* already loaded: no-op */
+	fprintf(stderr, "load_function_package_from_file:\n"
+		" '%s' is already loaded\n", fname);
     } else {
 	fnpkg *pkg = read_package_file(fname, &err);
 

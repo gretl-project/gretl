@@ -418,7 +418,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 
     gretl_function_print_code(fun, prn);
 
-    vwin = view_buffer(prn, 78, 350, finfo->active, EDIT_FUNC_CODE, finfo);
+    vwin = view_buffer(prn, 78, 350, finfo->active, EDIT_PKG_CODE, finfo);
 
     if (vwin != NULL) {
 	strcpy(vwin->fname, fname);
@@ -478,7 +478,7 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     } 
 
     finfo->samplewin = view_buffer(prn, 78, 350, title,
-				   EDIT_FUNC_CODE, finfo);
+				   EDIT_PKG_SAMPLE, finfo);
 
     g_object_set_data(G_OBJECT(finfo->samplewin->main), "finfo",
 		      finfo);
