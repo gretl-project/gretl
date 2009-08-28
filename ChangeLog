@@ -1,4 +1,4 @@
-version 1.8.4, in progress
+8/28/09 version 1.8.4
 - Fix breakage in GUI interface for calling user-defined
   functions, plus fixes for GUI function package editor
 - Patches from Mandriva: build OK with -Wformat-security,
