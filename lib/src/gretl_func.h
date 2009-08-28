@@ -141,7 +141,8 @@ ufunc *get_packaged_function_by_name (const char *name,
 
 int get_function_file_header (const char *fname, char **pdesc, char **pver);
 
-int update_function_from_script (const char *funname, const char *path);
+int update_function_from_script (const char *funname, const char *path,
+				 fnpkg *pkg);
 
 int user_function_help (const char *fnname, PRN *prn);
 

@@ -279,6 +279,7 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
     gtk_tree_model_get(model, &iter, col, &val, -1);
 
     if (val) {
+	gtk_tree_path_free(path);
 	return;
     }
 

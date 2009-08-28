@@ -1127,8 +1127,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	mark_vwin_content_saved(vwin);
 	mark_session_changed();
     } else {
-	FILE *fp;
 	gchar *text;
+	FILE *fp;
 
 	fp = gretl_fopen(vwin->fname, "w");
 
@@ -1139,9 +1139,14 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    system_print_buf(text, fp);
 	    fclose(fp);
 	    g_free(text);
-	    mark_vwin_content_saved(vwin);
 	    if (vwin->role == EDIT_PKG_CODE) {
-		update_func_code(vwin);
+		int err = update_func_code(vwin);
+
+		if (!err) {
+		    mark_vwin_content_saved(vwin);
+		}
+	    } else {
+		mark_vwin_content_saved(vwin);
 	    }
 	}
     }

@@ -584,10 +584,10 @@ void system_print_buf (const gchar *buf, FILE *fp)
     while (*p) {
 	if (*p == '\r') {
 	    if (*(p+1) != '\n') {
-		putc('\n', fp);
+		fputc('\n', fp);
 	    } 
 	} else {
-	    putc(*p, fp);
+	    fputc(*p, fp);
 	}
 	cbak = *p;
 	p++;
@@ -595,7 +595,7 @@ void system_print_buf (const gchar *buf, FILE *fp)
 
     /* ensure file ends with newline */
     if (cbak != '\n') {
-	putc('\n', fp);
+	fputc('\n', fp);
     }
 }
 

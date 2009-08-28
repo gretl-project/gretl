@@ -369,17 +369,16 @@ static gboolean update_active_func (GtkComboBox *menu,
 
 int update_func_code (windata_t *vwin)
 {
+    function_info *finfo = vwin->data;
     char *funname;
     int err = 0;
 
     funname = funname_from_filename(vwin->fname);
-    err = update_function_from_script(funname, vwin->fname);
+    err = update_function_from_script(funname, vwin->fname, finfo->pkg);
 
     if (err) {
 	gui_errmsg(err);
     } else {
-	function_info *finfo = vwin->data;
-
 	finfo_set_modified(finfo, TRUE);
     }
 

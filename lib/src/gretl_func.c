@@ -3666,9 +3666,14 @@ static int fndef_continues (const char *s)
    compilation errors.  We try to detect if the name of the function
    itself has been changed in the GUI editor window: that is not
    acceptable.
+
+   The @pkg argument will be non-NULL if an existing package is being
+   edited, but will be NULL when a new package is under construction
+   and has not yet been saved,
 */
 
-int update_function_from_script (const char *funname, const char *path)
+int update_function_from_script (const char *funname, const char *path,
+				 fnpkg *pkg)
 {
     char line[MAXLINE];
     ufunc *fun, *orig;
@@ -3677,8 +3682,14 @@ int update_function_from_script (const char *funname, const char *path)
     int gotfn = 0;
     int err = 0;
 
-    orig = get_user_function_by_name(funname);
+    if (pkg == NULL) {
+	orig = get_user_function_by_name(funname);
+    } else {
+	orig = get_packaged_function_by_name(funname, pkg);
+    }
+
     if (orig == NULL) {
+	gretl_errmsg_sprintf("Couldn't find function '%s'", funname);
 	return E_DATA;
     }
 
