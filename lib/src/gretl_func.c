@@ -72,6 +72,7 @@ struct fncall_ {
     fnargs *args;  /* argument array */
     int *ptrvars;  /* list of pointer arguments */
     int *listvars; /* list of series included in a list argument */
+    char *retname; /* name of return value (or dummy string) */
     obsinfo obs;   /* sample info */
 };
 
@@ -86,7 +87,6 @@ struct ufunc_ {
     int n_params;          /* number of parameters */
     fn_param *params;      /* parameter info array */
     int rettype;           /* return type (if any) */
-    char *retname;         /* used only with "old-style" function syntax */
     int debug;             /* are we debugging this function? */
 };
 
@@ -319,6 +319,7 @@ static fncall *fncall_new (ufunc *fun)
 	call->fun = fun;
 	call->ptrvars = NULL;
 	call->listvars = NULL;
+	call->retname = NULL;
     }
 
     return call;
@@ -329,6 +330,7 @@ static void fncall_free (fncall *call)
     if (call != NULL) {
 	free(call->ptrvars);
 	free(call->listvars);
+	free(call->retname);
 	free(call);
     }
 }
@@ -854,7 +856,6 @@ static ufunc *ufunc_new (void)
     fun->params = NULL;
 
     fun->rettype = GRETL_TYPE_NONE;
-    fun->retname = NULL;
 
     fun->debug = 0;
 
@@ -878,7 +879,6 @@ static void clear_ufunc_data (ufunc *fun)
 {
     free_strings_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
-    free(fun->retname);
     
     fun->lines = NULL;
     fun->params = NULL;
@@ -887,14 +887,12 @@ static void clear_ufunc_data (ufunc *fun)
     fun->n_params = 0;
 
     fun->rettype = GRETL_TYPE_NONE;
-    fun->retname = NULL;
 }
 
 static void ufunc_free (ufunc *fun)
 {
     free_strings_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
-    free(fun->retname);
 
     free(fun);
 }
@@ -1138,13 +1136,15 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 
 /* we use this only with old-style function definitions */
 
-static int func_read_return (xmlNodePtr node, ufunc *fun)
+static int func_read_return (xmlNodePtr node, ufunc *fun,
+			     char **retname)
 {
-    char *field;
+    char *field = NULL;
     int err = 0;
 
     if (gretl_xml_get_prop_as_string(node, "name", &field)) {
-	fun->retname = field;
+	*retname = field;
+	field = NULL;
     } else {
 	fprintf(stderr, "return value: couldn't get name\n");
 	err = E_DATA;
@@ -1345,6 +1345,29 @@ static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
     return err;
 }
 
+/* We got an old-style function definition from XML,
+   in which the return type and name were recorded
+   in the 'header'.  Having recorded the return type
+   we now append a return statement.
+*/
+
+static int ufunc_add_return_statement (ufunc *fun,
+				       const char *retname)
+{
+    char *s = malloc(8 + strlen(retname));
+    int err = 0;
+
+    if (s == NULL) {
+	err = E_ALLOC;
+    } else {
+	sprintf(s, "return %s", retname);
+	err = strings_array_add(&fun->lines, &fun->n_lines, s);
+	free(s);
+    }
+
+    return err;
+}
+
 /* read a single user-function definition from XML file: if the
    function is a child of a package, the @pkg argument will
    be non-NULL
@@ -1354,6 +1377,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 {
     ufunc *fun = ufunc_new();
     xmlNodePtr cur;
+    char *retname = NULL;
     char *tmp;
     int err = 0;
 
@@ -1405,7 +1429,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "return")) {
 	    /* support old-style functions */
-	    err = func_read_return(cur, fun);
+	    err = func_read_return(cur, fun, &retname);
 	    if (err) {
 		fprintf(stderr, "%s: error parsing function return value\n",
 			fun->name);
@@ -1414,6 +1438,14 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 	    err = func_read_code(cur, doc, fun);
 	}
 	cur = cur->next;
+    }
+
+    if (retname != NULL) {
+	/* backward compat */
+	if (!err) {
+	    err = ufunc_add_return_statement(fun, retname);
+	}
+	free(retname);
     }
 
     if (!err) {
@@ -1567,13 +1599,6 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 	fputc('\n', fp);
     }
 
-    if (fun->rettype != GRETL_TYPE_NONE && fun->retname != NULL) {
-	/* handle old-style definition */
-	fprintf(fp, "return %s\n", fun->retname);
-	free(fun->retname);
-	fun->retname = NULL;
-    }
-
     fputs("</code>\n", fp);
 
     fputs("</gretl-function>\n", fp);
@@ -1639,10 +1664,12 @@ static void print_function_start (ufunc *fun, PRN *prn)
 
 static void print_function_end (ufunc *fun, PRN *prn)
 {
+#if 0
     if (fun->retname != NULL) {
 	/* support old-style */
 	pprintf(prn, "  return %s\n", fun->retname);
     }
+#endif
 
     pputs(prn, "end function\n");
 }
@@ -3356,6 +3383,9 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     return err;
 }
 
+/* not reading from XML, but from script or other
+   direct user input */
+
 static int parse_function_return (ufunc *fun, const char *line)
 {
     const char *s = line + 6; /* skip "return" */
@@ -3371,14 +3401,19 @@ static int parse_function_return (ufunc *fun, const char *line)
 
     type = return_type_from_string(s1);
 
-    if (type > 0 && fun->retname != NULL) {
-	sprintf(gretl_errmsg, "%s: return value is already defined",
+    if (type > 0 && fun->rettype != GRETL_TYPE_NONE) {
+	sprintf(gretl_errmsg, "%s: return type is already defined",
 		fun->name);
-	return E_PARSE;
-    }
-
-    if (fun->rettype == GRETL_TYPE_NONE) {
-	/* old-style: return type should be specified inline */
+	err = E_PARSE;
+    } else if (fun->rettype != GRETL_TYPE_NONE) {
+	/* new-style: the return type was pre-defined, and
+	   we treat a "return " line as a normal line 
+	*/
+	err = strings_array_add(&fun->lines, &fun->n_lines, line);
+    } else {
+	/* old-style: we didn't get a return type at the start of the
+	   definition, and it should be specified inline here
+	*/
 	if (type == 0) {
 	    gretl_errmsg_sprintf("%s: missing a valid return type\n", 
 				 fun->name);
@@ -3386,18 +3421,13 @@ static int parse_function_return (ufunc *fun, const char *line)
 	} else {
 	    err = check_varname(s2);
 	    if (!err) {
-		fun->retname = gretl_strdup(s2);
-		if (fun->retname == NULL) {
-		    err = E_ALLOC;
-		} else {
-		    fun->rettype = type;
-		}
+		err = ufunc_add_return_statement(fun, s2);
+	    }
+	    if (!err) {
+		fun->rettype = type;
 	    }
 	}
-    } else {
-	/* return type was pre-defined: treat as normal line */
-	err = strings_array_add(&fun->lines, &fun->n_lines, line);
-    }	
+    } 
 
     return err;
 }
@@ -3473,7 +3503,15 @@ static int check_function_structure (ufunc *fun)
 
     gretl_cmd_init(&cmd);
 
+#if 0
+    fprintf(stderr, "checking function '%s'\n", fun->name);
+#endif
+
+
     for (i=0; i<fun->n_lines && !err; i++) {
+#if 0
+	fprintf(stderr, "line[%d] = '%s'\n", i, fun->lines[i]);
+#endif
 	/* avoid losing comment lines */
 	strcpy(line, fun->lines[i]);
 	get_command_index(line, &cmd);
@@ -3748,7 +3786,6 @@ int update_function_from_script (const char *funname, const char *path,
 	/* didn't work: trash the attempt */
 	free_strings_array(fun->lines, fun->n_lines);
 	free_params_array(fun->params, fun->n_params);
-	free(fun->retname);
     } else {	
 	/* really replace the original function content */
 	free_strings_array(orig->lines, orig->n_lines);
@@ -3762,9 +3799,6 @@ int update_function_from_script (const char *funname, const char *path,
 	fun->params = NULL;
 
 	orig->rettype = fun->rettype;
-	free(orig->retname);
-	orig->retname = fun->retname;
-	fun->retname = NULL;
     } 
 
     free(fun);
@@ -4298,11 +4332,12 @@ get_string_return (const char *sname, double **Z, DATAINFO *pdinfo,
 }
 
 static void 
-maybe_set_return_description (ufunc *u, int rtype, DATAINFO *pdinfo, 
+maybe_set_return_description (fncall *call, int rtype, 
+			      DATAINFO *pdinfo, 
 			      char **descrip)
 {
     if (rtype == GRETL_TYPE_SERIES) {
-	int v = series_index(pdinfo, u->retname);
+	int v = series_index(pdinfo, call->retname);
 
 	if (v < pdinfo->v) {
 	    *descrip = gretl_strdup(VARLABEL(pdinfo, v));
@@ -4313,13 +4348,14 @@ maybe_set_return_description (ufunc *u, int rtype, DATAINFO *pdinfo,
 #define types_match(pt,rt) ((pt==GRETL_TYPE_SERIES_REF && rt==GRETL_TYPE_SERIES) || \
                             (pt==GRETL_TYPE_MATRIX_REF && rt==GRETL_TYPE_MATRIX))
 
-static int is_pointer_arg (ufunc *u, fnargs *args, int rtype)
+static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
 {
+    ufunc *u = call->fun;
     int i;
 
     for (i=0; i<args->argc; i++) {
 	if (types_match(u->params[i].type, rtype)) {
-	    if (!strcmp(u->params[i].name, u->retname)) {
+	    if (!strcmp(u->params[i].name, call->retname)) {
 		return 1;
 	    }
 	}
@@ -4333,11 +4369,12 @@ static int is_pointer_arg (ufunc *u, fnargs *args, int rtype)
                            t == GRETL_TYPE_SERIES_REF)
 
 static int 
-function_assign_returns (ufunc *u, fnargs *args, int rtype, 
+function_assign_returns (fncall *call, fnargs *args, int rtype, 
 			 double **Z, DATAINFO *pdinfo, 
 			 void *ret, char **descrip, PRN *prn, 
 			 int *perr)
 {
+    ufunc *u = call->fun;
     struct fnarg *arg;
     fn_param *fp;
     int copy, i, err = 0;
@@ -4354,21 +4391,23 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	    /* "can't happen" */
 	    err = E_DATA;
 	} else if (rtype == GRETL_TYPE_DOUBLE) {
-	    *(double *) ret = get_scalar_return(u->retname, &err);
+	    *(double *) ret = get_scalar_return(call->retname, &err);
 	} else if (rtype == GRETL_TYPE_SERIES) {
-	    copy = is_pointer_arg(u, args, rtype);
-	    *(double **) ret = get_series_return(u->retname, Z, pdinfo, copy, &err);
+	    copy = is_pointer_arg(call, args, rtype);
+	    *(double **) ret = get_series_return(call->retname, Z, pdinfo, 
+						 copy, &err);
 	} else if (rtype == GRETL_TYPE_MATRIX) {
-	    copy = is_pointer_arg(u, args, rtype);
-	    *(gretl_matrix **) ret = get_matrix_return(u->retname, copy, &err);
+	    copy = is_pointer_arg(call, args, rtype);
+	    *(gretl_matrix **) ret = get_matrix_return(call->retname, 
+						       copy, &err);
 	} else if (rtype == GRETL_TYPE_LIST) {
 	    /* note: in this case the job is finished in
 	       stop_fncall(); here we just adjust the info on the
 	       listed variables so they don't get deleted
 	    */
-	    err = unlocalize_list(u->retname, LIST_DIRECT_RETURN, Z, pdinfo);
+	    err = unlocalize_list(call->retname, LIST_DIRECT_RETURN, Z, pdinfo);
 	} else if (rtype == GRETL_TYPE_STRING) {
-	    *(char **) ret = get_string_return(u->retname, Z, pdinfo, &err);
+	    *(char **) ret = get_string_return(call->retname, Z, pdinfo, &err);
 	}
 
 	if (err == E_UNKVAR) {
@@ -4379,7 +4418,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	*perr = err;
 
 	if (!err && pdinfo != NULL && descrip != NULL) {
-	    maybe_set_return_description(u, rtype, pdinfo, descrip);
+	    maybe_set_return_description(call, rtype, pdinfo, descrip);
 	}
     }
 
@@ -4543,7 +4582,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
        changed due to the deletion of function-local variables.
     */
     if (!err && rtype == GRETL_TYPE_LIST) {
-	int *lret = gretl_list_copy(get_list_by_name(call->fun->retname));
+	int *lret = gretl_list_copy(get_list_by_name(call->retname));
 
 	if (lret != NULL) {
 	    *(int **) ret = lret;
@@ -4791,12 +4830,13 @@ static int debug_command_loop (ExecState *state,
 
 #define void_function(f) (f->rettype == 0 || f->rettype == GRETL_TYPE_VOID)
 
-static int handle_return_statement (ufunc *fun,
+static int handle_return_statement (fncall *call,
 				    ExecState *state,
 				    double ***pZ,
 				    DATAINFO *pdinfo)
 {
     const char *s = state->line + 6; /* skip "return" */
+    ufunc *fun = call->fun;
     int err = 0;
 
 #if EXEC_DEBUG
@@ -4820,7 +4860,7 @@ static int handle_return_statement (ufunc *fun,
 
 	if (len == strlen(s)) {
 	    /* returning a named variable */
-	    fun->retname = gretl_strndup(s, len);
+	    call->retname = gretl_strndup(s, len);
 	} else {
 	    const char *typestr = arg_type_string(fun->rettype);
 	    char formula[MAXLINE];
@@ -4828,12 +4868,12 @@ static int handle_return_statement (ufunc *fun,
 	    sprintf(formula, "%s $retval=%s", typestr, s);
 	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
 	    if (!err) {
-		fun->retname = gretl_strdup("$retval");
+		call->retname = gretl_strdup("$retval");
 	    }
 	}
     }
 
-    if (!err && fun->retname == NULL) {
+    if (!err && call->retname == NULL) {
 	err = E_ALLOC;
     }
 
@@ -4976,7 +5016,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	err = maybe_exec_line(&state, pZ, pdinfo);
 
 	if (!err && state.cmd->ci == FUNCRET) {
-	    err = handle_return_statement(u, &state, pZ, pdinfo);
+	    err = handle_return_statement(call, &state, pZ, pdinfo);
 	    if (i < u->n_lines - 1) {
 		retline = i;
 	    }
@@ -5065,7 +5105,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	err = gretl_if_state_check(indent0);
     }
 
-    function_assign_returns(u, args, rtype, (pZ != NULL)? *pZ : NULL, 
+    function_assign_returns(call, args, rtype, (pZ != NULL)? *pZ : NULL, 
 			    pdinfo, ret, descrip, prn, &err);
 
     gretl_exec_state_clear(&state);
