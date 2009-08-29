@@ -1660,20 +1660,6 @@ static void print_function_start (ufunc *fun, PRN *prn)
     gretl_pop_c_numeric_locale();
 }
 
-/* script-style output */
-
-static void print_function_end (ufunc *fun, PRN *prn)
-{
-#if 0
-    if (fun->retname != NULL) {
-	/* support old-style */
-	pprintf(prn, "  return %s\n", fun->retname);
-    }
-#endif
-
-    pputs(prn, "end function\n");
-}
-
 /**
  * gretl_function_print_code:
  * @fun: pointer to user-function.
@@ -1703,9 +1689,9 @@ int gretl_function_print_code (ufunc *fun, PRN *prn)
 	}
 	pputs(prn, fun->lines[i]);
 	pputc(prn, '\n');
-    }  
+    }
 
-    print_function_end(fun, prn);
+    pputs(prn, "end function\n");
 
     return 0;
 }
