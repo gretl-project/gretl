@@ -112,7 +112,7 @@ function_info *finfo_new (void)
     finfo->n_priv = 0;
 
     finfo->dreq = 0;
-    finfo->minver = 10803;
+    finfo->minver = 10804;
 
     return finfo;
 }

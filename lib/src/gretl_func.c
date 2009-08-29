@@ -2470,10 +2470,19 @@ static int version_number_from_string (const char *s)
 
 static void print_package_info (const fnpkg *pkg, PRN *prn)
 {
+    char vstr[8];
+
+    if (pkg->minver > 0) {
+	get_version_string(vstr, pkg->minver);
+    } else {
+	*vstr = '\0';
+    }
+
     pprintf(prn, "Package: %s\n", (*pkg->name)? pkg->name : "unknown");
     pprintf(prn, "Author: %s\n", (pkg->author)? pkg->author : "unknown");
     pprintf(prn, "Version: %s\n", (pkg->version)? pkg->version : "unknown");
     pprintf(prn, "Date: %s\n", (pkg->date)? pkg->date : "unknown");
+    pprintf(prn, "Required gretl version: %s\n", (*vstr)? vstr : "unknown");
     pputs(prn, "Description: ");
     pputs(prn, (pkg->descrip)? pkg->descrip : "none");
 
