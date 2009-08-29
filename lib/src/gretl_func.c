@@ -1502,7 +1502,7 @@ static void maybe_correct_line (char *line)
 /* write out a single user-defined function as XML, according to
    gretlfunc.dtd */
 
-static int write_function_xml (const ufunc *fun, FILE *fp)
+static int write_function_xml (ufunc *fun, FILE *fp)
 {
     int rtype = fun->rettype;
     int this_indent = 0;
@@ -1569,7 +1569,9 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 
     if (fun->rettype != GRETL_TYPE_NONE && fun->retname != NULL) {
 	/* handle old-style definition */
-	fprintf(fp, "  return %s\n", fun->retname);
+	fprintf(fp, "return %s\n", fun->retname);
+	free(fun->retname);
+	fun->retname = NULL;
     }
 
     fputs("</code>\n", fp);
