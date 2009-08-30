@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-30 13:51-0400\n"
+"POT-Creation-Date: 2009-08-30 13:57-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12611,20 +12611,12 @@ msgstr ""
 msgid "Language preference"
 msgstr ""
 
-#: gui2/settings.c:188
-msgid "Path to wgnuplot.exe"
-msgstr ""
-
-#: gui2/settings.c:191
+#: gui2/settings.c:188 gui2/settings.c:191
 msgid "Command to launch gnuplot"
 msgstr ""
 
 #: gui2/settings.c:194
 msgid "Command to launch GNU R"
-msgstr ""
-
-#: gui2/settings.c:197
-msgid "Path to Rterm.exe"
 msgstr ""
 
 #: gui2/settings.c:200

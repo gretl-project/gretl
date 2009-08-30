@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-30 13:51-0400\n"
+"POT-Creation-Date: 2009-08-30 13:57-0400\n"
 "PO-Revision-Date: 2009-08-06 21:07-0400\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>, Marian Zubia <marian."
 "zubia@ehu.es>\n"
@@ -13103,22 +13103,13 @@ msgstr "Ezarri lan direktorioa shell-etik"
 msgid "Language preference"
 msgstr "Hizkuntzaren lehentasuna"
 
-#: gui2/settings.c:188
-msgid "Path to wgnuplot.exe"
-msgstr ""
-
-#: gui2/settings.c:191
+#: gui2/settings.c:188 gui2/settings.c:191
 msgid "Command to launch gnuplot"
 msgstr "Gnuplot-a abiarazteko komandoa"
 
 #: gui2/settings.c:194
 msgid "Command to launch GNU R"
 msgstr "GNU R abiarazteko komandoa"
-
-#: gui2/settings.c:197
-#, fuzzy
-msgid "Path to Rterm.exe"
-msgstr "TRAMOrako bidea"
 
 #: gui2/settings.c:200
 msgid "Command to compile TeX files"
@@ -14703,6 +14694,10 @@ msgstr "Estatistikoak/eraldakuntzak"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Probabilitate banaketak"
+
+#, fuzzy
+#~ msgid "Path to Rterm.exe"
+#~ msgstr "TRAMOrako bidea"
 
 #~ msgid "function code"
 #~ msgstr "kode funtzioa"

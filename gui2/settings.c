@@ -185,7 +185,7 @@ RCVAR rc_vars[] = {
       LISTSET | RESTART, 32, TAB_MAIN, NULL },
 #endif
 #ifdef G_OS_WIN32 
-    { "gnuplot", N_("Path to wgnuplot.exe"), NULL, paths.gnuplot, 
+    { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | INVISET, MAXLEN, TAB_NONE, NULL },
 #else
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
@@ -194,7 +194,7 @@ RCVAR rc_vars[] = {
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef G_OS_WIN32 
-    { "Rbin", N_("Path to Rterm.exe"), NULL, paths.rbinpath, 
+    { "Rbin", "Path to Rterm.exe", NULL, paths.rbinpath, 
       MACHSET | INVISET, MAXSTR, TAB_NONE, NULL },
 #endif
     { "latex", N_("Command to compile TeX files"), NULL, latex, 

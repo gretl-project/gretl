@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-30 13:51-0400\n"
+"POT-Creation-Date: 2009-08-30 13:57-0400\n"
 "PO-Revision-Date: 2009-08-23 20:06-0300\n"
 "Last-Translator: Henrique Andrade <ch.andrade@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
@@ -13066,22 +13066,13 @@ msgstr "Definir o diretório de trabalho a partir da linha de comandos"
 msgid "Language preference"
 msgstr "Preferência de idioma"
 
-#: gui2/settings.c:188
-msgid "Path to wgnuplot.exe"
-msgstr ""
-
-#: gui2/settings.c:191
+#: gui2/settings.c:188 gui2/settings.c:191
 msgid "Command to launch gnuplot"
 msgstr "Comando para iniciar gnuplot"
 
 #: gui2/settings.c:194
 msgid "Command to launch GNU R"
 msgstr "Comando para iniciar GNU R"
-
-#: gui2/settings.c:197
-#, fuzzy
-msgid "Path to Rterm.exe"
-msgstr "Caminho para tramo"
 
 #: gui2/settings.c:200
 msgid "Command to compile TeX files"
@@ -14663,6 +14654,10 @@ msgstr "Estatísticas e Transformações"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Distribuições de probabilidade"
+
+#, fuzzy
+#~ msgid "Path to Rterm.exe"
+#~ msgstr "Caminho para tramo"
 
 #~ msgid "function code"
 #~ msgstr "código da função"

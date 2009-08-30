@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.8.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-30 13:51-0400\n"
+"POT-Creation-Date: 2009-08-30 13:57-0400\n"
 "PO-Revision-Date: 2009-08-30 18:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -13054,22 +13054,13 @@ msgstr "Katalog roboczy zgodny z powłoką shell"
 msgid "Language preference"
 msgstr "Wybór języka dla GUI"
 
-#: gui2/settings.c:188
-msgid "Path to wgnuplot.exe"
-msgstr ""
-
-#: gui2/settings.c:191
+#: gui2/settings.c:188 gui2/settings.c:191
 msgid "Command to launch gnuplot"
 msgstr "Program gnuplot"
 
 #: gui2/settings.c:194
 msgid "Command to launch GNU R"
 msgstr "Program GNU R"
-
-#: gui2/settings.c:197
-#, fuzzy
-msgid "Path to Rterm.exe"
-msgstr "Program tramo"
 
 #: gui2/settings.c:200
 msgid "Command to compile TeX files"
@@ -14649,6 +14640,10 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
+
+#, fuzzy
+#~ msgid "Path to Rterm.exe"
+#~ msgstr "Program tramo"
 
 #~ msgid "function code"
 #~ msgstr "kod funkcji"

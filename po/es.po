@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-30 13:51-0400\n"
-"PO-Revision-Date: 2009-08-23 18:42+0200\n"
+"POT-Creation-Date: 2009-08-30 13:57-0400\n"
+"PO-Revision-Date: 2009-08-30 13:54-0400\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -8930,9 +8930,8 @@ msgid "gretl: function package editor"
 msgstr "gretl: editor de paquetes de funciones"
 
 #: gui2/fnsave.c:967
-#, fuzzy
 msgid "Help text:"
-msgstr "Ayuda de texto para %s:"
+msgstr "Ayuda de texto:"
 
 #: gui2/fnsave.c:982
 msgid "Edit function code"
@@ -13104,22 +13103,13 @@ msgstr ""
 msgid "Language preference"
 msgstr "Preferencia de idioma"
 
-#: gui2/settings.c:188
-msgid "Path to wgnuplot.exe"
-msgstr ""
-
-#: gui2/settings.c:191
+#: gui2/settings.c:188 gui2/settings.c:191
 msgid "Command to launch gnuplot"
 msgstr "Instrucción para lanzar gnuplot"
 
 #: gui2/settings.c:194
 msgid "Command to launch GNU R"
 msgstr "Instrucción para lanzar GNU R"
-
-#: gui2/settings.c:197
-#, fuzzy
-msgid "Path to Rterm.exe"
-msgstr "Camino a tramo"
 
 #: gui2/settings.c:200
 msgid "Command to compile TeX files"
@@ -14703,6 +14693,9 @@ msgstr "Estadísticas/transformaciones"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Distribuciones de probabilidades"
+
+#~ msgid "Path to Rterm.exe"
+#~ msgstr "Camino a Rterm.exe"
 
 #~ msgid "function code"
 #~ msgstr "código de función"

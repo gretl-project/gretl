@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-30 13:51-0400\n"
-"PO-Revision-Date: 2009-08-21 15:37+0200\n"
+"POT-Creation-Date: 2009-08-30 13:57-0400\n"
+"PO-Revision-Date: 2009-08-30 13:55-0400\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -8913,9 +8913,8 @@ msgid "gretl: function package editor"
 msgstr "gretl: editor dei pacchetti di funzioni"
 
 #: gui2/fnsave.c:967
-#, fuzzy
 msgid "Help text:"
-msgstr "Testo di aiuto per"
+msgstr "Testo di aiuto"
 
 #: gui2/fnsave.c:982
 msgid "Edit function code"
@@ -13095,23 +13094,13 @@ msgstr "Imposta la directory di lavoro dalla shell"
 msgid "Language preference"
 msgstr "Preferenza sulla lingua"
 
-#: gui2/settings.c:188
-#, fuzzy
-msgid "Path to wgnuplot.exe"
-msgstr "Invia a gnuplot"
-
-#: gui2/settings.c:191
+#: gui2/settings.c:188 gui2/settings.c:191
 msgid "Command to launch gnuplot"
 msgstr "Comando per eseguire gnuplot"
 
 #: gui2/settings.c:194
 msgid "Command to launch GNU R"
 msgstr "Comando per eseguire GNU R"
-
-#: gui2/settings.c:197
-#, fuzzy
-msgid "Path to Rterm.exe"
-msgstr "Comando per eseguire TRAMO"
 
 #: gui2/settings.c:200
 msgid "Command to compile TeX files"
@@ -14694,6 +14683,13 @@ msgstr "Statistiche/trasformazioni"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Distribuzioni di probabilità"
+
+#~ msgid "Path to wgnuplot.exe"
+#~ msgstr "Invia a wgnuplot.exe"
+
+#, fuzzy
+#~ msgid "Path to Rterm.exe"
+#~ msgstr "Comando per eseguire TRAMO"
 
 #~ msgid "function code"
 #~ msgstr "codice della funzione"
