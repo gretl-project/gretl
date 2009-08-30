@@ -42,7 +42,7 @@ int main (void)
     /* basic initialization of library */
     libgretl_init();
 
-    logo(); /* print version info and session time */
+    logo(0); /* print version info and session time */
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); /* simple printing */
 
     /* create the datainfo struct and data matrix -- pass in pointer
@@ -102,7 +102,7 @@ int main (void)
     model = gretl_model_new();
     if (model == NULL) noalloc();
     *model = lsq(list,     /* regressand and regressors */
-		 &Z,       /* data matrix */
+		 &Z,       /* data array */
 		 datainfo, /* data information */
 		 OLS,      /* use Ordinary Least Squares */
 		 OPT_NONE  /* no special options */
