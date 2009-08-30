@@ -2156,10 +2156,11 @@ int gretl_normalize_path (char *path)
     char tmp[FILENAME_MAX];
     char *pcpy, *pbit, *s = path;
     char **S, **P = NULL;
-    int i, n = 0;
+    int i, n;
     int err = 0;
 
     if (*path == '\0' || strstr(path, SLASHSTR) == NULL) {
+	/* no-op */
 	return 0;
     }
 
@@ -2182,6 +2183,11 @@ int gretl_normalize_path (char *path)
     }
 #endif
 
+    /* split string s on the path separator and cumulate
+       the pieces in array P, skipping any pieces which
+       are just "." */
+
+    n = 0;
     while ((pbit = strtok(s, SLASHSTR)) != NULL && !err) {
 	if (strcmp(pbit, ".")) {
 	    S = realloc(P, (n+1) * sizeof *P);
@@ -2192,11 +2198,13 @@ int gretl_normalize_path (char *path)
 		P[n++] = pbit;
 	    }
 	}
-	s = NULL;
+	s = NULL; /* for next strtok call */
     }
 
     if (!err) {
 	int j;
+
+	/* let each ".." annihilate the preceding path chunk */
 
 	for (i=n-1; i>0; i--) {
 	    if (P[i] != NULL && !strcmp(P[i], "..")) {
@@ -2208,16 +2216,20 @@ int gretl_normalize_path (char *path)
 		}
 	    }
 	}
+
+	/* re-assemble the path */
+
 	for (i=0; i<n; i++) {
 	    if (P[i] != NULL && strcmp(P[i], "..")) {
 		strcat(tmp, SLASHSTR);
 		strcat(tmp, P[i]);
 	    }
 	}
+
 	strcpy(path, tmp);
-	free(P);
     }
 
+    free(P);
     free(pcpy);
     
     return err;
@@ -2225,10 +2237,10 @@ int gretl_normalize_path (char *path)
 
 void slash_terminate (char *path)
 {
-    if (path == NULL || *path == '\0') return;
-
-    if (path[strlen(path) - 1] != SLASH) {
-	strcat(path, SLASHSTR);
+    if (path != NULL && *path != '\0') {
+	if (path[strlen(path) - 1] != SLASH) {
+	    strcat(path, SLASHSTR);
+	}
     }
 }
 
@@ -2316,7 +2328,10 @@ int cli_read_rc (PATHS *paths)
 		use_proxy = rc_bool(val);
 	    } else if (!strcmp(key, "x12a")) {
 		*paths->x12a = '\0';
-		strncat(paths->x12a, val, FILENAME_MAX - 1);
+		strncat(paths->x12a, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "tramo")) {
+		*paths->tramo = '\0';
+		strncat(paths->tramo, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {
 		rc_set_gp_colors(val);
 	    } 

@@ -593,6 +593,8 @@ static void real_add_files_to_menus (int ftype)
 		   know how that happened, but we'll try to recover by
 		   blanking out the rubbish and continuing.
 		*/
+		fprintf(stderr, "%s %d: got corrupted filename\n", 
+			mpath[j], i);
 		filep[i][0] = '\0';
 		continue;
 	    } else {
