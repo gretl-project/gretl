@@ -54,22 +54,22 @@ mandatory).  The example below is based on these assumptions:</p>
 
 <ul>
   <li><p class="in-list">gretl is installed on a server that is mapped as drive
-  <kbd>L</kbd> from the point of view of the client PCs.</p>
+  <kbd>K</kbd> from the point of view of the client PCs.</p>
   <li><p class="in-list">The (primary) hard drive on the client machines is drive
   <kbd>C</kbd>.</p>
-  <li><p class="in-list">When gretl was installed on the server, the default installation
-  path of <kbd>c:\userdata\gretl</kbd> was used.</p>
+  <li><p class="in-list">When gretl was installed on the server, the installation
+  path <kbd>c:\gretl</kbd> was used.</p>
   <li><p class="in-list">Users of the client PCs have write access to a
   directory named <kbd>c:\userdata</kbd> on the local machine.</p>
  </ul>
 
 <p>You can edit this file in any text editor (e.g. Windows notepad).
 If your setup differs in respect of the drive letter for the network
-installation, replace <kbd>L:</kbd> throughout.  If gretl was
-installed in (say) <kbd>c:\Program Files</kbd> on the server, then
-replace <kbd>L:\userdata</kbd> with <kbd>L:\Program Files</kbd>
-throughout. Items with embedded spaces (e.g. "Progam Files") will be
-handled correctly as is, do not wrap them in quotes.
+installation, replace <kbd>K:</kbd> throughout.  If gretl was
+installed in (say) <kbd>c:\Program Files\gretl</kbd> on the server, then
+replace <kbd>K:\gretl</kbd> with <kbd>K:\Program Files\gretl</kbd>
+throughout. (Items with embedded spaces, e.g. "Progam Files", should be
+handled correctly as is, do not wrap them in quotes.)
   You can grab a copy of the example with DOS-style
   line-termination here: <a href="./gretlnet.txt">gretlnet.txt</a>.</p>
   
@@ -78,7 +78,7 @@ handled correctly as is, do not wrap them in quotes.
 # gretlnet.txt: gretl network config file for Windows
 
 # Main gretl directory on server (users do not need write permission)
-gretldir = L:\userdata\gretl
+gretldir = K:\gretl
 
 # User's gretl directory (users must have permission to write
 # to this dir -- it will be created if it does not exist)
@@ -94,18 +94,27 @@ viewdvi = windvi.exe
 calculator = calc.exe
 
 # path to x12arima (optional)
-x12a = L:\userdata\x12arima\x12a.exe
+x12a = K:\gretl\x12arima\x12a.exe
 
 # path to tramo (optional)
-tramo = L:\userdata\tramo\tramo.exe
+tramo = K:\gretl\tramo\tramo.exe
+
+# path to GNU R executable for interactive use (optional)
+Rcommand = K:\R\R-2.9.1\bin\Rgui.exe
+
+# path to GNU R executable for batch use (optional)
+Rbin = K:\R\R-2.9.1\bin\Rterm.exe
+
+# path to GNU R shared library (optional)
+Rlib = K:\R\R-2.9.1\bin\R.dll
 
 # gretl database directory (write permission not needed)
-binbase = L:\userdata\gretl\db
+binbase = K:\gretl\db
 
 # RATS data directory (write permission not needed)
-ratsbase = L:\userdata\rats
+ratsbase = K:\userdata\rats
 
-# Database server (should be left alone)
+# Database server (should probably be left alone)
 dbhost = ricardo.ecn.wfu.edu
 
 # HTTP proxy (ipnumber:port)
