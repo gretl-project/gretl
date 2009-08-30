@@ -900,15 +900,15 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == VIEW_FN_PKG_CODE) {
 	display_function_package_data(pkgname, path, VIEW_PKG_CODE);
     } else if (task == EDIT_FN_PKG) {
-	edit_function_package(path, &err);
+	edit_function_package(path);
     } else if (task == CALL_FN_PKG) {
 	call_function_package(path, vwin->main, &err);
     }
 
     g_free(pkgname);
 
-    if (!err && (task == EDIT_FN_PKG || task == CALL_FN_PKG)) {
-	maybe_update_func_files_window(CALL_FN_PKG);
+    if (!err && task == CALL_FN_PKG) {
+	maybe_update_func_files_window(task);
     }
 }
 

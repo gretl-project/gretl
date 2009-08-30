@@ -127,6 +127,7 @@ static struct extmap action_map[] = {
     { APPEND_ODS,        ".ods" },
     { OPEN_RATS_DB,      ".rat" },
     { OPEN_PCGIVE_DB,    ".bn7" },
+    { OPEN_GFN,          ".gfn" },
     { FILE_OP_MAX,       NULL }
 };
 
@@ -437,6 +438,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     strncat(fname, in_fname, FILENAME_MAX - 1);
 
     if (action < END_OPEN) {
+	/* pre-check that the file is accessible */
 	FILE *fp = gretl_fopen(fname, "r");
 
 	if (fp == NULL) {
@@ -463,6 +465,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	filesel_open_session(fname);
     } else if (action == OPEN_MARKERS) {
 	do_add_markers(fname);
+    } else if (action == OPEN_GFN) {
+	edit_function_package(fname);
     } else if (action == OPEN_RATS_DB) {
 	open_rats_window(fname);
     } else if (action == OPEN_PCGIVE_DB) {

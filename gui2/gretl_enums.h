@@ -135,6 +135,7 @@ enum file_ops {
     APPEND_ODS,
     OPEN_SESSION,
     OPEN_MARKERS,
+    OPEN_GFN,
     END_OPEN,      /* marker for end of file open section */
     SAVE_DATA,
     SAVE_DATA_AS,

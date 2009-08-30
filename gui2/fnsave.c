@@ -1561,7 +1561,7 @@ void revise_function_package (void *p)
     free(privlist);
 }
 
-void edit_function_package (const char *fname, int *loaderr)
+void edit_function_package (const char *fname)
 {
     function_info *finfo;
     int *publist = NULL;
@@ -1577,9 +1577,6 @@ void edit_function_package (const char *fname, int *loaderr)
 	err = load_function_package_from_file(fname);
 	if (err) {
 	    file_read_errbox(fname);
-	    if (loaderr != NULL) {
-		*loaderr = 1;
-	    }
 	    return;
 	} else {
 	    pkg = get_function_package_by_filename(fname);
@@ -1624,7 +1621,13 @@ void edit_function_package (const char *fname, int *loaderr)
 	errbox("Couldn't get function package information");
 	finfo_free(finfo);
 	return;
-    }    
+    } 
+
+    /* if the user has a package-list window open, we may need to
+       sync (check the "loaded" box for this package if it wasn't
+       already set) 
+    */
+    maybe_update_func_files_window(CALL_FN_PKG);
 
     p = strrchr(fname, SLASH);
     if (p == NULL) {
@@ -1646,7 +1649,7 @@ void edit_package_at_startup (const char *fname)
 	file_read_errbox(fname);
     } else {
 	fclose(fp);
-	edit_function_package(fname, NULL);
+	edit_function_package(fname);
     }
 }
 

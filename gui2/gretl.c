@@ -265,7 +265,12 @@ static void options_dialog_callback (void)
     options_dialog(0, NULL, mdata->main);
 }
 
-static void new_function_pkg_callback (GtkAction *action, gpointer p)
+static void edit_package_callback (GtkAction *action, gpointer p)
+{
+    file_selector(OPEN_GFN, FSEL_DATA_NONE, NULL);
+}
+
+static void new_package_callback (GtkAction *action, gpointer p)
 {
     if (no_user_functions_check()) {
 	return;
@@ -1305,7 +1310,8 @@ GtkActionEntry main_entries[] = {
     { "FunctionFiles", NULL, N_("_Function files"), NULL, NULL, NULL },
     { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
     { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
-    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_function_pkg_callback) },
+    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_package_callback) },
+    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_package_callback) },
 
     { "Quit", GTK_STOCK_QUIT, N_("E_xit"), "<control>X", NULL,  G_CALLBACK(menu_exit_check)},
 

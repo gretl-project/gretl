@@ -79,6 +79,7 @@
       <menu action='FunctionFiles'>
 	<menuitem action='LocalGfn'/>
 	<menuitem action='RemoteGfn'/>
+	<menuitem action='EditGfn'/>
 	<menuitem action='NewGfn'/>
       </menu>
       <separator/>
