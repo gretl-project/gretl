@@ -3,7 +3,7 @@ version 1.8.5, in progress
   packaged functions that were originally old-style
 - More refinements for function-package editor
   
-8/28/09 version 1.8.4
+8/28/2009 version 1.8.4
 - Fix breakage in GUI interface for calling user-defined
   functions, plus fixes for GUI function package editor
 - Patches from Mandriva: build OK with -Wformat-security,
@@ -23,7 +23,7 @@ version 1.8.5, in progress
 - ODS import: fix bug 2841292
 - win32: update GTK+ stack to 2.16.5
 
-8/10/09 version 1.8.3
+8/10/2009 version 1.8.3
 - Fix bugs 2819633, 2827358, 2828349, 2833434
 - $stopwatch: use times() function if available, to include
   execution time of child processes
