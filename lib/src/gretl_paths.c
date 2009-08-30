@@ -57,7 +57,11 @@ struct INTERNAL_PATHS {
     char x12adir[MAXLEN];
     char tramo[MAXLEN];
     char tramodir[MAXLEN];
+    char rbinpath[MAXLEN];
     char rlibpath[MAXLEN];
+#ifdef USE_OX
+    char oxlpath[MAXLEN];
+#endif
     char pngfont[128];
     unsigned char status;
 };
@@ -1456,6 +1460,7 @@ static void copy_paths_to_internal (PATHS *paths)
     strcpy(gretl_paths.x12adir,  paths->x12adir);
     strcpy(gretl_paths.tramo,    paths->tramo);
     strcpy(gretl_paths.tramodir, paths->tramodir);
+    strcpy(gretl_paths.rbinpath, paths->rbinpath);
     strcpy(gretl_paths.pngfont,  paths->pngfont);
 
 #ifdef USE_RLIB
@@ -1463,6 +1468,10 @@ static void copy_paths_to_internal (PATHS *paths)
 	strcpy(gretl_paths.rlibpath, paths->rlibpath);
 	gretl_R_reset_error();
     }
+#endif
+
+#ifdef USE_OX
+    strcpy(gretl_paths.oxlpath, paths->oxlpath);
 #endif
 
     gretl_insert_builtin_string("gretldir", paths->gretldir);
@@ -1728,10 +1737,27 @@ const char *gretl_x12_arima_dir (void)
     return gretl_paths.x12adir;
 }
 
+const char *gretl_rbin_path (void)
+{
+    return gretl_paths.rbinpath;
+}
+
 const char *gretl_rlib_path (void)
 {
     return gretl_paths.rlibpath;
 }
+
+#ifdef USE_OX
+const char *gretl_oxl_path (void)
+{
+    return gretl_paths.oxlpath;
+}
+#else
+const char *gretl_oxl_path (void)
+{
+    return "unsupported";
+}
+#endif
 
 const char *gretl_png_font (void)
 {
@@ -1742,47 +1768,6 @@ void set_gretl_png_font (const char *s, PATHS *ppaths)
 {
     strcpy(gretl_paths.pngfont, s);
     strcpy(ppaths->pngfont, s);
-}
-
-static char ox_path[MAXLEN];
-
-#ifdef USE_OX
-static void set_default_ox_path (char *s)
-{
-    if (s == NULL) {
-	s = ox_path;
-    }
-
-# ifdef WIN32
-    sprintf(s, "%s\\OxMetrics5\\Ox\\bin\\oxl.exe", program_files_path());
-# else
-    strcpy(s, "oxl");
-# endif
-}
-#else
-static void set_default_ox_path (char *s)
-{
-    return;
-}
-#endif
-
-const char *gretl_ox_path (void)
-{
-    if (*ox_path == '\0') {
-	set_default_ox_path(ox_path);
-    }
-    
-    return ox_path;
-}
-
-void set_gretl_ox_path (char *path)
-{
-    if (*path != '\0') {
-	*ox_path = '\0';
-	strncat(ox_path, path, MAXLEN - 1);
-    } else {
-	set_default_ox_path(path);
-    }
 }
 
 void set_string_table_written (void)
@@ -1833,7 +1818,14 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
 	strcpy(ppaths->x12a, "c:\\program files\\x12arima\\x12a.exe");
 	strcpy(ppaths->tramo, "c:\\program files\\tramo\\tramo.exe");
+
+	R_path_from_registry(ppaths->rbinpath, RTERM);
 	R_path_from_registry(ppaths->rlibpath, RLIB);
+
+#ifdef USE_OX
+	sprintf(ppaths->oxlpath, "%s\\OxMetrics5\\Ox\\bin\\oxl.exe", 
+		program_files_path());
+#endif
 
 	if (opt & OPT_X) {
 	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
@@ -1847,7 +1839,6 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	ppaths->workdir[0] = '\0';
 	gretl_paths.plotfile[0] = '\0';
 	strcpy(ppaths->pngfont, "verdana 8");
-	set_default_ox_path(NULL);
     } else {
 	/* not defaults: after reading from registry */
 	ensure_slash(ppaths->gretldir);
@@ -1989,10 +1980,16 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	    ppaths->dbhost[0] = '\0';
 	}
 
+	strcpy(ppaths->rbinpath, "R");
+
 #ifdef RLIBPATH
 	strcpy(ppaths->rlibpath, RLIBPATH);
 #else
 	*ppaths->rlibpath = '\0';
+#endif
+
+#ifdef USE_OX
+	strcpy(ppaths->oxlpath, "oxl");
 #endif
 
 	strcpy(ppaths->gnuplot, "gnuplot");
@@ -2024,7 +2021,6 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->tramo, "tramo"); 	 
 #endif
 
-	set_default_ox_path(NULL);
 	*gretl_paths.plotfile = '\0';
     } else {
 	/* check validity of main directories */

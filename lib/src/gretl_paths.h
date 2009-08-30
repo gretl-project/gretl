@@ -114,13 +114,13 @@ const char *gretl_x12_arima (void);
 
 const char *gretl_x12_arima_dir (void);
 
+const char *gretl_rbin_path (void);
+
 const char *gretl_rlib_path (void);
 
 const char *gretl_png_font (void);
 
-void set_gretl_ox_path (char *path);
-
-const char *gretl_ox_path (void);
+const char *gretl_oxl_path (void);
 
 void set_gretl_png_font (const char *s, PATHS *ppaths);
 

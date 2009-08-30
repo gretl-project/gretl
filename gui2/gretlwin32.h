@@ -42,8 +42,6 @@ void set_up_windows_look (void);
 
 void gretl_win32_init (const char *progname, int debug);
 
-const char *get_network_cfg_filename (void);
-
 int prn_to_clipboard (PRN *prn, int copycode);
 
 int win_buf_to_clipboard (const char *buf);

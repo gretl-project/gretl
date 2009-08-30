@@ -863,7 +863,7 @@ char *chopstr (char *str)
 
     n = strlen(str);
 
-    for (i = n - 1; i >= 0; i--) {
+    for (i=n-1; i>=0; i--) {
 	if (isspace(str[i]) || str[i] == '\r') {
 	    str[i] = '\0';
 	} else {

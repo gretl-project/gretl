@@ -307,7 +307,9 @@ struct PATHS_ {
     char x12adir[MAXLEN];
     char tramo[MAXLEN];
     char tramodir[MAXLEN];
+    char rbinpath[MAXLEN];
     char rlibpath[MAXLEN];
+    char oxlpath[MAXLEN];
     char dbhost[32];
     char pngfont[128];
 };

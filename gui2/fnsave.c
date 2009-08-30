@@ -284,6 +284,7 @@ static int check_version_string (const char *s)
 
 static int finfo_save (function_info *finfo, int saveas)
 {
+    const char *missing = "???";
     char **fields[] = {
 	&finfo->author,
 	&finfo->version,
@@ -295,8 +296,8 @@ static int finfo_save (function_info *finfo, int saveas)
     for (i=0; i<NENTRIES && !err; i++) {
 	g_free(*fields[i]);
 	*fields[i] = entry_box_get_trimmed_text(finfo->entries[i]);
-	if (*fields[i] == NULL || !strcmp(*fields[i], "missing")) {
-	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[i]), "missing");
+	if (*fields[i] == NULL || !strcmp(*fields[i], missing)) {
+	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[i]), missing);
 	    gtk_editable_select_region(GTK_EDITABLE(finfo->entries[i]), 0, -1);
 	    gtk_widget_grab_focus(finfo->entries[i]);
 	    return 1;
@@ -305,8 +306,8 @@ static int finfo_save (function_info *finfo, int saveas)
 
     g_free(finfo->help);
     finfo->help = textview_get_trimmed_text(finfo->text);
-    if (finfo->help == NULL || !strcmp(finfo->help, "missing")) {
-	textview_set_text_selected(finfo->text, "missing");
+    if (finfo->help == NULL || !strcmp(finfo->help, missing)) {
+	textview_set_text_selected(finfo->text, missing);
 	gtk_widget_grab_focus(finfo->text);
 	return 1;
     }
@@ -408,7 +409,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
     fun = get_packaged_function_by_name(finfo->active,
 					finfo->pkg);
     if (fun == NULL) {
-	errbox("Can't find the function '%s'", finfo->active);
+	errbox(_("Can't find the function '%s'"), finfo->active);
     }
 
     if (bufopen(&prn)) {
@@ -633,7 +634,7 @@ static void func_selector_set_strings (function_info *finfo,
     }
 
     for (i=0; i<finfo->n_priv; i++) {
-	gchar *s = g_strdup_printf("%s (%s)", finfo->privnames[i], "private");
+	gchar *s = g_strdup_printf("%s (%s)", finfo->privnames[i], _("private"));
 
 	gtk_combo_box_append_text(GTK_COMBO_BOX(ifmenu), s);
 	g_free(s);
@@ -1296,9 +1297,9 @@ static int check_package_filename (function_info *finfo, const char *fname)
     }
 
     if (err) {
-	errbox("Invalid package filename: the name must be less than\n"
-	       "32 characters in length, must include only ASCII letters,\n"
-	       "numbers and '_', and must end with \".gfn\"");
+	errbox(_("Invalid package filename: the name must start with a letter,\n"
+		 "must be less than 32 characters in length, must include only\n"
+		 "ASCII letters, numbers and '_', and must end with \".gfn\""));
     }
 
     return err;

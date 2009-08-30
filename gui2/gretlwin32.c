@@ -144,18 +144,12 @@ int create_child_process (char *prog)
 
 static int Rgui_path_from_registry (void)
 {
-    char tmp[MAX_PATH] = {0}; 
+    char tmp[MAX_PATH];
     int err;
 
-    err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", tmp);
-
-    if (err) {
-	err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", tmp);
-    }
+    err = R_path_from_registry(tmp, RGUI);
 
     if (!err) {
-	strcat(tmp, "\\bin\\");
-	strcat(tmp, "Rgui.exe");
 	*Rcommand = '\0';
 	strncat(Rcommand, tmp, MAXSTR - 1);
     }
@@ -344,41 +338,13 @@ void set_up_windows_look (void)
     }
 }
 
-static char inifile[FILENAME_MAX];
-
-const char *get_network_cfg_filename (void)
-{
-    return inifile;
-}
-
-static int set_network_cfg_filename (const char *prog)
-{
-    const char *p;
-    int n;
-
-    *inifile = '\0';
-    
-    n = strlen(prog);
-    p = prog + n - 1;
-    while (p - prog >= 0) {
-	if (*p == '\\' || *p == '/') {
-	    strncpy(inifile, prog, n - strlen(p));
-	    strcat(inifile, "\\gretlnet.txt");
-	    break;
-	}
-	p--;
-    }
-
-    return 0;
-}
-
 void gretl_win32_init (const char *progname, int debug)
 {
     if (debug) {
         redirect_io_to_console();
     }
 
-    set_network_cfg_filename(progname);
+    set_gretlnet_filename(progname);
 
     wimp_init();
     read_rc(debug); /* get config info from registry */

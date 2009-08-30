@@ -32,6 +32,7 @@ enum {
 };
 
 enum {
+    RGUI,
     RTERM,
     RLIB
 };
@@ -48,6 +49,10 @@ int read_reg_val_with_fallback (HKEY tree0, HKEY tree1,
 int write_reg_val (HKEY tree, const char *base,
 		   const char *keyname, char *keyval,
 		   int ktype);
+
+const char *get_gretlnet_filename (void);
+
+int set_gretlnet_filename (const char *prog);
 
 void cli_read_registry (char *callname, PATHS *ppaths);
 

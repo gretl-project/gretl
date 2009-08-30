@@ -3662,18 +3662,11 @@ char *double_underscores (char *targ, const char *src)
 
 static void run_R_sync (void)
 {
-    char Rterm[FILENAME_MAX];
     gchar *cmd;
     int err;
 
-    err = R_path_from_registry(Rterm, RTERM);
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }
-
     cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
-			  "--slave", Rterm);
+			  "--slave", gretl_rbin_path());
 
     err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
 
@@ -3702,7 +3695,7 @@ void run_ox_script (gchar *buf)
 	char *sout = NULL;
 	gchar *cmd;
 
-	cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_ox_path(), fname);
+	cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
 	err = gretl_win32_grab_output(cmd, &sout);
 	g_free(cmd);
 
@@ -3897,7 +3890,7 @@ void run_ox_script (gchar *buf)
     } else {
 	gchar *argv[3];
 
-	argv[0] = (gchar *) gretl_ox_path();
+	argv[0] = (gchar *) gretl_oxl_path();
 	argv[1] = (gchar *) fname;
 	argv[2] = NULL;
 

@@ -106,10 +106,6 @@ extern int use_wimp;
 char midiplayer[MAXSTR] = "timidity -ig";
 #endif
 
-#ifdef USE_OX
-char oxpath[MAXSTR];
-#endif
-
 typedef enum {
     ROOTSET  = 1 << 0,
     USERSET  = 1 << 1, 
@@ -136,8 +132,8 @@ typedef struct {
                           INTSET integer (user)
 			  LISTSET user string, from fixed menu
                           RADIOSET user int, from fixed menu
-			  INVISET not visible in Prefs dialog
-			  RESTART needs restart to take effect
+			  INVISET not visible in Preferences dialog
+			  RESTART needs program restart to take effect
 		       */
     int len;           /* storage size for string variable (also see Note) */
     short tab;         /* which tab (if any) does the item fall under? */
@@ -188,12 +184,19 @@ RCVAR rc_vars[] = {
     { "langpref", N_("Language preference"), NULL, langpref, 
       LISTSET | RESTART, 32, TAB_MAIN, NULL },
 #endif
-#ifndef G_OS_WIN32 
+#ifdef G_OS_WIN32 
+    { "gnuplot", N_("Path to wgnuplot.exe"), NULL, paths.gnuplot, 
+      MACHSET | INVISET, MAXLEN, TAB_NONE, NULL },
+#else
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
 #endif
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+#ifdef G_OS_WIN32 
+    { "Rbin", N_("Path to Rterm.exe"), NULL, paths.rbinpath, 
+      MACHSET | INVISET, MAXSTR, TAB_NONE, NULL },
+#endif
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
@@ -223,7 +226,7 @@ RCVAR rc_vars[] = {
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
 #ifdef USE_OX
-    { "ox", N_("Path to oxl executable"), NULL, oxpath, 
+    { "ox", N_("Path to oxl executable"), NULL, paths.oxlpath, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
     { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
@@ -1175,7 +1178,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	}
 
 #ifdef USE_OX
-	if (!ox_support && rc->var == oxpath) {
+	if (!ox_support && rc->var == paths.oxlpath) {
 	    /* don't show ox path entry if support is not enabled */
 	    continue;
 	}
@@ -1723,9 +1726,6 @@ static int common_read_rc_setup (void)
     set_garch_robust_vcv(hc_garch);
 
     err = gretl_set_paths(&paths, set_paths_opt);
-#ifdef USE_OX
-    set_gretl_ox_path(oxpath);
-#endif
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
     set_tex_use_pdf(latex);
@@ -1801,23 +1801,25 @@ void write_rc (void)
 
     save_file_lists();
     gretl_set_paths(&paths, set_paths_opt);
-#ifdef USE_OX
-    set_gretl_ox_path(oxpath);
-#endif
 }
 
 static int get_network_settings (void)
 {
-    const char *inifile;
+    const char *netfile;
     FILE *fp;
     char *strvar;
-    int gotini = 0;
+    int gotnet = 0;
 
-    inifile = get_network_cfg_filename();
+    netfile = get_gretlnet_filename();
+    if (netfile == NULL) {
+	return 0;
+    }
 
-    if (*inifile && (fp = gretl_fopen(inifile, "r"))) {
-	int j, calldrive = tolower(inifile[0]);
+    fp = gretl_fopen(netfile, "r");
+
+    if (fp != NULL) {
 	char line[MAXLEN], key[32], linevar[MAXLEN];
+	int j, calldrive = tolower(netfile[0]);
 
 	while (fgets(line, MAXLEN, fp)) {
 	    int gotvar = 0;
@@ -1839,7 +1841,7 @@ static int get_network_settings (void)
 			} else {
 			    if (!strcmp(key, "gretldir") && 
 				tolower(linevar[0]) != calldrive) {
-				gotini = 0;
+				gotnet = 0;
 				goto network_quit;
 			    } else {
 				strvar = (char *) rc_vars[j].var;
@@ -1848,7 +1850,7 @@ static int get_network_settings (void)
 			    }
 			}
 			rc_vars[j].flags |= FIXSET;
-			gotvar = gotini = 1;
+			gotvar = gotnet = 1;
 		    }
 		    if (gotvar) break;
 		}
@@ -1858,7 +1860,7 @@ static int get_network_settings (void)
 	fclose(fp);
     }
 
-    return gotini;
+    return gotnet;
 }
 
 void read_rc (int debug) 
@@ -1949,9 +1951,6 @@ void write_rc (void)
     if (!err) {
 	gretl_set_paths(&paths, set_paths_opt);
 	record_shell_opt();
-#ifdef USE_OX
-	set_gretl_ox_path(oxpath);
-#endif
     }
 }
 

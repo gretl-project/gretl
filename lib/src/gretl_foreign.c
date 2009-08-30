@@ -118,17 +118,11 @@ static void make_gretl_R_names (void)
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
-    char Rterm[MAX_PATH];
     gchar *cmd;
     int err = 0;
 
-    err = R_path_from_registry(Rterm, RTERM);
-    if (err) {
-	return E_EXTERNAL;
-    }
-
     cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
-			  "--slave", Rterm);
+			  "--slave", gretl_rbin_path());
 
     err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
 
@@ -154,7 +148,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_ox_sync (gretlopt opt, PRN *prn)
 {
-    const char *path = gretl_ox_path();
+    const char *path = gretl_oxl_path();
     const char *fname = gretl_ox_filename();
     gchar *cmd, *sout = NULL;
     int err;
@@ -239,7 +233,7 @@ static int lib_run_ox_sync (gretlopt opt, PRN *prn)
     char *argv[3];
     int err;
 
-    argv[0] = (char *) gretl_ox_path();
+    argv[0] = (char *) gretl_oxl_path();
     argv[1] = (char *) gretl_ox_filename();
     argv[2] = NULL;
 
