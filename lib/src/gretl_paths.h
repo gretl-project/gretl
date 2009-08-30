@@ -84,6 +84,8 @@ int has_system_prefix (const char *fname, const PATHS *ppaths,
 
 void show_paths (const PATHS *ppaths);
 
+int gretl_set_default_paths (PATHS *ppaths, const char *callname);
+
 int gretl_set_paths (PATHS *ppaths, gretlopt opt);
 
 const char *gretl_lib_path (void);

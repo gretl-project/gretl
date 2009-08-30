@@ -1797,13 +1797,14 @@ void show_paths (const PATHS *ppaths)
 
 #ifdef WIN32
 
-int gretl_set_paths (PATHS *ppaths, gretlopt opt)
+static int real_set_paths (PATHS *ppaths, const char *callname, 
+			   gretlopt opt)
 {
+    int defaults = (callname != NULL);
     char envstr[MAXLEN];
     int err = 0;
 
-    if (opt & OPT_D) {
-	/* set defaults */
+    if (defaults) {
 	char *home = getenv("GRETL_HOME");
 
 	if (home != NULL) {
@@ -1815,6 +1816,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
 	sprintf(ppaths->binbase, "%sdb\\", ppaths->gretldir);
 	strcpy(ppaths->ratsbase, "f:\\"); 
+	strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
 
 	strcpy(ppaths->x12a, "c:\\program files\\x12arima\\x12a.exe");
 	strcpy(ppaths->tramo, "c:\\program files\\tramo\\tramo.exe");
@@ -1827,12 +1829,6 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 		program_files_path());
 #endif
 
-	if (opt & OPT_X) {
-	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
-	} else {
-	    ppaths->dbhost[0] = '\0';
-	}
-
 	shelldir_init(NULL);
 	ppaths->currdir[0] = '\0';
 	ppaths->dotdir[0] = '\0';
@@ -1840,7 +1836,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	gretl_paths.plotfile[0] = '\0';
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
-	/* not defaults: after reading from registry */
+	/* not just defaults: after reading from registry */
 	ensure_slash(ppaths->gretldir);
 	if (*ppaths->dotdir == '\0') {
 	    correct_blank_dotdir(ppaths);
@@ -1955,12 +1951,13 @@ static void check_gretldir (PATHS *ppaths)
     }
 }
 
-int gretl_set_paths (PATHS *ppaths, gretlopt opt)
+static int real_set_paths (PATHS *ppaths, const char *callname, 
+			   gretlopt opt)
 {
+    int defaults = (callname != NULL);
     int err = 0;
 
-    if (opt & OPT_D) {
-	/* defaults */
+    if (defaults) {
 	char *home = getenv("GRETL_HOME");
 
 	if (home != NULL) {
@@ -1973,12 +1970,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
 	sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
 	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
-
-	if (opt & OPT_X) {
-	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
-	} else {
-	    ppaths->dbhost[0] = '\0';
-	}
+	strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
 
 	strcpy(ppaths->rbinpath, "R");
 
@@ -2085,6 +2077,22 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 }
 
 #endif /* win32 versus unix */
+
+int gretl_set_default_paths (PATHS *ppaths, const char *callname)
+{
+    gretlopt opt = OPT_NONE;
+
+    if (strstr(callname, "gretlcli") == NULL) {
+	opt = OPT_X; /* gui program */
+    }
+
+    return real_set_paths(ppaths, callname, opt);
+}
+
+int gretl_set_paths (PATHS *ppaths, gretlopt opt)
+{
+    return real_set_paths(ppaths, NULL, opt);
+}
 
 /* for writing a file, name given by user: if the path is not
    absolute, switch to the gretl "workdir" (for a plain filename and

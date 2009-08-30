@@ -458,9 +458,7 @@ static int have_data (void)
 
 int main (int argc, char **argv)
 {
-#ifdef G_OS_WIN32
     char *callname = argv[0];
-#endif
     int ftype = 0;
     char auxname[MAXLEN];
     char filearg[MAXLEN];
@@ -492,7 +490,7 @@ int main (int argc, char **argv)
 #endif
 
     libgretl_init();
-    gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
+    gretl_set_default_paths(&paths, callname);
 
 #ifdef G_OS_WIN32
     gretl_win32_init(callname, optdebug);

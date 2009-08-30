@@ -327,9 +327,7 @@ static int ctrl_x (int count, int key)
 
 int main (int argc, char *argv[])
 {
-#ifdef WIN32
     char *callname = argv[0];
-#endif
     double **Z = NULL;
     DATAINFO *datainfo = NULL;
     MODEL **models = NULL;
@@ -427,7 +425,7 @@ int main (int argc, char *argv[])
 	noalloc();
     } 
 
-    gretl_set_paths(&paths, OPT_D); /* defaults, not gui */
+    gretl_set_default_paths(&paths, callname);
 
 #ifdef WIN32
     cli_read_registry(callname, &paths);
