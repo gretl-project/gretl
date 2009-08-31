@@ -484,7 +484,7 @@ gchar *package_sample_get_script (windata_t *vwin)
     gsize retsize;
     int n, done = 0;
 
-    if (finfo->pkg == NULL) {
+    if (buf == NULL || *buf == '\0' || finfo->pkg == NULL) {
 	return buf;
     }
 
@@ -523,7 +523,7 @@ gchar *package_sample_get_script (windata_t *vwin)
 
     n = strlen(ret);
     if (ret[n-1] != '\n') {
-	strcat(ret, "\n");
+	g_strlcat(ret, "\n", retsize);
     }    
 
     return ret;
