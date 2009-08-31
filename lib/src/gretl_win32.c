@@ -171,20 +171,18 @@ const char *get_gretlnet_filename (void)
 
 int set_gretlnet_filename (const char *prog)
 {
-    const char *p;
-    int n;
+    char *p;
+    int i, n;
 
-    *netfile = '\0';
-    
-    n = strlen(prog);
-    p = prog + n - 1;
-    while (p - prog >= 0) {
-	if (*p == '\\' || *p == '/') {
-	    strncpy(netfile, prog, n - strlen(p));
-	    strcat(netfile, "\\gretlnet.txt");
+    strcpy(netfile, prog);
+    n = strlen(netfile) - 1;
+    p = netfile;
+
+    for (i=n; i>0; i--) {
+	if (p[i] == '\\' || p[i] == '/') {
+	    strcpy(p + i,  "\\gretlnet.txt");
 	    break;
 	}
-	p--;
     }
 
     return 0;
@@ -214,7 +212,7 @@ int read_gretlnet_string (FILE *fp, const char *key, char *value)
 
 	rewind(fp);
 
-	sprintf(keystr, "% = ", key);
+	sprintf(keystr, "%s = ", key);
 	n = strlen(keystr);
 
 	while (fgets(line, sizeof line, fp) && !ret) {
