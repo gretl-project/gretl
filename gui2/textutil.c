@@ -517,7 +517,8 @@ void window_save (windata_t *vwin, guint fmt)
 
 void window_print (GtkAction *action, windata_t *vwin) 
 {
-    char *buf, *selbuf = NULL;
+    gchar *buf, *selbuf = NULL;
+    const char *filename = NULL;
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
 
@@ -528,7 +529,18 @@ void window_print (GtkAction *action, windata_t *vwin)
 	selbuf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     }
 
-    print_window_content(buf, selbuf);
+    if (vwin->role == EDIT_SCRIPT ||
+	vwin->role == VIEW_SCRIPT) {
+	const char *p = strrchr(vwin->fname, SLASH);
+	
+	if (p != NULL) {
+	    filename = p + 1;
+	} else {
+	    filename = vwin->fname;
+	}
+    }
+
+    print_window_content(buf, selbuf, filename);
 }
 
 #endif

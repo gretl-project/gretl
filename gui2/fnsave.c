@@ -1023,7 +1023,7 @@ static void finfo_dialog (function_info *finfo)
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
-			 
+
     tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);

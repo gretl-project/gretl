@@ -40,39 +40,37 @@
 
 /* printing is enabled, either via Windows or GTK+ */
 
-static gchar *user_string (void)
+static const gchar *user_string (void)
 {
-    const gchar *username, *realname;
-    gchar *ret = NULL;
+    const gchar *ret = g_get_real_name();
 
-    username = g_get_user_name();
-    realname = g_get_real_name();
-
-    if (realname != NULL && *realname != '\0') {
-	ret = g_strdup_printf("%s %s", _("for"), realname);
-    } else if (username != NULL && *username != '\0') {
-	ret = g_strdup_printf("%s %s", _("for"), username);
+    if (ret == NULL || *ret == '\0') {
+	ret = g_get_user_name();
     }
 
     return ret;
 }
 
-static char *header_string (void)
+static char *header_string (const char *fname)
 {
-    gchar *hdr, *ustr;
+    gchar *hdr;
 # ifndef G_OS_WIN32
     gchar *trans;
 # endif
     char tstr[48];
 
     print_time(tstr);
-    ustr = user_string();
 
-    if (ustr != NULL) {
-	hdr = g_strdup_printf("%s %s %s", _("gretl output"), ustr, tstr);
-	g_free(ustr);
+    if (fname != NULL && *fname != '\0' && !strstr(fname, "tmp")) {
+	hdr = g_strdup_printf("%s %s", fname, tstr);
     } else {
-	hdr = g_strdup_printf("%s %s", _("gretl output"), tstr);
+	const gchar *ustr = user_string();
+
+	if (ustr != NULL && *ustr != '\0') {
+	    hdr = g_strdup_printf("%s %s %s %s", _("gretl output"), _("for"), ustr, tstr);
+	} else {
+	    hdr = g_strdup_printf("%s %s", _("gretl output"), tstr);
+	}
     }
 
 # ifndef G_OS_WIN32
@@ -92,7 +90,8 @@ static char *header_string (void)
 
 #if defined(G_OS_WIN32)
 
-void print_window_content (char *fullbuf, char *selbuf)
+void print_window_content (char *fullbuf, char *selbuf, 
+			   const char *fname)
 {
     HDC dc;
     PRINTDLG pdlg;
@@ -180,7 +179,7 @@ void print_window_content (char *fullbuf, char *selbuf)
 
     page = 1;
     x = px / 2; /* attempt at left margin */
-    hdrstart = header_string();
+    hdrstart = header_string(fname);
     while (*printbuf && printok) { /* pages loop */
 	StartPage(dc);
 	SelectObject(dc, fixed_font);
@@ -449,7 +448,8 @@ static void job_set_n_pages (GtkPrintOperation *op, struct print_info *pinfo)
 
 static GtkPrintSettings *settings = NULL;
 
-void print_window_content (char *fullbuf, char *selbuf)
+void print_window_content (char *fullbuf, char *selbuf, 
+			   const char *fname)
 {
     GtkPrintOperation *op;
     GtkPrintOperationResult res;
@@ -468,7 +468,7 @@ void print_window_content (char *fullbuf, char *selbuf)
 
     pinfo.buf = (selbuf != NULL)? selbuf : fullbuf;
     pinfo.p = pinfo.buf;
-    pinfo.hdr = header_string();
+    pinfo.hdr = header_string(fname);
     pinfo.layout = NULL;
     pinfo.pagelines = 54; /* FIXME */
 
