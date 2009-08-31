@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-30 13:57-0400\n"
-"PO-Revision-Date: 2009-08-30 13:55-0400\n"
+"PO-Revision-Date: 2009-08-31 11:50+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -7689,22 +7689,19 @@ msgid "gretl: delete"
 msgstr "gretl: cancella"
 
 #: gui2/datafiles.c:826
-#, fuzzy
 msgid "Add to functions shown"
-msgstr "Chiamata alla funzione %s"
+msgstr "Aggiungi alle funzioni mostrate"
 
 #: gui2/datafiles.c:827
-#, fuzzy
 msgid "Replace functions shown"
-msgstr "Funzioni ausiliarie"
+msgstr "Sostituisci le funzioni mostrate"
 
 #: gui2/datafiles.c:850
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d function file(s)"
-msgstr "_Funzioni"
+msgstr "Trovati %d file di funzioni"
 
 #: gui2/datafiles.c:856
-#, fuzzy
 msgid "No function files were found"
 msgstr "Non è stato trovato alcun file di funzioni"
 
@@ -8845,22 +8842,21 @@ msgid "Couldn't get function package information"
 msgstr "Impossibile ottenere informazioni sul pacchetto di funzioni"
 
 #: gui2/fnsave.c:316
-#, fuzzy
 msgid "Please add a sample script for this package"
-msgstr "Aggiungere una variabile nel dataset per prima cosa"
+msgstr "Aggiungere uno script di esempio per questo pacchetto"
 
 #: gui2/fnsave.c:321
 msgid "Invalid version string: use numbers and '.' only"
 msgstr "Stringa di versione non valida: usare solo numeri e \".\""
 
 #: gui2/fnsave.c:412
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find the function '%s'"
-msgstr "Chiamata alla funzione %s"
+msgstr "Non trovo la funzione \"%s\""
 
 #: gui2/fnsave.c:637
 msgid "private"
-msgstr ""
+msgstr "privata"
 
 #: gui2/fnsave.c:667
 msgid "No special requirement"
@@ -8887,9 +8883,8 @@ msgid "Minimum gretl version"
 msgstr "Versione di gretl richiesta"
 
 #: gui2/fnsave.c:820
-#, fuzzy
 msgid "Insert today's date"
-msgstr "_Inserisci"
+msgstr "Inserire la data di oggi"
 
 #: gui2/fnsave.c:839 gui2/gui_utils.c:1836 gui2/ssheet.c:2435
 #: gui2/ssheet.c:2460
@@ -8929,9 +8924,8 @@ msgid "Edit sample script"
 msgstr "Modifica script di esempio"
 
 #: gui2/fnsave.c:1008
-#, fuzzy
 msgid "Add/remove functions"
-msgstr "Salva funzioni"
+msgstr "Aggiungi/rimuovi funzioni"
 
 #: gui2/fnsave.c:1015
 msgid "Upload package to server on save"
@@ -8971,6 +8965,9 @@ msgid ""
 "must be less than 32 characters in length, must include only\n"
 "ASCII letters, numbers and '_', and must end with \".gfn\""
 msgstr ""
+"Nome file del pacchetto non valido: il nome deve iniziare con una lettera,\n"
+"essere lungo meno di 32 caratteri, includere solo lettere ASCII, numeri,\n"
+"il carattere \"_\", e deve terminare per \".gfn\""
 
 #: gui2/fnsave.c:1314 gui2/library.c:6322
 msgid "OK to overwrite?"
@@ -9365,9 +9362,8 @@ msgid "open a remote (web) database on startup"
 msgstr "Apre un database remoto (web) all'avvio"
 
 #: gui2/gretl.c:121 gui2/gretl.c:193
-#, fuzzy
 msgid "open (edit) a function package on startup"
-msgstr "gretl: pacchetti di funzioni su %s"
+msgstr "apri (modifica) un pacchetto di funzioni all'avvio"
 
 #: gui2/gretl.c:122 gui2/gretl.c:195
 msgid "force use of English"
@@ -9594,7 +9590,7 @@ msgstr "Sul _server di gretl"
 
 #: gui2/gretl.c:1313
 msgid "Edit package..."
-msgstr ""
+msgstr "Modifica pacchetto..."
 
 #: gui2/gretl.c:1314
 msgid "_New package"
@@ -12656,9 +12652,8 @@ msgid "Independent variables"
 msgstr "Variabili indipendenti"
 
 #: gui2/selector.c:4934
-#, fuzzy
 msgid "Public functions"
-msgstr "una funzione"
+msgstr "Funzioni pubbliche"
 
 #: gui2/selector.c:5151
 msgid "Select variables for logging"
@@ -12753,9 +12748,8 @@ msgid "Save data"
 msgstr "Salva i dati"
 
 #: gui2/selector.c:5753
-#, fuzzy
 msgid "Edit package list"
-msgstr "Pacchetto salvato con il nome %s"
+msgstr "Modifica la lista dei pacchetti"
 
 #: gui2/selector.c:6119
 msgid "lag order"
