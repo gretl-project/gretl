@@ -2900,7 +2900,7 @@ impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
     }
 
     dialog_add_confidence_selector(dlg, &conf);
-    gtk_widget_show(dlg);
+    gtk_widget_show_all(dlg);
 
     if (resp < 0) {
 	/* cancelled */

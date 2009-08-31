@@ -106,6 +106,10 @@ int checks_dialog (const char *title, const char *blurb,
 		   int *spinvar, const char *spintxt, 
 		   int spinmin, int spinmax, int helpcode);
 
+int checks_only_dialog (const char *title, const char *blurb,
+			const char **opts, int nopts,
+			int *active, int hcode);
+
 int spin_dialog (const char *title, const char *blurb,
 		 int *spinvar, const char *spintxt, 
 		 int spinmin, int spinmax, int helpcode);

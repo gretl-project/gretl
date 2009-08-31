@@ -746,22 +746,40 @@ static int gui_load_user_functions (const char *fname)
 
 static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
 {
-    char *msg = g_strdup_printf(_("Really delete %s?"), fname);
-    int err;
-    
-    if (yes_no_dialog(_("gretl: delete"), msg, 0) != GRETL_YES) {
-        return 0;
+    char *msg = g_strdup_printf(_("Function package %s"), fname);
+    const char *opts[] = {
+	N_("Delete package file"),
+	N_("Unload member functions")
+    };
+    int active[] = {1, 1};
+    int resp, err = 0;
+
+    resp = checks_only_dialog ("gretl", msg,
+			       opts, 2, active, 0);
+    g_free(msg);
+
+    if (resp < 0 || (active[0] == 0 && active[1] == 0)) {
+	/* canceled, or equivalent */
+	return 0;
     }
 
-    /* unload the package from memory */
-    function_package_unload_by_filename(fname);
-
-    /* scratch the package file */
-    err = gretl_remove(fname);
-
-    if (err) {
-	file_write_errbox(fname);
+    if (active[1]) {
+	/* unload the package and its members from memory */
+	function_package_unload_full_by_filename(fname);
     } else {
+	/* unload the package (only) from memory */
+	function_package_unload_by_filename(fname);
+    }
+
+     if (active[0]) {
+	/* scratch the package file */
+	err = gretl_remove(fname);
+	if (err) {
+	    file_write_errbox(fname);
+	}
+    }
+
+    if (!err) {
 	/* remove package from GUI listing */
 	GtkTreeModel *mod;
 	GtkTreeIter iter;

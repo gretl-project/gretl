@@ -1860,7 +1860,6 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     gtk_box_pack_end(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show_all(hbox);
 
     cb = g_object_get_data(G_OBJECT(dlg), "checkbox");
     if (cb != NULL) {
@@ -3227,6 +3226,26 @@ int checks_dialog (const char *title, const char *blurb,
     dlg = build_checks_dialog(title, blurb, opts, nopts, active,
 			      nradios, rvar, spinvar, spintxt,
 			      spinmin, spinmax, hcode, &ret);
+
+    if (dlg == NULL) {
+	return -1;
+    }
+
+    gtk_widget_show_all(dlg);
+
+    return ret;
+}
+
+int checks_only_dialog (const char *title, const char *blurb,
+			const char **opts, int nopts,
+			int *active, int hcode)
+{
+    GtkWidget *dlg;
+    int ret = 0;
+
+    dlg = build_checks_dialog(title, blurb, opts, nopts, active,
+			      0, NULL, NULL, NULL,
+			      0, 0, hcode, &ret);
 
     if (dlg == NULL) {
 	return -1;

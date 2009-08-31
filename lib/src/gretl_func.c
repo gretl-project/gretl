@@ -2330,6 +2330,24 @@ void function_package_unload_by_filename (const char *fname)
     }
 }
 
+/**
+ * function_package_unload_full_by_filename:
+ * @fname: package filename.
+ *
+ * Unloads the specified function package from memory, if it
+ * is currently loaded.  The functions 'owned' by the package
+ * are also unloaded from memory.
+ */
+
+void function_package_unload_full_by_filename (const char *fname)
+{
+    fnpkg *pkg = get_function_package_by_filename(fname);
+
+    if (pkg != NULL) {
+	real_function_package_unload(pkg, 1);
+    }
+}
+
 /* append a function package to the recorder array of loaded
    packages */
 
