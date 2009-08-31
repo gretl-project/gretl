@@ -587,9 +587,8 @@ static GretlToolItem viewbar_items[] = {
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define exec_ok(r) (vwin_editing_script(r) || \
-		    r == VIEW_SCRIPT)
-
-/* FIXME add EDIT_PKG_SAMPLE to exec_ok() when the bugs are fixed */
+		    r == VIEW_SCRIPT || \
+	            r == EDIT_PKG_SAMPLE)
 
 #define open_ok(r) (vwin_editing_script(r))
 
@@ -611,6 +610,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 		    r == MAHAL)
 
 #define cmd_help_ok(r) (r == EDIT_SCRIPT || \
+	                r == EDIT_PKG_CODE || \
+                        r == EDIT_PKG_SAMPLE || \
 			r == VIEW_SCRIPT || \
 			r == VIEW_LOG)
 

@@ -72,6 +72,7 @@
 #include "model_table.h"
 #include "cmdstack.h"
 #include "filelists.h"
+#include "fnsave.h"
 
 #define CMD_DEBUG 0
 
@@ -5902,7 +5903,8 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
 }
 
 /* Execute a script from the buffer in a viewer window.  The script
-   may be executed in full or in part (if sel is non-zero) */
+   may be executed in full or in part (in case sel is non-zero)
+*/
 
 static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 {
@@ -5911,7 +5913,6 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
     GdkWindow *wcurr = NULL;
     GdkWindow *wtxt;
     gpointer vp = NULL;
-    gint x, y;
     PRN *prn;
     int save_batch;
     int shown = 0;
@@ -5926,7 +5927,7 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	if (vwin_first_child(vwin) != NULL) {
 	    suppress_logo = 1;
 	}
-    } else {
+    } else if (vwin->role != EDIT_PKG_SAMPLE) {
 	gretl_command_sprintf("run %s", vwin->fname);
 	check_and_record_command();
     } 
@@ -5935,22 +5936,33 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	busy_cursor = gdk_cursor_new(GDK_WATCH);
     }
 
-    disp = gdk_display_get_default();
-    if (disp != NULL) {
-	wcurr = gdk_display_get_window_at_pointer(disp, &x, &y);
-	gdk_window_set_cursor(wcurr, busy_cursor);
-    }
-
+    /* set a "busy" cursor on the script text window */
     wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->text),
 				    GTK_TEXT_WINDOW_TEXT);
     gdk_window_set_cursor(wtxt, busy_cursor);
 
+    /* and also on the window that the mouse pointer is in, 
+       if it's not the script text window */
+    disp = gdk_display_get_default();
+    if (disp != NULL) {
+	gint x, y;
+
+	wcurr = gdk_display_get_window_at_pointer(disp, &x, &y);
+	if (wcurr != wtxt) {
+	    gdk_window_set_cursor(wcurr, busy_cursor);
+	} else {
+	    wcurr = NULL;
+	}
+    }
+
+    /* update cursor */
     gdk_flush();
 
     save_batch = gretl_in_batch_mode();
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
     gretl_set_batch_mode(save_batch);
 
+    /* reset regular cursor */
     if (wcurr != NULL) {
 	gdk_window_set_cursor(wcurr, NULL);
     }
@@ -5971,8 +5983,8 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, vp);
     }
 
-    if (!err && !sel && *vwin->fname != '\0' && 
-	strstr(vwin->fname, "script_tmp") == NULL) {
+    if (!err && !sel && vwin->role != EDIT_PKG_SAMPLE &&
+	*vwin->fname != '\0' && !strstr(vwin->fname, "script_tmp")) {
 	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
     }
 
@@ -6023,6 +6035,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	vwin->role == EDIT_R || 
 	vwin->role == EDIT_OX) {
 	buf = textview_get_text(vwin->text);
+    } else if (vwin->role == EDIT_PKG_SAMPLE) {
+	buf = package_sample_get_script(vwin);
     } else {
 	buf = textview_get_selection_or_all(vwin->text, &sel);
     }
@@ -6035,7 +6049,9 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	return;
     }  
 
-    ensure_newline_termination(&buf);
+    if (vwin->role != EDIT_PKG_SAMPLE) {
+	ensure_newline_termination(&buf);
+    }
 
     if (vwin->role == EDIT_GP) {
 	run_gp_script(buf);

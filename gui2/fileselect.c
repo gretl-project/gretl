@@ -438,7 +438,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     strncat(fname, in_fname, FILENAME_MAX - 1);
 
     if (action < END_OPEN) {
-	/* pre-check that the file is accessible */
+	/* opening a file: check that the file is accessible */
 	FILE *fp = gretl_fopen(fname, "r");
 
 	if (fp == NULL) {

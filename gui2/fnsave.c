@@ -25,6 +25,7 @@
 #include "gretl_www.h"
 #include "winstack.h"
 #include "selector.h"
+#include "textutil.h"
 #include "fnsave.h"
 
 #ifdef G_OS_WIN32
@@ -50,6 +51,7 @@ struct function_info_ {
     GtkWidget *saveas;     /* "Save as" button in dialog */
     GtkWidget *popup;      /* popup menu */
     windata_t *samplewin;  /* window for editing sample script */
+    GList *codewins;       /* list of windows editing function code */
     fnpkg *pkg;            /* pointer to package being edited */
     gchar *fname;          /* package filename */
     gchar *author;         /* package author */
@@ -102,6 +104,7 @@ function_info *finfo_new (void)
 
     finfo->active = NULL;
     finfo->samplewin = NULL;
+    finfo->codewins = NULL;
     finfo->popup = NULL;
 
     finfo->help = NULL;
@@ -133,23 +136,13 @@ static char *filename_from_funname (char *fname,
     return fname;
 }
 
-static void close_code_editor (const char *funname)
+static void destroy_code_window (windata_t *vwin)
 {
-    char fname[FILENAME_MAX];
-    GtkWidget *w;
-
-    filename_from_funname(fname, funname);
-    w = match_window_by_filename(fname);
-
-    if (w != NULL) {
-	gtk_widget_destroy(w);
-    }    
+    gtk_widget_destroy(vwin->main);
 }
 
 static void finfo_free (function_info *finfo)
 {
-    int i;
-
     g_free(finfo->fname);
     g_free(finfo->author);
     g_free(finfo->version);
@@ -159,21 +152,20 @@ static void finfo_free (function_info *finfo)
     g_free(finfo->help);
 
     if (finfo->pubnames != NULL) {
-	for (i=0; i<finfo->n_pub; i++) {
-	    close_code_editor(finfo->pubnames[i]);
-	}
 	free_strings_array(finfo->pubnames, finfo->n_pub);
     }
 	
     if (finfo->privnames != NULL) {
-	for (i=0; i<finfo->n_priv; i++) {
-	    close_code_editor(finfo->privnames[i]);
-	}
 	free_strings_array(finfo->privnames, finfo->n_priv);
     }
 
     if (finfo->samplewin != NULL) {
 	gtk_widget_destroy(finfo->samplewin->main);
+    }
+
+    if (finfo->codewins != NULL) {
+	g_list_foreach(finfo->codewins, (GFunc) destroy_code_window, NULL);
+	g_list_free(finfo->codewins);
     }
 
     if (finfo->popup != NULL) {
@@ -365,33 +357,87 @@ static gboolean update_active_func (GtkComboBox *menu,
     return FALSE;
 }
 
-/* callback used when editing a function in the context of
-   the package editor */
+/* callback used when editing a function in the context of the package
+   editor: save window-content to file and pass this to gretl_func to
+   revise the function definition.  
+*/
 
 int update_func_code (windata_t *vwin)
 {
-    function_info *finfo = vwin->data;
-    char *funname;
+    FILE *fp;
     int err = 0;
 
-    funname = funname_from_filename(vwin->fname);
-    err = update_function_from_script(funname, vwin->fname, finfo->pkg);
-
-    if (err) {
-	gui_errmsg(err);
+    fp = gretl_fopen(vwin->fname, "w");
+    
+    if (fp == NULL) {
+	file_write_errbox(vwin->fname);
+	err = E_FOPEN;
     } else {
-	finfo_set_modified(finfo, TRUE);
+	function_info *finfo = vwin->data;
+	gchar *text = textview_get_text(vwin->text);
+	char *funname;
+	
+	system_print_buf(text, fp);
+	fclose(fp);
+	g_free(text);
+
+	funname = funname_from_filename(vwin->fname);
+	err = update_function_from_script(funname, vwin->fname, finfo->pkg);
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    mark_vwin_content_saved(vwin);
+	    finfo_set_modified(finfo, TRUE);
+	}
     }
 
     return err;
 }
+
+static void finfo_remove_codewin (GtkWidget *w, function_info *finfo)
+{
+    gpointer p = g_object_get_data(G_OBJECT(w), "vwin");
+
+    finfo->codewins = g_list_remove(finfo->codewins, p);
+}
+
+static void finfo_add_codewin (function_info *finfo, windata_t *vwin)
+{
+    finfo->codewins = g_list_append(finfo->codewins, vwin);
+
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+    g_signal_connect(G_OBJECT(vwin->main), "destroy",
+		     G_CALLBACK(finfo_remove_codewin),
+		     finfo);
+}
+
+static windata_t *get_codewin_by_filename (const char *fname,
+					   function_info *finfo)
+{
+    GList *list = finfo->codewins;
+    windata_t *vwin;
+
+    while (list) {
+	vwin = list->data;
+	if (vwin != NULL && !strcmp(fname, vwin->fname)) {
+	    return vwin;
+	}
+	list = g_list_next(list);
+    }
+
+    return NULL;
+}
+
+/* editing a public interface or private function belonging
+   to a package: callback from "Edit function code" button.
+*/
 
 static void edit_code_callback (GtkWidget *w, function_info *finfo)
 {
     char fname[FILENAME_MAX];
     ufunc *fun;
     windata_t *vwin;
-    GtkWidget *orig;
     PRN *prn = NULL;
 
     if (finfo->active == NULL) {
@@ -399,10 +445,10 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
     }
 
     filename_from_funname(fname, finfo->active);
-    orig = match_window_by_filename(fname);
 
-    if (orig != NULL) {
-	gtk_window_present(GTK_WINDOW(orig));
+    vwin = get_codewin_by_filename(fname, finfo);
+    if (vwin != NULL) {
+	gtk_window_present(GTK_WINDOW(vwin->main));
 	return;
     }
 
@@ -422,8 +468,68 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 
     if (vwin != NULL) {
 	strcpy(vwin->fname, fname);
+	finfo_add_codewin(finfo, vwin);
     }
 }
+
+/* used by callback from Exec in sample script editor window */
+
+gchar *package_sample_get_script (windata_t *vwin)
+{
+    function_info *finfo = vwin->data;
+    gchar *buf = textview_get_text(vwin->text);
+    const char *pkgname;
+    gchar *ret;
+    char *p, line[MAXLINE];
+    gsize retsize;
+    int n, done = 0;
+
+    if (finfo->pkg == NULL) {
+	return buf;
+    }
+
+    pkgname = function_package_get_name(finfo->pkg);
+
+    /* allow for adding "# ", and possibly appending a newline */
+    retsize = strlen(buf) + 5;
+    ret = g_malloc(retsize);
+    *ret = '\0';
+
+    /* We need to comment out "include <self>.gfn" if such a line is
+       included in the sample script: the package is already in memory
+       and re-loading it now may be disruptive.
+    */
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	if (!done) {
+	    p = line + strspn(line, " ");
+	    if (!strncmp(p, "include ", 8)) {
+		p += 8;
+		p += strspn(p, " ");
+		n = gretl_namechar_spn(p);
+		if (!strncmp(p, pkgname, n)) {
+		    g_strlcat(ret, "# ", retsize);
+		    done = 1;
+		} 
+	    }
+	}
+	g_strlcat(ret, line, retsize);
+    }
+
+    bufgets_finalize(buf);   
+    g_free(buf);
+
+    n = strlen(ret);
+    if (ret[n-1] != '\n') {
+	strcat(ret, "\n");
+    }    
+
+    return ret;
+}
+
+/* callback from Save in sample script editor window */
 
 void update_sample_script (windata_t *vwin)
 {
@@ -437,15 +543,19 @@ void update_sample_script (windata_t *vwin)
 	free(finfo->sample);
 	finfo->sample = gretl_strdup(text);
 	g_free(text);
+	mark_vwin_content_saved(vwin);
 	finfo_set_modified(finfo, TRUE);
     }
 }
 
-static void
-nullify_sample_window (GtkWidget *w, function_info *finfo)
+static void nullify_sample_window (GtkWidget *w, function_info *finfo)
 {
     finfo->samplewin = NULL;
 }
+
+/* edit the sample script for a package: callback from
+   "Edit sample script" button in packager
+*/
 
 static void edit_sample_callback (GtkWidget *w, function_info *finfo)
 {

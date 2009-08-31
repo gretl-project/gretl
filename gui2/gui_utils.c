@@ -1101,11 +1101,13 @@ static void buf_edit_save (GtkWidget *w, windata_t *vwin)
 static void file_edit_save (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == EDIT_PKG_SAMPLE) {
-	/* special: function package, sample script window */
+	/* function package editor, sample script window */
 	update_sample_script(vwin);
-	mark_vwin_content_saved(vwin);
+    } else if (vwin->role == EDIT_PKG_CODE) {
+	/* function package editor, function code window */
+	update_func_code(vwin);
     } else if (*vwin->fname == '\0' || strstr(vwin->fname, "script_tmp")) {
-	/* no real filename is available */
+	/* no real filename is available yet */
 	if (vwin->role == EDIT_SCRIPT) {
 	    file_selector(SAVE_SCRIPT, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_GP) {
@@ -1127,7 +1129,6 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	mark_vwin_content_saved(vwin);
 	mark_session_changed();
     } else {
-	gchar *text;
 	FILE *fp;
 
 	fp = gretl_fopen(vwin->fname, "w");
@@ -1135,19 +1136,12 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	if (fp == NULL) {
 	    file_write_errbox(vwin->fname);
 	} else {
-	    text = textview_get_text(vwin->text);
+	    gchar *text = textview_get_text(vwin->text);
+
 	    system_print_buf(text, fp);
 	    fclose(fp);
 	    g_free(text);
-	    if (vwin->role == EDIT_PKG_CODE) {
-		int err = update_func_code(vwin);
-
-		if (!err) {
-		    mark_vwin_content_saved(vwin);
-		}
-	    } else {
-		mark_vwin_content_saved(vwin);
-	    }
+	    mark_vwin_content_saved(vwin);
 	}
     }
 }
@@ -1501,18 +1495,23 @@ static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
     return FALSE;
 }
 
+#define view_buffer_record(r) (r != SCRIPT_OUT && \
+	                       r != EDIT_PKG_CODE && \
+	                       r != EDIT_PKG_SAMPLE)
+
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role, 
 			gpointer data) 
 {
     static windata_t *script_out;
     windata_t *vwin;
-    int record = (role != SCRIPT_OUT);
-    int w, nlines;
+    int record, w, nlines;
 
     if (role == SCRIPT_OUT && script_out != NULL) {
 	return reuse_script_out(script_out, prn);
     }
+
+    record = view_buffer_record(role);
 
     if (title != NULL) {
 	vwin = gretl_viewer_new(role, title, data, record);

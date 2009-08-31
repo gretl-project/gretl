@@ -32,6 +32,8 @@ int no_user_functions_check (void);
 
 void get_default_package_name (char *fname, gpointer p, int mode);
 
+gchar *package_sample_get_script (windata_t *vwin);
+
 void update_sample_script (windata_t *vwin);
 
 int update_func_code (windata_t *vwin);
