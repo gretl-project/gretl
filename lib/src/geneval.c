@@ -5136,13 +5136,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 	    } else if (i == 3) {
 		/* initial (scalar) value for output series */
-		if (e->t != NUM) {
+		if (!scalar_node(e)) {
 		    node_type_error(t->t, i, NUM, e, p);
-		} else if (na(e->v.xval)) {
-		    p->err = E_MISSDATA;
 		} else {
-		    y0 = e->v.xval;
-		}
+		    y0 = node_get_scalar(e, p);
+		    if (!p->err && na(y0)) {
+			p->err = E_MISSDATA;
+		    }
+		} 
 	    }
 	} 
 	
