@@ -918,7 +918,7 @@ int maybe_print_R_path_addition (FILE *fp)
 
     err = R_path_from_registry(rpath, RBASE);
 
-    if (err != NULL) {
+    if (!err) {
 	path = getenv("PATH");
     }
 
