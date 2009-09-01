@@ -208,7 +208,7 @@ int read_gretlnet_string (FILE *fp, const char *key, char *value)
     if (fp != NULL) {
 	char line[MAXLEN];
 	char keystr[32];
-	int n, ret = 0;
+	int n;
 
 	rewind(fp);
 
@@ -276,6 +276,8 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     done = cli_read_string_var("gretldir", ppaths->gretldir, netfp, HKEY_LOCAL_MACHINE);
     if (!done) {
 	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl\\", drive);
+    } else {
+	ensure_slash(ppaths->gretldir);
     }
 
     /* user's working directory */
