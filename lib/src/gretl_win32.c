@@ -948,7 +948,7 @@ int maybe_print_R_path_addition (FILE *fp)
 		    break;
 		}
 	    }
-	    if (got[0] && got[1] && got[3]) {
+	    if (got[0] && got[1] && got[2]) {
 		break;
 	    }
 	}
