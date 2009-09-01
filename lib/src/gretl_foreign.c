@@ -554,7 +554,7 @@ static int write_R_source_file (const char *buf,
 	}
 
 #ifdef G_OS_WIN32
-	if (!(opt & OPT_I) && !(opt & OPT_L)) {
+	if (!(opt & (OPT_I | OPT_L))) {
 	    /* Rterm on Windows won't exit without this? */
 	    fputs("q()\n", fp);
 	}
@@ -646,7 +646,7 @@ static int Rinit;      /* are we initialized or not? */
 static SEXP current_arg;
 static SEXP current_call;
 
-/* ponters to, and renamed versions of, the R global variables
+/* pointers to, and renamed versions of, the R global variables
    we'll need */
 
 SEXP *PR_GlobalEnv;
@@ -808,7 +808,7 @@ void gretl_R_reset_error (void)
 /* Initialize the R library for use with gretl.  Note that we only
    need do this once per gretl session.  We need to check that the
    environment is set to R's liking first, otherwise initialization
-   will fail -- and abort gretl too!
+   will fail -- and will abort gretl too!
 */
 
 static int gretl_Rlib_init (void)
@@ -962,8 +962,8 @@ static SEXP find_R_function (const char *name)
 }
 
 /* Check if we should be using the R shared library for executing the
-   code in a "foreign" block.  This is disabled if the user has not
-   done "set R_lib on", and can be prohibited by the environment
+   code in a "foreign" block.  This is disabled if the user has 
+   done "set R_lib off", and can be prohibited by the environment
    variable GRETL_NO_RLIB.  It may also be blocked if we already tried
    and failed to initialize the library for gretl's use.  (The
    fallback will be to call the R binary.)
