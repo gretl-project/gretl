@@ -513,8 +513,8 @@ static int write_R_source_file (const char *buf,
 	err = E_FOPEN;
     } else {
 #ifdef G_OS_WIN32
-	if (!(opt & OPT_I)) {
-	    /* non-interactive */
+	if (!(opt & (OPT_I | OPT_L))) {
+	    /* non-interactive, but not using Rlib */
 	    fprintf(fp, "sink(\"%s\")\n", gretl_Rout);
 	}
 #endif

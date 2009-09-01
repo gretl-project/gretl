@@ -10712,3 +10712,26 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 
     return V;
 }
+
+/**
+ * gretl_matrix_transcribe_obs_info:
+ * @targ: target matrix.
+ * @src: source matrix.
+ *
+ * If @targ and @src have the same number of rows, and if
+ * the rows of @src are identified by observation stamps
+ * while those of @targ are not so identified, copy the
+ * stamp information across to @targ.  (Or if the given
+ * conditions are not satified, do nothing.)
+ */
+
+void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
+				       const gretl_matrix *src)
+{
+    if (targ->rows == src->rows &&
+	targ->t1 == 0 && targ->t2 == 0 &&
+	!is_block_matrix(src)) {
+	targ->t1 = src->t1;
+	targ->t2 = src->t2;
+    }
+}

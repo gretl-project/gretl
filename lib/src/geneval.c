@@ -1356,6 +1356,9 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    *err = E_ALLOC;
 	} else {
 	    *err = gretl_matrix_multiply(A, B, C);
+	    if (!*err) {
+		gretl_matrix_transcribe_obs_info(C, A);
+	    }
 	}	
 	break;
     case B_TRMUL:

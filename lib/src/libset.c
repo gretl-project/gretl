@@ -1626,7 +1626,7 @@ static int intvar_min_max (const char *s, int *min, int *max,
     *max = 100000;
 
     if (!strcmp(s, BFGS_MAXITER)) {
-	*min = 1;
+	*min = 0;
 	*var = &state->bfgs_maxiter;
     } else if (!strcmp(s, BHHH_MAXITER)) {
 	*min = 1;

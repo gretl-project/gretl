@@ -647,6 +647,9 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 					const gretl_matrix *w,
 					int p, int *err);
 
+void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
+				       const gretl_matrix *src);
+
 void lapack_mem_free (void);
 
 void set_blas_nmk_min (int n);

@@ -405,7 +405,7 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
     }
 
     umaxit = libset_get_int(BFGS_MAXITER);
-    if (umaxit > 0) {
+    if (umaxit >= 0) {
 	*maxit = umaxit;
     } else if (*maxit < 0) {
 	*maxit = 500;
@@ -486,6 +486,10 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	fprintf(stderr, " g[%d] = %g\n", i, g[i]);
     }
 #endif
+
+    if (maxit == 0) {
+	goto skipcalc;
+    }
 
     do {
 	if (verbose) {
@@ -656,6 +660,8 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		" f0=%.15g, fmax=%.15g\n", f0, fmax);
 	err = E_NOCONV;
     }
+
+ skipcalc:
 
     *fncount = fcount;
     *grcount = gcount;
