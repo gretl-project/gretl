@@ -34,7 +34,8 @@ enum {
 enum {
     RGUI,
     RTERM,
-    RLIB
+    RLIB,
+    RBASE
 };
 
 DIR *win32_opendir (const char *dname);
@@ -82,6 +83,8 @@ int win32_write_access (char *path);
 int win32_delete_dir (const char *path);
 
 int R_path_from_registry (char *s, int which);
+
+int maybe_print_R_path_addition (FILE *fp);
 
 #endif /* WIN32 */
 

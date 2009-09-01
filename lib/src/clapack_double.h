@@ -1,5 +1,5 @@
-#ifndef __CLAPACK_DOUBLE_H
-#define __CLAPACK_DOUBLE_H
+#ifndef CLAPACK_DOUBLE_H
+#define CLAPACK_DOUBLE_H
 
 /* CLAPACK subroutines: double-precision real versions only */
 
@@ -1446,4 +1446,4 @@ void dgejsv_ (const char *joba, const char *jobu, const char *jobv,
 	      double *work, integer *lwork, integer *iwork, 
 	      integer *info);
  
-#endif /* __CLAPACK_DOUBLE_H */
+#endif /* CLAPACK_DOUBLE_H */

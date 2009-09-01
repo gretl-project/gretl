@@ -894,18 +894,77 @@ int R_path_from_registry (char *s, int which)
     }
 
     if (!err) {
-	strcat(s, "\\bin\\");
-	if (which == RGUI) {
-	    strcat(s, "Rgui.exe");
-	} else if (which == RTERM) {
-	    strcat(s, "Rterm.exe");
-	} else if (which == RLIB) {
-	    strcat(s, "R.dll");
+	if (which != RBASE) {
+	    strcat(s, "\\bin\\");
+	    if (which == RGUI) {
+		strcat(s, "Rgui.exe");
+	    } else if (which == RTERM) {
+		strcat(s, "Rterm.exe");
+	    } else if (which == RLIB) {
+		strcat(s, "R.dll");
+	    } 
 	}
     }
 
     return err;
 }
 
+int maybe_print_R_path_addition (FILE *fp)
+{
+    char *path = NULL;
+    gchar **pathbits = NULL;
+    char rpath[MAXLEN];
+    int err;
 
+    err = R_path_from_registry(rpath, RBASE);
 
+    if (err != NULL) {
+	path = getenv("PATH");
+    }
+
+    if (path != NULL) {
+	pathbits = g_strsplit(path, ";", 0);
+    }
+
+    if (pathbits != NULL) {
+	char p[3][MAXLEN];
+	gchar **S = pathbits;
+	gchar *chunk;
+	int i, got[3] = {0};
+
+	sprintf(p[0], "%s\\bin", rpath);
+	sprintf(p[1], "%s\\modules", rpath);
+	sprintf(p[2], "%s\\lib", rpath);
+
+	lower(p[0]);
+	lower(p[1]);
+	lower(p[2]);
+
+	while ((chunk = *S++) != NULL) {
+	    lower(chunk);
+	    for (i=0; i<3; i++) {
+		if (!strcmp(chunk, p[i])) {
+		    got[i] = 1;
+		    break;
+		}
+	    }
+	    if (got[0] && got[1] && got[3]) {
+		break;
+	    }
+	}
+
+	if (!got[0] || !got[1] || !got[2]) {
+	    fprintf(fp, "Sys.setenv(PATH=\"%s");
+	    for (i=0; i<3; i++) {
+		if (!got[i]) {
+		    fprintf(fp, ";%s", p[i]);
+		}
+	    }
+	    fputs("\")\n", fp);
+	}
+
+	g_strfreev(pathbits);
+    }
+
+    return err;
+}

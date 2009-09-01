@@ -41,10 +41,10 @@ do {						\
     union {					\
 	unsigned long long int u64;		\
 	double d;				\
-    } __from, __to;				\
-    __from.d = (from);				\
-    __to.u64 = bswap_64(__from.u64);		\
-    (to) = __to.d;				\
+    } from__, to__;				\
+    from__.d = (from);				\
+    to__.u64 = bswap_64(from__.u64);		\
+    (to) = to__.d;				\
 } while (0)
 
 #else
@@ -54,11 +54,11 @@ do {						\
     union {					\
 	unsigned int u32[2];			\
 	double d;				\
-    } __from, __to;				\
-    __from.d = (from);  			\
-    swap_bytes_32(__from.u32[1], __to.u32[0]);	\
-    swap_bytes_32(__from.u32[0], __to.u32[1]);	\
-    (to) = __to.d;				\
+    } from__, to__;				\
+    from__.d = (from);  			\
+    swap_bytes_32(from__.u32[1], to__.u32[0]);	\
+    swap_bytes_32(from__.u32[0], to__.u32[1]);	\
+    (to) = to__.d;				\
 } while (0)
 
 #endif
@@ -67,17 +67,17 @@ do {						\
 
 #define swap_bytes_16(from, to)						\
 do {									\
-    unsigned short __from16 = (from);					\
-    (to) = ((((__from16) >> 8) & 0xff) | (((__from16) & 0xff) << 8));	\
+    unsigned short from__16 = (from);					\
+    (to) = ((((from__16) >> 8) & 0xff) | (((from__16) & 0xff) << 8));	\
 } while (0)
 
 #define swap_bytes_32(from, to)			\
 do {						\
-    unsigned int __from32 = (from);		\
-    (to) = (((__from32 & 0xff000000) >> 24) |	\
-	    ((__from32 & 0x00ff0000) >>  8) |	\
-	    ((__from32 & 0x0000ff00) <<  8) |	\
-	    ((__from32 & 0x000000ff) << 24));	\
+    unsigned int from__32 = (from);		\
+    (to) = (((from__32 & 0xff000000) >> 24) |	\
+	    ((from__32 & 0x00ff0000) >>  8) |	\
+	    ((from__32 & 0x0000ff00) <<  8) |	\
+	    ((from__32 & 0x000000ff) << 24));	\
 } while (0)
 
 #define swap_bytes_double(from, to)		\
@@ -85,11 +85,11 @@ do {						\
     union {					\
 	unsigned int u32[2];			\
 	double d;				\
-    } __from, __to;				\
-    __from.d = (from);  			\
-    swap_bytes_32(__from.u32[1], __to.u32[0]);	\
-    swap_bytes_32(__from.u32[0], __to.u32[1]);	\
-    (to) = __to.d;				\
+    } from__, to__;				\
+    from__.d = (from);  			\
+    swap_bytes_32(from__.u32[1], to__.u32[0]);	\
+    swap_bytes_32(from__.u32[0], to__.u32[1]);	\
+    (to) = to__.d;				\
 } while (0)
 
 #endif  /* HAVE_GLIBC_BSWAP */
@@ -103,10 +103,10 @@ do {						\
     union {					\
 	unsigned short u16;			\
 	short          s16;			\
-    } __from, __to;				\
-    __from.s16 = (from);			\
-    swap_bytes_16(__from.u16, __to.u16);	\
-    (to) = __to.s16;				\
+    } from__, to__;				\
+    from__.s16 = (from);			\
+    swap_bytes_16(from__.u16, to__.u16);	\
+    (to) = to__.s16;				\
 } while (0)
 
 #define reverse_short(x)                        \
@@ -114,10 +114,10 @@ do {						\
     union {					\
 	unsigned short u16;			\
 	short          s16;			\
-    } __from, __to;				\
-    __from.s16 = (x);    			\
-    swap_bytes_16(__from.u16, __to.u16);	\
-    (x) = __to.s16;				\
+    } from__, to__;				\
+    from__.s16 = (x);    			\
+    swap_bytes_16(from__.u16, to__.u16);	\
+    (x) = to__.s16;				\
 } while (0)
 
 #define swap_bytes_uint(from, to) swap_bytes_32(from, to)
@@ -129,10 +129,10 @@ do {						\
     union {					\
 	unsigned int u32;			\
 	int          s32;			\
-    } __from, __to;				\
-    __from.s32 = (from);			\
-    swap_bytes_32(__from.u32, __to.u32);	\
-    (to) = __to.s32;				\
+    } from__, to__;				\
+    from__.s32 = (from);			\
+    swap_bytes_32(from__.u32, to__.u32);	\
+    (to) = to__.s32;				\
 } while (0)
 
 #define reverse_int(x)                          \
@@ -140,10 +140,10 @@ do {						\
     union {					\
 	unsigned int u32;			\
 	int          s32;			\
-    } __from, __to;				\
-    __from.s32 = (x);    			\
-    swap_bytes_32(__from.u32, __to.u32);	\
-    (x) = __to.s32;				\
+    } from__, to__;				\
+    from__.s32 = (x);    			\
+    swap_bytes_32(from__.u32, to__.u32);	\
+    (x) = to__.s32;				\
 } while (0)
 
 #define swap_bytes_float(from, to)		\
@@ -151,10 +151,10 @@ do {						\
     union {					\
 	unsigned int u32;			\
 	float f;				\
-    } __from, __to;				\
-    __from.f = (from);				\
-    swap_bytes_32(__from.u32, __to.u32);	\
-    (to) = __to.f;				\
+    } from__, to__;				\
+    from__.f = (from);				\
+    swap_bytes_32(from__.u32, to__.u32);	\
+    (to) = to__.f;				\
 } while (0)
 
 #define reverse_float(x)        		\
@@ -162,10 +162,10 @@ do {						\
     union {					\
 	unsigned int u32;			\
 	float f;				\
-    } __from, __to;				\
-    __from.f = (x);				\
-    swap_bytes_32(__from.u32, __to.u32);	\
-    (x) = __to.f;				\
+    } from__, to__;				\
+    from__.f = (x);				\
+    swap_bytes_32(from__.u32, to__.u32);	\
+    (x) = to__.f;				\
 } while (0)
 
 #define reverse_double(x) swap_bytes_double(x, x)
