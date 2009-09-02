@@ -105,7 +105,7 @@ static void make_gretl_R_names (void)
     if (!done) {
 	gretl_dot_dir = g_strdup(gretl_dotdir());
 #ifdef G_OS_WIN32
-	slash_convert(gretl_dotdir, FROM_BACKSLASH);
+	slash_convert(gretl_dot_dir, FROM_BACKSLASH);
 #endif
 	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", gretl_dot_dir);
 	gretl_Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir);

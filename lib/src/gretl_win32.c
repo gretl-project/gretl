@@ -248,8 +248,9 @@ static int cli_read_string_var (char *key, char *val,
    HKCU; "Software\gretl"; "Gp_colors";  ""
 */
 
-void cli_read_registry (char *callname, PATHS *ppaths)
+void cli_read_registry (char *callname)
 {
+    ConfigPaths cpaths = {0};
     char valstr[MAXLEN];
     char dbproxy[21];
     int done, use_proxy = 0;
@@ -260,93 +261,54 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     netfp = cli_gretlnet_open(callname);
 
     /* gretl installation directory */
-    done = cli_read_string_var("gretldir", ppaths->gretldir, netfp, HKEY_LOCAL_MACHINE);
-    if (!done) {
-	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl\\", drive);
-    } else {
-	ensure_slash(ppaths->gretldir);
-    }
+    cli_read_string_var("gretldir", cpaths.gretldir, netfp, HKEY_LOCAL_MACHINE);
 
     /* user's working directory */
-    done = cli_read_string_var("userdir", ppaths->workdir, netfp, HKEY_CURRENT_USER);
+    done = cli_read_string_var("userdir", cpaths.workdir, netfp, HKEY_CURRENT_USER);
     if (!done) {
 	tmp = mydocs_path();
 	if (tmp != NULL) {
-	    sprintf(ppaths->workdir, "%s\\gretl\\", tmp);
+	    sprintf(cpaths.workdir, "%s\\gretl\\", tmp);
 	    free(tmp);
 	} else {
-	    sprintf(ppaths->workdir, "%suser\\", ppaths->gretldir);
+	    sprintf(cpaths.workdir, "%suser\\", cpaths.gretldir);
 	}
     }
-
-    /* "hidden" working dir: not user-configurable */
-    ppaths->dotdir[0] = '\0';
-    tmp = appdata_path();
-    if (tmp != NULL) {
-	sprintf(ppaths->dotdir, "%s\\gretl\\", tmp);
-	free(tmp);
-    } else {
-	sprintf(ppaths->dotdir, "%c:\\userdata\\gretl\\user\\", drive);
-    }    
 
     /* base path for databases */
-    done = cli_read_string_var("binbase", ppaths->binbase, netfp, HKEY_CURRENT_USER);
-    if (!done) {
-	sprintf(ppaths->binbase, "%sdb", ppaths->gretldir);
-    }
+    cli_read_string_var("binbase", cpaths.binbase, netfp, HKEY_CURRENT_USER);
 
     /* base path for RATS databases */
-    cli_read_string_var("ratsbase", ppaths->ratsbase, netfp, HKEY_CURRENT_USER);
+    cli_read_string_var("ratsbase", cpaths.ratsbase, netfp, HKEY_CURRENT_USER);
 
     /* path to gnuplot */
-    done = cli_read_string_var("gnuplot", ppaths->gnuplot, netfp, HKEY_LOCAL_MACHINE);
-    if (!done) {
-	sprintf(ppaths->gnuplot, "%swgnuplot.exe", ppaths->gretldir);
-    }
+    cli_read_string_var("gnuplot", cpaths.gnuplot, netfp, HKEY_LOCAL_MACHINE);
 
     /* path to X-12-ARIMA */
-    done = read_gretlnet_string(netfp, "x12a", ppaths->x12a);
+    done = read_gretlnet_string(netfp, "x12a", cpaths.x12a);
     if (!done) {
-	read_reg_val(HKEY_LOCAL_MACHINE, "x12arima", "x12a", ppaths->x12a);
-	if (ppaths->x12a[0] == '\0') {
-	    sprintf(ppaths->x12a, "%c:\\userdata\\x12arima\\x12a.exe", drive);
-	}
+	read_reg_val(HKEY_LOCAL_MACHINE, "x12arima", "x12a", cpaths.x12a);
     }
 
     /* path to tramo */
-    done = read_gretlnet_string(netfp, "tramo", ppaths->tramo);
+    done = read_gretlnet_string(netfp, "tramo", cpaths.tramo);
     if (!done) {
-	read_reg_val(HKEY_LOCAL_MACHINE, "tramo", "tramo", ppaths->tramo);
-	if (ppaths->tramo[0] == '\0') {
-	    sprintf(ppaths->tramo, "%c:\\userdata\\tramo\\tramo.exe", drive);
-	}
+	read_reg_val(HKEY_LOCAL_MACHINE, "tramo", "tramo", cpaths.tramo);
     }
 
     /* path to R binary (non-interactive use) */
-    done = read_gretlnet_string(netfp, "Rbin", ppaths->rbinpath);
-    if (!done) {
-	R_path_from_registry(ppaths->rbinpath, RTERM);
-    }  
+    read_gretlnet_string(netfp, "Rbin", cpaths.rbinpath);
 
     /* path to R shared library */
-    done = read_gretlnet_string(netfp, "Rlib", ppaths->rlibpath);
-    if (!done) {
-	R_path_from_registry(ppaths->rlibpath, RLIB);
-    }
+    read_gretlnet_string(netfp, "Rlib", cpaths.rlibpath);
 
 #ifdef USE_OX
     /* path to oxl */
-    done = read_gretlnet_string(netfp, "ox", ppaths->oxlpath);
-    if (!done) {
-	strcpy(ppaths->oxlpath, "oxl.exe");
-    }
+    read_gretlnet_string(netfp, "ox", cpaths.oxlpath);
 #endif
 
     /* remote database host */
-    done = cli_read_string_var("dbhost", ppaths->dbhost, netfp, HKEY_CURRENT_USER);
-    if (!done) {
-	strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
-    }
+    cli_read_string_var("dbhost", cpaths.dbhost, netfp, HKEY_CURRENT_USER);
 
     /* www proxy for reading remote databases */
     cli_read_string_var("dbproxy", dbproxy, netfp, HKEY_CURRENT_USER);
@@ -365,8 +327,8 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	libset_set_bool(SHELL_OK, 0);
     }
 
-    gretl_set_paths(ppaths, OPT_NONE);
-    gretl_www_init(ppaths->dbhost, dbproxy, use_proxy);
+    gretl_set_paths(&cpaths, OPT_NONE);
+    gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
 
     if (netfp != NULL) {
 	fclose(netfp);

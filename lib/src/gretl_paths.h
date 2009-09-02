@@ -36,6 +36,27 @@ typedef enum {
     GRETL_CLI_HELPFILE
 } HelpPaths;
 
+typedef struct ConfigPaths_ ConfigPaths;
+
+/* these are all the gretl paths which are recorded in
+   the gretl config file or Windows registry entries 
+*/
+
+struct ConfigPaths_ {
+    char gretldir[MAXLEN];
+    char workdir[MAXLEN];
+    char binbase[MAXLEN];
+    char ratsbase[MAXLEN];
+    char gnuplot[MAXLEN];
+    char x12a[MAXLEN];
+    char tramo[MAXLEN];
+    char rbinpath[MAXLEN];
+    char rlibpath[MAXLEN];
+    char oxlpath[MAXLEN];
+    char dbhost[32];
+    char pngfont[128];
+};
+
 void set_string_table_written (void);
 
 int gretl_string_table_written (void);
@@ -88,9 +109,9 @@ int has_system_prefix (const char *fname, int locus);
 
 void show_paths (void);
 
-int gretl_set_default_paths (PATHS *ppaths, const char *callname);
+int gretl_set_paths (ConfigPaths *paths, gretlopt opt);
 
-int gretl_set_paths (PATHS *ppaths, gretlopt opt);
+int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt);
 
 const char *helpfile_path (int id);
 
@@ -148,7 +169,7 @@ int gretl_mkstemp (char *tmpl);
 
 #else
 
-int cli_read_rc (PATHS *paths);
+int cli_read_rc (void);
 
 #endif
 

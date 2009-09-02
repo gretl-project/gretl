@@ -17,7 +17,7 @@
  * 
  */
 
-/* var.c - vector autoregressions */  
+#define FULL_XML_HEADERS
 
 #include "libgretl.h" 
 #include "var.h"  

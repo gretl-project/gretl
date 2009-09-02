@@ -17,6 +17,8 @@
  * 
  */
 
+#define FULL_XML_HEADERS
+
 #include "libgretl.h"
 #include "gretl_list.h"
 #include "gretl_func.h"

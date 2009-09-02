@@ -225,7 +225,7 @@ gretl_matrix *sys_get_fitted_values (equation_system *sys,
 int system_adjust_t1t2 (equation_system *sys, const double **Z, 
 			const DATAINFO *pdinfo);
 
-#ifndef GRETLCLI
+#ifdef FULL_XML_HEADERS
 
 equation_system *
 equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, 

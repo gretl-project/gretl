@@ -24,8 +24,6 @@
 #include <math.h>
 #include <dirent.h>
 
-#define GRETLCLI
-
 #include "libgretl.h"
 #include "monte_carlo.h"
 #include "var.h"
@@ -64,7 +62,6 @@ char cmdfile[MAXLEN];
 char outfile[MAXLEN];
 char hdrfile[MAXLEN];
 char syscmd[MAXLEN];
-PATHS paths;                  /* useful paths */
 PRN *cmdprn;
 FILE *fb;
 int batch;
@@ -323,7 +320,9 @@ static int ctrl_x (int count, int key)
 
 int main (int argc, char *argv[])
 {
+#ifdef WIN32
     char *callname = argv[0];
+#endif
     double **Z = NULL;
     DATAINFO *datainfo = NULL;
     MODEL **models = NULL;
@@ -421,12 +420,10 @@ int main (int argc, char *argv[])
 	noalloc();
     } 
 
-    gretl_set_default_paths(&paths, callname);
-
 #ifdef WIN32
-    cli_read_registry(callname, &paths);
+    cli_read_registry(callname);
 #else
-    cli_read_rc(&paths);
+    cli_read_rc();
 #endif /* WIN32 */
 
     if (!batch) {

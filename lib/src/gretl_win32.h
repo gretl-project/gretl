@@ -51,7 +51,7 @@ const char *get_gretlnet_filename (void);
 
 int set_gretlnet_filename (const char *prog);
 
-void cli_read_registry (char *callname, PATHS *ppaths);
+void cli_read_registry (char *callname);
 
 void win_show_last_error (void);
 

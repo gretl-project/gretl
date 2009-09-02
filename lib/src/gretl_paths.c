@@ -65,25 +65,24 @@ struct INTERNAL_PATHS {
     char tramodir[MAXLEN];
     char rbinpath[MAXLEN];
     char rlibpath[MAXLEN];
-#ifdef USE_OX
     char oxlpath[MAXLEN];
-#endif
+    char dbhost[32];
     char pngfont[128];
     unsigned char status;
 };
 
-static struct INTERNAL_PATHS gretl_paths;
+static struct INTERNAL_PATHS paths;
 
 static char current_dir[MAXLEN];
 
 const char *helpfile_path (int id)
 {
     if (id == GRETL_HELPFILE) {
-	return gretl_paths.helpfile;
+	return paths.helpfile;
     } else if (id == GRETL_CMD_HELPFILE) {
-	return gretl_paths.cmd_helpfile;
+	return paths.cmd_helpfile;
     } else if (id == GRETL_CLI_HELPFILE) {
-	return gretl_paths.cli_helpfile;
+	return paths.cli_helpfile;
     } else {
 	return "";
     }
@@ -1387,7 +1386,7 @@ enum paths_status_flags {
 static void set_gretl_libpath (const char *path)
 {
 #ifdef WIN32
-    strcpy(gretl_paths.libpath, path);
+    strcpy(paths.libpath, path);
 #else
     const char *sfx = "-gtk2/";
     char *p = strstr(path, "/share");
@@ -1395,128 +1394,99 @@ static void set_gretl_libpath (const char *path)
     if (p) {
 	size_t len = p - path;
 
-	*gretl_paths.libpath = 0;
-	strncat(gretl_paths.libpath, path, len);
-	strcat(gretl_paths.libpath, "/lib/gretl");
-	strcat(gretl_paths.libpath, sfx);
+	*paths.libpath = 0;
+	strncat(paths.libpath, path, len);
+	strcat(paths.libpath, "/lib/gretl");
+	strcat(paths.libpath, sfx);
     } else {
-	sprintf(gretl_paths.libpath, "%s/lib/gretl%s", path, sfx);
+	sprintf(paths.libpath, "%s/lib/gretl%s", path, sfx);
     }
 #endif /* !WIN32 */
 }
 
-#if defined(HAVE_X12A) || defined(HAVE_TRAMO)
+/* This should be called after we're fairly confident that we
+   have the dotdir setting right */
 
-static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
+static int set_tramo_x12a_dirs (void)
 {
     char dirname[MAXLEN];
     size_t n;
     int err = 0;
 
-    if (baddir) {
-# ifdef HAVE_TRAMO
-	*ppaths->tramodir = '\0';
-# endif
-# ifdef HAVE_X12A
-	*ppaths->x12adir = '\0';
-# endif
-	return baddir;
-    }
+    *paths.tramodir = '\0';
+    *paths.x12adir = '\0';
 
-    strcpy(dirname, ppaths->dotdir);
+#if !defined(HAVE_TRAMO) && !defined(HAVE_X12A)
+    return 0;
+#endif
+
+    strcpy(dirname, paths.dotdir);
     n = strlen(dirname);
 
     if (n > 0 && (dirname[n-1] == '\\' || dirname[n-1] == '/')) {
 	dirname[n-1] = '\0';
     }
 
-# ifdef HAVE_X12A
-    build_path(ppaths->x12adir, ppaths->dotdir, "x12arima", NULL);
-    err = gretl_mkdir(ppaths->x12adir);
+#ifdef HAVE_X12A
+    build_path(paths.x12adir, paths.dotdir, "x12arima", NULL);
+    err = gretl_mkdir(paths.x12adir);
     if (err) {
-	*ppaths->x12adir = '\0';
+	*paths.x12adir = '\0';
     }
-# endif
+#endif
 
-# ifdef HAVE_TRAMO
-    build_path(ppaths->tramodir, ppaths->dotdir, "tramo", NULL);
-    if (gretl_mkdir(ppaths->tramodir)) {
-	*ppaths->tramodir = '\0';
+#ifdef HAVE_TRAMO
+    build_path(paths.tramodir, paths.dotdir, "tramo", NULL);
+    if (gretl_mkdir(paths.tramodir)) {
+	*paths.tramodir = '\0';
 	return E_FOPEN;
     }
 
-    sprintf(dirname, "%s%coutput", ppaths->tramodir, SLASH);
+    sprintf(dirname, "%s%coutput", paths.tramodir, SLASH);
     gretl_mkdir(dirname);
 
-    sprintf(dirname, "%s%cgraph", ppaths->tramodir, SLASH);
+    sprintf(dirname, "%s%cgraph", paths.tramodir, SLASH);
     if (gretl_mkdir(dirname)) {
-	*ppaths->tramodir = '\0';
+	*paths.tramodir = '\0';
 	return E_FOPEN;
     }
 
-    sprintf(dirname, "%s%cgraph%cacf", ppaths->tramodir, SLASH, SLASH);
+    sprintf(dirname, "%s%cgraph%cacf", paths.tramodir, SLASH, SLASH);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s%cgraph%cfilters", ppaths->tramodir, SLASH, SLASH);
+    sprintf(dirname, "%s%cgraph%cfilters", paths.tramodir, SLASH, SLASH);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s%cgraph%cforecast", ppaths->tramodir, SLASH, SLASH);
+    sprintf(dirname, "%s%cgraph%cforecast", paths.tramodir, SLASH, SLASH);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s%cgraph%cseries", ppaths->tramodir, SLASH, SLASH);
+    sprintf(dirname, "%s%cgraph%cseries", paths.tramodir, SLASH, SLASH);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s%cgraph%cspectra", ppaths->tramodir, SLASH, SLASH);
+    sprintf(dirname, "%s%cgraph%cspectra", paths.tramodir, SLASH, SLASH);
     gretl_mkdir(dirname);
-# endif
+#endif
 
     return err;
 }
 
-#endif /* x12a || tramo */
-
-static void copy_paths_to_internal (PATHS *paths)
+static void set_builtin_path_strings (int update)
 {
-    strcpy(gretl_paths.gretldir, paths->gretldir);
-    strcpy(gretl_paths.dotdir,   paths->dotdir);
-    strcpy(gretl_paths.workdir,  paths->workdir);
-    strcpy(gretl_paths.gnuplot,  paths->gnuplot);
-    strcpy(gretl_paths.binbase,  paths->binbase);
-    strcpy(gretl_paths.ratsbase, paths->ratsbase);
+    gretl_insert_builtin_string("gretldir", paths.gretldir);
+    gretl_insert_builtin_string("gnuplot",  paths.gnuplot);
+    gretl_insert_builtin_string("x12a",     paths.x12a);
+    gretl_insert_builtin_string("tramo",    paths.tramo);
 
-    strcpy(gretl_paths.helpfile,     paths->helpfile);
-    strcpy(gretl_paths.cmd_helpfile, paths->cmd_helpfile);
-    strcpy(gretl_paths.cli_helpfile, paths->cli_helpfile);
-
-    strcpy(gretl_paths.x12a,     paths->x12a);
-    strcpy(gretl_paths.x12adir,  paths->x12adir);
-    strcpy(gretl_paths.tramo,    paths->tramo);
-    strcpy(gretl_paths.tramodir, paths->tramodir);
-    strcpy(gretl_paths.rbinpath, paths->rbinpath);
-    strcpy(gretl_paths.pngfont,  paths->pngfont);
-
-#ifdef USE_RLIB
-    if (strcmp(paths->rlibpath, gretl_paths.rlibpath)) {
-	strcpy(gretl_paths.rlibpath, paths->rlibpath);
-	gretl_R_reset_error();
+    if (!update) {
+	/* these only have to be done once */
+	gretl_insert_builtin_string("dotdir",   paths.dotdir);
+	gretl_insert_builtin_string("workdir",  paths.workdir);
+	gretl_insert_builtin_string("x12adir",  paths.x12adir);
+	gretl_insert_builtin_string("tramodir", paths.tramodir);
     }
-#endif
 
-#ifdef USE_OX
-    strcpy(gretl_paths.oxlpath, paths->oxlpath);
-#endif
-
-    gretl_insert_builtin_string("gretldir", gretl_paths.gretldir);
-    gretl_insert_builtin_string("dotdir",   gretl_paths.dotdir);
-    gretl_insert_builtin_string("workdir",  gretl_paths.workdir);
-    gretl_insert_builtin_string("gnuplot",  gretl_paths.gnuplot);
-    gretl_insert_builtin_string("x12a",     gretl_paths.x12a);
-    gretl_insert_builtin_string("x12adir",  gretl_paths.x12adir);
-    gretl_insert_builtin_string("tramo",    gretl_paths.tramo);
-    gretl_insert_builtin_string("tramodir", gretl_paths.tramodir);
-
-    if (*paths->tramo) {
+    if (*paths.tramo != '\0') {
 	char s[MAXLEN];
 	int n;
 
 	*s = '\0';
-	strncat(s, paths->tramo, MAXLEN - 1);
+	strncat(s, paths.tramo, MAXLEN - 1);
 	n = strlen(s);
 #ifdef WIN32
 	if (n >= 9 && !strcmp(s + n - 9, "tramo.exe")) {
@@ -1534,7 +1504,7 @@ static void copy_paths_to_internal (PATHS *paths)
 
 const char *gretl_home (void)
 {
-    return gretl_paths.gretldir;
+    return paths.gretldir;
 }
 
 const char *gretl_lib_path (void)
@@ -1545,36 +1515,26 @@ const char *gretl_lib_path (void)
 	char *epath = getenv("GRETL_PLUGIN_PATH");
 
 	if (epath != NULL) {
-	    gretl_paths.libpath[0] = '\0';
-	    strncat(gretl_paths.libpath, epath, MAXLEN - 1);
+	    paths.libpath[0] = '\0';
+	    strncat(paths.libpath, epath, MAXLEN - 1);
 	}
 	set = 1;
     }
 
-    return gretl_paths.libpath;
+    return paths.libpath;
 }
 
 const char *gretl_dotdir (void)
 {
-    return gretl_paths.dotdir;
+    return paths.dotdir;
 }
 
 const char *gretl_workdir (void)
 {
-    return gretl_paths.workdir;
+    return paths.workdir;
 }
 
 #ifdef WIN32
-
-static void correct_blank_dotdir (PATHS *paths)
-{
-    char *base = appdata_path();
-
-    if (base != NULL) {
-	sprintf(paths->dotdir, "%s\\gretl\\", base);
-	free(base);
-    } 
-}
 
 /* if the default workdir is a valid directory, and
    not equal to the current workdir, return the path
@@ -1589,7 +1549,7 @@ char *gretl_default_workdir (void)
 
     if (base != NULL) {
 	ret = g_strdup_printf("%s\\gretl\\", base);
-	if (strcmp(ret, gretl_paths.workdir)) {
+	if (strcmp(ret, paths.workdir)) {
 	    DIR *dir = win32_opendir(ret);
 
 	    if (dir != NULL) {
@@ -1608,26 +1568,7 @@ char *gretl_default_workdir (void)
     return ret;
 }
 
-static void correct_blank_workdir (PATHS *paths)
-{
-    char *base = mydocs_path();
-
-    if (base != NULL) {
-	sprintf(paths->workdir, "%s\\gretl\\", base);
-	free(base);
-    } 
-}
-
 #else
-
-static void correct_blank_dotdir (char *path)
-{
-    char *home = getenv("HOME");
-
-    if (home != NULL) {
-	sprintf(path, "%s/.gretl/", home);
-    } 
-}
 
 char *gretl_default_workdir (void)
 {
@@ -1637,7 +1578,7 @@ char *gretl_default_workdir (void)
 
     if (home != NULL) {
 	ret = g_strdup_printf("%s/gretl/", home);
-	if (strcmp(ret, gretl_paths.workdir)) {
+	if (strcmp(ret, paths.workdir)) {
 	    DIR *dir = opendir(ret);
 
 	    if (dir != NULL) {
@@ -1653,15 +1594,6 @@ char *gretl_default_workdir (void)
     }
 
     return ret;
-}
-
-static void correct_blank_workdir (char *path)
-{
-    char *home = getenv("HOME");
-
-    if (home != NULL) {
-	sprintf(path, "%s/gretl/", home);
-    } 
 }
 
 #endif
@@ -1722,10 +1654,10 @@ int set_gretl_work_dir (const char *path)
 
     closedir(test);
 
-    if (!strcmp(path, gretl_paths.workdir)) {
-	strcpy(gretl_paths.workdir, path);
-	ensure_slash(gretl_paths.workdir);
-	gretl_insert_builtin_string("workdir", gretl_paths.workdir);
+    if (!strcmp(path, paths.workdir)) {
+	strcpy(paths.workdir, path);
+	ensure_slash(paths.workdir);
+	gretl_insert_builtin_string("workdir", paths.workdir);
     }
 
     return 0;
@@ -1733,66 +1665,66 @@ int set_gretl_work_dir (const char *path)
 
 const char *gretl_gnuplot_path (void)
 {
-    return gretl_paths.gnuplot;
+    return paths.gnuplot;
 }
 
 const char *gretl_plotfile (void)
 {
-    return gretl_paths.plotfile;
+    return paths.plotfile;
 }
 
 char *set_gretl_plotfile (const char *fname)
 {
-    *gretl_paths.plotfile = 0;
-    strncat(gretl_paths.plotfile, fname, MAXLEN - 1);
+    *paths.plotfile = 0;
+    strncat(paths.plotfile, fname, MAXLEN - 1);
 
-    return gretl_paths.plotfile;
+    return paths.plotfile;
 }
 
 const char *gretl_binbase (void)
 {
-    return gretl_paths.binbase;
+    return paths.binbase;
 }
 
 const char *gretl_ratsbase (void)
 {
-    return gretl_paths.ratsbase;
+    return paths.ratsbase;
 }
 
 const char *gretl_tramo (void)
 {
-    return gretl_paths.tramo;
+    return paths.tramo;
 }
 
 const char *gretl_tramo_dir (void)
 {
-    return gretl_paths.tramodir;
+    return paths.tramodir;
 }
 
 const char *gretl_x12_arima (void)
 {
-    return gretl_paths.x12a;
+    return paths.x12a;
 }
 
 const char *gretl_x12_arima_dir (void)
 {
-    return gretl_paths.x12adir;
+    return paths.x12adir;
 }
 
 const char *gretl_rbin_path (void)
 {
-    return gretl_paths.rbinpath;
+    return paths.rbinpath;
 }
 
 const char *gretl_rlib_path (void)
 {
-    return gretl_paths.rlibpath;
+    return paths.rlibpath;
 }
 
 #ifdef USE_OX
 const char *gretl_oxl_path (void)
 {
-    return gretl_paths.oxlpath;
+    return paths.oxlpath;
 }
 #else
 const char *gretl_oxl_path (void)
@@ -1815,26 +1747,26 @@ void gretl_set_current_dir (const char *s)
 
 const char *gretl_png_font (void)
 {
-    return gretl_paths.pngfont;
+    return paths.pngfont;
 }
 
 void set_gretl_png_font (const char *s)
 {
-    strcpy(gretl_paths.pngfont, s);
+    strcpy(paths.pngfont, s);
 }
 
 void set_string_table_written (void)
 {
-    gretl_paths.status |= STRING_TABLE_WRITTEN;
+    paths.status |= STRING_TABLE_WRITTEN;
 }
 
 int gretl_string_table_written (void)
 {
     int ret = 0;
 
-    if (gretl_paths.status & STRING_TABLE_WRITTEN) ret = 1;
+    if (paths.status & STRING_TABLE_WRITTEN) ret = 1;
 
-    gretl_paths.status &= ~STRING_TABLE_WRITTEN;
+    paths.status &= ~STRING_TABLE_WRITTEN;
 
     return ret;
 }
@@ -1842,132 +1774,35 @@ int gretl_string_table_written (void)
 void show_paths (void)
 {
     printf(_("gretl: using these basic search paths:\n"));
-    printf("gretldir: %s\n", gretl_paths.gretldir);
-    printf("workdir: %s\n", gretl_paths.workdir);
-    printf("dotdir: %s\n", gretl_paths.dotdir);
-    printf("gnuplot: %s\n", gretl_paths.gnuplot);
+    printf("gretldir: %s\n", paths.gretldir);
+    printf("workdir: %s\n", paths.workdir);
+    printf("dotdir: %s\n", paths.dotdir);
+    printf("gnuplot: %s\n", paths.gnuplot);
 }
 
-#ifdef WIN32
+#ifndef WIN32
 
-static int real_set_paths (PATHS *ppaths, const char *callname, 
-			   gretlopt opt)
-{
-    int defaults = (callname != NULL);
-    char envstr[MAXLEN];
-    int err = 0;
-
-    if (defaults) {
-	char *home = getenv("GRETL_HOME");
-
-	if (home != NULL) {
-	    strcpy(ppaths->gretldir, home);
-	    ensure_slash(ppaths->gretldir);
-	} else {
-	    strcpy(ppaths->gretldir, "c:\\program files\\gretl\\");
-	}
-
-	sprintf(ppaths->binbase, "%sdb\\", ppaths->gretldir);
-	strcpy(ppaths->ratsbase, "f:\\"); 
-	strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
-
-	strcpy(ppaths->x12a, "c:\\program files\\x12arima\\x12a.exe");
-	strcpy(ppaths->tramo, "c:\\program files\\tramo\\tramo.exe");
-
-	R_path_from_registry(ppaths->rbinpath, RTERM);
-	R_path_from_registry(ppaths->rlibpath, RLIB);
-
-#ifdef USE_OX
-	sprintf(ppaths->oxlpath, "%s\\OxMetrics5\\Ox\\bin\\oxl.exe", 
-		program_files_path());
-#endif
-
-	shelldir_init(NULL);
-	current_dir[0] = '\0';
-	ppaths->dotdir[0] = '\0';
-	ppaths->workdir[0] = '\0';
-	gretl_paths.plotfile[0] = '\0';
-	strcpy(ppaths->pngfont, "verdana 8");
-    } else {
-	/* not just defaults: after reading from registry */
-	ensure_slash(ppaths->gretldir);
-	if (*ppaths->dotdir == '\0') {
-	    correct_blank_dotdir(ppaths);
-	}
-	err = validate_writedir(ppaths->dotdir);
-	if (*ppaths->workdir == '\0') {
-	    correct_blank_workdir(ppaths);
-	}
-	if (strcmp(ppaths->dotdir, ppaths->workdir)) { 
-	    err += validate_writedir(ppaths->workdir);
-	}
-	if (!err) {
-	    err = set_tramo_x12a_dirs(ppaths, err);
-	}
-    }
-
-    if (opt & OPT_X) {
-	/* gui program */
-	gretl_set_gui_mode(1);
-	if (opt & OPT_N) {
-	    /* force english */
-	    sprintf(ppaths->helpfile, "%sgretlgui_hlp.txt", ppaths->gretldir);
-	    sprintf(ppaths->cmd_helpfile, "%sgretlcmd_hlp.txt", ppaths->gretldir);
-	    sprintf(ppaths->cli_helpfile, "%sgretlcli_hlp.txt", ppaths->gretldir);
-	} else {
-	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlgui_hlp.txt"));
-	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcmd_hlp.txt"));
-	    sprintf(ppaths->cli_helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
-	}
-    } else { 
-	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
-	strcpy(ppaths->cli_helpfile, ppaths->helpfile);
-    }
-
-    sprintf(ppaths->gnuplot, "%swgnuplot.exe", ppaths->gretldir);
-
-    sprintf(envstr, "%sshare\\gtksourceview-1.0\\language-specs", ppaths->gretldir);
-    gretl_setenv("GTKSOURCEVIEW_LANGUAGE_DIR", envstr);
-
-    ensure_slash(ppaths->dotdir);
-    ensure_slash(ppaths->workdir);
-    set_gretl_libpath(ppaths->gretldir);
-    copy_paths_to_internal(ppaths);
-
-    if (!(opt & OPT_D)) {
-	shelldir_init(ppaths->workdir);
-    }
-
-    set_gretl_tex_preamble();
-
-    return err;
-}
-
-#else /* not Windows */
-
-static void check_gretldir (PATHS *ppaths)
+static void check_gretldir (void)
 {
     char *epath = getenv("GRETL_HOME");
     char buf[FILENAME_MAX];
     FILE *fp;
     int gotit = 0;
 
-    ensure_slash(ppaths->gretldir);
-
-    if (epath != NULL && strcmp(epath, ppaths->gretldir)) {
+    if (epath != NULL && strcmp(epath, paths.gretldir)) {
 	/* environment vs rc file: is the env version OK? */
 	sprintf(buf, "%sCOPYING", epath);
 	fp = gretl_fopen(buf, "r");
 	if (fp != NULL) {
 	    fclose(fp);
-	    *ppaths->gretldir = '\0';
-	    strncat(ppaths->gretldir, epath, MAXLEN - 2);
-	    ensure_slash(ppaths->gretldir);
+	    *paths.gretldir = '\0';
+	    strncat(paths.gretldir, epath, MAXLEN - 2);
+	    ensure_slash(paths.gretldir);
 	    gotit = 1;
 	}
     } else {
 	/* no env setting: check what the rc file says */
-	sprintf(buf, "%sCOPYING", ppaths->gretldir);
+	sprintf(buf, "%sCOPYING", paths.gretldir);
 	fp = gretl_fopen(buf, "r");
 	if (fp != NULL) {
 	    fclose(fp);
@@ -1993,158 +1828,433 @@ static void check_gretldir (PATHS *ppaths)
 	    */
 	    s = strstr(buf, "bin/gretl");
 	    if (s != NULL) {
-		*ppaths->gretldir = '\0';
-		strncat(ppaths->gretldir, buf, s - buf);
-		strcat(ppaths->gretldir, "share/gretl/");
+		*paths.gretldir = '\0';
+		strncat(paths.gretldir, buf, s - buf);
+		strcat(paths.gretldir, "share/gretl/");
 		fprintf(stderr, "gretldir is really '%s'?\n", 
-			ppaths->gretldir);
+			paths.gretldir);
 	    }
 	}
 	g_free(proc_exe);
     }
 }
 
-static int real_set_paths (PATHS *ppaths, const char *callname, 
-			   gretlopt opt)
+#endif
+
+/* In setting helpfile paths, OPT_N means to force the use of
+   the English-language files.  We do this once we're fairly
+   sure we have gretldir right, and on changing gretldir via
+   the GUI (though that's likely to be a disaster, isn't it?).
+*/
+
+static void set_helpfile_paths (gretlopt opt)
 {
-    int defaults = (callname != NULL);
-    int err = 0;
+    const char *ghome = paths.gretldir;
 
-    if (defaults) {
-	char *home = getenv("GRETL_HOME");
-
-	if (home != NULL) {
-	    strcpy(ppaths->gretldir, home);
-	    ensure_slash(ppaths->gretldir);
-	} else {
-	    strcpy(ppaths->gretldir, GRETL_PREFIX);
-	    strcat(ppaths->gretldir, "/share/gretl/");
-	} 
-
-	sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
-	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
-	strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
-
-	strcpy(ppaths->rbinpath, "R");
-
-#ifdef RLIBPATH
-	strcpy(ppaths->rlibpath, RLIBPATH);
+    if (!(opt & OPT_X)) {
+	/* not GUI, CLI program */
+#ifdef WIN32
+	sprintf(paths.helpfile, "%s%s", ghome, _("gretlcli_hlp.txt"));
+	strcpy(paths.cli_helpfile, paths.helpfile);
 #else
-	*ppaths->rlibpath = '\0';
+	sprintf(paths.helpfile, "%s%s", ghome, _("gretlcli.hlp"));
+	strcpy(paths.cli_helpfile, paths.helpfile);
 #endif
+	return;
+    }
 
-#ifdef USE_OX
-	strcpy(ppaths->oxlpath, "oxl");
-#endif
-
-	strcpy(ppaths->gnuplot, "gnuplot");
-#ifdef OSX_BUILD
-	strcpy(ppaths->pngfont, "Sans 9");
+#ifdef WIN32
+    if (opt & OPT_N) {
+	sprintf(paths.helpfile, "%sgretlgui_hlp.txt", ghome);
+	sprintf(paths.cmd_helpfile, "%sgretlcmd_hlp.txt", ghome);
+	sprintf(paths.cli_helpfile, "%sgretlcli_hlp.txt", ghome);
+    } else {
+	sprintf(paths.helpfile, "%s%s", ghome, _("gretlgui_hlp.txt"));
+	sprintf(paths.cmd_helpfile, "%s%s", ghome, _("gretlcmd_hlp.txt"));
+	sprintf(paths.cli_helpfile, "%s%s", ghome, _("gretlcli_hlp.txt"));
+    }
 #else
-	strcpy(ppaths->pngfont, "Vera 9");
-#endif
-	current_dir[0] = '\0';	
-	shelldir_init(NULL);
-
-	/* try to set a default userdir */
-	home = getenv("HOME");
-	if (home != NULL) {
-	    strcpy(ppaths->dotdir, home);
-	    strcat(ppaths->dotdir, "/.gretl/");
-	    strcpy(ppaths->workdir, home);
-	    strcat(ppaths->workdir, "/gretl/");
-	} else {
-	    *ppaths->dotdir = '\0';
-	    *ppaths->workdir = '\0';
-	}
-
-#ifdef HAVE_X12A 	 
-	strcpy(ppaths->x12a, "x12a"); 	 
-#endif 	 
-	  	 
-#ifdef HAVE_TRAMO 	 
-	strcpy(ppaths->tramo, "tramo"); 	 
-#endif
-
-	*gretl_paths.plotfile = '\0';
+    if (opt & OPT_N) {
+	sprintf(paths.helpfile, "%sgretlgui.hlp", ghome);
+	sprintf(paths.cli_helpfile, "%sgretlcli.hlp", ghome);
+	sprintf(paths.cmd_helpfile, "%sgretlcmd.hlp", ghome);
     } else {
-	/* check validity of main directories */
-	check_gretldir(ppaths);
-	if (*ppaths->dotdir == '\0') {
-	    correct_blank_dotdir(ppaths->dotdir);
-	}
-	if (*ppaths->workdir == '\0') {
-	    correct_blank_workdir(ppaths->workdir);
-	}
-	err = validate_writedir(ppaths->dotdir);
-	if (strcmp(ppaths->dotdir, ppaths->workdir)) {
-	    err += validate_writedir(ppaths->workdir);
-	}
+	sprintf(paths.helpfile, "%s%s", ghome, _("gretlgui.hlp"));
+	sprintf(paths.cli_helpfile, "%s%s", ghome, _("gretlcli.hlp"));
+	sprintf(paths.cmd_helpfile, "%s%s", ghome, _("gretlcmd.hlp"));
+    }
+#endif
+}
+
+/* called at start-up only: the @dirname argument is the value
+   taken from the config file or registry
+*/
+
+static int initialize_gretldir (const char *dirname, gretlopt opt)
+{
+    char *ghome = getenv("GRETL_HOME");
+    int done = 0, err = 0;
+
+    if (*dirname != '\0') {
+	/* use value from config/registry */
+	strcpy(paths.gretldir, dirname);
+	ensure_slash(paths.gretldir);
+	done = 1;
+    } else if (ghome != NULL) {
+	/* use environment setting */
+	strcpy(paths.gretldir, ghome);
+	ensure_slash(paths.gretldir);
+	done = 1;
     }
 
-    if (opt & OPT_X) {
-	gretl_set_gui_mode(1);
-	if (opt & OPT_N) {
-	    /* force english */
-	    sprintf(ppaths->helpfile, "%sgretlgui.hlp", ppaths->gretldir);
-	    sprintf(ppaths->cli_helpfile, "%sgretlcli.hlp", ppaths->gretldir);
-	    sprintf(ppaths->cmd_helpfile, "%sgretlcmd.hlp", ppaths->gretldir);
+    if (!done) {
+#ifdef WIN32
+	/* fall back on installation-time default */
+	char *progfiles = program_files_path();
+
+	if (progfiles != NULL) {
+	    sprintf(paths.gretldir, "%s\\gretl\\", progfiles);
+	    free(progfiles);
 	} else {
-	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlgui.hlp"));
-	    sprintf(ppaths->cli_helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
-	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcmd.hlp"));
+	    err = 1;
 	}
-    } else {
-	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
-	strcpy(ppaths->cli_helpfile, ppaths->helpfile);
-    }
-
-    if (getenv("GTKSOURCEVIEW_LANGUAGE_DIR") == NULL) {
-	/* for the benefit of the bundled gtksourceview library */
-	char envstr[MAXLEN];
-
-	sprintf(envstr, "%sgtksourceview", ppaths->gretldir);
-	gretl_setenv("GTKSOURCEVIEW_LANGUAGE_DIR", envstr);
-    }
-
-    ensure_slash(ppaths->dotdir);
-    set_gretl_libpath(ppaths->gretldir);
-
-#if defined(HAVE_X12A) || defined(HAVE_TRAMO)
-    if ((!(opt & OPT_D) || !(opt & OPT_X))) {
-	err = set_tramo_x12a_dirs(ppaths, err);
-    }
+#else
+	/* use the compiled-in value */
+	strcpy(paths.gretldir, GRETL_PREFIX);
+	strcat(paths.gretldir, "/share/gretl/");
 #endif
-
-    copy_paths_to_internal(ppaths);
-
-#ifdef OSX_BUILD
-    if (!(opt & OPT_D)) {
-	shelldir_init(ppaths->workdir);
     }
-#endif
 
-    set_gretl_tex_preamble();
+#ifndef WIN32
+    check_gretldir();
+#endif 
+
+    if (!err) {
+	set_helpfile_paths(opt);
+	set_gretl_libpath(paths.gretldir);
+    }
 
     return err;
 }
 
-#endif /* win32 versus unix */
+/* called at start-up only: set the "hidden" working dir,
+   which is not user-configurable */
 
-int gretl_set_default_paths (PATHS *ppaths, const char *callname)
+static int initialize_dotdir (void)
 {
-    gretlopt opt = OPT_NONE;
+    char *home;
+    int err = 0;
 
-    if (strstr(callname, "gretlcli") == NULL) {
-	opt = OPT_X; /* gui program */
+    *paths.dotdir = '\0';
+
+#ifdef WIN32
+    home = appdata_path();
+    if (home != NULL) {
+	sprintf(paths.dotdir, "%s\\gretl\\", home);
+	free(home);
+    } else {
+	sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
+    }
+#else
+    /* now try to set a sensible dotdir */
+    home = getenv("HOME");
+    if (home != NULL) {
+	sprintf(paths.dotdir, "%s/.gretl/", home);
+    } 
+#endif
+
+    err = validate_writedir(paths.dotdir);
+
+    if (err) {
+	*paths.x12adir = '\0';
+	*paths.tramodir = '\0';
+    } else {
+	/* these paths depend on dotdir */
+	err = set_tramo_x12a_dirs();
     }
 
-    return real_set_paths(ppaths, callname, opt);
+    return err;
 }
 
-int gretl_set_paths (PATHS *ppaths, gretlopt opt)
+static int maybe_transcribe_path (char *targ, const char *src,
+				  int slash_terminate)
 {
-    return real_set_paths(ppaths, NULL, opt);
+    if (*src != '\0' && strcmp(src, targ)) {
+	strcpy(targ, src);
+	if (slash_terminate) {
+	    ensure_slash(targ);
+	}
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+/* This is called from GUI after editing config in dialog. The path
+   elements that can be set in this way are:
+
+   gretldir
+   gnuplot (but not on MS Windows)
+   tramo, x12a, rbinpath, rlibpath, oxlpath, 
+   binbase, ratsbase, 
+   dbhost (??)
+
+   * paths.workdir is updated via the separate working directory
+     dialog
+
+   * paths.pngfont is updated separately, via the plot editing
+     dialog.
+*/
+
+int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
+{
+    int ndelta = 0;
+
+    if (maybe_transcribe_path(paths.gretldir, cpaths->gretldir, 1)) {
+	set_helpfile_paths(opt);
+	set_gretl_libpath(paths.gretldir);
+	ndelta++;
+    }
+    
+    /* databases, native and RATS */
+    maybe_transcribe_path(paths.binbase, cpaths->binbase, 1);
+    maybe_transcribe_path(paths.ratsbase, cpaths->ratsbase, 1);
+
+    /* database server -- needs restart to activate? */
+    maybe_transcribe_path(paths.dbhost, cpaths->dbhost, 0);
+
+#ifndef WIN32
+    /* gnuplot path: this is set immutably at start-up on Windows */
+    maybe_transcribe_path(paths.gnuplot, cpaths->gnuplot, 0);
+#endif
+
+    /* other external programs */
+    ndelta += maybe_transcribe_path(paths.x12a, cpaths->x12a, 0);
+    ndelta += maybe_transcribe_path(paths.tramo, cpaths->tramo, 0);
+    ndelta += maybe_transcribe_path(paths.rbinpath, cpaths->rbinpath, 0);
+    ndelta += maybe_transcribe_path(paths.oxlpath, cpaths->oxlpath, 0);
+
+#ifdef USE_RLIB
+    if (maybe_transcribe_path(paths.rlibpath, cpaths->rlibpath, 0)) {
+	gretl_R_reset_error();
+	ndelta++;
+    }
+#endif
+
+    if (ndelta > 0) {
+	set_builtin_path_strings(1);
+    }
+
+    return 0;
+}
+
+#ifdef WIN32
+
+static void load_default_workdir (char *targ)
+{
+    char *home = mydocs_path();
+
+    if (home != NULL) {
+	sprintf(targ, "%s\\gretl\\", home);
+	free(home);
+    } else {
+	sprintf(targ, "%suser\\", paths.gretldir);
+    }
+}
+
+static void load_default_path (char *targ)
+{
+    char *progfiles = program_files_path();
+
+    if (targ == paths.workdir) {
+	load_default_workdir(targ);
+    } else if (targ == paths.binbase) {
+	sprintf(targ, "%sdb\\", paths.gretldir);
+    } else if (targ == paths.ratsbase) {
+	strcpy(targ, "f:\\"); 
+    } else if (targ == paths.dbhost) {
+	strcpy(targ, "ricardo.ecn.wfu.edu");
+    } else if (targ == paths.gnuplot) {
+	strcpy(targ, "gnuplot");
+    } else if (targ == paths.x12a) {
+	sprintf(targ, "%s\\x12arima\\x12a.exe", progfiles);
+    } else if (targ == paths.tramo) {
+	sprintf(targ, "%s\\tramo\\tramo.exe", progfiles);
+    } else if (targ == paths.rbinpath) {
+	R_path_from_registry(targ, RTERM);
+    } else if (targ == paths.rlibpath) {
+	R_path_from_registry(targ, RLIB);
+    } else if (targ == paths.oxlpath) {
+# ifdef USE_OX
+	sprintf(targ, "%s\\OxMetrics5\\Ox\\bin\\oxl.exe", progfiles);
+# else
+	*paths.oxlpath = '\0';
+# endif
+    } else if (targ == paths.pngfont) {
+	strcpy(targ, "verdana 8");
+    }
+
+    free(progfiles);
+}
+
+#else /* !WIN32 */
+
+static void load_default_workdir (char *targ)
+{
+    char *home = getenv("HOME");
+
+    if (home != NULL) {
+	sprintf(targ, "%s/gretl/", home);
+    } else {
+	sprintf(targ, "%suser/", paths.gretldir);
+    }
+}
+
+static void load_default_path (char *targ)
+{
+    if (targ == paths.workdir) {
+	load_default_workdir(targ);
+    } else if (targ == paths.binbase) {
+	sprintf(targ, "%sdb/", paths.gretldir);
+    } else if (targ == paths.ratsbase) {
+	strcpy(targ, "/mnt/dosc/userdata/rats/oecd/");
+    } else if (targ == paths.dbhost) {
+	strcpy(targ, "ricardo.ecn.wfu.edu");
+    } else if (targ == paths.gnuplot) {
+	strcpy(targ, "gnuplot");
+    } else if (targ == paths.x12a) {
+# ifdef HAVE_X12A
+	strcpy(targ, "x12a");
+# else
+	*targ = '\0';
+# endif
+    } else if (targ == paths.tramo) {
+# ifdef HAVE_TRAMO
+	strcpy(targ, "tramo");
+# else
+	*targ = '\0';
+# endif
+    } else if (targ == paths.rbinpath) {
+	strcpy(paths.rbinpath, "R");
+    } else if (targ == paths.rlibpath) {
+# ifdef RLIBPATH
+	strcpy(paths.rlibpath, RLIBPATH);
+# else
+	*paths.rlibpath = '\0';
+# endif
+    } else if (targ == paths.oxlpath) {
+# ifdef USE_OX
+	strcpy(paths.oxlpath, "oxl");
+# else
+	*paths.oxlpath = '\0';
+# endif
+    } else if (targ == paths.pngfont) {
+# ifdef OSX_BUILD
+	strcpy(targ, "Sans 9");
+# else
+	strcpy(targ, "Vera 9");
+# endif	
+    }
+}
+
+#endif /* WIN32 or not */
+
+static void path_init (char *targ, const char *src, int slash_terminate)
+{
+    if (*src) {
+	strcpy(targ, src);
+    } else {
+	load_default_path(targ);
+    }
+
+    if (slash_terminate && *targ != '\0') {
+	ensure_slash(targ);
+    }
+}
+
+/* done only at startup */
+
+static void copy_paths_with_fallback (ConfigPaths *cpaths)
+{
+    /* working directory */
+    path_init(paths.workdir, cpaths->workdir, 1);
+
+    /* databases, native and RATS */
+    path_init(paths.binbase, cpaths->binbase, 1);
+    path_init(paths.ratsbase, cpaths->ratsbase, 1);
+
+    /* database server */
+    path_init(paths.dbhost, cpaths->dbhost, 0);
+
+    /* gnuplot */
+    path_init(paths.gnuplot, cpaths->gnuplot, 0);
+
+    /* other external programs */
+    path_init(paths.x12a, cpaths->x12a, 0);
+    path_init(paths.tramo, cpaths->tramo, 0);
+    path_init(paths.rbinpath, cpaths->rbinpath, 0);
+    path_init(paths.rlibpath, cpaths->rlibpath, 0);
+    path_init(paths.oxlpath, cpaths->oxlpath, 0);
+
+    /* graphing font */
+    path_init(paths.pngfont, cpaths->pngfont, 0);
+}
+
+static void set_up_sourceview_path (void)
+{
+    char envstr[MAXLEN];
+
+#ifdef WIN32
+    sprintf(envstr, "%sshare\\gtksourceview-1.0\\language-specs", paths.gretldir);
+    gretl_setenv("GTKSOURCEVIEW_LANGUAGE_DIR", envstr);
+#else
+    if (getenv("GTKSOURCEVIEW_LANGUAGE_DIR") == NULL) {
+	/* for the benefit of the bundled gtksourceview library */
+	sprintf(envstr, "%sgtksourceview", paths.gretldir);
+	gretl_setenv("GTKSOURCEVIEW_LANGUAGE_DIR", envstr);
+    }
+#endif
+}
+
+/* This is called after reading the gretl config file (or reading
+   from the registry on Windows) at startup.  Subsequent updates
+   to paths via the GUI are handled by gretl_update_paths().
+*/
+
+int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
+{
+    int err = 0;
+
+    if (opt & OPT_X) {
+	gretl_set_gui_mode(1);
+    }  
+
+    shelldir_init(NULL);
+
+    *current_dir = '\0';	
+    *paths.workdir = '\0';
+    *paths.plotfile = '\0';
+
+    err = initialize_gretldir(cpaths->gretldir, opt);
+    err += initialize_dotdir();
+
+    copy_paths_with_fallback(cpaths);
+
+    if (strcmp(paths.dotdir, paths.workdir)) { 
+	err += validate_writedir(paths.workdir);
+    }
+
+    set_up_sourceview_path();
+
+#if defined(WIN32) || defined(OSX_BUILD) 
+    /* FIXME why not otherwise? */
+    shelldir_init(paths.workdir);
+#endif
+
+    set_builtin_path_strings(0);
+    set_gretl_tex_preamble();
+
+    return err;
 }
 
 /* for writing a file, name given by user: if the path is not
@@ -2170,7 +2280,7 @@ const char *gretl_maybe_switch_dir (const char *fname)
 		gretl_chdir(sdir);
 	    }
 	} else {
-	    gretl_chdir(gretl_paths.workdir);
+	    gretl_chdir(paths.workdir);
 	}
     }
 
@@ -2199,7 +2309,7 @@ char *gretl_maybe_prepend_dir (char *fname)
 		build_path(tmp, sdir, fname, NULL);
 	    }
 	} else {
-	    build_path(tmp, gretl_paths.workdir, fname, NULL);
+	    build_path(tmp, paths.workdir, fname, NULL);
 	}
     }
 
@@ -2331,8 +2441,9 @@ static int rc_bool (const char *s)
     }	
 }
 
-int cli_read_rc (PATHS *paths) 
+int cli_read_rc (void) 
 {
+    ConfigPaths cpaths = {0};
     FILE *fp;
     char rcfile[FILENAME_MAX];
     char line[MAXLEN], key[32], val[MAXLEN];
@@ -2364,35 +2475,35 @@ int cli_read_rc (PATHS *paths)
 	    strcpy(val, line + strlen(key) + 3); 
 	    chopstr(val); 
 	    if (!strcmp(key, "gretldir")) {
-		*paths->gretldir = '\0';
-		strncat(paths->gretldir, val, MAXLEN - 1);
+		*cpaths.gretldir = '\0';
+		strncat(cpaths.gretldir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "userdir")) {
-		*paths->workdir = '\0';
-		strncat(paths->workdir, val, MAXLEN - 1);
+		*cpaths.workdir = '\0';
+		strncat(cpaths.workdir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "shellok")) {
 		libset_set_bool(SHELL_OK, rc_bool(val));
 	    } else if (!strcmp(key, "usecwd")) {
 		usecwd = rc_bool(val);
 		libset_set_bool(USE_CWD, usecwd);
 	    } else if (!strcmp(key, "binbase")) {
-		*paths->binbase = '\0';
-		strncat(paths->binbase, val, MAXLEN - 1);
+		*cpaths.binbase = '\0';
+		strncat(cpaths.binbase, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "ratsbase")) {
-		*paths->ratsbase = '\0';
-		strncat(paths->ratsbase, val, MAXLEN - 1);
+		*cpaths.ratsbase = '\0';
+		strncat(cpaths.ratsbase, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "dbhost")) {
-		*paths->dbhost = '\0';
-		strncat(paths->dbhost, val, 32 - 1);
+		*cpaths.dbhost = '\0';
+		strncat(cpaths.dbhost, val, 32 - 1);
 	    } else if (!strcmp(key, "dbproxy")) {
 		strncat(dbproxy, val, 21 - 1);
 	    } else if (!strcmp(key, "useproxy")) {
 		use_proxy = rc_bool(val);
 	    } else if (!strcmp(key, "x12a")) {
-		*paths->x12a = '\0';
-		strncat(paths->x12a, val, MAXLEN - 1);
+		*cpaths.x12a = '\0';
+		strncat(cpaths.x12a, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "tramo")) {
-		*paths->tramo = '\0';
-		strncat(paths->tramo, val, MAXLEN - 1);
+		*cpaths.tramo = '\0';
+		strncat(cpaths.tramo, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {
 		rc_set_gp_colors(val);
 	    } 
@@ -2406,14 +2517,14 @@ int cli_read_rc (PATHS *paths)
 
 	s = getcwd(cwd, MAXLEN);
 	if (s != NULL) {
-	    *paths->workdir = '\0';
-	    strncat(paths->workdir, s, MAXLEN - 2);
-	    ensure_slash(paths->workdir);
+	    *cpaths.workdir = '\0';
+	    strncat(cpaths.workdir, s, MAXLEN - 2);
+	    ensure_slash(cpaths.workdir);
 	}
     }
 
-    err = gretl_set_paths(paths, OPT_NONE);
-    gretl_www_init(paths->dbhost, dbproxy, use_proxy);
+    err = gretl_set_paths(&cpaths, OPT_NONE);
+    gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
 
     return err;
 }

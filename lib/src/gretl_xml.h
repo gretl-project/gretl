@@ -20,7 +20,7 @@
 #ifndef GRETL_XML_H
 #define GRETL_XML_H
 
-#ifndef GRETLCLI
+#ifdef FULL_XML_HEADERS
 
 #define XUC const xmlChar *
 
@@ -103,7 +103,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc,
 
 int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask);
 
-#endif /* !GRETLCLI */
+#endif /* FULL_XML_HEADERS */
 
 int gretl_write_matrix_as_gdt (const char *fname, 
 			       const gretl_matrix *X,

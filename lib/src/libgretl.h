@@ -28,7 +28,7 @@
 
 #include <zlib.h>
 
-#ifndef GRETLCLI
+#ifdef FULL_XML_HEADERS
 # include <libxml/xmlmemory.h>
 # include <libxml/parser.h>
 #endif
@@ -225,7 +225,6 @@ typedef unsigned int gretlopt;
 typedef struct VARINFO_ VARINFO;
 typedef struct PANINFO_ PANINFO;
 typedef struct DATAINFO_ DATAINFO;
-typedef struct PATHS_ PATHS;
 typedef struct VMatrix_ VMatrix;
 typedef struct SAMPLE_ SAMPLE;
 typedef struct ARINFO_ ARINFO;
@@ -289,27 +288,6 @@ struct DATAINFO_ {
 struct DATASET_ {
     DATAINFO *dinfo;
     double **Z;
-};
-
-struct PATHS_ {
-    char workdir[MAXLEN];
-    char dotdir[MAXLEN];
-    char gretldir[MAXLEN];
-    char helpfile[MAXLEN];
-    char cmd_helpfile[MAXLEN];
-    char cli_helpfile[MAXLEN];
-    char binbase[MAXLEN];
-    char ratsbase[MAXLEN];
-    char gnuplot[MAXLEN];
-    char x12a[MAXLEN];
-    char x12adir[MAXLEN];
-    char tramo[MAXLEN];
-    char tramodir[MAXLEN];
-    char rbinpath[MAXLEN];
-    char rlibpath[MAXLEN];
-    char oxlpath[MAXLEN];
-    char dbhost[32];
-    char pngfont[128];
 };
 
 struct VMatrix_ {

@@ -2050,7 +2050,7 @@ void libset_cleanup (void)
 }
 
 /* switches for looping and batch mode: output: these depend on the
-   state of the program calling libgretl, but are not user-settable
+   state of the program calling libgretl, they are not user-settable
 */
 
 static int batch_mode;

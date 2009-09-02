@@ -215,7 +215,6 @@ char datafile[MAXLEN];
 char scriptfile[MAXLEN];
 char tryfile[MAXLEN];
 
-PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
 
@@ -332,7 +331,6 @@ static int script_type (const char *fname)
 
 static void fix_dbname (char *db)
 {
-    const char *bbase;
     FILE *fp = NULL;
 
     if (strstr(db, ".bin") == NULL &&
@@ -464,7 +462,9 @@ static int have_data (void)
 
 int main (int argc, char **argv)
 {
+#ifdef G_OS_WIN32
     char *callname = argv[0];
+#endif
     int ftype = 0;
     char auxname[MAXLEN];
     char filearg[MAXLEN];
@@ -496,7 +496,6 @@ int main (int argc, char **argv)
 #endif
 
     libgretl_init();
-    gretl_set_default_paths(&paths, callname);
 
 #ifdef G_OS_WIN32
     gretl_win32_init(callname, optdebug);

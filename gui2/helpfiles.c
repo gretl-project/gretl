@@ -229,7 +229,8 @@ static int compat_command_number (const char *s)
 
 static void set_en_help_file (int gui)
 {
-    char *helpfile, *tmp, *p;
+    const char *helpfile;
+    char *tmp, *p;
 
     if (gui) {
 	helpfile = helpfile_path(GRETL_HELPFILE);

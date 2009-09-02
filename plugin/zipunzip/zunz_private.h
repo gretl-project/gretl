@@ -9,7 +9,6 @@
 #ifndef ZUNZ_PRIVATE_H_
 #define ZUNZ_PRIVATE_H_
 
-#define GRETLCLI
 #include "libgretl.h"
 
 #include <stddef.h>

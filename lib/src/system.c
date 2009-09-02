@@ -19,6 +19,8 @@
 
 /* mechanisms for defining and handling systems of equations */
 
+#define FULL_XML_HEADERS
+
 #include "libgretl.h"
 #include "system.h"
 #include "objstack.h"

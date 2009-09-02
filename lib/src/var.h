@@ -210,7 +210,7 @@ int transcribe_VAR_models (GRETL_VAR *var,
 			   const DATAINFO *pdinfo,
 			   const gretl_matrix *XTX);
 
-#ifndef GRETLCLI
+#ifdef FULL_XML_HEADERS
 
 GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, 
 			       const DATAINFO *pdinfo,

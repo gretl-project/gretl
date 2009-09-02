@@ -17,6 +17,8 @@
  * 
  */
 
+#define FULL_XML_HEADERS
+
 #include "libgretl.h"
 #include "monte_carlo.h"
 #include "version.h"

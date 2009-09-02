@@ -54,6 +54,8 @@ char rcfile[MAXLEN];
 char dbproxy[21];
 int use_proxy;
 
+static ConfigPaths paths;
+
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
 #ifndef G_OS_WIN32
@@ -314,7 +316,7 @@ static gretlopt set_paths_opt = OPT_X;
 void force_english_help (void)
 {
     set_paths_opt |= OPT_N;
-    gretl_set_paths(&paths, set_paths_opt);
+    gretl_update_paths(&paths, set_paths_opt);
 }
 
 void set_fixed_font (void)
@@ -593,14 +595,17 @@ int get_tramo_ok (void)
 
 static void set_tramo_status (void)
 {
+    const char *tramodir = gretl_tramo_dir();
     int gui_up = (mdata != NULL);
     int ok = 0;
 
-    if (*paths.tramodir != '\0') {
-	ok = check_for_prog(paths.tramo);
+    if (*tramodir != '\0') {
+	const char *tramo = gretl_tramo();
+
+	ok = check_for_prog(tramo);
 # ifdef OSX_BUILD
 	if (!ok) {
-	    ok = alt_ok(paths.tramo);
+	    ok = alt_ok(tramo);
 	}
 # endif 
     }
@@ -633,14 +638,17 @@ int get_x12a_ok (void)
 
 static void set_x12a_status (void)
 {
+    const char *x12adir = gretl_x12_arima_dir();
     int gui_up = (mdata != NULL);
     int ok = 0;
 
-    if (*paths.x12adir != '\0') {
-	ok = check_for_prog(paths.x12a);
+    if (*x12adir != '\0') {
+	const char *x12a = gretl_x12_arima();
+
+	ok = check_for_prog(x12a);
 # ifdef OSX_BUILD    
 	if (!ok) {
-	    ok = alt_ok(paths.x12a);
+	    ok = alt_ok(x12a);
 	}
 # endif  
     }
@@ -1556,7 +1564,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     maybe_revise_tramo_x12a_status();
 #endif
 
-    write_rc(); /* note: calls gretl_set_paths */
+    write_rc(); /* note: calls gretl_update_paths */
 
     /* register these for session using libset apparatus */
     libset_set_bool(SHELL_OK, shellok);
@@ -1790,7 +1798,7 @@ void write_rc (void)
     }
 
     save_file_lists();
-    gretl_set_paths(&paths, set_paths_opt);
+    gretl_update_paths(&paths, set_paths_opt);
 }
 
 static int get_network_settings (void)
@@ -1870,12 +1878,14 @@ void read_rc (int debug)
 	if (err) {
 	    gui_errmsg(err);
 	}
+#if 0 /* FIXME? */
 	for (i=0; rc_vars[i].key != NULL; i++) {
 	    if (rc_vars[i].var == paths.tramodir ||
 		rc_vars[i].var == paths.x12adir) {
 		rc_vars[i].flags |= FIXSET;
 	    }
 	}
+#endif
     } 
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1933,7 +1943,7 @@ void write_rc (void)
 
     err = write_plain_text_rc();
     if (!err) {
-	gretl_set_paths(&paths, set_paths_opt);
+	gretl_update_paths(&paths, set_paths_opt);
 	record_shell_opt();
     }
 }

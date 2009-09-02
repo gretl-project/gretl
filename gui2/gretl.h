@@ -31,6 +31,8 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#define FULL_XML_HEADERS
+
 #include "libgretl.h"
 #include "dbread.h"
 
@@ -70,7 +72,6 @@
 /* basic global program vars */
 extern double **Z;
 extern DATAINFO *datainfo;
-extern PATHS paths; 
 extern MODEL **models;
 
 /* global counters */

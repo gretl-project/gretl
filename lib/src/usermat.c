@@ -17,6 +17,8 @@
  * 
  */
 
+#define FULL_XML_HEADERS
+
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "matrix_extra.h"

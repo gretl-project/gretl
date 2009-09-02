@@ -206,10 +206,6 @@ typedef enum {
     GRETL_TEST_MAX
 } ModelTestType;
 
-#ifndef GRETLCLI
-int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node);
-#endif
-
 MODEL *gretl_model_new (void);
 
 void model_stats_init (MODEL *pmod);
@@ -441,12 +437,13 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 			   FILE *fp);
 
-#ifndef GRETLCLI
+#ifdef FULL_XML_HEADERS
+
+int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node);
 
 MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, 
 			     const DATAINFO *pdinfo,
 			     int *err);
-
 #endif
 
 #endif /* GRETL_MODEL_H */
