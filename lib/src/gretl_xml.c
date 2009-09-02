@@ -1438,7 +1438,8 @@ int gretl_write_matrix_as_gdt (const char *fname,
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @opt: if %OPT_Z write gzipped data, else uncompressed.
- * @ppaths: pointer to paths information (or NULL).
+ * @progress: may be 1 when called from gui to display progress
+ * bar in case of a large data write; generally should be 0.
  * 
  * Write out in xml a data file containing the values of the given set
  * of variables.
@@ -1448,7 +1449,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
 
 int gretl_write_gdt (const char *fname, const int *list, 
 		     const double **Z, const DATAINFO *pdinfo, 
-		     gretlopt opt, PATHS *ppaths)
+		     gretlopt opt, int progress)
 {
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
@@ -1495,7 +1496,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     sz = (tsamp * nvars * sizeof(double));
     if (sz > 100000) {
 	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), sz / 1024);
-	if (ppaths == NULL) {
+	if (!progress) {
 	    sz = 0L;
 	}
     } else {
@@ -2305,10 +2306,9 @@ static long get_filesize (const char *fname)
 /**
  * gretl_read_gdt:
  * @fname: name of file to try.
- * @ppaths: path information struct.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
- * @opt: use %OPT_P to display gui progress bar.
+ * @opt: use %OPT_P to display gui progress bar. (FIXME?)
  * @prn: where messages should be written.
  * 
  * Read data from file into gretl's work space, allocating space as
@@ -2318,15 +2318,13 @@ static long get_filesize (const char *fname)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt (char *fname, PATHS *ppaths,
-		    double ***pZ, DATAINFO *pdinfo, 
+int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn) 
 {
     DATAINFO *tmpdinfo;
     double **tmpZ = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur;
-    int newdata = (*pZ == NULL);
     int gotvars = 0, gotobs = 0, err = 0;
     int caldata = 0;
     double gdtversion = 1.0;
@@ -2470,10 +2468,6 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
     data_read_message(fname, tmpdinfo, prn);
 
     err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, opt, prn);
-
-    if (!err && newdata && ppaths != NULL && fname != ppaths->datfile) {
-	strcpy(ppaths->datfile, fname);
-    }
 
  bailout:
 

@@ -903,7 +903,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
 void print_plot_bounding_box_request (FILE *fp)
 {
-    fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_dot_dir());
+    fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_dotdir());
     fputs("print \"pixel_bounds: \", GPVAL_TERM_XMIN, GPVAL_TERM_XMAX, "
 	  "GPVAL_TERM_YMIN, GPVAL_TERM_YMAX\n", fp);
     fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
@@ -1127,12 +1127,12 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
     }
 
     if (gui) {
-	sprintf(plotfile, "%sgpttmp.XXXXXX", gretl_dot_dir());
+	sprintf(plotfile, "%sgpttmp.XXXXXX", gretl_dotdir());
 	if (mktemp(plotfile) == NULL) {
 	    return E_FOPEN;
 	}
     } else {
-	sprintf(plotfile, "%sgpttmp.plt", gretl_dot_dir());
+	sprintf(plotfile, "%sgpttmp.plt", gretl_dotdir());
     }
 
     set_gretl_plotfile(plotfile);
@@ -1145,7 +1145,7 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
 
     if (gui) {
 	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype, flags));
-	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_dot_dir());
+	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_dotdir());
     }
 
     write_plot_type_string(ptype, *fpp);
@@ -1208,7 +1208,7 @@ FILE *gnuplot_batch_init (int *err)
 	gretl_maybe_prepend_dir(fname);
 	fp = gretl_fopen(fname, "w");
     } else {
-	sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(),
+	sprintf(fname, "%sgpttmp%02d.plt", gretl_workdir(),
 		++gretl_plot_count);
 	fp = gretl_fopen(fname, "w");
     }
@@ -1491,7 +1491,7 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	    strcpy(fname, optname);
 	    gretl_maybe_prepend_dir(fname);
 	} else {
-	    sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(), 
+	    sprintf(fname, "%sgpttmp%02d.plt", gretl_workdir(), 
 		    ++gretl_plot_count);
 	}
 	*fpp = gretl_fopen(fname, "w");
@@ -3078,7 +3078,7 @@ static int get_3d_output_file (FILE **fpp)
     char fname[MAXLEN];
     int err = 0;
 
-    sprintf(fname, "%sgpttmp.plt", gretl_dot_dir());
+    sprintf(fname, "%sgpttmp.plt", gretl_dotdir());
     *fpp = gretl_fopen(fname, "w");
 
     if (*fpp == NULL) {

@@ -87,7 +87,7 @@ static int prn_add_tempfile (PRN *prn)
 
     errno = 0;
 
-    sprintf(fname, "%sprntmp.XXXXXX", gretl_dot_dir());
+    sprintf(fname, "%sprntmp.XXXXXX", gretl_dotdir());
 
 #ifdef WIN32
     fd = gretl_mkstemp(fname);

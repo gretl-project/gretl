@@ -454,11 +454,11 @@ static int seek_file_collections (int location)
     int i = 0, err = 0;
 
     if (location == DATA_SEARCH) {
-	tmp = g_strdup_printf("%sdata", paths.gretldir);
+	tmp = g_strdup_printf("%sdata", gretl_home());
     } else if (location == SCRIPT_SEARCH) {
-	tmp = g_strdup_printf("%sscripts", paths.gretldir);
+	tmp = g_strdup_printf("%sscripts", gretl_home());
     } else if (location == USER_SEARCH) {
-	tmp = g_strdup(paths.workdir);
+	tmp = g_strdup(gretl_workdir());
 	trim_slash(tmp);
     } else {
 	return 1;
@@ -500,7 +500,7 @@ static int seek_file_collections (int location)
     g_free(tmp);
 
     if (location == USER_SEARCH && i++ == 0) {
-	tmp = gretl_default_workdir(&paths);
+	tmp = gretl_default_workdir();
 	if (tmp != NULL) {
 	    goto user_search_2;
 	}
@@ -1757,19 +1757,19 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 
 	    if (i == 0) {
 		/* pick up any function files in system dir */
-		build_path(fndir, paths.gretldir, "functions", NULL);
+		build_path(fndir, gretl_home(), "functions", NULL);
 	    } else if (i == 1) {
 		/* plus any function files in the user's working dir... */
-		strcpy(fndir, paths.workdir);
+		strcpy(fndir, gretl_workdir());
 	    } else if (i == 2) {
 		/* and in any "functions" subdir thereof */
-		build_path(fndir, paths.workdir, "functions", NULL);
+		build_path(fndir, gretl_workdir(), "functions", NULL);
 	    } else if (i == 3) {
 		/* plus any in the user's dotdir */
-		build_path(fndir, paths.dotdir, "functions", NULL);
+		build_path(fndir, gretl_dotdir(), "functions", NULL);
 	    } else if (i == 4) {
 		/* plus any in the default working dir, if not already searched */
-		char *tmp = gretl_default_workdir(&paths);
+		char *tmp = gretl_default_workdir();
 
 		if (tmp != NULL) {
 		    build_path(fndir, tmp, "functions", NULL);

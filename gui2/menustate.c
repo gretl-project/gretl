@@ -558,15 +558,15 @@ void set_sample_label (DATAINFO *pdinfo)
 	gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
     }
 
-    if (strlen(paths.datfile) > 2) {
+    if (strlen(datafile) > 2) {
 	/* data file open already */
-	const char *p = strrchr(paths.datfile, SLASH);
+	const char *p = strrchr(datafile, SLASH);
 	gchar *trfname;
 
 	if (p != NULL) {
 	    trfname = my_filename_to_utf8(p + 1);
 	} else {
-	    trfname = my_filename_to_utf8(paths.datfile);
+	    trfname = my_filename_to_utf8(datafile);
 	}
 
 	sprintf(labeltxt, " %s ", trfname);

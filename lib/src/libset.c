@@ -1086,20 +1086,20 @@ void set_workdir_callback (int (*callback)())
 
 static int set_workdir (const char *s)
 {
+    int err = 0;
+
     if (gretl_function_depth() > 0) {
 	gretl_errmsg_set("set workdir: cannot be done inside a function");
 	return 1;
-    }
-
-    if (workdir_callback == NULL) {
-	return E_DATA;
     }
 
     /* skip past "set workdir" and space */
     s += 11;
     s += strspn(s, " ");
 
-    if (*s != '\0') {
+    if (*s == '\0') {
+	err = E_DATA;
+    } else {
 	char workdir[MAXLEN];
 	int n = 0;
 
@@ -1108,10 +1108,14 @@ static int set_workdir (const char *s)
 	} else {
 	    n = sscanf(s, "%511s", workdir);
 	}
-	return (*workdir_callback)(workdir);
-    } else {
-	return E_DATA;
-    }
+	if (workdir_callback != NULL) {
+	    err = (*workdir_callback)(workdir);
+	} else {
+	    err = set_gretl_work_dir(workdir);
+	}
+    } 
+
+    return err;
 }
 
 static int parse_set_plotfile (const char *s)
@@ -1709,7 +1713,7 @@ static int read_cli_shell_status (void)
     FILE *fp;
     int ok = 0;
 
-    sprintf(shellstamp, "%s.gretl_shell_stamp", gretl_dot_dir());
+    sprintf(shellstamp, "%s.gretl_shell_stamp", gretl_dotdir());
     fp = fopen(shellstamp, "r");
     if (fp != NULL) {
 	ok = 1;

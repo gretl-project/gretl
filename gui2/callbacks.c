@@ -300,7 +300,7 @@ void print_report (GtkAction *action)
 
     if (bufopen(&prn)) return;
 
-    data_report(datainfo, &paths, prn);
+    data_report(datainfo, datafile, prn);
 
     view_buffer(prn, 77, 400, _("gretl: data summary"), 
 		DATA_REPORT, NULL);
@@ -775,8 +775,8 @@ void do_nistcheck (GtkAction *action)
 	return;
     }
 
-    datadir = g_strdup_printf("%sdata%s", paths.gretldir, SLASHSTR);
-    fname = g_strdup_printf("%snist.out", paths.dotdir);
+    datadir = g_strdup_printf("%sdata%s", gretl_home(), SLASHSTR);
+    fname = g_strdup_printf("%snist.out", gretl_dotdir());
 
     (*run_nist_tests)(datadir, fname, nist_verbosity(action));
 
@@ -800,7 +800,7 @@ void send_file (char *fullname)
         return;
     }
     
-    email_file(fullname, paths.dotdir);
+    email_file(fullname, gretl_dotdir());
     close_plugin(handle);
 }
 

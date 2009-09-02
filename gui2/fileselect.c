@@ -342,7 +342,7 @@ static void filesel_open_session (const char *fname)
     } else {
 	windata_t *vwin;
 
-	if (has_system_prefix(tryfile, &paths, SCRIPT_SEARCH)) {
+	if (has_system_prefix(tryfile, SCRIPT_SEARCH)) {
 	    vwin = view_file(tryfile, 0, 0, 78, 370, VIEW_SCRIPT);
 	} else {
 	    vwin = view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT);
@@ -598,12 +598,12 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 {
     gchar *currname;
 
-    if (action == SAVE_DATA && *paths.datfile != '\0') {
-	currname = suggested_savename(paths.datfile);
+    if (action == SAVE_DATA && *datafile != '\0') {
+	currname = suggested_savename(datafile);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
-    } else if (EXPORT_ACTION(action, src) && *paths.datfile != '\0') {
-	currname = suggested_exportname(paths.datfile, action);
+    } else if (EXPORT_ACTION(action, src) && *datafile != '\0') {
+	currname = suggested_exportname(datafile, action);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
     } else if (action == SET_PROG || action == SET_DIR) {

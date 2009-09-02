@@ -1457,8 +1457,7 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
     return x;
 }
 
-int 
-set_db_name (const char *fname, int filetype, const PATHS *ppaths, PRN *prn)
+int set_db_name (const char *fname, int filetype, PRN *prn)
 {
     FILE *fp;
     int err = 0;
@@ -1487,14 +1486,18 @@ set_db_name (const char *fname, int filetype, const PATHS *ppaths, PRN *prn)
 
     if (fp == NULL) {
 	/* try looking a bit more */
-	if (filetype == GRETL_NATIVE_DB && 
-	    strstr(db_name, ppaths->binbase) == NULL) {
-	    build_path(db_name, ppaths->binbase, fname, NULL);
-	} else if (filetype == GRETL_RATS_DB && 
-		   strstr(db_name, ppaths->ratsbase) == NULL) {
-	    build_path(db_name, ppaths->ratsbase, fname, NULL);
+	const char *path = NULL;
+
+	if (filetype == GRETL_NATIVE_DB) {
+	    path = gretl_binbase();
+	} else if (filetype == GRETL_RATS_DB) {
+	    path = gretl_ratsbase();
 	}
-	fp = gretl_fopen(db_name, "rb");
+
+	if (path != NULL && strstr(db_name, path) == NULL) {
+	    build_path(db_name, path, fname, NULL);
+	    fp = gretl_fopen(db_name, "rb");
+	}
     }
 	    
     if (fp == NULL) {
@@ -2206,14 +2209,14 @@ static int db_delete_series (char *line, const int *list,
 	return err;
     }
 
-    strcpy(tmp1, gretl_dot_dir());
+    strcpy(tmp1, gretl_dotdir());
     strcat(tmp1, "tmpidx");
     f1 = tempfile_open(tmp1, &err);
     if (err) {
 	goto bailout;
     }
 
-    strcpy(tmp2, gretl_dot_dir());
+    strcpy(tmp2, gretl_dotdir());
     strcat(tmp2, "tmpbin");
     f2 = tempfile_open(tmp2, &err);
     if (err) {

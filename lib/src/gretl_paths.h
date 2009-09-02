@@ -30,6 +30,12 @@ typedef enum {
     USER_SEARCH
 } SearchLocation;
 
+typedef enum {
+    GRETL_HELPFILE,
+    GRETL_CMD_HELPFILE,
+    GRETL_CLI_HELPFILE
+} HelpPaths;
+
 void set_string_table_written (void);
 
 int gretl_string_table_written (void);
@@ -72,31 +78,33 @@ int gretl_is_xml_file (const char *fname);
 
 int gretl_isdir (const char *path);
 
-char *addpath (char *fname, PATHS *ppaths, int script);
+char *addpath (char *fname, int script);
 
-int getopenfile (const char *line, char *fname, PATHS *ppaths,
-		 gretlopt opt);
+int getopenfile (const char *line, char *fname, gretlopt opt);
 
 int fname_has_path (const char *fname);
 
-int has_system_prefix (const char *fname, const PATHS *ppaths,
-		       int locus);
+int has_system_prefix (const char *fname, int locus);
 
-void show_paths (const PATHS *ppaths);
+void show_paths (void);
 
 int gretl_set_default_paths (PATHS *ppaths, const char *callname);
 
 int gretl_set_paths (PATHS *ppaths, gretlopt opt);
 
+const char *helpfile_path (int id);
+
+const char *gretl_home (void);
+
 const char *gretl_lib_path (void);
 
-const char *gretl_dot_dir (void);
+const char *gretl_dotdir (void);
 
-const char *gretl_work_dir (void);
+const char *gretl_workdir (void);
 
-char *gretl_default_workdir (PATHS *paths);
+char *gretl_default_workdir (void);
 
-int set_gretl_work_dir (const char *path, PATHS *ppaths);
+int set_gretl_work_dir (const char *path);
 
 const char *gretl_maybe_switch_dir (const char *fname);
 
@@ -107,6 +115,10 @@ const char *gretl_gnuplot_path (void);
 const char *gretl_plotfile (void);
 
 char *set_gretl_plotfile (const char *fname);
+
+const char *gretl_binbase (void);
+
+const char *gretl_ratsbase (void);
 
 const char *gretl_tramo (void);
 
@@ -124,7 +136,11 @@ const char *gretl_png_font (void);
 
 const char *gretl_oxl_path (void);
 
-void set_gretl_png_font (const char *s, PATHS *ppaths);
+const char *gretl_current_dir (void);
+
+void gretl_set_current_dir (const char *s);
+
+void set_gretl_png_font (const char *s);
 
 #ifdef WIN32
 

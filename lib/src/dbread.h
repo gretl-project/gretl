@@ -101,8 +101,7 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
 double *expand_db_series (const double *src, SERIESINFO *sinfo,
 			  int target_pd);
 
-int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
-		 PRN *prn);
+int set_db_name (const char *fname, int filetype, PRN *prn);
 
 const char *get_db_name (void);
 

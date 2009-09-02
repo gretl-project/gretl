@@ -506,8 +506,9 @@ static int make_png_file (const char *fname,
 {
     FILE *fsrc, *ftmp;
     char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
+    const char *dotdir = gretl_dotdir();
 
-    sprintf(temp, "%sgpttmp", paths.dotdir);
+    sprintf(temp, "%sgpttmp", dotdir);
 
     ftmp = gretl_tempfile_open(temp);
     if (ftmp == NULL) {
@@ -521,7 +522,7 @@ static int make_png_file (const char *fname,
 	return 1;
     }
 
-    build_path(pngname, paths.dotdir, GRETL_PNG_TMP, NULL);
+    build_path(pngname, dotdir, GRETL_PNG_TMP, NULL);
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
 	if (!strncmp(fline, "set output", 10)) {
@@ -535,7 +536,8 @@ static int make_png_file (const char *fname,
     fclose(ftmp);
 
     /* run gnuplot on the temp plotfile */
-    sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
+    sprintf(cmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), 
+	    temp);
     if (system(cmd)) {
 	gretl_remove(temp);
 	return 1;

@@ -489,7 +489,7 @@ static void get_email_info (struct mail_info *minfo)
     GList *addrs = NULL;
     FILE *fp;
 
-    minfo->addrfile = g_strdup_printf("%sgretl.addresses", gretl_dot_dir());
+    minfo->addrfile = g_strdup_printf("%sgretl.addresses", gretl_dotdir());
 
     fp = gretl_fopen(minfo->addrfile, "r");
     if (fp != NULL) {

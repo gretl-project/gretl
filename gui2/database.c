@@ -1810,7 +1810,7 @@ static char *get_writable_target (int code, int op, char *objname)
     }
 
     if (code == REMOTE_DB) {
-	build_path(targ, paths.binbase, objname, ext);
+	build_path(targ, gretl_binbase(), objname, ext);
     } else if (code == REMOTE_DATA_PKGS) {
 	    char pkgdir[MAXLEN];
 
@@ -1818,7 +1818,7 @@ static char *get_writable_target (int code, int op, char *objname)
 	    build_path(targ, pkgdir, objname, ext);
     } else {
 	if (op == TMP_INSTALL) {
-	    build_path(targ, paths.dotdir, "dltmp", NULL);
+	    build_path(targ, gretl_dotdir(), "dltmp", NULL);
 	    err = gretl_tempname(targ);
 	} else {
 	    char pkgdir[MAXLEN];
@@ -1838,7 +1838,7 @@ static char *get_writable_target (int code, int op, char *objname)
 	if (fp == NULL) {
 	    if (errno == EACCES && code != REMOTE_FUNC_FILES) { 
 		/* write to user dir instead? */
-		build_path(targ, paths.workdir, objname, ext);
+		build_path(targ, gretl_workdir(), objname, ext);
 	    } else {
 		file_write_errbox(targ);
 		free(targ);
@@ -2143,12 +2143,12 @@ static void get_local_object_status (const char *fname, int role,
     int err;
 
     if (role == REMOTE_DB) {
-	build_path(fullname, paths.binbase, fname, NULL);
+	build_path(fullname, gretl_binbase(), fname, NULL);
     } else if (role == REMOTE_DATA_PKGS) {
-	build_path(filedir, paths.gretldir, "data", NULL);
+	build_path(filedir, gretl_home(), "data", NULL);
 	build_path(fullname, filedir, fname, NULL);
     } else {
-	build_path(filedir, paths.gretldir, "functions", NULL);
+	build_path(filedir, gretl_home(), "functions", NULL);
 	build_path(fullname, filedir, fname, NULL);
     }
 
@@ -2159,18 +2159,18 @@ static void get_local_object_status (const char *fname, int role,
 #else
 	    /* try user dir too, if not on Windows */
 	    if (role == REMOTE_DB) {
-		build_path(fullname, paths.workdir, fname, NULL);
+		build_path(fullname, gretl_workdir(), fname, NULL);
 	    } else if (role == REMOTE_DATA_PKGS) {
-		build_path(fullname, paths.workdir, fname, NULL);
+		build_path(fullname, gretl_workdir(), fname, NULL);
 	    } else {
-		build_path(filedir, paths.workdir, "functions", NULL);
+		build_path(filedir, gretl_workdir(), "functions", NULL);
 		build_path(fullname, filedir, fname, NULL);
 	    }
 	    err = gretl_stat(fullname, &fbuf);
 	    if (err == -1) {
 		if (role == REMOTE_FUNC_FILES || role == REMOTE_DATA_PKGS) {
 		    /* try default working dir */
-		    char *tmp = gretl_default_workdir(&paths);
+		    char *tmp = gretl_default_workdir();
 
 		    if (tmp != NULL) {
 			if (role == REMOTE_FUNC_FILES) {
@@ -2634,7 +2634,7 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
     return err;
 }
 
-static DIR *open_gretl_db_dir (char *dbdir)
+static DIR *open_gretl_db_dir (const char *dbdir)
 {
     DIR *dir = NULL;
     int tries = 0;
@@ -2661,7 +2661,7 @@ gint populate_dbfilelist (windata_t *vwin)
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    char *dbdir;
+    const char *dbdir;
     DIR *dir = NULL;
     int ndb = 0;
 
@@ -2670,7 +2670,7 @@ gint populate_dbfilelist (windata_t *vwin)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     /* pick up any databases in the shared gretl dir */
-    dbdir = paths.binbase;
+    dbdir = gretl_binbase();
     dir = open_gretl_db_dir(dbdir);
     if (dir != NULL) {
 	ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
@@ -2678,7 +2678,7 @@ gint populate_dbfilelist (windata_t *vwin)
     }
 
     /* pick up any databases in the user's personal dir */
-    dbdir = paths.workdir;
+    dbdir = gretl_workdir();
 #ifdef G_OS_WIN32 
     dir = win32_opendir(dbdir);
 #else

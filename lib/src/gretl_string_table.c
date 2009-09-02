@@ -244,7 +244,7 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     }
 
     strcpy(stname, "string_table.txt");
-    gretl_path_prepend(stname, gretl_work_dir());
+    gretl_path_prepend(stname, gretl_workdir());
 
     fp = gretl_fopen(stname, "w");
     if (fp == NULL) {
@@ -724,7 +724,7 @@ char *retrieve_file_content (const char *fname, int *err)
 
 	*fullname = '\0';
 	strncat(fullname, fname, FILENAME_MAX - 1);
-	addpath(fullname, NULL, 0);
+	addpath(fullname, 0);
 
 	g_file_get_contents(fullname, &ret, &len, &gerr);
 

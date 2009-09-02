@@ -48,11 +48,17 @@
 #endif
 
 struct INTERNAL_PATHS {
+    char gretldir[MAXLEN];
     char dotdir[MAXLEN];
     char workdir[MAXLEN];
     char gnuplot[MAXLEN];
     char plotfile[MAXLEN];
     char libpath[MAXLEN];
+    char binbase[MAXLEN];
+    char ratsbase[MAXLEN];
+    char helpfile[MAXLEN];
+    char cmd_helpfile[MAXLEN];
+    char cli_helpfile[MAXLEN];
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
     char tramo[MAXLEN];
@@ -67,6 +73,21 @@ struct INTERNAL_PATHS {
 };
 
 static struct INTERNAL_PATHS gretl_paths;
+
+static char current_dir[MAXLEN];
+
+const char *helpfile_path (int id)
+{
+    if (id == GRETL_HELPFILE) {
+	return gretl_paths.helpfile;
+    } else if (id == GRETL_CMD_HELPFILE) {
+	return gretl_paths.cmd_helpfile;
+    } else if (id == GRETL_CLI_HELPFILE) {
+	return gretl_paths.cli_helpfile;
+    } else {
+	return "";
+    }
+}
 
 static int add_suffix (char *fname, const char *sfx)
 {
@@ -1098,7 +1119,6 @@ static int shelldir_open_dotfile (char *fname, char *orig)
 /**
  * addpath:
  * @fname: initially given file name.
- * @ppaths: path information struct.
  * @script: if non-zero, suppose the file is a command script.
  * 
  * Elementary path-searching: try adding various paths to the given
@@ -1108,7 +1128,7 @@ static int shelldir_open_dotfile (char *fname, char *orig)
  * file could be found.
  */
 
-char *addpath (char *fname, PATHS *ppaths, int script)
+char *addpath (char *fname, int script)
 {
     char orig[MAXLEN];
     char *tmp = fname;
@@ -1143,12 +1163,14 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	return NULL;
     }
 
-    if (ppaths != NULL) {
+    if (1) { /* was ppaths != NULL : FIXME */
+	const char *currdir = gretl_current_dir();
+	const char *gretldir = gretl_home();
 	char trydir[MAXLEN];
 
 	/* try looking where script was found */
-	if (*ppaths->currdir != '\0') {
-	    if ((fname = search_dir(fname, ppaths->currdir, CURRENT_DIR))) {
+	if (*currdir != '\0') {
+	    if ((fname = search_dir(fname, currdir, CURRENT_DIR))) {
 		return fname;
 	    }
 	}
@@ -1157,20 +1179,20 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	strcpy(fname, orig);
 
 	if (script) {
-	    sprintf(trydir, "%sscripts", ppaths->gretldir);
+	    sprintf(trydir, "%sscripts", gretldir);
 	    if ((fname = search_dir(fname, trydir, SCRIPT_SEARCH))) { 
 		return fname;
 	    } else {
 		fname = tmp;
 		strcpy(fname, orig);
-		sprintf(trydir, "%sfunctions", ppaths->gretldir);
+		sprintf(trydir, "%sfunctions", gretldir);
 		if ((fname = search_dir(fname, trydir, FUNCS_SEARCH))) { 
 		    return fname;
 		}
 	    }
 	} else {
 	    /* data file */
-	    sprintf(trydir, "%sdata", ppaths->gretldir);
+	    sprintf(trydir, "%sdata", gretldir);
 	    if ((fname = search_dir(fname, trydir, DATA_SEARCH))) { 
 		return fname;
 	    }
@@ -1180,13 +1202,13 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     /* or try looking in user's dir (and subdirs) */
     fname = tmp;
     strcpy(fname, orig);
-    if ((fname = search_dir(fname, gretl_work_dir(), USER_SEARCH))) { 
+    if ((fname = search_dir(fname, gretl_workdir(), USER_SEARCH))) { 
 	return fname;
     }
 
     /* try looking in default workdir? */
-    if (ppaths != NULL) {
-	char *dwork = gretl_default_workdir(ppaths);
+    if (1) {
+	char *dwork = gretl_default_workdir();
 
 	if (dwork != NULL) {
 	    int ok = 0;
@@ -1278,7 +1300,6 @@ static int substitute_homedir (char *fname)
  * getopenfile:
  * @line: command line (e.g. "open foo").
  * @fname: filename to be filled out.
- * @ppaths: pointer to paths information struct.
  * @opt: if includes %OPT_W, treat as web filename and don't
  * try to add path, if %OPT_S, treat as a script.
  * 
@@ -1288,8 +1309,7 @@ static int substitute_homedir (char *fname)
  * Returns: 0 on successful parsing of @line, 1 on error.
  */
 
-int getopenfile (const char *line, char *fname, PATHS *ppaths,
-		 gretlopt opt)
+int getopenfile (const char *line, char *fname, gretlopt opt)
 {
     int script = (opt & OPT_S)? 1 : 0;
     char *fullname;
@@ -1321,33 +1341,33 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     }
 
     /* try a basic path search on this filename */
-    fullname = addpath(fname, ppaths, script);
+    fullname = addpath(fname, script);
 
-    if (ppaths != NULL && fullname != NULL && script) {
+    if (fullname != NULL && script) {
 	int spos = slashpos(fname);
 
 	if (spos) {
-	    *ppaths->currdir = '\0';
-	    strncat(ppaths->currdir, fname, spos + 1);
+	    *current_dir = '\0';
+	    strncat(current_dir, fname, spos + 1);
 	} else {
-	    ppaths->currdir[0] = '.';
-	    ppaths->currdir[1] = SLASH;
-	    ppaths->currdir[2] = '\0';
+	    current_dir[0] = '.';
+	    current_dir[1] = SLASH;
+	    current_dir[2] = '\0';
 	}
     }
 
     return 0;
 }
 
-int has_system_prefix (const char *fname, const PATHS *ppaths, 
-		       int locus)
+int has_system_prefix (const char *fname, int locus)
 {
-    int n = strlen(ppaths->gretldir);
+    const char *gretldir = gretl_home();
+    int n = strlen(gretldir);
     int ret = 0;
 
     if (strlen(fname) < n) return 0;
     
-    if (!strncmp(fname, ppaths->gretldir, n)) {
+    if (!strncmp(fname, gretldir, n)) {
 	if (locus == DATA_SEARCH &&
 	    !strncmp(fname + n, "data", 4)) {
 	    ret = 1;
@@ -1453,9 +1473,17 @@ static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
 
 static void copy_paths_to_internal (PATHS *paths)
 {
+    strcpy(gretl_paths.gretldir, paths->gretldir);
     strcpy(gretl_paths.dotdir,   paths->dotdir);
     strcpy(gretl_paths.workdir,  paths->workdir);
     strcpy(gretl_paths.gnuplot,  paths->gnuplot);
+    strcpy(gretl_paths.binbase,  paths->binbase);
+    strcpy(gretl_paths.ratsbase, paths->ratsbase);
+
+    strcpy(gretl_paths.helpfile,     paths->helpfile);
+    strcpy(gretl_paths.cmd_helpfile, paths->cmd_helpfile);
+    strcpy(gretl_paths.cli_helpfile, paths->cli_helpfile);
+
     strcpy(gretl_paths.x12a,     paths->x12a);
     strcpy(gretl_paths.x12adir,  paths->x12adir);
     strcpy(gretl_paths.tramo,    paths->tramo);
@@ -1474,14 +1502,14 @@ static void copy_paths_to_internal (PATHS *paths)
     strcpy(gretl_paths.oxlpath, paths->oxlpath);
 #endif
 
-    gretl_insert_builtin_string("gretldir", paths->gretldir);
-    gretl_insert_builtin_string("dotdir",   paths->dotdir);
-    gretl_insert_builtin_string("workdir",  paths->workdir);
-    gretl_insert_builtin_string("gnuplot",  paths->gnuplot);
-    gretl_insert_builtin_string("x12a",     paths->x12a);
-    gretl_insert_builtin_string("x12adir",  paths->x12adir);
-    gretl_insert_builtin_string("tramo",    paths->tramo);
-    gretl_insert_builtin_string("tramodir", paths->tramodir);
+    gretl_insert_builtin_string("gretldir", gretl_paths.gretldir);
+    gretl_insert_builtin_string("dotdir",   gretl_paths.dotdir);
+    gretl_insert_builtin_string("workdir",  gretl_paths.workdir);
+    gretl_insert_builtin_string("gnuplot",  gretl_paths.gnuplot);
+    gretl_insert_builtin_string("x12a",     gretl_paths.x12a);
+    gretl_insert_builtin_string("x12adir",  gretl_paths.x12adir);
+    gretl_insert_builtin_string("tramo",    gretl_paths.tramo);
+    gretl_insert_builtin_string("tramodir", gretl_paths.tramodir);
 
     if (*paths->tramo) {
 	char s[MAXLEN];
@@ -1504,6 +1532,11 @@ static void copy_paths_to_internal (PATHS *paths)
     }
 }
 
+const char *gretl_home (void)
+{
+    return gretl_paths.gretldir;
+}
+
 const char *gretl_lib_path (void)
 {
     static int set;
@@ -1521,12 +1554,12 @@ const char *gretl_lib_path (void)
     return gretl_paths.libpath;
 }
 
-const char *gretl_dot_dir (void)
+const char *gretl_dotdir (void)
 {
     return gretl_paths.dotdir;
 }
 
-const char *gretl_work_dir (void)
+const char *gretl_workdir (void)
 {
     return gretl_paths.workdir;
 }
@@ -1548,7 +1581,7 @@ static void correct_blank_dotdir (PATHS *paths)
    to it
 */
 
-char *gretl_default_workdir (PATHS *paths)
+char *gretl_default_workdir (void)
 {
     char *base = mydocs_path();
     char *ret = NULL;
@@ -1556,7 +1589,7 @@ char *gretl_default_workdir (PATHS *paths)
 
     if (base != NULL) {
 	ret = g_strdup_printf("%s\\gretl\\", base);
-	if (strcmp(ret, paths->workdir)) {
+	if (strcmp(ret, gretl_paths.workdir)) {
 	    DIR *dir = win32_opendir(ret);
 
 	    if (dir != NULL) {
@@ -1596,7 +1629,7 @@ static void correct_blank_dotdir (char *path)
     } 
 }
 
-char *gretl_default_workdir (PATHS *paths)
+char *gretl_default_workdir (void)
 {
     char *home = getenv("HOME");
     char *ret = NULL;
@@ -1604,7 +1637,7 @@ char *gretl_default_workdir (PATHS *paths)
 
     if (home != NULL) {
 	ret = g_strdup_printf("%s/gretl/", home);
-	if (strcmp(ret, paths->workdir)) {
+	if (strcmp(ret, gretl_paths.workdir)) {
 	    DIR *dir = opendir(ret);
 
 	    if (dir != NULL) {
@@ -1671,7 +1704,7 @@ static int validate_writedir (const char *dirname)
     return err;
 }
 
-int set_gretl_work_dir (const char *path, PATHS *ppaths)
+int set_gretl_work_dir (const char *path)
 {
     DIR *test;
 
@@ -1689,11 +1722,10 @@ int set_gretl_work_dir (const char *path, PATHS *ppaths)
 
     closedir(test);
 
-    if (path != ppaths->workdir) {
-	strcpy(ppaths->workdir, path);
-	ensure_slash(ppaths->workdir);
-	strcpy(gretl_paths.workdir, ppaths->workdir);
-	gretl_insert_builtin_string("workdir", ppaths->workdir);
+    if (!strcmp(path, gretl_paths.workdir)) {
+	strcpy(gretl_paths.workdir, path);
+	ensure_slash(gretl_paths.workdir);
+	gretl_insert_builtin_string("workdir", gretl_paths.workdir);
     }
 
     return 0;
@@ -1715,6 +1747,16 @@ char *set_gretl_plotfile (const char *fname)
     strncat(gretl_paths.plotfile, fname, MAXLEN - 1);
 
     return gretl_paths.plotfile;
+}
+
+const char *gretl_binbase (void)
+{
+    return gretl_paths.binbase;
+}
+
+const char *gretl_ratsbase (void)
+{
+    return gretl_paths.ratsbase;
 }
 
 const char *gretl_tramo (void)
@@ -1759,15 +1801,26 @@ const char *gretl_oxl_path (void)
 }
 #endif
 
+const char *gretl_current_dir (void)
+{
+    return current_dir;
+}
+
+void gretl_set_current_dir (const char *s)
+{
+    *current_dir = '\0';
+
+    strncat(current_dir, s, MAXLEN - 1);
+}
+
 const char *gretl_png_font (void)
 {
     return gretl_paths.pngfont;
 }
 
-void set_gretl_png_font (const char *s, PATHS *ppaths)
+void set_gretl_png_font (const char *s)
 {
     strcpy(gretl_paths.pngfont, s);
-    strcpy(ppaths->pngfont, s);
 }
 
 void set_string_table_written (void)
@@ -1786,13 +1839,13 @@ int gretl_string_table_written (void)
     return ret;
 }
 
-void show_paths (const PATHS *ppaths)
+void show_paths (void)
 {
     printf(_("gretl: using these basic search paths:\n"));
-    printf("gretldir: %s\n", ppaths->gretldir);
-    printf("workdir: %s\n", ppaths->workdir);
-    printf("dotdir: %s\n", ppaths->dotdir);
-    printf("gnuplot: %s\n", ppaths->gnuplot);
+    printf("gretldir: %s\n", gretl_paths.gretldir);
+    printf("workdir: %s\n", gretl_paths.workdir);
+    printf("dotdir: %s\n", gretl_paths.dotdir);
+    printf("gnuplot: %s\n", gretl_paths.gnuplot);
 }
 
 #ifdef WIN32
@@ -1830,7 +1883,7 @@ static int real_set_paths (PATHS *ppaths, const char *callname,
 #endif
 
 	shelldir_init(NULL);
-	ppaths->currdir[0] = '\0';
+	current_dir[0] = '\0';
 	ppaths->dotdir[0] = '\0';
 	ppaths->workdir[0] = '\0';
 	gretl_paths.plotfile[0] = '\0';
@@ -1990,7 +2043,7 @@ static int real_set_paths (PATHS *ppaths, const char *callname,
 #else
 	strcpy(ppaths->pngfont, "Vera 9");
 #endif
-	ppaths->currdir[0] = '\0';	
+	current_dir[0] = '\0';	
 	shelldir_init(NULL);
 
 	/* try to set a default userdir */

@@ -100,13 +100,14 @@ static void maybe_fork_updater (char *msg)
     resp = yes_no_dialog("gretl", msg, 0);
 
     if (resp == GRETL_YES) {
+	const char *gretldir = gretl_home();
 	gchar *ud;
-	size_t n = strlen(paths.gretldir);
+	size_t n = strlen(gretldir);
 
-	if (paths.gretldir[n-1] != SLASH) {
-	    ud = g_strdup_printf("%s\\gretl_updater.exe -g", paths.gretldir);
+	if (gretldir[n-1] != SLASH) {
+	    ud = g_strdup_printf("%s\\gretl_updater.exe -g", gretldir);
 	} else {
-	    ud = g_strdup_printf("%sgretl_updater.exe -g", paths.gretldir);
+	    ud = g_strdup_printf("%sgretl_updater.exe -g", gretldir);
 	}
 	WinExec(ud, SW_SHOWNORMAL);
 	exit(EXIT_SUCCESS);
@@ -167,7 +168,7 @@ static int real_update_query (int queryopt)
     struct stat fbuf;
     time_t filedate = (time_t) 0;
 
-    build_path(testfile, paths.gretldir, "gretl.stamp", NULL);
+    build_path(testfile, gretl_home(), "gretl.stamp", NULL);
 
     if (gretl_stat(testfile, &fbuf)) {
 	fprintf(stderr, "update_query: couldn't stat testfile '%s'\n", 
@@ -179,7 +180,7 @@ static int real_update_query (int queryopt)
 	*hometest = '\0';
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
-	    build_path(hometest, paths.dotdir, "gretl.stamp", NULL);
+	    build_path(hometest, gretl_dotdir(), "gretl.stamp", NULL);
 	    if (!gretl_stat(hometest, &fbuf)) {
 		filedate = get_time_from_stamp_file(hometest);
 	    }

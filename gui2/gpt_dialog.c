@@ -705,7 +705,7 @@ static void set_graph_font_from_widgets (plot_editor *ed)
 	} else {
 	    *pngfont = '\0';
 	}
-	set_gretl_png_font(pngfont, &paths);
+	set_gretl_png_font(pngfont);
     }
     g_free(tmp);
 }
@@ -843,7 +843,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     if (!err) {
 	if (ed->fontname != NULL) {
-	    set_gretl_png_font(ed->fontname, &paths);
+	    set_gretl_png_font(ed->fontname);
 	} else if (ed->ttfcombo != NULL && ed->ttfspin != NULL) {
 	    set_graph_font_from_widgets(ed);
 	}

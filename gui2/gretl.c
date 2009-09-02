@@ -211,6 +211,7 @@ static GOptionEntry options[] = {
 windata_t *mdata;
 DATAINFO *datainfo;
 
+char datafile[MAXLEN];
 char scriptfile[MAXLEN];
 char tryfile[MAXLEN];
 
@@ -282,7 +283,7 @@ static void new_package_callback (GtkAction *action, gpointer p)
 #ifdef ENABLE_MAILER
 static void email_data (gpointer p, guint u, GtkWidget *w)
 {
-    send_file(paths.datfile);
+    send_file(datafile);
 }
 #endif
 
@@ -304,7 +305,7 @@ static void get_runfile (char *fname)
     strncat(tryfile, fname, MAXLEN - 1);
 #endif
 
-    if (addpath(tryfile, &paths, 1) == NULL) {
+    if (addpath(tryfile, 1) == NULL) {
 	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryfile);
 	exit(EXIT_FAILURE);
     } else {
@@ -331,6 +332,7 @@ static int script_type (const char *fname)
 
 static void fix_dbname (char *db)
 {
+    const char *bbase;
     FILE *fp = NULL;
 
     if (strstr(db, ".bin") == NULL &&
@@ -342,11 +344,15 @@ static void fix_dbname (char *db)
 
     fp = gretl_fopen(db, "rb");
 
-    if (fp == NULL && strstr(db, paths.binbase) == NULL) {
-	char tmp[MAXLEN];
+    if (fp == NULL) {
+	const char *bbase = gretl_binbase();
 
-	strcpy(tmp, db);
-	build_path(db, paths.binbase, tmp, NULL);
+	if (strstr(db, bbase) == NULL) {
+	    char tmp[MAXLEN];
+
+	    strcpy(tmp, db);
+	    build_path(db, bbase, tmp, NULL);
+	}
     }
 
     if (fp != NULL) {
@@ -471,7 +477,7 @@ int main (int argc, char **argv)
 
     *tryfile = '\0';
     *scriptfile = '\0';
-    *paths.datfile = '\0';
+    *datafile = '\0';
     *auxname = '\0';
     *filearg = '\0';
 
@@ -555,32 +561,32 @@ int main (int argc, char **argv)
 	    strncat(filearg, argv[1], MAXLEN - 1);
 	}
 
-	*paths.datfile = '\0';
+	*datafile = '\0';
 
 #ifdef G_OS_WIN32
-	if (filename_to_win32(paths.datfile, filearg)) {
+	if (filename_to_win32(datafile, filearg)) {
 	    exit(EXIT_FAILURE);
 	}
 #else
-	record_filearg(paths.datfile, filearg);
+	record_filearg(datafile, filearg);
 #endif
 
 	/* keep a copy of input filename */
-	strcpy(tryfile, paths.datfile);
+	strcpy(tryfile, datafile);
 
-	ftype = detect_filetype(paths.datfile, &paths);
+	ftype = detect_filetype(datafile);
 
 	switch (ftype) {
 	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(paths.datfile, &paths, &Z, datainfo, 
+	    err = gretl_get_data(datafile, &Z, datainfo, 
 				 OPT_NONE, prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(paths.datfile, &paths, &Z, datainfo, 
+	    err = gretl_read_gdt(datafile, &Z, datainfo, 
 				 OPT_NONE, prn);
 	    break;
 	case GRETL_CSV:
-	    err = import_csv(paths.datfile, &Z, datainfo, 
+	    err = import_csv(datafile, &Z, datainfo, 
 			     OPT_NONE, prn);
 	    break;
 	case GRETL_XLS:
@@ -591,19 +597,19 @@ int main (int argc, char **argv)
 	case GRETL_JMULTI:
 	case GRETL_OCTAVE:
 	case GRETL_WF1:
-	    err = get_imported_data(paths.datfile, ftype, 0);
+	    err = get_imported_data(datafile, ftype, 0);
 	    break;
 	case GRETL_SCRIPT:
 	case GRETL_SESSION:
-	    get_runfile(paths.datfile);
-	    *paths.datfile = '\0';
+	    get_runfile(datafile);
+	    *datafile = '\0';
 	    break;
 	case GRETL_NATIVE_DB:
 	case GRETL_RATS_DB:  
 	case GRETL_PCGIVE_DB:
-	    strcpy(auxname, paths.datfile);
+	    strcpy(auxname, datafile);
 	    *tryfile = '\0';
-	    *paths.datfile = '\0';
+	    *datafile = '\0';
 	    fix_dbname(auxname);
 	    optdb = auxname;
 	    break;
@@ -618,7 +624,7 @@ int main (int argc, char **argv)
 	    err = 0;
 	    ftype = 0;
 	    *tryfile = '\0';
-	    *paths.datfile = '\0';
+	    *datafile = '\0';
 	}
 
 	if (ftype != GRETL_SCRIPT && err) {
@@ -1563,7 +1569,7 @@ static gchar *get_main_ui (void)
     char fname[FILENAME_MAX];
     gchar *main_ui = NULL;
 
-    sprintf(fname, "%sui%cgretlmain.xml", paths.gretldir, SLASH);
+    sprintf(fname, "%sui%cgretlmain.xml", gretl_home(), SLASH);
     gretl_file_get_contents(fname, &main_ui);
 
     return main_ui;
@@ -1787,12 +1793,12 @@ static void auto_store (void)
     /* but if there's already a datafile, and it's not gzipped, then
        arrange for the new file to be uncompressed too
     */
-    if (*paths.datfile && !is_gzipped(paths.datfile)) {
+    if (*datafile && !is_gzipped(datafile)) {
 	oflag = OPT_NONE;
     }
 
-    if ((data_status & USER_DATA) && has_suffix(paths.datfile, ".gdt")) {
-	do_store(paths.datfile, oflag);
+    if ((data_status & USER_DATA) && has_suffix(datafile, ".gdt")) {
+	do_store(datafile, oflag);
     } else {
 	file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
     }	

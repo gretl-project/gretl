@@ -35,7 +35,7 @@
 
 static void remove_temp_dir (char *dname)
 {
-    const char *udir = gretl_dot_dir();
+    const char *udir = gretl_dotdir();
 
 #ifdef G_OS_WIN32
     char *fullpath = g_strdup_printf("%s%s", udir, dname);
@@ -1248,7 +1248,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
     int gui = (opt & OPT_G);
     ods_sheet *sheet = NULL;
     int (*gretl_unzip_file)(const char *, GError **);
-    const char *udir = gretl_dot_dir();
+    const char *udir = gretl_dotdir();
     char *abspath = NULL;
     void *handle;
     char dname[32];

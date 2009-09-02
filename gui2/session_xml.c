@@ -647,7 +647,7 @@ static int write_session_xml (const char *datname)
     int i, modnum;
     int err = 0;
 
-    gretl_chdir(paths.dotdir);
+    gretl_chdir(gretl_dotdir());
 
     sprintf(fname, "%s%csession.xml", session.dirname, SLASH);
     fp = gretl_fopen(fname, "w");

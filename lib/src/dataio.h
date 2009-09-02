@@ -89,9 +89,9 @@ double get_date_x (int pd, const char *obs);
 
 int write_data (const char *fname, int *list, 
 		const double **Z, const DATAINFO *pdinfo, 
-	        gretlopt opt, PATHS *ppaths);
+	        gretlopt opt, int progress);
 
-int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn);
+int data_report (const DATAINFO *pdinfo, const char *fname, PRN *prn);
 
 int is_gzipped (const char *fname);
 
@@ -103,8 +103,7 @@ int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
 			   double ***pZ1, DATAINFO **ppdinfo1,
 			   gretlopt opt, PRN *prn);
 
-int gretl_get_data (char *datfile, PATHS *ppaths,
-		    double ***pZ, DATAINFO *pdinfo, 
+int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
@@ -125,7 +124,7 @@ int import_other (const char *fname, int ftype,
 
 int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);
 
-GretlFileType detect_filetype (char *fname, PATHS *ppaths);
+GretlFileType detect_filetype (char *fname);
 
 gretlopt data_save_opt_from_suffix (const char *fname);
 

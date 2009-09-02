@@ -59,6 +59,7 @@ extern char *rl_gets (char **line_read, const char *prompt);
 extern void initialize_readline (void);
 #endif /* HAVE_READLINE */
 
+char datafile[MAXLEN];
 char cmdfile[MAXLEN];
 char outfile[MAXLEN];
 char hdrfile[MAXLEN];
@@ -101,11 +102,6 @@ static void usage (int err)
     } else {
 	exit(EXIT_SUCCESS);
     }
-}
-
-static int cli_workdir_callback (const char *s)
-{
-    return set_gretl_work_dir(s, &paths);
 }
 
 static void gretl_abort (char *line)
@@ -180,7 +176,7 @@ static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 {
     int err = 0;
 
-    *paths.datfile = 0;
+    *datafile = 0;
 
     if (pZ != NULL && *pZ != NULL) {
 	err = restore_full_sample(pZ, pdinfo, NULL); 
@@ -433,10 +429,8 @@ int main (int argc, char *argv[])
     cli_read_rc(&paths);
 #endif /* WIN32 */
 
-    set_workdir_callback(cli_workdir_callback);
-
     if (!batch) {
-	strcpy(cmdfile, gretl_work_dir());
+	strcpy(cmdfile, gretl_workdir());
 	strcat(cmdfile, "session.inp");
 	cmdprn = gretl_print_new_with_filename(cmdfile, &err);
 	if (err) {
@@ -450,9 +444,9 @@ int main (int argc, char *argv[])
 	int ftype;
 
 	strcpy(given_file, filearg);
-	strcpy(paths.datfile, filearg);
+	strcpy(datafile, filearg);
 
-	ftype = detect_filetype(paths.datfile, &paths);
+	ftype = detect_filetype(datafile);
 
 	switch (ftype) {
 	case GRETL_UNRECOGNIZED:
@@ -461,20 +455,18 @@ int main (int argc, char *argv[])
 	    exit(EXIT_FAILURE);
 	    break;
 	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(paths.datfile, &paths, &Z, datainfo,
-				 OPT_NONE, prn);
+	    err = gretl_get_data(datafile, &Z, datainfo, OPT_NONE, prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(paths.datfile, &paths, &Z, datainfo, 
-				 OPT_NONE, prn);
+	    err = gretl_read_gdt(datafile, &Z, datainfo, OPT_NONE, prn);
 	    break;
 	case GRETL_CSV:
-	    err = import_csv(paths.datfile, &Z, datainfo, OPT_NONE, prn);
+	    err = import_csv(datafile, &Z, datainfo, OPT_NONE, prn);
 	    break;
 	case GRETL_XLS:
 	case GRETL_GNUMERIC:
 	case GRETL_ODS:
-	    err = import_spreadsheet(paths.datfile, ftype, NULL, NULL,
+	    err = import_spreadsheet(datafile, ftype, NULL, NULL,
 				     &Z, datainfo, OPT_NONE, prn);
 	    break;
 	case GRETL_DTA:
@@ -482,13 +474,13 @@ int main (int argc, char *argv[])
 	case GRETL_JMULTI:
 	case GRETL_OCTAVE:
 	case GRETL_WF1:
-	    err = import_other(paths.datfile, ftype, &Z, datainfo, 
+	    err = import_other(datafile, ftype, &Z, datainfo, 
 			       OPT_NONE, prn);
 	    break;
 	case GRETL_SCRIPT:
 	    runit = 1;
-	    strcpy(runfile, paths.datfile); 
-	    clear(paths.datfile, MAXLEN);
+	    strcpy(runfile, datafile); 
+	    clear(datafile, MAXLEN);
 	    load_datafile = 0;
 	    break;
 	default:
@@ -499,7 +491,7 @@ int main (int argc, char *argv[])
 	    if (err) {
 		errmsg(err, prn);
 		if (err == E_FOPEN) {
-		    show_paths(&paths);
+		    show_paths();
 		}
 		return EXIT_FAILURE;
 	    }
@@ -527,15 +519,15 @@ int main (int argc, char *argv[])
 
     /* check for help file */
     if (!batch) {
-	FILE *fp = fopen(paths.helpfile, "r");
+	const char *hpath = helpfile_path(GRETL_HELPFILE);
+	FILE *fp = fopen(hpath, "r");
 
 	if (fp != NULL) { 
 	    printf(_("\n\"help\" gives a list of commands\n"));
 	    fclose(fp);
 	} else {
-	    printf(_("help file %s is not accessible\n"), 
-		   paths.helpfile);
-	    show_paths(&paths);
+	    printf(_("help file %s is not accessible\n"), hpath);
+	    show_paths();
 	}
     } 
 
@@ -643,13 +635,13 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 			    DATAINFO *pdinfo, MODEL **models,
 			    PRN *prn)
 {
-    char datfile[MAXLEN] = {0};
+    char newfile[MAXLEN] = {0};
     char response[3];
     int ftype, dbdata = 0;
     int err = 0;
 
     if (!(cmd->opt & OPT_O)) {
-	err = getopenfile(line, datfile, &paths, (cmd->opt & OPT_W)?
+	err = getopenfile(line, newfile, (cmd->opt & OPT_W)?
 			  OPT_W : OPT_NONE);
 	if (err) {
 	    errmsg(err, prn);
@@ -662,7 +654,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     } else if (cmd->opt & OPT_O) {
 	ftype = GRETL_ODBC;
     } else {
-	ftype = detect_filetype(datfile, &paths);
+	ftype = detect_filetype(newfile);
     }
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
@@ -670,7 +662,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 	      ftype == GRETL_ODBC);
 
     if (data_status && !batch && !dbdata && cmd->ci != APPEND &&
-	strcmp(datfile, paths.datfile)) {
+	strcmp(newfile, datafile)) {
 	fprintf(stderr, _("Opening a new data file closes the "
 			  "present one.  Proceed? (y/n) "));
 	fgets(response, sizeof response, stdin);
@@ -685,22 +677,20 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     } 
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(datfile, pZ, pdinfo, cmd->opt, prn);
+	err = import_csv(newfile, pZ, pdinfo, cmd->opt, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(datfile, ftype, cmd->list, cmd->extra,
+	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->extra,
 				 pZ, pdinfo, cmd->opt, prn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(datfile, ftype, pZ, pdinfo, cmd->opt, prn);
+	err = import_other(newfile, ftype, pZ, pdinfo, cmd->opt, prn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(datfile, &paths, pZ, pdinfo, 
-			     cmd->opt, prn);
+	err = gretl_read_gdt(newfile, pZ, pdinfo, cmd->opt, prn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(line, prn);
     } else if (dbdata) {
-	err = set_db_name(datfile, ftype, &paths, prn);
+	err = set_db_name(newfile, ftype, prn);
     } else {
-	err = gretl_get_data(datfile, &paths, pZ, pdinfo,  
-			     cmd->opt, prn);
+	err = gretl_get_data(newfile, pZ, pdinfo, cmd->opt, prn);
     }
 
     if (err) {
@@ -709,7 +699,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     }
 
     if (!dbdata && cmd->ci != APPEND) {
-	strncpy(paths.datfile, datfile, MAXLEN - 1);
+	strncpy(datafile, newfile, MAXLEN - 1);
     }
 
     data_status = 1;
@@ -903,7 +893,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case HELP:
-	cli_help(cmd->param, &paths, cmd->opt, prn);
+	cli_help(cmd->param, cmd->opt, prn);
 	break;
 
     case OPEN:
@@ -955,13 +945,12 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
 	if (*outfile != 0 && *outfile != '\n' && *outfile != '\r' 
 	    && strcmp(outfile, "q")) {
-	    const char *udir = gretl_work_dir();
+	    const char *udir = gretl_workdir();
 
 	    printf(_("writing session output to %s%s\n"), udir, outfile);
 #ifdef WIN32
-	    sprintf(syscmd, "\"%s\\gretlcli\" -b \"%s\" > \"%s%s\"", 
-		    paths.gretldir, cmdfile, udir, outfile);
-	    /* WinExec(syscmd, SW_SHOWMINIMIZED); */
+	    sprintf(syscmd, "\"%sgretlcli\" -b \"%s\" > \"%s%s\"", 
+		    gretl_home(), cmdfile, udir, outfile);
 	    system(syscmd);
 #else
 	    sprintf(syscmd, "gretlcli -b \"%s\" > \"%s%s\"", 
@@ -974,7 +963,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case RUN:
     case INCLUDE:
-	err = getopenfile(line, runfile, &paths, OPT_S);
+	err = getopenfile(line, runfile, OPT_S);
 	if (err) { 
 	    pputs(prn, _("Command is malformed\n"));
 	    break;

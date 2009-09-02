@@ -1065,7 +1065,7 @@ static PRN *make_tex_prn (int ID, char *fname,
     PRN *prn;
 
     if (*fname == '\0') {
-	sprintf(texfile, "%s%s_%d.tex", gretl_work_dir(),
+	sprintf(texfile, "%s%s_%d.tex", gretl_workdir(),
 		(eqn)? "equation" : "model", ID);
 	strcpy(fname, texfile);
     } else {
@@ -1094,7 +1094,7 @@ static PRN *make_rtf_prn (int ID, char *fname, int *err)
     PRN *prn;
 
     if (*fname == '\0') {
-	sprintf(rtffile, "%smodel_%d.rtf", gretl_work_dir(), ID);
+	sprintf(rtffile, "%smodel_%d.rtf", gretl_workdir(), ID);
 	strcpy(fname, rtffile);
     } else {
 	gretl_maybe_switch_dir(fname);
@@ -1135,7 +1135,7 @@ void set_gretl_tex_preamble (void)
     FILE *fp;
 
     /* first choice: localized preamble file */
-    sprintf(test, "%s%s", gretl_work_dir(), get_gretltex_local());
+    sprintf(test, "%s%s", gretl_workdir(), get_gretltex_local());
     fp = gretl_fopen(test, "r");
     if (fp != NULL) {
 	strcpy(tex_preamble_file, test);
@@ -1144,7 +1144,7 @@ void set_gretl_tex_preamble (void)
     }    
 
     /* preamble file on disk */
-    sprintf(test, "%sgretlpre.tex", gretl_work_dir());
+    sprintf(test, "%sgretlpre.tex", gretl_workdir());
     fp = gretl_fopen(test, "r");
     if (fp != NULL) {
 	strcpy(tex_preamble_file, test);

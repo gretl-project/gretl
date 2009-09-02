@@ -2204,7 +2204,7 @@ static int loop_store_save (LOOP_STORE *lstore, PRN *prn)
     pprintf(prn, _("store: using filename %s\n"), lstore->fname);
 
     err = write_data(lstore->fname, list, (const double **) lstore->Z, 
-		     lstore->dinfo, lstore->opt, NULL);
+		     lstore->dinfo, lstore->opt, 0);
 
     if (!err) {
 	pprintf(prn, _("Data written OK.\n"));

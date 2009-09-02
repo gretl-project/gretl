@@ -292,14 +292,12 @@ struct DATASET_ {
 };
 
 struct PATHS_ {
-    char currdir[MAXLEN];
     char workdir[MAXLEN];
     char dotdir[MAXLEN];
     char gretldir[MAXLEN];
     char helpfile[MAXLEN];
     char cmd_helpfile[MAXLEN];
     char cli_helpfile[MAXLEN];
-    char datfile[MAXLEN];
     char binbase[MAXLEN];
     char ratsbase[MAXLEN];
     char gnuplot[MAXLEN];

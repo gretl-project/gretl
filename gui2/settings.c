@@ -107,17 +107,16 @@ char midiplayer[MAXSTR] = "timidity -ig";
 #endif
 
 typedef enum {
-    ROOTSET  = 1 << 0,
-    USERSET  = 1 << 1, 
-    BOOLSET  = 1 << 2,
-    INTSET   = 1 << 3,
-    LISTSET  = 1 << 4,
-    RADIOSET = 1 << 5,
-    INVISET  = 1 << 6,
-    FIXSET   = 1 << 7,  /* setting fixed by admin (Windows network use) */
-    MACHSET  = 1 << 8,  /* "local machine" setting */
-    BROWSER  = 1 << 9,  /* wants "Browse" button */
-    RESTART  = 1 << 10
+    USERSET  = 1 << 0,  /* user-lavel variable */
+    BOOLSET  = 1 << 1,  /* boolean value (user) */
+    INTSET   = 1 << 2,  /* integer value (user) */
+    LISTSET  = 1 << 3,  /* user string, from fixed menu */
+    RADIOSET = 1 << 4,  /* user int, from fixed menu */
+    INVISET  = 1 << 5,  /* not visible in Preferences dialog */
+    FIXSET   = 1 << 6,  /* setting fixed by admin (Windows network use) */
+    MACHSET  = 1 << 7,  /* "local machine" setting */
+    BROWSER  = 1 << 8,  /* wants "Browse" button */
+    RESTART  = 1 << 9   /* needs program restart to take effect */
 } rcflags;
 
 typedef struct {
@@ -125,16 +124,7 @@ typedef struct {
     char *description; /* How the field will show up in the options dialog */
     char *link;        /* in case of radio button pair, alternate string */
     void *var;         /* pointer to variable */
-    rcflags flags;     /* ROOTSET user string
-			  USERSET root string
-			  MACHSET local machine string
-			  BOOLSET boolean (user)
-                          INTSET integer (user)
-			  LISTSET user string, from fixed menu
-                          RADIOSET user int, from fixed menu
-			  INVISET not visible in Preferences dialog
-			  RESTART needs program restart to take effect
-		       */
+    rcflags flags;     /* see above */
     int len;           /* storage size for string variable (also see Note) */
     short tab;         /* which tab (if any) does the item fall under? */
     GtkWidget *widget;
@@ -215,19 +205,19 @@ RCVAR rc_vars[] = {
       USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef HAVE_X12A
     { "x12a", N_("Path to x12arima"), NULL, paths.x12a, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
 #ifdef HAVE_TRAMO
     { "tramo", N_("Path to tramo"), NULL, paths.tramo, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
 #ifdef USE_RLIB
     { "Rlib", N_("Path to R library"), NULL, paths.rlibpath, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
 #ifdef USE_OX
     { "ox", N_("Path to oxl executable"), NULL, paths.oxlpath, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
     { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
       USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },
@@ -358,15 +348,15 @@ static void set_gd_fontpath (void)
 	if (strstr(gdpath, "gretl") == NULL &&
 	    strstr(gdpath, "GRETL") == NULL) {
 	    newpath = g_strdup_printf("%s:%sfonts", gdpath, 
-				      paths.gretldir);
+				      gretl_home());
 	}
     } else {
-	newpath = g_strdup_printf("%sfonts", paths.gretldir);
+	newpath = g_strdup_printf("%sfonts", gretl_home());
     }
 
     if (newpath != NULL) {
 	/* Vera is supplied with gretl, so it should work */
-	strcpy(paths.pngfont, "Vera 9");
+	set_gretl_png_font("Vera 9");
 	setenv("GDFONTPATH", newpath, 1);
 	g_free(newpath);
 	gnuplot_has_ttf(1);
@@ -377,7 +367,7 @@ static void record_shell_opt (void)
 {
     char shellstamp[FILENAME_MAX];
 
-    sprintf(shellstamp, "%s.gretl_shell_stamp", paths.dotdir);
+    sprintf(shellstamp, "%s.gretl_shell_stamp", gretl_dotdir());
 
     if (shellok) {
 	FILE *fp = gretl_fopen(shellstamp, "w");
@@ -446,7 +436,7 @@ static void get_pkg_dir (char *dirname, int action)
 
     /* try 'system' location first */
 
-    sprintf(dirname, "%s%s", paths.gretldir, subdir);
+    sprintf(dirname, "%s%s", gretl_home(), subdir);
     err = gretl_mkdir(dirname);
     if (!err) {
 	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
@@ -466,11 +456,11 @@ static void get_pkg_dir (char *dirname, int action)
     /* try user's directory */
 
     if (action == SAVE_DATA_PKG) {
-	strcpy(dirname, paths.workdir);
+	strcpy(dirname, gretl_workdir());
 	target = g_strdup_printf("%s%s", dirname, "wtest");
     } else {
 	/* should we really use dotdir here? */
-	sprintf(dirname, "%s%s", paths.dotdir, subdir);
+	sprintf(dirname, "%s%s", gretl_dotdir(), subdir);
 	err = gretl_mkdir(dirname);
 	if (!err) {
 	    target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
@@ -513,12 +503,12 @@ void set_gretl_startdir (void)
 #endif
 
     if (usecwd && *startdir != '\0') {
-	int err = set_gretl_work_dir(startdir, &paths);
+	int err = set_gretl_work_dir(startdir);
 
 	if (err) {
 	    fprintf(stderr, "%s\n", gretl_errmsg_get());
 	} else {
-	    fprintf(stderr, "working dir = '%s'\n", paths.workdir);
+	    fprintf(stderr, "working dir = '%s'\n", startdir);
 	}
     }
 }
@@ -535,9 +525,9 @@ void get_default_dir (char *s, int action)
     if (action == SAVE_FUNCTIONS || action == SAVE_DATA_PKG) {
 	get_pkg_dir(s, action);
     } else if (action == OPEN_RATS_DB) {
-	strcpy(s, paths.ratsbase);
+	strcpy(s, gretl_ratsbase());
     } else {
-	strcpy(s, paths.workdir);
+	strcpy(s, gretl_workdir());
     }
 
     slash_terminate(s);
@@ -563,7 +553,7 @@ static int alt_ok (const char *prog)
     int tr = strstr(prog, "tramo") != NULL;
     int ok;
     
-    strcpy(test, paths.gretldir);
+    strcpy(test, gretl_home());
     p = strstr(test, "share/gretl");
     if (p != NULL) {
     	*p = 0;
@@ -1536,7 +1526,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 		rcvar_set_int(rcvar, bval, &changed);
 	    } else if ((rcvar->flags & USERSET) || 
-		       (rcvar->flags & ROOTSET) ||
+		       (rcvar->flags & MACHSET) ||
 		       (rcvar->flags & MACHSET)) {
 		const gchar *str = gtk_entry_get_text(GTK_ENTRY(w));
 
@@ -1767,7 +1757,7 @@ void write_rc (void)
     for (i=0; rc_vars[i].key != NULL; i++) {
 	rcvar = &rc_vars[i];
 
-	if (rcvar->flags & (FIXSET | ROOTSET)) {
+	if (rcvar->flags & FIXSET) {
 	    /* read-only variables */
 	    continue;
 	}
@@ -1875,7 +1865,7 @@ void read_rc (int debug)
     }
 
     if (get_network_settings() && *paths.workdir != '\0') {
-	int err = set_gretl_work_dir(paths.workdir, &paths);
+	int err = set_gretl_work_dir(paths.workdir);
 
 	if (err) {
 	    gui_errmsg(err);
@@ -1899,13 +1889,7 @@ void read_rc (int debug)
 
 	*value = '\0';
 
-	if (rcvar->flags & ROOTSET) {
-	    err = read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, 
-					     HKEY_CLASSES_ROOT,
-					     get_reg_base(rcvar->key),
-					     rcvar->key, 
-					     value);
-	} else if (rcvar->flags & MACHSET) {
+	if (rcvar->flags & MACHSET) {
 	    err = read_reg_val(HKEY_LOCAL_MACHINE, 
 			       get_reg_base(rcvar->key),
 			       rcvar->key, 
@@ -1979,8 +1963,8 @@ static void find_and_write_var (const char *key, const char *val)
 
 static void read_rc (void) 
 {
-    FILE *fp;
     char line[MAXLEN], key[32], linevar[MAXLEN];
+    FILE *fp;
     int i;
 
     fp = fopen(rcfile, "r");
@@ -2151,7 +2135,7 @@ void dump_rc (void)
     char val[6];
     int i;
 
-    sprintf(dumper, "%sconfig-dump.txt", paths.workdir);
+    sprintf(dumper, "%sconfig-dump.txt", gretl_workdir());
 
     fp = gretl_fopen(dumper, "w");
     if (fp == NULL) {
@@ -2182,7 +2166,7 @@ void dump_rc (void)
 	}
     }
 
-    dir_exists(paths.gretldir, fp);
+    dir_exists(gretl_home(), fp);
 
     printf("Config info written to %s\n", dumper);
 
@@ -2191,7 +2175,7 @@ void dump_rc (void)
 
 int gui_set_working_dir (char *dirname)
 {
-    int err = set_gretl_work_dir(dirname, &paths);
+    int err = set_gretl_work_dir(dirname);
 
     if (err) {
 	gui_errmsg(err);
@@ -2244,7 +2228,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     w = gtk_label_new(_("Working directory:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5); 
 
-    strcpy(tmp, paths.workdir); 
+    strcpy(tmp, gretl_workdir()); 
     trim_slash(tmp);
  
     /* combo + browse button for current working dir */
@@ -2303,7 +2287,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 	g_free(str);
     }
 
-    err = set_gretl_work_dir(tmp, &paths);
+    err = set_gretl_work_dir(tmp);
     if (err) {
 	gui_errmsg(err);
 	delete_from_filelist(FILE_LIST_WDIR, tmp);

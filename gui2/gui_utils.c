@@ -604,7 +604,7 @@ void mark_dataset_as_modified (void)
 
 static void gui_record_data_opening (const char *fname, const int *list)
 {
-    const char *recname = (fname != NULL)? fname : paths.datfile;
+    const char *recname = (fname != NULL)? fname : datafile;
 
     if (haschar(' ', recname) >= 0) {
 	gretl_command_sprintf("open \"%s\"", recname);
@@ -632,10 +632,10 @@ static void gui_record_data_opening (const char *fname, const int *list)
 
     check_and_record_command();
 
-    if (*paths.datfile != '\0') {
+    if (*datafile != '\0') {
 	char tmp[FILENAME_MAX];
 
-	strcpy(tmp, paths.datfile);
+	strcpy(tmp, datafile);
 	mkfilelist(FILE_LIST_DATA, tmp);
     }
 }
@@ -655,14 +655,14 @@ static void real_register_data (int flag, const char *user_fname,
     if (file_opened(flag)) {
 	if (!(data_status & IMPORT_DATA)) {
 	    /* we opened a native data file */
-	    if (has_system_prefix(paths.datfile, &paths, DATA_SEARCH)) {
+	    if (has_system_prefix(datafile, DATA_SEARCH)) {
 		data_status |= BOOK_DATA;
 		data_status &= ~USER_DATA;
 	    } else {
 		data_status &= ~BOOK_DATA;
 		data_status |= USER_DATA; 
 	    }
-	    if (is_gzipped(paths.datfile)) {
+	    if (is_gzipped(datafile)) {
 		data_status |= GZIPPED_DATA;
 	    } else {
 		data_status &= ~GZIPPED_DATA;
@@ -725,8 +725,8 @@ static void finalize_data_open (const char *fname, int ftype,
 	return;
     } 
 
-    if (fname != paths.datfile) {
-	strcpy(paths.datfile, fname);
+    if (fname != datafile) {
+	strcpy(datafile, fname);
     }
 
     real_register_data(DATAFILE_OPENED, NULL, plist);
@@ -906,12 +906,12 @@ static int get_native_data (char *fname, int ftype, int append,
     int err;
 
     if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(fname, &paths, &Z, datainfo, 
-			     OPT_B, prn);
+	err = gretl_read_gdt(fname, &Z, datainfo, OPT_B, prn);
     } else {
-	err = gretl_get_data(fname, &paths, &Z, datainfo, 
-			     OPT_NONE, prn);
+	err = gretl_get_data(fname, &Z, datainfo, OPT_NONE, prn);
     }
+
+    /* FIXME NEW : fname to datafile */
 
     gretl_print_destroy(prn);
 
@@ -976,7 +976,7 @@ void do_open_data (windata_t *fwin, int code)
 	ftype = GRETL_JMULTI;
     } else {
 	/* no filetype specified: have to guess */
-	ftype = detect_filetype(tryfile, &paths);
+	ftype = detect_filetype(tryfile);
     }
 
     /* destroy the current data set, etc., unless we're explicitly appending */
@@ -3672,7 +3672,7 @@ static void run_R_sync (void)
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *Rout = g_strdup_printf("%sR.out", paths.dotdir);
+	gchar *Rout = g_strdup_printf("%sR.out", gretl_dotdir());
 
 	view_file(Rout, 0, 1, 78, 350, VIEW_FILE);
 	g_free(Rout);

@@ -87,7 +87,7 @@ int get_command_index (char *line, CMD *cmd);
 
 int command_number (const char *cmd);
 
-int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn);
+int cli_help (const char *cmdword, gretlopt opt, PRN *prn);
 
 int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname);
 

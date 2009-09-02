@@ -180,7 +180,8 @@ static void launch_gnuplot_interactive (void)
 # ifdef G_OS_WIN32
     gchar *gpline;
 
-    gpline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
+    gpline = g_strdup_printf("\"%s\" \"%s\" -", 
+			     gretl_gnuplot_path(),
 			     gretl_plotfile());
     create_child_process(gpline);
     g_free(gpline);
@@ -198,13 +199,14 @@ static void launch_gnuplot_interactive (void)
     } 
 
     if (!err) {
+	const char *gp = gretl_gnuplot_path();
 	GError *error = NULL;
 	gchar *argv[12];
 	int ok;
 
 	if (*term == '\0') {
 	    /* no controller is needed */
-	    argv[0] = paths.gnuplot;
+	    argv[0] = (char *) gp;
 	    argv[1] = plotfile;
 	    argv[2] = "-persist";
 	    argv[3] = NULL;
@@ -214,7 +216,7 @@ static void launch_gnuplot_interactive (void)
 	    argv[1] = "--geometry=40x4";
 	    argv[2] = "--title=\"gnuplot: type q to quit\"";
 	    argv[3] = "-x";
-	    argv[4] = paths.gnuplot;
+	    argv[4] = (char *) gp;
 	    argv[5] = plotfile;
 	    argv[6] = "-";
 	    argv[7] = NULL;
@@ -228,7 +230,7 @@ static void launch_gnuplot_interactive (void)
 	    argv[5] = "-title";
 	    argv[6] = "gnuplot: type q to quit";
 	    argv[7] = "-e";
-	    argv[8] = paths.gnuplot;
+	    argv[8] = (char *) gp;
 	    argv[9] = plotfile;
 	    argv[10] = "-";
 	    argv[11] = NULL;
@@ -287,7 +289,7 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
     int err = 0;
 
-    strcpy(fullname, paths.dotdir);
+    strcpy(fullname, gretl_dotdir());
     strcat(fullname, fname);
 
     *pprn = gretl_print_new_with_filename(fullname, &err);
@@ -6078,8 +6080,11 @@ void set_currdir_from_filename (const char *fname)
     int spos = slashpos(scriptfile);
 
     if (spos) {
-	*paths.currdir = '\0';
-	strncat(paths.currdir, scriptfile, spos + 1);
+	char currdir[MAXLEN];
+
+	*currdir = '\0';
+	strncat(currdir, scriptfile, spos + 1);
+	gretl_set_current_dir(currdir);
     }
 }
 
@@ -6104,7 +6109,7 @@ void do_open_script (int action)
 	strcpy(scriptfile, tryfile);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	set_currdir_from_filename(scriptfile);
-	if (has_system_prefix(scriptfile, &paths, SCRIPT_SEARCH)) {
+	if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
 	    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 	} else {
 	    view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
@@ -6120,7 +6125,7 @@ void do_new_script (int code)
     char temp[MAXLEN];
     FILE *fp;
 
-    sprintf(temp, "%sscript_tmp", paths.dotdir);
+    sprintf(temp, "%sscript_tmp", gretl_dotdir());
     fp = gretl_tempfile_open(temp);
     if (fp == NULL) {
 	return;
@@ -6171,7 +6176,7 @@ void maybe_display_string_table (void)
 	} 
 
 	s_table_waiting = 0;
-	build_path(stname, paths.workdir, "string_table.txt", NULL);
+	build_path(stname, gretl_workdir(), "string_table.txt", NULL);
 	view_file(stname, 0, 0, 78, 350, VIEW_FILE);
     }
 }
@@ -6357,14 +6362,14 @@ static int set_auto_overwrite (const char *fname, gretlopt opt,
 {
     int ret = 0;
 
-    if (fname == paths.datfile) {
+    if (fname == datafile) {
 	/* saving current dataset under same name */
 	ret = 1;
     } else if (WRITING_DB(opt)) {
 	/* allow for appending to databases */
 	ret = 1;
     } else {
-	int samename = (strcmp(fname, paths.datfile) == 0);
+	int samename = (strcmp(fname, datafile) == 0);
 
 	if (storelist == NULL) {
 	    if (samename) {
@@ -6452,7 +6457,7 @@ static void maybe_shrink_dataset (const char *savename, int sublist)
     int shrink = 0;
     int resp;
 
-    if (paths.datfile == savename || !strcmp(paths.datfile, savename)) {
+    if (datafile == savename || !strcmp(datafile, savename)) {
 	shrink = 1;
     } else {
 	resp = yes_no_dialog(_("gretl: revised data set"), 
@@ -6468,8 +6473,8 @@ static void maybe_shrink_dataset (const char *savename, int sublist)
 	if (sublist) {
 	    shrink_dataset_to_sublist();
 	}
-	if (paths.datfile != savename) {
-	    strcpy(paths.datfile, savename);
+	if (datafile != savename) {
+	    strcpy(datafile, savename);
 	}
     }	
 }
@@ -6551,7 +6556,7 @@ int do_store (char *savename, gretlopt opt)
 
     /* actually write the data to file */
     err = write_data(savename, libcmd.list, (const double **) Z, datainfo, 
-		     opt, &paths);
+		     opt, 1);
 
     if (err) {
 	if (WRITING_DB(opt) && err == E_DB_DUP) {
@@ -6570,11 +6575,11 @@ int do_store (char *savename, gretlopt opt)
 	mkfilelist(FILE_LIST_DATA, savename);
 	if (dataset_is_subsampled() || sublist) {
 	    maybe_shrink_dataset(savename, sublist);
-	} else if (paths.datfile != savename) {
-	    strcpy(paths.datfile, savename);
+	} else if (datafile != savename) {
+	    strcpy(datafile, savename);
 	}
 	data_status = (HAVE_DATA | USER_DATA);
-	if (is_gzipped(paths.datfile)) {
+	if (is_gzipped(datafile)) {
 	    data_status |= GZIPPED_DATA;
 	} 
 	edit_info_state(TRUE);
@@ -6628,7 +6633,7 @@ static int spawn_latex (char *texsrc)
 
     signal(SIGCHLD, SIG_DFL);
 
-    ok = g_spawn_sync (paths.dotdir, /* working dir */
+    ok = g_spawn_sync (gretl_dotdir(), /* working dir */
 		       argv,
 		       NULL,    /* envp */
 		       G_SPAWN_SEARCH_PATH,
@@ -6689,7 +6694,7 @@ int latex_compile (char *texshort)
     }
 
     sprintf(tmp, "\"%s\" \\batchmode \\input %s", latex_path, texshort);
-    if (winfork(tmp, paths.dotdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+    if (winfork(tmp, gretl_dotdir(), SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return LATEX_EXEC_FAILED;
     }
 #else
@@ -6779,7 +6784,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     if (fname != NULL) {
 	strcpy(texfile, fname);
     } else {
-	sprintf(texfile, "%swindow.tex", paths.dotdir);
+	sprintf(texfile, "%swindow.tex", gretl_dotdir());
     } 
 
     fprn = gretl_print_new_with_filename(texfile, &err);
@@ -7153,7 +7158,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     gretlopt openopt = OPT_NONE;
     char *line = s->line;
     CMD *cmd = s->cmd;
-    char datfile[MAXLEN] = {0};
+    char myfile[MAXLEN] = {0};
     int ftype, dbdata = 0;
     int err = 0;
 
@@ -7162,7 +7167,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (!(cmd->opt & OPT_O)) {
-	err = getopenfile(line, datfile, &paths, (cmd->opt & OPT_W)? 
+	err = getopenfile(line, myfile, (cmd->opt & OPT_W)? 
 			  OPT_W : OPT_NONE);
 	if (err) {
 	    gui_errmsg(err);
@@ -7178,7 +7183,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     } else if (cmd->opt & OPT_O) {
 	ftype = GRETL_ODBC;
     } else {
-	ftype = detect_filetype(datfile, &paths);
+	ftype = detect_filetype(myfile);
     }
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
@@ -7207,22 +7212,20 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(datfile, pZ, pdinfo, openopt, prn);
+	err = import_csv(myfile, pZ, pdinfo, openopt, prn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(datfile, &paths, pZ, pdinfo, 
-			     openopt | OPT_B, prn);
+	err = gretl_read_gdt(myfile, pZ, pdinfo, openopt | OPT_B, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(datfile, ftype, cmd->list, cmd->extra, pZ, pdinfo, 
+	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->extra, pZ, pdinfo, 
 				 openopt, prn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(datfile, ftype, pZ, pdinfo, openopt, prn);
+	err = import_other(myfile, ftype, pZ, pdinfo, openopt, prn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(line, prn);
     } else if (dbdata) {
-	err = set_db_name(datfile, ftype, &paths, prn);
+	err = set_db_name(myfile, ftype, prn);
     } else {
-	err = gretl_get_data(datfile, &paths, pZ, pdinfo, 
-			     openopt, prn);
+	err = gretl_get_data(myfile, pZ, pdinfo, openopt, prn);
     }
 
     if (err) {
@@ -7231,7 +7234,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (!dbdata && cmd->ci != APPEND) {
-	strncpy(paths.datfile, datfile, MAXLEN - 1);
+	strncpy(datafile, myfile, MAXLEN - 1);
     }
 
     if (ftype == GRETL_CSV || SPREADSHEET_IMPORT(ftype) || 
@@ -7483,10 +7486,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = gui_console_help(cmd->param);
 	    if (err) {
 		err = 0;
-		cli_help(cmd->param, &paths, cmd->opt, prn);
+		cli_help(cmd->param, cmd->opt, prn);
 	    }
 	} else {
-	    cli_help(cmd->param, &paths, cmd->opt, prn);
+	    cli_help(cmd->param, cmd->opt, prn);
 	}
 	break;
 
@@ -7529,7 +7532,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case RUN:
     case INCLUDE:
-	err = getopenfile(line, runfile, &paths, OPT_S);
+	err = getopenfile(line, runfile, OPT_S);
 	if (err) { 
 	    errmsg(err, prn);
 	    break;

@@ -1001,17 +1001,18 @@ static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
 static void link_open_script (GtkTextTag *tag)
 {
     const char *fname = g_object_get_data(G_OBJECT(tag), "fname");
+    const char *gretldir = gretl_home();
     char fullname[MAXLEN];
     FILE *fp;
 
-    sprintf(fullname, "%sscripts%cmisc%c%s", paths.gretldir, 
+    sprintf(fullname, "%sscripts%cmisc%c%s", gretldir, 
 	    SLASH, SLASH, fname);
 
     fp = gretl_fopen(fullname, "r");
     if (fp != NULL) {
 	fclose(fp);
     } else {
-	sprintf(fullname, "%sscripts%c%s", paths.gretldir, 
+	sprintf(fullname, "%sscripts%c%s", gretldir, 
 		SLASH, fname);
     }
 
@@ -2432,7 +2433,7 @@ static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
     char figfile[FILENAME_MAX];
     GdkPixbuf *pixbuf;
 
-    sprintf(figfile, "%shelpfigs%c%s.png", paths.gretldir,
+    sprintf(figfile, "%shelpfigs%c%s.png", gretl_home(),
 	    SLASH, fig);
 
     pixbuf = gdk_pixbuf_new_from_file(figfile, NULL);

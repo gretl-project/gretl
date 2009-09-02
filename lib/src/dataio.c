@@ -1229,8 +1229,8 @@ static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @opt: option flag indicating format in which to write the data.
- * @ppaths: pointer to paths information (should be NULL when not
- * called from gui).
+ * @progress: may be 1 when called from gui to display progress
+ * bar in case of a large data write; generally should be 0.
  * 
  * Write out a data file containing the values of the given set
  * of variables.
@@ -1240,7 +1240,7 @@ static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
 
 int write_data (const char *fname, int *list, 
 		const double **Z, const DATAINFO *pdinfo, 
-		gretlopt opt, PATHS *ppaths)
+		gretlopt opt, int progress)
 {
     int i, t, v, l0;
     GretlDataFormat fmt;
@@ -1280,7 +1280,7 @@ int write_data (const char *fname, int *list,
     if (fmt == 0 || fmt == GRETL_FMT_GZIPPED) {
 	err = gretl_write_gdt(fname, list, Z, pdinfo, 
 			      (fmt == GRETL_FMT_GZIPPED)? OPT_Z : OPT_NONE,
-			      ppaths);
+			      progress);
 	goto write_exit;
     }
 
@@ -1583,7 +1583,7 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
 /**
  * data_report:
  * @pdinfo: data information struct.
- * @ppaths: path information struct.
+ * @fname: filename for current datafile.
  * @prn: gretl printing struct.
  * 
  * Write out a summary of the content of the current data set.
@@ -1592,7 +1592,7 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
  * 
  */
 
-int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
+int data_report (const DATAINFO *pdinfo, const char *fname, PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN], tmp[MAXLEN];
     char tstr[48];
@@ -1602,7 +1602,7 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     ntodate(enddate, pdinfo->n - 1, pdinfo);
 
     sprintf(tmp, _("Data file %s\nas of"), 
-	    strlen(ppaths->datfile)? ppaths->datfile : _("(unsaved)"));
+	    (*fname != '\0')? fname : _("(unsaved)"));
 
     print_time(tstr);
     pprintf(prn, "%s %s\n\n", tmp, tstr);
@@ -1788,7 +1788,6 @@ static void try_gdt (char *fname)
 /**
  * gretl_get_data:
  * @datfile: name of file to try.
- * @ppaths: path information struct.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
  * @opt: for use with "append".
@@ -1800,8 +1799,7 @@ static void try_gdt (char *fname)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_get_data (char *datfile, PATHS *ppaths,
-		    double ***pZ, DATAINFO *pdinfo, 
+int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn) 
 {
     DATAINFO *tmpdinfo = NULL;
@@ -1809,7 +1807,6 @@ int gretl_get_data (char *datfile, PATHS *ppaths,
     FILE *dat = NULL;
     gzFile fz = NULL;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
-    int newdata = (*pZ == NULL);
     int gdtsuff, gzsuff = 0;
     int binary = 0, old_byvar = 0;
     int err = 0;
@@ -1823,7 +1820,7 @@ int gretl_get_data (char *datfile, PATHS *ppaths,
 	gzsuff = has_suffix(datfile, ".gz");
     }
 
-    if (addpath(datfile, ppaths, 0) == NULL) { /* not found yet */
+    if (addpath(datfile, 0) == NULL) { /* not found yet */
 	char tryfile[MAXLEN];
 	int found = 0;
 
@@ -1832,7 +1829,7 @@ int gretl_get_data (char *datfile, PATHS *ppaths,
 	    *tryfile = '\0';
 	    strncat(tryfile, datfile, MAXLEN-1);
 	    try_gdt(tryfile); 
-	    found = (addpath(tryfile, ppaths, 0) != NULL);
+	    found = (addpath(tryfile, 0) != NULL);
 	    if (found) {
 		gdtsuff = 1;
 	    }
@@ -1841,7 +1838,7 @@ int gretl_get_data (char *datfile, PATHS *ppaths,
 	/* or maybe the file is gzipped but lacks a .gz extension? */
 	if (!found && !gzsuff) { 
 	    sprintf(tryfile, "%s.gz", datfile);
-	    if (addpath(tryfile, ppaths, 0) != NULL) {
+	    if (addpath(tryfile, 0) != NULL) {
 		gzsuff = 1;
 		found = 1;
 	    }
@@ -1857,7 +1854,7 @@ int gretl_get_data (char *datfile, PATHS *ppaths,
 
     /* catch XML files that have strayed in here? */
     if (gdtsuff && gretl_is_xml_file(datfile)) {
-	return gretl_read_gdt(datfile, ppaths, pZ, pdinfo, OPT_NONE, prn);
+	return gretl_read_gdt(datfile, pZ, pdinfo, OPT_NONE, prn);
     }
 
     tmpdinfo = datainfo_new();
@@ -1958,10 +1955,6 @@ int gretl_get_data (char *datfile, PATHS *ppaths,
     if (err) goto bailout;
 
     err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, opt, prn);
-
-    if (!err && newdata && ppaths != NULL && datfile != ppaths->datfile) {
-	strcpy(ppaths->datfile, datfile);
-    }
 
  bailout:
 
@@ -3012,7 +3005,6 @@ int gretl_is_pkzip_file (const char *fname)
 /**
  * detect_filetype:
  * @fname: name of file to examine.
- * @ppaths: path information struct.
  * 
  * Attempt to determine the type of a file to be opened in gretl:
  * data file (of various formats), or command script.
@@ -3020,7 +3012,7 @@ int gretl_is_pkzip_file (const char *fname)
  * Returns: integer code indicating the type of file.
  */
 
-GretlFileType detect_filetype (char *fname, PATHS *ppaths)
+GretlFileType detect_filetype (char *fname)
 {
     int i, c, ftype = GRETL_NATIVE_DATA;
     char teststr[5];
@@ -3064,11 +3056,7 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths)
     if (has_suffix(fname, ".bn7"))
 	return GRETL_PCGIVE_DB;
 
-    if (ppaths == NULL) {
-	return GRETL_NATIVE_DATA; 
-    }
-
-    addpath(fname, ppaths, 0); 
+    addpath(fname, 0); 
 
     if (gretl_is_xml_file(fname)) {
 	return GRETL_XML_DATA;  

@@ -48,7 +48,7 @@ static char gpage_tex_base[FILENAME_MAX];
 static void gpage_filenames_init (const char *base)
 {
     if (base == NULL) {
-	strcpy(gpage_base, paths.dotdir);
+	strcpy(gpage_base, gretl_dotdir());
 	strcat(gpage_base, "gretl_graphpage");
 	strcpy(gpage_tex_base, "gretl_graphpage");
     } else {
@@ -302,13 +302,14 @@ int in_graph_page (const char *fname)
 
 static int gnuplot_compile (const char *fname)
 {
+    const char *gnuplot = gretl_gnuplot_path();
     char plotcmd[MAXLEN];
     int err = 0;
 
 # ifdef WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, fname);
+    sprintf(plotcmd, "\"%s\" \"%s\"", gnuplot, fname);
 # else
-    sprintf(plotcmd, "%s \"%s\"", paths.gnuplot, fname);
+    sprintf(plotcmd, "%s \"%s\"", gnuplot, fname);
 # endif
 
     err = gretl_spawn(plotcmd);
@@ -427,7 +428,7 @@ static int spawn_dvips (char *texsrc)
 
     signal(SIGCHLD, SIG_DFL);
 
-    ok = g_spawn_sync (paths.dotdir, /* working dir */
+    ok = g_spawn_sync (gretl_dotdir(),
 		       argv,
 		       NULL,    /* envp */
 		       G_SPAWN_SEARCH_PATH,
@@ -475,7 +476,7 @@ int dvips_compile (char *texshort)
     }
 
     sprintf(tmp, "\"%s\" -o %s.ps %s", dvips_path, texshort, texshort);
-    if (winfork(tmp, paths.dotdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+    if (winfork(tmp, gretl_dotdir(), SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return 1;
     }
 #else

@@ -520,7 +520,7 @@ static int filename_to_param (CMD *cmd, char *s, int *len,
     } else if (cmd->ci == OUTFILE && !strcmp(fname, "null")) {
 	cmd->param = fname;
     } else {
-	cmd->param = gretl_strdup_printf("%s%s", gretl_work_dir(), fname);
+	cmd->param = gretl_strdup_printf("%s%s", gretl_workdir(), fname);
 	free(fname);
 	if (cmd->param == NULL) {
 	    return E_ALLOC;
@@ -2761,7 +2761,6 @@ static int func_help_topics (const char *helpfile, PRN *prn)
 /**
  * cli_help:
  * @cmdword: the command on which help is wanted.
- * @paths: pointer to gretl paths structure.
  * @opt: may include %OPT_F to give priority to functions
  * rather than commands.
  * @prn: pointer to gretl printing struct.
@@ -2774,7 +2773,7 @@ static int func_help_topics (const char *helpfile, PRN *prn)
  * requested topic was not found.
  */
 
-int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn)
+int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
 {
     static int recode = -1;
     char helpfile[FILENAME_MAX];
@@ -2810,7 +2809,7 @@ int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn)
     }
 
     if (!strcmp(cmdword, "functions") || (noword && funhelp)) {
-	sprintf(helpfile, "%s%s", paths->gretldir, _("genrcli.hlp"));
+	sprintf(helpfile, "%s%s", gretl_home(), _("genrcli.hlp"));
 	return func_help_topics(helpfile, prn);
     }
 
@@ -2819,10 +2818,10 @@ int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn)
     } 
 
     if (ok) {
-	strcpy(helpfile, paths->cli_helpfile);
+	strcpy(helpfile, helpfile_path(GRETL_CLI_HELPFILE));
     } else {
 	if (genr_function_word(cmdword)) {
-	    sprintf(helpfile, "%sgenrcli.hlp", paths->gretldir);
+	    sprintf(helpfile, "%sgenrcli.hlp", gretl_home());
 	} else if (gretl_is_public_user_function(cmdword)) {
 	    return user_function_help(cmdword, prn);
 	} else {
@@ -3602,7 +3601,7 @@ static void get_optional_filename_etc (const char *line, CMD *cmd)
 	if (libset_get_bool(USE_CWD) || fname_has_path(p)) {
 	    cmd->param = p;
 	} else {
-	    cmd->param = gretl_strdup_printf("%s%s", gretl_work_dir(), p);
+	    cmd->param = gretl_strdup_printf("%s%s", gretl_workdir(), p);
 	    free(p);
 	}
     }
@@ -3955,13 +3954,13 @@ static int append_data (const char *line, int *list,
     char fname[MAXLEN] = {0};
     int ftype, err = 0;
 
-    err = getopenfile(line, fname, NULL, OPT_NONE);
+    err = getopenfile(line, fname, OPT_NONE);
     if (err) {
 	errmsg(err, prn);
 	return err;
     }
 
-    ftype = detect_filetype(fname, NULL);
+    ftype = detect_filetype(fname);
 
     if (ftype == GRETL_CSV) {
 	err = import_csv(fname, pZ, pdinfo, opt, prn);
@@ -3971,9 +3970,9 @@ static int append_data (const char *line, int *list,
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(fname, ftype, pZ, pdinfo, opt, prn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(fname, NULL, pZ, pdinfo, opt, prn);
+	err = gretl_read_gdt(fname, pZ, pdinfo, opt, prn);
     } else {
-	err = gretl_get_data(fname, NULL, pZ, pdinfo, opt, prn);
+	err = gretl_get_data(fname, pZ, pdinfo, opt, prn);
     }
 
     return err;
@@ -4513,7 +4512,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pprintf(prn, _("store: using filename %s\n"), cmd->param);
 	}
 	if (!err) {
-	    err = write_data(cmd->param, cmd->list, Z, pdinfo, cmd->opt, NULL);
+	    err = write_data(cmd->param, cmd->list, Z, pdinfo, cmd->opt, 0);
 	}
 	if (!err && gretl_messages_on()) {
 	    pprintf(prn, _("Data written OK.\n"));
@@ -4820,7 +4819,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case RUN:
     case INCLUDE:
-	err = getopenfile(line, runfile, NULL, OPT_S);
+	err = getopenfile(line, runfile, OPT_S);
 	if (err) { 
 	    break;
 	} 

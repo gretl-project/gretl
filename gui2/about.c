@@ -42,7 +42,7 @@ static GtkWidget *open_logo (void)
     GError *error = NULL;
     GtkWidget *image = NULL;
 
-    fname = g_strdup_printf("%sgretl-logo.xpm", paths.gretldir);
+    fname = g_strdup_printf("%sgretl-logo.xpm", gretl_home());
     pbuf = gdk_pixbuf_new_from_file(fname, &error);
 
     if (pbuf == NULL) {
@@ -61,7 +61,7 @@ static void license_callback (GtkWidget *w, gpointer p)
 {
     gchar *fname;
 
-    fname = g_strdup_printf("%sCOPYING", paths.gretldir);
+    fname = g_strdup_printf("%sCOPYING", gretl_home());
     view_file(fname, 0, 0, 78, 350, VIEW_FILE);
     g_free(fname);
 }

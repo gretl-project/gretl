@@ -69,19 +69,6 @@ int read_reg_val (HKEY tree, const char *base,
     return err;
 }
 
-int read_reg_val_with_fallback (HKEY tree0, HKEY tree1, const char *base, 
-				char *keyname, char *keyval)
-{
-    int err;
-
-    err = read_reg_val(tree0, base, keyname, keyval);
-    if (err) {
-	err = read_reg_val(tree1, base, keyname, keyval);
-    }
-
-    return err;
-}
-
 static gchar *get_windows_string (char *s)
 {
     gsize bytes;
@@ -320,8 +307,7 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     /* path to X-12-ARIMA */
     done = read_gretlnet_string(netfp, "x12a", ppaths->x12a);
     if (!done) {
-	read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, HKEY_CLASSES_ROOT,
-				   "x12arima", "x12a", ppaths->x12a);
+	read_reg_val(HKEY_LOCAL_MACHINE, "x12arima", "x12a", ppaths->x12a);
 	if (ppaths->x12a[0] == '\0') {
 	    sprintf(ppaths->x12a, "%c:\\userdata\\x12arima\\x12a.exe", drive);
 	}
@@ -330,8 +316,7 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     /* path to tramo */
     done = read_gretlnet_string(netfp, "tramo", ppaths->tramo);
     if (!done) {
-	read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, HKEY_CLASSES_ROOT,
-				   "tramo", "tramo", ppaths->tramo);
+	read_reg_val(HKEY_LOCAL_MACHINE, "tramo", "tramo", ppaths->tramo);
 	if (ppaths->tramo[0] == '\0') {
 	    sprintf(ppaths->tramo, "%c:\\userdata\\tramo\\tramo.exe", drive);
 	}

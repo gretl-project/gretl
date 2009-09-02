@@ -232,9 +232,9 @@ static void set_en_help_file (int gui)
     char *helpfile, *tmp, *p;
 
     if (gui) {
-	helpfile = paths.helpfile;
+	helpfile = helpfile_path(GRETL_HELPFILE);
     } else {
-	helpfile = paths.cmd_helpfile;
+	helpfile = helpfile_path(GRETL_CMD_HELPFILE);
     }
 
     tmp = malloc(strlen(helpfile) + 1);
@@ -258,17 +258,18 @@ static void set_en_help_file (int gui)
 
 void helpfile_init (void)
 {
+    const char *hpath = helpfile_path(GRETL_HELPFILE);
     char *p;
 
 #ifdef G_OS_WIN32
-    p = strrchr(paths.helpfile, '_');
+    p = strrchr(hpath, '_');
     if (p != NULL && strncmp(p, "_hlp", 4)) { 
 	translated_helpfile = 1;
     } else {
 	translated_helpfile = 0;
     }
 #else
-    p = strrchr(paths.helpfile, '.');
+    p = strrchr(hpath, '.');
     if (p != NULL && strcmp(p, ".hlp")) { 
 	translated_helpfile = 1;
     } else {
@@ -416,9 +417,9 @@ static GtkTreeStore *make_help_topics_tree (int role)
     int err; 
 
     if (role == CLI_HELP) {
-	fname = paths.cmd_helpfile;
+	fname = helpfile_path(GRETL_CMD_HELPFILE);
     } else if (role == GUI_HELP) {
-	fname = paths.helpfile;
+	fname = helpfile_path(GRETL_HELPFILE);
     } else if (role == FUNCS_HELP) {
 	fname = funcs_helpfile();
     } else if (role == CLI_HELP_EN) {
@@ -907,7 +908,7 @@ static char *funcs_helpfile (void)
     static char fname[MAXLEN];
 
     if (*fname == '\0') {
-	sprintf(fname, "%s%s", paths.gretldir, _("genrgui.hlp"));
+	sprintf(fname, "%s%s", gretl_home(), _("genrgui.hlp"));
     }
 
     return fname;
@@ -1009,10 +1010,10 @@ static void real_do_help (int idx, int pos, int role)
 
     if (role == CLI_HELP) {
 	hwin = cli_hwin;
-	fname = paths.cmd_helpfile;
+	fname = helpfile_path(GRETL_CMD_HELPFILE);
     } else if (role == GUI_HELP) {
 	hwin = gui_hwin;
-	fname = paths.helpfile;
+	fname = helpfile_path(GRETL_HELPFILE);
     } else if (role == FUNCS_HELP) {
 	hwin = funcs_hwin;
 	fname = funcs_helpfile();
@@ -1666,22 +1667,24 @@ static int get_writable_path (char *path, const char *fname)
 {
     static int sysdoc_writable = -1;
     static int userdoc_writable = -1;
+    const char *gretldir = gretl_home();
+    const char *dotdir = gretl_dotdir();
     FILE *fp;
     int err = 0;
 
     if (sysdoc_writable == 1) {
-	sprintf(path, "%sdoc%c%s", paths.gretldir, SLASH, fname);
+	sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
 	return 0;
     } else if (userdoc_writable == 1) {
-	sprintf(path, "%sdoc%c%s", paths.dotdir, SLASH, fname);
+	sprintf(path, "%sdoc%c%s", dotdir, SLASH, fname);
 	return 0;
     }
 
     if (sysdoc_writable < 0) {
 	sysdoc_writable = 0;
-	sprintf(path, "%sdoc", paths.gretldir);
+	sprintf(path, "%sdoc", gretldir);
 	if (gretl_mkdir(path) == 0) {
-	    sprintf(path, "%sdoc%c%s", paths.gretldir, SLASH, fname);
+	    sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
 	    fp = gretl_fopen(path, "w");
 	    if (fp != NULL) {
 		sysdoc_writable = 1;
@@ -1694,9 +1697,9 @@ static int get_writable_path (char *path, const char *fname)
     if (!sysdoc_writable && userdoc_writable < 0) {
 	/* can't write to 'sys' dir, user dir not tested yet */
 	userdoc_writable = 0;
-	sprintf(path, "%sdoc", paths.dotdir);
+	sprintf(path, "%sdoc", dotdir);
 	if (gretl_mkdir(path) == 0) {
-	    sprintf(path, "%sdoc%c%s", paths.dotdir, SLASH, fname);
+	    sprintf(path, "%sdoc%c%s", dotdir, SLASH, fname);
 	    fp = gretl_fopen(path, "w");
 	    if (fp != NULL) {
 		userdoc_writable = 1;
@@ -1752,7 +1755,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     }
 
     /* is the file available in public dir? */
-    sprintf(fullpath, "%sdoc%c%s", paths.gretldir, SLASH, fname);
+    sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
     fp = gretl_fopen(fullpath, "r");
     if (fp != NULL) {
 	fclose(fp);
@@ -1760,7 +1763,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     }
 
     /* or maybe in user dir? */
-    sprintf(fullpath, "%sdoc%c%s", paths.dotdir, SLASH, fname);
+    sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
     fp = gretl_fopen(fullpath, "r");
     if (fp != NULL) {
 	fclose(fp);

@@ -130,7 +130,7 @@ static char *funname_from_filename (const char *fname)
 static char *filename_from_funname (char *fname, 
 				    const char *funname)
 {
-    build_path(fname, paths.dotdir, "pkgedit", NULL);
+    build_path(fname, gretl_dotdir(), "pkgedit", NULL);
     strcat(fname, ".");
     strcat(fname, funname);
     return fname;

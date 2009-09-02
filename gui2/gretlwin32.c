@@ -325,12 +325,13 @@ static int wimp_init (void)
 void set_up_windows_look (void)
 {
     if (use_wimp) { 
-	size_t n = strlen(paths.gretldir);
-	int needslash = (paths.gretldir[n-1] != SLASH);
+	const char *gretldir = gretl_home();
+	size_t n = strlen(gretldir);
+	int needslash = (gretldir[n-1] != SLASH);
 	gchar *wimprc;
 
 	wimprc = g_strdup_printf("%s%sshare\\themes\\MS-Windows\\gtk-2.0\\gtkrc", 
-				 paths.gretldir, (needslash)? "\\" : "");
+				 gretldir, (needslash)? "\\" : "");
 	gtk_rc_parse(wimprc);
 	g_free(wimprc);
     } else {

@@ -46,7 +46,7 @@ static int foreign_lang;
 static gretlopt foreign_opt;
 
 /* "dotdir" filenames */
-static gchar *gretl_dotdir;
+static gchar *gretl_dot_dir;
 static gchar *gretl_Rprofile;
 static gchar *gretl_Rsrc;
 static gchar *gretl_Rout;
@@ -90,7 +90,7 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 static const gchar *gretl_ox_filename (void)
 {
     if (gretl_Oxprog == NULL) {
-	const char *dotdir = gretl_dot_dir();
+	const char *dotdir = gretl_dotdir();
 
 	gretl_Oxprog = g_strdup_printf("%sgretltmp.ox", dotdir);
     }
@@ -103,13 +103,13 @@ static void make_gretl_R_names (void)
     static int done;
 
     if (!done) {
-	gretl_dotdir = g_strdup(gretl_dot_dir());
+	gretl_dot_dir = g_strdup(gretl_dotdir());
 #ifdef G_OS_WIN32
 	slash_convert(gretl_dotdir, FROM_BACKSLASH);
 #endif
-	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", gretl_dotdir);
-	gretl_Rsrc = g_strdup_printf("%sRsrc", gretl_dotdir);
-	gretl_Rout = g_strdup_printf("%sR.out", gretl_dotdir);
+	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", gretl_dot_dir);
+	gretl_Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir);
+	gretl_Rout = g_strdup_printf("%sR.out", gretl_dot_dir);
 	done = 1;
     }
 }
@@ -249,7 +249,7 @@ static int write_ox_io_file (void)
     static int written;
 
     if (!written) {
-	const char *dotdir = gretl_dot_dir();
+	const char *dotdir = gretl_dotdir();
 	gchar *fname;
 	FILE *fp;
 
@@ -295,7 +295,7 @@ static int write_ox_io_file (void)
 
 static void add_gretl_include (FILE *fp)
 {
-    const char *dotdir = gretl_dot_dir();
+    const char *dotdir = gretl_dotdir();
 
     if (strchr(dotdir, ' ')) {
 	fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotdir);
@@ -372,11 +372,11 @@ static int write_data_for_R (const double **Z,
     gchar *Rdata, *Rline;
     int err;
 
-    Rdata = g_strdup_printf("%sRdata.tmp", gretl_dotdir);
+    Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
     Rline = g_strdup_printf("store \"%s\" -r", Rdata);
     g_free(Rline);
 
-    err = write_data(Rdata, NULL, Z, pdinfo, OPT_R, NULL);
+    err = write_data(Rdata, NULL, Z, pdinfo, OPT_R, 0);
     if (err) {
 	g_free(Rdata);
 	return err;
@@ -409,9 +409,9 @@ static int write_data_for_R (const double **Z,
 
 static void write_R_export_func (FILE *fp) 
 {
-    fprintf(fp, "gretl.dotdir <- \"%s\"\n", gretl_dotdir);
+    fprintf(fp, "gretl.dotdir <- \"%s\"\n", gretl_dot_dir);
     fputs("gretl.export <- function(x) {\n", fp);
-    fprintf(fp, "  prefix <- \"%s\"\n", gretl_dotdir);
+    fprintf(fp, "  prefix <- \"%s\"\n", gretl_dot_dir);
     fputs("  sx <- as.character(substitute(x))\n", fp);
     fputs("  if (is.ts(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
