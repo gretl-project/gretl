@@ -847,43 +847,21 @@ int R_path_from_registry (char *s, int which)
 
 int maybe_print_R_path_addition (FILE *fp)
 {
-    char *path = NULL;
-    gchar **pathbits = NULL;
-    char rpath[MAXLEN];
+    char path[8096], rpath[MAXLEN];
+    DWORD len = 0;
     int err;
 
     err = R_path_from_registry(rpath, RBASE);
 
     if (!err) {
-	path = getenv("PATH");
+	len = GetEnvironmentVariable("PATH", path, 8096);
     }
 
-    if (path != NULL) {
-	pathbits = g_strsplit(path, ";", 0);
-    }
-
-    if (pathbits != NULL) {
-	char p[MAXLEN];
-	gchar **S = pathbits;
-	gchar *chunk;
-	int got = 0;
-
-	sprintf(p, "%s\\bin", rpath);
-	lower(p);
-
-	while ((chunk = *S++) != NULL) {
-	    lower(chunk);
-	    if (!strcmp(chunk, p)) {
-		got = 1;
-		break;
-	    }
+    if (len > 0 && len < 8096) {
+	strcat(rpath, "\\bin");
+	if (strstr(path, rpath) == NULL) {
+	    fprintf(fp, "Sys.setenv(PATH=\"%s;%s\")\n", path, rpath);
 	}
-
-	if (!got) {
-	    fprintf(fp, "Sys.setenv(PATH=\"%s;%s\")\n", path, p);
-	}
-
-	g_strfreev(pathbits);
     }
 
     return err;
