@@ -658,6 +658,8 @@ void context_error (int c, parser *p)
     }
 }
 
+#define BS_ESCAPE 0
+
 static int closing_quote_pos (parser *p, int *litquot)
 {
     const char *s = p->point;
@@ -665,11 +667,15 @@ static int closing_quote_pos (parser *p, int *litquot)
 
     for (i=0; s[i] != '\0'; i++) {
 	if (s[i] == '"') {
+#if BS_ESCAPE
 	    if (i > 0 && s[i-1] == '\\') {
 		*litquot = 1;
 	    } else {
 		return i;
 	    }
+#else
+	    return i;
+#endif
 	}
     }
 
