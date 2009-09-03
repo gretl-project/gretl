@@ -62,8 +62,6 @@ int read_reg_val (HKEY tree, const char *base,
 	err = 1;
     }
 
-    if (0) ;
-
     RegCloseKey(regkey);
 
     return err;
@@ -256,7 +254,6 @@ void cli_read_registry (char *callname)
     char valstr[MAXLEN];
     char dbproxy[21];
     int done, use_proxy = 0;
-    char *tmp;
     FILE *netfp;
 
     netfp = cli_gretlnet_open(callname);
@@ -866,40 +863,24 @@ int maybe_print_R_path_addition (FILE *fp)
     }
 
     if (pathbits != NULL) {
-	char p[3][MAXLEN];
+	char p[MAXLEN];
 	gchar **S = pathbits;
 	gchar *chunk;
-	int i, got[3] = {0};
+	int got = 0;
 
-	sprintf(p[0], "%s\\bin", rpath);
-	sprintf(p[1], "%s\\modules", rpath);
-	sprintf(p[2], "%s\\lib", rpath);
-
-	lower(p[0]);
-	lower(p[1]);
-	lower(p[2]);
+	sprintf(p, "%s\\bin", rpath);
+	lower(p);
 
 	while ((chunk = *S++) != NULL) {
 	    lower(chunk);
-	    for (i=0; i<3; i++) {
-		if (!strcmp(chunk, p[i])) {
-		    got[i] = 1;
-		    break;
-		}
-	    }
-	    if (got[0] && got[1] && got[2]) {
+	    if (!strcmp(chunk, p)) {
+		got = 1;
 		break;
 	    }
 	}
 
-	if (!got[0] || !got[1] || !got[2]) {
-	    fprintf(fp, "Sys.setenv(PATH=\"%s");
-	    for (i=0; i<3; i++) {
-		if (!got[i]) {
-		    fprintf(fp, ";%s", p[i]);
-		}
-	    }
-	    fputs("\")\n", fp);
+	if (!got) {
+	    fprintf(fp, "Sys.setenv(PATH=\"%s;%s\")\n", path, p);
 	}
 
 	g_strfreev(pathbits);

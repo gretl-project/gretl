@@ -434,7 +434,7 @@ static void write_R_export_func (FILE *fp)
 /* basic content which can either go into gretl.Rprofile or into
    Rsrc for sourcing */
 
-static void put_startup_content (FILE *fp)
+static void put_R_startup_content (FILE *fp)
 {
     fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
 	  fp);
@@ -466,7 +466,7 @@ static int write_gretl_R_profile (gretlopt opt)
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	put_startup_content(fp);
+	put_R_startup_content(fp);
 	fprintf(fp, "source(\"%s\", %s = TRUE)\n", 
 		gretl_Rsrc, (opt & OPT_V)? "echo" : "print.eval");
 	fclose(fp);
@@ -527,10 +527,14 @@ static int write_R_source_file (const char *buf,
 #if FDEBUG
 		printf("Rlib: writing 'startup' material\n");
 #endif
-		put_startup_content(fp);
+		put_R_startup_content(fp);
 		startup_done = 1;
 	    }
 	    fprintf(fp, "sink(\"%s\")\n", gretl_Rout);
+#ifdef G_OS_WIN32
+	    /* can this go in the "startup content"? */
+	    maybe_print_R_path_addition(fp);
+#endif
 	}
 
 	if (opt & OPT_D) {
