@@ -2456,6 +2456,17 @@ static int rc_bool (const char *s)
     }	
 }
 
+void get_gretl_rc_path (char *rcfile)
+{
+    char *custprof = getenv("GRETL_PROFILE");
+
+    if (custprof != NULL) {
+	strcpy(rcfile, custprof);
+    } else {
+	sprintf(rcfile, "%s/.gretl2rc", getenv("HOME"));
+    }
+}
+
 /* non-Windows read of the gretl configuration file on behalf
    of the CLI program, gretlcli
 */
@@ -2471,25 +2482,19 @@ int cli_read_rc (void)
     char rcfile[FILENAME_MAX];
     char line[MAXLEN], key[32], val[MAXLEN];
     char dbproxy[21] = {0};
-    char *home;
     int usecwd = 0;
     int use_proxy = 0;
     int err = 0;
 
-    home = getenv("HOME");
-    if (home == NULL) {
-	err = E_DATA;
-	goto bailout;
-    }
+    get_gretl_rc_path(rcfile);
 
-    sprintf(rcfile, "%s/.gretl2rc", home);
     fp = gretl_fopen(rcfile, "r");
     if (fp == NULL) {
 	err = E_FOPEN;
 	goto bailout;
     }
 
-    while (fgets(line, MAXLEN, fp) != NULL) {
+    while (fgets(line, sizeof line, fp) != NULL) {
 	if (*line == '#') {
 	    continue;
 	}
@@ -2522,6 +2527,14 @@ int cli_read_rc (void)
 		strncat(cpaths.x12a, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "tramo")) {
 		strncat(cpaths.tramo, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "Rbin")) {
+		strncat(cpaths.rbinpath, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "Rlib")) {
+		strncat(cpaths.rlibpath, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "ox")) {
+		strncat(cpaths.oxlpath, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "Png_font")) {
+		strncat(cpaths.pngfont, val, 128 - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {
 		rc_set_gp_colors(val);
 	    } 

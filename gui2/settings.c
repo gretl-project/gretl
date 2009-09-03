@@ -47,8 +47,8 @@
 # include "gtkfontselhack.h"
 #endif
 
-#if !defined(G_OS_WIN32)
-char rcfile[MAXLEN];
+#ifndef G_OS_WIN32
+char rcfile[FILENAME_MAX];
 #endif
 
 char dbproxy[21];
@@ -814,14 +814,7 @@ static void root_check (void)
 
 void gretl_config_init (void)
 {
-    char *custprof = getenv("GRETL_PROFILE");
-
-    if (custprof == NULL) {
-	sprintf(rcfile, "%s/.gretl2rc", getenv("HOME"));
-    } else {
-	strcpy(rcfile, custprof);
-    }
-
+    get_gretl_rc_path(rcfile);
     read_rc();
     set_gretl_startdir();
     set_gd_fontpath();
@@ -1878,14 +1871,6 @@ void read_rc (int debug)
 	if (err) {
 	    gui_errmsg(err);
 	}
-#if 0 /* FIXME? */
-	for (i=0; rc_vars[i].key != NULL; i++) {
-	    if (rc_vars[i].var == paths.tramodir ||
-		rc_vars[i].var == paths.x12adir) {
-		rc_vars[i].flags |= FIXSET;
-	    }
-	}
-#endif
     } 
 
     for (i=0; rc_vars[i].key != NULL; i++) {

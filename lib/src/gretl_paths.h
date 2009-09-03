@@ -169,6 +169,8 @@ int gretl_mkstemp (char *tmpl);
 
 #else
 
+void get_gretl_rc_path (char *rcfile);
+
 int cli_read_rc (void);
 
 #endif

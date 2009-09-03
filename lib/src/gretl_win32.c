@@ -250,7 +250,11 @@ static int cli_read_string_var (char *key, char *val,
 
 void cli_read_registry (char *callname)
 {
-    ConfigPaths cpaths = {0};
+    ConfigPaths cpaths = {
+	{0}, {0}, {0}, {0},
+	{0}, {0}, {0}, {0},
+	{0}, {0}, {0}, {0}
+    };
     char valstr[MAXLEN];
     char dbproxy[21];
     int done, use_proxy = 0;
@@ -270,9 +274,7 @@ void cli_read_registry (char *callname)
 	if (tmp != NULL) {
 	    sprintf(cpaths.workdir, "%s\\gretl\\", tmp);
 	    free(tmp);
-	} else {
-	    sprintf(cpaths.workdir, "%suser\\", cpaths.gretldir);
-	}
+	} 
     }
 
     /* base path for databases */
