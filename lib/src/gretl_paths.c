@@ -2173,8 +2173,12 @@ static void load_default_path (char *targ)
 #endif
     } else if (targ == paths.oxlpath) {
 #ifdef USE_OX
+# ifdef OSX_BUILD
+	strcpy(paths.oxlpath, "/Applications/OxMetrics5/ox/bin/oxl");
+# else
 	strcpy(paths.oxlpath, "oxl");
-#else
+# endif
+#else /* USE_OX */
 	*paths.oxlpath = '\0';
 #endif
     } else if (targ == paths.pngfont) {
