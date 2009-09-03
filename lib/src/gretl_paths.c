@@ -1536,9 +1536,9 @@ const char *gretl_workdir (void)
 
 #ifdef WIN32
 
-/* if the default workdir is a valid directory, and
+/* If the default workdir is a valid directory, and
    not equal to the current workdir, return the path
-   to it
+   to it.
 */
 
 char *gretl_default_workdir (void)
@@ -1568,7 +1568,7 @@ char *gretl_default_workdir (void)
     return ret;
 }
 
-#else
+#else /* !WIN32 */
 
 char *gretl_default_workdir (void)
 {
@@ -1596,7 +1596,7 @@ char *gretl_default_workdir (void)
     return ret;
 }
 
-#endif
+#endif /* WIN32 or not */
 
 static int validate_writedir (const char *dirname)
 {
@@ -1841,10 +1841,13 @@ static void check_gretldir (void)
 
 #endif
 
-/* In setting helpfile paths, OPT_N means to force the use of
-   the English-language files.  We do this once we're fairly
-   sure we have gretldir right, and on changing gretldir via
-   the GUI (though that's likely to be a disaster, isn't it?).
+/* Setting helpfile paths: we do this once we're fairly sure we have
+   gretldir right, and on changing gretldir via the GUI (though that's
+   likely to be a disaster, isn't it?).
+
+   OPT_X means that we're working with the GUI program. OPT_N (a
+   GUI-only option) indicates that we should force use of the
+   English-language helpfiles.
 */
 
 static void set_helpfile_paths (gretlopt opt)
@@ -1886,8 +1889,8 @@ static void set_helpfile_paths (gretlopt opt)
 #endif
 }
 
-/* called at start-up only: the @dirname argument is the value
-   taken from the config file or registry
+/* Called at start-up only: the @dirname argument is the value
+   taken from the config file or registry.
 */
 
 static int initialize_gretldir (const char *dirname, gretlopt opt)
@@ -1919,7 +1922,7 @@ static int initialize_gretldir (const char *dirname, gretlopt opt)
 	    err = 1;
 	}
 #else
-	/* use the compiled-in value */
+	/* use the compile-time value */
 	strcpy(paths.gretldir, GRETL_PREFIX);
 	strcat(paths.gretldir, "/share/gretl/");
 #endif
@@ -1937,8 +1940,9 @@ static int initialize_gretldir (const char *dirname, gretlopt opt)
     return err;
 }
 
-/* called at start-up only: set the "hidden" working dir,
-   which is not user-configurable */
+/* Called at start-up only: set the "hidden" working dir,
+   which is not user-configurable.
+*/
 
 static int initialize_dotdir (void)
 {
@@ -1956,7 +1960,6 @@ static int initialize_dotdir (void)
 	sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
     }
 #else
-    /* now try to set a sensible dotdir */
     home = getenv("HOME");
     if (home != NULL) {
 	sprintf(paths.dotdir, "%s/.gretl/", home);
@@ -2050,6 +2053,11 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
 
 #ifdef WIN32
 
+/* MS Windows variants of defaults for any paths that
+   we need that were not given by the Windows registry
+   (or network config file).
+*/
+
 static void load_default_workdir (char *targ)
 {
     char *home = mydocs_path();
@@ -2098,6 +2106,10 @@ static void load_default_path (char *targ)
 }
 
 #else /* !WIN32 */
+
+/* unix-type variants of defaults for any paths that we need 
+   that were not given by the gretl config file.
+*/
 
 static void load_default_workdir (char *targ)
 {
@@ -2172,7 +2184,9 @@ static void path_init (char *targ, const char *src, int slash_terminate)
     }
 }
 
-/* done only at startup */
+/* Set paths, falling back to defaults if no value has been supplied.
+   We do this only at startup. 
+*/
 
 static void copy_paths_with_fallback (ConfigPaths *cpaths)
 {
@@ -2216,9 +2230,10 @@ static void set_up_sourceview_path (void)
 #endif
 }
 
-/* This is called after reading the gretl config file (or reading
-   from the registry on Windows) at startup.  Subsequent updates
-   to paths via the GUI are handled by gretl_update_paths().
+/* This is called after reading the gretl config file (or reading from
+   the registry on Windows) at startup (and only then).  Subsequent
+   updates to paths via the GUI (if any) are handled by the function
+   gretl_update_paths().
 */
 
 int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
@@ -2257,7 +2272,7 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
     return err;
 }
 
-/* for writing a file, name given by user: if the path is not
+/* For writing a file, name given by user: if the path is not
    absolute, switch to the gretl "workdir" (for a plain filename and
    STATE_USE_CWD not set), or to the current "shelldir" (for a filename
    beginning with '.', or if STATE_USE_CWD is set).
@@ -2441,10 +2456,18 @@ static int rc_bool (const char *s)
     }	
 }
 
+/* non-Windows read of the gretl configuration file on behalf
+   of the CLI program, gretlcli
+*/
+
 int cli_read_rc (void) 
 {
-    ConfigPaths cpaths = {0};
-    FILE *fp;
+    ConfigPaths cpaths = {
+	{0}, {0}, {0}, {0},
+	{0}, {0}, {0}, {0},
+	{0}, {0}, {0}, {0}
+    };
+    FILE *fp = NULL;
     char rcfile[FILENAME_MAX];
     char line[MAXLEN], key[32], val[MAXLEN];
     char dbproxy[21] = {0};
@@ -2455,13 +2478,15 @@ int cli_read_rc (void)
 
     home = getenv("HOME");
     if (home == NULL) {
-	return 1;
+	err = E_DATA;
+	goto bailout;
     }
 
     sprintf(rcfile, "%s/.gretl2rc", home);
     fp = gretl_fopen(rcfile, "r");
     if (fp == NULL) {
-	return 1;
+	err = E_FOPEN;
+	goto bailout;
     }
 
     while (fgets(line, MAXLEN, fp) != NULL) {
@@ -2472,13 +2497,11 @@ int cli_read_rc (void)
 	    break;
 	}
 	if (sscanf(line, "%s", key) == 1) {
-	    strcpy(val, line + strlen(key) + 3); 
+	    strcpy(val, line + strlen(key) + 3); /* skip " = " */ 
 	    chopstr(val); 
 	    if (!strcmp(key, "gretldir")) {
-		*cpaths.gretldir = '\0';
 		strncat(cpaths.gretldir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "userdir")) {
-		*cpaths.workdir = '\0';
 		strncat(cpaths.workdir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "shellok")) {
 		libset_set_bool(SHELL_OK, rc_bool(val));
@@ -2486,23 +2509,18 @@ int cli_read_rc (void)
 		usecwd = rc_bool(val);
 		libset_set_bool(USE_CWD, usecwd);
 	    } else if (!strcmp(key, "binbase")) {
-		*cpaths.binbase = '\0';
 		strncat(cpaths.binbase, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "ratsbase")) {
-		*cpaths.ratsbase = '\0';
 		strncat(cpaths.ratsbase, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "dbhost")) {
-		*cpaths.dbhost = '\0';
 		strncat(cpaths.dbhost, val, 32 - 1);
 	    } else if (!strcmp(key, "dbproxy")) {
 		strncat(dbproxy, val, 21 - 1);
 	    } else if (!strcmp(key, "useproxy")) {
 		use_proxy = rc_bool(val);
 	    } else if (!strcmp(key, "x12a")) {
-		*cpaths.x12a = '\0';
 		strncat(cpaths.x12a, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "tramo")) {
-		*cpaths.tramo = '\0';
 		strncat(cpaths.tramo, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {
 		rc_set_gp_colors(val);
@@ -2523,7 +2541,14 @@ int cli_read_rc (void)
 	}
     }
 
-    err = gretl_set_paths(&cpaths, OPT_NONE);
+ bailout:
+
+    if (err) {
+	gretl_set_paths(&cpaths, OPT_NONE);
+    } else {
+	err = gretl_set_paths(&cpaths, OPT_NONE);
+    }
+
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
 
     return err;
