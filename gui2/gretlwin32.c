@@ -339,6 +339,9 @@ void set_up_windows_look (void)
     }
 }
 
+/* carry out some Windows-specific start-up tasks, and
+   call read_rc to get configuration info */
+
 void gretl_win32_init (const char *progname, int debug)
 {
     if (debug) {

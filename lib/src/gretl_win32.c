@@ -236,14 +236,12 @@ static int cli_read_string_var (char *key, char *val,
    relevant extract from gretl.iss:
 
    HKLM; "Software\gretl"; "gretldir";   "{app}"
-   HKLM; "Software\gretl"; "Rcommand";   "RGui.exe"
    HKCU; "Software\gretl"; "binbase";    "{app}\db\"
    HKCU; "Software\gretl"; "ratsbase";   "f:\"
    HKCU; "Software\gretl"; "dbhost";     "ricardo.ecn.wfu.edu"
    HKCU; "Software\gretl"; "dbproxy";    ""
    HKCU; "Software\gretl"; "useproxy";   "false"
    HKCU; "Software\gretl"; "updater";    "false"
-   HKCU; "Software\gretl"; "Fixed_font"; "Courier New 10"
    HKCU; "Software\gretl"; "Png_font";   "verdana 8"
    HKCU; "Software\gretl"; "Gp_colors";  ""
 */
@@ -259,7 +257,6 @@ void cli_read_registry (char *callname)
     char dbproxy[21];
     int done, use_proxy = 0;
     char *tmp;
-    int drive = callname[0];
     FILE *netfp;
 
     netfp = cli_gretlnet_open(callname);
@@ -268,14 +265,7 @@ void cli_read_registry (char *callname)
     cli_read_string_var("gretldir", cpaths.gretldir, netfp, HKEY_LOCAL_MACHINE);
 
     /* user's working directory */
-    done = cli_read_string_var("userdir", cpaths.workdir, netfp, HKEY_CURRENT_USER);
-    if (!done) {
-	tmp = mydocs_path();
-	if (tmp != NULL) {
-	    sprintf(cpaths.workdir, "%s\\gretl\\", tmp);
-	    free(tmp);
-	} 
-    }
+    cli_read_string_var("userdir", cpaths.workdir, netfp, HKEY_CURRENT_USER);
 
     /* base path for databases */
     cli_read_string_var("binbase", cpaths.binbase, netfp, HKEY_CURRENT_USER);

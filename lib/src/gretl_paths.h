@@ -65,7 +65,7 @@ int gretl_path_prepend (char *file, const char *path);
 
 int gretl_normalize_path (char *path);
 
-void slash_terminate (char *path);
+int slash_terminate (char *path);
 
 void set_stdio_use_utf8 (void);
 

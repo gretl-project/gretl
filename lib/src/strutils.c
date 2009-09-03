@@ -1946,26 +1946,6 @@ const char *path_last_element (const char *path)
 }
 
 /**
- * ensure_slash:
- * @s: string to work on.
- *
- * If @s does not ends with #SLASH, append this character.
- *
- * Returns: the (possibly) modified string.
- */
-
-char *ensure_slash (char *s)
-{
-    int n = strlen(s);
-
-    if (n > 0 && s[n-1] != SLASH) {
-	strcat(s, SLASHSTR);
-    }
-
-    return s;
-}
-
-/**
  * trim_slash:
  * @s: string to work on.
  *

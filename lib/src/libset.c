@@ -1706,24 +1706,6 @@ int libset_set_int (const char *key, int val)
     return err;
 }
 
-#ifndef WIN32
-static int read_cli_shell_status (void)
-{
-    char shellstamp[FILENAME_MAX];
-    FILE *fp;
-    int ok = 0;
-
-    sprintf(shellstamp, "%s.gretl_shell_stamp", gretl_dotdir());
-    fp = fopen(shellstamp, "r");
-    if (fp != NULL) {
-	ok = 1;
-	fclose(fp);
-    }
-
-    return ok;
-}
-#endif
-
 static int boolvar_get_flag (const char *s)
 {
     if (!strcmp(s, ECHO)) {
@@ -1794,16 +1776,6 @@ static void maybe_check_env (const char *s)
     } else if (!strcmp(s, HALT_ON_ERR)) {
 	set_flag_from_env(STATE_HALT_ON_ERR, "GRETL_KEEP_GOING", 1);
     }
-
-#ifndef WIN32
-    if (!strcmp(s, SHELL_OK) && !gretl_in_gui_mode()) {
-	if (read_cli_shell_status()) {
-	    state->flags |= STATE_SHELL_OK;
-	} else {
-	    state->flags &= ~STATE_SHELL_OK;
-	}
-    }
-#endif
 }
 
 int libset_get_bool (const char *key)

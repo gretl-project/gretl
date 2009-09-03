@@ -17,8 +17,6 @@
  * 
  */
 
-/* settings.c for gretl */
-
 #include "gretl.h"
 #include "filelists.h"
 #include "gretl_www.h"
@@ -365,24 +363,6 @@ static void set_gd_fontpath (void)
     }
 }
 
-static void record_shell_opt (void)
-{
-    char shellstamp[FILENAME_MAX];
-
-    sprintf(shellstamp, "%s.gretl_shell_stamp", gretl_dotdir());
-
-    if (shellok) {
-	FILE *fp = gretl_fopen(shellstamp, "w");
-
-	if (fp != NULL) {
-	    fputs("ok\n", fp);
-	    fclose(fp);
-	}
-    } else {
-	gretl_remove(shellstamp);
-    }
-}
-
 #endif
 
 const char *get_app_fontname (void)
@@ -695,7 +675,7 @@ int check_for_prog (const char *prog)
     return ret;
 }
 
-#else
+#else /* !G_OS_WIN32 */
 
 int is_executable (const char *s, uid_t myid, gid_t mygrp)
 {
@@ -1702,6 +1682,11 @@ static void maybe_fix_viewpdf (void)
 
 #endif
 
+/* The various things we need to do after reading gretl's
+   configuration info -- or perhaps after failing to do so. 
+   We do this only at start-up time.
+*/
+
 static int common_read_rc_setup (void)
 {
     int langid = 0;
@@ -1854,6 +1839,10 @@ static int get_network_settings (void)
     return gotnet;
 }
 
+/* the Windows version of this function is not static, since
+   it is called from gretl_win32_init() in gretlwin32.c 
+*/
+
 void read_rc (int debug) 
 {
     RCVAR *rcvar;
@@ -1924,12 +1913,10 @@ void read_rc (int debug)
 
 void write_rc (void)
 {
-    int err;
+    int err = write_plain_text_rc();
 
-    err = write_plain_text_rc();
     if (!err) {
 	gretl_update_paths(&paths, set_paths_opt);
-	record_shell_opt();
     }
 }
 
@@ -1956,6 +1943,11 @@ static void find_and_write_var (const char *key, const char *val)
     }
 }
 
+/* Note: even if we fail to read the rc file, we should still do
+   common_read_rc_setup(), since that will establish defaults for
+   basic paths, etc., and give gretl a chance of running OK.
+*/
+
 static void read_rc (void) 
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
@@ -1963,8 +1955,10 @@ static void read_rc (void)
     int i;
 
     fp = fopen(rcfile, "r");
+
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read %s\n", rcfile);
+	common_read_rc_setup();
 	return;
     }
 
@@ -1991,6 +1985,7 @@ static void read_rc (void)
 
     read_file_lists(fp, line);
     fclose(fp);
+
     common_read_rc_setup();
 }
 

@@ -157,8 +157,6 @@ char *build_path (char *targ, const char *dirname, const char *fname,
 
 const char *path_last_element (const char *path);
 
-char *ensure_slash (char *s);
-
 char *trim_slash (char *s);
 
 int gretl_string_ends_with (const char *s, const char *test);

@@ -320,7 +320,9 @@ static saved_string built_ins[] = {
     { "tramo",    0, NULL },
     { "tramodir", 0, NULL },
     { "seats",    0, NULL },
-    { "shelldir", 0, NULL }
+    { "shelldir", 0, NULL },
+    { "Rbin",     0, NULL },
+    { "Rlib",     0, NULL },
 };
 
 #ifdef WIN32
