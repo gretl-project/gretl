@@ -346,6 +346,20 @@ string s1 = "sweet"
 string s2 = "Home, " ~ s1 ~ " home."
 \end{code}
 
+Note that when you define a string variable using a string literal, no
+characters are treated as ``special'' (other than the double quotes
+that delimit the string).  Specifically, the backslash is not used as
+an escape character.  So, for example,
+%
+\begin{code}
+string s = "\"
+\end{code}
+%
+is a valid assignment, producing a string that contains a single
+backslash character.  If you wish to use backslash-escapes to denote
+newlines, tabs, embedded double-quotes and so on, use \texttt{sprintf}
+instead.
+
 The \texttt{sprintf} command is more flexible.  It works exactly as
 \app{gretl}'s \texttt{printf} command except that the ``format''
 string must be preceded by the name of a string variable.  For

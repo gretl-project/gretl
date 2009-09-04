@@ -658,58 +658,13 @@ void context_error (int c, parser *p)
     }
 }
 
-#define BS_ESCAPE 0
-
-static int closing_quote_pos (parser *p, int *litquot)
-{
-    const char *s = p->point;
-    int i;
-
-    for (i=0; s[i] != '\0'; i++) {
-	if (s[i] == '"') {
-#if BS_ESCAPE
-	    if (i > 0 && s[i-1] == '\\') {
-		*litquot = 1;
-	    } else {
-		return i;
-	    }
-#else
-	    return i;
-#endif
-	}
-    }
-
-    return -1;
-}
-
-static void fix_literal_quotes (char *s)
-{
-    char *tmp = calloc(strlen(s) + 1, 1);
-    char *targ = s;
-    char *p = tmp;
-
-    while (*s) {
-	if (*s == '\\' && *(s+1) == '"') {
-	    s++;
-	} 
-	*p++ = *s++;
-    }
-
-    strcpy(targ, tmp);
-    free(tmp);
-}
-
 static char *get_quoted_string (parser *p)
 {
-    int litquot = 0;
-    int n = closing_quote_pos(p, &litquot);
+    int n = parser_charpos(p, '"');
     char *s = NULL;
 
     if (n >= 0) {
 	s = gretl_strndup(p->point, n);
-	if (litquot) {
-	    fix_literal_quotes(s);
-	}
 	parser_advance(p, n + 1);
     } else {
 	parser_print_input(p);

@@ -1987,27 +1987,34 @@ static int initialize_dotdir (void)
 /* when updating: transcribe the new value unless it is empty or is
    unchanged; if it's a directory string that needs to be
    slash-terminated, check that; return 1 if any change was made
-   otherwise 0.
+   to the internally recorded value, @targ, otherwise return 0.
 */
 
-static int maybe_transcribe_path (char *targ, const char *src,
+static int maybe_transcribe_path (char *targ, char *src,
 				  int needs_slash)
 {
-    if (*src != '\0' && strcmp(src, targ)) {
-	strcpy(targ, src);
+    int ret = 0;
+
+    if (*src != '\0') {
 	if (needs_slash) {
-	    slash_terminate(targ);
+	    slash_terminate(src);
 	}
-	return 1;
+	if (strcmp(src, targ)) {
+	    strcpy(targ, src);
+	    ret = 1;
+	}
     } else {
-	return 0;
+	/* back-sync */
+	strcpy(src, targ);
     }
+
+    return ret;
 }
 
 #define CFG_DEBUG 0
 
-/* This is called from GUI after editing config in dialog. The path
-   elements that can be set in this way are:
+/* gretl_update_paths is called from the GUI preferences dialog. The
+   internal path elements that can be set in this way are:
 
    gretldir
    gnuplot (but not on MS Windows)
