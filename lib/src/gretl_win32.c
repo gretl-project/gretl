@@ -845,74 +845,95 @@ int R_path_from_registry (char *s, int which)
     return err;
 }
 
+/* for use in R, we need to form a version of the PATH with all
+   backslashes doubled 
+*/
+
+static char *get_fixed_R_path (const char *path, const char *rpath)
+{
+    char *fixpath;
+    int plen = (path != NULL)? strlen(path) : 0;
+    int rlen = strlen(rpath);
+    int i, ns = 0;
+
+    for (i=0; i<plen; i++) {
+	if (path[i] == '\\') ns++;
+    }
+
+    for (i=0; i<rlen; i++) {
+	if (rpath[i] == '\\') ns++;
+    }
+ 
+    fixpath = malloc(plen + rlen + ns + 1);
+
+    if (fixpath != NULL) {
+	int j = 0;
+
+	for (i=0; i<plen; i++) {
+	    if (path[i] == '\\') {
+		fixpath[j++] = '\\';
+		fixpath[j++] = '\\';
+	    } else {
+		fixpath[j++] = path[i];
+	    }
+	}
+
+	if (plen > 0) {
+	    fixpath[j++] = ';';
+	}
+
+	for (i=0; i<rlen; i++) {
+	    if (rpath[i] == '\\') {
+		fixpath[j++] = '\\';
+		fixpath[j++] = '\\';
+	    } else {
+		fixpath[j++] = rpath[i];
+	    }
+	}
+
+	fixpath[j] = '\0';
+    }
+
+    return fixpath;
+}
+
 int maybe_print_R_path_addition (FILE *fp)
 {
     static char *fixpath;
     static int ok;
-    char path[8096], rpath[MAXLEN];
-    DWORD len = 0;
-    int err;
+    int err = 0;
 
     if (ok) {
-	/* no need to amend the path */
-	return 0;
+	; /* no need to amend the path */
     } else if (fixpath != NULL) {
 	/* revised path already built */
 	fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
-	return 0;
-    }
+    } else {
+	char rpath[MAXLEN];
 
-    err = R_path_from_registry(rpath, RBASE);
+	strcpy(rpath, gretl_rlib_path());
 
-    if (!err) {
-	len = GetEnvironmentVariable("PATH", path, 8096);
-    }
-
-    if (len > 0 && len < 8096) {
- 	strcat(rpath, "\\bin");
-	if (strstr(path, rpath) != NULL) {
-	    ok = 1; /* nothing to be done */
+	if (*rpath == '\0') {
+	    err = 1;
 	} else {
-	    /* for use in R, we need to form a version of the
-	       PATH with all backslahes doubled */
-            int i, ns = 0;
+	    char *p = strrchr(rpath, '\\');
+	    char *path = getenv("PATH");
 
-            for (i=0; path[i]; i++) {
-		if (path[i] == '\\') ns++;
-            }
+	    if (p != NULL) {
+		/* chop off "\R.dll" */
+		*p = '\0';
+	    }
 
-	    for (i=0; rpath[i]; i++) {
-		if (rpath[i] == '\\') ns++;
-            }
- 
-            fixpath = malloc(len + strlen(rpath) + ns + 1);
-
-            if (fixpath != NULL) {
-                int j = 0;
-
-                for (i=0; path[i]; i++) {
-		    if (path[i] == '\\') {
-			fixpath[j++] = '\\';
-			fixpath[j++] = '\\';
-		    } else {
-			fixpath[j++] = path[i];
-		    }
-                }
-
-                fixpath[j++] = ';';
-
-                for (i=0; rpath[i]; i++) {
-		    if (rpath[i] == '\\') {
-			fixpath[j++] = '\\';
-			fixpath[j++] = '\\';
-		    } else {
-			fixpath[j++] = rpath[i];
-		    }
-                }
-
-                fixpath[j] = '\0';
-  	        fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
-            }
+	    if (path != NULL && strstr(path, rpath) != NULL) {
+		ok = 1; /* nothing to be done */
+	    } else {
+		fixpath = get_fixed_R_path(path, rpath);
+		if (fixpath == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
+		}
+	    }
 	}
     }
 
