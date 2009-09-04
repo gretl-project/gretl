@@ -1611,13 +1611,13 @@ static int validate_writedir (const char *dirname)
     int err = 0;
 
     if (*dirname == '\0') {
-	strcpy(gretl_errmsg, _("User directory is not set"));
+	gretl_errmsg_set(_("User directory is not set"));
 	return E_DATA;
     }
 
     err = gretl_mkdir(dirname);
     if (err) {
-	sprintf(gretl_errmsg, _("Couldn't create directory '%s'"), dirname);
+	gretl_errmsg_sprintf( _("Couldn't create directory '%s'"), dirname);
     }
 
     if (!err) {
@@ -1629,9 +1629,9 @@ static int validate_writedir (const char *dirname)
 	if (testname != NULL) {
 	    fp = gretl_fopen(testname, "w");
 	    if (fp == NULL) {
-		sprintf(gretl_errmsg, _("Couldn't write to '%s': "
-					"gretl will not work properly!"), 
-			dirname);
+		gretl_errmsg_sprintf(_("Couldn't write to '%s': "
+				       "gretl will not work properly!"), 
+				     dirname);
 		err = E_FOPEN;
 	    } else {
 		fclose(fp);
@@ -1639,6 +1639,10 @@ static int validate_writedir (const char *dirname)
 	    }
 	    g_free(testname);
 	}
+    }
+
+    if (err) {
+	set_gretl_alarm(1);
     }
 
     return err;
@@ -2107,7 +2111,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.dbhost) {
 	strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.gnuplot) {
-	strcpy(targ, "gnuplot");
+	sprintf(targ, "%swgnuplot.exe", paths.gretldir);
     } else if (targ == paths.x12a) {
 	sprintf(targ, "%s\\x12arima\\x12a.exe", progfiles);
     } else if (targ == paths.tramo) {
@@ -2279,6 +2283,7 @@ static void set_up_sourceview_path (void)
 int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 {
     int err0 = 0, err1 = 0;
+    int retval = 0;
 
     if (opt & OPT_X) {
 	gretl_set_gui_mode(1);
@@ -2309,11 +2314,13 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
     set_builtin_path_strings(0);
     set_gretl_tex_preamble();
 
+    retval = (err0)? err0 : err1;
+
 #if CFG_DEBUG
-    fprintf(stderr, "gretl_set_paths: returning %d\n", err);
+    fprintf(stderr, "gretl_set_paths: returning %d\n", retval);
 #endif
 
-    return (err0)? err0 : err1;
+    return retval;
 }
 
 /* For writing a file, name given by user: if the path is not

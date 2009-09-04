@@ -95,6 +95,7 @@ static const char *look_up_errmsg (int err)
 }
 
 static int error_printed;
+static int alarm_set;
 
 /**
  * errmsg_get_with_default: 
@@ -165,6 +166,11 @@ const char *gretl_errmsg_get (void)
 
 void gretl_errmsg_set (const char *str)
 {
+    if (alarm_set && *gretl_errmsg != '\0') {
+	/* leave the current error message in place */
+	return;
+    }
+
     if (*gretl_errmsg == '\0') {
 	strncat(gretl_errmsg, str, ERRLEN - 1);
     } else if (strcmp(gretl_errmsg, str)) {
@@ -189,6 +195,11 @@ void gretl_errmsg_set (const char *str)
 
 void gretl_errmsg_sprintf (const char *fmt, ...)
 {
+    if (alarm_set && *gretl_errmsg != '\0') {
+	/* leave the current error message in place */
+	return;
+    }
+
     if (*gretl_errmsg == '\0' && fmt != NULL) {
 	va_list ap;
 
@@ -235,9 +246,20 @@ static int gretl_errno;
 
 void gretl_error_clear (void)
 {
-    *gretl_errmsg = '\0';
+    if (!alarm_set) {
+	*gretl_errmsg = '\0';
+    }
     error_printed = 0;
     errno = 0;
+}
+
+/* setting the "alarm" prevents gretl_errmsg from being
+   overwritten
+*/
+
+void set_gretl_alarm (int val)
+{
+    alarm_set = val;
 }
 
 void set_gretl_errno (int err)

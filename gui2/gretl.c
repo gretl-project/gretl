@@ -471,7 +471,6 @@ int main (int argc, char **argv)
 #ifndef OLD_GTK
     GError *opterr = NULL;
 #endif
-    int err = 0;
 
     nls_init();
 
@@ -551,6 +550,7 @@ int main (int argc, char **argv)
 	   have been extracted from the argv array).
 	*/
 	PRN *prn; 
+	int err = 0;
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 	if (err) exit(EXIT_FAILURE);

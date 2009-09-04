@@ -57,7 +57,7 @@ static ConfigPaths paths;
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
 #ifndef G_OS_WIN32
-static void read_rc (void);
+static int read_rc (void);
 #endif
 
 /* font handling */
@@ -792,13 +792,17 @@ static void root_check (void)
     }
 }
 
-void gretl_config_init (void)
+int gretl_config_init (void)
 {
+    int err = 0;
+
     get_gretl_rc_path(rcfile);
-    read_rc();
+    err = read_rc();
     set_gretl_startdir();
     set_gd_fontpath();
     root_check();
+
+    return err;
 }
 
 #endif /* *nix versus Windows */
@@ -1702,6 +1706,11 @@ static int common_read_rc_setup (void)
     set_garch_robust_vcv(hc_garch);
 
     err = gretl_set_paths(&paths, set_paths_opt);
+    if (err) {
+	/* tell the user, then turn of the special alarm */
+	gui_errmsg(err);
+	set_gretl_alarm(0);
+    }
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
     set_tex_use_pdf(latex);
@@ -1843,54 +1852,51 @@ static int get_network_settings (void)
    it is called from gretl_win32_init() in gretlwin32.c 
 */
 
-void read_rc (int debug) 
+int read_rc (int debug) 
 {
     RCVAR *rcvar;
     char value[MAXSTR];
     char *strvar;
-    int i;
+    int i, err = 0;
 
     if (chinese_locale()) {
 	strcpy(fixedfontname, "MS Gothic 10");
     }
 
-    if (get_network_settings() && *paths.workdir != '\0') {
-	int err = set_gretl_work_dir(paths.workdir);
-
-	if (err) {
-	    gui_errmsg(err);
-	}
-    } 
+    /* see if we have a gretlnet.txt in place, and if so,
+       read config from it */
+    get_network_settings();
 
     for (i=0; rc_vars[i].key != NULL; i++) {
-	int err = 0;
+	int regerr = 0;
 
 	rcvar = &rc_vars[i];
 
 	if (rcvar->flags & FIXSET) {
+	    /* already set via gretlnet.txt */
 	    continue;
 	}
 
 	*value = '\0';
 
 	if (rcvar->flags & MACHSET) {
-	    err = read_reg_val(HKEY_LOCAL_MACHINE, 
-			       get_reg_base(rcvar->key),
-			       rcvar->key, 
-			       value);
+	    regerr = read_reg_val(HKEY_LOCAL_MACHINE, 
+				  get_reg_base(rcvar->key),
+				  rcvar->key, 
+				  value);
 	} else {
-	    err = read_reg_val(HKEY_CURRENT_USER, 
-			       get_reg_base(rcvar->key),
-			       rcvar->key, 
-			       value);
+	    regerr = read_reg_val(HKEY_CURRENT_USER, 
+				  get_reg_base(rcvar->key),
+				  rcvar->key, 
+				  value);
 	}
 
         if (debug) {
-            fprintf(stderr, "reg: err = %d, '%s' -> '%s'\n", err, rcvar->key,
+            fprintf(stderr, "reg: err = %d, '%s' -> '%s'\n", regerr, rcvar->key,
                     value);
         }
 	    
-	if (!err && *value != '\0') {
+	if (!regerr && *value != '\0') {
 	    if (rcvar->flags & BOOLSET) {
 		str_to_boolvar(value, rcvar->var);
 	    } else if (rcvar->flags & INTSET) {
@@ -1904,9 +1910,11 @@ void read_rc (int debug)
     }
 
     read_file_lists();
-    common_read_rc_setup();
+    err = common_read_rc_setup();
     set_fixed_font();
     set_app_font(NULL);
+
+    return err;
 }
 
 #else /* end of win32 version, now plain GTK */
@@ -1948,7 +1956,7 @@ static void find_and_write_var (const char *key, const char *val)
    basic paths, etc., and give gretl a chance of running OK.
 */
 
-static void read_rc (void) 
+static int read_rc (void) 
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
     FILE *fp;
@@ -1958,8 +1966,7 @@ static void read_rc (void)
 
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read %s\n", rcfile);
-	common_read_rc_setup();
-	return;
+	return common_read_rc_setup();
     }
 
     i = 0;
@@ -1986,7 +1993,7 @@ static void read_rc (void)
     read_file_lists(fp, line);
     fclose(fp);
 
-    common_read_rc_setup();
+    return common_read_rc_setup();
 }
 
 #endif /* end of non-Windows versions of read_rc, write_rc */
