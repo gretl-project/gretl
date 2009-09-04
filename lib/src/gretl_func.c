@@ -2979,6 +2979,8 @@ static int read_min_max_deflt (char **ps, fn_param *param)
     double x, y, z;
     int err = 0;
 
+    gretl_push_c_numeric_locale();
+
     if (param->type == GRETL_TYPE_BOOL) {
 	if (sscanf(p, "[%lf]", &x) == 1) {
 	    param->deflt = x;
@@ -3005,6 +3007,8 @@ static int read_min_max_deflt (char **ps, fn_param *param)
 	    err = E_PARSE;
 	}
     }
+
+    gretl_pop_c_numeric_locale();
 
     if (!err) {
 	p = strchr(p, ']');
@@ -3113,6 +3117,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     
     while (isspace(*s)) s++;
     len = gretl_namechar_spn(s);
+
     if (len == 0) {
 	sprintf(gretl_errmsg, "parameter %d: name is missing", i + 1);
 	err = E_PARSE;
