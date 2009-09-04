@@ -858,9 +858,47 @@ int maybe_print_R_path_addition (FILE *fp)
     }
 
     if (len > 0 && len < 8096) {
-	strcat(rpath, "\\bin");
+ 	strcat(rpath, "\\bin");
 	if (strstr(path, rpath) == NULL) {
-	    fprintf(fp, "Sys.setenv(PATH=\"%s;%s\")\n", path, rpath);
+	    char *newpath;
+            int i, ns = 0;
+
+            for (i=0; path[i]!=0; i++) {
+               if (path[i] == '\\') ns++;
+            }
+
+	    for (i=0; rpath[i]!=0; i++) {
+               if (rpath[i] == '\\') ns++;
+            }
+ 
+            newpath = malloc(len + strlen(rpath) + ns + 1);
+            if (newpath != NULL) {
+                int j = 0;
+
+                for (i=0; path[i]!=0; i++) {
+                   if (path[i] == '\\') {
+                      newpath[j++] = '\\';
+                      newpath[j++] = '\\';
+                   } else {
+                      newpath[j++] = path[i];
+                   }
+                }
+
+                newpath[j++] = ';';
+
+                for (i=0; rpath[i]!=0; i++) {
+                   if (rpath[i] == '\\') {
+                      newpath[j++] = '\\';
+                      newpath[j++] = '\\';
+                   } else {
+                      newpath[j++] = rpath[i];
+                   }
+                }
+
+                newpath[j] = '\0';
+  	        fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", newpath);
+                free(newpath);
+            }
 	}
     }
 
