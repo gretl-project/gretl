@@ -754,7 +754,7 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
     GtkTextIter iter; 
     int nextcolor, thiscolor = PLAIN_TEXT;
     int in_comment = 0;
-    char readbuf[MAXSTR];
+    char readbuf[2048];
     int i = 0;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));

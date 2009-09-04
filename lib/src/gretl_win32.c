@@ -847,9 +847,20 @@ int R_path_from_registry (char *s, int which)
 
 int maybe_print_R_path_addition (FILE *fp)
 {
+    static char *fixpath;
+    static int ok;
     char path[8096], rpath[MAXLEN];
     DWORD len = 0;
     int err;
+
+    if (ok) {
+	/* no need to amend the path */
+	return 0;
+    } else if (fixpath != NULL) {
+	/* revised path already built */
+	fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
+	return 0;
+    }
 
     err = R_path_from_registry(rpath, RBASE);
 
@@ -859,45 +870,48 @@ int maybe_print_R_path_addition (FILE *fp)
 
     if (len > 0 && len < 8096) {
  	strcat(rpath, "\\bin");
-	if (strstr(path, rpath) == NULL) {
-	    char *newpath;
+	if (strstr(path, rpath) != NULL) {
+	    ok = 1; /* nothing to be done */
+	} else {
+	    /* for use in R, we need to form a version of the
+	       PATH with all backslahes doubled */
             int i, ns = 0;
 
-            for (i=0; path[i]!=0; i++) {
-               if (path[i] == '\\') ns++;
+            for (i=0; path[i]; i++) {
+		if (path[i] == '\\') ns++;
             }
 
-	    for (i=0; rpath[i]!=0; i++) {
-               if (rpath[i] == '\\') ns++;
+	    for (i=0; rpath[i]; i++) {
+		if (rpath[i] == '\\') ns++;
             }
  
-            newpath = malloc(len + strlen(rpath) + ns + 1);
-            if (newpath != NULL) {
+            fixpath = malloc(len + strlen(rpath) + ns + 1);
+
+            if (fixpath != NULL) {
                 int j = 0;
 
-                for (i=0; path[i]!=0; i++) {
-                   if (path[i] == '\\') {
-                      newpath[j++] = '\\';
-                      newpath[j++] = '\\';
-                   } else {
-                      newpath[j++] = path[i];
-                   }
+                for (i=0; path[i]; i++) {
+		    if (path[i] == '\\') {
+			fixpath[j++] = '\\';
+			fixpath[j++] = '\\';
+		    } else {
+			fixpath[j++] = path[i];
+		    }
                 }
 
-                newpath[j++] = ';';
+                fixpath[j++] = ';';
 
-                for (i=0; rpath[i]!=0; i++) {
-                   if (rpath[i] == '\\') {
-                      newpath[j++] = '\\';
-                      newpath[j++] = '\\';
-                   } else {
-                      newpath[j++] = rpath[i];
-                   }
+                for (i=0; rpath[i]; i++) {
+		    if (rpath[i] == '\\') {
+			fixpath[j++] = '\\';
+			fixpath[j++] = '\\';
+		    } else {
+			fixpath[j++] = rpath[i];
+		    }
                 }
 
-                newpath[j] = '\0';
-  	        fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", newpath);
-                free(newpath);
+                fixpath[j] = '\0';
+  	        fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
             }
 	}
     }
