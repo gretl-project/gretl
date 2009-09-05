@@ -281,13 +281,16 @@ static const char *libset_option_string (const char *s)
     }
 }
 
-static void print_initvals (const gretl_matrix *ivals, PRN *prn)
+static void print_initvals (const gretl_matrix *ivals, PRN *prn,
+			    gretlopt opt)
 {
-    if (ivals == NULL) {
-	pputs(prn, " initvals = auto\n");
-    } else {
-	gretl_matrix_print_to_prn(ivals, " initvals =", prn);
-    }
+    if (opt & OPT_D) {
+	if (ivals == NULL) {
+	    pputs(prn, " initvals = auto\n");
+	} else {
+	    gretl_matrix_print_to_prn(ivals, " initvals =", prn);
+	}
+    } 
 }
 
 /* check_for_state() returns non-zero if the program options
@@ -1173,9 +1176,16 @@ static const char *arg_from_delim (char c)
     return "unset";
 }
 
-static void libset_print_bool (const char *s, PRN *prn)
+static void libset_print_bool (const char *s, PRN *prn,
+			       gretlopt opt)
 {
-    pprintf(prn, " %s = %d\n", s, libset_get_bool(s));
+    int v = libset_get_bool(s);
+
+    if (opt & OPT_D) {
+	pprintf(prn, " %s = %d\n", s, v);
+    } else {
+	pprintf(prn, "set %s %s\n", s, v? "on" : "off");
+    }
 }
 
 #define coded_intvar(s) (!strcmp(s, GARCH_VCV) || \
@@ -1194,113 +1204,152 @@ const char *intvar_code_string (const char *s)
     }
 }
 
-static void libset_print_int (const char *s, PRN *prn)
+static void libset_print_int (const char *s, PRN *prn,
+			      gretlopt opt)
 {
     if (coded_intvar(s)) {
-	pprintf(prn, " %s = %s\n", s, intvar_code_string(s));
+	if (opt & OPT_D) {
+	    pprintf(prn, " %s = %s\n", s, intvar_code_string(s));
+	} else {
+	    pprintf(prn, "set %s %s\n", s, intvar_code_string(s));
+	}
     } else {
 	int k = libset_get_int(s);
 
-	if (is_unset(k)) {
-	    pprintf(prn, " %s = auto\n", s);
-	} else {
-	    pprintf(prn, " %s = %d\n", s, k);
+	if (opt & OPT_D) {
+	    if (is_unset(k)) {
+		pprintf(prn, " %s = auto\n", s);
+	    } else {
+		pprintf(prn, " %s = %d\n", s, k);
+	    }
+	} else if (!is_unset(k)) {
+	    pprintf(prn, "set %s %d\n", s, k);
 	}
     }
 }
 
-static void libset_print_double (const char *s, PRN *prn)
+static void libset_print_double (const char *s, PRN *prn,
+				 gretlopt opt)
 {
     double x = libset_get_double(s);
 
-    if (na(x)) {
-	pprintf(prn, " %s = auto\n", s);
-    } else {
-	pprintf(prn, " %s = %g\n", s, x);
+    if (opt & OPT_D) {
+	if (na(x)) {
+	    pprintf(prn, " %s = auto\n", s);
+	} else {
+	    pprintf(prn, " %s = %g\n", s, x);
+	}
+    } else if (!na(x)) {
+	pprintf(prn, "set %s %g\n", s, x);
     }
 }
 
-static void libset_header (char *s, PRN *prn) 
+static void libset_header (char *s, PRN *prn, gretlopt opt) 
 {
-    pputs(prn, "\n --- ");
-    pputs(prn, s);
-    pputs(prn, " ---\n");
+    if (opt & OPT_D) {
+	pputs(prn, "\n --- ");
+	pputs(prn, _(s));
+	pputs(prn, " ---\n");
+    } else {
+	pprintf(prn, "# %s\n", s);
+    }
 }
 
-static int display_settings (PRN *prn)
+/* print_settings: use OPT_D for "display" */
+
+static int print_settings (PRN *prn, gretlopt opt)
 {
-    pputs(prn, _("Variables that can be set using \"set\""));
-    pputs(prn, " (");
-    pputs(prn, _("\"help set\" for details"));
-    pputs(prn, "):\n");
-
-    libset_header(_("Program interaction and behavior"), prn);
-
-    pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
-    pprintf(prn, " csv_na = %s\n", get_csv_na_string());
-
-    libset_print_bool(ECHO, prn);
-    libset_print_bool(FORCE_DECP, prn);
-    libset_print_bool(HALT_ON_ERR, prn);
-    libset_print_int(LONGDIGITS, prn);
-    libset_print_int(LOOP_MAXITER, prn);
-    libset_print_bool(MAX_VERBOSE, prn);
-    libset_print_bool(MESSAGES, prn);
-    libset_print_bool(WARNINGS, prn);
-    libset_print_int(GRETL_DEBUG, prn);
-    libset_print_int(BLAS_NMK_MIN, prn);
-    libset_print_bool(SHELL_OK, prn);
-
-    if (*state->shelldir) {
-	pprintf(prn, " shelldir = '%s'\n", state->shelldir);
-    } else {
-	pputs(prn, " shelldir = unset\n");
+    if (opt & OPT_D) {
+	pputs(prn, _("Variables that can be set using \"set\""));
+	pputs(prn, " (");
+	pputs(prn, _("\"help set\" for details"));
+	pputs(prn, "):\n");
     }
 
-    libset_print_bool(USE_CWD, prn);
-    libset_print_bool(VERBOSE_INCLUDE, prn);
-    libset_print_bool(SKIP_MISSING, prn);
+    libset_header(N_("Program interaction and behavior"), prn, opt);
 
-    libset_print_bool(R_LIB, prn);
-    libset_print_bool(R_FUNCTIONS, prn);
-
-    if (*include_path) {
-	pprintf(prn, " include_path = '%s'\n", include_path);
+    if (opt & OPT_D) {
+	pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
+	pprintf(prn, " csv_na = %s\n", get_csv_na_string());
     } else {
-	pputs(prn, " include_path = unset\n");
+	pprintf(prn, "set csv_delim %s\n", arg_from_delim(state->delim));
+	pprintf(prn, "set csv_na %s\n", get_csv_na_string());
+    }	
+
+    libset_print_bool(ECHO, prn, opt);
+    libset_print_bool(FORCE_DECP, prn, opt);
+    libset_print_bool(HALT_ON_ERR, prn, opt);
+    libset_print_int(LONGDIGITS, prn, opt);
+    libset_print_int(LOOP_MAXITER, prn, opt);
+    libset_print_bool(MAX_VERBOSE, prn, opt);
+    libset_print_bool(MESSAGES, prn, opt);
+    libset_print_bool(WARNINGS, prn, opt);
+    libset_print_int(GRETL_DEBUG, prn, opt);
+    libset_print_int(BLAS_NMK_MIN, prn, opt);
+    libset_print_bool(SHELL_OK, prn, opt);
+
+    if (opt & OPT_D) {
+	if (*state->shelldir) {
+	    pprintf(prn, " shelldir = '%s'\n", state->shelldir);
+	} else {
+	    pputs(prn, " shelldir = unset\n");
+	}
+    } else if (*state->shelldir) {
+	pprintf(prn, "set shelldir '%s'\n", state->shelldir);
     }
 
-    libset_header(_("Numerical methods"), prn);
+    libset_print_bool(USE_CWD, prn, opt);
+    libset_print_bool(VERBOSE_INCLUDE, prn, opt);
+    libset_print_bool(SKIP_MISSING, prn, opt);
 
-    libset_print_int(BFGS_MAXITER, prn);
-    libset_print_double(BFGS_TOLER, prn);
-    libset_print_int(BHHH_MAXITER, prn);
-    libset_print_double(BHHH_TOLER, prn);
-    libset_print_int(RQ_MAXITER, prn);
-    print_initvals(state->initvals, prn);
-    libset_print_bool(USE_LBFGS, prn);
-    libset_print_double(NLS_TOLER, prn);
-    libset_print_bool(USE_SVD, prn);
-    libset_print_bool(USE_FCP, prn);
+    libset_print_bool(R_LIB, prn, opt);
+    libset_print_bool(R_FUNCTIONS, prn, opt);
 
-    libset_header(_("Random number generation"), prn);
+    if (opt & OPT_D) {
+	if (*include_path) {
+	    pprintf(prn, " include_path = '%s'\n", include_path);
+	} else {
+	    pputs(prn, " include_path = unset\n");
+	}
+    } else if (*include_path) {
+	pprintf(prn, "set include_path \"%s\"\n", include_path);
+    }
 
-    pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
+    libset_header(N_("Numerical methods"), prn, opt);
 
-    libset_header(_("Robust estimation"), prn);
+    libset_print_int(BFGS_MAXITER, prn, opt);
+    libset_print_double(BFGS_TOLER, prn, opt);
+    libset_print_int(BHHH_MAXITER, prn, opt);
+    libset_print_double(BHHH_TOLER, prn, opt);
+    libset_print_int(RQ_MAXITER, prn, opt);
+    print_initvals(state->initvals, prn, opt);
+    libset_print_bool(USE_LBFGS, prn, opt);
+    libset_print_double(NLS_TOLER, prn, opt);
+    libset_print_bool(USE_SVD, prn, opt);
+    libset_print_bool(USE_FCP, prn, opt);
 
-    libset_print_int(BOOTREP, prn);
-    libset_print_int(GARCH_VCV, prn);
-    libset_print_int(ARMA_VCV, prn);
-    libset_print_bool(FORCE_HC, prn);
-    libset_print_int(HAC_LAG, prn);
-    libset_print_int(HAC_KERNEL, prn);
-    libset_print_bool(PREWHITEN, prn);
-    libset_print_int(HC_VERSION, prn);
-    libset_print_bool(PCSE, prn);
-    libset_print_double(QS_BANDWIDTH, prn);
+    libset_header(N_("Random number generation"), prn, opt);
 
-    libset_header(_("Filtering"), prn);
+    if (opt & OPT_D) {
+	pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
+    } else {
+	pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
+    }
+
+    libset_header(N_("Robust estimation"), prn, opt);
+
+    libset_print_int(BOOTREP, prn, opt);
+    libset_print_int(GARCH_VCV, prn, opt);
+    libset_print_int(ARMA_VCV, prn, opt);
+    libset_print_bool(FORCE_HC, prn, opt);
+    libset_print_int(HAC_LAG, prn, opt);
+    libset_print_int(HAC_KERNEL, prn, opt);
+    libset_print_bool(PREWHITEN, prn, opt);
+    libset_print_int(HC_VERSION, prn, opt);
+    libset_print_bool(PCSE, prn, opt);
+    libset_print_double(QS_BANDWIDTH, prn, opt);
+
+    libset_header(N_("Filtering"), prn, opt);
 
     if (is_unset(state->bkbp_p0) ||
 	is_unset(state->bkbp_p1)) {
@@ -1311,13 +1360,13 @@ static int display_settings (PRN *prn)
 		state->bkbp_p1);
     }
 
-    libset_print_int(BKBP_K, prn);
-    libset_print_double(HP_LAMBDA, prn);
+    libset_print_int(BKBP_K, prn, opt);
+    libset_print_double(HP_LAMBDA, prn, opt);
 
-    libset_header(_("Time series"), prn);
+    libset_header(N_("Time series"), prn, opt);
 
-    libset_print_int(HORIZON, prn);
-    libset_print_int(VECM_NORM, prn);
+    libset_print_int(HORIZON, prn, opt);
+    libset_print_int(VECM_NORM, prn, opt);
 
     pputc(prn, '\n');
     
@@ -1402,7 +1451,7 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
     nw = sscanf(line, "%*s %31s %31s %31s", setobj, setarg, setarg2);
 
     if (nw <= 0) {
-	return display_settings(prn);
+	return print_settings(prn, OPT_D);
     }
 
     /* specials which need the whole line */
