@@ -168,7 +168,7 @@ matrix parm = $coeff
 
 # Write CSV file for Ox
 set csv_na .NaN
-store abdata.csv
+store @dotdir/abdata.csv
 
 # Replicate using the Ox DPD package
 foreign language=Ox
@@ -178,7 +178,7 @@ foreign language=Ox
 main ()
 {
     decl dpd = new DPD();
-    dpd.Load("abdata.csv"); 
+    dpd.Load("@dotdir/abdata.csv"); 
     dpd.SetYear("YEAR");
 
     dpd.Select(Y_VAR, {"n", 0, 2});
