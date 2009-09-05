@@ -285,7 +285,6 @@ struct gretl_option gretl_opts[] = {
     { PERGM,    OPT_L, "log", 0 },
     { PLOT,     OPT_O, "one-scale", 0 },
     { PRINT,    OPT_O, "byobs", 0 },
-    { PRINT,    OPT_L, "long", 0 },
     { PRINT,    OPT_N, "no-dates", 0 },
     { PROBIT,   OPT_P, "p-values", 0 },
     { PROBIT,   OPT_Q, "quiet", 0 },

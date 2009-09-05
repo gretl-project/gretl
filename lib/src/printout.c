@@ -1273,73 +1273,49 @@ static void fcast_print_x (double x, int n, int pmax, PRN *prn)
     }
 }
 
-static void printstr_long (PRN *prn, double xx, int d, int *ls)
-{
-    char str[64];
-    int n;
-
-    if (na(xx)) {
-	strcpy(str, "NA  ");
-	n = 4;
-    } else {
-	sprintf(str, "% .*E  ", d, xx);
-	n = strlen(str);
-    }
-    if (*ls + n > 78) {
-	pputc(prn, '\n');
-	*ls = 0;
-    }
-    pputs(prn, str);
-    *ls += n;
-}
-
 /* prints series z from current sample t1 to t2 */
 
 static void print_series_by_var (const double *z, const DATAINFO *pdinfo, 
-				 gretlopt opt, PRN *prn)
+				 PRN *prn)
 {
     char format[12];
-    int t, dig = 11, ls = 0;
+    int t, ls = 0;
     int anyneg = 0;
     double xx;
 
-    if (opt & OPT_L) {
-	dig = libset_get_int(LONGDIGITS);
-    } else {
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (z[t] < 0) {
-		anyneg = 1;
-		break;
-	    }
-	}
-	if (anyneg) {
-	    sprintf(format, "%% #.%dg  ", GRETL_DIGITS);
-	} else {
-	    sprintf(format, "%%#.%dg  ", GRETL_DIGITS);
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (z[t] < 0) {
+	    anyneg = 1;
+	    break;
 	}
     }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xx = z[t];
-	if (opt & OPT_L) {
-	    printstr_long(prn, xx, dig, &ls);
-	} else {
-	    char str[32];
-	    int n;
+    if (anyneg) {
+	sprintf(format, "%% #.%dg  ", GRETL_DIGITS);
+    } else {
+	sprintf(format, "%%#.%dg  ", GRETL_DIGITS);
+    }
 
-	    if (na(xx)) {
-		sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, "NA");
-	    } else {
-		sprintf(str, format, xx);
-	    }
-	    n = strlen(str);
-	    if (ls + n > 78) {
-		pputc(prn, '\n');
-		ls = 0;
-	    }
-	    pputs(prn, str);
-	    ls += n;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	char str[32];
+	int n;
+
+	xx = z[t];
+
+	if (na(xx)) {
+	    sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, "NA");
+	} else {
+	    sprintf(str, format, xx);
 	}
+
+	n = strlen(str);
+	if (ls + n > 78) {
+	    pputc(prn, '\n');
+	    ls = 0;
+	}
+
+	pputs(prn, str);
+	ls += n;
     }
 
     pputc(prn, '\n');
@@ -1754,9 +1730,9 @@ static void print_varlist (const char *name, const int *list,
     }
 }
 
-static void 
-print_listed_objects (const char *s, const DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn)
+static void print_listed_objects (const char *s, 
+				  const DATAINFO *pdinfo, 
+				  PRN *prn)
 {
     const gretl_matrix *m;
     const int *list;
@@ -1764,14 +1740,12 @@ print_listed_objects (const char *s, const DATAINFO *pdinfo,
 
     while ((name = gretl_word_strdup(s, &s)) != NULL) {
 	if (gretl_is_scalar(name)) {
-	    print_scalar_by_name(name, opt, prn);
+	    print_scalar_by_name(name, prn);
 	} else if ((m = get_matrix_by_name(name)) != NULL) {
 	    gretl_matrix_print_to_prn(m, name, prn);
 	} else if ((list = get_list_by_name(name)) != NULL) {
 	    print_varlist(name, list, pdinfo, prn);
-	} else if (!strcmp(name, "scalars")) {
-	    print_all_scalars(opt, prn);
-	}
+	} 
 	    
 	free(name);
     }
@@ -1952,8 +1926,7 @@ static int print_by_obs (int *list, const double **Z,
 }
 
 static int print_by_var (const int *list, const double **Z,
-			 const DATAINFO *pdinfo, gretlopt opt,
-			 PRN *prn)
+			 const DATAINFO *pdinfo, PRN *prn)
 {
     int i, vi;
 
@@ -1969,7 +1942,7 @@ static int print_by_var (const int *list, const double **Z,
 	}
 	print_var_smpl(vi, Z, pdinfo, prn);
 	pputc(prn, '\n');
-	print_series_by_var(Z[vi], pdinfo, opt, prn);
+	print_series_by_var(Z[vi], pdinfo, prn);
 	pputc(prn, '\n');
     }
 
@@ -1983,9 +1956,7 @@ static int print_by_var (const int *list, const double **Z,
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @opt: if %OPT_O, print the data by observation (series in columns);
- * if %OPT_N, use simple obs numbers, not dates; if %OPT_L, print the 
- * data to a number of digits set by "set longdigits" (default 10).
- * Note that %OPT_L nullifies %OPT_O.
+ * if %OPT_N, use simple obs numbers, not dates.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently
@@ -2001,11 +1972,6 @@ int printdata (const int *list, const char *mstr,
     int screenvar = 0;
     int *plist = NULL;
     int err = 0;
-
-    if (opt & OPT_L) {
-	/* can't do both --long and --byobs */
-	opt &= ~OPT_O;
-    }
 
     if (list != NULL && list[0] == 0) {
 	/* explicitly empty list given */
@@ -2060,13 +2026,13 @@ int printdata (const int *list, const char *mstr,
     if (opt & OPT_O) {
 	err = print_by_obs(plist, Z, pdinfo, opt, screenvar, prn);
     } else {
-	err = print_by_var(plist, Z, pdinfo, opt, prn);
+	err = print_by_var(plist, Z, pdinfo, prn);
     }
 
  endprint:
 
     if (!err && mstr != NULL) {
-	print_listed_objects(mstr, pdinfo, opt, prn);
+	print_listed_objects(mstr, pdinfo, prn);
     }
 
     free(plist);

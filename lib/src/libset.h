@@ -47,7 +47,6 @@ typedef enum {
 #define HORIZON          "horizon"
 #define HP_LAMBDA        "hp_lambda"
 #define USE_LBFGS        "lbfgs"
-#define LONGDIGITS       "longdigits"
 #define LOOP_MAXITER     "loop_maxiter"
 #define RQ_MAXITER       "rq_maxiter"
 #define MAX_VERBOSE      "max_verbose"

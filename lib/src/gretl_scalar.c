@@ -375,7 +375,7 @@ int gretl_scalar_delete (const char *name, PRN *prn)
     return err;
 }
 
-static void print_scalar (gretl_scalar *s, gretlopt opt, PRN *prn, int n)
+static void print_scalar (gretl_scalar *s, int n, PRN *prn)
 {
     if (n == 0) {
 	pputc(prn, '\n');
@@ -389,43 +389,18 @@ static void print_scalar (gretl_scalar *s, gretlopt opt, PRN *prn, int n)
 	if (s->val >= 0.0) {
 	    pputc(prn, ' ');
 	}
-	if (opt & OPT_L) {
-	    pprintf(prn, "%#.*E", libset_get_int(LONGDIGITS), s->val);
-	} else if (opt & OPT_T) {
-	    pprintf(prn, "%#.10E", s->val);
-	} else {
-	    pprintf(prn, "%#.6g", s->val);
-	}
+	pprintf(prn, "%#.8g", s->val);
     }
 
     pputc(prn, '\n');
 }
 
-void print_scalar_by_name (const char *name, gretlopt opt, PRN *prn)
+void print_scalar_by_name (const char *name, PRN *prn)
 {
     gretl_scalar *s = get_scalar_pointer(name, gretl_function_depth());
 
     if (s != NULL) {
-	print_scalar(s, opt, prn, 0);
-    }
-}
-
-void print_all_scalars (gretlopt opt, PRN *prn)
-{
-    int n = 0;
-
-    if (n_scalars > 0) {
-	int i, level = gretl_function_depth();
-
-	for (i=0; i<n_scalars; i++) {
-	    if (scalars[i]->level == level) {
-		print_scalar(scalars[i], opt, prn, n++);
-	    }
-	}
-    }
-
-    if (n == 0) {
-	pputs(prn, "No scalars are defined\n");
+	print_scalar(s, 0, prn);
     }
 }
 

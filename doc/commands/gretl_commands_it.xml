@@ -6463,10 +6463,6 @@
 	  <flag>--byobs</flag>
 	  <effect>per osservazione</effect>
 	</option>
-	<option>
-	  <flag>--long</flag>
-	  <effect>usa più cifre significative</effect>
-	</option>
  	<option>
  	  <flag>--no-dates</flag>
  	  <effect>usa i numeri delle osservazioni</effect>
@@ -6485,14 +6481,6 @@
         di tutte le variabili nel dataset in uso. Usando l'opzione
 	<lit>--byobs</lit> i dati vengono stampati per osservazione,
         altrimenti sono stampati per variabile.
-      </para>
-      <para>
-        Usando l'opzione <lit>--long</lit> i dati vengono stampati per variabile
-        in notazione scientifica, con una precisione superiore al normale.  In
-        questo caso di solito vengono mostrate 10 cifre significative, ma è
-        possibile modificare questo numero con il comando  <cmdref targ="set"/>
-        e l'argomento <lit>longdigits</lit>. Per avere maggiore controllo sul
-        formato di stampa, si veda <cmdref targ="printf"/>.
       </para>
 
       <para>
@@ -7531,13 +7519,6 @@
 	  <lit>on</lit> (valore predefinito). Quando è attivo, se si verifica un
           errore all'interno di un loop, questo si interromperà. Se si usa il
           client a riga di comando, il programma terminerà.
-	  </para>
-	</li>
-	<li>	  
-	  <para><lit>longdigits</lit>: un valore intero positivo, minore o
-            uguale a 20. Determina il numero di cifre usate per mostrare i
-            valori delle variabili quando viene usata l'opzione
-	    <lit>--long</lit> (si veda <cmdref targ="print"/>).
 	  </para>
 	</li>
         <li>

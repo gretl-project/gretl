@@ -1,3 +1,10 @@
+version 1.8.5, in progress
+
+The --long option to the "print" command has been removed,
+along with the longdigits variable in the "set" command.
+These were long ago rendered redundant by the "printf"
+command.
+
 8/28/2009 version 1.8.4
 
 Gretl uses "to" as a syntactic element in some contexts;

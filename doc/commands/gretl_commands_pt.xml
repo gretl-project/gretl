@@ -6108,10 +6108,6 @@
 	  <effect>by observations</effect>
 	</option>
 	<option>
-	  <flag>--long</flag>
-	  <effect>use 10 significant digits or more</effect>
-	</option>
-	<option>
 	  <flag>--no-dates</flag>
 	  <effect>use simple observation numbers</effect>
 	</option>
@@ -6129,13 +6125,6 @@
 	all variables in the current data file. If the
 	<lit>--byobs</lit> flag is given the data are printed by
 	observation, otherwise they are printed by variable.
-      </para>
-
-      <para>
-	If the <lit>--long</lit> flag is given the data are printed, by
-	variable, to greater than usual precision.  The default in this
-	case is to show 10 significant digits but you can adjust that
-	figure using the <cmdref targ="set"/> command.
       </para>
 
       <para>
@@ -7202,13 +7191,6 @@
 	    smaller than <lit>bhhh_toler</lit>.  The default value is
 	    1.0E&minus;06; this value may be re-established by typing
 	    <lit>default</lit> in place of a numeric value.
-	  </para>
-	</li>
-	<li>	  
-	  <para><lit>longdigits</lit>: one positive integer value, less
-	    than or equal to 20.  Determines the number of digits of
-	    precision used when printing the values of variables using the
-	    <lit>--long</lit> option (see <cmdref targ="print"/>).
 	  </para>
 	</li>
 	<li>	  

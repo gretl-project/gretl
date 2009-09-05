@@ -6908,10 +6908,6 @@
 	  <effect>by observations</effect>
 	</option>
 	<option>
-	  <flag>--long</flag>
-	  <effect>show more significant digits</effect>
-	</option>
-	<option>
 	  <flag>--no-dates</flag>
 	  <effect>use simple observation numbers</effect>
 	</option>
@@ -6929,16 +6925,9 @@
 	all variables in the current data file. If the
 	<lit>--byobs</lit> flag is given the data are printed by
 	observation, otherwise they are printed by variable.
-      </para>
-
-      <para>
-	If the <lit>--long</lit> flag is given the data are printed, by
-	variable in scientific notation, to greater than usual precision.
-	The default in this case is to show 10 digits following the
-	decimal point, but you can adjust that figure using the <cmdref
-	  targ="set"/> command with the <lit>longdigits</lit> argument.
-	For greater control over the printing format, see
-	<cmdref targ="printf"/>.
+	Please note, for greater control over the printing format
+	and/or to expose a greater number of digits than are
+	shown by <lit>print</lit>, see <cmdref targ="printf"/>.
       </para>
 
       <para>
@@ -8050,13 +8039,6 @@
 	    setting the environment variable <lit>GRETL_KEEP_GOING</lit> to
 	    1). If an error occurs while <quote>compiling</quote> a loop or
 	    user-defined function, however, execution is halted regardless.
-	  </para>
-	</li>
-	<li>	  
-	  <para><lit>longdigits</lit>: one positive integer value, less
-	    than or equal to 20.  Determines the number of digits of
-	    precision used when printing the values of variables using the
-	    <lit>--long</lit> option (see <cmdref targ="print"/>).
 	  </para>
 	</li>
 	<li>	  

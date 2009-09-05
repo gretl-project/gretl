@@ -82,7 +82,6 @@ struct set_vars_ {
     double nls_toler;           /* NLS convergence criterion */
     int loop_maxiter;           /* max no. of iterations in non-for loops */
     char delim;                 /* delimiter for CSV data export */
-    int longdigits;             /* digits for printing data in long form */
     int vecm_norm;              /* VECM beta normalization */
     int bfgs_maxiter;           /* max iterations, BFGS */         
     double bfgs_toler;          /* convergence tolerance, BFGS */
@@ -139,7 +138,6 @@ struct set_vars_ {
 		       !strcmp(s, HAC_KERNEL) || \
                        !strcmp(s, HC_VERSION) || \
 		       !strcmp(s, HORIZON) || \
-		       !strcmp(s, LONGDIGITS) || \
 		       !strcmp(s, LOOP_MAXITER) || \
                        !strcmp(s, RQ_MAXITER) || \
 		       !strcmp(s, VECM_NORM) || \
@@ -156,6 +154,8 @@ static char include_path[MAXLEN];
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
+static int real_libset_read_script (const char *fname,
+				    PRN *prn);
 
 static void robust_opts_init (struct robust_opts *r)
 {
@@ -336,7 +336,6 @@ static void state_vars_copy (set_vars *sv)
     sv->rq_maxiter = state->rq_maxiter;
     sv->nls_toler = state->nls_toler;
     sv->delim = state->delim; 
-    sv->longdigits = state->longdigits; 
     sv->vecm_norm = state->vecm_norm;
     sv->bfgs_maxiter = state->bfgs_maxiter;
     sv->bfgs_toler = state->bfgs_toler;
@@ -370,7 +369,6 @@ static void state_vars_init (set_vars *sv)
     sv->loop_maxiter = 250;
     sv->rq_maxiter = 1000;
     sv->delim = UNSET_INT;
-    sv->longdigits = 10;
     sv->vecm_norm = NORM_PHILLIPS;
     sv->initvals = NULL;
 
@@ -1289,7 +1287,6 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(ECHO, prn, opt);
     libset_print_bool(FORCE_DECP, prn, opt);
     libset_print_bool(HALT_ON_ERR, prn, opt);
-    libset_print_int(LONGDIGITS, prn, opt);
     libset_print_int(LOOP_MAXITER, prn, opt);
     libset_print_bool(MAX_VERBOSE, prn, opt);
     libset_print_bool(MESSAGES, prn, opt);
@@ -1452,7 +1449,7 @@ libset_query_settings (const char *s, PRN *prn)
 #define boolean_off(s) (!strcmp(s, "off") || !strcmp(s, "0") || \
                         !strcmp(s, "false"))
 
-static int write_or_read_settings (gretlopt opt)
+static int write_or_read_settings (gretlopt opt, PRN *prn)
 {
     int err = incompatible_options(opt, (OPT_T | OPT_F));
 
@@ -1464,7 +1461,7 @@ static int write_or_read_settings (gretlopt opt)
 	} else if (opt == OPT_T) {
 	    err = libset_write_script(fname);
 	} else {
-	    err = libset_read_script(fname);
+	    err = real_libset_read_script(fname, prn);
 	}
     }
 
@@ -1481,7 +1478,7 @@ int execute_set_line (const char *line, DATAINFO *pdinfo,
     check_for_state();
 
     if (opt != OPT_NONE) {
-	return write_or_read_settings(opt);
+	return write_or_read_settings(opt, prn);
     }
 
     *setobj = *setarg = *setarg2 = '\0';
@@ -1694,8 +1691,6 @@ int libset_get_int (const char *key)
 	return state->ropts.hc_version;
     } else if (!strcmp(key, HORIZON)) {
 	return state->horizon;
-    } else if (!strcmp(key, LONGDIGITS)) {
-	return state->longdigits;
     } else if (!strcmp(key, LOOP_MAXITER)) {
 	return state->loop_maxiter;
     } else if (!strcmp(key, VECM_NORM)) {
@@ -1741,10 +1736,6 @@ static int intvar_min_max (const char *s, int *min, int *max,
     } else if (!strcmp(s, HORIZON)) {
 	*min = 1;
 	*var = &state->horizon;
-    } else if (!strcmp(s, LONGDIGITS)) {
-	*min = 1;
-	*max = 21;
-	*var = &state->longdigits;
     } else if (!strcmp(s, LOOP_MAXITER)) {
 	*min = 1;
 	*var = &state->loop_maxiter;
@@ -2337,7 +2328,12 @@ int libset_write_script (const char *fname)
     return err;
 }
 
-int libset_read_script (const char *fname)
+/* If @prn is non-NULL we're called via the "set" command.
+   Otherwise we're called by the gretl session apparatus.
+*/
+
+static int real_libset_read_script (const char *fname,
+				    PRN *prn)
 {
     FILE *fp;
     int err = 0;
@@ -2358,12 +2354,15 @@ int libset_read_script (const char *fname)
     if (!err) {
 	char line[1024];
 
-	while (fgets(line, sizeof line, fp) && !err) {
+	while (fgets(line, sizeof line, fp)) {
 	    if (*line == '#' || string_is_blank(line)) {
 		continue;
 	    }
 	    tailstrip(line);
-	    err = execute_set_line(line, NULL, OPT_NONE, NULL);
+	    err = execute_set_line(line, NULL, OPT_NONE, prn);
+	    if (err && prn != NULL) {
+		break;
+	    }
 	}
 
 	fclose(fp);
@@ -2371,3 +2370,10 @@ int libset_read_script (const char *fname)
 
     return err;
 }
+
+int libset_read_script (const char *fname)
+{
+    return real_libset_read_script(fname, NULL);
+}
+
+
