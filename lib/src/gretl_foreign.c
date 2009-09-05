@@ -276,7 +276,7 @@ static int write_ox_io_file (void)
 	    fputs("gretl_export (const X, const str)\n{\n", fp);
             fputs("  decl dname = gretl_dotdir();\n", fp);
 	    fputs("  decl fp = fopen(dname ~ str, \"w\");\n", fp);
-	    fputs("  fprint(fp, \"%d %d\", rows(X), columns(X));\n", fp);
+	    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
 	    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
 	    fputs("  fclose(fp);\n}\n\n", fp);
 
