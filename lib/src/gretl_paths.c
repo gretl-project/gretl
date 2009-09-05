@@ -1651,6 +1651,7 @@ static int validate_writedir (const char *dirname)
 int set_gretl_work_dir (const char *path)
 {
     DIR *test;
+    int err = 0;
 
     errno = 0;
 
@@ -1659,21 +1660,19 @@ int set_gretl_work_dir (const char *path)
 #else
     test = opendir(path);
 #endif
+
     if (test == NULL) {
 	gretl_errmsg_set_from_errno(path);
 	fprintf(stderr, "set_gretl_work_dir: '%s': failed\n", path);
-	return E_FOPEN;
-    } 
-
-    closedir(test);
-
-    if (strcmp(path, paths.workdir)) {
+	err = E_FOPEN;
+    } else {
+	closedir(test);
 	strcpy(paths.workdir, path);
 	slash_terminate(paths.workdir);
 	gretl_insert_builtin_string("workdir", paths.workdir);
     }
 
-    return 0;
+    return err;
 }
 
 const char *gretl_gnuplot_path (void)
@@ -1795,59 +1794,67 @@ void show_paths (void)
 
 #ifndef WIN32
 
-static void check_gretldir (void)
+/* We have paths.gretldir in place: now test it by seeing if we can
+   open the the GPL file "COPYING", which definitely should be in that
+   directory.  If that doesn't work, try some remedial measures.  
+   Note, @config_path is the path garnered from the config file,
+   which we may or may not have used to write paths.gretldir (and
+   which may be an empty string).
+*/
+
+static void check_gretldir (char *config_path)
 {
-    char *epath = getenv("GRETL_HOME");
-    char buf[FILENAME_MAX];
+    char testname[FILENAME_MAX];
     FILE *fp;
     int gotit = 0;
 
-    if (epath != NULL && strcmp(epath, paths.gretldir)) {
-	/* environment vs rc file: is the env version OK? */
-	sprintf(buf, "%sCOPYING", epath);
-	fp = gretl_fopen(buf, "r");
-	if (fp != NULL) {
-	    fclose(fp);
-	    *paths.gretldir = '\0';
-	    strncat(paths.gretldir, epath, MAXLEN - 2);
-	    slash_terminate(paths.gretldir);
-	    gotit = 1;
+    sprintf(testname, "%sCOPYING", paths.gretldir);
+    fp = gretl_fopen(testname, "r");
+
+    if (fp != NULL) {
+	/* should be fine as is */
+	fclose(fp);
+	gotit = 1;
+    } else if (*config_path != '\0') {
+	slash_terminate(config_path);
+	if (strcmp(config_path, paths.gretldir)) {
+	    /* we weren't using the config-file version: try it now */
+	    sprintf(testname, "%sCOPYING", config_path);
+	    fp = gretl_fopen(testname, "r");
+	    if (fp != NULL) {
+		strcpy(paths.gretldir, config_path);
+		fclose(fp);
+		gotit = 1;
+	    }
 	}
-    } else {
-	/* no env setting: check what the rc file says */
-	sprintf(buf, "%sCOPYING", paths.gretldir);
-	fp = gretl_fopen(buf, "r");
-	if (fp != NULL) {
-	    fclose(fp);
-	    gotit = 1;
-	}
-    }	
+    }
 
     if (!gotit) {
 	/* we're messed up; try to recover */
+	pid_t pid = getpid();
 	gchar *proc_exe;
 	const char *s;
-	pid_t pid;
 	ssize_t nr;
 
-	pid = getpid();
 	proc_exe = g_strdup_printf("/proc/%d/exe", pid);
-	nr = readlink(proc_exe, buf, FILENAME_MAX - 1);
+	nr = readlink(proc_exe, testname, FILENAME_MAX - 1);
+
 	if (nr > 0) {
-	    buf[nr] = '\0';
-	    fprintf(stderr, "gretl is process %d, '%s'\n", (int) pid, buf);
+	    testname[nr] = '\0';
+	    fprintf(stderr, "gretl is process %d, '%s'\n", (int) pid, testname);
 	    /* should be something like /foo/bar/bin/gretl; we
 	       want the /foo/bar bit to append to
 	    */
-	    s = strstr(buf, "bin/gretl");
+	    s = strstr(testname, "bin/gretl");
 	    if (s != NULL) {
 		*paths.gretldir = '\0';
-		strncat(paths.gretldir, buf, s - buf);
+		strncat(paths.gretldir, testname, s - testname);
 		strcat(paths.gretldir, "share/gretl/");
-		fprintf(stderr, "gretldir is really '%s'?\n", 
+		fprintf(stderr, "gretldir is maybe '%s'?\n", 
 			paths.gretldir);
 	    }
 	}
+
 	g_free(proc_exe);
     }
 }
@@ -1912,17 +1919,17 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
     char *ghome = getenv("GRETL_HOME");
     int done = 0, err = 0;
 
-    if (*dirname != '\0') {
+    if (ghome != NULL) {
+	/* environment setting, if any, takes precedence */
+	strcpy(paths.gretldir, ghome);
+	slash_terminate(paths.gretldir);
+	done = 1;
+    } else if (*dirname != '\0') {
 	/* use value from config/registry */
 	strcpy(paths.gretldir, dirname);
 	slash_terminate(paths.gretldir);
 	done = 1;
-    } else if (ghome != NULL) {
-	/* use environment setting */
-	strcpy(paths.gretldir, ghome);
-	slash_terminate(paths.gretldir);
-	done = 1;
-    }
+    } 
 
     if (!done) {
 #ifdef WIN32
@@ -1939,8 +1946,8 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
     }
 
 #ifndef WIN32
-    check_gretldir();
-#endif 
+    check_gretldir(dirname);
+#endif
 
     if (!err) {
 	set_helpfile_paths(opt);
