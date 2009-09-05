@@ -143,7 +143,8 @@ void set_csv_na_string (const char *s);
 const char *get_include_path (void);
 void set_include_path (const char *s);
 
-int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn);
+int execute_set_line (const char *line, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn);
 
 void set_iter_print_func (ITER_PRINT_FUNC func);
 int iter_print_callback (int i, PRN *prn);
@@ -159,6 +160,9 @@ void set_workdir_callback (int (*callback)());
 
 void set_script_switch (int s);
 int get_script_switch (void);
+
+int libset_write_script (const char *fname);
+int libset_read_script (const char *fname);
 
 #endif /* LIBSET_H */
 

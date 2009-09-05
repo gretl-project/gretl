@@ -309,6 +309,8 @@ struct gretl_option gretl_opts[] = {
     { RUNS,     OPT_D, "difference", 0 },
     { RUNS,     OPT_E, "equal", 0 },
     { SCATTERS, OPT_L, "with-lines", 0 },
+    { SET,      OPT_F, "from-file", 2 },
+    { SET,      OPT_T, "to-file", 2 },
     { SETINFO,  OPT_C, "continuous", 0 },
     { SETINFO,  OPT_D, "discrete", 0 },
     { SETOBS,   OPT_C, "stacked-cross-section", 0 },
@@ -1069,7 +1071,7 @@ gretlopt get_gretl_options (char *line, int *err)
 	return oflags;
     }
 
-    if (ci != SETINFO && ci != TABPRINT && ci != EQNPRINT) {
+    if (ci != SET && ci != SETINFO && ci != TABPRINT && ci != EQNPRINT) {
 	/* try for short-form options (e.g. "-o") */
 	opt = get_short_opts(line, ci, (ci == SMPL)? NULL : &myerr);
 	if (!myerr && opt) {

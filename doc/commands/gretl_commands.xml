@@ -108,6 +108,14 @@
     </description>
   </command>
 
+  <command name="addobs" section="Dataset" context="cli">
+    <description>
+      <para>
+	See <cmdref targ="dataset"/>.
+      </para>
+    </description>
+  </command>
+
   <command name="adf" section="Tests" label="Augmented Dickey-Fuller test">
 
     <usage>
@@ -7956,39 +7964,42 @@
     label="Set program parameters" context="cli">
 
     <usage>
-      <arguments>
-        <argument>variable</argument>
-        <argument>value</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>set</lit> <repl>variable</repl> <repl>value</repl></altform>
+	<altform><lit>set --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>set --from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>set stopwatch</lit></altform>
+	<altform><lit>set</lit></altform>
+      </altforms>
       <examples>
         <example>set svd on</example>
         <example>set csv_delim tab</example>
 	<example>set horizon 10</example>
+	<example>set --to-file=mysettings.inp</example>
       </examples>    
     </usage>
 
     <description>
       <para>
-	Set the values of various program parameters.  The given value
-	remains in force for the duration of the gretl session unless it
-	is changed by a further call to <cmd>set</cmd>.  The parameters
-	that can be set in this way are enumerated below. Note that the
-	settings of <lit>hc_version</lit>, <lit>hac_lag</lit> and
-	<lit>hac_kernel</lit> are used when the <lit>--robust</lit> option
-	is given to an estimation command. 
+	The most common use of this command is the first variant shown above,
+	where it is used to set the value of a selected program parameter.
+	This is discussed in detail below.  The other uses are: with
+	<lit>--to-file</lit>, to write a script file containing all the
+	current parameter settings; with <lit>--from-file</lit> to read a
+	script file containing parameter settings and apply them to the
+	current session; with <lit>stopwatch</lit> to zero the gretl
+	<quote>stopwatch</quote> which can be used to measure CPU time (see
+	the entry for the <lit>$stopwatch</lit> accessor in the gretl function
+	reference); or, if the word <lit>set</lit> is given alone, to print
+	the current settings.
       </para>
       <para>
-	A special usage of the command is <cmd>set
-	stopwatch</cmd>. This activates the measurement of CPU time,
-	which stops the first time the accessor <lit>$stopwatch</lit>
-	is used, either in assigning it to a variable or simply by
-	printing it. The accessor <lit>$stopwatch</lit> will yield the
-	seconds of CPU time that have elapsed since the last <lit>set
-	stopwatch</lit> statement.
-      </para>
-      <para>
-	If the <cmd>set</cmd> command is given without any parameters, the
-	current settings for all the relevant variables are printed.
+	Values set via this comand remain in force for the duration of
+	the gretl session unless they are changed by a further call to
+	<cmd>set</cmd>.  The parameters that can be set in this way are
+	enumerated below. Note that the settings of <lit>hc_version</lit>,
+	<lit>hac_lag</lit> and <lit>hac_kernel</lit> are used when the
+	<lit>--robust</lit> option is given to an estimation command. 
       </para>
       <para>
 	The available settings are grouped under the following categories:

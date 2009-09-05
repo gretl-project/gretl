@@ -909,6 +909,11 @@ static int set_line_width (const char *s0, const char *s1,
 {
     int v, w, err = 0;
 
+    if (pdinfo == NULL) {
+	/* treat as no-op */
+	return 0;
+    }
+
     if (!isdigit((unsigned char) *s1)) {
 	return 1;
     }
@@ -1273,7 +1278,11 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
 	pprintf(prn, " csv_na = %s\n", get_csv_na_string());
     } else {
-	pprintf(prn, "set csv_delim %s\n", arg_from_delim(state->delim));
+	const char *dl = arg_from_delim(state->delim);
+
+	if (strcmp(dl, "unset")) {
+	    pprintf(prn, "set csv_delim %s\n", arg_from_delim(state->delim));
+	}
 	pprintf(prn, "set csv_na %s\n", get_csv_na_string());
     }	
 
@@ -1287,17 +1296,15 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(WARNINGS, prn, opt);
     libset_print_int(GRETL_DEBUG, prn, opt);
     libset_print_int(BLAS_NMK_MIN, prn, opt);
-    libset_print_bool(SHELL_OK, prn, opt);
 
     if (opt & OPT_D) {
+	libset_print_bool(SHELL_OK, prn, opt);
 	if (*state->shelldir) {
 	    pprintf(prn, " shelldir = '%s'\n", state->shelldir);
 	} else {
 	    pputs(prn, " shelldir = unset\n");
 	}
-    } else if (*state->shelldir) {
-	pprintf(prn, "set shelldir '%s'\n", state->shelldir);
-    }
+    } 
 
     libset_print_bool(USE_CWD, prn, opt);
     libset_print_bool(VERBOSE_INCLUDE, prn, opt);
@@ -1352,14 +1359,20 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     libset_header(N_("Filtering"), prn, opt);
 
-    if (is_unset(state->bkbp_p0) ||
-	is_unset(state->bkbp_p1)) {
-	pputs(prn, " bkbp_limits = auto\n");
-    } else {
-	pprintf(prn, " bkbp_limits = (%d, %d)\n", 
-		state->bkbp_p0, 
-		state->bkbp_p1);
-    }
+    if (opt & OPT_D) {
+	if (is_unset(state->bkbp_p0) ||
+	    is_unset(state->bkbp_p1)) {
+	    pputs(prn, " bkbp_limits = auto\n");
+	} else {
+	    pprintf(prn, " bkbp_limits = (%d, %d)\n", 
+		    state->bkbp_p0, 
+		    state->bkbp_p1);
+	}
+    } else if (!is_unset(state->bkbp_p0) &&
+	       !is_unset(state->bkbp_p1)) {
+	pprintf(prn, "set bkbp_limits %d %d\n", 
+		state->bkbp_p0, state->bkbp_p1);
+    }	
 
     libset_print_int(BKBP_K, prn, opt);
     libset_print_double(HP_LAMBDA, prn, opt);
@@ -1439,13 +1452,37 @@ libset_query_settings (const char *s, PRN *prn)
 #define boolean_off(s) (!strcmp(s, "off") || !strcmp(s, "0") || \
                         !strcmp(s, "false"))
 
-int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
+static int write_or_read_settings (gretlopt opt)
+{
+    int err = incompatible_options(opt, (OPT_T | OPT_F));
+
+    if (!err) {
+	const char *fname = get_optval_string(SET, opt);
+
+	if (fname == NULL) {
+	    err = E_DATA;
+	} else if (opt == OPT_T) {
+	    err = libset_write_script(fname);
+	} else {
+	    err = libset_read_script(fname);
+	}
+    }
+
+    return err;
+}
+
+int execute_set_line (const char *line, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
 {
     char setobj[32], setarg[32], setarg2[32];
     int k, nw, err = E_PARSE;
     double x;
 
     check_for_state();
+
+    if (opt != OPT_NONE) {
+	return write_or_read_settings(opt);
+    }
 
     *setobj = *setarg = *setarg2 = '\0';
 
@@ -2281,4 +2318,56 @@ void set_include_path (const char *s)
 const char *get_include_path (void)
 {
     return (*include_path == '\0')? NULL : include_path;
+}
+
+int libset_write_script (const char *fname)
+{
+    PRN *prn;
+    int err = 0;
+
+    /* FIXME maybe adjust path for fname? */
+
+    prn = gretl_print_new_with_filename(fname, &err);
+
+    if (!err) {
+	print_settings(prn, OPT_NONE);
+	gretl_print_destroy(prn);
+    }
+
+    return err;
+}
+
+int libset_read_script (const char *fname)
+{
+    FILE *fp;
+    int err = 0;
+
+    fp = gretl_fopen(fname, "r");
+
+    if (fp == NULL) {
+	char fullname[FILENAME_MAX];
+
+	strcpy(fullname, fname);
+	addpath(fullname, 0);
+	fp = gretl_fopen(fname, "r");
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	}
+    }
+
+    if (!err) {
+	char line[1024];
+
+	while (fgets(line, sizeof line, fp) && !err) {
+	    if (*line == '#' || string_is_blank(line)) {
+		continue;
+	    }
+	    tailstrip(line);
+	    err = execute_set_line(line, NULL, OPT_NONE, NULL);
+	}
+
+	fclose(fp);
+    }
+
+    return err;
 }

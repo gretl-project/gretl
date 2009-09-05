@@ -109,19 +109,20 @@ finer control:
 \end{itemize}
 
 What if one wants to generate a true forecast that goes beyond the
-available data?  In that case one can use the \texttt{addobs} command
-to add extra observations before forecasting.  For example:
+available data?  In that case one can use the \texttt{dataset} command
+with the \texttt{addobs} parameter to add extra observations before 
+forecasting.  For example:
 %
 \begin{code}
 # use the entire dataset, which ends in 2008:4
 ols y 0 xlist
-addobs 4
+dataset addobs 4
 fcast 2009:1 2009:4
 \end{code}
 %
 But this will work as stated only if the set of regressors in
 \texttt{xlist} does not contain any stochastic regressors other than
-lags of \texttt{y}.  The \texttt{addobs} command attempts to detect
+lags of \texttt{y}.  The \texttt{dataset addobs} command attempts to detect
 and extrapolate certain common deterministic variables (e.g., time
 trend, periodic dummy variables).  In addition, lagged values of the
 dependent variable can be supported via a dynamic forecast (see below
