@@ -1237,10 +1237,10 @@ static void libset_print_double (const char *s, PRN *prn,
 	if (na(x)) {
 	    pprintf(prn, " %s = auto\n", s);
 	} else {
-	    pprintf(prn, " %s = %g\n", s, x);
+	    pprintf(prn, " %s = %.15g\n", s, x);
 	}
     } else if (!na(x)) {
-	pprintf(prn, "set %s %g\n", s, x);
+	pprintf(prn, "set %s %.15g\n", s, x);
     }
 }
 
@@ -1255,7 +1255,8 @@ static void libset_header (char *s, PRN *prn, gretlopt opt)
     }
 }
 
-/* print_settings: use OPT_D for "display" */
+/* print_settings: use OPT_D for "display", otherwise
+   this gives script-type output */
 
 static int print_settings (PRN *prn, gretlopt opt)
 {
