@@ -1661,12 +1661,13 @@ int set_gretl_work_dir (const char *path)
 #endif
     if (test == NULL) {
 	gretl_errmsg_set_from_errno(path);
+	fprintf(stderr, "set_gretl_work_dir: '%s': failed\n", path);
 	return E_FOPEN;
     } 
 
     closedir(test);
 
-    if (!strcmp(path, paths.workdir)) {
+    if (strcmp(path, paths.workdir)) {
 	strcpy(paths.workdir, path);
 	slash_terminate(paths.workdir);
 	gretl_insert_builtin_string("workdir", paths.workdir);

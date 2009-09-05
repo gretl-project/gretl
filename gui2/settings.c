@@ -481,7 +481,7 @@ void set_gretl_startdir (void)
     }
 
 #if 0
-    fprintf(stderr, "startdir = '%s'\n", startdir);
+    fprintf(stderr, "startdir = '%s', usecwd = %d\n", startdir, usecwd);
 #endif
 
     if (usecwd && *startdir != '\0') {

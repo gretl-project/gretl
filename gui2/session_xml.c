@@ -5,6 +5,7 @@
 
 #include "usermat.h"
 #include "boxplots.h"
+#include "libset.h"
 
 static int check_graph_file (const char *fname, int type)
 {
@@ -541,6 +542,21 @@ static int maybe_read_lists_file (const char *fname)
     return load_user_lists_file(fname);
 }
 
+static int maybe_read_settings_file (const char *fname) 
+{
+    FILE *fp;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	/* nothing to be read */
+	return 0;
+    }
+
+    fclose(fp);
+
+    return libset_read_script(fname);
+}
+
 static int model_in_session (const void *ptr)
 {
     int i;
@@ -578,9 +594,8 @@ static SavedObjectFlags model_save_flags (const void *ptr,
     return flags;
 }
 
-static int maybe_write_matrix_file (void)
+static int maybe_write_matrix_file (char *fullname)
 {
-    char fullname[MAXLEN];
     FILE *fp;
 
     if (n_user_matrices() == 0) {
@@ -599,9 +614,8 @@ static int maybe_write_matrix_file (void)
     return 0;
 }
 
-static int maybe_write_scalars_file (void)
+static int maybe_write_scalars_file (char *fullname)
 {
-    char fullname[MAXLEN];
     FILE *fp;
 
     if (n_saved_scalars() == 0) {
@@ -620,20 +634,22 @@ static int maybe_write_scalars_file (void)
     return 0;
 }
 
-static int maybe_write_function_file (void)
+static int maybe_write_function_file (char *fullname)
 {
-    char fullname[MAXLEN];
-
     session_file_make_path(fullname, "functions.xml");
     return write_session_functions_file(fullname);
 }
 
-static int maybe_write_lists_file (void)
+static int maybe_write_lists_file (char *fullname)
 {
-    char fullname[MAXLEN];
-
     session_file_make_path(fullname, "lists.xml");
     return gretl_serialize_lists(fullname);
+}
+
+static int write_settings_file (char *fullname)
+{
+    session_file_make_path(fullname, "settings.inp");
+    return libset_write_script(fullname);
 }
 
 static int write_session_xml (const char *datname)
@@ -776,10 +792,11 @@ static int write_session_xml (const char *datname)
 
     fclose(fp);
 
-    maybe_write_matrix_file();
-    maybe_write_scalars_file();
-    maybe_write_function_file();
-    maybe_write_lists_file();
+    maybe_write_matrix_file(tmpname);
+    maybe_write_scalars_file(tmpname);
+    maybe_write_function_file(tmpname);
+    maybe_write_lists_file(tmpname);
+    write_settings_file(tmpname);
 
     return 0;
 }
