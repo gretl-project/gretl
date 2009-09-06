@@ -33,6 +33,8 @@
 #include "config.h"
 #endif
 
+#define GRETLBUILD
+
 /* The `emacs' switch turns on certain matching commands
    that make sense only in Emacs. */
 #ifdef emacs
@@ -4687,6 +4689,7 @@ re_exec (s)
 /* POSIX.2 functions.  Don't define these for Emacs.  */
 
 #ifndef emacs
+#ifndef GRETLBUILD
 
 /* regcomp takes a regular expression as a string and compiles it.
 
@@ -4903,7 +4906,6 @@ regerror (errcode, preg, errbuf, errbuf_size)
   return msg_size;
 }
 
-
 /* Free dynamically allocated space used by PREG.  */
 
 void
@@ -4926,6 +4928,31 @@ regfree (preg)
     free (preg->translate);
   preg->translate = NULL;
 }
+
+#else /* GRETLBUILD defined */
+
+void
+local_regfree (preg)
+    regex_t *preg;
+{
+  if (preg->buffer != NULL)
+    free (preg->buffer);
+  preg->buffer = NULL;
+  
+  preg->allocated = 0;
+  preg->used = 0;
+
+  if (preg->fastmap != NULL)
+    free (preg->fastmap);
+  preg->fastmap = NULL;
+  preg->fastmap_accurate = 0;
+
+  if (preg->translate != NULL)
+    free (preg->translate);
+  preg->translate = NULL;
+}
+
+#endif /* GRETLBUILD switch */
 
 #endif /* not emacs  */
 

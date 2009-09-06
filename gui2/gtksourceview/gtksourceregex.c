@@ -87,7 +87,11 @@ gtk_source_regex_destroy (GtkSourceRegex *regex)
 
 	g_free (regex->buf.fastmap);
 	regex->buf.fastmap = NULL;
-	regfree (&regex->buf);
+#ifdef NATIVE_GNU_REGEX
+        regfree (&regex->buf);
+#else
+        local_regfree (&regex->buf);	
+#endif	
 	if (regex->reg.num_regs > 0) {
 		
 		/* FIXME: maybe we should pre-allocate the registers

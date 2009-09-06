@@ -469,6 +469,11 @@ extern void re_set_registers
 extern char *re_comp _RE_ARGS ((const char *));
 extern int re_exec _RE_ARGS ((const char *));
 
+#define GRETLBUILD
+
+#ifdef GRETLBUILD
+extern void local_regfree _RE_ARGS ((regex_t *preg));
+#else
 /* POSIX compatibility.  */
 extern int regcomp _RE_ARGS ((regex_t *preg, const char *pattern, int cflags));
 extern int regexec
@@ -478,6 +483,7 @@ extern size_t regerror
   _RE_ARGS ((int errcode, const regex_t *preg, char *errbuf,
              size_t errbuf_size));
 extern void regfree _RE_ARGS ((regex_t *preg));
+#endif /* GRETLBUILD switch */
 
 #endif /* not __REGEXP_LIBRARY_H__ */
 
