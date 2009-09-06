@@ -2017,6 +2017,8 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
  * @list: an array of integer variable ID numbers, the first element
  * of which holds a count of the number of elements following.
  * @minpos: position in @list at which to start the search (>= 1).
+ * @Z: data array.
+ * @pdinfo: dataset information.
  *
  * Checks @list for the presence, in position @minpos or higher, of
  * a variable whose valid values in sample all equal 1.  This usually
@@ -2643,8 +2645,8 @@ int gretl_serialize_lists (const char *fname)
 /**
  * gretl_list_print:
  * @lname: name of list.
- * @pdinfo:
- * @prn:
+ * @pdinfo: dataset information.
+ * @prn: gretl printing struct.
  * 
  * Prints to @prn the given @list of variables, by name.
  */

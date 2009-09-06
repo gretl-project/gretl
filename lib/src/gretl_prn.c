@@ -569,6 +569,7 @@ FILE *gretl_print_read_tempfile (PRN *prn)
 /**
  * gretl_print_stop_tempfile_read:
  * @prn: printing struct.
+ * @fp: auxiliary stream.
  * 
  * For @prn with tempfile attached, stops reading
  * of the tempfile and closes @fp (recording the

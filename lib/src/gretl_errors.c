@@ -211,6 +211,7 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 
 /**
  * gretl_errmsg_set_from_errno:
+ * @s: string to prepend to error message, or %NULL.
  *
  * If %gretl_errmsg is currently blank, copy the string 
  * returned by %strerror into the message space; or if the 

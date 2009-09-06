@@ -1469,6 +1469,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
  * @targ: index of the target or response variable.
  * @shock: index of the source or shock variable.
  * @periods: number of periods over which to compute the response.
+ * @alpha: determines confidence level for bootstrap interval.
  * @Z: data array (or %NULL).
  * @pdinfo: dataset information.
  *
@@ -1482,10 +1483,10 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
  * If @Z is %NULL, the response matrix returned is a column vector 
  * of length @periods, giving the point estimate of the response 
  * function.  If @Z is not %NULL, the response matrix returned
- * has three columns, containing the point estimate, the 0.025
- * and the 0.975 quantile, where the quantiles are based on 999
- * bootstrap replications, with resampling of the original
- * residuals with replacement.
+ * has three columns, containing the point estimate, the @alpha / 2
+ * quantile and the 1 - @alpha / 2 quantile, where the quantiles
+ * are based on 999 bootstrap replications, with resampling of the 
+ * original residuals with replacement.
  *
  * Returns: matrix containing the estimated impulse responses,
  * with or without a confidence interval depending on whether

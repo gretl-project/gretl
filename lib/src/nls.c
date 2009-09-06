@@ -580,6 +580,8 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
  * @np: number of parameters.
  * @vals: array of initial parameter values.
  * @names: array of parameter names.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  *
  * Adds to @spec a list of (scalar) parameters to be estimated.
  * For an example of use see arma.c in the gretl plugin directory.

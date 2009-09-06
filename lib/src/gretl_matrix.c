@@ -10053,6 +10053,7 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
  * @mm: 0 for minimum, 1 for maximum.
  * @rc: 0 for row, 1 for column.
  * @idx: 0 for values, 1 for indices.
+ * @err: location to receive error code.
  *
  * Creates a matrix holding the row or column mimima or
  * maxima from @A, either as values or as location indices.

@@ -65,7 +65,7 @@ typedef struct _gretl_matrix_block gretl_matrix_block;
  * @i: row.
  * @j: column.
  * 
- * Retrieves the @i, @j element of @m.
+ * Returns: the @i, @j element of @m.
  */
 
 #define gretl_matrix_get(m,i,j) (m->val[(j)*m->rows+(i)])
@@ -75,7 +75,7 @@ typedef struct _gretl_matrix_block gretl_matrix_block;
  * @v: vector.
  * @i: index.
  * 
- * Gives element @i of @v.
+ * Returns: element @i of @v.
  */
 
 #define gretl_vector_get(v,i) (v->val[i])
@@ -107,7 +107,7 @@ typedef struct _gretl_matrix_block gretl_matrix_block;
  * gretl_matrix_cols:
  * @m: matrix to query.
  * 
- * Gives the number of columns in @m. 
+ * Returns: the number of columns in @m. 
  */
 
 #define gretl_matrix_cols(m) ((m == NULL)? 0 : m->cols)
@@ -116,7 +116,7 @@ typedef struct _gretl_matrix_block gretl_matrix_block;
  * gretl_matrix_rows:
  * @m: matrix to query.
  * 
- * Gives the number of rows in @m. 
+ * Returns: the number of rows in @m. 
  */
 
 #define gretl_matrix_rows(m) ((m == NULL)? 0 : m->rows)
@@ -125,7 +125,7 @@ typedef struct _gretl_matrix_block gretl_matrix_block;
  * gretl_vector_get_length:
  * @v: vector to examine.
  * 
- * Gives the length of vector @v (without regard to whether
+ * Returns: the length of vector @v (without regard to whether
  * it is a row or column vector).
  */
 
@@ -137,7 +137,7 @@ typedef struct _gretl_matrix_block gretl_matrix_block;
  * gretl_vector_alloc:
  * @i: number of columns.
  *
- * Allocates a new #gretl_vector with @i columns.
+ * Returns: a new #gretl_vector with @i columns.
  */
 
 #define gretl_vector_alloc(i) gretl_matrix_alloc(1,(i))
@@ -146,7 +146,7 @@ typedef struct _gretl_matrix_block gretl_matrix_block;
  * gretl_column_vector_alloc:
  * @i: number of rows.
  *
- * Allocates a new column gretl_vector with @i rows.
+ * Returns: a new column gretl_vector with @i rows.
  */
 
 #define gretl_column_vector_alloc(i) gretl_matrix_alloc((i),1)
@@ -164,7 +164,7 @@ typedef struct _gretl_matrix_block gretl_matrix_block;
  * gretl_matrix_is_scalar:
  * @m: matrix to test.
  *
- * Gives 1 if @m is 1 x 1, else 0.
+ * Returns: 1 if @m is 1 x 1, else 0.
  */
 
 #define gretl_matrix_is_scalar(m) ((m) != NULL && \

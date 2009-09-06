@@ -2902,7 +2902,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
  * @str: command string, which may include a starting 
  * observation and ending observation, and/or the name of a 
  * variable for saving the forecast values.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: pointer to data information struct.
  * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
  * a static forecast.  By default, the forecast is static within
@@ -2911,6 +2911,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
  * %OPT_R: do rolling/recursive forecast.
  * %OPT_Q: suppress printing of the forecast;
  * %OPT_P: ensure that the values are printed.
+ * @prn: gretl printing struct.
  *
  * In the case of "simple" models with an autoregressive error term 
  * (%AR, %AR1) the predicted values incorporate the forecastable portion 
