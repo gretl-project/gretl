@@ -1579,6 +1579,14 @@ static int write_plain_text_rc (void)
 
     for (i=0; rc_vars[i].var != NULL; i++) {
 	rcvar = &rc_vars[i];
+#ifdef G_OS_WIN32
+	/* Leave this to the registry?  Or should we do it here
+	   in the hope of making gretl relocatable? 
+	 */
+	if (!strcmp(rcvar->key, "gretldir")) {
+	    continue;
+	}
+#endif
 	fprintf(rc, "# %s\n", rcvar->description);
 	if (rcvar->flags & BOOLSET) {
 	    boolvar_to_str(rcvar->var, val);
@@ -1903,12 +1911,10 @@ static int win32_read_gretlrc (int *got_recent)
 	    break;
 	}
 	if (sscanf(line, "%s", key) == 1) {
-	    if (strcmp(key, "gretldir")) { 
-		strcpy(linevar, line + strlen(key) + 3); 
-		chopstr(linevar); 
-		if (*linevar) {
-		    find_and_set_rc_var(key, linevar);
-		}
+	    strcpy(linevar, line + strlen(key) + 3); 
+	    chopstr(linevar); 
+	    if (*linevar) {
+		find_and_set_rc_var(key, linevar);
 	    }
 	}
     }
@@ -1961,7 +1967,7 @@ int read_win32_config (int debug)
 	}
 
 	if (rcvar->flags & GOTSET) {
-	    /* already set via .gretl2rc */
+	    /* already set via user rcfile */
 	    continue;
 	}	
 
