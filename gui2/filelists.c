@@ -112,10 +112,7 @@ static void write_filename_to_list (int filetype, int i, char *fname)
 
 #ifdef G_OS_WIN32
 
-/* we're not exactly "printing" here, but writing to the
-   Windows registry */
-
-static void print_filelist (int filetype)
+static void reg_save_filelist (int filetype)
 {
     char rpath[MAXLEN];
     char **filep;
@@ -135,15 +132,15 @@ static void print_filelist (int filetype)
     }
 }
 
-void save_file_lists (void)
+void reg_save_file_lists (void)
 {
-    print_filelist(FILE_LIST_DATA);
-    print_filelist(FILE_LIST_SESSION);
-    print_filelist(FILE_LIST_SCRIPT);
-    print_filelist(FILE_LIST_WDIR);
+    reg_save_filelist(FILE_LIST_DATA);
+    reg_save_filelist(FILE_LIST_SESSION);
+    reg_save_filelist(FILE_LIST_SCRIPT);
+    reg_save_filelist(FILE_LIST_WDIR);
 }
 
-void read_file_lists (void)
+void reg_read_file_lists (void)
 {
     char rpath[MAXSTR], value[MAXSTR];
     int i, j;
@@ -167,9 +164,41 @@ void read_file_lists (void)
     } 
 }
 
-#else /* "plain" GTK version follows */
+#endif /* G_OS_WIN32 */
 
-static void print_filelist (int filetype, FILE *fp)
+/* return 1 if we read any "recent files", else 0 */
+
+int rc_read_file_lists (FILE *fp, char *prev)
+{
+    char line[MAXLEN];
+    int i, len, n[NFILELISTS] = {0};
+    int ret = 0;
+
+    initialize_file_lists();
+    strcpy(line, prev);
+
+    while (1) {
+	for (i=0; i<NFILELISTS; i++) {
+	    len = strlen(file_sections[i]);
+	    if (!strncmp(line, file_sections[i], len)) {
+		chopstr(line);
+		if (*line != '\0') {
+		    write_filename_to_list(i, n[i], line + len + 2);
+		    n[i] += 1;
+		    ret = 1;
+		}
+		break;
+	    }
+	}
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+static void rc_print_filelist (int filetype, FILE *fp)
 {
     char **filep;
     int i;
@@ -188,39 +217,11 @@ static void print_filelist (int filetype, FILE *fp)
 
 void rc_save_file_lists (FILE *fp)
 {
-    print_filelist(FILE_LIST_DATA, fp);
-    print_filelist(FILE_LIST_SESSION, fp);
-    print_filelist(FILE_LIST_SCRIPT, fp);
-    print_filelist(FILE_LIST_WDIR, fp);
+    rc_print_filelist(FILE_LIST_DATA, fp);
+    rc_print_filelist(FILE_LIST_SESSION, fp);
+    rc_print_filelist(FILE_LIST_SCRIPT, fp);
+    rc_print_filelist(FILE_LIST_WDIR, fp);
 }    
-
-void read_file_lists (FILE *fp, char *prev)
-{
-    char line[MAXLEN];
-    int i, len, n[NFILELISTS] = {0};
-
-    initialize_file_lists();
-    strcpy(line, prev);
-
-    while (1) {
-	for (i=0; i<NFILELISTS; i++) {
-	    len = strlen(file_sections[i]);
-	    if (!strncmp(line, file_sections[i], len)) {
-		chopstr(line);
-		if (*line != '\0') {
-		    write_filename_to_list(i, n[i], line + len + 2);
-		    n[i] += 1;
-		}
-		break;
-	    }
-	}
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    break;
-	}
-    }
-}
-
-#endif 
 
 static char *endbit (char *dest, const char *src, int addscore)
 {

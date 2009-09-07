@@ -45,19 +45,17 @@
 # include "gtkfontselhack.h"
 #endif
 
-#ifndef G_OS_WIN32
-char rcfile[FILENAME_MAX];
-#endif
-
-char dbproxy[21];
-int use_proxy;
+static char rcfile[FILENAME_MAX];
+static char dbproxy[21];
+static int use_proxy;
 
 static ConfigPaths paths;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
+
 #ifndef G_OS_WIN32
-static int read_rc (void);
+static int read_gretlrc (void);
 #endif
 
 /* font handling */
@@ -116,7 +114,8 @@ typedef enum {
     FIXSET   = 1 << 6,  /* setting fixed by admin (Windows network use) */
     MACHSET  = 1 << 7,  /* "local machine" setting */
     BROWSER  = 1 << 8,  /* wants "Browse" button */
-    RESTART  = 1 << 9   /* needs program restart to take effect */
+    RESTART  = 1 << 9,  /* needs program restart to take effect */
+    GOTSET   = 1 << 10  /* dynamic: already found a setting */
 } rcflags;
 
 typedef struct {
@@ -797,7 +796,7 @@ int gretl_config_init (void)
     int err = 0;
 
     get_gretl_rc_path(rcfile);
-    err = read_rc();
+    err = read_gretlrc();
     set_gretl_startdir();
     set_gd_fontpath();
     root_check();
@@ -1562,8 +1561,6 @@ static void boolvar_to_str (void *b, char *s)
     }
 }
 
-#ifndef G_OS_WIN32
-
 static int write_plain_text_rc (void) 
 {
     RCVAR *rcvar;
@@ -1600,8 +1597,6 @@ static int write_plain_text_rc (void)
 
     return 0;
 }
-
-#endif /* !G_OS_WIN32 */
 
 static void str_to_boolvar (const char *s, void *b)
 {
@@ -1739,6 +1734,36 @@ static int common_read_rc_setup (void)
     return err;
 }
 
+/* On reading from text rc file, look up the key in the "key = value"
+   line we just read, and set the value of the associated variable.
+*/
+
+static void find_and_set_rc_var (const char *key, const char *val)
+{
+    RCVAR *rcvar;
+    char *strvar;
+    int i;
+
+    for (i=0; rc_vars[i].key != NULL; i++) {
+	rcvar = &rc_vars[i];
+	if (!strcmp(key, rcvar->key)) {
+	    if (!(rcvar->flags & FIXSET)) {
+		if (rcvar->flags & BOOLSET) {
+		    str_to_boolvar(val, rcvar->var);
+		} else if (rcvar->flags & INTSET) {
+		    str_to_int(val, rcvar->var);
+		} else {
+		    strvar = (char *) rcvar->var;
+		    *strvar = '\0';
+		    strncat(strvar, val, rcvar->len - 1);
+		}
+		rcvar->flags |= GOTSET;
+	    }
+	    break;
+	}
+    }
+}
+
 #ifdef G_OS_WIN32
 
 void write_rc (void) 
@@ -1748,6 +1773,10 @@ void write_rc (void)
     char ival[16];
     char *strval;
     int i = 0, err = 0;
+
+    if (*rcfile != '\0') {
+	write_plain_text_rc();
+    }
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	rcvar = &rc_vars[i];
@@ -1784,7 +1813,7 @@ void write_rc (void)
 	}
     }
 
-    save_file_lists();
+    reg_save_file_lists();
     gretl_update_paths(&paths, set_paths_opt);
 }
 
@@ -1848,24 +1877,78 @@ static int get_network_settings (void)
     return gotnet;
 }
 
-/* the Windows version of this function is not static, since
-   it is called from gretl_win32_init() in gretlwin32.c 
+/* Try reading user settings from .gretl2rc in appdata directory: if
+   this succeeds it will pre-empt reading from the registry --
+   except that we'll respect the registry entry for gretldir.
 */
 
-int read_rc (int debug) 
+static int win32_read_gretlrc (int *got_recent) 
+{
+    char line[MAXLEN], key[32], linevar[MAXLEN];
+    FILE *fp;
+
+    fp = gretl_fopen(rcfile, "r");
+
+    if (fp == NULL) {
+	/* not necessarily an error */
+	return 1;
+    }
+
+    while (fgets(line, sizeof line, fp) != NULL) {
+	if (line[0] == '#') {
+	    continue;
+	}
+	if (!strncmp(line, "recent", 6)) {
+	    *got_recent = 1;
+	    break;
+	}
+	if (sscanf(line, "%s", key) == 1) {
+	    if (strcmp(key, "gretldir")) { 
+		strcpy(linevar, line + strlen(key) + 3); 
+		chopstr(linevar); 
+		if (*linevar) {
+		    find_and_set_rc_var(key, linevar);
+		}
+	    }
+	}
+    }
+
+    if (*got_recent) {
+	*got_recent = rc_read_file_lists(fp, line);
+    }
+
+    fclose(fp);
+}
+
+/* This function is not static since it is called from
+   gretl_win32_init() in gretlwin32.c */
+
+int read_win32_config (int debug) 
 {
     RCVAR *rcvar;
     char value[MAXSTR];
+    char *appdata;
     char *strvar;
+    int got_recent = 0;
     int i, err = 0;
 
     if (chinese_locale()) {
 	strcpy(fixedfontname, "MS Gothic 10");
     }
 
+    appdata = appdata_path();
+    if (appdata != NULL) {
+	sprintf(rcfile, "%s\\gretl\\.gretl2rc", appdata);
+	free(appdata);
+    }
+
     /* see if we have a gretlnet.txt in place, and if so,
        read config from it */
     get_network_settings();
+
+    if (*rcfile != '\0') {
+	win32_read_gretlrc(&got_recent);
+    }
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	int regerr = 0;
@@ -1876,6 +1959,11 @@ int read_rc (int debug)
 	    /* already set via gretlnet.txt */
 	    continue;
 	}
+
+	if (rcvar->flags & GOTSET) {
+	    /* already set via .gretl2rc */
+	    continue;
+	}	
 
 	*value = '\0';
 
@@ -1909,8 +1997,12 @@ int read_rc (int debug)
 	}
     }
 
-    read_file_lists();
+    if (!got_recent) {
+	reg_read_file_lists();
+    }
+
     err = common_read_rc_setup();
+
     set_fixed_font();
     set_app_font(NULL);
 
@@ -1928,39 +2020,16 @@ void write_rc (void)
     }
 }
 
-static void find_and_write_var (const char *key, const char *val)
-{
-    RCVAR *rcvar;
-    char *strvar;
-    int i;
-
-    for (i=0; rc_vars[i].key != NULL; i++) {
-	rcvar = &rc_vars[i];
-	if (!strcmp(key, rcvar->key)) {
-	    if (rcvar->flags & BOOLSET) {
-		str_to_boolvar(val, rcvar->var);
-	    } else if (rcvar->flags & INTSET) {
-		str_to_int(val, rcvar->var);
-	    } else {
-		strvar = (char *) rcvar->var;
-		*strvar = '\0';
-		strncat(strvar, val, rcvar->len - 1);
-	    }
-	    break;
-	}
-    }
-}
-
 /* Note: even if we fail to read the rc file, we should still do
    common_read_rc_setup(), since that will establish defaults for
    basic paths, etc., and give gretl a chance of running OK.
 */
 
-static int read_rc (void) 
+static int read_gretlrc (void) 
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
+    int got_recent = 0;
     FILE *fp;
-    int i;
 
     fp = fopen(rcfile, "r");
 
@@ -1969,34 +2038,33 @@ static int read_rc (void)
 	return common_read_rc_setup();
     }
 
-    i = 0;
-    while (rc_vars[i].var != NULL) {
-	if (fgets(line, MAXLEN, fp) == NULL) {
-	    break;
-	}
+    while (fgets(line, sizeof line, fp) != NULL) {
 	if (line[0] == '#') {
 	    continue;
 	}
 	if (!strncmp(line, "recent", 6)) {
+	    got_recent = 1;
 	    break;
 	}
 	if (sscanf(line, "%s", key) == 1) {
 	    strcpy(linevar, line + strlen(key) + 3); 
 	    chopstr(linevar); 
 	    if (*linevar) {
-		find_and_write_var(key, linevar);
+		find_and_set_rc_var(key, linevar);
 	    }
 	}
-	i++;
+    }	
+
+    if (got_recent) {
+	rc_read_file_lists(fp, line);
     }
 
-    read_file_lists(fp, line);
     fclose(fp);
 
     return common_read_rc_setup();
 }
 
-#endif /* end of non-Windows versions of read_rc, write_rc */
+#endif /* end of non-Windows versions */
 
 static int fontsel_code (GtkAction *action)
 {

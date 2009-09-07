@@ -28,6 +28,10 @@ static int seven_bit_string (const unsigned char *s)
     return 1;
 }
 
+/* This is used for converting the UTF-8 datafile name
+   inside a gretl session file to the locale.
+*/
+
 gchar *my_filename_from_utf8 (char *fname)
 {
     const gchar *cset;
@@ -40,11 +44,18 @@ gchar *my_filename_from_utf8 (char *fname)
     }
 
     if (g_get_charset(&cset)) {
-	/* is this right? */
+	/* locale uses UTF-8, OK */
 	return fname;
     }
 
+#ifdef G_OS_WIN32
+    /* don't use g_filename_from_utf8 because on Windows
+       GLib uses UTF-8 for filenames and no conversion
+       will take place */
+    tmp = g_locale_from_utf8(fname, -1, NULL, &bytes, &err);
+#else
     tmp = g_filename_from_utf8(fname, -1, NULL, &bytes, &err);
+#endif
 
     if (err) {
 	errbox(err->message);

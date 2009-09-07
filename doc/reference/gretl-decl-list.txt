@@ -50,6 +50,7 @@ function_from_string
 is_gretl_function_call
 function_lookup
 const_lookup
+gretl_function_complete
 gretl_function_hash_cleanup
 </SECTION>
 
@@ -96,7 +97,6 @@ gretlopt
 VARINFO
 PANINFO
 DATAINFO
-PATHS
 VMatrix
 SAMPLE
 ARINFO
@@ -228,7 +228,6 @@ destroy_user_scalars_at_level
 destroy_private_scalars
 destroy_user_scalars
 print_scalar_by_name
-print_all_scalars
 set_auxiliary_scalars
 unset_auxiliary_scalars
 write_scalars_to_file
@@ -367,7 +366,7 @@ user_function_name_by_index
 user_function_index_by_name
 user_function_set_debug
 function_names_init
-next_free_function_name
+next_available_function_name
 gretl_compiling_function
 gretl_function_depth
 gretl_start_compiling_function
@@ -378,20 +377,24 @@ gretl_func_get_arg_name
 object_is_const
 sample_range_get_extrema
 get_funcerr_message
-gretl_function_set_info
-gretl_function_get_info
+function_return_type_from_string
 gretl_function_print_code
-gretl_function_set_private
-write_function_package
-function_package_get_info
+function_package_new
+function_package_connect_funcs
+function_package_set_properties
+function_package_get_properties
+function_package_get_name
+function_package_write_file
 check_function_needs
-write_user_function_file
-function_package_is_loaded
-function_package_description
+write_session_functions_file
 read_session_functions_file
-load_user_function_file
-get_function_file_info
-get_function_file_code
+get_function_package_by_filename
+load_function_package_from_file
+function_package_unload_by_filename
+function_package_unload_full_by_filename
+print_function_package_info
+print_function_package_code
+get_packaged_function_by_name
 get_function_file_header
 update_function_from_script
 user_function_help
@@ -491,6 +494,8 @@ gen_cleanup
 parser_free_aux_nodes
 set_matrix_slice_on
 set_matrix_slice_off
+set_lag_parse_on
+set_lag_parse_off
 constname
 dvarname
 mvarname
@@ -561,6 +566,7 @@ strings_array_realloc_with_length
 strings_array_add
 strings_array_new_with_length
 strings_array_dup
+strings_array_cmp
 free_strings_array
 get_obs_string
 obs_str_to_double
@@ -577,7 +583,6 @@ fix_varname_duplicates
 append_dir
 build_path
 path_last_element
-ensure_slash
 trim_slash
 gretl_string_ends_with
 get_column_widths
@@ -822,10 +827,13 @@ write_db_data
 <SECTION>
 <FILE>gretl_paths</FILE>
 SearchLocation
+HelpPaths
+ConfigPaths
 set_string_table_written
 gretl_string_table_written
 gretl_path_prepend
 gretl_normalize_path
+slash_terminate
 set_stdio_use_utf8
 get_stdio_use_utf8
 string_is_utf8
@@ -844,13 +852,16 @@ gretl_is_xml_file
 gretl_isdir
 addpath
 getopenfile
-gretl_path_is_absolute
+fname_has_path
 has_system_prefix
 show_paths
 gretl_set_paths
+gretl_update_paths
+helpfile_path
+gretl_home
 gretl_lib_path
-gretl_dot_dir
-gretl_work_dir
+gretl_dotdir
+gretl_workdir
 gretl_default_workdir
 set_gretl_work_dir
 gretl_maybe_switch_dir
@@ -858,16 +869,21 @@ gretl_maybe_prepend_dir
 gretl_gnuplot_path
 gretl_plotfile
 set_gretl_plotfile
+gretl_binbase
+gretl_ratsbase
 gretl_tramo
 gretl_tramo_dir
 gretl_x12_arima
 gretl_x12_arima_dir
+gretl_rbin_path
 gretl_rlib_path
 gretl_png_font
-set_gretl_ox_path
-gretl_ox_path
+gretl_oxl_path
+gretl_current_dir
+gretl_set_current_dir
 set_gretl_png_font
 gretl_mkstemp
+get_gretl_rc_path
 cli_read_rc
 </SECTION>
 
@@ -893,7 +909,6 @@ is_model_ref_cmd
 RQ_SPECIAL_MODEL
 POOLED_MODEL
 ModelTestType
-attach_model_tests_from_xml
 gretl_model_new
 model_stats_init
 gretl_model_init
@@ -996,6 +1011,7 @@ gretl_model_get_series
 gretl_model_get_matrix
 gretl_model_get_data_element
 gretl_model_serialize
+attach_model_tests_from_xml
 gretl_model_from_XML
 </SECTION>
 
@@ -1361,6 +1377,7 @@ gretl_if_state_finalize
 gretl_if_state_record
 gretl_if_state_false
 gretl_if_state_check
+gretl_if_state_reset
 flow_control
 </SECTION>
 
@@ -1823,6 +1840,7 @@ matrix_matrix_xtab
 gretl_matrix_bool_sel
 gretl_matrix_sort_by_column
 gretl_matrix_covariogram
+gretl_matrix_transcribe_obs_info
 lapack_mem_free
 set_blas_nmk_min
 get_blas_nmk_min
@@ -1998,8 +2016,10 @@ get_matrix_by_name_at_level
 user_matrix_get_matrix
 get_user_matrix_by_name
 get_user_matrix_by_index
+get_user_matrix_by_data
 user_matrix_add
 private_matrix_add
+matrix_add_as_shell
 user_matrix_destroy_by_name
 user_matrix_destroy
 user_matrix_adjust_level
@@ -2201,6 +2221,7 @@ gretl_errmsg_set
 gretl_errmsg_sprintf
 gretl_errmsg_set_from_errno
 gretl_error_clear
+set_gretl_alarm
 set_gretl_errno
 get_gretl_errno
 check_gretl_errno
@@ -2348,8 +2369,9 @@ guess_daily_pd
 <FILE>gretl_win32</FILE>
 win32_opendir
 read_reg_val
-read_reg_val_with_fallback
 write_reg_val
+get_gretlnet_filename
+set_gretlnet_filename
 cli_read_registry
 win_show_last_error
 winfork
@@ -2364,6 +2386,7 @@ program_files_path
 win32_write_access
 win32_delete_dir
 R_path_from_registry
+maybe_print_R_path_addition
 </SECTION>
 
 <SECTION>
@@ -2403,7 +2426,6 @@ HC_VERSION
 HORIZON
 HP_LAMBDA
 USE_LBFGS
-LONGDIGITS
 LOOP_MAXITER
 RQ_MAXITER
 MAX_VERBOSE
@@ -2473,6 +2495,8 @@ get_shelldir
 get_csv_delim
 get_csv_na_string
 set_csv_na_string
+get_include_path
+set_include_path
 execute_set_line
 set_iter_print_func
 iter_print_callback
@@ -2484,5 +2508,7 @@ get_debug_output_func
 set_workdir_callback
 set_script_switch
 get_script_switch
+libset_write_script
+libset_read_script
 </SECTION>
 

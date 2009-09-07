@@ -351,7 +351,7 @@ void gretl_win32_init (const char *progname, int debug)
     set_gretlnet_filename(progname);
 
     wimp_init();
-    read_rc(debug); /* get config info from registry */
+    read_win32_config(debug); /* get config info from registry */
     set_gretl_startdir();
     hush_warnings();
     ws_startup(); 

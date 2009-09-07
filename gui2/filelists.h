@@ -19,14 +19,12 @@ void rc_save_file_lists (FILE *fp);
 
 GList *get_working_dir_list (void);
 
+int rc_read_file_lists (FILE *fp, char *prev);
+
 #ifdef G_OS_WIN32
 
-void save_file_lists (void);
-void read_file_lists (void);
-
-#else
-
-void read_file_lists (FILE *fp, char *prev);
+void reg_save_file_lists (void);
+void reg_read_file_lists (void);
 
 #endif
 
