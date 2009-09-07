@@ -344,143 +344,143 @@ real_read_zipfile (zfile *zf, int task)
 	if (LG(b) != LOCSIG) {
             trace(2, "expected to find local signature at %d\n", (int) z->off);
 	    return ZE_FORM;
-        } else {
-	    if (fread(b, LOCHEAD, 1, zf->fp) != 1) {
-		return ferror(zf->fp) ? ZE_READ : ZE_EOF;
-	    }
+        } 
 
-	    z->lflags = SH(LOCFLG + b);
-	    n = SH(LOCNAM + b);
-	    z->extlen = SH(LOCEXT + b);
+	if (fread(b, LOCHEAD, 1, zf->fp) != 1) {
+	    return ferror(zf->fp) ? ZE_READ : ZE_EOF;
+	}
 
-	    /* Compare name and extra fields */
-	    if (n != z->namelen) {
-		trace(2, "n = %d != z->namelen = %d\n", n, z->namelen);
-		return ZE_FORM;
-	    }
-	    if ((t = malloc(z->namelen + 1)) == NULL) {
-                trace(3, "failed malloc: z->namelen = %d\n", z->namelen);
-		return ZE_MEM;
-	    }
-	    if (fread(t, z->namelen, 1, zf->fp) != 1) {
-		free(t);
-		return ferror(zf->fp) ? ZE_READ : ZE_EOF;
-	    }
-	    if (memcmp(t, z->iname, z->namelen)) {
-		t[z->namelen] = 0;
-		trace(2, "t = '%s' != z->iname = '%s'\n", t, z->iname);
-		free(t);
-		return ZE_FORM;
-	    }
+	z->lflags = SH(LOCFLG + b);
+	n = SH(LOCNAM + b);
+	z->extlen = SH(LOCEXT + b);
+
+	/* Compare name and extra fields */
+	if (n != z->namelen) {
+	    trace(2, "n = %d != z->namelen = %d\n", n, z->namelen);
+	    return ZE_FORM;
+	}
+	if ((t = malloc(z->namelen + 1)) == NULL) {
+	    trace(3, "failed malloc: z->namelen = %d\n", z->namelen);
+	    return ZE_MEM;
+	}
+	if (fread(t, z->namelen, 1, zf->fp) != 1) {
 	    free(t);
+	    return ferror(zf->fp) ? ZE_READ : ZE_EOF;
+	}
+	if (memcmp(t, z->iname, z->namelen)) {
+	    t[z->namelen] = 0;
+	    trace(2, "t = '%s' != z->iname = '%s'\n", t, z->iname);
+	    free(t);
+	    return ZE_FORM;
+	}
+	free(t);
 
-	    if (z->extlen) {
-		if ((z->extra = malloc(z->extlen)) == NULL) {
-                    trace(3, "failed malloc: z->extlen = %d\n", z->extlen);
-		    return ZE_MEM;
-		}
-		if (fread(z->extra, z->extlen, 1, zf->fp) != 1) {
-		    free(z->extra);
-		    return ferror(zf->fp) ? ZE_READ : ZE_EOF;
-		}
-		if (z->extlen == z->cextlen && 
-		    memcmp(z->extra, z->cextra, z->extlen) == 0) {
-		    free(z->extra);
-		    z->extra = z->cextra;
-		}
-	    }
-
-	    /* Check extended local header if there is one */
-	    if (z->lflags & 8) {
-		char buf2[16];
-		guint32 s; /* size of compressed data */
-
-		s = LG(LOCSIZ + b);
-		if (s == 0) {
-		    s = LG((CENSIZ-CENVER) + (char *) &z->version_extract);
-		}
-		if (fseek(zf->fp, (z->off + (4+LOCHEAD) + z->namelen + z->extlen + s), 
-			  SEEK_SET)
-		    || (fread(buf2, 16, 1, zf->fp) != 1)) {
-		    return ferror(zf->fp) ? ZE_READ : ZE_EOF;
-		}
-		if (LG(buf2) != EXTLOCSIG) {
-		    trace(2, "expected extended local signature\n");
-		    return ZE_FORM;
-		}
-
-		trace(2, "extended header: s (compressed size) = %d\n", (int) s);
-
-		/* overwrite the unknown values of the local header */
-		for (n = 0; n < 12; n++) {
-		    b[LOCCRC+n] = buf2[4+n];
-		}
-	    }
-
-	    /* Compare local header with that part of central header
-	       (except for the reserved bits in the general purpose
-	       flags and except for the already checked entry name
-	       length) */
-	    u = (char *) &z->version_extract;
-	    flg = SH((CENFLG-CENVER) + u);          /* Save central flags word */
-	    u[CENFLG-CENVER+1] &= 0x1f;             /* Mask reserved flag bits */
-	    b[LOCFLG+1] &= 0x1f;
-	    for (n = 0; n < LOCNAM; n++) {
-		if (b[n] != u[n]) {
-		    /* local and central headers disagree */
-		    trace(2, "local and central headers disagree: b[%d]=%d, u[%d]=%d\n",
-			  n, b[n], n, u[n]);
-#if 0
-		    /* this seems to be harmless? */
-		    return ZE_FORM;
-#endif
-		}
-	    }
-
-	    /* Complete the setup of the zlist entry by translating
-	       the remaining central header fields in memory, starting
-	       with the fields with highest offset. This order of the
-	       conversion commands takes into account potential buffer
-	       overlaps caused by structure padding.
-	     */
-	    z->usize  = LG((CENLEN-CENVER) + u);
-	    z->csize  = LG((CENSIZ-CENVER) + u);
-	    z->crc    = LG((CENCRC-CENVER) + u);
-	    z->time   = LG((CENTIM-CENVER) + u);   /* time and date into one long */
-	    z->method = SH((CENHOW-CENVER) + u);
-	    z->flags = flg;                       /* may be different from z->lflags */
-	    z->version_extract = SH((CENVER-CENVER) + u);
-
-	    trace(2, "'%s': usize=%d, csize=%d\n", z->iname, (int) z->usize, 
-		  (int) z->csize);
-	    trace(2, " crc=%lu, time=%d, method=%d\n", z->crc, (int) z->time, 
-		  (int) z->method);
-
-	    /* Clear actions */
-	    z->mark = MARK_NONE;
-	    z->zname = internal_to_external(z->iname); /* convert to external name */
-	    if (z->zname == NULL) {
-                trace(3, "internal_to_external: got NULL from z->iname = '%s'\n", z->iname);
+	if (z->extlen) {
+	    if ((z->extra = malloc(z->extlen)) == NULL) {
+		trace(3, "failed malloc: z->extlen = %d\n", z->extlen);
 		return ZE_MEM;
 	    }
-	    z->name = z->zname;
+	    if (fread(z->extra, z->extlen, 1, zf->fp) != 1) {
+		free(z->extra);
+		return ferror(zf->fp) ? ZE_READ : ZE_EOF;
+	    }
+	    if (z->extlen == z->cextlen && 
+		memcmp(z->extra, z->cextra, z->extlen) == 0) {
+		free(z->extra);
+		z->extra = z->cextra;
+	    }
+	}
 
-	    if (task == ZIP_DO_UNZIP) {
-		if (file_is_wanted(z->zname, zf->wanted, zf->matches)) {
-		    long datapos = z->off + (4 + LOCHEAD) + z->namelen + z->extlen;
+	/* Check extended local header if there is one */
+	if (z->lflags & 8) {
+	    char buf2[16];
+	    guint32 s; /* size of compressed data */
 
-		    err = decompress_to_file(zf, z, datapos);
-		    if (!err) {
-			z->mark = MARK_UNZIP;
-		    }
-		}
-	    } else if (task == ZIP_DO_DELETE) {
-		if (file_is_wanted(z->zname, zf->wanted, zf->matches)) {
-		    trace(1, "'%s': scheduling for deletion\n", z->zname);
-		    z->mark = MARK_DELETE;
+	    s = LG(LOCSIZ + b);
+	    if (s == 0) {
+		s = LG((CENSIZ-CENVER) + (char *) &z->version_extract);
+	    }
+	    if (fseek(zf->fp, (z->off + (4+LOCHEAD) + z->namelen + z->extlen + s), 
+		      SEEK_SET)
+		|| (fread(buf2, 16, 1, zf->fp) != 1)) {
+		return ferror(zf->fp) ? ZE_READ : ZE_EOF;
+	    }
+	    if (LG(buf2) != EXTLOCSIG) {
+		trace(2, "expected extended local signature\n");
+		return ZE_FORM;
+	    }
+
+	    trace(2, "extended header: s (compressed size) = %d\n", (int) s);
+
+	    /* overwrite the unknown values of the local header */
+	    for (n = 0; n < 12; n++) {
+		b[LOCCRC+n] = buf2[4+n];
+	    }
+	}
+
+	/* Compare local header with that part of central header
+	   (except for the reserved bits in the general purpose
+	   flags and except for the already checked entry name
+	   length) */
+	u = (char *) &z->version_extract;
+	flg = SH((CENFLG-CENVER) + u);          /* Save central flags word */
+	u[CENFLG-CENVER+1] &= 0x1f;             /* Mask reserved flag bits */
+	b[LOCFLG+1] &= 0x1f;
+	for (n = 0; n < LOCNAM; n++) {
+	    if (b[n] != u[n]) {
+		/* local and central headers disagree */
+		trace(2, "local and central headers disagree: b[%d]=%d, u[%d]=%d\n",
+		      n, b[n], n, u[n]);
+#if 0
+		/* this seems to be harmless? */
+		return ZE_FORM;
+#endif
+	    }
+	}
+
+	/* Complete the setup of the zlist entry by translating
+	   the remaining central header fields in memory, starting
+	   with the fields with highest offset. This order of the
+	   conversion commands takes into account potential buffer
+	   overlaps caused by structure padding.
+	*/
+	z->usize  = LG((CENLEN-CENVER) + u);
+	z->csize  = LG((CENSIZ-CENVER) + u);
+	z->crc    = LG((CENCRC-CENVER) + u);
+	z->time   = LG((CENTIM-CENVER) + u);   /* time and date into one long */
+	z->method = SH((CENHOW-CENVER) + u);
+	z->flags = flg;                       /* may be different from z->lflags */
+	z->version_extract = SH((CENVER-CENVER) + u);
+
+	trace(2, "'%s': usize=%d, csize=%d\n", z->iname, (int) z->usize, 
+	      (int) z->csize);
+	trace(2, " crc=%lu, time=%d, method=%d\n", z->crc, (int) z->time, 
+	      (int) z->method);
+
+	/* Clear actions */
+	z->mark = MARK_NONE;
+	z->zname = internal_to_external(z->iname); /* convert to external name */
+	if (z->zname == NULL) {
+	    trace(3, "internal_to_external: got NULL from z->iname = '%s'\n", z->iname);
+	    return ZE_MEM;
+	}
+	z->name = z->zname;
+
+	if (task == ZIP_DO_UNZIP) {
+	    if (file_is_wanted(z->zname, zf->wanted, zf->matches)) {
+		long datapos = z->off + (4 + LOCHEAD) + z->namelen + z->extlen;
+
+		err = decompress_to_file(zf, z, datapos);
+		if (!err) {
+		    z->mark = MARK_UNZIP;
 		}
 	    }
-	} 
+	} else if (task == ZIP_DO_DELETE) {
+	    if (file_is_wanted(z->zname, zf->wanted, zf->matches)) {
+		trace(1, "'%s': scheduling for deletion\n", z->zname);
+		z->mark = MARK_DELETE;
+	    }
+	}
 
 	z = z->nxt;
     }

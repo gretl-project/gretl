@@ -15,8 +15,6 @@ gboolean listbox_drag (GtkWidget *widget, GdkEventMotion *event,
  
 void open_data (GtkAction *action);
 
-void open_script (GtkAction *action);
-
 void file_save (windata_t *vwin, int ci);
 
 void fsave_callback (GtkAction *action, gpointer p);

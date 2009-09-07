@@ -186,7 +186,23 @@ static FILE *cli_gretlnet_open (const char *prog)
     return fp;
 }
 
-int read_gretlnet_string (FILE *fp, const char *key, char *value)
+static FILE *cli_rcfile_open (void)
+{
+    char *appdata = appdata_path();
+    FILE *fp = NULL;
+
+    if (appdata != NULL) {
+	char fname[FILENAME_MAX];
+
+	sprintf(fname, "%s\\gretl\\.gretl2rc", appdata);
+	free(appdata);
+	fp = fopen(fname, "r");
+    }
+
+    return fp;
+}
+
+int read_rc_string (FILE *fp, const char *key, char *value)
 {
     int ret = 0;
 
@@ -212,15 +228,19 @@ int read_gretlnet_string (FILE *fp, const char *key, char *value)
     return ret;
 }
 
-static int cli_read_string_var (char *key, char *val,
-				FILE *fp, HKEY tree)
+static int cli_read_gretl_var (char *key, char *val,
+			       FILE **fp, HKEY tree)
 {
     int done = 0;
 
     *val = '\0';
 
-    if (fp != NULL) {
-	done = read_gretlnet_string(fp, key, val);
+    if (fp[0] != NULL) {
+	done = read_rc_string(fp[0], key, val);
+    }
+
+    if (!done && fp[1] != NULL) {
+	done = read_rc_string(fp[1], key, val);
     }
 
     if (!done) {
@@ -244,6 +264,8 @@ static int cli_read_string_var (char *key, char *val,
    HKCU; "Software\gretl"; "Gp_colors";  ""
 */
 
+/* FIXME support new rcfile approach */
+
 void cli_read_registry (char *callname)
 {
     ConfigPaths cpaths = {
@@ -254,62 +276,63 @@ void cli_read_registry (char *callname)
     char valstr[MAXLEN];
     char dbproxy[21];
     int done, use_proxy = 0;
-    FILE *netfp;
+    FILE *fp[2];
 
-    netfp = cli_gretlnet_open(callname);
+    fp[0] = cli_gretlnet_open(callname);
+    fp[1] = cli_rcfile_open();
 
     /* gretl installation directory */
-    cli_read_string_var("gretldir", cpaths.gretldir, netfp, HKEY_LOCAL_MACHINE);
+    cli_read_gretl_var("gretldir", cpaths.gretldir, fp, HKEY_LOCAL_MACHINE);
 
     /* user's working directory */
-    cli_read_string_var("userdir", cpaths.workdir, netfp, HKEY_CURRENT_USER);
+    cli_read_gretl_var("userdir", cpaths.workdir, fp, HKEY_CURRENT_USER);
 
     /* base path for databases */
-    cli_read_string_var("binbase", cpaths.binbase, netfp, HKEY_CURRENT_USER);
+    cli_read_gretl_var("binbase", cpaths.binbase, fp, HKEY_CURRENT_USER);
 
     /* base path for RATS databases */
-    cli_read_string_var("ratsbase", cpaths.ratsbase, netfp, HKEY_CURRENT_USER);
+    cli_read_gretl_var("ratsbase", cpaths.ratsbase, fp, HKEY_CURRENT_USER);
 
     /* path to gnuplot */
-    cli_read_string_var("gnuplot", cpaths.gnuplot, netfp, HKEY_LOCAL_MACHINE);
+    read_rc_string(fp[0], "gnuplot", cpaths.gnuplot);
 
     /* path to X-12-ARIMA */
-    done = read_gretlnet_string(netfp, "x12a", cpaths.x12a);
+    done = read_rc_string(fp[0], "x12a", cpaths.x12a);
     if (!done) {
 	read_reg_val(HKEY_LOCAL_MACHINE, "x12arima", "x12a", cpaths.x12a);
     }
 
     /* path to tramo */
-    done = read_gretlnet_string(netfp, "tramo", cpaths.tramo);
+    done = read_rc_string(fp[0], "tramo", cpaths.tramo);
     if (!done) {
 	read_reg_val(HKEY_LOCAL_MACHINE, "tramo", "tramo", cpaths.tramo);
     }
 
     /* path to R binary (non-interactive use) */
-    read_gretlnet_string(netfp, "Rbin", cpaths.rbinpath);
+    read_rc_string(fp[0], "Rbin", cpaths.rbinpath);
 
     /* path to R shared library */
-    read_gretlnet_string(netfp, "Rlib", cpaths.rlibpath);
+    read_rc_string(fp[0], "Rlib", cpaths.rlibpath);
 
 #ifdef USE_OX
     /* path to oxl */
-    read_gretlnet_string(netfp, "ox", cpaths.oxlpath);
+    read_rc_string(fp[0], "ox", cpaths.oxlpath);
 #endif
 
     /* remote database host */
-    cli_read_string_var("dbhost", cpaths.dbhost, netfp, HKEY_CURRENT_USER);
+    cli_read_gretl_var("dbhost", cpaths.dbhost, fp, HKEY_CURRENT_USER);
 
     /* www proxy for reading remote databases */
-    cli_read_string_var("dbproxy", dbproxy, netfp, HKEY_CURRENT_USER);
+    cli_read_gretl_var("dbproxy", dbproxy, fp, HKEY_CURRENT_USER);
 
     /* should a proxy be used? */
-    cli_read_string_var("useproxy", valstr, netfp, HKEY_CURRENT_USER);
+    cli_read_gretl_var("useproxy", valstr, fp, HKEY_CURRENT_USER);
     if (!strcmp(valstr, "true") || !strcmp(valstr, "1")) {
 	use_proxy = 1;
     } 
 
     /* do we allow the shell command within gretl? */
-    cli_read_string_var("shellok", valstr, netfp, HKEY_CURRENT_USER);
+    cli_read_gretl_var("shellok", valstr, fp, HKEY_CURRENT_USER);
     if (!strcmp(valstr, "true") || !strcmp(valstr, "1")) {
 	libset_set_bool(SHELL_OK, 1);
     } else {
@@ -319,8 +342,12 @@ void cli_read_registry (char *callname)
     gretl_set_paths(&cpaths, OPT_NONE);
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
 
-    if (netfp != NULL) {
-	fclose(netfp);
+    if (fp[0] != NULL) {
+	fclose(fp[0]);
+    }
+
+    if (fp[1] != NULL) {
+	fclose(fp[1]);
     }
 }
 

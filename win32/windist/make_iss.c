@@ -26,12 +26,6 @@ void LM_entry (const char *valname, const char *valdata)
 	   "\"%s\"; ValueData: \"%s\"\n", valname, valdata);
 }
 
-void CU_entry (const char *valname, const char *valdata)
-{
-    printf("Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: "
-	   "\"%s\"; ValueData: \"%s\"\n", valname, valdata);
-}
-
 void reg_suffix (const char *sfx, const char *name, const char *mime,
 		 const char *descrip, int iconnum)
 {
@@ -70,38 +64,16 @@ void set_registry_entries (void)
     /* base paths */
     printf("; Start \"gretl\" registry keys.\n");
     printf("Root: HKCR; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n");
-    printf("Root: HKCU; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n");
     printf("Root: HKLM; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n");
 
     /* specific entries, Local Machine */
     LM_entry("gretldir", "{app}");
-    LM_entry("Rcommand", "RGui.exe");
-    LM_entry("viewdvi", "windvi.exe");
-
-    /* specific entries, Current User */
-    CU_entry("binbase",    "{app}\\db\\");
-    CU_entry("ratsbase",   "f:\\");
-    CU_entry("dbhost",     "ricardo.ecn.wfu.edu");
-    CU_entry("dbproxy",    "");
-    CU_entry("useproxy",   "false");
-    CU_entry("updater",    "false");
-    CU_entry("calculator", "calc.exe");
-    CU_entry("Fixed_font", "Courier New 10");
-    CU_entry("App_font",   "");
-    CU_entry("Png_font",   "verdana 8");
-    CU_entry("Gp_colors",  "");
-    CU_entry("DataPage",   "Gretl");
-    CU_entry("ScriptPage", "Gretl");
-    CU_entry("manpref",    "0");
 
     /* Establish file associations */
-
     reg_suffix(".gdt", "GretlDataFile", "application/x-gretldata", 
 	       "Gretl data file", 1);
-
     reg_suffix(".gretl", "GretlSessionFile", "application/x-gretlsession", 
 	       "Gretl session file", 2);
-
     reg_suffix(".inp", "GretlScriptFile", "application/x-gretlscript", 
 	       "Gretl script file", 2);
 }

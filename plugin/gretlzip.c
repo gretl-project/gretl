@@ -246,40 +246,6 @@ int gretl_unzip_file (const char *fname, GError **gerr)
     return !ok;
 }
 
-int gretl_is_zipfile (const char *fname)
-{
-    GsfInput *input;
-    GsfInfile *infile;
-    GError *err = NULL;
-    int ret = 0;
-
-    gsf_init();
-
-    input = gsf_input_stdio_new(fname, &err);
-
-    if (input == NULL) {
-	g_return_val_if_fail(err != NULL, 0);
-	g_warning("'%s' error: %s", fname, err->message);
-	g_error_free(err);
-    } else {
-	infile = gsf_infile_zip_new(input, &err);
-	g_object_unref(G_OBJECT(input));
-
-	if (infile == NULL) {
-	    g_error_free(err);
-	} else {
-	    ret = 1;
-	    g_object_unref(infile);
-	}
-    }
-
-    gsf_shutdown();
-
-    fprintf(stderr, "*** gretl_is_zipfile: returning %d\n", ret);
-
-    return ret;
-}
-
 gchar *gretl_zipfile_get_topdir (const char *fname)
 {
     GsfInput *input;
@@ -340,20 +306,6 @@ int gretl_make_zipfile (const char *fname, const char *path,
 				ZIP_RECURSE_DIRS,
 				gerr);
     return err;
-}
-
-int gretl_is_zipfile (const char *fname)
-{
-    zipinfo *zinfo;
-    int ret = 0;
-
-    zinfo = zipfile_get_info(fname, 0, NULL);
-    if (zinfo != NULL) {
-	zipinfo_destroy(zinfo);
-	ret = 1;
-    }
-
-    return ret;
 }
 
 gchar *gretl_zipfile_get_topdir (const char *fname)

@@ -1232,24 +1232,6 @@ void do_open_session (void)
     }
 }
 
-int is_session_file (const char *fname)
-{
-    int (*gretl_is_zipfile)(const char *);
-    void *handle;
-    int ret;
-
-    gretl_is_zipfile = gui_get_plugin_function("gretl_is_zipfile", &handle);
-    if (gretl_is_zipfile == NULL) {
-        return 0;
-    }   
-
-    ret = (*gretl_is_zipfile)(fname);
-
-    close_plugin(handle);
-
-    return ret;
-}
-
 void verify_clear_data (void)
 {
     if (dataset_locked()) {

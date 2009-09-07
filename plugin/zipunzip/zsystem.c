@@ -252,11 +252,17 @@ char *external_to_internal (const char *name, zfile *zf, GError **gerr)
     return iname;
 }
 
+/* convert @from src to a printable ASCII version in @targ, either
+   processing @n bytes of @src or all of it if @n < 0  
+*/
+
 static void asciify (char *targ, const char *src, int n)
 {
     int c, i, j = 0;
 
-    if (n < 0) n = strlen(src);
+    if (n < 0) {
+	n = strlen(src);
+    }
 
     while (*targ) targ++;
                 
@@ -268,18 +274,24 @@ static void asciify (char *targ, const char *src, int n)
     }
 }
 
+/* g_locale_from_utf8 failed on @iname, so now we try desperate
+   measures
+*/
+
 static char *remedial_convert (const char *iname)
 {
-    int n = strlen(iname);
-    char *xname = g_malloc0(n + 1);
+    char *xname = g_malloc0(strlen(iname) + 1);
 
     if (xname == NULL) {
         return NULL;
     }
 
-    if (strchr(iname, '/')) {
+    if (strchr(iname, '/') == NULL) {
+	asciify(xname, iname, -1);
+    } else {
+	/* do it by parts */
         const char *p = strchr(iname, '/');
-        int m = p - iname;
+        int m = p - iname + 1;
         gchar *tmp;
         gsize b;
 
@@ -287,11 +299,9 @@ static char *remedial_convert (const char *iname)
         if (tmp != NULL) {
             /* converted first part OK */
             strcat(xname, tmp);
-            strcat(xname, "/");
             g_free(tmp);
         } else {
             asciify(xname, iname, m);
-            strcat(xname, "/");
         }
 
         tmp = g_locale_from_utf8(p + 1, -1, NULL, &b, NULL);
@@ -302,9 +312,7 @@ static char *remedial_convert (const char *iname)
         } else {
             asciify(xname, p + 1, -1);
         }
-    } else {
-        asciify(xname, iname, -1);
-    }
+    } 
 
     if (*xname == '\0') {
         free(xname);
@@ -316,10 +324,10 @@ static char *remedial_convert (const char *iname)
     return xname;
 }
 
-/* Convert the zip file name to an external file name, returning the
-   allocated string: we convert from UTF-8 to the locale if this
+/* Convert a zipfile internal name to an external file name, returning
+   the allocated string: we convert from UTF-8 to the locale if this
    seems to be required, and convert from forward slashes to
-   backslashes on MS Windows.
+   backslashes on MS Windows.  
 */
 
 char *internal_to_external (const char *iname)

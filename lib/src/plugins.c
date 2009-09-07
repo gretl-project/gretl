@@ -206,7 +206,6 @@ struct plugin_function plugin_functions[] = {
     /* zip and unzip */
     { "gretl_make_zipfile",       P_ZIPFILE},
     { "gretl_unzip_file",         P_ZIPFILE},
-    { "gretl_is_zipfile",         P_ZIPFILE},
     { "gretl_zipfile_get_topdir", P_ZIPFILE},
 
     /* Arellano-Bond estimation */

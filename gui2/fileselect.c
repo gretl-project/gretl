@@ -337,9 +337,10 @@ static void filesel_open_session (const char *fname)
 {
     strcpy(tryfile, fname);
 
-    if (is_session_file(fname)) {
+    if (gretl_is_pkzip_file(fname)) {
 	verify_open_session();
     } else {
+	/* old script-style session file? */
 	windata_t *vwin;
 
 	if (has_system_prefix(tryfile, SCRIPT_SEARCH)) {

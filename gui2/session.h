@@ -91,8 +91,6 @@ void free_session (void);
 
 int highest_numbered_variable_in_session (void);
 
-int is_session_file (const char *fname);
-
 int is_session_model (void *p);
 
 void view_session (GtkWidget *parent);

@@ -84,8 +84,8 @@ static int shellok;
 static int manpref;
 static int autoicon = 1;
 char gpcolors[64];
-static char datapage[24];
-static char scriptpage[24];
+static char datapage[24] = "Gretl";
+static char scriptpage[24] = "Gretl";
 
 static int hc_by_default;
 static char langpref[32];
@@ -1991,6 +1991,7 @@ int read_win32_config (int debug)
         }
 	    
 	if (!regerr && *value != '\0') {
+	    /* replace defaults only if we got something */
 	    if (rcvar->flags & BOOLSET) {
 		str_to_boolvar(value, rcvar->var);
 	    } else if (rcvar->flags & INTSET) {

@@ -218,17 +218,6 @@ void open_data (GtkAction *action)
     file_selector(code, FSEL_DATA_NONE, NULL);
 }
 
-void open_script (GtkAction *action)
-{
-    const gchar *s = gtk_action_get_name(action);
-
-    if (!strcmp(s, "OpenScript")) {
-	file_selector(OPEN_SCRIPT, FSEL_DATA_NONE, NULL);
-    } else if (!strcmp(s, "OpenSession")) {
-	file_selector(OPEN_SESSION, FSEL_DATA_NONE, NULL);
-    }
-}
-
 void file_save (windata_t *vwin, int ci)
 {
     switch (ci) {

@@ -1099,7 +1099,7 @@ static int shelldir_open_dotfile (char *fname, char *orig)
     FILE *test;
     int ret = 0;
 
-    if (sdir != NULL && *sdir != '\0') {
+    if (sdir != NULL) {
 	real_make_path_absolute(fname, orig, sdir);
 	test = gretl_fopen(fname, "r");
 	if (test != NULL) {
@@ -2297,8 +2297,6 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 	gretl_set_gui_mode(1);
     }  
 
-    shelldir_init(NULL);
-
     *current_dir = '\0';	
     *paths.workdir = '\0';
     *paths.plotfile = '\0';
@@ -2315,8 +2313,10 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
     set_up_sourceview_path();
 
 #if defined(WIN32) || defined(OSX_BUILD) 
-    /* If on Linux, repsect the "real" CWD? */
     shelldir_init(paths.workdir);
+#else
+    /* if on Linux, respect the "real" CWD */
+    shelldir_init(NULL);
 #endif
 
     set_builtin_path_strings(0);

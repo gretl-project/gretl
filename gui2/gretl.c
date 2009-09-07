@@ -265,6 +265,17 @@ static void options_dialog_callback (void)
     options_dialog(0, NULL, mdata->main);
 }
 
+void open_code_callback (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "OpenScript")) {
+	file_selector(OPEN_SCRIPT, FSEL_DATA_NONE, NULL);
+    } else if (!strcmp(s, "OpenSession")) {
+	file_selector(OPEN_SESSION, FSEL_DATA_NONE, NULL);
+    }
+}
+
 static void edit_package_callback (GtkAction *action, gpointer p)
 {
     file_selector(OPEN_GFN, FSEL_DATA_NONE, NULL);
@@ -1287,7 +1298,7 @@ GtkActionEntry main_entries[] = {
     { "WorkingDir", NULL, N_("_Working directory..."), NULL, NULL, G_CALLBACK(working_dir_dialog) },
 
     { "ScriptFiles", NULL, N_("_Script files"), NULL, NULL, NULL },
-    { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script) },
+    { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_code_callback) },
     { "DisplayScripts", GTK_STOCK_OPEN, N_("_Practice file..."), "", NULL, G_CALLBACK(show_files) },
     { "NewScript", GTK_STOCK_NEW, N_("_New script"), "", NULL, NULL },
     { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(new_script_callback) },
@@ -1298,7 +1309,7 @@ GtkActionEntry main_entries[] = {
 #endif
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
-    { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_script) },
+    { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_code_callback) },
     { "SaveSession", GTK_STOCK_SAVE, N_("_Save session"), "", NULL, 
       G_CALLBACK(save_session_callback) },
     { "SaveSessionAs", GTK_STOCK_SAVE_AS, N_("Save session _as..."), NULL, NULL, 
