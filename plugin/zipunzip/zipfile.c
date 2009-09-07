@@ -340,7 +340,11 @@ real_read_zipfile (zfile *zf, int task)
 	    fread(b, 4, 1, zf->fp) != 1) {
 	    return ferror(zf->fp) ? ZE_READ : ZE_EOF;
 	}
-	if (LG(b) == LOCSIG) {
+
+	if (LG(b) != LOCSIG) {
+            trace(2, "expected to find local signature at %d\n", (int) z->off);
+	    return ZE_FORM;
+        } else {
 	    if (fread(b, LOCHEAD, 1, zf->fp) != 1) {
 		return ferror(zf->fp) ? ZE_READ : ZE_EOF;
 	    }
@@ -355,6 +359,7 @@ real_read_zipfile (zfile *zf, int task)
 		return ZE_FORM;
 	    }
 	    if ((t = malloc(z->namelen + 1)) == NULL) {
+                trace(3, "failed malloc: z->namelen = %d\n", z->namelen);
 		return ZE_MEM;
 	    }
 	    if (fread(t, z->namelen, 1, zf->fp) != 1) {
@@ -371,6 +376,7 @@ real_read_zipfile (zfile *zf, int task)
 
 	    if (z->extlen) {
 		if ((z->extra = malloc(z->extlen)) == NULL) {
+                    trace(3, "failed malloc: z->extlen = %d\n", z->extlen);
 		    return ZE_MEM;
 		}
 		if (fread(z->extra, z->extlen, 1, zf->fp) != 1) {
@@ -454,6 +460,7 @@ real_read_zipfile (zfile *zf, int task)
 	    z->mark = MARK_NONE;
 	    z->zname = internal_to_external(z->iname); /* convert to external name */
 	    if (z->zname == NULL) {
+                trace(3, "internal_to_external: got NULL from z->iname = '%s'\n", z->iname);
 		return ZE_MEM;
 	    }
 	    z->name = z->zname;
@@ -473,10 +480,8 @@ real_read_zipfile (zfile *zf, int task)
 		    z->mark = MARK_DELETE;
 		}
 	    }
-	} else {
-	    trace(2, "expected to find local signature at %d\n", (int) z->off);
-	    return ZE_FORM;
-	}
+	} 
+
 	z = z->nxt;
     }
 
@@ -508,11 +513,15 @@ int read_zipfile (zfile *zf, int task)
 	}
     }
 
+    trace(3, "read_zipfile: zf->fname = '%s'\n", zf->fname);
+
     err = real_read_zipfile(zf, task);
 
     fclose(zf->fp);
     zf->fp = NULL;
 
+    trace(3, "read_zipfile: real_read_zipfile returned %d, zf->zcount = %d\n", err, zf->zcount);
+ 
     /* If we have one or more files, sort by name */
     if (!err && zf->zcount && task == ZIP_DO_ZIP) {
 	zlist **x;    /* pointer into zsort array */

@@ -252,6 +252,70 @@ char *external_to_internal (const char *name, zfile *zf, GError **gerr)
     return iname;
 }
 
+static void asciify (char *targ, const char *src, int n)
+{
+    int c, i, j = 0;
+
+    if (n < 0) n = strlen(src);
+
+    while (*targ) targ++;
+                
+    for (i=0; i<n; i++) {
+        c = src[i];
+        if (c >= 32 && c < 128 && isprint(c)) {
+            targ[j++] = c;
+        }
+    }
+}
+
+static char *remedial_convert (const char *iname)
+{
+    int n = strlen(iname);
+    char *xname = g_malloc0(n + 1);
+
+    if (xname == NULL) {
+        return NULL;
+    }
+
+    if (strchr(iname, '/')) {
+        const char *p = strchr(iname, '/');
+        int m = p - iname;
+        gchar *tmp;
+        gsize b;
+
+        tmp = g_locale_from_utf8(iname, m, NULL, &b, NULL);
+        if (tmp != NULL) {
+            /* converted first part OK */
+            strcat(xname, tmp);
+            strcat(xname, "/");
+            g_free(tmp);
+        } else {
+            asciify(xname, iname, m);
+            strcat(xname, "/");
+        }
+
+        tmp = g_locale_from_utf8(p + 1, -1, NULL, &b, NULL);
+        if (tmp != NULL) {
+            /* converted second part OK */
+            strcat(xname, tmp);
+            g_free(tmp);
+        } else {
+            asciify(xname, p + 1, -1);
+        }
+    } else {
+        asciify(xname, iname, -1);
+    }
+
+    if (*xname == '\0') {
+        free(xname);
+        xname = NULL;
+    } else {
+        fprintf(stderr, "remedial convert: '%s' -> '%s'\n", iname, xname);
+    }
+
+    return xname;
+}
+
 /* Convert the zip file name to an external file name, returning the
    allocated string: we convert from UTF-8 to the locale if this
    seems to be required, and convert from forward slashes to
@@ -263,9 +327,15 @@ char *internal_to_external (const char *iname)
     char *xname = NULL;
 
     if (!get_stdio_use_utf8() && string_is_utf8((unsigned char *) iname)) {
+	GError *err = NULL;
 	gsize b;
 
-	xname = g_locale_from_utf8(iname, -1, NULL, &b, NULL);
+	xname = g_locale_from_utf8(iname, -1, NULL, &b, &err);
+        if (err != NULL) {
+            fprintf(stderr, "internal_to_external: '%s'\n", err->message);
+            g_error_free(err);
+            xname = remedial_convert(iname);
+        }
     } else {
 	xname = g_strdup(iname);
     }
