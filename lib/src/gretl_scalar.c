@@ -375,32 +375,17 @@ int gretl_scalar_delete (const char *name, PRN *prn)
     return err;
 }
 
-static void print_scalar (gretl_scalar *s, int n, PRN *prn)
-{
-    if (n == 0) {
-	pputc(prn, '\n');
-    }
-
-    pprintf(prn, "%15s = ", s->name);
-
-    if (na(s->val)) {
-	pputs(prn, "NA");
-    } else {
-	if (s->val >= 0.0) {
-	    pputc(prn, ' ');
-	}
-	pprintf(prn, "%#.8g", s->val);
-    }
-
-    pputc(prn, '\n');
-}
-
 void print_scalar_by_name (const char *name, PRN *prn)
 {
     gretl_scalar *s = get_scalar_pointer(name, gretl_function_depth());
 
     if (s != NULL) {
-	print_scalar(s, 0, prn);
+	pprintf(prn, "\n%15s = ", s->name);
+	if (na(s->val)) {
+	    pputs(prn, " NA\n");
+	} else {
+	    pprintf(prn, "% #.8g\n", s->val);
+	}
     }
 }
 
