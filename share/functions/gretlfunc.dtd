@@ -1,17 +1,16 @@
 <!--
   Document Type Definition (DTD) for gretl function packages: a package
-  needs a name, author, version, date, and description.  It also needs
-  at least one gretl-function.  The latter must have a name and must
-  include function code; it may also have help text, zero or more 
+  needs a name, author, version, date, description and help text.  It 
+  also needs at least one gretl-function.  The latter must have a name 
+  and must include function code; it may have zero or more 
   parameters, and zero or one return values. And the package must
-  contain a sample script which illustrates a correct call, and
-  may contain help text.
+  contain a sample script which illustrates a correct call.
  -->
 
 <!ELEMENT gretl-functions (gretl-function-package?)>
 
 <!ELEMENT gretl-function-package (author, version, date, description, 
-                                  gretl-function+, help?, sample-script)>
+                                  help, gretl-function+, sample-script)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED
@@ -30,7 +29,7 @@
    lang CDATA #IMPLIED
 >
 
-<!ELEMENT gretl-function (help?, params?, return?, code)>
+<!ELEMENT gretl-function (params?, return?, code)>
 <!ATTLIST gretl-function
    name CDATA #REQUIRED
    type (void | scalar | series | matrix | list | string) 'void'
