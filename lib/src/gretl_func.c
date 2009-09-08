@@ -4993,7 +4993,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
 			      models, prn);
 	if (pdinfo != NULL && pdinfo->submask != NULL) {
-	    state.submask = copy_datainfo_submask(pdinfo);
+	    state.submask = copy_datainfo_submask(pdinfo, &err);
 	}
 	state.callback = func_exec_callback;
     }

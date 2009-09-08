@@ -2870,7 +2870,7 @@ int dataset_resample (int n, unsigned int seed,
     rinfo->t2 = n - 1;
     dataset_obs_info_default(rinfo);
 
-    rinfo->submask = RESAMPLED;
+    set_dataset_resampled(rinfo);
 
  bailout:
 

@@ -3523,6 +3523,7 @@ static int copy_model (MODEL *targ, const MODEL *src)
 {
     int k = src->ncoeff;
     int m = k * (k + 1) / 2;
+    int err = 0;
 
     /* monolithic copy of structure */
     *targ = *src;
@@ -3562,7 +3563,7 @@ static int copy_model (MODEL *targ, const MODEL *src)
     }
 
     if (src->submask != NULL && 
-	(targ->submask = copy_subsample_mask(src->submask)) == NULL) { 
+	(targ->submask = copy_subsample_mask(src->submask, &err)) == NULL) { 
 	return 1;
     }
 

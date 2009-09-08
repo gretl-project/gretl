@@ -41,9 +41,9 @@ DATAINFO *fetch_full_datainfo (void);
 
 void free_subsample_mask (char *s);
 
-char *copy_subsample_mask (const char *src);
+char *copy_subsample_mask (const char *src, int *err);
 
-char *copy_datainfo_submask (const DATAINFO *pdinfo);
+char *copy_datainfo_submask (const DATAINFO *pdinfo, int *err);
 
 int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp);
 
@@ -65,6 +65,10 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
 int complex_subsampled (void);
 
 int get_full_length_n (void);
+
+void set_dataset_resampled (DATAINFO *pdinfo);
+
+int dataset_is_resampled (const DATAINFO *pdinfo);
 
 int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo);
 

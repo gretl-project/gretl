@@ -4075,10 +4075,10 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err && pdinfo->submask != NULL) {
-	state.submask = copy_datainfo_submask(pdinfo);
-	if (state.submask == NULL) {
+	state.submask = copy_datainfo_submask(pdinfo, &err);
+	if (err) {
 	    gretl_matrix_free(vals);
-	    return E_ALLOC;
+	    return err;
 	}
     }
 

@@ -110,7 +110,7 @@ void free_subsample_mask (char *s)
     }
 }
 
-char *copy_subsample_mask (const char *src)
+char *copy_subsample_mask (const char *src, int *err)
 {
     char *ret = NULL;
 
@@ -122,18 +122,20 @@ char *copy_subsample_mask (const char *src)
 	ret = malloc(n * sizeof *ret);
 	if (ret != NULL) {
 	    memcpy(ret, src, n);
+	} else {
+	    *err = E_ALLOC;
 	}
     }
 
     return ret;
 }
 
-char *copy_datainfo_submask (const DATAINFO *pdinfo)
+char *copy_datainfo_submask (const DATAINFO *pdinfo, int *err)
 {
     char *mask = NULL;
 
     if (complex_subsampled()) {
-	mask = copy_subsample_mask(pdinfo->submask);
+	mask = copy_subsample_mask(pdinfo->submask, err);
     }
 
     return mask;
@@ -214,6 +216,16 @@ static char *make_submask (int n)
     }
 
     return mask;
+}
+
+void set_dataset_resampled (DATAINFO *pdinfo)
+{
+    pdinfo->submask = RESAMPLED;
+}
+
+int dataset_is_resampled (const DATAINFO *pdinfo)
+{
+    return (pdinfo != NULL && pdinfo->submask == RESAMPLED);
 }
 
 void maybe_free_full_dataset (const DATAINFO *pdinfo)
@@ -305,10 +317,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	    free_subsample_mask(pmod->submask);
 	}
 
-	pmod->submask = copy_subsample_mask(pdinfo->submask);
-	if (pmod->submask == NULL) {
-	    err = E_ALLOC;
-	}
+	pmod->submask = copy_subsample_mask(pdinfo->submask, &err);
     }
 
     return err;
@@ -446,7 +455,7 @@ static char *make_current_sample_mask (DATAINFO *pdinfo)
 {
     int n = full_data_length(pdinfo);
     char *currmask = NULL;
-    int s, t;
+    int s, t, err = 0;
 
     if (pdinfo->submask == NULL) {
 	/* no pre-existing mask: not sub-sampled */
@@ -458,7 +467,7 @@ static char *make_current_sample_mask (DATAINFO *pdinfo)
 	}
     } else {
 	/* there's a pre-existing mask */
-	currmask = copy_subsample_mask(pdinfo->submask);
+	currmask = copy_subsample_mask(pdinfo->submask, &err);
 	if (currmask != NULL) {
 	    s = -1;
 	    for (t=0; t<n; t++) {
@@ -1289,7 +1298,7 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
 
     err = backup_full_dataset(*pZ, pdinfo);
 
-    subinfo->submask = copy_subsample_mask(mask);
+    subinfo->submask = copy_subsample_mask(mask, &err);
 
     /* switch pointers */
     *pZ = subZ;
