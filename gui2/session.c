@@ -1502,6 +1502,7 @@ static int save_session_dataset (const char *dname)
     char *mask = NULL;
     int save_t1 = datainfo->t1;
     int save_t2 = datainfo->t2;
+    int write_err = 0;
     int err = 0;
 
     /* we need to retrieve and save the full version of the dataset */
@@ -1520,19 +1521,26 @@ static int save_session_dataset (const char *dname)
 
     if (!err) {
 	session_file_make_path(tmpname, dname);
-	err = gretl_write_gdt(tmpname, NULL, (const double **) Z, 
-			      datainfo, OPT_NONE, 0);
+	write_err = gretl_write_gdt(tmpname, NULL, (const double **) Z, 
+				    datainfo, OPT_NONE, 0);
 	fprintf(stderr, "Save session datafile as '%s', err = %d\n",
-		tmpname, err);
+		tmpname, write_err);
     }
 
-    if (!err && mask != NULL) {
+    if (mask != NULL) {
 	/* reset the prior subsample */
-	err = restrict_sample_from_mask(mask, &Z, datainfo, OPT_NONE);
+	if (!err) {
+	    err = restrict_sample_from_mask(mask, &Z, datainfo, OPT_NONE);
+	}
+	free(mask);
     }
 
     datainfo->t1 = save_t1;
     datainfo->t2 = save_t2;
+
+    if (!err) {
+	err = write_err;
+    }
     
     return err;
 }
