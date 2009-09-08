@@ -6191,7 +6191,7 @@ msgstr "Eştümleyen yöneyler"
 #: lib/src/varprint.c:665 gui2/model_table.c:1123 plugin/jrestrict.c:2775
 #: plugin/jrestrict.c:2808
 msgid "standard errors in parentheses"
-msgstr "Ölçünlü hatalar parantez içerisinde gösterilmiştir."
+msgstr "Ölçünlü hatalar parantez içerisinde gösterilsin"
 
 #: lib/src/texprint.c:990
 msgid "Adjustment vectors"
@@ -6215,7 +6215,7 @@ msgstr "HQÖ"
 
 #: lib/src/texprint.c:1503 gui2/model_table.c:918
 msgid "$t$-statistics in parentheses"
-msgstr "$t$-istatistikleri parantez içerisinde gösterilmiştir."
+msgstr "$t$-istatistikleri parantez içerisinde gösterilmiştir"
 
 #: lib/src/transforms.c:134
 #, c-format
@@ -10011,7 +10011,7 @@ msgstr "_Ağırlıklı En küçük Kareler"
 
 #: gui2/gretl.c:1466
 msgid "H_eteroskedasticity corrected..."
-msgstr "_Çokluserpilim düzeltmeli..."
+msgstr "_Farklıserpilimsellik düzeltmeli..."
 
 #: gui2/gretl.c:1468
 msgid "High _precision OLS..."
@@ -11974,11 +11974,11 @@ msgstr "Model %d"
 
 #: gui2/model_table.c:816 gui2/model_table.c:1022 gui2/model_table.c:1124
 msgid "t-statistics in parentheses"
-msgstr "t-istatistikleri parantez içerisinde gösterilmiştir."
+msgstr "t-istatistikleri parantez içerisinde gösterilsin"
 
 #: gui2/model_table.c:818 gui2/model_table.c:920 gui2/model_table.c:1024
 msgid "Standard errors in parentheses"
-msgstr "Ölçünlü hatalar parantez içerisinde gösterilmiştir."
+msgstr "Ölçünlü hatalar parantez içerisinde gösterilmiştir"
 
 #: gui2/model_table.c:821 gui2/model_table.c:924 gui2/model_table.c:1028
 msgid "* indicates significance at the 10 percent level"
