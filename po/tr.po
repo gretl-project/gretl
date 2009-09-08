@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-30 13:57-0400\n"
-"PO-Revision-Date: 2009-08-24 09:43+0300\n"
+"PO-Revision-Date: 2009-09-08 13:14+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -288,7 +288,7 @@ msgstr "kutu çizimi dosyası bozuk"
 
 #: lib/src/compare.c:340
 msgid "omit"
-msgstr "çıkart"
+msgstr "çıkar"
 
 #: lib/src/compare.c:343
 msgid "add"
@@ -3080,7 +3080,7 @@ msgstr ""
 #: lib/src/gretl_panel.c:1562
 #, c-format
 msgid "%d group means were subtracted from the data"
-msgstr "%d küme ortalaması verilerden çıkartıldı"
+msgstr "%d küme ortalaması verilerden çıkarıldı"
 
 #: lib/src/gretl_panel.c:1566
 #, c-format
@@ -4558,11 +4558,11 @@ msgstr "BÖD (IIE) varsayımı altında kavuşmazsal ölçünlü hatalar"
 
 #: lib/src/modelprint.c:1309
 msgid "Omitted because all values were zero:"
-msgstr "Tüm değerleri sıfır olduğu için çıkartılan değişken:"
+msgstr "Tüm değerleri sıfır olduğu için çıkarılan değişken:"
 
 #: lib/src/modelprint.c:1323
 msgid "Omitted due to exact collinearity:"
-msgstr "Tam eşdoğrusallık yüzünden çıkartılan değişken:"
+msgstr "Tam eşdoğrusallık yüzünden çıkarılan değişken:"
 
 #: lib/src/modelprint.c:1335
 msgid "Redundant instruments:"
@@ -7635,24 +7635,20 @@ msgid "gretl: delete"
 msgstr "gretl: sil"
 
 #: gui2/datafiles.c:826
-#, fuzzy
 msgid "Add to functions shown"
-msgstr "Çağırılan işlev %s"
+msgstr "Gösterilen işlevlere ekle"
 
 #: gui2/datafiles.c:827
-#, fuzzy
 msgid "Replace functions shown"
-msgstr "Yardımcı işlevler"
+msgstr "Gösterilen işlevleri değiştir"
 
-#: gui2/datafiles.c:850
-#, fuzzy, c-format
+#: gui2/datafiles.c:850, c-format
 msgid "Found %d function file(s)"
-msgstr "İ_şlev dosyaları"
+msgstr "%d işlev dosyası bulundu"
 
 #: gui2/datafiles.c:856
-#, fuzzy
 msgid "No function files were found"
-msgstr "Bulunan işlev paketi yok"
+msgstr "Bulunan işlev dosyası yok"
 
 #: gui2/datafiles.c:1039 gui2/datafiles.c:1058 gui2/datafiles.c:1075
 #: gui2/datafiles.c:1177
@@ -8788,22 +8784,20 @@ msgid "Couldn't get function package information"
 msgstr "İşlev paket bilgisi alınamadı"
 
 #: gui2/fnsave.c:316
-#, fuzzy
 msgid "Please add a sample script for this package"
-msgstr "Lütfen önce veri setine bir değişken ekleyiniz"
+msgstr "Lütfen bu paket için bir örnek betik ekleyiniz"
 
 #: gui2/fnsave.c:321
 msgid "Invalid version string: use numbers and '.' only"
 msgstr "Geçersiz sürüm dizgisi: yalnızca sayı ve '.' kullanınız"
 
-#: gui2/fnsave.c:412
-#, fuzzy, c-format
+#: gui2/fnsave.c:412, c-format
 msgid "Can't find the function '%s'"
-msgstr "Çağırılan işlev %s"
+msgstr "'%s' işlevi bulunamıyor"
 
 #: gui2/fnsave.c:637
 msgid "private"
-msgstr ""
+msgstr "özel"
 
 #: gui2/fnsave.c:667
 msgid "No special requirement"
@@ -8830,9 +8824,8 @@ msgid "Minimum gretl version"
 msgstr "En düşük gretl sürümü"
 
 #: gui2/fnsave.c:820
-#, fuzzy
 msgid "Insert today's date"
-msgstr "_Araya ekle"
+msgstr "Bugünün tarihini ekle"
 
 #: gui2/fnsave.c:839 gui2/gui_utils.c:1836 gui2/ssheet.c:2435
 #: gui2/ssheet.c:2460
@@ -8856,9 +8849,8 @@ msgid "gretl: function package editor"
 msgstr "gretl: işlev paket düzenleyici"
 
 #: gui2/fnsave.c:967
-#, fuzzy
 msgid "Help text:"
-msgstr "%s için yardım metni"
+msgstr "Yardım metni:"
 
 #: gui2/fnsave.c:982
 msgid "Edit function code"
@@ -8873,9 +8865,8 @@ msgid "Edit sample script"
 msgstr "Örnek betik düzenle"
 
 #: gui2/fnsave.c:1008
-#, fuzzy
 msgid "Add/remove functions"
-msgstr "İşlevleri kaydet"
+msgstr "İşlev ekle/çıkar"
 
 #: gui2/fnsave.c:1015
 msgid "Upload package to server on save"
@@ -8915,6 +8906,9 @@ msgid ""
 "must be less than 32 characters in length, must include only\n"
 "ASCII letters, numbers and '_', and must end with \".gfn\""
 msgstr ""
+"Geçersiz paket adı: Dosya adı bir harf ile başlamalı, uzunluğu "
+"32 harften az olmalı, yalnızca ASCII harf ve rakamları veya '_' "
+"simgesini içermeli ve \".gfn\" ile bitmelidir."
 
 #: gui2/fnsave.c:1314 gui2/library.c:6322
 msgid "OK to overwrite?"
@@ -9309,9 +9303,8 @@ msgid "open a remote (web) database on startup"
 msgstr "başlangıçta bir uzak (ağ) veritabanı aç"
 
 #: gui2/gretl.c:121 gui2/gretl.c:193
-#, fuzzy
 msgid "open (edit) a function package on startup"
-msgstr "gretl: %s üzerindeki işlev paketleri"
+msgstr "Açılışta bir işlev paketi aç (düzenle)"
 
 #: gui2/gretl.c:122 gui2/gretl.c:195
 msgid "force use of English"
@@ -9537,7 +9530,7 @@ msgstr "_Sunucu..."
 
 #: gui2/gretl.c:1313
 msgid "Edit package..."
-msgstr ""
+msgstr "Paket düzenle..."
 
 #: gui2/gretl.c:1314
 msgid "_New package"
@@ -12576,9 +12569,8 @@ msgid "Independent variables"
 msgstr "Bağımsız değişkenler"
 
 #: gui2/selector.c:4934
-#, fuzzy
 msgid "Public functions"
-msgstr "Yardımcı işlevler"
+msgstr "Genel işlevler"
 
 #: gui2/selector.c:5151
 msgid "Select variables for logging"
@@ -12674,7 +12666,7 @@ msgstr "Verileri kaydet"
 
 #: gui2/selector.c:5753
 msgid "Edit package list"
-msgstr ""
+msgstr "Paket listesini düzenle"
 
 #: gui2/selector.c:6119
 msgid "lag order"
