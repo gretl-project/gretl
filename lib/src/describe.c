@@ -3079,7 +3079,7 @@ static int xcf_data_check (const double *x, const double *y, int T,
  * @y: second series.
  * @p: maximum lag for cross-correlation function.
  * @pdinfo: information on the data set, or %NULL.
- * @n; length of series (required if @pdinfo is %NULL).
+ * @n: length of series (required if @pdinfo is %NULL).
  * @err: location to receive error code.
  *
  * Computes the cross-correlation function for series @x with
@@ -3123,6 +3123,11 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
 	t2 = n - 1;
 	T = n;
     }
+
+#if 0
+    fprintf(stderr, "t1=%d, t2=%d, T=%d\n", t1, t2, T);
+    fprintf(stderr, "x[t1]=%g, y[t1]=%g\n\n", x[t1], y[t1]);
+#endif
 
     if (pdinfo != NULL) {
 	if (2 * p > T - pdinfo->pd) { /* ?? */

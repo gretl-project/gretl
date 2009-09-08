@@ -4743,6 +4743,7 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 	} 
 
 	py = (r->t == MAT)? (void *) r->v.m : (void *) r->v.xvec;
+
 	A = multi_xcf(px, xtype, py, r->t, (const double **) *p->Z, 
 		      p->dinfo, k, &p->err);
     }

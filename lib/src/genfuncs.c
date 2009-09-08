@@ -2781,7 +2781,8 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	xvec = Xmat->val;
     } else {
 	/* VEC */
-	xvec = px + pdinfo->t1;
+	xvec = px;
+	xvec += pdinfo->t1;
     }
 
     if (ytype == MAT) {
