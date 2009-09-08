@@ -2780,7 +2780,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	T = Xmat->rows;
 	xvec = Xmat->val;
     } else {
-	/* VEC */
+	/* VEC: note: px is of type *void */
 	xvec = px;
 	xvec += pdinfo->t1;
     }
