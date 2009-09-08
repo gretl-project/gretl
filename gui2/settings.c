@@ -218,8 +218,6 @@ RCVAR rc_vars[] = {
     { "ox", N_("Path to oxl executable"), NULL, paths.oxlpath, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
-    { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
-      USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },
     { "ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
       USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },
     { "dbhost", N_("Database server name"), NULL, paths.dbhost, 

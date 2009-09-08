@@ -1399,7 +1399,7 @@ static void set_gretl_libpath (const char *path)
     if (p) {
 	size_t len = p - path;
 
-	*paths.libpath = 0;
+	*paths.libpath = '\0';
 	strncat(paths.libpath, path, len);
 	strcat(paths.libpath, "/lib/gretl");
 	strcat(paths.libpath, sfx);
@@ -1407,6 +1407,11 @@ static void set_gretl_libpath (const char *path)
 	sprintf(paths.libpath, "%s/lib/gretl%s", path, sfx);
     }
 #endif /* !WIN32 */
+}
+
+static void set_gretl_binbase (const char *path)
+{
+    sprintf(paths.binbase, "%sdb", path);
 }
 
 /* This should be called after we're fairly confident that we
@@ -1952,6 +1957,7 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
     if (!err) {
 	set_helpfile_paths(opt);
 	set_gretl_libpath(paths.gretldir);
+	set_gretl_binbase(paths.gretldir);
     }
 
     strcpy(dirname, paths.gretldir);
@@ -2031,8 +2037,7 @@ static int maybe_transcribe_path (char *targ, char *src,
    gretldir
    gnuplot (but not on MS Windows)
    tramo, x12a, rbinpath, rlibpath, oxlpath, 
-   binbase, ratsbase, 
-   dbhost
+   ratsbase, dbhost
 
    * paths.workdir is updated via the separate working directory
      dialog
@@ -2052,7 +2057,6 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     }
     
     /* databases, native and RATS */
-    maybe_transcribe_path(paths.binbase, cpaths->binbase, 1);
     maybe_transcribe_path(paths.ratsbase, cpaths->ratsbase, 1);
     maybe_transcribe_path(paths.dbhost, cpaths->dbhost, 0);
 
@@ -2112,8 +2116,6 @@ static void load_default_path (char *targ)
 
     if (targ == paths.workdir) {
 	load_default_workdir(targ);
-    } else if (targ == paths.binbase) {
-	sprintf(targ, "%sdb\\", paths.gretldir);
     } else if (targ == paths.ratsbase) {
 	strcpy(targ, "f:\\"); 
     } else if (targ == paths.dbhost) {
@@ -2162,8 +2164,6 @@ static void load_default_path (char *targ)
 {
     if (targ == paths.workdir) {
 	load_default_workdir(targ);
-    } else if (targ == paths.binbase) {
-	sprintf(targ, "%sdb/", paths.gretldir);
     } else if (targ == paths.ratsbase) {
 	strcpy(targ, "/mnt/dosc/userdata/rats/oecd/");
     } else if (targ == paths.dbhost) {
@@ -2245,8 +2245,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     /* working directory */
     path_init(paths.workdir, cpaths->workdir, 1);
 
-    /* databases, native and RATS */
-    path_init(paths.binbase, cpaths->binbase, 1);
+    /* RATS databases */
     path_init(paths.ratsbase, cpaths->ratsbase, 1);
 
     /* database server */
@@ -2549,7 +2548,7 @@ int cli_read_rc (void)
     ConfigPaths cpaths = {
 	{0}, {0}, {0}, {0},
 	{0}, {0}, {0}, {0},
-	{0}, {0}, {0}, {0}
+	{0}, {0}, {0}
     };
     FILE *fp = NULL;
     char rcfile[FILENAME_MAX];
@@ -2589,8 +2588,6 @@ int cli_read_rc (void)
 	    } else if (!strcmp(key, "usecwd")) {
 		usecwd = rc_bool(val);
 		libset_set_bool(USE_CWD, usecwd);
-	    } else if (!strcmp(key, "binbase")) {
-		strncat(cpaths.binbase, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "ratsbase")) {
 		strncat(cpaths.ratsbase, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "dbhost")) {

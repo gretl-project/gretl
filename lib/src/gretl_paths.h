@@ -45,7 +45,6 @@ typedef struct ConfigPaths_ ConfigPaths;
 struct ConfigPaths_ {
     char gretldir[MAXLEN];
     char workdir[MAXLEN];
-    char binbase[MAXLEN];
     char ratsbase[MAXLEN];
     char gnuplot[MAXLEN];
     char x12a[MAXLEN];

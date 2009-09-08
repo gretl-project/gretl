@@ -2689,11 +2689,45 @@ gint populate_dbfilelist (windata_t *vwin)
 	closedir(dir);
     }
 
+    /* and in the default working dir? */
+    dbdir = gretl_default_workdir();
+    if (dbdir != NULL) {
+#ifdef G_OS_WIN32 
+	dir = win32_opendir(dbdir);
+#else
+	dir = opendir(dbdir);
+#endif
+	if (dir != NULL) {
+	    ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
+	    closedir(dir);
+	}
+    }
+
     if (ndb == 0) {
 	errbox(_("No database files found"));
     }
 
     return (ndb == 0);
+}
+
+void set_db_dir_callback (windata_t *vwin, char *path)
+{
+    DIR *dir = opendir(path);
+    int ndb = 0;
+
+    if (dir != NULL) {
+	GtkListStore *store;
+	GtkTreeIter iter;
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	ndb = read_db_files_in_dir(dir, vwin->role, path, store, &iter);
+    }
+
+    if (ndb == 0) {
+	warnbox(_("No database files found"));
+    }
 }
 
 static void set_compact_info_from_default (int method)

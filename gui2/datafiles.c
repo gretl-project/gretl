@@ -1167,6 +1167,12 @@ static void alt_funcs_dir (GtkWidget *w, windata_t *vwin)
                               vwin->main);
 }
 
+static void alt_db_dir (GtkWidget *w, windata_t *vwin)
+{
+    file_selector_with_parent(SET_DBDIR, FSEL_DATA_VWIN, vwin, 
+                              vwin->main);
+}
+
 enum {
     BTN_EDIT = 1,
     BTN_INFO,
@@ -1185,11 +1191,11 @@ enum {
 };
 
 static GretlToolItem files_items[] = {
-    { N_("Open"),           GTK_STOCK_OK,         NULL,                          BTN_OPEN },
+    { N_("Open"),           GTK_STOCK_OK, NULL, BTN_OPEN },
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-    { N_("Select directory"), GTK_STOCK_OPEN,  G_CALLBACK(alt_funcs_dir),   BTN_DIR },
+    { N_("Select directory"), GTK_STOCK_OPEN, NULL, BTN_DIR },
 #else
-    { N_("Select directory"), GTK_STOCK_DIRECTORY,  G_CALLBACK(alt_funcs_dir),   BTN_DIR },
+    { N_("Select directory"), GTK_STOCK_DIRECTORY, NULL, BTN_DIR },
 #endif
     { N_("Edit"),           GTK_STOCK_EDIT,       G_CALLBACK(browser_edit_func), BTN_EDIT },
     { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
@@ -1208,7 +1214,7 @@ static int n_files_items = G_N_ELEMENTS(files_items);
 
 #define common_item(f) (f == BTN_FIND || f == BTN_CLOSE)
 
-#define local_funcs_item(f) (f == BTN_DIR || f == BTN_EDIT || f == BTN_NEW || \
+#define local_funcs_item(f) (f == BTN_EDIT || f == BTN_NEW || \
 			     f == BTN_DEL || f == BTN_CODE)
 
 static int files_item_get_callback (GretlToolItem *item, int role)
@@ -1264,7 +1270,13 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	} else if (role == REMOTE_DB) {
 	    item->func = G_CALLBACK(show_local_dbs);
 	} 
-    } 
+    } else if (item->flag == BTN_DIR) {
+	if (role == FUNC_FILES) {
+	    item->func = G_CALLBACK(alt_funcs_dir);
+	} else if (role == NATIVE_DB) {
+	    item->func = G_CALLBACK(alt_db_dir);
+	}
+    }
 
     return (item->func != NULL);
 }

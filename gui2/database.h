@@ -13,7 +13,9 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin);
 
 void pkg_info_from_server (GtkWidget *w, windata_t *vwin);
 
-gint populate_dbfilelist (windata_t *ddata);
+gint populate_dbfilelist (windata_t *vwin);
+
+void set_db_dir_callback (windata_t *vwin, char *path);
 
 gint populate_remote_db_list (windata_t *vwin);
 

@@ -78,7 +78,8 @@
                        i == OPEN_DATA || \
                        i == APPEND_DATA)
 
-#define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR || i == SET_FDIR)
+#define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR || \
+                           i == SET_FDIR || i == SET_DBDIR)
 
 struct extmap {
     int action;
@@ -510,6 +511,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	set_working_dir_callback(data, fname);
     } else if (action == SET_FDIR) {
 	set_funcs_dir_callback(data, fname);
+    } else if (action == SET_DBDIR) {
+	set_db_dir_callback(data, fname);
     } else {
 	windata_t *vwin = (windata_t *) data;
 

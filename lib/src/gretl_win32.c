@@ -250,28 +250,12 @@ static int cli_read_gretl_var (char *key, char *val,
     return *val != '\0';
 }
 
-/* 
-   relevant extract from gretl.iss:
-
-   HKLM; "Software\gretl"; "gretldir";   "{app}"
-   HKCU; "Software\gretl"; "binbase";    "{app}\db\"
-   HKCU; "Software\gretl"; "ratsbase";   "f:\"
-   HKCU; "Software\gretl"; "dbhost";     "ricardo.ecn.wfu.edu"
-   HKCU; "Software\gretl"; "dbproxy";    ""
-   HKCU; "Software\gretl"; "useproxy";   "false"
-   HKCU; "Software\gretl"; "updater";    "false"
-   HKCU; "Software\gretl"; "Png_font";   "verdana 8"
-   HKCU; "Software\gretl"; "Gp_colors";  ""
-*/
-
-/* FIXME support new rcfile approach */
-
 void cli_read_registry (char *callname)
 {
     ConfigPaths cpaths = {
 	{0}, {0}, {0}, {0},
 	{0}, {0}, {0}, {0},
-	{0}, {0}, {0}, {0}
+	{0}, {0}, {0} 
     };
     char valstr[MAXLEN];
     char dbproxy[21];
@@ -287,14 +271,8 @@ void cli_read_registry (char *callname)
     /* user's working directory */
     cli_read_gretl_var("userdir", cpaths.workdir, fp, HKEY_CURRENT_USER);
 
-    /* base path for databases */
-    cli_read_gretl_var("binbase", cpaths.binbase, fp, HKEY_CURRENT_USER);
-
     /* base path for RATS databases */
     cli_read_gretl_var("ratsbase", cpaths.ratsbase, fp, HKEY_CURRENT_USER);
-
-    /* path to gnuplot */
-    read_rc_string(fp[0], "gnuplot", cpaths.gnuplot);
 
     /* path to X-12-ARIMA */
     done = read_rc_string(fp[0], "x12a", cpaths.x12a);
