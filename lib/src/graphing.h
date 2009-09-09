@@ -147,6 +147,8 @@ const char *gp_justification_string (int j);
 
 const char *gnuplot_label_front_string (void);
 
+int split_graph_fontspec (const char *s, char *name, int *psz);
+
 void gnuplot_missval_string (FILE *fp);
 
 int gnuplot_init (PlotType ptype, FILE **fpp);

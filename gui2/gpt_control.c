@@ -465,6 +465,16 @@ static void
 get_full_term_string (const GPT_SPEC *spec, char *termstr) 
 {
     int mono = (spec->flags & GPT_MONO);
+    char fontname[64] = {0};
+    int psz = 0;
+
+    if (spec->termtype == GP_TERM_EPS || spec->termtype == GP_TERM_PDF) {
+	const char *pngfont = gretl_png_font();
+
+	if (*pngfont != '\0') {
+	    split_graph_fontspec(pngfont, fontname, &psz);
+	}
+    }
 
     if (spec->termtype == GP_TERM_EPS) {
 	if (mono) {
@@ -474,7 +484,12 @@ get_full_term_string (const GPT_SPEC *spec, char *termstr)
 	} 
     } else if (spec->termtype == GP_TERM_PDF) {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	    strcpy(termstr, PDF_CAIRO_STRING);
+	    if (*fontname != '\0') {
+		sprintf(termstr, "set term pdfcairo font \"%s\"\n",
+			fontname);
+	    } else {
+		strcpy(termstr, "set term pdfcairo");
+	    }
 	} else {
 	    strcpy(termstr, "set term pdf");
 	}
@@ -766,6 +781,8 @@ static int revise_plot_file (GPT_SPEC *spec,
 	}
     }
 
+    /* FIXME font name */
+
     if (outtarg != NULL && *outtarg != '\0') {
 	fprintf(fpout, "%s\n", setterm);
 	fprintf(fpout, "set output '%s'\n", outtarg);
@@ -804,7 +821,7 @@ void save_graph_to_file (gpointer data, const char *fname)
 				  gretl_gnuplot_path(), 
 				  pltname);
 	err = gretl_spawn(plotcmd);
-	gretl_remove(pltname);
+	/* gretl_remove(pltname); */
 	g_free(plotcmd);
 	if (err) {
 	    gui_errmsg(err);

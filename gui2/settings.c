@@ -362,6 +362,11 @@ static void set_gd_fontpath (void)
 
 #endif
 
+void update_persistent_graph_font (void)
+{
+    strcpy(paths.pngfont, gretl_png_font());
+}
+
 const char *get_app_fontname (void)
 {
     return appfontname;
@@ -1562,18 +1567,18 @@ static void boolvar_to_str (void *b, char *s)
 static int write_plain_text_rc (void) 
 {
     RCVAR *rcvar;
-    FILE *rc;
+    FILE *fp;
     char val[6];
     char *strvar;
     int i;
 
-    rc = gretl_fopen(rcfile, "w");
-    if (rc == NULL) {
+    fp = gretl_fopen(rcfile, "w");
+    if (fp == NULL) {
 	file_write_errbox(rcfile);
 	return E_FOPEN;
     }
 
-    fprintf(rc, "# gretl config file\n");
+    fprintf(fp, "# gretl config file\n");
 
     for (i=0; rc_vars[i].var != NULL; i++) {
 	rcvar = &rc_vars[i];
@@ -1585,21 +1590,21 @@ static int write_plain_text_rc (void)
 	    continue;
 	}
 #endif
-	fprintf(rc, "# %s\n", rcvar->description);
+	fprintf(fp, "# %s\n", rcvar->description);
 	if (rcvar->flags & BOOLSET) {
 	    boolvar_to_str(rcvar->var, val);
-	    fprintf(rc, "%s = %s\n", rcvar->key, val);
+	    fprintf(fp, "%s = %s\n", rcvar->key, val);
 	} else if (rcvar->flags & INTSET) {
-	    fprintf(rc, "%s = %d\n", rcvar->key, *(int *) rcvar->var);
+	    fprintf(fp, "%s = %d\n", rcvar->key, *(int *) rcvar->var);
 	} else {
 	    strvar = (char *) rcvar->var;
-	    fprintf(rc, "%s = %s\n", rcvar->key, strvar);
+	    fprintf(fp, "%s = %s\n", rcvar->key, strvar);
 	}
     }
 
-    rc_save_file_lists(rc);
+    rc_save_file_lists(fp);
 
-    fclose(rc);
+    fclose(fp);
 
     return 0;
 }

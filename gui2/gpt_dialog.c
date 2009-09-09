@@ -94,6 +94,7 @@ struct plot_editor_ {
     GtkWidget *y2_check;
     GtkWidget *ttfcombo;
     GtkWidget *ttfspin;
+    GtkWidget *fontcheck;
 
     int gui_nlines;
     int gui_nlabels;
@@ -705,8 +706,10 @@ static void set_graph_font_from_widgets (plot_editor *ed)
 	} else {
 	    *pngfont = '\0';
 	}
+
 	set_gretl_png_font(pngfont);
     }
+
     g_free(tmp);
 }
 
@@ -846,6 +849,9 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    set_gretl_png_font(ed->fontname);
 	} else if (ed->ttfcombo != NULL && ed->ttfspin != NULL) {
 	    set_graph_font_from_widgets(ed);
+	}
+	if (ed->fontcheck != NULL && button_is_active(ed->fontcheck)) {
+	    update_persistent_graph_font();
 	}
     }
 
@@ -1442,7 +1448,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 
     /* setting of graph font, if gnuplot uses freetype */
     if (pngcairo || gnuplot_has_ttf(0)) {
-	GtkWidget *hsep;
+	GtkWidget *hsep, *b;
 
 	/* first a separator */
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);	
@@ -1453,8 +1459,8 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 
 	if (pngcairo) {
 	    gchar *title = g_strdup_printf(_("font: %s"), gretl_png_font());
-	    GtkWidget *b = gtk_button_new_with_label(title);
 
+	    b = gtk_button_new_with_label(title);
 	    table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), b, 0, TAB_MAIN_COLS, 
 				      rows - 1, rows); 
@@ -1466,6 +1472,14 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	} else {
 	    add_gd_font_selector(ed, tbl, &rows);
 	}
+
+	/* set font as default button */
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	b = gtk_check_button_new_with_label(_("Set as default"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), b, 0, TAB_MAIN_COLS, 
+				  rows - 1, rows); 
+	gtk_widget_show(b);
+	ed->fontcheck = b;
     } 
 
     if (gnuplot_png_terminal() != GP_PNG_OLD && frequency_plot_code(spec->code)) {
@@ -2797,6 +2811,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->y2_check = NULL;
     ed->ttfcombo = NULL;
     ed->ttfspin = NULL;
+    ed->fontcheck = NULL;
 
     ed->gui_nlines = ed->gui_nlabels = 0;
 

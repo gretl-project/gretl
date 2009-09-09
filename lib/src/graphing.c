@@ -759,7 +759,13 @@ void graph_palette_reset (int i)
     }
 }
 
-static int split_fontname (const char *s, char *name, int *psz)
+/* Given a string @s such as "Sans 8" or "Bodoni MT 12", write
+   the name part into @name and the point-size part into @psz.
+   Return 2 if we got both a name and a size, 1 if we just
+   got a name, 0 if we got nothing.
+*/
+
+int split_graph_fontspec (const char *s, char *name, int *psz)
 {
     int i, k = 0, n = strlen(s);
     int nf = 0;
@@ -770,6 +776,7 @@ static int split_fontname (const char *s, char *name, int *psz)
     }
 
     if (k > 0) {
+	/* got a size */
 	char ptstr[8];
 
 	*ptstr = *name = '\0';
@@ -790,14 +797,24 @@ static int split_fontname (const char *s, char *name, int *psz)
 			   t == PLOT_PANEL)
 
 static void 
-write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype,
-			   int pngterm)
+write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm)
 {
+    const char *grfont = gretl_png_font();
+
+    if (*grfont == '\0') {
+	grfont = getenv("GRETL_PNG_GRAPH_FONT");
+    }
+
+    if (grfont == NULL || *grfont == '\0') {
+	*fstr = '\0';
+	return;
+    }
+
     if (pngterm == GP_PNG_CAIRO) {
 	char fname[128];
 	int nf, fsize = 0;
 
-	nf = split_fontname(grfont, fname, &fsize);
+	nf = split_graph_fontspec(grfont, fname, &fsize);
 	if (nf == 2) {
 	    if (USE_SMALL_FONT(ptype) && gp_small_font_size > 0) {
 		fprintf(stderr, "Doing small font\n");
@@ -943,7 +960,6 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     char color_string[64];
     int gpcolors, gpttf = 1, gpsize = 1;
     int pngterm = 0;
-    const char *grfont = NULL;
 
     *font_string = 0;
     *size_string = 0;
@@ -972,13 +988,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 
     /* plot font setup */
     if (gpttf) {
-	grfont = gretl_png_font();
-	if (*grfont == 0) {
-	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
-	}
-	if (grfont != NULL && *grfont != 0) {
-	    write_gnuplot_font_string(font_string, grfont, ptype, pngterm);
-	}
+	write_gnuplot_font_string(font_string, ptype, pngterm);
     } 
 
 #ifndef WIN32
@@ -1027,7 +1037,7 @@ static void png_font_to_emf (const char *pngfont, char *emfline)
     char name[128];
     int pt;
 
-    if (split_fontname(pngfont, name, &pt) == 2) {
+    if (split_graph_fontspec(pngfont, name, &pt) == 2) {
 	char ptstr[8];
 
 	if (pt <= 8) {

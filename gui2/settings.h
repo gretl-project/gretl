@@ -37,6 +37,8 @@ void set_fixed_font (void);
 
 void update_persistent_graph_colors (void);
 
+void update_persistent_graph_font (void);
+
 void set_app_font (const char *fontname);
 
 const char *get_app_fontname (void);
