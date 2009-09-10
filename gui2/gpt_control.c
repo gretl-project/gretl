@@ -459,22 +459,36 @@ int gp_term_code (gpointer p)
     return spec->termtype;
 }
 
-#define PDF_CAIRO_STRING "set term pdfcairo font \"sans,5\""
-
-static void 
-get_full_term_string (const GPT_SPEC *spec, char *termstr) 
+static void get_pdfcairo_term_string (char *termstr)
 {
-    int mono = (spec->flags & GPT_MONO);
-    char fontname[64] = {0};
+    const char *pngfont = gretl_png_font();
+    char fontname[64];
     int psz = 0;
 
-    if (spec->termtype == GP_TERM_EPS || spec->termtype == GP_TERM_PDF) {
-	const char *pngfont = gretl_png_font();
+    *fontname = '\0';
 
-	if (*pngfont != '\0') {
-	    split_graph_fontspec(pngfont, fontname, &psz);
+    if (*pngfont != '\0') {
+	split_graph_fontspec(pngfont, fontname, &psz);
+    }    
+
+    fprintf(stderr, "get_pdfcairo_term_string!\n");
+
+    if (*fontname != '\0') {
+	if (psz > 0) {
+	    sprintf(termstr, "set term pdfcairo font \"%s,%d\"\n",
+		    fontname, psz / 2);
+	} else {
+	    sprintf(termstr, "set term pdfcairo font \"%s\"\n",
+		    fontname);
 	}
-    }
+    } else {
+	strcpy(termstr, "set term pdfcairo font \"sans,5\"");
+    }    
+}
+
+static void get_full_term_string (const GPT_SPEC *spec, char *termstr) 
+{
+    int mono = (spec->flags & GPT_MONO);
 
     if (spec->termtype == GP_TERM_EPS) {
 	if (mono) {
@@ -484,12 +498,7 @@ get_full_term_string (const GPT_SPEC *spec, char *termstr)
 	} 
     } else if (spec->termtype == GP_TERM_PDF) {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	    if (*fontname != '\0') {
-		sprintf(termstr, "set term pdfcairo font \"%s\"\n",
-			fontname);
-	    } else {
-		strcpy(termstr, "set term pdfcairo");
-	    }
+	    get_pdfcairo_term_string(termstr);
 	} else {
 	    strcpy(termstr, "set term pdf");
 	}
@@ -835,19 +844,17 @@ static void graph_display_pdf (GPT_SPEC *spec)
 {
     char pdfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
-    static char setterm[64];
+    char setterm[128];
     gchar *plotcmd;
     int err = 0;
 
     spec->termtype = GP_TERM_PDF;
 
-    if (*setterm == '\0') {
-	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	    fprintf(stderr, "gnuplot: using pdfcairo driver\n");
-	    strcpy(setterm, PDF_CAIRO_STRING);
-	} else {
-	    strcpy(setterm, "set term pdf");
-	}
+    if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	fprintf(stderr, "gnuplot: using pdfcairo driver\n");
+	get_pdfcairo_term_string(setterm);
+    } else {
+	strcpy(setterm, "set term pdf");
     }
 
     build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
