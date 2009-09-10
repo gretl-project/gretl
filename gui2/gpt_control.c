@@ -821,7 +821,7 @@ void save_graph_to_file (gpointer data, const char *fname)
 				  gretl_gnuplot_path(), 
 				  pltname);
 	err = gretl_spawn(plotcmd);
-	/* gretl_remove(pltname); */
+	gretl_remove(pltname);
 	g_free(plotcmd);
 	if (err) {
 	    gui_errmsg(err);
