@@ -4502,7 +4502,7 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!dataset_is_panel(pdinfo)) {
 	strcpy(gretl_errmsg, _("This test is only available for panel data"));
-	return E_NOTIM;
+	return E_NOTIMP;
     }
 
     pdinfo->t1 = pmod->t1;
