@@ -7557,9 +7557,9 @@
 	a common ratio. 
       </para>
       <code>
-	function restr (const matrix b)
+	function matrix restr (const matrix b)
 	  matrix v = b[1]/b[2] - b[4]/b[5]
-	  return matrix v
+	  return v
 	end function
       </code>
       <para>
