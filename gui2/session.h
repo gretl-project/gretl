@@ -45,6 +45,8 @@ enum {
 
 int save_session (char *fname);
 
+int save_session_dataset (void);
+
 int session_is_modified (void);
 
 void session_menu_state (gboolean s);

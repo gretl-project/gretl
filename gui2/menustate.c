@@ -571,7 +571,7 @@ void set_sample_label (DATAINFO *pdinfo)
 
 	sprintf(labeltxt, " %s ", trfname);
 	g_free(trfname);
-	if (data_status & MODIFIED_DATA) { 
+	if ((data_status & MODIFIED_DATA) && !(data_status & SESSION_DATA)) { 
 	    strcat(labeltxt, "* ");
 	} 
 	if (dlabel != NULL) {

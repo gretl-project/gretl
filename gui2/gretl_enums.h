@@ -213,7 +213,8 @@ enum data_status_flags {
     IMPORT_DATA   = 1 << 3,
     GUI_DATA      = 1 << 4,
     MODIFIED_DATA = 1 << 5,
-    GZIPPED_DATA  = 1 << 6
+    GZIPPED_DATA  = 1 << 6,
+    SESSION_DATA  = 1 << 7
 };
 
 enum register_data_flags {

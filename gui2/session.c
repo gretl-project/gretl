@@ -1496,7 +1496,7 @@ static void relpath_from_fname (char *path, const char *fname)
 
 /* dump the current dataset into the session dir */
 
-static int save_session_dataset (const char *dname)
+static int real_save_session_dataset (const char *dname)
 {
     char tmpname[MAXLEN];
     char *mask = NULL;
@@ -1541,6 +1541,11 @@ static int save_session_dataset (const char *dname)
     if (!err) {
 	err = write_err;
     }
+
+    if (!err) {
+	/* flag the fact that the data are saved */
+	data_status &= ~MODIFIED_DATA;
+    }
     
     return err;
 }
@@ -1561,6 +1566,19 @@ static const char *unpath (const char *fname)
     }
 
     return fname;
+}
+
+/* called in the context of a re-opened session */
+
+int save_session_dataset (void)
+{
+    int err = real_save_session_dataset(unpath(datafile));
+
+    if (err) {
+	gui_errmsg(err);
+    } 
+
+    return err;
 }
 
 static void make_session_dataname (char *datname)
@@ -1635,7 +1653,7 @@ int save_session (char *fname)
 
     make_session_dataname(datname);
     write_session_xml(datname);
-    err = save_session_dataset(datname);
+    err = real_save_session_dataset(datname);
 
     if (!err) {
 	session_switch_log_location(LOG_SAVE);

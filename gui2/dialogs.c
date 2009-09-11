@@ -62,8 +62,9 @@ void menu_exit_check (void)
 static void save_data_callback (void)
 {
     data_save_selection_wrapper(SAVE_DATA);
-    if (data_status & MODIFIED_DATA)
+    if (data_status & MODIFIED_DATA) {
 	data_status ^= MODIFIED_DATA;
+    }
     /* FIXME: need to do more here? */
 }
 
@@ -124,11 +125,17 @@ gboolean exit_check (void)
     };
     int resp;
 
+    /* note: returning FALSE from here allows the exit to proceed;
+       to block the exit we need to return TRUE
+    */
+
     if (maybe_raise_dialog() || console_is_busy()) {
+	/* we're not ready: block the exit now */
 	return TRUE;
     }
 
     if (session_is_modified()) {
+	/* give the user the chance to save an unsaved session */
 	const char *msg;
 	int as_is = 0;
 
@@ -147,23 +154,27 @@ gboolean exit_check (void)
 	    } else {
 		save_session_callback(NULL);
 	    }
-	    return TRUE; /* bodge */
+	    /* we now allow exit to proceed (unless revised below) */
 	} else if (resp == GRETL_CANCEL) {
-	    /* resp -1 = wm close */
+	    /* canceled exit: block right now */
 	    return TRUE;
+	} else {
+	    ; /* GRETL_NO to saving session: allow exit */
 	}
-	/* else resp = GRETL_NO: so fall through */
     }
 
     if (data_status & MODIFIED_DATA) {
+	/* give the user a chance to save modified dataset */
 	resp = yes_no_dialog ("gretl", 
 			      _("Do you want to save changes you have\n"
 				"made to the current data set?"), 1);
 	if (resp == GRETL_YES) {
 	    save_data_callback();
-	    return TRUE; 
 	} else if (resp == GRETL_CANCEL) {
+	    /* canceled exit: block right now */
 	    return TRUE;
+	} else {
+	    ; /* GRETL_NO to saving data: allow exit */
 	}
     } 
 

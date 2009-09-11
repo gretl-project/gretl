@@ -1795,22 +1795,29 @@ mdata_handle_drag  (GtkWidget *widget,
     }
 }
 
+/* the callback for Save Data (Ctrl-S) in main window */
+
 static void auto_store (void)
 {
-    /* by default, use gzip compression */
-    gretlopt oflag = OPT_Z;
-
-    /* but if there's already a datafile, and it's not gzipped, then
-       arrange for the new file to be uncompressed too
-    */
-    if (*datafile && !is_gzipped(datafile)) {
-	oflag = OPT_NONE;
-    }
-
-    if ((data_status & USER_DATA) && has_suffix(datafile, ".gdt")) {
-	do_store(datafile, oflag);
+    if (data_status & SESSION_DATA) {
+	/* the data file is embedded in a session file */
+	save_session_dataset();
     } else {
-	file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
+	/* by default, use gzip compression */
+	gretlopt oflag = OPT_Z;
+
+	/* but if there's already a datafile, and it's not gzipped, then
+	   arrange for the new file to be uncompressed too
+	*/
+	if (*datafile && !is_gzipped(datafile)) {
+	    oflag = OPT_NONE;
+	}
+
+	if ((data_status & USER_DATA) && has_suffix(datafile, ".gdt")) {
+	    do_store(datafile, oflag);
+	} else {
+	    file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
+	}
     }	
 }
 

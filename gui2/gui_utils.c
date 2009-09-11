@@ -666,7 +666,12 @@ static void real_register_data (int flag, const char *user_fname,
 		data_status |= GZIPPED_DATA;
 	    } else {
 		data_status &= ~GZIPPED_DATA;
-	    }	    
+	    }
+	    if (flag == OPENED_VIA_SESSION) {
+		data_status |= SESSION_DATA;
+	    } else {
+		data_status &= ~SESSION_DATA;
+	    }
 	}
     } else {
 	/* we modified the current dataset somehow */
