@@ -23,6 +23,7 @@
 #include "model_table.h"
 #include "session.h"
 #include "textutil.h"
+#include "textbuf.h"
 #include "texprint.h"
 
 static MODEL **table_models;
@@ -31,7 +32,8 @@ static char **pnames;
 static int n_params;
 static int use_tstats;
 static int depvarnum;
-static int colwidth;
+
+static int mt_figs = 4;
 
 static void print_rtf_row_spec (PRN *prn, int tall);
 
@@ -397,7 +399,7 @@ static const char *get_pre_asts (double pval)
     return (pval >= 0.1)? "" : (pval >= 0.05)? "$\\,$" : "$\\,\\,$";
 }
 
-static void print_model_table_coeffs (int namewidth, PRN *prn)
+static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 {
     int i, j, k;
     const MODEL *pmod;
@@ -443,7 +445,7 @@ static void print_model_table_coeffs (int namewidth, PRN *prn)
 		    pval = coeff_pval(pmod->ci, x / s, pmod->dfd);
 		}
 
-		sprintf(numstr, "%#.4g", x);
+		sprintf(numstr, "%#.*g", mt_figs, x);
 		gretl_fix_exponent(numstr);
 
 		if (tex) {
@@ -504,14 +506,14 @@ static void print_model_table_coeffs (int namewidth, PRN *prn)
 		    val = pmod->sderr[k];
 		}
 
-		sprintf(numstr, "%#.4g", val);
+		sprintf(numstr, "%#.*g", mt_figs, val);
 		gretl_fix_exponent(numstr);
 
 		if (tex) {
 		    if (val < 0) {
-			pprintf(prn, "& \\footnotesize{($-$%s)} ", numstr + 1);
+			pprintf(prn, "& \\subsize{($-$%s)} ", numstr + 1);
 		    } else {
-			pprintf(prn, "& \\footnotesize{(%s)} ", numstr);
+			pprintf(prn, "& \\subsize{(%s)} ", numstr);
 		    }
 		} else if (rtf) {
 		    if (first) {
@@ -570,7 +572,8 @@ static int any_stat (int s)
     return 0;
 }
 
-static void print_equation_stats (int width0, PRN *prn, int *binary)
+static void print_equation_stats (int width0, int colwidth, PRN *prn, 
+				  int *binary)
 {
     const MODEL *pmod;
     int same_df, any_R2, any_ll;
@@ -657,11 +660,11 @@ static void print_equation_stats (int width0, PRN *prn, int *binary)
 		}
 	    } else {
 		if (tex) {
-		    pprintf(prn, "& %.4f ", rsq);
+		    pprintf(prn, "& %.*f ", mt_figs, rsq);
 		} else if (rtf) {
-		    pprintf(prn, "\\qc %.4f\\cell ", rsq);
+		    pprintf(prn, "\\qc %.*f\\cell ", mt_figs, rsq);
 		} else {
-		    pprintf(prn, "%#*.4g", colwidth, rsq);
+		    pprintf(prn, "%#*.*g", colwidth, mt_figs, rsq);
 		}
 	    }
 	}
@@ -702,14 +705,14 @@ static void print_equation_stats (int width0, PRN *prn, int *binary)
 	    } else {
 		if (tex) {
 		    if (pmod->lnL > 0) {
-			pprintf(prn, "& %.2f ", pmod->lnL);
+			pprintf(prn, "& %.*g ", mt_figs, pmod->lnL);
 		    } else {
-			pprintf(prn, "& $-$%.2f ", -pmod->lnL);
+			pprintf(prn, "& $-$%.*g ", mt_figs, -pmod->lnL);
 		    }
 		} else if (rtf) {
-		    pprintf(prn, "\\qc %.3f\\cell ", pmod->lnL);
+		    pprintf(prn, "\\qc %.*g\\cell ", mt_figs, pmod->lnL);
 		} else {
-		    pprintf(prn, "%#*.6g", colwidth, pmod->lnL);
+		    pprintf(prn, "%#*.*g", colwidth, mt_figs, pmod->lnL);
 		}
 	    }
 	}
@@ -738,30 +741,42 @@ static int max_namelen (void)
     return maxlen;
 }
 
-int display_model_table (int gui)
+static int get_colwidth (void)
 {
-    int j, ci;
+    const MODEL *pmod;
+    int i, len, maxlen = 0;
+    int cw = 13;
+
+    for (i=0; i<n_models; i++) {
+	pmod = table_models[i];
+	if (pmod != NULL) {
+	    if (pmod->name != NULL) {
+		len = strlen(pmod->name);
+	    } else {
+		char tmp[32];
+
+		sprintf(tmp, _("Model %d"), pmod->ID);
+		len = strlen(tmp);
+	    }
+	    if (len > maxlen) {
+		maxlen = (len > 31)? 31 : len;
+	    }
+	}
+    }
+
+    if (maxlen < 11 && mt_figs < 4) {
+	cw -= 4 - mt_figs;
+    }
+
+    return (cw < maxlen + 2)? maxlen + 2 : cw;
+}
+
+static void plain_print_model_table (PRN *prn)
+{
+    int namelen = max_namelen();
+    int colwidth = get_colwidth();
     int binary = 0;
-    int winwidth = 78;
-    int namelen;
-    PRN *prn;
-
-    if (model_table_is_empty()) {
-	mtable_errmsg(_("The model table is empty"), gui);
-	return 1;
-    }
-
-    if (make_full_param_list()) {
-	return 1;
-    }
-
-    namelen = max_namelen();
-    colwidth = 13;
-
-    if (bufopen(&prn)) {
-	clear_model_table(NULL);
-	return 1;
-    }
+    int j, ci;
 
     ci = common_estimator();
 
@@ -809,8 +824,8 @@ int display_model_table (int gui)
 
     pputc(prn, '\n'); 
 
-    print_model_table_coeffs(namelen, prn);
-    print_equation_stats(namelen + 1, prn, &binary);
+    print_model_table_coeffs(namelen, colwidth, prn);
+    print_equation_stats(namelen + 1, colwidth, prn, &binary);
 
     if (use_tstats) {
 	pprintf(prn, "%s\n", _("t-statistics in parentheses"));
@@ -825,6 +840,28 @@ int display_model_table (int gui)
 	pprintf(prn, "%s\n", _("For logit and probit, R-squared is "
 			       "McFadden's pseudo-R-squared"));
     }
+}
+
+int display_model_table (int gui)
+{
+    int winwidth = 78;
+    PRN *prn;
+
+    if (model_table_is_empty()) {
+	mtable_errmsg(_("The model table is empty"), gui);
+	return 1;
+    }
+
+    if (make_full_param_list()) {
+	return 1;
+    }
+
+    if (bufopen(&prn)) {
+	clear_model_table(NULL);
+	return 1;
+    }
+
+    plain_print_model_table(prn);
 
     if (real_table_n_models() > 5) {
 	winwidth = 90;
@@ -851,9 +888,10 @@ static int tex_print_model_table (PRN *prn)
 	return 1;
     }
 
-    ci = common_estimator();
-
+    pputs(prn, "\n\\newcommand{\\subsize}[1]{\\footnotesize{#1}}\n\n");
     pputs(prn, "\\begin{center}\n");
+
+    ci = common_estimator();
 
     if (ci > 0) {
 	/* all models use same estimation procedure */
@@ -908,8 +946,8 @@ static int tex_print_model_table (PRN *prn)
 
     pputs(prn, " [6pt] \n");   
 
-    print_model_table_coeffs(0, prn);
-    print_equation_stats(0, prn, &binary);
+    print_model_table_coeffs(0, 0, prn);
+    print_equation_stats(0, 0, prn, &binary);
 
     pputs(prn, "\\end{longtable}\n\n");
     pputs(prn, "\\vspace{1em}\n");
@@ -1013,8 +1051,8 @@ static int rtf_print_model_table (PRN *prn)
 	pputs(prn, "\\intbl \\row\n");
     }
 
-    print_model_table_coeffs(0, prn);
-    print_equation_stats(0, prn, &binary);
+    print_model_table_coeffs(0, 0, prn);
+    print_equation_stats(0, 0, prn, &binary);
 
     pputs(prn, "}\n\n");
 
@@ -1117,18 +1155,45 @@ int modeltab_parse_line (const char *line, PRN *prn)
     return err;
 }
 
-void model_table_dialog (void)
+void model_table_dialog (windata_t *vwin)
 {
     const char *opts[] = {
 	N_("standard errors in parentheses"),
 	N_("t-statistics in parentheses")
     };
+    GtkTextBuffer *buf;
+    const char *newtext;
+    PRN *prn;
+    int figs = mt_figs;
     int opt;
 
-    opt = radio_dialog(_("model table options"), NULL, opts, 2, use_tstats, 0);
+    opt = radio_dialog_with_spinner(_("model table options"), 
+				    opts, 2, use_tstats, 0,
+				    &figs, _("significant figures"), 
+				    2, 8);
 
-    if (opt >= 0) {
-	use_tstats = opt;
+    if (opt < 0) {
+	/* canceled */
+	return;
     }
+
+    if (use_tstats == opt && figs == mt_figs) {
+	/* no change */
+	return;
+    }
+
+    use_tstats = opt;
+    mt_figs = figs;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    plain_print_model_table(prn);
+    newtext = gretl_print_get_buffer(prn);
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    gtk_text_buffer_set_text(buf, "", -1);
+    textview_set_text(vwin->text, newtext);
+    gretl_print_destroy(prn); 
 }
 

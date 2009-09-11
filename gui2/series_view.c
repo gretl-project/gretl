@@ -469,7 +469,7 @@ int has_sortable_data (windata_t *vwin)
 
 int can_format_data (windata_t *vwin)
 {
-    if (vwin->role == VIEW_SERIES) {
+    if (vwin->role == VIEW_SERIES || vwin->role == VIEW_MODELTABLE) {
 	return 1;
     } else if (vwin->role == PRINT && vwin->data != NULL) {
 	series_view *sview = vwin->data;

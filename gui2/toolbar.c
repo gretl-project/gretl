@@ -27,6 +27,7 @@
 #include "textbuf.h"
 #include "textutil.h"
 #include "series_view.h"
+#include "model_table.h"
 #include "cmdstack.h"
 #include "dlgutils.h"
 #include "fileselect.h"
@@ -391,6 +392,15 @@ static void alpha_button_callback (GtkToggleButton *b, double *x)
     } 
 }
 
+static void reformat_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin->role == VIEW_MODELTABLE) {
+	model_table_dialog(vwin);
+    } else {
+	series_view_format_dialog(w, vwin);
+    }
+}
+
 static void toggle_alpha_spin (GtkToggleButton *b, GtkWidget *w)
 {
     gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(b));
@@ -574,7 +584,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(cmd_log_refresh), REFRESH_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(series_view_graph), PLOT_ITEM },
-    { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(series_view_format_dialog), FORMAT_ITEM },
+    { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(set_output_sticky), STICKIFY_ITEM },
@@ -616,7 +626,6 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == VIEW_LOG)
 
 #define sort_ok(r)    (r == VIEW_SERIES)
-#define format_ok(r)  (r == VIEW_SERIES)
 #define plot_ok(r)    (r == VIEW_SERIES)
 
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
