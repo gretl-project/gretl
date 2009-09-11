@@ -1170,7 +1170,7 @@ void model_table_dialog (windata_t *vwin)
     opt = radio_dialog_with_spinner(_("model table options"), 
 				    opts, 2, use_tstats, 0,
 				    &figs, _("significant figures"), 
-				    2, 8);
+				    2, 6);
 
     if (opt < 0) {
 	/* canceled */
