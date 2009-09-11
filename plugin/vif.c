@@ -157,8 +157,8 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
     double *vif = NULL;
     int *vlist = NULL;
     int nvif = xlist[0];
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int i;
 
     if (nvif <= 1) {
@@ -191,8 +191,8 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
     }
 
     /* reinstate sample */
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     free(vlist);
 

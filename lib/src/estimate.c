@@ -2770,8 +2770,8 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 {
     int pos, newv = pdinfo->v;
     int *auxlist = NULL, *testlist = NULL;
-    int savet1 = pdinfo->t1;
-    int savet2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     MODEL ptmod;
     double x;
     int i, h, t;
@@ -2884,8 +2884,8 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     free(auxlist);
     free(testlist);
 
-    pdinfo->t1 = savet1;
-    pdinfo->t2 = savet2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }
@@ -4491,6 +4491,8 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
 int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			   PRN *prn)
 {
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     MODEL wmod;
     int err;
 
@@ -4500,8 +4502,11 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!dataset_is_panel(pdinfo)) {
 	strcpy(gretl_errmsg, _("This test is only available for panel data"));
-	return 1;
+	return E_NOTIM;
     }
+
+    pdinfo->t1 = pmod->t1;
+    pdinfo->t2 = pmod->t2;
 
     wmod = panel_wls_by_unit(pmod->list, pZ, pdinfo, OPT_T | OPT_A, prn);
     err = wmod.errcode;
@@ -4512,6 +4517,9 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     clear_model(&wmod);
+
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }

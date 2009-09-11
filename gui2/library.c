@@ -2518,13 +2518,14 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     equation_system *sys = NULL;
     GRETL_VAR *vecm = NULL;
     GRETL_VAR *vnew = NULL;
-
     gchar *buf;
     PRN *prn;
     char title[64], bufline[MAXLINE];
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
     gretlopt opt = edit_dialog_get_opt(dlg);
     gretl_restriction *my_rset = NULL;
+    int save_t1 = datainfo->t1;
+    int save_t2 = datainfo->t2;
     int got_start_line = 0, got_end_line = 0;
     int height = 300;
     int err = 0;
@@ -2607,6 +2608,11 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
     if (bufopen(&prn)) return; 
 
+    if (pmod != NULL) {
+	datainfo->t1 = pmod->t1;
+	datainfo->t2 = pmod->t2;
+    } 
+
     if (opt & OPT_F) {
 	vnew = gretl_restricted_vecm(my_rset, (const double **) Z, 
 				     datainfo, opt, prn, &err);
@@ -2639,6 +2645,9 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	strcat(title, _("linear restrictions"));
 	view_buffer(prn, 78, height, title, PRINT, NULL);
     }
+
+    datainfo->t1 = save_t1;
+    datainfo->t2 = save_t2;
 }
 
 static int 

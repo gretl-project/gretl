@@ -934,8 +934,8 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		       int aux_code, gretlopt opt, PRN *prn) 
 {
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int *tmplist = NULL;
     const int orig_nvar = pdinfo->v; 
     int err = 0;
@@ -983,8 +983,8 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     /* put back into pdinfo what was there on input */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     free(tmplist);
 
@@ -1042,8 +1042,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 	      gretlopt opt, PRN *prn)
 {
     gretlopt est_opt = opt;
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int *tmplist = NULL;
     const int orig_nvar = pdinfo->v; 
     int err = 0;
@@ -1135,8 +1135,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
     dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     /* put back into pdinfo what was there on input */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     free(tmplist);
 
@@ -1415,8 +1415,8 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	       gretlopt opt, PRN *prn)
 {
     gretlopt est_opt = opt;
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int omitlast = 0;
     int *tmplist = NULL;
     int err = 0;
@@ -1508,8 +1508,8 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
     }
 
     /* put back into pdinfo what was there on input */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     free(tmplist);
 
@@ -1520,8 +1520,8 @@ double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		      int *err)
 {
     MODEL dwmod;
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int *list = NULL;
     double pv = NADBL;
 
@@ -1559,8 +1559,8 @@ double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* put back into pdinfo what was there on input */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
     
     clear_model(&dwmod);
     free(list);
@@ -1980,8 +1980,8 @@ int autocorr_test (MODEL *pmod, int order,
 		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn)
 {
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int *newlist = NULL;
     MODEL aux;
     double RSSxe, RSSx = pmod->ess;
@@ -2015,7 +2015,7 @@ int autocorr_test (MODEL *pmod, int order,
 	order = pdinfo->pd;
     }
 
-    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1) {
+    if (pmod->ncoeff + order >= pmod->t2 - pmod->t1) {
 	return E_DF;
     }
 
@@ -2138,8 +2138,8 @@ int autocorr_test (MODEL *pmod, int order,
     clear_model(&aux); 
 
     /* reset sample as it was */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }
@@ -2432,8 +2432,8 @@ static int get_chow_dummy (const char *s, const double **Z,
 int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int *chowlist = NULL;
     int origv = pdinfo->v;
     char chowparm[VNAMELEN];
@@ -2605,8 +2605,8 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
     free(chowlist);
 
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }
@@ -2801,9 +2801,9 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
 int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		gretlopt opt, PRN *prn) 
 {
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
-    int T = pmod->t2 - pmod->t1 + 1;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
+    int T = pmod->nobs;
     int k = pmod->ncoeff;
     char cumdate[OBSLEN];
     double wbar = 0.0;
@@ -2929,8 +2929,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* restore original sample range */
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
     
     free(cresid);
     free(W);
@@ -2957,8 +2957,8 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt, PRN *prn)
 {
     MODEL cmod;
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int v = pdinfo->v;
     int *biglist = NULL;
     int clearit = 0;
@@ -3098,8 +3098,8 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     dataset_drop_last_variables(nadd, pZ, pdinfo);   
     free(biglist);
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }
