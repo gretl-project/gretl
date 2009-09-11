@@ -1586,9 +1586,11 @@ double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		gretlopt opt, PRN *prn)
 {
-    int *newlist;
+    int *newlist = NULL;
     MODEL aux;
     double RF;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int i, t, v = pdinfo->v; 
     int addcols;
     const char *mode;
@@ -1621,14 +1623,20 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	mode = N_("squares and cubes");
     }
 
+    impose_model_smpl(pmod, pdinfo);
+
     if (pmod->ncoeff + addcols >= pdinfo->t2 - pdinfo->t1) {
-	return E_DF;
+	err = E_DF;
     }
 
-    newlist = malloc((pmod->list[0] + addcols + 1) * sizeof *newlist);
-    if (newlist == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (!err) {
+	newlist = malloc((pmod->list[0] + addcols + 1) * sizeof *newlist);
+	if (newlist == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (newlist != NULL) {
 	newlist[0] = pmod->list[0] + addcols;
 	for (i=1; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
@@ -1722,6 +1730,9 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     free(newlist);
     dataset_drop_last_variables(addcols, pZ, pdinfo); 
     clear_model(&aux); 
+
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }

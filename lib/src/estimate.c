@@ -2972,6 +2972,8 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int aux = AUX_NONE;
     int v = pdinfo->v;
     int *list = NULL;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     double zz, LM;
     MODEL white;
     int err = 0;
@@ -2994,6 +2996,8 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return err;
     }
 
+    impose_model_smpl(pmod, pdinfo);
+
     /* what can we do, with the degrees of freedom available? */
     if (!BP) {
 	if (opt & OPT_X) { 
@@ -3001,6 +3005,8 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    aux = get_whites_aux(pmod, (const double **) *pZ);
 	    if (aux == AUX_NONE) {
+		pdinfo->t1 = save_t1;
+		pdinfo->t2 = save_t2;
 		return E_DF;
 	    }
 	}
@@ -3104,10 +3110,11 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     clear_model(&white);
-
     dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo);
-
     free(list);
+
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }

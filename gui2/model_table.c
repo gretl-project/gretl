@@ -1161,8 +1161,6 @@ void model_table_dialog (windata_t *vwin)
 	N_("standard errors in parentheses"),
 	N_("t-statistics in parentheses")
     };
-    GtkTextBuffer *buf;
-    const char *newtext;
     PRN *prn;
     int figs = mt_figs;
     int opt;
@@ -1171,7 +1169,6 @@ void model_table_dialog (windata_t *vwin)
 				    opts, 2, use_tstats, 0,
 				    &figs, _("significant figures"), 
 				    2, 6);
-
     if (opt < 0) {
 	/* canceled */
 	return;
@@ -1187,13 +1184,16 @@ void model_table_dialog (windata_t *vwin)
 
     if (bufopen(&prn)) {
 	return;
-    }
+    } else {
+	GtkTextBuffer *buf;
+	const char *newtext;
 
-    plain_print_model_table(prn);
-    newtext = gretl_print_get_buffer(prn);
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    gtk_text_buffer_set_text(buf, "", -1);
-    textview_set_text(vwin->text, newtext);
-    gretl_print_destroy(prn); 
+	plain_print_model_table(prn);
+	newtext = gretl_print_get_buffer(prn);
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+	gtk_text_buffer_set_text(buf, "", -1);
+	textview_set_text(vwin->text, newtext);
+	gretl_print_destroy(prn); 
+    }
 }
 

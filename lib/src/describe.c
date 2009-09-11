@@ -2336,6 +2336,8 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 {
     FreqDist *freq = NULL;
     gretlopt fopt = OPT_Z; /* show normality test */
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int err = 0;
 
     if (pmod == NULL || pmod->uhat == NULL) {
@@ -2351,6 +2353,8 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
     }
 
     if (!err) {
+	pdinfo->t1 = pmod->t1;
+	pdinfo->t2 = pmod->t2;
 	freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
 			NADBL, NADBL, 0, pmod->ncoeff, fopt, &err);
     }
@@ -2365,6 +2369,9 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
     }
 
     dataset_drop_last_variables(1, pZ, pdinfo);
+
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }

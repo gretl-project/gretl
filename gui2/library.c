@@ -3852,12 +3852,14 @@ static void normal_test (MODEL *pmod, FreqDist *freq)
 
 void do_resid_freq (GtkAction *action, gpointer p)
 {
-    FreqDist *freq;
+    FreqDist *freq = NULL;
     PRN *prn;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***rZ;
     DATAINFO *rinfo;
+    int save_t1 = datainfo->t1;
+    int save_t2 = datainfo->t2;
     int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -3872,11 +3874,15 @@ void do_resid_freq (GtkAction *action, gpointer p)
     } else {
 	rZ = &Z;
 	rinfo = datainfo;
+	datainfo->t1 = pmod->t1;
+	datainfo->t2 = pmod->t2;
     }
 
     err = genr_fit_resid(pmod, rZ, rinfo, M_UHAT, 1);
     if (err) {
 	gui_errmsg(err);
+	datainfo->t1 = save_t1;
+	datainfo->t2 = save_t2;
 	return;
     }
 
@@ -3888,27 +3894,27 @@ void do_resid_freq (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-	return;
+    } else {
+	normal_test(pmod, freq);
+	update_model_tests(vwin);
+
+	gretl_command_strcpy("modtest --normality");
+	err = model_command_init(pmod->ID);
+
+	if (!err) {
+	    print_freq(freq, prn);
+	    view_buffer(prn, 78, 300, _("gretl: residual dist."), MODTEST,
+			NULL);
+
+	    /* show the graph too */
+	    if (plot_freq(freq, D_NORMAL) == 0) {
+		register_graph();
+	    }
+	}
     }
-    
-    normal_test(pmod, freq);
-    update_model_tests(vwin);
 
-    gretl_command_strcpy("modtest --normality");
-
-    if (model_command_init(pmod->ID)) {
-	return;
-    }
- 
-    print_freq(freq, prn);
-
-    view_buffer(prn, 78, 300, _("gretl: residual dist."), MODTEST,
-		NULL);
-
-    /* show the graph too */
-    if (plot_freq(freq, D_NORMAL) == 0) {
-	register_graph();
-    }
+    datainfo->t1 = save_t1;
+    datainfo->t2 = save_t2;
 
     free_freq(freq);
 }
