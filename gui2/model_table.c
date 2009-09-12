@@ -254,7 +254,7 @@ static int real_add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn
 	}
 
 	for (i=n_models; i<n; i++) {
-	    table_models[i] = NULL;
+	    mods[i] = NULL;
 	}	
 
 	table_models = mods;
