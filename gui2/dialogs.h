@@ -133,7 +133,8 @@ int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,
 		 double xmin, double xmax, int *dist, int plot);
 
-int model_table_dialog (int *colhead_opt, int *se_opt, int *figs);
+int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
+			int *ast_opt, int *figs);
 
 void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 		       gretlopt *popt, int *cancelled);

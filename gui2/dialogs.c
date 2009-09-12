@@ -3570,7 +3570,8 @@ int freq_dialog (const char *title, const char *blurb,
    Returns GRETL_CANCEL on cancel, otherwise 0.  
 */
 
-int model_table_dialog (int *colhead_opt, int *se_opt, int *figs)
+int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
+			int *ast_opt, int *figs)
 {
     static char *col_opts[] = {
 	"(1), (2), (3), ...",
@@ -3617,7 +3618,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *figs)
 	}
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 	if (i == *colhead_opt) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_radio_opt), colhead_opt);
@@ -3634,7 +3635,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *figs)
 	button = gtk_radio_button_new_with_label(group, _(se_opts[i]));
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 	if (i == *se_opt) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_radio_opt), se_opt);
@@ -3643,6 +3644,21 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *figs)
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     } 
 
+    vbox_add_hsep(vbox);
+
+    /* show p-values box */
+    button = gtk_check_button_new_with_label(_("Show p-values"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), *pv_opt);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(option_check_set), pv_opt);
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+
+    /* show asterisks box */
+    button = gtk_check_button_new_with_label(_("Show significance asterisks"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), *ast_opt);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(option_check_set), ast_opt);
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     vbox_add_hsep(vbox);
 
     /* significant figs spinner */

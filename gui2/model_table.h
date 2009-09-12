@@ -28,7 +28,7 @@ enum {
 
 void clear_model_table (PRN *prn);
 
-int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn);
+int add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn);
 
 int display_model_table (int gui);
 
@@ -45,5 +45,7 @@ int model_table_n_models (void);
 int model_table_landscape (void);
 
 MODEL *model_table_model_by_index (int i);
+
+int model_table_position (const MODEL *pmod);
 
 #endif /* MODEL_TABLE_H */

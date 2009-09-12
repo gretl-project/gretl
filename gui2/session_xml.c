@@ -210,7 +210,8 @@ static int data_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
 
 static int rebuild_session_model (const char *fname, 
 				  const char *name, 
-				  GretlObjType type)
+				  GretlObjType type,
+				  int tablepos)
 {
     gpointer ptr = NULL;
     SavedObjectFlags flags = 0;
@@ -267,7 +268,7 @@ static int rebuild_session_model (const char *fname,
 	}
 
 	if (!err && (flags & IN_MODEL_TABLE)) {
-	    add_to_model_table(ptr, MODEL_ADD_BY_CMD, NULL);
+	    add_to_model_table(ptr, MODEL_ADD_BY_CMD, tablepos, NULL);
 	}
 
 	if (!err && (flags & IN_NAMED_STACK)) {
@@ -299,6 +300,7 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	xmlChar *fname = NULL;
 	xmlChar *name = NULL;
 	int type = GRETL_OBJ_EQN;
+	int tablepos = 0;
 	int err = 0;
 
 	fname = xmlGetProp(cur, (XUC) "fname");
@@ -314,8 +316,12 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	if (!err) {
 	    session_file_make_path(fullname, (const char *) fname);
 	    gretl_xml_get_prop_as_int(cur, "type", &type);
+	    if (type == GRETL_OBJ_EQN) {
+		gretl_xml_get_prop_as_int(cur, "tablepos", &tablepos);
+	    }
 	    fprintf(stderr, "model file: fname='%s', type=%d\n", fullname, type);
-	    err = rebuild_session_model(fullname, (const char *) name, type);
+	    err = rebuild_session_model(fullname, (const char *) name, 
+					type, tablepos);
 	}
 
 	if (!err) {
@@ -707,6 +713,7 @@ static int write_session_xml (const char *datname)
 	int type = session.models[i]->type;
 	void *ptr = session.models[i]->ptr;
 	SavedObjectFlags sflags;
+	int tablepos = 0;
 
 	sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, modnum);
 	fq = gretl_fopen(tmpname, "w");
@@ -716,8 +723,16 @@ static int write_session_xml (const char *datname)
 	    err = E_FOPEN;
 	} else {
 	    sprintf(tmpname, "model.%d", modnum++);
-	    fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n", 
-		    session.models[i]->name, tmpname, type);
+	    if (type == GRETL_OBJ_EQN) {
+		tablepos = model_table_position(ptr);
+	    }
+	    if (tablepos > 0) {
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\" tablepos=\"%d\"/>\n", 
+			session.models[i]->name, tmpname, type, tablepos);
+	    } else {
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n", 
+			session.models[i]->name, tmpname, type);
+	    }		
 	    gretl_xml_header(fq);
 	    sflags = model_save_flags(ptr, type);
 	    if (type == GRETL_OBJ_EQN) {
@@ -740,10 +755,11 @@ static int write_session_xml (const char *datname)
 		file_write_errbox(tmpname);
 		err = E_FOPEN;
 	    } else {
+		int tablepos = model_table_position(pmod);
+
 		sprintf(tmpname, "model.%d", modnum++);
-		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n", 
-			(pmod->name != NULL)? pmod->name : "none", tmpname, 
-			GRETL_OBJ_EQN);
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\" tablepos=\"%d\"/>\n", 
+			(pmod->name != NULL)? pmod->name : "none", tmpname, GRETL_OBJ_EQN, tablepos);
 		gretl_xml_header(fq);
 		gretl_model_serialize(pmod, model_save_flags(pmod, GRETL_OBJ_EQN), 
 				      fq);

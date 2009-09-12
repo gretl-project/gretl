@@ -31,9 +31,11 @@ static int n_models;
 static char **pnames;
 static int n_params;
 static int use_tstats;
+static int do_pvals;
 static int colheads;
 static int depvarnum;
 
+static int do_asts = 1;
 static int mt_figs = 4;
 
 static void print_rtf_row_spec (PRN *prn, int tall);
@@ -91,6 +93,9 @@ int in_model_table (const MODEL *pmod)
     }
 
     for (i=0; i<n_models; i++) {
+	if (table_models[i] == NULL) {
+	    continue;
+	}
 	if (pmod == table_models[i] || pmod->ID == table_models[i]->ID) {
 	    return 1;
 	}
@@ -116,6 +121,19 @@ MODEL *model_table_model_by_index (int i)
     } else {
 	return NULL;
     }
+}
+
+int model_table_position (const MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<n_models; i++) {
+	if (pmod == table_models[i]) {
+	    return i + 1;
+	}
+    }
+
+    return 0;
 }
 
 void clear_model_table (PRN *prn)
@@ -205,29 +223,45 @@ static int model_table_precheck (MODEL *pmod, int add_mode)
     return 0;
 }
 
-static int real_add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
+/* @pos will usually be 0, which means: add to end of model table array.
+   But when reconstituting a session, @pos may be a 1-based index of
+   the position within the array that this model should occupy.
+*/
+
+static int real_add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn)
 {
+    int i, n = (pos == 0)? n_models + 1 : pos;
+
+    fprintf(stderr, "real_add_to_model_table: pos = %d\n", pos);
+
     /* is the list started or not? */
     if (n_models == 0) {
-	table_models = mymalloc(sizeof *table_models);
+	table_models = mymalloc(n * sizeof *table_models);
 	if (table_models == NULL) {
 	    return 1;
 	}
-	n_models = 1;
-    } else {
+	for (i=0; i<n; i++) {
+	    table_models[i] = NULL;
+	}
+	n_models = n;
+    } else if (pos == 0 || pos > n_models) {
 	MODEL **mods;
 
-	n_models++;
-	mods = myrealloc(table_models, n_models * sizeof *mods);
+	mods = myrealloc(table_models, n * sizeof *mods);
 	if (mods == NULL) {
 	    clear_model_table(NULL);
 	    return 1;
 	}
 
+	for (i=n_models; i<n; i++) {
+	    table_models[i] = NULL;
+	}	
+
 	table_models = mods;
+	n_models = n;
     }
 
-    table_models[n_models - 1] = pmod;
+    table_models[n-1] = pmod;
 
     /* augment refcount so model won't get deleted */
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
@@ -244,14 +278,14 @@ static int real_add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
     return 0;
 }
 
-int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
+int add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn)
 {
     if (model_table_precheck(pmod, add_mode)) {
 	fprintf(stderr, "add_to_model_table: precheck failed\n");
 	return 1;
     }
 
-    return real_add_to_model_table(pmod, add_mode, prn);
+    return real_add_to_model_table(pmod, add_mode, pos, prn);
 }
 
 static int on_param_list (const char *pname)
@@ -407,19 +441,48 @@ static const char *get_pre_asts (double pval)
     return (pval >= 0.1)? "" : (pval >= 0.05)? "$\\,$" : "$\\,\\,$";
 }
 
+static void terminate_coeff_row (int namewidth, PRN *prn)
+{
+    if (tex_format(prn)) {
+	pputs(prn, "\\\\\n");
+    } else if (rtf_format(prn)) {
+	pputs(prn, "\\intbl \\row\n");
+	print_rtf_row_spec(prn, 1);
+	pputs(prn, "\\intbl ");
+    } else {
+	pputc(prn, '\n');
+	bufspace(namewidth + 2, prn);
+    }
+}
+
+static double modtab_get_pval (const MODEL *pmod, int k)
+{
+    double x = pmod->coeff[k];
+    double s = pmod->sderr[k];
+    double pval = NADBL;
+
+    if (!na(x) && !na(s)) {
+	pval = coeff_pval(pmod->ci, x / s, pmod->dfd);
+    }
+
+    return pval;
+}
+
 static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 {
-    int i, j, k;
     const MODEL *pmod;
-    char tmp[32];
+    char numstr[32], tmp[32];
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
+    int i, j, k;
 
     /* loop across all variables that appear in any model */
 
     for (i=0; i<n_params; i++) {
 	char *pname = pnames[i];
-	int first = 1;
+	int first_coeff = 1;
+	int first_se = 1;
+	int first_pval = 1;
 
 	if (tex) {
 	    tex_escape(tmp, pname);
@@ -432,6 +495,7 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 	}
 
 	/* print the coefficient estimates across a row */
+
 	for (j=0; j<n_models; j++) {
 	    pmod = table_models[j];
 	    if (pmod == NULL) {
@@ -439,39 +503,43 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 	    }
 	    if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
 		double x = screen_zero(pmod->coeff[k]);
-		double s = screen_zero(pmod->sderr[k]);
-		double pval;
-		char numstr[32];
-
-		if (floateq(s, 0.0)) {
-		    if (floateq(x, 0.0)) {
-			pval = 1.0;
-		    } else {
-			pval = 0.0001;
-		    }
-		} else {
-		    pval = coeff_pval(pmod->ci, x / s, pmod->dfd);
-		}
 
 		sprintf(numstr, "%#.*g", mt_figs, x);
 		gretl_fix_exponent(numstr);
 
-		if (tex) {
-		    if (x < 0) {
-			pprintf(prn, "& %s$-$%s%s ", get_pre_asts(pval),
-				numstr + 1, tex_get_asts(pval));
+		if (do_asts) {
+		    double pval = modtab_get_pval(pmod, k);
+
+		    if (tex) {
+			if (x < 0) {
+			    pprintf(prn, "& %s$-$%s%s ", get_pre_asts(pval),
+				    numstr + 1, tex_get_asts(pval));
+			} else {
+			    pprintf(prn, "& %s%s%s ", get_pre_asts(pval), 
+				    numstr, tex_get_asts(pval));
+			}
+		    } else if (rtf) {
+			pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval));
 		    } else {
-			pprintf(prn, "& %s%s%s ", get_pre_asts(pval), 
-				numstr, tex_get_asts(pval));
+			/* note: strlen(asts) = 2 */
+			pprintf(prn, "%*s%s", (first_coeff)? colwidth : colwidth - 2,
+				numstr, get_asts(pval));
 		    }
-		} else if (rtf) {
-		    pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval));
 		} else {
-		    /* note: strlen(asts) = 2 */
-		    pprintf(prn, "%*s%s", (first)? colwidth : colwidth - 2,
-			    numstr, get_asts(pval));
+		    /* not showing asterisks */
+		    if (tex) {
+			if (x < 0) {
+			    pprintf(prn, "& $-$%s ", numstr + 1);
+			} else {
+			    pprintf(prn, "& %s ", numstr);
+			}
+		    } else if (rtf) {
+			pprintf(prn, "\\qc %s\\cell ", numstr);
+		    } else {
+			pprintf(prn, "%*s", colwidth, numstr);
+		    }
 		}
-		first = 0;
+		first_coeff = 0;
 	    } else {
 		/* variable not present in this column */
 		if (tex) {
@@ -484,28 +552,16 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 	    }
 	}
 
-	/* terminate the coefficient row and start the next one,
-	   which holds standard errors or t-stats */
-	if (tex) {
-	    pputs(prn, "\\\\\n");
-	} else if (rtf) {
-	    pputs(prn, "\\intbl \\row\n");
-	    print_rtf_row_spec(prn, 1);
-	    pputs(prn, "\\intbl ");
-	} else {
-	    pputc(prn, '\n');
-	    bufspace(namewidth + 2, prn);
-	}
+	terminate_coeff_row(namewidth, prn);
 
 	/* print the t-stats or standard errors across a row */
-	first = 1;
+
 	for (j=0; j<n_models; j++) {
 	    pmod = table_models[j];
 	    if (pmod == NULL) {
 		continue;
 	    }
 	    if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
-		char numstr[32];
 		double val;
 
 		if (use_tstats) {
@@ -524,15 +580,15 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 			pprintf(prn, "& \\subsize{(%s)} ", numstr);
 		    }
 		} else if (rtf) {
-		    if (first) {
+		    if (first_se) {
 			pputs(prn, "\\qc \\cell ");
 		    }
 		    pprintf(prn, "\\qc (%s)\\cell ", numstr);
-		    first = 0;
 		} else {
 		    sprintf(tmp, "(%s)", numstr);
 		    pprintf(prn, "%*s", colwidth, tmp);
 		}
+		first_se = 0;
 	    } else {
 		/* variable not present in this column */
 		if (tex) {
@@ -541,6 +597,47 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 		    pputs(prn, "\\qc \\cell ");
 		} else {
 		    bufspace(colwidth, prn);
+		}
+	    }
+	}
+
+	if (do_pvals) {
+	    terminate_coeff_row(namewidth, prn);
+	    for (j=0; j<n_models; j++) {
+		pmod = table_models[j];
+		if (pmod == NULL) {
+		    continue;
+		}
+		if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
+		    double pval = modtab_get_pval(pmod, k);
+
+		    if (na(pval)) {
+			strcpy(numstr, "NA");
+		    } else {
+			sprintf(numstr, "%.*f", mt_figs, pval);
+		    }
+
+		    if (tex) {
+			pprintf(prn, "& \\subsize{[%s]} ", numstr);
+		    } else if (rtf) {
+			if (first_pval) {
+			    pputs(prn, "\\qc \\cell ");
+			}
+			pprintf(prn, "\\qc [%s]\\cell ", numstr);
+		    } else {
+			sprintf(tmp, "[%s]", numstr);
+			pprintf(prn, "%*s", colwidth, tmp);
+		    }
+		    first_pval = 0;
+		} else {
+		    /* variable not present in this column */
+		    if (tex) {
+			pputs(prn, "& ");
+		    } else if (rtf) {
+			pputs(prn, "\\qc \\cell ");
+		    } else {
+			bufspace(colwidth, prn);
+		    }
 		}
 	    }
 	}
@@ -783,9 +880,36 @@ static int get_colwidth (void)
     return (cw < maxlen + 2)? maxlen + 2 : cw;
 }
 
-static char *get_model_head (char *targ, const MODEL *pmod, int j,
-			     int fmt)
+static void print_estimator_strings (int colwidth, PRN *prn)
 {
+    const char *s;
+    char est[32];
+    int i;
+
+    pputc(prn, '\n');
+
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] != NULL) {
+	    s = short_estimator_string(table_models[i], prn);
+	    if (tex_format(prn)) {
+		strcpy(est, I_(s));
+		pprintf(prn, " & %s ", est);
+	    } else if (rtf_format(prn)) {
+		strcpy(est, I_(s));
+		pprintf(prn, "\\qc %s\\cell ", est);
+	    } else {
+		strcpy(est, _(s));
+		print_centered(est, colwidth, prn);
+	    }		
+	}
+    }
+}
+
+static void print_model_head (const MODEL *pmod, int j, int colwidth,
+			      PRN *prn)
+{
+    char targ[48];
+
     if (colheads == COLHEAD_ARABIC) {
 	sprintf(targ, "(%d)", j + 1);
     } else if (colheads == COLHEAD_ROMAN) {
@@ -797,7 +921,7 @@ static char *get_model_head (char *targ, const MODEL *pmod, int j,
 	sprintf(targ, "%s", R[j]);
     } else if (colheads == COLHEAD_ALPHA) {
 	sprintf(targ, "%c", 'A' + j);
-    } else if (fmt == GRETL_FORMAT_TEX) {
+    } else if (tex_format(prn)) {
 	if (pmod->name != NULL) {
 	    char tmp[32];
 
@@ -808,7 +932,7 @@ static char *get_model_head (char *targ, const MODEL *pmod, int j,
 	} else {
 	    sprintf(targ, I_("Model %d"), pmod->ID);
 	}
-    } else if (fmt == GRETL_FORMAT_RTF) {
+    } else if (rtf_format(prn)) {
 	if (pmod->name != NULL) {
 	    *targ = '\0';
 	    strncat(targ, pmod->name, 31);
@@ -824,17 +948,32 @@ static char *get_model_head (char *targ, const MODEL *pmod, int j,
 	}
     }
 
-    return targ;
+    if (tex_format(prn)) {
+	pprintf(prn, " & %s ", targ);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, "\\qc %s\\cell ", targ);
+    } else {
+	print_centered(targ, colwidth, prn);
+    }
+}
+
+static void print_column_heads (int colwidth, PRN *prn)
+{
+    int i, j = 0;
+
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] != NULL) {
+	    print_model_head(table_models[i], j++, colwidth, prn);
+	}
+    }
 }
 
 static void plain_print_model_table (PRN *prn)
 {
     int namelen = max_namelen();
     int colwidth = get_colwidth();
+    int ci = common_estimator();
     int binary = 0;
-    int i, j, ci;
-
-    ci = common_estimator();
 
     if (ci > 0) {
 	/* all models use same estimation procedure */
@@ -847,31 +986,12 @@ static void plain_print_model_table (PRN *prn)
 
     pputc(prn, '\n');
     bufspace(namelen + 4, prn);
-
-    j = 0;
-    for (i=0; i<n_models; i++) {
-	char modhd[32];
-
-	if (table_models[i] != NULL) {
-	    get_model_head(modhd, table_models[i], j++, GRETL_FORMAT_TXT);
-	    print_centered(modhd, colwidth, prn);
-	}
-    }
-
+    print_column_heads(colwidth, prn);
     pputc(prn, '\n');
     
     if (ci == 0) {
-	const char *s;
-	char est[32];	
-
 	bufspace(namelen + 4, prn);
-	for (i=0; i<n_models; i++) {
-	    if (table_models[i] != NULL) {
-		s = short_estimator_string(table_models[i], prn);
-		strcpy(est, _(s));
-		print_centered(est, colwidth, prn);
-	    }
-	}
+	print_estimator_strings(colwidth, prn);
 	pputc(prn, '\n');
     }
 
@@ -886,8 +1006,14 @@ static void plain_print_model_table (PRN *prn)
 	pprintf(prn, "%s\n", _("Standard errors in parentheses"));
     }
 
-    pprintf(prn, "%s\n", _("* indicates significance at the 10 percent level"));
-    pprintf(prn, "%s\n", _("** indicates significance at the 5 percent level"));
+    if (do_pvals) {
+	pprintf(prn, "%s\n", _("p-values in brackets"));
+    }
+
+    if (do_asts) {
+	pprintf(prn, "%s\n", _("* indicates significance at the 10 percent level"));
+	pprintf(prn, "%s\n", _("** indicates significance at the 5 percent level"));
+    }
    
     if (binary) {
 	pprintf(prn, "%s\n", _("For logit and probit, R-squared is "
@@ -930,7 +1056,7 @@ static int tex_print_model_table (PRN *prn)
 {
     int binary = 0;
     char tmp[32];
-    int i, j, ci;
+    int i, ci;
 
     if (model_table_is_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
@@ -958,37 +1084,19 @@ static int tex_print_model_table (PRN *prn)
 
     pputs(prn, "\\vspace{1em}\n\n");
     pputs(prn, "\\begin{longtable}{l");
-    for (j=0; j<n_models; j++) {
-	pputs(prn, "c");
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] != NULL) {
+	    pputc(prn, 'c');
+	}
     }
     pputs(prn, "}\n");
 
-    j = 0;
-    for (i=0; i<n_models; i++) {
-	char modhd[48];
-
-	if (table_models[i] != NULL) {
-	    get_model_head(modhd, table_models[i], j++, GRETL_FORMAT_TEX);
-	    pprintf(prn, " & %s ", modhd);
-	}
-    }
-
+    print_column_heads(0, prn);
     pputs(prn, "\\\\ ");
     
     if (ci == 0) {
-	const char *s;
-	char est[32];
-
 	pputc(prn, '\n');
-
-	for (i=0; i<n_models; i++) {
-	    if (table_models[i] != NULL) {
-		s = short_estimator_string(table_models[i], prn);
-		strcpy(est, I_(s));
-		pprintf(prn, " & %s ", est);
-	    }
-	}
-
+	print_estimator_strings(0, prn);
 	pputs(prn, "\\\\ ");
     }
 
@@ -1006,10 +1114,16 @@ static int tex_print_model_table (PRN *prn)
 	pprintf(prn, "%s\\\\\n", I_("Standard errors in parentheses"));
     }
 
-    pprintf(prn, "{}%s\\\\\n", 
-	    I_("* indicates significance at the 10 percent level"));
-    pprintf(prn, "{}%s\\\\\n", 
-	    I_("** indicates significance at the 5 percent level"));
+    if (do_pvals) {
+	pprintf(prn, "%s\\\\\n", I_("$p$-values in brackets"));
+    }
+
+    if (do_asts) {
+	pprintf(prn, "{}%s\\\\\n", 
+		I_("* indicates significance at the 10 percent level"));
+	pprintf(prn, "{}%s\\\\\n", 
+		I_("** indicates significance at the 5 percent level"));
+    }
 
     if (binary) {
 	pprintf(prn, "%s\\\\\n", I_("For logit and probit, $R^2$ is "
@@ -1036,8 +1150,7 @@ static void print_rtf_row_spec (PRN *prn, int tall)
 
 static int rtf_print_model_table (PRN *prn)
 {
-    int binary = 0;
-    int i, j, ci;
+    int ci, binary = 0;
 
     if (model_table_is_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
@@ -1047,8 +1160,6 @@ static int rtf_print_model_table (PRN *prn)
     if (make_full_param_list()) {
 	return 1;
     }
-
-    gretl_print_set_format(prn, GRETL_FORMAT_RTF);
 
     ci = common_estimator();
 
@@ -1067,33 +1178,12 @@ static int rtf_print_model_table (PRN *prn)
 
     print_rtf_row_spec(prn, 1);
     pputs(prn, "\\intbl \\qc \\cell ");
-
-    j = 0;
-    for (i=0; i<n_models; i++) {
-	char modhd[32];
-
-	if (table_models[i] != NULL) {
-	    get_model_head(modhd, table_models[i], j++, GRETL_FORMAT_RTF);
-	    pprintf(prn, "\\qc %s\\cell ", modhd);
-	}
-    }
-
+    print_column_heads(0, prn);
     pputs(prn, "\\intbl \\row\n");
     
     if (ci == 0) {
-	const char *s;
-	char est[32];
-
 	pputs(prn, "\\intbl \\qc \\cell ");
-
-	for (i=0; i<n_models; i++) {
-	    if (table_models[i] != NULL) {
-		s = short_estimator_string(table_models[i], prn);
-		strcpy(est, I_(s));
-		pprintf(prn, "\\qc %s\\cell ", est);
-	    }
-	}
-
+	print_estimator_strings(0, prn);
 	pputs(prn, "\\intbl \\row\n");
     }
 
@@ -1108,10 +1198,16 @@ static int rtf_print_model_table (PRN *prn)
 	pprintf(prn, "\\par \\qc %s\n", I_("Standard errors in parentheses"));
     }
 
-    pprintf(prn, "\\par \\qc %s\n", 
-	    I_("* indicates significance at the 10 percent level"));
-    pprintf(prn, "\\par \\qc %s\n", 
-	    I_("** indicates significance at the 5 percent level"));
+    if (do_pvals) {
+	pprintf(prn, "\\par \\qc %s\n", I_("p-values in brackets"));
+    }
+
+    if (do_asts) {
+	pprintf(prn, "\\par \\qc %s\n", 
+		I_("* indicates significance at the 10 percent level"));
+	pprintf(prn, "\\par \\qc %s\n", 
+		I_("** indicates significance at the 5 percent level"));
+    }
 
     if (binary) {
 	pprintf(prn, "\\par \\qc %s\n", I_("For logit and probit, "
@@ -1165,7 +1261,7 @@ static int cli_modeltab_add (PRN *prn)
 	}
 
 	if (!err) {
-	    err = real_add_to_model_table(cpy, MODEL_ADD_BY_CMD, prn);
+	    err = real_add_to_model_table(cpy, MODEL_ADD_BY_CMD, 0, prn);
 	}
 
 	if (err && freeit) {
@@ -1205,15 +1301,20 @@ void format_model_table (windata_t *vwin)
 {
     int colhead_opt = colheads;
     int se_opt = use_tstats;
+    int pv_opt = do_pvals;
+    int ast_opt = do_asts;
     int figs = mt_figs;
     int resp;
 
-    resp = model_table_dialog(&colhead_opt, &se_opt, &figs);
+    resp = model_table_dialog(&colhead_opt, &se_opt, &pv_opt, &ast_opt,
+			      &figs);
+
     if (resp == GRETL_CANCEL) {
 	return;
     }
 
-    if (colhead_opt == colheads && se_opt == use_tstats && figs == mt_figs) {
+    if (colhead_opt == colheads && se_opt == use_tstats && 
+	pv_opt == do_pvals && ast_opt == do_asts && figs == mt_figs) {
 	/* no-op */
 	return;
     } else {
@@ -1223,6 +1324,8 @@ void format_model_table (windata_t *vwin)
 
 	colheads = colhead_opt;
 	use_tstats = se_opt;
+	do_pvals = pv_opt;
+	do_asts = ast_opt;
 	mt_figs = figs;
 
 	if (bufopen(&prn)) {

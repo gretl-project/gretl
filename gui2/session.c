@@ -2725,7 +2725,7 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	if (obj->sort == GRETL_OBJ_EQN) {
 	    SESSION_MODEL *mod = (SESSION_MODEL *) obj->data;
 
-	    add_to_model_table(mod->ptr, MODEL_ADD_FROM_MENU, NULL);
+	    add_to_model_table(mod->ptr, MODEL_ADD_FROM_MENU, 0, NULL);
 	}
     } else if (!strcmp(item, _("Clear"))) {
 	if (obj->sort == GRETL_OBJ_MODTAB) {
@@ -2778,7 +2778,7 @@ session_data_received (GtkWidget *widget,
 	MODEL **ppmod = (MODEL **) data->data;
 
 	if (ppmod != NULL) {
-	    add_to_model_table(*ppmod, MODEL_ADD_BY_DRAG, NULL);
+	    add_to_model_table(*ppmod, MODEL_ADD_BY_DRAG, 0, NULL);
 	}
     } else if (info == GRETL_GRAPH_FILE && data != NULL) {
 	gchar *fname = (gchar *) data->data;
