@@ -395,7 +395,7 @@ static void alpha_button_callback (GtkToggleButton *b, double *x)
 static void reformat_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == VIEW_MODELTABLE) {
-	model_table_dialog(vwin);
+	format_model_table(vwin);
     } else {
 	series_view_format_dialog(w, vwin);
     }

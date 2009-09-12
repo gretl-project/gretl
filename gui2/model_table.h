@@ -36,7 +36,7 @@ int special_print_model_table (PRN *prn);
 
 int modeltab_parse_line (const char *line, PRN *prn);
 
-void model_table_dialog (windata_t *vwin);
+void format_model_table (windata_t *vwin);
 
 int in_model_table (const MODEL *pmod);
 

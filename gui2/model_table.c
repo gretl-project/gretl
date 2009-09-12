@@ -31,6 +31,7 @@ static int n_models;
 static char **pnames;
 static int n_params;
 static int use_tstats;
+static int colheads;
 static int depvarnum;
 
 static int mt_figs = 4;
@@ -39,6 +40,13 @@ static void print_rtf_row_spec (PRN *prn, int tall);
 
 #define MAX_PORTRAIT_MODELS 6
 #define MAX_TABLE_MODELS 12
+
+enum {
+    COLHEAD_ARABIC,
+    COLHEAD_ROMAN,
+    COLHEAD_ALPHA,
+    COLHEAD_NAMES
+};
 
 static void mtable_errmsg (char *msg, int gui)
 {
@@ -477,7 +485,7 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 	}
 
 	/* terminate the coefficient row and start the next one,
-	   which holds standard errors */
+	   which holds standard errors or t-stats */
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	} else if (rtf) {
@@ -743,23 +751,27 @@ static int max_namelen (void)
 
 static int get_colwidth (void)
 {
-    const MODEL *pmod;
-    int i, len, maxlen = 0;
+    int maxlen = 0;
     int cw = 13;
 
-    for (i=0; i<n_models; i++) {
-	pmod = table_models[i];
-	if (pmod != NULL) {
-	    if (pmod->name != NULL) {
-		len = strlen(pmod->name);
-	    } else {
-		char tmp[32];
+    if (colheads == COLHEAD_NAMES) {
+	const MODEL *pmod;
+	int i, len;
 
-		sprintf(tmp, _("Model %d"), pmod->ID);
-		len = strlen(tmp);
-	    }
-	    if (len > maxlen) {
-		maxlen = (len > 31)? 31 : len;
+	for (i=0; i<n_models; i++) {
+	    pmod = table_models[i];
+	    if (pmod != NULL) {
+		if (pmod->name != NULL) {
+		    len = strlen(pmod->name);
+		} else {
+		    char tmp[32];
+
+		    sprintf(tmp, _("Model %d"), pmod->ID);
+		    len = strlen(tmp);
+		}
+		if (len > maxlen) {
+		    maxlen = (len > 31)? 31 : len;
+		}
 	    }
 	}
     }
@@ -771,12 +783,56 @@ static int get_colwidth (void)
     return (cw < maxlen + 2)? maxlen + 2 : cw;
 }
 
+static char *get_model_head (char *targ, const MODEL *pmod, int j,
+			     int fmt)
+{
+    if (colheads == COLHEAD_ARABIC) {
+	sprintf(targ, "(%d)", j + 1);
+    } else if (colheads == COLHEAD_ROMAN) {
+	const char *R[] = {
+	    "I", "II", "III", "IV", "V", "VI", 
+	    "VII", "VIII", "IX", "X", "XI", "XII"
+	};
+
+	sprintf(targ, "%s", R[j]);
+    } else if (colheads == COLHEAD_ALPHA) {
+	sprintf(targ, "%c", 'A' + j);
+    } else if (fmt == GRETL_FORMAT_TEX) {
+	if (pmod->name != NULL) {
+	    char tmp[32];
+
+	    *targ = '\0';
+	    strncat(targ, pmod->name, 16);
+	    tex_escape(tmp, targ);
+	    strcpy(targ, tmp);
+	} else {
+	    sprintf(targ, I_("Model %d"), pmod->ID);
+	}
+    } else if (fmt == GRETL_FORMAT_RTF) {
+	if (pmod->name != NULL) {
+	    *targ = '\0';
+	    strncat(targ, pmod->name, 31);
+	} else {
+	    sprintf(targ, I_("Model %d"), pmod->ID);
+	}	
+    } else {
+	if (pmod->name != NULL) {
+	    *targ = '\0';
+	    strncat(targ, pmod->name, 31);
+	} else {
+	    sprintf(targ, _("Model %d"), pmod->ID);
+	}
+    }
+
+    return targ;
+}
+
 static void plain_print_model_table (PRN *prn)
 {
     int namelen = max_namelen();
     int colwidth = get_colwidth();
     int binary = 0;
-    int j, ci;
+    int i, j, ci;
 
     ci = common_estimator();
 
@@ -792,30 +848,27 @@ static void plain_print_model_table (PRN *prn)
     pputc(prn, '\n');
     bufspace(namelen + 4, prn);
 
-    for (j=0; j<n_models; j++) {
+    j = 0;
+    for (i=0; i<n_models; i++) {
 	char modhd[32];
 
-	if (table_models[j] == NULL) {
-	    continue;
+	if (table_models[i] != NULL) {
+	    get_model_head(modhd, table_models[i], j++, GRETL_FORMAT_TXT);
+	    print_centered(modhd, colwidth, prn);
 	}
-	if (table_models[j]->name != NULL) {
-	    *modhd = '\0';
-	    strncat(modhd, table_models[j]->name, 31);
-	} else {
-	    sprintf(modhd, _("Model %d"), table_models[j]->ID);
-	}
-	print_centered(modhd, colwidth, prn);
     }
+
     pputc(prn, '\n');
     
     if (ci == 0) {
+	const char *s;
 	char est[32];	
 
 	bufspace(namelen + 4, prn);
-	for (j=0; j<n_models; j++) {
-	    if (table_models[j] != NULL) {
-		strcpy(est, 
-		       _(short_estimator_string(table_models[j], prn)));
+	for (i=0; i<n_models; i++) {
+	    if (table_models[i] != NULL) {
+		s = short_estimator_string(table_models[i], prn);
+		strcpy(est, _(s));
 		print_centered(est, colwidth, prn);
 	    }
 	}
@@ -875,9 +928,9 @@ int display_model_table (int gui)
 
 static int tex_print_model_table (PRN *prn)
 {
-    int j, ci;
     int binary = 0;
     char tmp[32];
+    int i, j, ci;
 
     if (model_table_is_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
@@ -910,37 +963,32 @@ static int tex_print_model_table (PRN *prn)
     }
     pputs(prn, "}\n");
 
-    for (j=0; j<n_models; j++) {
+    j = 0;
+    for (i=0; i<n_models; i++) {
 	char modhd[48];
 
-	if (table_models[j] == NULL) {
-	    continue;
+	if (table_models[i] != NULL) {
+	    get_model_head(modhd, table_models[i], j++, GRETL_FORMAT_TEX);
+	    pprintf(prn, " & %s ", modhd);
 	}
-	if (table_models[j]->name != NULL) {
-	    *modhd = '\0';
-	    strncat(modhd, table_models[j]->name, 16);
-	    tex_escape(tmp, modhd);
-	    strcpy(modhd, tmp);
-	} else {
-	    sprintf(modhd, I_("Model %d"), table_models[j]->ID);
-	}
-	pprintf(prn, " & %s ", modhd);
     }
+
     pputs(prn, "\\\\ ");
     
     if (ci == 0) {
+	const char *s;
 	char est[32];
 
 	pputc(prn, '\n');
 
-	for (j=0; j<n_models; j++) {
-	    if (table_models[j] == NULL) {
-		continue;
+	for (i=0; i<n_models; i++) {
+	    if (table_models[i] != NULL) {
+		s = short_estimator_string(table_models[i], prn);
+		strcpy(est, I_(s));
+		pprintf(prn, " & %s ", est);
 	    }
-	    strcpy(est, 
-		   I_(short_estimator_string(table_models[j], prn)));
-	    pprintf(prn, " & %s ", est);
 	}
+
 	pputs(prn, "\\\\ ");
     }
 
@@ -988,8 +1036,8 @@ static void print_rtf_row_spec (PRN *prn, int tall)
 
 static int rtf_print_model_table (PRN *prn)
 {
-    int j, ci;
     int binary = 0;
+    int i, j, ci;
 
     if (model_table_is_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
@@ -1017,37 +1065,35 @@ static int rtf_print_model_table (PRN *prn)
     pprintf(prn, "\\par \\qc %s: %s\n\\par\n\\par\n{", 
 	    I_("Dependent variable"), datainfo->varname[depvarnum]);
 
-    /* RTF row stuff */
     print_rtf_row_spec(prn, 1);
-
     pputs(prn, "\\intbl \\qc \\cell ");
-    for (j=0; j<n_models; j++) {
+
+    j = 0;
+    for (i=0; i<n_models; i++) {
 	char modhd[32];
 
-	if (table_models[j] == NULL) {
-	    continue;
+	if (table_models[i] != NULL) {
+	    get_model_head(modhd, table_models[i], j++, GRETL_FORMAT_RTF);
+	    pprintf(prn, "\\qc %s\\cell ", modhd);
 	}
-	if (table_models[j]->name != NULL) {
-	    *modhd = '\0';
-	    strncat(modhd, table_models[j]->name, 31);
-	} else {
-	    sprintf(modhd, I_("Model %d"), table_models[j]->ID);
-	}
-	pprintf(prn, "\\qc %s\\cell ", modhd);
     }
+
     pputs(prn, "\\intbl \\row\n");
     
     if (ci == 0) {
+	const char *s;
 	char est[32];
 
 	pputs(prn, "\\intbl \\qc \\cell ");
 
-	for (j=0; j<n_models; j++) {
-	    if (table_models[j] == NULL) continue;
-	    strcpy(est, 
-		   I_(short_estimator_string(table_models[j], prn)));
-	    pprintf(prn, "\\qc %s\\cell ", est);
+	for (i=0; i<n_models; i++) {
+	    if (table_models[i] != NULL) {
+		s = short_estimator_string(table_models[i], prn);
+		strcpy(est, I_(s));
+		pprintf(prn, "\\qc %s\\cell ", est);
+	    }
 	}
+
 	pputs(prn, "\\intbl \\row\n");
     }
 
@@ -1155,38 +1201,33 @@ int modeltab_parse_line (const char *line, PRN *prn)
     return err;
 }
 
-void model_table_dialog (windata_t *vwin)
+void format_model_table (windata_t *vwin)
 {
-    const char *opts[] = {
-	N_("standard errors in parentheses"),
-	N_("t-statistics in parentheses")
-    };
-    PRN *prn;
+    int colhead_opt = colheads;
+    int se_opt = use_tstats;
     int figs = mt_figs;
-    int opt;
+    int resp;
 
-    opt = radio_dialog_with_spinner(_("model table options"), 
-				    opts, 2, use_tstats, 0,
-				    &figs, _("significant figures"), 
-				    2, 6);
-    if (opt < 0) {
-	/* canceled */
+    resp = model_table_dialog(&colhead_opt, &se_opt, &figs);
+    if (resp == GRETL_CANCEL) {
 	return;
     }
 
-    if (use_tstats == opt && figs == mt_figs) {
-	/* no change */
-	return;
-    }
-
-    use_tstats = opt;
-    mt_figs = figs;
-
-    if (bufopen(&prn)) {
+    if (colhead_opt == colheads && se_opt == use_tstats && figs == mt_figs) {
+	/* no-op */
 	return;
     } else {
 	GtkTextBuffer *buf;
 	const char *newtext;
+	PRN *prn;
+
+	colheads = colhead_opt;
+	use_tstats = se_opt;
+	mt_figs = figs;
+
+	if (bufopen(&prn)) {
+	    return;
+	}
 
 	plain_print_model_table(prn);
 	newtext = gretl_print_get_buffer(prn);

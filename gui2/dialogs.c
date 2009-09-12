@@ -46,6 +46,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int hcode, gpointer p);
 static GtkWidget *option_checkbox (int *checkvar, const char *checktxt);
 static void set_radio_opt (GtkWidget *w, int *opt);
+static GtkWidget *dialog_blurb_box (const char *text);
 
 int gretl_all_done (void)
 {
@@ -114,15 +115,73 @@ gint yes_no_dialog (const char *title, const char *msg, int cancel)
     }
 }
 
+static void toggle_session_prompt (GtkToggleButton *b)
+{
+    set_session_prompt(button_is_active(b));
+}
+
+static void set_ret_no (GtkButton *b, int *ret)
+{
+    *ret = GRETL_NO;
+}
+
+static int save_session_prompt (void)
+{
+    const char *msg = N_("Do you want to save this gretl session?");
+    const char *check_msg = N_("Show this prompt whenever there are unsaved changes");
+    GtkWidget *dialog;
+    GtkWidget *vbox, *hbox, *tmp, *b;
+    int ret = GRETL_YES;
+
+    dialog = gretl_dialog_new("gretl", NULL, GRETL_DLG_BLOCK);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    /* label */
+    tmp = dialog_blurb_box(_(msg));
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+
+    /* check button */
+    b = gtk_check_button_new_with_label(_(check_msg));
+    gtk_box_pack_start(GTK_BOX(vbox), b, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), session_prompt_on());
+    g_signal_connect(G_OBJECT(b), "clicked",
+		     G_CALLBACK(toggle_session_prompt), NULL);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    /* "Yes" button */
+    b = gtk_button_new_from_stock(GTK_STOCK_YES);
+    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(b), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+    GTK_WIDGET_SET_FLAGS(b, GTK_CAN_DEFAULT);
+    gtk_widget_grab_default(b);
+    gtk_widget_grab_focus(b);
+
+    /* "No" button */
+    b = gtk_button_new_from_stock(GTK_STOCK_NO);
+    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(b), "clicked", 
+		     G_CALLBACK(set_ret_no), &ret);
+    g_signal_connect(G_OBJECT(b), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+
+    /* Cancel button */
+    cancel_options_button(hbox, dialog, &ret);
+
+    /* "Help" button */
+    context_help_button(hbox, SAVE_SESSION);
+
+    gtk_widget_show_all(dialog);
+
+    return ret;
+}
+
 gboolean exit_check (void) 
 {
-    const char save_as_msg[] = {
-	N_("Do you want to save this gretl session?")
-    };
-    const char save_msg[] = {
-	N_("Do you want to save the changes you made\n"
-	   "to this session?")
-    };
     int resp;
 
     /* note: returning FALSE from here allows the exit to proceed;
@@ -136,17 +195,18 @@ gboolean exit_check (void)
 
     if (session_is_modified()) {
 	/* give the user the chance to save an unsaved session */
-	const char *msg;
+	const char *save_msg = N_("Do you want to save the changes you made\n"
+				  "to this session?");
 	int as_is = 0;
 
 	if (session_file_is_open()) {
-	    msg = save_msg;
 	    as_is = 1;
+	    resp = yes_no_dialog("gretl", _(save_msg), 1);
+	} else if (session_prompt_on()) {
+	    resp = save_session_prompt();
 	} else {
-	    msg = save_as_msg;
+	    resp = GRETL_NO;
 	}
-
-	resp = yes_no_dialog("gretl", _(msg), 1);
 
 	if (resp == GRETL_YES) {
 	    if (as_is) {
@@ -2883,8 +2943,7 @@ int real_radio_dialog (const char *title, const char *label,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     if (label != NULL) {
-	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-	
+	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 	gtk_widget_show(hbox);
 	tmp = gtk_label_new(label);
@@ -3500,6 +3559,106 @@ int freq_dialog (const char *title, const char *blurb,
     if (nbins != NULL) {
 	context_help_button(hbox, FREQ);
     }
+
+    gtk_widget_show_all(dialog);
+
+    return ret;
+}
+
+/* Sets option indices for column headings type and standard errors
+   versus t-stats, also the number of significant figures to show.
+   Returns GRETL_CANCEL on cancel, otherwise 0.  
+*/
+
+int model_table_dialog (int *colhead_opt, int *se_opt, int *figs)
+{
+    static char *col_opts[] = {
+	"(1), (2), (3), ...",
+	"I, II, III, ...",
+	"A, B, C, ...",
+	N_("Use model names")
+    };
+    const char *se_opts[] = {
+	N_("standard errors in parentheses"),
+	N_("t-statistics in parentheses")
+    };
+    GtkWidget *dialog;
+    GtkWidget *vbox, *hbox, *tmp;
+    GtkWidget *button = NULL;
+    GSList *group = NULL;
+    int i, ret = 0;
+
+    if (maybe_raise_dialog()) {
+	return ret;
+    }
+
+    dialog = gretl_dialog_new("gretl", NULL, GRETL_DLG_BLOCK);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    tmp = gtk_label_new(_("model table options"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    vbox_add_hsep(vbox);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    tmp = gtk_label_new(_("column headings"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+
+    /* column heading options */
+    for (i=0; i<4; i++) {
+	if (i == 3) {
+	    button = gtk_radio_button_new_with_label(group, _(col_opts[i]));
+	} else {
+	    button = gtk_radio_button_new_with_label(group, col_opts[i]);
+	}
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	if (i == *colhead_opt) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	}
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), colhead_opt);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(i));
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
+
+    vbox_add_hsep(vbox);
+
+    /* standard error / t-ratios option */
+    group = NULL;
+    for (i=0; i<2; i++) {
+	button = gtk_radio_button_new_with_label(group, _(se_opts[i]));
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	if (i == *se_opt) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	}
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), se_opt);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(i));
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    } 
+
+    vbox_add_hsep(vbox);
+
+    /* significant figs spinner */
+    tmp = option_spinbox(figs, _("significant figures"), 2, 6, 0, NULL);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    /* "Cancel" button */
+    cancel_options_button(hbox, dialog, &ret);
+
+    /* "OK" button */
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), dialog);
+    gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dialog);
 

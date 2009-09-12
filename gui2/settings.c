@@ -83,6 +83,7 @@ static int usecwd;
 static int shellok;
 static int manpref;
 static int autoicon = 1;
+static int session_prompt = 1;
 char gpcolors[64];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -162,6 +163,8 @@ RCVAR rc_vars[] = {
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "autoicon", N_("Show icon view automatically"), NULL, &autoicon, 
+      BOOLSET, 0, TAB_MAIN, NULL },
+    { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt, 
       BOOLSET, 0, TAB_MAIN, NULL },
 #ifdef USE_OX
     { "oxsupport", N_("Enable Ox support"), NULL, &ox_support, 
@@ -304,6 +307,16 @@ int autoicon_on (void)
     } else {
 	return 0;
     }
+}
+
+int session_prompt_on (void)
+{
+    return session_prompt;
+}
+
+void set_session_prompt (int val)
+{
+    session_prompt = val;
 }
 
 static gretlopt set_paths_opt = OPT_X;

@@ -354,8 +354,7 @@
 
   </command>
 
-  <command name="append" section="Dataset" 
-    label="Append data" context="cli">
+  <command name="append" section="Dataset" label="Append data" context="cli">
 
     <usage>
       <arguments>
@@ -3928,8 +3927,7 @@
     </description>
   </command>   
  
-  <command name="hausman" section="Tests"
-    label="Panel diagnostics">
+  <command name="hausman" section="Tests" label="Panel diagnostics">
 
     <description>
       <para>
@@ -4706,8 +4704,7 @@
 
   </command>
 
-  <command name="leverage" section="Tests"
-    label="Influential observations">
+  <command name="leverage" section="Tests" label="Influential observations">
 
     <usage>
       <options>
@@ -4779,8 +4776,7 @@
 
   </command>
 
-  <command name="logistic" section="Estimation"
-    label="Logistic regression">
+  <command name="logistic" section="Estimation" label="Logistic regression">
 
     <usage>
       <arguments>
@@ -5036,8 +5032,7 @@
 
   </command>
 
-  <command name="mahal" section="Statistics" 
-    label="Mahalanobis distances">
+  <command name="mahal" section="Statistics" label="Mahalanobis distances">
 
     <usage>
       <arguments>
@@ -5124,8 +5119,7 @@
     </description>
   </command>
 
-  <command name="meantest" section="Tests"
-    label="Difference of means">
+  <command name="meantest" section="Tests" label="Difference of means">
 
     <usage>
       <arguments>
@@ -5389,8 +5383,7 @@
 
   </command>
 
-  <command name="modeltab" section="Utilities"
-    label="The model table">
+  <command name="modeltab" section="Utilities" label="The model table">
 
     <usage>
       <arguments>
@@ -5648,8 +5641,7 @@
 
   </command>
 
-  <command name="mpols" section="Estimation"
-    label="Multiple-precision OLS">
+  <command name="mpols" section="Estimation" label="Multiple-precision OLS">
 
     <usage>
       <arguments>
@@ -5900,8 +5892,7 @@
 
   </command>
 
-  <command name="normtest" section="Tests"
-    label="Normality test">
+  <command name="normtest" section="Tests" label="Normality test">
 
     <usage>
       <arguments>
@@ -6002,8 +5993,7 @@
 
   </command>
 
-  <command name="ols" section="Estimation"
-    label="Ordinary Least Squares">
+  <command name="ols" section="Estimation" label="Ordinary Least Squares">
 
     <usage>
       <arguments>
@@ -7683,8 +7673,7 @@
 
   </command>
 
-  <command name="rmplot" section="Graphs"
-    label="Range-mean plot">
+  <command name="rmplot" section="Graphs" label="Range-mean plot">
 
     <usage>
       <arguments>
@@ -7866,6 +7855,33 @@
     </description>
   </command>
 
+  <command name="save-session" section="Utilities" 
+    label="Save this gretl session?" context="gui">
+    <description>
+      <para>
+	If you choose Yes here, gretl will write a file containing a
+	<quote>snapshot</quote> of your current session, including a copy of
+	the working dataset along with any models, graphs or other objects
+	that you have saved <quote>as icons</quote>.  You can re-open this
+	file later to recreate the state of gretl as of the time you quit the
+	session (see the <quote>File/Session files</quote> menu).
+      </para>
+      <para>
+	If you mostly work with gretl using command scripts (which we
+	recommend for <quote>serious</quote> econometric work) you
+	probably don't need to save the session, but you should be
+	sure to save any changes to your script that you wish to keep.
+	You may also want to save any changes to your dataset, unless
+	these are of a sort that can easily be recreated by running
+	a script.
+      </para>
+      <para>
+	If you work with scripts and don't care to be prompted to
+	save your session on exit, uncheck the tick box in the
+	save session dialog.
+      </para>
+    </description>
+  </command>
 
   <command name="scatters" section="Graphs"
     label="Multiple pairwise graphs">

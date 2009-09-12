@@ -132,6 +132,7 @@ static struct gui_help_item gui_help_items[] = {
     { DFGLS,          "dfgls" },
     { GPT_ADDLINE,    "addline" }, 
     { GPT_CURVE,      "curve" }, 
+    { SAVE_SESSION,   "save-session" },
     { -1,             NULL },
 };
 

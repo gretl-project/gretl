@@ -23,6 +23,10 @@ int get_manpref (void);
 
 int autoicon_on (void);
 
+int session_prompt_on (void);
+
+void set_session_prompt (int val);
+
 void write_rc (void);
 
 void dump_rc (void);
