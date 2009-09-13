@@ -14,13 +14,14 @@ version 1.8.5, in progress
 - Fix bug in corrgm() function when series the input
   series have missing values 
 - Add --to-file and --from-file options to "set" command
-- Refinements for the "model table"
+- Several refinements for the GUI "model table"
 - Fix bug: error message when trying to save the dataset,
   in the context of a saved-then-reopened session file
 - Fix bug: in some circumstances model tests failed to
   respect the sample used when estimating the model, if the
   sample had since been changed 
-- win32: update GTK+ stack to 2.16.6
+- win32: update GTK+ stack to 2.16.6; update gnuplot to
+  CVS as of 2009-09-13
   
 8/28/2009 version 1.8.4
 - Fix breakage in GUI interface for calling user-defined
