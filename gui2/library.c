@@ -6494,7 +6494,8 @@ static void maybe_shrink_dataset (const char *savename, int sublist)
     }	
 }
 
-#define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | OPT_C | OPT_D | OPT_J))
+#define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | \
+                             OPT_C | OPT_D | OPT_J | OPT_X))
 
 /* returning 1 here means that we'll automatically overwrite
    a file of the same name; returning 0 means we'll query
@@ -6520,7 +6521,10 @@ int do_store (char *savename, gretlopt opt)
     /* "storelist" is a global string */
     mylist = (storelist == NULL)? "" : storelist;
 
-    if (opt != OPT_NONE) { 
+    if (opt & OPT_X) {
+	/* session: exporting gdt */
+	tmp = g_strdup_printf("store '%s' %s", savename, mylist);
+    } else if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
 	const char *flagstr = print_flags(opt, STORE);
 

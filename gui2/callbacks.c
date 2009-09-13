@@ -251,7 +251,7 @@ void file_save (windata_t *vwin, int ci)
 static int fsave_code (const gchar *s)
 {
     if (!strcmp(s, "SaveAsGdt"))
-	return SAVE_DATA;
+	return SAVE_DATA_AS;
     if (!strcmp(s, "SaveAsDb"))
 	return SAVE_DBDATA;
     if (!strcmp(s, "ExportCSV"))

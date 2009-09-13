@@ -1663,6 +1663,9 @@ int save_session (char *fname)
     int len, err = 0;
     GError *gerr = NULL;
 
+    fprintf(stderr, "save_session: fname='%s', sessionfile='%s'\n",
+	    fname, sessionfile);
+
     if (fname == NULL) {
 	/* saving session 'as is' */
 	fname = sessionfile;
@@ -1718,10 +1721,13 @@ int save_session (char *fname)
 	g_error_free(gerr);
     } else {
 	mkfilelist(FILE_LIST_SESSION, fname);
-	mark_session_saved();
 	if (fname != sessionfile) {
+	    session_name_from_session_file(session.name, fname);
 	    strcpy(sessionfile, fname);
+	    data_status |= SESSION_DATA;
+	    set_sample_label(datainfo);
 	}
+	mark_session_saved();
     }
 
     return err;

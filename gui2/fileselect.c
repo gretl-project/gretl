@@ -150,6 +150,10 @@ static gretlopt save_action_to_opt (int action, gpointer p)
     default: break;
     }
 
+    if (action == SAVE_DATA_AS && session_file_is_open()) {
+	opt |= OPT_X; /* "exporting" to GDT */
+    }
+
     if (p != NULL) {
 	opt |= GPOINTER_TO_INT(p);
     }
@@ -624,6 +628,8 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	currname = suggested_exportname(datafile, action);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
+    } else if (action == SAVE_CMD_LOG) {
+	gtk_file_chooser_set_current_name(filesel, "session.inp");
     } else if (action == SET_PROG || action == SET_DIR) {
 	currname = (gchar *) data;
 	if (currname != NULL && g_path_is_absolute(currname)) {
