@@ -133,6 +133,8 @@ int gretl_object_rename (void *p, GretlObjType type, const char *oname);
 
 int gretl_object_compose_name (void *p, GretlObjType type);
 
+int gretl_object_compose_unique_name (void *p, GretlObjType type);
+
 char *gretl_object_get_name (void *p, GretlObjType type);
 
 int parse_object_command (const char *s, char *name, char **cmd);

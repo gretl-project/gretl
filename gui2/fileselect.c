@@ -431,11 +431,19 @@ static void bootstrap_save_callback (const char *fname)
     } 
 }
 
+static void maybe_set_fsel_status (FselDataSrc src, gpointer p, int val)
+{
+    if (src == FSEL_DATA_STATUS && p != NULL) {
+	* (int *) p = val;
+    }
+}
+
 static void
 file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 			      gpointer data)
 {
     char fname[FILENAME_MAX];
+    int err = 0;
 
     *fname = 0;
     strncat(fname, in_fname, FILENAME_MAX - 1);
@@ -446,6 +454,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 
 	if (fp == NULL) {
 	    file_read_errbox(fname);
+	    maybe_set_fsel_status(src, data, E_FOPEN);
 	    return;
 	} else {
 	    fclose(fp);
@@ -495,17 +504,17 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (src == FSEL_DATA_PRN) {
 	filesel_save_prn_buffer((PRN *) data, fname);
     } else if (SAVE_DATA_ACTION(action)) {
-	do_store(fname, save_action_to_opt(action, data));
+	err = do_store(fname, save_action_to_opt(action, data));
     } else if (action == SAVE_GNUPLOT) {
 	save_graph_to_file(data, fname);
     } else if (action == SAVE_SESSION) {
-	save_session(fname);
+	err = save_session(fname);
     } else if (action == SAVE_CMD_LOG) {
-	save_session_commands(fname);
+	err = save_session_commands(fname);
     } else if (action == SAVE_FUNCTIONS) {
-	save_function_package(fname, data);
+	err = save_function_package(fname, data);
     } else if (action == SAVE_FUNCTIONS_AS) {
-	save_function_package_as_script(fname, data);
+	err = save_function_package_as_script(fname, data);
     } else if (action == SAVE_BOOT_DATA) {
 	bootstrap_save_callback(fname);
     } else if (action == SET_PROG || action == SET_DIR) {
@@ -521,6 +530,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 
 	save_editable_content(action, fname, vwin);
     }
+
+    maybe_set_fsel_status(src, data, err);
 }
 
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
@@ -733,7 +744,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	    file_selector_process_result(fname, action, src, data);
 	    g_free(fname);
 	}
-    } 
+    } else {
+	maybe_set_fsel_status(src, data, GRETL_CANCEL);
+    }
 
     if (filesel != NULL) {
 	gtk_widget_destroy(filesel);

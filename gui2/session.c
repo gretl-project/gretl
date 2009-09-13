@@ -443,6 +443,24 @@ static void session_switch_log_location (int code)
     g_free(fullpath);
 }
 
+char *session_graph_make_path (char *path, const char *fname)
+{
+    if (strstr(fname, session.dirname) != NULL) {
+	/* should be OK */
+	strcpy(path, fname);
+    } else {
+	char *p = strrchr(fname, SLASH);
+
+	if (p != NULL) {
+	    sprintf(path, "%s%s", session.dirname, p);
+	} else {
+	    sprintf(path, "%s%c%s", session.dirname, SLASH, fname);
+	}
+    }
+
+    return path;
+}
+
 /* first arg should be a MAXLEN string */
 
 static char *session_file_make_path (char *path, const char *fname)
@@ -917,6 +935,7 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     void *ptr = vwin->data;
     const char *name;
     int type;
+    int err = 0;
 
     if (ptr == NULL) {
 	return;
@@ -934,14 +953,26 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     type = model_type_from_vwin(vwin);
     name = gretl_object_get_name(ptr, type);
 
-    if (real_add_model_to_session(ptr, name, type)) {
-	return;
+    if (name != NULL && *name == '\0') {
+	/* since we didn't get a match by data above, we
+	   need to ensure that this model is given a
+	   unique name */
+	gretl_object_compose_unique_name(ptr, type);
+	name = gretl_object_get_name(ptr, type);
     }
 
-    mark_session_changed();
+    if (name == NULL) {
+	nomem();
+	return;
+    }    
 
-    if (close_on_add(action) && !window_is_busy(vwin)) {
-	gtk_widget_destroy(vwin->main);
+    err = real_add_model_to_session(ptr, name, type);
+
+    if (!err) {
+	mark_session_changed();
+	if (close_on_add(action) && !window_is_busy(vwin)) {
+	    gtk_widget_destroy(vwin->main);
+	}
     } 	
 }
 
@@ -1736,11 +1767,6 @@ int save_session_commands (char *fname)
     }
 
     return err;
-}
-
-void save_session_commands_callback (void)
-{
-    file_selector(SAVE_CMD_LOG, FSEL_DATA_NONE, NULL);
 }
 
 static char *model_cmd_str (MODEL *pmod)

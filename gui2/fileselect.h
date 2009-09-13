@@ -22,7 +22,8 @@ typedef enum {
     FSEL_DATA_PRN,
     FSEL_DATA_VWIN,
     FSEL_DATA_MISC,
-    FSEL_DATA_FNPKG
+    FSEL_DATA_FNPKG,
+    FSEL_DATA_STATUS
 } FselDataSrc;
 
 void file_selector (int action, FselDataSrc src, gpointer data);

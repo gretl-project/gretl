@@ -236,8 +236,6 @@ static int real_add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn
 {
     int i, n = (pos == 0)? n_models + 1 : pos;
 
-    fprintf(stderr, "real_add_to_model_table: pos = %d\n", pos);
-
     /* is the list started or not? */
     if (n_models == 0) {
 	table_models = mymalloc(n * sizeof *table_models);
@@ -681,6 +679,13 @@ static int any_stat (int s)
     return 0;
 }
 
+static int catch_bad_point (char *s)
+{
+    int c = s[strlen(s) - 1];
+
+    return (c == '.' || c == ',');
+}
+
 static void print_equation_stats (int width0, int colwidth, PRN *prn, 
 				  int *binary)
 {
@@ -761,11 +766,11 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 		*binary = 1;
 		/* McFadden */
 		if (tex) {
-		    pprintf(prn, "& %.4f ", pmod->rsq);
+		    pprintf(prn, "& %.*f ", mt_figs, pmod->rsq);
 		} else if (rtf) {
-		    pprintf(prn, "\\qc %.4f\\cell ", pmod->rsq);
+		    pprintf(prn, "\\qc %.*f\\cell ", mt_figs, pmod->rsq);
 		} else {
-		    pprintf(prn, "%#*.4g", colwidth, pmod->rsq);
+		    pprintf(prn, "%*.*f", colwidth, mt_figs, pmod->rsq);
 		}
 	    } else {
 		if (tex) {
@@ -773,7 +778,7 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %.*f\\cell ", mt_figs, rsq);
 		} else {
-		    pprintf(prn, "%#*.*g", colwidth, mt_figs, rsq);
+		    pprintf(prn, "%*.*f", colwidth, mt_figs, rsq);
 		}
 	    }
 	}
@@ -792,6 +797,8 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 
     if (any_ll) {
 	/* print log-likelihoods */
+	char numstr[16];
+
 	if (tex) {
 	    pputs(prn, "$\\ell$");
 	} else if (rtf) {
@@ -814,14 +821,25 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 	    } else {
 		if (tex) {
 		    if (pmod->lnL > 0) {
-			pprintf(prn, "& %.*g ", mt_figs, pmod->lnL);
+			sprintf(numstr, "%.*g", mt_figs, pmod->lnL);
+			catch_bad_point(numstr);
+			pprintf(prn, "& %s ", numstr);
 		    } else {
-			pprintf(prn, "& $-$%.*g ", mt_figs, -pmod->lnL);
+			sprintf(numstr, "%.*g", mt_figs, -pmod->lnL);
+			catch_bad_point(numstr);
+			pprintf(prn, "& $-$%s ", numstr);
 		    }
 		} else if (rtf) {
-		    pprintf(prn, "\\qc %.*g\\cell ", mt_figs, pmod->lnL);
+		    sprintf(numstr, "%.*g", mt_figs, pmod->lnL);
+		    catch_bad_point(numstr);
+		    pprintf(prn, "\\qc %s\\cell ", numstr);
 		} else {
-		    pprintf(prn, "%#*.*g", colwidth, mt_figs, pmod->lnL);
+		    sprintf(numstr, "%#*.*g", colwidth, mt_figs, pmod->lnL);
+		    if (catch_bad_point(numstr)) {
+			sprintf(numstr, "%#*.*g", colwidth + 1, mt_figs, pmod->lnL);
+			numstr[strlen(numstr) - 1] = '\0';
+		    }
+		    pputs(prn, numstr);
 		}
 	    }
 	}

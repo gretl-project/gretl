@@ -68,6 +68,8 @@ int add_graph_to_session (char *fname, char *fullname, int type);
 int cli_add_graph_to_session (const char *fname, const char *gname,
 			      GretlObjType type);
 
+char *session_graph_make_path (char *path, const char *fname);
+
 void model_add_as_icon (GtkAction *action, gpointer p);
 
 int maybe_add_model_to_session (void *ptr, GretlObjType type);
@@ -104,8 +106,6 @@ int is_session_model (void *p);
 void view_session (GtkWidget *parent);
 
 void save_session_callback (GtkAction *action);
-
-void save_session_commands_callback (void);
 
 int session_file_is_open (void);
 

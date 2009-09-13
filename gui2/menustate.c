@@ -484,21 +484,9 @@ void set_main_window_title (const char *name, gboolean modified)
     }
 }
 
-void set_sample_label (DATAINFO *pdinfo)
+static const char *get_pd_string (DATAINFO *pdinfo)
 {
-    GtkWidget *dlabel;
-    char stobs[OBSLEN], endobs[OBSLEN];
-    char labeltxt[128];
-    const char *pdstr;
-
-    if (mdata == NULL) {
-	return;
-    }
-
-    dlabel = g_object_get_data(G_OBJECT(mdata->main), "dlabel");
-
-    ntodate(stobs, 0, pdinfo);
-    ntodate(endobs, pdinfo->n - 1, pdinfo);
+    char *pdstr;
 
     if (custom_time_series(pdinfo)) {
 	pdstr = N_("Time series");
@@ -528,61 +516,94 @@ void set_sample_label (DATAINFO *pdinfo)
     } else {
 	pdstr = N_("Undated");
     }
+    
+    return pdstr;
+}
+
+void set_sample_label (DATAINFO *pdinfo)
+{
+    GtkWidget *dlabel;
+    char t1str[OBSLEN], t2str[OBSLEN];
+    char tmp[256];
+
+    if (mdata == NULL) {
+	return;
+    }
+
+    /* set the sensitivity of various menu items */
 
     time_series_menu_state(dataset_is_time_series(pdinfo));
     panel_menu_state(dataset_is_panel(pdinfo));
     ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
 			   dataset_is_panel(pdinfo));
-
     flip(mdata->ui, "/menubar/Data/DataTranspose", !dataset_is_panel(pdinfo));
 
+    /* construct label showing summary of dataset/sample info
+       (this goes at the foot of the window) */
+    
     if (complex_subsampled() && pdinfo->t1 == 0 && 
 	pdinfo->t2 == pdinfo->n - 1 && 
 	datainfo->structure == CROSS_SECTION) {
-	sprintf(labeltxt, _("Undated: Full range n = %d; current sample"
-			    " n = %d"), get_full_length_n(), datainfo->n);
+	sprintf(tmp, _("Undated: Full range n = %d; current sample"
+		       " n = %d"), get_full_length_n(), datainfo->n);
     } else {
-	sprintf(labeltxt, _("%s: Full range %s - %s"), 
-		_(pdstr), stobs, endobs);
+	const char *pdstr;
+
+	ntodate(t1str, 0, pdinfo);
+	ntodate(t2str, pdinfo->n - 1, pdinfo);
+	pdstr = get_pd_string(pdinfo);
+	sprintf(tmp, _("%s: Full range %s - %s"), _(pdstr), 
+		t1str, t2str);
     }
 
     if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1) {
-	char t1str[OBSLEN], t2str[OBSLEN];
-	char biglabel[160];
+	gchar *fulltext;
 
 	ntodate(t1str, pdinfo->t1, pdinfo);
 	ntodate(t2str, pdinfo->t2, pdinfo);
-	sprintf(biglabel, _("%s; sample %s - %s"), labeltxt, t1str, t2str);
-	gtk_label_set_text(GTK_LABEL(mdata->status), biglabel);
+	fulltext = g_strdup_printf(_("%s; sample %s - %s"), tmp, t1str, t2str);
+	gtk_label_set_text(GTK_LABEL(mdata->status), fulltext);
+	g_free(fulltext);
     } else {
-	gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
+	gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
     }
 
-    if (strlen(datafile) > 2) {
-	/* data file open already */
-	const char *p = strrchr(datafile, SLASH);
-	gchar *trfname;
+    /* construct label with datafile name (this goes above the
+       data series window) */
 
-	if (p != NULL) {
-	    trfname = my_filename_to_utf8(p + 1);
-	} else {
-	    trfname = my_filename_to_utf8(datafile);
-	}
+    dlabel = g_object_get_data(G_OBJECT(mdata->main), "dlabel");
 
-	sprintf(labeltxt, " %s ", trfname);
-	g_free(trfname);
-	if ((data_status & MODIFIED_DATA) && !(data_status & SESSION_DATA)) { 
-	    strcat(labeltxt, "* ");
-	} 
-	if (dlabel != NULL) {
-	    gtk_label_set_text(GTK_LABEL(dlabel), labeltxt);
+    if (dlabel != NULL) {
+	if (strlen(datafile) > 2) {
+	    /* data file open already */
+	    const char *p = strrchr(datafile, SLASH);
+	    gchar *trfname;
+
+	    if (p != NULL) {
+		trfname = my_filename_to_utf8(p + 1);
+	    } else {
+		trfname = my_filename_to_utf8(datafile);
+	    }
+
+	    strcpy(tmp, " ");
+
+	    if (data_status & SESSION_DATA) {
+		sprintf(tmp + 1, "Imported %s", trfname);
+	    } else if (data_status & MODIFIED_DATA) {
+		sprintf(tmp + 1, "%s *", trfname);
+	    } else {
+		sprintf(tmp + 1, "%s", trfname);
+	    }
+
+	    gtk_label_set_text(GTK_LABEL(dlabel), tmp);
+	    g_free(trfname);
+	} else if (data_status & MODIFIED_DATA) {
+	    strcpy(tmp, _(" Unsaved data "));
+	    gtk_label_set_text(GTK_LABEL(dlabel), tmp);
 	}
-    } else if (data_status & MODIFIED_DATA) {
-	strcpy(labeltxt, _(" Unsaved data "));
-	gtk_label_set_text(GTK_LABEL(dlabel), labeltxt);
     }
 
-    if (complex_subsampled() || pdinfo->t1 > 0 ||
+    if (complex_subsampled() || pdinfo->t1 > 0 || 
 	pdinfo->t2 < pdinfo->n - 1) {
 	restore_sample_state(TRUE);
     }

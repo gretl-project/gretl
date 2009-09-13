@@ -720,7 +720,7 @@ static void speak_dataset_comments (const dataset *dset)
                           NULL, 
                           CLSCTX_ALL, 
                           &IID_ISpVoice, 
-                          (void **) &v);
+                          (void *) &v); 
 
     if (SUCCEEDED(hr)) {
 	for (i=0; i<N_COMMENTS; i++) {
@@ -780,7 +780,7 @@ static void audio_graph_error (const char *msg)
                           NULL, 
                           CLSCTX_ALL, 
                           &IID_ISpVoice, 
-                          (void **) &v);
+                          (void *) &v);
     if (SUCCEEDED(hr)) {
 	wchar_t *w = wide_string(msg);
 

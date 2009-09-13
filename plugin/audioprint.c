@@ -244,7 +244,7 @@ static ISpVoice *get_sapi_voice (void)
                           NULL, 
                           CLSCTX_ALL, 
                           &IID_ISpVoice, 
-                          (void **) &v);
+                          (void *) &v);
     if (!SUCCEEDED(hr)) {
 	CoUninitialize();
 	return NULL;

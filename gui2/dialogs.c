@@ -29,6 +29,7 @@
 #include "ssheet.h"
 #include "database.h"
 #include "selector.h"
+#include "fileselect.h"
 #include "gretl_panel.h"
 #include "texprint.h"
 #include "forecast.h"
@@ -195,7 +196,7 @@ static int save_session_prompt (int gui_session)
 
 gboolean exit_check (void) 
 {
-    int resp;
+    int resp, status = 0;
     int err = 0;
 
     if (maybe_raise_dialog() || console_is_busy()) {
@@ -218,26 +219,36 @@ gboolean exit_check (void)
 	    /* canceled exit: block */
 	    return TRUE;
 	} 
-    } else if (session_is_modified() && session_prompt_on()) {
-	/* give the user the chance to save the session */
-	resp = save_session_prompt(1);
-	if (resp == GRETL_YES) {
-	    save_session_callback(NULL);
-	    /* we now allow exit to proceed (unless revised below) */
-	} else if (resp == GRETL_CANCEL) {
-	    /* canceled exit: block right now */
-	    return TRUE;
-	} 
-    } else if (get_commands_recorded() && session_prompt_on()) { 
-	/* give the user the chance to save commands */
-	resp = save_session_prompt(0);
-	if (resp == GRETL_YES) {
-	    save_session_commands_callback();
-	    /* we now allow exit to proceed (unless revised below) */
-	} else if (resp == GRETL_CANCEL) {
-	    /* canceled exit: block */
-	    return TRUE;
-	} 
+    } else if (session_prompt_on()) {
+	if (session_is_modified()) {
+	    /* give the user the chance to save the session */
+	    resp = save_session_prompt(1);
+	    if (resp == GRETL_YES) {
+		file_selector(SAVE_SESSION, FSEL_DATA_STATUS, &status);
+		if (status != 0 && status != GRETL_CANCEL) {
+		    /* error saving session */
+		    return TRUE;
+		}	    
+		/* now provisionally allow exit to proceed */
+	    } else if (resp == GRETL_CANCEL) {
+		/* canceled exit: block */
+		return TRUE;
+	    } 
+	} else if (!session_file_is_open() && get_commands_recorded()) { 
+	    /* give the user the chance to save commands */
+	    resp = save_session_prompt(0);
+	    if (resp == GRETL_YES) {
+		file_selector(SAVE_CMD_LOG, FSEL_DATA_STATUS, &status);
+		if (status != 0 && status != GRETL_CANCEL) {
+		    /* error saving commands */
+		    return TRUE;
+		}	    
+		/* now provisionally allow exit to proceed */
+	    } else if (resp == GRETL_CANCEL) {
+		/* canceled exit: block */
+		return TRUE;
+	    } 
+	}
     }	
 
     if (data_status & MODIFIED_DATA) {
@@ -3696,39 +3707,6 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     return ret;
 }
 
-#ifdef NATIVE_WIN32_MSGBOX
-
-/* MS Windows native "MessageBox" */
-
-static void msgbox (const char *msg, int msgtype)
-{
-    gchar *trmsg = NULL;
-    int nls_on = doing_nls();
-    int utype;
-
-    if (nls_on && !gretl_is_ascii(msg) && g_utf8_validate(msg, -1, NULL)) {
-	/* recode messages in UTF-8, but don't try to recode messages
-	   that are already in the locale encoding (strerror) 
-	*/
-	gsize bytes;
-
-	trmsg = g_locale_from_utf8(msg, -1, NULL, &bytes, NULL);
-    } 
-
-    utype = (msgtype == GTK_MESSAGE_WARNING)? MB_ICONWARNING :
-	(msgtype == GTK_MESSAGE_ERROR)? MB_ICONERROR :
-	MB_ICONINFORMATION;
-
-    MessageBox(NULL, (trmsg != NULL)? trmsg : msg, "gretl", 
-	       MB_OK | utype);
-
-    if (trmsg != NULL) {
-	g_free(trmsg);
-    }
-}
-
-#else /* not native win32 */
-
 static void msgbox (const char *msg, int msgtype)
 {
     const gchar *titles[] = {
@@ -3749,7 +3727,7 @@ static void msgbox (const char *msg, int msgtype)
     }   
 
     dialog = gtk_message_dialog_new(NULL, /* GTK_WINDOW(mdata->main) */
-				    0,    /* GTK_DIALOG_DESTROY_WITH_PARENT */
+				    0,    /* or GTK_DIALOG_DESTROY_WITH_PARENT? */
 				    msgtype,
 				    GTK_BUTTONS_CLOSE,
 				    "%s",
@@ -3762,20 +3740,12 @@ static void msgbox (const char *msg, int msgtype)
 
     gtk_dialog_run(GTK_DIALOG(dialog));
 
-    /* ?? with gtk 2.16.2, the above produces 
-       "Gdk-CRITICAL **: gdk_x11_atom_to_xatom_for_display: 
-       assertion `atom != GDK_NONE' failed", when Close
-       is clicked.
-    */
-
     gtk_widget_destroy(dialog);
 
     if (trmsg != NULL) {
 	g_free(trmsg);
     }    
 }
-
-#endif
 
 void errbox (const char *template, ...)
 {

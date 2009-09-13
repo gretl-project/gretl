@@ -441,12 +441,23 @@ static void mark_plot_as_saved (GPT_SPEC *spec)
     plot->status |= PLOT_SAVED;
 }
 
-static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
+static int gnuplot_png_init (png_plot *plot, FILE **fpp)
 {
-    *fpp = gretl_fopen(spec->fname, "w");
+    GPT_SPEC *spec = plot->spec;
+    char fname[FILENAME_MAX];
+
+    if (plot_is_saved(plot)) {
+	/* session graph: ensure we're writing to the correct
+	   directory */
+	session_graph_make_path(fname, spec->fname);
+    } else {
+	strcpy(fname, spec->fname);
+    }
+
+    *fpp = gretl_fopen(fname, "w");
 
     if (*fpp == NULL) {
-	file_write_errbox(spec->fname);
+	file_write_errbox(fname);
 	return 1;
     }
 
@@ -2855,7 +2866,6 @@ static void add_to_session_callback (GPT_SPEC *spec)
     err = add_graph_to_session(spec->fname, fullname, type);
 
     if (!err) {
-	fprintf(stderr, "spec->fname now '%s'\n", spec->fname);
 	remove_png_term_from_plotfile(fullname, spec);
 	mark_plot_as_saved(spec);
     }
@@ -2872,7 +2882,7 @@ static void show_all_labels (png_plot *plot)
 
     plot->spec->flags |= GPT_PRINT_MARKERS;
 
-    gnuplot_png_init(plot->spec, &fp);
+    gnuplot_png_init(plot, &fp);
 
     if (fp == NULL) {
 	gui_errmsg(E_FOPEN);
@@ -2892,7 +2902,7 @@ static void clear_labels (png_plot *plot)
 	FILE *fp;
 
 	plot->spec->flags &= ~GPT_PRINT_MARKERS;
-	gnuplot_png_init(plot->spec, &fp);
+	gnuplot_png_init(plot, &fp);
 	if (fp == NULL) {
 	    gui_errmsg(E_FOPEN);
 	    return;
@@ -3179,7 +3189,7 @@ int redisplay_edited_plot (png_plot *plot)
 #endif
 
     /* open file in which to dump plot specification */
-    gnuplot_png_init(plot->spec, &fp);
+    gnuplot_png_init(plot, &fp);
     if (fp == NULL) {
 	return 1;
     }

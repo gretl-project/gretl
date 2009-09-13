@@ -612,6 +612,53 @@ int gretl_object_compose_name (void *p, GretlObjType type)
     return err;
 }
 
+int gretl_object_compose_unique_name (void *p, GretlObjType type)
+{
+    char name[32];
+    int id, err = 0;
+
+    if (type == GRETL_OBJ_EQN) {
+	MODEL *pmod = (MODEL *) p;
+	
+	id = pmod->ID;
+	sprintf(name, "%s %d", _("Model"), id);
+	while (get_model_by_name(name) != NULL) {
+	    sprintf(name, "%s %d", _("Model"), ++id);
+	}
+	gretl_model_set_name(pmod, name);
+    } else if (type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) p;
+
+	if (var->ci == VAR) {
+	    id = ++n_vars;
+	    sprintf(name, "%s %d", _("VAR"), id);
+	    while (get_VAR_by_name(name) != NULL) {
+		sprintf(name, "%s %d", _("VAR"), ++id);
+	    }
+	} else {
+	    id = gretl_VECM_id(var);
+	    sprintf(name, "%s %d", _("VECM"), id);
+	    while (get_VECM_by_name(name) != NULL) {
+		sprintf(name, "%s %d", _("VECM"), ++id);
+	    }
+	}
+	gretl_VAR_set_name(var, name);
+    } else if (type == GRETL_OBJ_SYS) {
+	equation_system *sys = (equation_system *) p;
+	
+	id = ++n_sys;
+	sprintf(name, "%s %d", _("System"), id);
+	while (get_equation_system_by_name(name) != NULL) {
+	    sprintf(name, "%s %d", _("System"), ++id);
+	}
+	equation_system_set_name(sys, name);
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
 int gretl_object_rename (void *p, GretlObjType type, const char *oname)
 {
     int err = 0;
@@ -737,7 +784,6 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 	gretl_object_ref(p, type);
 	n_obj++;
 	pprintf(prn, "Added object '%s'\n", name);
-
     }
 
 #if ODEBUG
