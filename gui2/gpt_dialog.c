@@ -864,7 +864,9 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
 	set_plot_has_y2_axis(plot, spec->flags & GPT_Y2AXIS);
 	redisplay_edited_plot(plot);
-	mark_session_changed();
+	if (plot_is_saved(plot)) {
+	    mark_session_changed();
+	}
     }
 
     plot_editor_sync(ed);

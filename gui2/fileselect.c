@@ -90,6 +90,7 @@ static struct extmap action_map[] = {
     { SAVE_DBDATA,       ".bin" },
     { SAVE_SCRIPT,       ".inp" },
     { SAVE_FUNCTIONS_AS, ".inp" },
+    { SAVE_CMD_LOG,      ".inp" },
     { SAVE_CONSOLE,      ".txt" },
     { SAVE_SESSION,      ".gretl" },
     { SAVE_GP_CMDS,      ".plt" },
@@ -499,6 +500,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	save_graph_to_file(data, fname);
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
+    } else if (action == SAVE_CMD_LOG) {
+	save_session_commands(fname);
     } else if (action == SAVE_FUNCTIONS) {
 	save_function_package(fname, data);
     } else if (action == SAVE_FUNCTIONS_AS) {

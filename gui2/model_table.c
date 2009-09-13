@@ -136,9 +136,13 @@ int model_table_position (const MODEL *pmod)
     return 0;
 }
 
-void clear_model_table (PRN *prn)
+void clear_model_table (int on_exit, PRN *prn)
 {
     int i;
+
+    if (!on_exit && n_models > 0) {
+	mark_session_changed();
+    }
 
     for (i=0; i<n_models; i++) {
 	/* reduce refcount on the model pointer */
@@ -249,7 +253,7 @@ static int real_add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn
 
 	mods = myrealloc(table_models, n * sizeof *mods);
 	if (mods == NULL) {
-	    clear_model_table(NULL);
+	    clear_model_table(0, NULL);
 	    return 1;
 	}
 
@@ -1036,7 +1040,7 @@ int display_model_table (int gui)
     }
 
     if (bufopen(&prn)) {
-	clear_model_table(NULL);
+	clear_model_table(0, NULL);
 	return 1;
     }
 
@@ -1290,7 +1294,7 @@ int modeltab_parse_line (const char *line, PRN *prn)
 	    mtable_errmsg(_("The model table is empty"), 0);
 	    err = 1;
 	} else {
-	    clear_model_table(prn);
+	    clear_model_table(0, prn);
 	}
     }
 

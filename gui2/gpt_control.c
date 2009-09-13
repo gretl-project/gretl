@@ -68,7 +68,6 @@ enum {
 
 #define MAX_MARKERS 250
 
-#define plot_is_saved(p)        (p->status & PLOT_SAVED)
 #define plot_is_zoomed(p)       (p->status & PLOT_ZOOMED)
 #define plot_is_zooming(p)      (p->status & PLOT_ZOOMING)
 #define plot_has_png_coords(p)  (p->status & PLOT_PNG_COORDS)
@@ -199,6 +198,11 @@ GtkWidget *plot_get_shell (png_plot *plot)
 GPT_SPEC *plot_get_spec (png_plot *plot) 
 {
     return plot->spec;
+}
+
+int plot_is_saved (const png_plot *plot)
+{
+    return (plot->status & PLOT_SAVED);
 }
 
 int plot_is_mouseable (const png_plot *plot)
@@ -2851,6 +2855,7 @@ static void add_to_session_callback (GPT_SPEC *spec)
     err = add_graph_to_session(spec->fname, fullname, type);
 
     if (!err) {
+	fprintf(stderr, "spec->fname now '%s'\n", spec->fname);
 	remove_png_term_from_plotfile(fullname, spec);
 	mark_plot_as_saved(spec);
     }

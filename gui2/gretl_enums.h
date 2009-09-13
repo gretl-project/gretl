@@ -158,6 +158,7 @@ enum file_ops {
     SAVE_R_CMDS,
     SAVE_OX_CMDS,
     SAVE_CONSOLE,
+    SAVE_CMD_LOG,
     SAVE_FUNCTIONS,
     SAVE_FUNCTIONS_AS,
     SAVE_BOOT_DATA,

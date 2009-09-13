@@ -3,7 +3,7 @@
 
 int display_graph_page (void);
 
-void clear_graph_page (void);
+void clear_graph_page (int on_exit);
 
 int graph_page_add_file (const char *fname);
 

@@ -45,9 +45,15 @@ enum {
 
 int save_session (char *fname);
 
+int save_session_commands (char *fname);
+
 int save_session_dataset (void);
 
 int session_is_modified (void);
+
+void set_commands_recorded (void);
+
+int get_commands_recorded (void);
 
 void session_menu_state (gboolean s);
 
@@ -98,6 +104,8 @@ int is_session_model (void *p);
 void view_session (GtkWidget *parent);
 
 void save_session_callback (GtkAction *action);
+
+void save_session_commands_callback (void);
 
 int session_file_is_open (void);
 

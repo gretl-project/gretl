@@ -659,9 +659,13 @@ int display_graph_page (void)
     return err;
 }
 
-void clear_graph_page (void)
+void clear_graph_page (int on_exit)
 {
     int i;
+
+    if (!on_exit && gpage.ngraphs > 0) {
+	mark_session_changed();
+    }
 
     for (i=0; i<gpage.ngraphs; i++) {
 	free(gpage.fnames[i]);

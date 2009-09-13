@@ -1146,7 +1146,7 @@ static GtkWidget *make_main_window (void)
     if (mdata == NULL) {
 	noalloc();
     }
-
+    
     gui_scale = get_gui_scale();
 
     if (!winsize || mainwin_width <= 200 || mainwin_height <= 200) {

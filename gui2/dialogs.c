@@ -125,20 +125,28 @@ static void set_ret_no (GtkButton *b, int *ret)
     *ret = GRETL_NO;
 }
 
-static int save_session_prompt (void)
+static int save_session_prompt (int gui_session)
 {
-    const char *msg = N_("Do you want to save this gretl session?");
-    const char *check_msg = N_("Show this prompt whenever there are unsaved changes");
+    const char *gui_msg = 
+	N_("Do you want to save this gretl session?");
+    const char *cmds_msg = 
+	N_("Save a record of the commands you executed?");
+    const char *check_msg = 
+	N_("Always prompt if there are unsaved changes");
     GtkWidget *dialog;
     GtkWidget *vbox, *hbox, *tmp, *b;
+    gchar *title;
     int ret = GRETL_YES;
 
-    dialog = gretl_dialog_new("gretl", NULL, GRETL_DLG_BLOCK);
+    title = g_strdup_printf("gretl: %s", gui_session ?
+			    _("save session") : _("save commands"));
+    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+    g_free(title);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     /* label */
-    tmp = dialog_blurb_box(_(msg));
+    tmp = dialog_blurb_box(gui_session ? _(gui_msg) : _(cmds_msg));
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
     /* check button */
@@ -173,55 +181,64 @@ static int save_session_prompt (void)
     cancel_options_button(hbox, dialog, &ret);
 
     /* "Help" button */
-    context_help_button(hbox, SAVE_SESSION);
+    context_help_button(hbox, gui_session ? SAVE_SESSION :
+			SAVE_CMD_LOG);
 
     gtk_widget_show_all(dialog);
 
     return ret;
 }
 
+/* exit_check: returning FALSE allows the exit to proceed;
+   to block the exit we return TRUE.
+*/
+
 gboolean exit_check (void) 
 {
     int resp;
-
-    /* note: returning FALSE from here allows the exit to proceed;
-       to block the exit we need to return TRUE
-    */
+    int err = 0;
 
     if (maybe_raise_dialog() || console_is_busy()) {
 	/* we're not ready: block the exit now */
 	return TRUE;
     }
 
-    if (session_is_modified()) {
-	/* give the user the chance to save an unsaved session */
+    if (session_file_is_open() && session_is_modified()) {
 	const char *save_msg = N_("Do you want to save the changes you made\n"
 				  "to this session?");
-	int as_is = 0;
 
-	if (session_file_is_open()) {
-	    as_is = 1;
-	    resp = yes_no_dialog("gretl", _(save_msg), 1);
-	} else if (session_prompt_on()) {
-	    resp = save_session_prompt();
-	} else {
-	    resp = GRETL_NO;
-	}
-
+	resp = yes_no_dialog("gretl", _(save_msg), 1);
 	if (resp == GRETL_YES) {
-	    if (as_is) {
-		save_session(NULL);
-	    } else {
-		save_session_callback(NULL);
+	    err = save_session(NULL);
+	    if (err) {
+		/* give the user a shot at remedial action */
+		return TRUE;
 	    }
+	} else if (resp == GRETL_CANCEL) {
+	    /* canceled exit: block */
+	    return TRUE;
+	} 
+    } else if (session_is_modified() && session_prompt_on()) {
+	/* give the user the chance to save the session */
+	resp = save_session_prompt(1);
+	if (resp == GRETL_YES) {
+	    save_session_callback(NULL);
 	    /* we now allow exit to proceed (unless revised below) */
 	} else if (resp == GRETL_CANCEL) {
 	    /* canceled exit: block right now */
 	    return TRUE;
-	} else {
-	    ; /* GRETL_NO to saving session: allow exit */
-	}
-    }
+	} 
+    } else if (get_commands_recorded() && session_prompt_on()) { 
+	/* give the user the chance to save commands */
+	resp = save_session_prompt(0);
+	if (resp == GRETL_YES) {
+	    save_session_commands_callback();
+	    /* we now allow exit to proceed (unless revised below) */
+	} else if (resp == GRETL_CANCEL) {
+	    /* canceled exit: block */
+	    return TRUE;
+	} 
+    }	
 
     if (data_status & MODIFIED_DATA) {
 	/* give the user a chance to save modified dataset */
@@ -233,9 +250,7 @@ gboolean exit_check (void)
 	} else if (resp == GRETL_CANCEL) {
 	    /* canceled exit: block right now */
 	    return TRUE;
-	} else {
-	    ; /* GRETL_NO to saving data: allow exit */
-	}
+	} 
     } 
 
     write_rc();

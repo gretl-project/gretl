@@ -265,7 +265,7 @@ int add_command_to_stack (const char *s)
 	strncmp(s, "list", 4) &&
 	strncmp(s, "open", 4) &&
 	strncmp(s, "quit", 4)) {
-	mark_session_changed();
+	set_commands_recorded();
     }
 
     return 0;
@@ -301,7 +301,7 @@ int model_command_init (int model_ID)
 	    prev_ID = model_ID;
 	}
 	echo_cmd(libcmd, datainfo, line, CMD_RECORDING, logprn);
-	mark_session_changed();
+	set_commands_recorded();
     } 
 
     return err;

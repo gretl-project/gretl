@@ -26,7 +26,7 @@ enum {
     MODEL_ADD_BY_CMD
 } model_add_modes;
 
-void clear_model_table (PRN *prn);
+void clear_model_table (int on_exit, PRN *prn);
 
 int add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn);
 

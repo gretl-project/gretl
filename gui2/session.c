@@ -252,6 +252,7 @@ static void add_user_matrix_callback (void);
 
 static int session_graph_count;
 static int session_bplot_count;
+static int commands_recorded;
 
 int session_is_modified (void)
 {
@@ -278,6 +279,16 @@ static void mark_session_saved (void)
 	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", FALSE);
 	set_main_window_title(session.name, FALSE);
     }
+}
+
+void set_commands_recorded (void)
+{
+    commands_recorded = 1;
+}
+
+int get_commands_recorded (void)
+{
+    return commands_recorded;
 }
 
 /* constructors and destructors for session data-objects */
@@ -1424,8 +1435,8 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 
     free_session();
 
-    clear_model_table(NULL);
-    clear_graph_page();
+    clear_model_table(1, NULL);
+    clear_graph_page(1);
 
     session_menu_state(FALSE);
     *scriptfile = '\0';
@@ -1436,6 +1447,7 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     }
 
     session.status = 0;
+    commands_recorded = 0;
 
     winstack_destroy();
     clear_selector();
@@ -1701,6 +1713,34 @@ void save_session_callback (GtkAction *action)
     } else {
 	file_selector(SAVE_SESSION, FSEL_DATA_NONE, NULL);
     }
+}
+
+int save_session_commands (char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "w");
+    int err = 0;
+
+    if (fp == NULL) {
+	file_write_errbox(fname);
+	err = E_FOPEN;
+    } else {
+	gchar *s = get_logfile_content(&err);
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    fputs(s, fp);
+	}
+
+	fclose(fp);
+    }
+
+    return err;
+}
+
+void save_session_commands_callback (void)
+{
+    file_selector(SAVE_CMD_LOG, FSEL_DATA_NONE, NULL);
 }
 
 static char *model_cmd_str (MODEL *pmod)
@@ -2729,9 +2769,9 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	}
     } else if (!strcmp(item, _("Clear"))) {
 	if (obj->sort == GRETL_OBJ_MODTAB) {
-	    clear_model_table(NULL);
+	    clear_model_table(0, NULL);
 	} else if (obj->sort == GRETL_OBJ_GPAGE) {
-	    clear_graph_page();
+	    clear_graph_page(0);
 	}
     } else if (!strcmp(item, _("Help"))) {
 	if (obj->sort == GRETL_OBJ_MODTAB) {

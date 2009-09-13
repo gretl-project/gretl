@@ -7855,12 +7855,30 @@
     </description>
   </command>
 
+  <command name="save-script" section="Utilities" 
+    label="Save commands?" context="gui">
+    <description>
+      <para>
+	If you choose Yes here, gretl will write a file containing a
+	record of the commands you executed in the current session.  Most
+	commands that you execute via <quote>point and click</quote> have
+	a <quote>script</quote> counterpart, and it is these script
+	commands that will be saved.  You could take the file as the basis
+	for writing a gretl command script.
+      </para>
+      <para>
+	If you don't care to be prompted to save a record of commands
+	on exit, uncheck the tick box in the save commands dialog.
+      </para>
+    </description>
+  </command>
+
   <command name="save-session" section="Utilities" 
     label="Save this gretl session?" context="gui">
     <description>
       <para>
 	If you choose Yes here, gretl will write a file containing a
-	<quote>snapshot</quote> of your current session, including a copy of
+	<quote>snapshot</quote> of the current session, including a copy of
 	the working dataset along with any models, graphs or other objects
 	that you have saved <quote>as icons</quote>.  You can re-open this
 	file later to recreate the state of gretl as of the time you quit the
