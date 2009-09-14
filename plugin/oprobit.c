@@ -467,32 +467,32 @@ static int ihess_from_ascore (op_container *OC, gretl_matrix *inH)
 
 #if 1
 
-/* Find the value of y that has the highest probability to form
-   the prediction for y */
+/* Get the predicted value of y; that is, the value for which the estimated 
+   probability is greatest */
 
 static int get_prediction (op_container *OC, const MODEL *pmod,
 			   double Xb)
 {
     int k = OC->nx; /* position of least cut point */
     double prob, pmax, cut;
-    double Phi, Phibak;
+    double CDF, CDFbak;
     int i, pred = 0;
 
     cut = pmod->coeff[k];
-    pmax = Phibak = normal_cdf(cut - Xb);
+    pmax = CDFbak = distfunc(OC->type, cut - Xb);
 
     for (i=1; i<OC->M; i++) {
 	cut = pmod->coeff[++k];
-	Phi = normal_cdf(cut - Xb);
-	prob = Phi - Phibak;
+	CDF = distfunc(OC->type, cut - Xb);
+	prob = CDF - CDFbak;
 	if (prob > pmax) {
 	    pmax = prob;
 	    pred = i;
 	}
-	Phibak = Phi;
+	CDFbak = CDF;
     }
 
-    prob = 1 - normal_cdf(cut - Xb);
+    prob = 1 - CDFbak;
     if (prob > pmax) {
 	pred = OC->M;
     }
