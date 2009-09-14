@@ -628,6 +628,7 @@ static void fill_op_model (MODEL *pmod, const int *list,
     pmod->ci = OC->type;
 
     gretl_model_set_int(pmod, "ordered", 1);
+    gretl_model_set_int(pmod, "nx", OC->nx);
     gretl_model_set_int(pmod, "fncount", fnc);
     gretl_model_set_int(pmod, "grcount", grc);
 

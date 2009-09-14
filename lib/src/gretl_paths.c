@@ -2143,6 +2143,15 @@ static void load_default_path (char *targ)
     free(progfiles);
 }
 
+static void show_paths_on_stderr (void)
+{
+    fprintf(stderr, "after gretl_set_paths:\n");
+    fprintf(stderr, " gretldir = '%s'\n", paths.gretldir);
+    fprintf(stderr, " workdir = '%s'\n", paths.workdir);
+    fprintf(stderr, " dotdir = '%s'\n", paths.dotdir);
+    fprintf(stderr, " gnuplot = '%s'\n", paths.gnuplot);
+}
+
 #else /* !WIN32 */
 
 /* unix-type variants of defaults for any paths that we need 
@@ -2252,7 +2261,11 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.dbhost, cpaths->dbhost, 0);
 
     /* gnuplot */
+#ifdef WIN32
+    sprintf(paths.gnuplot, "%swgnuplot.exe", paths.gretldir);
+#else
     path_init(paths.gnuplot, cpaths->gnuplot, 0);
+#endif
 
     /* other external programs */
     path_init(paths.x12a, cpaths->x12a, 0);
@@ -2325,6 +2338,10 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 
 #if CFG_DEBUG
     fprintf(stderr, "gretl_set_paths: returning %d\n", retval);
+#endif
+
+#ifdef WIN32
+    show_paths_on_stderr();
 #endif
 
     return retval;

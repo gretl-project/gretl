@@ -1638,15 +1638,59 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
     return err;
 }
 
+static double ordered_cdf (double x, int ci)
+{
+    switch (ci) {
+    case PROBIT:
+	return normal_cdf(x);
+    case LOGIT:
+	return 1.0 / (1.0 + exp(-x));
+    default:
+	return NADBL;
+    }
+}
+
+static double ordered_model_prediction (const MODEL *pmod, double Xb)
+{
+    /* position of least cut point in coeff array */
+    int k = gretl_model_get_int(pmod, "nx");
+    int maxval = pmod->ncoeff - k;
+    double prob, pmax, cut;
+    double CDF, CDFbak;
+    int i, pred = 0;
+
+    cut = pmod->coeff[k];
+    pmax = CDFbak = ordered_cdf(cut - Xb, pmod->ci);
+
+    for (i=1; i<maxval; i++) {
+	cut = pmod->coeff[++k];
+	CDF = ordered_cdf(cut - Xb, pmod->ci);
+	prob = CDF - CDFbak;
+	if (prob > pmax) {
+	    pmax = prob;
+	    pred = i;
+	}
+	CDFbak = CDF;
+    }
+
+    prob = 1 - CDFbak;
+    if (prob > pmax) {
+	pred = maxval;
+    }
+
+    return (double) pred;
+}
+
 /* Calculates the transformation required to get from xb (= X*b) to
    the actual prediction for the dependent variable, for models of
    type LOGISTIC, LOGIT, PROBIT, TOBIT and POISSON.
  */
 
-static double fcast_transform (double xb, int ci, int t, 
-			       const double *offset,
+static double fcast_transform (double xb, const MODEL *pmod,  
+			       int t, const double *offset,
 			       double lmax)
 {
+    int ci = pmod->ci;
     double yf = xb;
 
     if (ci == TOBIT) {
@@ -1654,9 +1698,17 @@ static double fcast_transform (double xb, int ci, int t,
 	    yf = 0.0;
 	}
     } else if (ci == LOGIT) {
-	yf = exp(xb) / (1.0 + exp(xb));
+	if (gretl_model_get_int(pmod, "ordered")) {
+	    yf = ordered_model_prediction(pmod, xb);
+	} else {
+	    yf = exp(xb) / (1.0 + exp(xb));
+	}
     } else if (ci == PROBIT) {
-	yf = normal_cdf(xb);
+	if (gretl_model_get_int(pmod, "ordered")) {
+	    yf = ordered_model_prediction(pmod, xb);
+	} else {	
+	    yf = normal_cdf(xb);
+	}
     } else if (ci == LOGISTIC) {
 	if (na(lmax)) {
 	    yf = 1.0 / (1.0 + exp(-xb));
@@ -1763,6 +1815,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 {
     const double *offvar = NULL;
     double xval, lmax = NADBL;
+    int k = pmod->ncoeff;
     int i, vi, t;
 
     if (pmod->ci == POISSON) {
@@ -1774,13 +1827,22 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	}
     } else if (pmod->ci == LOGISTIC) {
 	lmax = gretl_model_get_double(pmod, "lmax");
+    } else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	if (gretl_model_get_int(pmod, "ordered")) {
+	    /* we need to know how many coeffs are not
+	       just estimated cut-points */
+	    k = gretl_model_get_int(pmod, "nx");
+	    if (k <= 0) {
+		return E_MISSDATA;
+	    }
+	}
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
 	double yht = 0.0;
 	int miss = 0;
 
-	for (i=0; i<pmod->ncoeff && !miss; i++) {
+	for (i=0; i<k && !miss; i++) {
 	    int lag;
 
 	    vi = pmod->list[i+2];
@@ -1800,7 +1862,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	    fc->yhat[t] = NADBL;
 	} else if (FCAST_SPECIAL(pmod->ci)) {
 	    /* special handling for LOGIT and others */
-	    fc->yhat[t] = fcast_transform(yht, pmod->ci, t, offvar, lmax);
+	    fc->yhat[t] = fcast_transform(yht, pmod, t, offvar, lmax);
 	} else {
 	    fc->yhat[t] = yht;
 	}
