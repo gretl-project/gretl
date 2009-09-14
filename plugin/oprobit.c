@@ -465,6 +465,43 @@ static int ihess_from_ascore (op_container *OC, gretl_matrix *inH)
     return err;
 }
 
+#if 1
+
+/* Find the value of y that has the highest probability to form
+   the prediction for y */
+
+static int get_prediction (op_container *OC, const MODEL *pmod,
+			   double Xb)
+{
+    int k = OC->nx; /* position of least cut point */
+    double prob, pmax, cut;
+    double Phi, Phibak;
+    int i, pred = 0;
+
+    cut = pmod->coeff[k];
+    pmax = Phibak = normal_cdf(cut - Xb);
+
+    for (i=1; i<OC->M; i++) {
+	cut = pmod->coeff[++k];
+	Phi = normal_cdf(cut - Xb);
+	prob = Phi - Phibak;
+	if (prob > pmax) {
+	    pmax = prob;
+	    pred = i;
+	}
+	Phibak = Phi;
+    }
+
+    prob = 1 - normal_cdf(cut - Xb);
+    if (prob > pmax) {
+	pred = OC->M;
+    }
+
+    return pred;
+}
+
+#else
+
 /* compare X*b with the cut points to get a prediction for y */
 
 static int get_prediction (op_container *OC, const MODEL *pmod,
@@ -474,9 +511,13 @@ static int get_prediction (op_container *OC, const MODEL *pmod,
     double cut;
     int i, pred = 0;
 
+    fprintf(stderr, "get_prediction: k=%d, coeff[k] = %g, Xb = %g\n", 
+	    k, pmod->coeff[k], Xb);
+
     for (i=OC->M; i>0; i--) {
 	cut = pmod->coeff[k--];
 	if (Xb > cut) {
+	    fprintf(stderr, " Xb > %g: pred = %d\n", cut, i);
 	    pred = i;
 	    break;
 	}
@@ -484,6 +525,8 @@ static int get_prediction (op_container *OC, const MODEL *pmod,
 
     return pred;
 }
+
+#endif
 
 static double gen_resid (op_container *OC, const double *theta, int t) 
 {
@@ -626,6 +669,7 @@ static void fill_op_model (MODEL *pmod, const int *list,
 	if (pred == OC->y[s]) {
 	    correct++;
 	}
+
 	/* compute generalized residual */
 	pmod->uhat[t] = gen_resid(OC, OC->theta, s);
 	s++;

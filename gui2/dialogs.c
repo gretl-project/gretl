@@ -196,7 +196,7 @@ static int save_session_prompt (int gui_session)
 
 gboolean exit_check (void) 
 {
-    int resp, status = 0;
+    int resp, datamod, status = 0;
     int err = 0;
 
     if (maybe_raise_dialog() || console_is_busy()) {
@@ -204,7 +204,9 @@ gboolean exit_check (void)
 	return TRUE;
     }
 
-    if (session_file_is_open() && session_is_modified()) {
+    datamod = (data_status & MODIFIED_DATA);
+
+    if (session_file_is_open() && (session_is_modified() || datamod)) {
 	const char *save_msg = N_("Do you want to save the changes you made\n"
 				  "to this session?");
 
@@ -214,7 +216,7 @@ gboolean exit_check (void)
 	    if (err) {
 		/* give the user a shot at remedial action */
 		return TRUE;
-	    }
+	    } 
 	} else if (resp == GRETL_CANCEL) {
 	    /* canceled exit: block */
 	    return TRUE;
@@ -251,7 +253,7 @@ gboolean exit_check (void)
 	}
     }	
 
-    if (data_status & MODIFIED_DATA) {
+    if (!session_file_is_open() && (data_status & MODIFIED_DATA)) {
 	/* give the user a chance to save modified dataset */
 	resp = yes_no_dialog ("gretl", 
 			      _("Do you want to save changes you have\n"
