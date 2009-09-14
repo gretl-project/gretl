@@ -333,6 +333,7 @@ static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
 	gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN + 3);
 	filter_make_savename(finfo, i);
 	gtk_entry_set_text(GTK_ENTRY(w), (i == 0)? finfo->save1 : finfo->save2);
+	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);	
 	gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, i, i+1);
 	if (i == 0) {
 	    finfo->entry1 = w;
@@ -841,6 +842,12 @@ static int calculate_filter (filter_info *finfo)
 	}
 	for (t=t1; t<=finfo->t2; t++) {
 	    fx[t] = finfo->lambda * x[t] + (1.0 - finfo->lambda) * fx[t-1];
+	}
+	for (t=finfo->t2; t>=t1; t--) {
+	    fx[t] = fx[t-1];
+	}
+	for (t=t1-1; t>=0; t--) {
+	    fx[t] = NADBL;
 	}
     } else if (finfo->ftype == FILTER_HP) {
 	double l0 = libset_get_double(HP_LAMBDA);
