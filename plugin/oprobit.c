@@ -507,17 +507,14 @@ static int get_prediction (op_container *OC, const MODEL *pmod,
 static int get_prediction (op_container *OC, const MODEL *pmod,
 			   double Xb)
 {
-    int k = OC->k - 1; /* position of greatest cut point */
+    int k = OC->nx; /* position of least cut point */
     double cut;
-    int i, pred = 0;
+    int i, pred = OC->M;
 
-    fprintf(stderr, "get_prediction: k=%d, coeff[k] = %g, Xb = %g\n", 
-	    k, pmod->coeff[k], Xb);
-
-    for (i=OC->M; i>0; i--) {
-	cut = pmod->coeff[k--];
-	if (Xb > cut) {
-	    fprintf(stderr, " Xb > %g: pred = %d\n", cut, i);
+    for (i=0; i<OC->M; i++) {
+	cut = pmod->coeff[k++];
+	if (Xb < cut) {
+	    fprintf(stderr, " Xb = %g < %g: pred = %d\n", Xb, cut, i);
 	    pred = i;
 	    break;
 	}

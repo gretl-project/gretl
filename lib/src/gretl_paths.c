@@ -2263,6 +2263,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     /* gnuplot */
 #ifdef WIN32
     sprintf(paths.gnuplot, "%swgnuplot.exe", paths.gretldir);
+    strcpy(cpaths->gnuplot, paths.gnuplot);
 #else
     path_init(paths.gnuplot, cpaths->gnuplot, 0);
 #endif
