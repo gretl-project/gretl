@@ -479,11 +479,11 @@ static int get_prediction (op_container *OC, const MODEL *pmod,
     int i, pred = 0;
 
     cut = pmod->coeff[k];
-    pmax = CDFbak = distfunc(OC->type, cut - Xb);
+    pmax = CDFbak = distfunc(cut - Xb, OC->type);
 
     for (i=1; i<OC->M; i++) {
 	cut = pmod->coeff[++k];
-	CDF = distfunc(OC->type, cut - Xb);
+	CDF = distfunc(cut - Xb, OC->type);
 	prob = CDF - CDFbak;
 	if (prob > pmax) {
 	    pmax = prob;
