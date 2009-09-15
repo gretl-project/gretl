@@ -11,15 +11,17 @@ version 1.8.5, in progress
 - Function parameter [min:max:default] values: fix bug
   for locales using ',' as decimal separator
 - Fix bugs 2843717, 2848633
-- Fix bug in corrgm() function when series the input
-  series have missing values 
+- Fix bug in corrgm() function when the series given as
+  arguments contain missing values 
 - Add --to-file and --from-file options to "set" command
 - Several refinements for the GUI "model table"
-- Fix bug: error message when trying to save the dataset,
-  in the context of a saved-then-reopened session file
+- Fix bug: error when trying to save the dataset, in the
+  context of a saved-then-reopened session file
 - Fix bug: in some circumstances model tests failed to
   respect the sample used when estimating the model, if the
   sample had since been changed 
+- Fix bug: wrong results from the "fcast" command after
+  estimating an ordered probit or logit model
 - win32: update GTK+ stack to 2.16.6; update gnuplot to
   CVS as of 2009-09-13
   
