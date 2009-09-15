@@ -509,6 +509,8 @@ double ordered_model_prediction (const MODEL *pmod, double Xb)
     return (double) pred;
 }
 
+/* compute generalized residual for ordered models */
+
 static double op_gen_resid (op_container *OC, const double *theta, int t) 
 {
     double ndxt, m0, m1, ystar0, f0, f1;
@@ -949,9 +951,11 @@ static int *make_dummies_list (const int *list,
     return dumlist;
 }
 
-static int *make_big_list (const int *list, double ***pZ,
-			   DATAINFO *pdinfo, int **pdumlist,
-			   int *err)
+/* make internal regression list for ordered model */
+
+static int *make_op_list (const int *list, double ***pZ,
+			  DATAINFO *pdinfo, int **pdumlist,
+			  int *err)
 {
     int *dumlist;
     int *biglist;
@@ -1034,7 +1038,7 @@ static MODEL ordered_estimate (int *list, int ci,
     /* construct augmented regression list, including dummies 
        for the level of the dependent variable
     */
-    biglist = make_big_list(list, pZ, pdinfo, &dumlist, &model.errcode);
+    biglist = make_op_list(list, pZ, pdinfo, &dumlist, &model.errcode);
     if (model.errcode) {
 	return model;
     }
