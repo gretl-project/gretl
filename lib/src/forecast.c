@@ -1638,49 +1638,6 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
     return err;
 }
 
-static double ordered_cdf (double x, int ci)
-{
-    switch (ci) {
-    case PROBIT:
-	return normal_cdf(x);
-    case LOGIT:
-	return 1.0 / (1.0 + exp(-x));
-    default:
-	return NADBL;
-    }
-}
-
-static double ordered_model_prediction (const MODEL *pmod, double Xb)
-{
-    /* position of least cut point in coeff array */
-    int k = gretl_model_get_int(pmod, "nx");
-    int maxval = pmod->ncoeff - k;
-    double prob, pmax, cut;
-    double CDF, CDFbak;
-    int i, pred = 0;
-
-    cut = pmod->coeff[k];
-    pmax = CDFbak = ordered_cdf(cut - Xb, pmod->ci);
-
-    for (i=1; i<maxval; i++) {
-	cut = pmod->coeff[++k];
-	CDF = ordered_cdf(cut - Xb, pmod->ci);
-	prob = CDF - CDFbak;
-	if (prob > pmax) {
-	    pmax = prob;
-	    pred = i;
-	}
-	CDFbak = CDF;
-    }
-
-    prob = 1 - CDFbak;
-    if (prob > pmax) {
-	pred = maxval;
-    }
-
-    return (double) pred;
-}
-
 /* Calculates the transformation required to get from xb (= X*b) to
    the actual prediction for the dependent variable, for models of
    type LOGISTIC, LOGIT, PROBIT, TOBIT and POISSON.

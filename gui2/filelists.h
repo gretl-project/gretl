@@ -21,11 +21,4 @@ GList *get_working_dir_list (void);
 
 int rc_read_file_lists (FILE *fp, char *prev);
 
-#ifdef G_OS_WIN32
-
-void reg_save_file_lists (void);
-void reg_read_file_lists (void);
-
-#endif
-
 #endif /* FILELISTS_H */

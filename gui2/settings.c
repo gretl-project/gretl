@@ -176,10 +176,7 @@ RCVAR rc_vars[] = {
     { "langpref", N_("Language preference"), NULL, langpref, 
       LISTSET | RESTART, 32, TAB_MAIN, NULL },
 #endif
-#ifdef G_OS_WIN32 
-    { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
-      MACHSET | INVISET, MAXLEN, TAB_NONE, NULL },
-#else
+#ifndef G_OS_WIN32 
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
 #endif
@@ -1577,7 +1574,9 @@ static void boolvar_to_str (void *b, char *s)
     }
 }
 
-static int write_plain_text_rc (void) 
+/* non-static because also called from dialogs.c on exit */
+
+int write_rc (void)
 {
     RCVAR *rcvar;
     FILE *fp;
@@ -1596,9 +1595,7 @@ static int write_plain_text_rc (void)
     for (i=0; rc_vars[i].var != NULL; i++) {
 	rcvar = &rc_vars[i];
 #ifdef G_OS_WIN32
-	/* Leave this to the registry?  Or should we do it here
-	   in the hope of making gretl relocatable? 
-	 */
+	/* let the registry or gretlnet.txt handle this */
 	if (!strcmp(rcvar->key, "gretldir")) {
 	    continue;
 	}
@@ -1616,8 +1613,9 @@ static int write_plain_text_rc (void)
     }
 
     rc_save_file_lists(fp);
-
     fclose(fp);
+
+    gretl_update_paths(&paths, set_paths_opt);
 
     return 0;
 }
@@ -1790,57 +1788,6 @@ static void find_and_set_rc_var (const char *key, const char *val)
 
 #ifdef G_OS_WIN32
 
-void write_rc (void) 
-{
-    RCVAR *rcvar;
-    char bval[6];
-    char ival[16];
-    char *strval;
-    int i = 0, err = 0;
-
-    if (*rcfile != '\0') {
-	write_plain_text_rc();
-    }
-
-    for (i=0; rc_vars[i].key != NULL; i++) {
-	rcvar = &rc_vars[i];
-
-	if (rcvar->flags & FIXSET) {
-	    /* read-only variables */
-	    continue;
-	}
-
-	if (rcvar->flags & BOOLSET) {
-	    boolvar_to_str(rcvar->var, bval);
-	    err += write_reg_val(HKEY_CURRENT_USER, 
-				 "gretl", 
-				 rcvar->key, 
-				 bval, GRETL_TYPE_BOOL);
-	} else if (rcvar->flags & INTSET) {
-	    sprintf(ival, "%d", *(int *) rcvar->var);
-	    err += write_reg_val(HKEY_CURRENT_USER, 
-				 "gretl", 
-				 rcvar->key, 
-				 ival, GRETL_TYPE_INT);	    
-	} else if (rcvar->flags & MACHSET) {
-	    strval = (char *) rcvar->var;
-	    err += write_reg_val(HKEY_LOCAL_MACHINE, 
-				 get_reg_base(rcvar->key),
-				 rcvar->key, 
-				 strval, GRETL_TYPE_STRING);
-	} else {
-	    strval = (char *) rcvar->var;
-	    err += write_reg_val(HKEY_CURRENT_USER, 
-				 get_reg_base(rcvar->key),
-				 rcvar->key, 
-				 strval, GRETL_TYPE_STRING);
-	}
-    }
-
-    reg_save_file_lists();
-    gretl_update_paths(&paths, set_paths_opt);
-}
-
 static int get_network_settings (void)
 {
     const char *netfile;
@@ -1906,15 +1853,21 @@ static int get_network_settings (void)
    except that we'll respect the registry entry for gretldir.
 */
 
-static int win32_read_gretlrc (int *got_recent) 
+static int win32_read_gretlrc (void) 
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
+    int got_recent = 0;
     FILE *fp;
+
+    if (*rcfile == '\0') {
+	/* shouldn't happen */
+	return 1;
+    }
 
     fp = gretl_fopen(rcfile, "r");
 
     if (fp == NULL) {
-	/* not necessarily an error */
+	/* not necessarily an error: may be starting from scratch */
 	return 1;
     }
 
@@ -1923,20 +1876,23 @@ static int win32_read_gretlrc (int *got_recent)
 	    continue;
 	}
 	if (!strncmp(line, "recent", 6)) {
-	    *got_recent = 1;
+	    got_recent = 1;
 	    break;
 	}
 	if (sscanf(line, "%s", key) == 1) {
-	    strcpy(linevar, line + strlen(key) + 3); 
-	    chopstr(linevar); 
-	    if (*linevar) {
-		find_and_set_rc_var(key, linevar);
+	    /* note: don't take gretldir from here */
+	    if (strcmp(key, "gretldir")) {
+		strcpy(linevar, line + strlen(key) + 3); 
+		chopstr(linevar); 
+		if (*linevar) {
+		    find_and_set_rc_var(key, linevar);
+		}
 	    }
 	}
     }
 
-    if (*got_recent) {
-	*got_recent = rc_read_file_lists(fp, line);
+    if (got_recent) {
+	rc_read_file_lists(fp, line);
     }
 
     fclose(fp);
@@ -1951,7 +1907,6 @@ int read_win32_config (int debug)
     char value[MAXSTR];
     char *appdata;
     char *strvar;
-    int got_recent = 0;
     int i, err = 0;
 
     if (chinese_locale()) {
@@ -1968,24 +1923,21 @@ int read_win32_config (int debug)
        read config from it */
     get_network_settings();
 
-    if (*rcfile != '\0') {
-	win32_read_gretlrc(&got_recent);
-    }
+    /* read from user config file */
+    win32_read_gretlrc();
+
+    /* now read from registry for a few items, if they're
+       not already set */
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	int regerr = 0;
 
 	rcvar = &rc_vars[i];
 
-	if (rcvar->flags & FIXSET) {
-	    /* already set via gretlnet.txt */
+	if (rcvar->flags & (FIXSET | GOTSET)) {
+	    /* already set via gretlnet.txt or user rcfile */
 	    continue;
 	}
-
-	if (rcvar->flags & GOTSET) {
-	    /* already set via user rcfile */
-	    continue;
-	}	
 
 	*value = '\0';
 
@@ -1994,17 +1946,12 @@ int read_win32_config (int debug)
 				  get_reg_base(rcvar->key),
 				  rcvar->key, 
 				  value);
-	} else {
-	    regerr = read_reg_val(HKEY_CURRENT_USER, 
-				  get_reg_base(rcvar->key),
-				  rcvar->key, 
-				  value);
-	}
+	} 
 
-        if (debug) {
-            fprintf(stderr, "reg: err = %d, '%s' -> '%s'\n", regerr, rcvar->key,
-                    value);
-        }
+	if (debug) {
+	    fprintf(stderr, "reg: err = %d, '%s' -> '%s'\n", regerr, rcvar->key,
+		    value);
+	}
 	    
 	if (!regerr && *value != '\0') {
 	    /* replace defaults only if we got something */
@@ -2020,10 +1967,6 @@ int read_win32_config (int debug)
 	}
     }
 
-    if (!got_recent) {
-	reg_read_file_lists();
-    }
-
     err = common_read_rc_setup();
 
     set_fixed_font();
@@ -2033,15 +1976,6 @@ int read_win32_config (int debug)
 }
 
 #else /* end of win32 version, now plain GTK */
-
-void write_rc (void)
-{
-    int err = write_plain_text_rc();
-
-    if (!err) {
-	gretl_update_paths(&paths, set_paths_opt);
-    }
-}
 
 /* Note: even if we fail to read the rc file, we should still do
    common_read_rc_setup(), since that will establish defaults for

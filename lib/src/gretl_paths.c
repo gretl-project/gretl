@@ -2120,8 +2120,6 @@ static void load_default_path (char *targ)
 	strcpy(targ, "f:\\"); 
     } else if (targ == paths.dbhost) {
 	strcpy(targ, "ricardo.ecn.wfu.edu");
-    } else if (targ == paths.gnuplot) {
-	sprintf(targ, "%swgnuplot.exe", paths.gretldir);
     } else if (targ == paths.x12a) {
 	sprintf(targ, "%s\\x12arima\\x12a.exe", progfiles);
     } else if (targ == paths.tramo) {
@@ -2263,7 +2261,6 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     /* gnuplot */
 #ifdef WIN32
     sprintf(paths.gnuplot, "%swgnuplot.exe", paths.gretldir);
-    strcpy(cpaths->gnuplot, paths.gnuplot);
 #else
     path_init(paths.gnuplot, cpaths->gnuplot, 0);
 #endif
@@ -2563,11 +2560,7 @@ void get_gretl_rc_path (char *rcfile)
 
 int cli_read_rc (void) 
 {
-    ConfigPaths cpaths = {
-	{0}, {0}, {0}, {0},
-	{0}, {0}, {0}, {0},
-	{0}, {0}, {0}
-    };
+    ConfigPaths cpaths = {0};
     FILE *fp = NULL;
     char rcfile[FILENAME_MAX];
     char line[MAXLEN], key[32], val[MAXLEN];
@@ -2599,6 +2592,8 @@ int cli_read_rc (void)
 	    chopstr(val); 
 	    if (!strcmp(key, "gretldir")) {
 		strncat(cpaths.gretldir, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "gnuplot")) {
+		strncat(cpaths.gnuplot, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "userdir")) {
 		strncat(cpaths.workdir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "shellok")) {

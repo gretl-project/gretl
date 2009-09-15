@@ -110,62 +110,6 @@ static void write_filename_to_list (int filetype, int i, char *fname)
     }
 }
 
-#ifdef G_OS_WIN32
-
-static void reg_save_filelist (int filetype)
-{
-    char rpath[MAXLEN];
-    char **filep;
-    int i;
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    for (i=0; i<MAXRECENT; i++) {
-	if (filep[i] != NULL) {
-	    sprintf(rpath, "%s\\%d", file_sections[filetype], i);
-	    write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i],
-			  GRETL_TYPE_STRING);
-	}
-    }
-}
-
-void reg_save_file_lists (void)
-{
-    reg_save_filelist(FILE_LIST_DATA);
-    reg_save_filelist(FILE_LIST_SESSION);
-    reg_save_filelist(FILE_LIST_SCRIPT);
-    reg_save_filelist(FILE_LIST_WDIR);
-}
-
-void reg_read_file_lists (void)
-{
-    char rpath[MAXSTR], value[MAXSTR];
-    int i, j;
-
-    initialize_file_lists();
-
-    /* Note: the filenames read from the Windows registry will be in
-       the locale encoding.  That's intended; we'll re-encode them for
-       GUI display if required.  Below we are just storing the names.
-    */
-
-    for (i=0; i<NFILELISTS; i++) {
-	for (j=0; j<MAXRECENT; j++) {
-	    sprintf(rpath, "%s\\%d", file_sections[i], j);
-	    if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) { 
-		write_filename_to_list(i, j, value);
-	    } else {
-		break;
-	    }
-	}
-    } 
-}
-
-#endif /* G_OS_WIN32 */
-
 /* return 1 if we read any "recent files", else 0 */
 
 int rc_read_file_lists (FILE *fp, char *prev)

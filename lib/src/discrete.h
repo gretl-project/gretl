@@ -37,6 +37,8 @@ MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 const char *mn_logit_coeffsep (const MODEL *pmod, const DATAINFO *pdinfo, 
 			       int i);
 
+double ordered_model_prediction (const MODEL *pmod, double Xb);
+
 #endif /* DISCRETE_H */
 
 

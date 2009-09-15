@@ -58,7 +58,6 @@ enum {
     P_SPSS_IMPORT,
     P_JMULTI_IMPORT,
     P_ZIPFILE,
-    P_OPROBIT,
     P_ARBOND,
     P_HECKIT,
     P_ODBC,
@@ -109,7 +108,6 @@ struct plugin_info plugins[] = {
     { P_SPSS_IMPORT,     "spss_import" },
     { P_JMULTI_IMPORT,   "jmulti_import" },
     { P_ZIPFILE,         "gretlzip" },
-    { P_OPROBIT,         "oprobit" },
     { P_ARBOND,          "arbond" },
     { P_HECKIT,          "heckit" },
     { P_ODBC,            "odbc_import" },
@@ -182,7 +180,6 @@ struct plugin_function plugin_functions[] = {
     { "tobit_estimate",    P_TOBIT },
     { "garch_model",       P_GARCH },
     { "poisson_estimate",  P_POISSON },
-    { "ordered_estimate",  P_OPROBIT },
     { "heckit_estimate",   P_HECKIT },
     { "interval_estimate", P_INTREG },
 

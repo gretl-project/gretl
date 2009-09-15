@@ -43,10 +43,6 @@ DIR *win32_opendir (const char *dname);
 int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval);
 
-int write_reg_val (HKEY tree, const char *base,
-		   const char *keyname, char *keyval,
-		   int ktype);
-
 const char *get_gretlnet_filename (void);
 
 int set_gretlnet_filename (const char *prog);

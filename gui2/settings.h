@@ -27,7 +27,7 @@ int session_prompt_on (void);
 
 void set_session_prompt (int val);
 
-void write_rc (void);
+int write_rc (void);
 
 void dump_rc (void);
 

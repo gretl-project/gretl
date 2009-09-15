@@ -97,7 +97,6 @@ PLUGINSRC = \
         arma_x12.c \
 	workbook.c \
 	tobit.c \
-	oprobit.c \
 	mod_garch.c \
 	fcp.c \
 	garch.c \
@@ -137,7 +136,6 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/pca.dll \
 	plugins/nistcheck.dll \
 	plugins/tobit.dll \
-	plugins/oprobit.dll \
 	plugins/garch.dll \
         plugins/audio.dll \
 	plugins/vif.dll \
@@ -449,10 +447,6 @@ plugins/tobit.dll: tobit.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
-plugins/oprobit.dll: oprobit.o dllinit.o
-	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
-
 plugins/garch.dll: garch.o fcp.o mod_garch.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
@@ -508,13 +502,13 @@ dirs:
 	mkdir -p dlls 
 	mkdir -p plugins 
 	mkdir -p import-libs
-	
+
 cross_builddate: $(topsrc)/builddate.c
 	gcc -Wall -o builddate $<
 
 native_builddate: $(topsrc)/builddate.c
 	$(CC) -Wall -o builddate $<
-	
+
 buildstamp: $(BUILDDATE)
 	./builddate
 

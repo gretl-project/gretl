@@ -46,7 +46,9 @@ struct ConfigPaths_ {
     char gretldir[MAXLEN];
     char workdir[MAXLEN];
     char ratsbase[MAXLEN];
+#ifndef WIN32
     char gnuplot[MAXLEN];
+#endif
     char x12a[MAXLEN];
     char tramo[MAXLEN];
     char rbinpath[MAXLEN];

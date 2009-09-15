@@ -67,64 +67,6 @@ int read_reg_val (HKEY tree, const char *base,
     return err;
 }
 
-static gchar *get_windows_string (char *s)
-{
-    gsize bytes;
-
-    return g_locale_from_utf8(s, -1, NULL, &bytes, NULL);
-}
-
-int write_reg_val (HKEY tree, const char *base, 
-		   const char *keyname, char *keyval,
-		   int ktype)
-{
-    gchar *tmp = NULL;
-    char regpath[64];
-    int err = 0;
-    HKEY regkey;
-
-    /* ensure that strings are in the locale encoding */
-    if (ktype == GRETL_TYPE_STRING && string_is_utf8(keyval)) {
-	tmp = get_windows_string(keyval);
-	if (tmp != NULL) {
-	    keyval = tmp;
-	}
-    }
-
-    sprintf(regpath, "Software\\%s", base);
-
-    if (RegCreateKeyEx(tree,
-                       regpath,
-                       0,
-                       NULL, 
-                       REG_OPTION_NON_VOLATILE,
-                       KEY_ALL_ACCESS,
-                       NULL,
-                       &regkey,
-                       NULL) != ERROR_SUCCESS) {
-	fprintf(stderr, "RegCreateKeyEx: failed on '%s'\n", regpath);
-        return 1;
-    }
-
-    if (RegSetValueEx(regkey,
-		      keyname,
-		      0,
-		      REG_SZ,
-		      keyval,
-		      strlen(keyval) + 1) != ERROR_SUCCESS) {
-	fprintf(stderr, "RegSetValueEx: failed on '%s'\n", keyname);
-        err = 1;
-    }
-
-    if (tmp != NULL) {
-	g_free(tmp);
-    }
-                  
-    RegCloseKey(regkey);
-
-    return err;
-}
-
 DIR *win32_opendir (const char *dname)
 {
     char tmp[MAXLEN];
@@ -252,11 +194,7 @@ static int cli_read_gretl_var (char *key, char *val,
 
 void cli_read_registry (char *callname)
 {
-    ConfigPaths cpaths = {
-	{0}, {0}, {0}, {0},
-	{0}, {0}, {0}, {0},
-	{0}, {0}, {0} 
-    };
+    ConfigPaths cpaths = {0};
     char valstr[MAXLEN];
     char dbproxy[21];
     int done, use_proxy = 0;
@@ -667,7 +605,7 @@ int gretl_shell (const char *arg, PRN *prn)
     }
 
     if (!libset_get_bool(SHELL_OK)) {
-	strcpy(gretl_errmsg, _("The shell command is not activated."));
+	gretl_errmsg_set(_("The shell command is not activated."));
 	return 1;
     }
 
