@@ -120,6 +120,7 @@ SRCS = about.c \
 	filters.c \
 	fncall.c \
 	fnsave.c \
+	graphics.c \
 	graph_page.c \
 	gpt_control.c \
 	gpt_dialog.c \

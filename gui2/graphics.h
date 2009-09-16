@@ -17,11 +17,17 @@
  * 
  */
 
-#ifndef GPT_DIALOG_H
-#define GPT_DIALOG_H
+#ifndef GRAPHICS_H_
+#define GRAPHICS_H_
 
-GtkWidget *plot_add_editor (png_plot *plot);
+void pdf_ps_dialog (GPT_SPEC *spec);
 
-void pdf_font_selector (GtkButton *button, gpointer p);
+void save_graphic_to_file (gpointer data, const char *fname);
 
-#endif /* GPT_DIALOG_H */
+GPT_SPEC *graph_saver_get_plotspec (gpointer p);
+
+void pdf_saver_set_fontname (gpointer p, const char *fontname);
+
+const char *pdf_saver_current_font (gpointer p);
+
+#endif /* GRAPHICS_H_ */

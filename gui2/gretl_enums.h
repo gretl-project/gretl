@@ -154,6 +154,7 @@ enum file_ops {
     SAVE_OUTPUT,
     SAVE_SESSION,
     SAVE_GNUPLOT,
+    SAVE_GRAPHIC,
     SAVE_GP_CMDS,
     SAVE_R_CMDS,
     SAVE_OX_CMDS,

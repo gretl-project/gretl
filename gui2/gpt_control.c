@@ -28,6 +28,7 @@
 #include "calculator.h"
 #include "guiprint.h"
 #include "textbuf.h"
+#include "graphics.h"
 
 #include "boxplots.h"
 
@@ -467,9 +468,16 @@ static int gnuplot_png_init (png_plot *plot, FILE **fpp)
     return 0;
 }
 
-int gp_term_code (gpointer p)
+int gp_term_code (gpointer p, int action)
 {
-    GPT_SPEC *spec = (GPT_SPEC *) p;
+    GPT_SPEC *spec;
+    
+    if (action == SAVE_GNUPLOT) {
+	spec = (GPT_SPEC *) p;
+    } else {
+	/* EPS/PDF saver */
+	spec = graph_saver_get_plotspec(p);
+    }
 
     return spec->termtype;
 }
@@ -854,6 +862,7 @@ void save_graph_to_file (gpointer data, const char *fname)
 }
 
 #define GRETL_PDF_TMP "gretltmp.pdf"
+#define GRETL_EPS_TMP "gretltmp.eps"
 
 static void graph_display_pdf (GPT_SPEC *spec)
 {
@@ -899,6 +908,76 @@ static void graph_display_pdf (GPT_SPEC *spec)
 #else
     gretl_fork("viewpdf", pdfname);
 #endif
+}
+
+void saver_preview_graph (GPT_SPEC *spec, char *termstr)
+{
+    char grfname[FILENAME_MAX];
+    char plttmp[FILENAME_MAX];
+    gchar *plotcmd;
+    int err = 0;
+
+    build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
+
+    if (spec->termtype == GP_TERM_EPS) {
+	build_path(grfname, gretl_dotdir(), GRETL_EPS_TMP, NULL);
+    } else {
+	build_path(grfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
+    }
+
+    err = revise_plot_file(spec, plttmp, grfname, termstr);
+    if (err) {
+	return;
+    }
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+			      plttmp);
+    err = gretl_spawn(plotcmd);
+    gretl_remove(plttmp);
+    g_free(plotcmd);
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    } 
+
+#if defined(G_OS_WIN32)
+    win32_open_file(grfname);
+#elif defined(OSX_BUILD)
+    osx_open_file(grfname);
+#else
+    if (spec->termtype == GP_TERM_EPS) {
+	gretl_fork("viewps", grfname);
+    } else {
+	gretl_fork("viewpdf", grfname);
+    }
+#endif
+}
+
+int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname)
+{
+    char plttmp[FILENAME_MAX];
+    int err;
+
+    build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
+
+    err = revise_plot_file(spec, plttmp, fname, termstr);
+
+    if (!err) {
+	gchar *plotcmd;
+
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+			      plttmp);
+	err = gretl_spawn(plotcmd);
+	gretl_remove(plttmp);
+	g_free(plotcmd);
+
+	if (err) {
+	    gui_errmsg(err);
+	}
+    }
+
+    return err;
 }
 
 /* dump_plot_buffer: this is used when we're taking the material from
@@ -2761,8 +2840,7 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 
     if (!strcmp(up_item, _("Save as postscript (EPS)..."))) {
 	plot->spec->termtype = GP_TERM_EPS;
-	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
-				  plot->spec, plot->shell);
+	pdf_ps_dialog(plot->spec);
     } else if (!strcmp(up_item, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
 	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
@@ -2933,8 +3011,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 				  plot->spec, plot->shell);
     } else if (!strcmp(item, _("Save as PDF..."))) {
 	plot->spec->termtype = GP_TERM_PDF;
-        file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
-				  plot->spec, plot->shell);
+	pdf_ps_dialog(plot->spec);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_to_session_callback(plot->spec);
     } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 

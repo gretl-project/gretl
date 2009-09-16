@@ -27,6 +27,7 @@
 #include "fnsave.h"
 #include "database.h"
 #include "datafiles.h"
+#include "graphics.h"
 #include "bootstrap.h"
 
 #include <sys/stat.h>
@@ -63,8 +64,6 @@
                                i == APPEND_SAV || \
                                i == APPEND_JMULTI || \
                                i == APPEND_ODS)
-
-#define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT)
 
 #define EXPORT_ACTION(a,s) ((a == EXPORT_OCTAVE || \
                              a == EXPORT_R || \
@@ -180,8 +179,8 @@ static const char *get_ext (int action, gpointer data)
 
     if (GDT_ACTION(action)) {
 	return ".gdt";
-    } else if (action == SAVE_GNUPLOT) {
-	int ttype = gp_term_code(data);
+    } else if (action == SAVE_GNUPLOT || action == SAVE_GRAPHIC) {
+	int ttype = gp_term_code(data, action);
 
 	s = get_gp_ext(ttype);
     } else {
@@ -511,6 +510,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	err = do_store(fname, save_action_to_opt(action, data));
     } else if (action == SAVE_GNUPLOT) {
 	save_graph_to_file(data, fname);
+    } else if (action == SAVE_GRAPHIC) {
+	save_graphic_to_file(data, fname);
     } else if (action == SAVE_SESSION) {
 	err = save_session(fname);
     } else if (action == SAVE_CMD_LOG) {

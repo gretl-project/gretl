@@ -30,6 +30,10 @@ void display_session_graph (const char *path, const char *title);
 
 int display_graph_file (const char *fname);
 
+void saver_preview_graph (GPT_SPEC *spec, char *termstr);
+
+int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname);
+
 void plot_label_position_click (GtkWidget *w, png_plot *plot);
 
 int redisplay_edited_plot (png_plot *plot);
@@ -50,7 +54,7 @@ GPT_SPEC *plot_get_spec (png_plot *plot);
 
 void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2);
 
-int gp_term_code (gpointer p);
+int gp_term_code (gpointer p, int action);
 
 void save_graph_to_file (gpointer p, const char *fname);
 
