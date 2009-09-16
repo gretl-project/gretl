@@ -74,7 +74,7 @@ editor; ``OK'' applies the changes and closes the dialog.
 
 \begin{figure}[htbp]
   \begin{center}
-    \includegraphics[scale=0.5]{figures/plot_control}
+    \includegraphics[scale=0.6]{figures/plot_control}
   \end{center}
   \caption{gretl's gnuplot controller}
   \label{fig-plot}
@@ -84,44 +84,64 @@ editor; ``OK'' applies the changes and closes the dialog.
 \subsection{Publication-quality graphics: advanced options}
 \label{plot-advanced}
 
-If you know a little about \app{gnuplot} and wish to get finer control
-over the appearance of a graph than is available via the plot editor
-dialog.  In the graph display window, right-click and choose ``Save to
-session as icon''.  Then open the icon view window --- either via the
-menu item View/Icon view, or by clicking the ``session icon view''
-button on the main-window toolbar.  You should see an icon
-representing your graph.  Right-click on that and select ``Edit plot
-commands'' from the pop-up menu.  This opens an editing window with
-the actual gnuplot commands displayed. You can edit these commands and
-either save them for future processing or send them to \app{gnuplot}
-directly, using the Execute (cogwheel) button on the toolbar in the
-plot commands editing window.
+The GUI plot editor has two limitations.  First, it cannot represent
+all the myriad options that \app{gnuplot} offers. Users who are
+sufficiently familiar with \app{gnuplot} to know what they're missing
+in the plot editor presumably don't need much help from \app{gretl},
+so long as they can get hold of the \app{gnuplot} command file that
+\app{gretl} has put together.  Second, even if the plot editor meets
+your needs, in terms of fine-tuning the graph you see on screen, a few
+details may need further work in order to get optimal results for
+publication.
 
-Most likely you'll only need to edit a couple of lines at the top of
-the file, specifying a driver (plus options) and an output file.  If
-you've already fine-tuned the graph using the GUI plot editor your
-refinements will already be embodied in gnuplot commands (though you
-may want to tweak a few things --- see the ``Additional tips'' below).
+Either way, the first step in advanced tweaking of a graph is to get
+access to the graph command file.
 
-We offer here a brief summary of some points that may be useful.  (To
-find out more about \app{gnuplot} visit
-\href{http://www.gnuplot.info/}{www.gnuplot.info}. This site has
-documentation for the current version of the program in various
-formats.)
+\begin{itemize}
+\item In the graph display window, right-click and choose ``Save to
+  session as icon''.
+\item If it's not already open, open the icon view window --- either
+  via the menu item View/Icon view, or by clicking the ``session icon
+  view'' button on the main-window toolbar.
+\item Right-click on the icon representing the newly added graph and
+  select ``Edit plot commands'' from the pop-up menu.
+\item You get a window displaying the plot file
+  (Figure~\ref{fig:plot-edit}).
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.6]{figures/plotedit}
+  \caption{Plot commands editor}
+  \label{fig:plot-edit}
+\end{figure}
+
+Here are the basic things you can do in this window.  Obviously, you
+can edit the file you just opened.  You can also send it for
+processing by gnuplot, by clicking the ``Execute'' (cogwheel)
+icon in the toolbar.  Or you can use the ``Save as'' button to save
+a copy for editing and processing as you wish.
+
+Unless you're a gnuplot expert, most likely you'll only need to edit a
+couple of lines at the top of the file, specifying a driver (plus
+options) and an output file.  We offer here a brief summary of some
+points that may be useful.
 
 First, \app{gnuplot}'s output mode is set via the command \texttt{set
   term} followed by the name of a supported driver (``terminal'' in
-gnuplot parlance) plus various possible options.  The graphic formats
-that are most suitable for publication are PDF and EPS.  These are
-supported by the gnuplot \texttt{term} types \texttt{pdf},
-\texttt{pdfcairo} and \texttt{postscript} (with the \texttt{eps}
-option).  The \texttt{pdfcairo} driver has the virtue that is behaves
-in a very similar manner to the PNG one (the output of which you see
-on screen).  This is provided by the version of gnuplot that is
-included in the \app{gretl} packages for MS Windows and Mac OS X; if
-you're on Linux it may or may be supported.  If \texttt{pdfcairo} is
-not available, the \texttt{pdf} terminal may be available; the
-\texttt{postscript} terminal is almost certainly available.
+gnuplot parlance) plus various possible options.  (The top line in the
+plot commands window shows the \texttt{set term} line that \app{gretl}
+used to make a PNG file, commented out.)  The graphic formats that are
+most suitable for publication are PDF and EPS.  These are supported by
+the gnuplot \texttt{term} types \texttt{pdf}, \texttt{pdfcairo} and
+\texttt{postscript} (with the \texttt{eps} option).  The
+\texttt{pdfcairo} driver has the virtue that is behaves in a very
+similar manner to the PNG one, the output of which you see on screen.
+This is provided by the version of gnuplot that is included in the
+\app{gretl} packages for MS Windows and Mac OS X; if you're on Linux
+it may or may be supported.  If \texttt{pdfcairo} is not available,
+the \texttt{pdf} terminal may be available; the \texttt{postscript}
+terminal is almost certainly available.
 
 Besides selecting a term type, if you want to get gnuplot to write the
 actual output file you need to append a \texttt{set output} line
@@ -177,7 +197,11 @@ On the first line we set a sans serif font for \texttt{pdfcairo} at a
 suitable size for a 5 $\times$ 3.5 inch plot (which you may find looks
 better than the rather ``letterboxy'' default of 5 $\times$ 3).  And
 on the second we illustrate what you might do to get a smaller 3
-$\times$ 2 inch plot.
+$\times$ 2 inch plot. You can specify the plot size in centimeters
+if you prefer, as in
+\begin{code}
+set term pdfcairo font "Sans,6" size 6cm,4cm
+\end{code}
 
 We then repeat the exercise for the \texttt{pdf} terminal.  Notice
 that here we're specifying one of the 35 standard PostScript fonts,
@@ -208,6 +232,11 @@ have mentioned.
   \caption{Drivers for publication-quality graphics}
   \label{tab:drivers}
 \end{table}
+
+To find out more about \app{gnuplot} visit
+\href{http://www.gnuplot.info/}{www.gnuplot.info}. This site has
+documentation for the current version of the program in various
+formats.
 
 \subsection{Additional tips}
 \label{subsect-graph-tips}
