@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-09-13 16:38-0400\n"
-"PO-Revision-Date: 2009-08-06 21:14-0400\n"
+"PO-Revision-Date: 2009-09-16 16:42+0100\n"
 "Last-Translator: Hélio Guilherme\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -256,8 +256,7 @@ msgstr "mediana"
 
 #: lib/src/boxplots.c:174
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
-"Resumo numérico com intervalo de confiança (bootstrapped) para a mediana"
+msgstr "Resumo numérico com intervalo de confiança (bootstrapped) para a mediana"
 
 #: lib/src/boxplots.c:180
 #, no-c-format
@@ -767,8 +766,7 @@ msgstr "   aparenta ser etiqueta de observação\n"
 
 #: lib/src/csvdata.c:1203
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 "   a célula para a variável %d, observação %d está vazia: marcando como "
 "valor omisso\n"
@@ -919,8 +917,7 @@ msgstr "Atenção: erro na leitura dos dados binários na variável %d"
 #: lib/src/dataio.c:202 lib/src/dataio.c:242 lib/src/dataio.c:336
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr ""
-"Atençao: erro na leitura dos dados ASCII na variável %d, na observação %d"
+msgstr "Atençao: erro na leitura dos dados ASCII na variável %d, na observação %d"
 
 #: lib/src/dataio.c:308
 #, c-format
@@ -1402,8 +1399,7 @@ msgstr "Não se conseguiu abrir %s para escrita"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Das variáveis a serem guardadas, %d já estavam presentes na base de dados."
+msgstr "Das variáveis a serem guardadas, %d já estavam presentes na base de dados."
 
 #: lib/src/describe.c:1487 lib/src/describe.c:1591
 #, c-format
@@ -2685,8 +2681,7 @@ msgstr "Comando com argumentos insuficientes"
 
 #: lib/src/gretl_errors.c:47
 msgid "This command is implemented only for OLS models"
-msgstr ""
-"Este comando está implementado apenas para modelos Mínimos Quadrados (OLS)"
+msgstr "Este comando está implementado apenas para modelos Mínimos Quadrados (OLS)"
 
 #: lib/src/gretl_errors.c:48
 msgid "Invalid argument for function"
@@ -2948,8 +2943,7 @@ msgstr "Teste QLR para quebra estrutural"
 
 #: lib/src/gretl_model.c:2833
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
-msgstr ""
-"Teste de razão de verosimilhanças para heterocedasticidade entre grupos"
+msgstr "Teste de razão de verosimilhanças para heterocedasticidade entre grupos"
 
 #: lib/src/gretl_model.c:2834
 msgid "the units have a common error variance"
@@ -3026,8 +3020,7 @@ msgstr "Variância do erro de unidade-específica = 0"
 
 #: lib/src/gretl_model.c:2872
 msgid "Wald test for joint significance of time dummies"
-msgstr ""
-"Teste de Wald para a significância conjunta das variáveis tempo auxiliares"
+msgstr "Teste de Wald para a significância conjunta das variáveis tempo auxiliares"
 
 #: lib/src/gretl_model.c:2879
 msgid "restriction is acceptable"
@@ -3532,8 +3525,7 @@ msgstr "unidades"
 
 #: lib/src/gretl_utils.c:891
 msgid "Failed to parse line as frequency, startobs"
-msgstr ""
-"Falha no processamento de linha como sendo frequência, observação inicial"
+msgstr "Falha no processamento de linha como sendo frequência, observação inicial"
 
 #: lib/src/gretl_utils.c:929 lib/src/gretl_utils.c:938
 #: lib/src/gretl_utils.c:948 lib/src/gretl_utils.c:958
@@ -3654,8 +3646,7 @@ msgstr "Falha no processamento do número de observações"
 #: lib/src/gretl_xml.c:1950
 #, c-format
 msgid "labels attribute for observations must be 'true' or 'false'"
-msgstr ""
-"etiquetas de atributos para as observações têm que ser 'true' ou 'false'"
+msgstr "etiquetas de atributos para as observações têm que ser 'true' ou 'false'"
 
 #: lib/src/gretl_xml.c:1995
 #, c-format
@@ -3852,8 +3843,7 @@ msgstr " (por ex. help smpl)\n"
 
 #: lib/src/interact.c:2806
 msgid "You can also do 'help functions' for a list of functions\n"
-msgstr ""
-"Você também pode escrever 'help functions' para obter uma lista de funções\n"
+msgstr "Você também pode escrever 'help functions' para obter uma lista de funções\n"
 
 #: lib/src/interact.c:2812
 msgid "genrcli.hlp"
@@ -4170,13 +4160,11 @@ msgstr "O valor p foi o maior para a variável %d (%s)"
 
 #: lib/src/modelprint.c:598
 msgid "Auxiliary regression for non-linearity test (squared terms)"
-msgstr ""
-"Regressão auxiliar para o teste de não-linearidade (termos ao quadrado)"
+msgstr "Regressão auxiliar para o teste de não-linearidade (termos ao quadrado)"
 
 #: lib/src/modelprint.c:601
 msgid "Auxiliary regression for non-linearity test (log terms)"
-msgstr ""
-"Regressão auxiliar para o teste de não-linearidade (logaritmos dos termos)"
+msgstr "Regressão auxiliar para o teste de não-linearidade (logaritmos dos termos)"
 
 #: lib/src/modelprint.c:613
 msgid "Augmented regression for Chow test"
@@ -5385,8 +5373,7 @@ msgid "not significant at the 10% level\n"
 msgstr "não significativo com um nível de 10%\n"
 
 #: lib/src/nonparam.c:344
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 "A amostra é demasiado pequena para calcular um valor p baseado na "
 "distribuição normal\n"
@@ -5424,8 +5411,7 @@ msgstr ""
 #: lib/src/nonparam.c:822
 #, c-format
 msgid "Under the null hypothesis of independence, R follows N(%g, %g)\n"
-msgstr ""
-"De acordo com a hipótese nula de independência, R segue uma N(%g ; %g)\n"
+msgstr "De acordo com a hipótese nula de independência, R segue uma N(%g ; %g)\n"
 
 #: lib/src/nonparam.c:825
 #, c-format
@@ -5482,8 +5468,7 @@ msgstr "Número de casos com %s > %s: w = %d (%.2f%%)\n"
 #: lib/src/nonparam.c:1165
 #, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
-msgstr ""
-"De acordo com a hipótese nula de não diferença, W segue uma B(%d, %.1f)\n"
+msgstr "De acordo com a hipótese nula de não diferença, W segue uma B(%d, %.1f)\n"
 
 #: lib/src/nonparam.c:1167 lib/src/nonparam.c:1174 gui2/calculator.c:1975
 msgid "Prob"
@@ -5616,10 +5601,8 @@ msgid "gretl version %s\n"
 msgstr "gretl versão %s\n"
 
 #: lib/src/printout.c:104
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell e Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell e Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:105 lib/src/printout.c:129
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5724,8 +5707,7 @@ msgstr "Teste do qui-quadrado de Pearson = %g (%d gl, valor p = %g)"
 
 #: lib/src/printout.c:603
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 "Atenção: Menos que 80% das células tinham valores esperados de 5 ou "
 "superiores.\n"
@@ -6071,10 +6053,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1749
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Número total de valores omissos = %d (%.2f%% do total de valores de dados)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Número total de valores omissos = %d (%.2f%% do total de valores de dados)\n"
 
 #: lib/src/subsample.c:1760
 msgid "valid values"
@@ -6704,8 +6684,7 @@ msgstr "comandos gravados como %s\n"
 #: cli/gretlcli.c:939
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"escreva um nome de ficheiro onde guardar resultados (\"Enter\" para sair): "
+msgstr "escreva um nome de ficheiro onde guardar resultados (\"Enter\" para sair): "
 
 #: cli/gretlcli.c:947
 #, c-format
@@ -6747,7 +6726,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de Agosto de 2009."
+"Tradução de 16 de Setembro de 2009."
 
 #: gui2/about.c:168
 msgid "License"
@@ -6957,8 +6936,7 @@ msgstr "Estatística de teste: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1671
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Atenão: com amostras pequenas, a aproximação assimptótica pode ser fraca\n"
+msgstr "Atenão: com amostras pequenas, a aproximação assimptótica pode ser fraca\n"
 
 #: gui2/calculator.c:1678
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7684,39 +7662,34 @@ msgid "didn't get description from %s\n"
 msgstr "não se obteve a descrição a partir de %s\n"
 
 #: gui2/datafiles.c:749
-#, fuzzy, c-format
+#, c-format
 msgid "Function package %s"
-msgstr "pacotes de funções"
+msgstr "Pacotes de funções %s"
 
 #: gui2/datafiles.c:751
-#, fuzzy
 msgid "Delete package file"
-msgstr "gretl: ficheiros de exercícios"
+msgstr "Apagar ficheiro de pacote de funções"
 
 #: gui2/datafiles.c:752
-#, fuzzy
 msgid "Unload member functions"
-msgstr "Funções Ajudantes"
+msgstr "Libertar funções membro"
 
 #: gui2/datafiles.c:844
-#, fuzzy
 msgid "Add to functions shown"
-msgstr "Chamada à função %s"
+msgstr "Adicionar às funções mostradas"
 
 #: gui2/datafiles.c:845
-#, fuzzy
 msgid "Replace functions shown"
-msgstr "Funções Ajudantes"
+msgstr "Substituir as funções mostradas"
 
 #: gui2/datafiles.c:868
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d function file(s)"
-msgstr "Ficheiros de _Funções"
+msgstr "Encontrou-se %d ficheiros de funções"
 
 #: gui2/datafiles.c:874
-#, fuzzy
 msgid "No function files were found"
-msgstr "Não se encontrou pacotes de funções"
+msgstr "Não se encontrou ficheiros de funções"
 
 #: gui2/datafiles.c:1057 gui2/datafiles.c:1076 gui2/datafiles.c:1093
 #: gui2/datafiles.c:1201
@@ -8057,8 +8030,7 @@ msgstr "As variáveis índice de unidade e de tempo têm que ser distintas"
 
 #: gui2/datawiz.c:830
 msgid "The selected index variables do not represent a panel structure"
-msgstr ""
-"As variáveis índice seleccionadas não representam uma estrutura de painel"
+msgstr "As variáveis índice seleccionadas não representam uma estrutura de painel"
 
 #: gui2/datawiz.c:921
 msgid "This dataset cannot be interpreted as a panel"
@@ -8101,23 +8073,20 @@ msgid "Do you want to save this gretl session?"
 msgstr "Deseja gravar esta sessão do gretl?"
 
 #: gui2/dialogs.c:134
-#, fuzzy
 msgid "Save a record of the commands you executed?"
-msgstr "Nenhuns comandos para executar"
+msgstr "Gravar um registo dos comandos executados?"
 
 #: gui2/dialogs.c:136
 msgid "Always prompt if there are unsaved changes"
-msgstr ""
+msgstr "Perguntar sempre quando existirem alterações por gravar"
 
 #: gui2/dialogs.c:143
-#, fuzzy
 msgid "save session"
-msgstr "Gravar sessão"
+msgstr "gravar sessão"
 
 #: gui2/dialogs.c:143
-#, fuzzy
 msgid "save commands"
-msgstr "Permitir comandos shell"
+msgstr "gravar comandos"
 
 #: gui2/dialogs.c:208
 msgid ""
@@ -8513,9 +8482,8 @@ msgid "Test against gamma distribution"
 msgstr "Testar contra a distribuição gama"
 
 #: gui2/dialogs.c:3606
-#, fuzzy
 msgid "Use model names"
-msgstr "Usar linhas"
+msgstr "Usar nomes de modelos"
 
 #: gui2/dialogs.c:3610 gui2/model_table.c:1026 gui2/model_table.c:1218
 msgid "t-statistics in parentheses"
@@ -8527,7 +8495,7 @@ msgstr "opções da tabela de modelos"
 
 #: gui2/dialogs.c:3635
 msgid "column headings"
-msgstr ""
+msgstr "cabeçalhos de coluna"
 
 #: gui2/dialogs.c:3676 gui2/selector.c:4430
 msgid "Show p-values"
@@ -8535,7 +8503,7 @@ msgstr "Apresentar valores p"
 
 #: gui2/dialogs.c:3683
 msgid "Show significance asterisks"
-msgstr ""
+msgstr "Mostrar asteriscos de significância"
 
 #: gui2/dialogs.c:3691 gui2/dialogs.c:4082 gui2/series_view.c:614
 msgid "significant figures"
@@ -8869,9 +8837,8 @@ msgid "Call to function %s"
 msgstr "Chamada à função %s"
 
 #: gui2/fncall.c:653
-#, fuzzy
 msgid "Select arguments:"
-msgstr "Argumentos:"
+msgstr "Seleccionar argumentos:"
 
 #: gui2/fncall.c:685
 msgid "More..."
@@ -8898,23 +8865,21 @@ msgid "Couldn't get function package information"
 msgstr "Não se conseguiu obter informação sobre o pacote de funções"
 
 #: gui2/fnsave.c:308
-#, fuzzy
 msgid "Please add a sample script for this package"
-msgstr "Por favor primeiro acrescente uma variável ao conjunto de dados"
+msgstr "Por favor acrescente um exemplo de sequência de comandos a este pacote"
 
 #: gui2/fnsave.c:313
 msgid "Invalid version string: use numbers and '.' only"
-msgstr ""
-"Cadeia de caracteres inválida para número de versão: use apenas números e '.'"
+msgstr "Cadeia de caracteres inválida para número de versão: use apenas números e '.'"
 
 #: gui2/fnsave.c:458
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find the function '%s'"
-msgstr "Chamada à função %s"
+msgstr "Não se encontrou a função '%s'"
 
 #: gui2/fnsave.c:747
 msgid "private"
-msgstr ""
+msgstr "privado"
 
 #: gui2/fnsave.c:777
 msgid "No special requirement"
@@ -8941,9 +8906,8 @@ msgid "Minimum gretl version"
 msgstr "Mínima versão gretl"
 
 #: gui2/fnsave.c:930
-#, fuzzy
 msgid "Insert today's date"
-msgstr "_Inserir observações"
+msgstr "Inserir a data de hoje"
 
 #: gui2/fnsave.c:949 gui2/gui_utils.c:1840 gui2/ssheet.c:2435
 #: gui2/ssheet.c:2460
@@ -8967,9 +8931,8 @@ msgid "gretl: function package editor"
 msgstr "gretl: editor de pacote de funções"
 
 #: gui2/fnsave.c:1077
-#, fuzzy
 msgid "Help text:"
-msgstr "Texto de ajuda para %s:"
+msgstr "Texto de ajuda:"
 
 #: gui2/fnsave.c:1092
 msgid "Edit function code"
@@ -8984,9 +8947,8 @@ msgid "Edit sample script"
 msgstr "Editar o ficheiro de comandos de exemplo"
 
 #: gui2/fnsave.c:1118
-#, fuzzy
 msgid "Add/remove functions"
-msgstr "Gravar funções"
+msgstr "Acrescentar ou Remover funções"
 
 #: gui2/fnsave.c:1125
 msgid "Upload package to server on save"
@@ -9026,6 +8988,8 @@ msgid ""
 "must be less than 32 characters in length, must include only\n"
 "ASCII letters, numbers and '_', and must end with \".gfn\""
 msgstr ""
+"Nome inválido para o pacote: o nome tem que iniciar com uma letra,\n"
+"de comprimento inferior a 32 caracteres, apenas incluir letras ASCII, números e '_', e tem que terminar em \".gfn\""
 
 #: gui2/fnsave.c:1424 gui2/library.c:6358
 msgid "OK to overwrite?"
@@ -9424,9 +9388,8 @@ msgid "open a remote (web) database on startup"
 msgstr "abrir uma base de dados remota (web) no arranque"
 
 #: gui2/gretl.c:121 gui2/gretl.c:193
-#, fuzzy
 msgid "open (edit) a function package on startup"
-msgstr "gretl: pacotes de funções em %s"
+msgstr "abrir para editar um pacotes de funções ao iniciar"
 
 #: gui2/gretl.c:122 gui2/gretl.c:195
 msgid "force use of English"
@@ -9652,7 +9615,7 @@ msgstr "Em _servidor..."
 
 #: gui2/gretl.c:1327
 msgid "Edit package..."
-msgstr ""
+msgstr "Editar pacote..."
 
 #: gui2/gretl.c:1328
 msgid "_New package"
@@ -11459,8 +11422,7 @@ msgstr "Coeficiente de Gini"
 
 #: gui2/library.c:2225
 msgid "This test only implemented for OLS models"
-msgstr ""
-"Este teste apenas está implementado para modelos Mínimos Quadrados (OLS)"
+msgstr "Este teste apenas está implementado para modelos Mínimos Quadrados (OLS)"
 
 #: gui2/library.c:2291
 msgid "gretl: Chow test output"
@@ -12027,8 +11989,7 @@ msgid "Sorry, ARMA models can't be put in the model table"
 msgstr "Desculpe, os modelos ARMA não podem ser colocados na tabela de modelos"
 
 #: gui2/model_table.c:210
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Não se pode acrescentar modelo à tabela -- este modelo tem uma variável "
 "dependente diferente"
@@ -12107,7 +12068,7 @@ msgstr "Erros padrão em parentísis"
 
 #: gui2/model_table.c:1032 gui2/model_table.c:1224
 msgid "p-values in brackets"
-msgstr ""
+msgstr "p-valores entre parenteses"
 
 #: gui2/model_table.c:1036 gui2/model_table.c:1145 gui2/model_table.c:1229
 msgid "* indicates significance at the 10 percent level"
@@ -12132,7 +12093,7 @@ msgstr "gretl: tabela de modelos"
 
 #: gui2/model_table.c:1140
 msgid "$p$-values in brackets"
-msgstr ""
+msgstr "$p$-valores entre parenteses"
 
 #: gui2/model_table.c:1151
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
@@ -12140,8 +12101,7 @@ msgstr "Para logit e probit, o $R^2$ é o pseudo-$R^2$ de McFadden"
 
 #: gui2/model_table.c:1235
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Para logit e probit, o R{\\super 2} é o pseudo-R{\\super 2} de McFadden"
+msgstr "Para logit e probit, o R{\\super 2} é o pseudo-R{\\super 2} de McFadden"
 
 #: gui2/model_table.c:1263
 msgid "No model is available"
@@ -12601,9 +12561,8 @@ msgstr ""
 "usando p-valor bilateral:"
 
 #: gui2/selector.c:4526
-#, fuzzy
 msgid "Test only selected variables"
-msgstr "_Logaritmos das variáveis seleccionadas"
+msgstr "Testar apenas as variáveis seleccionadas"
 
 #: gui2/selector.c:4551
 msgid "Fixed effects"
@@ -12698,9 +12657,8 @@ msgid "Independent variables"
 msgstr "Variáveis independentes"
 
 #: gui2/selector.c:4934
-#, fuzzy
 msgid "Public functions"
-msgstr "Funções Ajudantes"
+msgstr "Funções públicas"
 
 #: gui2/selector.c:5151
 msgid "Select variables for logging"
@@ -12796,7 +12754,7 @@ msgstr "Guardar Dados"
 
 #: gui2/selector.c:5753
 msgid "Edit package list"
-msgstr ""
+msgstr "Editar a lista de pacotes"
 
 #: gui2/selector.c:6119
 msgid "lag order"
@@ -13120,9 +13078,8 @@ msgid "Show icon view automatically"
 msgstr "Apresentar automaticamente a vista por ícones"
 
 #: gui2/settings.c:167
-#, fuzzy
 msgid "Prompt to save session"
-msgstr "Gravar sessão"
+msgstr "Perguntar se se deve gravar a sessão"
 
 #: gui2/settings.c:170
 msgid "Enable Ox support"
@@ -13316,8 +13273,7 @@ msgstr "a directoria seleccionada acima"
 
 #: gui2/settings.c:2353
 msgid "the current directory as determined via the shell"
-msgstr ""
-"a directoria actual tal como foi determinado a partir do ambiente de trabalho"
+msgstr "a directoria actual tal como foi determinado a partir do ambiente de trabalho"
 
 #: gui2/settings.c:2401
 msgid "gretl: working directory"
@@ -13325,7 +13281,7 @@ msgstr "gretl: directoria de trabalho"
 
 #: gui2/ssheet.c:122
 msgid "Apply"
-msgstr ""
+msgstr "Aplicar"
 
 #: gui2/ssheet.c:151
 msgid "_Fill"
@@ -13834,8 +13790,7 @@ msgstr ""
 #: gui2/update.c:149
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
-"Este ficheiro faz parte do sistema de notificação de actualizações do gretl\n"
+msgstr "Este ficheiro faz parte do sistema de notificação de actualizações do gretl\n"
 
 #: gui2/update.c:211
 msgid "No new files"
@@ -14152,8 +14107,7 @@ msgstr "Produzir saída para despiste de erros"
 #: plugin/interval.c:216
 #, c-format
 msgid "Obs %d: lower bound (%g) exceeds upper (%g)"
-msgstr ""
-"Observação %d: o limite inferior (%g) é maior que o limite superior (%g)"
+msgstr "Observação %d: o limite inferior (%g) é maior que o limite superior (%g)"
 
 #: plugin/johansen.c:202
 msgid "renormalized beta"
@@ -14691,8 +14645,7 @@ msgstr ""
 
 #: plugin/workbook.c:637
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Este não é um ficheiro OLE -- talvez seja demasiado antigo para o gretl ler\n"
+msgstr "Este não é um ficheiro OLE -- talvez seja demasiado antigo para o gretl ler\n"
 
 #: plugin/workbook.c:639
 msgid "Unexpected error reading the file\n"
@@ -14722,50 +14675,3 @@ msgstr "Estatísticas e Transformações"
 msgid "Probability distributions"
 msgstr "Distribuições de probabilidade"
 
-#~ msgid "Options"
-#~ msgstr "Opções"
-
-#~ msgid "gretl database directory"
-#~ msgstr "directoria da base de dados gretl"
-
-#, fuzzy
-#~ msgid "Path to Rterm.exe"
-#~ msgstr "Caminho para tramo"
-
-#~ msgid "function code"
-#~ msgstr "código da função"
-
-#~ msgid "Some required information is missing"
-#~ msgstr "Falta alguma informação obrigatória"
-
-#~ msgid ""
-#~ "The package filename must match the name of\n"
-#~ "the package's public interface"
-#~ msgstr ""
-#~ "O nome de ficheiro do pacote tem que coincidir com o nome\n"
-#~ "do interface público do pacote"
-
-#~ msgid "Public interface"
-#~ msgstr "Interface público"
-
-#~ msgid "selection"
-#~ msgstr "selecção"
-
-#~ msgid "Can't delete a variable when in sub-sample mode\n"
-#~ msgstr ""
-#~ "Não se pode eliminar uma variável quando em modo de sub-amostragem\n"
-
-#~ msgid "_Observation"
-#~ msgstr "_Observação"
-
-#~ msgid "_Append obs"
-#~ msgstr "_Acrescentar observações"
-
-#~ msgid "Choose ->"
-#~ msgstr "Escolher ->"
-
-#~ msgid "Add ->"
-#~ msgstr "Acrescentar ->"
-
-#~ msgid "<- Remove"
-#~ msgstr "<- Remover"
