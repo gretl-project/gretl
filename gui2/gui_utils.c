@@ -3484,7 +3484,8 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
     if (model_sample_problem(pmod, datainfo)) { 
 	/* FIXME: allow most tests */
-	int err = add_dataset_to_model(pmod, (const double **) Z, datainfo);
+	int err = add_dataset_to_model(pmod, (const double **) Z, 
+				       datainfo, OPT_NONE);
 
 	ok = 0;
 	graphs_ok = (err == 0);

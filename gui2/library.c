@@ -1849,27 +1849,37 @@ static gretlopt modtest_get_opt (GtkAction *action)
 }
 
 static double ***
-maybe_get_model_data (MODEL *pmod, DATAINFO **ppdinfo, int *moddata, int *err)
+maybe_get_model_data (MODEL *pmod, DATAINFO **ppdinfo, 
+		      gretlopt opt, int *err)
 {
     double ***pZ = NULL;
 
     if (model_sample_problem(pmod, datainfo)) { 
-	*err = add_dataset_to_model(pmod, (const double **) Z, datainfo);
+	*err = add_dataset_to_model(pmod, (const double **) Z, 
+				    datainfo, opt);
 	if (*err) {
 	    gui_errmsg(*err);
 	} else {
 	    pZ = &pmod->dataset->Z;
 	    *ppdinfo = pmod->dataset->dinfo;
-	    *moddata = 1;
 	}
     } else {
 	pZ = &Z;
 	*ppdinfo = datainfo;
-	*moddata = 0;
 	*err = 0;
     }
 
     return pZ;
+}
+
+static void trim_dataset (MODEL *pmod, int origv)
+{
+    if (pmod != NULL && pmod->dataset != NULL) {
+	free_model_dataset(pmod);
+    } else if (origv > 0) {
+	dataset_drop_last_variables(datainfo->v - origv, &Z, 
+				    datainfo);
+    }
 }
 
 void do_modtest (GtkAction *action, gpointer p)
@@ -1881,7 +1891,6 @@ void do_modtest (GtkAction *action, gpointer p)
     PRN *prn;
     char title[64];
     gretlopt opt = OPT_NONE;
-    int modeldata = 0;
     int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -1890,7 +1899,7 @@ void do_modtest (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, &modeldata, &err);
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
     if (err) {
 	gretl_print_destroy(prn);
 	return;
@@ -3910,7 +3919,6 @@ void do_resid_freq (GtkAction *action, gpointer p)
     DATAINFO *pdinfo;
     int save_t1 = datainfo->t1;
     int save_t2 = datainfo->t2;
-    int modeldata = 0;
     int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -3919,13 +3927,13 @@ void do_resid_freq (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, &modeldata, &err);
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
     if (err) {
 	gretl_print_destroy(prn);
 	return;
     }
 
-    if (!modeldata) {
+    if (pdinfo == datainfo) {
 	datainfo->t1 = pmod->t1;
 	datainfo->t2 = pmod->t2;
     }	
@@ -4338,13 +4346,12 @@ void residual_correlogram (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int modeldata;
     int origv;
     double ***pZ;
     DATAINFO *pdinfo;
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, &modeldata, &err);
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
     if (err) {
 	return;
     }
@@ -4437,13 +4444,12 @@ void residual_periodogram (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int modeldata;
     int origv;
     double ***pZ;
     DATAINFO *pdinfo;
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, &modeldata, &err);
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
     if (err) {
 	return;
     }
@@ -4998,7 +5004,6 @@ void resid_plot (GtkAction *action, gpointer p)
     int pdum = vwin->active_var; 
     int xvar = 0;
     int yno, uhatno;
-    int modeldata;
     double ***pZ;
     DATAINFO *pdinfo;
     int err = 0;
@@ -5016,7 +5021,8 @@ void resid_plot (GtkAction *action, gpointer p)
 
     xvar_from_action(action, &xvar);
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, &modeldata, &err);
+    /* FIXME OPT_F? */
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_F, &err);
     if (err) {
 	return;
     }
@@ -5115,13 +5121,12 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int origv, xvar = 0;
-    int modeldata;
     double ***pZ;
     DATAINFO *pdinfo;
     char *formula;
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, &modeldata, &err);
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
     if (err) {
 	return;
     }
@@ -5195,12 +5200,11 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     double ***pZ;
     DATAINFO *pdinfo;
-    int modeldata;
     int *xlist = NULL;
     int list[4];
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, &modeldata, &err);
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
     if (err) {
 	return;
     }

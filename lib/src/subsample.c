@@ -949,7 +949,7 @@ static int mask_contiguous (const char *mask,
 static void 
 copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
 			const double **Z, const DATAINFO *pdinfo,
-			const char *mask)
+			int maxv, const char *mask)
 {
     int i, t, s;
 
@@ -959,7 +959,7 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
 #endif
 
     /* copy data values */
-    for (i=1; i<pdinfo->v; i++) {
+    for (i=1; i<maxv; i++) {
 	s = 0;
 	for (t=0; t<pdinfo->n; t++) {
 	    if (mask == NULL) {
@@ -1302,7 +1302,7 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
 
     /* copy across data (and case markers, if any) */
     copy_data_to_subsample(subZ, subinfo, (const double **) *pZ, 
-			   pdinfo, mask);
+			   pdinfo, pdinfo->v, mask);
 
     err = backup_full_dataset(*pZ, pdinfo);
 
@@ -1776,11 +1776,12 @@ int count_missing_values (const double **Z, const DATAINFO *pdinfo,
     return missval;
 }
 
-static void copy_series_info (DATAINFO *dest, const DATAINFO *src)
+static void copy_series_info (DATAINFO *dest, const DATAINFO *src,
+			      int maxv)
 {
     int i;
 
-    for (i=1; i<src->v; i++) {
+    for (i=1; i<maxv; i++) {
 	strcpy(dest->varname[i], src->varname[i]);
 	if (src->varinfo != NULL) {
 	    copy_varinfo(dest->varinfo[i], src->varinfo[i]);
@@ -1801,14 +1802,15 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src)
 */
 
 int add_dataset_to_model (MODEL *pmod, const double **Z, 
-			  const DATAINFO *pdinfo)
+			  const DATAINFO *pdinfo,
+			  gretlopt opt)
 {
     const double **srcZ;
     const DATAINFO *srcinfo;
     double **modZ = NULL;
     DATAINFO *modinfo = NULL;
     char *mask = NULL;
-    int sn = 0;
+    int maxv, sn = 0;
 
     if (pmod->dataset != NULL) {
 	fputs("add_dataset_to_model: job already done\n", stderr);
@@ -1863,8 +1865,16 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
 	    (void *) pmod->dataset);
 #endif
 
+    if (opt & OPT_F) {
+	maxv = srcinfo->v;
+    } else if (opt & OPT_G) {
+	maxv = 1;
+    } else {
+	maxv = highest_numbered_var_in_model(pmod, pdinfo);
+    }
+
     /* allocate auxiliary dataset */
-    modinfo = create_auxiliary_dataset(&modZ, srcinfo->v, sn);
+    modinfo = create_auxiliary_dataset(&modZ, maxv, sn);
     if (modinfo == NULL) {
 	free(mask);
 	free(pmod->dataset);
@@ -1873,10 +1883,10 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
     }
 
     /* copy across info on series */
-    copy_series_info(modinfo, srcinfo);
+    copy_series_info(modinfo, srcinfo, maxv);
 
     /* copy across data */
-    copy_data_to_subsample(modZ, modinfo, srcZ, srcinfo, mask);
+    copy_data_to_subsample(modZ, modinfo, srcZ, srcinfo, maxv, mask);
 
     /* dataset characteristics such as pd: if we're rebuilding the
        full dataset copy these across; but if we're reconstructing a

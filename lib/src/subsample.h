@@ -31,12 +31,6 @@ typedef enum {
     SUBSAMPLE_UNKNOWN
 } SubsampleMode;
 
-typedef enum {
-    MODSAMPLE_NOOP,
-    MODSAMPLE_RESTORE_FULL,
-    MODSAMPLE_MAKE_SUB
-} ModsampleMode;
-
 #define RESAMPLED ((char *) 0xdeadbeef)
 
 double ***fetch_full_Z (void);
@@ -86,7 +80,8 @@ int count_missing_values (const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn, int *err);
 
 int add_dataset_to_model (MODEL *pmod, const double **Z, 
-			  const DATAINFO *pdinfo);
+			  const DATAINFO *pdinfo,
+			  gretlopt opt);
 
 void free_model_dataset (MODEL *pmod);
 
