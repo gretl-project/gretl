@@ -934,6 +934,7 @@ static void plot_editor_set_fontname (plot_editor *ed, gchar *name)
 
 static void real_graph_font_selector (GtkButton *button, gpointer p, int type)
 {
+    const char *default_font;
     char fontname[128];
 
     if (type == 1) {
@@ -943,9 +944,9 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type)
     }
 
     strcpy(fontname, default_font);
-    win32_font_selector(win32_fontname, APP_FONT_SELECTION);
+    win32_font_selector(fontname, APP_FONT_SELECTION);
 
-    if (*win32_fontname != '\0') {
+    if (*fontname != '\0') {
 	gchar *title = g_strdup_printf(_("font: %s"), fontname);
 
 	gtk_button_set_label(button, title);

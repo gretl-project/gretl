@@ -245,6 +245,7 @@ GUISRC = about.c \
 	fnsave.c \
 	gpt_control.c \
 	gpt_dialog.c \
+	graphics.c \
 	graph_page.c \
 	gretl.c \
 	gretlwin32.c \
