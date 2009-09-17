@@ -362,7 +362,7 @@ void fit_resid_callback (GtkAction *action, gpointer data)
 	code = M_AHAT;
     }
 
-    add_fit_resid(pmod, code, 0);
+    save_fit_resid(pmod, code);
 }
 
 /* callback for adding a scalar from a model */

@@ -235,7 +235,7 @@ void logs_etc_callback (GtkAction *action);
 
 void add_system_resid (GtkAction *action, gpointer p);
 
-int add_fit_resid (MODEL *pmod, int code, int undo);
+int save_fit_resid (MODEL *pmod, int code);
 
 void add_model_stat (MODEL *pmod, int which);
 

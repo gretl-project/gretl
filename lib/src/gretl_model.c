@@ -711,6 +711,13 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	int j = i + 2;
 	int k = -1;
 
+#if 0
+	/* should we do this? */
+	if (pmod->dataset != NULL && pmod->dataset->dinfo != NULL) {
+	    pdinfo = pmod->dataset->dinfo;
+	}
+#endif
+
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[j]], targ);
 	} else if (pmod->ci == PANEL && (pmod->opt & OPT_W)) {

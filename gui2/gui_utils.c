@@ -3482,12 +3482,12 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (model_sample_problem(pmod, datainfo)) {
+    if (model_sample_problem(pmod, datainfo)) { 
+	/* FIXME: allow most tests */
+	int err = add_dataset_to_model(pmod, (const double **) Z, datainfo);
+
 	ok = 0;
-	graphs_ok = (pmod->dataset != NULL);
-	if (!graphs_ok && add_dataset_to_model(pmod, datainfo) == 0) {
-	    graphs_ok = 1;
-	}
+	graphs_ok = (err == 0);
     }
 
     action = gtk_ui_manager_get_action(mwin->ui, "/menubar/Tests");
