@@ -108,8 +108,6 @@ static void saver_init (struct pdf_ps_saver *s,
 	gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
 	s->pdfcairo = 1;
     }
-
-    fprintf(stderr, "saver_init: pdfcairo = %d\n", s->pdfcairo);
 }
 
 static void saver_set_defaults (struct pdf_ps_saver *s)
@@ -192,11 +190,13 @@ static GtkWidget *pdf_ps_size_spinners (struct pdf_ps_saver *s)
     gtk_table_attach_defaults(GTK_TABLE(tbl), s->w_in, 0, 1, 1, 2);
     gtk_table_attach_defaults(GTK_TABLE(tbl), s->h_in, 1, 2, 1, 2);
     label = gtk_label_new(_("inches"));
+    gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), label, 2, 3, 1, 2);
 
     gtk_table_attach_defaults(GTK_TABLE(tbl), s->w_cm, 0, 1, 2, 3);
     gtk_table_attach_defaults(GTK_TABLE(tbl), s->h_cm, 1, 2, 2, 3);
-    label = gtk_label_new(_("centimeters"));
+    label = gtk_label_new(_("cm"));
+    gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), label, 2, 3, 2, 3);
 
     hbox = gtk_hbox_new(FALSE, 5);
