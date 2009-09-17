@@ -33,6 +33,7 @@ static char pdffont[64] = "Sans";
 static double psfontsize = 8;
 static double pdffontsize = 6;
 static int linewidth_plus;
+static int psmono;
 
 static const char *psfonts[] = {
     "AvantGarde-Book",
@@ -107,6 +108,8 @@ static void saver_init (struct pdf_ps_saver *s,
 	gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
 	s->pdfcairo = 1;
     }
+
+    fprintf(stderr, "saver_init: pdfcairo = %d\n", s->pdfcairo);
 }
 
 static void saver_set_defaults (struct pdf_ps_saver *s)
@@ -120,6 +123,10 @@ static void saver_set_defaults (struct pdf_ps_saver *s)
     } else {
 	strcpy(psfont, s->psfont);
 	psfontsize = s->psfontsize;
+    }
+
+    if (s->spec->termtype == GP_TERM_EPS) {
+	psmono = (s->spec->flags & GPT_MONO);
     }
 
     linewidth_plus = s->linewidth_plus;    
@@ -217,6 +224,32 @@ static GtkWidget *label_in_hbox (const char *s, int center)
     return hbox;
 }
 
+void set_ps_mode (GtkToggleButton *b, struct pdf_ps_saver *s)
+{
+    if (button_is_active(b)) {
+	s->spec->flags |= GPT_MONO;
+    } else {
+	s->spec->flags &= ~GPT_MONO;
+    }
+}
+
+static void ps_mode_selector (struct pdf_ps_saver *s,
+			      GtkWidget *vbox)
+{
+    GSList *group = NULL;
+    GtkWidget *b;
+
+    b = gtk_radio_button_new_with_label(NULL, _("color"));
+    pack_in_hbox(b, vbox, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
+    b = gtk_radio_button_new_with_label(group, _("monochrome"));
+    g_signal_connect(b, "toggled", G_CALLBACK(set_ps_mode), s);
+    pack_in_hbox(b, vbox, 0);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), psmono);
+}
+
 static GtkWidget *ps_font_selector (struct pdf_ps_saver *s)
 {
     GtkWidget *hbox, *entry, *fspin;
@@ -285,24 +318,25 @@ saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
     char fontstr[64];
     const char *ttype;
 
-    if (!s->pdfcairo) {
-	record_selected_ps_font(s);
-    }
+    fprintf(stderr, "s->pdfcairo = %d\n", s->pdfcairo);
 
     if (s->pdfcairo) {
 	ttype = "pdfcairo";
 	sprintf(fontstr, "font \"%s,%g\"", s->pdffont, s->pdffontsize);
-    } else if (s->spec->termtype == GP_TERM_EPS) {
-	if (s->spec->flags & GPT_MONO) {
-	    ttype = "post eps mono";
-	} else {
-	    ttype = "post eps solid";
-	}
-	sprintf(fontstr, "font \"%s,%g\"", s->psfont, 2 * s->psfontsize);
     } else {
-	/* PDF via pdflib */
-	ttype = "pdf";
-	sprintf(fontstr, "font \"%s,%g\"", s->psfont, s->psfontsize);
+	record_selected_ps_font(s);
+	if (s->spec->termtype == GP_TERM_EPS) {
+	    if (s->spec->flags & GPT_MONO) {
+		ttype = "post eps mono";
+	    } else {
+		ttype = "post eps solid";
+	    }
+	    sprintf(fontstr, "font \"%s,%g\"", s->psfont, 2 * s->psfontsize);
+	} else {
+	    /* PDF via pdflib */
+	    ttype = "pdf";
+	    sprintf(fontstr, "font \"%s,%g\"", s->psfont, s->psfontsize);
+	}
     } 
 
     sprintf(termstr, "set term %s %s size %gin,%gin", ttype, fontstr, 
@@ -341,7 +375,7 @@ pdf_ps_save_callback (GtkWidget *w, struct pdf_ps_saver *saver)
 			      saver, saver->dialog);
 }
 
-void pdf_ps_dialog (GPT_SPEC *spec)
+void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
 {
     struct pdf_ps_saver saver;
     GtkWidget *dialog;
@@ -353,14 +387,15 @@ void pdf_ps_dialog (GPT_SPEC *spec)
     ps = (spec->termtype == GP_TERM_EPS);
 
     title = g_strdup_printf("gretl: %s", _("save graph"));
-    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+    /* note: we need to block to keep 'saver' current */
+    dialog = gretl_dialog_new(title, parent, GRETL_DLG_BLOCK);
     g_free(title);
 
     saver_init(&saver, dialog, spec);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     
-    label = label_in_hbox(ps? _("EPS file") : _("PDF file"), 1);
+    label = label_in_hbox(ps ? _("EPS file") : _("PDF file"), 1);
     gtk_box_pack_start(GTK_BOX(vbox), label, TRUE, TRUE, 5);
 
     label = label_in_hbox(_("Plot dimensions:"), 0);
@@ -385,9 +420,15 @@ void pdf_ps_dialog (GPT_SPEC *spec)
     } else {
 	hbox = label_in_hbox(_("Font and size:"), 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
 	hbox = ps_font_selector(&saver);
 	gtk_container_add(GTK_CONTAINER(vbox), hbox);
     }
+
+    if (ps) {
+	vbox_add_hsep(vbox);
+	ps_mode_selector(&saver, vbox);
+    }	
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 

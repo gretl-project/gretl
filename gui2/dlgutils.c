@@ -77,6 +77,14 @@ void vbox_add_hsep (GtkWidget *vbox)
     gtk_widget_show(h);
 }
 
+void pack_in_hbox (GtkWidget *w, GtkWidget *vbox, int vspace)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, vspace);
+}
+
 /* Various buttons, usable in several sorts of dialogs */
 
 GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)

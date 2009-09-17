@@ -397,15 +397,6 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
     free(p);
 }
 
-static void pack_in_hbox (GtkWidget *w, GtkWidget *vbox,
-			  int vspace)
-{
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, vspace);
-}
-
 int csv_options_dialog (gretlopt *optp)
 {
     GtkWidget *dialog, *vbox, *hbox;

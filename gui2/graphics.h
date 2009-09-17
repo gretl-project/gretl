@@ -20,7 +20,7 @@
 #ifndef GRAPHICS_H_
 #define GRAPHICS_H_
 
-void pdf_ps_dialog (GPT_SPEC *spec);
+void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent);
 
 void save_graphic_to_file (gpointer data, const char *fname);
 

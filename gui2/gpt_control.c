@@ -2838,10 +2838,7 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 	plot->spec->flags |= GPT_MONO;
     }
 
-    if (!strcmp(up_item, _("Save as postscript (EPS)..."))) {
-	plot->spec->termtype = GP_TERM_EPS;
-	pdf_ps_dialog(plot->spec);
-    } else if (!strcmp(up_item, _("Save as Windows metafile (EMF)..."))) {
+    if (!strcmp(up_item, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
 	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
 				  plot->spec, plot->shell);
@@ -3011,7 +3008,10 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 				  plot->spec, plot->shell);
     } else if (!strcmp(item, _("Save as PDF..."))) {
 	plot->spec->termtype = GP_TERM_PDF;
-	pdf_ps_dialog(plot->spec);
+	pdf_ps_dialog(plot->spec, plot->shell);
+    } else if (!strcmp(item, _("Save as postscript (EPS)..."))) {
+	plot->spec->termtype = GP_TERM_EPS;
+	pdf_ps_dialog(plot->spec, plot->shell);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_to_session_callback(plot->spec);
     } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
@@ -3237,7 +3237,6 @@ static void build_plot_menu (png_plot *plot)
 
 	/* items with color sub-menu */
 	if (!strcmp(plot_items[i], "Save as Windows metafile (EMF)...") ||
-	    !strcmp(plot_items[i], "Save as postscript (EPS)...") ||
 	    !strcmp(plot_items[i], "Copy to clipboard") ||
 	    !strcmp(plot_items[i], "Print")) {
 	    attach_color_popup(item, plot);
