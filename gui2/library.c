@@ -1411,6 +1411,12 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     PRN *prn;
     int resp, err = 0;
 
+    err = model_sample_problem(pmod, datainfo);
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
     /* try to figure which options might be applicable */
     forecast_options_for_model(pmod, (const double **) Z, datainfo, 
 			       &flags, &dt2, &st2);
@@ -1543,6 +1549,12 @@ void do_bootstrap (GtkAction *action, gpointer p)
     PRN *prn;
     int err;
 
+    err = model_sample_problem(pmod, datainfo);
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
     set_window_busy(vwin);
     bootstrap_dialog(vwin, &k, &B, &opt, &cancelled);
     unset_window_busy(vwin);
@@ -1607,6 +1619,40 @@ int do_coeff_sum (selector *sr)
     return 0;
 }
 
+static double ***
+maybe_get_model_data (MODEL *pmod, DATAINFO **ppdinfo, 
+		      gretlopt opt, int *err)
+{
+    double ***pZ = NULL;
+
+    if (model_sample_problem(pmod, datainfo)) { 
+	*err = add_dataset_to_model(pmod, (const double **) Z, 
+				    datainfo, opt);
+	if (*err) {
+	    gui_errmsg(*err);
+	} else {
+	    pZ = &pmod->dataset->Z;
+	    *ppdinfo = pmod->dataset->dinfo;
+	}
+    } else {
+	pZ = &Z;
+	*ppdinfo = datainfo;
+	*err = 0;
+    }
+
+    return pZ;
+}
+
+static void trim_dataset (MODEL *pmod, int origv)
+{
+    if (pmod != NULL && pmod->dataset != NULL) {
+	free_model_dataset(pmod);
+    } else if (origv > 0) {
+	dataset_drop_last_variables(datainfo->v - origv, &Z, 
+				    datainfo);
+    }
+}
+
 int do_add_omit (selector *sr)
 {
     windata_t *vwin = selector_get_data(sr);
@@ -1615,7 +1661,9 @@ int do_add_omit (selector *sr)
     gretlopt opt = OPT_S | selector_get_opts(sr);
     int auto_omit = (ci == OMIT && (opt & OPT_A));
     const char *flagstr = NULL;
-    MODEL *orig, *pmod = NULL;
+    MODEL *pmod, *newmod = NULL;
+    double ***pZ = &Z;
+    DATAINFO *pdinfo = datainfo;
     PRN *prn;
     int err = 0;
 
@@ -1623,14 +1671,15 @@ int do_add_omit (selector *sr)
 	return 1;
     }
 
-    orig = vwin->data;
+    pmod = vwin->data;
 
     if (ci == OMIT && (opt & OPT_W)) {
 	; /* Wald test */
     } else {
-	err = model_sample_problem(orig, datainfo);
+	gretlopt opt = (ci == ADD)? OPT_F : OPT_NONE;
+
+	pZ = maybe_get_model_data(pmod, &pdinfo, opt, &err);
 	if (err) {
-	    gui_errmsg(err);
 	    return err;
 	}
     }
@@ -1645,47 +1694,53 @@ int do_add_omit (selector *sr)
         gretl_command_sprintf("omit %s%s", buf, flagstr);
     }
 
-    if (model_command_init(orig->ID) || bufopen(&prn)) {
+    if (model_command_init(pmod->ID) || bufopen(&prn)) {
 	return 1;
     }
 
     if (ci == OMIT && (opt & OPT_W)) {
 	; /* Wald test: new model is not needed */
     } else {
-	pmod = gretl_model_new();
-	if (pmod == NULL) {
+	newmod = gretl_model_new();
+	if (newmod == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
 	if (ci == ADD) { 
-	    err = add_test(libcmd.list, orig, pmod, &Z, datainfo, opt, prn);
+	    err = add_test(libcmd.list, pmod, newmod, pZ, pdinfo, opt, prn);
 	} else {
-	    err = omit_test(libcmd.list, orig, pmod, &Z, datainfo, opt, prn);
+	    err = omit_test(libcmd.list, pmod, newmod, pZ, pdinfo, opt, prn);
 	}
     }
 
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
-	gretl_model_free(pmod);
+	gretl_model_free(newmod);
     } else {
 	update_model_tests(vwin);
 
-	if (pmod != NULL) {
+	if (newmod != NULL) {
 	    char title[48];
 
 	    /* record sub-sample info (if any) with the model */
-	    attach_subsample_to_model(pmod, datainfo);
-	    gretl_object_ref(pmod, GRETL_OBJ_EQN);
-	    sprintf(title, _("gretl: model %d"), pmod->ID);
-	    view_model(prn, pmod, 78, 420, title);
+	    if (pmod->dataset != NULL) {
+		newmod->submask = copy_subsample_mask(pmod->submask, &err);
+	    } else {
+		attach_subsample_to_model(newmod, datainfo);
+	    }
+	    gretl_object_ref(newmod, GRETL_OBJ_EQN);
+	    sprintf(title, _("gretl: model %d"), newmod->ID);
+	    view_model(prn, newmod, 78, 420, title);
 	} else {
 	    view_buffer(prn, 78, 400, _("gretl: Wald omit test"), 
 			PRINT, NULL);
 	}
     }
+
+    trim_dataset(pmod, 0);
 
     return err;
 }
@@ -1848,40 +1903,6 @@ static gretlopt modtest_get_opt (GtkAction *action)
     }
 }
 
-static double ***
-maybe_get_model_data (MODEL *pmod, DATAINFO **ppdinfo, 
-		      gretlopt opt, int *err)
-{
-    double ***pZ = NULL;
-
-    if (model_sample_problem(pmod, datainfo)) { 
-	*err = add_dataset_to_model(pmod, (const double **) Z, 
-				    datainfo, opt);
-	if (*err) {
-	    gui_errmsg(*err);
-	} else {
-	    pZ = &pmod->dataset->Z;
-	    *ppdinfo = pmod->dataset->dinfo;
-	}
-    } else {
-	pZ = &Z;
-	*ppdinfo = datainfo;
-	*err = 0;
-    }
-
-    return pZ;
-}
-
-static void trim_dataset (MODEL *pmod, int origv)
-{
-    if (pmod != NULL && pmod->dataset != NULL) {
-	free_model_dataset(pmod);
-    } else if (origv > 0) {
-	dataset_drop_last_variables(datainfo->v - origv, &Z, 
-				    datainfo);
-    }
-}
-
 void do_modtest (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -1981,6 +2002,8 @@ void do_modtest (GtkAction *action, gpointer p)
 	model_command_init(pmod->ID);
 	view_buffer(prn, 78, 400, title, MODTEST, NULL); 
     }
+
+    trim_dataset(pmod, 0);
 }
 
 void do_arch (GtkAction *action, gpointer p)
@@ -2028,14 +2051,20 @@ void do_panel_tests (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     PRN *prn;
-    gretlopt opt = OPT_NONE;
-    int err;
+    int err = 0;
+
+    err = model_sample_problem(pmod, datainfo);
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
 
     if (bufopen(&prn)) {
 	return;
-    }	
-	
-    err = panel_diagnostics(pmod, &Z, datainfo, opt, prn);
+    }
+
+    err = panel_diagnostics(pmod, &Z, datainfo, OPT_NONE, prn);
+
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
@@ -2152,20 +2181,30 @@ void do_vif (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     int (*print_vifs) (MODEL *, double ***, DATAINFO *, PRN *);
     void *handle;
-    int err;
+    double ***pZ;
+    DATAINFO *pdinfo;
     PRN *prn;
+    int err;
+
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
 
     print_vifs = gui_get_plugin_function("print_vifs", &handle);
     if (print_vifs == NULL) {
+	trim_dataset(pmod, 0);
 	return;
     }
 
     if (bufopen(&prn)) {
 	close_plugin(handle);
+	trim_dataset(pmod, 0);
 	return;
     }	
 	
-    err = (*print_vifs)(pmod, &Z, datainfo, prn);
+    err = (*print_vifs)(pmod, pZ, pdinfo, prn);
     close_plugin(handle);
 
     if (err) {
@@ -2179,6 +2218,8 @@ void do_vif (GtkAction *action, gpointer p)
 	gretl_command_strcpy("vif");
 	model_command_init(pmod->ID);
     } 
+
+    trim_dataset(pmod, 0);
 }
 
 void do_gini (void)
@@ -2352,6 +2393,8 @@ void do_reset (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
+    double ***pZ;
+    DATAINFO *pdinfo;
     PRN *prn;
     const char *optstrs[] = {
 	N_("squares and cubes"),
@@ -2379,6 +2422,12 @@ void do_reset (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    if (err) {
+	gretl_print_destroy(prn);
+	return;
+    }
+
     if (resp == 1) {
 	opt |= OPT_R;
     } else if (resp == 2) {
@@ -2391,15 +2440,15 @@ void do_reset (GtkAction *action, gpointer p)
 	/* gui special: show short form of all 3 tests */
 	width = 60;
 	height = 320;
-	err = reset_test(pmod, &Z, datainfo, opt, prn);
+	err = reset_test(pmod, pZ, pdinfo, opt, prn);
 	if (!err) {
-	    err = reset_test(pmod, &Z, datainfo, (opt | OPT_R), prn);
+	    err = reset_test(pmod, pZ, pdinfo, (opt | OPT_R), prn);
 	}
 	if (!err) {
-	    err = reset_test(pmod, &Z, datainfo, (opt | OPT_C), prn);
+	    err = reset_test(pmod, pZ, pdinfo, (opt | OPT_C), prn);
 	}
     } else {
-	err = reset_test(pmod, &Z, datainfo, opt, prn);
+	err = reset_test(pmod, pZ, pdinfo, opt, prn);
     }
 
     if (err) {
@@ -2413,6 +2462,8 @@ void do_reset (GtkAction *action, gpointer p)
 	model_command_init(pmod->ID);
 	view_buffer(prn, width, height, _("gretl: RESET test"), RESET, NULL); 
     }
+
+    trim_dataset(pmod, 0);
 }
 
 void do_autocorr (GtkAction *action, gpointer p)
@@ -3919,6 +3970,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     DATAINFO *pdinfo;
     int save_t1 = datainfo->t1;
     int save_t2 = datainfo->t2;
+    int origv = datainfo->v;
     int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -3953,8 +4005,6 @@ void do_resid_freq (GtkAction *action, gpointer p)
     freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
 		    NADBL, NADBL, 0, pmod->ncoeff, OPT_Z, &err);
 
-    dataset_drop_last_variables(1, pZ, pdinfo);
-
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
@@ -3977,6 +4027,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 	}
     }
 
+    trim_dataset(pmod, origv);
     datainfo->t1 = save_t1;
     datainfo->t2 = save_t2;
 
@@ -4346,7 +4397,7 @@ void residual_correlogram (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int origv;
+    int origv = datainfo->v;
     double ***pZ;
     DATAINFO *pdinfo;
     int err = 0;
@@ -4356,8 +4407,6 @@ void residual_correlogram (GtkAction *action, gpointer p)
 	return;
     }
 
-    origv = pdinfo->v;
-
     /* add residuals to data set temporarily */
     if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT)) {
 	return;
@@ -4365,7 +4414,7 @@ void residual_correlogram (GtkAction *action, gpointer p)
 
     real_do_corrgm(pZ, pdinfo, MODEL_VAR);
 
-    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo); 
+    trim_dataset(pmod, origv);
 }
 
 static void 
@@ -4444,7 +4493,7 @@ void residual_periodogram (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int origv;
+    int origv = datainfo->v;
     double ***pZ;
     DATAINFO *pdinfo;
     int err = 0;
@@ -4454,14 +4503,12 @@ void residual_periodogram (GtkAction *action, gpointer p)
 	return;
     }
 
-    origv = pdinfo->v;
-
     /* add residuals to data set temporarily */
     if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT)) return;
 
     real_do_pergm(1, *pZ, pdinfo, MODEL_VAR);
 
-    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo); 
+    trim_dataset(pmod, origv); 
 }
 
 void do_coeff_intervals (GtkAction *action, gpointer p)
@@ -4998,14 +5045,14 @@ void resid_plot (GtkAction *action, gpointer p)
 {
     gretlopt opt = OPT_NONE;
     int plotlist[4];
-    int origv, ts;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int pdum = vwin->active_var; 
-    int xvar = 0;
+    int ts, xvar = 0;
     int yno, uhatno;
     double ***pZ;
     DATAINFO *pdinfo;
+    int origv = datainfo->v;
     int err = 0;
 
     /* special case: GARCH model (show fitted variance) */
@@ -5026,8 +5073,6 @@ void resid_plot (GtkAction *action, gpointer p)
     if (err) {
 	return;
     }
-
-    origv = pdinfo->v;
 
     /* add residuals to data set temporarily */
     if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT)) {
@@ -5083,7 +5128,7 @@ void resid_plot (GtkAction *action, gpointer p)
 	register_graph();
     }
     
-    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
+    trim_dataset(pmod, origv);
 }
 
 static void theil_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
@@ -5110,8 +5155,6 @@ static void theil_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     } else {
 	register_graph();
     }
-
-    dataset_drop_last_variables(1, pZ, pdinfo);
 }
 
 void fit_actual_plot (GtkAction *action, gpointer p)
@@ -5120,9 +5163,10 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     int plotlist[4];
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int origv, xvar = 0;
+    int xvar = 0;
     double ***pZ;
     DATAINFO *pdinfo;
+    int origv = datainfo->v;
     char *formula;
     int err = 0;
 
@@ -5135,6 +5179,7 @@ void fit_actual_plot (GtkAction *action, gpointer p)
 
     if (xvar < 0) {
 	theil_plot(pmod, pZ, pdinfo);
+	trim_dataset(pmod, origv);
 	return;
     }
 
@@ -5157,8 +5202,6 @@ void fit_actual_plot (GtkAction *action, gpointer p)
 	free(formula);
 	return;
     }
-
-    origv = pdinfo->v;
 
     /* add fitted values to data set temporarily */
     if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_YHAT)) {
@@ -5191,7 +5234,7 @@ void fit_actual_plot (GtkAction *action, gpointer p)
 	register_graph();
     }
 
-    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
+    trim_dataset(pmod, origv);
 }
 
 void fit_actual_splot (GtkAction *action, gpointer p)
@@ -5200,6 +5243,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     double ***pZ;
     DATAINFO *pdinfo;
+    int origv = datainfo->v;
     int *xlist = NULL;
     int list[4];
     int err = 0;
@@ -5236,6 +5280,8 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     } else {
 	launch_gnuplot_interactive();
     }
+
+    trim_dataset(pmod, origv);
 }
 
 /* max number of observations for which we use the buffer approach for
@@ -5296,20 +5342,33 @@ void display_fit_resid (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
+    double ***pZ;
+    DATAINFO *pdinfo;
     FITRESID *fr;
     PRN *prn;
     int err = 0;
 
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    if (err) {
+	return;
+    }
+
     if (bufopen(&prn)) return;
 
-    fr = get_fit_resid(pmod, (const double **) Z, datainfo, &err);
+    fr = get_fit_resid(pmod, (const double **) *pZ, pdinfo, &err);
 
     if (fr == NULL) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	text_print_fit_resid(fr, datainfo, prn);
-	view_buffer(prn, 78, 350, _("gretl: display data"), AFR, fr);  
+	text_print_fit_resid(fr, pdinfo, prn);
+	if (pmod->dataset == NULL) {
+	    view_buffer(prn, 78, 350, _("gretl: display data"), AFR, fr);
+	} else {
+	    view_buffer(prn, 78, 350, _("gretl: display data"), 
+			PRINT, NULL);
+	    trim_dataset(pmod, 0);
+	}
     }  
 }
 

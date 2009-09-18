@@ -27,8 +27,8 @@
 #include "dbread.h"
 #include "gretl_scalar.h"
 
-#define SUBDEBUG 1
-#define FULLDEBUG 1
+#define SUBDEBUG 0
+#define FULLDEBUG 0
 
 /*
   The purpose of the static pointers below: When the user subsamples
@@ -1789,6 +1789,18 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src,
     }
 }
 
+void free_model_dataset (MODEL *pmod)
+{
+    if (pmod->dataset != NULL) {
+#if SUBDEBUG
+	fprintf(stderr, "freeing pmod->dataset\n");
+#endif
+	destroy_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
+	free(pmod->dataset);
+	pmod->dataset = NULL;
+    }
+}
+
 /* Below: For a model that was estimated using a data sample which
    differs from the current sample, reconstitute the dataset
    appropriate to the model.  If the model used a subsample, we use
@@ -1799,6 +1811,11 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src,
    We attach this dataset to the model, so that it can be used for,
    e.g., residual or fitted versus actual plots.  The attached data
    set will be destroyed when the model itself is destroyed.
+
+   By default we create a dataset containing series up to the
+   highest numbered series associated with the model (regressand
+   and regressors).  If OPT_F is given we include all series; if
+   OPT_G is given we include only the constant.
 */
 
 int add_dataset_to_model (MODEL *pmod, const double **Z, 
@@ -1813,8 +1830,7 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
     int maxv, sn = 0;
 
     if (pmod->dataset != NULL) {
-	fputs("add_dataset_to_model: job already done\n", stderr);
-	return 0;
+	free_model_dataset(pmod);
     }    
 
     if (fullZ != NULL) {
@@ -1870,7 +1886,7 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
     } else if (opt & OPT_G) {
 	maxv = 1;
     } else {
-	maxv = highest_numbered_var_in_model(pmod, pdinfo);
+	maxv = highest_numbered_var_in_model(pmod, pdinfo) + 1;
     }
 
     /* allocate auxiliary dataset */
@@ -1911,18 +1927,6 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
 #endif
 
     return 0;
-}
-
-void free_model_dataset (MODEL *pmod)
-{
-    if (pmod->dataset != NULL) {
-#if SUBDEBUG
-	fprintf(stderr, "Deep freeing model->dataset\n");
-#endif
-	destroy_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
-	free(pmod->dataset);
-	pmod->dataset = NULL;
-    }
 }
 
 static int submask_match (const char *s1, const char *s2, int n)

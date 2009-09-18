@@ -3461,8 +3461,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     windata_t *mwin = (windata_t *) data;
     MODEL *pmod = mwin->data;
     GtkAction *action;
-    gboolean s;
-    int ok = 1, graphs_ok = 1;
+    gboolean s, ok = TRUE;
 
     if (RQ_SPECIAL_MODEL(pmod)) {
 	return FALSE;
@@ -3483,26 +3482,17 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     }
 
     if (model_sample_problem(pmod, datainfo)) { 
-	/* FIXME: allow most tests */
-	int err = add_dataset_to_model(pmod, (const double **) Z, 
-				       datainfo, OPT_NONE);
-
-	ok = 0;
-	graphs_ok = (err == 0);
+	ok = FALSE;
     }
 
-    action = gtk_ui_manager_get_action(mwin->ui, "/menubar/Tests");
+    action = gtk_ui_manager_get_action(mwin->ui, "/menubar/Save/uhat");
     s = gtk_action_is_sensitive(action);
-    if ((s && ok) || (!s && !ok)) {
+    if (s == ok) {
 	/* no need to flip state */
 	return FALSE;
     }
 
-    flip(mwin->ui, "/menubar/Tests", ok);
-    flip(mwin->ui, "/menubar/Graphs", graphs_ok);
-    flip(mwin->ui, "/menubar/Analysis/DisplayAFR", ok);
     flip(mwin->ui, "/menubar/Analysis/Forecasts", ok);
-    flip(mwin->ui, "/menubar/Analysis/ConfIntervals", ok);
     flip(mwin->ui, "/menubar/Save/yhat", ok);
     flip(mwin->ui, "/menubar/Save/uhat", ok);
     flip(mwin->ui, "/menubar/Save/uhat2", ok);
@@ -3511,7 +3501,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     if (!ok) {
 	const char *msg = gretl_errmsg_get();
 
-	if (msg != NULL && *msg != 0) {
+	if (*msg != '\0') {
 	    infobox(msg);
 	}
     } 
