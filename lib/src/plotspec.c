@@ -375,6 +375,19 @@ GPT_LINE *plotspec_clone_lines (GPT_SPEC *spec, int *err)
     return lines;
 }
 
+int plotspec_max_line_width (GPT_SPEC *spec)
+{
+    int i, lw = 0;
+
+    for (i=0; i<spec->n_lines; i++) {
+	if (spec->lines[i].width > lw) {
+	    lw = spec->lines[i].width;
+	}
+    } 
+
+    return lw;
+}
+
 int plotspec_add_label (GPT_SPEC *spec)
 {
     GPT_LABEL *labels;

@@ -30,10 +30,10 @@ static double pwidth = 5.0;
 static double pheight = 3.5;
 static char psfont[64] = "Helvetica";
 static char pdffont[64] = "Sans";
-static double psfontsize = 8;
-static double pdffontsize = 6;
-static int linewidth_plus;
-static int psmono;
+static int psfontsize = 8;
+static int pdffontsize = 6;
+static double lw_factor = 1.0;
+static int mono;
 
 static const char *psfonts[] = {
     "AvantGarde-Book",
@@ -81,9 +81,9 @@ struct pdf_ps_saver {
     double pheight;
     char psfont[64];
     char pdffont[64];
-    double psfontsize;
-    double pdffontsize;
-    int linewidth_plus;
+    int psfontsize;
+    int pdffontsize;
+    double lw_factor;
     GtkWidget *w_in, *h_in;
     GtkWidget *w_cm, *h_cm;
     GtkWidget *combo;
@@ -102,7 +102,7 @@ static void saver_init (struct pdf_ps_saver *s,
     strcpy(s->pdffont, pdffont);
     s->psfontsize = psfontsize;
     s->pdffontsize = pdffontsize;
-    s->linewidth_plus = linewidth_plus;
+    s->lw_factor = lw_factor;
 
     if (spec->termtype == GP_TERM_PDF && 
 	gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
@@ -123,11 +123,9 @@ static void saver_set_defaults (struct pdf_ps_saver *s)
 	psfontsize = s->psfontsize;
     }
 
-    if (s->spec->termtype == GP_TERM_EPS) {
-	psmono = (s->spec->flags & GPT_MONO);
-    }
+    mono = (s->spec->flags & GPT_MONO);
 
-    linewidth_plus = s->linewidth_plus;    
+    lw_factor = s->lw_factor;    
 }
 
 static void set_dim_callback (GtkSpinButton *b, struct pdf_ps_saver *s)
@@ -149,10 +147,15 @@ static void set_dim_callback (GtkSpinButton *b, struct pdf_ps_saver *s)
     }
 }
 
+static void set_lw_callback (GtkSpinButton *b, struct pdf_ps_saver *s)
+{
+    s->lw_factor = gtk_spin_button_get_value(b);
+}
+
 static GtkWidget *pdf_ps_size_spinners (struct pdf_ps_saver *s)
 {
-    GtkWidget *tbl, *label;
-    GtkWidget *hbox;
+    GtkWidget *tbl, *label, *b;
+    GtkWidget *vbox, *hbox;
 
     s->w_in = gtk_spin_button_new_with_range(1.5, 10, 0.01);
     s->h_in = gtk_spin_button_new_with_range(1.5, 10, 0.01);
@@ -202,12 +205,27 @@ static GtkWidget *pdf_ps_size_spinners (struct pdf_ps_saver *s)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), tbl, TRUE, FALSE, 0);
 
-    return hbox;
+    vbox = gtk_vbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, FALSE, 0);
+
+    vbox_add_hsep(vbox);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_("line width factor"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    b = gtk_spin_button_new_with_range(0.5, 12.0, 0.1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(b), s->lw_factor);
+    g_signal_connect(G_OBJECT(b), "value-changed",
+		     G_CALLBACK(set_lw_callback), s);
+    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, FALSE, 0);
+
+    return vbox;
 }
 
 static void set_ps_fontsize (GtkSpinButton *b, struct pdf_ps_saver *s)
 {
-    s->psfontsize = gtk_spin_button_get_value(b);
+    s->psfontsize = gtk_spin_button_get_value_as_int(b);
 }
 
 static GtkWidget *label_in_hbox (const char *s, int center)
@@ -224,7 +242,7 @@ static GtkWidget *label_in_hbox (const char *s, int center)
     return hbox;
 }
 
-void set_ps_mode (GtkToggleButton *b, struct pdf_ps_saver *s)
+void set_color_mode (GtkToggleButton *b, struct pdf_ps_saver *s)
 {
     if (button_is_active(b)) {
 	s->spec->flags |= GPT_MONO;
@@ -233,8 +251,8 @@ void set_ps_mode (GtkToggleButton *b, struct pdf_ps_saver *s)
     }
 }
 
-static void ps_mode_selector (struct pdf_ps_saver *s,
-			      GtkWidget *vbox)
+static void color_mode_selector (struct pdf_ps_saver *s,
+				 GtkWidget *vbox)
 {
     GSList *group = NULL;
     GtkWidget *b;
@@ -244,10 +262,10 @@ static void ps_mode_selector (struct pdf_ps_saver *s,
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
     b = gtk_radio_button_new_with_label(group, _("monochrome"));
-    g_signal_connect(b, "toggled", G_CALLBACK(set_ps_mode), s);
+    g_signal_connect(b, "toggled", G_CALLBACK(set_color_mode), s);
     pack_in_hbox(b, vbox, 0);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), psmono);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), mono);
 }
 
 static GtkWidget *ps_font_selector (struct pdf_ps_saver *s)
@@ -286,7 +304,7 @@ const char *pdf_saver_current_font (gpointer p)
     static char fontname[68];
     struct pdf_ps_saver *s = p;
 
-    sprintf(fontname, "%s %g", s->pdffont, s->pdffontsize);
+    sprintf(fontname, "%s %d", s->pdffont, s->pdffontsize);
     return fontname;
 }
 
@@ -315,32 +333,38 @@ static void record_selected_ps_font (struct pdf_ps_saver *s)
 static void 
 saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
 {
+    int mono = (s->spec->flags & GPT_MONO);
     char fontstr[64];
+    char lwstr[32];
     const char *ttype;
 
-    fprintf(stderr, "s->pdfcairo = %d\n", s->pdfcairo);
+    gretl_push_c_numeric_locale();
+
+    if (s->lw_factor != 1.0) {
+	sprintf(lwstr, " linewidth %g", s->lw_factor);
+    } else {
+	*lwstr = '\0';
+    }
 
     if (s->pdfcairo) {
-	ttype = "pdfcairo";
-	sprintf(fontstr, "font \"%s,%g\"", s->pdffont, s->pdffontsize);
+	ttype = (mono)? "pdfcairo mono dashed" : "pdfcairo";
+	sprintf(fontstr, "font \"%s,%d\"", s->pdffont, s->pdffontsize);
     } else {
 	record_selected_ps_font(s);
 	if (s->spec->termtype == GP_TERM_EPS) {
-	    if (s->spec->flags & GPT_MONO) {
-		ttype = "post eps mono";
-	    } else {
-		ttype = "post eps solid";
-	    }
-	    sprintf(fontstr, "font \"%s,%g\"", s->psfont, 2 * s->psfontsize);
+	    ttype = (mono)? "post eps mono" : "post eps solid";
+	    sprintf(fontstr, "font \"%s,%d\"", s->psfont, 2 * s->psfontsize);
 	} else {
 	    /* PDF via pdflib */
-	    ttype = "pdf";
-	    sprintf(fontstr, "font \"%s,%g\"", s->psfont, s->psfontsize);
+	    ttype = (mono)? "pdf mono dashed" : "pdf";
+	    sprintf(fontstr, "font \"%s,%d\"", s->psfont, s->psfontsize);
 	}
     } 
 
-    sprintf(termstr, "set term %s %s size %gin,%gin", ttype, fontstr, 
-	    s->pwidth, s->pheight);
+    sprintf(termstr, "set term %s %s%s size %gin,%gin", ttype, fontstr, 
+	    lwstr, s->pwidth, s->pheight);
+
+    gretl_pop_c_numeric_locale();
 }
 
 static void preview_callback (GtkWidget *w, struct pdf_ps_saver *s)
@@ -348,10 +372,7 @@ static void preview_callback (GtkWidget *w, struct pdf_ps_saver *s)
     char termstr[256];
 
     saver_make_term_string(s, termstr);
-    
-    fprintf(stderr, "linewidth_plus = %d\n", s->linewidth_plus);
     fprintf(stderr, "termstr: '%s'\n", termstr);
-
     saver_preview_graph(s->spec, termstr);
 }
 
@@ -401,8 +422,7 @@ void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
     label = label_in_hbox(_("Plot dimensions:"), 0);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
     
-    hbox = pdf_ps_size_spinners(&saver);
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    gtk_container_add(GTK_CONTAINER(vbox), pdf_ps_size_spinners(&saver));
 
     vbox_add_hsep(vbox);
 
@@ -425,10 +445,8 @@ void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
 	gtk_container_add(GTK_CONTAINER(vbox), hbox);
     }
 
-    if (ps) {
-	vbox_add_hsep(vbox);
-	ps_mode_selector(&saver, vbox);
-    }	
+    vbox_add_hsep(vbox);
+    color_mode_selector(&saver, vbox);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 

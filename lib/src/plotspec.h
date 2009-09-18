@@ -147,6 +147,8 @@ int plotspec_delete_line (GPT_SPEC *spec, int i);
 
 GPT_LINE *plotspec_clone_lines (GPT_SPEC *spec, int *err);
 
+int plotspec_max_line_width (GPT_SPEC *spec);
+
 int plotspec_add_label (GPT_SPEC *spec);
 
 int plotspec_delete_label (GPT_SPEC *spec, int i);
