@@ -2661,6 +2661,39 @@ static int serialize_model_tests (const MODEL *pmod, FILE *fp)
     return 0;
 }
 
+static int testvals_differ (double x, double y)
+{
+    double eq_tol = 1.0e-10;
+    double reldiff;
+
+    if (x == 0.0) {
+	reldiff = fabs(y);
+    } else if (y == 0.0) {
+	reldiff = fabs(x);
+    } else if (x > y) {
+	reldiff = fabs((x - y) / y);
+    } else {
+	reldiff = fabs((y - x) / x);
+    }
+
+    return reldiff > eq_tol;
+}
+
+static int test_params_differ (const char *p, const char *s)
+{
+    int ret = 0;
+
+    if (s == NULL && p != NULL) {
+	ret = 1;
+    } else if (p == NULL && s != NULL) {
+	ret = 1;
+    } else if (p != NULL && s != NULL) {
+	ret = strcmp(p, s);
+    }
+
+    return ret;
+}
+
 static int model_tests_differ (ModelTest *mt1, ModelTest *mt2)
 {
     int ret = 0;
@@ -2669,12 +2702,11 @@ static int model_tests_differ (ModelTest *mt1, ModelTest *mt2)
 	ret = 1;
     } else if (mt1->order != mt2->order) {
 	ret = 1;
-    } else if (mt1->param != NULL && mt2->param != NULL &&
-	       strcmp(mt1->param, mt2->param)) {
-	ret = 1;
     } else if (mt1->teststat != mt2->teststat) {
 	ret = 1;
-    } else if (mt1->value != mt2->value) {
+    } else if (test_params_differ(mt1->param, mt2->param)) {
+	ret = 1;
+    } else if (testvals_differ(mt1->value, mt2->value)) {
 	ret = 1;
     }
 
@@ -2724,29 +2756,30 @@ ModelTest *model_test_new (ModelTestType ttype)
 
 int maybe_add_test_to_model (MODEL *pmod, ModelTest *test)
 {
-    ModelTest *tests = NULL;
-    int i, nt = pmod->ntests;
-    int done = 0, add = 0;
+    int i, done = 0, add = 0;
 
     if (test == NULL || test->teststat == GRETL_STAT_NONE) {
 	return 0;
     }
 
-    for (i=0; i<nt; i++) {
+    for (i=0; i<pmod->ntests; i++) {
 	if (!model_tests_differ(test, &pmod->tests[i])) {
 	    done = 1;
 	}
     } 
 
     if (!done) {
-	tests = realloc(pmod->tests, (nt + 1) * sizeof *tests);
-    }
+	int n = pmod->ntests + 1;
+	ModelTest *tests;
 
-    if (tests != NULL) {
-	pmod->tests = tests;
-	pmod->ntests += 1;
-	copy_test(&pmod->tests[nt], test);
-	add = 1;
+	tests = realloc(pmod->tests, n * sizeof *tests);
+
+	if (tests != NULL) {
+	    pmod->tests = tests;
+	    copy_test(&pmod->tests[n-1], test);
+	    pmod->ntests += 1;
+	    add = 1;
+	}
     }
 
     free(test->param);

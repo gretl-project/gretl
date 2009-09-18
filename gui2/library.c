@@ -1873,6 +1873,9 @@ static void update_model_tests (windata_t *vwin)
 {
     MODEL *pmod = (MODEL *) vwin->data;
 
+    fprintf(stderr, "update_model_tests: pmod->ntests = %d,\n"
+	    " vwin->n_model_tests = %d\n", pmod->ntests, vwin->n_model_tests);
+
     if (pmod->ntests > vwin->n_model_tests) {
 	print_test_to_window(pmod, vwin->text);
 	vwin->n_model_tests += 1;

@@ -1952,6 +1952,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     textview_set_text(vwin->text, buf);
     gretl_print_destroy(prn);
 
+    /* sync number of model tests */
+    vwin->n_model_tests = pmod->ntests;
+
     /* attach shortcuts */
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
@@ -3490,14 +3493,18 @@ static gboolean maybe_set_sample_from_model (MODEL *pmod)
     } else {
 	err = restrict_sample_from_mask(pmod->submask, &Z, datainfo, OPT_NONE);
 	if (!err) {
+	    char comment[64];
+
 	    restore_sample_state(TRUE);
-	    /* FIXME record this action? */
+	    sprintf(comment, "# restored sample from model %d\n", pmod->ID);
+	    add_command_to_stack(comment);
 	}
     }
 
     if (err) {
 	gui_errmsg(err);
     } else {
+	mark_session_changed();
 	set_sample_label(datainfo);
     }
 
@@ -3545,7 +3552,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     if (s && !ok) {
 	ok = maybe_set_sample_from_model(pmod);
 	if (ok) {
-	    return TRUE;
+	    return FALSE;
 	}
     } 
 

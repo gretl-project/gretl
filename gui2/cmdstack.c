@@ -259,7 +259,7 @@ int add_command_to_stack (const char *s)
 
     n_cmds++;
 
-    if (strlen(s) > 2 && 
+    if (strlen(s) > 2 && *s != '#' && 
 	strncmp(s, "help", 4) &&
 	strncmp(s, "info", 4) &&
 	strncmp(s, "list", 4) &&
