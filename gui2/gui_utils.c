@@ -3461,6 +3461,49 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     }
 }
 
+/* maybe_set_sample_from_model: return TRUE if the problem situation
+   (sample mismatch) is successfully handled, else FALSE.
+*/
+
+static gboolean maybe_set_sample_from_model (MODEL *pmod)
+{
+    const char *msg = N_("The model sample differs from the dataset sample,\n"
+			 "so some menu options will be disabled.\n\n"
+			 "Do you want to restore the sample on which\n"
+			 "this model was estimated?");
+    int resp, err = 0;
+
+    resp = yes_no_dialog(NULL, _(msg), 0);
+
+    if (resp == GRETL_NO) {
+	return FALSE;
+    }
+	 
+    if (pmod->submask == NULL) {
+	/* this means restoring the full dataset */
+	err = restore_full_sample(&Z, datainfo, NULL);
+	if (!err) {
+	    restore_sample_state(FALSE);
+	    gretl_command_strcpy("smpl --full");
+	    check_and_record_command();
+	}
+    } else {
+	err = restrict_sample_from_mask(pmod->submask, &Z, datainfo, OPT_NONE);
+	if (!err) {
+	    restore_sample_state(TRUE);
+	    /* FIXME record this action? */
+	}
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	set_sample_label(datainfo);
+    }
+
+    return (err == 0);
+}
+
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data)
 {
@@ -3493,24 +3536,24 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
     action = gtk_ui_manager_get_action(vwin->ui, "/menubar/Save/uhat");
     s = gtk_action_is_sensitive(action);
+
     if (s == ok) {
 	/* no need to flip state */
 	return FALSE;
-    }
+    }    
+
+    if (s && !ok) {
+	ok = maybe_set_sample_from_model(pmod);
+	if (ok) {
+	    return TRUE;
+	}
+    } 
 
     flip(vwin->ui, "/menubar/Analysis/Forecasts", ok);
     flip(vwin->ui, "/menubar/Save/yhat", ok);
     flip(vwin->ui, "/menubar/Save/uhat", ok);
     flip(vwin->ui, "/menubar/Save/uhat2", ok);
     flip(vwin->ui, "/menubar/Save/NewVar", ok);
-
-    if (!ok) {
-	const char *msg = gretl_errmsg_get();
-
-	if (*msg != '\0') {
-	    warnbox(msg);
-	}
-    } 
 
     return FALSE;
 }
@@ -3528,6 +3571,7 @@ static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb,
 
     action = gtk_ui_manager_get_action(vwin->ui, "/menubar/Tests");
     s = gtk_action_is_sensitive(action);
+
     if (s == ok) {
 	/* no need to flip state */
 	return FALSE;

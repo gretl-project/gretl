@@ -75,6 +75,10 @@ gint yes_no_dialog (const char *title, const char *msg, int cancel)
     GtkWidget *dlg, *label, *vbox, *hbox;
     int ret = GTK_RESPONSE_HELP;
 
+    if (title == NULL) {
+	title = "gretl";
+    }
+
     dlg = gtk_dialog_new_with_buttons(title,
 				      NULL,
 				      GTK_DIALOG_MODAL | 
