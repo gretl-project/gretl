@@ -65,6 +65,8 @@ static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
+static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb, 
+			    gpointer data);
 static void model_copy_callback (GtkAction *action, gpointer p);
 
 static void close_model (GtkAction *action, gpointer data)
@@ -1537,6 +1539,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	model_save_state(vwin->ui, !is_session_model(vwin->data));
 	add_system_menu_items(vwin, role);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
+	if (role == VAR || role == VECM) {
+	    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event", 
+			     G_CALLBACK(check_VAR_menu), vwin);
+	}
 	gtk_widget_show(vwin->mbar);
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
     } else if (role == VIEW_PKG_CODE || role == VIEW_MODELTABLE) {
@@ -3458,8 +3464,8 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data)
 {
-    windata_t *mwin = (windata_t *) data;
-    MODEL *pmod = mwin->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = vwin->data;
     GtkAction *action;
     gboolean s, ok = TRUE;
 
@@ -3468,12 +3474,12 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     }
 
     if (Z == NULL) {
-	flip(mwin->ui, "/menubar/File/SaveAsIcon", FALSE);
-	flip(mwin->ui, "/menubar/File/SaveAndClose", FALSE);
-	flip(mwin->ui, "/menubar/Edit/Copy", FALSE);
-	flip(mwin->ui, "/menubar/Tests", FALSE);
-	flip(mwin->ui, "/menubar/Graphs", FALSE);
-	flip(mwin->ui, "/menubar/Analysis", FALSE);
+	flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
+	flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);
+	flip(vwin->ui, "/menubar/Edit/Copy", FALSE);
+	flip(vwin->ui, "/menubar/Tests", FALSE);
+	flip(vwin->ui, "/menubar/Graphs", FALSE);
+	flip(vwin->ui, "/menubar/Analysis", FALSE);
 	return FALSE;
     }
 
@@ -3485,26 +3491,59 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	ok = FALSE;
     }
 
-    action = gtk_ui_manager_get_action(mwin->ui, "/menubar/Save/uhat");
+    action = gtk_ui_manager_get_action(vwin->ui, "/menubar/Save/uhat");
     s = gtk_action_is_sensitive(action);
     if (s == ok) {
 	/* no need to flip state */
 	return FALSE;
     }
 
-    flip(mwin->ui, "/menubar/Analysis/Forecasts", ok);
-    flip(mwin->ui, "/menubar/Save/yhat", ok);
-    flip(mwin->ui, "/menubar/Save/uhat", ok);
-    flip(mwin->ui, "/menubar/Save/uhat2", ok);
-    flip(mwin->ui, "/menubar/Save/NewVar", ok);
+    flip(vwin->ui, "/menubar/Analysis/Forecasts", ok);
+    flip(vwin->ui, "/menubar/Save/yhat", ok);
+    flip(vwin->ui, "/menubar/Save/uhat", ok);
+    flip(vwin->ui, "/menubar/Save/uhat2", ok);
+    flip(vwin->ui, "/menubar/Save/NewVar", ok);
 
     if (!ok) {
 	const char *msg = gretl_errmsg_get();
 
 	if (*msg != '\0') {
-	    infobox(msg);
+	    warnbox(msg);
 	}
     } 
+
+    return FALSE;
+}
+
+static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb, 
+			    gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    GtkAction *action;
+    gboolean s, ok = TRUE;
+
+    if (complex_subsampled()) { 
+	ok = FALSE;
+    }
+
+    action = gtk_ui_manager_get_action(vwin->ui, "/menubar/Tests");
+    s = gtk_action_is_sensitive(action);
+    if (s == ok) {
+	/* no need to flip state */
+	return FALSE;
+    }
+
+    flip(vwin->ui, "/menubar/Edit/Revise", ok);
+    flip(vwin->ui, "/menubar/Tests", ok);
+    flip(vwin->ui, "/menubar/Save", ok);
+    flip(vwin->ui, "/menubar/Graphs", ok);
+    flip(vwin->ui, "/menubar/Analysis/Forecasts", ok);
+    flip(vwin->ui, "/menubar/Analysis/VarIrf", ok);
+    flip(vwin->ui, "/menubar/Analysis/VarDecomp", ok);
+
+    if (!ok) {
+	warnbox(_("dataset is subsampled"));
+    }
 
     return FALSE;
 }
