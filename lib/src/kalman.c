@@ -2496,8 +2496,10 @@ static void transcribe_and_free (double *x, gretl_matrix *m,
     gretl_matrix_free(m);
 }
 
-/* called by the kfilter() function: run a user-defined Kalman
-   filter in forecasting mode */
+/* Called on behalf of the kfilter() function: run a user-defined Kalman
+   filter in forecasting mode. The doc for kfilter says that it return
+   0 on successful completion or 1 if numerical problems are encountered.
+*/
 
 int user_kalman_run (const char *E, const char *V, 
 		     const char *S, const char *P,
@@ -2573,10 +2575,20 @@ int user_kalman_run (const char *E, const char *V,
 	    transcribe_and_free(Z[smat[K_K]] + t1, K->K, *err);
     }
 
-    /* reverted (??) */
-    if (*err != 0 && *err != E_NAN) {
+    if (*err) {
 	ret = 1;
+	if (0 && *err == E_NAN) {
+	    /* FIXME */
+	    /* we'll flag this condition with a return value of 1 but 
+	       won't count it as a 'true' error */
+	    *err = 0; 
+	}
     }
+
+#if KDEBUG
+    fprintf(stderr, "user_kalman_run: returning %d, err = %d\n",
+	    ret, *err);
+#endif
 
     /* detach matrices */
     K->E = K->V = K->S = NULL;

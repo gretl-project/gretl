@@ -127,6 +127,8 @@ int genr_get_output_varnum (const GENERATOR *genr);
 
 double genr_get_output_scalar (const GENERATOR *genr);
 
+int genr_get_warning (const GENERATOR *genr);
+
 int genr_get_last_output_type (void);
 
 gretl_matrix *genr_get_output_matrix (const GENERATOR *genr);

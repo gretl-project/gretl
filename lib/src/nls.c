@@ -336,7 +336,7 @@ static int nls_auto_genr (nlspec *s, int i)
 	s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, OPT_S, s->prn);
 	if (s->generr) {
 	    return s->generr;
-	}
+	} 
     }
 
     if (i == 0 && s->nlfunc == NULL) {
@@ -805,17 +805,21 @@ static int nl_missval_check (nlspec *s)
     return err;
 }
 
-/* the next two functions are used in the context of BFGS */
+/* get_mle_ll: callback used by BFGS.  Note that this should return
+   NADBL in case of numerical problems.  This will signal to BFGS to
+   try a smaller step length.
+*/
 
 static double get_mle_ll (const double *b, void *p)
 {
     nlspec *s = (nlspec *) p;
     double x;
-    int t, k;
+    int t, k, err;
 
     update_coeff_values(b, s);
 
-    if (nl_calculate_fvec(s)) {
+    err = nl_calculate_fvec(s);
+    if (err) {
 	return NADBL;
     }
 
@@ -825,7 +829,7 @@ static double get_mle_ll (const double *b, void *p)
 	k = gretl_vector_get_length(s->lvec);
 	for (t=0; t<k; t++) {
 	    x = s->lvec->val[t];
-	    if (na(x)) {
+	    if (xna(x)) {
 		return NADBL;
 	    }
 	    s->crit += x;
@@ -834,7 +838,7 @@ static double get_mle_ll (const double *b, void *p)
 	k = s->lhv;
 	for (t=s->t1; t<=s->t2; t++) {
 	    x = (*s->Z)[k][t];
-	    if (na(x)) {
+	    if (xna(x)) {
 		return NADBL;
 	    }
 	    s->crit += x;

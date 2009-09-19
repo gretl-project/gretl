@@ -931,16 +931,29 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
 
     realgen(NULL, p, pZ, pdinfo, prn, flags);
 
+#if 1
     if (flags & P_SLAVE) {
 	if (p->warn != 0 && p->err == 0) {
 	    /* warnings re. NAs become errors */
 	    p->err = p->warn;
 	}
     }
+#endif
 
     if (p->err == 0) {
 	gen_save_or_print(p, prn);
     } 
+
+#if 0
+    /* FIXME!! */
+    if (flags & P_SLAVE) {
+	if (p->warn != 0 && p->err == 0) {
+	    /* warnings re. NAs become errors */
+	    fprintf(stderr, "converting warning to error\n");
+	    p->err = p->warn;
+	}
+    }
+#endif
 
     gen_cleanup(p);
 
@@ -1022,6 +1035,11 @@ double genr_get_output_scalar (const parser *p)
     } else {
 	return NADBL;
     }
+}
+
+int genr_get_warning (const parser *p)
+{
+    return p->warn;
 }
 
 int genr_is_print (const parser *p)

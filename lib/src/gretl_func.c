@@ -5063,7 +5063,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	if (err) {
 	    gretl_errmsg_sprintf("error in function %s\n> %s", u->name, line);
 	    pprintf(prn, "error in function %s\n> %s\n", u->name, line);
-	    fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
+	    fprintf(stderr, "error %d on line %d of function %s\n", err, i+1, u->name);
 	    fprintf(stderr, "> %s\n", line);
 	}
 
@@ -5119,6 +5119,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     if (err) {
+	/* FIXME E_NAN? */
 	gretl_if_state_clear();
     } else if (retline >= 0) {
 	/* we returned prior to the end of the function */

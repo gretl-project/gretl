@@ -272,7 +272,7 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 {
     double bi0, f1, f2;
     gretlopt opt = OPT_NONE;
-    int i;
+    int i, err = 0;
 
     if (opt == OPT_R) {
 	/* Richardson */
@@ -294,7 +294,8 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 		f2 = func(b, data);
 		if (na(f1) || na(f2)) {
 		    b[i] = bi0;
-		    return 1;
+		    err = 1;
+		    goto bailout;
 		}		    
 		df[k] = (f2 - f1) / (2.0 * h); 
 		h /= v;
@@ -321,7 +322,8 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 	    f2 = func(b, data);
 	    b[i] = bi0;
 	    if (na(f1) || na(f2)) {
-		return 1;
+		err = 1;
+		goto bailout;
 	    }
 	    g[i] = (f2 - f1) / (2.0 * h);
 #if BFGS_DEBUG > 1
@@ -331,7 +333,13 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 	}
     }
 
-    return 0;
+ bailout:
+
+#if BFGS_DEBUG
+    fprintf(stderr, "BFGS_numeric_gradient: returning %d\n", err);
+#endif
+
+    return err;
 }
 
 #define stepfrac	0.2
@@ -472,7 +480,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     }
 
 #if BFGS_DEBUG
-    fprintf(stderr, "BFGS: first evaluation of f = %g\n", f);
+    fprintf(stderr, "*** BFGS: first evaluation of f = %g\n", f);
 #endif
 
     f0 = fmax = f;
@@ -528,7 +536,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	}
 
 #if BFGS_DEBUG
-	fprintf(stderr, "sumgrad = %g\n", sumgrad);
+	fprintf(stderr, "\niter %d: sumgrad = %g\n", iter, sumgrad);
 #endif
 
 	if (sumgrad < 0.0) {	
@@ -551,8 +559,8 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		    fcount++;
 		    crit_ok = !na(f) && (f >= fmax + d);
 #if BFGS_DEBUG
-		    fprintf(stderr, "crit_ok: f=%.15g, fmax=%.15g, d=%g, ok=%d\n",
-			    f, fmax, d, crit_ok);
+		    fprintf(stderr, "crit_ok: f=%.10g, fmax=%.10g, d=%g, steplen=%g, ok=%d\n",
+			    f, fmax, d, steplen, crit_ok);
 #endif
 		    if (!crit_ok) {
 			/* calculated criterion no good: try smaller step */
@@ -647,8 +655,8 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     } while (ndelta > 0 || ilast < gcount);
 
 #if BFGS_DEBUG
-    fprintf(stderr, "terminated: ndelta=%d, ilast=%d, gcount=%d\n",
-	    ndelta, ilast, gcount);
+    fprintf(stderr, "terminated: fmax=%g, ndelta=%d, ilast=%d, gcount=%d\n",
+	    fmax, ndelta, ilast, gcount);
 #endif
 
     if (iter >= maxit) {
@@ -659,7 +667,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	fprintf(stderr, "failed to match initial value of objective function:\n"
 		" f0=%.15g, fmax=%.15g\n", f0, fmax);
 	err = E_NOCONV;
-    }
+    } 
 
  skipcalc:
 
