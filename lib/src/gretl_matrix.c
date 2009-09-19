@@ -6261,6 +6261,10 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	err = (info > 0)? E_NOTPD : E_DATA;
+	if (err) {
+	   memcpy(a->val, aval, bytes);
+	   gretl_matrix_print(a, "input matrix");
+	}
     } 
 
     if (!err) {
@@ -6545,6 +6549,7 @@ static int invert_packed_symm_indef_matrix (gretl_matrix *v,
 
 int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 {
+    gretl_matrix *vcpy = NULL;
     integer info, n;
     char uplo = 'L';
     int err = 0;
@@ -6564,6 +6569,10 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 	return 0;
     }
 
+    if (v->rows < 100) {
+	vcpy = gretl_matrix_copy(v);
+    }
+
     n = (integer) ((sqrt(1.0 + 8.0 * v->rows) - 1.0) / 2.0);
 
     dpptrf_(&uplo, &n, v->val, &info);   
@@ -6574,6 +6583,9 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 	if (info > 0) {
 	    fputs(" matrix is not positive definite\n", stderr);
 	}
+	if (vcpy != NULL) {
+	    gretl_matrix_print(vcpy, "input matrix");
+	}
 	return E_SINGULAR;
     } 
 
@@ -6583,7 +6595,10 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 	err = E_SINGULAR;
 	fprintf(stderr, "gretl_invert_packed_symmetric_matrix:\n"
 		" dpptri failed with info = %d\n", (int) info);
+	
     } 
+
+    gretl_matrix_free(vcpy);
 
     return err;
 }

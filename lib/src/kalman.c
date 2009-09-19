@@ -2577,8 +2577,7 @@ int user_kalman_run (const char *E, const char *V,
 
     if (*err) {
 	ret = 1;
-	if (0 && *err == E_NAN) {
-	    /* FIXME */
+	if (*err == E_NAN) {
 	    /* we'll flag this condition with a return value of 1 but 
 	       won't count it as a 'true' error */
 	    *err = 0; 

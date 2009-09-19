@@ -1189,6 +1189,8 @@ static double *mle_score_callback (const double *b, int i, void *p)
     }
 }
 
+#define ALT_OPG 0
+
 /* build the G matrix, given a final set of coefficient
    estimates, b, and a function for calculating the score
    vector, scorefun
@@ -1334,6 +1336,9 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
     } else {
 	/* plain OPG */
 	err = gretl_invert_symmetric_matrix(V);
+	if (err) {
+	    fprintf(stderr, "mle_build_vcv: failed to invert OPG matrix GG'\n");
+	}
 	*vcvopt = VCV_OP;
     }
 
