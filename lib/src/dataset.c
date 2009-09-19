@@ -448,7 +448,7 @@ int dataset_finalize_panel_indices (DATAINFO *pdinfo)
     /* basic validity check */
     for (i=0; i<pdinfo->n; i++) {
 	if (pan->unit[i] < 0 || pan->period[i] < 0) {
-	    strcpy(gretl_errmsg, "Panel index information is corrupted");
+	    gretl_errmsg_set("Panel index information is corrupted");
 	    return E_DATA;
 	}
 	sprintf(test, "%d", pan->period[i] + 1);
@@ -1365,7 +1365,7 @@ int dataset_add_series_as (double *x, const char *newname,
     int v, t, err = 0;
 
     if (pdinfo->varinfo == NULL) {
-	strcpy(gretl_errmsg, _("Please open a data file first"));
+	gretl_errmsg_set(_("Please open a data file first"));
 	return 1;
     }
 
@@ -1502,7 +1502,7 @@ static int vars_renumbered (const int *list, DATAINFO *pdinfo,
 
 int overwrite_err (const char *name)
 {
-    sprintf(gretl_errmsg, "The variable %s is read-only", name);
+    gretl_errmsg_sprintf("The variable %s is read-only", name);
 
     return E_DATA;
 }
@@ -1969,7 +1969,7 @@ static int dataset_sort (const char *s, double **Z, DATAINFO *pdinfo,
 
     if (dataset_is_time_series(pdinfo) ||
 	dataset_is_panel(pdinfo)) {
-	strcpy(gretl_errmsg, "You can only do this with undated data");
+	gretl_errmsg_set("You can only do this with undated data");
 	return E_DATA;
     }
 
@@ -2732,7 +2732,7 @@ static int dataset_int_param (const char **ps, int op,
 
 	if (!ok) {
 	    *err = E_PDWRONG;
-	    strcpy(gretl_errmsg, "This conversion is not supported");
+	    gretl_errmsg_set("This conversion is not supported");
 	}
     } else if (op == DS_EXPAND) {
 	int ok = 0;
@@ -2745,7 +2745,7 @@ static int dataset_int_param (const char **ps, int op,
 
 	if (!ok) {
 	    *err = E_PDWRONG;
-	    strcpy(gretl_errmsg, "This conversion is not supported");
+	    gretl_errmsg_set("This conversion is not supported");
 	}
     }
 
@@ -2905,7 +2905,7 @@ int modify_dataset (int op, const int *list, const char *s,
     }
 
     if (gretl_function_depth() > 0) {
-	strcpy(gretl_errmsg, _("The 'dataset' command is not available within functions"));
+	gretl_errmsg_set(_("The 'dataset' command is not available within functions"));
 	return 1;
     }
 
@@ -2925,7 +2925,7 @@ int modify_dataset (int op, const int *list, const char *s,
     }
 
     if (op != DS_RESTORE && complex_subsampled()) {
-	strcpy(gretl_errmsg, _("The data set is currently sub-sampled"));
+	gretl_errmsg_set(_("The data set is currently sub-sampled"));
 	return 1;
     }
 

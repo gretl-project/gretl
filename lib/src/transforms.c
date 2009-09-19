@@ -720,7 +720,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
     int lno;
 
     if (lag > pdinfo->n || -lag > pdinfo->n) {
-	sprintf(gretl_errmsg, _("Invalid lag order %d"), lag);
+	gretl_errmsg_sprintf(_("Invalid lag order %d"), lag);
 	lno = -1;
     } else if (lag == 0) {
 	lno = v;
@@ -1176,7 +1176,7 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
     int err;
 
     if (order < 0) {
-	sprintf(gretl_errmsg, _("Invalid lag order %d"), order);
+	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
 	return E_DATA;
     }
 
@@ -1530,7 +1530,7 @@ static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err && tmplist[0] == 0) {
-	strcpy(gretl_errmsg, _("dummify: no suitable variables were found"));
+	gretl_errmsg_set(_("dummify: no suitable variables were found"));
 	err = E_DATA;
     }
 

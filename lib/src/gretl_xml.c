@@ -79,14 +79,14 @@ int gretl_xml_open_doc_root (const char *fname,
 
     doc = gretl_xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
+	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
 	err = 1;
     }
 
     if (!err) {
 	node = xmlDocGetRootElement(doc);
 	if (node == NULL) {
-	    sprintf(gretl_errmsg, _("%s: empty document"), fname);
+	    gretl_errmsg_sprintf(_("%s: empty document"), fname);
 	    xmlFreeDoc(doc);
 	    err = 1;
 	}
@@ -94,8 +94,8 @@ int gretl_xml_open_doc_root (const char *fname,
 
     if (!err) {
 	if (xmlStrcmp(node->name, (XUC) rootname)) {
-	    sprintf(gretl_errmsg, _("File of the wrong type, root node not %s"),
-		    rootname);
+	    gretl_errmsg_sprintf(_("File of the wrong type, root node not %s"),
+				 rootname);
 	    fprintf(stderr, "Unexpected root node '%s'\n", (char *) node->name);
 	    xmlFreeDoc(doc);
 	    err = 1;
@@ -1355,7 +1355,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
     fz = gretl_gzopen(fname, "wb");
 
     if (fz == Z_NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), fname);
+	gretl_errmsg_sprintf(_("Couldn't open %s for writing"), fname);
 	return 1;
     }
 
@@ -1479,7 +1479,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (err) {
-	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), fname);
+	gretl_errmsg_sprintf(_("Couldn't open %s for writing"), fname);
 	return 1;
     }
 
@@ -1758,7 +1758,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	if (sscanf((char *) tmp, "%d", &v) == 1) {
 	    pdinfo->v = v + 1;
 	} else {
-	    sprintf(gretl_errmsg, _("Failed to parse count of variables"));
+	    gretl_errmsg_set(_("Failed to parse count of variables"));
 	    err = 1;
 	}
 	if (!err && dataset_allocate_varnames(pdinfo)) {
@@ -1772,7 +1772,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	}		
 	free(tmp);
     } else {
-	sprintf(gretl_errmsg, _("Got no variables"));
+	gretl_errmsg_set(_("Got no variables"));
 	err = 1;
     }
 
@@ -1785,7 +1785,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
     }
 
     if (cur == 0) {
-	sprintf(gretl_errmsg, _("Got no variables"));
+	gretl_errmsg_set(_("Got no variables"));
 	return 1;
     }
 
@@ -1797,7 +1797,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 		transcribe_string(pdinfo->varname[i], (char *) tmp, VNAMELEN);
 		free(tmp);
 	    } else {
-		sprintf(gretl_errmsg, _("Variable %d has no name"), i);
+		gretl_errmsg_sprintf(_("Variable %d has no name"), i);
 		return 1;
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "label");
@@ -1865,7 +1865,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
     }
    
     if (i != pdinfo->v) {
-	sprintf(gretl_errmsg, _("Number of variables does not match declaration"));
+	gretl_errmsg_set(_("Number of variables does not match declaration"));
 	err = 1;
     } 
 
@@ -1898,8 +1898,8 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	}
     }	
 
-    if (err && *gretl_errmsg == '\0') {
-	sprintf(gretl_errmsg, _("Failed to parse data values at obs %d"), t+1);
+    if (err && !gretl_errmsg_is_set()) {
+	gretl_errmsg_sprintf(_("Failed to parse data values at obs %d"), t+1);
     }
 
     return err;
@@ -1928,7 +1928,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	pdinfo->n = n;
 	free(tmp);
     } else {
-	sprintf(gretl_errmsg, _("Failed to parse number of observations"));
+	gretl_errmsg_set(_("Failed to parse number of observations"));
 	free(tmp);
 	return E_DATA;
     }
@@ -1947,8 +1947,8 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		return E_ALLOC;
 	    }
 	} else if (strcmp((char *) tmp, "false")) {
-	    sprintf(gretl_errmsg, _("labels attribute for observations must be "
-		    "'true' or 'false'"));
+	    gretl_errmsg_set(_("labels attribute for observations must be "
+			       "'true' or 'false'"));
 	    return E_DATA;
 	}
 	free(tmp);
@@ -1992,7 +1992,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (cur == NULL) {
-	sprintf(gretl_errmsg, _("Got no observations\n"));
+	gretl_errmsg_set(_("Got no observations\n"));
 	return E_DATA;
     }
 
@@ -2014,7 +2014,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    transcribe_string(pdinfo->S[t], (char *) tmp, OBSLEN);
 		    free(tmp);
 		} else {
-		    sprintf(gretl_errmsg, _("Case marker missing at obs %d"), t+1);
+		    gretl_errmsg_sprintf(_("Case marker missing at obs %d"), t+1);
 		    return E_DATA;
 		}
 	    }
@@ -2033,7 +2033,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    free(tmp);
 		} 
 		if (ok < 2) {
-		    sprintf(gretl_errmsg, "Panel index missing at obs %d", t+1);
+		    gretl_errmsg_sprintf("Panel index missing at obs %d", t+1);
 		    return E_DATA;
 		}
 		pdinfo->paninfo->unit[t] = j;
@@ -2049,7 +2049,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		free(tmp);
 		t++;
 	    } else {
-		sprintf(gretl_errmsg, _("Values missing at observation %d"), t+1);
+		gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
 		err = E_DATA;
 		goto bailout;
 	    }
@@ -2079,7 +2079,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (!err && t != pdinfo->n) {
-	sprintf(gretl_errmsg, _("Number of observations does not match declaration"));
+	gretl_errmsg_set(_("Number of observations does not match declaration"));
 	err = E_DATA;
     }
 
@@ -2105,8 +2105,7 @@ static int xml_get_data_structure (xmlNodePtr node, int *dtype)
     int err = 0;
 
     if (tmp == NULL) {
-	sprintf(gretl_errmsg, 
-		_("Required attribute 'type' is missing from data file"));
+	gretl_errmsg_set(_("Required attribute 'type' is missing from data file"));
 	err = 1;
     } else {
 	if (!strcmp((char *) tmp, "cross-section")) {
@@ -2118,7 +2117,7 @@ static int xml_get_data_structure (xmlNodePtr node, int *dtype)
 	} else if (!strcmp((char *) tmp, "stacked-cross-section")) {
 	    *dtype = STACKED_CROSS_SECTION;
 	} else {
-	    sprintf(gretl_errmsg, _("Unrecognized type attribute for data file"));
+	    gretl_errmsg_set(_("Unrecognized type attribute for data file"));
 	    err = 1;
 	}
 	free(tmp);
@@ -2143,7 +2142,7 @@ static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dtype)
 		fprintf(stderr, "custom time series, using frequency 1\n");
 	    }
 	} else if (sscanf((char *) tmp, "%d", pd) != 1) {
-	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));
+	    gretl_errmsg_set(_("Failed to parse data frequency"));
 	    err = 1;
 	}
 	free(tmp);
@@ -2184,7 +2183,7 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 	}
 
 	if (err) {
-	    strcpy(gretl_errmsg, _("Failed to parse startobs"));
+	    gretl_errmsg_set(_("Failed to parse startobs"));
 	} else {
 	    stobs[0] = '\0';
 	    strncat(stobs, (char *) tmp, OBSLEN - 1);
@@ -2216,7 +2215,7 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
 	} 
 
 	if (err) {
-	    strcpy(gretl_errmsg, _("Failed to parse endobs"));
+	    gretl_errmsg_set(_("Failed to parse endobs"));
 	} else {
 	    endobs[0] = '\0';
 	    strncat(endobs, (char *) tmp, OBSLEN - 1);
@@ -2361,20 +2360,20 @@ int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo,
 
     doc = gretl_xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
+	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
 	err = 1;
 	goto bailout;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        sprintf(gretl_errmsg, _("%s: empty document"), fname);
+        gretl_errmsg_sprintf(_("%s: empty document"), fname);
 	err = 1;
 	goto bailout;
     }
 
     if (xmlStrcmp(cur->name, (XUC) "gretldata")) {
-        sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
+        gretl_errmsg_set(_("File of the wrong type, root node not gretldata"));
 	err = 1;
 	goto bailout;
     }
@@ -2431,7 +2430,7 @@ int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "observations")) {
 	    if (!gotvars) {
-		sprintf(gretl_errmsg, _("Variables information is missing"));
+		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
 	    }
 	    if (process_observations(doc, cur, &tmpZ, tmpdinfo, progress)) {
@@ -2456,13 +2455,13 @@ int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!gotvars) {
-	sprintf(gretl_errmsg, _("Variables information is missing"));
+	gretl_errmsg_set(_("Variables information is missing"));
 	err = 1;
 	goto bailout;
     }
 
     if (!gotobs) {
-	sprintf(gretl_errmsg, _("No observations were found"));
+	gretl_errmsg_set(_("No observations were found"));
 	err = 1;
 	goto bailout;
     }
@@ -2532,19 +2531,19 @@ char *gretl_get_gdt_description (const char *fname)
 
     doc = gretl_xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
+	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
 	return NULL;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        sprintf(gretl_errmsg, _("%s: empty document"), fname);
+        gretl_errmsg_sprintf(_("%s: empty document"), fname);
 	xmlFreeDoc(doc);
 	return NULL;
     }
 
     if (xmlStrcmp(cur->name, (XUC) "gretldata")) {
-        sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
+        gretl_errmsg_set(_("File of the wrong type, root node not gretldata"));
 	xmlFreeDoc(doc);
 	return NULL;
     }
@@ -2573,12 +2572,12 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
     doc = gretl_xmlParseFile(fname);
 
     if (doc == NULL) {
-	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
+	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
 	*err = 1;
     } else {
 	node = xmlDocGetRootElement(doc);
 	if (node == NULL) {
-	    sprintf(gretl_errmsg, _("%s: empty document"), fname);
+	    gretl_errmsg_sprintf(_("%s: empty document"), fname);
 	    *err = 1;
 	} else {
 	    ret = gretl_strdup((char *) node->name);

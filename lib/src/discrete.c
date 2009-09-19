@@ -1359,7 +1359,7 @@ static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
 
     dmod->xpx = lp_hessian(dmod, Z, dmod->ci);
     if (dmod->xpx == NULL) {
-	strcpy(gretl_errmsg, _("Failed to construct Hessian matrix"));
+	gretl_errmsg_set(_("Failed to construct Hessian matrix"));
 	return E_ALLOC;
     } 
 
@@ -2628,8 +2628,8 @@ discrete_depvar_ok (double **Z, const DATAINFO *pdinfo, int v)
 {
     if (!var_is_discrete(pdinfo, v) && 
 	!gretl_is_oprobit_ok(pdinfo->t1, pdinfo->t2, Z[v])) {
-	sprintf(gretl_errmsg, _("The variable '%s' is not discrete"),
-		pdinfo->varname[v]);
+	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
+			     pdinfo->varname[v]);
 	return 0;
     } 
 
@@ -2797,8 +2797,8 @@ int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
 	    continue;
 	}
 	if (y[t] <= 0.0) {
-	    strcpy(gretl_errmsg, _("Illegal non-positive value of the "
-				   "dependent variable"));
+	    gretl_errmsg_set(_("Illegal non-positive value of the "
+			       "dependent variable"));
 	    return 1;
 	}
 	if (y[t] > *ymax) {

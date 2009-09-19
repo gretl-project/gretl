@@ -463,7 +463,7 @@ open_db_files (const char *fname, char *idxname, char *binname,
 
     *fidx = gretl_fopen(idxname, imode);
     if (*fidx == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), idxname);
+	gretl_errmsg_sprintf(_("Couldn't open %s for writing"), idxname);
 	return 1;
     }
 
@@ -472,7 +472,7 @@ open_db_files (const char *fname, char *idxname, char *binname,
     
     *fbin = gretl_fopen(binname, bmode);
     if (*fbin == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), binname);
+	gretl_errmsg_sprintf(_("Couldn't open %s for writing"), binname);
 	fclose(*fidx);
 	if (*append == 0) {
 	    gretl_remove(idxname);
@@ -585,9 +585,8 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
 	    if (err) {
 		fputs("check_for_db_duplicates failed\n", stderr);
 	    } else if (dups > 0) {
-		sprintf(gretl_errmsg, 
-			_("Of the variables to be saved, %d were already "
-			  "present in the database."), dups);
+		gretl_errmsg_sprintf(_("Of the variables to be saved, %d were already "
+				       "present in the database."), dups);
 		/* FIXME add message for command line use, about the
 		   --overwrite option */
 		err = E_DB_DUP;

@@ -742,7 +742,7 @@ static int libset_get_scalar (const char *var, const char *arg,
     if (gretl_is_scalar(arg)) {
 	x = gretl_scalar_get_value(arg);
     } else {
-	sprintf(gretl_errmsg, "'%s': not a scalar", arg);
+	gretl_errmsg_sprintf("'%s': not a scalar", arg);
 	return E_UNKVAR;
     }
 

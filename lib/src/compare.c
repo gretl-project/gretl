@@ -1883,7 +1883,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	    lnum = laggenr(v, i, pZ, pdinfo);
 
 	    if (lnum < 0) {
-		sprintf(gretl_errmsg, _("lagging uhat failed"));
+		gretl_errmsg_set(_("lagging uhat failed"));
 		err = E_LAGS;
 	    } else {
 		/* set the first entries to 0 for compatibility with Godfrey (1994)
@@ -2468,7 +2468,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	} else {
 	    split = dateton(chowparm, pdinfo);
 	    if (split <= 0 || split >= pdinfo->n) { 
-		strcpy(gretl_errmsg, _("Invalid sample split for Chow test"));
+		gretl_errmsg_set(_("Invalid sample split for Chow test"));
 		err = E_DATA;
 	    }
 	    smax = split;

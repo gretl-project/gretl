@@ -24,7 +24,9 @@
 
 #include <errno.h>
 
-char gretl_errmsg[ERRLEN];
+#define ERRLEN 2048
+
+static char gretl_errmsg[ERRLEN];
 
 static const char *gretl_error_messages[] = {
     NULL,
@@ -185,6 +187,8 @@ void gretl_errmsg_set (const char *str)
     }
 }
 
+#if 0
+
 /**
  * gretl_errmsg_sprintf:
  * @fmt: format string.
@@ -195,17 +199,47 @@ void gretl_errmsg_set (const char *str)
 
 void gretl_errmsg_sprintf (const char *fmt, ...)
 {
-    if (alarm_set && *gretl_errmsg != '\0') {
-	/* leave the current error message in place */
-	return;
-    }
-
     if (*gretl_errmsg == '\0' && fmt != NULL) {
 	va_list ap;
 
 	va_start(ap, fmt);
 	vsnprintf(gretl_errmsg, ERRLEN, fmt, ap);
 	va_end(ap);
+    }
+}
+
+#endif
+
+/**
+ * gretl_errmsg_sprintf:
+ * @fmt: format string.
+ *
+ * Append a formatted message to the current gretl
+ * error message.
+ */
+
+void gretl_errmsg_sprintf (const char *fmt, ...)
+{
+    if (*gretl_errmsg == '\0') {
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsnprintf(gretl_errmsg, ERRLEN, fmt, ap);
+	va_end(ap);
+    } else {
+	int n = ERRLEN - strlen(gretl_errmsg) - 2;
+
+	if (n > 31) {
+	    char msg[ERRLEN];
+	    va_list ap;
+
+	    va_start(ap, fmt);
+	    vsnprintf(msg, n, fmt, ap);
+	    va_end(ap);
+
+	    strcat(gretl_errmsg, "\n");
+	    strcat(gretl_errmsg, msg);
+	}
     }
 }
 
@@ -252,6 +286,18 @@ void gretl_error_clear (void)
     }
     error_printed = 0;
     errno = 0;
+}
+
+/**
+ * gretl_errmsg_is_set:
+ *
+ * Returns: 1 if the gretl error message is currently
+ * set (not blank), otherwise 0.
+ */
+
+int gretl_errmsg_is_set (void)
+{
+    return (*gretl_errmsg != '\0');
 }
 
 /* setting the "alarm" prevents gretl_errmsg from being
@@ -313,5 +359,3 @@ const char *gretl_warning_get (void)
 }
 
 #endif
-
-

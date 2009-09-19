@@ -118,7 +118,7 @@ static ocset *oc_set_new (void)
 
 static int gmm_unkvar (const char *s)
 {
-    sprintf(gretl_errmsg, _("Unknown variable '%s'"), s);
+    gretl_errmsg_sprintf(_("Unknown variable '%s'"), s);
     return E_UNKVAR;
 }
 
@@ -625,8 +625,8 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     }
 
     if (s->oc != NULL && s->oc->W != NULL) {
-	strcpy(gretl_errmsg, _("Orthogonality conditions must come before the "
-	       "weights matrix"));
+	gretl_errmsg_set(_("Orthogonality conditions must come before the "
+			   "weights matrix"));
 	return E_DATA;
     }
 
@@ -760,12 +760,12 @@ int nlspec_add_weights (nlspec *s, const char *str)
     }
 
     if (s->oc == NULL) {
-	strcpy(gretl_errmsg, _("Weights must come after orthogonality conditions"));
+	gretl_errmsg_set(_("Weights must come after orthogonality conditions"));
 	return E_DATA;
     }
 
     if (s->oc->W != NULL) {
-	strcpy(gretl_errmsg, _("Weights are already defined"));
+	gretl_errmsg_set(_("Weights are already defined"));
 	return E_DATA;
     }
 
@@ -786,8 +786,8 @@ int nlspec_add_weights (nlspec *s, const char *str)
 
     /* is the weight matrix of the correct dimensions? */
     if (s->oc->W->rows != k || s->oc->W->cols != k) {
-	sprintf(gretl_errmsg, _("Weight matrix is of wrong size: should be "
-				"%d x %d"), k, k);
+	gretl_errmsg_sprintf(_("Weight matrix is of wrong size: should be "
+			       "%d x %d"), k, k);
 	err = E_DATA;
     }
 
@@ -865,12 +865,12 @@ void nlspec_print_gmm_info (const nlspec *spec, PRN *prn)
 int check_gmm_requirements (nlspec *spec)
 {
     if (spec->oc == NULL) {
-	strcpy(gretl_errmsg, _("No orthogonality conditions have been specified"));
+	gretl_errmsg_set(_("No orthogonality conditions have been specified"));
 	return 1;
     }
 
     if (spec->oc->W == NULL) {
-	strcpy(gretl_errmsg, _("No weights have been specified"));
+	gretl_errmsg_set(_("No weights have been specified"));
 	return 1;
     }
 

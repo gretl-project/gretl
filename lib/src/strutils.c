@@ -1644,7 +1644,7 @@ char *gretl_xml_encode (const char *str)
 
     targ = malloc(len);
     if (targ == NULL) {
-	sprintf(gretl_errmsg, _("out of memory in XML encoding"));
+	gretl_errmsg_set(_("out of memory in XML encoding"));
 	return NULL;
     }
 

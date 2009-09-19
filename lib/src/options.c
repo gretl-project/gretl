@@ -533,7 +533,7 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     }
 
     if (c != 0) {
-	sprintf(gretl_errmsg, "Invalid option '-%c'", c);
+	gretl_errmsg_sprintf("Invalid option '-%c'", c);
     } 
 
     return 0;
@@ -908,7 +908,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 		; /* no-op here: handled elsewhere (FIXME) */
 	    } else {
 		/* not a valid flag, or not applicable in context */
-		sprintf(gretl_errmsg, _("Invalid option '--%s'"), longopt);
+		gretl_errmsg_sprintf(_("Invalid option '--%s'"), longopt);
 		fprintf(stderr, " line='%s', ci = %d\n", line, ci);
 		*err = 1;
 		return 0L;
@@ -929,8 +929,8 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 		}
 	    } else if (status == NEEDS_PARM) {
 		/* we need a param value but there's none */
-		sprintf(gretl_errmsg, _("The option '--%s' requires a parameter"), 
-			longopt);
+		gretl_errmsg_sprintf(_("The option '--%s' requires a parameter"), 
+				     longopt);
 		*err = E_PARSE;
 	    }
 	    if (*err) {

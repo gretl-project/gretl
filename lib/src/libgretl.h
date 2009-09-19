@@ -65,7 +65,6 @@
 #define MAXLINE 8192  /* maximum length of command line */
 #define MAXLABEL 128  /* maximum length of descriptive labels for variables */
 #define MAXLEN   512  /* max length of regular "long" strings */
-#define ERRLEN   256  /* max length of libgretl error messages */
 #define MAXDISP   32  /* max length of "display names" for variables */
 #define VNAMELEN  16  /* space allocated for var names (including termination) */
 #define OBSLEN    16  /* space allocated for obs strings (including termination) */

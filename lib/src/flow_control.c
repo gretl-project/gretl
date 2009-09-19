@@ -68,7 +68,7 @@ static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err)
 	gretl_errmsg_set(_("error evaluating 'if'"));
     } else if (na(val)) {
 	*err = 1;
-	strcpy(gretl_errmsg, _("indeterminate condition for 'if'"));
+	gretl_errmsg_set(_("indeterminate condition for 'if'"));
     } else {
 	ret = (int) val;
     }
@@ -100,9 +100,9 @@ static const char *ifstr (int c)
 
 static void unmatched_message (int code)
 {
-    sprintf(gretl_errmsg, _("Unmatched \"%s\""),
-	    (code == SET_ELSE)? "else" : 
-	    (code == SET_ELIF)? "elif": "endif");
+    gretl_errmsg_sprintf(_("Unmatched \"%s\""),
+			 (code == SET_ELSE)? "else" : 
+			 (code == SET_ELIF)? "elif": "endif");
 }
 
 #define IF_DEPTH 32
@@ -131,7 +131,7 @@ static int ifstate (int code, int val, int *err)
     } else if (code == SET_FALSE || code == SET_TRUE) {
 	indent++;
 	if (indent >= IF_DEPTH) {
-	    sprintf(gretl_errmsg, "IF depth (%d) exceeded\n", IF_DEPTH);
+	    gretl_errmsg_sprintf("IF depth (%d) exceeded", IF_DEPTH);
 	    *err = E_DATA;
 	} else {
 	    T[indent] = got_T[indent] = (code == SET_TRUE);

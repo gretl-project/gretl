@@ -334,8 +334,8 @@ int winfork (char *cmdline, const char *dir,
 	WaitForSingleObject(pi.hProcess, INFINITE); 
 	if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
 	    if (exitcode != 0) {
-		sprintf(gretl_errmsg, "%s: exit code %d\n",
-			cmdline, exitcode);
+		gretl_errmsg_sprintf("%s: exit code %d\n", cmdline, 
+				     exitcode);
 		err = 1;
 	    }
 	} else {

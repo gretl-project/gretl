@@ -349,7 +349,7 @@ open_native_db_files (const char *dname, FILE **f1, char *name1,
 	if (!err) {
 	    fidx = gretl_fopen(fname, "r");
 	    if (fidx == NULL) {
-		strcpy(gretl_errmsg, _("Couldn't open database index file"));
+		gretl_errmsg_set(_("Couldn't open database index file"));
 		err = E_FOPEN;
 	    } 
 	}
@@ -369,7 +369,7 @@ open_native_db_files (const char *dname, FILE **f1, char *name1,
 	if (!err) {
 	    fbin = gretl_fopen(fname, "rb");
 	    if (fbin == NULL) {
-		strcpy(gretl_errmsg, _("Couldn't open database binary file"));
+		gretl_errmsg_set(_("Couldn't open database binary file"));
 		err = E_FOPEN;
 	    } 
 	}
@@ -429,7 +429,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	    get_native_series_comment(sinfo, s1);
 	    if (sscanf(s2, "%c %10s %*s %10s %*s %*s %d", 
 		       &pdc, stobs, endobs, &sinfo->nobs) != 4) {
-		strcpy(gretl_errmsg, _("Failed to parse series information"));
+		gretl_errmsg_set(_("Failed to parse series information"));
 		err = DB_PARSE_ERROR;
 	    } else {
 		get_native_series_pd(sinfo, pdc);
@@ -439,7 +439,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	    }
 	} else {
 	    if (sscanf(s2, "%*c %*s %*s %*s %*s %*s %d", &n) != 1) {
-		strcpy(gretl_errmsg, _("Failed to parse series information"));
+		gretl_errmsg_set(_("Failed to parse series information"));
 		err = DB_PARSE_ERROR;
 	    } else {
 		offset += n * sizeof(dbnumber);
@@ -450,7 +450,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     fclose(fp);
 
     if (!gotit) {
-	sprintf(gretl_errmsg, _("Series not found, '%s'"), series);
+	gretl_errmsg_sprintf(_("Series not found, '%s'"), series);
 	err = DB_NO_SUCH_SERIES;
     }
 
@@ -502,7 +502,7 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
 
 	if (sscanf(s2, "%c %10s %*s %10s %*s %*s %d", 
 		   &pdc, stobs, endobs, &sinfo->nobs) != 4) {
-	    strcpy(gretl_errmsg, _("Failed to parse series information"));
+	    gretl_errmsg_set(_("Failed to parse series information"));
 	    err = DB_PARSE_ERROR;
 	} else {
 	    get_native_series_pd(sinfo, pdc);
@@ -516,7 +516,7 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
     free(buf);
 
     if (!gotit) {
-	sprintf(gretl_errmsg, _("Series not found, '%s'"), series);
+	gretl_errmsg_sprintf(_("Series not found, '%s'"), series);
 	err = DB_NO_SUCH_SERIES;
     }
 
@@ -590,7 +590,7 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 
     fp = gretl_fopen(dbidx, "r");
     if (fp == NULL) {
-	strcpy(gretl_errmsg, _("Couldn't open database index file"));
+	gretl_errmsg_set(_("Couldn't open database index file"));
 	return E_FOPEN;
     }
 
@@ -635,7 +635,7 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
     fclose(fp);
 
     if (!err && !gotit) {
-	sprintf(gretl_errmsg, _("Series not found, '%s'"), series);
+	gretl_errmsg_sprintf(_("Series not found, '%s'"), series);
 	err = DB_NO_SUCH_SERIES;
     }
 
@@ -679,7 +679,7 @@ static int dinfo_sanity_check (const DATEINFO *dinfo)
 	dinfo->year < 0 || dinfo->year > 3000 ||
 	dinfo->month < 0 || dinfo->month > 12 ||
 	dinfo->day < 0 || dinfo->day > 365) {
-	strcpy(gretl_errmsg, _("This is not a valid RATS 4.0 database"));
+	gretl_errmsg_set(_("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: failed dinfo_sanity_check:\n"
 		" info=%ld, year=%d, month=%d, day=%d\n",
 		dinfo->info, (int) dinfo->year, (int) dinfo->month, 
@@ -724,8 +724,8 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
 		(int) dinfo->info);
 	fputc('\n', stderr);
-	sprintf(gretl_errmsg, ("frequency (%d) does not make seem to make sense"), 
-		(int) dinfo->info);
+	gretl_errmsg_sprintf(("frequency (%d) does not make seem to make sense"), 
+			     (int) dinfo->info);
 	err = 1;
     }   
 
@@ -767,11 +767,9 @@ static int in7_to_sinfo (const char *varname, const char *comment,
 	sprintf(sinfo->stobs, "%d", y0);
 	sprintf(sinfo->endobs, "%d", y1);
     } else {
-	fprintf(stderr, I_("frequency %d is not supported"),
-		pd);
+	fprintf(stderr, I_("frequency %d is not supported"), pd);
 	fputc('\n', stderr);
-	sprintf(gretl_errmsg, ("frequency %d is not supported"), 
-		pd);
+	gretl_errmsg_sprintf(_("frequency %d is not supported"), pd);
 	err = 1;
     }
 
@@ -1016,7 +1014,7 @@ static int count_in7_series (FILE *fp, int *err)
     while (fgets(line, sizeof line, fp)) {
 	if (i == 0 && strncmp(line, "pcgive 700", 10)) {
 	    *err = 1;
-	    strcpy(gretl_errmsg, "This is not a PcGive 700 data file");
+	    gretl_errmsg_set("This is not a PcGive 700 data file");
 	    return 0;
 	}
 	if (*line == '>') {
@@ -1055,7 +1053,7 @@ dbwrapper *read_pcgive_db (FILE *fp)
     ns = count_in7_series(fp, &err);
     if (ns == 0) {
 	if (!err) {
-	    strcpy(gretl_errmsg, _("No valid series found"));
+	    gretl_errmsg_set(_("No valid series found"));
 	}
 	return NULL;
     }
@@ -1067,7 +1065,7 @@ dbwrapper *read_pcgive_db (FILE *fp)
     /* allocate table for series rows */
     dw = dbwrapper_new(ns);
     if (dw == NULL) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
+	gretl_errmsg_set(_("Out of memory!"));
 	return NULL;
     }
 
@@ -1111,7 +1109,7 @@ dbwrapper *read_rats_db (FILE *fp)
 
     /* basic check */
     if (forward <= 0) { 
-	strcpy(gretl_errmsg, _("This is not a valid RATS 4.0 database"));
+	gretl_errmsg_set(_("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: got forward = %ld\n", forward);
 	return NULL;
     }
@@ -1119,7 +1117,7 @@ dbwrapper *read_rats_db (FILE *fp)
     /* allocate table for series rows */
     dw = dbwrapper_new(0);
     if (dw == NULL) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
+	gretl_errmsg_set(_("Out of memory!"));
 	return NULL;
     }
     
@@ -1134,7 +1132,7 @@ dbwrapper *read_rats_db (FILE *fp)
 	if (dw->nv > 0 && dw->nv % DB_INIT_ROWS == 0) {
 	    err = dbwrapper_expand(dw);
 	    if (err) {
-		strcpy(gretl_errmsg, _("Out of memory!"));
+		gretl_errmsg_set(_("Out of memory!"));
 	    }
 	}
 	if (!err) {
@@ -1266,7 +1264,7 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 
     /* basic check */
     if (forward <= 0) {
-	strcpy(gretl_errmsg, _("This is not a valid RATS 4.0 database"));
+	gretl_errmsg_set(_("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: got forward = %ld\n", forward);
 	return DB_PARSE_ERROR;
     }
@@ -1646,25 +1644,24 @@ int db_set_sample (const char *s, DATAINFO *pdinfo)
     int t1 = 0, t2 = 0;
 
     if (sscanf(s, "%10s %10s", start, stop) != 2) {
-	sprintf(gretl_errmsg, _("error reading smpl line"));
+	gretl_errmsg_set(_("error reading smpl line"));
 	return 1;
     }
 
     if (strcmp(start, ";")) {
 	t1 = dateton(start, pdinfo);
-	if (t1 < 0 || *gretl_errmsg != '\0') {
+	if (t1 < 0) {
 	    return 1;
 	}
     }
 
     t2 = dateton(stop, pdinfo);
-
-    if (*gretl_errmsg != '\0') {
+    if (t2 < 0) {
 	return 1;
     }
 
     if (t1 > t2) {
-	sprintf(gretl_errmsg, _("Invalid null sample"));
+	gretl_errmsg_set(_("Invalid null sample"));
 	return 1;
     }
 
@@ -1922,12 +1919,12 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
 
     if (gretl_odinfo.dsn == NULL) {
-	strcpy(gretl_errmsg, _("No database has been opened"));
+	gretl_errmsg_set(_("No database has been opened"));
 	return 1;
     } 
 
     if (pdinfo->n == 0) {
-	strcpy(gretl_errmsg, _("No series length has been defined"));
+	gretl_errmsg_set(_("No series length has been defined"));
 	return 1;
     }
 
@@ -2044,7 +2041,7 @@ int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     if (*db_name == '\0') {
-	strcpy(gretl_errmsg, _("No database has been opened"));
+	gretl_errmsg_set(_("No database has been opened"));
 	return 1;
     }   
 
@@ -2089,7 +2086,7 @@ int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	/* temporary dataset */
 	dbZ = new_dbZ(sinfo.nobs);
 	if (dbZ == NULL) {
-	    strcpy(gretl_errmsg, _("Out of memory!"));
+	    gretl_errmsg_set(_("Out of memory!"));
 	    return 1;
 	}
 
@@ -2156,7 +2153,7 @@ static FILE *tempfile_open (char *fname, int *err)
 	fp = fdopen(fd, "w+");
 	if (fp == NULL) {
 	    *err = E_FOPEN;
-	    sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
+	    gretl_errmsg_sprintf(_("Couldn't open %s"), fname);
 	    close(fd);
 	    gretl_remove(fname);
 	}
@@ -2193,10 +2190,10 @@ static int db_delete_series (char *line, const int *list,
 
     if (fname == NULL) {
 	if (*db_name == '\0') {
-	    strcpy(gretl_errmsg, _("No database has been opened"));
+	    gretl_errmsg_set(_("No database has been opened"));
 	    err = 1;
 	} else if (db_type != GRETL_NATIVE_DB) {
-	    strcpy(gretl_errmsg, "This only works for gretl databases");
+	    gretl_errmsg_set("This only works for gretl databases");
 	    err = 1;
 	} else {
 	    err = open_native_db_files(db_name, &fidx, src1, &fbin, src2);
@@ -2360,9 +2357,9 @@ int db_range_check (SERIESINFO *sinfo, DATAINFO *pdinfo)
     int err = 0;
 
     if (sd0 > sdn_orig || sdn < pdinfo->sd0) {
-	sprintf(gretl_errmsg, _("%s: observation range does not overlap\n"
-				"with the working data set"),
-		sinfo->varname);
+	gretl_errmsg_sprintf(_("%s: observation range does not overlap\n"
+			       "with the working data set"),
+			     sinfo->varname);
 	err = 1;
     }
 
@@ -2376,8 +2373,8 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
     if (sinfo->pd < pdinfo->pd) {
 	if (sinfo->pd != 1 && sinfo->pd != 4 && 
 	    pdinfo->pd != 4 && pdinfo->pd != 12) {
-	    sprintf(gretl_errmsg, _("%s: can't handle conversion"),
-		    sinfo->varname);
+	    gretl_errmsg_sprintf(_("%s: can't handle conversion"),
+				 sinfo->varname);
 	    err = 1;
 	} 
     }
@@ -2389,7 +2386,6 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 #if DB_DEBUG
     if (err) {
 	fprintf(stderr, "check_db_import: err = %d\n", err);
-	fprintf(stderr, "%s\n", gretl_errmsg);
 	fprintf(stderr, "(pdinfo->n = %d)\n", pdinfo->n);
     }
 #endif
@@ -2444,11 +2440,11 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	pdinfo->v = 2;
 	dbv = 1;
 	if (start_new_Z(pZ, pdinfo, 0)) {
-	    strcpy(gretl_errmsg, _("Out of memory!"));
+	    gretl_errmsg_set(_("Out of memory!"));
 	    return 1;
 	}
     } else if (new && dataset_add_series(1, pZ, pdinfo)) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
+	gretl_errmsg_set(_("Out of memory!"));
 	return 1;
     }
 
@@ -2462,7 +2458,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     if (sinfo->pd > pdinfo->pd) {
 	if (pdinfo->pd != 1 && pdinfo->pd != 4 &&
 	    sinfo->pd != 12) {
-	    strcpy(gretl_errmsg, _("Sorry, can't handle this conversion yet!"));
+	    gretl_errmsg_set(_("Sorry, can't handle this conversion yet!"));
 	    if (new) {
 		dataset_drop_last_variables(1, pZ, pdinfo);
 	    }
@@ -2476,7 +2472,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	}
 	xvec = compact_db_series(dbZ[1], sinfo, pdinfo->pd, method);
 	if (xvec == NULL) {
-	    strcpy(gretl_errmsg, _("Out of memory!"));
+	    gretl_errmsg_set(_("Out of memory!"));
 	    if (new) {
 		dataset_drop_last_variables(1, pZ, pdinfo);
 	    }
@@ -3423,7 +3419,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	*/
 	err = maybe_expand_daily_data(pZ, pdinfo);
 	if (err) {
-	    strcpy(gretl_errmsg, "Error expanding daily data with missing observations");
+	    gretl_errmsg_set("Error expanding daily data with missing observations");
 	    return err;
 	}
     }

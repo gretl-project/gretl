@@ -574,8 +574,8 @@ static int msel_out_of_bounds (int *range, int n)
     }
 
     if (bad != NULL) {
-	sprintf(gretl_errmsg, _("Index value %d is out of bounds"), 
-		*bad);
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+			     *bad);
 	return 1;
     } else {
 	return 0;
@@ -616,15 +616,15 @@ static int *mspec_to_list (int type, union msel *sel, int n,
 	} else {
 	    ns = sel->range[1] - sel->range[0] + 1;
 	    if (ns <= 0) {
-		sprintf(gretl_errmsg, _("Range %d to %d is non-positive!"),
-			sel->range[0], sel->range[1]); 
+		gretl_errmsg_sprintf(_("Range %d to %d is non-positive!"),
+				     sel->range[0], sel->range[1]); 
 		*err = E_DATA;
 	    }
 	}
     } else {
 	/* SEL_MATRIX */
 	if (sel->m == NULL) {
-	    strcpy(gretl_errmsg, _("Range is non-positive!"));
+	    gretl_errmsg_set(_("Range is non-positive!"));
 	    *err = E_DATA;
 	} else {
 	    ns = gretl_vector_get_length(sel->m);
@@ -658,8 +658,8 @@ static int *mspec_to_list (int type, union msel *sel, int n,
 
     for (i=1; i<=slice[0] && !*err; i++) {
 	if (slice[i] < 1 || slice[i] > n) {
-	    sprintf(gretl_errmsg, _("Index value %d is out of bounds"), 
-		    slice[i]);
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+				 slice[i]);
 	    *err = 1;
 	}
     }
@@ -1461,7 +1461,7 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
     }
 
     if (err) {
-	strcpy(gretl_errmsg, _("Matrix decomposition failed"));
+	gretl_errmsg_set(_("Matrix decomposition failed"));
 	gretl_matrix_free(*Q);
 	*Q = NULL;
 	if (R != NULL) {

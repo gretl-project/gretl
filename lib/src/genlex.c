@@ -616,9 +616,9 @@ static void undefined_symbol_error (const char *s, parser *p)
     parser_print_input(p);
 
     if (p->ch == '.') {
-	sprintf(gretl_errmsg, _("%s: no such object\n"), s);
+	gretl_errmsg_sprintf(_("%s: no such object\n"), s);
     } else {
-	sprintf(gretl_errmsg, _("The symbol '%s' is undefined\n"), s);
+	gretl_errmsg_sprintf(_("The symbol '%s' is undefined\n"), s);
     }
 
     p->err = E_UNKVAR;
@@ -629,7 +629,7 @@ static void function_noargs_error (const char *s, parser *p)
     parser_print_input(p);
 
     pprintf(p->prn, _("'%s': no argument was given\n"), s);
-    sprintf(gretl_errmsg, _("'%s': no argument was given\n"), s);
+    gretl_errmsg_sprintf(_("'%s': no argument was given\n"), s);
 
     p->err = E_ARGS;
 }

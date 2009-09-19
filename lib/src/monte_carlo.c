@@ -1105,7 +1105,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 	err = parse_as_count_loop(loop, (const double **) *pZ, pdinfo, lvar);
     } else {
 	printf("parse_first_loopline: failed on '%s'\n", s);
-	strcpy(gretl_errmsg, _("No valid loop condition was given."));
+	gretl_errmsg_set(_("No valid loop condition was given."));
 	err = 1;
     }
 
@@ -1190,8 +1190,8 @@ static int loop_count_too_high (LOOPSET *loop)
 
     if (loop->type == FOR_LOOP) {
 	if (nt >= MAX_FOR_TIMES) {
-	    sprintf(gretl_errmsg, _("Reached maximum iterations, %d"),
-		    MAX_FOR_TIMES);
+	    gretl_errmsg_sprintf(_("Reached maximum iterations, %d"),
+				 MAX_FOR_TIMES);
 	    loop->err = 1;
 	}
     } else {
@@ -1199,8 +1199,8 @@ static int loop_count_too_high (LOOPSET *loop)
 	    max_iters = libset_get_int(LOOP_MAXITER);
 	}
 	if (nt >= max_iters) {
-	    sprintf(gretl_errmsg, _("Warning: no convergence after %d iterations"),
-		    max_iters);
+	    gretl_errmsg_sprintf(_("Warning: no convergence after %d iterations"),
+				 max_iters);
 	    loop->err = 1;
 	}
     }
@@ -1551,7 +1551,7 @@ static int loop_store_start (LOOPSET *loop, const int *list,
     int i, n, err = 0;
 
     if (list == NULL || list[0] == 0) {
-	strcpy(gretl_errmsg, "'store' list is empty");
+	gretl_errmsg_set("'store' list is empty");
 	return E_DATA;
     }
 
@@ -1593,8 +1593,8 @@ static int loop_store_update (LOOPSET *loop, int lno,
     int i, t, err = 0;
 
     if (loop->store.linenum >= 0 && loop->store.linenum != lno) {
-	strcpy(gretl_errmsg, "Only one 'store' command is allowed in a "
-	       "progressive loop");
+	gretl_errmsg_set("Only one 'store' command is allowed in a "
+			 "progressive loop");
 	return E_DATA;
     }
 
@@ -1908,7 +1908,7 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 	const char *flagstr = print_flags(s->cmd->opt, s->cmd->ci);
 
 	if (strlen(s->line) + strlen(flagstr) >= MAXLEN) {
-	    strcpy(gretl_errmsg, "loop: line is too long");
+	    gretl_errmsg_set("loop: line is too long");
 	    err = 1;
 	} else {
 	    sprintf(loop->lines[nc], "%s%s", s->line, flagstr);
@@ -2797,8 +2797,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 					(const double **) *pZ, 
 					pdinfo, cmd->opt);
 	    } else if (loop_is_progressive(loop) && not_ok_in_progloop(cmd->ci)) {
-		sprintf(gretl_errmsg, _("%s: not implemented in 'progressive' loops"),
-			cmd->word);
+		gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),
+				     cmd->word);
 		err = 1;
 	    } else if (cmd->ci == GENR) {
 		if (!loop_is_verbose(loop)) {

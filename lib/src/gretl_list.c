@@ -1623,8 +1623,8 @@ static int *real_gretl_list_omit (const int *orig, const int *omit,
 	if (pos < minpos) {
 	    if (mode == LIST_OMIT_TIGHT) {
 		/* "omission" is spurious */
-		sprintf(gretl_errmsg, _("Variable %d was not in the original list"),
-			omit[i]);
+		gretl_errmsg_sprintf(_("Variable %d was not in the original list"),
+				     omit[i]);
 		*err = 1;
 		return NULL;
 	    } else {
@@ -1993,7 +1993,7 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 	    continue;
 	}
 	if (list[j] >= pdinfo->v) {
-	    strcpy(gretl_errmsg, _(errmsg));
+	    gretl_errmsg_set(_(errmsg));
 	    return E_DATA;
 	}
 	label = VARLABEL(pdinfo, list[j]);
@@ -2003,7 +2003,7 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 	    repl = 0;
 	    sscanf(label, "%*s %*s %*s %d", &repl);
 	    if (repl >= mc) {
-		strcpy(gretl_errmsg, _(errmsg));
+		gretl_errmsg_set(_(errmsg));
 		return E_DATA;
 	    }
 	}

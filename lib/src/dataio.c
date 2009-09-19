@@ -164,8 +164,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof x, 1, fp)) {
-		    sprintf(gretl_errmsg, _("WARNING: binary data read error at "
-			    "var %d"), i);
+		    gretl_errmsg_sprintf(_("WARNING: binary data read error at "
+					   "var %d"), i);
 		    return 1;
 		}
 		if (x == -999.0) {
@@ -182,8 +182,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof x, 1, fp)) {
-		    sprintf(gretl_errmsg, 
-			    _("WARNING: binary data read error at var %d"), i);
+		    gretl_errmsg_sprintf(_("WARNING: binary data read error at var %d"), i);
 		    return 1;
 		}
 		if (x == -999.0) {
@@ -196,18 +195,17 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
     } else if (old_byvar) {
 	/* ascii data by variable */
 	for (i=1; i<pdinfo->v; i++) {
-	   for (t=0; t<n && !err; t++) {
+	    for (t=0; t<n && !err; t++) {
 		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
-		    sprintf(gretl_errmsg, 
-			    _("WARNING: ascii data read error at var %d, "
-			    "obs %d"), i, t + 1);
+		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
+					   "obs %d"), i, t + 1);
 		    err = 1;
 		    break;
 		}
 		if (Z[i][t] == -999.0) {
 		    Z[i][t] = NADBL;
 		} 
-	   }
+	    }
 	}	       
     } else { 
 	/* ascii data by observation */
@@ -238,9 +236,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	    }
 	    for (i=1; i<pdinfo->v; i++) {
 		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
-		    sprintf(gretl_errmsg, 
-			    _("WARNING: ascii data read error at var %d, "
-			    "obs %d"), i, t + 1);
+		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
+					   "obs %d"), i, t + 1);
 		    err = 1;
 		    break;
 		}
@@ -271,8 +268,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!gzread(fz, &xx, sizeof xx)) {
-		    sprintf(gretl_errmsg, _("WARNING: binary data read error at "
-			    "var %d"), i);
+		    gretl_errmsg_sprintf(_("WARNING: binary data read error at "
+					   "var %d"), i);
 		    return 1;
 		}
 		Z[i][t] = (double) xx;
@@ -282,8 +279,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 	/* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!gzread(fz, &Z[i][0], n * sizeof(double))) {
-		sprintf(gretl_errmsg, 
-			_("WARNING: binary data read error at var %d"), i);
+		gretl_errmsg_sprintf(_("WARNING: binary data read error at var %d"), i);
 		return 1;
 	    }
 	}
@@ -305,8 +301,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 	for (t=0; t<n; t++) {
 	    offset = 0L;
 	    if (!gzgets(fz, line, llen - 1)) {
-		sprintf(gretl_errmsg, _("WARNING: ascii data read error at "
-			"obs %d"), t + 1);
+		gretl_errmsg_sprintf(_("WARNING: ascii data read error at "
+				       "obs %d"), t + 1);
 		err = 1;
 		break;
 	    }
@@ -320,11 +316,10 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 
 	    if (pdinfo->markers) {
 		if (sscanf(line, sformat, pdinfo->S[t]) != 1) {
-		   sprintf(gretl_errmsg, 
-			   _("WARNING: failed to read case marker for "
-			   "obs %d"), t + 1);
-		   err = 1;
-		   break;
+		    gretl_errmsg_sprintf(_("WARNING: failed to read case marker for "
+					   "obs %d"), t + 1);
+		    err = 1;
+		    break;
 		}
 		pdinfo->S[t][OBSLEN-1] = 0;
 		offset += strlen(pdinfo->S[t]) + 1;
@@ -332,9 +327,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 
 	    for (i=1; i<pdinfo->v; i++) {
 		if (sscanf(line + offset, "%23s", numstr) != 1) {
-		    sprintf(gretl_errmsg, 
-			    _("WARNING: ascii data read error at var %d, "
-			    "obs %d"), i, t + 1);
+		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
+					   "obs %d"), i, t + 1);
 		    err = 1;
 		    break;
 		}
@@ -396,23 +390,23 @@ int check_varname (const char *varname)
     if (testchar != 'a') {
 	if (isprint((unsigned char) testchar)) {
 	    if (ret == VARNAME_FIRSTCHAR) {
-		sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
-					"(first must be alphabetical)"), 
-			(unsigned char) testchar);
+		gretl_errmsg_sprintf(_("First char of varname ('%c') is bad\n"
+				       "(first must be alphabetical)"), 
+				     (unsigned char) testchar);
 	    } else {
-		sprintf(gretl_errmsg, _("Varname contains illegal character '%c'\n"
-					"Use only letters, digits and underscore"), 
-			(unsigned char) testchar);
+		gretl_errmsg_sprintf(_("Varname contains illegal character '%c'\n"
+				       "Use only letters, digits and underscore"), 
+				     (unsigned char) testchar);
 	    }
 	} else {
 	    if (ret == VARNAME_FIRSTCHAR) {
-		sprintf(gretl_errmsg, _("First char of varname (0x%x) is bad\n"
-					"(first must be alphabetical)"), 
-			(unsigned) testchar);
+		gretl_errmsg_sprintf(_("First char of varname (0x%x) is bad\n"
+				       "(first must be alphabetical)"), 
+				     (unsigned) testchar);
 	    } else {
-		sprintf(gretl_errmsg, _("Varname contains illegal character 0x%x\n"
-					"Use only letters, digits and underscore"), 
-			(unsigned) testchar);
+		gretl_errmsg_sprintf(_("Varname contains illegal character 0x%x\n"
+				       "Use only letters, digits and underscore"), 
+				     (unsigned) testchar);
 	    }
 	}
     }
@@ -431,7 +425,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 
     fp = gretl_fopen(hdrfile, "r");
     if (fp == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open file %s"),  hdrfile);
+	gretl_errmsg_sprintf(_("Couldn't open file %s"),  hdrfile);
 	return E_FOPEN;
     }
 
@@ -443,9 +437,10 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     while (1) {
         if (fscanf(fp, "%s", str) != 1) {
 	    fclose(fp);
-	    sprintf(gretl_errmsg, _("Opened header file %s\n"
-		    "Couldn't find list of variables (must "
-		    "be terminated with a semicolon)"), hdrfile);
+	    gretl_errmsg_sprintf(_("Opened header file %s\n"
+				   "Couldn't find list of variables (must "
+				   "be terminated with a semicolon)"), 
+				 hdrfile);
 	    return 1;
 	}
 	n = strlen(str);
@@ -591,11 +586,9 @@ static int bad_date_string (const char *s)
     while (*s && !err) {
 	if (!isdigit((unsigned char) *s) && !IS_DATE_SEP(*s)) {
 	    if (isprint((unsigned char) *s)) {
-		sprintf(gretl_errmsg, 
-			_("Bad character '%c' in date string"), *s);
+		gretl_errmsg_sprintf(_("Bad character '%c' in date string"), *s);
 	    } else {
-		sprintf(gretl_errmsg, 
-			_("Bad character %d in date string"), *s);
+		gretl_errmsg_sprintf(_("Bad character %d in date string"), *s);
 	    }
 	    err = 1;
 	}
@@ -750,7 +743,7 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	dotpos2 = get_dot_pos(pdinfo->stobs);
 
 	if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
-	    sprintf(gretl_errmsg, _("Date strings inconsistent"));
+	    gretl_errmsg_set(_("Date strings inconsistent"));
 	} else if (!dotpos1 && !dotpos2) {
 	    n = atoi(date) - atoi(pdinfo->stobs);
 	} else {
@@ -1291,8 +1284,8 @@ int write_data (const char *fname, int *list,
 
     if (fmt == GRETL_FMT_CSV && get_csv_delim(pdinfo) == ',' && 
 	',' == pdinfo->decpoint) {
-	sprintf(gretl_errmsg, _("You can't use the same character for "
-				"the column delimiter and the decimal point"));
+	gretl_errmsg_set(_("You can't use the same character for "
+			   "the column delimiter and the decimal point"));
 	err = E_DATA;
 	goto write_exit;
     }
@@ -1653,7 +1646,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
     while (fgets(line, MAXLEN, fp)) {
 	tailstrip(line);
         if (sscanf(line, "%s", varname) != 1) {
-	    sprintf(gretl_errmsg, _("Bad data label in %s"), lblfile); 
+	    gretl_errmsg_sprintf(_("Bad data label in %s"), lblfile); 
             break;
         }
 	v = series_index(pdinfo, varname);
@@ -1845,7 +1838,7 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (!found) {
-	    sprintf(gretl_errmsg, _("Couldn't open file %s"),  datfile);
+	    gretl_errmsg_sprintf(_("Couldn't open file %s"), datfile);
 	    return E_FOPEN;
 	} else {
 	    strcpy(datfile, tryfile);
@@ -2047,7 +2040,7 @@ static int extend_markers (DATAINFO *pdinfo, int old_n, int new_n)
 static void merge_error (char *msg, PRN *prn)
 {
     pputs(prn, msg);
-    strcpy(gretl_errmsg, msg);
+    gretl_errmsg_set(msg);
 }
 
 static int count_new_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo,
@@ -2478,7 +2471,7 @@ static int check_marker (char *src, int i)
 	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
 
 	if (trstr == NULL) {
-	    sprintf(gretl_errmsg, "Invalid characters in marker, line %d", i);
+	    gretl_errmsg_sprintf("Invalid characters in marker, line %d", i);
 	    err = E_DATA;
 	} else {
 	    *src = '\0';
@@ -2524,11 +2517,11 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
     
     for (t=0; t<pdinfo->n && !err; t++) {
 	if (fgets(line, sizeof line, fp) == NULL) {
-	    sprintf(gretl_errmsg, "Expected %d markers; found %d\n", 
-		    pdinfo->n, t);
+	    gretl_errmsg_sprintf("Expected %d markers; found %d\n", 
+				 pdinfo->n, t);
 	    err = E_DATA;
 	} else if (sscanf(line, "%31[^\n\r]", marker) != 1) {
-	    sprintf(gretl_errmsg, "Couldn't read marker on line %d", t+1);
+	    gretl_errmsg_sprintf("Couldn't read marker on line %d", t+1);
 	    err = E_DATA;
 	} else {
 	    strncat(S[t], marker, OBSLEN - 1);
@@ -3115,21 +3108,21 @@ int check_atof (const char *numstr)
     if (*test == '\0' && errno != ERANGE) return 0;
 
     if (!strcmp(numstr, test)) {
-	sprintf(gretl_errmsg, M_("'%s' -- no numeric conversion performed!"), numstr);
+	gretl_errmsg_sprintf(M_("'%s' -- no numeric conversion performed!"), numstr);
 	return 1;
     }
 
     if (*test != '\0') {
 	if (isprint(*test)) {
-	    sprintf(gretl_errmsg, M_("Extraneous character '%c' in data"), *test);
+	    gretl_errmsg_sprintf(M_("Extraneous character '%c' in data"), *test);
 	} else {
-	    sprintf(gretl_errmsg, M_("Extraneous character (0x%x) in data"), *test);
+	    gretl_errmsg_sprintf(M_("Extraneous character (0x%x) in data"), *test);
 	}
 	return 1;
     }
 
     if (errno == ERANGE) {
-	sprintf(gretl_errmsg, M_("'%s' -- number out of range!"), numstr);
+	gretl_errmsg_sprintf(M_("'%s' -- number out of range!"), numstr);
     }
 
     return 1;
@@ -3158,21 +3151,21 @@ int check_atoi (const char *numstr)
     if (*test == '\0' && errno != ERANGE) return 0;
 
     if (!strcmp(numstr, test)) {
-	sprintf(gretl_errmsg, M_("'%s' -- no numeric conversion performed!"), numstr);
+	gretl_errmsg_sprintf(M_("'%s' -- no numeric conversion performed!"), numstr);
 	return 1;
     }
 
     if (*test != '\0') {
 	if (isprint(*test)) {
-	    sprintf(gretl_errmsg, M_("Extraneous character '%c' in data"), *test);
+	    gretl_errmsg_sprintf(M_("Extraneous character '%c' in data"), *test);
 	} else {
-	    sprintf(gretl_errmsg, M_("Extraneous character (0x%x) in data"), *test);
+	    gretl_errmsg_sprintf(M_("Extraneous character (0x%x) in data"), *test);
 	}
 	return 1;
     }
 
     if (errno == ERANGE || val <= INT_MIN || val >= INT_MAX) {
-	sprintf(gretl_errmsg, M_("'%s' -- number out of range!"), numstr);
+	gretl_errmsg_sprintf(M_("'%s' -- number out of range!"), numstr);
     }
 
     return 1;

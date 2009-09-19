@@ -344,7 +344,7 @@ static int iwrite (int fd, const char *buf, int len);
 static char *print_option (int opt);
 
 #ifdef STANDALONE
-# define errmsg_set(s) fprintf(stderr, s)
+# define errmsg_set(s) fprintf(stderr, "%s\n", s)
 #else
 # define errmsg_set(s) gretl_errmsg_set(s)
 #endif
@@ -1679,7 +1679,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 #endif
 
     if (result != RETROK) {
-	strcpy(gretl_errmsg, u->errbuf);
+	errmsg_set(u->errbuf);
 	err = 1;
     }
 
@@ -1722,8 +1722,8 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy)
 
     p = strrchr(proxy, ':');
     if (p == NULL) {
-	strcpy(gretl_errmsg, _("Failed to parse HTTP proxy:\n"
-	       "format must be ipnumber:port"));
+	errmsg_set(_("Failed to parse HTTP proxy:\n"
+		     "format must be ipnumber:port"));
 	return E_DATA;
     }
 
@@ -1731,7 +1731,7 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy)
 
     iplen = p - proxy;
     if (iplen > 15) {
-	strcpy(gretl_errmsg, _("HTTP proxy: first field must be an IP number"));
+	errmsg_set(_("HTTP proxy: first field must be an IP number"));
 	return E_DATA;	
     }
 
@@ -1810,7 +1810,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 #endif
 
     if (result != RETROK) {
-	strcpy(gretl_errmsg, u->errbuf);
+	errmsg_set(u->errbuf);
 	err = 1;
     }
 
@@ -1882,7 +1882,7 @@ int upload_function_package (const char *login, const char *pass,
     result = try_http(u);
 
     if (result != RETROK) {
-	strcpy(gretl_errmsg, u->getbuf);
+	gretl_errmsg_set(u->getbuf);
 	err = 1;
     } else if (retbuf != NULL) {
 	*retbuf = u->getbuf;

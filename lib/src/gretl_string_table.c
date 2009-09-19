@@ -513,7 +513,7 @@ int delete_saved_string (const char *name, PRN *prn)
     if (S == NULL) {
 	err = E_UNKVAR;
     } else if (builtin) {
-	sprintf(gretl_errmsg, _("You cannot delete '%s'"), name);
+	gretl_errmsg_sprintf(_("You cannot delete '%s'"), name);
 	err = E_DATA;
     } else {
 	err = destroy_saved_string(S);
@@ -626,7 +626,7 @@ static int shell_grab (const char *arg, char **sout)
     }
 
     if (!libset_get_bool(SHELL_OK)) {
-	strcpy(gretl_errmsg, _("The shell command is not activated."));
+	gretl_errmsg_set(_("The shell command is not activated."));
 	return 1;
     }
 
@@ -785,7 +785,7 @@ int save_named_string (const char *name, const char *s, PRN *prn)
 
     if (str != NULL && builtin) {
 	if (prn == NULL) {
-	    sprintf(gretl_errmsg, _("You cannot overwrite '%s'\n"), name);
+	    gretl_errmsg_sprintf(_("You cannot overwrite '%s'\n"), name);
 	} else {
 	    pprintf(prn, _("You cannot overwrite '%s'\n"), name);
 	}
@@ -890,8 +890,8 @@ static char *maybe_get_subst (char *name, int *n, int quoted,
 
 static void too_long (void)
 {
-    sprintf(gretl_errmsg, _("Maximum length of command line "
-			    "(%d bytes) exceeded\n"), MAXLINE);
+    gretl_errmsg_sprintf(_("Maximum length of command line "
+			   "(%d bytes) exceeded\n"), MAXLINE);
 }
 
 #define var_context(s,i) (i > 8 && !strncmp(s - 9, "isstring(", 9))

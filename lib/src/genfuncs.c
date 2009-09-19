@@ -1132,7 +1132,7 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 #endif
 
     if (bkl >= bku) {
-	strcpy(gretl_errmsg, "Error in Baxter-King frequencies");
+	gretl_errmsg_set("Error in Baxter-King frequencies");
 	return 1;
     }
 
@@ -1142,7 +1142,7 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
     } 
 
     if (2 * k >= t2 - t1 + 1) {
-	strcpy(gretl_errmsg, "Insufficient observations");
+	gretl_errmsg_set("Insufficient observations");
 	return E_DATA;
     }
 
@@ -1270,7 +1270,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     double xx, dx;
 
     if (ndums == 1 || ndums > 99999) {
-	strcpy(gretl_errmsg, _("This command won't work with the current periodicity"));
+	gretl_errmsg_set(_("This command won't work with the current periodicity"));
 	return 0;
     }
 
@@ -1297,7 +1297,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     }
 
     if (dataset_add_series(ndums, pZ, pdinfo)) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
+	gretl_errmsg_set(_("Out of memory!"));
 	return 0;
     }
 
@@ -1471,8 +1471,8 @@ int gen_unit (double ***pZ, DATAINFO *pdinfo)
     int i, t;
 
     if (pdinfo->structure != STACKED_TIME_SERIES) {
-	strcpy(gretl_errmsg, "'genr unit' can be used only with "
-	       "panel data");
+	gretl_errmsg_set("'genr unit' can be used only with "
+			 "panel data");
 	return 1;
     }
 
@@ -1989,7 +1989,7 @@ int get_t_from_obs_string (const char *s, const double **Z,
     }
 
     if (t < 0) {
-	sprintf(gretl_errmsg, _("Observation number out of bounds"));
+	gretl_errmsg_set(_("Observation number out of bounds"));
     }
 
 #if OBS_DEBUG

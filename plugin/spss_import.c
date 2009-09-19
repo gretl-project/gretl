@@ -202,7 +202,7 @@ static double second_lowest_double_val (void)
 
 static int sav_error (const char *fmt, ...)
 {
-    char msg[ERRLEN];
+    char msg[512];
     va_list args;
 
     if (fmt == NULL) {
@@ -210,7 +210,7 @@ static int sav_error (const char *fmt, ...)
     }
 
     va_start(args, fmt);
-    vsnprintf(msg, ERRLEN, fmt, args);
+    vsnprintf(msg, sizeof msg, fmt, args);
     va_end(args);
 
     gretl_errmsg_set(msg);

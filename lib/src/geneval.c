@@ -1930,7 +1930,7 @@ static void matrix_error (parser *p)
 	p->err = 1;
     }
 
-    if (*gretl_errmsg != '\0') {
+    if (gretl_errmsg_is_set()) {
 	errmsg(p->err, p->prn);
     }
 }
@@ -2227,7 +2227,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 		rname = r->v.str;
 	    } else {
 		p->err = E_PARSE;
-		strcpy(gretl_errmsg, "Expected the address of a matrix");
+		gretl_errmsg_set("Expected the address of a matrix");
 		return ret;
 	    }
 	}
@@ -2943,7 +2943,7 @@ static int *node_get_list (NODE *n, parser *p)
     }
 
     if (p->err == E_UNKVAR) {
-	sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), v);
+	gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
     }
 
     return list;
@@ -7459,14 +7459,14 @@ static void process_lhs_substr (const char *lname, parser *p)
 #endif
 
     if (p->lh.t == NUM) {
-	sprintf(gretl_errmsg, "scalar target variable: specifier '[%s]' is not valid",
-		p->lh.substr);
+	gretl_errmsg_sprintf("scalar target variable: specifier '[%s]' is not valid",
+			     p->lh.substr);
 	p->err = E_TYPES;
     } else if (p->lh.t == VEC) {
 	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) *p->Z, 
 					  p->dinfo); 
 	if (p->lh.obs < 0) {
-	    sprintf(gretl_errmsg, "'[%s]': bad observation specifier", p->lh.substr);
+	    gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.substr);
 	    p->err = E_PARSE;
 	} else {
 	    gretl_error_clear();
@@ -7476,7 +7476,7 @@ static void process_lhs_substr (const char *lname, parser *p)
 	get_lh_mspec(p);
     } else if (p->lh.t == UNK) {
 	if (lname != NULL) {
-	    sprintf(gretl_errmsg, "%s: unknown variable\n", lname);
+	    gretl_errmsg_sprintf("%s: unknown variable\n", lname);
 	}
 	p->err = E_UNKVAR;
     }
@@ -7896,35 +7896,35 @@ static void pre_process (parser *p, int flags)
     /* matrices: we accept only a limited range of
        modified assignment operators */
     if (p->lh.t == MAT && !ok_matrix_op(p->op)) {
-	sprintf(gretl_errmsg, _("'%s' : not implemented for matrices"), opstr);
+	gretl_errmsg_sprintf(_("'%s' : not implemented for matrices"), opstr);
 	p->err = E_PARSE;
 	return;
     }
 
     /* lists: same story as matrices */
     if (p->lh.t == LIST && !ok_list_op(p->op)) {
-	sprintf(gretl_errmsg, _("'%s' : not implemented for lists"), opstr);
+	gretl_errmsg_sprintf(_("'%s' : not implemented for lists"), opstr);
 	p->err = E_PARSE;
 	return;
     }	
 
     /* strings: ditto */
     if (p->lh.t == STR && !ok_string_op(p->op)) {
-	sprintf(gretl_errmsg, _("'%s' : not implemented for strings"), opstr);
+	gretl_errmsg_sprintf(_("'%s' : not implemented for strings"), opstr);
 	p->err = E_PARSE;
 	return;
     } 
 
     /* vertical concat: only OK for matrices */
     if (p->lh.t != MAT && p->op == B_VCAT) {
-	sprintf(gretl_errmsg, _("'%s' : only defined for matrices"), opstr);
+	gretl_errmsg_sprintf(_("'%s' : only defined for matrices"), opstr);
 	p->err = E_PARSE;
 	return;
     }
 
     /* horizontal concat: only OK for matrices, strings */
     if (p->lh.t != MAT && p->lh.t != STR && p->op == B_HCAT) {
-	sprintf(gretl_errmsg, _("'%s' : not implemented for this type"), opstr);
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
 	p->err = E_PARSE;
 	return;
     }	
@@ -8879,8 +8879,8 @@ static int decl_check (parser *p, int flags)
 {
     if (flags & P_COMPILE) {
 	p->err = E_PARSE;
-	sprintf(gretl_errmsg, "Bare declarations are not allowed here:\n> '%s'",
-		p->input);
+	gretl_errmsg_sprintf("Bare declarations are not allowed here:\n> '%s'",
+			     p->input);
     } 
 
     return p->err;

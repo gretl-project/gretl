@@ -2117,8 +2117,7 @@ static int check_derivatives (integer m, integer n, double *x,
     }
 
     if (zerocount > 0) {
-	strcpy(gretl_errmsg, 
-	       _("NLS: The supplied derivatives seem to be incorrect"));
+	gretl_errmsg_set(_("NLS: The supplied derivatives seem to be incorrect"));
 	fprintf(stderr, _("%d out of %d tests gave zero\n"), zerocount, (int) m);
     } else if (badcount > 0) {
 	pputs(prn, _("Warning: The supplied derivatives may be incorrect, or perhaps\n"
@@ -2212,7 +2211,7 @@ static int lm_calculate (nlspec *spec, PRN *prn)
 	err = 1;
 	break;
     case 0:
-	strcpy(gretl_errmsg, _("Invalid NLS specification"));
+	gretl_errmsg_set(_("Invalid NLS specification"));
 	err = 1;
 	break;
     case 1:
@@ -2223,9 +2222,8 @@ static int lm_calculate (nlspec *spec, PRN *prn)
     case 5:
     case 6:
     case 7:
-	sprintf(gretl_errmsg, 
-		_("NLS: failed to converge after %d iterations"),
-		spec->iters);
+	gretl_errmsg_sprintf(_("NLS: failed to converge after %d iterations"),
+			     spec->iters);
 	err = 1;
 	break;
     default:
@@ -2316,7 +2314,7 @@ static int lm_approximate (nlspec *spec, PRN *prn)
 	err = 1;
 	break;
     case 0:
-	strcpy(gretl_errmsg, _("Invalid NLS specification"));
+	gretl_errmsg_set(_("Invalid NLS specification"));
 	err = 1;
 	break;
     case 1:
@@ -2328,9 +2326,8 @@ static int lm_approximate (nlspec *spec, PRN *prn)
     case 6:
     case 7:
     case 8:
-	sprintf(gretl_errmsg, 
-		_("NLS: failed to converge after %d iterations"),
-		spec->iters);
+	gretl_errmsg_sprintf(_("NLS: failed to converge after %d iterations"),
+			     spec->iters);
 	err = 1;
 	break;
     default:
@@ -2393,7 +2390,7 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
     int err = 0;
 
     if (spec->ci == GMM) {
-	strcpy(gretl_errmsg, _("Analytical derivatives cannot be used with GMM"));
+	gretl_errmsg_set(_("Analytical derivatives cannot be used with GMM"));
 	return E_DATA;
     }
 
@@ -2451,8 +2448,8 @@ static int screen_bad_aux (const char *line, const DATAINFO *pdinfo)
     } else if (get_user_function_by_name(word)) {
 	err = 0;
     } else {
-	sprintf(gretl_errmsg, _("command '%s' not valid in this context"), 
-		word);
+	gretl_errmsg_sprintf(_("command '%s' not valid in this context"), 
+			     word);
     }
 
     return err;
@@ -2536,12 +2533,12 @@ nlspec_set_regression_function (nlspec *spec, const char *fnstr,
     }
 
     if (equation_get_lhs_and_rhs(p, &vname, &rhs)) { 
-	sprintf(gretl_errmsg, _("parse error in '%s'\n"), fnstr);
+	gretl_errmsg_sprintf(_("parse error in '%s'\n"), fnstr);
 	err =  E_PARSE;
     } else if (spec->ci == NLS) {
 	spec->dv = series_index(pdinfo, vname);
 	if (spec->dv == pdinfo->v) {
-	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
+	    gretl_errmsg_sprintf(_("Unknown variable '%s'"), vname);
 	    err = E_UNKVAR;
 	}
     } else {
@@ -2641,13 +2638,13 @@ int nl_parse_line (int ci, const char *line, const double **Z,
 	}	
     } else if (param_line(line)) {
 	if (s->nlfunc == NULL && s->ci != GMM) {
-	    strcpy(gretl_errmsg, _("No regression function has been specified"));
+	    gretl_errmsg_set(_("No regression function has been specified"));
 	    err = E_PARSE;
 	} else {
 	    if (!strncmp(line, "deriv", 5)) {
 		if (numeric_mode(s) && s->params != NULL) {
-		    strcpy(gretl_errmsg, _("You cannot supply both a \"params\" "
-					   "line and analytical derivatives"));
+		    gretl_errmsg_set(_("You cannot supply both a \"params\" "
+				       "line and analytical derivatives"));
 		    err = E_PARSE;
 		} else {
 		    err = nlspec_add_param_with_deriv(s, line, Z, pdinfo);
@@ -2699,7 +2696,7 @@ double get_default_nls_toler (void)
 static int check_spec_requirements (nlspec *spec)
 {
     if (spec->nparam < 1) {
-	strcpy(gretl_errmsg, _("No parameters have been specified"));
+	gretl_errmsg_set(_("No parameters have been specified"));
 	return 1;
     }
 
@@ -2795,7 +2792,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (spec->nlfunc == NULL && spec->ci != GMM) {
-	strcpy(gretl_errmsg, _("No function has been specified"));
+	gretl_errmsg_set(_("No function has been specified"));
 	nlmod.errcode = E_PARSE;
 	goto bailout;
     } 

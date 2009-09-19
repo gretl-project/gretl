@@ -767,13 +767,11 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	if (bools[i-1] == NULL) {
 	    continue;
 	}
+
 	sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
 	err = generate(formula, pZ, pdinfo, OPT_P, NULL);
-	if (err) {
-	    gretl_errmsg_sprintf(_("boxplots: generation of dummy variable failed\n%s"),
-				 gretl_errmsg_get());
-	    err = 1;
-	} else {
+
+	if (!err) {
 	    for (t=0; t<n; t++) {
 		if ((*pZ)[k][t] == 1.0) {
 		    (*pZ)[k][t] = (*pZ)[list[i]][t];

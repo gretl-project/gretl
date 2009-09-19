@@ -4055,9 +4055,8 @@ static int check_indices (sorter *s, int n)
 
     for (i=0; i<n; i++) {
 	if (s->points[i].obsnum < 0) {
-	    sprintf(gretl_errmsg, 
-		    _("Error: unit %g, period %g: duplicated observation"),
-		    s->points[i].val1, s->points[i].val2);
+	    gretl_errmsg_sprintf(_("Error: unit %g, period %g: duplicated observation"),
+				 s->points[i].val1, s->points[i].val2);
 	    return E_DATA;
 	}
     }
@@ -4340,7 +4339,7 @@ static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
     *uv = series_index(pdinfo, uvname);
     if (*uv == pdinfo->v) {
 	/* FIXME "not a series" */
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), uvname);
+	gretl_errmsg_sprintf(_("Unknown variable '%s'"), uvname);
 	err = E_UNKVAR;
     } 
 
@@ -4350,7 +4349,7 @@ static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
 
     *tv = series_index(pdinfo, tvname);
     if (*tv == pdinfo->v) {
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), tvname);
+	gretl_errmsg_sprintf(_("Unknown variable '%s'"), tvname);
 	err = E_UNKVAR;
     } 
 
@@ -4627,7 +4626,7 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
 	int cpos = in_gretl_list(drop, 0);
 
 	if (cpos >= 2) {
-	    strcpy(gretl_errmsg, "Panel models must include an intercept");
+	    gretl_errmsg_set("Panel models must include an intercept");
 	    *err = E_DATA;
 	    return NULL;
 	}

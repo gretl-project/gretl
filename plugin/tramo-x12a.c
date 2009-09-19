@@ -134,7 +134,7 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 	    gretl_errmsg_set(sout);
 	    fprintf(stderr, "spawn: status = %d: '%s'\n", status, sout);
 	} else {
-	    strcpy(gretl_errmsg, _("Command failed"));
+	    gretl_errmsg_set(_("Command failed"));
 	    fprintf(stderr, "spawn: status = %d\n", status);
 	}
 	err = E_DATA;

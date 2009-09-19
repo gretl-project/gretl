@@ -1306,8 +1306,7 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     } else {
 	for (i=1; i<=zlist[0]; i++) {
 	    if (zlist[i] == list[1]) {
-		strcpy(gretl_errmsg, 
-		       "You can't use the dependent variable as an instrument");
+		gretl_errmsg_set("You can't use the dependent variable as an instrument");
 		err = E_DATA;
 		break;
 	    }
@@ -1317,9 +1316,8 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     if (!err) {
 	oid = zlist[0] - rlist[0] + 1;
 	if (oid < 0) {
-	    sprintf(gretl_errmsg, 
-		    _("The order condition for identification is not satisfied.\n"
-		      "At least %d more instruments are needed."), -oid);
+	    gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
+				   "At least %d more instruments are needed."), -oid);
 	    err = E_DATA; 
 	}
     }
@@ -1451,9 +1449,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     */
     OverIdRank = instlist[0] - reglist[0] + 1;
     if (OverIdRank < 0) {
-        sprintf(gretl_errmsg, 
-		_("The order condition for identification is not satisfied.\n"
-		  "At least %d more instruments are needed."), -OverIdRank);
+        gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
+			       "At least %d more instruments are needed."), -OverIdRank);
 	err = E_DATA; 
 	goto bailout;
     }

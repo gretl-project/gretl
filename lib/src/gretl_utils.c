@@ -800,32 +800,31 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
 
     if (pd == 1) {
 	if (min > 0) {
-	    strcpy(gretl_errmsg, _("no ':' allowed in starting obs with "
-				   "frequency 1"));
+	    gretl_errmsg_set(_("no ':' allowed in starting obs with "
+			       "frequency 1"));
 	    err = 1;
 	} else if (opt == OPT_S || opt == OPT_C) {
-	    strcpy(gretl_errmsg, _("panel data must have frequency > 1"));
+	    gretl_errmsg_set(_("panel data must have frequency > 1"));
 	    err = 1;
 	}
     } else {
 	if (min == 0) {
-	    strcpy(gretl_errmsg, _("starting obs must contain a ':' with "
-				   "frequency > 1"));
+	    gretl_errmsg_set(_("starting obs must contain a ':' with "
+			       "frequency > 1"));
 	    err = 1;
 	} else if (min > pd) {
-	    sprintf(gretl_errmsg, 
-		    _("starting obs '%s' is incompatible with frequency"), 
-		    stobs);
+	    gretl_errmsg_sprintf(_("starting obs '%s' is incompatible with frequency"), 
+				 stobs);
 	    err = 1;
 	} else if (opt == OPT_X) {
-	    strcpy(gretl_errmsg, _("cross-sectional data: frequency must be 1"));
+	    gretl_errmsg_set(_("cross-sectional data: frequency must be 1"));
 	    err = 1;
 	} else if (n % pd != 0) {
 	    if (opt == OPT_S || opt == OPT_C) {
-		sprintf(gretl_errmsg, _("Panel datasets must be balanced.\n"
-					"The number of observations (%d) is not a multiple\n"
-					"of the number of %s (%d)."), 
-			n, ((opt == OPT_S)? _("periods") : _("units")), pd);
+		gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
+				       "The number of observations (%d) is not a multiple\n"
+				       "of the number of %s (%d)."), 
+				     n, ((opt == OPT_S)? _("periods") : _("units")), pd);
 		err = 1;
 	    }
 	}
@@ -888,7 +887,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     /* now we get down to business */
 
     if (sscanf(line, "%*s %15s %10s", pdstr, stobs) != 2) {
-	strcpy(gretl_errmsg, _("Failed to parse line as frequency, startobs"));
+	gretl_errmsg_set(_("Failed to parse line as frequency, startobs"));
 	return 1;
     }
 
@@ -906,8 +905,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     /* does frequency make sense? */
     if (pd < 1 || (pdinfo->n > 0 && pd > pdinfo->n && opt != OPT_T)) {
-	sprintf(gretl_errmsg, 
-		_("frequency (%d) does not make seem to make sense"), pd);
+	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
 	return 1;
     }
 
@@ -926,7 +924,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     if (dated) {
 	if (opt == OPT_X || opt == OPT_S || opt == OPT_C) {
-	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
+	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
 
@@ -935,7 +933,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    double ed0 = get_epoch_day(stobs);
 
 	    if (ed0 < 0) {
-		sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
+		gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
 		return 1;
 	    }
 
@@ -945,7 +943,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    /* replace any existing markers with date strings */
 	    dataset_destroy_obs_markers(pdinfo);
 	} else {
-	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
+	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
     } else if (structure == TIME_SERIES && pd == 10) {
@@ -955,7 +953,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	int maj = 0, min = 0;
 
 	if (get_stobs_maj_min(stobs, &maj, &min)) {
-	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
+	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
 
@@ -1408,7 +1406,7 @@ int gretl_spawn (char *cmdline)
 	fprintf(stderr, "stderr: '%s'\n", errout);
 	if (!non_fatal(errout)) {
 	    gretl_errmsg_set(errout);
-	    fprintf(stderr, "gretl_errmsg: '%s'\n", gretl_errmsg);
+	    fprintf(stderr, "gretl_errmsg: '%s'\n", gretl_errmsg_get());
 	    ret = 1;
 	}
     } else if (status != 0) {
@@ -1416,7 +1414,7 @@ int gretl_spawn (char *cmdline)
 	    gretl_errmsg_set(sout);
 	    fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, sout);
 	} else {
-	    strcpy(gretl_errmsg, _("Command failed"));
+	    gretl_errmsg_set(_("Command failed"));
 	    fprintf(stderr, "gretl_spawn: status = %d\n", status);
 	}
 	ret = 1;
@@ -1447,12 +1445,12 @@ int gretl_copy_file (const char *src, const char *dest)
     }
    
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open %s"), src);
+	gretl_errmsg_sprintf(_("Couldn't open %s"), src);
 	return 1; 
     }
 
     if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't write to %s"), dest);
+	gretl_errmsg_sprintf(_("Couldn't write to %s"), dest);
 	fclose(srcfd);
 	return 1;
     }

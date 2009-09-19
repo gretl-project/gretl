@@ -1890,7 +1890,7 @@ static gretl_matrix *k_matrix_from_dataset (char *s,
 
     if (m != NULL) {
 	strcpy(s, GENERIC_MATNAME);
-    }	
+    }
 
     return m;
 }
@@ -1901,25 +1901,26 @@ static gretl_matrix *k_matrix_from_dataset (char *s,
    record its name so we're able to update its value later if need be.
 */
 
-static gretl_matrix *k_matrix_from_scalar (char *s, int *err)
+static gretl_matrix *k_matrix_from_scalar (char *s, int *errp)
 {
     gretl_matrix *m = NULL;
     double x;
+    int err = 0;
 
-    x = gretl_double_from_string(s, err);
+    x = gretl_double_from_string(s, &err);
 
-    if (!*err && na(x)) {
-	*err = E_MISSDATA;
+    if (!err && na(x)) {
+	*errp = err = E_MISSDATA;
     }
 
-    if (!*err) {
+    if (!err) {
 	m = gretl_matrix_from_scalar(x);
 	if (m == NULL) {
-	    *err = E_ALLOC;
+	    *errp = err = E_ALLOC;
 	}
     }
 
-    if (!*err) {
+    if (!err) {
 	if (gretl_is_scalar(s)) {
 	    /* got a scalar variable: record its name */
 	    char tmp[VNAMELEN];
@@ -2306,6 +2307,8 @@ static int get_kalman_matrix_id (const char **ps)
     }
 
     /* failed */
+    gretl_errmsg_sprintf("kalman: invalid input '%s'", *ps);
+
     return -1;
 }
 

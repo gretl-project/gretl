@@ -664,7 +664,7 @@ sscanf_target_var (const char *vname, DATAINFO *pdinfo, int *err)
     if (gretl_is_scalar(vname)) {
 	return 0;
     } else {
-	strcpy(gretl_errmsg, _("sscanf: numerical target must be scalar"));
+	gretl_errmsg_set(_("sscanf: numerical target must be scalar"));
 	*err = E_DATA;
 	return 0;
     }
@@ -814,7 +814,7 @@ scan_string (const char *targ, char **psrc, int width,
 
     if (targ != NULL) {
 	if (!is_user_string(targ)) {
-	    sprintf(gretl_errmsg, _("%s: not a string variable"), targ);
+	    gretl_errmsg_sprintf(_("%s: not a string variable"), targ);
 	    err = E_UNKVAR;
 	} else if (n > 0) {
 	    char *conv = gretl_strndup(*psrc, n);

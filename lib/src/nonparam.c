@@ -1421,7 +1421,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     }
 
     if (!data_pre_sorted(x)) {
-	strcpy(gretl_errmsg, "loess: the data must be sorted by x");
+	gretl_errmsg_set("loess: the data must be sorted by x");
 	*err = E_DATA;
 	return NULL;
     }

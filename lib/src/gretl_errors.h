@@ -20,8 +20,6 @@
 #ifndef GRETL_ERRORS_H
 #define GRETL_ERRORS_H
 
-extern char gretl_errmsg[ERRLEN];
-
 enum gretl_error_codes {
     E_DATA = 2,
     E_SINGULAR,     /* 3 */
@@ -97,5 +95,7 @@ int get_gretl_errno (void);
 int check_gretl_errno (void);
 
 int gretl_error_is_fatal (void);
+
+int gretl_errmsg_is_set (void);
 
 #endif /* GRETL_ERRORS_H */

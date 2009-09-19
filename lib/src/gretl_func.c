@@ -1928,7 +1928,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     if (standalone) {
 	fp = gretl_fopen(pkg->fname, "w");
 	if (fp == NULL) {
-	    sprintf(gretl_errmsg, _("Couldn't open %s"), pkg->fname);
+	    gretl_errmsg_sprintf(_("Couldn't open %s"), pkg->fname);
 	    return E_FOPEN;
 	} else {
 	    gretl_xml_header(fp);
@@ -2900,15 +2900,15 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
     int i, err = 0;
 
     if (!isalpha((unsigned char) *fname)) {
-	strcpy(gretl_errmsg, _("Function names must start with a letter"));
+	gretl_errmsg_set(_("Function names must start with a letter"));
 	err = 1;
     } else if (gretl_command_number(fname)) {
-	sprintf(gretl_errmsg, _("'%s' is the name of a gretl command"),
-		fname);
+	gretl_errmsg_sprintf(_("'%s' is the name of a gretl command"),
+			     fname);
 	err = 1;
     } else if (function_lookup(fname)) {
-	sprintf(gretl_errmsg, _("'%s' is the name of a built-in function"),
-		fname);
+	gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
+			     fname);
 	err = 1;
     } else {
 	for (i=0; i<n_ufuns; i++) {
@@ -2939,10 +2939,10 @@ static int maybe_delete_function (const char *fname, PRN *prn)
     if (fun == NULL) {
 	; /* no-op */
     } else if (function_in_use(fun)) {
-	sprintf(gretl_errmsg, "%s: function is in use", fname);
+	gretl_errmsg_sprintf("%s: function is in use", fname);
 	err = 1;
     } else if (fun->pkg != NULL) {
-	sprintf(gretl_errmsg, "%s: function belongs to package", fname);
+	gretl_errmsg_sprintf("%s: function belongs to package", fname);
 	err = 1;
     } else {
 	ufunc_unload(fun);
@@ -3100,12 +3100,12 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	    s++;
 	}
 	if (*tstr == '\0') {
-	    sprintf(gretl_errmsg, "Expected a type identifier");
+	    gretl_errmsg_set("Expected a type identifier");
 	    err = E_PARSE;
 	} else {
 	    type = arg_type_from_string(tstr);
 	    if (type == 0) {
-		sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
+		gretl_errmsg_sprintf("Unrecognized data type '%s'", tstr);
 		err = E_PARSE;
 	    }
 	} 
@@ -3119,7 +3119,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     len = gretl_namechar_spn(s);
 
     if (len == 0) {
-	sprintf(gretl_errmsg, "parameter %d: name is missing", i + 1);
+	gretl_errmsg_sprintf("parameter %d: name is missing", i + 1);
 	err = E_PARSE;
     } else {
 	name = gretl_strndup(s, len);
@@ -3422,8 +3422,8 @@ static int parse_function_return (ufunc *fun, const char *line)
     type = return_type_from_string(s1);
 
     if (type > 0 && fun->rettype != GRETL_TYPE_NONE) {
-	sprintf(gretl_errmsg, "%s: return type is already defined",
-		fun->name);
+	gretl_errmsg_sprintf("%s: return type is already defined",
+			     fun->name);
 	err = E_PARSE;
     } else if (fun->rettype != GRETL_TYPE_NONE) {
 	/* new-style: the return type was pre-defined, and
@@ -3591,7 +3591,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
 	err = strings_array_add(&fun->lines, &fun->n_lines, "");
     } else if (end_of_function(line) && !ignore_line(fun)) {
 	if (fun->n_lines == 0) {
-	    sprintf(gretl_errmsg, "%s: empty function", fun->name);
+	    gretl_errmsg_sprintf("%s: empty function", fun->name);
 	    err = 1;
 	}
 	set_compiling_off();
@@ -3776,8 +3776,7 @@ int update_function_from_script (const char *funname, const char *path,
 		err = E_DATA;
 	    } else if (strcmp(fun->name, orig->name)) {
 		err = E_DATA;
-		strcpy(gretl_errmsg, 
-		       _("You can't change the name of a function here"));
+		gretl_errmsg_set(_("You can't change the name of a function here"));
 		fprintf(stderr, "orig->name='%s', fun->name='%s'\n",
 		       orig->name, fun->name);
 	    } else {
@@ -4146,26 +4145,26 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 	char vstr[8];
 
 	get_version_string(vstr, minver);
-	sprintf(gretl_errmsg, "This function needs gretl version %s", vstr);
+	gretl_errmsg_sprintf("This function needs gretl version %s", vstr);
 	return 1;
     }
 
     if (dreq == FN_NEEDS_TS && 
 	(pdinfo == NULL || !dataset_is_time_series(pdinfo))) {
-	strcpy(gretl_errmsg, "This function needs time-series data");
+	gretl_errmsg_set("This function needs time-series data");
 	return 1;
     }
 
     if (dreq == FN_NEEDS_PANEL && 
 	(pdinfo == NULL || !dataset_is_panel(pdinfo))) {
-	strcpy(gretl_errmsg, "This function needs panel data");
+	gretl_errmsg_set("This function needs panel data");
 	return 1;
     }
 
     if (dreq == FN_NEEDS_QM && 
 	(pdinfo == NULL || !dataset_is_time_series(pdinfo) || 
 	 (pdinfo->pd != 4 || pdinfo->pd != 12))) {
-	strcpy(gretl_errmsg, "This function needs quarterly or monthly data");
+	gretl_errmsg_set("This function needs quarterly or monthly data");
 	return 1;
     } 
 
@@ -4914,6 +4913,12 @@ static void fn_state_init (CMD *cmd, ExecState *state, int *indent0)
     *indent0 = gretl_if_state_record();
 }
 
+static int do_debugging (ExecState *s)
+{
+    return s->cmd->ci > 0 && !s->cmd->context &&
+	!gretl_compiling_loop();
+}
+
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
 			 void *ret, char **descrip, 
@@ -5043,8 +5048,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    break;
 	}
 
-	if (debugging > 1 && state.cmd->ci > 0 && 
-	    !gretl_compiling_loop() && !state.cmd->context) {
+	if (debugging > 1 && do_debugging(&state)) {
 	    if (put_func != NULL) {
 		pprintf(prn, "-- debugging %s, line %d --\n", u->name, i + 1);
 		(*put_func)(&state);
@@ -5057,10 +5061,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (err) {
-	    if (*gretl_errmsg == '\0') {
-		gretl_errmsg_sprintf("error in function %s\n"
-				     "> %s", u->name, line);
-	    }
+	    gretl_errmsg_sprintf("error in function %s\n> %s", u->name, line);
+	    pprintf(prn, "error in function %s\n> %s\n", u->name, line);
 	    fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
 	    fprintf(stderr, "> %s\n", line);
 	}

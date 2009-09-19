@@ -1023,10 +1023,9 @@ static int expand_command_list (CMD *cmd, int add)
     int *list;
 
     list = realloc(cmd->list, (oldn + add) * sizeof *list);
+
     if (list == NULL) {
 	cmd->err = E_ALLOC;
-	strcpy (gretl_errmsg, 
-		_("Memory allocation failed for command list"));
 	return 1;
     }
 
@@ -1122,7 +1121,7 @@ int auto_lag_ok (const char *s, int *lpos,
 #endif
 	if (lv < 0) {
 	    cmd->err = 1;
-	    sprintf(gretl_errmsg, _("generation of lag variable failed"));
+	    gretl_errmsg_set(_("generation of lag variable failed"));
 	    ok = 0;
 	} else {
 	    /* Record info regarding the auto-generation of lags
@@ -1389,7 +1388,7 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 	vtarg = atoi(targ);
 	if (vtarg >= pdinfo->v || vtarg < 1) {
 	    cmd->err = E_DATA;
-	    sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), vtarg);
+	    gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), vtarg);
 	    return;
 	}
     } else {
@@ -1405,7 +1404,7 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     if (vtest == vtarg) {
 	; /* no-op */
     } else if (vtest < pdinfo->v) {
-	sprintf(gretl_errmsg, _("A series named %s already exists"), newname);
+	gretl_errmsg_sprintf(_("A series named %s already exists"), newname);
 	cmd->err = E_DATA;
 	return;
     }
@@ -1545,7 +1544,7 @@ static void parse_data_open_params (const char *s, CMD *cmd)
 	if (cmd->err) {
 	    break;
 	} else if (!ok) {
-	    sprintf(gretl_errmsg, _("Parse error in '%s'"), s);
+	    gretl_errmsg_sprintf(_("Parse error in '%s'"), s);
 	    cmd->err = E_PARSE;
 	} else {
 	    s += strspn(s, " ");
@@ -1736,12 +1735,12 @@ static int check_end_command (CMD *cmd)
 	    cmd->ci = ENDLOOP;
 	} else if (!COMMAND_CAN_END(cmdcode)) {
 	    cmd->err = 1;
-	    sprintf(gretl_errmsg, _("command 'end %s' not recognized"), 
-		    cmd->param);
+	    gretl_errmsg_sprintf(_("command 'end %s' not recognized"), 
+				 cmd->param);
 	}
     } else {
 	cmd->err = 1;
-	strcpy(gretl_errmsg, _("end: nothing to end")); 
+	gretl_errmsg_set(_("end: nothing to end")); 
     }
 
     return cmd->err;
@@ -1814,8 +1813,8 @@ static int capture_param (const char *s, CMD *cmd, int *nf)
     if (string_is_blank(s)) {
 	if (REQUIRES_PARAM(cmd->ci) || REQUIRES_ORDER(cmd->ci)) {
 	    cmd->err = E_PARSE;
-	    sprintf(gretl_errmsg, _("%s: required parameter is missing"),
-		    cmd->word);
+	    gretl_errmsg_sprintf(_("%s: required parameter is missing"),
+				 cmd->word);
 	}
     } else {
 	if (cmd->ci == PRINT || cmd->ci == FUNCERR || 
@@ -1891,7 +1890,6 @@ static int resize_command_list (CMD *cmd, int nf)
 
     if (list == NULL) {
 	cmd->err = E_ALLOC;
-	strcpy (gretl_errmsg, _("Memory allocation failed for command list"));
     } else {
 	list[0] = nf;
 	for (i=1; i<=nf; i++) {
@@ -2026,7 +2024,7 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
 
     if (!ints_ok && !poly && v >= pdinfo->v) {
 	cmd->err = 1;
-	sprintf(gretl_errmsg, _("%d is not a valid variable number"), v);
+	gretl_errmsg_sprintf(_("%d is not a valid variable number"), v);
     } else {
 	cmd->list[*k] = v;
 	*k += 1;
@@ -2105,10 +2103,10 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 
     if (!ok && cmd->err == 0) {
 	if (gretl_is_scalar(s) || gretl_is_matrix(s)) {
-	    sprintf(gretl_errmsg, _("'%s' is not the name of a series"), s);
+	    gretl_errmsg_sprintf(_("'%s' is not the name of a series"), s);
 	    cmd->err = E_DATATYPE;
 	} else {
-	    sprintf(gretl_errmsg, _("'%s' is not the name of a variable"), s);
+	    gretl_errmsg_sprintf(_("'%s' is not the name of a variable"), s);
 	    cmd->err = E_UNKVAR;
 	}
     }
@@ -2307,8 +2305,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		return 0;
 	    } else {
 		cmd->err = 1;
-		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
-			cmd->word);
+		gretl_errmsg_sprintf(_("command '%s' not recognized"), 
+				     cmd->word);
 		goto cmd_exit;
 	    }
 	}
@@ -2596,7 +2594,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    if (cmd->err == 0) {
 		cmd->err = 1;
 	    } 
-	    if (*gretl_errmsg == '\0') {
+	    if (!gretl_errmsg_is_set()) {
 		if (*s == '=' && cmd->ci != GENR) {
 		    gretl_errmsg_sprintf(_("'%s' may not be used as a "
 					   "variable name"), cmd->word);
@@ -2654,9 +2652,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (dupv >= 0) {
 	    printlist(cmd->list, "cmd->list with duplicate(s)");
 	    cmd->err = E_UNSPEC;
-	    sprintf(gretl_errmsg, 
-		    _("var number %d duplicated in the command list."),
-		    dupv);
+	    gretl_errmsg_sprintf(_("var number %d duplicated in the command list."),
+				 dupv);
 	} 
     }
 
@@ -3103,7 +3100,7 @@ static int gretl_shell (const char *arg, PRN *prn)
     }
 
     if (!libset_get_bool(SHELL_OK)) {
-	strcpy(gretl_errmsg, _("The shell command is not activated."));
+	gretl_errmsg_set(_("The shell command is not activated."));
 	return 1;
     }
 
@@ -3649,7 +3646,7 @@ static int set_var_info (const char *line, gretlopt opt,
 
     v = series_index(pdinfo, vname);
     if (v == pdinfo->v) {
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
+	gretl_errmsg_sprintf(_("Unknown variable '%s'"), vname);
 	return E_UNKVAR;
     }
 
@@ -3919,7 +3916,7 @@ static int run_script (const char *fname, ExecState *s,
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
+	gretl_errmsg_sprintf(_("Couldn't open %s"), fname);
 	return E_FOPEN;
     }
 
@@ -4060,7 +4057,7 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
     x = (const double *) (*pZ)[v];
 
     if (!var_is_discrete(pdinfo, v) && !gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x)) {
-	sprintf(gretl_errmsg, _("The variable '%s' is not discrete"), byvar);
+	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byvar);
 	return E_DATA;
     }
 
@@ -4138,6 +4135,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     int *listcpy = NULL;
     int err = 0;
 
+    gretl_error_clear();
+
     s->pmod = NULL;
 
     if (NEEDS_MODEL_CHECK(cmd->ci)) {
@@ -4171,8 +4170,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (pZ != NULL) {
 	Z = (const double **) *pZ;
     }
-
-    gretl_error_clear();
 
     switch (cmd->ci) {
 
@@ -4566,7 +4563,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case ARBOND:
     case PANEL:	
 	if (!dataset_is_panel(pdinfo)) {
-	    strcpy(gretl_errmsg, _("This estimator requires panel data"));
+	    gretl_errmsg_set(_("This estimator requires panel data"));
 	    err = E_DATA;
 	    break;
 	}
@@ -4927,7 +4924,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
         errmsg(err, s->prn);
         return err;
     }
-    
+
     s->in_comment = cmd_ignore(s->cmd)? 1 : 0;
 
     if (s->cmd->ci < 0) {
@@ -4953,6 +4950,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (s->cmd->ci == FUNCERR) {
 	s->funcerr = err = 1;
     } else {
+	/* note: error messages may be printed to s->prn */
 	err = gretl_cmd_exec(s, pZ, pdinfo);
     }
 
@@ -5087,8 +5085,8 @@ int get_command_index (char *line, CMD *cmd)
 		cmd->opt = OPT_U;
 	    } else {
 		cmd->err = 1;
-		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
-			cmd->word);
+		gretl_errmsg_sprintf(_("command '%s' not recognized"), 
+				     cmd->word);
 		return 1;
 	    }
 	}

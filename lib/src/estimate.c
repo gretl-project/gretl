@@ -137,8 +137,9 @@ static int get_model_df (MODEL *pmod)
 
     if (pmod->dfd < 0) {
 	pmod->errcode = E_DF;
-        sprintf(gretl_errmsg, _("No. of obs (%d) is less than no. "
-		"of parameters (%d)"), pmod->nobs, pmod->ncoeff);
+        gretl_errmsg_sprintf(_("No. of obs (%d) is less than no. "
+			       "of parameters (%d)"), pmod->nobs, 
+			     pmod->ncoeff);
 	err = 1;
     } else {
 	pmod->dfn = pmod->ncoeff - pmod->ifc;
@@ -549,14 +550,14 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
     int t;
 
     if (gretl_iszero(pmod->t1, pmod->t2, w)) {
-	strcpy(gretl_errmsg, _(wtzero));
+	gretl_errmsg_set(_(wtzero));
 	pmod->errcode = E_DATA;
 	return 1;
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (w[t] < 0.0) {
-	    strcpy(gretl_errmsg, _(wtneg));
+	    gretl_errmsg_set(_(wtneg));
 	    pmod->errcode = E_DATA;
 	    return 1;
 	}
@@ -1080,8 +1081,9 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 		return mdl;
 	    }
 	} else {
-	    sprintf(gretl_errmsg, _("Missing value encountered for "
-		    "variable %d, obs %d"), missv, misst);
+	    gretl_errmsg_sprintf(_("Missing value encountered for "
+				   "variable %d, obs %d"), 
+				 missv, misst);
 	    mdl.errcode = E_DATA;
 	    return mdl;
 	} 
@@ -1612,8 +1614,8 @@ static void regress (MODEL *pmod, double *xpy,
     if (fabs(pmod->ess) < ESSZERO) {
 	pmod->ess = 0.0;
     } else if (pmod->ess < 0.0) { 
-	sprintf(gretl_errmsg, _("Error sum of squares (%g) is not > 0"),
-		pmod->ess);
+	gretl_errmsg_sprintf(_("Error sum of squares (%g) is not > 0"),
+			     pmod->ess);
         return; 
     }
 
@@ -2054,8 +2056,8 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
 			pdinfo->n, (const double **) *pZ, &misst);
     if (missv) {
-	sprintf(gretl_errmsg, _("Missing value encountered for "
-				"variable %d, obs %d"), missv, misst);
+	gretl_errmsg_sprintf(_("Missing value encountered for "
+			       "variable %d, obs %d"), missv, misst);
 	*err = E_DATA;
 	goto bailout;
     }
@@ -3576,7 +3578,7 @@ static int real_arch_test (const double *u, int T, int order,
     gretl_error_clear();
 
     if (order < 1 || order > T - 1) {
-	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
+	gretl_errmsg_sprintf(_("Invalid lag order for arch (%d)"), order);
 	return E_DATA;
     }
 
@@ -3722,7 +3724,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 
     if (order < 1 || order > T - list[0]) {
 	amod.errcode = E_UNSPEC;
-	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
+	gretl_errmsg_sprintf(_("Invalid lag order for arch (%d)"), order);
 	return amod;
     }
 
@@ -4291,8 +4293,8 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 {
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, const int *, 
-		 const double **, DATAINFO *, char *, 
-		 MODEL *, gretlopt);
+		 const double **, DATAINFO *, MODEL *, 
+		 gretlopt);
     MODEL mpmod;
 
     gretl_model_init(&mpmod);
@@ -4312,13 +4314,13 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 	    mpmod.errcode = E_ARGS;
 	} else {
 	    mpmod.errcode = (*mplsq)(base, poly, NULL, Z, pdinfo,  
-				     gretl_errmsg, &mpmod, OPT_S);
+				     &mpmod, OPT_S);
 	}
 	free(base);
 	free(poly);
     } else {
 	mpmod.errcode = (*mplsq)(list, NULL, NULL, Z, pdinfo,  
-				 gretl_errmsg, &mpmod, OPT_S); 
+				 &mpmod, OPT_S); 
     }
 
     close_plugin(handle);
@@ -4501,7 +4503,7 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!dataset_is_panel(pdinfo)) {
-	strcpy(gretl_errmsg, _("This test is only available for panel data"));
+	gretl_errmsg_set(_("This test is only available for panel data"));
 	return E_NOTIMP;
     }
 

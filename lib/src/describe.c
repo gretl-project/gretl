@@ -1484,15 +1484,15 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (n < 8) {
-	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
-				"distribution for variable %s"), 
-		pdinfo->varname[v]);
+	gretl_errmsg_sprintf(_("Insufficient data to build frequency "
+			       "distribution for variable %s"), 
+			     pdinfo->varname[v]);
 	return E_TOOFEW;
     }
 
     xrange = xmax - xmin;
     if (xrange == 0) {
-	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[v]);
+	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[v]);
 	return E_DATA;
     }
 
@@ -1588,9 +1588,9 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (freq->n < 3) {
-	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
-				"distribution for variable %s"), 
-		pdinfo->varname[v]);
+	gretl_errmsg_sprintf(_("Insufficient data to build frequency "
+			       "distribution for variable %s"), 
+			     pdinfo->varname[v]);
 	*err = E_TOOFEW;
 	goto bailout;
     }
@@ -2243,7 +2243,7 @@ int crosstab (const int *list, const double **Z,
     }
 
     if (rowvar[0] == 0 || (blanket && rowvar[0] == 1)) {
-	strcpy(gretl_errmsg, "xtab: variables must be discrete");
+	gretl_errmsg_set("xtab: variables must be discrete");
 	free(rowvar);
 	return E_DATATYPE;
     }
@@ -2700,7 +2700,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     }
 
     if (gretl_isconst(t1, t2, Z[varno])) {
-	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[varno]);
+	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[varno]);
 	return E_DATA;
     }
 
@@ -2870,7 +2870,7 @@ gretl_matrix *acf_vec (const double *x, int order,
     }
 
     if (gretl_isconst(t1, t2, x)) {
-	sprintf(gretl_errmsg, _("Argument is a constant"));
+	gretl_errmsg_set(_("Argument is a constant"));
 	*err = E_DATA;
 	return NULL;
     }
@@ -3057,8 +3057,6 @@ static int xcf_data_check (const double *x, const double *y, int T,
 
     for (t=0; t<T; t++) {
 	if (na(x[t]) || na(y[t])) {
-	    strcpy(gretl_errmsg, 
-		   _("Missing values within sample -- can't do correlogram"));
 	    return E_MISSDATA;
 	}
 	if (t > 0 && x[t] != x[0]) {
@@ -3147,8 +3145,8 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
     if (!*err) { 
 	*err = xcf_data_check(x + t1, y + t1, T, &badvar);
 	if (badvar) {
-	    sprintf(gretl_errmsg, _("xcf: argument %d is a constant"), 
-		    badvar);
+	    gretl_errmsg_sprintf(_("xcf: argument %d is a constant"), 
+				 badvar);
 	}
     }
 
@@ -3203,8 +3201,8 @@ int xcorrgram (const int *list, int order, const double **Z,
 
     if (err) {
 	if (badvar) {
-	    sprintf(gretl_errmsg, _("%s is a constant"), 
-		    pdinfo->varname[list[badvar]]);
+	    gretl_errmsg_sprintf(_("%s is a constant"), 
+				 pdinfo->varname[list[badvar]]);
 	}
 	return err;
     }
@@ -3695,8 +3693,8 @@ static int real_periodogram (const double *x, int varno, int width,
 
     if (gretl_isconst(t1, t2, x)) {
 	if (varno >= 0) {
-	    sprintf(gretl_errmsg, _("'%s' is a constant"), 
-		    pdinfo->varname[varno]);
+	    gretl_errmsg_sprintf(_("'%s' is a constant"), 
+				 pdinfo->varname[varno]);
 	}
 	return E_DATA;
     }
@@ -5143,7 +5141,7 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
 	if (na(x[t])) {
 	    continue;
 	} else if (x[t] < 0.0) {
-	    strcpy(gretl_errmsg, _("illegal negative value"));
+	    gretl_errmsg_set(_("illegal negative value"));
 	    *err = E_DATA;
 	    break;
 	} else {

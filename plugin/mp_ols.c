@@ -118,7 +118,7 @@ static void free_mpZ (mpf_t **mpZ, int v, int n)
    vars are all "zero" */
 
 static int data_problems (const int *list, const double **Z, 
-			  const DATAINFO *pdinfo, char *errbuf)
+			  const DATAINFO *pdinfo)
 {
     int i, t, allzero;
 
@@ -133,8 +133,8 @@ static int data_problems (const int *list, const double **Z,
 	    }
 	}
 	if (allzero) {
-	    sprintf(errbuf, _("Variable '%s' is all zeros"), 
-		    pdinfo->varname[list[i]]);
+	    gretl_errmsg_sprintf(_("Variable '%s' is all zeros"), 
+				 pdinfo->varname[list[i]]);
 	    return 1;
 	}
     }
@@ -1328,7 +1328,7 @@ static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
     mpf_clear(tmp);
 }
 
-static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, char *errbuf)
+static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
 {
     int i, v, nobs, nv, yno;
     mpf_t *diag, ysum, ypy, zz, rss, tss;
@@ -1408,9 +1408,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, char *errbuf)
     }
 
     if (mpf_sgn(pmod->ess) < 0) { 
-	if (errbuf != NULL) {
-	    sprintf(errbuf, _("Error sum of squares is not >= 0"));
-	}
+	gretl_errmsg_set(_("Error sum of squares is not >= 0"));
 	pmod->errcode = E_DATA;
         return; 
     }
@@ -1543,7 +1541,6 @@ static int mp_rearrange (int *list)
  * (or %NULL).
  * @Z: data array.
  * @pdinfo: information on the data set.
- * @errbuf: where to print any error message.
  * @pmod: MODEL pointer to hold results.
  * @opt: if contains %OPT_S, save additional model
  * information (including the names of parameters in 
@@ -1557,7 +1554,7 @@ static int mp_rearrange (int *list)
 
 int mplsq (const int *list, const int *polylist, const int *zdigits,
 	   const double **Z, DATAINFO *pdinfo, 
-	   char *errbuf, MODEL *pmod, gretlopt opt) 
+	   MODEL *pmod, gretlopt opt) 
 {
     int l0, i;
     mpf_t **mpZ = NULL;
@@ -1568,7 +1565,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     int orig_t2 = pdinfo->t2;
     int err = 0;
 
-    *errbuf = 0;
+    gretl_error_clear();
 
     if (list == NULL || Z == NULL || pdinfo == NULL ||
 	list[0] < 2 || pdinfo->v < 2) {
@@ -1610,7 +1607,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     mpmod.t2 = pdinfo->t2;
 
     /* check for other data issues */
-    if (data_problems(list, Z, pdinfo, errbuf)) {
+    if (data_problems(list, Z, pdinfo)) {
 	err = E_DATA;
 	goto bailout;
     }
@@ -1643,8 +1640,9 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
 
     /* check degrees of freedom */
     if (mpmod.nobs < mpmod.ncoeff) { 
-        sprintf(errbuf, _("No. of obs (%d) is less than no. "
-			  "of parameters (%d)"), mpmod.nobs, mpmod.ncoeff);
+        gretl_errmsg_sprintf(_("No. of obs (%d) is less than no. "
+			       "of parameters (%d)"), mpmod.nobs, 
+			     mpmod.ncoeff);
 	free_mpZ(mpZ, l0, mpmod.nobs);
 	mpf_constants_clear();
 	err = E_DF;
@@ -1656,7 +1654,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     xpxxpy = mp_xpxxpy_func(mpmod.list, mpmod.nobs, mpZ);
     mpf_set(mpmod.tss, xpxxpy.xpy[l0]);
 
-    mp_regress(&mpmod, xpxxpy, errbuf);
+    mp_regress(&mpmod, xpxxpy);
 
     for (i=0; i<=l0; i++) {
 	mpf_clear(xpxxpy.xpy[i]);
@@ -1730,7 +1728,7 @@ int matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
     xpxxpy = mp_xpxxpy_func(mpmod.list, T, mpZ);
     mpf_set(mpmod.tss, xpxxpy.xpy[l0]);
 
-    mp_regress(&mpmod, xpxxpy, NULL);
+    mp_regress(&mpmod, xpxxpy);
 
     for (i=0; i<=l0; i++) {
 	mpf_clear(xpxxpy.xpy[i]);

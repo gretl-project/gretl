@@ -829,12 +829,12 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 
     if (var->jinfo != NULL && var->jinfo->lrdf > 0) {
 	/* FIXME add support for restricted vecms */
-	strcpy(gretl_errmsg, "IRF bootstrap not yet available");
+	gretl_errmsg_set("IRF bootstrap not yet available");
 	return NULL;
     }
 
     if (var->X == NULL || var->Y == NULL) {
-	strcpy(gretl_errmsg, "X and/or Y matrix missing, can't do this");
+	gretl_errmsg_set("X and/or Y matrix missing, can't do this");
 	return NULL;
     }
 
@@ -889,7 +889,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
     }
 
     if (err && scount == MAXSING) {
-	strcpy(gretl_errmsg, "Excessive collinearity in resampled datasets");
+	gretl_errmsg_set("Excessive collinearity in resampled datasets");
     }
 
     if (!err) {

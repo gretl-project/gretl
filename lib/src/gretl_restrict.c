@@ -101,8 +101,8 @@ static int check_R_matrix (const gretl_matrix *R)
     err = gretl_invert_general_matrix(m);
 
     if (err == E_SINGULAR) {
-	strcpy(gretl_errmsg, _("Matrix inversion failed: restrictions may be "
-			       "inconsistent or redundant"));
+	gretl_errmsg_set(_("Matrix inversion failed: restrictions may be "
+			   "inconsistent or redundant"));
     }
     
     gretl_matrix_free(m);
@@ -276,8 +276,8 @@ static double get_restriction_param (const rrow *r, int k)
 
 static void vecm_cross_error (void)
 {
-    strcpy(gretl_errmsg, "VECM: beta/alpha cross restrictions are "
-	   "not handled");
+    gretl_errmsg_set("VECM: beta/alpha cross restrictions are "
+		     "not handled");
 }
 
 /* See if we have both beta and alpha terms; check that there
@@ -397,12 +397,12 @@ static int vecm_restriction_check (gretl_restriction *rset)
 
     if (!err) {
 	if (rset->gb > rset->bcols) {
-	    strcpy(gretl_errmsg, "Too many restrictions");
+	    gretl_errmsg_set("Too many restrictions");
 	    err = E_NONCONF;
 	} else if (rset->ga > rset->acols) {
 	    fprintf(stderr, "rset->ga = %d, rset->acols = %d\n",
 		    rset->ga, rset->acols);
-	    strcpy(gretl_errmsg, "Too many restrictions");
+	    gretl_errmsg_set("Too many restrictions");
 	    err = E_NONCONF;
 	}
     }
@@ -721,14 +721,14 @@ bnum_from_name (gretl_restriction *r, const DATAINFO *pdinfo,
     int k = -1;
 
     if (pdinfo == NULL || r->otype != GRETL_OBJ_EQN || r->obj == NULL) {
-	strcpy(gretl_errmsg, _("Please give a coefficient number"));
+	gretl_errmsg_set(_("Please give a coefficient number"));
     } else {
 	const MODEL *pmod = r->obj;
 
 	k = gretl_model_get_param_number(pmod, pdinfo, s);
 
 	if (k < 0) {
-	    sprintf(gretl_errmsg, _("%s: not a valid parameter name"), s);
+	    gretl_errmsg_sprintf(_("%s: not a valid parameter name"), s);
 	} else {
 	    /* convert to 1-based for compatibility with numbers read
 	       directly: the index will be converted to 0-base below
@@ -857,7 +857,7 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
     }
 
     if (*bnum < 1) {
-	if (*gretl_errmsg == '\0') {
+	if (!gretl_errmsg_is_set()) {
 	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
 				 *bnum);
 	}
@@ -1318,12 +1318,12 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 	GRETL_VAR *var = rset->obj;
 
 	if (i >= gretl_VECM_rank(var)) {
-	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
-		    i + 1);
+	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
+				 i + 1);
 	} else if ((letter == 'b' && j >= gretl_VECM_n_beta(var)) ||
 		   (letter == 'a' && j >= gretl_VECM_n_alpha(var))) {
-	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-		    j + 1);
+	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
+				 j + 1);
 	} else {
 	    ret = 0;
 	}
@@ -1332,11 +1332,11 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 	const int *list = system_get_list(sys, i);
 
 	if (list == NULL) {
-	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
-		    i + 1);
+	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
+				 i + 1);
 	} else if (j >= list[0] - 1) {
-	    sprintf(gretl_errmsg, _("Coefficient number (%d) out of range "
-				    "for equation %d"), j + 1, i + 1);
+	    gretl_errmsg_sprintf(_("Coefficient number (%d) out of range "
+				   "for equation %d"), j + 1, i + 1);
 	} else {
 	    ret = 0;
 	}
@@ -1344,12 +1344,12 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 	MODEL *pmod = rset->obj;
 
 	if (i > 0) {
-	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
+	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
 		    i + 1);
 	} else if (j >= pmod->ncoeff || j < 0) {
-	    if (*gretl_errmsg == '\0') {
-		sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-			j + 1);
+	    if (!gretl_errmsg_is_set()) {
+		gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
+				     j + 1);
 	    }
 	} else {
 	    ret = 0;
@@ -1610,8 +1610,8 @@ restriction_set_parse_line (gretl_restriction *rset, const char *line,
 			    const DATAINFO *pdinfo)
 {
     if (rset->g > rset->gmax) {
-	sprintf(gretl_errmsg, _("Too many restrictions (maximum is %d)"), 
-		rset->gmax);
+	gretl_errmsg_sprintf(_("Too many restrictions (maximum is %d)"), 
+			     rset->gmax);
 	destroy_restriction_set(rset);
 	return E_DATA;
     }
@@ -1628,15 +1628,15 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
 
     rset = restriction_set_new(var, GRETL_OBJ_VAR, OPT_NONE);
     if (rset == NULL) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
+	gretl_errmsg_set(_("Out of memory!"));
 	return NULL;
     }
 
     gretl_error_clear();
 
     if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
-	if (*gretl_errmsg == '\0') {
-	    sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
+	if (!gretl_errmsg_is_set()) {
+	    gretl_errmsg_sprintf(_("parse error in '%s'\n"), line);
 	}
 	return NULL;
     }
@@ -1654,12 +1654,12 @@ cross_restriction_set_start (const char *line, equation_system *sys)
 
     rset = restriction_set_new(sys, GRETL_OBJ_SYS, OPT_NONE);
     if (rset == NULL) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
+	gretl_errmsg_set(_("Out of memory!"));
 	return NULL;
     }
 
     if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
-	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
+	gretl_errmsg_sprintf(_("parse error in '%s'\n"), line);
 	return NULL;
     }
 
@@ -1677,12 +1677,12 @@ eqn_restriction_set_start (const char *line, MODEL *pmod,
 
     rset = restriction_set_new(pmod, GRETL_OBJ_EQN, opt);
     if (rset == NULL) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
+	gretl_errmsg_set(_("Out of memory!"));
 	return NULL;
     }
 
     if (real_restriction_set_parse_line(rset, line, pdinfo, 1)) {
-	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
+	gretl_errmsg_sprintf(_("parse error in '%s'\n"), line);
 	return NULL;
     }
 
@@ -1709,7 +1709,7 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 	/* get pointer to named object */
 	*err = gretl_get_object_and_type(name, &ptr, &type);
 	if (ptr == NULL) {
-	    sprintf(gretl_errmsg, "'%s': unrecognized name", name);
+	    gretl_errmsg_sprintf("'%s': unrecognized name", name);
 	}
     } else {
 	/* get pointer to last-created object */
@@ -1741,7 +1741,7 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 	if (*err) {
 	    rset = NULL;
 	    if (*err == E_PARSE) {
-		sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
+		gretl_errmsg_sprintf(_("parse error in '%s'\n"), line);
 	    }
 	}
     }
@@ -2214,7 +2214,7 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
     int err = 0;
 
     if (get_user_function_by_name(rset->rfunc) == NULL) {
-	sprintf(gretl_errmsg, _("The symbol '%s' is undefined\n"), rset->rfunc);
+	gretl_errmsg_sprintf(_("The symbol '%s' is undefined\n"), rset->rfunc);
 	return E_UNKVAR;
     }
 

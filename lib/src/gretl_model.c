@@ -5219,7 +5219,7 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
 
     if (pmod->t2 - pmod->t1 + 1 > pdinfo->n || 
 	model_sample_problem(pmod, pdinfo)) {
-	strcpy(gretl_errmsg, 
+	gretl_errmsg_set( 
 	       (idx == M_UHAT)? 
 	       _("Can't retrieve uhat: data set has changed") :
 	       (idx == M_YHAT)?

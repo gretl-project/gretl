@@ -596,10 +596,9 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     PRN *vprn;
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, const int *,
-		 const double **, const DATAINFO *, char *, 
-		 MODEL *, gretlopt);
+		 const double **, const DATAINFO *, MODEL *, 
+		 gretlopt);
     int *list = NULL, *polylist = NULL;
-    char errbuf[MAXLEN];
     int i, err = 0;
     int realv = dinfo->v - npoly;
     MODEL model;
@@ -652,7 +651,7 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 
     if (!err) {
         err = (*mplsq)(list, polylist, zdigits, 
-		       (const double **) *pZ, dinfo, errbuf, 
+		       (const double **) *pZ, dinfo, 
 		       &model, OPT_NONE); 
     }
 

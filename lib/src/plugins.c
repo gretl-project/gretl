@@ -263,7 +263,7 @@ void *gretl_dlopen (const char *path, int now)
 #endif
 
     if (handle == NULL) {
-        sprintf(gretl_errmsg, _("Failed to load plugin: %s"), path);
+        gretl_errmsg_sprintf(_("Failed to load plugin: %s"), path);
 #if !defined(WIN32) && !defined(OSX_NATIVE)
 	fprintf(stderr, "%s\n", dlerror());
 #endif
@@ -302,7 +302,7 @@ static void *get_plugin_handle (const char *plugin)
     handle = gretl_dlopen(pluginpath, 0);
 
     if (handle == NULL) {
-        sprintf(gretl_errmsg, _("Failed to load plugin: %s"), pluginpath);
+        gretl_errmsg_sprintf(_("Failed to load plugin: %s"), pluginpath);
 #if !defined(WIN32) && !defined(OSX_NATIVE)
 	fprintf(stderr, "%s\n", dlerror());
 #endif
@@ -318,7 +318,7 @@ void *get_plugin_function (const char *funcname, void **handle)
 
     plugname = get_plugin_name_for_function(funcname);
     if (plugname == NULL) {
-	strcpy(gretl_errmsg, _("Couldn't load plugin function"));
+	gretl_errmsg_set(_("Couldn't load plugin function"));
 	*handle = NULL;
 	return NULL;
     }
@@ -346,7 +346,7 @@ void *get_plugin_function (const char *funcname, void **handle)
 #endif   
 
     if (funp == NULL) {
-	strcpy(gretl_errmsg, _("Couldn't load plugin function"));
+	gretl_errmsg_set(_("Couldn't load plugin function"));
 	close_plugin(*handle);
 	*handle = NULL;
     }

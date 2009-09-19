@@ -536,7 +536,7 @@ int equation_system_append (equation_system *sys,
     int n;
 
     if (sys == NULL) {
-	strcpy(gretl_errmsg, _(nosystem));
+	gretl_errmsg_set(_(nosystem));
 	return E_DATA;
     }
 
@@ -687,7 +687,7 @@ equation_system *equation_system_start (const char *line,
 
     if (method == SYS_METHOD_MAX) {
 	/* invalid method was given */
-	strcpy(gretl_errmsg, _(badsystem));
+	gretl_errmsg_set(_(badsystem));
 	*err = E_DATA;
 	return NULL;
     }
@@ -696,7 +696,7 @@ equation_system *equation_system_start (const char *line,
 
     if (method < 0 && sysname == NULL) {
 	/* neither a method nor a name was specified */
-	strcpy(gretl_errmsg, _(badsystem));
+	gretl_errmsg_set(_(badsystem));
 	*err = E_DATA;
     }
 
@@ -1275,9 +1275,9 @@ static int sys_check_lists (equation_system *sys, const double **Z,
 	for (j=1; j<=ylist[0] && !err; j++) {
 	    vj = ylist[j];
 	    if (!in_gretl_list(sys->ylist, vj)) {
-		sprintf(gretl_errmsg, "%s appears on the left-hand side "
-			"of an equation but is not marked as endogenous", 
-			pdinfo->varname[vj]);
+		gretl_errmsg_sprintf("%s appears on the left-hand side "
+				     "of an equation but is not marked as endogenous", 
+				     pdinfo->varname[vj]);
 		err = E_DATA;
 	    }
 	}
@@ -1312,8 +1312,9 @@ static int sys_check_lists (equation_system *sys, const double **Z,
 	for (j=1; j<=sys->ylist[0]; j++) {
 	    vj = sys->ylist[j];
 	    if (!in_gretl_list(sys->biglist, vj)) {
-		sprintf(gretl_errmsg, "%s is marked as endogenous but is "
-			"not present in the system", pdinfo->varname[vj]);
+		gretl_errmsg_sprintf("%s is marked as endogenous but is "
+				     "not present in the system", 
+				     pdinfo->varname[vj]);
 		err = E_DATA;
 		goto bailout;
 	    }
@@ -1351,8 +1352,9 @@ static int sys_check_lists (equation_system *sys, const double **Z,
 	for (j=1; j<=sys->ilist[0]; j++) {
 	    vj = sys->ilist[j];
 	    if (in_gretl_list(sys->ylist, vj)) {
-		sprintf(gretl_errmsg, "%s is marked as an instrument "
-			"but is endogenous", pdinfo->varname[vj]);
+		gretl_errmsg_sprintf("%s is marked as an instrument "
+				     "but is endogenous", 
+				     pdinfo->varname[vj]);
 		err = E_DATA;
 	    }
 	}
@@ -1391,8 +1393,8 @@ static int sys_check_lists (equation_system *sys, const double **Z,
 
     if (!err && sys->ylist[0] != nlhs) {
 	/* Note: added 2009-08-10 */
-	sprintf(gretl_errmsg, "Found %d endogenous variables but %d equations",
-		sys->ylist[0], nlhs);
+	gretl_errmsg_sprintf("Found %d endogenous variables but %d equations",
+			     sys->ylist[0], nlhs);
 	err = E_DATA;
     }
 
@@ -1438,18 +1440,18 @@ int equation_system_finalize (equation_system *sys,
     gretl_error_clear();
 
     if (sys == NULL) {
-	strcpy(gretl_errmsg, _(nosystem));
+	gretl_errmsg_set(_(nosystem));
 	return 1;
     }
 
     if (sys->neqns < mineq) {
-	strcpy(gretl_errmsg, _(toofew));
+	gretl_errmsg_set(_(toofew));
 	equation_system_destroy(sys);
 	return 1;
     }
 
     if (sys->method >= SYS_METHOD_MAX) {
-	strcpy(gretl_errmsg, _(badsystem));
+	gretl_errmsg_set(_(badsystem));
 	equation_system_destroy(sys);
 	return 1;
     } 
@@ -1482,19 +1484,19 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
     int method;
 
     if (strlen(line) < 12) {
-	strcpy(gretl_errmsg, "estimate: no system name was provided");
+	gretl_errmsg_set("estimate: no system name was provided");
 	return E_DATA;
     }
 
     sysname = get_system_name_from_line(line, SYSNAME_EST);
     if (sysname == NULL) {
-	strcpy(gretl_errmsg, "estimate: no system name was provided");
+	gretl_errmsg_set("estimate: no system name was provided");
 	return E_DATA;
     }
 
     sys = get_equation_system_by_name(sysname);
     if (sys == NULL) {
-	sprintf(gretl_errmsg, _("'%s': unrecognized name"), sysname);
+	gretl_errmsg_sprintf(_("'%s': unrecognized name"), sysname);
 	free(sysname);
 	return E_UNKVAR;
     }
@@ -1507,7 +1509,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (method < 0 || method >= SYS_METHOD_MAX) {
-	strcpy(gretl_errmsg, "estimate: no valid method was specified");
+	gretl_errmsg_set("estimate: no valid method was specified");
 	return E_DATA;
     }
 
@@ -2137,12 +2139,12 @@ add_aux_list_to_sys (equation_system *sys, const char *line,
 
     if (which == ENDOG_LIST) {
 	if (sys->ylist != NULL) {
-	    strcpy(gretl_errmsg, "Only one list of endogenous variables may be given");
+	    gretl_errmsg_set("Only one list of endogenous variables may be given");
 	    return 1;
 	} 
     } else if (which == INSTR_LIST) {
 	if (sys->ilist != NULL) {
-	    strcpy(gretl_errmsg, "Only one list of instruments may be given");
+	    gretl_errmsg_set("Only one list of instruments may be given");
 	    return 1;
 	} 
     } else {

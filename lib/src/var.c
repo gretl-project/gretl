@@ -619,7 +619,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     ci = (code >= VECM_ESTIMATE)? VECM : VAR;
 
     if ((ci == VAR && order < 1) || (ci == VECM && order < 0)) {
-	sprintf(gretl_errmsg, _("Invalid lag order %d"), order);
+	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
 	*errp = E_DATA;
 	return NULL;
     }
@@ -643,7 +643,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     err = VAR_make_lists(var, list, Z, pdinfo);
 
     if (!err && rank > var->ylist[0]) {
-	sprintf(gretl_errmsg, _("vecm: rank %d is out of bounds"), rank);
+	gretl_errmsg_sprintf(_("vecm: rank %d is out of bounds"), rank);
 	err = E_DATA;
     }
 
@@ -2692,7 +2692,7 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     int *lags = NULL;
 
     if (rank <= 0) {
-	sprintf(gretl_errmsg, _("vecm: rank %d is out of bounds"), rank);
+	gretl_errmsg_sprintf(_("vecm: rank %d is out of bounds"), rank);
 	*err = E_DATA;
 	return NULL;
     }

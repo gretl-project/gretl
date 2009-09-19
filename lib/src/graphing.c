@@ -1269,8 +1269,8 @@ static int make_graph_special (const char *fname, int fmt)
     int err;
 
     if (fmt == GP_TERM_PDF && gnuplot_pdf_terminal() == GP_PDF_NONE) {
-	strcpy(gretl_errmsg, _("Gnuplot does not support PDF output "
-			       "on this system"));
+	gretl_errmsg_set(_("Gnuplot does not support PDF output "
+			   "on this system"));
 	return E_EXTERNAL;
     }
 
@@ -3358,7 +3358,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     }
 
     if (K == 1) {
-	sprintf(gretl_errmsg, _("'%s' is a constant"), freq->varname);
+	gretl_errmsg_sprintf(_("'%s' is a constant"), freq->varname);
 	return E_DATA;
     }
 
