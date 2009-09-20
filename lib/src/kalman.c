@@ -2580,7 +2580,7 @@ int user_kalman_run (const char *E, const char *V,
     } else {
 	/* we'll flag E_NAN with a return value of 1 but 
 	   won't count it as a 'true' error */
-	;
+	*errp = 0;
     }
 
 #if KDEBUG

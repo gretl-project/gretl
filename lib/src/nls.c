@@ -1202,8 +1202,14 @@ static double *mle_score_callback (const double *b, int i, void *p)
 
     if (err) {
 	return NULL;
-    } else if (s->lvec != NULL) {
-	return s->lvec->val;
+    } else if (s->lhtype == GRETL_TYPE_MATRIX) {
+	s->lvec = get_matrix_by_name(s->lhname);
+	if (s->lvec == NULL) {
+	    fprintf(stderr, "mle_score_callback: s->lvec is gone!\n");
+	    return NULL;
+	} else {
+	    return s->lvec->val;
+	}
     } else {
 	return (*s->Z)[s->lhv] + s->t1;
     }
@@ -1357,7 +1363,7 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 	/* plain OPG */
 	err = gretl_invert_symmetric_matrix(V);
 	if (err) {
-	    fprintf(stderr, "mle_build_vcv: failed to invert OPG matrix GG'\n");
+	    gretl_errmsg_set("failed to invert OPG matrix GG'");
 	}
 	*vcvopt = VCV_OP;
     }
