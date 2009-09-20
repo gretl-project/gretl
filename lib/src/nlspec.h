@@ -36,6 +36,7 @@ struct _nlspec {
 			   continuation on error.
 			*/
     int dv;             /* ID number of dependent variable (NLS) */
+    int lhtype;         /* type of the LHS variable (series or matrix) */
     char lhname[VNAMELEN]; /* name of LHS var in criterion function */
     int lhv;            /* ID number of LHS variable in function being
 			   minimized or maximized... */

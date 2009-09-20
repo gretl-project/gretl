@@ -270,10 +270,15 @@ static int nls_genr_setup (nlspec *s)
 	}
 
 	if (i == s->naux) {
-	    s->lhv = v;
-	    s->lvec = m;
-	    if (s->lvec != NULL) {
+	    if (m != NULL) {
+		s->lvec = m;
+		s->lhtype = GRETL_TYPE_MATRIX;
 		err = check_lhs_vec(s);
+	    } else if (v > 0) {
+		s->lhv = v;
+		s->lhtype = GRETL_TYPE_SERIES;
+	    } else {
+		err = E_TYPES;
 	    }
 	} else if (j > 0) {
 	    int k = j - 1;
@@ -825,12 +830,21 @@ static double get_mle_ll (const double *b, void *p)
 
     s->crit = 0.0;
 
+    if (s->lhtype == GRETL_TYPE_MATRIX) {
+	s->lvec = get_matrix_by_name(s->lhname);
+	if (s->lvec == NULL) {
+	    fprintf(stderr, "get_mle_ll: s->lvec is gone!\n");
+	    return NADBL;
+	}
+    }
+
     if (s->lvec != NULL) {
 	k = gretl_vector_get_length(s->lvec);
 	for (t=0; t<k; t++) {
 	    x = s->lvec->val[t];
 	    if (xna(x)) {
-		return NADBL;
+		s->crit = NADBL;
+		break;
 	    }
 	    s->crit += x;
 	}
@@ -839,7 +853,8 @@ static double get_mle_ll (const double *b, void *p)
 	for (t=s->t1; t<=s->t2; t++) {
 	    x = (*s->Z)[k][t];
 	    if (xna(x)) {
-		return NADBL;
+		s->crit = NADBL;
+		break;
 	    }
 	    s->crit += x;
 	}
@@ -863,7 +878,9 @@ static int nl_function_calc (double *f, void *p)
 #endif
 
     /* calculate residual given current parameter estimates */
-    if ((err = nl_calculate_fvec(s))) {
+    err = nl_calculate_fvec(s);
+    fprintf(stderr, "nl_function_calc: nl_calculate_fvec gave %d\n", err);
+    if (err) {
 	return err;
     }
 
@@ -1178,11 +1195,14 @@ static int QML_vcv (nlspec *spec, gretl_matrix *V)
 static double *mle_score_callback (const double *b, int i, void *p)
 {
     nlspec *s = (nlspec *) p;
+    int err;
 
     update_coeff_values(b, s);
-    nl_calculate_fvec(s);
+    err = nl_calculate_fvec(s);
 
-    if (s->lvec != NULL) {
+    if (err) {
+	return NULL;
+    } else if (s->lvec != NULL) {
 	return s->lvec->val;
     } else {
 	return (*s->Z)[s->lhv] + s->t1;
@@ -1959,6 +1979,7 @@ static void clear_nlspec (nlspec *spec)
     spec->opt = OPT_NONE;
 
     spec->dv = 0;
+    spec->lhtype = GRETL_TYPE_NONE;
     spec->lhv = 0;
     spec->lvec = NULL;
 
@@ -3052,6 +3073,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->opt = OPT_NONE;
 
     spec->dv = 0;
+    spec->lhtype = GRETL_TYPE_NONE;
     *spec->lhname = '\0';
     spec->lhv = 0;
     spec->lvec = NULL;
