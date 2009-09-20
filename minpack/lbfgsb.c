@@ -147,9 +147,9 @@ static double ddot_(int *n, double *dx, int *incx, double *dy,
     mp1 = m + 1;
     i1 = *n;
     for (i = mp1; i <= i1; i += 5) {
-	dtemp = dtemp + dx[i] * dy[i] + dx[i + 1] * dy[i + 1] + dx[
-								   i + 2] * dy[i + 2] + dx[i + 3] * dy[i + 3] + dx[i + 
-														   4] * dy[i + 4];
+	dtemp = dtemp + dx[i] * dy[i] + dx[i + 1] * dy[i + 1] + 
+	    dx[i + 2] * dy[i + 2] + dx[i + 3] * 
+	    dy[i + 3] + dx[i + 4] * dy[i + 4];
     }
  L60:
     ret_val = dtemp;
@@ -579,8 +579,8 @@ static int cmprlb_(int *n, int *m, double *x,
 	    k = index[i];
 	    r[i] = -(*theta) * (z[k] - x[k]) - g[k];
 	}
-	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, &wa[(*m << 1) + 1], &wa[
-									     1], info);
+	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, 
+	     &wa[(*m << 1) + 1], &wa[1], info);
 	if (*info != 0) {
 	    *info = -8;
 	    return 0;
@@ -593,8 +593,8 @@ static int cmprlb_(int *n, int *m, double *x,
 	    i2 = *nfree;
 	    for (i = 1; i <= i2; ++i) {
 		k = index[i];
-		r[i] = r[i] + wy[k + pointr * wy_dim1] * a1 + ws[k + 
-								 pointr * ws_dim1] * a2;
+		r[i] = r[i] + wy[k + pointr * wy_dim1] * a1 + 
+		    ws[k + pointr * ws_dim1] * a2;
 	    }
 	    pointr = pointr % *m + 1;
 	}
@@ -602,8 +602,8 @@ static int cmprlb_(int *n, int *m, double *x,
     return 0;
 } /* cmprlb_ */
 
-static int errclb_(int *n, int *m, double *factr, 
-		   double *l, double *u, int *nbd, char *task, int *info,
+static int errclb_(int *n, int *m, double *factr, double *l, 
+		   double *u, int *nbd, char *task, int *info,
 		   int *k)
 {
     /* System generated locals */
@@ -645,9 +645,9 @@ static int errclb_(int *n, int *m, double *factr,
     return 0;
 } /* errclb_ */
 
-static int formk_(int *n, int *nsub, int *ind, int *
-		  nenter, int *ileave, int *indx2, int *iupdat, int *
-		  updatd, double *wn, double *wn1, int *m, double *ws, 
+static int formk_(int *n, int *nsub, int *ind, int *nenter, 
+		  int *ileave, int *indx2, int *iupdat, int *updatd, 
+		  double *wn, double *wn1, int *m, double *ws, 
 		  double *wy, double *sy, double *theta, int *col, 
 		  int *head, int *info)
 {
@@ -687,14 +687,14 @@ static int formk_(int *n, int *nsub, int *ind, int *
 	    for (jy = 1; jy <= i1; ++jy) {
 		js = *m + jy;
 		i2 = *m - jy;
-		dcopy_(&i2, &wn1[jy + 1 + (jy + 1) * wn1_dim1], &c1, &wn1[
-									  jy + jy * wn1_dim1], &c1);
+		dcopy_(&i2, &wn1[jy + 1 + (jy + 1) * wn1_dim1], &c1, 
+		       &wn1[jy + jy * wn1_dim1], &c1);
 		i2 = *m - jy;
-		dcopy_(&i2, &wn1[js + 1 + (js + 1) * wn1_dim1], &c1, &wn1[
-									  js + js * wn1_dim1], &c1);
+		dcopy_(&i2, &wn1[js + 1 + (js + 1) * wn1_dim1], &c1, 
+		       &wn1[js + js * wn1_dim1], &c1);
 		i2 = *m - 1;
-		dcopy_(&i2, &wn1[*m + 2 + (jy + 1) * wn1_dim1], &c1, &wn1[
-									  *m + 1 + jy * wn1_dim1], &c1);
+		dcopy_(&i2, &wn1[*m + 2 + (jy + 1) * wn1_dim1], &c1, 
+		       &wn1[*m + 1 + jy * wn1_dim1], &c1);
 	    }
 	}
 	pbegin = 1;
@@ -894,8 +894,8 @@ static int formt_(int *m, double *wt, double *sy,
 	    ddum = 0.;
 	    i3 = k1;
 	    for (k = 1; k <= i3; ++k) {
-		ddum += sy[i + k * sy_dim1] * sy[j + k * sy_dim1] / sy[k + 
-								       k * sy_dim1];
+		ddum += sy[i + k * sy_dim1] * 
+		    sy[j + k * sy_dim1] / sy[k + k * sy_dim1];
 	    }
 	    wt[i + j * wt_dim1] = ddum + *theta * ss[i + j * ss_dim1];
 	}
@@ -1068,20 +1068,20 @@ static int matupd_(int *n, int *m, double *ws,
     if (*iupdat > *m) {
 	i1 = *col - 1;
 	for (j = 1; j <= i1; ++j) {
-	    dcopy_(&j, &ss[(j + 1) * ss_dim1 + 2], &c1, &ss[j * ss_dim1 + 1]
-		   , &c1);
+	    dcopy_(&j, &ss[(j + 1) * ss_dim1 + 2], &c1, 
+		   &ss[j * ss_dim1 + 1], &c1);
 	    i2 = *col - j;
-	    dcopy_(&i2, &sy[j + 1 + (j + 1) * sy_dim1], &c1, &sy[j + j * 
-								 sy_dim1], &c1);
+	    dcopy_(&i2, &sy[j + 1 + (j + 1) * sy_dim1], &c1, 
+		   &sy[j + j * sy_dim1], &c1);
 	}
     }
     pointr = *head;
     i1 = *col - 1;
     for (j = 1; j <= i1; ++j) {
-	sy[*col + j * sy_dim1] = ddot_(n, &d[1], &c1, &wy[pointr * 
-							  wy_dim1 + 1], &c1);
-	ss[j + *col * ss_dim1] = ddot_(n, &ws[pointr * ws_dim1 + 1], &c1, &
-				       d[1], &c1);
+	sy[*col + j * sy_dim1] = 
+	    ddot_(n, &d[1], &c1, &wy[pointr * wy_dim1 + 1], &c1);
+	ss[j + *col * ss_dim1] = 
+	    ddot_(n, &ws[pointr * ws_dim1 + 1], &c1, &d[1], &c1);
 	pointr = pointr % *m + 1;
     }
     if (*stp == 1.) {
@@ -1298,19 +1298,17 @@ static int dcstep_(double *stx, double *fx, double *dx,
 	q = gamma - *dx + gamma + *dp;
 	r = p / q;
 	stpc = *stx + r * (*stp - *stx);
-	stpq = *stx + *dx / ((*fx - *fp) / (*stp - *stx) + *dx) / 2. * (*stp 
-									- *stx);
-	if ((d1 = stpc - *stx, abs(d1)) < (d2 = stpq - *stx, abs(d2)))
-	    {
-		stpf = stpc;
-	    } else {
+	stpq = *stx + *dx / ((*fx - *fp) / (*stp - *stx) + *dx) / 
+	    2. * (*stp - *stx);
+	if ((d1 = stpc - *stx, abs(d1)) < (d2 = stpq - *stx, abs(d2))) {
+	    stpf = stpc;
+	} else {
 	    stpf = stpc + (stpq - stpc) / 2.;
 	}
 	*brackt = 1;
     } else if (sgnd < 0.) {
 	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
-	d1 = abs(theta), d2 = abs(*dx), d1 = max(d1,d2), d2 = abs(
-								  *dp);
+	d1 = abs(theta), d2 = abs(*dx), d1 = max(d1,d2), d2 = abs(*dp);
 	s = max(d1,d2);
 	d1 = theta / s;
 	gamma = s * sqrt(d1 * d1 - *dx / s * (*dp / s));
@@ -1322,17 +1320,15 @@ static int dcstep_(double *stx, double *fx, double *dx,
 	r = p / q;
 	stpc = *stp + r * (*stx - *stp);
 	stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
-	if ((d1 = stpc - *stp, abs(d1)) > (d2 = stpq - *stp, abs(d2)))
-	    {
-		stpf = stpc;
-	    } else {
+	if ((d1 = stpc - *stp, abs(d1)) > (d2 = stpq - *stp, abs(d2))) {
+	    stpf = stpc;
+	} else {
 	    stpf = stpq;
 	}
 	*brackt = 1;
     } else if (abs(*dp) < abs(*dx)) {
 	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
-	d1 = abs(theta), d2 = abs(*dx), d1 = max(d1,d2), d2 = abs(
-								  *dp);
+	d1 = abs(theta), d2 = abs(*dx), d1 = max(d1,d2), d2 = abs(*dp);
 	s = max(d1,d2);
 	d3 = theta / s;
 	d1 = 0., d2 = d3 * d3 - *dx / s * (*dp / s);
@@ -1352,8 +1348,7 @@ static int dcstep_(double *stx, double *fx, double *dx,
 	}
 	stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
 	if (*brackt) {
-	    if ((d1 = stpc - *stp, abs(d1)) < (d2 = stpq - *stp, abs(
-								     d2))) {
+	    if ((d1 = stpc - *stp, abs(d1)) < (d2 = stpq - *stp, abs(d2))) {
 		stpf = stpc;
 	    } else {
 		stpf = stpq;
@@ -1366,8 +1361,7 @@ static int dcstep_(double *stx, double *fx, double *dx,
 		stpf = max(d1,stpf);
 	    }
 	} else {
-	    if ((d1 = stpc - *stp, abs(d1)) > (d2 = stpq - *stp, abs(
-								     d2))) {
+	    if ((d1 = stpc - *stp, abs(d1)) > (d2 = stpq - *stp, abs(d2))) {
 		stpf = stpc;
 	    } else {
 		stpf = stpq;
@@ -1378,8 +1372,8 @@ static int dcstep_(double *stx, double *fx, double *dx,
     } else {
 	if (*brackt) {
 	    theta = (*fp - *fy) * 3. / (*sty - *stp) + *dy + *dp;
-	    d1 = abs(theta), d2 = abs(*dy), d1 = max(d1,d2), d2 = 
-		abs(*dp);
+	    d1 = abs(theta), d2 = abs(*dy), d1 = max(d1,d2), 
+		d2 = abs(*dp);
 	    s = max(d1,d2);
 	    d1 = theta / s;
 	    gamma = s * sqrt(d1 * d1 - *dy / s * (*dp / s));
@@ -1647,14 +1641,17 @@ static int lnsrlb_(int *n, double *l, double *u,
 	    }
 	}
     }
+
     if (*iter == 0 && ! (*boxed)) {
 	d1 = 1. / *dnorm;
 	*stp = min(d1,*stpmx);
     } else {
 	*stp = 1.;
     }
+
     dcopy_(n, &x[1], &c1, &t[1], &c1);
     dcopy_(n, &g[1], &c1, &r[1], &c1);
+
     *fold = *f;
     *ifun = 0;
     *iback = 0;
@@ -2053,8 +2050,8 @@ static int cauchy_(int *n, double *x, double *l,
 
 static int mainlb_(int *n, int *m, double *x, 
 		   double *l, double *u, int *nbd, double *f, double 
-		   *g, double *factr, double *pgtol, double *ws, double *
-		   wy, double *sy, double *ss, double *yy, double *wt, 
+		   *g, double *factr, double *pgtol, double *ws, 
+		   double *wy, double *sy, double *ss, double *yy, double *wt, 
 		   double *wn, double *snd, double *z, double *r, 
 		   double *d, double *t, double *wa, double *sg, 
 		   double *sgo, double *yg, double *ygo, int *index, 
@@ -2252,11 +2249,11 @@ static int mainlb_(int *n, int *m, double *x,
 	goto L333;
     }
     timer_(&cpu1);
-    cauchy_(n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1], &iwhere[1], &t[
-									      1], &d[1], &z[1], m, &wy[wy_offset], &ws[ws_offset], &sy[
-																       sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1], &wa[(*m 
-																								     << 1) + 1], &wa[(*m << 2) + 1], &wa[*m * 6 + 1], &nint, &sg[1], &
-	    yg[1], &sbgnrm, &info, &epsmch);
+    cauchy_(n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1], &iwhere[1], 
+	    &t[1], &d[1], &z[1], m, &wy[wy_offset], &ws[ws_offset], 
+	    &sy[sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1], 
+	    &wa[(*m << 1) + 1], &wa[(*m << 2) + 1], &wa[*m * 6 + 1], &nint, 
+	    &sg[1], &yg[1], &sbgnrm, &info, &epsmch);
     if (info != 0) {
 	info = 0;
 	col = 0;
@@ -2295,15 +2292,15 @@ static int mainlb_(int *n, int *m, double *x,
 	sbtime = sbtime + cpu2 - cpu1;
 	goto L222;
     }
-    cmprlb_(n, m, &x[1], &g[1], &ws[ws_offset], &wy[wy_offset], &sy[sy_offset]
-	    , &wt[wt_offset], &z[1], &r[1], &wa[1], &index[1], &theta, &
-	    col, &head, &nfree, &cnstnd, &info);
+    cmprlb_(n, m, &x[1], &g[1], &ws[ws_offset], &wy[wy_offset], 
+	    &sy[sy_offset], &wt[wt_offset], &z[1], &r[1], &wa[1], 
+	    &index[1], &theta, &col, &head, &nfree, &cnstnd, &info);
     if (info != 0) {
 	goto L444;
     }
-    subsm_(n, m, &nfree, &index[1], &l[1], &u[1], &nbd[1], &z[1], &r[1], &
-	   ws[ws_offset], &wy[wy_offset], &theta, &col, &head, &iword, &wa[1]
-	   , &wn[wn_offset], &info);
+    subsm_(n, m, &nfree, &index[1], &l[1], &u[1], &nbd[1], &z[1], &r[1],
+	   &ws[ws_offset], &wy[wy_offset], &theta, &col, &head, &iword, 
+	   &wa[1], &wn[wn_offset], &info);
  L444:
     if (info != 0) {
 	info = 0;
@@ -2325,9 +2322,9 @@ static int mainlb_(int *n, int *m, double *x,
     }
     timer_(&cpu1);
  L666:
-    lnsrlb_(n, &l[1], &u[1], &nbd[1], &x[1], f, &fold, &gd, &gdold, &g[1], &
-	    d[1], &r[1], &t[1], &z[1], &stp, &dnorm, &dtd, &xstep, &
-	    stpmx, &iter, &ifun, &iback, &nfgv, &info, task, &boxed, &cnstnd, 
+    lnsrlb_(n, &l[1], &u[1], &nbd[1], &x[1], f, &fold, &gd, &gdold, &g[1],
+	    &d[1], &r[1], &t[1], &z[1], &stp, &dnorm, &dtd, &xstep, &stpmx, 
+	    &iter, &ifun, &iback, &nfgv, &info, task, &boxed, &cnstnd, 
 	    csave, &isave[22], &dsave[17]);
     if (info != 0 || iback >= 20) {
 	dcopy_(n, &t[1], &c1, &x[1], &c1);
@@ -2401,11 +2398,11 @@ static int mainlb_(int *n, int *m, double *x,
     }
     updatd = 1;
     ++iupdat;
-    matupd_(n, m, &ws[ws_offset], &wy[wy_offset], &sy[sy_offset], &ss[
-								      ss_offset], &d[1], &r[1], &itail, &iupdat, &col, &head, &
-	    theta, &rr, &dr, &stp, &dtd);
-    formt_(m, &wt[wt_offset], &sy[sy_offset], &ss[ss_offset], &col, &theta, &
-	   info);
+    matupd_(n, m, &ws[ws_offset], &wy[wy_offset], &sy[sy_offset], 
+	    &ss[ss_offset], &d[1], &r[1], &itail, &iupdat, &col, &head,
+	    &theta, &rr, &dr, &stp, &dtd);
+    formt_(m, &wt[wt_offset], &sy[sy_offset], &ss[ss_offset], &col, 
+	   &theta, &info);
     if (info != 0) {
 	info = 0;
 	col = 0;
@@ -2532,11 +2529,11 @@ int setulb_(int *n, int *m, double *x,
     lsgo = isave[18];
     lyg = isave[19];
     lygo = isave[20];
-    mainlb_(n, m, &x[1], &l[1], &u[1], &nbd[1], f, &g[1], factr, pgtol, &wa[
-									    lws], &wa[lwy], &wa[lsy], &wa[lss], &wa[lyy], &wa[lwt], &wa[lwn], 
+    mainlb_(n, m, &x[1], &l[1], &u[1], &nbd[1], f, &g[1], factr, pgtol, 
+	    &wa[lws], &wa[lwy], &wa[lsy], &wa[lss], &wa[lyy], &wa[lwt], &wa[lwn], 
 	    &wa[lsnd], &wa[lz], &wa[lr], &wa[ld], &wa[lt], &wa[lwa], &wa[lsg],
-	    &wa[lsgo], &wa[lyg], &wa[lygo], &iwa[1], &iwa[*n + 1], &iwa[(*n 
-									 << 1) + 1], task, csave, &lsave[1], &isave[22], &dsave[1]
-	    );
+	    &wa[lsgo], &wa[lyg], &wa[lygo], &iwa[1], &iwa[*n + 1], 
+	    &iwa[(*n << 1) + 1], task, csave, &lsave[1], &isave[22], 
+	    &dsave[1]);
     return 0;
 } /* setulb_ */
