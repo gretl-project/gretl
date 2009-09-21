@@ -7571,6 +7571,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case GNUPLOT:
     case SCATTERS:
 	if (cmd->ci == GNUPLOT) {
+	    if (cmd->opt & OPT_U) {
+		/* output to file */
+		goto use_lib;
+	    }
 	    if (cmd->opt & OPT_C) {
 		err = xy_plot_with_control(cmd->list, cmd->param, 
 					   (const double **) *pZ, pdinfo,
@@ -7713,6 +7717,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	/* else fall through */
 
     default:
+    use_lib:
 	err = gretl_cmd_exec(s, pZ, pdinfo);
 	break;
     } /* end of command switch */
