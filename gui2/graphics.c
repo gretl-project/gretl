@@ -77,6 +77,7 @@ struct pdf_ps_saver {
     GtkWidget *dialog;
     GPT_SPEC *spec;
     int pdfcairo;
+    int mono;
     double pwidth;
     double pheight;
     char psfont[64];
@@ -96,6 +97,7 @@ static void saver_init (struct pdf_ps_saver *s,
     s->dialog = w;
     s->spec = spec;
     s->pdfcairo = 0;
+    s->mono = mono;
     s->pwidth = pwidth;
     s->pheight = pheight;
     strcpy(s->psfont, psfont);
@@ -123,8 +125,7 @@ static void saver_set_defaults (struct pdf_ps_saver *s)
 	psfontsize = s->psfontsize;
     }
 
-    mono = (s->spec->flags & GPT_MONO);
-
+    mono = s->mono;
     lw_factor = s->lw_factor;    
 }
 
@@ -244,11 +245,7 @@ static GtkWidget *label_in_hbox (const char *s, int center)
 
 void set_color_mode (GtkToggleButton *b, struct pdf_ps_saver *s)
 {
-    if (button_is_active(b)) {
-	s->spec->flags |= GPT_MONO;
-    } else {
-	s->spec->flags &= ~GPT_MONO;
-    }
+    s->mono = button_is_active(b);
 }
 
 static void color_mode_selector (struct pdf_ps_saver *s,
@@ -265,7 +262,7 @@ static void color_mode_selector (struct pdf_ps_saver *s,
     g_signal_connect(b, "toggled", G_CALLBACK(set_color_mode), s);
     pack_in_hbox(b, vbox, 0);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), mono);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), s->mono);
 }
 
 static GtkWidget *ps_font_selector (struct pdf_ps_saver *s)
@@ -333,7 +330,6 @@ static void record_selected_ps_font (struct pdf_ps_saver *s)
 static void 
 saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
 {
-    int mono = (s->spec->flags & GPT_MONO);
     char fontstr[64];
     char lwstr[32];
     const char *ttype;
@@ -347,19 +343,25 @@ saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
     }
 
     if (s->pdfcairo) {
-	ttype = (mono)? "pdfcairo mono dashed" : "pdfcairo";
+	ttype = (s->mono)? "pdfcairo mono dashed" : "pdfcairo";
 	sprintf(fontstr, "font \"%s,%d\"", s->pdffont, s->pdffontsize);
     } else {
 	record_selected_ps_font(s);
 	if (s->spec->termtype == GP_TERM_EPS) {
-	    ttype = (mono)? "post eps mono" : "post eps solid";
+	    ttype = (s->mono)? "post eps mono" : "post eps solid";
 	    sprintf(fontstr, "font \"%s,%d\"", s->psfont, 2 * s->psfontsize);
 	} else {
 	    /* PDF via pdflib */
-	    ttype = (mono)? "pdf mono dashed" : "pdf";
+	    ttype = (s->mono)? "pdf mono dashed" : "pdf";
 	    sprintf(fontstr, "font \"%s,%d\"", s->psfont, s->psfontsize);
 	}
     } 
+
+    if (s->mono) {
+	s->spec->flags |= GPT_MONO;
+    } else {
+	s->spec->flags &= ~GPT_MONO;
+    }
 
     sprintf(termstr, "set term %s %s%s size %gin,%gin", ttype, fontstr, 
 	    lwstr, s->pwidth, s->pheight);
@@ -466,6 +468,9 @@ void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
 		     G_CALLBACK(delete_widget), dialog);
     
     gtk_widget_show_all(dialog);
+
+    /* unset mono flag on exit */
+    spec->flags &= ~GPT_MONO;
 }
 
 GPT_SPEC *graph_saver_get_plotspec (gpointer p)
