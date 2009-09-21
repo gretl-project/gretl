@@ -1422,7 +1422,7 @@ libset_query_settings (const char *s, PRN *prn)
 	}
     } else if (!strcmp(s, "seed")) {
 	pprintf(prn, "%s: unsigned int, currently %u\n",
-		s, state->seed);
+		s, state->seed ? state->seed : gretl_rand_get_seed());
     } else if (!strcmp(s, "csv_delim")) {
 	pprintf(prn, "%s: named character, currently \"%s\"\n", s,
 		arg_from_delim(state->delim));

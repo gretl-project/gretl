@@ -2194,6 +2194,12 @@ static NODE *string_to_matrix_func (NODE *n, int f, parser *p)
 	    break;
 	}
 
+	if (p->err == E_FOPEN) {
+	    /* should we do this? */
+	    ret->v.m = gretl_null_matrix_new();
+	    p->err = 0;
+	}
+
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
 	}
@@ -4276,7 +4282,10 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
 		if (n->t == EMPTY) {
 		    n = t->v.bn.n[k++];
 		} 
-		x = na(n->v.xval)? M_NA : n->v.xval;
+		x = node_get_scalar(n, p);
+		if (na(x)) {
+		    x = M_NA;
+		}
 		gretl_matrix_set(M, i, j, x);
 	    }
 	}
@@ -5461,7 +5470,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 
     for (i=0; i<m && !p->err; i++) {
 	n = nn->v.bn.n[i];
-	if (ok_matdef_sym(n->t)) {
+	if (ok_matdef_sym(n->t) || scalar_matrix_node(n)) {
 	    nn->v.bn.n[i] = n;
 	} else {
 	    n = eval(n, p);
@@ -5471,7 +5480,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	    if (p->err) {
 		break;
 	    }
-	    if (ok_matdef_sym(n->t)) {
+	    if (ok_matdef_sym(n->t) || scalar_matrix_node(n)) {
 		if (nntmp == NULL) {
 		    free_tree(nn->v.bn.n[i], p, "MatDef");
 		}
@@ -5482,7 +5491,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 		break;
 	    }
 	}
-	if (n->t == NUM) {
+	if (n->t == NUM || scalar_matrix_node(n)) {
 	    nnum++;
 	} else if (n->t == VEC) {
 	    nvec++;
