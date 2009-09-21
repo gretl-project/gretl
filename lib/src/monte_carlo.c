@@ -337,6 +337,7 @@ int ok_in_loop (int c)
 	c == DATA ||
 	c == DELEET ||
 	c == EQNPRINT ||
+	c == FOREIGN ||
 	c == FUNC ||
 	c == HURST ||
 	c == INCLUDE ||
@@ -2696,6 +2697,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (loop_is_progressive(loop)) {
 		cmd->flags |= CMD_PROG;
 	    }
+
 	    err = parse_command_line(line, cmd, pZ, pdinfo);
 
 	    if (cmd->ci < 0) {
