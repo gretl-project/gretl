@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-09-13 16:38-0400\n"
-"PO-Revision-Date: 2009-08-30 13:54-0400\n"
+"PO-Revision-Date: 2009-09-22 11:11+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
-"Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
+"Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2149,7 +2149,7 @@ msgstr "'%s' : no está preparado para este tipo"
 
 #: lib/src/genfuncs.c:722 gui2/library.c:4095
 msgid "Input must be a monthly or quarterly time series"
-msgstr ""
+msgstr "la serie input debe ser mensual o trimestral"
 
 #: lib/src/genfuncs.c:732 plugin/tramo-x12a.c:993
 msgid ""
@@ -7566,12 +7566,13 @@ msgstr ""
 "Ya hay una variable con este nombre.\n"
 "en el conjunto de datos ¿Sobreescribirla?"
 
-#: gui2/database.c:478
-#, fuzzy, c-format
+#: gui2/database.c:478, c-format
 msgid ""
 "Really delete the selected series\n"
 "from the database '%s'?"
-msgstr "¿Desea realmente eliminar la(s) serie(s) seleccionada(s)?"
+msgstr ""
+"¿Desea realmente eliminar la(s) serie(s)\n"
+"seleccionada(s) de la base de datos '%s'?"
 
 #: gui2/database.c:640
 msgid "Warning: series has missing observations"
@@ -7698,40 +7699,33 @@ msgstr "Fallo al recuperar la descripción de los datos"
 msgid "didn't get description from %s\n"
 msgstr "no se consiguió descripción de %s\n"
 
-#: gui2/datafiles.c:749
-#, fuzzy, c-format
+#: gui2/datafiles.c:749, c-format
 msgid "Function package %s"
-msgstr "paquetes de funciones"
+msgstr "Paquete de función %s"
 
 #: gui2/datafiles.c:751
-#, fuzzy
 msgid "Delete package file"
-msgstr "gretl: ficheros de práctica"
+msgstr "Borrar fichero de paquete"
 
 #: gui2/datafiles.c:752
-#, fuzzy
 msgid "Unload member functions"
-msgstr "Funciones de ayuda"
+msgstr "Descargar las funciones internas"
 
 #: gui2/datafiles.c:844
-#, fuzzy
 msgid "Add to functions shown"
-msgstr "Llamada a la función %s"
+msgstr "Añadir a las funciones que se muestran"
 
 #: gui2/datafiles.c:845
-#, fuzzy
 msgid "Replace functions shown"
-msgstr "Funciones de ayuda"
+msgstr "Reemplazar las funciones mostradas"
 
-#: gui2/datafiles.c:868
-#, fuzzy, c-format
+#: gui2/datafiles.c:868, c-format
 msgid "Found %d function file(s)"
-msgstr "Archivos de _función"
+msgstr "Se han encontrado %d archivo(s) de función"
 
 #: gui2/datafiles.c:874
-#, fuzzy
 msgid "No function files were found"
-msgstr "No se han encontrado paquetes de funciones"
+msgstr "No se han encontrado archivos de función"
 
 #: gui2/datafiles.c:1057 gui2/datafiles.c:1076 gui2/datafiles.c:1093
 #: gui2/datafiles.c:1201
@@ -8116,23 +8110,20 @@ msgid "Do you want to save this gretl session?"
 msgstr "¿Desea guardar esta sesión de Gretl?"
 
 #: gui2/dialogs.c:134
-#, fuzzy
 msgid "Save a record of the commands you executed?"
-msgstr "No hay instrucciones a ejecutar"
+msgstr "¿Desea guardar un registro de las instrucciones que ha ejecutado?"
 
 #: gui2/dialogs.c:136
 msgid "Always prompt if there are unsaved changes"
-msgstr ""
+msgstr "Si hay cambios sin guardar, preguntar siempre"
 
 #: gui2/dialogs.c:143
-#, fuzzy
 msgid "save session"
-msgstr "Guardar Sesión"
+msgstr "guardar sesión"
 
 #: gui2/dialogs.c:143
-#, fuzzy
 msgid "save commands"
-msgstr "Guardar las instrucciones de R"
+msgstr "guardar las instrucciones"
 
 #: gui2/dialogs.c:208
 msgid ""
@@ -8151,9 +8142,8 @@ msgstr ""
 "en el conjunto de datos actual?"
 
 #: gui2/dialogs.c:321
-#, fuzzy
 msgid "Print missing values as:"
-msgstr "_Contar valores perdidos"
+msgstr "Mostrar los valores ausentes como:"
 
 #: gui2/dialogs.c:428
 msgid "gretl: data delimiter"
@@ -8529,9 +8519,8 @@ msgid "Test against gamma distribution"
 msgstr "Contraste contra la distribución gamma"
 
 #: gui2/dialogs.c:3606
-#, fuzzy
 msgid "Use model names"
-msgstr "Usar líneas"
+msgstr "Usar nombres de modelos"
 
 #: gui2/dialogs.c:3610 gui2/model_table.c:1026 gui2/model_table.c:1218
 msgid "t-statistics in parentheses"
@@ -8543,7 +8532,7 @@ msgstr "opciones de la tabla de modelos"
 
 #: gui2/dialogs.c:3635
 msgid "column headings"
-msgstr ""
+msgstr "cabeceras de las columnas"
 
 #: gui2/dialogs.c:3676 gui2/selector.c:4430
 msgid "Show p-values"
@@ -8551,7 +8540,7 @@ msgstr "Mostrar los valores p"
 
 #: gui2/dialogs.c:3683
 msgid "Show significance asterisks"
-msgstr ""
+msgstr "Mostrar los asteriscos de significatividad"
 
 #: gui2/dialogs.c:3691 gui2/dialogs.c:4082 gui2/series_view.c:614
 msgid "significant figures"
@@ -8885,9 +8874,8 @@ msgid "Call to function %s"
 msgstr "Llamada a la función %s"
 
 #: gui2/fncall.c:653
-#, fuzzy
 msgid "Select arguments:"
-msgstr "Argumentos:"
+msgstr "Elegir argumentos:"
 
 #: gui2/fncall.c:685
 msgid "More..."
@@ -8914,22 +8902,20 @@ msgid "Couldn't get function package information"
 msgstr "No se pudo obtener la información del paquete de función"
 
 #: gui2/fnsave.c:308
-#, fuzzy
 msgid "Please add a sample script for this package"
-msgstr "Por favor, primero añada una variable al conjunto de datos"
+msgstr "Por favor, añada un guión de ejemplo para este paquete de funciones"
 
 #: gui2/fnsave.c:313
 msgid "Invalid version string: use numbers and '.' only"
 msgstr "Expresión de versión no válida: use sólo números y '.'"
 
-#: gui2/fnsave.c:458
-#, fuzzy, c-format
+#: gui2/fnsave.c:458, c-format
 msgid "Can't find the function '%s'"
-msgstr "Llamada a la función %s"
+msgstr "No puedo encontrar la función '%s'"
 
 #: gui2/fnsave.c:747
 msgid "private"
-msgstr ""
+msgstr "privado"
 
 #: gui2/fnsave.c:777
 msgid "No special requirement"
@@ -8956,9 +8942,8 @@ msgid "Minimum gretl version"
 msgstr "Mínima versión de Gretl"
 
 #: gui2/fnsave.c:930
-#, fuzzy
 msgid "Insert today's date"
-msgstr "_Insertar obs"
+msgstr "Insertar la fecha de hoy"
 
 #: gui2/fnsave.c:949 gui2/gui_utils.c:1840 gui2/ssheet.c:2435
 #: gui2/ssheet.c:2460
@@ -8998,9 +8983,8 @@ msgid "Edit sample script"
 msgstr "Editar guión de ejemplo"
 
 #: gui2/fnsave.c:1118
-#, fuzzy
 msgid "Add/remove functions"
-msgstr "Guardar funciones"
+msgstr "Añadir/borrar funciones"
 
 #: gui2/fnsave.c:1125
 msgid "Upload package to server on save"
@@ -9040,6 +9024,9 @@ msgid ""
 "must be less than 32 characters in length, must include only\n"
 "ASCII letters, numbers and '_', and must end with \".gfn\""
 msgstr ""
+"Nombre de archivo de paquete no válido: el nombre debe comenzar con\n"
+"una letra, debe tener menos de 32 caracteres, sólo puede contener\n"
+"letras ASCII, números y el carácter '_', además debe finalizar con \".gfn\""
 
 #: gui2/fnsave.c:1424 gui2/library.c:6358
 msgid "OK to overwrite?"
@@ -9440,9 +9427,8 @@ msgid "open a remote (web) database on startup"
 msgstr "abrir una base de datos remota (web) al inicio"
 
 #: gui2/gretl.c:121 gui2/gretl.c:193
-#, fuzzy
 msgid "open (edit) a function package on startup"
-msgstr "gretl: paquetes de funciones en %s"
+msgstr "abrir (editar) un paquete de funciones al iniciar"
 
 #: gui2/gretl.c:122 gui2/gretl.c:195
 msgid "force use of English"
@@ -9462,7 +9448,7 @@ msgstr "enviar la información de depurado a la consola"
 
 #: gui2/gretl.c:205
 msgid "pass integer value to script"
-msgstr ""
+msgstr "pasar un valor entero al guión"
 
 #: gui2/gretl.c:319
 #, c-format
@@ -9619,9 +9605,8 @@ msgid "R script"
 msgstr "Guión de R"
 
 #: gui2/gretl.c:1308 gui2/gretl.c:1567
-#, fuzzy
 msgid "Ox program"
-msgstr "Programas Ox"
+msgstr "Programa Ox"
 
 #: gui2/gretl.c:1311
 msgid "_Session files"
@@ -9669,7 +9654,7 @@ msgstr "Sobre _servidor..."
 
 #: gui2/gretl.c:1327
 msgid "Edit package..."
-msgstr ""
+msgstr "Editar paquete..."
 
 #: gui2/gretl.c:1328
 msgid "_New package"
@@ -10844,9 +10829,8 @@ msgid "gretl: edit R commands"
 msgstr "gretl: editar instrucciones de R"
 
 #: gui2/gui_utils.c:1398
-#, fuzzy
 msgid "gretl: edit Ox program"
-msgstr "gretl: periodograma"
+msgstr "gretl: editar programa Ox"
 
 #: gui2/gui_utils.c:1400 gui2/gui_utils.c:3712 gui2/gui_utils.c:3864
 msgid "gretl: script output"
@@ -11197,36 +11181,31 @@ msgstr "Accesores"
 
 #: gui2/helpfiles.c:385
 msgid "Mathematical"
-msgstr ""
+msgstr "Matemática"
 
 #: gui2/helpfiles.c:389 doc/commands/matfuncs.c:56
 msgid "Filters"
 msgstr "Filtros"
 
 #: gui2/helpfiles.c:391
-#, fuzzy
 msgid "Statistical"
-msgstr "Estadísticos"
+msgstr "Estadística"
 
 #: gui2/helpfiles.c:393
-#, fuzzy
 msgid "Probability"
-msgstr "Probit"
+msgstr "Probabilidad"
 
 #: gui2/helpfiles.c:395
-#, fuzzy
 msgid "Linear algebra"
-msgstr "Álgebra matricial"
+msgstr "Álgebra lineal"
 
 #: gui2/helpfiles.c:397
-#, fuzzy
 msgid "Matrix building"
-msgstr "Álgebra matricial"
+msgstr "Construcción de matrices"
 
 #: gui2/helpfiles.c:399
-#, fuzzy
 msgid "Matrix shaping"
-msgstr "Álgebra matricial"
+msgstr "Forma de la matriz"
 
 #: gui2/helpfiles.c:403 doc/commands/matfuncs.c:55
 msgid "Data utilities"
@@ -12134,7 +12113,7 @@ msgstr "Desviaciones típicas entre paréntesis"
 
 #: gui2/model_table.c:1032 gui2/model_table.c:1224
 msgid "p-values in brackets"
-msgstr ""
+msgstr "valores p entre corchetes"
 
 #: gui2/model_table.c:1036 gui2/model_table.c:1145 gui2/model_table.c:1229
 msgid "* indicates significance at the 10 percent level"
@@ -12159,7 +12138,7 @@ msgstr "gretl: tabla de modelos"
 
 #: gui2/model_table.c:1140
 msgid "$p$-values in brackets"
-msgstr ""
+msgstr "valores $p$ entre corchetes"
 
 #: gui2/model_table.c:1151
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
@@ -12722,9 +12701,8 @@ msgid "Independent variables"
 msgstr "Variables independientes"
 
 #: gui2/selector.c:4934
-#, fuzzy
 msgid "Public functions"
-msgstr "Funciones de ayuda"
+msgstr "Funciones públicas"
 
 #: gui2/selector.c:5151
 msgid "Select variables for logging"
@@ -12820,7 +12798,7 @@ msgstr "Guardar los datos"
 
 #: gui2/selector.c:5753
 msgid "Edit package list"
-msgstr ""
+msgstr "Editar lista de paquetes"
 
 #: gui2/selector.c:6119
 msgid "lag order"
@@ -13144,9 +13122,8 @@ msgid "Show icon view automatically"
 msgstr "Mostrar automáticamente la vista de iconos"
 
 #: gui2/settings.c:167
-#, fuzzy
 msgid "Prompt to save session"
-msgstr "Guardar Sesión"
+msgstr "Preguntar si se desea guardar sesión"
 
 #: gui2/settings.c:170
 msgid "Enable Ox support"
