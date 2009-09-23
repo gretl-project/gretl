@@ -2691,13 +2691,13 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		break;
 	    }
 
-	    /* We already have the "ci" index recorded, but here
-	       we do some further parsing. 
-	    */
 	    if (loop_is_progressive(loop)) {
 		cmd->flags |= CMD_PROG;
 	    }
 
+	    /* We already have the "ci" index recorded, but here
+	       we do some further parsing. 
+	    */
 	    err = parse_command_line(line, cmd, pZ, pdinfo);
 
 	    if (cmd->ci < 0) {
