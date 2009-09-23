@@ -537,7 +537,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 			const double **Z, const DATAINFO *pdinfo) 
 {
     gretl_matrix *V = NULL;
-    gretl_vector *Xs = NULL;
+    gretl_vector *Xt = NULL;
     gretl_vector *b = NULL;
     double s2 = pmod->sigma * pmod->sigma;
     double vyh, xval;
@@ -555,8 +555,8 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 	goto bailout;
     }
 
-    Xs = gretl_vector_alloc(k);
-    if (Xs == NULL) {
+    Xt = gretl_vector_alloc(k);
+    if (Xt == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -569,7 +569,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 	    missing = na(pmod->yhat[t]);
 	}   
 
-	/* populate Xs vector for observation */
+	/* populate Xt vector for observation */
 	for (i=0; i<k && !missing; i++) {
 	    vi = pmod->list[i + 2];
 	    xval = Z[vi][t];
@@ -577,20 +577,20 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 		fc->sderr[t] = fc->yhat[t] = NADBL;
 		missing = 1;
 	    } else {
-		gretl_vector_set(Xs, i, xval);
+		gretl_vector_set(Xt, i, xval);
 	    }
 	}
 
 	if (missing) {
 	    fc->sderr[t] = fc->yhat[t] = NADBL;
 	    continue;
-	}
+	} 
 
 	/* forecast value */
-	fc->yhat[t] = gretl_vector_dot_product(Xs, b, NULL);
+	fc->yhat[t] = gretl_vector_dot_product(Xt, b, NULL);
 
 	/* forecast variance */
-	vyh = gretl_scalar_qform(Xs, V, &err);
+	vyh = gretl_scalar_qform(Xt, V, &err);
 	if (na(vyh)) {
 	    err = 1;
 	} else {
@@ -607,7 +607,67 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
  bailout:
 
     gretl_matrix_free(V);
-    gretl_vector_free(Xs);
+    gretl_vector_free(Xt);
+    gretl_vector_free(b);
+
+    return err;
+}
+
+static int fixed_effects_fcast (Forecast *fc, MODEL *pmod, 
+				const double **Z, const DATAINFO *pdinfo) 
+{
+    gretl_vector *b = NULL;
+    double xval;
+    const double *ahat;
+    int k = pmod->ncoeff;
+    int i, vi, t;
+    int err = 0;
+
+    b = gretl_coeff_vector_from_model(pmod, NULL, &err);
+    if (err) {
+	return err;
+    }
+
+    ahat = gretl_model_get_data(pmod, "ahat");
+    if (ahat == NULL) {
+	fprintf(stderr, "fixed_effects_fcast: ahat is missing\n");
+	gretl_matrix_free(b);
+	return E_DATA;
+    }
+
+    for (t=fc->t1; t<=fc->t2 && !err; t++) {
+	int missing = 0;
+
+	/* skip if we can't compute forecast */
+	if (t >= pmod->t1 && t <= pmod->t2) {
+	    missing = na(pmod->yhat[t]);
+	} 
+
+	if (!missing) {
+	    /* per-unit intercept */
+	    if (na(ahat[t])) {
+		missing = 1;
+	    } else {
+		fc->yhat[t] = ahat[t];
+	    }
+	}
+
+	for (i=1; i<k && !missing; i++) {
+	    vi = pmod->list[i + 2];
+	    xval = Z[vi][t];
+	    if (na(xval)) {
+		missing = 1;
+	    } else {
+		fc->yhat[t] += b->val[i] * xval;
+	    }
+	}	
+
+	if (missing) {
+	    fc->sderr[t] = fc->yhat[t] = NADBL;
+	    continue;
+	} 
+    }
+
     gretl_vector_free(b);
 
     return err;
@@ -2029,7 +2089,9 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	asy_errs = 1;
     }
 
-    if (!FCAST_SPECIAL(pmod->ci) && !integrate) {
+    if (pmod->ci == PANEL) {
+	; /* don't do the things below */
+    } else if (!FCAST_SPECIAL(pmod->ci) && !integrate) {
 	if (!AR_MODEL(pmod->ci) && fc.dvlags == NULL) {
 	    /* we'll do Davidson-MacKinnon error variance */
 	    DM_errs = 1;
@@ -2075,7 +2137,9 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     /* compute the actual forecast */
-    if (DM_errs) {
+    if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
+	err = fixed_effects_fcast(&fc, pmod, Z, pdinfo);
+    } else if (DM_errs) {
 	err = static_fcast_with_errs(&fc, pmod, Z, pdinfo);
     } else if (pmod->ci == NLS) {
 	err = nls_fcast(&fc, pmod, pZ, pdinfo);
