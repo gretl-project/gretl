@@ -33,6 +33,7 @@ $TOOL -change ${AUXPATH}/libreadline.5.2.dylib ${NEWPATH}/libreadline.5.2.dylib 
 $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib lib/libgretl-1.0.0.dylib
 $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib lib/libmpfr.1.dylib
 if [ -f lib/libfftw3.dylib ] ; then
+  $TOOL -change ${AUXPATH}/libfftw3.dylib ${NEWPATH}/libfftw3.dylib lib/libgretl-1.0.0.dylib
   $TOOL -change ${AUXPATH}/libfftw3.dylib ${NEWPATH}/libfftw3.dylib bin/gretlcli
   $TOOL -change ${AUXPATH}/libfftw3.dylib ${NEWPATH}/libfftw3.dylib bin/gretl_x11
 fi
