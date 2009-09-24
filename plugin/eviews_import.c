@@ -133,6 +133,39 @@ static int get_data (FILE *fp, long pos, double **Z, int i, int n)
     return err;
 }
 
+static int read_history (FILE *fp, long pos, DATAINFO *pdinfo, int i)
+{
+    char *htxt;
+    int hpos, len, err = 0;
+
+    fseek(fp, pos + 2, SEEK_SET);
+    len = read_int(fp, &err);
+    if (err) {
+	return 1;
+    }
+
+    fseek(fp, pos + 10, SEEK_SET);
+    hpos = read_long(fp, &err);
+    if (err) {
+	return 1;
+    }  
+
+    htxt = calloc(len + 1, 1);
+    if (htxt != NULL) {
+	fseek(fp, hpos, SEEK_SET);
+	if (fread(htxt, 1, len, fp) == len) {
+	    char *targ = VARLABEL(pdinfo, i);
+
+	    *targ = '\0';
+	    strncat(targ, htxt, MAXLABEL - 1);
+	    fprintf(stderr, "history: '%s'\n", htxt);
+	}
+	free(htxt);
+    }
+
+    return 0;
+}
+
 static int read_wf1_variables (FILE *fp, long pos, double **Z,
 			       DATAINFO *dinfo, int *nvread, PRN *prn)
 {
@@ -187,6 +220,13 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	} else {
 	    fputs("Couldn't find the data: skipping this variable\n", stderr);
 	}
+
+	/* stream pos for history */
+	fseek(fp, pos + 54, SEEK_SET);
+	u = read_long(fp, &err);
+	if (u > 0) {
+	    read_history(fp, u, dinfo, j);
+	}
     }
 
     *nvread = j;
@@ -199,6 +239,35 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 
     return err;
 }
+
+#if 0
+
+static void analyse_mystery_vals (FILE *fp)
+{
+    union {
+	unsigned char s[8];
+	short i2[4];
+	int i4[2];
+    } u;
+    short k;
+    int err = 0;
+
+    fseek(fp, 122, SEEK_SET);
+    k = read_short(fp, &err);
+    fprintf(stderr, "got %d at offset 122\n", (int) k);
+
+    fseek(fp, 132, SEEK_SET);
+    fread(&u.s, 1, 8, fp);
+    fprintf(stderr, "8 bytes starting at offset 132:\n");
+    fprintf(stderr, "bytes: %d, %d, %d, %d, %d, %d, %d, %d\n",
+	    (int) u.s[0], (int) u.s[1], (int) u.s[2], (int) u.s[3], 
+	    (int) u.s[4], (int) u.s[5], (int) u.s[6], (int) u.s[7]);
+    fprintf(stderr, "shorts: %d, %d, %d, %d\n", 
+	    (int) u.i2[0], (int) u.i2[1], (int) u.i2[2], (int) u.i2[3]);
+    fprintf(stderr, "ints: %d, %d\n", u.i4[0], u.i4[1]);
+}
+
+#endif
 
 static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
 {
@@ -226,6 +295,10 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
     fseek(fp, 140, SEEK_SET);
     nobs = read_int(fp, &err);
 
+#if 0
+    analyse_mystery_vals(fp);
+#endif
+
     if (nvars <= 2 || nobs <= 0 || startyr <= 0 ||
 	pd <= 0 || startper < 0) {
 	err = E_DATA;
@@ -246,7 +319,16 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
 
     if (!err) {
 	if (startper > 0) {
-	    sprintf(dinfo->stobs, "%d:%d", startyr, startper);
+	    int p10 = log(pd) / log(10.0);
+
+	    if (p10 > 0) {
+		char fmt[16];
+
+		sprintf(fmt, "%%d:%%0%dd", p10 + 1);
+		sprintf(dinfo->stobs, fmt, startyr, startper);
+	    } else {
+		sprintf(dinfo->stobs, "%d:%d", startyr, startper);
+	    }
 	} else {
 	    sprintf(dinfo->stobs, "%d", startyr);
 	}
@@ -256,6 +338,7 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
 	}
 
 	dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
+	ntodate(dinfo->endobs, dinfo->n - 1, dinfo);
     }
 
     return err;
