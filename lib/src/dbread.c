@@ -675,19 +675,35 @@ static int get_endobs (char *datestr, int startyr, int startfrac,
 
 static int dinfo_sanity_check (const DATEINFO *dinfo)
 {
-    if (dinfo->info < 0 || dinfo->info > 365 ||
-	dinfo->year < 0 || dinfo->year > 3000 ||
-	dinfo->month < 0 || dinfo->month > 12 ||
-	dinfo->day < 0 || dinfo->day > 365) {
+    int err = 0;
+
+    if (dinfo->info < 0 || dinfo->info > 365) {
+	err = 1;
+    } else if (dinfo->day < 0 || dinfo->day > 365) {
+	err = 1;
+    } else if (dinfo->year < 0 || dinfo->year > 3000) {
+	err = 1;
+    } else if (dinfo->info == 52) {
+	/* note: "month" = week */
+	if (dinfo->month < 0 || dinfo->month > 52) {
+	    err = 1;
+	}
+    } else {
+	/* annual, quarterly, monthly */
+	if (dinfo->month < 0 || dinfo->month > 12) {
+	    err = 1;
+	}
+    }
+
+    if (err) {
 	gretl_errmsg_set(_("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: failed dinfo_sanity_check:\n"
 		" info=%ld, year=%d, month=%d, day=%d\n",
 		dinfo->info, (int) dinfo->year, (int) dinfo->month, 
 		(int) dinfo->day);
-	return 1;
     }
 
-    return 0;
+    return err;
 }
 
 static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
@@ -715,7 +731,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 	} else {
 	    startfrac = 4;
 	}
-    } else if (dinfo->info == 12) {
+    } else if (dinfo->info == 12 || dinfo->info == 52) {
 	sprintf(pdstr, ".%02d", dinfo->month);
 	startfrac = dinfo->month;
     } else if (dinfo->info == 1) {
