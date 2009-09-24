@@ -66,4 +66,6 @@ void run_gp_script (gchar *buf);
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause);
 
+void close_plot_windows (void);
+
 #endif /* GPT_CONTROL_H */

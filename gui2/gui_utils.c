@@ -3474,6 +3474,7 @@ static gboolean maybe_set_sample_from_model (MODEL *pmod)
 			 "so some menu options will be disabled.\n\n"
 			 "Do you want to restore the sample on which\n"
 			 "this model was estimated?");
+    int full = (pmod->submask == NULL);
     int resp, err = 0;
 
     resp = yes_no_dialog(NULL, _(msg), 0);
@@ -3481,29 +3482,30 @@ static gboolean maybe_set_sample_from_model (MODEL *pmod)
     if (resp == GRETL_NO) {
 	return FALSE;
     }
-	 
-    if (pmod->submask == NULL) {
-	/* this means restoring the full dataset */
-	err = restore_full_sample(&Z, datainfo, NULL);
-	if (!err) {
+
+    /* first restore the full dataset */
+    err = restore_full_sample(&Z, datainfo, NULL);
+
+    /* then, if the model was subsampled, restore the subsample */
+    if (!err && !full) {
+	err = restrict_sample_from_mask(pmod->submask, &Z, datainfo, OPT_NONE);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	if (full) {
 	    restore_sample_state(FALSE);
 	    gretl_command_strcpy("smpl --full");
 	    check_and_record_command();
-	}
-    } else {
-	err = restrict_sample_from_mask(pmod->submask, &Z, datainfo, OPT_NONE);
-	if (!err) {
+	} else {
 	    char comment[64];
 
 	    restore_sample_state(TRUE);
 	    sprintf(comment, "# restored sample from model %d\n", pmod->ID);
 	    add_command_to_stack(comment);
 	}
-    }
 
-    if (err) {
-	gui_errmsg(err);
-    } else {
 	mark_session_changed();
 	set_sample_label(datainfo);
     }

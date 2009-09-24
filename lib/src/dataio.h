@@ -91,8 +91,6 @@ int write_data (const char *fname, int *list,
 		const double **Z, const DATAINFO *pdinfo, 
 	        gretlopt opt, int progress);
 
-int data_report (const DATAINFO *pdinfo, const char *fname, PRN *prn);
-
 int is_gzipped (const char *fname);
 
 int gretl_is_pkzip_file (const char *fname);

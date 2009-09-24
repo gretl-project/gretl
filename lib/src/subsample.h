@@ -89,4 +89,10 @@ void maybe_free_full_dataset (const DATAINFO *pdinfo);
 
 int model_sample_problem (MODEL *pmod, const DATAINFO *pdinfo);
 
+void print_sample_obs (const DATAINFO *pdinfo, PRN *prn);
+
+void print_sample_status (const DATAINFO *pdinfo, PRN *prn);
+
+int data_report (const DATAINFO *pdinfo, const char *fname, PRN *prn);
+
 #endif /* SUBSAMPLE_H */

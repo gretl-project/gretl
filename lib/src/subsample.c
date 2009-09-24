@@ -1988,3 +1988,147 @@ int model_sample_problem (MODEL *pmod, const DATAINFO *pdinfo)
     return ret;
 }
 
+static void dataset_type_string (char *str, const DATAINFO *pdinfo)
+{
+    if (dataset_is_time_series(pdinfo)) {
+	strcpy(str, _("time series"));
+    } else if (dataset_is_panel(pdinfo)) {
+        strcpy(str, _("panel"));
+    } else {
+        strcpy(str, _("undated"));
+    }
+}
+
+static void pd_string (char *str, const DATAINFO *pdinfo)
+{
+    if (custom_time_series(pdinfo)) {
+	strcpy(str, _("special"));
+    } else {
+	switch (pdinfo->pd) {
+	case 1:
+	    strcpy(str, _("annual")); break;
+	case 4:
+	    strcpy(str, _("quarterly")); break;
+	case 12:
+	    strcpy(str, _("monthly")); break;
+	case 24:
+	    strcpy(str, _("hourly")); break;
+	case 52:
+	    strcpy(str, _("weekly")); break;
+	case 5:
+	case 6:
+	case 7:
+	    strcpy(str, _("daily")); break;
+	case 10:
+	    strcpy(str, _("decennial")); break;
+	default:
+	    strcpy(str, _("unknown")); break;
+	}
+    }
+}
+
+void print_sample_obs (const DATAINFO *pdinfo, PRN *prn)
+{
+    char d1[OBSLEN], d2[OBSLEN];
+
+    ntodate(d1, pdinfo->t1, pdinfo);
+    ntodate(d2, pdinfo->t2, pdinfo);
+
+    pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
+    pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
+}
+
+void print_sample_status (const DATAINFO *pdinfo, PRN *prn)
+{
+    char tmp[128];
+
+    if (complex_subsampled()) {
+	pprintf(prn, "%s:\n\n", _("Full dataset"));
+	dataset_type_string(tmp, fullinfo);
+	pprintf(prn, "%s: %s\n", _("Type of data"), tmp);
+	if (dataset_is_time_series(fullinfo)) {
+	    pd_string(tmp, fullinfo);
+	    pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
+	} else if (dataset_is_panel(fullinfo)) {
+	    int nu = fullinfo->n / fullinfo->pd;
+
+	    pprintf(prn, "%s: %d\n", _("Number of cross-sectional units"), nu);
+	    pprintf(prn, "%s: %d\n", _("Number of time periods"), fullinfo->pd);
+	}
+	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
+		fullinfo->stobs, fullinfo->endobs, fullinfo->n);
+
+	pprintf(prn, "\n%s:\n\n", _("Subsampled data"));
+    }	
+
+    dataset_type_string(tmp, pdinfo);
+    pprintf(prn, "%s: %s\n", _("Type of data"), tmp);
+    if (dataset_is_time_series(pdinfo)) {
+	pd_string(tmp, pdinfo);
+	pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
+    } else if (dataset_is_panel(pdinfo)) {
+	int nu = pdinfo->n / pdinfo->pd;
+
+	pprintf(prn, "%s: %d\n", _("Number of cross-sectional units"), nu);
+	pprintf(prn, "%s: %d\n", _("Number of time periods"), pdinfo->pd);
+    }	
+    pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
+	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
+    print_sample_obs(pdinfo, prn); 
+}
+
+/**
+ * data_report:
+ * @pdinfo: data information struct.
+ * @fname: filename for current datafile.
+ * @prn: gretl printing struct.
+ * 
+ * Write out a summary of the content of the current data set.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ * 
+ */
+
+int data_report (const DATAINFO *pdinfo, const char *fname, PRN *prn)
+{
+    char startdate[OBSLEN], enddate[OBSLEN], tmp[MAXLEN];
+    char tstr[48];
+    int i;
+
+    ntodate(startdate, 0, pdinfo);
+    ntodate(enddate, pdinfo->n - 1, pdinfo);
+
+    sprintf(tmp, _("Data file %s\nas of"), 
+	    (*fname != '\0')? fname : _("(unsaved)"));
+
+    print_time(tstr);
+    pprintf(prn, "%s %s\n\n", tmp, tstr);
+
+    if (pdinfo->descrip != NULL && *pdinfo->descrip != '\0') {
+	pprintf(prn, "%s:\n\n", _("Description"));
+	pputs(prn, pdinfo->descrip);
+	pputs(prn, "\n\n");
+    }
+
+    dataset_type_string(tmp, pdinfo);
+    pprintf(prn, "%s: %s\n", _("Type of data"), tmp);
+    
+    if (dataset_is_time_series(pdinfo)) {
+	pd_string(tmp, pdinfo);
+	pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
+    }	
+
+    pprintf(prn, "%s: %s - %s (n = %d)\n\n", _("Range"),
+	    startdate, enddate, pdinfo->n);
+
+    pprintf(prn, "%s:\n\n", _("Listing of variables"));
+
+    for (i=1; i<pdinfo->v; i++) {
+	pprintf(prn, "%*s  %s\n", VNAMELEN, pdinfo->varname[i], 
+		VARLABEL(pdinfo, i));
+    }
+
+    return 0;
+}
+
+

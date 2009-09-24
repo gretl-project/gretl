@@ -72,6 +72,7 @@ static int set_up_main_menu (void);
 static void start_R_callback (void);
 static void auto_store (void);
 static void restore_sample_callback (void);
+static void show_sample_callback (void);
 static void mdata_select_all (void);
 
 GtkTargetEntry gretl_drag_targets[] = {
@@ -1420,6 +1421,7 @@ GtkActionEntry main_entries[] = {
     { "Sample", NULL, N_("_Sample"), NULL, NULL, NULL },
     { "SMPL", NULL, N_("_Set range..."), NULL, NULL, G_CALLBACK(sample_range_dialog) },
     { "FullRange", NULL, N_("_Restore full range"), NULL, NULL, G_CALLBACK(restore_sample_callback) },
+    { "ShowSample", NULL, N_("_Show status"), NULL, NULL, G_CALLBACK(show_sample_callback) },
     { "SMPLDUM", NULL, N_("_Define, based on dummy..."), NULL, NULL, G_CALLBACK(sample_range_dialog) },
     { "SampleRestrict", NULL, N_("_Restrict, based on criterion..."), NULL, NULL, 
       G_CALLBACK(gretl_callback) },
@@ -1646,6 +1648,18 @@ static void restore_sample_callback (void)
 	gretl_command_strcpy("smpl --full");
 	check_and_record_command();
     }
+}
+
+static void show_sample_callback (void)
+{
+    PRN *prn;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    print_sample_status(datainfo, prn);
+    view_buffer(prn, 78, 360, "gretl", PRINT, NULL);
 }
 
 static void start_R_callback (void)

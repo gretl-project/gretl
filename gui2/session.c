@@ -1481,6 +1481,7 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     commands_recorded = 0;
 
     winstack_destroy();
+    close_plot_windows();
     clear_selector();
     edit_dialog_special_get_text(NULL);
 

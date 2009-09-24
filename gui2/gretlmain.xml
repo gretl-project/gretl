@@ -180,6 +180,7 @@
     <menu action='Sample'>
       <menuitem action='SMPL'/>
       <menuitem action='FullRange'/>
+      <menuitem action='ShowSample'/>
       <separator/>
       <menuitem action='SMPLDUM'/>
       <menuitem action='SampleRestrict'/>

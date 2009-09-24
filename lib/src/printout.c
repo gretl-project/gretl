@@ -611,17 +611,6 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     }
 }
 
-static void print_sample_obs (const DATAINFO *pdinfo, PRN *prn)
-{
-    char d1[OBSLEN], d2[OBSLEN];
-
-    ntodate(d1, pdinfo->t1, pdinfo);
-    ntodate(d2, pdinfo->t2, pdinfo);
-
-    pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
-    pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
-}
-
 /**
  * print_smpl:
  * @pdinfo: data information struct

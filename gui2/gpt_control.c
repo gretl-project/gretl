@@ -3607,6 +3607,20 @@ static int render_pngfile (png_plot *plot, int view)
     return 0;
 }
 
+/* keep track of open plot windows */
+
+static GList *plot_list;
+
+static void close_plot_window (GtkWidget *w, gpointer p)
+{
+    gtk_widget_destroy(w);
+}
+
+void close_plot_windows (void)
+{
+    g_list_foreach(plot_list, (GFunc) close_plot_window, NULL);
+}
+
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     /* delete temporary plot source file? */
@@ -3625,6 +3639,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	g_object_unref(plot->invert_gc);
     }
 
+    plot_list = g_list_remove(plot_list, plot->shell);
     g_object_unref(plot->shell);
 
     free(plot);
@@ -4176,7 +4191,8 @@ static int gnuplot_show_png (const char *plotfile, const char *name,
     }
 
     gtk_widget_show(vbox);
-    gtk_widget_show(plot->shell);       
+    gtk_widget_show(plot->shell);   
+    plot_list = g_list_append(plot_list, plot->shell);
 
     /* set the focus to the canvas area */
     gtk_widget_grab_focus(plot->canvas);  
@@ -4191,7 +4207,7 @@ static int gnuplot_show_png (const char *plotfile, const char *name,
     if (err) {
 	gtk_widget_destroy(plot->shell);
 	plot = NULL;
-    }
+    } 
 
     return err;
 }
