@@ -286,11 +286,18 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
     fseek(fp, 124, SEEK_SET);
     pd = read_short(fp, &err);
 
+#if 0
     fseek(fp, 126, SEEK_SET);
     startper = read_short(fp, &err);
+#endif
 
     fseek(fp, 128, SEEK_SET);
     startyr = read_int(fp, &err);
+
+#if 1
+    fseek(fp, 132, SEEK_SET);
+    startper = read_short(fp, &err);
+#endif
 
     fseek(fp, 140, SEEK_SET);
     nobs = read_int(fp, &err);
