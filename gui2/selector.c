@@ -2626,9 +2626,12 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 		*idvlags = get_lagpref_string(ynum, LAG_Y_W, NULL);
 	    }
 	}
-	if (sr->default_check != NULL && 
-	    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sr->default_check))) {
-	    default_y = ynum;
+	if (sr->default_check != NULL) {
+	    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sr->default_check))) {
+		default_y = ynum;
+	    } else {
+		default_y = -1;
+	    }
 	} else if (sr->ci == INTREG) {
 	    lovar = ynum;
 	}
@@ -3195,6 +3198,8 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     if (sr->ci != INTREG) {
 	sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
+				     default_y >= 0);
     } 
 
     if (sr->ci != ARBOND) {
