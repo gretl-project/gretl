@@ -935,7 +935,7 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
 	gen_save_or_print(p, prn);
     } 
 
-    if ((flags & P_SLAVE) && !p->err) {
+    if (0 && (flags & P_SLAVE) && !p->err) {
 	p->err = p->warn;
     }
 

@@ -920,6 +920,84 @@ static int dates_maybe_reversed (const char *s1, const char *s2,
     return ret;
 }
 
+/* e.g. "M1 1957", "M12 2009", with spaces removed */
+
+static int fix_IFS_data_labels (DATAINFO *pdinfo)
+{
+    char *s1 = pdinfo->S[0];
+    char *s2 = pdinfo->S[pdinfo->n - 1];
+    int ret = 0;
+
+    if ((*s1 == 'M' || *s1 == 'Q') && *s2 == *s1) {
+	const char *dig = "0123456789";
+	int n1 = strlen(s1);
+	int n2 = strlen(s2);
+
+	if ((n1 == 6 || n1 == 7) && (n2 == 6 || n2 == 7) &&
+	    strspn(s1 + 1, dig) == n1 - 1 &&
+	    strspn(s2 + 1, dig) == n2 - 1) {
+	    char sp[3], tmp[8], *s;
+	    int y, p, pbak, pmax = (*s1 == 'M')? 12 : 4;
+	    int i, n, doit = 1;
+
+	    for (i=0; i<pdinfo->n; i++) {
+		s = pdinfo->S[i];
+		if (*s != *s1) {
+		    doit = 0;
+		    break;
+		}
+		n = strlen(s);
+		if (n != 6 && n != 7) {
+		    doit = 0;
+		    break;
+		}
+		if (strspn(s + 1, dig) != n - 1) {
+		    doit = 0;
+		    break;
+		}
+		y = atoi(s + n - 4);
+		*sp = '\0';
+		strncat(sp, s + 1, n - 5);
+		p = atoi(sp);
+		if (y < 1800 || y > 2500 || p <= 0 || p > pmax) {
+		    doit = 0;
+		    break;
+		} 
+		if (i > 0 && p != pbak + 1 && p != 1) {
+		    doit = 0;
+		    break;
+		}		    
+		pbak = p;
+	    }
+
+	    if (doit) {
+		for (i=0; i<pdinfo->n; i++) {
+		    s = pdinfo->S[i];
+		    n = strlen(s);
+		    y = atoi(s + n - 4);
+		    *sp = '\0';
+		    strncat(sp, s + 1, n - 5);
+		    p = atoi(sp);
+		    if (pmax == 12) {
+			sprintf(tmp, "%d:%02d", y, p);
+		    } else {
+			sprintf(tmp, "%d:%d", y, p);
+		    }
+		    if (strlen(tmp) > strlen(s)) {
+			free(s);
+			pdinfo->S[i] = gretl_strdup(tmp);
+		    } else {
+			strcpy(s, tmp);
+		    }		    
+		}
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* Attempt to parse csv row labels as dates.  Return -1 if this
    doesn't work out, or 0 if the labels seem to be just integer
    observation numbers, else return the inferred data frequency.  The
@@ -949,6 +1027,12 @@ int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo,
     sprintf(endobs, "%d", n);
     if (!strcmp(lbl1, "1") && !strcmp(lbl2, endobs)) {
 	return 0;
+    }
+
+    if (fix_IFS_data_labels(pdinfo)) {
+	lbl1 = pdinfo->S[0];
+	lbl2 = pdinfo->S[n - 1];
+	len1 = strlen(lbl1);
     }
 
     /* labels are of different lengths? */

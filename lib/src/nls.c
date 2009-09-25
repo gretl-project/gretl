@@ -879,7 +879,6 @@ static int nl_function_calc (double *f, void *p)
 
     /* calculate residual given current parameter estimates */
     err = nl_calculate_fvec(s);
-    fprintf(stderr, "nl_function_calc: nl_calculate_fvec gave %d\n", err);
     if (err) {
 	return err;
     }
