@@ -41,6 +41,7 @@ fi
 # fix paths in plugins
 for d in lib/gretl-gtk2/*.so ; do
    $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib $d
+   $TOOL -change ${AUXPATH}/libfftw3.dylib ${NEWPATH}/libfftw3.dylib $d
    $TOOL -change ${SRCPATH}/libgretl-1.0.0.dylib ${NEWPATH}/libgretl-1.0.0.dylib $d
 done
 
