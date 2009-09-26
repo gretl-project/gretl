@@ -2814,7 +2814,7 @@ static void set_pane_text_properties (GtkTextView *w)
 /* limited to script output window at present: divide the
    window into two panes */
 
-void viewer_split_pane (GtkWidget *w, windata_t *vwin)
+void viewer_split_pane (windata_t *vwin)
 {
     GtkWidget *vbox = vwin->vbox;
     GtkWidget *view1 = vwin->text;
@@ -2823,9 +2823,6 @@ void viewer_split_pane (GtkWidget *w, windata_t *vwin)
     gint pos = 0;
 
     sw = g_object_get_data(G_OBJECT(vbox), "sw");
-    if (sw == NULL) {
-	return;
-    }
 
     gtk_window_get_size(GTK_WINDOW(vwin->main), NULL, &pos);
 
@@ -2865,14 +2862,11 @@ void viewer_split_pane (GtkWidget *w, windata_t *vwin)
 
 /* script output window: revert to a single pane */
 
-void viewer_close_pane (GtkWidget *w, windata_t *vwin)
+void viewer_close_pane (windata_t *vwin)
 {
     GtkWidget *sw, *vpaned;
 
     vpaned = g_object_get_data(G_OBJECT(vwin->vbox), "vpaned");
-    if (vpaned == NULL) {
-	return;
-    }
 
     /* grab the first child and reference it */
     sw = gtk_paned_get_child1(GTK_PANED(vpaned));

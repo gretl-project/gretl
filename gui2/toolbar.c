@@ -407,11 +407,14 @@ static void reformat_callback (GtkWidget *w, windata_t *vwin)
 
 static void split_pane_callback (GtkWidget *w, windata_t *vwin)
 {
-    if (g_object_get_data(G_OBJECT(vwin->vbox), "sw") != NULL) {
+    GtkWidget *vb = vwin->vbox;
+
+    if (g_object_get_data(G_OBJECT(vb), "sw") != NULL) {
 	/* currently in single-view mode */
-	viewer_split_pane(w, vwin);
-    } else {
-	viewer_close_pane(w, vwin);
+	viewer_split_pane(vwin);
+    } else if (g_object_get_data(G_OBJECT(vb), "vpaned") != NULL) {
+	/* currently in split-view mode */
+	viewer_close_pane(vwin);
     }
 }
 
@@ -889,22 +892,6 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
 	}
     }
-
-#if 0
-    if (vwin->role == SCRIPT_OUT) {
-	if (g_object_get_data(G_OBJECT(vwin->vbox), "vpaned") == NULL) {
-	    w = gtk_menu_item_new_with_label(_("Split pane"));
-	    g_signal_connect(G_OBJECT(w), "activate", G_CALLBACK(viewer_split_pane), vwin);
-	    gtk_widget_show(w);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
-	} else {
-	    w = gtk_menu_item_new_with_label(_("Close pane"));
-	    g_signal_connect(G_OBJECT(w), "activate", G_CALLBACK(viewer_close_pane), vwin);
-	    gtk_widget_show(w);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
-	}
-    }
-#endif
 
     return pmenu;
 }
