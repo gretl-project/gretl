@@ -937,7 +937,8 @@ static int fix_IFS_data_labels (DATAINFO *pdinfo)
 	    strspn(s1 + 1, dig) == n1 - 1 &&
 	    strspn(s2 + 1, dig) == n2 - 1) {
 	    char sp[3], tmp[8], *s;
-	    int y, p, pbak, pmax = (*s1 == 'M')? 12 : 4;
+	    int pmax = (*s1 == 'M')? 12 : 4;
+	    int y, p, pbak = 0;
 	    int i, n, doit = 1;
 
 	    for (i=0; i<pdinfo->n; i++) {
