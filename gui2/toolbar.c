@@ -890,6 +890,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	}
     }
 
+#if 0
     if (vwin->role == SCRIPT_OUT) {
 	if (g_object_get_data(G_OBJECT(vwin->vbox), "vpaned") == NULL) {
 	    w = gtk_menu_item_new_with_label(_("Split pane"));
@@ -903,6 +904,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
 	}
     }
+#endif
 
     return pmenu;
 }
