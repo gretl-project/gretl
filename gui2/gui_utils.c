@@ -1307,8 +1307,7 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
-static gboolean 
-text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
+gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 

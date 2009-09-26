@@ -107,6 +107,9 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 void add_popup_item (const gchar *label, GtkWidget *menu,
 		     GCallback callback, gpointer data);
 
+gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, 
+			     gpointer p);
+
 void *gui_get_plugin_function (const char *funcname, 
 			       void **phandle);
 

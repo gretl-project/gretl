@@ -1534,6 +1534,27 @@ int write_data (const char *fname, int *list,
     return err;
 }
 
+static int no_case_series_index (const DATAINFO *pdinfo,
+				 const char *vname)
+{
+    char s1[VNAMELEN], s2[VNAMELEN];
+    int i;
+
+    *s1 = '\0';
+    strncat(s1, vname, VNAMELEN - 1);
+    lower(s1);
+
+    for (i=1; i<pdinfo->v; i++) {
+	strcpy(s2, pdinfo->varname[i]);
+	lower(s2);
+	if (strcmp(s1, s2) == 0) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
 /* read data "labels" from file */
 
 static int readlbl (const char *lblfile, DATAINFO *pdinfo)
@@ -1557,7 +1578,10 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
             break;
         }
 	v = series_index(pdinfo, varname);
-	if (v < pdinfo->v) {
+	if (v == pdinfo->v) {
+	    v = no_case_series_index(pdinfo, varname);
+	}
+	if (v > 0 && v < pdinfo->v) {
 	    p = line + strlen(varname);
 	    p += strspn(p, " \t");
 	    VARLABEL(pdinfo, v)[0] = '\0';

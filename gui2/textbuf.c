@@ -2787,6 +2787,8 @@ void text_table_setup (GtkWidget *vbox, GtkWidget *w)
 
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_box_pack_start(GTK_BOX(vbox), sw, TRUE, TRUE, FALSE);
+    g_object_set_data(G_OBJECT(vbox), "sw", sw);
+
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
@@ -2795,5 +2797,96 @@ void text_table_setup (GtkWidget *vbox, GtkWidget *w)
     gtk_container_add(GTK_CONTAINER(sw), w); 
     gtk_widget_show(w);
     gtk_widget_show(sw);
+}
+
+static void set_pane_text_properties (GtkTextView *w)
+{
+    gtk_text_view_set_wrap_mode(w, 0);
+    gtk_text_view_set_left_margin(w, 4);
+    gtk_text_view_set_right_margin(w, 4);
+
+    gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
+
+    gtk_text_view_set_editable(w, FALSE);
+    gtk_text_view_set_cursor_visible(w, FALSE);
+}
+
+/* limited to script output window at present: divide the
+   window into two panes */
+
+void viewer_split_pane (GtkWidget *w, windata_t *vwin)
+{
+    GtkWidget *vbox = vwin->vbox;
+    GtkWidget *view1 = vwin->text;
+    GtkWidget *sw, *vpaned, *view2;
+    GtkTextBuffer *tbuf;
+    gint pos = 0;
+
+    sw = g_object_get_data(G_OBJECT(vbox), "sw");
+    if (sw == NULL) {
+	return;
+    }
+
+    gtk_window_get_size(GTK_WINDOW(vwin->main), NULL, &pos);
+
+    g_object_ref(G_OBJECT(sw));
+    gtk_container_remove(GTK_CONTAINER(vwin->vbox), sw);
+
+    vpaned = gtk_vpaned_new();
+    gtk_container_set_border_width(GTK_CONTAINER(vpaned), 0);
+    gtk_container_add(GTK_CONTAINER(vbox), vpaned);
+
+    g_object_set_data(G_OBJECT(vwin->vbox), "vpaned", vpaned);
+    g_object_set_data(G_OBJECT(vwin->vbox), "sw", NULL);
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view1));
+    view2 = gtk_text_view_new_with_buffer(tbuf);
+    set_pane_text_properties(GTK_TEXT_VIEW(view2));
+
+    g_signal_connect(G_OBJECT(view2), "button-press-event", 
+		     G_CALLBACK(text_popup_handler), vwin);
+
+    gtk_paned_add1(GTK_PANED(vpaned), sw);
+    g_object_unref(G_OBJECT(sw));
+
+    sw = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+				   GTK_POLICY_AUTOMATIC,
+				   GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
+					GTK_SHADOW_IN);
+    gtk_paned_add2(GTK_PANED(vpaned), sw);
+    gtk_container_add(GTK_CONTAINER(sw), view2);
+
+    gtk_paned_set_position(GTK_PANED(vpaned), pos / 2 - 24);
+
+    gtk_widget_show_all(vpaned);
+}
+
+/* script output window: revert to a single pane */
+
+void viewer_close_pane (GtkWidget *w, windata_t *vwin)
+{
+    GtkWidget *sw, *vpaned;
+
+    vpaned = g_object_get_data(G_OBJECT(vwin->vbox), "vpaned");
+    if (vpaned == NULL) {
+	return;
+    }
+
+    /* grab the first child and reference it */
+    sw = gtk_paned_get_child1(GTK_PANED(vpaned));
+    g_object_ref(G_OBJECT(sw));
+    gtk_container_remove(GTK_CONTAINER(vpaned), sw);
+
+    /* remove the "paned" widget */
+    gtk_widget_destroy(vpaned);
+    g_object_set_data(G_OBJECT(vwin->vbox), "vpaned", NULL);
+
+    /* and repack the scrolled window */
+    gtk_container_add(GTK_CONTAINER(vwin->vbox), sw);
+    g_object_set_data(G_OBJECT(vwin->vbox), "sw", sw);
+    gtk_widget_show(sw);
+    g_object_unref(G_OBJECT(sw));
 }
 

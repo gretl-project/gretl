@@ -94,4 +94,8 @@ void sourceview_insert_buffer (windata_t *vwin, const char *buf);
 
 void script_tabs_dialog (GtkWidget *w, windata_t *vwin);
 
+void viewer_split_pane (GtkWidget *w, windata_t *vwin);
+
+void viewer_close_pane (GtkWidget *w, windata_t *vwin);
+
 #endif /* TEXTBUF_H */

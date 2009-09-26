@@ -49,6 +49,7 @@
 #include "../pixmaps/mini.pin.xpm"
 #include "../pixmaps/mini.alpha.xpm"
 #include "../pixmaps/mini.en.xpm"
+#include "../pixmaps/mini.split.xpm"
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # include "../pixmaps/info_24.xpm"
 #endif
@@ -87,7 +88,8 @@ enum {
     STICKIFY_ITEM,
     ALPHA_ITEM,
     REFRESH_ITEM,
-    OPEN_ITEM
+    OPEN_ITEM,
+    SPLIT_ITEM
 } viewbar_flags;
 
 static GtkIconFactory *gretl_stock_ifac;
@@ -116,7 +118,8 @@ void gretl_stock_icons_init (void)
 	mini_func_xpm,
 	mini_pin_xpm,
 	mini_alpha_xpm,
-	mini_en_xpm
+	mini_en_xpm,
+	mini_split_xpm
     };
     const char *stocks[] = {
 #if NO_INFO_ICON
@@ -140,7 +143,8 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_FUNC,
 	GRETL_STOCK_PIN,
 	GRETL_STOCK_ALPHA,
-	GRETL_STOCK_EN
+	GRETL_STOCK_EN,
+	GRETL_STOCK_SPLIT
     };
     int n = G_N_ELEMENTS(stocks);
 
@@ -401,6 +405,16 @@ static void reformat_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
+static void split_pane_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (g_object_get_data(G_OBJECT(vwin->vbox), "sw") != NULL) {
+	/* currently in single-view mode */
+	viewer_split_pane(w, vwin);
+    } else {
+	viewer_close_pane(w, vwin);
+    }
+}
+
 static void toggle_alpha_spin (GtkToggleButton *b, GtkWidget *w)
 {
     gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(b));
@@ -588,6 +602,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(set_output_sticky), STICKIFY_ITEM },
+    { N_("Toggle split pane"), GRETL_STOCK_SPLIT, G_CALLBACK(split_pane_callback), SPLIT_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
@@ -631,6 +646,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
                         r == MAHAL || r == FCAST)
 
+#define split_ok(r) (r == SCRIPT_OUT)
+
 /* Screen out unwanted menu items depending on the context; also
    adjust the callbacks associated with some items based on
    context.
@@ -667,6 +684,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (!sortby_ok && f == SORT_BY_ITEM) {
 	return NULL;
     } else if (!plot_ok(r) && f == PLOT_ITEM) {
+	return NULL;
+    } else if (!split_ok(r) && f == SPLIT_ITEM) {
 	return NULL;
     } else if (!format_ok && f == FORMAT_ITEM) {
 	return NULL;
@@ -866,6 +885,20 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    }
 	    w = gtk_menu_item_new_with_label(_(item->tip));
 	    g_signal_connect(G_OBJECT(w), "activate", func, vwin);
+	    gtk_widget_show(w);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
+	}
+    }
+
+    if (vwin->role == SCRIPT_OUT) {
+	if (g_object_get_data(G_OBJECT(vwin->vbox), "vpaned") == NULL) {
+	    w = gtk_menu_item_new_with_label(_("Split pane"));
+	    g_signal_connect(G_OBJECT(w), "activate", G_CALLBACK(viewer_split_pane), vwin);
+	    gtk_widget_show(w);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
+	} else {
+	    w = gtk_menu_item_new_with_label(_("Close pane"));
+	    g_signal_connect(G_OBJECT(w), "activate", G_CALLBACK(viewer_close_pane), vwin);
 	    gtk_widget_show(w);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
 	}
