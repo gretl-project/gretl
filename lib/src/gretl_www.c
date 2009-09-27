@@ -62,14 +62,15 @@ extern int errno;
 extern int h_errno;
 #endif
 
-#define GRETLHOST  "ricardo.ecn.wfu.edu"
-#define DATACGI    "/gretl/cgi-bin/gretldata.cgi"
-#define UPDATECGI  "/gretl/cgi-bin/gretl_update.cgi"
-#define MPATH      "/pub/gretl/manual/PDF/"
 #define DBHLEN     64
 
 static int wproxy;
 static char dbhost[DBHLEN] = "ricardo.ecn.wfu.edu";
+
+static char gretlhost[DBHLEN] = "ricardo.ecn.wfu.edu";
+static char datacgi[DBHLEN]   = "/gretl/cgi-bin/gretldata.cgi";
+static char updatecgi[DBHLEN] = "/gretl/cgi-bin/gretl_update.cgi";
+static char mpath[DBHLEN]     = "/pub/gretl/manual/PDF/";
 
 typedef enum {
     SAVE_NONE,
@@ -1515,7 +1516,7 @@ urlinfo_set_path (urlinfo *u, const char *cgi, const char *mname)
     if (cgi != NULL && *cgi != '\0') {
 	len += strlen(cgi);
     } else if (mname != NULL && *mname != '\0') {
-	len += strlen(MPATH) + strlen(mname);
+	len += strlen(mpath) + strlen(mname);
     }
 
     u->path = malloc(len);
@@ -1532,7 +1533,7 @@ urlinfo_set_path (urlinfo *u, const char *cgi, const char *mname)
     if (cgi != NULL && *cgi != '\0') {
 	strcat(u->path, cgi);
     } else if (mname != NULL && *mname != '\0') {
-	strcat(u->path, MPATH);
+	strcat(u->path, mpath);
 	strcat(u->path, mname);
     }
 	
@@ -1631,11 +1632,11 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
     }
     
     if (opt == GRAB_FILE) {
-	urlinfo_set_path(u, UPDATECGI, NULL);
+	urlinfo_set_path(u, updatecgi, NULL);
     } else if (opt == GRAB_PDF) {
 	urlinfo_set_path(u, NULL, fname);
     } else {
-	urlinfo_set_path(u, DATACGI, NULL);
+	urlinfo_set_path(u, datacgi, NULL);
     }
 
     if (u->path == NULL) {
@@ -1783,7 +1784,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 	return E_ALLOC;
     }
 
-    urlinfo_set_path(u, UPDATECGI, NULL);
+    urlinfo_set_path(u, updatecgi, NULL);
     urlinfo_set_update_params(u, filedate, queryopt);
     getbuf_init(u);
 
@@ -1793,7 +1794,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 	return E_ALLOC;
     }
 
-    err = get_host_ip(u, GRETLHOST);
+    err = get_host_ip(u, gretlhost);
     if (err) {
 	free(u->getbuf);
 	urlinfo_destroy(u, 0);
@@ -1859,7 +1860,7 @@ int upload_function_package (const char *login, const char *pass,
 	return E_ALLOC;
     }
 
-    urlinfo_set_path(u, DATACGI, NULL);
+    urlinfo_set_path(u, datacgi, NULL);
     urlinfo_set_upload_params(u, login, pass, fname);
     getbuf_init(u);
 
@@ -1871,7 +1872,7 @@ int upload_function_package (const char *login, const char *pass,
     u->upload = buf;
     u->upsize = strlen(buf) + 1;
 
-    err = get_host_ip(u, GRETLHOST);
+    err = get_host_ip(u, gretlhost);
     if (err) {
 	urlinfo_destroy(u, 0);
 	return E_ALLOC;
@@ -1902,13 +1903,13 @@ int list_remote_dbs (char **getbuf)
 
 int list_remote_function_packages (char **getbuf)
 {
-    return retrieve_url (GRETLHOST, LIST_FUNCS, NULL, NULL, SAVE_TO_BUFFER, 
+    return retrieve_url (gretlhost, LIST_FUNCS, NULL, NULL, SAVE_TO_BUFFER, 
 			 NULL, getbuf);
 }
 
 int list_remote_data_packages (char **getbuf)
 {
-    return retrieve_url (GRETLHOST, LIST_PKGS, NULL, NULL, SAVE_TO_BUFFER, 
+    return retrieve_url (gretlhost, LIST_PKGS, NULL, NULL, SAVE_TO_BUFFER, 
 			 NULL, getbuf);
 }
 
@@ -1947,17 +1948,30 @@ int check_remote_db (const char *dbname)
     return err;
 }
 
+static void maybe_revise_www_paths (void)
+{
+    if (0) {
+	/* not yet */
+	strcpy(gretlhost, "www.wfu.edu");
+	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
+	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
+	strcpy(mpath, "/~cottrell/gretl/manual");
+    }
+}
+
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname)
 {
-    return retrieve_url (GRETLHOST, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
+    maybe_revise_www_paths();
+    return retrieve_url (gretlhost, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
 			 localname, NULL);
 }
 
 int retrieve_remote_datafiles_package (const char *pkgname, 
 				       const char *localname)
 {
-    return retrieve_url (GRETLHOST, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
+    maybe_revise_www_paths();
+    return retrieve_url (gretlhost, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
 			 localname, NULL);
 }
 
@@ -1966,13 +1980,15 @@ int retrieve_remote_db_data (const char *dbname,
 			     char **getbuf,
 			     int opt)
 {
+    maybe_revise_www_paths();
     return retrieve_url (dbhost, opt, dbname, varname, SAVE_TO_BUFFER, 
 			 NULL, getbuf);
 }
 
 int retrieve_manfile (const char *fname, const char *localname)
 {
-    return retrieve_url (GRETLHOST, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
+    maybe_revise_www_paths();
+    return retrieve_url (gretlhost, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
 			 localname, NULL);
 }
 
