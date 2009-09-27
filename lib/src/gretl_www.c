@@ -1607,6 +1607,18 @@ static int maybe_register_type_error (urlinfo *u, CGIOpt opt)
     return err;
 }
 
+static void maybe_revise_www_paths (void)
+{
+    if (1) {
+	/* temporary measure? */
+	strcpy(dbhost, "www.wfu.edu");
+	strcpy(gretlhost, "www.wfu.edu");
+	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
+	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
+	strcpy(mpath, "/~cottrell/gretl/manual");
+    }
+}
+
 /* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored
    to a local file whose name is given by "savefile".  If saveopt =
    SAVE_TO_BUFFER then "getbuf" is presumed to point to a char buffer
@@ -1621,6 +1633,8 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
     urlinfo *u;
     uerr_t result;
     int err = 0;
+
+    maybe_revise_www_paths();
 
     if (getbuf != NULL) {
 	*getbuf = NULL;
@@ -1948,21 +1962,9 @@ int check_remote_db (const char *dbname)
     return err;
 }
 
-static void maybe_revise_www_paths (void)
-{
-    if (0) {
-	/* not yet */
-	strcpy(gretlhost, "www.wfu.edu");
-	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
-	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
-	strcpy(mpath, "/~cottrell/gretl/manual");
-    }
-}
-
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname)
 {
-    maybe_revise_www_paths();
     return retrieve_url (gretlhost, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
 			 localname, NULL);
 }
@@ -1970,7 +1972,6 @@ int retrieve_remote_function_package (const char *pkgname,
 int retrieve_remote_datafiles_package (const char *pkgname, 
 				       const char *localname)
 {
-    maybe_revise_www_paths();
     return retrieve_url (gretlhost, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
 			 localname, NULL);
 }
@@ -1980,14 +1981,12 @@ int retrieve_remote_db_data (const char *dbname,
 			     char **getbuf,
 			     int opt)
 {
-    maybe_revise_www_paths();
     return retrieve_url (dbhost, opt, dbname, varname, SAVE_TO_BUFFER, 
 			 NULL, getbuf);
 }
 
 int retrieve_manfile (const char *fname, const char *localname)
 {
-    maybe_revise_www_paths();
     return retrieve_url (gretlhost, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
 			 localname, NULL);
 }

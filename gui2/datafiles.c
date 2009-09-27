@@ -1531,9 +1531,13 @@ void display_files (int code, gpointer p)
 	} 
     }
 
-    if (err && code == FUNC_FILES && fresp.try_server == 1) {
-	/* no function packages on local machine */
-	display_files(REMOTE_FUNC_FILES, p);
+    if (err) {
+	if (code == FUNC_FILES && fresp.try_server == 1) {
+	    /* no function packages on local machine */
+	    display_files(REMOTE_FUNC_FILES, p);
+	} else {
+	    return;
+	}
     }
 
     if (code != TEXTBOOK_DATA && code != PS_FILES) {
