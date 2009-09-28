@@ -52,6 +52,7 @@
 #include "fnsave.h"
 #include "datawiz.h"
 #include "selector.h"
+#include "guiprint.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -132,6 +133,25 @@ static void model_revise_callback (GtkAction *action, gpointer p)
     selector_from_model(vwin->data, vwin->role);
 }
 
+static void text_eqn_callback (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = vwin->data;
+    PRN *prn;
+    int err;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+    
+    err = text_print_equation(pmod, datainfo, OPT_NONE, prn);
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	view_buffer(prn, 78, 50, "gretl", PRINT, NULL);
+    }
+}
+
 static GtkActionEntry model_items[] = {
     { "File", NULL, N_("_File"), NULL, NULL, NULL },
     { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },
@@ -140,6 +160,7 @@ static GtkActionEntry model_items[] = {
 #ifdef NATIVE_PRINTING
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
 #endif
+    { "TextEqn", NULL, N_("View as equation"), NULL, NULL, G_CALLBACK(text_eqn_callback) },
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
     { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },    
     { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) },
@@ -2558,6 +2579,7 @@ static const gchar *model_ui =
 #ifdef NATIVE_PRINTING
     "   <menuitem action='Print'/>"
 #endif
+    "   <menuitem action='TextEqn'/>"
     "   <menuitem action='Close'/>"
     "  </menu>"    
     "  <menu action='Edit'>"
@@ -2668,6 +2690,10 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	add_model_tex_items(vwin);
     } else {
 	add_missing_tex_items(vwin);
+    }
+
+    if (!text_equation_ok(pmod)) {
+	flip(vwin->ui, "/menubar/File/TextEqn", FALSE);
     }
 
     if (pmod->ci != ARMA && pmod->ci != GARCH && 

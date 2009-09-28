@@ -764,6 +764,103 @@ rtfprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "}}\n");
 }
 
+int text_equation_ok (const MODEL *pmod) 
+{
+    if (pmod->ci == OLS || pmod->ci == WLS ||
+	pmod->ci == HSK || pmod->ci == AR1 ||
+	pmod->ci == ARCH || pmod->ci == IVREG ||
+	pmod->ci == LAD || pmod->ci == PANEL ||
+	pmod->ci == LOGIT || pmod->ci == PROBIT ||
+	pmod->ci == TOBIT) {
+	return pmod->ncoeff <= 6;
+    } else {
+	return 0;
+    }
+}
+
+int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn)
+{
+    double x;
+    char vname[32];
+    int pad, c, cols[6] = {0};
+    int i, nc = pmod->ncoeff;
+
+    /* dependent variable */
+    pputc(prn, '\n');
+    c = pprintf(prn, "%s = ", gretl_model_get_depvar_name(pmod, pdinfo));
+
+    /* coefficients times indep vars */
+
+    for (i=0; i<nc; i++) {
+	cols[i] = (i == 0)? c : c + 2;
+	if (i == 0 && pmod->ifc) {
+	    c += pprintf(prn, "%#.4g", pmod->coeff[i]);
+	} else {
+	    c += pprintf(prn, " %c %#.4g", (pmod->coeff[i] < 0.0)? '-' : '+',
+			 fabs(pmod->coeff[i]));
+	    gretl_model_get_param_name(pmod, pdinfo, i, vname);
+	    c += pprintf(prn, "*%s", vname);
+	}
+    }
+    pputc(prn, '\n');
+
+    /* standard errors or t-stats */
+
+    c = cols[0];
+    bufspace(cols[0], prn);
+
+    for (i=0; i<nc; i++) {
+	if (i > 0) {
+	    pad = cols[i] - c;
+	    if (pad > 0) {
+		bufspace(pad, prn);
+		c += pad;
+	    }
+	}
+	if (na(pmod->sderr[i])) {
+	    c += pprintf(prn, "(NA)");
+	} else if (opt & OPT_T) {
+	    x = pmod->coeff[i] / pmod->sderr[i];
+	    c += pprintf(prn, "(%#.4g)", x);
+	} else {
+	    c += pprintf(prn, "(%#.4g)", pmod->sderr[i]);
+	}
+    }
+
+    pputs(prn, "\n\n");
+
+    if (dataset_is_time_series(pdinfo)) {
+	pprintf(prn, "T = %d", pmod->nobs);
+    } else {
+	pprintf(prn, "n = %d", pmod->nobs);
+    }
+
+    /* additional info (R^2 etc) */
+    if (pmod->ci == LAD) { 
+	x = gretl_model_get_double(pmod, "ladsum");
+	if (!na(x)) {
+	    pprintf(prn, ", sum of abs. residuals = %.5g ", x);
+	}
+    } else {
+	if (!na(pmod->adjrsq)) {
+	    pprintf(prn, ", R-squared = %.4f ", pmod->rsq);
+	} else if (!na(pmod->lnL)) {
+	    pprintf(prn, ", loglikelihood = %.5g ", pmod->lnL);
+	}
+	x = gretl_model_get_double(pmod, "rho_in");
+	if (!na(x)) {
+	    pprintf(prn, ", rho = %.5g", x);
+	}
+    }
+
+    pprintf(prn, "\n(%s)\n",
+	    (opt & OPT_T)? I_("t-ratios in parentheses") :
+	    I_("standard errors in parentheses"));
+
+    return 0;
+}
+
 /* print value in (non-correlation) matrix */
 
 static void tex_matnum (double x, PRN *prn)

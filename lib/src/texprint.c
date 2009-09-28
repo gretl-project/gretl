@@ -1464,10 +1464,9 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* additional info (R^2 etc) */
     if (pmod->ci == LAD) { 
-	double SAR = gretl_model_get_double(pmod, "ladsum");
-
-	if (!na(SAR)) {
-	    tex_sprint_math_double_digits(SAR, tmp, 6);
+	x = gretl_model_get_double(pmod, "ladsum");
+	if (!na(x)) {
+	    tex_sprint_math_double_digits(x, tmp, 6);
 	    pprintf(prn, "\\quad \\sum |\\hat{u}_t| = %s ", tmp);
 	}
     } else {
@@ -1489,9 +1488,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
 
 	if (!na(gretl_model_get_double(pmod, "rho_in"))) {
-	    double r = gretl_model_get_double(pmod, "rho_in");
-
-	    tex_sprint_math_double_digits(r, tmp, 5);
+	    x = gretl_model_get_double(pmod, "rho_in");
+	    tex_sprint_math_double_digits(x, tmp, 5);
 	    pprintf(prn, " \\quad \\rho = %s", tmp);
 	}
     }

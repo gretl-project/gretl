@@ -51,6 +51,11 @@ void special_print_forecast (const FITRESID *fr,
 void special_print_confints (const CoeffIntervals *cf, 
 			     PRN *prn);
 
+int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn);
+
+int text_equation_ok (const MODEL *pmod);
+
 int csv_to_clipboard (void);
 
 int csv_selected_to_clipboard (void);
