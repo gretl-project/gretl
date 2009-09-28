@@ -2814,7 +2814,7 @@ int import_other (const char *fname, int ftype,
  * @sheetname: name of worksheet, or %NULL.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
- * @opt: fir use with "append".
+ * @opt: for use with "append".
  * @prn: gretl printing struct.
  * 
  * Open a data file of a type that requires a special plugin.

@@ -1812,10 +1812,10 @@ static char *get_writable_target (int code, int op, char *objname)
     if (code == REMOTE_DB) {
 	build_path(targ, gretl_binbase(), objname, ext);
     } else if (code == REMOTE_DATA_PKGS) {
-	    char pkgdir[MAXLEN];
+	char pkgdir[MAXLEN];
 
-	    get_default_dir(pkgdir, SAVE_DATA_PKG);
-	    build_path(targ, pkgdir, objname, ext);
+	get_default_dir(pkgdir, SAVE_DATA_PKG);
+	build_path(targ, pkgdir, objname, ext);
     } else {
 	if (op == TMP_INSTALL) {
 	    build_path(targ, gretl_dotdir(), "dltmp", NULL);
