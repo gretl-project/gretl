@@ -328,6 +328,8 @@ int infobox (const char *msg)
     return msgbox(msg, 0);
 }
 
+#define GRETLHOST "www.wfu.edu"
+
 static int files_query (char **getbuf, time_t filedate)
 {
     int use_proxy = 0;
