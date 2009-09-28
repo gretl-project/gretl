@@ -148,7 +148,7 @@ static void text_eqn_callback (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	view_buffer(prn, 78, 50, "gretl", PRINT, NULL);
+	view_buffer(prn, 78, 200, "gretl", PRINT, NULL);
     }
 }
 
@@ -1576,8 +1576,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     gretl_print_get_size(prn, &w, &nlines);
 #if 1
-    if (role != SCRIPT_OUT && w > 0 && w + 2 < hsize) {
-	hsize = w + 2;
+    if (role != SCRIPT_OUT && w > 0 && w + 4 < hsize) {
+	hsize = w + 4;
     }
 #endif
 
