@@ -1609,9 +1609,7 @@ static int maybe_register_type_error (urlinfo *u, CGIOpt opt)
 
 static void maybe_revise_www_paths (void)
 {
-    if (1) {
-	/* temporary measure? */
-	strcpy(dbhost, "www.wfu.edu");
+    if (!strcmp(dbhost, "www.wfu.edu")) {
 	strcpy(gretlhost, "www.wfu.edu");
 	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
 	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
