@@ -27,16 +27,16 @@
 typedef struct _col_table col_table;
 
 struct _col_table {
-    int idx;
-    int n_strs;
-    char **strs;
-    GHashTable *hash;
+    int idx;          /* column index (variable number) */
+    int n_strs;       /* number of strings in table */
+    char **strs;      /* saved strings */
+    GHashTable *hash; /* hash table for quick lookup */
 };
 
 struct _gretl_string_table {
-    int n_cols;
-    col_table **cols;
-    char *extra;
+    int n_cols;       /* number of columns (variables) included */
+    col_table **cols; /* column tables (see above) */
+    char *extra;      /* extra information */
 };
 
 static void clean_up_codevars (void);
@@ -55,6 +55,13 @@ static col_table *col_table_new (int colnum)
     return ct;
 }
 
+/**
+ * gretl_string_table_new:
+ * @err: location to receive error code.
+ *
+ * Returns: a pointer to a newly allocated string table.
+ */
+
 gretl_string_table *gretl_string_table_new (int *err)
 {
     gretl_string_table *st = malloc(sizeof *st);
@@ -69,6 +76,20 @@ gretl_string_table *gretl_string_table_new (int *err)
 
     return st;
 }
+
+/**
+ * gretl_string_table_new_from_cols_list:
+ * @list: list of 'columns' (variables) whose values are to be 
+ * given a string representation.  
+ * 
+ * These values in @list should correspond to the 0-based indices 
+ * of the variables in question within the dataset.  For example, 
+ * if strings are to be recorded for variables 2, 5 and 10 the
+ * @list argument would be {3, 2, 5, 10}.
+ *
+ * Returns: pointer to a newly allocated string table
+ * containing a column member for each ID in @list.
+ */
 
 gretl_string_table *string_table_new_from_cols_list (int *list)
 {
@@ -158,6 +179,26 @@ gretl_string_table_add_column (gretl_string_table *st, int colnum)
     return cols[n-1];
 }
 
+/**
+ * gretl_string_table_index:
+ * @st: a gretl string table.
+ * @s: the string to look up or add.
+ * @col: index of the column to be accessed or created.
+ * @addcol: non-zero to indicate that a column should be
+ * added if it's not already present.
+ * @prn: gretl printer (or %NULL).
+ *
+ * This function has two main uses: for lookup in the context of
+ * a completed string table, or for constructing such a
+ * table (with @addcol non-zero).  The returned index reflects 
+ * any additions to the table that may be required (if column
+ * @col does not already exist, or if string @s is not already
+ * stored for column @col).
+ *
+ * Returns: the 1-based index of @s within the column of
+ * @st that has index @col, if available, otherwise 0.
+ */
+
 int 
 gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 			  int addcol, PRN *prn)
@@ -168,7 +209,7 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
     if (st == NULL) return idx;
 
     for (i=0; i<st->n_cols; i++) {
-	if ((st->cols[i])->idx == col) {
+	if (st->cols[i]->idx == col) {
 	    ct = st->cols[i];
 	    break;
 	}
@@ -211,6 +252,13 @@ static void col_table_destroy (col_table *ct)
     free(ct);
 }
 
+/**
+ * gretl_string_table_destroy:
+ * @st: gretl string table.
+ *
+ * Frees all resources associated with @st.
+ */
+
 void gretl_string_table_destroy (gretl_string_table *st)
 {
     int i;
@@ -228,6 +276,18 @@ void gretl_string_table_destroy (gretl_string_table *st)
 
     free(st);
 }
+
+/**
+ * gretl_string_table_print:
+ * @st: gretl string table.
+ * @pdinfo: dataset information (for names of variables).
+ * @fname: name of file to which to print.
+ * @prn: gretl printer (or %NULL).
+ *
+ * Prints table @st to a file called @fname.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
 			      const char *fname, PRN *prn)
@@ -290,9 +350,19 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     return err;
 }
 
+/**
+ * gretl_string_table_add_extra:
+ * @st: gretl string table.
+ * @prn: gretl printer.
+ *
+ * Steals the printing buffer from @prn and adds it to @st.
+ * The buffer will be appended when @st is printed via
+ * gretl_string_table_print().
+ */
+
 void gretl_string_table_add_extra (gretl_string_table *st, PRN *prn)
 {
-    if (st != NULL) {
+    if (st != NULL && prn != NULL) {
 	st->extra = gretl_print_steal_buffer(prn);
     }
 }
@@ -330,6 +400,15 @@ static saved_string dsep = { "dirsep", 0, "\\" };
 #else
 static saved_string dsep = { "dirsep", 0, "/" };
 #endif
+
+/**
+ * gretl_insert_builtin_string:
+ * @name: the name of the string to be added or replaced.
+ * @s: the value for this string variable.
+ *
+ * Inserts value @s for string @name in gretl's table
+ * of built-in string variables.
+ */
 
 void gretl_insert_builtin_string (const char *name, const char *s)
 {
@@ -393,7 +472,13 @@ static saved_string *get_saved_string_by_name (const char *name,
     return NULL;
 }
 
-/* access a saved string by name */
+/**
+ * get_string_by_name:
+ * @name: the name of the string variable to access.
+ *
+ * Returns: the value of string variable @name, or %NULL
+ * if there is no such variable.
+ */
 
 char *get_string_by_name (const char *name)
 {
@@ -441,6 +526,17 @@ static saved_string *add_named_string (const char *name)
 
     return &S[n];
 }
+
+/**
+ * add_string_as:
+ * @s: string value to be added.
+ * @name: the name of the string variable to add.
+ *
+ * Adds @s to the saved array of string variables 
+ * under the name @name.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
 
 int add_string_as (const char *s, const char *name)
 {
@@ -503,6 +599,17 @@ static int destroy_saved_string (saved_string *S)
 
     return err;
 }
+
+/**
+ * delete_saved_string:
+ * @name: the name of the string variable to delete.
+ * @prn: gretl printer (or %NULL).
+ *
+ * Deletes the string variable called @name.
+ *
+ * Returns: 0 on success, non-zero on failure (e.g.
+ * attempting to delete a built-in string variable).
+ */
 
 int delete_saved_string (const char *name, PRN *prn)
 {
