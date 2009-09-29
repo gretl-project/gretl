@@ -131,6 +131,7 @@ struct sample_info {
     int t1;
     int t2;
     char *mask;
+    char *restriction;
     unsigned int seed;
     int resample_n;
 };
@@ -1091,8 +1092,19 @@ static void sinfo_init (struct sample_info *sinfo)
     sinfo->t1 = 0;
     sinfo->t2 = 0;
     sinfo->mask = NULL;
+    sinfo->restriction = NULL;
     sinfo->seed = 0;
     sinfo->resample_n = 0;
+}
+
+static void sinfo_free_data (struct sample_info *sinfo)
+{
+    if (sinfo->mask != NULL) {
+	free(sinfo->mask);
+    }
+    if (sinfo->restriction != NULL) {
+	free(sinfo->restriction);
+    }
 }
 
 static int set_session_dirname (const char *zdirname)
@@ -1237,6 +1249,10 @@ void do_open_session (void)
     } else if (sinfo.mask != NULL) {
 	err = restrict_sample_from_mask(sinfo.mask, &Z, datainfo,
 					OPT_NONE);
+	if (!err) {
+	    datainfo->restriction = sinfo.restriction;
+	    sinfo.restriction = NULL;
+	}
     }
 
     if (err) {
@@ -1251,8 +1267,9 @@ void do_open_session (void)
 
     if (sinfo.mask != NULL) {
 	set_sample_label(datainfo);
-	free(sinfo.mask);
     }
+
+    sinfo_free_data(&sinfo);
 
     set_main_window_title(session.name, FALSE);
 

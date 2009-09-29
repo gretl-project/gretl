@@ -19,6 +19,8 @@
 
 /* subsample.c for gretl */
 
+#define FULL_XML_HEADERS
+
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_func.h"
@@ -26,6 +28,7 @@
 #include "cmd_private.h"
 #include "dbread.h"
 #include "gretl_scalar.h"
+#include "gretl_xml.h"
 
 #define SUBDEBUG 0
 #define FULLDEBUG 0
@@ -179,6 +182,11 @@ int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp)
 	    fprintf(fp, "%d ", (int) pdinfo->submask[i]);
 	}
 	fputs("</submask>\n", fp);
+
+	if (pdinfo->restriction != NULL) {
+	    gretl_xml_put_tagged_string("restriction", pdinfo->restriction, fp);
+	}
+
 	ret = 1;
     }
 
@@ -1382,6 +1390,29 @@ static int restriction_uses_obs (const char *s)
 
 #endif
 
+static int make_restriction_string (DATAINFO *pdinfo, char *old, 
+				    const char *restr, int mode)
+{
+    if (mode == SUBSAMPLE_RANDOM) {
+	pdinfo->restriction = gretl_strdup("random");
+    } else if (old == NULL) {
+	pdinfo->restriction = gretl_strdup(restr);
+    } else {
+	char *s = malloc(strlen(old) + strlen(restr) + 5);
+
+	if (s != NULL) {
+	    sprintf(s, "%s && %s", old, restr);
+	    pdinfo->restriction = s;
+	}
+    }
+
+    if (old != NULL) {
+	free(old);
+    }
+
+    return (pdinfo->restriction == NULL)? E_ALLOC : 0;
+}
+
 /* restrict_sample: 
  * @line: command line (or %NULL).  
  * @pZ: pointer to original data array.  
@@ -1412,6 +1443,7 @@ int restrict_sample (const char *line, const int *list,
 		     ExecState *state, gretlopt opt, 
 		     PRN *prn)
 {
+    char *oldrestr = NULL;
     char *oldmask = NULL;
     char *mask = NULL;
     int free_oldmask = 0;
@@ -1445,6 +1477,9 @@ int restrict_sample (const char *line, const int *list,
 	    return E_ALLOC;
 	}
 	free_oldmask = 1;
+	if (pdinfo->restriction != NULL) {
+	    oldrestr = gretl_strdup(pdinfo->restriction);
+	}
     } else if (state != NULL && state->submask != NULL) {
 	/* subsampling within a function, with incoming
 	   restriction recorded in state
@@ -1506,6 +1541,8 @@ int restrict_sample (const char *line, const int *list,
     if (free_oldmask) {
 	free(oldmask);
     }
+
+    make_restriction_string(pdinfo, oldrestr, line, mode);
 
     return err;
 }
@@ -2034,7 +2071,7 @@ void print_sample_obs (const DATAINFO *pdinfo, PRN *prn)
     ntodate(d1, pdinfo->t1, pdinfo);
     ntodate(d2, pdinfo->t2, pdinfo);
 
-    pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
+    pprintf(prn, "%s: %s - %s", _("Current sample"), d1, d2);
     pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
 }
 
@@ -2043,9 +2080,9 @@ void print_sample_status (const DATAINFO *pdinfo, PRN *prn)
     char tmp[128];
 
     if (complex_subsampled()) {
-	pprintf(prn, "%s:\n\n", _("Full dataset"));
+	pprintf(prn, "%s\n\n", _("Full dataset"));
 	dataset_type_string(tmp, fullinfo);
-	pprintf(prn, "%s: %s\n", _("Type of data"), tmp);
+	pprintf(prn, "%s: %s\n", _("Type"), tmp);
 	if (dataset_is_time_series(fullinfo)) {
 	    pd_string(tmp, fullinfo);
 	    pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
@@ -2055,14 +2092,19 @@ void print_sample_status (const DATAINFO *pdinfo, PRN *prn)
 	    pprintf(prn, "%s: %d\n", _("Number of cross-sectional units"), nu);
 	    pprintf(prn, "%s: %d\n", _("Number of time periods"), fullinfo->pd);
 	}
-	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
+	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Range"), 
 		fullinfo->stobs, fullinfo->endobs, fullinfo->n);
 
-	pprintf(prn, "\n%s:\n\n", _("Subsampled data"));
+	pprintf(prn, "\n%s\n", _("Subsampled data"));
+	if (pdinfo->restriction != NULL) {
+	    pprintf(prn, "(%s: %s)\n\n", _("restriction"), pdinfo->restriction);
+	} else {
+	    pputc(prn, '\n');
+	}
     }	
 
     dataset_type_string(tmp, pdinfo);
-    pprintf(prn, "%s: %s\n", _("Type of data"), tmp);
+    pprintf(prn, "%s: %s\n", _("Type"), tmp);
     if (dataset_is_time_series(pdinfo)) {
 	pd_string(tmp, pdinfo);
 	pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
@@ -2072,7 +2114,7 @@ void print_sample_status (const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "%s: %d\n", _("Number of cross-sectional units"), nu);
 	pprintf(prn, "%s: %d\n", _("Number of time periods"), pdinfo->pd);
     }	
-    pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
+    pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full range"), 
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     print_sample_obs(pdinfo, prn); 
 }

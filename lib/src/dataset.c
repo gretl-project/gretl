@@ -147,6 +147,11 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	pdinfo->submask = NULL;
     }
 
+    if (pdinfo->restriction != NULL) {
+	free(pdinfo->restriction);
+	pdinfo->restriction = NULL;
+    }	
+
     if (pdinfo->paninfo != NULL) {
 	dataset_destroy_panel_info(pdinfo);
     }    
@@ -618,6 +623,7 @@ DATAINFO *datainfo_new (void)
     dinfo->S = NULL;
     dinfo->descrip = NULL;
     dinfo->submask = NULL;
+    dinfo->restriction = NULL;
 
     dinfo->structure = CROSS_SECTION;
 
@@ -759,6 +765,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->descrip = NULL;
     pdinfo->paninfo = NULL;
     pdinfo->submask = NULL;
+    pdinfo->restriction = NULL;
     
     return 0;
 }

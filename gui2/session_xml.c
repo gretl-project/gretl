@@ -208,6 +208,18 @@ static int data_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
+static int data_restrict_from_xml (xmlNodePtr node, xmlDocPtr doc,
+				   struct sample_info *sinfo)
+{
+    char *s = NULL;
+
+    if (gretl_xml_node_get_trimmed_string(node, doc, &s)) {
+	sinfo->restriction = s;
+    }
+
+    return 0;
+}
+
 static int rebuild_session_model (const char *fname, 
 				  const char *name, 
 				  GretlObjType type,
@@ -422,6 +434,8 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
 	    err = data_submask_from_xml(cur, doc, sinfo);
+	} else if (!xmlStrcmp(cur->name, (XUC) "restriction")) {
+	    err = data_restrict_from_xml(cur, doc, sinfo);
 	} else if (!xmlStrcmp(cur->name, (XUC) "resample")) {
 	    tmp = xmlGetProp(cur, (XUC) "seed");
 	    if (tmp != NULL) {

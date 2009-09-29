@@ -281,6 +281,7 @@ struct DATAINFO_ {
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
     char *submask;      /* subsampling mask */
+    char *restriction;  /* record of sub-sampling restriction */
 };
 
 /* wrapper for the two main elements of a gretl data set */
