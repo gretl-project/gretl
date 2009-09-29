@@ -1652,9 +1652,7 @@ static int allocate_label (plot_editor *ed)
 
 static int allocate_line (plot_editor *ed)
 {
-    int err;
-
-    err = make_lines_backup(ed);
+    int err = make_lines_backup(ed);
 
     if (!err) {
 	err = plotspec_add_line(ed->spec);
@@ -1690,11 +1688,34 @@ static void add_label_callback (GtkWidget *w, plot_editor *ed)
     }
 }
 
+static void set_gp_formula (char *targ, const char *s)
+{
+    int decom = (get_local_decpoint() == ',');
+    int rem = GP_MAXFORMULA - strlen(s);
+    int i = 0;
+
+    while (*s) {
+	if (decom && *s == ',') {
+	    targ[i++] = '.';
+	} else if (*s == '^' && rem > 1) {
+	    targ[i++] = '*';
+	    targ[i++] = '*';
+	    rem--;
+	} else {
+	    targ[i++] = *s;
+	}
+	s++;
+    }
+
+    targ[i] = '\0';
+}
+
 static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 {
     plot_editor *ed = nlinfo->editor;
     GPT_SPEC *spec = ed->spec;
     GPT_LINE *line;
+    char tmp[GP_MAXFORMULA];
     const gchar *s;
     gint pgnum;
     int err = 0;
@@ -1705,6 +1726,9 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 	return;
     }
 
+    *tmp = '\0';
+    strncat(tmp, s, GP_MAXFORMULA - 1);
+
     err = allocate_line(ed);
     if (err) {
 	gtk_widget_destroy(nlinfo->dlg);
@@ -1712,8 +1736,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     }
 
     line = &spec->lines[spec->n_lines - 1];
-
-    entry_to_gp_string(nlinfo->formula_entry, line->formula, GP_MAXFORMULA);
+    set_gp_formula(line->formula, tmp);
 
     line->style = GP_STYLE_LINES;
     line->type = spec->n_lines; /* assign next line style */

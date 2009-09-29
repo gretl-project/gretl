@@ -778,27 +778,35 @@ int text_equation_ok (const MODEL *pmod)
     }
 }
 
+static char *eqn_numstr (double x, char *s)
+{
+    sprintf(s, "%#.4g", x);
+    return gretl_fix_exponent(s);
+}
+
 int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn)
 {
     double x;
-    char vname[32];
+    char vname[32], xstr[12];
     int pad, c, cols[6] = {0};
     int i, nc = pmod->ncoeff;
 
     /* dependent variable */
     pputc(prn, '\n');
-    c = pprintf(prn, "%s = ", gretl_model_get_depvar_name(pmod, pdinfo));
+    c = pprintf(prn, "^%s = ", gretl_model_get_depvar_name(pmod, pdinfo));
 
     /* coefficients times indep vars */
 
     for (i=0; i<nc; i++) {
-	cols[i] = (i == 0)? c : c + 2;
+	cols[i] = (i == 0)? (c - 1) : (c + 2);
 	if (i == 0 && pmod->ifc) {
-	    c += pprintf(prn, "%#.4g", pmod->coeff[i]);
+	    eqn_numstr(pmod->coeff[i], xstr);
+	    c += pputs(prn, xstr);
 	} else {
-	    c += pprintf(prn, " %c %#.4g", (pmod->coeff[i] < 0.0)? '-' : '+',
-			 fabs(pmod->coeff[i]));
+	    eqn_numstr(fabs(pmod->coeff[i]), xstr);
+	    c += pprintf(prn, " %c %s", (pmod->coeff[i] < 0.0)? '-' : '+',
+			 xstr);
 	    gretl_model_get_param_name(pmod, pdinfo, i, vname);
 	    c += pprintf(prn, "*%s", vname);
 	}
@@ -822,9 +830,11 @@ int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    c += pprintf(prn, "(NA)");
 	} else if (opt & OPT_T) {
 	    x = pmod->coeff[i] / pmod->sderr[i];
-	    c += pprintf(prn, "(%#.4g)", x);
+	    eqn_numstr(x, xstr);
+	    c += pprintf(prn, "(%s)", xstr);
 	} else {
-	    c += pprintf(prn, "(%#.4g)", pmod->sderr[i]);
+	    eqn_numstr(pmod->sderr[i], xstr);
+	    c += pprintf(prn, "(%s)", xstr);
 	}
     }
 
