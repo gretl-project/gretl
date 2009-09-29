@@ -38,10 +38,10 @@ struct SAS_varinfo {
     int size;
     int pos;
     char name[9];
+    char label[41];
 };
 
 struct SAS_fileinfo {
-    int opt;       /* option flags */
     int nmembers;  /* number of member datasets */
     int mem2pos;   /* starting offset of second dataset (if present) */
     int nvars;     /* number of variables in first dataset */
@@ -49,6 +49,7 @@ struct SAS_fileinfo {
     int nobs;      /* computed number of observations */
     int nobs_read; /* numbe of obs actually read */
     int maxclen;   /* max. length of character variables, bytes */
+    int data_up;   /* reached the point of actually reading data */
     int finished;  /* finished reading data */
     struct SAS_varinfo *vars;
 };
@@ -68,18 +69,11 @@ enum {
     XPT_CHARACTER
 };
 
-enum {
-    OPT_CSV = 1
-};
-
 #define VERBOSE 1
-#define MAXOBS 0
-#define CSV_DIG 8
 
 static void SAS_fileinfo_init (struct SAS_fileinfo *finfo,
 			       int opt)
 {
-    finfo->opt = opt;
     finfo->nmembers = 0;
     finfo->mem2pos = 0;
     finfo->nvars = 0;
@@ -87,6 +81,7 @@ static void SAS_fileinfo_init (struct SAS_fileinfo *finfo,
     finfo->nobs = 0;
     finfo->nobs_read = 0;
     finfo->maxclen = 0;
+    finfo->data_up = 0;
     finfo->finished = 0;
     finfo->vars = NULL;
 }
@@ -193,7 +188,7 @@ static double read_xpt (char *src)
     }
 
     if (na) {
-	x = -999; /* FIXME */
+	x = NADBL;
     } else {
 	xpt_to_ieee((unsigned char *) src, (unsigned char *) xs.s); 
 #if HOST_ENDIAN == G_LITTLE_ENDIAN
@@ -216,7 +211,7 @@ static int read_namestr (FILE *fp, int nsize, int j, struct SAS_varinfo *var)
 
     if (fread(&nstr, sizeof nstr, 1, fp) != 1) {
 	fprintf(stderr, "couldn't read NAMESTR record\n");
-	return 1;
+	return E_DATA;
     }
 
     strncat(vname, nstr.nname, 8);
@@ -244,6 +239,7 @@ static int read_namestr (FILE *fp, int nsize, int j, struct SAS_varinfo *var)
     var->size = nstr.nlng;
     var->pos = nstr.npos;
     strcpy(var->name, vname);
+    strcpy(var->label, label);
 
     /* skip to end */
     fseek(fp, nsize - sizeof nstr, SEEK_CUR);
@@ -255,7 +251,6 @@ static int is_date_record (char *buf)
 {
     char dstr[18], mon[4];
     int dd, yy, hh, mm, ss;
-    
 
     *dstr = '\0';
     strncat(dstr, buf, 16);
@@ -295,7 +290,7 @@ static int namestr_get_nvars (char *buf)
 
 static int header_type (char *buf, int quiet)
 {
-    char hstr[8];
+    char hstr[14];
     int ret = 0;
 
     *hstr = '\0';
@@ -385,37 +380,12 @@ static int get_nobs (FILE *fp, struct SAS_fileinfo *finfo)
 	fprintf(stderr, "obsize = %d (test count = %d)\n", finfo->obsize, ostest);
     }
 
-    return (finfo->nobs == 0);
+    return (finfo->nobs == 0)? E_DATA : 0;
 }
 
-#if 0
-static int write_subset_file (FILE *fp)
-{
-    int len = ftell(fp);
-    int bytes = 0;
-    char buf[80];
-    FILE *fq;
-
-    fq = fopen("subset.xpt", "wb");
-
-    if (fq == NULL) {
-	return 1;
-    }
-
-    rewind(fp);
-
-    while (bytes < len) {
-	bytes += fread(buf, 1, sizeof buf, fp);
-	fwrite(buf, 1, sizeof buf, fq);
-    }
-
-    fclose(fq);
-
-    return 0;
-}
-#endif
-
-static int real_read_data (FILE *fp, struct SAS_fileinfo *finfo)
+static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
+			  double **Z, DATAINFO *pdinfo, 
+			  gretl_string_table *st, PRN *prn)
 {
     char *buf = NULL, *cbuf = NULL;
     char c8[8];
@@ -425,21 +395,19 @@ static int real_read_data (FILE *fp, struct SAS_fileinfo *finfo)
     if (finfo->maxclen > 0) {
 	cbuf = malloc(finfo->maxclen + 1);
 	if (cbuf == NULL) {
-	    return 1;
+	    return E_ALLOC;
 	}
     }
 
     buf = malloc(finfo->obsize);
     if (buf == NULL) {
 	free(cbuf);
-	return 1;
+	return E_ALLOC;
     }
 
-    if (finfo->opt == OPT_CSV) {
-	for (i=0; i<finfo->nvars; i++) {
-	    printf("%s", finfo->vars[i].name);
-	    putchar((i < finfo->nvars - 1)? ',' : '\n');
-	}
+    for (i=0; i<finfo->nvars; i++) {
+	strcpy(pdinfo->varname[i+1], finfo->vars[i].name);
+	strcpy(VARLABEL(pdinfo, i+1), finfo->vars[i].label);
     }
 
     t = 0;
@@ -449,27 +417,17 @@ static int real_read_data (FILE *fp, struct SAS_fileinfo *finfo)
 	    if (finfo->vars[i].type == XPT_NUMERIC) {
 		memcpy(c8, buf + pos, 8);
 		x = read_xpt(c8);
-		if (finfo->opt == OPT_CSV) {
-		    printf("%.*g", CSV_DIG, x);
-		}
-	    } else {
+		Z[i+1][t] = x;
+	    } else if (st != NULL) {
 		/* character data */
 		*cbuf = '\0';
 		strncat(cbuf, buf + pos, finfo->vars[i].size);
 		tailstrip(cbuf);
-		if (finfo->opt == OPT_CSV) {
-		    printf("\"%s\"", cbuf);
-		}
-	    }
-	    if (finfo->opt == OPT_CSV) {
-		putchar((i < finfo->nvars - 1)? ',' : '\n');
+		Z[i+1][t] = gretl_string_table_index(st, cbuf, i+1, 
+						     1, prn);
 	    }
 	}
 	t++;
-	if (t == MAXOBS) {
-	    fprintf(stderr, "hit MAXOBS=%d at pos=%d\n", MAXOBS, (int) ftell(fp));
-	    break;
-	}
     }
 
     if (t > 0) {
@@ -484,7 +442,7 @@ static int real_read_data (FILE *fp, struct SAS_fileinfo *finfo)
     return 0;
 }
 
-static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo)
+static int SAS_read_data_info (FILE *fp, struct SAS_fileinfo *finfo)
 {
     char buf[160];
     int htype, rem, nsize = 140;
@@ -493,29 +451,29 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo)
 
     nb = fread(buf, 1, 80, fp);
     if (nb != 80) {
-	return 1;
+	return E_DATA;
     }
 
     htype = header_type(buf, 0);
     if (htype == 0) {
 	fprintf(stderr, "Got some unexpected bytes\n");
-	return 1;
+	return E_DATA;
     }
 
     if (htype == XPT_MEMBER) {
 	nsize = member_get_namestr_size(buf);
 	fprintf(stderr, "member: got nsize = %d\n", nsize);
 	if (nsize != 140 && nsize != 136) {
-	    err = 1;
+	    err = E_DATA;
 	}
     } else if (htype == XPT_NAMESTR) {
 	finfo->nvars = namestr_get_nvars(buf);
 	if (finfo->nvars <= 0) {
-	    err = 1;
+	    err = E_DATA;
 	} else {
 	    finfo->vars = malloc(finfo->nvars * sizeof *finfo->vars);
 	    if (finfo->vars == NULL) {
-		err = 1;
+		err = E_ALLOC;
 	    } 
 	    for (j=0; j<finfo->nvars && !err; j++) {
 		err = read_namestr(fp, nsize, j, &finfo->vars[j]);
@@ -534,18 +492,18 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo)
 	    /* now we should get an OBS record */
 	    nb = fread(buf, 1, 80, fp);
 	    if (nb != 80) {
-		err = 1;
+		err = E_DATA;
 	    }
 	}
 	if (!err) {
 	    if (header_type(buf, 0) == XPT_OBSREC) {
 		err = get_nobs(fp, finfo);
 		if (!err) {
-		    err = real_read_data(fp, finfo);
+		    finfo->data_up = 1;
 		}
 	    } else {
 		fprintf(stderr, "Expected OBS record\n");
-		err = 1;
+		err = E_DATA;
 	    }
 	}
     }
@@ -560,9 +518,9 @@ static int SAS_read_global_header (FILE *fp, struct SAS_fileinfo *finfo)
 
     /* we start with 3 80-bytes records */
     if (fread(buf, 1, 240, fp) != 240) {
-	err = 1;
+	err = E_DATA;
     } else if (header_type(buf, 0) != XPT_LIBRARY) {
-	err = 1;
+	err = E_DATA;
     } 
 
     if (err) {
@@ -580,6 +538,8 @@ static int SAS_read_global_header (FILE *fp, struct SAS_fileinfo *finfo)
 	fseek(fp, 240, SEEK_SET);
     }
 
+    fprintf(stderr, "SAS_read_global_header: returning %d\n", err);
+
     return err;
 }
 
@@ -588,10 +548,10 @@ int xport_get_data (const char *fname,
 		    gretlopt opt, PRN *prn)
 {
     struct SAS_fileinfo finfo;
-    FILE *fp;
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
     gretl_string_table *st = NULL;
+    FILE *fp;
     int err = 0;
 
     fp = gretl_fopen(fname, "rb");
@@ -602,28 +562,42 @@ int xport_get_data (const char *fname,
     SAS_fileinfo_init(&finfo, opt);
 
     err = SAS_read_global_header(fp, &finfo);
+    if (err) {
+	pputs(prn, _("This file does not seem to be a valid SAS xport file"));
+	fclose(fp);
+	return E_DATA;
+    }
+
+    fprintf(stderr, "done SAS_read_global_header\n");
 
     fprintf(stderr, "nmembers = %d\n", finfo.nmembers);
     if (finfo.nmembers > 1) {
 	fprintf(stderr, "position of member 2 = %d\n", finfo.mem2pos);
     }
 
-    /* FIXME extract full dimenstions of dataset first */
-
-    while (!err && !finfo.finished) {
-	err = SAS_read_data(fp, &finfo);
+    while (!err && !finfo.data_up && !finfo.finished) {
+	err = SAS_read_data_info(fp, &finfo);
     }
 
-    fclose(fp);
+    if (err) {
+	/* FIXME message, and cleanup */
+	pputs(prn, _("This file does not seem to be a valid SAS xport file"));
+	fclose(fp);
+	return E_DATA;
+    }
 
-    free(finfo.vars);
-
-#if 0 /* not yet */
     newinfo = datainfo_new();
     if (newinfo == NULL) {
 	pputs(prn, _("Out of memory\n"));
 	fclose(fp);
 	return E_ALLOC;
+    }
+
+    newinfo = datainfo_new();
+    if (newinfo == NULL) {
+	pputs(prn, _("Out of memory\n"));
+	err = E_ALLOC;
+	goto bailout;
     }
 
     newinfo->v = finfo.nvars + 1;
@@ -633,9 +607,17 @@ int xport_get_data (const char *fname,
     if (err) {
 	pputs(prn, _("Out of memory\n"));
 	free_datainfo(newinfo);
-	fclose(fp);
-	return E_ALLOC;
-    }	
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (finfo.maxclen > 0) {
+	st = gretl_string_table_new(&err);
+    }
+
+    if (!err) {
+	err = SAS_read_data(fp, &finfo, newZ, newinfo, st, prn);
+    }
 
     if (err) {
 	destroy_dataset(newZ, newinfo);
@@ -643,12 +625,6 @@ int xport_get_data (const char *fname,
 	    gretl_string_table_destroy(st);
 	}	
     } else {
-	int nvtarg = newinfo->v - 1;
-
-	if (nvread < nvtarg) {
-	    dataset_drop_last_variables(nvtarg - nvread, &newZ, newinfo);
-	}
-	
 	if (fix_varname_duplicates(newinfo)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
@@ -665,7 +641,10 @@ int xport_get_data (const char *fname,
 	}
     }
 
-#endif
+ bailout:
+
+    free(finfo.vars);
+    fclose(fp);
 
     return err;
 }  

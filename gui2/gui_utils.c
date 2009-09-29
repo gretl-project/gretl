@@ -742,7 +742,8 @@ static void finalize_data_open (const char *fname, int ftype,
 				const int *plist)
 {
     if (import) {
-	if (ftype == GRETL_CSV || ftype == GRETL_DTA || ftype == GRETL_SAV) {
+	if (ftype == GRETL_CSV || ftype == GRETL_DTA || 
+	    ftype == GRETL_SAV || ftype == GRETL_SAS) {
 	    maybe_display_string_table();
 	}
 	data_status |= IMPORT_DATA;
@@ -830,7 +831,10 @@ int get_imported_data (char *fname, int ftype, int append)
     } else if (ftype == GRETL_SAV) {
 	misc_importer = gui_get_plugin_function("sav_get_data",
 						&handle);
-    } else if (ftype == GRETL_JMULTI) {
+    } else if (ftype == GRETL_SAS) {
+	misc_importer = gui_get_plugin_function("xport_get_data",
+						&handle);
+     } else if (ftype == GRETL_JMULTI) {
 	misc_importer = gui_get_plugin_function("jmulti_get_data",
 						&handle);
     } else if (ftype == GRETL_WF1) {
@@ -971,6 +975,7 @@ static int get_native_data (char *fname, int ftype, int append,
                            action == APPEND_WF1 || \
                            action == APPEND_DTA || \
 	                   action == APPEND_SAV || \
+			   action == APPEND_SAS || \
                            action == APPEND_JMULTI)
 
 void do_open_data (windata_t *fwin, int code)
@@ -1000,6 +1005,8 @@ void do_open_data (windata_t *fwin, int code)
 	ftype = GRETL_DTA;
     } else if (code == OPEN_SAV || code == APPEND_SAV) {
 	ftype = GRETL_SAV;
+    } else if (code == OPEN_SAS || code == APPEND_SAS) {
+	ftype = GRETL_SAS;
     } else if (code == OPEN_JMULTI || code == APPEND_JMULTI) {
 	ftype = GRETL_JMULTI;
     } else {

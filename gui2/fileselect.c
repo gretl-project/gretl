@@ -50,6 +50,7 @@
                               i == OPEN_WF1 || \
                               i == OPEN_DTA || \
 	                      i == OPEN_SAV || \
+			      i == OPEN_SAS || \
                               i == OPEN_JMULTI || \
                               i == OPEN_ODS)
 
@@ -62,6 +63,7 @@
                                i == APPEND_WF1 || \
                                i == APPEND_DTA || \
                                i == APPEND_SAV || \
+			       i == APPEND_SAS || \
                                i == APPEND_JMULTI || \
                                i == APPEND_ODS)
 
@@ -122,6 +124,8 @@ static struct extmap action_map[] = {
     { APPEND_DTA,        ".dta" },
     { OPEN_SAV,          ".sav" },
     { APPEND_SAV,        ".sav" },
+    { OPEN_SAS,          ".xpt" },
+    { APPEND_SAS,        ".xpt" },
     { OPEN_JMULTI,       ".dat" },
     { APPEND_JMULTI,     ".dat" },
     { OPEN_ODS,          ".ods" },

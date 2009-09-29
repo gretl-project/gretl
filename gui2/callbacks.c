@@ -176,6 +176,8 @@ struct open_data_code open_data_codes[] = {
     { APPEND_DTA,      "AppendDTA" },
     { OPEN_SAV,        "OpenSAV" },
     { APPEND_SAV,      "AppendSAV" },
+    { OPEN_SAS,        "OpenSAS" },
+    { APPEND_SAS,      "AppendSAS" },
     { OPEN_JMULTI,     "OpenJMulTi" },
     { APPEND_JMULTI,   "AppendJMulTi" },
     { OPEN_ODS,        "OpenODS" },

@@ -56,6 +56,7 @@ enum {
     P_EVIEWS_IMPORT,
     P_STATA_IMPORT,
     P_SPSS_IMPORT,
+    P_SAS_IMPORT,
     P_JMULTI_IMPORT,
     P_ZIPFILE,
     P_ARBOND,
@@ -106,6 +107,7 @@ struct plugin_info plugins[] = {
     { P_EVIEWS_IMPORT,   "eviews_import" },
     { P_STATA_IMPORT,    "stata_import" },
     { P_SPSS_IMPORT,     "spss_import" },
+    { P_SAS_IMPORT,      "sas_import" },
     { P_JMULTI_IMPORT,   "jmulti_import" },
     { P_ZIPFILE,         "gretlzip" },
     { P_ARBOND,          "arbond" },
@@ -124,6 +126,7 @@ struct plugin_function plugin_functions[] = {
     { "wf1_get_data",      P_EVIEWS_IMPORT },
     { "dta_get_data",      P_STATA_IMPORT },
     { "sav_get_data",      P_SPSS_IMPORT },
+    { "xport_get_data",    P_SAS_IMPORT },
     { "jmulti_get_data",   P_JMULTI_IMPORT },
 
     /* Johansen cointegration test and VECM */
@@ -319,6 +322,7 @@ void *get_plugin_function (const char *funcname, void **handle)
     plugname = get_plugin_name_for_function(funcname);
     if (plugname == NULL) {
 	gretl_errmsg_set(_("Couldn't load plugin function"));
+	fprintf(stderr, "plugname == NULL for '%s'\n", funcname);
 	*handle = NULL;
 	return NULL;
     }

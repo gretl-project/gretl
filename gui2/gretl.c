@@ -605,6 +605,7 @@ int main (int argc, char **argv)
 	case GRETL_ODS:
 	case GRETL_DTA:
 	case GRETL_SAV:
+	case GRETL_SAS:
 	case GRETL_JMULTI:
 	case GRETL_OCTAVE:
 	case GRETL_WF1:
@@ -1266,6 +1267,7 @@ GtkActionEntry main_entries[] = {
     { "OpenWF1",      NULL, N_("_Eviews..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenDTA",      NULL, N_("_Stata..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenSAV",      NULL, N_("_SPSS..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "OpenSAS",      NULL, N_("_SAS (xport)..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
     { "AppendData",     NULL, N_("_Append data"), NULL, NULL, NULL }, 
@@ -1279,6 +1281,8 @@ GtkActionEntry main_entries[] = {
     { "AppendWF1",      NULL, N_("_Eviews..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendDTA",      NULL, N_("_Stata..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendSAV",      NULL, N_("_SPSS..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "AppendSAS",      NULL, N_("_SAS (xport)..."), NULL, NULL, G_CALLBACK(open_data) },
+
     { "AppendJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
     { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), "<control>S", NULL, G_CALLBACK(auto_store) },

@@ -2784,6 +2784,8 @@ int import_other (const char *fname, int ftype,
 	importer = get_plugin_function("dta_get_data", &handle);
     } else if (ftype == GRETL_SAV) {
 	importer = get_plugin_function("sav_get_data", &handle);
+    } else if (ftype == GRETL_SAS) {
+	importer = get_plugin_function("xport_get_data", &handle);
     } else if (ftype == GRETL_JMULTI) {
 	importer = get_plugin_function("jmulti_get_data", &handle);
     } else {
@@ -2967,6 +2969,8 @@ GretlFileType detect_filetype (char *fname)
 	return GRETL_DTA;
     if (has_suffix(fname, ".sav"))
 	return GRETL_SAV;
+    if (has_suffix(fname, ".xpt"))
+	return GRETL_SAS;
     if (has_suffix(fname, ".bin"))
 	return GRETL_NATIVE_DB;
     if (has_suffix(fname, ".rat"))
@@ -3190,6 +3194,7 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 	{ GRETL_WF1,      "Eviews" },
 	{ GRETL_DTA,      "Stata" },
 	{ GRETL_SAV,      "SPSS" },
+	{ GRETL_SAS,      "SAS" },
 	{ GRETL_JMULTI,   "JMulTi" }
     };
     int i, nt = sizeof ftypes / sizeof ftypes[0];
