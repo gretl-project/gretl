@@ -620,6 +620,48 @@ int make_html_log (int type)
     return err;
 }
 
+int make_gretldata_dtd_page (void)
+{
+    char line[512];
+    char targ[MYLEN];
+    char src[MYLEN];
+    FILE *fp, *fq;
+    int i;
+
+    sprintf(src, "%s/share/data/gretldata.dtd", SRCDIR);
+    sprintf(targ, "%s/gretldata.dtd.html", WEBDIR);
+
+    fp = fopen(src, "r");
+    if (fp == NULL) {
+	return 1;
+    }
+
+    fq = fopen(targ, "w");
+    if (fq == NULL) {
+	fclose(fp);
+	return 1;
+    }
+
+    fputs("<html>\n<pre>\n", fq);
+    while (fgets(line, sizeof line, fp)) {
+	for (i=0; line[i]; i++) {
+	    if (line[i] == '<') {
+		fputs("&lt;", fq);
+	    } else if (line[i] == '>') {
+		fputs("&gt;", fq);
+	    } else {
+		fputc(line[i], fq);
+	    }
+	}
+    }
+    fputs("</pre>\n</html>", fq);
+
+    fclose(fp);
+    fclose(fq);
+
+    return 0;
+}
+
 int main (int argc, char **argv)
 {
     char *progdate;
@@ -692,6 +734,10 @@ int main (int argc, char **argv)
 
     if (!err) {
 	err = make_html_log(BACKWARD_LOG);
+    }
+    
+    if (!err) {
+	err = make_gretldata_dtd_page();
     }
 
     return err;
