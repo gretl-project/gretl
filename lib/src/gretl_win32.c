@@ -677,6 +677,7 @@ int win32_write_access (char *path)
 	    fprintf(stderr, "failed\n");
 	} else {
 	    fprintf(stderr, "domain='%s'\n", domain);
+	}
     }
 
     if (!err) {
