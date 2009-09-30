@@ -427,8 +427,12 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
 		*cbuf = '\0';
 		strncat(cbuf, buf + pos, finfo->vars[i].size);
 		tailstrip(cbuf);
-		Z[i+1][t] = gretl_string_table_index(st, cbuf, i+1, 
-						     1, prn);
+		if (*cbuf) {
+		    Z[i+1][t] = gretl_string_table_index(st, cbuf, i+1, 
+							 1, prn);
+		} else {
+		    Z[i+1][t] = 0.0;
+		}
 	    }
 	}
 	t++;
