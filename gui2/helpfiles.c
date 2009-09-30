@@ -1138,28 +1138,31 @@ void genr_funcs_ref (GtkAction *action)
     real_do_help(idx, pos, FUNCS_HELP);    
 }
 
+/* below: must return > 0 to do anything useful */
+
 static int help_pos_from_string (const char *s, int *idx, int *role)
 {
-    char word[12];
+    char word[16];
     int pos;
 
     *word = '\0';
-    strncat(word, s, 11);
+    strncat(word, s, 15);
 
     *idx = gretl_command_number(word);
     pos = help_pos_from_index(*idx, *role);
 
-    if (pos < 0 && translated_helpfile) {
+    if (pos <= 0 && translated_helpfile) {
 	pos = help_pos_from_index(*idx, CLI_HELP_EN);
-	if (pos >= 0) {
+	if (pos > 0) {
 	    *role = CLI_HELP_EN;
 	}
     }
 
-    if (pos < 0) {
+    if (pos <= 0) {
 	/* try function instead of command */
 	pos = function_help_pos_from_word(word);
 	if (pos > 0) {
+	    *idx = function_help_index_from_word(word);
 	    *role = FUNCS_HELP;
 	}
     }
@@ -1187,6 +1190,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	if (gtk_text_iter_inside_word(&iter)) {
 	    GtkTextIter w_start, w_end;
+	    int got_dollar = 0;
 
 	    w_start = iter;
 	    w_end = iter;
@@ -1201,7 +1205,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	    text = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
 
-	    /* dollar accessors! */
+	    /* dollar accessors */
 	    if (text != NULL) {
 		GtkTextIter dstart = w_start;
 		gchar *dtest = NULL;
@@ -1214,22 +1218,25 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			
 			g_free(text);
 			text = s;
+			got_dollar = 1;
 		    }
 		    g_free(dtest);
 		}
 	    }
 
-	    /* "coint2" command! */
-	    if (text != NULL && !strcmp(text, "coint") && 
-		gtk_text_iter_forward_char(&w_end)) {
-		gchar *s = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
+	    /* special: "coint2" command */
+	    if (!got_dollar && text != NULL && !strcmp(text, "coint")) {
+		if (gtk_text_iter_forward_char(&w_end)) {
+		    gchar *s = gtk_text_buffer_get_text(buf, &w_start, 
+							&w_end, FALSE);
 
-		if (s != NULL) {
-		    if (!strcmp(s, "coint2")) {
-			g_free(text);
-			text = s;
-		    } else {
-			g_free(s);
+		    if (s != NULL) {
+			if (!strcmp(s, "coint2")) {
+			    g_free(text);
+			    text = s;
+			} else {
+			    g_free(s);
+			}
 		    }
 		}
 	    }

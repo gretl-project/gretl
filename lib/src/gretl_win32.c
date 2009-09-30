@@ -658,6 +658,9 @@ int win32_write_access (char *path)
     LookupAccountName(NULL, username, NULL, &sidsize, 
 		      NULL, &dlen, &stype);
 
+    fprintf(stderr, "username='%s', sidsize=%d, dlen=%d\n",
+	    username, sidsize, dlen);
+
     sid = LocalAlloc(0, sidsize);
     domain = LocalAlloc(0, dlen * sizeof *domain);
     if (sid == NULL || domain == NULL) {
@@ -666,9 +669,14 @@ int win32_write_access (char *path)
 
     if (!err) {
 	/* call the function for real */
+	fprintf(stderr, "calling LookupAccountName for real...\n");
 	ret = LookupAccountName(NULL, username, sid, &sidsize, 
 				domain, &dlen, &stype);
 	err = (ret == 0);
+	if (err) {
+	    fprintf(stderr, "failed\n");
+	} else {
+	    fprintf(stderr, "domain='%s'\n", domain);
     }
 
     if (!err) {
@@ -678,12 +686,14 @@ int win32_write_access (char *path)
 				   DACL_SECURITY_INFORMATION, 
 				   NULL, NULL, &dacl, NULL, &sd);
 	err = (ret != ERROR_SUCCESS);
+	fprintf(stderr, "BuildTrusteeWithSid: ret=%d\n", ret);
     }
 
     if (!err) {
 	/* get the access mask for this trustee */
 	ret = GetEffectiveRightsFromAcl(dacl, &t, &amask);
 	err = (ret != ERROR_SUCCESS);
+	fprintf(stderr, "GetEffectiveRights...: ret=%d\n", ret);
     }
 
     if (!err && (amask & STANDARD_RIGHTS_WRITE)) {
