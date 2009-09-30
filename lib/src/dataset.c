@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_func.h"
 #include "gretl_scalar.h"
+#include "gretl_string_table.h"
 #include "libset.h"
 #include "dbread.h"
 
@@ -1869,6 +1870,93 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
 						NULL, NULL);
 	    free(list);
 	}
+    }
+
+    return err;
+}
+
+/* intended for use with newly imported data: trash any 
+   series that contain nothing but NAs
+*/
+
+int maybe_prune_dataset (double ***pZ, DATAINFO **ppdinfo, void *p)
+{
+    DATAINFO *pdinfo = *ppdinfo;
+    int allmiss, prune = 0, err = 0;
+    int i, t;
+
+    for (i=1; i<pdinfo->v; i++) {
+	allmiss = 1;
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!na((*pZ)[i][t])) {
+		allmiss = 0;
+		break;
+	    }
+	}
+	if (allmiss) {
+	    prune = 1;
+	    break;
+	}
+    }
+
+    if (prune) {
+	char *mask = calloc(pdinfo->v, 1);
+	double **newZ = NULL;
+	DATAINFO *newinfo = NULL;
+	int ndrop = 0;
+
+	if (mask == NULL) {
+	    return E_ALLOC;
+	}
+
+	for (i=1; i<pdinfo->v; i++) {
+	    allmiss = 1;
+	    for (t=0; t<pdinfo->n; t++) {
+		if (!na((*pZ)[i][t])) {
+		    allmiss = 0;
+		    break;
+		}
+	    }
+	    if (allmiss) {
+		mask[i] = 1;
+		ndrop++;
+	    }
+	}
+
+	newinfo = datainfo_new();
+	if (newinfo == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    newinfo->v = pdinfo->v - ndrop;
+	    newinfo->n = pdinfo->n;
+	    err = start_new_Z(&newZ, newinfo, 0);
+	}
+
+	if (!err) {
+	    gretl_string_table *st = (gretl_string_table *) p;
+	    size_t ssize = pdinfo->n * sizeof **newZ;
+	    int k = 1;
+
+	    for (i=1; i<pdinfo->v; i++) {
+		if (!mask[i]) {
+		    memcpy(newZ[k], (*pZ)[i], ssize);
+		    strcpy(newinfo->varname[k], pdinfo->varname[i]);
+		    strcpy(VARLABEL(newinfo, k), VARLABEL(pdinfo, i));
+		    if (st != NULL) {
+			gretl_string_table_reset_column_id(st, i, k);
+		    }
+		    k++;
+		}
+	    }
+
+	    destroy_dataset(*pZ, pdinfo);
+	    *pZ = newZ;
+	    *ppdinfo = newinfo;
+
+	    fprintf(stderr, "pruned dataset to %d variables\n", newinfo->v);
+	}
+
+	free(mask);
     }
 
     return err;

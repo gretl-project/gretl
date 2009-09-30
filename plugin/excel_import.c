@@ -1468,6 +1468,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     int ts_markers = 0;
     char **ts_S = NULL;
     int r0, c0;
+    int merge = (*pZ != NULL);
     int i, t, pd = 0;
     int err = 0;
 
@@ -1655,7 +1656,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
 
-    if (!err) {
+    if (!err && !merge) {
 	dataset_add_import_info(pdinfo, fname, GRETL_XLS);
     }
 

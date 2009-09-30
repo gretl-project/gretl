@@ -350,6 +350,8 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
 
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo);
 
+int maybe_prune_dataset (double ***pZ, DATAINFO **ppdinfo, void *p);
+
 int dataset_stack_variables (const char *vname, const char *line,
 			     double ***pZ, DATAINFO *pdinfo, 
 			     PRN *prn);

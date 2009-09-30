@@ -414,6 +414,7 @@ int wf1_get_data (const char *fname,
     if (err) {
 	destroy_dataset(newZ, newinfo);
     } else {
+	int merge = (*pZ != NULL);
 	int nvtarg = newinfo->v - 1;
 
 	if (nvread < nvtarg) {
@@ -426,7 +427,7 @@ int wf1_get_data (const char *fname,
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
 
-	if (!err) {
+	if (!err && !merge) {
 	    dataset_add_import_info(pdinfo, fname, GRETL_WF1);
 	}
     }

@@ -902,6 +902,7 @@ int dta_get_data (const char *fname,
 	    gretl_string_table_destroy(st);
 	}	
     } else {
+	int merge = (*pZ != NULL);
 	int nvtarg = newinfo->v - 1;
 
 	if (nvread < nvtarg) {
@@ -919,7 +920,7 @@ int dta_get_data (const char *fname,
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
     
-	if (!err) {
+	if (!err && !merge) {
 	    dataset_add_import_info(pdinfo, fname, GRETL_DTA);
 	}
     }

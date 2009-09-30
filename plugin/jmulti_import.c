@@ -377,6 +377,8 @@ int jmulti_get_data (const char *fname,
     if (err) {
 	destroy_dataset(newZ, newinfo);
     } else {
+	int merge = (*pZ != NULL);
+
 	if (fix_varname_duplicates(newinfo)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
@@ -386,7 +388,7 @@ int jmulti_get_data (const char *fname,
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
 
-	if (!err) {
+	if (!err && !merge) {
 	    dataset_add_import_info(pdinfo, fname, GRETL_JMULTI);
 	}
     }

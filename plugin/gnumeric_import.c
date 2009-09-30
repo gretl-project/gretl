@@ -691,6 +691,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	int r0 = 1;
 	int i, j, t;
 	int ts_markers = 0;
+	int merge = (*pZ != NULL);
 	char **ts_S = NULL;
 	int blank_cols = 0;
 	int missvals = 0;
@@ -814,7 +815,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
 
-	if (!err) {
+	if (!err && !merge) {
 	    dataset_add_import_info(pdinfo, fname, GRETL_GNUMERIC);
 	}
 

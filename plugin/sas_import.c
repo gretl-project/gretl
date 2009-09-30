@@ -579,92 +579,6 @@ static int SAS_read_global_header (FILE *fp, struct SAS_fileinfo *finfo)
     return err;
 }
 
-/* some massive SAS datasets may contain many variables that
-   have no valid values */
-
-static int maybe_prune_SAS_data (double ***pZ, DATAINFO **ppdinfo,
-				 gretl_string_table *st)
-{
-    DATAINFO *pdinfo = *ppdinfo;
-    int allmiss, prune = 0, err = 0;
-    int i, t;
-
-    for (i=1; i<pdinfo->v; i++) {
-	allmiss = 1;
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!na((*pZ)[i][t])) {
-		allmiss = 0;
-		break;
-	    }
-	}
-	if (allmiss) {
-	    prune = 1;
-	    break;
-	}
-    }
-
-    if (prune) {
-	char *mask = calloc(pdinfo->v, 1);
-	double **newZ = NULL;
-	DATAINFO *newinfo = NULL;
-	int ndrop = 0;
-
-	if (mask == NULL) {
-	    return E_ALLOC;
-	}
-
-	for (i=1; i<pdinfo->v; i++) {
-	    allmiss = 1;
-	    for (t=0; t<pdinfo->n; t++) {
-		if (!na((*pZ)[i][t])) {
-		    allmiss = 0;
-		    break;
-		}
-	    }
-	    if (allmiss) {
-		mask[i] = 1;
-		ndrop++;
-	    }
-	}
-
-	newinfo = datainfo_new();
-	if (newinfo == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    newinfo->v = pdinfo->v - ndrop;
-	    newinfo->n = pdinfo->n;
-	    err = start_new_Z(&newZ, newinfo, 0);
-	}
-
-	if (!err) {
-	    size_t ssize = pdinfo->n * sizeof **newZ;
-	    int k = 1;
-
-	    for (i=1; i<pdinfo->v; i++) {
-		if (!mask[i]) {
-		    memcpy(newZ[k], (*pZ)[i], ssize);
-		    strcpy(newinfo->varname[k], pdinfo->varname[i]);
-		    strcpy(VARLABEL(newinfo, k), VARLABEL(pdinfo, i));
-		    if (st != NULL) {
-			gretl_string_table_reset_column_id(st, i, k);
-		    }
-		    k++;
-		}
-	    }
-
-	    destroy_dataset(*pZ, pdinfo);
-	    *pZ = newZ;
-	    *ppdinfo = newinfo;
-
-	    fprintf(stderr, "Pruned dataset to %d variables\n", newinfo->v);
-	}
-
-	free(mask);
-    }
-
-    return err;
-}
-
 static void append_SAS_date_info (DATAINFO *pdinfo, struct SAS_fileinfo *finfo)
 {
     if (pdinfo->descrip != NULL && *finfo->revdate != '\0') {
@@ -766,7 +680,11 @@ int xport_get_data (const char *fname,
 	    gretl_string_table_destroy(st);
 	}	
     } else {
-	maybe_prune_SAS_data(&newZ, &newinfo, st);
+	int merge = (*pZ != NULL);
+
+	/* some massive SAS datasets may contain many series
+	   that have nothing but missing values */
+	maybe_prune_dataset(&newZ, &newinfo, st);
 	
 	if (fix_varname_duplicates(newinfo)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
@@ -778,8 +696,8 @@ int xport_get_data (const char *fname,
 	}
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
-    
-	if (!err) {
+
+	if (!err && !merge) {
 	    dataset_add_import_info(pdinfo, fname, GRETL_SAS);
 	    append_SAS_date_info(pdinfo, &finfo);
 	}
