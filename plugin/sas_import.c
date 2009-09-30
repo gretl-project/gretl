@@ -87,7 +87,7 @@ static void SAS_fileinfo_init (struct SAS_fileinfo *finfo,
 }
 
 #if HOST_ENDIAN == G_LITTLE_ENDIAN
-void XREV (char *intp, int k) 
+static void XREV (char *intp, int k) 
 {
     int i, j = k/2;
     char save;
@@ -102,32 +102,37 @@ void XREV (char *intp, int k)
 # define XREV(a,b)
 #endif 
 
-void xpt_to_ieee (unsigned char *xport, unsigned char *ieee)
+/* convert from the "IBM mainframe" floating-point 
+   format, used in SAS xport files, to IEEE.
+*/
+
+static void xpt_to_ieee(const unsigned char *xport, 
+			unsigned char *ieee)
 {
     char temp[8];
-    register int shift;
-    register int nib;
-    unsigned long ieee1, ieee2;
+    int shift, nib;
+    unsigned long ieee1,ieee2;
     unsigned long xport1 = 0;
     unsigned long xport2 = 0;
 
     memcpy(temp, xport, 8);
     memset(ieee, 0, 8);
 
-    if (*temp && memcmp(temp+1, ieee, 7) == 0) {
+    if (*temp && memcmp(temp+1,ieee,7) == 0) {
 	ieee[0] = ieee[1] = 0xff;
 	ieee[2] = ~(*temp);
 	return;
     }
 
-    memcpy(((char *) &xport1) + sizeof xport1 - 4, temp, 4); 
-    XREV((char *) &xport1, sizeof xport1);
-    memcpy(((char *) &xport2) + sizeof xport2 - 4, temp+4, 4); 
-    XREV((char *) &xport2, sizeof xport2);
+    memcpy(((char *) &xport1)+sizeof(unsigned long)-4, temp, 4); 
+    XREV((char *) &xport1,sizeof(unsigned long));
+    memcpy(((char *) &xport2)+sizeof(unsigned long)-4, temp+4, 4); 
+    XREV((char *) &xport2,sizeof(unsigned long));
 
     ieee1 = xport1 & 0x00ffffff;
+    ieee2 = xport2;
 
-    if (ieee2 != xport2 && !xport1) {
+    if (!xport2 && !xport1) {
 	return;
     }
 
@@ -155,10 +160,10 @@ void xpt_to_ieee (unsigned char *xport, unsigned char *ieee)
 	(((((long)(*temp & 0x7f) - 65) << 2) + shift + 1023) << 20) |
 	(xport1 & 0x80000000);
 
-    XREV((char *) &ieee1, sizeof ieee1); 
-    memcpy(ieee, ((char *) &ieee1) + sizeof(unsigned long) - 4, 4);
-    XREV((char *) &ieee2, sizeof ieee2); 
-    memcpy(ieee+4, ((char *) &ieee2) + sizeof(unsigned long) - 4, 4);
+    XREV((char *) &ieee1,sizeof(unsigned long)); 
+    memcpy(ieee,((char *)&ieee1)+sizeof(unsigned long)-4,4);
+    XREV((char *) &ieee2,sizeof(unsigned long)); 
+    memcpy(ieee+4,((char *)&ieee2)+sizeof(unsigned long)-4,4);
 }
 
 union xswitch {
@@ -166,10 +171,10 @@ union xswitch {
     double x;
 };
 
-static double read_xpt (char *src) 
+static double read_xpt (const char *src) 
 {
     union xswitch xs;
-    char temp[8]; 
+    unsigned char temp[8]; 
     double x;
     int i, na = 0;
 
@@ -177,7 +182,7 @@ static double read_xpt (char *src)
     i = temp[0];
 
     if (i == 0x5f || i == 0x2e || (i >= 0x41 && i <= 0x5a)) {
-	/* SAS "NA" bytes (followed by zero bytes) */
+	/* SAS "NA" bytes (if followed by zero bytes) */
 	na = 1;
 	for (i=1; i<8; i++) {
 	    if (temp[i] != 0x00) {
@@ -185,14 +190,13 @@ static double read_xpt (char *src)
 		break;
 	    }
 	}
-    }
+    } 
 
     if (na) {
 	x = NADBL;
     } else {
-	xpt_to_ieee((unsigned char *) src, (unsigned char *) xs.s); 
+	xpt_to_ieee((const unsigned char*) src, temp); 
 #if HOST_ENDIAN == G_LITTLE_ENDIAN
-	memcpy(temp, xs.s, 8); 
 	for (i=7; i>=0; i--) {
 	    xs.s[7-i] = temp[i]; 
 	} 
