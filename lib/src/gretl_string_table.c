@@ -234,6 +234,23 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
     return idx;
 }
 
+int gretl_string_table_reset_column_id (gretl_string_table *st, 
+					int oldid, int newid)
+{
+    if (st != NULL) {
+	int i;
+
+	for (i=0; i<st->n_cols; i++) {
+	    if (st->cols[i]->idx == oldid) {
+		st->cols[i]->idx = newid;
+		return 0;
+	    }
+	}
+    }
+
+    return E_DATA;
+}
+
 static void col_table_destroy (col_table *ct)
 {
     int i;
