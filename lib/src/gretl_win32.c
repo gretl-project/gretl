@@ -687,14 +687,17 @@ int win32_write_access (char *path)
 				   DACL_SECURITY_INFORMATION, 
 				   NULL, NULL, &dacl, NULL, &sd);
 	err = (ret != ERROR_SUCCESS);
-	fprintf(stderr, "BuildTrusteeWithSid: ret=%d\n", ret);
     }
 
     if (!err) {
 	/* get the access mask for this trustee */
 	ret = GetEffectiveRightsFromAcl(dacl, &t, &amask);
-	err = (ret != ERROR_SUCCESS);
-	fprintf(stderr, "GetEffectiveRights...: ret=%d\n", ret);
+        if (ret != ERROR_SUCCESS) {
+            fprintf(stderr, "GetEffectiveRights...: ret=%d\n", ret);   
+            if (ret != RPC_S_SERVER_UNAVAILABLE && ret != ERROR_NO_SUCH_DOMAIN) {
+                err = 1;
+            }
+        }
     }
 
     if (!err && (amask & STANDARD_RIGHTS_WRITE)) {
