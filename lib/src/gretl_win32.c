@@ -658,9 +658,6 @@ int win32_write_access (char *path)
     LookupAccountName(NULL, username, NULL, &sidsize, 
 		      NULL, &dlen, &stype);
 
-    fprintf(stderr, "username='%s', sidsize=%d, dlen=%d\n",
-	    username, sidsize, dlen);
-
     sid = LocalAlloc(0, sidsize);
     domain = LocalAlloc(0, dlen * sizeof *domain);
     if (sid == NULL || domain == NULL) {
@@ -669,15 +666,9 @@ int win32_write_access (char *path)
 
     if (!err) {
 	/* call the function for real */
-	fprintf(stderr, "calling LookupAccountName for real...\n");
 	ret = LookupAccountName(NULL, username, sid, &sidsize, 
 				domain, &dlen, &stype);
 	err = (ret == 0);
-	if (err) {
-	    fprintf(stderr, "failed\n");
-	} else {
-	    fprintf(stderr, "domain='%s'\n", domain);
-	}
     }
 
     if (!err) {
@@ -697,11 +688,9 @@ int win32_write_access (char *path)
             if (ret != RPC_S_SERVER_UNAVAILABLE && ret != ERROR_NO_SUCH_DOMAIN) {
                 err = 1;
             }
-        }
-    }
-
-    if (!err && (amask & STANDARD_RIGHTS_WRITE)) {
-	ok = 1;
+        } else if (amask & STANDARD_RIGHTS_WRITE) {
+	    ok = 1;
+	}
     }
 
     if (dacl != NULL) {

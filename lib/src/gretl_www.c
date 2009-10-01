@@ -65,8 +65,7 @@ extern int h_errno;
 #define DBHLEN     64
 
 static int wproxy;
-static char dbhost[DBHLEN] = "ricardo.ecn.wfu.edu";
-
+static char dbhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN] = "ricardo.ecn.wfu.edu";
 static char datacgi[DBHLEN]   = "/gretl/cgi-bin/gretldata.cgi";
 static char updatecgi[DBHLEN] = "/gretl/cgi-bin/gretl_update.cgi";

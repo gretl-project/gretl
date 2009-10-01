@@ -37,6 +37,8 @@ static time_t filedate;
 static int argcount;
 static int prog_opt;
 
+#define GRETLHOST "ricardo.ecn.wfu.edu"
+
 /* include stand-alone versions of two libgretl source files */
 #define STANDALONE
 #include "gretl_www.c"
@@ -327,8 +329,6 @@ int infobox (const char *msg)
 {
     return msgbox(msg, 0);
 }
-
-#define GRETLHOST "www.wfu.edu"
 
 static int files_query (char **getbuf, time_t filedate)
 {
