@@ -780,7 +780,7 @@ int text_equation_ok (const MODEL *pmod)
 
 static char *eqn_numstr (double x, char *s)
 {
-    sprintf(s, "%#.4g", x);
+    sprintf(s, "%#.3g", x);
     return gretl_fix_exponent(s);
 }
 
@@ -850,17 +850,17 @@ int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     if (pmod->ci == LAD) { 
 	x = gretl_model_get_double(pmod, "ladsum");
 	if (!na(x)) {
-	    pprintf(prn, ", sum of abs. residuals = %.5g ", x);
+	    pprintf(prn, ", sum of abs. residuals = %.3g ", x);
 	}
     } else {
 	if (!na(pmod->adjrsq)) {
-	    pprintf(prn, ", R-squared = %.4f ", pmod->rsq);
+	    pprintf(prn, ", R-squared = %.3f ", pmod->rsq);
 	} else if (!na(pmod->lnL)) {
-	    pprintf(prn, ", loglikelihood = %.5g ", pmod->lnL);
+	    pprintf(prn, ", loglikelihood = %.3g ", pmod->lnL);
 	}
 	x = gretl_model_get_double(pmod, "rho_in");
 	if (!na(x)) {
-	    pprintf(prn, ", rho = %.5g", x);
+	    pprintf(prn, ", rho = %.3f", x);
 	}
     }
 
