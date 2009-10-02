@@ -94,6 +94,7 @@ gui2/fncall.c
 gui2/fnsave.c
 gui2/gpt_control.c
 gui2/gpt_dialog.c
+gui2/graphics.c
 gui2/graph_page.c
 gui2/gretl.c
 gui2/gretlwin32.c
@@ -154,12 +155,12 @@ plugin/mod_garch.c
 plugin/mp_ols.c
 plugin/odbc_import.c
 plugin/ods_import.c
-plugin/oprobit.c
 plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c
 plugin/quantreg.c
 plugin/range-mean.c
+plugin/sas_import.c
 plugin/spss_import.c
 plugin/stata_import.c
 plugin/stats_tables.c

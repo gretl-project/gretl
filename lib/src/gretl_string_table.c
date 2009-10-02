@@ -234,6 +234,12 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
     return idx;
 }
 
+/* Used in the context of deletion of "empty" variables from
+   an imported dataset: the index of a given "column" in 
+   a string table is adjusted to match the new position of
+   the variable in question. 
+*/
+
 int gretl_string_table_reset_column_id (gretl_string_table *st, 
 					int oldid, int newid)
 {

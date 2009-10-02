@@ -1942,7 +1942,7 @@ int maybe_prune_dataset (double ***pZ, DATAINFO **ppdinfo, void *p)
 		    memcpy(newZ[k], (*pZ)[i], ssize);
 		    strcpy(newinfo->varname[k], pdinfo->varname[i]);
 		    strcpy(VARLABEL(newinfo, k), VARLABEL(pdinfo, i));
-		    if (st != NULL) {
+		    if (st != NULL && k < i) {
 			gretl_string_table_reset_column_id(st, i, k);
 		    }
 		    k++;

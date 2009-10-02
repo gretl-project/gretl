@@ -850,13 +850,15 @@ int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     if (pmod->ci == LAD) { 
 	x = gretl_model_get_double(pmod, "ladsum");
 	if (!na(x)) {
-	    pprintf(prn, ", sum of abs. residuals = %.3g ", x);
+	    eqn_numstr(x, xstr);
+	    pprintf(prn, ", sum of abs. residuals = %s ", xstr);
 	}
     } else {
 	if (!na(pmod->adjrsq)) {
 	    pprintf(prn, ", R-squared = %.3f ", pmod->rsq);
 	} else if (!na(pmod->lnL)) {
-	    pprintf(prn, ", loglikelihood = %.3g ", pmod->lnL);
+	    eqn_numstr(pmod->lnL, xstr);
+	    pprintf(prn, ", loglikelihood = %s ", xstr);
 	}
 	x = gretl_model_get_double(pmod, "rho_in");
 	if (!na(x)) {
