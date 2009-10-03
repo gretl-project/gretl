@@ -84,7 +84,7 @@ typedef enum {
     M_JS00,       /* VECM residual covariance matrix (1st differences) */
     M_JS11,       /* VECM residual covariance matrix (levels) */
     M_JS01,       /* VECM residual cross-product matrix */
-    M_HAUSMAN,    /* Hausman test after tsls */
+    M_HAUSMAN,    /* Hausman test after tsls or fixed effects */
     M_SARGAN,     /* Sargan over-identification test after tsls */
     M_SYSGAM,     /* Parameter matrix Gamma (simultaneous systems) */
     M_SYSA,       /* Parameter matrix A (simultaneous systems) */

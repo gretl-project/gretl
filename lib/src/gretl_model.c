@@ -5440,11 +5440,7 @@ static gretl_matrix *model_get_special_test (const MODEL *pmod,
     gretl_matrix *r = NULL;
     int i, found = 0;
 
-    fprintf(stderr, "looking for test type %d: ntests = %d\n", 
-	    type, pmod->ntests);
-
     for (i=0; i<pmod->ntests; i++) {
-	fprintf(stderr, "test[%d].type = %d\n", i, pmod->tests[i].type);
 	found = (pmod->tests[i].type == type);
 	if (found) {
 	    r = gretl_vector_alloc(3);
@@ -5528,7 +5524,13 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	M = model_get_rhovec(pmod, err);
 	break;
     case M_HAUSMAN:
-	M = model_get_special_test(pmod, GRETL_TEST_IV_HAUSMAN, err);
+	if (pmod->ci == IVREG) {
+	    M = model_get_special_test(pmod, GRETL_TEST_IV_HAUSMAN, err);
+	} else if (pmod->ci == PANEL) {
+	    M = model_get_special_test(pmod, GRETL_TEST_PANEL_HAUSMAN, err);
+	} else {
+	    *err = E_BADSTAT;
+	}
 	break;	
     case M_SARGAN:	
 	M = model_get_special_test(pmod, GRETL_TEST_SARGAN, err);

@@ -1877,8 +1877,9 @@ static int add_more_loop_lines (LOOPSET *loop)
 
 static int real_append_line (ExecState *s, LOOPSET *loop)
 {
+    const char *flagstr = NULL;
     int nc = loop->n_cmds;
-    int err = 0;
+    int len, err = 0;
 
 #if LOOP_DEBUG
     fprintf(stderr, "real_append_line: s->line = '%s'\n", s->line);
@@ -1886,39 +1887,42 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 
     if ((nc + 1) % LOOP_BLOCK == 0) {
 	if (add_more_loop_lines(loop)) {
-	    gretl_errmsg_set(_("Out of memory!"));
 	    return E_ALLOC;
 	}
     }
 
-    loop->lines[nc] = malloc(MAXLEN);
-    if (loop->lines[nc] == NULL) {
-	gretl_errmsg_set(_("Out of memory!"));
-	return E_ALLOC;
-    }
-
-    if (s->cmd->ci == PRINT && (!loop_is_progressive(loop) || strchr(s->line, '"'))) {
-	loop->ci[nc] = 0;
-    } else {
-	loop->ci[nc] = s->cmd->ci;
-    }
-
-    loop->lines[nc][0] = '\0';
+    len = strlen(s->line);
 
     if (s->cmd->opt) {
-	const char *flagstr = print_flags(s->cmd->opt, s->cmd->ci);
-
-	if (strlen(s->line) + strlen(flagstr) >= MAXLEN) {
+	flagstr = print_flags(s->cmd->opt, s->cmd->ci);
+	len += strlen(flagstr);
+	if (len >= MAXLINE) {
 	    gretl_errmsg_set("loop: line is too long");
 	    err = 1;
-	} else {
-	    sprintf(loop->lines[nc], "%s%s", s->line, flagstr);
 	}
-    } else {
-	strcpy(loop->lines[nc], s->line);
     }
 
-    loop->n_cmds += 1;
+    if (!err) {
+	if (flagstr != NULL) {
+	    loop->lines[nc] = malloc(len + 1);
+	} else {
+	    loop->lines[nc] = gretl_strdup(s->line);
+	}
+	if (loop->lines[nc] == NULL) {
+	    err = E_ALLOC;
+	} else if (flagstr != NULL) {
+	    sprintf(loop->lines[nc], "%s%s", s->line, flagstr);
+	}
+    }
+
+    if (!err) {
+	if (s->cmd->ci == PRINT && (!loop_is_progressive(loop) || strchr(s->line, '"'))) {
+	    loop->ci[nc] = 0;
+	} else {
+	    loop->ci[nc] = s->cmd->ci;
+	}
+	loop->n_cmds += 1;
+    }
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop %p: n_cmds=%d, line[%d]='%s', ci=%d\n",

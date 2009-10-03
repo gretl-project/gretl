@@ -2954,7 +2954,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 
     destroy_private_scalars();
 
-    if (spec->Z != pZ) {
+    if (spec->Z != pZ && spec->Z != NULL) {
 	if (!nlmod.errcode) {
 	    nls_model_fix_sample(&nlmod, spec, pdinfo);
 	}
