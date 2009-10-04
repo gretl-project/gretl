@@ -648,25 +648,24 @@ DATAINFO *gretl_dataset_from_matrix (gretl_matrix *m, const int *list,
 
 /**
  * gretl_plotfit_matrices:
- * @yno: ID number of the y variable.
- * @xno: ID number of the y variable.
+ * @yvar: the y variable.
+ * @xvar: the x variable.
  * @fit: type of fit sought.
- * @Z: data array.
  * @t1: starting observation.
  * @t2: ending observation.
  * @py: location to receive y vector.
  * @pX: location to receive X matrix.
  *
- * Creates a vector y and matrix X based on the input @yno, @xno
- * and @fit, using the given sample range.  An observation is
- * skipped if any of the variables in @list are missing at that
- * observation.
+ * Creates a vector y and matrix X based on the input @yvar, 
+ * @xvar and @fit, using the given sample range.  An observation
+ * is skipped if either @yvar or @xvar is missing at that
+ * observation. 
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_plotfit_matrices (int yno, int xno, FitType fit,
-			    const double **Z, int t1, int t2, 
+int gretl_plotfit_matrices (const double *yvar, const double *xvar,
+			    FitType fit, int t1, int t2, 
 			    gretl_matrix **py, gretl_matrix **pX)
 {
     gretl_matrix *y = NULL;
@@ -689,7 +688,7 @@ int gretl_plotfit_matrices (int yno, int xno, FitType fit,
 
     for (s=0; s<T; s++) {
 	t = s + t1;
-	if (na(Z[yno][t]) || na(Z[xno][t])) {
+	if (na(yvar[t]) || na(xvar[t])) {
 	    mask[s] = 1;
 	} else {
 	    n++;
@@ -721,11 +720,11 @@ int gretl_plotfit_matrices (int yno, int xno, FitType fit,
 	t = s + t1;
 	if (!mask[s]) {
 	    j = 0;
-	    y->val[i] = Z[yno][t];
+	    y->val[i] = yvar[t];
 	    if (fit != PLOT_FIT_LOESS) {
 		gretl_matrix_set(X, i, j++, 1.0);
 	    }
-	    xt = Z[xno][t];
+	    xt = xvar[t];
 	    if (fit == PLOT_FIT_INVERSE) {
 		gretl_matrix_set(X, i, j++, 1.0 / xt);
 	    } else {

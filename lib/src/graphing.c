@@ -256,7 +256,7 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 	}
     }
 
-    if (k == 2 && !(opt & OPT_S)) {
+    if ((k == 2 || (k == 1 && (flags & GPT_IDX))) && !(opt & OPT_S)) {
 	/* OPT_S suppresses auto-fit */
 	if (opt & OPT_I) {
 	    *f = PLOT_FIT_INVERSE;
@@ -1528,14 +1528,22 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
     gretl_matrix *y = NULL;
     gretl_matrix *x = NULL;
     gretl_matrix *yh = NULL;
-    int yno = gi->list[1];
-    int xno = gi->list[2];
-    const char *s1, *s2;
+    int xno, yno = gi->list[1];
+    const double *yvar = Z[yno];
+    const double *xvar;
     FILE *fp = NULL;
     char title[96];
     int t, T, d = 1;
     double q = 0.5;
     int err;
+
+    if (gi->x != NULL) {
+	xno = 0;
+	xvar = gi->x;
+    } else {
+	xno = gi->list[2];
+	xvar = Z[xno];
+    }
 
     graph_list_adjust_sample(gi->list, gi, Z);
     if (gi->t1 == gi->t2 || gi->list[0] != 2) {
@@ -1546,7 +1554,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 	return E_FOPEN;
     } 
 
-    err = gretl_plotfit_matrices(yno, xno, PLOT_FIT_LOESS, Z,
+    err = gretl_plotfit_matrices(yvar, xvar, PLOT_FIT_LOESS,
 				 gi->t1, gi->t2, &y, &x);
 
     if (!err) {
@@ -1562,14 +1570,17 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 	goto bailout;
     }
 
-    s1 = var_get_graph_name(pdinfo, yno);
-    s2 = var_get_graph_name(pdinfo, xno);
+    if (xno > 0) {
+	const char *s1 = var_get_graph_name(pdinfo, yno);
+	const char *s2 = var_get_graph_name(pdinfo, xno);
 
-    sprintf(title, _("%s versus %s (with loess fit)"), s1, s2);
-    print_keypos_string(GP_KEY_LEFT_TOP, fp);
-    fprintf(fp, "set title \"%s\"\n", title);
-    print_axis_label('y', s1, fp);
-    print_axis_label('x', s2, fp);
+	sprintf(title, _("%s versus %s (with loess fit)"), s1, s2);
+	print_keypos_string(GP_KEY_LEFT_TOP, fp);
+	fprintf(fp, "set title \"%s\"\n", title);
+	print_axis_label('y', s1, fp);
+	print_axis_label('x', s2, fp);
+    }
+
     print_auto_fit_string(PLOT_FIT_LOESS, fp);
 
     if (literal != NULL && *literal != '\0') {
@@ -1621,12 +1632,21 @@ static int get_fitted_line (gnuplot_info *gi,
     gretl_matrix *X = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *V = NULL;
-    int yno = gi->list[1];
-    int xno = gi->list[2];
+    int xno, yno = gi->list[1];
+    const double *yvar = Z[yno];
+    const double *xvar;
     double s2, *ps2 = NULL;
     FitType f = gi->fit;
     char title[72];
     int k, err;
+
+    if (gi->x != NULL) {
+	xno = 0;
+	xvar = gi->x;
+    } else {
+	xno = gi->list[2];
+	xvar = Z[xno];
+    }
 
     if (gi->fit == PLOT_FIT_NONE) {
 	/* Doing first-time automatic OLS: we want to check for
@@ -1646,7 +1666,7 @@ static int get_fitted_line (gnuplot_info *gi,
     /* columns needed in X matrix */
     k = (f == PLOT_FIT_QUADRATIC)? 3 : 2;
 
-    err = gretl_plotfit_matrices(yno, xno, f, Z,
+    err = gretl_plotfit_matrices(yvar, xvar, f, 
 				 pdinfo->t1, pdinfo->t2,
 				 &y, &X);
 
@@ -1682,23 +1702,35 @@ static int get_fitted_line (gnuplot_info *gi,
 		gi->fit = PLOT_FIT_OLS;
 	    }
 	} else if (gi->fit == PLOT_FIT_OLS) {
-	    sprintf(title, "Y = %#.3g %c %#.3gX", c[0],
-		    (c[1] > 0)? '+' : '-', fabs(c[1]));
+	    if (xno > 0) {
+		sprintf(title, "Y = %#.3g %c %#.3gX", c[0],
+			(c[1] > 0)? '+' : '-', fabs(c[1]));
+	    } else {
+		strcpy(title, _("linear fit"));
+	    }
 	    gretl_push_c_numeric_locale();
 	    sprintf(targ, "%.10g + %.10g*x title '%s' w lines\n", 
 		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
-	    sprintf(title, "Y = %#.3g %c %#.3g/X", c[0],
-		    (c[1] > 0)? '+' : '-', fabs(c[1]));
+	    if (xno > 0) {
+		sprintf(title, "Y = %#.3g %c %#.3g/X", c[0],
+			(c[1] > 0)? '+' : '-', fabs(c[1]));
+	    } else {
+		strcpy(title, _("inverse fit"));
+	    }
 	    gretl_push_c_numeric_locale();
 	    sprintf(targ, "%.10g + %.10g/x title '%s' w lines\n", 
 		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();
 	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
-	    sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", c[0],
-		    (c[1] > 0)? '+' : '-', fabs(c[1]),
-		    (c[2] > 0)? '+' : '-', fabs(c[2])),
+	    if (xno > 0) {
+		sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", c[0],
+			(c[1] > 0)? '+' : '-', fabs(c[1]),
+			(c[2] > 0)? '+' : '-', fabs(c[2]));
+	    } else {
+		strcpy(title, _("quadratic fit"));
+	    }
 	    gretl_push_c_numeric_locale();
 	    sprintf(targ, "%.10g + %.10g*x + %.10g*x**2 title '%s' w lines\n", 
 		    c[0], c[1], c[2], title);
@@ -2512,6 +2544,8 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     return err;
 }
 
+#define fit_opts (OPT_I | OPT_L | OPT_Q | OPT_N)
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -2547,9 +2581,15 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_error_clear();
 
-    err = incompatible_options(opt, OPT_T | OPT_I | OPT_L | OPT_Q | OPT_N);
+    err = incompatible_options(opt, fit_opts);
     if (err) {
 	return err;
+    }
+
+    if (opt & OPT_T) {
+	if (plotlist[0] > 1 && (opt & fit_opts)) {
+	    return E_BADOPT;
+	}
     }
 
     if (opt & OPT_X) {
@@ -2566,17 +2606,17 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
+    err = maybe_add_plotx(&gi, pdinfo);
+    if (err) {
+	goto bailout;
+    }
+
     if (gi.fit == PLOT_FIT_LOESS) {
 	return loess_plot(&gi, literal, Z, pdinfo);
     }
 
     if (gi.list[0] > MAX_LETTERBOX_LINES + 1) {
 	many = 1;
-    }
-
-    err = maybe_add_plotx(&gi, pdinfo);
-    if (err) {
-	goto bailout;
     }
 
     /* convenience pointer */
@@ -2612,9 +2652,13 @@ int gnuplot (const int *plotlist, const char *literal,
     /* add a simple regression line if appropriate */
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 && 
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
+	printlist(list, "list, in gnuplot");
+	fprintf(stderr, "HERE!\n");
 	get_fitted_line(&gi, Z, pdinfo, fit_line);
 	pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
 	pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
+    } else if ((gi.flags & GPT_TS) && (opt & fit_opts)) {
+	get_fitted_line(&gi, Z, pdinfo, fit_line);
     }
 
     /* separation by dummy: create special vars */

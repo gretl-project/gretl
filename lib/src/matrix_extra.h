@@ -65,8 +65,8 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
 DATAINFO *gretl_dataset_from_matrix (gretl_matrix *m, const int *list,
 				     double ***pZ, int *err);
 
-int gretl_plotfit_matrices (int yno, int xno, FitType fit,
-			    const double **Z, int t1, int t2, 
+int gretl_plotfit_matrices (const double *yvar, const double *xvar,
+			    FitType fit, int t1, int t2, 
 			    gretl_matrix **py, gretl_matrix **pX);
 
 int gretl_matrix_delete_columns (gretl_matrix *X, int *list);
