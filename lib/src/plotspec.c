@@ -1153,23 +1153,35 @@ static void set_fitted_line (GPT_SPEC *spec, FitType f)
 
     if (f == PLOT_FIT_OLS) {
 	b = spec->b_ols->val;
-	sprintf(title, "Y = %#.3g %c %#.3gX", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]));
+	if (spec->flags & GPT_TS) {
+	    strcpy(title, _("linear fit"));
+	} else {
+	    sprintf(title, "Y = %#.3g %c %#.3gX", b[0],
+		    (b[1] > 0)? '+' : '-', fabs(b[1]));
+	}
 	gretl_push_c_numeric_locale();
 	sprintf(formula, "%g + %g*x", b[0], b[1]);
 	gretl_pop_c_numeric_locale();
     } else if (f == PLOT_FIT_QUADRATIC) {
 	b = spec->b_quad->val;
-	sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]),
-		(b[2] > 0)? '+' : '-', fabs(b[2]));
+	if (spec->flags & GPT_TS) {
+	    strcpy(title, _("quadratic fit"));
+	} else {
+	    sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", b[0],
+		    (b[1] > 0)? '+' : '-', fabs(b[1]),
+		    (b[2] > 0)? '+' : '-', fabs(b[2]));
+	}
 	gretl_push_c_numeric_locale();
 	sprintf(formula, "%g + %g*x + %g*x**2", b[0], b[1], b[2]);
 	gretl_pop_c_numeric_locale();
     } else if (f == PLOT_FIT_INVERSE) {
 	b = spec->b_inv->val;
-	sprintf(title, "Y = %#.3g %c %#.3g(1/X)", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]));
+	if (spec->flags & GPT_TS) {
+	    strcpy(title, _("inverse fit"));
+	} else {
+	    sprintf(title, "Y = %#.3g %c %#.3g(1/X)", b[0],
+		    (b[1] > 0)? '+' : '-', fabs(b[1]));
+	}
 	gretl_push_c_numeric_locale();
 	sprintf(formula, "%g + %g/x", b[0], b[1]);
 	gretl_pop_c_numeric_locale();

@@ -152,10 +152,11 @@
     <function name="$hausman" section="access" output="rvec">
       <description>
 	<para>
-	  Must follow a <lit>tsls</lit> command. Returns a <by r="1"
-	  c="3"/> vector, containing the value of the Hausman test
-	  statistic, the corresponding degrees of freedom and p-value,
-	  in this order.
+	  Must follow estimation of a model via either <lit>tsls</lit> or
+	  <lit>panel</lit> with the random effects option. Returns a <by
+	    r="1" c="3"/> vector containing the value of the
+	  Hausman test statistic, the corresponding degrees of freedom and
+	  the p-value for the test, in that order.
 	</para>
       </description>
     </function>

@@ -1947,11 +1947,16 @@ static void maybe_set_add_fit_ok (GPT_SPEC *spec)
     if (spec->n_lines == 2 && spec->fit != PLOT_FIT_NONE) {
 	; /* already OK */
     } else if (spec->data != NULL &&
-	spec->code == PLOT_REGULAR &&
-	spec->n_lines == 1 &&
-	spec->lines[0].ncols == 2 &&
-	!(spec->flags & (GPT_IMPULSES|GPT_LINES|GPT_RESIDS|GPT_TS))) {
-	spec->fit = PLOT_FIT_NONE;
+	       spec->code == PLOT_REGULAR &&
+	       spec->n_lines == 1 &&
+	       spec->lines[0].ncols == 2 &&
+	       !(spec->flags & (GPT_IMPULSES|GPT_LINES|GPT_RESIDS))) {
+	if (spec->flags & GPT_TS) {
+	    spec->fit = (dataset_is_time_series(datainfo))?
+		PLOT_FIT_NONE : PLOT_FIT_NA;
+	} else {
+	    spec->fit = PLOT_FIT_NONE;
+	}
     } else {
 	spec->fit = PLOT_FIT_NA;
     }

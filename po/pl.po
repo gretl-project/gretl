@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-10-02 08:59-0400\n"
-"PO-Revision-Date: 2009-08-30 18:30-0400\n"
+"PO-Revision-Date: 2009-10-04 12:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -6007,14 +6007,12 @@ msgid "decennial"
 msgstr "Dziesięcioletnie"
 
 #: lib/src/subsample.c:2083
-#, fuzzy
 msgid "Full dataset"
-msgstr "Pełne wyniki"
+msgstr "Pełny zakres danych"
 
 #: lib/src/subsample.c:2085 lib/src/subsample.c:2107
-#, fuzzy
 msgid "Type"
-msgstr "typ"
+msgstr "Typ"
 
 #: lib/src/subsample.c:2092 lib/src/subsample.c:2114 gui2/datawiz.c:1227
 msgid "Number of cross-sectional units"
@@ -6029,12 +6027,10 @@ msgid "Range"
 msgstr "Zakres"
 
 #: lib/src/subsample.c:2098
-#, fuzzy
 msgid "Subsampled data"
-msgstr "Wylosowana podpróba"
+msgstr "Podpróba"
 
 #: lib/src/subsample.c:2117
-#, fuzzy
 msgid "Full range"
 msgstr "Pełny zakres danych"
 
@@ -7649,39 +7645,34 @@ msgid "didn't get description from %s\n"
 msgstr "Nie pobrano opisu z %s\n"
 
 #: gui2/datafiles.c:749
-#, fuzzy, c-format
+#, c-format
 msgid "Function package %s"
-msgstr "pakiet funkcji"
+msgstr "Funkcje pakietu %s"
 
 #: gui2/datafiles.c:751
-#, fuzzy
 msgid "Delete package file"
-msgstr "gretl: pliki z przykładami skryptów"
+msgstr "Usunąć plik z funkcją pakietu"
 
 #: gui2/datafiles.c:752
-#, fuzzy
 msgid "Unload member functions"
-msgstr "Pomoc dla funkcji"
+msgstr "Nieotwarta funkcja pakietu"
 
 #: gui2/datafiles.c:844
-#, fuzzy
 msgid "Add to functions shown"
-msgstr "Wywołanie funkcji %s"
+msgstr "Pokaż dodane funkcje"
 
 #: gui2/datafiles.c:845
-#, fuzzy
 msgid "Replace functions shown"
-msgstr "Pomoc dla funkcji"
+msgstr "Pokaż zamienione funkcje"
 
 #: gui2/datafiles.c:868
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d function file(s)"
-msgstr "Pliki pakietów _funkcji"
+msgstr "Znaleźiono %d - pliki funkcji"
 
 #: gui2/datafiles.c:874
-#, fuzzy
 msgid "No function files were found"
-msgstr "Nie znaleziono funkcji w pakiecie"
+msgstr "Nie znaleziono plików z funkcjami"
 
 #: gui2/datafiles.c:1057 gui2/datafiles.c:1076 gui2/datafiles.c:1093
 #: gui2/datafiles.c:1201
@@ -8057,23 +8048,20 @@ msgid "Do you want to save this gretl session?"
 msgstr "Czy chcesz zapisać sesję gretla?"
 
 #: gui2/dialogs.c:138
-#, fuzzy
 msgid "Save a record of the commands you executed?"
-msgstr "Brak poleceń do wykonania"
+msgstr "Zapisać dziennik polceń skrytowych (*.inp)?"
 
 #: gui2/dialogs.c:140
 msgid "Always prompt if there are unsaved changes"
-msgstr ""
+msgstr "Zawsze podpowiadaj, jeśli polecenia skryptowe nie są zapisane"
 
 #: gui2/dialogs.c:147
-#, fuzzy
 msgid "save session"
-msgstr "Zapisz sesję"
+msgstr "Zapisz sesję (*.gretl)"
 
 #: gui2/dialogs.c:147
-#, fuzzy
 msgid "save commands"
-msgstr "Dopuszcza polecenia powłoki shell"
+msgstr "zapisz polecenia skryptu (*.inp)"
 
 #: gui2/dialogs.c:214
 msgid ""
@@ -8469,9 +8457,8 @@ msgid "Test against gamma distribution"
 msgstr "Test zgodności z rozkładem gama"
 
 #: gui2/dialogs.c:3603
-#, fuzzy
 msgid "Use model names"
-msgstr "Wykorzystaj linie"
+msgstr "Wykorzystywane nazwy modeli"
 
 #: gui2/dialogs.c:3607 gui2/model_table.c:1026 gui2/model_table.c:1218
 msgid "t-statistics in parentheses"
@@ -8483,7 +8470,7 @@ msgstr "Opcje tabeli modeli"
 
 #: gui2/dialogs.c:3632
 msgid "column headings"
-msgstr ""
+msgstr "nagłówki kolumn"
 
 #: gui2/dialogs.c:3673 gui2/selector.c:4435
 msgid "Show p-values"
@@ -8491,7 +8478,7 @@ msgstr "Pokaż wartość p"
 
 #: gui2/dialogs.c:3680
 msgid "Show significance asterisks"
-msgstr ""
+msgstr "Pokaż (*) gwiazdki istotności"
 
 #: gui2/dialogs.c:3688 gui2/dialogs.c:4079 gui2/series_view.c:614
 msgid "significant figures"
@@ -8853,22 +8840,21 @@ msgid "Couldn't get function package information"
 msgstr "Niemożliwe pobranie informacji o pakiecie funkcji"
 
 #: gui2/fnsave.c:308
-#, fuzzy
 msgid "Please add a sample script for this package"
-msgstr "Proszę najpierw dodać zmienną do bazy danych"
+msgstr "Dodać skrypt do pakietu"
 
 #: gui2/fnsave.c:313
 msgid "Invalid version string: use numbers and '.' only"
 msgstr "Błędny wersja łańcucha: wykorzystaj cyfry i '.'"
 
 #: gui2/fnsave.c:458
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find the function '%s'"
-msgstr "Wywołanie funkcji %s"
+msgstr "Nie znaleziono funkcji %s"
 
 #: gui2/fnsave.c:747
 msgid "private"
-msgstr ""
+msgstr "prywatna"
 
 #: gui2/fnsave.c:777
 msgid "No special requirement"
@@ -8896,7 +8882,7 @@ msgstr "Minimalna wersja gretla"
 
 #: gui2/fnsave.c:930
 msgid "Insert today's date"
-msgstr ""
+msgstr "Wprowadz dzisiejszą datę"
 
 #: gui2/fnsave.c:949 gui2/gui_utils.c:1873 gui2/ssheet.c:2435
 #: gui2/ssheet.c:2460
@@ -8920,9 +8906,8 @@ msgid "gretl: function package editor"
 msgstr "gretl: edytor pakietu funkcji"
 
 #: gui2/fnsave.c:1077
-#, fuzzy
 msgid "Help text:"
-msgstr "Tekst pomocy dla %s"
+msgstr "Tekst pomocy:"
 
 #: gui2/fnsave.c:1092
 msgid "Edit function code"
@@ -8937,9 +8922,8 @@ msgid "Edit sample script"
 msgstr "Edycja skryptu"
 
 #: gui2/fnsave.c:1118
-#, fuzzy
 msgid "Add/remove functions"
-msgstr "Zapisz funkcje"
+msgstr "Dodaj/Zamień funkcje"
 
 #: gui2/fnsave.c:1125
 msgid "Upload package to server on save"
@@ -8979,6 +8963,9 @@ msgid ""
 "must be less than 32 characters in length, must include only\n"
 "ASCII letters, numbers and '_', and must end with \".gfn\""
 msgstr ""
+"Błędna nazwa pakietu funkcji: nazwa musi rozpoczynać się"
+"od litery, długość do 32 znaków, może zawierać tylko"
+"znaki ASCII, cyfry i '_' oraz kończyć się nazwą \".gfn\""
 
 #: gui2/fnsave.c:1424 gui2/library.c:6454
 msgid "OK to overwrite?"
@@ -9344,57 +9331,48 @@ msgid "gretl plot controls"
 msgstr "gretl edycja opcji wykresu"
 
 #: gui2/graphics.c:189
-#, fuzzy
 msgid "width"
-msgstr "Szerokość przedziału:"
+msgstr "szerokość"
 
 #: gui2/graphics.c:191
-#, fuzzy
 msgid "height"
-msgstr "prawy"
+msgstr "wysokość"
 
 #: gui2/graphics.c:196
-#, fuzzy
 msgid "inches"
-msgstr "Linie"
+msgstr "cale"
 
 #: gui2/graphics.c:202
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: gui2/graphics.c:215
-#, fuzzy
 msgid "line width factor"
 msgstr "szerokość lini"
 
 #: gui2/graphics.c:412
-#, fuzzy
 msgid "save graph"
-msgstr "Generuj wykres"
+msgstr "Zapisz wykres"
 
 #: gui2/graphics.c:421
-#, fuzzy
 msgid "EPS file"
-msgstr "Zapisz jako plik tekstowy"
+msgstr "plik *.EPS"
 
 #: gui2/graphics.c:421
-#, fuzzy
 msgid "PDF file"
-msgstr "Pliki"
+msgstr "Plik *.PDF"
 
 #: gui2/graphics.c:424
 msgid "Plot dimensions:"
-msgstr ""
+msgstr "Wymiary wykresu"
 
 #: gui2/graphics.c:443
-#, fuzzy
 msgid "Font and size:"
-msgstr "Nazwa czcionki"
+msgstr "Nazwa i rozmiar czcionki:"
 
 #: gui2/graphics.c:455
-#, fuzzy
 msgid "Preview"
-msgstr "_Podgląd:"
+msgstr "Podgląd"
 
 #: gui2/graph_page.c:272
 msgid "The graph page is full"
@@ -9433,9 +9411,8 @@ msgid "open a remote (web) database on startup"
 msgstr "Otwórz bazę danych (web) jako startową"
 
 #: gui2/gretl.c:122 gui2/gretl.c:194
-#, fuzzy
 msgid "open (edit) a function package on startup"
-msgstr "gretl: Pakiet funkcji na %s"
+msgstr "otwórz (edytuj) pakiet funkcji"
 
 #: gui2/gretl.c:123 gui2/gretl.c:196
 msgid "force use of English"
@@ -9536,9 +9513,8 @@ msgid "_SPSS..."
 msgstr "_SPSS..."
 
 #: gui2/gretl.c:1270 gui2/gretl.c:1284
-#, fuzzy
 msgid "_SAS (xport)..."
-msgstr "Wykres 3D..."
+msgstr "SAS (_xport)..."
 
 #: gui2/gretl.c:1271 gui2/gretl.c:1286 gui2/gretl.c:1297
 msgid "_JMulTi..."
@@ -9666,7 +9642,7 @@ msgstr "na _serwerze gretla..."
 
 #: gui2/gretl.c:1332
 msgid "Edit package..."
-msgstr ""
+msgstr "Edycja pakietu funkcji..."
 
 #: gui2/gretl.c:1333
 msgid "_New package"
@@ -9978,9 +9954,8 @@ msgid "_Restore full range"
 msgstr "_Przywracanie pełnego zakresu"
 
 #: gui2/gretl.c:1428
-#, fuzzy
 msgid "_Show status"
-msgstr "Pokaż t-Studenta"
+msgstr "Pokaż status danych"
 
 #: gui2/gretl.c:1429
 msgid "_Define, based on dummy..."
@@ -10433,7 +10408,6 @@ msgid "for the variable %s (%d valid observations)"
 msgstr "dla zmiennej %s (%d prawidłowych obserwacji)"
 
 #: gui2/guiprint.c:868
-#, fuzzy
 msgid "t-ratios in parentheses"
 msgstr "Statystyka-t w nawiasach"
 
@@ -10574,9 +10548,8 @@ msgid "_Print..."
 msgstr "_Drukuj..."
 
 #: gui2/gui_utils.c:163
-#, fuzzy
 msgid "View as equation"
-msgstr "Dołącz równanie"
+msgstr "Pokaż jako równanie"
 
 #: gui2/gui_utils.c:164 gui2/gui_utils.c:292
 msgid "_Close"
@@ -11103,11 +11076,15 @@ msgid ""
 "Do you want to restore the sample on which\n"
 "this model was estimated?"
 msgstr ""
+"The model sample differs from the dataset sample,\n"
+"so some menu options will be disabled.\n"
+"\n"
+"Do you want to restore the sample on which\n"
+"this model was estimated?"
 
 #: gui2/gui_utils.c:3630
-#, fuzzy
 msgid "dataset is subsampled"
-msgstr "Dane są podpróbą, a model oszacowano nie dla tego zakresu danych\n"
+msgstr "Dane są podpróbą"
 
 #: gui2/gui_utils.c:3643
 #, c-format
@@ -12155,7 +12132,7 @@ msgstr "Błędy ocen w nawiasach"
 
 #: gui2/model_table.c:1032 gui2/model_table.c:1224
 msgid "p-values in brackets"
-msgstr ""
+msgstr "wartość p w nawiasach"
 
 #: gui2/model_table.c:1036 gui2/model_table.c:1145 gui2/model_table.c:1229
 msgid "* indicates significance at the 10 percent level"
@@ -12182,7 +12159,7 @@ msgstr "gretl: tabela modeli"
 
 #: gui2/model_table.c:1140
 msgid "$p$-values in brackets"
-msgstr ""
+msgstr "wartość $p$ w nawiasach"
 
 #: gui2/model_table.c:1151
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
@@ -12748,9 +12725,8 @@ msgid "Independent variables"
 msgstr "Zmienne niezależne (X):"
 
 #: gui2/selector.c:4939
-#, fuzzy
 msgid "Public functions"
-msgstr "Pomoc dla funkcji"
+msgstr "Publiczne funkcje"
 
 #: gui2/selector.c:5156
 msgid "Select variables for logging"
@@ -12846,7 +12822,7 @@ msgstr "Zapisywanie danych"
 
 #: gui2/selector.c:5758
 msgid "Edit package list"
-msgstr ""
+msgstr "Edycja listy pakietów"
 
 #: gui2/selector.c:6124
 msgid "lag order"
@@ -13170,7 +13146,6 @@ msgid "Show icon view automatically"
 msgstr "Pokaż ikony automatycznie"
 
 #: gui2/settings.c:167
-#, fuzzy
 msgid "Prompt to save session"
 msgstr "Zapisz sesję"
 
@@ -13802,9 +13777,8 @@ msgid "Stickiness..."
 msgstr "Lepkość"
 
 #: gui2/toolbar.c:608
-#, fuzzy
 msgid "Toggle split pane"
-msgstr "Przełącznik numerów lini"
+msgstr "Toggle split pane"
 
 #: gui2/toolbar.c:609
 msgid "Help on command"
@@ -14519,13 +14493,12 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "H0: kierunek-nachylenie prostej = 0; wartość p = %g\n"
 
 #: plugin/sas_import.c:620 plugin/sas_import.c:654
-#, fuzzy
 msgid "This file does not seem to be a valid SAS xport file"
-msgstr "To nie jest prawidłowy zbiór danych Stata"
+msgstr "To nie jest prawidłowy zbiór danych SAS xport"
 
 #: plugin/spss_import.c:1850
 msgid "cannot read SPSS .sav on this platform"
-msgstr "Niemożliwe czytanie pliku SPSS *.sav na tej platrofmie"
+msgstr "Niemożliwe czytanie pliku SPSS *.sav na tej platformie"
 
 #: plugin/stata_import.c:291
 msgid "unknown data type"
@@ -14777,42 +14750,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid ""
-#~ "boxplots: generation of dummy variable failed\n"
-#~ "%s"
-#~ msgstr ""
-#~ "boxplots: błąd generowania zmiennej 0-1\n"
-#~ "%s"
-
-#~ msgid "Missing values within sample -- can't do correlogram"
-#~ msgstr "Brakujące dane w próbie -- niemożliwe wyznaczenie korelogramu"
-
-#~ msgid "Memory allocation failed for command list"
-#~ msgstr "Błąd alokacji pamięci dla listy poleceń"
-
-#~ msgid "Options"
-#~ msgstr "Opcje"
-
-#~ msgid "gretl database directory"
-#~ msgstr "Folder bazy danych gretla"
-
-#, fuzzy
-#~ msgid "Path to Rterm.exe"
-#~ msgstr "Program tramo"
-
-#~ msgid "function code"
-#~ msgstr "kod funkcji"
-
-#~ msgid "Some required information is missing"
-#~ msgstr "Brak wymaganych informacji"
-
-#~ msgid ""
-#~ "The package filename must match the name of\n"
-#~ "the package's public interface"
-#~ msgstr ""
-#~ "The package filename must match the name of\n"
-#~ "the package's public interface"
-
-#~ msgid "Public interface"
-#~ msgstr "Publiczny interfejs"

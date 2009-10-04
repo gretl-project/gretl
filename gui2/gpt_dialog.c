@@ -502,11 +502,18 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     gchar *title = NULL;
     FitType f = PLOT_FIT_NONE;
 
+    f = gtk_combo_box_get_active(box);
+
+    if ((spec->flags & GPT_TS) && f != PLOT_FIT_NONE && ed->keycombo != NULL) {
+	if (!GTK_WIDGET_SENSITIVE(ed->keycombo)) {
+	    gtk_widget_set_sensitive(ed->keycombo, TRUE);
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->keycombo), 0);
+	}
+    }	
+
     if (*s1 == '\0' || *s2 == '\0') {
 	return FALSE;
-    }
-
-    f = gtk_combo_box_get_active(box);
+    }    
 
     if (f == PLOT_FIT_OLS) {
 	title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
@@ -528,6 +535,9 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 	gtk_entry_set_text(GTK_ENTRY(ed->gpt_titles[0].widget), title);
 	g_free(title);
     }
+
+    /* FIXME: when changing from no fit case to showing a fit,
+       adjust the key position option, which may be disabled */
 
     /* also re-jig the "Lines" tab entries for the fitted line */
 
@@ -1431,10 +1441,22 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	ed->fitcombo = gtk_combo_box_new_text();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  ed->fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
-	for (i=0; fittype_strings[i] != NULL; i++) {
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->fitcombo), 
-				      _(fittype_strings[i]));
+
+	if (spec->flags & GPT_TS) {
+	    char tmp[128];
+
+	    for (i=0; fittype_strings[i] != NULL; i++) {
+		strcpy(tmp, _(fittype_strings[i]));
+		charsub(tmp, 'x', 't');
+		gtk_combo_box_append_text(GTK_COMBO_BOX(ed->fitcombo), tmp);
+	    }	    
+	} else {
+	    for (i=0; fittype_strings[i] != NULL; i++) {
+		gtk_combo_box_append_text(GTK_COMBO_BOX(ed->fitcombo), 
+					  _(fittype_strings[i]));
+	    }
 	}
+
 	gtk_combo_box_set_active(GTK_COMBO_BOX(ed->fitcombo), spec->fit);
 	widget_set_int(ed->fitcombo, "oldfit", spec->fit);
 	g_signal_connect(G_OBJECT(ed->fitcombo), "changed",

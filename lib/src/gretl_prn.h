@@ -62,6 +62,8 @@ PRN *gretl_print_new_with_buffer (char *buf);
 
 PRN *gretl_print_new_with_stream (FILE *fp);
 
+void gretl_print_detach_stream (PRN *prn);
+
 int gretl_print_reset_buffer (PRN *prn);
 
 int gretl_print_rename_file (PRN *prn, const char *oldpath, 

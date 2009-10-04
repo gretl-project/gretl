@@ -119,6 +119,10 @@ static void graph_list_adjust_sample (int *list,
 				      gnuplot_info *ginfo,
 				      const double **Z);
 static void clear_gpinfo (gnuplot_info *gi);
+static int make_time_tics (gnuplot_info *gi,
+			   const DATAINFO *pdinfo,
+			   int many, char *xlabel,
+			   PRN *prn);
     
 #ifndef WIN32
 
@@ -1579,6 +1583,9 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 	fprintf(fp, "set title \"%s\"\n", title);
 	print_axis_label('y', s1, fp);
 	print_axis_label('x', s2, fp);
+    } else {
+	print_keypos_string(GP_KEY_LEFT_TOP, fp);
+	print_axis_label('y', var_get_graph_name(pdinfo, yno), fp);
     }
 
     print_auto_fit_string(PLOT_FIT_LOESS, fp);
@@ -1749,6 +1756,78 @@ static int get_fitted_line (gnuplot_info *gi,
 
     return err;
 }
+
+/* support the "fit" options for a single time-series plot */
+
+static int time_fit_plot (gnuplot_info *gi, const char *literal,
+			  const double **Z, const DATAINFO *pdinfo)
+{
+    int yno = gi->list[1];
+    const double *yvar = Z[yno];
+    FILE *fp = NULL;
+    char fitline[128] = {0};
+    PRN *prn;
+    int t, err = 0;
+
+    if (gi->x == NULL) {
+	return E_DATA;
+    }
+
+    graph_list_adjust_sample(gi->list, gi, Z);
+    if (gi->t1 == gi->t2) {
+	return GRAPH_NO_DATA;
+    }
+
+    err = get_fitted_line(gi, Z, pdinfo, fitline);
+    if (err) {
+	return err;
+    }
+
+    if (get_gnuplot_output_file(&fp, gi->flags, PLOT_REGULAR)) {
+	return E_FOPEN;
+    } 
+
+    prn = gretl_print_new_with_stream(fp);
+
+    if (prn != NULL) {
+	make_time_tics(gi, pdinfo, 0, NULL, prn);
+	gretl_print_detach_stream(prn);
+	gretl_print_destroy(prn);
+    }
+
+    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+    print_axis_label('y', var_get_graph_name(pdinfo, yno), fp);
+
+    print_auto_fit_string(gi->fit, fp);
+
+    if (literal != NULL && *literal != '\0') {
+	print_gnuplot_literal_lines(literal, fp);
+    }
+
+    fputs("plot \\\n", fp);
+    fputs(" '-' using 1:2 title '' w lines, \\\n", fp);
+    
+    gretl_push_c_numeric_locale();
+
+    fprintf(fp, " %s", fitline);
+
+    for (t=gi->t1; t<=gi->t2; t++) {
+	fprintf(fp, "%.10g %.10g\n", gi->x[t], yvar[t]);
+    }
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    if (gp_interactive(gi->flags) || specified_gp_output_format()) {
+	err = gnuplot_make_graph();
+    }
+
+    clear_gpinfo(gi);
+
+    return err;
+} 
 
 static int check_tic_labels (double vmin, double vmax,
 			     gnuplot_info *gi)
@@ -2494,6 +2573,49 @@ static void make_calendar_tics (const DATAINFO *pdinfo,
     }
 }
 
+/* special tics for time series plots */
+
+static int make_time_tics (gnuplot_info *gi,
+			   const DATAINFO *pdinfo,
+			   int many, char *xlabel,
+			   PRN *prn)
+{
+    if (many) {
+	pprintf(prn, "# multiple timeseries %d\n", pdinfo->pd);
+    } else {
+	int gpsize = 1;
+
+#ifndef WIN32
+	gpsize = gnuplot_has_size();
+#endif
+	pprintf(prn, "# timeseries %d", pdinfo->pd);
+
+	if (gpsize && gi->fit == PLOT_FIT_NONE) {
+	    gi->flags |= GPT_LETTERBOX;
+	    pputs(prn, " (letterbox)\n");
+	} else {
+	    pputc(prn, '\n');
+	}
+    } 
+
+    if (pdinfo->pd == 4 && (gi->t2 - gi->t1) / 4 < 8) {
+	pputs(prn, "set xtics nomirror 0,1\n"); 
+	pputs(prn, "set mxtics 4\n");
+    } else if (pdinfo->pd == 12 && (gi->t2 - gi->t1) / 12 < 8) {
+	pputs(prn, "set xtics nomirror 0,1\n"); 
+	pputs(prn, "set mxtics 12\n");
+    } else if (dated_daily_data(pdinfo)) {
+	make_calendar_tics(pdinfo, gi, prn);
+    } else if (panel_plot(pdinfo, gi->t1, gi->t2)) {
+	make_panel_unit_tics(pdinfo, gi, prn);
+	if (xlabel != NULL) {
+	    strcpy(xlabel, _("time series by group"));
+	}
+    }
+
+    return 0;
+}
+
 /* Respond to use of the option --matrix=<matname> in the gnuplot
    command, or create a plot directly from a matrix and a plot list.
 */
@@ -2586,8 +2708,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	return err;
     }
 
-    if (opt & OPT_T) {
-	if (plotlist[0] > 1 && (opt & fit_opts)) {
+    if ((opt & OPT_T) && (opt & fit_opts)) {
+	if (plotlist[0] > 1 || !dataset_is_time_series(pdinfo)) {
 	    return E_BADOPT;
 	}
     }
@@ -2613,6 +2735,10 @@ int gnuplot (const int *plotlist, const char *literal,
 
     if (gi.fit == PLOT_FIT_LOESS) {
 	return loess_plot(&gi, literal, Z, pdinfo);
+    }
+
+    if (opt & OPT_T && (opt & fit_opts)) {
+	return time_fit_plot(&gi, literal, Z, pdinfo);
     }
 
     if (gi.list[0] > MAX_LETTERBOX_LINES + 1) {
@@ -2652,14 +2778,10 @@ int gnuplot (const int *plotlist, const char *literal,
     /* add a simple regression line if appropriate */
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 && 
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
-	printlist(list, "list, in gnuplot");
-	fprintf(stderr, "HERE!\n");
 	get_fitted_line(&gi, Z, pdinfo, fit_line);
 	pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
 	pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
-    } else if ((gi.flags & GPT_TS) && (opt & fit_opts)) {
-	get_fitted_line(&gi, Z, pdinfo, fit_line);
-    }
+    } 
 
     /* separation by dummy: create special vars */
     if (gi.flags & GPT_DUMMY) { 
@@ -2671,37 +2793,10 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* special tics for time series plots */
     if (gi.flags & GPT_TS) {
-	if (many) {
-	    pprintf(prn, "# multiple timeseries %d\n", pdinfo->pd);
-	} else {
-	    int gpsize = 1;
-
-#ifndef WIN32
-	    gpsize = gnuplot_has_size();
-#endif
-	    pprintf(prn, "# timeseries %d", pdinfo->pd);
-	    if (gpsize) {
-		gi.flags |= GPT_LETTERBOX;
-		pputs(prn, " (letterbox)\n");
-	    } else {
-		pputc(prn, '\n');
-	    }
-	} 
-	if (pdinfo->pd == 4 && (gi.t2 - gi.t1) / 4 < 8) {
-	    pputs(prn, "set xtics nomirror 0,1\n"); 
-	    pputs(prn, "set mxtics 4\n");
-	} else if (pdinfo->pd == 12 && (gi.t2 - gi.t1) / 12 < 8) {
-	    pputs(prn, "set xtics nomirror 0,1\n"); 
-	    pputs(prn, "set mxtics 12\n");
-	} else if (dated_daily_data(pdinfo)) {
-	    make_calendar_tics(pdinfo, &gi, prn);
-	} else if (panel_plot(pdinfo, gi.t1, gi.t2)) {
-	    make_panel_unit_tics(pdinfo, &gi, prn);
-	    strcpy(xlabel, _("time series by group"));
-	}
+	make_time_tics(&gi, pdinfo, many, xlabel, prn);
     }
 
-    /* open file and dump the prn into it: we delaying writing
+    /* open file and dump the prn into it: we delay writing
        the file header till we know a bit more about the plot
     */
     if (get_gnuplot_output_file(&fp, gi.flags, PLOT_REGULAR)) {

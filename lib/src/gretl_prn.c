@@ -340,7 +340,21 @@ PRN *gretl_print_new_with_stream (FILE *fp)
     } else {
 	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL, NULL, fp, NULL);
     }
-}  
+} 
+ 
+/**
+ * gretl_print_detach_stream
+ * @prn: printing struct to operate on.
+ * 
+ * Sets the stream member of @prn to %NULL so that @prn can
+ * be destroyed without closing the associated stream.  May be
+ * used in conjunction with gretl_print_new_with_stream().
+ */
+
+void gretl_print_detach_stream (PRN *prn)
+{
+    prn->fp = NULL;
+}
 
 /**
  * gretl_print_rename_file:
