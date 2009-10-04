@@ -1145,11 +1145,29 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     return 0;
 }
 
-static void set_fitted_line (GPT_SPEC *spec, FitType f)
+static void set_fit_formula (GPT_SPEC *spec, const double *b)
 {
     char *formula = spec->lines[1].formula;
+
+    gretl_push_c_numeric_locale();
+
+    if (spec->fit == PLOT_FIT_OLS) {
+	sprintf(formula, "%.10g + %.10g*x", b[0], b[1]);
+    } else if (spec->fit == PLOT_FIT_QUADRATIC) {
+	sprintf(formula, "%.10g + %.10g*x + %.10g*x**2", b[0], b[1], b[2]);
+    } else if (spec->fit == PLOT_FIT_INVERSE) {
+	sprintf(formula, "%.10g + %.10g/x", b[0], b[1]);
+    }
+
+    gretl_pop_c_numeric_locale();
+}
+
+static void set_fitted_line (GPT_SPEC *spec, FitType f)
+{
     char *title = spec->lines[1].title;
     const double *b;
+
+    spec->fit = f;
 
     if (f == PLOT_FIT_OLS) {
 	b = spec->b_ols->val;
@@ -1159,9 +1177,7 @@ static void set_fitted_line (GPT_SPEC *spec, FitType f)
 	    sprintf(title, "Y = %#.3g %c %#.3gX", b[0],
 		    (b[1] > 0)? '+' : '-', fabs(b[1]));
 	}
-	gretl_push_c_numeric_locale();
-	sprintf(formula, "%g + %g*x", b[0], b[1]);
-	gretl_pop_c_numeric_locale();
+	set_fit_formula(spec, b);
     } else if (f == PLOT_FIT_QUADRATIC) {
 	b = spec->b_quad->val;
 	if (spec->flags & GPT_TS) {
@@ -1171,9 +1187,7 @@ static void set_fitted_line (GPT_SPEC *spec, FitType f)
 		    (b[1] > 0)? '+' : '-', fabs(b[1]),
 		    (b[2] > 0)? '+' : '-', fabs(b[2]));
 	}
-	gretl_push_c_numeric_locale();
-	sprintf(formula, "%g + %g*x + %g*x**2", b[0], b[1], b[2]);
-	gretl_pop_c_numeric_locale();
+	set_fit_formula(spec, b);
     } else if (f == PLOT_FIT_INVERSE) {
 	b = spec->b_inv->val;
 	if (spec->flags & GPT_TS) {
@@ -1182,16 +1196,12 @@ static void set_fitted_line (GPT_SPEC *spec, FitType f)
 	    sprintf(title, "Y = %#.3g %c %#.3g(1/X)", b[0],
 		    (b[1] > 0)? '+' : '-', fabs(b[1]));
 	}
-	gretl_push_c_numeric_locale();
-	sprintf(formula, "%g + %g/x", b[0], b[1]);
-	gretl_pop_c_numeric_locale();
+	set_fit_formula(spec, b);
     }
 
     spec->lines[1].scale = NADBL;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 0;
-
-    spec->fit = f;
 }
 
 int plotspec_add_fit (GPT_SPEC *spec, FitType f)
@@ -1203,7 +1213,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     const double *py;
     const double *px;
     int T = spec->okobs;
-    double q = 0.5;
+    double xt, q = 0.5;
     int d = 1;
     int i, t, k;
     int err = 0;
@@ -1246,19 +1256,20 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 
     i = 0;
     for (t=0; t<spec->nobs; t++) {
-	if (!na(py[t]) && !na(px[t])) {
+	xt = px[t];
+	if (!na(py[t]) && !na(xt)) {
 	    y->val[i] = py[t];
 	    if (f == PLOT_FIT_LOESS) {
-		gretl_matrix_set(X, i, 0, px[t]);
+		gretl_matrix_set(X, i, 0, xt);
 	    } else {
 		gretl_matrix_set(X, i, 0, 1.0);
 		if (f == PLOT_FIT_INVERSE) {
-		    gretl_matrix_set(X, i, 1, 1.0 / px[t]);
+		    gretl_matrix_set(X, i, 1, 1.0 / xt);
 		} else {
-		    gretl_matrix_set(X, i, 1, px[t]);
+		    gretl_matrix_set(X, i, 1, xt);
 		}
 		if (f == PLOT_FIT_QUADRATIC) {
-		    gretl_matrix_set(X, i, 2, px[t] * px[t]);
+		    gretl_matrix_set(X, i, 2, xt * xt);
 		}
 	    }
 	    i++;

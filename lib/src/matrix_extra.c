@@ -688,7 +688,7 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 
     for (s=0; s<T; s++) {
 	t = s + t1;
-	if (na(yvar[t]) || na(xvar[t])) {
+	if (na(yvar[t]) || (xvar != NULL && na(xvar[t]))) {
 	    mask[s] = 1;
 	} else {
 	    n++;
@@ -724,7 +724,7 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 	    if (fit != PLOT_FIT_LOESS) {
 		gretl_matrix_set(X, i, j++, 1.0);
 	    }
-	    xt = xvar[t];
+	    xt = (xvar != NULL)? xvar[t] : s;
 	    if (fit == PLOT_FIT_INVERSE) {
 		gretl_matrix_set(X, i, j++, 1.0 / xt);
 	    } else {

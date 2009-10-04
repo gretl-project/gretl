@@ -119,10 +119,10 @@ static void graph_list_adjust_sample (int *list,
 				      gnuplot_info *ginfo,
 				      const double **Z);
 static void clear_gpinfo (gnuplot_info *gi);
-static int make_time_tics (gnuplot_info *gi,
-			   const DATAINFO *pdinfo,
-			   int many, char *xlabel,
-			   PRN *prn);
+static void make_time_tics (gnuplot_info *gi,
+			    const DATAINFO *pdinfo,
+			    int many, char *xlabel,
+			    PRN *prn);
     
 #ifndef WIN32
 
@@ -420,6 +420,12 @@ int gnuplot_has_bbox (void)
 int gnuplot_has_utf8 (void)
 {
     /* ... and that it supports "set encoding utf8" */
+    return 1;
+}
+
+static int gnuplot_has_size (void)
+{
+    /* ... and that it supports the size argument to set term */
     return 1;
 }
 
@@ -1516,6 +1522,7 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	}
     } else {
 	/* note: gnuplot_init is not used in batch mode */
+	fprintf(stderr, "calling real_gnuplot_init: flags = %d\n", flags);
 	err = real_gnuplot_init(code, flags, fpp);
     }
 
@@ -1642,7 +1649,7 @@ static int get_fitted_line (gnuplot_info *gi,
     int xno, yno = gi->list[1];
     const double *yvar = Z[yno];
     const double *xvar;
-    double s2, *ps2 = NULL;
+    double x0, s2, *ps2 = NULL;
     FitType f = gi->fit;
     char title[72];
     int k, err;
@@ -1650,10 +1657,13 @@ static int get_fitted_line (gnuplot_info *gi,
     if (gi->x != NULL) {
 	xno = 0;
 	xvar = gi->x;
+	/* xvar = NULL; */
     } else {
 	xno = gi->list[2];
 	xvar = Z[xno];
     }
+
+    x0 = gi->x[gi->t1];
 
     if (gi->fit == PLOT_FIT_NONE) {
 	/* Doing first-time automatic OLS: we want to check for
@@ -1709,13 +1719,17 @@ static int get_fitted_line (gnuplot_info *gi,
 		gi->fit = PLOT_FIT_OLS;
 	    }
 	} else if (gi->fit == PLOT_FIT_OLS) {
-	    if (xno > 0) {
+	    if (xno > 0 || xvar == NULL) {
 		sprintf(title, "Y = %#.3g %c %#.3gX", c[0],
 			(c[1] > 0)? '+' : '-', fabs(c[1]));
 	    } else {
 		strcpy(title, _("linear fit"));
 	    }
 	    gretl_push_c_numeric_locale();
+	    if (xvar == NULL) {
+		c[0] -= c[1] * x0 * pdinfo->pd;
+                c[1] *= pdinfo->pd;
+	    }
 	    sprintf(targ, "%.10g + %.10g*x title '%s' w lines\n", 
 		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();
@@ -1781,6 +1795,10 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     err = get_fitted_line(gi, Z, pdinfo, fitline);
     if (err) {
 	return err;
+    }
+
+    if (gnuplot_has_size()) {
+	gi->flags |= GPT_LETTERBOX;
     }
 
     if (get_gnuplot_output_file(&fp, gi->flags, PLOT_REGULAR)) {
@@ -2575,22 +2593,16 @@ static void make_calendar_tics (const DATAINFO *pdinfo,
 
 /* special tics for time series plots */
 
-static int make_time_tics (gnuplot_info *gi,
-			   const DATAINFO *pdinfo,
-			   int many, char *xlabel,
-			   PRN *prn)
+static void make_time_tics (gnuplot_info *gi,
+			    const DATAINFO *pdinfo,
+			    int many, char *xlabel,
+			    PRN *prn)
 {
     if (many) {
 	pprintf(prn, "# multiple timeseries %d\n", pdinfo->pd);
     } else {
-	int gpsize = 1;
-
-#ifndef WIN32
-	gpsize = gnuplot_has_size();
-#endif
 	pprintf(prn, "# timeseries %d", pdinfo->pd);
-
-	if (gpsize && gi->fit == PLOT_FIT_NONE) {
+	if (gnuplot_has_size()) {
 	    gi->flags |= GPT_LETTERBOX;
 	    pputs(prn, " (letterbox)\n");
 	} else {
@@ -2612,8 +2624,6 @@ static int make_time_tics (gnuplot_info *gi,
 	    strcpy(xlabel, _("time series by group"));
 	}
     }
-
-    return 0;
 }
 
 /* Respond to use of the option --matrix=<matname> in the gnuplot
