@@ -1043,6 +1043,10 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    continue;
 	}
 
+	if (i == skipline) {
+	    continue;
+	}
+
 	if (!started_data_lines) {
 	    x[0] = spec->data;
 	    /* see below for subsequent adjustment of x[1] */
