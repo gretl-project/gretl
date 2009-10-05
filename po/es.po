@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-10-02 08:59-0400\n"
-"PO-Revision-Date: 2009-09-22 11:11+0200\n"
+"PO-Revision-Date: 2009-10-05 11:11+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
-"Language-Team: Español <kde-i18n-doc@kde.org>\n"
+"Language-Team: Español <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -6041,12 +6041,10 @@ msgid "decennial"
 msgstr "decenal"
 
 #: lib/src/subsample.c:2083
-#, fuzzy
 msgid "Full dataset"
-msgstr "Todos los detalles"
+msgstr "Conjunto de datos completo"
 
 #: lib/src/subsample.c:2085 lib/src/subsample.c:2107
-#, fuzzy
 msgid "Type"
 msgstr "Tipo"
 
@@ -6063,12 +6061,10 @@ msgid "Range"
 msgstr "Rango"
 
 #: lib/src/subsample.c:2098
-#, fuzzy
 msgid "Subsampled data"
-msgstr "remuestrear el conjunto de datos"
+msgstr "datos submuestreados"
 
 #: lib/src/subsample.c:2117
-#, fuzzy
 msgid "Full range"
 msgstr "Rango de datos completo"
 
@@ -9378,57 +9374,48 @@ msgid "gretl plot controls"
 msgstr "controladores de gráfico gretl"
 
 #: gui2/graphics.c:189
-#, fuzzy
 msgid "width"
-msgstr "Grosor del intervalo:"
+msgstr "anchura"
 
 #: gui2/graphics.c:191
-#, fuzzy
 msgid "height"
-msgstr "derecha"
+msgstr "altura"
 
 #: gui2/graphics.c:196
-#, fuzzy
 msgid "inches"
-msgstr "líneas"
+msgstr "pulgadas"
 
 #: gui2/graphics.c:202
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: gui2/graphics.c:215
-#, fuzzy
 msgid "line width factor"
-msgstr "grosor de línea"
+msgstr "factor de grosor de línea"
 
 #: gui2/graphics.c:412
-#, fuzzy
 msgid "save graph"
-msgstr "Generar gráfico"
+msgstr "guardar el gráfico"
 
 #: gui2/graphics.c:421
-#, fuzzy
 msgid "EPS file"
-msgstr "Abrir fichero SPSS"
+msgstr "Ficehro EPS"
 
 #: gui2/graphics.c:421
-#, fuzzy
 msgid "PDF file"
-msgstr "Fichero"
+msgstr "Fichero PDF"
 
 #: gui2/graphics.c:424
 msgid "Plot dimensions:"
-msgstr ""
+msgstr "Dimensiones del gráfico:"
 
 #: gui2/graphics.c:443
-#, fuzzy
 msgid "Font and size:"
-msgstr "Nombre de la fuente"
+msgstr "Fuente y tamaño:"
 
 #: gui2/graphics.c:455
-#, fuzzy
 msgid "Preview"
-msgstr "Vista _previa:"
+msgstr "Vista previa"
 
 #: gui2/graph_page.c:272
 msgid "The graph page is full"
@@ -9570,9 +9557,8 @@ msgid "_SPSS..."
 msgstr "_SPSS..."
 
 #: gui2/gretl.c:1270 gui2/gretl.c:1284
-#, fuzzy
 msgid "_SAS (xport)..."
-msgstr "Gráfico en _3D..."
+msgstr "_SAS (xport)..."
 
 #: gui2/gretl.c:1271 gui2/gretl.c:1286 gui2/gretl.c:1297
 msgid "_JMulTi..."
@@ -10012,9 +9998,8 @@ msgid "_Restore full range"
 msgstr "Recuperar el rango _completo"
 
 #: gui2/gretl.c:1428
-#, fuzzy
 msgid "_Show status"
-msgstr "Ver los estadísticos t"
+msgstr "_Ver el status actual"
 
 #: gui2/gretl.c:1429
 msgid "_Define, based on dummy..."
@@ -10467,7 +10452,6 @@ msgid "for the variable %s (%d valid observations)"
 msgstr "para la variable %s (%d observaciones válidas)"
 
 #: gui2/guiprint.c:868
-#, fuzzy
 msgid "t-ratios in parentheses"
 msgstr "entre paréntesis los estadísticos t"
 
@@ -10604,9 +10588,8 @@ msgid "_Print..."
 msgstr "Im_primir..."
 
 #: gui2/gui_utils.c:163
-#, fuzzy
 msgid "View as equation"
-msgstr "Añadir ecuación"
+msgstr "Ver como ecuación"
 
 #: gui2/gui_utils.c:164 gui2/gui_utils.c:292
 msgid "_Close"
@@ -11133,11 +11116,15 @@ msgid ""
 "Do you want to restore the sample on which\n"
 "this model was estimated?"
 msgstr ""
+"La muestra del modelo es diferente de la muestra del conjunto de datos,\n"
+"por ello se desactivarán algunas opciones de menú.\n"
+"\n"
+"¿Desea recuperar la muestra sobre la cual se estimó\n"
+"este modelo?"
 
 #: gui2/gui_utils.c:3630
-#, fuzzy
 msgid "dataset is subsampled"
-msgstr "el conjunto de datos se ha submuestreado, el modelo no es\n"
+msgstr "el conjunto de datos se ha submuestreado"
 
 #: gui2/gui_utils.c:3643
 #, c-format
@@ -14552,9 +14539,8 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "el valor p para H0: pendiente = 0 es %g\n"
 
 #: plugin/sas_import.c:620 plugin/sas_import.c:654
-#, fuzzy
 msgid "This file does not seem to be a valid SAS xport file"
-msgstr "Este fichero no parece ser un fichero de datos Stata válido"
+msgstr "Este no parece ser un fichero xport de SAS válido"
 
 #: plugin/spss_import.c:1850
 msgid "cannot read SPSS .sav on this platform"
