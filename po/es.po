@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-10-02 08:59-0400\n"
-"PO-Revision-Date: 2009-10-05 11:11+0200\n"
+"PO-Revision-Date: 2009-10-05 12:33+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
-"Language-Team: Español <es@li.org>\n"
+"Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -13821,9 +13821,8 @@ msgid "Stickiness..."
 msgstr "Pegajosidad..."
 
 #: gui2/toolbar.c:608
-#, fuzzy
 msgid "Toggle split pane"
-msgstr "Cambiar los números de linea"
+msgstr "Activar/desactivar división de ventana"
 
 #: gui2/toolbar.c:609
 msgid "Help on command"
