@@ -1145,58 +1145,85 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     return 0;
 }
 
-static void set_fit_formula (GPT_SPEC *spec, const double *b)
+static void set_fit_formula (GPT_SPEC *spec, const double *b,
+			     double x0)
 {
     char *formula = spec->lines[1].formula;
 
     gretl_push_c_numeric_locale();
 
     if (spec->fit == PLOT_FIT_OLS) {
-	sprintf(formula, "%.10g + %.10g*x", b[0], b[1]);
+	if (!na(x0)) {
+	    double c = b[1] * spec->pd;
+
+	    sprintf(formula, "%.10g + %.10g*x", b[0] - c*x0, c);
+	} else {
+	    sprintf(formula, "%.10g + %.10g*x", b[0], b[1]);
+	}
     } else if (spec->fit == PLOT_FIT_QUADRATIC) {
-	sprintf(formula, "%.10g + %.10g*x + %.10g*x**2", b[0], b[1], b[2]);
+	if (!na(x0)) {
+	    double c = b[1] * spec->pd;
+	    double g = b[2] * spec->pd * spec->pd;
+
+	    sprintf(formula, "%.10g + %.10g*x + %.10g*x**2", 
+		    b[0] - c*x0 + g*x0*x0, c - 2*g*x0, g);
+	} else {
+	    sprintf(formula, "%.10g + %.10g*x + %.10g*x**2", b[0], b[1], b[2]);
+	}	
     } else if (spec->fit == PLOT_FIT_INVERSE) {
-	sprintf(formula, "%.10g + %.10g/x", b[0], b[1]);
+	if (!na(x0)) {
+	    double c = x0 * spec->pd;
+
+	    sprintf(formula, "%.10g + %.10g/(%g*x - %.10g)", b[0], b[1], 
+		    (double) spec->pd, c);
+	} else {
+	    sprintf(formula, "%.10g + %.10g/x", b[0], b[1]);
+	}
     }
 
     gretl_pop_c_numeric_locale();
 }
 
-static void set_fitted_line (GPT_SPEC *spec, FitType f)
+static void set_fitted_line (GPT_SPEC *spec, FitType f, double x0)
 {
     char *title = spec->lines[1].title;
+    char xc = 'X';
     const double *b;
 
     spec->fit = f;
 
+    if (spec->flags & GPT_TS) {
+	xc = (na(x0)) ? 0 : 't';
+    }
+
     if (f == PLOT_FIT_OLS) {
 	b = spec->b_ols->val;
-	if (spec->flags & GPT_TS) {
+	if (xc == 0) {
 	    strcpy(title, _("linear fit"));
 	} else {
-	    sprintf(title, "Y = %#.3g %c %#.3gX", b[0],
-		    (b[1] > 0)? '+' : '-', fabs(b[1]));
+	    sprintf(title, "Y = %#.3g %c %#.3g%c", b[0],
+		    (b[1] > 0)? '+' : '-', fabs(b[1]), xc);
 	}
-	set_fit_formula(spec, b);
+	set_fit_formula(spec, b, x0);
     } else if (f == PLOT_FIT_QUADRATIC) {
 	b = spec->b_quad->val;
-	if (spec->flags & GPT_TS) {
+	if (xc == 0) {
 	    strcpy(title, _("quadratic fit"));
 	} else {
-	    sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", b[0],
-		    (b[1] > 0)? '+' : '-', fabs(b[1]),
-		    (b[2] > 0)? '+' : '-', fabs(b[2]));
+	    sprintf(title, "Y = %#.3g %c %#.3g%c %c %#.3g%c^2", b[0],
+		    (b[1] > 0)? '+' : '-', fabs(b[1]), xc,
+		    (b[2] > 0)? '+' : '-', fabs(b[2]), xc);
 	}
-	set_fit_formula(spec, b);
+	set_fit_formula(spec, b, x0);
     } else if (f == PLOT_FIT_INVERSE) {
 	b = spec->b_inv->val;
-	if (spec->flags & GPT_TS) {
+	if (xc == 0) {
 	    strcpy(title, _("inverse fit"));
 	} else {
-	    sprintf(title, "Y = %#.3g %c %#.3g(1/X)", b[0],
-		    (b[1] > 0)? '+' : '-', fabs(b[1]));
+	    sprintf(title, "Y = %#.3g %c %#.3g(1/%c)", b[0],
+		    (b[1] > 0)? '+' : '-', fabs(b[1]), xc);
 	}
-	set_fit_formula(spec, b);
+	set_fit_formula(spec, b, x0);
     }
 
     spec->lines[1].scale = NADBL;
@@ -1210,19 +1237,25 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     gretl_matrix *X = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *yh = NULL;
+    const double *px = spec->data;
     const double *py;
-    const double *px;
     int T = spec->okobs;
-    double xt, q = 0.5;
+    double x0, xt, q = 0.5;
     int d = 1;
     int i, t, k;
     int err = 0;
+
+    if ((spec->flags & GPT_TS) && (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC)) {
+	x0 = px[0];
+    } else {
+	x0 = NADBL;
+    }
 
     if ((f == PLOT_FIT_OLS && spec->b_ols != NULL) ||
 	(f == PLOT_FIT_QUADRATIC && spec->b_quad != NULL) ||
 	(f == PLOT_FIT_INVERSE && spec->b_inv != NULL)) {
 	/* just activate existing setup */
-	set_fitted_line(spec, f);
+	set_fitted_line(spec, f, x0);
 	return 0;
     }
 	
@@ -1256,7 +1289,11 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 
     i = 0;
     for (t=0; t<spec->nobs; t++) {
-	xt = px[t];
+	if (!na(x0)) {
+	    xt = t;
+	} else {
+	    xt = px[t];
+	}
 	if (!na(py[t]) && !na(xt)) {
 	    y->val[i] = py[t];
 	    if (f == PLOT_FIT_LOESS) {
@@ -1306,7 +1343,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	if (f == PLOT_FIT_LOESS) {
 	    set_loess_fit(spec, d, q, X, y, yh);
 	} else {
-	    set_fitted_line(spec, f);
+	    set_fitted_line(spec, f, x0);
 	}
     }
 

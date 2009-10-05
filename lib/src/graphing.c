@@ -1649,7 +1649,7 @@ static int get_fitted_line (gnuplot_info *gi,
     int xno, yno = gi->list[1];
     const double *yvar = Z[yno];
     const double *xvar;
-    double x0, s2, *ps2 = NULL;
+    double s2, *ps2 = NULL;
     FitType f = gi->fit;
     char title[72];
     int k, err;
@@ -1657,12 +1657,9 @@ static int get_fitted_line (gnuplot_info *gi,
     if (gi->x != NULL) {
 	xno = 0;
 	xvar = gi->x;
-	x0 = gi->x[gi->t1];
-	/* xvar = NULL; */
     } else {
 	xno = gi->list[2];
 	xvar = Z[xno];
-	x0 = 0;
     }
 
     if (gi->fit == PLOT_FIT_NONE) {
@@ -1719,17 +1716,13 @@ static int get_fitted_line (gnuplot_info *gi,
 		gi->fit = PLOT_FIT_OLS;
 	    }
 	} else if (gi->fit == PLOT_FIT_OLS) {
-	    if (xno > 0 || xvar == NULL) {
+	    if (xno > 0) {
 		sprintf(title, "Y = %#.3g %c %#.3gX", c[0],
 			(c[1] > 0)? '+' : '-', fabs(c[1]));
 	    } else {
 		strcpy(title, _("linear fit"));
 	    }
 	    gretl_push_c_numeric_locale();
-	    if (xvar == NULL) {
-		c[0] -= c[1] * x0 * pdinfo->pd;
-                c[1] *= pdinfo->pd;
-	    }
 	    sprintf(targ, "%.10g + %.10g*x title '%s' w lines\n", 
 		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();

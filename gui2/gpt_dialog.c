@@ -1446,6 +1446,9 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	    char tmp[128];
 
 	    for (i=0; fittype_strings[i] != NULL; i++) {
+		if (!strncmp(fittype_strings[i], "inver", 5)) {
+		    continue;
+		}
 		strcpy(tmp, _(fittype_strings[i]));
 		charsub(tmp, 'x', 't');
 		gtk_combo_box_append_text(GTK_COMBO_BOX(ed->fitcombo), tmp);
