@@ -1522,7 +1522,6 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	}
     } else {
 	/* note: gnuplot_init is not used in batch mode */
-	fprintf(stderr, "calling real_gnuplot_init: flags = %d\n", flags);
 	err = real_gnuplot_init(code, flags, fpp);
     }
 
@@ -1646,21 +1645,18 @@ static int get_fitted_line (gnuplot_info *gi,
     gretl_matrix *X = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *V = NULL;
-    int xno, yno = gi->list[1];
-    const double *yvar = Z[yno];
-    const double *xvar;
-    double s2, *ps2 = NULL;
-    FitType f = gi->fit;
-    char title[72];
-    int k, err;
+    const double *yvar, *xvar = NULL;
+    double x0, s2, *ps2 = NULL;
+    int err = 0;
 
-    if (gi->x != NULL) {
-	xno = 0;
-	xvar = gi->x;
+    if (gi->x != NULL && (pdinfo->pd == 1 || pdinfo->pd == 4 || pdinfo->pd == 12)) {
+	x0 = gi->x[gi->t1];
     } else {
-	xno = gi->list[2];
-	xvar = Z[xno];
+	xvar = Z[gi->list[2]];
+	x0 = NADBL;
     }
+
+    yvar = Z[gi->list[1]];
 
     if (gi->fit == PLOT_FIT_NONE) {
 	/* Doing first-time automatic OLS: we want to check for
@@ -1674,17 +1670,15 @@ static int get_fitted_line (gnuplot_info *gi,
 	    return E_ALLOC;
 	}
 	ps2 = &s2;
-	f = PLOT_FIT_OLS;
     }
 
-    /* columns needed in X matrix */
-    k = (f == PLOT_FIT_QUADRATIC)? 3 : 2;
-
-    err = gretl_plotfit_matrices(yvar, xvar, f, 
+    err = gretl_plotfit_matrices(yvar, xvar, gi->fit,
 				 pdinfo->t1, pdinfo->t2,
 				 &y, &X);
 
     if (!err) {
+	int k = (gi->fit == PLOT_FIT_QUADRATIC)? 3 : 2;
+
 	b = gretl_column_vector_alloc(k);
 	if (b == NULL) {
 	    err = E_ALLOC;
@@ -1695,65 +1689,26 @@ static int get_fitted_line (gnuplot_info *gi,
 	err = gretl_matrix_ols(y, X, b, V, NULL, ps2);
     }
 
-    if (!err) {
-	double *c = b->val;
+    if (!err && gi->fit == PLOT_FIT_NONE) {
+	/* the "automatic" case */
+	double pv, v = gretl_matrix_get(V, 1, 1);
+	int T = gretl_vector_get_length(y);
 
-	if (gi->fit == PLOT_FIT_NONE) {
-	    /* the "automatic" case */
-	    double pv, v = gretl_matrix_get(V, 1, 1);
-	    int T = gretl_vector_get_length(y);
-
-	    pv = student_pvalue_2(T - k, c[1] / sqrt(v));
-	    /* show the line if the p-value for the slope coeff is
-	       less than 0.1, otherwise discard it */
-	    if (pv < .10) {
-		sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
-			(c[1] > 0)? '+' : '-', fabs(c[1]));
-		gretl_push_c_numeric_locale();
-		sprintf(targ, "%.10g + %.10g*x title '%s' w lines\n", 
-			c[0], c[1], title);
-		gretl_pop_c_numeric_locale();
-		gi->fit = PLOT_FIT_OLS;
-	    }
-	} else if (gi->fit == PLOT_FIT_OLS) {
-	    if (xno > 0) {
-		sprintf(title, "Y = %#.3g %c %#.3gX", c[0],
-			(c[1] > 0)? '+' : '-', fabs(c[1]));
-	    } else {
-		strcpy(title, _("linear fit"));
-	    }
-	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%.10g + %.10g*x title '%s' w lines\n", 
-		    c[0], c[1], title);
-	    gretl_pop_c_numeric_locale();
-	} else if (gi->fit == PLOT_FIT_INVERSE) {
-	    if (xno > 0) {
-		sprintf(title, "Y = %#.3g %c %#.3g/X", c[0],
-			(c[1] > 0)? '+' : '-', fabs(c[1]));
-	    } else {
-		strcpy(title, _("inverse fit"));
-	    }
-	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%.10g + %.10g/x title '%s' w lines\n", 
-		    c[0], c[1], title);
-	    gretl_pop_c_numeric_locale();
-	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
-	    if (xno > 0) {
-		sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", c[0],
-			(c[1] > 0)? '+' : '-', fabs(c[1]),
-			(c[2] > 0)? '+' : '-', fabs(c[2]));
-	    } else {
-		strcpy(title, _("quadratic fit"));
-	    }
-	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%.10g + %.10g*x + %.10g*x**2 title '%s' w lines\n", 
-		    c[0], c[1], c[2], title);
-	    gretl_pop_c_numeric_locale();
+	pv = student_pvalue_2(T - 2, b->val[1] / sqrt(v));
+	/* show the line if the two-tailed p-value for the slope coeff
+	   is less than 0.1, otherwise discard it */
+	if (pv < 0.10) {
+	    gi->fit = PLOT_FIT_OLS;
 	}
+    }
+	    
+    if (!err && gi->fit != PLOT_FIT_NONE) {
+	char title[MAXTITLE], formula[GP_MAXFORMULA];
+	double pd = pdinfo->pd;
 
-	if (gi->fit != PLOT_FIT_NONE) {
-	    gi->flags |= GPT_AUTO_FIT;
-	}
+	set_plotfit_line(title, formula, gi->fit, b->val, x0, pd);
+	sprintf(targ, "%s title \"%s\" w lines\n", formula, title);
+	gi->flags |= GPT_AUTO_FIT;
     }
 
     gretl_matrix_free(y);

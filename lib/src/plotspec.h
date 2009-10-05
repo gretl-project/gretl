@@ -177,4 +177,8 @@ gp_style_spec *get_keypos_spec (int t);
 
 void print_keypos_string (int t, FILE *fp);
 
+void set_plotfit_line (char *title, char *formula,
+		       FitType f, const double *b, 
+		       double x0, double pd);
+
 #endif /* PLOTSPEC_H */
