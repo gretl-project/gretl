@@ -1657,13 +1657,13 @@ static int get_fitted_line (gnuplot_info *gi,
     if (gi->x != NULL) {
 	xno = 0;
 	xvar = gi->x;
+	x0 = gi->x[gi->t1];
 	/* xvar = NULL; */
     } else {
 	xno = gi->list[2];
 	xvar = Z[xno];
+	x0 = 0;
     }
-
-    x0 = gi->x[gi->t1];
 
     if (gi->fit == PLOT_FIT_NONE) {
 	/* Doing first-time automatic OLS: we want to check for
