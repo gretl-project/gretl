@@ -965,9 +965,15 @@ static void select_interface (call_info *cinfo)
 	cinfo->iface = -1;
 	gui_errmsg(err);
     } else {
-	cinfo->iface = radio_dialog("gretl", "select function", 
-				    (const char **) opts, 
-				    nopts, 0, 0);
+	int resp = radio_dialog("gretl", "select function", 
+				(const char **) opts, 
+				nopts, 0, 0);
+
+	if (resp >= 0) {
+	    cinfo->iface = cinfo->publist[resp+1];
+	} else {
+	    cinfo->iface = -1;
+	}
     }
 
     free_strings_array(opts, nopts);
