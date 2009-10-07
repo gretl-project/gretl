@@ -23,7 +23,7 @@
 #define GP_MAXFORMULA 128
 
 #define GP_BORDER_DEFAULT (-1)
-#define LT_NONE (-2)
+#define LT_AUTO (-2)
 
 typedef enum {
     GP_STYLE_NONE,

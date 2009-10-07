@@ -1571,13 +1571,13 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 
     if (!strncmp(s, "set style line", 14)) {
 	/* e.g. set style line 1 lc rgb "#ff0000 lt 6" */
-	int n, idx = 0, lt = LT_NONE;
+	int n, idx = 0, lt = LT_AUTO;
 	char rgb[8];
 
 	n = sscanf(s + 14, " %d lc rgb \"%7s\" lt %d", &idx, rgb, &lt);
 	if (n >= 2 && idx > 0 && idx <= MAX_STYLES) {
 	    strcpy(styles[idx-1].rgb, rgb);
-	    styles[idx-1].type = (n == 3)? lt : LT_NONE;
+	    styles[idx-1].type = (n == 3)? lt : LT_AUTO;
 	}	    
 	return 0;
     }
@@ -2098,7 +2098,7 @@ static FitType recognize_fit_string (const char *s)
 static void linestyle_init (linestyle *ls)
 {
     ls->rgb[0] = '\0';
-    ls->type = LT_NONE;
+    ls->type = LT_AUTO;
 }
 
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && \

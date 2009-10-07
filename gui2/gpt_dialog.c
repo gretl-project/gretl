@@ -329,16 +329,22 @@ static GtkWidget *color_patch_button (int i)
     return button;
 }
 
-static int style_from_line_number (GPT_SPEC *spec, int i)
+static int style_from_line_number (GPT_SPEC *spec, int i,
+				   int *dotted)
 {
     int j, lt = spec->lines[i].type;
 
     if (lt > 0) {
 	j = lt - 1;
-    } else if (lt == LT_NONE) {
+    } else if (lt == LT_AUTO) {
+	j = i;
+    } else if (lt == 0) {
+	if (dotted != NULL) {
+	    *dotted = 1;
+	}
 	j = i;
     } else {
-	j = LT_NONE;
+	j = LT_AUTO;
     }
 
     return j;
@@ -347,9 +353,11 @@ static int style_from_line_number (GPT_SPEC *spec, int i)
 static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 {
     GtkWidget *image, *button;
-    int j = style_from_line_number(spec, i);
+    int dotted = 0;
+    int j = style_from_line_number(spec, i, &dotted);
 
-    if (j == LT_NONE) {
+    if (j < 0) {
+	/* shouldn't happen */
 	return NULL;
     }
 
@@ -373,7 +381,11 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(graph_color_selector), 
 			 GINT_TO_POINTER(j));
-    }	
+    }
+
+    if (dotted) {
+	gtk_widget_set_sensitive(button, FALSE);
+    }
 
     return button;
 }
@@ -387,12 +399,12 @@ static void maybe_apply_line_color (GtkWidget *w, GPT_SPEC *spec,
 
     cb = g_object_get_data(G_OBJECT(w), "colorsel");
 
-    if (cb != NULL) {
+    if (cb != NULL && GTK_WIDGET_SENSITIVE(cb)) {
 	rgb = g_object_get_data(G_OBJECT(cb), "rgb");
     }
 
     if (rgb != NULL) {
-	j = style_from_line_number(spec, i);
+	j = style_from_line_number(spec, i, NULL);
 	print_rgb_hash(spec->lines[j].rgb, rgb);
     }
 }
@@ -553,17 +565,19 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 static void dot_callback (GtkComboBox *box, GPT_SPEC *spec)
 {
     int i = widget_get_int(GTK_WIDGET(box), "linenum");
-    int d = gtk_combo_box_get_active(box);
+    int solid = (gtk_combo_box_get_active(box) == 0);
     GtkWidget *w;
 
-    /* flip between colored solid line and black dotted */
+    /* flip between colored solid line (the first option)
+       and a dotted black line (second option) 
+    */
+    spec->lines[i].type = solid ? LT_AUTO : 0;
 
-    spec->lines[i].type = (d > 0)? 0 : LT_NONE;
-
+    /* the color selector is effective only for solid lines */
     w = g_object_get_data(G_OBJECT(box), "colorsel");
-    gtk_widget_set_sensitive(w, d == 0);
+    gtk_widget_set_sensitive(w, solid);
     w = g_object_get_data(G_OBJECT(box), "color-label");
-    gtk_widget_set_sensitive(w, d == 0);
+    gtk_widget_set_sensitive(w, solid);
 }
 
 /* take a double (which might be NA) and format it for
@@ -683,7 +697,7 @@ static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
 
     if (ptsel != NULL && GTK_WIDGET_SENSITIVE(ptsel)) {
 	int pt = gtk_combo_box_get_active(GTK_COMBO_BOX(ptsel));
-	int ptdef = (line->type == LT_NONE)? i : line->type - 1;
+	int ptdef = (line->type == LT_AUTO)? i : line->type - 1;
 
 	if (pt != ptdef) {
 	    /* point-type is not just the default */
@@ -1990,7 +2004,7 @@ static int line_get_point_style (GPT_LINE *line, int i)
 	/* a specific point-style has been selected: convert
 	   to zero-based */
 	return line->ptype - 1;
-    } else if (line->type == LT_NONE) {
+    } else if (line->type == LT_AUTO) {
 	/* line type is set by placement of line in plot */
 	return i;
     } else {
@@ -2332,8 +2346,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	if (line->flags & GP_LINE_USER) {
 	    /* dotted option */
 	    GtkWidget *dotcombo = dash_types_combo();
+	    int dotted = (line->type == 0);
 
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(dotcombo), 0); 
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(dotcombo), 
+				     dotted ? 1 : 0);
 	    gtk_widget_show(dotcombo);
 	    widget_set_int(dotcombo, "linenum", i);
 	    g_object_set_data(G_OBJECT(dotcombo), "colorsel", button);

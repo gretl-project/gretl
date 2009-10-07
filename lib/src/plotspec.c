@@ -301,7 +301,7 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].formula[0] = '\0';
     lines[n].rgb[0] = '\0';
     lines[n].yaxis = 1;
-    lines[n].type = LT_NONE;
+    lines[n].type = LT_AUTO;
     lines[n].ptype = 0;
     lines[n].width = 1;
     lines[n].ncols = 0;
@@ -726,7 +726,7 @@ static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
 
     if (i < spec->n_lines) {
 	line = &spec->lines[i];
-	if (*line->rgb != '\0' && line->type != LT_NONE) {
+	if (*line->rgb != '\0' && line->type != LT_AUTO) {
 	    fprintf(fp, "lc rgb \"%s\" lt %d\n", line->rgb, line->type);
 	    done = 1;
 	} else if (*line->rgb != '\0') {
@@ -1008,7 +1008,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
 	fprintf(fp, "w %s", gp_line_style_string(line->style));
 
-	if (line->type != LT_NONE) {
+	if (line->type != LT_AUTO) {
 	    fprintf(fp, " lt %d", line->type);
 	}
 
