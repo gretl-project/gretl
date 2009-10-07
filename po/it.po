@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.8.4\n"
+"Project-Id-Version: gretl 1.8.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-10-02 08:59-0400\n"
-"PO-Revision-Date: 2009-08-31 11:50+0200\n"
+"PO-Revision-Date: 2009-10-07 13:36+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -6025,12 +6025,10 @@ msgid "decennial"
 msgstr "decennale"
 
 #: lib/src/subsample.c:2083
-#, fuzzy
 msgid "Full dataset"
-msgstr "Dettagli completi"
+msgstr "Dataset completo"
 
 #: lib/src/subsample.c:2085 lib/src/subsample.c:2107
-#, fuzzy
 msgid "Type"
 msgstr "Tipo"
 
@@ -6047,12 +6045,10 @@ msgid "Range"
 msgstr "Intervallo"
 
 #: lib/src/subsample.c:2098
-#, fuzzy
 msgid "Subsampled data"
-msgstr "ricampiona dataset"
+msgstr "Campione ridotto dei dati"
 
 #: lib/src/subsample.c:2117
-#, fuzzy
 msgid "Full range"
 msgstr "Campione completo dei dati"
 
@@ -7670,19 +7666,17 @@ msgid "didn't get description from %s\n"
 msgstr "Impossibile leggere la descrizione da %s\n"
 
 #: gui2/datafiles.c:749
-#, fuzzy, c-format
+#, c-format
 msgid "Function package %s"
-msgstr "pacchetti di funzioni"
+msgstr "Pacchetto di funzioni %s"
 
 #: gui2/datafiles.c:751
-#, fuzzy
 msgid "Delete package file"
-msgstr "Modifica la lista dei pacchetti"
+msgstr "Cancella pacchetto di funzioni"
 
 #: gui2/datafiles.c:752
-#, fuzzy
 msgid "Unload member functions"
-msgstr "Funzioni ausiliarie"
+msgstr "Disattiva le funzioni del pacchetto"
 
 #: gui2/datafiles.c:844
 msgid "Add to functions shown"
@@ -8075,23 +8069,20 @@ msgid "Do you want to save this gretl session?"
 msgstr "Si desidera salvare questa sessione di gretl?"
 
 #: gui2/dialogs.c:138
-#, fuzzy
 msgid "Save a record of the commands you executed?"
-msgstr "Nessun comando da eseguire"
+msgstr "Salvare l'elenco dei comandi eseguiti?"
 
 #: gui2/dialogs.c:140
 msgid "Always prompt if there are unsaved changes"
-msgstr ""
+msgstr "Avvisa sempre se ci sono modifiche non salvate"
 
 #: gui2/dialogs.c:147
-#, fuzzy
 msgid "save session"
-msgstr "Salva sessione"
+msgstr "salva sessione"
 
 #: gui2/dialogs.c:147
-#, fuzzy
 msgid "save commands"
-msgstr "Salva i comandi R"
+msgstr "salva i comandi"
 
 #: gui2/dialogs.c:214
 msgid ""
@@ -8488,9 +8479,8 @@ msgid "Test against gamma distribution"
 msgstr "Test contro la distribuzione gamma"
 
 #: gui2/dialogs.c:3603
-#, fuzzy
 msgid "Use model names"
-msgstr "Usa linee"
+msgstr "Usa nomi dei modelli"
 
 #: gui2/dialogs.c:3607 gui2/model_table.c:1026 gui2/model_table.c:1218
 msgid "t-statistics in parentheses"
@@ -8502,7 +8492,7 @@ msgstr "opzioni tabella modelli"
 
 #: gui2/dialogs.c:3632
 msgid "column headings"
-msgstr ""
+msgstr "titoli colonne"
 
 #: gui2/dialogs.c:3673 gui2/selector.c:4435
 msgid "Show p-values"
@@ -8510,7 +8500,7 @@ msgstr "Mostra i p-value"
 
 #: gui2/dialogs.c:3680
 msgid "Show significance asterisks"
-msgstr ""
+msgstr "Mostra asterischi di significatività"
 
 #: gui2/dialogs.c:3688 gui2/dialogs.c:4079 gui2/series_view.c:614
 msgid "significant figures"
@@ -9365,57 +9355,48 @@ msgid "gretl plot controls"
 msgstr "gretl: modifica grafico"
 
 #: gui2/graphics.c:189
-#, fuzzy
 msgid "width"
-msgstr "Ampiezza dell'intervallo:"
+msgstr "larghezza"
 
 #: gui2/graphics.c:191
-#, fuzzy
 msgid "height"
-msgstr "Alto"
+msgstr "altezza"
 
 #: gui2/graphics.c:196
-#, fuzzy
 msgid "inches"
-msgstr "linee"
+msgstr "pollici"
 
 #: gui2/graphics.c:202
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: gui2/graphics.c:215
-#, fuzzy
 msgid "line width factor"
-msgstr "Spessore della linea"
+msgstr "fattore larghezza della linea"
 
 #: gui2/graphics.c:412
-#, fuzzy
 msgid "save graph"
-msgstr "Genera grafico"
+msgstr "salva grafico"
 
 #: gui2/graphics.c:421
-#, fuzzy
 msgid "EPS file"
-msgstr "Apri file SPSS"
+msgstr "file EPS"
 
 #: gui2/graphics.c:421
-#, fuzzy
 msgid "PDF file"
-msgstr "File"
+msgstr "file PDF"
 
 #: gui2/graphics.c:424
 msgid "Plot dimensions:"
-msgstr ""
+msgstr "Dimensioni del grafico:"
 
 #: gui2/graphics.c:443
-#, fuzzy
 msgid "Font and size:"
-msgstr "Nome del carattere"
+msgstr "Carattere e dimensione:"
 
 #: gui2/graphics.c:455
-#, fuzzy
 msgid "Preview"
-msgstr "_Anteprima:"
+msgstr "Anteprima"
 
 #: gui2/graph_page.c:272
 msgid "The graph page is full"
@@ -9556,9 +9537,8 @@ msgid "_SPSS..."
 msgstr "_SPSS..."
 
 #: gui2/gretl.c:1270 gui2/gretl.c:1284
-#, fuzzy
 msgid "_SAS (xport)..."
-msgstr "_3D..."
+msgstr "_SAS (xport)..."
 
 #: gui2/gretl.c:1271 gui2/gretl.c:1286 gui2/gretl.c:1297
 msgid "_JMulTi..."
@@ -10000,9 +9980,8 @@ msgid "_Restore full range"
 msgstr "_Ripristina campione completo"
 
 #: gui2/gretl.c:1428
-#, fuzzy
 msgid "_Show status"
-msgstr "LaTeX/Opzioni equazione/Mostra rapporti _t"
+msgstr "Mostra _stato"
 
 #: gui2/gretl.c:1429
 msgid "_Define, based on dummy..."
@@ -10455,9 +10434,8 @@ msgid "for the variable %s (%d valid observations)"
 msgstr "per la variabile %s (%d osservazioni valide)"
 
 #: gui2/guiprint.c:868
-#, fuzzy
 msgid "t-ratios in parentheses"
-msgstr "statistiche t tra parentesi"
+msgstr "rapporti t tra parentesi"
 
 #: gui2/guiprint.c:915
 #, c-format
@@ -10596,9 +10574,8 @@ msgid "_Print..."
 msgstr "Stam_pa..."
 
 #: gui2/gui_utils.c:163
-#, fuzzy
 msgid "View as equation"
-msgstr "Aggiungi equazione"
+msgstr "Visualizza come equazione"
 
 #: gui2/gui_utils.c:164 gui2/gui_utils.c:292
 msgid "_Close"
@@ -11126,11 +11103,15 @@ msgid ""
 "Do you want to restore the sample on which\n"
 "this model was estimated?"
 msgstr ""
+"Il campione di questo modello è diverso da quello del dataset,\n"
+"quindi alcune voci del menù saranno disabilitate.\n"
+"\n"
+"Si desidera ripristinare il campione su cui\n"
+"questo modello era stato stimato?"
 
 #: gui2/gui_utils.c:3630
-#, fuzzy
 msgid "dataset is subsampled"
-msgstr "Il campione del dataset è ridotto, quello del modello no\n"
+msgstr "il campione del dataset è ridotto"
 
 #: gui2/gui_utils.c:3643
 #, c-format
@@ -12184,7 +12165,7 @@ msgstr "Errori standard tra parentesi"
 
 #: gui2/model_table.c:1032 gui2/model_table.c:1224
 msgid "p-values in brackets"
-msgstr ""
+msgstr "p-value tra parentesi"
 
 #: gui2/model_table.c:1036 gui2/model_table.c:1145 gui2/model_table.c:1229
 msgid "* indicates significance at the 10 percent level"
@@ -12209,7 +12190,7 @@ msgstr "gretl: tabella modelli"
 
 #: gui2/model_table.c:1140
 msgid "$p$-values in brackets"
-msgstr ""
+msgstr "$p$-value tra parentesi"
 
 #: gui2/model_table.c:1151
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
@@ -13202,9 +13183,8 @@ msgid "Show icon view automatically"
 msgstr "Mostra automaticamente la finestra icone"
 
 #: gui2/settings.c:167
-#, fuzzy
 msgid "Prompt to save session"
-msgstr "Salva sessione"
+msgstr "Avvisa di salvare la sessione"
 
 #: gui2/settings.c:170
 msgid "Enable Ox support"
@@ -13836,9 +13816,8 @@ msgid "Stickiness..."
 msgstr "Modalità risultati..."
 
 #: gui2/toolbar.c:608
-#, fuzzy
 msgid "Toggle split pane"
-msgstr "Attiva i numeri di linea"
+msgstr "Attiva il pannello diviso"
 
 #: gui2/toolbar.c:609
 msgid "Help on command"
@@ -14552,9 +14531,8 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "Il p-value per H0: pendenza = 0 è %g\n"
 
 #: plugin/sas_import.c:620 plugin/sas_import.c:654
-#, fuzzy
 msgid "This file does not seem to be a valid SAS xport file"
-msgstr "Il file non sembra essere un file dati di Stata"
+msgstr "Il file non sembra essere un file xport di SAS"
 
 #: plugin/spss_import.c:1850
 msgid "cannot read SPSS .sav on this platform"
