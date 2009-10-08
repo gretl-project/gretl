@@ -3064,10 +3064,25 @@ double gretl_bessel (char type, double v, double x, int *err)
 /* Net Present Value: note that the first value is taken as
    occurring "now" and is not discounted */
 
-double gretl_npv (int t1, int t2, const double *x, double r, int *err)
+double gretl_npv (int t1, int t2, const double *x, double r, 
+		  int pd, int *err)
 {
-    double PV = 0.0, d = 1.0 + r;
+    double d, PV = 0.0;
     int i, n = 0;
+
+    if (pd != 1 && pd != 4 && pd != 12) {
+	*err = E_PDWRONG;
+	return NADBL;
+    }
+
+    if (pd == 1) {
+	d = 1 + r;
+    } else if (r < -1.0) {
+	*err = E_NAN;
+	return 0.0 / 0.0;
+    } else {
+	d = pow(1 + r, 1.0 / pd);
+    }
 
     for (i=t1; i<=t2; i++) {
 	if (!na(x[i])) {
@@ -3085,9 +3100,9 @@ double gretl_npv (int t1, int t2, const double *x, double r, int *err)
 
 /* Internal Rate of Return */
 
-double gretl_irr (const double *x, int n, int *err)
+double gretl_irr (const double *x, int n, int pd, int *err)
 {
-    double PV, r, rhi = 0.02, rlo = -0.02;
+    double PV, r, r1 = 0.02, r0 = -0.02;
     int gotplus = 0, gotminus = 0;
     int i, m = n;
 
@@ -3114,50 +3129,54 @@ double gretl_irr (const double *x, int n, int *err)
 	return (x[0] < 0)? 0.0/0.0 : -1.0/0.0;
     }
 
-    /* find (rlo, rhi) bracket for solution, if possible */
+    /* find (r0, r1) bracket for solution, if possible */
 
-    while ((PV = gretl_npv(0, n-1, x, rlo, err)) < 0) {
-	if (rlo < -DBL_MAX / 2.0) {
+    while ((PV = gretl_npv(0, n-1, x, r0, pd, err)) < 0 && !*err) {
+	if (r0 < -DBL_MAX / 2.0) {
 	    return -1.0/0.0;
 	}
-	rlo *= 2.0;
+	r0 *= 2.0;
     }
 
-    while ((PV = gretl_npv(0, n-1, x, rhi, err)) > 0) {
-	if (rhi > DBL_MAX / 2.0) {
+    while ((PV = gretl_npv(0, n-1, x, r1, pd, err)) > 0 && !*err) {
+	if (r1 > DBL_MAX / 2.0) {
 	    return 1.0/0.0;
 	}
-	rhi *= 2.0;
+	r1 *= 2.0;
     }
 
 #if 0
-    printf("initial bracket for r: %g to %g\n", rlo, rhi);
+    printf("initial bracket for r: %g to %g\n", r0, r1);
 #endif
-    r = rhi;
+    r = r1;
 
     /* now do binary search */
 
-    for (i=0; i<32; i++) {
+    for (i=0; i<32 && !*err; i++) {
 	if (floateq(PV, 0.0)) {
 	    break;
 	}
 	if (PV < 0) {
 	    /* r is too high */
-	    if (r < rhi) {
-		rhi = r;
+	    if (r < r1) {
+		r1 = r;
 	    }
-	    r = (r + rlo) / 2.0;
+	    r = (r + r0) / 2.0;
 	} else {
 	    /* r too low */
-	    if (r > rlo) {
-		rlo = r;
+	    if (r > r0) {
+		r0 = r;
 	    }
-	    r = (r + rhi) / 2.0;
+	    r = (r + r1) / 2.0;
 	}
-	PV = gretl_npv(0, n-1, x, r, err);
+	PV = gretl_npv(0, n-1, x, r, pd, err);
 #if 0
 	printf("binary search: r = %.9g, PV = %g\n", r, PV);
 #endif
+    }
+
+    if (*err) {
+	r = NADBL;
     }
 
     return r;

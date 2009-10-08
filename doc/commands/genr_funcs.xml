@@ -3181,12 +3181,18 @@
       <description>
 	<para>
 	  Returns the Net Present Value of <argname>x</argname>,
-	  considered as a sequence of payments (negative) and
-	  receipts (positive), evaluated at discount rate
-	  <argname>r</argname>.  The first value is taken as
-	  dated <quote>now</quote> and is not discounted.
-	  To emulate an NPV function in which the first value is
-	  discounted, prepend zero to the input sequence.
+	  considered as a sequence of payments (negative) and receipts
+	  (positive), evaluated at annual discount rate
+	  <argname>r</argname>.  The first value is taken as dated
+	  <quote>now</quote> and is not discounted.  To emulate an NPV
+	  function in which the first value is discounted, prepend zero to
+	  the input sequence.
+	</para>
+	<para>
+	  Supported data frequencies are annual, quarterly, monthly, and
+	  undated (undated data are treated as if annual).
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="irr"/>
 	  </seelist>

@@ -3749,6 +3749,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	gretl_matrix *tmp = NULL;
 	double rval = node_get_scalar(r, p);
 	const double *xvec;
+	int pd = 1;
 
 	if (l->t == MAT) {
 	    if (f == F_QUANTILE) {
@@ -3764,6 +3765,9 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 		    return NULL;
 		}
 	    }
+	} else {
+	    /* got a series on the left */
+	    pd = p->dinfo->pd;
 	}
 
 	ret = aux_scalar_node(p);
@@ -3784,7 +3788,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	case F_NPV:
 	    ret->v.xval = gretl_npv(p->dinfo->t1, p->dinfo->t2, xvec, 
-				    rval, &p->err);
+				    rval, pd, &p->err);
 	    break;
 	default:
 	    break;
@@ -4014,18 +4018,19 @@ static NODE *do_irr (NODE *l, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const double *x = NULL;
-	int n = 0;
+	int pd = 1, n = 0;
 
 	if (l->t == VEC) {
 	    n = sample_size(p->dinfo);
 	    x = l->v.xvec + p->dinfo->t1;
+	    pd = p->dinfo->pd;
 	} else if (!gretl_is_null_matrix(l->v.m)) {
 	    n = gretl_vector_get_length(l->v.m);
 	    x = l->v.m->val;
 	}
 
 	if (n > 0 && x != NULL) {
-	    ret->v.xval = gretl_irr(x, n, &p->err);
+	    ret->v.xval = gretl_irr(x, n, pd, &p->err);
 	} else {
 	    p->err = E_DATA;
 	}
