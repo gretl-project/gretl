@@ -23,9 +23,9 @@ AC_ARG_WITH(readline-prefix,[  --with-readline-prefix=PFX   Prefix where readlin
   
   if test "$have_rl_header" = "yes" ; then
     dnl check for the libraries that readline depends on
-    AC_CHECK_LIB(termcap, tgetent, termcap_lib=-ltermcap,
+    AC_CHECK_LIB(ncurses, tgetent, termcap_lib=-lncurses,
+    [AC_CHECK_LIB(termcap, tgetent, termcap_lib=-ltermcap,
     [AC_CHECK_LIB(curses, tgetent, termcap_lib=-lcurses,
-    [AC_CHECK_LIB(ncurses, tgetent, termcap_lib=-lncurses,
     termcap_lib='')])])
 
     AC_CHECK_LIB(readline, readline, have_readline="yes" ; \
