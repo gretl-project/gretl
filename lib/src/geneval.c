@@ -3782,6 +3782,10 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.xval = gretl_quantile(p->dinfo->t1, p->dinfo->t2, xvec, 
 					 rval, &p->err);
 	    break;
+	case F_NPV:
+	    ret->v.xval = gretl_npv(p->dinfo->t1, p->dinfo->t2, xvec, 
+				    rval, &p->err);
+	    break;
 	default:
 	    break;
 	}
@@ -3991,6 +3995,37 @@ static NODE *vector_values (NODE *l, parser *p)
 
 	if (n > 0 && x != NULL) {
 	    ret->v.m = gretl_matrix_values(x, n, &p->err);
+	} else {
+	    p->err = E_DATA;
+	}
+
+	if (p->err) {
+	    free(ret);
+	    ret = NULL;
+	}
+    } 
+
+    return ret;
+}
+
+static NODE *do_irr (NODE *l, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const double *x = NULL;
+	int n = 0;
+
+	if (l->t == VEC) {
+	    n = sample_size(p->dinfo);
+	    x = l->v.xvec + p->dinfo->t1;
+	} else if (!gretl_is_null_matrix(l->v.m)) {
+	    n = gretl_vector_get_length(l->v.m);
+	    x = l->v.m->val;
+	}
+
+	if (n > 0 && x != NULL) {
+	    ret->v.xval = gretl_irr(x, n, &p->err);
 	} else {
 	    p->err = E_DATA;
 	}
@@ -6613,12 +6648,15 @@ static NODE *eval (NODE *t, parser *p)
     case F_DSORT:
     case F_VALUES:
     case F_PERGM:
+    case F_IRR:
 	/* series or vector argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    if (t->t == F_PERGM) {
 		ret = do_pergm(l, r, p);
 	    } else if (t->t == F_VALUES) {
 		ret = vector_values(l, p);
+	    } else if (t->t == F_IRR) {
+		ret = do_irr(l, p);
 	    } else {
 		ret = vector_sort(l, t->t, p);
 	    }
@@ -6651,7 +6689,8 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;	
     case F_LRVAR:
-    case F_QUANTILE:	
+    case F_QUANTILE:
+    case F_NPV:
 	/* takes series and scalar arg, returns scalar */
 	if (l->t == VEC || l->t == MAT) {
 	    if (scalar_node(r)) {

@@ -2102,6 +2102,22 @@
       </description>
     </function>
 
+    <function name="irr" section="math" output="scalar">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns the Internal Rate of Return for <argname>x</argname>,
+	  considered as a sequence of payments (negative) and receipts
+	  (positive).
+	  <seelist>
+	    <fncref targ="npv"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="islist" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -3152,6 +3168,27 @@
 	    <fncref targ="genpois"/>
 	    <fncref targ="mnormal"/>
 	    <fncref targ="muniform"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="npv" section="math" output="scalar">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="scalar">r</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the Net Present Value of <argname>x</argname>,
+	  considered as a sequence of payments (negative) and
+	  receipts (positive), evaluated at discount rate
+	  <argname>r</argname>.  The first value is taken as
+	  dated <quote>now</quote> and is not discounted.
+	  To emulate an NPV function in which the first value is
+	  discounted, prepend zero to the input sequence.
+	  <seelist>
+	    <fncref targ="irr"/>
 	  </seelist>
 	</para>
       </description>

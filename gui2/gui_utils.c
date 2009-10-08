@@ -69,6 +69,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb, 
 			    gpointer data);
 static void model_copy_callback (GtkAction *action, gpointer p);
+static int set_sample_from_model (MODEL *pmod);
 
 static void close_model (GtkAction *action, gpointer data)
 {
@@ -133,6 +134,16 @@ static void model_revise_callback (GtkAction *action, gpointer p)
     selector_from_model(vwin->data, vwin->role);
 }
 
+#if 0
+static void model_sample_callback (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = (MODEL *) vwin->data;
+    
+    set_sample_from_model(pmod);
+}
+#endif
+
 static void text_eqn_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -166,6 +177,9 @@ static GtkActionEntry model_items[] = {
     { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) },
     { "Revise", GTK_STOCK_EDIT, N_("_Modify model..."), NULL, NULL, 
       G_CALLBACK(model_revise_callback) },
+#if 0
+    { "Restore", NULL, N_("_Restore model sample"), NULL, NULL, G_CALLBACK(model_sample_callback) },
+#endif
     { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
     { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
     { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
@@ -2592,6 +2606,9 @@ static const gchar *model_ui =
     "  <menu action='Edit'>"
     "   <menuitem action='Copy'/>"
     "   <menuitem action='Revise'/>"
+#if 0
+    "   <menuitem action='Restore'/>"
+#endif
     "  </menu> "     
     "  <menu action='Tests'>"
     "   <menuitem action='omit'/>"
@@ -3496,24 +3513,10 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     }
 }
 
-/* maybe_set_sample_from_model: return TRUE if the problem situation
-   (sample mismatch) is successfully handled, else FALSE.
-*/
-
-static gboolean maybe_set_sample_from_model (MODEL *pmod)
+static int set_sample_from_model (MODEL *pmod)
 {
-    const char *msg = N_("The model sample differs from the dataset sample,\n"
-			 "so some menu options will be disabled.\n\n"
-			 "Do you want to restore the sample on which\n"
-			 "this model was estimated?");
     int full = (pmod->submask == NULL);
-    int resp, err = 0;
-
-    resp = yes_no_dialog(NULL, _(msg), 0);
-
-    if (resp == GRETL_NO) {
-	return FALSE;
-    }
+    int err = 0;
 
     /* first restore the full dataset */
     err = restore_full_sample(&Z, datainfo, NULL);
@@ -3541,6 +3544,29 @@ static gboolean maybe_set_sample_from_model (MODEL *pmod)
 	mark_session_changed();
 	set_sample_label(datainfo);
     }
+
+    return err;
+}
+
+/* maybe_set_sample_from_model: return TRUE if the problem situation
+   (sample mismatch) is successfully handled, else FALSE.
+*/
+
+static gboolean maybe_set_sample_from_model (MODEL *pmod)
+{
+    const char *msg = N_("The model sample differs from the dataset sample,\n"
+			 "so some menu options will be disabled.\n\n"
+			 "Do you want to restore the sample on which\n"
+			 "this model was estimated?");
+    int resp, err = 0;
+
+    resp = yes_no_dialog(NULL, _(msg), 0);
+
+    if (resp == GRETL_NO) {
+	return FALSE;
+    }
+
+    err = set_sample_from_model(pmod);
 
     return (err == 0);
 }

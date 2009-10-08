@@ -3060,3 +3060,105 @@ double gretl_bessel (char type, double v, double x, int *err)
 	return NADBL;
     }
 }
+
+/* Net Present Value: note that the first value is taken as
+   occurring "now" and is not discounted */
+
+double gretl_npv (int t1, int t2, const double *x, double r, int *err)
+{
+    double PV = 0.0, d = 1.0 + r;
+    int i, n = 0;
+
+    for (i=t1; i<=t2; i++) {
+	if (!na(x[i])) {
+	    PV += x[i] / (pow(d, i-t1));
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	PV = NADBL;
+    }
+
+    return PV;
+}
+
+/* Internal Rate of Return */
+
+double gretl_irr (const double *x, int n, int *err)
+{
+    double PV, r, rhi = 0.02, rlo = -0.02;
+    int gotplus = 0, gotminus = 0;
+    int i, m = n;
+
+    for (i=0; i<n; i++) {
+	if (na(x[i])) {
+	    m--;
+	} else if (x[i] > 0) {
+	    gotplus = 1;
+	} else if (x[i] < 0) {
+	    gotminus = 1;
+	}
+    }
+
+    if (!gotplus && !gotminus) {
+	/* null payment stream */
+	return (m > 0)? 0 : NADBL;
+    }
+
+    if (gotplus && !gotminus) {
+	/* payments all positive */
+	return (x[0] > 0)? 0.0/0.0 : 1.0/0.0;
+    } else if (gotminus && !gotplus) {
+	/* payments all negative */
+	return (x[0] < 0)? 0.0/0.0 : -1.0/0.0;
+    }
+
+    /* find (rlo, rhi) bracket for solution, if possible */
+
+    while ((PV = gretl_npv(0, n-1, x, rlo, err)) < 0) {
+	if (rlo < -DBL_MAX / 2.0) {
+	    return -1.0/0.0;
+	}
+	rlo *= 2.0;
+    }
+
+    while ((PV = gretl_npv(0, n-1, x, rhi, err)) > 0) {
+	if (rhi > DBL_MAX / 2.0) {
+	    return 1.0/0.0;
+	}
+	rhi *= 2.0;
+    }
+
+#if 0
+    printf("initial bracket for r: %g to %g\n", rlo, rhi);
+#endif
+    r = rhi;
+
+    /* now do binary search */
+
+    for (i=0; i<32; i++) {
+	if (floateq(PV, 0.0)) {
+	    break;
+	}
+	if (PV < 0) {
+	    /* r is too high */
+	    if (r < rhi) {
+		rhi = r;
+	    }
+	    r = (r + rlo) / 2.0;
+	} else {
+	    /* r too low */
+	    if (r > rlo) {
+		rlo = r;
+	    }
+	    r = (r + rhi) / 2.0;
+	}
+	PV = gretl_npv(0, n-1, x, r, err);
+#if 0
+	printf("binary search: r = %.9g, PV = %g\n", r, PV);
+#endif
+    }
+
+    return r;
+}

@@ -244,6 +244,7 @@ enum {
     F_VARNUM,
     F_TOLOWER,
     F_SSCANF,
+    F_IRR,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -292,6 +293,7 @@ enum {
     F_MREVERSE,
     F_DESEAS,
     F_PERGM,
+    F_NPV,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,

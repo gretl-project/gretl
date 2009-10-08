@@ -117,4 +117,8 @@ double gretl_round (double x);
 
 double gretl_bessel (char type, double v, double x, int *err);
 
+double gretl_npv (int t1, int t2, const double *x, double r, int *err);
+
+double gretl_irr (const double *x, int n, int *err);
+
 #endif /* GENFUNCS_H */
