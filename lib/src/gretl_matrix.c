@@ -7796,30 +7796,56 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
     } else {
 	double x;
 	int i, j, k;
+	int isscalar;
+	/*
+	  the isscalar variable is used to discriminate cases when
+	  concatenating a matrix to a scalar;
+	*/
+	isscalar = -(a->cols==1) + (b->cols==1);
 	
-	if (a->cols != b->cols) {
+	if (!isscalar && (a->cols != b->cols)) {
 	    *err = E_NONCONF;
 	    return NULL;
 	}
 
-	c = gretl_matrix_alloc(a->rows + b->rows, a->cols);
+	if (isscalar == 0) {
+	    c = gretl_matrix_alloc(a->rows + b->rows, a->cols);
+	} else if (isscalar == -1) {
+	    c = gretl_matrix_alloc(1 + b->rows, b->cols);
+	} else if (isscalar == 1) {
+	    c = gretl_matrix_alloc(a->rows + 1, a->cols);
+	}
 
 	if (c != NULL) {
-	    for (i=0; i<a->rows; i++) {
-		for (j=0; j<a->cols; j++) {
-		    x = gretl_matrix_get(a, i, j);
-		    gretl_matrix_set(c, i, j, x);
+	    if (isscalar != -1) {
+		for (i=0; i<a->rows; i++) {
+		    for (j=0; j<a->cols; j++) {
+			x = gretl_matrix_get(a, i, j);
+			gretl_matrix_set(c, i, j, x);
+		    }
+		}  
+	    } else {
+		x = a->val[0];
+		for (j=0; j<b->cols; j++) {
+		    gretl_matrix_set(c, 0, j, x);
 		}
-	    }  
+	    }
 
 	    k = a->rows;
-	    for (i=0; i<b->rows; i++) {
-		for (j=0; j<b->cols; j++) {
-		    x = gretl_matrix_get(b, i, j);
+	    if (isscalar != 1) {
+		for (i=0; i<b->rows; i++) {
+		    for (j=0; j<b->cols; j++) {
+			x = gretl_matrix_get(b, i, j);
+			gretl_matrix_set(c, k, j, x);
+		    }
+		    k++;
+		}  
+	    } else {
+		x = b->val[0];
+		for (j=0; j<a->cols; j++) {
 		    gretl_matrix_set(c, k, j, x);
 		}
-		k++;
-	    }  
+	    }
 	}
     }
 
@@ -7859,28 +7885,53 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	c = gretl_matrix_copy(a);
     } else {
 	size_t asize, bsize;
-	int anelem;
-
-	if (a->rows != b->rows) {
+	int anelem, isscalar, i;
+	/*
+	  the isscalar variable is used to discriminate cases when
+	  concatenating a matrix to a scalar;
+	*/
+	isscalar = -(a->rows==1) + (b->rows==1);
+	if (!isscalar && (a->rows != b->rows)) {
 	    *err = E_NONCONF;
 	    return NULL;
 	}
 
-	c = gretl_matrix_alloc(a->rows, a->cols + b->cols);
-	if (c != NULL) {
-	    anelem = a->rows * a->cols;
-	    asize = anelem * sizeof *a->val;
-	    bsize = b->rows * b->cols * sizeof *b->val;
+	if (isscalar == 0) {
+	    c = gretl_matrix_alloc(a->rows, a->cols + b->cols);
+	    if (c != NULL) {
+		anelem = a->rows * a->cols;
+		asize = anelem * sizeof *a->val;
+		bsize = b->rows * b->cols * sizeof *b->val;
+		
+		memcpy(c->val, a->val, asize);
+		memcpy(c->val + anelem, b->val, bsize);
+	    }
+	} else if (isscalar == -1) {
+	    c = gretl_matrix_alloc(b->rows, b->cols + 1);
+	    if (c != NULL) {
+		bsize = b->rows * b->cols * sizeof *b->val;
+		memcpy(c->val + b->rows, b->val, bsize);
+		double x = a->val[0];
+		for (i=0; i<b->rows; i++) {
+		    gretl_matrix_set(c, i, 0, x);
+		}
+	    }
+	} else if (isscalar == 1) {
+	    c = gretl_matrix_alloc(a->rows, a->cols + 1);
+	    if (c != NULL) {
+		asize = a->rows * a->cols * sizeof *a->val;
+		memcpy(c->val, a->val, asize);
+		double x = b->val[0];
+		for (i=0; i<a->rows; i++) {
+		    gretl_matrix_set(c, i, a->cols, x);
+		}
+	    }
+	}
 
-	    memcpy(c->val, a->val, asize);
-	    memcpy(c->val + anelem, b->val, bsize);
+	if (c == NULL) {
+	    *err = E_ALLOC;
 	}
     }
-
-    if (c == NULL) {
-	*err = E_ALLOC;
-    }
-
     return c;
 }
 
