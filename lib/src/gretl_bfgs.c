@@ -167,12 +167,16 @@ double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
 	    hess_b_adjust_i(c, bcpy, h, n, i, 1);
 	    f1 = func(c, data);
 	    if (na(f1)) {
+		fprintf(stderr, "numerical_hessian: 1st derivative: "
+			"criterion = NA for theta[%d] = %g\n", i, c[i]);
 		*err = E_NAN;
 		goto bailout;
 	    }
 	    hess_b_adjust_i(c, bcpy, h, n, i, -1);
 	    f2 = func(c, data);
 	    if (na(f2)) {
+		fprintf(stderr, "numerical_hessian: 1st derivative: "
+			"criterion = NA for theta[%d] = %g\n", i, c[i]);
 		*err = E_NAN;
 		goto bailout;
 	    }
@@ -207,12 +211,16 @@ double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
 		    hess_b_adjust_ij(c, bcpy, h, n, i, j, 1);
 		    f1 = func(c, data);
 		    if (na(f1)) {
+			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
+				"objective function gave NA\n", i, j);
 			*err = E_NAN;
 			goto bailout;
 		    }
 		    hess_b_adjust_ij(c, bcpy, h, n, i, j, -1);
 		    f2 = func(c, data);
 		    if (na(f2)) {
+			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
+				"objective function gave NA\n", i, j);
 			*err = E_NAN;
 			goto bailout;
 		    }

@@ -49,7 +49,8 @@
 #include "../pixmaps/mini.pin.xpm"
 #include "../pixmaps/mini.alpha.xpm"
 #include "../pixmaps/mini.en.xpm"
-#include "../pixmaps/mini.split.xpm"
+#include "../pixmaps/mini.split_h.xpm"
+#include "../pixmaps/mini.split_v.xpm"
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # include "../pixmaps/info_24.xpm"
 #endif
@@ -119,7 +120,8 @@ void gretl_stock_icons_init (void)
 	mini_pin_xpm,
 	mini_alpha_xpm,
 	mini_en_xpm,
-	mini_split_xpm
+	mini_split_h_xpm,
+	mini_split_v_xpm,
     };
     const char *stocks[] = {
 #if NO_INFO_ICON
@@ -144,7 +146,8 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_PIN,
 	GRETL_STOCK_ALPHA,
 	GRETL_STOCK_EN,
-	GRETL_STOCK_SPLIT
+	GRETL_STOCK_SPLIT_H,
+	GRETL_STOCK_SPLIT_V
     };
     int n = G_N_ELEMENTS(stocks);
 
@@ -407,14 +410,27 @@ static void reformat_callback (GtkWidget *w, windata_t *vwin)
 
 static void split_pane_callback (GtkWidget *w, windata_t *vwin)
 {
-    GtkWidget *vb = vwin->vbox;
+    GtkWidget *hb = g_object_get_data(G_OBJECT(w), "hpane");
+    GtkWidget *vb = g_object_get_data(G_OBJECT(w), "vpane");
+    int vertical = 0;
 
-    if (g_object_get_data(G_OBJECT(vb), "sw") != NULL) {
+    if (hb != NULL) {
+	vb = w;
+	vertical = 1;
+    } else {
+	hb = w;
+    }
+
+    if (g_object_get_data(G_OBJECT(vwin->vbox), "sw") != NULL) {
 	/* currently in single-view mode */
-	viewer_split_pane(vwin);
-    } else if (g_object_get_data(G_OBJECT(vb), "vpaned") != NULL) {
+	viewer_split_pane(vwin, vertical);
+	gtk_widget_set_sensitive(vb, vertical);
+	gtk_widget_set_sensitive(hb, !vertical);
+    } else if (g_object_get_data(G_OBJECT(vwin->vbox), "paned") != NULL) {
 	/* currently in split-view mode */
 	viewer_close_pane(vwin);
+	gtk_widget_set_sensitive(hb, TRUE);
+	gtk_widget_set_sensitive(vb, TRUE);
     }
 }
 
@@ -605,7 +621,8 @@ static GretlToolItem viewbar_items[] = {
     { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(set_output_sticky), STICKIFY_ITEM },
-    { N_("Toggle split pane"), GRETL_STOCK_SPLIT, G_CALLBACK(split_pane_callback), SPLIT_ITEM },
+    { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_ITEM },
+    { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
@@ -784,6 +801,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     int format_ok = can_format_data(vwin);
     int latex_ok = latex_is_ok();
     int save_ok = (flags & VIEWBAR_EDITABLE);
+    GtkWidget *hpane = NULL, *vpane = NULL;
     GtkToolItem *button;
     GretlToolItem *item;
     GCallback func;
@@ -804,6 +822,14 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 
 	button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
 
+	if (func == (GCallback) split_pane_callback) {
+	    if (hpane == NULL) {
+		hpane = GTK_WIDGET(button);
+	    } else {
+		vpane = GTK_WIDGET(button);
+	    }
+	}
+
 	if (item->flag == SAVE_ITEM) { 
 	    if (vwin->role != CONSOLE) {
 		/* nothing to save just yet */
@@ -816,6 +842,14 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
 	    }
 	}
+    }
+
+    if (hpane != NULL) {
+	g_object_set_data(G_OBJECT(hpane), "vpane", vpane);
+    }
+
+    if (vpane != NULL) {
+	g_object_set_data(G_OBJECT(vpane), "hpane", hpane);
     }
 }
 

@@ -3135,6 +3135,7 @@ double gretl_irr (const double *x, int n, int pd, int *err)
 	if (r0 < -DBL_MAX / 2.0) {
 	    return -1.0/0.0;
 	}
+	r1 = r0;
 	r0 *= 2.0;
     }
 
@@ -3142,12 +3143,14 @@ double gretl_irr (const double *x, int n, int pd, int *err)
 	if (r1 > DBL_MAX / 2.0) {
 	    return 1.0/0.0;
 	}
+	r0 = r1;
 	r1 *= 2.0;
-    }
+    } 
 
 #if 0
-    printf("initial bracket for r: %g to %g\n", r0, r1);
+    fprintf(stderr, "initial bracket for r: %g to %g\n", r0, r1);
 #endif
+
     r = r1;
 
     /* now do binary search */
@@ -3171,7 +3174,7 @@ double gretl_irr (const double *x, int n, int pd, int *err)
 	}
 	PV = gretl_npv(0, n-1, x, r, pd, err);
 #if 0
-	printf("binary search: r = %.9g, PV = %g\n", r, PV);
+	fprintf(stderr, "binary search: r = %.9g, PV = %g\n", r, PV);
 #endif
     }
 

@@ -2814,26 +2814,31 @@ static void set_pane_text_properties (GtkTextView *w)
 /* limited to script output window at present: divide the
    window into two panes */
 
-void viewer_split_pane (windata_t *vwin)
+void viewer_split_pane (windata_t *vwin, int vertical)
 {
     GtkWidget *vbox = vwin->vbox;
     GtkWidget *view1 = vwin->text;
-    GtkWidget *sw, *vpaned, *view2;
+    GtkWidget *sw, *paned, *view2;
     GtkTextBuffer *tbuf;
-    gint pos = 0;
+    gint width, height;
 
     sw = g_object_get_data(G_OBJECT(vbox), "sw");
 
-    gtk_window_get_size(GTK_WINDOW(vwin->main), NULL, &pos);
+    gtk_window_get_size(GTK_WINDOW(vwin->main), &width, &height);
 
     g_object_ref(G_OBJECT(sw));
     gtk_container_remove(GTK_CONTAINER(vwin->vbox), sw);
 
-    vpaned = gtk_vpaned_new();
-    gtk_container_set_border_width(GTK_CONTAINER(vpaned), 0);
-    gtk_container_add(GTK_CONTAINER(vbox), vpaned);
+    if (vertical) {
+	paned = gtk_hpaned_new();
+    } else {
+	paned = gtk_vpaned_new();
+    }
 
-    g_object_set_data(G_OBJECT(vwin->vbox), "vpaned", vpaned);
+    gtk_container_set_border_width(GTK_CONTAINER(paned), 0);
+    gtk_container_add(GTK_CONTAINER(vbox), paned);
+
+    g_object_set_data(G_OBJECT(vwin->vbox), "paned", paned);
     g_object_set_data(G_OBJECT(vwin->vbox), "sw", NULL);
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view1));
@@ -2843,7 +2848,7 @@ void viewer_split_pane (windata_t *vwin)
     g_signal_connect(G_OBJECT(view2), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
 
-    gtk_paned_add1(GTK_PANED(vpaned), sw);
+    gtk_paned_add1(GTK_PANED(paned), sw);
     g_object_unref(G_OBJECT(sw));
 
     sw = gtk_scrolled_window_new(NULL, NULL);
@@ -2852,30 +2857,34 @@ void viewer_split_pane (windata_t *vwin)
 				   GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
 					GTK_SHADOW_IN);
-    gtk_paned_add2(GTK_PANED(vpaned), sw);
+    gtk_paned_add2(GTK_PANED(paned), sw);
     gtk_container_add(GTK_CONTAINER(sw), view2);
 
-    gtk_paned_set_position(GTK_PANED(vpaned), pos / 2 - 24);
+    if (vertical) {
+	gtk_paned_set_position(GTK_PANED(paned), width / 2 - 5);
+    } else {
+	gtk_paned_set_position(GTK_PANED(paned), height / 2 - 24);
+    }
 
-    gtk_widget_show_all(vpaned);
+    gtk_widget_show_all(paned);
 }
 
 /* script output window: revert to a single pane */
 
 void viewer_close_pane (windata_t *vwin)
 {
-    GtkWidget *sw, *vpaned;
+    GtkWidget *sw, *paned;
 
-    vpaned = g_object_get_data(G_OBJECT(vwin->vbox), "vpaned");
+    paned = g_object_get_data(G_OBJECT(vwin->vbox), "paned");
 
     /* grab the first child and reference it */
-    sw = gtk_paned_get_child1(GTK_PANED(vpaned));
+    sw = gtk_paned_get_child1(GTK_PANED(paned));
     g_object_ref(G_OBJECT(sw));
-    gtk_container_remove(GTK_CONTAINER(vpaned), sw);
+    gtk_container_remove(GTK_CONTAINER(paned), sw);
 
     /* remove the "paned" widget */
-    gtk_widget_destroy(vpaned);
-    g_object_set_data(G_OBJECT(vwin->vbox), "vpaned", NULL);
+    gtk_widget_destroy(paned);
+    g_object_set_data(G_OBJECT(vwin->vbox), "paned", NULL);
 
     /* and repack the scrolled window */
     gtk_container_add(GTK_CONTAINER(vwin->vbox), sw);
