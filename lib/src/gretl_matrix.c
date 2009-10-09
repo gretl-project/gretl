@@ -6582,11 +6582,14 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 		" dpptrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	if (info > 0) {
 	    fputs(" matrix is not positive definite\n", stderr);
+	    err = E_NOTPD;
+	} else {
+	    err = E_DATA;
 	}
 	if (vcpy != NULL) {
 	    gretl_matrix_print(vcpy, "input matrix");
 	}
-	return E_SINGULAR;
+	return err;
     } 
 
     dpptri_(&uplo, &n, v->val, &info);
