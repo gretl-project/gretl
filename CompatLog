@@ -1,4 +1,4 @@
-version 1.8.5, in progress
+10/10/2009 version 1.8.5
 
 The --long option to the "print" command has been removed,
 along with the longdigits variable in the "set" command.
