@@ -25,6 +25,7 @@ genr_get_loopline
 genr_get_output_type
 genr_get_output_varnum
 genr_get_output_scalar
+genr_get_warning
 genr_get_last_output_type
 genr_get_output_matrix
 series_index
@@ -74,7 +75,6 @@ M_
 MAXLINE
 MAXLABEL
 MAXLEN
-ERRLEN
 MAXDISP
 VNAMELEN
 OBSLEN
@@ -275,6 +275,7 @@ logistic_ymax_lmax
 fishers_exact_test
 intreg
 mn_logit_coeffsep
+ordered_model_prediction
 </SECTION>
 
 <SECTION>
@@ -692,7 +693,6 @@ get_info
 get_precision
 get_date_x
 write_data
-data_report
 is_gzipped
 gretl_is_pkzip_file
 gz_switch_ext
@@ -730,6 +730,8 @@ restrict_sample
 restrict_sample_from_mask
 complex_subsampled
 get_full_length_n
+set_dataset_resampled
+dataset_is_resampled
 set_sample
 restore_full_sample
 backup_full_dataset
@@ -738,6 +740,9 @@ add_dataset_to_model
 free_model_dataset
 maybe_free_full_dataset
 model_sample_problem
+print_sample_obs
+print_sample_status
+data_report
 </SECTION>
 
 <SECTION>
@@ -1345,6 +1350,8 @@ multi_xcf
 forecast_stats
 gretl_round
 gretl_bessel
+gretl_npv
+gretl_irr
 </SECTION>
 
 <SECTION>
@@ -1401,6 +1408,7 @@ get_gretl_png_term_line
 get_gretl_emf_term_line
 gp_justification_string
 gnuplot_label_front_string
+split_graph_fontspec
 gnuplot_missval_string
 gnuplot_init
 gnuplot_batch_init
@@ -1555,6 +1563,7 @@ gretl_print_has_tempfile
 gretl_print_get_tempfile_name
 gretl_print_new_with_buffer
 gretl_print_new_with_stream
+gretl_print_detach_stream
 gretl_print_reset_buffer
 gretl_print_rename_file
 gretl_print_get_buffer
@@ -1889,6 +1898,7 @@ saved_object_get_matrix
 saved_object_get_list
 gretl_object_rename
 gretl_object_compose_name
+gretl_object_compose_unique_name
 gretl_object_get_name
 parse_object_command
 match_object_command
@@ -2065,6 +2075,7 @@ gretl_string_table_index
 gretl_string_table_print
 gretl_string_table_destroy
 gretl_string_table_add_extra
+gretl_string_table_reset_column_id
 gretl_insert_builtin_string
 save_named_string
 add_string_as
@@ -2170,6 +2181,7 @@ dataset_drop_listed_variables
 dataset_drop_variable
 dataset_destroy_hidden_variables
 dataset_drop_last_variables
+maybe_prune_dataset
 dataset_stack_variables
 dataset_sort_by
 is_log_variable
@@ -2226,13 +2238,14 @@ set_gretl_errno
 get_gretl_errno
 check_gretl_errno
 gretl_error_is_fatal
+gretl_errmsg_is_set
 </SECTION>
 
 <SECTION>
 <FILE>plotspec</FILE>
 GP_MAXFORMULA
 GP_BORDER_DEFAULT
-LT_NONE
+LT_AUTO
 GpLineStyle
 GpKeyPos
 gp_style_spec
@@ -2248,6 +2261,7 @@ plotspec_label_init
 plotspec_add_line
 plotspec_delete_line
 plotspec_clone_lines
+plotspec_max_line_width
 plotspec_add_label
 plotspec_delete_label
 plotspec_clone_labels
@@ -2262,6 +2276,7 @@ gp_keypos_from_string
 gp_keypos_from_translation
 get_keypos_spec
 print_keypos_string
+set_plotfit_line
 </SECTION>
 
 <SECTION>
@@ -2369,7 +2384,6 @@ guess_daily_pd
 <FILE>gretl_win32</FILE>
 win32_opendir
 read_reg_val
-write_reg_val
 get_gretlnet_filename
 set_gretlnet_filename
 cli_read_registry

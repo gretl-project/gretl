@@ -2873,7 +2873,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     /* create differenced series if needed */
     if (ainfo.d > 0 || ainfo.D > 0) {
-	err = arima_difference(Z[ainfo.yno], &ainfo);
+	err = arima_difference(&ainfo, Z);
     }
 
     /* initialize the coefficients: there are 3 possible methods */

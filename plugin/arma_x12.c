@@ -873,9 +873,9 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	goto bailout;
     }
 
-    /* create differenced series if needed */
+    /* create differenced series if needed (??) */
     if (ainfo.d > 0 || ainfo.D > 0) {
-	err = arima_difference(Z[ainfo.yno], &ainfo);
+	err = arima_difference(&ainfo, Z);
     }  
 
     strcpy(yname, pdinfo->varname[ainfo.yno]);
