@@ -586,7 +586,7 @@ int bhhh_max (LL_FUNC loglik,
 #if BHHH_DEBUG
 	pprintf(prn, "Top of loop: ll = %g\n", minfo->ll);
 	pprintf(prn, "Dataset for OPG regression:\n");
-	printdata(blist, (const double **) tZ, tinfo, OPT_O, prn);
+	printdata(blist, NULL, (const double **) tZ, tinfo, OPT_O, prn);
 #endif
 
 	/* BHHH via OPG regression */

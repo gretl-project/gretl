@@ -6186,19 +6186,6 @@ void run_script_fragment (windata_t *vwin, gchar *buf)
     run_native_script(vwin, buf, 1);
 }
 
-void set_currdir_from_filename (const char *fname)
-{
-    int spos = slashpos(scriptfile);
-
-    if (spos) {
-	char currdir[MAXLEN];
-
-	*currdir = '\0';
-	strncat(currdir, scriptfile, spos + 1);
-	gretl_set_current_dir(currdir);
-    }
-}
-
 void do_open_script (int action)
 {
     FILE *fp = NULL;
@@ -6219,7 +6206,7 @@ void do_open_script (int action)
     if (action == EDIT_SCRIPT) {
 	strcpy(scriptfile, tryfile);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	set_currdir_from_filename(scriptfile);
+	gretl_set_current_dir(scriptfile);
 	if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
 	    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 	} else {

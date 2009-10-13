@@ -321,7 +321,7 @@ static void get_runfile (char *fname)
 	exit(EXIT_FAILURE);
     } else {
 	fprintf(stderr, I_("%s found\n"), tryfile);
-	set_currdir_from_filename(tryfile);
+	gretl_set_current_dir(tryfile);
     }
 }
 

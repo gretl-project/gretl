@@ -1757,9 +1757,12 @@ const char *gretl_current_dir (void)
 
 void gretl_set_current_dir (const char *s)
 {
-    *current_dir = '\0';
+    int spos = slashpos(s);
 
-    strncat(current_dir, s, MAXLEN - 1);
+    if (spos) {
+	*current_dir = '\0';
+	strncat(current_dir, s, spos + 1);
+    }
 }
 
 const char *gretl_png_font (void)

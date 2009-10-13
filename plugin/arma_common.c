@@ -24,10 +24,8 @@ struct arma_info {
     int t2;          /* ending observation */
     int pd;          /* periodicity of data */
     int T;           /* full length of data series */
-    int *xlist;      /* list of armax regressors */
     double *dy;      /* differenced dependent variable */
     double dyscale;  /* scale factor for dy */
-    gretl_matrix *dX;   /* differenced regressors (if applicable) */
     const char *pqspec; /* input string with specific AR, MA lags */
 };
 
@@ -48,20 +46,11 @@ struct arma_info {
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')
 
 static void 
-arma_info_init (struct arma_info *ainfo, gretlopt opt, 
+arma_info_init (struct arma_info *ainfo, char flags, 
 		const char *pqspec, const DATAINFO *pdinfo)
 {
     ainfo->yno = 0;
-
-    if (opt & OPT_C) {
-	ainfo->flags = 0;
-    } else {
-	ainfo->flags = ARMA_EXACT;
-    }
-
-    if (opt & OPT_X) {
-	ainfo->flags |= ARMA_X12A;
-    }
+    ainfo->flags = flags;
 
     ainfo->p = 0;
     ainfo->d = 0;
@@ -86,10 +75,8 @@ arma_info_init (struct arma_info *ainfo, gretlopt opt,
     ainfo->pd = pdinfo->pd;
     ainfo->T = pdinfo->n;
 
-    ainfo->xlist = NULL;
     ainfo->dy = NULL;
     ainfo->dyscale = 1.0;
-    ainfo->dX = NULL;
     ainfo->pqspec = pqspec;
 }
 
@@ -97,9 +84,7 @@ static void arma_info_cleanup (struct arma_info *ainfo)
 {
     free(ainfo->pmask);
     free(ainfo->qmask);
-    free(ainfo->xlist);
     free(ainfo->dy);
-    gretl_matrix_free(ainfo->dX);
 }
 
 enum {
@@ -477,8 +462,8 @@ static void calc_max_lag (struct arma_info *ainfo)
 #define SAMPLE_DEBUG 0
 
 static int 
-arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, 
-		    const int *list, struct arma_info *ainfo)
+arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
+		    struct arma_info *ainfo)
 {
     int vstart = arma_list_y_position(ainfo);
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -551,17 +536,10 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z,
 	}
     }
 
-#if SAMPLE_DEBUG
-    fprintf(stderr, "now checking for NAs in range %d to %d\n", t1, t2);
-    fprintf(stderr, " starting at list[%d] (variable %d)\n", vstart,
-	    list[vstart]);
-#endif
-
     /* check for missing obs within the sample range */
     for (t=t1; t<t2; t++) {
 	for (i=vstart; i<=list[0]; i++) {
 	    v = list[i];
-	    fprintf(stderr, "Z[%d][%d] = %g\n", v, t, Z[v][t]);
 	    if (na(Z[v][t])) {
 		gretl_errmsg_sprintf(_("Missing value encountered for "
 				       "variable %d, obs %d"), v, t + 1);
@@ -657,26 +635,6 @@ static int check_arma_sep (int *list, int sep1, struct arma_info *ainfo)
     return err;
 }
 
-/* add list of regressors in the ar(i)max case */
-
-static int ainfo_add_xlist (struct arma_info *ainfo, const int *list,
-			    int ypos)
-{
-    ainfo->xlist = gretl_list_new(ainfo->nexo);
-
-    if (ainfo->xlist == NULL) {
-	return E_ALLOC;
-    } else {
-	int i;
-
-	for (i=1; i<=ainfo->xlist[0]; i++) {
-	    ainfo->xlist[i] = list[ypos + i];
-	}
-	
-	return 0;
-    }
-}
-
 #define count_arma_coeffs(a) (a->ifc + a->np + a->nq + a->P + a->Q + a->nexo)
 
 static int check_arma_list (int *list, gretlopt opt, 
@@ -748,14 +706,9 @@ static int check_arma_list (int *list, gretlopt opt,
     if (err) {
 	gretl_errmsg_set(_("Error in arma command"));
     } else {
-	int ypos = arma_has_seasonal(ainfo) ? 7 : 4;
-
-	ainfo->nexo = list[0] - ypos;
+	ainfo->nexo = list[0] - ((arma_has_seasonal(ainfo))? 7 : 4);
 	ainfo->nc = count_arma_coeffs(ainfo);
-	ainfo->yno = list[ypos];
-	if (ainfo->nexo > 0) {
-	    err = ainfo_add_xlist(ainfo, list, ypos);
-	}
+	ainfo->yno = (arma_has_seasonal(ainfo))? list[7] : list[4];
     }
 
     return err;
@@ -765,7 +718,7 @@ static int check_arima_list (int *list, gretlopt opt,
 			     const double **Z, const DATAINFO *pdinfo,
 			     struct arma_info *ainfo)
 {
-    int ypos, armax = 0;
+    int armax = 0;
     int hadconst = 0;
     int err = 0;
 
@@ -773,8 +726,11 @@ static int check_arima_list (int *list, gretlopt opt,
     printlist(list, "check_arima_list");
 #endif
 
-    ypos = arma_has_seasonal(ainfo)? 9 : 5;
-    armax = list[0] > ypos;
+    if (arma_has_seasonal(ainfo)) {
+	armax = (list[0] > 9);
+    } else {
+	armax = (list[0] > 5);
+    }
 
     if (list[1] < 0 || list[1] > MAX_ARMA_ORDER) {
 	err = 1;
@@ -837,12 +793,9 @@ static int check_arima_list (int *list, gretlopt opt,
     if (err) {
 	gretl_errmsg_set(_("Error in arma command"));
     } else {
-	ainfo->nexo = list[0] - ypos;
+	ainfo->nexo = list[0] - ((arma_has_seasonal(ainfo))? 9 : 5);
 	ainfo->nc = count_arma_coeffs(ainfo);
-	ainfo->yno = list[ypos];
-	if (ainfo->nexo > 0) {
-	    err = ainfo_add_xlist(ainfo, list, ypos);
-	}
+	ainfo->yno = (arma_has_seasonal(ainfo))? list[9] : list[5];
     }
 
     return err;
@@ -901,48 +854,11 @@ static int arma_check_list (int *list, gretlopt opt,
     return err;
 }
 
-static void 
-real_arima_difference_series (double *dx, const double *x,
-			      struct arma_info *ainfo,
-			      int t1)
-{
-    int t, s = ainfo->pd;
-    
-    for (t=t1; t<ainfo->T; t++) {
-	dx[t] = x[t];
-	if (ainfo->d > 0) {
-	    dx[t] -= x[t-1];
-	} 
-	if (ainfo->d == 2) {
-	    dx[t] -= x[t-1] - x[t-2];
-	}
-	if (ainfo->D > 0) {
-	    dx[t] -= x[t-s];
-	    if (ainfo->d > 0) {
-		dx[t] += x[t-s-1];
-	    }
-	    if (ainfo->d == 2) {
-		dx[t] += x[t-s-1] - x[t-s-2];
-	    }	    
-	} 
-	if (ainfo->D == 2) {
-	    dx[t] -= x[t-s] - x[t-2*s];
-	    if (ainfo->d > 0) {
-		dx[t] += x[t-s-1] - x[t-2*s-1];
-	    }
-	    if (ainfo->d == 2) {
-		dx[t] += x[t-s-1] - x[t-2*s-1];
-		dx[t] -= x[t-s-2] - x[t-2*s-2];
-	    }
-	}
-    }
-}
-
 static int
-arima_difference (struct arma_info *ainfo, const double **Z)
+arima_difference (const double *y, struct arma_info *ainfo)
 {
-    const double *y = Z[ainfo->yno];
     double *dy;
+    int s = ainfo->pd;
     int t, t1 = 0;
 
 #if ARMA_DEBUG
@@ -963,13 +879,40 @@ arima_difference (struct arma_info *ainfo, const double **Z)
 	}
     }
 
-    t1 += ainfo->d + ainfo->D * ainfo->pd;
+    t1 += ainfo->d + ainfo->D * s;
 
     for (t=0; t<t1; t++) {
 	dy[t] = NADBL;
     }
 
-    real_arima_difference_series(dy, y, ainfo, t1);
+    for (t=t1; t<ainfo->T; t++) {
+	dy[t] = y[t];
+	if (ainfo->d > 0) {
+	    dy[t] -= y[t-1];
+	} 
+	if (ainfo->d == 2) {
+	    dy[t] -= y[t-1] - y[t-2];
+	}
+	if (ainfo->D > 0) {
+	    dy[t] -= y[t-s];
+	    if (ainfo->d > 0) {
+		dy[t] += y[t-s-1];
+	    }
+	    if (ainfo->d == 2) {
+		dy[t] += y[t-s-1] - y[t-s-2];
+	    }	    
+	} 
+	if (ainfo->D == 2) {
+	    dy[t] -= y[t-s] - y[t-2*s];
+	    if (ainfo->d > 0) {
+		dy[t] += y[t-s-1] - y[t-2*s-1];
+	    }
+	    if (ainfo->d == 2) {
+		dy[t] += y[t-s-1] - y[t-2*s-1];
+		dy[t] -= y[t-s-2] - y[t-2*s-2];
+	    }
+	}
+    }
 
 #if ARMA_DEBUG > 1
     for (t=0; t<ainfo->T; t++) {
@@ -978,23 +921,6 @@ arima_difference (struct arma_info *ainfo, const double **Z)
 #endif    
 
     ainfo->dy = dy;
-
-#if 0 /* not yet */
-    if (ainfo->xlist != NULL) {
-	int i, vi, T = ainfo->T - t1;
-	double *val;
-
-	ainfo->dX = gretl_matrix_alloc(T, ainfo->nexo);
-	if (ainfo->dX != NULL) {
-	    val = ainfo->dX;
-	    for (i=0; i<ainfo->nexo; i++) {
-		vi = ainfo->xlist[i+1];
-		real_difference_series(val, Z[vi], ainfo, t1);
-		val += T;
-	    }
-	}
-    }
-#endif
 
     return 0;
 }

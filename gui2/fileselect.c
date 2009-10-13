@@ -337,7 +337,7 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	if (view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
 	    strcpy(scriptfile, tryfile);
 	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	    set_currdir_from_filename(scriptfile);
+	    gretl_set_current_dir(scriptfile);
 	}
     }
 }

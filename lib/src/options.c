@@ -79,6 +79,7 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_U, "continue", 0 },
     { ARMA,     OPT_V, "verbose", 0 },
     { ARMA,     OPT_X, "x-12-arima", 0 },
+    { ARMA,     OPT_Y, "y-diff-only", 0 },
     { BXPLOT,   OPT_O, "notches", 0 },
     { BXPLOT,   OPT_U, "output", 2 },
     { CHOW,     OPT_D, "dummy", 0 },

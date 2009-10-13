@@ -990,6 +990,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    fprintf(stderr, _("Couldn't open script \"%s\"\n"), runfile);
 	    fb = pop_input_file();
 	} else {
+	    gretl_set_current_dir(runfile);
 	    strcpy(s->runfile, runfile);
 	    if (libset_get_bool(VERBOSE_INCLUDE)) {
 		pprintf(prn, _("%s opened OK\n"), runfile);
