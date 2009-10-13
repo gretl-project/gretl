@@ -559,24 +559,6 @@ output_series_to_spc (const int *list, const double **Z,
     fputs(" )\n", fp);
 }
 
-static int *
-arma_info_get_x_list (struct arma_info *ainfo, const int *alist)
-{
-    int *xlist = NULL;
-    int start = arma_list_y_position(ainfo);
-    int i;
-
-    xlist = gretl_list_new(ainfo->nexo);
-
-    if (xlist != NULL) {
-	for (i=1; i<=xlist[0]; i++) {
-	    xlist[i] = alist[i + start];
-	}
-    }
-
-    return xlist;
-}
-
 static void 
 make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
 {
@@ -662,20 +644,12 @@ static int write_spc_file (const char *fname,
     int maxobs = pdmax * 50;
     int maxfcast = pdmax * 5;
     int ylist[2];
-    int *xlist = NULL;
     FILE *fp;
     char datestr[12];
     int nfcast = 0;
     int t1 = ainfo->t1;
     int tmax;
     int i;
-
-    if (ainfo->nexo > 0) {
-	xlist = arma_info_get_x_list(ainfo, alist);
-	if (xlist == NULL) {
-	    return E_ALLOC;
-	}
-    }
 
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
@@ -734,14 +708,13 @@ static int write_spc_file (const char *fname,
     if (ainfo->ifc) {
 	fputs(" variables = (const)\n", fp);
     }
-    if (ainfo->nexo > 0) {
+    if (ainfo->xlist != NULL) {
 	fputs(" user = ( ", fp);
-	for (i=1; i<=xlist[0]; i++) {
-	    fprintf(fp, "%s ", pdinfo->varname[xlist[i]]);
+	for (i=1; i<=ainfo->xlist[0]; i++) {
+	    fprintf(fp, "%s ", pdinfo->varname[ainfo->xlist[i]]);
 	}
 	fputs(")\n", fp);
-	output_series_to_spc(xlist, Z, t1, tmax, fp);
-	free(xlist);
+	output_series_to_spc(ainfo->xlist, Z, t1, tmax, fp);
     }
     fputs("}\n", fp);
 
@@ -829,7 +802,6 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     PRN *vprn = NULL;
     MODEL armod;
     struct arma_info ainfo;
-    char flags = ARMA_X12A;
 #ifdef WIN32
     char *cmd;
 #endif
@@ -842,11 +814,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	opt |= OPT_F;
     }
 
-    if (!(opt & OPT_C)) {
-	flags |= ARMA_EXACT;
-    }
-
-    arma_info_init(&ainfo, flags, pqspec, pdinfo);
+    arma_info_init(&ainfo, opt | OPT_X, pqspec, pdinfo);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
@@ -909,7 +877,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	    if (gretl_in_gui_mode()) {
 		add_unique_output_file(&armod, path);
 	    }
-	    gretl_model_set_int(&armod, "arma_flags", (int) flags);
+	    gretl_model_set_int(&armod, "arma_flags", (int) ainfo.flags);
 	}	
     } else {
 	armod.errcode = E_UNSPEC;

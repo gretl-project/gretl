@@ -48,11 +48,20 @@ struct arma_info {
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')
 
 static void 
-arma_info_init (struct arma_info *ainfo, char flags, 
+arma_info_init (struct arma_info *ainfo, gretlopt opt, 
 		const char *pqspec, const DATAINFO *pdinfo)
 {
     ainfo->yno = 0;
-    ainfo->flags = flags;
+
+    if (opt & OPT_C) {
+	ainfo->flags = 0;
+    } else {
+	ainfo->flags = ARMA_EXACT;
+    }
+
+    if (opt & OPT_X) {
+	ainfo->flags |= ARMA_X12A;
+    }
 
     ainfo->p = 0;
     ainfo->d = 0;
@@ -465,11 +474,11 @@ static void calc_max_lag (struct arma_info *ainfo)
 #endif
 }
 
-#define SAMPLE_DEBUG 1
+#define SAMPLE_DEBUG 0
 
 static int 
-arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
-		    struct arma_info *ainfo)
+arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, 
+		    const int *list, struct arma_info *ainfo)
 {
     int vstart = arma_list_y_position(ainfo);
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -542,10 +551,17 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
+#if SAMPLE_DEBUG
+    fprintf(stderr, "now checking for NAs in range %d to %d\n", t1, t2);
+    fprintf(stderr, " starting at list[%d] (variable %d)\n", vstart,
+	    list[vstart]);
+#endif
+
     /* check for missing obs within the sample range */
     for (t=t1; t<t2; t++) {
 	for (i=vstart; i<=list[0]; i++) {
 	    v = list[i];
+	    fprintf(stderr, "Z[%d][%d] = %g\n", v, t, Z[v][t]);
 	    if (na(Z[v][t])) {
 		gretl_errmsg_sprintf(_("Missing value encountered for "
 				       "variable %d, obs %d"), v, t + 1);
@@ -885,9 +901,10 @@ static int arma_check_list (int *list, gretlopt opt,
     return err;
 }
 
-static void real_difference_series (double *dx, const double *x,
-				    struct arma_info *ainfo,
-				    int t1)
+static void 
+real_arima_difference_series (double *dx, const double *x,
+			      struct arma_info *ainfo,
+			      int t1)
 {
     int t, s = ainfo->pd;
     
@@ -952,7 +969,7 @@ arima_difference (struct arma_info *ainfo, const double **Z)
 	dy[t] = NADBL;
     }
 
-    real_difference_series(dy, y, ainfo, t1);
+    real_arima_difference_series(dy, y, ainfo, t1);
 
 #if ARMA_DEBUG > 1
     for (t=0; t<ainfo->T; t++) {
@@ -962,7 +979,7 @@ arima_difference (struct arma_info *ainfo, const double **Z)
 
     ainfo->dy = dy;
 
-#if 0
+#if 0 /* not yet */
     if (ainfo->xlist != NULL) {
 	int i, vi, T = ainfo->T - t1;
 	double *val;

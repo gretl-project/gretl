@@ -2643,7 +2643,7 @@ static int hr_arma_init (const int *list, double *coeff,
 }
 
 static int user_arma_init (double *coeff, struct arma_info *ainfo, 
-			   char flags, int *init_done, PRN *prn)
+			   int *init_done, PRN *prn)
 {
     int i, nc = n_init_vals();
 
@@ -2655,7 +2655,7 @@ static int user_arma_init (double *coeff, struct arma_info *ainfo,
 	return E_DATA;
     }
 
-    if (flags & ARMA_EXACT) {
+    if (ainfo->flags & ARMA_EXACT) {
 	/* initialization is handled within BFGS */
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = 0.0;
@@ -2829,16 +2829,11 @@ MODEL arma_model (const int *list, const char *pqspec,
     MODEL armod;
     struct arma_info ainfo;
     int init_done = 0;
-    char flags = 0;
     int err = 0;
-
-    if (!(opt & OPT_C)) {
-	flags = ARMA_EXACT;
-    }
 
     vprn = set_up_verbose_printer(opt, prn);
 
-    arma_info_init(&ainfo, flags, pqspec, pdinfo);
+    arma_info_init(&ainfo, opt, pqspec, pdinfo);
     gretl_model_init(&armod); 
 
     alist = gretl_list_copy(list);
@@ -2851,7 +2846,6 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (err) {
-	armod.errcode = err;
 	goto bailout;
     } 
 
@@ -2874,18 +2868,20 @@ MODEL arma_model (const int *list, const char *pqspec,
     /* create differenced series if needed */
     if (ainfo.d > 0 || ainfo.D > 0) {
 	err = arima_difference(&ainfo, Z);
+	if (err) {
+	    goto bailout;
+	}
     }
 
     /* initialize the coefficients: there are 3 possible methods */
 
     /* first pass: see if the user specified some values */
-    err = user_arma_init(coeff, &ainfo, flags, &init_done, vprn);
+    err = user_arma_init(coeff, &ainfo, &init_done, vprn);
     if (err) {
-	armod.errcode = err;
 	goto bailout;
     }
 
-    if (!(flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
+    if (!(ainfo.flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
 	/* pure AR model can be estimated via least squares */
 	ainfo.flags |= ARMA_LS;
 	arma_by_ls(alist, (init_done)? coeff : NULL, Z, pdinfo, 
@@ -2895,18 +2891,19 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     /* second pass: try Hannan-Rissanen, if suitable */
     if (!init_done && prefer_hr_init(&ainfo)) {
-	err = hr_init_check(pdinfo, &ainfo);
-	if (!err) {
-	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, vprn);
+	int h_err = hr_init_check(pdinfo, &ainfo);
+
+	if (!h_err) {
+	    h_err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, vprn);
 #if AINIT_DEBUG
-	    if (err) {
+	    if (h_err) {
 		fputs("*** hr_arma_init failed, will try ar_arma_init\n", stderr);
 	    } else {
 		fputs("*** hr_arma_init OK\n", stderr);
 	    }
 #endif
 	}
-	if (!err) {
+	if (!h_err) {
 	    init_done = 1;
 	}
     }
@@ -2917,18 +2914,19 @@ MODEL arma_model (const int *list, const char *pqspec,
 			   &armod, vprn);
     }
 
-    if (err) {
-	armod.errcode = err;
-	goto bailout;
-    }
-
-    if (flags & ARMA_EXACT) {
-	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
-    } else {
-	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+    if (!err) {
+	if (ainfo.flags & ARMA_EXACT) {
+	    kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+	} else {
+	    bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+	}
     }
 
  bailout:
+
+    if (err && !armod.errcode) {
+	armod.errcode = err;
+    }
 
     if (armod.errcode) {
 	if (opt & OPT_U) {
