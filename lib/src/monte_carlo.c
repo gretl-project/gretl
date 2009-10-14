@@ -2697,6 +2697,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
 	    if (loop_is_progressive(loop)) {
 		cmd->flags |= CMD_PROG;
+	    } else {
+		cmd->flags &= ~CMD_PROG;
 	    }
 
 	    /* We already have the "ci" index recorded, but here
@@ -2891,6 +2893,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (line != NULL) {
 	*line = '\0';
     } 
+
+    cmd->flags &= ~CMD_PROG;
 
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */
