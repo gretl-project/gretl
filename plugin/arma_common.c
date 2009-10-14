@@ -3,7 +3,9 @@
 #define MAX_ARMA_ORDER 128
 #define MAX_ARIMA_DIFF 2
 
-struct arma_info {
+typedef struct arma_info_ arma_info;
+
+struct arma_info_ {
     int yno;         /* ID of dependent variable */
     ArmaFlags flags; /* specification flags */
     int ifc;         /* specification includes a constant? */
@@ -23,7 +25,7 @@ struct arma_info {
     int t1;          /* starting observation */
     int t2;          /* ending observation */
     int pd;          /* periodicity of data */
-    int T;           /* full length of data series */
+    int T;           /* sample size for estimation */
     double *dy;      /* differenced dependent variable */
     double dyscale;  /* scale factor for dy */
     const char *pqspec; /* input string with specific AR, MA lags */
@@ -46,7 +48,7 @@ struct arma_info {
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')
 
 static void 
-arma_info_init (struct arma_info *ainfo, char flags, 
+arma_info_init (arma_info *ainfo, char flags, 
 		const char *pqspec, const DATAINFO *pdinfo)
 {
     ainfo->yno = 0;
@@ -73,14 +75,14 @@ arma_info_init (struct arma_info *ainfo, char flags,
     ainfo->t1 = pdinfo->t1;
     ainfo->t2 = pdinfo->t2;
     ainfo->pd = pdinfo->pd;
-    ainfo->T = pdinfo->n;
+    ainfo->T = 0;
 
     ainfo->dy = NULL;
     ainfo->dyscale = 1.0;
     ainfo->pqspec = pqspec;
 }
 
-static void arma_info_cleanup (struct arma_info *ainfo)
+static void arma_info_cleanup (arma_info *ainfo)
 {
     free(ainfo->pmask);
     free(ainfo->qmask);
@@ -99,7 +101,7 @@ enum {
 */
 
 static char *mask_from_vec (const gretl_vector *v, 
-			    struct arma_info *ainfo,
+			    arma_info *ainfo,
 			    int m, int *err)
 {
     int vlen = gretl_vector_get_length(v);
@@ -181,7 +183,7 @@ matrix_from_spec (const char *s, int *tmp, int *err)
     return m;
 }
 
-static gretl_matrix *get_arma_pq_vec (struct arma_info *ainfo,
+static gretl_matrix *get_arma_pq_vec (arma_info *ainfo,
 				      int t, int *tmp, int *err)
 {
     gretl_matrix *m = NULL;
@@ -214,7 +216,7 @@ static gretl_matrix *get_arma_pq_vec (struct arma_info *ainfo,
 }
 
 static int 
-arma_make_masks (struct arma_info *ainfo, int *list)
+arma_make_masks (arma_info *ainfo, int *list)
 {
     gretl_matrix *m;
     int tmp, err = 0;
@@ -248,7 +250,7 @@ arma_make_masks (struct arma_info *ainfo, int *list)
     return err;
 }
 
-static int arma_list_y_position (struct arma_info *ainfo)
+static int arma_list_y_position (arma_info *ainfo)
 {
     int ypos;
 
@@ -333,7 +335,7 @@ static int arima_integrate (double *dx, const double *x,
     return 0;
 }
 
-static void ainfo_data_to_model (struct arma_info *ainfo, MODEL *pmod)
+static void ainfo_data_to_model (arma_info *ainfo, MODEL *pmod)
 {
     pmod->ifc = ainfo->ifc;
     pmod->dfn = ainfo->nc - pmod->ifc;
@@ -370,7 +372,7 @@ static void ainfo_data_to_model (struct arma_info *ainfo, MODEL *pmod)
    a gretl MODEL struct */
 
 static void write_arma_model_stats (MODEL *pmod, const int *list, 
-				    struct arma_info *ainfo,
+				    arma_info *ainfo,
 				    const double **Z, 
 				    const DATAINFO *pdinfo)
 {
@@ -442,7 +444,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 				  ainfo->nexo);
 }
 
-static void calc_max_lag (struct arma_info *ainfo)
+static void calc_max_lag (arma_info *ainfo)
 {
     int pmax = ainfo->p;
     int dmax = ainfo->d;
@@ -463,7 +465,7 @@ static void calc_max_lag (struct arma_info *ainfo)
 
 static int 
 arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
-		    struct arma_info *ainfo)
+		    arma_info *ainfo)
 {
     int vstart = arma_list_y_position(ainfo);
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -561,6 +563,7 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 
     ainfo->t1 = t1;
     ainfo->t2 = t2;
+    ainfo->T = t2 - t1 + 1;
 
     return 0;
 }
@@ -595,7 +598,7 @@ static int arma_remove_const (int *list, int seasonal, int diffs,
     return ret;
 }
 
-static int check_arma_sep (int *list, int sep1, struct arma_info *ainfo)
+static int check_arma_sep (int *list, int sep1, arma_info *ainfo)
 {
     int sep2 = (sep1 == 3)? 6 : 8;
     int i, err = 0;
@@ -639,7 +642,7 @@ static int check_arma_sep (int *list, int sep1, struct arma_info *ainfo)
 
 static int check_arma_list (int *list, gretlopt opt, 
 			    const double **Z, const DATAINFO *pdinfo,
-			    struct arma_info *ainfo)
+			    arma_info *ainfo)
 {
     int armax = 0;
     int hadconst = 0;
@@ -716,7 +719,7 @@ static int check_arma_list (int *list, gretlopt opt,
 
 static int check_arima_list (int *list, gretlopt opt, 
 			     const double **Z, const DATAINFO *pdinfo,
-			     struct arma_info *ainfo)
+			     arma_info *ainfo)
 {
     int armax = 0;
     int hadconst = 0;
@@ -803,7 +806,7 @@ static int check_arima_list (int *list, gretlopt opt,
 
 static int arma_check_list (int *list, gretlopt opt,
 			    const double **Z, const DATAINFO *pdinfo,
-			    struct arma_info *ainfo)
+			    arma_info *ainfo)
 {
     int sep1 = gretl_list_separator_position(list);
     int err = 0;
@@ -854,9 +857,52 @@ static int arma_check_list (int *list, gretlopt opt,
     return err;
 }
 
-static int
-arima_difference (const double *y, struct arma_info *ainfo)
+#define ARIMA_DIFF_NEW 0
+
+#if ARIMA_DIFF_NEW
+
+static void 
+real_arima_difference_series (double *dx, const double *x,
+			      int t1, arma_info *ainfo)
 {
+    int t, i, s = ainfo->pd;
+    
+    for (i=0, t=t1; t<=ainfo->t2; i++, t++) {
+	dx[i] = x[t];
+	if (ainfo->d > 0) {
+	    dx[i] -= x[t-1];
+	} 
+	if (ainfo->d == 2) {
+	    dx[i] -= x[t-1] - x[t-2];
+	}
+	if (ainfo->D > 0) {
+	    dx[i] -= x[t-s];
+	    if (ainfo->d > 0) {
+		dx[i] += x[t-s-1];
+	    }
+	    if (ainfo->d == 2) {
+		dx[i] += x[t-s-1] - x[t-s-2];
+	    }	    
+	} 
+	if (ainfo->D == 2) {
+	    dx[i] -= x[t-s] - x[t-2*s];
+	    if (ainfo->d > 0) {
+		dx[i] += x[t-s-1] - x[t-2*s-1];
+	    }
+	    if (ainfo->d == 2) {
+		dx[i] += x[t-s-1] - x[t-2*s-1];
+		dx[i] -= x[t-s-2] - x[t-2*s-2];
+	    }
+	}
+    }
+}
+
+#endif
+
+static int arima_difference (arma_info *ainfo, const double **Z,
+			     const DATAINFO *pdinfo)
+{
+    const double *y = Z[ainfo->yno];
     double *dy;
     int s = ainfo->pd;
     int t, t1 = 0;
@@ -866,12 +912,12 @@ arima_difference (const double *y, struct arma_info *ainfo)
 	    ainfo->d, ainfo->D);
 #endif
 
-    dy = malloc(ainfo->T * sizeof *dy);
+    dy = malloc(pdinfo->n * sizeof *dy);
     if (dy == NULL) {
 	return E_ALLOC;
     }
 
-    for (t=0; t<ainfo->T; t++) {
+    for (t=0; t<pdinfo->n; t++) {
 	if (na(y[t])) {
 	    t1++;
 	} else {
@@ -881,11 +927,14 @@ arima_difference (const double *y, struct arma_info *ainfo)
 
     t1 += ainfo->d + ainfo->D * s;
 
-    for (t=0; t<t1; t++) {
+    for (t=0; t<pdinfo->n; t++) {
 	dy[t] = NADBL;
     }
 
-    for (t=t1; t<ainfo->T; t++) {
+#if ARIMA_DIFF_NEW
+    real_arima_difference_series(dy + t1, y, t1, ainfo);
+#else
+    for (t=t1; t<pdinfo->n; t++) {
 	dy[t] = y[t];
 	if (ainfo->d > 0) {
 	    dy[t] -= y[t-1];
@@ -913,9 +962,10 @@ arima_difference (const double *y, struct arma_info *ainfo)
 	    }
 	}
     }
+#endif
 
 #if ARMA_DEBUG > 1
-    for (t=0; t<ainfo->T; t++) {
+    for (t=0; t<pdinfo->n; t++) {
 	fprintf(stderr, "dy[%d] = % 12.5f\n", t, dy[t]);
     }
 #endif    

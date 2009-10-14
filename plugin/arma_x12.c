@@ -240,7 +240,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 /* Parse the roots information from the X12ARIMA output file foo.rts */
 
 static int get_roots (const char *fname, MODEL *pmod, 
-		      struct arma_info *ainfo)
+		      arma_info *ainfo)
 {
     FILE *fp;
     char line[132];
@@ -358,7 +358,7 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 */
 
 static int 
-get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
+get_estimates (const char *fname, MODEL *pmod, arma_info *ainfo)
 {
     double *ar_coeff = pmod->coeff + ainfo->ifc;
     double *ma_coeff = ar_coeff + ainfo->np + ainfo->P;
@@ -481,7 +481,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 static void 
 populate_arma_model (MODEL *pmod, const int *list, const char *path, 
 		     const double **Z, const DATAINFO *pdinfo, 
-		     struct arma_info *ainfo)
+		     arma_info *ainfo)
 {
     char fname[MAXLEN];
     int t, err = 0;
@@ -560,7 +560,7 @@ output_series_to_spc (const int *list, const double **Z,
 }
 
 static int *
-arma_info_get_x_list (struct arma_info *ainfo, const int *alist)
+arma_info_get_x_list (arma_info *ainfo, const int *alist)
 {
     int *xlist = NULL;
     int start = arma_list_y_position(ainfo);
@@ -611,7 +611,7 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
     }    
 }
 
-static void x12_pdq_string (struct arma_info *ainfo, FILE *fp)
+static void x12_pdq_string (arma_info *ainfo, FILE *fp)
 {
     fputc('(', fp);
     
@@ -656,7 +656,7 @@ static void x12_pdq_string (struct arma_info *ainfo, FILE *fp)
 
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo,
-			   struct arma_info *ainfo, const int *alist,
+			   arma_info *ainfo, const int *alist,
 			   int pdmax, gretlopt opt)
 {
     int maxobs = pdmax * 50;
@@ -828,7 +828,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     int *alist = NULL;
     PRN *vprn = NULL;
     MODEL armod;
-    struct arma_info ainfo;
+    arma_info ainfo;
     char flags = ARMA_X12A;
 #ifdef WIN32
     char *cmd;
@@ -875,7 +875,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 
     /* create differenced series if needed */
     if (ainfo.d > 0 || ainfo.D > 0) {
-	err = arima_difference(Z[ainfo.yno], &ainfo);
+	err = arima_difference(&ainfo, Z, pdinfo);
     }  
 
     strcpy(yname, pdinfo->varname[ainfo.yno]);

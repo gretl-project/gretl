@@ -61,7 +61,7 @@ static void bchecker_free (struct bchecker *b)
     }
 }
 
-static struct bchecker *bchecker_allocate (struct arma_info *ainfo)
+static struct bchecker *bchecker_allocate (arma_info *ainfo)
 {
     struct bchecker *b;
 
@@ -92,7 +92,7 @@ static struct bchecker *bchecker_allocate (struct arma_info *ainfo)
    course of iteration */
 
 static int 
-ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
+ma_out_of_bounds (arma_info *ainfo, const double *theta,
 		  const double *Theta)
 {
     static struct bchecker *b = NULL;
@@ -202,7 +202,7 @@ static void bounds_checker_cleanup (void)
 }
 
 static void do_MA_partials (double *drv,
-			    struct arma_info *ainfo,
+			    arma_info *ainfo,
 			    const double *theta,
 			    const double *Theta,
 			    int t)
@@ -261,7 +261,7 @@ static int arma_ll (double *coeff,
     const double *theta, *Theta;
     const double *beta;
 
-    struct arma_info *ainfo;
+    arma_info *ainfo;
 
     double ll, s2 = 0.0;
     int err = 0;
@@ -505,7 +505,7 @@ static int arma_ll (double *coeff,
   returns: zero on success, non-zero on failure
 */
 
-static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
+static int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 				 const double *coeff)
 {
     const double *phi = coeff + ainfo->ifc;
@@ -612,7 +612,7 @@ static gretl_matrix *vQ;
 static double *ac;
 static double *mc;
 
-static struct arma_info *kainfo;   
+static arma_info *kainfo;   
 
 static void allocate_kalman_matrices (int r, int r2,
 				      int k, int T)
@@ -639,7 +639,7 @@ static void free_kalman_matrices (void)
     gretl_matrix_free(Svar);
 }
 
-static int ainfo_get_r (struct arma_info *ainfo)
+static int ainfo_get_r (arma_info *ainfo)
 {
     int pmax = ainfo->p + ainfo->pd * ainfo->P;
     int qmax = ainfo->q + ainfo->pd * ainfo->Q;
@@ -647,7 +647,7 @@ static int ainfo_get_r (struct arma_info *ainfo)
     return (pmax > qmax + 1)? pmax : qmax + 1;
 }
 
-static int allocate_ac_mc (struct arma_info *ainfo)
+static int allocate_ac_mc (arma_info *ainfo)
 {
     if (ainfo->P > 0) {
 	int pmax = ainfo->p + ainfo->pd * ainfo->P;
@@ -678,7 +678,7 @@ static void free_ac_mc (void)
 
 static void write_big_phi (const double *phi, 
 			   const double *Phi,
-			   struct arma_info *ainfo,
+			   arma_info *ainfo,
 			   gretl_matrix *F)
 {
     int pmax = ainfo->p + ainfo->pd * ainfo->P;
@@ -712,7 +712,7 @@ static void write_big_phi (const double *phi,
 
 static void write_big_theta (const double *theta, 
 			     const double *Theta,
-			     struct arma_info *ainfo,
+			     arma_info *ainfo,
 			     gretl_matrix *H)
 {
     int qmax = ainfo->q + ainfo->pd * ainfo->Q;
@@ -783,7 +783,7 @@ static void condense_state_vcv (gretl_matrix *targ,
     }
 }
 
-static void kalman_matrices_init (struct arma_info *ainfo)
+static void kalman_matrices_init (arma_info *ainfo)
 {
     int r = F->rows;
 
@@ -1107,7 +1107,7 @@ static int arma_use_hessian (gretlopt opt)
 }
 
 static int kalman_arma_finish (MODEL *pmod, const int *alist,
-			       struct arma_info *ainfo,
+			       arma_info *ainfo,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       kalman *K, double *b, int k, int T,
 			       gretlopt opt, PRN *prn)
@@ -1121,7 +1121,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     pmod->t2 = ainfo->t2;
     pmod->nobs = T;
     pmod->ncoeff = k;
-    pmod->full_n = ainfo->T;
+    pmod->full_n = pdinfo->n;
     
     /* in the Kalman case the basic model struct is empty, so we 
        have to allocate for coefficients, residuals and so on
@@ -1188,7 +1188,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
 static gretl_matrix *form_arma_y_vector (const int *alist, 
 					 const double **Z,
-					 struct arma_info *ainfo,
+					 arma_info *ainfo,
 					 int *err)
 {
     gretl_matrix *yvec;
@@ -1249,7 +1249,7 @@ static gretl_matrix *form_arma_y_vector (const int *alist,
 
 static gretl_matrix *form_arma_x_matrix (const int *alist, 
 					 const double **Z,
-					 struct arma_info *ainfo)
+					 arma_info *ainfo)
 {
     gretl_matrix *x;
     int i, xstart;
@@ -1293,7 +1293,7 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
    goes: const, phi, Phi, theta, Theta, beta.
 */
 
-static void transform_arma_const (double *b, struct arma_info *ainfo)
+static void transform_arma_const (double *b, arma_info *ainfo)
 {
     const double *phi = b + 1;
     const double *Phi = phi + ainfo->np;
@@ -1318,7 +1318,7 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
     b[0] /= (narfac * sarfac);
 }
 
-static int kalman_undo_y_scaling (struct arma_info *ainfo,
+static int kalman_undo_y_scaling (arma_info *ainfo,
 				  gretl_matrix *y, double *b, 
 				  kalman *K)
 {
@@ -1348,7 +1348,7 @@ static int kalman_undo_y_scaling (struct arma_info *ainfo,
 
 static int kalman_arma (const int *alist, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
-			struct arma_info *ainfo, MODEL *pmod,
+			arma_info *ainfo, MODEL *pmod,
 			gretlopt opt, PRN *prn)
 {
     kalman *K = NULL;
@@ -1518,7 +1518,7 @@ static int kalman_arma (const int *alist, double *coeff,
 */
 
 static const double **
-make_armax_X (const int *list, struct arma_info *ainfo, const double **Z)
+make_armax_X (const int *list, arma_info *ainfo, const double **Z)
 {
     const double **X;
     int ypos, nx;
@@ -1567,7 +1567,7 @@ static int add_to_spec (char *targ, const char *src)
    that takes the form (y_{t-i} - X_{t-i} \beta)
 */
 
-static int y_Xb_at_lag (char *spec, struct arma_info *ainfo, 
+static int y_Xb_at_lag (char *spec, arma_info *ainfo, 
 			int narmax, int lag)
 {
     char chunk[32];
@@ -1641,7 +1641,7 @@ static void nls_kickstart (MODEL *pmod, double ***pZ,
     clear_model(pmod);
 }
 
-static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
+static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 			       int narmax, const double *coeff,
 			       double ***pZ, DATAINFO *pdinfo,
 			       PRN *prn) 
@@ -1834,7 +1834,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
    ARMA via OLS (not NLS)
 */
 
-static int *make_ar_ols_list (struct arma_info *ainfo, int av)
+static int *make_ar_ols_list (arma_info *ainfo, int av)
 {
     int * alist = gretl_list_new(av);
     int i, k, vi;
@@ -1875,7 +1875,7 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av)
 
 /* compose variable names for temporary dataset */
 
-static void arma_init_add_varnames (struct arma_info *ainfo, 
+static void arma_init_add_varnames (arma_info *ainfo, 
 				    int ptotal, int narmax, 
 				    DATAINFO *adinfo)
 {
@@ -1930,7 +1930,7 @@ static void arma_init_add_varnames (struct arma_info *ainfo,
    at an offset of ainfo->t1 into the "real", external dataset.
 */
 
-static void arma_init_build_dataset (struct arma_info *ainfo, 
+static void arma_init_build_dataset (arma_info *ainfo, 
 				     int ptotal, int narmax, 
 				     const int *list,
 				     const double **Z,
@@ -2052,7 +2052,7 @@ static void arma_init_build_dataset (struct arma_info *ainfo,
    into the array that will be passed to the maximizer.
 */
 
-static void arma_init_transcribe_coeffs (struct arma_info *ainfo,
+static void arma_init_transcribe_coeffs (arma_info *ainfo,
 					 MODEL *pmod, double *b)
 {
     int q0 = ainfo->ifc + ainfo->np + ainfo->P;
@@ -2082,14 +2082,14 @@ static void arma_init_transcribe_coeffs (struct arma_info *ainfo,
     }	
 }
 
-static void maybe_rescale_dy (struct arma_info *ainfo)
+static void maybe_rescale_dy (arma_info *ainfo)
 {
-    double ybar = gretl_mean(0, ainfo->T - 1, ainfo->dy);
+    double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->dy);
 
     if (fabs(ybar) > 250) {
 	int t;
 
-	for (t=0; t<ainfo->T; t++) {
+	for (t=0; t<=ainfo->t2; t++) {
 	    if (!na(ainfo->dy[t])) {
 		ainfo->dy[t] /= ybar;
 	    }
@@ -2111,7 +2111,7 @@ static void maybe_rescale_dy (struct arma_info *ainfo)
 
 static int ar_arma_init (const int *list, double *coeff, 
 			 const double **Z, const DATAINFO *pdinfo,
-			 struct arma_info *ainfo, 
+			 arma_info *ainfo, 
 			 MODEL *pmod, PRN *prn)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
@@ -2236,7 +2236,7 @@ static int ar_arma_init (const int *list, double *coeff,
 
 static int arma_by_ls (const int *list, double *coeff, 
 		       const double **Z, const DATAINFO *pdinfo,
-		       struct arma_info *ainfo, 
+		       arma_info *ainfo, 
 		       MODEL *pmod, PRN *prn)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
@@ -2321,7 +2321,7 @@ static int arma_by_ls (const int *list, double *coeff,
 
 #define MINLAGS 16
 
-static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
+static int hr_init_check (const DATAINFO *pdinfo, arma_info *ainfo)
 {
     int nobs = pdinfo->t2 - ainfo->t1 + 1; /* ?? */
     int nlags = (ainfo->P + ainfo->Q) * pdinfo->pd;
@@ -2348,7 +2348,7 @@ static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
     return err;
 }
 
-static int hr_transcribe_coeffs (struct arma_info *ainfo,
+static int hr_transcribe_coeffs (arma_info *ainfo,
 				 MODEL *pmod, double *b)
 {
     const double *theta = NULL;
@@ -2412,7 +2412,7 @@ static int hr_transcribe_coeffs (struct arma_info *ainfo,
 
 static int hr_arma_init (const int *list, double *coeff, 
 			 const double **Z, const DATAINFO *pdinfo,
-			 struct arma_info *ainfo, PRN *prn)
+			 arma_info *ainfo, PRN *prn)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
     int np = ainfo->p, nq = ainfo->q;
@@ -2642,7 +2642,7 @@ static int hr_arma_init (const int *list, double *coeff,
     return err;
 }
 
-static int user_arma_init (double *coeff, struct arma_info *ainfo, 
+static int user_arma_init (double *coeff, arma_info *ainfo, 
 			   char flags, int *init_done, PRN *prn)
 {
     int i, nc = n_init_vals();
@@ -2677,8 +2677,8 @@ static int user_arma_init (double *coeff, struct arma_info *ainfo,
 
 /* set up a model_info struct for passing to bhhh_max */
 
-static model_info *
-set_up_arma_model_info (struct arma_info *ainfo)
+static model_info *set_up_arma_model_info (arma_info *ainfo, 
+					   const DATAINFO *pdinfo)
 {
     double tol = libset_get_double(BHHH_TOLER);
     model_info *arma;
@@ -2687,7 +2687,7 @@ set_up_arma_model_info (struct arma_info *ainfo)
 	tol = 1.0e-6;
     }
 
-    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, ainfo->T, tol);
+    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, pdinfo->n, tol);
 
     if (arma == NULL) return NULL;
 
@@ -2725,7 +2725,7 @@ conditional_arma_model_prep (MODEL *pmod, model_info *minfo,
 
 static int bhhh_arma (const int *alist, double *coeff, 
 		      const double **Z, const DATAINFO *pdinfo,
-		      struct arma_info *ainfo, MODEL *pmod,
+		      arma_info *ainfo, MODEL *pmod,
 		      gretlopt opt, PRN *prn)
 {
     model_info *minfo = NULL;
@@ -2740,7 +2740,7 @@ static int bhhh_arma (const int *alist, double *coeff,
     }
 
     /* create model_info struct to feed to bhhh_max() */
-    minfo = set_up_arma_model_info(ainfo);
+    minfo = set_up_arma_model_info(ainfo, pdinfo);
     if (minfo == NULL) {
 	pmod->errcode = E_ALLOC;
 	free(X);
@@ -2773,7 +2773,7 @@ static int bhhh_arma (const int *alist, double *coeff,
 /* Should we try Hannan-Rissanen initialization of ARMA
    coefficients? */
 
-static int prefer_hr_init (struct arma_info *ainfo)
+static int prefer_hr_init (arma_info *ainfo)
 {
     int ret = 0;
 
@@ -2827,7 +2827,7 @@ MODEL arma_model (const int *list, const char *pqspec,
     double *coeff = NULL;
     int *alist = NULL;
     MODEL armod;
-    struct arma_info ainfo;
+    arma_info ainfo;
     int init_done = 0;
     char flags = 0;
     int err = 0;
@@ -2873,7 +2873,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     /* create differenced series if needed */
     if (ainfo.d > 0 || ainfo.D > 0) {
-	err = arima_difference(Z[ainfo.yno], &ainfo);
+	err = arima_difference(&ainfo, Z, pdinfo);
     }
 
     /* initialize the coefficients: there are 3 possible methods */
