@@ -1109,18 +1109,18 @@ static int arma_use_hessian (gretlopt opt)
 static int kalman_arma_finish (MODEL *pmod, const int *alist,
 			       arma_info *ainfo,
 			       const double **Z, const DATAINFO *pdinfo, 
-			       kalman *K, double *b, int k, int T,
+			       kalman *K, double *b, 
 			       gretlopt opt, PRN *prn)
 {
-    int do_hess = arma_use_hessian(opt);
     double s2;
-    int kopt, i;
+    int do_hess = arma_use_hessian(opt);
+    int kopt, i, k = ainfo->nc;
     int err;
 
     pmod->t1 = ainfo->t1;
     pmod->t2 = ainfo->t2;
-    pmod->nobs = T;
-    pmod->ncoeff = k;
+    pmod->nobs = ainfo->T;
+    pmod->ncoeff = ainfo->nc;
     pmod->full_n = pdinfo->n;
     
     /* in the Kalman case the basic model struct is empty, so we 
@@ -1144,7 +1144,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
     /* rescale if we're using average loglikelihood */
     if (kopt & KALMAN_AVG_LL) {
-	pmod->lnL *= T;
+	pmod->lnL *= ainfo->T;
     }
 
 #if ARMA_DEBUG
@@ -1154,7 +1154,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
     if (!do_hess) {
 	/* try OPG first, hessian as fallback */
-	err = arma_OPG_vcv(pmod, K, b, s2, k, T, prn);
+	err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
 	if (err) {
 	    err = 0;
 	    do_hess = 1;
@@ -1171,7 +1171,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 	vcv = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
 	kalman_do_ma_check = 1;
 	if (!err) {
-	    maybe_rescale_hessian(kopt, vcv, k, T);
+	    maybe_rescale_hessian(kopt, vcv, k, ainfo->T);
 	    arma_hessian_vcv(pmod, vcv, k);
 	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
 	}
@@ -1193,34 +1193,20 @@ static gretl_matrix *form_arma_y_vector (const int *alist,
 {
     gretl_matrix *yvec;
     const double *y;
-    int s, t, T;
+    int s, t;
 
 #if ARMA_DEBUG
     fprintf(stderr, "ainfo->t1 = %d, ainfo->t2 = %d\n",
 	    ainfo->t1, ainfo->t2);
 #endif
 
-    if (ainfo->dy != NULL) {
-	y = ainfo->dy;
-	/* should be handled earlier? */
-	for (t=ainfo->t1; t<=ainfo->t2; t++) {
-	    if (na(y[t])) {
-		ainfo->t1 += 1;
-	    } else {
-		break;
-	    }
-	}
+    if (ainfo->y != NULL) {
+	y = ainfo->y;
     } else {
 	y = Z[ainfo->yno];
     }
 
-    T = ainfo->t2 - ainfo->t1 + 1;
-    if (T == 0) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    yvec = gretl_column_vector_alloc(T);
+    yvec = gretl_column_vector_alloc(ainfo->T);
     if (yvec == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -1228,9 +1214,6 @@ static gretl_matrix *form_arma_y_vector (const int *alist,
 
     s = 0;
     for (t=ainfo->t1; t<=ainfo->t2; t++) {
-	if (na(y[t])) {
-	    *err = E_DATA;
-	}
 	gretl_vector_set(yvec, s++, y[t]);
     }
 
@@ -1247,45 +1230,27 @@ static gretl_matrix *form_arma_y_vector (const int *alist,
     return yvec;
 }
 
-static gretl_matrix *form_arma_x_matrix (const int *alist, 
+static gretl_matrix *form_arma_X_matrix (const int *alist, 
 					 const double **Z,
-					 arma_info *ainfo)
+					 arma_info *ainfo,
+					 int *err)
 {
-    gretl_matrix *x;
-    int i, xstart;
-    int *xlist;
-    int err = 0;
-
-    xlist = gretl_list_new(ainfo->nexo);
-    if (xlist == NULL) {
-	return NULL;
-    }
-
-    xstart = arma_list_y_position(ainfo) + 1;
-    for (i=xstart; i<=alist[0]; i++) {
-	xlist[i - xstart + 1] = alist[i];
-    }
+    gretl_matrix *X;
 
 #if ARMA_DEBUG
     printlist(alist, "alist (arma list)");
-    printlist(xlist, "xlist (exog vars)");
+    printlist(ainfo->xlist, "xlist (exog vars)");
 #endif
 
-    x = gretl_matrix_data_subset(xlist, Z, ainfo->t1, ainfo->t2, 
-				 M_MISSING_ERROR, &err);
-    if (err) {
-	free(xlist);
-	return NULL;
-    }
+    X = gretl_matrix_data_subset(ainfo->xlist, Z, ainfo->t1, ainfo->t2, 
+				 M_MISSING_ERROR, err);
 
 #if ARMA_DEBUG
-    gretl_matrix_print(x, "x");
-    fprintf(stderr, "x has %d rows\n", gretl_matrix_rows(x));
+    gretl_matrix_print(X, "X");
+    fprintf(stderr, "X has %d rows\n", gretl_matrix_rows(X));
 #endif
 
-    free(xlist);
-    
-    return x;
+    return X;
 }
 
 /* Given an estimate of the ARMA constant via OLS, convert to the form
@@ -1327,16 +1292,16 @@ static int kalman_undo_y_scaling (arma_info *ainfo,
     int i, t, T = ainfo->t2 - ainfo->t1 + 1;
     int err = 0;
 
-    b[0] *= ainfo->dyscale;
+    b[0] *= ainfo->yscale;
 
     for (i=0; i<ainfo->nexo; i++) {
-	beta[i] *= ainfo->dyscale;
+	beta[i] *= ainfo->yscale;
     }
 
     i = ainfo->t1;
     for (t=0; t<T; t++) {
-	y->val[t] *= ainfo->dyscale;
-	ainfo->dy[i++] *= ainfo->dyscale;
+	y->val[t] *= ainfo->yscale;
+	ainfo->y[i++] *= ainfo->yscale;
     }
 
     if (na(kalman_arma_ll(b, K))) {
@@ -1346,6 +1311,16 @@ static int kalman_undo_y_scaling (arma_info *ainfo,
     return err;
 }
 
+static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
+{
+    if (X == ainfo->dX) {
+	gretl_matrix_free(ainfo->dX);
+	ainfo->dX = NULL;
+    } else {
+	gretl_matrix_free(X);
+    }
+}
+
 static int kalman_arma (const int *alist, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			arma_info *ainfo, MODEL *pmod,
@@ -1353,19 +1328,16 @@ static int kalman_arma (const int *alist, double *coeff,
 {
     kalman *K = NULL;
     gretl_matrix *y = NULL;
-    gretl_matrix *x = NULL;
-
+    gretl_matrix *X = NULL;
     int k = 1 + ainfo->nexo; /* number of exog vars plus space for const */
     int r, r2, m;
-
     /* BFGS apparatus */
     int maxit = 1000;
     double reltol = 1.0e-12;
     int fncount = 0;
     int grcount = 0;
-
     double *b;
-    int i, T, err = 0;
+    int i, err = 0;
 
     b = malloc(ainfo->nc * sizeof *b);
     if (b == NULL) {
@@ -1384,31 +1356,35 @@ static int kalman_arma (const int *alist, double *coeff,
 #endif
 
     y = form_arma_y_vector(alist, Z, ainfo, &err);
-    if (y == NULL) {
+    if (err) {
 	free(b);
 	return err;
     }
 
     if (ainfo->nexo > 0) {
-	x = form_arma_x_matrix(alist, Z, ainfo);
-	if (x == NULL) {
-	    free(b);
-	    gretl_matrix_free(y);
-	    return E_ALLOC;
+	if (ainfo->dX != NULL) {
+	    X = ainfo->dX;
+	} else {
+	    X = form_arma_X_matrix(alist, Z, ainfo, &err);
+	    if (err) {
+		free(b);
+		gretl_matrix_free(y);
+		return err;
+	    }
 	}
     }
 
-    if (allocate_ac_mc(ainfo)) {
+    err = allocate_ac_mc(ainfo);
+    if (err) {
 	free(b);
 	gretl_matrix_free(y);
-	gretl_matrix_free(x);
-	return E_ALLOC;
+	free_arma_X_matrix(ainfo, X);
+	return err;
     }
 
     r = ainfo_get_r(ainfo);
     r2 = r * r;
     m = r * (r + 1) / 2;
-    T = gretl_matrix_rows(y);
 
     /* when should we use vech apparatus? */
     if (r > 4) {
@@ -1417,7 +1393,7 @@ static int kalman_arma (const int *alist, double *coeff,
 
     clear_gretl_matrix_err();
 
-    allocate_kalman_matrices(r, r2, k, T);
+    allocate_kalman_matrices(r, r2, k, ainfo->T);
 
     if (arma_using_vech(ainfo)) {
 	vQ = gretl_column_vector_alloc(m);
@@ -1430,7 +1406,7 @@ static int kalman_arma (const int *alist, double *coeff,
     if (err) {
 	free(b);
 	gretl_matrix_free(y);
-	gretl_matrix_free(x);
+	free_arma_X_matrix(ainfo, X);
 	return E_ALLOC;
     }
 
@@ -1442,13 +1418,13 @@ static int kalman_arma (const int *alist, double *coeff,
 	    ainfo->p, ainfo->P, ainfo->q, ainfo->Q, ainfo->ifc, 
 	    ainfo->nexo, ainfo->t1, ainfo->t2);
     fprintf(stderr, "Kalman dims: r = %d, k = %d, T = %d, ncoeff=%d\n", 
-	    r, k, T, ainfo->nc);
+	    r, k, ainfo->T, ainfo->nc);
 #endif
 
     /* publish ainfo */
     kainfo = ainfo;
 
-    K = kalman_new(S, P, F, A, H, Q, NULL, y, x, E, &err);
+    K = kalman_new(S, P, F, A, H, Q, NULL, y, X, E, &err);
 
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
@@ -1459,7 +1435,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	    kalman_set_nonshift(K, r);
 	}
 
-	if (T > 3072 || getenv("KALMAN_AVG_LL") != NULL) {
+	if (ainfo->T > 3072 || getenv("KALMAN_AVG_LL") != NULL) {
 	    kalman_set_options(K, KALMAN_ARMA_LL | KALMAN_AVG_LL);
 	} else {
 	    kalman_set_options(K, KALMAN_ARMA_LL);
@@ -1473,7 +1449,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	} 
     }
 
-    if (!err && ainfo->dyscale != 1.0) {
+    if (!err && ainfo->yscale != 1.0) {
 	kalman_undo_y_scaling(ainfo, y, b, K);
     }
 
@@ -1482,8 +1458,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	gretl_model_set_int(pmod, "grcount", grcount);
 	err = kalman_arma_finish(pmod, alist, ainfo, 
 				 Z, pdinfo, K, b, 
-				 ainfo->nc, T, opt,
-				 prn);
+				 opt, prn);
     } 
 
     if (err) {
@@ -1495,7 +1470,7 @@ static int kalman_arma (const int *alist, double *coeff,
     free_kalman_matrices();
 
     gretl_matrix_free(y);
-    gretl_matrix_free(x);
+    free_arma_X_matrix(ainfo, X);
 
     gretl_matrix_free(Svar2);
     gretl_matrix_free(vQ);
@@ -1538,8 +1513,8 @@ make_armax_X (const int *list, arma_info *ainfo, const double **Z)
     }
 
     /* the dependent variable */
-    if (ainfo->dy != NULL) {
-	X[0] = ainfo->dy;
+    if (ainfo->y != NULL) {
+	X[0] = ainfo->y;
     } else {
 	X[0] = Z[list[ypos]];
     }
@@ -1924,6 +1899,17 @@ static void arma_init_add_varnames (arma_info *ainfo,
     }
 }
 
+static int use_preprocessed_y (arma_info *ainfo)
+{
+    if (ainfo->flags & ARMA_XDIFF) {
+	/* for initialization, use the level of y */
+	return 0;
+    } else {
+	/* use preprocessed y if available */
+	return (ainfo->y != NULL);
+    }
+}
+
 /* Build temporary dataset including lagged vars: if we're doing exact
    ML on an ARMAX model we need lags of the exogenous variables as
    well as lags of y_t.  Note that the auxiliary dataset has "t = 0"
@@ -1943,8 +1929,8 @@ static void arma_init_build_dataset (arma_info *ainfo,
     int lag, xstart;
 
     /* dependent variable */
-    if (ainfo->dy != NULL) {
-	y = ainfo->dy;
+    if (use_preprocessed_y(ainfo)) {
+	y = ainfo->y;
     } else {
 	y = Z[ainfo->yno];
     }
@@ -2082,19 +2068,42 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
     }	
 }
 
-static void maybe_rescale_dy (arma_info *ainfo)
+/* try to avoid numerical problems when doing exact ML: 
+   scale the dependent variable if it's "too big" 
+*/
+
+static void maybe_rescale_y (arma_info *ainfo, const double **Z,
+			     const DATAINFO *pdinfo)
 {
-    double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->dy);
+    double ybar;
+    int t, doit = 0;
 
-    if (fabs(ybar) > 250) {
-	int t;
+    if (ainfo->y != NULL) {
+	ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
+	doit = (fabs(ybar) > 250);
+    } else {
+	const double *y = Z[ainfo->yno];
 
-	for (t=0; t<=ainfo->t2; t++) {
-	    if (!na(ainfo->dy[t])) {
-		ainfo->dy[t] /= ybar;
+	ybar = gretl_mean(ainfo->t1, ainfo->t2, y);
+	if (fabs(ybar) > 250) {
+	    ainfo->y = malloc(pdinfo->n * sizeof *ainfo->y);
+	    if (ainfo->y != NULL) {
+		for (t=0; t<pdinfo->n; t++) {
+		    ainfo->y[t] = y[t];
+		}
+		doit = 1;
 	    }
 	}
-	ainfo->dyscale = ybar;
+    }
+
+    if (doit) {
+	fprintf(stderr, "arma: ybar = %g, rescaling y\n", ybar);
+	for (t=0; t<=ainfo->t2; t++) {
+	    if (!na(ainfo->y[t])) {
+		ainfo->y[t] /= ybar;
+	    }
+	}
+	ainfo->yscale = ybar;
     }
 }
 
@@ -2114,7 +2123,6 @@ static int ar_arma_init (const int *list, double *coeff,
 			 arma_info *ainfo, 
 			 MODEL *pmod, PRN *prn)
 {
-    int an = pdinfo->t2 - ainfo->t1 + 1;
     int nmixed = ainfo->np * ainfo->P;
     int ptotal = ainfo->np + ainfo->P + nmixed;
     int av = ptotal + ainfo->nexo + 2;
@@ -2148,11 +2156,11 @@ static int ar_arma_init (const int *list, double *coeff,
 	av += ainfo->nexo * ptotal;
     } 
 
-    if (arma_exact_ml(ainfo) && ainfo->ifc && ainfo->dy != NULL) {
-	maybe_rescale_dy(ainfo);
+    if (arma_exact_ml(ainfo) && ainfo->ifc) {
+	maybe_rescale_y(ainfo, Z, pdinfo);
     }
 
-    adinfo = create_auxiliary_dataset(&aZ, av, an);
+    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->T);
     if (adinfo == NULL) {
 	return E_ALLOC;
     }
@@ -2239,7 +2247,6 @@ static int arma_by_ls (const int *list, double *coeff,
 		       arma_info *ainfo, 
 		       MODEL *pmod, PRN *prn)
 {
-    int an = pdinfo->t2 - ainfo->t1 + 1;
     int nmixed = ainfo->np * ainfo->P;
     int ptotal = ainfo->np + ainfo->P + nmixed;
     int av = ptotal + ainfo->nexo + 2;
@@ -2248,7 +2255,7 @@ static int arma_by_ls (const int *list, double *coeff,
     int *alist = NULL;
     int nonlin = 0;
 
-    adinfo = create_auxiliary_dataset(&aZ, av, an);
+    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->T);
     if (adinfo == NULL) {
 	return E_ALLOC;
     }
@@ -2323,7 +2330,7 @@ static int arma_by_ls (const int *list, double *coeff,
 
 static int hr_init_check (const DATAINFO *pdinfo, arma_info *ainfo)
 {
-    int nobs = pdinfo->t2 - ainfo->t1 + 1; /* ?? */
+    int nobs = ainfo->T;
     int nlags = (ainfo->P + ainfo->Q) * pdinfo->pd;
     int ncoeff, df;
     int err = 0;
@@ -2414,14 +2421,12 @@ static int hr_arma_init (const int *list, double *coeff,
 			 const double **Z, const DATAINFO *pdinfo,
 			 arma_info *ainfo, PRN *prn)
 {
-    int an = pdinfo->t2 - ainfo->t1 + 1;
     int np = ainfo->p, nq = ainfo->q;
     int nP = ainfo->P, nQ = ainfo->Q;
     int ptotal = np + nP + np * nP;
     int qtotal = nq + nQ + nq * nQ;
     int nexo = ainfo->nexo;
     int pass1lags, pass1v;
-
     const double *y;
     double **aZ = NULL;
     DATAINFO *adinfo = NULL;
@@ -2442,13 +2447,13 @@ static int hr_arma_init (const int *list, double *coeff,
     pass1v = pass1lags + nexo + 2;
 
     /* dependent variable */
-    if (ainfo->dy != NULL) {
-	y = ainfo->dy;
+    if (ainfo->y != NULL) {
+	y = ainfo->y;
     } else {
 	y = Z[ainfo->yno];
     }
 
-    adinfo = create_auxiliary_dataset(&aZ, pass1v + qtotal, an);
+    adinfo = create_auxiliary_dataset(&aZ, pass1v + qtotal, ainfo->T);
     if (adinfo == NULL) {
 	return E_ALLOC;
     }
@@ -2496,7 +2501,7 @@ static int hr_arma_init (const int *list, double *coeff,
 	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
     }
 
-    for (t=0; t<an; t++) {
+    for (t=0; t<ainfo->T; t++) {
 	s = t + ainfo->t1;
 	aZ[1][t] = y[s];
 	for (i=0, pos=2; i<nexo; i++) {
@@ -2572,7 +2577,7 @@ static int hr_arma_init (const int *list, double *coeff,
     pos = pass1v;
     for (i=0; i<qtotal; i++) {
 	sprintf(adinfo->varname[pos], "e_%d", malags[i]);
-	for (t=0; t<an; t++) {
+	for (t=0; t<ainfo->T; t++) {
 	    s = t - malags[i];
 	    aZ[pos][t] = (s >= 0)? armod.uhat[s] : NADBL;
 	}
@@ -2643,7 +2648,7 @@ static int hr_arma_init (const int *list, double *coeff,
 }
 
 static int user_arma_init (double *coeff, arma_info *ainfo, 
-			   char flags, int *init_done, PRN *prn)
+			   int *init_done, PRN *prn)
 {
     int i, nc = n_init_vals();
 
@@ -2655,7 +2660,7 @@ static int user_arma_init (double *coeff, arma_info *ainfo,
 	return E_DATA;
     }
 
-    if (flags & ARMA_EXACT) {
+    if (ainfo->flags & ARMA_EXACT) {
 	/* initialization is handled within BFGS */
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = 0.0;
@@ -2779,31 +2784,25 @@ static int prefer_hr_init (arma_info *ainfo)
 
     if (ainfo->q > 1 || ainfo->Q > 0) {
 	ret = 1;
-
-	/* don't use for gappy arma (yet?) */
 	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
+	    /* don't use for gappy arma (yet?) */
 	    ret = 0;
-	}
-
-	/* unlikely to work well with small sample */
-	if (ainfo->t2 - ainfo->t1 < 100) {
+	} else if (ainfo->flags & ARMA_XDIFF) {
+	    /* don't use for ARIMAX (yet?) */
 	    ret = 0;
-	}
-
-	/* not sure about this: HR catches the MA terms, but NLS
-	   handles better the AR interactions
-	*/
-	if (ainfo->p > 0 && ainfo->P > 0) {
+	} else if (ainfo->t2 - ainfo->t1 < 100) {
+	    /* unlikely to work well with small sample */
 	    ret = 0;
-	}
-
-	/* overlapping orders screw things up */
-	if ((ainfo->P > 0 && ainfo->p >= ainfo->pd) ||
-	    (ainfo->Q > 0 && ainfo->q >= ainfo->pd)) {
+	} else if (ainfo->p > 0 && ainfo->P > 0) {
+	    /* not sure about this: HR catches the MA terms, but NLS
+	       handles the AR interactions better
+	    */
 	    ret = 0;
-	}
-
-	if (ret && arma_exact_ml(ainfo)) {
+	} else if ((ainfo->P > 0 && ainfo->p >= ainfo->pd) ||
+		   (ainfo->Q > 0 && ainfo->q >= ainfo->pd)) {
+	    /* overlapping orders screw things up */
+	    ret = 0;
+	} else if (ret && arma_exact_ml(ainfo)) {
 	    /* screen for cases where we'll use NLS */
 	    if (ainfo->P > 0) {
 		ret = 0;
@@ -2820,6 +2819,20 @@ static int prefer_hr_init (arma_info *ainfo)
     return ret;
 }
 
+/* Set flag to indicate differencing of exogenous regressors, in the
+   case of an ARIMAX model using native exact ML -- unless this is
+   forbidden by OPT_Y.
+*/
+
+static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
+{
+    if ((ainfo->flags & ARMA_EXACT) &&
+	(ainfo->d > 0 || ainfo->D > 0) &&
+	ainfo->nexo > 0 && !(opt & OPT_Y)) {
+	ainfo->flags |= ARMA_XDIFF;
+    }
+}
+
 MODEL arma_model (const int *list, const char *pqspec,
 		  const double **Z, const DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
@@ -2829,16 +2842,11 @@ MODEL arma_model (const int *list, const char *pqspec,
     MODEL armod;
     arma_info ainfo;
     int init_done = 0;
-    char flags = 0;
     int err = 0;
-
-    if (!(opt & OPT_C)) {
-	flags = ARMA_EXACT;
-    }
 
     vprn = set_up_verbose_printer(opt, prn);
 
-    arma_info_init(&ainfo, flags, pqspec, pdinfo);
+    arma_info_init(&ainfo, opt, pqspec, pdinfo);
     gretl_model_init(&armod); 
 
     alist = gretl_list_copy(list);
@@ -2850,85 +2858,87 @@ MODEL arma_model (const int *list, const char *pqspec,
 	err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
     }
 
-    if (err) {
-	armod.errcode = err;
-	goto bailout;
-    } 
-
-    /* calculate maximum lag */
-    calc_max_lag(&ainfo);
-
-    /* adjust sample range if need be */
-    if (arma_adjust_sample(pdinfo, Z, alist, &ainfo)) {
-        armod.errcode = E_DATA;
-	goto bailout;
+    if (!err) {
+	/* calculate maximum lag */
+	maybe_set_xdiff_flag(&ainfo, opt);
+	calc_max_lag(&ainfo);
     }
 
-    /* allocate initial coefficient vector */
-    coeff = malloc(ainfo.nc * sizeof *coeff);
-    if (coeff == NULL) {
-	armod.errcode = E_ALLOC;
-	goto bailout;
+    if (!err) {
+	/* adjust sample range if need be */
+	err = arma_adjust_sample(pdinfo, Z, alist, &ainfo);
     }
 
-    /* create differenced series if needed */
-    if (ainfo.d > 0 || ainfo.D > 0) {
+    if (!err) {
+	/* allocate initial coefficient vector */
+	coeff = malloc(ainfo.nc * sizeof *coeff);
+	if (coeff == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && (ainfo.d > 0 || ainfo.D > 0)) {
 	err = arima_difference(&ainfo, Z, pdinfo);
+    }
+
+    if (err) {
+	goto bailout;
     }
 
     /* initialize the coefficients: there are 3 possible methods */
 
     /* first pass: see if the user specified some values */
-    err = user_arma_init(coeff, &ainfo, flags, &init_done, vprn);
+    err = user_arma_init(coeff, &ainfo, &init_done, vprn);
     if (err) {
-	armod.errcode = err;
 	goto bailout;
     }
 
-    if (!(flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
+    if (!(ainfo.flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
 	/* pure AR model can be estimated via least squares */
 	ainfo.flags |= ARMA_LS;
-	arma_by_ls(alist, (init_done)? coeff : NULL, Z, pdinfo, 
-		   &ainfo, &armod, vprn);
+	err = arma_by_ls(alist, (init_done)? coeff : NULL, Z, pdinfo, 
+			 &ainfo, &armod, vprn);
 	goto bailout;
     }
 
     /* second pass: try Hannan-Rissanen, if suitable */
     if (!init_done && prefer_hr_init(&ainfo)) {
-	err = hr_init_check(pdinfo, &ainfo);
-	if (!err) {
-	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, vprn);
+	int h_err = hr_init_check(pdinfo, &ainfo);
+
+	if (!h_err) {
+	    h_err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, vprn);
 #if AINIT_DEBUG
-	    if (err) {
+	    if (h_err) {
 		fputs("*** hr_arma_init failed, will try ar_arma_init\n", stderr);
 	    } else {
 		fputs("*** hr_arma_init OK\n", stderr);
 	    }
 #endif
 	}
-	if (!err) {
+	if (!h_err) {
 	    init_done = 1;
 	}
     }
 
     /* third pass: estimate pure AR model by OLS or NLS */
-    if (!init_done) {
+    if (!err && !init_done) {
 	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, 
 			   &armod, vprn);
     }
 
-    if (err) {
-	armod.errcode = err;
-	goto bailout;
-    }
-
-    if (flags & ARMA_EXACT) {
-	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
-    } else {
-	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+    if (!err) {
+	if (ainfo.flags & ARMA_EXACT) {
+	    kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+	} else {
+	    bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+	}
     }
 
  bailout:
+
+    if (err && !armod.errcode) {
+	armod.errcode = err;
+    }
 
     if (armod.errcode) {
 	if (opt & OPT_U) {

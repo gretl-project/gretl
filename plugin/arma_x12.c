@@ -688,9 +688,7 @@ static int write_spc_file (const char *fname,
     fprintf(fp, "series {\n title = \"%s\"\n period = %d\n", 
 	    pdinfo->varname[ainfo->yno], pdinfo->pd);
 
-    if (!arma_exact_ml(ainfo)) {
-	t1 -= ainfo->maxlag;
-    }
+    t1 -= ainfo->maxlag;
     
     make_x12a_date_string(t1, pdinfo, datestr);
     fprintf(fp, " start = %s\n", datestr);
@@ -829,7 +827,6 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     PRN *vprn = NULL;
     MODEL armod;
     arma_info ainfo;
-    char flags = ARMA_X12A;
 #ifdef WIN32
     char *cmd;
 #endif
@@ -842,11 +839,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	opt |= OPT_F;
     }
 
-    if (!(opt & OPT_C)) {
-	flags |= ARMA_EXACT;
-    }
-
-    arma_info_init(&ainfo, flags, pqspec, pdinfo);
+    arma_info_init(&ainfo, opt | OPT_X, pqspec, pdinfo);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
@@ -909,7 +902,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	    if (gretl_in_gui_mode()) {
 		add_unique_output_file(&armod, path);
 	    }
-	    gretl_model_set_int(&armod, "arma_flags", (int) flags);
+	    gretl_model_set_int(&armod, "arma_flags", (int) ainfo.flags);
 	}	
     } else {
 	armod.errcode = E_UNSPEC;
