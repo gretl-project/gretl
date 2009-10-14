@@ -2057,6 +2057,11 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 	b[j++] = pmod->coeff[i];
     }
 
+    if ((ainfo->flags & ARMA_XDIFF) && ainfo->ifc) {
+	/* is this a good idea? */
+	b[0] /= ainfo->T;
+    }
+
     /* insert near-zeros for nonseasonal MA */
     for (i=0; i<ainfo->nq; i++) {
 	b[q0 + i] = 0.0001;
