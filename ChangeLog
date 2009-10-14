@@ -1,3 +1,7 @@
+version 1.8.6, in progress
+- Fix bug: the "print" command for series fails after 
+  exiting a loop with the --progressive option set
+
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving
   packaged functions that were originally old-style
