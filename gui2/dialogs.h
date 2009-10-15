@@ -143,8 +143,8 @@ void lmax_dialog (double *lmax, double ymax);
 
 int chow_dialog (int tmin, int tmax, int *t, int *dumv);
 
-void iter_control_dialog (const char *title, int *pmaxit, double *ptol, 
-			  int *cancel);
+void iter_control_dialog (int bhhh, int *pmaxit, double *ptol, 
+			  int *lbfgs, int *cancel);
 
 void tex_format_dialog (void);
 

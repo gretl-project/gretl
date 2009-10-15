@@ -1334,8 +1334,7 @@ static int kalman_arma (const int *alist, double *coeff,
     /* BFGS apparatus */
     int maxit = 1000;
     double reltol = 1.0e-12;
-    int fncount = 0;
-    int grcount = 0;
+    int fncount = 0, grcount = 0;
     double *b;
     int i, err = 0;
 
@@ -1429,6 +1428,8 @@ static int kalman_arma (const int *alist, double *coeff,
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
     } else {
+	int save_lbfgs = 0;
+
 	if (r > 3) {
 	    kalman_set_nonshift(K, 1);
 	} else {
@@ -1441,12 +1442,22 @@ static int kalman_arma (const int *alist, double *coeff,
 	    kalman_set_options(K, KALMAN_ARMA_LL);
 	}
 
+	save_lbfgs = libset_get_bool(USE_LBFGS);
+
+	if (!save_lbfgs && (opt & OPT_L)) {
+	    libset_set_bool(USE_LBFGS, 1);
+	}
+
 	err = BFGS_max(b, ainfo->nc, maxit, reltol, 
 		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
 		       NULL, K, opt, prn);
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
 	} 
+
+	if (!save_lbfgs && (opt & OPT_L)) {
+	    libset_set_bool(USE_LBFGS, 0);
+	}
     }
 
     if (!err && ainfo->yscale != 1.0) {
@@ -2371,6 +2382,9 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
 
     if (ainfo->ifc) {
 	b[0] = pmod->coeff[0];
+	if (ainfo->flags & ARMA_XDIFF) {
+	    b[0] /= ainfo->T;
+	}
 	k = 1;
     } 
 
@@ -2452,7 +2466,7 @@ static int hr_arma_init (const int *list, double *coeff,
     pass1v = pass1lags + nexo + 2;
 
     /* dependent variable */
-    if (ainfo->y != NULL) {
+    if (use_preprocessed_y(ainfo)) {
 	y = ainfo->y;
     } else {
 	y = Z[ainfo->yno];
@@ -2854,9 +2868,13 @@ MODEL arma_model (const int *list, const char *pqspec,
     arma_info_init(&ainfo, opt, pqspec, pdinfo);
     gretl_model_init(&armod); 
 
-    alist = gretl_list_copy(list);
-    if (alist == NULL) {
-	err = E_ALLOC;
+    err = incompatible_options(opt, OPT_C | OPT_L);
+
+    if (!err) {
+	alist = gretl_list_copy(list);
+	if (alist == NULL) {
+	    err = E_ALLOC;
+	}
     } 
 
     if (!err) {

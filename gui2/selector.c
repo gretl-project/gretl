@@ -4085,8 +4085,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 {
     selector *sr = g_object_get_data(G_OBJECT(combo), "selector");
     int active = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
-    const char *title = NULL;
-    int maxit;
+    int maxit, bhhh = 0, lbfgs = 0;
     double tol;
     int cancel = 0;
 
@@ -4094,11 +4093,10 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	if (active == 1) {
 	    maxit = libset_get_int(BHHH_MAXITER);
 	    tol = libset_get_double(BHHH_TOLER);
-	    title = N_("BHHH maximizer");
+	    bhhh = 1;
 	} else {
 	    maxit = libset_get_int(BFGS_MAXITER);
 	    tol = libset_get_double(BFGS_TOLER);
-	    title = N_("BFGS maximizer");
 	}
     } else {
 	/* FIXME figure this out for NLS, MLE, GMM ? */
@@ -4114,17 +4112,23 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	tol = 1.0e-6;
     }
     
-    iter_control_dialog(_(title), &maxit, &tol, &cancel);
+    iter_control_dialog(bhhh, &maxit, &tol, &lbfgs, &cancel);
 
     if (!cancel) {
 	int err;
 
-	if (active == 1) {
+	if (bhhh) {
 	    err = libset_set_int(BHHH_MAXITER, maxit);
 	    err += libset_set_double(BHHH_TOLER, tol);
 	} else {
 	    err = libset_set_int(BFGS_MAXITER, maxit);
 	    err += libset_set_double(BFGS_TOLER, tol);
+	}
+
+	if (lbfgs) {
+	    sr->opts |= OPT_L;
+	} else {
+	    sr->opts &= ~OPT_L;
 	}
 
 	if (err) {

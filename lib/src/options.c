@@ -74,6 +74,7 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_C, "conditional", 0 },
     { ARMA,     OPT_G, "opg", 0 },
     { ARMA,     OPT_H, "hessian", 0 },
+    { ARMA,     OPT_L, "lbfgs", 0 },
     { ARMA,     OPT_N, "nc", 0 },    
     { ARMA,     OPT_Q, "quiet", 0 },
     { ARMA,     OPT_U, "continue", 0 },
