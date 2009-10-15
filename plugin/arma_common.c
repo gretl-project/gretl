@@ -29,7 +29,7 @@ struct arma_info_ {
     double *y;       /* dependent variable (possibly differenced) */
     double yscale;   /* scale factor for y */
     int *xlist;      /* list of regressors (armax) */
-    gretl_matrix *dX;   /* differenced regressors (arimax) */
+    gretl_matrix *dX;   /* differenced regressors (ARIMAX) */
     const char *pqspec; /* input string with specific AR, MA lags */
 };
 
@@ -462,14 +462,14 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 
 static void calc_max_lag (arma_info *ainfo)
 {
-    if (!(ainfo->flags & ARMA_EXACT)) {
+    if (ainfo->flags & ARMA_EXACT) {
+	ainfo->maxlag = ainfo->d + ainfo->D * ainfo->pd;
+    } else {
 	/* conditional ML */
 	int pmax = ainfo->p + ainfo->P * ainfo->pd;
 	int dmax = ainfo->d + ainfo->D * ainfo->pd;
 
 	ainfo->maxlag = pmax + dmax;
-    } else {
-	ainfo->maxlag = ainfo->d + ainfo->D * ainfo->pd;
     }
 
 #if ARMA_DEBUG
@@ -478,12 +478,6 @@ static void calc_max_lag (arma_info *ainfo)
 }
 
 #define SAMPLE_DEBUG 0
-
-#define NEW_SAMPLE 1
-
-#if NEW_SAMPLE
-
-/* new version */
 
 static int 
 arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
@@ -583,118 +577,6 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     return 0;
 }
 
-#else
-
-/* old version */
-
-static int 
-arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
-		    arma_info *ainfo)
-{
-    int ypos = arma_list_y_position(ainfo);
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int i, vi, t, t1min;
-    int anymiss;
-
-#if SAMPLE_DEBUG
-    fprintf(stderr, "arma_adjust_sample: at start, t1=%d, t2=%d, maxlag = %d\n",
-	    t1, t2, ainfo->maxlag);
-#endif
-
-    /* determine the starting point for valid data, t1min */
-    t1min = 0;
-    for (t=0; t<=pdinfo->t2; t++) {
-	anymiss = 0;
-	for (i=ypos; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (na(Z[vi][t])) {
-		anymiss = 1;
-		t1min++;
-		break;
-	    }
-	}
-	if (!anymiss) {
-	    break;
-	}
-    }
-
-#if SAMPLE_DEBUG
-    fprintf(stderr, " phase 1: t1min = %d\n", t1min);
-#endif
-
-    /* if the notional starting point, t1, is before the start of
-       valid data, t1min, advance t1 */
-    if (t1 < t1min) {
-	t1 = t1min;
-    }
-    
-    if (!arma_exact_ml(ainfo)) {
-	/* conditional ML: ensure that the sample start allows for
-	   the required lags of y */
-	int t0;
-
-	if (t1 < ainfo->maxlag) {
-	    t1 = ainfo->maxlag;
-	}
-	t0 = t1 - ainfo->maxlag;
-	t1min = t1;
-	vi = list[ypos];
-	for (t=t0; t<t1min; t++) {
-	    if (na(Z[vi][t])) {
-		t1 = t + ainfo->maxlag + 1;
-	    }
-	}
-    }
-
-    /* trim any missing obs from the end of the specified sample
-       range 
-    */
-    for (t=pdinfo->t2; t>=t1; t--) {
-	anymiss = 0;
-	for (i=ypos; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (na(Z[vi][t])) {
-		anymiss = 1;
-		t2--;
-		break;
-	    }
-	}
-	if (!anymiss) {
-	    break;
-	}
-    }
-
-    /* check for missing obs within the sample range */
-    for (t=t1; t<t2; t++) {
-	for (i=ypos; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (na(Z[vi][t])) {
-		gretl_errmsg_sprintf(_("Missing value encountered for "
-				       "variable %d, obs %d"), vi, t + 1);
-		return 1;
-	    }
-	}
-    }
-
-    ainfo->T = t2 - t1 + 1;
-    if (ainfo->T <= ainfo->nc) {
-	/* insufficient observations */
-	return E_DF; 
-    }
-
-#if SAMPLE_DEBUG
-    fprintf(stderr, "arma_adjust_sample: at end, t1=%d, t2=%d\n",
-	    t1, t2);
-#endif
-
-    ainfo->t1 = t1;
-    ainfo->t2 = t2;
-
-    return 0;
-}
-
-#endif
-
 #define ARIMA_DEBUG 0
 
 /* remove the intercept from list of regressors */
@@ -789,12 +671,10 @@ static int check_arma_list (int *list, gretlopt opt,
 			    const double **Z, const DATAINFO *pdinfo,
 			    arma_info *ainfo)
 {
-    int ypos, armax = 0;
+    int ypos = arma_has_seasonal(ainfo) ? 7 : 4;
+    int armax = (list[0] > ypos);
     int hadconst = 0;
     int err = 0;
-
-    ypos = arma_has_seasonal(ainfo) ? 7 : 4;
-    armax = (list[0] > ypos);
 
     if (list[1] < 0 || list[1] > MAX_ARMA_ORDER) {
 	err = 1;
@@ -866,16 +746,14 @@ static int check_arima_list (int *list, gretlopt opt,
 			     const double **Z, const DATAINFO *pdinfo,
 			     arma_info *ainfo)
 {
-    int ypos, armax = 0;
+    int ypos = arma_has_seasonal(ainfo) ? 9 : 5;
+    int armax = (list[0] > ypos);
     int hadconst = 0;
     int err = 0;
 
 #if ARIMA_DEBUG
     printlist(list, "check_arima_list");
 #endif
-
-    ypos = arma_has_seasonal(ainfo) ? 9 : 5;
-    armax = (list[0] > ypos);
 
     if (list[1] < 0 || list[1] > MAX_ARMA_ORDER) {
 	err = 1;

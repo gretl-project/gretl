@@ -537,14 +537,10 @@ int vwin_is_editing (windata_t *vwin)
 
 static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
-    GdkModifierType mods;
-    guint upkey;
-    int editing, Ctrl;
-
-    mods = widget_get_pointer_mask(w);
-    upkey = gdk_keyval_to_upper(key->keyval);
-    editing = vwin_is_editing(vwin);
-    Ctrl = (mods & GDK_CONTROL_MASK);
+    GdkModifierType mods = widget_get_pointer_mask(w);
+    guint upkey = gdk_keyval_to_upper(key->keyval);
+    int editing = vwin_is_editing(vwin);
+    int Ctrl = (mods & GDK_CONTROL_MASK);
 
     if (Ctrl) {
 	if (upkey == GDK_F) {

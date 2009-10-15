@@ -67,6 +67,7 @@ struct _selector {
     GtkWidget *lags_button;
     GtkWidget *hess_button;
     GtkWidget *x12a_button;
+    GtkWidget *xdiff_button;
     GtkWidget *extra[N_EXTRA];
     GtkWidget *radios[N_RADIOS];
     int ci;
@@ -201,6 +202,7 @@ static int garch_q = 1;
 static int arma_const = 1;
 static int arma_x12 = 0;
 static int arma_hessian = 1;
+static int arima_xdiff = 1;
 static int selvar;
 static int offvar;
 static int jrank = 1;
@@ -453,17 +455,22 @@ static void retrieve_arma_info (MODEL *pmod)
     int *laglist;
     char *mask;
 
-    if (acode & ARMA_X12A) {
-	model_opt |= OPT_X;
-    }
-
     if (!(acode & ARMA_EXACT)) {
 	model_opt |= OPT_C;
     } 
 
+    if (acode & ARMA_X12A) {
+	arma_x12 = 1;
+    }    
+
     if (pmod->opt & OPT_G) {
 	/* use OPG for covariance matrix */
 	arma_hessian = 0;
+    }
+
+    if (pmod->opt & OPT_Y) {
+	/* don't difference ARIMAX regressors */
+	arima_xdiff = 0;
     }
 
     arma_p = arma_model_nonseasonal_AR_order(pmod);
@@ -1410,6 +1417,51 @@ static int varflag_dialog (int v)
     return ret;
 }
 
+static int arima_selected (selector *sr)
+{
+    int ret = 0;
+
+    if (sr->extra[2] != NULL) {
+	/* the arima_d spinner */
+	ret = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[2]));
+    }
+
+    if (!ret && sr->extra[6] != NULL) {
+	/* the seasonal arima_D spinner */
+	ret = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[6]));
+    } 
+
+    return ret;
+}
+
+static void xdiff_button_set_sensitive (selector *sr, gboolean s)
+{
+    if (sr->xdiff_button != NULL) { 
+	s = s && arima_selected(sr);
+	gtk_widget_set_sensitive(sr->xdiff_button, s);
+    }
+}
+
+static int rvars1_n_vars (selector *sr)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    int nv = 0;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
+    if (model == NULL) {
+	return 0;
+    }
+
+    if (gtk_tree_model_get_iter_first(model, &iter)) {
+	do {
+	    nv++;
+	} while (gtk_tree_model_iter_next(model, &iter));
+    }
+
+    return nv;
+}
+
 /* add a variable to the listbox at @locus */
 
 static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter, 
@@ -1499,6 +1551,9 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	} else if (VECLAGS_CODE(sr->ci) && locus == SR_RVARS1 &&
 		   sr->extra[EXTRA_LAGS] != NULL) {
 	    gtk_widget_set_sensitive(sr->extra[EXTRA_LAGS], TRUE);
+	}
+	if (sr->ci == ARMA) {
+	    xdiff_button_set_sensitive(sr, TRUE);
 	}
     }
 
@@ -1598,7 +1653,7 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
     } else {
 	return;
     }
-    
+
     context = lag_context_from_widget(GTK_WIDGET(view));
     
     /* work back up, deleting selected rows */
@@ -1622,15 +1677,23 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
 
     sr = g_object_get_data(G_OBJECT(data), "selector");
 
-    if (sr != NULL && sr->add_button != NULL &&
+    if (sr == NULL) {
+	return;
+    }
+
+    if (sr->add_button != NULL &&
 	!GTK_WIDGET_SENSITIVE(sr->add_button) &&
 	!selection_at_max(sr, nsel)) {
 	gtk_widget_set_sensitive(sr->add_button, TRUE);
     }
 
-    if (context && sr != NULL && sr->lags_button != NULL) {
-	if (nsel == 0) {
+    if (nsel == 0) {
+	/* the listbox is now empty */
+	if (context && sr->lags_button != NULL) {
 	    gtk_widget_set_sensitive(sr->lags_button, FALSE);
+	}
+	if (GTK_WIDGET(view) == sr->rvars1 && sr->ci == ARMA) {
+	    xdiff_button_set_sensitive(sr, FALSE);
 	}
     }
 }
@@ -2863,6 +2926,7 @@ static void compose_cmdlist (selector *sr)
 	if (sr->ci == ARMA) {
 	    arma_const = (sr->opts & OPT_N)? 0 : 1;
 	    arma_hessian = (sr->opts & OPT_G)? 0 : 1;
+	    arima_xdiff = (sr->opts & OPT_Y)? 0 : 1;
 	    arma_x12 = (sr->opts & OPT_X)? 1 : 0;
 	}
 	if (sr->ci == GARCH) {
@@ -3694,6 +3758,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->lags_button = NULL;
     sr->hess_button = NULL;
     sr->x12a_button = NULL;
+    sr->xdiff_button = NULL;
 
     for (i=0; i<N_EXTRA; i++) {
 	sr->extra[i] = NULL;
@@ -3871,6 +3936,12 @@ static void toggle_q (GtkWidget *w, selector *sr)
     }	
 }
 
+static void arima_callback (GtkWidget *w, selector *sr)
+{
+    gtk_widget_set_sensitive(sr->xdiff_button, arima_selected(sr) &&
+			     rvars1_n_vars(sr) > 0);
+}
+
 static void build_arma_spinners (selector *sr)
 {
     GtkWidget *lbl, *chk, *tab;
@@ -3921,6 +3992,8 @@ static void build_arma_spinners (selector *sr)
     adj = gtk_adjustment_new(arima_d, 0, 2, 1, 1, 0);
     sr->extra[2] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[2], 1, 2, 1, 2);
+    g_signal_connect(G_OBJECT(sr->extra[2]), "value-changed",
+		     G_CALLBACK(arima_callback), sr);
 
     /* MA lags */
     lbl = gtk_label_new(_(strs[2]));
@@ -3958,6 +4031,10 @@ static void build_arma_spinners (selector *sr)
 	    vmax = (i == 1)? 2 : 4;
 	    adj = gtk_adjustment_new(val, 0, vmax, 1, 1, 0);
 	    sr->extra[j] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	    if (i == 1) {
+		g_signal_connect(G_OBJECT(sr->extra[j]), "value-changed",
+				 G_CALLBACK(arima_callback), sr);
+	    }
 	    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[j++], FALSE, FALSE, 5);
 	}
 
@@ -4045,12 +4122,19 @@ static void call_iters_dialog (GtkWidget *w, selector *sr)
 
 #ifdef HAVE_X12A
 
-static gboolean x12a_vs_hessian (GtkWidget *w, selector *sr)
+static gboolean x12a_vs_native_opts (GtkWidget *w, selector *sr)
 {
-    if (sr->hess_button != NULL) {
-	gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
+    if (sr->hess_button != NULL) {
 	gtk_widget_set_sensitive(sr->hess_button, !s);
+    }
+
+    if (sr->xdiff_button != NULL) {
+	if (s) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->xdiff_button), s);
+	}
+	gtk_widget_set_sensitive(sr->xdiff_button, !s && arima_selected(sr));
     }
 
     return FALSE;
@@ -4224,14 +4308,14 @@ static void build_selector_switches (selector *sr)
 	sr->hess_button = 
 	    gtk_check_button_new_with_label(_("Parameter covariance matrix via Hessian"));
 	pack_switch(sr->hess_button, sr, arma_hessian, TRUE, OPT_G, 0);
+	sr->xdiff_button = gtk_check_button_new_with_label(_("Difference the independent variables"));
+	pack_switch(sr->xdiff_button, sr, arima_xdiff, TRUE, OPT_Y, 0);
+	gtk_widget_set_sensitive(sr->xdiff_button, (arima_d > 0 || arima_D > 0) && !arma_x12);
 #ifdef HAVE_X12A   
 	sr->x12a_button = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
 	pack_switch(sr->x12a_button, sr, arma_x12, FALSE, OPT_X, 0);
 	g_signal_connect(G_OBJECT(sr->x12a_button), "toggled",
-			 G_CALLBACK(x12a_vs_hessian), sr);
-	if (model_opt & OPT_X) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->x12a_button), TRUE);
-	}
+			 G_CALLBACK(x12a_vs_native_opts), sr);
 #endif
     } else if (sr->ci == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Standardize the residuals"));
