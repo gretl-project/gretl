@@ -2527,10 +2527,10 @@ static void read_omit_cutoff (selector *sr)
     }
 }
 
-#define extra_widget_get_int(c) (c == HECKIT || \
-                                 c == INTREG || \
-                                 c == POISSON || \
-                                 c == WLS || \
+#define extra_widget_get_int(c) (c == HECKIT ||		\
+                                 c == INTREG ||		\
+                                 c == POISSON ||	\
+                                 c == WLS ||		\
                                  THREE_VARS_CODE(c))
 
 static void parse_extra_widgets (selector *sr, char *endbit)
@@ -4081,44 +4081,54 @@ static void pack_switch (GtkWidget *b, selector *sr,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
 
-#if 0 /* not ready yet */
-
-static void call_iters_dialog (GtkWidget *w, selector *sr)
+static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 {
-    iterinfo iinfo;
+    selector *sr = g_object_get_data(G_OBJECT(combo), "selector");
+    int active = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+    int maxit;
+    double tol;
     int cancel = 0;
 
-    iinfo.ci = sr->ci;
-
-    /* FIXME need to figure out properly where to get the
-       defaults from, given the command and possible options
-    */
-
-    if (1) {
-	iinfo.maxiters = libset_get_int(BHHH_MAXITER);
-	iinfo.tol = libset_get_double(BHHH_TOLER);
-    } else if (sr->ci == NLS || sr->ci == MLE || sr->ci == GMM) {
-	iinfo.maxiters = 400; /* FIXME: 100*(n+1) or 200*(n+1) */
-	iinfo.tol = libset_get_double(NLS_TOLER);
+    if (sr->ci == ARMA) {
+	if (active == 1) {
+	    maxit = libset_get_int(BHHH_MAXITER);
+	    tol = libset_get_double(BHHH_TOLER);
+	} else {
+	    maxit = libset_get_int(BFGS_MAXITER);
+	    tol = libset_get_double(BFGS_TOLER);
+	}
+    } else {
+	/* FIXME figure this out for NLS, MLE, GMM ? */
+	return;
     } 
+
+    if (maxit <= 0) {
+	maxit = 1000;
+    }  
+
+    if (na(tol)) {
+	/* BHHH ARMA default */
+	tol = 1.0e-6;
+    }
     
-    edit_dialog("Iterative estimation",
-		"Tolerance for convergence",
-		NULL,
-		NULL,
-		&iinfo,
-		ITERATIONS,
-		VARCLICK_NONE,
-		&cancel);
+    iter_control_dialog(&maxit, &tol, &cancel);
 
     if (!cancel) {
-	fprintf(stderr, "iters=%d, tol=%g\n", iinfo.maxiters,
-		iinfo.tol);
-	/* FIXME check and set values */
+	int err;
+
+	if (active == 1) {
+	    err = libset_set_int(BHHH_MAXITER, maxit);
+	    err += libset_set_double(BHHH_TOLER, tol);
+	} else {
+	    err = libset_set_int(BFGS_MAXITER, maxit);
+	    err += libset_set_double(BFGS_TOLER, tol);
+	}
+
+	if (err) {
+	    errbox("Error setting values");
+	}
     }
 }
-
-#endif
 
 #ifdef HAVE_X12A
 
@@ -4185,8 +4195,8 @@ static GtkWidget *mpols_bits_selector (void)
     return hbox;
 }
 
-#define robust_conf(c) (c != LOGIT && c != PROBIT && \
-                        c != OLOGIT && c != OPROBIT && \
+#define robust_conf(c) (c != LOGIT && c != PROBIT &&	\
+                        c != OLOGIT && c != OPROBIT &&	\
                         c != QUANTREG && c != INTREG && \
                         c != MLOGIT)
 
@@ -4367,7 +4377,7 @@ static void unhide_lags_switch (selector *sr)
 
 static void boot_switch_callback (GtkWidget *w, selector *sr)
 {
-    if (get_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)) {
+    if (get_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	sr->opts |= OPT_P;
     } else {
 	sr->opts &= ~OPT_P;
@@ -4725,10 +4735,10 @@ static gboolean arma_estimator_switch (GtkComboBox *box, selector *sr)
 
 static void build_arma_combo (selector *sr)
 {
-    GtkWidget *hbox, *combo;
+    GtkWidget *hbox, *combo, *button;
     static const char *opt_strs[] = {
-        N_("Exact Maximum Likelihood"),
-        N_("Conditional Maximum Likelihood"),
+	N_("Exact Maximum Likelihood"),
+	N_("Conditional Maximum Likelihood"),
 	NULL
     };
     static gretlopt opts[] = { 
@@ -4749,9 +4759,16 @@ static void build_arma_combo (selector *sr)
     combo = gretl_opts_combo_full(&arma_opts, deflt, 
 				  G_CALLBACK(arma_estimator_switch),
 				  sr);
+    g_object_set_data(G_OBJECT(combo), "selector", sr);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
+
+    button = gtk_button_new_with_label(_("Configure"));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(call_iters_dialog), combo);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
 

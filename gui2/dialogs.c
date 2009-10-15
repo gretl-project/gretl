@@ -1210,6 +1210,75 @@ void rand_seed_dialog (void)
     gtk_widget_show_all(dlg);
 }
 
+void iter_control_dialog (int *pmaxit, double *ptol, int *cancel)
+{
+    GtkWidget *dlg;
+    GtkWidget *tmp, *hbox, *vbox;
+    double v1;
+    int v2;
+    char *s, numstr[32];
+
+    dlg = gretl_dialog_new(_("gretl: iteration controls"), NULL,
+			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    sprintf(numstr, "%g", *ptol);
+    s = strchr(numstr, '-');
+    *s = '\0';
+    v1 = atof(numstr);
+    v2 = atoi(s+1);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Maximum iterations:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tmp = gtk_spin_button_new_with_range(100, 100000, 100);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), *pmaxit);
+    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+		     G_CALLBACK(set_int_from_spinner), pmaxit);
+    gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Convergence tolerance:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tmp = gtk_spin_button_new_with_range(1.00, 9.99, 0.01);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), v1);
+    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+		     G_CALLBACK(set_double_from_spinner), &v1);
+    gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
+
+    tmp = gtk_label_new("E-");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+    tmp = gtk_spin_button_new_with_range(2, 14, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), v2);
+    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+		     G_CALLBACK(set_int_from_spinner), &v2);
+    gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+
+    /* Cancel button */
+    cancel_delete_button(hbox, dlg, cancel);
+    
+    /* OK button */
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    gtk_widget_grab_default(tmp);
+
+    gtk_widget_show_all(dlg);
+
+    if (!*cancel) {
+	sprintf(numstr, "%fe-%d", v1, v2);
+	*ptol = atof(numstr);
+    }
+}
+
 /* apparatus for setting sample range */
 
 struct range_setting {
