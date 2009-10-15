@@ -1210,7 +1210,8 @@ void rand_seed_dialog (void)
     gtk_widget_show_all(dlg);
 }
 
-void iter_control_dialog (int *pmaxit, double *ptol, int *cancel)
+void iter_control_dialog (const char *title, int *pmaxit, double *ptol, 
+			  int *cancel)
 {
     GtkWidget *dlg;
     GtkWidget *tmp, *hbox, *vbox;
@@ -1228,6 +1229,11 @@ void iter_control_dialog (int *pmaxit, double *ptol, int *cancel)
     *s = '\0';
     v1 = atof(numstr);
     v2 = atoi(s+1);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(title);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Maximum iterations:"));

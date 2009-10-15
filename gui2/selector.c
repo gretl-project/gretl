@@ -4085,6 +4085,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 {
     selector *sr = g_object_get_data(G_OBJECT(combo), "selector");
     int active = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+    const char *title = NULL;
     int maxit;
     double tol;
     int cancel = 0;
@@ -4093,9 +4094,11 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	if (active == 1) {
 	    maxit = libset_get_int(BHHH_MAXITER);
 	    tol = libset_get_double(BHHH_TOLER);
+	    title = N_("BHHH maximizer");
 	} else {
 	    maxit = libset_get_int(BFGS_MAXITER);
 	    tol = libset_get_double(BFGS_TOLER);
+	    title = N_("BFGS maximizer");
 	}
     } else {
 	/* FIXME figure this out for NLS, MLE, GMM ? */
@@ -4111,7 +4114,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	tol = 1.0e-6;
     }
     
-    iter_control_dialog(&maxit, &tol, &cancel);
+    iter_control_dialog(_(title), &maxit, &tol, &cancel);
 
     if (!cancel) {
 	int err;
@@ -4767,7 +4770,7 @@ static void build_arma_combo (selector *sr)
     button = gtk_button_new_with_label(_("Configure"));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(call_iters_dialog), combo);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
