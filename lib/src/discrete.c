@@ -27,7 +27,6 @@
 #define LPDEBUG 0
 
 #define CHOL_TINY 1.0e-13
-#define OPROBIT_TOL 1.0e-12
 
 typedef struct op_container_ op_container;
 
@@ -756,6 +755,7 @@ static int do_ordered (int ci, int ndum,
     int i, npar;
     gretl_matrix *V = NULL;
     double *theta = NULL;
+    double toler;
     int err;
 
     OC = op_container_new(ci, ndum, Z, pmod, opt);
@@ -791,7 +791,9 @@ static int do_ordered (int ci, int ndum,
 	    op_loglik(theta, OC));
 #endif
 
-    err = BFGS_max(theta, npar, maxit, OPROBIT_TOL, 
+    BFGS_defaults(&maxit, &toler, PROBIT);
+
+    err = BFGS_max(theta, npar, maxit, toler, 
 		   &fncount, &grcount, op_loglik, C_LOGLIK,
 		   op_score, OC, (prn != NULL)? OPT_V : OPT_NONE,
 		   prn);

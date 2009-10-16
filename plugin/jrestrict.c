@@ -3073,18 +3073,16 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar)
 
 static int do_bfgs (Jwrap *J, gretlopt opt, PRN *prn)
 {
-    int maxit = 4000;
-    double reltol = 1.0e-11;
-    int fncount = 0;
-    int grcount = 0;
-    int nn = J->theta->rows;
-    int err = 0;
-
-    pputs(prn, "LBFGS: using analytical derivatives\n\n");
-    err = add_gradhelper(J);
+    int err = add_gradhelper(J);
 
     if (!err) {
-	err = LBFGS_max(J->theta->val, nn, maxit, reltol, 
+	int maxit = 4000, fncount = 0, grcount = 0;
+	int nn = J->theta->rows;
+	double toler = 1.0e-11;
+
+	pputs(prn, "LBFGS: using analytical derivatives\n\n");
+
+	err = LBFGS_max(J->theta->val, nn, maxit, toler, 
 			&fncount, &grcount, Jloglik, C_LOGLIK,
 			Jgradient, J, opt, prn);
     }

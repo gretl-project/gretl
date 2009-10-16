@@ -736,11 +736,9 @@ int garch_estimate_mod (const double *y, const double **X,
 			int vopt, PRN *prn)
 {
     garch_container *DH;
-    int npar, err;
-
-    /* BFGS apparatus */
-    int maxit = 1000;
-    double reltol = 1.0e-13;
+    int npar, maxit;
+    double toler;
+    int err = 0;
 
     DH = garch_container_new(y, X, t1, t2, nobs, nc, p, q, 
 			     INIT_VAR_RESID, e, e2, h, 
@@ -751,7 +749,10 @@ int garch_estimate_mod (const double *y, const double **X,
     }
 
     npar = nc + 1 + p + q; 
-    err = BFGS_max(theta, npar, maxit, reltol, 
+
+    BFGS_defaults(&maxit, &toler, GARCH);
+
+    err = BFGS_max(theta, npar, maxit, toler, 
 		   fncount, grcount, loglik, C_LOGLIK,
 		   anal_score, DH, (prn != NULL)? OPT_V : OPT_NONE, 
 		   prn);

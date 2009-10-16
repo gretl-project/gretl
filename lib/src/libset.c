@@ -1600,7 +1600,7 @@ int execute_set_line (const char *line, DATAINFO *pdinfo,
 double libset_get_double (const char *key)
 {
     if (check_for_state()) {
-	return 1;
+	return NADBL;
     }
 
     if (!strcmp(key, QS_BANDWIDTH)) {
@@ -1616,6 +1616,9 @@ double libset_get_double (const char *key)
 	}
 	return state->nls_toler;
     } else if (!strcmp(key, BHHH_TOLER)) {
+	if (na(state->bhhh_toler)) {
+	    state->bhhh_toler = 1.0e-6;
+	}
 	return state->bhhh_toler;
     } else if (!strcmp(key, BFGS_TOLER)) {
 	if (na(state->bfgs_toler)) {
@@ -1628,6 +1631,19 @@ double libset_get_double (const char *key)
 	fprintf(stderr, "libset_get_double: unrecognized "
 		"variable '%s'\n", key);	
 	return 0;
+    }
+}
+
+double libset_get_user_tolerance (const char *key)
+{
+    if (!strcmp(key, NLS_TOLER)) {
+	return state->nls_toler;
+    } else if (!strcmp(key, BHHH_TOLER)) {
+	return state->bhhh_toler;
+    } else if (!strcmp(key, BFGS_TOLER)) {
+	return state->bfgs_toler;
+    } else {
+	return NADBL;
     }
 }
 

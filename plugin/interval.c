@@ -23,8 +23,6 @@
 
 #define INTDEBUG 0
 
-#define INTERVAL_TOL 1.0e-12
-
 enum {
     INT_LOW,   /* no lower bound */
     INT_MID,   /* both bounds */
@@ -792,18 +790,20 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
 			MODEL *mod, gretlopt opt, PRN *prn) 
 {
-    int err;
     int_container *IC;
     gretl_matrix *V = NULL;
-    int fncount, grcount;
-    double normtest = NADBL;
+    int maxit, fncount, grcount;
+    double toler, normtest = NADBL;
+    int err = 0;
 
     IC = int_container_new(list, Z, pdinfo, mod);
     if (IC == NULL) {
 	return E_ALLOC;
     }
 
-    err = BFGS_max(IC->theta, IC->k, 1000, INTERVAL_TOL, 
+    BFGS_defaults(&maxit, &toler, INTREG);
+
+    err = BFGS_max(IC->theta, IC->k, maxit, toler, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
 		   int_score, IC, opt & OPT_V, prn);
 

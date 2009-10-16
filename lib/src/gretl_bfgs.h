@@ -20,7 +20,11 @@
 #ifndef GRETL_BFGS_H
 #define GRETL_BFGS_H
 
-#define RSTEPS 4
+typedef enum {
+    BHHH_MAX,
+    BFGS_MAX,
+    LBFGS_MAX
+} OptimizerCode;
 
 typedef double (*BFGS_CRIT_FUNC) (const double *, void *);
 typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
@@ -54,5 +58,7 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     double ***pZ, DATAINFO *pdinfo,
 		     int *err);
+
+void BFGS_defaults (int *maxit, double *tol, int ci);
 
 #endif /* GRETL_BFGS_H */

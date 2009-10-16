@@ -1331,9 +1331,6 @@ static int kalman_arma (const int *alist, double *coeff,
     gretl_matrix *X = NULL;
     int k = 1 + ainfo->nexo; /* number of exog vars plus space for const */
     int r, r2, m;
-    /* BFGS apparatus */
-    int maxit = 1000;
-    double reltol = 1.0e-12;
     int fncount = 0, grcount = 0;
     double *b;
     int i, err = 0;
@@ -1428,7 +1425,8 @@ static int kalman_arma (const int *alist, double *coeff,
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
     } else {
-	int save_lbfgs = 0;
+	int maxit, save_lbfgs = 0;
+	double toler;
 
 	if (r > 3) {
 	    kalman_set_nonshift(K, 1);
@@ -1448,7 +1446,9 @@ static int kalman_arma (const int *alist, double *coeff,
 	    libset_set_bool(USE_LBFGS, 1);
 	}
 
-	err = BFGS_max(b, ainfo->nc, maxit, reltol, 
+	BFGS_defaults(&maxit, &toler, ARMA);
+
+	err = BFGS_max(b, ainfo->nc, maxit, toler, 
 		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
 		       NULL, K, opt, prn);
 	if (err) {
@@ -2706,10 +2706,6 @@ static model_info *set_up_arma_model_info (arma_info *ainfo,
 {
     double tol = libset_get_double(BHHH_TOLER);
     model_info *arma;
-
-    if (na(tol)) {
-	tol = 1.0e-6;
-    }
 
     arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, pdinfo->n, tol);
 

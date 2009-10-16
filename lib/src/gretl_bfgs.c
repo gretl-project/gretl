@@ -29,6 +29,41 @@
 
 #define BFGS_DEBUG 0
 
+void BFGS_defaults (int *maxit, double *tol, int ci)
+{
+    *maxit = libset_get_int(BFGS_MAXITER);
+    *tol = libset_get_user_tolerance(BFGS_TOLER);
+
+    if (ci != MLE && ci != GMM && *maxit <= 0) {
+	*maxit = 1000;
+    }
+
+    if (ci == PROBIT || ci == INTREG || ci == ARMA) {
+	if (na(*tol)) {
+	    *tol = 1.0e-12;
+	}
+    } else if (ci == TOBIT) {
+	if (na(*tol)) {
+	    *tol = 1.0e-10; /* calibrated against Wm Greene */
+	}
+    } else if (ci == HECKIT) {
+	if (na(*tol)) {
+	    *tol = 1.0e-09;
+	}
+    } else if (ci == GARCH) {
+	if (na(*tol)) {
+	    *tol = 1.0e-13;
+	}
+    } else if (ci == MLE || ci == GMM) {
+	if (*maxit <= 0) {
+	    *maxit = 500;
+	}
+	if (na(*tol)) {
+	    *tol = libset_get_double(BFGS_TOLER);
+	}
+    }
+}
+
 static void free_triangular_array (double **m, int n)
 {
     if (m != NULL) {
@@ -99,6 +134,8 @@ static void hess_b_adjust_ij (double *c, double *b, double *h, int n,
 	    (k == j) * sgn * h[j];
     }
 }
+
+#define RSTEPS 4
 
 /* The algorithm below implements the method of Richardson
    Extrapolation.  It is derived from code in the gnu R package
@@ -391,8 +428,11 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 {
     const gretl_matrix *uinit;
     int uilen, umaxit;
-    double utol, deftol;
+    double utol;
     int i;
+
+    /* we first check to see if we've been a usable initialization
+       for the parameter estimates */
 
     uinit = get_init_vals();
     uilen = gretl_vector_get_length(uinit);
@@ -420,6 +460,9 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 	}
     }
 
+    /* then check for a setting of the maximum number
+       of iterations */
+
     umaxit = libset_get_int(BFGS_MAXITER);
     if (umaxit >= 0) {
 	*maxit = umaxit;
@@ -427,20 +470,19 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 	*maxit = 500;
     }
 
-    deftol = get_default_nls_toler();
-    if (*reltol == 0) {
-	/* unset: use default */
-	*reltol = deftol;
-    }
-    
-    utol = libset_get_double(BFGS_TOLER);
-    if (utol != deftol) {
-	/* user values has actually been set */
+    /* and then the convergence tolerance */
+
+    utol = libset_get_user_tolerance(BFGS_TOLER);
+    if (!na(utol)) {
+	/* the user has actually set a value */
 	*reltol = utol;
 	if (!(opt & OPT_Q)) {
 	    fprintf(stderr, "user-specified BFGS tolerance = %g\n", utol);
 	}
-    }	
+    } else if (*reltol == 0) {
+	/* use the generic BFGS default */
+	*reltol = libset_get_double(BFGS_TOLER);
+    }
 }
 
 int BFGS_orig (double *b, int n, int maxit, double reltol,
@@ -460,7 +502,11 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     double D1, D2;
     int err = 0;
 
+    fprintf(stderr, "BFGS_orig, on entry: maxit=%d, reltol=%g\n", maxit, reltol);
+
     BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
+
+    fprintf(stderr, " after 'get_user_values': maxit=%d, reltol=%g\n", maxit, reltol);
 
     if (gradfunc == NULL) {
 	gradfunc = BFGS_numeric_gradient;

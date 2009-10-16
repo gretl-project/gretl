@@ -24,7 +24,6 @@
 #include "gretl_bfgs.h"
 
 #define HDEBUG 0
-#define HTOL 1.0e-09
 
 typedef struct h_container_ h_container;
 
@@ -862,8 +861,8 @@ int add_lambda_to_ml_vcv (h_container *HC)
 
 int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 {
-    int fncount, grcount;
-    double hij, rho;
+    int maxit, fncount, grcount;
+    double hij, rho, toler;
     double *hess = NULL;
     double *theta = NULL;
     int i, j, k, np = HC->kmain + HC->ksel + 2;
@@ -892,7 +891,9 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 
     theta[np-1] = rho;
 
-    err = BFGS_max(theta, np, 1000, HTOL, 
+    BFGS_defaults(&maxit, &toler, HECKIT);
+
+    err = BFGS_max(theta, np, maxit, toler, 
 		   &fncount, &grcount, h_loglik, C_LOGLIK,
 		   NULL, HC, (prn != NULL)? OPT_V : OPT_NONE, prn);
 

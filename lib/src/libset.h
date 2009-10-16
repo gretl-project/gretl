@@ -84,6 +84,8 @@ int libset_set_bool (const char *key, int val);
 double libset_get_double (const char *key);
 int libset_set_double (const char *key, double val);
 
+double libset_get_user_tolerance (const char *key);
+
 int libset_get_int (const char *key);
 int libset_set_int (const char *key, int val);
 

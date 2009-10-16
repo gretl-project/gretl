@@ -33,6 +33,7 @@
 #include "gretl_func.h"
 #include "libset.h"
 #include "johansen.h"
+#include "gretl_bfgs.h"
 
 /* for graphical selector buttons */
 #include "arrows.h"
@@ -4085,39 +4086,30 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 {
     selector *sr = g_object_get_data(G_OBJECT(combo), "selector");
     int active = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
-    int maxit, bhhh = 0, lbfgs = 0;
+    int maxit, optim = BFGS_MAX;
     double tol;
     int cancel = 0;
 
-    if (sr->ci == ARMA) {
-	if (active == 1) {
-	    maxit = libset_get_int(BHHH_MAXITER);
-	    tol = libset_get_double(BHHH_TOLER);
-	    bhhh = 1;
-	} else {
-	    maxit = libset_get_int(BFGS_MAXITER);
-	    tol = libset_get_double(BFGS_TOLER);
-	}
+    /* FIXME NLS */
+
+    if (sr->ci == ARMA && active == 1) {
+	maxit = libset_get_int(BHHH_MAXITER);
+	tol = libset_get_double(BHHH_TOLER);
+	optim = BHHH_MAX;
     } else {
-	/* FIXME figure this out for NLS, MLE, GMM ? */
-	return;
-    } 
+	BFGS_defaults(&maxit, &tol, sr->ci);
+    }
 
     if (maxit <= 0) {
 	maxit = 1000;
     }  
 
-    if (na(tol)) {
-	/* BHHH ARMA default */
-	tol = 1.0e-6;
-    }
-    
-    iter_control_dialog(bhhh, &maxit, &tol, &lbfgs, &cancel);
+    iter_control_dialog(&optim, &maxit, &tol, &cancel);
 
     if (!cancel) {
 	int err;
 
-	if (bhhh) {
+	if (optim == BHHH_MAX) {
 	    err = libset_set_int(BHHH_MAXITER, maxit);
 	    err += libset_set_double(BHHH_TOLER, tol);
 	} else {
@@ -4125,7 +4117,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	    err += libset_set_double(BFGS_TOLER, tol);
 	}
 
-	if (lbfgs) {
+	if (optim == LBFGS_MAX) {
 	    sr->opts |= OPT_L;
 	} else {
 	    sr->opts &= ~OPT_L;

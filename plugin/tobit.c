@@ -23,8 +23,6 @@
 
 #define TDEBUG 0
 
-#define TOBIT_TOL 1.0e-10 /* calibrated against William Greene */
-
 typedef struct tob_container_ tob_container;
 
 struct tob_container_ {
@@ -562,10 +560,10 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		     double scale, int missvals, PRN *prn)
 {
     tob_container *TC = NULL;
-    int fncount, grcount;
+    int maxit, fncount, grcount;
     double **X;
     gretl_matrix *VCV = NULL;
-    double sigma;
+    double sigma, toler;
     int i, k, n;
     int nv = pmod->list[0];
     int err = 0;
@@ -592,7 +590,9 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	goto bailout;
     }
 
-    err = BFGS_max(TC->theta, TC->k, 1000, TOBIT_TOL, 
+    BFGS_defaults(&maxit, &toler, TOBIT);
+
+    err = BFGS_max(TC->theta, TC->k, maxit, toler, 
 		   &fncount, &grcount, t_loglik, C_LOGLIK,
 		   (1 ? t_score : NULL), 
 		   TC, (prn != NULL)? OPT_V : OPT_NONE,
