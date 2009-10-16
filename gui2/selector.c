@@ -76,6 +76,7 @@ struct _selector {
     int active_var;
     int error;
     int n_left;
+    int state_pushed;
     gretlopt opts;
     char *cmdlist;
     gpointer data;
@@ -2957,6 +2958,10 @@ static void destroy_selector (GtkWidget *w, selector *sr)
 	gtk_main_quit();
     }
 
+    if (sr->state_pushed) {
+	pop_program_state();
+    }
+
     free(sr->cmdlist);
     free(sr);
 
@@ -3775,6 +3780,11 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->active_var = 0;
     sr->error = 0;
     sr->n_left = 0;
+    sr->state_pushed = 0;
+
+    if (ci == ARMA && push_program_state() == 0) {
+	sr->state_pushed = 1;
+    }
 
     sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     open_selector = sr;
@@ -4103,6 +4113,10 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
     if (maxit <= 0) {
 	maxit = 1000;
     }  
+
+    if (optim == BFGS_MAX && libset_get_bool(USE_LBFGS)) {
+	optim = LBFGS_MAX;
+    }
 
     iter_control_dialog(&optim, &maxit, &tol, &cancel);
 

@@ -2001,12 +2001,12 @@ int push_program_state (void)
     newstate = malloc(sizeof *newstate);
 
     if (newstate == NULL) {
-	err = 1;
+	err = E_ALLOC;
     } else {
 	sstack = realloc(state_stack, (ns + 1) * sizeof *sstack);
 	if (sstack == NULL) {
 	    free(newstate);
-	    err = 1;
+	    err = E_ALLOC;
 	}
     }
 

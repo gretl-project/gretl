@@ -1223,7 +1223,7 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     GtkWidget *tmp, *hbox, *vbox;
     const char *title;
     double v1;
-    int v2, lbfgs = 0;
+    int v2, lbfgs;
     char *s, numstr[32];
 
     dlg = gretl_dialog_new(_("gretl: iteration controls"), NULL,
@@ -1239,6 +1239,8 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 
     title = (*optim == BHHH_MAX)? N_("BHHH maximizer") : 
 	N_("BFGS maximizer");
+
+    lbfgs = libset_get_bool(USE_LBFGS);
 
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_(title));
@@ -1279,6 +1281,8 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     if (*optim != BHHH_MAX) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_check_button_new_with_label("Use L-BFGS-B");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
+				     lbfgs);
 	g_signal_connect(G_OBJECT(tmp), "toggled", 
 			 G_CALLBACK(set_bool_from_check), &lbfgs);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
