@@ -25,7 +25,7 @@
 #include "system.h"
 #include "libset.h"
 
-#define ARF_DEBUG 0
+#define AR_DEBUG 0
 
 #ifdef max
 # undef max
@@ -475,8 +475,6 @@ has_real_exog_regressors (MODEL *pmod, const int *dvlags,
     return ret;
 }
 
-#define AR_DEBUG 0
-
 /* Get a value for a lag of the dependent variable.  If method is
    dynamic we prefer lagged prediction to lagged actual.  If method is
    static, we never want the lagged prediction, only the actual.  If
@@ -777,9 +775,9 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     return err;
 }
 
-#if ARF_DEBUG
+#if AR_DEBUG
 # include <stdarg.h>
-static void dprintf (const char *format, ...)
+static void my_dprintf (const char *format, ...)
 {
    va_list args;
 
@@ -789,7 +787,7 @@ static void dprintf (const char *format, ...)
 
    return;
 }
-# define DPRINTF(x) dprintf x
+# define DPRINTF(x) my_dprintf x
 #else 
 # define DPRINTF(x)
 #endif 
@@ -1126,6 +1124,8 @@ static double arma_variance (const double *phi, int p,
     static double sspsi;
     int i, j;
 
+    DPRINTF(("arma_variance: p=%d, q=%d, npsi=%d, l=%d\n", p, q, npsi, l));
+
     if (l == 1) {
 	sspsi = 0.0;
 	psi[0] = 1.0;
@@ -1139,8 +1139,11 @@ static double arma_variance (const double *phi, int p,
 		    psi[j] += theta[j];
 		}
 	    }
+	    DPRINTF(("psi[%d] = %g\n", j, psi[j]));
 	}
     } 
+
+    DPRINTF(("augmenting 'sspsi' using psi(%d) = %g\n", l-1, psi[l-1]));
 
     sspsi += psi[l-1] * psi[l-1];
 
@@ -1153,6 +1156,8 @@ static double arma_variance (const double *phi, int p,
    computing the AR portion of the forecast. "beta" below
    is the array of ARMAX coefficients, not including the
    constant.
+
+   FIXME new ARIMAX?
 */
 
 static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
@@ -1598,6 +1603,8 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	   sample */
 	pmax = max_ar_lag(fc, pmod, p);
 	npsi = fc->t2 - fc->t1 + 1;
+	/* npsi = fc->t2 - pmod->t2; */
+	DPRINTF(("pmax = %d, npsi = %d\n", pmax, npsi));
 	set_up_ar_fcast_variance(fc, pmod, pmax, npsi, &phi, &psi, &errphi);
     }
 
@@ -1683,6 +1690,8 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	    if (t > pmod->t2) {
 		vl = arma_variance(phi, pmax, NULL, 0, psi, npsi, t - pmod->t2); 
 		fc->sderr[t] = pmod->sigma * sqrt(vl);
+		DPRINTF(("sderr[%d] = %g * sqrt(%g) = %g\n", t, pmod->sigma, 
+			 vl, fc->sderr[t]));
 	    } else {
 		fc->sderr[t] = NADBL;
 	    }
