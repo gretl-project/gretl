@@ -751,6 +751,14 @@
 	  <effect>use X-12-ARIMA for estimation</effect>
         </option>
 	<option>
+	  <flag>--lbfgs</flag>
+	  <effect>use L-BFGS-B maximizer</effect>
+	</option>
+	<option>
+	  <flag>--y-diff-only</flag>
+	  <effect>ARIMAX special, see below</effect>
+	</option>
+	<option>
 	  <flag>--continue</flag>
 	  <effect>continue on numerical errors</effect>
 	</option>
@@ -851,6 +859,24 @@
       </para>
 
       <para context="cli">
+	The option <lit>--lbfgs</lit> is specific to estimation using
+	native ARMA code and exact ML: it calls for use of the 
+	<quote>limited memory</quote> L-BFGS-B algorithm in place
+	of the regular BFGS maximizer.  This may help in some
+	instances where convergence is difficult to achieve.
+      </para>
+
+      <para context="cli">
+	The option <lit>--y-diff-only</lit> is specific to estimation of
+	ARIMAX models (models with a non-zero order of integration and
+	including exogenous regressors), and applies only when gretl's native
+	exact ML is used. For such models the default behavior is to
+	difference both the dependent variable and the regressors, but when
+	this option is specified only the dependent variable is differenced,
+	the regressors remaining in level form.
+      </para>
+
+      <para context="cli">
 	In general if a gretl command fails to complete successfully,
 	execution of a script is halted.  However, if the
 	<lit>--continue</lit> option is given for this command, execution
@@ -896,6 +922,26 @@
       <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
+  </command>
+
+  <command name="bfgs-config" section="Estimation" label="BFGS options"
+    context="gui">
+    <description>
+      <para>
+	This dialog allows you to control some aspects of the operation of the
+	BFGS maximizer.  In case the maximizer fails to converge it may help
+	matters, in some cases, to increase the number of iterations allowed
+	and/or to increase (make more permissive) the convergence tolerance.
+	However, you should be suspicious of results obtained using a high
+	tolerance and should consider the possibility that the model you
+	are estimating is misspecified. 
+      </para>
+      <para>
+	For most applications we recommend use of the regular BFGS maximizer
+	but for some problems the <quote>limited memory</quote> variant of the
+	algorithm, L-BFGS-B, may produce more rapid convergence.
+      </para>
+    </description>
   </command>
 
   <command name="bootstrap" section="Tests" label="Bootstrap options"

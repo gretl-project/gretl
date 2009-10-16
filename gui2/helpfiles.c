@@ -134,6 +134,7 @@ static struct gui_help_item gui_help_items[] = {
     { GPT_CURVE,      "curve" }, 
     { SAVE_SESSION,   "save-session" },
     { SAVE_CMD_LOG,   "save-script" },
+    { BFGS_CONFIG,    "bfgs-config" },
     { -1,             NULL },
 };
 

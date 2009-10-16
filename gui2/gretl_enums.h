@@ -104,6 +104,7 @@ enum extra_cmds {
     OPROBIT,
     IV_LIML,
     IV_GMM,
+    BFGS_CONFIG,
     GUI_CMD_MAX
 };
 

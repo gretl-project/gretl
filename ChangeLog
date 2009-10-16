@@ -1,6 +1,13 @@
 version 1.8.6, in progress
 - Fix bug: the "print" command for series fails after 
   exiting a loop with the --progressive option set
+- ARIMAX models: follow the practice of most software
+  and difference both the dependent variable and the
+  exogenous regressors; a new option, --y-diff-only,
+  restores the old behavior of leaving the regressors in
+  levels
+- arima: fix some "corner case" bugs and extend the options
+  that can be controlled via the GUI
 
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving

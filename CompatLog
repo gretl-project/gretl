@@ -1,3 +1,13 @@
+version 1.8.6, in progress
+
+ARIMAX models (i.e. ARIMA models with non-zero order of 
+integration and including exogenous regressors): we now
+follow the practice of most ARIMA software, and apply the
+differencing operator to both the dependent variable
+and the exogenous regressors.  Previously gretl left the
+regressors in level form; you can reinstate that
+behavior via a new "arima" option, --y-diff-only.
+
 10/10/2009 version 1.8.5
 
 The --long option to the "print" command has been removed,

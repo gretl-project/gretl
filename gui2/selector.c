@@ -4123,7 +4123,8 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	optim = LBFGS_MAX;
     }
 
-    iter_control_dialog(&optim, &maxit, &tol, &cancel);
+    iter_control_dialog(&optim, &maxit, &tol, &cancel,
+			sr->dlg);
 
     if (!cancel) {
 	int err;

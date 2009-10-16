@@ -1221,17 +1221,25 @@ static void bfgs_mode_callback (GtkToggleButton *button, int *s)
 }
 
 void iter_control_dialog (int *optim, int *pmaxit, double *ptol, 
-			  int *cancel)
+			  int *cancel, GtkWidget *parent)
 {
-    GtkWidget *dlg;
+    static GtkWidget *dlg;
     GtkWidget *tmp, *hbox, *vbox;
     const char *title;
     double v1;
     int v2;
     char *s, numstr[32];
 
-    dlg = gretl_dialog_new(_("gretl: iteration controls"), NULL,
-			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
+    if (dlg != NULL) {
+	gtk_window_present(GTK_WINDOW(dlg));
+	return;
+    }
+
+    dlg = gretl_dialog_new(_("gretl: iteration controls"), parent,
+			   GRETL_DLG_BLOCK);
+
+    g_signal_connect(G_OBJECT(dlg), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed), &dlg);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
@@ -1301,6 +1309,9 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);
+
+    /* Help button */
+    context_help_button(hbox, BFGS_CONFIG);
 
     gtk_widget_show_all(dlg);
 
