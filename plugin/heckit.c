@@ -24,7 +24,7 @@
 #include "gretl_bfgs.h"
 
 #define HDEBUG 0
-#define HYPERBOLIC 1
+#define HYPERBOLIC 0
 
 typedef struct h_container_ h_container;
 
