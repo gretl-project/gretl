@@ -24,6 +24,7 @@
 #include "gretl_bfgs.h"
 
 #define HDEBUG 0
+#define HYPERBOLIC 1
 
 typedef struct h_container_ h_container;
 
@@ -475,10 +476,22 @@ static int h_container_fill (h_container *HC, const int *Xl,
     return err;
 }
 
+#if HYPERBOLIC
+static double hyperbolic(double x, double *irhoc)
+{
+    double ex = exp(x);
+    double ex2 = ex*ex;
+    double rho = (ex2 - 1)/(ex2 + 1);
+    *irhoc = 0.5*(ex + 1/ex);
+    return rho;
+}
+#endif
+
 static double h_loglik (const double *param, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
     double lnsig, x, ll = NADBL;
+    double irhoc;
     int kmax = HC->kmain + HC->ksel;
     int i, j, err = 0;
     
@@ -493,8 +506,13 @@ static double h_loglik (const double *param, void *ptr)
 
     HC->sigma = param[kmax];
     lnsig = log(HC->sigma);
-
+    
+#if HYPERBOLIC
+    HC->rho = hyperbolic(param[kmax+1], &irhoc);
+#else
     HC->rho = param[kmax+1];
+    irhoc = 1.0 / sqrt(1 - HC->rho * HC->rho);
+#endif
 
 #if HDEBUG > 1
     gretl_matrix_print(HC->beta, "beta");
@@ -503,9 +521,15 @@ static double h_loglik (const double *param, void *ptr)
     fputc('\n', stderr);
 #endif
 
+#if HYPERBOLIC
+    if (HC->sigma <= 0) {
+	return NADBL;
+    } 
+#else
     if (HC->sigma <= 0 || fabs(HC->rho) >= 1) {
 	return NADBL;
     } 
+#endif
 
     err = gretl_matrix_multiply(HC->reg, HC->beta, HC->fitted);
     
@@ -523,7 +547,6 @@ static double h_loglik (const double *param, void *ptr)
     }
 
     if (!err) {
-	double rhofunc = 1 / sqrt(1 - HC->rho * HC->rho);
 	double ll0 = 0, ll1 = 0, ll2 = 0;
 	double ut, ndxt;
 	int sel;
@@ -536,8 +559,12 @@ static double h_loglik (const double *param, void *ptr)
 	    ndxt = gretl_vector_get(HC->ndx, i);
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j++);
-		x = (ndxt + HC->rho*ut) * rhofunc;
+		x = (ndxt + HC->rho*ut) * irhoc;
+#if 0
 		ll1 += log(normal_pdf(ut)) - lnsig;
+#else
+		ll1 -= LN_SQRT_2_PI + 0.5*ut*ut + lnsig;
+#endif
 		ll2 += log(normal_cdf(x));
 	    } else {
 		ll0 += log(normal_cdf(-ndxt));
@@ -889,7 +916,12 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 	rho = (rho > 0)? 0.99 : -0.99;
     }
 
+
+#if HYPERBOLIC
+    theta[np-1] = 0.5 * log((1+rho)/(1-rho));
+#else
     theta[np-1] = rho;
+#endif
 
     BFGS_defaults(&maxit, &toler, HECKIT);
 
