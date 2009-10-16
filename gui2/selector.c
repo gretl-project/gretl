@@ -475,6 +475,10 @@ static void retrieve_arma_info (MODEL *pmod)
 	arima_xdiff = 0;
     }
 
+    if (pmod->opt & OPT_L) {
+	model_opt |= OPT_L;
+    }
+
     arma_p = arma_model_nonseasonal_AR_order(pmod);
     arma_q = arma_model_nonseasonal_MA_order(pmod);
     arima_d = gretl_model_get_int(pmod, "arima_d");
@@ -3783,6 +3787,9 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->state_pushed = 0;
 
     if (ci == ARMA && push_program_state() == 0) {
+	if (model_opt & OPT_L) {
+	    libset_set_bool(USE_LBFGS, 1);
+	}
 	sr->state_pushed = 1;
     }
 
@@ -4100,8 +4107,6 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
     double tol;
     int cancel = 0;
 
-    /* FIXME NLS */
-
     if (sr->ci == ARMA && active == 1) {
 	maxit = libset_get_int(BHHH_MAXITER);
 	tol = libset_get_double(BHHH_TOLER);
@@ -4254,7 +4259,7 @@ static void build_selector_switches (selector *sr)
 	if (robust_conf(sr->ci)) {
 	    GtkWidget *b2;
 
-	    b2 = gtk_button_new_with_label(_("configure"));
+	    b2 = gtk_button_new_with_label(_("Configure"));
 	    g_signal_connect(G_OBJECT(b2), "clicked",
 			     G_CALLBACK(hc_config), sr);
 	    gtk_widget_set_sensitive(b2, using_hc_by_default());
@@ -4273,17 +4278,8 @@ static void build_selector_switches (selector *sr)
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
 	    pack_switch(tmp, sr, arma_const, TRUE, OPT_N, 0);
 	}
-#if 0 /* testing */
-	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = gtk_button_new_with_label(_("Configure"));
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(call_iters_dialog), sr);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-#else
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
-#endif
     } else if (sr->ci == COINT2 || sr->ci == VECM || 
 	       sr->ci == VAR || sr->ci == VLAGSEL) {
 	if (sr->ci == VAR || sr->ci == VLAGSEL) {
@@ -4777,7 +4773,7 @@ static void build_arma_combo (selector *sr)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
 
-    button = gtk_button_new_with_label(_("Configure"));
+    button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(call_iters_dialog), combo);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);

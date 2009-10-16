@@ -502,11 +502,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     double D1, D2;
     int err = 0;
 
-    fprintf(stderr, "BFGS_orig, on entry: maxit=%d, reltol=%g\n", maxit, reltol);
-
     BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
-
-    fprintf(stderr, " after 'get_user_values': maxit=%d, reltol=%g\n", maxit, reltol);
 
     if (gradfunc == NULL) {
 	gradfunc = BFGS_numeric_gradient;

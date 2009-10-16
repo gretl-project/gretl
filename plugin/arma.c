@@ -1093,6 +1093,16 @@ static void maybe_rescale_hessian (int kopt, double *vcv,
     }
 }
 
+static int arima_ydiff_only (arma_info *ainfo)
+{
+    if ((ainfo->d > 0 || ainfo->D > 0) &&
+	ainfo->nexo > 0 && !(ainfo->flags & ARMA_XDIFF)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static int arma_use_hessian (gretlopt opt)
 {
     int ret = 1;
@@ -1181,6 +1191,12 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 	write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
 	arma_model_add_roots(pmod, ainfo, b);
 	gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
+	if (ainfo->flags & ARMA_LBFGS) {
+	    pmod->opt |= OPT_L;
+	}
+	if (arima_ydiff_only(ainfo)) {
+	    pmod->opt |= OPT_Y;
+	}
     }
 
     return err;
@@ -1442,8 +1458,11 @@ static int kalman_arma (const int *alist, double *coeff,
 
 	save_lbfgs = libset_get_bool(USE_LBFGS);
 
-	if (!save_lbfgs && (opt & OPT_L)) {
+	if (save_lbfgs) {
+	    ainfo->flags |= ARMA_LBFGS;
+	} else if (opt & OPT_L) {
 	    libset_set_bool(USE_LBFGS, 1);
+	    ainfo->flags |= ARMA_LBFGS;
 	}
 
 	BFGS_defaults(&maxit, &toler, ARMA);

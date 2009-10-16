@@ -31,7 +31,8 @@ typedef enum {
 			    variance matrix of state for Kalman filter
 			 */
     ARMA_LS    = 1 << 5, /* using conditional ML, and O/NLS == CML */
-    ARMA_XDIFF = 1 << 6  /* ARIMA: exogenous regressors are differenced */
+    ARMA_XDIFF = 1 << 6, /* ARIMA: exogenous regressors are differenced */
+    ARMA_LBFGS = 1 << 7  /* using L-BFGS-B with native exact ML */
 } ArmaFlags;
 
 typedef struct CoeffIntervals_ CoeffIntervals;
