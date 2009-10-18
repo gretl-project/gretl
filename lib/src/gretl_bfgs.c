@@ -774,7 +774,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
       recommended, and large values of m can result in excessive
       computing time. The range 3 <= m <= 20 is recommended.
     */
-    m = 10; /* was initially set to 5 */
+    m = 8; /* was initially set to 5 */
 
     wadim = (2*m+4)*n + 12*m*m + 12*m;
 
