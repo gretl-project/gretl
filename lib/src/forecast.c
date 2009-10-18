@@ -1150,6 +1150,70 @@ static double arma_variance (const double *phi, int p,
     return sspsi;
 }
 
+#define invalid_obs(x,t) ((t) < 0 || na(x[t]))
+
+static double arima_difference_obs (const double *x, int t, 
+				    int d, int D, int s)
+{
+    double dx = x[t];
+
+    if (na(dx)) {
+	return NADBL;
+    }
+
+    if (d > 0) {
+	if (invalid_obs(x, t-1)) {
+	    return NADBL;
+	}
+	dx -= x[t-1];
+    } 
+    if (d == 2) {
+	if (invalid_obs(x, t-2)) {
+	    return NADBL;
+	}
+	dx -= x[t-1] - x[t-2];
+    }
+    if (D > 0) {
+	if (invalid_obs(x, t-s)) {
+	    return NADBL;
+	}
+	dx -= x[t-s];
+	if (d > 0) {
+	    if (invalid_obs(x, t-s-1)) {
+		return NADBL;
+	    }
+	    dx += x[t-s-1];
+	}
+	if (d == 2) {
+	    if (invalid_obs(x, t-s-2)) {
+		return NADBL;
+	    }
+	    dx += x[t-s-1] - x[t-s-2];
+	}	    
+    } 
+    if (D == 2) {
+	if (invalid_obs(x, t-2*s)) {
+	    return NADBL;
+	}
+	dx -= x[t-s] - x[t-2*s];
+	if (d > 0) {
+	    if (invalid_obs(x, t-s-1) || invalid_obs(x, t-2*s-1)) {
+		return NADBL;
+	    }
+	    dx += x[t-s-1] - x[t-2*s-1];
+	}
+	if (d == 2) {
+	    if (invalid_obs(x, t-s-2) || invalid_obs(x, t-2*s-2)) {
+		return NADBL;
+	    }
+	    dx += x[t-s-1] - x[t-2*s-1];
+	    dx -= x[t-s-2] - x[t-2*s-2];
+	}
+    }
+
+    return dx;
+}
+
 /* When forecasting based on an armax model estimated using X12A,
    or via the Kalman filter, we need to form the series X\beta
    so that we can subtract X\beta_{t-i} from y_{t-i} in
@@ -1157,7 +1221,9 @@ static double arma_variance (const double *phi, int p,
    is the array of ARMAX coefficients, not including the
    constant.
 
-   FIXME new ARIMAX?
+   If the model is ARIMAX and was NOT estimated with the
+   --y-diff-only option (OPT_Y) then the regressors X have
+   to be differenced in this context.
 */
 
 static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
@@ -1166,12 +1232,21 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
 {
     double *Xb;
     double x;
-    int miss;
-    int i, j, t;
+    int miss, diff = 0;
+    int d, D, s = 0;
+    int i, j, t, vi;
 
     Xb = malloc((fc->t2 + 1) * sizeof *Xb);
     if (Xb == NULL) {
 	return NULL;
+    }
+
+    d = gretl_model_get_int(pmod, "arima_d");
+    D = gretl_model_get_int(pmod, "arima_D");
+
+    if ((d > 0 || D > 0) && !(pmod->opt & OPT_Y)) {
+	s = gretl_model_get_int(pmod, "arma_pd");
+	diff = 1;
     }
 
     for (t=0; t<=fc->t2; t++) {
@@ -1179,10 +1254,15 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
 	miss = 0;
 	j = 0;
 	for (i=1; i<=xlist[0] && !miss; i++) {
-	    if (xlist[i] == 0) {
+	    vi = xlist[i];
+	    if (vi == 0) {
 		Xb[t] += pmod->coeff[0];
 	    } else {
-		x = Z[xlist[i]][t];
+		if (diff) {
+		    x = arima_difference_obs(Z[vi], t, d, D, s);
+		} else {
+		    x = Z[vi][t];
+		}
 		if (na(x)) {
 		    Xb[t] = NADBL;
 		    miss = 1;
@@ -1226,7 +1306,6 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     double *Xb = NULL;
     const double *beta;
     const double *y;
-
     double xval, yval, vl;
     double mu = NADBL;
     int xvars, yno;
