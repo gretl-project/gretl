@@ -3855,13 +3855,14 @@ static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 			      PRN *prn, ExecState *s)
 {
     int err = pmod->errcode;
-
-    if (!err && !gretl_looping_currently()) {
-	printmodel(pmod, pdinfo, s->cmd->opt, prn);
-	s->pmod = pmod;
-    }
-
-    if (numerical_error(err) && allow_continue(pmod)) {
+    
+    if (!err) {
+	set_gretl_errno(0);
+	if (!gretl_looping_currently()) {
+	    printmodel(pmod, pdinfo, s->cmd->opt, prn);
+	    s->pmod = pmod;
+	}
+    } else if (numerical_error(err) && allow_continue(pmod)) {
 	errmsg(err, prn);
 	set_gretl_errno(err);
 	err = 0;

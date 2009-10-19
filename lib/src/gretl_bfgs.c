@@ -300,7 +300,7 @@ double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
 
  bailout:
 
-    if (*err != E_ALLOC) {
+    if (*err != 0 && *err != E_ALLOC) {
 	gretl_errmsg_set(_("Failed to compute numerical Hessian"));
     }
 
