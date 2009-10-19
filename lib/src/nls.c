@@ -732,7 +732,7 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
    nls residual variable.  
 */
 
-static int nl_missval_check (nlspec *s)
+static int nl_missval_check (nlspec *s, const DATAINFO *pdinfo)
 {
     int t1 = s->t1, t2 = s->t2;
     int t, v;
@@ -787,7 +787,8 @@ static int nl_missval_check (nlspec *s)
     for (t=t1; t<=t2; t++) {
 	if (na((*s->Z)[v][t])) {
 	    fprintf(stderr, "  after setting t1=%d, t2=%d, "
-		    "got NA for var %d at obs %d\n", t1, t2, v, t);
+		    "got NA for var %d (%s) at obs %d\n", t1, t2, v, 
+		    pdinfo->varname[v], t);
 #if NLS_SKIP_MISSING
 	    return nls_make_trimmed_dataset(s, t1, t2);
 #else
@@ -2859,7 +2860,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     if (spec->ci == GMM) {
 	err = gmm_missval_check_etc(spec);
     } else {
-	err = nl_missval_check(spec);
+	err = nl_missval_check(spec, pdinfo);
     }
 
     if (err) {

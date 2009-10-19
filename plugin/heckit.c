@@ -480,7 +480,11 @@ static double h_loglik (const double *param, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
     double lnsig, x, ll = NADBL;
+#if HYPERBOLIC
+    double ca;
+#else
     double irhoc;
+#endif
     int kmax = HC->kmain + HC->ksel;
     int i, j, err = 0;
     
@@ -498,7 +502,7 @@ static double h_loglik (const double *param, void *ptr)
     
 #if HYPERBOLIC
     HC->rho = tanh(param[kmax+1]);
-    double ca = cosh(param[kmax+1]);
+    ca = cosh(param[kmax+1]);
 #else
     HC->rho = param[kmax+1];
     irhoc = 1.0 / sqrt(1 - HC->rho * HC->rho);
@@ -550,7 +554,7 @@ static double h_loglik (const double *param, void *ptr)
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j++);
 #if HYPERBOLIC
-		x = ca*(ndxt + HC->rho*ut);
+		x = ca * (ndxt + HC->rho*ut);
 #else
 		x = (ndxt + HC->rho*ut) * irhoc;
 #endif
@@ -887,15 +891,14 @@ static int adjust_ml_vcv_hyperbolic (h_container *HC)
       \frac{\partial \rho}{\partial a} = 1 - \rho^2
     */
 
+    double x, jac = 1 - (HC->rho * HC->rho);
     int npar = HC->vcv->rows;
     int irho = npar - 1;
     int i, err = 0;
-    double x, jac = 1 - (HC->rho * HC->rho);
-    err = 0;
 
     for (i=0; i<npar; i++) {
-	    x = gretl_matrix_get(HC->vcv, i, irho);
-	if (i==irho) {
+	x = gretl_matrix_get(HC->vcv, i, irho);
+	if (i == irho) {
 	    gretl_matrix_set(HC->vcv, irho, irho, x*jac*jac);
 	} else {
 	    gretl_matrix_set(HC->vcv, irho, i, x*jac);

@@ -3209,27 +3209,40 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 	}
     }
 
+    *note = '\0';
+
     p = strrchr(fname, SLASH);
     if (p != NULL) {
-	basename = g_strdup(p + 1);
-    } 
+	fname = p + 1;
+    }
 
-    snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
-	     src, (basename == NULL)? fname : basename, print_time(tstr));
-
-    g_free(basename);
-
-    if (pdinfo->descrip == NULL) {
-	pdinfo->descrip = gretl_strdup(note);
+    if (g_utf8_validate(fname, -1, NULL)) {
+	snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
+		 src, fname, print_time(tstr));
     } else {
-	int dlen = strlen(pdinfo->descrip);
-	int nlen = strlen(note);
-	char *tmp = realloc(pdinfo->descrip, dlen + nlen + 3);
+	gsize b = 0;
 
-	if (tmp != NULL) {
-	    pdinfo->descrip = tmp;
-	    strcat(pdinfo->descrip, "\n\n");
-	    strncat(pdinfo->descrip, note, nlen);
+	trfname = g_locale_to_utf8(fname, -1, NULL, &b, NULL);
+	if (trfname != NULL) {
+	    snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
+		     src, trfname, print_time(tstr));
+	    g_free(trfname);
+	}
+    }
+
+    if (*note != '\0') {
+	if (pdinfo->descrip == NULL) {
+	    pdinfo->descrip = gretl_strdup(note);
+	} else {
+	    int dlen = strlen(pdinfo->descrip);
+	    int nlen = strlen(note);
+	    char *tmp = realloc(pdinfo->descrip, dlen + nlen + 3);
+
+	    if (tmp != NULL) {
+		pdinfo->descrip = tmp;
+		strcat(pdinfo->descrip, "\n\n");
+		strncat(pdinfo->descrip, note, nlen);
+	    }
 	}
     }
 }
