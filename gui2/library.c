@@ -1377,6 +1377,10 @@ int out_of_sample_info (int add_ok, int *t2)
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
+		gchar *cline = g_strdup_printf("dataset addobs %d", n);
+
+		record_command_line(cline);
+		g_free(cline);
 		mark_dataset_as_modified();
 		drop_obs_state(TRUE);
 		*t2 += n;

@@ -1143,9 +1143,10 @@ static double arma_variance (const double *phi, int p,
 	}
     } 
 
-    DPRINTF(("augmenting 'sspsi' using psi(%d) = %g\n", l-1, psi[l-1]));
-
     sspsi += psi[l-1] * psi[l-1];
+
+    DPRINTF(("augmented 'sspsi' using psi(%d) = %g (sspsi = %g)\n", 
+	     l-1, psi[l-1], sspsi));
 
     return sspsi;
 }
