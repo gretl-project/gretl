@@ -3199,7 +3199,6 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
     };
     int i, nt = sizeof ftypes / sizeof ftypes[0];
     const char *p, *src = "unknown";
-    gchar *basename = NULL;
     char note[NOTELEN], tstr[48];
 
     for (i=0; i<nt; i++) {
@@ -3220,6 +3219,7 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 	snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
 		 src, fname, print_time(tstr));
     } else {
+	gchar *trfname;
 	gsize b = 0;
 
 	trfname = g_locale_to_utf8(fname, -1, NULL, &b, NULL);
