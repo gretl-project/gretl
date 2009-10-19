@@ -24,7 +24,7 @@
 #include "gretl_bfgs.h"
 
 #define HDEBUG 0
-#define HYPERBOLIC 0
+#define HYPERBOLIC 1
 
 typedef struct h_container_ h_container;
 
@@ -476,17 +476,6 @@ static int h_container_fill (h_container *HC, const int *Xl,
     return err;
 }
 
-#if HYPERBOLIC
-static double hyperbolic(double x, double *irhoc)
-{
-    double ex = exp(x);
-    double ex2 = ex*ex;
-    double rho = (ex2 - 1)/(ex2 + 1);
-    *irhoc = 0.5*(ex + 1/ex);
-    return rho;
-}
-#endif
-
 static double h_loglik (const double *param, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
@@ -508,7 +497,8 @@ static double h_loglik (const double *param, void *ptr)
     lnsig = log(HC->sigma);
     
 #if HYPERBOLIC
-    HC->rho = hyperbolic(param[kmax+1], &irhoc);
+    HC->rho = tanh(param[kmax+1]);
+    double ca = cosh(param[kmax+1]);
 #else
     HC->rho = param[kmax+1];
     irhoc = 1.0 / sqrt(1 - HC->rho * HC->rho);
@@ -559,12 +549,12 @@ static double h_loglik (const double *param, void *ptr)
 	    ndxt = gretl_vector_get(HC->ndx, i);
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j++);
-		x = (ndxt + HC->rho*ut) * irhoc;
-#if 0
-		ll1 += log(normal_pdf(ut)) - lnsig;
+#if HYPERBOLIC
+		x = ca*(ndxt + HC->rho*ut);
 #else
-		ll1 -= LN_SQRT_2_PI + 0.5*ut*ut + lnsig;
+		x = (ndxt + HC->rho*ut) * irhoc;
 #endif
+		ll1 -= LN_SQRT_2_PI + 0.5*ut*ut + lnsig;
 		ll2 += log(normal_cdf(x));
 	    } else {
 		ll0 += log(normal_cdf(-ndxt));
@@ -886,6 +876,37 @@ int add_lambda_to_ml_vcv (h_container *HC)
     return err;
 }
 
+#if HYPERBOLIC
+static int adjust_ml_vcv_hyperbolic (h_container *HC)
+{
+    /*
+      Here we modify $vcv as if rho was used in BFGS instead 
+      of atanh(rho); we use the fact that 
+      \frac{\partial tanh(a)}{\partial a} = (cosh(a))^{-2}
+      which translates into
+      \frac{\partial \rho}{\partial a} = 1 - \rho^2
+    */
+
+    int npar = HC->vcv->rows;
+    int irho = npar - 1;
+    int i, err = 0;
+    double x, jac = 1 - (HC->rho * HC->rho);
+    err = 0;
+
+    for (i=0; i<npar; i++) {
+	    x = gretl_matrix_get(HC->vcv, i, irho);
+	if (i==irho) {
+	    gretl_matrix_set(HC->vcv, irho, irho, x*jac*jac);
+	} else {
+	    gretl_matrix_set(HC->vcv, irho, i, x*jac);
+	    gretl_matrix_set(HC->vcv, i, irho, x*jac);
+	}
+    }
+
+    return err;
+}
+#endif
+
 int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 {
     int maxit, fncount, grcount;
@@ -916,9 +937,8 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 	rho = (rho > 0)? 0.99 : -0.99;
     }
 
-
 #if HYPERBOLIC
-    theta[np-1] = 0.5 * log((1+rho)/(1-rho));
+    theta[np-1] = atanh(rho);
 #else
     theta[np-1] = rho;
 #endif
@@ -955,6 +975,11 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 		}
 	    }
 	}
+
+#if HYPERBOLIC
+	adjust_ml_vcv_hyperbolic(HC);
+#endif
+
 	add_lambda_to_ml_vcv(HC);
 
 #if HDEBUG
