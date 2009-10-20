@@ -609,6 +609,22 @@
       </description>
     </function>
 
+    <function name="acosh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Inverse hyperbolic cosine of <argname>x</argname> (positive
+	  solution). <argname>x</argname> should be greater than 1;
+	  otherwise, NA is returned.
+	  <seelist>
+	    <fncref targ="cosh"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="asin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -622,6 +638,20 @@
       </description>
     </function>
 
+    <function name="asinh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Inverse hyperbolic sine of <argname>x</argname>.
+	  <seelist>
+	    <fncref targ="sinh"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -630,6 +660,20 @@
 	<para>
 	  The arc tangent of <argname>x</argname>, that is, the value whose
 	  tangent is <argname>x</argname>.  The result is in radians.
+	</para>
+      </description>
+    </function>
+
+    <function name="atanh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Inverse hyperbolic tangent of <argname>x</argname>.
+	  <seelist>
+	    <fncref targ="tanh"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -1061,6 +1105,27 @@
       <description>
 	<para>
 	  Cosine.
+	</para>
+      </description>
+    </function>
+
+    <function name="cosh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Hyperbolic cosine.
+	</para>
+	<para context="tex">
+	  \[ \cosh x = \frac{e^x + e^{-x}}{2}  \]
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="acosh"/>
+	    <fncref targ="sinh"/>
+	    <fncref targ="tanh"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -4244,6 +4309,27 @@
       </description>
     </function>
 
+    <function name="sinh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Hyperbolic sine.
+	</para>
+	<para context="tex">
+	  \[ \sinh x = \frac{e^x - e^{-x}}{2}  \]
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="asinh"/>
+	    <fncref targ="cosh"/>
+	    <fncref targ="tanh"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
@@ -4476,6 +4562,27 @@
       <description>
 	<para>
 	  Tangent.
+	</para>
+      </description>
+    </function>
+
+    <function name="tanh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Hyperbolic tangent.
+	</para>
+	<para context="tex">
+	  \[ \tanh x = \frac{e^{2x} - 1}{e^{2x} + 1}  \]
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="atanh"/>
+	    <fncref targ="cosh"/>
+	    <fncref targ="sinh"/>
+	  </seelist>
 	</para>
       </description>
     </function>

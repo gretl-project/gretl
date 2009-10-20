@@ -2555,6 +2555,18 @@ static double real_apply_func (double x, int f, parser *p)
 	return acos(x);
     case F_ATAN:
 	return atan(x);
+    case F_SINH:
+	return sinh(x);
+    case F_COSH:
+	return cosh(x);
+    case F_TANH:
+	return tanh(x);
+    case F_ASINH:
+	return asinh(x);
+    case F_ACOSH:
+	return acosh(x);
+    case F_ATANH:
+	return atanh(x);
     case F_CNORM:
 	return normal_cdf(x);
     case F_DNORM:
@@ -6505,6 +6517,12 @@ static NODE *eval (NODE *t, parser *p)
     case F_ASIN:
     case F_ACOS:
     case F_ATAN:
+    case F_SINH:
+    case F_COSH:
+    case F_TANH:
+    case F_ASINH:
+    case F_ACOSH:
+    case F_ATANH:
     case F_LOG:
     case F_LOG10:
     case F_LOG2:
