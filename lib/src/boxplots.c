@@ -403,7 +403,9 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 	fp = gretl_fopen(fname, "w");
     } else if (opt & OPT_B) {
 	/* batch mode: auto-named file */
-	fp = gnuplot_batch_init(&err);
+	const char *optname = get_optval_string(BXPLOT, OPT_U);
+
+	fp = gnuplot_batch_init(optname, &err);
 	if (!err) {
 	    *fmt = specified_gp_output_format();
 	    qtype = (*fmt)? 1 : 3;

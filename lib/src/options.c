@@ -124,6 +124,7 @@ struct gretl_option gretl_opts[] = {
     { ESTIMATE, OPT_Q, "quiet", 0 },
     { ESTIMATE, OPT_V, "verbose", 0 },
     { FCAST,    OPT_D, "dynamic", 0 },
+    { FCAST,    OPT_G, "plot", 1 },
     { FCAST,    OPT_N, "no-stats", 0 },
     { FCAST,    OPT_S, "static", 0 },
     { FCAST,    OPT_Q, "quiet", 0 },
@@ -754,9 +755,9 @@ static int option_parm_status (int ci, gretlopt opt)
 }
 
 /* We got an "=val" parameter value in connection with a given option:
-   check this for validity.  Note that (at present), for all options
-   that accept but do not mandate a parameter value, the parameter
-   must be a numerical value.  
+   check this for validity.  Note that (at present), for almost all
+   options that accept but do not mandate a parameter value, the
+   parameter must be a numerical value.
 */
 
 static int check_optval (int ci, gretlopt opt, int status, char *val)
@@ -765,8 +766,15 @@ static int check_optval (int ci, gretlopt opt, int status, char *val)
 
     if (status == NEEDS_PARM) {
 	err = push_optparm(ci, opt, val);
-    } else if (status == ACCEPTS_PARM && numeric_string(val)) {
-	err = push_optparm(ci, opt, val);
+    } else if (status == ACCEPTS_PARM) {
+	if (ci == FCAST && opt == OPT_G) {
+	    /* --plot=filename */
+	    err = push_optparm(ci, opt, val);
+	} else if (numeric_string(val)) {
+	    err = push_optparm(ci, opt, val);
+	} else {
+	    err = 1;
+	}
     } else {
 	err = 1;
     }

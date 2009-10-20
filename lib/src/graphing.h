@@ -153,7 +153,7 @@ void gnuplot_missval_string (FILE *fp);
 
 int gnuplot_init (PlotType ptype, FILE **fpp);
 
-FILE *gnuplot_batch_init (int *err);
+FILE *gnuplot_batch_init (const char *optname, int *err);
 
 int specified_gp_output_format (void);
 

@@ -1142,7 +1142,7 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
     char plotfile[FILENAME_MAX] = {0};
 
     /* 'gnuplot_path' is file-scope static var */
-    if (*gnuplot_path == 0) {
+    if (*gnuplot_path == '\0') {
 	strcpy(gnuplot_path, gretl_gnuplot_path());
     }
 
@@ -1216,9 +1216,8 @@ void reset_plot_count (void)
 /* initialization for gnuplot output file in batch mode: this
    is wanted when drawing batch boxplots */
 
-FILE *gnuplot_batch_init (int *err)
+FILE *gnuplot_batch_init (const char *optname, int *err)
 {
-    const char *optname = get_optval_string(BXPLOT, OPT_U);
     char fname[FILENAME_MAX];
     FILE *fp = NULL;
 
@@ -3672,7 +3671,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     char cistr[64];
     int t2 = fr->t2;
     int t1, yhmin;
-    int t, n, err;
+    int t, n, err = 0;
 
     /* note: yhmin is the first obs at which to start plotting y-hat */
     if (do_errs) {
@@ -3704,7 +3703,16 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	return E_ALLOC;
     }
 
-    if ((err = gnuplot_init(PLOT_FORECAST, &fp))) {
+    if (opt & OPT_G) {
+	/* responding to command-line --plot option */
+	const char *optname = get_optval_string(FCAST, OPT_G);
+
+	fp = gnuplot_batch_init(optname, &err);
+    } else {
+	err = gnuplot_init(PLOT_FORECAST, &fp);
+    }
+
+    if (err) {
 	return err;
     }    
 
