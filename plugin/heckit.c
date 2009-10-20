@@ -24,7 +24,6 @@
 #include "gretl_bfgs.h"
 
 #define HDEBUG 0
-#define HYPERBOLIC 1
 
 typedef struct h_container_ h_container;
 
@@ -34,6 +33,8 @@ struct h_container_ {
     int kmain;		     /* no. of params in the main eq. */
     int ksel;		     /* no. of params in the selection eq. */
     double ll;		     /* log-likelihood */
+    gretl_matrix *score;     /* score matrix */
+    gretl_matrix *sscore;    /* score vector (sum) */
 
     int ntot, nunc;	     /* total and uncensored obs */
     int depvar;		     /* location of y in array Z */
@@ -86,6 +87,8 @@ static void h_container_destroy (h_container *HC)
     gretl_vector_free(HC->fitted);
     gretl_vector_free(HC->u);
     gretl_vector_free(HC->ndx);
+    gretl_matrix_free(HC->score);
+    gretl_vector_free(HC->sscore);
 
     gretl_vector_free(HC->beta);
     gretl_vector_free(HC->gama);
@@ -125,6 +128,8 @@ static h_container *h_container_new (const int *list)
     HC->fitted = NULL;
     HC->u = NULL;
     HC->ndx = NULL;
+    HC->score = NULL;
+    HC->sscore = NULL;
 
     HC->beta = NULL;
     HC->gama = NULL;
@@ -335,12 +340,13 @@ static int h_container_fill (h_container *HC, const int *Xl,
     gretl_vector *tmp = NULL;
     double bmills, s2, mdelta;
     int tmplist[2];
-    int t1, t2;
+    int t1, t2, npar;
     int i, err = 0;
 
     /* X does NOT include the Mills ratios: hence the "-1" */
     HC->kmain = olsmod->ncoeff - 1;
     HC->ksel = probmod->ncoeff;
+    npar = HC->kmain + HC->ksel + 2;
 
     if (HC->kmain < 1) {
 	/* FIXME? */
@@ -467,8 +473,11 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->fitted = gretl_matrix_alloc(HC->nunc, 1);
 	HC->u      = gretl_matrix_alloc(HC->nunc, 1);
 	HC->ndx    = gretl_matrix_alloc(HC->ntot, 1);
+	HC->score  = gretl_matrix_alloc(HC->ntot, npar); 
+	HC->sscore = gretl_vector_alloc(npar); 
 
-	if (HC->fitted == NULL || HC->u == NULL || HC->ndx == NULL) {
+	if (HC->fitted == NULL || HC->u == NULL || HC->ndx == NULL
+	    || HC->score == NULL || HC->sscore == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -480,33 +489,31 @@ static double h_loglik (const double *param, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
     double lnsig, x, ll = NADBL;
-#if HYPERBOLIC
-    double ca;
-#else
-    double irhoc;
-#endif
-    int kmax = HC->kmain + HC->ksel;
+    double ca, sa, arho;
     int i, j, err = 0;
+    int kmain, ksel, kmax, npar;
+
+    kmain = HC->kmain;
+    ksel  = HC->ksel;
+    kmax  = kmain + ksel;
+    npar  = kmax + 2;
     
-    for (i=0; i<HC->kmain; i++) {
+    for (i=0; i<kmain; i++) {
 	gretl_vector_set(HC->beta, i, param[i]);
     }
 
     j = 0;
-    for (i=HC->kmain; i<kmax; i++) {
+    for (i=kmain; i<kmax; i++) {
 	gretl_vector_set(HC->gama, j++, param[i]);
     }
 
-    HC->sigma = param[kmax];
+    HC->sigma = param[npar-2];
     lnsig = log(HC->sigma);
     
-#if HYPERBOLIC
-    HC->rho = tanh(param[kmax+1]);
-    ca = cosh(param[kmax+1]);
-#else
-    HC->rho = param[kmax+1];
-    irhoc = 1.0 / sqrt(1 - HC->rho * HC->rho);
-#endif
+    arho = param[npar-1];
+    HC->rho = tanh(arho);
+    ca = cosh(arho);
+    sa = sinh(arho);
 
 #if HDEBUG > 1
     gretl_matrix_print(HC->beta, "beta");
@@ -515,18 +522,12 @@ static double h_loglik (const double *param, void *ptr)
     fputc('\n', stderr);
 #endif
 
-#if HYPERBOLIC
     if (HC->sigma <= 0) {
 	return NADBL;
     } 
-#else
-    if (HC->sigma <= 0 || fabs(HC->rho) >= 1) {
-	return NADBL;
-    } 
-#endif
 
     err = gretl_matrix_multiply(HC->reg, HC->beta, HC->fitted);
-    
+
     if (!err) {
 	gretl_matrix_copy_values(HC->u, HC->y);
 	err = gretl_matrix_subtract_from(HC->u, HC->fitted);
@@ -545,6 +546,12 @@ static double h_loglik (const double *param, void *ptr)
 	double ut, ndxt;
 	int sel;
 
+	double P, f, mills, tmp, psum;
+	int k;
+
+	gretl_matrix_fill(HC->score, 0);
+	gretl_matrix_fill(HC->sscore, 0);
+
 	/* i goes through all obs, while j keeps track of the uncensored
 	   ones */
 	j = 0;
@@ -552,16 +559,57 @@ static double h_loglik (const double *param, void *ptr)
 	    sel = (1.0 == gretl_vector_get(HC->d, i));
 	    ndxt = gretl_vector_get(HC->ndx, i);
 	    if (sel) {
-		ut = gretl_vector_get(HC->u, j++);
-#if HYPERBOLIC
+		ut = gretl_vector_get(HC->u, j);
 		x = ca * (ndxt + HC->rho*ut);
-#else
-		x = (ndxt + HC->rho*ut) * irhoc;
-#endif
+
 		ll1 -= LN_SQRT_2_PI + 0.5*ut*ut + lnsig;
-		ll2 += log(normal_cdf(x));
+		P = normal_cdf(x);
+		f = normal_pdf(x);
+		mills = f/P;
+		ll2 += log(P);
+		
 	    } else {
-		ll0 += log(normal_cdf(-ndxt));
+		P = normal_cdf(-ndxt);
+		f = normal_pdf(ndxt);
+		mills = -f/P;
+		ll0 += log(P);
+	    }
+
+	    /* score for beta */
+	    if (sel) {
+		tmp = (ut - sa*mills)/HC->sigma;
+		for(k=0; k<kmain; k++) {
+		    x = tmp * gretl_matrix_get(HC->reg, j, k);
+		    gretl_matrix_set(HC->score, i, k, x); 
+		    psum = x + gretl_vector_get(HC->sscore, k);
+		    gretl_vector_set(HC->sscore, k, psum);
+		}
+	    }
+
+	    /* score for gamma */
+	    tmp = sel ? ca*mills : mills;
+	    for(k=0; k<ksel; k++) {
+		x = tmp * gretl_matrix_get(HC->selreg, i, k);
+		gretl_matrix_set(HC->score, i, kmain+k, x); 
+		psum = x + gretl_vector_get(HC->sscore, kmain+k);
+		gretl_vector_set(HC->sscore, kmain+k, psum);
+	    }
+
+	    /* score for sigma and arho */
+	    if (sel) {
+		x = (ut * (ut - sa*mills) - 1) / HC->sigma;
+		gretl_matrix_set(HC->score, i, npar-2, x); 
+		psum = x + gretl_vector_get(HC->sscore, npar-2);
+		gretl_vector_set(HC->sscore, npar-2, psum);
+
+		x = mills * ca * (ut + HC->rho*ndxt);
+		gretl_matrix_set(HC->score, i, npar-1, x); 
+		psum = x + gretl_vector_get(HC->sscore, npar-1);
+		gretl_vector_set(HC->sscore, npar-1, psum);
+	    }
+
+	    if (sel) {
+		j++;
 	    }
 	}
 	ll = ll0 + ll1 + ll2;
@@ -570,8 +618,90 @@ static double h_loglik (const double *param, void *ptr)
 		ll0, ll1, ll2, ll, HC->ntot);
 #endif
     }
-
+    
     return ll;
+}
+
+static int heckit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
+		    void *ptr)
+{
+    h_container *HC = (h_container *) ptr;
+    int i;
+
+    for (i=0; i<npar; i++) {
+	s[i] = gretl_vector_get(HC->sscore,i);
+    }
+
+    return 1;
+}
+
+double *heckit_hessian (const double *b, int n, BFGS_CRIT_FUNC func, 
+			h_container *HC, int *err)
+{
+    int i, j, k;
+    double x, eps = 1.0e-05;
+    gretl_matrix *H = NULL;
+    gretl_matrix *splus = NULL;
+    gretl_matrix *sminus = NULL;
+
+    int m = n*(n+1)/2;
+    double *hess;
+    double *theta;
+    hess   = malloc(m * sizeof *hess);
+    theta  = malloc(n * sizeof *hess);
+    H      = gretl_matrix_alloc(n, n);
+    splus  = gretl_matrix_alloc(1, n);
+    sminus = gretl_matrix_alloc(1, n);
+    
+    if (hess == NULL || theta == NULL || H == NULL ||
+	splus == NULL || sminus == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	theta[i] = b[i];
+    }
+
+    for (i=0; i<n; i++) {
+	theta[i] += eps;
+	h_loglik(theta, HC);
+	for (j=0; j<n; j++) {
+	    x = gretl_vector_get(HC->sscore, j);
+	    gretl_vector_set(splus, j, x);
+	}
+
+	theta[i] -= 2*eps;
+	h_loglik(theta, HC);
+	for (j=0; j<n; j++) {
+	    x = gretl_vector_get(HC->sscore, j);
+	    gretl_vector_set(sminus, j, x);
+	}
+
+	theta[i] += eps;
+	for (j=0; j<n; j++) {
+	    x = gretl_vector_get(splus, j);
+	    x -= gretl_vector_get(sminus, j);
+	    gretl_matrix_set(H, i, j, -x/(2*eps));
+	}
+    }
+
+    gretl_matrix_xtr_symmetric(H);
+    gretl_invert_symmetric_matrix(H);
+
+    k = 0;
+    for (i=0; i<n; i++) {
+	for (j=i; j<n; j++) {
+	    hess[k++] = gretl_matrix_get(H, i, j);
+	}
+    }
+
+    gretl_matrix_free(splus);
+    gretl_matrix_free(sminus);
+    gretl_matrix_free(H);
+    free(theta);
+
+    return hess;
 }
 
 /*
@@ -880,7 +1010,6 @@ int add_lambda_to_ml_vcv (h_container *HC)
     return err;
 }
 
-#if HYPERBOLIC
 static int adjust_ml_vcv_hyperbolic (h_container *HC)
 {
     /*
@@ -908,7 +1037,6 @@ static int adjust_ml_vcv_hyperbolic (h_container *HC)
 
     return err;
 }
-#endif
 
 int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 {
@@ -940,24 +1068,23 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 	rho = (rho > 0)? 0.99 : -0.99;
     }
 
-#if HYPERBOLIC
     theta[np-1] = atanh(rho);
-#else
-    theta[np-1] = rho;
-#endif
 
     BFGS_defaults(&maxit, &toler, HECKIT);
 
-    err = BFGS_max(theta, np, maxit, toler, 
-		   &fncount, &grcount, h_loglik, C_LOGLIK,
-		   NULL, HC, (prn != NULL)? OPT_V : OPT_NONE, prn);
+    err = BFGS_max(theta, np, maxit, toler, &fncount, 
+		   &grcount, h_loglik, C_LOGLIK,
+		   heckit_score, HC, 
+		   (prn != NULL)? OPT_V : OPT_NONE, prn);
+
+
 
     if (!err) {
 	HC->ll = hm->lnL = h_loglik(theta, HC);
 	gretl_model_set_int(hm, "fncount", fncount);	
 	gretl_model_set_int(hm, "grcount", grcount);	
 	HC->lambda = HC->sigma * HC->rho;
-	hess = numerical_hessian(theta, np, h_loglik, HC, &err);
+	hess = heckit_hessian(theta, np, h_loglik, HC, &err);
     }
 
     if (!err) {
@@ -979,10 +1106,7 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 	    }
 	}
 
-#if HYPERBOLIC
 	adjust_ml_vcv_hyperbolic(HC);
-#endif
-
 	add_lambda_to_ml_vcv(HC);
 
 #if HDEBUG
