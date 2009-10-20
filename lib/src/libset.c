@@ -1612,19 +1612,22 @@ double libset_get_double (const char *key)
 	}
     } else if (!strcmp(key, NLS_TOLER)) {
 	if (na(state->nls_toler)) {
-	    state->nls_toler = get_default_nls_toler();
+	    return get_default_nls_toler();
+	} else {
+	    return state->nls_toler;
 	}
-	return state->nls_toler;
     } else if (!strcmp(key, BHHH_TOLER)) {
 	if (na(state->bhhh_toler)) {
-	    state->bhhh_toler = 1.0e-6;
+	    return 1.0e-6;
+	} else {
+	    return state->bhhh_toler;
 	}
-	return state->bhhh_toler;
     } else if (!strcmp(key, BFGS_TOLER)) {
 	if (na(state->bfgs_toler)) {
-	    state->bfgs_toler = get_default_nls_toler();
+	    return get_default_nls_toler();
+	} else {
+	    return state->bfgs_toler;
 	}
-	return state->bfgs_toler;
     } else if (!strcmp(key, HP_LAMBDA)) {
 	return state->hp_lambda;
     } else {

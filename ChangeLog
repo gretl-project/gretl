@@ -8,6 +8,18 @@ version 1.8.6, in progress
   levels
 - arima: fix some "corner case" bugs and extend the options
   that can be controlled via the GUI
+- Add hyperbolic functions, asinh and friends
+- heckit: use analytical score, and use hyperbolic
+  transformation in estimating rho
+- Fix bug: a native gdt file made from imported data could
+  end up containing non-UTF-8 characters (and hence not
+  be openable)
+- Fix bug: the internal $error variable associated with
+  the --continue option to (e.g.) "arima" could get stuck
+  on within a command loop
+- Fix bug: ensure that the "dataset addobs" command is
+  recorded in the session command log when observations
+  are added in the course of forecasting
 
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving
