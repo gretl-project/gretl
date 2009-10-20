@@ -543,20 +543,18 @@ static double h_loglik (const double *param, void *ptr)
 
     if (!err) {
 	double ll0 = 0, ll1 = 0, ll2 = 0;
-	double ut, ndxt;
-	int sel;
-
+	double ndxt, ut = 0;
 	double P, f, mills, tmp, psum;
-	int k;
+	int sel, k;
 
-	gretl_matrix_fill(HC->score, 0);
-	gretl_matrix_fill(HC->sscore, 0);
+	gretl_matrix_zero(HC->score);
+	gretl_matrix_zero(HC->sscore);
 
 	/* i goes through all obs, while j keeps track of the uncensored
 	   ones */
 	j = 0;
 	for (i=0; i<HC->ntot; i++) {
-	    sel = (1.0 == gretl_vector_get(HC->d, i));
+	    sel = (gretl_vector_get(HC->d, i) == 1.0);
 	    ndxt = gretl_vector_get(HC->ndx, i);
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j);
@@ -567,7 +565,6 @@ static double h_loglik (const double *param, void *ptr)
 		f = normal_pdf(x);
 		mills = f/P;
 		ll2 += log(P);
-		
 	    } else {
 		P = normal_cdf(-ndxt);
 		f = normal_pdf(ndxt);
@@ -578,7 +575,7 @@ static double h_loglik (const double *param, void *ptr)
 	    /* score for beta */
 	    if (sel) {
 		tmp = (ut - sa*mills)/HC->sigma;
-		for(k=0; k<kmain; k++) {
+		for (k=0; k<kmain; k++) {
 		    x = tmp * gretl_matrix_get(HC->reg, j, k);
 		    gretl_matrix_set(HC->score, i, k, x); 
 		    psum = x + gretl_vector_get(HC->sscore, k);
@@ -588,7 +585,7 @@ static double h_loglik (const double *param, void *ptr)
 
 	    /* score for gamma */
 	    tmp = sel ? ca*mills : mills;
-	    for(k=0; k<ksel; k++) {
+	    for (k=0; k<ksel; k++) {
 		x = tmp * gretl_matrix_get(HC->selreg, i, k);
 		gretl_matrix_set(HC->score, i, kmain+k, x); 
 		psum = x + gretl_vector_get(HC->sscore, kmain+k);
@@ -623,7 +620,7 @@ static double h_loglik (const double *param, void *ptr)
 }
 
 static int heckit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
-		    void *ptr)
+			 void *ptr)
 {
     h_container *HC = (h_container *) ptr;
     int i;
@@ -638,17 +635,17 @@ static int heckit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 double *heckit_hessian (const double *b, int n, BFGS_CRIT_FUNC func, 
 			h_container *HC, int *err)
 {
-    int i, j, k;
     double x, eps = 1.0e-05;
     gretl_matrix *H = NULL;
     gretl_matrix *splus = NULL;
     gretl_matrix *sminus = NULL;
-
-    int m = n*(n+1)/2;
     double *hess;
     double *theta;
+    int m = n*(n+1)/2;
+    int i, j, k;
+
     hess   = malloc(m * sizeof *hess);
-    theta  = malloc(n * sizeof *hess);
+    theta  = malloc(n * sizeof *theta);
     H      = gretl_matrix_alloc(n, n);
     splus  = gretl_matrix_alloc(1, n);
     sminus = gretl_matrix_alloc(1, n);
@@ -656,7 +653,9 @@ double *heckit_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
     if (hess == NULL || theta == NULL || H == NULL ||
 	splus == NULL || sminus == NULL) {
 	*err = E_ALLOC;
-	return NULL;
+	free(hess);
+	hess = NULL;
+	goto bailout;
     }
 
     for (i=0; i<n; i++) {
@@ -695,6 +694,8 @@ double *heckit_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
 	    hess[k++] = gretl_matrix_get(H, i, j);
 	}
     }
+
+ bailout:
 
     gretl_matrix_free(splus);
     gretl_matrix_free(sminus);
