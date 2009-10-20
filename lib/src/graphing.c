@@ -1214,7 +1214,7 @@ void reset_plot_count (void)
 }
 
 /* initialization for gnuplot output file in batch mode: this
-   is wanted when drawing batch boxplots */
+   is wanted (e.g.) when drawing batch boxplots */
 
 FILE *gnuplot_batch_init (const char *optname, int *err)
 {
@@ -3835,7 +3835,11 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     fclose(fp);
 
-    return gnuplot_make_graph();
+    if (!(opt & OPT_G) || specified_gp_output_format()) {
+	err = gnuplot_make_graph();
+    }
+
+    return err;
 }
 
 #ifndef min

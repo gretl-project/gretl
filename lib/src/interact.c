@@ -4242,7 +4242,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case FCAST:
 	err = do_forecast(line, pZ, pdinfo, cmd->opt, prn);
-	/* FIXME plot notification in case of OPT_G? */
 	break;
 
     case FREQ:
