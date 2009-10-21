@@ -20,6 +20,10 @@ version 1.8.6, in progress
 - Fix bug: ensure that the "dataset addobs" command is
   recorded in the session command log when observations
   are added in the course of forecasting
+- "fcast": add a --plot option to generate a plot of the
+  forecast in batch mode
+- L-BFGS-B: add a "set" variable, lbfgs_mem, to control the
+  number of corrections used in the limited memory matrix 
 
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving

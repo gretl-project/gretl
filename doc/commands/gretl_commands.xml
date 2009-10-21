@@ -2669,6 +2669,11 @@
 	  <flag>--rolling</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--plot</flag>
+	  <optparm optional="true">filename</optparm>
+	  <effect>see below</effect>
+        </option>
       </options>
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
@@ -2747,6 +2752,26 @@
 	this is applicable.  Note that the <lit>steps-ahead</lit> argument
 	should be given only in conjunction with the <lit>rolling</lit>
 	option.
+      </para>
+
+      <para context="cli">
+	The <lit>--plot</lit> option calls for a plot file to be produced,
+	containing a graphical representation of the forecast.  When no
+	<repl>filename</repl> parameter is given, gretl writes a gnuplot
+	command file with a name on the pattern <lit>gpttmp01.plt</lit> to the
+	user's gretl working directory (with the number incremented for
+	successive plots).  If a <repl>filename</repl> is appended, its
+	extension is used to determine the type of file to be written
+	(<lit>.eps</lit> for EPS, <lit>.pdf</lit> for PDF, or <lit>.png</lit>
+	for PNG; any other extension gives a gnuplot command file).  
+	For example,
+      </para>
+      <code>
+	fcast --plot=fc.pdf
+      </code>
+      <para>
+	will generate a graphic in PDF format.  Absolute pathnames are
+	respected, otherwise files are written to the gretl working directory.
       </para>
 
       <para>
@@ -8244,9 +8269,16 @@
 	</li>
 	<li>
 	  <para><lit>lbfgs</lit>: <lit>on</lit> or <lit>off</lit> (the
-	  default). Use the limited-memory version of BFGS instead of
-	  the ordinary algorithm. This may be advantageous when the
-	  function to maximize is not globally concave.
+	    default). Use the limited-memory version of BFGS (L-BFGS-B)
+	    instead of the ordinary algorithm. This may be advantageous when
+	    the function to be maximized is not globally concave.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>lbfgs_mem</lit>: an integer value in the range 3 to 20
+	    (with a default value of 8).  This determines the number of
+	    corrections used in the limited memory matrix when L-BFGS-B
+	    is employed.  
 	  </para>
 	</li>
 	<li>
