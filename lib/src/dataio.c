@@ -2455,6 +2455,7 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 	    gretl_errmsg_sprintf("Couldn't read marker on line %d", t+1);
 	    err = E_DATA;
 	} else {
+	    g_strstrip(marker);
 	    strncat(S[t], marker, OBSLEN - 1);
 	    err = check_marker(S[t], t+1);
 	}
