@@ -144,7 +144,7 @@ void lmax_dialog (double *lmax, double ymax);
 int chow_dialog (int tmin, int tmax, int *t, int *dumv);
 
 void iter_control_dialog (int *optim, int *pmaxit, double *ptol, 
-			  int *cancel, GtkWidget *parent);
+			  int *plmem, int *cancel, GtkWidget *parent);
 
 void tex_format_dialog (void);
 

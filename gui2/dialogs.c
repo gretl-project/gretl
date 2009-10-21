@@ -1221,7 +1221,7 @@ static void bfgs_mode_callback (GtkToggleButton *button, int *s)
 }
 
 void iter_control_dialog (int *optim, int *pmaxit, double *ptol, 
-			  int *cancel, GtkWidget *parent)
+			  int *plmem, int *cancel, GtkWidget *parent)
 {
     static GtkWidget *dlg;
     GtkWidget *tmp, *hbox, *vbox;
@@ -1289,13 +1289,23 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     if (*optim != BHHH_MAX) {
+	GtkWidget *lb;
+
 	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = gtk_check_button_new_with_label("Use L-BFGS-B");
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
+	lb = gtk_check_button_new_with_label(_("Use L-BFGS-B, memory size:"));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lb),
 				     (*optim == LBFGS_MAX));
-	g_signal_connect(G_OBJECT(tmp), "toggled", 
+	g_signal_connect(G_OBJECT(lb), "toggled", 
 			 G_CALLBACK(bfgs_mode_callback), optim);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), lb, FALSE, FALSE, 5);
+	tmp = gtk_spin_button_new_with_range(3, 20, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), *plmem);
+	g_signal_connect(G_OBJECT(tmp), "value-changed", 
+			 G_CALLBACK(set_int_from_spinner), plmem);
+	gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
+	gtk_widget_set_sensitive(tmp, (*optim == LBFGS_MAX));
+	sensitize_conditional_on(tmp, lb);	
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     }
 

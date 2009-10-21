@@ -939,7 +939,10 @@
       <para>
 	For most applications we recommend use of the regular BFGS maximizer
 	but for some problems the <quote>limited memory</quote> variant of the
-	algorithm, L-BFGS-B, may produce more rapid convergence.
+	algorithm, L-BFGS-B, may produce more rapid convergence.  When
+	L-BFGS-B is selected, you have the option of setting the number of
+	corrections used in the limited memory matrix (between 3 and 20, with
+	a default of 8).
       </para>
     </description>
   </command>

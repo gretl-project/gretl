@@ -4103,7 +4103,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 {
     selector *sr = g_object_get_data(G_OBJECT(combo), "selector");
     int active = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
-    int maxit, optim = BFGS_MAX;
+    int maxit, lmem = 0, optim = BFGS_MAX;
     double tol;
     int cancel = 0;
 
@@ -4113,6 +4113,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	optim = BHHH_MAX;
     } else {
 	BFGS_defaults(&maxit, &tol, sr->ci);
+	lmem = libset_get_int(LBFGS_MEM);
     }
 
     if (maxit <= 0) {
@@ -4123,11 +4124,11 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	optim = LBFGS_MAX;
     }
 
-    iter_control_dialog(&optim, &maxit, &tol, &cancel,
+    iter_control_dialog(&optim, &maxit, &tol, &lmem, &cancel,
 			sr->dlg);
 
     if (!cancel) {
-	int err;
+	int err = 0;
 
 	if (optim == BHHH_MAX) {
 	    err = libset_set_int(BHHH_MAXITER, maxit);
@@ -4138,6 +4139,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	}
 
 	if (optim == LBFGS_MAX) {
+	    libset_set_int(LBFGS_MEM, lmem);
 	    sr->opts |= OPT_L;
 	} else {
 	    sr->opts &= ~OPT_L;
