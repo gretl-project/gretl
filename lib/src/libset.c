@@ -87,6 +87,7 @@ struct set_vars_ {
     double bfgs_toler;          /* convergence tolerance, BFGS */
     int bhhh_maxiter;           /* max iterations, BHHH */          
     double bhhh_toler;          /* convergence tolerance, BHHH */
+    int lbfgs_mem;              /* memory span for L-BFGS-B */
     int garch_vcv;              /* GARCH vcv variant */
     int garch_robust_vcv;       /* GARCH vcv variant, robust estimation */
     int arma_vcv;               /* ARMA vcv variant */
@@ -133,6 +134,7 @@ struct set_vars_ {
 
 #define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
 		       !strcmp(s, BHHH_MAXITER) || \
+		       !strcmp(s, LBFGS_MEM) || \
                        !strcmp(s, BKBP_K) || \
 		       !strcmp(s, BOOTREP) || \
 		       !strcmp(s, HAC_KERNEL) || \
@@ -341,6 +343,7 @@ static void state_vars_copy (set_vars *sv)
     sv->bfgs_toler = state->bfgs_toler;
     sv->bhhh_maxiter = state->bhhh_maxiter;
     sv->bhhh_toler = state->bhhh_toler;
+    sv->lbfgs_mem = state->lbfgs_mem;
     sv->garch_vcv = state->garch_vcv;
     sv->garch_robust_vcv = state->garch_robust_vcv;
     sv->bkbp_k = state->bkbp_k;
@@ -376,6 +379,7 @@ static void state_vars_init (set_vars *sv)
     sv->bfgs_toler = NADBL;
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
+    sv->lbfgs_mem = 8;
     sv->garch_vcv = VCV_UNSET;
     sv->arma_vcv = VCV_HESSIAN;
     sv->garch_robust_vcv = VCV_UNSET;
@@ -1329,6 +1333,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(RQ_MAXITER, prn, opt);
     print_initvals(state->initvals, prn, opt);
     libset_print_bool(USE_LBFGS, prn, opt);
+    libset_print_int(LBFGS_MEM, prn, opt);
     libset_print_double(NLS_TOLER, prn, opt);
     libset_print_bool(USE_SVD, prn, opt);
     libset_print_bool(USE_FCP, prn, opt);
@@ -1694,6 +1699,8 @@ int libset_get_int (const char *key)
 	return state->bhhh_maxiter;
     } else if (!strcmp(key, RQ_MAXITER)) {
 	return state->rq_maxiter;
+    } else if (!strcmp(key, LBFGS_MEM)) {
+	return state->lbfgs_mem;
     } else if (!strcmp(key, BKBP_K)) {
 	return state->bkbp_k;
     } else if (!strcmp(key, BOOTREP)) {
@@ -1739,6 +1746,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
     } else if (!strcmp(s, RQ_MAXITER)) {
 	*min = 1;
 	*var = &state->rq_maxiter;
+    } else if (!strcmp(s, LBFGS_MEM)) {
+	*min = 3;
+	*max = 20;
+	*var = &state->lbfgs_mem;
     } else if (!strcmp(s, BKBP_K)) {
 	*min = 1;
 	*var = &state->bkbp_k;

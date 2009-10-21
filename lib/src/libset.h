@@ -34,6 +34,7 @@ typedef enum {
 #define BFGS_TOLER       "bfgs_toler"
 #define BHHH_MAXITER     "bhhh_maxiter"
 #define BHHH_TOLER       "bhhh_toler"
+#define LBFGS_MEM        "lbfgs_mem"
 #define BKBP_K           "bkbp_k"
 #define BOOTREP          "bootrep"
 #define FORCE_DECP       "force_decpoint"

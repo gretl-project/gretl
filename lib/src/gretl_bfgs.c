@@ -773,8 +773,10 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
       It is not altered by the routine.  Values of m < 3 are not
       recommended, and large values of m can result in excessive
       computing time. The range 3 <= m <= 20 is recommended.
+
+      Was initially set to 5 (then 10, then 8; and 8 is the default).
     */
-    m = 8; /* was initially set to 5 (then 10) */
+    m = libset_get_int(LBFGS_MEM); 
 
     wadim = (2*m+4)*n + 12*m*m + 12*m;
 
