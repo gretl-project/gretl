@@ -1308,10 +1308,7 @@ int modeltab_parse_line (const char *line, PRN *prn)
     } else if (!strcmp(cmdword, "show")) {
 	err = display_model_table(0);
     } else if (!strcmp(cmdword, "free")) {
-	if (model_table_is_empty()) {
-	    mtable_errmsg(_("The model table is empty"), 0);
-	    err = 1;
-	} else {
+	if (!model_table_is_empty()) {
 	    clear_model_table(0, prn);
 	}
     }

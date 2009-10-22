@@ -718,3 +718,26 @@ int save_graph_page (const char *fname)
 
     return err;
 }
+
+int graph_page_parse_line (const char *line)
+{
+    char cmdword[9];
+    int err = 0;
+
+    if (sscanf(line, "%*s %8s", cmdword) != 1) {
+	return E_PARSE;
+    }
+
+    if (!strcmp(cmdword, "add")) {
+	/* FIXME need filename here */
+	/* err = graph_page_add_file(fname); */
+    } else if (!strcmp(cmdword, "show")) {
+	err = display_graph_page();
+    } else if (!strcmp(cmdword, "free")) {
+	if (gpage.ngraphs > 0) {
+	    clear_graph_page(0);
+	}
+    }
+
+    return err;
+}
