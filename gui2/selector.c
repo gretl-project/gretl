@@ -242,6 +242,7 @@ static int list_show_var (int v, int ci, int show_lags);
 static void functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
+static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
 
 #define spinner_get_int(b) (gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(b)))
 
@@ -401,6 +402,7 @@ void clear_selector (void)
     malags = NULL;
 
     destroy_lag_preferences();
+    call_iters_dialog(NULL, NULL);
 }
 
 static int presel;
@@ -4101,11 +4103,20 @@ static void pack_switch (GtkWidget *b, selector *sr,
 
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 {
-    selector *sr = g_object_get_data(G_OBJECT(combo), "selector");
-    int active = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
-    int maxit, lmem = 0, optim = BFGS_MAX;
+    static int optim = BFGS_MAX;
+    selector *sr;
+    int active, maxit, lmem = 0;
     double tol;
     int cancel = 0;
+
+    if (w == NULL) {
+	/* clean-up signal */
+	optim = libset_get_bool(USE_LBFGS)? LBFGS_MAX : BFGS_MAX;
+	return;
+    }
+
+    sr = g_object_get_data(G_OBJECT(combo), "selector");
+    active = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
 
     if (sr->ci == ARMA && active == 1) {
 	maxit = libset_get_int(BHHH_MAXITER);
