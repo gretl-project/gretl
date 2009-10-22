@@ -899,7 +899,8 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
  * gradient, or %NULL for default numerical calculation.
  * @data: pointer that will be passed as the last
  * parameter to the callback functions @cfunc and @gradfunc.
- * @opt: may contain %OPT_V for verbose operation.
+ * @opt: may contain %OPT_V for verbose operation, %OPT_L to
+ * force use of L-BFGS-B.
  * @prn: printing struct (or %NULL).  Only used if @opt
  * includes %OPT_V.
  *
@@ -919,7 +920,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn)
 {
-    if (libset_get_bool(USE_LBFGS)) {
+    if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
 	return LBFGS_max(b, n, maxit, reltol,
 			 fncount, grcount, cfunc, 
 			 crittype, gradfunc, data, 

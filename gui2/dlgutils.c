@@ -24,7 +24,9 @@
 #include "menustate.h"
 #include "dlgutils.h"
 
+#include "libset.h"
 #include "system.h"
+#include "gretl_bfgs.h"
 
 void set_window_busy (windata_t *vwin)
 {
@@ -1013,9 +1015,68 @@ void depopulate_combo_box (GtkComboBox *box)
     }
 }
 
+static void mle_gmm_iters_dialog (GtkWidget *w, dialog_t *d)
+{
+    int maxit, lmem = 0, optim = BFGS_MAX;
+    double tol;
+    int cancel = 0;
+
+    BFGS_defaults(&maxit, &tol, d->code);
+    lmem = libset_get_int(LBFGS_MEM);
+
+    if (maxit <= 0) {
+	maxit = 1000;
+    }  
+
+    if ((d->opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
+	optim = LBFGS_MAX;
+    }
+
+    iter_control_dialog(&optim, &maxit, &tol, &lmem, &cancel,
+			d->dialog);
+
+    if (!cancel) {
+	int err;
+
+	err = libset_set_int(BFGS_MAXITER, maxit);
+	err += libset_set_double(BFGS_TOLER, tol);
+
+	if (optim == LBFGS_MAX) {
+	    d->opt |= OPT_L;
+	    libset_set_int(LBFGS_MEM, lmem);
+	} else {
+	    d->opt &= ~OPT_L;
+	}
+
+	if (err) {
+	    errbox("Error setting values");
+	}
+    }
+}
+
+static void iter_control_button (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
+{
+    GtkWidget *hbox, *button;
+
+    if (pmod != NULL && pmod->ci == MLE) {
+	if (pmod->opt & OPT_L) {
+	    d->opt |= OPT_L;
+	}
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(mle_gmm_iters_dialog), d);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show_all(hbox);   
+}
+
 static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
 {
-    GtkWidget *combo, *hbox;
+    GtkWidget *combo, *hbox, *button;
     static const char *strs[] = {
 	N_("One-step estimation"),
 	N_("Two-step estimation"),
@@ -1040,16 +1101,24 @@ static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
 	} else if (pmod->opt & OPT_I) {
 	    deflt = 2;
 	}
+	if (pmod->opt & OPT_L) {
+	    d->opt |= OPT_L;
+	}
     }
 
     combo = gretl_opts_combo(&gmm_opts, deflt);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0); /* 5 ? */
-    gtk_widget_show(combo);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+
+    /* BFGS controls */
+    button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(mle_gmm_iters_dialog), d);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox);      
+    gtk_widget_show_all(hbox);      
 }
 
 static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
@@ -1307,6 +1376,9 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     } else if (ci == NLS || ci == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V, pmod);
 	dialog_option_switch(top_vbox, d, OPT_R, pmod);
+	if (ci == MLE) {
+	    iter_control_button(top_vbox, d, pmod);
+	}
     } else if (ci == GMM) {
 	dialog_option_switch(top_vbox, d, OPT_V, pmod);
 	build_gmm_combo(top_vbox, d, pmod);

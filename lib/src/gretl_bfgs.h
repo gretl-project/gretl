@@ -23,7 +23,8 @@
 typedef enum {
     BHHH_MAX,
     BFGS_MAX,
-    LBFGS_MAX
+    LBFGS_MAX,
+    LM_MAX
 } OptimizerCode;
 
 typedef double (*BFGS_CRIT_FUNC) (const double *, void *);

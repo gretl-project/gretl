@@ -3522,6 +3522,10 @@
 	  <flag>--continue</flag>
 	  <effect>continue on numerical errors</effect>
 	</option>
+	<option>
+	  <flag>--lbfgs</flag>
+	  <effect>use L-BFGS-B instead of regular BFGS</effect>
+	</option>
       </options>
     </usage>
 
@@ -5295,6 +5299,10 @@
 	<option>
 	  <flag>--no-gradient-check</flag>
 	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--lbfgs</flag>
+	  <effect>use L-BFGS-B instead of regular BFGS</effect>
 	</option>
       </options>
       <examples>
