@@ -4902,6 +4902,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = 0;
     }
 
+    if (!err && gretl_cmd_has_savename() && gretl_in_gui_mode() &&
+	s->callback != NULL) {
+	/* save a named object? */
+	s->callback(s, pZ, pdinfo);
+    }
+
  bailout:
 
     if (err) {
@@ -5215,6 +5221,11 @@ char *gretl_cmd_get_savename (char *sname)
     *cmd_savename = 0;
 
     return sname;
+}
+
+int gretl_cmd_has_savename (void)
+{
+    return (*cmd_savename != '\0');
 }
 
 void gretl_exec_state_init (ExecState *s,

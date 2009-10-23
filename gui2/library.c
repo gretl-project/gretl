@@ -7241,6 +7241,7 @@ static int execute_script (const char *runfile, const char *buf,
 static void gui_exec_callback (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo)
 {
+    char sname[MAXSAVENAME];   
     int ci = s->cmd->ci;
     int err = 0;
 
@@ -7260,7 +7261,24 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 	err = modeltab_parse_line(s->line, s->prn);
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line);
+    } else if (ci == GNUPLOT && !(s->cmd->opt & OPT_U)) {
+	maybe_save_graph(s->cmd, gretl_plotfile(),
+			 GRETL_OBJ_GRAPH, s->prn);
+    } else if (ci == BXPLOT && !(s->cmd->opt & OPT_U)) {
+	maybe_save_graph(s->cmd, gretl_plotfile(),
+			 GRETL_OBJ_PLOT, s->prn);
+    } else if (MODEL_COMMAND(ci)) {
+	/* FIXME is this always right? */
+	MODEL *pmod = s->models[0];
+
+	if (pmod != NULL) {
+	    maybe_save_model(s->cmd, pmod, s->prn);
+	}
     }
+
+    /* ensure we zero out the "savename" in case it
+       hasn't been used */
+    gretl_cmd_get_savename(sname);
 
     if (err) {
 	gui_errmsg(err);

@@ -302,13 +302,8 @@ int in_graph_page (const char *fname)
 
 static int graph_page_add_last_graph (void)
 {
-    const char *fname = NULL;
+    const char *fname = last_session_graph_name();
     int err = 0;
-
-    fname = gretl_plotfile();
-    fprintf(stderr, "graph_page_add_last_graph: fname = '%s'\n",
-	    fname);
-    return 0; /* FIXME */
 
     if (fname != NULL && *fname != '\0') {
 	if (!in_graph_page(fname)) {

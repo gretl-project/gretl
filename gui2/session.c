@@ -434,6 +434,19 @@ session_append_graph (const char *grname,
     return graph;
 }
 
+const char *last_session_graph_name (void)
+{
+    int ng = session.ngraphs;
+
+    if (ng > 0) {
+	SESSION_GRAPH *graph = session.graphs[ng - 1];
+
+	return graph->fname;
+    } else {
+	return NULL;
+    }
+}
+
 static void session_switch_log_location (int code)
 {
     gchar *fullpath;
@@ -842,6 +855,7 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 	errbox(_("Failed to copy graph file"));
 	return ADD_OBJECT_FAIL;
     } 
+
     gretl_remove(fname);
 
     return real_add_graph_to_session(name, gname, type);

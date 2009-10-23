@@ -70,6 +70,8 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 
 char *session_graph_make_path (char *path, const char *fname);
 
+const char *last_session_graph_name (void);
+
 void model_add_as_icon (GtkAction *action, gpointer p);
 
 int maybe_add_model_to_session (void *ptr, GretlObjType type);
