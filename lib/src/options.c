@@ -313,6 +313,7 @@ struct gretl_option gretl_opts[] = {
     { RUNS,     OPT_D, "difference", 0 },
     { RUNS,     OPT_E, "equal", 0 },
     { SCATTERS, OPT_L, "with-lines", 0 },
+    { SCATTERS, OPT_U, "output", 2 },
     { SET,      OPT_F, "from-file", 2 },
     { SET,      OPT_T, "to-file", 2 },
     { SETINFO,  OPT_C, "continuous", 0 },

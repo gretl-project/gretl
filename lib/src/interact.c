@@ -4859,9 +4859,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case GNUPLOT:
     case BXPLOT:
+    case SCATTERS:
 	/* in this context we only do plots in batch mode (OPT_B) */
 	if (cmd->ci == GNUPLOT) {
 	    err = gnuplot(cmd->list, cmd->param, Z, pdinfo, cmd->opt | OPT_B);
+	} else if (cmd->ci == SCATTERS) {
+	    err = multi_scatters(cmd->list, Z, pdinfo, cmd->opt | OPT_B);
 	} else if (cmd_nolist(cmd)) { 
 	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
 	} else {
@@ -4876,7 +4879,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case MODELTAB:
     case GRAPHPG:
-	if (s->callback != NULL) {
+	if (s->callback != NULL && gretl_in_gui_mode()) {
 	    s->callback(s, pZ, pdinfo);
 	} else {
 	    pprintf(prn, _("%s: command not available\n"), cmd->word);
@@ -4902,7 +4905,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = 0;
     }
 
-    if (!err && gretl_cmd_has_savename() && gretl_in_gui_mode() &&
+    if (!err && *cmd_savename != '\0' && gretl_in_gui_mode() &&
 	s->callback != NULL) {
 	/* save a named object? */
 	s->callback(s, pZ, pdinfo);
@@ -5221,11 +5224,6 @@ char *gretl_cmd_get_savename (char *sname)
     *cmd_savename = 0;
 
     return sname;
-}
-
-int gretl_cmd_has_savename (void)
-{
-    return (*cmd_savename != '\0');
 }
 
 void gretl_exec_state_init (ExecState *s,

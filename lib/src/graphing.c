@@ -3002,7 +3002,8 @@ int theil_forecast_plot (const int *plotlist, const double **Z,
  * @list: list of variables to plot, by ID number.
  * @Z: data array.
  * @pdinfo: data information struct.
- * @opt: can include %OPT_L to use lines.
+ * @opt: can include %OPT_L to use lines, %OPT_U to
+ * direct output to a named file.
  *
  * Writes a gnuplot plot file to display up to 6 small graphs
  * based on the variables in @list, and calls gnuplot to make 
@@ -3029,6 +3030,12 @@ int multi_scatters (const int *list, const double **Z,
     if (opt & OPT_L) {
 	flags |= GPT_LINES;
     }
+
+#if 1 /* ? */
+    if (opt & OPT_U) {
+	flags |= GPT_FILE;
+    }
+#endif
 
     pos = gretl_list_separator_position(list);
 
@@ -3170,7 +3177,7 @@ int multi_scatters (const int *list, const double **Z,
 
     fclose(fp);
 
-    if (gp_interactive(flags)) {
+    if (gp_interactive(flags) || specified_gp_output_format()) {
 	err = gnuplot_make_graph();
     }
 

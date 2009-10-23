@@ -37,16 +37,6 @@ static int cli_parse_object_request (const char *line,
 	return OBJ_ACTION_NONE;
     }
 
-    /* the model table is special, not handled here */
-    if (!strcmp(word, "modeltab")) {
-	return OBJ_ACTION_NONE;
-    }  
-
-    /* ditto the graph page */
-    if (!strcmp(word, "graphpg")) {
-	return OBJ_ACTION_NONE;
-    }      
-
     /* see if there's an object associated with the name */
     err = gretl_get_object_and_type(word, pptr, type);
 

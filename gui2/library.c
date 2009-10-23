@@ -7588,11 +7588,11 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case GNUPLOT:
     case SCATTERS:
+	if (cmd->opt & OPT_U) {
+	    /* output to named file */
+	    goto use_lib;
+	}
 	if (cmd->ci == GNUPLOT) {
-	    if (cmd->opt & OPT_U) {
-		/* output to file */
-		goto use_lib;
-	    }
 	    if (cmd->opt & OPT_C) {
 		err = xy_plot_with_control(cmd->list, cmd->param, 
 					   (const double **) *pZ, pdinfo,
@@ -7633,20 +7633,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case OPEN:
     case APPEND:
 	err = script_open_append(s, pZ, pdinfo, prn);
-	break;
-
-    case MODELTAB:
-	err = modeltab_parse_line(line, prn);
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-
-    case GRAPHPG:
-	err = graph_page_parse_line(line);
-	if (err) {
-	    errmsg(err, prn);
-	}
 	break;
 
     case NULLDATA:

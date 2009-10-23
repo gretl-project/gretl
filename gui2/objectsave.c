@@ -45,16 +45,6 @@ static int gui_parse_object_request (const char *line,
 	return OBJ_ACTION_NONE;
     }
 
-    /* the model table is special, not handled here */
-    if (!strcmp(word, "modeltab")) {
-	return OBJ_ACTION_NONE;
-    }
-
-    /* also the graph page */
-    if (!strcmp(word, "graphpg")) {
-	return OBJ_ACTION_NONE;
-    }
-
     /* see if there's an object associated with the name */
     *pptr = get_session_object_by_name(word, type);
 
