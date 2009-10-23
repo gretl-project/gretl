@@ -354,6 +354,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 		       c == FUNDEBUG || \
 	               c == GENR || \
                        c == GMM || \
+		       c == GRAPHPG || \
 	               c == HAUSMAN || \
                        c == HELP || \
                        c == INCLUDE || \
@@ -4870,6 +4871,15 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
 	} else {
 	    fprintf(stderr, "ci = %d, err = %d\n", cmd->ci, err);
+	}
+	break;
+
+    case MODELTAB:
+    case GRAPHPG:
+	if (s->callback != NULL) {
+	    s->callback(s, pZ, pdinfo);
+	} else {
+	    pprintf(prn, _("%s: command not available\n"), cmd->word);
 	}
 	break;
 

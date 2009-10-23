@@ -342,7 +342,6 @@ int ok_in_loop (int c)
 	c == HURST ||
 	c == INCLUDE ||
 	c == LEVERAGE ||
-	c == MODELTAB ||
 	c == NULLDATA ||
 	c == OPEN ||
 	c == RMPLOT ||

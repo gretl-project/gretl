@@ -300,6 +300,25 @@ int in_graph_page (const char *fname)
     return 0;
 }
 
+static int graph_page_add_last_graph (void)
+{
+    const char *fname = NULL;
+    int err = 0;
+
+    fname = gretl_plotfile();
+    fprintf(stderr, "graph_page_add_last_graph: fname = '%s'\n",
+	    fname);
+    return 0; /* FIXME */
+
+    if (fname != NULL && *fname != '\0') {
+	if (!in_graph_page(fname)) {
+	    err = graph_page_add_file(fname);
+	}
+    }
+
+    return err;
+}
+
 static int gnuplot_compile (const char *fname)
 {
     const char *gnuplot = gretl_gnuplot_path();
@@ -729,8 +748,7 @@ int graph_page_parse_line (const char *line)
     }
 
     if (!strcmp(cmdword, "add")) {
-	/* FIXME need filename here */
-	/* err = graph_page_add_file(fname); */
+	err = graph_page_add_last_graph();
     } else if (!strcmp(cmdword, "show")) {
 	err = display_graph_page();
     } else if (!strcmp(cmdword, "free")) {

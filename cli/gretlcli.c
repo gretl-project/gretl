@@ -626,7 +626,9 @@ static void cli_exec_callback (ExecState *s, double ***pZ,
 	maybe_stack_var(s->var, s->cmd);
     } else if (ci == END && !strcmp(s->cmd->param, "restrict")) {
 	maybe_stack_var(s->var, s->cmd);
-    } 
+    } else {
+	pprintf(s->prn, _("%s: command not available\n"), s->cmd->word);
+    }
 }
 
 static int cli_open_append (CMD *cmd, const char *line, double ***pZ,

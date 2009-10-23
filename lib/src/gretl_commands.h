@@ -66,6 +66,7 @@ typedef enum {
     GMM,
     GNUPLOT, 
     GRAPH,
+    GRAPHPG,
     HAUSMAN,
     HECKIT,
     HELP,    

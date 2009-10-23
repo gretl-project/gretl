@@ -7242,6 +7242,7 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo)
 {
     int ci = s->cmd->ci;
+    int err = 0;
 
     if (ci == FREQ && s->flags == CONSOLE_EXEC) {
 	register_graph();
@@ -7255,6 +7256,14 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     } else if (ci == DATAMOD) {
 	mark_dataset_as_modified();
 	populate_varlist();
+    } else if (ci == MODELTAB) {
+	err = modeltab_parse_line(s->line, s->prn);
+    } else if (ci == GRAPHPG) {
+	err = graph_page_parse_line(s->line);
+    }
+
+    if (err) {
+	gui_errmsg(err);
     }
 }
 
@@ -7610,6 +7619,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case MODELTAB:
 	err = modeltab_parse_line(line, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
+	break;
+
+    case GRAPHPG:
+	err = graph_page_parse_line(line);
 	if (err) {
 	    errmsg(err, prn);
 	}
