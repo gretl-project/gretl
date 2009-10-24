@@ -2841,7 +2841,7 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	if (obj->sort == GRETL_OBJ_MODTAB) {
 	    context_help(NULL, GINT_TO_POINTER(MODELTAB));
 	} else if (obj->sort == GRETL_OBJ_GPAGE) {
-	    context_help(NULL, GINT_TO_POINTER(GRAPHPAGE));
+	    context_help(NULL, GINT_TO_POINTER(GRAPHPG));
 	}
     } else if (!strcmp(item, _("Save as TeX..."))) {   
 	if (obj->sort == GRETL_OBJ_GPAGE) {

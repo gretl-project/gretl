@@ -1128,33 +1128,6 @@ static int set_workdir (const char *s)
     return err;
 }
 
-static int parse_set_plotfile (const char *s)
-{
-    char *fname;
-    int err = 0;
-
-    while (isspace((unsigned char) *s)) {
-	s++;
-    }
-
-    /* now skip two words, "set" and "plotfile" */
-    s += strcspn(s, " ");
-    s += strspn(s, " ");
-    s += strcspn(s, " ");
-    s += strspn(s, " ");
-
-    fname = gretl_strdup(s);
-    if (fname != NULL) {
-	tailstrip(fname);
-	set_gretl_plotfile(fname);
-	free(fname);
-    } else {
-	err = E_ALLOC;
-    }
-
-    return err;
-}
-
 const char *csv_delims = ", \t;";
 
 static char delim_from_arg (const char *s)
@@ -1496,9 +1469,7 @@ int execute_set_line (const char *line, DATAINFO *pdinfo,
 
     /* specials which need the whole line */
     if (nw > 1) {
-	if (!strcmp(setobj, "plotfile")) {
-	    return parse_set_plotfile(line);
-	} else if (!strcmp(setobj, "initvals")) {
+	if (!strcmp(setobj, "initvals")) {
 	    return set_initvals(line, prn);
 	} else if (!strcmp(setobj, "shelldir")) {
 	    return set_shelldir(line);

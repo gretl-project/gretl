@@ -61,8 +61,6 @@ enum extra_cmds {
     CLI_HELP_EN,
     GUI_HELP_EN,
     FUNCS_HELP,
-    MODELTABLE,
-    GRAPHPAGE,
     KERNEL_DENSITY,
     CREATE_DATASET,
     HCCME,

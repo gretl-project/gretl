@@ -1076,13 +1076,7 @@
 	actual plots may be generated later using <program>gnuplot</program>
 	(under MS Windows, <program>wgnuplot</program>).  This behavior can be
 	modified by use of the <lit>--output=</lit><repl>filename</repl>
-	option.  This option controls the filename used, and at the same time
-	allows you to specify a particular output format via the three-letter
-	extension of the file name, as follows: <lit>.eps</lit> results in the
-	production of an Encapulated PostScript (EPS) file; <lit>.pdf</lit>
-	produces PDF; <lit>.png</lit> produces PNG format, and <lit>.fig</lit>
-	produces XFig.  With any other extensions, a gnuplot command file is
-	written.
+	option.  For details, please see the <cmdref targ="gnuplot"/> command.
       </para>
 
     </description>
@@ -3677,9 +3671,9 @@
 	allows you to specify a particular output format via the three-letter
 	extension of the file name, as follows: <lit>.eps</lit> results in the
 	production of an Encapulated PostScript (EPS) file; <lit>.pdf</lit>
-	produces PDF; <lit>.png</lit> produces PNG format, and <lit>.fig</lit>
-	produces XFig.  With any other extensions, a gnuplot command file is
-	written.
+	produces PDF; <lit>.png</lit> produces PNG format, <lit>.emf</lit>
+	calls for EMF (Enhanced MetaFile), and <lit>.fig</lit> XFig.
+	If any other extension is given, a gnuplot command file is written.
       </para>
 
       <para>
@@ -3833,8 +3827,7 @@
 
   </command>
 
-  <command name="graphpag" section="Graphs" context="gui"
-    label="Gretl graph page">
+  <command name="graphpg" section="Graphs" label="Gretl graph page">
 
     <description>
 
@@ -3858,10 +3851,26 @@
       </para> 
 
       <para>
-	On systems other than MS Windows, you may have to adjust the
+	In script (or console) mode, you can add a graph to the graph page by
+	issuing the command <lit>graphpg add</lit> after saving
+	a named graph, as in
+      </para>
+      <code>
+	grf1 &lt;- gnuplot Y X
+	graphpg add
+      </code>
+
+      <para>
+	Also in script mode you can call for display of the graph page using
+	the command <lit>graphpg show</lit>, and can clear the page via
+	<lit>graphpg free</lit>.
+      </para>
+
+      <para>
+	Note that on systems other than MS Windows, you may have to adjust the
 	setting for the program used to view PDF or PostScript files. Find
-	that under the <quote>Programs</quote> tab in the gretl
-	Preferences dialog box (under the Tools menu in the main window).
+	that under the <quote>Programs</quote> tab in the gretl Preferences
+	dialog box (under the Tools menu in the main window).
       </para>
 
     </description>
@@ -7997,6 +8006,11 @@
 	  <flag>--with-lines</flag>
 	  <effect>create line graphs</effect>
 	</option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
       </options>
       <examples>
         <example>scatters 1 ; 2 3 4 5</example>
@@ -8023,6 +8037,10 @@
       <para context="cli">
 	By default the graphs are scatterplots, but if you give the
 	<lit>--with-lines</lit> flag they will be line graphs.
+      </para>
+      <para context="cli">
+	For details on usage of the <lit>--output</lit> option, please see
+	the <cmdref targ="gnuplot"/> command.
       </para>
       <para context="gui">
 	Generates pairwise graphs of the selected <quote>Y-axis

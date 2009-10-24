@@ -106,8 +106,6 @@ static struct gui_help_item gui_help_items[] = {
     { VSETMISS,       "missing" },
     { GSETMISS,       "missing" },
     { GUI_HELP,       "dialog" },
-    { MODELTABLE,     "modeltab" },
-    { GRAPHPAGE,      "graphpag" },
     { GENR_RANDOM,    "genrand" },
     { SEED_RANDOM,    "genseed" },
     { KERNEL_DENSITY, "density" },

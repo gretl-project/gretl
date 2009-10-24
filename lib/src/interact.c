@@ -3977,6 +3977,37 @@ static int append_data (const char *line, int *list,
     return err;
 }
 
+static void schedule_callback (ExecState *s)
+{
+    if (s->callback != NULL) {
+	s->flags |= CALLBACK_EXEC;
+    }
+}
+
+static int callback_scheduled (ExecState *s)
+{
+    return (s->flags & CALLBACK_EXEC) ? 1 : 0;
+}
+
+#define GRAPH_COMMAND(c) (c == GNUPLOT || c == BXPLOT || c == SCATTERS)
+
+static void check_for_named_object_save (ExecState *s)
+{
+    if (*cmd_savename != '\0' && gretl_in_gui_mode()) {
+	int ci = s->cmd->ci;
+
+	if (MODEL_COMMAND(ci) || GRAPH_COMMAND(ci)) {
+	    schedule_callback(s);
+	}
+    }
+}
+
+static void callback_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+{
+    s->callback(s, pZ, pdinfo);
+    s->flags &= ~CALLBACK_EXEC;
+}
+
 static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
     gretlopt ropt = gretl_restriction_get_options(s->rset);
@@ -3989,10 +4020,8 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	s->var = gretl_restricted_vecm(s->rset, (const double **) *pZ, 
 				       pdinfo, cmd->opt, prn, &err);
 	if (s->var != NULL) {
-	    if (s->callback != NULL) {
-		s->callback(s, pZ, pdinfo);
-	    }
-	} 
+	    schedule_callback(s);
+	}
     } else {
 	err = gretl_restriction_finalize(s->rset, (const double **) *pZ, 
 					 pdinfo, cmd->opt, prn);
@@ -4122,6 +4151,13 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static void exec_state_prep (ExecState *s)
+{
+    gretl_error_clear();
+    s->flags &= ~CALLBACK_EXEC;
+    s->pmod = NULL;
+}
+
 #define param_to_order(ci) (ci == CORRGM || ci == XCORRGM || \
                             ci == PERGM || ci == LAGS)
 
@@ -4137,9 +4173,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     int *listcpy = NULL;
     int err = 0;
 
-    gretl_error_clear();
-
-    s->pmod = NULL;
+    exec_state_prep(s);
 
     if (NEEDS_MODEL_CHECK(cmd->ci)) {
 	err = model_test_check(cmd, pdinfo, prn);
@@ -4248,8 +4282,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case FREQ:
 	err = freqdist(cmd->list[1], Z, pdinfo, (s->flags == CONSOLE_EXEC),
 		       cmd->opt, prn);
-	if (!err && !(cmd->opt & OPT_Q) && s->callback != NULL) {
-	    s->callback(s, pZ, pdinfo);
+	if (!err && !(cmd->opt & OPT_Q)) {
+	    schedule_callback(s);
 	}
 	break;
 
@@ -4292,9 +4326,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			     pdinfo, prn);
 	if (!err) { 
 	    print_smpl(pdinfo, get_full_length_n(), prn);
-	    if (s->callback != NULL) {
-		s->callback(s, pZ, pdinfo);
-	    }
+	    schedule_callback(s);
 	} 
 	break;
 
@@ -4476,9 +4508,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (!err) {
 	    if (pdinfo->n > 0) {
 		print_smpl(pdinfo, 0, prn);
-		if (s->callback != NULL) {
-		    s->callback(s, pZ, pdinfo);
-		}
+		schedule_callback(s);
 	    } else {
 		pprintf(prn, _("setting data frequency = %d\n"), pdinfo->pd);
 	    }
@@ -4810,9 +4840,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 				cmd->opt, prn, &err);
 	}
 	if (s->var != NULL) {
-	    if (s->callback != NULL) {
-		s->callback(s, pZ, pdinfo);
-	    }
+	    schedule_callback(s);
 	}
 	break;
 
@@ -4879,8 +4907,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case MODELTAB:
     case GRAPHPG:
-	if (s->callback != NULL && gretl_in_gui_mode()) {
-	    s->callback(s, pZ, pdinfo);
+	if (gretl_in_gui_mode()) {
+	    schedule_callback(s);
 	} else {
 	    pprintf(prn, _("%s: command not available\n"), cmd->word);
 	}
@@ -4905,10 +4933,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = 0;
     }
 
-    if (!err && *cmd_savename != '\0' && gretl_in_gui_mode() &&
-	s->callback != NULL) {
-	/* save a named object? */
-	s->callback(s, pZ, pdinfo);
+    if (!err) {
+	check_for_named_object_save(s);
+    }
+
+    if (callback_scheduled(s)) {
+	callback_exec(s, pZ, pdinfo);
     }
 
  bailout:

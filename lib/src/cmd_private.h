@@ -8,13 +8,13 @@
 
 typedef struct Laginfo_ Laginfo;
 
-enum {
+typedef enum {
     CMD_NOLIST  = 1 << 0, /* command doesn't have a list of variables */
     CMD_IGNORE  = 1 << 1, /* line should be ignored */
     CMD_NULLIST = 1 << 2, /* command has been given a null list on input */
     CMD_SUBST   = 1 << 3, /* string substitution has been done on command */
     CMD_PROG    = 1 << 4  /* command is in context of progressive loop */
-};
+} CmdFlags;
 
 #define cmd_nolist(c)    (c->flags & CMD_NOLIST)
 #define cmd_ignore(c)    (c->flags & CMD_IGNORE)
@@ -27,7 +27,7 @@ struct CMD_ {
     int order;                  /* lag order, for various commands */
     int aux;                    /* auxiliary int (e.g. for VECM rank) */
     gretlopt opt;               /* option flags */
-    char flags;                 /* internal flags */
+    CmdFlags flags;             /* internal flags */
     char savename[MAXSAVENAME]; /* name used to save an object from the command */
     int *list;                  /* list of variables by ID number */
     char *param;                /* general-purpose parameter to command */

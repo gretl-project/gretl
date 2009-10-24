@@ -255,10 +255,10 @@ the models.
 
 In the Icon view window \app{gretl} provides a means of constructing
 such a table (and copying it in plain text, {\LaTeX} or Rich Text
-Format).  Here is how to do it:\footnote{The model table can also be
-  built non-interactively, in script mode.  For details on how to do
-  this, see the entry for \cmd{modeltab} in the \emph{Gretl Command
-    Reference}.  }
+Format).  The procedure is outlined below.  (The model table can also
+be built non-interactively, in script mode.  For details, see the
+entry for \cmd{modeltab} in the \emph{Gretl Command Reference}.)
+
       
 \begin{enumerate}
 \item Estimate a model which you wish to include in the table, and in
@@ -306,11 +306,14 @@ The ``graph page'' icon in the session window offers a means of
 putting together several graphs for printing on a single page.  This
 facility will work only if you have the {\LaTeX} typesetting system
 installed, and are able to generate and view either PDF or PostScript
-output.\footnote{For PDF output you need \app{pdflatex} and either
-  Adobe's PDF reader or \app{xpdf} on X11.  For PostScript, you must
-  have \app{dvips} and \app{ghostscript} installed, along with a
-  viewer such as \app{gv}, \app{ggv} or \app{kghostview}. The default
-  viewer for systems other than MS Windows is \app{gv}.}
+output.  The output format is controlled by your choice of program for
+compiling \TeX\ files, which can be found under the ``Programs'' tab
+in the Preferences dialog box (under the ``Tools'' menu in the main
+window).  Usually this should be \app{pdflatex} for PDF output or
+\app{latex} for PostScript.  In the latter case you must have
+a working set-up for handling PostScript, which will
+usually include \app{dvips}, \app{ghostscript} and a viewer such
+as \app{gv}, \app{ggv} or \app{kghostview}.  
 
 In the Icon view window, you can drag up to eight graphs onto the
 graph page icon.  When you double-click on the icon (or right-click
@@ -320,13 +323,10 @@ you should be able to print the page.
 
 To clear the graph page, right-click on its icon and select ``Clear''.
 
-On systems other than MS Windows, you may have to adjust the setting
-for the program used to view postscript.  Find that under the
-``Programs'' tab in the Preferences dialog box (under the ``Tools''
-menu in the main window).  On Windows, you may need to adjust your
-file associations so that the appropriate viewer is called for the
-``Open'' action on files with the \verb+.ps+ extension.
-FIXME discuss PDF here.
+As with the model table, it is also possible to manipulate the graph
+page via commands in script or console mode --- see the entry for the
+\cmd{graphpg} command in the \emph{Gretl Command Reference}.
+
 
 \subsection{Saving and re-opening sessions}
 \label{session-save}
@@ -341,7 +341,9 @@ which to save the session.  To re-open the session later, either
   ``File, Session files, Open session'', or
 \item From the command line, type \cmd{gretl -r} \textsl{sessionfile},
   where \textsl{sessionfile} is the name under which the session was
-  saved.
+  saved, or
+\item Drag the icon representing a \app{gretl} session file onto
+  \app{gretl}.
 \end{itemize}
 
 

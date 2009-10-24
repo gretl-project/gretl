@@ -1257,17 +1257,24 @@ static void print_term_string (int tt, FILE *fp)
 	}
     } else if (tt == GP_TERM_PNG) {
 	tstr = get_gretl_png_term_line(PLOT_REGULAR, 0);
+    } else if (tt == GP_TERM_EMF) {
+	tstr = get_gretl_emf_term_line(PLOT_REGULAR, 0);
     } else if (tt == GP_TERM_FIG) {
 	tstr = "set term fig";
-    }
+    } 
 
     if (tstr != NULL) {
 	fprintf(fp, "%s\n", tstr);
+	if (tt != GP_TERM_EPS && gnuplot_has_rgb()) {
+	    write_plot_line_styles(PLOT_REGULAR, fp);
+	}
     }
 }
 
-/* Produce formatted graph output in batch mode: at present
-   we only recognize EPS, PDF, PNG and XFig */
+/* Produce formatted graph output in batch mode, in response to the
+   --output=filename option: at present we only recognize EPS, PDF,
+   PNG, EMF and XFig.
+*/
 
 static int make_graph_special (const char *fname, int fmt)
 {
@@ -1341,6 +1348,8 @@ int specified_gp_output_format (void)
 	return GP_TERM_PNG;
     } else if (has_suffix(fname, ".fig")) {
 	return GP_TERM_FIG;
+    } else if (has_suffix(fname, ".emf")) {
+	return GP_TERM_EMF;
     } else {
 	return GP_TERM_NONE;
     }
@@ -1488,21 +1497,26 @@ static void print_gnuplot_literal_lines (const char *s, FILE *fp)
     }
 }
 
+static int command_index_from_plot_code (int code)
+{
+    /* FIXME boxplots? */
+    if (code == PLOT_MULTI_SCATTER) {
+	return SCATTERS;
+    } else {
+	return GNUPLOT;
+    }
+}
+
 static int
 get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 {
-    const char *plotfile = gretl_plotfile();
     int err = 0;
 
     *fpp = NULL;
 
-    if ((flags & GPT_FILE) && *plotfile != '\0') {
-	*fpp = gretl_fopen(plotfile, "w");
-	if (*fpp == NULL) {
-	    err = E_FOPEN;
-	}
-    } else if (flags & GPT_BATCH) {
-	const char *optname = get_optval_string(GNUPLOT, OPT_U);
+    if (flags & GPT_BATCH) {
+	int ci = command_index_from_plot_code(code);
+	const char *optname = get_optval_string(ci, OPT_U);
 	char fname[FILENAME_MAX];
 
 	if (optname != NULL && *optname != '\0') {
@@ -1520,7 +1534,7 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	    set_gretl_plotfile(fname);
 	}
     } else {
-	/* note: gnuplot_init is not used in batch mode */
+	/* note: real_gnuplot_init is not used in batch mode */
 	err = real_gnuplot_init(code, flags, fpp);
     }
 
@@ -2226,9 +2240,6 @@ static void print_gnuplot_flags (int flags, int revised)
     }
     if (flags & GPT_DATA_STYLE) {
 	fprintf(stderr, " GPT_DATA_STYLE\n");
-    }
-    if (flags & GPT_FILE) {
-	fprintf(stderr, " GPT_FILE\n");
     }
     if (flags & GPT_IDX) {
 	fprintf(stderr, " GPT_IDX\n");
@@ -3024,18 +3035,12 @@ int multi_scatters (const int *list, const double **Z,
     int i, t, err = 0;
 
     if (opt & OPT_B) {
-	flags = GPT_BATCH;
+	flags |= GPT_BATCH;
     }
 
     if (opt & OPT_L) {
 	flags |= GPT_LINES;
     }
-
-#if 1 /* ? */
-    if (opt & OPT_U) {
-	flags |= GPT_FILE;
-    }
-#endif
 
     pos = gretl_list_separator_position(list);
 

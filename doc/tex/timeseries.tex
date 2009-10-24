@@ -252,6 +252,37 @@ arma 1 0 ; 1 1 ; dsy
 where we use the \texttt{sdiff} function to create a seasonal
 difference (e.g.\ for quarterly data, $y_t - y_{t-4}$).
 
+In specifying an ARIMA model with exogenous regressors we face a
+choice which relates back to the discussion of the variant models
+(\ref{eq:arma-with-x}) and (\ref{eq:arma-with-z}) above.  If we choose
+model (\ref{eq:arma-with-x}), the ``regression model with ARMA
+errors'', how should this be extended to the case of ARIMA?  The issue
+is whether or not the differencing that is applied to the dependent
+variable should also be applied to the regressors.  Consider the
+simplest case, ARIMA with non-seasonal differencing of order 1. We may
+estimate either
+\begin{equation}
+  \label{eq:arima-with-x}
+  \phi(L) (1-L) (y_t - X_t\beta) = \theta(L) \epsilon_t
+\end{equation}
+or
+\begin{equation}
+  \label{eq:arima-with-z}
+  \phi(L) \left((1-L) y_t - X_t\beta\right) = \theta(L) \epsilon_t
+\end{equation}
+%
+The first of these formulations can be described as a regression model
+with ARIMA errors, while the second preserves the levels of the $X$
+variables.  As of \app{gretl} version 1.8.6, the default model is
+(\ref{eq:arima-with-x}), in which differencing is applied to both
+$y_t$ and $X_t$.  However, when using the default estimation method
+(native exact ML, see below), the option \option{y-diff-only} may be
+given, in which case \app{gretl} estimates
+(\ref{eq:arima-with-z}).\footnote{Prior to \app{gretl} 1.8.6, the
+  default model was (\ref{eq:arima-with-z}).  We changed this for the
+  sake of consistency with other software.}
+
+
 \subsection{Estimation}
 \label{arma-est}
 
@@ -341,7 +372,7 @@ To see the details of the ARMA estimation procedure, add the
 initialization method used, as well as the parameter values and
 log-likelihood at each iteration.
 
-Besides the build-in initialization mechanisms, the user has the
+Besides the built-in initialization mechanisms, the user has the
 option of specifying a set of starting values manually.  This is done
 via the \cmd{set} command: the first argument should be the keyword
 \texttt{initvals} and the second should be the name of a pre-specified
@@ -361,6 +392,15 @@ $\phi_1$ to 0.85, and $\theta_1$ to 0.34.
 
 You can get \app{gretl} to revert to automatic initialization via
 the command \cmd{set initvals auto}.
+
+Two variants of the BFGS algorithm are available in \app{gretl}.  In
+general we recommend the default variant, which is based on an
+implementation by J. C. Nash (1990), but for some problems the
+alternative, limited-memory version (L-BFGS-B, see Byrd \textit{et
+  al.}, 1995) may increase the chances of convergence on the ML
+solution.  This can be selected via the \option{lbfgs} option to the
+\texttt{arma} command.
+
 
 \subsection{Estimation via X-12-ARIMA}
 
@@ -391,7 +431,9 @@ ML mode, the comments above regarding the variant treatments of the
 mean of the process $y_t$ \textit{do not apply}.  That is, when you
 use \app{X-12-ARIMA} the model that is estimated is
 (\ref{eq:arma-with-x}), regardless of whether estimation is by exact
-ML or conditional ML.
+ML or conditional ML.  In addition, the treatment of exogenous
+regressors in the context of ARIMA differencing is always that shown
+in equation (\ref{eq:arima-with-x}).
 
 
 \subsection{Forecasting}

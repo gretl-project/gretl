@@ -1847,7 +1847,7 @@
 
   </command>
 
-  <command name="graphpag" section="Graphs" context="gui"
+  <command name="graphpg" section="Graphs" context="gui"
     label="Página de gráficos de Gretl">
 
     <description>

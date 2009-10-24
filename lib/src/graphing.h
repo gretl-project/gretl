@@ -37,21 +37,20 @@ typedef enum {
     GPT_GUI            = 1 << 7,  /* called from GUI context */
     GPT_FIT_OMIT       = 1 << 8,  /* User said don't draw fitted line on graph */
     GPT_DATA_STYLE     = 1 << 9,  /* data style is set by user */
-    GPT_FILE           = 1 << 10, /* send output to named file */
-    GPT_IDX            = 1 << 11, /* plot against time or obs index */
-    GPT_TS             = 1 << 12, /* doing time series plot */
-    GPT_Y2AXIS         = 1 << 13, /* plot has second y-axis */
-    GPT_AUTO_FIT       = 1 << 14, /* automatic (OLS) fitted line was added */
-    GPT_FIT_HIDDEN     = 1 << 15, /* autofit line calculated, but suppressed */
-    GPT_PNG_OUTPUT     = 1 << 16, /* output is to PNG file */
-    GPT_PRINT_MARKERS  = 1 << 17, /* print observation markers */
-    GPT_LETTERBOX      = 1 << 18, /* special format for time series graphs */
-    GPT_PARAMETRIC     = 1 << 19, /* gnuplot should be in parametric mode */
-    GPT_XZEROAXIS      = 1 << 20, /* show x = 0 line */
-    GPT_YZEROAXIS      = 1 << 21, /* show y = 0 line */
-    GPT_FILL_SWITCH    = 1 << 22, /* switching from errorbars to fill */
-    GPT_ERR_SWITCH     = 1 << 23, /* switching from fill to errorbars */
-    GPT_MONO           = 1 << 24  /* monochrome output */
+    GPT_IDX            = 1 << 10, /* plot against time or obs index */
+    GPT_TS             = 1 << 11, /* doing time series plot */
+    GPT_Y2AXIS         = 1 << 12, /* plot has second y-axis */
+    GPT_AUTO_FIT       = 1 << 13, /* automatic (OLS) fitted line was added */
+    GPT_FIT_HIDDEN     = 1 << 14, /* autofit line calculated, but suppressed */
+    GPT_PNG_OUTPUT     = 1 << 15, /* output is to PNG file */
+    GPT_PRINT_MARKERS  = 1 << 16, /* print observation markers */
+    GPT_LETTERBOX      = 1 << 17, /* special format for time series graphs */
+    GPT_PARAMETRIC     = 1 << 18, /* gnuplot should be in parametric mode */
+    GPT_XZEROAXIS      = 1 << 19, /* show x = 0 line */
+    GPT_YZEROAXIS      = 1 << 20, /* show y = 0 line */
+    GPT_FILL_SWITCH    = 1 << 21, /* switching from errorbars to fill */
+    GPT_ERR_SWITCH     = 1 << 22, /* switching from fill to errorbars */
+    GPT_MONO           = 1 << 23  /* monochrome output */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;

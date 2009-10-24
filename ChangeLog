@@ -25,6 +25,8 @@ version 1.8.6, in progress
 - L-BFGS-B: add a "set" variable, lbfgs_mem, to control the
   number of corrections used in the limited memory matrix 
 - GUI dialogs for mle, gmm: add controller for BFGS details
+- "scatters" command: add an --output option as for the
+  "gnuplot" command
 
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving
