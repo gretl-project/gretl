@@ -7080,6 +7080,7 @@ static char *gui_get_input_line (char *line, FILE *fp,
 				 int *err)
 {
     char *s;
+    int n;
 
     *line = '\0';
 
@@ -7089,7 +7090,9 @@ static char *gui_get_input_line (char *line, FILE *fp,
 	s = bufgets(line, MAXLINE, buf);
     }
 
-    if (*line != '\0' && line[strlen(line)-1] != '\n') {
+    n = strlen(line);
+
+    if (n > MAXLINE - 2  && line[n-1] != '\n') {
 	*err = E_TOOLONG;
     }
 
