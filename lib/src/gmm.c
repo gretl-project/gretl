@@ -1706,6 +1706,20 @@ int gmm_missval_check_etc (nlspec *s)
 	    s->t1, s->t2);
 #endif
 
+#if 0
+    /* thought: allow matrix version of GMM for vectors longer
+       then the dataset -- but not ready yet */
+    if (!matrix_is_dated(s->oc->e) && !matrix_is_dated(s->oc->Z)) {
+	int nr1 = s->oc->e->rows;
+	int nr2 = s->oc->Z->rows;
+	
+	if (nr1 == nr2) {
+	    s->t1 = 0;
+	    s->t2 = nr1 - 1;
+	}
+    }
+#endif
+
     if (matrix_is_dated(s->oc->e)) {
 	if (s->oc->e->t1 > s->t1) {
 	    s->t1 = s->oc->e->t1;

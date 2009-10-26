@@ -27,6 +27,8 @@ version 1.8.6, in progress
 - GUI dialogs for mle, gmm: add controller for BFGS details
 - "scatters" command: add an --output option as for the
   "gnuplot" command
+- Fix bug: the popup menu item "Execute line", in script
+  windows, was not working
 
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving
