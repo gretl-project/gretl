@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-10-02 08:59-0400\n"
-"PO-Revision-Date: 2009-09-08 13:14+0300\n"
+"PO-Revision-Date: 2009-10-05 08:35+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -5979,14 +5979,12 @@ msgid "decennial"
 msgstr "on yıllık"
 
 #: lib/src/subsample.c:2083
-#, fuzzy
 msgid "Full dataset"
-msgstr "Tüm ayrıntılar"
+msgstr "Tüm veriseti"
 
 #: lib/src/subsample.c:2085 lib/src/subsample.c:2107
-#, fuzzy
 msgid "Type"
-msgstr "tür"
+msgstr "Tür"
 
 #: lib/src/subsample.c:2092 lib/src/subsample.c:2114 gui2/datawiz.c:1227
 msgid "Number of cross-sectional units"
@@ -6001,14 +5999,12 @@ msgid "Range"
 msgstr "Aralık"
 
 #: lib/src/subsample.c:2098
-#, fuzzy
 msgid "Subsampled data"
-msgstr "veri setini yeniden örnekle"
+msgstr "Altörneklemeli veriler"
 
 #: lib/src/subsample.c:2117
-#, fuzzy
 msgid "Full range"
-msgstr "Tam veri aralığı"
+msgstr "Tam aralık"
 
 #: lib/src/subsample.c:2143
 #, c-format
@@ -7617,20 +7613,17 @@ msgstr "Veri betimlemesi alınamadı"
 msgid "didn't get description from %s\n"
 msgstr "%s için betimleme alınamadı\n"
 
-#: gui2/datafiles.c:749
-#, fuzzy, c-format
+#: gui2/datafiles.c:749, c-format
 msgid "Function package %s"
-msgstr "işlev paketleri"
+msgstr "işlev paketi %s"
 
 #: gui2/datafiles.c:751
-#, fuzzy
 msgid "Delete package file"
-msgstr "Paket listesini düzenle"
+msgstr "Paket dosyasını sil"
 
 #: gui2/datafiles.c:752
-#, fuzzy
 msgid "Unload member functions"
-msgstr "Yardımcı işlevler"
+msgstr "Üye işlevleri kaldır"
 
 #: gui2/datafiles.c:844
 msgid "Add to functions shown"
@@ -7950,7 +7943,7 @@ msgstr "Hiçbiri (tarih kullanma)"
 #: gui2/datawiz.c:546
 #, c-format
 msgid "%s, observations 1 to %d"
-msgstr "%s, 1 ile %d arası gözlemler"
+msgstr "%s, gözlemler 1 - %d arası"
 
 #: gui2/datawiz.c:546
 msgid "Cross-sectional data"
@@ -7968,7 +7961,7 @@ msgid ""
 "%d cross-sectional units observed over %d periods"
 msgstr ""
 "Panel verileri (%1$s)\n"
-"%3$d dönem üzerinde %2$d yatay-kesit birimi gözlendi"
+"%3$d dönem üzerinde gözlenen %2$d yatay-kesit birimi"
 
 #: gui2/datawiz.c:566 gui2/datawiz.c:574
 msgid "stacked time series"
@@ -8023,23 +8016,20 @@ msgid "Do you want to save this gretl session?"
 msgstr "Bu gretl oturumunu kaydetmek ister misiniz?"
 
 #: gui2/dialogs.c:138
-#, fuzzy
 msgid "Save a record of the commands you executed?"
-msgstr "Çalıştırılacak komut yok"
+msgstr "Çalıştırdığınız komutları dosyaya kaydetmek ister misiniz?"
 
 #: gui2/dialogs.c:140
 msgid "Always prompt if there are unsaved changes"
-msgstr ""
+msgstr "Kaydedilmemiş değişiklikleri her zaman uyar"
 
 #: gui2/dialogs.c:147
-#, fuzzy
 msgid "save session"
-msgstr "Oturumu kaydet"
+msgstr "oturumu kaydet"
 
 #: gui2/dialogs.c:147
-#, fuzzy
 msgid "save commands"
-msgstr "Kaydet: R komutları"
+msgstr "komutları kaydet"
 
 #: gui2/dialogs.c:214
 msgid ""
@@ -8435,9 +8425,8 @@ msgid "Test against gamma distribution"
 msgstr "Gama dağılımına karşı sına"
 
 #: gui2/dialogs.c:3603
-#, fuzzy
 msgid "Use model names"
-msgstr "Çizgi kullan"
+msgstr "Model adlarını kullan"
 
 #: gui2/dialogs.c:3607 gui2/model_table.c:1026 gui2/model_table.c:1218
 msgid "t-statistics in parentheses"
@@ -8449,7 +8438,7 @@ msgstr "Model çizelgesi seçenekleri"
 
 #: gui2/dialogs.c:3632
 msgid "column headings"
-msgstr ""
+msgstr "Sütun başlıkları"
 
 #: gui2/dialogs.c:3673 gui2/selector.c:4435
 msgid "Show p-values"
@@ -8457,7 +8446,7 @@ msgstr "P-değerlerini göster"
 
 #: gui2/dialogs.c:3680
 msgid "Show significance asterisks"
-msgstr ""
+msgstr "Anlamlılık yıldız imlerini göster"
 
 #: gui2/dialogs.c:3688 gui2/dialogs.c:4079 gui2/series_view.c:614
 msgid "significant figures"
@@ -9310,57 +9299,48 @@ msgid "gretl plot controls"
 msgstr "gretl çizim denetimleri"
 
 #: gui2/graphics.c:189
-#, fuzzy
 msgid "width"
-msgstr "Kap genişliği:"
+msgstr "genişlik"
 
 #: gui2/graphics.c:191
-#, fuzzy
 msgid "height"
-msgstr "sağ"
+msgstr "yükseklik"
 
 #: gui2/graphics.c:196
-#, fuzzy
 msgid "inches"
-msgstr "çizgiler"
+msgstr "inç"
 
 #: gui2/graphics.c:202
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: gui2/graphics.c:215
-#, fuzzy
 msgid "line width factor"
-msgstr "çizgi genişliği"
+msgstr "çizgi genişlik çarpanı"
 
 #: gui2/graphics.c:412
-#, fuzzy
 msgid "save graph"
-msgstr "Çizim oluştur"
+msgstr "Çiziti kaydet"
 
 #: gui2/graphics.c:421
-#, fuzzy
 msgid "EPS file"
-msgstr "Aç: SPSS dosyası"
+msgstr "EPS dosyası"
 
 #: gui2/graphics.c:421
-#, fuzzy
 msgid "PDF file"
-msgstr "Dosya"
+msgstr "PDF dosyası"
 
 #: gui2/graphics.c:424
 msgid "Plot dimensions:"
-msgstr ""
+msgstr "Çizit boyutları:"
 
 #: gui2/graphics.c:443
-#, fuzzy
 msgid "Font and size:"
-msgstr "Yazı tipi adı"
+msgstr "Yazı tipi ve büyüklüğü:"
 
 #: gui2/graphics.c:455
-#, fuzzy
 msgid "Preview"
-msgstr "_Önizleme:"
+msgstr "Önizleme"
 
 #: gui2/graph_page.c:272
 msgid "The graph page is full"
@@ -9501,9 +9481,8 @@ msgid "_SPSS..."
 msgstr "_SPSS..."
 
 #: gui2/gretl.c:1270 gui2/gretl.c:1284
-#, fuzzy
 msgid "_SAS (xport)..."
-msgstr "_3B çizimi..."
+msgstr "_SAS (xport)..."
 
 #: gui2/gretl.c:1271 gui2/gretl.c:1286 gui2/gretl.c:1297
 msgid "_JMulTi..."
@@ -9943,9 +9922,8 @@ msgid "_Restore full range"
 msgstr "Tam aralığı geri _getir"
 
 #: gui2/gretl.c:1428
-#, fuzzy
 msgid "_Show status"
-msgstr "_T-oranlarını göster"
+msgstr "_Durumu göster"
 
 #: gui2/gretl.c:1429
 msgid "_Define, based on dummy..."
@@ -10398,9 +10376,8 @@ msgid "for the variable %s (%d valid observations)"
 msgstr "%s değişkeni için (%d geçerli gözlem)"
 
 #: gui2/guiprint.c:868
-#, fuzzy
 msgid "t-ratios in parentheses"
-msgstr "t-istatistikleri parantez içerisinde gösterilsin"
+msgstr "t-oranları parantez içerisinde gösterilsin"
 
 #: gui2/guiprint.c:915
 #, c-format
@@ -10535,9 +10512,8 @@ msgid "_Print..."
 msgstr "_Yazdır..."
 
 #: gui2/gui_utils.c:163
-#, fuzzy
 msgid "View as equation"
-msgstr "Denklem ekle"
+msgstr "Denklem olarak göster"
 
 #: gui2/gui_utils.c:164 gui2/gui_utils.c:292
 msgid "_Close"
@@ -11063,11 +11039,15 @@ msgid ""
 "Do you want to restore the sample on which\n"
 "this model was estimated?"
 msgstr ""
+"Model örneklemi veriseti örnekleminden farklı olduğu\n"
+"için bazı menü seçenekleri geçersiz kılınacaktır.\n"
+"\n"
+"Bu modelin tahmin edilmiş olduğu örneklemi\n"
+"geri getirmek ister misiniz?"
 
 #: gui2/gui_utils.c:3630
-#, fuzzy
 msgid "dataset is subsampled"
-msgstr "veri seti altörneklemeli, model değil\n"
+msgstr "veri seti altörneklemeli"
 
 #: gui2/gui_utils.c:3643
 #, c-format
@@ -12114,7 +12094,7 @@ msgstr "Ölçünlü hatalar parantez içerisinde gösterilmiştir"
 
 #: gui2/model_table.c:1032 gui2/model_table.c:1224
 msgid "p-values in brackets"
-msgstr ""
+msgstr "p-değerleri parantez içerisinde gösterilmiştir"
 
 #: gui2/model_table.c:1036 gui2/model_table.c:1145 gui2/model_table.c:1229
 msgid "* indicates significance at the 10 percent level"
@@ -12139,7 +12119,7 @@ msgstr "gretl: model çizelgesi"
 
 #: gui2/model_table.c:1140
 msgid "$p$-values in brackets"
-msgstr ""
+msgstr "$p$-değerleri parantez içerisinde gösterilmiştir"
 
 #: gui2/model_table.c:1151
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
@@ -13123,9 +13103,8 @@ msgid "Show icon view automatically"
 msgstr "Simge görünümünü kendiliğinden göster"
 
 #: gui2/settings.c:167
-#, fuzzy
 msgid "Prompt to save session"
-msgstr "Oturumu kaydet"
+msgstr "Oturumu kaydetmek için uyar"
 
 #: gui2/settings.c:170
 msgid "Enable Ox support"
@@ -13755,9 +13734,8 @@ msgid "Stickiness..."
 msgstr "Yapışkanlık..."
 
 #: gui2/toolbar.c:608
-#, fuzzy
 msgid "Toggle split pane"
-msgstr "Satır numaralarını aç"
+msgstr "Ayrık paneli aç"
 
 #: gui2/toolbar.c:609
 msgid "Help on command"
@@ -14470,9 +14448,8 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "H0: eğim = 0 için p-değeri = %g\n"
 
 #: plugin/sas_import.c:620 plugin/sas_import.c:654
-#, fuzzy
 msgid "This file does not seem to be a valid SAS xport file"
-msgstr "Bu dosya geçerli bir Stata veri dosyası gibi görünmüyor"
+msgstr "Bu dosya geçerli bir SAS xport dosyası gibi görünmüyor"
 
 #: plugin/spss_import.c:1850
 msgid "cannot read SPSS .sav on this platform"
