@@ -1578,13 +1578,16 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
 
 static void add_editing_option (GtkWidget *vbox, gretlopt *flags)
 {
-    GtkWidget *hbox, *b;
+    if (g_object_get_data(G_OBJECT(vbox), "edbutton") == NULL) {
+	GtkWidget *hbox, *b;
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    b = gretl_option_check_button(_("start entering data values"),
-				  flags, DW_SSHEET);
-    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);    
+	hbox = gtk_hbox_new(FALSE, 5);
+	b = gretl_option_check_button(_("start entering data values"),
+				      flags, DW_SSHEET);
+	gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	g_object_set_data(G_OBJECT(vbox), "edbutton", b);
+    }
 }
 
 /* build the appropriate notebook page for the given step */
