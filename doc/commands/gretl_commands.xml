@@ -6174,7 +6174,16 @@
 
       <para context="cli">Various internal variables may be retrieved
 	using the <cmdref targ="genr"/> command, provided
-	<cmd>genr</cmd> is invoked immediately after this command.
+	<cmd>genr</cmd> is invoked directly after estimation.
+	For example
+      </para>
+      <code context="cli">
+	genr uh = $uhat
+      </code>
+      <para>
+	saves the residuals under the name <lit>uh</lit>.
+	See the <quote>accessors</quote> section of the
+	gretl function reference for details.
       </para>
 
       <para context="cli">The specific formula used for generating

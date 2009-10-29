@@ -2876,6 +2876,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (opt & OPT_S) {
 	/* --simple-print */
+	if (pmod->ci == OLS && plain_format(prn)) {
+	    pprintf(prn, "%s = %f\n\n", _("R-squared"), pmod->rsq);
+	}
 	goto close_format;
     }
 
