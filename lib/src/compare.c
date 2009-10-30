@@ -357,8 +357,9 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     if (verbosity > 0 && stat_ok) {
 	if (diffvars[0] == 1) {
 	    pputs(prn, "\n  ");
-	    pprintf(prn, "%s: the regression parameter is zero for %s\n", 
-		    _("Null hypothesis"), pdinfo->varname[diffvars[1]]);
+	    pprintf(prn, _("Null hypothesis: the regression parameter is zero for %s"), 
+		    pdinfo->varname[diffvars[1]]);
+	    pputc(prn, '\n');
 	} else {
 	    const char *vname;
 	    int nc = 0;
