@@ -3920,7 +3920,7 @@ int do_rename_variable (int v, const char *newname, int full)
     int err = 0;
 
     if (v < datainfo->v && !strcmp(newname, datainfo->varname[v])) {
-	/* no-op */
+	/* no-op (shouldn't happen) */
 	return 0;
     }
 
