@@ -290,6 +290,11 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	}
     }
 
+    if (!err) {
+	/* zero the "change" recorder */
+	varinfo_set_unchanged(vset);
+    }
+
     if (!err && w != vset->apply) {
 	gtk_widget_destroy(vset->dlg);
     }

@@ -3919,6 +3919,11 @@ int do_rename_variable (int v, const char *newname, int full)
 {
     int err = 0;
 
+    if (v < datainfo->v && !strcmp(newname, datainfo->varname[v])) {
+	/* no-op */
+	return 0;
+    }
+
     if (gretl_is_series(newname, datainfo)) {
 	errbox(_("A series named %s already exists"), newname);
 	return 1;
@@ -3939,6 +3944,7 @@ int do_rename_variable (int v, const char *newname, int full)
 
     if (!err) {
 	strcpy(datainfo->varname[v], newname);
+	mark_dataset_as_modified();
     }
 
     return err;
