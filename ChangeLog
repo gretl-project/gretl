@@ -5,7 +5,7 @@ version 1.8.6, in progress
   and difference both the dependent variable and the
   exogenous regressors; a new option, --y-diff-only,
   restores the old behavior of leaving the regressors in
-  levels
+  levels.  This resolves bug 1972626.
 - arima: fix some "corner case" bugs and extend the options
   that can be controlled via the GUI
 - Add hyperbolic functions, asinh and friends
