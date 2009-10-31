@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-10-30 14:58-0400\n"
-"PO-Revision-Date: 2009-10-05 08:35+0300\n"
+"PO-Revision-Date: 2009-10-31 17:11+0200\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -290,12 +290,9 @@ msgstr "ekle"
 msgid "Comparison of Model %d and Model %d:\n"
 msgstr "Model %d ve Model %d karşılaştırması:\n"
 
-#: lib/src/compare.c:360
-#, fuzzy, c-format
+#: lib/src/compare.c:360, c-format
 msgid "Null hypothesis: the regression parameter is zero for %s"
-msgstr ""
-"\n"
-"  Sıfır önsavı: Seçilen değişken(ler) için bağlanım katsayısı = 0\n"
+msgstr "Sıfır önsavı: %s için bağlanım katsayısı = 0"
 
 #: lib/src/compare.c:367
 msgid ""
@@ -911,7 +908,7 @@ msgstr "UYARI: %d. değişken ascii veri okuma hatası"
 #: lib/src/dataio.c:319
 #, c-format
 msgid "WARNING: failed to read case marker for obs %d"
-msgstr "UYARI: %d. gözlem durum imleyici okuma başarısız"
+msgstr "UYARI: %d. gözlem için durum imleçi okuma başarısız"
 
 #: lib/src/dataio.c:393
 #, c-format
@@ -1817,7 +1814,7 @@ msgstr "Ağırlık değişkeni eksi değerler içeriyor"
 #: lib/src/estimate.c:1084 lib/src/estimate.c:2059 plugin/arma_common.c:556
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
-msgstr "%d değişkeni, %d. gözlemde eksik değer ile karşılaşıldı"
+msgstr "%d no'lu değişkenin %d. gözleminde eksik değer ile karşılaşıldı"
 
 #: lib/src/estimate.c:1617
 #, c-format
@@ -2488,7 +2485,7 @@ msgstr "%% %g güven elipsi ve %% %g marjinal aralıkları"
 #: lib/src/graphing.c:4873 lib/src/graphing.c:4874
 #, c-format
 msgid "adjusted %s"
-msgstr "ayarlamalı %s"
+msgstr "ayarlı %s"
 
 #: lib/src/graphing.c:4936 plugin/range-mean.c:66
 msgid "with least squares fit"
@@ -3542,7 +3539,7 @@ msgstr "Alınan gözlem yok\n"
 #: lib/src/gretl_xml.c:2017
 #, c-format
 msgid "Case marker missing at obs %d"
-msgstr "%d. gözlemde durum imleyicisi eksik"
+msgstr "%d. gözlemin durum imleçi eksik"
 
 #: lib/src/gretl_xml.c:2052
 #, c-format
@@ -3837,10 +3834,9 @@ msgstr "Bu bağlamda değişken silemezsiniz\n"
 msgid "wrote %s\n"
 msgstr "%s yazıldı\n"
 
-#: lib/src/interact.c:4913 cli/gretlcli.c:630
-#, fuzzy, c-format
+#: lib/src/interact.c:4913 cli/gretlcli.c:630, c-format
 msgid "%s: command not available\n"
-msgstr "%s: üzgünüm, elde yardım yok.\n"
+msgstr "%s: komut bulunmuyor\n"
 
 #: lib/src/interact.c:4919
 #, c-format
@@ -4793,7 +4789,7 @@ msgstr "R-kare"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2521
 msgid "Adjusted R-squared"
-msgstr "Ayarlamalı R-kare"
+msgstr "Ayarlı R-kare"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2524
@@ -4834,7 +4830,7 @@ msgstr "Durbin-Watson"
 
 #: lib/src/modelprint.c:2575
 msgid "Adjusted $R^2$"
-msgstr "Ayarlamalı $R^2$"
+msgstr "Ayarlı $R^2$"
 
 #: lib/src/modelprint.c:2576
 msgid "P-value($F$)"
@@ -8173,30 +8169,28 @@ msgid "Seed for generator:"
 msgstr "Oluşturucu tohumu:"
 
 #: gui2/dialogs.c:1238
-#, fuzzy
 msgid "gretl: iteration controls"
-msgstr "gretl: yineleme bilgisi"
+msgstr "gretl: yineleme denetimleri"
 
 #: gui2/dialogs.c:1252
 msgid "BHHH maximizer"
-msgstr ""
+msgstr "BHHH ençoklayıcısı"
 
 #: gui2/dialogs.c:1253
 msgid "BFGS maximizer"
-msgstr ""
+msgstr "BFGS ençoklayıcısı"
 
 #: gui2/dialogs.c:1261
-#, fuzzy
 msgid "Maximum iterations:"
-msgstr "Ençoksal yineleme sayısına (%d) ulaşıldı"
+msgstr "Ençok yineleme sayısı:"
 
 #: gui2/dialogs.c:1272
 msgid "Convergence tolerance:"
-msgstr ""
+msgstr "Yakınsama hoşgörüsü:"
 
 #: gui2/dialogs.c:1295
 msgid "Use L-BFGS-B, memory size:"
-msgstr ""
+msgstr "L-BFGS-B kullan, bellek boyutu:"
 
 #: gui2/dialogs.c:1537
 #, c-format
@@ -9773,11 +9767,11 @@ msgstr "Betimlemeyi ya_zdır"
 
 #: gui2/gretl.c:1371
 msgid "Add _case markers..."
-msgstr "Durum imleyici _ekle..."
+msgstr "Durum imleçleri _ekle..."
 
 #: gui2/gretl.c:1372
 msgid "Remove case _markers"
-msgstr "Durum imleyici _kaldır..."
+msgstr "Durum imleçlerini _kaldır..."
 
 #: gui2/gretl.c:1373
 msgid "Dataset _structure..."
@@ -10572,9 +10566,8 @@ msgid "_Modify model..."
 msgstr "_Modeli kiple (modify)..."
 
 #: gui2/gui_utils.c:181
-#, fuzzy
 msgid "_Restore model sample"
-msgstr "Model adlarını kullan"
+msgstr "Model _örneklemini geri getir"
 
 #: gui2/gui_utils.c:183 gui2/gui_utils.c:312
 msgid "_Tests"
@@ -11141,7 +11134,7 @@ msgid ""
 "Name contains an illegal char (in place %d)\n"
 "Use only unaccented letters, digits and underscore"
 msgstr ""
-"Ad, geçersiz bir simge (%d. sıra) içeriyor.\n"
+"Ad, geçersiz bir simge (%d. sırada) içeriyor.\n"
 "Yalnızca vurgusuz harf, rakam veya altçizgi kullanınız"
 
 #: gui2/gui_utils.c:3931
@@ -11944,7 +11937,7 @@ msgstr "\"%s\" için durum çevirme başarısız\n"
 #: gui2/menustate.c:285 gui2/menustate.c:331 gui2/menustate.c:371
 #: gui2/menustate.c:418
 msgid "Descriptive statistics"
-msgstr "Betimleyici istatistikler"
+msgstr "Özet istatistikler"
 
 #: gui2/menustate.c:287 gui2/menustate.c:346 gui2/menustate.c:372
 #: gui2/menustate.c:421
@@ -12553,9 +12546,8 @@ msgid "Parameter covariance matrix via Hessian"
 msgstr "Hesseyen yolu ile değiştirge kovaryans dizeyi"
 
 #: gui2/selector.c:4344
-#, fuzzy
 msgid "Difference the independent variables"
-msgstr "Bağımlı değişken ortalaması"
+msgstr "Bağımsız değişkenlerin farklarını al"
 
 #: gui2/selector.c:4348
 msgid "Use X-12-ARIMA"
@@ -13420,14 +13412,14 @@ msgstr "Yeni değişken için ad, veya ad=değer, giriniz"
 
 #: gui2/ssheet.c:835
 msgid "gretl: case marker"
-msgstr "gretl: durum imleyici"
+msgstr "gretl: durum imleçi"
 
 #: gui2/ssheet.c:836
 msgid ""
 "Enter case marker for new obs\n"
 "(max. 8 characters)"
 msgstr ""
-"Yeni gözlem için durum imleyici giriniz\n"
+"Yeni gözlem için durum imleçi giriniz\n"
 "(ençok 8 harf)"
 
 #: gui2/ssheet.c:874
@@ -14561,7 +14553,7 @@ msgstr "Veri setine kaydet:"
 
 #: plugin/tramo_options.c:449 plugin/tramo-x12a.c:198
 msgid "Seasonally adjusted series"
-msgstr "Mevsimsel ayarlamalı seri"
+msgstr "Mevsimselce ayarlı seri"
 
 #: plugin/tramo_options.c:459 plugin/tramo-x12a.c:205
 msgid "Trend/cycle"
@@ -14651,7 +14643,7 @@ msgstr "Mevsimsel HO terimleri:"
 #: plugin/tramo-x12a.c:60
 #, c-format
 msgid "seasonally adjusted %s"
-msgstr "mevsimsel ayarlamalı %s"
+msgstr "mevsimselce ayarlı %s"
 
 #: plugin/tramo-x12a.c:61
 #, c-format
@@ -14677,7 +14669,7 @@ msgstr "eğilim/çevrim"
 
 #: plugin/tramo-x12a.c:396
 msgid "adjusted"
-msgstr "ayarlamalı"
+msgstr "ayarlı"
 
 #: plugin/vif.c:107
 msgid "Properties of matrix X'X"
