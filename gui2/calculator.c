@@ -256,7 +256,7 @@ enum {
                  "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
 #define F_STUD   "stud(x,m)=Binv(0.5*m,0.5)/sqrt(m)*(1.0+(x*x)/m)**(-0.5*(m+1.0))"
 #define F_POIS   "poisson(z,k)=exp(-z)*(z**k)/(int(k))!"
-#define F_WEIB   "weibull(x,shp,scl)=(shp/scl)*(x/scl)**(shp-1.0)*exp(-(x/scl)**shp)"
+#define F_WEIB   "weibull(x,shp,scl)=x<0?0.0/0.0:(shp/scl)*(x/scl)**(shp-1.0)*exp(-(x/scl)**shp)"
 #define F_BINOM  "binom(k,n,p)=k<0||k>n?0.0:exp(lgamma(n+1)-lgamma(n-k+1)-lgamma(k+1)" \
                  "+k*log(p)+(n-k)*log(1.0-p))"
 
