@@ -3855,6 +3855,7 @@ static void msgbox (const char *msg, int msgtype)
 	(msgtype == GTK_MESSAGE_WARNING)? titles[0] : titles[2];
 
     gtk_window_set_title(GTK_WINDOW(dialog), _(title));
+    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
 
     gtk_dialog_run(GTK_DIALOG(dialog));
 
