@@ -48,6 +48,13 @@ typedef enum {
     GP_KEY_NONE
 } GpKeyPos;
 
+typedef enum {
+    GP_X_RANGE,
+    GP_Y_RANGE,
+    GP_Y2_RANGE,
+    GP_T_RANGE
+} GpRange;
+
 typedef struct gp_style_spec_ gp_style_spec;
 
 struct gp_style_spec_ {

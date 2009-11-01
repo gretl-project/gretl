@@ -556,8 +556,8 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
     x = spec->data;
     y = x + spec->nobs;
 
-    xrange = spec->range[0][1] - spec->range[0][0];
-    yrange = spec->range[1][1] - spec->range[1][0];
+    xrange = spec->range[GP_X_RANGE][1] - spec->range[GP_X_RANGE][0];
+    yrange = spec->range[GP_Y_RANGE][1] - spec->range[GP_Y_RANGE][0];
 
     if (xrange == 0.0 || yrange == 0.0) {
 	double ymin = 1.0e+16, ymax = -1.0e+16;
@@ -649,8 +649,8 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
 	    continue;
 	}
 
-	if ((i == 2 && !(spec->flags & GPT_Y2AXIS)) ||
-	    (i == 3 && !(spec->flags & GPT_PARAMETRIC))) {
+	if ((i == GP_Y2_RANGE && !(spec->flags & GPT_Y2AXIS)) ||
+	    (i == GP_T_RANGE && !(spec->flags & GPT_PARAMETRIC))) {
 	    continue;
 	}
 

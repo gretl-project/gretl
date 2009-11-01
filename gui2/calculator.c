@@ -100,8 +100,8 @@ int use_alt_form (int d, double *parms)
     if (d == CHISQ_DIST && parms[0] > 69) {
 	return 1;
     } else if (d == BINOMIAL_DIST) {
-	int n = parms[1];
 	double p = parms[0];
+	int n = parms[1];
 
 	return (n*p > 8 && n*(1-p) > 8);
     } else {
@@ -250,15 +250,16 @@ enum {
 #define F_STDN   "normal(x)=1/(sqrt(2*pi))*exp(-(x)**2/2)"
 #define F_NORM   "normal(x,mu,s)=1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
 #define F_BINV   "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))"
-#define F_CHI    "chi(x,m)=x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)"
-#define F_ALTCHI "bigchi(x,m)=exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log(2.0))"
-#define F_F      "f(x,m,n)=Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*" \
+#define F_CHI    "chi(x,m)=x<0?0.0/0.0:x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)"
+#define F_ALTCHI "bigchi(x,m)=x<0?0.0/0.0:exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log(2.0))"
+#define F_F      "f(x,m,n)=x<0?0.0/0.0:Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*" \
                  "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
-#define F_STUD   "stud(x,m)=Binv(0.5*m,0.5)/sqrt(m)*(1.0+(x*x)/m)**(-0.5*(m+1.0))"
-#define F_POIS   "poisson(z,k)=exp(-z)*(z**k)/(int(k))!"
+#define F_STUD   "stud(x,m)=x<0?0.0/0.0:Binv(0.5*m,0.5)/sqrt(m)*(1.0+(x*x)/m)**(-0.5*(m+1.0))"
+#define F_POIS   "poisson(z,k)=k<0?0.0/0.0:exp(-z)*(z**k)/(int(k))!"
 #define F_WEIB   "weibull(x,shp,scl)=x<0?0.0/0.0:(shp/scl)*(x/scl)**(shp-1.0)*exp(-(x/scl)**shp)"
 #define F_BINOM  "binom(k,n,p)=k<0||k>n?0.0:exp(lgamma(n+1)-lgamma(n-k+1)-lgamma(k+1)" \
                  "+k*log(p)+(n-k)*log(1.0-p))"
+#define F_ALTBIN "bigbin(x,mu,s)=x<0?0.0/0.0:1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
 
 static void 
 dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax, int alt)
@@ -436,15 +437,14 @@ range_from_dist (int d, double *parms, int alt, FILE *fp)
     } else if (d == T_DIST) {
 	fputs("set yrange [0:.50]\n", fp);
     } else if (d == BINOMIAL_DIST || d == POISSON_DIST) {  
-	fprintf(fp, "set samples %d\n", (int) (tmax - tmin + 1));
 	fprintf(fp, "set xtics %d\n", tic_step(tmax - tmin));
     }	
 }
 
 static void
-spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
+adjust_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
 {
-    double *t_range = spec->range[3];
+    double *t_range = spec->range[GP_T_RANGE];
     double tmin, tmax;
 
     dist_xmin_xmax(d, parms, &tmin, &tmax, alt);
@@ -459,19 +459,15 @@ spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
 	t_range[1] = tmax;
     }   
 
+    if (d != NORMAL_DIST && d != T_DIST) {
+	spec->range[GP_Y_RANGE][0] = spec->range[GP_Y_RANGE][1] = NADBL;
+    }
+
     if (d == BINOMIAL_DIST && alt) { 
 	sprintf(spec->xtics, "%d", tic_step(t_range[1] - t_range[0]));
     }
 
-    if (d == BINOMIAL_DIST || d == POISSON_DIST) {
-	int ns = t_range[1] - t_range[0] + 1;
-
-	if (ns > spec->samples) {
-	    spec->samples = ns;
-	}
-    } else if (spec->samples != 0) {
-	spec->samples = 100;
-    }
+    spec->samples = 200;
 }
 
 static void 
@@ -501,15 +497,15 @@ make_plot_line (char *targ, int d, int alt, const int *ids)
 	k = ids[ID_N] + 1;
 	j = ids[ID_P] + 1;
 	if (alt) {
-	    sprintf(targ, "int(t),normal(t+.5,n%d*p%d,sqrt(n%d*p%d*(1-p%d)))", 
+	    sprintf(targ, "int(t),bigbin(int(t)+.5,n%d*p%d,sqrt(n%d*p%d*(1-p%d)))", 
 		    k, j, k, j, j);
 	} else {
-	    sprintf(targ, "int(t),binom(t,n%d,p%d)", k, j);
+	    sprintf(targ, "int(t),binom(int(t),n%d,p%d)", k, j);
 	}
 	break;
     case POISSON_DIST:
 	k = ids[ID_L] + 1;
-	sprintf(targ, "int(t),poisson(lambda%d,t)", k);
+	sprintf(targ, "int(t),poisson(lambda%d,int(t))", k);
 	break;
     case WEIBULL_DIST:
 	k = ids[ID_SHP] + 1;
@@ -654,11 +650,7 @@ static void dist_graph (int d, double *parms)
     case BINOMIAL_DIST:
 	fprintf(fp, "n1=%d\n", (int) parms[1]);
 	fprintf(fp, "p1=%g\n", parms[0]);
-	if (alt) {
-	    fprintf(fp, "%s\n", F_NORM);
-	} else {
-	    fprintf(fp, "%s\n", F_BINOM);
-	}
+	fprintf(fp, "%s\n", (alt)? F_ALTBIN : F_BINOM);
 	break;
     case POISSON_DIST:
 	fprintf(fp, "lambda1=%g\n", parms[0]);
@@ -696,6 +688,7 @@ static void dist_graph (int d, double *parms)
 }
 
 #define ALT_CHI MAX_DIST
+#define ALT_BIN (ALT_CHI + 1)
 
 static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 {
@@ -704,7 +697,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     const char *f1 = NULL, *f2 = NULL;
     char v1[32] = {0};
     char v2[32] = {0};
-    char got[MAX_DIST+1] = {0};
+    char got[MAX_DIST+2] = {0};
     int ids[ID_MAX] = {0};
     double x[2] = {0};
     int i, k, alt = 0;
@@ -724,10 +717,10 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 		    /* no-op: line is already present */
 		    return;
 		}
-		if (prevd == CHISQ_DIST && x[0] > 69) {
+		if (prevd == CHISQ_DIST && use_alt_form(prevd, x)) {
 		    got[ALT_CHI] = 1;
-		} else if (prevd == BINOMIAL_DIST && x[0] > 150) { /* ?? */
-		    got[NORMAL_DIST] = 1;
+		} else if (prevd == BINOMIAL_DIST && use_alt_form(prevd, x)) { 
+		    got[ALT_BIN] = 1;
 		} else {
 		    got[prevd] = 1;
 		}
@@ -770,8 +763,8 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     /* alternate forms for some plots */
     alt = use_alt_form(d, parms);
 
-    /* maybe adjust t-range */
-    spec_range_from_dist(d, parms, alt, spec);
+    /* maybe adjust plot range */
+    adjust_range_from_dist(d, parms, alt, spec);
 
     /* add a comment line for the new plot */
     title = dist_comment_line(d, parms);
@@ -857,8 +850,8 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	if (!got[F_DIST]) f2 = F_F;
 	break;
     case BINOMIAL_DIST:
-	if (alt && !got[NORMAL_DIST]) {
-	    f1 = F_NORM;
+	if (alt && !got[ALT_BIN]) {
+	    f1 = F_ALTBIN;
 	} else if (!alt && !got[BINOMIAL_DIST]) {
 	    f1 = F_BINOM;
 	}

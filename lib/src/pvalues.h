@@ -28,6 +28,10 @@ double binomial_cdf (double p, int n, int k);
 
 double binomial_cdf_comp (double p, int n, int k);
 
+double binomial_pmf (double p, int n, int k);
+
+double poisson_pmf (double lambda, int k);
+
 double x_factorial (double x);
 
 double log_x_factorial (double x);

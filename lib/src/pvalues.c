@@ -156,6 +156,27 @@ static double binomial_critval (double p, int n, double a)
 }
 
 /**
+ * binomial_pmf:
+ * @p: success probability.
+ * @n: number of trials.
+ * @k: number of successes.
+ * 
+ * Returns: the probability mass for @k successes in @n
+ * binomial trials with success probability @p.
+ */
+
+double binomial_pmf (double p, int n, int k)
+{
+    double pm = binomial_cdf(p, n, k);
+
+    if (k > 0 && !na(pm)) {
+	pm -= binomial_cdf(p, n, k - 1);
+    }
+
+    return pm;
+}
+
+/**
  * x_factorial:
  * @x: input value.
  * 
@@ -1269,7 +1290,16 @@ static double poisson_cdf_comp (double lambda, int k)
     return x;
 }
 
-static double poisson_pmf (double lambda, int k)
+/**
+ * poisson_pmf:
+ * @lambda: mean (also variance).
+ * @k: test value.
+ *
+ * Returns: the probability mass at @k, for an r.v. that follows
+ * the Poisson distribution with parameter @lambda.
+ */
+
+double poisson_pmf (double lambda, int k)
 {
     double den, l0, p;
 
