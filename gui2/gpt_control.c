@@ -980,6 +980,29 @@ int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname)
     return err;
 }
 
+/* we're looking for an uncommented "set term png" or some such */
+
+static int is_batch_term_line (const char *s)
+{
+    int ret = 0;
+
+    while (isspace(*s)) s++;
+
+    if (*s != '#') {
+	s = strstr(s, "set term");
+
+	if (s != NULL) {
+	    s += 8;
+	    s += strspn(s, "inal");
+	    while (isspace(*s)) s++;
+	    if (strncmp(s, "win", 3))
+		ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 /* dump_plot_buffer: this is used when we're taking the material from
    an editor window containing gnuplot commands, and either (a)
    sending it to gnuplot for execution, or (b) saving it to a "user
@@ -1029,6 +1052,9 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	bufgets_init(buf);
 
 	while (bufgets(bufline, sizeof bufline, buf)) {
+	    if (addpause && is_batch_term_line(bufline)) {
+		addpause = 0;
+	    }
 	    handled = 0;
 	    if (recode) {
 		trbuf = gp_locale_from_utf8(bufline);
