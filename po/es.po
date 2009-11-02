@@ -8,13 +8,13 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-10-30 14:58-0400\n"
-"PO-Revision-Date: 2009-10-05 12:33+0200\n"
+"PO-Revision-Date: 2009-11-02 13:55+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 0.3\n"
+"X-Generator: Lokalize 1.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:245
@@ -293,12 +293,9 @@ msgstr "añadir"
 msgid "Comparison of Model %d and Model %d:\n"
 msgstr "Comparación entre el modelo %d y el modelo %d:\n"
 
-#: lib/src/compare.c:360
-#, fuzzy, c-format
+#: lib/src/compare.c:360, c-format
 msgid "Null hypothesis: the regression parameter is zero for %s"
-msgstr ""
-"\n"
-"  Hipótesis nula: los parámetros de regresión son cero para las variables\n"
+msgstr "Hipótesis nula: el parámetro de regresión es cero para %s"
 
 #: lib/src/compare.c:367
 msgid ""
@@ -3873,10 +3870,9 @@ msgstr "En este contexto no se pueden borrar variables\n"
 msgid "wrote %s\n"
 msgstr "escribió %s\n"
 
-#: lib/src/interact.c:4913 cli/gretlcli.c:630
-#, fuzzy, c-format
+#: lib/src/interact.c:4913 cli/gretlcli.c:630, c-format
 msgid "%s: command not available\n"
-msgstr "%s: lo siento, no hay ayuda disponible.\n"
+msgstr "%s: instrucción no disponible\n"
 
 #: lib/src/interact.c:4919
 #, c-format
@@ -8246,30 +8242,28 @@ msgid "Seed for generator:"
 msgstr "Semilla para el generador:"
 
 #: gui2/dialogs.c:1238
-#, fuzzy
 msgid "gretl: iteration controls"
-msgstr "gretl: información de iteración"
+msgstr "gretl: controles de iteración"
 
 #: gui2/dialogs.c:1252
 msgid "BHHH maximizer"
-msgstr ""
+msgstr "maximizador BHHH"
 
 #: gui2/dialogs.c:1253
 msgid "BFGS maximizer"
-msgstr ""
+msgstr "maximizador BFGS"
 
 #: gui2/dialogs.c:1261
-#, fuzzy
 msgid "Maximum iterations:"
-msgstr "Se ha alcanzado el número máximo de iteraciones, %d"
+msgstr "Máximo número de iteraciones:"
 
 #: gui2/dialogs.c:1272
 msgid "Convergence tolerance:"
-msgstr ""
+msgstr "Tolerancia de la convergencia:"
 
 #: gui2/dialogs.c:1295
 msgid "Use L-BFGS-B, memory size:"
-msgstr ""
+msgstr "Utilización de L-BFGS-B,  cantidad de memoria:"
 
 #: gui2/dialogs.c:1537
 #, c-format
@@ -10647,9 +10641,8 @@ msgid "_Modify model..."
 msgstr "_Modificar el modelo..."
 
 #: gui2/gui_utils.c:181
-#, fuzzy
 msgid "_Restore model sample"
-msgstr "Usar nombres de modelos"
+msgstr "_Restaurar la muestra del modelo"
 
 #: gui2/gui_utils.c:183 gui2/gui_utils.c:312
 msgid "_Tests"
@@ -12634,9 +12627,8 @@ msgid "Parameter covariance matrix via Hessian"
 msgstr "Matriz de covarianzas de los parámetros mediante el Hessiano"
 
 #: gui2/selector.c:4344
-#, fuzzy
 msgid "Difference the independent variables"
-msgstr "Media de la var. dependiente"
+msgstr "Diferenciar las variables independientes"
 
 #: gui2/selector.c:4348
 msgid "Use X-12-ARIMA"
