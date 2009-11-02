@@ -2485,7 +2485,7 @@ msgstr "%% %g güven elipsi ve %% %g marjinal aralıkları"
 #: lib/src/graphing.c:4873 lib/src/graphing.c:4874
 #, c-format
 msgid "adjusted %s"
-msgstr "ayarlı %s"
+msgstr "ayarlamalı %s"
 
 #: lib/src/graphing.c:4936 plugin/range-mean.c:66
 msgid "with least squares fit"
@@ -4789,7 +4789,7 @@ msgstr "R-kare"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2521
 msgid "Adjusted R-squared"
-msgstr "Ayarlı R-kare"
+msgstr "Ayarlamalı R-kare"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2524
@@ -4830,7 +4830,7 @@ msgstr "Durbin-Watson"
 
 #: lib/src/modelprint.c:2575
 msgid "Adjusted $R^2$"
-msgstr "Ayarlı $R^2$"
+msgstr "Ayarlamalı $R^2$"
 
 #: lib/src/modelprint.c:2576
 msgid "P-value($F$)"
@@ -14553,7 +14553,7 @@ msgstr "Veri setine kaydet:"
 
 #: plugin/tramo_options.c:449 plugin/tramo-x12a.c:198
 msgid "Seasonally adjusted series"
-msgstr "Mevsimselce ayarlı seri"
+msgstr "Mevsimsel ayarlamalı seri"
 
 #: plugin/tramo_options.c:459 plugin/tramo-x12a.c:205
 msgid "Trend/cycle"
@@ -14643,7 +14643,7 @@ msgstr "Mevsimsel HO terimleri:"
 #: plugin/tramo-x12a.c:60
 #, c-format
 msgid "seasonally adjusted %s"
-msgstr "mevsimselce ayarlı %s"
+msgstr "mevsimsel ayarlamalı %s"
 
 #: plugin/tramo-x12a.c:61
 #, c-format
@@ -14669,7 +14669,7 @@ msgstr "eğilim/çevrim"
 
 #: plugin/tramo-x12a.c:396
 msgid "adjusted"
-msgstr "ayarlı"
+msgstr "ayarlamalı"
 
 #: plugin/vif.c:107
 msgid "Properties of matrix X'X"
