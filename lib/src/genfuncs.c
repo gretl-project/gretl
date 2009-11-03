@@ -3184,3 +3184,26 @@ double gretl_irr (const double *x, int n, int pd, int *err)
 
     return r;
 }
+
+double logistic_cdf (double x)
+{
+    double emx, ret;
+
+    errno = 0;
+
+    emx = exp(-x);
+
+    if (errno) {
+	errno = 0;
+	return NADBL;
+    }
+
+    ret = 1.0 / (1.0 + emx);
+
+    if (errno) {
+	ret = NADBL;
+	errno = 0;
+    }
+
+    return ret;
+}

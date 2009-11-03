@@ -122,4 +122,6 @@ double gretl_npv (int t1, int t2, const double *x, double r,
 
 double gretl_irr (const double *x, int n, int pd, int *err);
 
+double logistic_cdf (double x);
+
 #endif /* GENFUNCS_H */

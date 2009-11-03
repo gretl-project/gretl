@@ -334,6 +334,7 @@ struct str_table funcs[] = {
     { F_PERGM,    "pergm" },
     { F_IRR,      "irr" },
     { F_NPV,      "npv" },
+    { F_LOGISTIC, "logistic" },
     { 0,          NULL }
 };
 

@@ -2573,6 +2573,8 @@ static double real_apply_func (double x, int f, parser *p)
 	return normal_pdf(x);
     case F_QNORM:
 	return normal_cdf_inverse(x);
+    case F_LOGISTIC:
+	return logistic_cdf(x);
     case F_GAMMA:
 	y = gamma_function(x);
 	if (na(y)) {
@@ -6531,6 +6533,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CNORM:
     case F_DNORM:
     case F_QNORM:
+    case F_LOGISTIC:
     case F_GAMMA:
     case F_LNGAMMA:
 	/* functions taking one argument, any type */

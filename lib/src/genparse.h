@@ -251,6 +251,7 @@ enum {
     F_TOLOWER,
     F_SSCANF,
     F_IRR,
+    F_LOGISTIC,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,

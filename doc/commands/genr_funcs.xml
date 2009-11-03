@@ -2523,6 +2523,18 @@
       </description>
     </function>
 
+    <function name="logistic" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the logistic function of the argument
+	  <argname>x</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="lower" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
