@@ -3630,6 +3630,11 @@
 	  <effect>see below</effect>
         </option>
         <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>plot columns of named matrix</effect>
+        </option>
+        <option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
@@ -3660,7 +3665,20 @@
       </para>
 
       <para context="cli">
-	In interactive mode the result is displayed immediately. In batch mode
+	Generally, <repl>yvars</repl> and <repl>xvar</repl> refer to series in
+	the current dataset (given either by name or ID number).  But if a
+	named matrix is supplied via the <lit>--matrix</lit> option these
+	arguments (which must be given as numerical values) denote
+	(1-based) column indices for the given matrix.  So for example
+	if you want a scatterplot of column 2 of matrix <lit>M</lit> against
+	column 1, you should do:
+      </para>
+      <code context="cli">
+	gnuplot 2 1 --matrix=M
+      </code>
+
+      <para context="cli">
+	In interactive mode the plot is displayed immediately. In batch mode
 	the default behavior is that a gnuplot command file is written in the
 	user's working directory, with a name on the pattern
 	<filename>gpttmpN.plt</filename>, starting with N = <lit>01</lit>. The

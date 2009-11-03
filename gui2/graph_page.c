@@ -361,6 +361,10 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     if (gpage.term == GP_TERM_EPS || pdfterm != GP_PDF_CAIRO) {
 	latin = iso_latin_version();
+	if (latin == 9 && !gnuplot_has_latin5()) {
+	    /* what we gonna do? */
+	    latin = 1;
+	}
 	fprintf(fq, "set encoding iso_8859_%d\n", latin);
     }
 

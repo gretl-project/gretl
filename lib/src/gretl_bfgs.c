@@ -525,7 +525,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 
     if (na(f)) {
 	gretl_errmsg_set(_("BFGS: initial value of objective function is not finite"));
-	err = E_DATA;
+	err = E_NAN;
 	goto bailout;
     }
 
