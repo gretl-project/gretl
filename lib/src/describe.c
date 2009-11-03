@@ -2557,10 +2557,57 @@ gretl_xcf (int k, int t1, int t2, const double *x, const double *y,
     return num / sqrt(den1 * den2);
 }
 
-static int corrgram_graph (const char *vname, double *acf, int m,
-			   double *pacf, double *pm, gretlopt opt)
+static void corrgm_min_max (const double *acf, const double *pacf,
+			    int m, double pm, double *ymin, double *ymax)
+{
+    int k;
+
+    /* the range should comfortably include the plus/minus bands, but
+       should not go outside (-1.1, 1.1) */
+    *ymax = pm * 1.2;
+    if (*ymax > 1.1) *ymax = 1.1;
+    *ymin = -pm * 1.2;
+    if (*ymin < -1.1) *ymin = -1.1;
+
+    /* adjust based on min and max of ACF, PACF */
+    for (k=0; k<m; k++) {
+	if (acf[k] > *ymax) {
+	    *ymax = acf[k];
+	} else if (acf[k] < *ymin) {
+	    *ymin = acf[k];
+	}
+	if (pacf[k] > *ymax) {
+	    *ymax = pacf[k];
+	} else if (pacf[k] < *ymin) {
+	    *ymin = pacf[k];
+	}
+    }
+
+    if (*ymax > 0.75) {
+	*ymax = 1.1;
+    } else {
+	*ymax *= 1.2;
+    }
+
+    if (*ymin < -0.75) {
+	*ymin = -1.1;
+    } else {
+	*ymin *= 1.2;
+    }
+
+    /* make the range symmetrical */
+    if (fabs(*ymin) > *ymax) {
+	*ymax = -*ymin;
+    } else if (*ymax > fabs(*ymin)) {
+	*ymin = -*ymax;
+    }
+}
+
+static int corrgram_graph (const char *vname, const double *acf, int m,
+			   const double *pacf, double pm, gretlopt opt)
 {
     char crit_string[16];
+    double ymin, ymax;
     FILE *fp = NULL;
     int k, err;
 
@@ -2571,6 +2618,8 @@ static int corrgram_graph (const char *vname, double *acf, int m,
 
     sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
 
+    corrgm_min_max(acf, pacf, m, pm, &ymin, &ymax);
+
     gretl_push_c_numeric_locale();
 
     /* create two separate plots, if both are OK */
@@ -2580,7 +2629,11 @@ static int corrgram_graph (const char *vname, double *acf, int m,
     fputs("set xzeroaxis\n", fp);
     print_keypos_string(GP_KEY_RIGHT_TOP, fp);
     fprintf(fp, "set xlabel '%s'\n", _("lag"));
+#if 1
+    fprintf(fp, "set yrange [%.2f:%.2f]\n", ymin, ymax);
+#else
     fputs("set yrange [-1.1:1.1]\n", fp);
+#endif
 
     /* upper plot: Autocorrelation Function or ACF */
     if (pacf != NULL) {
@@ -2595,7 +2648,7 @@ static int corrgram_graph (const char *vname, double *acf, int m,
     fprintf(fp, "plot \\\n"
 	    "'-' using 1:2 notitle w impulses lw 5, \\\n"
 	    "%g title '+- %s' lt 2, \\\n"
-	    "%g notitle lt 2\n", pm[1], crit_string, -pm[1]);
+	    "%g notitle lt 2\n", pm, crit_string, -pm);
     for (k=0; k<m; k++) {
 	fprintf(fp, "%d %g\n", k + 1, acf[k]);
     }
@@ -2613,7 +2666,7 @@ static int corrgram_graph (const char *vname, double *acf, int m,
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
 		"%g title '+- %s' lt 2, \\\n"
-		"%g notitle lt 2\n", pm[1], crit_string, -pm[1]);
+		"%g notitle lt 2\n", pm, crit_string, -pm);
 	for (k=0; k<m; k++) {
 	    fprintf(fp, "%d %g\n", k + 1, pacf[k]);
 	}
@@ -2808,7 +2861,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 
     if (!(opt & OPT_A) && !(opt & OPT_Q)) {
 	err = corrgram_graph(vname, acf, m, (pacf_err)? NULL : pacf, 
-			     pm, opt);
+			     pm[1], opt);
     }
 
  bailout:
