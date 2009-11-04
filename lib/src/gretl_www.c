@@ -1612,7 +1612,7 @@ static void maybe_revise_www_paths (void)
 	strcpy(gretlhost, "www.wfu.edu");
 	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
 	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
-	strcpy(mpath, "/~cottrell/gretl/manual");
+	strcpy(mpath, "/~cottrell/gretl/manual/");
     }
 }
 
@@ -1691,6 +1691,11 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 #endif
 
     if (result != RETROK) {
+	if (u->errbuf != NULL && *u->errbuf != '\0') {
+	    fprintf(stderr, "u->errbuf = '%s'\n", u->errbuf);
+	} else {
+	    fprintf(stderr, "u->path = '%s'\n", u->path);
+	}
 	errmsg_set(u->errbuf);
 	err = 1;
     }
