@@ -33,7 +33,8 @@ version 1.8.6, in progress
   when adding Weibull curve to an existing plot that includes
   negative values of x
 - Add convenience function: logistic()
-- MS Windows: update gnuplot
+- MS Windows package: update gnuplot and include gnuplot
+  manual in PDF format
 
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving
