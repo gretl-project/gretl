@@ -2528,9 +2528,16 @@
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Returns the logistic function of the argument
-	  <argname>x</argname>.
+	<para context="tex">
+	  Returns the logistic function of the argument <argname>x</argname>,
+	  that is, $\Lambda(x) = e^x/(1+e^x)$. If <argname>x</argname> is a
+	  matrix, the function is applied element by element.
+	</para>
+	<para context="notex">
+	  Returns the logistic function of the argument <argname>x</argname>,
+	  that is, <math>e</math><sup>x</sup>/(1 +
+	  <math>e</math><sup>x</sup>).  If <argname>x</argname> is a matrix,
+	  the function is applied element by element.
 	</para>
       </description>
     </function>
