@@ -99,6 +99,8 @@ void view_window_set_editable (windata_t *vwin);
 
 int gui_validate_varname (const char *varname, GretlType t);
 
+int gui_validate_varname_strict (const char *name, GretlType t);
+
 gretlopt get_tex_eqn_opt (void);
 
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,

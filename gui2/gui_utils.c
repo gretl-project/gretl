@@ -3687,7 +3687,8 @@ static int object_overwrite_ok (const char *name, GretlType t)
     return (resp == GRETL_YES);
 }	    
 
-int gui_validate_varname (const char *name, GretlType t)
+int real_gui_validate_varname (const char *name, GretlType t,
+			       int allow_overwrite)
 {
     int i, n = strlen(name);
     char namebit[VNAMELEN];
@@ -3723,7 +3724,7 @@ int gui_validate_varname (const char *name, GretlType t)
 	GretlType t0 = gretl_type_from_name(name, datainfo);
 
 	if (t0 != GRETL_TYPE_NONE) {
-	    if (t == t0) {
+	    if (t == t0 && allow_overwrite) {
 		err = !object_overwrite_ok(name, t);
 	    } else {
 		/* won't work */
@@ -3738,6 +3739,16 @@ int gui_validate_varname (const char *name, GretlType t)
 	
 
     return err;
+}
+
+int gui_validate_varname (const char *name, GretlType t)
+{
+    return real_gui_validate_varname(name, t, 1);
+}
+
+int gui_validate_varname_strict (const char *name, GretlType t)
+{
+    return real_gui_validate_varname(name, t, 0);
 }
 
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
