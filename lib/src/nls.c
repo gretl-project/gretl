@@ -2895,9 +2895,11 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	spec->tol = libset_get_double(NLS_TOLER);
     }
 
-    pputs(prn, (numeric_mode(spec))?
-	  _("Using numerical derivatives\n") :
-	  _("Using analytical derivatives\n"));
+    if (!(opt & OPT_Q)) {
+	pputs(prn, (numeric_mode(spec))?
+	      _("Using numerical derivatives\n") :
+	      _("Using analytical derivatives\n"));
+    }
 
     /* now start the actual calculations */
 
@@ -2917,7 +2919,9 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    pprintf(prn, _("Tolerance = %g\n"), spec->tol);
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("Tolerance = %g\n"), spec->tol);
+    }
 
     if (!err) {
 	if (spec->ci == NLS) {
