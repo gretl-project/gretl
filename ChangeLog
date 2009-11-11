@@ -35,6 +35,8 @@ version 1.8.6, in progress
 - Add convenience function: logistic()
 - MS Windows package: update gnuplot and include gnuplot
   manual in PDF format
+- Scalar variables: improve GUI management of these, and
+  add a --scalars option to the "varlist" command
 
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving
