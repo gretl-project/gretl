@@ -540,13 +540,31 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
     }
 }
 
+/* right now, this is only used for renaming or adding a scalar */
+
 static void sheet_text_cell_edited (GtkCellRendererText *cell,
 				    const gchar *path_string,
 				    const gchar *user_text,
 				    Spreadsheet *sheet)
 {
-    /* rename scalar, or add one if there are none */
-    if (gui_validate_varname_strict(user_text, GRETL_TYPE_DOUBLE) == 0) {
+    int err;
+
+    err = gui_validate_varname_strict(user_text, GRETL_TYPE_DOUBLE);
+
+    if (err) {
+	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+	GtkTreePath *path;
+	GtkTreeViewColumn *column;
+
+	path = gtk_tree_path_new_from_string(path_string);
+	column = gtk_tree_view_get_column(view, 0);
+	gtk_tree_view_set_cursor(view, path, column, TRUE);
+	if (sheet->entry != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(sheet->entry), user_text);
+	    gtk_editable_select_region(GTK_EDITABLE(sheet->entry), 0, -1);
+	}
+	gtk_tree_path_free(path);
+    } else {
 	maybe_update_store(sheet, user_text, path_string);
     }
 }
@@ -620,33 +638,35 @@ static int real_add_new_series (Spreadsheet *sheet, const char *varname)
     return 0;
 }
 
-static int real_add_new_scalar (Spreadsheet *sheet, const char *vname,
-				double val)
+static void add_scalar_callback (GtkWidget *w, Spreadsheet *sheet)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreeViewColumn *column;
+    GtkTreePath *path;
+    gchar *pstr;
     GtkListStore *store;
     GtkTreeIter iter;
+    GtkAdjustment *adj;
+    GtkWidget *sw;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_list_store_append(store, &iter);
 
-    if (na(val)) {
-	gtk_list_store_set(store, &iter, 0, vname, 1, "", -1);
-    } else {
-	gchar *numstr;
-
-	numstr = g_strdup_printf("%.*g", DBL_DIG, val);
-	gtk_list_store_set(store, &iter, 0, vname, 1, numstr, 
-			   2, sheet->pbuf, -1);
-	g_free(numstr);
-    }
-
+    gtk_list_store_set(store, &iter, 0, "", 1, "", -1);
     sheet->datarows += 1;
-    spreadsheet_scroll_to_foot(sheet, sheet->datarows - 1, 1);
 
-    sheet_set_modified(sheet, TRUE);
+    pstr = g_strdup_printf("%d", sheet->datarows - 1);
+    path = gtk_tree_path_new_from_string(pstr);
+    column = gtk_tree_view_get_column(view, 0);
+    gtk_tree_view_set_cursor(view, path, column, TRUE);
+    gtk_tree_path_free(path);
+    g_free(pstr);
 
-    return 0;
+    sw = gtk_widget_get_ancestor(GTK_WIDGET(view), GTK_TYPE_BIN);
+    if (sw != NULL) {
+	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(sw));
+	gtk_adjustment_set_value(adj, adj->upper);
+    }
 }
 
 static void 
@@ -763,53 +783,6 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
     sheet_set_modified(sheet, TRUE);
 }
 
-static void add_new_scalar (GtkWidget *widget, dialog_t *dlg) 
-{
-    Spreadsheet *sheet = (Spreadsheet *) edit_dialog_get_data(dlg);
-    const gchar *buf;
-    char varname[VNAMELEN];
-    double val = NADBL;
-    int err = 0;
-
-    buf = edit_dialog_get_text(dlg);
-
-    if (buf == NULL || *buf == '\0') {
-	return;
-    }
-
-    *varname = '\0';
-
-    if (strchr(buf, '=')) {
-	gchar *p, *tmp = g_strdup(buf);
-
-	p = strchr(tmp, '=');
-	*p = '\0';
-	tailstrip(tmp);
-
-	if (gui_validate_varname_strict(tmp, GRETL_TYPE_DOUBLE)) {
-	    g_free(tmp);
-	    return;
-	}
-
-	strncat(varname, tmp, VNAMELEN - 1);
-	val = generate_scalar(p + 1, &Z, datainfo, &err);
-	g_free(tmp);
-    } else if (gui_validate_varname_strict(buf, GRETL_TYPE_DOUBLE)) {
-	return;
-    } else {
-	strncat(varname, buf, VNAMELEN - 1);
-    }
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	close_dialog(dlg);
-	if (real_add_new_scalar(sheet, varname, val)) {
-	    nomem();
-	}
-    }
-}
-
 static void name_new_var (GtkWidget *widget, dialog_t *dlg) 
 {
     Spreadsheet *sheet = (Spreadsheet *) edit_dialog_get_data(dlg);
@@ -856,17 +829,6 @@ static void name_var_dialog (Spreadsheet *sheet)
 		_("Enter name for new variable\n"
 		  "(max. 15 characters)"),
 		NULL, name_new_var, sheet, 
-		0, VARCLICK_NONE, &cancel);
-}
-
-static void new_scalar_dialog (Spreadsheet *sheet) 
-{
-    int cancel = 0;
-    
-    edit_dialog(_("gretl: scalar"), 
-		_("Enter name, or name=value,\n"
-		  "for new scalar"),
-		NULL, add_new_scalar, sheet, 
 		0, VARCLICK_NONE, &cancel);
 }
 
@@ -1130,11 +1092,6 @@ static void popup_sheet_add_var (GtkWidget *w, Spreadsheet *sheet)
     name_var_dialog(sheet);
 }
 
-static void popup_sheet_add_scalar (GtkWidget *w, Spreadsheet *sheet)
-{
-    new_scalar_dialog(sheet);
-}
-
 static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
@@ -1152,16 +1109,9 @@ static void build_sheet_popup (Spreadsheet *sheet)
 {
     sheet->popup = gtk_menu_new();
 
-    if (editing_scalars(sheet)) {
-	add_popup_item(_("Add..."), 
-		       sheet->popup, 
-		       G_CALLBACK(popup_sheet_add_scalar),
-		       sheet);
-    } else {
-	add_popup_item(_("Add Variable"), sheet->popup, 
-		       G_CALLBACK(popup_sheet_add_var),
-		       sheet);
-    }
+    add_popup_item(_("Add Variable"), sheet->popup, 
+		   G_CALLBACK(popup_sheet_add_var),
+		   sheet);
 
     if (sheet->flags & SHEET_ADD_OBS_OK) {
 	add_popup_item(_("Add Observation"), sheet->popup,
@@ -2143,7 +2093,8 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 
     mods = widget_get_pointer_mask(view);
 
-    if (sheet->matrix == NULL && (mods & GDK_BUTTON3_MASK)) {
+    if (sheet->matrix == NULL && !editing_scalars(sheet) && 
+	(mods & GDK_BUTTON3_MASK)) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
 
 	if (sheet->popup == NULL) {
@@ -2894,6 +2845,12 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	    gtk_widget_show(tmp);
 	} else {
 	    /* doing scalars */
+	    tmp = gtk_button_new_from_stock(GTK_STOCK_ADD);
+	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(add_scalar_callback), sheet);
+	    gtk_widget_show(tmp);
+
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
 	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
