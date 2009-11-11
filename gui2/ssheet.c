@@ -1239,6 +1239,10 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 
     if (err) {
 	gui_errmsg(err);
+    } else if (ns > 0) {
+	GtkWidget *b = g_object_get_data(G_OBJECT(sheet->view), "add-button");
+
+	gtk_widget_set_sensitive(b, TRUE);
     }
 
     sheet_set_modified(sheet, FALSE);
@@ -2849,6 +2853,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
 			     G_CALLBACK(add_scalar_callback), sheet);
+	    g_object_set_data(G_OBJECT(sheet->view), "add-button", tmp);
+	    gtk_widget_set_sensitive(tmp, n_saved_scalars() > 0);
 	    gtk_widget_show(tmp);
 
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
