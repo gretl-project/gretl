@@ -261,10 +261,14 @@ static void move_to_next_column (Spreadsheet *sheet, GtkTreePath *path,
     GtkTreeViewColumn *newcol;
     int colmin = 1;
 
-    if (sheet->next == NEXT_RIGHT) {
-	colnum++;
-    } else {
+#if CELLDEBUG
+    fprintf(stderr, "move_to_next_column: sheet->next = %d\n", sheet->next);
+#endif
+
+    if (sheet->next == NEXT_LEFT) {
 	colnum--;
+    } else {
+	colnum++;
     }  
 
 #if CELLDEBUG
@@ -299,7 +303,7 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
 
     if (sheet->next == NEXT_RIGHT) {
 #if CELLDEBUG
-	fprintf(stderr, "move_to_next: got NEXT_RIGHT\n");
+	fprintf(stderr, "move_to_next_cell: got NEXT_RIGHT\n");
 #endif
 	move_to_next_column(sheet, path, column);
 	return;
@@ -312,7 +316,7 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
     }
 
 #if CELLDEBUG
-    fprintf(stderr, "move_to_next: newrow = %d\n", newrow);
+    fprintf(stderr, "move_to_next_cell: newrow = %d\n", newrow);
 #endif
 
     if (newrow >= 0 && newrow < sheet->datarows) {
@@ -326,6 +330,9 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
 	    gtk_tree_path_free(newpath);
 	}
     } else {
+#if CELLDEBUG
+	fprintf(stderr, "move_to_next_cell: else: calling move_to_next_column\n");
+#endif
 	move_to_next_column(sheet, path, column);
     }
 
@@ -779,7 +786,7 @@ static void add_new_scalar (GtkWidget *widget, dialog_t *dlg)
 	*p = '\0';
 	tailstrip(tmp);
 
-	if (gui_validate_varname(tmp, GRETL_TYPE_DOUBLE)) {
+	if (gui_validate_varname_strict(tmp, GRETL_TYPE_DOUBLE)) {
 	    g_free(tmp);
 	    return;
 	}
@@ -787,7 +794,7 @@ static void add_new_scalar (GtkWidget *widget, dialog_t *dlg)
 	strncat(varname, tmp, VNAMELEN - 1);
 	val = generate_scalar(p + 1, &Z, datainfo, &err);
 	g_free(tmp);
-    } else if (gui_validate_varname(buf, GRETL_TYPE_DOUBLE)) {
+    } else if (gui_validate_varname_strict(buf, GRETL_TYPE_DOUBLE)) {
 	return;
     } else {
 	strncat(varname, buf, VNAMELEN - 1);
@@ -1855,10 +1862,12 @@ set_up_sheet_column (GtkTreeViewColumn *column, gint width, gboolean expand)
 static void commit_and_move_right (Spreadsheet *sheet,
 				   const char *s)
 {
+    GtkTreeViewColumn *col;
     GtkTreePath *path;
     gchar *pathstr;
 
-    gtk_tree_view_get_cursor(GTK_TREE_VIEW(sheet->view), &path, NULL);
+    gtk_tree_view_get_cursor(GTK_TREE_VIEW(sheet->view), &path, &col);
+
     if (path == NULL) {
 	return;
     }
@@ -1869,8 +1878,11 @@ static void commit_and_move_right (Spreadsheet *sheet,
     fprintf(stderr, "commit_and_move_right: calling sheet_cell_edited\n");
 #endif
 
-
-    sheet_cell_edited(NULL, pathstr, s, sheet);
+    if (editing_scalars(sheet) && get_treeview_column_number(col) == 0) {
+	sheet_text_cell_edited(NULL, pathstr, s, sheet);
+    } else {
+	sheet_cell_edited(NULL, pathstr, s, sheet);
+    }
 
     g_free(pathstr);
     gtk_tree_path_free(path);
@@ -2184,8 +2196,8 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	    fprintf(stderr, "Clicked column: colnum = %d\n", colnum);
 #endif
 
-	    if (colnum == 0) {
-		/* don't respond to a click in a non-data column */
+	    if (colnum == 0 && !editing_scalars(sheet)) {
+		/* don't respond to a click in a non-editable column */
 		ret = TRUE;
 	    } else if (editing_scalars(sheet) && colnum == 2) {
 		/* call to delete scalar */

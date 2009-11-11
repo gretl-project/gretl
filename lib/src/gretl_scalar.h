@@ -61,4 +61,6 @@ void unset_auxiliary_scalars (void);
 
 void write_scalars_to_file (FILE *fp);
 
+void print_scalars (PRN *prn);
+
 #endif /* GRETL_SCALAR_H */

@@ -9914,10 +9914,24 @@
   <command name="varlist" section="Dataset" 
     label="Listing of variables" context="cli">
 
+    <usage>
+      <options>
+	<option>
+	  <flag>--scalars</flag>
+	  <effect>list scalars</effect>
+	</option>
+      </options>
+    </usage>
+
     <description>
       <para>
-	Prints a listing of variables currently available.
-	<cmd>list</cmd> and <cmd>ls</cmd> are synonyms.  
+	By default, prints a listing of the (series) variables currently
+	available.  <cmd>list</cmd> and <cmd>ls</cmd> are synonyms.
+      </para>
+      <para>
+	If the <lit>--scalars</lit> opton is given, prints a 
+	listing of any currently defined scalar variables and
+	their values.
       </para>
     </description>
 

@@ -546,3 +546,43 @@ void write_scalars_to_file (FILE *fp)
 
     fputs("</gretl-scalars>\n", fp);
 }
+
+/**
+ * print_scalars:
+ * @prn: pointer to gretl printing struct.
+ *
+ * Prints names and values of any saved scalars.
+ */
+
+void print_scalars (PRN *prn)
+{
+    int level = gretl_function_depth();
+    int len, ns = 0, maxlen = 0;
+    int i;
+
+    for (i=0; i<n_scalars; i++) {
+	if (scalars[i]->level == level) {
+	    len = strlen(scalars[i]->name);
+	    if (len > maxlen) {
+		maxlen = len;
+	    }
+	    ns++;
+	}
+    }
+
+    if (ns == 0) {
+	pprintf(prn, "%s\n", _("none"));
+	return;
+    }
+
+    pputc(prn, '\n');
+
+    for (i=0; i<n_scalars; i++) {
+	if (scalars[i]->level == level) {
+	    pprintf(prn, " %*s = %.15g\n", maxlen, scalars[i]->name, 
+		    scalars[i]->val);
+	}
+    }
+
+    pputc(prn, '\n');
+}

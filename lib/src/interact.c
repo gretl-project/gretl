@@ -4434,7 +4434,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case VARLIST:
-	varlist(pdinfo, prn);
+	if (cmd->opt & OPT_S) {
+	    print_scalars(prn);
+	} else {
+	    varlist(pdinfo, prn);
+	}
 	break;
 
     case PRINT:
