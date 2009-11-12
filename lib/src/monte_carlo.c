@@ -2590,11 +2590,18 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
     for (i=0; i<loop->n_genrs; i++) {
 	ll = genr_get_loopline(loop->genrs[i]);
 	if (ll == lno) {
+#if LOOP_DEBUG > 1
+	    fprintf(stderr, "retrieving loop genr %d\n", i);
+#endif
 	    return loop->genrs[i];
 	}
     }
 
     genr = genr_compile(line, pZ, pdinfo, OPT_NONE, err);
+
+#if LOOP_DEBUG > 1
+    fprintf(stderr, "compiled loop genr, err = %d\n", *err);
+#endif
 
     if (!*err) {
 	*err = add_loop_genr(loop, genr, lno);
@@ -2687,11 +2694,14 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    fprintf(stderr, " j=%d, line='%s'\n", j, line);
 #endif
 	    strcpy(errline, line);
-	    err = make_dollar_substitutions(line, loop, 
-					    (const double **) *pZ,
-					    pdinfo, &subst);
-	    if (err) {
-		break;
+
+	    if (strchr(line, '$')) {
+		err = make_dollar_substitutions(line, loop, 
+						(const double **) *pZ,
+						pdinfo, &subst);
+		if (err) {
+		    break;
+		}
 	    }
 
 	    if (loop_is_progressive(loop)) {
