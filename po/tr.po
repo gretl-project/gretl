@@ -1526,7 +1526,7 @@ msgstr "Ölçünlü sapma"
 #: lib/src/describe.c:3919 lib/src/describe.c:4051 gui2/guiprint.c:751
 #: gui2/guiprint.c:971
 msgid "C.V."
-msgstr "D.K."
+msgstr "Değ.Kat."
 
 #: lib/src/describe.c:3920 lib/src/describe.c:4052 gui2/guiprint.c:751
 #: gui2/guiprint.c:971
@@ -1556,7 +1556,7 @@ msgstr "'%s' değişkeni için (%d geçerli gözlem)"
 
 #: lib/src/describe.c:4023 lib/src/describe.c:4050 gui2/guiprint.c:751
 msgid "Std. Dev."
-msgstr "Ölç. Sap."
+msgstr "Ölç.Sap."
 
 #: lib/src/describe.c:4207
 #, c-format
@@ -7534,7 +7534,7 @@ msgstr "Kod çizelgesi"
 #: gui2/database.c:728 gui2/menustate.c:283 gui2/menustate.c:342
 #: gui2/menustate.c:370 gui2/menustate.c:417
 msgid "Display values"
-msgstr "Değerleri _göster"
+msgstr "Değerleri göster"
 
 #: gui2/database.c:730
 msgid "Add to dataset"
