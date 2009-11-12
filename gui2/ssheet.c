@@ -2879,6 +2879,10 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
     gtk_widget_show(sheet->win);
 
+    if (c == SHEET_EDIT_SCALARS) {
+	gretl_set_window_modal(sheet->win);
+    }
+
     if (c != SHEET_EDIT_MATRIX && c != SHEET_EDIT_SCALARS) {
 	/* we can't have the user making confounding changes elsewhere,
 	   while editing the dataset here */
