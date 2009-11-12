@@ -1393,24 +1393,37 @@ static int restriction_uses_obs (const char *s)
 static int make_restriction_string (DATAINFO *pdinfo, char *old, 
 				    const char *restr, int mode)
 {
+    int err = 0;
+
+    if (pdinfo->restriction != NULL) {
+	free(pdinfo->restriction);
+	pdinfo->restriction = NULL;
+    }
+
     if (mode == SUBSAMPLE_RANDOM) {
 	pdinfo->restriction = gretl_strdup("random");
-    } else if (old == NULL) {
-	pdinfo->restriction = gretl_strdup(restr);
     } else {
-	char *s = malloc(strlen(old) + strlen(restr) + 5);
+	if (old != NULL) {
+	    char *s = malloc(strlen(old) + strlen(restr) + 5);
 
-	if (s != NULL) {
-	    sprintf(s, "%s && %s", old, restr);
-	    pdinfo->restriction = s;
-	}
+	    if (s != NULL) {
+		sprintf(s, "%s && %s", old, restr);
+		pdinfo->restriction = s;
+	    }
+	} else {	    
+	    pdinfo->restriction = gretl_strdup(restr);
+	} 
     }
 
     if (old != NULL) {
 	free(old);
     }
 
-    return (pdinfo->restriction == NULL)? E_ALLOC : 0;
+    if (pdinfo->restriction == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
 }
 
 /* restrict_sample: 
