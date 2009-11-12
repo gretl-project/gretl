@@ -171,14 +171,6 @@ static GtkActionEntry matrix_items[] = {
 
 static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
 {
-    if (editing_scalars(sheet)) {
-	if (s) {
-	    /* update right away */
-	    update_scalars_from_sheet(sheet);
-	}
-	return;
-    }
-
     if (s) {
 	sheet->flags |= SHEET_MODIFIED;
     } else {
@@ -475,10 +467,16 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
     if (old_text != NULL && strcmp(old_text, new_text)) {
 	gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 			   colnum, new_text, -1);
+
 	if (sheet->matrix != NULL) {
 	    update_sheet_matrix_element(sheet, new_text, path_string, colnum);
+	} 
+
+	if (editing_scalars(sheet)) {
+	    update_scalars_from_sheet(sheet);
+	} else {
+	    sheet_set_modified(sheet, TRUE);
 	}
-	sheet_set_modified(sheet, TRUE);
     }
 
     move_to_next_cell(sheet, path, col);
@@ -1095,14 +1093,26 @@ static void popup_sheet_add_var (GtkWidget *w, Spreadsheet *sheet)
 static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    GtkTreeIter iter;
     GtkListStore *store;
+    GtkTreeIter iter;
+    gchar *vname;
+    int err;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
-    gtk_list_store_remove(store, &iter);
-    sheet->datarows--;
-    sheet_set_modified(sheet, TRUE);
+    gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &vname, -1);
+
+    err = gretl_scalar_delete(vname, NULL);
+    if (!err) {
+	mark_session_changed();
+    }
+
+    if (sheet->datarows == 1) {
+	gtk_list_store_set(store, &iter, 0, "", 1, "", -1);
+    } else {
+	gtk_list_store_remove(store, &iter);
+	sheet->datarows--;
+    }
 }
 
 static void build_sheet_popup (Spreadsheet *sheet)
@@ -1191,61 +1201,46 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
     GtkTreeModel *model;
     GtkTreeIter iter;
     gchar *vname, *val;
-    const char *sname;
     double x;
-    int i, j, ns;
-    int err = 0;
+    int i, err = 0;
+
+    sheet_set_modified(sheet, FALSE);
 
     model = gtk_tree_view_get_model(view);
     gtk_tree_model_get_iter_first(model, &iter);
 
-    /* deal with added or modified scalars fist */
+    /* deal with added or modified scalars first */
     for (i=0; i<sheet->datarows && !err; i++) {
 	gtk_tree_model_get(model, &iter, 0, &vname, 1, &val, -1);
 	x = (*val == '\0')? NADBL : atof(val);
 	if (gretl_is_scalar(vname)) {
-	    gretl_scalar_set_value(vname, x);
+	    if (x != gretl_scalar_get_value(vname)) {
+		gretl_scalar_set_value(vname, x);
+		sheet_set_modified(sheet, TRUE);
+	    }
 	} else {
 	    err = gretl_scalar_add(vname, x);
+	    if (!err) {
+		sheet_set_modified(sheet, TRUE);
+	    }
 	}
 	g_free(vname);
 	g_free(val);
 	gtk_tree_model_iter_next(model, &iter);
     }
 
-    ns = n_saved_scalars();
-
-    if (ns > sheet->datarows) {
-	/* must have deleted some scalar(s) via GUI */
-	int match, n = 0, ndel = ns - sheet->datarows;
-
-	i = 0;
-	while ((sname = gretl_scalar_get_name(i)) && n < ndel) {
-	    gtk_tree_model_get_iter_first(model, &iter);
-	    match = 0;
-	    for (j=0; j<sheet->datarows && !match; j++) {
-		gtk_tree_model_get(model, &iter, 0, &vname, -1);
-		match = !strcmp(sname, vname);
-		g_free(vname);
-	    }
-	    if (!match) {
-		gretl_scalar_delete(sname, NULL);
-		n++;
-	    } else {
-		i++;
-	    }
-	}
+    if (sheet_is_modified(sheet)) {
+	mark_session_changed();
+	sheet_set_modified(sheet, FALSE);
     }
 
     if (err) {
 	gui_errmsg(err);
-    } else if (ns > 0) {
+    } else if (n_saved_scalars() > 0) {
 	GtkWidget *b = g_object_get_data(G_OBJECT(sheet->view), "add-button");
 
 	gtk_widget_set_sensitive(b, TRUE);
     }
-
-    sheet_set_modified(sheet, FALSE);
 }
 
 /* pull modified values from the data-editing spreadsheet
@@ -1264,7 +1259,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     int i, colnum, s, t;
 
 #if SSDEBUG
-    fprintf(stderr, "get_data_from_sheet: oldv = %d, newvars = %d, newobs = %d\n",
+    fprintf(stderr, "update_dataset_from_sheet: oldv=%d, newvars=%d, newobs=%d\n",
 	    oldv, newvars, newobs);
 #endif
 
@@ -1419,8 +1414,6 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 	infobox(_("No changes were made"));
     } else if (sheet->cmd == SHEET_EDIT_MATRIX) {
 	update_matrix_from_sheet_full(sheet);
-    } else if (editing_scalars(sheet)) {
-	update_scalars_from_sheet(sheet);
     } else {
 	update_dataset_from_sheet(sheet);
     }
@@ -2112,10 +2105,8 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	
     if (mods & GDK_BUTTON1_MASK) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
-	GtkTreePath *path = NULL;
-	GtkTreeViewColumn *column = NULL;	
-	GtkTreePath *oldpath = NULL;
-	GtkTreeViewColumn *oldcol = NULL;
+	GtkTreePath *path = NULL, *oldpath = NULL;
+	GtkTreeViewColumn *column = NULL, *oldcol = NULL;	
 
 #if CELLDEBUG
 	fprintf(stderr, "Got button 1 click\n");
@@ -2144,7 +2135,7 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 				      (gint) bevent->y,
 				      &path, &column,
 				      NULL, NULL);
-	if (column != NULL) {
+	if (path != NULL && column != NULL) {
 	    gint colnum = get_treeview_column_number(column);
 
 #if CELLDEBUG
