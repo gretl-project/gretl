@@ -1855,7 +1855,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"ro, yinelemeli olarak hesaplanıyor...\n"
+"Ro'nun yinelemesel hesaplaması yapılıyor...\n"
 "\n"
 
 #: lib/src/estimate.c:2185
