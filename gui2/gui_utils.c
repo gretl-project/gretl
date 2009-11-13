@@ -633,6 +633,10 @@ void mark_dataset_as_modified (void)
 {
     data_status |= MODIFIED_DATA;
     set_sample_label(datainfo);
+
+    if (session_file_is_open()) {
+	mark_session_changed();
+    }
 }
 
 static void gui_record_data_opening (const char *fname, const int *list)
