@@ -33,10 +33,11 @@ version 1.8.6, in progress
   when adding Weibull curve to an existing plot that includes
   negative values of x
 - Add convenience function: logistic()
-- MS Windows package: update gnuplot and include gnuplot
-  manual in PDF format
-- Scalar variables: improve GUI management of these, and
-  add a --scalars option to the "varlist" command
+- MS Windows package: update GTK and gnuplot
+- Scalar variables: improve GUI management, and add a 
+  --scalars option to the "varlist" command
+- Fix memory leak on repeated sub-sampling
+- Miscellaneous small GUI fixes
 
 10/10/2009 version 1.8.5
 - Fix: avoid duplicating the return line when saving
