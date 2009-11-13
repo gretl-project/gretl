@@ -1541,12 +1541,22 @@ GtkActionEntry main_entries[] = {
 
 static void add_conditional_items (GtkUIManager *ui)
 {
-    gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
-			  "/menubar/Tools/Preferences",
-			  N_("_Menu font..."),
-			  "MenuFont",
-			  GTK_UI_MANAGER_MENUITEM, 
-			  FALSE);
+    int add_appfont = 1;
+
+#ifdef G_OS_WIN32
+    if (use_wimp) {
+	add_appfont = 0;
+    }
+#endif
+
+    if (add_appfont) {
+	gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
+			      "/menubar/Tools/Preferences",
+			      N_("_Menu font..."),
+			      "MenuFont",
+			      GTK_UI_MANAGER_MENUITEM, 
+			      FALSE);
+    }
 
 #ifdef HAVE_X12A
     gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),

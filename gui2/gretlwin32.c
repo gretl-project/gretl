@@ -305,7 +305,7 @@ static void try_to_get_windows_font (void)
     }
 }
 
-int use_wimp;
+int use_wimp; /* note: published via gretlwin32.h */
 
 static int wimp_init (void)
 {
