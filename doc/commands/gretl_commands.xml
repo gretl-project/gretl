@@ -1820,6 +1820,12 @@
       <arguments>
         <argument>varlist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't report results except on error</effect>
+	</option>
+      </options>
     </usage>
 
     <description>

@@ -2139,7 +2139,7 @@ int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	/* free up temp stuff */
 	free_dbZ(dbZ);
 
-	if (!err) {
+	if (!err && !(opt & OPT_Q)) {
 	    pprintf(prn, _("Series imported OK"));
 	    pputc(prn, '\n');
 	    if (newdata) {

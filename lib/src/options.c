@@ -105,6 +105,7 @@ struct gretl_option gretl_opts[] = {
     { CUSUM,    OPT_Q, "quiet", 0 },
     { CUSUM,    OPT_R, "squares", 0 },
     { DATA,     OPT_O, "odbc", 0 },
+    { DATA,     OPT_Q, "quiet", 0 },
     { DATAMOD,  OPT_P, "preserve", 0 },
     { DELEET,   OPT_D, "db", 0 },
     { DIFFTEST, OPT_G, "sign", 0 },
