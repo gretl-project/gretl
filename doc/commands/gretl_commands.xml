@@ -9209,7 +9209,7 @@
     <description>
       <para>
 	Saves either the entire dataset or, if a <repl>varlist</repl>
-	is supplied, a specified subset of the variables in the
+	is supplied, a specified subset of the series in the
 	current dataset, to the file given by
 	<repl>datafile</repl>.</para>
 
@@ -9233,12 +9233,6 @@
 	the <lit>--omit-obs</lit> flag is given this column is omitted; only the
 	actual data are printed.
       </para>
-
-      <para>
-	Note that any scalar variables will not be saved
-	automatically: if you wish to save scalars you must explicitly
-	list them in <repl>varlist</repl>.
-      </para>  
 
       <para>
 	The option of saving in gretl database format is intended to help with the
