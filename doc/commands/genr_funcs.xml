@@ -2967,15 +2967,29 @@
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns a <by r="k" c="n"/> matrix of parameter estimates obtained
 	  by OLS regression of the <by r="T" c="n"/> matrix
 	  <argname>Y</argname> on the <by r="T" c="k"/> matrix
-	  <argname>X</argname>. The Cholesky decomposition is used. If the
-	  third argument is not <lit>null</lit>, the <by r="T" c="n"/> matrix
-	  <argname>U</argname> will contain the residuals.
+	  <argname>X</argname>.
+	</para>
+	<para>
+	  If the third argument is not <lit>null</lit>, the <by r="T" c="n"/>
+	  matrix <argname>U</argname> will contain the residuals. If the final
+	  argument is given and is not <lit>null</lit> then the
+	  <by r="k" c="k"/> matrix <argname>V</argname> will contain (a) the
+	  covariance matrix of the parameter estimates, if
+	  <argname>Y</argname> has just one column, or (b)
+	  <math>X'X</math><sup>-1</sup> if <argname>Y</argname> has multiple
+	  columns.
+	</para>
+	<para>
+	  Estimates are obtained via Cholesky decomposition, with a fallback
+	  to QR decomposition if the columns of <argname>X</argname> are
+	  highly collinear.
 	</para>
       </description>
     </function>

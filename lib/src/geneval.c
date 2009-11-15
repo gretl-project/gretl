@@ -4870,20 +4870,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    vname = ptr_node_get_name(r, p);
 	    A = user_matrix_SVD(l->v.m, uname, vname, &p->err);
 	}
-    } else if (f == F_MOLS || f == F_MPOLS) {
-	if (l->t != MAT) {
-	    node_type_error(f, 0, MAT, l, p);
-	} else if (m->t != MAT) {
-	    node_type_error(f, 1, MAT, m, p);
-	} else if (r->t != U_ADDR && r->t != EMPTY) {
-	    node_type_error(f, 2, U_ADDR, r, p);
-	} else {
-	    gretlopt opt = (f == F_MOLS)? OPT_NONE : OPT_M;
-	    const char *Uname;
-
-	    Uname = ptr_node_get_name(r, p);
-	    A = user_matrix_ols(l->v.m, m->v.m, Uname, opt, &p->err);
-	}
     } else if (f == F_TOEPSOLV) {
 	if (l->t != MAT) {
 	    node_type_error(f, 0, MAT, l, p);
@@ -5390,6 +5376,64 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	if (freeV) gretl_matrix_free(V);
 	if (freeW) gretl_matrix_free(W);
+    } else if (t->t == F_MOLS || t->t == F_MPOLS) {
+	gretlopt opt = (t->t == F_MPOLS)? OPT_M : OPT_NONE;
+	gretl_matrix *Y = NULL;
+	gretl_matrix *X = NULL;
+	const char *SU = NULL;
+	const char *SV = NULL;
+	int freeY = 0, freeX = 0;
+
+	if (k < 2 || k > 4) {
+	    n_args_error(k, 1, (opt)? "mpols" : "mols", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (i == 0) {
+		if (e->t == VEC) {
+		    Y = tmp_matrix_from_series(e, p);
+		    freeY = 1;
+		} else if (e->t != MAT) {
+		    node_type_error(t->t, i, MAT, e, p);
+		} else {
+		    Y = e->v.m;
+		}
+	    } else if (i == 1) {
+		if (e->t == VEC) {
+		    X = tmp_matrix_from_series(e, p);
+		    freeX = 1;
+		} else if (e->t != MAT) {
+		    node_type_error(t->t, i, MAT, e, p);
+		} else {
+		    X = e->v.m;
+		}
+	    } else {		
+		if (e->t == EMPTY) {
+		    ; /* OK */
+		} else if (e->t != U_ADDR) {
+		    node_type_error(t->t, i, U_ADDR, e, p);
+		} else if (i == 2) {
+		    SU = ptr_node_get_name(e, p);
+		} else {
+		    SV = ptr_node_get_name(e, p);
+		}
+	    } 
+	}
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }	
+	    ret->v.m = user_matrix_ols(Y, X, SU, SV, opt, &p->err);
+	}
+
+	if (freeY) gretl_matrix_free(Y);
+	if (freeX) gretl_matrix_free(X);
     }
 
     return ret;
@@ -6917,8 +6961,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;	
     case F_MSHAPE:
     case F_SVD:
-    case F_MOLS:
-    case F_MPOLS:
     case F_TRIMR:
     case F_TOEPSOLV:
     case F_CORRGM:
@@ -6945,6 +6987,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = eval_bessel_func(l, m, r, p);
 	}		
 	break;
+    case F_MOLS:
+    case F_MPOLS:
     case F_FILTER:	
     case F_MCOVG:
     case F_KFILTER:

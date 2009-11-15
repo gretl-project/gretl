@@ -304,8 +304,6 @@ enum {
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,
-    F_MOLS,
-    F_MPOLS,
     F_TRIMR,
     F_TOEPSOLV,
     F_CORRGM,
@@ -314,6 +312,8 @@ enum {
     F_STRNCMP,
     F_BESSEL,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
+    F_MOLS,
+    F_MPOLS,
     F_FILTER,
     F_MCOVG,
     F_KFILTER,

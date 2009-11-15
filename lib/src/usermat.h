@@ -134,6 +134,7 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 gretl_matrix *user_matrix_ols (const gretl_matrix *Y, 
 			       const gretl_matrix *X, 
 			       const char *Uname, 
+			       const char *Vname,
 			       gretlopt opt,
 			       int *err);
 

@@ -36,6 +36,8 @@ version 1.8.6, in progress
 - MS Windows package: update pango and gnuplot
 - Scalar variables: improve GUI management, and add a 
   --scalars option to the "varlist" command
+- "mols" function: add option of retrieving the covariance
+  matrix
 - Fix memory leak on repeated sub-sampling
 - Miscellaneous small GUI fixes
 
