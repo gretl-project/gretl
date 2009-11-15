@@ -4372,6 +4372,10 @@ static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
     ufunc *u = call->fun;
     int i;
 
+    if (call->retname == NULL) {
+	return 0;
+    }
+
     for (i=0; i<args->argc; i++) {
 	if (types_match(u->params[i].type, rtype)) {
 	    if (!strcmp(u->params[i].name, call->retname)) {

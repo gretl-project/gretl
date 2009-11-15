@@ -2421,8 +2421,7 @@ static void progressive_loop_zero (LOOPSET *loop)
     loop_store_free(&loop->store);
 }
 
-static int 
-top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
+static int top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 {
     int err = 0;
 
@@ -2439,7 +2438,9 @@ top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
     if (!err && (loop->type == COUNT_LOOP || indexed_loop(loop))) {
 	loop->final.val = controller_get_val(&loop->final);
 	if (na(loop->init.val) || na(loop->final.val)) {
-	    err = 1;
+	    gretl_errmsg_set(_("error evaluating loop condition"));
+	    fprintf(stderr, "loop: got NA for init and/or final value\n");
+	    err = E_DATA;
 	} else {
 	    loop->itermax = loop->final.val - loop->init.val + 1;
 #if LOOP_DEBUG
@@ -2674,6 +2675,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     err = top_of_loop(loop, pZ, pdinfo);
+    if (err) {
+	*errline = '\0';
+    }
     
     while (!err && loop_condition(loop, pZ, pdinfo, &err)) {
 #if LOOP_DEBUG
@@ -2873,7 +2877,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (err) {
 	if (!s->funcerr) {
 	    errmsg(err, prn);
-	    pprintf(prn, ">> %s\n", errline);
+	    if (*errline != '\0') {
+		pprintf(prn, ">> %s\n", errline);
+	    }
 	}
     } else if (loop->err) {
 	errmsg(loop->err, prn);
