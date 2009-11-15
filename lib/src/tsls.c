@@ -630,8 +630,8 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
    of this matrix; return Q */
 
 static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
-			     const double **Z, int t1, int t2, char *mask,
-			     int *err)
+			     const double **Z, const DATAINFO *pdinfo, 
+			     char *mask, int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
@@ -640,7 +640,8 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
     double test;
     int i, j, k;
 
-    Q = gretl_matrix_data_subset_masked(instlist, Z, t1, t2, mask, err);
+    Q = gretl_matrix_data_subset_masked(instlist, Z, pdinfo->t1, pdinfo->t2, 
+					mask, err);
     if (*err) {
 	return NULL;
     }
@@ -688,8 +689,8 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 		    droplist[0] += 1;
 		    droplist[droplist[0]] = instlist[j];
 		}	    
-		fprintf(stderr, "tsls_Q: dropping redundant instrument %d\n", 
-			instlist[j]);
+		fprintf(stderr, "tsls_Q: dropping redundant instrument %d (%s)\n", 
+			instlist[j], pdinfo->varname[instlist[j]]);
 		gretl_list_delete_at_pos(instlist, j--);
 	    }
 	    j++;
@@ -697,7 +698,8 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 
 	k = instlist[0];
 	gretl_matrix_free(Q);
-	Q = gretl_matrix_data_subset_masked(instlist, Z, t1, t2, mask, err);
+	Q = gretl_matrix_data_subset_masked(instlist, Z, pdinfo->t1, pdinfo->t2, 
+					    mask, err);
 	if (!*err) {
 	    R = gretl_matrix_reuse(R, k, k);
 	    *err = gretl_matrix_QR_decomp(Q, R);
@@ -1318,6 +1320,7 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
 	if (oid < 0) {
 	    gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
 				   "At least %d more instruments are needed."), -oid);
+	    fprintf(stderr, "zlist[0] = %d, rlist[0] = %d\n", zlist[0], rlist[0]);
 	    err = E_DATA; 
 	}
     }
@@ -1436,7 +1439,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	Q = tsls_Q(instlist, reglist, &droplist,
-		   (const double **) *pZ, pdinfo->t1, pdinfo->t2,
+		   (const double **) *pZ, pdinfo,
 		   missmask, &err);
     }
 
