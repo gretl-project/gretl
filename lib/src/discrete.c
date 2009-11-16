@@ -214,6 +214,8 @@ static int op_compute_score (op_container *OC, int yt,
     return 0;
 }
 
+#define dPMIN 1.0e-15
+
 static int op_compute_probs (const double *theta, op_container *OC)
 {
     double m0, m1, ystar0 = 0.0, ystar1 = 0.0;
@@ -267,11 +269,11 @@ static int op_compute_probs (const double *theta, op_container *OC)
 	    dP =  0.5 * h * adj;
 	}
 
-	if (dP > 1.0e-15) {
+	if (dP > dPMIN) {
 	    OC->dP[s] = dP;
 	} else {
-#if LPDEBUG > 1
-	    fprintf(stderr, "very small dP at obs %d; y=%d, ndx = %10.6f, dP = %9.7f\n", 
+#if LPDEBUG
+	    fprintf(stderr, "very small dP at obs %d; y=%d, ndx=%g, dP=%g\n", 
  		    t, yt, OC->ndx[s], dP);
 #endif
 	    return 1;
@@ -351,6 +353,7 @@ static double op_loglik (const double *theta, void *ptr)
     }
     
     err = op_compute_probs(OC->theta, OC);
+
     if (err) {
 	ll = NADBL;
     } else {
