@@ -3210,22 +3210,6 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
 
 #define S2MINOBS 2
 
-static void
-print_wald_test (double W, int nunits, const int *unit_obs, PRN *prn)
-{
-    int i, df = 0;
-
-    for (i=0; i<nunits; i++) {
-	if (unit_obs[i] >= S2MINOBS) df++;
-    }
-
-    pprintf(prn, "\n%s\n%s:\n",
-	    _("Distribution free Wald test for heteroskedasticity"),
-	    _("based on the FGLS residuals"));
-    pprintf(prn, "%s(%d) = %g, ",  _("Chi-square"), df, W);
-    pprintf(prn, "%s = %g\n", _("with p-value"), chisq_cdf_comp(df, W));
-}
-
 /* Wald test for groupwise heteroskedasticity, without assuming
    normality of the errors: see Greene, 4e, p. 598.  Note that the
    computation involves a factor of (1/(T_i - 1)) so this is not
@@ -3241,7 +3225,7 @@ wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo,
     int i, t, Ti;
 
     for (i=0; i<pan->nunits; i++) {
-	double Vi = 0.0;
+	double fii = 0.0;
 
 	Ti = pan->unit_obs[i];
 	if (Ti == 0) {
@@ -3257,18 +3241,18 @@ wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo,
 	    x = pmod->uhat[panel_index(i, t)];
 	    if (!na(x)) {
 		x = x * x - uvar[i];
-		Vi += x * x;
+		fii += x * x;
 	    }
 	}
 
-	if (Vi <= 0) {
+	if (fii <= 0) {
 	    W = NADBL;
 	    break;
 	}
 	    
-	Vi *= (1.0 / Ti) * (1.0 / (Ti - 1.0));
+	fii *= (1.0 / Ti) * (1.0 / (Ti - 1.0));
 	x = uvar[i] - s2;
-	W += x * x / Vi;
+	W += x * x / fii;
     }
 
     return W;
@@ -3386,6 +3370,21 @@ unit_error_variances (double *uvar, const MODEL *pmod,
 #define SMALLDIFF 0.0001
 #define WLS_MAX   30
 
+/**
+ * panel_wls_by_unit:
+ * @list: regression list.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on the (panel) data set.
+ * @opt: may include %OPT_I (iterate to ML solution), 
+ * %OPT_V for verbose operation.
+ * @prn: for printing details of iterations (or %NULL).
+ *
+ * Performs weighted least squares (possibly iterated) on
+ * a panel model, allowing for groupwise heteroskedasticity.
+ * 
+ * Returns: the estimates, in a %MODEL.
+ */
+
 MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn)
 {
@@ -3395,7 +3394,6 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     double *uvar = NULL;
     double *bvec = NULL;
     double s2, diff = 1.0;
-    double W = NADBL;
     int *wlist = NULL;
     int orig_v = pdinfo->v;
     int i, iter = 0;
@@ -3404,13 +3402,9 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     panelmod_init(&pan);
 
     if (opt & OPT_I) {
-	/* iterating: no degrees-of-freedom correction */
+	/* iterating: no degrees-of-freedom correction in WLS */
 	wlsopt |= OPT_N; 
     } 
-
-    if (opt & OPT_A) {
-	wlsopt |= OPT_A;
-    }
 
     /* baseline pooled model */
     mdl = lsq(list, pZ, pdinfo, OLS, OPT_A);
@@ -3472,8 +3466,8 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	wlist[i] = mdl.list[i-1];
     }
 
-    /* if wanted (and possible) iterate to ML solution; otherwise just do
-       one-step FGLS estimation 
+    /* If wanted (and possible) iterate to ML solution; otherwise just do
+       one-step FGLS estimation.
     */
 
     while (diff > SMALLDIFF) {
@@ -3497,10 +3491,6 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 		    pprintf(prn, "%5d%12s (T = %d)\n", i + 1, "NA", pan.unit_obs[i]);
 		}
 	    }
-	}
-
-	if ((opt & OPT_I) && iter == 2) {
-	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, &pan);
 	}
 
 	write_weights_to_dataset(uvar, pan.nunits, pan.T, *pZ, pdinfo);
@@ -3552,14 +3542,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    if (opt & OPT_V) {
 		pputc(prn, '\n');
 	    }
-	} else {
-	    unit_error_variances(uvar, &mdl, pdinfo, &pan);
-	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, &pan);
-	}
-
-	if (!na(W)) {
-	    print_wald_test(W, pan.nunits, pan.unit_obs, prn);
-	}
+	} 
     }    
 
  bailout:
@@ -3574,6 +3557,93 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
     
     return mdl;
+}
+
+static void
+print_wald_test (double W, int df, double pval, PRN *prn)
+{
+    pprintf(prn, "\n%s:\n",
+	    _("Distribution free Wald test for heteroskedasticity"));
+    pprintf(prn, "%s(%d) = %g, ",  _("Chi-square"), df, W);
+    pprintf(prn, "%s = %g\n\n", _("with p-value"), pval);
+}
+
+/**
+ * groupwise_hetero_test:
+ * @pmod: panel model to be tested.
+ * @pdinfo: information on the (panel) data set.
+ * @prn: for printing details of iterations (or %NULL).
+ *
+ * Performs a Wald test for the null hypothesis that the 
+ * error variance is uniform across the units.
+ * 
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
+			   gretlopt opt, PRN *prn)
+{
+    panelmod_t pan;
+    double *uvar = NULL;
+    double s2, W = NADBL;
+    int err = 0;
+
+    if (pmod->ci == OLS || (pmod->ci == PANEL && (pmod->opt & OPT_F))) {
+	; /* only for pooled or fixed effects */
+    } else {
+	return E_NOTIMP;
+    }
+
+    gretl_error_clear();
+    panelmod_init(&pan);
+
+    err = panelmod_setup(&pan, pmod, pdinfo, 0, OPT_NONE);
+    if (err) {
+	return err;
+    }
+
+    uvar = malloc(pan.nunits * sizeof *uvar);
+    if (uvar == NULL) {
+	free(pan.unit_obs);
+	return E_ALLOC;
+    }  
+
+    s2 = pmod->ess / pmod->nobs;
+
+    unit_error_variances(uvar, pmod, pdinfo, &pan);
+
+    W = wald_hetero_test(pmod, pdinfo, s2, uvar, &pan);
+
+    if (!na(W)) {
+	double pval;
+	int i, df = 0;
+
+	for (i=0; i<pan.nunits; i++) {
+	    if (pan.unit_obs[i] >= S2MINOBS) df++;
+	}
+
+	pval = chisq_cdf_comp(df, W);
+	print_wald_test(W, df, pval, prn);
+
+	if (opt & OPT_S) {
+	    ModelTest *test = model_test_new(GRETL_TEST_GROUPWISE);
+
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+		model_test_set_dfn(test, df);
+		model_test_set_value(test, W);
+		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
+	    }
+	}
+
+	record_test_result(W, pval, _("groupwise heteroskedasticity"));
+    }
+
+    free(pan.unit_obs);
+    free(uvar);
+
+    return err;
 }
 
 static void panel_copy_var (double **targZ, DATAINFO *targinfo, int targv,

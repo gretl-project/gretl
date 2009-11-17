@@ -1970,7 +1970,7 @@ void do_modtest (GtkAction *action, gpointer p)
 	}
     } else if (opt == OPT_P) {
 	gretl_command_strcpy("modtest --panel");
-	err = groupwise_hetero_test(pmod, pZ, pdinfo, prn);
+	err = groupwise_hetero_test(pmod, pdinfo, opt | OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);

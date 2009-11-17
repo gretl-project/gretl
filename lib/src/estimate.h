@@ -65,9 +65,6 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
 		    const DATAINFO *pdinfo, gretlopt opt, 
 		    PRN *prn);
 
-int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			   PRN *prn);
-
 MODEL hsk_func (const int *list, double ***pZ, DATAINFO *pdinfo);
 
 int whites_test (MODEL *pmod, 

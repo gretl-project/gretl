@@ -33,6 +33,9 @@ int panel_autocorr_test (MODEL *pmod, int order,
 			 double **Z, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
+int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
+			   gretlopt opt, PRN *prn);
+
 int panel_tsls_robust_vcv (MODEL *pmod, const double **Z, 
 			   const DATAINFO *pdinfo);
 

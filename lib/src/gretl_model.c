@@ -2952,6 +2952,11 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 	}
     }
 
+    if (test->type == GRETL_TEST_GROUPWISE &&
+	test->teststat == GRETL_STAT_WALD_CHISQ) {
+	descrip = N_("Distribution free Wald test for heteroskedasticity");
+    }
+
     if (descrip == NULL) {
 	return 1;
     }
@@ -4467,9 +4472,11 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 		ok = 0;
 	    }	    
 	} else if (mci != OLS) {
-	    if ((mci == IVREG) && (opt & (OPT_A | OPT_W))) {
+	    if (mci == IVREG && (opt & (OPT_A | OPT_W))) {
 		/* Autocorr. and H'sked. supported for IVREG */
 		ok = 1; 
+	    } else if (mci == PANEL && (opt & OPT_P)) {
+		ok = 1;
 	    } else {
 		ok = 0; /* FIXME? */
 	    }

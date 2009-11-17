@@ -4355,7 +4355,7 @@ static int check_panel_options (gretlopt opt)
  * @opt: can include %OPT_Q (quiet estimation), %OPT_S
  * (silent estimation), %OPT_R (random effects model),
  * %OPT_W (weights based on the error variance for the
- * respective cross-sectional units), %OPT_T (iterate, only
+ * respective cross-sectional units), %OPT_I (iterate, only
  * available in conjunction with %OPT_W).
  * @prn: printing struct (or %NULL).
  *
@@ -4473,57 +4473,6 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
     }
 
     return mod;    
-}
-
-/**
- * groupwise_hetero_test:
- * @pmod: pooled OLS model to be tested.
- * @pZ: pointer to data array.
- * @pdinfo: information on the (panel) data set.
- * @prn: for printing details of iterations (or %NULL).
- *
- * Calculates iterated WLS estimates using weights based on the error
- * variance for the cross-sectional units and performs a Wald test
- * for the null hypothesis that the error variance is uniform
- * across the units.
- * 
- * Returns: 0 on success, non-zero error code on failure.
- */
-
-int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			   PRN *prn)
-{
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
-    MODEL wmod;
-    int err;
-
-    if (!POOLED_MODEL(pmod)) {
-	return E_NOTIMP;
-    }
-
-    if (!dataset_is_panel(pdinfo)) {
-	gretl_errmsg_set(_("This test is only available for panel data"));
-	return E_NOTIMP;
-    }
-
-    pdinfo->t1 = pmod->t1;
-    pdinfo->t2 = pmod->t2;
-
-    wmod = panel_wls_by_unit(pmod->list, pZ, pdinfo, OPT_T | OPT_A, prn);
-    err = wmod.errcode;
-
-    if (!err) {
-	gretl_model_set_auxiliary(&wmod, AUX_GROUPWISE);
-	printmodel(&wmod, pdinfo, OPT_NONE, prn);
-    }
-
-    clear_model(&wmod);
-
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
-
-    return err;
 }
 
 /**

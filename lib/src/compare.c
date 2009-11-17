@@ -3445,7 +3445,7 @@ int model_test_driver (const char *param,
     /* groupwise heteroskedasticity */
     if (!err && (opt & OPT_P)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = groupwise_hetero_test(ptr, pZ, pdinfo, prn);
+	    err = groupwise_hetero_test(ptr, pdinfo, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
 	}

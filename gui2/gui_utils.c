@@ -2053,7 +2053,7 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 	    continue;
 	} else if (!strcmp(s, "Hsk")) {
 	    ci = MODTEST;
-	    opt = OPT_W;
+	    opt = (dataset_is_panel(datainfo))? OPT_P : OPT_W;
 	} else {
 	    ci = gretl_command_number(s);
 	}
@@ -2693,10 +2693,15 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
        depending on the nature of the model
     */
 
-    if (dataset_is_panel(datainfo) && pmod->ci == OLS) {
-	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
-			    panel_hsk_items, 
-			    G_N_ELEMENTS(panel_hsk_items));
+    if (dataset_is_panel(datainfo)) {
+	if (pmod->ci == OLS) {
+	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
+				panel_hsk_items, 
+				G_N_ELEMENTS(panel_hsk_items));
+	} else if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
+	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
+				panel_hsk_items + 1, 1);
+	}	    
     } else if (pmod->ci == IVREG) {
 	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
 			    ivreg_hsk_items, 
