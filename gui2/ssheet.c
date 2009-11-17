@@ -663,7 +663,7 @@ static void add_scalar_callback (GtkWidget *w, Spreadsheet *sheet)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_list_store_append(store, &iter);
 
-    gtk_list_store_set(store, &iter, 0, "", 1, "", -1);
+    gtk_list_store_set(store, &iter, 0, "", 1, "", 2, sheet->pbuf, -1);
     sheet->datarows += 1;
 
     pstr = g_strdup_printf("%d", sheet->datarows - 1);
