@@ -503,29 +503,40 @@ int gretl_rand_F (double *a, int t1, int t2, int v1, int v2)
 
 int gretl_rand_binomial (double *a, int t1, int t2, int n, double p) 
 {
-    double *b;
-    int i, t;
+    int t;
 
-    if (n < 1 || p <= 0 || p >= 1) {
+    if (n < 0 || p < 0 || p > 1) {
 	return E_INVARG;
     }
 
-    b = malloc(n * sizeof *b);
-    if (b == NULL) {
-	return E_ALLOC;
-    }
+    if (n == 0 || p == 0.0) {
+	for (t=t1; t<=t2; t++) {
+	    a[t] = 0.0;
+	}
+    } else if (p == 1.0) {
+	for (t=t1; t<=t2; t++) {
+	    a[t] = n;
+	}
+    } else {
+	double *b = malloc(n * sizeof *b);
+	int i;
 
-    for (t=t1; t<=t2; t++) {
-	a[t] = 0.0;
-	gretl_rand_uniform(b, 0, n - 1);
-	for (i=0; i<n; i++) {
-	    if (b[i] <= p) {
-		a[t] += 1;
+	if (b == NULL) {
+	    return E_ALLOC;
+	}
+
+	for (t=t1; t<=t2; t++) {
+	    a[t] = 0.0;
+	    gretl_rand_uniform(b, 0, n - 1);
+	    for (i=0; i<n; i++) {
+		if (b[i] <= p) {
+		    a[t] += 1;
+		}
 	    }
 	}
-    }
 
-    free(b);
+	free(b);
+    }
 
     return 0;
 }

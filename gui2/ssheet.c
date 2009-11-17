@@ -1225,16 +1225,18 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
     /* deal with added or modified scalars first */
     for (i=0; i<sheet->datarows && !err; i++) {
 	gtk_tree_model_get(model, &iter, 0, &vname, 1, &val, -1);
-	x = (*val == '\0')? NADBL : atof(val);
-	if (gretl_is_scalar(vname)) {
-	    if (x != gretl_scalar_get_value(vname)) {
-		gretl_scalar_set_value(vname, x);
-		sheet_set_modified(sheet, TRUE);
-	    }
-	} else {
-	    err = gretl_scalar_add(vname, x);
-	    if (!err) {
-		sheet_set_modified(sheet, TRUE);
+	if (vname != NULL && *vname != '\0') {
+	    x = (*val == '\0')? NADBL : atof(val);
+	    if (gretl_is_scalar(vname)) {
+		if (x != gretl_scalar_get_value(vname)) {
+		    gretl_scalar_set_value(vname, x);
+		    sheet_set_modified(sheet, TRUE);
+		}
+	    } else {
+		err = gretl_scalar_add(vname, x);
+		if (!err) {
+		    sheet_set_modified(sheet, TRUE);
+		}
 	    }
 	}
 	g_free(vname);
