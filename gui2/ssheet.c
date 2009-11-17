@@ -499,6 +499,35 @@ static int scalar_try_genr (gchar **ps)
     return err;
 }
 
+/* right now, this is only used for renaming or adding a scalar */
+
+static void sheet_text_cell_edited (GtkCellRendererText *cell,
+				    const gchar *path_string,
+				    const gchar *user_text,
+				    Spreadsheet *sheet)
+{
+    int err;
+
+    err = gui_validate_varname_strict(user_text, GRETL_TYPE_DOUBLE);
+
+    if (err) {
+	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+	GtkTreePath *path;
+	GtkTreeViewColumn *column;
+
+	path = gtk_tree_path_new_from_string(path_string);
+	column = gtk_tree_view_get_column(view, 0);
+	gtk_tree_view_set_cursor(view, path, column, TRUE);
+	if (sheet->entry != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(sheet->entry), user_text);
+	    gtk_editable_select_region(GTK_EDITABLE(sheet->entry), 0, -1);
+	}
+	gtk_tree_path_free(path);
+    } else {
+	maybe_update_store(sheet, user_text, path_string);
+    }
+}
+
 static void sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
 			       const gchar *user_text,
@@ -538,32 +567,16 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
     }
 }
 
-/* right now, this is only used for renaming or adding a scalar */
-
-static void sheet_text_cell_edited (GtkCellRendererText *cell,
-				    const gchar *path_string,
-				    const gchar *user_text,
-				    Spreadsheet *sheet)
+static void cell_edited_callback (GtkTreeViewColumn *column,
+				  const gchar *path_string,
+				  const gchar *user_text,
+				  Spreadsheet *sheet)
+				  
 {
-    int err;
-
-    err = gui_validate_varname_strict(user_text, GRETL_TYPE_DOUBLE);
-
-    if (err) {
-	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-	GtkTreePath *path;
-	GtkTreeViewColumn *column;
-
-	path = gtk_tree_path_new_from_string(path_string);
-	column = gtk_tree_view_get_column(view, 0);
-	gtk_tree_view_set_cursor(view, path, column, TRUE);
-	if (sheet->entry != NULL) {
-	    gtk_entry_set_text(GTK_ENTRY(sheet->entry), user_text);
-	    gtk_editable_select_region(GTK_EDITABLE(sheet->entry), 0, -1);
-	}
-	gtk_tree_path_free(path);
+    if (editing_scalars(sheet) && get_treeview_column_number(column) == 0) {
+	sheet_text_cell_edited(NULL, path_string, user_text, sheet);
     } else {
-	maybe_update_store(sheet, user_text, path_string);
+	sheet_cell_edited(NULL, path_string, user_text, sheet);
     }
 }
 
@@ -1825,12 +1838,7 @@ static void commit_and_move_right (Spreadsheet *sheet,
     fprintf(stderr, "commit_and_move_right: calling sheet_cell_edited\n");
 #endif
 
-    if (editing_scalars(sheet) && get_treeview_column_number(col) == 0) {
-	sheet_text_cell_edited(NULL, pathstr, s, sheet);
-    } else {
-	sheet_cell_edited(NULL, pathstr, s, sheet);
-    }
-
+    cell_edited_callback(col, pathstr, s, sheet);
     g_free(pathstr);
     gtk_tree_path_free(path);
 }
@@ -2121,10 +2129,10 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 		const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
 		gchar *pathstr = gtk_tree_path_to_string(oldpath);
 
-#if CELLDEBUG
+#if 1 || CELLDEBUG
 		fprintf(stderr, "click: calling sheet_cell_edited\n");
 #endif
-		sheet_cell_edited(NULL, pathstr, txt, sheet);
+		cell_edited_callback(oldcol, pathstr, txt, sheet);
 		g_free(pathstr);
 	    }
 	    gtk_tree_path_free(oldpath);

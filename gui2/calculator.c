@@ -956,6 +956,7 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
     strncat(s, text, 31);
     tailstrip(s);
 
+    /* try for constants: e, pi */
     x = get_real_const(s, t);
     if (!na(x)) {
 	return x;
@@ -1364,6 +1365,7 @@ static void get_random (GtkWidget *w, CalcChild *child)
     }
 
     vname = gtk_entry_get_text(GTK_ENTRY(tabs[i]->entry[j]));
+
     if (vname == NULL || *vname == '\0') {
 	warnbox(_("You must give a name for the variable"));
 	return;
@@ -1375,6 +1377,8 @@ static void get_random (GtkWidget *w, CalcChild *child)
 	warnbox(_("Range is non-positive!"));
 	return;
     }
+
+    gretl_push_c_numeric_locale();
 
     switch (d) {
     case UNIFORM_DIST:
@@ -1412,6 +1416,8 @@ static void get_random (GtkWidget *w, CalcChild *child)
 	gretl_command_sprintf("genr %s = randgen(P,%g)", vname, x[0]);
 	break;
     }
+
+    gretl_pop_c_numeric_locale();
 
     if (check_and_record_command()) {
 	return;
