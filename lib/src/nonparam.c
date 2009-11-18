@@ -547,7 +547,7 @@ int kendall (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (!err) {
 	pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), pdinfo->varname[vx],
 		pdinfo->varname[vy]);
-	pprintf(prn, "Kendall's tau = %.8f\n", tau);
+	pprintf(prn, "%s = %.8f\n", _("Kendall's tau"), tau);
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), z,
 		normal_pvalue_2(z));
@@ -841,17 +841,17 @@ static void print_z_prob (double z, PRN *prn)
     if (z > 0) {
 	p = normal_pvalue_1(z);
 	if (!na(p)) {
-	    pprintf(prn, "  Prob(Z > %g) = %g\n", z, p);
+	    pprintf(prn, "  P(Z > %g) = %g\n", z, p);
 	}
     } else if (z < 0) {
 	p = normal_cdf(z);
 	if (!na(p)) {
-	    pprintf(prn, "  Prob(Z < %g) = %g\n", z, p);
+	    pprintf(prn, "  P(Z < %g) = %g\n", z, p);
 	}
     }
 
     if (!na(p) && p > 0) {
-	pprintf(prn, "  Two-tailed p-value = %g\n", 2 * p);
+	pprintf(prn, "  %s = %g\n", _("Two-tailed p-value"), 2 * p);
     }
 }
 
@@ -979,7 +979,8 @@ signed_rank_test (const double *x, const double *y,
 
     pprintf(prn, "  n = %d\n", n);
     pprintf(prn, "  W+ = %g, W- = %g\n", wp, wm);
-    pprintf(prn, "  (zero differences: %d, non-zero ties: %d)\n", Z, k);
+    pprintf(prn, "  (%s: %d, %s: %d)\n", _("zero differences"), 
+	    _("non-zero ties"), Z, k);
 
     if (n > 8) {
 	double s2, x, num, z;
@@ -1001,7 +1002,8 @@ signed_rank_test (const double *x, const double *y,
 	pprintf(prn, "  5%% critical values: %d (two-tailed), %d (one-tailed)\n",
 		rank5[n-6][0], rank5[n-6][1]);
     } else {
-	pprintf(prn, "  Sample too small for statistical significance\n");
+	pprintf(prn, "  %s\n", 
+		_("Sample too small for statistical significance"));
     }
 
     pputc(prn, '\n');
@@ -1124,7 +1126,8 @@ static int rank_sum_test (const double *x, const double *y,
 	    close_plugin(handle);
 	}
     } else {
-	pprintf(prn, "  Sample too small for statistical significance\n");
+	pprintf(prn, "  %s\n", 
+		_("Sample too small for statistical significance"));
     }
 
     pputc(prn, '\n');

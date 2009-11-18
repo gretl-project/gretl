@@ -1284,11 +1284,7 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 
     if (err) {
 	gui_errmsg(err);
-    } else if (n_saved_scalars() > 0) {
-	GtkWidget *b = g_object_get_data(G_OBJECT(sheet->view), "add-button");
-
-	gtk_widget_set_sensitive(b, TRUE);
-    }
+    } 
 }
 
 /* pull modified values from the data-editing spreadsheet
@@ -1688,9 +1684,11 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 
     if (n_saved_scalars() == 0) {
 	/* starting from scratch */
+#if 0
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, "", 1, "", 
 			   2, sheet->pbuf, -1);
+#endif
 	return 0;
     }
 
@@ -2892,8 +2890,6 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
 			     G_CALLBACK(add_scalar_callback), sheet);
-	    g_object_set_data(G_OBJECT(sheet->view), "add-button", tmp);
-	    gtk_widget_set_sensitive(tmp, n_saved_scalars() > 0);
 	    gtk_widget_show(tmp);
 
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
@@ -2979,9 +2975,6 @@ void edit_scalars (void)
     scalars_sheet = sheet;
 
     sheet->datarows = n_saved_scalars();
-    if (sheet->datarows == 0) {
-	sheet->datarows = 1;
-    }
     sheet->datacols = 1;
 
     real_show_spreadsheet(&sheet, SHEET_EDIT_SCALARS, 0);
