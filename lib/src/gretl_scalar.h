@@ -69,8 +69,6 @@ void write_scalars_to_file (FILE *fp);
 
 void print_scalars (PRN *prn);
 
-void set_scalar_sheet_action (int s);
-
 void set_scalar_edit_callback (void (*callback));
 
 #endif /* GRETL_SCALAR_H */

@@ -39,9 +39,8 @@ struct gretl_scalar_ {
 static gretl_scalar **scalars;
 static int n_scalars;
 static int scalar_imin;
-static int scalar_sheet_action;
 
-static void (*scalar_edit_callback)(void);
+static void (*scalar_edit_callback)(const char *name, double val);
 
 #if SDEBUG
 
@@ -292,9 +291,8 @@ int gretl_scalar_add (const char *name, double val)
     debug_print_scalars("gretl_scalar_add");
 #endif
 
-    if (!err && !scalar_sheet_action && 
-	scalar_edit_callback != NULL) {
-	scalar_edit_callback();
+    if (!err && level == 0 && scalar_edit_callback != NULL) {
+	scalar_edit_callback(name, val);
     }
 
     return err;
@@ -381,17 +379,7 @@ int gretl_scalar_delete (const char *name, PRN *prn)
     debug_print_scalars("gretl_scalar_delete");
 #endif
 
-    if (!err && !scalar_sheet_action && 
-	scalar_edit_callback != NULL) {
-	scalar_edit_callback();
-    }
-
     return err;
-}
-
-void set_scalar_sheet_action (int s)
-{
-    scalar_sheet_action = s;
 }
 
 void set_scalar_edit_callback (void (*callback))

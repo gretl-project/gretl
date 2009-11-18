@@ -165,6 +165,8 @@ static GtkActionEntry matrix_items[] = {
     { "ScalarDiv", NULL, N_("_Divide by scalar"), NULL, NULL, G_CALLBACK(matrix_edit_callback) }
 };
 
+static Spreadsheet *scalars_sheet;
+
 #define sheet_is_modified(s) (s->flags & SHEET_MODIFIED)
 
 #define editing_scalars(s) (s->cmd == SHEET_EDIT_SCALARS)
@@ -1205,6 +1207,34 @@ static void update_matrix_from_sheet_full (Spreadsheet *sheet)
     set_ok_transforms(sheet);
 }
 
+/* callback from gretl_scalar.c, for use when a scalar is added by
+   means other than the spreadsheet, and the scalars spreadsheet
+   is currently displayed
+*/
+
+static void scalars_changed_callback (const char *name, double val)
+{
+    Spreadsheet *sheet = scalars_sheet;
+
+    if (sheet != NULL) {
+	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+	GtkListStore *store;
+	GtkTreeIter iter;
+	char valstr[32];
+
+	if (na(val)) {
+	    *valstr = '\0';
+	} else {
+	    sprintf(valstr, "%.*g", DBL_DIG, val);
+	}
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 0, name, 1, valstr, 2, sheet->pbuf, -1);
+	sheet->datarows += 1;
+    }
+}
+
 /* put modified values from the spreadsheet into the array
    of saved scalars */
 
@@ -1218,7 +1248,7 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
     int i, err = 0;
 
     sheet_set_modified(sheet, FALSE);
-    set_scalar_sheet_action(TRUE);
+    set_scalar_edit_callback(NULL);
 
     model = gtk_tree_view_get_model(view);
     gtk_tree_model_get_iter_first(model, &iter);
@@ -1250,7 +1280,7 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 	sheet_set_modified(sheet, FALSE);
     }
 
-    set_scalar_sheet_action(FALSE);
+    set_scalar_edit_callback(scalars_changed_callback);
 
     if (err) {
 	gui_errmsg(err);
@@ -1259,11 +1289,6 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 
 	gtk_widget_set_sensitive(b, TRUE);
     }
-}
-
-static void scalars_changed_callback (void)
-{
-    fprintf(stderr, "Got scalars changed callback\n");
 }
 
 /* pull modified values from the data-editing spreadsheet
@@ -2355,6 +2380,11 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
 	gretl_matrix_free(sheet->matrix);
     }
 
+    if (editing_scalars(sheet)) {
+	scalars_sheet = NULL;
+	set_scalar_edit_callback(NULL);
+    }
+
     free(sheet);
 
     *psheet = NULL;
@@ -2945,6 +2975,8 @@ void edit_scalars (void)
     if (sheet == NULL) {
 	return;
     }
+
+    scalars_sheet = sheet;
 
     sheet->datarows = n_saved_scalars();
     if (sheet->datarows == 0) {
