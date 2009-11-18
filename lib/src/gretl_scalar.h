@@ -20,6 +20,12 @@
 #ifndef GRETL_SCALAR_H
 #define GRETL_SCALAR_H
 
+typedef enum {
+    SCALAR_ADD,
+    SCALAR_SET,
+    SCALAR_DELETE
+} ScalarAction;
+
 int n_saved_scalars (void);
 
 int gretl_is_scalar (const char *name);
@@ -62,5 +68,9 @@ void unset_auxiliary_scalars (void);
 void write_scalars_to_file (FILE *fp);
 
 void print_scalars (PRN *prn);
+
+void set_scalar_sheet_action (int s);
+
+void set_scalar_edit_callback (void (*callback));
 
 #endif /* GRETL_SCALAR_H */

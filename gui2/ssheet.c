@@ -1218,6 +1218,7 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
     int i, err = 0;
 
     sheet_set_modified(sheet, FALSE);
+    set_scalar_sheet_action(TRUE);
 
     model = gtk_tree_view_get_model(view);
     gtk_tree_model_get_iter_first(model, &iter);
@@ -1249,6 +1250,8 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 	sheet_set_modified(sheet, FALSE);
     }
 
+    set_scalar_sheet_action(FALSE);
+
     if (err) {
 	gui_errmsg(err);
     } else if (n_saved_scalars() > 0) {
@@ -1256,6 +1259,11 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 
 	gtk_widget_set_sensitive(b, TRUE);
     }
+}
+
+static void scalars_changed_callback (void)
+{
+    fprintf(stderr, "Got scalars changed callback\n");
 }
 
 /* pull modified values from the data-editing spreadsheet
@@ -2741,7 +2749,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	    gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit matrix"));
 	}
     } else if (c == SHEET_EDIT_SCALARS) {
-	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit scalars"));
+	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: scalars"));
     } else {
 	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit data"));
     }
@@ -2865,6 +2873,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
 			     G_CALLBACK(maybe_exit_sheet), sheet);
 	    gtk_widget_show(tmp);
+
+	    set_scalar_edit_callback(scalars_changed_callback);
 	}
     }
 
@@ -2888,10 +2898,6 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     select_first_editable_cell(sheet);
 
     gtk_widget_show(sheet->win);
-
-    if (c == SHEET_EDIT_SCALARS) {
-	gretl_set_window_modal(sheet->win);
-    }
 
     if (c != SHEET_EDIT_MATRIX && c != SHEET_EDIT_SCALARS) {
 	/* we can't have the user making confounding changes elsewhere,
