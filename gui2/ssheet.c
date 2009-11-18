@@ -1122,12 +1122,8 @@ static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
 	mark_session_changed();
     }
 
-    if (sheet->datarows == 1) {
-	gtk_list_store_set(store, &iter, 0, "", 1, "", -1);
-    } else {
-	gtk_list_store_remove(store, &iter);
-	sheet->datarows--;
-    }
+    gtk_list_store_remove(store, &iter);
+    sheet->datarows--;
 }
 
 static void build_sheet_popup (Spreadsheet *sheet)
@@ -1679,20 +1675,15 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 					     GTK_ICON_SIZE_MENU, NULL);
     }
 
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-
     if (n_saved_scalars() == 0) {
-	/* starting from scratch */
-#if 0
-	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, "", 1, "", 
-			   2, sheet->pbuf, -1);
-#endif
+	/* nothing to show */
 	return 0;
     }
 
-    /* insert variable names and values */
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    /* insert names and values of scalar variables */
 
     for (i=0; i<sheet->datarows; i++) {
 	strcpy(vname, gretl_scalar_get_name(i)); /* underscores? */
