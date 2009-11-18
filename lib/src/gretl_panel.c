@@ -3367,6 +3367,21 @@ unit_error_variances (double *uvar, const MODEL *pmod,
     }
 }
 
+static void print_unit_variances (panelmod_t *pan, double *uvar, PRN *prn)
+{
+    int i;
+
+    pputs(prn, " unit    variance\n");
+
+    for (i=0; i<pan->nunits; i++) {
+	if (pan->unit_obs[i] > 0) {
+	    pprintf(prn, "%5d%12g (T = %d)\n", i + 1, uvar[i], pan->unit_obs[i]);
+	} else {
+	    pprintf(prn, "%5d%12s (T = %d)\n", i + 1, "NA", pan->unit_obs[i]);
+	}
+    }
+}
+
 #define SMALLDIFF 0.0001
 #define WLS_MAX   30
 
@@ -3483,14 +3498,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    } else {
 		pputc(prn, '\n');
 	    }
-	    pputs(prn, " unit    variance\n");
-	    for (i=0; i<pan.nunits; i++) {
-		if (pan.unit_obs[i] > 0) {
-		    pprintf(prn, "%5d%12g (T = %d)\n", i + 1, uvar[i], pan.unit_obs[i]);
-		} else {
-		    pprintf(prn, "%5d%12s (T = %d)\n", i + 1, "NA", pan.unit_obs[i]);
-		}
-	    }
+	    print_unit_variances(&pan, uvar, prn);
 	}
 
 	write_weights_to_dataset(uvar, pan.nunits, pan.T, *pZ, pdinfo);
@@ -3559,13 +3567,19 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     return mdl;
 }
 
-static void
-print_wald_test (double W, int df, double pval, PRN *prn)
+static void print_wald_test (double W, int df, double pval, 
+			     panelmod_t *pan, double *uvar,
+			     double s2, PRN *prn)
 {
     pprintf(prn, "\n%s:\n",
 	    _("Distribution free Wald test for heteroskedasticity"));
-    pprintf(prn, "%s(%d) = %g, ",  _("Chi-square"), df, W);
+    pprintf(prn, " %s(%d) = %g, ",  _("Chi-square"), df, W);
     pprintf(prn, "%s = %g\n\n", _("with p-value"), pval);
+
+    if (pan->nunits <= 30) {
+	pprintf(prn, "Pooled error variance = %g\n\n", s2);
+	print_unit_variances(pan, uvar, prn);
+    }
 }
 
 /**
@@ -3623,7 +3637,7 @@ int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
 	}
 
 	pval = chisq_cdf_comp(df, W);
-	print_wald_test(W, df, pval, prn);
+	print_wald_test(W, df, pval, &pan, uvar, s2, prn);
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_GROUPWISE);
