@@ -3603,7 +3603,7 @@ int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
     int err = 0;
 
     if (pmod->ci == OLS || (pmod->ci == PANEL && (pmod->opt & OPT_F))) {
-	; /* only for pooled or fixed effects */
+	; /* OK for pooled or fixed effects */
     } else {
 	return E_NOTIMP;
     }

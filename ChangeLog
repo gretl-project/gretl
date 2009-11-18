@@ -32,6 +32,7 @@ version 1.8.6, in progress
 - Fix bug: bad Weibull plot (under "Distribution graphs")
   when adding Weibull curve to an existing plot that includes
   negative values of x
+- Add facility to display normal and logistic CDFs
 - Add convenience function: logistic()
 - MS Windows package: update pango and gnuplot
 - Scalar variables: improve GUI management, and add a 

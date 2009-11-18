@@ -2906,7 +2906,7 @@ static int calc_help_code (int c)
 static void real_stats_calculator (int code, gpointer data) 
 {
     GtkWidget *tmp = NULL;
-    static GtkWidget *winptr[CALC_MAX];
+    static GtkWidget *winptr[CALC_RAND + 1];
     GtkWidget *oldwin;
     CalcChild *child;
     const char *calc_titles[] = {
@@ -2921,6 +2921,7 @@ static void real_stats_calculator (int code, gpointer data)
     int i, hcode, nv = 0;
 
     oldwin = winptr[code];
+
     if (oldwin != NULL) {
 	gtk_window_present(GTK_WINDOW(oldwin));
  	return;
@@ -3160,6 +3161,134 @@ static void plot_curve (void)
     gtk_widget_show_all(dialog);
 }
 
+static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
+{
+    const char *formulae[] = {
+	"normcdf(x)=0.5+0.5*erf(x/sqrt(2.0))",
+	"logcdf(x)=1.0/(1+exp(-x))"
+    };
+    const char *titles[] = {
+	N_("normal CDF"),
+	N_("logistic CDF")
+    };
+    FILE *fp = NULL;
+    double xmax = 4.0;
+    int opt, err = 0;
+
+    if (gnuplot_init(PLOT_CURVE, &fp)) { 
+	return;
+    }
+
+    opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dlg), "opt"));
+
+    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+
+    if (opt > 0) {
+	xmax = 6.0;
+    }     
+    
+    gretl_push_c_numeric_locale();
+
+    if (opt == 0 || opt == 1) {
+	fputs("# literal lines = 2\n", fp);
+	fprintf(fp, "%s\n", formulae[opt]);
+	fputs("set zeroaxis\n", fp);
+    } else {
+	fputs("# literal lines = 3\n", fp);
+	fprintf(fp, "%s\n", formulae[0]);
+	fprintf(fp, "%s\n", formulae[1]);
+	fputs("set zeroaxis\n", fp);
+    }
+
+    fprintf(fp, "set xrange [%g:%g]\n", -xmax, xmax);
+    fputs("plot \\\n", fp);
+
+    if (opt == 0) {
+	fprintf(fp, "normcdf(x) title '%s' w lines\n", _(titles[opt]));
+    } else if (opt == 1) {
+	fprintf(fp, "logcdf(x) title '%s' w lines\n", _(titles[opt]));
+    } else {
+	fprintf(fp, "normcdf(x) title '%s' w lines , \\\n", _(titles[0]));
+	fprintf(fp, "logcdf(x) title '%s' w lines\n", _(titles[1]));
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    err = gnuplot_make_graph();
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph();
+    }
+
+    gtk_widget_destroy(dlg);
+}
+
+static void set_cdf_opt (GtkWidget *button, GtkWidget *dlg)
+{
+    gpointer p = g_object_get_data(G_OBJECT(button), "opt");
+
+    g_object_set_data(G_OBJECT(dlg), "opt", p);
+}
+
+static void plot_cdf (void)
+{
+    static GtkWidget *dialog;
+    GtkWidget *hbox, *vbox;
+    GtkWidget *button;
+    GSList *group;
+
+    if (dialog) {
+	gtk_window_present(GTK_WINDOW(dialog));
+	return;
+    }
+
+    dialog = gretl_dialog_new(_("gretl: plot CDF"), mdata->main, 0);
+
+    g_signal_connect(G_OBJECT(dialog), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed), &dialog);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    /* normal */
+    button = gtk_radio_button_new_with_label(NULL, _("standard normal"));
+    pack_in_hbox(button, vbox, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_cdf_opt), dialog);
+
+    /* logistic */
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("logistic"));
+    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(1));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_cdf_opt), dialog);
+    pack_in_hbox(button, vbox, 0);
+
+    /* both */
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("both CDFs"));
+    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(2));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_cdf_opt), dialog);
+    pack_in_hbox(button, vbox, 0);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    
+    /* "Cancel" button */
+    cancel_delete_button(hbox, dialog, NULL);
+
+    /* "OK" button */
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(do_plot_cdf), dialog);
+    gtk_widget_grab_default(button);
+
+    gtk_widget_show_all(dialog);
+}
+
 static int stats_calculator_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -3178,6 +3307,8 @@ static int stats_calculator_code (GtkAction *action)
 	return CALC_RAND;
     else if (!strcmp(s, "PlotCurve"))
 	return CALC_PLOT;
+    else if (!strcmp(s, "CDFGraphs"))
+	return CALC_CDF;
     else
 	return 0;
 }
@@ -3192,10 +3323,13 @@ void stats_calculator (GtkAction *action, gpointer data)
 		     code == CALC_NPTEST ||
 		     code == CALC_GRAPH ||
 		     code == CALC_RAND ||
-		     code == CALC_PLOT);
+		     code == CALC_PLOT ||
+		     code == CALC_CDF);
 
     if (code == CALC_PLOT) {
 	plot_curve();
+    } else if (code == CALC_CDF) {
+	plot_cdf();
     } else {
 	real_stats_calculator(code, data);
     }
