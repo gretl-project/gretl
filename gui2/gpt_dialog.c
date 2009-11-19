@@ -783,7 +783,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     }
 
-    if (spec->code == PLOT_REGULAR) {
+    if (spec->code == PLOT_REGULAR || spec->code == PLOT_CURVE) {
 	k = (spec->flags & GPT_Y2AXIS)? 3 : 2;
 	for (i=0; i<k; i++) {
 	    if (ed->axis_range[i].isauto != NULL) {
@@ -796,7 +796,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 		    err = validate_range(spec->range[i]);
 		}
 	    }
-	    if (ed->axis_range[i].lbase != NULL) {
+	    if (spec->code == PLOT_REGULAR && ed->axis_range[i].lbase != NULL) {
 		if (GTK_WIDGET_SENSITIVE(ed->axis_range[i].lbase)) {
 		    err = set_logscale_from_entry(spec, i, ed->axis_range[i].lbase);
 		} else {
@@ -2584,7 +2584,7 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 	}
     } 
 
-    if (spec->code != PLOT_REGULAR) {
+    if (spec->code != PLOT_REGULAR && spec->code != PLOT_CURVE) {
 	return;
     }
 
@@ -2662,6 +2662,10 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->axis_range[axis].isauto), 
 				     FALSE);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
+    }
+
+    if (spec->code != PLOT_REGULAR) {
+	return;
     }
 
     /* axis scale: linear vs log? */
