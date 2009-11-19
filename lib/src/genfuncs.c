@@ -950,17 +950,15 @@ static double hp_lambda (const DATAINFO *pdinfo)
 int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 	       gretlopt opt)
 {
-    int i, t, T, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int err = 0;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
     double v00 = 1.0, v11 = 1.0, v01 = 0.0;
     double det, tmp0, tmp1;
+    double e0, e1, b00, b01, b11;
     double lambda;
-
     double **V = NULL;
     double m[2], tmp[2];
-
-    int tb;
-    double e0, e1, b00, b01, b11;
+    int i, t, T, tb;
+    int err = 0;
 
     for (t=t1; t<=t2; t++) {
 	hp[t] = NADBL;
@@ -968,7 +966,7 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 
     err = array_adjust_t1t2(x, &t1, &t2);
     if (err) {
-	err = E_DATA;
+	err = E_MISSDATA;
 	goto bailout;
     }
 
@@ -1086,10 +1084,12 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 
  bailout:
 
-    for (i=0; i<4; i++) {
-	free(V[i]);
+    if (V != NULL) {
+	for (i=0; i<4; i++) {
+	    free(V[i]);
+	}
+	free(V);
     }
-    free(V);
 
     return err;
 }
