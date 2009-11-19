@@ -4275,6 +4275,10 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	    pmod->llt = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "xpx")) {
 	    pmod->xpx = gretl_xml_get_double_array(cur, doc, &n, err);
+	    if (*err == E_DATA) {
+		fprintf(stderr, "couldn't read xpx\n");
+		*err = 0;
+	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "vcv")) {
 	    pmod->vcv = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "list")) {

@@ -883,11 +883,14 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 		while (isspace(*s)) s++;
 		x = strtod(s, &test);
 		if (errno) {
+		    fprintf(stderr, "strtod failed on '%s'\n", s);
+		    perror(NULL);
 		    *err = E_DATA;
 		} else if (!strncmp(test, "NA", 2)) {
 		    x = NADBL;
 		    s = test + 2;
 		} else if (*test != '\0' && !isspace(*test)) {
+		    fprintf(stderr, "strtod: got test = '%s'\n", test);
 		    *err = E_DATA;
 		} else {
 		    s = test;

@@ -835,6 +835,11 @@ static MODEL garch_run_ols (const int *list, double ***pZ,
 
     free(ols_list);
 
+    if (!model.errcode) {
+	free(model.xpx);
+	model.xpx = NULL;
+    }
+
     return model;
 }
 
