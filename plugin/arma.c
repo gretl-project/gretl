@@ -2965,6 +2965,10 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (!err) {
+	if (armod.xpx != NULL) {
+	    free(armod.xpx);
+	    armod.xpx = NULL;
+	}
 	if (ainfo.flags & ARMA_EXACT) {
 	    kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
 	} else {
