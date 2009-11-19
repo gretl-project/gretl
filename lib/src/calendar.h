@@ -44,6 +44,8 @@ int MS_excel_date_string (char *date, int mst, int pd, int d1904);
 
 double get_dec_date (const char *date);
 
+double day_of_week (int yr, int mo, int day, int *err);
+
 int n_hidden_missing_obs (const DATAINFO *pdinfo);
 
 int guess_daily_pd (const DATAINFO *pdinfo);

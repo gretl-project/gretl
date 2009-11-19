@@ -311,6 +311,7 @@ enum {
     F_REPLACE,
     F_STRNCMP,
     F_BESSEL,
+    F_WEEKDAY,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_MOLS,
     F_MPOLS,

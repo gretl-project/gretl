@@ -39,6 +39,7 @@ version 1.8.6, in progress
   --scalars option to the "varlist" command
 - "mols" function: add option of retrieving the covariance
   matrix
+- Add new function "weekday"
 - Fix memory leak on repeated sub-sampling
 - Miscellaneous small GUI fixes
 

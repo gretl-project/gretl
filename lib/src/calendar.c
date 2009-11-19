@@ -70,11 +70,12 @@ int week1stday = 0; /* 1 for Monday, 0 for Sunday */
 
 static int day_in_year (int day, int month, int year)
 {
-    int i, leap;
+    int i, leap = leap_year(year);
 
-    leap = leap_year(year);
-    for (i=1; i<month; i++)
+    for (i=1; i<month; i++) {
 	day += days_in_month[leap][i];
+    }
+
     return day;
 }
 
@@ -375,6 +376,32 @@ static int day_of_week_from_ymd (int yr, int mo, int day)
     return ((day % 7) + ((int) floor(2.6 * mo - 0.2) % 7) + 
 	    (d % 7) + ((int) floor(d / 4.0) % 7) + ((int) floor(c / 4.0) % 7)
 	    - ((2 * c) % 7)) % 7; 
+}
+
+/* public access to the function above, with error checking */
+
+double day_of_week (int yr, int mo, int day, int *err)
+{
+    if (yr < 0 || mo <= 0 || day <= 0) {
+	*err = E_DATA;
+	return NADBL;
+    }
+
+    if (mo > 12 || day > 31) {
+	*err = E_DATA;
+	return NADBL;
+    } 
+
+    if (day > days_in_month[leap_year(yr)][mo]) {
+	*err = E_DATA;
+	return NADBL;
+    }	
+
+    if (yr < 100) {
+	yr = FOUR_DIGIT_YEAR(yr);
+    }
+
+    return day_of_week_from_ymd(yr, mo, day);
 }
 
 #define day_in_calendar(w, d) ((w == 6 && d != 0) || \

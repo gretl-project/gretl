@@ -4922,9 +4922,26 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		}
 	    }
 	}
-    }	    
+    } else if (f == F_WEEKDAY) {
+	if (l->t != NUM) {
+	    node_type_error(f, 0, NUM, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 1, NUM, m, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else {
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		int yr = l->v.xval;
+		int mo = m->v.xval;
+		int day = r->v.xval;
 
-    if (f != F_STRNCMP) {
+		ret->v.xval = day_of_week(yr, mo, day, &p->err);
+	    }
+	}
+    }	
+
+    if (f != F_STRNCMP && f != F_WEEKDAY) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -6967,6 +6984,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_SEQ:
     case F_REPLACE:
     case F_STRNCMP:
+    case F_WEEKDAY:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

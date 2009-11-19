@@ -3348,6 +3348,10 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	return 1;
     }
 
+    if (cmd->ci == OUTFILE && cmd->opt == OPT_C) {
+	return 1;
+    }
+
     if (*line == '!') {
 	return 1;
     }

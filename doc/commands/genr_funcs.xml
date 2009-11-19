@@ -4935,6 +4935,21 @@
       </description>
     </function>
 
+    <function name="weekday" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">year</fnarg>
+	<fnarg type="scalar">month</fnarg>
+	<fnarg type="scalar">day</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns the day of the week (Sunday = 0, Monday = 1, etc.) for the
+	  date specified by the three arguments, or <lit>NA</lit> if the date
+	  is invalid.
+	</para>
+      </description>
+    </function>
+
     <function name="wmean" section="stats" output="series">
       <fnargs>
 	<fnarg type="list">Y</fnarg>
