@@ -890,5 +890,7 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     /* do the actual analysis */
     model.errcode = do_interval(list, *pZ, pdinfo, &model, opt, prn);
 
+    clear_model_xpx(&model);
+
     return model;
 }

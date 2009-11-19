@@ -1081,6 +1081,7 @@ static MODEL ordered_estimate (int *list, int ci,
 
     /* do the actual ordered probit analysis */
     if (!model.errcode) {
+	clear_model_xpx(&model);
 	model.errcode = do_ordered(ci, ndum, *pZ, pdinfo, &model, list, 
 				   opt, prn);
     }
@@ -2528,10 +2529,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	pmod->dfn = df;
     }
 
-    if (pmod->xpx != NULL) {
-	free(pmod->xpx);
-	pmod->xpx = NULL;
-    }
+    clear_model_xpx(pmod);
 
     pmod->opt |= OPT_M;
 }
@@ -3083,6 +3081,7 @@ MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     gretl_error_clear();
 
     interval_estimate = get_plugin_function("interval_estimate", &handle);
+
     if (interval_estimate == NULL) {
 	gretl_model_init(&intmod);
 	intmod.errcode = E_FOPEN;

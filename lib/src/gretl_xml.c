@@ -890,7 +890,6 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 		    x = NADBL;
 		    s = test + 2;
 		} else if (*test != '\0' && !isspace(*test)) {
-		    fprintf(stderr, "strtod: got test = '%s'\n", test);
 		    *err = E_DATA;
 		} else {
 		    s = test;

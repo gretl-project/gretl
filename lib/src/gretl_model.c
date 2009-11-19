@@ -2472,6 +2472,14 @@ void clear_model (MODEL *pmod)
 #endif
 }
 
+void clear_model_xpx (MODEL *pmod)
+{
+    if (pmod->xpx != NULL) {
+	free(pmod->xpx);
+	pmod->xpx = NULL;
+    }
+}
+
 /**
  * gretl_model_free:
  * @pmod: pointer to #MODEL.

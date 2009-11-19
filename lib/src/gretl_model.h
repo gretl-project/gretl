@@ -234,6 +234,8 @@ void clear_model (MODEL *pmod);
 
 void gretl_model_free (MODEL *pmod);
 
+void clear_model_xpx (MODEL *pmod);
+
 void gretl_model_free_on_exit (MODEL *pmod);
 
 void display_model_data_items (const MODEL *pmod);

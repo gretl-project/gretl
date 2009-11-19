@@ -775,6 +775,7 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* do the actual Tobit analysis */
     if (model.errcode == 0) {
+	clear_model_xpx(&model);
 	model.errcode = do_tobit(*pZ, pdinfo, &model, scale, 
 				 missvals, prn);
     }

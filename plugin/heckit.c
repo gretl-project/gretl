@@ -1309,6 +1309,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     } else {
 	err = transcribe_heckit_params(&hm, HC, pdinfo);
 	heckit_yhat_uhat(&hm, HC, (const double **) *pZ, pdinfo);
+	clear_model_xpx(&hm);
     }
 
     if (err && hm.errcode == 0) {
