@@ -1893,7 +1893,7 @@ catch_sheet_edit_key (GtkWidget *view, GdkEventKey *key,
 	    return TRUE;
 	}
     } else if (key->keyval == GDK_Return) {
-#if 1 || CELLDEBUG
+#if CELLDEBUG
 	fprintf(stderr, "catch_edit_key: GDK_Return\n");
 #endif
     } else if (key->keyval == GDK_Down) {
