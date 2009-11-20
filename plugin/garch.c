@@ -35,10 +35,11 @@
 static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				const int *list)
 {
-    int p = list[1];
-    int q = list[2];
-    int r = list[0] - 4;
-    int i, j, np = 2 + p + q + r;
+    int p = list[1];        /* GARCH beta terms */
+    int q = list[2];        /* ARCH alpha terms > 0 */
+    int r = list[0] - 4;    /* regressors */
+    int np = 1 + p + q + r; /* the "1" is for alpha(0) */
+    int i, j;
 
     free(pmod->list);
     pmod->list = gretl_list_copy(list);
@@ -49,6 +50,7 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     j = 0;
+
     for (i=0; i<r; i++) {
 	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]);
     }

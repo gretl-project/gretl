@@ -1013,6 +1013,46 @@ cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
 			       nelem, err);
 }
 
+static char *chunk_strdup (const char *src, const char **ptr, int *err)
+{
+    char *targ = NULL;
+
+    if (*src == '\0') {
+	*ptr = src;
+    } else {
+	const char *p;
+	int len = 0;
+
+	while (*src && isspace(*src)) {
+	    src++;
+	}
+
+	p = src;
+
+	while (*src && !isspace(*src)) {
+	    len++;
+	    src++;
+	}
+
+	if (ptr != NULL) {
+	    *ptr = src;
+	}
+
+	if (len > 0) {
+	    targ = gretl_strndup(p, len);
+	    if (targ == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (targ == NULL && !*err) {
+	*err = E_DATA;
+    }
+
+    return targ;
+}
+
 /**
  * gretl_xml_get_strings_array:
  * @node: XML node pointer.
@@ -1020,8 +1060,8 @@ cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
  * @nelem: location to receive number of elements in array.
  * @err: location to receive error code.
  * 
- * Returns: allocated array of cmplx (complex numbers) read from 
- * @node, or %NULL on failure.
+ * Returns: allocated array of strings read from @node, or 
+ * %NULL on failure.
  */
 
 char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
@@ -1050,11 +1090,8 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 		*err = E_DATA;
 	    } else {
 		p = (const char *) tmp;
-		for (i=0; i<n; i++) {
-		    S[i] = gretl_word_strdup(p, &p);
-		    if (S[i] == NULL) {
-			*err = E_ALLOC;
-		    }
+		for (i=0; i<n && !*err; i++) {
+		    S[i] = chunk_strdup(p, &p, err);
 		}
 		free(tmp);
 	    }

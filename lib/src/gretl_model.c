@@ -2422,8 +2422,6 @@ void gretl_model_destroy_tests (MODEL *pmod)
 void clear_model (MODEL *pmod)
 {
     if (pmod != NULL) {
-	int i;
-
 #if MDEBUG
 	fprintf(stderr, "clear model: model at %p\n", (void *) pmod);
 #endif
@@ -2450,11 +2448,8 @@ void clear_model (MODEL *pmod)
 	if (pmod->arinfo != NULL) {
 	    clear_ar_info(pmod);
 	}
-	if (pmod->params) {
-	    for (i=0; i<pmod->nparams; i++) {
-		free(pmod->params[i]);
-	    }
-	    free(pmod->params);
+	if (pmod->params != NULL) {
+	    free_strings_array(pmod->params, pmod->nparams);
 	}
 	if (pmod->dataset) {
 	    free_model_dataset(pmod);
@@ -2584,6 +2579,7 @@ static int attach_model_params_from_xml (xmlNodePtr node, xmlDocPtr doc,
     int err = 0;
 
     S = gretl_xml_get_strings_array(node, doc, &np, &err);
+
     if (!err) {
 	pmod->params = S;
 	pmod->nparams = np;
@@ -3308,27 +3304,19 @@ static ARINFO *copy_ar_info (const ARINFO *src)
 
 static int copy_model_params (MODEL *targ, const MODEL *src)
 {
-    int i, j, n = src->nparams;
+    int err = 0;
 
-    targ->params = malloc(n * sizeof *targ->params);
-    if (targ->params == NULL) return 1;
-
-    targ->nparams = n;
-
-    for (i=0; i<n; i++) {
-	targ->params[i] = gretl_strdup(src->params[i]);
-	if (targ->params[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(targ->params[j]);
-	    }
-	    free(targ->params);
-	    targ->params = NULL;
-	    targ->nparams = 0;
-	    return 1;
+    if (src->nparams > 0) {
+	targ->params = strings_array_dup(src->params, src->nparams);
+    
+	if (targ->params == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    targ->nparams = src->nparams;
 	}
     }
 
-    return 0;
+    return err;
 }
 
 static void serialize_coeff_sep (model_data_item *item, FILE *fp)
@@ -3661,11 +3649,10 @@ static int copy_model (MODEL *targ, const MODEL *src)
     }
 
     if (src->nparams > 0 && src->params != NULL) {
-	copy_model_params(targ, src);
-	if (targ->params == NULL) {
-	    return 1;
+	err = copy_model_params(targ, src);
+	if (err) {
+	    return err;
 	}
-	targ->nparams = src->nparams;
     }    
 
     if (src->n_data_items > 0) {
