@@ -183,6 +183,7 @@ static void panelmod_free_tsinfo (panelmod_t *pan)
 	free(pan->tsinfo->t0);
 	free(pan->tsinfo->T);
 	free(pan->tsinfo);
+	pan->tsinfo = NULL;
     }
 }
 
