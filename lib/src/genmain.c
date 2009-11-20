@@ -251,9 +251,9 @@ int function_from_string (const char *s)
 
 int is_gretl_function_call (const char *s)
 {
-    char c, word[9];
+    char c, word[12];
 
-    sscanf(s, "%8[^ (]", word);
+    sscanf(s, "%10[^ (]", word);
     c = s[strlen(word)];
     if (c == ' ' || c == '(') {
 	return function_lookup(word);

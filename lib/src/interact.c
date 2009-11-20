@@ -2152,7 +2152,7 @@ static int end_foreign (const char *s)
    0") or a numerical multiplier.  
 */
 
-static int get_command_word (const char *line, CMD *cmd)
+static int get_command_word (const char *line, char *cnext, CMD *cmd)
 {
     int n = gretl_namechar_spn(line);
     int ret = 0;
@@ -2172,6 +2172,7 @@ static int get_command_word (const char *line, CMD *cmd)
 	    n = FN_NAMELEN - 1;
 	}
 	strncat(cmd->word, line, n);
+	*cnext = line[n];
 	ret = 1;
     } else if (!string_is_blank(line)) {
 	/* must be garbage? */
@@ -2201,6 +2202,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     int ints_ok = 0;
     int subst = 0;
     char *rem = NULL;
+    char cnext = 0;
     char s[FIELDLEN] = {0};
 
     if (gretl_cmd_clear(cmd)) {
@@ -2257,15 +2259,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } 
 
     /* no command here? */
-    if (!get_command_word(line, cmd)) {
+    if (!get_command_word(line, &cnext, cmd)) {
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
 	return cmd->err;
     }
-
-#if CMD_DEBUG
-    fprintf(stderr, "cmd->word = '%s'\n", cmd->word);
-#endif
 
     if (!cmd->context) {
 	/* backwards compatibility */
@@ -2290,7 +2288,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (cmd->ci == 0) {
-	cmd->ci = gretl_command_number(cmd->word);
+	if (cnext != '(') {
+	    /* must be function call, not regular command */
+	    cmd->ci = gretl_command_number(cmd->word);
+	}
 	if (cmd->ci == 0) {
 	    if (plausible_genr_start(line, pdinfo)) {
 		cmd->ci = GENR;
@@ -5068,6 +5069,7 @@ static int is_endif (const char *s)
 int get_command_index (char *line, CMD *cmd)
 {
     static int context;
+    char cnext = 0;
     int done = 0;
 
     cmd->ci = 0;
@@ -5086,7 +5088,7 @@ int get_command_index (char *line, CMD *cmd)
 	return 0;
     }
 
-    if (!get_command_word(line, cmd)) {
+    if (!get_command_word(line, &cnext, cmd)) {
 	if (*line == '$') {
 	    /* most plausible possibility? */
 	    strcpy(cmd->word, "genr");

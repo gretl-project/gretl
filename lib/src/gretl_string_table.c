@@ -826,18 +826,24 @@ static char *strim (char *s)
 
 char *retrieve_date_string (int t, const DATAINFO *pdinfo, int *err)
 {
-    char datestr[OBSLEN] = {0};
     char *ret = NULL;
 
-    if (t > 0 && t <= pdinfo->n) {
+    if (t <= 0 || t > pdinfo->n) {
+	*err = E_DATA;
+    } else if (pdinfo->S != NULL) {
+	ret = gretl_strdup(pdinfo->S[t-1]);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}	
+    } else {
+	char datestr[OBSLEN] = {0};
+
 	ntodate(datestr, t - 1, pdinfo);
 	ret = gretl_strdup(datestr);
 	if (ret == NULL) {
 	    *err = E_ALLOC;
 	}
-    } else {
-	*err = E_DATA;
-    }
+    } 
 
     return ret;
 }

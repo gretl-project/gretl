@@ -513,7 +513,13 @@ static NODE *get_string_arg (parser *p, int fn)
 	}
 
 	if (fn == F_SSCANF) {
-	    p->idstr = gretl_strndup(src, close + 2);
+	    int len = close + 2;
+
+	    if (src == NULL) {
+		src = p->point - 1;
+		len = close + 1;
+	    }
+	    p->idstr = gretl_strndup(src, len);
 	    started = 1;
 	}
 

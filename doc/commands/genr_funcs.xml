@@ -3348,6 +3348,19 @@
       </description>
     </function>
 
+    <function name="obslabel" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="scalar">t</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the observation label for observation <argname>t</argname>,
+	  where <argname>t</argname> is a 1-based index.  The inverse
+	  function is provided by <fncref targ="obsnum"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="obsnum" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -3370,6 +3383,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="obs"/>
+	    <fncref targ="obslabel"/>
 	  </seelist>
 	</para>
       </description>
