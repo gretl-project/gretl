@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-11-21 13:31-0500\n"
-"PO-Revision-Date: 2009-11-21 22:47+0200\n"
+"PO-Revision-Date: 2009-11-21 22:59+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -7282,7 +7282,7 @@ msgstr "Логистическое распределение"
 
 #: gui2/calculator.c:3272
 msgid "both CDFs"
-msgstr ""
+msgstr "Нормальное и логистическое"
 
 #: gui2/callbacks.c:285
 msgid "Sorry, this item not yet implemented!"
