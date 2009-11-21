@@ -834,10 +834,11 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
     int nread = 0;
     int i, n = 0;
 
+    *nelem = 0;
+
     if (tmp == NULL) {
 	fprintf(stderr, "gretl_xml_get_array: failed\n");
 	*err = E_DATA;
-	*nelem = 0;
 	return NULL;
     }
 
@@ -845,7 +846,6 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
     free(tmp);
 
     if (n <= 0) {
-	*nelem = 0;
 	return NULL;
     }    
 
@@ -862,7 +862,6 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 
     if (ptr == NULL) {
 	*err = E_ALLOC;
-	*nelem = 0;
 	return NULL;
     }
 
@@ -991,6 +990,12 @@ int *gretl_xml_get_int_array (xmlNodePtr node, xmlDocPtr doc,
 double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
 				    int *nelem, int *err)
 {
+    int myerr = 0;
+
+    if (err == NULL) {
+	err = &myerr;
+    }
+	
     return gretl_xml_get_array(node, doc, GRETL_TYPE_DOUBLE_ARRAY,
 			       nelem, err);
 }

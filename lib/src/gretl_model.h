@@ -210,8 +210,6 @@ typedef enum {
 
 MODEL *gretl_model_new (void);
 
-void model_stats_init (MODEL *pmod);
-
 void gretl_model_init (MODEL *pmod);
 
 int gretl_model_allocate_storage (MODEL *pmod);

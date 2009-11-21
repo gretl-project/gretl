@@ -2098,13 +2098,21 @@ int gretl_model_add_arinfo (MODEL *pmod, int nterms)
     return 0;
 }
 
-void model_stats_init (MODEL *pmod)
+static void model_stats_init (MODEL *pmod)
 {
-    pmod->ess = pmod->sigma = NADBL;
-    pmod->fstt = pmod->lnL = NADBL;
+    int i;
+
+    pmod->ess = pmod->tss = NADBL;
+    pmod->sigma = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
-    pmod->chisq = NADBL;
+    pmod->fstt = pmod->chisq = NADBL;
+    pmod->lnL = NADBL;
+    pmod->ybar = pmod->sdy = NADBL;
     pmod->dw = pmod->rho = NADBL;
+
+    for (i=0; i<C_MAX; i++) {
+	pmod->criterion[i] = NADBL;
+    }
 }
 
 static void gretl_model_init_pointers (MODEL *pmod)
@@ -2141,8 +2149,6 @@ static void gretl_model_init_pointers (MODEL *pmod)
 
 void gretl_model_init (MODEL *pmod)
 {
-    int i;
-
     if (pmod == NULL) return;
 
 #if MDEBUG
@@ -2154,8 +2160,7 @@ void gretl_model_init (MODEL *pmod)
     pmod->ci = 0;
     pmod->opt = OPT_NONE;
     pmod->full_n = 0;
-    pmod->t1 = 0;
-    pmod->t2 = 0;
+    pmod->t1 = pmod->t2 = 0;
     pmod->nobs = 0;
 
     pmod->smpl.t1 = 0;
@@ -2166,13 +2171,10 @@ void gretl_model_init (MODEL *pmod)
     pmod->nparams = 0;
     pmod->errcode = 0;
     pmod->ifc = 0;
+    pmod->nwt = 0;
     pmod->aux = AUX_NONE;
 
     model_stats_init(pmod);
-
-    for (i=0; i<C_MAX; i++) {
-	pmod->criterion[i] = NADBL;
-    }
 
     gretl_model_init_pointers(pmod);
     pmod->n_data_items = 0;
@@ -4012,6 +4014,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
     while (cur != NULL && !err) {
 	char *key = NULL;
 	char *typestr = NULL;
+	int ignore_err = 0;
 	int t, nelem = 0;
 
 	if (!gretl_xml_get_prop_as_string(cur, "type", &typestr) ||
@@ -4025,6 +4028,11 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 #endif
 
 	t = type_from_type_string(typestr);
+
+	if (!strcmp(key, "roots")) {
+	    /* could be a backward-compat problem */
+	    ignore_err = 1;
+	}
 
 	if (!strcmp(key, "coeffsep") || !strcmp(key, "10")) {
 	    /* special, with backward compatibility */
@@ -4113,6 +4121,11 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    }
 	}
 
+	if (err && ignore_err) {
+	    fprintf(stderr, "ignoring error reloading %s\n", key);
+	    err = 0;
+	}
+
 	xmlFree(key);
 	xmlFree(typestr);
 
@@ -4195,12 +4208,10 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
     got += gretl_xml_get_prop_as_int(node, "dfn", &pmod->dfn);
     got += gretl_xml_get_prop_as_int(node, "dfd", &pmod->dfd);
     got += gretl_xml_get_prop_as_int(node, "ifc", &pmod->ifc);
-    got += gretl_xml_get_prop_as_int(node, "nwt", &pmod->nwt);
-    got += gretl_xml_get_prop_as_int(node, "aux", &pmod->aux);
 
     got += gretl_xml_get_prop_as_string(node, "ci", &buf);
 
-    if (got < 12) {
+    if (got < 10) {
 	fprintf(stderr, "gretl_model_from_XML: got(1) = %d (expected 12)\n", got);
 	if (buf != NULL) {
 	    free(buf);
@@ -4208,6 +4219,9 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	*err = E_DATA;
 	goto bailout;
     }
+
+    gretl_xml_get_prop_as_int(node, "nwt", &pmod->nwt);
+    gretl_xml_get_prop_as_int(node, "aux", &pmod->aux);
 
     if (gretl_xml_get_prop_as_int(node, "opt", &n)) {
 	pmod->opt = (unsigned) n;
@@ -4269,11 +4283,8 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	} else if (!xmlStrcmp(cur->name, (XUC) "llt")) {
 	    pmod->llt = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "xpx")) {
-	    pmod->xpx = gretl_xml_get_double_array(cur, doc, &n, err);
-	    if (*err == E_DATA) {
-		fprintf(stderr, "couldn't read xpx\n");
-		*err = 0;
-	    }
+	    /* note: allow this one to fail silently */
+	    pmod->xpx = gretl_xml_get_double_array(cur, doc, &n, NULL);
 	} else if (!xmlStrcmp(cur->name, (XUC) "vcv")) {
 	    pmod->vcv = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "list")) {

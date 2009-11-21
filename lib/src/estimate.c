@@ -1016,7 +1016,6 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&mdl);
     gretl_model_smpl_init(&mdl, pdinfo);
-    model_stats_init(&mdl);
 
     if (ci == AR1) {
 	if (opt & OPT_P) {
