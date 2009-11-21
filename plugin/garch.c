@@ -98,6 +98,7 @@ write_garch_stats (MODEL *pmod, const int *list,
 {
     double *garch_h;
     double den;
+    const double *vcoef;
     int ynum = list[4];
     int nvp = list[1] + list[2];
     int xvars = list[0] - 4;
@@ -133,12 +134,14 @@ write_garch_stats (MODEL *pmod, const int *list,
 	pmod->yhat[i] = Z[ynum][i] * scale - pmod->uhat[i];
     }
 
+    vcoef = pmod->coeff + xvars;
+
     /* set sigma to its unconditional or steady-state value */
     den = 1.0;
-    for (i=0; i<nvp; i++) {
-	den -= pmod->coeff[i+xvars+1];
+    for (i=1; i<=nvp; i++) {
+	den -= vcoef[i];
     }
-    pmod->sigma = sqrt(pmod->coeff[xvars] / den);
+    pmod->sigma = sqrt(vcoef[0] / den);
 
     pmod->adjrsq = NADBL; 
     pmod->fstt = NADBL;

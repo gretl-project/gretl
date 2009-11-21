@@ -96,7 +96,7 @@ cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
 				  int *nelem, int *err);
 
 char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
-				    int *nelem, int *err);
+				    int *nelem, int slop, int *err);
 
 gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
 				    int *err);

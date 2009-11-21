@@ -1063,6 +1063,8 @@ static char *chunk_strdup (const char *src, const char **ptr, int *err)
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @nelem: location to receive number of elements in array.
+ * @slop: if non-zero, allow the number of strings to fall
+ * short of the recorded string count by one.
  * @err: location to receive error code.
  * 
  * Returns: allocated array of strings read from @node, or 
@@ -1070,7 +1072,7 @@ static char *chunk_strdup (const char *src, const char **ptr, int *err)
  */
 
 char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
-				    int *nelem, int *err)
+				    int *nelem, int slop, int *err)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
     char **S = NULL;
@@ -1097,6 +1099,10 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 		p = (const char *) tmp;
 		for (i=0; i<n && !*err; i++) {
 		    S[i] = chunk_strdup(p, &p, err);
+		    if (*err == E_DATA && i == n - 1 && slop) {
+			*err = 0;
+			n--;
+		    }
 		}
 		free(tmp);
 	    }

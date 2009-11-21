@@ -2577,10 +2577,13 @@ static int attach_model_params_from_xml (xmlNodePtr node, xmlDocPtr doc,
 					 MODEL *pmod)
 {
     char **S;
+    int slop = (pmod->ci == GARCH);
     int np = 0;
     int err = 0;
 
-    S = gretl_xml_get_strings_array(node, doc, &np, &err);
+    
+
+    S = gretl_xml_get_strings_array(node, doc, &np, slop, &err);
 
     if (!err) {
 	pmod->params = S;
@@ -4306,7 +4309,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	}
 
 	if (*err) {
-	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d on %s\n", 
+	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d reading '%s'\n", 
 		    *err, cur->name);
 	    break;
 	}

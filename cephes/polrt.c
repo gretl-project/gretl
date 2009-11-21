@@ -58,12 +58,15 @@ int polrt (double *xcof, double *cof, int m, cmplx *root)
     final = 0;
     n = m;
 
-    if (n <= 0)
+    if (n <= 0) {
 	return 1;
-    if (n > 36)
+    }
+    if (n > 36) {
 	return 2;
-    if (xcof[m] == 0.0)
+    }
+    if (xcof[m] == 0.0) {
 	return 4;
+    }
 
     n1 = n;
     n2 = n;
@@ -71,8 +74,9 @@ int polrt (double *xcof, double *cof, int m, cmplx *root)
     nsav = n;
     q = &xcof[0];
     p = &cof[n];
-    for (j=0; j<=nsav; j++)
+    for (j=0; j<=nsav; j++) {
 	*p-- = *q++; /*	cof[n-j] = xcof[j]; */
+    }
     xsav.r = 0.0;
     xsav.i = 0.0;
 

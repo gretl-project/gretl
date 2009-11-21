@@ -512,12 +512,11 @@ static int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
     const double *Phi = phi + ainfo->np;
     const double *theta = Phi + ainfo->P;
     const double *Theta = theta + ainfo->nq;
-
     int nr = ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
     int pmax, qmax, lmax;
     double *temp = NULL, *tmp2 = NULL;
     cmplx *rptr, *roots = NULL;
-    int i, k;
+    int i, k, cerr = 0;
 
     pmax = (ainfo->p > ainfo->P)? ainfo->p : ainfo->P;
     qmax = (ainfo->q > ainfo->Q)? ainfo->q : ainfo->Q;
@@ -551,20 +550,20 @@ static int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 		temp[i+1] = 0;
 	    }
 	}
-	polrt(temp, tmp2, ainfo->p, rptr);
+	cerr = polrt(temp, tmp2, ainfo->p, rptr);
 	rptr += ainfo->p;
     }
 
-    if (ainfo->P > 0) {
+    if (!cerr && ainfo->P > 0) {
 	/* B(L), seasonal */
 	for (i=0; i<ainfo->P; i++) {
 	    temp[i+1] = -Phi[i];
 	}    
-	polrt(temp, tmp2, ainfo->P, rptr);
+	cerr = polrt(temp, tmp2, ainfo->P, rptr);
 	rptr += ainfo->P;
     }
 
-    if (ainfo->q > 0) {
+    if (!cerr && ainfo->q > 0) {
 	/* C(L), non-seasonal */
 	k = 0;
 	for (i=0; i<ainfo->q; i++) {
@@ -574,23 +573,27 @@ static int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 		temp[i+1] = 0;
 	    }
 	}  
-	polrt(temp, tmp2, ainfo->q, rptr);
+	cerr = polrt(temp, tmp2, ainfo->q, rptr);
 	rptr += ainfo->q;
     }
 
-    if (ainfo->Q > 0) {
+    if (!cerr && ainfo->Q > 0) {
 	/* D(L), seasonal */
 	for (i=0; i<ainfo->Q; i++) {
 	    temp[i+1] = Theta[i];
 	}  
-	polrt(temp, tmp2, ainfo->Q, rptr);
+	cerr = polrt(temp, tmp2, ainfo->Q, rptr);
     }
     
     free(temp);
     free(tmp2);
 
-    gretl_model_set_data(pmod, "roots", roots, GRETL_TYPE_CMPLX_ARRAY,
-			 nr * sizeof *roots);
+    if (cerr) {
+	free(roots);
+    } else {
+	gretl_model_set_data(pmod, "roots", roots, GRETL_TYPE_CMPLX_ARRAY,
+			     nr * sizeof *roots);
+    }
 
     return 0;
 }
