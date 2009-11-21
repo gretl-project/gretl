@@ -3198,7 +3198,7 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
     if (!*err) { 
 	*err = xcf_data_check(x + t1, y + t1, T, &badvar);
 	if (badvar) {
-	    gretl_errmsg_sprintf(_("xcf: argument %d is a constant"), 
+	    gretl_errmsg_sprintf(_("Argument %d is a constant"), 
 				 badvar);
 	}
     }
@@ -3746,7 +3746,7 @@ static int real_periodogram (const double *x, int varno, int width,
 
     if (gretl_isconst(t1, t2, x)) {
 	if (varno >= 0) {
-	    gretl_errmsg_sprintf(_("'%s' is a constant"), 
+	    gretl_errmsg_sprintf(_("%s is a constant"), 
 				 pdinfo->varname[varno]);
 	}
 	return E_DATA;

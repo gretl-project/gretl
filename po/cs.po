@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-11-18 18:12-0500\n"
+"POT-Creation-Date: 2009-11-21 13:31-0500\n"
 "PO-Revision-Date: 2009-11-15 17:00+0100\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -154,10 +154,10 @@ msgstr "Parametr řádu zpoždění = %d\n"
 
 #: lib/src/adf_kpss.c:903 lib/src/compare.c:424 lib/src/compare.c:893
 #: lib/src/compare.c:1703 lib/src/compare.c:1929 lib/src/compare.c:2102
-#: lib/src/compare.c:3070 lib/src/describe.c:4923 lib/src/estimate.c:2691
-#: lib/src/estimate.c:2704 lib/src/estimate.c:2712 lib/src/estimate.c:3500
-#: lib/src/gretl_intl.c:103 lib/src/gretl_model.c:3216
-#: lib/src/gretl_panel.c:3825 lib/src/gretl_restrict.c:1926
+#: lib/src/compare.c:3070 lib/src/describe.c:4923 lib/src/estimate.c:2690
+#: lib/src/estimate.c:2703 lib/src/estimate.c:2711 lib/src/estimate.c:3499
+#: lib/src/gretl_intl.c:103 lib/src/gretl_model.c:3225
+#: lib/src/gretl_panel.c:3826 lib/src/gretl_restrict.c:1926
 #: lib/src/gretl_restrict.c:1933 lib/src/modelprint.c:2075
 #: lib/src/modelprint.c:2079 lib/src/modelprint.c:2084
 #: lib/src/modelprint.c:2102 lib/src/modelprint.c:2106
@@ -304,7 +304,7 @@ msgstr ""
 "\n"
 "  Nulová hypotéza: regresní koeficienty jsou nulové u proměnných\n"
 
-#: lib/src/compare.c:402 lib/src/gretl_model.c:3215
+#: lib/src/compare.c:402 lib/src/gretl_model.c:3224
 msgid "Asymptotic test statistic"
 msgstr "Asymptotická testovací statistika"
 
@@ -331,10 +331,10 @@ msgid "Likelihood ratio test"
 msgstr "Test poměru věrohodnosti"
 
 #: lib/src/compare.c:418 lib/src/compare.c:452 lib/src/compare.c:2109
-#: lib/src/compare.c:2115 lib/src/compare.c:2584 lib/src/estimate.c:2716
-#: lib/src/estimate.c:3502 lib/src/gretl_model.c:3109
-#: lib/src/gretl_model.c:3122 lib/src/gretl_model.c:3125
-#: lib/src/gretl_panel.c:3576 lib/src/gretl_panel.c:3832
+#: lib/src/compare.c:2115 lib/src/compare.c:2584 lib/src/estimate.c:2715
+#: lib/src/estimate.c:3501 lib/src/gretl_model.c:3118
+#: lib/src/gretl_model.c:3131 lib/src/gretl_model.c:3134
+#: lib/src/gretl_panel.c:3577 lib/src/gretl_panel.c:3833
 #: lib/src/modelprint.c:167 lib/src/modelprint.c:274 lib/src/modelprint.c:278
 #: lib/src/modelprint.c:359 lib/src/modelprint.c:362 lib/src/modelprint.c:2077
 #: lib/src/modelprint.c:2082 lib/src/modelprint.c:2104
@@ -399,12 +399,12 @@ msgstr "Sekvenční eliminace s použitím oboustranného alfa = %.2f"
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " Odstranit %-16s (p-hodnota %.3f)\n"
 
-#: lib/src/compare.c:1618 lib/src/estimate.c:2708 lib/src/gretl_model.c:2927
-#: lib/src/gretl_model.c:2933 lib/src/modelprint.c:606 gui2/library.c:2408
+#: lib/src/compare.c:1618 lib/src/estimate.c:2707 lib/src/gretl_model.c:2936
+#: lib/src/gretl_model.c:2942 lib/src/modelprint.c:606 gui2/library.c:2408
 msgid "squares only"
 msgstr "pouze druhé mocniny"
 
-#: lib/src/compare.c:1621 lib/src/gretl_model.c:2929 gui2/library.c:2409
+#: lib/src/compare.c:1621 lib/src/gretl_model.c:2938 gui2/library.c:2409
 msgid "cubes only"
 msgstr "pouze třetí mocniny"
 
@@ -412,7 +412,7 @@ msgstr "pouze třetí mocniny"
 msgid "squares and cubes"
 msgstr "druhé a třetí mocniny"
 
-#: lib/src/compare.c:1696 lib/src/gretl_model.c:2885
+#: lib/src/compare.c:1696 lib/src/gretl_model.c:2894
 msgid "RESET test for specification"
 msgstr "Test RESET pro specifikaci"
 
@@ -420,11 +420,11 @@ msgstr "Test RESET pro specifikaci"
 #: lib/src/compare.c:2108 lib/src/compare.c:2114 lib/src/compare.c:2585
 #: lib/src/compare.c:2587 lib/src/compare.c:2592 lib/src/describe.c:3374
 #: lib/src/describe.c:3601 lib/src/describe.c:5857 lib/src/describe.c:5860
-#: lib/src/estimate.c:2693 lib/src/estimate.c:2716 lib/src/estimate.c:3502
-#: lib/src/gretl_model.c:3232 lib/src/gretl_model.c:3234
-#: lib/src/gretl_model.c:3236 lib/src/gretl_panel.c:1571
-#: lib/src/gretl_panel.c:3577 lib/src/gretl_panel.c:3826
-#: lib/src/gretl_panel.c:3831 lib/src/modelprint.c:2077
+#: lib/src/estimate.c:2692 lib/src/estimate.c:2715 lib/src/estimate.c:3501
+#: lib/src/gretl_model.c:3241 lib/src/gretl_model.c:3243
+#: lib/src/gretl_model.c:3245 lib/src/gretl_panel.c:1572
+#: lib/src/gretl_panel.c:3578 lib/src/gretl_panel.c:3827
+#: lib/src/gretl_panel.c:3832 lib/src/modelprint.c:2077
 #: lib/src/modelprint.c:2082 lib/src/modelprint.c:2086
 #: lib/src/modelprint.c:2104 lib/src/modelprint.c:2109
 #: lib/src/modelprint.c:2113 lib/src/modelprint.c:2126
@@ -451,7 +451,7 @@ msgstr "autokorelace prvního řádu"
 
 #: lib/src/compare.c:1879 lib/src/compare.c:2048 lib/src/graphing.c:2798
 #: lib/src/graphing.c:2807 lib/src/graphing.c:2879 lib/src/graphing.c:4029
-#: lib/src/gretl_panel.c:3677 lib/src/printout.c:1195 gui2/guiprint.c:1373
+#: lib/src/gretl_panel.c:3678 lib/src/printout.c:1195 gui2/guiprint.c:1373
 #: gui2/guiprint.c:1433 gui2/library.c:5106 plugin/leverage.c:469
 msgid "residual"
 msgstr "reziduum"
@@ -464,7 +464,7 @@ msgstr "vytvoření zpožděného u se stříškou se nepodařilo"
 msgid "autocorrelation"
 msgstr "autokorelace"
 
-#: lib/src/compare.c:2107 lib/src/gretl_panel.c:3830
+#: lib/src/compare.c:2107 lib/src/gretl_panel.c:3831
 msgid "Alternative statistic"
 msgstr "Alternativní statistika"
 
@@ -530,12 +530,12 @@ msgstr ""
 msgid "Invalid sample split for Chow test"
 msgstr "Neplatné rozdělení pozorování pro Chowův test"
 
-#: lib/src/compare.c:2575 lib/src/gretl_model.c:2864
+#: lib/src/compare.c:2575 lib/src/gretl_model.c:2873
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr "Chowův test pro strukturální zlom vzhledem k %s"
 
-#: lib/src/compare.c:2578 lib/src/gretl_model.c:2861
+#: lib/src/compare.c:2578 lib/src/gretl_model.c:2870
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr "Chowův test pro strukturální zlom při pozorování %s"
@@ -600,7 +600,7 @@ msgstr "Kumulovaný součet škálovaných reziduí"
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' indikuje hodnotu mimo 95% konfidenční interval)"
 
-#: lib/src/compare.c:3067 lib/src/gretl_model.c:2918
+#: lib/src/compare.c:3067 lib/src/gretl_model.c:2927
 msgid "Test of common factor restriction"
 msgstr "Test nulových omezení"
 
@@ -1038,7 +1038,7 @@ msgstr ""
 "\n"
 "Načítán hlavičkový soubor %s\n"
 
-#: lib/src/dataio.c:1861 lib/src/dataio.c:1940 lib/src/gretl_xml.c:2290
+#: lib/src/dataio.c:1861 lib/src/dataio.c:1940 lib/src/gretl_xml.c:2340
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d,\n"
@@ -1167,7 +1167,7 @@ msgstr "Soubor dat byl rozšířen o %d pozorování"
 msgid "The 'dataset' command is not available within functions"
 msgstr "Příkaz 'dataset' nelze použít v rámci funkcí"
 
-#: lib/src/dataset.c:3008 lib/src/interact.c:4991 cli/gretlcli.c:815
+#: lib/src/dataset.c:3008 lib/src/interact.c:4996 cli/gretlcli.c:815
 #: gui2/library.c:7492
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Bohužel, tento příkaz nelze použít v cyklu\n"
@@ -1254,7 +1254,7 @@ msgid "Series imported OK"
 msgstr "Řada byla v pořádku importována"
 
 #: lib/src/dbread.c:2172 lib/src/gretl_func.c:1931 lib/src/gretl_utils.c:1448
-#: lib/src/interact.c:3921 gui2/dialogs.c:3919 plugin/tramo-x12a.c:525
+#: lib/src/interact.c:3926 gui2/dialogs.c:3919 plugin/tramo-x12a.c:525
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Nebylo možné oteřít %s"
@@ -1286,8 +1286,8 @@ msgstr "%s: použití základní metody kompaktování: průměrování"
 msgid "Compacted dataset would be empty"
 msgstr "Kompaktovaný datový soubor by byl prázdný"
 
-#: lib/src/dbwrite.c:466 lib/src/dbwrite.c:475 lib/src/gretl_xml.c:1358
-#: lib/src/gretl_xml.c:1482
+#: lib/src/dbwrite.c:466 lib/src/dbwrite.c:475 lib/src/gretl_xml.c:1408
+#: lib/src/gretl_xml.c:1532
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Nebylo možné otevřít %s pro zápis"
@@ -1303,6 +1303,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr "Data nepostačují k nalezení frekvenčního rozdělení proměnné %s"
 
 #: lib/src/describe.c:1495 lib/src/describe.c:2756 lib/src/describe.c:3257
+#: lib/src/describe.c:3749
 #, c-format
 msgid "%s is a constant"
 msgstr "%s je konstanta"
@@ -1368,8 +1369,8 @@ msgid "Cross-correlogram"
 msgstr "Vzájemný korelogram"
 
 #: lib/src/describe.c:3201
-#, c-format
-msgid "xcf: argument %d is a constant"
+#, fuzzy, c-format
+msgid "Argument %d is a constant"
 msgstr "xcf: argument %d je konstanta"
 
 #: lib/src/describe.c:3289
@@ -1459,11 +1460,6 @@ msgid ""
 msgstr ""
 "Použito Bartlettovo okno zpoždění, délka %d\n"
 "\n"
-
-#: lib/src/describe.c:3749 lib/src/graphing.c:3469
-#, c-format
-msgid "'%s' is a constant"
-msgstr "'%s' je konstanta"
 
 #: lib/src/describe.c:3843
 msgid "Fractional integration test failed"
@@ -1684,8 +1680,8 @@ msgstr ""
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Podíl výběrových rozptylů = %g\n"
 
-#: lib/src/describe.c:4921 lib/src/gretl_model.c:3054
-#: lib/src/gretl_model.c:3057 lib/src/gretl_model.c:3060
+#: lib/src/describe.c:4921 lib/src/gretl_model.c:3063
+#: lib/src/gretl_model.c:3066 lib/src/gretl_model.c:3069
 #: lib/src/nonparam.c:952 lib/src/nonparam.c:1086 lib/src/varprint.c:1188
 #: lib/src/varprint.c:1194 lib/src/varprint.c:1202
 msgid "Null hypothesis"
@@ -1767,34 +1763,34 @@ msgstr "Doornik-Hansenův test"
 msgid "Test for normality of %s:"
 msgstr "Test normality %s"
 
-#: lib/src/discrete.c:1367
+#: lib/src/discrete.c:1368
 msgid "Failed to construct Hessian matrix"
 msgstr "Nepodařilo se zkonstruovat Hessovu matici"
 
-#: lib/src/discrete.c:1514
+#: lib/src/discrete.c:1515
 #, c-format
 msgid "Iteration %d: log likelihood = NA"
 msgstr "Iterace %d: log věrohodnosti = NA"
 
-#: lib/src/discrete.c:1516
+#: lib/src/discrete.c:1517
 #, c-format
 msgid "Iteration %d: log likelihood = %#.12g"
 msgstr "Iterace %d: log věrohodnosti = %#.12g "
 
-#: lib/src/discrete.c:2636 lib/src/interact.c:4091
+#: lib/src/discrete.c:2634 lib/src/interact.c:4096
 #, c-format
 msgid "The variable '%s' is not discrete"
 msgstr "Proměnná '%s' není diskrétní"
 
-#: lib/src/discrete.c:2805
+#: lib/src/discrete.c:2803
 msgid "Illegal non-positive value of the dependent variable"
 msgstr "Nepovolená nekladná hodnota závisle proměnné"
 
-#: lib/src/discrete.c:2841
+#: lib/src/discrete.c:2839
 msgid "Invalid value for the maximum of the dependent variable"
 msgstr "Neplatná hodnota maxima závisle proměnné"
 
-#: lib/src/discrete.c:3051
+#: lib/src/discrete.c:3049
 msgid "Fisher's Exact Test"
 msgstr "Fišerův Exaktní Test"
 
@@ -1811,21 +1807,21 @@ msgstr "Všechny váhy jsou nulové, regrese zastavena"
 msgid "Weight variable contains negative values"
 msgstr "Váhy obsahují záporné hodnoty"
 
-#: lib/src/estimate.c:1084 lib/src/estimate.c:2059 plugin/arma_common.c:556
+#: lib/src/estimate.c:1083 lib/src/estimate.c:2058 plugin/arma_common.c:556
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr "Chybějící hodnota pro proměnnou %d, pozorování %d"
 
-#: lib/src/estimate.c:1617
+#: lib/src/estimate.c:1616
 #, c-format
 msgid "Error sum of squares (%g) is not > 0"
 msgstr "Chyba: součet čtverců (%g) není > 0"
 
-#: lib/src/estimate.c:1967 lib/src/estimate.c:2089
+#: lib/src/estimate.c:1966 lib/src/estimate.c:2088
 msgid "ESS"
 msgstr "ESS"
 
-#: lib/src/estimate.c:2149
+#: lib/src/estimate.c:2148
 #, c-format
 msgid ""
 "\n"
@@ -1838,7 +1834,7 @@ msgstr ""
 "ESS je minimální for rho = %g\n"
 "\n"
 
-#: lib/src/estimate.c:2180
+#: lib/src/estimate.c:2179
 msgid ""
 "\n"
 "Fine-tune rho using the CORC procedure...\n"
@@ -1848,7 +1844,7 @@ msgstr ""
 "Kalibrujte rho pomocí procedury CORC...\n"
 "\n"
 
-#: lib/src/estimate.c:2182
+#: lib/src/estimate.c:2181
 msgid ""
 "\n"
 "Performing iterative calculation of rho...\n"
@@ -1858,62 +1854,62 @@ msgstr ""
 "Prováděn interativní výpočet rho...\n"
 "\n"
 
-#: lib/src/estimate.c:2185
+#: lib/src/estimate.c:2184
 msgid "                 ITER       RHO        ESS"
 msgstr "                 ITER       RHO        ESS"
 
-#: lib/src/estimate.c:2690 lib/src/gretl_model.c:2915 lib/src/modelprint.c:611
+#: lib/src/estimate.c:2689 lib/src/gretl_model.c:2924 lib/src/modelprint.c:611
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "Pesaran-Taylorův test heteroskedasticity"
 
-#: lib/src/estimate.c:2700 lib/src/gretl_model.c:2894 lib/src/modelprint.c:609
+#: lib/src/estimate.c:2699 lib/src/gretl_model.c:2903 lib/src/modelprint.c:609
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr "Breusch-Paganův test heteroskedasticity"
 
-#: lib/src/estimate.c:2702
+#: lib/src/estimate.c:2701
 msgid "with Koenker robust variance estimator"
 msgstr "s Koenkerovým robustním odhadem rozptylu"
 
-#: lib/src/estimate.c:2706 lib/src/gretl_model.c:2891 lib/src/modelprint.c:604
+#: lib/src/estimate.c:2705 lib/src/gretl_model.c:2900 lib/src/modelprint.c:604
 msgid "White's test for heteroskedasticity"
 msgstr "Whiteův test heteroskedasticity"
 
-#: lib/src/estimate.c:2877
+#: lib/src/estimate.c:2876
 msgid "HET_1"
 msgstr "HET_1"
 
-#: lib/src/estimate.c:3110
+#: lib/src/estimate.c:3109
 msgid "White's"
 msgstr "Whiteovo"
 
-#: lib/src/estimate.c:3224
+#: lib/src/estimate.c:3223
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Zobecněný Cochran-Orcuttův odhad"
 
-#: lib/src/estimate.c:3227
+#: lib/src/estimate.c:3226
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr "ITER             ESS           % ZMĚNA"
 
-#: lib/src/estimate.c:3499
+#: lib/src/estimate.c:3498
 msgid "Test for ARCH of order"
 msgstr "Test pro ARCH řádu"
 
-#: lib/src/estimate.c:3524 lib/src/modelprint.c:1549
+#: lib/src/estimate.c:3523 lib/src/modelprint.c:1549
 #, c-format
 msgid "Test for ARCH of order %d"
 msgstr "Test pro ARCH řádu %d"
 
-#: lib/src/estimate.c:3581 lib/src/estimate.c:3727
+#: lib/src/estimate.c:3580 lib/src/estimate.c:3726
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "Neplatný řád zpoždění pro arch (%d)"
 
-#: lib/src/estimate.c:3869 lib/src/estimate.c:3928 lib/src/estimate.c:4067
+#: lib/src/estimate.c:3868 lib/src/estimate.c:3927 lib/src/estimate.c:4066
 msgid "Couldn't load plugin function\n"
 msgstr "Nebylo možné nahrát plugin funkci\n"
 
-#: lib/src/estimate.c:4044 lib/src/genfuncs.c:739 plugin/tramo-x12a.c:1000
+#: lib/src/estimate.c:4043 lib/src/genfuncs.c:739 plugin/tramo-x12a.c:1000
 #, c-format
 msgid ""
 "X-12-ARIMA can't handle more than %d observations.\n"
@@ -1958,7 +1954,7 @@ msgstr "Proměnná číslo %d je mimo meze"
 msgid "Matrix specification is not coherent"
 msgstr "Specifikace matice není koherentní"
 
-#: lib/src/geneval.c:4461 lib/src/geneval.c:5125
+#: lib/src/geneval.c:4461 lib/src/geneval.c:5142
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -1971,69 +1967,69 @@ msgstr ""
 msgid "Wrong type of operand for unary '&'"
 msgstr "Nesprávný typ operandu pro unární '&'"
 
-#: lib/src/geneval.c:6110
+#: lib/src/geneval.c:6127
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': neplatný argument pro %s()\n"
 
-#: lib/src/geneval.c:6138 lib/src/genlex.c:628 cli/cli_object.c:46
+#: lib/src/geneval.c:6155 lib/src/genlex.c:629 cli/cli_object.c:46
 #: gui2/objectsave.c:54
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: takový objekt neexistuje\n"
 
-#: lib/src/geneval.c:6293
+#: lib/src/geneval.c:6310
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: operand by měl být %s"
 
-#: lib/src/geneval.c:6296
+#: lib/src/geneval.c:6313
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: operand %d by měl být %s"
 
-#: lib/src/geneval.c:6301
+#: lib/src/geneval.c:6318
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: argument by měl být %s"
 
-#: lib/src/geneval.c:6304
+#: lib/src/geneval.c:6321
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: argument %d by měl být %s"
 
-#: lib/src/geneval.c:7746 lib/src/genlex.c:680 lib/src/genlex.c:747
+#: lib/src/geneval.c:7764 lib/src/genlex.c:681 lib/src/genlex.c:748
 #: lib/src/gensyntax.c:274
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Neshodující se '%c'\n"
 
-#: lib/src/geneval.c:7918
+#: lib/src/geneval.c:7936
 #, c-format
 msgid "'%s': name is too long (max 15 characters)\n"
 msgstr "'%s': jméno je příliš dlouhé (maximálně 15 znaků)\n"
 
-#: lib/src/geneval.c:8017
+#: lib/src/geneval.c:8035
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : není implementováno pro matice"
 
-#: lib/src/geneval.c:8024
+#: lib/src/geneval.c:8042
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : není implementováno pro seznamy"
 
-#: lib/src/geneval.c:8031
+#: lib/src/geneval.c:8049
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : není implementováno pro řetězce"
 
-#: lib/src/geneval.c:8038
+#: lib/src/geneval.c:8056
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : definováno pouze pro matice"
 
-#: lib/src/geneval.c:8045
+#: lib/src/geneval.c:8063
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : není implementováno pro tento typ"
@@ -2138,39 +2134,39 @@ msgstr "konstanty modelu %d vztahující se k jednotkám"
 msgid "Invalid declaration"
 msgstr "Neplatná deklarace"
 
-#: lib/src/genlex.c:630 lib/src/gretl_restrict.c:2217
+#: lib/src/genlex.c:631 lib/src/gretl_restrict.c:2217
 #, c-format
 msgid "The symbol '%s' is undefined\n"
 msgstr "Symbol '%s' není definovaný\n"
 
-#: lib/src/genlex.c:640 lib/src/genlex.c:641
+#: lib/src/genlex.c:641 lib/src/genlex.c:642
 #, c-format
 msgid "'%s': no argument was given\n"
 msgstr "'%s': nebyl zadán žádný argument\n"
 
-#: lib/src/genlex.c:650
+#: lib/src/genlex.c:651
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Symbol '%c' je v tomto kontextu neplatný\n"
 
-#: lib/src/genlex.c:652
+#: lib/src/genlex.c:653
 msgid "(for logical AND, use '&&')\n"
 msgstr "(pro logické A použijte '&&')\n"
 
-#: lib/src/genlex.c:654
+#: lib/src/genlex.c:655
 msgid "(for logical OR, use '||')\n"
 msgstr "(pro logické NEBO použijte '||')\n"
 
-#: lib/src/genlex.c:660
+#: lib/src/genlex.c:661
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Symbol '%s' je v tomto kontextu neplatný\n"
 
-#: lib/src/genlex.c:744
+#: lib/src/genlex.c:745
 msgid "Empty observation []\n"
 msgstr "Prázdné pozorování []\n"
 
-#: lib/src/genlex.c:1390
+#: lib/src/genlex.c:1391
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Neplatný znak '%c'\n"
@@ -2242,7 +2238,7 @@ msgstr "Varování"
 msgid "Replaced after model %d: "
 msgstr "Nahrazeno po modelu %d: "
 
-#: lib/src/genmain.c:307 lib/src/interact.c:2600
+#: lib/src/genmain.c:307 lib/src/interact.c:2601
 #, c-format
 msgid "'%s' may not be used as a variable name"
 msgstr "'%s' nemůže být použito jako jméno proměnné"
@@ -2269,8 +2265,8 @@ msgstr "Očekáváno '%c' ale vzorec skončil\n"
 msgid "Expected '%c' but found '%s'\n"
 msgstr "Očekáváno '%c' ale nalezeno '%s'\n"
 
-#: lib/src/gmm.c:121 lib/src/gretl_list.c:2662 lib/src/gretl_panel.c:4426
-#: lib/src/gretl_panel.c:4436 lib/src/interact.c:3650 lib/src/nls.c:2577
+#: lib/src/gmm.c:121 lib/src/gretl_list.c:2662 lib/src/gretl_panel.c:4427
+#: lib/src/gretl_panel.c:4437 lib/src/interact.c:3655 lib/src/nls.c:2577
 #, c-format
 msgid "Unknown variable '%s'"
 msgstr "Neznámá proměnná '%s'"
@@ -2382,6 +2378,11 @@ msgstr "vyrovnané"
 #: lib/src/graphing.c:2991
 msgid "actual = predicted"
 msgstr "stávající = předpovídaná"
+
+#: lib/src/graphing.c:3469
+#, c-format
+msgid "'%s' is a constant"
+msgstr "'%s' je konstanta"
 
 #: lib/src/graphing.c:3521
 msgid "Test statistic for normality"
@@ -2790,181 +2791,181 @@ msgid "Can't do this: some vars in original model have been redefined"
 msgstr ""
 "Toto nelze provést: některé proměnné původního modelu byly předefiovány"
 
-#: lib/src/gretl_model.c:2852
+#: lib/src/gretl_model.c:2861
 msgid "Test for addition of variables"
 msgstr "Test pro přidání proměnných"
 
-#: lib/src/gretl_model.c:2853 lib/src/gretl_model.c:2883
+#: lib/src/gretl_model.c:2862 lib/src/gretl_model.c:2892
 msgid "parameters are zero for the variables"
 msgstr "nulové koeficienty pro proměnné"
 
-#: lib/src/gretl_model.c:2855
+#: lib/src/gretl_model.c:2864
 #, c-format
 msgid "Test for ARCH of order %s"
 msgstr "Test pro ARCH řádu %s"
 
-#: lib/src/gretl_model.c:2856
+#: lib/src/gretl_model.c:2865
 msgid "no ARCH effect is present"
 msgstr "není zde žádný efekt ARCH"
 
-#: lib/src/gretl_model.c:2858
+#: lib/src/gretl_model.c:2867
 #, c-format
 msgid "LM test for autocorrelation up to order %s"
 msgstr "LM test pro autokorelaci až do řádu %s"
 
-#: lib/src/gretl_model.c:2859
+#: lib/src/gretl_model.c:2868
 msgid "no autocorrelation"
 msgstr "žádná autokorelace"
 
-#: lib/src/gretl_model.c:2862 lib/src/gretl_model.c:2871
+#: lib/src/gretl_model.c:2871 lib/src/gretl_model.c:2880
 msgid "no structural break"
 msgstr "žádný strukturální zlom"
 
-#: lib/src/gretl_model.c:2865
+#: lib/src/gretl_model.c:2874
 msgid "no structural difference"
 msgstr "žádný strukturální rozdíl"
 
-#: lib/src/gretl_model.c:2867
+#: lib/src/gretl_model.c:2876
 msgid "CUSUM test for parameter stability"
 msgstr "CUSUM test pro stabilitu parametrů"
 
-#: lib/src/gretl_model.c:2868
+#: lib/src/gretl_model.c:2877
 msgid "no change in parameters"
 msgstr "žádná změna v parametrech"
 
-#: lib/src/gretl_model.c:2870
+#: lib/src/gretl_model.c:2879
 msgid "QLR test for structural break"
 msgstr "QLR test pro strukturální zlom"
 
-#: lib/src/gretl_model.c:2873
+#: lib/src/gretl_model.c:2882
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
 msgstr "Test poměru věrohodnosti pro heteroskedasticitu mezi skupinami"
 
-#: lib/src/gretl_model.c:2874
+#: lib/src/gretl_model.c:2883
 msgid "the units have a common error variance"
 msgstr "jednotky mají stejný rozptyl chyb"
 
-#: lib/src/gretl_model.c:2876
+#: lib/src/gretl_model.c:2885
 msgid "Non-linearity test (logs)"
 msgstr "Test nelinearity (logaritmy)"
 
-#: lib/src/gretl_model.c:2877 lib/src/gretl_model.c:2889
+#: lib/src/gretl_model.c:2886 lib/src/gretl_model.c:2898
 msgid "relationship is linear"
 msgstr "vztah je lineární"
 
-#: lib/src/gretl_model.c:2879 gui2/gui_utils.c:3235
+#: lib/src/gretl_model.c:2888 gui2/gui_utils.c:3235
 msgid "Test for normality of residual"
 msgstr "Test normality reziduí"
 
-#: lib/src/gretl_model.c:2880
+#: lib/src/gretl_model.c:2889
 msgid "error is normally distributed"
 msgstr "chyby jsou normálně rozdělené"
 
-#: lib/src/gretl_model.c:2882
+#: lib/src/gretl_model.c:2891
 msgid "Test for omission of variables"
 msgstr "Test vynechání proměnných"
 
-#: lib/src/gretl_model.c:2886
+#: lib/src/gretl_model.c:2895
 msgid "specification is adequate"
 msgstr "specifikace je adekvátní"
 
-#: lib/src/gretl_model.c:2888
+#: lib/src/gretl_model.c:2897
 msgid "Non-linearity test (squares)"
 msgstr "Test nelinearity (druhé mocniny)"
 
-#: lib/src/gretl_model.c:2892 lib/src/gretl_model.c:2895
-#: lib/src/gretl_model.c:2916
+#: lib/src/gretl_model.c:2901 lib/src/gretl_model.c:2904
+#: lib/src/gretl_model.c:2925
 msgid "heteroskedasticity not present"
 msgstr "není zde heteroskedasticita"
 
-#: lib/src/gretl_model.c:2897 lib/src/modelprint.c:325
+#: lib/src/gretl_model.c:2906 lib/src/modelprint.c:325
 msgid "Sargan over-identification test"
 msgstr "Sarganův test pro nadbytečnou identifikaci"
 
-#: lib/src/gretl_model.c:2898
+#: lib/src/gretl_model.c:2907
 msgid "all instruments are valid"
 msgstr "všechny instrumentální proměnné jsou platné"
 
-#: lib/src/gretl_model.c:2900 lib/src/gretl_model.c:2903
+#: lib/src/gretl_model.c:2909 lib/src/gretl_model.c:2912
 msgid "Hausman test"
 msgstr "Hausmanův test"
 
-#: lib/src/gretl_model.c:2901
+#: lib/src/gretl_model.c:2910
 msgid "OLS estimates are consistent"
 msgstr "OLS odhady jsou konzistentní"
 
-#: lib/src/gretl_model.c:2904
+#: lib/src/gretl_model.c:2913
 msgid "GLS estimates are consistent"
 msgstr "GLS odhady jsou konzistentní"
 
-#: lib/src/gretl_model.c:2906
+#: lib/src/gretl_model.c:2915
 msgid "Test for differing group intercepts"
 msgstr "Test pro různé intercepty mezi skupinami"
 
-#: lib/src/gretl_model.c:2907
+#: lib/src/gretl_model.c:2916
 msgid "The groups have a common intercept"
 msgstr "Skupiny mají společný intercept"
 
-#: lib/src/gretl_model.c:2909
+#: lib/src/gretl_model.c:2918
 msgid "Breusch-Pagan test"
 msgstr "Breusch-Paganův test"
 
-#: lib/src/gretl_model.c:2910
+#: lib/src/gretl_model.c:2919
 msgid "Variance of the unit-specific error = 0"
 msgstr "Rozptyl chyb příslušejících jednotkám = 0"
 
-#: lib/src/gretl_model.c:2912
+#: lib/src/gretl_model.c:2921
 msgid "Wald test for joint significance of time dummies"
 msgstr "Waldův test sdružené signifikance časových indikátorových proměnných"
 
-#: lib/src/gretl_model.c:2919
+#: lib/src/gretl_model.c:2928
 msgid "restriction is acceptable"
 msgstr "omezení je přijatelné"
 
-#: lib/src/gretl_model.c:2937
+#: lib/src/gretl_model.c:2946
 msgid "robust variant"
 msgstr "robustní varianta"
 
-#: lib/src/gretl_model.c:2957 lib/src/gretl_panel.c:3575
+#: lib/src/gretl_model.c:2966 lib/src/gretl_panel.c:3576
 msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Waldův test heteroskedasticity nezávislý na rozdělení"
 
-#: lib/src/gretl_model.c:3091
+#: lib/src/gretl_model.c:3100
 #, c-format
 msgid "max F(%d, %d) = %g at observation %s"
 msgstr "max F(%d, %d) = %g pro pozorování %s"
 
-#: lib/src/gretl_model.c:3116 lib/src/gretl_model.c:3123
+#: lib/src/gretl_model.c:3125 lib/src/gretl_model.c:3132
 msgid "failed"
 msgstr "nezdařilo se"
 
-#: lib/src/gretl_model.c:3242 lib/src/gretl_model.c:3245
-#: lib/src/gretl_model.c:3248
+#: lib/src/gretl_model.c:3251 lib/src/gretl_model.c:3254
+#: lib/src/gretl_model.c:3257
 #, c-format
 msgid "%g percent critical value"
 msgstr "%g procentní kritická hodnota"
 
-#: lib/src/gretl_model.c:5231
+#: lib/src/gretl_model.c:5244
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "Nelze vypočítat u se stříškou: soubor dat byl změněn"
 
-#: lib/src/gretl_model.c:5233
+#: lib/src/gretl_model.c:5246
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "Nelze vypočítat y se stříškou: soubor dat byl změněn"
 
-#: lib/src/gretl_model.c:5235
+#: lib/src/gretl_model.c:5248
 msgid "Can't retrieve ht: data set has changed"
 msgstr "Nelze vypočítat ht: soubor dat byl změněn"
 
-#: lib/src/gretl_model.c:5236
+#: lib/src/gretl_model.c:5249
 msgid "Can't retrieve series: data set has changed"
 msgstr "Nelze vypočítat řadu: soubor dat byl změněn"
 
-#: lib/src/gretl_model.c:5678 gui2/library.c:473
+#: lib/src/gretl_model.c:5691 gui2/library.c:473
 msgid "The model exhibits an exact linear fit"
 msgstr "Model vykazuje přesnou shodu s lineárním modelem"
 
-#: lib/src/gretl_panel.c:1011
+#: lib/src/gretl_panel.c:1012
 msgid ""
 "                         Random effects estimator\n"
 "           allows for a unit-specific component to the error term\n"
@@ -2976,7 +2977,7 @@ msgstr ""
 "           (standardní chyby v závorkách, p-hodnoty v hranatých závorkách)\n"
 "\n"
 
-#: lib/src/gretl_panel.c:1549
+#: lib/src/gretl_panel.c:1550
 msgid ""
 "Fixed effects estimator\n"
 "allows for differing intercepts by cross-sectional unit\n"
@@ -2987,12 +2988,12 @@ msgstr ""
 "jednotky\n"
 "standardní chyby směrnice v závorkách, p-hodnoty v hranatých závorkách\n"
 
-#: lib/src/gretl_panel.c:1562
+#: lib/src/gretl_panel.c:1563
 #, c-format
 msgid "%d group means were subtracted from the data"
 msgstr "střední hodnoty skupiny %d byly odečteny od dat"
 
-#: lib/src/gretl_panel.c:1566
+#: lib/src/gretl_panel.c:1567
 #, c-format
 msgid ""
 "\n"
@@ -3001,11 +3002,11 @@ msgstr ""
 "\n"
 "Rozptyl reziduí: %g/(%d - %d) = %g\n"
 
-#: lib/src/gretl_panel.c:1569
+#: lib/src/gretl_panel.c:1570
 msgid "Joint significance of differing group means:\n"
 msgstr "Sdružená signifikance rozdílných středních hodnot po skupinách:\n"
 
-#: lib/src/gretl_panel.c:1573
+#: lib/src/gretl_panel.c:1574
 msgid ""
 "(A low p-value counts against the null hypothesis that the pooled OLS model\n"
 "is adequate, in favor of the fixed effects alternative.)\n"
@@ -3015,16 +3016,16 @@ msgstr ""
 "je adekvátní, a ve prospěch alternativy pevných efektů.)\n"
 "\n"
 
-#: lib/src/gretl_panel.c:1631 lib/src/gretl_restrict.c:2058
+#: lib/src/gretl_panel.c:1632 lib/src/gretl_restrict.c:2058
 #, c-format
 msgid "Failed to compute test statistic\n"
 msgstr "Nepodařilo se vypočítat testovací statistiku\n"
 
-#: lib/src/gretl_panel.c:2188
+#: lib/src/gretl_panel.c:2189
 msgid "Error estimating fixed effects model\n"
 msgstr "Chyba při odhadu modelu s pevnými efekty\n"
 
-#: lib/src/gretl_panel.c:2236
+#: lib/src/gretl_panel.c:2237
 msgid ""
 "\n"
 "Hausman test matrix is not positive definite (this result may be treated as\n"
@@ -3035,7 +3036,7 @@ msgstr ""
 "být vykládán tak, že se\n"
 "\"nepodařilo se zamítnout\" specifikaci náhodných jevů).\n"
 
-#: lib/src/gretl_panel.c:2240
+#: lib/src/gretl_panel.c:2241
 #, c-format
 msgid ""
 "\n"
@@ -3046,7 +3047,7 @@ msgstr ""
 "Hausmanova testovací statistika:\n"
 " H = %g s p-hodnotou = prob(chí-kvadrát(%d) > %g) = %g\n"
 
-#: lib/src/gretl_panel.c:2244
+#: lib/src/gretl_panel.c:2245
 msgid ""
 "(A low p-value counts against the null hypothesis that the random effects\n"
 "model is consistent, in favor of the fixed effects model.)\n"
@@ -3055,11 +3056,11 @@ msgstr ""
 "efekty\n"
 "je konzistentní, a ve prospěch alternativy pevných efektů.)\n"
 
-#: lib/src/gretl_panel.c:2352
+#: lib/src/gretl_panel.c:2353
 msgid "Error estimating random effects model\n"
 msgstr "Chyba při odhadu modelu s náhodnými efekty\n"
 
-#: lib/src/gretl_panel.c:2436
+#: lib/src/gretl_panel.c:2437
 msgid ""
 "\n"
 "Means of pooled OLS residuals for cross-sectional units:\n"
@@ -3069,12 +3070,12 @@ msgstr ""
 "Střední hodnoty hromadných OLS reziduí pro průřezové jednotky:\n"
 "\n"
 
-#: lib/src/gretl_panel.c:2453
+#: lib/src/gretl_panel.c:2454
 #, c-format
 msgid " unit %2d: %13.5g\n"
 msgstr " jednotka %2d: %13.5g\n"
 
-#: lib/src/gretl_panel.c:2464
+#: lib/src/gretl_panel.c:2465
 #, c-format
 msgid ""
 "\n"
@@ -3085,7 +3086,7 @@ msgstr ""
 "Breusch-Paganova testovací statistika:\n"
 " LM = %g s p-hodnotou = prob(chí-kvadrát(1) > %g) = %g\n"
 
-#: lib/src/gretl_panel.c:2468
+#: lib/src/gretl_panel.c:2469
 msgid ""
 "(A low p-value counts against the null hypothesis that the pooled OLS model\n"
 "is adequate, in favor of the random effects alternative.)\n"
@@ -3095,11 +3096,11 @@ msgstr ""
 "je adekvátní, a ve prospěch alternativy náhodných efektů.)\n"
 "\n"
 
-#: lib/src/gretl_panel.c:2495
+#: lib/src/gretl_panel.c:2496
 msgid "Hausman test matrix is not positive definite"
 msgstr "Matice Hausmanova testu není pozitivně definitní"
 
-#: lib/src/gretl_panel.c:2707
+#: lib/src/gretl_panel.c:2708
 #, c-format
 msgid ""
 "      Diagnostics: assuming a balanced panel with %d cross-sectional units\n"
@@ -3110,25 +3111,25 @@ msgstr ""
 "                         pozorovanými přes %d period\n"
 "\n"
 
-#: lib/src/gretl_panel.c:2739 lib/src/gretl_panel.c:3086
+#: lib/src/gretl_panel.c:2740 lib/src/gretl_panel.c:3087
 msgid "Couldn't estimate group means regression\n"
 msgstr "Nebylo možné odhadnout regresi středních hodnot skupin\n"
 
-#: lib/src/gretl_panel.c:3444
+#: lib/src/gretl_panel.c:3445
 msgid "Can't produce ML estimates: some units have only one observation"
 msgstr ""
 "Nelze nalézt ML odhady: některé jednotky obsahují pouze jedno pozorování"
 
-#: lib/src/gretl_panel.c:3496 plugin/poisson.c:327
+#: lib/src/gretl_panel.c:3497 plugin/poisson.c:327
 msgid "iteration"
 msgstr "iterace"
 
-#: lib/src/gretl_panel.c:3654
+#: lib/src/gretl_panel.c:3655
 #, fuzzy
 msgid "groupwise heteroskedasticity"
 msgstr "Heteroskedasticita po skupinách"
 
-#: lib/src/gretl_panel.c:4142
+#: lib/src/gretl_panel.c:4143
 #, c-format
 msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Chyba: jednotka %g, perioda %g: zdvojené pozorování"
@@ -3346,26 +3347,26 @@ msgid "Deleted string %s"
 msgstr "Smazán řetězec %s"
 
 #: lib/src/gretl_string_table.c:759 lib/src/gretl_win32.c:608
-#: lib/src/interact.c:3104
+#: lib/src/interact.c:3105
 msgid "The shell command is not activated."
 msgstr "Příkaz shellu nebyl aktivován."
 
-#: lib/src/gretl_string_table.c:918 lib/src/gretl_string_table.c:920
+#: lib/src/gretl_string_table.c:924 lib/src/gretl_string_table.c:926
 #, c-format
 msgid "You cannot overwrite '%s'\n"
 msgstr "Nelze přepsat '%s'\n"
 
-#: lib/src/gretl_string_table.c:944
+#: lib/src/gretl_string_table.c:950
 #, c-format
 msgid "Generated string %s\n"
 msgstr "Vygenerován řetězec %s\n"
 
-#: lib/src/gretl_string_table.c:946
+#: lib/src/gretl_string_table.c:952
 #, c-format
 msgid "Replaced string %s\n"
 msgstr "Nahrazen řetězec %s\n"
 
-#: lib/src/gretl_string_table.c:1023 lib/src/interact.c:3897
+#: lib/src/gretl_string_table.c:1029 lib/src/interact.c:3902
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Maximální délka příkazové řádky (%d bytů) byla překročena\n"
@@ -3481,15 +3482,15 @@ msgstr ""
 msgid "HTTP proxy: first field must be an IP number"
 msgstr "HTTP proxy: první pole musí být číslo IP"
 
-#: lib/src/gretl_xml.c:82 lib/src/gretl_xml.c:2363 lib/src/gretl_xml.c:2534
-#: lib/src/gretl_xml.c:2575 plugin/gnumeric_import.c:381
+#: lib/src/gretl_xml.c:82 lib/src/gretl_xml.c:2413 lib/src/gretl_xml.c:2584
+#: lib/src/gretl_xml.c:2625 plugin/gnumeric_import.c:381
 #: plugin/gnumeric_import.c:492
 #, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "xmlParseFile selhal na %s"
 
-#: lib/src/gretl_xml.c:89 lib/src/gretl_xml.c:2370 lib/src/gretl_xml.c:2540
-#: lib/src/gretl_xml.c:2580 plugin/gnumeric_import.c:387
+#: lib/src/gretl_xml.c:89 lib/src/gretl_xml.c:2420 lib/src/gretl_xml.c:2590
+#: lib/src/gretl_xml.c:2630 plugin/gnumeric_import.c:387
 #: plugin/gnumeric_import.c:498
 #, c-format
 msgid "%s: empty document"
@@ -3500,85 +3501,85 @@ msgstr "%s: prázdný dokument"
 msgid "File of the wrong type, root node not %s"
 msgstr "Soubor nesprávného typu, kořenový uzel není %s"
 
-#: lib/src/gretl_xml.c:1364 lib/src/gretl_xml.c:1500
+#: lib/src/gretl_xml.c:1414 lib/src/gretl_xml.c:1550
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
 msgstr "Zapisuji %ld Kbytů dat\n"
 
-#: lib/src/gretl_xml.c:1761
+#: lib/src/gretl_xml.c:1811
 msgid "Failed to parse count of variables"
 msgstr "Nepodařilo se analyzovat proměnné"
 
-#: lib/src/gretl_xml.c:1775 lib/src/gretl_xml.c:1788
+#: lib/src/gretl_xml.c:1825 lib/src/gretl_xml.c:1838
 msgid "Got no variables"
 msgstr "Program neobdržel žádné proměnné"
 
-#: lib/src/gretl_xml.c:1800
+#: lib/src/gretl_xml.c:1850
 #, c-format
 msgid "Variable %d has no name"
 msgstr "Proměnná %d není pojmenovaná"
 
-#: lib/src/gretl_xml.c:1868
+#: lib/src/gretl_xml.c:1918
 msgid "Number of variables does not match declaration"
 msgstr "Počet proměnných neodpovídá deklaraci"
 
-#: lib/src/gretl_xml.c:1902
+#: lib/src/gretl_xml.c:1952
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr "Nepodařilo se analyzovat hodnoty pozorování %d"
 
-#: lib/src/gretl_xml.c:1931
+#: lib/src/gretl_xml.c:1981
 msgid "Failed to parse number of observations"
 msgstr "Nepodařilo se analyzovat počet pozorování"
 
-#: lib/src/gretl_xml.c:1950
+#: lib/src/gretl_xml.c:2000
 msgid "labels attribute for observations must be 'true' or 'false'"
 msgstr "popisky přidělené pozorováním musí být 'true' nebo 'false'"
 
-#: lib/src/gretl_xml.c:1995
+#: lib/src/gretl_xml.c:2045
 msgid "Got no observations\n"
 msgstr "Program neobdržel žádná pozorování\n"
 
-#: lib/src/gretl_xml.c:2017
+#: lib/src/gretl_xml.c:2067
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr "U proměnné %d chybí označení typu"
 
-#: lib/src/gretl_xml.c:2052
+#: lib/src/gretl_xml.c:2102
 #, c-format
 msgid "Values missing at observation %d"
 msgstr "Chybí hodnoty pro pozorování %d"
 
-#: lib/src/gretl_xml.c:2082
+#: lib/src/gretl_xml.c:2132
 msgid "Number of observations does not match declaration"
 msgstr "Počet pozorování neodpovídá deklaraci"
 
-#: lib/src/gretl_xml.c:2108
+#: lib/src/gretl_xml.c:2158
 msgid "Required attribute 'type' is missing from data file"
 msgstr "Požadovaný attribut 'typ' v datovém soubor chybí"
 
-#: lib/src/gretl_xml.c:2120
+#: lib/src/gretl_xml.c:2170
 msgid "Unrecognized type attribute for data file"
 msgstr "Atribut typu nebyl pro datový soubor rozpoznán"
 
-#: lib/src/gretl_xml.c:2145
+#: lib/src/gretl_xml.c:2195
 msgid "Failed to parse data frequency"
 msgstr "Nepodařilo se analyzovat frekvenci dat"
 
-#: lib/src/gretl_xml.c:2186
+#: lib/src/gretl_xml.c:2236
 msgid "Failed to parse startobs"
 msgstr "Nepodařilo se analyzovat počáteční pozorování"
 
-#: lib/src/gretl_xml.c:2218
+#: lib/src/gretl_xml.c:2268
 msgid "Failed to parse endobs"
 msgstr "Nepodařilo se analyzovat koncové pozorování"
 
-#: lib/src/gretl_xml.c:2252
+#: lib/src/gretl_xml.c:2302
 #, c-format
 msgid "dummy for %s = %lf"
 msgstr "indikátorová proměnná pro %s = %lf "
 
-#: lib/src/gretl_xml.c:2289
+#: lib/src/gretl_xml.c:2339
 #, c-format
 msgid ""
 "\n"
@@ -3587,27 +3588,27 @@ msgstr ""
 "\n"
 "Načítám datový soubor %s\n"
 
-#: lib/src/gretl_xml.c:2346
+#: lib/src/gretl_xml.c:2396
 msgid "Uncompressing"
 msgstr "Rozbaluji"
 
-#: lib/src/gretl_xml.c:2346
+#: lib/src/gretl_xml.c:2396
 msgid "Reading"
 msgstr "Načítám"
 
-#: lib/src/gretl_xml.c:2347
+#: lib/src/gretl_xml.c:2397
 msgid "of data"
 msgstr "data"
 
-#: lib/src/gretl_xml.c:2376 lib/src/gretl_xml.c:2546
+#: lib/src/gretl_xml.c:2426 lib/src/gretl_xml.c:2596
 msgid "File of the wrong type, root node not gretldata"
 msgstr "Nesprávný typ souboru, kořenový uzel není gretldata"
 
-#: lib/src/gretl_xml.c:2433 lib/src/gretl_xml.c:2458
+#: lib/src/gretl_xml.c:2483 lib/src/gretl_xml.c:2508
 msgid "Variables information is missing"
 msgstr "Chybí informace o proměnných"
 
-#: lib/src/gretl_xml.c:2464
+#: lib/src/gretl_xml.c:2514
 msgid "No observations were found"
 msgstr "Nebyla nalezena žádná pozorování"
 
@@ -3659,28 +3660,28 @@ msgstr "'%s' není jméno řady"
 msgid "'%s' is not the name of a variable"
 msgstr "'%s' není jméno proměnné"
 
-#: lib/src/interact.c:2309 lib/src/interact.c:5142 cli/cli_object.c:54
+#: lib/src/interact.c:2310 lib/src/interact.c:5148 cli/cli_object.c:54
 #: gui2/objectsave.c:62
 #, c-format
 msgid "command '%s' not recognized"
 msgstr "příkaz '%s' nebyl rozpoznán"
 
-#: lib/src/interact.c:2603
+#: lib/src/interact.c:2604
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "pole '%s' v příkazu je neplatné"
 
-#: lib/src/interact.c:2656
+#: lib/src/interact.c:2657
 #, c-format
 msgid "var number %d duplicated in the command list."
 msgstr "proměnná číslo %d je v seznamu příkazů duplicitní"
 
-#: lib/src/interact.c:2723 lib/src/interact.c:2832
+#: lib/src/interact.c:2724 lib/src/interact.c:2833
 #, c-format
 msgid "Unable to access the file %s.\n"
 msgstr "Nebylo možné realizovat přístup k souboru %s.\n"
 
-#: lib/src/interact.c:2751
+#: lib/src/interact.c:2752
 msgid ""
 "\n"
 "\n"
@@ -3690,11 +3691,11 @@ msgstr ""
 "\n"
 "Pro nápovědu o dané funkci napište: help jménofunkce"
 
-#: lib/src/interact.c:2752
+#: lib/src/interact.c:2753
 msgid " (e.g. help qrdecomp)\n"
 msgstr " (např. help qrdecomp)\n"
 
-#: lib/src/interact.c:2787
+#: lib/src/interact.c:2788
 msgid ""
 "\n"
 "Valid gretl commands are:\n"
@@ -3702,7 +3703,7 @@ msgstr ""
 "\n"
 "Platné příkazy gretlu jsou:\n"
 
-#: lib/src/interact.c:2802
+#: lib/src/interact.c:2803
 msgid ""
 "\n"
 "\n"
@@ -3712,137 +3713,137 @@ msgstr ""
 "\n"
 "Pro nápovědu o daném příkazu napište: help jménopříkazu"
 
-#: lib/src/interact.c:2803
+#: lib/src/interact.c:2804
 msgid " (e.g. help smpl)\n"
 msgstr " (např. help smpl)\n"
 
-#: lib/src/interact.c:2804
+#: lib/src/interact.c:2805
 msgid "You can also do 'help functions' for a list of functions\n"
 msgstr "Také můžete napsat 'help functions' pro zobrazení seznamu funkcí\n"
 
-#: lib/src/interact.c:2810
+#: lib/src/interact.c:2811
 msgid "genrcli.hlp"
 msgstr "genrcli.hlp"
 
-#: lib/src/interact.c:2826
+#: lib/src/interact.c:2827
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
 msgstr "\"%s\" není příkaz gretlu.\n"
 
-#: lib/src/interact.c:2864
+#: lib/src/interact.c:2865
 #, c-format
 msgid "%s: sorry, no help available.\n"
 msgstr "%s: bohužel, žádná nápověda není k dispozici.\n"
 
-#: lib/src/interact.c:2886 lib/src/interact.c:2894 lib/src/interact.c:2902
+#: lib/src/interact.c:2887 lib/src/interact.c:2895 lib/src/interact.c:2903
 #, c-format
 msgid "%s: negative value is out of bounds.\n"
 msgstr "%s: záporná hodnota je mimo meze.\n"
 
-#: lib/src/interact.c:3681 lib/src/printout.c:1606
+#: lib/src/interact.c:3686 lib/src/printout.c:1606
 msgid "No series are defined\n"
 msgstr "Nejsou definovány žádné řady\n"
 
-#: lib/src/interact.c:3685
+#: lib/src/interact.c:3690
 msgid "Listing labels for variables:\n"
 msgstr "Vypisuji popisky proměnných:\n"
 
-#: lib/src/interact.c:3730
+#: lib/src/interact.c:3735
 msgid "Output is not currently diverted to file\n"
 msgstr "Výstup momentálně není transformován do souboru\n"
 
-#: lib/src/interact.c:3735
+#: lib/src/interact.c:3740
 #, c-format
 msgid "Closed output file '%s'\n"
 msgstr "Byl zavřen výstupní soubor '%s'\n"
 
-#: lib/src/interact.c:3743
+#: lib/src/interact.c:3748
 #, c-format
 msgid "Output is already diverted to '%s'\n"
 msgstr "Výstup už byl transformován do '%s'\n"
 
-#: lib/src/interact.c:3750
+#: lib/src/interact.c:3755
 msgid "Now discarding output\n"
 msgstr "Nyní odstraňuji výstup\n"
 
-#: lib/src/interact.c:3766
+#: lib/src/interact.c:3771
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "Nebylo možné otevřít %s pro psaní\n"
 
-#: lib/src/interact.c:3772
+#: lib/src/interact.c:3777
 #, c-format
 msgid "Now writing output to '%s'\n"
 msgstr "Nyní zapisuji výstup do '%s'\n"
 
-#: lib/src/interact.c:3774
+#: lib/src/interact.c:3779
 #, c-format
 msgid "Now appending output to '%s'\n"
 msgstr "Nyní připojuji výstup do '%s'\n"
 
-#: lib/src/interact.c:3838
+#: lib/src/interact.c:3843
 msgid "No data information is available.\n"
 msgstr "Žádné informace o datech nejsou k dispozici.\n"
 
-#: lib/src/interact.c:4273
+#: lib/src/interact.c:4278
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "Zde nemůžete ukončit cyklus, žádný jste nezačali\n"
 
-#: lib/src/interact.c:4394
+#: lib/src/interact.c:4399
 msgid "This command requires one variable.\n"
 msgstr "Tento příkaz vyžaduje jednu proměnnou.\n"
 
-#: lib/src/interact.c:4517
+#: lib/src/interact.c:4522
 #, c-format
 msgid "setting data frequency = %d\n"
 msgstr "pokládám frekvenci dat = %d\n"
 
-#: lib/src/interact.c:4542
+#: lib/src/interact.c:4547
 msgid "store: no filename given\n"
 msgstr "uložit: nebylo zadáno jméno souboru\n"
 
-#: lib/src/interact.c:4545 lib/src/monte_carlo.c:2208
+#: lib/src/interact.c:4550 lib/src/monte_carlo.c:2208
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "uložit: používám jméno souboru %s\n"
 
-#: lib/src/interact.c:4551 lib/src/monte_carlo.c:2214
+#: lib/src/interact.c:4556 lib/src/monte_carlo.c:2214
 msgid "Data written OK.\n"
 msgstr "Data byla v pořádku zapsána.\n"
 
-#: lib/src/interact.c:4602
+#: lib/src/interact.c:4607
 msgid "This estimator requires panel data"
 msgstr "Tento odhad vyžaduje panelová data"
 
-#: lib/src/interact.c:4751
+#: lib/src/interact.c:4756
 msgid "Couldn't format model\n"
 msgstr "Nepodařilo se formátovat model\n"
 
-#: lib/src/interact.c:4765
+#: lib/src/interact.c:4770
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Model byl vytištěn do %s\n"
 
-#: lib/src/interact.c:4865 cli/gretlcli.c:986 gui2/library.c:7690
+#: lib/src/interact.c:4870 cli/gretlcli.c:986 gui2/library.c:7690
 msgid "Infinite loop detected in script\n"
 msgstr "Ve skriptu byl detekován nekonečný cyklus\n"
 
-#: lib/src/interact.c:4884
+#: lib/src/interact.c:4889
 msgid "You cannot delete variables in this context\n"
 msgstr "V tomto kontextu nemůžete vymazat proměnné\n"
 
-#: lib/src/interact.c:4906 lib/src/printout.c:2599 cli/gretlcli.c:893
+#: lib/src/interact.c:4911 lib/src/printout.c:2599 cli/gretlcli.c:893
 #: gui2/library.c:7591 gui2/library.c:7623
 #, c-format
 msgid "wrote %s\n"
 msgstr "zapsáno %s\n"
 
-#: lib/src/interact.c:4917 cli/gretlcli.c:630
+#: lib/src/interact.c:4922 cli/gretlcli.c:630
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: příkaz není k dispozici\n"
 
-#: lib/src/interact.c:4923
+#: lib/src/interact.c:4928
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Bohužel, příkaz %s ještě nebyl implementován v libgretl\n"
@@ -7577,7 +7578,7 @@ msgstr "Importovat"
 #: gui2/datafiles.c:1206 gui2/menustate.c:316 gui2/menustate.c:354
 #: gui2/menustate.c:380 gui2/menustate.c:425 gui2/session.c:154
 #: gui2/session.c:173 gui2/session.c:180 gui2/session.c:205
-#: gui2/session.c:2748 gui2/session.c:2826 gui2/ssheet.c:2316
+#: gui2/session.c:2748 gui2/session.c:2826 gui2/ssheet.c:2305
 msgid "Delete"
 msgstr "Vymazat"
 
@@ -7609,7 +7610,7 @@ msgstr "Status sítě: OK"
 msgid "Database parse error at variable '%s'"
 msgstr "Chyba při analýze u proměnné '%s'"
 
-#: gui2/database.c:1301 gui2/ssheet.c:2262
+#: gui2/database.c:1301 gui2/ssheet.c:2251
 msgid "Name"
 msgstr "Jméno"
 
@@ -7901,7 +7902,7 @@ msgstr ""
 "Zadat jméno pro první proměnnou\n"
 "(max. 15 znaků)"
 
-#: gui2/datawiz.c:293 gui2/ssheet.c:1462
+#: gui2/datawiz.c:293 gui2/ssheet.c:1454
 msgid "No changes were made"
 msgstr "Nebyly udělány žádné změny"
 
@@ -8102,7 +8103,7 @@ msgstr ""
 "Chcet uložit změny, které jste udělali\n"
 "v této relaci?"
 
-#: gui2/dialogs.c:264 gui2/ssheet.c:2553
+#: gui2/dialogs.c:264 gui2/ssheet.c:2542
 msgid ""
 "Do you want to save changes you have\n"
 "made to the current data set?"
@@ -8939,8 +8940,8 @@ msgstr "Minimální verze gretlu"
 msgid "Insert today's date"
 msgstr "Vložit dnešní datum"
 
-#: gui2/fnsave.c:949 gui2/gui_utils.c:1887 gui2/ssheet.c:2527
-#: gui2/ssheet.c:2552
+#: gui2/fnsave.c:949 gui2/gui_utils.c:1887 gui2/ssheet.c:2516
+#: gui2/ssheet.c:2541
 msgid "Save changes?"
 msgstr "Uložit změny?"
 
@@ -9353,19 +9354,19 @@ msgstr "automatický rozsah osy"
 msgid "manual range:"
 msgstr "ručně zadaný rozsah:"
 
-#: gui2/gpt_dialog.c:2685
+#: gui2/gpt_dialog.c:2689
 msgid "linear scale"
 msgstr "lineární měřítko"
 
-#: gui2/gpt_dialog.c:2693
+#: gui2/gpt_dialog.c:2697
 msgid "logarithmic scale, base:"
 msgstr "logaritmické měřítko, základ:"
 
-#: gui2/gpt_dialog.c:2729
+#: gui2/gpt_dialog.c:2733
 msgid "Palette"
 msgstr "Paleta"
 
-#: gui2/gpt_dialog.c:2732
+#: gui2/gpt_dialog.c:2736
 msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
@@ -9373,15 +9374,15 @@ msgstr ""
 "Tyto barvy budou použity, pokud nebude\n"
 "pro daný graf zadáno jinak\n"
 
-#: gui2/gpt_dialog.c:2939
+#: gui2/gpt_dialog.c:2943
 msgid "Title of plot"
 msgstr "Název obrázku"
 
-#: gui2/gpt_dialog.c:2940
+#: gui2/gpt_dialog.c:2944
 msgid "Title for axis"
 msgstr "Název osy"
 
-#: gui2/gpt_dialog.c:2965
+#: gui2/gpt_dialog.c:2969
 msgid "gretl plot controls"
 msgstr "ovladače obrázků gretlu"
 
@@ -12237,7 +12238,7 @@ msgstr "Žádný model není k dispozici"
 msgid "%s replaced\n"
 msgstr "%s nahrazeno\n"
 
-#: gui2/obsbutton.c:232 gui2/ssheet.c:2304
+#: gui2/obsbutton.c:232 gui2/ssheet.c:2293
 msgid "Value"
 msgstr "Hodnota"
 
@@ -13488,105 +13489,105 @@ msgstr "gretl: specifikovat skalární veličinu"
 msgid "Enter a numerical value"
 msgstr "Zadat numerickou hodnotu"
 
-#: gui2/ssheet.c:1137
+#: gui2/ssheet.c:1133
 msgid "Add Variable"
 msgstr "Přidat Proměnnou"
 
-#: gui2/ssheet.c:1142
+#: gui2/ssheet.c:1138
 msgid "Add Observation"
 msgstr "Přidat Pozorování"
 
-#: gui2/ssheet.c:1148
+#: gui2/ssheet.c:1144
 msgid "Insert Observation"
 msgstr "Vložit Pozorování"
 
-#: gui2/ssheet.c:1402 gui2/ssheet.c:2518
+#: gui2/ssheet.c:1394 gui2/ssheet.c:2507
 msgid "Warning: there were missing observations"
 msgstr "Varování: některá pozorování chyběla"
 
-#: gui2/ssheet.c:1429 gui2/toolbar.c:325
+#: gui2/ssheet.c:1421 gui2/toolbar.c:325
 msgid "gretl: save matrix"
 msgstr "gretl: uložit matici"
 
-#: gui2/ssheet.c:1430 gui2/toolbar.c:326
+#: gui2/ssheet.c:1422 gui2/toolbar.c:326
 msgid "Enter a name"
 msgstr "Zadat jméno"
 
-#: gui2/ssheet.c:2427
+#: gui2/ssheet.c:2416
 msgid "No series to edit"
 msgstr "Nejsou zde řady, které by se daly upravit"
 
-#: gui2/ssheet.c:2516
+#: gui2/ssheet.c:2505
 #, c-format
 msgid "Warning: series %s is empty"
 msgstr "Varování: řada %s je prázdná"
 
-#: gui2/ssheet.c:2779
+#: gui2/ssheet.c:2768
 msgid "gretl: edit matrix"
 msgstr "gretl: upravit matici"
 
-#: gui2/ssheet.c:2782
+#: gui2/ssheet.c:2771
 msgid "gretl: scalars"
 msgstr "gretl: skalární veličiny"
 
-#: gui2/ssheet.c:2784
+#: gui2/ssheet.c:2773
 msgid "gretl: edit data"
 msgstr "gretl: upravit data"
 
-#: gui2/ssheet.c:2948
+#: gui2/ssheet.c:2935
 msgid "Please add a variable to the dataset first"
 msgstr "Prosím, napřed přidejte do souboru dat proměnnou"
 
-#: gui2/ssheet.c:3022
+#: gui2/ssheet.c:3006
 msgid "You must give the matrix a name"
 msgstr "Musíte matici pojmenovat"
 
-#: gui2/ssheet.c:3046
+#: gui2/ssheet.c:3030
 msgid "The matrix formula is empty"
 msgstr "Vzorec matice je prázdný"
 
-#: gui2/ssheet.c:3123
+#: gui2/ssheet.c:3107
 msgid "New matrix"
 msgstr "Nová matice"
 
-#: gui2/ssheet.c:3129
+#: gui2/ssheet.c:3113
 msgid "Name:"
 msgstr "Jméno:"
 
-#: gui2/ssheet.c:3149
+#: gui2/ssheet.c:3133
 msgid "Build from series"
 msgstr "Vytvořit z řady"
 
-#: gui2/ssheet.c:3158
+#: gui2/ssheet.c:3142
 msgid "Build numerically"
 msgstr "Vytvořit numericky"
 
-#: gui2/ssheet.c:3167
+#: gui2/ssheet.c:3151
 msgid "Number of rows:"
 msgstr "Počet řádků:"
 
-#: gui2/ssheet.c:3176
+#: gui2/ssheet.c:3160
 msgid "Number of columns:"
 msgstr "Počet sloupců:"
 
-#: gui2/ssheet.c:3185
+#: gui2/ssheet.c:3169
 msgid "Initial fill value:"
 msgstr "Počáteční vyplněná hodnota:"
 
-#: gui2/ssheet.c:3208
+#: gui2/ssheet.c:3192
 msgid "Build from formula"
 msgstr "Vytvořit ze vzorce"
 
-#: gui2/ssheet.c:3397
+#: gui2/ssheet.c:3381
 msgid "Define matrix"
 msgstr "Definovat matici"
 
-#: gui2/ssheet.c:3438
+#: gui2/ssheet.c:3422
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr "Nebylo možné otevřít '%s'"
 
-#: gui2/ssheet.c:3459
+#: gui2/ssheet.c:3443
 msgid "You can't do this while editing the dataset"
 msgstr "Toto nelze udělat při upravování datového souboru"
 
@@ -13958,15 +13959,15 @@ msgstr "Průměr průměrů"
 msgid "%s, response = %s, treatment = %s:"
 msgstr "%s, reakce = %s, úprava = %s:"
 
-#: plugin/arma.c:2264 plugin/arma.c:2267
+#: plugin/arma.c:2267 plugin/arma.c:2270
 msgid "ARMA initialization"
 msgstr "ARMA inicializace"
 
-#: plugin/arma.c:2265
+#: plugin/arma.c:2268
 msgid "using nonlinear AR model"
 msgstr "za použití nelineárního AR modelu"
 
-#: plugin/arma.c:2268
+#: plugin/arma.c:2271
 msgid "using linear AR model"
 msgstr "za použití lineárního AR modelu"
 
@@ -14114,11 +14115,11 @@ msgstr "Výsledky regrese"
 msgid "Estimated Hurst exponent"
 msgstr "Odhadovaný Hurstův exponent"
 
-#: plugin/garch.c:630
+#: plugin/garch.c:635
 msgid "GARCH: p > 0 and q = 0: the model is unidentified"
 msgstr "GARCH: p > 0 a q = 0: model není identifikován"
 
-#: plugin/garch.c:637
+#: plugin/garch.c:642
 msgid "GARCH: p + q must be less than 6"
 msgstr "GARCH: p + q musí být menší než 6"
 
