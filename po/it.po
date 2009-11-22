@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-11-21 13:31-0500\n"
-"PO-Revision-Date: 2009-10-07 13:36+0200\n"
+"PO-Revision-Date: 2009-11-22 11:01+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -295,12 +295,9 @@ msgid "Comparison of Model %d and Model %d:\n"
 msgstr "Confronto tra il modello %d e il modello %d:\n"
 
 #: lib/src/compare.c:360
-#, fuzzy, c-format
+#, c-format
 msgid "Null hypothesis: the regression parameter is zero for %s"
-msgstr ""
-"\n"
-"  Ipotesi nulla: i parametri della regressione valgono zero per le "
-"variabili\n"
+msgstr "Ipotesi nulla: il parametro della regressione è zero per %s"
 
 #: lib/src/compare.c:367
 msgid ""
@@ -1385,9 +1382,9 @@ msgid "Cross-correlogram"
 msgstr "Correlogramma incrociato"
 
 #: lib/src/describe.c:3201
-#, fuzzy, c-format
+#, c-format
 msgid "Argument %d is a constant"
-msgstr "xcf: l'argomento %d è una costante"
+msgstr "L'argomento %d è una costante"
 
 #: lib/src/describe.c:3289
 #, c-format
@@ -3154,7 +3151,6 @@ msgid "iteration"
 msgstr "iterazione"
 
 #: lib/src/gretl_panel.c:3655
-#, fuzzy
 msgid "groupwise heteroskedasticity"
 msgstr "Eteroschedasticità di gruppo"
 
@@ -3871,9 +3867,9 @@ msgid "wrote %s\n"
 msgstr "scritto %s\n"
 
 #: lib/src/interact.c:4922 cli/gretlcli.c:630
-#, fuzzy, c-format
+#, c-format
 msgid "%s: command not available\n"
-msgstr "%s: spiacente, aiuto non disponibile.\n"
+msgstr "%s: comando non disponibile\n"
 
 #: lib/src/interact.c:4928
 #, c-format
@@ -5346,9 +5342,8 @@ msgid "z-score = %g, with two-tailed p-value %g\n"
 msgstr "Valore z = %g, con p-value a due code %g\n"
 
 #: lib/src/nonparam.c:854
-#, fuzzy
 msgid "Two-tailed p-value"
-msgstr "con p-value"
+msgstr "p-value a due code"
 
 #: lib/src/nonparam.c:862
 #, c-format
@@ -5364,14 +5359,12 @@ msgid "the median difference is zero"
 msgstr "la differenza mediana è zero"
 
 #: lib/src/nonparam.c:982
-#, fuzzy
 msgid "zero differences"
-msgstr "Aggiungi differenze"
+msgstr "zero differenze"
 
 #: lib/src/nonparam.c:983
-#, fuzzy
 msgid "non-zero ties"
-msgstr "Proprietà"
+msgstr "non-zero pareggi"
 
 #: lib/src/nonparam.c:989
 msgid "Expected value"
@@ -5382,9 +5375,8 @@ msgid "Variance"
 msgstr "Varianza"
 
 #: lib/src/nonparam.c:1006 lib/src/nonparam.c:1130
-#, fuzzy
 msgid "Sample too small for statistical significance"
-msgstr "Il campione è troppo piccolo per calcolare l'esponente di Hurst"
+msgstr "Campione troppo piccolo per significatività statistica"
 
 #: lib/src/nonparam.c:1085
 msgid "Wilcoxon Rank-Sum Test"
@@ -7342,33 +7334,28 @@ msgid "x range"
 msgstr "Intervallo x"
 
 #: gui2/calculator.c:3171
-#, fuzzy
 msgid "normal CDF"
-msgstr "Normale"
+msgstr "FDR Normale"
 
 #: gui2/calculator.c:3172
-#, fuzzy
 msgid "logistic CDF"
-msgstr "Logistico"
+msgstr "FDR logistica"
 
 #: gui2/calculator.c:3248
-#, fuzzy
 msgid "gretl: plot CDF"
-msgstr "gretl: boxplot"
+msgstr "gretl: grafico FRD"
 
 #: gui2/calculator.c:3256
-#, fuzzy
 msgid "standard normal"
-msgstr "Normale standard"
+msgstr "normale standard"
 
 #: gui2/calculator.c:3264
-#, fuzzy
 msgid "logistic"
-msgstr "Logistico"
+msgstr "logistica"
 
 #: gui2/calculator.c:3272
 msgid "both CDFs"
-msgstr ""
+msgstr "entrambe le FDR"
 
 #: gui2/callbacks.c:285
 msgid "Sorry, this item not yet implemented!"
@@ -8277,30 +8264,28 @@ msgid "Seed for generator:"
 msgstr "Seme per il generatore:"
 
 #: gui2/dialogs.c:1238
-#, fuzzy
 msgid "gretl: iteration controls"
-msgstr "gretl: informazioni sulle iterazioni"
+msgstr "gretl: controlli sulle iterazioni"
 
 #: gui2/dialogs.c:1252
 msgid "BHHH maximizer"
-msgstr ""
+msgstr "Massimizzatore BHHH"
 
 #: gui2/dialogs.c:1253
 msgid "BFGS maximizer"
-msgstr ""
+msgstr "Massimizzatore BFGS"
 
 #: gui2/dialogs.c:1261
-#, fuzzy
 msgid "Maximum iterations:"
-msgstr "Raggiunto il massimo numero di iterazioni, %d"
+msgstr "Iterazioni massime:"
 
 #: gui2/dialogs.c:1272
 msgid "Convergence tolerance:"
-msgstr ""
+msgstr "Tolleranza per la convergenza:"
 
 #: gui2/dialogs.c:1295
 msgid "Use L-BFGS-B, memory size:"
-msgstr ""
+msgstr "Usa L-BFGS-B, dimensione della memoria:"
 
 #: gui2/dialogs.c:1537
 #, c-format
@@ -9784,9 +9769,8 @@ msgid "_Distribution graphs"
 msgstr "_Grafici distribuzione"
 
 #: gui2/gretl.c:1342
-#, fuzzy
 msgid "_CDF graphs"
-msgstr "_Grafici"
+msgstr "Grafici _FDR"
 
 #: gui2/gretl.c:1343
 msgid "_Plot a curve"
@@ -10690,9 +10674,8 @@ msgid "_Modify model..."
 msgstr "_Modifica modello..."
 
 #: gui2/gui_utils.c:181
-#, fuzzy
 msgid "_Restore model sample"
-msgstr "Usa nomi dei modelli"
+msgstr "_Ripristina campione del modello"
 
 #: gui2/gui_utils.c:183 gui2/gui_utils.c:312
 msgid "_Tests"
@@ -12689,9 +12672,8 @@ msgid "Parameter covariance matrix via Hessian"
 msgstr "Matrice di covarianza dei parametri Hessiana"
 
 #: gui2/selector.c:4344
-#, fuzzy
 msgid "Difference the independent variables"
-msgstr "Media della variabile dipendente"
+msgstr "Differenzia le variabili indipendenti"
 
 #: gui2/selector.c:4348
 msgid "Use X-12-ARIMA"
