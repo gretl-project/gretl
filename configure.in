@@ -289,6 +289,9 @@ AC_CHECK_SIZEOF(int)
 AC_TYPE_SIGNAL 
 AC_C_BIGENDIAN 
 
+AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
+AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
+
 dnl try to build mailer plugin?
 AC_CHECK_HEADERS(netdb.h sys/socket.h,
 	build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),
@@ -404,6 +407,8 @@ dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then
   CARBONLIB="-Wl,-framework -Wl,Carbon"
   AC_SUBST(CARBONLIB)
+  DARWIN_LIBNAME="-Wl,-install_name -Wl,@executable_path/../lib/libgretl.dylib"
+  AC_SUBST(DARWIN_LIBNAME)
 fi
 
 dnl

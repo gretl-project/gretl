@@ -9,6 +9,7 @@ CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
+HOSTCC = @HOSTCC@
 have_gtk = @have_gtk@
 build_po = @build_po@
 build_doc = @build_docs@

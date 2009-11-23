@@ -3,6 +3,8 @@ prefix = @prefix@
 
 CC = @CC@
 CFLAGS = @CFLAGS@
+AR = @AR@
+RANLIB = @RANLIB@
 MAKE = @MAKE@
 XML_CFLAGS = @XML_CFLAGS@
 GTK_CFLAGS = @GTK_CFLAGS@
@@ -43,12 +45,9 @@ OBJS = $(SRCS:.c=.o)
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-LIB = libgtksourceview-lite.a
-
-all: $(LIB)
-
-$(LIB): .deps $(OBJS) $(REGEX_OBJ)
-	ar -rs $@ $(OBJS) $(REGEX_OBJ)
+libgtksourceview-lite.a: .deps $(OBJS) $(REGEX_OBJ)
+	$(AR) -rs $@ $(OBJS) $(REGEX_OBJ)
+	$(RANLIB) $@
 
 regex.o: regex.c
 	$(CC) -c $(RX_CFLAGS) $<
@@ -59,7 +58,7 @@ regex.o: regex.c
 -include .deps/*.d
 
 clean:
-	rm -f *.o $(LIB)
+	rm -f *.o libgtksourceview-lite.a
 	rm -rf .deps
 
 
