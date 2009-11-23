@@ -3220,15 +3220,8 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 	snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
 		 src, fname, print_time(tstr));
     } else {
-	gchar *trfname;
-	gsize b = 0;
-
-	trfname = g_locale_to_utf8(fname, -1, NULL, &b, NULL);
-	if (trfname != NULL) {
-	    snprintf(note, NOTELEN-1, "Data imported from %s file '%s', %s\n",
-		     src, trfname, print_time(tstr));
-	    g_free(trfname);
-	}
+	snprintf(note, NOTELEN-1, "Data imported from %s, %s\n",
+		 src, print_time(tstr));
     }
 
     if (*note != '\0') {
@@ -3247,4 +3240,3 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 	}
     }
 }
-
