@@ -700,6 +700,15 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 	gtk_text_buffer_get_end_iter(buf, &ins);
     }
 
+    if (key->keyval == GDK_Home && (mods & GDK_SHIFT_MASK)) {
+	/* "select to start of line" */
+	GtkTextIter start = ins;
+
+	gtk_text_iter_set_line_index(&start, 2);	
+	gtk_text_buffer_select_range(buf, &start, &ins);
+	return TRUE;
+    }
+
     if (IS_BACKKEY(key->keyval)) {
 	/* if we're at the start of the input line, block backspacing */
 	if (gtk_text_iter_get_line_index(&ins) < 3) {
