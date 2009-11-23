@@ -53,9 +53,9 @@ GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
 
 plugindir = $(libdir)/gretl-gtk2
-GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell pkg-config --cflags glib-2.0)
-GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(shell pkg-config --cflags glib-2.0)
-GRETL_ZIP_LIBS := $(shell pkg-config --libs glib-2.0) -lz
+GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(GLIB_CFLAGS)
+GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
+GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
 
 SRCS = excel_import.c \
 	fiml.c \
