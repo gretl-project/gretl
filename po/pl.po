@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.8.4cvs
+# Polish translation for gretl-1.8.5cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2009
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2009
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.8.4\n"
+"Project-Id-Version: gretl-1.8.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-11-21 13:31-0500\n"
-"PO-Revision-Date: 2009-10-04 12:00-0400\n"
+"PO-Revision-Date: 2009-11-22 23:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -295,12 +295,9 @@ msgid "Comparison of Model %d and Model %d:\n"
 msgstr "Porównanie Modelu %d z Modelem %d:\n"
 
 #: lib/src/compare.c:360
-#, fuzzy, c-format
+#, c-format
 msgid "Null hypothesis: the regression parameter is zero for %s"
-msgstr ""
-"\n"
-"  Hipoteza zerowa: parametry regresji dla wskazanych zmiennych są równe "
-"zero\n"
+msgstr "Hipoteza zerowa: parametr regresji jest równy zero dla %s"
 
 #: lib/src/compare.c:367
 msgid ""
@@ -1386,9 +1383,9 @@ msgid "Cross-correlogram"
 msgstr "Korelogram wzajemny"
 
 #: lib/src/describe.c:3201
-#, fuzzy, c-format
+#, c-format
 msgid "Argument %d is a constant"
-msgstr "xcf: argument %d jest stały"
+msgstr "Argument %d jest stały"
 
 #: lib/src/describe.c:3289
 #, c-format
@@ -2144,7 +2141,7 @@ msgstr "kwadraty reszt z modelu %d"
 #: lib/src/genfuncs.c:1852
 #, c-format
 msgid "fitted variance from model %d"
-msgstr "wariancja wartości wyrównanych z modelu %d"
+msgstr "wariancja warunkowa z modelu %d"
 
 #: lib/src/genfuncs.c:1859
 #, c-format
@@ -3148,9 +3145,8 @@ msgid "iteration"
 msgstr "iteracja"
 
 #: lib/src/gretl_panel.c:3655
-#, fuzzy
 msgid "groupwise heteroskedasticity"
-msgstr "Groupwise heteroskedasticity"
+msgstr "groupwise heteroskedasticity"
 
 #: lib/src/gretl_panel.c:4143
 #, c-format
@@ -3861,9 +3857,9 @@ msgid "wrote %s\n"
 msgstr "zapisano %s\n"
 
 #: lib/src/interact.c:4922 cli/gretlcli.c:630
-#, fuzzy, c-format
+#, c-format
 msgid "%s: command not available\n"
-msgstr "%s: sorry, brak pomocy.\n"
+msgstr "%s: niedostępne polecenie\n"
 
 #: lib/src/interact.c:4928
 #, c-format
@@ -5326,9 +5322,8 @@ msgid "z-score = %g, with two-tailed p-value %g\n"
 msgstr "test z-score = %g, przy dwustronym obszarze krytycznym p = %g\n"
 
 #: lib/src/nonparam.c:854
-#, fuzzy
 msgid "Two-tailed p-value"
-msgstr "z wartością p"
+msgstr "dwustronna wartość p"
 
 #: lib/src/nonparam.c:862
 #, c-format
@@ -5344,14 +5339,12 @@ msgid "the median difference is zero"
 msgstr "Mediana różnice jest równa zero"
 
 #: lib/src/nonparam.c:982
-#, fuzzy
 msgid "zero differences"
-msgstr "Dodaj różnice"
+msgstr "zerowe różnice"
 
 #: lib/src/nonparam.c:983
-#, fuzzy
 msgid "non-zero ties"
-msgstr "Własności"
+msgstr "niezerowe pary"
 
 #: lib/src/nonparam.c:989
 msgid "Expected value"
@@ -5362,9 +5355,8 @@ msgid "Variance"
 msgstr "Wariancja"
 
 #: lib/src/nonparam.c:1006 lib/src/nonparam.c:1130
-#, fuzzy
 msgid "Sample too small for statistical significance"
-msgstr "Próba jest zbyt mała dla wyznaczenia wykładnika Hursta"
+msgstr "Próba jest zbyt mała dla wyznaczenia istotności statystyki"
 
 #: lib/src/nonparam.c:1085
 msgid "Wilcoxon Rank-Sum Test"
@@ -7323,33 +7315,28 @@ msgid "x range"
 msgstr "x maksimum"
 
 #: gui2/calculator.c:3171
-#, fuzzy
-msgid "normal CDF"
-msgstr "normalny"
+msgid "normalny CDF"
+msgstr "dystrybuanta rozkładu normalnego"
 
 #: gui2/calculator.c:3172
-#, fuzzy
 msgid "logistic CDF"
-msgstr "Logistic"
+msgstr "dystrybuanta rozkładu logistycznego"
 
 #: gui2/calculator.c:3248
-#, fuzzy
 msgid "gretl: plot CDF"
-msgstr "gretl: wykres pudełkowy"
+msgstr "gretl: wykres CDF (Cumulative Distribution Function)"
 
 #: gui2/calculator.c:3256
-#, fuzzy
 msgid "standard normal"
-msgstr "Rozkład normalny"
+msgstr "dystrybuanta rozkładu normalnego"
 
 #: gui2/calculator.c:3264
-#, fuzzy
 msgid "logistic"
-msgstr "Logistic"
+msgstr "dystrybuanta rozkładu logistycznego"
 
 #: gui2/calculator.c:3272
 msgid "both CDFs"
-msgstr ""
+msgstr "wspólny wykres obu dystrybuant (CDF)"
 
 #: gui2/callbacks.c:285
 msgid "Sorry, this item not yet implemented!"
@@ -8256,30 +8243,28 @@ msgid "Seed for generator:"
 msgstr "Ziarno generatora:"
 
 #: gui2/dialogs.c:1238
-#, fuzzy
 msgid "gretl: iteration controls"
 msgstr "gretl: informacjie o iteracjach"
 
 #: gui2/dialogs.c:1252
 msgid "BHHH maximizer"
-msgstr ""
+msgstr "BHHH maximizer"
 
 #: gui2/dialogs.c:1253
 msgid "BFGS maximizer"
-msgstr ""
+msgstr "BFGS maximizer"
 
 #: gui2/dialogs.c:1261
-#, fuzzy
 msgid "Maximum iterations:"
-msgstr "Zakres maksymalnej liczby iteracji, %d"
+msgstr "Maksymalna liczba iteracji:"
 
 #: gui2/dialogs.c:1272
 msgid "Convergence tolerance:"
-msgstr ""
+msgstr "Parametr zbieżności, tolerancja:"
 
 #: gui2/dialogs.c:1295
 msgid "Use L-BFGS-B, memory size:"
-msgstr ""
+msgstr "Wykorzystano L-BFGS-B, rozmiar pamięci:"
 
 #: gui2/dialogs.c:1537
 #, c-format
@@ -9759,9 +9744,8 @@ msgid "_Distribution graphs"
 msgstr "_Wykresy rozkładów"
 
 #: gui2/gretl.c:1342
-#, fuzzy
 msgid "_CDF graphs"
-msgstr "_Wykresy"
+msgstr "Wykresy dystrybuant _CDF"
 
 #: gui2/gretl.c:1343
 msgid "_Plot a curve"
@@ -10664,9 +10648,8 @@ msgid "_Modify model..."
 msgstr "_Modyfikacja specyfikacji modelu..."
 
 #: gui2/gui_utils.c:181
-#, fuzzy
 msgid "_Restore model sample"
-msgstr "Wykorzystywane nazwy modeli"
+msgstr "_Odtwórz próbę modelu"
 
 #: gui2/gui_utils.c:183 gui2/gui_utils.c:312
 msgid "_Tests"
@@ -11000,7 +10983,7 @@ msgstr "Kryterium Informacyjne Hannana-Quinna"
 
 #: gui2/gui_utils.c:2169
 msgid "_Predicted error variance"
-msgstr "_Wariancja błędu predyktora"
+msgstr "_Wariancja warunkowa"
 
 #: gui2/gui_utils.c:2175
 msgid "Per-unit _constants"
@@ -12652,9 +12635,8 @@ msgid "Parameter covariance matrix via Hessian"
 msgstr "Parametr macierzy kowariancji via Hessian"
 
 #: gui2/selector.c:4344
-#, fuzzy
 msgid "Difference the independent variables"
-msgstr "Średnia arytmetyczna zm. zależnej"
+msgstr "Pierwsze różnice zmiennej zależnej"
 
 #: gui2/selector.c:4348
 msgid "Use X-12-ARIMA"
@@ -14810,42 +14792,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "This test is only available for panel data"
-#~ msgstr "Ten test stosowany jest tylko dla danych panelowych"
-
-#~ msgid "based on the FGLS residuals"
-#~ msgstr "bazuje na resztach FGLS"
-
-#~ msgid "gretl: scalar"
-#~ msgstr "gretl: skalar"
-
-#~ msgid ""
-#~ "Enter name, or name=value,\n"
-#~ "for new scalar"
-#~ msgstr ""
-#~ "Wprowadź nazwę lub nazwa=wartość\n"
-#~ "dla nowego skalaru"
-
-#~ msgid "gretl: edit scalars"
-#~ msgstr "gretl: edycja skalarów"
-
-#~ msgid ""
-#~ "No scalar variable are currently defined.\n"
-#~ "Add one now?"
-#~ msgstr ""
-#~ "Brak zdefiniowanych skalarów.\n"
-#~ "Czy chcesz dodać teraz?"
-
-#~ msgid "gretl: name scalar"
-#~ msgstr "gretl: definiowanie nowego skalaru"
-
-#~ msgid ""
-#~ "Enter name for new scalar\n"
-#~ "(max. 15 characters)"
-#~ msgstr ""
-#~ "Wprowadź nazwę nowego skalara\n"
-#~ "(maksymalnie 15 znaków)"
-
-#~ msgid "configure"
-#~ msgstr "konfiguracja"
