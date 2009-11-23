@@ -2314,6 +2314,8 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 	gui_errmsg(err);
 	delete_from_filelist(FILE_LIST_WDIR, tmp);
     } else {
+	/* sync with "local copy" */
+	strcpy(paths.workdir, gretl_workdir());
 	mkfilelist(FILE_LIST_WDIR, tmp);
     }
 
