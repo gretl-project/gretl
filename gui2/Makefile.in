@@ -80,6 +80,10 @@ ifeq ($(USE_NLS),yes)
   NLSDEF = -DLOCALEDIR=\"$(localedir)\"
 endif
 
+ifeq ($(MKLANG),) 
+  MKLANG = mklang
+endif
+
 DEFS = $(NLSDEF) $(GNOMEDEF)
 
 override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) \
@@ -172,7 +176,7 @@ mklang: mklang.o
 mklang.o: mklang.c $(topsrc)/lib/src/options.c $(topsrc)/lib/src/genlex.c $(topsrc)/lib/src/gretl_commands.c
 	$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
 
-$(GRETL_LANG): mklang
+$(GRETL_LANG): $(MKLANG)
 	./mklang $(LANGOPT) > $@
 
 $(GTKSOURCEVIEW_LITE):
