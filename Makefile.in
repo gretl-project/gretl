@@ -17,6 +17,10 @@ ifeq ($(CC),)
   CC = gcc
 endif
 
+ifeq ($(HOSTCC),)
+  HOSTCC = $(CC)
+endif
+
 ifeq ($(have_gtk),2.0)
   GUIDIR = gui2
 endif
@@ -76,7 +80,7 @@ tags:
 	$(topsrc)/plugin/rq/*.[ch]
 
 builddate: $(topsrc)/builddate.c
-	$(CC) -o $@ $<
+	$(HOSTCC) -o $@ $<
 
 buildstamp: builddate
 	./builddate
