@@ -3,9 +3,9 @@ prefix = @prefix@
 
 CC = @CC@
 CFLAGS = @CFLAGS@
+MAKE = @MAKE@
 AR = @AR@
 RANLIB = @RANLIB@
-MAKE = @MAKE@
 XML_CFLAGS = @XML_CFLAGS@
 GTK_CFLAGS = @GTK_CFLAGS@
 RX_CFLAGS = @CFLAGS@ -I$(topsrc)/gui2/gtksourceview
@@ -18,6 +18,8 @@ else
 endif
 
 DATADIR = $(prefix)/share/gretl
+
+LIBTOOL = ../../libtool
 
 VPATH = $(topsrc)/gui2/gtksourceview:$(topsrc)/gui2/gtksourceview/gnu-regex
 

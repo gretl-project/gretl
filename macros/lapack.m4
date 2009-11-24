@@ -11,7 +11,7 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
 AC_ARG_VAR([LAPACK_LIBS],[linker flags for lapack, overriding auto-detection])
 
   if test x$lapack_config_prefix = x ; then
-     lapack_config_prefix="/usr"
+     lapack_config_prefix="/usr/lib"
   fi
 
   lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
@@ -32,7 +32,7 @@ AC_ARG_VAR([LAPACK_LIBS],[linker flags for lapack, overriding auto-detection])
 
   AC_MSG_CHECKING(for LAPACK)
   if test x"${LAPACK_LIBS}" = x ; then  
-     LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas $FLIB"
+     LAPACK_LIBS="-L$lapack_config_prefix -llapack -lblas $FLIB"
   fi
 
   ac_save_CFLAGS="$CFLAGS"
