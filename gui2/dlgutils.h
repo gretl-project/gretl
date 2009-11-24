@@ -38,6 +38,10 @@ struct combo_opts_ {
     const char **strs;
 };
 
+extern GtkWidget *active_edit_id;
+extern GtkWidget *active_edit_name;
+extern GtkWidget *active_edit_text;
+
 typedef struct combo_opts_ combo_opts;
 
 void set_window_busy (windata_t *vwin);

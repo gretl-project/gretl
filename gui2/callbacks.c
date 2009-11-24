@@ -34,11 +34,6 @@
 
 #include "boxplots.h"
 
-/* these live in dialogs.c */
-extern GtkWidget *active_edit_id;
-extern GtkWidget *active_edit_name;
-extern GtkWidget *active_edit_text;
-
 static void doubleclick_action (windata_t *vwin)
 {
     switch (vwin->role) {

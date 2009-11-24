@@ -24,11 +24,6 @@
 #include "datafiles.h"
 #include "dlgutils.h"
 
-/* these live in dialogs.c */
-extern GtkWidget *active_edit_id; 
-extern GtkWidget *active_edit_name;
-extern GtkWidget *active_edit_text;
-
 /* special comparator which always preserves "const" (variable 0) in
    the first position when sorting variables by name */
 
