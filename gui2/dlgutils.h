@@ -38,9 +38,11 @@ struct combo_opts_ {
     const char **strs;
 };
 
-extern GtkWidget *active_edit_id;
-extern GtkWidget *active_edit_name;
-extern GtkWidget *active_edit_text;
+GtkWidget *get_active_edit_id (void);
+
+GtkWidget *get_active_edit_name (void);
+
+GtkWidget *get_active_edit_text (void);
 
 typedef struct combo_opts_ combo_opts;
 

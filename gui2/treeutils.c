@@ -197,6 +197,9 @@ static void my_gtk_entry_append_text (GtkEntry *entry, gchar *add)
 
 static void update_dialogs_from_varclick (int active_var)
 {
+    GtkWidget *active_edit_id = get_active_edit_id();
+    GtkWidget *active_edit_name = get_active_edit_name();
+    GtkWidget *active_edit_text = get_active_edit_text();
     const gchar *edttext;
 
     if (active_edit_id != NULL) {

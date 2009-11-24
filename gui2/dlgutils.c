@@ -457,9 +457,24 @@ GtkWidget *gretl_option_check_button_switched (const char *label,
 
 /* "edit dialog" apparatus */
 
-GtkWidget *active_edit_id;
-GtkWidget *active_edit_name;
-GtkWidget *active_edit_text;
+static GtkWidget *active_edit_id;
+static GtkWidget *active_edit_name;
+static GtkWidget *active_edit_text;
+
+GtkWidget *get_active_edit_id (void)
+{
+    return active_edit_id;
+}
+
+GtkWidget *get_active_edit_name (void)
+{
+    return active_edit_name;
+}
+
+GtkWidget *get_active_edit_text (void)
+{
+    return active_edit_text;
+}
 
 struct dialog_t_ {
     GtkWidget *dialog;
