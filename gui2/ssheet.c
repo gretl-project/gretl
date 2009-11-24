@@ -508,9 +508,11 @@ static void sheet_text_cell_edited (GtkCellRendererText *cell,
 				    const gchar *user_text,
 				    Spreadsheet *sheet)
 {
-    int err;
+    int err = 0;
 
-    err = gui_validate_varname_strict(user_text, GRETL_TYPE_DOUBLE);
+    if (*user_text != '\0') {
+	err = gui_validate_varname_strict(user_text, GRETL_TYPE_DOUBLE);
+    }
 
     if (err) {
 	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
@@ -2153,7 +2155,7 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 		const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
 		gchar *pathstr = gtk_tree_path_to_string(oldpath);
 
-#if 1 || CELLDEBUG
+#if CELLDEBUG
 		fprintf(stderr, "click: calling sheet_cell_edited\n");
 #endif
 		cell_edited_callback(oldcol, pathstr, txt, sheet);
@@ -2167,11 +2169,12 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 				      (gint) bevent->y,
 				      &path, &column,
 				      NULL, NULL);
+
 	if (path != NULL && column != NULL) {
 	    gint colnum = get_treeview_column_number(column);
 
 #if CELLDEBUG
-	    fprintf(stderr, "Clicked column: colnum = %d\n", colnum);
+	    fprintf(stderr, "*** Clicked column: colnum = %d\n", colnum);
 #endif
 
 	    if (colnum == 0 && !editing_scalars(sheet)) {
