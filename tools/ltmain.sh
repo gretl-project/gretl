@@ -5938,8 +5938,6 @@ func_mode_link ()
 		  eval libdir=`${SED} -n -e 's/^libdir=\(.*\)$/\1/p' $deplib`
 		  test -z "$libdir" && \
 		    func_fatal_error "\`$deplib' is not a valid libtool archive"
-		  test "$absdir" != "$libdir" && \
-		    func_warning "\`$deplib' seems to be moved"
 
 		  path="-L$absdir"
 		fi

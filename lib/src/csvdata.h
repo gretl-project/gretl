@@ -27,6 +27,7 @@
                              !strcmp(s, "N/A") || \
 			     !strcmp(s, "#N/A") || \
                              !strcmp(s, "NaN") || \
+                             !strcmp(s, ".NaN") || \
                              !strcmp(s, ".") || \
                              !strcmp(s, "..") || \
                              !strcmp(s, "-999") || \
