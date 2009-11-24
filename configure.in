@@ -407,9 +407,13 @@ dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then
   CARBONLIB="-Wl,-framework -Wl,Carbon"
   AC_SUBST(CARBONLIB)
-  DARWIN_LIBNAME="-Wl,-install_name -Wl,@executable_path/../lib/libgretl.dylib"
-  AC_SUBST(DARWIN_LIBNAME)
+  if test -z "$HOSTCC"; then
+    XDARWIN_LIBNAME="-Wl,-install_name -Wl,@executable_path/../lib/libgretl-1.0.dylib"
+    AC_SUBST(XDARWIN_LIBNAME)
+  fi
 fi
+
+
 
 dnl
 dnl Check for FLITE?
