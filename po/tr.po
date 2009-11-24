@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-11-21 13:31-0500\n"
-"PO-Revision-Date: 2009-10-31 17:11+0200\n"
+"PO-Revision-Date: 2009-11-24 09:38+0200\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -1369,10 +1369,9 @@ msgstr "%s ile gecikmeli %s arası ilinti"
 msgid "Cross-correlogram"
 msgstr "Çapraz-ilintiçizit"
 
-#: lib/src/describe.c:3201
-#, fuzzy, c-format
+#: lib/src/describe.c:3201, c-format
 msgid "Argument %d is a constant"
-msgstr "xcf: %d argümanı bir sabit"
+msgstr "Argüman %d bir sabit"
 
 #: lib/src/describe.c:3289
 #, c-format
@@ -3126,7 +3125,6 @@ msgid "iteration"
 msgstr "yineleme"
 
 #: lib/src/gretl_panel.c:3655
-#, fuzzy
 msgid "groupwise heteroskedasticity"
 msgstr "kümeli farklıserpilimsellik"
 
@@ -5299,9 +5297,8 @@ msgid "z-score = %g, with two-tailed p-value %g\n"
 msgstr "z-değeri = %g (çift-kuyruk p-değeri = %g)\n"
 
 #: lib/src/nonparam.c:854
-#, fuzzy
 msgid "Two-tailed p-value"
-msgstr "p-değeri"
+msgstr "Çift-kuyruk p-değeri"
 
 #: lib/src/nonparam.c:862
 #, c-format
@@ -5317,14 +5314,12 @@ msgid "the median difference is zero"
 msgstr "ortanca farkı sıfırdır"
 
 #: lib/src/nonparam.c:982
-#, fuzzy
 msgid "zero differences"
-msgstr "Fark ekle"
+msgstr "sıfır farklar"
 
 #: lib/src/nonparam.c:983
-#, fuzzy
 msgid "non-zero ties"
-msgstr "Özellikler"
+msgstr "sıfır-dışı eşit kalmalar"
 
 #: lib/src/nonparam.c:989
 msgid "Expected value"
@@ -5335,9 +5330,8 @@ msgid "Variance"
 msgstr "Varyans"
 
 #: lib/src/nonparam.c:1006 lib/src/nonparam.c:1130
-#, fuzzy
 msgid "Sample too small for statistical significance"
-msgstr "Örneklem, Hurst üstü için aşırı küçük"
+msgstr "İstatistiksel anlamlılık için örneklem çok küçük"
 
 #: lib/src/nonparam.c:1085
 msgid "Wilcoxon Rank-Sum Test"
@@ -7289,33 +7283,28 @@ msgid "x range"
 msgstr "x aralığı"
 
 #: gui2/calculator.c:3171
-#, fuzzy
 msgid "normal CDF"
-msgstr "normal"
+msgstr "normal YDİ"
 
 #: gui2/calculator.c:3172
-#, fuzzy
 msgid "logistic CDF"
-msgstr "lojistik"
+msgstr "lojistik YDİ"
 
 #: gui2/calculator.c:3248
-#, fuzzy
 msgid "gretl: plot CDF"
-msgstr "gretl: kutu çizimi"
+msgstr "gretl: YDİ çizimleri"
 
 #: gui2/calculator.c:3256
-#, fuzzy
 msgid "standard normal"
-msgstr "Ölçünlü normal"
+msgstr "ölçünlü normal"
 
 #: gui2/calculator.c:3264
-#, fuzzy
 msgid "logistic"
 msgstr "lojistik"
 
 #: gui2/calculator.c:3272
 msgid "both CDFs"
-msgstr ""
+msgstr "her iki yığınsal"
 
 #: gui2/callbacks.c:285
 msgid "Sorry, this item not yet implemented!"
@@ -9723,13 +9712,12 @@ msgid "_Distribution graphs"
 msgstr "_Dağılım çizimleri"
 
 #: gui2/gretl.c:1342
-#, fuzzy
 msgid "_CDF graphs"
-msgstr "_Çizimler"
+msgstr "_Yığınsal dağılım çizimleri"
 
 #: gui2/gretl.c:1343
 msgid "_Plot a curve"
-msgstr "_Bir eğri çiz"
+msgstr "_Bir eğri çizdir"
 
 #: gui2/gretl.c:1344
 msgid "_Test statistic calculator"
