@@ -1,4 +1,4 @@
-version 1.8.6, in progress
+11/25/2009 version 1.8.6
 
 ARIMAX models (i.e. ARIMA models with non-zero order of 
 integration and including exogenous regressors): we now

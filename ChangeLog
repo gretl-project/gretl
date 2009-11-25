@@ -1,4 +1,4 @@
-version 1.8.6, in progress
+11/25/2008 version 1.8.6
 - Fix bug: the "print" command for series fails after 
   exiting a loop with the --progressive option set
 - ARIMAX models: follow the practice of most software
