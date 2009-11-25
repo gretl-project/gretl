@@ -829,7 +829,7 @@ ODBC_LIBS
 ODBC_CFLAGS
 FLITE_LIBS
 FLITE_CFLAGS
-XDARWIN_LIBNAME
+DARWIN_RPATH
 CARBONLIB
 FLIB
 LAPACK_CFLAGS
@@ -17945,10 +17945,8 @@ esac
 if test "$darwin_build" = "yes" ; then
   CARBONLIB="-Wl,-framework -Wl,Carbon"
 
-  if test "x$HOSTCC" != "x" ; then
-    XDARWIN_LIBNAME="-Wl,-install_name -Wl,@executable_path/../lib/libgretl-1.0.dylib"
+  DARWIN_RPATH="@executable_path/../lib"
 
-  fi
 fi
 
 if test "$have_audio" = "yes" ; then

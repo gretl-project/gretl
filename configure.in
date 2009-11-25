@@ -409,7 +409,6 @@ if test "$darwin_build" = "yes" ; then
   AC_SUBST(CARBONLIB)
   DARWIN_RPATH="@executable_path/../lib"
   AC_SUBST(DARWIN_RPATH)
-  fi
 fi
 
 dnl
