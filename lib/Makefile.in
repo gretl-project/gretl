@@ -243,8 +243,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(RPATH) $(LIBS) $(XDARWIN_LIBNAME) \
-	-version-info $(CURRENT):$(REVISION):$(AGE)
+	-rpath $(RPATH) $(LIBS) -version-info $(CURRENT):$(REVISION):$(AGE)
 
 .deps:
 	mkdir $@
