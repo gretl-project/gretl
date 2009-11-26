@@ -20,8 +20,8 @@ $TOOL -id ${NEWPATH}/libgretl-1.0.0.dylib lib/libgretl-1.0.0.dylib
 $TOOL -id ${NEWPATH}/libgmp.3.dylib lib/libgmp.3.dylib
 $TOOL -id ${NEWPATH}/libmpfr.1.dylib lib/libmpfr.1.dylib
 $TOOL -id ${NEWPATH}/libreadline.5.2.dylib lib/libreadline.5.2.dylib
-if [ -f lib/libfftw3.dylib ] ; then
-  $TOOL -id ${NEWPATH}/libfftw3.dylib lib/libfftw3.dylib
+if [ -f lib/libfftw3.3.dylib ] ; then
+  $TOOL -id ${NEWPATH}/libfftw3.3.dylib lib/libfftw3.3.dylib
 fi
 
 # change install names copied into executables
@@ -32,16 +32,16 @@ $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib bin/gretl_x11
 $TOOL -change ${AUXPATH}/libreadline.5.2.dylib ${NEWPATH}/libreadline.5.2.dylib bin/gretlcli
 $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib lib/libgretl-1.0.0.dylib
 $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib lib/libmpfr.1.dylib
-if [ -f lib/libfftw3.dylib ] ; then
-  $TOOL -change ${AUXPATH}/libfftw3.dylib ${NEWPATH}/libfftw3.dylib lib/libgretl-1.0.0.dylib
-  $TOOL -change ${AUXPATH}/libfftw3.dylib ${NEWPATH}/libfftw3.dylib bin/gretlcli
-  $TOOL -change ${AUXPATH}/libfftw3.dylib ${NEWPATH}/libfftw3.dylib bin/gretl_x11
+if [ -f lib/libfftw3.3.dylib ] ; then
+  $TOOL -change ${AUXPATH}/libfftw3.3.dylib ${NEWPATH}/libfftw3.3.dylib lib/libgretl-1.0.0.dylib
+  $TOOL -change ${AUXPATH}/libfftw3.3.dylib ${NEWPATH}/libfftw3.3.dylib bin/gretlcli
+  $TOOL -change ${AUXPATH}/libfftw3.3.dylib ${NEWPATH}/libfftw3.3.dylib bin/gretl_x11
 fi
 
 # fix paths in plugins
 for d in lib/gretl-gtk2/*.so ; do
    $TOOL -change ${AUXPATH}/libgmp.3.dylib ${NEWPATH}/libgmp.3.dylib $d
-   $TOOL -change ${AUXPATH}/libfftw3.dylib ${NEWPATH}/libfftw3.dylib $d
+   $TOOL -change ${AUXPATH}/libfftw3.3.dylib ${NEWPATH}/libfftw3.3.dylib $d
    $TOOL -change ${SRCPATH}/libgretl-1.0.0.dylib ${NEWPATH}/libgretl-1.0.0.dylib $d
 done
 
