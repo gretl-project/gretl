@@ -1,30 +1,25 @@
 #!/bin/sh
 
+# the directory above the source tree
 parent=/home/cottrell/stats/esl
 
-version=$(cat ${parent}/gretl/lib/src/version.h | grep GRETL_VERSION[^_] | \
-     awk '{ print $NF}' | sed s/[\"\;]//g)
-tarfile="gretl-${version}.tar.bz2"
-topdir=/home/cottrell/stats/esl/gretl
+version=$(grep GRETL_VERSION[^_] ${parent}/gretl/lib/src/version.h | \
+          awk '{ print $NF}' | sed s/[\"\;]//g)
+versiondir=gretl-${version}	  
+tarfile="${versiondir}.tar.bz2"
 
 echo "making dist file for gretl $version using filename $tarfile"
 
 # make time stamp
-cd ${topdir} && date > share/gretl.stamp
+cd ${parent}/gretl && date > share/gretl.stamp
 
 # make the archive and remove the dist dir
 cd $parent 
 echo "making archive..."
-for f in `find gretl/gui -type l` ; do
-   rm $f
-done
-make -C gretl/doc/tex clean
-rm -f gretl/share/*.txt
-
-mv gretl gretl-${version}
+mv gretl ${versiondir}
 rm -f $tarfile 
-tar cvjfX $tarfile tar_exclude gretl-${version}
-mv gretl-${version} gretl
+tar cvjfX $tarfile tar_exclude ${versiondir}
+mv ${versiondir} gretl
 
 
 

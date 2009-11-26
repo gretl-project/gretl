@@ -1,8 +1,0 @@
-#!/bin/sh
-
-for f in `grep -l $1 *.{c,h}` ; do
-   echo $f
-   cp -ap $f $f.bak
-   cat $f | sed s/$1/$2/g > $f.new
-   mv $f.new $f
-done   
