@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-11-21 13:31-0500\n"
-"PO-Revision-Date: 2009-11-02 13:55+0100\n"
+"PO-Revision-Date: 2009-11-26 14:09+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
-"Language-Team: Español <kde-i18n-doc@kde.org>\n"
+"Language-Team: Español <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1381,10 +1381,9 @@ msgstr "Correlaciones entre %s y %s retardada"
 msgid "Cross-correlogram"
 msgstr "Correlograma cruzado"
 
-#: lib/src/describe.c:3201
-#, fuzzy, c-format
+#: lib/src/describe.c:3201, c-format
 msgid "Argument %d is a constant"
-msgstr "xcf: el argumento %d es una constante"
+msgstr "El argumento %d es una constante"
 
 #: lib/src/describe.c:3289
 #, c-format
@@ -3152,7 +3151,6 @@ msgid "iteration"
 msgstr "iteración"
 
 #: lib/src/gretl_panel.c:3655
-#, fuzzy
 msgid "groupwise heteroskedasticity"
 msgstr "Heterocedasticidad por grupos"
 
@@ -5357,9 +5355,8 @@ msgid "z-score = %g, with two-tailed p-value %g\n"
 msgstr "valor z = %g, con valor p a dos colas %g\n"
 
 #: lib/src/nonparam.c:854
-#, fuzzy
 msgid "Two-tailed p-value"
-msgstr "con valor p "
+msgstr "Valor p a dos colas"
 
 #: lib/src/nonparam.c:862
 #, c-format
@@ -5375,14 +5372,12 @@ msgid "the median difference is zero"
 msgstr "la diferencia de medianas es cero"
 
 #: lib/src/nonparam.c:982
-#, fuzzy
 msgid "zero differences"
-msgstr "Añadir diferencias"
+msgstr "cero diferencias"
 
 #: lib/src/nonparam.c:983
-#, fuzzy
 msgid "non-zero ties"
-msgstr "Propiedades"
+msgstr "nudos no-cero"
 
 #: lib/src/nonparam.c:989
 msgid "Expected value"
@@ -5393,9 +5388,9 @@ msgid "Variance"
 msgstr "Varianza"
 
 #: lib/src/nonparam.c:1006 lib/src/nonparam.c:1130
-#, fuzzy
 msgid "Sample too small for statistical significance"
-msgstr "La muestra es demasiado pequeña para calcular el exponente de Hurst"
+msgstr ""
+"La muestra es demasiado pequeña para obtener significatividad estadística"
 
 #: lib/src/nonparam.c:1085
 msgid "Wilcoxon Rank-Sum Test"
@@ -7359,33 +7354,28 @@ msgid "x range"
 msgstr "dominio de x"
 
 #: gui2/calculator.c:3171
-#, fuzzy
 msgid "normal CDF"
-msgstr "normal"
+msgstr "FDA normal"
 
 #: gui2/calculator.c:3172
-#, fuzzy
 msgid "logistic CDF"
-msgstr "Logística"
+msgstr "FDA logística"
 
 #: gui2/calculator.c:3248
-#, fuzzy
 msgid "gretl: plot CDF"
-msgstr "gretl: gráficos de caja (boxplots)"
+msgstr "gretl: representar la FDA"
 
 #: gui2/calculator.c:3256
-#, fuzzy
 msgid "standard normal"
-msgstr "Normal estándar"
+msgstr "normal estándar"
 
 #: gui2/calculator.c:3264
-#, fuzzy
 msgid "logistic"
-msgstr "Logística"
+msgstr "logística"
 
 #: gui2/calculator.c:3272
 msgid "both CDFs"
-msgstr ""
+msgstr "ambas FDAs"
 
 #: gui2/callbacks.c:285
 msgid "Sorry, this item not yet implemented!"
@@ -9798,9 +9788,8 @@ msgid "_Distribution graphs"
 msgstr "Gráficos de _distribuciones"
 
 #: gui2/gretl.c:1342
-#, fuzzy
 msgid "_CDF graphs"
-msgstr "_Gráficos"
+msgstr "Gráficos de las FDAs"
 
 #: gui2/gretl.c:1343
 msgid "_Plot a curve"
