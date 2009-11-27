@@ -6620,6 +6620,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_MISSZERO:
     case F_ZEROMISS:
+    case F_MISSING:	
 	/* one series or scalar argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = apply_series_func(l, t->t, p);
@@ -6629,7 +6630,6 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, VEC, l, p);
 	}
 	break;
-    case F_MISSING:	
     case F_DATAOK:
 	/* series, scalar or list argument needed */
 	if (l->t == VEC) {
