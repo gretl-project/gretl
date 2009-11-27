@@ -1704,6 +1704,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 
     if (*err) {
 	gretl_matrix_free(B);
+	B = NULL;
 	if (newU) gretl_matrix_free(U);
 	if (newV) gretl_matrix_free(V);
     } else {
