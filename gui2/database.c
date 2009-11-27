@@ -109,22 +109,6 @@ static void set_time_series (DATAINFO *pdinfo)
     }
 }
 
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-typedef struct {
-    long frac;
-    short exp;
-} netfloat;
-
-float retrieve_float (netfloat nf)
-{
-    short exp = ntohs(nf.exp);
-    long frac = ntohl(nf.frac);
-    double receive = frac / 10e6;
-    
-    return ldexp(receive, exp);
-}
-#endif
-
 void show_network_error (windata_t *vwin)
 {
     const char *msg = gretl_errmsg_get();

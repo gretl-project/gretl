@@ -96,11 +96,6 @@ static char db_name[MAXLEN];
 static int db_type;
 
 #if WORDS_BIGENDIAN
-typedef struct {
-    long frac;
-    short exp;
-} netfloat;
-
 float retrieve_float (netfloat nf)
 {
     short exp = ntohs(nf.exp);

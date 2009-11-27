@@ -77,6 +77,15 @@ struct ODBC_info_ {
     int ncols;
 };
 
+#if WORDS_BIGENDIAN
+typedef struct {
+    long frac;
+    short exp;
+} netfloat;
+
+float retrieve_float (netfloat nf);
+#endif
+
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z);
 
