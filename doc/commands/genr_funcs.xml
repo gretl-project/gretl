@@ -2871,13 +2871,18 @@
 
     <function name="missing" section="data-utils" output="asinput">
       <fnargs>
-	<fnarg type="scalar-or-series">x</fnarg>
+	<fnarg type="sslist">x</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns a binary variable holding 1 if <argname>x</argname> is
-	  <lit>NA</lit>. If <argname>x</argname> is a series, the
-	  comparison is done element by element. 
+	  <lit>NA</lit>. If <argname>x</argname> is a series, the comparison
+	  is done element by element; if <argname>x</argname> is a list of
+	  series, the output is a series with 1 at observations for which
+	  at least one series in the list has a missing value, and 0
+	  otherwise.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="misszero"/>
 	    <fncref targ="ok"/>
@@ -3395,11 +3400,11 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a binary variable holding 1 if <math>x</math> is not
-	  <lit>NA</lit>. If <math>x</math> is a series, the comparison is
-	  done element by element. If <math>x</math> is a list of series,
-	  the output is a series with 0 at the observations for which at
-	  least one series in the list is missing, and 1 otherwise.
+	  Returns a binary variable holding 1 if <argname>x</argname> is not
+	  <lit>NA</lit>. If <argname>x</argname> is a series, the comparison
+	  is done element by element. If <argname>x</argname> is a list of
+	  series, the output is a series with 0 at observations for which at
+	  least one series in the list has a missing value, and 1 otherwise.
 	</para>
 	<para>
 	  <seelist>

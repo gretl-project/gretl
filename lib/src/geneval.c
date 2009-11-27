@@ -3196,7 +3196,7 @@ static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
 
 /* check for missing obs in a list of variables */
 
-static NODE *list_ok_func (NODE *n, parser *p)
+static NODE *list_ok_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_vec_node(p, p->dinfo->n);
 
@@ -3211,11 +3211,11 @@ static NODE *list_ok_func (NODE *n, parser *p)
 	}
 
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    x = 1;
+	    x = (f == F_DATAOK)? 1 : 0;
 	    for (i=1; i<=list[0]; i++) {
 		v = list[i];
 		if (na((*p->Z)[v][t])) {
-		    x = 0;
+		    x = (f == F_DATAOK)? 0 : 1;
 		    break;
 		}
 	    }
@@ -6620,7 +6620,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_MISSZERO:
     case F_ZEROMISS:
-    case F_MISSING:	
 	/* one series or scalar argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = apply_series_func(l, t->t, p);
@@ -6630,6 +6629,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, VEC, l, p);
 	}
 	break;
+    case F_MISSING:	
     case F_DATAOK:
 	/* series, scalar or list argument needed */
 	if (l->t == VEC) {
@@ -6637,7 +6637,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
 	} else if (ok_list_node(l)) {
-	    ret = list_ok_func(l, p);
+	    ret = list_ok_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 1, VEC, l, p);
 	}
