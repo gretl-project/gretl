@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-11-21 13:31-0500\n"
-"PO-Revision-Date: 2009-11-21 20:38+0100\n"
+"PO-Revision-Date: 2009-11-27 11:00+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at no spam) gmx (dot no spam) net>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -5919,7 +5919,7 @@ msgstr "die Mediandifferenz ist Null"
 
 #: lib/src/nonparam.c:982
 msgid "zero differences"
-msgstr "keine Differenzen"
+msgstr "Null-Differenzen"
 
 #: lib/src/nonparam.c:983
 msgid "non-zero ties"
