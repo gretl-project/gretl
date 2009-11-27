@@ -135,7 +135,10 @@
     </menu>
     <menu action='View'>
       <menuitem action='IconView'/>
-      <menuitem action='EditScalars'/>
+      <separator/>
+      <menu action='Windows'>
+	<menuitem action='EditScalars'/>
+      </menu>
       <separator/>
       <menu action='GraphVars'>
 	<menuitem action='TSPlot'/>

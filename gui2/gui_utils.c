@@ -1770,7 +1770,6 @@ windata_t *console_window (int hsize, int vsize)
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
-    /* ?? */
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
     gtk_widget_show(vwin->vbox);

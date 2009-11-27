@@ -21,6 +21,8 @@
 #include "var.h"
 #include "winstack.h"
 
+#define WDEBUG 0
+
 /* Below: Keep a record of (most) windows that are open, so they can
    be destroyed en masse when a new data file is opened, to prevent
    weirdness that could arise if (e.g.) a model window that pertains
@@ -38,6 +40,7 @@ enum winstack_codes {
     STACK_QUERY,
     STACK_MATCH_FNAME,
     STACK_MATCH_FNAME_MOD,
+    STACK_MATCH_VWIN,
     STACK_MAXVAR
 };
 
@@ -104,10 +107,11 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
     case STACK_DESTROY:	
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] != NULL) {
-#if 0
+#if WDEBUG
 		fprintf(stderr, "winstack: destroying widget at %p\n", 
 			(void *) wstack[i]);
 #endif
+		remove_window_list_item(wstack[i]);
 		gtk_widget_destroy(wstack[i]);
 	    }
 	}
@@ -142,6 +146,7 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] == w) {
 		wstack[i] = NULL;
+		ret = 1;
 		break;
 	    }
 	}
@@ -159,6 +164,15 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
 		    ret = 1;
 		    break;
 		}
+	    }
+	}
+	break;
+
+    case STACK_MATCH_VWIN:
+	for (i=0; i<n_windows; i++) {
+	    if (wstack[i] == ptest) {
+		ret = 1;
+		break;
 	    }
 	}
 	break;
@@ -208,6 +222,11 @@ int winstack_match_data (const gpointer p)
     return winstack(STACK_QUERY, NULL, p, NULL);
 }
 
+int vwin_on_stack (const windata_t *vwin)
+{
+    return winstack(STACK_MATCH_VWIN, NULL, vwin->main, NULL);
+}
+
 GtkWidget *match_window_by_data (const gpointer p)
 {
     GtkWidget *w = NULL;
@@ -239,12 +258,22 @@ int highest_numbered_variable_in_winstack (void)
 
 void winstack_add (GtkWidget *w)
 {
+#if WDEBUG
+    fprintf(stderr, "winstack add: %p (%s)\n", (void *) w,
+	    gtk_window_get_title(GTK_WINDOW(w)));
+#endif
     winstack(STACK_ADD, w, NULL, NULL);
+    add_window_list_item(w);
 }
 
 void winstack_remove (GtkWidget *w)
 {
+#if WDEBUG
+    fprintf(stderr, "winstack remove: %p (%s)\n", (void *) w,
+	    gtk_window_get_title(GTK_WINDOW(w)));    
+#endif
     winstack(STACK_REMOVE, w, NULL, NULL);
+    remove_window_list_item(w);
 }
 
 static void windata_init (windata_t *vwin, int role, gpointer data)
@@ -290,11 +319,15 @@ windata_t *gretl_viewer_new (int role, const gchar *title,
     g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
 
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+
     if (record) {
 	g_object_set_data(G_OBJECT(vwin->main), "object", data);
 	g_object_set_data(G_OBJECT(vwin->main), "role", 
 			  GINT_TO_POINTER(vwin->role));
 	winstack_add(vwin->main);
+    } else {
+	add_window_list_item(vwin->main);
     }
 
     return vwin;
@@ -320,7 +353,9 @@ windata_t *gretl_browser_new (int role, const gchar *title, int record)
 	winstack_add(vwin->main);
 	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(free_windata), vwin);
-    }	
+    } else {
+	add_window_list_item(vwin->main);
+    }
 
     return vwin;
 }

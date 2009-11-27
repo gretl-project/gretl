@@ -2714,6 +2714,8 @@ static void gretl_child_destroy (GtkWidget *w, CalcChild *child)
 	free(dist);	
     } 
 
+    remove_window_list_item(w);
+
     free(child);
 }
 
@@ -3001,6 +3003,7 @@ static void real_stats_calculator (int code, gpointer data)
     }
 
     gtk_widget_show_all(child->dlg);
+    add_window_list_item(child->dlg);
 }
 
 /* for gnuplot: convert '^' to '**' for exonentiation */

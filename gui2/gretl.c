@@ -1382,6 +1382,7 @@ GtkActionEntry main_entries[] = {
     { "View", NULL, N_("_View"), NULL, NULL, NULL },
     { "IconView", NULL, N_("_Icon view"), NULL, NULL, G_CALLBACK(iconview_callback) },
     { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },
+    { "Windows", NULL, N_("_Windows"), NULL, NULL, NULL },
     { "GraphVars", NULL, N_("_Graph specified vars"), NULL, NULL, NULL },
     { "TSPlot", NULL, N_("_Time series plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "ScatterPlot", NULL, N_("X-Y _scatter..."), NULL, NULL, G_CALLBACK(selector_callback) },
@@ -1636,6 +1637,74 @@ static int set_up_main_menu (void)
     mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
 
     return 0;
+}
+
+static void gretl_window_raise (GtkAction *action, gpointer data)
+{
+    const gchar *s = gtk_action_get_name(action);
+    unsigned long lptr = strtoul(s, NULL, 16);
+    GtkWidget *wptr = (GtkWidget *) lptr;
+
+    if (GTK_IS_WINDOW(wptr)) {
+	gtk_window_present(GTK_WINDOW(wptr));
+    }
+}
+
+void add_window_list_item (GtkWidget *w)
+{
+    GtkActionEntry entry = { 
+	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
+    };
+    const gchar *s = gtk_window_get_title(GTK_WINDOW(w));
+    gchar *aname, *apath = NULL;
+    windata_t *vwin;
+    guint merge_id;
+
+    if (!strncmp(s, "gretl", 5)) {
+	s += 5;
+	s += strspn(s, " ");
+	if (*s == ':') {
+	    s++;
+	    s += strspn(s, " ");
+	}
+    }
+
+    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+
+    if (vwin != NULL) {
+	windata_t *parent = NULL;
+
+	if (vwin->gretl_parent != NULL) {
+	    parent = vwin->gretl_parent;
+	} else if (vwin->role == MODTEST && vwin->data != NULL) {
+	    parent = vwin->data;
+	}
+	if (parent != NULL && vwin_on_stack(parent)) {
+	    apath = g_strdup_printf("/menubar/View/Windows/%p", parent->main);
+	}
+    }
+
+    aname = g_strdup_printf("%p", (void *) w);
+    entry.name = aname;
+    entry.label = s;
+    merge_id = vwin_menu_add_item(mdata, 
+				  (apath != NULL)? apath : "/menubar/View/Windows", 
+				  &entry);
+    if (merge_id > 0) {
+	g_object_set_data(G_OBJECT(w), "merge_id", GINT_TO_POINTER(merge_id));
+    }
+
+    g_free(aname);
+    g_free(apath);
+}
+
+void remove_window_list_item (GtkWidget *w)
+{
+    guint merge_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "merge_id"));
+
+    if (merge_id > 0) {
+	gtk_ui_manager_remove_ui(mdata->ui, merge_id);
+    }
 }
 
 int gui_restore_sample (double ***pZ, DATAINFO *pdinfo)

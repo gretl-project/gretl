@@ -3652,6 +3652,18 @@ void close_plot_windows (void)
     g_list_foreach(plot_list, (GFunc) close_plot_window, NULL);
 }
 
+static void register_plot_window (GtkWidget *w)
+{
+    plot_list = g_list_append(plot_list, w);
+    add_window_list_item(w);
+}
+
+static void unregister_plot_window (GtkWidget *w)
+{
+    remove_window_list_item(w);
+    plot_list = g_list_remove(plot_list, w);
+}
+
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     /* delete temporary plot source file? */
@@ -3670,7 +3682,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	g_object_unref(plot->invert_gc);
     }
 
-    plot_list = g_list_remove(plot_list, plot->shell);
+    unregister_plot_window(plot->shell);
     g_object_unref(plot->shell);
 
     free(plot);
@@ -4222,8 +4234,8 @@ static int gnuplot_show_png (const char *plotfile, const char *name,
     }
 
     gtk_widget_show(vbox);
-    gtk_widget_show(plot->shell);   
-    plot_list = g_list_append(plot_list, plot->shell);
+    gtk_widget_show(plot->shell);  
+    register_plot_window(plot->shell);
 
     /* set the focus to the canvas area */
     gtk_widget_grab_focus(plot->canvas);  
