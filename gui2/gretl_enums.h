@@ -106,6 +106,8 @@ enum extra_cmds {
     GUI_CMD_MAX
 };
 
+#define HELP_ROLE(r) (r >= CLI_HELP && r <= FUNCS_HELP)
+
 enum file_ops {
     OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */
     OPEN_RATS_DB,
@@ -190,6 +192,8 @@ enum browser_codes {
     REMOTE_SERIES,
     MAINWIN
 };
+
+#define BROWSER_ROLE(r) (r >= TEXTBOOK_DATA && r < MAINWIN)
 
 enum pref_tabs {
     TAB_NONE = 0,

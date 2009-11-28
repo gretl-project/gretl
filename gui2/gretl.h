@@ -132,8 +132,9 @@ void clear_varlist (GtkWidget *widget);
 void mdata_select_last_var (void);
 int gui_restore_sample (double ***pZ, DATAINFO *pdinfo);
 
-void add_window_list_item (GtkWidget *w);
+void add_window_list_item (GtkWidget *w, int role);
 void remove_window_list_item (GtkWidget *w);
+void raise_main_window (void);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (void);

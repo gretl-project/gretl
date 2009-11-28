@@ -2367,6 +2367,16 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
+    item = gtk_separator_menu_item_new();
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+
+    item = gtk_menu_item_new_with_label(_("Main window"));
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(raise_main_window), NULL);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+
     return pmenu;
 }
 

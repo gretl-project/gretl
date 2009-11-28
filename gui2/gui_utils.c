@@ -1638,7 +1638,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gtk_widget_show(vwin->main);
 
     if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
-	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
@@ -1720,10 +1719,6 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
-    if (editable) {
-	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
-    }
-
     /* editing script or graph commands: grab the "changed" signal and
        set up alert for unsaved changes on exit */
     if (vwin_editing_script(role)) {
@@ -1769,8 +1764,6 @@ windata_t *console_window (int hsize, int vsize)
     /* catch some special keystrokes */
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
-
-    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
@@ -1868,7 +1861,6 @@ void view_window_set_editable (windata_t *vwin)
 {
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->text), TRUE);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), TRUE);
-    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
     vwin->role = EDIT_SCRIPT;

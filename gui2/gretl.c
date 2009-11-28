@@ -1381,8 +1381,6 @@ GtkActionEntry main_entries[] = {
     /* View */
     { "View", NULL, N_("_View"), NULL, NULL, NULL },
     { "IconView", NULL, N_("_Icon view"), NULL, NULL, G_CALLBACK(iconview_callback) },
-    { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },
-    { "Windows", NULL, N_("_Windows"), NULL, NULL, NULL },
     { "GraphVars", NULL, N_("_Graph specified vars"), NULL, NULL, NULL },
     { "TSPlot", NULL, N_("_Time series plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "ScatterPlot", NULL, N_("X-Y _scatter..."), NULL, NULL, G_CALLBACK(selector_callback) },
@@ -1531,6 +1529,10 @@ GtkActionEntry main_entries[] = {
     { "gmm", NULL, N_("_GMM..."), NULL, NULL, G_CALLBACK(gretl_callback) }, 
     { "system", NULL, N_("_Simultaneous equations..."), NULL, NULL, G_CALLBACK(gretl_callback) }, 
 
+    /* Windows */
+    { "Windows", NULL, N_("_Windows"), NULL, NULL, NULL },
+    { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },    
+
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
     { "TextCmdRef", GRETL_STOCK_BOOK, N_("_Command reference"), NULL, NULL, G_CALLBACK(plain_text_cmdref) },
@@ -1639,6 +1641,11 @@ static int set_up_main_menu (void)
     return 0;
 }
 
+void raise_main_window (void)
+{
+    gtk_window_present(GTK_WINDOW(mdata->main));
+}
+
 static void gretl_window_raise (GtkAction *action, gpointer data)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -1650,7 +1657,50 @@ static void gretl_window_raise (GtkAction *action, gpointer data)
     }
 }
 
-void add_window_list_item (GtkWidget *w)
+static const gchar *window_list_icon (int role)
+{
+    const gchar *id = NULL;
+
+    if (role == VIEW_MODEL) {
+	id = GRETL_STOCK_MODEL;
+    } else if (role == CONSOLE) {
+	id = GRETL_STOCK_CONSOLE;
+    } else if (role == EDIT_SCRIPT || 
+	       role == EDIT_PKG_CODE ||
+	       role == EDIT_PKG_SAMPLE) {
+	id = GTK_STOCK_EDIT;
+    } else if (role == GNUPLOT) {
+	id = GRETL_STOCK_SCATTER;
+    } else if (BROWSER_ROLE(role)) {
+	id = GTK_STOCK_INDEX;
+    } else if (HELP_ROLE(role)) {
+	id = GRETL_STOCK_BOOK;
+    } else if (role == STAT_TABLE) {
+	id = GRETL_STOCK_CALC;
+    }
+
+    return id;
+}
+
+static windata_t *get_parent_viewer (windata_t *vwin)
+{
+    windata_t *parent = NULL;
+
+    if (vwin->gretl_parent != NULL) {
+	parent = vwin->gretl_parent;
+    } else if (vwin->role == MODTEST && vwin->data != NULL) {
+	parent = vwin->data;
+    }
+
+    if (parent != NULL && !vwin_on_stack(parent)) {
+	/* shouldn't happen, but... */
+	parent = NULL;
+    }
+
+    return parent;
+}
+
+void add_window_list_item (GtkWidget *w, int role)
 {
     GtkActionEntry entry = { 
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
@@ -1672,23 +1722,19 @@ void add_window_list_item (GtkWidget *w)
     vwin = g_object_get_data(G_OBJECT(w), "vwin");
 
     if (vwin != NULL) {
-	windata_t *parent = NULL;
+	windata_t *parent = get_parent_viewer(vwin);
 
-	if (vwin->gretl_parent != NULL) {
-	    parent = vwin->gretl_parent;
-	} else if (vwin->role == MODTEST && vwin->data != NULL) {
-	    parent = vwin->data;
-	}
-	if (parent != NULL && vwin_on_stack(parent)) {
-	    apath = g_strdup_printf("/menubar/View/Windows/%p", parent->main);
+	if (parent != NULL) {
+	    apath = g_strdup_printf("/menubar/Windows/%p", parent->main);
 	}
     }
 
     aname = g_strdup_printf("%p", (void *) w);
     entry.name = aname;
+    entry.stock_id = window_list_icon(role);
     entry.label = s;
     merge_id = vwin_menu_add_item(mdata, 
-				  (apath != NULL)? apath : "/menubar/View/Windows", 
+				  (apath != NULL)? apath : "/menubar/Windows", 
 				  &entry);
     if (merge_id > 0) {
 	g_object_set_data(G_OBJECT(w), "merge_id", GINT_TO_POINTER(merge_id));

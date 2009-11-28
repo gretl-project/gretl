@@ -20,12 +20,6 @@
 #ifndef TEXTBUF_H
 #define TEXTBUF_H
 
-#define help_role(r) (r == CLI_HELP || \
-                      r == GUI_HELP || \
-                      r == CLI_HELP_EN || \
-                      r == GUI_HELP_EN || \
-                      r == FUNCS_HELP)
-
 extern int tabwidth;
 extern int smarttab;
 

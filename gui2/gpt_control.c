@@ -3655,7 +3655,7 @@ void close_plot_windows (void)
 static void register_plot_window (GtkWidget *w)
 {
     plot_list = g_list_append(plot_list, w);
-    add_window_list_item(w);
+    add_window_list_item(w, GNUPLOT);
 }
 
 static void unregister_plot_window (GtkWidget *w)

@@ -263,7 +263,6 @@ void winstack_add (GtkWidget *w)
 	    gtk_window_get_title(GTK_WINDOW(w)));
 #endif
     winstack(STACK_ADD, w, NULL, NULL);
-    add_window_list_item(w);
 }
 
 void winstack_remove (GtkWidget *w)
@@ -326,9 +325,9 @@ windata_t *gretl_viewer_new (int role, const gchar *title,
 	g_object_set_data(G_OBJECT(vwin->main), "role", 
 			  GINT_TO_POINTER(vwin->role));
 	winstack_add(vwin->main);
-    } else {
-	add_window_list_item(vwin->main);
-    }
+    } 
+
+    add_window_list_item(vwin->main, role);
 
     return vwin;
 }
@@ -353,9 +352,9 @@ windata_t *gretl_browser_new (int role, const gchar *title, int record)
 	winstack_add(vwin->main);
 	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(free_windata), vwin);
-    } else {
-	add_window_list_item(vwin->main);
-    }
+    } 
+
+    add_window_list_item(vwin->main, role);
 
     return vwin;
 }

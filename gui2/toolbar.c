@@ -899,6 +899,9 @@ GtkWidget *build_text_popup (windata_t *vwin)
 
     for (i=0; i<n_viewbar_items; i++) {
 	item = &viewbar_items[i];
+	if (item->flag == SPLIT_ITEM) {
+	    continue;
+	}
 	if (vwin->role == EDIT_SCRIPT) {
 	    /* the script editor popup may have some special stuff
 	       added: don't clutter it up */
@@ -925,6 +928,18 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    gtk_widget_show(w);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
 	}
+    }
+
+    if (vwin->role != EDIT_SCRIPT) {
+	w =  gtk_separator_menu_item_new();
+	gtk_widget_show(w);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
+
+	w = gtk_menu_item_new_with_label(_("Main window"));
+	g_signal_connect(G_OBJECT(w), "activate", 
+			 G_CALLBACK(raise_main_window), NULL);
+	gtk_widget_show(w);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
     }
 
     return pmenu;

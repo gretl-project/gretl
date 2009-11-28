@@ -2375,6 +2375,8 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
     if (editing_scalars(sheet)) {
 	scalars_sheet = NULL;
 	set_scalar_edit_callback(NULL);
+    } else {
+	remove_window_list_item(sheet->win);
     }
 
     free(sheet);
@@ -2398,6 +2400,8 @@ static void free_matrix_sheet (GtkWidget *widget, Spreadsheet *sheet)
 	/* delete the copied matrix */
 	gretl_matrix_free(sheet->matrix);
     }
+
+    remove_window_list_item(sheet->win);
 
     free(sheet);
 }
@@ -2918,6 +2922,10 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     select_first_editable_cell(sheet);
 
     gtk_widget_show(sheet->win);
+    
+    if (c != SHEET_EDIT_SCALARS) {
+	add_window_list_item(sheet->win, 0);
+    }
 
     if (c != SHEET_EDIT_MATRIX && c != SHEET_EDIT_SCALARS) {
 	/* we can't have the user making confounding changes elsewhere,

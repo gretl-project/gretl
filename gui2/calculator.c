@@ -3003,7 +3003,7 @@ static void real_stats_calculator (int code, gpointer data)
     }
 
     gtk_widget_show_all(child->dlg);
-    add_window_list_item(child->dlg);
+    add_window_list_item(child->dlg, STAT_TABLE);
 }
 
 /* for gnuplot: convert '^' to '**' for exonentiation */

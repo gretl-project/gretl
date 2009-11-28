@@ -334,6 +334,7 @@ static void finfo_save_callback (GtkWidget *w, function_info *finfo)
 
 static void finfo_destroy (GtkWidget *w, function_info *finfo)
 {
+    remove_window_list_item(finfo->dlg);
     finfo_free(finfo);
 }
 
@@ -1159,6 +1160,7 @@ static void finfo_dialog (function_info *finfo)
     finfo_set_modified(finfo, finfo->fname == NULL);
 
     gtk_widget_show_all(finfo->dlg);
+    add_window_list_item(finfo->dlg, SAVE_FUNCTIONS);
 }
 
 static void web_get_login (GtkWidget *w, gpointer p)
