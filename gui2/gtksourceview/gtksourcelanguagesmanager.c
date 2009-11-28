@@ -453,6 +453,7 @@ gtk_source_languages_manager_get_language_from_mime_type (GtkSourceLanguagesMana
 
 		while (tmp != NULL)
 		{
+		    fprintf(stderr, "tmp->data = '%s'\n", tmp->data);
 			if (strcmp ((const gchar*)tmp->data, mime_type) == 0)
 			{		
 				break;
