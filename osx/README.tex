@@ -18,7 +18,7 @@
 
 \begin{center}
 {\color{gold} \titlefont gretl} \\[1ex]
-version 1.7.5 for Mac OS X \\[2ex]
+version 1.8.6 for Mac OS X \\[2ex]
 
 \textit{GNU Regression, Econometrics and Time-series Library\\
   This is free software under the GNU General Public License.}
@@ -28,9 +28,15 @@ version 1.7.5 for Mac OS X \\[2ex]
 \section{Installation}
 \label{sec:install}
 
-After downloading the gretl disk image to your desktop, double-click
-it to open. Then drag \textsf{Gretl} to somewhere suitable on your
-system (such as your \textsf{Applications} folder or Desktop).
+\textsf{Gretl} is distributed either as a plain disk-image file
+(with extension \texttt{.dmg}) or a gzipped disk-image
+(\texttt{.dmg.gz}).  If it is gzipped, double-click to unzip it
+first.  Once you have a \texttt{.dmg} file, double-click to
+mount the image, and open the image in the Finder.
+Then drag \textsf{Gretl} to somewhere suitable on your
+system (preferably your \textsf{Applications} folder).  Once that
+is done, you can eject the disk image and delete the \texttt{.dmg}
+file (and the \texttt{.dmg.gz} file, if applicable).
 
 To run gretl, double-click on the gretl program icon.  You can drag
 this icon onto the dock if you want a quick launcher.
@@ -38,47 +44,41 @@ this icon onto the dock if you want a quick launcher.
 \section{System requirements}
 \label{sec:os}
 
-This gretl package was built on Mac OS X v10.4.11 (``Tiger'').  I'm not
-able to to test it on earlier versions of OS X; it may work on 10.3
-but will almost certainly will not work on any Mac operating system
-prior to 10.3.
+This gretl package was tested on Mac OS X v10.4.11 (``Tiger'').  
+Hopefully it will work on later releases of OS X but it will
+probably not work on earlier releases.
 
 The package requires Apple's version of the X11 window system, which
-is available as an optional install from the Tiger distribution DVD.
+is available as an optional install from the OS X distribution DVD.
+It also requires the GTK+ Framework, which can be found at either
+of the following locations:
 
-The package does \textit{not} depend on third-party enhancements for
-OS X such as \textsf{Fink}.
+\url{http://r.research.att.com/gtk2-framework.dmg} 
 
-\section{Font problems?}
-\label{sec:fonts}
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg}
 
-If gretl will not start at all, or if it starts but fonts are missing
-or font selection doesn't work (you should be able to select fonts
-under the ``Preferences'' item on the File menu) try this fix:
-
-\begin{enumerate}
-\item Open a Terminal window.
-\item Type the command \texttt{sudo fc-cache}
-\item Hit the Enter key, then enter your password if prompted.
-\item If you see something like \texttt{fc-cache: not found} then
-   X11 is not installed (properly); otherwise the X11 font cache
-   should be created/updated.
-\item Restart gretl.
-\end{enumerate}
-
-\section{Other problems?}
+\section{Trouble-shooting}
 
 If double-clicking on the gretl icon doesn't work for you, try
 starting X11, opening an xterm, navigating into the \textsf{bin}
-folder inside \textsf{Gretl.app}, and executing \textsf{gretl}
-manually.  That is, do something like:
+folder inside \textsf{Gretl.app}, and executing 
+\textsf{gretl} manually.  That is, do something like:
 
 \begin{verbatim}
-cd Gretl.app/Contents/Resources/bin
+cd /Applications/Gretl.app/Contents/Resources/bin
 ./gretl
 \end{verbatim}
 
 Hopefully this will give you an informative error message.
+
+If you are updating from a previous installation of gretl, it
+is possible that your recorded user preferences may be out of
+sync with current gretl.  The fix for that is to delete
+your old preferences file.  In an xterm window, do:
+
+\begin{verbatim}
+rm -f ~/.gretl2rc
+\end{verbatim}
 
 \section{Documentation}
 \label{sec:doc}
@@ -92,7 +92,7 @@ documentation in various formats.
 Allin Cottrell \\
 Wake Forest University \\
 \texttt{cottrell@wfu.edu} \\
-June, 2008
+November, 2009
 
 \end{document}
 
