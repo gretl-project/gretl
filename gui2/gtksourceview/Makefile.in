@@ -5,7 +5,6 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 AR = @AR@
-RANLIB = @RANLIB@
 XML_CFLAGS = @XML_CFLAGS@
 GTK_CFLAGS = @GTK_CFLAGS@
 RX_CFLAGS = @CFLAGS@ -I$(topsrc)/gui2/gtksourceview
@@ -49,7 +48,6 @@ OBJS = $(SRCS:.c=.o)
 
 libgtksourceview-lite.a: .deps $(OBJS) $(REGEX_OBJ)
 	$(AR) -rs $@ $(OBJS) $(REGEX_OBJ)
-	$(RANLIB) $@
 
 regex.o: regex.c
 	$(CC) -c $(RX_CFLAGS) $<

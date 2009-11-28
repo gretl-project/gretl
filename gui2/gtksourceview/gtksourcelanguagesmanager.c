@@ -346,6 +346,10 @@ gtk_source_languages_manager_get_lang_files_dirs (GtkSourceLanguagesManager *lm)
 {
 	g_return_val_if_fail (GTK_IS_SOURCE_LANGUAGES_MANAGER (lm), NULL);
 
+	if (lm->priv->language_specs_directories == NULL) {
+	    g_warning ("get_lang_files_dirs: got NULL\n");
+	}
+
 	return lm->priv->language_specs_directories;
 }
 
@@ -435,6 +439,10 @@ gtk_source_languages_manager_get_language_from_mime_type (GtkSourceLanguagesMana
 
 	languages = gtk_source_languages_manager_get_available_languages (lm);
 
+	if (languages == NULL) {
+	    g_warning ("get_language_from_mime_type: languages = NULL\n");
+	}
+
 	while (languages != NULL)
 	{
 		GSList *mime_types, *tmp;
@@ -479,6 +487,10 @@ get_lang_files (GtkSourceLanguagesManager *lm)
 						filenames);
 
 		dirs = g_slist_next (dirs);
+	}
+
+	if (filenames == NULL) {
+	    g_warning ("get_lang_files: got NULL\n");
 	}
 
 	return filenames;
