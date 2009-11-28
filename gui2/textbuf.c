@@ -424,6 +424,7 @@ static void sourceview_apply_language (windata_t *vwin)
     }
 
     lang = gtk_source_language_manager_get_language(lm, id);
+
     if (lang == NULL) {
 	fprintf(stderr, "*** gtksourceview: lang is NULL for id='%s'\n", id);
     } else {
@@ -452,7 +453,9 @@ static void sourceview_apply_language (windata_t *vwin)
     }
 
     lang = gtk_source_languages_manager_get_language_from_mime_type(lm, mtype);
+
     if (lang == NULL) {
+	fprintf(stderr, "*** gtksourceview: lang is NULL for mtype='%s'\n", mtype);
 	g_object_set(G_OBJECT(vwin->sbuf), "highlight", FALSE, NULL);
     } else {
 	g_object_set(G_OBJECT(vwin->sbuf), "highlight", TRUE, NULL);
