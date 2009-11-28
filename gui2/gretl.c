@@ -240,7 +240,7 @@ char Rcommand[MAXSTR] = "RGui.exe";
 char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "pdflatex";
 char viewdvi[MAXSTR] = "xdvi";
-char Rcommand[MAXSTR] = "xterm -e R";
+char Rcommand[MAXSTR] = "/usr/X11R6/bin/xterm -e R";
 #else
 char Browser[MAXSTR] = "mozilla";
 char calculator[MAXSTR] = "xcalc";
