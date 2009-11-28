@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 # include <netinet/in.h>
 #endif
 
@@ -95,7 +95,7 @@ typedef struct {
 static char db_name[MAXLEN];
 static int db_type;
 
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 float retrieve_float (netfloat nf)
 {
     short exp = ntohs(nf.exp);
@@ -181,11 +181,11 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
     int v = sinfo->v;
     dbnumber x;
     size_t offset;
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
     netfloat nf;
 #endif
 
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
 				  GRAB_NBO_DATA);
 #else
@@ -202,7 +202,7 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
 
     offset = 0L;
     for (t=sinfo->t1; t<=t2; t++) {
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 	/* go via network byte order */
 	memcpy(&(nf.frac), getbuf + offset, sizeof nf.frac);
 	offset += sizeof nf.frac;
@@ -242,7 +242,7 @@ int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 	    err = E_DATA;
 	    break;
 	}
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 	reverse_double(x);
 #endif
 	if (x == -9999.99 || isnan(x)) {
@@ -1201,7 +1201,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 	fread(&rdata, sizeof rdata, 1, fp);
 	for (i=0; i<31 && t<T; i++) {
 	    x = rdata.data[i];
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 	    reverse_double(x);
 #endif
 	    if (isnan(x)) {

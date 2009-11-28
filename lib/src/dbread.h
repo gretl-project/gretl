@@ -77,7 +77,7 @@ struct ODBC_info_ {
     int ncols;
 };
 
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 typedef struct {
     long frac;
     short exp;
