@@ -8,8 +8,6 @@ void gretl_set_window_quasi_modal (GtkWidget *w);
 
 void flip (GtkUIManager *ui, const char *path, gboolean s);
 
-void edit_info_state (gboolean s);
-void add_remove_markers_state (gboolean s);
 void variable_menu_state (gboolean s);
 void main_menubar_state (gboolean s);
 void time_series_menu_state (gboolean s);

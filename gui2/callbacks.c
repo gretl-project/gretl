@@ -280,28 +280,6 @@ void dummy_call (void)
     errbox(_("Sorry, this item not yet implemented!"));
 }
 
-void print_report (GtkAction *action)
-{
-    PRN *prn;
-
-    if (bufopen(&prn)) return;
-
-    data_report(datainfo, datafile, prn);
-
-    view_buffer(prn, 77, 400, _("gretl: data summary"), 
-		DATA_REPORT, NULL);
-}
-
-void edit_header (GtkAction *action)
-{
-    if (data_status & BOOK_DATA) {
-	errbox(_("You don't have permission to do this"));
-    } else { 
-	edit_buffer(&datainfo->descrip, 80, 400, _("gretl: edit data info"),
-		    EDIT_HEADER);
-    }
-}
-
 static int model_action_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);

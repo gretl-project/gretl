@@ -21,10 +21,6 @@ void fsave_callback (GtkAction *action, gpointer p);
 
 void dummy_call (void);
 
-void print_report (GtkAction *action);
-
-void edit_header (GtkAction *action);
-
 void fit_resid_callback (GtkAction *action, gpointer data);
 
 void model_stat_callback (GtkAction *action, gpointer data);

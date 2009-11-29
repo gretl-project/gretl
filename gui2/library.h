@@ -89,7 +89,7 @@ void count_missing (void);
 
 void do_add_markers (const char *fname);
 
-void do_remove_markers (void);
+void add_or_remove_markers (void);
 
 int dataset_is_restricted (void);
 
@@ -279,7 +279,7 @@ void display_var (void);
 
 void do_open_script (int action);
 
-void open_info (void);
+void dataset_info (void);
 
 void do_new_script (int code);
 

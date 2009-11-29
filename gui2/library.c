@@ -1175,16 +1175,17 @@ int do_xcorrgm (selector *sr)
     return err;
 }
 
-void open_info (void)
+void dataset_info (void)
 {
     if (datainfo->descrip == NULL) {
 	if (yes_no_dialog(_("gretl: add info"), 
 			  _("The data file contains no informative comments.\n"
 			    "Would you like to add some now?"), 
 			  0) == GRETL_YES) {
-	    edit_header(NULL);
+	    edit_buffer(&datainfo->descrip, 80, 400, _("gretl: edit data info"),
+			EDIT_HEADER);
 	}
-    } else {
+    } else if (data_status & BOOK_DATA) {
 	char *buf = g_strdup(datainfo->descrip);
 	PRN *prn;
 	
@@ -1192,7 +1193,10 @@ void open_info (void)
 	    prn = gretl_print_new_with_buffer(buf);
 	    view_buffer(prn, 80, 400, _("gretl: data info"), INFO, NULL);
 	}
-    }
+    } else {
+	edit_buffer(&datainfo->descrip, 80, 400, _("gretl: edit data info"),
+		    EDIT_HEADER);
+    }	
 }
 
 void gui_errmsg (int errcode)
@@ -1347,15 +1351,27 @@ void do_add_markers (const char *fname)
 	gui_errmsg(err);
     } else {
 	mark_dataset_as_modified();
-	add_remove_markers_state(TRUE);
     }
 }
 
-void do_remove_markers (void) 
+void add_or_remove_markers (void) 
 {
-    dataset_destroy_obs_markers(datainfo);
-    mark_dataset_as_modified();
-    add_remove_markers_state(FALSE);
+    if (datainfo->S != NULL) {
+	/* we have markers in place */
+	if (yes_no_dialog(_("gretl"), 
+			  _("Really remove the observation markers?"),
+			  0) == GRETL_YES) {
+	    dataset_destroy_obs_markers(datainfo);
+	    mark_dataset_as_modified();
+	}
+    } else {
+	if (yes_no_dialog(_("gretl"),
+			  _("The dataset has no observation markers.\n"
+			    "Add some from file now?"),
+			  0) == GRETL_YES) {
+	    file_selector(OPEN_MARKERS, FSEL_DATA_NONE, NULL);
+	}
+    }
 }
 
 int out_of_sample_info (int add_ok, int *t2)
@@ -6696,7 +6712,6 @@ int do_store (char *savename, gretlopt opt)
 	if (is_gzipped(datafile)) {
 	    data_status |= GZIPPED_DATA;
 	} 
-	edit_info_state(TRUE);
 	set_sample_label(datainfo);	
     }
 

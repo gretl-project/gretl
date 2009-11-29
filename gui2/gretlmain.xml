@@ -119,11 +119,8 @@
       <menuitem action='AddObs'/>
       <menuitem action='RemoveObs'/>
       <separator/>
-      <menuitem action='ReadInfo'/>
-      <menuitem action='EditInfo'/>
-      <menuitem action='PrintReport'/>
-      <menuitem action='AddMarkers'/>
-      <menuitem action='RemoveMarkers'/>
+      <menuitem action='DataInfo'/>
+      <menuitem action='DataMarkers'/>
       <separator/>
       <menuitem action='DataStructure'/>
       <menuitem action='DataCompact'/>

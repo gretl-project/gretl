@@ -193,8 +193,7 @@ static char *scalars_items[] = {
 };
 
 static char *info_items[] = {
-    N_("View"),
-    N_("Edit"),
+    N_("View")
 };
 
 static char *matrix_items[] = {
@@ -2652,7 +2651,7 @@ static gboolean session_view_click (GtkWidget *widget,
 	    open_matrix(obj); 
 	    break;
 	case GRETL_OBJ_INFO:
-	    open_info(); 
+	    dataset_info(); 
 	    break;
 	case GRETL_OBJ_NOTES:
 	    edit_session_notes(); 
@@ -2713,13 +2712,7 @@ static void global_popup_callback (GtkWidget *widget, gpointer data)
 
 static void info_popup_callback (GtkWidget *widget, gpointer data)
 {
-    gchar *item = (gchar *) data;
-
-    if (!strcmp(item, _("View"))) {
-	open_info();
-    } else if (!strcmp(item, _("Edit"))) { 
-	edit_header(NULL);
-    }
+    dataset_info();
 }
 
 static void matrix_popup_callback (GtkWidget *widget, gpointer data)

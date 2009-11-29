@@ -58,17 +58,6 @@ void flip (GtkUIManager *ui, const char *path, gboolean s)
     }
 }
 
-void edit_info_state (gboolean s)
-{
-    flip(mdata->ui, "/menubar/Data/EditInfo", s);
-}
-
-void add_remove_markers_state (gboolean s)
-{
-    flip(mdata->ui, "/menubar/Data/AddMarkers", !s);
-    flip(mdata->ui, "/menubar/Data/RemoveMarkers", s);
-}
-
 /* by using gretl_set_window_modal() we make the main
    window visibly insensitive */
 
@@ -138,11 +127,6 @@ void main_menubar_state (gboolean s)
     flip(mdata->ui, "/menubar/Model", s);
 
     flip(mdata->ui, "/menubar/File/NewData", !s);
-
-    if (s) {
-	edit_info_state(!(data_status & BOOK_DATA));
-	add_remove_markers_state(datainfo->S != NULL);
-    }
 
     set_main_colheads_clickable(s);
 }
