@@ -263,7 +263,8 @@ static int nls_genr_setup (nlspec *s)
 	    if (genr_is_print(genrs[i])) {
 		continue;
 	    } else if (i >= s->naux && (dname == NULL || !gretl_is_scalar(dname))) {
-		fprintf(stderr, "nls_genr_setup: bad type: %s\n", formula);
+		gretl_errmsg_sprintf(_("The formula '%s'\n produced a scalar result"), 
+				     formula);
 		err = E_TYPES;
 		break;
 	    }

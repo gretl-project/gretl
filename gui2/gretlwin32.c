@@ -89,9 +89,10 @@ static int ws_startup (void)
 	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
 	WSACleanup();
 	return 1;
+    } else {
+	/* arrange for cleanup on exit */
+	atexit(ws_cleanup);
     }
-
-    atexit(ws_cleanup);
 
     return 0;
 }

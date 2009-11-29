@@ -2007,12 +2007,10 @@ static int compare_ranges (const DATAINFO *targ,
 			   const DATAINFO *src,
 			   int *offset)
 {
-    int ed0, sd1, ed1;
+    int ed0 = dateton(targ->endobs, targ);
+    int sd1 = merge_dateton(src->stobs, targ);
+    int ed1 = merge_dateton(src->endobs, targ);
     int addobs = -1;
-
-    ed0 = dateton(targ->endobs, targ);
-    sd1 = merge_dateton(src->stobs, targ);
-    ed1 = merge_dateton(src->endobs, targ);
 
 #if 0
     fprintf(stderr, "compare_ranges:\n"
@@ -2042,6 +2040,8 @@ static int compare_ranges (const DATAINFO *targ,
 	*offset = 0;
 	if (ed1 > ed0) {
 	    addobs = ed1 - ed0;
+	} else {
+	    addobs = 0;
 	}
     } else if (sd1 == ed0 + 1) {
 	/* case: new data start right after end of old */

@@ -89,7 +89,9 @@ void count_missing (void);
 
 void do_add_markers (const char *fname);
 
-void add_or_remove_markers (void);
+int do_save_markers (const char *fname);
+
+void markers_callback (void);
 
 int dataset_is_restricted (void);
 

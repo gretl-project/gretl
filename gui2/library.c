@@ -1343,9 +1343,7 @@ void count_missing (void)
 
 void do_add_markers (const char *fname) 
 {
-    int err;
-
-    err = add_obs_markers_from_file(datainfo, fname);
+    int err = add_obs_markers_from_file(datainfo, fname);
 
     if (err) {
 	gui_errmsg(err);
@@ -1354,18 +1352,52 @@ void do_add_markers (const char *fname)
     }
 }
 
-void add_or_remove_markers (void) 
+int do_save_markers (const char *fname)
+{
+    FILE *fp;
+    int i;
+
+    if (datainfo->S == NULL) {
+	return E_DATA;
+    }
+
+    fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	file_write_errbox(fname);
+	return E_FOPEN;
+    }
+
+    for (i=0; i<datainfo->n; i++) {
+	fprintf(fp, "%s\n", datainfo->S[i]);
+    }
+
+    fclose(fp);
+
+    return 0;
+}
+
+void markers_callback (void) 
 {
     if (datainfo->S != NULL) {
 	/* we have markers in place */
-	if (yes_no_dialog(_("gretl"), 
-			  _("Really remove the observation markers?"),
-			  0) == GRETL_YES) {
+	const char *opts[] = {
+	    N_("Export the markers to file"),
+	    N_("Remove the markers")
+	};
+	int resp;
+
+	resp = radio_dialog("gretl", _("The dataset has observation markers.\n"
+				"Would you like to:"),
+			    opts, 2, 0, 0);
+	if (resp == 0) {
+	    file_selector(SAVE_MARKERS, FSEL_DATA_NONE, NULL);
+	} else if (resp == 1) {
 	    dataset_destroy_obs_markers(datainfo);
 	    mark_dataset_as_modified();
 	}
     } else {
-	if (yes_no_dialog(_("gretl"),
+	if (yes_no_dialog("gretl",
 			  _("The dataset has no observation markers.\n"
 			    "Add some from file now?"),
 			  0) == GRETL_YES) {

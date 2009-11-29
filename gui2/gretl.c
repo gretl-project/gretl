@@ -1367,8 +1367,7 @@ GtkActionEntry main_entries[] = {
     { "AddObs", NULL, N_("_Add observations..."), NULL, NULL, G_CALLBACK(do_add_obs) },
     { "RemoveObs", NULL, N_("_Remove extra observations"), NULL, NULL, G_CALLBACK(do_remove_obs) },
     { "DataInfo", NULL, N_("_Dataset info"), NULL, NULL, G_CALLBACK(dataset_info) },
-    { "DataMarkers", NULL, N_("_Add/remove case markers..."), NULL, NULL, 
-      G_CALLBACK(add_or_remove_markers) },
+    { "DataMarkers", NULL, N_("_Observation markers..."), NULL, NULL, G_CALLBACK(markers_callback) },
     { "DataStructure", NULL, N_("Dataset _structure..."), NULL, NULL, G_CALLBACK(data_structure_dialog) },
     { "DataCompact", NULL, N_("_Compact data..."), NULL, NULL, G_CALLBACK(do_compact_data_set) },
     { "DataExpand", NULL, N_("_Expand data..."), NULL, NULL, G_CALLBACK(do_expand_data_set) },
@@ -1379,6 +1378,8 @@ GtkActionEntry main_entries[] = {
     /* View */
     { "View", NULL, N_("_View"), NULL, NULL, NULL },
     { "IconView", NULL, N_("_Icon view"), NULL, NULL, G_CALLBACK(iconview_callback) },
+    { "Windows", NULL, N_("_Windows"), NULL, NULL, NULL },
+    { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },    
     { "GraphVars", NULL, N_("_Graph specified vars"), NULL, NULL, NULL },
     { "TSPlot", NULL, N_("_Time series plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "ScatterPlot", NULL, N_("X-Y _scatter..."), NULL, NULL, G_CALLBACK(selector_callback) },
@@ -1527,10 +1528,6 @@ GtkActionEntry main_entries[] = {
     { "gmm", NULL, N_("_GMM..."), NULL, NULL, G_CALLBACK(gretl_callback) }, 
     { "system", NULL, N_("_Simultaneous equations..."), NULL, NULL, G_CALLBACK(gretl_callback) }, 
 
-    /* Windows */
-    { "Windows", NULL, N_("_Windows"), NULL, NULL, NULL },
-    { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },    
-
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
     { "TextCmdRef", GRETL_STOCK_BOOK, N_("_Command reference"), NULL, NULL, G_CALLBACK(plain_text_cmdref) },
@@ -1675,6 +1672,8 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_BOOK;
     } else if (role == STAT_TABLE) {
 	id = GRETL_STOCK_CALC;
+    } else if (role == VIEW_SCRIPT) {
+	id = GTK_STOCK_EXECUTE;
     }
 
     return id;
@@ -1723,7 +1722,7 @@ void add_window_list_item (GtkWidget *w, int role)
 	windata_t *parent = get_parent_viewer(vwin);
 
 	if (parent != NULL) {
-	    apath = g_strdup_printf("/menubar/Windows/%p", parent->main);
+	    apath = g_strdup_printf("/menubar/View/Windows/%p", parent->main);
 	}
     }
 
@@ -1732,7 +1731,7 @@ void add_window_list_item (GtkWidget *w, int role)
     entry.stock_id = window_list_icon(role);
     entry.label = s;
     merge_id = vwin_menu_add_item(mdata, 
-				  (apath != NULL)? apath : "/menubar/Windows", 
+				  (apath != NULL)? apath : "/menubar/View/Windows", 
 				  &entry);
     if (merge_id > 0) {
 	g_object_set_data(G_OBJECT(w), "merge_id", GINT_TO_POINTER(merge_id));

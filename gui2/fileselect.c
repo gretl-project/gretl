@@ -98,6 +98,7 @@ static struct extmap action_map[] = {
     { SAVE_R_CMDS,       ".R" },
     { SAVE_OX_CMDS,      ".ox" },
     { SAVE_FUNCTIONS,    ".gfn" },
+    { SAVE_MARKERS,      ".txt" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
     { OPEN_OCTAVE,       ".m" },
@@ -526,6 +527,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	err = save_function_package_as_script(fname, data);
     } else if (action == SAVE_BOOT_DATA) {
 	bootstrap_save_callback(fname);
+    } else if (action == SAVE_MARKERS) {
+	err = do_save_markers(fname);
     } else if (action == SET_PROG || action == SET_DIR) {
 	set_path_callback(data, fname);
     } else if (action == SET_WDIR) {
@@ -648,7 +651,9 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	*fname = '\0';
 	get_default_package_name(fname, data, action);
 	gtk_file_chooser_set_current_name(filesel, fname);
-    } 
+    } else if (action == SAVE_MARKERS) {
+	gtk_file_chooser_set_current_name(filesel, "markers.txt");
+    }
 }
 
 static void filesel_add_filter (GtkWidget *filesel,

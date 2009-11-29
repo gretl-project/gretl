@@ -132,6 +132,9 @@
     </menu>
     <menu action='View'>
       <menuitem action='IconView'/>
+      <menu action='Windows'>
+	<menuitem action='EditScalars'/>
+      </menu>
       <separator/>
       <menu action='GraphVars'>
 	<menuitem action='TSPlot'/>
@@ -286,9 +289,6 @@
       <menuitem action='mle'/>
       <menuitem action='gmm'/>
       <menuitem action='system'/>
-    </menu>
-    <menu action='Windows'>
-      <menuitem action='EditScalars'/>
     </menu>
     <menu action='Help'>
       <menuitem action='TextCmdRef'/>

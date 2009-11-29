@@ -1,7 +1,8 @@
 version 1.8.7, in progress
-- Fix bug: crash on error in user_matrix_ols()
 - GUI enhancement: add a Windows menu to help keep track
   of gretl windows
+- Fix bug: crash on error in user_matrix_ols()
+- Fix bug: "append" should work in more cases
 
 11/25/2008 version 1.8.6
 - Fix bug: the "print" command for series fails after 

@@ -246,7 +246,7 @@ scalar p = m*alpha
 
 mle logl = check ? p*ln(ax) - lngamma(p) - ln(x) - ax : NA
   series ax = alpha*x
-  scalar check = (alpha>0) & (p>0)
+  scalar check = (alpha>0) && (p>0)
 params alpha p
 end mle 
 \end{code}
