@@ -2532,7 +2532,14 @@ static void make_calendar_tics (const DATAINFO *pdinfo,
 				const gnuplot_info *gi,
 				PRN *prn)
 {
-    double yrs = (gi->t2 - gi->t1 + 1.0) / (pdinfo->pd * 52.0);
+    int T = gi->t2 - gi->t1 + 1;
+    double yrs;
+
+    if (pdinfo->pd == 52) {
+	yrs = T / 52.0;
+    } else {
+	yrs = T / (pdinfo->pd * 52.0);
+    }
 
     if (yrs <= 3) {
 	make_named_month_tics(gi, yrs, prn);
@@ -2574,7 +2581,7 @@ static void make_time_tics (gnuplot_info *gi,
     } else if (pdinfo->pd == 12 && (gi->t2 - gi->t1) / 12 < 8) {
 	pputs(prn, "set xtics nomirror 0,1\n"); 
 	pputs(prn, "set mxtics 12\n");
-    } else if (dated_daily_data(pdinfo)) {
+    } else if (dated_daily_data(pdinfo) || dated_weekly_data(pdinfo)) {
 	make_calendar_tics(pdinfo, gi, prn);
     } else if (panel_plot(pdinfo, gi->t1, gi->t2)) {
 	make_panel_unit_tics(pdinfo, gi, prn);
