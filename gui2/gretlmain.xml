@@ -91,7 +91,6 @@
       <menuitem action='StatsTables'/>
       <menuitem action='PValues'/>
       <menuitem action='DistGraphs'/>
-      <menuitem action='CDFGraphs'/>
       <menuitem action='PlotCurve'/>
       <menuitem action='TestStats'/>
       <menuitem action='NonparamTests'/>

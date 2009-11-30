@@ -1339,7 +1339,6 @@ GtkActionEntry main_entries[] = {
     { "StatsTables", NULL, N_("_Statistical tables"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "PValues", NULL, N_("_P-value finder"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "DistGraphs", NULL, N_("_Distribution graphs"), NULL, NULL, G_CALLBACK(stats_calculator) },
-    { "CDFGraphs", NULL, N_("_CDF graphs"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "PlotCurve", NULL, N_("_Plot a curve"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "TestStats", NULL, N_("_Test statistic calculator"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "NonparamTests", NULL, N_("_Nonparametric tests"), NULL, NULL, G_CALLBACK(stats_calculator) },

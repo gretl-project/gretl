@@ -62,6 +62,7 @@ struct test_t_ {
 };
 
 struct dist_t_ {
+    int flags;
     GtkWidget *entry[NDISTENTRY];
 };
 
@@ -92,6 +93,8 @@ enum {
     NP_DIFF,
     NP_RUNS
 };
+
+static void plot_cdf (GtkWidget *parent);
 
 /* functions relating to distribution graphics */
 
@@ -1856,6 +1859,11 @@ static void dist_graph_callback (GtkWidget *w, CalcChild *child)
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
     d = dist_from_page(child->code, i);
 
+    if (d == NORMAL_DIST && tabs[i]->flags) {
+	plot_cdf(child->dlg);
+	return;
+    }
+
     if (get_dist_entry_vector(child->code, tabs[i], d, x, NULL)) {
 	return;
     }
@@ -1865,6 +1873,42 @@ static void dist_graph_callback (GtkWidget *w, CalcChild *child)
     } else {
 	dist_graph(d, x);
     } 
+}
+
+static void toggle_dist_flag (GtkToggleButton *b, 
+			      dist_t *dist)
+{
+    int i;
+
+    dist->flags = gtk_toggle_button_get_active(b);
+
+    for (i=0; i<NDISTENTRY; i++) {
+	if (dist->entry[i] == NULL) {
+	    break;
+	}
+	gtk_widget_set_sensitive(dist->entry[i], 
+				 dist->flags == 0);
+    }
+}
+
+static void 
+calc_checkbox (GtkWidget *tbl, gint *rows, const gchar *label,
+	       CalcChild *child, int i)
+{
+    dist_t **dist = child->calcp;
+    GtkWidget *tmp;
+
+    *rows += 1;
+
+    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
+    tmp = gtk_check_button_new_with_label(_(label));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      tmp, 0, 1, *rows - 1, *rows);
+    gtk_widget_show(tmp);
+    
+    g_signal_connect(G_OBJECT(tmp), "toggled", 
+		     G_CALLBACK(toggle_dist_flag),
+		     dist[i]);    
 }
 
 static void 
@@ -1994,6 +2038,10 @@ static void make_dist_tab (CalcChild *child, int i)
 	calc_entry(tbl, &rows, N_("value"), child, i);
     } else if (child->code == CALC_RAND) {
 	calc_entry(tbl, &rows, N_("name"), child, i);
+    } else if (child->code == CALC_GRAPH) {
+	if (d == NORMAL_DIST) {
+	    calc_checkbox(tbl, &rows, N_("Show CDF"), child, i);
+	}
     }
 }
 
@@ -2722,7 +2770,7 @@ static void gretl_child_destroy (GtkWidget *w, CalcChild *child)
 static int child_allocate_calcp (CalcChild *child)
 {
     int c = child->code;
-    int i, err = 0;
+    int i, j, err = 0;
 
     child->calcp = NULL;
 
@@ -2751,6 +2799,11 @@ static int child_allocate_calcp (CalcChild *child)
 		dist[i] = mymalloc(sizeof **dist);
 		if (dist[i] == NULL) {
 		    err = E_ALLOC;
+		} else {
+		    dist[i]->flags = 0;
+		    for (j=0; j<NDISTENTRY; j++) {
+			dist[i]->entry[j] = NULL;
+		    }
 		}
 	    }
 	} 
@@ -3236,7 +3289,7 @@ static void set_cdf_opt (GtkWidget *button, GtkWidget *dlg)
     g_object_set_data(G_OBJECT(dlg), "opt", p);
 }
 
-static void plot_cdf (void)
+static void plot_cdf (GtkWidget *parent)
 {
     static GtkWidget *dialog;
     GtkWidget *hbox, *vbox;
@@ -3248,7 +3301,7 @@ static void plot_cdf (void)
 	return;
     }
 
-    dialog = gretl_dialog_new(_("gretl: plot CDF"), mdata->main, 0);
+    dialog = gretl_dialog_new(_("gretl: plot CDF"), parent, 0);
 
     g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed), &dialog);
@@ -3310,8 +3363,6 @@ static int stats_calculator_code (GtkAction *action)
 	return CALC_RAND;
     else if (!strcmp(s, "PlotCurve"))
 	return CALC_PLOT;
-    else if (!strcmp(s, "CDFGraphs"))
-	return CALC_CDF;
     else
 	return 0;
 }
@@ -3326,13 +3377,10 @@ void stats_calculator (GtkAction *action, gpointer data)
 		     code == CALC_NPTEST ||
 		     code == CALC_GRAPH ||
 		     code == CALC_RAND ||
-		     code == CALC_PLOT ||
-		     code == CALC_CDF);
+		     code == CALC_PLOT);
 
     if (code == CALC_PLOT) {
 	plot_curve();
-    } else if (code == CALC_CDF) {
-	plot_cdf();
     } else {
 	real_stats_calculator(code, data);
     }

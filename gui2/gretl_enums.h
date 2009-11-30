@@ -270,7 +270,6 @@ enum calc_functions {
     CALC_GRAPH_ADD,
     CALC_RAND,
     CALC_PLOT,
-    CALC_CDF,
     CALC_MAX
 };
 
