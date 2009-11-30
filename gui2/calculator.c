@@ -2040,7 +2040,7 @@ static void make_dist_tab (CalcChild *child, int i)
 	calc_entry(tbl, &rows, N_("name"), child, i);
     } else if (child->code == CALC_GRAPH) {
 	if (d == NORMAL_DIST) {
-	    calc_checkbox(tbl, &rows, N_("Show CDF"), child, i);
+	    calc_checkbox(tbl, &rows, N_("CDF instead of density"), child, i);
 	}
     }
 }
