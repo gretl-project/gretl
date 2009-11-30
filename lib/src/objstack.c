@@ -97,17 +97,27 @@ enum {
     UNSTACK_DESTROY
 };
 
+static int unstack_replace;
+
 static void gretl_object_unstack (void *ptr, int action)
 {
     int i, pos = -1;
 
+#if ODEBUG
+    fprintf(stderr, "gretl_object_unstack: ptr=%p, action=%d\n", ptr, action);
+#endif
+
     if (action == UNSTACK_DESTROY && ptr == last_model.ptr) {
 #if ODEBUG
-	fprintf(stderr, "gretl_object_unstack: %p is 'last_model'\n", ptr);
+	fprintf(stderr, " %p is 'last_model'\n", ptr);
 #endif
 	/* avoid double-freeing */
 	last_model.ptr = NULL;
 	last_model.type = GRETL_OBJ_NULL;
+    }
+
+    if (unstack_replace) {
+	return;
     }
 
     for (i=0; i<n_obj; i++) {
@@ -118,8 +128,8 @@ static void gretl_object_unstack (void *ptr, int action)
     }
 
 #if ODEBUG
-    fprintf(stderr, "gretl_object_unstack: stack pos for %p = %d\n",
-	    ptr, pos);
+    fprintf(stderr, " stack pos for %p = %d, n_obj = %d\n",
+	    ptr, pos, n_obj);
 #endif
     
     if (pos >= 0) {
@@ -353,7 +363,7 @@ void set_as_last_model (void *ptr, GretlObjType type)
 
     if (last_model.ptr != ptr && last_model.ptr != NULL) {
 #if ODEBUG
-	fprintf(stderr, " kicking old object at %p (type %d) off the stack\n",
+	fprintf(stderr, " unrefing old object at %p (type %d)\n",
 		last_model.ptr, last_model.type);
 #endif
 	gretl_object_unref(last_model.ptr, last_model.type);
@@ -700,6 +710,9 @@ void remove_model_from_stack_on_exit (MODEL *pmod)
 
 void gretl_object_remove_from_stack (void *ptr, GretlObjType type)
 {
+#if ODEBUG
+    fprintf(stderr, "gretl_object_remove_from_stack\n");
+#endif
     gretl_object_unstack(ptr, UNSTACK_REMOVE);
     gretl_object_unref(ptr, type);
 }
@@ -737,7 +750,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
     int onum, err = 0;
 
 #if ODEBUG
-    fprintf(stderr, "real_stack_object: on entry, p=%p, type=%d, name='%s'\n", 
+    fprintf(stderr, " real_stack_object: on entry, p=%p, type=%d, name='%s'\n", 
 	    (void *) p, type, name);
 #endif
 
@@ -746,6 +759,9 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
     }
 
     if (object_stack_index(p) >= 0) {
+#if ODEBUG
+	fprintf(stderr, " real_stack_object: done, no-op\n");
+#endif
 	return 0;
     }
 
@@ -764,9 +780,12 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
     if (orig != NULL) {
 	/* replace existing object of same name */
 #if ODEBUG
-	fprintf(stderr, "stack_object: replacing at %p\n", orig->ptr);
+	fprintf(stderr, "  replacing at %p (onum = %d, ptr = %p)\n", 
+		orig, onum, orig->ptr);
 #endif
+	unstack_replace = 1;
 	gretl_object_unref(orig->ptr, orig->type);
+	unstack_replace = 0;
 	ostack[onum].ptr = p;
 	ostack[onum].type = type;
 	pprintf(prn, "Replaced object '%s'\n", name);
@@ -787,7 +806,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
     }
 
 #if ODEBUG
-    fprintf(stderr, "stack_object: name='%s', type=%d, ptr=%p (n_obj=%d)\n",
+    fprintf(stderr, " real_stack_object, on exit: '%s', type=%d, ptr=%p (n_obj=%d)\n",
 	    name, type, (void *) p, n_obj);
 #endif  
 

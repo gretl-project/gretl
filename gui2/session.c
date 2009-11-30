@@ -901,22 +901,36 @@ static SESSION_MODEL *get_session_model_by_data (const void *ptr)
     return NULL;
 }
 
-int maybe_add_model_to_session (void *ptr, GretlObjType type)
+static void delete_icon_for_data (void *data)
+{
+    gui_obj *gobj = get_gui_obj_by_data(data);
+
+    if (gobj != NULL) {
+	/* icon is shown: delete it */
+	session_delete_icon(gobj);
+    }
+}
+
+int maybe_add_model_to_session (void *ptr, GretlObjType type,
+				const char *name)
 {
     SESSION_MODEL *oldmod;
-    const char *name;
 
     if (get_session_model_by_data(ptr)) {
 	/* model already present */
-	return 1;
+	return 0;
     }
 
     /* check to see if there's already a (different) model with the
        same name: if so, delete it
     */
-    name = gretl_object_get_name(ptr, type);
-    oldmod = get_session_model_by_name(name);
+    if (name == NULL) {
+	name = gretl_object_get_name(ptr, type);
+    }
+    oldmod = get_session_model_by_name(name); 
+
     if (oldmod != NULL) {
+	delete_icon_for_data(oldmod);
 	real_delete_model_from_session(oldmod);
     }
 
@@ -1940,12 +1954,7 @@ void session_model_callback (void *ptr, int action)
     if (action == OBJ_ACTION_SHOW) {
 	display_session_model(mod);
     } else if (action == OBJ_ACTION_FREE) {
-	gui_obj *gobj = get_gui_obj_by_data(mod);
-
-	if (gobj != NULL) {
-	    /* model icon is shown: delete it */
-	    session_delete_icon(gobj);
-	}	
+	delete_icon_for_data(mod);
 	real_delete_model_from_session(mod);
     } 
 }	
@@ -2130,14 +2139,14 @@ static void maybe_delete_session_object (gui_obj *obj)
     g_free(msg);
 }
 
-static gui_obj *get_gui_obj_by_data (void *finddata)
+static gui_obj *get_gui_obj_by_data (void *targ)
 {
     GList *mylist = iconlist;
     gui_obj *obj = NULL;
 
     while (mylist != NULL) {
 	obj = (gui_obj *) mylist->data;
-	if (obj->data == finddata) {
+	if (obj->data == targ) {
 	    return obj;
 	}
 	mylist = mylist->next;

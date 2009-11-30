@@ -1891,6 +1891,7 @@
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
+	<example>dataset clear</example>
       </examples>
     </usage>
 
@@ -1898,8 +1899,9 @@
       <para>
 	Performs various operations on the data set as a whole, depending on
 	the given <repl>keyword</repl>, which must be <lit>addobs</lit>,
-	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
-	<lit>sortby</lit>, <lit>dsortby</lit> or <lit>resample</lit>.  Note:
+	<lit>clear</lit>, <lit>compact</lit>, <lit>expand</lit>,
+	<lit>transpose</lit>, <lit>sortby</lit>, <lit>dsortby</lit> or
+	<lit>resample</lit>. Note: with the exception of <lit>clear</lit>,
 	these actions are not available when the dataset is currently
 	subsampled by selection of cases on some Boolean criterion.
       </para>
@@ -1912,6 +1914,10 @@
 	recognized and extended, namely, a simple linear trend and
 	periodic dummy variables. 
       </para>
+      <para>
+	<lit>clear</lit>: No parameter required.  Clears out the current
+	data, returning gretl to its intial <quote>empty</quote> state.
+      </para>      
       <para>
 	<lit>compact</lit>: Must be followed by a positive integer
 	representing a new data frequency, which should be lower than the

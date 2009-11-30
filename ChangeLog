@@ -1,8 +1,11 @@
 version 1.8.7, in progress
 - GUI enhancement: add a Windows menu to help keep track
   of gretl windows
+- "dataset" command: document the "clear" keyword
 - Fix bug: crash on error in user_matrix_ols()
 - Fix bug: "append" should work in more cases
+- Fix bug: saving a model when there is already a saved
+  model of the same name (in the GUI) caused a crash
 
 11/25/2008 version 1.8.6
 - Fix bug: the "print" command for series fails after 

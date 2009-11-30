@@ -7812,7 +7812,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (system_save_flag_is_set(s->sys)) {
 	if (!err) {
-	    maybe_add_model_to_session(s->sys, GRETL_OBJ_SYS);
+	    maybe_add_model_to_session(s->sys, GRETL_OBJ_SYS, NULL);
 	}
 	system_unset_save_flag(s->sys);
 	s->sys = NULL;

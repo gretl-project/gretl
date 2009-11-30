@@ -2056,7 +2056,7 @@ int font_has_minus (PangoFontDescription *desc)
     }    
 
     layout = pango_layout_new(context); 
-    lang = pango_language_from_string("eng");
+    lang = pango_language_get_default();
 
     if (layout != NULL && lang != NULL) {
 	pfont = pango_context_load_font(context, desc);

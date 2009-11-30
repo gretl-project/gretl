@@ -72,13 +72,7 @@ static int
 finalize_model_save (void *ptr, GretlObjType type, const char *name, 
 		     PRN *prn)
 {
-    int err;
-
-    err = gretl_stack_object_as(ptr, type, name);
-
-    if (!err) {
-	err = maybe_add_model_to_session(ptr, type);
-    }
+    int err = maybe_add_model_to_session(ptr, type, name);
 
     if (!err) {
 	pprintf(prn, _("%s saved\n"), name);
