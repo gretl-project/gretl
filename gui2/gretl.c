@@ -1696,6 +1696,13 @@ static windata_t *get_parent_viewer (windata_t *vwin)
     return parent;
 }
 
+static int n_listed_windows;
+
+int get_n_listed_windows (void)
+{
+    return n_listed_windows;
+}
+
 void add_window_list_item (GtkWidget *w, int role)
 {
     GtkActionEntry entry = { 
@@ -1734,6 +1741,8 @@ void add_window_list_item (GtkWidget *w, int role)
 				  &entry);
     if (merge_id > 0) {
 	g_object_set_data(G_OBJECT(w), "merge_id", GINT_TO_POINTER(merge_id));
+	window_list_state(TRUE);
+	n_listed_windows++;
     }
 
     g_free(aname);
@@ -1746,6 +1755,10 @@ void remove_window_list_item (GtkWidget *w)
 
     if (merge_id > 0) {
 	gtk_ui_manager_remove_ui(mdata->ui, merge_id);
+	n_listed_windows--;
+	if (n_listed_windows == 0) {
+	    window_list_state(FALSE);
+	}
     }
 }
 

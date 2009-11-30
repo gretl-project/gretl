@@ -135,6 +135,7 @@ int gui_restore_sample (double ***pZ, DATAINFO *pdinfo);
 void add_window_list_item (GtkWidget *w, int role);
 void remove_window_list_item (GtkWidget *w);
 void raise_main_window (void);
+int get_n_listed_windows (void);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (void);

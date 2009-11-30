@@ -109,6 +109,30 @@ void variable_menu_state (gboolean s)
 	 dataset_is_time_series(datainfo));
 }
 
+static void view_items_state (gboolean s)
+{
+    const char *viewpaths[] = {
+	"IconView",
+	"EditScalars",
+	"GraphVars",
+	"MultiPlots",
+	"summary",
+	"corr",
+	"xtab",
+	"pca",
+	"mahal",
+	"xcorrgm",
+	NULL
+    };
+    char fullpath[32];
+    int i;
+
+    for (i=0; viewpaths[i] != NULL; i++) {
+	sprintf(fullpath, "/menubar/View/%s", viewpaths[i]);
+	flip(mdata->ui, fullpath, s);
+    }
+}
+
 void main_menubar_state (gboolean s)
 {
     if (mdata == NULL || mdata->ui == NULL) return;
@@ -120,15 +144,35 @@ void main_menubar_state (gboolean s)
     flip(mdata->ui, "/menubar/File/ExportData", s);
     flip(mdata->ui, "/menubar/File/MailData", s);
     flip(mdata->ui, "/menubar/Data", s);
-    flip(mdata->ui, "/menubar/View", s);
     flip(mdata->ui, "/menubar/Add", s);
     flip(mdata->ui, "/menubar/Sample", s);
     flip(mdata->ui, "/menubar/Variable", s);
     flip(mdata->ui, "/menubar/Model", s);
 
+    view_items_state(s);
+
+    if (s || get_n_listed_windows() == 0) {
+	flip(mdata->ui, "/menubar/View", s);
+    }
+
     flip(mdata->ui, "/menubar/File/NewData", !s);
 
     set_main_colheads_clickable(s);
+}
+
+void window_list_state (gboolean s)
+{
+    if (s) {
+	GtkAction *a = gtk_ui_manager_get_action(mdata->ui, "/menubar/View");
+
+	if (a != NULL && !gtk_action_get_sensitive(a)) {
+	    gtk_action_set_sensitive(a, TRUE);
+	    view_items_state(FALSE);
+	}
+	flip(mdata->ui, "/menubar/View/Windows", s);
+    } else if (!data_status) {
+	flip(mdata->ui, "/menubar/View", s);
+    }
 }
 
 #define COMPACTABLE(d) (d->structure == TIME_SERIES && \

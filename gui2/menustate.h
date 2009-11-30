@@ -17,6 +17,7 @@ void session_menu_state (gboolean s);
 void restore_sample_state (gboolean s);
 void compact_data_state (gboolean s);
 void drop_obs_state (gboolean s);
+void window_list_state (gboolean s);
 
 void main_menus_enable (gboolean s);
 
