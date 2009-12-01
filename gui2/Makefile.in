@@ -87,10 +87,6 @@ endif
 
 DEFS = $(NLSDEF) $(GNOMEDEF)
 
-override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) \
-	$(GDK_PIXBUF_CFLAGS) $(XML_CFLAGS) $(DEFS)
-override LIBS += $(GDK_PIXBUF_LIBS)
-
 # Directories
 bindir	= $(prefix)/bin
 gretldir = $(prefix)/share/gretl
@@ -99,6 +95,14 @@ tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
 clisrc = $(topsrc)/cli
 docdir = $(topsrc)/doc
+
+LANGDEPS = $(libsrc)/options.c \
+           $(libsrc)/genlex.c \
+           $(libsrc)/gretl_commands.c
+
+override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) \
+	$(GDK_PIXBUF_CFLAGS) $(XML_CFLAGS) $(DEFS)
+override LIBS += $(GDK_PIXBUF_LIBS)
 
 #### End of system configuration section. ####
 
@@ -171,11 +175,11 @@ $(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKSOURCEVIEW_LITE)
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<
 
-mklang: mklang.o
-	$(LIBTOOL) --mode=link $(CC) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
-
-mklang.o: mklang.c $(topsrc)/lib/src/options.c $(topsrc)/lib/src/genlex.c $(topsrc)/lib/src/gretl_commands.c
+mklang.o: mklang.c $(LANGDEPS)
 	$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
+
+mklang: mklang.o 
+	$(LIBTOOL) --mode=link $(CC) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
 $(GRETL_LANG): $(MKLANG)
 	./mklang $(LANGOPT) > $@
