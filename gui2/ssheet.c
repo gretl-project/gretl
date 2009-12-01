@@ -2375,9 +2375,7 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
     if (editing_scalars(sheet)) {
 	scalars_sheet = NULL;
 	set_scalar_edit_callback(NULL);
-    } else {
-	remove_window_list_item(sheet->win);
-    }
+    } 
 
     free(sheet);
 
@@ -2400,8 +2398,6 @@ static void free_matrix_sheet (GtkWidget *widget, Spreadsheet *sheet)
 	/* delete the copied matrix */
 	gretl_matrix_free(sheet->matrix);
     }
-
-    remove_window_list_item(sheet->win);
 
     free(sheet);
 }

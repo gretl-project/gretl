@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "var.h"
+#include "dlgutils.h"
 #include "winstack.h"
 
 #define WDEBUG 0
@@ -111,7 +112,6 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
 		fprintf(stderr, "winstack: destroying widget at %p\n", 
 			(void *) wstack[i]);
 #endif
-		remove_window_list_item(wstack[i]);
 		gtk_widget_destroy(wstack[i]);
 	    }
 	}
@@ -272,7 +272,6 @@ void winstack_remove (GtkWidget *w)
 	    gtk_window_get_title(GTK_WINDOW(w)));    
 #endif
     winstack(STACK_REMOVE, w, NULL, NULL);
-    remove_window_list_item(w);
 }
 
 static void windata_init (windata_t *vwin, int role, gpointer data)
@@ -332,6 +331,18 @@ windata_t *gretl_viewer_new (int role, const gchar *title,
     return vwin;
 }
 
+static gint catch_winlist_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    GdkModifierType mods = widget_get_pointer_mask(w);
+
+    if ((mods & GDK_MOD1_MASK) && key->keyval == GDK_w) {
+	window_list_popup(vwin->main);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 windata_t *gretl_browser_new (int role, const gchar *title, int record)
 {
     windata_t *vwin = mymalloc(sizeof *vwin);
@@ -344,6 +355,9 @@ windata_t *gretl_browser_new (int role, const gchar *title, int record)
 
     vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+		     G_CALLBACK(catch_winlist_key), vwin);
 
     if (record) {
 	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);

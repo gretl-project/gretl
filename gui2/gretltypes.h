@@ -37,7 +37,7 @@
 #define GRETL_STOCK_EN      "gretl-en"
 #define GRETL_STOCK_SPLIT_H "gretl-split-h"
 #define GRETL_STOCK_SPLIT_V "gretl-split-v"
-
+#define GRETL_STOCK_COMPASS "gretl-compass"
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # define NO_INFO_ICON 1

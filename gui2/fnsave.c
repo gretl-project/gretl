@@ -334,7 +334,6 @@ static void finfo_save_callback (GtkWidget *w, function_info *finfo)
 
 static void finfo_destroy (GtkWidget *w, function_info *finfo)
 {
-    remove_window_list_item(finfo->dlg);
     finfo_free(finfo);
 }
 

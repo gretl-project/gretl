@@ -572,6 +572,12 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		return TRUE;
 	    } 
 	} 
+    } else if (mods & GDK_MOD1_MASK) {
+	/* Alt */
+	if (upkey == GDK_W) {
+	    window_list_popup(vwin->main);
+	    return TRUE;
+	}
     }
 
     if (editing) {

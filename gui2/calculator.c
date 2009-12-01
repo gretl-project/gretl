@@ -2762,8 +2762,6 @@ static void gretl_child_destroy (GtkWidget *w, CalcChild *child)
 	free(dist);	
     } 
 
-    remove_window_list_item(w);
-
     free(child);
 }
 

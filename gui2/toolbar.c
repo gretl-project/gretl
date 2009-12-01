@@ -51,6 +51,7 @@
 #include "../pixmaps/mini.en.xpm"
 #include "../pixmaps/mini.split_h.xpm"
 #include "../pixmaps/mini.split_v.xpm"
+#include "../pixmaps/mini.compass.xpm"
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # include "../pixmaps/info_24.xpm"
 #endif
@@ -122,6 +123,7 @@ void gretl_stock_icons_init (void)
 	mini_en_xpm,
 	mini_split_h_xpm,
 	mini_split_v_xpm,
+	mini_compass_xpm
     };
     const char *stocks[] = {
 #if NO_INFO_ICON
@@ -147,7 +149,8 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_ALPHA,
 	GRETL_STOCK_EN,
 	GRETL_STOCK_SPLIT_H,
-	GRETL_STOCK_SPLIT_V
+	GRETL_STOCK_SPLIT_V,
+	GRETL_STOCK_COMPASS
     };
     int n = G_N_ELEMENTS(stocks);
 
@@ -552,6 +555,11 @@ static void set_output_sticky (GtkWidget *w, windata_t *vwin)
     }
 }
 
+static void compass_callback (GtkWidget *w, windata_t *vwin)
+{
+    window_list_popup(vwin->main);
+}
+
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
     text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
@@ -626,6 +634,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
+    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(compass_callback), 0 },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), 0 }
 };
 

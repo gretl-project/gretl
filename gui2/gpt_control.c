@@ -3660,7 +3660,6 @@ static void register_plot_window (GtkWidget *w)
 
 static void unregister_plot_window (GtkWidget *w)
 {
-    remove_window_list_item(w);
     plot_list = g_list_remove(plot_list, w);
 }
 
