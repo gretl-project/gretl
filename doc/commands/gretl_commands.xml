@@ -9178,6 +9178,10 @@
 	  <effect>see below, on CSV format</effect>
         </option>
         <option>
+	  <flag>--no-header</flag>
+	  <effect>see below, on CSV format</effect>
+        </option>
+        <option>
 	  <flag>--gnu-octave</flag>
 	  <effect>use GNU Octave format</effect>
         </option>
@@ -9232,25 +9236,29 @@
 	various formats.</para>
 
       <para>
-	The option flag <lit>--omit-obs</lit> is applicable only when saving
-	data in CSV format.  By default, if the data are time series or panel or
-	if the dataset includes specific observation markers, the CSV file
-	includes a first column identifying the observations (&eg; by date).  If
-	the <lit>--omit-obs</lit> flag is given this column is omitted; only the
-	actual data are printed.
+	The option flags <lit>--omit-obs</lit> and <lit>--no-header</lit>
+	are applicable only when saving data in CSV format.  By default,
+	if the data are time series or panel, or if the dataset includes
+	specific observation markers, the CSV file includes a first column
+	identifying the observations (&eg; by date).  If the
+	<lit>--omit-obs</lit> flag is given this column is omitted. The
+	<lit>--no-header</lit> flag suppresses the usual printing of the
+	names of the variables at the top of the columns.
       </para>
 
       <para>
-	The option of saving in gretl database format is intended to help with the
-	construction of large sets of series, possibly having mixed frequencies and
-	ranges of observations.  At present this option is available only for
-	annual, quarterly or monthly time-series data. If you save to a file that
-	already exists, the default action is to append the newly saved series to
-	the existing content of the database.  In this context it is an error if one
-	or more of the variables to be saved has the same name as a variable that is
-	already present in the database. The <lit>--overwrite</lit> flag has the
-	effect that, if there are variable names in common, the newly saved variable
-	replaces the variable of the same name in the original dataset.
+	The option of saving in gretl database format is intended to help
+	with the construction of large sets of series, possibly having
+	mixed frequencies and ranges of observations.  At present this
+	option is available only for annual, quarterly or monthly
+	time-series data. If you save to a file that already exists, the
+	default action is to append the newly saved series to the existing
+	content of the database.  In this context it is an error if one or
+	more of the variables to be saved has the same name as a variable
+	that is already present in the database. The
+	<lit>--overwrite</lit> flag has the effect that, if there are
+	variable names in common, the newly saved variable replaces the
+	variable of the same name in the original dataset.
       </para>
 	
     </description>
