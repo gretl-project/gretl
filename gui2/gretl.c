@@ -75,6 +75,8 @@ static void restore_sample_callback (void);
 static void show_sample_callback (void);
 static void mdata_select_all (void);
 
+void window_list_popup (void);
+
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME },
     { "db_series_ptr",  GTK_TARGET_SAME_APP, GRETL_DBSERIES_PTR },
@@ -782,10 +784,16 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	/* launch the console */
 	gretl_console();
 	return TRUE;
-    } else if ((mods & GDK_MOD1_MASK) && k == GDK_x) {
-	/* Alt-x: invoke command minibuffer */
-	minibuf_callback();
-	return TRUE;
+    } else if (mods & GDK_MOD1_MASK) {
+	if (k == GDK_x) {
+	    /* Alt-x: invoke command minibuffer */
+	    minibuf_callback();
+	    return TRUE;
+	} else if (k == GDK_w) {
+	    /* Alt-w: window list */
+	    window_list_popup();
+	    return TRUE;
+	}
     }
 
     if (datainfo->v == 0) {
@@ -1377,8 +1385,8 @@ GtkActionEntry main_entries[] = {
     /* View */
     { "View", NULL, N_("_View"), NULL, NULL, NULL },
     { "IconView", NULL, N_("_Icon view"), NULL, NULL, G_CALLBACK(iconview_callback) },
+    { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },   
     { "Windows", NULL, N_("_Windows"), NULL, NULL, NULL },
-    { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },    
     { "GraphVars", NULL, N_("_Graph specified vars"), NULL, NULL, NULL },
     { "TSPlot", NULL, N_("_Time series plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "ScatterPlot", NULL, N_("X-Y _scatter..."), NULL, NULL, G_CALLBACK(selector_callback) },
@@ -1703,24 +1711,35 @@ int get_n_listed_windows (void)
     return n_listed_windows;
 }
 
+static const gchar *get_window_title (GtkWidget *w)
+{
+    const gchar *s = NULL;
+
+    if (GTK_IS_WINDOW(w)) {
+	s = gtk_window_get_title(GTK_WINDOW(w));
+
+	if (s != NULL && !strncmp(s, "gretl", 5)) {
+	    s += 5;
+	    s += strspn(s, " ");
+	    if (*s == ':') {
+		s++;
+		s += strspn(s, " ");
+	    }
+	}
+    }
+
+    return s;
+}
+
 void add_window_list_item (GtkWidget *w, int role)
 {
     GtkActionEntry entry = { 
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
     };
-    const gchar *s = gtk_window_get_title(GTK_WINDOW(w));
+    const gchar *s = get_window_title(w);
     gchar *aname, *apath = NULL;
     windata_t *vwin;
     guint merge_id;
-
-    if (!strncmp(s, "gretl", 5)) {
-	s += 5;
-	s += strspn(s, " ");
-	if (*s == ':') {
-	    s++;
-	    s += strspn(s, " ");
-	}
-    }
 
     vwin = g_object_get_data(G_OBJECT(w), "vwin");
 
@@ -1758,6 +1777,64 @@ void remove_window_list_item (GtkWidget *w)
 	n_listed_windows--;
 	if (n_listed_windows == 0) {
 	    window_list_state(FALSE);
+	}
+    }
+}
+
+void window_list_popup (void)
+{
+    if (n_listed_windows > 0) {
+	static GtkWidget *menu;
+	gchar *ui = gtk_ui_manager_get_ui(mdata->ui);
+	char fullpath[48];
+	char *p, *q = NULL;
+	unsigned long lptr;
+	int n_items = 0;
+
+	if (menu != NULL) {
+	    gtk_widget_destroy(menu);
+	};
+
+	p = strstr(ui, "<menu name=\"Windows\"");
+	if (p != NULL) {
+	    q = strstr(p, "</menu>");
+	    *(q + 7) = '\0';
+	    q = strstr(p, "<menuitem");
+	}
+
+	if (q == NULL) {
+	    g_free(ui);
+	    return;
+	}
+
+	menu = gtk_menu_new();
+
+	while (q != NULL) {
+	    GtkAction *a;
+	    GtkWidget *w;
+
+	    sscanf(q + 10, "name=\"%lx", &lptr);
+	    if (GTK_IS_WIDGET(lptr)) {
+		w = (GtkWidget *) lptr;
+		sprintf(fullpath, "/menubar/View/Windows/%p", (void *) w);
+		a = gtk_ui_manager_get_action(mdata->ui, fullpath);
+		w = gtk_action_create_menu_item(a);
+		gtk_widget_show(w);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
+		n_items++;
+	    }
+	    q += 16;
+	    q = strstr(q, "<menuitem");
+	}
+
+	g_free(ui);
+
+	if (n_items > 0) {
+	    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+			   0, gtk_get_current_event_time());
+	} else {
+	    gtk_widget_destroy(menu);
+	    menu = NULL;
 	}
     }
 }

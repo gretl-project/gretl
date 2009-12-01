@@ -1387,15 +1387,19 @@ int write_data (const char *fname, int *list,
 		    datestr, pdinfo->pd);
 	}
 
-	/* variable names */
-	if (fmt == GRETL_FMT_CSV && print_obs && 
-	    (pdinfo->S != NULL || pdinfo->structure != CROSS_SECTION)) {
-	    fprintf(fp, "obs%c", delim);
+	if (fmt == GRETL_FMT_CSV && (opt & OPT_N)) {
+	    ;/* no header */
+	} else {
+	    /* header: variable names */
+	    if (fmt == GRETL_FMT_CSV && print_obs && 
+		(pdinfo->S != NULL || pdinfo->structure != CROSS_SECTION)) {
+		fprintf(fp, "obs%c", delim);
+	    }
+	    for (i=1; i<l0; i++) {
+		fprintf(fp, "%s%c", pdinfo->varname[list[i]], delim);
+	    }
+	    fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);
 	}
-	for (i=1; i<l0; i++) {
-	    fprintf(fp, "%s%c", pdinfo->varname[list[i]], delim);
-	}
-	fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (print_obs) {

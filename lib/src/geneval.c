@@ -799,7 +799,7 @@ static double *series_pdist (int t, char d, double *parm,
     }
 
     if (bvec == NULL && pvec != NULL && t == F_PDF) {
-	/* fast treatment, for pdf pnly at this point */
+	/* fast treatment, for pdf only at this point */
 	int n = sample_size(p->dinfo);
 
 	for (s=0; s<p->dinfo->n; s++) {

@@ -931,7 +931,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
     }
 
     if (vwin->role != EDIT_SCRIPT) {
-	w =  gtk_separator_menu_item_new();
+	w = gtk_separator_menu_item_new();
 	gtk_widget_show(w);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
 

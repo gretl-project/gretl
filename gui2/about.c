@@ -71,7 +71,7 @@ static void show_link_cursor (GtkWidget *w, gpointer p)
     GdkCursor *c;
 
     c = gdk_cursor_new(GDK_HAND2);
-    gdk_window_set_cursor(w->window, c);
+    gdk_window_set_cursor(gtk_widget_get_parent_window(w), c);
     gdk_cursor_unref(c);
 }
 

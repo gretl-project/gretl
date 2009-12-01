@@ -134,7 +134,6 @@
       <menuitem action='EditScalars'/>
       <separator/>
       <menu action='Windows'>
-	<placeholder/>
       </menu>
       <separator/>
       <menu action='GraphVars'>
