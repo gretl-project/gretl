@@ -54,7 +54,6 @@ static ConfigPaths paths;
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
 static void font_selector (GtkWidget *w, gpointer data);
-static void working_dir_dialog (void);
 
 #ifndef G_OS_WIN32
 static int read_gretlrc (void);
@@ -1443,6 +1442,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_widget_show_all(hb);
 	}
 
+#if 0
 	hb = gtk_hbox_new(FALSE, 0);
 	w = gtk_button_new();
 	gtk_button_set_label(GTK_BUTTON(w), _("Working directory..."));
@@ -1453,8 +1453,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(working_dir_dialog), NULL);
 	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 10);
-	gtk_widget_show_all(hb);	
-
+	gtk_widget_show_all(hb);
+#endif	
     } else if (tab == TAB_VCV) {
 	/* we need a help button */
 	GtkWidget *hb = gtk_hbox_new(FALSE, 0);
@@ -2364,7 +2364,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
     usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->r2));
 }
 
-static void working_dir_dialog (void) 
+void working_dir_dialog (void) 
 {
     static GtkWidget *dialog;
     struct wdir_setter wset;

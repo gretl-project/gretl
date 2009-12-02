@@ -47,6 +47,8 @@ const char *get_app_fontname (void);
 
 void get_default_dir (char *s, int action);
 
+void working_dir_dialog (void);
+
 int gui_set_working_dir (char *dirname);
 
 void set_working_dir_callback (GtkWidget *w, char *path);
