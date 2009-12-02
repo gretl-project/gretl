@@ -51,8 +51,6 @@
       <menuitem action='NewData'/>
       <menuitem action='ClearData'/>
       <separator/>
-      <menuitem action='WorkingDir'/>
-      <separator/>
       <menu action='ScriptFiles'>
 	<menuitem action='OpenScript'/>
 	<menuitem action='DisplayScripts'/>

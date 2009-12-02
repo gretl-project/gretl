@@ -54,6 +54,7 @@ static ConfigPaths paths;
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
 static void font_selector (GtkWidget *w, gpointer data);
+static void working_dir_dialog (void);
 
 #ifndef G_OS_WIN32
 static int read_gretlrc (void);
@@ -1404,7 +1405,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     }
 
     if (tab == TAB_MAIN) {
-	/* font selector buttons */
+	/* font selector buttons, working directory */
 	int add_appfont = 1;
 	GtkWidget *hb, *im;
 
@@ -1416,7 +1417,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	hb = gtk_hbox_new(FALSE, 0);
 	w = gtk_button_new();
-	gtk_button_set_label(GTK_BUTTON(w), _("Fixed font"));
+	gtk_button_set_label(GTK_BUTTON(w), _("Fixed font..."));
 	im = gtk_image_new_from_stock(GTK_STOCK_SELECT_FONT, 
 				      GTK_ICON_SIZE_BUTTON);
 	gtk_button_set_image(GTK_BUTTON(w), im);
@@ -1430,7 +1431,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	if (add_appfont) {
 	    hb = gtk_hbox_new(FALSE, 0);
 	    w = gtk_button_new();
-	    gtk_button_set_label(GTK_BUTTON(w), _("Menu font"));
+	    gtk_button_set_label(GTK_BUTTON(w), _("Menu font..."));
 	    im = gtk_image_new_from_stock(GTK_STOCK_SELECT_FONT, 
 					  GTK_ICON_SIZE_BUTTON);
 	    gtk_button_set_image(GTK_BUTTON(w), im);
@@ -1441,6 +1442,19 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 0);
 	    gtk_widget_show_all(hb);
 	}
+
+	hb = gtk_hbox_new(FALSE, 0);
+	w = gtk_button_new();
+	gtk_button_set_label(GTK_BUTTON(w), _("Working directory..."));
+	im = gtk_image_new_from_stock(GTK_STOCK_DIRECTORY, 
+				      GTK_ICON_SIZE_BUTTON);
+	gtk_button_set_image(GTK_BUTTON(w), im);
+	gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
+	g_signal_connect(G_OBJECT(w), "clicked", 
+			 G_CALLBACK(working_dir_dialog), NULL);
+	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 10);
+	gtk_widget_show_all(hb);	
+
     } else if (tab == TAB_VCV) {
 	/* we need a help button */
 	GtkWidget *hb = gtk_hbox_new(FALSE, 0);
@@ -2350,7 +2364,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
     usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->r2));
 }
 
-void working_dir_dialog (void) 
+static void working_dir_dialog (void) 
 {
     static GtkWidget *dialog;
     struct wdir_setter wset;

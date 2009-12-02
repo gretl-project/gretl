@@ -51,8 +51,6 @@ int gui_set_working_dir (char *dirname);
 
 void set_working_dir_callback (GtkWidget *w, char *path);
 
-void working_dir_dialog (void);
-
 void set_path_callback (char *setvar, char *setting);
 
 void set_datapage (const char *str);
