@@ -863,40 +863,6 @@ edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, dialog_t *d)
     return FALSE;
 }
 
-static void set_replace_restrictions (GtkWidget *w, gpointer p)
-{
-    dialog_t *d = (dialog_t *) p;
-    
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	d->opt = OPT_P;
-    } else {
-	d->opt = OPT_NONE;
-    }
-}
-
-static void sample_replace_buttons (GtkWidget *box, gpointer data)
-{
-    GtkWidget *tmp;
-    GSList *group;
-
-    /* add to current sample restriction */
-    tmp = gtk_radio_button_new_with_label(NULL, _("add to current restriction"));
-    gtk_box_pack_start(GTK_BOX(box), tmp, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
-    gtk_widget_show(tmp);
-
-    /* replace current sample restriction */
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-    tmp = gtk_radio_button_new_with_label(group, _("replace current restriction"));
-    gtk_box_pack_start(GTK_BOX(box), tmp, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
-
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(set_replace_restrictions), data);
-
-    gtk_widget_show(tmp);
-}
-
 static void set_sys_method (GtkComboBox *box, dialog_t *d)
 {
     gchar *str = gtk_combo_box_get_active_text(box);
@@ -1380,9 +1346,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 			 G_CALLBACK(raise_and_focus_dialog), d);
     }
 
-    if (ci == SMPLBOOL && dataset_is_restricted()) {
-	sample_replace_buttons(top_vbox, d);
-    } else if (ci == SYSTEM || ci == ESTIMATE) {
+    if (ci == SYSTEM || ci == ESTIMATE) {
 	GtkWidget *bt, *bv;
 
 	bt = dialog_option_switch(top_vbox, d, OPT_T, NULL);

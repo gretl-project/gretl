@@ -534,12 +534,6 @@ void gretl_callback (GtkAction *action, gpointer data)
     cmd = gretl_callback_code(gtk_action_get_name(action));
 
     switch (cmd) {
-    case SMPLBOOL:
-	title = N_("gretl: restrict sample");
-	query = N_("Enter boolean condition for selecting cases:");
-	okfunc = do_samplebool;
-	varclick = VARCLICK_INSERT_NAME;
-	break;
     case GENR:
 	title = N_("gretl: add var");
 	query = N_("Enter formula for new variable\n"

@@ -185,8 +185,7 @@
       <menuitem action='FullRange'/>
       <menuitem action='ShowSample'/>
       <separator/>
-      <menuitem action='SMPLDUM'/>
-      <menuitem action='SampleRestrict'/>
+      <menuitem action='SMPLBOOL'/>
       <menuitem action='SMPLRAND'/>
       <menuitem action='SampleWReplace'/>
       <menuitem action='DropMissing'/>

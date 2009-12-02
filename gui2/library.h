@@ -79,8 +79,6 @@ void register_graph (void);
 
 int bool_subsample (gretlopt opt);
 
-void do_samplebool (GtkWidget *w, dialog_t *dlg);
-
 int do_set_sample (void);
 
 void drop_all_missing (void);

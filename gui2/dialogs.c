@@ -1342,6 +1342,7 @@ struct range_setting {
     GtkObject *adj2;
     GtkWidget *endspin;
     GtkWidget *combo;
+    GtkWidget *entry;
     gpointer p;
     MODEL *pmod;
     int *t1;
@@ -1382,14 +1383,31 @@ static int unit_get_last_obs (int u)
 static gboolean
 set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 {
+    const char *replace;
     int err;
 
-    if (rset->opt & OPT_O) {
+    replace = (rset->opt & OPT_P)? " --replace" : "";
+
+    if (rset->opt & OPT_R) {
+	/* boolean restriction */
+	const gchar *restr = gtk_entry_get_text(GTK_ENTRY(rset->entry));
+	
+	gretl_command_sprintf("smpl %s --restrict%s", restr, replace);
+
+	if (check_and_record_command()) {
+	    return TRUE;
+	}
+
+	err = bool_subsample(rset->opt);
+	if (!err) {
+	    gtk_widget_destroy(rset->dlg);
+	} 	
+    } else if (rset->opt & OPT_O) {
 	/* sampling using a dummy var */
 	gchar *dumv;
 
 	dumv = gtk_combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
-	gretl_command_sprintf("smpl %s --dummy", dumv);
+	gretl_command_sprintf("smpl %s --dummy%s", dumv, replace);
 	g_free(dumv);
 
 	if (check_and_record_command()) {
@@ -1568,6 +1586,8 @@ static struct range_setting *rset_new (guint code, gpointer p,
 
     if (code == SMPLDUM) {
 	rset->opt = OPT_O;
+    } else if (code == SMPLBOOL) {
+	rset->opt = OPT_R;
     } else if (code == SMPLRAND) {
 	rset->opt = OPT_N;
     } else if (code == CREATE_DATASET) {
@@ -1577,7 +1597,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
     }
     
     rset->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
-    rset->combo = NULL;
+    rset->combo = rset->entry = NULL;
     rset->adj1 = rset->adj2 = NULL;
     rset->startspin = rset->endspin = NULL;
     rset->obslabel = NULL;
@@ -1738,21 +1758,31 @@ static int sample_range_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
 
-    if (!strcmp(s, "SMPLDUM"))
-	return SMPLDUM;
-    else if (!strcmp(s, "SMPLRAND"))
-	return SMPLRAND;
-    else 
-	return SMPL;
+    return (!strcmp(s, "SMPLRAND"))? SMPLRAND : SMPL;
 }
 
 static GtkWidget *build_dummies_combo (GList *dumlist, 
-				       int thisdum,
-				       const gchar *label,
-				       GtkWidget *vbox)
+				       int thisdum)
+{
+    GtkWidget *combo = gtk_combo_box_new_text();
+    GList *dlist = dumlist;
+
+    while (dlist != NULL) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), dlist->data);
+	dlist = dlist->next;
+    }
+
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), thisdum);
+
+    return combo;
+}
+
+static GtkWidget *add_dummies_combo (GList *dumlist, 
+				     int thisdum,
+				     const gchar *label,
+				     GtkWidget *vbox)
 {
     GtkWidget *w, *hbox, *combo;
-    GList *dlist;
 
     if (label != NULL) {
 	w = gtk_label_new(label);
@@ -1761,13 +1791,7 @@ static GtkWidget *build_dummies_combo (GList *dumlist,
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     }
 
-    combo = gtk_combo_box_new_text();
-    dlist = dumlist;
-    while (dlist != NULL) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), dlist->data);
-	dlist = dlist->next;
-    }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), thisdum);
+    combo = build_dummies_combo(dumlist, thisdum);
 
     hbox = gtk_hbox_new(TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
@@ -1779,37 +1803,17 @@ static GtkWidget *build_dummies_combo (GList *dumlist,
 void sample_range_dialog (GtkAction *action, gpointer p)
 {
     struct range_setting *rset = NULL;
-    GList *dumlist = NULL;
-    int u, thisdum = 0;
     GtkWidget *w, *vbox, *hbox;
+    int u;
 
     u = sample_range_code(action);
-
-    if (u == SMPLDUM) {
-	dumlist = get_dummy_list(&thisdum);
-	if (dumlist == NULL) {
-	    if (dataset_is_restricted()) {
-		warnbox(_("There are no dummy variables in the current sample"));
-	    } else {
-		warnbox(_("There are no dummy variables in the dataset"));
-	    }
-	    return;
-	}
-    }
 
     rset = rset_new(u, p, NULL, NULL, NULL, _("gretl: set sample"));
     if (rset == NULL) return;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
 
-    if (u == SMPLDUM) {
-	rset->combo = build_dummies_combo(dumlist, thisdum,
-					  _("Name of dummy variable to use:"),
-					  vbox);
-	g_signal_connect(G_OBJECT(rset->combo), "changed",
-			 G_CALLBACK(update_obs_label), rset);
-	g_list_free(dumlist);
-    } else if (u == SMPLRAND) {
+    if (u == SMPLRAND) {
 	gchar *labtxt;
 	GtkObject *adj;
 
@@ -1854,10 +1858,6 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	g_object_set_data(G_OBJECT(rset->endspin), "rset", rset);
     }
 
-    if (u == SMPLDUM) {
-	update_obs_label(GTK_COMBO_BOX(rset->combo), rset);
-    }
-
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
 
     /* Cancel button */
@@ -1871,6 +1871,130 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
+
+    gtk_widget_show_all(rset->dlg);
+}
+
+static void toggle_rset_use_dummy (GtkToggleButton *b,
+				   struct range_setting *rset)
+{
+    gboolean usedum = gtk_toggle_button_get_active(b);
+
+    if (usedum) {
+	rset->opt |= OPT_O;
+	rset->opt &= ~OPT_R;
+    } else {
+	rset->opt |= OPT_R;
+	rset->opt &= ~OPT_O;
+    }
+
+    gtk_widget_set_sensitive(rset->entry, !usedum);
+    gtk_widget_set_sensitive(rset->combo, usedum);
+}
+
+static void toggle_replace_restrictions (GtkToggleButton *b,
+					 struct range_setting *rset)
+{
+    if (gtk_toggle_button_get_active(b)) {
+	rset->opt |= OPT_P;
+    } else {
+	rset->opt &= ~OPT_P;
+    }
+}
+
+void sample_restrict_dialog (GtkAction *action, gpointer p)
+{
+    const char *btxt = 
+	N_("Enter boolean condition for selecting cases:");
+    struct range_setting *rset = NULL;
+    GList *dumlist = NULL;
+    GSList *group = NULL;
+    int thisdum = 0;
+    GtkWidget *w, *vbox, *hbox;
+
+    rset = rset_new(SMPLBOOL, p, NULL, NULL, NULL, _("gretl: restrict sample"));
+    if (rset == NULL) return;
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
+
+    dumlist = get_dummy_list(&thisdum);
+
+    if (dumlist != NULL) {
+	/* radios for restriction/dummy */
+	w = gtk_radio_button_new_with_label(NULL, _(btxt));
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
+    } else {
+	w = gtk_label_new(_(btxt));
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);  
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* text entry for restriction */
+    hbox = gtk_hbox_new(FALSE, 5);    
+    rset->entry = gtk_entry_new();
+    gtk_entry_set_activates_default(GTK_ENTRY(rset->entry), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), rset->entry, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    if (dumlist != NULL) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_radio_button_new_with_label(group, _("Use dummy variable:"));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	rset->combo = build_dummies_combo(dumlist, thisdum);
+	gtk_box_pack_start(GTK_BOX(hbox), rset->combo, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+	g_signal_connect(G_OBJECT(w), "toggled",
+			 G_CALLBACK(toggle_rset_use_dummy), rset);
+	gtk_widget_set_sensitive(rset->combo, FALSE);
+	g_list_free(dumlist);
+    }
+
+    if (dataset_is_restricted()) {
+	if (dumlist != NULL) {
+	    vbox_add_hsep(vbox);
+	}
+
+	/* add to current sample restriction */
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_radio_button_new_with_label(NULL, _("add to current restriction"));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+	/* replace current sample restriction */
+	hbox = gtk_hbox_new(FALSE, 5);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
+	w = gtk_radio_button_new_with_label(group, _("replace current restriction"));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), FALSE);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+	g_signal_connect(G_OBJECT(w), "toggled",
+			 G_CALLBACK(toggle_replace_restrictions), rset);
+    }
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
+
+    /* Cancel button */
+    cancel_delete_button(hbox, rset->dlg, NULL);
+
+    /* "OK" button */
+    w = ok_button(hbox);
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(set_sample_from_dialog), rset);
+    gtk_widget_grab_default(w);
+
+    /* "Help" button */
+    context_help_button(hbox, SMPLBOOL);
+
+    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
+		     G_CALLBACK(free_rsetting), rset);
+
+    if (rset->entry != NULL) {
+	gtk_widget_grab_focus(rset->entry);
+    }    
 
     gtk_widget_show_all(rset->dlg);
 }
@@ -1982,7 +2106,7 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv)
 
     if (dumlist != NULL) {
 	gtk_box_pack_start(GTK_BOX(vbox), b2, TRUE, TRUE, 0);
-	rset->combo = build_dummies_combo(dumlist, thisdum, NULL, vbox);
+	rset->combo = add_dummies_combo(dumlist, thisdum, NULL, vbox);
 	gtk_widget_set_sensitive(rset->combo, FALSE);
 	rset->t2 = dumv;
 	g_signal_connect(b2, "toggled", G_CALLBACK(configure_chow_dlg), rset);

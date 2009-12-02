@@ -1271,33 +1271,6 @@ void drop_all_missing (void)
     }
 }
 
-void do_samplebool (GtkWidget *w, dialog_t *dlg)
-{
-    const gchar *buf = edit_dialog_get_text(dlg);
-    gretlopt opt;
-    int err;
-
-    if (buf == NULL) return;
-
-    opt = edit_dialog_get_opt(dlg);
-
-    if (opt & OPT_P) { 
-	gretl_command_sprintf("smpl %s --restrict --replace", buf); 
-    } else {
-	gretl_command_sprintf("smpl %s --restrict", buf);
-    }
-
-    if (check_and_record_command()) {
-	return;
-    }
-
-    err = bool_subsample(opt | OPT_R);
-
-    if (!err) {
-	close_dialog(dlg);
-    }
-}
-
 int do_set_sample (void)
 {
     return set_sample(cmdline, &Z, datainfo);
