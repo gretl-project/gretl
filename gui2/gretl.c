@@ -1371,6 +1371,8 @@ GtkActionEntry main_entries[] = {
     { "DataExpand", NULL, N_("_Expand data..."), NULL, NULL, G_CALLBACK(do_expand_data_set) },
     { "DataTranspose", NULL, N_("_Transpose data..."), NULL, NULL, G_CALLBACK(gui_transpose_data) },
     { "DataSort", NULL, N_("_Sort data..."), NULL, NULL, G_CALLBACK(gui_sort_data) },
+    { "GSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },
+    { "VarFind", GTK_STOCK_FIND, N_("_Find variable..."), NULL, NULL, G_CALLBACK(listbox_find) },
     { "DataRefresh", NULL, N_("_Refresh window"), NULL, NULL, G_CALLBACK(refresh_data) },
 
     /* View */
@@ -1432,11 +1434,9 @@ GtkActionEntry main_entries[] = {
     { "DropMissing", NULL, N_("Drop all obs with _missing values"), NULL, NULL, 
       G_CALLBACK(drop_all_missing) },
     { "CountMissing", NULL, N_("_Count missing values"), NULL, NULL, G_CALLBACK(count_missing) },
-    { "GSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },
 
     /* Variable */
     { "Variable", NULL, N_("_Variable"), NULL, NULL, NULL },
-    { "VarFind", GTK_STOCK_FIND, N_("_Find..."), NULL, NULL, G_CALLBACK(listbox_find) },
     { "VarDisplay", NULL, N_("_Display values"), NULL, NULL, G_CALLBACK(display_var) },
     { "VarSummary", NULL, N_("_Summary statistics"), NULL, NULL, G_CALLBACK(menu_op_action) },
     { "normtest", NULL, N_("_Normality test"), NULL, NULL, G_CALLBACK(menu_op_action) },
@@ -1861,6 +1861,7 @@ static void restore_sample_callback (void)
 
 static void show_sample_callback (void)
 {
+    gchar *title;
     PRN *prn;
 
     if (bufopen(&prn)) {
@@ -1868,7 +1869,9 @@ static void show_sample_callback (void)
     }
 
     print_sample_status(datainfo, prn);
-    view_buffer(prn, 78, 360, "gretl", PRINT, NULL);
+    title = g_strdup_printf("gretl: %s", _("sample status"));
+    view_buffer(prn, 78, 360, title, PRINT, NULL);
+    g_free(title);
 }
 
 static void start_R_callback (void)

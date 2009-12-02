@@ -1454,7 +1454,7 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
     /* if searching in the main gretl window, start on line 1 */
     minvar = (vwin == mdata)? 1 : 0;
 
-    if (vnames) {
+    if (!vnames) {
 	lower(s);
     }
 

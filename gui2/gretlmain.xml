@@ -122,7 +122,10 @@
       <menuitem action='DataExpand'/>
       <menuitem action='DataTranspose'/>
       <menuitem action='DataSort'/>
+      <menuitem action='GSETMISS'/>
+      <menuitem action='CountMissing'/>
       <separator/>
+      <menuitem action='VarFind'/>
       <menuitem action='DataRefresh'/>
     </menu>
     <menu action='View'>
@@ -184,13 +187,9 @@
       <menuitem action='SampleRestrict'/>
       <menuitem action='SMPLRAND'/>
       <menuitem action='SampleWReplace'/>
-      <separator/>
       <menuitem action='DropMissing'/>
-      <menuitem action='CountMissing'/>
-      <menuitem action='GSETMISS'/>
     </menu>
     <menu action='Variable'>
-      <menuitem action='VarFind'/>
       <menuitem action='VarDisplay'/>
       <menuitem action='VarSummary'/>
       <menuitem action='normtest'/>
@@ -222,8 +221,6 @@
       <separator/>
       <menuitem action='EditAttrs'/>
       <menuitem action='VSETMISS'/>
-      <separator/>
-      <menuitem action='GENR'/>
     </menu>
     <menu action='Model'>
       <menuitem action='ols'/>
