@@ -1355,8 +1355,13 @@ GtkActionEntry main_entries[] = {
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVVerbose", NULL, N_("V_ery verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
-    { "Preferences", GTK_STOCK_PREFERENCES, N_("_Preferences..."), NULL, NULL, 
-      G_CALLBACK(options_dialog_callback) },    
+    { "Preferences", NULL, N_("_Preferences"), NULL, NULL, NULL },    
+    { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), NULL, NULL, 
+      G_CALLBACK(options_dialog_callback) },
+    { "FixedFont", GTK_STOCK_SELECT_FONT, N_("_Fixed font..."), NULL, NULL, 
+      G_CALLBACK(font_selector) },
+    { "MenuFont", GTK_STOCK_SELECT_FONT, N_("_Menu font..."), NULL, NULL, 
+      G_CALLBACK(font_selector) },
 
     /* Data */
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
@@ -1537,6 +1542,23 @@ GtkActionEntry main_entries[] = {
 
 static void add_conditional_items (GtkUIManager *ui)
 {
+    int add_appfont = 1;
+
+#ifdef G_OS_WIN32
+    if (use_wimp) {
+	add_appfont = 0;
+    }
+#endif
+
+    if (add_appfont) {
+	gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
+			      "/menubar/Tools/Preferences",
+			      N_("_Menu font..."),
+			      "MenuFont",
+			      GTK_UI_MANAGER_MENUITEM, 
+			      FALSE);
+    }
+
 #ifdef HAVE_X12A
     gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
 			  "/menubar/Variable/X12A",

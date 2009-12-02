@@ -35,6 +35,8 @@ void force_english_help (void);
 
 int options_dialog (int page, const char *varname, GtkWidget *parent);
 
+void font_selector (GtkAction *action);
+
 void set_fixed_font (void);
 
 void update_persistent_graph_colors (void);

@@ -105,8 +105,10 @@
 	<menuitem action='NistVerbose'/>
 	<menuitem action='NistVVerbose'/>
       </menu>
-      <separator/>
-      <menuitem action='Preferences'/>
+      <menu action='Preferences'>
+	<menuitem action='PrefsGeneral'/>
+	<menuitem action='FixedFont'/>
+      </menu>
     </menu>
     <menu action='Data'>
       <menuitem action='DataSelectAll'/>
@@ -183,12 +185,13 @@
     <menu action='Sample'>
       <menuitem action='SMPL'/>
       <menuitem action='FullRange'/>
-      <menuitem action='ShowSample'/>
-      <separator/>
+       <separator/>
       <menuitem action='SMPLBOOL'/>
       <menuitem action='SMPLRAND'/>
       <menuitem action='SampleWReplace'/>
       <menuitem action='DropMissing'/>
+      <separator/>
+      <menuitem action='ShowSample'/>
     </menu>
     <menu action='Variable'>
       <menuitem action='VarDisplay'/>

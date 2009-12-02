@@ -53,7 +53,6 @@ static ConfigPaths paths;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
-static void font_selector (GtkWidget *w, gpointer data);
 
 #ifndef G_OS_WIN32
 static int read_gretlrc (void);
@@ -1403,6 +1402,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	} 
     }
 
+#if 0 /* not for now */
     if (tab == TAB_MAIN) {
 	/* font selector buttons, working directory */
 	int add_appfont = 1;
@@ -1442,7 +1442,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_widget_show_all(hb);
 	}
 
-#if 0
 	hb = gtk_hbox_new(FALSE, 0);
 	w = gtk_button_new();
 	gtk_button_set_label(GTK_BUTTON(w), _("Working directory..."));
@@ -1454,8 +1453,10 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 			 G_CALLBACK(working_dir_dialog), NULL);
 	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 10);
 	gtk_widget_show_all(hb);
+    }
 #endif	
-    } else if (tab == TAB_VCV) {
+
+    if (tab == TAB_VCV) {
 	/* we need a help button */
 	GtkWidget *hb = gtk_hbox_new(FALSE, 0);
 
@@ -2074,6 +2075,17 @@ static int read_gretlrc (void)
     return common_read_rc_setup();
 }
 
+static int fontsel_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+    
+    if (!strcmp(s, "MenuFont")) {
+	return APP_FONT_SELECTION;
+    } else {
+	return FIXED_FONT_SELECTION;
+    }
+}
+
 #endif /* end of non-Windows versions */
 
 /* font selection: non-Windows, gtk-2.0 version first */
@@ -2106,10 +2118,10 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
 
-static void font_selector (GtkWidget *w, gpointer data)
+void font_selector (GtkAction *action)
 {
     static GtkWidget *fontsel = NULL;
-    int which = GPOINTER_TO_INT(data);
+    int which = fontsel_code(action);
     int filter = GTK_FONT_HACK_LATIN;
     char *title = NULL;
     const char *fontname = NULL;
@@ -2159,21 +2171,21 @@ static void font_selector (GtkWidget *w, gpointer data)
 
 #else /* end non-win32 font selection, start win32 */
 
-static void font_selector (GtkWidget *w, gpointer data)
+void font_selector (GtkAction *action)
 {
-    int flag = GPOINTER_TO_INT(data);
+    int which = fontsel_code(action);
     char fontname[128];
 
-    if (flag == FIXED_FONT_SELECTION) {
+    if (which == FIXED_FONT_SELECTION) {
 	strcpy(fontname, fixedfontname);
     } else {
 	strcpy(fontname, appfontname);
     }
 
-    win32_font_selector(fontname, flag);
+    win32_font_selector(fontname, which);
 
     if (*fontname != '\0') {
-	if (flag == FIXED_FONT_SELECTION) {
+	if (which == FIXED_FONT_SELECTION) {
 	    strcpy(fixedfontname, fontname);
 	    set_fixed_font();
 	    write_rc();
