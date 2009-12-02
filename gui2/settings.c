@@ -53,6 +53,7 @@ static ConfigPaths paths;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
+static void font_selector (GtkWidget *w, gpointer data);
 
 #ifndef G_OS_WIN32
 static int read_gretlrc (void);
@@ -1402,7 +1403,45 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	} 
     }
 
-    if (tab == TAB_VCV) {
+    if (tab == TAB_MAIN) {
+	/* font selector buttons */
+	int add_appfont = 1;
+	GtkWidget *hb, *im;
+
+#ifdef G_OS_WIN32
+	if (use_wimp) {
+	    add_appfont = 0;
+	}
+#endif
+
+	hb = gtk_hbox_new(FALSE, 0);
+	w = gtk_button_new();
+	gtk_button_set_label(GTK_BUTTON(w), _("Fixed font"));
+	im = gtk_image_new_from_stock(GTK_STOCK_SELECT_FONT, 
+				      GTK_ICON_SIZE_BUTTON);
+	gtk_button_set_image(GTK_BUTTON(w), im);
+	gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
+	g_signal_connect(G_OBJECT(w), "clicked", 
+			 G_CALLBACK(font_selector), 
+			 GINT_TO_POINTER(FIXED_FONT_SELECTION));
+	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 10);
+	gtk_widget_show_all(hb);
+
+	if (add_appfont) {
+	    hb = gtk_hbox_new(FALSE, 0);
+	    w = gtk_button_new();
+	    gtk_button_set_label(GTK_BUTTON(w), _("Menu font"));
+	    im = gtk_image_new_from_stock(GTK_STOCK_SELECT_FONT, 
+					  GTK_ICON_SIZE_BUTTON);
+	    gtk_button_set_image(GTK_BUTTON(w), im);
+	    gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
+	    g_signal_connect(G_OBJECT(w), "clicked", 
+			     G_CALLBACK(font_selector), 
+			     GINT_TO_POINTER(APP_FONT_SELECTION));
+	    gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 0);
+	    gtk_widget_show_all(hb);
+	}
+    } else if (tab == TAB_VCV) {
 	/* we need a help button */
 	GtkWidget *hb = gtk_hbox_new(FALSE, 0);
 
@@ -2023,17 +2062,6 @@ static int read_gretlrc (void)
 
 #endif /* end of non-Windows versions */
 
-static int fontsel_code (GtkAction *action)
-{
-    const gchar *s = gtk_action_get_name(action);
-    
-    if (!strcmp(s, "MenuFont")) {
-	return APP_FONT_SELECTION;
-    } else {
-	return FIXED_FONT_SELECTION;
-    }
-}
-
 /* font selection: non-Windows, gtk-2.0 version first */
 
 #ifndef G_OS_WIN32
@@ -2064,10 +2092,10 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
 
-void font_selector (GtkAction *action)
+static void font_selector (GtkWidget *w, gpointer data)
 {
     static GtkWidget *fontsel = NULL;
-    int which = fontsel_code(action);
+    int which = GPOINTER_TO_INT(data);
     int filter = GTK_FONT_HACK_LATIN;
     char *title = NULL;
     const char *fontname = NULL;
@@ -2117,9 +2145,9 @@ void font_selector (GtkAction *action)
 
 #else /* end non-win32 font selection, start win32 */
 
-void font_selector (GtkAction *action)
+static void font_selector (GtkWidget *w, gpointer data)
 {
-    int flag = fontsel_code(action);
+    int flag = GPOINTER_TO_INT(data);
     char fontname[128];
 
     if (flag == FIXED_FONT_SELECTION) {

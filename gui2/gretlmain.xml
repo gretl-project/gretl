@@ -105,10 +105,8 @@
 	<menuitem action='NistVerbose'/>
 	<menuitem action='NistVVerbose'/>
       </menu>
-      <menu action='Preferences'>
-	<menuitem action='PrefsGeneral'/>
-	<menuitem action='FixedFont'/>
-      </menu>
+      <separator/>
+      <menuitem action='Preferences'/>
     </menu>
     <menu action='Data'>
       <menuitem action='DataSelectAll'/>
