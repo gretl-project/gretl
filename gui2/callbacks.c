@@ -526,6 +526,7 @@ void gretl_callback (GtkAction *action, gpointer data)
     const char *title = NULL;
     const char *query = NULL;
     const char *defstr = NULL;
+    gchar *dynquery = NULL;
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
     int cmd, cancel = 0;
@@ -548,7 +549,9 @@ void gretl_callback (GtkAction *action, gpointer data)
 	break;
     case VSETMISS:
 	title = N_("gretl: missing code");
-	query = N_("Enter value to be read as \"missing\":");
+	dynquery = g_strdup_printf(_("Enter value to be read as \"missing\"\n"
+				     "for the variable \"%s\""), 
+				   datainfo->varname[mdata->active_var]);
 	okfunc = do_variable_setmiss;
 	break;
     case GSETMISS:
@@ -608,8 +611,14 @@ void gretl_callback (GtkAction *action, gpointer data)
 	return;
     }
 
-    edit_dialog(_(title), _(query), defstr, okfunc, data, 
-		cmd, varclick, &cancel);   
+    if (dynquery != NULL) {
+	edit_dialog(_(title), dynquery, defstr, okfunc, data, 
+		    cmd, varclick, &cancel);
+	g_free(dynquery);
+    } else {
+	edit_dialog(_(title), _(query), defstr, okfunc, data, 
+		    cmd, varclick, &cancel);
+    }
 }
 
 void revise_nl_model (MODEL *pmod)

@@ -193,6 +193,8 @@
     </menu>
     <menu action='Variable'>
       <menuitem action='VarDisplay'/>
+      <menuitem action='EditAttrs'/>
+      <menuitem action='VSETMISS'/>
       <menuitem action='VarSummary'/>
       <menuitem action='normtest'/>
       <menuitem action='FreqDist'/>
@@ -219,9 +221,6 @@
       <placeholder action='X12A'/>
       <placeholder action='Tramo'/>
       <menuitem action='Hurst'/>
-      <separator/>
-      <menuitem action='EditAttrs'/>
-      <menuitem action='VSETMISS'/>
     </menu>
     <menu action='Model'>
       <menuitem action='ols'/>
