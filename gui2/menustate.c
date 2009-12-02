@@ -315,9 +315,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Time series plot"))) 
 	do_graph_var(v);
     else if (!strcmp(item, _("Frequency distribution"))) 
-	do_freq_dist(0);
-    else if (!strcmp(item, _("Frequency plot"))) 
-	do_freq_dist(1);
+	do_freq_dist();
     else if (!strcmp(item, _("Boxplot")))
 	do_boxplot_var(v);
     else if (!strcmp(item, _("Gini coefficient")))
@@ -398,7 +396,7 @@ GtkWidget *build_var_popup (void)
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Time series plot"),
-	N_("Frequency plot"),
+	N_("Frequency distribution"),
 	N_("Boxplot"),
 	N_("Correlogram"),
 	N_("Spectrum"),

@@ -197,9 +197,7 @@ int record_varlabel_change (int v);
 
 void do_resid_freq (GtkAction *action, gpointer p);
 
-void do_freq_dist (int plot);
-
-void freq_callback (GtkAction *action);
+void do_freq_dist (void);
 
 void do_corrgm (void);
 

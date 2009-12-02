@@ -196,7 +196,6 @@
       <menuitem action='VarSummary'/>
       <menuitem action='normtest'/>
       <menuitem action='FreqDist'/>
-      <menuitem action='FreqPlot'/>
       <menuitem action='Density'/>
       <menuitem action='Gini'/>
       <menuitem action='rmplot'/>

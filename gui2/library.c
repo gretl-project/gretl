@@ -4111,7 +4111,7 @@ series_has_negative_vals (const double *x)
     return 0;
 }
 
-void do_freq_dist (int plot)
+void do_freq_dist (void)
 {
     FreqDist *freq = NULL;
     gretlopt opt = OPT_NONE;
@@ -4122,6 +4122,7 @@ void do_freq_dist (int plot)
     gchar *tmp = NULL;
     int discrete = 0;
     int nbins = 0;
+    int plot = 1;
     int err = 0;
 
     if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[v])) {
@@ -4161,12 +4162,12 @@ void do_freq_dist (int plot)
 	if (discrete) {
 	    /* minimal dialog */
 	    err = freq_dialog(tmp, bintxt, NULL, 0, NULL, NULL, 
-			      xmin, xmax, &dist, plot);
+			      xmin, xmax, &dist, &plot);
 	} else {
 	    /* full dialog */
 	    if (n % 2 == 0) n--;
 	    err = freq_dialog(tmp, bintxt, &nbins, n, &fmin, &fwid, 
-			      xmin, xmax, &dist, plot);
+			      xmin, xmax, &dist, &plot);
 	}
 
 	g_free(bintxt);
@@ -4223,13 +4224,6 @@ void do_freq_dist (int plot)
     }
 
     free_freq(freq);
-}
-
-void freq_callback (GtkAction *action)
-{
-    int plot = (strstr(gtk_action_get_name(action), "Plot") != NULL);
-
-    do_freq_dist(plot);
 }
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
@@ -5618,7 +5612,7 @@ void do_graph_var (int varnum)
 
     if (!dataset_is_time_series(datainfo) &&
 	datainfo->structure != STACKED_TIME_SERIES) {
-	do_freq_dist(1);
+	do_freq_dist();
 	return;
     }
 

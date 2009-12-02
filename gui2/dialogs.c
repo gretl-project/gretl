@@ -3556,26 +3556,25 @@ static void revise_finfo (GtkWidget *w, struct freqdist_info *f)
     }
 }
 
+static void freq_set_plot (GtkToggleButton *b, int *plot)
+{
+    *plot = gtk_toggle_button_get_active(b);
+}
+
 int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,
-		 double xmin, double xmax, int *dist, int plot)
+		 double xmin, double xmax, int *dist, int *plot)
 {
     const char *strs[] = {
 	N_("Number of bins:"),
 	N_("Minimum value, left bin:"),
 	N_("Bin width:")
     };
-    const char *plot_opts[] = {
-	N_("Show data only"),
-	N_("Show normal distribution"),
-	N_("Show gamma distribution")
-    };
-    const char *dist_opts[] = {
+    const char *opts[] = {
 	N_("Show data only"),
 	N_("Test against normal distribution"),
 	N_("Test against gamma distribution")
     };
-    const char **opts;
     struct freqdist_info finfo;
     GtkWidget *dialog, *rad;
     GtkWidget *vbox, *hbox;
@@ -3599,8 +3598,6 @@ int freq_dialog (const char *title, const char *blurb,
     finfo.fwid = fwid;
     finfo.xmax = xmax;
     finfo.xmin = xmin;
-
-    opts = (plot)? plot_opts : dist_opts;
 
     /* upper label */
     tmp = dialog_blurb_box(blurb);
@@ -3683,6 +3680,17 @@ int freq_dialog (const char *title, const char *blurb,
 	gtk_container_add(GTK_CONTAINER(hbox), rad);
 	gtk_container_add(GTK_CONTAINER(vbox), hbox);
     }
+
+    /* show plot option */
+
+    vbox_add_hsep(vbox);
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_check_button_new_with_label(_("show plot"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), *plot);
+    g_signal_connect(G_OBJECT(tmp), "toggled",
+		     G_CALLBACK(freq_set_plot), plot);
+    gtk_container_add(GTK_CONTAINER(hbox), tmp);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);    
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
