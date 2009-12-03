@@ -44,6 +44,11 @@ GtkWidget *get_active_edit_name (void);
 
 GtkWidget *get_active_edit_text (void);
 
+void set_active_edit_name (GtkWidget *w);
+
+void raise_and_focus_dialog (GtkEditable *entry, 
+			     GtkWidget *parent);
+
 typedef struct combo_opts_ combo_opts;
 
 void set_window_busy (windata_t *vwin);

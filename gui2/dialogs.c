@@ -1351,6 +1351,7 @@ struct range_setting {
 
 static void free_rsetting (GtkWidget *w, struct range_setting *rset)
 {
+    set_active_edit_name(NULL);
     free(rset);
 }
 
@@ -1883,9 +1884,11 @@ static void toggle_rset_use_dummy (GtkToggleButton *b,
     if (usedum) {
 	rset->opt |= OPT_O;
 	rset->opt &= ~OPT_R;
+	set_active_edit_name(NULL);
     } else {
 	rset->opt |= OPT_R;
 	rset->opt &= ~OPT_O;
+	set_active_edit_name(rset->entry);
     }
 
     gtk_widget_set_sensitive(rset->entry, !usedum);
@@ -1935,6 +1938,9 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
     hbox = gtk_hbox_new(FALSE, 5);    
     rset->entry = gtk_entry_new();
     gtk_entry_set_activates_default(GTK_ENTRY(rset->entry), TRUE);
+    set_active_edit_name(rset->entry);
+    g_signal_connect(G_OBJECT(GTK_EDITABLE(rset->entry)), "changed", 
+		     G_CALLBACK(raise_and_focus_dialog), rset->dlg);
     gtk_box_pack_start(GTK_BOX(hbox), rset->entry, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 

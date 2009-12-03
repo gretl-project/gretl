@@ -476,6 +476,11 @@ GtkWidget *get_active_edit_text (void)
     return active_edit_text;
 }
 
+void set_active_edit_name (GtkWidget *w)
+{
+    active_edit_name = w;
+}
+
 struct dialog_t_ {
     GtkWidget *dialog;
     GtkWidget *edit;
@@ -1169,14 +1174,13 @@ static void dlg_display_sys (dialog_t *d)
     gretl_dialog_set_resizeable(d->dialog, TRUE);
 }
 
-static void raise_and_focus_dialog (GtkEditable *editable, gpointer p)
+void raise_and_focus_dialog (GtkEditable *entry, 
+			     GtkWidget *parent)
 {
-    dialog_t *d = (dialog_t *) p;
+    gtk_window_present(GTK_WINDOW(parent));
 
-    gtk_window_present(GTK_WINDOW(d->dialog));
-
-    if (!GTK_WIDGET_HAS_FOCUS(d->edit)) {
-	gtk_widget_grab_focus(d->edit);
+    if (!GTK_WIDGET_HAS_FOCUS(GTK_WIDGET(entry))) {
+	gtk_widget_grab_focus(GTK_WIDGET(entry));
     }
 }
 
@@ -1343,7 +1347,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	gtk_widget_show(d->edit);
 
 	g_signal_connect(G_OBJECT(GTK_EDITABLE(d->edit)), "changed", 
-			 G_CALLBACK(raise_and_focus_dialog), d);
+			 G_CALLBACK(raise_and_focus_dialog), d->dialog);
     }
 
     if (ci == SYSTEM || ci == ESTIMATE) {
@@ -1377,6 +1381,12 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	modal = 1;
     }
 
+    hlpcode = edit_dialog_help_code(ci, okptr);
+
+    if (varclick == VARCLICK_NONE && !hlpcode) {
+	gtk_window_set_keep_above(GTK_WINDOW(d->dialog), TRUE);
+    }
+
     gtk_widget_grab_focus(d->edit);
 
     /* "Clear" button? */
@@ -1402,7 +1412,6 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     gtk_widget_grab_default(w);
 
     /* "Help" button, if wanted */
-    hlpcode = edit_dialog_help_code(ci, okptr);
     if (hlpcode > 0) {
 	context_help_button(button_box, hlpcode);
 	modal = 0;
