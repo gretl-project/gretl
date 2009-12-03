@@ -1727,15 +1727,16 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
  * count_missing_values:
  * @Z: data array.
  * @pdinfo: dataset information.
- * @opt: use %OPT_V for verbose operation.
+ * @opt: use %OPT_V for verbose operation, %OPT_A to 
+ * examine all data.
  * @prn: printing struct.
  * @err: location to receive error code.
  *
  * Prints a count of missing values (if any) in the current
- * dataset over the currently defined sample range. If
- * %OPT_V is given this includes a count of missing values
- * at each observation; otherwise it just includes global
- * and per-variable counts.
+ * dataset over the currently defined sample range (or the 
+ * entire data range if %OPT_A is given). If %OPT_V is given 
+ * this includes a count of missing values at each observation; 
+ * otherwise it just includes global and per-variable counts.
  *
  * Returns: 0 if no missing values are found (or on error),
  * otherwise the total number of missing values.
@@ -1745,10 +1746,20 @@ int count_missing_values (const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn, int *err)
 {
     int missval = 0, missobs = 0, totvals = 0, oldmiss = 0;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T, t1, t2;
     int *missvec;
     double missfrac;
     int i, t, tmiss;
+
+    if (opt & OPT_A) {
+	t1 = 0;
+	t2 = pdinfo->n - 1;
+    } else {
+	t1 = pdinfo->t1;
+	t2 = pdinfo->t2;
+    }
+
+    T = t2 - t1 + 1;
 
     missvec = malloc(pdinfo->v * sizeof missvec);
 
@@ -1761,7 +1772,7 @@ int count_missing_values (const double **Z, const DATAINFO *pdinfo,
 	missvec[i] = 0;
     }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=t1; t<=t2; t++) {
 	tmiss = 0;
 	for (i=1; i<pdinfo->v; i++) {
 	    if (var_is_hidden(pdinfo, i)) {

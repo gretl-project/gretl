@@ -1940,14 +1940,20 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* text entry for restriction */
-    hbox = gtk_hbox_new(FALSE, 5);    
+    if (dumlist != NULL) {
+	hbox = gtk_hbox_new(FALSE, 5);
+    }
     rset->entry = gtk_entry_new();
     gtk_entry_set_activates_default(GTK_ENTRY(rset->entry), TRUE);
     set_active_edit_name(rset->entry);
     g_signal_connect(G_OBJECT(GTK_EDITABLE(rset->entry)), "changed", 
 		     G_CALLBACK(raise_and_focus_dialog), rset->dlg);
-    gtk_box_pack_start(GTK_BOX(hbox), rset->entry, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    if (dumlist != NULL) {
+	gtk_box_pack_start(GTK_BOX(hbox), rset->entry, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    } else {
+	gtk_box_pack_start(GTK_BOX(vbox), rset->entry, FALSE, FALSE, 0);
+    }
 
     if (dumlist != NULL) {
 	hbox = gtk_hbox_new(FALSE, 5);

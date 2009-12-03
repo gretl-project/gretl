@@ -32,9 +32,9 @@ cat $TOP/etc/gtk-2.0/gdk-pixbuf.loaders | sed s+'\.\.'+$TOP+ > $HOME/.gretl/etc/
 export "GDK_PIXBUF_MODULE_FILE=$HOME/.gretl/etc/gdk-pixbuf.loaders"
 
 # location of gnuplot help file
-export "GNUHELP=$TOP/share/gnuplot/4.3/gnuplot.gih"
+export "GNUHELP=$TOP/share/gnuplot/4.5/gnuplot.gih"
 # location of gnuplot X11 driver
-export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.3"
+export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.5"
 # path for fonts for libgd
 export "GDFONTPATH=$TOP/share/gretl/fonts:/usr/X11R6/lib/X11/fonts/TTF"
 # default font for gnuplot PNG

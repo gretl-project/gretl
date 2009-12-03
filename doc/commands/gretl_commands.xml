@@ -10281,6 +10281,13 @@
 	are in the habit of launching gretl from a command prompt rather
 	than a menu or icon.
       </para>
+      <para>
+	This dialog also allows you to set the behavior of the GUI file
+	selector: when you open or save a file in a given folder, should the
+	selector remember and return to the same folder on the next
+	invocation?  Or should the selector always visit the chosen working
+	directory?
+      </para>
     </description>
 
     <gui-access>

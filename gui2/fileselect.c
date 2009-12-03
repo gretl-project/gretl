@@ -695,34 +695,53 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
     } 
 }
 
+static void remember_folder (GtkFileChooser *chooser, char *savedir)
+{
+    gchar *folder = gtk_file_chooser_get_current_folder(chooser);
+
+    strcpy(savedir, folder);
+    g_free(folder);
+}
+
 static void gtk_file_selector (int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
-    GtkWidget *filesel;
+    static char savedir[MAXLEN];
     char startdir[MAXLEN];
+    GtkWidget *filesel;
     GtkFileChooserAction fa;
     const gchar *okstr;
+    int remember = get_keep_folder();
     gint response;
-
-    get_default_dir(startdir, action);
-
-#ifdef G_OS_WIN32
-    win32_correct_path(startdir);
-#endif
 
     if (SET_DIR_ACTION(action)) {
 	fa = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
 	okstr = GTK_STOCK_OK;
+	remember = 0;
     } else if (action == SET_PROG) {
 	fa = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OK;
+	remember = 0;
     } else if (action < END_OPEN) {
 	fa = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OPEN;
     } else {
 	fa = GTK_FILE_CHOOSER_ACTION_SAVE;
 	okstr = GTK_STOCK_SAVE;
+	if (action == SAVE_FUNCTIONS || action == SAVE_DATA_PKG) {
+	    remember = 0;
+	}
     }
+
+    if (remember && *savedir != '\0') {
+	strcpy(startdir, savedir);
+    } else {
+	get_default_dir(startdir, action);
+    }
+
+#ifdef G_OS_WIN32
+    win32_correct_path(startdir);
+#endif
 
     if (parent == NULL) {
 	parent = mdata->main;
@@ -750,6 +769,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	gchar *fname;
 	
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
+	if (remember) {
+	    remember_folder(GTK_FILE_CHOOSER(filesel), savedir);
+	}
 	gtk_widget_destroy(filesel);
 	filesel = NULL;
 

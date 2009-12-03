@@ -1276,6 +1276,23 @@ int do_set_sample (void)
     return set_sample(cmdline, &Z, datainfo);
 }
 
+static int any_missing (void)
+{
+    int i, t;
+
+    for (i=1; i<datainfo->v; i++) {
+	if (!var_is_hidden(datainfo, i)) {
+	    for (t=0; t<datainfo->n; t++) {
+		if (na(Z[i][t])) {
+		    return 1;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
 void count_missing (void)
 {
     const char *opts[] = {
@@ -1287,6 +1304,11 @@ void count_missing (void)
     int mc, err = 0;
     PRN *prn;
 
+    if (!any_missing()) {
+	infobox(_("No missing data values"));
+	return;
+    }
+
     active = (datainfo->n < 1000);
 
     resp = checks_dialog(_("gretl: missing values info"), NULL,
@@ -1297,7 +1319,7 @@ void count_missing (void)
 	return;
     }
 
-    opt = (active)? OPT_V : OPT_NONE;
+    opt = (active)? (OPT_V | OPT_A) : OPT_A;
 
     mc = count_missing_values((const double **) Z, datainfo, opt, prn, &err);
 

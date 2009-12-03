@@ -27,6 +27,8 @@ int session_prompt_on (void);
 
 void set_session_prompt (int val);
 
+int get_keep_folder (void);
+
 int write_rc (void);
 
 void dump_rc (void);

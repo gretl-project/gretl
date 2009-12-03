@@ -84,6 +84,7 @@ static int shellok;
 static int manpref;
 static int autoicon = 1;
 static int session_prompt = 1;
+static int keep_folder = 1;
 char gpcolors[64];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -172,6 +173,8 @@ RCVAR rc_vars[] = {
 #endif
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
+    { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder, 
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
 #ifdef ENABLE_NLS
     { "langpref", N_("Language preference"), NULL, langpref, 
       LISTSET | RESTART, 32, TAB_MAIN, NULL },
@@ -314,6 +317,11 @@ int session_prompt_on (void)
 void set_session_prompt (int val)
 {
     session_prompt = val;
+}
+
+int get_keep_folder (void)
+{
+    return keep_folder;
 }
 
 static gretlopt set_paths_opt = OPT_X;
@@ -476,40 +484,35 @@ static void get_pkg_dir (char *dirname, int action)
     *dirname = '\0';
 }
 
-static char startdir[MAXLEN];
-
 void set_gretl_startdir (void)
 {
-    char *test = getenv("GRETL_STARTDIR");
+    if (usecwd) {
+	char *test = getenv("GRETL_STARTDIR");
+	char startdir[MAXLEN];
 
-    if (test != NULL) {
-	*startdir = '\0';
-	strncat(startdir, test, MAXLEN - 1);
-    } else {
-	test = getcwd(startdir, MAXLEN);
-	if (test == NULL) {
+	/* the environment variable check is mostly for the OS X
+	   package */
+
+	if (test != NULL) {
 	    *startdir = '\0';
-	}
-    }
-
-#if 0
-    fprintf(stderr, "startdir = '%s', usecwd = %d\n", startdir, usecwd);
-#endif
-
-    if (usecwd && *startdir != '\0') {
-	int err = set_gretl_work_dir(startdir);
-
-	if (err) {
-	    fprintf(stderr, "%s\n", gretl_errmsg_get());
+	    strncat(startdir, test, MAXLEN - 1);
 	} else {
-	    fprintf(stderr, "working dir = '%s'\n", startdir);
+	    test = getcwd(startdir, MAXLEN);
+	    if (test == NULL) {
+		*startdir = '\0';
+	    }
+	}
+
+	if (*startdir != '\0') {
+	    int err = set_gretl_work_dir(startdir);
+
+	    if (err) {
+		fprintf(stderr, "%s\n", gretl_errmsg_get());
+	    } else {
+		fprintf(stderr, "working dir = '%s'\n", startdir);
+	    }
 	}
     }
-}
-
-const char *get_gretl_startdir (void)
-{
-    return startdir;
 }
 
 void get_default_dir (char *s, int action)
@@ -2266,7 +2269,8 @@ int gui_set_working_dir (char *dirname)
 struct wdir_setter {
     GtkWidget *dialog;
     GtkWidget *wdir_combo;
-    GtkWidget *r1, *r2;
+    GtkWidget *cwd_radio;
+    GtkWidget *keep_radio;
 };
 
 /* callback from the file selector */
@@ -2334,7 +2338,6 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
-    wset->r1 = w;
 
     /* radio 2 for "next time" */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -2343,7 +2346,31 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), usecwd);
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
-    wset->r2 = w;
+    wset->cwd_radio = w;
+
+    vbox_add_hsep(vbox);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("The file selection dialog should:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5);
+
+    /* radio 1 for "remember folder" */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_radio_button_new_with_label(NULL, 
+					_("remember the last-opened folder"));
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), keep_folder);
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    wset->keep_radio = w;
+
+    /* radio 2 for "remember folder" */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_radio_button_new_with_label(group, _("always start in the "
+						 "working directory"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
     g_list_foreach(list, (GFunc) free_fname, NULL);
     g_list_free(list);
@@ -2373,7 +2400,8 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 	mkfilelist(FILE_LIST_WDIR, tmp);
     }
 
-    usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->r2));
+    usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->cwd_radio));
+    keep_folder = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->keep_radio));
 }
 
 void working_dir_dialog (void) 

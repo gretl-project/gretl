@@ -21,9 +21,9 @@ export "GRETL_HOME=$TOP/share/gretl/"
 export "GTKSOURCEVIEW_LANGUAGE_DIR=$TOP/share/gretl/gtksourceview"
 
 # location of gnuplot help file
-export "GNUHELP=$TOP/share/gnuplot/4.3/gnuplot.gih"
+export "GNUHELP=$TOP/share/gnuplot/4.5/gnuplot.gih"
 # location of gnuplot X11 driver
-export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.3"
+export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.5"
 # we do not support the 'aqua' terminal type
 if [ "$GNUTERM" = "aqua" ] ; then
    export GNUTERM=x11
