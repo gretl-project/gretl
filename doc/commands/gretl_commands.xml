@@ -5629,7 +5629,8 @@
 
   </command>
 
-  <command name="modtest" section="Tests" label="Model tests">
+  <command name="modtest" section="Tests" label="Model tests"
+    context="cli">
 
     <usage>
       <arguments>
@@ -5687,18 +5688,7 @@
       </options>
     </usage>
 
-    <description context="gui">
-      <para>
-	Under this heading fall several diagnostic tests.  In each case the
-	null hypothesis is that the model under test does not exhibit some
-	problematic condition (heteroskedasticity, autocorrelation, etc.). A
-	<quote>large</quote> test statistic value (small p-value) suggests
-	that the null hypothesis should be rejected, or in other words the
-	problem is present.
-      </para>
-    </description>
-
-    <description context="cli">
+    <description>
       <para>
 	Must immediately follow an estimation command. Depending on the option
 	given, this command carries out one of the following: the

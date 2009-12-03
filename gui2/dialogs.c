@@ -538,6 +538,7 @@ int csv_options_dialog (gretlopt *optp)
 		     G_CALLBACK(delete_widget), dialog);
     gtk_widget_grab_default(tmp);
 
+    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
     gtk_widget_show_all(dialog);
 
     return ret;
@@ -806,6 +807,7 @@ void copy_format_dialog (windata_t *vwin, int action)
 		     G_CALLBACK(copy_with_format_callback), finfo);
     gtk_widget_grab_default(tmp);
 
+    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
     gtk_widget_show_all(dialog);
 }
 
@@ -1063,6 +1065,8 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     if (!htest) {
 	/* Help button */
 	context_help_button(hbox, BOOTSTRAP);
+    } else {
+	gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
     }
 
     gtk_widget_show_all(dialog);
@@ -1873,6 +1877,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
 
+    gtk_window_set_keep_above(GTK_WINDOW(rset->dlg), TRUE);
     gtk_widget_show_all(rset->dlg);
 }
 
@@ -3264,6 +3269,8 @@ int real_radio_dialog (const char *title, const char *label,
     /* Create a "Help" button? */
     if (hcode) {
 	context_help_button(hbox, hcode);
+    } else {
+	gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
     }
 
     gtk_widget_show_all(dialog);
@@ -3550,6 +3557,10 @@ build_checks_dialog (const char *title, const char *blurb,
     /* Create a "Help" button if wanted */
     if (hcode && hcode != FREQ) {
 	context_help_button(hbox, hcode);
+    }
+
+    if (!hcode) {
+	gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
     }
 
     return dialog;
@@ -3840,6 +3851,8 @@ int freq_dialog (const char *title, const char *blurb,
     /* Help button */
     if (nbins != NULL) {
 	context_help_button(hbox, FREQ);
+    } else {
+	gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
     }
 
     gtk_widget_show_all(dialog);
@@ -3862,8 +3875,8 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 	N_("Use model names")
     };
     const char *se_opts[] = {
-	N_("standard errors in parentheses"),
-	N_("t-statistics in parentheses")
+	N_("Show standard errors in parentheses"),
+	N_("Show t-statistics in parentheses")
     };
     GtkWidget *dialog;
     GtkWidget *vbox, *hbox, *tmp;
@@ -3958,6 +3971,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 		     G_CALLBACK(delete_widget), dialog);
     gtk_widget_grab_default(tmp);
 
+    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
     gtk_widget_show_all(dialog);
 
     return ret;
@@ -4150,6 +4164,7 @@ void lmax_dialog (double *lmax, double ymax)
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(lmax_opt_finalize), &opt);
 
+    gtk_window_set_keep_above(GTK_WINDOW(opt.dlg), TRUE);
     gtk_widget_show_all(opt.dlg);
 }
 
@@ -4380,5 +4395,6 @@ void tex_format_dialog (void)
 
     gtk_widget_show_all(hbox);
 
+    gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
     gtk_widget_show(dlg);
 }

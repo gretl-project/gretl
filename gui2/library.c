@@ -2052,7 +2052,7 @@ void do_arch (GtkAction *action, gpointer p)
     set_window_busy(vwin);
     err = spin_dialog(_("gretl: ARCH test"), NULL,
 		      &order, _("Lag order for ARCH test:"),
-		      1, datainfo->n / 2, MODTEST);
+		      1, datainfo->n / 2, 0);
     unset_window_busy(vwin);
 
     if (err < 0) {
@@ -2513,7 +2513,7 @@ void do_autocorr (GtkAction *action, gpointer p)
     set_window_busy(vwin);
     err = spin_dialog(_("gretl: autocorrelation"), NULL,
 		      &order, _("Lag order for test:"),
-		      1, datainfo->n / 2, MODTEST);
+		      1, datainfo->n / 2, 0);
     unset_window_busy(vwin);
 
     if (err < 0) {
@@ -4053,8 +4053,8 @@ void do_resid_freq (GtkAction *action, gpointer p)
 
 	if (!err) {
 	    print_freq(freq, prn);
-	    view_buffer(prn, 78, 300, _("gretl: residual dist."), MODTEST,
-			vwin);
+	    view_buffer(prn, 78, 300, _("gretl: residual dist."), 
+			MODTEST, vwin);
 
 	    /* show the graph too */
 	    if (plot_freq(freq, D_NORMAL) == 0) {

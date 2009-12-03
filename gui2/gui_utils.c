@@ -3202,7 +3202,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 			  _("gretl: autocorrelation") :
 			  _("gretl: ARCH test"), NULL,
 			  &order, _("Lag order for test:"),
-			  1, datainfo->n / 2, MODTEST);
+			  1, datainfo->n / 2, 0);
 	unset_window_busy(vwin);
 	if (err < 0) {
 	    gretl_print_destroy(prn);
