@@ -2075,6 +2075,8 @@ static int read_gretlrc (void)
     return common_read_rc_setup();
 }
 
+#endif /* end of non-Windows versions */
+
 static int fontsel_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -2085,8 +2087,6 @@ static int fontsel_code (GtkAction *action)
 	return FIXED_FONT_SELECTION;
     }
 }
-
-#endif /* end of non-Windows versions */
 
 /* font selection: non-Windows, gtk-2.0 version first */
 
