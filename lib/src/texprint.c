@@ -24,6 +24,8 @@
 #include "johansen.h"
 #include "texprint.h"
 
+#include <glib.h>
+
 static char colspec[4][8];
 static int use_custom;
 static int use_pdf;
@@ -1131,25 +1133,53 @@ static const char *get_gretltex_local (void)
 
 void set_gretl_tex_preamble (void)
 {
+    const char *wdir = gretl_workdir();
     char test[MAXLEN];
     FILE *fp;
+    int gotit = 0;
 
-    /* first choice: localized preamble file */
-    sprintf(test, "%s%s", gretl_workdir(), get_gretltex_local());
+    /* localized preamble file in working dir */
+    sprintf(test, "%s%s", wdir, get_gretltex_local());
     fp = gretl_fopen(test, "r");
     if (fp != NULL) {
 	strcpy(tex_preamble_file, test);
 	fclose(fp);
-	return;
-    }    
-
-    /* preamble file on disk */
-    sprintf(test, "%sgretlpre.tex", gretl_workdir());
-    fp = gretl_fopen(test, "r");
-    if (fp != NULL) {
-	strcpy(tex_preamble_file, test);
-	fclose(fp);
+	gotit = 1;
+    } else {
+	/* regular preamble file in working dir */
+	sprintf(test, "%sgretlpre.tex", wdir);
+	fp = gretl_fopen(test, "r");
+	if (fp != NULL) {
+	    strcpy(tex_preamble_file, test);
+	    fclose(fp);
+	    gotit = 1;
+	}
     }
+
+    if (!gotit) {
+	gchar *ddir = gretl_default_workdir();
+
+	if (ddir != NULL) {
+	    /* localized preamble file in standard working dir */
+	    sprintf(test, "%s%s", ddir, get_gretltex_local());
+	    fp = gretl_fopen(test, "r");
+	    if (fp != NULL) {
+		strcpy(tex_preamble_file, test);
+		fclose(fp);
+		gotit = 1;
+	    } else {
+		/* regular preamble file in standard working dir */
+		sprintf(test, "%sgretlpre.tex", ddir);
+		fp = gretl_fopen(test, "r");
+		if (fp != NULL) {
+		    strcpy(tex_preamble_file, test);
+		    fclose(fp);
+		    gotit = 1;
+		}
+	    }
+	    g_free(ddir);
+	}
+    }    
 
     gretl_error_clear();
 }
