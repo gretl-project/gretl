@@ -1700,6 +1700,7 @@ static windata_t *get_parent_viewer (windata_t *vwin)
 }
 
 static int n_listed_windows;
+static GtkActionGroup *window_list;
 
 int get_n_listed_windows (void)
 {
@@ -1744,12 +1745,12 @@ static void destroy_window_action (GtkWidget *w, GtkActionGroup *group)
 	/* and also the underlying action */
 	aname = g_strdup_printf("%p", (void *) w);
 	action = gtk_action_group_get_action(group, aname);
-	gtk_action_group_remove_action(group, action);
+	if (action != NULL) {
+	    gtk_action_group_remove_action(group, action);
+	}
 	g_free(aname);
     }    
 }
-
-static GtkActionGroup *window_list;
 
 void add_window_list_item (GtkWidget *w, int role)
 {
@@ -1771,7 +1772,7 @@ void add_window_list_item (GtkWidget *w, int role)
     vwin = g_object_get_data(G_OBJECT(w), "vwin");
     if (vwin != NULL) {
 	windata_t *parent = get_parent_viewer(vwin);
-
+	
 	if (parent != NULL) {
 	    apath = g_strdup_printf("/menubar/View/Windows/%p", parent->main);
 	}

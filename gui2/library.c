@@ -1618,7 +1618,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
     } else {
 	windata_t *bootwin = view_buffer(prn, 78, 300, 
 					 _("gretl: bootstrap analysis"), 
-					 PRINT, vwin);
+					 PRINT, NULL);
 	if (opt & OPT_G) {
 	    make_and_display_graph();
 	}
@@ -4621,10 +4621,10 @@ void do_anova (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	char title[32];
+	gchar *title = g_strdup_printf("gretl: %s", _("ANOVA"));
 
-	sprintf(title, "gretl: %s", _("ANOVA"));
-	view_buffer(prn, 80, 300, title, PRINT, vwin);
+	view_buffer(prn, 80, 300, title, PRINT, NULL);
+	g_free(title);
     }
 }
 
