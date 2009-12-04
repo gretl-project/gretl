@@ -70,6 +70,7 @@ static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb,
 			    gpointer data);
 static void model_copy_callback (GtkAction *action, gpointer p);
 static int set_sample_from_model (MODEL *pmod);
+static void vwin_add_child (windata_t *parent, windata_t *child);
 
 static void close_model (GtkAction *action, gpointer data)
 {
@@ -144,6 +145,11 @@ static void model_sample_callback (GtkAction *action, gpointer p)
 }
 #endif
 
+static gchar *gretl_title (char *s)
+{
+    return g_strdup_printf("gretl: %s", s);
+}
+
 static void text_eqn_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -156,10 +162,16 @@ static void text_eqn_callback (GtkAction *action, gpointer p)
     }
     
     err = text_print_equation(pmod, datainfo, OPT_NONE, prn);
+
     if (err) {
 	gui_errmsg(err);
     } else {
-	view_buffer(prn, 78, 200, "gretl", PRINT, NULL);
+	gchar *title = gretl_title(_("equation"));
+	windata_t *viewer;
+
+	viewer = view_buffer(prn, 78, 200, title, PRINT, NULL);
+	vwin_add_child(vwin, viewer);
+	g_free(title);			   
     }
 }
 
@@ -1210,7 +1222,7 @@ void vwin_save_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
-static int vwin_add_child (windata_t *parent, windata_t *child)
+static void vwin_add_child (windata_t *parent, windata_t *child)
 {
     int n = parent->n_gretl_children;
     int i, done = 0, err = 0;
@@ -1227,28 +1239,26 @@ static int vwin_add_child (windata_t *parent, windata_t *child)
     if (!done) {
 	windata_t **children;
 
-	children = realloc(parent->gretl_children, (n + 1) * sizeof *children);
-	if (children == NULL) {
-	    err = 1;
-	} else {
+	children = myrealloc(parent->gretl_children, (n + 1) * sizeof *children);
+	if (children != NULL) {
 	    parent->gretl_children = children;
 	    parent->gretl_children[n] = child;
 	    parent->n_gretl_children += 1;
+	} else {
+	    err = 1;
 	}
     }
     
     if (!err) {
 	child->gretl_parent = parent;
     }
-
-    return err;
 }
 
 static void vwin_nullify_child (windata_t *parent, windata_t *child)
 {
-    int i, n = parent->n_gretl_children;
+    int i;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<parent->n_gretl_children; i++) {
 	if (child == parent->gretl_children[i]) {
 	    parent->gretl_children[i] = NULL;
 	}
@@ -1257,9 +1267,9 @@ static void vwin_nullify_child (windata_t *parent, windata_t *child)
 
 windata_t *vwin_first_child (windata_t *vwin)
 {
-    int i, n = vwin->n_gretl_children;
+    int i;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<vwin->n_gretl_children; i++) {
 	if (vwin->gretl_children[i] != NULL) {
 	    return vwin->gretl_children[i];
 	}
@@ -1281,12 +1291,12 @@ void free_windata (GtkWidget *w, gpointer data)
 	    }
 	}
 
-	/* notify parent, if any */
+	/* notify parent, if any, that child is gone */
 	if (vwin->gretl_parent != NULL) {
 	    vwin_nullify_child(vwin->gretl_parent, vwin);
 	}
 
-	/* notify children, if any */
+	/* notify children, if any, that parent is gone */
 	if (vwin->n_gretl_children > 0) {
 	    int i;
 
@@ -1339,14 +1349,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	}
 
 	if (window_delete_filename(vwin)) {
-	    if (vwin->gretl_parent == NULL) {
-		windata_t *child = vwin_first_child(vwin);
-
-		if (child == NULL) {
-		    gretl_remove(vwin->fname);
-		}
-	    }
-	} else if (vwin->role == EDIT_PKG_CODE) {
+	    /* there's a temporary file associated */
 	    gretl_remove(vwin->fname);
 	}
 

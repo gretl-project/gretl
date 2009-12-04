@@ -115,6 +115,5 @@ struct GretlToolItem_ {
 
 #define window_delete_filename(w)       (w->flags & VWIN_DELETE_FNAME)
 #define set_window_delete_filename(w)   (w->flags |= VWIN_DELETE_FNAME)
-#define unset_window_delete_filename(w) (w->flags &= ~VWIN_DELETE_FNAME)
 
 #endif /* GRETLTYPES_H */

@@ -469,6 +469,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
     if (vwin != NULL) {
 	strcpy(vwin->fname, fname);
 	finfo_add_codewin(finfo, vwin);
+	set_window_delete_filename(vwin);
     }
 }
 

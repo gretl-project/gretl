@@ -468,6 +468,7 @@ static int seek_file_collections (int location)
 
     dir = opendir(tmp);
     if (dir == NULL) {
+	g_free(tmp);
 	return 1;
     }
 
@@ -671,11 +672,13 @@ static void show_datafile_info (GtkWidget *w, gpointer data)
     descrip = gretl_get_gdt_description(hdrname);
 
     if (descrip != NULL) {
+	gchar *title = g_strdup_printf("gretl: %s", _("data info"));
+
 	prn = gretl_print_new_with_buffer(descrip);
-	view_buffer(prn, 80, 320, _("gretl: data header"), INFO, NULL);
+	view_buffer(prn, 80, 320, title, INFO, NULL);
+	g_free(title);
     } else {
 	errbox(_("Failed to retrieve description of data"));
-	fprintf(stderr, I_("didn't get description from %s\n"), hdrname);
     }
 }
 
