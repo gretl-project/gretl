@@ -1734,32 +1734,34 @@ static void destroy_window_action (GtkWidget *w, GtkActionGroup *group)
     }    
 }
 
+static gchar *get_parent_path (GtkWidget *w)
+{
+    windata_t *vwin = g_object_get_data(G_OBJECT(w), "vwin");
+    gchar *path = NULL;
+
+    if (vwin != NULL && vwin->gretl_parent != NULL) {
+	/* got a viewer with a 'parent' */
+	path = g_strdup_printf("/menubar/View/Windows/%p", 
+			       vwin->gretl_parent->main);
+    } 
+    
+    return path;
+}
+
 void add_window_list_item (GtkWidget *w, int role)
 {
     GtkActionEntry entry = { 
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
     };
     const gchar *s = get_window_title(w);
-    gchar *aname, *apath = NULL;
-    windata_t *vwin;
+    gchar *aname;
     guint merge_id;
 
     if (window_list == NULL) {
-	/* create the group */
+	/* create the window group */
 	window_list = gtk_action_group_new("WindowList");
 	gtk_ui_manager_insert_action_group(mdata->ui, window_list, 0);
     }
-
-    /* does this window have a 'parent'? */
-    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-    if (vwin != NULL) {
-	windata_t *parent = vwin->gretl_parent;
-
-	if (parent != NULL) {
-	    apath = g_strdup_printf("/menubar/View/Windows/%p", 
-				    parent->main);
-	}
-    } 
 
     /* set up an action entry */
     aname = g_strdup_printf("%p", (void *) w);
@@ -1772,6 +1774,8 @@ void add_window_list_item (GtkWidget *w, int role)
     merge_id = gtk_ui_manager_new_merge_id(mdata->ui);
 
     if (merge_id > 0) {
+	gchar *apath = get_parent_path(w);
+
 	gtk_ui_manager_add_ui(mdata->ui, merge_id, 
 			      (apath != NULL)? apath : "/menubar/View/Windows",
 			      aname, aname,
@@ -1783,10 +1787,31 @@ void add_window_list_item (GtkWidget *w, int role)
 
 	window_list_state(TRUE);
 	n_listed_windows++;
+	g_free(apath);
     }
 
     g_free(aname);
-    g_free(apath);
+}
+
+static gint sort_window_items (gconstpointer a, gconstpointer b)
+{
+    const gchar *aname = gtk_action_get_name((GtkAction *) a);
+    const gchar *bname = gtk_action_get_name((GtkAction *) b);
+    GtkWidget *wa = (GtkWidget *) strtol(aname, NULL, 16);
+    GtkWidget *wb = (GtkWidget *) strtol(bname, NULL, 16);
+    windata_t *va = g_object_get_data(G_OBJECT(wa), "vwin");
+    windata_t *vb = g_object_get_data(G_OBJECT(wb), "vwin");
+    gint ret = 0;
+
+    if (va != NULL && vb != NULL) {
+	if (va->gretl_parent == vb) {
+	    ret = 1;
+	} else if (vb->gretl_parent == va) {
+	    ret = -1;
+	}
+    }
+    
+    return ret;
 }
 
 void window_list_popup (GtkWidget *src)
@@ -1800,7 +1825,7 @@ void window_list_popup (GtkWidget *src)
 
     if (n_listed_windows > 0) {
 	GList *wlist = gtk_action_group_list_actions(window_list);
-	GList *list = wlist;
+	GList *list = g_list_sort(wlist, sort_window_items);
 	GtkAction *a;
 	GtkWidget *w;
 	int n_items = 0;
@@ -1817,6 +1842,7 @@ void window_list_popup (GtkWidget *src)
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
 		n_items++;
 	    }
+	    /* FIXME: order of items */
 	    a = (GtkAction *) list->data;
 	    w = gtk_action_create_menu_item(a);
 	    gtk_widget_show(w);

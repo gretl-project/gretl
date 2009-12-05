@@ -1581,7 +1581,9 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	if (!rolling && fr->sderr == NULL) {
 	    width = 60;
 	}
-	view_buffer(prn, width, 400, _("gretl: forecasts"), FCAST, fr);
+	view_buffer_with_parent(vwin, prn, width, 400, 
+				_("gretl: forecasts"), 
+				FCAST, fr);
     }
 }
 
@@ -2223,8 +2225,9 @@ void do_leverage (GtkAction *action, gpointer p)
     } else {
 	windata_t *levwin;
 
-	levwin = view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
-			     LEVERAGE, m); 
+	levwin = view_buffer_with_parent(vwin, prn, 78, 400, 
+					 _("gretl: leverage and influence"), 
+					 LEVERAGE, m); 
 	set_model_id_on_window(levwin->main, pmod->ID);
 
 	make_and_display_graph();
@@ -2806,7 +2809,8 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     } else {
 	strcpy(title, "gretl: ");
 	strcat(title, _("linear restrictions"));
-	view_buffer(prn, 78, height, title, PRINT, NULL);
+	view_buffer_with_parent(vwin, prn, 78, height, title, 
+				PRINT, NULL);
     }
 
     datainfo->t1 = save_t1;
@@ -4586,9 +4590,9 @@ void do_coeff_intervals (GtkAction *action, gpointer p)
 
     if (cf != NULL) {
 	text_print_model_confints(cf, prn);
-	view_buffer(prn, 78, 300, 
-		    _("gretl: coefficient confidence intervals"), 
-		    COEFFINT, cf);
+	view_buffer_with_parent(vwin, prn, 78, 300, 
+				_("gretl: coefficient confidence intervals"), 
+				COEFFINT, cf);
     }
 }
 
@@ -4612,8 +4616,9 @@ void do_outcovmx (GtkAction *action, gpointer p)
 	errbox(_("Error generating covariance matrix"));
     } else {
 	text_print_vmatrix(vcv, prn);
-	view_buffer(prn, 80, 300, _("gretl: coefficient covariances"), 
-		    COVAR, vcv);
+	view_buffer_with_parent(vwin, prn, 80, 300, 
+				_("gretl: coefficient covariances"), 
+				COVAR, vcv);
     }
 }
 
