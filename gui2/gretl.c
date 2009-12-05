@@ -1842,7 +1842,6 @@ void window_list_popup (GtkWidget *src)
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
 		n_items++;
 	    }
-	    /* FIXME: order of items */
 	    a = (GtkAction *) list->data;
 	    w = gtk_action_create_menu_item(a);
 	    gtk_widget_show(w);
