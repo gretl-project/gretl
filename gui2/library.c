@@ -1616,14 +1616,16 @@ void do_bootstrap (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	windata_t *bootwin = view_buffer(prn, 78, 300, 
-					 _("gretl: bootstrap analysis"), 
-					 PRINT, NULL);
+	windata_t *w;
+
+	w = view_buffer_with_parent(vwin, prn, 78, 300, 
+				    _("gretl: bootstrap analysis"), 
+				    PRINT, NULL);
 	if (opt & OPT_G) {
 	    make_and_display_graph();
 	}
 	if (opt & OPT_S) {
-	    file_selector(SAVE_BOOT_DATA, FSEL_DATA_VWIN, bootwin);
+	    file_selector(SAVE_BOOT_DATA, FSEL_DATA_VWIN, w);
 	}
     }
 }
@@ -1632,10 +1634,10 @@ int do_coeff_sum (selector *sr)
 {
     windata_t *vwin = selector_get_data(sr);
     const char *buf = selector_list(sr);
-    PRN *prn;
-    char title[48];
     MODEL *pmod;
-    gint err;
+    PRN *prn;
+    gchar *title;
+    int err;
 
     if (buf == NULL) {
 	return 0;
@@ -1658,10 +1660,10 @@ int do_coeff_sum (selector *sr)
 
     model_command_init(pmod->ID);
 
-    strcpy(title, "gretl: ");
-    strcat(title, _("Sum of coefficients"));
-
-    view_buffer(prn, 78, 200, title, COEFFSUM, NULL); 
+    title = gretl_window_title(_("Sum of coefficients"), NULL);
+    view_buffer_with_parent(vwin, prn, 78, 200, title, 
+			    COEFFSUM, NULL); 
+    g_free(title);
 
     return 0;
 }
@@ -1782,8 +1784,9 @@ int do_add_omit (selector *sr)
 	    sprintf(title, _("gretl: model %d"), newmod->ID);
 	    view_model(prn, newmod, 78, 420, title);
 	} else {
-	    view_buffer(prn, 78, 400, _("gretl: Wald omit test"), 
-			PRINT, NULL);
+	    view_buffer_with_parent(vwin, prn, 78, 400, 
+				    _("gretl: Wald omit test"), 
+				    PRINT, NULL);
 	}
     }
 
@@ -2052,7 +2055,8 @@ void do_modtest (GtkAction *action, gpointer p)
     if (!err) {
 	update_model_tests(vwin);
 	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, title, MODTEST, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 400, 
+				title, MODTEST, NULL); 
     }
 
     trim_dataset(pmod, 0);
@@ -2094,7 +2098,9 @@ void do_arch (GtkAction *action, gpointer p)
 	update_model_tests(vwin);
 	gretl_command_sprintf("modtest --arch %d", order);
 	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, _("gretl: ARCH test"), MODTEST, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 400, 
+				_("gretl: ARCH test"), 
+				MODTEST, NULL); 
     }
 }
 
@@ -2121,8 +2127,9 @@ void do_panel_tests (GtkAction *action, gpointer p)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 78, 400, _("gretl: panel model diagnostics"), 
-		    PANEL, NULL);
+	view_buffer_with_parent(vwin, prn, 78, 400, 
+				_("gretl: panel model diagnostics"), 
+				PANEL, NULL);
     }
 }
 
@@ -2262,11 +2269,9 @@ void do_vif (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	windata_t *vifwin;
-
-	vifwin = view_buffer(prn, 78, 400, _("gretl: collinearity"), 
-			     PRINT, NULL); 
-
+	view_buffer_with_parent(vwin, prn, 78, 400, 
+				_("gretl: collinearity"), 
+				PRINT, NULL); 
 	gretl_command_strcpy("vif");
 	model_command_init(pmod->ID);
     } 
@@ -2430,14 +2435,15 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	update_model_tests(vwin);
 	model_command_init(pmod->ID);
 
-	view_buffer(prn, 78, 400, (ci == CHOW)?
-		    _("gretl: Chow test output") : 
-		    (ci == QLRTEST)?
-		    _("gretl: QLR test output") : 
-		    (ci == CUSUM)?
-		    _("gretl: CUSUM test output") :
-		    _("gretl: CUSUMSQ test output"),
-		    ci, NULL);
+	view_buffer_with_parent(vwin, prn, 78, 400, 
+				(ci == CHOW)?
+				_("gretl: Chow test output") : 
+				(ci == QLRTEST)?
+				_("gretl: QLR test output") : 
+				(ci == CUSUM)?
+				_("gretl: CUSUM test output") :
+				_("gretl: CUSUMSQ test output"),
+				ci, NULL);
     }
 }
 
@@ -2512,7 +2518,9 @@ void do_reset (GtkAction *action, gpointer p)
 	}
 	gretl_command_strcpy("reset");
 	model_command_init(pmod->ID);
-	view_buffer(prn, width, height, _("gretl: RESET test"), RESET, NULL); 
+	view_buffer_with_parent(vwin, prn, width, height, 
+				_("gretl: RESET test"), 
+				RESET, NULL); 
     }
 
     trim_dataset(pmod, 0);
@@ -2562,7 +2570,8 @@ void do_autocorr (GtkAction *action, gpointer p)
 	update_model_tests(vwin);
 	gretl_command_sprintf("modtest --autocorr %d", order);
 	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, title, MODTEST, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 400, 
+				title, MODTEST, NULL); 
     }
 }
 
@@ -2585,10 +2594,11 @@ void do_dwpval (GtkAction *action, gpointer p)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	title = g_strdup_printf("gretl: %s", _("Durbin-Watson"));
+	title = gretl_window_title(_("Durbin-Watson"), NULL);
 	pprintf(prn, "%s = %g\n", _("Durbin-Watson statistic"), pmod->dw);
 	pprintf(prn, "%s = %g\n", _("p-value"), pv);
-	view_buffer(prn, 78, 200, title, PRINT, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 200, 
+				title, PRINT, NULL); 
 	g_free(title);
     }
 }
@@ -4075,9 +4085,9 @@ void do_resid_freq (GtkAction *action, gpointer p)
 
 	if (!err) {
 	    print_freq(freq, prn);
-	    view_buffer(prn, 78, 300, _("gretl: residual dist."), 
-			MODTEST, NULL);
-
+	    view_buffer_with_parent(vwin, prn, 78, 300, 
+				    _("gretl: residual dist."), 
+				    MODTEST, NULL);
 	    /* show the graph too */
 	    if (plot_freq(freq, D_NORMAL) == 0) {
 		register_graph();
@@ -4342,8 +4352,8 @@ void do_range_mean (void)
 	make_and_display_graph();
     }
 
-    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RMPLOT, 
-		NULL);
+    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), 
+		RMPLOT, NULL);
 }
 
 void do_hurst (void)
@@ -4375,8 +4385,8 @@ void do_hurst (void)
 	make_and_display_graph();
     }
 
-    view_buffer(prn, 60, 350, _("gretl: Hurst exponent"), HURST, 
-		NULL);
+    view_buffer(prn, 60, 350, _("gretl: Hurst exponent"), 
+		HURST, NULL);
 }
 
 enum {
@@ -4621,9 +4631,10 @@ void do_anova (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *title = g_strdup_printf("gretl: %s", _("ANOVA"));
+	gchar *title = gretl_window_title(_("ANOVA"), NULL);
 
-	view_buffer(prn, 80, 300, title, PRINT, NULL);
+	view_buffer_with_parent(vwin, prn, 80, 300, 
+				title, PRINT, NULL);
 	g_free(title);
     }
 }
@@ -5381,7 +5392,8 @@ void display_selected (void)
 	    gretl_print_destroy(prn);
 	} else {
 	    sview = multi_series_view_new(list);
-	    view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, sview);
+	    view_buffer(prn, 78, 350, _("gretl: display data"), 
+			PRINT, sview);
 	}
     }
 
@@ -5415,10 +5427,13 @@ void display_fit_resid (GtkAction *action, gpointer p)
     } else {
 	text_print_fit_resid(fr, pdinfo, prn);
 	if (pmod->dataset == NULL) {
-	    view_buffer(prn, 78, 350, _("gretl: display data"), AFR, fr);
+	    view_buffer_with_parent(vwin, prn, 78, 350, 
+				    _("gretl: display data"), 
+				    AFR, fr);
 	} else {
-	    view_buffer(prn, 78, 350, _("gretl: display data"), 
-			PRINT, NULL);
+	    view_buffer_with_parent(vwin, prn, 78, 350, 
+				    _("gretl: display data"), 
+				    PRINT, NULL);
 	    trim_dataset(pmod, 0);
 	}
     }  

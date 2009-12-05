@@ -43,6 +43,11 @@ int highest_numbered_variable_in_winstack (void);
 windata_t *gretl_viewer_new (int role, const gchar *title, 
 			     gpointer data, int record);
 
+windata_t *
+gretl_viewer_new_with_parent (windata_t *parent, int role, 
+			      const gchar *title, 
+			      gpointer data, int record);
+
 windata_t *gretl_browser_new (int role, const gchar *title,
 			      int record);
 

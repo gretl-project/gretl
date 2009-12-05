@@ -3421,6 +3421,7 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 {
     gretl_matrix *A = NULL;
     gretl_matrix *evals = NULL;
+    gchar *title;
     PRN *prn;
     int s, err = 0;
 
@@ -3536,7 +3537,9 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 
  done:
 
-    view_buffer(prn, 78, 400, name, PRINT, NULL);
+    title = gretl_window_title(name, ("properties"));
+    view_buffer(prn, 78, 400, title, PRINT, NULL);
+    g_free(title);
 }
 
 

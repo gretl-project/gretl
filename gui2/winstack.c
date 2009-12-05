@@ -297,8 +297,10 @@ static void windata_init (windata_t *vwin, int role, gpointer data)
     vwin->sbuf = NULL;
 }
 
-windata_t *gretl_viewer_new (int role, const gchar *title, 
-			     gpointer data, int record)
+windata_t *
+gretl_viewer_new_with_parent (windata_t *parent, int role, 
+			      const gchar *title, 
+			      gpointer data, int record)
 {
     windata_t *vwin = mymalloc(sizeof *vwin);
 
@@ -326,9 +328,20 @@ windata_t *gretl_viewer_new (int role, const gchar *title,
 	winstack_add(vwin->main);
     } 
 
+    if (parent != NULL) {
+	vwin_add_child(parent, vwin);
+    }
+
     add_window_list_item(vwin->main, role);
 
     return vwin;
+}
+
+windata_t *gretl_viewer_new (int role, const gchar *title, 
+			     gpointer data, int record)
+{
+    return gretl_viewer_new_with_parent(NULL, role, title,
+					data, record);
 }
 
 static gint catch_winlist_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)

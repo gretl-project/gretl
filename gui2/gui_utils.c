@@ -70,7 +70,6 @@ static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb,
 			    gpointer data);
 static void model_copy_callback (GtkAction *action, gpointer p);
 static int set_sample_from_model (MODEL *pmod);
-static void vwin_add_child (windata_t *parent, windata_t *child);
 
 static void close_model (GtkAction *action, gpointer data)
 {
@@ -145,9 +144,15 @@ static void model_sample_callback (GtkAction *action, gpointer p)
 }
 #endif
 
-static gchar *gretl_title (char *s)
+gchar *gretl_window_title (const char *s1, const char *s2)
 {
-    return g_strdup_printf("gretl: %s", s);
+    if (s1 != NULL && s2 != NULL) {
+	return g_strdup_printf("gretl: %s %s", s1, s2);
+    } else if (s1 != NULL) {
+	return g_strdup_printf("gretl: %s", s1);
+    } else {
+	return g_strdup("gretl: untitled");
+    }
 }
 
 static void text_eqn_callback (GtkAction *action, gpointer p)
@@ -166,11 +171,11 @@ static void text_eqn_callback (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *title = gretl_title(_("equation"));
+	gchar *title = gretl_window_title(_("equation"), NULL);
 	windata_t *viewer;
 
-	viewer = view_buffer(prn, 78, 200, title, PRINT, NULL);
-	vwin_add_child(vwin, viewer);
+	viewer = view_buffer_with_parent(vwin, prn, 78, 200, 
+					 title, PRINT, NULL);
 	g_free(title);			   
     }
 }
@@ -1222,7 +1227,7 @@ void vwin_save_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
-static void vwin_add_child (windata_t *parent, windata_t *child)
+void vwin_add_child (windata_t *parent, windata_t *child)
 {
     int n = parent->n_gretl_children;
     int i, done = 0, err = 0;
@@ -1240,6 +1245,7 @@ static void vwin_add_child (windata_t *parent, windata_t *child)
 	windata_t **children;
 
 	children = myrealloc(parent->gretl_children, (n + 1) * sizeof *children);
+
 	if (children != NULL) {
 	    parent->gretl_children = children;
 	    parent->gretl_children[n] = child;
@@ -1556,9 +1562,11 @@ static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
 	                       r != EDIT_PKG_CODE && \
 	                       r != EDIT_PKG_SAMPLE)
 
-windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
-			const char *title, int role, 
-			gpointer data) 
+windata_t *
+view_buffer_with_parent (windata_t *parent, PRN *prn, 
+			 int hsize, int vsize, 
+			 const char *title, int role, 
+			 gpointer data) 
 {
     static windata_t *script_out;
     windata_t *vwin;
@@ -1571,15 +1579,19 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     record = view_buffer_record(role);
 
     if (title != NULL) {
-	vwin = gretl_viewer_new(role, title, data, record);
+	vwin = gretl_viewer_new_with_parent(parent, role, title, 
+					    data, record);
     } else {
 	gchar *tmp = make_viewer_title(role, NULL);
 
-	vwin = gretl_viewer_new(role, tmp, data, record);
+	vwin = gretl_viewer_new_with_parent(parent, role, tmp, 
+					    data, record);
 	g_free(tmp);
     }
 
-    if (vwin == NULL) return NULL;
+    if (vwin == NULL) {
+	return NULL;
+    }
 
     viewer_box_config(vwin);
 
@@ -1658,6 +1670,15 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     return vwin;
 }
+
+windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
+			const char *title, int role, 
+			gpointer data)
+{
+    return view_buffer_with_parent(NULL, prn, hsize, 
+				   vsize, title,
+				   role, data);
+} 
 
 #define view_file_use_sourceview(r) (vwin_editing_script(r) || \
                                      r == VIEW_SCRIPT || \

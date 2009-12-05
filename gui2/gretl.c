@@ -1681,24 +1681,6 @@ static const gchar *window_list_icon (int role)
     return id;
 }
 
-static windata_t *get_parent_viewer (windata_t *vwin)
-{
-    windata_t *parent = NULL;
-
-    if (vwin->gretl_parent != NULL) {
-	parent = vwin->gretl_parent;
-    } else if (vwin->role == MODTEST && vwin->data != NULL) {
-	parent = vwin->data;
-    }
-
-    if (parent != NULL && !vwin_on_stack(parent)) {
-	/* shouldn't happen, but... */
-	parent = NULL;
-    }
-
-    return parent;
-}
-
 static int n_listed_windows;
 static GtkActionGroup *window_list;
 
@@ -1771,12 +1753,13 @@ void add_window_list_item (GtkWidget *w, int role)
     /* does this window have a 'parent'? */
     vwin = g_object_get_data(G_OBJECT(w), "vwin");
     if (vwin != NULL) {
-	windata_t *parent = get_parent_viewer(vwin);
-	
+	windata_t *parent = vwin->gretl_parent;
+
 	if (parent != NULL) {
-	    apath = g_strdup_printf("/menubar/View/Windows/%p", parent->main);
+	    apath = g_strdup_printf("/menubar/View/Windows/%p", 
+				    parent->main);
 	}
-    }
+    } 
 
     /* set up an action entry */
     aname = g_strdup_printf("%p", (void *) w);
