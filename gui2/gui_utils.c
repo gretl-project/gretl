@@ -2938,8 +2938,8 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
     } else {
 	windata_t *viewer;
 
-	viewer = view_buffer(prn, 80, 400, title, code, NULL);
-	vwin_add_child(vwin, viewer);
+	viewer = view_buffer_with_parent(vwin, prn, 80, 400, title, 
+					 code, NULL);
 	viewer->active_var = h;
     }
 

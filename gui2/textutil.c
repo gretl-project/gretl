@@ -365,7 +365,17 @@ void window_tex_callback (GtkWidget *w, windata_t *vwin)
 	N_("Copy"),
 	N_("Save")
     };
-    int opt = radio_dialog("gretl: LaTeX", NULL, opts, 3, 0, 0);
+    int opt;
+
+    if (vwin->role == VAR_IRF || vwin->role == VAR_DECOMP) {
+	if (vwin->gretl_parent == NULL) {
+	    warnbox(_("Not available"));
+	    gtk_widget_set_sensitive(w, FALSE);
+	    return;
+	}
+    }
+
+    opt = radio_dialog("gretl: LaTeX", NULL, opts, 3, 0, 0);
 
     if (opt >= 0) {
 	int fmt = GRETL_FORMAT_TEX;
