@@ -1015,6 +1015,10 @@ static int get_native_data (char *fname, int ftype, int append,
 			   action == APPEND_SAS || \
                            action == APPEND_JMULTI)
 
+/* respond to the file selector: note that the selected 
+   filename has by now been written into 'tryfile'
+*/
+
 void do_open_data (windata_t *fwin, int code)
 {
     int append = APPENDING(code);

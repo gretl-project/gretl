@@ -41,31 +41,9 @@
                           i == SAVE_DATA_AS || \
                           i == OPEN_DATA)
 
-#define OPEN_DATA_ACTION(i)  (i == OPEN_DATA || \
-                              i == OPEN_CSV || \
-                              i == OPEN_ASCII || \
-                              i == OPEN_OCTAVE || \
-                              i == OPEN_GNUMERIC || \
-	                      i == OPEN_XLS || \
-                              i == OPEN_WF1 || \
-                              i == OPEN_DTA || \
-	                      i == OPEN_SAV || \
-			      i == OPEN_SAS || \
-                              i == OPEN_JMULTI || \
-                              i == OPEN_ODS)
+#define OPEN_DATA_ACTION(i) (i >= OPEN_DATA && i <= OPEN_JMULTI)
 
-#define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
-                               i == APPEND_CSV || \
-                               i == APPEND_OCTAVE || \
-                               i == APPEND_GNUMERIC || \
-                               i == APPEND_XLS || \
-                               i == APPEND_ASCII || \
-                               i == APPEND_WF1 || \
-                               i == APPEND_DTA || \
-                               i == APPEND_SAV || \
-			       i == APPEND_SAS || \
-                               i == APPEND_JMULTI || \
-                               i == APPEND_ODS)
+#define APPEND_DATA_ACTION(i) (i >= APPEND_DATA && i <= APPEND_JMULTI)
 
 #define EXPORT_ACTION(a,s) ((a == EXPORT_OCTAVE || \
                              a == EXPORT_R || \
@@ -446,6 +424,23 @@ static void maybe_set_fsel_status (FselDataSrc src, gpointer p, int val)
     }
 }
 
+#if 0
+static int open_data_action_from_ext (const char *fname)
+{
+    const char *sfx;
+    int i;
+
+    for (i=OPEN_DATA; i<=OPEN_JMULTI; i++) {
+	sfx = get_ext(i, NULL);
+	if (has_suffix(fname, sfx)) {
+	    return i;
+	}
+    }
+
+    return 0;
+}
+#endif
+
 static void
 file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 			      gpointer data)
@@ -671,6 +666,20 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 				 FselDataSrc src, gpointer data)
 {
     GtkFileFilter *filter = get_file_filter(action, data);
+
+#if 0
+    if (action == OPEN_DATA) {
+	filesel_add_filter(filesel, _("gretl data files (*.gdt)"), "*.gdt");
+	filesel_add_filter(filesel, _("Octave files (*.m)"), "*.m");
+	filesel_add_filter(filesel, _("Gnumeric files (*.gnumeric)"), "*.gnumeric");
+	filesel_add_filter(filesel, _("Excel files (*.xls)"), "*.xls");
+	filesel_add_filter(filesel, _("Open Document (*.ods)"), "*.ods");
+	filesel_add_filter(filesel, _("Eviews files (*.wf1)"), "*.wf1");
+	filesel_add_filter(filesel, _("Stata files (*.dta)"), "*.dta");
+	filesel_add_filter(filesel, _("SPSS SAV files (*.sav)"), "*.sav");
+	filesel_add_filter(filesel, _("SAS xport files (*.xpt)"), "*.xpt");
+    }
+#endif
 
     if (action == OPEN_ASCII || action == APPEND_ASCII) {
 	gtk_file_filter_set_name(filter, _("ASCII files (*.txt)"));

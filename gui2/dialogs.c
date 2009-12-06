@@ -387,7 +387,9 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
 
     if (button_is_active(w)) {
 	i = widget_get_int(w, "action");
-	csv->delim = i;
+	if (i != 'a') {
+	    csv->delim = i;
+	}
 	if (csv->point_button != NULL && 
 	    csv->delim == ',' && csv->decpoint == ',') {
 	    csv->decpoint = '.';
@@ -483,7 +485,16 @@ int csv_options_dialog (gretlopt *optp)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvp);
     g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(';'));    
+		      GINT_TO_POINTER(';'));   
+
+    /* auto-detect separator */
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("auto-detect"));
+    pack_in_hbox(button, vbox, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_delim), csvp);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER('a'));    
 
     if (',' == get_local_decpoint()) {
 	GSList *dgroup;
