@@ -1227,6 +1227,13 @@ void vwin_save_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
+/* Hook up child and parent viewers: this is used to help organize the
+   window list menu (with, e.g., model-related output windows being
+   marked as children of the model window itself).  It's also used for
+   some more specialized cases, such as marking a script output window
+   as child of the originating script window.
+*/
+
 void vwin_add_child (windata_t *parent, windata_t *child)
 {
     int n = parent->n_gretl_children;

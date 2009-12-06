@@ -2930,6 +2930,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     }
 
     if (block) {
+	gretl_set_window_modal(sheet->win);
 	gtk_main();
     }
 }
@@ -3374,12 +3375,12 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 {
     struct gui_matrix_spec spec;
     int block = (m == NULL);
-    int err = 0;
+    int cancel = 0;
 
     gui_matrix_spec_init(&spec, m, name);
 
-    err = new_matrix_dialog(&spec);
-    if (err) {
+    cancel = new_matrix_dialog(&spec);
+    if (cancel) {
 	return;
     }
 
@@ -3387,21 +3388,18 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 	/* matrix from listed vars */
 	simple_selection(_("Define matrix"), matrix_from_list, 
 			 DEFINE_MATRIX, &spec);
-	return;
     } else if (spec.formula != NULL) {
 	/* matrix from genr-style formula */
 	matrix_from_formula(&spec);
 	free(spec.formula);
-	return;
     } else {
 	/* numerical specification: open editor if OK */
-	err = matrix_from_spec(&spec);
-	if (err) {
-	    return;
+	int err = matrix_from_spec(&spec);
+
+	if (!err) {
+	    edit_matrix(spec.m, spec.name, block);
 	}
     }
-
-    edit_matrix(spec.m, spec.name, block);
 }
 
 /* callback for "Define matrix..." in main window */

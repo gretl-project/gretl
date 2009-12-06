@@ -71,6 +71,12 @@ static void save_data_callback (void)
     /* FIXME: need to do more here? */
 }
 
+static void gretl_dialog_keep_above (GtkWidget *w)
+{
+    /* note: this could be ifdef'd out if not wanted */
+    gtk_window_set_keep_above(GTK_WINDOW(w), TRUE);    
+}
+
 gint yes_no_dialog (const char *title, const char *msg, int cancel)
 {
     GtkWidget *dlg, *label, *vbox, *hbox;
@@ -106,7 +112,7 @@ gint yes_no_dialog (const char *title, const char *msg, int cancel)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 12);
 
     gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
-
+    gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);  
     ret = gtk_dialog_run(GTK_DIALOG(dlg));
 					  
     gtk_widget_destroy(dlg);
@@ -538,7 +544,7 @@ int csv_options_dialog (gretlopt *optp)
 		     G_CALLBACK(delete_widget), dialog);
     gtk_widget_grab_default(tmp);
 
-    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+    gretl_dialog_keep_above(dialog);
     gtk_widget_show_all(dialog);
 
     return ret;
@@ -807,7 +813,7 @@ void copy_format_dialog (windata_t *vwin, int action)
 		     G_CALLBACK(copy_with_format_callback), finfo);
     gtk_widget_grab_default(tmp);
 
-    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+    gretl_dialog_keep_above(dialog);
     gtk_widget_show_all(dialog);
 }
 
@@ -1066,7 +1072,7 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 	/* Help button */
 	context_help_button(hbox, BOOTSTRAP);
     } else {
-	gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+	gretl_dialog_keep_above(dialog);
     }
 
     gtk_widget_show_all(dialog);
@@ -1877,7 +1883,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
 
-    gtk_window_set_keep_above(GTK_WINDOW(rset->dlg), TRUE);
+    gretl_dialog_keep_above(rset->dlg);
     gtk_widget_show_all(rset->dlg);
 }
 
@@ -3276,7 +3282,7 @@ int real_radio_dialog (const char *title, const char *label,
     if (hcode) {
 	context_help_button(hbox, hcode);
     } else {
-	gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+	gretl_dialog_keep_above(dialog);
     }
 
     gtk_widget_show_all(dialog);
@@ -3566,7 +3572,7 @@ build_checks_dialog (const char *title, const char *blurb,
     }
 
     if (!hcode) {
-	gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+	gretl_dialog_keep_above(dialog);
     }
 
     return dialog;
@@ -3858,7 +3864,7 @@ int freq_dialog (const char *title, const char *blurb,
     if (nbins != NULL) {
 	context_help_button(hbox, FREQ);
     } else {
-	gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+	gretl_dialog_keep_above(dialog);
     }
 
     gtk_widget_show_all(dialog);
@@ -3977,7 +3983,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 		     G_CALLBACK(delete_widget), dialog);
     gtk_widget_grab_default(tmp);
 
-    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+    gretl_dialog_keep_above(dialog);
     gtk_widget_show_all(dialog);
 
     return ret;
@@ -4170,7 +4176,7 @@ void lmax_dialog (double *lmax, double ymax)
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(lmax_opt_finalize), &opt);
 
-    gtk_window_set_keep_above(GTK_WINDOW(opt.dlg), TRUE);
+    gretl_dialog_keep_above(opt.dlg);
     gtk_widget_show_all(opt.dlg);
 }
 
@@ -4401,6 +4407,6 @@ void tex_format_dialog (void)
 
     gtk_widget_show_all(hbox);
 
-    gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
+    gretl_dialog_keep_above(dlg);
     gtk_widget_show(dlg);
 }

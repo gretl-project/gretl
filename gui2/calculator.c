@@ -64,6 +64,7 @@ struct test_t_ {
 struct dist_t_ {
     int flags;
     GtkWidget *entry[NDISTENTRY];
+    GtkWidget *check;
 };
 
 enum {
@@ -257,7 +258,7 @@ enum {
 #define F_ALTCHI "bigchi(x,m)=x<0?0.0/0.0:exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log(2.0))"
 #define F_F      "f(x,m,n)=x<0?0.0/0.0:Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*" \
                  "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
-#define F_STUD   "stud(x,m)=x<0?0.0/0.0:Binv(0.5*m,0.5)/sqrt(m)*(1.0+(x*x)/m)**(-0.5*(m+1.0))"
+#define F_STUD   "stud(x,m)=Binv(0.5*m,0.5)/sqrt(m)*(1.0+(x*x)/m)**(-0.5*(m+1.0))"
 #define F_POIS   "poisson(z,k)=k<0?0.0/0.0:exp(-z)*(z**k)/(int(k))!"
 #define F_WEIB   "weibull(x,shp,scl)=x<0?0.0/0.0:(shp/scl)*(x/scl)**(shp-1.0)*exp(-(x/scl)**shp)"
 #define F_BINOM  "binom(k,n,p)=k<0||k>n?0.0:exp(lgamma(n+1)-lgamma(n-k+1)-lgamma(k+1)" \
@@ -432,6 +433,8 @@ range_from_dist (int d, double *parms, int alt, FILE *fp)
 
     dist_xmin_xmax(d, parms, &tmin, &tmax, alt);
 
+    fprintf(stderr, "range_from_dist: got %g:%g\n", tmin, tmax);
+
     fprintf(fp, "set trange [%g:%g]\n", tmin, tmax);
 
     if (d == NORMAL_DIST) {
@@ -460,7 +463,15 @@ adjust_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
 
     if (tmax > t_range[1]) {
 	t_range[1] = tmax;
-    }   
+    } 
+
+    if (d == NORMAL_DIST && !na(spec->range[GP_Y_RANGE][1])) {
+	double ymax = normal_pdf_height(parms[1]);
+
+	if (spec->range[GP_Y_RANGE][1] < ymax) {
+	    spec->range[GP_Y_RANGE][1] = 1.05 * ymax;
+	}
+    }
 
     if (d != NORMAL_DIST && d != T_DIST) {
 	spec->range[GP_Y_RANGE][0] = spec->range[GP_Y_RANGE][1] = NADBL;
@@ -1069,36 +1080,6 @@ static void dw_lookup_call (dist_t *tab)
     } else {
 	gui_errmsg(err);
     }
-}
-
-static int page_from_dist (int code, int dist)
-{
-    if (code == CALC_RAND) {
-	return dist;
-    } else if (code == CALC_PVAL) {
-	return dist - 1;
-    } else {
-	switch (dist) {
-	case NORMAL_DIST:
-	    return 0;
-	case T_DIST:
-	    return 1;
-	case CHISQ_DIST:
-	    return 2;
-	case F_DIST:
-	    return 3;
-	case BINOMIAL_DIST:
-	    return 4;
-	case POISSON_DIST:
-	    return 5;
-	case WEIBULL_DIST:
-	    return 6;
-	case DW_DIST:
-	    return 7;
-	}
-    }
-
-    return 0;
 }
 
 static int dist_from_page (int code, int page)
@@ -1896,17 +1877,18 @@ calc_checkbox (GtkWidget *tbl, gint *rows, const gchar *label,
 	       CalcChild *child, int i)
 {
     dist_t **dist = child->calcp;
-    GtkWidget *tmp;
+    GtkWidget *w;
 
     *rows += 1;
 
     gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
-    tmp = gtk_check_button_new_with_label(_(label));
+    w = gtk_check_button_new_with_label(_(label));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 0, 1, *rows - 1, *rows);
-    gtk_widget_show(tmp);
+			      w, 0, 1, *rows - 1, *rows);
+    gtk_widget_show(w);
+    dist[i]->check = w;
     
-    g_signal_connect(G_OBJECT(tmp), "toggled", 
+    g_signal_connect(G_OBJECT(w), "toggled", 
 		     G_CALLBACK(toggle_dist_flag),
 		     dist[i]);    
 }
@@ -2765,44 +2747,76 @@ static void gretl_child_destroy (GtkWidget *w, CalcChild *child)
     free(child);
 }
 
+static test_t *test_holder_new (int i)
+{
+    test_t *test = mymalloc(sizeof *test);
+
+    if (test != NULL) {
+	int j;
+
+	test->code = i;
+	test->check = NULL;
+	test->extra = NULL;
+
+	test->combo[0] = test->combo[1] = NULL;
+	test->radio[0] = test->radio[1] = test->radio[2] = NULL;
+
+	for (j=0; j<NTESTENTRY; j++) {
+	    test->entry[j] = NULL;
+	}
+    }
+
+    return test;
+}
+
+static dist_t *dist_holder_new (void)
+{
+    dist_t *dist = mymalloc(sizeof *dist);
+
+    if (dist != NULL) {
+	int j;
+
+	dist->flags = 0;
+	dist->check = NULL;
+
+	for (j=0; j<NDISTENTRY; j++) {
+	    dist->entry[j] = NULL;
+	}
+    }
+
+    return dist;
+}
+
 static int child_allocate_calcp (CalcChild *child)
 {
     int c = child->code;
-    int i, j, err = 0;
+    int n = child->n_pages;
+    int i, err = 0;
 
     child->calcp = NULL;
 
     if (c == CALC_TEST || c == CALC_NPTEST) {
-	test_t **test;
+	test_t **test = mymalloc(n * sizeof *test);
 
-	test = mymalloc(child->n_pages * sizeof *test);
 	if (test != NULL) {
 	    child->calcp = test;
-	    for (i=0; i<child->n_pages && !err; i++) {
-		test[i] = mymalloc(sizeof **test);
+	    for (i=0; i<n && !err; i++) {
+		test[i] = test_holder_new(i);
 		if (test[i] == NULL) {
 		    err = E_ALLOC;
-		} else {
-		    test[i]->code = i;
-		}
+		} 
 	    }
 	} 
     } else {
-	dist_t **dist;
+	dist_t **dist = mymalloc(n * sizeof *dist);
 
-	dist = mymalloc(child->n_pages * sizeof *dist);
 	if (dist != NULL) {
 	    child->calcp = dist;
-	    for (i=0; i<child->n_pages && !err; i++) {
-		dist[i] = mymalloc(sizeof **dist);
+	    for (i=0; i<n && !err; i++) {
+		dist[i] = dist_holder_new();
 		if (dist[i] == NULL) {
 		    err = E_ALLOC;
-		} else {
-		    dist[i]->flags = 0;
-		    for (j=0; j<NDISTENTRY; j++) {
-			dist[i]->entry[j] = NULL;
-		    }
-		}
+		} 
 	    }
 	} 
     }
@@ -2916,6 +2930,7 @@ static void switch_child_role (GtkWidget *win, png_plot *plot)
 {
     CalcChild *child;
     GtkNotebook *book;
+    dist_t **dists, *dist;
     int i, d;
 
     child = g_object_get_data(G_OBJECT(win), "gchild");
@@ -2930,12 +2945,12 @@ static void switch_child_role (GtkWidget *win, png_plot *plot)
 
     i = gtk_notebook_get_current_page(book);
     d = dist_from_page(child->code, i);
+    dists = child->calcp;
+    dist = dists[i];
 
-    if (d == T_DIST || d == CHISQ_DIST || d == POISSON_DIST) {
-	dist_t *dist, **dists = child->calcp;
-	int p = page_from_dist(CALC_GRAPH_ADD, d);
-
-	dist = dists[p];
+    if (d == NORMAL_DIST) {
+	gtk_widget_set_sensitive(dist->check, FALSE);
+    } else if (d == T_DIST || d == CHISQ_DIST || d == POISSON_DIST) {
 	gtk_editable_select_region(GTK_EDITABLE(dist->entry[0]), 0, -1);
 	gtk_widget_grab_focus(dist->entry[0]);
     }
