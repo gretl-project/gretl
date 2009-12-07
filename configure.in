@@ -62,6 +62,7 @@ try_libR="yes"
 have_libR="no"
 check_gnuplot="yes"
 darwin_build="no"
+quiet_build="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -95,6 +96,13 @@ then
   build_docs=yes
 else
   build_docs=no
+fi])
+
+AC_ARG_ENABLE(quiet-build,
+[  --enable-quiet-build     Enable quiet building],
+[if test "$enableval" = "yes"
+then
+  quiet_build=yes
 fi])
 
 AC_ARG_ENABLE(gnuplot-checks,
@@ -653,8 +661,8 @@ if test "${build_docs}" = "yes" ; then
    fi
 fi
 
-dnl record the results of the above test
 AC_SUBST(build_docs)
+AC_SUBST(quiet_build)
 
 dnl record results on various libraries
 AC_SUBST(XML_CFLAGS)

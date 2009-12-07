@@ -15,6 +15,7 @@ have_sourceview = @have_sourceview@
 have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
+quiet_build = @quiet_build@
 
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
@@ -83,6 +84,15 @@ endif
 
 ifeq ($(MKLANG),) 
   MKLANG = mklang
+endif
+
+ifeq ($(quiet_build),yes)
+  AMP = @
+  CCECHO = @echo "  CC    $<"
+  LDECHO = @echo "  LD    $@" 
+  CCV = $(CC) > /dev/null
+else
+  CCV = $(CC)
 endif
 
 DEFS = $(NLSDEF) $(GNOMEDEF)
@@ -166,20 +176,23 @@ HACK_OBJ = gtkfontselhack.o
 all: $(PROG) $(GRETL_LANG)
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $<
-	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
+	$(CCECHO)
+	$(AMP)$(CC) -c $(CFLAGS) $<
+	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
 $(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKSOURCEVIEW_LITE) 
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(LDFLAGS) $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
+	$(LDECHO)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LDFLAGS) $(OBJS) $(HACK_OBJ) \
+	$(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<
+	$(AMP)$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<
 
 mklang.o: mklang.c $(LANGDEPS)
-	$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
+	$(AMP)$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
 
 mklang: mklang.o 
-	$(LIBTOOL) --mode=link $(CC) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
 $(GRETL_LANG): $(MKLANG)
 	./mklang $(LANGOPT) > $@
@@ -188,7 +201,7 @@ $(GTKSOURCEVIEW_LITE):
 	make -C gtksourceview
 
 .deps:
-	mkdir $@
+	$(AMP)mkdir $@
 
 -include .deps/*.d
 

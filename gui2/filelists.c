@@ -442,33 +442,6 @@ static void open_file_from_filelist (GtkAction *action)
     }
 }
 
-#ifdef G_OS_WIN32
-
-void trim_homedir (char *fname)
-{
-    char *home = mydocs_path();
-
-    if (home != NULL) {
-	int n = strlen(home);
-	int m = strlen(fname);
-
-	if (m > n && !fnamencmp(fname, home, n)) {
-	    char *p = strrchr(home, '\\');
-	    
-	    if (p != NULL) {
-		char tmp[FILENAME_MAX];
-
-		n = p - home + 1;
-		strcpy(tmp, fname + n);
-		strcpy(fname, tmp);
-	    }
-	}
-	free(home);
-    }    
-}
-
-#endif
-
 static void real_add_files_to_menus (int ftype)
 {
     char **filep, tmp[MAXSTR];
@@ -551,9 +524,6 @@ static void real_add_files_to_menus (int ftype)
 		apath = g_strdup_printf("%s/%s", mpath[j], aname);
 		w = gtk_ui_manager_get_widget(mdata->ui, apath);
 		if (w != NULL) {
-#ifdef G_OS_WIN32
-		    trim_homedir(fname);
-#endif
 		    gretl_tooltips_add(w, fname);
 		} 		
 		g_free(fname);

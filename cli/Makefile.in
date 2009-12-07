@@ -16,6 +16,8 @@ have_readline = @have_readline@
 READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 
+quiet_build = @quiet_build@
+
 ifeq ($(CC),)
   CC = gcc
 endif
@@ -24,6 +26,15 @@ ifeq ($(INSTALL_PROGRAM),)
 endif
 ifeq ($(have_readline),yes)
   RL_OBJ = complete.o
+endif
+
+ifeq ($(quiet_build),yes)
+  AMP = @
+  CCECHO = @echo "  CC    $<"
+  LDECHO = @echo "  LD    $@" 
+  CCV = $(CC) > /dev/null
+else
+  CCV = $(CC)
 endif
 
 GRETLLIB = ../lib/libgretl-1.0.la
@@ -47,15 +58,17 @@ CLI = gretlcli
 LIBTOOL = ../libtool
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $<
-	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
+	$(CCECHO)
+	$(AMP)$(CC) -c $(CFLAGS) $<
+	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
 $(CLI): .deps $(OBJS)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(LDFLAGS) $(OBJS) $(GRETLLIB) \
+	$(LDECHO)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LDFLAGS) $(OBJS) $(GRETLLIB) \
 	$(READLINE_LIBS)
 
 .deps:
-	mkdir $@
+	$(AMP)mkdir $@
 
 -include .deps/*.d
 

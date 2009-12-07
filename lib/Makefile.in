@@ -26,6 +26,7 @@ REVISION=@LIBGRETL_REVISION@
 AGE=@LIBGRETL_AGE@
 
 have_gtk = @have_gtk@
+quiet_build = @quiet_build@
 
 ifeq ($(DARWIN_RPATH),)
   RPATH = $(prefix)/lib
@@ -41,6 +42,15 @@ ifeq ($(INSTALL_DATA),)
 endif
 ifeq ($(LN),)
   LN = ln -sf
+endif
+
+ifeq ($(quiet_build),yes)
+  AMP = @
+  CCECHO = @echo "  CC    $<"
+  LDECHO = @echo "  LD    $@" 
+  CCV = $(CC) > /dev/null
+else
+  CCV = $(CC)
 endif
 
 # Installation directories
@@ -235,18 +245,20 @@ LIBTOOL = ../libtool
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
 	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H
 
-COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
+COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
 
 %.lo: %.c
-	$(COMPILE) -o $@ $<
-	$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
+	$(CCECHO)
+	$(AMP)$(COMPILE) -o $@ $<
+	$(AMP)$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
 
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
+	$(LDECHO)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LOBJS) $(AUX_LOBJ) \
 	-rpath $(RPATH) $(LIBS) -version-info $(CURRENT):$(REVISION):$(AGE)
 
 .deps:
-	mkdir $@
+	$(AMP)mkdir $@
 
 -include .deps/*.d
 

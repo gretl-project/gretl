@@ -15,6 +15,7 @@ build_gui = @build_gui@
 have_gmp = @have_gmp@
 build_mailer = @build_mailer@
 have_odbc = @have_odbc@
+quiet_build = @quiet_build@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
@@ -46,8 +47,18 @@ VPATH = $(topsrc)/plugin:$(topsrc)/tests:$(topsrc)/plugin/mpack:$(topsrc)/plugin
 override CFLAGS += -I.. -I$(topsrc)/gui2 -DHAVE_CONFIG_H
 
 LIBTOOL = ../libtool
-COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
-LINK = $(LIBTOOL) --mode=link $(CC) -module -avoid-version -rpath $(plugindir)
+COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
+
+ifeq ($(quiet_build),yes)
+  AMP = @
+  CCECHO = @echo "  CC    $<"
+  LDECHO = @echo "  LD    $@" 
+  CCV = $(CC) > /dev/null
+  LINK = $(LDECHO); $(LIBTOOL) --mode=link $(CCV) -module -avoid-version -rpath $(plugindir)
+else
+  CCV = $(CC)
+  LINK = $(LIBTOOL) --mode=link $(CC) -module -avoid-version -rpath $(plugindir)
+endif
 
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
@@ -185,8 +196,9 @@ override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 	$(ODBC_CFLAGS) -I. $(GMPDEF)
 
 %.lo: %.c
-	$(COMPILE) $< 
-	$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d 
+	$(CCECHO)
+	$(AMP)$(COMPILE) $< 
+	$(AMP)$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d 
 
 all: .deps $(PLUGINS)
 

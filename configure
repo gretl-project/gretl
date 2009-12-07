@@ -788,6 +788,7 @@ gt_needs=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 RLIB
+quiet_build
 build_docs
 RLIB_LIBS
 RLIB_CFLAGS
@@ -963,6 +964,7 @@ with_libiconv_prefix
 with_libintl_prefix
 enable_gui
 enable_build_doc
+enable_quiet_build
 enable_gnuplot_checks
 with_lucida
 with_gmake
@@ -1650,6 +1652,7 @@ Optional Features:
   --disable-rpath         do not hardcode runtime library paths
   --enable-gui		      Enable gui [default=yes]
   --enable-build-doc      Enable building of gretl docs [CVS only]
+  --enable-quiet-build     Enable quiet building
   --disable-gnuplot-checks     do not run checks for gnuplot
   --enable-static[=PKGS]  build static libraries [default=no]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
@@ -2266,6 +2269,7 @@ try_libR="yes"
 have_libR="no"
 check_gnuplot="yes"
 darwin_build="no"
+quiet_build="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -6416,6 +6420,15 @@ fi
 fi
 
 
+# Check whether --enable-quiet-build was given.
+if test "${enable_quiet_build+set}" = set; then
+  enableval=$enable_quiet_build; if test "$enableval" = "yes"
+then
+  quiet_build=yes
+fi
+fi
+
+
 # Check whether --enable-gnuplot-checks was given.
 if test "${enable_gnuplot_checks+set}" = set; then
   enableval=$enable_gnuplot_checks; if test "$enableval" = "yes"
@@ -7943,13 +7956,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:7946: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:7959: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:7949: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:7962: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:7952: output\"" >&5)
+  (eval echo "\"\$as_me:7965: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -9154,7 +9167,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 9157 "configure"' > conftest.$ac_ext
+  echo '#line 9170 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -10487,11 +10500,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10490: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10503: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10494: \$? = $ac_status" >&5
+   echo "$as_me:10507: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -10826,11 +10839,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10829: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10842: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10833: \$? = $ac_status" >&5
+   echo "$as_me:10846: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -10931,11 +10944,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10934: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10947: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10938: \$? = $ac_status" >&5
+   echo "$as_me:10951: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10986,11 +10999,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10989: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11002: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10993: \$? = $ac_status" >&5
+   echo "$as_me:11006: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13786,7 +13799,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 13789 "configure"
+#line 13802 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13882,7 +13895,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 13885 "configure"
+#line 13898 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19652,6 +19665,7 @@ if test "${build_docs}" = "yes" ; then
       echo "*** Can't build gretl docs: XSLT and/or LaTeX not found"
    fi
 fi
+
 
 
 
