@@ -1487,7 +1487,8 @@ int write_data (const char *fname, int *list,
 
 	fputs("/*\n", fp);
 	for (i=1; i<=list[0]; i++) {
-	    fprintf(fp, " %s: %s\n", pdinfo->varname[list[i]], VARLABEL(pdinfo, i));
+	    v = list[i];
+	    fprintf(fp, " %s: %s\n", pdinfo->varname[v], VARLABEL(pdinfo, v));
 	}
 	fputs("*/\n", fp);
 	date_maj_min(pdinfo->t1, pdinfo, &maj, &min);
@@ -1499,7 +1500,8 @@ int write_data (const char *fname, int *list,
 	    fputs("<1>\n", fp);
 	}
 	for (i=1; i<=list[0]; i++) {
-	    fprintf(fp, " %s", pdinfo->varname[list[i]]);
+	    v = list[i];
+	    fprintf(fp, " %s", pdinfo->varname[v]);
 	}
 	fputc('\n', fp);
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
