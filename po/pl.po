@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.8.5cvs
+# Polish translation for gretl-1.8.6cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2009
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2009
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-12-06 20:46-0500\n"
-"PO-Revision-Date: 2009-11-24 02:00-0400\n"
+"PO-Revision-Date: 2009-12-07 10:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -5135,6 +5135,8 @@ msgid ""
 "The formula '%s'\n"
 " produced a scalar result"
 msgstr ""
+"Formuła '%s'\n"
+" wynik jest skalarem"
 
 #: lib/src/nls.c:920
 #, c-format
@@ -7115,7 +7117,7 @@ msgstr "Nazwa zmiennej"
 
 #: gui2/calculator.c:2025
 msgid "CDF instead of density"
-msgstr ""
+msgstr "wykres dystrybuanty"
 
 #: gui2/calculator.c:2203
 #, c-format
@@ -7405,11 +7407,13 @@ msgid "gretl: missing code"
 msgstr "gretl: kod brakujących danych"
 
 #: gui2/callbacks.c:544
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter value to be read as \"missing\"\n"
 "for the variable \"%s\""
-msgstr "Wprowadź wartość, która będzie \"brakującą daną\":"
+msgstr ""
+"Wprowadź wartość, która będzie \"brakującą daną\"\n"
+"dla zmiennej: \"%s\""
 
 #: gui2/callbacks.c:551
 msgid "Enter value to be read as \"missing\":"
@@ -7681,7 +7685,6 @@ msgid "Can't open folder %s"
 msgstr "Niemożliwe otwarcie katalogu %s"
 
 #: gui2/datafiles.c:675
-#, fuzzy
 msgid "data info"
 msgstr "Opis pliku"
 
@@ -8153,9 +8156,8 @@ msgid "semicolon"
 msgstr "średnik"
 
 #: gui2/dialogs.c:494
-#, fuzzy
 msgid "auto-detect"
-msgstr "Auto-indent script"
+msgstr "Auto-detect"
 
 #: gui2/dialogs.c:506
 msgid "decimal point character:"
@@ -8309,9 +8311,8 @@ msgid "gretl: restrict sample"
 msgstr "gretl: restrykcje dla podpróby"
 
 #: gui2/dialogs.c:1980
-#, fuzzy
 msgid "Use dummy variable:"
-msgstr "Wykorzystaj indeksy jednostek i czasu"
+msgstr "Wykorzystaj zmienną zero-jedynkową:"
 
 #: gui2/dialogs.c:1998
 msgid "add to current restriction"
@@ -8536,21 +8537,18 @@ msgid "Test against gamma distribution"
 msgstr "Test zgodności z rozkładem gama"
 
 #: gui2/dialogs.c:3855
-#, fuzzy
 msgid "show plot"
-msgstr "Wykres pudełkowy"
+msgstr "Pokaż wykres"
 
 #: gui2/dialogs.c:3901
 msgid "Use model names"
 msgstr "Wykorzystywane nazwy modeli"
 
 #: gui2/dialogs.c:3904
-#, fuzzy
 msgid "Show standard errors in parentheses"
 msgstr "Błędy ocen w nawiasach"
 
 #: gui2/dialogs.c:3905
-#, fuzzy
 msgid "Show t-statistics in parentheses"
 msgstr "Statystyka-t w nawiasach"
 
@@ -8676,9 +8674,8 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(Proszę skorzystać z porady w Pomocy dla polecenia)"
 
 #: gui2/fileselect.c:670
-#, fuzzy
 msgid "CSV files (*.csv)"
-msgstr "wszystkie pliki (*.*)"
+msgstr "pliki CSV (*.csv)"
 
 #: gui2/fileselect.c:671
 msgid "ASCII files (*.txt)"
@@ -9836,14 +9833,12 @@ msgid "_Remove extra observations"
 msgstr "_Usuń dodane obserwacje..."
 
 #: gui2/gretl.c:1371
-#, fuzzy
 msgid "_Dataset info"
-msgstr "Opis pliku"
+msgstr "_Opis pliku"
 
 #: gui2/gretl.c:1372
-#, fuzzy
 msgid "_Observation markers..."
-msgstr "_Dodaj obserwacje..."
+msgstr "_Dodaj opisy przypadków (obserwacji)..."
 
 #: gui2/gretl.c:1373
 msgid "Dataset _structure..."
@@ -9870,9 +9865,8 @@ msgid "Set missing _value code..."
 msgstr "_Kod brakujących danych..."
 
 #: gui2/gretl.c:1379
-#, fuzzy
 msgid "_Find variable..."
-msgstr "_Generowanie zmiennych losowych..."
+msgstr "_Znajdź zmienną..."
 
 #: gui2/gretl.c:1380
 msgid "_Refresh window"
@@ -9893,7 +9887,7 @@ msgstr "Definiowanie _skalarów"
 
 #: gui2/gretl.c:1386
 msgid "_Windows"
-msgstr ""
+msgstr "_Okna"
 
 #: gui2/gretl.c:1387
 msgid "_Graph specified vars"
@@ -10072,9 +10066,8 @@ msgid "_Normality test"
 msgstr "Testy normalności rozkładu"
 
 #: gui2/gretl.c:1446
-#, fuzzy
 msgid "_Frequency distribution..."
-msgstr "_Rozkład częstości"
+msgstr "_Rozkład częstości..."
 
 #: gui2/gretl.c:1447
 msgid "Estimated _density plot..."
@@ -10381,14 +10374,12 @@ msgid "_About gretl"
 msgstr "_O programie gretl"
 
 #: gui2/gretl.c:1836 gui2/textbuf.c:2377 gui2/toolbar.c:947
-#, fuzzy
 msgid "Main window"
-msgstr "Nowe okno"
+msgstr "Okno główne"
 
 #: gui2/gretl.c:1900
-#, fuzzy
 msgid "sample status"
-msgstr "Lokalny status bazy"
+msgstr "Status próby"
 
 #: gui2/gretlwin32.c:83 gui2/gretlwin32.c:89
 msgid "Couldn't find usable socket driver\n"
@@ -10613,7 +10604,6 @@ msgid "No scalar variables are currently defined"
 msgstr "Brak zdefiniowanych skalarów w bieżącej sesji"
 
 #: gui2/gui_utils.c:174
-#, fuzzy
 msgid "equation"
 msgstr "Równanie"
 
@@ -11504,27 +11494,27 @@ msgstr "gretl: informacja o brakujących danych"
 
 #: gui2/library.c:1380
 msgid "Export the markers to file"
-msgstr ""
+msgstr "Eksport opisów przypadków (obserwacji) do pliku"
 
 #: gui2/library.c:1381
-#, fuzzy
 msgid "Remove the markers"
-msgstr "_Usunięcie opisów przypadków (obserwacji)"
+msgstr "Usunięcie opisów przypadków (obserwacji)"
 
 #: gui2/library.c:1385
-#, fuzzy
 msgid ""
 "The dataset has observation markers.\n"
 "Would you like to:"
 msgstr ""
-"Plik danych gretla nie zawiera informacji w oknie opisu.\n"
-"Czy chcesz utworzyć taki opis dla bieżącego pliku danych?"
+"Zbiór danych zawiera opisu przypadków (obserwacji).\n"
+"Co chcesz wykonać:"
 
 #: gui2/library.c:1396
 msgid ""
 "The dataset has no observation markers.\n"
 "Add some from file now?"
 msgstr ""
+"Zbiór danych nie zawiera opisu przypadków (obserwacji).\n"
+"Czy chcesz wczytać plik z opisami przypadków (obserwacji) teraz?"
 
 #: gui2/library.c:1407
 msgid ""
@@ -13272,7 +13262,7 @@ msgstr "Katalog roboczy zgodny z powłoką shell"
 
 #: gui2/settings.c:176
 msgid "File selector remembers folder"
-msgstr ""
+msgstr "File selector remembers folder"
 
 #: gui2/settings.c:179
 msgid "Language preference"
@@ -13431,19 +13421,16 @@ msgid "Manuals"
 msgstr "Manual"
 
 #: gui2/settings.c:1422
-#, fuzzy
 msgid "Fixed font..."
-msgstr "Czcionka _tekstu..."
+msgstr "Czcionka tekstu..."
 
 #: gui2/settings.c:1436
-#, fuzzy
 msgid "Menu font..."
-msgstr "Czcionka _menu..."
+msgstr "Czcionka menu..."
 
 #: gui2/settings.c:1450
-#, fuzzy
 msgid "Working directory..."
-msgstr "_Katalog roboczy gretla..."
+msgstr "Katalog roboczy gretla..."
 
 #: gui2/settings.c:1606
 msgid "This change will take effect when you restart gretl"
@@ -13475,16 +13462,15 @@ msgstr "wykorzystaj bieżący folder powłoki shell"
 
 #: gui2/settings.c:2354
 msgid "The file selection dialog should:"
-msgstr ""
+msgstr "The file selection dialog should:"
 
 #: gui2/settings.c:2361
 msgid "remember the last-opened folder"
-msgstr ""
+msgstr "remember the last-opened folder"
 
 #: gui2/settings.c:2370
-#, fuzzy
 msgid "always start in the working directory"
-msgstr "gretl: katalog roboczy"
+msgstr "zawsze startuj z katalogu roboczego"
 
 #: gui2/settings.c:2419
 msgid "gretl: working directory"
@@ -13785,9 +13771,8 @@ msgid "Save"
 msgstr "Zapisz"
 
 #: gui2/textutil.c:372
-#, fuzzy
 msgid "Not available"
-msgstr "Model nie jest dostępny"
+msgstr "Nie jest dostępny"
 
 #: gui2/toolbar.c:190
 msgid "Save to file"
@@ -13900,7 +13885,7 @@ msgstr "Pomoc dla poleceń"
 
 #: gui2/toolbar.c:637
 msgid "Windows"
-msgstr ""
+msgstr "Okna"
 
 #: gui2/toolbar.c:1031
 msgid "launch calculator"
