@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-12-06 20:46-0500\n"
-"PO-Revision-Date: 2009-11-24 09:38+0200\n"
+"PO-Revision-Date: 2009-12-07 10:31+0200\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -2975,7 +2975,7 @@ msgid ""
 msgstr ""
 "                  Rastsal etkiler tahmincisi\n"
 "       hata teriminde birime özel bir bileşene izin verir\n"
-"(Ölçünlü hatalar parantez, p-değerleri köşeli ayıraç içerisinde "
+"(Ölçünlü hatalar ayraç, p-değerleri köşeli ayraç içerisinde "
 "gösterilmiştir.)\n"
 
 #: lib/src/gretl_panel.c:1550
@@ -2986,7 +2986,7 @@ msgid ""
 msgstr ""
 "Sabit etkiler tahmincisi\n"
 "yatay-kesit birimine göre farklılık gösteren sabit terimlere izin verir\n"
-"Eğim ölçünlü hataları parantez, p-değerleri köşeli ayıraç içerisinde "
+"Eğim ölçünlü hataları ayraç, p-değerleri köşeli ayraç içerisinde "
 "gösterilmiştir.\n"
 
 #: lib/src/gretl_panel.c:1563
@@ -3782,7 +3782,7 @@ msgstr "Şimdi çıktılar '%s' dosyasına iliştiriliyor\n"
 
 #: lib/src/interact.c:3843
 msgid "No data information is available.\n"
-msgstr "Elde veri bilgileri yok.\n"
+msgstr "Elde veri bilgisi yok.\n"
 
 #: lib/src/interact.c:4278
 msgid "You can't end a loop here, you haven't started one\n"
@@ -5113,6 +5113,8 @@ msgid ""
 "The formula '%s'\n"
 " produced a scalar result"
 msgstr ""
+"'%s' formülü sonuç olarak\n"
+"bir sayıl üretti"
 
 #: lib/src/nls.c:920
 #, c-format
@@ -6014,7 +6016,7 @@ msgstr "on yıllık"
 
 #: lib/src/subsample.c:2107
 msgid "Full dataset"
-msgstr "Tüm veriseti"
+msgstr "Tüm veri seti"
 
 #: lib/src/subsample.c:2109 lib/src/subsample.c:2131
 msgid "Type"
@@ -6214,7 +6216,7 @@ msgstr "Eştümleyen yöneyler"
 #: lib/src/varprint.c:665 gui2/guiprint.c:871 plugin/jrestrict.c:2775
 #: plugin/jrestrict.c:2808
 msgid "standard errors in parentheses"
-msgstr "Ölçünlü hatalar parantez içerisinde gösterilsin"
+msgstr "Ölçünlü hatalar ayraç içerisinde gösterilmiştir"
 
 #: lib/src/texprint.c:992
 msgid "Adjustment vectors"
@@ -6238,7 +6240,7 @@ msgstr "HQÖ"
 
 #: lib/src/texprint.c:1531 gui2/model_table.c:1134
 msgid "$t$-statistics in parentheses"
-msgstr "$t$-istatistikleri parantez içerisinde gösterilmiştir"
+msgstr "$t$-istatistikleri ayraç içerisinde gösterilmiştir"
 
 #: lib/src/transforms.c:134
 #, c-format
@@ -6695,7 +6697,7 @@ msgstr "%s açma tamam\n"
 
 #: cli/gretlcli.c:1014
 msgid "Dataset cleared\n"
-msgstr "Veriseti temizlendi\n"
+msgstr "Veri seti temizlendi\n"
 
 #: gui2/about.c:35
 msgid "\"By econometricians, for econometricians.\""
@@ -6711,7 +6713,7 @@ msgstr ""
 "Çeviren: Yrd. Doç. Dr. A. Talha YALTA\n"
 "TOBB Ekonomi ve Teknoloji Üniversitesi\n"
 "İktisat Bölümü\n"
-"İletişim bilgileri için: http://yalta.etu.edu.tr/"
+"İletişim için: http://yalta.etu.edu.tr/"
 
 #: gui2/about.c:175
 msgid "License"
@@ -7084,7 +7086,7 @@ msgstr "ad"
 
 #: gui2/calculator.c:2025
 msgid "CDF instead of density"
-msgstr ""
+msgstr "Yoğunluk yerine yığınsal"
 
 #: gui2/calculator.c:2203
 #, c-format
@@ -7373,12 +7375,13 @@ msgstr ""
 msgid "gretl: missing code"
 msgstr "gretl: eksik kodu"
 
-#: gui2/callbacks.c:544
-#, fuzzy, c-format
+#: gui2/callbacks.c:544, c-format
 msgid ""
 "Enter value to be read as \"missing\"\n"
 "for the variable \"%s\""
-msgstr "\"eksik\" olarak okunacak değeri giriniz:"
+msgstr ""
+"\"%s\" değişkeni için \"eksik\"\n"
+"diye okunacak değeri giriniz"
 
 #: gui2/callbacks.c:551
 msgid "Enter value to be read as \"missing\":"
@@ -7650,9 +7653,8 @@ msgid "Can't open folder %s"
 msgstr "%s dizini açılamıyor"
 
 #: gui2/datafiles.c:675
-#, fuzzy
 msgid "data info"
-msgstr "Veri bilgisi"
+msgstr "veri bilgisi"
 
 #: gui2/datafiles.c:681
 msgid "Failed to retrieve description of data"
@@ -8122,9 +8124,8 @@ msgid "semicolon"
 msgstr "noktalı virgül"
 
 #: gui2/dialogs.c:494
-#, fuzzy
 msgid "auto-detect"
-msgstr "Kendinden-girinti kaldırma bölgesi"
+msgstr "algılansın"
 
 #: gui2/dialogs.c:506
 msgid "decimal point character:"
@@ -8278,9 +8279,8 @@ msgid "gretl: restrict sample"
 msgstr "gretl: örneklemi sınırla"
 
 #: gui2/dialogs.c:1980
-#, fuzzy
 msgid "Use dummy variable:"
-msgstr "Endeks değişkenleri kullan"
+msgstr "Kukla değişken kullan:"
 
 #: gui2/dialogs.c:1998
 msgid "add to current restriction"
@@ -8505,23 +8505,20 @@ msgid "Test against gamma distribution"
 msgstr "Gama dağılımına karşı sına"
 
 #: gui2/dialogs.c:3855
-#, fuzzy
 msgid "show plot"
-msgstr "Kutu çizimi"
+msgstr "çizimi göster"
 
 #: gui2/dialogs.c:3901
 msgid "Use model names"
 msgstr "Model adlarını kullan"
 
 #: gui2/dialogs.c:3904
-#, fuzzy
 msgid "Show standard errors in parentheses"
-msgstr "Ölçünlü hatalar parantez içerisinde gösterilsin"
+msgstr "Ölçünlü hataları ayraç içerisinde göster"
 
 #: gui2/dialogs.c:3905
-#, fuzzy
 msgid "Show t-statistics in parentheses"
-msgstr "t-istatistikleri parantez içerisinde gösterilsin"
+msgstr "t-istatistiklerini ayraç içerisinde göster"
 
 #: gui2/dialogs.c:3923
 msgid "model table options"
@@ -8645,9 +8642,8 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(Bilgi için lütfen Yardım'a başvurunuz)"
 
 #: gui2/fileselect.c:670
-#, fuzzy
 msgid "CSV files (*.csv)"
-msgstr "tüm dosyalar (*.*)"
+msgstr "CSV dosyaları (*.csv)"
 
 #: gui2/fileselect.c:671
 msgid "ASCII files (*.txt)"
@@ -9484,7 +9480,7 @@ msgstr "sürüm bilgisini yazdır"
 
 #: gui2/gretl.c:201
 msgid "send debugging info to console"
-msgstr "ayıklama bilgilerini uçbirime gönder"
+msgstr "ayıklama bilgisini uçbirime gönder"
 
 #: gui2/gretl.c:206
 msgid "pass integer value to script"
@@ -9710,7 +9706,7 @@ msgstr "_Araçlar"
 
 #: gui2/gretl.c:1342
 msgid "_Statistical tables"
-msgstr "İstatistiksel _çizelgeler"
+msgstr "_İstatistiksel çizelgeler"
 
 #: gui2/gretl.c:1343
 msgid "_P-value finder"
@@ -9805,14 +9801,12 @@ msgid "_Remove extra observations"
 msgstr "Fazlalık gözlemleri _çıkar"
 
 #: gui2/gretl.c:1371
-#, fuzzy
 msgid "_Dataset info"
-msgstr "Veri bilgisi"
+msgstr "_Veri seti bilgisi"
 
 #: gui2/gretl.c:1372
-#, fuzzy
 msgid "_Observation markers..."
-msgstr "Gözlem _ekle..."
+msgstr "_Gözlem imleçleri..."
 
 #: gui2/gretl.c:1373
 msgid "Dataset _structure..."
@@ -9839,9 +9833,8 @@ msgid "Set missing _value code..."
 msgstr "Eksik değer kodunu sa_pta..."
 
 #: gui2/gretl.c:1379
-#, fuzzy
 msgid "_Find variable..."
-msgstr "_Rastsal değişken..."
+msgstr "Değişken _bul..."
 
 #: gui2/gretl.c:1380
 msgid "_Refresh window"
@@ -9861,9 +9854,8 @@ msgid "_Scalars"
 msgstr "_Sayıllar"
 
 #: gui2/gretl.c:1386
-#, fuzzy
 msgid "_Windows"
-msgstr "_Bul"
+msgstr "_Pencereler"
 
 #: gui2/gretl.c:1387
 msgid "_Graph specified vars"
@@ -10042,9 +10034,8 @@ msgid "_Normality test"
 msgstr "_Normallik sınaması"
 
 #: gui2/gretl.c:1446
-#, fuzzy
 msgid "_Frequency distribution..."
-msgstr "Sıklık da_ğılımı"
+msgstr "Sıklık da_ğılımı..."
 
 #: gui2/gretl.c:1447
 msgid "Estimated _density plot..."
@@ -10128,7 +10119,7 @@ msgstr "_Hurst üstü"
 
 #: gui2/gretl.c:1472
 msgid "_Edit attributes"
-msgstr "Nitelikleri d_üzenle"
+msgstr "Nitelikleri _düzenle"
 
 #: gui2/gretl.c:1474 gui2/gui_utils.c:2208
 msgid "Define _new variable..."
@@ -10351,14 +10342,12 @@ msgid "_About gretl"
 msgstr "Gretl _hakkında"
 
 #: gui2/gretl.c:1836 gui2/textbuf.c:2377 gui2/toolbar.c:947
-#, fuzzy
 msgid "Main window"
-msgstr "Pencerede bul"
+msgstr "Ana pencere"
 
 #: gui2/gretl.c:1900
-#, fuzzy
 msgid "sample status"
-msgstr "Yerel durum"
+msgstr "örneklem durumu"
 
 #: gui2/gretlwin32.c:83 gui2/gretlwin32.c:89
 msgid "Couldn't find usable socket driver\n"
@@ -10460,7 +10449,7 @@ msgstr "%s değişkeni için (%d geçerli gözlem)"
 
 #: gui2/guiprint.c:870
 msgid "t-ratios in parentheses"
-msgstr "t-oranları parantez içerisinde gösterilsin"
+msgstr "t-oranlarını ayraç içerisinde göster"
 
 #: gui2/guiprint.c:917
 #, c-format
@@ -10579,9 +10568,8 @@ msgid "No scalar variables are currently defined"
 msgstr "Şu an, tanımlı sayıl değişken yok"
 
 #: gui2/gui_utils.c:174
-#, fuzzy
 msgid "equation"
-msgstr "Denklem"
+msgstr "denklem"
 
 #: gui2/gui_utils.c:185 gui2/gui_utils.c:317
 msgid "_Save as..."
@@ -10799,7 +10787,7 @@ msgstr "_Ölçünlü hataları göster"
 
 #: gui2/gui_utils.c:307
 msgid "Show _t-ratios"
-msgstr "_T-oranlarını göster"
+msgstr "_t-oranlarını göster"
 
 #: gui2/gui_utils.c:326
 msgid "_Revise specification..."
@@ -11131,7 +11119,7 @@ msgid ""
 "Do you want to restore the sample on which\n"
 "this model was estimated?"
 msgstr ""
-"Model örneklemi veriseti örnekleminden farklı olduğu\n"
+"Model örneklemi veri seti örnekleminden farklı olduğu\n"
 "için bazı menü seçenekleri geçersiz kılınacaktır.\n"
 "\n"
 "Bu modelin tahmin edilmiş olduğu örneklemi\n"
@@ -11469,27 +11457,27 @@ msgstr "gretl: eksik değerler bilgisi"
 
 #: gui2/library.c:1380
 msgid "Export the markers to file"
-msgstr ""
+msgstr "Durum imleçlerini dışa aktar"
 
 #: gui2/library.c:1381
-#, fuzzy
 msgid "Remove the markers"
-msgstr "Durum imleçlerini _kaldır..."
+msgstr "Durum imleçlerini kaldır"
 
 #: gui2/library.c:1385
-#, fuzzy
 msgid ""
 "The dataset has observation markers.\n"
 "Would you like to:"
 msgstr ""
-"Veri dosyası bilgilendirici bir yorum içermiyor.\n"
-"Şimdi eklemek ister misiniz?"
+"Veri seti gözlem imleçleri içeriyor.\n"
+"Lütfen seçiniz:"
 
 #: gui2/library.c:1396
 msgid ""
 "The dataset has no observation markers.\n"
 "Add some from file now?"
 msgstr ""
+"Veri seti gözlem imleçleri içermiyor.\n"
+"Dosyadan eklemek ister misiniz?"
 
 #: gui2/library.c:1407
 msgid ""
@@ -12206,15 +12194,15 @@ msgstr "Bağımlı değişken: %s\n"
 
 #: gui2/model_table.c:1026 gui2/model_table.c:1218
 msgid "t-statistics in parentheses"
-msgstr "t-istatistikleri parantez içerisinde gösterilsin"
+msgstr "t-istatistikleri ayraç içerisinde gösterilmiştir"
 
 #: gui2/model_table.c:1028 gui2/model_table.c:1136 gui2/model_table.c:1220
 msgid "Standard errors in parentheses"
-msgstr "Ölçünlü hatalar parantez içerisinde gösterilmiştir"
+msgstr "Ölçünlü hatalar ayraç içerisinde gösterilmiştir"
 
 #: gui2/model_table.c:1032 gui2/model_table.c:1224
 msgid "p-values in brackets"
-msgstr "p-değerleri parantez içerisinde gösterilmiştir"
+msgstr "p-değerleri ayraç içerisinde gösterilmiştir"
 
 #: gui2/model_table.c:1036 gui2/model_table.c:1145 gui2/model_table.c:1229
 msgid "* indicates significance at the 10 percent level"
@@ -12238,7 +12226,7 @@ msgstr "gretl: model çizelgesi"
 
 #: gui2/model_table.c:1140
 msgid "$p$-values in brackets"
-msgstr "$p$-değerleri parantez içerisinde gösterilmiştir"
+msgstr "$p$-değerleri ayraç içerisinde gösterilmiştir"
 
 #: gui2/model_table.c:1151
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
@@ -13231,7 +13219,7 @@ msgstr "Çalışma dizinini kabuktan sapta"
 
 #: gui2/settings.c:176
 msgid "File selector remembers folder"
-msgstr ""
+msgstr "Dosya seçici önceki dizini anımsasın"
 
 #: gui2/settings.c:179
 msgid "Language preference"
@@ -13392,19 +13380,16 @@ msgid "Manuals"
 msgstr "Belgeler"
 
 #: gui2/settings.c:1422
-#, fuzzy
 msgid "Fixed font..."
-msgstr "_Tekhacimli yazı tipi..."
+msgstr "Tekhacimli yazı tipi..."
 
 #: gui2/settings.c:1436
-#, fuzzy
 msgid "Menu font..."
-msgstr "_Menü yazı tipi..."
+msgstr "Menü yazı tipi..."
 
 #: gui2/settings.c:1450
-#, fuzzy
 msgid "Working directory..."
-msgstr "_Çalışma dizini..."
+msgstr "Çalışma dizini..."
 
 #: gui2/settings.c:1606
 msgid "This change will take effect when you restart gretl"
@@ -13432,20 +13417,19 @@ msgstr "yukarıdaki seçili dizin"
 
 #: gui2/settings.c:2344
 msgid "the current directory as determined via the shell"
-msgstr "kabuk tarafından belirli, şu anki dizin:"
+msgstr "kabuk tarafından belirli şu anki dizin"
 
 #: gui2/settings.c:2354
 msgid "The file selection dialog should:"
-msgstr ""
+msgstr "Dosya seçim penceresi:"
 
 #: gui2/settings.c:2361
 msgid "remember the last-opened folder"
-msgstr ""
+msgstr "en son açılan dizini anımsasın"
 
 #: gui2/settings.c:2370
-#, fuzzy
 msgid "always start in the working directory"
-msgstr "gretl çalışma dizini"
+msgstr "her zaman çalışma dizininde başlasın"
 
 #: gui2/settings.c:2419
 msgid "gretl: working directory"
@@ -13746,9 +13730,8 @@ msgid "Save"
 msgstr "Kaydet"
 
 #: gui2/textutil.c:372
-#, fuzzy
 msgid "Not available"
-msgstr "Elde model yok"
+msgstr "Elde bulunmuyor"
 
 #: gui2/toolbar.c:190
 msgid "Save to file"
@@ -13861,7 +13844,7 @@ msgstr "Komut yardımı"
 
 #: gui2/toolbar.c:637
 msgid "Windows"
-msgstr ""
+msgstr "Pencereler"
 
 #: gui2/toolbar.c:1031
 msgid "launch calculator"
