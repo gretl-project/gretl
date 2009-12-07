@@ -1264,7 +1264,7 @@ GtkActionEntry main_entries[] = {
     { "OpenGdt",        GTK_STOCK_OPEN, N_("_User file..."), NULL, NULL, G_CALLBACK(open_data) },
     { "DisplayDataFiles", GTK_STOCK_OPEN, N_("_Sample file..."), "", NULL, G_CALLBACK(show_files) },
     { "ImportData",   NULL, N_("_Import"), NULL, NULL, NULL }, 
-    { "OpenCSV",      NULL, N_("_CSV..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "OpenCSV",      NULL, N_("_text/CSV..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenOctave",   NULL, N_("_Octave..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenGnumeric", NULL, N_("_Gnumeric..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenXLS",      NULL, N_("_Excel..."), NULL, NULL, G_CALLBACK(open_data) },
@@ -1277,7 +1277,7 @@ GtkActionEntry main_entries[] = {
 
     { "AppendData",     NULL, N_("_Append data"), NULL, NULL, NULL }, 
     { "AppendGdt",      NULL, N_("_Standard format..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendCSV",      NULL, N_("_CSV..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "AppendCSV",      NULL, N_("_text/CSV..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendOctave",   NULL, N_("_Octave..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendGnumeric", NULL, N_("_Gnumeric..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendXLS",      NULL, N_("_Excel..."), NULL, NULL, G_CALLBACK(open_data) },

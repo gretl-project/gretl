@@ -525,7 +525,27 @@ static char *win32_set_numeric (const char *lang)
     return set;
 }
 
-#endif /* WIN32 */
+#else /* !WIN32 */
+
+# ifdef ENABLE_NLS
+
+static char *other_set_numeric (const char *lang)
+{
+    char *set = setlocale(LC_NUMERIC, lang);
+
+    if (set == NULL) {
+	char lfix[32];
+
+	sprintf(lfix, "%s.UTF-8", lang);
+	set = setlocale(LC_NUMERIC, lfix);
+    }
+
+    return set;
+}
+
+# endif /* ENABLE_NLS */
+
+#endif /* WIN32 or not */
 
 void set_lcnumeric (int langid, int lcnumeric)
 {
@@ -533,14 +553,22 @@ void set_lcnumeric (int langid, int lcnumeric)
     return;
 #else
     if (lcnumeric && langid != LANG_C) {
-	char *lang = getenv("LANG");
+	const char *lang;
 	char *set = NULL;
+
+	if (langid == LANG_AUTO) {
+	    /* respect the system LANG setting */
+	    lang = getenv("LANG");
+	} else {
+	    /* fake it from user preference */
+	    lang = lang_code_from_id(langid);
+	}
 
 	if (lang != NULL) {
 # ifdef WIN32
 	    set = win32_set_numeric(lang);
 # else
-	    set = setlocale(LC_NUMERIC, lang);
+	    set = other_set_numeric(lang);
 # endif
 	} 
 	if (set == NULL) {
