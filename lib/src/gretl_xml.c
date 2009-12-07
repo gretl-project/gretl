@@ -2359,7 +2359,7 @@ static long get_filesize (const char *fname)
  * @fname: name of file to try.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
- * @opt: use %OPT_P to display gui progress bar. (FIXME?)
+ * @opt: use %OPT_B to display gui progress bar.
  * @prn: where messages should be written.
  * 
  * Read data from file into gretl's work space, allocating space as

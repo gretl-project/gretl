@@ -1763,7 +1763,9 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	/* or maybe the file is gzipped but lacks a .gz extension? */
+	/* or maybe the file is gzipped but lacks a .gz extension?
+	   (backward compatibility) 
+	*/
 	if (!found && !gzsuff) { 
 	    sprintf(tryfile, "%s.gz", datfile);
 	    if (addpath(tryfile, 0) != NULL) {

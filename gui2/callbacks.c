@@ -155,8 +155,6 @@ struct open_data_code {
 struct open_data_code open_data_codes[] = {
     { OPEN_DATA,       "OpenGdt" },
     { APPEND_DATA,     "AppendGdt" },
-    { OPEN_ASCII,      "OpenASCII" },
-    { APPEND_ASCII,    "AppendASCII" },
     { OPEN_CSV,        "OpenCSV" },
     { APPEND_CSV,      "AppendCSV" },
     { OPEN_OCTAVE,     "OpenOctave" },

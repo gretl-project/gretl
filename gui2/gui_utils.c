@@ -1008,16 +1008,11 @@ static int get_native_data (char *fname, int ftype, int append,
                            action == APPEND_GNUMERIC || \
                            action == APPEND_XLS || \
                            action == APPEND_ODS || \
-                           action == APPEND_ASCII || \
                            action == APPEND_WF1 || \
                            action == APPEND_DTA || \
 	                   action == APPEND_SAV || \
 			   action == APPEND_SAS || \
                            action == APPEND_JMULTI)
-
-/* respond to the file selector: note that the selected 
-   filename has by now been written into 'tryfile'
-*/
 
 void do_open_data (windata_t *fwin, int code)
 {
@@ -1029,8 +1024,7 @@ void do_open_data (windata_t *fwin, int code)
     if (code == OPEN_DATA || code == APPEND_DATA) {
 	/* native .gdt files */
 	ftype = GRETL_XML_DATA;
-    } else if (code == OPEN_CSV || code == APPEND_CSV || 
-	       code == OPEN_ASCII || code == APPEND_ASCII) {
+    } else if (code == OPEN_CSV || code == APPEND_CSV) {
 	ftype = GRETL_CSV;
     } else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
 	ftype = GRETL_GNUMERIC;

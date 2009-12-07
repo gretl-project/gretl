@@ -416,6 +416,7 @@ int csv_options_dialog (gretlopt *optp)
     GtkWidget *tmp, *button;
     GSList *group;
     csv_stuff *csvp = NULL;
+    int reading = (optp == NULL);
     int ret = 0;
 
     if (maybe_raise_dialog()) {
@@ -487,14 +488,16 @@ int csv_options_dialog (gretlopt *optp)
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(';'));   
 
-    /* auto-detect separator */
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    button = gtk_radio_button_new_with_label(group, _("auto-detect"));
-    pack_in_hbox(button, vbox, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_delim), csvp);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER('a'));    
+    if (reading) {
+	/* auto-detect separator */
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	button = gtk_radio_button_new_with_label(group, _("auto-detect"));
+	pack_in_hbox(button, vbox, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_delim), csvp);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER('a'));
+    }
 
     if (',' == get_local_decpoint()) {
 	GSList *dgroup;
@@ -528,7 +531,7 @@ int csv_options_dialog (gretlopt *optp)
 			  GINT_TO_POINTER(','));   
     }
 
-    if (optp != NULL) {
+    if (!reading) {
 	/* on output only */
 	vbox_add_hsep(vbox);
 	tmp = gretl_option_check_button_switched(_("include observations column"),

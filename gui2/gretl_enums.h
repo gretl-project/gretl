@@ -111,7 +111,6 @@ enum extra_cmds {
 enum file_ops {
     OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */
     OPEN_CSV,
-    OPEN_ASCII,
     OPEN_OCTAVE,
     OPEN_GNUMERIC,
     OPEN_XLS,
@@ -126,7 +125,6 @@ enum file_ops {
     OPEN_SCRIPT,
     APPEND_DATA,
     APPEND_CSV,
-    APPEND_ASCII,
     APPEND_OCTAVE,
     APPEND_GNUMERIC,
     APPEND_XLS,

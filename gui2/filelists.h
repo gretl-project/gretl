@@ -1,7 +1,7 @@
 #ifndef FILELISTS_H
 #define FILELISTS_H
 
-#define MAXRECENT 4
+#define MAXRECENT 6
 
 void mkfilelist (int filetype, char *newfile);
 

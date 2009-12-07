@@ -1,304 +1,297 @@
 <ui>
   <menubar>
-    <menu action='File'>
-      <menu action='OpenData'>
-	<menuitem action='OpenGdt'/>
-	<menuitem action='DisplayDataFiles'/>
+    <menu action="File">
+      <menu action="OpenData">
+	<menuitem action="OpenGdt"/>
+	<menuitem action="DisplayDataFiles"/>
 	<separator/>
-	<menu action='ImportData'>
-	  <menuitem action='OpenCSV'/>
-	  <menuitem action='OpenASCII'/>
-	  <menuitem action='OpenOctave'/>
-	  <menuitem action='OpenGnumeric'/>
-	  <menuitem action='OpenXLS'/>
-	  <menuitem action='OpenODS'/>
-	  <menuitem action='OpenWF1'/>
-	  <menuitem action='OpenDTA'/>
-	  <menuitem action='OpenSAV'/>
-	  <menuitem action='OpenSAS'/>
-	  <menuitem action='OpenJMulTi'/>
+	<menu action="ImportData">
+	  <menuitem action="OpenCSV"/>
+	  <menuitem action="OpenOctave"/>
+	  <menuitem action="OpenGnumeric"/>
+	  <menuitem action="OpenXLS"/>
+	  <menuitem action="OpenODS"/>
+	  <menuitem action="OpenWF1"/>
+	  <menuitem action="OpenDTA"/>
+	  <menuitem action="OpenSAV"/>
+	  <menuitem action="OpenSAS"/>
+	  <menuitem action="OpenJMulTi"/>
 	</menu>
 	<separator/>
-	<placeholder name='RecentData'/>
+	<placeholder name="RecentData"/>
       </menu>      
-      <menu action='AppendData'>
-	<menuitem action='AppendGdt'/>
-	<menuitem action='AppendCSV'/>
-	<menuitem action='AppendASCII'/>
-	<menuitem action='AppendOctave'/>
-	<menuitem action='AppendGnumeric'/>
-	<menuitem action='AppendXLS'/>
-	<menuitem action='AppendODS'/>
-	<menuitem action='AppendWF1'/>
-	<menuitem action='AppendDTA'/>
-	<menuitem action='AppendSAV'/>
-	<menuitem action='AppendSAS'/>
-	<menuitem action='AppendJMulTi'/>
+      <menu action="AppendData">
+	<menuitem action="AppendGdt"/>
+	<menuitem action="AppendCSV"/>
+	<menuitem action="AppendOctave"/>
+	<menuitem action="AppendGnumeric"/>
+	<menuitem action="AppendXLS"/>
+	<menuitem action="AppendODS"/>
+	<menuitem action="AppendWF1"/>
+	<menuitem action="AppendDTA"/>
+	<menuitem action="AppendSAV"/>
+	<menuitem action="AppendSAS"/>
+	<menuitem action="AppendJMulTi"/>
       </menu>
-      <menuitem action='SaveData'/>
-      <menu action='SaveDataAs'>
-	<menuitem action='SaveAsGdt'/>
-	<menuitem action='SaveAsDb'/>
+      <menuitem action="SaveData"/>
+      <menu action="SaveDataAs">
+	<menuitem action="SaveAsGdt"/>
+	<menuitem action="SaveAsDb"/>
       </menu>
-      <menu action='ExportData'>
-	<menuitem action='ExportCSV'/>
-	<menuitem action='ExportR'/>
-	<menuitem action='ExportOctave'/>
-	<menuitem action='ExportJMulTi'/>
-	<menuitem action='ExportPcGive'/>
+      <menu action="ExportData">
+	<menuitem action="ExportCSV"/>
+	<menuitem action="ExportR"/>
+	<menuitem action="ExportOctave"/>
+	<menuitem action="ExportJMulTi"/>
+	<menuitem action="ExportPcGive"/>
       </menu>
-      <menuitem action='MailData'/>
-      <menuitem action='NewData'/>
-      <menuitem action='ClearData'/>
+      <menuitem action="MailData"/>
+      <menuitem action="NewData"/>
+      <menuitem action="ClearData"/>
       <separator/>
-      <menuitem action='WorkingDir'/>
+      <menuitem action="WorkingDir"/>
       <separator/>
-      <menu action='ScriptFiles'>
-	<menuitem action='OpenScript'/>
-	<menuitem action='DisplayScripts'/>
-	<menu action='NewScript'>
-	  <menuitem action='GretlScript'/>
-	  <menuitem action='GnuplotScript'/>
-	  <menuitem action='RScript'/>
-	  <placeholder action='OxScript'/>
+      <menu action="ScriptFiles">
+	<menuitem action="OpenScript"/>
+	<menuitem action="DisplayScripts"/>
+	<menu action="NewScript">
+	  <menuitem action="GretlScript"/>
+	  <menuitem action="GnuplotScript"/>
+	  <menuitem action="RScript"/>
+	  <placeholder action="OxScript"/>
 	</menu>
 	<separator/>
-	<placeholder name='RecentScripts'/>
+	<placeholder name="RecentScripts"/>
       </menu>
-      <menu action='SessionFiles'>
-	<menuitem action='OpenSession'/>
-	<menuitem action='SaveSession'/>
-	<menuitem action='SaveSessionAs'/>
+      <menu action="SessionFiles">
+	<menuitem action="OpenSession"/>
+	<menuitem action="SaveSession"/>
+	<menuitem action="SaveSessionAs"/>
 	<separator/>
-	<placeholder name='RecentSessions'/>
+	<placeholder name="RecentSessions"/>
       </menu>
-      <menu action='Databases'>
-	<menuitem action='NativeDB'/>
-	<menuitem action='RATSDB'/>
-	<menuitem action='PcGiveDB'/>
-	<menuitem action='RemoteDB'/>
+      <menu action="Databases">
+	<menuitem action="NativeDB"/>
+	<menuitem action="RATSDB"/>
+	<menuitem action="PcGiveDB"/>
+	<menuitem action="RemoteDB"/>
       </menu>
-      <menu action='FunctionFiles'>
-	<menuitem action='LocalGfn'/>
-	<menuitem action='RemoteGfn'/>
-	<menuitem action='EditGfn'/>
-	<menuitem action='NewGfn'/>
+      <menu action="FunctionFiles">
+	<menuitem action="LocalGfn"/>
+	<menuitem action="RemoteGfn"/>
+	<menuitem action="EditGfn"/>
+	<menuitem action="NewGfn"/>
       </menu>
       <separator/>
-      <menuitem action='Quit'/>
+      <menuitem action="Quit"/>
     </menu>
-    <menu action='Tools'>
-      <menuitem action='StatsTables'/>
-      <menuitem action='PValues'/>
-      <menuitem action='DistGraphs'/>
-      <menuitem action='PlotCurve'/>
-      <menuitem action='TestStats'/>
-      <menuitem action='NonparamTests'/>
-      <menuitem action='SetSeed'/>
+    <menu action="Tools">
+      <menuitem action="StatsTables"/>
+      <menuitem action="PValues"/>
+      <menuitem action="DistGraphs"/>
+      <menuitem action="PlotCurve"/>
+      <menuitem action="TestStats"/>
+      <menuitem action="NonparamTests"/>
+      <menuitem action="SetSeed"/>
       <separator/>
-      <menuitem action='CommandLog'/>
-      <menuitem action='ShowConsole'/>
-      <menuitem action='StartR'/>
+      <menuitem action="CommandLog"/>
+      <menuitem action="ShowConsole"/>
+      <menuitem action="StartR"/>
       <separator/>
-      <menu action='NistTest'>
-	<menuitem action='NistBasic'/>
-	<menuitem action='NistVerbose'/>
-	<menuitem action='NistVVerbose'/>
+      <menu action="NistTest">
+	<menuitem action="NistBasic"/>
+	<menuitem action="NistVerbose"/>
+	<menuitem action="NistVVerbose"/>
       </menu>
-      <menu action='Preferences'>
-	<menuitem action='PrefsGeneral'/>
-	<menuitem action='FixedFont'/>
+      <menu action="Preferences">
+	<menuitem action="PrefsGeneral"/>
+	<menuitem action="FixedFont"/>
       </menu>
     </menu>
-    <menu action='Data'>
-      <menuitem action='DataSelectAll'/>
+    <menu action="Data">
+      <menuitem action="DataSelectAll"/>
       <separator/>
-      <menuitem action='DisplayValues'/>
-      <menuitem action='EditValues'/>
-      <menuitem action='AddObs'/>
-      <menuitem action='RemoveObs'/>
+      <menuitem action="DisplayValues"/>
+      <menuitem action="EditValues"/>
+      <menuitem action="AddObs"/>
+      <menuitem action="RemoveObs"/>
       <separator/>
-      <menuitem action='DataInfo'/>
-      <menuitem action='DataMarkers'/>
+      <menuitem action="DataInfo"/>
+      <menuitem action="DataMarkers"/>
       <separator/>
-      <menuitem action='DataStructure'/>
-      <menuitem action='DataCompact'/>
-      <menuitem action='DataExpand'/>
-      <menuitem action='DataTranspose'/>
-      <menuitem action='DataSort'/>
-      <menuitem action='GSETMISS'/>
-      <menuitem action='CountMissing'/>
+      <menuitem action="DataStructure"/>
+      <menuitem action="DataCompact"/>
+      <menuitem action="DataExpand"/>
+      <menuitem action="DataTranspose"/>
+      <menuitem action="DataSort"/>
+      <menuitem action="GSETMISS"/>
+      <menuitem action="CountMissing"/>
       <separator/>
-      <menuitem action='VarFind'/>
-      <menuitem action='DataRefresh'/>
+      <menuitem action="VarFind"/>
+      <menuitem action="DataRefresh"/>
     </menu>
-    <menu action='View'>
-      <menuitem action='IconView'/>
-      <menuitem action='EditScalars'/>
+    <menu action="View">
+      <menuitem action="IconView"/>
+      <menuitem action="EditScalars"/>
       <separator/>
-      <menu action='Windows'>
+      <menu action="Windows">
       </menu>
       <separator/>
-      <menu action='GraphVars'>
-	<menuitem action='TSPlot'/>
-	<menuitem action='ScatterPlot'/>
-	<menuitem action='ImpulsePlot'/>
-	<menuitem action='FactorPlot'/>
-	<menuitem action='FrischPlot'/>
-	<menuitem action='GR_BOX'/>
-	<menuitem action='GR_NBOX'/>
-	<menuitem action='ThreeDPlot'/>
+      <menu action="GraphVars">
+	<menuitem action="TSPlot"/>
+	<menuitem action="ScatterPlot"/>
+	<menuitem action="ImpulsePlot"/>
+	<menuitem action="FactorPlot"/>
+	<menuitem action="FrischPlot"/>
+	<menuitem action="GR_BOX"/>
+	<menuitem action="GR_NBOX"/>
+	<menuitem action="ThreeDPlot"/>
       </menu>
-      <menu action='MultiPlots'>
-	<menuitem action='MultiXY'/>
-	<menuitem action='MultiTS'/>
+      <menu action="MultiPlots">
+	<menuitem action="MultiXY"/>
+	<menuitem action="MultiTS"/>
       </menu>
       <separator/>
-      <menuitem action='summary'/>
-      <menuitem action='corr'/>
-      <menuitem action='xtab'/>
-      <menuitem action='pca'/>
-      <menuitem action='mahal'/>
-      <menuitem action='xcorrgm'/>
+      <menuitem action="summary"/>
+      <menuitem action="corr"/>
+      <menuitem action="xtab"/>
+      <menuitem action="pca"/>
+      <menuitem action="mahal"/>
+      <menuitem action="xcorrgm"/>
     </menu>
-    <menu action='Add'>
-      <menuitem action='logs'/>
-      <menuitem action='square'/>
-      <menuitem action='lags'/>
-      <menuitem action='diff'/>
-      <menuitem action='ldiff'/>
-      <menuitem action='sdiff'/>
+    <menu action="Add">
+      <menuitem action="logs"/>
+      <menuitem action="square"/>
+      <menuitem action="lags"/>
+      <menuitem action="diff"/>
+      <menuitem action="ldiff"/>
+      <menuitem action="sdiff"/>
       <separator/>
-      <menuitem action='AddIndex'/>
-      <menuitem action='AddTime'/>
+      <menuitem action="AddIndex"/>
+      <menuitem action="AddTime"/>
       <separator/>
-      <menuitem action='AddRandom'/>
+      <menuitem action="AddRandom"/>
       <separator/>
-      <menuitem action='PeriodDums'/>
-      <menuitem action='UnitDums'/>
-      <menuitem action='TimeDums'/>
-      <menuitem action='dummify'/>
+      <menuitem action="PeriodDums"/>
+      <menuitem action="UnitDums"/>
+      <menuitem action="TimeDums"/>
+      <menuitem action="dummify"/>
       <separator/>
-      <menuitem action='GENR'/>
-      <menuitem action='NewMatrix'/>
+      <menuitem action="GENR"/>
+      <menuitem action="NewMatrix"/>
     </menu>
-    <menu action='Sample'>
-      <menuitem action='SMPL'/>
-      <menuitem action='FullRange'/>
+    <menu action="Sample">
+      <menuitem action="SMPL"/>
+      <menuitem action="FullRange"/>
        <separator/>
-      <menuitem action='SMPLBOOL'/>
-      <menuitem action='SMPLRAND'/>
-      <menuitem action='SampleWReplace'/>
-      <menuitem action='DropMissing'/>
+      <menuitem action="SMPLBOOL"/>
+      <menuitem action="SMPLRAND"/>
+      <menuitem action="SampleWReplace"/>
+      <menuitem action="DropMissing"/>
       <separator/>
-      <menuitem action='ShowSample'/>
+      <menuitem action="ShowSample"/>
     </menu>
-    <menu action='Variable'>
-      <menuitem action='VarDisplay'/>
-      <menuitem action='EditAttrs'/>
-      <menuitem action='VSETMISS'/>
-      <menuitem action='VarSummary'/>
-      <menuitem action='normtest'/>
-      <menuitem action='FreqDist'/>
-      <menuitem action='Density'/>
-      <menuitem action='Gini'/>
-      <menuitem action='rmplot'/>
+    <menu action="Variable">
+      <menuitem action="VarDisplay"/>
+      <menuitem action="EditAttrs"/>
+      <menuitem action="VSETMISS"/>
+      <menuitem action="VarSummary"/>
+      <menuitem action="normtest"/>
+      <menuitem action="FreqDist"/>
+      <menuitem action="Density"/>
+      <menuitem action="Gini"/>
+      <menuitem action="rmplot"/>
       <separator/>
-      <menuitem action='VarTSPlot'/>
-      <menuitem action='corrgm'/>
-      <menu action='Spectrum'>
-	<menuitem action='Pergm'/>
-	<menuitem action='Bartlett'/>
+      <menuitem action="VarTSPlot"/>
+      <menuitem action="corrgm"/>
+      <menu action="Spectrum">
+	<menuitem action="Pergm"/>
+	<menuitem action="Bartlett"/>
       </menu>
-      <menuitem action='ADF'/>
-      <menuitem action='DFGLS'/>
-      <menuitem action='KPSS'/>
-      <menu action='Filter'>
-	<menuitem action='FilterSMA'/>
-	<menuitem action='FilterEMA'/>
-	<menuitem action='FilterHP'/>
-	<menuitem action='FilterBK'/>
-	<menuitem action='FilterFD'/>
+      <menuitem action="ADF"/>
+      <menuitem action="DFGLS"/>
+      <menuitem action="KPSS"/>
+      <menu action="Filter">
+	<menuitem action="FilterSMA"/>
+	<menuitem action="FilterEMA"/>
+	<menuitem action="FilterHP"/>
+	<menuitem action="FilterBK"/>
+	<menuitem action="FilterFD"/>
       </menu>
-      <placeholder action='X12A'/>
-      <placeholder action='Tramo'/>
-      <menuitem action='Hurst'/>
+      <placeholder action="X12A"/>
+      <placeholder action="Tramo"/>
+      <menuitem action="Hurst"/>
     </menu>
-    <menu action='Model'>
-      <menuitem action='ols'/>
-      <menu action='ivreg'>
-	<menuitem action='tsls'/>
-	<menuitem action='iv-liml'/>
-	<menuitem action='iv-gmm'/>
+    <menu action="Model">
+      <menuitem action="ols"/>
+      <menu action="ivreg">
+	<menuitem action="tsls"/>
+	<menuitem action="iv-liml"/>
+	<menuitem action="iv-gmm"/>
       </menu>
-      <menu action='LinearModels'>
-	<menuitem action='wls'/>
-	<menuitem action='hsk'/>
-	<menuitem action='mpols'/>
-        <menuitem action='anova'/>
+      <menu action="LinearModels">
+	<menuitem action="wls"/>
+	<menuitem action="hsk"/>
+	<menuitem action="mpols"/>
+        <menuitem action="anova"/>
       </menu>
-      <menu action='NonlinearModels'>
-	<menu action='logit'>
-	  <menuitem action='blogit'/>
-	  <menuitem action='ologit'/>
-	  <menuitem action='mlogit'/>
+      <menu action="NonlinearModels">
+	<menu action="logit">
+	  <menuitem action="blogit"/>
+	  <menuitem action="ologit"/>
+	  <menuitem action="mlogit"/>
 	</menu>
-	<menu action='probit'>
-	  <menuitem action='bprobit'/>
-	  <menuitem action='oprobit'/>
+	<menu action="probit">
+	  <menuitem action="bprobit"/>
+	  <menuitem action="oprobit"/>
 	</menu>
-	<menuitem action='tobit'/>
-	<menuitem action='heckit'/>
-	<menuitem action='poisson'/>
-	<menuitem action='logistic'/>
-	<menuitem action='nls'/>
-	<menuitem action='intreg'/>
+	<menuitem action="tobit"/>
+	<menuitem action="heckit"/>
+	<menuitem action="poisson"/>
+	<menuitem action="logistic"/>
+	<menuitem action="nls"/>
+	<menuitem action="intreg"/>
       </menu>
-      <menu action='TSModels'>
-	<menuitem action='CORC'/>
-	<menuitem action='HILU'/>
-	<menuitem action='PWE'/>
-	<menuitem action='ar'/>
-	<menuitem action='arima'/>
-	<menuitem action='arch'/>
-	<menuitem action='garch'/>
-	<menuitem action='var'/>
-	<menuitem action='VLAGSEL'/>
-	<menuitem action='vecm'/>
-	<menu action='CointMenu'>
-	  <menuitem action='coint'/>
-	  <menuitem action='coint2'/>
+      <menu action="TSModels">
+	<menuitem action="CORC"/>
+	<menuitem action="HILU"/>
+	<menuitem action="PWE"/>
+	<menuitem action="ar"/>
+	<menuitem action="arima"/>
+	<menuitem action="arch"/>
+	<menuitem action="garch"/>
+	<menuitem action="var"/>
+	<menuitem action="VLAGSEL"/>
+	<menuitem action="vecm"/>
+	<menu action="CointMenu">
+	  <menuitem action="coint"/>
+	  <menuitem action="coint2"/>
 	</menu>
       </menu>
-      <menu action='PanelModels'>
-	<menuitem action='panel'/>
-	<menuitem action='PANEL_WLS'/>
-	<menuitem action='PANEL_B'/>
-	<menuitem action='arbond'/>
+      <menu action="PanelModels">
+	<menuitem action="panel"/>
+	<menuitem action="PANEL_WLS"/>
+	<menuitem action="PANEL_B"/>
+	<menuitem action="arbond"/>
       </menu>
-      <menu action='RobustModels'>
-	<menuitem action='lad'/>
-	<menuitem action='quantreg'/>
-	<menuitem action='spearman'/>
+      <menu action="RobustModels">
+	<menuitem action="lad"/>
+	<menuitem action="quantreg"/>
+	<menuitem action="spearman"/>
       </menu>
-      <menuitem action='mle'/>
-      <menuitem action='gmm'/>
-      <menuitem action='system'/>
+      <menuitem action="mle"/>
+      <menuitem action="gmm"/>
+      <menuitem action="system"/>
     </menu>
-    <menu action='Help'>
-      <menuitem action='TextCmdRef'/>
-      <menuitem action='FuncRef'/>
+    <menu action="Help">
+      <menuitem action="TextCmdRef"/>
+      <menuitem action="FuncRef"/>
       <separator/>
-      <menuitem action='UserGuide'/>
-      <menuitem action='PDFCmdRef'/>
+      <menuitem action="UserGuide"/>
+      <menuitem action="PDFCmdRef"/>
       <separator/>
-      <menuitem action='UpdateCheck'/>
-      <menuitem action='About'/>
+      <menuitem action="UpdateCheck"/>
+      <menuitem action="About"/>
     </menu>
   </menubar>
 </ui>
-
-
-
-
-
