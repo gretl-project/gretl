@@ -672,7 +672,7 @@ static int intreg_normtest (int_container *IC, double *teststat)
 	gretl_vector_set(g, noc-1, kurt);
 	*teststat = gretl_scalar_qform(g, GG, &err);
     } else {
-	gretl_matrix_print(GG, "GG (inverse)");
+	gretl_matrix_print(condmom, "conditional moment matrix");
 	*teststat = NADBL;
     }
 
@@ -775,7 +775,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	pmod->opt |= OPT_R;
     }
 
-    if (IC->pmod->ifc) {
+    if (IC->pmod->ifc && IC->nx > 1) {
 	pmod->chisq = chisq_overall_test(IC);
     } else {
 	pmod->chisq = NADBL;
@@ -821,10 +821,11 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 
     if (!err) {
 	err = intreg_normtest(IC, &normtest);
-    }
-
-    if (!err) {
-	err = add_norm_test_to_model(IC->pmod, normtest);
+	if (!err) {
+	    err = add_norm_test_to_model(IC->pmod, normtest);
+	}
+	/* don't let this be a show-stopper */
+	err = 0;
     }
 
     gretl_matrix_free(V);
