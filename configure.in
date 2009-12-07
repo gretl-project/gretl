@@ -769,9 +769,10 @@ Configuration:
   Gnome installation prefix:              ${gnome_prefix}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
+  libR support:                           ${have_libR}
+  Ox support:                             ${have_ox}
   Experimental audio support:             ${have_audio}
   Experimental ODBC support:              ${have_odbc}
-  Experimental libR support:              ${have_libR}
   LAPACK libraries:
     ${LAPACK_LIBS}
 
