@@ -3130,12 +3130,12 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	In the appropriate context, <lit>series</lit>, <lit>scalar</lit>
 	and <lit>matrix</lit> are synonyms for this command.
       </para>
 
-      <para>
+      <para context="cli">
 	Creates new variables, often via transformations of existing
 	variables. See also <cmdref targ="diff"/>, <cmdref targ="logs"/>,
 	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, 
@@ -3147,7 +3147,24 @@
 	of this command can be found in <guideref targ="chap-genr"/>.
       </para>
 
-      <para>
+      <para context="gui">
+	Use this box to define a new variable, on the pattern
+	<repl>name</repl> = <repl>formula</repl>.  The formula should be a
+	well-formed combination of variable names, constants, operators and
+	functions (details below).  To ensure you get the type of variable you
+	want, you can prefix the formula with a type-name, &eg;
+	<lit>scalar</lit>, <lit>series</lit> or <lit>matrix</lit>.  For
+	example, to create a series that has a constant value of 10,
+	you can type
+      </para>
+      <code context="gui">
+	series c = 10
+      </code>
+      <para context="gui">
+	(otherwise <lit>c = 10</lit> would create a scalar variable).
+      </para>
+
+      <para context="cli">
 	A <lit>genr</lit> command may yield either a series or a scalar
 	result.  For example, the formula <lit>x2 = x * 2</lit> naturally
 	yields a series if the variable <lit>x</lit> is a series and a
@@ -3164,7 +3181,7 @@
 	error occurs.
       </para>
 
-      <para>
+      <para context="cli">
 	When a formula yields a series result, the range over which
 	the result is written to the target variable depends on the current
 	sample setting.  It is possible, therefore, to define a series piecewise
@@ -3415,7 +3432,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Define new variable</menu-path>
+      <menu-path>/Add/Define new variable</menu-path>
       <other-access>Main window pop-up menu</other-access>
     </gui-access>
 
@@ -4429,7 +4446,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Read info</menu-path>
+      <menu-path>/Data/Dataset info</menu-path>
       <other-access>Data browser windows</other-access>
     </gui-access>
 
@@ -8793,7 +8810,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Sample/Set missing value code</menu-path>
+      <menu-path>/Data/Set missing value code</menu-path>
     </gui-access>
 
   </command>
