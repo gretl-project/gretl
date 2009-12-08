@@ -2550,6 +2550,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	if (chow_mod.errcode) {
 	    err = chow_mod.errcode;
 	    errmsg(err, prn);
+	} else if (chow_mod.ncoeff <= pmod->ncoeff) {
+	    err = chow_mod.errcode = E_DATA;
+	    errmsg(err, prn);
 	} else {
 	    int dfd = (robust)? 0 : chow_mod.dfd;
 	    int dfn = chow_mod.ncoeff - pmod->ncoeff;
@@ -2562,12 +2565,18 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
 	    if (robust) {
 		test = robust_chow_test(&chow_mod, pmod->list, &err);
+		if (!na(test)) {
+		    pval = chisq_cdf_comp(dfn, test);
+		}
 	    } else {
 		test = (pmod->ess - chow_mod.ess) * dfd / 
 		    (chow_mod.ess * dfn);
+		if (!na(test)) {
+		    pval = snedecor_cdf_comp(dfn, dfd, test);
+		}
 	    }
 
-	    if (!na(test)) {
+	    if (!na(test) && !na(pval)) {
 		if (opt & OPT_Q) {
 		    pputc(prn, '\n');
 		}
@@ -2579,21 +2588,22 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 			    chowparm);
 		} 
 		pputc(prn, '\n');
+
 		if (robust) {
-		    pval = chisq_cdf_comp(dfn, test);
 		    pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
 			    dfn, test, _("with p-value"), pval);
 		    pprintf(prn, "  %s: F(%d, %d) = %g %s %.4f\n\n", _("F-form"), 
 			    dfn, chow_mod.dfd, test / dfn, _("with p-value"),
 			    snedecor_cdf_comp(dfn, chow_mod.dfd, test / dfn));
 		} else {
-		    pval = snedecor_cdf_comp(dfn, dfd, test);
 		    pprintf(prn, "  F(%d, %d) = %g %s %.4f\n\n", 
 			    dfn, dfd, test, _("with p-value"), pval);
 		}
+
 		if (opt & OPT_S) {
 		    save_chow_test(pmod, chowparm, dumv, test, pval, dfn, dfd);
 		}
+
 		record_test_result(test, pval, "Chow");
 	    } 
 	}
