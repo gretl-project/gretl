@@ -177,8 +177,8 @@ void window_list_state (gboolean s)
 
 #define COMPACTABLE(d) (d->structure == TIME_SERIES && \
                         (d->pd == 4 || d->pd == 12 || \
-                         d->pd == 5 || d->pd == 7 || \
-                         d->pd == 24))
+                         d->pd == 5 || d->pd == 6 || \
+                         d->pd == 7 || d->pd == 24))
 
 #define EXPANSIBLE(d) (d->structure == TIME_SERIES && (d->pd == 1 || d->pd == 4))
 
