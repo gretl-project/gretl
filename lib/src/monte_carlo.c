@@ -2482,7 +2482,7 @@ print_loop_progress (const LOOPSET *loop, const DATAINFO *pdinfo,
     } else if (loop->type == DATED_LOOP) {
 	char obs[OBSLEN];
 
-	ntodate(obs, i, pdinfo);
+	ntodate(obs, i - 1, pdinfo);
 	pprintf(prn, "loop: %s = %s\n\n", loop->idxname, obs);
     }
 }
