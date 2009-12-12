@@ -5840,10 +5840,10 @@ static void print_normality_stat (double test, double pval,
 				  gretlopt opt, PRN *prn)
 {
     const char *tstrs[] = {
-	_("Shapiro-Wilk W"),
-	_("Jarque-Bera test"),
-	_("Lilliefors test"),
-	_("Doornik-Hansen test")
+	N_("Shapiro-Wilk W"),
+	N_("Jarque-Bera test"),
+	N_("Lilliefors test"),
+	N_("Doornik-Hansen test")
     };
     int i = (opt & OPT_W)? 0 : (opt & OPT_J)? 1 :
 	(opt & OPT_L)? 2 : 3;
@@ -5854,10 +5854,10 @@ static void print_normality_stat (double test, double pval,
 
     if (opt & OPT_L) {
 	pprintf(prn, " %s = %g, %s ~= %g\n\n", 
-		tstrs[i], test, _("with p-value"), pval);
+		_(tstrs[i]), test, _("with p-value"), pval);
     } else {
 	pprintf(prn, " %s = %g, %s %g\n\n", 
-		tstrs[i], test, _("with p-value"), pval);
+		_(tstrs[i]), test, _("with p-value"), pval);
     }
 }
 

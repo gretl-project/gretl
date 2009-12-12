@@ -496,7 +496,7 @@ int main (int argc, char **argv)
     gtk_init(&argc, &argv);
     old_gretl_init(&argc, &argv, filearg);
 #else
-    gtk_init_with_args(&argc, &argv, param_msg, options, "gretl", &opterr);
+    gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
     if (opterr != NULL) {
 	g_print("%s\n", opterr->message);
 	exit(EXIT_FAILURE);
