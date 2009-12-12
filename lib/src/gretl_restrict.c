@@ -1913,6 +1913,8 @@ restriction_set_print_result (gretl_restriction *rset,
 {
     MODEL *pmod = rset->obj;
     int robust, asym = 0;
+    int quiet  = (rset->opt & OPT_Q);
+    int silent = (rset->opt & OPT_S);
 
     robust = (pmod->opt & OPT_R);
 
@@ -1923,28 +1925,35 @@ restriction_set_print_result (gretl_restriction *rset,
     if (asym) {
 	rset->code = GRETL_STAT_WALD_CHISQ;
 	rset->pval = chisq_cdf_comp(rset->g, rset->test);
-	pprintf(prn, "\n%s: %s(%d) = %g, ", _("Test statistic"), 
-		(robust)? _("Robust chi^2"): "chi^2",
-		rset->g, rset->test);
+	if (!silent) {
+	    pprintf(prn, "\n%s: %s(%d) = %g, ", _("Test statistic"), 
+		    (robust)? _("Robust chi^2"): "chi^2",
+		    rset->g, rset->test);
+	}
     } else {
 	rset->code = GRETL_STAT_F;
 	rset->test /= rset->g;
 	rset->pval = snedecor_cdf_comp(rset->g, pmod->dfd, rset->test);
-	pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		(robust)? _("Robust F"): "F",
-		rset->g, pmod->dfd, rset->test);
+	if (!silent) {
+	    pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		    (robust)? _("Robust F"): "F",
+		    rset->g, pmod->dfd, rset->test);
+	}
     }
 
-    if (!na(rset->pval)) {
+    if (!na(rset->pval) && !silent) {
 	pprintf(prn, _("with p-value = %g\n"), rset->pval);
     }
-    pputc(prn, '\n');
+
+    if (!silent) {
+	pputc(prn, '\n');
+    }
 
     if (!(rset->opt & OPT_C)) {
 	record_test_result(rset->test, rset->pval, _("restriction"));
     }
 
-    if (pmod != NULL && Z != NULL && !(rset->opt & OPT_Q) 
+    if (pmod != NULL && Z != NULL && !(quiet || silent)
 	&& pmod->ci == OLS) {
 	do_restricted_estimates(rset, Z, pdinfo, prn);
     }
@@ -2321,6 +2330,7 @@ gretl_restriction_finalize (gretl_restriction *rset,
 			    PRN *prn)
 {
     int t = rset->otype;
+    int silent = (rset->opt | opt) & OPT_S;
     int err = 0;
 
 #if RDEBUG
@@ -2347,7 +2357,7 @@ gretl_restriction_finalize (gretl_restriction *rset,
 	}
     }
 
-    if (rset->rows != NULL) {
+    if ((rset->rows != NULL) && !silent) {
 	print_restriction_set(rset, pdinfo, prn);
     }
 
