@@ -7557,6 +7557,10 @@
 	  <effect>don't print restricted estimates</effect>
 	</option>
 	<option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+	</option>
+	<option>
 	  <flag>--bootstrap</flag>
 	  <effect>bootstrap the test if possible</effect>
 	</option>
