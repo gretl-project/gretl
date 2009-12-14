@@ -1243,19 +1243,21 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
 	int nunits = count_panel_units(mask, pdinfo);
 	int ok = 0, npad = 0;
 
+	fprintf(stderr, "count_panel_units: got %d (subinfo->n = %d)\n", nunits, subinfo->n);
+
 	if (nunits > 1 && subinfo->n > nunits) {
-	    if (opt & OPT_M) {
-		/* "no-missing" option: don't do padding! */
-		ok = mask_leaves_balanced_panel(mask, pdinfo);
-	    } else {
-		/* add padding rows if need be */
+	    if (opt & OPT_B) {
+		/* only add padding rows if this was requested */
 		npad = make_panel_submask(mask, pdinfo, &err);
+		fprintf(stderr, "npad = %d\n", npad);
 		if (err) {
 		    free(subinfo);
 		    return err;
 		}
 		ok = 1;
-	    }
+	    } else {		
+		ok = mask_leaves_balanced_panel(mask, pdinfo);
+	    } 
 	    if (ok) {
 		subinfo->structure = STACKED_TIME_SERIES;
 		subinfo->n += npad;
@@ -1447,6 +1449,10 @@ static int make_restriction_string (DATAINFO *pdinfo, char *old,
  * existing sample restriction, otherwise the resulting restriction
  * will be the logical product of the new restriction and any
  * existing restriction.
+ *
+ * In case the original dataset was a panel and OPT_B was given,
+ * we'll pad with missing values if necessary, to try to reconstitute 
+ * a balanced panel.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */

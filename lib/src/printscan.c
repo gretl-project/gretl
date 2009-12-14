@@ -1249,7 +1249,7 @@ int do_sscanf (const char *line, double ***pZ,
     free(format);
     free(args);
 
-    if (!err && gretl_messages_on()) {
+    if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 	pprintf(prn, "Number of items successfully scanned = %d\n", 
 		nscan);
     }

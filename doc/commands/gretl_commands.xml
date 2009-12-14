@@ -8871,6 +8871,32 @@
 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
+      <options>
+        <option>
+	  <flag>--dummy</flag>
+	  <effect>argument is a dummy variable</effect>
+        </option>
+        <option>
+	  <flag>--restrict</flag>
+	  <effect>apply boolean restriction</effect>
+        </option>
+        <option>
+	  <flag>--replace</flag>
+	  <effect>replace any existing boolean restriction</effect>
+        </option>
+        <option>
+	  <flag>--no-missing</flag>
+	  <effect>restrict to valid observations</effect>
+        </option>
+        <option>
+	  <flag>--random</flag>
+	  <effect>form random sub-sample</effect>
+        </option>
+        <option>
+	  <flag>--balanced</flag>
+	  <effect>panel data: try to retain balanced panel</effect>
+        </option>
+      </options>	
       <examples>
         <example>smpl 3 10</example>
 	<example>smpl 1960:2 1982:4</example>
@@ -8883,75 +8909,85 @@
 
     <description>
       <para>
-	Resets the sample range.  The new range can be defined in
-	several ways.  In the first alternate form (and the first two
-	examples) above, <repl>startobs</repl> and <repl>endobs</repl>
-	must be consistent with the periodicity of the data.  Either
-	one may be replaced by a semicolon to leave the value
-	unchanged.  In the second form, the integers <repl>i</repl>
-	and <repl>j</repl> (which may be positive or negative, and
-	should be signed) are taken as offsets relative to the
-	existing sample range. In the third form <repl>dummyvar</repl>
-	must be an indicator variable with values 0 or 1 at each
-	observation; the sample will be restricted to observations
-	where the value is 1. The fourth form, using
-	<lit>--restrict</lit>, restricts the sample to observations
-	that satisfy the given Boolean condition (which is specified
-	according to the syntax of the <cmdref targ="genr"/>
-	command).</para>
-
-      <para>With the <lit>--no-missing</lit> form, if
-	<repl>varlist</repl> is specified observations are selected on
-	condition that all variables in <repl>varlist</repl> have
-	valid values at that observation; otherwise, if no
-	<repl>varlist</repl> is given, observations are selected on
-	condition that <emphasis>all</emphasis> variables have valid
-	(non-missing) values.</para>
-
-      <para>With the <lit>--random</lit> flag, the specified number of
-	cases are selected from the full dataset at random.  If you
-	wish to be able to replicate this selection you should 
-	set the seed for the random number generator first (see the
-	<cmdref targ="set"/> command).</para>
-
-      <para>The final form, <lit>smpl full</lit>, restores the full
-	data range.
+	Resets the sample range.  The new range can be defined in several
+	ways.  In the first alternate form (and the first two examples) above,
+	<repl>startobs</repl> and <repl>endobs</repl> must be consistent with
+	the periodicity of the data.  Either one may be replaced by a
+	semicolon to leave the value unchanged.  In the second form, the
+	integers <repl>i</repl> and <repl>j</repl> (which may be positive or
+	negative, and should be signed) are taken as offsets relative to the
+	existing sample range. In the third form <repl>dummyvar</repl> must be
+	an indicator variable with values 0 or 1 at each observation; the
+	sample will be restricted to observations where the value is 1. The
+	fourth form, using <lit>--restrict</lit>, restricts the sample to
+	observations that satisfy the given Boolean condition (which is
+	specified according to the syntax of the <cmdref targ="genr"/>
+	command).
       </para>
 
-      <para>Note that sample restrictions are, by default, cumulative:
-	the baseline for any <lit>smpl</lit> command is the current
-	sample. If you wish the command to act so as to replace any
-	existing restriction you can add the option flag
-	<lit>--replace</lit> to the end of the command.</para>
+      <para>
+	With the <lit>--no-missing</lit> form, if <repl>varlist</repl> is
+	specified observations are selected on condition that all variables in
+	<repl>varlist</repl> have valid values at that observation; otherwise,
+	if no <repl>varlist</repl> is given, observations are selected on
+	condition that <emphasis>all</emphasis> variables have valid
+	(non-missing) values.
+      </para>
 
-      <para>The internal variable <lit>obs</lit> may be used with the
-	<lit>--restrict</lit> form of <lit>smpl</lit> to exclude
-	particular observations from the sample.  For example</para>
+      <para>
+	With the <lit>--random</lit> flag, the specified number of cases are
+	selected from the full dataset at random.  If you wish to be able to
+	replicate this selection you should set the seed for the random number
+	generator first (see the
+	<cmdref targ="set"/> command).
+      </para>
 
+      <para>
+	The final form, <lit>smpl full</lit>, restores the full data range.
+      </para>
+
+      <para>
+	Note that sample restrictions are, by default, cumulative: the
+	baseline for any <lit>smpl</lit> command is the current sample. If you
+	wish the command to act so as to replace any existing restriction you
+	can add the option flag <lit>--replace</lit> to the end of the
+	command.
+      </para>
+
+      <para>
+	The internal variable <lit>obs</lit> may be used with the
+	<lit>--restrict</lit> form of <lit>smpl</lit> to exclude particular
+	observations from the sample.  For example
+      </para>
       <code>
 	smpl obs!=4 --restrict
       </code> 
-
-      <para>will drop just the fourth observation. If the data points
-	are identified by labels,</para>
-
+      <para>
+	will drop just the fourth observation. If the data points are
+	identified by labels,
+      </para>
       <code>
 	smpl obs!="USA" --restrict
       </code>
-	  
       <para>will drop the observation with label <quote>USA</quote>.
       </para>
 
       <para>
 	One point should be noted about the <lit>--dummy</lit>,
 	<lit>--restrict</lit> and <lit>--no-missing</lit> forms of
-	<lit>smpl</lit>: Any <quote>structural</quote> information in
-	the data file (regarding the time series or panel nature of
-	the data) is lost when this command is issued.  You may
-	reimpose structure with the <cmdref targ="setobs"/> command.
+	<lit>smpl</lit>: <quote>structural</quote> information in the data
+	file (regarding the time series or panel nature of the data) is likely
+	to be lost when this command is issued.  You may reimpose structure
+	with the <cmdref targ="setobs"/> command.  A related option, for use
+	with panel data, is the <lit>--balanced</lit> flag: this requests that
+	a balanced panel is reconstituted after sub-sampling, via the
+	insertion of <quote>missing rows</quote> if need be.  But note that it
+	is not always possible to comply with this request.  
       </para>
 
-      <para>Please see <guideref targ="sampling"/> for further details.</para>
+      <para>
+	Please see <guideref targ="sampling"/> for further details.
+      </para>
 
     </description>
 
