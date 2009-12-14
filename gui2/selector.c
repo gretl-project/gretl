@@ -2335,6 +2335,25 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     }
 }
 
+static int veclist_add_term (int **listp, int *jp, int v)
+{
+    int n = (*listp)[0];
+
+    if (*jp > n) {
+	gretl_list_append_term(listp, v);
+	if (*listp == NULL) {
+	    return E_ALLOC;
+	} else {
+	    *jp += 1;
+	}
+    } else {
+	(*listp)[*jp] = v;
+	*jp += 1;
+    }
+
+    return 0;
+}
+
 /* VECM: parse out the exogenous vars as either restricted
    or unrestricted.  Right now we don't attempt to combine
    this with auto lag selection ("Lags" button), but maybe
@@ -2369,11 +2388,13 @@ static int get_vecm_exog_list (selector *sr, int rows,
 
 	if (!err) {
 	    if (*flag == 'U') {
+		/* unrestricted terms */
 		gretl_list_append_term(&xlist, v);
 		if (xlist == NULL) {
 		    err = E_ALLOC;
 		}
 	    } else if (*flag == 'R') {
+		/* restricted terms */
 		gretl_list_append_term(&zlist, v);
 		if (zlist == NULL) {
 		    err = E_ALLOC;
@@ -2392,26 +2413,22 @@ static int get_vecm_exog_list (selector *sr, int rows,
 	    tmp = gretl_list_to_string(xlist);
 	    add_to_cmdlist(sr, tmp);
 	    g_free(tmp);
-	    for (i=1; i<=xlist[0]; i++) {
-		vecxlist[j++] = xlist[i];
+	    for (i=1; i<=xlist[0] && !err; i++) {
+		v = xlist[i];
+		err = veclist_add_term(&vecxlist, &j, v);
 	    }
 	    free(xlist);
 	} 
-	if (zlist != NULL) {
-	    int n = vecxlist[0];
 
-	    gretl_list_resize(&vecxlist, n + 1);
-	    if (vecxlist == NULL) {
-		err = E_ALLOC;
-	    } else {
-		add_to_cmdlist(sr, " ;");
-		vecxlist[j++] = LISTSEP;
-		tmp = gretl_list_to_string(zlist);
-		add_to_cmdlist(sr, tmp);
-		g_free(tmp);
-		for (i=1; i<=zlist[0]; i++) {
-		    vecxlist[j++] = zlist[i];
-		}
+	if (zlist != NULL && !err) {
+	    add_to_cmdlist(sr, " ;");
+	    tmp = gretl_list_to_string(zlist);
+	    add_to_cmdlist(sr, tmp);
+	    g_free(tmp);
+	    err = veclist_add_term(&vecxlist, &j, LISTSEP);
+	    for (i=1; i<=zlist[0] && !err; i++) {
+		v = zlist[i];
+		err = veclist_add_term(&vecxlist, &j, v);
 	    }
 	    free(zlist);	    
 	}
