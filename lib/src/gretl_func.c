@@ -926,6 +926,10 @@ static ufunc *add_ufunc (const char *fname)
 {
     ufunc *fun = ufunc_new();
 
+#if FN_DEBUG
+    fprintf(stderr, "add_ufunc: '%s'\n", fname);
+#endif
+
     if (fun != NULL) {
 	strncat(fun->name, fname, FN_NAMELEN - 1);
 	if (add_allocated_ufunc(fun)) {
@@ -2458,7 +2462,9 @@ static int real_load_package (fnpkg *pkg)
 {
     int i, err = 0;
 
+#if PKG_DEBUG
     fprintf(stderr, "real_load_package:\n loading '%s'\n", pkg->fname);
+#endif
 
     if (pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv && !err; i++) {
@@ -2899,6 +2905,10 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
 {
     int i, err = 0;
 
+#if FN_DEBUG
+    fprintf(stderr, "check_func_name: '%s'\n", fname);
+#endif
+
     if (!isalpha((unsigned char) *fname)) {
 	gretl_errmsg_set(_("Function names must start with a letter"));
 	err = 1;
@@ -2912,7 +2922,10 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
 	err = 1;
     } else {
 	for (i=0; i<n_ufuns; i++) {
-	    if (!strcmp(fname, ufuns[i]->name)) {
+	    if (!ufuns[i]->private && !strcmp(fname, ufuns[i]->name)) {
+#if FN_DEBUG
+		fprintf(stderr, "'%s': found an existing function of this name\n", fname);
+#endif
 		if (libset_get_bool(VERBOSE_INCLUDE)) {
 		    pprintf(prn, _("Redefining function '%s'"), fname);
 		    pputc(prn, '\n');
@@ -3199,10 +3212,9 @@ static void arg_tail_strip (char *s)
     }
 }
 
-/* Here we're parsing what follows "function ".  The
-   traditional expectation is <funcname> (<args>),
-   but in a new-style definition we can have
-   <return-type> <funcname> (<args>)
+/* Here we're parsing what follows "function ".  The expectation
+   is that we get <return-type> <funcname> (<args>), but we also
+   support the old-style <funcname> (<args>).
 */
 
 static int parse_fn_definition (char *fname, 
@@ -4403,8 +4415,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
     int copy, i, err = 0;
 
 #if UDEBUG
-    fprintf(stderr, "function_assign_returns: retname = '%s', rtype = %d\n", 
-	    u->retname, rtype);
+    fprintf(stderr, "function_assign_returns: rtype = %d\n", rtype);
 #endif
 
     if (*perr == 0) {
