@@ -415,7 +415,7 @@ range_from_test_stat (int d, double x, double *parms, double *spike,
 	*spike = .25;
 	fprintf(fp, "set xrange [%.3f:%.3f]\n", -x1, x1);
 	fprintf(fp, "set yrange [0:.50]\n");
-	fprintf(fp, "set xlabel '%s'\n", _("Standard errors"));
+	fprintf(fp, "set xlabel \"%s\"\n", _("Standard errors"));
     } else {
 	x1 = dist_xmax(d, parms);
 	if (x > x1) {
@@ -594,8 +594,8 @@ static void htest_graph (int d, double x, double *parms)
     }
 
     title = htest_graph_title(d, x, parms);
-    fprintf(fp, " title '%s' w lines , \\\n", title);
-    fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
+    fprintf(fp, " title \"%s\" w lines , \\\n", title);
+    fprintf(fp, "'-' using 1:2 title \"%s\" w impulses\n",
 	    _("test statistic"));
     fprintf(fp, "%g %g\n", x, spike);
     fputs("e\n", fp);
@@ -683,9 +683,9 @@ static void dist_graph (int d, double *parms)
     make_plot_line(pline, d, alt, ids);
 
     if (d == BINOMIAL_DIST || d == POISSON_DIST) {
-	fprintf(fp, "%s title '%s' w linespoints\n", pline, title);
+	fprintf(fp, "%s title \"%s\" w linespoints\n", pline, title);
     } else {
-	fprintf(fp, "%s title '%s' w lines\n", pline, title);
+	fprintf(fp, "%s title \"%s\" w lines\n", pline, title);
     }
 
     g_free(title);
@@ -3273,12 +3273,12 @@ static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
     fputs("plot \\\n", fp);
 
     if (opt == 0) {
-	fprintf(fp, "normcdf(x) title '%s' w lines\n", _(titles[opt]));
+	fprintf(fp, "normcdf(x) title \"%s\" w lines\n", _(titles[opt]));
     } else if (opt == 1) {
-	fprintf(fp, "logcdf(x) title '%s' w lines\n", _(titles[opt]));
+	fprintf(fp, "logcdf(x) title \"%s\" w lines\n", _(titles[opt]));
     } else {
-	fprintf(fp, "normcdf(x) title '%s' w lines , \\\n", _(titles[0]));
-	fprintf(fp, "logcdf(x) title '%s' w lines\n", _(titles[1]));
+	fprintf(fp, "normcdf(x) title \"%s\" w lines , \\\n", _(titles[0]));
+	fprintf(fp, "logcdf(x) title \"%s\" w lines\n", _(titles[1]));
     }
 
     gretl_pop_c_numeric_locale();
