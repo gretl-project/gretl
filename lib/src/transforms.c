@@ -487,8 +487,8 @@ enum transform_results {
 
 #define TR_OVERWRITE 1
 
-static int transform_handle_duplicate (int v, const double *x,
-				       const char *label,
+static int transform_handle_duplicate (int ci, int lag, int v, 
+				       const double *x, const char *label,
 				       DATAINFO *pdinfo, double **Z,
 				       int origv)
 {
@@ -509,7 +509,7 @@ static int transform_handle_duplicate (int v, const double *x,
 
     if (ok) {
 #if TRDEBUG
-	fprintf(stderr, "check_add_transform: updating var %d (%s)\n",
+	fprintf(stderr, "transform_handle_duplicate: updating var %d (%s)\n",
 		v, pdinfo->varname[v]);
 #endif
 	for (t=0; t<pdinfo->n; t++) {
@@ -518,6 +518,8 @@ static int transform_handle_duplicate (int v, const double *x,
 	if (*label != '\0') {
 	    strcpy(VARLABEL(pdinfo, v), label);
 	}
+	pdinfo->varinfo[v]->transform = ci;
+	pdinfo->varinfo[v]->lag = lag;
 	pdinfo->varinfo[v]->flags = 0;
 	ret = VAR_EXISTS_OK;
     }	
@@ -526,7 +528,7 @@ static int transform_handle_duplicate (int v, const double *x,
 }
 
 static int 
-check_add_transform (int vnum, const double *x,
+check_add_transform (int ci, int lag, int vnum, const double *x,
 		     const char *vname, const char *label,
 		     DATAINFO *pdinfo, double ***pZ,
 		     int origv)
@@ -548,7 +550,8 @@ check_add_transform (int vnum, const double *x,
 
 	if (chk == VARS_IDENTICAL) {
 	    ret = VAR_EXISTS_OK;
-	} else if (chk == X_HAS_MISSING) { /* is this right? */
+	} else if (chk == X_HAS_MISSING) { 
+	    /* is this right? */
 	    ret = VAR_EXISTS_OK;
 	} else if (chk == Y_HAS_MISSING) {
 	    for (t=0; t<pdinfo->n; t++) {
@@ -556,7 +559,7 @@ check_add_transform (int vnum, const double *x,
 	    }
 	    ret = VAR_EXISTS_OK;
 	} else {
-	    ret = transform_handle_duplicate(vnum, x, label, pdinfo,
+	    ret = transform_handle_duplicate(ci, lag, vnum, x, label, pdinfo,
 					     *pZ, origv);
 	}
     } else {
@@ -609,7 +612,8 @@ static int get_transform (int ci, int v, int aux, double x,
 {
     char vname[VNAMELEN] = {0};
     char label[MAXLABEL] = {0};
-    int len, vno = -1, err = 0;
+    int vno = -1, err = 0;
+    int len, lag = 0;
     const char *srcname;
     double *vx;
 
@@ -619,8 +623,8 @@ static int get_transform (int ci, int v, int aux, double x,
     }
 
     if (ci == LAGS) {
-	/* "aux" = lag */
-	err = get_lag(v, aux, vx, (const double **) *pZ, pdinfo);
+	lag = aux;
+	err = get_lag(v, lag, vx, (const double **) *pZ, pdinfo);
     } else if (ci == LOGS) {
 	err = get_log(v, vx, (const double **) *pZ, pdinfo);
     } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
@@ -643,7 +647,7 @@ static int get_transform (int ci, int v, int aux, double x,
 
     if (ci == LAGS && (vno = get_lag_ID(v, aux, pdinfo)) > 0) {
 	/* special case: pre-existing lag */
-	err = check_add_transform(vno, vx, vname, label, pdinfo, pZ, origv);
+	err = check_add_transform(ci, lag, vno, vx, vname, label, pdinfo, pZ, origv);
 	if (err != VAR_EXISTS_OK) {
 	    vno = -1;
 	}
@@ -675,7 +679,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	}
 	vno = series_index(pdinfo, vname);
 
-	err = check_add_transform(vno, vx, vname, label, pdinfo, pZ, origv);
+	err = check_add_transform(ci, lag, vno, vx, vname, label, pdinfo, pZ, origv);
 	if (err != VAR_EXISTS_OK && err != VAR_ADDED_OK) {
 	    vno = -1;
 	}
@@ -693,9 +697,12 @@ static int get_transform (int ci, int v, int aux, double x,
 	} else if (ci == LAGS || ci == DIFF) {
 	    strcpy(pdinfo->varinfo[vno]->parent, pdinfo->varname[v]);
 	    pdinfo->varinfo[vno]->transform = ci;
-	    if (ci == LAGS) {
-		pdinfo->varinfo[vno]->lag = aux;
-	    }
+	}
+
+	if (ci == LAGS) {
+	    pdinfo->varinfo[vno]->lag = aux;
+	} else {
+	    pdinfo->varinfo[vno]->lag = 0;
 	}
     }
 
