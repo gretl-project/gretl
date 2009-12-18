@@ -2785,8 +2785,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		    int moderr = check_gretl_errno();
 
 		    if (moderr) {
-			if (loop_is_progressive(loop) || 
-			    model_print_deferred(cmd->opt)) {
+			if (loop_is_progressive(loop) || model_print_deferred(cmd->opt)) {
 			    err = moderr;
 			} else {
 			    errmsg(moderr, prn);
@@ -2803,6 +2802,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			if (!(cmd->opt & OPT_Q)) {
 			    printmodel(s->models[0], pdinfo, cmd->opt, prn);
 			}
+			attach_subsample_to_model(s->models[0], pdinfo);
 			set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 		    }
 		}
