@@ -1363,7 +1363,14 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
     start = end = iter;
 
     if (!gtk_text_iter_forward_chars(&end, n)) {
-	return 0;
+	/* already at end of buffer */
+	if (from_cursor && !wrapped) {
+	    from_cursor = FALSE;
+	    wrapped = 1;
+	    goto text_search_wrap;
+	} else {
+	    return 0;
+	}
     }
 
     while (!found) {

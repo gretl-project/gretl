@@ -603,7 +603,7 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     case B_DIV: 
 	return x / y;
     case B_MOD: 
-	return (int) x % (int) y;
+	return fmod(x, y);
     case B_AND: 
 	return x != 0 && y != 0;
     case B_OR: 

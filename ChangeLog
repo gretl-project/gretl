@@ -8,6 +8,12 @@ version 1.8.7, in progress
 - Fix bug: saving a model when there is already a saved
   model of the same name (in the GUI) caused a crash
 - Fix bugs: miscellaneous small GUI bugs
+- Fix bug: setting of sub-sample information of models
+  estimated with a loop construct
+- Fix bug: floating-point exception when modulus operator is 
+  given non-integral arguments
+- Fix bug: text search not wrapping properly if the cursor
+  is at the end of a text buffer
 
 11/25/2008 version 1.8.6
 - Fix bug: the "print" command for series fails after 
