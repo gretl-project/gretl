@@ -4805,7 +4805,6 @@ static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol,
 
     gretl_matrix *s = NULL;
     int dim, i;
-    double x;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
@@ -4824,8 +4823,7 @@ static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol,
 	*err = E_ALLOC;
     } else {
 	for (i=0; i<dim; i++) {
-	    x = (bycol)? col_sum(m, i) : row_sum(m, i);
-	    gretl_vector_set(s, i, x);
+	    s->val[i] = (bycol)? col_sum(m, i) : row_sum(m, i);
 	}
     }
 
@@ -5100,8 +5098,9 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
 				      double p, int *err)
 {
     gretl_matrix *q;
-    double *a = NULL;
-    int i, j;
+    const double *mval;
+    double *a;
+    int j, n;
 
     if (gretl_is_null_matrix(m) || p <= 0 || p >= 1) {
 	*err = E_DATA;
@@ -5114,22 +5113,25 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
 	return NULL;
     }
 
-    a = malloc(m->rows * sizeof *a);
+    n = m->rows;
+
+    a = malloc(n * sizeof *a);
     if (a == NULL) {
 	*err = E_ALLOC;
 	gretl_matrix_free(q);
 	return NULL;
     }
 
+    mval = m->val;
+
     for (j=0; j<m->cols; j++) {
-	for (i=0; i<m->rows; i++) {
-	    a[i] = gretl_matrix_get(m, i, j);
-	}
-	q->val[j] = gretl_array_quantile(a, m->rows, p);
+	memcpy(a, mval, n * sizeof *a);
+	q->val[j] = gretl_array_quantile(a, n, p);
 	if (na(q->val[j])) {
 	    *err = E_DATA;
 	    break;
 	}
+	mval += n;
     }
 
     if (*err) {

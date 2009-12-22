@@ -3769,8 +3769,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    if (f == F_QUANTILE) {
 		ret = aux_matrix_node(p);
 		if (ret != NULL) {
-		    ret->v.m = gretl_matrix_quantiles(l->v.m, rval,
-						      &p->err);
+		    ret->v.m = gretl_matrix_quantiles(l->v.m, rval, &p->err);
 		}
 		return ret;
 	    } else {

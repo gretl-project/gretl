@@ -428,7 +428,7 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
     N = (n + 1) * p - 1;
     nl = floor(N);
     nh = ceil(N);
-
+    
     if (nh == 0 || nh == n) {
 	/* too few usable observations for such an extreme 
 	   quantile */
