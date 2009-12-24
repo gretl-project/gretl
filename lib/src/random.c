@@ -96,7 +96,7 @@ double gretl_one_snormal (void)
 
 #define USE_ZIGGURAT 1
 
-#if USE_ZIGGURAT == 1
+#if USE_ZIGGURAT
 
 /* the following based on gauss.c - gaussian random numbers, using the Ziggurat method
  * Copyright (C) 2005 Jochen Voss (GPL'd).
@@ -257,95 +257,6 @@ static double ran_normal_ziggurat (void)
 
 /* end of Ziggurat code derived from Jochen Voss */
 
-#elif USE_ZIGGURAT == 2 
-
-/* Doornik's code follows for comparison -- but note that this is free
-   only for non-commercial use.
-*/
-
-#define ZIGNOR_C 128               /* number of blocks */
-#define ZIGNOR_R 3.442619855899    /* start of the right tail */
-
-/* (R * phi(R) + Pr(X>=R)) * sqrt(2\pi) */
-#define ZIGNOR_V 9.91256303526217e-3
-
-/* zig_x holds coordinates, such that each rectangle has
-   same area; zig_r holds zig_x[i + 1] / zig_x[i] 
-*/
-
-static double zig_x[ZIGNOR_C + 1], zig_r[ZIGNOR_C];
-
-static void zig_nor_init (int c, double r, double v)
-{
-    double f = exp(-0.5 * r * r);
-    int i;
-
-    zig_x[0] = v / f; /* zig_x[0] is bottom block: V / f(R) */
-    zig_x[1] = r;
-    zig_x[c] = 0;
-
-    for (i = 2; i < c; ++i) {
-        zig_x[i] = sqrt(-2 * log(v / zig_x[i - 1] + f));
-        f = exp(-0.5 * zig_x[i] * zig_x[i]);
-    }
-
-    for (i = 0; i < c; ++i) {
-        zig_r[i] = zig_x[i + 1] / zig_x[i];
-    }
-}
-
-static double ran_normal_tail (double dmin, int neg)
-{
-    double x, y;
-
-    do {
-	x = log(g_rand_double(gretl_rand)) / dmin;
-        y = log(g_rand_double(gretl_rand));
-    } while (-2 * y < x * x);
-
-    return neg ? x - dmin : dmin - x;
-}
-
-static double ran_normal_ziggurat (void)
-{
-    static int initted;
-    double x, u, f0, f1, ret = 0.0;
-    unsigned int i;
-
-    if (!initted) {
-	zig_nor_init(ZIGNOR_C, ZIGNOR_R, ZIGNOR_V);
-	initted = 1;
-    }
-
-    while (1) {
-	u = 2 * g_rand_double(gretl_rand) - 1;
-	i = g_rand_int(gretl_rand) & 0x7F;
-
-	/* first try the rectangular boxes */
-	if (fabs(u) < zig_r[i]) {
-	    ret = u * zig_x[i];
-	    break;
-	}
-
-	/* bottom box: sample from the tail */
-	if (i == 0) {
-	    ret = ran_normal_tail(ZIGNOR_R, u < 0);
-	    break;
-	}
-
-	/* is this a sample from the wedges? */
-	x = u * zig_x[i];
-	f0 = exp(-0.5 * (zig_x[i] * zig_x[i] - x * x));
-	f1 = exp(-0.5 * (zig_x[i+1] * zig_x[i+1] - x * x));
-	if (f1 + g_rand_double(gretl_rand) * (f0 - f1) < 1.0) {
-	    ret = x;
-	    break;
-	}
-    }
-
-    return ret;
-}
-
 #else /* Box-Muller, as of old */
 
 static void gretl_two_snormals (double *z1, double *z2) 
@@ -366,6 +277,78 @@ static void gretl_two_snormals (double *z1, double *z2)
 }
 
 #endif
+
+/**
+ * gretl_rand_normal:
+ * @a: target array
+ * @t1: start of the fill range
+ * @t2: end of the fill range
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the standard normal distribution, using the Mersenne Twister
+ * for uniform input and the Box-Muller method for converting to the
+ * normal distribution.
+ */
+
+void gretl_rand_normal (double *a, int t1, int t2) 
+{
+    int t;
+
+#if USE_ZIGGURAT
+    for (t=t1; t<=t2; t++) {
+	a[t] = ran_normal_ziggurat();
+    }
+#else
+    double z1, z2;
+
+    for (t=t1; t<=t2; t++) {
+	gretl_two_snormals(&z1, &z2);
+	a[t] = z1;
+	if (t < t2) {
+	    a[++t] = z2;
+	}
+    }
+#endif
+}
+
+/**
+ * gretl_rand_normal_full:
+ * @a: target array
+ * @t1: start of the fill range
+ * @t2: end of the fill range
+ * @mean: mean of the distribution
+ * @sd: standard deviation
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the normal distribution with the given mean and standard
+ * deviation, using the Mersenne Twister for uniform input and the 
+ * Box-Muller method for converting to the normal distribution.
+ *
+ * Returns: 0 on success, 1 on invalid input.
+ */
+
+int gretl_rand_normal_full (double *a, int t1, int t2,
+			    double mean, double sd) 
+{
+    int t;
+
+    if (na(mean) && na(sd)) {
+	mean = 0.0;
+	sd = 1.0;
+    } else if (na(mean) || na(sd) || sd <= 0.0) {
+	return E_INVARG;
+    }
+
+    gretl_rand_normal(a, t1, t2);
+
+    if (mean != 0.0 || sd != 1.0) {
+	for (t=t1; t<=t2; t++) {
+	    a[t] = mean + a[t] * sd;
+	}
+    }
+    
+    return 0;
+}
 
 /**
  * gretl_rand_uniform_minmax:
@@ -450,78 +433,6 @@ void gretl_rand_uniform (double *a, int t1, int t2)
     for (t=t1; t<=t2; t++) {
 	a[t] = gretl_one_uniform();
     }
-}
-
-/**
- * gretl_rand_normal:
- * @a: target array
- * @t1: start of the fill range
- * @t2: end of the fill range
- *
- * Fill the selected range of array @a with pseudo-random drawings
- * from the standard normal distribution, using the Mersenne Twister
- * for uniform input and the Box-Muller method for converting to the
- * normal distribution.
- */
-
-void gretl_rand_normal (double *a, int t1, int t2) 
-{
-    int t;
-
-#if USE_ZIGGURAT
-    for (t=t1; t<=t2; t++) {
-	a[t] = ran_normal_ziggurat();
-    }
-#else
-    double z1, z2;
-
-    for (t=t1; t<=t2; t++) {
-	gretl_two_snormals(&z1, &z2);
-	a[t] = z1;
-	if (t < t2) {
-	    a[++t] = z2;
-	}
-    }
-#endif
-}
-
-/**
- * gretl_rand_normal_full:
- * @a: target array
- * @t1: start of the fill range
- * @t2: end of the fill range
- * @mean: mean of the distribution
- * @sd: standard deviation
- *
- * Fill the selected range of array @a with pseudo-random drawings
- * from the normal distribution with the given mean and standard
- * deviation, using the Mersenne Twister for uniform input and the 
- * Box-Muller method for converting to the normal distribution.
- *
- * Returns: 0 on success, 1 on invalid input.
- */
-
-int gretl_rand_normal_full (double *a, int t1, int t2,
-			    double mean, double sd) 
-{
-    int t;
-
-    if (na(mean) && na(sd)) {
-	mean = 0.0;
-	sd = 1.0;
-    } else if (na(mean) || na(sd) || sd <= 0.0) {
-	return E_INVARG;
-    }
-
-    gretl_rand_normal(a, t1, t2);
-
-    if (mean != 0.0 || sd != 1.0) {
-	for (t=t1; t<=t2; t++) {
-	    a[t] = mean + a[t] * sd;
-	}
-    }
-    
-    return 0;
 }
 
 /**
