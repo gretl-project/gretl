@@ -110,7 +110,8 @@ rm_adjust_sample (int v, const double **Z, int *t1, int *t2)
     return 0;
 }
 
-int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
+int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
 {
     double **rmZ;
     DATAINFO *rminfo;
@@ -118,6 +119,7 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
     int rmlist[4] = { 3, 1, 0, 2 };
     int k, t, m, nsamp, err = 0;
     int start, end, extra;
+    int verbose = !(opt & OPT_Q);
     double mean, range, tpval;
     char startdate[OBSLEN], enddate[OBSLEN];
     double a, b;
@@ -132,7 +134,7 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
     if (nsamp < 16) {
 	pputs(prn, _("Sample is too small for range-mean graph\n"));
 	errmsg(err, prn);
-	return 1;
+	return E_DATA;
     } 	
 
     if (pdinfo->pd > 1 && nsamp >= 3 * pdinfo->pd) {
@@ -149,14 +151,16 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	return E_ALLOC;
     }
 
-    pprintf(prn, _("Range-mean statistics for %s\n"), 
-	    pdinfo->varname[vnum]);
-    pprintf(prn, _("using %d sub-samples of size %d\n\n"),
-	    m, k);
-
-    pprintf(prn, "%30s%16s\n", _("range"), _("mean"));
+    if (verbose) {
+	pprintf(prn, _("Range-mean statistics for %s\n"), 
+		pdinfo->varname[vnum]);
+	pprintf(prn, _("using %d sub-samples of size %d\n\n"),
+		m, k);
+	pprintf(prn, "%30s%16s\n", _("range"), _("mean"));
+    }
 
     /* find group means and ranges */
+
     for (t=0; t<m; t++) {
 	char obsstr[32];
 
@@ -172,14 +176,16 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	rmZ[1][t] = range;
 	rmZ[2][t] = mean;
 
-	ntodate(startdate, start, pdinfo);
-	ntodate(enddate, end, pdinfo);
-	sprintf(obsstr, "%s - %s", startdate, enddate);
-	pputs(prn, obsstr);
-	bufspace(20 - strlen(obsstr), prn);
-	gretl_print_fullwidth_double(rmZ[1][t], GRETL_DIGITS, prn);
-	gretl_print_fullwidth_double(rmZ[2][t], GRETL_DIGITS, prn);
-	pputc(prn, '\n');
+	if (verbose) {
+	    ntodate(startdate, start, pdinfo);
+	    ntodate(enddate, end, pdinfo);
+	    sprintf(obsstr, "%s - %s", startdate, enddate);
+	    pputs(prn, obsstr);
+	    bufspace(20 - strlen(obsstr), prn);
+	    gretl_print_fullwidth_double(rmZ[1][t], GRETL_DIGITS, prn);
+	    gretl_print_fullwidth_double(rmZ[2][t], GRETL_DIGITS, prn);
+	    pputc(prn, '\n');
+	}
     }
 
     strcpy(rminfo->varname[1], "range");
@@ -193,14 +199,19 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	pputs(prn, _("Error estimating range-mean model\n"));
 	errmsg(err, prn);
     } else {
-	pputc(prn, '\n');
-	pprintf(prn, _("slope of range against mean = %g\n"),
-		rmmod.coeff[1]);
+	if (verbose) {
+	    pputc(prn, '\n');
+	    pprintf(prn, _("slope of range against mean = %g\n"),
+		    rmmod.coeff[1]);
+	}
 	if (rmmod.sderr[1] > 0) {
 	    double tval = rmmod.coeff[1] / rmmod.sderr[1];
 
 	    tpval = student_pvalue_2(rmmod.dfd, tval);
-	    pprintf(prn, _("p-value for H0: slope = 0 is %g\n"), tpval);
+	    record_test_result(tval, tpval, _("range-mean test"));
+	    if (verbose) {
+		pprintf(prn, _("p-value for H0: slope = 0 is %g\n"), tpval);
+	    }
 	} else {
 	    tpval = 1.0;
 	}
@@ -211,7 +222,7 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	} 
     }
 
-    if (!gretl_in_batch_mode() && !gretl_looping()) {
+    if (verbose && !gretl_in_batch_mode() && !gretl_looping()) {
 	err = do_range_mean_plot(m, (const double **) rmZ, a, b, 
 				 pdinfo->varname[vnum]);
     }

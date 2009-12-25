@@ -4329,12 +4329,12 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 
 void do_range_mean (void)
 {
-    gint err;
     int v = mdata_active_var();
     void *handle;
-    int (*range_mean_graph) (int, const double **, 
-			     const DATAINFO *, PRN *);
+    int (*range_mean_graph) (int, const double **, const DATAINFO *, 
+			     gretlopt opt, PRN *);
     PRN *prn;
+    int err = 0;
 
     range_mean_graph = gui_get_plugin_function("range_mean_graph", 
 					       &handle);
@@ -4348,12 +4348,16 @@ void do_range_mean (void)
     }
 
     err = range_mean_graph(v, (const double **) Z, 
-			   datainfo, prn);
+			   datainfo, OPT_NONE, prn);
 
     close_plugin(handle);
 
     if (!err) {
+	gchar *cline = g_strdup_printf("rmplot %s", datainfo->varname[v]);
+
 	make_and_display_graph();
+	record_command_line(cline);
+	g_free(cline);
     }
 
     view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), 

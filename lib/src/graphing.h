@@ -187,7 +187,7 @@ int plot_freq (FreqDist *freq, DistCode dist);
 int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo); 
 
 int rmplot (const int *list, const double **Z, DATAINFO *pdinfo, 
-	    PRN *prn);
+	    gretlopt opt, PRN *prn);
 
 int hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, 
 	       PRN *prn);

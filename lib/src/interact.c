@@ -4400,7 +4400,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 1;
 	} else {
 	    if (cmd->ci == RMPLOT) {
-		err = rmplot(cmd->list, Z, pdinfo, prn);
+		err = rmplot(cmd->list, Z, pdinfo, cmd->opt, prn);
 	    } else {
 		err = hurstplot(cmd->list, Z, pdinfo, prn);
 	    }

@@ -312,6 +312,7 @@ struct gretl_option gretl_opts[] = {
     { RESTRICT, OPT_L, "lbfgs", 0 },
     { RESTRICT, OPT_N, "no-scaling", 0 },
     { RESTRICT, OPT_S, "silent", 0 },
+    { RMPLOT,   OPT_Q, "quiet", 0 },
     { RUNS,     OPT_D, "difference", 0 },
     { RUNS,     OPT_E, "equal", 0 },
     { SCATTERS, OPT_L, "with-lines", 0 },

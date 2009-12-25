@@ -71,7 +71,10 @@ void gretl_rand_set_seed (unsigned int seed)
     g_rand_set_seed(gretl_rand, useed);
 }
 
-#define gretl_one_uniform() (g_rand_double_range(gretl_rand, 0, 1))
+static double gretl_rand_01 (void)
+{
+    return g_rand_double(gretl_rand);
+}
 
 /**
  * gretl_one_snormal:
@@ -84,8 +87,8 @@ double gretl_one_snormal (void)
     double x, y, z;
 
  tryagain:
-    x = gretl_one_uniform();
-    y = gretl_one_uniform();
+    x = gretl_rand_01();
+    y = gretl_rand_01();
     z = sqrt(-2. * log(x));
     if (isnan(z) || isinf(z)) {
 	goto tryagain;
@@ -100,8 +103,8 @@ double gretl_one_snormal (void)
 
 /* the following based on gauss.c - gaussian random numbers, using the Ziggurat method
  * Copyright (C) 2005 Jochen Voss (GPL'd).
- *
- * For details see the following article.
+ * 
+ * See http://seehuhn.de/pages/ziggurat, and also
  *
  *     George Marsaglia, Wai Wan Tsang
  *     The Ziggurat Method for Generating Random Variables
@@ -239,12 +242,12 @@ static double ran_normal_ziggurat (void)
 	}
 
 	if (i < 127) {
-	    double  y0 = ytab[i], y1 = ytab[i+1];
+	    double y0 = ytab[i], y1 = ytab[i+1];
 
-	    y = y1 + (y0 - y1) * g_rand_double(gretl_rand);
+	    y = y1 + (y0 - y1) * gretl_rand_01();
 	} else {
-	    x = PARAM_R - log(1.0 - g_rand_double(gretl_rand)) / PARAM_R;
-	    y = exp(-PARAM_R * (x - 0.5 * PARAM_R)) * g_rand_double(gretl_rand);
+	    x = PARAM_R - log(1.0 - gretl_rand_01()) / PARAM_R;
+	    y = exp(-PARAM_R * (x - 0.5 * PARAM_R)) * gretl_rand_01();
 	}
 
 	if (y < exp(-0.5 * x * x)) {
@@ -264,8 +267,8 @@ static void gretl_two_snormals (double *z1, double *z2)
     double x, y, z;
 
  tryagain:
-    x = 2 * gretl_one_uniform() - 1;
-    y = 2 * gretl_one_uniform() - 1;
+    x = 2 * gretl_rand_01() - 1;
+    y = 2 * gretl_rand_01() - 1;
     z = x*x + y*y;
     if (z >= 1) {
 	goto tryagain;
@@ -431,7 +434,7 @@ void gretl_rand_uniform (double *a, int t1, int t2)
     int t;
 
     for (t=t1; t<=t2; t++) {
-	a[t] = gretl_one_uniform();
+	a[t] = gretl_rand_01();
     }
 }
 
@@ -492,8 +495,8 @@ int gretl_rand_gamma (double *a, int t1, int t2,
 	    double ex2;
 
 	    while (1) {
-		u = gretl_one_uniform();
-		v = gretl_one_uniform();
+		u = gretl_rand_01();
+		v = gretl_rand_01();
 		x = -2 * log(1 - pow(u, dinv));
 		ex2 = exp(-x/2);
 		u0 = pow(x, d1) * ex2;
@@ -505,15 +508,15 @@ int gretl_rand_gamma (double *a, int t1, int t2,
 	    }
 	} else {
 	    for (i=0; i<k; i++) {
-		U[i] = gretl_one_uniform();
+		U[i] = gretl_rand_01();
 		while (U[i] == 0.0) {
-		    U[i] = gretl_one_uniform();
+		    U[i] = gretl_rand_01();
 		}
 	    }
 	    if (delta > 0) {
 		while (1) {
-		    u = gretl_one_uniform();
-		    v = gretl_one_uniform();
+		    u = gretl_rand_01();
+		    v = gretl_rand_01();
 		    if (u <= u0) {
 			x = pow(u, dinv);
 			y = v * pow(x, d1);
@@ -710,10 +713,10 @@ static double genpois (const double m)
     } else {
 	int y = 0;
 
-	x = exp(m) * gretl_one_uniform();
+	x = exp(m) * gretl_rand_01();
 	while (x > 1) {
 	    y++;
-	    x *= gretl_one_uniform();
+	    x *= gretl_rand_01();
 	}
 	x = (double) y;
     }
@@ -774,9 +777,9 @@ int gretl_rand_weibull (double *a, int t1, int t2, double shape,
 	int t;
 
 	for (t=t1; t<=t2; t++) {
-	    u = gretl_one_uniform();
+	    u = gretl_rand_01();
 	    while (u == 0.0) {
-		u = gretl_one_uniform();
+		u = gretl_rand_01();
 	    }
 	    a[t] = scale * pow(-log(u), kinv);
 	}

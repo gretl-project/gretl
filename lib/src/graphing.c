@@ -4061,9 +4061,11 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
     return gnuplot_make_graph();
 }
 
-int rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
+int rmplot (const int *list, const double **Z, DATAINFO *pdinfo, 
+	    gretlopt opt, PRN *prn)
 {
-    int (*range_mean_graph) (int, const double **, const DATAINFO *, PRN *);
+    int (*range_mean_graph) (int, const double **, const DATAINFO *, 
+			     gretlopt, PRN *);
     void *handle = NULL;
     int err;
 
@@ -4072,7 +4074,7 @@ int rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
         return 1;
     }
 
-    err = range_mean_graph(list[1], Z, pdinfo, prn);
+    err = range_mean_graph(list[1], Z, pdinfo, opt, prn);
 
     close_plugin(handle);
 
