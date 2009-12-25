@@ -7820,38 +7820,47 @@
       <arguments>
         <argument>varname</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
       <para>
-	Range&ndash;mean plot: this command creates a simple graph to
-	help in deciding whether a time series,
-	<math>y</math>(t), has constant variance or not.  We
-	take the full sample t=1,...,T and divide it into small
-	subsamples of arbitrary size <math>k</math>. The first
-	subsample is formed by
-	<math>y</math>(1),...,<math>y</math>(k), the
-	second is <math>y</math>(k+1), ...,
-	<math>y</math>(2k), and so on.  For each subsample we
-	calculate the sample mean and range (= maximum minus minimum),
-	and we construct a graph with the means on the horizontal axis
-	and the ranges on the vertical. So each subsample is
-	represented by a point in this plane.  If the variance of the
-	series is constant we would expect the subsample range to be
-	independent of the subsample mean; if we see the points
-	approximate an upward-sloping line this suggests the variance
-	of the series is increasing in its mean; and if the points
-	approximate a downward sloping line this suggests the variance
-	is decreasing in the mean.
+	Range&ndash;mean plot: this command creates a simple graph to help in
+	deciding whether a time series, <math>y</math>(t), has constant
+	variance or not.  We take the full sample t=1,...,T and divide it into
+	small subsamples of arbitrary size <math>k</math>. The first subsample
+	is formed by <math>y</math>(1),...,<math>y</math>(k), the second is
+	<math>y</math>(k+1), ..., <math>y</math>(2k), and so on.  For each
+	subsample we calculate the sample mean and range (= maximum minus
+	minimum), and we construct a graph with the means on the horizontal
+	axis and the ranges on the vertical. So each subsample is represented
+	by a point in this plane.  If the variance of the series is constant
+	we would expect the subsample range to be independent of the subsample
+	mean; if we see the points approximate an upward-sloping line this
+	suggests the variance of the series is increasing in its mean; and if
+	the points approximate a downward sloping line this suggests the
+	variance is decreasing in the mean.
       </para>
-
-      <para>Besides the graph, gretl displays the means and ranges for
-	each subsample, along with the slope coefficient for an OLS
-	regression of the range on the mean and the p-value for the
-	null hypothesis that this slope is zero.  If the slope
-	coefficient is significant at the 10 percent significance
-	level then the fitted line from the regression of range on
-	mean is shown on the graph.
+      <para>
+	Besides the graph, gretl displays the means and ranges for each
+	subsample, along with the slope coefficient for an OLS regression of
+	the range on the mean and the p-value for the null hypothesis that
+	this slope is zero.  If the slope coefficient is significant at the 10
+	percent significance level then the fitted line from the regression of
+	range on mean is shown on the graph.  The <math>t</math>-statistic for
+	the null, and the corresponding p-value, are recorded and may be
+	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
+	respectively.
+      </para>
+      <para context="cli">
+	If the <lit>--quiet</lit> option is given, no graph is shown and no
+	output is printed; only the <math>t</math>-statistic and p-value
+	are recorded.
       </para>
     </description>
 
