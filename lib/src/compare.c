@@ -2556,7 +2556,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	} else {
 	    int dfd = (robust)? 0 : chow_mod.dfd;
 	    int dfn = chow_mod.ncoeff - pmod->ncoeff;
-	    double test, pval;
+	    double test, pval = NADBL;
 
 	    if (!(opt & OPT_Q)) {
 		chow_mod.aux = AUX_CHOW;
