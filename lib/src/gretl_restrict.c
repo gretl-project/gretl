@@ -2092,6 +2092,11 @@ static int bootstrap_zero_restriction (gretl_restriction *rset,
     int B = 0;
     int err = 0;
 
+    if (rset->opt & OPT_S) {
+	/* silent */
+	bopt |= OPT_S;
+    }
+
     gretl_restriction_get_boot_params(&B, &bopt);
     err = bootstrap_analysis(pmod, r->bnum[0], B, Z, pdinfo, 
 			     bopt, prn);
@@ -2158,7 +2163,7 @@ static int do_single_equation_test (gretl_restriction *rset,
 		rset->test /= rset->g;
 		err = bootstrap_test_restriction(pmod, rset->R, rset->q,
 						 rset->test, rset->g, Z, 
-						 pdinfo, prn);
+						 pdinfo, rset->opt, prn);
 	    }
 	}
     } else {

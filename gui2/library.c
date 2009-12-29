@@ -1592,7 +1592,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     gretlopt opt = OPT_NONE;
-    int cancelled = 0;
+    int cancel = 0;
     int B = 1000;
     int k = 0;
     PRN *prn;
@@ -1605,10 +1605,10 @@ void do_bootstrap (GtkAction *action, gpointer p)
     }
 
     set_window_busy(vwin);
-    bootstrap_dialog(vwin, &k, &B, &opt, &cancelled);
+    bootstrap_dialog(vwin, &k, &B, &opt, &cancel);
     unset_window_busy(vwin);
 
-    if (cancelled || bufopen(&prn)) {
+    if (cancel || bufopen(&prn)) {
 	return;
     }
 
@@ -1626,7 +1626,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
 	if (opt & OPT_G) {
 	    make_and_display_graph();
 	}
-	if (opt & OPT_S) {
+	if (opt & OPT_A) {
 	    file_selector(SAVE_BOOT_DATA, FSEL_DATA_VWIN, w);
 	}
     }

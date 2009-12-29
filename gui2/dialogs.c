@@ -1058,9 +1058,9 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
     }
 
-    /* save output switch */
+    /* switch for saving output to file */
     button = gretl_option_check_button(_("Save bootstrap data to file"),
-				       popt, OPT_S);
+				       popt, OPT_A);
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
 
     /* pack all of the above */

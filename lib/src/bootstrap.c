@@ -37,7 +37,8 @@ enum {
     BOOT_F_FORM      = 1 << 8,  /* compute F-statistics */
     BOOT_FREE_RQ     = 1 << 9,  /* free restriction matrices */
     BOOT_SAVE        = 1 << 10, /* save results vector */
-    BOOT_VERBOSE     = 1 << 11  /* for debugging */
+    BOOT_VERBOSE     = 1 << 11, /* for debugging */
+    BOOT_SILENT      = 1 << 12  /* suppress printed output */
 };
 
 #define resampling(b) (b->flags & BOOT_RESAMPLE_U)
@@ -67,6 +68,7 @@ struct boot_ {
     double test0;       /* original test statistic */
     double b_p;         /* test value for coeff */
     double a;           /* alpha, for confidence interval */
+    double pval;        /* p-value for test */
     char vname[VNAMELEN]; /* name of variable analysed */
 };
 
@@ -175,9 +177,13 @@ static int make_bs_flags (gretlopt opt)
 	flags |= BOOT_F_FORM;
     }
 
-    if (opt & OPT_S) {
+    if (opt & OPT_A) {
 	flags |= BOOT_SAVE;
     }
+
+    if (opt & OPT_S) {
+	flags |= BOOT_SILENT;
+    }    
 
 #if BDEBUG > 1
     flags |= BOOT_VERBOSE;
@@ -263,6 +269,7 @@ static boot *boot_new (const MODEL *pmod,
     bs->se0 = NADBL;
     bs->test0 = NADBL;
     bs->b_p = NADBL;
+    bs->pval = NADBL;
 
     bs->k = bs->X->cols;
     bs->T = bs->X->rows;
@@ -406,9 +413,7 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
     }
 
     if (bs->flags & BOOT_PVAL) {
-	double pv = (double) tail / bs->B;
-
-	pprintf(prn, "%s = %d / %d = %g", _("p-value"), tail, bs->B, pv);
+	pprintf(prn, "%s = %d / %d = %g", _("p-value"), tail, bs->B, bs->pval);
     } else {
 	double ql, qu;
 	int i, j;
@@ -862,10 +867,16 @@ static int real_bootstrap (boot *bs, PRN *prn)
     }
 
     if (!err) {
+	if (bs->flags & BOOT_PVAL) {
+	    bs->pval = (double) tail / bs->B;
+	    record_test_result(bs->test0, bs->pval, _("bootstrap test"));
+	}
 	if (bs->flags & BOOT_SAVE) {
 	    bs_store_result(bs, xi);
 	}
-	bs_print_result(bs, xi, tail, prn);
+	if (!(bs->flags & BOOT_SILENT)) {
+	    bs_print_result(bs, xi, tail, prn);
+	}
     }
 
  bailout:
@@ -909,7 +920,8 @@ static int bs_add_restriction (boot *bs, int p)
  * @opt: option flags -- may contain %OPT_P to compute p-value
  * (default is to calculate confidence interval), %OPT_N
  * to use simulated normal errors (default is to resample the
- * empirical residuals), %OPT_G to display graph.
+ * empirical residuals), %OPT_G to display graph, %OPT_S for
+ * silent operation.
  * @prn: printing struct.
  *
  * Calculates a bootstrap confidence interval or p-value for
@@ -939,7 +951,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
     bs = boot_new(pmod, Z, B, opt);
     if (bs == NULL) {
 	err = E_ALLOC;
-    }    
+    }  
 
     if (!err && (bs->flags & BOOT_PVAL)) {
 	err = bs_add_restriction(bs, p);
@@ -980,6 +992,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
  * @g: number of restrictions.
  * @Z: data array.
  * @pdinfo: dataset information.
+ * @opt: options passed to the restrict command.
  * @prn: printing struct.
  *
  * Calculates a bootstrap p-value for the restriction on the
@@ -994,10 +1007,10 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R, 
 				gretl_matrix *q, double test, int g,
 				const double **Z, const DATAINFO *pdinfo, 
-				PRN *prn)
+				gretlopt opt, PRN *prn)
 {
+    gretlopt bopt = OPT_P | OPT_R | OPT_F;
     boot *bs = NULL;
-    gretlopt bopt;
     int B = 0;
     int err = 0;
 
@@ -1008,7 +1021,11 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
     gretl_matrix_print(q, "q");
 #endif    
 
-    bopt = (OPT_P | OPT_R | OPT_F);
+    if (opt & OPT_S) {
+	/* silent */
+	bopt |= OPT_S;
+    }    
+
     gretl_restriction_get_boot_params(&B, &bopt);
 
     bs = boot_new(pmod, Z, B, bopt);

@@ -4,8 +4,10 @@ version 1.8.7, in progress
 - GUI menus: clean-up and consolidation
 - "dataset" command: document the "clear" keyword
 - "rmplot" command: save $test and $pvalue
+- "restrict" with --bootstrap option: record $test and
+  $pvalue
 - Fix bug: crash on error in user_matrix_ols()
-- Fix bug: "append" should work in more cases
+- Fix bug: "append" for data should work in more cases
 - Fix bug: saving a model when there is already a saved
   model of the same name (in the GUI) caused a crash
 - Fix bugs: miscellaneous small GUI bugs

@@ -27,7 +27,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R, 
 				gretl_matrix *q, double test, int g,
 				const double **Z, const DATAINFO *pdinfo, 
-				PRN *prn);
+				gretlopt opt, PRN *prn);
 
 int bootstrap_ok (int ci);
 

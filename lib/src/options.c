@@ -254,7 +254,6 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_A, "auto", 1 },
     { OMIT,     OPT_B, "both", 0 },
     { OMIT,     OPT_I, "silent", 0 },
-    { OMIT,     OPT_P, "bootstrap", 0 },
     { OMIT,     OPT_Q, "quiet", 0 },
     { OMIT,     OPT_T, "inst", 0 },
     { OMIT,     OPT_W, "wald", 0 },
