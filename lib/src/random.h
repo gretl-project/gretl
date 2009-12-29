@@ -22,6 +22,10 @@
 
 void gretl_rand_set_seed (unsigned int seed);
 
+void gretl_rand_set_box_muller (int s);
+
+int gretl_rand_get_box_muller (void);
+
 double gretl_one_snormal (void);
 
 void gretl_rand_uniform (double *a, int t1, int t2);

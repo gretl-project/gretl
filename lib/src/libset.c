@@ -1224,6 +1224,30 @@ static void libset_print_double (const char *s, PRN *prn,
     }
 }
 
+static const char *normal_rand_string (void)
+{
+    if (gretl_rand_get_box_muller()) {
+	return "box-muller";
+    } else {
+	return "ziggurat";
+    }
+}
+
+static int set_normal_rand (const char *s)
+{
+    int err = E_PARSE;
+
+    if (!strcmp(s, "box-muller")) {
+	gretl_rand_set_box_muller(1);
+	err = 0;
+    } else if (!strcmp(s, "ziggurat")) {
+	gretl_rand_set_box_muller(0);
+	err = 0;
+    }    
+
+    return err;
+}
+
 static void libset_header (char *s, PRN *prn, gretlopt opt) 
 {
     if (opt & OPT_D) {
@@ -1315,8 +1339,10 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     if (opt & OPT_D) {
 	pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
+	pprintf(prn, " normal_rand = %s\n", normal_rand_string());
     } else {
 	pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
+	pprintf(prn, "set normal_rand %s\n", normal_rand_string());
     }
 
     libset_header(N_("Robust estimation"), prn, opt);
@@ -1537,6 +1563,8 @@ int execute_set_line (const char *line, DATAINFO *pdinfo,
 		}
 		state->seed = k;
 	    }
+	} else if (!strcmp(setobj, "normal_rand")) {
+	    err = set_normal_rand(setarg);
 	} else if (!strcmp(setobj, HORIZON)) {
 	    /* horizon for VAR impulse responses */
 	    if (!strcmp(setarg, "auto")) {

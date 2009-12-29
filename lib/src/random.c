@@ -76,29 +76,32 @@ static double gretl_rand_01 (void)
     return g_rand_double(gretl_rand);
 }
 
-#define USE_ZIGGURAT 1
+/* Below: an implementation of the Marsaglia/Tsang Ziggurat method for
+   generating random normal samples (Journal of Statistical Software,
+   vol. 5, no. 8, 2000).
 
-#if USE_ZIGGURAT
+   The code is based on Jochen Voss's gauss.c, written for use with
+   the Gnu Scientific Library -- see http://seehuhn.de/pages/ziggurat.
+   It was modified for gretl in two main ways: (a) we use the Mersenne
+   Twister uniform RNG from GLib, and (b) we use a 30-bit unsigned
+   random integer for conversion via the Ziggurat where Voss uses
+   a 24-bit value.  This sacrifices a little speed in exchange for
+   better coverage of the real line: we get over 10^9 distinct 
+   normal values as opposed to around 30 million values from the
+   24-bit input.
+
+   See also Jurgen Doornik's discussion of Ziggurat:
+   http://www.doornik.com/research/ziggurat.pdf
+*/
 
 #define ZLEVELS 128
 
-/* the following based on gauss.c - gaussian random numbers, using the Ziggurat method
- * Copyright (C) 2005 Jochen Voss (GPL'd).
- * 
- * See http://seehuhn.de/pages/ziggurat, and also
- *
- *     George Marsaglia, Wai Wan Tsang
- *     The Ziggurat Method for Generating Random Variables
- *     Journal of Statistical Software, vol. 5 (2000), no. 8
- *     http://www.jstatsoft.org/v05/i08/
- */
-
 /* position of right-most step */
-#define PARAM_R 3.44428647676
+#define ZIG_R 3.44428647676
 
 /* tabulated values for the height of the Ziggurat levels */
 
-static const double ytab[ZLEVELS] = {
+static const double z_ytab[ZLEVELS] = {
                1,  0.963598623011,  0.936280813353,  0.913041104253,
   0.892278506696,  0.873239356919,  0.855496407634,  0.838778928349,
   0.822902083699,  0.807732738234,  0.793171045519,  0.779139726505,
@@ -135,47 +138,47 @@ static const double ytab[ZLEVELS] = {
 
 /* quick acceptance check: tabulated values for 2^30 times x[i] / x[i+1], 
    used to accept for U * x[i+1] <= x[i] without any floating point 
-   operations 
+   operations
 */
 
-static const unsigned long ktab[ZLEVELS] = {
-           0,   805801241,   913449795,   959292101,
-   984613382,  1000640624,  1011683932,  1019748961,
-  1025894063,  1030729937,  1034633429,  1037849573,
-  1040544531,  1042834934,  1044805040,  1046517229,
-  1048018667,  1049345670,  1050526658,  1051584182,
-  1052536369,  1053397953,  1054181032,  1054895635,
-  1055550142,  1056151611,  1056706028,  1057218504,
-  1057693425,  1058134583,  1058545264,  1058928337,
-  1059286313,  1059621402,  1059935555,  1060230499,
-  1060507771,  1060768742,  1061014636,  1061246555,
-  1061465485,  1061672318,  1061867859,  1062052837,
-  1062227911,  1062393683,  1062550699,  1062699456,
-  1062840408,  1062973969,  1063100520,  1063220406,
-  1063333944,  1063441425,  1063543115,  1063639256,
-  1063730072,  1063815765,  1063896520,  1063972507,
-  1064043878,  1064110772,  1064173314,  1064231616,
-  1064285778,  1064335887,  1064382020,  1064424241,
-  1064462606,  1064497159,  1064527934,  1064554954,
-  1064578233,  1064597773,  1064613567,  1064625597,
-  1064633833,  1064638235,  1064638750,  1064635313,
-  1064627846,  1064616255,  1064600432,  1064580255,
-  1064555581,  1064526248,  1064492076,  1064452858,
-  1064408364,  1064358335,  1064302479,  1064240469,
-  1064171940,  1064096477,  1064013619,  1063922841,
-  1063823555,  1063715090,  1063596689,  1063467488,
-  1063326500,  1063172593,  1063004460,  1062820593,
-  1062619233,  1062398322,  1062155436,  1061887700,
-  1061591677,  1061263222,  1060897294,  1060487689,
-  1060026690,  1059504563,  1058908848,  1058223320,
-  1057426429,  1056488880,  1055369768,  1054010073,
-  1052321211,  1050163479,  1047302125,  1043307773,
-  1037295293,  1027071672,  1005071925,   990267308
+static const guint32 z_ktab[ZLEVELS] = {
+             0,   805801241,   913449795,   959292101,
+     984613382,  1000640624,  1011683932,  1019748961,
+    1025894063,  1030729937,  1034633429,  1037849573,
+    1040544531,  1042834934,  1044805040,  1046517229,
+    1048018667,  1049345670,  1050526658,  1051584182,
+    1052536369,  1053397953,  1054181032,  1054895635,
+    1055550142,  1056151611,  1056706028,  1057218504,
+    1057693425,  1058134583,  1058545264,  1058928337,
+    1059286313,  1059621402,  1059935555,  1060230499,
+    1060507771,  1060768742,  1061014636,  1061246555,
+    1061465485,  1061672318,  1061867859,  1062052837,
+    1062227911,  1062393683,  1062550699,  1062699456,
+    1062840408,  1062973969,  1063100520,  1063220406,
+    1063333944,  1063441425,  1063543115,  1063639256,
+    1063730072,  1063815765,  1063896520,  1063972507,
+    1064043878,  1064110772,  1064173314,  1064231616,
+    1064285778,  1064335887,  1064382020,  1064424241,
+    1064462606,  1064497159,  1064527934,  1064554954,
+    1064578233,  1064597773,  1064613567,  1064625597,
+    1064633833,  1064638235,  1064638750,  1064635313,
+    1064627846,  1064616255,  1064600432,  1064580255,
+    1064555581,  1064526248,  1064492076,  1064452858,
+    1064408364,  1064358335,  1064302479,  1064240469,
+    1064171940,  1064096477,  1064013619,  1063922841,
+    1063823555,  1063715090,  1063596689,  1063467488,
+    1063326500,  1063172593,  1063004460,  1062820593,
+    1062619233,  1062398322,  1062155436,  1061887700,
+    1061591677,  1061263222,  1060897294,  1060487689,
+    1060026690,  1059504563,  1058908848,  1058223320,
+    1057426429,  1056488880,  1055369768,  1054010073,
+    1052321211,  1050163479,  1047302125,  1043307773,
+    1037295293,  1027071672,  1005071925,   990267308
 };
 
 /* quick value conversion: tabulated values of 2^{-30} * x[i] */
 
-static const double wtab[ZLEVELS] = {
+static const double z_wtab[ZLEVELS] = {
   2.53622366902e-10,  3.37955476897e-10,  3.97259851698e-10,  4.44655509278e-10,
   4.84906285128e-10,  5.20330822255e-10,  5.52248531789e-10,  5.81488551029e-10,
   6.08609212063e-10,  6.34006194944e-10,  6.57971170180e-10,  6.80725976412e-10,
@@ -215,6 +218,11 @@ union wraprand {
     gchar c[4];
 };
 
+/* Split a 32-bit random value from GLib into 4 octets: each octet
+   provides a 7-bit value for indexing into the Ziggurat plus a
+   sign bit.  Load a new guint32 when the material is exhausted.
+*/
+
 static guint32 gretl_rand_128 (guint32 *sign)
 {
     static union wraprand wr;
@@ -240,19 +248,19 @@ static double ran_normal_ziggurat (void)
 	i = gretl_rand_128(&sign);
 	j = j >> 2;
 
-	x = j * wtab[i];
+	x = j * z_wtab[i];
 
-	if (j < ktab[i]) {
+	if (j < z_ktab[i]) {
 	    break;
 	}
 
 	if (i < 127) {
-	    double y0 = ytab[i], y1 = ytab[i+1];
+	    double y0 = z_ytab[i], y1 = z_ytab[i+1];
 
 	    y = y1 + (y0 - y1) * gretl_rand_01();
 	} else {
-	    x = PARAM_R - log(1.0 - gretl_rand_01()) / PARAM_R;
-	    y = exp(-PARAM_R * (x - 0.5 * PARAM_R)) * gretl_rand_01();
+	    x = ZIG_R - log(1.0 - gretl_rand_01()) / ZIG_R;
+	    y = exp(-ZIG_R * (x - 0.5 * ZIG_R)) * gretl_rand_01();
 	}
 
 	if (y < exp(-0.5 * x * x)) {
@@ -263,9 +271,7 @@ static double ran_normal_ziggurat (void)
     return sign ? x : -x;
 }
 
-/* end of Ziggurat code derived from Jochen Voss */
-
-#else /* Box-Muller, as of old */
+/* Box-Muller polar method */
 
 static void gretl_two_snormals (double *z1, double *z2) 
 {
@@ -274,7 +280,7 @@ static void gretl_two_snormals (double *z1, double *z2)
  tryagain:
     x = 2 * gretl_rand_01() - 1;
     y = 2 * gretl_rand_01() - 1;
-    z = x*x + y*y;
+    z = x * x + y * y;
     if (z >= 1) {
 	goto tryagain;
     }
@@ -296,10 +302,20 @@ static double ran_normal_box_muller (void)
 	goto tryagain;
     }
 
-    return (z * cos(M_2PI * y));
+    return z * cos(M_2PI * y);
 }
 
-#endif /* !USE_ZIGURAT */
+static int use_box_muller;
+
+void gretl_rand_set_box_muller (int s)
+{
+    use_box_muller = s;
+}
+
+int gretl_rand_get_box_muller (void)
+{
+    return use_box_muller;
+}
 
 /**
  * gretl_rand_normal:
@@ -316,22 +332,22 @@ static double ran_normal_box_muller (void)
 void gretl_rand_normal (double *a, int t1, int t2) 
 {
     int t;
+    
+    if (use_box_muller) {
+	double z1, z2;
 
-#if USE_ZIGGURAT
-    for (t=t1; t<=t2; t++) {
-	a[t] = ran_normal_ziggurat();
-    }
-#else
-    double z1, z2;
-
-    for (t=t1; t<=t2; t++) {
-	gretl_two_snormals(&z1, &z2);
-	a[t] = z1;
-	if (t < t2) {
-	    a[++t] = z2;
+	for (t=t1; t<=t2; t++) {
+	    gretl_two_snormals(&z1, &z2);
+	    a[t] = z1;
+	    if (t < t2) {
+		a[++t] = z2;
+	    }
+	}
+    } else {	
+	for (t=t1; t<=t2; t++) {
+	    a[t] = ran_normal_ziggurat();
 	}
     }
-#endif
 }
 
 /**
@@ -342,11 +358,11 @@ void gretl_rand_normal (double *a, int t1, int t2)
 
 double gretl_one_snormal (void) 
 {
-#if USE_ZIGGURAT
-    return ran_normal_ziggurat();
-#else
-    return ran_normal_box_muller();
-#endif
+    if (use_box_muller) {
+	return ran_normal_box_muller();
+    } else {
+	return ran_normal_ziggurat();
+    }
 }
 
 /**
