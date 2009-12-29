@@ -63,11 +63,7 @@ void gretl_rand_init (void)
 
 void gretl_rand_set_seed (unsigned int seed)
 {
-    if (seed == 0) {
-	useed = time(NULL);
-    } else {
-	useed = seed;
-    }
+    useed = (seed == 0)? time(NULL) : seed;
     g_rand_set_seed(gretl_rand, useed);
 }
 
@@ -223,7 +219,7 @@ union wraprand {
    sign bit.  Load a new guint32 when the material is exhausted.
 */
 
-static guint32 gretl_rand_128 (guint32 *sign)
+static guint32 gretl_rand_octet (guint32 *sign)
 {
     static union wraprand wr;
     static int i;
@@ -245,7 +241,7 @@ static double ran_normal_ziggurat (void)
 
     while (1) {
 	j = g_rand_int(gretl_rand);
-	i = gretl_rand_128(&sign);
+	i = gretl_rand_octet(&sign);
 	j = j >> 2;
 
 	x = j * z_wtab[i];
