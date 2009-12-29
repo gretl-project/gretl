@@ -17,10 +17,9 @@
  * 
  */
 
-/* random.c for gretl */
+/* random.c for gretl: RNGs based on GLib */
 
 #include "libgretl.h"
-
 #include <time.h>
 #include <glib.h>
 
@@ -267,7 +266,7 @@ static double ran_normal_ziggurat (void)
     return sign ? x : -x;
 }
 
-/* Box-Muller polar method */
+/* alternative: normals via the Box-Muller method */
 
 static void gretl_two_snormals (double *z1, double *z2) 
 {
@@ -472,7 +471,7 @@ int gretl_rand_int_minmax (int *a, int n, int min, int max)
  * @t2: end of the fill range
  *
  * Fill the selected range of array @a with pseudo-random drawings
- * from the uniform distribution on 0-1, using the Mersenne
+ * from the uniform distribution on [0-1), using the Mersenne
  * Twister.
  */
 
@@ -852,7 +851,7 @@ unsigned int gretl_rand_int_max (unsigned int max)
  * gretl_rand_int:
  *
  * Returns: a pseudo-random unsigned int on the interval
- * [0,0xffffffff] using the Mersenne Twister.
+ * [0, 2^32-1] using the Mersenne Twister.
  */
 
 unsigned int gretl_rand_int (void)
