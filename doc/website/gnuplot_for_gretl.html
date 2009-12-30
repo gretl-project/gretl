@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Data for gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
+</head>
+
+<body>
+<p>[<a href="./index.html">gretl main page</a>]</p>
+
+<center>
+<h1>Gnuplot for gretl</h1>
+</center>
+
+<p>
+Hopefully these instructions will become redundant before long, but right
+now (December 2009) if you're running gretl on Linux the version of
+gnuplot available via your Linux distribution is probably not sufficiently
+up to date to work optimally with gretl.  For best results, gnuplot
+should be version 4.3 or higher, with a build date of at least mid-2009.
+</p>
+
+<p>
+To get a good build of gnuplot for use with gretl you have two options:
+build CVS gnuplot yourself, or use a special packaged binary.
+</p>
+
+<h2>Build from source</h2>
+
+<code>
+ export CVSROOT=:pserver:anonymous@gnuplot.cvs.sourceforge.net:/cvsroot/gnuplot
+ cvs login
+ cvs -z3 checkout gnuplot
+</code>
+
+<p>Just hit Enter when asked for a password.  Then</p>
+
+<code>
+ sh ./prepare
+ ./configure --prefix=/opt/gnuplot
+ make
+ sudo make install
+</code>
+
+<p>The choice of installing to <kbd>/opt/gnuplot</kbd> is designed to
+avoid collisions with gnuplot as installed by your Linux distro.</p>
+
+<h2>Packaged binary</h2>
+
+<code>
+ cd /tmp
+ wget http:/ricardo.ecn.wfu.edu/pub/gretl/gnuplot-4.5-i586.tar.gz
+ sudo cd / && tar xvfz /tmp/gnuplot-4.5-i586.tar.gz
+ rm /tmp/gnuplot-4.5-i586.tar.gz
+</code>
+
+<p>Note that this package installs into <kbd>/opt/gnuplot</kbd>.</p>
+
+<p>
+In gretl, go to Tools/Preferences/General/Programs and change the
+"gnuplot" entry to read
+</p>
+
+<code>
+ /opt/gnuplot/bin/gnuplot
+</code>
+
+<p>Then re-start gretl.</p>
+
+
+
+
+
