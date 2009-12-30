@@ -996,7 +996,7 @@ print_beta_and_alpha (const GRETL_VAR *jvar, gretl_matrix *evals, int h,
 {
     int i, err = 0;
 
-    pprintf(prn, "\n%s", _("eigenvalue"));
+    pputs(prn, _("eigenvalue"));
     for (i=0; i<h; i++) {
 	pprintf(prn, "%#12.5g ", evals->val[i]);
     }
@@ -1419,11 +1419,25 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     return 0;
 }
 
+static void coint_test_print_exog (const int *list, const DATAINFO *pdinfo,
+				   PRN *prn)
+{
+    int i, vi;
+
+    pprintf(prn, "\n%s: ", _("Exogenous regressor(s)"));
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	pprintf(prn, "%s ", pdinfo->varname[vi]);
+    }
+}
+
 static int 
-compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, PRN *prn)
+compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, 
+		    const DATAINFO *pdinfo, PRN *prn)
 {
     int T = jvar->T;
     int n = jvar->neqns;
+    int nexo = 0;
     double cumeig = 0.0;
     double *lmax = NULL;
     double *trace = NULL;
@@ -1445,8 +1459,15 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, PRN *prn)
 	trace[i] = cumeig; 
     }
 
-    pputc(prn, '\n');
+    if (jvar->xlist != NULL) {
+	nexo = jvar->xlist[0];
+    }
+
     print_Johansen_test_case(jcode(jvar), prn);
+    if (nexo > 0) {
+	coint_test_print_exog(jvar->xlist, pdinfo, prn);
+    }
+    pputc(prn, '\n');
     pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
 	    _("Trace test"), _("p-value"),
 	    _("Lmax test"), _("p-value"));	
@@ -1457,6 +1478,13 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, PRN *prn)
 		i, evals->val[i], trace[i], pvals[0], lmax[i], pvals[1]);
     }
     pputc(prn, '\n');
+
+    if (nexo > 0) {
+	pputs(prn, _("Note: in general, the test statistics above "
+		     "are valid only in the\nabsence of additional "
+		     "regressors."));
+	pputs(prn, "\n\n");
+    }
 
     free(lmax);
     free(trace);
@@ -1537,7 +1565,7 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	pputs(prn, _("Failed to find eigenvalues\n"));
     } else {
 	johansen_ll_calc(jvar, evals);
-	compute_coint_test(jvar, evals, prn);
+	compute_coint_test(jvar, evals, pdinfo, prn);
 
 	if (!(opt & OPT_Q)) {
 	    print_beta_and_alpha(jvar, evals, p, pdinfo, prn);
