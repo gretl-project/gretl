@@ -26,32 +26,32 @@ build CVS gnuplot yourself, or use a special packaged binary.
 
 <h2>Build from source</h2>
 
-<code>
+<pre>
  export CVSROOT=:pserver:anonymous@gnuplot.cvs.sourceforge.net:/cvsroot/gnuplot
  cvs login
  cvs -z3 checkout gnuplot
-</code>
+</pre>
 
 <p>Just hit Enter when asked for a password.  Then</p>
 
-<code>
+<pre>
  sh ./prepare
  ./configure --prefix=/opt/gnuplot
  make
  sudo make install
-</code>
+</pre>
 
 <p>The choice of installing to <kbd>/opt/gnuplot</kbd> is designed to
 avoid collisions with gnuplot as installed by your Linux distro.</p>
 
 <h2>Packaged binary</h2>
 
-<code>
+<pre>
  cd /tmp
  wget http:/ricardo.ecn.wfu.edu/pub/gretl/gnuplot-4.5-i586.tar.gz
  sudo cd / && tar xvfz /tmp/gnuplot-4.5-i586.tar.gz
  rm /tmp/gnuplot-4.5-i586.tar.gz
-</code>
+</pre>
 
 <p>Note that this package installs into <kbd>/opt/gnuplot</kbd>.</p>
 
@@ -60,9 +60,9 @@ In gretl, go to Tools/Preferences/General/Programs and change the
 "gnuplot" entry to read
 </p>
 
-<code>
+<pre>
  /opt/gnuplot/bin/gnuplot
-</code>
+</pre>
 
 <p>Then re-start gretl.</p>
 
