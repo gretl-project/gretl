@@ -51,7 +51,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
 
 ifeq ($(quiet_build),yes)
   AMP = @
-  CCECHO = @echo "  CC    $<"
+  CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
   CCV = $(CC) > /dev/null
   LINK = $(LDECHO); $(LIBTOOL) --mode=link $(CCV) -module -avoid-version -rpath $(plugindir)

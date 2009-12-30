@@ -46,7 +46,7 @@ endif
 
 ifeq ($(quiet_build),yes)
   AMP = @
-  CCECHO = @echo "  CC    $<"
+  CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
   CCV = $(CC) > /dev/null
 else
@@ -56,19 +56,11 @@ endif
 # Installation directories
 libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
-aclocaldir = $(prefix)/share/aclocal
 pkgconfigdir = $(libdir)/pkgconfig
 
-INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(aclocaldir)
+INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(pkgconfigdir)
 
 LIBGRETL = libgretl-1.0.la 
-
-ifeq ($(have_gtk),2.0)
-  INSTALLDIRS += $(DESTDIR)$(pkgconfigdir)
-  INSTALL_CFG = install-cfg-new
-else
-  INSTALL_CFG = install-cfg-old
-endif
 
 LIBS = $(LAPACK_LIBS) -lm -ldl -lz $(XML_LIBS) \
 	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS)
@@ -270,16 +262,12 @@ install: $(LIBGRETL) install-data
 install-strip: $(LIBGRETL) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $< $(DESTDIR)$(libdir)/$<
 
-install-data: installdirs $(INSTALL_CFG)
+install-data: installdirs install-cfg
 	for f in $(PUBLIC_HDRS) ; do \
 	$(INSTALL_DATA) $(libsrc)/$$f $(DESTDIR)$(includedir) ; done
 
-install-cfg-old: ../gretl-config
-	$(INSTALL_PROGRAM) ../gretl-config $(DESTDIR)$(bindir)
-	$(INSTALL_DATA) $(topsrc)/gretl.m4 $(DESTDIR)$(aclocaldir)
-
-install-cfg-new: ../gretl.pc
-	$(INSTALL_DATA) ../gretl.pc $(DESTDIR)$(pkgconfigdir)
+install-cfg: ../gretl.pc
+	$(INSTALL_DATA) $< $(DESTDIR)$(pkgconfigdir)
 
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)

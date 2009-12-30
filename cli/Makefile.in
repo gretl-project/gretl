@@ -30,7 +30,7 @@ endif
 
 ifeq ($(quiet_build),yes)
   AMP = @
-  CCECHO = @echo "  CC    $<"
+  CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
   CCV = $(CC) > /dev/null
 else
