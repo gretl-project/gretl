@@ -3294,7 +3294,8 @@ static int parse_fn_definition (char *fname,
     /* move to next bit and make a copy */
     str += strspn(str, " (");
     if (*str == 0) {
-	err = E_PARSE;
+	/* FIXME allow '(' then newline? */
+	return E_PARSE;
     } else {
 	s = gretl_strdup(str);
 	if (s == NULL) {
