@@ -4813,10 +4813,10 @@ static int qq_plot_two_series (const int *list, const double **Z,
     FILE *fp = NULL;
     int vx = list[1];
     int vy = list[2];
-    int i, n = 20, ny = 20;
+    int i, nx = 20, ny = 20;
     int err = 0;
 
-    x = gretl_sorted_series(vx, Z, pdinfo, OPT_NONE, &n, &err);
+    x = gretl_sorted_series(vx, Z, pdinfo, OPT_NONE, &nx, &err);
 
     if (!err) {
 	y = gretl_sorted_series(vy, Z, pdinfo, OPT_NONE, &ny, &err);
@@ -4826,8 +4826,8 @@ static int qq_plot_two_series (const int *list, const double **Z,
 	} 
     }
 
-    if (!err && n != ny) {
-	/* FIXME */
+    if (!err && nx != ny) {
+	/* FIXME allow differing numbers of observations */
 	err = E_DATA;
     }
 
@@ -4852,17 +4852,17 @@ static int qq_plot_two_series (const int *list, const double **Z,
 
     gretl_push_c_numeric_locale();
 
-    for (i=1; i<n; i++) {
-	p = i / ((double) n + 1);
+    for (i=1; i<nx; i++) {
+	p = i / ((double) nx + 1);
 	/* x-axis value */
-	q = gretl_quantile(0, n-1, x, p, &err);
+	q = gretl_quantile(0, nx-1, x, p, &err);
 	if (na(q)) {
 	    fputs("'?' \n", fp);
 	} else {
 	    fprintf(fp, "%.12g ", q);
 	}
 	/* y-axis value */
-	q = gretl_quantile(0, n-1, y, p, &err);
+	q = gretl_quantile(0, nx-1, y, p, &err);
 	if (na(q)) {
 	    fputs("'?'\n", fp);
 	} else {
@@ -4882,25 +4882,19 @@ static int qq_plot_two_series (const int *list, const double **Z,
     return gnuplot_make_graph();    
 }
 
-int qq_plot (const int *list, const double **Z, 
-	     const DATAINFO *pdinfo, gretlopt opt)
+#define QQ_ZSCORES 1
+
+static int normal_qq_plot (const int *list, const double **Z, 
+			   const DATAINFO *pdinfo)
 {
-    double q, p;
+    double q, p, ym, ys;
     double *y = NULL;
     FILE *fp = NULL;
-    int i, v, n = 20;
+    int v = list[1];
+    int i, n = 20;
     int err = 0;
 
-    if (list[0] == 1) {
-	/* one series against normal */
-	v = list[1];
-	y = gretl_sorted_series(v, Z, pdinfo, OPT_NONE, &n, &err);
-    } else if (list[0] == 2) {
-	/* two empirical series */
-	return qq_plot_two_series(list, Z, pdinfo);
-    } else {
-	err = E_DATA;
-    }
+    y = gretl_sorted_series(v, Z, pdinfo, OPT_NONE, &n, &err);
 
     if (!err && y[0] == y[n-1]) {
 	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[v]);
@@ -4909,15 +4903,17 @@ int qq_plot (const int *list, const double **Z,
 
     if (err) {
 	return err;
-    } else {
-	/* standardize y */
-	double ym = gretl_mean(0, n-1, y);
-	double ys = gretl_stddev(0, n-1, y);
+    } 
 
-	for (i=1; i<n; i++) {
-	    y[i] = (y[i] - ym) / ys;
-	}
+    ym = gretl_mean(0, n-1, y);
+    ys = gretl_stddev(0, n-1, y);
+
+#if QQ_ZSCORES
+    /* standardize y */
+    for (i=1; i<n; i++) {
+	y[i] = (y[i] - ym) / ys;
     }
+#endif
 
     err = gnuplot_init(PLOT_QQ, &fp);
     if (err) {
@@ -4943,6 +4939,9 @@ int qq_plot (const int *list, const double **Z,
 	if (na(q)) {
 	    fputs("'?' \n", fp);
 	} else {
+#if !QQ_ZSCORES
+	    q = ys * q + ym;
+#endif
 	    fprintf(fp, "%.12g ", q);
 	}
 	/* y-axis value (empirical) */
@@ -4962,6 +4961,24 @@ int qq_plot (const int *list, const double **Z,
     fclose(fp);
 
     return gnuplot_make_graph();
+}
+
+int qq_plot (const int *list, const double **Z, 
+	     const DATAINFO *pdinfo, gretlopt opt)
+{
+    int err;
+
+    if (list[0] == 1) {
+	/* one series against normal */
+	err = normal_qq_plot(list, Z, pdinfo);
+    } else if (list[0] == 2) {
+	/* two empirical series */
+	err = qq_plot_two_series(list, Z, pdinfo);
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
 }
 
 /**
