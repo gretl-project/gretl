@@ -7349,18 +7349,27 @@
   <command name="qqplot" section="Graphs" label="Normal Q-Q plot">
 
     <usage>
-      <arguments>
-	<argument>series</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>qqplot</lit> <repl>y</repl></altform>
+	<altform><lit>qqplot</lit> <repl>y</repl> <repl>x</repl></altform>
+      </altforms>
     </usage>
 
     <description>
       <para>
-	Displays a plot of the empirical quantiles of the selected
-	<repl>series</repl> (given by name or ID number) against the
-	corresponding quantiles of the normal distribution. The
-	series must include at least 20 valid observations in the
-	current sample range.
+	Given just one series argument, displays a plot of the empirical
+	quantiles of the selected series (given by name or ID
+	number) against the corresponding quantiles of the normal
+	distribution. The series must include at least 20 valid
+	observations in the current sample range.  The values are
+	standardized before the empirical quantiles are calculated.
+      </para>
+      <para>
+	Given two series arguments, <repl>y</repl> and <repl>x</repl>,
+	displays a plot of the empirical quantiles of <repl>y</repl>
+	against those of <repl>x</repl>. In this case the values are not
+	standardized. At present the number of valid observations for the
+	two series must be equal.
       </para>
     </description>
 

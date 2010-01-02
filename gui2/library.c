@@ -7713,7 +7713,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case QQPLOT:
 	err = qq_plot(cmd->list, (const double **) *pZ, pdinfo,
-		      OPT_N);
+		      cmd->opt);
 	if (err) {
 	    errmsg(err, prn);
 	} else if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {

@@ -4809,16 +4809,14 @@ static int qq_plot_two_series (const int *list, const double **Z,
 {
     double *x = NULL;
     double *y = NULL;
+    double p, q;
+    FILE *fp = NULL;
     int vx = list[1];
     int vy = list[2];
-    int nx = 20, ny = 20;
+    int i, n = 20, ny = 20;
     int err = 0;
 
-    return E_DATA; 
-
-    /* FIXME */
-
-    x = gretl_sorted_series(vx, Z, pdinfo, OPT_NONE, &nx, &err);
+    x = gretl_sorted_series(vx, Z, pdinfo, OPT_NONE, &n, &err);
 
     if (!err) {
 	y = gretl_sorted_series(vy, Z, pdinfo, OPT_NONE, &ny, &err);
@@ -4828,10 +4826,60 @@ static int qq_plot_two_series (const int *list, const double **Z,
 	} 
     }
 
+    if (!err && n != ny) {
+	/* FIXME */
+	err = E_DATA;
+    }
+
+    if (!err) {
+	err = gnuplot_init(PLOT_QQ, &fp);
+    }
+
+    if (err) {
+	free(x);
+	free(y);
+	return err;
+    }   
+
+    fputs("set title \"Q-Q plot\"\n", fp);
+    fputs("set datafile missing '?'\n", fp);
+    fputs("set key top left\n", fp);
+    fprintf(fp, "set xlabel \"%s\"\n", var_get_graph_name(pdinfo, vx));
+    fprintf(fp, "set ylabel \"%s\"\n", var_get_graph_name(pdinfo, vy));
+    fputs("plot \\\n", fp);
+    fputs(" '-' using 1:2 notitle w points, \\\n", fp);
+    fputs(" x notitle w lines\n", fp);
+
+    gretl_push_c_numeric_locale();
+
+    for (i=1; i<n; i++) {
+	p = i / ((double) n + 1);
+	/* x-axis value */
+	q = gretl_quantile(0, n-1, x, p, &err);
+	if (na(q)) {
+	    fputs("'?' \n", fp);
+	} else {
+	    fprintf(fp, "%.12g ", q);
+	}
+	/* y-axis value */
+	q = gretl_quantile(0, n-1, y, p, &err);
+	if (na(q)) {
+	    fputs("'?'\n", fp);
+	} else {
+	    fprintf(fp, "%.12g\n", q);
+	}
+    } 
+
+    fputs("e\n", fp);
+    
+    gretl_pop_c_numeric_locale();
+
     free(x);
     free(y);
 
-    return err;
+    fclose(fp);
+
+    return gnuplot_make_graph();    
 }
 
 int qq_plot (const int *list, const double **Z, 
@@ -4843,11 +4891,11 @@ int qq_plot (const int *list, const double **Z,
     int i, v, n = 20;
     int err = 0;
 
-    if ((opt & OPT_N) && list[0] == 1) {
+    if (list[0] == 1) {
 	/* one series against normal */
 	v = list[1];
 	y = gretl_sorted_series(v, Z, pdinfo, OPT_NONE, &n, &err);
-    } else if (!(opt & OPT_N) && list[0] == 2) {
+    } else if (list[0] == 2) {
 	/* two empirical series */
 	return qq_plot_two_series(list, Z, pdinfo);
     } else {
