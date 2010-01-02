@@ -93,6 +93,7 @@ typedef enum {
     PLOT_RQ_TAU,
     PLOT_BOXPLOTS,
     PLOT_CURVE,
+    PLOT_QQ,
     PLOT_TYPE_MAX
 } PlotType;
 
@@ -191,6 +192,9 @@ int rmplot (const int *list, const double **Z, DATAINFO *pdinfo,
 
 int hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, 
 	       PRN *prn);
+
+int qq_plot (const int *list, const double **Z, 
+	     const DATAINFO *pdinfo, gretlopt opt);
 
 int theil_forecast_plot (const int *plotlist, const double **Z, 
 			 const DATAINFO *pdinfo, gretlopt opt);

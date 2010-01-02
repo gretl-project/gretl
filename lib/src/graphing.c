@@ -112,6 +112,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_RQ_TAU,         "tau sequence plot" },
     { PLOT_BOXPLOTS,       "boxplots" },
     { PLOT_CURVE,          "curve" },
+    { PLOT_QQ,             "QQ plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -1022,6 +1023,8 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 	    strcpy(size_string, " size 680,400");
 	} else if (ptype == PLOT_VAR_ROOTS) {
 	    strcpy(size_string, " size 480,480");
+	} else if (ptype == PLOT_QQ) {
+	    strcpy(size_string, " size 480,480");
 	}
     }
 
@@ -1358,7 +1361,7 @@ int specified_gp_output_format (void)
 /**
  * gnuplot_make_graph:
  *
- * Executes gnuplot to produce a grapg file in PNG format.
+ * Executes gnuplot to produce a graph file in PNG format.
  *
  * Returns: the return value from the system command.
  */
@@ -4796,6 +4799,118 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 
     gretl_pop_c_numeric_locale();
 
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
+static int qq_plot_two_series (const int *list, const double **Z,
+			       const DATAINFO *pdinfo)
+{
+    double *x = NULL;
+    double *y = NULL;
+    int vx = list[1];
+    int vy = list[2];
+    int nx = 20, ny = 20;
+    int err = 0;
+
+    return E_DATA; 
+
+    /* FIXME */
+
+    x = gretl_sorted_series(vx, Z, pdinfo, OPT_NONE, &nx, &err);
+
+    if (!err) {
+	y = gretl_sorted_series(vy, Z, pdinfo, OPT_NONE, &ny, &err);
+	if (err) {
+	    free(x);
+	    x = NULL;
+	} 
+    }
+
+    free(x);
+    free(y);
+
+    return err;
+}
+
+int qq_plot (const int *list, const double **Z, 
+	     const DATAINFO *pdinfo, gretlopt opt)
+{
+    double q, p;
+    double *y = NULL;
+    FILE *fp = NULL;
+    int i, v, n = 20;
+    int err = 0;
+
+    if ((opt & OPT_N) && list[0] == 1) {
+	/* one series against normal */
+	v = list[1];
+	y = gretl_sorted_series(v, Z, pdinfo, OPT_NONE, &n, &err);
+    } else if (!(opt & OPT_N) && list[0] == 2) {
+	/* two empirical series */
+	return qq_plot_two_series(list, Z, pdinfo);
+    } else {
+	err = E_DATA;
+    }
+
+    if (!err && y[0] == y[n-1]) {
+	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[v]);
+	err = E_DATA;
+    }
+
+    if (err) {
+	return err;
+    } else {
+	/* standardize y */
+	double ym = gretl_mean(0, n-1, y);
+	double ys = gretl_stddev(0, n-1, y);
+
+	for (i=1; i<n; i++) {
+	    y[i] = (y[i] - ym) / ys;
+	}
+    }
+
+    err = gnuplot_init(PLOT_QQ, &fp);
+    if (err) {
+	free(y);
+	return err;
+    }
+
+    fprintf(fp, "set title \"Q-Q plot for %s\"\n", 
+	    var_get_graph_name(pdinfo, v));
+    fputs("set datafile missing '?'\n", fp);
+    fputs("set key top left\n", fp);
+    fputs("set xlabel \"Normal quantiles\"\n", fp);
+    fputs("plot \\\n", fp);
+    fputs(" '-' using 1:2 notitle w points, \\\n", fp);
+    fputs(" x title \"y = x\" w lines\n", fp);
+    
+    gretl_push_c_numeric_locale();
+
+    for (i=1; i<n; i++) {
+	p = i / ((double) n + 1);
+	/* x-axis value (normal) */
+	q = normal_critval(1 - p);
+	if (na(q)) {
+	    fputs("'?' \n", fp);
+	} else {
+	    fprintf(fp, "%.12g ", q);
+	}
+	/* y-axis value (empirical) */
+	q = gretl_quantile(0, n-1, y, p, &err);
+	if (na(q)) {
+	    fputs("'?'\n", fp);
+	} else {
+	    fprintf(fp, "%.12g\n", q);
+	}
+    } 
+
+    fputs("e\n", fp);
+    
+    gretl_pop_c_numeric_locale();
+
+    free(y);
     fclose(fp);
 
     return gnuplot_make_graph();

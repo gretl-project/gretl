@@ -2307,6 +2307,28 @@ void do_gini (void)
     } 
 }
 
+void do_qqplot (void)
+{
+    int list[2] = {1, 0};
+    int v = mdata_active_var();
+    int err;
+
+    gretl_command_sprintf("qqplot %s --normal", datainfo->varname[v]);
+
+    if (check_and_record_command()) {
+	return;
+    }
+
+    list[1] = v;
+    err = qq_plot(list, (const double **) Z, datainfo, OPT_N);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph();
+    } 
+}
+
 void do_kernel (void)
 {
     void *handle;
@@ -7687,6 +7709,16 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = maybe_save_graph(cmd, gretl_plotfile(),
 				   GRETL_OBJ_GRAPH, prn);
 	}
+	break;
+
+    case QQPLOT:
+	err = qq_plot(cmd->list, (const double **) *pZ, pdinfo,
+		      OPT_N);
+	if (err) {
+	    errmsg(err, prn);
+	} else if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
+	    register_graph();
+	} 
 	break;
 
     case HELP:

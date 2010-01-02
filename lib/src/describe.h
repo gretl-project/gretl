@@ -126,6 +126,11 @@ int gretl_moments (int t1, int t2, const double *x,
 		   double *xbar, double *sd, 
 		   double *skew, double *kurt, int k);
 
+double *gretl_sorted_series (int v, const double **Z, 
+			     const DATAINFO *pdinfo,
+			     gretlopt opt, int *n, 
+			     int *err);
+
 void free_freq (FreqDist *freq);
 
 int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,

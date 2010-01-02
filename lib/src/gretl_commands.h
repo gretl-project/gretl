@@ -113,6 +113,7 @@ typedef enum {
     PVALUE, 
     QUANTREG,
     QLRTEST,
+    QQPLOT,
     QUIT,
     RENAME,
     RESET,

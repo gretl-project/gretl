@@ -123,6 +123,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { PVALUE,   "pvalue" }, 
     { QUANTREG, "quantreg" },
     { QLRTEST,  "qlrtest" }, 
+    { QQPLOT,   "qqplot" },
     { QUIT,     "quit" }, 
     { RENAME,   "rename" },
     { RESET,    "reset" },

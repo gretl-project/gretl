@@ -4395,14 +4395,17 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case RMPLOT:
     case HURST:
+    case QQPLOT:
 	if (cmd->list[0] != 1) {
 	    pputs(prn, _("This command requires one variable.\n"));
 	    err = 1;
 	} else {
 	    if (cmd->ci == RMPLOT) {
 		err = rmplot(cmd->list, Z, pdinfo, cmd->opt, prn);
-	    } else {
+	    } else if (cmd->ci == HURST) {
 		err = hurstplot(cmd->list, Z, pdinfo, prn);
+	    } else {
+		err = qq_plot(cmd->list, Z, pdinfo, OPT_N);
 	    }
 	}
 	break;

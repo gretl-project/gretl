@@ -159,6 +159,8 @@ void do_graph_model (const int *list, int fit);
 
 void do_gini (void);
 
+void do_qqplot (void);
+
 void do_kernel (void);
 
 void do_vif (GtkAction *action, gpointer p);

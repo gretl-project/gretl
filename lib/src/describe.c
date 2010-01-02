@@ -1058,6 +1058,73 @@ int gretl_moments (int t1, int t2, const double *x,
 }
 
 /**
+ * gretl_sorted_series:
+ * @v: ID number of input series.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @opt: may include %OPT_M to flag an error in case
+ * missing values are found.
+ * @n: on input, the minimum acceptable number of
+ * non-missing observations; on output, the number
+ * of valid observations.
+ * @err: location to receive error code.
+ *
+ * Returns: an array containing the valid values of the
+ * input series over the sample range given in @pdinfo, 
+ * sorted from smallest to largest, or %NULL on error.
+ * An error is flagged if the number of valid observations
+ * is less than that given in @n on input, or if %OPT_M 
+ * is given and the input contains missing values.
+ */
+
+double *gretl_sorted_series (int v, const double **Z, 
+			     const DATAINFO *pdinfo,
+			     gretlopt opt,
+			     int *n, int *err)
+{
+    double *y = NULL;
+    int t, k = 0;
+
+    if (*n < 1) {
+	*n = 1;
+    }
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(Z[v][t])) {
+	    k++;
+	} else if (opt & OPT_M) {
+	    *err = E_MISSDATA;
+	    return NULL;
+	}
+    }
+
+    if (k < *n) {
+	gretl_errmsg_set(_("Insufficient data"));
+	*err = E_DATA;
+	return NULL;
+    }
+
+    y = malloc(k * sizeof *y);
+    if (y == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    *n = k;
+
+    k = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(Z[v][t])) {
+	    y[k++] = Z[v][t];
+	}
+    }
+    
+    qsort(y, k, sizeof *y, gretl_compare_doubles);
+
+    return y;
+}
+
+/**
  * free_freq:
  * @freq: gretl frequency distribution struct
  *

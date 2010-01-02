@@ -7346,6 +7346,30 @@
 
   </command>
 
+  <command name="qqplot" section="Graphs" label="Normal Q-Q plot">
+
+    <usage>
+      <arguments>
+	<argument>series</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Displays a plot of the empirical quantiles of the selected
+	<repl>series</repl> (given by name or ID number) against the
+	corresponding quantiles of the normal distribution. The
+	series must include at least 20 valid observations in the
+	current sample range.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Normal Q-Q plot</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="quantreg" section="Estimation" 
     label="Quantile regression">
 

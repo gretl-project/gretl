@@ -4102,7 +4102,8 @@ static int gnuplot_show_png (const char *plotfile, const char *name,
 	set_plot_format_flags(plot);
     } 
 
-    if (plot->spec->code == PLOT_VAR_ROOTS) {
+    if (plot->spec->code == PLOT_VAR_ROOTS ||
+	plot->spec->code == PLOT_QQ) {
 	plot->pixel_width = plot->pixel_height;
     }
 
