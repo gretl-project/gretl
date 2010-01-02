@@ -4882,12 +4882,11 @@ static int qq_plot_two_series (const int *list, const double **Z,
     return gnuplot_make_graph();    
 }
 
-#define QQ_ZSCORES 1
-
 static int normal_qq_plot (const int *list, const double **Z, 
-			   const DATAINFO *pdinfo)
+			   const DATAINFO *pdinfo, gretlopt opt)
 {
-    double q, p, ym, ys;
+    int zscores = 1;
+    double q, p, ym = 0, ys = 1;
     double *y = NULL;
     FILE *fp = NULL;
     int v = list[1];
@@ -4905,15 +4904,17 @@ static int normal_qq_plot (const int *list, const double **Z,
 	return err;
     } 
 
-    ym = gretl_mean(0, n-1, y);
-    ys = gretl_stddev(0, n-1, y);
+    if (!(opt & OPT_R)) {
+	ym = gretl_mean(0, n-1, y);
+	ys = gretl_stddev(0, n-1, y);
 
-#if QQ_ZSCORES
-    /* standardize y */
-    for (i=1; i<n; i++) {
-	y[i] = (y[i] - ym) / ys;
+	if (zscores) {
+	    /* standardize y */
+	    for (i=1; i<n; i++) {
+		y[i] = (y[i] - ym) / ys;
+	    }
+	}
     }
-#endif
 
     err = gnuplot_init(PLOT_QQ, &fp);
     if (err) {
@@ -4939,9 +4940,9 @@ static int normal_qq_plot (const int *list, const double **Z,
 	if (na(q)) {
 	    fputs("'?' \n", fp);
 	} else {
-#if !QQ_ZSCORES
-	    q = ys * q + ym;
-#endif
+	    if (!zscores && !(opt & OPT_R)) {
+		q = ys * q + ym;
+	    }
 	    fprintf(fp, "%.12g ", q);
 	}
 	/* y-axis value (empirical) */
@@ -4970,7 +4971,7 @@ int qq_plot (const int *list, const double **Z,
 
     if (list[0] == 1) {
 	/* one series against normal */
-	err = normal_qq_plot(list, Z, pdinfo);
+	err = normal_qq_plot(list, Z, pdinfo, opt);
     } else if (list[0] == 2) {
 	/* two empirical series */
 	err = qq_plot_two_series(list, Z, pdinfo);
