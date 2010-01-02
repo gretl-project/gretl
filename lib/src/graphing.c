@@ -4910,7 +4910,7 @@ static int normal_qq_plot (const int *list, const double **Z,
 
 	if (zscores) {
 	    /* standardize y */
-	    for (i=1; i<n; i++) {
+	    for (i=0; i<n; i++) {
 		y[i] = (y[i] - ym) / ys;
 	    }
 	}
