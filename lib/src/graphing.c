@@ -4904,6 +4904,11 @@ static int normal_qq_plot (const int *list, const double **Z,
 	return err;
     } 
 
+    if (opt & OPT_A) {
+	/* adjust normal quantiles instead of standardizing data */
+	zscores = 0;
+    }
+
     if (!(opt & OPT_R)) {
 	ym = gretl_mean(0, n-1, y);
 	ys = gretl_stddev(0, n-1, y);
@@ -4925,11 +4930,18 @@ static int normal_qq_plot (const int *list, const double **Z,
     fprintf(fp, "set title \"Q-Q plot for %s\"\n", 
 	    var_get_graph_name(pdinfo, v));
     fputs("set datafile missing '?'\n", fp);
-    fputs("set key top left\n", fp);
     fputs("set xlabel \"Normal quantiles\"\n", fp);
-    fputs("plot \\\n", fp);
-    fputs(" '-' using 1:2 notitle w points, \\\n", fp);
-    fputs(" x title \"y = x\" w lines\n", fp);
+
+    if (opt & OPT_R) {
+	fputs("set nokey\n", fp);
+	fputs("plot \\\n", fp);
+	fputs(" '-' using 1:2 notitle w points\n", fp);
+    } else {
+	fputs("set key top left\n", fp);
+	fputs("plot \\\n", fp);
+	fputs(" '-' using 1:2 notitle w points, \\\n", fp);
+	fputs(" x title \"y = x\" w lines\n", fp);
+    }
     
     gretl_push_c_numeric_locale();
 

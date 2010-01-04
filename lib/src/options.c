@@ -295,6 +295,7 @@ struct gretl_option gretl_opts[] = {
     { PROBIT,   OPT_Q, "quiet", 0 },
     { PROBIT,   OPT_R, "robust", 0 },
     { PROBIT,   OPT_V, "verbose", 0 },
+    { QQPLOT,   OPT_A, "adjust", 0 },    
     { QQPLOT,   OPT_N, "normal", 0 },
     { QQPLOT,   OPT_R, "raw", 0 },
     { QUANTREG, OPT_I, "intervals", 1 },

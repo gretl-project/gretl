@@ -2309,23 +2309,46 @@ void do_gini (void)
 
 void do_qqplot (void)
 {
-    int list[2] = {1, 0};
+    const char *opts[] = {
+	N_("standardize the data"),
+	N_("use sample mean and standard deviation for normal quantiles"),
+	N_("raw quantiles versus N(0, 1)")
+    };
     int v = mdata_active_var();
-    int err;
+    gretlopt opt = OPT_N;
+    gchar *title;
+    int resp;
 
-    gretl_command_sprintf("qqplot %s --normal", datainfo->varname[v]);
+    title = g_strdup_printf("gretl: %s", _("Q-Q plot"));
+    resp = radio_dialog(title, _("Normal Q-Q plot"), opts, 3, 0, 0);
+    g_free(title);
 
-    if (check_and_record_command()) {
+    if (resp < 0) {
 	return;
     }
 
-    list[1] = v;
-    err = qq_plot(list, (const double **) Z, datainfo, OPT_N);
+    if (resp == 1) {
+	opt |= OPT_A;
+    } else if (resp == 2) {
+	opt |= OPT_R;
+    }
 
-    if (err) {
-	gui_errmsg(err);
+    gretl_command_sprintf("qqplot %s%s", datainfo->varname[v], 
+			  print_flags(opt, QQPLOT));
+
+    if (check_and_record_command()) {
+	return;
     } else {
-	register_graph();
+	int list[2] = {1, v};
+	int err;
+
+	err = qq_plot(list, (const double **) Z, datainfo, opt);
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    register_graph();
+	}
     } 
 }
 
