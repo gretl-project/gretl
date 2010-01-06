@@ -4804,17 +4804,62 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
     return gnuplot_make_graph();
 }
 
+#define MAKKONEN_POS 0
+
+/* Probability of non-exceedance of the kth value in a set of n
+   rank-ordered values.  See L. Makkonen, `Bringing Closure to the
+   Plotting Position Controversy', Communications in Statistics -
+   Theory and Methods, vol 37, January 2008, for an argument in favor
+   of using k / (n + 1); but also see many uses of (k - 1/2) / n in
+   the literature.  
+*/
+
+static double plotpos (int k, int n)
+{
+#if MAKKONEN_POS
+    return k / (n + 1.0);
+#else
+    return (k - 0.5) / n;
+#endif
+
+}
+
+static double quantile_interp (const double *y, int n,
+			       double ftarg)
+{
+    double f, ret = NADBL;
+    int i;
+
+    for (i=0; i<n; i++) {
+	f = plotpos(i+1, n);
+	if (f >= ftarg) {
+	    if (f > ftarg && i > 0) {
+		double d, f0, f1 = f;
+
+		f0 = plotpos(i, n);
+		d = (ftarg - f0) / (f1 - f0);
+		ret = (1-d) * y[i-1] + d * y[i];
+	    } else {
+		ret = y[i];
+	    }
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 static int qq_plot_two_series (const int *list, const double **Z,
 			       const DATAINFO *pdinfo)
 {
     double *x = NULL;
     double *y = NULL;
-    double p, q;
+    double f, qx, qy;
     FILE *fp = NULL;
     int vx = list[1];
     int vy = list[2];
-    int i, nx = 20, ny = 20;
-    int err = 0;
+    int nx = 10, ny = 10;
+    int i, n, err = 0;
 
     x = gretl_sorted_series(vx, Z, pdinfo, OPT_NONE, &nx, &err);
 
@@ -4826,9 +4871,9 @@ static int qq_plot_two_series (const int *list, const double **Z,
 	} 
     }
 
-    if (!err && nx != ny) {
-	/* FIXME allow differing numbers of observations */
-	err = E_DATA;
+    if (!err) {
+	/* take the smaller sample as basis */
+	n = (nx > ny)? ny : nx;
     }
 
     if (!err) {
@@ -4847,30 +4892,27 @@ static int qq_plot_two_series (const int *list, const double **Z,
     fprintf(fp, "set xlabel \"%s\"\n", var_get_graph_name(pdinfo, vx));
     fprintf(fp, "set ylabel \"%s\"\n", var_get_graph_name(pdinfo, vy));
     fputs("plot \\\n", fp);
-#if 0
     fputs(" '-' using 1:2 notitle w points, \\\n", fp);
     fputs(" x notitle w lines\n", fp);
-#else
-    fputs(" '-' using 1:2 notitle w points\n", fp);
-#endif
 
     gretl_push_c_numeric_locale();
 
-    for (i=1; i<nx; i++) {
-	p = i / ((double) nx + 1);
-	/* x-axis value */
-	q = gretl_quantile(0, nx-1, x, p, &err);
-	if (na(q)) {
-	    fputs("'?' \n", fp);
+    for (i=0; i<n; i++) {
+	f = plotpos(i+1, n);
+
+	if (nx == ny) {
+	    qx = x[i];
+	    qy = y[i];
+	} else if (nx == n) {
+	    qx = x[i];
+	    qy = quantile_interp(y, ny, f);
 	} else {
-	    fprintf(fp, "%.12g ", q);
+	    qx = quantile_interp(x, nx, f);
+	    qy = y[i];
 	}
-	/* y-axis value */
-	q = gretl_quantile(0, nx-1, y, p, &err);
-	if (na(q)) {
-	    fputs("'?'\n", fp);
-	} else {
-	    fprintf(fp, "%.12g\n", q);
+
+	if (!na(qx) && !na(qy)) {
+	    fprintf(fp, "%.12g %.12g\n", qx, qy); 
 	}
     } 
 
@@ -4890,7 +4932,8 @@ static int normal_qq_plot (const int *list, const double **Z,
 			   const DATAINFO *pdinfo, gretlopt opt)
 {
     int zscores = 1;
-    double q, p, ym = 0, ys = 1;
+    double ym = 0, ys = 1;
+    double p, qx, qy;
     double *y = NULL;
     FILE *fp = NULL;
     int v = list[1];
@@ -4949,24 +4992,17 @@ static int normal_qq_plot (const int *list, const double **Z,
     
     gretl_push_c_numeric_locale();
 
-    for (i=1; i<n; i++) {
-	p = i / ((double) n + 1);
-	/* x-axis value (normal) */
-	q = normal_critval(1 - p);
-	if (na(q)) {
-	    fputs("'?' \n", fp);
-	} else {
-	    if (!zscores && !(opt & OPT_R)) {
-		q = ys * q + ym;
-	    }
-	    fprintf(fp, "%.12g ", q);
+    for (i=0; i<n; i++) {
+	p = plotpos(i+1, n);
+	/* empirical quantile */
+	qy = y[i];
+	/* normal quantile */
+	qx = normal_critval(1 - p);
+	if (!na(qx) && !zscores && !(opt & OPT_R)) {
+	    qx = ys * qx + ym;
 	}
-	/* y-axis value (empirical) */
-	q = gretl_quantile(0, n-1, y, p, &err);
-	if (na(q)) {
-	    fputs("'?'\n", fp);
-	} else {
-	    fprintf(fp, "%.12g\n", q);
+	if (!na(qx) && !na(qy)) {
+	    fprintf(fp, "%.12g %.12g\n", qx, qy); 
 	}
     } 
 

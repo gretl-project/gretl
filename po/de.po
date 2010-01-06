@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-06 12:51-0500\n"
+"POT-Creation-Date: 2010-01-06 17:43-0500\n"
 "PO-Revision-Date: 2009-11-27 11:00+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at no spam) gmx (dot no spam) "
 "net>\n"
@@ -1320,7 +1320,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr "Zu wenig Daten um Häufigkeitsverteilung für Variable %s zu erstellen"
 
 #: lib/src/describe.c:1562 lib/src/describe.c:2823 lib/src/describe.c:3324
-#: lib/src/describe.c:3816 lib/src/graphing.c:4903
+#: lib/src/describe.c:3816 lib/src/graphing.c:4946
 #, c-format
 msgid "%s is a constant"
 msgstr "%s ist eine Konstante"
@@ -2497,12 +2497,12 @@ msgstr "Inverse VAR-Wurzeln im Vgl. mit Einheitskreis"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%%-Konfidenzellipse und %g%%-intervalle der Randverteilungen"
 
-#: lib/src/graphing.c:5079 lib/src/graphing.c:5080
+#: lib/src/graphing.c:5115 lib/src/graphing.c:5116
 #, c-format
 msgid "adjusted %s"
 msgstr "korrigiertes %s"
 
-#: lib/src/graphing.c:5142 plugin/range-mean.c:66
+#: lib/src/graphing.c:5178 plugin/range-mean.c:66
 msgid "with least squares fit"
 msgstr "mit Kleinst-Quadrate-Fit"
 
@@ -11624,7 +11624,7 @@ msgstr "standardisiere die Residuen"
 
 #: gui2/library.c:2339
 #, fuzzy
-msgid "use sample mean and standard deviation for normal quantiles"
+msgid "use sample mean and variance for normal quantiles"
 msgstr "Annahme, dass Stand'abw. aus Grundgesamtheit"
 
 #: gui2/library.c:2340

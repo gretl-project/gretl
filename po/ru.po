@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-06 12:51-0500\n"
+"POT-Creation-Date: 2010-01-06 17:43-0500\n"
 "PO-Revision-Date: 2009-12-27 13:42+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
@@ -1339,7 +1339,7 @@ msgstr ""
 "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1562 lib/src/describe.c:2823 lib/src/describe.c:3324
-#: lib/src/describe.c:3816 lib/src/graphing.c:4903
+#: lib/src/describe.c:3816 lib/src/graphing.c:4946
 #, c-format
 msgid "%s is a constant"
 msgstr "%s является константой"
@@ -2514,12 +2514,12 @@ msgstr "Обратные корни VAR по отношению к единич�
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%% доверительный эллипс и %g%% доверительные интервалы"
 
-#: lib/src/graphing.c:5079 lib/src/graphing.c:5080
+#: lib/src/graphing.c:5115 lib/src/graphing.c:5116
 #, c-format
 msgid "adjusted %s"
 msgstr "исправлен. %s"
 
-#: lib/src/graphing.c:5142 plugin/range-mean.c:66
+#: lib/src/graphing.c:5178 plugin/range-mean.c:66
 msgid "with least squares fit"
 msgstr "с подбором по МНК"
 
@@ -11566,7 +11566,7 @@ msgstr "Стандартизировать остатки"
 
 #: gui2/library.c:2339
 #, fuzzy
-msgid "use sample mean and standard deviation for normal quantiles"
+msgid "use sample mean and variance for normal quantiles"
 msgstr "Выборочная дисперсия совпадает с генеральной"
 
 #: gui2/library.c:2340

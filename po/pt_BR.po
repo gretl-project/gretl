@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-06 12:51-0500\n"
+"POT-Creation-Date: 2010-01-06 17:43-0500\n"
 "PO-Revision-Date: 2009-12-08 14:19-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
@@ -1326,7 +1326,7 @@ msgstr ""
 "s"
 
 #: lib/src/describe.c:1562 lib/src/describe.c:2823 lib/src/describe.c:3324
-#: lib/src/describe.c:3816 lib/src/graphing.c:4903
+#: lib/src/describe.c:3816 lib/src/graphing.c:4946
 #, c-format
 msgid "%s is a constant"
 msgstr "%s é uma constante"
@@ -2502,12 +2502,12 @@ msgstr "Raízes da inversa do VAR em relação ao círculo unitário"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "elipse a %g%% de confiança e %g%% de intervalos marginais"
 
-#: lib/src/graphing.c:5079 lib/src/graphing.c:5080
+#: lib/src/graphing.c:5115 lib/src/graphing.c:5116
 #, c-format
 msgid "adjusted %s"
 msgstr "'%s' ajustado"
 
-#: lib/src/graphing.c:5142 plugin/range-mean.c:66
+#: lib/src/graphing.c:5178 plugin/range-mean.c:66
 msgid "with least squares fit"
 msgstr "com ajuste de mínimos quadrados"
 
@@ -11645,7 +11645,7 @@ msgstr "Padronizar os resíduos"
 
 #: gui2/library.c:2339
 #, fuzzy
-msgid "use sample mean and standard deviation for normal quantiles"
+msgid "use sample mean and variance for normal quantiles"
 msgstr "Assumir que o desvio padrão é o valor da população"
 
 #: gui2/library.c:2340

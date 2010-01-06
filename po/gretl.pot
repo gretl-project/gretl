@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-06 12:51-0500\n"
+"POT-Creation-Date: 2010-01-06 17:43-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1237,7 +1237,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr ""
 
 #: lib/src/describe.c:1562 lib/src/describe.c:2823 lib/src/describe.c:3324
-#: lib/src/describe.c:3816 lib/src/graphing.c:4903
+#: lib/src/describe.c:3816 lib/src/graphing.c:4946
 #, c-format
 msgid "%s is a constant"
 msgstr ""
@@ -2376,12 +2376,12 @@ msgstr ""
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr ""
 
-#: lib/src/graphing.c:5079 lib/src/graphing.c:5080
+#: lib/src/graphing.c:5115 lib/src/graphing.c:5116
 #, c-format
 msgid "adjusted %s"
 msgstr ""
 
-#: lib/src/graphing.c:5142 plugin/range-mean.c:66
+#: lib/src/graphing.c:5178 plugin/range-mean.c:66
 msgid "with least squares fit"
 msgstr ""
 
@@ -11210,7 +11210,7 @@ msgid "standardize the data"
 msgstr ""
 
 #: gui2/library.c:2339
-msgid "use sample mean and standard deviation for normal quantiles"
+msgid "use sample mean and variance for normal quantiles"
 msgstr ""
 
 #: gui2/library.c:2340

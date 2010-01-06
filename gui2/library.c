@@ -2336,7 +2336,7 @@ void do_qqplot (void)
 {
     const char *opts[] = {
 	N_("standardize the data"),
-	N_("use sample mean and standard deviation for normal quantiles"),
+	N_("use sample mean and variance for normal quantiles"),
 	N_("raw quantiles versus N(0, 1)")
     };
     int v = mdata_active_var();

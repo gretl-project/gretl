@@ -7393,9 +7393,7 @@
       <para context="cli">
 	Given two series arguments, <repl>y</repl> and <repl>x</repl>,
 	displays a plot of the empirical quantiles of <repl>y</repl> against
-	those of <repl>x</repl>. The data values are not standardized. At
-	present the number of valid observations for the two series must be
-	equal.
+	those of <repl>x</repl>. The data values are not standardized.
       </para>
     </description>
 

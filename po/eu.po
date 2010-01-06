@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-06 12:51-0500\n"
+"POT-Creation-Date: 2010-01-06 17:43-0500\n"
 "PO-Revision-Date: 2009-08-06 21:07-0400\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>, Marian Zubia <marian."
 "zubia@ehu.es>\n"
@@ -1329,7 +1329,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr "Datu gutxiegi %s aldagaiaren maiztasun banaketa eraikitzeko"
 
 #: lib/src/describe.c:1562 lib/src/describe.c:2823 lib/src/describe.c:3324
-#: lib/src/describe.c:3816 lib/src/graphing.c:4903
+#: lib/src/describe.c:3816 lib/src/graphing.c:4946
 #, c-format
 msgid "%s is a constant"
 msgstr "%s konstantea da"
@@ -2507,12 +2507,12 @@ msgstr "VAR erroen alderantzizkoa unitateko zirkunferentziarekiko"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%%%g -ko konfidantza elipsea eta %%%g -ko tarte marginalak"
 
-#: lib/src/graphing.c:5079 lib/src/graphing.c:5080
+#: lib/src/graphing.c:5115 lib/src/graphing.c:5116
 #, c-format
 msgid "adjusted %s"
 msgstr "doitutako %s"
 
-#: lib/src/graphing.c:5142 plugin/range-mean.c:66
+#: lib/src/graphing.c:5178 plugin/range-mean.c:66
 msgid "with least squares fit"
 msgstr "karratu txikieneko doikuntzarekin"
 
@@ -11725,7 +11725,7 @@ msgstr "Perturbazioen desbideratze estimatua = %g"
 
 #: gui2/library.c:2339
 #, fuzzy
-msgid "use sample mean and standard deviation for normal quantiles"
+msgid "use sample mean and variance for normal quantiles"
 msgstr "Suposatu desbideratze tipikoa populazioko balioa dela"
 
 #: gui2/library.c:2340
