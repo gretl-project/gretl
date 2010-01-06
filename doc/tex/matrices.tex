@@ -818,7 +818,7 @@ These are set out in Table~\ref{tab:matrix-accessors}.
 \begin{table}[htbp]
 \centering
 \begin{tabular}{ll}
-  \dollar{coeff}  & vector of estimated coefficients \\
+  \dollar{coeff}  & matrix of estimated coefficients \\
   \dollar{compan} & companion matrix (after VAR or VECM estimation) \\
   \dollar{jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
   \dollar{jbeta}  & matrix $\beta$ (cointegration vectors) from
@@ -827,7 +827,7 @@ These are set out in Table~\ref{tab:matrix-accessors}.
   $\beta$ from Johansen's procedure \\
   \dollar{rho}    & autoregressive coefficients for error process \\
   \dollar{sigma}  & residual covariance matrix \\
-  \dollar{stderr} & vector of estimated standard errors \\
+  \dollar{stderr} & matrix of estimated standard errors \\
   \dollar{uhat}   & matrix of residuals \\
   \dollar{vcv}    & covariance matrix of parameter estimates \\
   \dollar{yhat}   & matrix of fitted values 
@@ -842,14 +842,14 @@ referenced, as follows:
 
 \begin{itemize}
 \item Single-equation models: \texttt{\$sigma} gets a scalar (the
-  standard error of the residuals); \texttt{\$uhat} and
+  standard error of the regression); \texttt{\$coeff} and
+  \texttt{\$stderr} get column vectors; \texttt{\$uhat} and
   \texttt{\$yhat} get series.
-\item All system estimators: \texttt{\$sigma} gets the cross-equation
-  residual covariance matrix, \texttt{\$uhat} gets a matrix of
-  residuals, one column per equation.  
-\item VARs and VECMs: \texttt{\$stderr} and \texttt{\$yhat} are not
-  available; \texttt{\$coeff} gets a matrix of coefficients, one
-  column per equation.
+\item System estimators: \texttt{\$sigma} gets the cross-equation
+  residual covariance matrix; \texttt{\$coeff} and \texttt{\$stderr}
+  get matrices with one column per equation, as do \texttt{\$uhat}
+  and \texttt{\$yhat}
+\item VECMs: \texttt{\$vcv} is not available, but see \texttt{\$jvbeta}.
 \end{itemize}
 
 If the accessors are given without any prefix, they retrieve results
