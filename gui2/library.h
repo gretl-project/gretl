@@ -207,6 +207,8 @@ void do_pergm (GtkAction *action);
 
 void residual_periodogram (GtkAction *action, gpointer p);
 
+void residual_qq_plot (GtkAction *action, gpointer p);
+
 #if defined (HAVE_TRAMO) || defined (HAVE_X12A)
 void do_tramo_x12a (GtkAction *action, gpointer p);
 #endif

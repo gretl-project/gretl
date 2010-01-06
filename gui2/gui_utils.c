@@ -2432,7 +2432,15 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	entry.label = _("Residual _spectrum");
 	entry.callback = G_CALLBACK(residual_periodogram);
 	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
+    } else {
+	vwin_menu_add_separator(vwin, "/menubar/Graphs");
     }
+
+    /* residual Q-Q plot */
+    entry.name = "QQPlot";
+    entry.label = _("Residual _Q-Q plot");
+    entry.callback = G_CALLBACK(residual_qq_plot);
+    vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
 
     /* 3-D fitted versus actual plot? */
     if (xlist != NULL) {

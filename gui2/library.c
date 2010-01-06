@@ -4651,6 +4651,37 @@ void residual_periodogram (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv); 
 }
 
+void residual_qq_plot (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = (MODEL *) vwin->data;
+    int origv = datainfo->v;
+    double ***pZ;
+    DATAINFO *pdinfo;
+    int err = 0;
+
+    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
+
+    if (!err) {
+	/* add residuals to data set temporarily */
+	err = tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT);
+    }
+
+    if (!err) {
+	int list[2] = {1, origv};
+
+	err = qq_plot(list, (const double **) *pZ, pdinfo, OPT_N);
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    register_graph();
+	}    
+    }
+
+    trim_dataset(pmod, origv); 
+}
+
 void do_coeff_intervals (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
