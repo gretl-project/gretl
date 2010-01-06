@@ -108,7 +108,8 @@ struct _selector {
 #define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || \
 		       c == GR_DUMMY || c == GR_XYZ || c == GR_3D)
 
-#define TWO_VARS_CODE(c) (c == SPEARMAN || c == ELLIPSE || c == XCORRGM)
+#define TWO_VARS_CODE(c) (c == SPEARMAN || c == ELLIPSE || c == XCORRGM || \
+	                  c == GR_QQ)
 
 #define THREE_VARS_CODE(c) (c == GR_DUMMY || c == GR_XYZ || \
 			    c == GR_3D || c == ANOVA)
@@ -5311,6 +5312,7 @@ static char *get_topstr (int cmdnum)
     case COEFFSUM:
 	return N_("Select coefficients to sum");
     case SPEARMAN:
+    case GR_QQ:
 	return N_("Select two variables");
     case ELLIPSE:
 	return N_("Confidence region: select two variables");
@@ -5740,7 +5742,7 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     if (nleft == 0) {
 	gtk_widget_destroy(sr->dlg);
 	warnbox(_("No suitable data are available"));
-    } else if ((ci == COEFFSUM || ci == ELLIPSE) && nleft < 2) {
+    } else if ((ci == COEFFSUM || ci == ELLIPSE || ci == GR_QQ) && nleft < 2) {
 	gtk_widget_destroy(sr->dlg);
 	warnbox(_("No suitable data are available"));
     } else {

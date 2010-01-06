@@ -4847,8 +4847,12 @@ static int qq_plot_two_series (const int *list, const double **Z,
     fprintf(fp, "set xlabel \"%s\"\n", var_get_graph_name(pdinfo, vx));
     fprintf(fp, "set ylabel \"%s\"\n", var_get_graph_name(pdinfo, vy));
     fputs("plot \\\n", fp);
+#if 0
     fputs(" '-' using 1:2 notitle w points, \\\n", fp);
     fputs(" x notitle w lines\n", fp);
+#else
+    fputs(" '-' using 1:2 notitle w points\n", fp);
+#endif
 
     gretl_push_c_numeric_locale();
 

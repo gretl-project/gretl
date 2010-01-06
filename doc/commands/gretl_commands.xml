@@ -7346,30 +7346,56 @@
 
   </command>
 
-  <command name="qqplot" section="Graphs" label="Normal Q-Q plot">
+  <command name="qqplot" section="Graphs" label="Q-Q plot">
 
     <usage>
       <altforms>
 	<altform><lit>qqplot</lit> <repl>y</repl></altform>
 	<altform><lit>qqplot</lit> <repl>y</repl> <repl>x</repl></altform>
       </altforms>
+      <options>
+	<option>
+	  <flag>--sample-stats</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--raw</flag>
+	  <effect>see below</effect>
+        </option>
+      </options>
     </usage>
 
     <description>
-      <para>
-	Given just one series argument, displays a plot of the empirical
-	quantiles of the selected series (given by name or ID
-	number) against the corresponding quantiles of the normal
-	distribution. The series must include at least 20 valid
-	observations in the current sample range.  The values are
-	standardized before the empirical quantiles are calculated.
+      <para context="gui">
+	Displays a plot of the empirical quantiles of the selected series
+	against the quantiles of the normal distribution. The series must
+	include at least 20 valid observations in the current sample range.
+	By default the data values are standardized before the empirical
+	quantiles are calculated, but two alternatives are available: the
+	reference normal quantiles may be based on the normal distribution
+	with mean and variance equal to the sample values, or the
+	<quote>raw</quote> empirical quantiles may be plotted against the
+	quantiles of the standard normal distribution.	
       </para>
-      <para>
+      <para context="cli">
+	Given just one series argument, displays a plot of the empirical
+	quantiles of the selected series (given by name or ID number) against
+	the quantiles of the normal distribution. The series must include at
+	least 20 valid observations in the current sample range.  By default
+	the <repl>y</repl> values are standardized before the empirical
+	quantiles are calculated, but two alternatives are available: if the
+	<lit>--sample-stats</lit> option is given the reference quantiles are
+	based on the normal distribution with mean and variance equal to the
+	sample values, while if the <lit>--raw</lit> option is given the
+	<quote>raw</quote> empirical quantiles are plotted against the
+	quantiles of the standard normal distribution.
+      </para>
+      <para context="cli">
 	Given two series arguments, <repl>y</repl> and <repl>x</repl>,
-	displays a plot of the empirical quantiles of <repl>y</repl>
-	against those of <repl>x</repl>. In this case the values are not
-	standardized. At present the number of valid observations for the
-	two series must be equal.
+	displays a plot of the empirical quantiles of <repl>y</repl> against
+	those of <repl>x</repl>. The data values are not standardized. At
+	present the number of valid observations for the two series must be
+	equal.
       </para>
     </description>
 

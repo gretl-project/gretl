@@ -800,18 +800,41 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
     }
 }
 
+static void do_qq_xyplot (const char *buf, gretlopt opt)
+{
+    gretl_command_sprintf("qqplot%s", buf);
+
+    if (check_and_record_command()) {
+	return;
+    } else {
+	int err;
+
+	err = qq_plot(libcmd.list, (const double **) Z, datainfo, opt);
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    register_graph();
+	}
+    }     
+}
+
 static int menu_op_wrapper (selector *sr)
 {
     const char *buf = selector_list(sr);
     int ci = selector_code(sr);
     gretlopt opt = selector_get_opts(sr);
+    int err = 0;
 
     if (buf == NULL) {
-	return 1;
+	err = 1;
+    } else if (ci == GR_QQ) {
+	do_qq_xyplot(buf, opt);
     } else {
 	do_menu_op(ci, buf, opt);
-	return 0;
     }
+
+    return err;
 }
 
 static int menu_op_ci (GtkAction *action)
@@ -822,6 +845,8 @@ static int menu_op_ci (GtkAction *action)
     if (ci == 0) {
 	if (!strcmp(s, "VarSummary")) {
 	    ci = VAR_SUMMARY;
+	} else if (!strcmp(s, "GR_QQ")) {
+	    ci = GR_QQ;
 	}
     }
 
@@ -2320,7 +2345,7 @@ void do_qqplot (void)
     int resp;
 
     title = g_strdup_printf("gretl: %s", _("Q-Q plot"));
-    resp = radio_dialog(title, _("Normal Q-Q plot"), opts, 3, 0, 0);
+    resp = radio_dialog(title, _("Normal Q-Q plot"), opts, 3, 0, QQPLOT);
     g_free(title);
 
     if (resp < 0) {

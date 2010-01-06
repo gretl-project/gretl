@@ -145,6 +145,7 @@
 	<menuitem action="FrischPlot"/>
 	<menuitem action="GR_BOX"/>
 	<menuitem action="GR_NBOX"/>
+	<menuitem action="GR_QQ"/>
 	<menuitem action="ThreeDPlot"/>
       </menu>
       <menu action="MultiPlots">
