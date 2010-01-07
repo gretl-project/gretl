@@ -276,6 +276,7 @@ static void gretl_two_snormals (double *z1, double *z2)
     x = 2 * gretl_rand_01() - 1;
     y = 2 * gretl_rand_01() - 1;
     z = x * x + y * y;
+
     if (z >= 1) {
 	goto tryagain;
     }
@@ -293,6 +294,7 @@ static double ran_normal_box_muller (void)
     x = gretl_rand_01();
     y = gretl_rand_01();
     z = sqrt(-2. * log(x));
+
     if (isnan(z) || isinf(z)) {
 	goto tryagain;
     }
@@ -320,8 +322,8 @@ int gretl_rand_get_box_muller (void)
  *
  * Fill the selected range of array @a with pseudo-random drawings
  * from the standard normal distribution, using the Mersenne Twister
- * for uniform input and the Box-Muller method for converting to the
- * normal distribution.
+ * for uniform input and either the Ziggurat or the Box-Muller method 
+ * for converting to the normal distribution.
  */
 
 void gretl_rand_normal (double *a, int t1, int t2) 

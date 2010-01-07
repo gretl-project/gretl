@@ -4807,7 +4807,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 #define MAKKONEN_POS 0
 
 /* Probability of non-exceedance of the kth value in a set of n
-   rank-ordered values.  See L. Makkonen, `Bringing Closure to the
+   rank-ordered values.  See L. Makkonen, 'Bringing Closure to the
    Plotting Position Controversy', Communications in Statistics -
    Theory and Methods, vol 37, January 2008, for an argument in favor
    of using k / (n + 1); but also see many uses of (k - 1/2) / n in
@@ -4821,7 +4821,6 @@ static double plotpos (int k, int n)
 #else
     return (k - 0.5) / n;
 #endif
-
 }
 
 static double quantile_interp (const double *y, int n,
@@ -4834,10 +4833,9 @@ static double quantile_interp (const double *y, int n,
 	f = plotpos(i+1, n);
 	if (f >= ftarg) {
 	    if (f > ftarg && i > 0) {
-		double d, f0, f1 = f;
+		double f0 = plotpos(i, n);
+		double d = (ftarg - f0) / (f - f0);
 
-		f0 = plotpos(i, n);
-		d = (ftarg - f0) / (f1 - f0);
 		ret = (1-d) * y[i-1] + d * y[i];
 	    } else {
 		ret = y[i];
@@ -4952,7 +4950,7 @@ static int normal_qq_plot (const int *list, const double **Z,
     } 
 
     if (opt & OPT_A) {
-	/* adjust normal quantiles instead of standardizing data */
+	/* adjust normal quantiles, don't standardize the data */
 	zscores = 0;
     }
 

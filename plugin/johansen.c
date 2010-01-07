@@ -63,22 +63,22 @@ const double s_mTrace_m_time[5][7] = {
 };
 
 const double s_mTrace_v_time[5][7] = {
-  {-0.204,   0.980,    3.11,   -2.14,  0.0499, -0.0103,-0.00902}, 
-  { 0.224,   0.863,    3.38,  -0.807,       0,       0, -0.0091}, 
-  { 0.422,   0.734,    3.76,    4.32,-0.00606,       0,-0.00718}, 
-  {     0,   0.836,    3.99,   -1.33,-0.00298,-0.00139,-0.00268}, 
-  { -1.29,    1.01,    3.92,    4.67, 0.00484,-0.00127, -0.0199}
+  {-0.204,   0.980,    3.11,   -2.14,    0.0499, -0.01030,  -0.00902}, 
+  { 0.224,   0.863,    3.38,   -0.807,        0,        0,  -0.0091}, 
+  { 0.422,   0.734,    3.76,    4.320, -0.00606,        0,  -0.00718}, 
+  { 0.000,   0.836,    3.99,   -1.330, -0.00298, -0.00139,  -0.00268}, 
+  { -1.29,   1.010,    3.92,    4.670,  0.00484, -0.00127,  -0.0199}
 };
 
 /* Matrices for the lambdamax test */
 
 const double s_mMaxev_m_coef[5][5] = {
-/*   n            1        n==1         n==2        n^1/2 */
-  {6.0019,     -2.7558,     0.67185,     0.11490,     -2.7764},  
-  {5.9498,     0.43402,    0.048360,    0.018198,     -2.3669},  
-  {5.8271,     -1.6487,     -1.6118,    -0.25949,     -1.5666},  
-  {5.8658,      2.5595,    -0.34443,   -0.077991,     -1.7552},  
-  {5.6364,    -0.90531,     -3.5166,    -0.47966,    -0.21447}
+/*   n            1         n==1       n==2        n^1/2 */
+  {6.0019,  -2.7558,    0.67185,    0.11490,    -2.7764},  
+  {5.9498,   0.43402,   0.048360,   0.018198,   -2.3669},  
+  {5.8271,  -1.6487,   -1.6118,    -0.25949,    -1.5666},  
+  {5.8658,   2.5595,   -0.34443,   -0.077991,   -1.7552},  
+  {5.6364,  -0.90531,  -3.5166,    -0.47966,    -0.21447}
 }; 
 
 const double s_mMaxev_v_coef[5][5] = {
@@ -105,7 +105,7 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
         J_REST_TREND   = restricted trend
         J_UNREST_TREND = unrestricted trend
       N: cointegration rank under H0;
-      pval: on output, array of pvalues, for the two tests;
+      pval: on output, array of pvalues for the two tests
     */
     
     double mt, vt, ml, vl;
@@ -451,10 +451,13 @@ static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
 /* flags for controlling "full" estimation of VECM */
 
 enum {
-    NET_OUT_ALPHA  = 0,
-    ESTIMATE_ALPHA = 1 << 0,
+    NET_OUT_ALPHA  = 1 << 0,
     BOOTSTRAPPING  = 1 << 1
 };
+
+#define bootstrap(f)      (f & BOOTSTRAPPING)
+#define net_out_alpha(f)  (f & NET_OUT_ALPHA)
+#define estimate_alpha(f) (!(f & NET_OUT_ALPHA))
 
 /* write pre-computed ML alpha into model structs */
 
@@ -487,7 +490,7 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
     int xc = (v->X != NULL)? v->X->cols : 0;
     int err = 0;
 
-    if (flags & BOOTSTRAPPING) {
+    if (bootstrap(flags)) {
 	/* in this case the matrices will already
 	   be fully allocated */
 	v->X->cols = v->ncoeff;
@@ -502,7 +505,7 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 
     v->ncoeff += jrank(v);
 
-    if (flags & ESTIMATE_ALPHA) {
+    if (estimate_alpha(flags)) {
 	xc += jrank(v);
     } else if (xc == 0) {
 	return 0;
@@ -608,7 +611,7 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
     double pij, yti, xti;
     int err = 0;
 
-    if (flags & ESTIMATE_ALPHA) {
+    if (estimate_alpha(flags)) {
 	/* "Y" is composed of plain DYt */
 	for (i=0; i<v->neqns; i++) {
 	    vi = v->ylist[i+1];
@@ -620,13 +623,12 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 	}
     } else {
 	/* netting out \alpha: "Y" = DY_t - \Pi Y*_t */
-	int j, p1 = v->jinfo->Beta->rows;
+	int j, k, wexo, p1 = v->jinfo->Beta->rows;
 
 	form_Pi(v, Pi);
 
 	for (i=0; i<v->neqns; i++) {
-	    int wexo = 1;
-
+	    wexo = 1;
 	    vi = v->ylist[i+1];
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
@@ -643,8 +645,7 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 			} else if (j == v->neqns && auto_restr(v)) {
 			    xti = (jcode(v) == J_REST_TREND)? t : 1;
 			} else {
-			    int k = j - v->ylist[0] - auto_restr(v) + 1;
-
+			    k = j - v->ylist[0] - auto_restr(v) + 1;
 			    vj = v->rlist[k];
 			    xti = Z[vj][t-1];
 			} 
@@ -707,7 +708,7 @@ correct_variance (GRETL_VAR *v, const gretl_restriction *rset,
 
     R = rset_get_Ra_matrix(rset);
     if (R == NULL) {
-	/* shouldn't be here */
+	/* shouldn't be here! */
 	return 0;
     }
 
@@ -832,7 +833,8 @@ static void fill_residuals_matrix (GRETL_VAR *v)
 }
 
 /* The following is designed to accommodate the case where alpha is
-   restricted, so we can't just run OLS conditional on beta.
+   restricted, in which case we can't just run OLS conditional on
+   beta.
 
    DY_t = \Pi Y*_{t-1} + \sum_{i=1}^{k-1}\Gamma_i DY_{t-1} + ...
 
@@ -849,25 +851,22 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 		    const double **Z, const DATAINFO *pdinfo,
 		    int flags)
 {
+    gretl_matrix *beta = v->jinfo->Beta;
     gretl_matrix *Pi = NULL;
-    gretl_matrix *XTX = NULL;
     gretl_matrix *Ai = NULL;
     gretl_matrix **G = NULL;
-
-    gretl_matrix *beta = v->jinfo->Beta;
-
     int order = v->order;
     int xc, n = v->neqns;
     int i, err;
 
 #if JDEBUG
     fprintf(stderr, "VECM_estimate_full: %s\n", 
-	    (flags & ESTIMATE_ALPHA)? "including alpha in estimation" :
+	    (estimate_alpha(flags))? "including alpha in estimation" :
 	    "netting out the EC terms");
 #endif
 
-    if (!(flags & ESTIMATE_ALPHA) && v->jinfo->Alpha == NULL) {
-	/* alpha must be pre-computed */
+    if (net_out_alpha(flags) && v->jinfo->Alpha == NULL) {
+	/* error: alpha must be pre-computed */
 	return E_DATA;
     }
 
@@ -895,20 +894,24 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	err = make_vecm_Y(v, Z, Pi, flags);
     }
 
-    if (!err && (flags & ESTIMATE_ALPHA)) {
+    if (!err && estimate_alpha(flags)) {
 	err = add_EC_terms_to_X(v, v->X, Z);
     }
 
     if (!err) {
 	if (xc > 0) {
 	    /* run the regressions */
-	    if (flags & BOOTSTRAPPING) {
+	    if (bootstrap(flags)) {
 		err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, NULL);
 	    } else {
-		err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &XTX);
+		if (v->XTX != NULL) {
+		    gretl_matrix_free(v->XTX);
+		    v->XTX = NULL;
+		}
+		err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &v->XTX);
 	    }
 	} else {
-	    /* nothing to estimate, with alpha in hand */
+	    /* nothing to estimate, with alpha already in hand */
 	    fill_residuals_matrix(v);
 	}
     }
@@ -917,7 +920,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	copy_coeffs_to_Gamma(v, G);
     }
 
-    if (!err && (flags & ESTIMATE_ALPHA)) {
+    if (!err && estimate_alpha(flags)) {
 	err = copy_to_alpha(v);
 	if (!err) {
 	    form_Pi(v, Pi);
@@ -961,16 +964,21 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     gretl_matrix_print(v->A, "vecm->A");
 #endif
 
-    if (!err && !(flags & BOOTSTRAPPING)) {
+    if (!err && !bootstrap(flags)) {
+	const gretl_matrix *XTX = NULL;
+
+	if (estimate_alpha(flags)) {
+	    XTX = v->XTX;
+	}
 	transcribe_VAR_models(v, Z, pdinfo, XTX);
-	if (flags == NET_OUT_ALPHA) {
+	if (net_out_alpha(flags)) {
 	    transcribe_alpha(v);
 	}
     }
 
 #if 1
     /* experimental */
-    if (!err &&  flags == NET_OUT_ALPHA) {
+    if (!err && net_out_alpha(flags)) {
 	err = correct_variance(v, rset, Z);
     }
 #endif
@@ -978,7 +986,6 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
  bailout:
     
     gretl_matrix_free(Pi);
-    gretl_matrix_free(XTX);
     gretl_matrix_free(Ai);
     gretl_matrix_array_free(G, order);
 
@@ -1764,9 +1771,9 @@ static int j_general_restrict (GRETL_VAR *jvar,
     err = general_vecm_analysis(jvar, rset, pdinfo, prn);
 
     if (!err) {
-	int flag = (acols > 0)? NET_OUT_ALPHA : ESTIMATE_ALPHA;
+	int flags = (acols > 0)? NET_OUT_ALPHA : 0;
 
-	err = VECM_estimate_full(jvar, rset, Z, pdinfo, flag);
+	err = VECM_estimate_full(jvar, rset, Z, pdinfo, flags);
     }
 
     if (!err) {
@@ -1875,6 +1882,32 @@ static int get_unrestricted_ll (GRETL_VAR *jvar)
     return err;
 }
 
+/* add covariance matrix for parameter estimates after estimation
+   via OLS conditional on \beta */
+
+static int vecm_add_vcv (GRETL_VAR *jvar)
+{
+    int err = 0;
+
+    if (jvar->S == NULL || jvar->XTX == NULL) {
+	return 0;
+    }
+
+    if (jvar->vcv != NULL) {
+	gretl_matrix_free(jvar->vcv);
+    }
+
+    jvar->vcv = gretl_matrix_kronecker_product_new(jvar->S, jvar->XTX, &err);
+
+    if (!err) {
+	double cfac = jvar->T / (double) jvar->df;
+
+	gretl_matrix_multiply_by_scalar(jvar->vcv, cfac);
+    }
+
+    return err;
+}
+
 /* common finalization for estimation subject to simple beta
    restriction, simple alpha restriction, or no restriction.
 */
@@ -1887,7 +1920,7 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
     int do_stderrs = jrank(jvar) < jvar->neqns;
     int err = 0;
 
-    if (flags & ESTIMATE_ALPHA) {
+    if (estimate_alpha(flags)) {
 	err = normalize_beta(jvar, H, &do_stderrs);
     } else {
 	do_stderrs = 0;
@@ -1908,6 +1941,10 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 	} else {
 	    err = beta_variance(jvar);
 	}
+    }
+
+    if (!err && estimate_alpha(flags)) {
+	err = vecm_add_vcv(jvar);
     }
 
     if (!err) {
@@ -2011,7 +2048,7 @@ est_simple_beta_restr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, H, NULL, Z, pdinfo, ESTIMATE_ALPHA);
+	err = vecm_finalize(jvar, H, NULL, Z, pdinfo, 0);
     }
 
     if (!err) {
@@ -2065,7 +2102,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, NULL, Z, pdinfo, ESTIMATE_ALPHA);
+	err = vecm_finalize(jvar, NULL, NULL, Z, pdinfo, 0);
     }
 
     gretl_matrix_free(S00);
@@ -2179,7 +2216,7 @@ johansen_boot_round (GRETL_VAR *jvar, const double **Z,
 	err = normalize_beta(jvar, NULL, NULL); 
 	if (!err) {
 	    err = VECM_estimate_full(jvar, NULL, Z, pdinfo, 
-				     ESTIMATE_ALPHA | BOOTSTRAPPING);
+				     BOOTSTRAPPING);
 	}
 	if (!err) {
 	    err = compute_omega(jvar);

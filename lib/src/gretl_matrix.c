@@ -8622,7 +8622,6 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     double *s = NULL;
     int err = 0;
 
-    /* null_matrix */
     if (gretl_is_null_matrix(Y) ||
 	gretl_is_null_matrix(X) ||
 	gretl_is_null_matrix(B)) {
@@ -9098,56 +9097,34 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     return err;
 }
 
-/**
- * gretl_matrix_restricted_ols:
- * @y: dependent variable vector.
- * @X: matrix of independent variables.
- * @R: left-hand restriction matrix, as in Rb = q.
- * @q: right-hand restriction vector.
- * @b: vector to hold coefficient estimates.
- * @vcv: matrix to hold the covariance matrix of the coefficients,
- * or %NULL if this is not needed.
- * @uhat: vector to hold residuals, if wanted.
- * @s2: pointer ro receive residual variance, or NULL.  If vcv is non-NULL
- * and s2 is NULL, the vcv estimate is just W^{-1}.
- *
- * Computes OLS estimates restricted by R and q, using LU factorization, 
- * and puts the coefficient estimates in @b.  Optionally, calculates the
- * covariance matrix in @vcv.
- * 
- * Returns: 0 on success, non-zero error code on failure.
- */
+/* build matrices needed for estimation via restricted OLS */
 
-int 
-gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
-			     const gretl_matrix *R, const gretl_vector *q,
-			     gretl_vector *b, gretl_matrix *vcv,
-			     gretl_vector *uhat, double *s2)
+static int build_augmented_regression_matrices (const gretl_matrix *y,
+						const gretl_matrix *X,
+						const gretl_matrix *R,
+						const gretl_matrix *q,
+						gretl_matrix **pXTX,
+						gretl_matrix **pV,
+						gretl_matrix **pW)
 {
-    gretl_matrix *XTX = NULL;
-    gretl_vector *V = NULL;
-    gretl_matrix *W = NULL;
-    gretl_matrix *S = NULL;
+    gretl_matrix *XTX;
+    gretl_matrix *V;
+    gretl_matrix *W;    
     double x;
     int k = X->cols;
     int nr = R->rows;
     int ldW = k + nr;
-    int err = 0;
-    int i, j;
+    int i, j, err = 0;
 
-    if (gretl_vector_get_length(b) != k) {
-	fprintf(stderr, "gretl_matrix_restricted_ols: "
-		"b should be a %d-vector\n", k);
-	err = E_NONCONF;
-    }
+    XTX = gretl_matrix_XTX_new(X);
+    V = gretl_column_vector_alloc(ldW);
+    W = gretl_zero_matrix_new(ldW, ldW);
 
-    if (!err) {
-	XTX = gretl_matrix_XTX_new(X);
-	V = gretl_column_vector_alloc(ldW);
-	W = gretl_zero_matrix_new(ldW, ldW);
-	if (XTX == NULL || V == NULL || W == NULL) {
-	    err = E_ALLOC;
-	}
+    if (XTX == NULL || V == NULL || W == NULL) {
+	gretl_matrix_free(XTX);
+	gretl_matrix_free(V);
+	gretl_matrix_free(W);
+	return E_ALLOC;
     }
 
     /* construct V matrix: X'y augmented by q (or by a 0
@@ -9195,6 +9172,59 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	}
     } 
 
+    *pXTX = XTX;
+    *pV = V;
+    *pW = W;
+
+    return err;
+}
+
+/**
+ * gretl_matrix_restricted_ols:
+ * @y: dependent variable vector.
+ * @X: matrix of independent variables.
+ * @R: left-hand restriction matrix, as in Rb = q.
+ * @q: right-hand restriction vector.
+ * @b: vector to hold coefficient estimates.
+ * @vcv: matrix to hold the covariance matrix of the coefficients,
+ * or %NULL if this is not needed.
+ * @uhat: vector to hold residuals, if wanted.
+ * @s2: pointer to receive residual variance, or %NULL.  If vcv is non-%NULL
+ * and s2 is NULL, the vcv estimate is just W^{-1}.
+ *
+ * Computes OLS estimates restricted by R and q, using LU factorization, 
+ * and puts the coefficient estimates in @b.  Optionally, calculates the
+ * covariance matrix in @vcv.
+ * 
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int 
+gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
+			     const gretl_matrix *R, const gretl_vector *q,
+			     gretl_vector *b, gretl_matrix *vcv,
+			     gretl_vector *uhat, double *s2)
+{
+    gretl_matrix *XTX = NULL;
+    gretl_vector *V = NULL;
+    gretl_matrix *W = NULL;
+    gretl_matrix *S = NULL;
+    double x;
+    int k = X->cols;
+    int nr = R->rows;
+    int j, err = 0;
+
+    if (gretl_vector_get_length(b) != k) {
+	fprintf(stderr, "gretl_matrix_restricted_ols: "
+		"b should be a %d-vector\n", k);
+	err = E_NONCONF;
+    }
+
+    if (!err) {
+	err = build_augmented_regression_matrices(y, X, R, q,
+						  &XTX, &V, &W);
+    }
+
     if (!err && vcv != NULL) {
 	S = gretl_matrix_copy(W);
 	if (S == NULL) {
@@ -9233,7 +9263,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (XTX != NULL) gretl_matrix_free(XTX);
-    if (V != NULL) gretl_vector_free(V);
+    if (V != NULL) gretl_matrix_free(V);
     if (W != NULL) gretl_matrix_free(W);
 
     return err;
