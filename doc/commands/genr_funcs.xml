@@ -2992,9 +2992,10 @@
 	  columns.
 	</para>
 	<para>
-	  Estimates are obtained via Cholesky decomposition, with a fallback
-	  to QR decomposition if the columns of <argname>X</argname> are
-	  highly collinear.
+	  By default, estimates are obtained via Cholesky decomposition, with
+	  a fallback to QR decomposition if the columns of
+	  <argname>X</argname> are highly collinear.  The use of SVD
+	  can be forced via the command <lit>set svd on</lit>.
 	</para>
       </description>
     </function>
