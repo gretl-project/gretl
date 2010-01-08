@@ -99,8 +99,15 @@ done
 for f in \
     libgmp-3.dll libmpfr-1.dll libxml2.dll readline5.dll history5.dll \
     zlib1.dll libblas.dll liblapack.dll libgtksourceview.dll \
-    iconv.dll intl.dll libfftw3-3.dll libpng12-0.dll
+    iconv.dll intl.dll libfftw3-3.dll libpng12-0.dll 
 do
+    add_file ${WINFILES}/misc-dll/$f gretl/$f
+done
+
+# GTK/pango dependencies
+for f in \
+    libexpat-1.dll freetype6.dll libfontconfig-1.dll
+do 
     add_file ${WINFILES}/misc-dll/$f gretl/$f
 done
 
