@@ -72,7 +72,6 @@ install-strip: $(SUBDIRS) installdirs install-man
 
 install-man:
 	$(tooldir)/install_man $(tooldir) $(DESTDIR)$(prefix) $(topsrc)/gretl.1 
-	$(tooldir)/install_man $(tooldir) $(DESTDIR)$(prefix) $(topsrc)/gretl-config.1
 
 tags:
 	etags $(topsrc)/lib/src/*.[ch] $(topsrc)/cli/*.[ch] \

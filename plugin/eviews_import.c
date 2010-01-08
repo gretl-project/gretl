@@ -291,7 +291,6 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
 #if 0 /* old approach, seems to be wrong? */
     fseek(fp, 126, SEEK_SET);
     startper = read_short(fp, &err);
-    fprintf(stderr, "at offset 126: got %d (short, old startper)\n", (int) startper);
 #endif
 
     fseek(fp, 128, SEEK_SET);
@@ -309,7 +308,7 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
     analyse_mystery_vals(fp);
 #endif
 
-    if (pd == 1 && startper <= 0) {
+    if (pd == 1) {
 	startper = 0;
     }
 
