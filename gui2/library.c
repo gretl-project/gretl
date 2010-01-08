@@ -2335,12 +2335,12 @@ void do_gini (void)
 void do_qqplot (void)
 {
     const char *opts[] = {
-	N_("standardize the data"),
 	N_("use sample mean and variance for normal quantiles"),
+	N_("standardize the data"),
 	N_("raw quantiles versus N(0, 1)")
     };
     int v = mdata_active_var();
-    gretlopt opt = OPT_N;
+    gretlopt opt = OPT_NONE;
     gchar *title;
     int resp;
 
@@ -2353,7 +2353,7 @@ void do_qqplot (void)
     }
 
     if (resp == 1) {
-	opt |= OPT_A;
+	opt |= OPT_Z;
     } else if (resp == 2) {
 	opt |= OPT_R;
     }
@@ -4670,7 +4670,7 @@ void residual_qq_plot (GtkAction *action, gpointer p)
     if (!err) {
 	int list[2] = {1, origv};
 
-	err = qq_plot(list, (const double **) *pZ, pdinfo, OPT_N);
+	err = qq_plot(list, (const double **) *pZ, pdinfo, OPT_NONE);
 
 	if (err) {
 	    gui_errmsg(err);

@@ -7355,7 +7355,7 @@
       </altforms>
       <options>
 	<option>
-	  <flag>--sample-stats</flag>
+	  <flag>--z-scores</flag>
 	  <effect>see below</effect>
         </option>
         <option>
@@ -7369,26 +7369,26 @@
       <para context="gui">
 	Displays a plot of the empirical quantiles of the selected series
 	against the quantiles of the normal distribution. The series must
-	include at least 20 valid observations in the current sample range.
-	By default the data values are standardized before the empirical
-	quantiles are calculated, but two alternatives are available: the
-	reference normal quantiles may be based on the normal distribution
-	with mean and variance equal to the sample values, or the
-	<quote>raw</quote> empirical quantiles may be plotted against the
-	quantiles of the standard normal distribution.	
+	include at least 20 valid observations in the current sample
+	range. By default the empirical quantiles are plotted against
+	quantiles of the normal distribution having the same mean and
+	variance as the sample data, but two alternatives are available:
+	the data may be standardized (converted to z-scores) before
+	plotting, or the <quote>raw</quote> empirical quantiles may be
+	plotted against the quantiles of the standard normal distribution.
       </para>
       <para context="cli">
 	Given just one series argument, displays a plot of the empirical
-	quantiles of the selected series (given by name or ID number) against
-	the quantiles of the normal distribution. The series must include at
-	least 20 valid observations in the current sample range.  By default
-	the <repl>y</repl> values are standardized before the empirical
-	quantiles are calculated, but two alternatives are available: if the
-	<lit>--sample-stats</lit> option is given the reference quantiles are
-	based on the normal distribution with mean and variance equal to the
-	sample values, while if the <lit>--raw</lit> option is given the
+	quantiles of the selected series (given by name or ID number)
+	against the quantiles of the normal distribution. The series must
+	include at least 20 valid observations in the current sample
+	range. By default the empirical quantiles are plotted against
+	quantiles of the normal distribution having the same mean and
+	variance as the sample data, but two alternatives are available:
+	if the <lit>--z-scores</lit> option is given the data are
+	standardized, while if the <lit>--raw</lit> option is given the
 	<quote>raw</quote> empirical quantiles are plotted against the
-	quantiles of the standard normal distribution.
+	quantiles of the standard normal distribution. 
       </para>
       <para context="cli">
 	Given two series arguments, <repl>y</repl> and <repl>x</repl>,

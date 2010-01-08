@@ -4929,7 +4929,7 @@ static int qq_plot_two_series (const int *list, const double **Z,
 static int normal_qq_plot (const int *list, const double **Z, 
 			   const DATAINFO *pdinfo, gretlopt opt)
 {
-    int zscores = 1;
+    int zscores = 0;
     double ym = 0, ys = 1;
     double p, qx, qy;
     double *y = NULL;
@@ -4949,9 +4949,9 @@ static int normal_qq_plot (const int *list, const double **Z,
 	return err;
     } 
 
-    if (opt & OPT_A) {
-	/* adjust normal quantiles, don't standardize the data */
-	zscores = 0;
+    if (opt & OPT_Z) {
+	/* standardize the data */
+	zscores = 1;
     }
 
     if (!(opt & OPT_R)) {
