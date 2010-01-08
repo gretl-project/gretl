@@ -55,24 +55,6 @@ gtksourceview optional      syntax highlighting for gretl scripts
 
 Notes:
 
-* By default gretl attempts to build against the gtk 2.0
-  libraries.  If you want to prevent this (i.e., if you have gtk 2.0
-  installed but would prefer to build gretl using the traditional gtk
-  1.2) specify the option "--without-gtk2".  This slightly reduces
-  gretl's functionality.
-
-* When gretl is built against gtk 1.2, it looks for an installed
-  version of libole2 to link against; if you want to prevent this,
-  specify the option "--without-libole2".  Then gretl will use the
-  subset of libole2 code supplied in the source package.  This does
-  not reduce gretl's functionality.
-
-* When gretl is built against gtk 1.2, it looks for an installed
-  version of libgtkextra to link against; if you want to prevent this,
-  specify the option "--without-gtkextra".  Then gretl will use the
-  subset of gtkextra code supplied in the source package.  Again, this
-  does not reduce gretl's functionality.
-
 * The gretl configure script looks for the gnome desktop, and arranges
   for gretl to be built with gnome support if gnome is found on your
   system.  If you want to disable this, add the option
@@ -80,10 +62,9 @@ Notes:
 
 * By default, gnome-specific gretl files (e.g. pixmaps, help files,
   the gretl.desktop file) are installed under the prefix that is
-  returned by the command "gnome-config --prefix" (gnome 1.4) or
-  "pkg-config --variable=prefix libgnome-2.0" (gnome 2.0).  This will
-  generally be correct, but if you want to override this behavior you
-  may use the option "--with-gnome-install=DIR" when running
+  returned by the command "pkg-config --variable=prefix libgnome-2.0". 
+  This will generally be correct, but if you want to override this 
+  behavior you may use the option "--with-gnome-install=DIR" when running
   configure. Substitute for "DIR" the prefix you want to use.
 
 * If you want to build gretl without a dependency on GMP, even though
