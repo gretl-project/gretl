@@ -686,7 +686,6 @@ CFLAGS="$orig_CFLAGS"
 AC_OUTPUT([ 
 Makefile 
 gretl_sh
-gretl-config
 gretl.pc 
 gui2/Makefile
 gui2/debug

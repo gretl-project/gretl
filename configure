@@ -19688,7 +19688,7 @@ _ACEOF
 
 
 CFLAGS="$orig_CFLAGS"
-ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gretl.pc gui2/Makefile gui2/debug gui2/gtksourceview/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug gui2/gtksourceview/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -20561,7 +20561,6 @@ do
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "gretl_sh") CONFIG_FILES="$CONFIG_FILES gretl_sh" ;;
-    "gretl-config") CONFIG_FILES="$CONFIG_FILES gretl-config" ;;
     "gretl.pc") CONFIG_FILES="$CONFIG_FILES gretl.pc" ;;
     "gui2/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/Makefile" ;;
     "gui2/debug") CONFIG_FILES="$CONFIG_FILES gui2/debug" ;;
@@ -22865,7 +22864,6 @@ do
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "gretl_sh") CONFIG_FILES="$CONFIG_FILES gretl_sh" ;;
-    "gretl-config") CONFIG_FILES="$CONFIG_FILES gretl-config" ;;
     "gretl.pc") CONFIG_FILES="$CONFIG_FILES gretl.pc" ;;
     "gui2/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/Makefile" ;;
     "gui2/debug") CONFIG_FILES="$CONFIG_FILES gui2/debug" ;;
