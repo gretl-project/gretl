@@ -29,6 +29,8 @@
 # include "swap_bytes.h"
 #endif
 
+#define EDEBUG 0
+
 #define WF1_NA 1e-37
 
 static void bin_error (int *err)
@@ -240,7 +242,7 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
     return err;
 }
 
-#if 0
+#if EDEBUG
 
 static void analyse_mystery_vals (FILE *fp)
 {
@@ -286,9 +288,10 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
     fseek(fp, 124, SEEK_SET);
     pd = read_short(fp, &err);
 
-#if 0
+#if 0 /* old approach, seems to be wrong? */
     fseek(fp, 126, SEEK_SET);
     startper = read_short(fp, &err);
+    fprintf(stderr, "at offset 126: got %d (short, old startper)\n", (int) startper);
 #endif
 
     fseek(fp, 128, SEEK_SET);
@@ -302,27 +305,39 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
     fseek(fp, 140, SEEK_SET);
     nobs = read_int(fp, &err);
 
-#if 0
+#if EDEBUG
     analyse_mystery_vals(fp);
 #endif
+
+    if (pd == 1 && startper <= 0) {
+	startper = 0;
+    }
 
     if (nvars <= 2 || nobs <= 0 || startyr <= 0 ||
 	pd <= 0 || startper < 0) {
 	err = E_DATA;
+	fprintf(stderr, "header info:\n"
+		" nvars = %d\n"
+		" nobs = %d\n"
+		" pd = %d\n"
+		" starting year or major = %d\n"
+		" starting sub-period or minor = %d\n",
+		nvars, nobs, (int) pd,
+		startyr, (int) startper);
     } else {
 	dinfo->v = nvars - 2; /* skip C and RESID */
 	dinfo->n = nobs;
 	dinfo->pd = pd;
-    }
 
-    fprintf(stderr, "header info:\n"
-	    " number of variables = %d\n"
-	    " number of observations = %d\n"
-	    " data frequency = %d\n"
-	    " starting year or major = %d\n"
-	    " starting sub-period or minor = %d\n",
-	    dinfo->v, dinfo->n, dinfo->pd,
-	    startyr, startper);
+	fprintf(stderr, "header info:\n"
+		" number of variables = %d\n"
+		" number of observations = %d\n"
+		" data frequency = %d\n"
+		" starting year or major = %d\n"
+		" starting sub-period or minor = %d\n",
+		dinfo->v, dinfo->n, dinfo->pd,
+		startyr, (int) startper);
+    }
 
     if (!err) {
 	if (startper > 0) {
