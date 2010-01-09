@@ -70,19 +70,20 @@ static int VAR_add_models (GRETL_VAR *var, const DATAINFO *pdinfo)
 
 static int VAR_add_companion_matrix (GRETL_VAR *var)
 {
-    int g = var->neqns;
-    int n = g * effective_order(var);
-    int i, j, err = 0;
+    int n, i, j, err = 0;
 
     if (var->A != NULL) {
 	return 0;
     }
+
+    n = var->neqns * effective_order(var);
 
     var->A = gretl_matrix_alloc(n, n);
 
     if (var->A == NULL) {
 	err = E_ALLOC;
     } else {
+	int g = var->neqns;
 	double x;
 
 	for (i=g; i<n; i++) {
@@ -96,26 +97,25 @@ static int VAR_add_companion_matrix (GRETL_VAR *var)
     return err;
 }
 
-static int VAR_add_cholesky_matrix (GRETL_VAR *var)
+static int VAR_allocate_cholesky_matrix (GRETL_VAR *var)
 {
-    int n = var->neqns * effective_order(var);
-    int err = 0;
+    int n, err = 0;
 
     if (var->C != NULL) {
 	return 0;
-    }    
+    } 
 
-    var->C = gretl_matrix_alloc(n, var->neqns);
+    n = var->neqns * effective_order(var);
+
+    var->C = gretl_zero_matrix_new(n, var->neqns);
     if (var->C == NULL) {
 	err = E_ALLOC;
-    } else {
-	gretl_matrix_zero(var->C);
-    }
+    } 
 
     return err;
 }
 
-static int VAR_add_residuals_matrix (GRETL_VAR *var)
+static int VAR_allocate_residuals_matrix (GRETL_VAR *var)
 {
     int err = 0;
 
@@ -123,7 +123,7 @@ static int VAR_add_residuals_matrix (GRETL_VAR *var)
 	return 0;
     }      
 
-    var->E = gretl_matrix_alloc(var->T, var->neqns);
+    var->E = gretl_zero_matrix_new(var->T, var->neqns);
     if (var->E == NULL) {
 	err = E_ALLOC;
     } 
@@ -131,7 +131,7 @@ static int VAR_add_residuals_matrix (GRETL_VAR *var)
     return err;
 }
 
-static int VAR_add_vcv_matrix (GRETL_VAR *var)
+static int VAR_allocate_vcv_matrix (GRETL_VAR *var)
 {
     int k, err = 0;
 
@@ -141,10 +141,29 @@ static int VAR_add_vcv_matrix (GRETL_VAR *var)
 
     k = var->ncoeff * var->neqns;
 
-    var->vcv = gretl_matrix_alloc(k, k);
+    var->vcv = gretl_zero_matrix_new(k, k);
     if (var->vcv == NULL) {
 	err = E_ALLOC;
     } 
+
+    return err;
+}
+
+static int VAR_add_XTX_matrix (GRETL_VAR *var)
+{
+    int k = var->X->cols;
+    int err = 0;
+
+    var->XTX = gretl_zero_matrix_new(k, k);
+
+    if (var->XTX == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_multiply_mod(var->X, GRETL_MOD_TRANSPOSE,
+				  var->X, GRETL_MOD_NONE,
+				  var->XTX, GRETL_MOD_NONE);
+	err = gretl_invert_matrix(var->XTX);
+    }
 
     return err;
 }
@@ -673,11 +692,11 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     }
 
     if (!err && var->ci == VAR) {
-	err = VAR_add_cholesky_matrix(var);
+	err = VAR_allocate_cholesky_matrix(var);
     }
 
     if (!err && var->ci == VAR) {
-	err = VAR_add_vcv_matrix(var);
+	err = VAR_allocate_vcv_matrix(var);
     }
 
     if (!err && code != VAR_LAGSEL) {
@@ -1810,7 +1829,7 @@ static int VAR_add_stats (GRETL_VAR *var)
 	gretl_matrix_multiply_mod(var->E, GRETL_MOD_TRANSPOSE,
 				  var->E, GRETL_MOD_NONE,
 				  var->S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(var->S, var->T); /* OK, for ldet? */
+	gretl_matrix_divide_by_scalar(var->S, var->T); /* or df? */
     }
 
     if (!err) {
@@ -2527,10 +2546,10 @@ static int jvar_check_allocation (GRETL_VAR *v, const DATAINFO *pdinfo)
 	err = VAR_add_companion_matrix(v);
     }
     if (!err) {
-	err = VAR_add_cholesky_matrix(v);
+	err = VAR_allocate_cholesky_matrix(v);
     }
     if (!err) {
-	err = VAR_add_residuals_matrix(v);
+	err = VAR_allocate_residuals_matrix(v);
     }
 
     return err;
@@ -3489,24 +3508,27 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     double x;
     int gotA = (var->A != NULL);
     int gotX = (var->X != NULL);
-    int gotV = (var->vcv != NULL);
     int j, i;
     int err = 0;
 
     if (var->E == NULL) {
-	err = VAR_add_residuals_matrix(var);
+	err = VAR_allocate_residuals_matrix(var);
     }
 
     if (!err && var->A == NULL) {
 	err = VAR_add_companion_matrix(var);
     }
 
+    if (!err && gotX && var->XTX == NULL) {
+	err = VAR_add_XTX_matrix(var);
+    }     
+
     if (!err && var->vcv == NULL) {
-	err = VAR_add_vcv_matrix(var);
+	err = VAR_allocate_vcv_matrix(var);
     } 
 
     if (!err && var->C == NULL) {
-	err = VAR_add_cholesky_matrix(var);
+	err = VAR_allocate_cholesky_matrix(var);
     } 
 
     if (!err && var->B == NULL) {
@@ -3539,10 +3561,6 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     if (!err && !gotX) {
 	fprintf(stderr, "Can't we rebuild VAR->X somehow?\n");
     }    
-
-    if (!err && !gotV) {
-	VAR_write_vcv_matrix(var);
-    }
 
     return err;
 }
@@ -3661,8 +3679,11 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
     }
 
     if (!*err) {
-	/* covariance matrix and related things */
 	*err = VAR_add_stats(var);
+    }
+
+    if (!*err) {
+	VAR_write_vcv_matrix(var);
     }
 
     if (!*err) {
