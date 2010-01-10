@@ -2,13 +2,13 @@
 # #-#-#-#-#  ru.po (ru)  #-#-#-#-#
 # Alexander B. Gedranovich <gedranovich@gmail.com>, 2008, 2009.
 # moradan, 2008.
-# Alexander Gedranovich, 2009.
+# Alexander Gedranovich, 2009, 2010.
 msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-06 17:43-0500\n"
-"PO-Revision-Date: 2009-12-27 13:42+0200\n"
+"PO-Revision-Date: 2010-01-11 00:58+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:245
 msgid "lagged differences"
@@ -251,9 +251,8 @@ msgid "bootstrap coefficient"
 msgstr "бутстреп коэффициента"
 
 #: lib/src/bootstrap.c:872
-#, fuzzy
 msgid "bootstrap test"
-msgstr "бутстреп F-теста"
+msgstr "бутстреп тест"
 
 #: lib/src/boxplots.c:159 gui2/gpt_control.c:3085 gui2/gpt_control.c:3162
 msgid "Numerical summary"
@@ -5205,6 +5204,8 @@ msgstr "Регрессионная функция не была определе
 #: lib/src/nls.c:2683
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
 msgstr ""
+"Нельзя одновременно указать значения параметров (\"params\") и аналитические "
+"производные"
 
 #: lib/src/nls.c:2693
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
@@ -5353,7 +5354,7 @@ msgstr "Разница медиан равна нулю"
 
 #: lib/src/nonparam.c:982
 msgid "zero differences"
-msgstr ""
+msgstr "нулевые разницы"
 
 #: lib/src/nonparam.c:983
 msgid "non-zero ties"
@@ -6047,7 +6048,7 @@ msgstr "Тип"
 
 #: lib/src/subsample.c:2122 lib/src/subsample.c:2144 gui2/datawiz.c:1227
 msgid "Number of cross-sectional units"
-msgstr ""
+msgstr "Количество кросс-секционных наблюдений"
 
 #: lib/src/subsample.c:2123 lib/src/subsample.c:2145 gui2/datawiz.c:1228
 msgid "Number of time periods"
@@ -7685,7 +7686,7 @@ msgstr ""
 #: gui2/datafiles.c:871
 #, c-format
 msgid "Found %d function file(s)"
-msgstr ""
+msgstr "Найдено %d файлов с функциями"
 
 #: gui2/datafiles.c:877
 msgid "No function files were found"
@@ -9523,9 +9524,8 @@ msgid "_Import"
 msgstr "_Импорт"
 
 #: gui2/gretl.c:1267 gui2/gretl.c:1280
-#, fuzzy
 msgid "_text/CSV..."
-msgstr "_CSV..."
+msgstr "_Текст/CSV..."
 
 #: gui2/gretl.c:1268 gui2/gretl.c:1281 gui2/gretl.c:1300
 msgid "_Octave..."
@@ -9854,7 +9854,7 @@ msgstr "_Скалярные величины"
 
 #: gui2/gretl.c:1386
 msgid "_Windows"
-msgstr ""
+msgstr "_Окна"
 
 #: gui2/gretl.c:1387
 msgid "_Graph specified vars"
@@ -9889,9 +9889,8 @@ msgid "_Notched boxplots..."
 msgstr "Коробчатая диаграмма с _меткой"
 
 #: gui2/gretl.c:1395
-#, fuzzy
 msgid "_Q-Q plot..."
-msgstr "_3D график..."
+msgstr "_Q-Q график..."
 
 #: gui2/gretl.c:1396
 msgid "_3D plot..."
@@ -10046,9 +10045,8 @@ msgid "Estimated _density plot..."
 msgstr "График _ядерной оценки плотности..."
 
 #: gui2/gretl.c:1449
-#, fuzzy
 msgid "Normal _Q-Q plot..."
-msgstr "_3D график..."
+msgstr "_Нормализованный Q-Q график..."
 
 #: gui2/gretl.c:1450
 msgid "_Gini coefficient"
@@ -10983,9 +10981,8 @@ msgid "Residual _spectrum"
 msgstr "_Спектр остатков"
 
 #: gui2/gui_utils.c:2441
-#, fuzzy
 msgid "Residual _Q-Q plot"
-msgstr "_График остатков"
+msgstr "_Q-Q график остатков"
 
 #: gui2/gui_utils.c:2461
 #, c-format
@@ -11465,7 +11462,7 @@ msgstr "gretl: информация о пропусках"
 
 #: gui2/library.c:1405
 msgid "Export the markers to file"
-msgstr ""
+msgstr "Экспортировать маркеры в файл"
 
 #: gui2/library.c:1406
 msgid "Remove the markers"
@@ -11560,27 +11557,24 @@ msgid "Gini coefficient"
 msgstr "Коэффициент Джини"
 
 #: gui2/library.c:2338
-#, fuzzy
 msgid "standardize the data"
-msgstr "Стандартизировать остатки"
+msgstr "Стандартизировать данные"
 
 #: gui2/library.c:2339
-#, fuzzy
 msgid "use sample mean and variance for normal quantiles"
-msgstr "Выборочная дисперсия совпадает с генеральной"
+msgstr "Использовать выборочное среднее и дисперсию для нормальных квантилей"
 
 #: gui2/library.c:2340
 msgid "raw quantiles versus N(0, 1)"
 msgstr ""
 
 #: gui2/library.c:2347
-#, fuzzy
 msgid "Q-Q plot"
-msgstr "3D график"
+msgstr "Q-Q график"
 
 #: gui2/library.c:2348
 msgid "Normal Q-Q plot"
-msgstr ""
+msgstr "Нормальный Q-Q график"
 
 #: gui2/library.c:2446
 msgid "This test only implemented for OLS models"
@@ -13455,7 +13449,7 @@ msgstr ""
 
 #: gui2/settings.c:2361
 msgid "remember the last-opened folder"
-msgstr ""
+msgstr "Запомнить последнюю открытую папку"
 
 #: gui2/settings.c:2370
 msgid "always start in the working directory"
@@ -13527,7 +13521,7 @@ msgstr ""
 
 #: gui2/ssheet.c:854
 msgid "gretl: case marker"
-msgstr ""
+msgstr "gretl: маркеры"
 
 #: gui2/ssheet.c:855
 msgid ""
@@ -13872,7 +13866,7 @@ msgstr "Справка по команде"
 
 #: gui2/toolbar.c:637
 msgid "Windows"
-msgstr ""
+msgstr "Окна"
 
 #: gui2/toolbar.c:1031
 msgid "launch calculator"
@@ -14286,9 +14280,8 @@ msgid "eigenvalue"
 msgstr "собственное значение"
 
 #: plugin/johansen.c:1427
-#, fuzzy
 msgid "Exogenous regressor(s)"
-msgstr "Экзогенные переменные"
+msgstr "Экзогенные регрессоры"
 
 #: plugin/johansen.c:1471
 msgid "Eigenvalue"
@@ -14349,7 +14342,7 @@ msgstr "Пользовательские начальные значения"
 #: plugin/jrestrict.c:1817
 #, c-format
 msgid "Rank of Jacobian = %d, number of free parameters = %d\n"
-msgstr ""
+msgstr "Ранг Якобиана = %d, количество свободных параметров = %d\n"
 
 #: plugin/jrestrict.c:1820
 msgid "Model is not fully identified\n"
@@ -14362,7 +14355,7 @@ msgstr "Модель полностью идентифицируема\n"
 #: plugin/jrestrict.c:1829
 #, c-format
 msgid "Based on Jacobian, df = %d\n"
-msgstr ""
+msgstr "Основан на Якобиане, df = %d\n"
 
 #: plugin/jrestrict.c:2752
 msgid "loglikelihood"
@@ -14579,9 +14572,8 @@ msgid "slope of range against mean = %g\n"
 msgstr "Угловой коэффициент (разброс от среднего) = %g\n"
 
 #: plugin/range-mean.c:211
-#, fuzzy
 msgid "range-mean test"
-msgstr "График разброс-среднее для"
+msgstr "Тест разброс-среднее"
 
 #: plugin/range-mean.c:213
 #, c-format
