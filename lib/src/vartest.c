@@ -182,74 +182,12 @@ int VAR_portmanteau_test (GRETL_VAR *var)
     return err;
 }
 
-/* identify columns of the VAR X matrix that contain the final
-   lag of an endogenous variable */
-
-static int omit_column (GRETL_VAR *var, int ifc, int nl, int j)
+int VAR_LR_lag_test (GRETL_VAR *var, const gretl_matrix *E)
 {
-    if (ifc) {
-	return j % nl == 0 && j < 1 + var->neqns * nl;
-    } else {
-	return (j+1) % nl == 0 && j < var->neqns * nl;
-    }
-}
-
-/* make and record residuals for LR test on last lag */
-
-int last_lag_LR_prep (GRETL_VAR *var, int ifc)
-{
-    gretl_matrix *X = NULL;
-    gretl_matrix *B = NULL;
-    double x;
-    int g = var->ncoeff - var->neqns; /* removing one lag from each eqn */
-    int j, t, k, nl;
+    double test_ldet;
     int err = 0;
 
-    if (var->F == NULL) {
-	var->F = gretl_matrix_alloc(var->T, var->neqns);
-	if (var->F == NULL) {
-	    return E_ALLOC;
-	}
-    }   
-
-    X = gretl_matrix_alloc(var->T, g);
-    B = gretl_matrix_alloc(g, var->neqns);
-    if (X == NULL || B == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    nl = var_n_lags(var);
-
-    k = 0;
-    for (j=0; j<var->ncoeff; j++) {
-	/* loop across the cols of var->X */
-	if (j > 0 && omit_column(var, ifc, nl, j)) {
-	    continue;
-	}
-	for (t=0; t<var->T; t++) {
-	    x = gretl_matrix_get(var->X, t, j);
-	    gretl_matrix_set(X, t, k, x);
-	}
-	k++;
-    }
-
-    err = gretl_matrix_multi_ols(var->Y, X, B, var->F, NULL);
-
- bailout:
-
-    gretl_matrix_free(X);
-    gretl_matrix_free(B);
-
-    return err;
-}
-
-int VAR_LR_lag_test (GRETL_VAR *var)
-{
-    double ldet;
-    int err = 0;
-
-    ldet = gretl_VAR_ldet(var, &err);
+    test_ldet = gretl_VAR_ldet(var, E, &err);
 
     if (!err) {
 	double ll, AIC, BIC, HQC;
@@ -258,9 +196,9 @@ int VAR_LR_lag_test (GRETL_VAR *var)
 	int m = var->ncoeff - g;
 	int k = g * m;
 
-	var->LR = T * (ldet - var->ldet);
+	var->LR = T * (test_ldet - var->ldet);
 
-	ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
+	ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * test_ldet;
 	AIC = (-2.0 * ll + 2.0 * k) / T;
 	BIC = (-2.0 * ll + k * log(T)) / T;
 	HQC = (-2.0 * ll + 2.0 * k * log(log(T))) / T;
@@ -268,10 +206,6 @@ int VAR_LR_lag_test (GRETL_VAR *var)
 	var->Ivals[1] = BIC;
 	var->Ivals[2] = HQC;
     }
-
-    /* we're done with this set of residuals */
-    gretl_matrix_free(var->F);
-    var->F = NULL;
 
     return err;
 }
@@ -326,12 +260,11 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
 {
     gretl_matrix *crittab = NULL;
     gretl_matrix *lltab = NULL;
-
+    gretl_matrix *E = NULL;
     int p = var->order;
     int r = p - 1;
     int T = var->T;
     int n = var->neqns;
-
     /* initialize the "best" at the longest lag */
     double best[N_IVALS] = { var->AIC, var->BIC, var->HQC };
     int best_row[N_IVALS] = { r, r, r };
@@ -346,12 +279,8 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
 	return 0;
     }
 
-    if (var->F != NULL) {
-	gretl_matrix_free(var->F);
-    }
-
-    var->F = gretl_matrix_alloc(T, n);
-    if (var->F == NULL) {
+    E = gretl_matrix_alloc(T, n);
+    if (E == NULL) {
 	return E_ALLOC;
     }
 
@@ -374,10 +303,10 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
 	gretl_matrix_reuse(var->B, jxcols, n);
 
 	err = gretl_matrix_multi_ols(var->Y, var->X, var->B, 
-				     var->F, NULL);
+				     E, NULL);
 
 	if (!err) {
-	    ldet = gretl_VAR_ldet(var, &err);
+	    ldet = gretl_VAR_ldet(var, E, &err);
 	}
 
 	if (!err) {
@@ -424,9 +353,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
 
     gretl_matrix_free(crittab);
     gretl_matrix_free(lltab);
-
-    gretl_matrix_free(var->F);
-    var->F = NULL;
+    gretl_matrix_free(E);
 
     return err;
 }
@@ -485,7 +412,7 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
    covariance matrix to hand.
 */
 
-int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
+int VAR_wald_omit_tests (GRETL_VAR *var)
 {
     gretl_matrix *V = NULL;
     gretl_matrix *C = NULL;
@@ -498,7 +425,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
     int i, j, k, m = 0;
     int err = 0;
 
-    if (ifc && var->robust && g - 1 > dim) {
+    if (var->ifc && var->robust && g - 1 > dim) {
 	/* need bigger arrays for robust overall F-test */
 	dim = g - 1;
     }
@@ -513,7 +440,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
 
     for (i=0; i<var->neqns && !err; i++) {
 	MODEL *pmod = var->models[i];
-	int ii, jj, jpos, ipos = ifc;
+	int ii, jj, jpos, ipos = var->ifc;
 	double w, vij;
 
 	gretl_matrix_reuse(V, g, g);
@@ -562,9 +489,9 @@ int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
 	    gretl_matrix_reuse(C, n, n);
 	    gretl_matrix_reuse(b, n, 1);
 
-	    ipos = ifc + p - 1;
+	    ipos = var->ifc + p - 1;
 	    for (ii=0; ii<n; ii++) {
-		jpos = ifc + p - 1;
+		jpos = var->ifc + p - 1;
 		for (jj=0; jj<n; jj++) {
 		    vij = gretl_matrix_get(V, ipos, jpos);
 		    gretl_matrix_set(C, ii, jj, vij);
@@ -585,7 +512,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
 
 	/* exclusion of all but const? */
 
-	if (ifc && var->robust) {
+	if (var->ifc && var->robust) {
 	    gretl_matrix_reuse(C, g-1, g-1);
 	    gretl_matrix_reuse(b, g-1, 1);
 

@@ -939,6 +939,8 @@ static double real_get_obj_scalar (void *p, GretlObjType type,
 
 	if (idx == M_T) {
 	    x = var->T;
+	} else if (idx == M_DF) {
+	    x = var->df;
 	} else if (idx == M_LNL) {
 	    x = var->ll;
 	} else if (idx == M_AIC) {

@@ -1388,18 +1388,11 @@ int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *evals)
 
 static int vecm_ll_stats (GRETL_VAR *vecm)
 {
-    gretl_matrix *S;
     int T = vecm->T;
     int g = vecm->neqns;
     int k = g * (vecm->order + 1); /* FIXME gappy */
 
-    S = gretl_matrix_copy(vecm->S);
-    if (S == NULL) {
-	return E_ALLOC;
-    } 
-
-    vecm->ldet = gretl_vcv_log_determinant(S);
-    gretl_matrix_free(S);
+    vecm->ldet = gretl_vcv_log_determinant(vecm->S);
 
     k += vecm->jinfo->seasonals;
 
@@ -1882,28 +1875,40 @@ static int get_unrestricted_ll (GRETL_VAR *jvar)
     return err;
 }
 
+#define USE_DF_FOR_S 0
+
 /* add covariance matrix for parameter estimates after estimation
    via OLS conditional on \beta */
 
-static int vecm_add_vcv (GRETL_VAR *jvar)
+static int vecm_add_vcv (GRETL_VAR *v)
 {
+#if USE_DF_FOR_S
+    double cfac;
+#endif
     int err = 0;
 
-    if (jvar->S == NULL || jvar->XTX == NULL) {
+    if (v->S == NULL || v->XTX == NULL) {
 	return 0;
     }
 
-    if (jvar->vcv != NULL) {
-	gretl_matrix_free(jvar->vcv);
+    if (v->vcv != NULL) {
+	gretl_matrix_free(v->vcv);
     }
 
-    jvar->vcv = gretl_matrix_kronecker_product_new(jvar->S, jvar->XTX, &err);
+#if USE_DF_FOR_S
+    cfac = v->T / (double) v->df;
+    gretl_matrix_multiply_by_scalar(v->S, cfac);
+#endif
 
+    v->vcv = gretl_matrix_kronecker_product_new(v->S, v->XTX, &err);
+
+#if !USE_DF_FOR_S
     if (!err) {
-	double cfac = jvar->T / (double) jvar->df;
+	double cfac = v->T / (double) v->df;
 
-	gretl_matrix_multiply_by_scalar(jvar->vcv, cfac);
+	gretl_matrix_multiply_by_scalar(v->vcv, cfac);
     }
+#endif
 
     return err;
 }
@@ -1943,16 +1948,16 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 	}
     }
 
-    if (!err && estimate_alpha(flags)) {
-	err = vecm_add_vcv(jvar);
-    }
-
     if (!err) {
 	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
     }
 
     if (!err) {
 	err = vecm_ll_stats(jvar);
+    }
+
+    if (!err && estimate_alpha(flags)) {
+	err = vecm_add_vcv(jvar);
     }
 
     return err;

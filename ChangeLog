@@ -8,6 +8,8 @@ version 1.8.7, in progress
 - "rmplot" command: save $test and $pvalue
 - "restrict" with --bootstrap option: record $test and
   $pvalue
+- VECMs: enable $vcv accessor
+- VARs and VECMs: enable $df accessor
 - Fix bug: crash on error in user_matrix_ols()
 - Fix bug: "append" for data should work in more cases
 - Fix bug: saving a model when there is already a saved

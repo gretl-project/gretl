@@ -31,7 +31,7 @@
 #define VDEBUG 0
 
 enum {
-    VAR_ESTIMATE,
+    VAR_ESTIMATE = 1,
     VAR_LAGSEL,
     VECM_ESTIMATE,
     VECM_CTEST
@@ -309,6 +309,9 @@ void VAR_fill_X (GRETL_VAR *v, int p, const double **Z,
 	k++;
     }
 
+    gretl_matrix_set_t1(v->X, v->t1);
+    gretl_matrix_set_t2(v->X, v->t2);
+
 #if VDEBUG
     gretl_matrix_print(v->X, "X");
 #endif
@@ -355,7 +358,10 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const double **Z)
 	    }
 	    k++;
 	}
-    }    
+    }  
+
+    gretl_matrix_set_t1(v->Y, v->t1);
+    gretl_matrix_set_t2(v->Y, v->t2);
 
 #if VDEBUG
     gretl_matrix_print(v->Y, "Y");
@@ -1792,7 +1798,10 @@ const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var, int *err)
     return var->L;
 }
 
-double gretl_VAR_ldet (GRETL_VAR *var, int *err)
+/* used in context of LR tests: see vartest.c */
+
+double gretl_VAR_ldet (GRETL_VAR *var, const gretl_matrix *E,
+		       int *err)
 {
     gretl_matrix *S = NULL;
     double ldet = NADBL;
@@ -1802,8 +1811,8 @@ double gretl_VAR_ldet (GRETL_VAR *var, int *err)
     if (S == NULL) {
 	*err = E_ALLOC;
     } else {
-	gretl_matrix_multiply_mod(var->F, GRETL_MOD_TRANSPOSE,
-				  var->F, GRETL_MOD_NONE,
+	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+				  E, GRETL_MOD_NONE,
 				  S, GRETL_MOD_NONE);
 	gretl_matrix_divide_by_scalar(S, var->T); /* or var->df? */
 	ldet = gretl_vcv_log_determinant(S);
@@ -1816,9 +1825,78 @@ double gretl_VAR_ldet (GRETL_VAR *var, int *err)
     return ldet;
 }
 
-static int VAR_add_stats (GRETL_VAR *var)
+/* identify columns of the VAR X matrix that contain the final
+   lag of an endogenous variable */
+
+static int omit_column (GRETL_VAR *var, int nl, int j)
 {
+    if (var->ifc) {
+	return j % nl == 0 && j < 1 + var->neqns * nl;
+    } else {
+	return (j+1) % nl == 0 && j < var->neqns * nl;
+    }
+}
+
+/* make and record residuals for LR test on last lag */
+
+static gretl_matrix *VAR_short_residuals (GRETL_VAR *var, int *err)
+{
+    gretl_matrix *X = NULL;
+    gretl_matrix *B = NULL;
+    gretl_matrix *E = NULL;
+    double x;
+    /* note: removing one lag from each equation */
+    int g = var->ncoeff - var->neqns;
+    int j, t, k, nl;
+
+    E = gretl_matrix_alloc(var->T, var->neqns);
+    X = gretl_matrix_alloc(var->T, g);
+    B = gretl_matrix_alloc(g, var->neqns);
+
+    if (E == NULL || X == NULL || B == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    nl = var_n_lags(var);
+
+    k = 0;
+    for (j=0; j<var->ncoeff; j++) {
+	/* loop across the cols of var->X */
+	if (j > 0 && omit_column(var, nl, j)) {
+	    continue;
+	}
+	for (t=0; t<var->T; t++) {
+	    x = gretl_matrix_get(var->X, t, j);
+	    gretl_matrix_set(X, t, k, x);
+	}
+	k++;
+    }
+
+    /* put residuals from "short" estimation into E */
+    *err = gretl_matrix_multi_ols(var->Y, X, B, E, NULL);
+
+ bailout:
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(B);
+    
+    if (*err) {
+	gretl_matrix_free(E);
+	E = NULL;
+    }
+
+    return E;
+}
+
+static int VAR_add_stats (GRETL_VAR *var, int code)
+{
+    gretl_matrix *E1 = NULL;
     int err = 0;
+
+    if (var->order > 1 && code == VAR_ESTIMATE) {
+	E1 = VAR_short_residuals(var, &err);
+    }
 
     var->S = gretl_matrix_alloc(var->neqns, var->neqns);
     if (var->S == NULL) {
@@ -1829,15 +1907,19 @@ static int VAR_add_stats (GRETL_VAR *var)
 	gretl_matrix_multiply_mod(var->E, GRETL_MOD_TRANSPOSE,
 				  var->E, GRETL_MOD_NONE,
 				  var->S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(var->S, var->T); /* or df? */
+	/* for computing log-determinant, don't apply df
+	   correction (?) */
+	gretl_matrix_divide_by_scalar(var->S, var->T);
     }
 
     if (!err) {
+	double cfac = var->T / (double) var->df;
+
 	var->ldet = gretl_vcv_log_determinant(var->S);
 	if (na(var->ldet)) {
 	    err = 1;
 	}
-	gretl_matrix_multiply_by_scalar(var->S, var->T / var->df);
+	gretl_matrix_multiply_by_scalar(var->S, cfac);
     }    
 
     if (!err) {
@@ -1852,8 +1934,11 @@ static int VAR_add_stats (GRETL_VAR *var)
 	var->HQC = (-2.0 * var->ll + 2.0 * k * log(log(T))) / T;
     }
 
-    if (!err && var->F != NULL) {
-	VAR_LR_lag_test(var);
+    if (E1 != NULL) {
+	if (!err) {
+	    VAR_LR_lag_test(var, E1);
+	}
+	gretl_matrix_free(E1);
     }
 
     if (!err) {
@@ -1950,31 +2035,11 @@ static void VAR_write_vcv_matrix (GRETL_VAR *v)
 {
     if (v->S != NULL && v->XTX != NULL && v->vcv != NULL) {
 	gretl_matrix_kronecker_product(v->S, v->XTX, v->vcv);
+    } else if (v->vcv != NULL) {
+	/* destroy invalid matrix */
+	gretl_matrix_free(v->vcv);
+	v->vcv = NULL;
     }
-}
-
-static int VAR_finalize (GRETL_VAR *var)
-{
-    int err = 0;
-
-    VAR_write_A_matrix(var);
-
-    err = VAR_wald_omit_tests(var, var->ifc);
-
-    if (!err && var->order > 1) {
-	err = last_lag_LR_prep(var, var->ifc);
-    }
-
-    if (!err) {
-	err = VAR_add_stats(var);
-	VAR_write_vcv_matrix(var);
-    }
-
-    if (!err) {
-	err = gretl_VAR_do_error_decomp(var->S, var->C);
-    }
-
-    return err;
 }
 
 static int VAR_depvar_name (GRETL_VAR *var, int i, const char *yname)
@@ -2158,15 +2223,29 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 
     if (!*err) {
 	if (code == VAR_LAGSEL) {
-	    *err = VAR_add_stats(var);
+	    /* doing lag-length selection */
+	    *err = VAR_add_stats(var, code);
 	    if (!*err) {
 		*err = VAR_do_lagsel(var, Z, pdinfo, prn);
 	    }
 	} else {
+	    /* regular VAR estimation */
 	    *err = transcribe_VAR_models(var, Z, pdinfo, NULL);
+
 	    if (!*err) {
-		*err = VAR_finalize(var);
+		VAR_write_A_matrix(var);
+		*err = VAR_wald_omit_tests(var);
 	    }
+
+	    if (!*err) {
+		*err = VAR_add_stats(var, code);
+		VAR_write_vcv_matrix(var);
+	    }
+
+	    if (!*err) {
+		*err = gretl_VAR_do_error_decomp(var->S, var->C);
+	    }
+
 	    if (!*err) {
 		gretl_VAR_print(var, pdinfo, opt, prn);
 	    }
@@ -3206,6 +3285,8 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     } else if (idx == M_COEFF || idx == M_SE) {
 	M = VAR_matrix_from_models(var, idx, err);
 	copy = 0;
+    } else if (idx == M_XTXINV) {
+	src = var->XTX;
     } else if (idx == M_VCV) {
 	src = var->vcv;
     } else if (idx == M_SIGMA) {
@@ -3679,10 +3760,7 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
     }
 
     if (!*err) {
-	*err = VAR_add_stats(var);
-    }
-
-    if (!*err) {
+	*err = VAR_add_stats(var, 0);
 	VAR_write_vcv_matrix(var);
     }
 

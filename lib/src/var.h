@@ -52,7 +52,7 @@ struct GRETL_VAR_ {
     gretl_matrix *Y;     /* matrix of dependent variables */
     gretl_matrix *X;     /* matrix of independent variables */
     gretl_matrix *B;     /* basic coefficient matrix */
-    gretl_matrix *XTX;   /* X'X */
+    gretl_matrix *XTX;   /* X'X inverse */
     gretl_matrix *A;     /* augmented coefficient matrix (companion form) */
     gretl_matrix *L;     /* lambda: inverse roots of A(L) polynomial */
     gretl_matrix *E;     /* residuals matrix */
