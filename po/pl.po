@@ -1,15 +1,15 @@
 # Polish translation for gretl-1.8.6cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2009
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2009
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2009
+# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2010
+# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2010
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2010
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.8.5\n"
+"Project-Id-Version: gretl-1.8.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-06 17:43-0500\n"
-"PO-Revision-Date: 2009-12-07 10:30-0400\n"
+"PO-Revision-Date: 2010-01-11 02:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -236,9 +236,8 @@ msgid "bootstrap coefficient"
 msgstr "bootstarpowy współczynnik"
 
 #: lib/src/bootstrap.c:872
-#, fuzzy
 msgid "bootstrap test"
-msgstr "bootstrapowy test F"
+msgstr "bootstrapowy test"
 
 #: lib/src/boxplots.c:159 gui2/gpt_control.c:3085 gui2/gpt_control.c:3162
 msgid "Numerical summary"
@@ -1312,7 +1311,7 @@ msgstr "Wśród zmiennych do zapisu %d zmienne występują w bazie danych."
 
 #: lib/src/describe.c:1102
 msgid "Insufficient data"
-msgstr ""
+msgstr "Nieodpowiednie dane"
 
 #: lib/src/describe.c:1554 lib/src/describe.c:1658
 #, c-format
@@ -9570,9 +9569,8 @@ msgid "_Import"
 msgstr "_Import"
 
 #: gui2/gretl.c:1267 gui2/gretl.c:1280
-#, fuzzy
 msgid "_text/CSV..."
-msgstr "_CSV..."
+msgstr "_text/CSV..."
 
 #: gui2/gretl.c:1268 gui2/gretl.c:1281 gui2/gretl.c:1300
 msgid "_Octave..."
@@ -9936,9 +9934,8 @@ msgid "_Notched boxplots..."
 msgstr "Wykres pudełkowy z 90% przedziałem..."
 
 #: gui2/gretl.c:1395
-#, fuzzy
 msgid "_Q-Q plot..."
-msgstr "Wykres 3D..."
+msgstr "Wykres _Q-Q ..."
 
 #: gui2/gretl.c:1396
 msgid "_3D plot..."
@@ -10093,9 +10090,8 @@ msgid "Estimated _density plot..."
 msgstr "Wykres gęs_tości..."
 
 #: gui2/gretl.c:1449
-#, fuzzy
 msgid "Normal _Q-Q plot..."
-msgstr "Wykres 3D..."
+msgstr "Wykres normalności Q-Q..."
 
 #: gui2/gretl.c:1450
 msgid "_Gini coefficient"
@@ -11036,9 +11032,8 @@ msgid "Residual _spectrum"
 msgstr "Spektrum procesu resztowego"
 
 #: gui2/gui_utils.c:2441
-#, fuzzy
 msgid "Residual _Q-Q plot"
-msgstr "wykres reszt modelu"
+msgstr "wykres reszt _Q-Q (kwantyl-kwantyl)"
 
 #: gui2/gui_utils.c:2461
 #, c-format
@@ -11622,27 +11617,24 @@ msgid "Gini coefficient"
 msgstr "Współczynnik Giniego"
 
 #: gui2/library.c:2338
-#, fuzzy
 msgid "standardize the data"
-msgstr "Standaryzowane reszty"
+msgstr "dla standaryzowanych danych z próby"
 
 #: gui2/library.c:2339
-#, fuzzy
 msgid "use sample mean and variance for normal quantiles"
-msgstr "Odchylenie standardowe jest wartością z populacji"
+msgstr "średnia i wariancja z próby dla kwantyli rozkładu normalnego"
 
 #: gui2/library.c:2340
 msgid "raw quantiles versus N(0, 1)"
-msgstr ""
+msgstr "tylko kwantyle zmiennej względem kwantyli rozkładu normalnego"
 
 #: gui2/library.c:2347
-#, fuzzy
 msgid "Q-Q plot"
-msgstr "Wykres 3D"
+msgstr "Wykres Q-Q (kwantyle-kwantyle)"
 
 #: gui2/library.c:2348
 msgid "Normal Q-Q plot"
-msgstr ""
+msgstr "Wykres Q-Q (kwantyle empiryczne - kwantyle normalne)"
 
 #: gui2/library.c:2446
 msgid "This test only implemented for OLS models"
@@ -14380,6 +14372,8 @@ msgid ""
 "Note: in general, the test statistics above are valid only in the\n"
 "absence of additional regressors."
 msgstr ""
+"Uwaga: in general, the test statistics above are valid only in the\n"
+"absence of additional regressors."
 
 #: plugin/johansen.c:1565
 msgid "Failed to find eigenvalues\n"
