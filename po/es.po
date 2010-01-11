@@ -1,14 +1,14 @@
 # translation of es.po to Spanish
-# Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+# Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
 #
-# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2004, 2005, 2006, 2007, 2008, 2009.
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2004, 2005, 2006, 2007, 2008, 2009, 2010.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-06 17:43-0500\n"
-"PO-Revision-Date: 2009-12-09 16:42+0100\n"
+"PO-Revision-Date: 2010-01-11 15:26+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -235,9 +235,8 @@ msgid "bootstrap coefficient"
 msgstr "coefficiente bootstrap"
 
 #: lib/src/bootstrap.c:872
-#, fuzzy
 msgid "bootstrap test"
-msgstr "Contraste F bootstrap"
+msgstr "contraste bootstrap"
 
 #: lib/src/boxplots.c:159 gui2/gpt_control.c:3085 gui2/gpt_control.c:3162
 msgid "Numerical summary"
@@ -1314,11 +1313,8 @@ msgstr ""
 "De las variables que iban a ser guardadas, %d estaban ya en la base de datos."
 
 #: lib/src/describe.c:1102
-#, fuzzy
 msgid "Insufficient data"
-msgstr ""
-"\n"
-"Datos insuficientes para el contraste de rachas\n"
+msgstr "No hay datos suficientes"
 
 #: lib/src/describe.c:1554 lib/src/describe.c:1658
 #, c-format
@@ -9618,9 +9614,8 @@ msgid "_Import"
 msgstr "_Importar"
 
 #: gui2/gretl.c:1267 gui2/gretl.c:1280
-#, fuzzy
 msgid "_text/CSV..."
-msgstr "_CSV..."
+msgstr "_texto/CSV..."
 
 #: gui2/gretl.c:1268 gui2/gretl.c:1281 gui2/gretl.c:1300
 msgid "_Octave..."
@@ -9984,9 +9979,8 @@ msgid "_Notched boxplots..."
 msgstr "Gráficos de caja _recortados..."
 
 #: gui2/gretl.c:1395
-#, fuzzy
 msgid "_Q-Q plot..."
-msgstr "Gráfico en _3D..."
+msgstr "Gráfico _Q-Q..."
 
 #: gui2/gretl.c:1396
 msgid "_3D plot..."
@@ -10141,9 +10135,8 @@ msgid "Estimated _density plot..."
 msgstr "Gráfico de la _densidad estimada..."
 
 #: gui2/gretl.c:1449
-#, fuzzy
 msgid "Normal _Q-Q plot..."
-msgstr "Gráfico en _3D..."
+msgstr "Gráfico _Q-Q normal..."
 
 #: gui2/gretl.c:1450
 msgid "_Gini coefficient"
@@ -11080,9 +11073,8 @@ msgid "Residual _spectrum"
 msgstr "E_spectro de los residuos"
 
 #: gui2/gui_utils.c:2441
-#, fuzzy
 msgid "Residual _Q-Q plot"
-msgstr "Gráfico de _residuos"
+msgstr "Gráfico _Q-Q de los residuos"
 
 #: gui2/gui_utils.c:2461
 #, c-format
@@ -11667,27 +11659,25 @@ msgid "Gini coefficient"
 msgstr "Coeficiente de Gini"
 
 #: gui2/library.c:2338
-#, fuzzy
 msgid "standardize the data"
-msgstr "Estandarizar los residuos"
+msgstr "Estandarizar los datos"
 
 #: gui2/library.c:2339
-#, fuzzy
 msgid "use sample mean and variance for normal quantiles"
-msgstr "Suponer que la desv. típica es un valor poblacional"
+msgstr ""
+"usar la media y la varianza muestrales para calcular los cuantiles normales"
 
 #: gui2/library.c:2340
 msgid "raw quantiles versus N(0, 1)"
-msgstr ""
+msgstr "cuantiles brutos contra la N(0,1)"
 
 #: gui2/library.c:2347
-#, fuzzy
 msgid "Q-Q plot"
-msgstr "Gráfico 3D"
+msgstr "Gráfico Q-Q"
 
 #: gui2/library.c:2348
 msgid "Normal Q-Q plot"
-msgstr ""
+msgstr "Gráfico Q-Q normal"
 
 #: gui2/library.c:2446
 msgid "This test only implemented for OLS models"
@@ -14410,9 +14400,8 @@ msgid "eigenvalue"
 msgstr "valor propio"
 
 #: plugin/johansen.c:1427
-#, fuzzy
 msgid "Exogenous regressor(s)"
-msgstr "Variables exógenas"
+msgstr "Regresor(es) exógeno(s)"
 
 #: plugin/johansen.c:1471
 msgid "Eigenvalue"
@@ -14431,6 +14420,8 @@ msgid ""
 "Note: in general, the test statistics above are valid only in the\n"
 "absence of additional regressors."
 msgstr ""
+"Nota: en general, los estadísticos de contraste de arriba sólo\n"
+"son válidos en ausencia de regresores adicionales."
 
 #: plugin/johansen.c:1565
 msgid "Failed to find eigenvalues\n"
@@ -14703,9 +14694,8 @@ msgid "slope of range against mean = %g\n"
 msgstr "pendiente de 'rango' con respecto a 'media' = %g\n"
 
 #: plugin/range-mean.c:211
-#, fuzzy
 msgid "range-mean test"
-msgstr "gráfico rango-media de "
+msgstr "contraste rango-media "
 
 #: plugin/range-mean.c:213
 #, c-format
