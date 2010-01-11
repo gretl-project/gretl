@@ -3263,12 +3263,12 @@
 	  Generates a series of Gaussian pseudo-random variates with mean
 	  &mu; and standard deviation &sigma;. If no arguments are
 	  supplied, standard normal variates <math>N</math>(0,1) are
-	  produced.
+	  produced.  The values are produced using the Ziggurat method
+	  (Marsaglia and Tsang, 2000).
 	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="randgen"/>
-	    <fncref targ="normal"/>
 	    <fncref targ="genpois"/>
 	    <fncref targ="mnormal"/>
 	    <fncref targ="muniform"/>
