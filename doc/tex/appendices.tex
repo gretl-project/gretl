@@ -265,9 +265,10 @@ want to refer to the
 \href{http://gretl.sourceforge.net/depend.html}{dependencies} page on
 the \app{gretl} website.
 
-The first step is installing the C compiler and related utilities. On
-a Debian system, these are contained in a bunch of packages that can
-be installed via the command
+The first step is installing the C compiler and related basic
+utilities, if these are not already in place. On a Debian system,
+these are contained in a bunch of packages that can be installed via
+the command
 \begin{code}
 apt-get install gcc autoconf automake1.9 libtool flex bison gcc-doc \
 libc6-dev libc-dev libgfortran1 libgfortran1-dev gettext pkgconfig
@@ -382,6 +383,9 @@ option to \texttt{configure}, as in
 \begin{code}
 ./configure --enable-build-doc
 \end{code}
+But please note that this option will work only if you are using
+the CVS source.
+
 You will see a number of checks being run, and if everything goes
 according to plan, you should see a summary similar to that displayed
 in Example~\ref{configure-output}.
