@@ -661,6 +661,7 @@ int force_language (int langid)
 
     if (langid == LANG_C) {
 	putenv("LANGUAGE=english");
+	putenv("LANG=C");
 	setlocale(LC_ALL, "C");
     } else {
 	lcode = get_setlocale_string(langid);
