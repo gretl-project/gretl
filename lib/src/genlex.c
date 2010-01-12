@@ -1152,6 +1152,9 @@ static double getdbl (parser *p)
 	}
     } else {
 	d = dot_atof(xstr);
+#if LDEBUG
+	fprintf(stderr, "getdbl: dot_atof gave %g\n", d);
+#endif
     }
     
     return d;
