@@ -127,6 +127,7 @@ int reset_local_decpoint (void)
 
     lc = localeconv();
     decpoint = *lc->decimal_point;
+    set_atof_point(decpoint);
     return decpoint;
 }
 
@@ -576,6 +577,7 @@ void set_lcnumeric (int langid, int lcnumeric)
 	    putenv("LC_NUMERIC=");
 	}
     } else {
+	/* either lcnumeric is not chosen, or we're in LANG_C */
 	setlocale(LC_NUMERIC, "C");
 	putenv("LC_NUMERIC=C");
     }

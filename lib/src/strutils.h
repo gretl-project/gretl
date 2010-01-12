@@ -48,6 +48,8 @@ int integer_string (const char *str);
 int count_fields (const char *s);
 
 double dot_atof (const char *s);
+
+void set_atof_point (char c);
  
 int dotpos (const char *str);
 

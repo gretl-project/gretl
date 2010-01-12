@@ -50,6 +50,13 @@ int string_is_blank (const char *s)
     return ret;
 }
 
+static int atof_point;
+
+void set_atof_point (char c)
+{
+    atof_point = c;
+}
+
 /**
  * dot_atof:
  * @s: the string to convert.
@@ -64,16 +71,14 @@ double dot_atof (const char *s)
 #ifndef ENABLE_NLS
     return atof(s);
 #else
-    static int decpoint = 0;
     double x;
 
-    if (decpoint == 0) {
-	struct lconv *lc;
+    if (atof_point == 0) {
+	struct lconv *lc = localeconv();
 
-	lc = localeconv();
-	decpoint = *lc->decimal_point;
+	atof_point = *lc->decimal_point;
     }
-    if (decpoint == '.') {
+    if (atof_point == '.') {
 	x = atof(s);
     } else {
 	gretl_push_c_numeric_locale();

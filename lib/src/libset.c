@@ -1923,13 +1923,13 @@ int libset_get_bool (const char *key)
 static void libset_set_decpoint (int on)
 {
 #ifdef ENABLE_NLS
-    static char num_locale[16];
+    static char num_locale[32];
 
     if (on) {
 	char *orig = setlocale(LC_NUMERIC, "");
 
 	*num_locale = '\0';
-	strncat(num_locale, orig, 15);
+	strncat(num_locale, orig, 31);
 	setlocale(LC_NUMERIC, "C");
     } else {
 	setlocale(LC_NUMERIC, num_locale);
