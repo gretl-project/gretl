@@ -44,6 +44,7 @@
  <gentext key="coeffname"     text="name of coefficient"/>
  <gentext key="sslist"        text="scalar, series or list"/>
  <gentext key="smlist"        text="series, matrix or list"/>
+ <gentext key="fncall"        text="function call"/>
  <gentext key="optional"      text="optional"/>
  <gentext key="seebelow"      text="see below"/>
  <gentext key="varargs"       text="see below"/>  
