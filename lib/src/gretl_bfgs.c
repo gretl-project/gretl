@@ -1053,7 +1053,7 @@ static int user_get_gradient (double *b, double *g, int k,
 	err = E_NONCONF;
     } else {
 	for (i=0; i<k; i++) {
-	    g[i] = -ug->val[i];
+	    g[i] = ug->val[i];
 	}
     } 
 
