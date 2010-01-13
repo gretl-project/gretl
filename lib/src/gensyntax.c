@@ -502,7 +502,7 @@ static NODE *get_string_arg (parser *p, int fn)
 		quoted = !quoted;
 	    } else if (!quoted && *s == '(') {
 		paren++;
-	    }
+	    } 
 	    s++;
 	    i++;
 	}
@@ -560,8 +560,102 @@ static NODE *get_string_arg (parser *p, int fn)
     return newstr(p, STR);
 }
 
+static NODE *get_middle_string_arg (parser *p)
+{
+    const char *src = NULL;
+    const char *s;
+    int gotparen = 0, close = 0;
+    int quoted, wrapped = 0;
+    int i, paren = 0;
+
+    while (p->ch == ' ') {
+	parser_getc(p);
+    }
+
+    if (p->ch == '"') {
+	wrapped = 1;
+	parser_getc(p);
+    }
+
+    /* find length of string to bare comma or
+       matched right paren */
+
+    quoted = wrapped;
+    s = p->point;
+    i = 0;
+
+    while (*s) {
+	if (*s == '"') {
+	    quoted = !quoted;
+	} 
+	if (!quoted) {
+	    if (*s == '(') {
+		gotparen++;
+		paren++;
+	    } else if (*s == ')') {
+		paren--;
+	    }
+	    if (paren == 0) {
+		if (gotparen) {
+		    close = i + 1;
+		    break;
+		} else if (*s == ',') {
+		    close = i;
+		    break;
+		}
+	    } 
+	}
+	s++;
+	i++;
+    }
+
+    if (paren > 0) {
+	unmatched_symbol_error('(', p);
+	return NULL;
+    } else if (paren < 0) {
+	unmatched_symbol_error(')', p);
+	return NULL;
+    } else if (quoted) {
+	unmatched_symbol_error('"', p);
+	return NULL;
+    }
+
+    src = p->point - 1;
+    p->idstr = gretl_strndup(src, close + 1);
+
+    for (i=0; i<=close; i++) {
+	parser_getc(p);
+    }
+
+    if (p->idstr == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
+    lex(p);
+
+    tailstrip(p->idstr);
+
+    if (wrapped) {
+	int n = strlen(p->idstr);
+
+	if (p->idstr[n-1] == '"') {
+	    p->idstr[n-1] = '\0';
+	} else {
+	    unmatched_symbol_error('"', p);
+	}
+    }
+
+#if SDEBUG
+    fprintf(stderr, "get_middle_string_arg: '%s'\n", p->idstr);
+#endif
+
+    return newstr(p, STR);
+}
+
 enum {
-    RIGHT_STR = 1
+    RIGHT_STR = 1 << 0,
+    MID_STR   = 1 << 1
 };
 
 static void get_matrix_def (NODE *t, parser *p, int *sub)
@@ -697,13 +791,13 @@ static void get_slice_parts (NODE *t, parser *p)
 static void attach_child (NODE *parent, NODE *child, int k, int i,
 			  parser *p)
 {
-#if SDEBUG
-    fprintf(stderr, "attach_child: i=%d, type = %d\n", i, child->t);
-#endif
-
     if (p->err) {
 	return;
     }
+
+#if SDEBUG
+    fprintf(stderr, "attach_child: i=%d, type=%d\n", i, child->t);
+#endif
 
     if (k == 2) {
 	/* 2-place node */
@@ -764,7 +858,11 @@ static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 	if (p->sym == G_RPR) {
 	    break;
 	}
-	child = expr(p);
+	if (i == k - 1 && (opt & RIGHT_STR)) {
+	    child = get_string_arg(p, 0);
+	} else {
+	    child = expr(p);
+	}
 	attach_child(t, child, k, i++, p);
 	if (p->err) {
 	    break;
@@ -774,8 +872,12 @@ static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 	} else if (p->sym == P_COM) {
 	    /* turn off flag for accepting string as first arg */
 	    p->flags &= ~P_GETSTR;
-	    /* and handle final string arg if relevant */
-	    if (i == k - 1 && opt == RIGHT_STR) {
+	    if (i == k - 2 && (opt & MID_STR)) {
+		/* handle middle string arg if relevant */
+		child = get_middle_string_arg(p);
+		attach_child(t, child, k, i++, p);
+	    } else if (i == k - 1 && (opt & RIGHT_STR)) {
+		/* handle final string arg if relevant */
 		child = get_string_arg(p, 0);
 		attach_child(t, child, k, i++, p);
 	    } else {
@@ -803,7 +905,11 @@ static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 		*next = G_LBR;
 	    }
 	}
-    }	
+    }
+
+#if SDEBUG
+    fprintf(stderr, "get_args: returning with p->err=%d\n", p->err);
+#endif    
 }
 
 static void get_ovar_ref (NODE *t, parser *p)
@@ -851,8 +957,12 @@ static NODE *powterm (parser *p)
 #endif
 
     if (string_last_func(sym)) {
-	opt = RIGHT_STR;
+	opt |= RIGHT_STR;
     } 
+
+    if (string_mid_func(sym)) {
+	opt |= MID_STR;
+    }    
 
     if (unary_op(sym)) {
 	if (p->ch == 0) {

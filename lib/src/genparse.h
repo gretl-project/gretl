@@ -271,7 +271,6 @@ enum {
     F_EIGSYM,	 
     F_EIGGEN,
     F_FDJAC,
-    F_BFGSMAX,
     F_LRVAR,
     F_PRINCOMP,
     F_QUANTILE,
@@ -302,6 +301,7 @@ enum {
     F_PERGM,
     F_NPV,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
+    F_BFGSMAX,
     F_MSHAPE,
     F_SVD,
     F_TRIMR,
@@ -359,6 +359,9 @@ enum {
 /* functions taking a string arg in last position */
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
                              s == F_DESEAS)
+
+/* functions taking string arg in middle position */
+#define string_mid_func(s) (s == F_BFGSMAX)
 
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)

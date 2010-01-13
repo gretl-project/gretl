@@ -938,15 +938,18 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 typedef struct umax_ umax;
 
 struct umax_ {
-    GretlType gentype;   /* GRETL_TYPE_DOUBLE or GRETL_TYPE_MATRIX */
-    gretl_matrix *b;     /* parameter vector */
-    int ncoeff;          /* number of coefficients */
-    GENERATOR *g;        /* for generating scalar or matrix result */
-    double x_out;        /* generated double value */
-    gretl_matrix *m_out; /* generated matrix value */
-    double ***Z;         /* pointer to data array */
-    DATAINFO *dinfo;     /* dataset info */
-    PRN *prn;            /* optional printing struct */
+    GretlType gentype;    /* GRETL_TYPE_DOUBLE or GRETL_TYPE_MATRIX */
+    gretl_matrix *b;      /* parameter vector */
+    gretl_matrix *g;      /* gradient vector */
+    int ncoeff;           /* number of coefficients */
+    GENERATOR *gf;        /* for generating scalar or matrix result */
+    GENERATOR *gg;        /* for generating gradient */
+    double fx_out;        /* function double value */
+    gretl_matrix *fm_out; /* function matrix value */
+    gretl_matrix *gm_out; /* gradient matrix value */
+    double ***Z;          /* pointer to data array */
+    DATAINFO *dinfo;      /* dataset info */
+    PRN *prn;             /* optional printing struct */
 };
 
 static umax *umax_new (GretlType t)
@@ -956,10 +959,13 @@ static umax *umax_new (GretlType t)
     if (u != NULL) {
 	u->gentype = t;
 	u->b = NULL;
-	u->ncoeff = 0;
 	u->g = NULL;
-	u->x_out = NADBL;
-	u->m_out = NULL;
+	u->ncoeff = 0;
+	u->gf = NULL;
+	u->gg = NULL;
+	u->fx_out = NADBL;
+	u->fm_out = NULL;
+	u->gm_out = NULL;
 	u->Z = NULL;
 	u->dinfo = NULL;
 	u->prn = NULL;
@@ -975,7 +981,8 @@ static void umax_destroy (umax *u)
 	dataset_drop_listed_variables(NULL, u->Z, u->dinfo, NULL, NULL);
     }
 
-    destroy_genr(u->g);
+    destroy_genr(u->gf);
+    destroy_genr(u->gg);
 
     free(u);
 }
@@ -990,38 +997,75 @@ static double user_get_criterion (const double *b, void *p)
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->g, u->Z, u->dinfo, OPT_S, u->prn); 
+    err = execute_genr(u->gf, u->Z, u->dinfo, OPT_S, u->prn); 
 
     if (err) {
 	return NADBL;
     }
 
-    t = genr_get_output_type(u->g);
+    t = genr_get_output_type(u->gf);
 
     if (t == GRETL_TYPE_DOUBLE) {
-	x = genr_get_output_scalar(u->g);
+	x = genr_get_output_scalar(u->gf);
     } else if (t == GRETL_TYPE_MATRIX) {
-	gretl_matrix *m = genr_get_output_matrix(u->g);
+	gretl_matrix *m = genr_get_output_matrix(u->gf);
 
 	if (gretl_matrix_is_scalar(m)) {
 	    x = m->val[0];
+	} else {
+	    err = E_TYPES;
 	}
     } else {
 	err = E_TYPES;
     }
 
-    u->x_out = x;
+    u->fx_out = x;
     
     return x;
 }
 
+/* FIXME the function below is not properly hooked
+   up yet!! */
+
+static int user_get_gradient (double *b, double *g, int k,
+			      BFGS_CRIT_FUNC func, void *p)
+{
+    umax *u = (umax *) p;
+    int i, t, err;
+
+    err = execute_genr(u->gg, u->Z, u->dinfo, OPT_S, u->prn); 
+
+    if (err) {
+	return err;
+    }
+
+    t = genr_get_output_type(u->gg);
+
+    if (t == GRETL_TYPE_DOUBLE && k == 1) {
+	u->g->val[0] = genr_get_output_scalar(u->gg);
+    } else if (t == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = genr_get_output_matrix(u->gg);
+
+	if (gretl_vector_get_length(m) == k) {
+	    for (i=0; i<k; i++) {
+		u->g->val[i] = m->val[i];
+	    }
+	}
+    } else {
+	err = E_TYPES;
+    }
+
+    return err;
+}
+
 static int user_gen_setup (umax *u,
 			   const char *fncall,
+			   const char *gradcall,
 			   double ***pZ, 
 			   DATAINFO *pdinfo)
 {
     char formula[MAXLINE];
-    GENERATOR *g;
+    GENERATOR *gf, *gg = NULL;
     int err = 0;
 
     if (u->gentype == GRETL_TYPE_MATRIX) {
@@ -1030,26 +1074,42 @@ static int user_gen_setup (umax *u,
 	sprintf(formula, "$umax=%s", fncall);
     }
 
-    g = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
+    gf = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
 
     if (!err) {
 	/* see if the formula actually works */
-	err = execute_genr(g, pZ, pdinfo, OPT_S, u->prn);
+	err = execute_genr(gf, pZ, pdinfo, OPT_S, u->prn);
+    }
+
+    if (!err && gradcall != NULL) {
+	/* process gradient formula */
+	sprintf(formula, "matrix $ugrad=%s", gradcall);
+	gg = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
+	if (!err) {
+	   err = execute_genr(gg, pZ, pdinfo, OPT_S, u->prn); 
+	}
     }
 
     if (!err) {
-	u->g = g;
+	u->gf = gf;
+	u->gg = gg;
 	u->Z = pZ;
 	u->dinfo = pdinfo;
-	u->m_out = genr_get_output_matrix(g);
+	u->fm_out = genr_get_output_matrix(gf);
+	if (u->gg != NULL) {
+	    u->gm_out = genr_get_output_matrix(gg);
+	}
     } else {
-	destroy_genr(g);
+	destroy_genr(gf);
+	destroy_genr(gg);
     }
 
     return err;
 }
 
-double user_BFGS (gretl_matrix *b, const char *fncall,
+double user_BFGS (gretl_matrix *b, 
+		  const char *fncall,
+		  const char *gradcall, 
 		  double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn, int *err)
 {
@@ -1074,7 +1134,7 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
 
     u->b = b;
 
-    *err = user_gen_setup(u, fncall, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, gradcall, pZ, pdinfo);
     if (*err) {
 	return NADBL;
     }
@@ -1086,8 +1146,11 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
 	u->prn = prn;
     }
 
-    *err = BFGS_max(b->val, u->ncoeff, maxit, tol, &fcount, &gcount,
-		    user_get_criterion, C_OTHER, NULL, u, opt, prn);
+    *err = BFGS_max(b->val, u->ncoeff, 
+		    maxit, tol, &fcount, &gcount,
+		    user_get_criterion, C_OTHER, 
+		    (u->gg == NULL)? NULL : user_get_gradient, 
+		    u, opt, prn);
 
     if (fcount > 0) {
 	pprintf(prn, _("Function evaluations: %d\n"), fcount);
@@ -1095,7 +1158,7 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
     }
 
     if (!*err) {
-	ret = u->x_out;
+	ret = u->fx_out;
     }
 
  bailout:
@@ -1122,7 +1185,7 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
     gretl_matrix_print(u->b, "user_calc_fvec: u->b");
 #endif
 
-    err = execute_genr(u->g, u->Z, u->dinfo, OPT_S, u->prn); 
+    err = execute_genr(u->gf, u->Z, u->dinfo, OPT_S, u->prn); 
     if (err) {
 	fprintf(stderr, "execute_genr: err = %d\n", err); 
     }
@@ -1132,10 +1195,10 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
 	return 0;
     }
 
-    v = genr_get_output_matrix(u->g);
+    v = genr_get_output_matrix(u->gf);
 
 #if JAC_DEBUG
-    gretl_matrix_print(v, "matrix from u->g");
+    gretl_matrix_print(v, "matrix from u->f");
 #endif
 
     if (v == NULL || gretl_vector_get_length(v) != *m) {
@@ -1201,19 +1264,19 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     u->b = theta;
     u->ncoeff = n;
 
-    *err = user_gen_setup(u, fncall, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, NULL, pZ, pdinfo);
     if (*err) {
 	fprintf(stderr, "fdjac: error %d from user_gen_setup\n", *err);
 	goto bailout;
     }
 
-    if (u->m_out == NULL) {
-	fprintf(stderr, "fdjac: u.m_out is NULL\n");
+    if (u->fm_out == NULL) {
+	fprintf(stderr, "fdjac: u.fm_out is NULL\n");
 	*err = E_DATA; /* FIXME */
 	goto bailout;
     }
 
-    m = gretl_vector_get_length(u->m_out);
+    m = gretl_vector_get_length(u->fm_out);
     if (m == 0) {
 	*err = E_DATA;
 	goto bailout;
@@ -1225,7 +1288,7 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     }
 
     for (i=0; i<m; i++) {
-	fvec[i] = u->m_out->val[i];
+	fvec[i] = u->fm_out->val[i];
     }
 
     fdjac2_(user_calc_fvec, &m, &n, theta->val, fvec, J->val, 

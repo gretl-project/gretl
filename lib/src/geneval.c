@@ -1705,20 +1705,33 @@ static NODE *numeric_jacobian (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *BFGS_maximize (NODE *l, NODE *r, parser *p)
+static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *m = l->v.m;
-	const char *s = r->v.str;
+	gretl_matrix *b = l->v.m;
+	const char *sf = m->v.str;
+	const char *sg = NULL;
 
-	if (!is_function_call(s)) {
+	if (r->t == STR) {
+	    sg = r->v.str;
+	} else if (r->t != EMPTY) {
 	    p->err = E_TYPES;
 	    return NULL;
 	}
 
-	if (gretl_is_null_matrix(m)) {
+	if (!is_function_call(sf)) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
+
+	if (sg != NULL && !is_function_call(sg)) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}	
+
+	if (gretl_is_null_matrix(b)) {
 	    p->err = E_DATA;
 	    return NULL;
 	}
@@ -1728,7 +1741,7 @@ static NODE *BFGS_maximize (NODE *l, NODE *r, parser *p)
 	    return NULL;
 	}
 
-	ret->v.xval = user_BFGS(m, s, p->Z, p->dinfo, 
+	ret->v.xval = user_BFGS(b, sf, sg, p->Z, p->dinfo, 
 				p->prn, &p->err);
     } else {
 	ret = aux_scalar_node(p);
@@ -6929,18 +6942,23 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}
 	break;
-    case F_BFGSMAX:
     case F_FDJAC:
     case F_MWRITE:
 	/* matrix, with string as second arg */
 	if (l->t == MAT && r->t == STR) {
-	    if (t->t == F_BFGSMAX) {
-		ret = BFGS_maximize(l, r, p);
-	    } else if (t->t == F_FDJAC) {
+	    if (t->t == F_FDJAC) {
 		ret = numeric_jacobian(l, r, p);
 	    } else {
 		ret = matrix_csv_write(l, r, p);
 	    }
+	} else {
+	    p->err = E_TYPES;
+	} 
+	break;
+    case F_BFGSMAX:
+	/* matrix, plus one or two string args */
+	if (l->t == MAT && m->t == STR) {
+	    ret = BFGS_maximize(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	} 
