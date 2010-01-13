@@ -23,6 +23,7 @@
 #include "gretl_bfgs.h"
 #include "libset.h"
 #include "matrix_extra.h"
+#include "usermat.h"
 
 #include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
@@ -753,7 +754,6 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     double *wa = NULL;
     int *nbd = NULL;
     int *iwa = NULL;
-
     int i, m, wadim;
     char task[60];
     char csave[60];
@@ -946,7 +946,7 @@ struct umax_ {
     GENERATOR *gg;        /* for generating gradient */
     double fx_out;        /* function double value */
     gretl_matrix *fm_out; /* function matrix value */
-    gretl_matrix *gm_out; /* gradient matrix value */
+    char gmname[VNAMELEN]; /* name of user-defined gradient vector */
     double ***Z;          /* pointer to data array */
     DATAINFO *dinfo;      /* dataset info */
     PRN *prn;             /* optional printing struct */
@@ -965,7 +965,7 @@ static umax *umax_new (GretlType t)
 	u->gg = NULL;
 	u->fx_out = NADBL;
 	u->fm_out = NULL;
-	u->gm_out = NULL;
+	u->gmname[0] = '\0';
 	u->Z = NULL;
 	u->dinfo = NULL;
 	u->prn = NULL;
@@ -986,6 +986,8 @@ static void umax_destroy (umax *u)
 
     free(u);
 }
+
+/* user-defined BFGS: get the criterion value */
 
 static double user_get_criterion (const double *b, void *p)
 {
@@ -1024,14 +1026,18 @@ static double user_get_criterion (const double *b, void *p)
     return x;
 }
 
-/* FIXME the function below is not properly hooked
-   up yet!! */
+/* user-defined BFGS: get the gradient, if specified */
 
 static int user_get_gradient (double *b, double *g, int k,
 			      BFGS_CRIT_FUNC func, void *p)
 {
     umax *u = (umax *) p;
-    int i, t, err;
+    gretl_matrix *ug;
+    int i, err;
+
+    for (i=0; i<k; i++) {
+	u->b->val[i] = b[i];
+    }
 
     err = execute_genr(u->gg, u->Z, u->dinfo, OPT_S, u->prn); 
 
@@ -1039,20 +1045,47 @@ static int user_get_gradient (double *b, double *g, int k,
 	return err;
     }
 
-    t = genr_get_output_type(u->gg);
+    ug = get_matrix_by_name(u->gmname);
 
-    if (t == GRETL_TYPE_DOUBLE && k == 1) {
-	u->g->val[0] = genr_get_output_scalar(u->gg);
-    } else if (t == GRETL_TYPE_MATRIX) {
-	gretl_matrix *m = genr_get_output_matrix(u->gg);
+    if (ug == NULL) {
+	err = E_UNKVAR;
+    } else if (gretl_vector_get_length(ug) != k) {
+	err = E_NONCONF;
+    } else {
+	for (i=0; i<k; i++) {
+	    g[i] = -ug->val[i];
+	}
+    } 
 
-	if (gretl_vector_get_length(m) == k) {
-	    for (i=0; i<k; i++) {
-		u->g->val[i] = m->val[i];
+    return err;
+}
+
+/* parse the name of the user gradient matrix (vector) out of
+   the gradient function call, where it must be the first
+   argument, given in pointer form
+*/
+
+static int get_grad_vector_name (umax *u, const char *gradcall)
+{
+    const char *s = strchr(gradcall, '(');
+    int n, err = 0;
+
+    if (s == NULL) {
+	err = E_DATA;
+    } else {
+	s++;
+	s += strspn(s, " ");
+	if (*s != '&') {
+	    err = E_TYPES;
+	} else {
+	    s++;
+	    n = gretl_namechar_spn(s);
+	    if (n >= VNAMELEN) {
+		err = E_DATA;
+	    } else {
+		strncat(u->gmname, s, n);
 	    }
 	}
-    } else {
-	err = E_TYPES;
     }
 
     return err;
@@ -1065,7 +1098,6 @@ static int user_gen_setup (umax *u,
 			   DATAINFO *pdinfo)
 {
     char formula[MAXLINE];
-    GENERATOR *gf, *gg = NULL;
     int err = 0;
 
     if (u->gentype == GRETL_TYPE_MATRIX) {
@@ -1074,34 +1106,33 @@ static int user_gen_setup (umax *u,
 	sprintf(formula, "$umax=%s", fncall);
     }
 
-    gf = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
+    u->gf = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
 
     if (!err) {
 	/* see if the formula actually works */
-	err = execute_genr(gf, pZ, pdinfo, OPT_S, u->prn);
+	err = execute_genr(u->gf, pZ, pdinfo, OPT_S, u->prn);
     }
 
     if (!err && gradcall != NULL) {
 	/* process gradient formula */
-	sprintf(formula, "matrix $ugrad=%s", gradcall);
-	gg = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
+	err = get_grad_vector_name(u, gradcall);
+	sprintf(formula, "scalar $uerr=%s", gradcall);
 	if (!err) {
-	   err = execute_genr(gg, pZ, pdinfo, OPT_S, u->prn); 
+	    u->gg = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
+	    if (!err) {
+		err = execute_genr(u->gg, pZ, pdinfo, OPT_S, u->prn);
+	    } 
 	}
     }
 
     if (!err) {
-	u->gf = gf;
-	u->gg = gg;
 	u->Z = pZ;
 	u->dinfo = pdinfo;
-	u->fm_out = genr_get_output_matrix(gf);
-	if (u->gg != NULL) {
-	    u->gm_out = genr_get_output_matrix(gg);
-	}
+	u->fm_out = genr_get_output_matrix(u->gf);
     } else {
-	destroy_genr(gf);
-	destroy_genr(gg);
+	destroy_genr(u->gf);
+	destroy_genr(u->gg);
+	u->gf = u->gg = NULL;
     }
 
     return err;

@@ -1714,14 +1714,12 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 	const char *sf = m->v.str;
 	const char *sg = NULL;
 
-#if 0 /* not ready yet */
 	if (r->t == STR) {
 	    sg = r->v.str;
 	} else if (r->t != EMPTY) {
 	    p->err = E_TYPES;
 	    return NULL;
 	}
-#endif
 
 	if (!is_function_call(sf)) {
 	    p->err = E_TYPES;
