@@ -348,13 +348,12 @@ enum {
 #define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
 			    s == F_ISLIST   || s == F_LISTLEN || \
 			    s == F_ISSTRING || s == F_OBSNUM || \
-			    s == F_BACKTICK || s == F_VARNUM || \
-                            s == F_SSCANF)
+			    s == F_BACKTICK || s == F_VARNUM)
 
-/* function with multiple args, string for first arg */
-#define string0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
-                         s == F_CRIT || s == F_RANDGEN || s == F_PDF || \
-			 s == F_BESSEL)
+/* function with multiple args, character code for first arg */
+#define char0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
+		       s == F_CRIT || s == F_RANDGEN || s == F_PDF ||	\
+		       s == F_BESSEL)
 
 /* functions taking a string arg in last position */
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
@@ -376,7 +375,7 @@ enum {
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)
 
-#define evalb1(s) (b1sym(s) && !(string0_func(s)) && s != U_ADDR && \
+#define evalb1(s) (b1sym(s) && !(char0_func(s)) && s != U_ADDR && \
                    !func2_symb(s) && s != EROOT)
 
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == DMSL || \

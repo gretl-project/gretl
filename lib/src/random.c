@@ -303,6 +303,16 @@ static double ran_normal_box_muller (void)
 }
 
 static int use_box_muller;
+static int env_checked;
+
+static void box_muller_env_check (void)
+{
+    if (getenv("GRETL_USE_BOX_MULLER")) {
+	use_box_muller = 1;
+    }
+
+    env_checked = 1;
+}
 
 void gretl_rand_set_box_muller (int s)
 {
@@ -329,6 +339,10 @@ int gretl_rand_get_box_muller (void)
 void gretl_rand_normal (double *a, int t1, int t2) 
 {
     int t;
+
+    if (!env_checked) {
+	box_muller_env_check();
+    }
     
     if (use_box_muller) {
 	double z1, z2;
@@ -355,6 +369,10 @@ void gretl_rand_normal (double *a, int t1, int t2)
 
 double gretl_one_snormal (void) 
 {
+    if (!env_checked) {
+	box_muller_env_check();
+    }    
+
     if (use_box_muller) {
 	return ran_normal_box_muller();
     } else {

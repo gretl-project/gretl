@@ -5229,7 +5229,7 @@ void resid_plot (GtkAction *action, gpointer p)
     int err = 0;
 
     /* special case: GARCH model (show fitted variance) */
-    if (pmod->ci == GARCH && !(pmod->opt & OPT_U) && xvar == 0) {
+    if (pmod->ci == GARCH && !(pmod->opt & OPT_E) && xvar == 0) {
 	err = garch_resid_plot(pmod, datainfo);
 	if (err) {
 	    gui_errmsg(err);
@@ -5265,7 +5265,7 @@ void resid_plot (GtkAction *action, gpointer p)
 
     strcpy(pdinfo->varname[uhatno], _("residual"));
 
-    if (pmod->ci == GARCH && (pmod->opt & OPT_U)) {
+    if (pmod->ci == GARCH && (pmod->opt & OPT_E)) {
 	strcpy(DISPLAYNAME(pdinfo, uhatno), _("standardized residual"));
 	opt ^= OPT_R;
     } else {

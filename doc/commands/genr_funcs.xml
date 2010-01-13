@@ -1256,7 +1256,7 @@
     <function name="deseas" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="string">s</fnarg>
+	<fnarg optional="true" type="char">c</fnarg>
       </fnargs>
       <description>
 	<para>

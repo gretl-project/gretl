@@ -454,17 +454,9 @@ static NODE *listvar_node (parser *p)
     return ret;    
 }
 
-/* Grab a string argument.  Note: we have a mechanism in genlex.c for
-   retrieving arguments that take the form of quoted string literals
-   or names of string variables.  The special use of this function is
-   to grab a literal string without requiring the user to wrap it in
-   quotes; we use it only where we know the only acceptable argument
-   is a string.  This function assumes that the argument in question
-   is the last (or only) argument to a function: we look for a closing
-   parenthesis and flag an error if we don't find one.
-*/
+/* here we grab all the arguments to sscanf() as one big string */
 
-static NODE *get_string_arg (parser *p, int fn)
+static NODE *get_sscanf_args (parser *p)
 {
     const char *src = NULL;
     int wrapped = 0;
@@ -475,15 +467,110 @@ static NODE *get_string_arg (parser *p, int fn)
 
     if (p->ch == '"') {
 	wrapped = 1;
-	if (fn == F_SSCANF) {
-	    /* don't lose the leading quote */
-	    src = p->point - 1;
-	}
+	/* don't lose the leading quote */
+	src = p->point - 1;
 	parser_getc(p);
     }
 
     if (p->ch == ')') {
-	/* allow empty arg string "()" */
+	p->err = (wrapped)? E_PARSE : E_ARGS;
+	return NULL;
+    } else {
+	const char *s = p->point;
+	int i, paren = 1, quoted = wrapped;
+	int len, close = -1;
+
+	/* find length of string to closing paren */
+	i = 0;
+	while (*s) {
+	    if (!quoted && *s == ')') paren--;
+	    if (paren == 0) {
+		close = i;
+		break;
+	    }
+	    if (*s == '"') {
+		quoted = !quoted;
+	    } else if (!quoted && *s == '(') {
+		paren++;
+	    } 
+	    s++;
+	    i++;
+	}
+
+	if (close < 0) {
+	    unmatched_symbol_error('(', p);
+	    return NULL;
+	}
+
+	if (src == NULL) {
+	    src = p->point - 1;
+	    len = close + 1;
+	} else {
+	    len = close + 2;
+	}
+
+	p->idstr = gretl_strndup(src, len);
+
+	if (p->idstr == NULL) {
+	    p->err = E_ALLOC;
+	    return NULL;
+	}
+
+	tailstrip(p->idstr);
+	parser_advance(p, close);
+    }
+
+    parser_getc(p);
+    lex(p);
+
+#if SDEBUG
+    fprintf(stderr, "get_sscanf_args: '%s'\n", p->idstr);
+#endif
+
+    return newstr(p, STR);
+}
+
+static void unwrap_string_arg (parser *p)
+{
+    int n = strlen(p->idstr);
+
+    if (p->idstr[n-1] == '"') {
+	p->idstr[n-1] = '\0';
+    } else {
+	unmatched_symbol_error('"', p);
+    }
+}
+
+/* Grab a string argument.  Note: we have a mechanism in genlex.c for
+   retrieving arguments that take the form of quoted string literals
+   or names of string variables.  The special use of this function is
+   to grab a literal string without requiring the user to wrap it in
+   quotes; we use it only where we know the only acceptable argument
+   is a string.  This function assumes that the argument in question
+   is the last (or only) argument to a function: we look for a closing
+   parenthesis and flag an error if we don't find one.
+*/
+
+static NODE *get_string_arg (parser *p, int eat_last)
+{
+    const char *src = NULL;
+    int wrapped = 0;
+
+    while (p->ch == ' ') {
+	parser_getc(p);
+    }
+
+    if (p->ch == '"') {
+	wrapped = 1;
+	parser_getc(p);
+    }
+
+    if (p->ch == ')') {
+	if (wrapped) {
+	    p->err = E_PARSE;
+	    return NULL;
+	} 
+	/* allow empty args "()" */
 	p->idstr = gretl_strdup("");
     } else {
 	int i, paren = 1, quoted = wrapped;
@@ -512,17 +599,6 @@ static NODE *get_string_arg (parser *p, int fn)
 	    return NULL;
 	}
 
-	if (fn == F_SSCANF) {
-	    int len = close + 2;
-
-	    if (src == NULL) {
-		src = p->point - 1;
-		len = close + 1;
-	    }
-	    p->idstr = gretl_strndup(src, len);
-	    started = 1;
-	}
-
 	for (i=0; i<=close; i++) {
 	    if (!started && !isspace(p->ch)) {
 		src = p->point - 1;
@@ -538,26 +614,22 @@ static NODE *get_string_arg (parser *p, int fn)
 	return NULL;
     }
 
-    parser_getc(p);
+    tailstrip(p->idstr);
+    if (eat_last) {
+	/* FIXME this is funky */
+	parser_getc(p);
+    }
     lex(p);
 
-    tailstrip(p->idstr);
-
-    if (wrapped && fn != F_SSCANF) {
-	int n = strlen(p->idstr);
-
-	if (p->idstr[n-1] == '"') {
-	    p->idstr[n-1] = '\0';
-	} else {
-	    unmatched_symbol_error('"', p);
-	}
+    if (wrapped) {
+	unwrap_string_arg(p);
     }
 
 #if SDEBUG
     fprintf(stderr, "get_string_arg: '%s'\n", p->idstr);
 #endif
 
-    return newstr(p, STR);
+    return (p->err)? NULL : newstr(p, STR);
 }
 
 static NODE *get_middle_string_arg (parser *p)
@@ -565,22 +637,28 @@ static NODE *get_middle_string_arg (parser *p)
     const char *src = NULL;
     const char *s;
     int gotparen = 0, close = 0;
-    int quoted, wrapped = 0;
-    int i, paren = 0;
+    int i, quoted, paren = 0;
 
     while (p->ch == ' ') {
 	parser_getc(p);
     }
 
     if (p->ch == '"') {
-	wrapped = 1;
-	parser_getc(p);
+	/* arg is wrapped in quotes */
+	close = parser_charpos(p, '"');
+	if (close < 0) {
+	    unmatched_symbol_error('"', p);
+	    return NULL;
+	}
+	p->idstr = gretl_strndup(p->point, close);
+	close++;
+	goto post_process;
     }
 
-    /* find length of string to bare comma or
+    /* find length of string to bare comma (unquoted, not in parens) or
        matched right paren */
 
-    quoted = wrapped;
+    quoted = 0;
     s = p->point;
     i = 0;
 
@@ -597,12 +675,14 @@ static NODE *get_middle_string_arg (parser *p)
 	    }
 	    if (paren == 0) {
 		if (gotparen) {
+		    /* include right paren */
 		    close = i + 1;
 		    break;
 		} else if (*s == ',') {
+		    /* leave comma */
 		    close = i;
 		    break;
-		}
+		} 
 	    } 
 	}
 	s++;
@@ -611,46 +691,35 @@ static NODE *get_middle_string_arg (parser *p)
 
     if (paren > 0) {
 	unmatched_symbol_error('(', p);
-	return NULL;
     } else if (paren < 0) {
 	unmatched_symbol_error(')', p);
-	return NULL;
     } else if (quoted) {
 	unmatched_symbol_error('"', p);
+    }
+
+    if (p->err) {
 	return NULL;
     }
 
     src = p->point - 1;
     p->idstr = gretl_strndup(src, close + 1);
 
-    for (i=0; i<=close; i++) {
-	parser_getc(p);
-    }
+ post_process:
 
     if (p->idstr == NULL) {
 	p->err = E_ALLOC;
 	return NULL;
-    }
-
-    lex(p);
+    }  
 
     tailstrip(p->idstr);
-
-    if (wrapped) {
-	int n = strlen(p->idstr);
-
-	if (p->idstr[n-1] == '"') {
-	    p->idstr[n-1] = '\0';
-	} else {
-	    unmatched_symbol_error('"', p);
-	}
-    }
+    parser_advance(p, close);
+    lex(p);
 
 #if SDEBUG
     fprintf(stderr, "get_middle_string_arg: '%s'\n", p->idstr);
 #endif
 
-    return newstr(p, STR);
+    return (p->err)? NULL : newstr(p, STR);
 }
 
 enum {
@@ -852,6 +921,7 @@ static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 	return;
     }	
 
+    /* if k < 0 this does all the work */
     lex(p);
 
     while (((k > 0 && i < k) || p->ch) && !p->err) {
@@ -878,6 +948,7 @@ static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 		attach_child(t, child, k, i++, p);
 	    } else if (i == k - 1 && (opt & RIGHT_STR)) {
 		/* handle final string arg if relevant */
+		/* FIXME check for redundancy */
 		child = get_string_arg(p, 0);
 		attach_child(t, child, k, i++, p);
 	    } else {
@@ -984,12 +1055,12 @@ static NODE *powterm (parser *p)
 	t = newb3(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    if (string0_func(sym)) {
+	    if (char0_func(sym)) {
 		p->flags |= P_GETSTR;
 	    }
 	    get_args(t, p, 3, opt, &next);
 	}
-    } else if (string0_func(sym)) {
+    } else if (char0_func(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
@@ -1007,12 +1078,19 @@ static NODE *powterm (parser *p)
 	    if (t != NULL) {
 		get_args(t->v.b1.b, p, -1, opt, &next);
 	    }
+	}
+    } else if (sym == F_SSCANF) {
+	/* string arg is handled specially */
+	t = newb1(sym, NULL);
+	if (t != NULL) {
+	    lex(p);
+	    t->v.b1.b = get_sscanf_args(p);
 	}	
     } else if (string_arg_func(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = get_string_arg(p, sym);
+	    t->v.b1.b = get_string_arg(p, 1);
 	}	
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
@@ -1055,7 +1133,7 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
-	    t->v.b2.r = get_string_arg(p, sym);
+	    t->v.b2.r = get_string_arg(p, 1);
 	}
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);

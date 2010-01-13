@@ -1913,13 +1913,18 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
     }
 
     if (!err) {
-	double cfac = var->T / (double) var->df;
-
 	var->ldet = gretl_vcv_log_determinant(var->S);
 	if (na(var->ldet)) {
 	    err = 1;
 	}
-	gretl_matrix_multiply_by_scalar(var->S, cfac);
+
+	/* Hmm, should we df-adjust var->S here?  Note that this
+	   will affect the impulse response output */
+	if (0) {
+	    double cfac = var->T / (double) var->df;
+	
+	    gretl_matrix_multiply_by_scalar(var->S, cfac);
+	}
     }    
 
     if (!err) {
