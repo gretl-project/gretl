@@ -741,6 +741,12 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     return err;
 }
 
+/* Note: we need this because the original L-BFGS-B code is
+   set up as a minimizer.  We could get rid of it if anyone
+   has the strength to go into lbfgsb.c and make the
+   necessary adjustments.
+*/
+
 static void reverse_gradient (double *g, int n)
 {
     int i;
@@ -829,7 +835,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 	    /* Compute function value, f */
 	    f = cfunc(b, data);
 	    if (!na(f)) {
-		f = -f;
+		f = -f; /* maximize, don't minimize */
 	    } else if (*fncount == 0) {
 		fprintf(stderr, "initial value of f is not finite\n");
 		err = E_DATA;
@@ -1123,9 +1129,8 @@ static int user_gen_setup (umax *u,
     if (!err && gradcall != NULL) {
 	/* process gradient formula */
 	err = get_grad_vector_name(u, gradcall);
-	sprintf(formula, "scalar $uerr=%s", gradcall);
 	if (!err) {
-	    u->gg = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
+	    u->gg = genr_compile(gradcall, pZ, pdinfo, OPT_P | OPT_U, &err);
 	    if (!err) {
 		err = execute_genr(u->gg, pZ, pdinfo, OPT_S, u->prn);
 	    } 

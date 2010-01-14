@@ -895,6 +895,10 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 	flags |= P_PRIVATE;
     }
 
+    if (opt & OPT_U) {
+	flags |= P_UFUN;
+    }
+
     *err = realgen(s, p, pZ, pdinfo, NULL, flags);
 
     if (*err) {
@@ -915,29 +919,22 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
-    int flags = P_EXEC;
-
 #if GDEBUG
     fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s'\n", 
 	    (void *) p, p->lh.name);
 #endif
 
-    if (opt & OPT_L) {
-	flags |= P_LOOP;
-    } else if (opt & OPT_S) {
-	/* context is NLS/MLE or similar */
-	flags |= P_SLAVE;
-    }
+    realgen(NULL, p, pZ, pdinfo, prn, P_EXEC);
 
-    realgen(NULL, p, pZ, pdinfo, prn, flags);
-
-    if (!p->err) {
+    if (!p->err && !(p->flags & P_UFUN)) {
 	gen_save_or_print(p, prn);
     } 
 
-    if (0 && (flags & P_SLAVE) && !p->err) {
+#if 0
+    if ((p->flags & P_SLAVE) && !p->err) {
 	p->err = p->warn;
     }
+#endif
 
     gen_cleanup(p);
 

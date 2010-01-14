@@ -723,6 +723,7 @@
       <fnargs>
 	<fnarg type="vector">b</fnarg>
 	<fnarg type="fncall">f</fnarg>
+	<fnarg type="fncall" optional="true">g</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -738,9 +739,17 @@
 	  produce the maximum.  
 	</para>
 	<para>
-	  For more details and examples see the chapter
-	  on special functions in <lit>genr</lit> in 
-	  <guideref targ="sec:genr-numerical"/>.
+	  The optional third argument provides a means of supplying analytical
+	  derivatives (otherwise the gradient is computed numerically).  The
+	  gradient function call <argname>g</argname> must have as its first
+	  argument a pre-defined matrix that is of the correct size to contain
+	  the gradient, given in pointer form. It also must take the parameter
+	  vector as an argument (in pointer form or otherwise).  Other
+	  arguments are optional.
+	</para>
+	<para>
+	  For more details and examples see the chapter on special functions
+	  in <lit>genr</lit> in <guideref targ="sec:genr-numerical"/>.
 	  <seelist>
 	    <fncref targ="fdjac"/>
 	  </seelist>
