@@ -636,6 +636,9 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 
 	    if (ndelta > 0) {
 		/* making progress */
+#if BFGS_DEBUG
+		fprintf(stderr, "making progress, ndelta = %d\n", ndelta);
+#endif
 		fmax = f;
 		gradfunc(b, g, n, cfunc, data);
 		reverse_gradient(g, n);
@@ -647,6 +650,9 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		    c[i] = g[i] - c[i];
 		    D1 += t[i] * c[i];
 		}
+#if BFGS_DEBUG
+		fprintf(stderr, "D1 = %g\n", D1);
+#endif
 		if (D1 > 0.0) {
 		    D2 = 0.0;
 		    for (i=0; i<n; i++) {
@@ -666,6 +672,9 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 			    H[i][j] += (D2 * t[i]*t[j] - X[i]*t[j] - t[i]*X[j]) / D1;
 			}
 		    }
+#if BFGS_DEBUG
+		    fprintf(stderr, "D2 = %g\n", D2);
+#endif
 		} else {
 		    /* D1 <= 0.0 */
 		    ilast = gcount;
