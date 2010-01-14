@@ -30,6 +30,8 @@
 
 #define BFGS_DEBUG 0
 
+#define BFGS_MAXITER_DEFAULT 600
+
 void BFGS_defaults (int *maxit, double *tol, int ci)
 {
     *maxit = libset_get_int(BFGS_MAXITER);
@@ -57,7 +59,7 @@ void BFGS_defaults (int *maxit, double *tol, int ci)
 	}
     } else if (ci == MLE || ci == GMM) {
 	if (*maxit <= 0) {
-	    *maxit = 500;
+	    *maxit = BFGS_MAXITER_DEFAULT;
 	}
 	if (na(*tol)) {
 	    *tol = libset_get_double(BFGS_TOLER);
@@ -468,7 +470,7 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
     if (umaxit >= 0) {
 	*maxit = umaxit;
     } else if (*maxit < 0) {
-	*maxit = 500;
+	*maxit = BFGS_MAXITER_DEFAULT;
     }
 
     /* and then the convergence tolerance */
@@ -1156,7 +1158,7 @@ double user_BFGS (gretl_matrix *b,
     umax *u;
     double ret = NADBL;
     gretlopt opt = OPT_NONE;
-    int maxit = 500;
+    int maxit = BFGS_MAXITER_DEFAULT;
     int fcount = 0, gcount = 0;
     double tol;
 
