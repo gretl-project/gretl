@@ -10,17 +10,21 @@ version 1.8.7, in progress
   $pvalue
 - VECMs: enable $vcv accessor
 - VARs and VECMs: enable $df accessor
+- BFGSmax function: add facility for supplying analytical
+  derivatives
 - Fix bug: crash on error in user_matrix_ols()
 - Fix bug: "append" for data should work in more cases
 - Fix bug: saving a model when there is already a saved
   model of the same name (in the GUI) caused a crash
 - Fix bug: setting of sub-sample information on models
   estimated with a loop construct
+- Fix bug: the GUI option for reporting standardized
+  residuals for GARCH models got broken
 - Fix bugs: miscellaneous small GUI bugs
 - Fix bugs 2918790, 2918783, 2918775, 2917053
 
 11/25/2008 version 1.8.6
-- Fix bug: the "print" command for series fails after 
+- Fix bug: the "print" command for series fails after
   exiting a loop with the --progressive option set
 - ARIMAX models: follow the practice of most software
   and difference both the dependent variable and the
@@ -46,7 +50,7 @@ version 1.8.7, in progress
 - "fcast": add a --plot option to generate a plot of the
   forecast in batch mode
 - L-BFGS-B: add a "set" variable, lbfgs_mem, to control the
-  number of corrections used in the limited memory matrix 
+  number of corrections used in the limited memory matrix
 - GUI dialogs for mle, gmm: add controller for BFGS details
 - "scatters" command: add an --output option as for the
   "gnuplot" command
@@ -58,7 +62,7 @@ version 1.8.7, in progress
 - Add facility to display normal and logistic CDFs
 - Add convenience function: logistic()
 - MS Windows package: update pango and gnuplot
-- Scalar variables: improve GUI management, and add a 
+- Scalar variables: improve GUI management, and add a
   --scalars option to the "varlist" command
 - "mols" function: add option of retrieving the covariance
   matrix
@@ -80,23 +84,23 @@ version 1.8.7, in progress
   for locales using ',' as decimal separator
 - Fix bugs 2843717, 2848633, 2865384
 - Fix bug in corrgm() function when the series given as
-  arguments contain missing values 
+  arguments contain missing values
 - Add --to-file and --from-file options to "set" command
 - Several refinements for the GUI "model table"
 - Fix bug: error when trying to save the dataset, in the
   context of a saved-then-reopened session file
 - Fix bug: in some circumstances model tests failed to
   respect the sample used when estimating the model, if the
-  sample had since been changed 
+  sample had since been changed
 - Fix bug: wrong results from the "fcast" command after
   estimating an ordered probit or logit model
 - Fix bug: the --output option to the "gnuplot" command was
   not being respected in the gretl console
 - Fix bug: inconsistent handling of maximum command-line
   length in the context of loops
-- GUI, main window, Sample menu: add an item to print 
+- GUI, main window, Sample menu: add an item to print
   details of the current sample status
-- On closing GUI session, close any open graph windows 
+- On closing GUI session, close any open graph windows
 - RATS databases: recognize weekly data
 - Eviews data importer: fix recognition of the starting month
   or quarter for dated time series
@@ -111,7 +115,7 @@ version 1.8.7, in progress
 - add financial functions npv and irr
 - win32: update GTK+ stack to 2.16.6; update gnuplot to
   CVS as of 2009-09-13
-  
+
 8/28/2009 version 1.8.4
 - Fix breakage in GUI interface for calling user-defined
   functions, plus fixes for GUI function package editor
@@ -160,7 +164,7 @@ version 1.8.7, in progress
 - Add "set" variable "csv_na" to control the representation
   of NA values in CSV output (also GUI selector for same)
 - Remove old "set" variable, "protect_lists"
-- Help windows: substantial revamp of GUI, plus fixes for 
+- Help windows: substantial revamp of GUI, plus fixes for
   dealing with translated helpfiles
 - Add experimental function debugger: new "debug" command
 - Stata importer: support current format 114 .dta files
