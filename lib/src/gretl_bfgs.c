@@ -396,15 +396,6 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 
 #define coeff_unchanged(a,b) (reltest + a == reltest + b)
 
-static void reverse_gradient (double *g, int n)
-{
-    int i;
-
-    for (i=0; i<n; i++) {
-	g[i] = -g[i];
-    }
-}
-
 static int broken_gradient (double *g, int n)
 {
     int i;
@@ -539,7 +530,6 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     f0 = fmax = f;
     iter = ilast = fcount = gcount = 1;
     gradfunc(b, g, n, cfunc, data);
-    reverse_gradient(g, n);
 
 #if BFGS_DEBUG
     fprintf(stderr, "initial gradient:\n");
@@ -554,9 +544,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 
     do {
 	if (verbose) {
-	    reverse_gradient(g, n);
 	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
-	    reverse_gradient(g, n);
 	}
 
 	if (ilast == gcount) {
@@ -579,10 +567,10 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	for (i=0; i<n; i++) {
 	    s = 0.0;
 	    for (j=0; j<=i; j++) {
-		s -= H[i][j] * g[j];
+		s += H[i][j] * g[j];
 	    }
 	    for (j=i+1; j<n; j++) {
-		s -= H[j][i] * g[j];
+		s += H[j][i] * g[j];
 	    }
 	    t[i] = s;
 	    sumgrad += s * g[i];
@@ -592,7 +580,8 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	fprintf(stderr, "\niter %d: sumgrad = %g\n", iter, sumgrad);
 #endif
 
-	if (sumgrad < 0.0) {	
+	if (sumgrad > 0.0) { 
+	    /* heading in the right direction */
 	    steplen = 1.0;
 	    crit_ok = 0;
 	    do {
@@ -643,13 +632,12 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 #endif
 		fmax = f;
 		gradfunc(b, g, n, cfunc, data);
-		reverse_gradient(g, n);
 		gcount++;
 		iter++;
 		D1 = 0.0;
 		for (i=0; i<n; i++) {
-		    t[i] = steplen * t[i];
-		    c[i] = g[i] - c[i];
+		    t[i] *= steplen;
+		    c[i] -= g[i];
 		    D1 += t[i] * c[i];
 		}
 #if BFGS_DEBUG
@@ -737,7 +725,6 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     *grcount = gcount;
 
     if (verbose) {
-	reverse_gradient(g, n);
 	print_iter_info(-1, f, crittype, n, b, g, steplen, prn);
 	pputc(prn, '\n');
     }
@@ -752,6 +739,15 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 #endif
 
     return err;
+}
+
+static void reverse_gradient (double *g, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	g[i] = -g[i];
+    }
 }
 
 int LBFGS_max (double *b, int n, int maxit, double reltol,
