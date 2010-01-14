@@ -454,7 +454,8 @@ static NODE *listvar_node (parser *p)
     return ret;    
 }
 
-/* here we grab all the arguments to sscanf() as one big string */
+/* here we grab all the arguments to sscanf() as one big string,
+   which will be parsed later */
 
 static NODE *get_sscanf_args (parser *p)
 {
@@ -549,9 +550,13 @@ static void unwrap_string_arg (parser *p)
    is a string.  This function assumes that the argument in question
    is the last (or only) argument to a function: we look for a closing
    parenthesis and flag an error if we don't find one.
+
+   Depending on the context we may or may not want to "consume" the
+   trailing right paren that follows the string of interest; that's
+   controlled by the second argument.
 */
 
-static NODE *get_string_arg (parser *p, int eat_last)
+static NODE *get_final_string_arg (parser *p, int eat_last)
 {
     const char *src = NULL;
     int wrapped = 0;
@@ -570,7 +575,7 @@ static NODE *get_string_arg (parser *p, int eat_last)
 	    p->err = E_PARSE;
 	    return NULL;
 	} 
-	/* allow empty args "()" */
+	/* handle empty arg */
 	p->idstr = gretl_strdup("");
     } else {
 	int i, paren = 1, quoted = wrapped;
@@ -616,7 +621,7 @@ static NODE *get_string_arg (parser *p, int eat_last)
 
     tailstrip(p->idstr);
     if (eat_last) {
-	/* FIXME this is funky */
+	/* consume trailing right paren */
 	parser_getc(p);
     }
     lex(p);
@@ -626,7 +631,7 @@ static NODE *get_string_arg (parser *p, int eat_last)
     }
 
 #if SDEBUG
-    fprintf(stderr, "get_string_arg: '%s'\n", p->idstr);
+    fprintf(stderr, "get_final_string_arg: '%s'\n", p->idstr);
 #endif
 
     return (p->err)? NULL : newstr(p, STR);
@@ -644,7 +649,7 @@ static NODE *get_middle_string_arg (parser *p)
     }
 
     if (p->ch == '"') {
-	/* arg is wrapped in quotes */
+	/* special: arg is wrapped in quotes */
 	close = parser_charpos(p, '"');
 	if (close < 0) {
 	    unmatched_symbol_error('"', p);
@@ -901,12 +906,15 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
     }
 }
 
+#define next_arg_is_string(i,k,o) ((i>0 && i<k-1 && (o & MID_STR)) || \
+                                   (i==k-1 && (o & RIGHT_STR)))
+
 /* Get up to k comma-separated arguments (possibly optional).
    However, if k < 0 this is a signal for get as many arguments as we
    can find (the number is unknown in advance).
 */
 
-static void get_args (NODE *t, parser *p, int k, int opt, int *next)
+static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 {
     NODE *child;
     char cexp = 0;
@@ -921,41 +929,44 @@ static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 	return;
     }	
 
-    /* if k < 0 this does all the work */
     lex(p);
 
     while (((k > 0 && i < k) || p->ch) && !p->err) {
 	if (p->sym == G_RPR) {
+	    /* right paren: got to the end */
 	    break;
 	}
-	if (i == k - 1 && (opt & RIGHT_STR)) {
-	    child = get_string_arg(p, 0);
+
+	if (k > 0 && i == k) {
+	    gretl_errmsg_sprintf("%s: %s", getsymb(f, p), _("too many arguments"));
+	    p->err = E_ARGS;
+	    break;
+	}
+
+	/* get the next argument */
+	if (i > 0 && i < k - 1 && (opt & MID_STR)) {
+	    child = get_middle_string_arg(p);
+	} else if (i == k - 1 && (opt & RIGHT_STR)) {
+	    child = get_final_string_arg(p, 0);
 	} else {
 	    child = expr(p);
 	}
+
 	attach_child(t, child, k, i++, p);
-	if (p->err) {
-	    break;
-	}
-	if (p->sym == G_RPR) {
+
+	if (p->err || p->sym == G_RPR) {
 	    break;
 	} else if (p->sym == P_COM) {
 	    /* turn off flag for accepting string as first arg */
 	    p->flags &= ~P_GETSTR;
-	    if (i == k - 2 && (opt & MID_STR)) {
-		/* handle middle string arg if relevant */
-		child = get_middle_string_arg(p);
-		attach_child(t, child, k, i++, p);
-	    } else if (i == k - 1 && (opt & RIGHT_STR)) {
-		/* handle final string arg if relevant */
-		/* FIXME check for redundancy */
-		child = get_string_arg(p, 0);
-		attach_child(t, child, k, i++, p);
-	    } else {
+	    /* lex unless next arg needs special handling */
+	    if (!next_arg_is_string(i, k, opt)) {
 		lex(p);
 	    }
 	} else {
+	    /* arg-separating comma was expected */
 	    cexp = ',';
+	    break;
 	}
     }
 
@@ -966,7 +977,7 @@ static void get_args (NODE *t, parser *p, int k, int opt, int *next)
 	    if (i < k) {
 		pad_parent(t, k, i, p);
 	    } 
-	    /* handle trailing transpose */
+	    /* matrix functions: handle trailing transpose */
 	    if (p->ch == '\'') {
 		set_transpose(t);
 		parser_getc(p);
@@ -1049,7 +1060,7 @@ static NODE *powterm (parser *p)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    get_args(t, p, 2, opt, &next);
+	    get_args(t, p, sym, 2, opt, &next);
 	}
     } else if (func3_symb(sym)) {
 	t = newb3(sym, NULL);
@@ -1058,7 +1069,7 @@ static NODE *powterm (parser *p)
 	    if (char0_func(sym)) {
 		p->flags |= P_GETSTR;
 	    }
-	    get_args(t, p, 3, opt, &next);
+	    get_args(t, p, sym, 3, opt, &next);
 	}
     } else if (char0_func(sym)) {
 	t = newb1(sym, NULL);
@@ -1067,7 +1078,7 @@ static NODE *powterm (parser *p)
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
 		p->flags |= P_GETSTR;
-		get_args(t->v.b1.b, p, -1, opt, &next);
+		get_args(t->v.b1.b, p, sym, -1, opt, &next);
 	    }
 	}
     } else if (sym == F_URCPVAL) {
@@ -1076,7 +1087,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b1.b, p, -1, opt, &next);
+		get_args(t->v.b1.b, p, sym, -1, opt, &next);
 	    }
 	}
     } else if (sym == F_SSCANF) {
@@ -1090,7 +1101,7 @@ static NODE *powterm (parser *p)
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = get_string_arg(p, 1);
+	    t->v.b1.b = get_final_string_arg(p, 1);
 	}	
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
@@ -1133,7 +1144,7 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
-	    t->v.b2.r = get_string_arg(p, 1);
+	    t->v.b2.r = get_final_string_arg(p, 1);
 	}
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
@@ -1188,7 +1199,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b2.r = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b2.r, p, -1, opt, &next);
+		get_args(t->v.b2.r, p, sym, -1, opt, &next);
 	    }
 	}
     } else if (funcn_symb(sym)) {
@@ -1197,7 +1208,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b1.b, p, -1, opt, &next);
+		get_args(t->v.b1.b, p, sym, -1, opt, &next);
 	    }
 	}
     } else if (sym == STR || sym == VSTR) {
