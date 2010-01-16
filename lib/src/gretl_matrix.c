@@ -8206,7 +8206,9 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 
 void gretl_matrix_set_t1 (gretl_matrix *m, int t)
 {
-    if (is_block_matrix(m)) {
+    if (m == NULL) {
+	return;
+    } else if (is_block_matrix(m)) {
 	matrix_block_error("gretl_matrix_set_t1");
     } else {
 	m->t1 = t;
@@ -8224,7 +8226,9 @@ void gretl_matrix_set_t1 (gretl_matrix *m, int t)
 
 void gretl_matrix_set_t2 (gretl_matrix *m, int t)
 {
-    if (is_block_matrix(m)) {
+    if (m == NULL) {
+	return;    
+    } else if (is_block_matrix(m)) {
 	matrix_block_error("gretl_matrix_set_t2");
     } else {
 	m->t2 = t;

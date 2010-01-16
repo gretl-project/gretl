@@ -9,7 +9,7 @@ version 1.8.7, in progress
 - "restrict" with --bootstrap option: record $test and
   $pvalue
 - VECMs: enable $vcv accessor
-- VARs and VECMs: enable $df accessor
+- VARs and VECMs: enable $df and $ncoeff accessors
 - BFGSmax function: add facility for supplying analytical
   derivatives
 - Fix bug: crash on error in user_matrix_ols()

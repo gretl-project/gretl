@@ -309,8 +309,10 @@ void VAR_fill_X (GRETL_VAR *v, int p, const double **Z,
 	k++;
     }
 
-    gretl_matrix_set_t1(v->X, v->t1);
-    gretl_matrix_set_t2(v->X, v->t2);
+    if (v->X != NULL) {
+	gretl_matrix_set_t1(v->X, v->t1);
+	gretl_matrix_set_t2(v->X, v->t2);
+    }
 
 #if VDEBUG
     gretl_matrix_print(v->X, "X");
@@ -360,8 +362,10 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const double **Z)
 	}
     }  
 
-    gretl_matrix_set_t1(v->Y, v->t1);
-    gretl_matrix_set_t2(v->Y, v->t2);
+    if (v->Y != NULL) {
+	gretl_matrix_set_t1(v->Y, v->t1);
+	gretl_matrix_set_t2(v->Y, v->t2);
+    }
 
 #if VDEBUG
     gretl_matrix_print(v->Y, "Y");
@@ -1026,8 +1030,10 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
 
     VAR_add_fcast_variance(var, var->F, tdyn - t1);
 
-    gretl_matrix_set_t1(var->F, t1);
-    gretl_matrix_set_t2(var->F, t2);
+    if (var->F != NULL) {
+	gretl_matrix_set_t1(var->F, t1);
+	gretl_matrix_set_t2(var->F, t2);
+    }
 
 #if VDEBUG
     gretl_matrix_print(var->F, "var->F");
