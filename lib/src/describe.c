@@ -2808,6 +2808,11 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 
     gretl_error_clear();
 
+    if (order < 0) {
+	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
+	return E_DATA;
+    }
+
     varlist_adjust_sample(list, &t1, &t2, Z);
     T = t2 - t1 + 1;
 
@@ -3306,6 +3311,11 @@ int xcorrgram (const int *list, int order, const double **Z,
     int T, err = 0;
 
     gretl_error_clear();
+
+    if (order < 0) {
+	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
+	return E_DATA;
+    }
 
     if (list[0] != 2) {
 	return E_DATA;

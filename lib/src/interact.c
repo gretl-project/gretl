@@ -4163,8 +4163,19 @@ static void exec_state_prep (ExecState *s)
     s->pmod = NULL;
 }
 
-#define param_to_order(ci) (ci == CORRGM || ci == XCORRGM || \
-                            ci == PERGM || ci == LAGS)
+static int param_to_order (const char *s)
+{
+    if (integer_string(s)) {
+	return atoi(s);
+    } else if (gretl_is_scalar(s)) {
+	return (int) gretl_scalar_get_value(s);
+    } else {
+	return -1;
+    }
+}
+
+#define want_param_to_order(ci) (ci == CORRGM || ci == XCORRGM || \
+				 ci == PERGM || ci == LAGS)
 
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
@@ -4204,8 +4215,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	cmd->opt |= OPT_P; /* panel pooled OLS flag */
     }
 
-    if (param_to_order(cmd->ci)) {
-	cmd->order = atoi(cmd->param);
+    if (want_param_to_order(cmd->ci)) {
+	cmd->order = param_to_order(cmd->param);
     }
 
     if (pZ != NULL) {
