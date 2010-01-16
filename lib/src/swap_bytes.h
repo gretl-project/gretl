@@ -92,7 +92,7 @@ do {						\
     (to) = to__.d;				\
 } while (0)
 
-#endif  /* HAVE_GLIBC_BSWAP */
+#endif  /* HAVE_BYTESWAP_H or not */
 
 #define swap_bytes_ushort(from, to) swap_bytes_16(from, to)
 
