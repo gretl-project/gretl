@@ -3270,9 +3270,46 @@ VAR_matrix_from_models (const GRETL_VAR *var, int idx, int *err)
     return m;
 }
 
+static gretl_matrix *VECM_get_EC_matrix (const GRETL_VAR *v, int *err)
+{
+    gretl_matrix *EC = NULL;
+    double x;
+    int rank, k, k0;
+    int j, t, T;
+
+    if (v->X == NULL) {
+	fprintf(stderr, "VECM_get_EC_matrix: v->X is NULL\n");
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    rank = jrank(v);
+    T = v->X->rows;
+
+    EC = gretl_matrix_alloc(T, rank);
+    if (EC == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    k0 = v->ncoeff - rank;
+
+    for (j=0, k=k0; j<rank; j++, k++) {
+	for (t=0; t<T; t++) {
+	    x = gretl_matrix_get(v->X, t, k);
+	    gretl_matrix_set(EC, t, j, x);
+	}
+    }
+
+    gretl_matrix_set_t1(EC, v->t1);
+    gretl_matrix_set_t2(EC, v->t2);
+	
+    return EC;
+}
+
 #define vecm_matrix(i) (i == M_JALPHA || i == M_JBETA || \
                         i == M_JVBETA || i == M_JS00 || \
-                        i == M_JS11 || i == M_JS01)
+                        i == M_JS11 || i == M_JS01 || i == M_EC)
 
 gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
 				    int *err)
@@ -3323,8 +3360,12 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	    case M_JS01:
 		src = var->jinfo->S01;
 		break;
+	    case M_EC:
+		M = VECM_get_EC_matrix(var, err);
+		copy = 0;
+		break;
 	    }
-	}
+	} 
     }
 
     if (copy) {
