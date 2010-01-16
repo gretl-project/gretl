@@ -424,22 +424,22 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn
 	    err = 1;
 	} else {
 	    nmiss = fulln - T;
-	    pprintf(prn, "Observations: %d; days in sample: %d\n", 
+	    pprintf(prn, M_("Observations: %d; days in sample: %d\n"), 
 		    T, fulln);
 	    if (nmiss > 300 * T) {
-		pprintf(prn, "Probably annual data\n");
+		pprintf(prn, M_("Probably annual data\n"));
 		*pd = 1;
 	    } else if (nmiss > 50 * T) {
-		pprintf(prn, "Probably quarterly data\n");
+		pprintf(prn, M_("Probably quarterly data\n"));
 		*pd = 4;
 	    } else if (nmiss > 20 * T) {
-		pprintf(prn, "Probably monthly data\n");
+		pprintf(prn, M_("Probably monthly data\n"));
 		*pd = 12;
 	    } else if (nmiss > 3 * T) {
-		pprintf(prn, "Probably weekly data\n");
+		pprintf(prn, M_("Probably weekly data\n"));
 		*pd = pdinfo->pd = 52;
 	    } else {
-		pprintf(prn, "Missing daily observations: %d\n", nmiss);
+		pprintf(prn, M_("Missing daily observations: %d\n"), nmiss);
 	    }
 	}
     }
@@ -730,7 +730,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
     tryagain:
 
 	if (dorder == YYYYMMDD) {
-	    pputs(prn, "Trying date order YYYYMMDD\n");
+	    pputs(prn, M_("Trying date order YYYYMMDD\n"));
 	    yr1 = d1[0];
 	    mon1 = d1[1];
 	    day1 = d1[2];
@@ -738,7 +738,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 	    mon2 = d2[1];
 	    day2 = d2[2];
 	} else if (dorder == DDMMYYYY) {
-	    pputs(prn, "Trying date order DDMMYYYY\n");
+	    pputs(prn, M_("Trying date order DDMMYYYY\n"));
 	    day1 = d1[0];
 	    mon1 = d1[1];
 	    yr1 = d1[2];
@@ -746,7 +746,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 	    mon2 = d2[1];
 	    yr2 = d2[2];
 	} else {
-	    pputs(prn, "Trying date order MMDDYYYY\n");
+	    pputs(prn, M_("Trying date order MMDDYYYY\n"));
 	    mon1 = d1[0];
 	    day1 = d1[1];
 	    yr1 = d1[2];
@@ -765,7 +765,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 		    return -1;
 		}
 	    }
-	    pprintf(prn, "Could be %s - %s\n", lbl1, lbl2);
+	    pprintf(prn, M_("Could be %s - %s\n"), lbl1, lbl2);
 	    ret = check_daily_dates(pdinfo, &pd, reversed, prn);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {
@@ -790,7 +790,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 	    return ret;
 	}
     } else {
-	pprintf(prn, "'%s' and '%s': couldn't get dates\n", lbl1, lbl2);
+	pprintf(prn, M_("'%s' and '%s': couldn't get dates\n"), lbl1, lbl2);
     }
 
     return -1;

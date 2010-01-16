@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-06 17:43-0500\n"
+"POT-Creation-Date: 2010-01-16 10:11-0500\n"
 "PO-Revision-Date: 2009-11-27 11:00+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at no spam) gmx (dot no spam) "
 "net>\n"
@@ -163,7 +163,7 @@ msgstr "Lag-Berücksichtigungsschwelle = %d\n"
 #: lib/src/modelprint.c:2079 lib/src/modelprint.c:2084
 #: lib/src/modelprint.c:2102 lib/src/modelprint.c:2106
 #: lib/src/modelprint.c:2111 lib/src/modelprint.c:2123
-#: lib/src/modelprint.c:2128 lib/src/modelprint.c:2132 lib/src/vartest.c:664
+#: lib/src/modelprint.c:2128 lib/src/modelprint.c:2132 lib/src/vartest.c:591
 msgid "Test statistic"
 msgstr "Teststatistik"
 
@@ -352,7 +352,7 @@ msgstr "Likelihood-Quotienten-Test"
 #: lib/src/pvalues.c:1764 lib/src/system.c:818 lib/src/system.c:2652
 #: lib/src/system.c:2674 lib/src/system.c:2705 lib/src/system.c:2723
 #: lib/src/system.c:3799 lib/src/varprint.c:1197 lib/src/varprint.c:1205
-#: lib/src/vartest.c:60 lib/src/vartest.c:665
+#: lib/src/vartest.c:60 lib/src/vartest.c:592
 msgid "Chi-square"
 msgstr "Chi-Quadrat"
 
@@ -675,9 +675,60 @@ msgstr ""
 msgid "Invalid column specification"
 msgstr "Ungültige Spalten-Spezifikation"
 
+#: lib/src/csvdata.c:427
+#, fuzzy, c-format
+msgid "Observations: %d; days in sample: %d\n"
+msgstr "Beobachtungen: %d"
+
+#: lib/src/csvdata.c:430
+#, fuzzy
+msgid "Probably annual data\n"
+msgstr "Erhöhe Frequenz von jährlich auf:"
+
+#: lib/src/csvdata.c:433
+#, fuzzy
+msgid "Probably quarterly data\n"
+msgstr "ein(e) quartalsweise"
+
+#: lib/src/csvdata.c:436
+#, fuzzy
+msgid "Probably monthly data\n"
+msgstr "Quartalsweise oder monatliche Daten"
+
+#: lib/src/csvdata.c:439
+msgid "Probably weekly data\n"
+msgstr ""
+
+#: lib/src/csvdata.c:442
+#, fuzzy, c-format
+msgid "Missing daily observations: %d\n"
+msgstr "Fehlende Beobachtungen"
+
 #: lib/src/csvdata.c:694
 msgid "reversing the data!\n"
 msgstr "kehre Datenreihenfolge um!\n"
+
+#: lib/src/csvdata.c:733
+msgid "Trying date order YYYYMMDD\n"
+msgstr ""
+
+#: lib/src/csvdata.c:741
+msgid "Trying date order DDMMYYYY\n"
+msgstr ""
+
+#: lib/src/csvdata.c:749
+msgid "Trying date order MMDDYYYY\n"
+msgstr ""
+
+#: lib/src/csvdata.c:768
+#, fuzzy, c-format
+msgid "Could be %s - %s\n"
+msgstr "Konnte %s nicht öffnen\n"
+
+#: lib/src/csvdata.c:793
+#, c-format
+msgid "'%s' and '%s': couldn't get dates\n"
+msgstr ""
 
 #: lib/src/csvdata.c:811
 #, c-format
@@ -882,15 +933,15 @@ msgstr ""
 "Behandlung als undatierte Daten\n"
 "\n"
 
-#: lib/src/csvdata.c:2144 plugin/eviews_import.c:425
+#: lib/src/csvdata.c:2144 plugin/eviews_import.c:439
 #: plugin/excel_import.c:1638 plugin/gnumeric_import.c:798
 #: plugin/jmulti_import.c:383 plugin/sas_import.c:690
 #: plugin/spss_import.c:1901 plugin/stata_import.c:913
 msgid "warning: some variable names were duplicated\n"
 msgstr "Warnung: Variablennamen wurden teilweise dupliziert\n"
 
-#: lib/src/csvdata.c:2167 plugin/eviews_import.c:391
-#: plugin/eviews_import.c:406 plugin/excel_import.c:1477
+#: lib/src/csvdata.c:2167 plugin/eviews_import.c:405
+#: plugin/eviews_import.c:420 plugin/excel_import.c:1477
 #: plugin/gnumeric_import.c:628 plugin/jmulti_import.c:354
 #: plugin/jmulti_import.c:371 plugin/sas_import.c:652 plugin/sas_import.c:664
 #: plugin/spss_import.c:1804 plugin/spss_import.c:1825
@@ -1320,7 +1371,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr "Zu wenig Daten um Häufigkeitsverteilung für Variable %s zu erstellen"
 
 #: lib/src/describe.c:1562 lib/src/describe.c:2823 lib/src/describe.c:3324
-#: lib/src/describe.c:3816 lib/src/graphing.c:4946
+#: lib/src/describe.c:3816 lib/src/graphing.c:4944
 #, c-format
 msgid "%s is a constant"
 msgstr "%s ist eine Konstante"
@@ -1963,16 +2014,16 @@ msgstr "Ersetzte Reihe %s (ID %d)"
 msgid "Generated series %s (ID %d)"
 msgstr "Erzeugte Reihe %s (ID %d)"
 
-#: lib/src/geneval.c:2966 lib/src/interact.c:1392
+#: lib/src/geneval.c:2979 lib/src/interact.c:1392
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Variablennummer %d außerhalb der Grenzen"
 
-#: lib/src/geneval.c:4317
+#: lib/src/geneval.c:4330
 msgid "Matrix specification is not coherent"
 msgstr "Matrix-Spezifikation ist nicht kohärent"
 
-#: lib/src/geneval.c:4460 lib/src/geneval.c:5141
+#: lib/src/geneval.c:4473 lib/src/geneval.c:5154
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -1981,73 +2032,73 @@ msgstr ""
 "Zahl der Argumente (%d) entspricht nicht der Zahl der\n"
 "Parameter für Funktion %s (%d)"
 
-#: lib/src/geneval.c:4526
+#: lib/src/geneval.c:4539
 msgid "Wrong type of operand for unary '&'"
 msgstr "Falsches Typ-Operanden für '&'"
 
-#: lib/src/geneval.c:6126
+#: lib/src/geneval.c:6139
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': Ungültiges Argument für %s()\n"
 
-#: lib/src/geneval.c:6154 lib/src/genlex.c:629 cli/cli_object.c:46
+#: lib/src/geneval.c:6167 lib/src/genlex.c:630 cli/cli_object.c:46
 #: gui2/objectsave.c:54
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: kein solches Objekt\n"
 
-#: lib/src/geneval.c:6309
+#: lib/src/geneval.c:6322
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: Operand sollte %s sein"
 
-#: lib/src/geneval.c:6312
+#: lib/src/geneval.c:6325
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: Operand %d sollte %s sein"
 
-#: lib/src/geneval.c:6317
+#: lib/src/geneval.c:6330
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: Argument sollte %s sein"
 
-#: lib/src/geneval.c:6320
+#: lib/src/geneval.c:6333
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: Argument %d sollte %s sein"
 
-#: lib/src/geneval.c:7763 lib/src/genlex.c:681 lib/src/genlex.c:748
+#: lib/src/geneval.c:7781 lib/src/genlex.c:682 lib/src/genlex.c:749
 #: lib/src/gensyntax.c:274
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Unpassendes '%c'\n"
 
-#: lib/src/geneval.c:7935
+#: lib/src/geneval.c:7953
 #, c-format
 msgid "'%s': name is too long (max 15 characters)\n"
 msgstr "'%s': name ist zu lang (das Maximum ist 15 Zeichen)\n"
 
-#: lib/src/geneval.c:8034
+#: lib/src/geneval.c:8052
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : nicht für Matrizen implementiert"
 
-#: lib/src/geneval.c:8041
+#: lib/src/geneval.c:8059
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : nicht für Listen implementiert"
 
-#: lib/src/geneval.c:8048
+#: lib/src/geneval.c:8066
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : nicht für Zeichenketten implementiert"
 
-#: lib/src/geneval.c:8055
+#: lib/src/geneval.c:8073
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : nur für Matrizen implementiert"
 
-#: lib/src/geneval.c:8062
+#: lib/src/geneval.c:8080
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : nicht für diesen Typ implementiert"
@@ -2152,39 +2203,39 @@ msgstr "Einheiten-spezifische Konstanten von Modell %d"
 msgid "Invalid declaration"
 msgstr "Ungültige Deklaration"
 
-#: lib/src/genlex.c:631 lib/src/gretl_restrict.c:2231
+#: lib/src/genlex.c:632 lib/src/gretl_restrict.c:2231
 #, c-format
 msgid "The symbol '%s' is undefined\n"
 msgstr "Das Symbol '%s' ist nicht definiert\n"
 
-#: lib/src/genlex.c:641 lib/src/genlex.c:642
+#: lib/src/genlex.c:642 lib/src/genlex.c:643
 #, c-format
 msgid "'%s': no argument was given\n"
 msgstr "'%s': Kein Argument angegeben\n"
 
-#: lib/src/genlex.c:651
+#: lib/src/genlex.c:652
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Das Symbol '%c' ist ungültig in diesem Kontext\n"
 
-#: lib/src/genlex.c:653
+#: lib/src/genlex.c:654
 msgid "(for logical AND, use '&&')\n"
 msgstr "(für logisches UND: '&&' benutzen)\n"
 
-#: lib/src/genlex.c:655
+#: lib/src/genlex.c:656
 msgid "(for logical OR, use '||')\n"
 msgstr "(für logisches ODER: '||' benutzen)\n"
 
-#: lib/src/genlex.c:661
+#: lib/src/genlex.c:662
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Das Symbol '%s' ist ungültig in diesem Kontext\n"
 
-#: lib/src/genlex.c:745
+#: lib/src/genlex.c:746
 msgid "Empty observation []\n"
 msgstr "Leere Beobachtung []\n"
 
-#: lib/src/genlex.c:1391
+#: lib/src/genlex.c:1395
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Ungültiges Zeichen '%c'\n"
@@ -2282,6 +2333,11 @@ msgstr "Erwartete '%c' aber Formel zu Ende\n"
 #, c-format
 msgid "Expected '%c' but found '%s'\n"
 msgstr "Erwartete '%c' aber fand '%s'\n"
+
+#: lib/src/gensyntax.c:941
+#, fuzzy
+msgid "too many arguments"
+msgstr "Argumente auswählen:"
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2662 lib/src/gretl_panel.c:4427
 #: lib/src/gretl_panel.c:4437 lib/src/interact.c:3655 lib/src/nls.c:2578
@@ -2497,20 +2553,20 @@ msgstr "Inverse VAR-Wurzeln im Vgl. mit Einheitskreis"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%%-Konfidenzellipse und %g%%-intervalle der Randverteilungen"
 
-#: lib/src/graphing.c:5115 lib/src/graphing.c:5116
+#: lib/src/graphing.c:5113 lib/src/graphing.c:5114
 #, c-format
 msgid "adjusted %s"
 msgstr "korrigiertes %s"
 
-#: lib/src/graphing.c:5178 plugin/range-mean.c:66
+#: lib/src/graphing.c:5176 plugin/range-mean.c:66
 msgid "with least squares fit"
 msgstr "mit Kleinst-Quadrate-Fit"
 
-#: lib/src/gretl_bfgs.c:304
+#: lib/src/gretl_bfgs.c:308
 msgid "Failed to compute numerical Hessian"
 msgstr "Berechnung der numerischen Hesse-Matrix schlug fehl"
 
-#: lib/src/gretl_bfgs.c:450
+#: lib/src/gretl_bfgs.c:445
 msgid ""
 "\n"
 "\n"
@@ -2520,21 +2576,21 @@ msgstr ""
 "\n"
 "*** Vom Benutzer spezifizierte Startwerte:\n"
 
-#: lib/src/gretl_bfgs.c:527
+#: lib/src/gretl_bfgs.c:522
 msgid "BFGS: initial value of objective function is not finite"
 msgstr "BFGS: Startwert der Zielfunktion ist nicht endlich"
 
-#: lib/src/gretl_bfgs.c:713
+#: lib/src/gretl_bfgs.c:714
 #, c-format
 msgid "stopped after %d iterations\n"
 msgstr "gestoppt nach %d Iterationen\n"
 
-#: lib/src/gretl_bfgs.c:1093 lib/src/modelprint.c:2785
+#: lib/src/gretl_bfgs.c:1203 lib/src/modelprint.c:2785
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr "Funktionsberechnungen: %d\n"
 
-#: lib/src/gretl_bfgs.c:1094 lib/src/modelprint.c:2786
+#: lib/src/gretl_bfgs.c:1204 lib/src/modelprint.c:2786
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr "Auswertung des Gradienten: %d\n"
@@ -2781,7 +2837,7 @@ msgstr "_Öffne Daten"
 msgid "annual"
 msgstr "jährlich"
 
-#: lib/src/gretl_intl.c:642
+#: lib/src/gretl_intl.c:644
 #, c-format
 msgid "%s: locale is not supported on this system"
 msgstr "%s: Sprachumgebung auf diesem System nicht unterstützt"
@@ -5424,11 +5480,11 @@ msgstr "System"
 msgid "%s saved\n"
 msgstr "%s gespeichert\n"
 
-#: lib/src/objstack.c:1332 gui2/library.c:89
+#: lib/src/objstack.c:1334 gui2/library.c:89
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "Nicht durchführbar: kein Modell wurde bis jetzt geschätzt\n"
 
-#: lib/src/objstack.c:1343
+#: lib/src/objstack.c:1345
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -5436,17 +5492,17 @@ msgstr ""
 "Unmöglich: momentaner Datensatz ist anders als\n"
 " derjenige des Referenzmodells\n"
 
-#: lib/src/options.c:932
+#: lib/src/options.c:931
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr "ungültige Option '--%s'"
 
-#: lib/src/options.c:953
+#: lib/src/options.c:952
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "Die Option '--%s' benötigt einen Parameter"
 
-#: lib/src/options.c:1206
+#: lib/src/options.c:1205
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Warnung: Option %s außerhalb Schleifen ignoriert"
@@ -5920,7 +5976,7 @@ msgstr "Poisson (mean = %g): "
 msgid "Weibull (shape = %g, scale = %g): "
 msgstr "Weibull (Form = %g, Skala = %g): "
 
-#: lib/src/strutils.c:1647
+#: lib/src/strutils.c:1652
 msgid "out of memory in XML encoding"
 msgstr "Zu wenig Speicher beim XML-Encoden"
 
@@ -6302,7 +6358,7 @@ msgstr "= %s mal %s"
 msgid "dummy for %s = %g"
 msgstr "Dummy für %s = %g"
 
-#: lib/src/transforms.c:730 lib/src/transforms.c:1186 lib/src/var.c:622
+#: lib/src/transforms.c:730 lib/src/transforms.c:1186 lib/src/var.c:647
 #, c-format
 msgid "Invalid lag order %d"
 msgstr "Ungültige Lagordnung %d"
@@ -6347,49 +6403,49 @@ msgstr "Gelöschte Matrix %s"
 msgid "Matrix decomposition failed"
 msgstr "Matrixzerlegung fehlgeschlagen"
 
-#: lib/src/var.c:646 lib/src/var.c:2695
+#: lib/src/var.c:671 lib/src/var.c:2798
 #, c-format
 msgid "vecm: rank %d is out of bounds"
 msgstr "VECM: Rang %d außerhalb der Grenzen"
 
-#: lib/src/var.c:2170
+#: lib/src/var.c:2273
 msgid "Sample variance-covariance matrices for residuals"
 msgstr "Geschätzte Varianz-Kovarianz-Matrizen für Residuen"
 
-#: lib/src/var.c:2172
+#: lib/src/var.c:2275
 msgid "VAR system in first differences"
 msgstr "VAR-System in ersten Differenzen"
 
-#: lib/src/var.c:2180
+#: lib/src/var.c:2283
 msgid "System with levels as dependent variable"
 msgstr "System mit Niveaus als abhängige Variable"
 
-#: lib/src/var.c:2188
+#: lib/src/var.c:2291
 msgid "Cross-products"
 msgstr "Kreuzprodukte"
 
-#: lib/src/var.c:2513
+#: lib/src/var.c:2616
 msgid "Johansen test"
 msgstr "Johansen-Test"
 
-#: lib/src/var.c:2514
+#: lib/src/var.c:2617
 msgid "Number of equations"
 msgstr "Anzahl Gleichungen"
 
-#: lib/src/var.c:2515
+#: lib/src/var.c:2618
 msgid "Lag order"
 msgstr "Lagordnung"
 
-#: lib/src/var.c:2516
+#: lib/src/var.c:2619
 msgid "Estimation period"
 msgstr "Schätzperiode"
 
-#: lib/src/var.c:2884
+#: lib/src/var.c:2987
 #, c-format
 msgid "residual from VAR system, equation %d"
 msgstr "Residuum aus VAR-System, Gleichung %d"
 
-#: lib/src/var.c:2887
+#: lib/src/var.c:2990
 #, c-format
 msgid "residual from VECM system, equation %d"
 msgstr "Residuen aus VECM-System, Gleichung %d"
@@ -6546,12 +6602,12 @@ msgstr "Vergleich der Informationskriterien"
 msgid "Lag order %*d"
 msgstr "Lagordnung %*d"
 
-#: lib/src/vartest.c:288
+#: lib/src/vartest.c:222
 #, c-format
 msgid "VAR system, maximum lag order %d"
 msgstr "VAR-System, maximaler Lag %d"
 
-#: lib/src/vartest.c:291
+#: lib/src/vartest.c:225
 msgid ""
 "The asterisks below indicate the best (that is, minimized) values\n"
 "of the respective information criteria, AIC = Akaike criterion,\n"
@@ -6561,11 +6617,11 @@ msgstr ""
 "der jeweiligen Informationskriterien an, AIC = Akaike-Kriterium,\n"
 "BIC = Schwartz Bayes-Kriterium, and HQC = Hannan-Quinn-Kriterium."
 
-#: lib/src/vartest.c:296
+#: lib/src/vartest.c:230
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr "Lags      loglik     p(LR)       AIC          BIC          HQC     "
 
-#: lib/src/vartest.c:658
+#: lib/src/vartest.c:585
 msgid ""
 "\n"
 "  Null hypothesis: the regression parameters are zero for the variables\n"
@@ -6575,7 +6631,7 @@ msgstr ""
 "  Nullhypothese: Die Regressionskoeffizienten sind Null für die Variablen\n"
 "\n"
 
-#: lib/src/vartest.c:666
+#: lib/src/vartest.c:593
 #, c-format
 msgid ""
 "with p-value = %g\n"
@@ -11619,13 +11675,13 @@ msgstr "Gini-Koeffizient"
 
 #: gui2/library.c:2338
 #, fuzzy
-msgid "standardize the data"
-msgstr "standardisiere die Residuen"
+msgid "use sample mean and variance for normal quantiles"
+msgstr "Annahme, dass Stand'abw. aus Grundgesamtheit"
 
 #: gui2/library.c:2339
 #, fuzzy
-msgid "use sample mean and variance for normal quantiles"
-msgstr "Annahme, dass Stand'abw. aus Grundgesamtheit"
+msgid "standardize the data"
+msgstr "standardisiere die Residuen"
 
 #: gui2/library.c:2340
 msgid "raw quantiles versus N(0, 1)"
@@ -14117,11 +14173,11 @@ msgstr "Fehler im Arma-Befehl"
 msgid "Failed to execute x12arima"
 msgstr "Ausführung von X12arima schlug fehl"
 
-#: plugin/eviews_import.c:236
+#: plugin/eviews_import.c:238
 msgid "No variables were read\n"
 msgstr "Keine Variablen wurden gelesen\n"
 
-#: plugin/eviews_import.c:398
+#: plugin/eviews_import.c:412
 msgid "Error reading workfile header\n"
 msgstr "Fehler beim Lesen des Workfile-Headers\n"
 
@@ -14353,7 +14409,7 @@ msgstr "Alpha (Anpassungsvektoren)"
 msgid "long-run matrix (alpha * beta')"
 msgstr "Langfrist-Matrix (alpha * beta')"
 
-#: plugin/johansen.c:999
+#: plugin/johansen.c:1006
 msgid "eigenvalue"
 msgstr "Eigenwert"
 

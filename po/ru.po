@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-06 17:43-0500\n"
+"POT-Creation-Date: 2010-01-16 10:11-0500\n"
 "PO-Revision-Date: 2010-01-11 00:58+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:245
 msgid "lagged differences"
@@ -177,7 +177,7 @@ msgstr "Параметр для усечения лагов = %d\n"
 #: lib/src/modelprint.c:2079 lib/src/modelprint.c:2084
 #: lib/src/modelprint.c:2102 lib/src/modelprint.c:2106
 #: lib/src/modelprint.c:2111 lib/src/modelprint.c:2123
-#: lib/src/modelprint.c:2128 lib/src/modelprint.c:2132 lib/src/vartest.c:664
+#: lib/src/modelprint.c:2128 lib/src/modelprint.c:2132 lib/src/vartest.c:591
 msgid "Test statistic"
 msgstr "Тестовая статистика"
 
@@ -363,7 +363,7 @@ msgstr "Критерий отношения правдоподобия"
 #: lib/src/pvalues.c:1764 lib/src/system.c:818 lib/src/system.c:2652
 #: lib/src/system.c:2674 lib/src/system.c:2705 lib/src/system.c:2723
 #: lib/src/system.c:3799 lib/src/varprint.c:1197 lib/src/varprint.c:1205
-#: lib/src/vartest.c:60 lib/src/vartest.c:665
+#: lib/src/vartest.c:60 lib/src/vartest.c:592
 msgid "Chi-square"
 msgstr "Хи-квадрат"
 
@@ -693,9 +693,60 @@ msgstr ""
 msgid "Invalid column specification"
 msgstr "Неверная спецификация для столбца"
 
+#: lib/src/csvdata.c:427
+#, fuzzy, c-format
+msgid "Observations: %d; days in sample: %d\n"
+msgstr "Наблюдения: %d"
+
+#: lib/src/csvdata.c:430
+#, fuzzy
+msgid "Probably annual data\n"
+msgstr "Преобразовать годовые данные в:"
+
+#: lib/src/csvdata.c:433
+#, fuzzy
+msgid "Probably quarterly data\n"
+msgstr "ежеквартально"
+
+#: lib/src/csvdata.c:436
+#, fuzzy
+msgid "Probably monthly data\n"
+msgstr "Ежеквартальные или ежемесячные данные"
+
+#: lib/src/csvdata.c:439
+msgid "Probably weekly data\n"
+msgstr ""
+
+#: lib/src/csvdata.c:442
+#, fuzzy, c-format
+msgid "Missing daily observations: %d\n"
+msgstr "Недостающие наблюдения"
+
 #: lib/src/csvdata.c:694
 msgid "reversing the data!\n"
 msgstr "изменение порядка дат на обратный!\n"
+
+#: lib/src/csvdata.c:733
+msgid "Trying date order YYYYMMDD\n"
+msgstr ""
+
+#: lib/src/csvdata.c:741
+msgid "Trying date order DDMMYYYY\n"
+msgstr ""
+
+#: lib/src/csvdata.c:749
+msgid "Trying date order MMDDYYYY\n"
+msgstr ""
+
+#: lib/src/csvdata.c:768
+#, fuzzy, c-format
+msgid "Could be %s - %s\n"
+msgstr "Невозможно открыть %s\n"
+
+#: lib/src/csvdata.c:793
+#, c-format
+msgid "'%s' and '%s': couldn't get dates\n"
+msgstr ""
 
 #: lib/src/csvdata.c:811
 #, c-format
@@ -901,15 +952,15 @@ msgstr ""
 "данные имеют пространственную структуру\n"
 "\n"
 
-#: lib/src/csvdata.c:2144 plugin/eviews_import.c:425
+#: lib/src/csvdata.c:2144 plugin/eviews_import.c:439
 #: plugin/excel_import.c:1638 plugin/gnumeric_import.c:798
 #: plugin/jmulti_import.c:383 plugin/sas_import.c:690
 #: plugin/spss_import.c:1901 plugin/stata_import.c:913
 msgid "warning: some variable names were duplicated\n"
 msgstr "ВНИМАНИЕ: имена переменных были продублированы\n"
 
-#: lib/src/csvdata.c:2167 plugin/eviews_import.c:391
-#: plugin/eviews_import.c:406 plugin/excel_import.c:1477
+#: lib/src/csvdata.c:2167 plugin/eviews_import.c:405
+#: plugin/eviews_import.c:420 plugin/excel_import.c:1477
 #: plugin/gnumeric_import.c:628 plugin/jmulti_import.c:354
 #: plugin/jmulti_import.c:371 plugin/sas_import.c:652 plugin/sas_import.c:664
 #: plugin/spss_import.c:1804 plugin/spss_import.c:1825
@@ -1338,7 +1389,7 @@ msgstr ""
 "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1562 lib/src/describe.c:2823 lib/src/describe.c:3324
-#: lib/src/describe.c:3816 lib/src/graphing.c:4946
+#: lib/src/describe.c:3816 lib/src/graphing.c:4944
 #, c-format
 msgid "%s is a constant"
 msgstr "%s является константой"
@@ -1980,16 +2031,16 @@ msgstr "Изменена переменная %s (ID %d)"
 msgid "Generated series %s (ID %d)"
 msgstr "Создана переменная %s (ID %d)"
 
-#: lib/src/geneval.c:2966 lib/src/interact.c:1392
+#: lib/src/geneval.c:2979 lib/src/interact.c:1392
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Номер переменной %d выходит за границы"
 
-#: lib/src/geneval.c:4317
+#: lib/src/geneval.c:4330
 msgid "Matrix specification is not coherent"
 msgstr "Неверное описание матрицы"
 
-#: lib/src/geneval.c:4460 lib/src/geneval.c:5141
+#: lib/src/geneval.c:4473 lib/src/geneval.c:5154
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -1998,73 +2049,73 @@ msgstr ""
 "Число аргументов (%d) не соответствует числу\n"
 "параметров для функции %s (%d)"
 
-#: lib/src/geneval.c:4526
+#: lib/src/geneval.c:4539
 msgid "Wrong type of operand for unary '&'"
 msgstr "Неверный тип операнда для унарного '&'"
 
-#: lib/src/geneval.c:6126
+#: lib/src/geneval.c:6139
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': неверный аргумент для %s()\n"
 
-#: lib/src/geneval.c:6154 lib/src/genlex.c:629 cli/cli_object.c:46
+#: lib/src/geneval.c:6167 lib/src/genlex.c:630 cli/cli_object.c:46
 #: gui2/objectsave.c:54
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: нет такого объекта\n"
 
-#: lib/src/geneval.c:6309
+#: lib/src/geneval.c:6322
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: операнд должен быть равен %s"
 
-#: lib/src/geneval.c:6312
+#: lib/src/geneval.c:6325
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: операнд %d должен быть равен %s"
 
-#: lib/src/geneval.c:6317
+#: lib/src/geneval.c:6330
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: аргумент должен быть равен %s"
 
-#: lib/src/geneval.c:6320
+#: lib/src/geneval.c:6333
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: аргумент %d должен быть равен %s"
 
-#: lib/src/geneval.c:7763 lib/src/genlex.c:681 lib/src/genlex.c:748
+#: lib/src/geneval.c:7781 lib/src/genlex.c:682 lib/src/genlex.c:749
 #: lib/src/gensyntax.c:274
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Несовпадение '%c'\n"
 
-#: lib/src/geneval.c:7935
+#: lib/src/geneval.c:7953
 #, c-format
 msgid "'%s': name is too long (max 15 characters)\n"
 msgstr "'%s' : имя слишком длинное (максимум 15 символов)\n"
 
-#: lib/src/geneval.c:8034
+#: lib/src/geneval.c:8052
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : нельзя применить к матрицам"
 
-#: lib/src/geneval.c:8041
+#: lib/src/geneval.c:8059
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : нельзя применить к спискам"
 
-#: lib/src/geneval.c:8048
+#: lib/src/geneval.c:8066
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : нельзя применить к строкам"
 
-#: lib/src/geneval.c:8055
+#: lib/src/geneval.c:8073
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : определено только для матриц"
 
-#: lib/src/geneval.c:8062
+#: lib/src/geneval.c:8080
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : нельзя применить к этому типа"
@@ -2169,39 +2220,39 @@ msgstr "по-объектная константа из модели %d"
 msgid "Invalid declaration"
 msgstr "Неверное объявление"
 
-#: lib/src/genlex.c:631 lib/src/gretl_restrict.c:2231
+#: lib/src/genlex.c:632 lib/src/gretl_restrict.c:2231
 #, c-format
 msgid "The symbol '%s' is undefined\n"
 msgstr "Символ '%s' не определен\n"
 
-#: lib/src/genlex.c:641 lib/src/genlex.c:642
+#: lib/src/genlex.c:642 lib/src/genlex.c:643
 #, c-format
 msgid "'%s': no argument was given\n"
 msgstr "'%s': не были указаны аргументы\n"
 
-#: lib/src/genlex.c:651
+#: lib/src/genlex.c:652
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Символ '%c' не соответствует контексту\n"
 
-#: lib/src/genlex.c:653
+#: lib/src/genlex.c:654
 msgid "(for logical AND, use '&&')\n"
 msgstr "(для логического И используйте '&&')\n"
 
-#: lib/src/genlex.c:655
+#: lib/src/genlex.c:656
 msgid "(for logical OR, use '||')\n"
 msgstr "(для логического ИЛИ используйте '||')\n"
 
-#: lib/src/genlex.c:661
+#: lib/src/genlex.c:662
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Символ '%s' не соответствует контексту\n"
 
-#: lib/src/genlex.c:745
+#: lib/src/genlex.c:746
 msgid "Empty observation []\n"
 msgstr "Пустое наблюдение []\n"
 
-#: lib/src/genlex.c:1391
+#: lib/src/genlex.c:1395
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Неверный символ '%c'\n"
@@ -2299,6 +2350,11 @@ msgstr "Ожидалось '%c' но запись формулы прервал�
 #, c-format
 msgid "Expected '%c' but found '%s'\n"
 msgstr "Ожидалось '%c' но было '%s'\n"
+
+#: lib/src/gensyntax.c:941
+#, fuzzy
+msgid "too many arguments"
+msgstr "Аргументы:"
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2662 lib/src/gretl_panel.c:4427
 #: lib/src/gretl_panel.c:4437 lib/src/interact.c:3655 lib/src/nls.c:2578
@@ -2513,20 +2569,20 @@ msgstr "Обратные корни VAR по отношению к единич�
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%% доверительный эллипс и %g%% доверительные интервалы"
 
-#: lib/src/graphing.c:5115 lib/src/graphing.c:5116
+#: lib/src/graphing.c:5113 lib/src/graphing.c:5114
 #, c-format
 msgid "adjusted %s"
 msgstr "исправлен. %s"
 
-#: lib/src/graphing.c:5178 plugin/range-mean.c:66
+#: lib/src/graphing.c:5176 plugin/range-mean.c:66
 msgid "with least squares fit"
 msgstr "с подбором по МНК"
 
-#: lib/src/gretl_bfgs.c:304
+#: lib/src/gretl_bfgs.c:308
 msgid "Failed to compute numerical Hessian"
 msgstr "Не удалось численно оценить Гессиан"
 
-#: lib/src/gretl_bfgs.c:450
+#: lib/src/gretl_bfgs.c:445
 msgid ""
 "\n"
 "\n"
@@ -2536,21 +2592,21 @@ msgstr ""
 "\n"
 "*** Пользовательские начальные значения:\n"
 
-#: lib/src/gretl_bfgs.c:527
+#: lib/src/gretl_bfgs.c:522
 msgid "BFGS: initial value of objective function is not finite"
 msgstr "BFGS: начальное значение целевой функции не является конечным"
 
-#: lib/src/gretl_bfgs.c:713
+#: lib/src/gretl_bfgs.c:714
 #, c-format
 msgid "stopped after %d iterations\n"
 msgstr "выполнено %d итераций\n"
 
-#: lib/src/gretl_bfgs.c:1093 lib/src/modelprint.c:2785
+#: lib/src/gretl_bfgs.c:1203 lib/src/modelprint.c:2785
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr "Оценок функции: %d\n"
 
-#: lib/src/gretl_bfgs.c:1094 lib/src/modelprint.c:2786
+#: lib/src/gretl_bfgs.c:1204 lib/src/modelprint.c:2786
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr "Оценок градиента: %d\n"
@@ -2796,7 +2852,7 @@ msgstr "_Открыть"
 msgid "annual"
 msgstr "годичные"
 
-#: lib/src/gretl_intl.c:642
+#: lib/src/gretl_intl.c:644
 #, c-format
 msgid "%s: locale is not supported on this system"
 msgstr "%s: локаль данной системой не поддерживается"
@@ -5429,11 +5485,11 @@ msgstr "Система"
 msgid "%s saved\n"
 msgstr "%s сохранена\n"
 
-#: lib/src/objstack.c:1332 gui2/library.c:89
+#: lib/src/objstack.c:1334 gui2/library.c:89
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "Невозможно выполнить: ни одна модель еще не была оценена\n"
 
-#: lib/src/objstack.c:1343
+#: lib/src/objstack.c:1345
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -5441,17 +5497,17 @@ msgstr ""
 "Невозможно выполнить: текущий набор данных отличен от того на котором\n"
 "базовая модель была оценена\n"
 
-#: lib/src/options.c:932
+#: lib/src/options.c:931
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr "Неверная опция '--%s'"
 
-#: lib/src/options.c:953
+#: lib/src/options.c:952
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "Опция '--%s' требует указания параметра"
 
-#: lib/src/options.c:1206
+#: lib/src/options.c:1205
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "ВНИМАНИЕ: опция %s игнорируется вне циклов"
@@ -5919,7 +5975,7 @@ msgstr "Пуассон (среднее = %g): "
 msgid "Weibull (shape = %g, scale = %g): "
 msgstr "Вейбулл (форма = %g, масштаб = %g): "
 
-#: lib/src/strutils.c:1647
+#: lib/src/strutils.c:1652
 msgid "out of memory in XML encoding"
 msgstr "недостаточно памяти для декодирования XML"
 
@@ -6301,7 +6357,7 @@ msgstr "= %s раз %s"
 msgid "dummy for %s = %g"
 msgstr "фиктивная переменная для %s = %g"
 
-#: lib/src/transforms.c:730 lib/src/transforms.c:1186 lib/src/var.c:622
+#: lib/src/transforms.c:730 lib/src/transforms.c:1186 lib/src/var.c:647
 #, c-format
 msgid "Invalid lag order %d"
 msgstr "Неверный порядок лага %d"
@@ -6344,49 +6400,49 @@ msgstr "Матрица %s удалена"
 msgid "Matrix decomposition failed"
 msgstr "Ошибка в декомпозиции матрицы"
 
-#: lib/src/var.c:646 lib/src/var.c:2695
+#: lib/src/var.c:671 lib/src/var.c:2798
 #, c-format
 msgid "vecm: rank %d is out of bounds"
 msgstr "VECM: ранг %d выходит за допустимые границы"
 
-#: lib/src/var.c:2170
+#: lib/src/var.c:2273
 msgid "Sample variance-covariance matrices for residuals"
 msgstr ""
 
-#: lib/src/var.c:2172
+#: lib/src/var.c:2275
 msgid "VAR system in first differences"
 msgstr "VAR система в первых разностях"
 
-#: lib/src/var.c:2180
+#: lib/src/var.c:2283
 msgid "System with levels as dependent variable"
 msgstr ""
 
-#: lib/src/var.c:2188
+#: lib/src/var.c:2291
 msgid "Cross-products"
 msgstr "Кросс-произведения"
 
-#: lib/src/var.c:2513
+#: lib/src/var.c:2616
 msgid "Johansen test"
 msgstr "Тест Йохансена"
 
-#: lib/src/var.c:2514
+#: lib/src/var.c:2617
 msgid "Number of equations"
 msgstr "Количество уравнений"
 
-#: lib/src/var.c:2515
+#: lib/src/var.c:2618
 msgid "Lag order"
 msgstr "Порядок лага"
 
-#: lib/src/var.c:2516
+#: lib/src/var.c:2619
 msgid "Estimation period"
 msgstr "Период оценки"
 
-#: lib/src/var.c:2884
+#: lib/src/var.c:2987
 #, c-format
 msgid "residual from VAR system, equation %d"
 msgstr "остатки для VAR системы, уравнение %d"
 
-#: lib/src/var.c:2887
+#: lib/src/var.c:2990
 #, c-format
 msgid "residual from VECM system, equation %d"
 msgstr "остатки для VECM системы, уравнение %d"
@@ -6543,12 +6599,12 @@ msgstr "Сравнение информационных критериев"
 msgid "Lag order %*d"
 msgstr "Лаг порядка %*d"
 
-#: lib/src/vartest.c:288
+#: lib/src/vartest.c:222
 #, c-format
 msgid "VAR system, maximum lag order %d"
 msgstr "VAR система, максимальный порядок лага %d"
 
-#: lib/src/vartest.c:291
+#: lib/src/vartest.c:225
 msgid ""
 "The asterisks below indicate the best (that is, minimized) values\n"
 "of the respective information criteria, AIC = Akaike criterion,\n"
@@ -6558,11 +6614,11 @@ msgstr ""
 "информационных критериев Акаике (AIC), Шварца (BIC)\n"
 "и Хеннана-Куинна (HQC)."
 
-#: lib/src/vartest.c:296
+#: lib/src/vartest.c:230
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr ""
 
-#: lib/src/vartest.c:658
+#: lib/src/vartest.c:585
 msgid ""
 "\n"
 "  Null hypothesis: the regression parameters are zero for the variables\n"
@@ -6572,7 +6628,7 @@ msgstr ""
 "  Нулевая гипотеза: параметры регрессии нулевые\n"
 "\n"
 
-#: lib/src/vartest.c:666
+#: lib/src/vartest.c:593
 #, c-format
 msgid ""
 "with p-value = %g\n"
@@ -11557,12 +11613,12 @@ msgid "Gini coefficient"
 msgstr "Коэффициент Джини"
 
 #: gui2/library.c:2338
-msgid "standardize the data"
-msgstr "Стандартизировать данные"
-
-#: gui2/library.c:2339
 msgid "use sample mean and variance for normal quantiles"
 msgstr "Использовать выборочное среднее и дисперсию для нормальных квантилей"
+
+#: gui2/library.c:2339
+msgid "standardize the data"
+msgstr "Стандартизировать данные"
 
 #: gui2/library.c:2340
 msgid "raw quantiles versus N(0, 1)"
@@ -14045,11 +14101,11 @@ msgstr "Ошибка в команде arma"
 msgid "Failed to execute x12arima"
 msgstr "Ошибка запуска x12arima"
 
-#: plugin/eviews_import.c:236
+#: plugin/eviews_import.c:238
 msgid "No variables were read\n"
 msgstr "Ни одной переменной не было прочитано\n"
 
-#: plugin/eviews_import.c:398
+#: plugin/eviews_import.c:412
 msgid "Error reading workfile header\n"
 msgstr "Ошибка чтения заголовка файла\n"
 
@@ -14275,7 +14331,7 @@ msgstr "alpha (корректирующие векторы)"
 msgid "long-run matrix (alpha * beta')"
 msgstr ""
 
-#: plugin/johansen.c:999
+#: plugin/johansen.c:1006
 msgid "eigenvalue"
 msgstr "собственное значение"
 
