@@ -2,16 +2,19 @@ version 1.8.7, in progress
 - GUI enhancement: add apparatus to help keep track of
   gretl windows
 - GUI menus: clean-up and consolidation
-- New command: "qqplot"
+- New command: "qqplot" (Quantile-Quantile plots)
 - Normal random samples: implement the Ziggurat method
 - "dataset" command: document the "clear" keyword
 - "rmplot" command: save $test and $pvalue
 - "restrict" with --bootstrap option: record $test and
   $pvalue
-- VECMs: enable $vcv accessor
+- "corrgm" and "xcorrgm": allow the lag order to be
+  given as a named scalar variable
+- VECMs: enable $vcv accessor, add $ec accessor
 - VARs and VECMs: enable $df and $ncoeff accessors
 - BFGSmax function: add facility for supplying analytical
   derivatives
+- Eviews data importer: handle more cases of .wf1 files
 - Fix bug: crash on error in user_matrix_ols()
 - Fix bug: "append" for data should work in more cases
 - Fix bug: saving a model when there is already a saved
