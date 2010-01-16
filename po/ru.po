@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-11 00:58+0200\n"
+"PO-Revision-Date: 2010-01-16 22:46+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:245
 msgid "lagged differences"
@@ -694,33 +694,30 @@ msgid "Invalid column specification"
 msgstr "Неверная спецификация для столбца"
 
 #: lib/src/csvdata.c:427
-#, fuzzy, c-format
+#, c-format
 msgid "Observations: %d; days in sample: %d\n"
-msgstr "Наблюдения: %d"
+msgstr "Наблюдений: %d; дней в выборке: %d\n"
 
 #: lib/src/csvdata.c:430
-#, fuzzy
 msgid "Probably annual data\n"
-msgstr "Преобразовать годовые данные в:"
+msgstr "Возможно годовые данные\n"
 
 #: lib/src/csvdata.c:433
-#, fuzzy
 msgid "Probably quarterly data\n"
-msgstr "ежеквартально"
+msgstr "Возможно квартальные данные\n"
 
 #: lib/src/csvdata.c:436
-#, fuzzy
 msgid "Probably monthly data\n"
-msgstr "Ежеквартальные или ежемесячные данные"
+msgstr "Возможно ежемесячные данные\n"
 
 #: lib/src/csvdata.c:439
 msgid "Probably weekly data\n"
 msgstr ""
 
 #: lib/src/csvdata.c:442
-#, fuzzy, c-format
+#, c-format
 msgid "Missing daily observations: %d\n"
-msgstr "Недостающие наблюдения"
+msgstr "Недостающих дневных наблюдений: %d\n"
 
 #: lib/src/csvdata.c:694
 msgid "reversing the data!\n"
@@ -739,9 +736,9 @@ msgid "Trying date order MMDDYYYY\n"
 msgstr ""
 
 #: lib/src/csvdata.c:768
-#, fuzzy, c-format
+#, c-format
 msgid "Could be %s - %s\n"
-msgstr "Невозможно открыть %s\n"
+msgstr "Должно быть %s - %s\n"
 
 #: lib/src/csvdata.c:793
 #, c-format
@@ -2352,9 +2349,8 @@ msgid "Expected '%c' but found '%s'\n"
 msgstr "Ожидалось '%c' но было '%s'\n"
 
 #: lib/src/gensyntax.c:941
-#, fuzzy
 msgid "too many arguments"
-msgstr "Аргументы:"
+msgstr "Очень много аргументов"
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2662 lib/src/gretl_panel.c:4427
 #: lib/src/gretl_panel.c:4437 lib/src/interact.c:3655 lib/src/nls.c:2578
