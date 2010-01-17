@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-11 02:00-0400\n"
+"PO-Revision-Date: 2010-01-17 23:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -679,33 +679,30 @@ msgid "Invalid column specification"
 msgstr "Błąd w specyfikacji kolumn"
 
 #: lib/src/csvdata.c:427
-#, fuzzy, c-format
+#, c-format
 msgid "Observations: %d; days in sample: %d\n"
-msgstr "Liczba obserwacji: %d"
+msgstr "Liczba obserwacji: %d; dni w próbie: %d\n"
 
 #: lib/src/csvdata.c:430
-#, fuzzy
 msgid "Probably annual data\n"
-msgstr "Dezagregacja danych rocznych do:"
+msgstr "Prawdopodobnie dane roczne\n"
 
 #: lib/src/csvdata.c:433
-#, fuzzy
 msgid "Probably quarterly data\n"
-msgstr "kwartalnych"
+msgstr "Prawdopodobnie dane kwartalne\n"
 
 #: lib/src/csvdata.c:436
-#, fuzzy
 msgid "Probably monthly data\n"
-msgstr "Dane kwartalne lub miesięczne"
+msgstr "Prawdopodobnie dane miesięczne\n"
 
 #: lib/src/csvdata.c:439
 msgid "Probably weekly data\n"
-msgstr ""
+msgstr "Prawdopodobnie dane tygodniowe\n"
 
 #: lib/src/csvdata.c:442
-#, fuzzy, c-format
+#, c-format
 msgid "Missing daily observations: %d\n"
-msgstr "Brakujące obserwacje"
+msgstr "Brakujące dzienne obserwacje: %d\n"
 
 #: lib/src/csvdata.c:694
 msgid "reversing the data!\n"
@@ -713,25 +710,25 @@ msgstr "przesortowanie rosnące danych według etykiet!\n"
 
 #: lib/src/csvdata.c:733
 msgid "Trying date order YYYYMMDD\n"
-msgstr ""
+msgstr "Zidentyfikowano datę jako YYYYMMDD\n"
 
 #: lib/src/csvdata.c:741
 msgid "Trying date order DDMMYYYY\n"
-msgstr ""
+msgstr "Zidentyfikowano datę jako DDMMYYYY\n"
 
 #: lib/src/csvdata.c:749
 msgid "Trying date order MMDDYYYY\n"
-msgstr ""
+msgstr "Zidentyfikowano datę jako MMDDYYYY\n"
 
 #: lib/src/csvdata.c:768
-#, fuzzy, c-format
+#, c-format
 msgid "Could be %s - %s\n"
-msgstr "Nie można otworzyć %s\n"
+msgstr "Można być %s - %s\n"
 
 #: lib/src/csvdata.c:793
 #, c-format
 msgid "'%s' and '%s': couldn't get dates\n"
-msgstr ""
+msgstr "'%s' oraz '%s': nie może tworzyć daty\n"
 
 #: lib/src/csvdata.c:811
 #, c-format
@@ -2343,9 +2340,8 @@ msgid "Expected '%c' but found '%s'\n"
 msgstr "Oczekiwano '%c' lecz znaleziono '%s'\n"
 
 #: lib/src/gensyntax.c:941
-#, fuzzy
 msgid "too many arguments"
-msgstr "Wybór argumentów:"
+msgstr "Za dużo argumentów"
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2662 lib/src/gretl_panel.c:4427
 #: lib/src/gretl_panel.c:4437 lib/src/interact.c:3655 lib/src/nls.c:2578
@@ -14407,7 +14403,6 @@ msgid "eigenvalue"
 msgstr "Wartość własna"
 
 #: plugin/johansen.c:1427
-#, fuzzy
 msgid "Exogenous regressor(s)"
 msgstr "Zmienne egzogeniczne"
 
@@ -14704,9 +14699,8 @@ msgid "slope of range against mean = %g\n"
 msgstr "nachylenie prostej dla przedziałów wg. średniej = %g\n"
 
 #: plugin/range-mean.c:211
-#, fuzzy
 msgid "range-mean test"
-msgstr "Wykres średnich-przedziałowych dla"
+msgstr "Test średnich-przedziałowych"
 
 #: plugin/range-mean.c:213
 #, c-format
@@ -14971,57 +14965,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "gretl: data summary"
-#~ msgstr "gretl: pełny opis pliku danych"
-
-#~ msgid "You don't have permission to do this"
-#~ msgstr "Sorry, nie masz pozwolenia do tego"
-
-#~ msgid "gretl: data header"
-#~ msgstr "gretl: opis pliku"
-
-#~ msgid "didn't get description from %s\n"
-#~ msgstr "Nie pobrano opisu z %s\n"
-
-#~ msgid "There are no dummy variables in the current sample"
-#~ msgstr "Brak zmiennych 0-1 w bieżącej podpróbie"
-
-#~ msgid "There are no dummy variables in the dataset"
-#~ msgstr "Brak zmiennych 0-1 w bazie danych"
-
-#~ msgid "Show normal distribution"
-#~ msgstr "Pokaż dane i rozkład normalny"
-
-#~ msgid "Show gamma distribution"
-#~ msgstr "Pokaż dane i rozkład gamma"
-
-#~ msgid "_ASCII..."
-#~ msgstr "_ASCII..."
-
-#~ msgid "_CDF graphs"
-#~ msgstr "Wykresy dystrybuant _CDF"
-
-#~ msgid "_Read info"
-#~ msgstr "_Opis pliku danych"
-
-#~ msgid "Edit _info"
-#~ msgstr "Edytuj opis pliku"
-
-#~ msgid "_Print description"
-#~ msgstr "Pokaż pełny opis pliku"
-
-#~ msgid "Add _case markers..."
-#~ msgstr "_Dodanie opisów przypadków (obserwacji)..."
-
-#~ msgid "_Define, based on dummy..."
-#~ msgstr "_Zmienne 0-1 dla podpróby..."
-
-#~ msgid "_Find..."
-#~ msgstr "_Szukaj..."
-
-#~ msgid "Frequency _plot"
-#~ msgstr "Wykres _częstości..."
-
-#~ msgid "Frequency plot"
-#~ msgstr "Wykres częstości"
