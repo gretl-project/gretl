@@ -1078,8 +1078,10 @@ static stacker *find_smatch (const char *oname)
     return smatch;
 }
 
-/* retrieve the type and command index of a named model, or of 
-   the last model if @name is NULL */
+/* Retrieve the type of a named model, or of the last model if @name
+   is NULL.  If it's a single-equation model and @ci is non-NULL,
+   also retrieve the model's command index in @ci.
+*/
 
 GretlObjType gretl_model_get_type_and_ci (const char *name,
 					  int *ci)
@@ -1087,11 +1089,13 @@ GretlObjType gretl_model_get_type_and_ci (const char *name,
     stacker *smatch = find_smatch(name);
     GretlObjType ret = GRETL_OBJ_NULL;
 
-    *ci = 0;
+    if (ci != NULL) {
+	*ci = 0;
+    }
 
     if (smatch != NULL) {
 	ret = smatch->type;
-	if (ret == GRETL_OBJ_EQN) {
+	if (ret == GRETL_OBJ_EQN && ci != NULL) {
 	    MODEL *pmod = smatch->ptr;
 
 	    *ci = pmod->ci;
