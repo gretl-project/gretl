@@ -98,7 +98,12 @@
     <function name="$df" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the degrees of freedom of the last estimated model.
+	  Returns the degrees of freedom of the last estimated model. If the
+	  last model was in fact a system of equations, the value returned is
+	  the degrees of freedom per equation; if this differs across the
+	  equations then the value given is the number of observations minus
+	  the mean number of coefficients per equation (rounded up to the
+	  nearest integer).
 	</para>
       </description>
     </function>
@@ -109,6 +114,17 @@
 	  Returns the p-value for the Durbin&ndash;Watson statistic for the
 	  model last estimated, if available.  This is computed using the
 	  Imhof procedure.
+	</para>
+      </description>
+    </function>
+
+    <function name="$ec" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the estimation of a VECM; returns a matrix containing
+	  the error correction terms.  The number of rows equals the number 
+	  of observations used and the number of columns equals the
+	  cointegration rank of the system.
 	</para>
       </description>
     </function>
