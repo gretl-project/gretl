@@ -265,6 +265,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
     int r = p - 1;
     int T = var->T;
     int n = var->neqns;
+
     /* initialize the "best" at the longest lag */
     double best[N_IVALS] = { var->AIC, var->BIC, var->HQC };
     int best_row[N_IVALS] = { r, r, r };
@@ -291,7 +292,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
 	goto bailout;
     }
 
-    /* # of cols in X that are not Y lags */
+    /* number of cols in X that are not Y lags */
     cols0 = var->ncoeff - p * n; 
 
     for (j=1; j<p && !err; j++) {

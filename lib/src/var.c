@@ -2250,6 +2250,7 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 
 	    if (!*err) {
 		*err = VAR_add_stats(var, code);
+		/* FIXME: what about the robust option? */
 		VAR_write_vcv_matrix(var);
 	    }
 
