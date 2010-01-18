@@ -1639,6 +1639,12 @@
         <argument>variable</argument>
         <argument optional="true">maxlag</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't draw ACF graph</effect>
+	</option>
+      </options>
       <examples>
         <example>corrgm x 12</example>
       </examples>
@@ -1659,13 +1665,14 @@
       </para>
 
       <para>
-	The partial autocorrelations (calculated using the Durbin&ndash;Levinson
-	algorithm) are also shown: these are net of the effects of intervening
-	lags.  The command also graphs the correlogram and prints the
-	Box&ndash;Pierce <math>Q</math> statistic for testing the null
-	hypothesis that the series is <quote>white noise</quote>: this is
+	The partial autocorrelations (calculated using the
+	Durbin&ndash;Levinson algorithm) are also shown: these are net of the
+	effects of intervening lags.  In addition the Box&ndash;Pierce
+	<math>Q</math> statistic is printed.  This may be used to test the
+	null hypothesis that the series is <quote>white noise</quote>; it is
 	asymptotically distributed as chi-square with degrees of freedom equal
-	to the number of lags used.
+	to the number of lags used.  Unless the <lit>--quiet</lit> option is
+	given, a plot of the correlogram is printed.
       </para>
 
       <para>

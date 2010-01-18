@@ -6105,13 +6105,7 @@ static GretlType object_var_type (int idx, const char *oname)
 	if (otype != GRETL_OBJ_EQN) {
 	    vtype = GRETL_TYPE_MATRIX;
 	}
-    } else if (idx == M_DF) {
-	GretlObjType otype = gretl_model_get_type_and_ci(oname, NULL);
-
-	if (otype == GRETL_OBJ_SYS) {
-	    vtype = GRETL_TYPE_MATRIX;
-	}
-    }
+    } 
 
     return vtype;
 }
