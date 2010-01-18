@@ -2301,6 +2301,30 @@ static int system_add_yhat_matrix (equation_system *sys)
     return 0;
 }
 
+static gretl_matrix *sys_df_vec (const equation_system *sys,
+				 int *err)
+{
+    gretl_matrix *df = NULL;
+
+    if (sys->models == NULL) {
+	fprintf(stderr, "sys_df_vec: sys->models = NULL\n");
+	*err = E_BADSTAT;
+    } else {
+	int i;
+
+	df = gretl_matrix_alloc(1, sys->neqns);
+	if (df == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0; i<sys->neqns; i++) {
+		gretl_vector_set(df, i, sys->models[i]->dfd);
+	    }
+	}
+    }
+
+    return df;
+}
+
 /* retrieve a copy of a specified matrix from an equation
    system */
 
@@ -2347,6 +2371,9 @@ equation_system_get_matrix (const equation_system *sys, int idx,
 	break;
     case M_SYSB:
 	M = gretl_matrix_copy(sys->B);
+	break;
+    case M_DF:
+	M = sys_df_vec(sys, err);
 	break;
     default:
 	*err = E_BADSTAT;

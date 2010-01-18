@@ -4163,14 +4163,17 @@ static void exec_state_prep (ExecState *s)
     s->pmod = NULL;
 }
 
-static int param_to_order (const char *s)
+static void param_to_order (CMD *cmd)
 {
-    if (integer_string(s)) {
-	return atoi(s);
-    } else if (gretl_is_scalar(s)) {
-	return (int) gretl_scalar_get_value(s);
+    if (cmd->ci == LAGS && *cmd->param == '\0') {
+	/* giving an order is optional */
+	cmd->order = 0;
+    } else if (integer_string(cmd->param)) {
+	cmd->order = atoi(cmd->param);
+    } else if (gretl_is_scalar(cmd->param)) {
+	cmd->order = (int) gretl_scalar_get_value(cmd->param);
     } else {
-	return -1;
+	cmd->order = -1;
     }
 }
 
@@ -4216,7 +4219,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (want_param_to_order(cmd->ci)) {
-	cmd->order = param_to_order(cmd->param);
+	param_to_order(cmd);
     }
 
     if (pZ != NULL) {
