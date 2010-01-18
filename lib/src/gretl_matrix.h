@@ -229,6 +229,8 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err);
 
+int gretl_matrix_get_row (const gretl_matrix *m, int i, gretl_vector *v);
+
 double gretl_matrix_trace (const gretl_matrix *m, int *err);
 
 int gretl_matrix_random_fill (gretl_matrix *m, int dist);

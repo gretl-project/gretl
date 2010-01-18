@@ -2087,16 +2087,14 @@ int transcribe_VAR_models (GRETL_VAR *var,
     int i, j, jmax;
     int err = 0;
 
-    jmax = (var->B != NULL)? var->B->rows : 0;
-
     params = strings_array_new_with_length(var->ncoeff, VNAMELEN);
     if (params == NULL) {
 	return E_ALLOC;
     }
 
-    jmax = (var->B != NULL)? var->B->rows : 0;
-
     gretl_VAR_param_names(var, params, pdinfo);
+
+    jmax = (var->B != NULL)? var->B->rows : 0;
 
     for (i=0; i<var->neqns && !err; i++) {
 	yno = var->ylist[i+1];
@@ -2221,6 +2219,7 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 	}
     }
 
+    /* allocation and initial set-up */
     var = gretl_VAR_new(code, order, 0, lags, list, Z, pdinfo, 
 			opt, err);
     if (var == NULL) {
@@ -2245,6 +2244,7 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 
 	    if (!*err) {
 		VAR_write_A_matrix(var);
+		/* note: the following also sets std. errors */
 		*err = VAR_wald_omit_tests(var);
 	    }
 

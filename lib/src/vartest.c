@@ -358,37 +358,84 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
     return err;
 }
 
-/* (X'X)^{-1} * X'\Omega X * (X'X)^{-1} : right now
-   we're supporting only HC0 and HC1 */
+static gretl_matrix *VAR_get_hvec (const gretl_matrix *X,
+				   const gretl_matrix *XTX,
+				   int *err)
+{
+    gretl_matrix *hvec;
+    gretl_matrix *Xt;
+    int t, T = X->rows;
+    int k = X->cols;
+    double ht;
+
+    Xt = gretl_matrix_alloc(1, k);
+    hvec = gretl_column_vector_alloc(T);
+
+    if (Xt == NULL || hvec == NULL) {
+	gretl_matrix_free(Xt);
+	gretl_matrix_free(hvec);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=0; t<T && !*err; t++) {
+	gretl_matrix_get_row(X, t, Xt);
+	ht = gretl_scalar_qform(Xt, XTX, err);
+	gretl_vector_set(hvec, t, ht);
+    }
+
+    gretl_matrix_free(Xt);
+
+    return hvec;
+}
+
+/* (X'X)^{-1} * X'\Omega X * (X'X)^{-1} */
 
 static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
 			   MODEL *pmod, int hcv, int k)
 {
     gretl_matrix *XOX = NULL;
-    double xij, xti, xtj, utk;
+    gretl_matrix *hvec = NULL;
+    double xij, xti, xtj, utk, u2, ht;
     int T = var->T;
     int g = var->ncoeff;
     int i, j, t;
+    int err = 0;
 
     XOX = gretl_matrix_alloc(g, g);
     if (XOX == NULL) {
 	return E_ALLOC;
     }
 
+    if (hcv > 1) {
+	hvec = VAR_get_hvec(var->X, var->XTX, &err);
+	if (err) {
+	    gretl_matrix_free(XOX);
+	    return err;
+	}
+    }
+    
     /* form X' \Omega X */
     for (i=0; i<g; i++) {
 	for (j=i; j<g; j++) {
 	    xij = 0.0;
 	    for (t=0; t<T; t++) {
+		utk = gretl_matrix_get(var->E, t, k);
+		u2 = utk * utk;
+		if (hcv > 1) {
+		    ht = gretl_vector_get(hvec, t);
+		    u2 /= 1.0 - ht;
+		    if (hcv > 2) {
+			u2 /= 1.0 - ht;
+		    }
+		}
 		xti = gretl_matrix_get(var->X, t, i);
 		xtj = gretl_matrix_get(var->X, t, j);
-		utk = gretl_matrix_get(var->E, t, k);
-		xij += utk * utk * xti * xtj;
+		xij += u2 * xti * xtj;
 	    }
-	    if (hcv > 0) {
-		/* cheating here, for now */
+	    if (hcv == 1) {
 		xij *= (double) T / (T - g);
-	    }
+	    } 
 	    gretl_matrix_set(XOX, i, j, xij);
 	    if (i != j) {
 		gretl_matrix_set(XOX, j, i, xij);
@@ -402,6 +449,7 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
     gretl_model_set_vcv_info(pmod, VCV_HC, hcv);
 
     gretl_matrix_free(XOX);
+    gretl_matrix_free(hvec);
 
     return 0;
 }
@@ -409,7 +457,7 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
 /* Run the various per-equation omit tests (all lags of each var in
    turn, last lag of all vars) using the Wald method.  We also
    add the standard errors to the models here, since we have the
-   covariance matrix to hand.
+   per-equation covariance matrices to hand.
 */
 
 int VAR_wald_omit_tests (GRETL_VAR *var)
