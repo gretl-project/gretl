@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-12 12:35+0200\n"
+"PO-Revision-Date: 2010-01-18 11:24+0200\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -670,34 +670,29 @@ msgstr ""
 msgid "Invalid column specification"
 msgstr "Geçersiz sütun belirtimi"
 
-#: lib/src/csvdata.c:427
-#, fuzzy, c-format
+#: lib/src/csvdata.c:427, c-format
 msgid "Observations: %d; days in sample: %d\n"
-msgstr "Gözlem: %d"
+msgstr "Gözlem sayısı: %d; örneklemdeki gün sayısı: %d\n"
 
 #: lib/src/csvdata.c:430
-#, fuzzy
 msgid "Probably annual data\n"
-msgstr "Yıllık verileri genişlet:"
+msgstr "Büyük olasılıkla yıllık veriler\n"
 
 #: lib/src/csvdata.c:433
-#, fuzzy
 msgid "Probably quarterly data\n"
-msgstr "üç aylık"
+msgstr "Büyük olasılıkla üç aylık veriler\n"
 
 #: lib/src/csvdata.c:436
-#, fuzzy
 msgid "Probably monthly data\n"
-msgstr "Üç aylık veya aylık veriler"
+msgstr "Büyük olasılıkla aylık veriler\n"
 
 #: lib/src/csvdata.c:439
 msgid "Probably weekly data\n"
-msgstr ""
+msgstr "Büyük olasılıkla haftalık veriler\n"
 
-#: lib/src/csvdata.c:442
-#, fuzzy, c-format
+#: lib/src/csvdata.c:442, c-format
 msgid "Missing daily observations: %d\n"
-msgstr "Eksik gözlemler"
+msgstr "Eksik gün gözlemleri: %d\n"
 
 #: lib/src/csvdata.c:694
 msgid "reversing the data!\n"
@@ -705,25 +700,24 @@ msgstr "Veriler tersine çevriliyor!\n"
 
 #: lib/src/csvdata.c:733
 msgid "Trying date order YYYYMMDD\n"
-msgstr ""
+msgstr "YYYYAAGG tarih sırası deneniyor\n"
 
 #: lib/src/csvdata.c:741
 msgid "Trying date order DDMMYYYY\n"
-msgstr ""
+msgstr "GGAAYYYY tarih sırası deneniyor\n"
 
 #: lib/src/csvdata.c:749
 msgid "Trying date order MMDDYYYY\n"
-msgstr ""
+msgstr "AAGGYYYY tarih sırası deneniyor\n"
 
-#: lib/src/csvdata.c:768
-#, fuzzy, c-format
+#: lib/src/csvdata.c:768, c-format
 msgid "Could be %s - %s\n"
-msgstr "%s açılamadı\n"
+msgstr "%s - %s olabilir\n"
 
 #: lib/src/csvdata.c:793
 #, c-format
 msgid "'%s' and '%s': couldn't get dates\n"
-msgstr ""
+msgstr "'%s' ve '%s': tarihler alınamadı\n"
 
 #: lib/src/csvdata.c:811
 #, c-format
@@ -2067,7 +2061,7 @@ msgstr "'%c' uyuşmadı\n"
 #: lib/src/geneval.c:7953
 #, c-format
 msgid "'%s': name is too long (max 15 characters)\n"
-msgstr "'%s': ad aşırı uzun (ençok 15 harf)\n"
+msgstr "'%s': adı aşırı uzun (ençok 15 harf)\n"
 
 #: lib/src/geneval.c:8052
 #, c-format
@@ -2326,9 +2320,8 @@ msgid "Expected '%c' but found '%s'\n"
 msgstr "'%c' beklenirken %s bulundu\n"
 
 #: lib/src/gensyntax.c:941
-#, fuzzy
 msgid "too many arguments"
-msgstr "Argümanları seçiniz:"
+msgstr "argümanlar aşırı sayıda"
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2662 lib/src/gretl_panel.c:4427
 #: lib/src/gretl_panel.c:4437 lib/src/interact.c:3655 lib/src/nls.c:2578
@@ -3300,7 +3293,7 @@ msgstr "Katsayı numarası (%d), denklem %d için sınırlar dışında"
 #: lib/src/gretl_restrict.c:1613
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
-msgstr "Aşırı sınırlama sayısı (ençok %d)"
+msgstr "Sınırlamalar aşırı sayıda (ençok %d)"
 
 #: lib/src/gretl_restrict.c:1780
 msgid "Restricted estimates"
@@ -5405,7 +5398,7 @@ msgstr "Varyans"
 
 #: lib/src/nonparam.c:1006 lib/src/nonparam.c:1130
 msgid "Sample too small for statistical significance"
-msgstr "İstatistiksel anlamlılık için örneklem çok küçük"
+msgstr "Örneklem, istatistiksel anlamlılık için aşırı küçük"
 
 #: lib/src/nonparam.c:1085
 msgid "Wilcoxon Rank-Sum Test"
@@ -10008,7 +10001,7 @@ msgstr "_Ekle"
 
 #: gui2/gretl.c:1409
 msgid "_Logs of selected variables"
-msgstr "Seçili değişken _logları"
+msgstr "Seçili değişken _loglar�"
 
 #: gui2/gretl.c:1410
 msgid "_Squares of selected variables"
@@ -12967,7 +12960,7 @@ msgstr "Tümü ->"
 
 #: gui2/selector.c:5805
 msgid "Too many items were selected"
-msgstr "Aşırı sayıda kalem seçildi"
+msgstr "Seçili kalemler aşırı sayıda"
 
 #: gui2/selector.c:5875
 msgid "Save functions"
@@ -14896,7 +14889,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 #: plugin/workbook.c:637
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
 msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+"Bu dosya bir 'OLE' dosyası değil -- gretl'ın okuması için aşırı eski olabilir\n"
 
 #: plugin/workbook.c:639
 msgid "Unexpected error reading the file\n"
