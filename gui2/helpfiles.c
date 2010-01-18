@@ -333,7 +333,8 @@ enum {
     NUM_COLS
 };
 
-void help_tree_select_row (GtkTreeSelection *selection, windata_t *vwin)
+static void help_tree_select_row (GtkTreeSelection *selection, 
+				  windata_t *hwin)
 {
     GtkTreeIter iter;
     GtkTreeModel *model;
@@ -349,7 +350,11 @@ void help_tree_select_row (GtkTreeSelection *selection, windata_t *vwin)
 			   POSITION_COL, &pos, 
 			   INDEX_COL, &idx,
 			   -1);
-	real_do_help(idx, pos, vwin->role);
+
+	if (idx != hwin->active_var) {
+	    /* not already in position */
+	    real_do_help(idx, pos, hwin->role);
+	}
     }    
 }
 
@@ -991,7 +996,6 @@ static void real_do_help (int idx, int pos, int role)
     static windata_t *funcs_hwin;
     static windata_t *en_gui_hwin;
     static windata_t *en_cli_hwin;
-
     windata_t *hwin = NULL;
     const char *fname = NULL;
 
@@ -1096,7 +1100,7 @@ void plain_text_cmdref (GtkAction *action)
 	}
     }
 
-    /* pos = 0 gives index of commands */
+    /* note: pos = 0 gives index of commands */
 
     real_do_help(idx, pos, role);
 } 

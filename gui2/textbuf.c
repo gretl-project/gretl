@@ -1392,13 +1392,19 @@ static GtkWidget *build_help_popup (windata_t *hwin)
     };
     GtkWidget *pmenu = gtk_menu_new();
     GtkWidget *item;
-    int i, imin = 0;
+    int i, imin = 0, imax = 2;
 
     if (hwin->active_var == 0) {
+	/* don't offer "Index" if we're in the index */
 	imin = 1;
     }
 
-    for (i=imin; i<2; i++) {
+    if (pop_backpage(hwin->text) == 0) {
+	/* don't offer "Back" if we haven't been anywhere */
+	imax = 1;
+    }
+
+    for (i=imin; i<imax; i++) {
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_object_set_data(G_OBJECT(item), "action", GINT_TO_POINTER(i+1));
 	g_signal_connect(G_OBJECT(item), "activate",
@@ -2659,6 +2665,8 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
     gchar *hbuf;
     char *buf;
 
+    push_backpage(hwin->text, hwin->active_var);
+
     textb = gretl_text_buf_new();
 
     if (pos == 0) {
@@ -2724,7 +2732,6 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
     free(buf);
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), textb);
-    push_backpage(hwin->text, hwin->active_var);
     maybe_connect_help_signals(hwin, en);
     cursor_to_top(hwin);
 
