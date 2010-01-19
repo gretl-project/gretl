@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-01-19 00:56+0800\n"
+"PO-Revision-Date: 2010-01-20 00:39+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1120,24 +1120,24 @@ msgstr "記憶體不足\n"
 #: lib/src/dataio.c:282
 #, c-format
 msgid "WARNING: binary data read error at var %d"
-msgstr ""
+msgstr "警告: binary data read error at var %d"
 
 #: lib/src/dataio.c:200
 #: lib/src/dataio.c:239
 #: lib/src/dataio.c:330
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr ""
+msgstr "警告: ascii data read error at var %d, obs %d"
 
 #: lib/src/dataio.c:304
 #, c-format
 msgid "WARNING: ascii data read error at obs %d"
-msgstr ""
+msgstr "警告: ascii data read error at obs %d"
 
 #: lib/src/dataio.c:319
 #, c-format
 msgid "WARNING: failed to read case marker for obs %d"
-msgstr ""
+msgstr "警告: 無法讀取樣本數 %d 的資料註記 (case marker)"
 
 #: lib/src/dataio.c:393
 #, fuzzy, c-format
@@ -1775,7 +1775,7 @@ msgstr ""
 
 #: lib/src/describe.c:3910
 msgid "Fractional integration test failed"
-msgstr ""
+msgstr "部份共整合檢定錯誤 (Fractional integration test failed)"
 
 #: lib/src/describe.c:3916
 msgid ""
@@ -5636,7 +5636,7 @@ msgstr ""
 #: lib/src/system.c:3698
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
-msgstr ""
+msgstr "Convergence achieved after %d iterations\n"
 
 #: lib/src/modelprint.c:3931
 #, fuzzy
@@ -5645,11 +5645,11 @@ msgstr "迴歸係數之共變數矩陣"
 
 #: lib/src/modelprint.c:3945
 msgid "slope"
-msgstr ""
+msgstr "邊際機率 (slope)"
 
 #: lib/src/modelprint.c:4369
 msgid "                        Real  Imaginary    Modulus  Frequency"
-msgstr ""
+msgstr "                        Real  Imaginary    Modulus  Frequency"
 
 #: lib/src/modelprint.c:4379
 #: lib/src/modelprint.c:4382
@@ -5867,6 +5867,10 @@ msgid ""
 "      Variable     coefficients   coefficients   std. errors    std. errors\n"
 "\n"
 msgstr ""
+"                     mean of      std. dev. of     mean of     std. dev. of\n"
+"                    estimated      estimated      estimated      estimated\n"
+"      Variable     coefficients   coefficients   std. errors    std. errors\n"
+"\n"
 
 #: lib/src/monte_carlo.c:2147
 msgid "   Variable     mean         std. dev.\n"
@@ -6192,7 +6196,7 @@ msgstr "向量自我迴歸之殘差"
 #: lib/src/objstack.c:652
 #: gui2/selector.c:3055
 msgid "VECM"
-msgstr ""
+msgstr "VECM"
 
 #: lib/src/objstack.c:616
 #: lib/src/objstack.c:660
@@ -6943,19 +6947,19 @@ msgstr "變數表列"
 
 #: lib/src/system.c:89
 msgid "SUR"
-msgstr ""
+msgstr "似無關迴歸法 (SUR)"
 
 #: lib/src/system.c:90
 msgid "3SLS"
-msgstr ""
+msgstr "三階段最小平方法 (3SLS)"
 
 #: lib/src/system.c:91
 msgid "FIML"
-msgstr ""
+msgstr "完全資訊最大概似法 (FIML)"
 
 #: lib/src/system.c:100
 msgid "Seemingly Unrelated Regressions"
-msgstr ""
+msgstr "似無關迴歸法 (SUR)"
 
 #: lib/src/system.c:101
 msgid "Three-Stage Least Squares"
@@ -6963,11 +6967,11 @@ msgstr "3 階段最小平方法(Three-Stage Least Squares)"
 
 #: lib/src/system.c:102
 msgid "Full Information Maximum Likelihood"
-msgstr ""
+msgstr "完全資訊最大概似法 (FIML)"
 
 #: lib/src/system.c:103
 msgid "Limited Information Maximum Likelihood"
-msgstr ""
+msgstr "限制資訊最大概似法 (LIML)"
 
 #: lib/src/system.c:104
 msgid "Ordinary Least Squares"
@@ -7078,7 +7082,7 @@ msgstr "Cross-equation 共變數矩陣"
 #: lib/src/system.c:3685
 #: gui2/dlgutils.c:1127
 msgid "Estimator"
-msgstr ""
+msgstr "估計法"
 
 #: lib/src/system.c:3799
 msgid "Ljung-Box Q'"
@@ -7992,7 +7996,7 @@ msgstr "weibull 分配"
 
 #: gui2/calculator.c:1953
 msgid " DW "
-msgstr ""
+msgstr " DW "
 
 #: gui2/calculator.c:1973
 #: gui2/gpt_dialog.c:2624
@@ -8503,12 +8507,12 @@ msgstr ""
 
 #: gui2/console.c:502
 msgid "gretl console: type 'help' for a list of commands"
-msgstr ""
+msgstr "gretl 指令視窗: 輸入 'help' 看有哪些指令"
 
 #: gui2/database.c:94
 #, c-format
 msgid "Network status: %s"
-msgstr ""
+msgstr "網路狀態: %s"
 
 #: gui2/database.c:134
 #: gui2/database.c:136
@@ -8794,7 +8798,7 @@ msgstr "新 (New)"
 #: gui2/datafiles.c:1136
 #: gui2/datafiles.c:1207
 msgid "Install"
-msgstr ""
+msgstr "安裝"
 
 #: gui2/datafiles.c:1112
 #: gui2/datafiles.c:1119
@@ -8904,7 +8908,7 @@ msgstr "開指令檔(_S)"
 
 #: gui2/datafiles.c:1919
 msgid "Topic"
-msgstr ""
+msgstr "主題"
 
 #: gui2/datafiles.c:1920
 #, fuzzy
@@ -9789,9 +9793,8 @@ msgstr "gretl: 新增變數資訊"
 #: gui2/dlgutils.c:914
 #: gui2/dlgutils.c:1069
 #: gui2/selector.c:3154
-#, fuzzy
 msgid "Iterated estimation"
-msgstr "自我相關模型"
+msgstr "反覆運算估計"
 
 #: gui2/dlgutils.c:920
 #: gui2/selector.c:4313
@@ -9805,9 +9808,8 @@ msgstr "使用穩健標準誤 (Robust standard errors)"
 
 #: gui2/dlgutils.c:929
 #: gui2/selector.c:4435
-#, fuzzy
 msgid "Use bootstrap"
-msgstr "用一階差分"
+msgstr "用拔靴法 (bootstrap) "
 
 #: gui2/dlgutils.c:932
 msgid "Show full restricted estimates"
@@ -9832,38 +9834,32 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(詳細請參見「指令參考說明」(command reference) 之指令語法)"
 
 #: gui2/fileselect.c:670
-#, fuzzy
 msgid "CSV files (*.csv)"
-msgstr "開指令檔(_S)"
+msgstr "CSV files (*.csv)"
 
 #: gui2/fileselect.c:671
-#, fuzzy
 msgid "ASCII files (*.txt)"
-msgstr "gretl 指令檔 (*.inp)"
+msgstr "ASCII files (*.txt)"
 
 #: gui2/fileselect.c:672
-#, fuzzy
 msgid "all files (*.*)"
-msgstr "開指令檔(_S)"
+msgstr "all files (*.*)"
 
 #: gui2/fileselect.c:674
 msgid "gretl script files (*.inp)"
 msgstr "gretl 指令檔 (*.inp)"
 
 #: gui2/fileselect.c:676
-#, fuzzy
 msgid "GNU R files (*.R)"
-msgstr "開指令檔(_S)"
+msgstr "GNU R files (*.R)"
 
 #: gui2/fileselect.c:677
-#, fuzzy
 msgid "gnuplot files (*.plt)"
-msgstr "gretl 指令檔 (*.inp)"
+msgstr "gnuplot files (*.plt)"
 
 #: gui2/fileselect.c:680
-#, fuzzy
 msgid "Ox files (*.ox)"
-msgstr "開指令檔(_S)"
+msgstr "Ox files (*.ox)"
 
 #: gui2/filters.c:75
 #, fuzzy
@@ -9883,9 +9879,8 @@ msgid "Baxter-King Band-pass filter"
 msgstr ""
 
 #: gui2/filters.c:83
-#, fuzzy
 msgid "Fractional difference"
-msgstr "Difference test 差異檢定"
+msgstr "部份差分法"
 
 #: gui2/filters.c:170
 #, c-format
@@ -9937,9 +9932,8 @@ msgid "Conflicting variable names"
 msgstr "產生新變數(_n)"
 
 #: gui2/filters.c:317
-#, fuzzy
 msgid "Save output as"
-msgstr "另存新檔(_a)"
+msgstr "另存成變數:"
 
 #: gui2/filters.c:321
 #, fuzzy
@@ -10003,9 +9997,8 @@ msgid "k (higher values -> better approximation):"
 msgstr ""
 
 #: gui2/filters.c:519
-#, fuzzy
 msgid "differencing parameter:"
-msgstr "落後期截斷參數 = %d\n"
+msgstr "部份差分參數:"
 
 #: gui2/filters.c:533
 #, fuzzy
@@ -10018,9 +10011,8 @@ msgid "Save cyclical series as"
 msgstr "儲存分析檔(_a)"
 
 #: gui2/filters.c:550
-#, fuzzy
 msgid "Graph differenced series"
-msgstr "時間序列圖(_T)"
+msgstr "繪差分時間序列圖"
 
 #: gui2/filters.c:556
 msgid "Graph original and smoothed series"
@@ -10067,14 +10059,12 @@ msgid "Really create an empty list?"
 msgstr ""
 
 #: gui2/fncall.c:480
-#, fuzzy
 msgid "Define list"
-msgstr "產生新矩陣"
+msgstr "產生新 list"
 
 #: gui2/fncall.c:627
-#, fuzzy
 msgid "gretl: function call"
-msgstr "殘差自我相關函數"
+msgstr "gretl: 使用函數"
 
 #: gui2/fncall.c:632
 #, c-format
@@ -10098,9 +10088,8 @@ msgid "Assign return value (optional):"
 msgstr ""
 
 #: gui2/fncall.c:713
-#, fuzzy
 msgid "selection (or new variable)"
-msgstr "輸入新變數的數學式"
+msgstr "選擇 (或新變數)"
 
 #: gui2/fncall.c:1031
 msgid "Function package is broken"
@@ -10346,9 +10335,8 @@ msgstr "存入分析檔中為圖示 (icon)"
 #: gui2/session.c:2842
 #: gui2/toolbar.c:635
 #: gui2/toolbar.c:636
-#, fuzzy
 msgid "Help"
-msgstr "說明(_H)"
+msgstr "說明"
 
 #: gui2/gpt_control.c:3052
 #: gui2/gpt_control.c:3150
@@ -11499,12 +11487,11 @@ msgstr "殘差異質變異校正 WLS (_hsk)..."
 
 #: gui2/gretl.c:1489
 msgid "High _precision OLS..."
-msgstr "High _precision OLS..."
+msgstr "高精準度 OLS (_p)..."
 
 #: gui2/gretl.c:1491
-#, fuzzy
 msgid "ANOVA..."
-msgstr "變異數分析(_ANOVA)"
+msgstr "變異數分析 (ANOVA)..."
 
 #: gui2/gretl.c:1492
 msgid "_Time series"
@@ -11556,7 +11543,7 @@ msgstr "共整合檢定 (_C)"
 
 #: gui2/gretl.c:1504
 msgid "_Engle-Granger..."
-msgstr "Engle-Granger 兩階段法(_E)..."
+msgstr "Engle-Granger 共整合檢定(_E)..."
 
 #: gui2/gretl.c:1505
 msgid "_Johansen..."
@@ -12129,7 +12116,7 @@ msgstr "White 檢定 (含交乘項)"
 
 #: gui2/gui_utils.c:242
 msgid "White's test (squares only)"
-msgstr "White 檢定 (只含平方項)"
+msgstr "White 檢定 (不含交乘項)"
 
 #: gui2/gui_utils.c:249
 msgid "_groupwise"
@@ -13087,7 +13074,7 @@ msgstr "其它線性模型(_l)"
 #: gui2/library.c:4744
 #: gui2/selector.c:5041
 msgid "ANOVA"
-msgstr ""
+msgstr "變異數分析 (ANOVA)"
 
 #: gui2/library.c:3478
 msgid "Sorry, not implemented yet!"
@@ -14545,9 +14532,8 @@ msgid "Lags of dependent variable"
 msgstr "自變數取落後期"
 
 #: gui2/selector.c:6339
-#, fuzzy
 msgid "default"
-msgstr "設定為預設 (default) 變數"
+msgstr "設定為預設 (default)"
 
 #: gui2/selector.c:6359
 #, fuzzy
