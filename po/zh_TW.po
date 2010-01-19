@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-01-20 00:39+0800\n"
+"PO-Revision-Date: 2010-01-20 01:17+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1342,9 +1342,8 @@ msgstr "另存新檔(_a)"
 #: lib/src/dataio.c:2801
 #: lib/src/dataio.c:2866
 #: gui2/gui_utils.c:881
-#, fuzzy
 msgid "Unrecognized data type"
-msgstr "另存新檔(_a)"
+msgstr "無法辨識之資料型態"
 
 #: lib/src/dataio.c:3055
 #: lib/src/dataio.c:3098
@@ -3148,9 +3147,8 @@ msgid "Data types not conformable for operation"
 msgstr ""
 
 #: lib/src/gretl_errors.c:71
-#, fuzzy
 msgid "Wrong data type"
-msgstr "另存新檔(_a)"
+msgstr "錯誤之資料型態"
 
 #: lib/src/gretl_errors.c:72
 msgid "Incompatible options"
@@ -4220,6 +4218,9 @@ msgid ""
 "\n"
 "For help on a specific function, type: help funname"
 msgstr ""
+"\n"
+"\n"
+"需要某一函數之說明, 請輸入: help 函數名稱"
 
 #: lib/src/interact.c:2753
 #, fuzzy
@@ -5677,9 +5678,8 @@ msgstr ""
 #: lib/src/subsample.c:2118
 #: lib/src/subsample.c:2140
 #: lib/src/subsample.c:2190
-#, fuzzy
 msgid "Frequency"
-msgstr "頻率"
+msgstr "資料頻率"
 
 #: lib/src/modelprint.c:4463
 #, fuzzy
@@ -6442,9 +6442,8 @@ msgstr "恢復為全樣本(_R)"
 
 #: lib/src/printout.c:676
 #: lib/src/subsample.c:2104
-#, fuzzy
 msgid "Current sample"
-msgstr "使用中樣本數: %d observations\n"
+msgstr "使用中樣本"
 
 #: lib/src/printout.c:953
 #: lib/src/printout.c:961
@@ -6847,29 +6846,24 @@ msgstr ""
 #: gui2/dialogs.c:3021
 #: gui2/dialogs.c:3174
 #: gui2/dialogs.c:3175
-#, fuzzy
 msgid "quarterly"
 msgstr "季資料"
 
 #: lib/src/subsample.c:2080
 #: gui2/dialogs.c:3021
 #: gui2/dialogs.c:3175
-#, fuzzy
 msgid "monthly"
 msgstr "月資料"
 
 #: lib/src/subsample.c:2082
-#, fuzzy
 msgid "hourly"
 msgstr "每小時資料"
 
 #: lib/src/subsample.c:2084
-#, fuzzy
 msgid "weekly"
 msgstr "週資料"
 
 #: lib/src/subsample.c:2088
-#, fuzzy
 msgid "daily"
 msgstr "日資料"
 
@@ -6884,7 +6878,6 @@ msgstr "資料類型(_s)"
 
 #: lib/src/subsample.c:2115
 #: lib/src/subsample.c:2137
-#, fuzzy
 msgid "Type"
 msgstr "資料型態"
 
@@ -6914,9 +6907,8 @@ msgid "Subsampled data"
 msgstr "開啟資料檔(_O)"
 
 #: lib/src/subsample.c:2147
-#, fuzzy
 msgid "Full range"
-msgstr "%s: 全部樣本 %s - %s"
+msgstr "全部樣本"
 
 #: lib/src/subsample.c:2173
 #, fuzzy, c-format
@@ -7568,7 +7560,7 @@ msgstr ""
 #: cli/gretlcli.c:538
 #, c-format
 msgid "Type \"open filename\" to open a data set\n"
-msgstr ""
+msgstr "輸入 \"open 檔案名稱\" 即可開啟資料檔\n"
 
 #: cli/gretlcli.c:668
 #, c-format
@@ -7621,7 +7613,7 @@ msgstr "另存新檔(_a)"
 #: cli/gretlcli.c:944
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
+msgstr "請輸入檔案名稱, 以儲存結果 (按 enter 可離開): "
 
 #: cli/gretlcli.c:952
 #, fuzzy, c-format
@@ -9862,9 +9854,8 @@ msgid "Ox files (*.ox)"
 msgstr "Ox files (*.ox)"
 
 #: gui2/filters.c:75
-#, fuzzy
 msgid "Simple moving average"
-msgstr "/變數/頻率分配圖/簡單(_S)"
+msgstr "簡單移動平均法"
 
 #: gui2/filters.c:77
 msgid "Exponential moving average"
@@ -9936,14 +9927,12 @@ msgid "Save output as"
 msgstr "另存成變數:"
 
 #: gui2/filters.c:321
-#, fuzzy
 msgid "Save smoothed series as"
-msgstr "儲存分析檔(_a)"
+msgstr "另存平滑後 (smoothed) 變數為:"
 
 #: gui2/filters.c:325
-#, fuzzy
 msgid "Save cyclical component as"
-msgstr "儲存分析檔(_a)"
+msgstr "另存季節成份 (cyclical componen) 為變數:"
 
 #: gui2/filters.c:360
 #, fuzzy
@@ -9971,14 +9960,12 @@ msgid "the mean of the first n observations"
 msgstr "移除樣本(_R)"
 
 #: gui2/filters.c:440
-#, fuzzy
 msgid "gretl: time-series filter"
-msgstr "/變數/時間序列圖(_T)"
+msgstr "gretl: 時間序列濾波法 (filter)"
 
 #: gui2/filters.c:458
-#, fuzzy
 msgid "Number of observations in average:"
-msgstr "輸入要增加的樣本數"
+msgstr "輸入要取移動平均的期數"
 
 #: gui2/filters.c:469
 msgid "Centered"
@@ -10001,14 +9988,12 @@ msgid "differencing parameter:"
 msgstr "部份差分參數:"
 
 #: gui2/filters.c:533
-#, fuzzy
 msgid "Graph filtered series"
-msgstr "時間序列圖(_T)"
+msgstr "畫濾波法 (filtered) 後之時間序列圖"
 
 #: gui2/filters.c:537
-#, fuzzy
 msgid "Save cyclical series as"
-msgstr "儲存分析檔(_a)"
+msgstr "另存週期序列 (cyclical series) 變數為:"
 
 #: gui2/filters.c:550
 msgid "Graph differenced series"
@@ -10020,7 +10005,7 @@ msgstr ""
 
 #: gui2/filters.c:558
 msgid "Graph residual or cycle series"
-msgstr ""
+msgstr "畫殘差或週期時間序列圖"
 
 #: gui2/filters.c:655
 #: gui2/filters.c:681
@@ -16312,9 +16297,8 @@ msgid "cannot read SPSS .sav on this platform"
 msgstr ""
 
 #: plugin/stata_import.c:291
-#, fuzzy
 msgid "unknown data type"
-msgstr "另存新檔(_a)"
+msgstr "未知之資料型態"
 
 #: plugin/stata_import.c:648
 msgid ""
