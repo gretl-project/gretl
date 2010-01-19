@@ -1,10 +1,9 @@
-\documentclass{article}
-\usepackage{lucidabr}
-\begin{document}
+\chapter{Degrees of freedom correction}
+\label{chap:dfcorr}
 
 \newcommand{\subml}{\textrm{\scriptsize ML}}
 
-\section{Biased and unbiased estimators of variance}
+\section{Introduction}
 
 It's well known that given a sample, $\{x_i\}$, of size $n$ from a
 normally distributed population, the Maximum Likelihood (ML) estimator
@@ -67,7 +66,7 @@ the OLS estimator, $\hat\beta$, is given by
 \mbox{Var}\left(\hat\beta\right) = \sigma^2 (X'X)^{-1}
 \]
 %
-where $\sigma^2$ is the variance of the error term and $X$ is the
+where $\sigma^2$ is the variance of the error term and $X$ is an
 $n\times k$ matrix of regressors.  But how should the unknown
 $\sigma^2$ be estimated?  The ML estimator is
 %
@@ -88,7 +87,7 @@ s^2 = \frac{1}{n-k} \sum_{i=1}^n \hat{u}_i^2
 in which $n - k$ is the number of degrees of freedom given $n$
 residuals from a regression where $k$ parameters are estimated.
 
-The ``classical'' estimator of the variance of $\hat\beta$ in the
+The standard estimator of the variance of $\hat\beta$ in the
 context of OLS is then $V = s^2 (X'X)^{-1}$.  And the standard errors
 of the individual parameter estimates, $s_{\hat{\beta}_i}$, being the
 square roots of the diagonal elements of $V$, inherit a ``degrees of
@@ -108,13 +107,16 @@ errors of the OLS coefficients, one uses the same $\nu$ in selecting
 the particular distribution to which the ``$t$-ratio'',
 $(\hat{\beta}_i-\beta^0)/s_{\hat{\beta}_i}$, should be referred in
 order to determine the marginal significance level or $p$-value for
-the null hypothesis $H_0: \beta_i = \beta^0$.
+the null hypothesis $H_0: \beta_i = \beta^0$.  This is the real
+payoff to df correction: we get test statistics that follow a 
+known distribution in small samples.  (In big enough samples
+the point is moot, since the quantitative distinction between
+$\hat\sigma^2$ and $s^2$ vanishes.)
 
 So far, so good.  Everyone expects df correction in OLS standard
 errors, just as we expect division by $n-1$ in the sample variance.
-And users of econometric software expect that the $p$-values
-reported for OLS coefficients will be based on the appropriate
-$t$ distribution.
+And users of econometric software expect that the $p$-values reported
+for OLS coefficients will be based on the $t(\nu)$ distribution.
 
 \section{Beyond OLS}
 
@@ -148,8 +150,7 @@ not produce test statistics that follow any known distribution in
 small samples.  In addition, if parameter estimates are obtained via
 ML, it makes sense to report ML estimates of variances even if these
 are biased, since it is the ML quantities that are used in computing
-the criterion function and in forming likelihood-ratio tests of
-hypotheses.
+the criterion function and in forming likelihood-ratio tests.
 
 On the other hand, pragmatic arguments for doing df adjustment are (a)
 that it makes for closer comparability between regular OLS estimates
@@ -165,19 +166,28 @@ modelling proper, however, the difference can be quite substantial.
 If $n=50$ and $k=10$, the $s^2$ defined in (\ref{eq:ols-s2}) will be
 $50/40 = 1.25$ as large as the $\hat\sigma^2$ in
 (\ref{eq:ols-sigma2}), and standard errors will be about 12 percent
-larger.  One might therefore make a case for ``inflating'' the
-standard errors obtained via nonlinear estimators as a precaution
-against taking results to be ``more precise than they really
-are''.
+larger.\footnote{A fairly typical situation in time-series
+  macroeconometrics would be have between 100 and 200 quarterly
+  observations, and to be estimating up to maybe 30 parameters
+  including lags.  In this case df correction would make a difference
+  to standard errors on the order of 10 percent.}  One might therefore
+make a case for ``inflating'' the standard errors obtained via
+nonlinear estimators as a precaution against taking results to be
+``more precise than they really are''.
 
-The force of the last point depends, of course, on the sophistication
-of the investigator.  One might equally say that savvy econometricians
-should know to apply a discount factor (albeit an imprecise one) to
-small-sample estimates outside of the classical, normal linear model---or
-even that they should know to distrust such results and insist on
-large samples before making inferences.  From this point
-of view one could argue that df adjustment provides a false sense
-of security.
+In rejoinder to the last point, one might equally say that savvy
+econometricians should know to apply a discount factor (albeit an
+imprecise one) to small-sample estimates outside of the classical,
+normal linear model --- or even that they should distrust such results
+and insist on large samples before making inferences. This line of
+thinking suggests that test statistics such as $z =
+\hat{\beta}_i/\hat\sigma_{\hat{\beta}_i}$ should be referred to the
+distribution to which they conform asymptotically (in this case
+$N(0,1)$ for $H_0: \beta_i = 0$) --- if and only if the conditions for
+appealing to asymptotic results can be taken to be met.  From this
+point of view df adjustment may be seen as providing a false sense of
+security.  
+
 
 \section{Consistency and ``grey'' cases}
 
@@ -196,7 +206,7 @@ Here is a more awkward case.  An unrestricted vector autoregression
 (VAR) is a system of equations, but the ML estimate of this system,
 given normal errors, is equivalent to equation-by-equation OLS.
 Should df correction be applied to VARs? Consistency with OLS argues
-Yes. But wait---a popular extension of the VAR methodology is the
+Yes. But wait --- a popular extension of the VAR methodology is the
 vector error-correction model (VECM).  VECMs are closely related to
 VARs and one might well be interested in making comparisons across the
 two, but a VECM is a nonlinear system and the cointegrating vectors
@@ -204,15 +214,9 @@ that lie at the heart of this model must be estimated via ML.  So
 perhaps VAR results should \textit{not} be df adjusted, for
 comparability with VECMs.
 
-Another ``grey area'' is the class of Feasible Generalized Least
-Squares (FGLS) estimators---for example, weighted least squares
-or AR(1) estimators such as Cochrane--Orcutt.  These depart from
-the classical linear model, yet according to econometric tradition 
-standard errors are generally df adjusted.  
-
-
-
-
-
-\end{document}
+Another ``grey area'' is the class of single-equation Feasible
+Generalized Least Squares (FGLS) estimators --- for example, weighted
+least squares or AR(1) estimators such as Cochrane--Orcutt.  These
+depart from the classical linear model, yet according to econometric
+tradition standard errors are generally df adjusted.
 

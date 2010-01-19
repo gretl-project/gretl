@@ -43,7 +43,8 @@ TEXSRC = cli.tex \
 	quantreg.tex \
 	odbc.tex \
 	gretlR.tex \
-	gretlOx.tex
+	gretlOx.tex \
+	df.tex
 
 STYSRC = $(docsrc)/gretl.sty.in
 
