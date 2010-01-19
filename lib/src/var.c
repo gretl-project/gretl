@@ -30,6 +30,9 @@
 
 #define VDEBUG 0
 
+#define VAR_SE_DFCORR 1
+#define VAR_S_DFCORR 0
+
 enum {
     VAR_ESTIMATE = 1,
     VAR_LAGSEL,
@@ -1278,7 +1281,11 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     }
 
     pmod->ess = SSR;
+#if VAR_SE_DFCORR
     pmod->sigma = sqrt(SSR / pmod->dfd);
+#else
+    pmod->sigma = sqrt(SSR / var->T);
+#endif
     pmod->tss = TSS;
     pmod->rsq = 1.0 - SSR / TSS;
     pmod->adjrsq = 1.0 - (SSR / (pmod->dfd)) / (TSS / (pmod->nobs - 1));
@@ -1924,13 +1931,15 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
 	    err = 1;
 	}
 
+#if VAR_S_DFCORR
 	/* Hmm, should we df-adjust var->S here?  Note that this
 	   will affect the impulse response output */
-	if (0) {
+	if (1) {
 	    double cfac = var->T / (double) var->df;
 	
 	    gretl_matrix_multiply_by_scalar(var->S, cfac);
 	}
+#endif
     }    
 
     if (!err) {
