@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-16 17:10-0300\n"
+"PO-Revision-Date: 2010-01-20 01:08-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -824,7 +824,7 @@ msgstr "Provavelmente os dados são semanais\n"
 #: lib/src/csvdata.c:442
 #, c-format
 msgid "Missing daily observations: %d\n"
-msgstr "Observações diárias omissas: %d\n"
+msgstr "Observações diárias ausentes: %d\n"
 
 #: lib/src/csvdata.c:694
 msgid "reversing the data!\n"
@@ -933,12 +933,12 @@ msgstr "   aparenta ser etiqueta de observação\n"
 #: lib/src/csvdata.c:1288
 #, c-format
 msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr "   a célula para a variável %d, observação %d está vazia: marcando como valor omisso\n"
+msgstr "   a célula para a variável %d, observação %d está vazia: marcando como valor ausente\n"
 
 #: lib/src/csvdata.c:1297
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
-msgstr "   aviso: valor omisso para a variável %d, observação %d\n"
+msgstr "   aviso: valor ausente para a variável %d, observação %d\n"
 
 #: lib/src/csvdata.c:1375
 #, c-format
@@ -1623,7 +1623,7 @@ msgstr "Função de autocorrelação para %s"
 
 #: lib/src/describe.c:2881
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
-msgstr "Defasagem  ACF          PACF         Q-stat. [p-valor]"
+msgstr "Defasagem   ACF    PACF         Q-stat. [p-value]"
 
 #: lib/src/describe.c:2993
 msgid "Argument is a constant"
@@ -1652,7 +1652,7 @@ msgstr "Função de correlação cruzada para %s e %s"
 
 #: lib/src/describe.c:3359
 msgid "  LAG      XCF"
-msgstr "  LAG      XCF"
+msgstr "Defasagem  XCF"
 
 #: lib/src/describe.c:3438
 msgid "GPH test for fractional integration"
@@ -1673,7 +1673,7 @@ msgstr "trimestres"
 
 #: lib/src/describe.c:3696
 msgid "months"
-msgstr "mêses"
+msgstr "meses"
 
 #: lib/src/describe.c:3698
 msgid "years"
@@ -1765,7 +1765,7 @@ msgstr ""
 #: lib/src/printout.c:1047
 #: lib/src/printout.c:1048
 msgid "NA"
-msgstr "ND"
+msgstr "NA"
 
 #: lib/src/describe.c:4018
 #: lib/src/describe.c:4771
@@ -4400,7 +4400,7 @@ msgstr "Gerador de números pseudo-aleatórios com semente %d\n"
 #: lib/src/missing.c:809
 #, c-format
 msgid "Set %d values to \"missing\"\n"
-msgstr "Marcar %d valores como \"omissos\"\n"
+msgstr "Marcar %d valores como \"ausentes\"\n"
 
 #: lib/src/missing.c:812
 msgid "Didn't find any matching observations\n"
@@ -5131,7 +5131,7 @@ msgstr "%s, obs. %s%s%s"
 
 #: lib/src/modelprint.c:1622
 msgid "Missing or incomplete observations dropped"
-msgstr "Observações omissas ou incompletas foram ignoradas"
+msgstr "Observações ausentes ou incompletas foram ignoradas"
 
 #: lib/src/modelprint.c:1631
 #, c-format
@@ -6245,12 +6245,12 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"       intervalo        ponto médio     frequência    rel.     acum.\n"
+"       intervalo        pt. médio     frequência    rel.     acum.\n"
 "\n"
 
 #: lib/src/printout.c:489
 msgid "Missing observations"
-msgstr "Observações omissas"
+msgstr "Observações ausentes"
 
 #: lib/src/printout.c:520
 #, c-format
@@ -6259,7 +6259,7 @@ msgstr "Tabulação cruzada entre %s (linhas) e %s (colunas)"
 
 #: lib/src/printout.c:531
 msgid "TOT."
-msgstr "TOTAL"
+msgstr "TOT."
 
 #: lib/src/printout.c:578
 msgid "TOTAL  "
@@ -6268,7 +6268,7 @@ msgstr "TOTAL  "
 #: lib/src/printout.c:593
 #, c-format
 msgid "%d missing values"
-msgstr "%d valores omissos"
+msgstr "%d valores ausentes"
 
 #: lib/src/printout.c:598
 #, c-format
@@ -6324,7 +6324,7 @@ msgstr "correlações acima da diagonal"
 #: lib/src/printout.c:1002
 #: lib/src/printout.c:1005
 msgid "log determinant"
-msgstr "logaritmo do determinante"
+msgstr "log do determinante"
 
 #: lib/src/printout.c:1167
 #, c-format
@@ -6651,7 +6651,7 @@ msgstr "erro na nova observação final"
 #: lib/src/subsample.c:1812
 #: lib/src/subsample.c:1834
 msgid "missing values"
-msgstr "valores omissos"
+msgstr "valores ausentes"
 
 #: lib/src/subsample.c:1821
 #, c-format
@@ -6660,12 +6660,12 @@ msgid ""
 "Number of observations (rows) with missing data values = %d (%.2f%%)\n"
 msgstr ""
 "\n"
-"Número de observações (linhas) com valores omissos = %d (%.2f%%)\n"
+"Número de observações (linhas) com valores ausentes = %d (%.2f%%)\n"
 
 #: lib/src/subsample.c:1824
 #, c-format
 msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr "Número total de valores omissos = %d (%.2f%% do total de valores de dados)\n"
+msgstr "Número total de valores ausentes = %d (%.2f%% do total de valores de dados)\n"
 
 #: lib/src/subsample.c:1835
 msgid "valid values"
@@ -7514,7 +7514,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 16 de janeiro de 2010."
+"Tradução de 20 de janeiro de 2010."
 
 #: gui2/about.c:175
 msgid "License"
@@ -8226,7 +8226,7 @@ msgstr ""
 #: gui2/callbacks.c:543
 #: gui2/callbacks.c:550
 msgid "gretl: missing code"
-msgstr "gretl: código de omissos"
+msgstr "gretl: código de ausentes"
 
 #: gui2/callbacks.c:544
 #, c-format
@@ -8234,12 +8234,12 @@ msgid ""
 "Enter value to be read as \"missing\"\n"
 "for the variable \"%s\""
 msgstr ""
-"Insira valor para ser lido como \"valor omisso\"\n"
+"Insira valor para ser lido como \"valor ausente\"\n"
 "para a variável \"%s\""
 
 #: gui2/callbacks.c:551
 msgid "Enter value to be read as \"missing\":"
-msgstr "Insira valor para ser lido como \"valor omisso\":"
+msgstr "Insira valor para ser lido como \"valor ausente\":"
 
 #: gui2/callbacks.c:556
 msgid "gretl: boxplots"
@@ -8410,7 +8410,7 @@ msgstr ""
 
 #: gui2/database.c:624
 msgid "Warning: series has missing observations"
-msgstr "Atenção: a série tem observações omissas"
+msgstr "Atenção: a série tem observações ausentes"
 
 #: gui2/database.c:628
 msgid "Couldn't access binary datafile"
@@ -8979,7 +8979,7 @@ msgstr "seções-cruzadas empilhadas"
 
 #: gui2/datawiz.c:580
 msgid "(dropping missing observations)"
-msgstr "(descartando observações omissas)"
+msgstr "(descartando observações ausentes)"
 
 #: gui2/datawiz.c:793
 msgid "The unit and time index variables must be distinct"
@@ -9003,7 +9003,7 @@ msgstr "Variável índice de tempo"
 
 #: gui2/datawiz.c:1287
 msgid "purge missing observations"
-msgstr "remover observações omissas"
+msgstr "remover observações ausentes"
 
 #: gui2/datawiz.c:1410
 msgid "The data set contains no suitable index variables"
@@ -9056,7 +9056,7 @@ msgstr ""
 
 #: gui2/dialogs.c:334
 msgid "Print missing values as:"
-msgstr "Apresentar valores omissos como:"
+msgstr "Apresentar valores ausentes como:"
 
 #: gui2/dialogs.c:435
 msgid "gretl: data delimiter"
@@ -10897,7 +10897,7 @@ msgstr "Ordenar dado_s..."
 #: gui2/gretl.c:1378
 #: gui2/gretl.c:1475
 msgid "Set missing _value code..."
-msgstr "Definir código para _valores omissos..."
+msgstr "Definir código para _valores ausentes..."
 
 #: gui2/gretl.c:1379
 msgid "_Find variable..."
@@ -11093,11 +11093,11 @@ msgstr "_Reamostrar com substituição..."
 
 #: gui2/gretl.c:1438
 msgid "Drop all obs with _missing values"
-msgstr "Descartar valores o_missos"
+msgstr "Descartar todas as observações com valores a_usentes"
 
 #: gui2/gretl.c:1440
 msgid "_Count missing values"
-msgstr "_Contagem de valores omissos"
+msgstr "_Contagem de valores ausentes"
 
 #: gui2/gretl.c:1443
 msgid "_Variable"
@@ -12608,12 +12608,12 @@ msgstr "Mostrar contagem de valores ausentes em cada observação"
 #: gui2/library.c:1333
 #: gui2/library.c:1358
 msgid "No missing data values"
-msgstr "Sem valores omissos"
+msgstr "Sem valores ausentes"
 
 #: gui2/library.c:1339
 #: gui2/library.c:1352
 msgid "gretl: missing values info"
-msgstr "gretl: informação sobre os valores omissos"
+msgstr "gretl: informação sobre os valores ausentes"
 
 #: gui2/library.c:1405
 msgid "Export the markers to file"
@@ -12817,7 +12817,7 @@ msgstr "Acrescentou-se a matriz %s"
 #: gui2/library.c:4012
 #, c-format
 msgid "Set %d values to \"missing\""
-msgstr "Designar %d valores como sendo \"omissos\""
+msgstr "Designar %d valores como sendo \"ausentes\""
 
 #: gui2/library.c:4015
 #: gui2/library.c:4043
@@ -12827,7 +12827,7 @@ msgstr "Não foram encontradas observações de acordo com o critério"
 #: gui2/library.c:4040
 #, c-format
 msgid "Set %d observations to \"missing\""
-msgstr "Designar %d observações como sendo \"omissos\""
+msgstr "Designar %d observações como sendo \"ausentes\""
 
 #: gui2/library.c:4163
 msgid "gretl: residual dist."
@@ -14818,7 +14818,7 @@ msgstr "Inserir Observação"
 #: gui2/ssheet.c:1396
 #: gui2/ssheet.c:2510
 msgid "Warning: there were missing observations"
-msgstr "Atenção: havia observações omissas"
+msgstr "Atenção: havia observações ausentes"
 
 #: gui2/ssheet.c:1423
 #: gui2/toolbar.c:328
@@ -15426,7 +15426,7 @@ msgstr "log(Tamanho)"
 
 #: plugin/fractals.c:230
 msgid "There were missing data values"
-msgstr "Havia valores omissos nos dados"
+msgstr "Havia valores ausentes nos dados"
 
 #: plugin/fractals.c:238
 msgid "Sample is too small for Hurst exponent"
