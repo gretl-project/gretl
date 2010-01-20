@@ -1875,7 +1875,7 @@ static int get_unrestricted_ll (GRETL_VAR *jvar)
     return err;
 }
 
-#define USE_DF_FOR_VCV 0
+#define VECM_VCV_DFCORR 0
 
 /* add covariance matrix for parameter estimates after estimation
    via OLS conditional on \beta */
@@ -1894,7 +1894,7 @@ static int vecm_add_vcv (GRETL_VAR *v)
 
     v->vcv = gretl_matrix_kronecker_product_new(v->S, v->XTX, &err);
 
-#if USE_DF_FOR_VCV
+#if VECM_VCV_DFCORR
     if (!err) {
 	double cfac = v->T / (double) v->df;
 
