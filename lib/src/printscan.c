@@ -138,15 +138,17 @@ static char *printf_get_string (char *s, double ***pZ,
     return ret;
 }
 
-static double printf_get_scalar (char *s, double ***pZ,
-				 DATAINFO *pdinfo, int t, 
-				 int *err)
+/* here we're trying to get a field width or precision
+   specifier */
+
+static int printf_get_int (const char *s, double ***pZ,
+			   DATAINFO *pdinfo, int *err)
 {
-    double x = NADBL;
-    int v;
+    double x;
+    int ret = 0;
 
 #if PSDEBUG
-    fprintf(stderr, "printf_get_scalar: looking at '%s'\n", s);
+    fprintf(stderr, "printf_get_int: looking at '%s'\n", s);
 #endif
 
     if (numeric_string(s)) {
@@ -154,23 +156,71 @@ static double printf_get_scalar (char *s, double ***pZ,
     } else if (gretl_is_scalar(s)) {
 	x = gretl_scalar_get_value(s);
     } else {
-	v = current_series_index(pdinfo, s);
+	x = generate_scalar(s, pZ, pdinfo, err);
+    }
 
-	if (v >= 0) {
-	    char genstr[32];
+    if (!*err && (xna(x) || fabs(x) > 255)) {
+	*err = E_DATA;
+    } 
 
-	    sprintf(genstr, "%s[%d]", s, t + 1);
-	    x = generate_scalar(genstr, pZ, pdinfo, err);
-	} else {
-	    x = generate_scalar(s, pZ, pdinfo, err);
-	}
+    if (!*err) {
+	ret = (int) x;
     }
 
 #if PSDEBUG
-    fprintf(stderr, "printf_get_scalar: returning %g\n", x);
+    fprintf(stderr, "printf_get_int: returning %g\n", x);
 #endif
 
-    return x;
+    return ret;
+}
+
+/* gen_arg_val: when this function is called we have already
+   determined that the argument string @s is not associated with a
+   string format specifier, is not a literal numerical value, and is
+   not the name of an existing scalar, matrix or series.  So now we
+   attempt to generate a value (of type unknown).
+*/
+
+static int gen_arg_val (const char *s, double ***pZ, DATAINFO *pdinfo, 
+			double *px, gretl_matrix **pm, int *pv,
+			int *scalar)
+{
+    const char *name = "$ptmp";
+    char *genstr;
+    int err = 0;
+
+    genstr = gretl_strdup_printf("%s=%s", name, s); 
+    if (genstr == NULL) {
+	return E_ALLOC;
+    }
+
+    err = generate(genstr, pZ, pdinfo, OPT_P, NULL);
+
+    if (!err) {
+	int type = genr_get_last_output_type();
+
+	if (type == GRETL_TYPE_DOUBLE) {
+	    *scalar = 1;
+	    *px = gretl_scalar_get_value(name);
+	    gretl_scalar_delete(name, NULL);
+	} else if (type == GRETL_TYPE_MATRIX) {
+	    gretl_matrix *m = get_matrix_by_name(name);
+
+	    *pm = gretl_matrix_copy(m);
+	    if (*pm == NULL) {
+		err = E_ALLOC;
+	    }
+	    user_matrix_destroy_by_name(name, NULL);
+	} else if (type == GRETL_TYPE_SERIES) {
+	    *pv = current_series_index(pdinfo, name);
+	} else {
+	    err = E_TYPES; /* FIXME cleanup? */
+	}
+    }
+
+    free(genstr);
+
+    return err;
 }
 
 /* dup argv (s) up to the next free comma */
@@ -324,7 +374,8 @@ get_printf_format_chunk (const char *s, int *fc,
 }
 
 /* extract the next conversion spec from *pfmt, find and evaluate the
-   corresponding elements in *pargs, and print the result */
+   corresponding elements in *pargs, and print the result 
+*/
 
 static int print_arg (char **pfmt, char **pargs, 
 		      double ***pZ, DATAINFO *pdinfo,
@@ -335,11 +386,14 @@ static int print_arg (char **pfmt, char **pargs,
     char *arg = NULL;
     char *str = NULL;
     gretl_matrix *m = NULL;
+    int free_m = 0;
     int series_v = -1;
+    int free_v = 0;
     double x = NADBL;
     int flen = 0, alen = 0;
     int wstar = 0, pstar = 0;
     int wid = 0, prec = 0;
+    int got_scalar = 0;
     int fc = 0;
     int err = 0;
 
@@ -360,10 +414,7 @@ static int print_arg (char **pfmt, char **pargs,
 	/* evaluate field width specifier */
 	arg = get_next_arg(*pargs, &alen, &err);
 	if (!err) {
-	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
-	    if (!err && (na(x) || fabs(x) > 255)) {
-		err = E_DATA;
-	    }
+	    x = printf_get_int(arg, pZ, pdinfo, &err);
 	}
 	free(arg);
 	if (err) {
@@ -377,10 +428,7 @@ static int print_arg (char **pfmt, char **pargs,
 	/* evaluate precision specifier */
 	arg = get_next_arg(*pargs, &alen, &err);
 	if (!err) {
-	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
-	    if (!err && (na(x) || fabs(x) > 255)) {
-		err = E_DATA;
-	    }
+	    x = printf_get_int(arg, pZ, pdinfo, &err);
 	}
 	free(arg);
 	if (err) {
@@ -392,29 +440,49 @@ static int print_arg (char **pfmt, char **pargs,
 
     /* get next substantive arg */
     arg = get_next_arg(*pargs, &alen, &err);
+
     if (!err) {
-	int v;
+	int v = -1;
 
 	if (fc == 's') {
+	    /* must be printing a string */
 	    str = printf_get_string(arg, pZ, pdinfo, t, &err);
+	} else if (numeric_string(arg)) {
+	    /* printing a scalar value */
+	    x = dot_atof(arg);
+	    got_scalar = 1;
+	} else if (gretl_is_scalar(arg)) {
+	    /* printing a named scalar */
+	    x = gretl_scalar_get_value(arg);
+	    got_scalar = 1;
 	} else if ((m = get_matrix_by_name(arg)) != NULL) {
-	    ; /* OK, we'll print the matrix */
+	    ; /* printing a named matrix */
 	} else if ((v = current_series_index(pdinfo, arg)) >= 0) {
-	    series_v = v; /* OK, we'll print the series */
+	    /* printing a named series */
+	    series_v = v;
 	} else {
-	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
-	    if (!err && na(x)) {
-		fc = fmt[flen - 1] = 's';
-		str = gretl_strdup("NA");
+	    /* try treating as generated value */
+	    err = gen_arg_val(arg, pZ, pdinfo, &x, &m, &v, &got_scalar);
+	    if (m != NULL) {
+		free_m = 1;
+	    } else if (v > 0) {
+		series_v = v;
+		free_v = 1;
 	    }
-	}
+	} 
 	*pargs += alen;
     }
+
     free(arg);
 
     if (err) {
 	goto bailout;
     } 
+
+    if (got_scalar && na(x)) {
+	fc = fmt[flen - 1] = 's';
+	str = gretl_strdup("NA");
+    }	
 
     /* do the actual printing */
 
@@ -423,7 +491,7 @@ static int print_arg (char **pfmt, char **pargs,
 	if (!wstar) wid = -1;
 	if (!pstar) prec = -1;
 	gretl_matrix_print_with_format(m, fmt, wid, prec, prn);
-    } else if (series_v > 0) {
+    } else if (series_v >= 0) {
 	/* printing a series */
 	printf_series(series_v, (const double **) *pZ,
 		      pdinfo, fmt, wid, prec, 
@@ -448,9 +516,11 @@ static int print_arg (char **pfmt, char **pargs,
 	} else {
 	    pprintf(prn, fmt, (int) x);
 	}
-    } else {
-	/* printing a scalar value */
-	x *= (1 + 0x1p-52);
+    } else if (got_scalar) {
+	/* printing a (non-missing) scalar value */
+	if (!isnan(x) && !isinf(x)) {
+	    x *= (1 + 0x1p-52);
+	}
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, x);
 	} else if (wstar || pstar) {
@@ -469,6 +539,12 @@ static int print_arg (char **pfmt, char **pargs,
 
     free(fmt);
     free(str);
+    
+    if (free_m) {
+	gretl_matrix_free(m);
+    } else if (free_v) {
+	dataset_drop_last_variables(1, pZ, pdinfo);
+    }
     
     return err;
 }
