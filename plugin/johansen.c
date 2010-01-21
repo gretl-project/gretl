@@ -803,7 +803,7 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
 	K += r * npi / p;
     } else {
 	/* FIXME: what matters is the number of unrestricted
-	   terms in \Pi = \alpha \beta'
+	   terms in \Pi = \alpha \beta' ?
 	*/
 
 	/* free beta terms */
