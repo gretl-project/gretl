@@ -134,24 +134,6 @@ static int VAR_allocate_residuals_matrix (GRETL_VAR *var)
     return err;
 }
 
-static int VAR_allocate_vcv_matrix (GRETL_VAR *var)
-{
-    int k, err = 0;
-
-    if (var->vcv != NULL) {
-	return 0;
-    }      
-
-    k = var->ncoeff * var->neqns;
-
-    var->vcv = gretl_zero_matrix_new(k, k);
-    if (var->vcv == NULL) {
-	err = E_ALLOC;
-    } 
-
-    return err;
-}
-
 static int VAR_add_XTX_matrix (GRETL_VAR *var)
 {
     int k = var->X->cols;
@@ -706,10 +688,6 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
 
     if (!err && var->ci == VAR) {
 	err = VAR_allocate_cholesky_matrix(var);
-    }
-
-    if (!err && var->ci == VAR) {
-	err = VAR_allocate_vcv_matrix(var);
     }
 
     if (!err && code != VAR_LAGSEL) {
@@ -2053,12 +2031,10 @@ void VAR_write_A_matrix (GRETL_VAR *v)
 
 static void VAR_write_vcv_matrix (GRETL_VAR *v)
 {
-    if (v->S != NULL && v->XTX != NULL && v->vcv != NULL) {
-	gretl_matrix_kronecker_product(v->S, v->XTX, v->vcv);
-    } else if (v->vcv != NULL) {
-	/* destroy invalid matrix */
-	gretl_matrix_free(v->vcv);
-	v->vcv = NULL;
+    if (!v->robust && v->S != NULL && v->XTX) {
+	int err = 0;
+
+	v->vcv = gretl_matrix_kronecker_product_new(v->S, v->XTX, &err);
     }
 }
 
@@ -3666,10 +3642,6 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
 	err = VAR_add_XTX_matrix(var);
     }     
 
-    if (!err && var->vcv == NULL) {
-	err = VAR_allocate_vcv_matrix(var);
-    } 
-
     if (!err && var->C == NULL) {
 	err = VAR_allocate_cholesky_matrix(var);
     } 
@@ -3742,6 +3714,7 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
     }
 
     /* these are not show-stoppers */
+    gretl_xml_get_prop_as_int(node, "robust", &var->robust);
     gretl_xml_get_prop_as_int(node, "detflags", &var->detflags);
     gretl_xml_get_prop_as_int(node, "LBs", &var->LBs);
     gretl_xml_get_prop_as_double(node, "LB", &var->LB);
@@ -3889,6 +3862,10 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 
     fprintf(fp, "ecm=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\" ",
 	    (var->ci == VECM), var->neqns, var->order, var->detflags);
+
+    if (var->robust) {
+	gretl_xml_put_int("robust", 1, fp);
+    }
 
     if (var->LBs > 0 && !na(var->LB)) {
 	/* Portmanteau test */
