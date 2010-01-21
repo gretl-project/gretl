@@ -796,25 +796,37 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
 
     K *= p;
 
-    /* free beta terms */
-    if (H == NULL) {
-	K += r * (p1 - r);
+    if (H == NULL && R == NULL) {
+	/* neither beta nor alpha is restricted */
+	int npi = v->jinfo->Alpha->rows * p1;
+
+	K += r * npi / p;
     } else {
-	K += H->cols * r;
+	/* FIXME: what matters is the number of unrestricted
+	   terms in \Pi = \alpha \beta'
+	*/
+
+	/* free beta terms */
+	if (H == NULL) {
+	    K += r * (p1 - r);
+	} else {
+	    K += H->cols * r;
+	}
+
+	/* free alpha terms */
+	if (R == NULL) {
+	    K += r * p; 
+	} else {
+	    K += r * (p - R->rows);
+	}
     }
 
-    /* free alpha terms */
-    if (R == NULL) {
-	K += r * p; 
-    } else {
-	K += r * (p - R->rows);
-    }
-
-    c = floor(K / p);
+    c = floor(K / (double) p);
     v->df = v->T - c;
 
 #if JDEBUG
-    fprintf(stderr, "vecm_set_df: global K = %d, c = %g\n", K, c);
+    fprintf(stderr, "vecm_set_df: T = %d, global K = %d, c = %g, df = %d\n", 
+	    v->T, K, c, v->df);
 #endif
 }
 
