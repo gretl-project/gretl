@@ -23,6 +23,7 @@ version 1.8.7, in progress
   estimated with a loop construct
 - Fix bug: the GUI option for reporting standardized
   residuals for GARCH models got broken
+- Fix bug: handling of on-the-fly matrices in "printf"
 - Fix bugs: miscellaneous small GUI bugs
 - Fix bugs 2918790, 2918783, 2918775, 2917053
 
