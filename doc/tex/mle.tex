@@ -168,40 +168,43 @@ scalar alpha = 1
 scalar p = 1
 
 mle logl =  p*ln(alpha * x) - lngamma(p) - ln(x) - alpha * x 
+  params alpha p
 end mle 
 \end{code}
 
-The two statements
+The first two statements
 
 \begin{code}
 alpha = 1
 p = 1
 \end{code}
 
-are necessary to ensure that the variables \texttt{p} and
-\texttt{alpha} exist before the computation of \texttt{logl} is
-attempted. The values of these variables will be changed by the
-execution of the \texttt{mle} command; upon successful completion,
-they will be replaced by the ML estimates. The starting value is 1 for
-both; this is arbitrary and does not matter much in this example (more
-on this later).
+are necessary to ensure that the variables \texttt{alpha} and
+\texttt{p} exist before the computation of \texttt{logl} is
+attempted. Inside the \texttt{mle} block these variables are
+identified as the parameters that should be adjusted to maximize the
+likelihood via the \texttt{params} keyword.  Their values will be
+changed by the execution of the \texttt{mle} command; upon successful
+completion, they will be replaced by the ML estimates. The starting
+value is 1 for both; this is arbitrary and does not matter much in
+this example (more on this later).
 
 The above code can be made more readable, and marginally more
 efficient, by defining a variable to hold $\alpha \cdot x_t$. This
-command can be embedded into the \texttt{mle} block as follows:
+command can be embedded in the \texttt{mle} block as follows:
 \begin{code}
-scalar alpha = 1
-scalar p = 1
-
 mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
   series ax = alpha*x
   params alpha p
 end mle 
 \end{code}
-In this case, it is necessary to include the line \texttt{params alpha
-  p} to set the symbols \texttt{p} and \texttt{alpha} apart from
-\texttt{ax}, which is a temporarily generated variable and not a
-parameter to be estimated.
+The variable \texttt{ax} is not added to the \texttt{params} list,
+of course, since it is just an auxiliary variable to facilitate
+the calculations.  You can insert as many such auxiliary lines
+as you require before the \texttt{params} line, with the restriction
+that they must contain either (a) commands to generate series,
+scalars or matrices or (b) print commands (which may be used to
+aid in debugging).
 
 In a simple example like this, the choice of the starting values is
 almost inconsequential; the algorithm is likely to converge no
@@ -247,7 +250,7 @@ scalar p = m*alpha
 mle logl = check ? p*ln(ax) - lngamma(p) - ln(x) - ax : NA
   series ax = alpha*x
   scalar check = (alpha>0) && (p>0)
-params alpha p
+  params alpha p
 end mle 
 \end{code}
 
