@@ -85,6 +85,7 @@ struct set_vars_ {
     int vecm_norm;              /* VECM beta normalization */
     int bfgs_maxiter;           /* max iterations, BFGS */         
     double bfgs_toler;          /* convergence tolerance, BFGS */
+    int bfgs_verbskip;          /* BFGS: show one in n iterations  */
     int bhhh_maxiter;           /* max iterations, BHHH */          
     double bhhh_toler;          /* convergence tolerance, BHHH */
     int lbfgs_mem;              /* memory span for L-BFGS-B */
@@ -133,6 +134,7 @@ struct set_vars_ {
 			  !strcmp(s, QS_BANDWIDTH))
 
 #define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
+		       !strcmp(s, BFGS_VERBSKIP) || \
 		       !strcmp(s, BHHH_MAXITER) || \
 		       !strcmp(s, LBFGS_MEM) || \
                        !strcmp(s, BKBP_K) || \
@@ -341,6 +343,7 @@ static void state_vars_copy (set_vars *sv)
     sv->vecm_norm = state->vecm_norm;
     sv->bfgs_maxiter = state->bfgs_maxiter;
     sv->bfgs_toler = state->bfgs_toler;
+    sv->bfgs_verbskip = state->bfgs_verbskip;
     sv->bhhh_maxiter = state->bhhh_maxiter;
     sv->bhhh_toler = state->bhhh_toler;
     sv->lbfgs_mem = state->lbfgs_mem;
@@ -377,6 +380,7 @@ static void state_vars_init (set_vars *sv)
 
     sv->bfgs_maxiter = -1;
     sv->bfgs_toler = NADBL;
+    sv->bfgs_verbskip = 1;
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
     sv->lbfgs_mem = 8;
@@ -1290,6 +1294,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(HALT_ON_ERR, prn, opt);
     libset_print_int(LOOP_MAXITER, prn, opt);
     libset_print_bool(MAX_VERBOSE, prn, opt);
+    libset_print_int(BFGS_VERBSKIP, prn, opt);
     libset_print_bool(MESSAGES, prn, opt);
     libset_print_bool(WARNINGS, prn, opt);
     libset_print_int(GRETL_DEBUG, prn, opt);
@@ -1724,6 +1729,8 @@ int libset_get_int (const char *key)
 	return gretl_debug;
     } else if (!strcmp(key, BLAS_NMK_MIN)) {
 	return get_blas_nmk_min();
+    } else if (!strcmp(key, BFGS_VERBSKIP)) {
+	return state->bfgs_verbskip;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"variable '%s'\n", key);	
@@ -1739,6 +1746,9 @@ static int intvar_min_max (const char *s, int *min, int *max,
     if (!strcmp(s, BFGS_MAXITER)) {
 	*min = 0;
 	*var = &state->bfgs_maxiter;
+    } else if (!strcmp(s, BFGS_VERBSKIP)) {
+	*min = 1;
+	*var = &state->bfgs_verbskip;
     } else if (!strcmp(s, BHHH_MAXITER)) {
 	*min = 1;
 	*var = &state->bhhh_maxiter;

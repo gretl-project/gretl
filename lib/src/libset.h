@@ -32,6 +32,7 @@ typedef enum {
 
 #define BFGS_MAXITER     "bfgs_maxiter"
 #define BFGS_TOLER       "bfgs_toler"
+#define BFGS_VERBSKIP    "bfgs_verbskip"
 #define BHHH_MAXITER     "bhhh_maxiter"
 #define BHHH_TOLER       "bhhh_toler"
 #define LBFGS_MEM        "lbfgs_mem"

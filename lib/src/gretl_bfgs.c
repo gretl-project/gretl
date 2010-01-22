@@ -480,6 +480,8 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
     }
 }
 
+#define bfgs_print_iter(v,s,i) (v && (s == 1 || i % s == 0))
+
 int BFGS_orig (double *b, int n, int maxit, double reltol,
 	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
@@ -489,7 +491,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     double *wspace = NULL;
     double **H = NULL;
     double *g, *t, *X, *c;
-    int verbose = (opt & OPT_V);
+    int verbskip, verbose = (opt & OPT_V);
     int fcount, gcount, ndelta = 0;
     double fmax, f, f0, sumgrad, d = 0.0;
     int i, j, ilast, iter;
@@ -543,8 +545,10 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	goto skipcalc;
     }
 
+    verbskip = libset_get_int("bfgs_verbskip");
+
     do {
-	if (verbose) {
+	if (bfgs_print_iter(verbose, verbskip, iter)) {
 	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
 	}
 
@@ -776,6 +780,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     int isave[44];
     int lsave[4];
     int iter, ibak = 0;
+    int verbskip, verbose = (opt & OPT_V);
     int err = 0;
 
     *fncount = *grcount = 0;    
@@ -806,6 +811,8 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 	err = E_ALLOC;
 	goto bailout;
     }
+
+    verbskip = libset_get_int("bfgs_verbskip");
 
     if (gradfunc == NULL) {
 	gradfunc = BFGS_numeric_gradient;
@@ -862,7 +869,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 	    break;
 	}
 
-	if (opt & OPT_V) {
+	if (bfgs_print_iter(verbose, verbskip, iter)) {
 	    if (iter != ibak) {
 		double steplen = (iter == 1)? NADBL : dsave[13];
 

@@ -1732,6 +1732,11 @@ static int check_jacobian (Jwrap *J)
     if (J->H != NULL) {
 	gretl_matrix *phi = gretl_column_vector_alloc(J->H->cols);
 
+	if (phi == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+
 	gretl_matrix_random_fill(phi, D_NORMAL);
 	gretl_matrix_reuse(J->beta, J->p1 * J->r, 1);
 	gretl_matrix_multiply(J->H, phi, J->beta);
@@ -1747,6 +1752,11 @@ static int check_jacobian (Jwrap *J)
     if (J->G != NULL) {
 	gretl_matrix *psi = gretl_column_vector_alloc(J->G->cols);
 	gretl_matrix *avec = gretl_column_vector_alloc(J->p * J->r);
+
+	if (psi == NULL || avec == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}	
 
 	gretl_matrix_random_fill(psi, D_NORMAL);
 	gretl_matrix_multiply(J->G, psi, avec);
@@ -1796,6 +1806,8 @@ static int check_jacobian (Jwrap *J)
 #endif
     }
 
+ bailout:
+
     gretl_matrix_free(A);
     gretl_matrix_free(B);
     gretl_matrix_free(Jac);
@@ -1805,8 +1817,7 @@ static int check_jacobian (Jwrap *J)
 
 /* Doornik's approach to checking identification */
 
-static int 
-vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
+static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 {
     int npar = J->alen + J->blen;
     int err = 0;
