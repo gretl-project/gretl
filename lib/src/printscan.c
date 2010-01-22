@@ -100,39 +100,33 @@ static char *printf_get_string (char *s, double ***pZ,
 				DATAINFO *pdinfo, int t, 
 				int *err)
 {
-    const char *p = NULL;
-    const char *q = NULL;
     char *ret = NULL;
-    int len = 0;
-
-    /* special, not yet in genr */
 
     if (!strncmp(s, "marker", 6) && pdinfo != NULL && pdinfo->S != NULL) {
-	/* observation label */
+	/* special, not in regular genr */
+	const char *p = pdinfo->S[t];
+	const char *q = s + 6;
+	int len = strlen(p);
 	int offset = 0;
 
-	p = pdinfo->S[t];
-	len = strlen(p);
-	q = s + 6;
 	while (isspace(*q)) q++;
+
 	if (*q == '+') {
-	    q++;
-	    offset = atoi(q);
+	    offset = atoi(++q);
 	    len -= offset;
 	}
 	if (len >= 0) {
 	    ret = gretl_strndup(p + offset, len);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    }
 	}
     } else {
 	ret = generate_string(s, pZ, pdinfo, err);
     }
 
-    if (ret == NULL) {
-	ret = gretl_strdup("");
-    }
-
-    if (ret == NULL) {
-	*err = E_ALLOC;
+    if (ret == NULL && !*err) {
+	*err = E_DATA;
     }
 
     return ret;

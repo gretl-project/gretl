@@ -706,6 +706,10 @@ correct_variance (GRETL_VAR *v, const gretl_restriction *rset,
     int r = jrank(v);
     int i, j, err = 0;
 
+#if 1
+    fprintf(stderr, "*** +++ doing correct_variance ***\n");
+#endif
+
     R = rset_get_Ra_matrix(rset);
     if (R == NULL) {
 	/* shouldn't be here! */
