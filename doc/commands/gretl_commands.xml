@@ -8365,6 +8365,15 @@
 	  started.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>bfgs_verbskip</lit>: one integer. This setting
+	  affects the behavior of the <lit>--verbose</lit> option to
+	  those command that use BFGS as an optimization algorithm and
+	  is used to compact output. if <lit>bfgs_verbskip</lit> is
+	  set to, say, 3, then the <lit>--verbose</lit> switch will
+	  only print iterations 3, 6, 9 and so on.
+	  </para>
+	</li>
       </ilist>
 
       <para>
