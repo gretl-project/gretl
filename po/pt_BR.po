@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-20 01:08-0300\n"
+"PO-Revision-Date: 2010-01-21 23:57-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -7514,7 +7514,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 20 de janeiro de 2010."
+"Tradução de 22 de janeiro de 2010."
 
 #: gui2/about.c:175
 msgid "License"
@@ -12069,7 +12069,7 @@ msgstr "Critério de Informação de _Hannan-Quinn"
 
 #: gui2/gui_utils.c:2195
 msgid "_Predicted error variance"
-msgstr "Variância do erro de _previsão"
+msgstr "Variância _prevista do erro"
 
 #: gui2/gui_utils.c:2201
 msgid "Per-unit _constants"
