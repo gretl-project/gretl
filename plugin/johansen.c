@@ -664,113 +664,6 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
     return err;
 }
 
-#if 1
-
-static int eqn_is_unrestricted (const gretl_matrix *R, int j0, int r)
-{
-    int i, j;
-
-    for (j=j0; j<R->cols; j+=r) {
-	for (i=0; i<R->rows; i++) {
-	    if (gretl_matrix_get(R, i, j) != 0.0) {
-		return 0;
-	    }
-	}
-    }
-
-    return 1;
-}
-
-/* (Experimental) apparatus for getting correct (?) standard errors
-   for Gamma etc., in case we've estimated the models netting out
-   \Pi*X^*_{t-1}.  At present we attempt a correction only for
-   equations where the \alpha estimates are unrestricted; we recompute
-   the std errors using the full X'X matrix, including the
-   \beta'X^*_{t-1} column(s).  Is this right?
-   
-   Note: if the dependent variable in a given equation is weakly
-   exogenous, then netting out \Pi*X^*_{t-1} should be OK, with regard
-   to the standard errors for Gamma etc., shouldn't it?  Because in
-   that case the "missing" \beta'X^*_{t-1} column(s) are all zeros.
-*/
-
-static int 
-correct_variance (GRETL_VAR *v, const gretl_restriction *rset,
-		  const double **Z)
-{
-    const gretl_matrix *R;
-    gretl_matrix *X = NULL;
-    gretl_matrix *XTX = NULL;
-    double x;
-    int xc1, nse;
-    int r = jrank(v);
-    int i, j, err = 0;
-
-#if 1
-    fprintf(stderr, "*** +++ doing correct_variance ***\n");
-#endif
-
-    R = rset_get_Ra_matrix(rset);
-    if (R == NULL) {
-	/* shouldn't be here! */
-	return 0;
-    }
-
-#if JDEBUG
-    gretl_matrix_print(R, "Ra, in correct_variance()");
-#endif
-
-    nse = (v->X != NULL)? v->X->cols : 0;
-    xc1 = nse + jrank(v);
-
-    X = gretl_zero_matrix_new(v->T, xc1);
-    XTX = gretl_matrix_alloc(xc1, xc1);
-
-    if (X == NULL || XTX == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err) {
-	/* copy original X cols and append ECs */
-	if (v->X != NULL) {
-	    gretl_matrix_inscribe_matrix(X, v->X, 0, 0, GRETL_MOD_NONE);
-	}
-	err = add_EC_terms_to_X(v, X, Z);
-    }
-
-    if (!err) {
-	/* form X'X and invert */
-	gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-				  X, GRETL_MOD_NONE,
-				  XTX, GRETL_MOD_NONE);
-	gretl_invert_symmetric_matrix(XTX);
-    }	
-
-    for (i=0; i<v->neqns && !err; i++) {
-	MODEL *pmod = v->models[i];
-	
-	if (eqn_is_unrestricted(R, i, r)) {
-	    for (j=0; j<nse; j++) {
-		x = gretl_matrix_get(XTX, j, j);
-		x = sqrt(x);
-		x *= pmod->sigma;
-#if JDEBUG
-		fprintf(stderr, "original se[%d,%d] = %g\n", i, j, pmod->sderr[j]);
-		fprintf(stderr, " revised se[%d,%d] = %g\n", i, j, x);
-#endif
-		pmod->sderr[j] = x;
-	    }
-	}
-    }
-
-    gretl_matrix_free(X);
-    gretl_matrix_free(XTX);
-
-    return err;
-}
-
-#endif
-
 /* As in PcGive: df = T - c, where c is the "average number of
    estimated parameters per equation, rounded towards zero".
 */
@@ -991,13 +884,6 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	    transcribe_alpha(v);
 	}
     }
-
-#if 1
-    /* experimental */
-    if (!err && net_out_alpha(flags)) {
-	err = correct_variance(v, rset, Z);
-    }
-#endif
 
  bailout:
     
