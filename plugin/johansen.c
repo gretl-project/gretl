@@ -666,6 +666,9 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 
 /* As in PcGive: df = T - c, where c is the "average number of
    estimated parameters per equation, rounded towards zero".
+   Note that this function is _not_invoked in the case of
+   "general" restriction on alpha/beta; in that case the df
+   calculation is handled specially.
 */
 
 static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
@@ -1236,6 +1239,7 @@ static int beta_variance (GRETL_VAR *vecm)
 	goto bailout;
     }
 
+    /* note use of df rather than T here */
     gretl_matrix_divide_by_scalar(vecm->jinfo->Bvar, vecm->df);
 
     k = 0;
@@ -1783,19 +1787,21 @@ static int get_unrestricted_ll (GRETL_VAR *jvar)
 
 static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H, 
 			  const gretl_matrix *Ra,
-			  const double **Z, const DATAINFO *pdinfo,
-			  int flags)
+			  const double **Z, const DATAINFO *pdinfo)
 {
     int do_stderrs = jrank(jvar) < jvar->neqns;
     int err = 0;
 
-    if (estimate_alpha(flags)) {
+    if (Ra == NULL) {
+	/* alpha unrestricted */
 	err = normalize_beta(jvar, H, &do_stderrs);
     } else {
 	do_stderrs = 0;
     }
 
     if (!err) {
+	int flags = (Ra != NULL)? NET_OUT_ALPHA : 0;
+
 	vecm_set_df(jvar, H, Ra);
 	err = VECM_estimate_full(jvar, NULL, Z, pdinfo, flags);
     }
@@ -1846,7 +1852,7 @@ est_simple_alpha_restr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, R, Z, pdinfo, NET_OUT_ALPHA);
+	err = vecm_finalize(jvar, NULL, R, Z, pdinfo);
     }
 
     if (!err) {
@@ -1913,7 +1919,7 @@ est_simple_beta_restr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, H, NULL, Z, pdinfo, 0);
+	err = vecm_finalize(jvar, H, NULL, Z, pdinfo);
     }
 
     if (!err) {
@@ -1967,7 +1973,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, NULL, Z, pdinfo, 0);
+	err = vecm_finalize(jvar, NULL, NULL, Z, pdinfo);
     }
 
     gretl_matrix_free(S00);
