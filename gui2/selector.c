@@ -5700,7 +5700,8 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
 
     /* unhide lags check box? */
-    if (SAVE_DATA_ACTION(sr->ci) && lags_hidden) {
+    if ((sr->ci == DEFINE_LIST || SAVE_DATA_ACTION(sr->ci)) 
+	&& lags_hidden) {
 	unhide_lags_switch(sr);
     }
 

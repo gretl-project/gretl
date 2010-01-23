@@ -386,23 +386,39 @@ static void update_matrix_selectors (call_info *cinfo)
     g_list_free(mlist);
 }
 
+static int combo_accepts_null (GtkComboBox *c)
+{
+    gpointer p = g_object_get_data(G_OBJECT(c), "null_OK");
+
+    return (p != NULL);
+}
+
 static void update_list_selectors (call_info *cinfo)
 {
     GList *slist = cinfo->lsels;
-    GList *llist = NULL;
+    GList *llist1 = NULL;
+    GList *llist2 = NULL;
     GtkComboBox *sel;
     const char *lname;
     gchar *saved;
     int nl = n_saved_lists();
+    int null_OK;
     int i, old;
+
+    llist2 = g_list_append(llist2, "null");
 
     for (i=0; i<nl; i++) {
 	lname = get_list_name_by_index(i);
-	llist = g_list_append(llist, (gpointer) lname);
+	llist1 = g_list_append(llist1, (gpointer) lname);
+	llist2 = g_list_append(llist2, (gpointer) lname);
     }
 
     while (slist != NULL) {
+	GList *llist;
+
 	sel = GTK_COMBO_BOX(slist->data);
+	null_OK = combo_accepts_null(sel);
+	llist = (null_OK)? llist2 : llist1; 
 	saved = gtk_combo_box_get_active_text(sel);
 	depopulate_combo_box(sel);
 	set_combo_box_strings_from_list(sel, llist);
@@ -410,11 +426,14 @@ static void update_list_selectors (call_info *cinfo)
 	    old = combo_list_index(saved, llist);
 	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
 	    g_free(saved);
+	} else if (null_OK) {
+	    gtk_combo_box_set_active(sel, 0);
 	}
 	slist = slist->next;
     }
 
-    g_list_free(llist);
+    g_list_free(llist1);
+    g_list_free(llist2);
 }
 
 int do_make_list (selector *sr)
@@ -554,6 +573,10 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_arg), cinfo);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+
+    if (i >= 0 && fn_param_optional(cinfo->func, i)) {
+	g_object_set_data(G_OBJECT(combo), "null_OK", GINT_TO_POINTER(1));
+    }
 
     list = get_selection_list(cinfo, i, ptype, 1);
     if (list != NULL) {
