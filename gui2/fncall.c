@@ -1021,7 +1021,9 @@ static void select_interface (call_info *cinfo)
 /* Callback from "OK" button in function call GUI: if there's a
    problem with the argument selection just return so the dialog stays
    in place and the user can correct matters; otherwise close the
-   dialog and execute the function, then clean up.
+   dialog and execute the function, then clean up.  (Note that we
+   need to set cinfo->ok so that the cinfo structure won't get
+   destroyed along with the dialog.)
 */
 
 static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
@@ -1032,7 +1034,7 @@ static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
 	PRN *prn = NULL;
 	int err;
 
-	cinfo->ok = 1;
+	cinfo->ok = 1; /* flag preservation of cinfo */
 	gtk_widget_destroy(cinfo->dlg);
 
 	err = bufopen(&prn);
