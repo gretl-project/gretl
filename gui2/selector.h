@@ -72,4 +72,6 @@ void maybe_clear_selector (const int *dlist);
 
 GtkWidget *selector_get_window (const selector *sr);
 
+void selector_cleanup (void);
+
 #endif /* SELECTOR_H */

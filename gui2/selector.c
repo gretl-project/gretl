@@ -3719,7 +3719,6 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 static void selector_init (selector *sr, guint ci, const char *title,
 			   gpointer p, int (*callback)())
 {
-    GtkWidget *base;
     double x;
     int dlgx = -1, dlgy = 340;
     int i;
@@ -3836,29 +3835,10 @@ static void selector_init (selector *sr, guint ci, const char *title,
     g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 		     G_CALLBACK(destroy_selector), 
 		     sr);
-    g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
-		     G_CALLBACK(esc_kills_window), NULL);
 
-    /* create equivalent of gtkdialog structure */
-    base = gtk_vbox_new(FALSE, 5);
-    gtk_container_add(GTK_CONTAINER(sr->dlg), base);
-
-    sr->vbox = gtk_vbox_new(FALSE, 0);
-
-    /* make (upper) vbox expansible */
-    gtk_box_pack_start(GTK_BOX(base), sr->vbox, TRUE, TRUE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(sr->vbox), 5);
-    gtk_box_set_spacing(GTK_BOX(sr->vbox), 5);
-
-    vbox_add_hsep(base);
-
-    sr->action_area = gtk_hbutton_box_new();
-    gtk_button_box_set_layout(GTK_BUTTON_BOX(sr->action_area), 
-			      GTK_BUTTONBOX_END);
-    gtk_box_set_spacing(GTK_BOX(sr->action_area), 10);
-    gtk_box_pack_start(GTK_BOX(base), sr->action_area,
-		       FALSE, FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(sr->action_area), 5);
+    gretl_emulated_dialog_add_structure(sr->dlg, 
+					&sr->vbox,
+					&sr->action_area);
 } 
 
 static void option_callback (GtkWidget *w, selector *sr)
@@ -4386,7 +4366,7 @@ static void build_selector_switches (selector *sr)
 
 static void unhide_lags_callback (GtkWidget *w, selector *sr)
 {
-    int i, show_lags;
+    int i, imin, show_lags;
     GtkListStore *store;
     GtkTreeIter iter;
 
@@ -4394,9 +4374,10 @@ static void unhide_lags_callback (GtkWidget *w, selector *sr)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
+    imin = (sr->ci == DEFINE_LIST)? 0 : 1;
     show_lags = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
-    for (i=1; i<datainfo->v; i++) {
+    for (i=imin; i<datainfo->v; i++) {
 	if (list_show_var(i, sr->ci, show_lags)) {
 	    list_append_var_simple(store, &iter, i);
 	}
@@ -5673,8 +5654,8 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     if (SAVE_DATA_ACTION(sr->ci)) {
 	tmp = gtk_button_new_with_label (_("All ->"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
-	g_signal_connect (G_OBJECT(tmp), "clicked", 
-			  G_CALLBACK(add_all_to_rvars1_callback), sr);
+	g_signal_connect(G_OBJECT(tmp), "clicked", 
+			 G_CALLBACK(add_all_to_rvars1_callback), sr);
     }
     
     sr->remove_button = remove_button(sr, button_vbox);
@@ -6060,6 +6041,15 @@ void maybe_clear_selector (const int *dlist)
     }
 }
 
+void selector_cleanup (void)
+{
+    clear_selector();
+
+    if (open_selector != NULL) {
+	gtk_widget_destroy(open_selector->dlg);
+    }
+}
+
 /* ------------- lag selection apparatus -------------- */
 
 #define NOT_LAG 66666
@@ -6245,7 +6235,7 @@ static void lags_set_OK (GtkWidget *w, gpointer p)
     *resp = GRETL_YES;
 }
 
-static void resensitive_selector (GtkWidget *w, gpointer p)
+static void resensitize_selector (GtkWidget *w, gpointer p)
 {
     if (open_selector != NULL) {
 	gtk_widget_set_sensitive(open_selector->dlg, TRUE);
@@ -6274,7 +6264,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 			      GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
     g_signal_connect(G_OBJECT(dialog), "destroy",
-		     G_CALLBACK(resensitive_selector), NULL);
+		     G_CALLBACK(resensitize_selector), NULL);
 
     myvbox = gtk_vbox_new(FALSE, 5);
 

@@ -36,6 +36,7 @@
 #include "menustate.h"
 #include "toolbar.h"
 #include "winstack.h"
+#include "fncall.h"
 #include "lib_private.h"
 
 #include "var.h"
@@ -1526,7 +1527,8 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 
     winstack_destroy();
     close_plot_windows();
-    clear_selector();
+    selector_cleanup();
+    function_call_cleanup();
     edit_dialog_special_get_text(NULL);
 
     if (opt & OPT_P) {

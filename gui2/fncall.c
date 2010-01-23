@@ -55,6 +55,10 @@ struct call_info_ {
 #define series_arg(t) (t == GRETL_TYPE_SERIES || t == GRETL_TYPE_SERIES_REF)
 #define matrix_arg(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
 
+static GtkWidget *open_fncall_dlg;
+
+static void fncall_OK_callback (GtkWidget *w, call_info *cinfo);
+
 static call_info *cinfo_new (void)
 {
     call_info *cinfo = mymalloc(sizeof *cinfo);
@@ -155,13 +159,14 @@ static int check_args (call_info *cinfo)
     return 0;
 }
 
-static void fncall_finalize (GtkWidget *w, call_info *cinfo)
+static void fncall_dialog_destruction (GtkWidget *w, call_info *cinfo)
 {
-    if (check_args(cinfo)) {
-	return;
+    if (!cinfo->ok) {
+	/* don't free cinfo if we're going to use it */
+	cinfo_free(cinfo);
     }
-    cinfo->ok = 1;
-    gtk_widget_destroy(cinfo->dlg);
+
+    open_fncall_dlg = NULL;
 }
 
 static void fncall_cancel (GtkWidget *w, call_info *cinfo)
@@ -639,12 +644,17 @@ static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
     GtkWidget *sel, *tbl = NULL;
-    GtkWidget *vbox, *hbox;
+    GtkWidget *vbox, *hbox, *bbox;
     gchar *txt;
     const char *fnname;
     int trows = 0, tcols = 0;
     int i, row = 0;
     int err;
+
+    if (open_fncall_dlg != NULL) {
+	gtk_window_present(GTK_WINDOW(open_fncall_dlg));
+	return;
+    }
 
     err = cinfo_args_init(cinfo);
     if (err) {
@@ -652,9 +662,12 @@ static void function_call_dialog (call_info *cinfo)
 	return;
     }
 
-    cinfo->dlg = gretl_dialog_new(_("gretl: function call"), NULL, 
-				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(cinfo->dlg));
+    cinfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(cinfo->dlg), ("gretl: function call"));
+    gretl_emulated_dialog_add_structure(cinfo->dlg, &vbox, &bbox);
+    open_fncall_dlg = cinfo->dlg;
+    g_signal_connect(G_OBJECT(cinfo->dlg), "destroy",
+		     G_CALLBACK(fncall_dialog_destruction), cinfo);
 
     fnname = user_function_name_by_index(cinfo->iface);
     txt = g_strdup_printf(_("Call to function %s"), fnname);
@@ -763,22 +776,20 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     }
 
-    hbox = gtk_dialog_get_action_area(GTK_DIALOG(cinfo->dlg));
-
     /* Cancel button */
-    button = cancel_button(hbox);
+    button = cancel_button(bbox);
     g_signal_connect(G_OBJECT (button), "clicked", 
 		     G_CALLBACK(fncall_cancel), cinfo);
 
     /* "OK" button */
-    button = ok_button(hbox);
+    button = ok_button(bbox);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(fncall_finalize), cinfo);
+		     G_CALLBACK(fncall_OK_callback), cinfo);
     gtk_widget_grab_default(button);
 
     /* Help button? */
     if (cinfo->n_params > 0 || cinfo->rettype != GRETL_TYPE_NONE) {
-	button = context_help_button(hbox, -1);
+	button = context_help_button(bbox, -1);
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(fncall_help), cinfo);
     }  
@@ -1007,6 +1018,42 @@ static void select_interface (call_info *cinfo)
     free_strings_array(opts, nopts);
 }
 
+/* Callback from "OK" button in function call GUI: if there's a
+   problem with the argument selection just return so the dialog stays
+   in place and the user can correct matters; otherwise close the
+   dialog and execute the function, then clean up.
+*/
+
+static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
+{
+    if (check_args(cinfo)) {
+	return;
+    } else {
+	PRN *prn = NULL;
+	int err;
+
+	cinfo->ok = 1;
+	gtk_widget_destroy(cinfo->dlg);
+
+	err = bufopen(&prn);
+
+	if (!err && cinfo->args != NULL) {
+	    err = pre_process_args(cinfo, prn);
+	    if (err) {
+		gui_errmsg(err);
+	    }
+	}
+
+	if (!err) {
+	    err = real_GUI_function_call(cinfo, prn);
+	} else {
+	    gretl_print_destroy(prn);
+	}
+
+	cinfo_free(cinfo);
+    }
+}
+
 /* call to execute a function from the specified package: we do
    this only for locally installed packages */
 
@@ -1017,7 +1064,6 @@ void call_function_package (const char *fname, GtkWidget *w,
     int minver = 0;
     call_info *cinfo;
     fnpkg *pkg;
-    PRN *prn = NULL;
     int err = 0;
 
     pkg = get_function_package_by_filename(fname);
@@ -1103,36 +1149,15 @@ void call_function_package (const char *fname, GtkWidget *w,
     }
 
     if (!err) {
-	/* construct GUI for argument selection: note that cinfo->ok
-	   is initialized to 0, and is set to 1 on clicking "OK" in
-	   the dialog, provided the args check out alright.  If
-	   cinfo->ok == 0, the user cancelled.
-	*/
 	function_call_dialog(cinfo);
-	if (!cinfo->ok) {
-	    cinfo_free(cinfo);
-	    return; /* note: handled */
-	}
-    }
-
-    if (!err) {
-	err = bufopen(&prn);
-    }
-
-    if (!err && cinfo->args != NULL) {
-	err = pre_process_args(cinfo, prn);
-	if (err) {
-	    gui_errmsg(err);
-	}
-    }
-
-    if (!err) {
-	err = real_GUI_function_call(cinfo, prn);
     } else {
-	gretl_print_destroy(prn);
+	cinfo_free(cinfo);
     }
+}
 
-    cinfo_free(cinfo);
-
-    return;
+void function_call_cleanup (void)
+{
+    if (open_fncall_dlg != NULL) {
+	gtk_widget_destroy(open_fncall_dlg);
+    }
 }

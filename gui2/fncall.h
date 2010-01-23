@@ -23,4 +23,6 @@
 void call_function_package (const char *fname, GtkWidget *w,
 			    int *loaderr);
 
+void function_call_cleanup (void);
+
 #endif /* FNCALL_H */

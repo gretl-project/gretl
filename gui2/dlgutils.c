@@ -1559,3 +1559,38 @@ gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
 	return TRUE;
     }
 }
+
+/* set-up for a top-level window, @dlg, which emulates a GtkDialog
+   structure: *pvbox is like the vbox member of a GtkDialog, and
+   *pbbox like the action_area member.
+*/
+
+void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
+					  GtkWidget **pvbox,
+					  GtkWidget **pbbox)
+{
+    GtkWidget *base;
+
+    g_signal_connect(G_OBJECT(dlg), "key-press-event", 
+		     G_CALLBACK(esc_kills_window), NULL);
+
+    base = gtk_vbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(dlg), base);
+
+    *pvbox = gtk_vbox_new(FALSE, 0);
+
+    /* make (upper) vbox expansible */
+    gtk_box_pack_start(GTK_BOX(base), *pvbox, TRUE, TRUE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(*pvbox), 5);
+    gtk_box_set_spacing(GTK_BOX(*pvbox), 5);
+
+    vbox_add_hsep(base);
+
+    *pbbox = gtk_hbutton_box_new();
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(*pbbox), 
+			      GTK_BUTTONBOX_END);
+    gtk_box_set_spacing(GTK_BOX(*pbbox), 10);
+    gtk_box_pack_start(GTK_BOX(base), *pbbox,
+		       FALSE, FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(*pbbox), 5);
+}
