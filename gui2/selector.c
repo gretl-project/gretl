@@ -406,6 +406,11 @@ void clear_selector (void)
     call_iters_dialog(NULL, NULL);
 }
 
+GtkWidget *selector_get_window (const selector *sr)
+{
+    return sr->dlg;
+}
+
 static int presel;
 
 void selector_set_varnum (int v)

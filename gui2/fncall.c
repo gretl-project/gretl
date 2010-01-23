@@ -496,8 +496,13 @@ int do_make_list (selector *sr)
 
 static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
 {
-    simple_selection(_("Define list"), do_make_list, DEFINE_LIST, 
-		     entry);
+    selector *sr;
+    GtkWidget *dlg;
+
+    sr = simple_selection(_("Define list"), do_make_list, DEFINE_LIST, 
+			  entry);
+    dlg = selector_get_window(sr);
+    gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
 }
 
 static void launch_matrix_maker (GtkWidget *w, call_info *cinfo)

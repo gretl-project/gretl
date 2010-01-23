@@ -70,4 +70,6 @@ int selector_error (const selector *sr);
 
 void maybe_clear_selector (const int *dlist);
 
+GtkWidget *selector_get_window (const selector *sr);
+
 #endif /* SELECTOR_H */
