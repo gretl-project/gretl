@@ -1777,36 +1777,6 @@ static int get_unrestricted_ll (GRETL_VAR *jvar)
     return err;
 }
 
-#define VECM_VCV_DFCORR 0
-
-/* add covariance matrix for parameter estimates after estimation
-   via OLS conditional on \beta */
-
-static int vecm_add_vcv (GRETL_VAR *v)
-{
-    int err = 0;
-
-    if (v->S == NULL || v->XTX == NULL) {
-	return 0;
-    }
-
-    if (v->vcv != NULL) {
-	gretl_matrix_free(v->vcv);
-    }
-
-    v->vcv = gretl_matrix_kronecker_product_new(v->S, v->XTX, &err);
-
-#if VECM_VCV_DFCORR
-    if (!err) {
-	double cfac = v->T / (double) v->df;
-
-	gretl_matrix_multiply_by_scalar(v->vcv, cfac);
-    }
-#endif
-
-    return err;
-}
-
 /* common finalization for estimation subject to simple beta
    restriction, simple alpha restriction, or no restriction.
 */
@@ -1848,10 +1818,6 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 
     if (!err) {
 	err = vecm_ll_stats(jvar);
-    }
-
-    if (!err && estimate_alpha(flags)) {
-	err = vecm_add_vcv(jvar);
     }
 
     return err;

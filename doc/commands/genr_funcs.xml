@@ -551,7 +551,11 @@
 	  <seelist>
 	    <fncref targ="$coeff"/> 
 	    <fncref targ="$stderr"/>
-	  </seelist>
+	  </seelist>	  
+	</para>
+	<para>
+	  This accessor is not available for VARs or VECMs; for models of that
+	  sort see <fncref targ="$sigma"/> and <fncref targ="$xtxinv"/>.
 	</para>
       </description>
     </function>
@@ -585,6 +589,18 @@
 	<para>
 	  Returns the list of regressors from the last model (for
 	  single-equation models only).
+	</para>
+      </description>
+    </function>
+
+    <function name="$xtxinv" section="access" output="matrix">
+      <description>
+	<para>
+	  Following estimation of a VAR or VECM (only), returns
+	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is the common
+	  matrix of regressors used in each of the equations.  This accessor
+	  is not available for a VECM estimated with a restriction imposed on
+	  &agr;, the <quote>loadings</quote> matrix.
 	</para>
       </description>
     </function>

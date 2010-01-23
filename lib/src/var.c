@@ -196,7 +196,6 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->E = NULL;
     var->C = NULL;
     var->S = NULL;
-    var->vcv = NULL;
     var->F = NULL;
 
     var->models = NULL;
@@ -782,7 +781,6 @@ void gretl_VAR_free (GRETL_VAR *var)
     gretl_matrix_free(var->X);
     gretl_matrix_free(var->B);
     gretl_matrix_free(var->XTX);
-    gretl_matrix_free(var->vcv);
 
     gretl_matrix_free(var->A);
     gretl_matrix_free(var->L);
@@ -1805,7 +1803,7 @@ double gretl_VAR_ldet (GRETL_VAR *var, const gretl_matrix *E,
 	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 				  E, GRETL_MOD_NONE,
 				  S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(S, var->T); /* or var->df? */
+	gretl_matrix_divide_by_scalar(S, var->T);
 	ldet = gretl_vcv_log_determinant(S);
 	if (na(ldet)) {
 	    *err = 1;
@@ -2029,15 +2027,6 @@ void VAR_write_A_matrix (GRETL_VAR *v)
 #endif
 }
 
-static void VAR_write_vcv_matrix (GRETL_VAR *v)
-{
-    if (!v->robust && v->S != NULL && v->XTX) {
-	int err = 0;
-
-	v->vcv = gretl_matrix_kronecker_product_new(v->S, v->XTX, &err);
-    }
-}
-
 static int VAR_depvar_name (GRETL_VAR *var, int i, const char *yname)
 {
     MODEL *pmod = var->models[i];
@@ -2235,8 +2224,6 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 
 	    if (!*err) {
 		*err = VAR_add_stats(var, code);
-		/* FIXME: what about the robust option? */
-		VAR_write_vcv_matrix(var);
 	    }
 
 	    if (!*err) {
@@ -3321,8 +3308,6 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	copy = 0;
     } else if (idx == M_XTXINV) {
 	src = var->XTX;
-    } else if (idx == M_VCV) {
-	src = var->vcv;
     } else if (idx == M_SIGMA) {
 	src = var->S;
     } else if (vecm_matrix(idx)) {
@@ -3796,7 +3781,6 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
 
     if (!*err) {
 	*err = VAR_add_stats(var, 0);
-	VAR_write_vcv_matrix(var);
     }
 
     if (!*err) {

@@ -841,16 +841,17 @@ somewhat differently depending on the sort of model that is
 referenced, as follows:
 
 \begin{itemize}
-\item Single-equation models: \texttt{\$sigma} gets a scalar (the
-  standard error of the regression); \texttt{\$coeff} and
-  \texttt{\$stderr} get column vectors; \texttt{\$uhat} and
-  \texttt{\$yhat} get series.
-\item System estimators: \texttt{\$sigma} gets the cross-equation
-  residual covariance matrix; \texttt{\$coeff} and \texttt{\$stderr}
-  get matrices with one column per equation, as do \texttt{\$uhat}
-  and \texttt{\$yhat}
-\item VECMs: \texttt{\$vcv} is not available at present when $\alpha$
-  is subject to restrictions.
+\item Single-equation models: \dollar{sigma} gets a scalar (the
+  standard error of the regression); \dollar{coeff} and
+  \dollar{stderr} get column vectors; \dollar{uhat} and
+  \dollar{yhat} get series.
+\item System estimators: \dollar{sigma} gets the cross-equation
+  residual covariance matrix; \dollar{coeff} and \dollar{stderr}
+  get matrices with one column per equation, as do \dollar{uhat}
+  and \dollar{yhat}
+\item VARs and VECMs: \dollar{vcv} is not available, but 
+  $X'X^{-1}$ (where $X$ is the common matrix of regressors) is
+  available as \dollar{xtxinv}.
 \end{itemize}
 
 If the accessors are given without any prefix, they retrieve results

@@ -10,13 +10,14 @@ version 1.8.7, in progress
   $pvalue
 - "corrgm" and "xcorrgm": allow the lag order to be
   given as a named scalar variable
-- VECMs: enable $vcv accessor, add $ec accessor
-- VARs and VECMs: enable $df and $ncoeff accessors
+- VECMs: add $ec accessor
+- VARs: remove $vcv accessor
+- VARs and VECMs: enable accessors $df, $ncoeff and $xtxinv
 - BFGSmax function: add facility for supplying analytical
   derivatives
 - Eviews data importer: handle more cases of .wf1 files
-- BFGS: make the degree of verbosity tunable via "set 
-  bfgs_verbskip" 
+- BFGS: make the degree of verbosity tunable via "set
+  bfgs_verbskip"
 - Fix bug: crash on error in user_matrix_ols()
 - Fix bug: "append" for data should work in more cases
 - Fix bug: saving a model when there is already a saved

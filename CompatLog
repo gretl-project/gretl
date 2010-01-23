@@ -1,5 +1,13 @@
 version 1.8.7, in progress
 
+The accessor $vcv is no longer available for VARs.  The
+full covariance matrix can be retrieved as 
+
+  $sigma ** $xtxinv 
+
+where "**" is the Kronecker product operator and $xtxinv
+is a newly defined accessor for X'X^{-1}.
+
 With the new (and faster) Ziggurat implementation for the
 normal RNG, gretl 1.8.7 will not produce the same sequence
 of normal samples for a given random seed as gretl <= 1.8.6.
