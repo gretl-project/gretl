@@ -1264,7 +1264,9 @@ static void print_term_string (int tt, FILE *fp)
 	tstr = get_gretl_emf_term_line(PLOT_REGULAR, 0);
     } else if (tt == GP_TERM_FIG) {
 	tstr = "set term fig";
-    } 
+    } else if (tt == GP_TERM_SVG) {
+	tstr = "set term svg";
+    }
 
     if (tstr != NULL) {
 	fprintf(fp, "%s\n", tstr);
@@ -1353,6 +1355,8 @@ int specified_gp_output_format (void)
 	return GP_TERM_FIG;
     } else if (has_suffix(fname, ".emf")) {
 	return GP_TERM_EMF;
+    } else if (has_suffix(fname, ".svg")) {
+	return GP_TERM_SVG;
     } else {
 	return GP_TERM_NONE;
     }
