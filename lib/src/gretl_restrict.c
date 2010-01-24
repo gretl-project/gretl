@@ -2322,9 +2322,9 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
 }
 
 /* Respond to "end restrict": in the case of a single equation, go
-   ahead and do the test; in the case of a system of equations,
-   form the restriction matrices R and q and attach these to the
-   equation system.
+   ahead and do the test; for a VECM, hand off to the driver in
+   var.c; for non-VAR systems, form the restriction matrices R 
+   and q and attach these to the equation system.
 */
 
 int

@@ -2276,6 +2276,9 @@ print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
     }     
 }
 
+/* called from gretl_restriction_finalize() if the target
+   is a VECM */
+
 int gretl_VECM_test (GRETL_VAR *vecm, 
 		     gretl_restriction *rset,
 		     const DATAINFO *pdinfo, 

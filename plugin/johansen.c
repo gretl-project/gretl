@@ -232,9 +232,10 @@ static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
 }
 
 /* Calculate \alpha (adjustments) matrix as per Johansen, 1991, eqn
-   2.8, p. 1554.  Required for the cointegration test, but not
-   needed when doing a VECM (in which case we get \alpha via
-   VECM_estimate_full() below).
+   2.8, p. 1554.  Not needed when doing a VECM (without restrictions
+   on alpha), in which case we get \alpha via VECM_estimate_full()
+   below.  We use this to support verbose output when testing a
+   restriction on \beta.
 */
 
 static int compute_alpha (JohansenInfo *jv)
@@ -243,11 +244,13 @@ static int compute_alpha (JohansenInfo *jv)
     gretl_matrix *alpha = NULL;
     gretl_matrix *BSB = NULL;
     gretl_matrix *Tmp = NULL;
+    int p = jv->S01->rows;
+    int r = B->cols;
     int err = 0;
 
-    BSB = gretl_matrix_alloc(B->cols, B->cols);
-    Tmp = gretl_matrix_alloc(B->rows, B->cols);
-    alpha = gretl_matrix_alloc(jv->S01->rows, B->cols);
+    BSB = gretl_matrix_alloc(r, r);
+    Tmp = gretl_matrix_alloc(B->rows, r);
+    alpha = gretl_matrix_alloc(p, r);
 
     if (BSB == NULL || Tmp == NULL || alpha == NULL) {
 	err = E_ALLOC;
@@ -677,7 +680,7 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
     int p = v->neqns;
     int r = v->jinfo->rank;
     int p1 = v->jinfo->Beta->rows;
-    int K = 0;
+    int Kpi, K = 0;
     double c;
 
     /* lagged differences */
@@ -696,33 +699,15 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
 
     K *= p;
 
-    if (H == NULL && R == NULL) {
-	/* neither beta nor alpha is restricted */
-	int npi = v->jinfo->Alpha->rows * p1;
-
-	K += r * npi / p;
-    } else {
-	/* FIXME: what matters is the number of unrestricted
-	   terms in \Pi = \alpha \beta' ?
-	*/
-
-	/* free beta terms */
-	if (H == NULL) {
-	    K += r * (p1 - r);
-	} else {
-	    K += H->cols * r;
-	}
-
-	/* free alpha terms */
-	if (R == NULL) {
-	    K += r * p; 
-	} else {
-	    K += r * (p - R->rows);
-	}
+    /* df loss in \Pi = \alpha \beta': see Johansen (1995) chapter 7 */
+    Kpi = (p + p1 - r) * r;
+    if (H != NULL || R != NULL) {
+	Kpi -= v->jinfo->lrdf;
     }
+    K += Kpi;
 
-    c = floor(K / (double) p);
-    v->df = v->T - c;
+    c = K / (double) p;
+    v->df = v->T - floor(c);
 
 #if JDEBUG
     fprintf(stderr, "vecm_set_df: T = %d, global K = %d, c = %g, df = %d\n", 
@@ -1487,9 +1472,10 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 static void set_beta_test_df (GRETL_VAR *jvar, const gretl_matrix *H)
 {
     int r = jrank(jvar);
-    int nb = jvar->jinfo->Beta->rows;
+    int p1 = jvar->jinfo->Beta->rows;
+    int s = H->cols;
 
-    jvar->jinfo->lrdf = r * (nb - H->cols);
+    jvar->jinfo->lrdf = r * (p1 - s);
 }
 
 /* Likelihood ratio test calculation, for restriction on
@@ -1506,6 +1492,7 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
     double T_2 = (double) jvar->T / 2.0;
     int n = jvar->neqns;
     int r = jrank(jvar);
+    int s = H->cols;
     int h = (r > 0)? r : n;
     int i, err = 0;
 
@@ -1536,9 +1523,9 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
 	int df;
 
 	if (job == V_BETA) {
-	    df = h * (nb - H->cols);
+	    df = h * (nb - s);
 	} else {
-	    df = h * (n - H->cols);
+	    df = h * (n - s);
 	}
 
 	/* allow for possible prior restriction */
@@ -1547,6 +1534,7 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
 	pprintf(prn, _("Unrestricted loglikelihood (lu) = %.8g\n"), jvar->ll);
 	pprintf(prn, _("Restricted loglikelihood (lr) = %.8g\n"), llr);
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
+
 	if (df > 0) {
 	    double pv = chisq_cdf_comp(df, x);
 
@@ -1561,14 +1549,22 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
     return err;
 }
 
-static int johansen_prep_restriction (const GRETL_VAR *jvar, 
-				      const gretl_matrix *R,
-				      gretl_matrix **S01,
-				      gretl_matrix **S11,
-				      gretl_matrix **pH)
+/* see Johansen (1995), section 7.2: compute the p x s
+   direct restriction matrix H = R_\perp and form the 
+   following two intermediate matrices:
+
+   H' * S_{11} * H  in "S11" 
+   S_{01} * H       in "S01"
+*/
+
+static int prep_beta_restriction (const GRETL_VAR *jvar, 
+				  const gretl_matrix *R,
+				  gretl_matrix **S01,
+				  gretl_matrix **S11,
+				  gretl_matrix **pH)
 {
     gretl_matrix *H;
-    int m, n = jvar->neqns;
+    int s, p = jvar->neqns;
     int err = 0;
 
     if (R == NULL) {
@@ -1581,10 +1577,10 @@ static int johansen_prep_restriction (const GRETL_VAR *jvar,
     }
 
     *pH = H;
-    m = gretl_matrix_cols(H);
+    s = gretl_matrix_cols(H);
 
-    *S11 = gretl_matrix_alloc(m, m);
-    *S01 = gretl_matrix_alloc(n, m);
+    *S11 = gretl_matrix_alloc(s, s);
+    *S01 = gretl_matrix_alloc(p, s);
     if (*S11 == NULL || *S01 == NULL) {
 	return E_ALLOC;
     }
@@ -1602,13 +1598,14 @@ static int johansen_prep_restriction (const GRETL_VAR *jvar,
     return err;
 }
 
-/* test for homogeneous restriction, either for a rank-1 system 
-   or in common across the columns of beta (or alpha)
+/* test for presence of a homogeneous restriction, either for a rank-1
+   system or in common across the columns of beta (or alpha),
+   having already screened for the case where both beta and alpha
+   are restricted.
 */
 
-static int 
-simple_restriction (const GRETL_VAR *jvar,
-		    const gretl_restriction *rset)
+static int simple_restriction (const GRETL_VAR *jvar,
+			       const gretl_restriction *rset)
 {
     const gretl_matrix *R, *q;
     int rcols = jvar->neqns;
@@ -1634,20 +1631,28 @@ simple_restriction (const GRETL_VAR *jvar,
     return ret;
 }
 
+/* check whether the restriction on @jvar in @rset is
+   a simple restriction on \beta */
+
 static int simple_beta_restriction (const GRETL_VAR *jvar,
 				    const gretl_restriction *rset)
 {
     if (rset_VECM_acols(rset) > 0) {
+	/* not so if alpha is restricted */
 	return 0;
     } else {
 	return simple_restriction(jvar, rset);
     }
 }
 
+/* check whether the restriction on @jvar in @rset is
+   a simple restriction on \alpha */
+
 static int simple_alpha_restriction (const GRETL_VAR *jvar,
 				     const gretl_restriction *rset)
 {
     if (rset_VECM_bcols(rset) > 0) {
+	/* not so if beta is restricted */
 	return 0;
     } else {
 	return simple_restriction(jvar, rset);
@@ -1890,7 +1895,7 @@ est_simple_beta_restr (GRETL_VAR *jvar,
     
     if (!err) {
 	R = rset_get_R_matrix(rset);
-	err = johansen_prep_restriction(jvar, R, &S01, &S11, &H);
+	err = prep_beta_restriction(jvar, R, &S01, &S11, &H);
     }
     
     if (!err) {
@@ -1965,7 +1970,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
     }
 
 #if JDEBUG
-    gretl_matrix_print(jvar->jinfo->Beta, "raw eigenvector(s)");
+    gretl_matrix_print(jvar->jinfo->Beta, "raw Beta");
 #endif
 
     if (!err) {
@@ -2166,7 +2171,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
     int verbose = (opt & OPT_V);
-    int m, n, rank;
+    int s, p, r;
     int err = 0;
 
     R = rset_get_R_matrix(rset);
@@ -2176,12 +2181,12 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 	return err;
     }
 
-    n = jvar->neqns;
-    rank = jrank(jvar);
-    m = gretl_matrix_cols(H);
+    p = jvar->neqns;
+    r = jrank(jvar);
+    s = gretl_matrix_cols(H);
 
-    S11 = gretl_matrix_alloc(m, m);
-    S01 = gretl_matrix_alloc(n, m);
+    S11 = gretl_matrix_alloc(s, s);
+    S01 = gretl_matrix_alloc(p, s);
     S00 = gretl_matrix_copy(jvar->jinfo->S00);
 
     if (S11 == NULL || S01 == NULL || S00 == NULL) {
@@ -2215,7 +2220,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 
     if (!err) {
 	err = johansen_get_eigenvalues(S00, S01, S11, 
-				       &M, &evals, rank);
+				       &M, &evals, r);
     }
 
     if (!err) {
@@ -2260,6 +2265,7 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 
     B0 = gretl_matrix_copy(jvar->jinfo->Beta);
     A0 = gretl_matrix_copy(jvar->jinfo->Alpha);
+
     if (B0 == NULL || A0 == NULL) {
 	return E_ALLOC;
     }

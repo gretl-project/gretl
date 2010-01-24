@@ -914,17 +914,14 @@ static void restricted_vecm_set_df (Jwrap *J, GRETL_VAR *v)
 
     K *= J->p;
 
-    /* free beta terms */
-    K += J->blen;
+    /* add number of free beta and alpha terms */
+    K += J->blen + J->alen;
 
-    /* free alpha terms */
-    K += J->alen;
-
-    c = floor(K / J->p);
-    v->df = v->T - c;
+    c = K / (double) J->p;
+    v->df = v->T - floor(c);
 
 #if JDEBUG
-    fprintf(stderr, "global K = %d, c = %g\n", K, c);
+    fprintf(stderr, "T = %d, K = %d, c = %g, df = %d\n", v->T, K, c, v->df);
 #endif
 }
 

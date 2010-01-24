@@ -270,49 +270,54 @@ static void set_true_zeros (gretl_matrix *m)
     }
 }
 
+/* See Johansen's 1995 book, section 8.2.1, "The same restriction on
+   all \alpha"
+*/
+
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     gretl_restriction *rset,
 		     const DATAINFO *pdinfo, 
 		     gretlopt opt,
 		     PRN *prn)
 {
-    const gretl_matrix *R = rset_get_Ra_matrix(rset);
+    const gretl_matrix *Ap = rset_get_Ra_matrix(rset);
     const gretl_matrix *S00 = jvar->jinfo->S00;
     gretl_matrix *S01 = jvar->jinfo->S01;
     gretl_matrix *S11 = jvar->jinfo->S11;
-
     gretl_matrix *ASA = NULL;
     gretl_matrix *C = NULL;
     gretl_matrix *Tmp = NULL;
     gretl_matrix *S00a = NULL;
     gretl_matrix *S11a = NULL;
     gretl_matrix *S01a = NULL;
-
-    int rank = jvar->jinfo->rank;
-    int n = jvar->neqns;
+    int r = jvar->jinfo->rank;
+    int p = jvar->neqns;
     int m = S11->rows;
     int err = 0;
 
     clear_gretl_matrix_err();
 
-    ASA = gretl_matrix_alloc(R->rows, R->rows);
-    C = gretl_matrix_alloc(n, n);
+    ASA = gretl_matrix_alloc(Ap->rows, Ap->rows);
+    C = gretl_matrix_alloc(p, p);
     Tmp = gretl_matrix_alloc(m, m);
-    S00a = gretl_zero_matrix_new(n, n);
+    S00a = gretl_zero_matrix_new(p, p);
     S11a = gretl_zero_matrix_new(m, m);
-    S01a = gretl_zero_matrix_new(n, m);
+    S01a = gretl_zero_matrix_new(p, m);
 
     err = get_gretl_matrix_err();
     if (err) {
 	goto bailout;
     }
 
-    gretl_matrix_qform(R, GRETL_MOD_NONE, S00,
+    /* form A\perp' S_{00} A_\perp in "ASA" */
+    gretl_matrix_qform(Ap, GRETL_MOD_NONE, S00,
 		       ASA, GRETL_MOD_NONE);
 
+    /* "ASA" <- (A\perp' S_{00} A_\perp)^{-1} */
     gretl_invert_symmetric_matrix(ASA);
 
-    gretl_matrix_qform(R, GRETL_MOD_TRANSPOSE, ASA,
+    /* C = A\perp' (A\perp' S_{00} A_\perp)^{-1} A_\perp */
+    gretl_matrix_qform(Ap, GRETL_MOD_TRANSPOSE, ASA,
 		       C, GRETL_MOD_NONE);
 
     /* Johansen, p. 124: compute the A_{\perp}-transformed 
@@ -329,7 +334,7 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     gretl_matrix_subtract_reversed(S11, S11a);
 
     /* S_{01.A_{\perp}} */
-    gretl_matrix_reuse(Tmp, n, n);
+    gretl_matrix_reuse(Tmp, p, p);
     gretl_matrix_multiply(S00, C, Tmp);
     gretl_matrix_multiply(Tmp, S01, S01a);
     gretl_matrix_subtract_reversed(S01, S01a);
@@ -350,7 +355,7 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 	gretl_matrix *M = NULL;
 	gretl_matrix *evals = NULL;
 
-	AS00 = make_AS00(R, S00a, &A, &err);
+	AS00 = make_AS00(Ap, S00a, &A, &err);
 
 	if (!err) {
 	    M = gretl_matrix_alloc(m, m);
@@ -362,14 +367,13 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 	if (!err) {
 	    gretl_matrix_reuse(Tmp, m, m);
 	    err = alt_get_eigenvalues(AS00, S01a, S11a,
-				      M, &evals, Tmp, 
-				      rank);
+				      M, &evals, Tmp, r);
 	}
 
 	if (!err) {
 	    if (opt & OPT_F) {
 		johansen_ll_calc(jvar, evals);
-		jvar->jinfo->lrdf = rank * (n - A->cols);
+		jvar->jinfo->lrdf = r * (p - A->cols);
 	    } else {
 		err = johansen_LR_calc(jvar, evals, A, rset, V_ALPHA, prn);
 	    }
