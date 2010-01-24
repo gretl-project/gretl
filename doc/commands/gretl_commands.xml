@@ -3726,7 +3726,8 @@
 	extension of the file name, as follows: <lit>.eps</lit> results in the
 	production of an Encapulated PostScript (EPS) file; <lit>.pdf</lit>
 	produces PDF; <lit>.png</lit> produces PNG format, <lit>.emf</lit>
-	calls for EMF (Enhanced MetaFile), and <lit>.fig</lit> XFig.
+	calls for EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an
+	Xfig file, and <lit>.svg</lit> for SVG (Scalable Vector Graphics).
 	If any other extension is given, a gnuplot command file is written.
       </para>
 
