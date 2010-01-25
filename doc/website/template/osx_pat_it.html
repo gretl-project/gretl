@@ -14,9 +14,9 @@ HREF="./css-gretl.html">
 <h2>per Mac OS X</h2>
 </center>
 
-<h2>Usare un'immagine disco già pronta</h2>
+<h2>Usare un'immagine disco gi?pronta</h2>
 
-<p>Il modo più semplice di installare gretl per OS X su piattaforma Intel, se
+<p>Il modo pi?semplice di installare gretl per OS X su piattaforma Intel, se
 funziona nel vostro caso, prevede di usare l'immagine disco  
 
 <a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.dmg">gretl-VERSION-intel.dmg</a>.
@@ -27,41 +27,39 @@ Gretl contenuta all'interno in una posizione adatta all'installazione
 Questo pacchetto dipende dal <a href="http://r.research.att.com/gtk2-framework.dmg">GTK+ Framework</a>.
 </p>
 
-<p>Questa procedura è stata testata su OS X v10.4.11. L'immagine disco è
-documentata brevemente nel file
+<p>Questa procedura ?stata testata su OS X v10.4.11. L'immagine disco ?documentata brevemente nel file
 <a href="./README.pdf">README.pdf</a>, che contiene suggerimenti da seguire nel caso
 in cui i caratteri non appaiano correttamente. Se gretl non funziona correttamente
-su OS X, è possibile fare il debug in questo modo: aprire una finestra di terminale
-X11, andare nella directory in cui è stato installato il pacchetto (es.
+su OS X, ?possibile fare il debug in questo modo: aprire una finestra di terminale
+X11, andare nella directory in cui ?stato installato il pacchetto (es.
 <kbd>cd Gretl.app</kbd>), andare nella directory <kbd>Contents/Resources/bin</kbd> ed
 eseguire il comando</p>
 <pre>
 ./gretl
 </pre>
-<p>Dovrebbero apparire alcune indicazioni utili per capire cosa c'è che non va.</p>
+<p>Dovrebbero apparire alcune indicazioni utili per capire cosa c'?che non va.</p>
 
 <p><i>Nota:</i> questo pacchetto dipende dal sistema X11 di Apple (il porting per
-Mac del sistema X Window). Questo è disponibile sui DVD di installazione di OS X.</p>
+Mac del sistema X Window). Questo ?disponibile sui DVD di installazione di OS X.</p>
 
 <p><i>Nota:</i> come indicato sopra, l'immagine disco fornita funziona sui Mac con
 processore <b>Intel</b>. Cerchiamo un volontario che possa compilare gretl per
-l'architettura PPC. Nel frattempo, per l'architettura PPC è disponibile la
+l'architettura PPC. Nel frattempo, per l'architettura PPC ?disponibile la
 <a href="http://downloads.sourceforge.net/gretl/gretl-1.6.5.dmg">versione 1.6.5
   di gretl</a>.</p>
 
 <h2>Metodo alternativo: compilare usando Fink</h2>
 
 <p>Se l'immagine precompilata non funziona, o se si vuole un maggior controllo
-sulla compilazione, è possibile compilare gretl dal sorgente. Per questo è richiesto,
-oltre all'X11 di Apple e a un certo grado di famigliarità con i comandi unix, il sistema
+sulla compilazione, ?possibile compilare gretl dal sorgente. Per questo ?richiesto,
+oltre all'X11 di Apple e a un certo grado di famigliarit?con i comandi unix, il sistema
 Fink disponibile da:
 <a
   href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p>
 
 <p>Oltre all'installazione base di Fink, per compilare ed eseguire gretl
 occorre assicurarsi che i seguenti pacchetti Fink siano installati e
-aggiornati (alcuni potrebbero già esserlo, nel qual caso Fink avvertirà
-l'utente). Dopo ogni pacchetto è indicato il comando da eseguire (al
+aggiornati (alcuni potrebbero gi?esserlo, nel qual caso Fink avvertir?l'utente). Dopo ogni pacchetto ?indicato il comando da eseguire (al
 prompt dei comandi in un xterm o nel programma Mac Terminal) per
 l'installazione:</p>
 
@@ -97,7 +95,7 @@ l'installazione:</p>
 funzionare con gretl).</p>
 
 <p>In passato erano richiesti anche questi pacchetti, ma ora sembrano
-essere non più essenziali:</p>
+essere non pi?essenziali:</p>
 
 <table cellspacing=8>
   <tr>
@@ -114,10 +112,10 @@ essere non più essenziali:</p>
 
 <p>Per compilare gretl usando fink, occorre assicurarsi che 
 l'<i>ambiente</i> sia impostato correttamente prima di eseguire lo 
-script configure di gretl. Ciò richiede di impostare alcune variabili
+script configure di gretl. Ci?richiede di impostare alcune variabili
 d'ambiente, e il modo esatto per farlo dipende dalla shell usata, 
 tcsh o bash (tcsh era la shell predefinita in OS X prima di Panther,
-ma penso che dopo Panther quella predefinita sia bash). È possibile
+ma penso che dopo Panther quella predefinita sia bash). ?possibile
 eseguire i comandi seguenti uno alla volta, oppure (meglio) metterli nel
 file di inizializzazione della shell, <kbd>.tcshrc</kbd> o <kbd>.bashrc</kbd>,
 nella propria directory home.</p>
@@ -151,7 +149,7 @@ fink:</p>
 source /sw/bin/init.sh
 </pre>
 
-<p>Può essere utile leggere la
+<p>Pu?essere utile leggere la
 <a href="http://fink.sourceforge.net/faq/usage-general.php">fink FAQ</a>.</p>
 
 <h2>Configurazione e compilazione</h2>
@@ -186,7 +184,7 @@ installarlo dai sorgenti. Ecco come fare:</p>
 <li><p class-"in-list">Eseguire <kbd>sudo make install</kbd> per installare gretl.</p></li>
 </ol>
 
-<p>Se può essere utile, ecco tutti i comandi riuniti in uno script di shell:</p>
+<p>Se pu?essere utile, ecco tutti i comandi riuniti in uno script di shell:</p>
 
 <pre>
 #!/bin/sh
