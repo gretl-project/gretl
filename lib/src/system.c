@@ -2295,10 +2295,30 @@ static int system_add_yhat_matrix (equation_system *sys)
 	nc += sys->models[i]->ncoeff;
     }
 
-    avc = ceil((double) nc / sys->neqns);
-    sys->df = sys->T - avc;
+    avc = nc / (double) sys->neqns;
+    sys->df = sys->T - floor(avc);
 
     return 0;
+}
+
+static gretl_matrix *get_stderr_vec (const gretl_matrix *V)
+{
+    gretl_matrix *se;
+    int k = V->rows;
+
+    se = gretl_column_vector_alloc(k);
+    
+    if (se != NULL) {
+	double x;
+	int i;
+
+	for (i=0; i<k; i++) {
+	    x = gretl_matrix_get(V, i, i);
+	    se->val[i] = sqrt(x);
+	}
+    }
+
+    return se;
 }
 
 /* retrieve a copy of a specified matrix from an equation
@@ -2330,8 +2350,11 @@ equation_system_get_matrix (const equation_system *sys, int idx,
 	M = gretl_matrix_copy(sys->yhat);
 	break;
     case M_VCV:
+    case M_SE:
 	if (sys->vcv == NULL) {
 	    *err = E_BADSTAT;
+	} else if (idx == M_SE) {
+	    M = get_stderr_vec(sys->vcv);
 	} else {
 	    M = gretl_matrix_copy(sys->vcv);
 	}
