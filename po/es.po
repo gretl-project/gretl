@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-11 15:26+0100\n"
+"PO-Revision-Date: 2010-01-25 11:52+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -673,34 +673,29 @@ msgstr ""
 msgid "Invalid column specification"
 msgstr "Especificación columna no válida"
 
-#: lib/src/csvdata.c:427
-#, fuzzy, c-format
+#: lib/src/csvdata.c:427, c-format
 msgid "Observations: %d; days in sample: %d\n"
-msgstr "Observaciones: %d"
+msgstr "Observaciones: %d; días en la muestra: %d\n"
 
 #: lib/src/csvdata.c:430
-#, fuzzy
 msgid "Probably annual data\n"
-msgstr "Expandir datos anuales a:"
+msgstr "Probablemente son datos anuales\n"
 
 #: lib/src/csvdata.c:433
-#, fuzzy
 msgid "Probably quarterly data\n"
-msgstr "trimestral"
+msgstr "Probablemente son datos trimestrales\n"
 
 #: lib/src/csvdata.c:436
-#, fuzzy
 msgid "Probably monthly data\n"
-msgstr "Datos trimestrales o mensuales"
+msgstr "Probablemente son datos mensuales\n"
 
 #: lib/src/csvdata.c:439
 msgid "Probably weekly data\n"
-msgstr ""
+msgstr "Probablemente son datos semanales\n"
 
-#: lib/src/csvdata.c:442
-#, fuzzy, c-format
+#: lib/src/csvdata.c:442, c-format
 msgid "Missing daily observations: %d\n"
-msgstr "Observaciones ausentes"
+msgstr "Observaciones diarias ausentes: %d\n"
 
 #: lib/src/csvdata.c:694
 msgid "reversing the data!\n"
@@ -708,25 +703,24 @@ msgstr "¡ invirtiendo los datos !\n"
 
 #: lib/src/csvdata.c:733
 msgid "Trying date order YYYYMMDD\n"
-msgstr ""
+msgstr "Intentando la estructura de fechas AAAAMMDD\n"
 
 #: lib/src/csvdata.c:741
 msgid "Trying date order DDMMYYYY\n"
-msgstr ""
+msgstr "Intentando la estructura de fechas DDMMAAAA\n"
 
 #: lib/src/csvdata.c:749
 msgid "Trying date order MMDDYYYY\n"
-msgstr ""
+msgstr "Intentando la estructura de fechas MMDDAAAA\n"
 
-#: lib/src/csvdata.c:768
-#, fuzzy, c-format
+#: lib/src/csvdata.c:768, c-format
 msgid "Could be %s - %s\n"
-msgstr "No se pudo abrir %s\n"
+msgstr "Podría ser %s - %s\n"
 
 #: lib/src/csvdata.c:793
 #, c-format
 msgid "'%s' and '%s': couldn't get dates\n"
-msgstr ""
+msgstr "'%s' y '%s': no pudieron obtenerse las fechas\n"
 
 #: lib/src/csvdata.c:811
 #, c-format
@@ -2336,9 +2330,8 @@ msgid "Expected '%c' but found '%s'\n"
 msgstr "Se esperaba '%c' pero se encontró '%s'\n"
 
 #: lib/src/gensyntax.c:941
-#, fuzzy
 msgid "too many arguments"
-msgstr "Elegir argumentos:"
+msgstr "demasiados argumentos"
 
 #: lib/src/gmm.c:121 lib/src/gretl_list.c:2662 lib/src/gretl_panel.c:4427
 #: lib/src/gretl_panel.c:4437 lib/src/interact.c:3655 lib/src/nls.c:2578
