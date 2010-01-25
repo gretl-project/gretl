@@ -1,4 +1,4 @@
-version 1.8.7, in progress
+01/24/2010 version 1.8.7
 
 The accessor $vcv is no longer available for VARs.  The
 full covariance matrix can be retrieved as 

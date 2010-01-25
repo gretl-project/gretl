@@ -67,11 +67,12 @@
 	  macoef = $coeff(theta_1) # gets a scalar
 	</code>
 	<para>
-	  If the <quote>model</quote> in question is actually a system (a
-	  VAR or VECM, or system of simultaneous equations),
-	  the returned column vector contains the coefficients from
-	  the first equation followed by those from the second equation,
-	  and so on.
+	  If the <quote>model</quote> in question is actually a system,
+	  the result depends on the characteristics of the system: for
+	  VARs and VECMs the value returned is a matrix with one column
+	  per equation, otherwise it is a column vector containing the
+	  coefficients from the first equation followed by those from the
+	  second equation, and so on.
 	</para>
       </description>
     </function>
@@ -400,10 +401,20 @@
       <description>
 	<para>
 	  With no arguments, <lit>$stderr</lit> returns a column vector
-          containing the standard error of the coefficients for the last
-          model.  With the optional string argument it returns a scalar,
-          namely the standard error of the parameter named
-          <argname>s</argname>.
+	  containing the standard error of the coefficients for the last
+	  model.  With the optional string argument it returns a scalar,
+	  namely the standard error of the parameter named
+	  <argname>s</argname>.
+	</para>
+	<para>
+	  If the <quote>model</quote> in question is actually a system,
+	  the result depends on the characteristics of the system: for
+	  VARs and VECMs the value returned is a matrix with one column
+	  per equation, otherwise it is a column vector containing the
+	  coefficients from the first equation followed by those from the
+	  second equation, and so on.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="$coeff"/> 
 	    <fncref targ="$vcv"/>
