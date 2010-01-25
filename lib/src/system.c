@@ -401,53 +401,43 @@ static void system_clear_results (equation_system *sys)
     sys->bdiff = 0.0;
 
     if (sys->b != NULL) {
-	gretl_matrix_free(sys->b);
-	sys->b = NULL;
+	gretl_matrix_replace(&sys->b, NULL);
     }
 
     if (sys->vcv != NULL) {
-	gretl_matrix_free(sys->vcv);
-	sys->vcv = NULL;
+	gretl_matrix_replace(&sys->vcv, NULL);
     }
 
     if (sys->S != NULL) {
-	gretl_matrix_free(sys->S);
-	sys->S = NULL;
+	gretl_matrix_replace(&sys->S, NULL);
     }
 
     if (sys->E != NULL) {
-	gretl_matrix_free(sys->E);
-	sys->E = NULL;
+	gretl_matrix_replace(&sys->E, NULL);
     }
 
     if (sys->yhat != NULL) {
-	gretl_matrix_free(sys->yhat);
-	sys->yhat = NULL;
+	gretl_matrix_replace(&sys->yhat, NULL);
     }
 
     if (sys->Gamma != NULL) {
-	gretl_matrix_free(sys->Gamma);
-	sys->Gamma = NULL;
+	gretl_matrix_replace(&sys->Gamma, NULL);
     }
 
     if (sys->B != NULL) {
-	gretl_matrix_free(sys->B);
-	sys->B = NULL;
+	gretl_matrix_replace(&sys->B, NULL);
     }
 
     if (sys->A != NULL) {
-	gretl_matrix_free(sys->A);
-	sys->A = NULL;
+	gretl_matrix_replace(&sys->A, NULL);
     }
 
     if (sys->Sr != NULL) {
-	gretl_matrix_free(sys->Sr);
-	sys->Sr = NULL;
+	gretl_matrix_replace(&sys->Sr, NULL);
     }    
 
     if (sys->F != NULL) {
-	gretl_matrix_free(sys->F);
-	sys->F = NULL;
+	gretl_matrix_replace(&sys->F, NULL);
     }
 
     if (sys->ldata != NULL) {
@@ -495,13 +485,8 @@ void equation_system_destroy (equation_system *sys)
 
     free(sys->name);
 
-    if (sys->R != NULL) {
-	gretl_matrix_free(sys->R);
-    }
-
-    if (sys->q != NULL) {
-	gretl_matrix_free(sys->q);
-    }
+    gretl_matrix_free(sys->R);
+    gretl_matrix_free(sys->q);
 
     system_clear_results(sys);
 
@@ -881,8 +866,7 @@ static int shrink_b_and_vcv (const gretl_matrix *b,
 	}
     }
 
-    gretl_matrix_free(sys->vcv);
-    sys->vcv = V;
+    gretl_matrix_replace(&sys->vcv, V);
 
     return 0;
 }
@@ -1753,39 +1737,23 @@ int *system_get_instr_vars (const equation_system *sys)
 
 void system_attach_coeffs (equation_system *sys, gretl_matrix *b)
 {
-    if (sys->b != NULL) {
-	gretl_matrix_free(sys->b);
-    }
-
-    sys->b = b;
+    gretl_matrix_replace(&sys->b, b);
 }
 
 void system_attach_vcv (equation_system *sys, gretl_matrix *vcv)
 {
-    if (sys->vcv != NULL) {
-	gretl_matrix_free(sys->vcv);
-    }
-
-    sys->vcv = vcv;
+    gretl_matrix_replace(&sys->vcv, vcv);
     gretl_matrix_xtr_symmetric(sys->vcv);
 }
 
 void system_attach_sigma (equation_system *sys, gretl_matrix *S)
 {
-    if (sys->S != NULL) {
-	gretl_matrix_free(sys->S);
-    }
-
-    sys->S = S;
+    gretl_matrix_replace(&sys->S, S);
 }
 
 void system_attach_uhat (equation_system *sys, gretl_matrix *E)
 {
-    if (sys->E != NULL) {
-	gretl_matrix_free(sys->E);
-    }
-
-    sys->E = E;
+    gretl_matrix_replace(&sys->E, E);
 }
 
 MODEL *system_get_model (const equation_system *sys, int i)
@@ -3497,8 +3465,7 @@ system_get_forecast_matrix (equation_system *sys, int t1, int t2,
 			    gretlopt opt, int *err)
 {
     if (sys->F != NULL) {
-	gretl_matrix_free(sys->F);
-	sys->F = NULL;
+	gretl_matrix_replace(&sys->F, NULL);
     }
 	
     *err = sys_add_forecast(sys, t1, t2, Z, pdinfo, opt);

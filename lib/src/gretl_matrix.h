@@ -197,6 +197,9 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols);
 
 int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols);
 
+gretl_matrix *gretl_matrix_replace (gretl_matrix **pa, 
+				    gretl_matrix *b);
+
 void gretl_matrix_block_destroy (gretl_matrix_block *B);
 
 gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...);

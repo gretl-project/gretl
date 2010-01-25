@@ -701,8 +701,7 @@ static int gmm_matrix_resize (gretl_matrix **pA, nlspec *s, int oldt1)
     B->t1 = s->t1;
     B->t2 = s->t2;
 
-    gretl_matrix_free(A);
-    *pA = B;
+    gretl_matrix_replace(pA, B);
 
     return 0;
 }

@@ -1719,8 +1719,8 @@ maybe_remove_col_scaling (Jwrap *J,
 
 static int check_jacobian (Jwrap *J)
 {
-    gretl_matrix *A = NULL;
-    gretl_matrix *B = NULL;
+    gretl_matrix *L = NULL;
+    gretl_matrix *R = NULL;
     gretl_matrix *Jac = NULL;
     int err = 0;
 
@@ -1765,35 +1765,33 @@ static int check_jacobian (Jwrap *J)
     }
 
     if (!err) {
-	A = gretl_matrix_I_kronecker_new(J->p, J->beta, &err);
+	L = gretl_matrix_I_kronecker_new(J->p, J->beta, &err);
     }
 
     if (!err) {
-	B = gretl_matrix_kronecker_I_new(J->alpha, J->p1, &err);
+	R = gretl_matrix_kronecker_I_new(J->alpha, J->p1, &err);
     }
 
     if (!err && J->G != NULL) {
 	/* alpha is restricted */
-	gretl_matrix *AG = gretl_matrix_multiply_new(A, J->G, &err);
+	gretl_matrix *LG = gretl_matrix_multiply_new(L, J->G, &err);
 
 	if (!err) {
-	    gretl_matrix_free(A);
-	    A = AG;
+	    gretl_matrix_replace(&L, LG);
 	}
     }
 
     if (!err && J->H != NULL) {
 	/* beta is restricted */
-	gretl_matrix *BH = gretl_matrix_multiply_new(B, J->H, &err);
+	gretl_matrix *RH = gretl_matrix_multiply_new(R, J->H, &err);
 
 	if (!err) {
-	    gretl_matrix_free(B);
-	    B = BH;
+	    gretl_matrix_replace(&R, RH);
 	}
     }
 
     if (!err) {
-	Jac = gretl_matrix_col_concat(A, B, &err);
+	Jac = gretl_matrix_col_concat(L, R, &err);
     }
 
     if (!err) {
@@ -1805,8 +1803,8 @@ static int check_jacobian (Jwrap *J)
 
  bailout:
 
-    gretl_matrix_free(A);
-    gretl_matrix_free(B);
+    gretl_matrix_free(L);
+    gretl_matrix_free(R);
     gretl_matrix_free(Jac);
 
     return err;
@@ -3054,28 +3052,22 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar)
     jvar->ll = J->ll;
     jvar->jinfo->lrdf += J->df; /* ? */
 
-    gretl_matrix_free(jvar->S);
-    jvar->S = J->Omega;
+    gretl_matrix_replace(&jvar->S, J->Omega);
     J->Omega = NULL;
 
-    gretl_matrix_free(jvar->jinfo->Beta);
-    jvar->jinfo->Beta = J->beta;
+    gretl_matrix_replace(&jvar->jinfo->Beta, J->beta);
     J->beta = NULL;
 
-    gretl_matrix_free(jvar->jinfo->Alpha);
-    jvar->jinfo->Alpha = J->alpha;
+    gretl_matrix_replace(&jvar->jinfo->Alpha, J->alpha);
     J->alpha = NULL;
 
-    gretl_matrix_free(jvar->jinfo->Bvar);
-    jvar->jinfo->Bvar = J->Vb;
+    gretl_matrix_replace(&jvar->jinfo->Bvar, J->Vb);
     J->Vb = NULL;
 
-    gretl_matrix_free(jvar->jinfo->Bse);
-    jvar->jinfo->Bse = J->bse;
+    gretl_matrix_replace(&jvar->jinfo->Bse, J->bse);
     J->bse = NULL;
 
-    gretl_matrix_free(jvar->jinfo->Ase);
-    jvar->jinfo->Ase = J->ase;
+    gretl_matrix_replace(&jvar->jinfo->Ase, J->ase);
     J->ase = NULL;    
 }
 

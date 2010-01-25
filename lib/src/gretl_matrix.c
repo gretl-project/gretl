@@ -486,6 +486,24 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 }
 
 /**
+ * gretl_matrix_replace:
+ * @pa: location of matrix to be replaced.
+ * @b: replacement matrix.
+ *
+ * Frees the matrix at location @pa and substitutes @b.
+ *
+ * Returns: the replacement matrix.
+ */
+
+gretl_matrix *gretl_matrix_replace (gretl_matrix **pa, 
+				    gretl_matrix *b)
+{
+    gretl_matrix_free(*pa);
+    *pa = b;
+    return b;
+}
+
+/**
  * gretl_identity_matrix_new:
  * @n: desired number of rows and columns in the matrix.
  *

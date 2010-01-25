@@ -160,15 +160,11 @@ static int augment_vecm_restriction (gretl_restriction *rset,
     if (err) {
 	gretl_matrix_free(R2);
     } else if (letter == 'b') {
-	gretl_matrix_free(rset->R);
-	rset->R = R2;
-	gretl_matrix_free(rset->q);
-	rset->q = q2;
+	gretl_matrix_replace(&rset->R, R2);
+	gretl_matrix_replace(&rset->q, q2);
     } else {
-	gretl_matrix_free(rset->Ra);
-	rset->Ra = R2;
-	gretl_matrix_free(rset->qa);
-	rset->qa = q2;
+	gretl_matrix_replace(&rset->Ra, R2);
+	gretl_matrix_replace(&rset->qa, q2);
     }	
 
     return err;
@@ -1823,8 +1819,7 @@ static int rset_expand_R (gretl_restriction *rset, int k)
 	}
     }
 
-    gretl_matrix_free(rset->R);
-    rset->R = R;
+    gretl_matrix_replace(&rset->R, R);
 
     return 0;
 }

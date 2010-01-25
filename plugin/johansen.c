@@ -274,8 +274,7 @@ static int compute_alpha (JohansenInfo *jv)
     gretl_matrix_free(Tmp);
 
     if (!err) {
-	gretl_matrix_free(jv->Alpha);
-	jv->Alpha = alpha;
+	gretl_matrix_replace(&jv->Alpha, alpha);
     } else {
 	gretl_matrix_free(alpha);
     }
@@ -802,8 +801,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 		err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, NULL);
 	    } else {
 		if (v->XTX != NULL) {
-		    gretl_matrix_free(v->XTX);
-		    v->XTX = NULL;
+		    gretl_matrix_replace(&v->XTX, NULL);
 		}
 		err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &v->XTX);
 	    }
@@ -1693,11 +1691,8 @@ static int j_general_restrict (GRETL_VAR *jvar,
 	R = rset_get_R_matrix(rset);
 	q = rset_get_q_matrix(rset);
 
-	gretl_matrix_free(jvar->jinfo->R);
-	gretl_matrix_free(jvar->jinfo->q);
-
-	jvar->jinfo->R = gretl_matrix_copy(R);
-	jvar->jinfo->q = gretl_matrix_copy(q);
+	gretl_matrix_replace(&jvar->jinfo->R, gretl_matrix_copy(R));
+	gretl_matrix_replace(&jvar->jinfo->q, gretl_matrix_copy(q));
 
 	if (jvar->jinfo->R == NULL || 
 	    (q != NULL && jvar->jinfo->q == NULL)) {
@@ -1709,11 +1704,8 @@ static int j_general_restrict (GRETL_VAR *jvar,
 	R = rset_get_Ra_matrix(rset);
         q = rset_get_qa_matrix(rset);
 
-	gretl_matrix_free(jvar->jinfo->Ra);
-	gretl_matrix_free(jvar->jinfo->qa);
-
-	jvar->jinfo->Ra = gretl_matrix_copy(R);
-	jvar->jinfo->qa = gretl_matrix_copy(q);
+	gretl_matrix_replace(&jvar->jinfo->Ra, gretl_matrix_copy(R));
+	gretl_matrix_replace(&jvar->jinfo->qa, gretl_matrix_copy(q));
 
 	if (jvar->jinfo->Ra == NULL || 
 	    (q != NULL && jvar->jinfo->qa == NULL)) {
@@ -2284,11 +2276,8 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 
     /* restore orginal Beta, Alpha on exit */
 
-    gretl_matrix_free(jvar->jinfo->Beta);
-    jvar->jinfo->Beta = B0;
-
-    gretl_matrix_free(jvar->jinfo->Alpha);
-    jvar->jinfo->Alpha = A0;
+    gretl_matrix_replace(&jvar->jinfo->Beta, B0);
+    gretl_matrix_replace(&jvar->jinfo->Alpha, A0);
 
     return err;
 }
