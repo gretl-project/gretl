@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-25 11:52+0100\n"
+"PO-Revision-Date: 2010-01-25 14:45+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -1557,7 +1557,7 @@ msgstr "%s, usando las observaciones %s - %s"
 #: lib/src/describe.c:4022 lib/src/describe.c:4776 gui2/guiprint.c:716
 #: gui2/guiprint.c:931 gui2/guiprint.c:1064 gui2/guiprint.c:1157
 msgid "(missing values were skipped)"
-msgstr "(se ignoraron los valores perdidos)"
+msgstr "(se ignoraron los valores ausentes)"
 
 #: lib/src/describe.c:4034 lib/src/describe.c:4140 lib/src/describe.c:4164
 #: gui2/guiprint.c:729 gui2/guiprint.c:944
@@ -1874,7 +1874,7 @@ msgstr "La variable de ponderaciones contiene valores negativos"
 #: lib/src/estimate.c:1083 lib/src/estimate.c:2058 plugin/arma_common.c:556
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
-msgstr "Hay un valor perdido para la variable %d, obs %d"
+msgstr "Hay un valor ausente para la variable %d, obs %d"
 
 #: lib/src/estimate.c:1616
 #, c-format
@@ -3638,7 +3638,7 @@ msgstr "Marcador de caja perdido en observación %d"
 #: lib/src/gretl_xml.c:2102
 #, c-format
 msgid "Values missing at observation %d"
-msgstr "Valores perdidos en observación %d"
+msgstr "Hay valores ausentes en la observación %d"
 
 #: lib/src/gretl_xml.c:2132
 msgid "Number of observations does not match declaration"
@@ -4005,7 +4005,7 @@ msgstr "Generador de números pseudoaleatorios iniciado con semilla %d\n"
 #: lib/src/missing.c:809
 #, c-format
 msgid "Set %d values to \"missing\"\n"
-msgstr "Poner %d valores como \"perdidos\"\n"
+msgstr "Poner %d valores como \"ausentes\"\n"
 
 #: lib/src/missing.c:812
 msgid "Didn't find any matching observations\n"
@@ -7219,7 +7219,7 @@ msgstr "FDA en lugar de la densidad"
 #: gui2/calculator.c:2203
 #, c-format
 msgid "Data missing for variable '%s'"
-msgstr "Dato perdido para la variable '%s'"
+msgstr "Dato ausente para la variable '%s'"
 
 #: gui2/calculator.c:2328
 #, c-format
@@ -7514,7 +7514,7 @@ msgstr ""
 
 #: gui2/callbacks.c:551
 msgid "Enter value to be read as \"missing\":"
-msgstr "Introduzca valor para ser leído como \"perdido\":"
+msgstr "Introduzca valor para ser leído como \"ausente\":"
 
 #: gui2/callbacks.c:556
 msgid "gretl: boxplots"
@@ -9968,7 +9968,7 @@ msgstr "_Ordenar los datos..."
 
 #: gui2/gretl.c:1378 gui2/gretl.c:1475
 msgid "Set missing _value code..."
-msgstr "Establecer código de '_valor perdido'..."
+msgstr "Establecer código de '_valor ausente'..."
 
 #: gui2/gretl.c:1379
 msgid "_Find variable..."
@@ -10161,11 +10161,11 @@ msgstr "_Remuestrear con reemplazamiento..."
 
 #: gui2/gretl.c:1438
 msgid "Drop all obs with _missing values"
-msgstr "Quitar todas las obs. con valores perdidos"
+msgstr "Quitar todas las obs. con valores ausentes"
 
 #: gui2/gretl.c:1440
 msgid "_Count missing values"
-msgstr "_Contar valores perdidos"
+msgstr "_Contar valores ausentes"
 
 #: gui2/gretl.c:1443
 msgid "_Variable"
@@ -11596,15 +11596,15 @@ msgstr "La muestra ahora sólo incluye observaciones completas"
 
 #: gui2/library.c:1324
 msgid "Show count of missing values at each observation"
-msgstr "Mostrar la cuenta de valores perdidos en cada observación"
+msgstr "Mostrar la cuenta de valores ausentes en cada observación"
 
 #: gui2/library.c:1333 gui2/library.c:1358
 msgid "No missing data values"
-msgstr "No hay valores de datos perdidos"
+msgstr "No hay valores de datos ausentes"
 
 #: gui2/library.c:1339 gui2/library.c:1352
 msgid "gretl: missing values info"
-msgstr "gretl: información de valores perdidos"
+msgstr "gretl: información de valores ausentes"
 
 #: gui2/library.c:1405
 msgid "Export the markers to file"
@@ -11801,7 +11801,7 @@ msgstr "Se ha añadido la matriz %s"
 #: gui2/library.c:4012
 #, c-format
 msgid "Set %d values to \"missing\""
-msgstr "Poner %d valores como \"perdidos\""
+msgstr "Poner %d valores como \"ausentes\""
 
 #: gui2/library.c:4015 gui2/library.c:4043
 msgid "Didn't find any matching observations"
@@ -14309,7 +14309,7 @@ msgstr "log(Tamaño)"
 
 #: plugin/fractals.c:230
 msgid "There were missing data values"
-msgstr "Hubo valores de datos perdidos"
+msgstr "Hubo valores de datos ausentes"
 
 #: plugin/fractals.c:238
 msgid "Sample is too small for Hurst exponent"
