@@ -108,14 +108,6 @@
     </description>
   </command>
 
-  <command name="addobs" section="Dataset" context="cli">
-    <description>
-      <para>
-	See <cmdref targ="dataset"/>.
-      </para>
-    </description>
-  </command>
-
   <command name="adf" section="Tests" label="Augmented Dickey-Fuller test">
 
     <usage>

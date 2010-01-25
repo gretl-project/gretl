@@ -2757,6 +2757,18 @@ static int func_help_topics (const char *helpfile, PRN *prn)
     return 0;
 }
 
+static int is_help_alias (char *s)
+{
+    int ret = 0;
+
+    if (!strcmp(s, "addobs")) {
+	strcpy(s, "dataset");
+	ret = 1;
+    }
+
+    return ret;
+}
+
 /**
  * cli_help:
  * @cmdword: the command on which help is wanted.
@@ -2778,11 +2790,16 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
     char helpfile[FILENAME_MAX];
     FILE *fp;
     int noword, funhelp = (opt & OPT_F);
-    char word[9];
+    char word[9], needle[32]; 
     char line[128];
     int i, j, ok = 0;
 
     noword = (cmdword == NULL || *cmdword == '\0');
+
+    *needle = '\0';
+    if (!noword) {
+	strncat(needle, cmdword, 31);
+    }
 
     if (noword && !funhelp) {
 	pputs(prn, _("\nValid gretl commands are:\n"));
@@ -2807,24 +2824,27 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
 	return 0;
     }
 
-    if (!strcmp(cmdword, "functions") || (noword && funhelp)) {
+    if ((noword && funhelp) || !strcmp(needle, "functions")) {
 	sprintf(helpfile, "%s%s", gretl_home(), _("genrcli.hlp"));
 	return func_help_topics(helpfile, prn);
     }
 
     if (!funhelp) {
-	ok = gretl_command_number(cmdword) > 0;
+	ok = gretl_command_number(needle) > 0;
+	if (!ok) {
+	    ok = is_help_alias(needle);
+	}
     } 
 
     if (ok) {
 	strcpy(helpfile, helpfile_path(GRETL_CLI_HELPFILE));
     } else {
-	if (genr_function_word(cmdword)) {
+	if (genr_function_word(needle)) {
 	    sprintf(helpfile, "%sgenrcli.hlp", gretl_home());
-	} else if (gretl_is_public_user_function(cmdword)) {
-	    return user_function_help(cmdword, prn);
+	} else if (gretl_is_public_user_function(needle)) {
+	    return user_function_help(needle, prn);
 	} else {
-	    pprintf(prn, _("\"%s\" is not a gretl command.\n"), cmdword);
+	    pprintf(prn, _("\"%s\" is not a gretl command.\n"), needle);
 	    return 1;
 	}
     }
@@ -2844,7 +2864,7 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
 	    continue;
 	}
 	sscanf(line + 2, "%8s", word);
-	if (!strcmp(cmdword, word)) {
+	if (!strcmp(needle, word)) {
 	    ok = 1;
 	    pprintf(prn, "\n%s\n", word);
 	    while (fgets(line, sizeof line, fp)) {
@@ -2862,7 +2882,7 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
     }
 
     if (!ok) {
-	pprintf(prn, _("%s: sorry, no help available.\n"), cmdword);
+	pprintf(prn, _("%s: sorry, no help available.\n"), needle);
     }
 
     fclose(fp);

@@ -1054,6 +1054,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 			function_help_callback(page);
 		    }
 		} else {
+		    /* commands help */
 		    if (xref) {
 			function_help_callback(page);
 		    } else {

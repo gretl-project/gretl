@@ -46,13 +46,15 @@ static void real_do_help (int idx, int pos, int role);
 static void en_help_callback (GtkAction *action, windata_t *hwin);
 static void delete_help_viewer (GtkAction *a, windata_t *hwin);
 static char *funcs_helpfile (void);
+static void helpwin_set_topic_index (windata_t *hwin, int idx);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *button, GtkWidget *dialog);
 static void find_in_listbox (GtkWidget *button, GtkWidget *dialog);
 static void find_string_dialog (void (*findfunc)(), windata_t *vwin);
 static gboolean real_find_in_text (GtkTextView *view, const gchar *s, 
-				   gboolean from_cursor);
+				   gboolean from_cursor, 
+				   gboolean search_all);
 static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, 
 				      gboolean vnames);
 
@@ -317,10 +319,9 @@ static int gui_help_topic_index (const char *word)
 
     if (h == 0) {
 	h = extra_command_number(word);
-    }
-
-    if (h <= 0) {
-	h = compat_command_number(word);
+	if (h <= 0) {
+	    h = compat_command_number(word);
+	}
     }
 
     return h;
@@ -746,10 +747,82 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *key,
     return FALSE;
 }
 
+#define starts_topic(s) (s[0]=='\n' && s[1]=='#' && s[2]==' ')
+
+/* apparatus for permitting the user to search across all the
+   "pages" in a help file 
+*/
+
+static int maybe_switch_page (const char *s, windata_t *hwin)
+{
+    const gchar *src, *hbuf;
+    int currpos, newpos = 0;
+    int wrapped = 0;
+    int k, n = strlen(s);
+    int ok = 0;
+
+    currpos = help_pos_from_index(hwin->active_var, hwin->role);
+    hbuf = (const gchar *) hwin->data;
+    k = currpos;
+    src = hbuf + k;
+
+    /* skip to start of next page */
+    while (*src != '\0') {
+	if (starts_topic(src)) {
+	    break;
+	}
+	k++;
+	src++;
+    }
+
+ retry:
+
+    /* see if the search text can be found on a page other than
+       the current one; if so, switch to it */
+
+    while (!ok && *src != '\0') {
+	if (starts_topic(src)) {
+	    newpos = k + 1;
+	} else if (newpos != currpos && !strncmp(s, src, n)) {
+	    ok = 1;
+	} 
+	k++;
+	src++;
+    }
+
+    if (!ok && !wrapped) {
+	src = hbuf;
+	newpos = k = 0;
+	wrapped = 1;
+	goto retry;
+    }
+
+    if (ok) {
+	int idx, en = (hwin->role == CLI_HELP_EN);
+	char targ[16];
+
+	sscanf(hbuf + newpos + 2, "%15s", targ);
+	if (hwin->role == CLI_HELP) {
+	    idx = command_help_index(targ);
+	} else {
+	    idx = function_help_index_from_word(targ);
+	}
+	set_help_topic_buffer(hwin, newpos, en);
+	helpwin_set_topic_index(hwin, idx);
+
+	if (wrapped) {
+	    infobox(_("Search wrapped"));
+	}
+    }
+
+    return ok;
+}
+
 /* respond to Enter key in the 'finder' entry */
 
 static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 {
+    gboolean search_all = FALSE;
     gboolean found;
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
@@ -757,8 +830,12 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 	return;
     }
 
+    if (g_object_get_data(G_OBJECT(entry), "search-all")) {
+	search_all = TRUE;
+    } 
+
     if (vwin->text != NULL) {
-	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE);
+	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE, search_all);
     } else {
 	found = real_find_in_listbox(vwin, needle, FALSE);
     }
@@ -791,9 +868,41 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 	}
     }
 
+    if (!found && search_all) {
+	if (maybe_switch_page(needle, vwin)) {
+	    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, 
+				      TRUE, TRUE);
+	}
+    }
+
     if (!found) {
 	notify_not_found(GTK_WIDGET(entry));
     }
+}
+
+static void toggle_search_all_help (GtkComboBox *box, GtkWidget *entry)
+{
+    gint i = gtk_combo_box_get_active(box);
+
+    if (i > 0) {
+	g_object_set_data(G_OBJECT(entry), "search-all", GINT_TO_POINTER(1));
+    } else {
+	g_object_steal_data(G_OBJECT(entry), "search-all");
+    }
+}
+
+static void finder_add_options (GtkWidget *hbox, GtkWidget *entry)
+{
+    GtkWidget *combo = gtk_combo_box_new_text();
+
+    gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("this page"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("all pages"));
+    gtk_box_pack_end(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(toggle_search_all_help), 
+		     entry);
 }
 
 #if (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16)
@@ -812,10 +921,14 @@ void vwin_add_finder (windata_t *vwin)
 
     hbox = gtk_widget_get_parent(vwin->mbar);
 
-    entry = gtk_entry_new();
+    vwin->finder = entry = gtk_entry_new();
+
+    if (vwin->role == FUNCS_HELP || vwin->role == CLI_HELP) {
+	finder_add_options(hbox, entry);
+    }
+
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 16);
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-    vwin->finder = entry;
 
 #ifdef USE_ENTRY_ICON
     gtk_entry_set_icon_from_stock(GTK_ENTRY(entry), 
@@ -998,6 +1111,7 @@ static void real_do_help (int idx, int pos, int role)
     static windata_t *en_cli_hwin;
     windata_t *hwin = NULL;
     const char *fname = NULL;
+    int en = 0;
 
     if (pos < 0) {
 	dummy_call();
@@ -1026,9 +1140,11 @@ static void real_do_help (int idx, int pos, int role)
     } else if (role == CLI_HELP_EN) {
 	hwin = en_cli_hwin;
 	fname = en_cli_helpfile;
+	en = 1;
     } else if (role == GUI_HELP_EN) {
 	hwin = en_gui_hwin;
 	fname = en_gui_helpfile;
+	en = 1;
     }
 
     if (hwin != NULL) {
@@ -1067,7 +1183,6 @@ static void real_do_help (int idx, int pos, int role)
 #endif
 
     if (hwin != NULL) {
-	int en = (role == CLI_HELP_EN || role == GUI_HELP_EN);
 	int ret = set_help_topic_buffer(hwin, pos, en);
 
 	if (ret >= 0) {
@@ -1336,7 +1451,8 @@ static int string_match_pos (const char *haystack, const char *needle,
 /* case-insensitive search in text buffer */
 
 static gboolean real_find_in_text (GtkTextView *view, const gchar *s, 
-				   gboolean from_cursor)
+				   gboolean from_cursor,
+				   gboolean search_all)
 {
     GtkTextBuffer *buf;
     GtkTextIter iter, start, end;
@@ -1368,7 +1484,7 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 
     if (!gtk_text_iter_forward_chars(&end, n)) {
 	/* already at end of buffer */
-	if (from_cursor && !wrapped) {
+	if (from_cursor && !wrapped && !search_all) {
 	    from_cursor = FALSE;
 	    wrapped = 1;
 	    goto text_search_wrap;
@@ -1393,9 +1509,8 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 	gtk_text_buffer_place_cursor(buf, &start);
 	gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &end);
 	vis = gtk_text_buffer_create_mark(buf, "vis", &end, FALSE);
-	/* gtk_text_view_scroll_mark_onscreen(view, vis); */
 	gtk_text_view_scroll_to_mark(view, vis, 0.0, FALSE, 0, 0);
-    } else if (from_cursor && !wrapped) {
+    } else if (from_cursor && !wrapped && !search_all) {
 	/* try wrapping */
 	from_cursor = FALSE;
 	wrapped = 1;
@@ -1419,7 +1534,8 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 	return;
     }
 
-    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE);
+    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), 
+			      needle, TRUE, FALSE);
 
     if (!found) {
 	notify_not_found(find_entry);
