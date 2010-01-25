@@ -826,6 +826,30 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     return res;
 }
 
+#define USE_MULTIPART 0
+
+#if USE_MULTIPART
+const char *partsep = "AaB03x";
+#endif
+
+static char *make_posthead (urlinfo *u)
+{
+    char *head = malloc(96);
+
+    if (head != NULL) {
+#if USE_MULTIPART
+	sprintf(test, "Content-Type: multipart/form-data, boundary=%s\r\n",
+		partsep);
+#else
+	sprintf(head, "Content-Type: "
+		"application/x-www-form-urlencoded\r\n"
+		"Content-Length: %d\r\n", strlen(u->params) + u->upsize);
+#endif
+    }
+
+    return head;
+}
+
 static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 {
     char *request, *type, *cmd;
@@ -897,14 +921,11 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 #endif
 
     if (u->upload != NULL) {
-	posthead = malloc(96);
+	posthead = make_posthead(u);
 	if (posthead == NULL) {
 	    close(sock);
 	    return NOTENOUGHMEM;
 	} else {
-	    sprintf(posthead, "Content-Type: "
-		    "application/x-www-form-urlencoded\r\n"
-		    "Content-Length: %d\r\n", strlen(u->params) + u->upsize);
 	    rlen += strlen(posthead);
 	}
     } else if (u->params != NULL) {
@@ -939,7 +960,7 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 
     strcat(request, "\r\n");
 
-#if WDEBUG > 1
+#if 1 || WDEBUG > 1
     fprintf(stderr, "---request begin---\n%s---request end---", request);
 #endif
 
@@ -1188,7 +1209,6 @@ static uerr_t try_http (urlinfo *u)
 #endif
 
     for (i=0; i<MAXTRY; i++) {
-
 	err = real_get_http(u, &hstat, &dt);
 
 #if WDEBUG
@@ -1844,15 +1864,32 @@ static int
 urlinfo_set_upload_params (urlinfo *u, const char *login, const char *pass,
 			   const char *fname)
 {
-    int len = strlen(login) + strlen(pass) + strlen(fname) + 40;
+    int len = strlen(login) + strlen(pass) + strlen(fname);
+
+#if USE_MULTIPART
+    len += 256;
+#else
+    len += 40;
+#endif
 
     u->params = malloc(len);
     if (u->params == NULL) {
 	return 1;
-    }
+    }    
 
+#if USE_MULTIPART   
+    sprintf(u->params, "--%s\r\ncontent-disposition: form-data; name=\"login\"\r\n"
+	    "\r\n%s\r\n" /* username */
+	    "--%s\r\ncontent-disposition: form-data; name=\"pass\"\r\n"
+	    "\r\n%s\r\n" /* password */
+	    "--%s\r\ncontent-disposition: form-data; name=\"pkg\"; "
+	    "filename=\"%s\"\r\n" /* filename */
+	    "Content-Type: text/plain; charset=utf-8\r\n\r\n",
+	    partsep, login, partsep, pass, partsep, fname);
+#else
     sprintf(u->params, "opt=UPLOAD&login=%s&pass=%s"
 	    "&fname=%s&content=", login, pass, fname);
+#endif
 
     return 0;
 }
