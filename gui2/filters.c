@@ -834,7 +834,7 @@ static int calculate_filter (filter_info *finfo)
 	}
     } else if (finfo->ftype == FILTER_EMA) {
 	/* exponential moving average */
-	double fcoeff = 1.0 - finfo->lambda;
+	double a = finfo->lambda;
 	int mt2;
 
 	if (finfo->n == 0) {
@@ -853,7 +853,7 @@ static int calculate_filter (filter_info *finfo)
 		fx[t] = gretl_mean(finfo->t1, mt2, x);
 	    } else {
 		/* subsequent filtered values */
-		fx[t] = finfo->lambda * x[t] + fcoeff * fx[t-1];
+		fx[t] = a * x[t] + (1-a) * fx[t-1];
 	    }
 	}
     } else if (finfo->ftype == FILTER_HP) {
