@@ -1305,6 +1305,11 @@ static char *url_encode_string (const char *s)
     return encstr;
 }
 
+/* before upload: check function package file against
+   gretlfunc.dtd (but first check that the package name 
+   is ASCII)
+*/
+
 static int validate_package_file (const char *fname)
 {
     const char *gretldir = gretl_home();
@@ -1312,6 +1317,11 @@ static int validate_package_file (const char *fname)
     xmlDocPtr doc;
     xmlDtdPtr dtd;
     int err = 0;
+
+    if (!gretl_is_ascii(path_last_element(fname))) {
+	errbox("Package name contains non-ASCII characters");
+	return 1;
+    }
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
@@ -1322,7 +1332,9 @@ static int validate_package_file (const char *fname)
     sprintf(dtdname, "%sfunctions/gretlfunc.dtd", gretldir);
     dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname); 
 
-    if (dtd != NULL) {
+    if (dtd == NULL) {
+	fprintf(stderr, "Couldn't open DTD to check package\n", fname);
+    } else {
 	xmlValidCtxtPtr cvp = xmlNewValidCtxt();
 	PRN *prn = NULL;
 
@@ -1343,7 +1355,7 @@ static int validate_package_file (const char *fname)
 	    errbox(buf);
 	    err = 1;
 	} else {
-	    fprintf(stderr, "%s: validated against DTD OK", fname);
+	    fprintf(stderr, "%s: validated against DTD OK\n", fname);
 	}
 
 	gretl_print_destroy(prn);
@@ -1356,12 +1368,10 @@ static int validate_package_file (const char *fname)
     return err;
 }
 
+#define USE_MULTIPART 0
+
 static void do_upload (const char *fname)
 {
-    char *ulogin = NULL;
-    char *upass = NULL;
-    char *ufname = NULL;
-    char *ubuf = NULL;
     char *buf = NULL;
     char *retbuf = NULL;
     login_info linfo;
@@ -1399,20 +1409,29 @@ static void do_upload (const char *fname)
     if (err) {
 	error_printed = 1;
     } else {
-	ubuf = url_encode_string(buf);
-	ulogin = url_encode_string(linfo.login);
-	upass = url_encode_string(linfo.pass);
-	ufname = url_encode_string(path_last_element(fname));
+#if USE_MULTIPART
+	err = upload_function_package(linfo.login, linfo.pass, 
+				      path_last_element(fname),
+				      buf, &retbuf);
+#else
+	char *ulogin = url_encode_string(linfo.login);
+	char *upass = url_encode_string(linfo.pass);
+	char *ufname = url_encode_string(path_last_element(fname));
+	char *ubuf = url_encode_string(buf);
 	
 	if (ubuf == NULL || ulogin == NULL || 
 	    upass == NULL || ufname == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    err = upload_function_package(ulogin, upass, ufname, 
+					  ubuf, &retbuf);
 	}
-    }
-
-    if (!err) {
-	err = upload_function_package(ulogin, upass, ufname, ubuf,
-				      &retbuf);
+	
+	free(ulogin);
+	free(upass);
+	free(ufname);
+	free(ubuf);
+#endif
     }
 
     /* reset default cursor */
@@ -1428,10 +1447,6 @@ static void do_upload (const char *fname)
 	infobox(retbuf);
     }
 
-    free(ulogin);
-    free(upass);
-    free(ufname);
-    free(ubuf);
     free(buf);
     free(retbuf);
 

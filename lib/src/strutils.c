@@ -1937,7 +1937,7 @@ const char *path_last_element (const char *path)
 
 #ifdef WIN32
     if (p == NULL) {
-	p = strrchr(path, '\\');
+	p = strrchr(path, '/');
     }
 #endif
 

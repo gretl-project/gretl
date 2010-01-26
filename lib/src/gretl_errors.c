@@ -100,7 +100,7 @@ static const char *look_up_errmsg (int err)
 	return gretl_error_messages[err];
     } else {
 	fprintf(stderr, "look_up_errmsg: out of bounds code %d\n", err);
-	return "missing message";
+	return "missing error message!";
     }
 }
 
@@ -110,7 +110,7 @@ static const char *look_up_warnmsg (int w)
 	return gretl_warning_messages[w];
     } else {
 	fprintf(stderr, "look_up_warnmsg: out of bounds code %d\n", w);
-	return "missing message";
+	return "missing warning message!";
     }
 }
 
@@ -155,6 +155,7 @@ const char *gretl_warnmsg_get (void)
     if (gretl_warnnum) {
 	if (*gretl_warnmsg != '\0') {
 	    ret = gretl_warnmsg;
+	    /* note; can't zero the message here! */
 	} else {
 	    const char *deflt = look_up_warnmsg(gretl_warnnum);
 
@@ -362,6 +363,7 @@ void gretl_error_clear (void)
     error_printed = 0;
     errno = 0;
     gretl_warnnum = 0;
+    *gretl_warnmsg = '\0';
 }
 
 /**

@@ -74,10 +74,10 @@ enum gretl_error_codes {
 
 enum gretl_warning_codes {
     W_GRADIENT = 1,
-    W_LOGS,
-    W_NATONAN,
-    W_GENERIC,
-    W_MAX
+    W_LOGS,        /* 2 */
+    W_NATONAN,     /* 3 */
+    W_GENERIC,     /* 4 */
+    W_MAX          /* 5 */
 };
 
 void errmsg (int err, PRN *prn);

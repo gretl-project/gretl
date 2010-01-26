@@ -620,7 +620,7 @@ static int help_pos_from_index (int idx, int role)
 {
     GtkTreeModel *model;
     GtkTreeIter iter, child;
-    int pos, fnum;
+    int pos, tidx;
 
     model = GTK_TREE_MODEL(get_help_topics_tree(role));
 
@@ -631,10 +631,40 @@ static int help_pos_from_index (int idx, int role)
     while (gtk_tree_model_iter_next(model, &iter)) {
 	if (gtk_tree_model_iter_children(model, &child, &iter)) {
 	    while (1) {
-		gtk_tree_model_get(model, &child, INDEX_COL, &fnum, -1);
-		if (idx == fnum) {
+		gtk_tree_model_get(model, &child, INDEX_COL, &tidx, -1);
+		if (tidx == idx) {
 		    gtk_tree_model_get(model, &child, POSITION_COL, &pos, -1);
 		    return pos;
+		} 
+		if (!gtk_tree_model_iter_next(model, &child)) {
+		    break;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int help_index_from_pos (int pos, int role)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter, child;
+    int idx, tpos;
+
+    model = GTK_TREE_MODEL(get_help_topics_tree(role));
+
+    if (!model || !gtk_tree_model_get_iter_first(model, &iter)) {
+	return 0;
+    }
+
+    while (gtk_tree_model_iter_next(model, &iter)) {
+	if (gtk_tree_model_iter_children(model, &child, &iter)) {
+	    while (1) {
+		gtk_tree_model_get(model, &child, POSITION_COL, &tpos, -1);
+		if (tpos == pos) {
+		    gtk_tree_model_get(model, &child, INDEX_COL, &idx, -1);
+		    return idx;
 		} 
 		if (!gtk_tree_model_iter_next(model, &child)) {
 		    break;
@@ -761,6 +791,7 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
     int k, n = strlen(s);
     int ok = 0;
 
+    /* where are we in the help file right now? */
     currpos = help_pos_from_index(hwin->active_var, hwin->role);
     hbuf = (const gchar *) hwin->data;
     k = currpos;
@@ -778,14 +809,17 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
  retry:
 
     /* see if the search text can be found on a page other than
-       the current one; if so, switch to it */
+       the current one; if so, we'll switch to it */
 
     while (!ok && *src != '\0') {
 	if (starts_topic(src)) {
+	    /* record page position */
 	    newpos = k + 1;
 	} else if (wrapped && newpos == currpos) {
+	    /* we got back to where we started */
 	    break;
 	} else if (newpos != currpos && !strncmp(s, src, n)) {
+	    /* found the text on a different page */
 	    ok = 1;
 	} 
 	k++;
@@ -793,6 +827,7 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
     }
 
     if (!ok && !wrapped) {
+	/* start from the top */
 	src = hbuf;
 	newpos = k = 0;
 	wrapped = 1;
@@ -800,15 +835,10 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
     }
 
     if (ok) {
-	int idx, en = (hwin->role == CLI_HELP_EN);
-	char targ[16];
+	/* text found: move to new position */
+	int idx = help_index_from_pos(newpos, hwin->role);
+	int en = (hwin->role == CLI_HELP_EN);
 
-	sscanf(hbuf + newpos + 2, "%15s", targ);
-	if (hwin->role == CLI_HELP) {
-	    idx = command_help_index(targ);
-	} else {
-	    idx = function_help_index_from_word(targ);
-	}
 	set_help_topic_buffer(hwin, newpos, en);
 	helpwin_set_topic_index(hwin, idx);
 
