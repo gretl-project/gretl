@@ -52,6 +52,7 @@ struct function_info_ {
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *save;       /* Save button in dialog */
     GtkWidget *saveas;     /* "Save as" button in dialog */
+    GtkWidget *validate;   /* Validate button */
     GtkWidget *popup;      /* popup menu */
     windata_t *samplewin;  /* window for editing sample script */
     GList *codewins;       /* list of windows editing function code */
@@ -84,6 +85,9 @@ struct login_info_ {
     char *pass;
     int canceled;
 };
+
+static int validate_package_file (const char *fname,
+				  int by_button);
 
 function_info *finfo_new (void)
 {
@@ -962,6 +966,11 @@ static gint query_save_package (GtkWidget *w, GdkEvent *event,
     return FALSE;
 }
 
+static void check_pkg_callback (GtkWidget *widget, function_info *finfo)
+{
+    validate_package_file(finfo->fname, 1);
+}
+
 static void delete_pkg_editor (GtkWidget *widget, function_info *finfo) 
 {
     gint resp = 0;
@@ -1135,6 +1144,14 @@ static void finfo_dialog (function_info *finfo)
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
     gtk_box_set_spacing(GTK_BOX(hbox), 10);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    /* "Validate" button */
+    button = gtk_button_new_with_label(_("Validate"));
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(check_pkg_callback), finfo);
+    gtk_widget_set_sensitive(button, finfo->fname != NULL);
+    finfo->validate = button;
 
     /* "Save as" button */
     button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
@@ -1310,15 +1327,19 @@ static char *url_encode_string (const char *s)
    is ASCII)
 */
 
-static int validate_package_file (const char *fname)
+static int validate_package_file (const char *fname,
+				  int by_button)
 {
     const char *gretldir = gretl_home();
+    const char *pkgname;
     char dtdname[FILENAME_MAX];
     xmlDocPtr doc;
     xmlDtdPtr dtd;
     int err = 0;
 
-    if (!gretl_is_ascii(path_last_element(fname))) {
+    pkgname = path_last_element(fname);
+
+    if (!gretl_is_ascii(pkgname)) {
 	errbox("Package name contains non-ASCII characters");
 	return 1;
     }
@@ -1333,7 +1354,7 @@ static int validate_package_file (const char *fname)
     dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname); 
 
     if (dtd == NULL) {
-	fprintf(stderr, "Couldn't open DTD to check package\n", fname);
+	fprintf(stderr, "Couldn't open DTD to check package\n");
     } else {
 	xmlValidCtxtPtr cvp = xmlNewValidCtxt();
 	PRN *prn = NULL;
@@ -1354,8 +1375,10 @@ static int validate_package_file (const char *fname)
 
 	    errbox(buf);
 	    err = 1;
+	} else if (by_button) {
+	    infobox(_("%s: validated against DTD OK"), pkgname);
 	} else {
-	    fprintf(stderr, "%s: validated against DTD OK\n", fname);
+	    fprintf(stderr, "%s: validated against DTD OK\n", pkgname);
 	}
 
 	gretl_print_destroy(prn);
@@ -1382,7 +1405,7 @@ static void do_upload (const char *fname)
     int error_printed = 0;
     int err;
 
-    err = validate_package_file(fname);
+    err = validate_package_file(fname, 0);
     if (err) {
 	return;
     }
@@ -1585,6 +1608,7 @@ int save_function_package (const char *fname, gpointer p)
 	g_free(title);
 	finfo_set_modified(finfo, FALSE);
 	gtk_widget_set_sensitive(finfo->saveas, TRUE);
+	gtk_widget_set_sensitive(finfo->validate, TRUE);
 	maybe_update_func_files_window(EDIT_FN_PKG);
 	if (finfo->upload) {
 	    do_upload(fname);
