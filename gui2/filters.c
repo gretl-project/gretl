@@ -181,10 +181,10 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
     } else if (finfo->ftype == FILTER_EMA) {
 	if (i == FILTER_SAVE_TREND) {
 	    sprintf(targ, _("Exponential moving average of %s (current weight %g)"),
-		    finfo->vname, 1.0 - finfo->lambda);
+		    finfo->vname, finfo->lambda);
 	} else {
 	    sprintf(targ, _("Residual from EMA of %s (current weight %g)"),
-		    finfo->vname, 1.0 - finfo->lambda);
+		    finfo->vname, finfo->lambda);
 	}	    
     } else if (finfo->ftype == FILTER_HP) {
 	if (i == FILTER_SAVE_TREND) {

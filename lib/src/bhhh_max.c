@@ -510,18 +510,14 @@ int bhhh_max (LL_FUNC loglik,
     /* OPG model */
     MODEL *bmod;
     int *blist;
-
     /* temporary artificial dataset */
     double **tZ = NULL;
     DATAINFO *tinfo = NULL;
-
     int iters, itermax;
     double minstep = 1.0e-06;
     double crit = 1.0;
     double stepsize = 0.25;
-
     double *delta = NULL, *ctemp = NULL;
-
     int i, t, err, k;
 
     err = model_info_init(minfo, init_coeff);

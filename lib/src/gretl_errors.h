@@ -72,15 +72,31 @@ enum gretl_error_codes {
     E_MAX          /* 50 */
 }; 
 
+enum gretl_warning_codes {
+    W_GRADIENT = 1,
+    W_LOGS,
+    W_NATONAN,
+    W_GENERIC,
+    W_MAX
+};
+
 void errmsg (int err, PRN *prn);
+
+void warnmsg (PRN *prn);
 
 const char *errmsg_get_with_default (int err);
 
 const char *gretl_errmsg_get (void);
 
+const char *gretl_warnmsg_get (void);
+
 void gretl_errmsg_set (const char *str);
 
+void gretl_warnmsg_set (const char *str);
+
 void gretl_errmsg_sprintf (const char *fmt, ...);
+
+void gretl_warnmsg_sprintf (const char *fmt, ...);
 
 void gretl_errmsg_set_from_errno (const char *s);
 
@@ -90,9 +106,13 @@ void set_gretl_alarm (int val);
 
 void set_gretl_errno (int err);
 
+void set_gretl_warning (int w);
+
 int get_gretl_errno (void);
 
 int check_gretl_errno (void);
+
+int check_gretl_warning (void);
 
 int gretl_error_is_fatal (void);
 

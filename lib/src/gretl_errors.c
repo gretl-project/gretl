@@ -27,6 +27,10 @@
 #define ERRLEN 2048
 
 static char gretl_errmsg[ERRLEN];
+static char gretl_warnmsg[ERRLEN];
+
+static int gretl_errno;
+static int gretl_warnnum;
 
 static const char *gretl_error_messages[] = {
     NULL,
@@ -82,18 +86,32 @@ static const char *gretl_error_messages[] = {
     NULL                                                         /* E_MAX */
 };
 
+static const char *gretl_warning_messages[] = {
+    NULL,
+    N_("gradient is not close to zero"),                 /* W_GRADIENT */
+    N_("generated missing values trying to take logs"),  /* W_LOGS */
+    N_("converted NAs in data to NaNs in matrix"),       /* W_NATONAN */
+    NULL                                                 /* W_MAX */
+};
+
 static const char *look_up_errmsg (int err)
 {
-    const char *ret = NULL;
-
     if (err > 0 && err < E_MAX) {
-	ret = gretl_error_messages[err];
+	return gretl_error_messages[err];
     } else {
-	fprintf(stderr, "look_up_errmsg: out of bounds errcode %d\n", 
-		err);
+	fprintf(stderr, "look_up_errmsg: out of bounds code %d\n", err);
+	return "missing message";
     }
+}
 
-    return ret;
+static const char *look_up_warnmsg (int w)
+{
+    if (w > 0 && w < W_MAX) {
+	return gretl_warning_messages[w];
+    } else {
+	fprintf(stderr, "look_up_warnmsg: out of bounds code %d\n", w);
+	return "missing message";
+    }
 }
 
 static int error_printed;
@@ -101,7 +119,7 @@ static int alarm_set;
 
 /**
  * errmsg_get_with_default: 
- * @err: gretl error code (see #error_codes).
+ * @err: gretl error code (see #gretl_error_codes).
  *
  * Returns: a specific error message if available,
  * otherwise a generic error message corresponding to the 
@@ -110,19 +128,42 @@ static int alarm_set;
 
 const char *errmsg_get_with_default (int err)
 {
-    const char *msg = "";
+    const char *ret = "";
 
     if (*gretl_errmsg != '\0') {
-	msg = gretl_errmsg;
+	ret = gretl_errmsg;
     } else {
 	const char *deflt = look_up_errmsg(err);
 
-	if (deflt != NULL) {
-	    msg = _(deflt);
-	}
+	ret = _(deflt);
     }
 
-    return msg;
+    return ret;
+}
+
+/**
+ * gretl_warnmsg_get: 
+ *
+ * Returns: the current gretl warning message, or %NULL if no
+ * warning is currently in place.
+ */
+
+const char *get_warnmsg_get (void)
+{
+    const char *ret = NULL;
+
+    if (gretl_warnnum) {
+	if (*gretl_warnmsg != '\0') {
+	    ret = gretl_warnmsg;
+	} else {
+	    const char *deflt = look_up_warnmsg(gretl_warnnum);
+
+	    ret = _(deflt);
+	}
+	gretl_warnnum = 0;
+    }
+
+    return ret;
 }
 
 /**
@@ -143,6 +184,30 @@ void errmsg (int err, PRN *prn)
 	pprintf(prn, "%s\n", msg);
 	error_printed = 1;
     } 
+}
+
+/**
+ * warnmsg:
+ * @prn: gretl printing struct.
+ *
+ * If a gretl warning is set, prints a message to @prn
+ * and zeros the warning signal.
+ */
+
+void warnmsg (PRN *prn)
+{
+    if (prn == NULL || gretl_warnnum == 0) return;
+
+    if (*gretl_warnmsg != '\0') {
+	pprintf(prn, "%s: %s\n", _("Warning"), gretl_warnmsg);
+	*gretl_warnmsg = '\0';
+    } else {
+	const char *s = look_up_warnmsg(gretl_warnnum);
+
+	pprintf(prn, "%s: %s\n", _("Warning"), s);
+    }
+
+    gretl_warnnum = 0;
 }
 
 /**
@@ -187,28 +252,19 @@ void gretl_errmsg_set (const char *str)
     }
 }
 
-#if 0
-
 /**
- * gretl_errmsg_sprintf:
- * @fmt: format string.
+ * gretl_warnmsg_set:
+ * @str: a warning message.
  *
- * If %gretl_errmsg is currently blank, print a formatted
- * message into place.
+ * If copy the given string into the warning message space.
  */
 
-void gretl_errmsg_sprintf (const char *fmt, ...)
+void gretl_warnmsg_set (const char *str)
 {
-    if (*gretl_errmsg == '\0' && fmt != NULL) {
-	va_list ap;
-
-	va_start(ap, fmt);
-	vsnprintf(gretl_errmsg, ERRLEN, fmt, ap);
-	va_end(ap);
-    }
+    *gretl_warnmsg = '\0';
+    strncat(gretl_warnmsg, str, ERRLEN - 1);
+    gretl_warnnum = W_MAX;
 }
-
-#endif
 
 /**
  * gretl_errmsg_sprintf:
@@ -244,6 +300,27 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 }
 
 /**
+ * gretl_warnmsg_sprintf:
+ * @fmt: format string.
+ *
+ * Write a formatted message to the current gretl
+ * warning message space.
+ */
+
+void gretl_warnmsg_sprintf (const char *fmt, ...)
+{
+    va_list ap;
+
+    *gretl_warnmsg = '\0';
+
+    va_start(ap, fmt);
+    vsnprintf(gretl_warnmsg, ERRLEN, fmt, ap);
+    va_end(ap);
+
+    gretl_warnnum = W_MAX;
+}
+
+/**
  * gretl_errmsg_set_from_errno:
  * @s: string to prepend to error message, or %NULL.
  *
@@ -271,8 +348,6 @@ void gretl_errmsg_set_from_errno (const char *s)
     }
 }
 
-static int gretl_errno;
-
 /**
  * gretl_error_clear:
  *
@@ -286,6 +361,7 @@ void gretl_error_clear (void)
     }
     error_printed = 0;
     errno = 0;
+    gretl_warnnum = 0;
 }
 
 /**
@@ -314,6 +390,11 @@ void set_gretl_errno (int err)
     gretl_errno = err;
 }
 
+void set_gretl_warning (int w)
+{
+    gretl_warnnum = w;
+}
+
 int get_gretl_errno (void)
 {
     int err = gretl_errno;
@@ -327,6 +408,11 @@ int check_gretl_errno (void)
     return gretl_errno;
 }
 
+int check_gretl_warning (void)
+{
+    return gretl_warnnum;
+}
+
 int gretl_error_is_fatal (void)
 {
     if (gretl_compiling_function() ||
@@ -338,24 +424,3 @@ int gretl_error_is_fatal (void)
 	return gretl_in_batch_mode();
     }
 }
-
-#if 0 /* not yet */
-
-static char *warnbuf;
-
-void gretl_warning_add (const char *s)
-{
-    free(warnbuf);
-    warnbuf = gretl_strdup(s);
-}
-
-const char *gretl_warning_get (void)
-{
-    if (warnbuf != NULL) {
-	return warnbuf;
-    } else {
-	return "";
-    }
-}
-
-#endif

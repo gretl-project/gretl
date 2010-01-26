@@ -2673,6 +2673,7 @@ print_iter_info (int iter, double crit, int type, int k,
 	N_("Criterion"),
     };
     const char *cstr = cstrs[type];
+    double gn = 0.0;
     int i;
 
     if (type == C_GMM) {
@@ -2694,6 +2695,13 @@ print_iter_info (int iter, double crit, int type, int k,
     if (sl > 0.0 && !na(sl)) {
 	pprintf(prn, _(" (steplength = %g)"), sl);
     }	
+
+    for (i=0; i<k; i++) {
+	gn += g[i] * g[i];
+    }
+    gn = sqrt(gn / k);
+
+    pprintf(prn, _(" (norm of gradient = %g)"), gn);
 
     pputc(prn, '\n');
 	

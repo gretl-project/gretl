@@ -482,6 +482,8 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 
 #define bfgs_print_iter(v,s,i) (v && (s == 1 || i % s == 0))
 
+#define GRAD_TOLER 1.0
+
 int BFGS_orig (double *b, int n, int maxit, double reltol,
 	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
@@ -493,10 +495,11 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     double *g, *t, *X, *c;
     int verbskip, verbose = (opt & OPT_V);
     int fcount, gcount, ndelta = 0;
-    double fmax, f, f0, sumgrad, d = 0.0;
-    int i, j, ilast, iter;
+    double sumgrad, gradnorm = 0.0;
+    double fmax, f, f0, d = 0.0;
     double s, steplen = 0.0;
     double D1, D2;
+    int i, j, ilast, iter;
     int err = 0;
 
     BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
@@ -568,7 +571,8 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    c[i] = g[i];
 	}
 
-	sumgrad = 0.0;
+	gradnorm = sumgrad = 0.0;
+
 	for (i=0; i<n; i++) {
 	    s = 0.0;
 	    for (j=0; j<=i; j++) {
@@ -579,7 +583,10 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    }
 	    t[i] = s;
 	    sumgrad += s * g[i];
+	    gradnorm += g[i] * g[i];
 	}
+
+	gradnorm = sqrt(gradnorm / n);
 
 #if BFGS_DEBUG
 	fprintf(stderr, "\niter %d: sumgrad = %g\n", iter, sumgrad);
@@ -717,6 +724,9 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     if (iter >= maxit) {
 	fprintf(stderr, _("stopped after %d iterations\n"), iter);
 	err = E_NOCONV;
+    } else if (gradnorm > GRAD_TOLER) {
+	fprintf(stderr, "gradient norm = %12.8f\n", gradnorm);
+	err = E_NOCONV; /* or just a warning? */
     } else if (fmax < f0) {
 	/* FIXME this should never happen */
 	fprintf(stderr, "failed to match initial value of objective function:\n"
