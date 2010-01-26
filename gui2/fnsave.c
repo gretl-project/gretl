@@ -1309,13 +1309,9 @@ static int validate_package_file (const char *fname)
 {
     const char *gretldir = gretl_home();
     char dtdname[FILENAME_MAX];
-    xmlValidCtxtPtr cvp;
     xmlDocPtr doc;
     xmlDtdPtr dtd;
-    PRN *prn = NULL;
     int err = 0;
-
-    sprintf(dtdname, "%sfunctions/gretlfunc.dtd", gretldir);
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
@@ -1323,28 +1319,20 @@ static int validate_package_file (const char *fname)
 	return 1;
     }
 
+    sprintf(dtdname, "%sfunctions/gretlfunc.dtd", gretldir);
     dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname); 
 
-    if (dtd == NULL) {
-	errbox("Error: couldn't parse DTD");
-	xmlFreeDoc(doc);
-	return 1;
-    }
+    if (dtd != NULL) {
+	xmlValidCtxtPtr cvp = xmlNewValidCtxt();
+	PRN *prn = NULL;
 
-    cvp = xmlNewValidCtxt();
+	if (cvp == NULL || bufopen(&prn)) {
+	    /* ignore "internal" failure */
+	    xmlFreeDtd(dtd);
+	    xmlFreeDoc(doc);
+	    return 0;
+	}
 
-    if (cvp == NULL) {
-	errbox("Error: couldn't allocate validation context");
-	xmlFreeDtd(dtd);
-	xmlFreeDoc(doc);
-	return 1;
-    }
-
-    if (bufopen(&prn)) {
-	err = 1;
-    }
-
-    if (!err) {
 	cvp->userData = (void *) prn;
 	cvp->error    = (xmlValidityErrorFunc) pprintf;
 	cvp->warning  = (xmlValidityWarningFunc) pprintf;
@@ -1354,12 +1342,15 @@ static int validate_package_file (const char *fname)
 
 	    errbox(buf);
 	    err = 1;
+	} else {
+	    fprintf(stderr, "%s: validated against DTD OK", fname);
 	}
+
 	gretl_print_destroy(prn);
+	xmlFreeValidCtxt(cvp);
+	xmlFreeDtd(dtd);
     } 
 
-    xmlFreeValidCtxt(cvp);
-    xmlFreeDtd(dtd);
     xmlFreeDoc(doc);
 
     return err;

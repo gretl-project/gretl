@@ -48,17 +48,17 @@ enum {
 typedef struct filter_info_ filter_info;
 
 struct filter_info_ {
-    int ftype;
-    int vnum;
-    const char *vname;
-    int t1;
-    int t2;
-    int nobs;
-    int center;
-    double lambda;
-    int k;
-    int bkl;
-    int bku;
+    int ftype;            /* type of filter */
+    int vnum;             /* ID number of series to filter */
+    const char *vname;    /* name of series */
+    int t1;               /* starting observation */
+    int t2;               /* ending observation */
+    int n;                /* no. of terms in MA, or no. of obs for mean */
+    int center;           /* for simple MA: center or not */
+    double lambda;        /* general purpose parameter */
+    int k;                /* Baxter-King parameter */
+    int bkl;              /* Baxter-King lower value */
+    int bku;              /* Baxter-King upper value */
     gretlopt graph_opt;
     gretlopt save_opt;
     char save1[VNAMELEN];
@@ -89,12 +89,14 @@ static const char *filter_get_title (int ftype)
 static void filter_info_init (filter_info *finfo, int ftype, int v,
 			      int t1, int t2)
 {
+    int pd = datainfo->pd;
+
     finfo->ftype = ftype;
     finfo->vnum = v;
     finfo->vname = datainfo->varname[v];
     finfo->t1 = t1;
     finfo->t2 = t2;
-    finfo->nobs = 0;
+    finfo->n = 0;
     finfo->center = 0;
     finfo->lambda = 0.0;
     finfo->k = 0;
@@ -119,14 +121,13 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
 
     if (ftype == FILTER_SMA) {
 	finfo->center = 1;
-	finfo->nobs = (datainfo->pd == 1 || datainfo->pd == 10)? 3 :
-	    datainfo->pd;
+	finfo->n = (pd == 1 || pd == 10)? 3 : pd;
     } else if (ftype == FILTER_EMA) {
 	finfo->lambda = 0.1;
     } else if (ftype == FILTER_HP) {
 	finfo->lambda = libset_get_double(HP_LAMBDA);
 	if (na(finfo->lambda)) {
-	    finfo->lambda = 100 * datainfo->pd * datainfo->pd;
+	    finfo->lambda = 100 * pd * pd;
 	}
     } else if (ftype == FILTER_BK) {
 	finfo->k = get_bkbp_k(datainfo);
@@ -168,14 +169,14 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
 	if (i == FILTER_SAVE_TREND) {
 	    if (finfo->center) {
 		sprintf(targ, _("Centered %d-period moving average of %s"), 
-			finfo->nobs, finfo->vname);
+			finfo->n, finfo->vname);
 	    } else {
 		sprintf(targ, _("%d-period moving average of %s"), 
-			finfo->nobs, finfo->vname);
+			finfo->n, finfo->vname);
 	    }
 	} else {
 	    sprintf(targ, _("Residual from %d-period MA of %s"), 
-		    finfo->nobs, finfo->vname);
+		    finfo->n, finfo->vname);
 	}
     } else if (finfo->ftype == FILTER_EMA) {
 	if (i == FILTER_SAVE_TREND) {
@@ -266,10 +267,10 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 
     if (finfo->nspin != NULL) {
 	if (GTK_WIDGET_SENSITIVE(finfo->nspin)) {
-	    finfo->nobs = (int) 
+	    finfo->n = (int) 
 		gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->nspin));
 	} else {
-	    finfo->nobs = 0;
+	    finfo->n = 0;
 	}
     }
     
@@ -458,9 +459,9 @@ static int filter_dialog (filter_info *finfo)
 	w = gtk_label_new(_("Number of observations in average:"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	nspin = gtk_spin_button_new_with_range(2, (gdouble) nmax, 1);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(nspin), (gdouble) finfo->nobs);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(nspin), (gdouble) finfo->n);
 	g_signal_connect(G_OBJECT(nspin), "value-changed",
-			 G_CALLBACK(set_int_from_spinner), &finfo->nobs);
+			 G_CALLBACK(set_int_from_spinner), &finfo->n);
 	gtk_box_pack_start(GTK_BOX(hbox), nspin, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -744,7 +745,7 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
 static int sma_special (const filter_info *finfo, double *fx,
 			const double *x)
 {
-    int offset = finfo->nobs / 2;
+    int offset = finfo->n / 2;
     double *tmp;
     int t, t1, t2;
     int i, k, n;
@@ -761,11 +762,11 @@ static int sma_special (const filter_info *finfo, double *fx,
 
     for (t=t1; t<=t2; t++) {
 	fx[t] = 0.0;
-	for (i=0; i<finfo->nobs; i++) {
+	for (i=0; i<finfo->n; i++) {
 	    k = i - offset + 1;
 	    fx[t] += x[t-k];
 	}
-	fx[t] /= finfo->nobs;
+	fx[t] /= finfo->n;
     }
 
     for (t=0; t<n; t++) {
@@ -812,54 +813,65 @@ static int calculate_filter (filter_info *finfo)
     }
 
     if (finfo->ftype == FILTER_SMA) {
-	if (finfo->center && finfo->nobs % 2 == 0) {
+	/* simple moving average */
+	if (finfo->center && finfo->n % 2 == 0) {
 	    err = sma_special(finfo, fx, x);
 	} else {
-	    int offset = finfo->center ? finfo->nobs / 2 : 0;
+	    int offset = finfo->center ? finfo->n / 2 : 0;
 	    int i, k, t1, t2;
 
-	    t1 = finfo->center ? finfo->t1 + offset : finfo->t1 + finfo->nobs - 1;
+	    t1 = finfo->center ? finfo->t1 + offset : finfo->t1 + finfo->n - 1;
 	    t2 = finfo->center ? finfo->t2 - offset : finfo->t2;
 
 	    for (t=t1; t<=t2; t++) {
 		fx[t] = 0.0;
-		for (i=0; i<finfo->nobs; i++) {
+		for (i=0; i<finfo->n; i++) {
 		    k = i - offset;
 		    fx[t] += x[t-k];
 		}
-		fx[t] /= finfo->nobs;
+		fx[t] /= finfo->n;
 	    }
 	}
     } else if (finfo->ftype == FILTER_EMA) {
-	int t1 = finfo->t1;
+	/* exponential moving average */
+	double fcoeff = 1.0 - finfo->lambda;
+	int mt2;
 
-	if (finfo->nobs == 0) {
-	    fx[t1] = gretl_mean(finfo->t1, finfo->t2, x);
+	if (finfo->n == 0) {
+	    /* use all observations to calculate mean */
+	    mt2 = finfo->t2;
 	} else {
-	    t1 = finfo->t1 + finfo->nobs - 1;
-	    fx[t1] = gretl_mean(finfo->t1, t1, x);
-	}
-	
-	for (t=t1+1; t<=finfo->t2; t++) {
-	    fx[t] = finfo->lambda * x[t] + (1.0 - finfo->lambda) * fx[t-1];
+	    /* use only the first finfo->n observations */
+	    mt2 = finfo->t1 + finfo->n - 1;
 	}
 
-	for (t=t1-1; t>=0; t--) {
-	    fx[t] = NADBL;
+	for (t=0; t<datainfo->n; t++) {
+	    if (t < finfo->t1 || t > finfo->t2) {
+		fx[t] = NADBL;
+	    } else if (t == finfo->t1) {
+		/* first filtered value = mean */
+		fx[t] = gretl_mean(finfo->t1, mt2, x);
+	    } else {
+		/* subsequent filtered values */
+		fx[t] = finfo->lambda * x[t] + fcoeff * fx[t-1];
+	    }
 	}
     } else if (finfo->ftype == FILTER_HP) {
+	/* Hodrick-Prescott */
 	double l0 = libset_get_double(HP_LAMBDA);
 
 	libset_set_double(HP_LAMBDA, finfo->lambda);
 	err = hp_filter(x, fx, datainfo, OPT_T);
 	libset_set_double(HP_LAMBDA, l0);
     } else if (finfo->ftype == FILTER_BK) {
+	/* Baxter and King bandpass */
 	set_bkbp_k(finfo->k);
 	set_bkbp_periods(finfo->bkl, finfo->bku);
 	err = bkbp_filter(x, u, datainfo);
 	unset_bkbp_k();
 	unset_bkbp_periods();
     } else if (finfo->ftype == FILTER_FD) {
+	/* fractional differencing */
 	err = fracdiff_series(x, fx, finfo->lambda, 1, -1, datainfo);
     }
 	

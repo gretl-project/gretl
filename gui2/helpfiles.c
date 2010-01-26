@@ -783,6 +783,8 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
     while (!ok && *src != '\0') {
 	if (starts_topic(src)) {
 	    newpos = k + 1;
+	} else if (wrapped && newpos == currpos) {
+	    break;
 	} else if (newpos != currpos && !strncmp(s, src, n)) {
 	    ok = 1;
 	} 
