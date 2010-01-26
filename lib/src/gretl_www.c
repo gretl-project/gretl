@@ -829,7 +829,17 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 #define USE_MULTIPART 0
 
 #if USE_MULTIPART
+
 const char *partsep = "AaB03x";
+
+static int write_multipart_trailer (int sock)
+{
+    char buf[16];
+
+    sprintf(buf, "--%s--\r\n", partsep);
+    return iwrite(sock, buf, strlen(buf));
+}
+
 #endif
 
 static char *make_posthead (urlinfo *u)
@@ -838,8 +848,12 @@ static char *make_posthead (urlinfo *u)
 
     if (head != NULL) {
 #if USE_MULTIPART
-	sprintf(test, "Content-Type: multipart/form-data, boundary=%s\r\n",
-		partsep);
+	int traillen = strlen(partsep) + 6;
+
+	sprintf(head, "Content-Type: "
+		"multipart/form-data, boundary=%s\r\n"
+		"Content-Length: %d\r\n", 
+		partsep, strlen(u->params) + u->upsize + traillen);
 #else
 	sprintf(head, "Content-Type: "
 		"application/x-www-form-urlencoded\r\n"
@@ -960,7 +974,7 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 
     strcat(request, "\r\n");
 
-#if WDEBUG > 1
+#if 1 || WDEBUG > 1
     fprintf(stderr, "---request begin---\n%s---request end---\n", request);
 #endif
 
@@ -983,10 +997,18 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 
     if (u->upload != NULL) {
 	/* use POST for params and file content */
+#if 1 || WDEBUG > 1
+	fprintf(stderr, "params:\n'%s'\n", u->params);
+#endif
 	num_written = iwrite(sock, u->params, strlen(u->params));
 	if (num_written > 0) {
 	    num_written = iwrite(sock, u->upload, u->upsize);
 	}
+#if USE_MULTIPART
+	if (num_written > 0) {
+	    num_written = write_multipart_trailer(sock);
+	}
+#endif	
 	if (num_written < 0) {
 	    close(sock);
 	    return WRITEFAILED;
@@ -1923,7 +1945,11 @@ int upload_function_package (const char *login, const char *pass,
     }
 
     u->upload = buf;
+#if USE_MULTIPART
+    u->upsize = strlen(buf);
+#else
     u->upsize = strlen(buf) + 1;
+#endif
 
     err = get_host_ip(u, gretlhost);
     if (err) {

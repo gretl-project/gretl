@@ -1230,7 +1230,7 @@ void gui_errmsg (int errcode)
 
     msg = errmsg_get_with_default(errcode);
 
-    if (*msg != '\0') {
+    if (msg != NULL && *msg != '\0') {
 	errbox(msg);
     } else {
 	errbox(_("Unspecified error"));

@@ -1436,6 +1436,7 @@ static void do_upload (const char *fname)
 	err = upload_function_package(linfo.login, linfo.pass, 
 				      path_last_element(fname),
 				      buf, &retbuf);
+	fprintf(stderr, "upload_function_package: err = %d\n", err);
 #else
 	char *ulogin = url_encode_string(linfo.login);
 	char *upass = url_encode_string(linfo.pass);

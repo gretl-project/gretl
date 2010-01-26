@@ -135,7 +135,9 @@ const char *errmsg_get_with_default (int err)
     } else {
 	const char *deflt = look_up_errmsg(err);
 
-	ret = _(deflt);
+	if (deflt != NULL) {
+	    ret = _(deflt);
+	}
     }
 
     return ret;
@@ -159,7 +161,9 @@ const char *gretl_warnmsg_get (void)
 	} else {
 	    const char *deflt = look_up_warnmsg(gretl_warnnum);
 
-	    ret = _(deflt);
+	    if (deflt != NULL) {
+		ret = _(deflt);
+	    }
 	}
 	gretl_warnnum = 0;
     }
