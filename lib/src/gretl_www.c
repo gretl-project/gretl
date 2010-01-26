@@ -960,8 +960,8 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 
     strcat(request, "\r\n");
 
-#if 1 || WDEBUG > 1
-    fprintf(stderr, "---request begin---\n%s---request end---", request);
+#if WDEBUG > 1
+    fprintf(stderr, "---request begin---\n%s---request end---\n", request);
 #endif
 
     /* Send the request to server */

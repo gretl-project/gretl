@@ -28,6 +28,9 @@
 #include "textutil.h"
 #include "fnsave.h"
 
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
+
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
 #endif
@@ -1302,6 +1305,66 @@ static char *url_encode_string (const char *s)
     return encstr;
 }
 
+static int validate_package_file (const char *fname)
+{
+    const char *gretldir = gretl_home();
+    char dtdname[FILENAME_MAX];
+    xmlValidCtxtPtr cvp;
+    xmlDocPtr doc;
+    xmlDtdPtr dtd;
+    PRN *prn = NULL;
+    int err = 0;
+
+    sprintf(dtdname, "%sfunctions/gretlfunc.dtd", gretldir);
+
+    doc = xmlParseFile(fname);
+    if (doc == NULL) {
+	errbox("Error: couldn't parse %s", fname);
+	return 1;
+    }
+
+    dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname); 
+
+    if (dtd == NULL) {
+	errbox("Error: couldn't parse DTD");
+	xmlFreeDoc(doc);
+	return 1;
+    }
+
+    cvp = xmlNewValidCtxt();
+
+    if (cvp == NULL) {
+	errbox("Error: couldn't allocate validation context");
+	xmlFreeDtd(dtd);
+	xmlFreeDoc(doc);
+	return 1;
+    }
+
+    if (bufopen(&prn)) {
+	err = 1;
+    }
+
+    if (!err) {
+	cvp->userData = (void *) prn;
+	cvp->error    = (xmlValidityErrorFunc) pprintf;
+	cvp->warning  = (xmlValidityWarningFunc) pprintf;
+
+	if (!xmlValidateDtd(cvp, doc, dtd)) {
+	    const char *buf = gretl_print_get_buffer(prn);
+
+	    errbox(buf);
+	    err = 1;
+	}
+	gretl_print_destroy(prn);
+    } 
+
+    xmlFreeValidCtxt(cvp);
+    xmlFreeDtd(dtd);
+    xmlFreeDoc(doc);
+
+    return err;
+}
+
 static void do_upload (const char *fname)
 {
     char *ulogin = NULL;
@@ -1316,7 +1379,12 @@ static void do_upload (const char *fname)
     GdkWindow *w1;
     gint x, y;
     int error_printed = 0;
-    int err = 0;
+    int err;
+
+    err = validate_package_file(fname);
+    if (err) {
+	return;
+    }
 
     login_dialog(&linfo);
 
