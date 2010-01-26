@@ -2668,12 +2668,11 @@ print_iter_info (int iter, double crit, int type, int k,
 		 double sl, PRN *prn)
 {
     const char *cstrs[] = {
-	N_("Log-likelihood"),
+	N_("loglikelihood"),
 	N_("GMM criterion"),
 	N_("Criterion"),
     };
     const char *cstr = cstrs[type];
-    double gn = 0.0;
     int i;
 
     if (type == C_GMM) {
@@ -2687,21 +2686,21 @@ print_iter_info (int iter, double crit, int type, int k,
     }
 
     if (na(crit) || na(-crit)) {
-	pprintf(prn, "%s = NA", _(cstr));
+	pprintf(prn, "%s NA", _(cstr));
     } else {
-	pprintf(prn, "%s = %#.12g", _(cstr), crit);
+	pprintf(prn, "%s %#.12g", _(cstr), crit);
     }
 
     if (sl > 0.0 && !na(sl)) {
-	pprintf(prn, _(" (steplength = %g)"), sl);
-    }	
+	double x = 0.0;
 
-    for (i=0; i<k; i++) {
-	gn += g[i] * g[i];
+	for (i=0; i<k; i++) {
+	    x += g[i] * g[i];
+	}
+
+	pprintf(prn, " (%s %.5g, %s %.5g)", _("steplength"), sl,
+		_("gradient norm"), sqrt(x/k));
     }
-    gn = sqrt(gn / k);
-
-    pprintf(prn, _(" (norm of gradient = %g)"), gn);
 
     pputc(prn, '\n');
 	
