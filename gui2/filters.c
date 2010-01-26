@@ -831,21 +831,19 @@ static int calculate_filter (filter_info *finfo)
 	    }
 	}
     } else if (finfo->ftype == FILTER_EMA) {
-	int t1 = finfo->t1 + 1;
+	int t1 = finfo->t1;
 
 	if (finfo->nobs == 0) {
-	    fx[finfo->t1] = gretl_mean(finfo->t1, finfo->t2, x);
+	    fx[t1] = gretl_mean(finfo->t1, finfo->t2, x);
 	} else {
 	    t1 = finfo->t1 + finfo->nobs - 1;
 	    fx[t1] = gretl_mean(finfo->t1, t1, x);
-	    t1++;
 	}
-	for (t=t1; t<=finfo->t2; t++) {
+	
+	for (t=t1+1; t<=finfo->t2; t++) {
 	    fx[t] = finfo->lambda * x[t] + (1.0 - finfo->lambda) * fx[t-1];
 	}
-	for (t=finfo->t2; t>=t1; t--) {
-	    fx[t] = fx[t-1];
-	}
+
 	for (t=t1-1; t>=0; t--) {
 	    fx[t] = NADBL;
 	}
