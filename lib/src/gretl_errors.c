@@ -148,7 +148,7 @@ const char *errmsg_get_with_default (int err)
  * warning is currently in place.
  */
 
-const char *get_warnmsg_get (void)
+const char *gretl_warnmsg_get (void)
 {
     const char *ret = NULL;
 
