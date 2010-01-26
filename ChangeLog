@@ -1,3 +1,6 @@
+version 1.8.8, in progress
+- Enable full-text search of "online" help files
+
 01/24/2010 version 1.8.7
 - GUI enhancement: add apparatus to help keep track of
   gretl windows
