@@ -74,8 +74,8 @@ enum gretl_error_codes {
 
 enum gretl_warning_codes {
     W_GRADIENT = 1,
-    W_LOGS,        /* 2 */
-    W_NATONAN,     /* 3 */
+    W_GENMISS,     /* 2 */
+    W_GENNAN,      /* 3 */
     W_GENERIC,     /* 4 */
     W_MAX          /* 5 */
 };

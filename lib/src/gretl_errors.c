@@ -89,8 +89,8 @@ static const char *gretl_error_messages[] = {
 static const char *gretl_warning_messages[] = {
     NULL,
     N_("gradient is not close to zero"),                 /* W_GRADIENT */
-    N_("generated missing values trying to take logs"),  /* W_LOGS */
-    N_("converted NAs in data to NaNs in matrix"),       /* W_NATONAN */
+    N_("generated missing values"),                      /* W_GENMISS */
+    N_("generated non-finite values"),                   /* W_GENNAN */
     NULL                                                 /* W_MAX */
 };
 

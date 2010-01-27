@@ -98,23 +98,6 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void gen_write_warning (const parser *p, PRN *prn)
-{
-    if (prn != NULL) {
-	const char *w[] = {
-	    N_("missing values were generated"),
-	    N_("non-finite values were generated")
-	};
-	const char *s = (p->warn == E_MISSDATA)? w[0] : w[1];
-
-	if (*p->warning != '\0') {
-	    pprintf(prn, "%s: %s\n", p->warning, _(s));
-	} else {
-	    pprintf(prn, "%s: %s\n", _("Warning"), _(s));
-	}
-    }
-}
-
 static int maybe_record_lag_info (parser *p)
 {
     const char *s = p->input;
@@ -531,7 +514,7 @@ static int gen_special (const char *s, const char *line,
 	p->dinfo = pdinfo;
 	p->targ = VEC;
 	p->flags = 0;
-	p->err = p->warn = 0;
+	p->err = 0;
 	p->prn = prn;
 	gen_write_message(p, orig_v, prn);
     }	    
@@ -663,10 +646,6 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	if (!(opt & OPT_Q)) {
 	    gen_write_message(&p, oldv, prn);
 	}
-    }
-
-    if (!p.err && p.warn && gretl_warnings_on() && !(flags & P_PRIVATE)) {
-	gen_write_warning(&p, prn);
     }
 
     genr_last_type = genr_get_output_type(&p);
@@ -930,12 +909,6 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
 	gen_save_or_print(p, prn);
     } 
 
-#if 0
-    if ((p->flags & P_SLAVE) && !p->err) {
-	p->err = p->warn;
-    }
-#endif
-
     gen_cleanup(p);
 
 #if GDEBUG
@@ -1016,11 +989,6 @@ double genr_get_output_scalar (const parser *p)
     } else {
 	return NADBL;
     }
-}
-
-int genr_get_warning (const parser *p)
-{
-    return p->warn;
 }
 
 int genr_is_print (const parser *p)

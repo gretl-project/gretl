@@ -365,6 +365,7 @@ static int get_log (int v, double *logvec, const double **Z,
 	xx = Z[v][t];
 	if (na(xx) || xx <= 0.0) {
 	    logvec[t] = NADBL;
+	    set_gretl_warning(W_GENMISS);
 	} else {
 	    logvec[t] = log(xx); 
 	}

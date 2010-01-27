@@ -520,30 +520,34 @@ static NODE *aux_any_node (parser *p)
     return get_aux_node(p, 0, 0, 0);
 }
 
-static void eval_warning (parser *p, int op, int err)
+static void eval_warning (parser *p, int op, int errnum)
 {
-    if (*p->warning == '\0') {
+    if (!check_gretl_warning()) {
+	const char *s = NULL;
+	const char *w = "";
+
 	if (op == B_POW) {
-	    strcpy(p->warning, "'^'");
+	    w = "'^'";
 	} else if (op == F_LOG) {
-	    strcpy(p->warning, "log()");
+	    w = "log()";
 	} else if (op == F_SQRT) {
-	    strcpy(p->warning, "sqrt()");
+	    w = "sqrt()";
 	} else if (op == F_EXP) {
-	    strcpy(p->warning, "exp()");
+	    w = "exp()";
 	} else if (op == F_GAMMA) {
-	    strcpy(p->warning, "gammafun()");
+	    w = "gammafun()";
 	} else if (op == F_LNGAMMA) {
-	    strcpy(p->warning, "lgamma()");
+	    w = "lgamma()";
 	}
 
-	if (err) {
-	    char *s = strerror(err);
-	
-	    if (s != NULL) {
-		strcat(p->warning, ": ");
-		strcat(p->warning, s);
-	    }
+	if (errnum) {
+	    s = strerror(errnum);
+	}
+
+	if (s != NULL) {
+	    gretl_warnmsg_sprintf("%s: %s", w, s);
+	} else {
+	    gretl_warnmsg_set(w);
 	}
     }
 }
@@ -8143,7 +8147,7 @@ static void gen_check_errvals (parser *p)
     if (n->t == NUM) {
 	if (!isfinite(n->v.xval)) {
 	    n->v.xval = NADBL;
-	    p->warn = E_MISSDATA;
+	    set_gretl_warning(W_GENMISS);
 	}
     } else if (n->t == VEC) {
 	int t;
@@ -8151,7 +8155,7 @@ static void gen_check_errvals (parser *p)
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    if (!isfinite(n->v.xvec[t])) {
 		n->v.xvec[t] = NADBL;
-		p->warn = E_MISSDATA;
+		set_gretl_warning(W_GENMISS);
 		break;
 	    }
 	}
@@ -8163,9 +8167,9 @@ static void gen_check_errvals (parser *p)
 	for (i=0; i<k; i++) {
 	    if (na(m->val[i])) {
 		m->val[i] = M_NA;
-		p->warn = E_NAN;
-	    } else if (!p->warn && !isfinite(m->val[i])) {
-		p->warn = E_NAN;
+		set_gretl_warning(W_GENNAN);
+	    } else if (!isfinite(m->val[i])) {
+		set_gretl_warning(W_GENNAN);
 	    }
 	}
     }
@@ -8780,7 +8784,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    matrix_edit(p);
 	}
 	if (gretl_matrix_xna_check(p->lh.m1)) {
-	    p->warn = E_NAN;
+	    set_gretl_warning(W_GENNAN);
 	}
     } else if (p->targ == LIST) {
 	edit_list(p);
@@ -8829,9 +8833,6 @@ static void parser_reinit (parser *p, double ***pZ,
 
     p->ret = NULL;
     p->err = 0;
-    p->warn = 0;
-
-    *p->warning = '\0';
 
 #if EDEBUG
     fprintf(stderr, "parser_reinit: p->subp=%p, targ=%d, lhname='%s', op=%d\n", 
@@ -8899,9 +8900,6 @@ static void parser_init (parser *p, const char *str,
     p->idnum = 0;
     p->idstr = NULL;
     p->err = 0;
-    p->warn = 0;
-
-    *p->warning = '\0';
 
     if (p->input == NULL) {
 	p->err = E_DATA;

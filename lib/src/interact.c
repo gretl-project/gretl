@@ -4995,6 +4995,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (!s->funcerr) {
 	    errmsg(err, prn);
 	}
+    } else {
+	/* no-op if there's no warning */
+	warnmsg(prn);
     }
 
     return err;
