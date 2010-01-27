@@ -87,7 +87,7 @@ struct login_info_ {
 };
 
 static int validate_package_file (const char *fname,
-				  int by_button);
+				  int verbose);
 
 function_info *finfo_new (void)
 {
@@ -1286,8 +1286,7 @@ static void login_dialog (login_info *linfo)
    is ASCII)
 */
 
-static int validate_package_file (const char *fname,
-				  int by_button)
+static int validate_package_file (const char *fname, int verbose)
 {
     const char *gretldir = gretl_home();
     const char *pkgname;
@@ -1305,15 +1304,19 @@ static int validate_package_file (const char *fname,
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	errbox("Error: couldn't parse %s", fname);
+	errbox("Couldn't parse %s", fname);
 	return 1;
     }
 
-    sprintf(dtdname, "%sfunctions/gretlfunc.dtd", gretldir);
+    sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretldir, SLASH);
     dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname); 
 
     if (dtd == NULL) {
-	fprintf(stderr, "Couldn't open DTD to check package\n");
+	if (verbose) {
+	    errbox("Couldn't open DTD to check package");
+	} else {
+	    fprintf(stderr, "Couldn't open DTD to check package\n");
+	}
     } else {
 	xmlValidCtxtPtr cvp = xmlNewValidCtxt();
 	PRN *prn = NULL;
@@ -1334,7 +1337,7 @@ static int validate_package_file (const char *fname,
 
 	    errbox(buf);
 	    err = 1;
-	} else if (by_button) {
+	} else if (verbose) {
 	    infobox(_("%s: validated against DTD OK"), pkgname);
 	} else {
 	    fprintf(stderr, "%s: validated against DTD OK\n", pkgname);

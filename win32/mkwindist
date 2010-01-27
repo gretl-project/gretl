@@ -66,6 +66,7 @@ mkdir -p windist/gretl/data
 mkdir -p windist/gretl/data/misc
 mkdir -p windist/gretl/data/greene
 mkdir -p windist/gretl/data/nist
+mkdir -p windist/gretl/functions
 mkdir -p windist/gretl/scripts
 mkdir -p windist/gretl/scripts/misc
 mkdir -p windist/gretl/db
@@ -197,6 +198,11 @@ for f in ${TOPDIR}/share/scripts/misc/*.inp ; do
 done
 for f in ${TOPDIR}/share/scripts/misc/ps_descriptions ; do
     add_file $f gretl/scripts/misc/`basename $f`
+done
+
+# function package DTD
+for f in ${TOPDIR}/share/functions/*.dtd ; do
+    add_file $f gretl/functions/`basename $f`
 done
 
 # database files
