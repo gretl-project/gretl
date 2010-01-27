@@ -120,7 +120,7 @@ gpointer edit_dialog_get_data (dialog_t *dlg);
 
 void close_dialog (dialog_t *dlg);
 
-char *entry_box_get_trimmed_text (GtkWidget *w);
+gchar *entry_box_get_trimmed_text (GtkWidget *w);
 
 GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt);
 

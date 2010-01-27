@@ -1441,10 +1441,10 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     gtk_widget_show(d->dialog); 
 }
 
-char *entry_box_get_trimmed_text (GtkWidget *w)
+gchar *entry_box_get_trimmed_text (GtkWidget *w)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
-    char *ret = NULL;
+    gchar *ret = NULL;
     int i, len;
 
     if (s == NULL || *s == '\0') {

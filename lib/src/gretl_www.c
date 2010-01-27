@@ -826,10 +826,6 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     return res;
 }
 
-#define USE_MULTIPART 0
-
-#if USE_MULTIPART
-
 const char *partsep = "AaB03x";
 
 static int write_multipart_trailer (int sock)
@@ -840,25 +836,16 @@ static int write_multipart_trailer (int sock)
     return iwrite(sock, buf, strlen(buf));
 }
 
-#endif
-
 static char *make_posthead (urlinfo *u)
 {
     char *head = malloc(96);
 
     if (head != NULL) {
-#if USE_MULTIPART
 	int traillen = strlen(partsep) + 6;
 
-	sprintf(head, "Content-Type: "
-		"multipart/form-data, boundary=%s\r\n"
+	sprintf(head, "Content-Type: multipart/form-data, boundary=%s\r\n"
 		"Content-Length: %d\r\n", 
 		partsep, strlen(u->params) + u->upsize + traillen);
-#else
-	sprintf(head, "Content-Type: "
-		"application/x-www-form-urlencoded\r\n"
-		"Content-Length: %d\r\n", strlen(u->params) + u->upsize);
-#endif
     }
 
     return head;
@@ -974,7 +961,7 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 
     strcat(request, "\r\n");
 
-#if 1 || WDEBUG > 1
+#if WDEBUG > 1
     fprintf(stderr, "---request begin---\n%s---request end---\n", request);
 #endif
 
@@ -996,19 +983,17 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
     }
 
     if (u->upload != NULL) {
-	/* use POST for params and file content */
-#if 1 || WDEBUG > 1
+	/* we're using POST */
+#if WDEBUG > 1
 	fprintf(stderr, "params:\n'%s'\n", u->params);
 #endif
 	num_written = iwrite(sock, u->params, strlen(u->params));
 	if (num_written > 0) {
 	    num_written = iwrite(sock, u->upload, u->upsize);
 	}
-#if USE_MULTIPART
 	if (num_written > 0) {
 	    num_written = write_multipart_trailer(sock);
 	}
-#endif	
 	if (num_written < 0) {
 	    close(sock);
 	    return WRITEFAILED;
@@ -1888,18 +1873,11 @@ urlinfo_set_upload_params (urlinfo *u, const char *login, const char *pass,
 {
     int len = strlen(login) + strlen(pass) + strlen(fname);
 
-#if USE_MULTIPART
-    len += 256;
-#else
-    len += 40;
-#endif
-
-    u->params = malloc(len);
+    u->params = malloc(len + 256);
     if (u->params == NULL) {
 	return 1;
     }    
 
-#if USE_MULTIPART   
     sprintf(u->params, "--%s\r\ncontent-disposition: form-data; name=\"login\"\r\n"
 	    "\r\n%s\r\n" /* username */
 	    "--%s\r\ncontent-disposition: form-data; name=\"pass\"\r\n"
@@ -1908,18 +1886,14 @@ urlinfo_set_upload_params (urlinfo *u, const char *login, const char *pass,
 	    "filename=\"%s\"\r\n" /* filename */
 	    "Content-Type: text/plain; charset=utf-8\r\n\r\n",
 	    partsep, login, partsep, pass, partsep, fname);
-#else
-    sprintf(u->params, "opt=UPLOAD&login=%s&pass=%s"
-	    "&fname=%s&content=", login, pass, fname);
-#endif
 
     return 0;
 }
 
-/* The content of the function package to be uploaded is URL-encoded
-   in 'buf'; the (short, pathless) filename for this package is in
-   'fname'.  If 'retbuf' is non-NULL it gets a copy of the response
-   from the server.
+/* The content of the function package to be uploaded is in 'buf';
+   the (short, pathless) filename for this package is in 'fname'.
+   If 'retbuf' is non-NULL it gets a copy of the response from the
+   server.
 */
 
 int upload_function_package (const char *login, const char *pass, 
@@ -1945,11 +1919,7 @@ int upload_function_package (const char *login, const char *pass,
     }
 
     u->upload = buf;
-#if USE_MULTIPART
     u->upsize = strlen(buf);
-#else
-    u->upsize = strlen(buf) + 1;
-#endif
 
     err = get_host_ip(u, gretlhost);
     if (err) {

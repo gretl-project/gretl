@@ -46,8 +46,8 @@ struct call_info_ {
     const ufunc *func;
     int n_params;
     char rettype;
-    char **args;
-    char *ret;
+    gchar **args; /* FIXME use GLib */
+    gchar *ret;
     int ok;
 };
 
@@ -110,7 +110,7 @@ static void cinfo_free (call_info *cinfo)
 	free_strings_array(cinfo->args, cinfo->n_params);
     }
     if (cinfo->ret != NULL) {
-	free(cinfo->ret);
+	g_free(cinfo->ret);
     }
     if (cinfo->lsels != NULL) {
 	g_list_free(cinfo->lsels);
@@ -218,10 +218,10 @@ static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
     return FALSE;
 }
 
-static char *combo_box_get_trimmed_text (GtkComboBox *combo)
+static gchar *combo_box_get_trimmed_text (GtkComboBox *combo)
 {
     gchar *s = gtk_combo_box_get_active_text(combo);
-    char *ret = NULL;
+    gchar *ret = NULL;
 
     if (s != NULL && *s != '\0') {
 	while (isspace(*s)) s++;
@@ -265,7 +265,7 @@ static gboolean update_arg (GtkComboBox *combo,
 static gboolean update_return (GtkComboBox *combo, 
 			       call_info *cinfo)
 {
-    free(cinfo->ret);
+    g_free(cinfo->ret);
     cinfo->ret = combo_box_get_trimmed_text(combo);
 
     return FALSE;

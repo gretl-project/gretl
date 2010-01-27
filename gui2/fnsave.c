@@ -222,7 +222,17 @@ static void linfo_free (login_info *linfo)
 static void login_finalize (GtkWidget *w, login_info *linfo)
 {
     linfo->login = entry_box_get_trimmed_text(linfo->login_entry);
+    if (linfo->login == NULL) {
+	gtk_widget_grab_focus(linfo->login_entry);
+	return;
+    }
+
     linfo->pass = entry_box_get_trimmed_text(linfo->pass_entry);
+    if (linfo->pass == NULL) {
+	gtk_widget_grab_focus(linfo->pass_entry);
+	g_free(linfo->login);
+	return;
+    }
 
     gtk_widget_destroy(linfo->dlg);
 }
@@ -1271,57 +1281,6 @@ static void login_dialog (login_info *linfo)
     gtk_widget_show(linfo->dlg);
 }
 
-#define url_reserved(c) (strchr(";/?:@&=+$,<>%#\t\r\n\v\0", c) != NULL)
-
-static int count_specials (const char *s)
-{
-    int n = 0;
-
-    while (*s) {
-	if (url_reserved(*s) || !isprint(*s)) {
-	    n++;
-	}
-	s++;
-    }
-
-    return n;
-}
-
-static char *url_encode_string (const char *s)
-{
-    char *encstr, *p;
-    int n;
-
-    if (s == NULL) {
-	return NULL;
-    }
-
-    n = count_specials(s);
-    if (n == 0) {
-	return gretl_strdup(s);
-    }
-
-    encstr = malloc(strlen(s) + n * 2 + 1);
-
-    if (encstr != NULL) {
-	p = encstr;
-	while (*s) {
-	    if (*s == ' ') {
-		*p++ = '+';
-	    } else if (url_reserved(*s) || !isprint(*s)) {
-		sprintf(p, "%%%.2X", *s);
-		p += 3;
-	    } else {
-		*p++ = *s;
-	    } 
-	    s++;
-	}
-	*p = '\0';
-    }
-
-    return encstr;
-}
-
 /* before upload: check function package file against
    gretlfunc.dtd (but first check that the package name 
    is ASCII)
@@ -1391,8 +1350,6 @@ static int validate_package_file (const char *fname,
     return err;
 }
 
-#define USE_MULTIPART 0
-
 static void do_upload (const char *fname)
 {
     char *buf = NULL;
@@ -1432,30 +1389,10 @@ static void do_upload (const char *fname)
     if (err) {
 	error_printed = 1;
     } else {
-#if USE_MULTIPART
 	err = upload_function_package(linfo.login, linfo.pass, 
 				      path_last_element(fname),
 				      buf, &retbuf);
 	fprintf(stderr, "upload_function_package: err = %d\n", err);
-#else
-	char *ulogin = url_encode_string(linfo.login);
-	char *upass = url_encode_string(linfo.pass);
-	char *ufname = url_encode_string(path_last_element(fname));
-	char *ubuf = url_encode_string(buf);
-	
-	if (ubuf == NULL || ulogin == NULL || 
-	    upass == NULL || ufname == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = upload_function_package(ulogin, upass, ufname, 
-					  ubuf, &retbuf);
-	}
-	
-	free(ulogin);
-	free(upass);
-	free(ufname);
-	free(ubuf);
-#endif
     }
 
     /* reset default cursor */

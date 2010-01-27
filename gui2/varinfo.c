@@ -180,7 +180,7 @@ static void show_varinfo_changes (int v)
     }
 }
 
-static char *entry_get_trimmed_text (GtkWidget *w)
+static gchar *entry_get_trimmed_text (GtkWidget *w)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
     gchar *ret = g_strdup(s);
