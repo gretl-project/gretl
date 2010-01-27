@@ -59,6 +59,13 @@ static GtkWidget *open_fncall_dlg;
 
 static void fncall_OK_callback (GtkWidget *w, call_info *cinfo);
 
+static gchar **glib_str_array_new (int n)
+{
+    gchar **S = g_malloc0((n + 1) * sizeof *S);
+
+    return S;
+}
+
 static call_info *cinfo_new (void)
 {
     call_info *cinfo = mymalloc(sizeof *cinfo);
@@ -95,7 +102,7 @@ static int cinfo_args_init (call_info *cinfo)
     cinfo->ret = NULL;
 
     if (cinfo->n_params > 0) {
-	cinfo->args = strings_array_new(cinfo->n_params);
+	cinfo->args = glib_str_array_new(cinfo->n_params);
 	if (cinfo->args == NULL) {
 	    err = E_ALLOC;
 	}
@@ -107,7 +114,7 @@ static int cinfo_args_init (call_info *cinfo)
 static void cinfo_free (call_info *cinfo)
 {
     if (cinfo->n_params > 0) {
-	free_strings_array(cinfo->args, cinfo->n_params);
+	g_strfreev(cinfo->args);
     }
     if (cinfo->ret != NULL) {
 	g_free(cinfo->ret);
@@ -198,7 +205,7 @@ static gboolean update_int_arg (GtkWidget *w, call_info *cinfo)
     int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
 
-    free(cinfo->args[i]);
+    g_free(cinfo->args[i]);
     cinfo->args[i] = g_strdup_printf("%d", val);
 
     return FALSE;
@@ -208,7 +215,7 @@ static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
 {
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
 
-    free(cinfo->args[i]);
+    g_free(cinfo->args[i]);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	cinfo->args[i] = g_strdup("1");
     } else {
@@ -250,7 +257,7 @@ static gboolean update_arg (GtkComboBox *combo,
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo), "argnum"));
     char *s;
 
-    free(cinfo->args[i]);
+    g_free(cinfo->args[i]);
     s = cinfo->args[i] = combo_box_get_trimmed_text(combo);
 
     if (s != NULL && fn_param_type(cinfo->func, i) == GRETL_TYPE_DOUBLE) {
@@ -838,7 +845,7 @@ static int should_addressify_var (call_info *cinfo, int i)
 {
     char *numchars = "0123456789+-.,";
     int t = fn_param_type(cinfo->func, i);
-    char *s = cinfo->args[i];
+    gchar *s = cinfo->args[i];
 
     return (t == GRETL_TYPE_SCALAR_REF && strchr(numchars, *s)) ||
 	(t == GRETL_TYPE_MATRIX_REF && *s == '{');
@@ -847,7 +854,7 @@ static int should_addressify_var (call_info *cinfo, int i)
 static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 {
     int t = fn_param_type(cinfo->func, i);
-    char *s = cinfo->args[i];
+    gchar *s = cinfo->args[i];
     int err = 0;
 
     *add = 0;
@@ -886,7 +893,7 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 static int needs_quoting (call_info *cinfo, int i)
 {
     int t = fn_param_type(cinfo->func, i);
-    char *s = cinfo->args[i];
+    gchar *s = cinfo->args[i];
 
     return (t == GRETL_TYPE_STRING && 
 	    strcmp(s, "null") && 
@@ -906,7 +913,7 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
 	    sprintf(auxline, "genr %s=%s", auxname, cinfo->args[i]);
 	    err = generate(auxline, &Z, datainfo, OPT_NONE, NULL);
 	    if (!err) {
-		free(cinfo->args[i]);
+		g_free(cinfo->args[i]);
 		cinfo->args[i] = g_strdup(auxname);
 		pprintf(prn, "? %s\n", auxline);
 	    } 
@@ -915,11 +922,11 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
 	if (add) {
 	    strcpy(auxname, "&");
 	    strncat(auxname, cinfo->args[i], VNAMELEN);
-	    free(cinfo->args[i]);
+	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup(auxname);
 	} else if (needs_quoting(cinfo, i)) {
 	    sprintf(auxname, "\"%s\"", cinfo->args[i]);
-	    free(cinfo->args[i]);
+	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup(auxname);
 	}	
     }
