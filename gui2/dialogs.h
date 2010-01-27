@@ -42,6 +42,8 @@ void infobox (const char *template, ...);
 
 void warnbox (const char *template, ...);
 
+void maybe_warn (void);
+
 void file_read_errbox (const char *fname);
 
 void file_write_errbox (const char *fname);

@@ -3960,6 +3960,8 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 		g_free(txt);
 	    }
 	}
+
+	maybe_warn();
     }
 
     gretl_print_destroy(prn);
@@ -4981,6 +4983,7 @@ void add_logs_etc (int ci)
     } else {
 	populate_varlist();
 	mark_dataset_as_modified();
+	maybe_warn();
     }
 }
 

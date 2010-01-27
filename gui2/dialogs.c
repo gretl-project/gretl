@@ -4014,6 +4014,10 @@ static void msgbox (const char *msg, int msgtype)
     gchar *trmsg = NULL;
     GtkWidget *dialog;
 
+    if (msg == NULL) {
+	return;
+    }
+
     if (!g_utf8_validate(msg, -1, NULL)) {
 	/* it's possible we have an OS string from strerror() that is
 	   not UTF-8 encoded */
@@ -4083,6 +4087,15 @@ void warnbox (const char *template, ...)
     va_end(args);
 
     msgbox(msg, GTK_MESSAGE_WARNING);
+}
+
+void maybe_warn (void)
+{
+    if (check_gretl_warning()) {
+	const char *w = gretl_warnmsg_get();
+
+	msgbox(w, GTK_MESSAGE_WARNING);
+    }
 }
 
 void file_read_errbox (const char *fname)

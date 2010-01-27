@@ -76,8 +76,7 @@ enum gretl_warning_codes {
     W_GRADIENT = 1,
     W_GENMISS,     /* 2 */
     W_GENNAN,      /* 3 */
-    W_GENERIC,     /* 4 */
-    W_MAX          /* 5 */
+    W_MAX          /* 4 */
 };
 
 void errmsg (int err, PRN *prn);
