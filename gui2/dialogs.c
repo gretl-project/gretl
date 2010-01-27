@@ -4092,9 +4092,7 @@ void warnbox (const char *template, ...)
 void maybe_warn (void)
 {
     if (check_gretl_warning()) {
-	const char *w = gretl_warnmsg_get();
-
-	msgbox(w, GTK_MESSAGE_WARNING);
+	msgbox(gretl_warnmsg_get(), GTK_MESSAGE_WARNING);
     }
 }
 
