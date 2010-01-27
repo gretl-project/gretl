@@ -61,9 +61,21 @@ static void fncall_OK_callback (GtkWidget *w, call_info *cinfo);
 
 static gchar **glib_str_array_new (int n)
 {
-    gchar **S = g_malloc0((n + 1) * sizeof *S);
+    gchar **S = g_malloc0(n * sizeof *S);
 
     return S;
+}
+
+static void glib_str_array_free (gchar **S, int n)
+{
+    if (S != NULL) {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    g_free(S[i]);
+	}
+	g_free(S);
+    }
 }
 
 static call_info *cinfo_new (void)
@@ -114,7 +126,7 @@ static int cinfo_args_init (call_info *cinfo)
 static void cinfo_free (call_info *cinfo)
 {
     if (cinfo->n_params > 0) {
-	g_strfreev(cinfo->args);
+	glib_str_array_free(cinfo->args, cinfo->n_params);
     }
     if (cinfo->ret != NULL) {
 	g_free(cinfo->ret);

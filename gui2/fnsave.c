@@ -1281,26 +1281,20 @@ static void login_dialog (login_info *linfo)
     gtk_widget_show(linfo->dlg);
 }
 
-/* before upload: check function package file against
-   gretlfunc.dtd (but first check that the package name 
-   is ASCII)
+/* Check the package file against gretlfunc.dtd. We call
+   this automatically before uploading a package file to
+   the server.  The user can also choose to run the test by
+   clicking the "Validate" button in the package editor;
+   in that case we set the @verbose flag.
 */
 
 static int validate_package_file (const char *fname, int verbose)
 {
     const char *gretldir = gretl_home();
-    const char *pkgname;
     char dtdname[FILENAME_MAX];
     xmlDocPtr doc;
     xmlDtdPtr dtd;
     int err = 0;
-
-    pkgname = path_last_element(fname);
-
-    if (!gretl_is_ascii(pkgname)) {
-	errbox("Package name contains non-ASCII characters");
-	return 1;
-    }
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
@@ -1318,11 +1312,19 @@ static int validate_package_file (const char *fname, int verbose)
 	    fprintf(stderr, "Couldn't open DTD to check package\n");
 	}
     } else {
+	const char *pkgname = path_last_element(fname);
 	xmlValidCtxtPtr cvp = xmlNewValidCtxt();
 	PRN *prn = NULL;
+	int xerr = 0;
 
-	if (cvp == NULL || bufopen(&prn)) {
-	    /* ignore "internal" failure */
+	if (cvp == NULL) {
+	    xerr = 1;
+	    if (verbose) nomem();
+	} else {
+	    xerr = bufopen(&prn);
+	}
+
+	if (xerr) {
 	    xmlFreeDtd(dtd);
 	    xmlFreeDoc(doc);
 	    return 0;
