@@ -238,46 +238,78 @@ static void do_MA_partials (double *drv,
     }
 }
 
+/* special info struct for use with BHHH */
+
+struct model_info_ {
+    double ll;         /* log-likelihood */
+    const double **X;  /* data array */ 
+    int n_series;      /* number of additional series needed in the
+                          likelihood and/or score calculations */
+    double **series;   /* additional series */
+    arma_info *ainfo;  /* pointer to full ARMA info */
+};
+
+typedef struct model_info_ model_info;
+
+static void model_info_free (model_info *minfo)
+{
+    if (minfo != NULL) {
+	free(minfo->X);
+	doubles_array_free(minfo->series, minfo->n_series);
+	free(minfo);
+    }
+}
+
+static model_info *model_info_new (arma_info *ainfo)
+{
+    model_info *mi = malloc(sizeof *mi);
+
+    if (mi != NULL) {
+	mi->ll = NADBL;
+	mi->X = NULL;
+	mi->n_series = 0;
+	mi->series = NULL;
+	mi->ainfo = ainfo;
+    }
+
+    return mi;
+}
+
 /* Calculate ARMA log-likelihood.  This function is passed to the
    bhhh_max() routine as a callback. */
 
-static int arma_ll (double *coeff, 
-		    const double **bhX, double **Z, 
-		    model_info *arma,
-		    int do_score)
+static double bhhh_arma_ll (double *coeff, 
+			    gretl_matrix *S, 
+			    void *data,
+			    int do_score,
+			    int *err)
 {
-    int i, j, k, s, t;
-    int t1 = model_info_get_t1(arma);
-    int t2 = model_info_get_t2(arma);
-    int n = t2 - t1 + 1;
-
+    model_info *arma = (model_info *) data;
+    arma_info *ainfo = arma->ainfo;
+    const double **bhX = arma->X;
     const double *y = bhX[0];
     const double **X = bhX + 1;
-    double **series = model_info_get_series(arma);
-    double *e = series[0];
-    double **de = series + 1;
-    double **de_a, **de_sa, **de_m, **de_sm, **de_r;
     const double *phi, *Phi;
     const double *theta, *Theta;
     const double *beta;
-
-    arma_info *ainfo;
-
+    double **series = arma->series;
+    double *e = series[0];
+    double **de = series + 1;
+    double **de_a, **de_sa, **de_m, **de_sm, **de_r;
     double ll, s2 = 0.0;
-    int err = 0;
+    int i, j, k, s, t;
 
-    /* retrieve ARMA-specific information */
-    ainfo = model_info_get_extra_info(arma);
+    *err = 0;
 
     /* pointers to blocks of coefficients */
-    phi = coeff + ainfo->ifc;
-    Phi = phi + ainfo->np;
-    theta = Phi + ainfo->P;
+    phi =   coeff + ainfo->ifc;
+    Phi =     phi + ainfo->np;
+    theta =   Phi + ainfo->P;
     Theta = theta + ainfo->nq;
-    beta = Theta + ainfo->Q;
+    beta =  Theta + ainfo->Q;
 
     /* pointers to blocks of derivatives */
-    de_a = de + ainfo->ifc;
+    de_a =    de + ainfo->ifc;
     de_sa = de_a + ainfo->np;
     de_m = de_sa + ainfo->P;
     de_sm = de_m + ainfo->nq;
@@ -291,12 +323,13 @@ static int arma_ll (double *coeff,
     if (ma_out_of_bounds(ainfo, theta, Theta)) {
 	pputs(vprn, "arma: MA estimate(s) out of bounds\n");
 	fputs("arma: MA estimate(s) out of bounds\n", stderr);
-	return 1;
+	*err = E_NOCONV;
+	return NADBL;
     }
 
     /* update forecast errors */
 
-    for (t=t1; t<=t2; t++) {
+    for (t=ainfo->t1; t<=ainfo->t2; t++) {
 	int p;
 
 	e[t] = y[t];
@@ -333,7 +366,7 @@ static int arma_ll (double *coeff,
 	for (i=0; i<ainfo->q; i++) {
 	    if (MA_included(ainfo, i)) {
 		s = t - (i + 1);
-		if (s >= t1) {
+		if (s >= ainfo->t1) {
 		    e[t] -= theta[k] * e[s];
 		}
 		k++;
@@ -343,13 +376,13 @@ static int arma_ll (double *coeff,
 	/* seasonal MA component plus interactions */
 	for (j=0; j<ainfo->Q; j++) {
 	    s = t - (j + 1) * ainfo->pd;
-	    if (s >= t1) {
+	    if (s >= ainfo->t1) {
 		e[t] -= Theta[j] * e[s];
 		k = 0;
 		for (i=0; i<ainfo->q; i++) {
 		    if (MA_included(ainfo, i)) {
 			p = s - (i + 1);
-			if (p >= t1) {
+			if (p >= ainfo->t1) {
 			    e[t] -= Theta[j] * theta[k] * e[p];
 			}
 			k++;
@@ -368,16 +401,19 @@ static int arma_ll (double *coeff,
 
     /* get error variance and log-likelihood */
 
-    s2 /= (double) n;
+    s2 /= (double) ainfo->T;
+    ll = -ainfo->T * (0.5 * log(s2) + LN_SQRT_2_PI_P5);
 
-    ll = -n * (0.5 * log(s2) + LN_SQRT_2_PI_P5);
-    model_info_set_ll(arma, ll, do_score);
+    /* FIXME? */
+    if (do_score) {
+	arma->ll = ll;
+    } 
 
     if (do_score) {
 	int lag, xlag;
-	double x;
+	double x, Ssi;
 
-	for (t=t1; t<=t2; t++) {
+	for (t=ainfo->t1, s=0; t<=ainfo->t2; t++, s++) {
 
 	    /* the constant term (de_0) */
 	    if (ainfo->ifc) {
@@ -473,19 +509,20 @@ static int arma_ll (double *coeff,
 		do_MA_partials(de_r[j], ainfo, theta, Theta, t);
 	    }
 
-	    /* update OPG data set */
+	    /* update OPG data array */
 	    x = e[t] / s2; /* sqrt(s2)? does it matter? */
 	    for (i=0; i<ainfo->nc; i++) {
-		Z[i+1][t] = -de[i][t] * x;
+		Ssi = -de[i][t] * x;
+		gretl_matrix_set(S, s, i, Ssi);
 	    }
 	}
     }
 
     if (isnan(ll)) {
-	err = 1;
+	*err = E_NAN;
     }
 
-    return err;
+    return ll;
 }
 
 /*
@@ -2724,55 +2761,83 @@ static int user_arma_init (double *coeff, arma_info *ainfo,
 /* set up a model_info struct for passing to bhhh_max */
 
 static model_info *set_up_arma_model_info (arma_info *ainfo, 
-					   const DATAINFO *pdinfo)
+					   const DATAINFO *pdinfo,
+					   const double **X)
 {
-    double tol = libset_get_double(BHHH_TOLER);
-    model_info *arma;
+    model_info *minfo;
+    int ns = ainfo->nc + 1;
 
-    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, pdinfo->n, tol);
+    minfo = model_info_new(ainfo);
 
-    if (arma == NULL) return NULL;
+    if (minfo == NULL) {
+	return NULL;
+    }
 
-    model_info_set_opts(arma, PRESERVE_OPG_MODEL);
-    model_info_set_n_series(arma, ainfo->nc + 1);
+    minfo->X = X;
+    minfo->series = doubles_array_new(ns, ainfo->t2 + 1);
 
-    /* add pointer to ARMA-specific details */
-    model_info_set_extra_info(arma, ainfo);
+    if (minfo->series == NULL) {
+	model_info_free(minfo);
+	minfo = NULL;
+    } else {
+	int i, t;
 
-    return arma;
+	for (i=0; i<ns; i++) {
+	    for (t=0; t<=ainfo->t2; t++) {
+		minfo->series[i][t] = 0.0;
+	    }
+	}
+
+	minfo->n_series = ns;
+    }
+
+    return minfo;
 }
 
 /* retrieve results specific to bhhh procedure */
 
-static void 
+static int
 conditional_arma_model_prep (MODEL *pmod, model_info *minfo,
-			     double *theta)
+			     double *theta, gretl_matrix *V)
 {
-    double **series;
-    int i, t;
+    int i, t, err;
 
-    pmod->lnL = model_info_get_ll(minfo);
+    pmod->t1 = minfo->ainfo->t1;
+    pmod->t2 = minfo->ainfo->t2;
+    pmod->nobs = pmod->t2 - pmod->t1 + 1;
+    pmod->ncoeff = minfo->ainfo->nc;
+
+    err = gretl_model_allocate_storage(pmod);
+    if (err) {
+	return err;
+    }
+
+    pmod->lnL = minfo->ll;
+    pmod->sigma = NADBL; /* will be replaced */
 
     for (i=0; i<pmod->ncoeff; i++) {
 	pmod->coeff[i] = theta[i];
     }
 
-    series = model_info_get_series(minfo);
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->uhat[t] = series[0][t];
+	pmod->uhat[t] = minfo->series[0][t];
     }
 
-    pmod->sigma = NADBL; /* will be replaced */
+    err = gretl_model_write_vcv(pmod, V);
+
+    return err;
 }
 
-static int bhhh_arma (const int *alist, double *coeff, 
+static int bhhh_arma (const int *alist, double *theta, 
 		      const double **Z, const DATAINFO *pdinfo,
 		      arma_info *ainfo, MODEL *pmod,
 		      gretlopt opt, PRN *prn)
 {
     model_info *minfo = NULL;
     const double **X = NULL;
-    int err = 0;
+    gretl_matrix *V = NULL;
+    double tol = libset_get_double(BHHH_TOLER);
+    int iters, err = 0;
 
     /* construct virtual dataset for dep var, real regressors */
     X = make_armax_X(alist, ainfo, Z);
@@ -2781,33 +2846,41 @@ static int bhhh_arma (const int *alist, double *coeff,
 	return pmod->errcode;
     }
 
-    /* create model_info struct to feed to bhhh_max() */
-    minfo = set_up_arma_model_info(ainfo, pdinfo);
+    V = gretl_matrix_alloc(ainfo->nc, ainfo->nc);
+    if (V == NULL) {
+	free(X);
+	pmod->errcode = E_ALLOC;
+	return pmod->errcode;
+    }	
+
+    /* create model_info struct for bhhh_max(); this
+       takes ownership of the X array */
+    minfo = set_up_arma_model_info(ainfo, pdinfo, X);
     if (minfo == NULL) {
 	pmod->errcode = E_ALLOC;
-	free(X);
 	return pmod->errcode;
     }
 
-    /* call BHHH conditional ML function (OPG regression) */
-    err = bhhh_max(arma_ll, X, coeff, minfo, opt, prn);
+    err = bhhh_max(theta, ainfo->nc, ainfo->T,
+		   bhhh_arma_ll, tol, &iters,
+		   minfo, V, opt, prn);
     
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
 	pmod->errcode = E_NOCONV;
     } else {
-	MODEL *omod = model_info_capture_OPG_model(minfo);
-	double *theta = model_info_get_theta(minfo);
-
-	conditional_arma_model_prep(omod, minfo, theta);
-	write_arma_model_stats(omod, alist, ainfo, Z, pdinfo);
-	arma_model_add_roots(omod, ainfo, theta);
-	*pmod = *omod;
-	free(omod);
+	pmod->full_n = pdinfo->n;
+	err = conditional_arma_model_prep(pmod, minfo, theta, V);
     }
 
-    free(X);
+    if (!err) {
+	gretl_model_set_int(pmod, "iters", iters);
+	write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
+	arma_model_add_roots(pmod, ainfo, theta);
+    }
+
     model_info_free(minfo);
+    gretl_matrix_free(V);
 
     return pmod->errcode;
 }

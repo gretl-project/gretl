@@ -2325,7 +2325,7 @@ gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
     int i, j;
     double x;
 
-    if (src->cols != 1 || (n * (n + 1) != 2 * m)) {
+    if (src->cols != 1 || n * (n + 1) != 2 * m) {
 	return E_NONCONF;
     }
 

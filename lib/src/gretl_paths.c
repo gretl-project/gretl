@@ -2378,7 +2378,20 @@ const char *gretl_maybe_switch_dir (const char *fname)
     return fname;
 }
 
-/* argument should be of length FILENAME_MAX */
+/**
+ * gretl_maybe_prepend_dir:
+ * @fname: the original filename, which should be in a
+ * location of length %FILENAME_MAX.
+ *
+ * If @fname starts with the construction "~/" to indicate
+ * the user's %HOME, replace this with the full path to that
+ * directory.  Otherwise, if @fname is not already an
+ * absolute path, prepend either the gretl "shelldir" or the
+ * user's gretl working directory, depending on whether or
+ * %USE_CWD is set. Otherwise do nothing.
+ * 
+ * Returns: the possibly modified filename.
+ */
 
 char *gretl_maybe_prepend_dir (char *fname)
 {

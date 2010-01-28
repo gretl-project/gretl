@@ -1234,9 +1234,9 @@ double *copyvec (const double *src, int n)
 
 void doubles_array_free (double **X, int m)
 {
-    int i;
-
     if (X != NULL) {
+	int i;
+
 	for (i=0; i<m; i++) {
 	    free(X[i]);
 	}

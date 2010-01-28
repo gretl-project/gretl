@@ -17,56 +17,21 @@
  * 
  */
 
-typedef enum {
-    PRESERVE_OPG_MODEL = 1 << 0,  
-    FULL_VCV_MATRIX    = 1 << 1
-} BHHH_opts;
+#ifndef BHHH_MAX_H
+#define BHHH_MAX_H
 
-typedef struct _model_info model_info;
+typedef double (*LL_FUNC) (double *, 
+			   gretl_matrix *, 
+			   void *, 
+			   int,
+			   int *);
 
-typedef int (*LL_FUNC) (double *, 
-			const double **, 
-			double **, 
-			model_info *, 
-			int);
-
-void model_info_free (model_info *minfo);
-
-model_info *model_info_new (int k, int t1, int t2, int bign, double tol);
-
-MODEL *model_info_capture_OPG_model (model_info *minfo);
-
-gretl_matrix *model_info_get_VCV (model_info *minfo);
-
-double *model_info_get_theta (model_info *minfo);
-
-int model_info_get_t1 (const model_info *minfo);
-
-int model_info_get_t2 (const model_info *minfo);
-
-int model_info_get_n (const model_info *minfo);
-
-int model_info_get_iters (const model_info *minfo);
-
-void *model_info_get_extra_info (model_info *minfo);
-
-double model_info_get_ll (const model_info *minfo);
-
-double **model_info_get_series (const model_info *minfo);
-
-void model_info_set_extra_info (model_info *minfo, void *extra);
-
-void model_info_set_n_series (model_info *minfo, int n);
-
-int model_info_get_k (model_info *minfo);
-
-void model_info_set_opts (model_info *minfo, unsigned char opts);
-
-void model_info_set_ll (model_info *minfo, double ll, int do_score);
-
-int bhhh_max (LL_FUNC loglik, 
-	      const double **X, 
-	      const double *init_coeff,
-	      model_info *minfo, 
-	      gretlopt opt, 
+int bhhh_max (double *theta, int k, int T,
+	      LL_FUNC loglik, double toler, 
+	      int *itcount,
+	      void *data, 
+	      gretl_matrix *V,
+	      gretlopt opt,
 	      PRN *prn);
+
+#endif /* BHHH_MAX_H */

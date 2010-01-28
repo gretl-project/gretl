@@ -2698,8 +2698,8 @@ print_iter_info (int iter, double crit, int type, int k,
 	    x += g[i] * g[i];
 	}
 
-	pprintf(prn, " (%s %.5g, %s %.5g)", _("steplength"), sl,
-		_("gradient norm"), sqrt(x/k));
+	pprintf(prn, " (%s %.5g, %s %.2e)", _("steplength"), sl,
+		"gradnorm", sqrt(x/k));
     }
 
     pputc(prn, '\n');

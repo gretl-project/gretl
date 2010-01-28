@@ -876,8 +876,7 @@ fiml_get_std_errs (fiml_system *fsys, const gretl_matrix *R)
     }
 
     if (!err) {
-	gretl_matrix_free(fsys->sys->vcv);
-	fsys->sys->vcv = vcv;
+	gretl_matrix_replace(&fsys->sys->vcv, vcv);
     } else {
 	gretl_matrix_free(vcv);
     }
