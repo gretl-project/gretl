@@ -2411,6 +2411,35 @@ char *gretl_maybe_prepend_dir (char *fname)
     return fname;
 }
 
+/**
+ * gretl_read_user_file:
+ * @fname: name of file to open.
+ *
+ * Attempts to open @fname in read-only mode.  If the file
+ * is not found when the name is used "as is", we use
+ * gretl_maybe_prepend_dir() to prepend the user's gretl 
+ * working directory and try again.
+ *
+ * Returns: file pointer, or %NULL on failure.
+ */
+
+FILE *gretl_read_user_file (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "r");
+
+    if (fp == NULL) {
+	char fullname[FILENAME_MAX];
+
+	strcpy(fullname, fname);
+	gretl_maybe_prepend_dir(fullname);
+	if (*fullname != '\0') {
+	    fp = gretl_fopen(fullname, "r");
+	}
+    }    
+
+    return fp;
+}
+
 /* remove '.' and '..' from @path */
 
 int gretl_normalize_path (char *path)

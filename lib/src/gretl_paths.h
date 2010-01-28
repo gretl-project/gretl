@@ -76,6 +76,8 @@ int string_is_utf8 (const unsigned char *s);
 
 FILE *gretl_fopen (const char *fname, const char *mode);
 
+FILE *gretl_read_user_file (const char *fname);
+
 int gretl_open (const char *pathname, int flags);
 
 int gretl_rename (const char *oldpath, const char *newpath);

@@ -806,7 +806,7 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
     gretl_matrix *A = NULL;
     FILE *fp;
 
-    fp = gretl_fopen(fname, "r");
+    fp = gretl_read_user_file(fname);
 
     if (fp == NULL) {
 	*err = E_FOPEN;
