@@ -245,7 +245,7 @@ struct opg_info_ {
     const double **X;  /* data array */ 
     int n_series;      /* number of additional series needed in the
                           likelihood and/or score calculations */
-    double **series;   /* additional series */
+    double **series;   /* forecast errors and derivatives */
     arma_info *ainfo;  /* pointer to full ARMA info */
     gretl_matrix *G;   /* gradient matrix */
     gretl_matrix *V;   /* covariance matrix */
@@ -283,11 +283,11 @@ static opg_info *opg_info_new (arma_info *ainfo)
 /* Calculate ARMA log-likelihood.  This function is passed to the
    bhhh_max() routine as a callback. */
 
-static double bhhh_arma_ll (double *coeff, 
-			    gretl_matrix *G, 
-			    void *data,
-			    int do_score,
-			    int *err)
+static double bhhh_arma_callback (double *coeff, 
+				  gretl_matrix *G, 
+				  void *data,
+				  int do_score,
+				  int *err)
 {
     opg_info *ginfo = (opg_info *) data;
     arma_info *ainfo = ginfo->ainfo;
@@ -2867,7 +2867,7 @@ static int bhhh_arma (const int *alist, double *theta,
     }
 
     err = bhhh_max(theta, ainfo->nc, ginfo->G,
-		   bhhh_arma_ll, tol, &iters,
+		   bhhh_arma_callback, tol, &iters,
 		   ginfo, ginfo->V, opt, prn);
     
     if (err) {

@@ -28,7 +28,7 @@
  * @theta: array of adjustable coefficients.
  * @k: number of elements in @theta.
  * @G: T x @k matrix to hold the gradient.
- * @loglik: pointer to function for calculating log-likelihood and
+ * @callback: pointer to function for calculating log-likelihood and
  * score.
  * @toler: tolerance for convergence.
  * @itcount: location to receive count of iterations.
@@ -41,13 +41,13 @@
  * iteration of the Outer Product of the Gradient (OPG) regression 
  * with line search.
  *
- * @loglik is called to calculate the loglikelihood for the model
+ * @callback is called to calculate the loglikelihood for the model
  * in question.  The parameters passed to this function are:
  * (1) the current array of estimated coefficients; (2) @G; 
  * (3) the @data pointer; (4) an integer indicator that is 1 if 
  * the gradient should be calculated in @G, 0 if only the
  * loglikelihood is needed; and (5) an int pointer to receive
- * an error code. The return value from @loglik should be the
+ * an error code. The return value from @callback should be the
  * loglikelihood (or #NADBL on error).
  *
  * For an example of the use of such a function, see arma.c in the
@@ -58,7 +58,7 @@
 
 int bhhh_max (double *theta, int k, 
 	      gretl_matrix *G,
-	      BHHH_FUNC loglik,
+	      BHHH_FUNC callback,
 	      double toler, int *itcount,
 	      void *data, 
 	      gretl_matrix *V,
@@ -69,7 +69,7 @@ int bhhh_max (double *theta, int k,
     gretl_matrix *g = NULL;
     double *delta = NULL, *ctemp = NULL;
     double *grad;
-    int iters, itermax;
+    int iter, itermax;
     double minstep = 1.0e-06;
     double crit = 1.0;
     double stepsize = 0.25;
@@ -97,14 +97,14 @@ int bhhh_max (double *theta, int k,
 	goto bailout;
     }
 
-    iters = 0;
+    iter = 0;
     itermax = libset_get_int(BHHH_MAXITER);
     grad = g->val;
 
-    while (crit > toler && iters++ < itermax) {
+    while (crit > toler && iter++ < itermax) {
 
 	/* compute loglikelihood and score */
-	ll = loglik(theta, G, data, 1, &err); 
+	ll = callback(theta, G, data, 1, &err); 
 	if (err) {
 	    pputs(prn, "Error calculating log-likelihood\n");
 	    break;
@@ -129,7 +129,7 @@ int bhhh_max (double *theta, int k,
 	} 
 	
 	/* see if we've gone up...  (0 means don't compute score) */
-	ll2 = loglik(ctemp, G, data, 0, &err); 
+	ll2 = callback(ctemp, G, data, 0, &err); 
 
 #if BHHH_DEBUG
 	pprintf(prn, "bhhh loop: initial ll2 = %g\n", ll2);
@@ -146,7 +146,7 @@ int bhhh_max (double *theta, int k,
 		delta[i] *= 0.5;
 		ctemp[i] = theta[i] + delta[i];
 	    }
-	    ll2 = loglik(ctemp, G, data, 0, &err);
+	    ll2 = callback(ctemp, G, data, 0, &err);
 #if BHHH_DEBUG
 	    pprintf(prn, "bhhh loop: modified ll2 = %g\n", ll2);
 #endif
@@ -166,12 +166,14 @@ int bhhh_max (double *theta, int k,
 
 	/* print iteration info, if wanted */
 	if (opt & OPT_V) {
-	    print_iter_info(iters, ll, C_LOGLIK, k, theta, grad, 
+	    print_iter_info(iter, ll, C_LOGLIK, k, theta, grad, 
 			    stepsize, prn);
 	}
 
 	crit = ll2 - ll;  
     }
+
+    *itcount = iter;
 
     if (opt & OPT_V) {
 	print_iter_info(-1, ll, C_LOGLIK, k, theta, grad, 
@@ -184,15 +186,12 @@ int bhhh_max (double *theta, int k,
 
     if (err) {
 	fprintf(stderr, "bhhh_max: iters = %d, crit = %g, tol = %g, err = %d\n",
-		iters, crit, toler, err);
-    } else {
-	if (V != NULL) {
-	    /* run OPG once more, to get VCV */
-	    double s2 = 0.0;
+		iter, crit, toler, err);
+    } else if (V != NULL) {
+	/* run OPG once more, to get VCV */
+	double s2 = 0.0;
 
-	    err = gretl_matrix_ols(c, G, g, V, NULL, &s2);
-	} 
-	*itcount = iters;
+	err = gretl_matrix_ols(c, G, g, V, NULL, &s2);
     }
 
  bailout:
