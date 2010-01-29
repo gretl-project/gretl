@@ -33,7 +33,7 @@
  * @toler: tolerance for convergence.
  * @itcount: location to receive count of iterations.
  * @data: pointer to be passed to @loglik.
- * @V: matrix to receive covariance, or %NULL.
+ * @V: matrix in which to store covariance, or %NULL.
  * @opt: can include %OPT_V for verbose output.
  * @prn: printing struct for iteration info (or %NULL).
  *
@@ -41,13 +41,14 @@
  * implemented via iteration of the Outer Product of the Gradient 
  * (OPG) regression with line search.
  *
- * @loglik is called to calculate the log-likelihood for the model
+ * @loglik is called to calculate the loglikelihood for the model
  * in question.  The parameters passed to this function are:
  * (1) the current array of estimated coefficients; (2) @G; 
- * (3) the @data pointer; and (4) an integer that is 1 if 
- * the gradient should be calculated in @G, otherwise 0.
- *
- * Note that @G does nto have to initialized on entry.
+ * (3) the @data pointer; (4) an integer indicator that is 1 if 
+ * the gradient should be calculated in @G, 0 if only the
+ * loglikelihood is needed; and (5) an int pointer to receive
+ * an error code. The return value from @loglik should be the
+ * loglikelihood (or #NADBL on error).
  *
  * For an example of the use of such a function, see arma.c in the
  * %plugin directory of the gretl source.
