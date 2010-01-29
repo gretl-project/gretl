@@ -2848,6 +2848,7 @@ static int bhhh_arma (const int *alist, double *theta,
 {
     opg_info *ginfo = NULL;
     const double **X = NULL;
+    gretlopt bhhh_opt = OPT_NONE;
     double tol = libset_get_double(BHHH_TOLER);
     int iters, err = 0;
 
@@ -2858,17 +2859,20 @@ static int bhhh_arma (const int *alist, double *theta,
 	return pmod->errcode;
     }
 
-    /* create wrapper struct for bhhh_max(); this
-       takes ownership of the X array */
+    /* wrapper struct; this takes ownership of the X array */
     ginfo = set_up_arma_opg_info(ainfo, pdinfo, X);
     if (ginfo == NULL) {
 	pmod->errcode = E_ALLOC;
 	return pmod->errcode;
     }
 
+    if (opt & OPT_V) {
+	bhhh_opt |= OPT_V;
+    }
+
     err = bhhh_max(theta, ainfo->nc, ginfo->G,
 		   bhhh_arma_callback, tol, &iters,
-		   ginfo, ginfo->V, opt, prn);
+		   ginfo, ginfo->V, bhhh_opt, prn);
     
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);

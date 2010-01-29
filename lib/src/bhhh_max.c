@@ -23,11 +23,85 @@
 
 #define BHHH_DEBUG 0
 
+/* just experimental at this point: call @func to compute the
+   per-observation contributions to the log-likelihood in @L,
+   and use that info to compute @G numerically.
+*/
+
+static double bhhh_numeric (double *b, int k, 
+			    gretl_matrix *L,
+			    gretl_matrix *G,
+			    BHHH_FUNC func, void *data,
+			    int *err)
+{
+    const double h = 1.0e-8;
+    double gti, ret;
+    int i, t, T = G->rows;
+
+    /* loglik at current evaluation point */
+    ret = func(b, L, data, 0, err); 
+
+    for (i=0; i<k && !*err; i++) {
+	double ll, bi0 = b[i];
+
+	b[i] = bi0 - h;
+	ll = func(b, L, data, 0, err);
+	
+	if (na(ll)) {
+	    ret = NADBL;
+	    break;
+	}
+
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(G, t, i, L->val[t]);
+	}
+
+	b[i] = bi0 + h;
+	ll = func(b, L, data, 0, err); 
+
+	b[i] = bi0;
+
+	if (na(ll)) {
+	    ret = NADBL;
+	    break;
+	}
+
+	for (t=0; t<T; t++) {
+	    gti = gretl_matrix_get(G, t, i);
+	    gti = (L->val[t] - gti) / (2.0 * h);
+	    gretl_matrix_set(G, t, i, gti);
+	}
+    }
+
+    return ret;
+}
+
+/* in case we want to compute the score numerically */
+
+static gretl_matrix *make_score_matrix (gretl_matrix *L, int k, int *err)
+{
+    int T = gretl_matrix_rows(L);
+    gretl_matrix *G = NULL;
+
+    if (T == 0) {
+	*err = E_DATA;
+    } else if (T <= k) {
+	*err = E_DF;
+    } else {
+	G = gretl_zero_matrix_new(T, k);
+	if (G == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return G;
+}
+
 /**
  * bhhh_max:
  * @theta: array of adjustable coefficients.
  * @k: number of elements in @theta.
- * @G: T x @k matrix to hold the gradient.
+ * @M: T x @k matrix to hold the gradient.
  * @callback: pointer to function for calculating log-likelihood and
  * score.
  * @toler: tolerance for convergence.
@@ -57,7 +131,7 @@
  */
 
 int bhhh_max (double *theta, int k, 
-	      gretl_matrix *G,
+	      gretl_matrix *M,
 	      BHHH_FUNC callback,
 	      double toler, int *itcount,
 	      void *data, 
@@ -67,6 +141,7 @@ int bhhh_max (double *theta, int k,
 {
     gretl_matrix *c = NULL;
     gretl_matrix *g = NULL;
+    gretl_matrix *G = NULL;
     double *delta = NULL, *ctemp = NULL;
     double *grad;
     int iter, itermax;
@@ -74,11 +149,25 @@ int bhhh_max (double *theta, int k,
     double crit = 1.0;
     double stepsize = 0.25;
     double ll2, ll = 0.0;
+    int numeric = 0;
     int i, T, err = 0;
 
-    if (gretl_matrix_cols(G) != k) {
-	return E_NONCONF;
-    }
+    if (opt & OPT_N) {
+	fprintf(stderr, "*** BHHH: got OPT_N\n");
+	/* numerical score (not ready) */
+	G = make_score_matrix(M, k, &err);
+	if (err) {
+	    return err;
+	}
+	numeric = 1;
+    } else {	
+	/* analytical score */
+	if (gretl_matrix_cols(M) != k) {
+	    return E_NONCONF;
+	} else {
+	    G = M;
+	}
+    } 
 
     T = gretl_matrix_rows(G);
     c = gretl_unit_matrix_new(T, 1);
@@ -104,7 +193,12 @@ int bhhh_max (double *theta, int k,
     while (crit > toler && iter++ < itermax) {
 
 	/* compute loglikelihood and score */
-	ll = callback(theta, G, data, 1, &err); 
+	if (numeric) {
+	    ll = bhhh_numeric(theta, k, M, G, callback, data, &err);
+	} else {
+	    ll = callback(theta, G, data, 1, &err); 
+	}
+
 	if (err) {
 	    pputs(prn, "Error calculating log-likelihood\n");
 	    break;
@@ -112,7 +206,7 @@ int bhhh_max (double *theta, int k,
 
 #if BHHH_DEBUG
 	pprintf(prn, "Top of loop: ll = %g\n", ll);
-	gretl_matrix_print(S, "RHS in OPG regression");
+	gretl_matrix_print(G, "RHS in OPG regression");
 #endif
 
 	/* BHHH via OPG regression */
@@ -139,6 +233,7 @@ int bhhh_max (double *theta, int k,
 	    /* ... if not, halve the steplength */
 	    stepsize *= 0.5;
 	    if (stepsize < minstep) {
+		fprintf(stderr, "BHHH: hit minimum step size %g\n", minstep);
 		err = E_NOCONV;
 		break;
 	    }
@@ -198,6 +293,10 @@ int bhhh_max (double *theta, int k,
 
     gretl_matrix_free(c);
     gretl_matrix_free(g);
+
+    if (G != M) {
+	gretl_matrix_free(G);
+    }
 
     free(delta);
     free(ctemp);
