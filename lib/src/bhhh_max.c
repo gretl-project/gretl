@@ -27,12 +27,12 @@
  * bhhh_max:
  * @theta: array of adjustable coefficients.
  * @k: number of elements in @theta.
- * @T: number of observations used.
+ * @G: T x @k matrix to hold the gradient.
  * @loglik: pointer to function for calculating log-likelihood and
  * score.
  * @toler: tolerance for convergence.
  * @itcount: location to receive count of iterations.
- * @data: data to be passed to @loglik.
+ * @data: pointer to be passed to @loglik.
  * @V: matrix to receive covariance, or %NULL.
  * @opt: can include %OPT_V for verbose output.
  * @prn: printing struct for iteration info (or %NULL).
@@ -43,11 +43,11 @@
  *
  * @loglik is called to calculate the log-likelihood for the model
  * in question.  The parameters passed to this function are:
- * (1) the array of estimated coefficients; (2) an auxiliary matrix 
- * array %S; (3) the @data pointer; and (4) an integer that is 1 if 
- * the score should be calculated in %Z, otherwise 0.  The %S 
- * matrix is @T x @k; it is allocated within %bhhh_max and is freed 
- * on exit.  
+ * (1) the current array of estimated coefficients; (2) @G; 
+ * (3) the @data pointer; and (4) an integer that is 1 if 
+ * the gradient should be calculated in @G, otherwise 0.
+ *
+ * Note that @G does nto have to initialized on entry.
  *
  * For an example of the use of such a function, see arma.c in the
  * %plugin directory of the gretl source.
@@ -55,8 +55,9 @@
  * Returns: 0 on successful completion, non-zero error code otherwise.
  */
 
-int bhhh_max (double *theta, int k, int T,
-	      LL_FUNC loglik,
+int bhhh_max (double *theta, int k, 
+	      gretl_matrix *G,
+	      BHHH_FUNC loglik,
 	      double toler, int *itcount,
 	      void *data, 
 	      gretl_matrix *V,
@@ -64,7 +65,6 @@ int bhhh_max (double *theta, int k, int T,
 	      PRN *prn)
 {
     gretl_matrix *c = NULL;
-    gretl_matrix *S = NULL;
     gretl_matrix *gcoeff = NULL;
     double *delta = NULL, *ctemp = NULL;
     int iters, itermax;
@@ -72,13 +72,17 @@ int bhhh_max (double *theta, int k, int T,
     double crit = 1.0;
     double stepsize = 0.25;
     double ll2, ll = 0.0;
-    int i, err = 0;
+    int i, T, err = 0;
 
-    S = gretl_zero_matrix_new(T, k);
+    if (gretl_matrix_cols(G) != k) {
+	return E_NONCONF;
+    }
+
+    T = gretl_matrix_rows(G);
     c = gretl_unit_matrix_new(T, 1);
     gcoeff = gretl_column_vector_alloc(k);
 
-    if (S == NULL || c == NULL || gcoeff == NULL) {
+    if (c == NULL || gcoeff == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -97,7 +101,7 @@ int bhhh_max (double *theta, int k, int T,
     while (crit > toler && iters++ < itermax) {
 
 	/* compute loglikelihood and score */
-	ll = loglik(theta, S, data, 1, &err); 
+	ll = loglik(theta, G, data, 1, &err); 
 	if (err) {
 	    pputs(prn, "Error calculating log-likelihood\n");
 	    break;
@@ -109,7 +113,7 @@ int bhhh_max (double *theta, int k, int T,
 #endif
 
 	/* BHHH via OPG regression */
-	err = gretl_matrix_ols(c, S, gcoeff, NULL, NULL, NULL);
+	err = gretl_matrix_ols(c, G, gcoeff, NULL, NULL, NULL);
 
 	if (err) {
 	    fprintf(stderr, "BHHH OLS error code = %d\n", err);
@@ -122,7 +126,7 @@ int bhhh_max (double *theta, int k, int T,
 	} 
 	
 	/* see if we've gone up...  (0 means don't compute score) */
-	ll2 = loglik(ctemp, S, data, 0, &err); 
+	ll2 = loglik(ctemp, G, data, 0, &err); 
 
 #if BHHH_DEBUG
 	pprintf(prn, "bhhh loop: initial ll2 = %g\n", ll2);
@@ -139,7 +143,7 @@ int bhhh_max (double *theta, int k, int T,
 		delta[i] *= 0.5;
 		ctemp[i] = theta[i] + delta[i];
 	    }
-	    ll2 = loglik(ctemp, S, data, 0, &err);
+	    ll2 = loglik(ctemp, G, data, 0, &err);
 #if BHHH_DEBUG
 	    pprintf(prn, "bhhh loop: modified ll2 = %g\n", ll2);
 #endif
@@ -183,14 +187,13 @@ int bhhh_max (double *theta, int k, int T,
 	    /* run OPG once more, to get VCV */
 	    double s2 = 0.0;
 
-	    err = gretl_matrix_ols(c, S, gcoeff, V, NULL, &s2);
+	    err = gretl_matrix_ols(c, G, gcoeff, V, NULL, &s2);
 	} 
 	*itcount = iters;
     }
 
  bailout:
 
-    gretl_matrix_free(S);
     gretl_matrix_free(c);
     gretl_matrix_free(gcoeff);
 

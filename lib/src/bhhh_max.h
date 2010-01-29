@@ -20,15 +20,16 @@
 #ifndef BHHH_MAX_H
 #define BHHH_MAX_H
 
-typedef double (*LL_FUNC) (double *, 
-			   gretl_matrix *, 
-			   void *, 
-			   int,
-			   int *);
+typedef double (*BHHH_FUNC) (double *, 
+			     gretl_matrix *, 
+			     void *, 
+			     int,
+			     int *);
 
-int bhhh_max (double *theta, int k, int T,
-	      LL_FUNC loglik, double toler, 
-	      int *itcount,
+int bhhh_max (double *theta, int k, 
+	      gretl_matrix *G,
+	      BHHH_FUNC loglik, 
+	      double toler, int *itcount,
 	      void *data, 
 	      gretl_matrix *V,
 	      gretlopt opt,

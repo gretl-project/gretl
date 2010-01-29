@@ -8978,7 +8978,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 {
     gretl_matrix *XTX = NULL;
     int nasty = 0;
-    int k, err = 0;
+    int k, T, err = 0;
 
     if (gretl_is_null_matrix(y) ||
 	gretl_is_null_matrix(X) ||
@@ -8991,18 +8991,24 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     k = X->cols;
+    T = X->rows;
 
-    if (gretl_vector_get_length(b) != k) {
-	err = E_NONCONF;
+    if (gretl_vector_get_length(b) != k ||
+	gretl_vector_get_length(y) != T) {
+	return E_NONCONF;
+    }
+
+    if (T < k) {
+	return E_DF;
     }
 
     if (vcv != NULL && (vcv->rows != k || vcv->cols != k)) {
-	err = E_NONCONF;
+	return E_NONCONF;
     }    
 
-    if (!err) {
-	XTX = gretl_matrix_packed_XTX_new(X, &nasty);
-	if (XTX == NULL) err = E_ALLOC;
+    XTX = gretl_matrix_packed_XTX_new(X, &nasty);
+    if (XTX == NULL) {
+	err = E_ALLOC;
     }
 
     if (!err && !nasty) {

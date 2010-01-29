@@ -240,59 +240,64 @@ static void do_MA_partials (double *drv,
 
 /* special info struct for use with BHHH */
 
-struct model_info_ {
+struct opg_info_ {
     double ll;         /* log-likelihood */
     const double **X;  /* data array */ 
     int n_series;      /* number of additional series needed in the
                           likelihood and/or score calculations */
     double **series;   /* additional series */
     arma_info *ainfo;  /* pointer to full ARMA info */
+    gretl_matrix *G;   /* gradient matrix */
+    gretl_matrix *V;   /* covariance matrix */
 };
 
-typedef struct model_info_ model_info;
+typedef struct opg_info_ opg_info;
 
-static void model_info_free (model_info *minfo)
+static void opg_info_free (opg_info *ginfo)
 {
-    if (minfo != NULL) {
-	free(minfo->X);
-	doubles_array_free(minfo->series, minfo->n_series);
-	free(minfo);
+    if (ginfo != NULL) {
+	free(ginfo->X);
+	doubles_array_free(ginfo->series, ginfo->n_series);
+	gretl_matrix_free(ginfo->G);
+	gretl_matrix_free(ginfo->V);
+	free(ginfo);
     }
 }
 
-static model_info *model_info_new (arma_info *ainfo)
+static opg_info *opg_info_new (arma_info *ainfo)
 {
-    model_info *mi = malloc(sizeof *mi);
+    opg_info *gi = malloc(sizeof *gi);
 
-    if (mi != NULL) {
-	mi->ll = NADBL;
-	mi->X = NULL;
-	mi->n_series = 0;
-	mi->series = NULL;
-	mi->ainfo = ainfo;
+    if (gi != NULL) {
+	gi->ll = NADBL;
+	gi->X = NULL;
+	gi->n_series = 0;
+	gi->series = NULL;
+	gi->ainfo = ainfo;
+	gi->G = gi->V = NULL;
     }
 
-    return mi;
+    return gi;
 }
 
 /* Calculate ARMA log-likelihood.  This function is passed to the
    bhhh_max() routine as a callback. */
 
 static double bhhh_arma_ll (double *coeff, 
-			    gretl_matrix *S, 
+			    gretl_matrix *G, 
 			    void *data,
 			    int do_score,
 			    int *err)
 {
-    model_info *arma = (model_info *) data;
-    arma_info *ainfo = arma->ainfo;
-    const double **bhX = arma->X;
+    opg_info *ginfo = (opg_info *) data;
+    arma_info *ainfo = ginfo->ainfo;
+    const double **bhX = ginfo->X;
     const double *y = bhX[0];
     const double **X = bhX + 1;
     const double *phi, *Phi;
     const double *theta, *Theta;
     const double *beta;
-    double **series = arma->series;
+    double **series = ginfo->series;
     double *e = series[0];
     double **de = series + 1;
     double **de_a, **de_sa, **de_m, **de_sm, **de_r;
@@ -406,12 +411,12 @@ static double bhhh_arma_ll (double *coeff,
 
     /* FIXME? */
     if (do_score) {
-	arma->ll = ll;
+	ginfo->ll = ll;
     } 
 
     if (do_score) {
 	int lag, xlag;
-	double x, Ssi;
+	double x, Gsi;
 
 	for (t=ainfo->t1, s=0; t<=ainfo->t2; t++, s++) {
 
@@ -512,8 +517,8 @@ static double bhhh_arma_ll (double *coeff,
 	    /* update OPG data array */
 	    x = e[t] / s2; /* sqrt(s2)? does it matter? */
 	    for (i=0; i<ainfo->nc; i++) {
-		Ssi = -de[i][t] * x;
-		gretl_matrix_set(S, s, i, Ssi);
+		Gsi = -de[i][t] * x;
+		gretl_matrix_set(G, s, i, Gsi);
 	    }
 	}
     }
@@ -2758,61 +2763,70 @@ static int user_arma_init (double *coeff, arma_info *ainfo,
     return 0;
 }
 
-/* set up a model_info struct for passing to bhhh_max */
+/* set up a opg_info struct for passing to bhhh_max */
 
-static model_info *set_up_arma_model_info (arma_info *ainfo, 
-					   const DATAINFO *pdinfo,
-					   const double **X)
+static opg_info *set_up_arma_opg_info (arma_info *ainfo, 
+				       const DATAINFO *pdinfo,
+				       const double **X)
 {
-    model_info *minfo;
-    int ns = ainfo->nc + 1;
+    opg_info *ginfo;
+    int k = ainfo->nc;
+    int ns = k + 1;
 
-    minfo = model_info_new(ainfo);
+    ginfo = opg_info_new(ainfo);
 
-    if (minfo == NULL) {
+    if (ginfo == NULL) {
 	return NULL;
     }
 
-    minfo->X = X;
-    minfo->series = doubles_array_new(ns, ainfo->t2 + 1);
+    ginfo->G = gretl_zero_matrix_new(ainfo->T, k);
+    ginfo->V = gretl_matrix_alloc(k, k);
 
-    if (minfo->series == NULL) {
-	model_info_free(minfo);
-	minfo = NULL;
+    if (ginfo->G == NULL || ginfo->V == NULL) {
+	opg_info_free(ginfo);
+	return NULL;
+    }
+
+    ginfo->X = X;
+    ginfo->series = doubles_array_new(ns, ainfo->t2 + 1);
+
+    if (ginfo->series == NULL) {
+	opg_info_free(ginfo);
+	ginfo = NULL;
     } else {
 	int i, t;
 
 	for (i=0; i<ns; i++) {
 	    for (t=0; t<=ainfo->t2; t++) {
-		minfo->series[i][t] = 0.0;
+		ginfo->series[i][t] = 0.0;
 	    }
 	}
 
-	minfo->n_series = ns;
+	ginfo->n_series = ns;
     }
 
-    return minfo;
+    return ginfo;
 }
 
 /* retrieve results specific to bhhh procedure */
 
 static int
-conditional_arma_model_prep (MODEL *pmod, model_info *minfo,
-			     double *theta, gretl_matrix *V)
+conditional_arma_model_prep (MODEL *pmod, opg_info *ginfo,
+			     double *theta)
 {
     int i, t, err;
 
-    pmod->t1 = minfo->ainfo->t1;
-    pmod->t2 = minfo->ainfo->t2;
+    pmod->t1 = ginfo->ainfo->t1;
+    pmod->t2 = ginfo->ainfo->t2;
     pmod->nobs = pmod->t2 - pmod->t1 + 1;
-    pmod->ncoeff = minfo->ainfo->nc;
+    pmod->ncoeff = ginfo->ainfo->nc;
 
     err = gretl_model_allocate_storage(pmod);
     if (err) {
 	return err;
     }
 
-    pmod->lnL = minfo->ll;
+    pmod->lnL = ginfo->ll;
     pmod->sigma = NADBL; /* will be replaced */
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -2820,10 +2834,10 @@ conditional_arma_model_prep (MODEL *pmod, model_info *minfo,
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->uhat[t] = minfo->series[0][t];
+	pmod->uhat[t] = ginfo->series[0][t];
     }
 
-    err = gretl_model_write_vcv(pmod, V);
+    err = gretl_model_write_vcv(pmod, ginfo->V);
 
     return err;
 }
@@ -2833,9 +2847,8 @@ static int bhhh_arma (const int *alist, double *theta,
 		      arma_info *ainfo, MODEL *pmod,
 		      gretlopt opt, PRN *prn)
 {
-    model_info *minfo = NULL;
+    opg_info *ginfo = NULL;
     const double **X = NULL;
-    gretl_matrix *V = NULL;
     double tol = libset_get_double(BHHH_TOLER);
     int iters, err = 0;
 
@@ -2846,31 +2859,24 @@ static int bhhh_arma (const int *alist, double *theta,
 	return pmod->errcode;
     }
 
-    V = gretl_matrix_alloc(ainfo->nc, ainfo->nc);
-    if (V == NULL) {
-	free(X);
-	pmod->errcode = E_ALLOC;
-	return pmod->errcode;
-    }	
-
-    /* create model_info struct for bhhh_max(); this
+    /* create wrapper struct for bhhh_max(); this
        takes ownership of the X array */
-    minfo = set_up_arma_model_info(ainfo, pdinfo, X);
-    if (minfo == NULL) {
+    ginfo = set_up_arma_opg_info(ainfo, pdinfo, X);
+    if (ginfo == NULL) {
 	pmod->errcode = E_ALLOC;
 	return pmod->errcode;
     }
 
-    err = bhhh_max(theta, ainfo->nc, ainfo->T,
+    err = bhhh_max(theta, ainfo->nc, ginfo->G,
 		   bhhh_arma_ll, tol, &iters,
-		   minfo, V, opt, prn);
+		   ginfo, ginfo->V, opt, prn);
     
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
-	pmod->errcode = E_NOCONV;
+	pmod->errcode = err;
     } else {
 	pmod->full_n = pdinfo->n;
-	err = conditional_arma_model_prep(pmod, minfo, theta, V);
+	err = conditional_arma_model_prep(pmod, ginfo, theta);
     }
 
     if (!err) {
@@ -2879,8 +2885,7 @@ static int bhhh_arma (const int *alist, double *theta,
 	arma_model_add_roots(pmod, ainfo, theta);
     }
 
-    model_info_free(minfo);
-    gretl_matrix_free(V);
+    opg_info_free(ginfo);
 
     return pmod->errcode;
 }
