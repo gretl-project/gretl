@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-01-28 01:24+0800\n"
+"PO-Revision-Date: 2010-01-30 01:10+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -4157,7 +4157,7 @@ msgstr "複製資料"
 #: lib/src/interact.c:1817
 #, c-format
 msgid "%s: required parameter is missing"
-msgstr ""
+msgstr "%s: 少了必要參數"
 
 #: lib/src/interact.c:1838
 #, fuzzy, c-format
@@ -4183,9 +4183,9 @@ msgstr "'%s' 並不是變數的名稱 (注意英大小寫是否有誤!)"
 #: lib/src/interact.c:5152
 #: cli/cli_object.c:54
 #: gui2/objectsave.c:62
-#, fuzzy, c-format
+#, c-format
 msgid "command '%s' not recognized"
-msgstr "   %s: 可能不是1年\n"
+msgstr "'%s' 並不是有效的 gretl 指令"
 
 #: lib/src/interact.c:2604
 #, c-format
@@ -4201,7 +4201,7 @@ msgstr ""
 #: lib/src/interact.c:2833
 #, c-format
 msgid "Unable to access the file %s.\n"
-msgstr ""
+msgstr "無法存取檔案 %s.\n"
 
 #: lib/src/interact.c:2752
 msgid ""
@@ -4214,15 +4214,16 @@ msgstr ""
 "需要某一函數之說明, 請輸入: help 函數名稱"
 
 #: lib/src/interact.c:2753
-#, fuzzy
 msgid " (e.g. help qrdecomp)\n"
-msgstr "/說明/有關 gretl(_A)"
+msgstr " (例如: help qrdecomp)\n"
 
 #: lib/src/interact.c:2788
 msgid ""
 "\n"
 "Valid gretl commands are:\n"
 msgstr ""
+"\n"
+"可用的 gretl 指令有:\n"
 
 #: lib/src/interact.c:2803
 msgid ""
@@ -4230,29 +4231,31 @@ msgid ""
 "\n"
 "For help on a specific command, type: help cmdname"
 msgstr ""
+"\n"
+"\n"
+"要看某一個指令的說明, 請輸入: help [該指令]"
 
 #: lib/src/interact.c:2804
-#, fuzzy
 msgid " (e.g. help smpl)\n"
-msgstr "/說明/有關 gretl(_A)"
+msgstr " (例如: help smpl)\n"
 
 #: lib/src/interact.c:2805
 msgid "You can also do 'help functions' for a list of functions\n"
-msgstr ""
+msgstr "你也可以輸入 'help functions' 來列出所有可用的函數列表\n"
 
 #: lib/src/interact.c:2811
 msgid "genrcli.hlp"
 msgstr ""
 
 #: lib/src/interact.c:2827
-#, fuzzy, c-format
+#, c-format
 msgid "\"%s\" is not a gretl command.\n"
-msgstr "殘差平方和 (%g) 並未 > 0"
+msgstr "\"%s\" 不是 gretl 的指令...\n"
 
 #: lib/src/interact.c:2865
 #, c-format
 msgid "%s: sorry, no help available.\n"
-msgstr ""
+msgstr "%s: 抱歉, 尚無任何說明.\n"
 
 #: lib/src/interact.c:2887
 #: lib/src/interact.c:2895
@@ -4263,9 +4266,8 @@ msgstr ""
 
 #: lib/src/interact.c:3686
 #: lib/src/printout.c:1606
-#, fuzzy
 msgid "No series are defined\n"
-msgstr "你已經新增了 %s 變數至 %s 資料檔"
+msgstr "尚未定義任何資料變數 (no series)\n"
 
 #: lib/src/interact.c:3690
 #, fuzzy
@@ -6232,31 +6234,31 @@ msgstr ""
 #: lib/src/plotspec.c:133
 #: lib/src/plotspec.c:156
 msgid "lines"
-msgstr ""
+msgstr "折線 (lines)"
 
 #: lib/src/plotspec.c:134
 msgid "points"
-msgstr ""
+msgstr "資料標記點 (points)"
 
 #: lib/src/plotspec.c:135
 msgid "linespoints"
-msgstr ""
+msgstr "點+線 (linespoints)"
 
 #: lib/src/plotspec.c:136
 msgid "impulses"
-msgstr ""
+msgstr "柱狀圖 (impulses)"
 
 #: lib/src/plotspec.c:137
 msgid "dots"
-msgstr ""
+msgstr "點"
 
 #: lib/src/plotspec.c:138
 msgid "steps"
-msgstr ""
+msgstr "梯狀圖 (steps)"
 
 #: lib/src/plotspec.c:139
 msgid "boxes"
-msgstr ""
+msgstr "直條圖(空心)"
 
 #: lib/src/plotspec.c:212
 msgid "left top"
@@ -7527,6 +7529,19 @@ msgid ""
 "Example of run mode usage:\n"
 " gretlcli -r myfile.inp\n"
 msgstr ""
+"\n"
+"你可以在指令行 (gretl console) 輸入一個資料檔名.\n"
+"可用參數:\n"
+" -b or --batch     執行指令檔 (script) 後離開\n"
+" -r or --run       執行指令檔 (script) 後停留在指令行\n"
+" -h or --help      輸出此資訊後離開\n"
+" -v or --version   Print version info and exit.\n"
+" -e or --english   Force use of English rather than translation.\n"
+" -q or --quiet     Print less verbose program information.\n"
+"Example of batch mode usage:\n"
+" gretlcli -b myfile.inp >myfile.out\n"
+"Example of run mode usage:\n"
+" gretlcli -r myfile.inp\n"
 
 #: cli/gretlcli.c:106
 #, c-format
@@ -7534,6 +7549,8 @@ msgid ""
 "\n"
 "gretlcli: error executing script: halting\n"
 msgstr ""
+"\n"
+"gretlcli: 指令檔執行有誤: 已經停止執行 (halting)\n"
 
 #: cli/gretlcli.c:524
 #, c-format
@@ -7541,11 +7558,13 @@ msgid ""
 "\n"
 "\"help\" gives a list of commands\n"
 msgstr ""
+"\n"
+"輸入\"help\" 可列出所有可用指令\n"
 
 #: cli/gretlcli.c:527
 #, c-format
 msgid "help file %s is not accessible\n"
-msgstr ""
+msgstr "說明檔 %s 無法讀取\n"
 
 #: cli/gretlcli.c:538
 #, c-format
@@ -7559,7 +7578,7 @@ msgstr "開啟新資料檔時, 將會關閉現在使用中之資料檔, 要繼�
 
 #: cli/gretlcli.c:672
 msgid "OK, staying with current data set\n"
-msgstr ""
+msgstr "OK, 繼續使用目前的資料檔\n"
 
 #: cli/gretlcli.c:799
 #: gui2/library.c:7640
@@ -7576,7 +7595,7 @@ msgstr ""
 #: gui2/library.c:5668
 #: gui2/library.c:7734
 msgid "Take note: variables have been renumbered"
-msgstr ""
+msgstr "注意: 變數代碼在刪除變數後, 已重新設定"
 
 #: cli/gretlcli.c:873
 msgid ""
@@ -7638,14 +7657,12 @@ msgid "Dataset cleared\n"
 msgstr "資料類型(_s)"
 
 #: gui2/about.c:35
-#, fuzzy
 msgid "\"By econometricians, for econometricians.\""
-msgstr "檢查有無更新版(_u)"
+msgstr "\"由計量學者替計量使用者設計之軟體.\""
 
 #: gui2/about.c:100
-#, fuzzy
 msgid "About gretl"
-msgstr "有關 gretl(_A)"
+msgstr "有關 gretl"
 
 #: gui2/about.c:164
 #: gui2/about.c:166
@@ -7712,7 +7729,6 @@ msgid "Weibull(%g, %g)"
 msgstr "weibull 分配"
 
 #: gui2/calculator.c:418
-#, fuzzy
 msgid "Standard errors"
 msgstr "標準誤"
 
@@ -7721,9 +7737,8 @@ msgstr "標準誤"
 #: gui2/database.c:197
 #: gui2/filters.c:708
 #: gui2/gpt_control.c:1137
-#, fuzzy
 msgid "gnuplot command failed"
-msgstr "儲存指令檔"
+msgstr "gnuplot 指令失敗"
 
 #: gui2/calculator.c:963
 msgid "Incomplete entry"
@@ -7770,9 +7785,8 @@ msgid ""
 msgstr ""
 
 #: gui2/calculator.c:1481
-#, fuzzy
 msgid "nonparametric test"
-msgstr "常態性檢定(_N)"
+msgstr "無母數檢定 (nonparametric test)"
 
 #: gui2/calculator.c:1507
 #, c-format
@@ -7782,9 +7796,9 @@ msgstr "虛無假設 H0: 母體均數 = %g\n"
 #: gui2/calculator.c:1508
 #: gui2/calculator.c:1537
 #: gui2/calculator.c:1559
-#, fuzzy, c-format
+#, c-format
 msgid "Sample size: n = %d\n"
-msgstr "樣本大小 %d\n"
+msgstr "樣本大小: n = %d\n"
 
 #: gui2/calculator.c:1509
 #, c-format
@@ -7794,15 +7808,15 @@ msgstr ""
 #: gui2/calculator.c:1513
 #: gui2/calculator.c:1561
 #: gui2/calculator.c:1641
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: z = (%g - %g)/%g = %g\n"
-msgstr "基本假設檢定(_T)"
+msgstr "統計值: z = (%g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:1522
 #: gui2/calculator.c:1621
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: t(%d) = (%g - %g)/%g = %g\n"
-msgstr "基本假設檢定(_T)"
+msgstr "統計值: t(%d) = (%g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:1536
 #, c-format
@@ -7810,14 +7824,14 @@ msgid "Null hypothesis: population variance = %g\n"
 msgstr "虛無假設 H0: 母體變異數 = %g\n"
 
 #: gui2/calculator.c:1538
-#, fuzzy, c-format
+#, c-format
 msgid "Sample variance = %g\n"
 msgstr "樣本變異數 = %g\n"
 
 #: gui2/calculator.c:1539
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: chi-square(%d) = %d * %g/%g = %g\n"
-msgstr "常態性檢定"
+msgstr "統計值: 卡方分配 chi-square(%d) = %d * %g/%g = %g\n"
 
 #: gui2/calculator.c:1558
 #, c-format
@@ -7825,9 +7839,9 @@ msgid "Null hypothesis: population proportion = %g\n"
 msgstr "虛無假設 H0: 母體比例 = %g\n"
 
 #: gui2/calculator.c:1560
-#, fuzzy, c-format
+#, c-format
 msgid "Sample proportion = %g\n"
-msgstr "示範資料檔(_S)..."
+msgstr "樣本比例 = %g\n"
 
 #: gui2/calculator.c:1573
 #, c-format
@@ -7835,17 +7849,19 @@ msgid "Null hypothesis: Difference of means = %g\n"
 msgstr "虛無假設 H0: 平均數差 = %g\n"
 
 #: gui2/calculator.c:1576
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Sample 1:\n"
 " n = %d, mean = %g, s.d. = %g\n"
-msgstr "樣本均數"
+msgstr ""
+"Sample 1:\n"
+" 樣本數 (n) = %d, 平均數 = %g, 標準差 = %g\n"
 
 #: gui2/calculator.c:1581
 #: gui2/calculator.c:1592
-#, fuzzy, c-format
+#, c-format
 msgid " standard error of mean = %g\n"
-msgstr "全距-均數圖()R)"
+msgstr "平均數之標準誤 (standard error) = %g\n"
 
 #: gui2/calculator.c:1583
 #: gui2/calculator.c:1594
@@ -7854,21 +7870,23 @@ msgid " 95%% confidence interval for mean: %g to %g\n"
 msgstr ""
 
 #: gui2/calculator.c:1587
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Sample 2:\n"
 " n = %d, mean = %g, s.d. = %g\n"
-msgstr "樣本均數"
+msgstr ""
+"Sample 2:\n"
+" 樣本數 (n) = %d, 平均數 = %g, 標準差 = %g\n"
 
 #: gui2/calculator.c:1635
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: z = (%g - %g - %g)/%g = %g\n"
-msgstr "基本假設檢定(_T)"
+msgstr "統計值: z = (%g - %g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:1638
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: z = [(%g - %g) - (%g)]/%g = %g\n"
-msgstr "基本假設檢定(_T)"
+msgstr "統計值: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1654
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
@@ -7879,64 +7897,67 @@ msgid "Null hypothesis: The population variances are equal\n"
 msgstr "虛無假設 H0: 母體變異數相等l\n"
 
 #: gui2/calculator.c:1663
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Sample 1:\n"
 " n = %d, variance = %g\n"
 msgstr ""
 "樣本 1:\n"
-" n = %d, 變異數 = %g\n"
+" 樣本數 (n) = %d, 變異數 = %g\n"
 
 #: gui2/calculator.c:1664
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Sample 2:\n"
 " n = %d, variance = %g\n"
 msgstr ""
 "樣本 2:\n"
-" n = %d, 變異數 = %g\n"
+" 樣本數 (n) = %d, 變異數 = %g\n"
 
 #: gui2/calculator.c:1668
 #: gui2/calculator.c:1673
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: F(%d, %d) = %g\n"
-msgstr "基本假設檢定(_T)"
+msgstr "統計值: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:1687
 msgid "Null hypothesis: the population proportions are equal\n"
 msgstr "虛無假設 H0: 母體比例相等\n"
 
 #: gui2/calculator.c:1690
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Sample 1:\n"
 " n = %d, proportion = %g\n"
-msgstr "示範資料檔(_S)..."
+msgstr ""
+"樣本 1:\n"
+" 樣本數 (n) = %d, 比例 = %g\n"
 
 #: gui2/calculator.c:1692
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Sample 2:\n"
 " n = %d, proportion = %g\n"
-msgstr "示範資料檔(_S)..."
+msgstr ""
+"樣本 2:\n"
+" 樣本數 (n) = %d, 比例 = %g\n"
 
 #: gui2/calculator.c:1699
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: z = (%g - %g) / %g = %g\n"
-msgstr "基本假設檢定(_T)"
+msgstr "統計值: z = (%g - %g) / %g = %g\n"
 
 #: gui2/calculator.c:1714
 msgid "gretl: hypothesis test"
 msgstr "gretl: 假設檢定"
 
 #: gui2/calculator.c:1760
-#, fuzzy
 msgid ""
 "The assumption of a normal sampling distribution\n"
 "is not justified here.  Abandoning the test."
 msgstr ""
-"The assumption of a normal sampling distribution\n"
-"is not justified here.  Abandoning the test."
+"常態抽樣分配的假設\n"
+"在此並不適用,  此檢定不執行."
 
 #: gui2/calculator.c:1944
 msgid "uniform"
@@ -8039,9 +8060,9 @@ msgid "CDF instead of density"
 msgstr "畫累積密度函數圖 (CDF)"
 
 #: gui2/calculator.c:2203
-#, fuzzy, c-format
+#, c-format
 msgid "Data missing for variable '%s'"
-msgstr "輸入新變數的數學式"
+msgstr "變數 '%s' 有遺漏值 (data missing)"
 
 #: gui2/calculator.c:2328
 #, c-format
@@ -8145,14 +8166,12 @@ msgid "H0: variance ="
 msgstr "H0: 變異數 ="
 
 #: gui2/calculator.c:2663
-#, fuzzy
 msgid "sample proportion"
-msgstr "示範資料檔(_S)..."
+msgstr "樣本比例"
 
 #: gui2/calculator.c:2665
-#, fuzzy
 msgid "H0: proportion ="
-msgstr "H0: 變異數 ="
+msgstr "H0: 樣本比例 ="
 
 #: gui2/calculator.c:2669
 msgid "mean of sample 1"
@@ -8203,19 +8222,16 @@ msgid "H0: Ratio of variances = 1"
 msgstr "H0: Ratio of variances 變異數比率 = 1"
 
 #: gui2/calculator.c:2696
-#, fuzzy
 msgid "proportion, sample 1"
-msgstr "示範資料檔(_S)..."
+msgstr "樣本 1 的比例"
 
 #: gui2/calculator.c:2701
-#, fuzzy
 msgid "proportion, sample 2"
-msgstr "示範資料檔(_S)..."
+msgstr "樣本 2 的比例"
 
 #: gui2/calculator.c:2703
-#, fuzzy
 msgid "H0: Difference of proportions = 0"
-msgstr "H0: 均數差 ="
+msgstr "H0: 兩樣本比例差異 = 0"
 
 #: gui2/calculator.c:2713
 #: gui2/dialogs.c:1055
@@ -8439,9 +8455,8 @@ msgstr ""
 
 #: gui2/callbacks.c:596
 #: gui2/callbacks.c:674
-#, fuzzy
 msgid "gretl: command entry"
-msgstr "gretl: 指令檔"
+msgstr "gretl: command entry"
 
 #: gui2/callbacks.c:597
 #: gui2/callbacks.c:675
@@ -8487,7 +8502,7 @@ msgstr ""
 
 #: gui2/console.c:502
 msgid "gretl console: type 'help' for a list of commands"
-msgstr "gretl 指令視窗: 輸入 'help' 看有哪些指令"
+msgstr "gretl 指令視窗: 輸入 'help' 可以列出可用的指令列表"
 
 #: gui2/database.c:94
 #, c-format
@@ -8602,9 +8617,8 @@ msgid "Display values"
 msgstr "顯示變數值"
 
 #: gui2/database.c:714
-#, fuzzy
 msgid "Add to dataset"
-msgstr "輸入要增加的樣本數"
+msgstr "新增至資料檔中"
 
 #: gui2/database.c:717
 #: gui2/datafiles.c:1213
@@ -8699,19 +8713,17 @@ msgid "Failed to retrieve description of data"
 msgstr ""
 
 #: gui2/datafiles.c:752
-#, fuzzy, c-format
+#, c-format
 msgid "Function package %s"
-msgstr "自訂函數庫(_F)"
+msgstr "函數套件 (function package) %s"
 
 #: gui2/datafiles.c:754
-#, fuzzy
 msgid "Delete package file"
-msgstr "資料檔格式錯誤\n"
+msgstr "刪除函數套件檔"
 
 #: gui2/datafiles.c:755
-#, fuzzy
 msgid "Unload member functions"
-msgstr "附屬函數"
+msgstr "缷載附屬函數 (Unload member functions)"
 
 #: gui2/datafiles.c:847
 #, fuzzy
@@ -9499,9 +9511,8 @@ msgid "Plot confidence interval using"
 msgstr "信賴區間選擇、繪圖選項:"
 
 #: gui2/dialogs.c:2568
-#, fuzzy
 msgid "Add observations"
-msgstr "增加樣本(_A)"
+msgstr "增加樣本數"
 
 #: gui2/dialogs.c:2581
 msgid "Number of observations to add:"
@@ -9739,9 +9750,8 @@ msgid "decimal places"
 msgstr "小數位數"
 
 #: gui2/dlgutils.c:809
-#, fuzzy
 msgid "Add equation"
-msgstr "增加樣本(_A)"
+msgstr "新增方程式"
 
 #: gui2/dlgutils.c:810
 #, fuzzy
@@ -13239,7 +13249,7 @@ msgstr "預測值"
 #: gui2/library.c:5609
 #, c-format
 msgid "Cannot delete %s; variable is in use"
-msgstr ""
+msgstr "無法刪除 %s; 該變數正在使用中"
 
 #: gui2/library.c:5613
 #: gui2/library.c:5621
@@ -13255,11 +13265,11 @@ msgstr "gretl: 刪除"
 
 #: gui2/library.c:5654
 msgid "Cannot delete the specified variables"
-msgstr ""
+msgstr "無法刪除指定的變數"
 
 #: gui2/library.c:5657
 msgid "Cannot delete all of the specified variables"
-msgstr ""
+msgstr "無法刪除所有指定的變數"
 
 #: gui2/library.c:5712
 #, fuzzy
@@ -13435,6 +13445,8 @@ msgid ""
 "There is already a data file of this name.\n"
 "OK to overwrite it?"
 msgstr ""
+"已經有同名的資料檔存在.\n"
+"是否取代現有檔案?"
 
 #: gui2/library.c:7216
 #: gui2/library.c:7299
@@ -13598,7 +13610,7 @@ msgstr ""
 
 #: gui2/model_table.c:217
 msgid "Model is already included in the table"
-msgstr ""
+msgstr "此模型已經在模型資料表中了"
 
 #: gui2/model_table.c:272
 #: gui2/model_table.c:274
@@ -14020,9 +14032,8 @@ msgid "Factor (dummy)"
 msgstr ""
 
 #: gui2/selector.c:3472
-#, fuzzy
 msgid "Control variable"
-msgstr "新增指標變數(_I)"
+msgstr "控制變數 (Control variable)"
 
 #: gui2/selector.c:3474
 #, fuzzy
@@ -14030,14 +14041,12 @@ msgid "Block variable (optional)"
 msgstr "產生新變數(_n)"
 
 #: gui2/selector.c:3529
-#, fuzzy
 msgid "Add"
-msgstr "新增變數(_A)"
+msgstr "新增"
 
 #: gui2/selector.c:3572
-#, fuzzy
 msgid "Exogenous variables"
-msgstr "變數顯示順序(_S)"
+msgstr "外生變數 (Exogenous variables)"
 
 #: gui2/selector.c:3576
 #, fuzzy
@@ -14055,14 +14064,12 @@ msgid "lags..."
 msgstr "落後期..."
 
 #: gui2/selector.c:3918
-#, fuzzy
 msgid "GARCH p:"
-msgstr "GARCH一般自我相關異質變異模型 (_A)"
+msgstr "GARCH p:"
 
 #: gui2/selector.c:3919
-#, fuzzy
 msgid "ARCH q:"
-msgstr "ARCH自我相關異質變異模型 (_A)"
+msgstr "ARCH q:"
 
 #: gui2/selector.c:3944
 #, fuzzy
@@ -14443,9 +14450,8 @@ msgid "Lags of endogenous variables"
 msgstr "取落後期(_L)"
 
 #: gui2/selector.c:6299
-#, fuzzy
 msgid "Regressors"
-msgstr "分量迴歸(_Q)"
+msgstr "自變數"
 
 #: gui2/selector.c:6305
 msgid "lags"
@@ -14871,19 +14877,16 @@ msgid "Use HTTP proxy"
 msgstr "使用 HTTP proxy"
 
 #: gui2/settings.c:232
-#, fuzzy
 msgid "Fixed font"
-msgstr "設定固定寬度字形大小"
+msgstr "固定寬度字形"
 
 #: gui2/settings.c:234
-#, fuzzy
 msgid "Menu font"
-msgstr "設定功能表字形大小"
+msgstr "功能表字形"
 
 #: gui2/settings.c:240
-#, fuzzy
 msgid "PNG graph font"
-msgstr "變數繪圖(_G)"
+msgstr "PNG 圖格式"
 
 #: gui2/settings.c:242
 msgid "Gnuplot colors"
@@ -15053,7 +15056,7 @@ msgstr "矩陣運算(_Transform)"
 
 #: gui2/ssheet.c:160
 msgid "_X'X"
-msgstr ""
+msgstr "_X'X"
 
 #: gui2/ssheet.c:161
 msgid "_Transpose"
@@ -15479,9 +15482,8 @@ msgid "command reference"
 msgstr "指令參考說明"
 
 #: gui2/toolbar.c:1042
-#, fuzzy
 msgid "X-Y graph"
-msgstr "變數繪圖(_G)"
+msgstr "X-Y 圖"
 
 #: gui2/toolbar.c:1043
 msgid "OLS model"
