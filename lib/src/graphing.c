@@ -430,6 +430,12 @@ static int gnuplot_has_size (void)
     return 1;
 }
 
+static int gnuplot_has_decimalsign (void)
+{
+    /* ... and that it supports the decimalsign setter */
+    return 1;
+}
+
 #else /* !WIN32 */
 
 int gnuplot_has_ttf (int reset)
@@ -460,6 +466,17 @@ static int gnuplot_has_size (void)
     
     if (err == -1) {
 	err = gnuplot_test_command("set term png size 640,480");
+    }
+
+    return !err;
+}
+
+static int gnuplot_has_decimalsign (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set decimalsign ','");
     }
 
     return !err;
@@ -1134,6 +1151,10 @@ int write_plot_type_string (PlotType ptype, FILE *fp)
 	    ret = 1;
 	    break;
 	}
+    }
+
+    if (get_local_decpoint() == ',' && gnuplot_has_decimalsign()) {
+	fputs("set decimalsign ','\n", fp);
     }
 
     return ret;

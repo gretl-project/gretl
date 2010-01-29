@@ -37,9 +37,9 @@
  * @opt: can include %OPT_V for verbose output.
  * @prn: printing struct for iteration info (or %NULL).
  *
- * Maximize likelihood using the BHHH conditional ML method,
- * implemented via iteration of the Outer Product of the Gradient 
- * (OPG) regression with line search.
+ * Maximize likelihood using the BHHH method, implemented via 
+ * iteration of the Outer Product of the Gradient (OPG) regression 
+ * with line search.
  *
  * @loglik is called to calculate the loglikelihood for the model
  * in question.  The parameters passed to this function are:
@@ -66,8 +66,9 @@ int bhhh_max (double *theta, int k,
 	      PRN *prn)
 {
     gretl_matrix *c = NULL;
-    gretl_matrix *gcoeff = NULL;
+    gretl_matrix *g = NULL;
     double *delta = NULL, *ctemp = NULL;
+    double *grad;
     int iters, itermax;
     double minstep = 1.0e-06;
     double crit = 1.0;
@@ -81,9 +82,9 @@ int bhhh_max (double *theta, int k,
 
     T = gretl_matrix_rows(G);
     c = gretl_unit_matrix_new(T, 1);
-    gcoeff = gretl_column_vector_alloc(k);
+    g = gretl_column_vector_alloc(k);
 
-    if (c == NULL || gcoeff == NULL) {
+    if (c == NULL || g == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -98,6 +99,7 @@ int bhhh_max (double *theta, int k,
 
     iters = 0;
     itermax = libset_get_int(BHHH_MAXITER);
+    grad = g->val;
 
     while (crit > toler && iters++ < itermax) {
 
@@ -114,7 +116,7 @@ int bhhh_max (double *theta, int k,
 #endif
 
 	/* BHHH via OPG regression */
-	err = gretl_matrix_ols(c, G, gcoeff, NULL, NULL, NULL);
+	err = gretl_matrix_ols(c, G, g, NULL, NULL, NULL);
 
 	if (err) {
 	    fprintf(stderr, "BHHH OLS error code = %d\n", err);
@@ -122,7 +124,7 @@ int bhhh_max (double *theta, int k,
 	} 
 
 	for (i=0; i<k; i++) {
-	    delta[i] = gcoeff->val[i] * stepsize;
+	    delta[i] = grad[i] * stepsize;
 	    ctemp[i] = theta[i] + delta[i];
 	} 
 	
@@ -164,7 +166,7 @@ int bhhh_max (double *theta, int k,
 
 	/* print iteration info, if wanted */
 	if (opt & OPT_V) {
-	    print_iter_info(iters, ll, C_LOGLIK, k, theta, delta, 
+	    print_iter_info(iters, ll, C_LOGLIK, k, theta, grad, 
 			    stepsize, prn);
 	}
 
@@ -172,7 +174,7 @@ int bhhh_max (double *theta, int k,
     }
 
     if (opt & OPT_V) {
-	print_iter_info(-1, ll, C_LOGLIK, k, theta, delta, 
+	print_iter_info(-1, ll, C_LOGLIK, k, theta, grad, 
 			stepsize, prn);
     }
 
@@ -188,7 +190,7 @@ int bhhh_max (double *theta, int k,
 	    /* run OPG once more, to get VCV */
 	    double s2 = 0.0;
 
-	    err = gretl_matrix_ols(c, G, gcoeff, V, NULL, &s2);
+	    err = gretl_matrix_ols(c, G, g, V, NULL, &s2);
 	} 
 	*itcount = iters;
     }
@@ -196,7 +198,7 @@ int bhhh_max (double *theta, int k,
  bailout:
 
     gretl_matrix_free(c);
-    gretl_matrix_free(gcoeff);
+    gretl_matrix_free(g);
 
     free(delta);
     free(ctemp);

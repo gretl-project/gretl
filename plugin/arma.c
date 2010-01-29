@@ -409,7 +409,6 @@ static double bhhh_arma_ll (double *coeff,
     s2 /= (double) ainfo->T;
     ll = -ainfo->T * (0.5 * log(s2) + LN_SQRT_2_PI_P5);
 
-    /* FIXME? */
     if (do_score) {
 	ginfo->ll = ll;
     } 

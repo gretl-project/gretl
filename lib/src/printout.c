@@ -2673,6 +2673,7 @@ print_iter_info (int iter, double crit, int type, int k,
 	N_("Criterion"),
     };
     const char *cstr = cstrs[type];
+    double x;
     int i;
 
     if (type == C_GMM) {
@@ -2686,21 +2687,14 @@ print_iter_info (int iter, double crit, int type, int k,
     }
 
     if (na(crit) || na(-crit)) {
-	pprintf(prn, "%s NA", _(cstr));
+	pprintf(prn, "%s = NA", _(cstr));
     } else {
-	pprintf(prn, "%s %#.12g", _(cstr), crit);
+	pprintf(prn, "%s = %#.12g", _(cstr), crit);
     }
 
     if (sl > 0.0 && !na(sl)) {
-	double x = 0.0;
-
-	for (i=0; i<k; i++) {
-	    x += g[i] * g[i];
-	}
-
-	pprintf(prn, " (%s %.5g, %s %.2e)", _("steplength"), sl,
-		"gradnorm", sqrt(x/k));
-    }
+	pprintf(prn, _(" (steplength = %g)"), sl);
+    }	
 
     pputc(prn, '\n');
 	
@@ -2711,10 +2705,12 @@ print_iter_info (int iter, double crit, int type, int k,
     pputc(prn, '\n');
 
     pputs(prn, _("Gradients:  "));
+    x = 0.0;
     for (i=0; i<k; i++) {
+	x += g[i] * g[i];
 	print_iter_val(g[i], i, k, prn);
     }
-    pputs(prn, "\n\n");
+    pprintf(prn, " (norm %.2e)\n\n", sqrt(x/k));
 
     if (iter < 0 || (iter % 20 == 0)) {
 	/* experimental */
