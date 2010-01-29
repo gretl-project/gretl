@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-01-30 01:10+0800\n"
+"PO-Revision-Date: 2010-01-30 02:08+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -2592,12 +2592,12 @@ msgstr "資料檔格式錯誤\n"
 #: lib/src/genmain.c:39
 #, c-format
 msgid "Replaced scalar %s"
-msgstr ""
+msgstr "數值變數 (scalar) %s 已被取代"
 
 #: lib/src/genmain.c:41
 #, c-format
 msgid "Generated scalar %s"
-msgstr ""
+msgstr "已產生數值變數 (scalar) %s"
 
 #: lib/src/genmain.c:60
 #, fuzzy, c-format
@@ -2622,22 +2622,22 @@ msgstr "相關係數矩陣(_C)"
 #: lib/src/genmain.c:84
 #, c-format
 msgid "Replaced list %s"
-msgstr ""
+msgstr "變數集 (list) %s 已被取代"
 
 #: lib/src/genmain.c:86
 #, c-format
 msgid "Generated list %s"
-msgstr ""
+msgstr "已產生變數集 (list) %s"
 
 #: lib/src/genmain.c:90
 #, c-format
 msgid "Replaced string %s"
-msgstr ""
+msgstr "字串變數 %s 已被取代"
 
 #: lib/src/genmain.c:92
 #, c-format
 msgid "Generated string %s"
-msgstr ""
+msgstr "字串變數 %s 已經產生"
 
 #: lib/src/genmain.c:105
 msgid "missing values were generated"
@@ -2665,26 +2665,26 @@ msgstr "殘差平方和 (%g) 並未 > 0"
 
 #: lib/src/genmain.c:494
 msgid "Periodic dummy variables generated.\n"
-msgstr ""
+msgstr "已產生週期虛擬變數.\n"
 
 #: lib/src/genmain.c:496
 msgid "Periodic dummy variables already present.\n"
-msgstr ""
+msgstr "週期虛擬變數已經存在\n"
 
 #: lib/src/genmain.c:502
 #: lib/src/genmain.c:507
 msgid "Panel dummy variables generated.\n"
-msgstr ""
+msgstr "追蹤資料虛擬變數 (panel dummy) 已經產生\n"
 
 #: lib/src/gensyntax.c:256
 #, c-format
 msgid "Expected '%c' but formula ended\n"
-msgstr ""
+msgstr "公式中預期應有 '%c', 但此公式並沒有\n"
 
 #: lib/src/gensyntax.c:258
 #, c-format
 msgid "Expected '%c' but found '%s'\n"
-msgstr ""
+msgstr "預期有 '%c' 但卻發現 '%s'\n"
 
 #: lib/src/gensyntax.c:941
 #, fuzzy
@@ -2959,7 +2959,7 @@ msgstr "兩階段最小平方法(_T)"
 
 #: lib/src/gretl_bfgs.c:308
 msgid "Failed to compute numerical Hessian"
-msgstr ""
+msgstr "無法計算 Hessian 數值"
 
 #: lib/src/gretl_bfgs.c:445
 msgid ""
@@ -2975,7 +2975,7 @@ msgstr ""
 #: lib/src/gretl_bfgs.c:714
 #, c-format
 msgid "stopped after %d iterations\n"
-msgstr ""
+msgstr "在 %d 次反覆運後已經停止\n"
 
 #: lib/src/gretl_bfgs.c:1203
 #: lib/src/modelprint.c:2785
@@ -3107,19 +3107,19 @@ msgstr "在這種模型中, 你必需設有常數項"
 
 #: lib/src/gretl_errors.c:63
 msgid "The statistic you requested is not available"
-msgstr ""
+msgstr "沒有你想要計算的統計量"
 
 #: lib/src/gretl_errors.c:64
 msgid "Missing sub-sample information; can't merge data"
-msgstr ""
+msgstr "遺件子樣的資料; 無法合併資料"
 
 #: lib/src/gretl_errors.c:65
 msgid "The convergence criterion was not met"
-msgstr ""
+msgstr "收歛條件未被滿足"
 
 #: lib/src/gretl_errors.c:66
 msgid "The operation was canceled"
-msgstr ""
+msgstr "此次之執行已被取消"
 
 #: lib/src/gretl_errors.c:67
 msgid "Missing values encountered"
@@ -3127,7 +3127,7 @@ msgstr "變數有遺漏值 (missing values) 的問題"
 
 #: lib/src/gretl_errors.c:68
 msgid "Not a Number in calculation"
-msgstr ""
+msgstr "在計算中, 這並非是數字"
 
 #: lib/src/gretl_errors.c:69
 msgid "Matrices not conformable for operation"
@@ -3135,7 +3135,7 @@ msgstr ""
 
 #: lib/src/gretl_errors.c:70
 msgid "Data types not conformable for operation"
-msgstr ""
+msgstr "資料類型不符, 所以無法執行"
 
 #: lib/src/gretl_errors.c:71
 msgid "Wrong data type"
@@ -3143,11 +3143,11 @@ msgstr "錯誤之資料型態"
 
 #: lib/src/gretl_errors.c:72
 msgid "Incompatible options"
-msgstr ""
+msgstr "不相容的選項"
 
 #: lib/src/gretl_errors.c:73
 msgid "The restrictions do not identify the parameters"
-msgstr ""
+msgstr "此限制式無法認定 (identify) 參數"
 
 #: lib/src/gretl_errors.c:74
 msgid "External command failed"
@@ -3155,11 +3155,11 @@ msgstr "無法執行外部指令 (External command failed)"
 
 #: lib/src/gretl_errors.c:75
 msgid "Maximum length of command line (8192 bytes) exceeded"
-msgstr ""
+msgstr "已超過指令行中所允許之最長字數 (8192 bytes)"
 
 #: lib/src/gretl_errors.c:76
 msgid "No dataset is in place"
-msgstr ""
+msgstr "目前並沒有資料庫檔"
 
 #: lib/src/gretl_errors.c:77
 #, fuzzy
@@ -3168,7 +3168,7 @@ msgstr "   %s: 可能不是1年\n"
 
 #: lib/src/gretl_errors.c:78
 msgid "Failed to calculate Jacobian"
-msgstr ""
+msgstr "無法計算 Jacobian"
 
 #: lib/src/gretl_errors.c:79
 #, fuzzy
@@ -3181,17 +3181,17 @@ msgstr "沒有任何說明"
 
 #: lib/src/gretl_func.c:2913
 msgid "Function names must start with a letter"
-msgstr ""
+msgstr "函數名稱必須要以一個英文字母開頭"
 
 #: lib/src/gretl_func.c:2916
 #, c-format
 msgid "'%s' is the name of a gretl command"
-msgstr ""
+msgstr "'%s' 並不是 gretl 的指令"
 
 #: lib/src/gretl_func.c:2920
 #, c-format
 msgid "'%s' is the name of a built-in function"
-msgstr ""
+msgstr "'%s' 是 gretl 的內建函數"
 
 #: lib/src/gretl_func.c:2930
 #, c-format
@@ -3252,7 +3252,7 @@ msgstr ""
 #: lib/src/gretl_list.c:309
 #, c-format
 msgid "Replaced list '%s'\n"
-msgstr ""
+msgstr "已取代原有的變數集 '%s'\n"
 
 #: lib/src/gretl_list.c:333
 #, c-format
@@ -3262,12 +3262,12 @@ msgstr "已新增 list 變數 '%s'\n"
 #: lib/src/gretl_list.c:336
 #, c-format
 msgid "Warning: the name was truncated to %d characters\n"
-msgstr ""
+msgstr "警告: 名稱太長, 已被刪成 %d 字元\n"
 
 #: lib/src/gretl_list.c:1626
 #, c-format
 msgid "Variable %d was not in the original list"
-msgstr ""
+msgstr "變數 %d 並未定義在原來的變數集 (list) 之中"
 
 #: lib/src/gretl_list.c:1979
 msgid "Can't do this: some vars in original model have been redefined"
@@ -3317,11 +3317,11 @@ msgstr "用一階差分"
 
 #: lib/src/gretl_model.c:2876
 msgid "CUSUM test for parameter stability"
-msgstr ""
+msgstr "CUSUM 檢定 (結構轉變檢定)"
 
 #: lib/src/gretl_model.c:2877
 msgid "no change in parameters"
-msgstr ""
+msgstr "參數並無結構轉變"
 
 #: lib/src/gretl_model.c:2879
 msgid "QLR test for structural break"
@@ -3337,7 +3337,7 @@ msgstr ""
 
 #: lib/src/gretl_model.c:2885
 msgid "Non-linearity test (logs)"
-msgstr ""
+msgstr "非線性檢定: 加入取對數項 (logs)"
 
 #: lib/src/gretl_model.c:2886
 #: lib/src/gretl_model.c:2898
@@ -3370,7 +3370,7 @@ msgstr "殘差是常態分配"
 
 #: lib/src/gretl_model.c:2897
 msgid "Non-linearity test (squares)"
-msgstr ""
+msgstr "非線性檢定: 加入平方項 (sqiares)"
 
 #: lib/src/gretl_model.c:2901
 #: lib/src/gretl_model.c:2904
@@ -3459,19 +3459,19 @@ msgstr "%g percent 臨界值"
 
 #: lib/src/gretl_model.c:5244
 msgid "Can't retrieve uhat: data set has changed"
-msgstr ""
+msgstr "無法取得殘差 (uhat): 資料檔已變更"
 
 #: lib/src/gretl_model.c:5246
 msgid "Can't retrieve yhat: data set has changed"
-msgstr ""
+msgstr "無法取得預測值 (yhat): 資料檔已變更"
 
 #: lib/src/gretl_model.c:5248
 msgid "Can't retrieve ht: data set has changed"
-msgstr ""
+msgstr "無法取得條件變異數 (h): 資料檔已變更"
 
 #: lib/src/gretl_model.c:5249
 msgid "Can't retrieve series: data set has changed"
-msgstr ""
+msgstr "無法取得資料變數 (series): 資料檔已變更"
 
 #: lib/src/gretl_model.c:5691
 #: gui2/library.c:473
@@ -3522,7 +3522,7 @@ msgstr ""
 #: lib/src/gretl_restrict.c:2067
 #, c-format
 msgid "Failed to compute test statistic\n"
-msgstr ""
+msgstr "無法計算該統計量\n"
 
 #: lib/src/gretl_panel.c:2189
 msgid "Error estimating fixed effects model\n"
@@ -3619,7 +3619,7 @@ msgstr ""
 
 #: lib/src/gretl_paths.c:1619
 msgid "User directory is not set"
-msgstr ""
+msgstr "使用者之預設工作子目錄未設定"
 
 #: lib/src/gretl_paths.c:1625
 #, c-format
@@ -3639,28 +3639,28 @@ msgstr ""
 #: lib/src/gretl_paths.c:1888
 #: lib/src/gretl_paths.c:1905
 msgid "gretlcli_hlp.txt"
-msgstr ""
+msgstr "gretlcli_hlp.txt"
 
 #: lib/src/gretl_paths.c:1891
 #: lib/src/gretl_paths.c:1914
 msgid "gretlcli.hlp"
-msgstr ""
+msgstr "gretlcli.hlp"
 
 #: lib/src/gretl_paths.c:1903
 msgid "gretlgui_hlp.txt"
-msgstr ""
+msgstr "gretlgui_hlp.txt"
 
 #: lib/src/gretl_paths.c:1904
 msgid "gretlcmd_hlp.txt"
-msgstr ""
+msgstr "gretlcmd_hlp.txt"
 
 #: lib/src/gretl_paths.c:1913
 msgid "gretlgui.hlp"
-msgstr ""
+msgstr "gretlgui.hlp"
 
 #: lib/src/gretl_paths.c:1915
 msgid "gretlcmd.hlp"
-msgstr ""
+msgstr "gretlcmd.hlp"
 
 #: lib/src/gretl_prn.c:247
 #, c-format
@@ -3673,7 +3673,7 @@ msgstr "矩陣轉置 (inversion) 失敗: 可能是限制條件不一致或重覆
 
 #: lib/src/gretl_restrict.c:724
 msgid "Please give a coefficient number"
-msgstr ""
+msgstr "請輸入係數的數目"
 
 #: lib/src/gretl_restrict.c:731
 #, c-format
@@ -3717,7 +3717,7 @@ msgstr "設定子樣本範圍(_S)"
 
 #: lib/src/gretl_restrict.c:1141
 msgid "Restriction"
-msgstr ""
+msgstr "限制式"
 
 #: lib/src/gretl_restrict.c:1338
 #, c-format
@@ -3749,7 +3749,7 @@ msgstr "卡方分配"
 #: lib/src/gretl_restrict.c:1953
 #: lib/src/subsample.c:2130
 msgid "restriction"
-msgstr ""
+msgstr "限制式"
 
 #: lib/src/gretl_restrict.c:2060
 msgid ""
@@ -3789,7 +3789,7 @@ msgstr ""
 #: lib/src/gretl_scalar.c:374
 #, c-format
 msgid "Deleted scalar %s"
-msgstr ""
+msgstr "數值變數 (scalar) %s 已被刪除"
 
 #: lib/src/gretl_scalar.c:586
 #: lib/src/plotspec.c:217
@@ -7671,7 +7671,7 @@ msgstr ""
 
 #: gui2/about.c:175
 msgid "License"
-msgstr ""
+msgstr "版樣聲明 (license)"
 
 #: gui2/calculator.c:181
 #, fuzzy
@@ -7696,12 +7696,12 @@ msgstr "畫樣本分配圖"
 #: gui2/calculator.c:201
 #, c-format
 msgid "N(%g, %g)"
-msgstr ""
+msgstr "N(%g, %g)"
 
 #: gui2/calculator.c:203
 #, c-format
 msgid "t(%d)"
-msgstr ""
+msgstr "t(%d)"
 
 #: gui2/calculator.c:205
 #, c-format
@@ -7711,7 +7711,7 @@ msgstr "Chi-square(%d)"
 #: gui2/calculator.c:207
 #, c-format
 msgid "F(%d, %d)"
-msgstr ""
+msgstr "F(%d, %d)"
 
 #: gui2/calculator.c:209
 #, fuzzy, c-format
@@ -7753,7 +7753,7 @@ msgstr "資料檔格式錯誤\n"
 #: gui2/calculator.c:1072
 #, no-c-format
 msgid "5% critical values for Durbin-Watson statistic"
-msgstr ""
+msgstr "DW 統計量之 5% 臨界值"
 
 #: gui2/calculator.c:1078
 #: gui2/calculator.c:1253
@@ -7763,11 +7763,11 @@ msgstr "gretl: 臨界值"
 
 #: gui2/calculator.c:1237
 msgid "Failed to compute critical value"
-msgstr ""
+msgstr "無法計算臨界值"
 
 #: gui2/calculator.c:1305
 msgid "Failed to compute p-value"
-msgstr ""
+msgstr "無法計算 p 值"
 
 #: gui2/calculator.c:1308
 msgid "gretl: p-value"
@@ -7783,6 +7783,8 @@ msgid ""
 "Two-tailed p-value = %.4g\n"
 "(one-tailed = %.4g)\n"
 msgstr ""
+"雙尾 p 值 = %.4g\n"
+"(單尾 = %.4g)\n"
 
 #: gui2/calculator.c:1481
 msgid "nonparametric test"
@@ -7803,7 +7805,7 @@ msgstr "樣本大小: n = %d\n"
 #: gui2/calculator.c:1509
 #, c-format
 msgid "Sample mean = %g, std. deviation = %g\n"
-msgstr ""
+msgstr "樣本均數 = %g, 標準差 = %g\n"
 
 #: gui2/calculator.c:1513
 #: gui2/calculator.c:1561
@@ -7867,7 +7869,7 @@ msgstr "平均數之標準誤 (standard error) = %g\n"
 #: gui2/calculator.c:1594
 #, c-format
 msgid " 95%% confidence interval for mean: %g to %g\n"
-msgstr ""
+msgstr "平均數之 95%% 信賴區間: %g to %g\n"
 
 #: gui2/calculator.c:1587
 #, c-format
@@ -8125,7 +8127,7 @@ msgstr "變異數"
 
 #: gui2/calculator.c:2604
 msgid "proportion"
-msgstr ""
+msgstr "樣本比例"
 
 #: gui2/calculator.c:2605
 msgid "2 means"
@@ -8137,7 +8139,7 @@ msgstr "2 變異數"
 
 #: gui2/calculator.c:2607
 msgid "2 proportions"
-msgstr ""
+msgstr "兩樣本比例"
 
 #: gui2/calculator.c:2648
 msgid "sample mean"
@@ -8267,7 +8269,7 @@ msgstr "gretl: 新增隨機變數"
 #: gui2/selector.c:5744
 #: gui2/selector.c:5747
 msgid "No suitable data are available"
-msgstr ""
+msgstr "沒有適合的資料"
 
 #: gui2/calculator.c:3172
 msgid "gretl: plot a curve"
@@ -8313,7 +8315,7 @@ msgstr "兩者皆畫"
 
 #: gui2/callbacks.c:278
 msgid "Sorry, this item not yet implemented!"
-msgstr ""
+msgstr "抱歉, 此項目尚未完成"
 
 #: gui2/callbacks.c:384
 #: gui2/callbacks.c:536
@@ -8473,7 +8475,7 @@ msgstr "請輸入樣本數: "
 
 #: gui2/callbacks.c:698
 msgid "Failed to create empty data set"
-msgstr ""
+msgstr "無法產生空的資料檔"
 
 #: gui2/callbacks.c:713
 #: gui2/library.c:1164
@@ -8498,7 +8500,7 @@ msgstr ""
 
 #: gui2/cmdstack.c:337
 msgid "The command log is empty"
-msgstr ""
+msgstr "無指令紀錄"
 
 #: gui2/console.c:502
 msgid "gretl console: type 'help' for a list of commands"
@@ -8548,6 +8550,8 @@ msgid ""
 "There is already a variable of this name\n"
 "in the dataset.  OK to overwrite it?"
 msgstr ""
+"此名稱之變數已經存在\n"
+"要取代現有的變數嗎?"
 
 #: gui2/database.c:462
 #, c-format
@@ -8555,6 +8559,8 @@ msgid ""
 "Really delete the selected series\n"
 "from the database '%s'?"
 msgstr ""
+"真的要刪除在資料庫 '%s' 中\n"
+"所選的變數嗎?"
 
 #: gui2/database.c:624
 msgid "Warning: series has missing observations"
@@ -10032,7 +10038,7 @@ msgstr "list 變數未命名"
 
 #: gui2/fncall.c:439
 msgid "Really create an empty list?"
-msgstr ""
+msgstr "真的要定義一個空的變數集 (list) 嗎?"
 
 #: gui2/fncall.c:480
 msgid "Define list"
