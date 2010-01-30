@@ -7682,7 +7682,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	gopt |= OPT_B; /* do graphs in batch mode */
     }
 
-    gretl_exec_state_set_callback(s, gui_exec_callback);
+    gretl_exec_state_set_callback(s, gui_exec_callback, OPT_G);
 
     switch (cmd->ci) {
 

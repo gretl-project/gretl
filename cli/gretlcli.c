@@ -839,7 +839,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
 
-    gretl_exec_state_set_callback(s, cli_exec_callback);
+    gretl_exec_state_set_callback(s, cli_exec_callback, OPT_NONE);
 
     switch (cmd->ci) {
 
@@ -866,6 +866,9 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case GNUPLOT:
     case SCATTERS:
+	if (cmd->opt & OPT_D) {
+	    goto use_lib;
+	}
 	if (cmd->ci == GNUPLOT) {
 	    if ((cmd->opt & OPT_Z) && 
 		(cmd->list[0] != 3 || 
@@ -1017,6 +1020,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	/* else fall through */
 
     default:
+    use_lib:
 	err = gretl_cmd_exec(s, pZ, pdinfo);
 	break;
     }

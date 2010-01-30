@@ -1163,8 +1163,8 @@ int write_plot_type_string (PlotType ptype, FILE *fp)
 
 static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
 {
-    int gui = gretl_in_gui_mode();
     char plotfile[FILENAME_MAX] = {0};
+    int gui = gretl_in_gui_mode();
 
     /* 'gnuplot_path' is file-scope static var */
     if (*gnuplot_path == '\0') {
@@ -1363,11 +1363,14 @@ static int make_graph_special (const char *fname, int fmt)
     return err;
 }
 
-int specified_gp_output_format (void)
+static int 
+gp_output_format_from_filename (const char *fname)
 {
-    const char *fname = gretl_plotfile();
-
-    if (has_suffix(fname, ".eps")) {
+    if (fname == NULL || *fname == '\0') {
+	return GP_TERM_NONE;
+    } else if (has_suffix(fname, ".eps")) {
+	return GP_TERM_EPS;
+    } else if (has_suffix(fname, ".ps")) {
 	return GP_TERM_EPS;
     } else if (has_suffix(fname, ".pdf")) {
 	return GP_TERM_PDF;
@@ -1382,6 +1385,13 @@ int specified_gp_output_format (void)
     } else {
 	return GP_TERM_NONE;
     }
+}
+
+int specified_gp_output_format (void)
+{
+    const char *fname = gretl_plotfile();
+
+    return gp_output_format_from_filename(fname);
 }
 
 /**
@@ -5203,22 +5213,49 @@ int is_auto_fit_string (const char *s)
     return 0;
 }
 
-int gnuplot_display_from_file (void)
+/** 
+ * gnuplot_process_file:
+ * @opt: may include %OPT_U for output to specified file.
+ * @prn: gretl printing struct.
+ *
+ * Respond to the "gnuplot" command with %OPT_D, to specify
+ * that input should be taken from a user-created gnuplot
+ * command file.
+ *
+ * Returns: 0 on success, or if ignored; otherwise error code.
+ */
+
+int gnuplot_process_file (gretlopt opt, PRN *prn)
 {
-    const char *fname = get_optval_string(GNUPLOT, OPT_D);
+    const char *inname = get_optval_string(GNUPLOT, OPT_D);
     FILE *fp, *fq;
+    int gui, display = 0;
+    int flags = 0;
     int err = 0;
 
-    if (fname == NULL && *fname == '\0') {
+    if (inname == NULL && *inname == '\0') {
 	return E_DATA;
     }
 
-    fp = gretl_fopen(fname, "r");
+    fp = gretl_fopen(inname, "r");
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
-    err = real_gnuplot_init(PLOT_USER, 0, &fq);
+    gui = gretl_in_gui_mode();
+
+    if (gui) {
+	if (opt & OPT_U) {
+	    /* specified output file */
+	    flags = GPT_BATCH;
+	} else {
+	    display = 1;
+	} 
+    } else {
+	flags = GPT_BATCH;
+    }
+
+    err = get_gnuplot_output_file(&fq, flags, PLOT_USER);
 
     if (err) {
 	fclose(fp);
@@ -5232,7 +5269,13 @@ int gnuplot_display_from_file (void)
 	fclose(fp);
 	fclose(fq);
 
-	err = gnuplot_make_graph();
+	if (display || specified_gp_output_format()) {
+	    err = gnuplot_make_graph();
+	}
+
+	if (!err && (flags & GPT_BATCH)) {
+	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+	}
     }
 
     return err;

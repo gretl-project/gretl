@@ -4047,7 +4047,7 @@ static png_plot *png_plot_new (void)
     return plot;
 }
 
-static int gnuplot_show_png (const char *plotfile, const char *name,
+static int gnuplot_show_png (const char *fname, const char *name,
 			     GPT_SPEC *spec, int saved)
 {
     GtkWidget *vbox;
@@ -4060,8 +4060,8 @@ static int gnuplot_show_png (const char *plotfile, const char *name,
     int err = 0;
 
 #if GPDEBUG
-    fprintf(stderr, "gnuplot_show_png:\n plotfile='%s', spec=%p, saved=%d\n",
-	    plotfile, (void *) spec, saved);
+    fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
+	    fname, (void *) spec, saved);
 #endif
 
     plot = png_plot_new();
@@ -4077,7 +4077,7 @@ static int gnuplot_show_png (const char *plotfile, const char *name,
 	    free(plot);
 	    return E_ALLOC;
 	}
-	strcpy(plot->spec->fname, plotfile);
+	strcpy(plot->spec->fname, fname);
     }
 
     if (saved) {

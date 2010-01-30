@@ -4032,7 +4032,9 @@ static void check_for_named_object_save (ExecState *s)
 
 static void callback_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
-    s->callback(s, pZ, pdinfo);
+    if (s->callback != NULL) {
+	s->callback(s, pZ, pdinfo);
+    }
     s->flags &= ~CALLBACK_EXEC;
 }
 
@@ -4939,14 +4941,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case BXPLOT:
     case SCATTERS:
 	if (cmd->ci == GNUPLOT && (cmd->opt & OPT_D)) {
-	    if (gretl_in_gui_mode()) {
-		err = gnuplot_display_from_file();
-		if (!err) {
-		    schedule_callback(s);
-		}
-	    } else {
-		pprintf(prn, _("%s: command not available\n"), 
-			"gnuplot --display");
+	    err = gnuplot_process_file(cmd->opt, prn);
+	    if (!err && gretl_in_gui_mode() && !(cmd->opt & OPT_U)) {
+		schedule_callback(s);
 	    }
 	    break;
 	}
@@ -5362,10 +5359,22 @@ void gretl_exec_state_init (ExecState *s,
     s->callback = NULL;
 }
 
-void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback)
+static EXEC_CALLBACK gui_callback;
+
+void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback,
+				    gretlopt opt)
 {
     s->callback = callback;
     s->pmod = NULL;
+
+    if (opt & OPT_G) {
+	gui_callback = callback;
+    }
+}
+
+EXEC_CALLBACK get_gui_callback (void)
+{
+    return gui_callback;
 }
 
 void gretl_exec_state_clear (ExecState *s)

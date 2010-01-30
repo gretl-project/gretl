@@ -237,7 +237,7 @@ int xy_plot_with_control (const int *list, const char *literal,
 			  const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt);
 
-int gnuplot_display_from_file (void);
+int gnuplot_process_file (gretlopt opt, PRN *prn);
 
 int is_auto_fit_string (const char *s);
 
