@@ -155,7 +155,7 @@ struct gretl_option gretl_opts[] = {
     { GMM,      OPT_T, "two-step", 0 },
     { GMM,      OPT_U, "continue", 0 },
     { GMM,      OPT_V, "verbose", 0 },
-    { GNUPLOT,  OPT_D, "display", 2 },
+    { GNUPLOT,  OPT_D, "input", 2 },
     { GNUPLOT,  OPT_O, "with-lines", 0 },
     { GNUPLOT,  OPT_I, "inverse-fit", 0 },
     { GNUPLOT,  OPT_L, "loess-fit", 0 },
