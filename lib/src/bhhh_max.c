@@ -153,7 +153,6 @@ int bhhh_max (double *theta, int k,
     int i, T, err = 0;
 
     if (opt & OPT_N) {
-	fprintf(stderr, "*** BHHH: got OPT_N\n");
 	/* numerical score (not ready) */
 	G = make_score_matrix(M, k, &err);
 	if (err) {
@@ -226,7 +225,7 @@ int bhhh_max (double *theta, int k,
 	ll2 = callback(ctemp, G, data, 0, &err); 
 
 #if BHHH_DEBUG
-	pprintf(prn, "bhhh loop: initial ll2 = %g\n", ll2);
+	pprintf(prn, "bhhh loop: initial ll2 = %#.14g\n", ll2);
 #endif
 
 	while (err || ll2 < ll) { 
@@ -243,7 +242,7 @@ int bhhh_max (double *theta, int k,
 	    }
 	    ll2 = callback(ctemp, G, data, 0, &err);
 #if BHHH_DEBUG
-	    pprintf(prn, "bhhh loop: modified ll2 = %g\n", ll2);
+	    pprintf(prn, "bhhh loop: modified ll2 = %#.14g\n", ll2);
 #endif
 	}
 
