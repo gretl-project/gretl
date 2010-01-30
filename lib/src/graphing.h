@@ -94,6 +94,7 @@ typedef enum {
     PLOT_BOXPLOTS,
     PLOT_CURVE,
     PLOT_QQ,
+    PLOT_USER,
     PLOT_TYPE_MAX
 } PlotType;
 
@@ -235,6 +236,8 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 int xy_plot_with_control (const int *list, const char *literal,
 			  const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt);
+
+int gnuplot_display_from_file (void);
 
 int is_auto_fit_string (const char *s);
 

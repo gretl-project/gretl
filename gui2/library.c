@@ -7422,6 +7422,8 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 
     if (ci == FREQ && s->flags == CONSOLE_EXEC) {
 	register_graph();
+    } else if (ci == GNUPLOT && (s->cmd->opt & OPT_D)) {
+	register_graph();
     } else if (ci == SETOBS || ci == SMPL) {
 	set_sample_label(pdinfo);
     } else if (ci == VAR || ci == VECM) {
@@ -7763,8 +7765,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case GNUPLOT:
     case SCATTERS:
-	if (cmd->opt & OPT_U) {
-	    /* output to named file */
+	if (cmd->opt & (OPT_U | OPT_D)) {
+	    /* output to named file, or input from file */
 	    goto use_lib;
 	}
 	if (cmd->ci == GNUPLOT) {

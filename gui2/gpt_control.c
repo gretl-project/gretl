@@ -1903,6 +1903,16 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	    if (i == 1 && spec->flags & GPT_AUTO_FIT) {
 		grab_fit_coeffs(spec, line->formula);
 	    }
+	} else {
+	    /* no title/notitle */
+	    char fmt[8];
+
+	    p = s;
+	    if (!strncmp(s, "plot ", 5)) {
+		p += 5;
+	    }
+	    sprintf(fmt, "%%%ds", GP_MAXFORMULA - 1);
+	    sscanf(p, fmt, line->formula);
 	}
     }
 
@@ -2129,7 +2139,8 @@ static void linestyle_init (linestyle *ls)
 
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && \
                            c != PLOT_PROB_DIST && \
-                           c != PLOT_CURVE)
+                           c != PLOT_CURVE && \
+			   c != PLOT_USER)
 
 /* Read plotspec struct from gnuplot command file.  This is _not_ a
    general parser for gnuplot files; it is designed specifically for

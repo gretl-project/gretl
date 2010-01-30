@@ -2630,6 +2630,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
     } else if (cmd->ci != SETMISS && 
 	       cmd->ci != PRINT &&
+	       cmd->ci != GNUPLOT &&
 	       cmd->ci != DELEET) {
 	/* the command needs a list but doesn't have one */
 	if (cmd->list[0] == 0) {
@@ -2641,8 +2642,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->err = E_ARGS;
     }
 
-    if (cmd->ci == GNUPLOT) {
-	if (!(cmd->opt & (OPT_T | OPT_X)) && cmd->list[0] < 2) {
+    if (cmd->ci == GNUPLOT && cmd->list[0] < 2) {
+	if (cmd->opt & (OPT_T|OPT_X)) {
+	    cmd->err = (cmd->list[0] == 0)? E_ARGS : cmd->err;
+	} else if (!(cmd->opt & OPT_D)) {
 	    cmd->err = E_ARGS;
 	}
     }
@@ -4935,9 +4938,22 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case GNUPLOT:
     case BXPLOT:
     case SCATTERS:
+	if (cmd->ci == GNUPLOT && (cmd->opt & OPT_D)) {
+	    if (gretl_in_gui_mode()) {
+		err = gnuplot_display_from_file();
+		if (!err) {
+		    schedule_callback(s);
+		}
+	    } else {
+		pprintf(prn, _("%s: command not available\n"), 
+			"gnuplot --display");
+	    }
+	    break;
+	}
 	/* in this context we only do plots in batch mode (OPT_B) */
 	if (cmd->ci == GNUPLOT) {
-	    err = gnuplot(cmd->list, cmd->param, Z, pdinfo, cmd->opt | OPT_B);
+	    err = gnuplot(cmd->list, cmd->param, Z, pdinfo, 
+			  cmd->opt | OPT_B);
 	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, Z, pdinfo, cmd->opt | OPT_B);
 	} else if (cmd_nolist(cmd)) { 

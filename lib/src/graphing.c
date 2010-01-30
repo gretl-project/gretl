@@ -113,6 +113,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_BOXPLOTS,       "boxplots" },
     { PLOT_CURVE,          "curve" },
     { PLOT_QQ,             "QQ plot" },
+    { PLOT_USER,           "user-defined plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -5200,5 +5201,40 @@ int is_auto_fit_string (const char *s)
     if (strstr(s, "automatic fit")) return 1;
     if (strstr(s, _("with least squares fit"))) return 1;
     return 0;
+}
+
+int gnuplot_display_from_file (void)
+{
+    const char *fname = get_optval_string(GNUPLOT, OPT_D);
+    FILE *fp, *fq;
+    int err = 0;
+
+    if (fname == NULL && *fname == '\0') {
+	return E_DATA;
+    }
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    err = real_gnuplot_init(PLOT_USER, 0, &fq);
+
+    if (err) {
+	fclose(fp);
+    } else {
+	char line[1024];
+
+	while (fgets(line, sizeof line, fp)) {
+	    fputs(line, fq);
+	}
+
+	fclose(fp);
+	fclose(fq);
+
+	err = gnuplot_make_graph();
+    }
+
+    return err;
 }
 
