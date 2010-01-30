@@ -5246,7 +5246,7 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 
     if (gui) {
 	if (opt & OPT_U) {
-	    /* specified output file */
+	    /* specified output */
 	    flags = GPT_BATCH;
 	} else {
 	    display = 1;
