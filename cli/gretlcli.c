@@ -40,6 +40,7 @@
 #include "usermat.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
+#include "boxplots.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -865,6 +866,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case GNUPLOT:
+    case BXPLOT:
     case SCATTERS:
 	if (cmd->opt & OPT_D) {
 	    goto use_lib;
@@ -885,11 +887,14 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
 			      pdinfo, plot_opt(cmd->opt, batch));
 	    }
-	} else {
+	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
 				 plot_opt(cmd->opt, batch));
+	} else if (cmd_nolist(cmd)) { 
+	    err = boolean_boxplots(line, pZ, pdinfo, plot_opt(cmd->opt, batch));
+	} else {
+	    err = boxplots(cmd->list, pZ, pdinfo, plot_opt(cmd->opt, batch));
 	}
-
 	if (err) {
 	    errmsg(err, prn);
 	} else if (batch) {

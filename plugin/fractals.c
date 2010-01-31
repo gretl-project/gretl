@@ -58,7 +58,7 @@ do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
 
     fclose(fp);
 
-    return 0;
+    return gnuplot_make_graph();
 }
 
 #define log_2(x) (log(x) / LOG2)

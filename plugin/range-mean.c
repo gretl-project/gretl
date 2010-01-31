@@ -85,7 +85,7 @@ do_range_mean_plot (int n, const double **Z, double a, double b,
 
     fclose(fp);
 
-    return 0;
+    return gnuplot_make_graph();
 }
 
 /* drop first/last observations from sample if missing obs 

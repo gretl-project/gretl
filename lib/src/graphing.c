@@ -1098,24 +1098,24 @@ static void png_font_to_emf (const char *pngfont, char *emfline)
 
 const char *get_gretl_emf_term_line (PlotType ptype, int color)
 {
-    static char emf_term_line[256];
+    static char tline[256];
     const char *grfont = NULL;
     
-    strcpy(emf_term_line, "set term emf ");
+    strcpy(tline, "set term emf ");
 
     if (color) {
-	strcat(emf_term_line, "color ");
+	strcat(tline, "color ");
     } else {
-	strcat(emf_term_line, "mono dash ");
+	strcat(tline, "mono dash ");
     }
 
     /* font spec */
     grfont = gretl_png_font();
-    if (grfont != NULL && *grfont != 0) {
-	png_font_to_emf(grfont, emf_term_line);
+    if (grfont != NULL && *grfont != '\0') {
+	png_font_to_emf(grfont, tline);
     }
 
-    return emf_term_line;
+    return tline;
 }
 
 /**
@@ -1178,7 +1178,7 @@ static void print_term_string (int tt, FILE *fp)
     } else if (tt == GP_TERM_PNG) {
 	tstr = get_gretl_png_term_line(PLOT_REGULAR, 0);
     } else if (tt == GP_TERM_EMF) {
-	tstr = get_gretl_emf_term_line(PLOT_REGULAR, 0);
+	tstr = get_gretl_emf_term_line(PLOT_REGULAR, 1);
     } else if (tt == GP_TERM_FIG) {
 	tstr = "set term fig";
     } else if (tt == GP_TERM_SVG) {
@@ -4115,10 +4115,6 @@ int rmplot (const int *list, const double **Z, DATAINFO *pdinfo,
 
     close_plugin(handle);
 
-    if (!err && !gretl_in_batch_mode() && !gretl_looping()) {
-        err = gnuplot_make_graph();
-    }
-
     return err;
 }
 
@@ -4137,10 +4133,6 @@ hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
     err = hurst_exponent(list[1], Z, pdinfo, prn);
 
     close_plugin(handle);
-
-    if (!err && !gretl_in_batch_mode() && !gretl_looping()) {
-        err = gnuplot_make_graph();
-    } 
 
     return err;
 }

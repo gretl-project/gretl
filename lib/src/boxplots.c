@@ -384,10 +384,13 @@ static void get_box_y_range (PLOTGROUP *grp, double gyrange,
     }
 }
 
-/* FIXME outliers */
+/* note: @fname is non-NULL only when we're doing the
+   backward-compatibility thing of reading an old-style
+   gretl boxplot file and converting it to gnuplot.
+*/
 
 static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
-				  gretlopt opt, int *fmt)
+				  gretlopt opt)
 {
     FILE *fp = NULL;
     BOXPLOT *bp;
@@ -395,11 +398,12 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     double lpos, h, gyrange;
     double ymin, ymax;
     int anybool = test_for_bool(grp);
+    int fmt = 0;
     int qtype = 2;
     int i, err = 0;
 
     if (fname != NULL) {
-	/* pre-specified filename */
+	/* converting old-style file */
 	fp = gretl_fopen(fname, "w");
 	if (fp == NULL) {
 	    err = E_FOPEN;
@@ -408,8 +412,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 	/* batch mode: auto-named file */
 	fp = get_gnuplot_batch_stream(PLOT_BOXPLOTS, &err);
 	if (!err) {
-	    *fmt = specified_gp_output_format();
-	    qtype = (*fmt)? 1 : 3;
+	    fmt = specified_gp_output_format();
+	    if (fmt == GP_TERM_EPS || fmt == GP_TERM_PLT) {
+		/* line type for main outline, monochrome */
+		qtype = 1;
+	    }
 	}	    
     } else {
 	/* displaying graph: auto-named temp file */
@@ -419,6 +426,8 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     if (err) {
 	return err;
     }
+
+    /* FIXME outliers */
 
     gyrange = grp->gmax - grp->gmin;
     h = gyrange / 20;
@@ -518,14 +527,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
 static int gnuplot_do_boxplot (PLOTGROUP *grp, gretlopt opt)
 {
-    int fmt = 0;
-    int err = write_gnuplot_boxplot(grp, NULL, opt, &fmt);
+    int err = write_gnuplot_boxplot(grp, NULL, opt);
 
     if (!err) {
-	if (!(opt & OPT_B) || fmt) {
-	    err = gnuplot_make_graph();
-	} 
-    }
+	err = gnuplot_make_graph();
+    } 
 
     return err;
 }
@@ -1010,7 +1016,7 @@ int gnuplot_from_boxplot (const char *fname)
 	if (grp->show_mean && grp->do_notches) {
 	    grp->show_mean = 0;
 	}
-	err = write_gnuplot_boxplot(grp, fname, OPT_NONE, NULL);
+	err = write_gnuplot_boxplot(grp, fname, OPT_NONE);
     } else if (err == E_DATA) {
 	gretl_errmsg_set(_("boxplot file is corrupt"));
     }

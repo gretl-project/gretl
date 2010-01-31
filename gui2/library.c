@@ -7742,26 +7742,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
 	break;
 
-    case BXPLOT:
-	if (cmd_nolist(cmd)) { 
-	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
-	} else {
-	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt | OPT_B);
-	}
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
-		register_graph();
-	    } else if (gopt & OPT_B) {
-		report_plot_written(prn);
-	    }
-	    err = maybe_save_graph(cmd, gretl_plotfile(),
-				   GRETL_OBJ_PLOT, prn);
-	}
-	break;
-
     case GNUPLOT:
+    case BXPLOT:	
     case SCATTERS:
 	if (cmd->opt & (OPT_U | OPT_D)) {
 	    /* output to named file, or input from file */
@@ -7776,20 +7758,26 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
 			      pdinfo, gopt | cmd->opt); 
 	    }
-	} else {
+	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
 				 gopt | cmd->opt);
+	} else if (cmd_nolist(cmd)) { 
+	    err = boolean_boxplots(line, pZ, pdinfo, gopt | cmd->opt);
+	} else {
+	    err = boxplots(cmd->list, pZ, pdinfo, gopt | cmd->opt);
 	}
 	if (err) {
 	    errmsg(err, prn);
 	} else {
+	    GretlObjType otype = (cmd->ci == BXPLOT)? 
+		GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
+
 	    if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
 		register_graph();
 	    } else if (gopt & OPT_B) {
 		report_plot_written(prn);
 	    }
-	    err = maybe_save_graph(cmd, gretl_plotfile(),
-				   GRETL_OBJ_GRAPH, prn);
+	    err = maybe_save_graph(cmd, gretl_plotfile(), otype, prn);
 	}
 	break;
 
