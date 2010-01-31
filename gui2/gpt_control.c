@@ -1869,6 +1869,12 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
     i = spec->n_lines - 1;
     line = &spec->lines[i];
 
+    if (!strncmp(s, "plot ", 5)) {
+	s += 5;
+    }
+
+    s += strspn(s, " ");
+
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
 	p += 7;
@@ -1888,9 +1894,16 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	} else {
 	    line->ncols = 2;
 	}
+    } else if (*s == '\'' || *s == '"') {
+	/* name of data file, without 'using' */
+	if (*(s+1) != '-') {
+	    fprintf(stderr, "plotting datafile, not supported\n");
+	} else {
+	    line->ncols = 2;
+	}
     } else {
-	/* absence of "using" means the line plots a formula, not a
-	   set of data columns 
+	/* absence of "using" should mean that the line plots 
+	   a formula, not a set of data columns 
 	*/
 	line->scale = NADBL;
 	/* get the formula: it runs up to "title" or "notitle" */
@@ -1904,15 +1917,13 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 		grab_fit_coeffs(spec, line->formula);
 	    }
 	} else {
-	    /* no title/notitle */
+	    /* title must be implicit? */
 	    char fmt[8];
 
-	    p = s;
-	    if (!strncmp(s, "plot ", 5)) {
-		p += 5;
-	    }
 	    sprintf(fmt, "%%%ds", GP_MAXFORMULA - 1);
-	    sscanf(p, fmt, line->formula);
+	    sscanf(s, fmt, line->formula);
+	    strcpy(fmt, "%79s");
+	    sscanf(s, fmt, line->title);
 	}
     }
 
