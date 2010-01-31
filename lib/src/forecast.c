@@ -2879,7 +2879,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     if (!err && !(opt & OPT_Q)) {
 	gretlopt printopt = opt;
 
-	if (opt & OPT_G) {
+	if (opt & OPT_U) {
 	    /* do graph (from command line) */
 	    printopt |= OPT_P;
 	}
@@ -3089,7 +3089,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
  * %OPT_R: do rolling/recursive forecast.
  * %OPT_Q: suppress printing of the forecast;
  * %OPT_P: ensure that the values are printed.
- * %OPT_G: produce gnuplot plot.
+ * %OPT_U: produce gnuplot plot.
  * @prn: gretl printing struct.
  *
  * In the case of "simple" models with an autoregressive error term 

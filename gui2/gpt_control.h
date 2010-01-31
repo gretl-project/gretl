@@ -24,11 +24,11 @@
 
 typedef struct png_plot_t png_plot;
 
-int remove_png_term_from_plotfile_by_name (const char *fname);
+int remove_png_term_from_plot_by_name (const char *fname);
 
 void display_session_graph (const char *path, const char *title);
 
-int display_graph_file (const char *fname);
+void display_new_graph (void);
 
 void saver_preview_graph (GPT_SPEC *spec, char *termstr);
 

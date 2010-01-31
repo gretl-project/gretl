@@ -2818,7 +2818,7 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 
 	    gretl_chdir(gretl_dotdir());
 	    session_file_make_path(fullname, graph->fname);
-	    remove_png_term_from_plotfile_by_name(fullname);
+	    remove_png_term_from_plot_by_name(fullname);
 	    vwin = view_file(fullname, 1, 0, 78, 400, EDIT_GP);
 	    object_set_window_title(vwin, obj);
 	    /* add flag so we can mark the session as modified

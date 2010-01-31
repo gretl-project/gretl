@@ -532,11 +532,12 @@ make_plot_line (char *targ, int d, int alt, const int *ids)
 static void htest_graph (int d, double x, double *parms)
 {
     double spike = 0.0;
-    int alt = 0;
     gchar *title = NULL;
-    FILE *fp = NULL;
+    FILE *fp;
+    int alt = 0, err = 0;
 
-    if (gnuplot_init(PLOT_H_TEST, &fp)) {
+    fp = get_plot_input_stream(PLOT_H_TEST, &err);
+    if (err) {
 	return;
     }
 
@@ -614,13 +615,14 @@ static void htest_graph (int d, double x, double *parms)
 
 static void dist_graph (int d, double *parms)
 {
-    int alt = 0;
     char pline[128];
     int ids[ID_MAX] = {0};
     gchar *title = NULL;
-    FILE *fp = NULL;
+    FILE *fp;
+    int alt = 0, err = 0;
 
-    if (gnuplot_init(PLOT_PROB_DIST, &fp)) {
+    fp = get_plot_input_stream(PLOT_PROB_DIST, &err);
+    if (err) {
 	return;
     }
 
@@ -3129,7 +3131,8 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 	p->formula = g_strdup(s);
     }
 
-    if (gnuplot_init(PLOT_CURVE, &fp)) { 
+    fp = get_plot_input_stream(PLOT_CURVE, &err);
+    if (err) { 
 	return;
     }
 
@@ -3244,7 +3247,8 @@ static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
     double xmax = 4.0;
     int opt, err = 0;
 
-    if (gnuplot_init(PLOT_CURVE, &fp)) { 
+    fp = get_plot_input_stream(PLOT_CURVE, &err);
+    if (err) { 
 	return;
     }
 

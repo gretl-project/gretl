@@ -604,7 +604,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     char xtitle[48];
     char ztitle[48];
     char title[128];
-    int v;
+    int v, err = 0;
 
     obs = gretl_plotx(datainfo);
     if (obs == NULL) {
@@ -616,8 +616,9 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	twoplot = 1;
     } 
 
-    if (gnuplot_init((twoplot)? PLOT_TRI_GRAPH : PLOT_REGULAR, &fp)) { 
-	return E_FOPEN;
+    fp = get_plot_input_stream((twoplot)? PLOT_TRI_GRAPH : PLOT_REGULAR, &err);
+    if (err) { 
+	return err;
     }
 
     if (!twoplot) {

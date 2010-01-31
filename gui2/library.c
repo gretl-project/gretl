@@ -158,10 +158,8 @@ void library_command_free (void)
 void register_graph (void)
 {
     gretl_error_clear();
-
-    /* if this gives an error, the message will be
-       handled downstream */
-    display_graph_file(gretl_plotfile());
+    /* now hand off to gpt_control.c */
+    display_new_graph();
 }
 
 static void gui_graph_handler (int err)
@@ -187,10 +185,10 @@ static void launch_gnuplot_interactive (void)
     g_free(gpline);
 # else 
     char term[16];
-    char plotfile[MAXLEN];
+    char fname[MAXLEN];
     int err = 0;
 
-    strcpy(plotfile, gretl_plotfile());
+    strcpy(fname, gretl_plotfile());
 
     if (gnuplot_has_wxt()) {
 	*term = '\0';
@@ -207,7 +205,7 @@ static void launch_gnuplot_interactive (void)
 	if (*term == '\0') {
 	    /* no controller is needed */
 	    argv[0] = (char *) gp;
-	    argv[1] = plotfile;
+	    argv[1] = fname;
 	    argv[2] = "-persist";
 	    argv[3] = NULL;
 	} else if (strstr(term, "gnome")) {
@@ -217,7 +215,7 @@ static void launch_gnuplot_interactive (void)
 	    argv[2] = "--title=\"gnuplot: type q to quit\"";
 	    argv[3] = "-x";
 	    argv[4] = (char *) gp;
-	    argv[5] = plotfile;
+	    argv[5] = fname;
 	    argv[6] = "-";
 	    argv[7] = NULL;
 	} else {	    
@@ -231,7 +229,7 @@ static void launch_gnuplot_interactive (void)
 	    argv[6] = "gnuplot: type q to quit";
 	    argv[7] = "-e";
 	    argv[8] = (char *) gp;
-	    argv[9] = plotfile;
+	    argv[9] = fname;
 	    argv[10] = "-";
 	    argv[11] = NULL;
 	} 
@@ -7756,7 +7754,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
 		register_graph();
 	    } else if (gopt & OPT_B) {
-		pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+		report_plot_written(prn);
 	    }
 	    err = maybe_save_graph(cmd, gretl_plotfile(),
 				   GRETL_OBJ_PLOT, prn);
@@ -7788,7 +7786,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
 		register_graph();
 	    } else if (gopt & OPT_B) {
-		pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+		report_plot_written(prn);
 	    }
 	    err = maybe_save_graph(cmd, gretl_plotfile(),
 				   GRETL_OBJ_GRAPH, prn);

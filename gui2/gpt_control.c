@@ -418,19 +418,19 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     return gretl_rename(temp, fname);
 }
 
-static int add_png_term_to_plotfile (const char *fname)
+static int add_png_term_to_plot (const char *fname)
 {
     return add_or_remove_png_term(fname, ADD_PNG, NULL);
 }
 
-static int remove_png_term_from_plotfile (const char *fname, GPT_SPEC *spec)
+static int remove_png_term_from_plot (const char *fname, GPT_SPEC *spec)
 {
     return add_or_remove_png_term(fname, REMOVE_PNG, spec);
 }
 
 /* public because called from session.c when editing plot commands */
 
-int remove_png_term_from_plotfile_by_name (const char *fname)
+int remove_png_term_from_plot_by_name (const char *fname)
 {
     return add_or_remove_png_term(fname, REMOVE_PNG, NULL);
 }
@@ -2329,7 +2329,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     if (strncmp(gpline, "plot ", 5) ||
 	(strlen(gpline) < 10 && bufgets(gpline, MAXLEN - 1, buf) == NULL)) {	
 	errbox(_("Failed to parse gnuplot file"));
-	fprintf(stderr, "bad plotfile line: '%s'\n", gpline);
+	fprintf(stderr, "bad gnuplot line: '%s'\n", gpline);
 	err = 1;
 	goto bailout;
     }
@@ -2994,7 +2994,7 @@ static void add_to_session_callback (GPT_SPEC *spec)
     err = add_graph_to_session(spec->fname, fullname, type);
 
     if (!err) {
-	remove_png_term_from_plotfile(fullname, spec);
+	remove_png_term_from_plot(fullname, spec);
 	mark_plot_as_saved(spec);
     }
 }
@@ -3593,9 +3593,10 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
     return pbuf;
 }
 
-/* The last step of redisplaying a graph after some change has been
-   made: grab the gulot-generated PNG file, make a pixbuf out of it,
-   and draw the pixbuf onto the canvas of the plot window.
+/* The last step in displaying a graph (or redisplaying after some
+   change has been made): grab the gnuplot-generated PNG file, make a
+   pixbuf out of it, and draw the pixbuf onto the canvas of the plot
+   window.
 */
 
 static int render_pngfile (png_plot *plot, int view)
@@ -4277,11 +4278,14 @@ static int gnuplot_show_png (const char *fname, const char *name,
     return err;
 }
 
-/* @fname is the name of a pre-made PNG file */
+/* Called on a newly created PNG graph; note that
+   the filename returned by gretl_plotfile() is the
+   input file (set of gnuplot commands).
+*/
 
-int display_graph_file (const char *fname)
+void display_new_graph (void)
 {
-    return gnuplot_show_png(fname, NULL, NULL, 0);
+    gnuplot_show_png(gretl_plotfile(), NULL, NULL, 0);
 }
 
 /* @fname is the name of a plot command file from the
@@ -4299,7 +4303,7 @@ void display_session_graph (const char *fname, const char *title)
 	sprintf(fullname, "%s%s", gretl_dotdir(), fname);
     }
 
-    if (add_png_term_to_plotfile(fullname)) {
+    if (add_png_term_to_plot(fullname)) {
 	return;
     }
 

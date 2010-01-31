@@ -140,6 +140,8 @@ const char *gretl_plotfile (void);
 
 char *set_gretl_plotfile (const char *fname);
 
+void report_plot_written (PRN *prn);
+
 const char *gretl_binbase (void);
 
 const char *gretl_ratsbase (void);

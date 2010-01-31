@@ -1580,8 +1580,6 @@ void libgretl_session_cleanup (int mode)
 
 void libgretl_cleanup (void)
 {
-    const char *p;
-
     libgretl_session_cleanup(SESSION_CLEAR_FULL);
 
     gretl_rand_free();
@@ -1594,18 +1592,11 @@ void libgretl_cleanup (void)
     forecast_matrix_cleanup();
     option_flags_cleanup();
     kalman_cleanup();
+    gnuplot_cleanup();
+
 #ifdef USE_RLIB
     gretl_R_cleanup();
 #endif
-
-    p = strstr(gretl_plotfile(), "gpttmp");
-    if (p != NULL) {
-	int pnum;
-
-	if (!sscanf(p, "gpttmp%d.plt", &pnum)) {
-	    gretl_remove(gretl_plotfile());
-	}
-    }
 }
 
 /* record and retrieve hypothesis test results */

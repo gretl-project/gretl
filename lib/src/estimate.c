@@ -1954,10 +1954,11 @@ static int hatvar (MODEL *pmod, int n, const double **Z)
 static int hilu_plot (double *ssr, double *rho, int n)
 {
     FILE *fp;
-    int i;
+    int i, err = 0;
 
-    if (gnuplot_init(PLOT_REGULAR, &fp)) {
-	return E_FOPEN; 
+    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    if (err) {
+	return err; 
     }
 
     fputs("# hildreth-lu\n", fp);

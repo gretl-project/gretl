@@ -4959,7 +4959,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt | OPT_B);
 	}
 	if (!err) {
-	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+	    report_plot_written(prn);
 	} else {
 	    fprintf(stderr, "ci = %d, err = %d\n", cmd->ci, err);
 	}

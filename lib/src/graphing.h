@@ -152,9 +152,11 @@ int split_graph_fontspec (const char *s, char *name, int *psz);
 
 void gnuplot_missval_string (FILE *fp);
 
-int gnuplot_init (PlotType ptype, FILE **fpp);
+FILE *get_plot_input_stream (PlotType ptype, int *err);
 
-FILE *gnuplot_batch_init (const char *optname, int *err);
+FILE *get_gnuplot_batch_stream (PlotType ptype, int *err);
+
+void gnuplot_cleanup (void);
 
 int specified_gp_output_format (void);
 

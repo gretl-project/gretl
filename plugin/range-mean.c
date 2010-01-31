@@ -47,11 +47,12 @@ static int
 do_range_mean_plot (int n, const double **Z, double a, double b,
 		    const char *vname)
 {
-    FILE *fp = NULL;
+    FILE *fp;
     int fitline = 0;
-    int t, err;
+    int t, err = 0;
 
-    if ((err = gnuplot_init(PLOT_RANGE_MEAN, &fp))) {
+    fp = get_plot_input_stream(PLOT_RANGE_MEAN, &err);
+    if (err) {
 	return err;
     }
 

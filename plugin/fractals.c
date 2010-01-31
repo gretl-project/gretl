@@ -28,10 +28,11 @@
 static int 
 do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
 {
-    FILE *fp = NULL;
-    int t, err;
+    FILE *fp;
+    int t, err = 0;
 
-    if ((err = gnuplot_init(PLOT_HURST, &fp))) {
+    fp = get_plot_input_stream(PLOT_HURST, &err);
+    if (err) {
 	return err;
     }
 

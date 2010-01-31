@@ -893,7 +893,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (err) {
 	    errmsg(err, prn);
 	} else if (batch) {
-	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+	    report_plot_written(prn);
 	}
 	break;
 

@@ -535,9 +535,8 @@ static int make_png_file (const char *fname,
     fclose(fsrc);
     fclose(ftmp);
 
-    /* run gnuplot on the temp plotfile */
-    sprintf(cmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), 
-	    temp);
+    /* run gnuplot on the temp file */
+    sprintf(cmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), temp);
     if (system(cmd)) {
 	gretl_remove(temp);
 	return 1;

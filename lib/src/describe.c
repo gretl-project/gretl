@@ -2675,10 +2675,10 @@ static int corrgram_graph (const char *vname, const double *acf, int m,
 {
     char crit_string[16];
     double ymin, ymax;
-    FILE *fp = NULL;
-    int k, err;
+    FILE *fp;
+    int k, err = 0;
 
-    err = gnuplot_init(PLOT_CORRELOGRAM, &fp);
+    fp = get_plot_input_stream(PLOT_CORRELOGRAM, &err);
     if (err) {
 	return err;
     }
@@ -3060,10 +3060,10 @@ static int xcorrgm_graph (const char *xname, const char *yname,
 {
     char crit_string[16];
     char title[128]; 
-    FILE *fp = NULL;
-    int k, err;
+    FILE *fp;
+    int k, err = 0;
 
-    err = gnuplot_init(PLOT_CORRELOGRAM, &fp);
+    fp = get_plot_input_stream(PLOT_CORRELOGRAM, &err);
     if (err) {
 	return err;
     }
@@ -3687,12 +3687,12 @@ static int pergm_graph (const char *vname,
 			int T, int L, const double *x,
 			gretlopt opt)
 {
-    FILE *fp = NULL;
     const char *pstr;
     char s[80];
-    int k, t, err;
+    FILE *fp;
+    int k, t, err = 0;
 
-    err = gnuplot_init(PLOT_PERIODOGRAM, &fp);
+    fp = get_plot_input_stream(PLOT_PERIODOGRAM, &err);
     if (err) {
 	return err;
     }
@@ -5366,8 +5366,9 @@ static int lorenz_graph (const char *vname, double *lz, int n)
     double idx;
     int t, err = 0;
 
-    if (gnuplot_init(PLOT_REGULAR, &fp)) {
-	return E_FOPEN;
+    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    if (err) {
+	return err;
     }
 
     print_keypos_string(GP_KEY_LEFT_TOP, fp);

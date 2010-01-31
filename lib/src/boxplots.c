@@ -401,18 +401,19 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     if (fname != NULL) {
 	/* pre-specified filename */
 	fp = gretl_fopen(fname, "w");
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	}
     } else if (opt & OPT_B) {
 	/* batch mode: auto-named file */
-	const char *optname = get_optval_string(BXPLOT, OPT_U);
-
-	fp = gnuplot_batch_init(optname, &err);
+	fp = get_gnuplot_batch_stream(PLOT_BOXPLOTS, &err);
 	if (!err) {
 	    *fmt = specified_gp_output_format();
 	    qtype = (*fmt)? 1 : 3;
-	}
+	}	    
     } else {
 	/* displaying graph: auto-named temp file */
-	err = gnuplot_init(PLOT_BOXPLOTS, &fp);
+	fp = get_plot_input_stream(PLOT_BOXPLOTS, &err);
     }
 
     if (err) {

@@ -101,14 +101,15 @@ static int density_plot (const double *x, double s, double h,
 			 int n, int kn, gretlopt opt,
 			 const char *vname)
 {
-    FILE *fp = NULL;
+    FILE *fp;
     char tmp[128];
     double xstep, xmin, xmax;
     double xt, xdt;
-    int ktype, t;
-
-    if (gnuplot_init(PLOT_KERNEL, &fp)) {
-	return E_FOPEN;
+    int ktype, t, err = 0;
+    
+    fp = get_plot_input_stream(PLOT_KERNEL, &err);
+    if (err) {
+	return err;
     }
 
     if (opt & OPT_O) {

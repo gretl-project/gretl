@@ -2595,8 +2595,9 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 
     if ((opt & OPT_P) && fr->nobs > 0) {
 	err = plot_fcast_errs(fr, maxerr, pdinfo, opt);
-	if (!err && (opt & OPT_G)) {
-	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+	if (!err && (opt & OPT_U)) {
+	    /* specified output file for graph */
+	    report_plot_written(prn);
 	}
     }
 

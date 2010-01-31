@@ -2264,11 +2264,12 @@ static int QLR_graph (const double *Ft, int t1, int t2,
 		      int tmax, int dfn, const DATAINFO *pdinfo)
 {
     const double *x = gretl_plotx(pdinfo);
-    FILE *fp = NULL;
-    int t;
+    FILE *fp;
+    int t, err = 0;
 
-    if (gnuplot_init(PLOT_REGULAR, &fp)) {
-	return E_FOPEN;
+    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    if (err) {
+	return err;
     }
 
     print_keypos_string(GP_KEY_LEFT_TOP, fp);
@@ -2704,14 +2705,13 @@ static int cusum_do_graph (double a, double b, const double *W,
 			   int t1, int k, int m, 
 			   DATAINFO *pdinfo, gretlopt opt)
 {
-    FILE *fq = NULL;
+    FILE *fp = NULL;
     const double *obs = NULL;
-    double x0 = 0.0;
-    int j, t;
-    int err = 0;
     double frac = 1.0;
+    double x0 = 0.0;
+    int j, t, err = 0;
 
-    err = gnuplot_init(PLOT_CUSUM, &fq);
+    fp = get_plot_input_stream(PLOT_CUSUM, &err);
     if (err) {
 	return err;
     }
@@ -2727,41 +2727,41 @@ static int cusum_do_graph (double a, double b, const double *W,
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fq, "set xlabel '%s'\n", _("Observation"));
-    fputs("set nokey\n", fq);
+    fprintf(fp, "set xlabel '%s'\n", _("Observation"));
+    fputs("set nokey\n", fp);
 
     if (opt & OPT_R) {
-	fprintf(fq, "set title '%s'\n",
+	fprintf(fp, "set title '%s'\n",
 		/* xgettext:no-c-format */
 		_("CUSUMSQ plot with 95% confidence band"));
-	fprintf(fq, "plot \\\n%g*(x-%g) title '' w dots lt 2, \\\n", b, x0 - frac);
-	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0 - frac);
-	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0 - frac);
+	fprintf(fp, "plot \\\n%g*(x-%g) title '' w dots lt 2, \\\n", b, x0 - frac);
+	fprintf(fp, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0 - frac);
+	fprintf(fp, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0 - frac);
     } else {
-	fputs("set xzeroaxis\n", fq);
-	fprintf(fq, "set title '%s'\n",
+	fputs("set xzeroaxis\n", fp);
+	fprintf(fp, "set title '%s'\n",
 		/* xgettext:no-c-format */
 		_("CUSUM plot with 95% confidence band"));
-	fprintf(fq, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0);
-	fprintf(fq, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0);
+	fprintf(fp, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0);
+	fprintf(fp, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0);
     }	
 
-    fputs("'-' using 1:2 w linespoints lt 1\n", fq);
+    fputs("'-' using 1:2 w linespoints lt 1\n", fp);
 
     for (j=0; j<m; j++) { 
 	t = t1 + k + j;
 	if (obs != NULL) {
-	    fprintf(fq, "%g %g\n", obs[t], W[j]);
+	    fprintf(fp, "%g %g\n", obs[t], W[j]);
 	} else {
-	    fprintf(fq, "%d %g\n", t, W[j]);
+	    fprintf(fp, "%d %g\n", t, W[j]);
 	}
     }
 
-    fputs("e\n", fq);
+    fputs("e\n", fp);
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fq);
+    fclose(fp);
 
     err = gnuplot_make_graph();
 

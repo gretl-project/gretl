@@ -1698,6 +1698,11 @@ char *set_gretl_plotfile (const char *fname)
     return paths.plotfile;
 }
 
+void report_plot_written (PRN *prn)
+{
+    pprintf(prn, _("wrote %s\n"), paths.plotfile);
+}
+
 const char *gretl_binbase (void)
 {
     return paths.binbase;

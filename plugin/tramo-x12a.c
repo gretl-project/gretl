@@ -299,15 +299,16 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
     int sub1 = 0;
     double f1;
     char title[32];
-    int t;
+    int t, err = 0;
 
     obs = gretl_plotx(pdinfo);
     if (obs == NULL) {
 	return E_ALLOC;
     }
 
-    if (gnuplot_init(PLOT_TRI_GRAPH, &fp)) {
-	return E_FOPEN;
+    fp = get_plot_input_stream(PLOT_TRI_GRAPH, &err);
+    if (err) {
+	return err;
     }
 
     gretl_push_c_numeric_locale();

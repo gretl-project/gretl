@@ -1161,111 +1161,6 @@ int write_plot_type_string (PlotType ptype, FILE *fp)
     return ret;
 }
 
-static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
-{
-    char plotfile[FILENAME_MAX] = {0};
-    int gui = gretl_in_gui_mode();
-
-    /* 'gnuplot_path' is file-scope static var */
-    if (*gnuplot_path == '\0') {
-	strcpy(gnuplot_path, gretl_gnuplot_path());
-    }
-
-    if (gui) {
-	sprintf(plotfile, "%sgpttmp.XXXXXX", gretl_dotdir());
-	if (mktemp(plotfile) == NULL) {
-	    return E_FOPEN;
-	}
-    } else {
-	sprintf(plotfile, "%sgpttmp.plt", gretl_dotdir());
-    }
-
-    set_gretl_plotfile(plotfile);
-
-    *fpp = gretl_fopen(plotfile, "w");
-    if (*fpp == NULL) {
-	fprintf(stderr, "gnuplot_init: couldn't write to %s\n", plotfile);
-	return E_FOPEN;
-    } 
-
-    if (gui) {
-	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype, flags));
-	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_dotdir());
-    }
-
-    write_plot_type_string(ptype, *fpp);
-
-    if (gnuplot_has_rgb()) {
-	write_plot_line_styles(ptype, *fpp);
-    }
-
-#if GP_DEBUG
-    fprintf(stderr, "gnuplot_init: set plotfile = '%s'\n", 
-	    plotfile);
-#endif
-
-    return 0;
-}
-
-/**
- * gnuplot_init:
- * @ptype: indication of the sort of plot to be made.
- * @fpp: pointer to stream to be opened.
- *
- * If we're in GUI mode: writes a unique temporary filename into
- * the internal variable #gretl_plotfile; opens plotfile for writing 
- * as @fpp; and writes initial lines into the output file to select 
- * the PNG terminal type, and direct gnuplot's output to a temporary
- * file in the gretl user directory.  
- *
- * If not in GUI mode, opens as @fpp the file %gpttmp.plt in the
- * gretl user directory.  
- *
- * This function is not used in batch mode.
- *
- * Returns: 0 on success, 1 on failure.
- */
-
-int gnuplot_init (PlotType ptype, FILE **fpp)
-{
-    return real_gnuplot_init(ptype, 0, fpp);
-}
-
-static int gretl_plot_count;
-
-void reset_plot_count (void)
-{
-    gretl_plot_count = 0;
-}
-
-/* initialization for gnuplot output file in batch mode: this
-   is wanted (e.g.) when drawing batch boxplots */
-
-FILE *gnuplot_batch_init (const char *optname, int *err)
-{
-    char fname[FILENAME_MAX];
-    FILE *fp = NULL;
-
-    if (optname != NULL && *optname != '\0') {
-	/* user gave --output=<filename> */
-	strcpy(fname, optname);
-	gretl_maybe_prepend_dir(fname);
-	fp = gretl_fopen(fname, "w");
-    } else {
-	sprintf(fname, "%sgpttmp%02d.plt", gretl_workdir(),
-		++gretl_plot_count);
-	fp = gretl_fopen(fname, "w");
-    }
-
-    if (fp == NULL) {
-	*err = E_FOPEN;
-    } else {
-	set_gretl_plotfile(fname);
-    }
-
-    return fp;
-}
-
 #define PDF_CAIRO_STRING "set term pdfcairo font \"sans,5\""
 
 static void print_term_string (int tt, FILE *fp)
@@ -1298,132 +1193,275 @@ static void print_term_string (int tt, FILE *fp)
     }
 }
 
-/* Produce formatted graph output in batch mode, in response to the
-   --output=filename option: at present we only recognize EPS, PDF,
-   PNG, EMF and XFig.
-*/
-
-static int make_graph_special (const char *fname, int fmt)
+static int command_index_from_plot_type (PlotType p)
 {
-    char plotcmd[MAXLEN];
-    char tmp[FILENAME_MAX];
-    char line[1024];
-    FILE *fp, *fq;
-    int err;
-
-    if (fmt == GP_TERM_PDF && gnuplot_pdf_terminal() == GP_PDF_NONE) {
-	gretl_errmsg_set(_("Gnuplot does not support PDF output "
-			   "on this system"));
-	return E_EXTERNAL;
-    }
-
-    strcpy(tmp, fname);
-    strcpy(strrchr(tmp, '.'), ".gp");
-
-    /* file to contain augmented gnuplot input */
-    fp = gretl_fopen(tmp, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    /* existing plot file */
-    fq = gretl_fopen(fname, "r");
-    if (fq == NULL) {
-	fclose(fp);
-	return E_FOPEN;
-    }    
-
-    /* write terminal/output lines */
-    print_term_string(fmt, fp);
-    fprintf(fp, "set output '%s'\n", fname);
-
-    /* transcribe original plot content */
-    while (fgets(line, sizeof line, fq)) {
-	fputs(line, fp);
-    }
-
-    fclose(fq);
-    fclose(fp);
-
-#ifdef WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), tmp);
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
-    sprintf(plotcmd, "%s \"%s\"", gretl_gnuplot_path(), tmp);
-    err = gretl_spawn(plotcmd);
-#endif 
-
-    /* remove the temporary input file */
-    if (err) {
-	fprintf(stderr, "err = %d: bad file is '%s'\n", err, tmp);
+    if (p == PLOT_MULTI_SCATTER) {
+	return SCATTERS;
+    } else if (p == PLOT_BOXPLOTS) {
+	return BXPLOT;
+    } else if (p == PLOT_FORECAST) {
+	return FCAST;
     } else {
-	remove(tmp);
+	/* all other cases */
+	return GNUPLOT;
     }
-
-    return err;
 }
 
-static int 
-gp_output_format_from_filename (const char *fname)
+static int gretl_plot_count;
+static int this_term_type;
+
+/* recorder for filename given via --output=foo */
+static char gnuplot_outname[FILENAME_MAX];
+
+static int set_term_type_from_fname (const char *fname)
 {
-    if (fname == NULL || *fname == '\0') {
-	return GP_TERM_NONE;
-    } else if (has_suffix(fname, ".eps")) {
-	return GP_TERM_EPS;
+    if (has_suffix(fname, ".eps")) {
+	this_term_type = GP_TERM_EPS;
     } else if (has_suffix(fname, ".ps")) {
-	return GP_TERM_EPS;
+	this_term_type = GP_TERM_EPS;
     } else if (has_suffix(fname, ".pdf")) {
-	return GP_TERM_PDF;
+	this_term_type = GP_TERM_PDF;
     } else if (has_suffix(fname, ".png")) {
-	return GP_TERM_PNG;
+	this_term_type = GP_TERM_PNG;
     } else if (has_suffix(fname, ".fig")) {
-	return GP_TERM_FIG;
+	this_term_type = GP_TERM_FIG;
     } else if (has_suffix(fname, ".emf")) {
-	return GP_TERM_EMF;
+	this_term_type = GP_TERM_EMF;
     } else if (has_suffix(fname, ".svg")) {
-	return GP_TERM_SVG;
-    } else {
-	return GP_TERM_NONE;
-    }
+	this_term_type = GP_TERM_SVG;
+    } 
+
+    return this_term_type;
 }
 
 int specified_gp_output_format (void)
 {
-    const char *fname = gretl_plotfile();
+    return this_term_type;
+}
 
-    return gp_output_format_from_filename(fname);
+void reset_plot_count (void)
+{
+    gretl_plot_count = 0;
+}
+
+static int make_temp_plot_name (char *fname)
+{
+    sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
+    return (mktemp(fname) == NULL)? E_FOPEN : 0;
+}
+
+/* Open stream into which gnuplot commands will be written.
+
+   When GPT_BATCH is set, we're either just dumping a 
+   gnuplot command file for the user to process, or possibly
+   generating output such as EPS, PDF, etc., in response to
+   the --output=filename option.
+
+   When GPT_BATCH is not set we're handling a graph that
+   was set up interactively, either via the gretl GUI or
+   in interactive mode in gretlcli.  We're going to display
+   this graph, either as PNG in a gretl window or via
+   gnuplot itself.
+*/
+
+static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
+{
+    char fname[FILENAME_MAX] = {0};
+    FILE *fp = NULL;
+
+    /* ensure we have 'gnuplot_path' in place (file-scope static var) */
+    if (*gnuplot_path == '\0') {
+	strcpy(gnuplot_path, gretl_gnuplot_path());
+    }
+
+    this_term_type = GP_TERM_NONE;
+    *gnuplot_outname = '\0';
+
+    if (flags & GPT_BATCH) {
+	int ci = command_index_from_plot_type(ptype);
+	const char *optname = get_optval_string(ci, OPT_U);
+	int fmt = GP_TERM_NONE;
+
+	if (optname != NULL && *optname != '\0') {
+	    /* user gave --output=<filename> */
+	    fmt = set_term_type_from_fname(optname);
+	    if (fmt) {
+		/* input needs processing */
+		strcpy(gnuplot_outname, optname);
+		gretl_maybe_prepend_dir(gnuplot_outname);
+		make_temp_plot_name(fname);
+	    } else {
+		/* just passing commands through */
+		strcpy(fname, optname);
+		gretl_maybe_prepend_dir(fname);
+		this_term_type = GP_TERM_PLT;
+	    }
+	} else {
+	    /* auto-constructed gnuplot commands filename */
+	    sprintf(fname, "%sgpttmp%02d.plt", gretl_workdir(), 
+		    ++gretl_plot_count);
+	    this_term_type = GP_TERM_PLT;
+	}
+
+	fp = gretl_fopen(fname, "w");
+	if (fp == NULL) {
+	    *err = E_FOPEN;
+	} else {
+	    set_gretl_plotfile(fname);
+	    if (*gnuplot_outname != '\0') {
+		/* write terminal/output lines */
+		print_term_string(fmt, fp);
+		fprintf(fp, "set output '%s'\n", gnuplot_outname);
+	    }
+	}
+    } else {
+	int gui = gretl_in_gui_mode();
+
+	if (gui) {
+	    /* the filename should be unique */
+	    make_temp_plot_name(fname);
+	} else {
+	    /* gretlcli: no need for uniqueness */
+	    sprintf(fname, "%sgpttmp.plt", gretl_dotdir());
+	}
+
+	fp = gretl_fopen(fname, "w");
+
+	if (fp == NULL) {
+	    *err = E_FOPEN;
+	} else {
+	    set_gretl_plotfile(fname);
+	    if (gui) {
+		/* set up for PNG output */
+		fprintf(fp, "%s\n", get_gretl_png_term_line(ptype, flags));
+		fprintf(fp, "set output '%sgretltmp.png'\n", gretl_dotdir());
+	    }
+	    write_plot_type_string(ptype, fp);
+	    if (gnuplot_has_rgb()) {
+		write_plot_line_styles(ptype, fp);
+	    }
+	}
+    }
+
+    if (fp == NULL && *fname) {
+	fprintf(stderr, "open_gp_stream: couldn't write to %s\n", fname);
+    }
+
+#if GPDEBUG
+    fprintf(stderr, "open_gp_stream: '%s'\n", gretl_plotfile());
+#endif
+
+    return fp;
+}
+
+/**
+ * get_gnuplot_batch_stream:
+ * @ptype: indication of the sort of plot to be made.
+ * @err: location to receive error code.
+ *
+ * Returns: writable stream on success, %NULL on failure.
+ */
+
+FILE *get_gnuplot_batch_stream (PlotType ptype, int *err)
+{
+    return open_gp_stream(ptype, GPT_BATCH, err);
+}
+
+/**
+ * get_plot_input_stream:
+ * @ptype: indication of the sort of plot to be made.
+ * @err: location to receive error code.
+ *
+ * If we're in GUI mode: writes a unique temporary filename into
+ * the internal variable #gretl_plotfile; opens plotfile for writing;
+ * and writes initial lines into the output file to select 
+ * the PNG terminal type and direct gnuplot's output to a temporary
+ * file in the gretl user directory.  
+ *
+ * If not in GUI mode, opens the file %gpttmp.plt in the gretl
+ * user directory.  
+ *
+ * This function is not for use in batch mode.
+ *
+ * Returns: writable stream on success, %NULL on failure.
+ */
+
+FILE *get_plot_input_stream (PlotType ptype, int *err)
+{
+    return open_gp_stream(ptype, 0, err);
+}
+
+/**
+ * gnuplot_cleanup:
+ *
+ * Removes any temporary gnuplot input file written in
+ * the user's dot directory.
+ */
+
+void gnuplot_cleanup (void)
+{
+    const char *p, *fname = gretl_plotfile();
+
+    p = strstr(fname, "gpttmp");
+
+    if (p != NULL) {
+	int pnum;
+
+	if (sscanf(p, "gpttmp%d.plt", &pnum) == 0) {
+	    gretl_remove(fname);
+	}
+    }
 }
 
 /**
  * gnuplot_make_graph:
  *
- * Executes gnuplot to produce a graph file in PNG format.
+ * Executes gnuplot to produce a graph: in the gretl GUI
+ * in interactive mode this will be a PNG file. In the
+ * CLI program in interactive mode there will be a direct
+ * call to gnuplot to display the graph. In batch mode
+ * the type of file written depends on the options selected
+ * by the user.
  *
- * Returns: the return value from the system command.
+ * Returns: 0 on success, non-zero on error.
  */
 
 int gnuplot_make_graph (void)
 {
-    const char *plotfile = gretl_plotfile();
     char plotcmd[MAXLEN];
+    const char *fname = gretl_plotfile();
+    int gui = gretl_in_gui_mode();
     int fmt, err = 0;
 
     fmt = specified_gp_output_format();
 
-    if (fmt != GP_TERM_NONE) {
-	return make_graph_special(plotfile, fmt);
-    }
-
-    if (gretl_in_gui_mode() && gnuplot_has_bbox()) {
-	do_plot_bounding_box();
+    if (fmt == GP_TERM_PLT) {
+	/* no-op: just the plot commands are wanted */
+	return 0;
+    } else if (fmt == GP_TERM_PDF) {
+	/* can we do this? */
+	if (gnuplot_pdf_terminal() == GP_PDF_NONE) {
+	    gretl_errmsg_set(_("Gnuplot does not support PDF output "
+			       "on this system"));
+	    return E_EXTERNAL;
+	}
+    } else if (fmt == GP_TERM_NONE) {
+	/* GUI graph? */
+	if (gui && gnuplot_has_bbox()) {
+	    do_plot_bounding_box();
+	}
     }
 
 #ifdef WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), plotfile);
+    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
-    sprintf(plotcmd, "%s%s \"%s\"", gretl_gnuplot_path(), 
-	    (gretl_in_gui_mode())? "" : " -persist", plotfile);
+    if (gui || fmt) {
+	sprintf(plotcmd, "%s \"%s\"", gretl_gnuplot_path(), fname);
+    } else {
+	/* gretlcli, interactive */
+	sprintf(plotcmd, "%s -persist \"%s\"", gretl_gnuplot_path(), fname);
+    }
     err = gretl_spawn(plotcmd);  
 #endif
 
@@ -1431,6 +1469,16 @@ int gnuplot_make_graph (void)
     fprintf(stderr, "gnuplot_make_graph:\n"
 	    " plotcmd='%s', err = %d\n", plotcmd, err);
 #endif
+
+    if (fmt) {
+	/* remove the temporary input file? */
+	if (err) {
+	    fprintf(stderr, "err = %d: bad file is '%s'\n", err, fname);
+	} else {
+	    remove(fname);
+	    set_gretl_plotfile(gnuplot_outname);
+	}	
+    }
 
     return err;
 }
@@ -1536,53 +1584,7 @@ static void print_gnuplot_literal_lines (const char *s, FILE *fp)
     }
 }
 
-static int command_index_from_plot_code (int code)
-{
-    /* FIXME boxplots? */
-    if (code == PLOT_MULTI_SCATTER) {
-	return SCATTERS;
-    } else {
-	return GNUPLOT;
-    }
-}
 
-static int
-get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
-{
-    int err = 0;
-
-    *fpp = NULL;
-
-    if (flags & GPT_BATCH) {
-	int ci = command_index_from_plot_code(code);
-	const char *optname = get_optval_string(ci, OPT_U);
-	char fname[FILENAME_MAX];
-
-	if (optname != NULL && *optname != '\0') {
-	    /* user gave --output=<filename> */
-	    strcpy(fname, optname);
-	    gretl_maybe_prepend_dir(fname);
-	} else {
-	    sprintf(fname, "%sgpttmp%02d.plt", gretl_workdir(), 
-		    ++gretl_plot_count);
-	}
-	*fpp = gretl_fopen(fname, "w");
-	if (*fpp == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    set_gretl_plotfile(fname);
-	}
-    } else {
-	/* note: real_gnuplot_init is not used in batch mode */
-	err = real_gnuplot_init(code, flags, fpp);
-    }
-
-#if GPDEBUG
-    fprintf(stderr, "get_gnuplot_output_file: '%s'\n", gretl_plotfile());
-#endif
-
-    return err;
-}
 
 static int loess_plot (gnuplot_info *gi, const char *literal,
 		       const double **Z, const DATAINFO *pdinfo)
@@ -1597,7 +1599,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
     char title[96];
     int t, T, d = 1;
     double q = 0.5;
-    int err;
+    int err = 0;
 
     if (gi->x != NULL) {
 	xno = 0;
@@ -1612,7 +1614,8 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 	return GRAPH_NO_DATA;
     }
 
-    if (get_gnuplot_output_file(&fp, gi->flags, PLOT_REGULAR)) {
+    fp = open_gp_stream(PLOT_REGULAR, gi->flags, &err);
+    if (err) {
 	return E_FOPEN;
     } 
 
@@ -1675,9 +1678,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 
     fclose(fp);
 
-    if (gp_interactive(gi->flags) || specified_gp_output_format()) {
-	err = gnuplot_make_graph();
-    }
+    err = gnuplot_make_graph();
 
  bailout:
 
@@ -1801,8 +1802,9 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 	gi->flags |= GPT_LETTERBOX;
     }
 
-    if (get_gnuplot_output_file(&fp, gi->flags, PLOT_REGULAR)) {
-	return E_FOPEN;
+    fp = open_gp_stream(PLOT_REGULAR, gi->flags, &err);
+    if (err) {
+	return err;
     } 
 
     prn = gretl_print_new_with_stream(fp);
@@ -1838,9 +1840,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     fclose(fp);
 
-    if (gp_interactive(gi->flags) || specified_gp_output_format()) {
-	err = gnuplot_make_graph();
-    }
+    err = gnuplot_make_graph();
 
     clear_gpinfo(gi);
 
@@ -2713,7 +2713,7 @@ int gnuplot (const int *plotlist, const char *literal,
     int oddman = 0;
     int many = 0;
     gnuplot_info gi;
-    int i, err;
+    int i, err = 0;
 
     gretl_error_clear();
 
@@ -2813,8 +2813,8 @@ int gnuplot (const int *plotlist, const char *literal,
     /* open file and dump the prn into it: we delay writing
        the file header till we know a bit more about the plot
     */
-    if (get_gnuplot_output_file(&fp, gi.flags, PLOT_REGULAR)) {
-	err = E_FOPEN;
+    fp = open_gp_stream(PLOT_REGULAR, gi.flags, &err);
+    if (err) {
 	gretl_print_destroy(prn);
 	goto bailout;
     } 
@@ -2971,9 +2971,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_pop_c_numeric_locale();
 
-    if (gp_interactive(gi.flags) || specified_gp_output_format()) {
-	err = gnuplot_make_graph();
-    }
+    err = gnuplot_make_graph();
 
  bailout:
 
@@ -2988,7 +2986,7 @@ int theil_forecast_plot (const int *plotlist, const double **Z,
     FILE *fp = NULL;
     gnuplot_info gi;
     int vx, vy;
-    int err;
+    int err = 0;
 
     gretl_error_clear();
 
@@ -3011,8 +3009,8 @@ int theil_forecast_plot (const int *plotlist, const double **Z,
 	goto bailout;
     }
 
-    if (get_gnuplot_output_file(&fp, gi.flags, PLOT_REGULAR)) {
-	err = E_FOPEN;
+    fp = open_gp_stream(PLOT_REGULAR, gi.flags, &err);
+    if (err) {
 	goto bailout;
     } 
 
@@ -3043,9 +3041,7 @@ int theil_forecast_plot (const int *plotlist, const double **Z,
 
     gretl_pop_c_numeric_locale();
 
-    if (gp_interactive(gi.flags) || specified_gp_output_format()) {
-	err = gnuplot_make_graph();
-    }
+    err = gnuplot_make_graph();
 
  bailout:
 
@@ -3130,8 +3126,9 @@ int multi_scatters (const int *list, const double **Z,
     nplots = plotlist[0];
     gp_small_font_size = (nplots > 4)? 6 : 0;
 
-    if (get_gnuplot_output_file(&fp, flags, PLOT_MULTI_SCATTER)) {
-	return E_FOPEN;
+    fp = open_gp_stream(PLOT_MULTI_SCATTER, flags, &err);
+    if (err) {
+	return err;
     }
 
     fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
@@ -3228,9 +3225,7 @@ int multi_scatters (const int *list, const double **Z,
 
     fclose(fp);
 
-    if (gp_interactive(flags) || specified_gp_output_format()) {
-	err = gnuplot_make_graph();
-    }
+    err = gnuplot_make_graph();
 
     free(plotlist);
 
@@ -3505,7 +3500,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     double barwidth;
     const double *endpt;
     int plottype, use_boxes = 1;
-    int err;
+    int err = 0;
 
     if (K == 0) {
 	return E_DATA;
@@ -3524,7 +3519,8 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	plottype = PLOT_FREQ_SIMPLE;
     }
 
-    if ((err = gnuplot_init(plottype, &fp))) {
+    fp = get_plot_input_stream(plottype, &err);
+    if (err) {
 	return err;
     }  
 
@@ -3722,6 +3718,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 {
     FILE *fp = NULL;
     const double *obs = NULL;
+    GptFlags flags = 0;
     double xmin, xmax, xrange;
     int depvar_present = 0;
     int use_fill = 0, use_lines = 0;
@@ -3761,15 +3758,12 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	return E_ALLOC;
     }
 
-    if (opt & OPT_G) {
-	/* responding to command-line --plot option */
-	const char *optname = get_optval_string(FCAST, OPT_G);
-
-	fp = gnuplot_batch_init(optname, &err);
-    } else {
-	err = gnuplot_init(PLOT_FORECAST, &fp);
+    if (opt & OPT_U) {
+	/* respond to command-line --plot=fname option */
+	flags = GPT_BATCH;
     }
 
+    fp = open_gp_stream(PLOT_FORECAST, flags, &err);
     if (err) {
 	return err;
     }    
@@ -3893,11 +3887,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     fclose(fp);
 
-    if (!(opt & OPT_G) || specified_gp_output_format()) {
-	err = gnuplot_make_graph();
-    }
-
-    return err;
+    return gnuplot_make_graph();
 }
 
 #ifndef min
@@ -3919,7 +3909,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     double ymin[2], ymax[2];
     gchar *tmp;
     int ntau, bcols;
-    int i, j, err;
+    int i, j, err = 0;
 
     if (tau == NULL || B == NULL) {
 	return E_DATA;
@@ -3930,7 +3920,8 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    if ((err = gnuplot_init(PLOT_RQ_TAU, &fp))) {
+    fp = get_plot_input_stream(PLOT_RQ_TAU, &err);
+    if (err) {
 	return err;
     } 
 
@@ -4051,7 +4042,7 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
     const double *obs;
     const double *h;
     double sd2;
-    int t, err;
+    int t, err = 0;
 
     h = gretl_model_get_data(pmod, "garch_h");
     if (h == NULL) {
@@ -4063,7 +4054,8 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
 	return E_ALLOC;
     }
 
-    if ((err = gnuplot_init(PLOT_GARCH, &fp))) {
+    fp = get_plot_input_stream(PLOT_GARCH, &err);
+    if (err) {
 	return err;
     }
 
@@ -4222,7 +4214,7 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
 
     gp_small_font_size = (nunits > 4)? 7 : 0;
 
-    err = gnuplot_init(PLOT_PANEL, &fp);
+    fp = get_plot_input_stream(PLOT_PANEL, &err);
     if (err) {
 	return err;
     }
@@ -4320,7 +4312,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     int vtarg, vshock;
     gretl_matrix *resp;
     char title[128];
-    int t, err;
+    int t, err = 0;
 
     if (alpha < 0.01 || alpha > 0.5) {
 	return E_DATA;
@@ -4336,7 +4328,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	confint = 1;
     }
 
-    err = gnuplot_init((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &fp);
+    fp = get_plot_input_stream((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &err);
     if (err) {
 	gretl_matrix_free(resp);
 	return err;
@@ -4412,12 +4404,12 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     int vtarg, vshock;
     gretl_matrix *resp;
     char title[128];
-    int t, err, i, j;
-
     int n = var->neqns;
     float plot_fraction = 1.0 / n;
     float xorig = 0.0;
     float yorig;
+    int t, i, j;
+    int err = 0;
 
     gp_small_font_size = (n == 4)? 6 : 0;
 
@@ -4430,7 +4422,7 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	confint = 1;
     }
 
-    err = gnuplot_init(PLOT_MULTI_IRF, &fp);
+    fp = get_plot_input_stream(PLOT_MULTI_IRF, &err);
     if (err) {
 	gretl_matrix_free(resp);
 	return err;
@@ -4511,7 +4503,8 @@ int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
     FILE *fp = NULL;
     const double *obs;
     int nvars, nobs;
-    int i, v, t, t1, err;
+    int i, v, t, t1;
+    int err = 0;
 
     if (ci == VAR || ci == VECM) {
 	var = (GRETL_VAR *) p;
@@ -4527,7 +4520,7 @@ int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
 
     t1 = E->t1;
 
-    err = gnuplot_init(PLOT_REGULAR, &fp);
+    fp = get_plot_input_stream(PLOT_REGULAR, &err);
     if (err) {
 	return err;
     }
@@ -4621,7 +4614,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo)
     nobs = gretl_matrix_rows(E);
     t1 = E->t1;
 
-    err = gnuplot_init(PLOT_MULTI_SCATTER, &fp);
+    fp = get_plot_input_stream(PLOT_MULTI_SCATTER, &err);
     if (err) {
 	return err;
     }
@@ -4709,7 +4702,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
 	return err;
     }
 
-    err = gnuplot_init(PLOT_VAR_ROOTS, &fp);
+    fp = get_plot_input_stream(PLOT_VAR_ROOTS, &err);
     if (err) {
 	return err;
     }
@@ -4801,7 +4794,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 
     gretl_matrix_free(e);
 
-    err = gnuplot_init(PLOT_ELLIPSE, &fp);
+    fp = get_plot_input_stream(PLOT_ELLIPSE, &err);
     if (err) {
 	return err;
     }
@@ -4911,7 +4904,7 @@ static int qq_plot_two_series (const int *list, const double **Z,
     }
 
     if (!err) {
-	err = gnuplot_init(PLOT_QQ, &fp);
+	fp = get_plot_input_stream(PLOT_QQ, &err);
     }
 
     if (err) {
@@ -5002,7 +4995,7 @@ static int normal_qq_plot (const int *list, const double **Z,
 	}
     }
 
-    err = gnuplot_init(PLOT_QQ, &fp);
+    fp = get_plot_input_stream(PLOT_QQ, &err);
     if (err) {
 	free(y);
 	return err;
@@ -5229,7 +5222,6 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 {
     const char *inname = get_optval_string(GNUPLOT, OPT_D);
     FILE *fp, *fq;
-    int gui, display = 0;
     int flags = 0;
     int err = 0;
 
@@ -5242,20 +5234,12 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 	return E_FOPEN;
     }
 
-    gui = gretl_in_gui_mode();
-
-    if (gui) {
-	if (opt & OPT_U) {
-	    /* specified output */
-	    flags = GPT_BATCH;
-	} else {
-	    display = 1;
-	} 
-    } else {
+    if (opt & OPT_U) {
+	/* specified output */
 	flags = GPT_BATCH;
     }
 
-    err = get_gnuplot_output_file(&fq, flags, PLOT_USER);
+    fq = open_gp_stream(PLOT_USER, flags, &err);
 
     if (err) {
 	fclose(fp);
@@ -5269,12 +5253,10 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 	fclose(fp);
 	fclose(fq);
 
-	if (display || specified_gp_output_format()) {
-	    err = gnuplot_make_graph();
-	}
+	err = gnuplot_make_graph();
 
 	if (!err && (flags & GPT_BATCH)) {
-	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+	    report_plot_written(prn);
 	}
     }
 

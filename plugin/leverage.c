@@ -205,12 +205,13 @@ leverage_x_range (int t1, int t2, const double *x, FILE *fp)
 static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 			  double ***pZ, DATAINFO *pdinfo)
 {
-    FILE *fp = NULL;
+    FILE *fp;
     const double *obs = NULL;
-    int t;
+    int t, err = 0;
 
-    if (gnuplot_init(PLOT_LEVERAGE, &fp)) {
-	return E_FOPEN;
+    fp = get_plot_input_stream(PLOT_LEVERAGE, &err);
+    if (err) {
+	return err;
     }
 
     if (dataset_is_time_series(pdinfo)) { 
