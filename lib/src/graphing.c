@@ -1262,6 +1262,11 @@ static int make_temp_plot_name (char *fname)
    in interactive mode in gretlcli.  We're going to display
    this graph, either as PNG in a gretl window or via
    gnuplot itself.
+
+   Depending on the prospective use of the stream, we
+   may write some initializations into it, the primary
+   case being when we're going to produce PNG output
+   for display in the GUI.
 */
 
 static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
@@ -1315,6 +1320,7 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
 	    }
 	}
     } else {
+	/* interactive */
 	int gui = gretl_in_gui_mode();
 
 	if (gui) {
