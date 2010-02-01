@@ -1073,11 +1073,36 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 
     BFGS_defaults(&maxit, &toler, HECKIT);
 
+    gretl_matrix *init_H = NULL;
+
+#define INITH_OPG 1
+#if INITH_OPG
+    /* calculate the OPG matrix at the starting point and use 
+       its inverse (if any) as initial curvature matrix for BFGS
+    */
+
+    init_H = gretl_matrix_alloc(np, np);
+    h_loglik(theta, HC);
+    gretl_matrix_multiply_mod(HC->score, GRETL_MOD_TRANSPOSE, 
+			      HC->score, GRETL_MOD_NONE, 
+			      init_H, GRETL_MOD_NONE);
+
+    err = gretl_invert_symmetric_matrix(init_H); 
+    if (err) {
+	fprintf(stderr, "init_H not pd\n");
+	gretl_matrix_free(init_H);
+	init_H = NULL;
+    }
+#endif
+
     err = BFGS_max(theta, np, maxit, toler, &fncount, 
 		   &grcount, h_loglik, C_LOGLIK,
-		   heckit_score, HC, NULL,
+		   heckit_score, HC, init_H,
 		   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
+#if INITH_OPG
+    gretl_matrix_free(init_H);
+#endif
 
 
     if (!err) {
