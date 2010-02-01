@@ -155,11 +155,15 @@ void library_command_free (void)
     gretl_cmd_free(&libcmd);
 }
 
-void register_graph (void)
+void register_graph (PRN *prn)
 {
-    gretl_error_clear();
-    /* now hand off to gpt_control.c */
-    display_new_graph();
+    if (graph_written_to_file()) {
+	report_plot_written(prn);
+    } else {
+	gretl_error_clear();
+	/* now hand off to gpt_control.c */
+	display_new_graph();
+    }
 }
 
 static void gui_graph_handler (int err)
@@ -169,7 +173,7 @@ static void gui_graph_handler (int err)
     } else if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -812,7 +816,7 @@ static void do_qq_xyplot (const char *buf, gretlopt opt)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    register_graph();
+	    register_graph(NULL);
 	}
     }     
 }
@@ -1192,7 +1196,7 @@ int do_xcorrgm (selector *sr)
         gretl_print_destroy(prn);
     } else {
 	view_buffer(prn, 60, 300, title, XCORRGM, NULL); 
-	register_graph();
+	register_graph(NULL);
     }
 
     return err;
@@ -1599,7 +1603,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	    err = text_print_forecast(fr, datainfo, gopt, prn);
 	}
 	if (!err && (gopt & OPT_P)) {
-	    register_graph();
+	    register_graph(NULL);
 	}
 	if (!rolling && fr->sderr == NULL) {
 	    width = 60;
@@ -2176,7 +2180,7 @@ static int make_and_display_graph (void)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 
     return err;
@@ -2326,7 +2330,7 @@ void do_gini (void)
 
 	view_buffer(prn, 78, 200, title, PRINT, NULL);
 	g_free(title);
-	register_graph();
+	register_graph(NULL);
     } 
 }
 
@@ -2370,7 +2374,7 @@ void do_qqplot (void)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    register_graph();
+	    register_graph(NULL);
 	}
     } 
 }
@@ -2500,7 +2504,7 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	gretl_print_destroy(prn);
     } else {
 	if (ci == CUSUM || ci == CUSUMSQ || ci == QLRTEST) {
-	    register_graph();
+	    register_graph(NULL);
 	}
 
 	update_model_tests(vwin);
@@ -3359,7 +3363,7 @@ static int real_do_model (int action)
 	*pmod = ar1_lsq(libcmd.list, &Z, datainfo, action, libcmd.opt, rho);
 	err = model_output(pmod, prn);
 	if (libcmd.opt & OPT_H) {
-	    register_graph();
+	    register_graph(NULL);
 	}
 	break;
 
@@ -4164,7 +4168,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 				    MODTEST, NULL);
 	    /* show the graph too */
 	    if (plot_freq(freq, D_NORMAL) == 0) {
-		register_graph();
+		register_graph(NULL);
 	    }
 	}
     }
@@ -4283,7 +4287,7 @@ void do_freq_dist (void)
 	} else {
 	    err = plot_freq(freq, dist);
 	    if (!err) {
-		register_graph();
+		register_graph(NULL);
 	    }
 	}
     } else if (!err) {
@@ -4511,7 +4515,7 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 	return;
     }
 
-    register_graph();
+    register_graph(NULL);
 
     view_buffer(prn, 78, 360, title, CORRGM, NULL);
 }
@@ -4611,7 +4615,7 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 	return;
     }
 
-    register_graph();
+    register_graph(NULL);
 
     view_buffer(prn, 60, 400, title, PERGM, NULL);
 }
@@ -4675,7 +4679,7 @@ void residual_qq_plot (GtkAction *action, gpointer p)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    register_graph();
+	    register_graph(NULL);
 	}    
     }
 
@@ -5235,7 +5239,7 @@ void resid_plot (GtkAction *action, gpointer p)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    register_graph();
+	    register_graph(NULL);
 	}
 	return;
     }
@@ -5299,7 +5303,7 @@ void resid_plot (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
     
     trim_dataset(pmod, origv);
@@ -5327,7 +5331,7 @@ static void theil_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -5371,7 +5375,7 @@ void fit_actual_plot (GtkAction *action, gpointer p)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    register_graph();
+	    register_graph(NULL);
 	}
 	free(formula);
 	return;
@@ -5405,7 +5409,7 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 
     trim_dataset(pmod, origv);
@@ -5776,7 +5780,7 @@ void do_boxplot_var (int varnum)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -5834,7 +5838,7 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
 	gui_errmsg(err);
     } else {
 	close_dialog(dlg);
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -5866,7 +5870,7 @@ int do_dummy_graph (selector *sr)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 
     return 0;
@@ -5899,7 +5903,7 @@ int do_xyz_graph (selector *sr)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }    
 
     return 0;
@@ -7414,14 +7418,11 @@ static int execute_script (const char *runfile, const char *buf,
 static void gui_exec_callback (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo)
 {
-    char sname[MAXSAVENAME];   
     int ci = s->cmd->ci;
     int err = 0;
 
     if (ci == FREQ && s->flags == CONSOLE_EXEC) {
-	register_graph();
-    } else if (ci == GNUPLOT && (s->cmd->opt & OPT_D)) {
-	register_graph();
+	register_graph(NULL);
     } else if (ci == SETOBS || ci == SMPL) {
 	set_sample_label(pdinfo);
     } else if (ci == VAR || ci == VECM) {
@@ -7436,12 +7437,19 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 	err = modeltab_parse_line(s->line, s->prn);
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line);
-    } else if (ci == GNUPLOT && !(s->cmd->opt & OPT_U)) {
-	maybe_save_graph(s->cmd, gretl_plotfile(),
-			 GRETL_OBJ_GRAPH, s->prn);
-    } else if (ci == BXPLOT && !(s->cmd->opt & OPT_U)) {
-	maybe_save_graph(s->cmd, gretl_plotfile(),
-			 GRETL_OBJ_PLOT, s->prn);
+    } else if (ci == GNUPLOT || ci == BXPLOT) {
+	if (graph_written_to_file()) {
+	    ; /* saved to named file: handled */
+	} else if (*s->cmd->savename != '\0') {
+	    GretlObjType otype = (ci == BXPLOT)?
+		GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
+
+	    maybe_save_graph(s->cmd, gretl_plotfile(),
+			     otype, s->prn);
+	} else if (s->cmd->opt & OPT_D) {
+	    /* this can be generalized? */
+	    register_graph(NULL);
+	}
     } else if (MODEL_COMMAND(ci)) {
 	/* FIXME is this always right? */
 	MODEL *pmod = s->models[0];
@@ -7453,7 +7461,7 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 
     /* ensure we zero out the "savename" in case it
        hasn't been used */
-    gretl_cmd_get_savename(sname);
+    gretl_cmd_zero_savename();
 
     if (err) {
 	gui_errmsg(err);
@@ -7583,7 +7591,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
-    gretlopt gopt = OPT_NONE;
     char runfile[MAXLEN];
     int console_run = 0;
     int k, err = 0;
@@ -7676,10 +7683,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
 
-    if (s->flags == SCRIPT_EXEC && *cmd->savename == 0) {
-	gopt |= OPT_B; /* do graphs in batch mode */
-    }
-
     gretl_exec_state_set_callback(s, gui_exec_callback, OPT_G);
 
     switch (cmd->ci) {
@@ -7753,32 +7756,29 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (cmd->opt & OPT_C) {
 		err = xy_plot_with_control(cmd->list, cmd->param, 
 					   (const double **) *pZ, pdinfo,
-					   gopt | cmd->opt);
+					   cmd->opt);
 	    } else {
 		err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			      pdinfo, gopt | cmd->opt); 
+			      pdinfo, cmd->opt); 
 	    }
 	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
-				 gopt | cmd->opt);
+				 cmd->opt);
 	} else if (cmd_nolist(cmd)) { 
-	    err = boolean_boxplots(line, pZ, pdinfo, gopt | cmd->opt);
+	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt);
 	} else {
-	    err = boxplots(cmd->list, pZ, pdinfo, gopt | cmd->opt);
+	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt);
 	}
 	if (err) {
 	    errmsg(err, prn);
-	} else {
+	} else if (*cmd->savename != '\0') {
 	    GretlObjType otype = (cmd->ci == BXPLOT)? 
 		GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
 
-	    if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
-		register_graph();
-	    } else if (gopt & OPT_B) {
-		report_plot_written(prn);
-	    }
 	    err = maybe_save_graph(cmd, gretl_plotfile(), otype, prn);
-	}
+	} else {
+	    register_graph(prn);
+	} 
 	break;
 
     case QQPLOT:
@@ -7786,8 +7786,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		      cmd->opt);
 	if (err) {
 	    errmsg(err, prn);
-	} else if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
-	    register_graph();
+	} else {
+	    register_graph(prn);
 	} 
 	break;
 

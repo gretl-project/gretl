@@ -194,11 +194,9 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbinfo)
     }
 
     if (err) {
-	errbox(_("gnuplot command failed"));
-    }
-
-    if (!err) {
-	register_graph();
+	gui_errmsg(err);
+    } else {
+	register_graph(NULL);
     }
 
     free(list);

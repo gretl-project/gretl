@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "boxplots.h"
+#include "libset.h"
 
 typedef struct {
     int n;
@@ -408,7 +409,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 	if (fp == NULL) {
 	    err = E_FOPEN;
 	}
-    } else if (opt & OPT_B) {
+    } else if (gretl_in_batch_mode()) {
 	/* batch mode: auto-named file */
 	fp = get_gnuplot_batch_stream(PLOT_BOXPLOTS, &err);
 	if (!err) {

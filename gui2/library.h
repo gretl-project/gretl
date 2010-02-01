@@ -73,7 +73,7 @@ void run_script_fragment (windata_t *vwin, gchar *buf);
 
 void gui_errmsg (const int errcode);
 
-void register_graph (void);
+void register_graph (PRN *prn);
 
 /* sample-related functions */
 

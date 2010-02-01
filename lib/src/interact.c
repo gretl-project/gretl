@@ -4940,29 +4940,29 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case GNUPLOT:
     case BXPLOT:
     case SCATTERS:
-	if (cmd->ci == GNUPLOT && (cmd->opt & OPT_D)) {
-	    err = gnuplot_process_file(cmd->opt, prn);
-	    if (!err && gretl_in_gui_mode() && !(cmd->opt & OPT_U)) {
-		schedule_callback(s);
-	    }
-	    break;
-	}
-	/* in this context we only do plots in batch mode (OPT_B) */
 	if (cmd->ci == GNUPLOT) {
-	    err = gnuplot(cmd->list, cmd->param, Z, pdinfo, 
-			  cmd->opt | OPT_B);
+	    if (cmd->opt & OPT_D) {
+		err = gnuplot_process_file(cmd->opt, prn);
+	    } else if (cmd->opt & OPT_C) {
+		err = xy_plot_with_control(cmd->list, cmd->param, 
+					   Z, pdinfo, cmd->opt);
+	    } else {
+		err = gnuplot(cmd->list, cmd->param, Z, pdinfo, cmd->opt);
+	    }
 	} else if (cmd->ci == SCATTERS) {
-	    err = multi_scatters(cmd->list, Z, pdinfo, cmd->opt | OPT_B);
+	    err = multi_scatters(cmd->list, Z, pdinfo, cmd->opt);
 	} else if (cmd_nolist(cmd)) { 
-	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
+	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt);
 	} else {
-	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt | OPT_B);
+	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt);
 	}
 	if (!err) {
-	    report_plot_written(prn);
-	} else {
-	    fprintf(stderr, "ci = %d, err = %d\n", cmd->ci, err);
-	}
+	    if (graph_written_to_file()) {
+		report_plot_written(prn);
+	    } else if (gretl_in_gui_mode()) {
+		schedule_callback(s);
+	    }
+	} 
 	break;
 
     case MODELTAB:
@@ -5315,9 +5315,14 @@ void gretl_cmd_set_opt (CMD *cmd, gretlopt opt)
 char *gretl_cmd_get_savename (char *sname)
 {
     strcpy(sname, cmd_savename);
-    *cmd_savename = 0;
+    *cmd_savename = '\0';
 
     return sname;
+}
+
+void gretl_cmd_zero_savename (void)
+{
+    *cmd_savename = '\0';
 }
 
 void gretl_exec_state_init (ExecState *s,

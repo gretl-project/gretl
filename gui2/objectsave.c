@@ -250,7 +250,7 @@ static int session_VAR_do_irf (GRETL_VAR *var, char *cmdstr)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 
     return err;

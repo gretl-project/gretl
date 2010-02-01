@@ -2573,7 +2573,7 @@ static void tau_plot_call (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }    
 }
 
@@ -3051,7 +3051,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -3077,7 +3077,7 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -3176,7 +3176,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	fr->alpha = 1 - conf;
 	err = text_print_forecast(fr, datainfo, gopt, prn);
 	if (!err) {
-	    register_graph();
+	    register_graph(NULL);
 	}
 	if (fr->sderr == NULL) {
 	    width = 50;
@@ -3300,7 +3300,7 @@ static void VAR_roots_plot_call (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -3324,7 +3324,7 @@ static void system_resid_plot_call (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -3339,7 +3339,7 @@ static void system_resid_mplot_call (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 

@@ -609,7 +609,7 @@ static void htest_graph (int d, double x, double *parms)
     if (gnuplot_make_graph()) {
 	errbox(_("gnuplot command failed"));
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -699,7 +699,7 @@ static void dist_graph (int d, double *parms)
     if (gnuplot_make_graph()) {
 	errbox(_("gnuplot command failed"));
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 }
 
@@ -3152,7 +3152,7 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
 	gtk_widget_destroy(p->dlg);
     }
 }
@@ -3293,7 +3293,7 @@ static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph();
+	register_graph(NULL);
     }
 
     gtk_widget_destroy(dlg);

@@ -1439,7 +1439,7 @@ static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 
     H = gretl_identity_matrix_new(k);
     if (H != NULL) {
-	gretl_matrix_multiply_by_scalar(H, 1.0 / T);
+	gretl_matrix_divide_by_scalar(H, T);
     } 
 
     return H;

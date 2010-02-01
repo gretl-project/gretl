@@ -1700,7 +1700,9 @@ char *set_gretl_plotfile (const char *fname)
 
 void report_plot_written (PRN *prn)
 {
-    pprintf(prn, _("wrote %s\n"), paths.plotfile);
+    if (prn != NULL) {
+	pprintf(prn, _("wrote %s\n"), paths.plotfile);
+    }
 }
 
 const char *gretl_binbase (void)

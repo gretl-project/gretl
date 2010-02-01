@@ -229,7 +229,7 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 {
     GptFlags flags = 0;
 
-    if (opt & OPT_B) {
+    if (gretl_in_batch_mode() || (opt & OPT_U)) {
 	flags |= GPT_BATCH;
     }
 
@@ -315,21 +315,29 @@ static void printvars (FILE *fp, int t, const int *list, const double **Z,
 
 static int factorized_vars (gnuplot_info *gi, const double **Z)
 {
-    int ynum = gi->list[1];
-    int dum = gi->list[3];
+    int ynum, dum;
     int fn, t, i;
+
+    if (gi->list[0] != 3 || !gretl_isdummy(gi->t1, gi->t2, Z[gi->list[3]])) {
+	gretl_errmsg_set(_("You must supply three variables, the last of "
+			   "which is a dummy variable\n(with values 1 or 0)\n"));
+	return E_DATA;
+    }
+
+    ynum = gi->list[1];
+    dum = gi->list[3];
 
     fn = gi->t2 - gi->t1 + 1;
 
     gi->yvar1 = malloc(fn * sizeof *gi->yvar1);
     if (gi->yvar1 == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     gi->yvar2 = malloc(fn * sizeof *gi->yvar2);
     if (gi->yvar2 == NULL) {
 	free(gi->yvar1);
-	return 1;
+	return E_ALLOC;
     }
 
     i = 0;
@@ -1419,6 +1427,13 @@ void gnuplot_cleanup (void)
     }
 }
 
+static int graph_file_written;
+
+int graph_written_to_file (void)
+{
+    return graph_file_written;
+}
+
 /**
  * gnuplot_make_graph:
  *
@@ -1439,10 +1454,13 @@ int gnuplot_make_graph (void)
     int gui = gretl_in_gui_mode();
     int fmt, err = 0;
 
+    graph_file_written = 0;
+
     fmt = specified_gp_output_format();
 
     if (fmt == GP_TERM_PLT) {
 	/* no-op: just the plot commands are wanted */
+	graph_file_written = 1;
 	return 0;
     } else if (fmt == GP_TERM_PDF) {
 	/* can we do this? */
@@ -1483,6 +1501,7 @@ int gnuplot_make_graph (void)
 	} else {
 	    remove(fname);
 	    set_gretl_plotfile(gnuplot_outname);
+	    graph_file_written = 1;
 	}	
     }
 
@@ -1589,8 +1608,6 @@ static void print_gnuplot_literal_lines (const char *s, FILE *fp)
 	s++;
     }
 }
-
-
 
 static int loess_plot (gnuplot_info *gi, const char *literal,
 		       const double **Z, const DATAINFO *pdinfo)
@@ -2805,8 +2822,8 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* separation by dummy: create special vars */
     if (gi.flags & GPT_DUMMY) { 
-	if (list[0] != 3 || factorized_vars(&gi, Z)) {
-	    err = E_DATA;
+	err = factorized_vars(&gi, Z);
+	if (err) {
 	    goto bailout;
 	}
     } 
@@ -3082,7 +3099,7 @@ int multi_scatters (const int *list, const double **Z,
     FILE *fp = NULL;
     int i, t, err = 0;
 
-    if (opt & OPT_B) {
+    if (gretl_in_batch_mode()) {
 	flags |= GPT_BATCH;
     }
 
@@ -5252,10 +5269,6 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 	fclose(fq);
 
 	err = gnuplot_make_graph();
-
-	if (!err && (flags & GPT_BATCH)) {
-	    report_plot_written(prn);
-	}
     }
 
     return err;

@@ -170,6 +170,8 @@ PlotType plot_type_from_string (const char *str);
 
 int gnuplot_make_graph (void);
 
+int graph_written_to_file (void);
+
 void reset_plot_count (void);
 
 int matrix_plot (gretl_matrix *m, const int *list, const char *literal, 

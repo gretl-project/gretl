@@ -714,14 +714,6 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     return err;
 }
 
-static gretlopt plot_opt (gretlopt opt, int batch)
-{
-    if (batch) {
-	opt |= OPT_B;
-    }
-    return opt;
-}
-
 #define ENDRUN (NC + 1)
 
 /* exec_line: this is called to execute both interactive and script
@@ -865,43 +857,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
 	break;
 
-    case GNUPLOT:
-    case BXPLOT:
-    case SCATTERS:
-	if (cmd->opt & OPT_D) {
-	    goto use_lib;
-	}
-	if (cmd->ci == GNUPLOT) {
-	    if ((cmd->opt & OPT_Z) && 
-		(cmd->list[0] != 3 || 
-		 !gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[cmd->list[3]]))) { 
-		pputs(prn, _("You must supply three variables, the last of "
-			     "which is a dummy variable\n(with values 1 or 0)\n"));
-		break;
-	    }
-	    if (cmd->opt & OPT_C) {
-		err = xy_plot_with_control(cmd->list, cmd->param, 
-					   (const double **) *pZ, pdinfo, 
-					   plot_opt(cmd->opt, batch));
-	    } else {
-		err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			      pdinfo, plot_opt(cmd->opt, batch));
-	    }
-	} else if (cmd->ci == SCATTERS) {
-	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
-				 plot_opt(cmd->opt, batch));
-	} else if (cmd_nolist(cmd)) { 
-	    err = boolean_boxplots(line, pZ, pdinfo, plot_opt(cmd->opt, batch));
-	} else {
-	    err = boxplots(cmd->list, pZ, pdinfo, plot_opt(cmd->opt, batch));
-	}
-	if (err) {
-	    errmsg(err, prn);
-	} else if (batch) {
-	    report_plot_written(prn);
-	}
-	break;
-
     case HELP:
 	cli_help(cmd->param, cmd->opt, prn);
 	break;
@@ -1025,7 +980,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	/* else fall through */
 
     default:
-    use_lib:
 	err = gretl_cmd_exec(s, pZ, pdinfo);
 	break;
     }

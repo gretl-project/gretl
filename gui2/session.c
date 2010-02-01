@@ -856,6 +856,8 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 	return ADD_OBJECT_FAIL;
     } 
 
+    /* we copied the plot commands file, @fname, into the
+       session directory; now delete the original */
     gretl_remove(fname);
 
     return real_add_graph_to_session(name, gname, type);

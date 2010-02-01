@@ -706,14 +706,14 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
     fclose(fp);
 
-    if (gnuplot_make_graph()) {
-	errbox(_("gnuplot command failed"));
-	return 1;
-    } 
+    err = gnuplot_make_graph();
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph(NULL);
+    }
 
-    register_graph();
-
-    return 0;
+    return err;
 }
 
 static int save_filtered_var (filter_info *finfo, double *x, int i,

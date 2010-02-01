@@ -4059,6 +4059,10 @@ static png_plot *png_plot_new (void)
     return plot;
 }
 
+/* note: @fname is the name of the file containing the 
+   plot commands.
+*/
+
 static int gnuplot_show_png (const char *fname, const char *name,
 			     GPT_SPEC *spec, int saved)
 {
