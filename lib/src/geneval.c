@@ -527,17 +527,17 @@ static void eval_warning (parser *p, int op, int errnum)
 	const char *w = "";
 
 	if (op == B_POW) {
-	    w = "'^'";
+	    w = "pow";
 	} else if (op == F_LOG) {
-	    w = "log()";
+	    w = "log";
 	} else if (op == F_SQRT) {
-	    w = "sqrt()";
+	    w = "sqrt";
 	} else if (op == F_EXP) {
-	    w = "exp()";
+	    w = "exp";
 	} else if (op == F_GAMMA) {
-	    w = "gammafun()";
+	    w = "gammafun";
 	} else if (op == F_LNGAMMA) {
-	    w = "lgamma()";
+	    w = "lgamma";
 	}
 
 	if (errnum) {

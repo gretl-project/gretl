@@ -314,6 +314,76 @@ double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
     return vcv;
 }
 
+#define ALT_OPG 0
+
+/* build the G matrix, given a set of coefficient estimates, b, and a
+   function for calculating the per-observation contributions
+   to the loglikelihood, lltfun 
+*/
+
+gretl_matrix *build_score_matrix (double *b, int k, int T,
+				  BFGS_LLT_FUNC lltfun,
+				  void *data, int *err)
+{
+    double h = 1e-8;
+#if ALT_OPG
+    double d = 1.0e-4;
+#endif
+    gretl_matrix *G;
+    const double *x;
+    double bi0, x0;
+    int i, t;
+
+    G = gretl_zero_matrix_new(k, T);
+    if (G == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<k; i++) {
+	bi0 = b[i];
+#if ALT_OPG
+	h = d * bi0 + d * (b[i] == 0.0);
+#endif
+	b[i] = bi0 - h;
+	x = lltfun(b, i, data);
+	if (x == NULL) {
+	    *err = E_NAN;
+	    goto bailout;
+	}
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(G, i, t, x[t]);
+	}
+	b[i] = bi0 + h;
+	x = lltfun(b, i, data);
+	if (x == NULL) {
+	    *err = E_NAN;
+	    goto bailout;
+	}
+	for (t=0; t<T; t++) {
+	    x0 = gretl_matrix_get(G, i, t);
+	    gretl_matrix_set(G, i, t, (x[t] - x0) / (2.0 * h));
+	}
+	b[i] = bi0;
+#if NLS_DEBUG
+	fprintf(stderr, "b[%d]: using %#.12g and %#.12g\n", i, bi0 - h, bi0 + h);
+#endif
+    }
+
+#if NLS_DEBUG
+    gretl_matrix_print(G, "Numerically estimated score");
+#endif
+
+ bailout:
+
+    if (*err) {
+	gretl_matrix_free(G);
+	G = NULL;
+    }
+
+    return G;
+}
+
 /* default numerical calculation of gradient in context of BFGS */
 
 int BFGS_numeric_gradient (double *b, double *g, int n,
@@ -488,30 +558,29 @@ static int copy_initial_hessian (gretl_matrix *A, double **H,
 				 int n)
 {
     int i, j;
-    int err = 0;
 
-    if (A == NULL || A->rows == 0) {
+#if BFGS_DEBUG
+    gretl_matrix_print(A, "BFGS: initial Hessian inverse");
+#endif
+
+    if (gretl_is_null_matrix(A)) {
 	for (i=0; i<n; i++) {
 	    for (j=0; j<i; j++) {
 		H[i][j] = 0.0;
 	    }
 	    H[i][i] = 1.0;
 	}
+    } else if (A->rows != n || A->cols != n) {
+	return E_NONCONF;
     } else {
-#if BFGS_DEBUG
-	gretl_matrix_print(A, "Initial Hessian inverse");
-#endif
-	err = (A->rows != n) || (A->cols != n);
-	if (!err) {
-	    for (i=0; i<n; i++) {
-		for (j=0; j<=i; j++) {
-		    H[i][j] = gretl_matrix_get(A, i, j);
-		}
+	for (i=0; i<n; i++) {
+	    for (j=0; j<=i; j++) {
+		H[i][j] = gretl_matrix_get(A, i, j);
 	    }
-	}	    
+	}	
     }
 
-    return err;
+    return 0;
 }
 
 static int BFGS_orig (double *b, int n, int maxit, double reltol,
@@ -543,6 +612,12 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
     if (wspace == NULL || H == NULL) {
 	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* initialize curvature matrix */
+    err = copy_initial_hessian(A0, H, n);
+    if (err) {
 	goto bailout;
     }
 
@@ -585,12 +660,14 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
 	}
 
-	if (iter == 1) {
-	    /* start: initialize curvature matrix */
-	    copy_initial_hessian(A0, H, n);
-	} else if (ilast == gcount) {
+	if (iter > 1 && ilast == gcount) {
 	    /* restart: set curvature matrix to I */
-	    copy_initial_hessian(NULL, H, n);
+	    for (i=0; i<n; i++) {
+		for (j=0; j<i; j++) {
+		    H[i][j] = 0.0;
+		}
+		H[i][i] = 1.0;
+	    }
 	}
 
 	for (i=0; i<n; i++) {
@@ -753,8 +830,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	fprintf(stderr, _("stopped after %d iterations\n"), iter);
 	err = E_NOCONV;
     } else if (gradnorm > GRAD_TOLER) {
-	fprintf(stderr, "gradient norm = %.8f\n", gradnorm);
-	set_gretl_warning(W_GRADIENT);
+	gretl_warnmsg_sprintf("norm of gradient = %g", gradnorm);
 	/* err = E_NOCONV; */
     } else if (fmax < f0) {
 	/* FIXME this should never happen */

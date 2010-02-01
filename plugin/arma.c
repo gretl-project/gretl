@@ -280,6 +280,135 @@ static opg_info *opg_info_new (arma_info *ainfo)
     return gi;
 }
 
+static int arma_analytical_score (arma_info *ainfo,
+				  const double *y,
+				  const double **X,
+				  const double *e,
+				  const double *phi,
+				  const double *Phi,
+				  const double *theta,
+				  const double *Theta,
+				  double s2,
+				  double **de,
+				  gretl_matrix *G)
+{
+    /* pointers to blocks of derivatives (workspace) */
+    double **de_a =    de + ainfo->ifc;
+    double **de_sa = de_a + ainfo->np;
+    double **de_m = de_sa + ainfo->P;
+    double **de_sm = de_m + ainfo->nq;
+    double **de_r = de_sm + ainfo->Q;    
+    double x, Gsi;
+    int lag, xlag;
+    int i, j, k, t, s;
+
+    for (t=ainfo->t1, s=0; t<=ainfo->t2; t++, s++) {
+
+	/* the constant term (de_0) */
+	if (ainfo->ifc) {
+	    de[0][t] = -1.0;
+	    do_MA_partials(de[0], ainfo, theta, Theta, t);
+	}
+
+	/* non-seasonal AR terms (de_a) */
+	k = 0;
+	for (i=0; i<ainfo->p; i++) {
+	    if (!AR_included(ainfo, i)) {
+		continue;
+	    }
+	    lag = i + 1;
+	    if (t >= lag) {
+		de_a[k][t] = -y[t-lag];
+		/* cross-partial with seasonal AR */
+		for (j=0; j<ainfo->P; j++) {
+		    xlag = lag + (j + 1) * ainfo->pd;
+		    if (t >= xlag) {
+			de_a[k][t] += Phi[j] * y[t-xlag];
+		    }
+		}
+		do_MA_partials(de_a[k], ainfo, theta, Theta, t);
+	    }
+	    k++;
+	}
+
+	/* seasonal AR terms (de_sa) */
+	for (j=0; j<ainfo->P; j++) {
+	    lag = (j + 1) * ainfo->pd;
+	    if (t >= lag) {
+		de_sa[j][t] = -y[t-lag];
+		/* cross-partial with non-seasonal AR */
+		k = 0;
+		for (i=0; i<ainfo->p; i++) {
+		    if (AR_included(ainfo, i)) {
+			xlag = lag + (i + 1);
+			if (t >= xlag) {
+			    de_sa[j][t] += phi[k] * y[t-xlag];
+			}
+			k++;
+		    }
+		}
+		do_MA_partials(de_sa[j], ainfo, theta, Theta, t);
+	    }
+	}
+
+	/* non-seasonal MA terms (de_m) */
+	k = 0;
+	for (i=0; i<ainfo->q; i++) {
+	    if (!MA_included(ainfo, i)) {
+		continue;
+	    }
+	    lag = i + 1;
+	    if (t >= lag) {
+		de_m[k][t] = -e[t-lag];
+		/* cross-partial with seasonal MA */
+		for (j=0; j<ainfo->Q; j++) {
+		    xlag = lag + (j + 1) * ainfo->pd;
+		    if (t >= xlag) {
+			de_m[k][t] -= Theta[j] * e[t-xlag];
+		    }
+		}
+		do_MA_partials(de_m[k], ainfo, theta, Theta, t);
+	    }
+	    k++;
+	}
+
+	/* seasonal MA terms (de_sm) */
+	for (j=0; j<ainfo->Q; j++) {
+	    lag = (j + 1) * ainfo->pd;
+	    if (t >= lag) {
+		de_sm[j][t] = -e[t-lag];
+		/* cross-partial with non-seasonal MA */
+		k = 0;
+		for (i=0; i<ainfo->q; i++) {
+		    if (MA_included(ainfo, i)) {
+			xlag = lag + (i + 1);
+			if (t >= xlag) {
+			    de_sm[j][t] -= theta[k] * e[t-xlag];
+			}
+			k++;
+		    }
+		}
+		do_MA_partials(de_sm[j], ainfo, theta, Theta, t);
+	    }
+	}
+
+	/* exogenous regressors (de_r) */
+	for (j=0; j<ainfo->nexo; j++) {
+	    de_r[j][t] = -X[j][t]; 
+	    do_MA_partials(de_r[j], ainfo, theta, Theta, t);
+	}
+
+	/* update gradient matrix */
+	x = e[t] / s2; /* sqrt(s2)? does it matter? */
+	for (i=0; i<ainfo->nc; i++) {
+	    Gsi = -de[i][t] * x;
+	    gretl_matrix_set(G, s, i, Gsi);
+	}
+    }
+
+    return 0;
+}
+
 /* Calculate ARMA log-likelihood.  This function is passed to the
    bhhh_max() routine as a callback. */
 
@@ -291,34 +420,24 @@ static double bhhh_arma_callback (double *coeff,
 {
     opg_info *ginfo = (opg_info *) data;
     arma_info *ainfo = ginfo->ainfo;
+    /* pointers to blocks of data */
     const double **bhX = ginfo->X;
     const double *y = bhX[0];
     const double **X = bhX + 1;
-    const double *phi, *Phi;
-    const double *theta, *Theta;
-    const double *beta;
+    /* pointers to blocks of coefficients */
+    const double *phi =   coeff + ainfo->ifc;
+    const double *Phi =     phi + ainfo->np;
+    const double *theta =   Phi + ainfo->P;
+    const double *Theta = theta + ainfo->nq;
+    const double *beta =  Theta + ainfo->Q;
+    /* forecast errors and derivatives */
     double **series = ginfo->series;
     double *e = series[0];
     double **de = series + 1;
-    double **de_a, **de_sa, **de_m, **de_sm, **de_r;
     double ll, s2 = 0.0;
     int i, j, k, s, t;
 
     *err = 0;
-
-    /* pointers to blocks of coefficients */
-    phi =   coeff + ainfo->ifc;
-    Phi =     phi + ainfo->np;
-    theta =   Phi + ainfo->P;
-    Theta = theta + ainfo->nq;
-    beta =  Theta + ainfo->Q;
-
-    /* pointers to blocks of derivatives */
-    de_a =    de + ainfo->ifc;
-    de_sa = de_a + ainfo->np;
-    de_m = de_sa + ainfo->P;
-    de_sm = de_m + ainfo->nq;
-    de_r = de_sm + ainfo->Q;
 
 #if ARMA_DEBUG
     fprintf(stderr, "arma_ll: p=%d, q=%d, P=%d, Q=%d, pd=%d\n",
@@ -404,126 +523,19 @@ static double bhhh_arma_callback (double *coeff,
 	s2 += e[t] * e[t];
     }
 
-    /* get error variance and log-likelihood */
-
+    /* error variance and log-likelihood */
     s2 /= (double) ainfo->T;
     ll = -ainfo->T * (0.5 * log(s2) + LN_SQRT_2_PI_P5);
 
-    if (do_score) {
-	ginfo->ll = ll;
-    } 
-
-    if (do_score) {
-	int lag, xlag;
-	double x, Gsi;
-
-	for (t=ainfo->t1, s=0; t<=ainfo->t2; t++, s++) {
-
-	    /* the constant term (de_0) */
-	    if (ainfo->ifc) {
-		de[0][t] = -1.0;
-		do_MA_partials(de[0], ainfo, theta, Theta, t);
-	    }
-
-	    /* non-seasonal AR terms (de_a) */
-	    k = 0;
-	    for (i=0; i<ainfo->p; i++) {
-		if (!AR_included(ainfo, i)) {
-		    continue;
-		}
-		lag = i + 1;
-		if (t >= lag) {
-		    de_a[k][t] = -y[t-lag];
-		    /* cross-partial with seasonal AR */
-		    for (j=0; j<ainfo->P; j++) {
-			xlag = lag + (j + 1) * ainfo->pd;
-			if (t >= xlag) {
-			    de_a[k][t] += Phi[j] * y[t-xlag];
-			}
-		    }
-		    do_MA_partials(de_a[k], ainfo, theta, Theta, t);
-		}
-		k++;
-	    }
-
-	    /* seasonal AR terms (de_sa) */
-	    for (j=0; j<ainfo->P; j++) {
-		lag = (j + 1) * ainfo->pd;
-		if (t >= lag) {
-		    de_sa[j][t] = -y[t-lag];
-		    /* cross-partial with non-seasonal AR */
-		    k = 0;
-		    for (i=0; i<ainfo->p; i++) {
-			if (AR_included(ainfo, i)) {
-			    xlag = lag + (i + 1);
-			    if (t >= xlag) {
-				de_sa[j][t] += phi[k] * y[t-xlag];
-			    }
-			    k++;
-			}
-		    }
-		    do_MA_partials(de_sa[j], ainfo, theta, Theta, t);
-		}
-	    }
-
-	    /* non-seasonal MA terms (de_m) */
-	    k = 0;
-	    for (i=0; i<ainfo->q; i++) {
-		if (!MA_included(ainfo, i)) {
-		    continue;
-		}
-		lag = i + 1;
-		if (t >= lag) {
-		    de_m[k][t] = -e[t-lag];
-		    /* cross-partial with seasonal MA */
-		    for (j=0; j<ainfo->Q; j++) {
-			xlag = lag + (j + 1) * ainfo->pd;
-			if (t >= xlag) {
-			    de_m[k][t] -= Theta[j] * e[t-xlag];
-			}
-		    }
-		    do_MA_partials(de_m[k], ainfo, theta, Theta, t);
-		}
-		k++;
-	    }
-
-	    /* seasonal MA terms (de_sm) */
-	    for (j=0; j<ainfo->Q; j++) {
-		lag = (j + 1) * ainfo->pd;
-		if (t >= lag) {
-		    de_sm[j][t] = -e[t-lag];
-		    /* cross-partial with non-seasonal MA */
-		    k = 0;
-		    for (i=0; i<ainfo->q; i++) {
-			if (MA_included(ainfo, i)) {
-			    xlag = lag + (i + 1);
-			    if (t >= xlag) {
-				de_sm[j][t] -= theta[k] * e[t-xlag];
-			    }
-			    k++;
-			}
-		    }
-		    do_MA_partials(de_sm[j], ainfo, theta, Theta, t);
-		}
-	    }
-
-	    /* exogenous regressors (de_r) */
-	    for (j=0; j<ainfo->nexo; j++) {
-		de_r[j][t] = -X[j][t]; 
-		do_MA_partials(de_r[j], ainfo, theta, Theta, t);
-	    }
-
-	    /* update OPG data array */
-	    x = e[t] / s2; /* sqrt(s2)? does it matter? */
-	    for (i=0; i<ainfo->nc; i++) {
-		Gsi = -de[i][t] * x;
-		gretl_matrix_set(G, s, i, Gsi);
-	    }
-	}
-    }
-
     if (isnan(ll)) {
 	*err = E_NAN;
+    }
+
+    if (do_score) {
+	ginfo->ll = ll;
+	arma_analytical_score(ainfo, y, X, e,
+			      phi, Phi, theta, Theta,
+			      s2, de, G);
     }
 
     return ll;
@@ -994,8 +1006,8 @@ static void arma_hessian_vcv (MODEL *pmod, double *vcv, int k)
     }
 }
 
-static double *
-kalman_arma_score_callback (const double *b, int i, void *data)
+static const double *kalman_arma_llt_callback (const double *b, int i, 
+					       void *data)
 {
     kalman *K = (kalman *) data;
     int err;
@@ -1004,7 +1016,7 @@ kalman_arma_score_callback (const double *b, int i, void *data)
     err = kalman_forecast(K, NULL);
 
 #if ARMA_DEBUG
-    fprintf(stderr, "kalman_arma_score: kalman f'cast gave "
+    fprintf(stderr, "kalman_arma_llt: kalman f'cast gave "
 	    "err = %d, ll = %#.12g\n", err, kalman_get_loglik(K));
 #endif
 
@@ -1030,8 +1042,8 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 	pmod->uhat[t] = gretl_vector_get(E, s++);
     }
 
-    G = build_OPG_matrix(b, k, T, kalman_arma_score_callback, 
-			 (void *) K, &err);
+    G = build_score_matrix(b, k, T, kalman_arma_llt_callback, 
+			   (void *) K, &err);
     if (err) {
 	goto bailout;
     }
@@ -1381,6 +1393,63 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
     }
 }
 
+#define KALMAN_ARMA_INITH 0 /* try initializing inverse Hessian */
+#define INITH_USE_OPG 0     /* try using OPG for that purpose */
+
+#if KALMAN_ARMA_INITH
+# if INITH_USE_OPG
+
+static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
+					 kalman *K)
+{
+    gretl_matrix *G, *H = NULL;
+    int err = 0;
+
+    G = build_score_matrix(b, k, T, kalman_arma_llt_callback, 
+			   K, &err);
+
+    if (!err) {
+	H = gretl_matrix_alloc(k, k);
+	if (H == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
+				  G, GRETL_MOD_TRANSPOSE,
+				  H, GRETL_MOD_NONE);
+	err = gretl_invert_symmetric_matrix(H);
+	if (err) {
+	    fprintf(stderr, "kalman_arma_init_H: H is not pd\n");
+	    gretl_matrix_free(H);
+	    H = NULL;
+	}
+    }
+
+    gretl_matrix_free(G);
+
+    return H;
+}
+
+# else /* just use scaled identity matrix */
+
+static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
+					 kalman *K)
+{
+    gretl_matrix *H;
+
+    H = gretl_identity_matrix_new(k);
+    if (H != NULL) {
+	gretl_matrix_multiply_by_scalar(H, 1.0 / T);
+    } 
+
+    return H;
+}
+
+# endif /* INITH variants */
+#endif /* KALMAN_ARMA_INITH */
+
 static int kalman_arma (const int *alist, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			arma_info *ainfo, MODEL *pmod,
@@ -1512,9 +1581,8 @@ static int kalman_arma (const int *alist, double *coeff,
 
 	BFGS_defaults(&maxit, &toler, ARMA);
 
-#if BFGS_SCALE_A0
-	A0 = gretl_identity_matrix_new(ainfo->nc);
-	gretl_matrix_multiply_by_scalar(A0, 1.0/ainfo->T);
+#if KALMAN_ARMA_INITH
+	A0 = kalman_arma_init_H(b, ainfo->nc, ainfo->T, K);
 #endif
 
 	err = BFGS_max(b, ainfo->nc, maxit, toler, 

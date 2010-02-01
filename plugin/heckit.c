@@ -1039,8 +1039,50 @@ static int adjust_ml_vcv_hyperbolic (h_container *HC)
     return err;
 }
 
+#define INITH_OPG 1
+
+#if INITH_OPG
+
+/* calculate the OPG matrix at the starting point and use 
+   its inverse (if any) as initial curvature matrix for BFGS
+*/
+
+static gretl_matrix *heckit_init_H (double *theta,
+				    h_container *HC,
+				    int np)
+{
+    gretl_matrix *H = NULL;
+    double ll = h_loglik(theta, HC);
+    int err = 0;
+
+    if (na(ll)) {
+	return NULL;
+    }
+
+    H = gretl_matrix_alloc(np, np);
+    if (H == NULL) {
+	return NULL;
+    }
+
+    gretl_matrix_multiply_mod(HC->score, GRETL_MOD_TRANSPOSE, 
+			      HC->score, GRETL_MOD_NONE, 
+			      H, GRETL_MOD_NONE);
+
+    err = gretl_invert_symmetric_matrix(H); 
+    if (err) {
+	fprintf(stderr, "heckit: init_H not pd\n");
+	gretl_matrix_free(H);
+	H = NULL;
+    }
+
+    return H;
+}
+
+#endif
+
 int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 {
+    gretl_matrix *init_H = NULL;
     int maxit, fncount, grcount;
     double hij, rho, toler;
     double *hess = NULL;
@@ -1073,26 +1115,8 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 
     BFGS_defaults(&maxit, &toler, HECKIT);
 
-    gretl_matrix *init_H = NULL;
-
-#define INITH_OPG 1
 #if INITH_OPG
-    /* calculate the OPG matrix at the starting point and use 
-       its inverse (if any) as initial curvature matrix for BFGS
-    */
-
-    init_H = gretl_matrix_alloc(np, np);
-    h_loglik(theta, HC);
-    gretl_matrix_multiply_mod(HC->score, GRETL_MOD_TRANSPOSE, 
-			      HC->score, GRETL_MOD_NONE, 
-			      init_H, GRETL_MOD_NONE);
-
-    err = gretl_invert_symmetric_matrix(init_H); 
-    if (err) {
-	fprintf(stderr, "init_H not pd\n");
-	gretl_matrix_free(init_H);
-	init_H = NULL;
-    }
+    init_H = heckit_init_H(theta, HC, np);
 #endif
 
     err = BFGS_max(theta, np, maxit, toler, &fncount, 
@@ -1100,10 +1124,7 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 		   heckit_score, HC, init_H,
 		   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
-#if INITH_OPG
     gretl_matrix_free(init_H);
-#endif
-
 
     if (!err) {
 	HC->ll = hm->lnL = h_loglik(theta, HC);

@@ -1193,7 +1193,10 @@ static int QML_vcv (nlspec *spec, gretl_matrix *V)
     return 0;
 }
 
-static double *mle_score_callback (const double *b, int i, void *p)
+/* returns the per-observation contributions to the log
+   likelihood */
+
+static const double *mle_llt_callback (const double *b, int i, void *p)
 {
     nlspec *s = (nlspec *) p;
     int err;
@@ -1206,7 +1209,7 @@ static double *mle_score_callback (const double *b, int i, void *p)
     } else if (s->lhtype == GRETL_TYPE_MATRIX) {
 	s->lvec = get_matrix_by_name(s->lhname);
 	if (s->lvec == NULL) {
-	    fprintf(stderr, "mle_score_callback: s->lvec is gone!\n");
+	    fprintf(stderr, "mle_llt_callback: s->lvec is gone!\n");
 	    return NULL;
 	} else {
 	    return s->lvec->val;
@@ -1214,78 +1217,6 @@ static double *mle_score_callback (const double *b, int i, void *p)
     } else {
 	return (*s->Z)[s->lhv] + s->t1;
     }
-}
-
-#define ALT_OPG 0
-
-/* build the G matrix, given a final set of coefficient
-   estimates, b, and a function for calculating the score
-   vector, scorefun
-*/
-
-gretl_matrix *build_OPG_matrix (double *b, int k, int T,
-				BFGS_SCORE_FUNC scorefun,
-				void *data, int *err)
-{
-    double h = 1e-8;
-#if ALT_OPG
-    double d = 1.0e-4;
-#endif
-    gretl_matrix *G;
-    const double *x;
-    double bi0, x0;
-    int i, t;
-
-    G = gretl_matrix_alloc(k, T);
-    if (G == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    gretl_matrix_zero(G);
-
-    for (i=0; i<k; i++) {
-	bi0 = b[i];
-#if ALT_OPG
-	h = d * bi0 + d * (b[i] == 0.0);
-#endif
-	b[i] = bi0 - h;
-	x = scorefun(b, i, data);
-	if (x == NULL) {
-	    *err = E_NAN;
-	    goto bailout;
-	}
-	for (t=0; t<T; t++) {
-	    gretl_matrix_set(G, i, t, x[t]);
-	}
-	b[i] = bi0 + h;
-	x = scorefun(b, i, data);
-	if (x == NULL) {
-	    *err = E_NAN;
-	    goto bailout;
-	}
-	for (t=0; t<T; t++) {
-	    x0 = gretl_matrix_get(G, i, t);
-	    gretl_matrix_set(G, i, t, (x[t] - x0) / (2.0 * h));
-	}
-	b[i] = bi0;
-#if NLS_DEBUG
-	fprintf(stderr, "b[%d]: using %#.12g and %#.12g\n", i, bi0 - h, bi0 + h);
-#endif
-    }
-
-#if NLS_DEBUG
-    gretl_matrix_print(G, "Numerically estimated score");
-#endif
-
- bailout:
-
-    if (*err) {
-	gretl_matrix_free(G);
-	G = NULL;
-    }
-
-    return G;
 }
 
 /* add variance matrix based on OPG, (GG')^{-1}, or on QML sandwich,
@@ -1309,8 +1240,8 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
     }
 
     if (numeric_mode(spec)) {
-	G = build_OPG_matrix(spec->coeff, k, T, mle_score_callback, 
-			     (void *) spec, &err);
+	G = build_score_matrix(spec->coeff, k, T, mle_llt_callback, 
+			       (void *) spec, &err);
 	if (err) {
 	    gretl_matrix_free(V);
 	    return err;

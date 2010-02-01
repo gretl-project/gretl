@@ -30,7 +30,7 @@ typedef enum {
 typedef double (*BFGS_CRIT_FUNC) (const double *, void *);
 typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
 			       BFGS_CRIT_FUNC, void *);
-typedef double *(*BFGS_SCORE_FUNC) (const double *, int, void *);
+typedef const double *(*BFGS_LLT_FUNC) (const double *, int, void *);
 
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
@@ -45,9 +45,9 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 int BFGS_numeric_gradient (double *b, double *g, int n,
 			   BFGS_CRIT_FUNC func, void *data);
 
-gretl_matrix *build_OPG_matrix (double *b, int k, int T,
-				BFGS_SCORE_FUNC scorefun,
-				void *data, int *err);
+gretl_matrix *build_score_matrix (double *b, int k, int T,
+				  BFGS_LLT_FUNC lltfun,
+				  void *data, int *err);
 
 double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func, 
 			   void *data, int *err);
