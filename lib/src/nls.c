@@ -2196,7 +2196,7 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
 		       get_mle_ll, C_LOGLIK, gradfun, s,
-		       s->opt, s->prn);
+		       NULL, s->opt, s->prn);
 	if (!err && (s->opt & (OPT_H | OPT_R))) {
 	    /* doing Hessian or QML covariance matrix */
 	    s->hessvec = numerical_hessian(s->coeff, s->ncoeff, 

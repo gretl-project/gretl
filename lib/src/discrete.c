@@ -798,8 +798,8 @@ static int do_ordered (int ci, int ndum,
 
     err = BFGS_max(theta, npar, maxit, toler, 
 		   &fncount, &grcount, op_loglik, C_LOGLIK,
-		   op_score, OC, (prn != NULL)? OPT_V : OPT_NONE,
-		   prn);
+		   op_score, OC, NULL, 
+		   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
     if (err) {
 	goto bailout;
@@ -2610,7 +2610,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
 			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
-			   mn_logit_score, mnl, 
+			   mn_logit_score, mnl, NULL,
 			   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
     if (!mod.errcode) {

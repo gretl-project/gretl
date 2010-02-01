@@ -1555,7 +1555,7 @@ int gmm_calculate (nlspec *s, PRN *prn)
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
 		       get_gmm_crit, C_GMM, NULL, s,
-		       iopt, s->prn);
+		       NULL, iopt, s->prn);
 
 	/* don't keep displaying certain things */
 	iopt |= OPT_Q;

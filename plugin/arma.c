@@ -1487,6 +1487,7 @@ static int kalman_arma (const int *alist, double *coeff,
     } else {
 	int maxit, save_lbfgs = 0;
 	double toler;
+	gretl_matrix *A0 = NULL;
 
 	if (r > 3) {
 	    kalman_set_nonshift(K, 1);
@@ -1494,7 +1495,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	    kalman_set_nonshift(K, r);
 	}
 
-	if (ainfo->T > 3072 || getenv("KALMAN_AVG_LL") != NULL) {
+	if (getenv("KALMAN_AVG_LL") != NULL) {
 	    kalman_set_options(K, KALMAN_ARMA_LL | KALMAN_AVG_LL);
 	} else {
 	    kalman_set_options(K, KALMAN_ARMA_LL);
@@ -1511,9 +1512,17 @@ static int kalman_arma (const int *alist, double *coeff,
 
 	BFGS_defaults(&maxit, &toler, ARMA);
 
+#if BFGS_SCALE_A0
+	A0 = gretl_identity_matrix_new(ainfo->nc);
+	gretl_matrix_multiply_by_scalar(A0, 1.0/ainfo->T);
+#endif
+
 	err = BFGS_max(b, ainfo->nc, maxit, toler, 
 		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
-		       NULL, K, opt, prn);
+		       NULL, K, A0, opt, prn);
+
+	gretl_matrix_free(A0);
+
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
 	} 

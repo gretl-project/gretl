@@ -805,7 +805,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 
     err = BFGS_max(IC->theta, IC->k, maxit, toler, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
-		   int_score, IC, opt & OPT_V, prn);
+		   int_score, IC, NULL, opt & OPT_V, prn);
 
     if (!err) {
 	IC->ll = int_loglik(IC->theta, IC);

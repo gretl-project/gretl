@@ -35,7 +35,7 @@ typedef double *(*BFGS_SCORE_FUNC) (const double *, int, void *);
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-	      gretlopt opt, PRN *prn);
+	      gretl_matrix *A0, gretlopt opt, PRN *prn);
 
 int LBFGS_max (double *b, int n, int maxit, double reltol,
 	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 

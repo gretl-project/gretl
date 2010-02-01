@@ -1075,7 +1075,7 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 
     err = BFGS_max(theta, np, maxit, toler, &fncount, 
 		   &grcount, h_loglik, C_LOGLIK,
-		   heckit_score, HC, 
+		   heckit_score, HC, NULL,
 		   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
 

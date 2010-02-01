@@ -484,10 +484,40 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 
 #define GRAD_TOLER 1.0
 
-int BFGS_orig (double *b, int n, int maxit, double reltol,
-	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-	       gretlopt opt, PRN *prn)
+static int copy_initial_hessian (gretl_matrix *A, double **H, 
+				 int n)
+{
+    int i, j;
+    int err = 0;
+
+    if (A == NULL || A->rows == 0) {
+	for (i=0; i<n; i++) {
+	    for (j=0; j<i; j++) {
+		H[i][j] = 0.0;
+	    }
+	    H[i][i] = 1.0;
+	}
+    } else {
+#if BFGS_DEBUG
+	gretl_matrix_print(A, "Initial Hessian inverse");
+#endif
+	err = (A->rows != n) || (A->cols != n);
+	if (!err) {
+	    for (i=0; i<n; i++) {
+		for (j=0; j<=i; j++) {
+		    H[i][j] = gretl_matrix_get(A, i, j);
+		}
+	    }
+	}	    
+    }
+
+    return err;
+}
+
+static int BFGS_orig (double *b, int n, int maxit, double reltol,
+		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
+		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+		      gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
     int crit_ok, done;
     double *wspace = NULL;
@@ -555,14 +585,12 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
 	}
 
-	if (ilast == gcount) {
-	    /* (re-)start: initialize curvature matrix */
-	    for (i=0; i<n; i++) {
-		for (j=0; j<i; j++) {
-		    H[i][j] = 0.0;
-		}
-		H[i][i] = 1.0;
-	    }
+	if (iter == 1) {
+	    /* start: initialize curvature matrix */
+	    copy_initial_hessian(A0, H, n);
+	} else if (ilast == gcount) {
+	    /* restart: set curvature matrix to I */
+	    copy_initial_hessian(NULL, H, n);
 	}
 
 	for (i=0; i<n; i++) {
@@ -931,6 +959,8 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
  * gradient, or %NULL for default numerical calculation.
  * @data: pointer that will be passed as the last
  * parameter to the callback functions @cfunc and @gradfunc.
+ * @A0: initial approximation to the inverse of the Hessian 
+ * (or %NULL to use identity matrix)
  * @opt: may contain %OPT_V for verbose operation, %OPT_L to
  * force use of L-BFGS-B.
  * @prn: printing struct (or %NULL).  Only used if @opt
@@ -950,7 +980,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-	      gretlopt opt, PRN *prn)
+	      gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
 	return LBFGS_max(b, n, maxit, reltol,
@@ -961,7 +991,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	return BFGS_orig(b, n, maxit, reltol,
 			 fncount, grcount, cfunc, 
 			 crittype, gradfunc, data, 
-			 opt, prn);
+			 A0, opt, prn);
     }
 }
 
@@ -1215,7 +1245,7 @@ double user_BFGS (gretl_matrix *b,
 		    maxit, tol, &fcount, &gcount,
 		    user_get_criterion, C_OTHER, 
 		    (u->gg == NULL)? NULL : user_get_gradient, 
-		    u, opt, prn);
+		    u, NULL, opt, prn);
 
     if (fcount > 0) {
 	pprintf(prn, _("Function evaluations: %d\n"), fcount);

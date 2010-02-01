@@ -754,8 +754,8 @@ int garch_estimate_mod (const double *y, const double **X,
 
     err = BFGS_max(theta, npar, maxit, toler, 
 		   fncount, grcount, loglik, C_LOGLIK,
-		   anal_score, DH, (prn != NULL)? OPT_V : OPT_NONE, 
-		   prn);
+		   anal_score, DH, NULL, 
+		   (prn != NULL)? OPT_V : OPT_NONE, prn);
 
 #if GDEBUG
     fprintf(stderr, "maxit = %d, fncount = %d, grcount = %d\n",
