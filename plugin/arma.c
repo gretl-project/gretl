@@ -561,9 +561,9 @@ static double bhhh_arma_callback (double *coeff,
 static int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 				 const double *coeff)
 {
-    const double *phi = coeff + ainfo->ifc;
-    const double *Phi = phi + ainfo->np;
-    const double *theta = Phi + ainfo->P;
+    const double *phi =   coeff + ainfo->ifc;
+    const double *Phi =     phi + ainfo->np;
+    const double *theta =   Phi + ainfo->P;
     const double *Theta = theta + ainfo->nq;
     int nr = ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
     int pmax, qmax, lmax;
@@ -860,17 +860,16 @@ static void kalman_matrices_init (arma_info *ainfo)
 
 static int write_kalman_matrices (const double *b, int idx)
 {
-    const double *phi = b + kainfo->ifc;
-    const double *Phi = phi + kainfo->np;
-    const double *theta = Phi + kainfo->P;
+    const double *phi =       b + kainfo->ifc;
+    const double *Phi =     phi + kainfo->np;
+    const double *theta =   Phi + kainfo->P;
     const double *Theta = theta + kainfo->nq;
-    const double *beta = Theta + kainfo->Q;
+    const double *beta =  Theta + kainfo->Q;
     double mu = (kainfo->ifc)? b[0] : 0.0;
-    int i, k, err = 0;
-
     int rewrite_A = 0;
     int rewrite_F = 0;
     int rewrite_H = 0;
+    int i, k, err = 0;
 
     gretl_matrix_zero(S);
 
@@ -1037,13 +1036,12 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     int s, t;
     int err = 0;
 
-    s = 0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->uhat[t] = gretl_vector_get(E, s++);
+    for (t=pmod->t1, s=0; t<=pmod->t2; t++, s++) {
+	pmod->uhat[t] = gretl_vector_get(E, s);
     }
 
     G = build_score_matrix(b, k, T, kalman_arma_llt_callback, 
-			   (void *) K, &err);
+			   K, &err);
     if (err) {
 	goto bailout;
     }
