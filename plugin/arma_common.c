@@ -19,15 +19,18 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
 	ainfo->flags |= ARMA_EXACT;
     }
 
+    ainfo->ll = NADBL;
+
+    ainfo->pqspec = pqspec;
+    ainfo->pmask = NULL;
+    ainfo->qmask = NULL;
+
     ainfo->p = 0;
     ainfo->d = 0;
     ainfo->q = 0;
     ainfo->P = 0;
     ainfo->D = 0;
     ainfo->Q = 0; 
-
-    ainfo->pmask = NULL;
-    ainfo->qmask = NULL;
     
     ainfo->np = 0;
     ainfo->nq = 0;
@@ -43,12 +46,17 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
     ainfo->T = 0;
 
     ainfo->y = NULL;
+    ainfo->X = NULL;
     ainfo->yscale = 1.0;
 
     ainfo->xlist = NULL;
     ainfo->dX = NULL;
+    ainfo->G = NULL;
+    ainfo->V = NULL;
 
-    ainfo->pqspec = pqspec;
+    ainfo->n_aux = 0;
+    ainfo->aux = NULL;
+
     ainfo->prn = NULL;
 }
 
@@ -58,8 +66,14 @@ static void arma_info_cleanup (arma_info *ainfo)
     free(ainfo->pmask);
     free(ainfo->qmask);
     free(ainfo->y);
+    free(ainfo->X);
     free(ainfo->xlist);
+
     gretl_matrix_free(ainfo->dX);
+    gretl_matrix_free(ainfo->G);
+    gretl_matrix_free(ainfo->V);
+
+    doubles_array_free(ainfo->aux, ainfo->n_aux);
 }
 
 enum {

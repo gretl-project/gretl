@@ -23,33 +23,39 @@
 typedef struct arma_info_ arma_info;
 
 struct arma_info_ {
-    int yno;         /* ID of dependent variable */
-    ArmaFlags flags; /* specification flags */
-    int *alist;      /* copy of incoming list */
-    int ifc;         /* specification includes a constant? */
-    int p;           /* max non-seasonal AR order */
-    int d;           /* non-seasonal difference */
-    int q;           /* max non-seasonal MA order */
-    int P;           /* seasonal AR order */
-    int D;           /* seasonal difference */
-    int Q;           /* seasonal MA order */
-    char *pmask;     /* specific AR lags included */
-    char *qmask;     /* specific MA lags included */
-    int np;          /* total non-seasonal AR lags */
-    int nq;          /* total non-seasonal MA lags */
-    int maxlag;      /* longest lag in model */
-    int nexo;        /* number of other regressors (ARMAX) */
-    int nc;          /* total number of coefficients */
-    int t1;          /* starting observation */
-    int t2;          /* ending observation */
-    int pd;          /* periodicity of data */
-    int T;           /* sample size for estimation */
-    double *y;       /* dependent variable (possibly differenced) */
-    double yscale;   /* scale factor for y */
-    int *xlist;      /* list of regressors (ARMAX) */
-    gretl_matrix *dX;   /* differenced regressors (ARIMAX) */
+    int yno;            /* ID of dependent variable */
+    ArmaFlags flags;    /* specification flags */
+    int *alist;         /* copy of incoming list */
     const char *pqspec; /* input string with specific AR, MA lags */
-    PRN *prn;        /* verbose printer */
+    char *pmask;        /* specific AR lags included */
+    char *qmask;        /* specific MA lags included */
+    double ll;          /* log-likelihood */
+    int ifc;            /* specification includes a constant? */
+    int p;              /* max non-seasonal AR order */
+    int d;              /* non-seasonal difference */
+    int q;              /* max non-seasonal MA order */
+    int P;              /* seasonal AR order */
+    int D;              /* seasonal difference */
+    int Q;              /* seasonal MA order */
+    int np;             /* total non-seasonal AR lags */
+    int nq;             /* total non-seasonal MA lags */
+    int maxlag;         /* longest lag in model */
+    int nexo;           /* number of other regressors (ARMAX) */
+    int nc;             /* total number of coefficients */
+    int t1;             /* starting observation */
+    int t2;             /* ending observation */
+    int pd;             /* periodicity of data */
+    int T;              /* sample size for estimation */
+    double *y;          /* dependent variable (possibly differenced) */
+    const double **X;   /* exogenous vars */
+    double yscale;      /* scale factor for y */
+    int *xlist;         /* list of regressors (ARMAX) */
+    gretl_matrix *dX;   /* differenced regressors (ARIMAX) */
+    gretl_matrix *G;    /* score matrix */
+    gretl_matrix *V;    /* covariance matrix */
+    int n_aux;          /* number of auxiliary arrays */
+    double **aux;       /* auxiliary arrays */
+    PRN *prn;           /* verbose printer */
 };
 
 #define arma_has_seasonal(a)   ((a)->flags & ARMA_SEAS)

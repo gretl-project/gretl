@@ -235,48 +235,6 @@ static void do_MA_partials (double *drv,
     }
 }
 
-/* special info struct for use with BHHH */
-
-struct opg_info_ {
-    double ll;         /* log-likelihood */
-    const double **X;  /* data array */ 
-    int n_series;      /* number of additional series needed in the
-                          likelihood and/or score calculations */
-    double **series;   /* forecast errors and derivatives */
-    arma_info *ainfo;  /* pointer to full ARMA info */
-    gretl_matrix *G;   /* gradient matrix */
-    gretl_matrix *V;   /* covariance matrix */
-};
-
-typedef struct opg_info_ opg_info;
-
-static void opg_info_free (opg_info *ginfo)
-{
-    if (ginfo != NULL) {
-	free(ginfo->X);
-	doubles_array_free(ginfo->series, ginfo->n_series);
-	gretl_matrix_free(ginfo->G);
-	gretl_matrix_free(ginfo->V);
-	free(ginfo);
-    }
-}
-
-static opg_info *opg_info_new (arma_info *ainfo)
-{
-    opg_info *gi = malloc(sizeof *gi);
-
-    if (gi != NULL) {
-	gi->ll = NADBL;
-	gi->X = NULL;
-	gi->n_series = 0;
-	gi->series = NULL;
-	gi->ainfo = ainfo;
-	gi->G = gi->V = NULL;
-    }
-
-    return gi;
-}
-
 static int arma_analytical_score (arma_info *ainfo,
 				  const double *y,
 				  const double **X,
@@ -502,10 +460,9 @@ static double bhhh_arma_callback (double *coeff,
 				  int do_score,
 				  int *err)
 {
-    opg_info *ginfo = (opg_info *) data;
-    arma_info *ainfo = ginfo->ainfo;
+    arma_info *ainfo = (arma_info *) data;
     /* pointers to blocks of data */
-    const double **bhX = ginfo->X;
+    const double **bhX = ainfo->X;
     const double *y = bhX[0];
     const double **X = bhX + 1;
     /* pointers to blocks of coefficients */
@@ -514,9 +471,8 @@ static double bhhh_arma_callback (double *coeff,
     const double *theta =   Phi + ainfo->P;
     const double *Theta = theta + ainfo->nq;
     const double *beta =  Theta + ainfo->Q;
-    /* forecast errors and derivatives */
-    double **series = ginfo->series;
-    double *e = series[0];
+    /* forecast errors */
+    double *e = ainfo->aux[0];
     double ll, s2 = 0.0;
 
     *err = 0;
@@ -546,9 +502,9 @@ static double bhhh_arma_callback (double *coeff,
     }
 
     if (do_score) {
-	double **de = series + 1;
+	double **de = ainfo->aux + 1;
 
-	ginfo->ll = ll;
+	ainfo->ll = ll;
 	arma_analytical_score(ainfo, y, X, e,
 			      phi, Phi, theta, Theta,
 			      s2, de, G);
@@ -669,20 +625,17 @@ static int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 
 /* below: exact ML using Kalman filter apparatus */
 
-static gretl_matrix *S = NULL;
-static gretl_matrix *P = NULL;
-static gretl_matrix *F = NULL;
-static gretl_matrix *A = NULL;
-static gretl_matrix *H = NULL;
-static gretl_matrix *Q = NULL;
-static gretl_matrix *E = NULL;
-
+static gretl_matrix *S;
+static gretl_matrix *P;
+static gretl_matrix *F;
+static gretl_matrix *A;
+static gretl_matrix *H;
+static gretl_matrix *Q;
+static gretl_matrix *E;
 static gretl_matrix *Svar;
+
 static gretl_matrix *Svar2;
 static gretl_matrix *vQ;
-
-static double *ac;
-static double *mc;
 
 static arma_info *kainfo;   
 
@@ -701,14 +654,14 @@ static void allocate_kalman_matrices (int r, int r2,
 
 static void free_kalman_matrices (void)
 {
-    gretl_matrix_free(S);
-    gretl_matrix_free(P);
-    gretl_matrix_free(F);
-    gretl_matrix_free(A);
-    gretl_matrix_free(H);
-    gretl_matrix_free(E);
-    gretl_matrix_free(Q);
-    gretl_matrix_free(Svar);
+    gretl_matrix_replace(&S, NULL);
+    gretl_matrix_replace(&P, NULL);
+    gretl_matrix_replace(&F, NULL);
+    gretl_matrix_replace(&A, NULL);
+    gretl_matrix_replace(&H, NULL);
+    gretl_matrix_replace(&E, NULL);
+    gretl_matrix_replace(&Q, NULL);
+    gretl_matrix_replace(&Svar, NULL);
 }
 
 static int ainfo_get_r (arma_info *ainfo)
@@ -721,31 +674,46 @@ static int ainfo_get_r (arma_info *ainfo)
 
 static int allocate_ac_mc (arma_info *ainfo)
 {
-    if (ainfo->P > 0) {
-	int pmax = ainfo->p + ainfo->pd * ainfo->P;
+    int m = (ainfo->P > 0) + (ainfo->Q > 0);
+    int err = 0;
 
-	ac = malloc((pmax + 1) * sizeof *ac);
-	if (ac == NULL) {
+    if (m > 0) {
+	double *ac = NULL, *mc = NULL;
+	int n, i = 0;
+
+	ainfo->aux = doubles_array_new(m, 0);
+	if (ainfo->aux == NULL) {
 	    return E_ALLOC;
+	}
+
+	if (ainfo->P > 0) {
+	    n = 1 + ainfo->p + ainfo->pd * ainfo->P;
+	    ac = malloc(n * sizeof *ac);
+	    if (ac == NULL) {
+		err = E_ALLOC;
+	    } else {
+		ainfo->aux[i++] = ac;
+	    }
+	}
+
+	if (!err && ainfo->Q > 0) {
+	    n = 1 + ainfo->q + ainfo->pd * ainfo->Q;
+	    mc = malloc(n * sizeof *mc);
+	    if (mc == NULL) {
+		err = E_ALLOC;
+	    } else {
+		ainfo->aux[i++] = mc;
+	    }
+	}
+
+	if (err) {
+	    doubles_array_free(ainfo->aux, m);
+	} else {
+	    ainfo->n_aux = m;
 	}
     }
 
-    if (ainfo->Q > 0) {
-	int qmax = ainfo->q + ainfo->pd * ainfo->Q;
-
-	mc = malloc((qmax + 1) * sizeof *mc);
-	if (mc == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    return 0;
-}
-
-static void free_ac_mc (void)
-{
-    if (ac != NULL) free(ac);
-    if (mc != NULL) free(mc);
+    return err;
 }
 
 static void write_big_phi (const double *phi, 
@@ -754,6 +722,7 @@ static void write_big_phi (const double *phi,
 			   gretl_matrix *F)
 {
     int pmax = ainfo->p + ainfo->pd * ainfo->P;
+    double *ac = ainfo->aux[0];
     double x, y;
     int i, j, k, ii;
 
@@ -788,8 +757,10 @@ static void write_big_theta (const double *theta,
 			     gretl_matrix *H)
 {
     int qmax = ainfo->q + ainfo->pd * ainfo->Q;
+    int i = (ainfo->P > 0)? 1 : 0;
+    double *mc = ainfo->aux[i];
     double x, y;
-    int i, j, k, ii;
+    int j, k, ii;
 
     for (i=0; i<=qmax; i++) {
 	mc[i] = 0.0;
@@ -1442,7 +1413,7 @@ static int kalman_arma (double *coeff,
     int fncount = 0, grcount = 0;
     double *b;
     int i, err = 0;
-
+    
     b = malloc(ainfo->nc * sizeof *b);
     if (b == NULL) {
 	return E_ALLOC;
@@ -1460,30 +1431,21 @@ static int kalman_arma (double *coeff,
 #endif
 
     y = form_arma_y_vector(ainfo, Z, &err);
-    if (err) {
-	free(b);
-	return err;
-    }
 
-    if (ainfo->nexo > 0) {
+    if (!err && ainfo->nexo > 0) {
 	if (ainfo->dX != NULL) {
 	    X = ainfo->dX;
 	} else {
 	    X = form_arma_X_matrix(ainfo, Z, &err);
-	    if (err) {
-		free(b);
-		gretl_matrix_free(y);
-		return err;
-	    }
 	}
     }
 
-    err = allocate_ac_mc(ainfo);
+    if (!err) {
+	err = allocate_ac_mc(ainfo);
+    }
+
     if (err) {
-	free(b);
-	gretl_matrix_free(y);
-	free_arma_X_matrix(ainfo, X);
-	return err;
+	goto bailout;
     }
 
     r = ainfo_get_r(ainfo);
@@ -1508,10 +1470,7 @@ static int kalman_arma (double *coeff,
 
     err = get_gretl_matrix_err();
     if (err) {
-	free(b);
-	gretl_matrix_free(y);
-	free_arma_X_matrix(ainfo, X);
-	return E_ALLOC;
+	goto bailout;
     }
 
     kalman_matrices_init(ainfo);
@@ -1593,22 +1552,22 @@ static int kalman_arma (double *coeff,
 				 opt, ainfo->prn);
     } 
 
+ bailout:
+
     if (err) {
 	pmod->errcode = err;
     }
 
     kalman_free(K);
-
     free_kalman_matrices();
 
     gretl_matrix_free(y);
     free_arma_X_matrix(ainfo, X);
 
-    gretl_matrix_free(Svar2);
-    gretl_matrix_free(vQ);
+    gretl_matrix_replace(&Svar2, NULL);
+    gretl_matrix_replace(&vQ, NULL);
 
     free(b);
-    free_ac_mc();
 
     /* unpublish ainfo */
     kainfo = NULL;
@@ -1695,43 +1654,37 @@ static const double **make_armax_X (arma_info *ainfo, const double **Z)
 
 /* set up a opg_info struct for passing to bhhh_max */
 
-static opg_info *set_up_arma_opg_info (arma_info *ainfo, 
-				       const double **Z,
-				       const DATAINFO *pdinfo)
+static int set_up_arma_opg_info (arma_info *ainfo, 
+				 const double **Z,
+				 const DATAINFO *pdinfo)
 {
-    opg_info *ginfo;
     int k = ainfo->nc;
     int ns = k + 1;
     int err = 0;
 
-    ginfo = opg_info_new(ainfo);
-    if (ginfo == NULL) {
-	return NULL;
-    }
-
     /* construct virtual dataset for dep var, real regressors */
-    ginfo->X = make_armax_X(ainfo, Z);
-    if (ginfo->X == NULL) {
+    ainfo->X = make_armax_X(ainfo, Z);
+    if (ainfo->X == NULL) {
 	err = E_ALLOC;
     }  
 
     if (!err) {
-	ginfo->G = gretl_zero_matrix_new(ainfo->T, k);
-	if (ginfo->G == NULL) {
+	ainfo->G = gretl_zero_matrix_new(ainfo->T, k);
+	if (ainfo->G == NULL) {
 	    err = E_ALLOC;
 	}
     }    
 
     if (!err && !(ainfo->flags & ARMA_EXACT)) {
-	ginfo->V = gretl_matrix_alloc(k, k);
-	if (ginfo->V == NULL) {
+	ainfo->V = gretl_matrix_alloc(k, k);
+	if (ainfo->V == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
-	ginfo->series = doubles_array_new(ns, ainfo->t2 + 1);
-	if (ginfo->series == NULL) {
+	ainfo->aux = doubles_array_new(ns, ainfo->t2 + 1);
+	if (ainfo->aux == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -1741,39 +1694,34 @@ static opg_info *set_up_arma_opg_info (arma_info *ainfo,
 
 	for (i=0; i<ns; i++) {
 	    for (t=0; t<=ainfo->t2; t++) {
-		ginfo->series[i][t] = 0.0;
+		ainfo->aux[i][t] = 0.0;
 	    }
 	}
-	ginfo->n_series = ns;
+	ainfo->n_aux = ns;
     }
 
-    if (err) {
-	opg_info_free(ginfo);
-	ginfo = NULL;
-    }
-
-    return ginfo;
+    return err;
 }
 
 /* retrieve results specific to bhhh procedure */
 
-static int
-conditional_arma_model_prep (MODEL *pmod, opg_info *ginfo,
+static int 
+conditional_arma_model_prep (MODEL *pmod, arma_info *ainfo,
 			     double *theta)
 {
     int i, t, err;
 
-    pmod->t1 = ginfo->ainfo->t1;
-    pmod->t2 = ginfo->ainfo->t2;
+    pmod->t1 = ainfo->t1;
+    pmod->t2 = ainfo->t2;
     pmod->nobs = pmod->t2 - pmod->t1 + 1;
-    pmod->ncoeff = ginfo->ainfo->nc;
+    pmod->ncoeff = ainfo->nc;
 
     err = gretl_model_allocate_storage(pmod);
     if (err) {
 	return err;
     }
 
-    pmod->lnL = ginfo->ll;
+    pmod->lnL = ainfo->ll;
     pmod->sigma = NADBL; /* will be replaced */
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -1781,10 +1729,10 @@ conditional_arma_model_prep (MODEL *pmod, opg_info *ginfo,
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->uhat[t] = ginfo->series[0][t];
+	pmod->uhat[t] = ainfo->aux[0][t];
     }
 
-    err = gretl_model_write_vcv(pmod, ginfo->V);
+    err = gretl_model_write_vcv(pmod, ainfo->V);
 
     return err;
 }
@@ -1794,32 +1742,30 @@ static int bhhh_arma (double *theta,
 		      arma_info *ainfo, MODEL *pmod,
 		      gretlopt opt)
 {
-    opg_info *ginfo = NULL;
     gretlopt bhhh_opt = OPT_NONE;
     double tol = libset_get_double(BHHH_TOLER);
     int iters, err = 0;
 
     /* wrapper struct */
-    ginfo = set_up_arma_opg_info(ainfo, Z, pdinfo);
-    if (ginfo == NULL) {
-	pmod->errcode = E_ALLOC;
-	return pmod->errcode;
+    err = set_up_arma_opg_info(ainfo, Z, pdinfo);
+    if (err) {
+	pmod->errcode = err;
+	return err;
     }
 
     if (opt & OPT_V) {
 	bhhh_opt |= OPT_V;
     }
 
-    err = bhhh_max(theta, ainfo->nc, ginfo->G,
+    err = bhhh_max(theta, ainfo->nc, ainfo->G,
 		   bhhh_arma_callback, tol, &iters,
-		   ginfo, ginfo->V, bhhh_opt, ainfo->prn);
+		   ainfo, ainfo->V, bhhh_opt, ainfo->prn);
     
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
-	pmod->errcode = err;
     } else {
 	pmod->full_n = pdinfo->n;
-	err = conditional_arma_model_prep(pmod, ginfo, theta);
+	err = conditional_arma_model_prep(pmod, ainfo, theta);
     }
 
     if (!err) {
@@ -1828,7 +1774,9 @@ static int bhhh_arma (double *theta,
 	arma_model_add_roots(pmod, ainfo, theta);
     }
 
-    opg_info_free(ginfo);
+    if (err && !pmod->errcode) {
+	pmod->errcode = err;
+    }
 
     return pmod->errcode;
 }

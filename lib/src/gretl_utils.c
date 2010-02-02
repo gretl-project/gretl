@@ -1250,7 +1250,8 @@ void doubles_array_free (double **X, int m)
  * @n: length of each sub-array.
  *
  * Allocates a 2-dimensional array of doubles, that is,
- * @m arrays each containing @n elements.
+ * @m arrays each containing @n elements.  If @n is
+ * zero the sub-arrays are just set to %NULL.
  * 
  * Returns: the allocated array, or %NULL on failure.
  */
