@@ -1283,6 +1283,7 @@ PRN *set_up_verbose_printer (gretlopt opt, PRN *prn)
     PRN *vprn = NULL;
 
     if (opt & OPT_V) {
+	/* verbose printing is wanted */
 	if (iter_print_func_installed()) {
 	    int err;
 

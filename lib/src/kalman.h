@@ -81,6 +81,10 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 				    const char *Sname, 
 				    PRN *prn, int *err);
 
+void kalman_attach_printer (kalman *K, PRN *prn);
+
+PRN *kalman_get_printer (const kalman *K);
+
 void kalman_cleanup (void);
 
 int delete_kalman (PRN *prn);

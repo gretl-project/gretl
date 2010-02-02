@@ -94,6 +94,7 @@ PLUGINSRC = \
 	tramo_options.c \
 	tramo-x12a.c \
 	nistcheck.c \
+	arma_init.c \
 	arma.c \
         arma_x12.c \
 	workbook.c \
@@ -405,7 +406,7 @@ plugins/stata_import.dll: stata_import.o dllinit.o
 plugins/spss_import.dll: spss_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
-	
+
 plugins/sas_import.dll: sas_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
@@ -442,7 +443,7 @@ plugins/arbond.dll: arbond.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-plugins/arma.dll: arma.o dllinit.o
+plugins/arma.dll: arma.o arma_init.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS) -lprob
 

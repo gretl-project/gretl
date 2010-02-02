@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "bhhh_max.h"
 #include "libset.h"
+#include "arma_priv.h"
 
 #include <glib.h>
 
@@ -479,7 +480,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 }
 
 static void 
-populate_arma_model (MODEL *pmod, const int *list, const char *path, 
+populate_arma_model (MODEL *pmod, const char *path, 
 		     const double **Z, const DATAINFO *pdinfo, 
 		     arma_info *ainfo)
 {
@@ -533,7 +534,7 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
 	fprintf(stderr, "problem reading X-12-ARIMA model info\n");
 	pmod->errcode = err;
     } else {
-	write_arma_model_stats(pmod, list, ainfo, Z, pdinfo);
+	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
     }
 }
 
@@ -559,8 +560,7 @@ output_series_to_spc (const int *list, const double **Z,
     fputs(" )\n", fp);
 }
 
-static int *
-arma_info_get_x_list (arma_info *ainfo, const int *alist)
+static int *arma_info_get_x_list (arma_info *ainfo)
 {
     int *xlist = NULL;
     int start = arma_list_y_position(ainfo);
@@ -570,7 +570,7 @@ arma_info_get_x_list (arma_info *ainfo, const int *alist)
 
     if (xlist != NULL) {
 	for (i=1; i<=xlist[0]; i++) {
-	    xlist[i] = alist[i + start];
+	    xlist[i] = ainfo->alist[i + start];
 	}
     }
 
@@ -656,8 +656,8 @@ static void x12_pdq_string (arma_info *ainfo, FILE *fp)
 
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo,
-			   arma_info *ainfo, const int *alist,
-			   int pdmax, gretlopt opt)
+			   arma_info *ainfo, int pdmax, 
+			   gretlopt opt)
 {
     int maxobs = pdmax * 50;
     int maxfcast = pdmax * 5;
@@ -671,7 +671,7 @@ static int write_spc_file (const char *fname,
     int i;
 
     if (ainfo->nexo > 0) {
-	xlist = arma_info_get_x_list(ainfo, alist);
+	xlist = arma_info_get_x_list(ainfo);
 	if (xlist == NULL) {
 	    return E_ALLOC;
 	}
@@ -823,8 +823,6 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     const char *prog = gretl_x12_arima();
     const char *workdir = gretl_x12_arima_dir();
     char yname[VNAMELEN], path[MAXLEN];
-    int *alist = NULL;
-    PRN *vprn = NULL;
     MODEL armod;
     arma_info ainfo;
 #ifdef WIN32
@@ -832,24 +830,23 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 #endif
     int err = 0;
 
-    vprn = set_up_verbose_printer(opt, prn);
-
     if (pdinfo->t2 < pdinfo->n - 1) {
 	/* FIXME this is temporary (OPT_F -> generate forecast) */
 	opt |= OPT_F;
     }
 
     arma_info_init(&ainfo, opt | OPT_X, pqspec, pdinfo);
+    ainfo.prn = set_up_verbose_printer(opt, prn);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
-    alist = gretl_list_copy(list);
-    if (alist == NULL) {
+    ainfo.alist = gretl_list_copy(list);
+    if (ainfo.alist == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
+	err = arma_check_list(&ainfo, Z, pdinfo, opt);
     }
 
     if (err) {
@@ -861,7 +858,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     calc_max_lag(&ainfo);
 
     /* adjust sample range if need be */
-    if (arma_adjust_sample(pdinfo, Z, alist, &ainfo)) {
+    if (arma_adjust_sample(&ainfo, Z, pdinfo)) {
         armod.errcode = E_DATA;
 	goto bailout;
     }
@@ -875,7 +872,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);
-    write_spc_file(path, Z, pdinfo, &ainfo, alist, pdmax, opt);
+    write_spc_file(path, Z, pdinfo, &ainfo, pdmax, opt);
 
     /* remove any files from on old run, in case of error */
     delete_old_files(path);
@@ -894,9 +891,9 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	sprintf(path, "%s%c%s", workdir, SLASH, yname); 
 	armod.t1 = ainfo.t1;
 	armod.t2 = ainfo.t2;
-	populate_arma_model(&armod, alist, path, Z, pdinfo, &ainfo);
+	populate_arma_model(&armod, path, Z, pdinfo, &ainfo);
 	if (verbose && !armod.errcode) {
-	    print_iterations(path, vprn);
+	    print_iterations(path, ainfo.prn);
 	}
 	if (!armod.errcode) {
 	    if (gretl_in_gui_mode()) {
@@ -909,19 +906,18 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	gretl_errmsg_set(_("Failed to execute x12arima"));
     }
 
-    if (armod.errcode && vprn != NULL) {
+    if (armod.errcode && ainfo.prn != NULL) {
 	sprintf(path, "%s%c%s.err", workdir, SLASH, yname);
-	print_x12a_error_file(path, vprn);
+	print_x12a_error_file(path, ainfo.prn);
     }
 
-    if (vprn != NULL && vprn != prn) {
-	iter_print_callback(0, vprn);
-	close_down_verbose_printer(vprn);
+    if (ainfo.prn != NULL && ainfo.prn != prn) {
+	iter_print_callback(0, ainfo.prn);
+	close_down_verbose_printer(ainfo.prn);
     }
 
  bailout:
 
-    free(alist);
     arma_info_cleanup(&ainfo);
 
     if (armod.errcode && (opt & OPT_U)) {

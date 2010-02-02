@@ -3,58 +3,13 @@
 #define MAX_ARMA_ORDER 128
 #define MAX_ARIMA_DIFF 2
 
-typedef struct arma_info_ arma_info;
-
-struct arma_info_ {
-    int yno;         /* ID of dependent variable */
-    ArmaFlags flags; /* specification flags */
-    int ifc;         /* specification includes a constant? */
-    int p;           /* max non-seasonal AR order */
-    int d;           /* non-seasonal difference */
-    int q;           /* max non-seasonal MA order */
-    int P;           /* seasonal AR order */
-    int D;           /* seasonal difference */
-    int Q;           /* seasonal MA order */
-    char *pmask;     /* specific AR lags included */
-    char *qmask;     /* specific MA lags included */
-    int np;          /* total non-seasonal AR lags */
-    int nq;          /* total non-seasonal MA lags */
-    int maxlag;      /* longest lag in model */
-    int nexo;        /* number of other regressors (ARMAX) */
-    int nc;          /* total number of coefficients */
-    int t1;          /* starting observation */
-    int t2;          /* ending observation */
-    int pd;          /* periodicity of data */
-    int T;           /* sample size for estimation */
-    double *y;       /* dependent variable (possibly differenced) */
-    double yscale;   /* scale factor for y */
-    int *xlist;      /* list of regressors (armax) */
-    gretl_matrix *dX;   /* differenced regressors (ARIMAX) */
-    const char *pqspec; /* input string with specific AR, MA lags */
-};
-
-#define arma_has_seasonal(a)   ((a)->flags & ARMA_SEAS)
-#define arma_is_arima(a)       ((a)->flags & ARMA_DSPEC)
-#define arma_by_x12a(a)        ((a)->flags & ARMA_X12A)
-#define arma_exact_ml(a)       ((a)->flags & ARMA_EXACT)
-#define arma_using_vech(a)     ((a)->flags & ARMA_VECH)
-#define arma_least_squares(a)  ((a)->flags & ARMA_LS)
-
-#define set_arma_has_seasonal(a)  ((a)->flags |= ARMA_SEAS)
-#define set_arma_is_arima(a)      ((a)->flags |= ARMA_DSPEC)
-#define unset_arma_is_arima(a)    ((a)->flags &= ~ARMA_DSPEC)
-#define set_arma_use_vech(a)      ((a)->flags |= ARMA_VECH)
-#define set_arma_least_squares(a) ((a)->flags |= ARMA_LS)
-
-#define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
-#define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')
-
 static void 
 arma_info_init (arma_info *ainfo, gretlopt opt, 
 		const char *pqspec, const DATAINFO *pdinfo)
 {
     ainfo->yno = 0;
     ainfo->flags = 0;
+    ainfo->alist = NULL;
 
     if (opt & OPT_X) {
 	ainfo->flags |= ARMA_X12A;
@@ -94,10 +49,12 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
     ainfo->dX = NULL;
 
     ainfo->pqspec = pqspec;
+    ainfo->prn = NULL;
 }
 
 static void arma_info_cleanup (arma_info *ainfo)
 {
+    free(ainfo->alist);
     free(ainfo->pmask);
     free(ainfo->qmask);
     free(ainfo->y);
@@ -231,8 +188,7 @@ static gretl_matrix *get_arma_pq_vec (arma_info *ainfo,
     return m;
 }
 
-static int 
-arma_make_masks (arma_info *ainfo, int *list)
+static int arma_make_masks (arma_info *ainfo, int *list)
 {
     gretl_matrix *m;
     int tmp, err = 0;
@@ -387,8 +343,7 @@ static void ainfo_data_to_model (arma_info *ainfo, MODEL *pmod)
 /* write the various statistics from ARMA estimation into
    a gretl MODEL struct */
 
-static void write_arma_model_stats (MODEL *pmod, const int *list, 
-				    arma_info *ainfo,
+static void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 				    const double **Z, 
 				    const DATAINFO *pdinfo)
 {
@@ -402,7 +357,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
     ainfo_data_to_model(ainfo, pmod);
 
     free(pmod->list);
-    pmod->list = gretl_list_copy(list);
+    pmod->list = gretl_list_copy(ainfo->alist);
 
     if (arma_is_arima(ainfo)) {
 	y = ainfo->y;
@@ -479,10 +434,11 @@ static void calc_max_lag (arma_info *ainfo)
 
 #define SAMPLE_DEBUG 0
 
-static int 
-arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
-		    arma_info *ainfo)
+static int arma_adjust_sample (arma_info *ainfo, 
+			       const double **Z,
+			       const DATAINFO *pdinfo)
 {
+    int *list = ainfo->alist;
     int ypos = arma_list_y_position(ainfo);
     int t0, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int i, vi, vlmax, k, t;
@@ -722,7 +678,7 @@ static int check_arma_list (int *list, gretlopt opt,
 					 0, Z, pdinfo);
 	}
 	if ((opt & OPT_N) || (armax && !hadconst)) {
-	    ;
+	    ; /* no constant present */
 	} else {
 	    ainfo->ifc = 1;
 	}
@@ -827,10 +783,12 @@ static int check_arima_list (int *list, gretlopt opt,
     return err;
 }
 
-static int arma_check_list (int *list, gretlopt opt,
-			    const double **Z, const DATAINFO *pdinfo,
-			    arma_info *ainfo)
+static int arma_check_list (arma_info *ainfo, 
+			    const double **Z, 
+			    const DATAINFO *pdinfo,
+			    gretlopt opt)
 {
+    int *list = ainfo->alist;
     int sep1 = gretl_list_separator_position(list);
     int err = 0;
 

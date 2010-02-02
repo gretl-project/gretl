@@ -29,11 +29,11 @@
 #include "matrix_extra.h"
 #include "gretl_scalar.h"
 #include "gretl_bfgs.h"
+#include "arma_priv.h"
 
 #include "../cephes/libprob.h"
 
 #define ARMA_DEBUG 0
-#define AINIT_DEBUG 0
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -41,8 +41,6 @@
 #define KALMAN_ALL 999
 
 #include "arma_common.c"
-
-static PRN *vprn;
 
 struct bchecker {
     int qmax;
@@ -91,9 +89,8 @@ static struct bchecker *bchecker_allocate (arma_info *ainfo)
 /* check whether the MA estimates have gone out of bounds in the
    course of iteration */
 
-static int 
-ma_out_of_bounds (arma_info *ainfo, const double *theta,
-		  const double *Theta)
+int ma_out_of_bounds (arma_info *ainfo, const double *theta,
+		      const double *Theta)
 {
     static struct bchecker *b = NULL;
     double re, im, rt;
@@ -187,7 +184,7 @@ ma_out_of_bounds (arma_info *ainfo, const double *theta,
 	im = b->roots[i].i;
 	rt = re * re + im * im;
 	if (rt > DBL_EPSILON && rt <= 1.0) {
-	    pprintf(vprn, "MA root %d = %g\n", i, rt);
+	    pprintf(ainfo->prn, "MA root %d = %g\n", i, rt);
 	    err = 1;
 	    break;
 	}
@@ -196,7 +193,7 @@ ma_out_of_bounds (arma_info *ainfo, const double *theta,
     return err;
 }
 
-static void bounds_checker_cleanup (void)
+void bounds_checker_cleanup (void)
 {
     ma_out_of_bounds(NULL, NULL, NULL);
 }
@@ -409,58 +406,28 @@ static int arma_analytical_score (arma_info *ainfo,
     return 0;
 }
 
-/* Calculate ARMA log-likelihood.  This function is passed to the
-   bhhh_max() routine as a callback. */
-
-static double bhhh_arma_callback (double *coeff, 
-				  gretl_matrix *G, 
-				  void *data,
-				  int do_score,
-				  int *err)
+static int conditional_arma_forecast_errors (arma_info *ainfo,
+					     const double *y,
+					     const double **X,
+					     double b0,
+					     const double *phi,
+					     const double *Phi,
+					     const double *theta,
+					     const double *Theta,
+					     const double *beta,
+					     double *e,
+					     double *s2)
 {
-    opg_info *ginfo = (opg_info *) data;
-    arma_info *ainfo = ginfo->ainfo;
-    /* pointers to blocks of data */
-    const double **bhX = ginfo->X;
-    const double *y = bhX[0];
-    const double **X = bhX + 1;
-    /* pointers to blocks of coefficients */
-    const double *phi =   coeff + ainfo->ifc;
-    const double *Phi =     phi + ainfo->np;
-    const double *theta =   Phi + ainfo->P;
-    const double *Theta = theta + ainfo->nq;
-    const double *beta =  Theta + ainfo->Q;
-    /* forecast errors and derivatives */
-    double **series = ginfo->series;
-    double *e = series[0];
-    double **de = series + 1;
-    double ll, s2 = 0.0;
-    int i, j, k, s, t;
+    int i, j, k, s, t, p;
 
-    *err = 0;
-
-#if ARMA_DEBUG
-    fprintf(stderr, "arma_ll: p=%d, q=%d, P=%d, Q=%d, pd=%d\n",
-	    ainfo->p, ainfo->q, ainfo->P, ainfo->Q, ainfo->pd);
-#endif
-
-    if (ma_out_of_bounds(ainfo, theta, Theta)) {
-	pputs(vprn, "arma: MA estimate(s) out of bounds\n");
-	fputs("arma: MA estimate(s) out of bounds\n", stderr);
-	*err = E_NOCONV;
-	return NADBL;
-    }
-
-    /* update forecast errors */
+    *s2 = 0.0;
 
     for (t=ainfo->t1; t<=ainfo->t2; t++) {
-	int p;
-
 	e[t] = y[t];
 
 	/* intercept */
 	if (ainfo->ifc) {
-	    e[t] -= coeff[0];
+	    e[t] -= b0;
 	} 
 
 	/* non-seasonal AR component */
@@ -520,8 +487,55 @@ static double bhhh_arma_callback (double *coeff,
 	    e[t] -= beta[i] * X[i][t];
 	}
 
-	s2 += e[t] * e[t];
+	*s2 += e[t] * e[t];
     }
+
+    return 0;
+}
+
+/* Calculate ARMA log-likelihood.  This function is passed to the
+   bhhh_max() routine as a callback. */
+
+static double bhhh_arma_callback (double *coeff, 
+				  gretl_matrix *G, 
+				  void *data,
+				  int do_score,
+				  int *err)
+{
+    opg_info *ginfo = (opg_info *) data;
+    arma_info *ainfo = ginfo->ainfo;
+    /* pointers to blocks of data */
+    const double **bhX = ginfo->X;
+    const double *y = bhX[0];
+    const double **X = bhX + 1;
+    /* pointers to blocks of coefficients */
+    const double *phi =   coeff + ainfo->ifc;
+    const double *Phi =     phi + ainfo->np;
+    const double *theta =   Phi + ainfo->P;
+    const double *Theta = theta + ainfo->nq;
+    const double *beta =  Theta + ainfo->Q;
+    /* forecast errors and derivatives */
+    double **series = ginfo->series;
+    double *e = series[0];
+    double ll, s2 = 0.0;
+
+    *err = 0;
+
+#if ARMA_DEBUG
+    fprintf(stderr, "arma_ll: p=%d, q=%d, P=%d, Q=%d, pd=%d\n",
+	    ainfo->p, ainfo->q, ainfo->P, ainfo->Q, ainfo->pd);
+#endif
+
+    if (ma_out_of_bounds(ainfo, theta, Theta)) {
+	pputs(ainfo->prn, "arma: MA estimate(s) out of bounds\n");
+	fputs("arma: MA estimate(s) out of bounds\n", stderr);
+	*err = E_NOCONV;
+	return NADBL;
+    }
+
+    conditional_arma_forecast_errors(ainfo, y, X, coeff[0],
+				     phi, Phi, theta, Theta,
+				     beta, e, &s2);
 
     /* error variance and log-likelihood */
     s2 /= (double) ainfo->T;
@@ -532,6 +546,8 @@ static double bhhh_arma_callback (double *coeff,
     }
 
     if (do_score) {
+	double **de = series + 1;
+
 	ginfo->ll = ll;
 	arma_analytical_score(ainfo, y, X, e,
 			      phi, Phi, theta, Theta,
@@ -1103,13 +1119,13 @@ static void debug_print_theta (const double *theta,
 
 static int kalman_do_ma_check = 1;
 
-static double kalman_arma_ll (const double *b, void *p)
+static double kalman_arma_ll (const double *b, void *data)
 {
+    kalman *K = (kalman *) data;
     int offset = kainfo->ifc + kainfo->np + kainfo->P;
     const double *theta = b + offset;
     const double *Theta = theta + kainfo->nq;
     double ll = NADBL;
-    kalman *K;
     int err = 0;
 
 #if ARMA_DEBUG
@@ -1117,11 +1133,10 @@ static double kalman_arma_ll (const double *b, void *p)
 #endif
 
     if (kalman_do_ma_check && ma_out_of_bounds(kainfo, theta, Theta)) {
-	pputs(vprn, "arma: MA estimate(s) out of bounds\n");
+	pputs(kalman_get_printer(K), "arma: MA estimate(s) out of bounds\n");
 	return NADBL;
     }
 
-    K = (kalman *) p;
     err = rewrite_kalman_matrices(K, b, KALMAN_ALL);
     if (!err) {
 	err = kalman_forecast(K, NULL);
@@ -1170,8 +1185,7 @@ static int arma_use_hessian (gretlopt opt)
     return ret;
 }
 
-static int kalman_arma_finish (MODEL *pmod, const int *alist,
-			       arma_info *ainfo,
+static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       kalman *K, double *b, 
 			       gretlopt opt, PRN *prn)
@@ -1242,7 +1256,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     }
 
     if (!err) {
-	write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
+	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
 	arma_model_add_roots(pmod, ainfo, b);
 	gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
 	if (ainfo->flags & ARMA_LBFGS) {
@@ -1256,9 +1270,8 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     return err;
 }
 
-static gretl_matrix *form_arma_y_vector (const int *alist, 
+static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 					 const double **Z,
-					 arma_info *ainfo,
 					 int *err)
 {
     gretl_matrix *yvec;
@@ -1300,15 +1313,13 @@ static gretl_matrix *form_arma_y_vector (const int *alist,
     return yvec;
 }
 
-static gretl_matrix *form_arma_X_matrix (const int *alist, 
+static gretl_matrix *form_arma_X_matrix (arma_info *ainfo,
 					 const double **Z,
-					 arma_info *ainfo,
 					 int *err)
 {
     gretl_matrix *X;
 
 #if ARMA_DEBUG
-    printlist(alist, "alist (arma list)");
     printlist(ainfo->xlist, "xlist (exog vars)");
 #endif
 
@@ -1321,36 +1332,6 @@ static gretl_matrix *form_arma_X_matrix (const int *alist,
 #endif
 
     return X;
-}
-
-/* Given an estimate of the ARMA constant via OLS, convert to the form
-   wanted for initializing the Kalman filter.  Note: the 'b' array
-   goes: const, phi, Phi, theta, Theta, beta.
-*/
-
-static void transform_arma_const (double *b, arma_info *ainfo)
-{
-    const double *phi = b + 1;
-    const double *Phi = phi + ainfo->np;
-    double narfac = 1.0;
-    double sarfac = 1.0;
-    int i, k = 0;
-
-#if AINIT_DEBUG
-    fprintf(stderr, "transform_arma_const: initially = %g\n", b[0]);
-#endif
-
-    for (i=0; i<ainfo->p; i++) {
-	if (AR_included(ainfo, i)) {
-	    narfac -= phi[k++];
-	}
-    }
-
-    for (i=0; i<ainfo->P; i++) {
-	sarfac -= Phi[i];
-    }
-
-    b[0] /= (narfac * sarfac);
 }
 
 static int kalman_undo_y_scaling (arma_info *ainfo,
@@ -1448,10 +1429,10 @@ static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 # endif /* INITH variants */
 #endif /* KALMAN_ARMA_INITH */
 
-static int kalman_arma (const int *alist, double *coeff, 
+static int kalman_arma (double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			arma_info *ainfo, MODEL *pmod,
-			gretlopt opt, PRN *prn)
+			gretlopt opt)
 {
     kalman *K = NULL;
     gretl_matrix *y = NULL;
@@ -1471,14 +1452,14 @@ static int kalman_arma (const int *alist, double *coeff,
 	b[i] = coeff[i];
     }
 
-#if AINIT_DEBUG
+#if ARMA_DEBUG
     fputs("initial coefficients:\n", stderr);
     for (i=0; i<ainfo->nc; i++) {
 	fprintf(stderr, " b[%d] = % .10E\n", i, b[i]);
     }
 #endif
 
-    y = form_arma_y_vector(alist, Z, ainfo, &err);
+    y = form_arma_y_vector(ainfo, Z, &err);
     if (err) {
 	free(b);
 	return err;
@@ -1488,7 +1469,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	if (ainfo->dX != NULL) {
 	    X = ainfo->dX;
 	} else {
-	    X = form_arma_X_matrix(alist, Z, ainfo, &err);
+	    X = form_arma_X_matrix(ainfo, Z, &err);
 	    if (err) {
 		free(b);
 		gretl_matrix_free(y);
@@ -1556,6 +1537,8 @@ static int kalman_arma (const int *alist, double *coeff,
 	double toler;
 	gretl_matrix *A0 = NULL;
 
+	kalman_attach_printer(K, ainfo->prn);
+
 	if (r > 3) {
 	    kalman_set_nonshift(K, 1);
 	} else {
@@ -1585,7 +1568,7 @@ static int kalman_arma (const int *alist, double *coeff,
 
 	err = BFGS_max(b, ainfo->nc, maxit, toler, 
 		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
-		       NULL, K, A0, opt, prn);
+		       NULL, K, A0, opt, ainfo->prn);
 
 	gretl_matrix_free(A0);
 
@@ -1605,9 +1588,9 @@ static int kalman_arma (const int *alist, double *coeff,
     if (!err) {
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
-	err = kalman_arma_finish(pmod, alist, ainfo, 
+	err = kalman_arma_finish(pmod, ainfo, 
 				 Z, pdinfo, K, b, 
-				 opt, prn);
+				 opt, ainfo->prn);
     } 
 
     if (err) {
@@ -1635,16 +1618,49 @@ static int kalman_arma (const int *alist, double *coeff,
 
 /* end of Kalman-specific material */
 
+static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
+{
+    PRN *prn = ainfo->prn;
+    int i, nc = n_init_vals();
+
+    if (nc == 0) {
+	return 0;
+    } else if (nc < ainfo->nc) {
+	pprintf(prn, "arma initialization: need %d coeffs but got %d\n",
+		ainfo->nc, nc);
+	return E_DATA;
+    }
+
+    if (ainfo->flags & ARMA_EXACT) {
+	/* initialization is handled within BFGS */
+	for (i=0; i<ainfo->nc; i++) {
+	    coeff[i] = 0.0;
+	}	
+    } else {
+	const gretl_matrix *m = get_init_vals();
+
+	pputs(prn, "\narma initialization: at user-specified values\n\n");
+	for (i=0; i<ainfo->nc; i++) {
+	    coeff[i] = gretl_vector_get(m, i);
+	}
+	free_init_vals();
+    }
+
+    *init_done = 1;
+
+    return 0;
+}
+
 /* construct a "virtual dataset" in the form of a set of pointers into
    the main dataset: this will be passed to the bhhh_max function.
    The dependent variable is put in position 0; following this are the
    independent variables.
 */
 
-static const double **
-make_armax_X (const int *list, arma_info *ainfo, const double **Z)
+static const double **make_armax_X (arma_info *ainfo, const double **Z)
 {
     const double **X;
+    int *list = ainfo->alist;
     int ypos, nx;
     int v, i;
 
@@ -1677,1197 +1693,50 @@ make_armax_X (const int *list, arma_info *ainfo, const double **Z)
     return X;
 }
 
-static int add_to_spec (char *targ, const char *src)
-{
-    if (strlen(src) + strlen(targ) > MAXLINE - 1) {
-	return 1;
-    } else {
-	strcat(targ, src);
-	return 0;
-    }
-}
-
-/* for ARMAX: write the component of the NLS specification
-   that takes the form (y_{t-i} - X_{t-i} \beta)
-*/
-
-static int y_Xb_at_lag (char *spec, arma_info *ainfo, 
-			int narmax, int lag)
-{
-    char chunk[32];
-    int i, nt;
-    int err = 0;
-
-    if (narmax == 0) {
-	sprintf(chunk, "y_%d", lag);
-	return add_to_spec(spec, chunk);
-    }
-
-    nt = ainfo->ifc + narmax;
-
-    sprintf(chunk, "(y_%d-", lag);
-
-    if (nt > 1) {
-	strcat(chunk, "(");
-    }
-
-    if (ainfo->ifc) {
-	strcat(chunk, "b0");
-    }
-
-    err = add_to_spec(spec, chunk);
-
-    for (i=0; i<narmax && !err; i++) {
-	if (ainfo->ifc || i > 0) {
-	    err += add_to_spec(spec, "+");
-	} 
-	sprintf(chunk, "b%d*x%d_%d", i+1, i+1, lag);
-	err += add_to_spec(spec, chunk); 
-    }
-
-    if (nt > 1) {
-	err += add_to_spec(spec, "))");
-    } else {
-	err += add_to_spec(spec, ")");
-    }
-
-    return err;
-}
-
-static void nls_kickstart (MODEL *pmod, double ***pZ, 
-			   DATAINFO *pdinfo,
-			   double *b0, double *by1)
-{
-    int list[4];
-
-    if (b0 != 0) {
-	list[0] = 3;
-	list[1] = 1;
-	list[2] = 0;
-	list[3] = 2;
-    } else {
-	list[0] = 2;
-	list[1] = 1;
-	list[2] = 2;
-    }
-
-    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
-
-    if (!pmod->errcode) {
-	if (b0 != 0) {
-	    *b0 = pmod->coeff[0];
-	    *by1 = pmod->coeff[1];
-	} else {
-	    *by1 = pmod->coeff[0];
-	}
-    }
-
-    clear_model(pmod);
-}
-
-static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
-			       int narmax, const double *coeff,
-			       double ***pZ, DATAINFO *pdinfo,
-			       PRN *prn) 
-{
-    gretlopt nlsopt = OPT_A;
-    char fnstr[MAXLINE];
-    char term[32];
-    nlspec *spec;
-    double *parms = NULL;
-    char **pnames = NULL;
-    double *b0 = NULL, *by1 = NULL;
-    int nparam, lag;
-    int i, j, k, err = 0;
-
-    spec = nlspec_new(NLS, pdinfo);
-    if (spec == NULL) {
-	return E_ALLOC;
-    }
-
-    if (arma_least_squares(ainfo)) {
-	/* respect verbose option */
-	if (prn != NULL) {
-	    nlsopt |= OPT_V;
-	}
-    } else {
-#if AINIT_DEBUG
-	nlsopt |= OPT_V;
-#else
-	/* don't bother with standard errors */
-	nlsopt |= OPT_C;
-#endif
-    }
-
-    nlspec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
-
-    nparam = ainfo->ifc + ainfo->np + ainfo->P + ainfo->nexo;
-
-    parms = malloc(nparam * sizeof *parms);
-    if (parms == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }	
-
-    pnames = strings_array_new_with_length(nparam, VNAMELEN);
-    if (pnames == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* make names for the parameters; construct the param list;
-       and do some rudimentary fall-back initialization */
-
-    for (i=0; i<nparam; i++) {
-	parms[i] = 0.0;
-    }
-
-    k = 0;
-
-    if (ainfo->ifc) {
-	if (coeff != NULL) {
-	    parms[k] = coeff[k];
-	} else {
-	    parms[k] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
-	}
-	b0 = &parms[k];
-	strcpy(pnames[k++], "b0");
-    }
-
-    for (i=0; i<ainfo->p; i++) {
-	if (AR_included(ainfo, i)) {
-	    if (by1 == NULL) {
-		by1 = &parms[k];
-		if (coeff == NULL) {
-		    parms[k] = 0.1;
-		}
-	    }
-	    if (coeff != NULL) {
-		parms[k] = coeff[k];
-	    }
-	    sprintf(pnames[k++], "phi%d", i+1);
-	}
-    }
-
-    for (i=0; i<ainfo->P; i++) {
-	if (by1 == NULL) {
-	    by1 = &parms[k];
-	    if (coeff == NULL) {
-		parms[k] = 0.1;
-	    }
-	}
-	if (coeff != NULL) {
-	    parms[k] = coeff[k];
-	}
-	sprintf(pnames[k++], "Phi%d", i+1);
-    }
-
-    for (i=0; i<ainfo->nexo; i++) {
-	if (coeff != NULL) {
-	    parms[k] = coeff[k];
-	}
-	sprintf(pnames[k++], "b%d", i+1);
-    }
-
-    /* construct NLS specification */
-
-    strcpy(fnstr, "y=");
-
-    if (ainfo->ifc) {
-	strcat(fnstr, "b0");
-    } else {
-	strcat(fnstr, "0");
-    } 
-
-    for (i=0; i<ainfo->p && !err; i++) {
-	if (AR_included(ainfo, i)) {
-	    lag = i + 1;
-	    sprintf(term, "+phi%d*", lag);
-	    err = add_to_spec(fnstr, term);
-	    if (!err) {
-		err = y_Xb_at_lag(fnstr, ainfo, narmax, lag);
-	    }
-	}
-    }
-
-    for (j=0; j<ainfo->P && !err; j++) {
-	sprintf(term, "+Phi%d*", j+1);
-	strcat(fnstr, term);
-	lag = (j + 1) * ainfo->pd;
-	y_Xb_at_lag(fnstr, ainfo, narmax, lag);
-	for (i=0; i<ainfo->p; i++) {
-	    if (AR_included(ainfo, i)) {
-		sprintf(term, "-phi%d*Phi%d*", i+1, j+1);
-		err = add_to_spec(fnstr, term);
-		if (!err) {
-		    lag = (j+1) * ainfo->pd + (i+1);
-		    y_Xb_at_lag(fnstr, ainfo, narmax, lag);
-		}
-	    }
-	}
-    }
-
-    for (i=0; i<ainfo->nexo && !err; i++) {
-	sprintf(term, "+b%d*x%d", i+1, i+1);
-	err = add_to_spec(fnstr, term);
-    }
-
-    if (!err) {
-	if (coeff == NULL) {
-	    nls_kickstart(amod, pZ, pdinfo, b0, by1);
-	}
-
-#if AINIT_DEBUG
-	fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
-	for (i=0; i<nparam; i++) {
-	    fprintf(stderr, "initial NLS b[%d] = %g (%s)\n",
-		    i, parms[i], pnames[i]);
-	}
-#endif
-
-	err = nlspec_set_regression_function(spec, fnstr, pdinfo);
-    }
-
-    if (!err) {
-	set_auxiliary_scalars();
-	err = nlspec_add_param_list(spec, nparam, parms, pnames,
-				    pZ, pdinfo);
-
-	if (!err) {
-	    *amod = model_from_nlspec(spec, pZ, pdinfo, nlsopt, prn);
-	    err = amod->errcode;
-#if AINIT_DEBUG
-	    if (!err) {
-		printmodel(amod, pdinfo, OPT_NONE, prn);
-	    }
-#endif
-	}
-	unset_auxiliary_scalars();
-    }
-
- bailout:
-
-    nlspec_destroy(spec);
-    free(parms);
-    free_strings_array(pnames, nparam);
-
-    return err;
-}
-
-/* compose the regression list for the case where we're initializing
-   ARMA via OLS (not NLS)
-*/
-
-static int *make_ar_ols_list (arma_info *ainfo, int av)
-{
-    int * alist = gretl_list_new(av);
-    int i, k, vi;
-
-    if (alist == NULL) {
-	return NULL;
-    }
-
-    alist[1] = 1;
-
-    if (ainfo->ifc) {
-	alist[2] = 0;
-	k = 3;
-    } else {
-	alist[0] -= 1;
-	k = 2;
-    }
-
-    /* allow for const and y */
-    vi = 2;
-
-    for (i=0; i<ainfo->p; i++) {
-	if (AR_included(ainfo, i)) {
-	    alist[k++] = vi++;
-	}
-    }
-
-    for (i=0; i<ainfo->P; i++) {
-	alist[k++] = vi++;
-    }
-
-    for (i=0; i<ainfo->nexo; i++) {
-	alist[k++] = vi++;
-    }
-
-    return alist;
-}
-
-/* compose variable names for temporary dataset */
-
-static void arma_init_add_varnames (arma_info *ainfo, 
-				    int ptotal, int narmax, 
-				    DATAINFO *adinfo)
-{
-    int i, j, k, kx, ky;
-    int lag, k0 = 2;
-
-    strcpy(adinfo->varname[1], "y");
-
-    k = k0;
-    kx = ptotal + ainfo->nexo + k0;
-
-    for (i=0; i<ainfo->p; i++) {
-	if (AR_included(ainfo, i)) {
-	    lag = i + 1;
-	    sprintf(adinfo->varname[k++], "y_%d", lag);
-	    for (j=0; j<narmax; j++) {
-		sprintf(adinfo->varname[kx++], "x%d_%d", j+1, lag);
-	    }
-	}
-    }
-
-    ky = ainfo->np + ainfo->P + k0;
-
-    for (j=0; j<ainfo->P; j++) {
-	lag = (j + 1) * ainfo->pd;
-	k = k0 + ainfo->np + j;
-	sprintf(adinfo->varname[k], "y_%d", lag);
-	for (i=0; i<narmax; i++) {
-	    sprintf(adinfo->varname[kx++], "x%d_%d", i+1, lag);
-	}
-	for (i=0; i<ainfo->p; i++) {
-	    if (AR_included(ainfo, i)) {
-		lag = (j + 1) * ainfo->pd + (i + 1);
-		sprintf(adinfo->varname[ky++], "y_%d", lag);
-		for (k=0; k<narmax; k++) {
-		    sprintf(adinfo->varname[kx++], "x%d_%d", k+1, lag);
-		}
-	    }
-	}
-    }
-
-    kx = ptotal + k0;
-
-    for (i=0; i<ainfo->nexo; i++) {
-	sprintf(adinfo->varname[kx++], "x%d", i+1);
-    }
-}
-
-static int use_preprocessed_y (arma_info *ainfo)
-{
-    if (ainfo->flags & ARMA_XDIFF) {
-	/* for initialization, use the level of y */
-	return 0;
-    } else {
-	/* use preprocessed y if available */
-	return (ainfo->y != NULL);
-    }
-}
-
-/* Build temporary dataset including lagged vars: if we're doing exact
-   ML on an ARMAX model we need lags of the exogenous variables as
-   well as lags of y_t.  Note that the auxiliary dataset has "t = 0"
-   at an offset of ainfo->t1 into the "real", external dataset.
-*/
-
-static void arma_init_build_dataset (arma_info *ainfo, 
-				     int ptotal, int narmax, 
-				     const int *list,
-				     const double **Z,
-				     double **aZ, 
-				     DATAINFO *adinfo)
-{
-    const double *y;
-    int i, j, k, kx, ky;
-    int t, s, m, k0 = 2;
-    int lag, xstart;
-
-    /* dependent variable */
-    if (use_preprocessed_y(ainfo)) {
-	y = ainfo->y;
-    } else {
-	y = Z[ainfo->yno];
-    }
-
-    /* starting position for reading exogeneous vars */
-    if (ainfo->d > 0 || ainfo->D > 0) {
-	xstart = (arma_has_seasonal(ainfo))? 10 : 6;
-    } else {
-	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
-    }
-
-    for (t=0; t<adinfo->n; t++) {
-	int realt = t + ainfo->t1;
-	int miss = 0;
-
-	aZ[1][t] = y[realt];
-
-	k = k0;
-	kx = ptotal + ainfo->nexo + k0;
-
-	for (i=0; i<ainfo->p; i++) {
-	    if (!AR_included(ainfo, i)) {
-		continue;
-	    }
-	    lag = i + 1;
-	    s = realt - lag;
-	    if (s < 0) {
-		miss = 1;
-		aZ[k++][t] = NADBL;
-		for (j=0; j<narmax; j++) {
-		    aZ[kx++][t] = NADBL;
-		}
-	    } else {
-		aZ[k++][t] = y[s];
-		for (j=0; j<narmax; j++) {
-		    m = list[xstart + j];
-		    aZ[kx++][t] = Z[m][s];
-		}
-	    }
-	}
-
-	ky = ainfo->np + ainfo->P + k0;
-
-	for (j=0; j<ainfo->P; j++) {
-	    lag = (j + 1) * ainfo->pd;
-	    s = realt - lag;
-	    k = ainfo->np + k0 + j;
-	    if (s < 0) {
-		miss = 1;
-		aZ[k][t] = NADBL;
-		for (k=0; k<narmax; k++) {
-		    aZ[kx++][t] = NADBL;
-		}
-	    } else {
-		aZ[k][t] = y[s];
-		for (k=0; k<narmax; k++) {
-		    m = list[xstart + k];
-		    aZ[kx++][t] = Z[m][s];
-		}
-	    }
-	    for (i=0; i<ainfo->p; i++) {
-		if (!AR_included(ainfo, i)) {
-		    continue;
-		}
-		lag = (j + 1) * ainfo->pd + (i + 1);
-		s = realt - lag;
-		if (s < 0) {
-		    miss = 1;
-		    aZ[ky++][t] = NADBL;
-		    for (k=0; k<narmax; k++) {
-			aZ[kx++][t] = NADBL;
-		    }
-		} else {
-		    aZ[ky++][t] = y[s];
-		    for (k=0; k<narmax; k++) {
-			m = list[xstart + k];
-			aZ[kx++][t] = Z[m][s];
-		    }
-		}
-	    }
-	}
-
-	kx = ptotal + k0;
-
-	for (i=0; i<ainfo->nexo; i++) {
-	    m = list[xstart + i];
-	    aZ[kx++][t] = Z[m][realt];
-	}
-
-	if (miss) {
-	    adinfo->t1 = t + 1;
-	}	
-    }
-
-#if AINIT_DEBUG
-    fprintf(stderr, "arma init dataset:\n");
-    for (i=0; i<adinfo->v; i++) {
-	fprintf(stderr, "var %d '%s', obs[0] = %g\n", i, adinfo->varname[i], 
-		aZ[i][0]);
-    }
-#endif
-}
-
-/* transcribe coeffs from the OLS or NLS model used for initializing,
-   into the array that will be passed to the maximizer.
-*/
-
-static void arma_init_transcribe_coeffs (arma_info *ainfo,
-					 MODEL *pmod, double *b)
-{
-    int q0 = ainfo->ifc + ainfo->np + ainfo->P;
-    int Q0 = q0 + ainfo->nq;
-    int i, j = 0;
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	if (i == q0) {
-	    /* reserve space for nonseasonal MA */
-	    j += ainfo->nq;
-	} 
-	if (i == Q0) {
-	    /* and for seasonal MA */
-	    j += ainfo->Q;
-	}
-	b[j++] = pmod->coeff[i];
-    }
-
-    if ((ainfo->flags & ARMA_XDIFF) && ainfo->ifc) {
-	/* is this a good idea? */
-	b[0] /= ainfo->T;
-    }
-
-    /* insert near-zeros for nonseasonal MA */
-    for (i=0; i<ainfo->nq; i++) {
-	b[q0 + i] = 0.0001;
-    } 
-
-    /* and also seasonal MA */
-    for (i=0; i<ainfo->Q; i++) {
-	b[Q0 + i] = 0.0001;
-    }	
-}
-
-/* try to avoid numerical problems when doing exact ML: 
-   scale the dependent variable if it's "too big" 
-*/
-
-static void maybe_rescale_y (arma_info *ainfo, const double **Z,
-			     const DATAINFO *pdinfo)
-{
-    double ybar;
-    int t, doit = 0;
-
-    if (ainfo->y != NULL) {
-	ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
-	doit = (fabs(ybar) > 250);
-    } else {
-	const double *y = Z[ainfo->yno];
-
-	ybar = gretl_mean(ainfo->t1, ainfo->t2, y);
-	if (fabs(ybar) > 250) {
-	    ainfo->y = malloc(pdinfo->n * sizeof *ainfo->y);
-	    if (ainfo->y != NULL) {
-		for (t=0; t<pdinfo->n; t++) {
-		    ainfo->y[t] = y[t];
-		}
-		doit = 1;
-	    }
-	}
-    }
-
-    if (doit) {
-	fprintf(stderr, "arma: ybar = %g, rescaling y\n", ybar);
-	for (t=0; t<=ainfo->t2; t++) {
-	    if (!na(ainfo->y[t])) {
-		ainfo->y[t] /= ybar;
-	    }
-	}
-	ainfo->yscale = ybar;
-    }
-}
-
-/* Run a least squares model to get initial values for the AR
-   coefficients, either OLS or NLS.  We use NLS if there is
-   nonlinearity due to either (a) the presence of both a seasonal and
-   a non-seasonal AR component or (b) the presence of exogenous
-   variables in the context of a non-zero AR order, where estimation
-   will be via exact ML.  
-
-   In this initialization any MA coefficients are simply set to
-   near-zero.
-*/
-
-static int ar_arma_init (const int *list, double *coeff, 
-			 const double **Z, const DATAINFO *pdinfo,
-			 arma_info *ainfo, 
-			 MODEL *pmod, PRN *prn)
-{
-    int nmixed = ainfo->np * ainfo->P;
-    int ptotal = ainfo->np + ainfo->P + nmixed;
-    int av = ptotal + ainfo->nexo + 2;
-    double **aZ = NULL;
-    DATAINFO *adinfo = NULL;
-    int *alist = NULL;
-    MODEL armod;
-    int narmax, nonlin = 0;
-    int i, err = 0;
-
-#if AINIT_DEBUG
-    fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
-	    "ainfo->t1=%d, ainfo->t2=%d\n",
-	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
-    fprintf(stderr, " nmixed = %d, ptotal = %d\n", nmixed, ptotal);
-#endif
-
-    if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
-	/* special case of pure MA model */
-	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
-	    coeff[i] = 0.0001; 
-	} 
-	return 0;
-    }
-
-    gretl_model_init(&armod); 
-
-    narmax = (arma_exact_ml(ainfo))? ainfo->nexo : 0;
-    if (narmax > 0) {
-	/* ARMAX-induced lags of exog vars */
-	av += ainfo->nexo * ptotal;
-    } 
-
-    if (arma_exact_ml(ainfo) && ainfo->ifc) {
-	maybe_rescale_y(ainfo, Z, pdinfo);
-    }
-
-    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->T);
-    if (adinfo == NULL) {
-	return E_ALLOC;
-    }
-
-    if (ptotal > 0 && (narmax > 0 || nmixed > 0)) {
-	/* we'll have to use NLS */
-	nonlin = 1;
-    } else {
-	/* OLS: need regression list */
-	alist = make_ar_ols_list(ainfo, av);
-    }
-
-    /* add variable names to auxiliary dataset: this is required for 
-       NLS, and useful for debugging when using OLS 
-    */
-    arma_init_add_varnames(ainfo, ptotal, narmax, adinfo);
-
-    /* build temporary dataset */
-    arma_init_build_dataset(ainfo, ptotal, narmax, list,
-			    Z, aZ, adinfo);
-
-    if (nonlin) {
-	PRN *dprn = NULL;
-
-#if AINIT_DEBUG
-	fprintf(stderr, "arma:_init_by_ls: doing NLS\n");
-	dprn = prn;
-#endif
-	err = arma_get_nls_model(&armod, ainfo, narmax, NULL, &aZ, adinfo,
-				 dprn);
-    } else {
-#if AINIT_DEBUG
-	printlist(alist, "'alist' in ar_arma_init (OLS)");
-#endif
-	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
-	err = armod.errcode;
-    }
-
-#if AINIT_DEBUG
-    if (!err) {
-	fprintf(stderr, "LS init: ncoeff = %d, nobs = %d\n", 
-		armod.ncoeff, armod.nobs);
-	for (i=0; i<armod.ncoeff; i++) {
-	    fprintf(stderr, " coeff[%d] = %g\n", i, armod.coeff[i]);
-	}
-    } else {
-	fprintf(stderr, "LS init: armod.errcode = %d\n", err);
-    }
-#endif
-
-    if (!err) {
-	arma_init_transcribe_coeffs(ainfo, &armod, coeff);
-    }
-
-    /* handle the case where we need to translate from an
-       estimate of the regression constant to the
-       unconditional mean of y_t
-    */
-    if (!err && arma_exact_ml(ainfo) && ainfo->ifc && 
-	(!nonlin || ainfo->nexo == 0)) {
-	transform_arma_const(coeff, ainfo);
-    }
-
-    if (!err && prn != NULL) {
-	if (nonlin) {
-	    pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
-		    _("using nonlinear AR model"));
-	} else {
-	    pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
-		    _("using linear AR model"));
-	}
-    }
-
-    /* clean up */
-    clear_model(&armod);
-    free(alist);
-    destroy_dataset(aZ, adinfo);
-
-    return err;
-}
-
-static int arma_by_ls (const int *list, double *coeff, 
-		       const double **Z, const DATAINFO *pdinfo,
-		       arma_info *ainfo, 
-		       MODEL *pmod, PRN *prn)
-{
-    int nmixed = ainfo->np * ainfo->P;
-    int ptotal = ainfo->np + ainfo->P + nmixed;
-    int av = ptotal + ainfo->nexo + 2;
-    double **aZ = NULL;
-    DATAINFO *adinfo = NULL;
-    int *alist = NULL;
-    int nonlin = 0;
-
-    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->T);
-    if (adinfo == NULL) {
-	return E_ALLOC;
-    }
-
-    if (ptotal > 0 && nmixed > 0) {
-	/* we'll have to use NLS */
-	nonlin = 1;
-    } else {
-	/* OLS: need regression list */
-	alist = make_ar_ols_list(ainfo, av);
-    }
-
-    /* add variable names to auxiliary dataset */
-    arma_init_add_varnames(ainfo, ptotal, 0, adinfo);
-
-    /* build temporary dataset */
-    arma_init_build_dataset(ainfo, ptotal, 0, list,
-			    Z, aZ, adinfo);
-
-    if (nonlin) {
-	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, &aZ, adinfo,
-					   prn);
-    } else {
-	*pmod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
-    }
-
-    /* clean up */
-    free(alist);
-    destroy_dataset(aZ, adinfo);
-
-    if (!pmod->errcode && pmod->full_n < pdinfo->n) {
-	/* the model series are short */
-	double *uhat, *yhat;
-	int s, t;
-
-	uhat = malloc(pdinfo->n * sizeof *uhat);
-	yhat = malloc(pdinfo->n * sizeof *yhat);
-	if (uhat == NULL || yhat == NULL) {
-	    free(uhat);
-	    free(yhat);
-	    pmod->errcode = E_ALLOC;
-	} else {
-	    for (t=0; t<pdinfo->n; t++) {
-		uhat[t] = yhat[t] = NADBL;
-	    }
-	    t = ainfo->t1;
-	    for (s=0; s<pmod->full_n; s++, t++) {
-		uhat[t] = pmod->uhat[s];
-		yhat[t] = pmod->yhat[s];
-	    }
-	    free(pmod->uhat);
-	    pmod->uhat = uhat;
-	    free(pmod->yhat);
-	    pmod->yhat = yhat;
-	}
-    }
-
-    if (!pmod->errcode) {
-	pmod->t1 = ainfo->t1;
-	pmod->t2 = ainfo->t2;
-	pmod->full_n = pdinfo->n;
-
-	write_arma_model_stats(pmod, list, ainfo, Z, pdinfo);
-	arma_model_add_roots(pmod, ainfo, pmod->coeff);
-	gretl_model_set_int(pmod, "arma_flags", ARMA_LS);
-    }
-
-    return pmod->errcode;
-}
-
-#define MINLAGS 16
-
-static int hr_init_check (const DATAINFO *pdinfo, arma_info *ainfo)
-{
-    int nobs = ainfo->T;
-    int nlags = (ainfo->P + ainfo->Q) * pdinfo->pd;
-    int ncoeff, df;
-    int err = 0;
-
-    if (nlags < MINLAGS) {
-	nlags = MINLAGS;
-    }
-
-    ncoeff = nlags + ainfo->nexo + ainfo->ifc;
-    nobs -= nlags;
-    df = nobs - ncoeff;
-
-    if (df < 1) {
-	err = E_DF;
-    }
-
-#if AINIT_DEBUG
-    fprintf(stderr, "hr_init_check: ncoeff=%d, nobs=%d, 'df'=%d\n", 
-	    ncoeff, nobs, df);
-#endif
-
-    return err;
-}
-
-static int hr_transcribe_coeffs (arma_info *ainfo,
-				 MODEL *pmod, double *b)
-{
-    const double *theta = NULL;
-    const double *Theta = NULL;
-    int j = ainfo->nexo + ainfo->ifc;
-    int i, k = 0;
-    int err = 0;
-
-    if (ainfo->ifc) {
-	b[0] = pmod->coeff[0];
-	if (ainfo->flags & ARMA_XDIFF) {
-	    b[0] /= ainfo->T;
-	}
-	k = 1;
-    } 
-
-    for (i=0; i<ainfo->p; i++) {
-	if (AR_included(ainfo, i)) {
-	    b[k++] = pmod->coeff[j++];
-	}
-    }
-
-    for (i=0; i<ainfo->P; i++) { 
-	b[k++] = pmod->coeff[j];
-	j += ainfo->np + 1; /* assumes ainfo->p < pd */
-    }
-
-    theta = pmod->coeff + j;
-
-    for (i=0; i<ainfo->q; i++) {
-	if (MA_included(ainfo, i)) {
-	    b[k++] = pmod->coeff[j++];
-	}
-    }
-
-    Theta = pmod->coeff + j;
-
-    for (i=0; i<ainfo->Q; i++) {
-	b[k++] = pmod->coeff[j];
-	j += ainfo->nq + 1; /* assumes ainfo->q < pd */
-    }
-
-    j = ainfo->ifc;
-
-    for (i=0; i<ainfo->nexo; i++) {
-	b[k++] = pmod->coeff[j++];
-    }
-
-    /* check MA values? */
-    if (ainfo->q > 0 || ainfo->Q > 0) {
-	err = ma_out_of_bounds(ainfo, theta, Theta);
-	bounds_checker_cleanup();
-    }
-
-    return err;
-}
-
-/* Hannan-Rissanen ARMA initialization via two OLS passes. In the
-   first pass we run an OLS regression of y on the exogenous vars plus
-   a certain (biggish) number of lags. In the second we estimate the
-   ARMA model by OLS, substituting innovations and corresponding lags
-   with the first-pass residuals.
-*/
-
-static int hr_arma_init (const int *list, double *coeff, 
-			 const double **Z, const DATAINFO *pdinfo,
-			 arma_info *ainfo, PRN *prn)
-{
-    int np = ainfo->p, nq = ainfo->q;
-    int nP = ainfo->P, nQ = ainfo->Q;
-    int ptotal = np + nP + np * nP;
-    int qtotal = nq + nQ + nq * nQ;
-    int nexo = ainfo->nexo;
-    int pass1lags, pass1v;
-    const double *y;
-    double **aZ = NULL;
-    DATAINFO *adinfo = NULL;
-    int *pass1list = NULL;
-    int *pass2list = NULL;
-    int *arlags = NULL;
-    int *malags = NULL;
-    MODEL armod;
-    int xstart;
-    int m, pos, s;
-    int i, j, t;
-    int err = 0;
-
-    pass1lags = (ainfo->Q + ainfo->P) * pdinfo->pd;
-    if (pass1lags < MINLAGS) {
-	pass1lags = MINLAGS;
-    }
-    pass1v = pass1lags + nexo + 2;
-
-    /* dependent variable */
-    if (use_preprocessed_y(ainfo)) {
-	y = ainfo->y;
-    } else {
-	y = Z[ainfo->yno];
-    }
-
-    adinfo = create_auxiliary_dataset(&aZ, pass1v + qtotal, ainfo->T);
-    if (adinfo == NULL) {
-	return E_ALLOC;
-    }
-
-#if AINIT_DEBUG
-    fprintf(stderr, "hr_arma_init: dataset allocated: %d vars, %d obs\n", 
-	    pass1v + qtotal, an);
-#endif
-
-    /* in case we bomb before estimating a model */
-    gretl_model_init(&armod);
-
-    /* Start building stuff for pass 1 */
-
-    pass1list = gretl_list_new(pass1v);
-    if (pass1list == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-	
-    pass1list[1] = 1;
-    pass1list[2] = 0;
-    for (i=2; i<pass1v; i++) {
-	pass1list[i+1] = i;
-    }
-
-    /* variable names */
-
-    strcpy(adinfo->varname[1], "y");
-    for (i=0; i<nexo; i++) { 
-	/* exogenous vars */
-	sprintf(adinfo->varname[i+1], "x%d", i);
-    }
-    for (i=1; i<=pass1lags; i++) { 
-	/* lags */
-	sprintf(adinfo->varname[i+1+nexo], "y_%d", i);
-    }
-
-     /* Fill the dataset with the data for pass 1 */
-
-    /* starting position for reading exogeneous vars */
-    if (ainfo->d > 0 || ainfo->D > 0) {
-	xstart = (arma_has_seasonal(ainfo))? 10 : 6;
-    } else {
-	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
-    }
-
-    for (t=0; t<ainfo->T; t++) {
-	s = t + ainfo->t1;
-	aZ[1][t] = y[s];
-	for (i=0, pos=2; i<nexo; i++) {
-	    m = list[xstart + i];
-	    aZ[pos++][t] = Z[m][s];
-	}
-	for (i=1; i<=pass1lags; i++) {
-	    s = t + ainfo->t1 - i;
-	    aZ[pos++][t] = (s >= 0)? y[s] : NADBL;
-	}
-    }
-
-    /* pass 1 proper */
-
-    armod = lsq(pass1list, &aZ, adinfo, OLS, OPT_A);
-    if (armod.errcode) {
-	err = armod.errcode;
-	goto bailout;
-    } 
-
-#if AINIT_DEBUG
-    fprintf(stderr, "pass1 model: t1=%d, t2=%d, nobs=%d, ncoeff=%d, dfd = %d\n", 
-	    armod.t1, armod.t2, armod.nobs, armod.ncoeff, armod.dfd);
-#endif
-
-    /* allocations for pass 2 */
-
-    if (qtotal > 0) {
-	malags = malloc(qtotal * sizeof *malags);
-	if (malags == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    for (i=0, pos=0; i<nq; i++) {
-		malags[pos++] = i+1;
-	    }
-	    for (i=0; i<ainfo->Q; i++) {
-		for (j=0; j<=nq; j++) {
-		    malags[pos++] = (i+1) * pdinfo->pd + j;
-		}
-	    }
-	}
-    }
-
-    if (ptotal > 0 && !err) {
-	arlags = malloc(ptotal * sizeof *arlags);
-	if (arlags == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    for (i=0, pos=0; i<np; i++) {
-		arlags[pos++] = i+1;
-	    }
-	    for (i=0; i<ainfo->P; i++) {
-		for (j=0; j<=np; j++) {
-		    arlags[pos++] = (i+1) * pdinfo->pd + j;
-		}
-	    }
-	}
-    }
-
-    if (!err) {
-	pass2list = gretl_list_new(2 + nexo + ptotal + qtotal);
-	if (pass2list == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    /* handle error in pass2 allocations */
-    if (err) {
-	goto bailout;
-    }
-
-    /* stick lagged residuals into temp dataset */
-    pos = pass1v;
-    for (i=0; i<qtotal; i++) {
-	sprintf(adinfo->varname[pos], "e_%d", malags[i]);
-	for (t=0; t<ainfo->T; t++) {
-	    s = t - malags[i];
-	    aZ[pos][t] = (s >= 0)? armod.uhat[s] : NADBL;
-	}
-	pos++;
-    }
-
-    /* compose pass 2 regression list */
-    for (i=1, pos=1; i<=nexo+2; i++) {
-	pass2list[pos++] = pass1list[i];
-    }
-    for (i=0; i<ptotal; i++) {
-	/* FIXME? */
-	if (AR_included(ainfo,i)) {
-	    pass2list[pos++] = arlags[i] + nexo + 1;
-	}
-    }
-    for (i=0; i<qtotal; i++) {
-	/* FIXME? */
-	if (MA_included(ainfo,i)) {
-	    pass2list[pos++] = pass1v + i;
-	}
-    }
-    
-    /* now do pass2 */
-    clear_model(&armod);
-    armod = lsq(pass2list, &aZ, adinfo, OLS, OPT_A);
-
-    if (armod.errcode) {
-	err = armod.errcode;
-    } else {
-#if AINIT_DEBUG
-	PRN *modprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-
-	printmodel(&armod, adinfo, OPT_S, modprn);
-	gretl_print_destroy(modprn);
-#endif
-	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
-
-	if (!err && arma_exact_ml(ainfo) && 
-	    ainfo->ifc && ainfo->nexo == 0) {
-	    transform_arma_const(coeff, ainfo);
-	}
-    }
-
-#if AINIT_DEBUG
-    if (!err) {
-	fprintf(stderr, "HR init:\n");
-	for (i=0; i<ainfo->nc; i++) {
-	    fprintf(stderr, "coeff[%d] = %g\n", i, coeff[i]);
-	}
-    }
-#endif
-
- bailout:
-
-    free(pass1list);
-    free(pass2list);
-    free(arlags);
-    free(malags);
-    destroy_dataset(aZ, adinfo);
-    clear_model(&armod);
-
-    if (!err && prn != NULL) {
-	pputs(prn, "\narma initialization: using Hannan-Rissanen method\n\n");
-    }
-
-    return err;
-}
-
-static int user_arma_init (double *coeff, arma_info *ainfo, 
-			   int *init_done, PRN *prn)
-{
-    int i, nc = n_init_vals();
-
-    if (nc == 0) {
-	return 0;
-    } else if (nc < ainfo->nc) {
-	pprintf(prn, "arma initialization: need %d coeffs but got %d\n",
-		ainfo->nc, nc);
-	return E_DATA;
-    }
-
-    if (ainfo->flags & ARMA_EXACT) {
-	/* initialization is handled within BFGS */
-	for (i=0; i<ainfo->nc; i++) {
-	    coeff[i] = 0.0;
-	}	
-    } else {
-	const gretl_matrix *m = get_init_vals();
-
-	pputs(prn, "\narma initialization: at user-specified values\n\n");
-	for (i=0; i<ainfo->nc; i++) {
-	    coeff[i] = gretl_vector_get(m, i);
-	}
-	free_init_vals();
-    }
-
-    *init_done = 1;
-
-    return 0;
-}
-
 /* set up a opg_info struct for passing to bhhh_max */
 
 static opg_info *set_up_arma_opg_info (arma_info *ainfo, 
-				       const DATAINFO *pdinfo,
-				       const double **X)
+				       const double **Z,
+				       const DATAINFO *pdinfo)
 {
     opg_info *ginfo;
     int k = ainfo->nc;
     int ns = k + 1;
+    int err = 0;
 
     ginfo = opg_info_new(ainfo);
-
     if (ginfo == NULL) {
 	return NULL;
     }
 
-    ginfo->G = gretl_zero_matrix_new(ainfo->T, k);
-    ginfo->V = gretl_matrix_alloc(k, k);
+    /* construct virtual dataset for dep var, real regressors */
+    ginfo->X = make_armax_X(ainfo, Z);
+    if (ginfo->X == NULL) {
+	err = E_ALLOC;
+    }  
 
-    if (ginfo->G == NULL || ginfo->V == NULL) {
-	opg_info_free(ginfo);
-	return NULL;
+    if (!err) {
+	ginfo->G = gretl_zero_matrix_new(ainfo->T, k);
+	if (ginfo->G == NULL) {
+	    err = E_ALLOC;
+	}
+    }    
+
+    if (!err && !(ainfo->flags & ARMA_EXACT)) {
+	ginfo->V = gretl_matrix_alloc(k, k);
+	if (ginfo->V == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    ginfo->X = X;
-    ginfo->series = doubles_array_new(ns, ainfo->t2 + 1);
+    if (!err) {
+	ginfo->series = doubles_array_new(ns, ainfo->t2 + 1);
+	if (ginfo->series == NULL) {
+	    err = E_ALLOC;
+	}
+    }
 
-    if (ginfo->series == NULL) {
-	opg_info_free(ginfo);
-	ginfo = NULL;
-    } else {
+    if (!err) {
 	int i, t;
 
 	for (i=0; i<ns; i++) {
@@ -2875,8 +1744,12 @@ static opg_info *set_up_arma_opg_info (arma_info *ainfo,
 		ginfo->series[i][t] = 0.0;
 	    }
 	}
-
 	ginfo->n_series = ns;
+    }
+
+    if (err) {
+	opg_info_free(ginfo);
+	ginfo = NULL;
     }
 
     return ginfo;
@@ -2916,26 +1789,18 @@ conditional_arma_model_prep (MODEL *pmod, opg_info *ginfo,
     return err;
 }
 
-static int bhhh_arma (const int *alist, double *theta, 
+static int bhhh_arma (double *theta, 
 		      const double **Z, const DATAINFO *pdinfo,
 		      arma_info *ainfo, MODEL *pmod,
-		      gretlopt opt, PRN *prn)
+		      gretlopt opt)
 {
     opg_info *ginfo = NULL;
-    const double **X = NULL;
     gretlopt bhhh_opt = OPT_NONE;
     double tol = libset_get_double(BHHH_TOLER);
     int iters, err = 0;
 
-    /* construct virtual dataset for dep var, real regressors */
-    X = make_armax_X(alist, ainfo, Z);
-    if (X == NULL) {
-	pmod->errcode = E_ALLOC;
-	return pmod->errcode;
-    }
-
-    /* wrapper struct; this takes ownership of the X array */
-    ginfo = set_up_arma_opg_info(ainfo, pdinfo, X);
+    /* wrapper struct */
+    ginfo = set_up_arma_opg_info(ainfo, Z, pdinfo);
     if (ginfo == NULL) {
 	pmod->errcode = E_ALLOC;
 	return pmod->errcode;
@@ -2947,7 +1812,7 @@ static int bhhh_arma (const int *alist, double *theta,
 
     err = bhhh_max(theta, ainfo->nc, ginfo->G,
 		   bhhh_arma_callback, tol, &iters,
-		   ginfo, ginfo->V, bhhh_opt, prn);
+		   ginfo, ginfo->V, bhhh_opt, ainfo->prn);
     
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
@@ -2959,7 +1824,7 @@ static int bhhh_arma (const int *alist, double *theta,
 
     if (!err) {
 	gretl_model_set_int(pmod, "iters", iters);
-	write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
+	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
 	arma_model_add_roots(pmod, ainfo, theta);
     }
 
@@ -3005,11 +1870,33 @@ static int prefer_hr_init (arma_info *ainfo)
 	}
     }
 
-#if AINIT_DEBUG
+#if ARMA_DEBUG
     fprintf(stderr, "prefer_hr_init? %s\n", ret? "yes" : "no");
 #endif
 
     return ret;
+}
+
+static int arma_via_OLS (arma_info *ainfo, const double *coeff, 
+			 const double **Z, const DATAINFO *pdinfo,
+			 MODEL *pmod)
+{
+    int err = 0;
+
+    ainfo->flags |= ARMA_LS;
+
+    err = arma_by_ls(coeff, Z, pdinfo, ainfo, pmod);
+
+    if (!err) {
+	pmod->t1 = ainfo->t1;
+	pmod->t2 = ainfo->t2;
+	pmod->full_n = pdinfo->n;
+	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
+	arma_model_add_roots(pmod, ainfo, pmod->coeff);
+	gretl_model_set_int(pmod, "arma_flags", ARMA_LS);
+    }
+
+    return err;
 }
 
 /* Set flag to indicate differencing of exogenous regressors, in the
@@ -3031,28 +1918,27 @@ MODEL arma_model (const int *list, const char *pqspec,
 		  gretlopt opt, PRN *prn)
 {
     double *coeff = NULL;
-    int *alist = NULL;
     MODEL armod;
     arma_info ainfo;
     int init_done = 0;
     int err = 0;
 
-    vprn = set_up_verbose_printer(opt, prn);
-
     arma_info_init(&ainfo, opt, pqspec, pdinfo);
+    ainfo.prn = set_up_verbose_printer(opt, prn);
+
     gretl_model_init(&armod); 
 
     err = incompatible_options(opt, OPT_C | OPT_L);
 
     if (!err) {
-	alist = gretl_list_copy(list);
-	if (alist == NULL) {
+	ainfo.alist = gretl_list_copy(list);
+	if (ainfo.alist == NULL) {
 	    err = E_ALLOC;
 	}
     } 
 
     if (!err) {
-	err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
+	err = arma_check_list(&ainfo, Z, pdinfo, opt);
     }
 
     if (!err) {
@@ -3063,7 +1949,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     if (!err) {
 	/* adjust sample range if need be */
-	err = arma_adjust_sample(pdinfo, Z, alist, &ainfo);
+	err = arma_adjust_sample(&ainfo, Z, pdinfo);
     }
 
     if (!err) {
@@ -3085,50 +1971,35 @@ MODEL arma_model (const int *list, const char *pqspec,
     /* initialize the coefficients: there are 3 possible methods */
 
     /* first pass: see if the user specified some values */
-    err = user_arma_init(coeff, &ainfo, &init_done, vprn);
+    err = user_arma_init(coeff, &ainfo, &init_done);
     if (err) {
 	goto bailout;
     }
 
     if (!(ainfo.flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
 	/* pure AR model can be estimated via least squares */
-	ainfo.flags |= ARMA_LS;
-	err = arma_by_ls(alist, (init_done)? coeff : NULL, Z, pdinfo, 
-			 &ainfo, &armod, vprn);
+	const double *b = (init_done)? coeff : NULL;
+
+	err = arma_via_OLS(&ainfo, b, Z, pdinfo, &armod);
 	goto bailout;
     }
 
     /* second pass: try Hannan-Rissanen, if suitable */
     if (!init_done && prefer_hr_init(&ainfo)) {
-	int h_err = hr_init_check(pdinfo, &ainfo);
-
-	if (!h_err) {
-	    h_err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, vprn);
-#if AINIT_DEBUG
-	    if (h_err) {
-		fputs("*** hr_arma_init failed, will try ar_arma_init\n", stderr);
-	    } else {
-		fputs("*** hr_arma_init OK\n", stderr);
-	    }
-#endif
-	}
-	if (!h_err) {
-	    init_done = 1;
-	}
+	hr_arma_init(coeff, Z, pdinfo, &ainfo, &init_done);
     }
 
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!err && !init_done) {
-	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, 
-			   &armod, vprn);
+	err = ar_arma_init(coeff, Z, pdinfo, &ainfo, &armod);
     }
 
     if (!err) {
 	clear_model_xpx(&armod);
 	if (ainfo.flags & ARMA_EXACT) {
-	    kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+	    kalman_arma(coeff, Z, pdinfo, &ainfo, &armod, opt);
 	} else {
-	    bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+	    bhhh_arma(coeff, Z, pdinfo, &ainfo, &armod, opt);
 	}
     }
 
@@ -3146,18 +2017,15 @@ MODEL arma_model (const int *list, const char *pqspec,
 	gretl_model_smpl_init(&armod, pdinfo);
     }
 
-    free(alist);
     free(coeff);
     arma_info_cleanup(&ainfo);
 
     /* cleanup in MA roots checker */
     bounds_checker_cleanup();
 
-    if (vprn != prn) {
-	close_down_verbose_printer(vprn);
+    if (ainfo.prn != prn) {
+	close_down_verbose_printer(ainfo.prn);
     }
-
-    vprn = NULL;
 
     return armod;
 }
