@@ -1058,9 +1058,7 @@ double bvnorm_cdf (double a, double b, double rho)
     static const double y[] = {0.10024215, 0.48281397, 1.0609498, 
 			       1.7797294, 2.6697604};
 
-    double den, a1, b1;
     double ret = NADBL;
-    int i, j;
 
     if (fabs(rho) > 1) {
 	return NADBL;
@@ -1070,8 +1068,23 @@ double bvnorm_cdf (double a, double b, double rho)
 	/* joint prob is just the product of the marginals */
 	return normal_cdf(a) * normal_cdf(b);
     }
-	
-    den = sqrt(2.0 * (1 - rho * rho));
+
+    if (rho == 1.0) {
+	/* the two variables are in fact the same */
+	return normal_cdf(a<b ? a : b);
+    }
+    
+    if (rho == -1.0) {
+	/* the two variables are perfectly negatively correlated: 
+	   P(x<a, y<b) = P((x<a) && (x>b)) = P(x \in (b,a))
+	*/
+	ret = (a<=b) ? 0 : normal_cdf(a)-normal_cdf(b);
+	return ret;
+    }
+    
+    double a1, b1, den = sqrt(2.0 * (1 - rho * rho));
+    int i, j;
+
     a1 = a / den;
     b1 = b / den;
 
