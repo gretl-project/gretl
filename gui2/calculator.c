@@ -3142,7 +3142,13 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 
     fprintf(fp, "set xrange [%g:%g]\n", p->xmin, p->xmin + p->xrange);
     fprintf(fp, "plot \\\n");
-    fprintf(fp, "%s notitle w lines\n", p->formula);
+    if (strstr(p->formula, " with ") ||
+	strstr(p->formula, " w ") ||
+	strstr(p->formula, "title ")) {
+	fprintf(fp, "%s\n", p->formula);
+    } else {  
+	fprintf(fp, "%s notitle w lines\n", p->formula);
+    }
 
     gretl_pop_c_numeric_locale();
 
