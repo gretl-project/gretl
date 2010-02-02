@@ -462,9 +462,8 @@ static double bhhh_arma_callback (double *coeff,
 {
     arma_info *ainfo = (arma_info *) data;
     /* pointers to blocks of data */
-    const double **bhX = ainfo->X;
-    const double *y = bhX[0];
-    const double **X = bhX + 1;
+    const double *y = ainfo->X[0];
+    const double **X = ainfo->X + 1;
     /* pointers to blocks of coefficients */
     const double *phi =   coeff + ainfo->ifc;
     const double *Phi =     phi + ainfo->np;

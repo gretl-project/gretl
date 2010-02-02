@@ -127,6 +127,7 @@ plugin/anova.c
 plugin/arbond.c
 plugin/arma.c
 plugin/arma_common.c
+plugin/arma_init.c
 plugin/arma_x12.c
 plugin/audio.c
 plugin/audioprint.c
