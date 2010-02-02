@@ -9,13 +9,13 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-18 11:24+0200\n"
+"PO-Revision-Date: 2010-02-02 10:16+0200\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 0.3\n"
+"X-Generator: Lokalize 1.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: lib/src/adf_kpss.c:245
@@ -38,7 +38,7 @@ msgid ""
 "Augmented Dickey-Fuller test for %s\n"
 msgstr ""
 "\n"
-"%s için Genişletilmiş Dickey-Fuller sınaması\n"
+"%s için Genişletmeli Dickey-Fuller sınaması\n"
 
 #: lib/src/adf_kpss.c:260
 #, c-format
@@ -197,12 +197,12 @@ msgstr "%s katsayısı için (%g nokta tahmini)"
 #: lib/src/bootstrap.c:432
 #, c-format
 msgid "Studentized %g%% confidence interval = %g to %g"
-msgstr "Studentlemeli %% %g güven aralığı =%g - %g"
+msgstr "Studentlemeli %%%g güven aralığı =%g - %g"
 
 #: lib/src/bootstrap.c:435
 #, c-format
 msgid "%g%% confidence interval = %g to %g"
-msgstr "%% %g güven aralığı = %g - %g"
+msgstr "%%%g güven aralığı = %g - %g"
 
 #: lib/src/bootstrap.c:441
 #, c-format
@@ -505,7 +505,7 @@ msgstr "Yüzde %d düzeyinde anlamlı"
 #: lib/src/compare.c:2332
 #, c-format
 msgid "(%d%% critical value %s %.2f)"
-msgstr "(%% %d kritik değeri %s %.2f)"
+msgstr "(%%%d kritik değeri %s %.2f)"
 
 #: lib/src/compare.c:2336
 #, c-format
@@ -632,8 +632,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:341
 #, c-format
@@ -797,8 +796,7 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1288
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
@@ -1938,7 +1936,7 @@ msgstr "White'ın"
 
 #: lib/src/estimate.c:3223
 msgid "Generalized Cochrane-Orcutt estimation"
-msgstr "Genelleştirilmiş Cochrane-Orcutt tahmini"
+msgstr "Genellemeli Cochrane-Orcutt tahmini"
 
 #: lib/src/estimate.c:3226
 #, no-c-format
@@ -2485,12 +2483,12 @@ msgstr "%s katsayısı"
 #: lib/src/graphing.c:3967
 #, c-format
 msgid "Quantile estimates with %g%% band"
-msgstr "%% %g kuşağı bölüt tahminleri"
+msgstr "%%%g kuşağı bölüt tahminleri"
 
 #: lib/src/graphing.c:3975
 #, c-format
 msgid "OLS estimate with %g%% band"
-msgstr "%% %g kuşağı ile SEK tahmini"
+msgstr "%%%g kuşağı ile SEK tahmini"
 
 #: lib/src/graphing.c:4039
 msgid "+- sqrt(h(t))"
@@ -2535,7 +2533,7 @@ msgstr "YÖB evrik kökleri, birim çembere göre"
 #: lib/src/graphing.c:4773
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
-msgstr "%% %g güven elipsi ve %% %g marjinal aralıkları"
+msgstr "%%%g GÜVEN ELİPSİ VE %%%g MARJİNAL ARALIKLARI"
 
 #: lib/src/graphing.c:5113 lib/src/graphing.c:5114
 #, c-format
@@ -2621,7 +2619,7 @@ msgstr "Dosya açma hatası"
 
 #: lib/src/gretl_errors.c:46
 msgid "No formula supplied in genr"
-msgstr "genr için sağlanmış bir formül yok"
+msgstr "genr için sağlanan bir formül yok"
 
 #: lib/src/gretl_errors.c:47
 msgid "Unknown variable name in command"
@@ -3005,11 +3003,11 @@ msgstr "yüzde %g kritik değeri"
 
 #: lib/src/gretl_model.c:5244
 msgid "Can't retrieve uhat: data set has changed"
-msgstr "uşapka alınamıyor: veri seti değişmiş"
+msgstr "u-şapka alınamıyor: veri seti değişmiş"
 
 #: lib/src/gretl_model.c:5246
 msgid "Can't retrieve yhat: data set has changed"
-msgstr "yşapka alınamıyor: veri seti değişmiş"
+msgstr "y-şapka alınamıyor: veri seti değişmiş"
 
 #: lib/src/gretl_model.c:5248
 msgid "Can't retrieve ht: data set has changed"
@@ -4101,7 +4099,7 @@ msgstr "Doğrusal-dışılık sınaması yardımcı bağlanımı (loglar)"
 
 #: lib/src/modelprint.c:613
 msgid "Augmented regression for Chow test"
-msgstr "Chow sınaması için genişletilmiş bağlanım"
+msgstr "Chow sınaması için genişletmeli bağlanım"
 
 #: lib/src/modelprint.c:616
 msgid "Cointegrating regression -- "
@@ -4113,11 +4111,11 @@ msgstr "Eştümleyen bağlanım - "
 
 #: lib/src/modelprint.c:622
 msgid "Augmented Dickey--Fuller regression"
-msgstr "Genişletilmiş Dickey--Fuller bağlanımı"
+msgstr "Genişletmeli Dickey--Fuller bağlanımı"
 
 #: lib/src/modelprint.c:624
 msgid "Augmented Dickey-Fuller regression"
-msgstr "Genişletilmiş Dickey-Fuller bağlanımı"
+msgstr "Genişletmeli Dickey-Fuller bağlanımı"
 
 #: lib/src/modelprint.c:628
 msgid "Dickey--Fuller regression"
@@ -4141,7 +4139,7 @@ msgstr "kümeli farklıserpilimsellik"
 
 #: lib/src/modelprint.c:639
 msgid "Augmented regression for common factor test"
-msgstr "Ortak çarpan sınaması için genişletilmiş bağlanım"
+msgstr "Ortak çarpan sınaması için genişletmeli bağlanım"
 
 #: lib/src/modelprint.c:657 lib/src/system.c:93 lib/src/varprint.c:1020
 #: lib/src/varprint.c:1029 lib/src/varprint.c:1037 gui2/selector.c:2999
@@ -4370,22 +4368,22 @@ msgstr "değer"
 #: lib/src/modelprint.c:846
 #, c-format
 msgid "Relative bias is probably less than %g%%"
-msgstr "Göreli yanlılık büyük olasılıkla %% %g değeri altında"
+msgstr "Göreli yanlılık büyük olasılıkla %%%g değeri altında"
 
 #: lib/src/modelprint.c:848
 #, c-format
 msgid "Maximal size is probably less than %g%%"
-msgstr "Ençok büyüklük büyük olasılıkla %% %g değeri altında"
+msgstr "Ençok büyüklük büyük olasılıkla %%%g değeri altında"
 
 #: lib/src/modelprint.c:858
 #, c-format
 msgid "Relative bias may exceed %g%%"
-msgstr "Göreli yanlılık %% %g değerini aşıyor olabilir"
+msgstr "Göreli yanlılık %%%g değerini aşıyor olabilir"
 
 #: lib/src/modelprint.c:860
 #, c-format
 msgid "Maximal size may exceed %g%%"
-msgstr "Ençok büyüklük %% %g değerini aşıyor olabilir"
+msgstr "Ençok büyüklük %%%g değerini aşıyor olabilir"
 
 #: lib/src/modelprint.c:869
 msgid "Weak instrument test"
@@ -5097,7 +5095,7 @@ msgstr "Döngü koşulunda tanımsız değişken '%s'."
 
 #: lib/src/monte_carlo.c:1108
 msgid "No valid loop condition was given."
-msgstr "Verilmiş geçerli bir döngü koşulu yok."
+msgstr "Verili geçerli bir döngü koşulu yok."
 
 #: lib/src/monte_carlo.c:1193
 #, c-format
@@ -5305,7 +5303,7 @@ msgstr "z-değeri = %g (çift-kuyruk p-değeri = %.4f)\n"
 #: lib/src/nonparam.c:337
 #, c-format
 msgid "significant at the %g%% level (two-tailed)\n"
-msgstr "%% %g düzeyinde anlamlı (çift-kuyruk)\n"
+msgstr "%%%g düzeyinde anlamlı (çift-kuyruk)\n"
 
 #: lib/src/nonparam.c:341
 #, no-c-format
@@ -5341,8 +5339,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:814
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:818
 #, c-format
@@ -5424,7 +5421,7 @@ msgstr "Farklılık sayısı: n = %d\n"
 #: lib/src/nonparam.c:1163
 #, c-format
 msgid "Number of cases with %s > %s: w = %d (%.2f%%)\n"
-msgstr "%s > %s olan durum sayısı: w = %d (%% %.2f)\n"
+msgstr "%s > %s olan durum sayısı: w = %d (%%%.2f)\n"
 
 #: lib/src/nonparam.c:1168
 #, c-format
@@ -5557,10 +5554,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:104
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:105 lib/src/printout.c:129
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5581,7 +5576,7 @@ msgid ""
 "      VARIABLE         COEFFICIENT      %g%% CONFIDENCE INTERVAL\n"
 "\n"
 msgstr ""
-"       DEĞİŞKEN        KATSAYI          %% %g GÜVEN ARALIĞI\n"
+"        DEĞİŞKEN          KATSAYI             %%%g GÜVEN ARALIĞI\n"
 "\n"
 
 #: lib/src/printout.c:320
@@ -5633,8 +5628,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:520
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:531
 msgid "TOT."
@@ -5665,10 +5659,8 @@ msgstr "Pearson ki-kare sınaması = %g (%d sd p-değeri = %g)"
 
 #: lib/src/printout.c:613
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
-msgstr ""
-"Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgstr "Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
 
 #: lib/src/printout.c:640 lib/src/printout.c:651
 #, c-format
@@ -5793,12 +5785,12 @@ msgstr "Not: '*' 2.5 ölçünlü hatadan daha uzak bir artığı göstermektedir
 #: lib/src/printout.c:2526
 #, c-format
 msgid " For %g%% confidence intervals, z(%g) = %.2f\n"
-msgstr " %% %g güven aralıkları için, z(%g) = %.2f\n"
+msgstr " %%%g güven aralıkları için, z(%g) = %.2f\n"
 
 #: lib/src/printout.c:2529
 #, c-format
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
-msgstr " %% %g güven aralıkları için, t(%d, %g) = %.3f\n"
+msgstr " %%%g güven aralıkları için, t(%d, %g) = %.3f\n"
 
 #: lib/src/printout.c:2541 gui2/guiprint.c:1509 gui2/guiprint.c:1572
 #: gui2/guiprint.c:1627 gui2/guiprint.c:1668
@@ -5812,7 +5804,7 @@ msgstr "ölç. hata"
 #: lib/src/printout.c:2545
 #, c-format
 msgid "        %g%% interval\n"
-msgstr "        %% %g aralığı\n"
+msgstr "        %%%g aralığı\n"
 
 #: lib/src/printout.c:2673
 msgid "Criterion"
@@ -6005,14 +5997,13 @@ msgid ""
 "Number of observations (rows) with missing data values = %d (%.2f%%)\n"
 msgstr ""
 "\n"
-"Eksik veri değerli gözlem (satır) sayısı = %d (%% %.2f)\n"
+"Eksik veri değerli gözlem (satır) sayısı = %d (%%%.2f)\n"
 
 #: lib/src/subsample.c:1824
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
+"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %%%.2f)\n"
 
 #: lib/src/subsample.c:1835
 msgid "valid values"
@@ -6980,8 +6971,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1654
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazsal yaklaştırma yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazsal yaklaştırma yetersiz olabilir\n"
 
 #: gui2/calculator.c:1661
 msgid "Null hypothesis: The population variances are equal\n"
@@ -8127,7 +8117,7 @@ msgstr "Çalıştırdığınız komutları dosyaya kaydetmek ister misiniz?"
 
 #: gui2/dialogs.c:147
 msgid "Always prompt if there are unsaved changes"
-msgstr "Kaydedilmemiş değişiklikleri her zaman uyar"
+msgstr "Kaydedilmeyen değişiklikleri her zaman uyar"
 
 #: gui2/dialogs.c:154
 msgid "save session"
@@ -8865,7 +8855,7 @@ msgstr "Çevrimsel seriyi farklı kaydet"
 
 #: gui2/filters.c:550
 msgid "Graph differenced series"
-msgstr "Farkı alınmış seriyi çiz"
+msgstr "Farkı alınan seriyi çiz"
 
 #: gui2/filters.c:556
 msgid "Graph original and smoothed series"
@@ -9317,7 +9307,7 @@ msgstr "Çizgi %d: "
 
 #: gui2/gpt_dialog.c:1764
 msgid "No formula was given"
-msgstr "Sağlanmış bir formül yok"
+msgstr "Verili bir formül yok"
 
 #: gui2/gpt_dialog.c:1884 gui2/selector.c:3556
 msgid "Remove"
@@ -10141,7 +10131,7 @@ msgstr "_Bartlett gecikme penceresi"
 
 #: gui2/gretl.c:1457
 msgid "_Augmented Dickey-Fuller test"
-msgstr "Geni_şletilmiş Dickey-Fuller sınaması"
+msgstr "Geni_şletmeli Dickey-Fuller sınaması"
 
 #: gui2/gretl.c:1458
 msgid "ADF-GLS test"
@@ -10596,7 +10586,7 @@ msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
 "\n"
 msgstr ""
-"\\%% %g güven aralıkları için, $z(%g) = %.2f$\n"
+"\\%%%g güven aralıkları için, $z(%g) = %.2f$\n"
 "\n"
 
 #: gui2/guiprint.c:1545
@@ -10605,33 +10595,33 @@ msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
 "\n"
 msgstr ""
-"\\%% %g güven aralıkları için, $t(%d, %g) = %.3f$\n"
+"\\%%%g güven aralıkları için, $t(%d, %g) = %.3f$\n"
 "\n"
 
 #: gui2/guiprint.c:1565
 #, c-format
 msgid "%g\\%% interval"
-msgstr "\\%% %g aralığı"
+msgstr "\\%%%g aralığı"
 
 #: gui2/guiprint.c:1649
 #, c-format
 msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "%% %g güven aralıkları için, z(%g) = %.2f"
+msgstr "%%%g güven aralıkları için, z(%g) = %.2f"
 
 #: gui2/guiprint.c:1653
 #, c-format
 msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "%% %g güven aralıkları için, t(%d, %g) = %.3f"
+msgstr "%%%g güven aralıkları için, t(%d, %g) = %.3f"
 
 #: gui2/guiprint.c:1658
 #, c-format
 msgid "%g%% interval"
-msgstr "(%% %g aralığı)"
+msgstr "(%%%g aralığı)"
 
 #: gui2/guiprint.c:1753 gui2/guiprint.c:1800
 #, c-format
 msgid "%g\\%% confidence interval"
-msgstr "\\%% %g güven aralığı"
+msgstr "\\%%%g güven aralığı"
 
 #: gui2/guiprint.c:1950
 msgid "No scalar variables are currently defined"
@@ -12067,7 +12057,7 @@ msgid ""
 "You have saved a reduced version of the current data set.\n"
 "Do you want to switch to the reduced version now?"
 msgstr ""
-"Şu anki veri setinin indirgenmiş bir sürümünü kaydettiniz.\n"
+"Şu anki veri setinin indirgemeli bir sürümünü kaydettiniz.\n"
 "Şimdi indirgemeli sürüme geçmek ister misiniz?"
 
 #: gui2/library.c:6803
@@ -12214,8 +12204,7 @@ msgid "Sorry, ARMA models can't be put in the model table"
 msgstr "Üzgünüm, ÖBHO modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:210
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:217
@@ -12328,8 +12317,7 @@ msgstr "Logbirim ve olabirim için, McFadden sahte-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1235
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1263
 msgid "No model is available"
@@ -12488,7 +12476,7 @@ msgstr "Sınırlı bilgi ençok olabilirlik"
 
 #: gui2/selector.c:3041
 msgid "Generalized method of moments"
-msgstr "Genelleştirilmiş beklemler yöntemi"
+msgstr "Genellemeli beklemler yöntemi"
 
 #: gui2/selector.c:3043
 msgid "Autoregressive model"
@@ -14188,7 +14176,7 @@ msgstr " (Hesseyen kullanılarak)"
 
 #: plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
-msgstr "Verilmiş bir içtürel değişken listesi yok"
+msgstr "Verili bir içtürel değişken listesi yok"
 
 #: plugin/fiml.c:892
 msgid "Gradients at last iteration"
