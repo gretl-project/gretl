@@ -104,6 +104,8 @@ void doubles_array_free (double **X, int m);
 
 double **doubles_array_new (int m, int n);
 
+double **doubles_array_new0 (int m, int n);
+
 double **data_array_from_model (const MODEL *pmod, double **Z, 
 				int missv);
 

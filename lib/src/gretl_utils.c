@@ -1289,6 +1289,35 @@ double **doubles_array_new (int m, int n)
 }
 
 /**
+ * doubles_array_new0:
+ * @m: number of sub-arrays.
+ * @n: length of each sub-array.
+ *
+ * Works just as doubles_array_new(), except that on
+ * successful allocation all values in the arrays are
+ * set to zero.
+ * 
+ * Returns: the allocated array, or %NULL on failure.
+ */
+
+double **doubles_array_new0 (int m, int n)
+{
+    double **X = doubles_array_new(m, n);
+
+    if (X != NULL && n > 0) {
+	int i, j;
+
+	for (i=0; i<m; i++) {
+	    for (j=0; j<n; j++) {
+		X[i][j] = 0.0;
+	    }
+	}
+    }
+
+    return X;
+}
+
+/**
  * data_array_from_model:
  * @pmod: reference model.
  * @Z: main data array.

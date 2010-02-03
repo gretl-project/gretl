@@ -204,29 +204,29 @@ static void do_MA_partials (double *drv,
 			    const double *Theta,
 			    int t)
 {
-    int i, j, k, s, p;
+    int i, j, k, p, s;
 
     k = 0;
     for (i=0; i<ainfo->q; i++) {
 	if (MA_included(ainfo, i)) {
-	    s = t - (i + 1);
-	    if (s >= 0) {
-		drv[t] -= theta[k] * drv[s];
+	    p = i + 1;
+	    if (t - p >= 0) {
+		drv[0] -= theta[k] * drv[p];
 	    }
 	    k++;
 	}
     }
 
     for (j=0; j<ainfo->Q; j++) {
-	s = t - (j + 1) * ainfo->pd;
-	if (s >= 0) {
-	    drv[t] -= Theta[j] * drv[s];
+	p = (j + 1) * ainfo->pd;
+	if (t - p >= 0) {
+	    drv[0] -= Theta[j] * drv[p];
 	    k = 0;
 	    for (i=0; i<ainfo->q; i++) {
 		if (MA_included(ainfo, i)) {
-		    p = s - (i + 1);
-		    if (p >= 0) {
-			drv[t] -= Theta[j] * theta[k] * drv[p];
+		    s = p + i + 1;
+		    if (t - s >= 0) {
+			drv[0] -= Theta[j] * theta[k] * drv[s];
 		    }
 		    k++;
 		}
@@ -235,33 +235,63 @@ static void do_MA_partials (double *drv,
     }
 }
 
+/* for each of the arrays of derivatives, shuffle each
+   value one place up */
+
+static void push_derivs (arma_info *ainfo, double **de, int dlen)
+{
+    int i, j;
+
+    for (i=0; i<ainfo->n_aux; i++) {
+	for (j=dlen-1; j>0; j--) {
+	    de[i][j] = de[i][j-1];
+	}
+	de[i][0] = 0.0;
+    }
+}
+
+static void zero_derivs (arma_info *ainfo, double **de, int dlen)
+{
+    int i, j;
+
+    for (i=0; i<ainfo->n_aux; i++) {
+	for (j=0; j<dlen; j++) {
+	    de[i][j] = 0.0;
+	}
+    }
+}
+
 static int arma_analytical_score (arma_info *ainfo,
 				  const double *y,
 				  const double **X,
-				  const double *e,
 				  const double *phi,
 				  const double *Phi,
 				  const double *theta,
 				  const double *Theta,
 				  double s2,
-				  double **de,
 				  gretl_matrix *G)
 {
+    /* forecast errors */
+    const double *e = ainfo->e;
     /* pointers to blocks of derivatives (workspace) */
+    double **de = ainfo->aux;
     double **de_a =    de + ainfo->ifc;
     double **de_sa = de_a + ainfo->np;
     double **de_m = de_sa + ainfo->P;
     double **de_sm = de_m + ainfo->nq;
-    double **de_r = de_sm + ainfo->Q;    
+    double **de_r = de_sm + ainfo->Q; 
+    int dlen = 1 + ainfo->q + ainfo->pd * ainfo->Q;
     double x, Gsi;
-    int lag, xlag;
-    int i, j, k, t, s;
+    int t, gt;
+    int i, j, k, p, s;
 
-    for (t=ainfo->t1, s=0; t<=ainfo->t2; t++, s++) {
+    zero_derivs(ainfo, de, dlen);
+
+    for (t=ainfo->t1, gt=0; t<=ainfo->t2; t++, gt++) {
 
 	/* the constant term (de_0) */
 	if (ainfo->ifc) {
-	    de[0][t] = -1.0;
+	    de[0][0] = -1.0;
 	    do_MA_partials(de[0], ainfo, theta, Theta, t);
 	}
 
@@ -271,14 +301,14 @@ static int arma_analytical_score (arma_info *ainfo,
 	    if (!AR_included(ainfo, i)) {
 		continue;
 	    }
-	    lag = i + 1;
-	    if (t >= lag) {
-		de_a[k][t] = -y[t-lag];
+	    p = i + 1;
+	    if (t - p >= 0) {
+		de_a[k][0] = -y[t-p];
 		/* cross-partial with seasonal AR */
 		for (j=0; j<ainfo->P; j++) {
-		    xlag = lag + (j + 1) * ainfo->pd;
-		    if (t >= xlag) {
-			de_a[k][t] += Phi[j] * y[t-xlag];
+		    s = p + (j + 1) * ainfo->pd;
+		    if (t - s >= 0) {
+			de_a[k][0] += Phi[j] * y[t-s];
 		    }
 		}
 		do_MA_partials(de_a[k], ainfo, theta, Theta, t);
@@ -288,16 +318,16 @@ static int arma_analytical_score (arma_info *ainfo,
 
 	/* seasonal AR terms (de_sa) */
 	for (j=0; j<ainfo->P; j++) {
-	    lag = (j + 1) * ainfo->pd;
-	    if (t >= lag) {
-		de_sa[j][t] = -y[t-lag];
+	    p = (j + 1) * ainfo->pd;
+	    if (t - p >= 0) {
+		de_sa[j][0] = -y[t-p];
 		/* cross-partial with non-seasonal AR */
 		k = 0;
 		for (i=0; i<ainfo->p; i++) {
 		    if (AR_included(ainfo, i)) {
-			xlag = lag + (i + 1);
-			if (t >= xlag) {
-			    de_sa[j][t] += phi[k] * y[t-xlag];
+			s = p + i + 1;
+			if (t - s >= 0) {
+			    de_sa[j][0] += phi[k] * y[t-s];
 			}
 			k++;
 		    }
@@ -312,14 +342,14 @@ static int arma_analytical_score (arma_info *ainfo,
 	    if (!MA_included(ainfo, i)) {
 		continue;
 	    }
-	    lag = i + 1;
-	    if (t >= lag) {
-		de_m[k][t] = -e[t-lag];
+	    p = i + 1;
+	    if (t - p >= 0) {
+		de_m[k][0] = -e[t-p];
 		/* cross-partial with seasonal MA */
 		for (j=0; j<ainfo->Q; j++) {
-		    xlag = lag + (j + 1) * ainfo->pd;
-		    if (t >= xlag) {
-			de_m[k][t] -= Theta[j] * e[t-xlag];
+		    s = p + (j + 1) * ainfo->pd;
+		    if (t - s >= 0) {
+			de_m[k][0] -= Theta[j] * e[t-s];
 		    }
 		}
 		do_MA_partials(de_m[k], ainfo, theta, Theta, t);
@@ -329,16 +359,16 @@ static int arma_analytical_score (arma_info *ainfo,
 
 	/* seasonal MA terms (de_sm) */
 	for (j=0; j<ainfo->Q; j++) {
-	    lag = (j + 1) * ainfo->pd;
-	    if (t >= lag) {
-		de_sm[j][t] = -e[t-lag];
+	    p = (j + 1) * ainfo->pd;
+	    if (t - p >= 0) {
+		de_sm[j][0] = -e[t-p];
 		/* cross-partial with non-seasonal MA */
 		k = 0;
 		for (i=0; i<ainfo->q; i++) {
 		    if (MA_included(ainfo, i)) {
-			xlag = lag + (i + 1);
-			if (t >= xlag) {
-			    de_sm[j][t] -= theta[k] * e[t-xlag];
+			s = p + i + 1;
+			if (t - s >= 0) {
+			    de_sm[j][0] -= theta[k] * e[t-s];
 			}
 			k++;
 		    }
@@ -349,16 +379,18 @@ static int arma_analytical_score (arma_info *ainfo,
 
 	/* exogenous regressors (de_r) */
 	for (j=0; j<ainfo->nexo; j++) {
-	    de_r[j][t] = -X[j][t]; 
+	    de_r[j][0] = -X[j][t]; 
 	    do_MA_partials(de_r[j], ainfo, theta, Theta, t);
 	}
 
 	/* update gradient matrix */
 	x = e[t] / s2; /* sqrt(s2)? does it matter? */
 	for (i=0; i<ainfo->nc; i++) {
-	    Gsi = -de[i][t] * x;
-	    gretl_matrix_set(G, s, i, Gsi);
+	    Gsi = -de[i][0] * x;
+	    gretl_matrix_set(G, gt, i, Gsi);
 	}
+
+	push_derivs(ainfo, de, dlen);
     }
 
     return 0;
@@ -373,9 +405,9 @@ static int conditional_arma_forecast_errors (arma_info *ainfo,
 					     const double *theta,
 					     const double *Theta,
 					     const double *beta,
-					     double *e,
 					     double *s2)
 {
+    double *e = ainfo->e;
     int i, j, k, s, t, p;
 
     *s2 = 0.0;
@@ -470,8 +502,6 @@ static double bhhh_arma_callback (double *coeff,
     const double *theta =   Phi + ainfo->P;
     const double *Theta = theta + ainfo->nq;
     const double *beta =  Theta + ainfo->Q;
-    /* forecast errors */
-    double *e = ainfo->aux[0];
     double ll, s2 = 0.0;
 
     *err = 0;
@@ -490,7 +520,7 @@ static double bhhh_arma_callback (double *coeff,
 
     conditional_arma_forecast_errors(ainfo, y, X, coeff[0],
 				     phi, Phi, theta, Theta,
-				     beta, e, &s2);
+				     beta, &s2);
 
     /* error variance and log-likelihood */
     s2 /= (double) ainfo->T;
@@ -501,12 +531,10 @@ static double bhhh_arma_callback (double *coeff,
     }
 
     if (do_score) {
-	double **de = ainfo->aux + 1;
-
 	ainfo->ll = ll;
-	arma_analytical_score(ainfo, y, X, e,
+	arma_analytical_score(ainfo, y, X, 
 			      phi, Phi, theta, Theta,
-			      s2, de, G);
+			      s2, G);
     }
 
     return ll;
@@ -1651,14 +1679,16 @@ static const double **make_armax_X (arma_info *ainfo, const double **Z)
     return X;
 }
 
-/* set up a opg_info struct for passing to bhhh_max */
+/* add extra OP-related info to the arma info struct */
 
-static int set_up_arma_opg_info (arma_info *ainfo, 
+static int set_up_arma_OPG_info (arma_info *ainfo, 
 				 const double **Z,
 				 const DATAINFO *pdinfo)
 {
+    /* array length needed for derivatives */
+    int nd = 1 + ainfo->q + ainfo->pd * ainfo->Q;
+    /* number of derivatives */
     int k = ainfo->nc;
-    int ns = k + 1;
     int err = 0;
 
     /* construct virtual dataset for dep var, real regressors */
@@ -1668,6 +1698,7 @@ static int set_up_arma_opg_info (arma_info *ainfo,
     }  
 
     if (!err) {
+	/* allocate gradient matrix */
 	ainfo->G = gretl_zero_matrix_new(ainfo->T, k);
 	if (ainfo->G == NULL) {
 	    err = E_ALLOC;
@@ -1675,6 +1706,7 @@ static int set_up_arma_opg_info (arma_info *ainfo,
     }    
 
     if (!err && !(ainfo->flags & ARMA_EXACT)) {
+	/* allocate covariance matrix */
 	ainfo->V = gretl_matrix_alloc(k, k);
 	if (ainfo->V == NULL) {
 	    err = E_ALLOC;
@@ -1682,21 +1714,27 @@ static int set_up_arma_opg_info (arma_info *ainfo,
     }
 
     if (!err) {
-	ainfo->aux = doubles_array_new(ns, ainfo->t2 + 1);
-	if (ainfo->aux == NULL) {
+	/* forecast errors array */
+	ainfo->e = malloc((ainfo->t2 + 1) * sizeof *ainfo->e);
+	if (ainfo->e == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    int t;
+
+	    for (t=0; t<=ainfo->t2; t++) {
+		ainfo->e[t] = 0.0;
+	    }
 	}
     }
 
     if (!err) {
-	int i, t;
-
-	for (i=0; i<ns; i++) {
-	    for (t=0; t<=ainfo->t2; t++) {
-		ainfo->aux[i][t] = 0.0;
-	    }
+	/* derivatives arrays */
+	ainfo->aux = doubles_array_new0(k, nd); 
+	if (ainfo->aux == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    ainfo->n_aux = k;
 	}
-	ainfo->n_aux = ns;
     }
 
     return err;
@@ -1728,7 +1766,7 @@ conditional_arma_model_prep (MODEL *pmod, arma_info *ainfo,
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->uhat[t] = ainfo->aux[0][t];
+	pmod->uhat[t] = ainfo->e[t];
     }
 
     err = gretl_model_write_vcv(pmod, ainfo->V);
@@ -1745,8 +1783,7 @@ static int bhhh_arma (double *theta,
     double tol = libset_get_double(BHHH_TOLER);
     int iters, err = 0;
 
-    /* wrapper struct */
-    err = set_up_arma_opg_info(ainfo, Z, pdinfo);
+    err = set_up_arma_OPG_info(ainfo, Z, pdinfo);
     if (err) {
 	pmod->errcode = err;
 	return err;

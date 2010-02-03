@@ -7863,10 +7863,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    close_session(s, pZ, pdinfo, cmd->opt);
 	    break;
 	}
-	/* else fall through */
+	/* else fall through intended */
 
     default:
-    use_lib:
 	err = gretl_cmd_exec(s, pZ, pdinfo);
 	break;
     } /* end of command switch */

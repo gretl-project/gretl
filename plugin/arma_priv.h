@@ -47,6 +47,7 @@ struct arma_info_ {
     int pd;             /* periodicity of data */
     int T;              /* sample size for estimation */
     double *y;          /* dependent variable (possibly differenced) */
+    double *e;          /* forecast errors */
     const double **X;   /* exogenous vars */
     double yscale;      /* scale factor for y */
     int *xlist;         /* list of regressors (ARMAX) */
