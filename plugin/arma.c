@@ -1679,7 +1679,7 @@ static const double **make_armax_X (arma_info *ainfo, const double **Z)
     return X;
 }
 
-/* add extra OP-related info to the arma info struct */
+/* add extra OPG-related stuff to the arma info struct */
 
 static int set_up_arma_OPG_info (arma_info *ainfo, 
 				 const double **Z,

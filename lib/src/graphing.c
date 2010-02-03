@@ -1258,6 +1258,37 @@ static int make_temp_plot_name (char *fname)
     return (mktemp(fname) == NULL)? E_FOPEN : 0;
 }
 
+static void print_set_output (const char *path, FILE *fp)
+{
+#ifdef WIN32
+    char *s, buf[FILENAME_MAX];
+
+    if (path == NULL) {
+	strcpy(buf, gretl_dotdir());
+    } else {
+	strcpy(buf, path);
+    }
+
+    s = buf;
+    while (*s) {
+	if (*s == '\\') *s = '/';
+	s++;
+    }
+
+    if (path == NULL) {
+	fprintf(fp, "set output \"%sgretltmp.png\"\n", buf);
+    } else {
+	fprintf(fp, "set output \"%s\"\n", buf);
+    }
+#else
+    if (path == NULL) {
+	fprintf(fp, "set output '%sgretltmp.png'\n", gretl_dotdir());
+    } else {
+	fprintf(fp, "set output '%s'\n", path);
+    }
+#endif
+}
+
 /* Open stream into which gnuplot commands will be written.
 
    When GPT_BATCH is set, we're either just dumping a 
@@ -1324,7 +1355,7 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
 	    if (*gnuplot_outname != '\0') {
 		/* write terminal/output lines */
 		print_term_string(fmt, fp);
-		fprintf(fp, "set output '%s'\n", gnuplot_outname);
+		print_set_output(gnuplot_outname, fp);
 	    }
 	}
     } else {
@@ -1348,7 +1379,7 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
 	    if (gui) {
 		/* set up for PNG output */
 		fprintf(fp, "%s\n", get_gretl_png_term_line(ptype, flags));
-		fprintf(fp, "set output '%sgretltmp.png'\n", gretl_dotdir());
+		print_set_output(NULL, fp);
 	    }
 	    write_plot_type_string(ptype, fp);
 	    if (gnuplot_has_rgb()) {
