@@ -5,6 +5,8 @@ version 1.8.8, in progress
 - Fix bug: errors in Exponential Moving Average in GUI
 - Fix bug: non-ASCII characters not handled in function
   package upload to server
+- Fix: gnuplot calls failed on Windows when the user's 
+  "dotdir" path contained an apostrophe
 
 01/24/2010 version 1.8.7
 - GUI enhancement: add apparatus to help keep track of
