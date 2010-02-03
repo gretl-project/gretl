@@ -7415,6 +7415,8 @@ static int execute_script (const char *runfile, const char *buf,
     return exec_err;
 }
 
+#define GRAPHING_CI(c) (c==GNUPLOT || c==SCATTERS || c==BXPLOT)
+
 static void gui_exec_callback (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo)
 {
@@ -7437,7 +7439,7 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 	err = modeltab_parse_line(s->line, s->prn);
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line);
-    } else if (ci == GNUPLOT || ci == BXPLOT) {
+    } else if (GRAPHING_CI(ci)) {
 	if (graph_written_to_file()) {
 	    ; /* saved to named file: handled */
 	} else if (*s->cmd->savename != '\0') {
@@ -7446,8 +7448,7 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 
 	    maybe_save_graph(s->cmd, gretl_plotfile(),
 			     otype, s->prn);
-	} else if (s->cmd->opt & OPT_D) {
-	    /* this can be generalized? */
+	} else {
 	    register_graph(NULL);
 	}
     } else if (MODEL_COMMAND(ci)) {
@@ -7743,42 +7744,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 	    maybe_clear_selector(cmd->list);
 	}
-	break;
-
-    case GNUPLOT:
-    case BXPLOT:	
-    case SCATTERS:
-	if (cmd->opt & (OPT_U | OPT_D)) {
-	    /* output to named file, or input from file */
-	    goto use_lib;
-	}
-	if (cmd->ci == GNUPLOT) {
-	    if (cmd->opt & OPT_C) {
-		err = xy_plot_with_control(cmd->list, cmd->param, 
-					   (const double **) *pZ, pdinfo,
-					   cmd->opt);
-	    } else {
-		err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			      pdinfo, cmd->opt); 
-	    }
-	} else if (cmd->ci == SCATTERS) {
-	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
-				 cmd->opt);
-	} else if (cmd_nolist(cmd)) { 
-	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt);
-	} else {
-	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt);
-	}
-	if (err) {
-	    errmsg(err, prn);
-	} else if (*cmd->savename != '\0') {
-	    GretlObjType otype = (cmd->ci == BXPLOT)? 
-		GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
-
-	    err = maybe_save_graph(cmd, gretl_plotfile(), otype, prn);
-	} else {
-	    register_graph(prn);
-	} 
 	break;
 
     case QQPLOT:
