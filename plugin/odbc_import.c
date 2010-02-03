@@ -256,12 +256,13 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	} else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
 	    SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, &grabstr[k++], 10, &colbytes[i]);
 	} else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
-	    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], 0, &colbytes[i]);
+	    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], sizeof(double), 
+		       &colbytes[i]);
 	}
     }
 
     /* last column: data */
-    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt, 0, &colbytes[i]);
+    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt, sizeof xt, &colbytes[i]);
 
     ret = SQLExecDirect(stmt, (SQLCHAR *) odinfo->query, SQL_NTS);   
     if (OD_error(ret)) {
