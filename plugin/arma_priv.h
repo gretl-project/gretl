@@ -65,6 +65,7 @@ struct arma_info_ {
 #define arma_exact_ml(a)       ((a)->flags & ARMA_EXACT)
 #define arma_using_vech(a)     ((a)->flags & ARMA_VECH)
 #define arma_least_squares(a)  ((a)->flags & ARMA_LS)
+#define arma_xdiff(a)          ((a)->flags & ARMA_XDIFF)
 
 #define set_arma_has_seasonal(a)  ((a)->flags |= ARMA_SEAS)
 #define set_arma_is_arima(a)      ((a)->flags |= ARMA_DSPEC)

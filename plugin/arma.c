@@ -1837,12 +1837,12 @@ static int prefer_hr_init (arma_info *ainfo)
 	    ret = 0;
 	} else if (ainfo->p > 0 && ainfo->P > 0) {
 	    /* not sure about this: HR catches the MA terms, but NLS
-	       handles the AR interactions better
+	       handles the seasonal/non-seasonal AR interactions better
 	    */
 	    ret = 0;
 	} else if ((ainfo->P > 0 && ainfo->p >= ainfo->pd) ||
 		   (ainfo->Q > 0 && ainfo->q >= ainfo->pd)) {
-	    /* overlapping orders screw things up */
+	    /* overlapping seasonal/non-seasonal orders screw things up */
 	    ret = 0;
 	} else if (ret && arma_exact_ml(ainfo)) {
 	    /* screen for cases where we'll use NLS */
@@ -1885,7 +1885,7 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
 
 /* Set flag to indicate differencing of exogenous regressors, in the
    case of an ARIMAX model using native exact ML -- unless this is
-   forbidden by OPT_Y.
+   forbidden by OPT_Y (--y-diff-only).
 */
 
 static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
@@ -1961,7 +1961,7 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (!(ainfo.flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
-	/* pure AR model can be estimated via least squares */
+	/* for a pure AR model, the conditional MLE is least squares */
 	const double *b = (init_done)? coeff : NULL;
 
 	err = arma_via_OLS(&ainfo, b, Z, pdinfo, &armod);
