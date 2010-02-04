@@ -1567,9 +1567,6 @@ static void ODBC_info_clear_read (void)
     free_strings_array(gretl_odinfo.S, gretl_odinfo.nrows);
     gretl_odinfo.S = NULL;
 
-    gretl_odinfo.nrows = 0;
-    gretl_odinfo.ncols = 0;
-
     for (i=0; i<ODBC_MAXCOLS; i++) {
 	gretl_odinfo.coltypes[i] = 0;
     }
@@ -1584,6 +1581,7 @@ static void ODBC_info_clear_read (void)
 
     gretl_odinfo.nrows = 0;
     gretl_odinfo.ncols = 0;
+    gretl_odinfo.nvars = 0;
 }
 
 void ODBC_info_clear_all (void)
@@ -1904,21 +1902,47 @@ static char *odbc_get_query (char *s, int *err)
     return query;
 }
 
-static int odbc_get_varname (char *s, char *vname)
+/* It would be nice to support multiple series names here,
+   but we can't do that until we have a definite means of
+   distinguishing a series name from the beginning of the
+   SQL query (in case the easily identifiable "obs-format"
+   is not given). Perhaps we need to add "query=" to the
+   gretl ODBC syntax. But backward compatibility would be
+   an issue.
+*/
+
+static int odbc_get_varname (char *vname, char **ps)
 {
-    int n, err;
+    char *s = *ps;
+    int n, err = 0;
 
-    err = extract_varname(vname, s, &n);
+    while (!err) {
+	err = extract_varname(vname, s, &n);
 
-    if (err || n == 0) {
-	gretl_errmsg_set(_("Expected a valid variable name"));
-	err = E_PARSE;
-    } else {
-	err = check_varname(vname);
+	if (err || n == 0) {
+	    gretl_errmsg_set(_("Expected a valid variable name"));
+	    err = E_PARSE;
+	} else {
+	    err = check_varname(vname);
+	}
+
+	if (!err) {
+	    s += n;
+	    s += strspn(s, " ");
+	    if (*s == '\0' || !strncmp(s, "obs-", 4)) {
+		break;
+	    }
+	}
+
+	break; /* can't really loop yet */
     }
+
+    *ps = s;
 
     return err;
 }
+
+/* data series [obs-format=format-string] query-string --odbc */
 
 static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
 			    PRN *prn)
@@ -1939,17 +1963,17 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
+    /* skip "data" plus following space */
     line += strcspn(line, " ");
     line += strspn(line, " ");
 
-    err = odbc_get_varname(line, vname);
+    /* get "series" field */
+    err = odbc_get_varname(vname, &line);
     if (err) {
 	return err;
     }
 
-    line += strlen(vname);
-    line += strspn(line, " ");
-
+    /* optional "obs-format" field */
     if (!strncmp(line, "obs-format=", 11)) {
 	line += 11;
 	format = gretl_quoted_string_strdup(line, (const char **) &line);
@@ -1958,8 +1982,9 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    err = parse_odbc_format(format);
 	}
-    } 
+    }
 
+    /* now the query to pass to the database */
     if (!err) {
 	line += strspn(line, " ");
 	gretl_odinfo.query = odbc_get_query(line, &err);

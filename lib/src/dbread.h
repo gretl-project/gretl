@@ -75,6 +75,7 @@ struct ODBC_info_ {
     char **S;
     int nrows;
     int ncols;
+    int nvars;
 };
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
