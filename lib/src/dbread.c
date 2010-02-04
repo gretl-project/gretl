@@ -1561,26 +1561,23 @@ static void ODBC_info_clear_read (void)
     free(gretl_odinfo.query);
     gretl_odinfo.query = NULL;
 
-    free(gretl_odinfo.x);
-    gretl_odinfo.x = NULL;
+    doubles_array_free(gretl_odinfo.X, gretl_odinfo.nvars);
+    gretl_odinfo.X = NULL;
 
     free_strings_array(gretl_odinfo.S, gretl_odinfo.nrows);
     gretl_odinfo.S = NULL;
 
-    for (i=0; i<ODBC_MAXCOLS; i++) {
+    for (i=0; i<ODBC_OBSCOLS; i++) {
 	gretl_odinfo.coltypes[i] = 0;
     }
 
     if (gretl_odinfo.fmts != NULL) {
-	for (i=0; i<gretl_odinfo.ncols; i++) {
-	    free(gretl_odinfo.fmts[i]);
-	}
-	free(gretl_odinfo.fmts);
+	free_strings_array(gretl_odinfo.fmts, gretl_odinfo.obscols);
 	gretl_odinfo.fmts = NULL;
     }
 
     gretl_odinfo.nrows = 0;
-    gretl_odinfo.ncols = 0;
+    gretl_odinfo.obscols = 0;
     gretl_odinfo.nvars = 0;
 }
 
@@ -1845,8 +1842,9 @@ static int parse_odbc_format_chunk (char **ps, int i)
 	err = E_ALLOC;
     } else {
 	err = strings_array_add(&gretl_odinfo.fmts, 
-				&gretl_odinfo.ncols, 
+				&gretl_odinfo.obscols, 
 				chunk);
+	free(chunk);
     }
 
     *ps = p;
@@ -1864,7 +1862,7 @@ static int parse_odbc_format (char *fmt)
     char *s = fmt;
     int i, err = 0;
 
-    for (i=0; i<ODBC_MAXCOLS && !err && *s; i++) {
+    for (i=0; i<ODBC_OBSCOLS && !err && *s; i++) {
 	err = parse_odbc_format_chunk(&s, i);
     }
 
@@ -1902,54 +1900,150 @@ static char *odbc_get_query (char *s, int *err)
     return query;
 }
 
-/* It would be nice to support multiple series names here,
-   but we can't do that until we have a definite means of
-   distinguishing a series name from the beginning of the
-   SQL query (in case the easily identifiable "obs-format"
-   is not given). Perhaps we need to add "query=" to the
-   gretl ODBC syntax. But backward compatibility would be
-   an issue.
+/* Grab the series name(s) out of an ODBC "data" command.  If the SQL
+   query is marked by "query=" (which was not required in the original
+   gretl ODBC setup) we're able to get multiple series names,
+   otherwise we're restricted to one.
 */
 
-static int odbc_get_varname (char *vname, char **ps)
+static char **odbc_get_varnames (char **line, int *err)
 {
-    char *s = *ps;
-    int n, err = 0;
+    char **vnames = NULL;
+    char vname[VNAMELEN];
+    char *s = *line;
+    int len, loop_ok = 0, nv = 0;
 
-    while (!err) {
-	err = extract_varname(vname, s, &n);
-
-	if (err || n == 0) {
-	    gretl_errmsg_set(_("Expected a valid variable name"));
-	    err = E_PARSE;
-	} else {
-	    err = check_varname(vname);
-	}
-
-	if (!err) {
-	    s += n;
-	    s += strspn(s, " ");
-	    if (*s == '\0' || !strncmp(s, "obs-", 4)) {
-		break;
-	    }
-	}
-
-	break; /* can't really loop yet */
+    if (strstr(s, "query=")) {
+	/* we know where the SQL query starts */
+	loop_ok = 1;
     }
 
-    *ps = s;
+    while (!*err) {
+	*vname = '\0';
+	*err = extract_varname(vname, s, &len);
 
-    return err;
+	if (!*err && len == 0) {
+	    gretl_errmsg_set(_("Expected a valid variable name"));
+	    *err = E_PARSE;
+	}
+
+	if (!*err) {
+	    *err = check_varname(vname);
+	}
+
+	if (!*err) {
+	    *err = strings_array_add(&vnames, &nv, vname);
+	}
+
+	if (!*err) {
+	    s += len;
+	    s += strspn(s, " ");
+	}
+
+	if (!loop_ok || *s == '\0' || !strncmp(s, "obs-", 4) || 
+	    !strncmp(s, "query=", 6)) {
+	    /* got to the end of the varnames section */
+	    break;
+	}
+    }
+
+    if (*err) {
+	free_strings_array(vnames, nv);
+	vnames = NULL;
+    } else {	
+	gretl_odinfo.nvars = nv;
+    } 
+
+    *line = s;
+
+    return vnames;
 }
 
-/* data series [obs-format=format-string] query-string --odbc */
+static int odbc_transcribe_data (char **vnames, double **Z,
+				 DATAINFO *pdinfo, int vmin,
+				 int newvars)
+{
+    int nv = gretl_odinfo.nvars;
+    int n = gretl_odinfo.nrows;
+    int nrepl = nv - newvars;
+    int i, s, t, v;
+
+    for (i=0; i<nv; i++) {
+	int vnew = 1; /* is this a new series? */
+
+	if (nrepl > 0) {
+	    /* we're replacing some series */
+	    v = current_series_index(pdinfo, vnames[i]);
+	} else {
+	    /* all the series are new */
+	    v = -1;
+	}
+
+	if (v < 0) {
+	    v = vmin++;
+	    strcpy(pdinfo->varname[v], vnames[i]);
+	    sprintf(VARLABEL(pdinfo, v), "ODBC series %d", i + 1);
+	} else {
+	    vnew = 0;
+	}
+
+	if (gretl_odinfo.S != NULL) {
+	    /* got obs identifiers via ODBC */
+	    if (vnew) {
+		for (t=0; t<pdinfo->n; t++) {
+		    Z[v][t] = NADBL;
+		}
+	    }
+	    for (s=0; s<n; s++) {
+		t = dateton(gretl_odinfo.S[s], pdinfo);
+		if (t >= 0 && t < pdinfo->n) {
+		    Z[v][t] = gretl_odinfo.X[i][s];
+		} else {
+		    fprintf(stderr, "Rejecting obs '%s'\n", gretl_odinfo.S[s]);
+		}
+	    }
+	} else {
+	    /* no obs identifiers via ODBC */
+	    s = 0;
+	    for (t=0; t<pdinfo->n; t++) {
+		if (t >= pdinfo->t1 && t <= pdinfo->t2 && s < n) {
+		    Z[v][t] = gretl_odinfo.X[i][s++];
+		} else if (vnew) {
+		    Z[v][t] = NADBL;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int odbc_count_new_vars (char **vnames, int nv, 
+				const DATAINFO *pdinfo)
+{
+    int newv = nv;
+
+    if (pdinfo->v > 0) {
+	int i;
+
+	for (i=0; i<nv; i++) {
+	    if (current_series_index(pdinfo, vnames[i]) > 0) {
+		newv--;
+	    }
+	}
+    }
+
+    return newv;
+}
+
+/* data series [obs-format=format-string] [query=]query-string */
 
 static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
 			    PRN *prn)
 {
     void *handle = NULL;
     int (*get_data) (ODBC_info *);
-    char vname[VNAMELEN];
+    char **vnames = NULL;
     char *format = NULL;
     int err = 0;
 
@@ -1968,7 +2062,7 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
     line += strspn(line, " ");
 
     /* get "series" field */
-    err = odbc_get_varname(vname, &line);
+    vnames = odbc_get_varnames(&line, &err);
     if (err) {
 	return err;
     }
@@ -1987,6 +2081,9 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
     /* now the query to pass to the database */
     if (!err) {
 	line += strspn(line, " ");
+	if (!strncmp(line, "query=", 6)) {
+	    line += 6;
+	}
 	gretl_odinfo.query = odbc_get_query(line, &err);
     }
 
@@ -2006,48 +2103,33 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	int n = gretl_odinfo.nrows;
-	int s, t, v;
+	int nv = gretl_odinfo.nvars;
+	int newvars, vmin = 1;
 
 	if (gretl_messages_on()) {
-	    pprintf(prn, "Retrieved %d observations via ODBC\n", n);
+	    pprintf(prn, "Retrieved %d observations on %d series via ODBC\n", 
+		    n, nv);
 	}
 
 	if (pdinfo->v == 0) {
-	    /* the data matrix is still empty */
-	    pdinfo->v = 2;
+	    /* the data array is still empty */
+	    newvars = nv;
+	    pdinfo->v = 1 + nv;
 	    err = start_new_Z(pZ, pdinfo, 0);
 	} else {
-	    err = dataset_add_series(1, pZ, pdinfo);
-	}
-	if (!err) {
-	    v = pdinfo->v - 1;
-	    strcpy(pdinfo->varname[v], vname);
-	    strcpy(VARLABEL(pdinfo, v), "ODBC data");
-	    if (gretl_odinfo.S != NULL) {
-		for (t=0; t<pdinfo->n; t++) {
-		    (*pZ)[v][t] = NADBL;
-		}
-		for (s=0; s<n; s++) {
-		    t = dateton(gretl_odinfo.S[s], pdinfo);
-		    if (t >= 0 && t < pdinfo->n) {
-			(*pZ)[v][t] = gretl_odinfo.x[s];
-		    } else {
-			fprintf(stderr, "Bad obs '%s'\n", gretl_odinfo.S[s]);
-		    }
-		}
-	    } else {
-		s = 0;
-		for (t=0; t<pdinfo->n; t++) {
-		    if (t>=pdinfo->t1 && t<=pdinfo->t2 && s<n) {
-			(*pZ)[v][t] = gretl_odinfo.x[s++];
-		    } else {
-			(*pZ)[v][t] = NADBL;
-		    }
-		}
+	    newvars = odbc_count_new_vars(vnames, nv, pdinfo);
+	    vmin = pdinfo->v;
+	    if (newvars > 0) {
+		err = dataset_add_series(newvars, pZ, pdinfo);
 	    }
+	}
+
+	if (!err) {
+	    odbc_transcribe_data(vnames, *pZ, pdinfo, vmin, newvars);
 	}
     }
 
+    free_strings_array(vnames, gretl_odinfo.nvars);
     ODBC_info_clear_read();
 
     return err;

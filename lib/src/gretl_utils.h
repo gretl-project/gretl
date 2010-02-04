@@ -106,6 +106,8 @@ double **doubles_array_new (int m, int n);
 
 double **doubles_array_new0 (int m, int n);
 
+int doubles_array_adjust_length (double **X, int m, int new_n);
+
 double **data_array_from_model (const MODEL *pmod, double **Z, 
 				int missv);
 

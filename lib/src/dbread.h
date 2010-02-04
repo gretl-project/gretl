@@ -62,7 +62,7 @@ struct dbwrapper_ {
     SERIESINFO *sinfo;
 };
 
-#define ODBC_MAXCOLS 3
+#define ODBC_OBSCOLS 3
 
 struct ODBC_info_ {
     char *dsn;
@@ -70,11 +70,11 @@ struct ODBC_info_ {
     char *password;
     char *query;
     char **fmts;
-    char coltypes[ODBC_MAXCOLS];
-    double *x;
+    char coltypes[ODBC_OBSCOLS];
+    double **X;
     char **S;
     int nrows;
-    int ncols;
+    int obscols;
     int nvars;
 };
 

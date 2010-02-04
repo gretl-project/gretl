@@ -1318,6 +1318,46 @@ double **doubles_array_new0 (int m, int n)
 }
 
 /**
+ * doubles_array_adjust_length:
+ * @X: original two-dimensional array.
+ * @m: number of sub-arrays in @X.
+ * @new_n: new length of each sub-array.
+ * 
+ * For each of the @m sub-arrays in @X, reallocate to
+ * a length of @new_n.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int doubles_array_adjust_length (double **X, int m, int new_n)
+{
+    int err = 0;
+
+    if (X == NULL || m == 0) {
+	; /* no-op */
+    } else {
+	double *xi;
+	int i;
+
+	for (i=0; i<m && !err; i++) {
+	    if (new_n == 0) {
+		free(X[i]);
+		X[i] = NULL;
+	    } else {
+		xi = realloc(X[i], new_n * sizeof *xi);
+		if (xi == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    X[i] = xi;
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
+/**
  * data_array_from_model:
  * @pmod: reference model.
  * @Z: main data array.

@@ -93,28 +93,28 @@ static int show_list (void)
 
 static int expand_catchment (ODBC_info *odinfo, SQLINTEGER *nrows)
 {
-    double *x;
     int n = 2 * *nrows;
+    int err;
 
-    x = realloc(odinfo->x, n * sizeof *x);
-    if (x == NULL) {
-	return E_ALLOC;
+    err = doubles_array_adjust_length(odinfo->X, odinfo->nvars, n);
+    if (err) {
+	return err;
     }
-
-    odinfo->x = x;
 
     if (odinfo->S != NULL) {
 	odinfo->S = strings_array_realloc_with_length(&odinfo->S,
 						      *nrows, n,
 						      OBSLEN);
 	if (odinfo->S == NULL) {
-	    return E_ALLOC;
+	    err = E_ALLOC;
 	}
     }
-    
-    *nrows = n;
 
-    return 0;
+    if (!err) {
+	*nrows = n;
+    }
+
+    return err;
 }
 
 /* Try connecting to data source.  If penv is NULL we're just checking
@@ -206,31 +206,156 @@ int gretl_odbc_check_dsn (ODBC_info *odinfo)
     return err;
 }
 
+int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
+		    int totcols, SQLINTEGER *colbytes, 
+		    long *grabint, double *grabx, 
+		    char **grabstr, double *xt, 
+		    SQLINTEGER *nrows, int *obsgot)
+{
+    char obsbit[16];
+    long ret;
+    int i, j, k, p, v;
+    int t = 0, err = 0;
+
+    ret = SQLFetch(stmt);  
+
+    while (ret != SQL_NO_DATA && !err) {
+	j = k = p = v = 0;
+	fprintf(stderr, "SQLFetch, row %d:\n", t);
+
+	for (i=0; i<totcols; i++) {
+	    if (i < odinfo->obscols) {
+		/* looking for obs identifier chunk(s) */
+		*obsbit = '\0';
+		if (colbytes[i] == SQL_NULL_DATA) {
+		    fprintf(stderr, " obs col %d: no data\n", i+1);
+		    continue; /* error? */
+		}
+		/* got a chunk */
+		fprintf(stderr, " col %d: %d bytes\n", i+1, (int) colbytes[i]);
+		if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
+		    sprintf(obsbit, odinfo->fmts[i], (int) grabint[j++]);
+		} else if (odinfo->coltypes[i] == GRETL_TYPE_STRING ||
+			   odinfo->coltypes[i] == GRETL_TYPE_DATE) {
+		    sprintf(obsbit, odinfo->fmts[i], grabstr[k++]);
+		} else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
+		    sprintf(obsbit, odinfo->fmts[i], grabx[p++]);
+		}
+		if (odinfo->S != NULL && *obsbit != '\0') {
+		    if (strlen(odinfo->S[t]) + strlen(obsbit) > OBSLEN - 1) {
+			fprintf(stderr, "Overflow in observation string!\n");
+		    } else {
+			strcat(odinfo->S[t], obsbit);
+		    }
+		}
+	    } else {
+		if (i == odinfo->obscols && odinfo->S != NULL) {
+		    /* finished composing obs string, report it */
+		    fprintf(stderr, " obs = '%s'\n", odinfo->S[t]);
+		}
+		/* now looking for actual data */
+		if (colbytes[i] == SQL_NULL_DATA) {
+		    fprintf(stderr, " data col %d: no data\n", v+1);
+		    odinfo->X[v][t] = NADBL;
+		} else {
+		    odinfo->X[v][t] = xt[v];
+		}
+		v++;
+	    }
+	}
+
+	t++;
+
+	/* try getting next row */
+	ret = SQLFetch(stmt);
+	if (ret != SQL_NO_DATA && t >= *nrows) {
+	    err = expand_catchment(odinfo, nrows);
+	}
+    }
+
+    *obsgot = t;
+
+    return err;
+}
+
+#define ODBC_STRSZ 16
+
+static char **allocate_string_grabbers (ODBC_info *odinfo, 
+					int *nstrs,
+					int *err)
+{
+    char **G = NULL;
+    int i, n = 0;
+
+    for (i=0; i<odinfo->obscols; i++) {
+	if (odinfo->coltypes[i] == GRETL_TYPE_STRING ||
+	    odinfo->coltypes[i] == GRETL_TYPE_DATE) {
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	G = strings_array_new_with_length(n, ODBC_STRSZ);
+	if (G == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *nstrs = n;
+	}
+    }
+
+    return G;
+}
+
 int gretl_odbc_get_data (ODBC_info *odinfo)
 {
     SQLHENV OD_env = NULL;    /* ODBC environment handle */
     SQLHDBC dbc = NULL;       /* connection handle */
     SQLHSTMT stmt = NULL;     /* statement handle */
-    long ret;                 /* return value from functions */
+    long ret;                 /* return value from SQL functions */
     unsigned char status[10]; /* SQL status */
+    unsigned char msg[200];
     SQLINTEGER OD_err, nrows;
     SQLSMALLINT mlen, ncols;
-    double xt;
-    unsigned char msg[200];
-    SQLINTEGER colbytes[ODBC_MAXCOLS+1];
-    long grabint[ODBC_MAXCOLS];
-    double grabx[ODBC_MAXCOLS];
-    char grabstr[ODBC_MAXCOLS][16];
-    char obsbit[16];
-    int i, j, k, p;
-    int t = 0, err = 0;
+    double *xt = NULL;
+    SQLINTEGER *colbytes = NULL;
+    long grabint[ODBC_OBSCOLS];
+    double grabx[ODBC_OBSCOLS];
+    char **grabstr = NULL;
+    int totcols, nstrs = 0;
+    int i, j, k, p, v;
+    int T = 0, err = 0;
 
-    odinfo->x = NULL;
+    odinfo->X = NULL;
     odinfo->S = NULL;
     odinfo->nrows = 0;
 
+    /* columns used in composing obs identifier (if any) plus
+       actual data columns */
+    totcols = odinfo->obscols + odinfo->nvars;
+
+    xt = malloc(odinfo->nvars * sizeof *xt);
+    if (xt == NULL) {
+	return E_ALLOC;
+    }
+
+    colbytes = malloc(totcols * sizeof *colbytes);
+    if (colbytes == NULL) {
+	free(xt);
+	return E_ALLOC;
+    }    
+
+    grabstr = allocate_string_grabbers(odinfo, &nstrs, &err);
+    if (err) {
+	free(xt);
+	free(colbytes);
+	return err;
+    }
+
     dbc = gretl_odbc_connect_to_dsn(odinfo, &OD_env, &err);
     if (err) {
+	free(xt);
+	free(colbytes);
+	free_strings_array(grabstr, nstrs);
 	return err;
     }
 
@@ -245,28 +370,36 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
-    j = k = p = 0;
+    j = k = p = v = 0;
 
-    /* auxiliary obs columns */
-    for (i=0; i<odinfo->ncols; i++) {
-	if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
-	    SQLBindCol(stmt, i+1, SQL_C_LONG, &grabint[j++], 0, &colbytes[i]);
-	} else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
-	    SQLBindCol(stmt, i+1, SQL_C_CHAR, &grabstr[k++], 16, &colbytes[i]);
-	} else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
-	    SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, &grabstr[k++], 10, &colbytes[i]);
-	} else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
-	    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], sizeof(double), 
+    /* bind all columns */
+    for (i=0; i<totcols; i++) {
+	if (i < odinfo->obscols) {
+	    /* auxiliary obs columns */
+	    if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
+		SQLBindCol(stmt, i+1, SQL_C_LONG, &grabint[j++], 0, 
+			   &colbytes[i]);
+	    } else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
+		SQLBindCol(stmt, i+1, SQL_C_CHAR, &grabstr[k++], ODBC_STRSZ, 
+			   &colbytes[i]);
+	    } else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
+		SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, &grabstr[k++], 10, 
+			   &colbytes[i]);
+	    } else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
+		SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], sizeof(double), 
+			   &colbytes[i]);
+	    }
+	} else {
+	    /* data columns */
+	    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt[v++], sizeof(double), 
 		       &colbytes[i]);
 	}
     }
 
-    /* last column: data */
-    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt, sizeof xt, &colbytes[i]);
-
     ret = SQLExecDirect(stmt, (SQLCHAR *) odinfo->query, SQL_NTS);   
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLExecDirect");
+	fprintf(stderr, "failed query: '%s'\n", odinfo->query);
 	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, &OD_err, msg, 
 		      100, &mlen);
 	gretl_errmsg_set((char *) msg);
@@ -283,9 +416,9 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 
     printf("Number of Columns = %d\n", (int) ncols);
 
-    if (ncols != odinfo->ncols + 1) {
+    if (ncols != totcols) {
 	gretl_errmsg_sprintf("ODBC: expected %d columns but got %d",
-			     odinfo->ncols + 1, ncols);
+			     totcols, ncols);
 	err = 1;
 	goto bailout;
     }
@@ -314,8 +447,8 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	if (nrows <= 0) {
 	    nrows = ODBC_INIT_ROWS;
 	}
-	odinfo->x = malloc(nrows * sizeof *odinfo->x);
-	if (odinfo->x == NULL) {
+	odinfo->X = doubles_array_new(odinfo->nvars, nrows);
+	if (odinfo->X == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -328,72 +461,34 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     }
 
     if (!err) {
-	double xtgot;
-
-	ret = SQLFetch(stmt);  
-	while (ret != SQL_NO_DATA && !err) {
-	    xtgot = NADBL;
-	    j = k = p = 0;
-	    fprintf(stderr, "SQLFetch, row %d:\n", t);
-	    for (i=0; i<=odinfo->ncols; i++) {
-		*obsbit = '\0';
-		if (colbytes[i] == SQL_NULL_DATA) {
-		    fprintf(stderr, " col %d: no data\n", i+1);
-		} else {
-		    fprintf(stderr, " col %d: %d bytes\n", i+1, (int) colbytes[i]);
-		    if (i == odinfo->ncols) {
-			/* the actual data */
-			xtgot = xt;
-		    } else if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
-			sprintf(obsbit, odinfo->fmts[i], (int) grabint[j++]);
-		    } else if (odinfo->coltypes[i] == GRETL_TYPE_STRING ||
-			       odinfo->coltypes[i] == GRETL_TYPE_DATE) {
-			sprintf(obsbit, odinfo->fmts[i], grabstr[k++]);
-		    } else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
-			sprintf(obsbit, odinfo->fmts[i], grabx[p++]);
-		    }
-		}
-		if (odinfo->S != NULL && *obsbit != '\0') {
-		    if (strlen(odinfo->S[t]) + strlen(obsbit) > OBSLEN - 1) {
-			fprintf(stderr, "Overflow in observation string!\n");
-		    } else {
-			strcat(odinfo->S[t], obsbit);
-		    }
-		}
-	    }
-	    if (odinfo->S != NULL) {
-		fprintf(stderr, " obs = '%s'\n", odinfo->S[t]);
-	    }
-	    odinfo->x[t++] = xtgot;
-	    ret = SQLFetch(stmt);
-	    if (ret != SQL_NO_DATA && t >= nrows) {
-		err = expand_catchment(odinfo, &nrows);
-	    }
-	}
+	/* get the actual data */
+	err = odbc_read_rows(odinfo, stmt, totcols, colbytes,
+			     grabint, grabx, grabstr, xt, 
+			     &nrows, &T);
     }
 
  bailout:
 
     if (err) {
-	if (odinfo->x != NULL) {
-	    free(odinfo->x);
-	    odinfo->x = NULL;
-	}
-	if (odinfo->S != NULL) {
-	    free_strings_array(odinfo->S, nrows);
-	    odinfo->S = NULL;
-	}
+	doubles_array_free(odinfo->X, odinfo->nvars);
+	odinfo->X = NULL;
+	free_strings_array(odinfo->S, nrows);
+	odinfo->S = NULL;
     } else {
-	if (t < nrows && odinfo->S != NULL) {
+	if (T < nrows && odinfo->S != NULL) {
 	    odinfo->S = strings_array_realloc_with_length(&odinfo->S,
-							  nrows, t,
+							  nrows, T,
 							  OBSLEN);
 	    if (odinfo->S == NULL) {
 		err = E_ALLOC;
 	    }
 	}
-	odinfo->nrows = t;
+	odinfo->nrows = T;
     }
+
+    free(xt);
+    free(colbytes);
+    free_strings_array(grabstr, nstrs);
 
     if (stmt != NULL) {
 	SQLFreeHandle(SQL_HANDLE_STMT, stmt);
