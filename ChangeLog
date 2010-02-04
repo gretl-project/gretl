@@ -2,6 +2,8 @@ version 1.8.8, in progress
 - Enable full-text search of "online" help files
 - "mread": search the gretl working directory if the
   file is not found at first
+- ODBC import: enable extraction of multiple data series
+  per SQL query
 - Fix bug: errors in Exponential Moving Average in GUI
 - Fix bug: non-ASCII characters not handled in function
   package upload to server
