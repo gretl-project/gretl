@@ -7,6 +7,8 @@ version 1.8.8, in progress
 - Fix bug: errors in Exponential Moving Average in GUI
 - Fix bug: non-ASCII characters not handled in function
   package upload to server
+- Fix bug: double normal cdf did not handle correctly some 
+  corner cases
 - Fix bug 2944000
 
 01/24/2010 version 1.8.7
