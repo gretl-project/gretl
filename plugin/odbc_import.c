@@ -132,7 +132,7 @@ gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
     SQLINTEGER OD_err;
     SQLSMALLINT mlen;
     char *uname, *pword;
-    unsigned char msg[200];
+    unsigned char msg[512];
 
     ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &OD_env);
     if (OD_error(ret)) {
@@ -170,7 +170,7 @@ gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLConnect");
 	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, 
-		      &OD_err, msg, 100, &mlen);
+		      &OD_err, msg, 512, &mlen);
 	gretl_errmsg_set((char *) msg);
 	*err = 1;
     } else {
@@ -313,7 +313,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     SQLHSTMT stmt = NULL;     /* statement handle */
     long ret;                 /* return value from SQL functions */
     unsigned char status[10]; /* SQL status */
-    unsigned char msg[200];
+    unsigned char msg[512];
     SQLINTEGER OD_err, nrows;
     SQLSMALLINT mlen, ncols;
     double *xt = NULL;
@@ -364,7 +364,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in AllocStatement");
 	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, &OD_err, 
-		      msg, 100, &mlen);
+		      msg, 512, &mlen);
 	gretl_errmsg_set((char *) msg);
 	err = 1;
 	goto bailout;
