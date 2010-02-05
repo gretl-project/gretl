@@ -147,17 +147,16 @@ There should be no spaces around the equals signs in the
 command.
 
 The \texttt{\emph{query-string}} can, in principle, contain any valid
-SQL statement which results in a table: a ``\texttt{;}'' character at
-the end will be added automatically. This string may be specified
+SQL statement which results in a table. This string may be specified
 directly within the command, as in
 \begin{code}
   data x query="SELECT foo FROM bar" --odbc
 \end{code}
 which will store into the gretl variable \texttt{x} the content of the
 column \texttt{foo} from the table \texttt{bar}. However, since in a
-real-life situation the string containing the SQL statement will be
-rather long, it may be best to create it just before the call to
-\texttt{data}. For example:
+real-life situation the string containing the SQL statement may be
+rather long, it may be best to store it in a string variable.  For
+example:
 \begin{code}
   string SqlQry = "SELECT foo1, foo2 FROM bar"
   data x y query=SqlQry --odbc
@@ -179,7 +178,7 @@ certainty that the data from the query will arrive in the same order
 as the \app{gretl} dataset. This may happen when missing values are
 interspersed within a column, or with data that do not have a natural
 ordering, e.g.\ cross-sectional data. In this case, the SQL statement
-should return a table with $n=m+k$ columns, where the first $m$
+should return a table with $m+k$ columns, where the first $m$
 columns are used to identify the observation or row in the \app{gretl}
 dataset into which the actual data values in the final $k$ columns
 should be placed.  The \texttt{obs-format} string is used to translate
@@ -320,7 +319,7 @@ and \ref{tab:odbc-AWMexample2}):
 The table \texttt{Consump} is the classic ``rectangular'' dataset;
 that is, its internal organization is the same as in a spreadsheet or
 econometrics package: each row is a data point and each column is a
-variable. On the other hand, the structure of the \texttt{DATA} table
+variable. The structure of the \texttt{DATA} table
 is different: each record is one figure, stored in the column
 \texttt{xval}, and the other fields keep track of which variable it
 belongs to, for which date.
@@ -369,7 +368,7 @@ case.
 \begin{scode}
 string foo = "select year, qtr, xval from DATA \
        where varname='STN' AND qtr>1"
-data bar obs-format="%d,%d" query=foo --odbc
+data bar obs-format="%d:%d" query=foo --odbc
 print bar --byobs
 \end{scode}
 
