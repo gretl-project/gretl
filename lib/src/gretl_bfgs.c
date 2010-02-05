@@ -390,11 +390,10 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 			   BFGS_CRIT_FUNC func, void *data)
 {
     double bi0, f1, f2;
-    gretlopt opt = OPT_NONE;
+    int richardson = libset_get_bool(BFGS_RSTEP);
     int i, err = 0;
 
-    if (opt == OPT_R) {
-	/* Richardson */
+    if (richardson) {
 	double df[RSTEPS];
 	double eps = 1.0e-4;
 	double d = 0.0001;
@@ -448,6 +447,7 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 #if BFGS_DEBUG > 1
 	    fprintf(stderr, "g[%d] = (%.16g - %.16g) / (2.0 * %g) = %g\n",
 		    i, f2, f1, h, g[i]);
+	    fprintf(stderr, "f2 - f1 = %.16g\n", f2 - f1);
 #endif
 	}
     }
@@ -455,7 +455,7 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
  bailout:
 
 #if BFGS_DEBUG
-    fprintf(stderr, "BFGS_numeric_gradient: returning %d\n", err);
+    fprintf(stderr, "BFGS_numeric_gradient returning, err = %d\n", err);
 #endif
 
     return err;

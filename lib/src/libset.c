@@ -56,7 +56,9 @@ enum {
     STATE_VERBOSE_INCLUDE = 1 << 14, /* verbose include */
     STATE_SKIP_MISSING    = 1 << 15, /* skip NAs when building matrix from series */
     STATE_LOOPING         = 1 << 16, /* loop is in progress at this level */
-    STATE_LOOP_QUIET      = 1 << 17  /* loop commands should be quiet */
+    STATE_LOOP_QUIET      = 1 << 17, /* loop commands should be quiet */
+    STATE_BFGS_RSTEP      = 1 << 18  /* use Ricardson method in BFGS numerical
+					gradient */
 };    
 
 /* for values that really want a non-negative integer */
@@ -125,7 +127,8 @@ struct set_vars_ {
                            !strcmp(s, VERBOSE_INCLUDE) || \
                            !strcmp(s, SKIP_MISSING) || \
 			   !strcmp(s, R_FUNCTIONS) || \
-			   !strcmp(s, R_LIB))
+			   !strcmp(s, R_LIB) || \
+			   !strcmp(s, BFGS_RSTEP))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -1334,6 +1337,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_double(BHHH_TOLER, prn, opt);
     libset_print_int(RQ_MAXITER, prn, opt);
     print_initvals(state->initvals, prn, opt);
+    libset_print_bool(BFGS_RSTEP, prn, opt);
     libset_print_bool(USE_LBFGS, prn, opt);
     libset_print_int(LBFGS_MEM, prn, opt);
     libset_print_double(NLS_TOLER, prn, opt);
@@ -1857,6 +1861,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_VERBOSE_INCLUDE;
     } else if (!strcmp(s, SKIP_MISSING)) {
 	return STATE_SKIP_MISSING;
+    } else if (!strcmp(s, BFGS_RSTEP)) {
+	return STATE_BFGS_RSTEP;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	

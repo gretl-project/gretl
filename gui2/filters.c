@@ -859,11 +859,11 @@ static int calculate_filter (filter_info *finfo)
 	}
     } else if (finfo->ftype == FILTER_HP) {
 	/* Hodrick-Prescott */
-	double l0 = libset_get_double(HP_LAMBDA);
+	double lam0 = libset_get_double(HP_LAMBDA);
 
 	libset_set_double(HP_LAMBDA, finfo->lambda);
 	err = hp_filter(x, fx, datainfo, OPT_T);
-	libset_set_double(HP_LAMBDA, l0);
+	libset_set_double(HP_LAMBDA, lam0);
     } else if (finfo->ftype == FILTER_BK) {
 	/* Baxter and King bandpass */
 	set_bkbp_k(finfo->k);

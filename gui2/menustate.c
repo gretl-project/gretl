@@ -496,13 +496,24 @@ void set_main_window_title (const char *name, gboolean modified)
     if (name == NULL) {
 	gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
     } else {
-	/* FIXME encoding on Windows? */
-	gchar *title;
+	/* FIXME encoding? */
+	gchar *title = NULL;
 
-	if (modified) {
-	    title = g_strdup_printf("gretl: %s *", name);
+	if (!g_utf8_validate(name, -1, NULL)) {
+	    gchar *trname = my_filename_to_utf8(name);
+	    
+	    if (modified) {
+		title = g_strdup_printf("gretl: %s *", trname);
+	    } else {
+		title = g_strdup_printf("gretl: %s", trname);
+	    }
+	    g_free(trname);
 	} else {
-	    title = g_strdup_printf("gretl: %s", name);
+	    if (modified) {
+		title = g_strdup_printf("gretl: %s *", name);
+	    } else {
+		title = g_strdup_printf("gretl: %s", name);
+	    }
 	}
 
 	gtk_window_set_title(GTK_WINDOW(mdata->main), title);
