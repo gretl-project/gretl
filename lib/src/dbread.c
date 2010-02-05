@@ -1875,6 +1875,26 @@ static int parse_odbc_format (char *fmt)
     return err;
 }
 
+static int ensure_semicolon (char **ps)
+{
+    int n = strlen(*ps);
+
+    if ((*ps)[n-1] != ';') {
+	char *tmp = malloc(n + 2);
+
+	if (tmp == NULL) {
+	    return E_ALLOC;
+	} else {
+	    strcpy(tmp, *ps);
+	    strcat(tmp, ";");
+	    free(*ps);
+	    *ps = tmp;
+	}
+    }
+
+    return 0;
+}
+
 static char *odbc_get_query (char *s, int *err)
 {
     char *p, *query = NULL;
@@ -1895,7 +1915,9 @@ static char *odbc_get_query (char *s, int *err)
     } else if (*query == '\0') {
 	gretl_errmsg_set(_("Expected an SQL query string"));
 	*err = E_PARSE;
-    }	
+    } else {
+	*err = ensure_semicolon(&query);
+    }
 
     return query;
 }
@@ -1970,6 +1992,7 @@ static int odbc_transcribe_data (char **vnames, double **Z,
 
     for (i=0; i<nv; i++) {
 	int vnew = 1; /* is this a new series? */
+	int obs_used = 0;
 
 	if (nrepl > 0) {
 	    /* we're replacing some series */
@@ -1998,6 +2021,7 @@ static int odbc_transcribe_data (char **vnames, double **Z,
 		t = dateton(gretl_odinfo.S[s], pdinfo);
 		if (t >= 0 && t < pdinfo->n) {
 		    Z[v][t] = gretl_odinfo.X[i][s];
+		    obs_used++;
 		} else {
 		    fprintf(stderr, "Rejecting obs '%s'\n", gretl_odinfo.S[s]);
 		}
@@ -2008,10 +2032,16 @@ static int odbc_transcribe_data (char **vnames, double **Z,
 	    for (t=0; t<pdinfo->n; t++) {
 		if (t >= pdinfo->t1 && t <= pdinfo->t2 && s < n) {
 		    Z[v][t] = gretl_odinfo.X[i][s++];
+		    obs_used++;
 		} else if (vnew) {
 		    Z[v][t] = NADBL;
 		}
 	    }
+	}
+
+	if (vnew && obs_used == 0) {
+	    gretl_warnmsg_sprintf("ODBC import: '%s': no valid observations",
+				  vnames[i]);
 	}
     }
 
