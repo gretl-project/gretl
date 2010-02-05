@@ -4,6 +4,8 @@ version 1.8.8, in progress
   file is not found at first
 - ODBC import: enable extraction of multiple data series
   per SQL query
+- Export of data to R, interactively: add a message
+  confirming that the export worked
 - Fix bug: errors in Exponential Moving Average in GUI
 - Fix bug: non-ASCII characters not handled in function
   package upload to server
