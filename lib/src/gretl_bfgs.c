@@ -439,7 +439,7 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 	for (i=0; i<n; i++) {
 	    bi0 = b[i];
 	    b[i] = bi0 - h;
-	    if (fabs((bi0 - b[i]) / bi0) < B_RELMIN) {
+	    if (bi0 != 0.0 && fabs((bi0 - b[i]) / bi0) < B_RELMIN) {
 		fprintf(stderr, "numerical gradient: switching to Richardson\n");
 		richardson = 1;
 		goto restart;
