@@ -48,7 +48,7 @@ struct arma_info_ {
     int T;              /* sample size for estimation */
     double *y;          /* dependent variable (possibly differenced) */
     double *e;          /* forecast errors */
-    const double **X;   /* exogenous vars */
+    const double **Z;   /* virtual dataset */
     double yscale;      /* scale factor for y */
     int *xlist;         /* list of regressors (ARMAX) */
     gretl_matrix *dX;   /* differenced regressors (ARIMAX) */

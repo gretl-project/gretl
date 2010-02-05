@@ -494,8 +494,8 @@ static double bhhh_arma_callback (double *coeff,
 {
     arma_info *ainfo = (arma_info *) data;
     /* pointers to blocks of data */
-    const double *y = ainfo->X[0];
-    const double **X = ainfo->X + 1;
+    const double *y = ainfo->Z[0];
+    const double **X = ainfo->Z + 1;
     /* pointers to blocks of coefficients */
     const double *phi =   coeff + ainfo->ifc;
     const double *Phi =     phi + ainfo->np;
@@ -1643,9 +1643,9 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
    independent variables.
 */
 
-static const double **make_armax_X (arma_info *ainfo, const double **Z)
+static const double **make_arma_Z (arma_info *ainfo, const double **Z)
 {
-    const double **X;
+    const double **aZ;
     int *list = ainfo->alist;
     int ypos, nx;
     int v, i;
@@ -1654,29 +1654,29 @@ static const double **make_armax_X (arma_info *ainfo, const double **Z)
     nx = list[0] - ypos;
 
 #if ARMA_DEBUG
-    fprintf(stderr, "make_armax_X: allocating %d series pointers\n",
+    fprintf(stderr, "make_arma_Z: allocating %d series pointers\n",
 	    nx + 1);
 #endif    
 
-    X = malloc((nx + 1) * sizeof *X);
-    if (X == NULL) {
+    aZ = malloc((nx + 1) * sizeof *aZ);
+    if (aZ == NULL) {
 	return NULL;
     }
 
     /* the dependent variable */
     if (ainfo->y != NULL) {
-	X[0] = ainfo->y;
+	aZ[0] = ainfo->y;
     } else {
-	X[0] = Z[list[ypos]];
+	aZ[0] = Z[list[ypos]];
     }
 
     /* the independent variables */
     for (i=1; i<=nx; i++) {
 	v = list[i + ypos];
-	X[i] = Z[v];
+	aZ[i] = Z[v];
     }
 
-    return X;
+    return aZ;
 }
 
 /* add extra OPG-related stuff to the arma info struct */
@@ -1692,8 +1692,8 @@ static int set_up_arma_OPG_info (arma_info *ainfo,
     int err = 0;
 
     /* construct virtual dataset for dep var, real regressors */
-    ainfo->X = make_armax_X(ainfo, Z);
-    if (ainfo->X == NULL) {
+    ainfo->Z = make_arma_Z(ainfo, Z);
+    if (ainfo->Z == NULL) {
 	err = E_ALLOC;
     }  
 
