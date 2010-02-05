@@ -384,6 +384,8 @@ gretl_matrix *build_score_matrix (double *b, int k, int T,
     return G;
 }
 
+#define B_RELMIN 1.0e-14
+
 /* default numerical calculation of gradient in context of BFGS */
 
 int BFGS_numeric_gradient (double *b, double *g, int n,
@@ -392,6 +394,8 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
     double bi0, f1, f2;
     int richardson = libset_get_bool(BFGS_RSTEP);
     int i, err = 0;
+
+ restart:
 
     if (richardson) {
 	double df[RSTEPS];
@@ -435,6 +439,11 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 	for (i=0; i<n; i++) {
 	    bi0 = b[i];
 	    b[i] = bi0 - h;
+	    if (fabs((bi0 - b[i]) / bi0) < B_RELMIN) {
+		fprintf(stderr, "numerical gradient: switching to Richardson\n");
+		richardson = 1;
+		goto restart;
+	    }
 	    f1 = func(b, data);
 	    b[i] = bi0 + h;
 	    f2 = func(b, data);
