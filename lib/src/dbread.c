@@ -1875,26 +1875,6 @@ static int parse_odbc_format (char *fmt)
     return err;
 }
 
-static int ensure_semicolon (char **ps)
-{
-    int n = strlen(*ps);
-
-    if ((*ps)[n-1] != ';') {
-	char *tmp = malloc(n + 2);
-
-	if (tmp == NULL) {
-	    return E_ALLOC;
-	} else {
-	    strcpy(tmp, *ps);
-	    strcat(tmp, ";");
-	    free(*ps);
-	    *ps = tmp;
-	}
-    }
-
-    return 0;
-}
-
 static char *odbc_get_query (char *s, int *err)
 {
     char *p, *query = NULL;
@@ -1915,9 +1895,7 @@ static char *odbc_get_query (char *s, int *err)
     } else if (*query == '\0') {
 	gretl_errmsg_set(_("Expected an SQL query string"));
 	*err = E_PARSE;
-    } else {
-	*err = ensure_semicolon(&query);
-    }
+    } 
 
     return query;
 }
