@@ -251,8 +251,7 @@ files or the manuals.
 We assume that the basic GNU utilities are already installed on the
 system, together with these other programs:
 \begin{itemize}
-\item some \TeX/\LaTeX system (\texttt{tetex} or \texttt{texlive} will
-  do beautifully)
+\item some \TeX/\LaTeX system (\texttt{texlive} will do beautifully)
 \item Gnuplot
 \item ImageMagick
 \end{itemize}
@@ -272,32 +271,49 @@ these are contained in a bunch of packages that can be installed via
 the command
 \begin{code}
 apt-get install gcc autoconf automake1.9 libtool flex bison gcc-doc \
-libc6-dev libc-dev libgfortran1 libgfortran1-dev gettext pkgconfig
+libc6-dev libc-dev gfortran gettext pkgconfig
 \end{code}
 
 Then it is necessary to install the ``development'' (\texttt{dev})
 packages for the libraries that \app{gretl} uses:
-
 \begin{center}
   \begin{tabular}{ll}
     \textit{Library} & \textit{command} \\ [4pt]
-    GLIB & \texttt{apt-get install libglib2.0-dev} \\
-    GTK 2.0 & \texttt{apt-get install libgtk2.0-dev} \\
-    PNG & \texttt{apt-get install libpng12-dev} \\
-    XSLT & \texttt{apt-get install libxslt1-dev} \\
-    LAPACK & \texttt{apt-get install lapack3-dev} \\
-    FFTW & \texttt{apt-get install fftw3-dev} \\
-    READLINE & \texttt{apt-get install libreadline5-dev} \\
-    GMP & \texttt{apt-get install libgmp3-dev}
+    GLIB     & \texttt{apt-get install libglib2.0-dev} \\
+    GTK 2.0  & \texttt{apt-get install libgtk2.0-dev} \\
+    PNG      & \texttt{apt-get install libpng12-dev} \\
+    XSLT     & \texttt{apt-get install libxslt1-dev} \\
+    LAPACK   & \texttt{apt-get install liblapack-dev} \\
+    FFTW     & \texttt{apt-get install libfftw3-dev} \\
+    READLINE & \texttt{apt-get install libreadline-dev} \\
+    ZLIB     & \texttt{apt-get install zlib1g-dev} \\
+    XML      & \texttt{apt-get install libxml2-dev} \\
+    GMP      & \texttt{apt-get install libgmp3-dev} \\
+    MPFR     & \texttt{apt-get install libmpfr-dev}
   \end{tabular}
 \end{center}
 
-(GMP is optional, but recommended.)  The \texttt{dev} packages for
-these libraries are necessary to \emph{compile} \app{gretl} --- you'll
-also need the plain, non-\texttt{dev} library packages to \emph{run}
-\app{gretl}, but most of these should already be part of a standard
-installation.  In order to enable other optional features, like audio
-support, you may need to install more libraries.
+(GMP and MPFR are optional, but recommended.)  The \texttt{dev}
+packages for these libraries are necessary to \emph{compile}
+\app{gretl} --- you'll also need the plain, non-\texttt{dev} library
+packages to \emph{run} \app{gretl}, but most of these should already
+be part of a standard installation.  In order to enable other optional
+features, like audio support, you may need to install more libraries.
+
+\textbf{Note!} The above steps can be much simplified on Linux systems
+that provide deb-based package managers, such as Debian and its
+derivatives (Ubuntu, Knoppix and other distributions). The command
+\begin{code}
+  apt-get build-dep gretl
+\end{code}
+will download and install all the necessary packages for building the
+version of \app{gretl} that is currently present in your APT
+sources. Techincally, this does not guarantee that all the software
+necessary to build the CVS version is included, because the version of
+\app{gretl} on your repository may be quite old and build requirements
+may have changed in the meantime. However, the chances of a mismatch
+are rather remote for a reasonably up-to-date system, so the above
+command should in most cases take care of everything correctly.
 
 \subsection{Getting the source: release or CVS}
 
