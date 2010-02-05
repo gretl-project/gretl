@@ -367,6 +367,7 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 
 static int write_data_for_R (const double **Z, 
 			     const DATAINFO *pdinfo,
+			     gretlopt opt,
 			     FILE *fp)
 {
     gchar *Rdata, *Rline;
@@ -400,6 +401,12 @@ static int write_data_for_R (const double **Z,
 		atoi(datestr), subper, pdinfo->pd);
     } else {
 	fputs("attach(gretldata)\n", fp);
+    }
+
+    if (!err && (opt & OPT_I)) {
+	/* interactive: let the user see that this worked */
+	fputs("gretlmsg <- \"current data loaded as \\\"gretldata\\\"\\n\"\n", fp);
+	fputs("cat(gretlmsg)\n", fp);
     }
 
     return err;
@@ -481,7 +488,7 @@ static int write_gretl_R_profile (gretlopt opt)
 
 /* Write an R command file to be sourced by R.  @buf may contain R
    commands assembled via the GUI; if it is NULL the current "foreign"
-   block is used as input.
+   block (if any) is used as input.
 
    @opt may contain the following:
 
@@ -539,7 +546,7 @@ static int write_R_source_file (const char *buf,
 
 	if (opt & OPT_D) {
 	    /* send data */
-	    err = write_data_for_R(Z, pdinfo, fp);
+	    err = write_data_for_R(Z, pdinfo, opt, fp);
 	}
 
 	if (buf != NULL) {
@@ -578,7 +585,7 @@ static int write_R_source_file (const char *buf,
    command source file.  This is called when we're exec'ing the R
    binary.  OPT_G in @opt indicates that this function is being called
    from the GUI program; @buf may contain R commands taken from a GUI
-   window.
+   window, or may be NULL.
 */
 
 int write_gretl_R_files (const char *buf,
