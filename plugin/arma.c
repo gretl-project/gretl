@@ -1376,12 +1376,123 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
 #if KALMAN_ARMA_INITH
 # if INITH_USE_OPG
 
+#if 0 /* not yet */
+
+static const double **make_arma_X (arma_info *ainfo, const double **Z)
+{
+    const double **X;
+    int *list = ainfo->alist;
+    int ypos = arma_list_y_position(ainfo);
+    int nx = list[0] - ypos;
+    int v, i;
+
+    X = malloc(nx * sizeof *X);
+    if (X == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<nx; i++) {
+	v = list[i + ypos + 1];
+	X[i] = Z[v];
+    }
+
+    return X;
+}
+
+#endif
+
 static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 					 kalman *K)
 {
     gretl_matrix *G, *H = NULL;
     int err = 0;
+#if 0 /* no, not yet */
+    const double *y;
+    const double **X;
+    const double *phi;
+    const double *Phi;
+    const double *theta;
+    const double *Theta;
+    double s2;
+    int nd = 1 + ainfo->q + ainfo->pd * ainfo->Q;
+    /* number of derivatives */
+    int k = ainfo->nc;
 
+    y = (ainfo->y != NULL) ainfo->y : Z[ainfo->yno];
+
+    /* the X array */
+    if (ainfo->dX != NULL) {
+	;
+    } else {
+	X = make_arma_X(ainfo, Z);
+    }
+
+    if (!err) {
+	/* allocate gradient matrix */
+	G = gretl_zero_matrix_new(ainfo->T, k);
+	if (G == NULL) {
+	    err = E_ALLOC;
+	}
+    }    
+
+    if (!err) {
+	/* forecast errors array */
+	ainfo->e = malloc((ainfo->t2 + 1) * sizeof *ainfo->e);
+	if (ainfo->e == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    int t;
+
+	    for (t=0; t<=ainfo->t2; t++) {
+		ainfo->e[t] = 0.0;
+	    }
+	}
+    }
+
+    if (!err) {
+	/* derivatives arrays */
+	ainfo->aux = doubles_array_new0(k, nd); 
+	if (ainfo->aux == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    ainfo->n_aux = k;
+	}
+    }
+
+    phi = ;
+    Phi = ;
+    theta = ;
+    Theta = ;
+
+    arma_analytical_score(ainfo, y, X,
+			  phi, Phi, theta, Theta,
+			  s2, G);
+    
+    if (!err) {
+	H = gretl_matrix_alloc(k, k);
+	if (H == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+				  G, GRETL_MOD_NONE,
+				  H, GRETL_MOD_NONE);
+	err = gretl_invert_symmetric_matrix(H);
+	if (err) {
+	    fprintf(stderr, "kalman_arma_init_H: H is not pd\n");
+	    gretl_matrix_free(H);
+	    H = NULL;
+	}
+    }
+
+    /* free stuff */
+    free(ainfo->e);
+    ainfo->e = NULL;
+    free(X);
+
+#else
     G = build_score_matrix(b, k, T, kalman_arma_llt_callback, 
 			   K, &err);
 
@@ -1403,6 +1514,7 @@ static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 	    H = NULL;
 	}
     }
+#endif
 
     gretl_matrix_free(G);
 
@@ -1647,11 +1759,9 @@ static const double **make_arma_Z (arma_info *ainfo, const double **Z)
 {
     const double **aZ;
     int *list = ainfo->alist;
-    int ypos, nx;
+    int ypos = arma_list_y_position(ainfo);
+    int nx = list[0] - ypos;
     int v, i;
-
-    ypos = arma_list_y_position(ainfo);
-    nx = list[0] - ypos;
 
 #if ARMA_DEBUG
     fprintf(stderr, "make_arma_Z: allocating %d series pointers\n",
