@@ -189,6 +189,14 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
+static char *win32_dotpath (void)
+{
+    gchar *dotpath = g_strdup(gretl_dotdir());
+
+    charsub(dotpath, '\\', '/');
+    return dotpath;
+}
+
 #else /* !G_OS_WIN32 */
 
 static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
@@ -291,9 +299,8 @@ static int write_ox_io_file (void)
 	    return E_FOPEN;
 	} else {
 #ifdef G_OS_WIN32
-            gchar *dotcpy = g_strdup(dotdir);
+            gchar *dotcpy = win32_dotpath();
 
-	    charsub(dotcpy, '\\', '/');
 	    fputs("gretl_dotdir ()\n{\n", fp);
 	    fprintf(fp, "  return \"%s\";\n", dotcpy);
 	    g_free(dotcpy);
@@ -340,9 +347,8 @@ static int write_octave_io_file (void)
 	    return E_FOPEN;
 	} else {
 #ifdef G_OS_WIN32
-            gchar *dotcpy = g_strdup(dotdir);
+            gchar *dotcpy = win32_dotpath();
 
-	    charsub(dotcpy, '\\', '/');
 	    fputs("function dotdir = gretl_dotdir()\n", fp);
 	    fprintf(fp, "  dotdir = \"%s\";\n", dotcpy);
 	    g_free(dotcpy);
@@ -378,13 +384,32 @@ static int write_octave_io_file (void)
 
 static void add_gretl_include (FILE *fp)
 {
+#ifdef G_OS_WIN32
+    gchar *dotcpy = win32_dotpath();
+
+    if (foreign_lang == LANG_OX) {
+	if (strchr(dotcpy, ' ')) {
+	    fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotcpy);
+	} else {
+	    fprintf(fp, "#include <%sgretl_io.ox>\n", dotcpy);
+	}
+    } else if (foreign_lang == LANG_OCTAVE) {
+	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
+    } 
+    g_free(dotcpy);
+#else
     const char *dotdir = gretl_dotdir();
 
-    if (strchr(dotdir, ' ')) {
-	fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotdir);
-    } else {
-	fprintf(fp, "#include <%sgretl_io.ox>\n", dotdir);
-    }
+    if (foreign_lang == LANG_OX) {
+	if (strchr(dotdir, ' ')) {
+	    fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotdir);
+	} else {
+	    fprintf(fp, "#include <%sgretl_io.ox>\n", dotdir);
+	}
+    } else if (foreign_lang == LANG_OCTAVE) {
+	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotdir);
+    } 
+#endif
 }
 
 /**
@@ -444,12 +469,15 @@ int write_gretl_octave_file (const char *buf, gretlopt opt, const char **pfname)
 {
     const gchar *fname = gretl_octave_filename();
     FILE *fp = gretl_fopen(fname, "w");
-
-    write_octave_io_file();
+    int err = write_octave_io_file();
 
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
+	/* source the I-O functions */
+	if (!err) {
+	    add_gretl_include(fp);
+	}
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
 	    char line[1024];
