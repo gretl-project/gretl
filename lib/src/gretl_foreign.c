@@ -360,7 +360,7 @@ static int write_octave_io_file (void)
 
 	    fputs("function gretl_export(X, str)\n", fp);
             fputs("  dname = gretl_dotdir();\n", fp);
-	    fputs("  fd = fopen(strcat(mdame, str), \"w\");\n", fp);
+	    fputs("  fd = fopen(strcat(dname, str), \"w\");\n", fp);
 	    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
 	    fputs("  fprintf(fd, \"%.15g\\n\", X);\n", fp);
 	    fputs("  fclose(fd);\n", fp);
