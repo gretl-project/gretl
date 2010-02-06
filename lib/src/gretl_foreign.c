@@ -253,18 +253,19 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
-    char *argv[3];
+    char *argv[4];
     int err;
 
     if (foreign_lang == LANG_OX) {
 	argv[0] = (char *) gretl_oxl_path();
 	argv[1] = (char *) gretl_ox_filename();
+	argv[2] = NULL;
     } else {
 	argv[0] = (char *) gretl_octave_path();
-	argv[1] = (char *) gretl_octave_filename();
+	argv[1] = "--silent";
+	argv[2] = (char *) gretl_octave_filename();
+	argv[3] = NULL;
     }
-
-    argv[2] = NULL;
 
     err = lib_run_prog_sync(argv, opt, prn);
 
