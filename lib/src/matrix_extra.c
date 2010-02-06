@@ -394,6 +394,44 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x)
     return err;
 }
 
+/**
+ * gretl_matrix_get_columns:
+ * @m: source matrix.
+ * @err: location to receive error code.
+ *
+ * Constructs a two-dimensional array in which each sub-array
+ * is a pointer to a column of @m. The content of these arrays
+ * belongs to @m and must not be freed; only the returned
+ * pointer itself should be freed.
+ *
+ * Returns: the constructed array on success or %NULL on failure.
+ */
+
+double **gretl_matrix_get_columns (const gretl_matrix *m, int *err)
+{
+    double **X = NULL;
+
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+    } else {
+	double *val = m->val;
+	int j;
+
+	X = doubles_array_new(m->cols, 0);
+
+	if (X == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (j=0; j<m->cols; j++) {
+		X[j] = val;
+		val += m->rows;
+	    }
+	}
+    }
+
+    return X;
+}
+
 static int get_mask_count (const char *mask, int n)
 {
     int i, k = 0;

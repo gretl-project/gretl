@@ -23,7 +23,8 @@
 #define vwin_editing_script(r) (r == EDIT_SCRIPT || \
 				r == EDIT_GP ||	    \
 				r == EDIT_R ||	    \
-				r == EDIT_OX)
+				r == EDIT_OX ||     \
+                                r == EDIT_OCTAVE)
 
 #define vwin_editing_buffer(r) (r == EDIT_HEADER || \
 	                        r == EDIT_NOTES)
@@ -135,6 +136,8 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents);
 void start_R (const char *buf, int send_data, int interactive);
 
 void run_ox_script (gchar *buf);
+
+void run_octave_script (gchar *buf);
 
 const char *print_today (void);
 

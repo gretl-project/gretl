@@ -42,7 +42,8 @@ enum {
 };
 
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
-#define foreign_script_role(r) (r == EDIT_GP || r == EDIT_R || r == EDIT_OX)
+#define foreign_script_role(r) (r == EDIT_GP || r == EDIT_R || \
+				r == EDIT_OX || r == EDIT_OCTAVE)
 
 /* globals accessed in settings.c */
 int tabwidth = 4;
@@ -419,6 +420,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	id = "r";
     } else if (vwin->role == EDIT_OX) {
 	id = "cpp";
+    } else if (vwin->role == EDIT_OCTAVE) {
+	id = "octave";
     } else {
 	id = "gretl";
     }
@@ -448,6 +451,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	mtype = "text/x-R";
     } else if (vwin->role == EDIT_OX) {
 	mtype = "text/x-c++src";
+    } else if (vwin->role == EDIT_OCTAVE) {
+	mtype = "text/x-octave";
     } else {
 	mtype = "application/x-gretlscript";
     }

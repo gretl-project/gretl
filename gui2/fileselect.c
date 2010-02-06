@@ -95,6 +95,7 @@ static struct extmap action_map[] = {
     { SAVE_GP_CMDS,      ".plt" },
     { SAVE_R_CMDS,       ".R" },
     { SAVE_OX_CMDS,      ".ox" },
+    { SAVE_OCTAVE_CMDS,  ".m" },    
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
     { EXPORT_CSV,        ".csv" },
@@ -299,7 +300,8 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	script_window_update(vwin, fname);
     } else if (action == SAVE_GP_CMDS || 
 	       action == SAVE_R_CMDS ||
-	       action == SAVE_OX_CMDS) {
+	       action == SAVE_OX_CMDS ||
+	       action == SAVE_OCTAVE_CMDS) {
 	script_window_update(vwin, fname);
     } 
 }
@@ -329,6 +331,8 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	view_file(fname, 1, 0, 78, 370, EDIT_GP);
     } else if (ox_support && has_suffix(fname, ".ox")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_OX);
+    } else if (has_suffix(fname, ".m")) {
+	view_file(fname, 1, 0, 78, 370, EDIT_OCTAVE);
     } else {
 	strcpy(tryfile, fname);
 	if (view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
@@ -675,6 +679,7 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	if (src != FSEL_DATA_FNPKG) {
 	    filesel_add_filter(filesel, _("GNU R files (*.R)"), "*.R");
 	    filesel_add_filter(filesel, _("gnuplot files (*.plt)"), "*.plt");
+	    filesel_add_filter(filesel, _("GNU Octave files (*.m)"), "*.m");
 #ifdef USE_OX
 	    if (ox_support) {
 		filesel_add_filter(filesel, _("Ox files (*.ox)"), "*.ox");

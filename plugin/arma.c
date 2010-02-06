@@ -1268,44 +1268,27 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     return err;
 }
 
+/* for Kalman: convert from full-length y series to
+   y vector of length ainfo->T */
+
 static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 					 const double **Z,
 					 int *err)
 {
     gretl_matrix *yvec;
-    const double *y;
-    int s, t;
-
-#if ARMA_DEBUG
-    fprintf(stderr, "ainfo->t1 = %d, ainfo->t2 = %d\n",
-	    ainfo->t1, ainfo->t2);
-#endif
-
-    if (ainfo->y != NULL) {
-	y = ainfo->y;
-    } else {
-	y = Z[ainfo->yno];
-    }
 
     yvec = gretl_column_vector_alloc(ainfo->T);
+
     if (yvec == NULL) {
 	*err = E_ALLOC;
-	return NULL;
-    }    
+    } else {
+	const double *y;
 
-    s = 0;
-    for (t=ainfo->t1; t<=ainfo->t2; t++) {
-	gretl_vector_set(yvec, s++, y[t]);
-    }
-
+	y = (ainfo->y != NULL)? ainfo->y : Z[ainfo->yno];
+	memcpy(yvec->val, y + ainfo->t1, ainfo->T * sizeof *y);
 #if ARMA_DEBUG
-    gretl_matrix_print(yvec, "y");
-    fprintf(stderr, "y has %d rows\n", gretl_matrix_rows(yvec));
+	gretl_matrix_print(yvec, "y");
 #endif
-
-    if (*err) {
-	gretl_matrix_free(yvec);
-	yvec = NULL;
     }
     
     return yvec;
@@ -1318,7 +1301,7 @@ static gretl_matrix *form_arma_X_matrix (arma_info *ainfo,
     gretl_matrix *X;
 
 #if ARMA_DEBUG
-    printlist(ainfo->xlist, "xlist (exog vars)");
+    printlist(ainfo->xlist, "ainfo->xlist (exog vars)");
 #endif
 
     X = gretl_matrix_data_subset(ainfo->xlist, Z, ainfo->t1, ainfo->t2, 
@@ -1326,7 +1309,6 @@ static gretl_matrix *form_arma_X_matrix (arma_info *ainfo,
 
 #if ARMA_DEBUG
     gretl_matrix_print(X, "X");
-    fprintf(stderr, "X has %d rows\n", gretl_matrix_rows(X));
 #endif
 
     return X;
@@ -1371,128 +1353,17 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
 }
 
 #define KALMAN_ARMA_INITH 0 /* try initializing inverse Hessian */
-#define INITH_USE_OPG 0     /* try using OPG for that purpose */
+#define INITH_USE_OPG 0    /* try using OPG for that purpose */
 
 #if KALMAN_ARMA_INITH
 # if INITH_USE_OPG
-
-#if 0 /* not yet */
-
-static const double **make_arma_X (arma_info *ainfo, const double **Z)
-{
-    const double **X;
-    int *list = ainfo->alist;
-    int ypos = arma_list_y_position(ainfo);
-    int nx = list[0] - ypos;
-    int v, i;
-
-    X = malloc(nx * sizeof *X);
-    if (X == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<nx; i++) {
-	v = list[i + ypos + 1];
-	X[i] = Z[v];
-    }
-
-    return X;
-}
-
-#endif
 
 static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 					 kalman *K)
 {
     gretl_matrix *G, *H = NULL;
     int err = 0;
-#if 0 /* no, not yet */
-    const double *y;
-    const double **X;
-    const double *phi;
-    const double *Phi;
-    const double *theta;
-    const double *Theta;
-    double s2;
-    int nd = 1 + ainfo->q + ainfo->pd * ainfo->Q;
-    /* number of derivatives */
-    int k = ainfo->nc;
 
-    y = (ainfo->y != NULL) ainfo->y : Z[ainfo->yno];
-
-    /* the X array */
-    if (ainfo->dX != NULL) {
-	;
-    } else {
-	X = make_arma_X(ainfo, Z);
-    }
-
-    if (!err) {
-	/* allocate gradient matrix */
-	G = gretl_zero_matrix_new(ainfo->T, k);
-	if (G == NULL) {
-	    err = E_ALLOC;
-	}
-    }    
-
-    if (!err) {
-	/* forecast errors array */
-	ainfo->e = malloc((ainfo->t2 + 1) * sizeof *ainfo->e);
-	if (ainfo->e == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    int t;
-
-	    for (t=0; t<=ainfo->t2; t++) {
-		ainfo->e[t] = 0.0;
-	    }
-	}
-    }
-
-    if (!err) {
-	/* derivatives arrays */
-	ainfo->aux = doubles_array_new0(k, nd); 
-	if (ainfo->aux == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    ainfo->n_aux = k;
-	}
-    }
-
-    phi = ;
-    Phi = ;
-    theta = ;
-    Theta = ;
-
-    arma_analytical_score(ainfo, y, X,
-			  phi, Phi, theta, Theta,
-			  s2, G);
-    
-    if (!err) {
-	H = gretl_matrix_alloc(k, k);
-	if (H == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
-				  G, GRETL_MOD_NONE,
-				  H, GRETL_MOD_NONE);
-	err = gretl_invert_symmetric_matrix(H);
-	if (err) {
-	    fprintf(stderr, "kalman_arma_init_H: H is not pd\n");
-	    gretl_matrix_free(H);
-	    H = NULL;
-	}
-    }
-
-    /* free stuff */
-    free(ainfo->e);
-    ainfo->e = NULL;
-    free(X);
-
-#else
     G = build_score_matrix(b, k, T, kalman_arma_llt_callback, 
 			   K, &err);
 
@@ -1514,7 +1385,6 @@ static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 	    H = NULL;
 	}
     }
-#endif
 
     gretl_matrix_free(G);
 
@@ -1526,11 +1396,17 @@ static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 					 kalman *K)
 {
-    gretl_matrix *H;
+    gretl_matrix *H = gretl_identity_matrix_new(k);
 
-    H = gretl_identity_matrix_new(k);
     if (H != NULL) {
-	gretl_matrix_divide_by_scalar(H, T);
+	double d = 1.0;
+
+	while (T > 0) {
+	    T /= 100;
+	    d *= 10;
+	}
+
+	gretl_matrix_divide_by_scalar(H, d);
     } 
 
     return H;
@@ -1766,7 +1642,7 @@ static const double **make_arma_Z (arma_info *ainfo, const double **Z)
 #if ARMA_DEBUG
     fprintf(stderr, "make_arma_Z: allocating %d series pointers\n",
 	    nx + 1);
-#endif    
+#endif 
 
     aZ = malloc((nx + 1) * sizeof *aZ);
     if (aZ == NULL) {
@@ -1995,7 +1871,8 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
 
 /* Set flag to indicate differencing of exogenous regressors, in the
    case of an ARIMAX model using native exact ML -- unless this is
-   forbidden by OPT_Y (--y-diff-only).
+   forbidden by OPT_Y (--y-diff-only).  Note that we don't do this
+   when we're using conditional ML (BHHH).
 */
 
 static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)

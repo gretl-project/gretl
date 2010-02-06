@@ -226,9 +226,10 @@ install-exec: $(PROG) installdirs
 install-gnome: $(PROG) installdirs 
 	$(MAKE) -C ../gnome install 
 
-install-extra-lang: $(topsrc)/gui2/R.lang $(topsrc)/gui2/cpp.lang
+install-extra-lang: $(topsrc)/gui2/R.lang $(topsrc)/gui2/cpp.lang $(topsrc)/gui2/octave.lang
 	$(INSTALL_DATA) $(topsrc)/gui2/R.lang $(DESTDIR)$(langdir)
 	$(INSTALL_DATA) $(topsrc)/gui2/cpp.lang $(DESTDIR)$(langdir)
+	$(INSTALL_DATA) $(topsrc)/gui2/octave.lang $(DESTDIR)$(langdir)
 
 install-lang: $(GRETL_LANG) installdirs $(query_install_extra_lang)
 	$(INSTALL_DATA) $(GRETL_LANG) $(DESTDIR)$(langdir)/gretl.lang

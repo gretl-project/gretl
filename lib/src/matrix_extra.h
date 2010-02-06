@@ -52,6 +52,7 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 
 int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x);
 
+double **gretl_matrix_get_columns (const gretl_matrix *m, int *err);
 
 gretl_matrix *
 gretl_matrix_data_subset_masked (const int *list, const double **Z,

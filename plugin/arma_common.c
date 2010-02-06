@@ -906,6 +906,8 @@ static int arima_difference (arma_info *ainfo, const double **Z,
 	    ainfo->t2);
 #endif
 
+    /* note: dy is a full length series (pdinfo->n) */
+
     dy = malloc(pdinfo->n * sizeof *dy);
     if (dy == NULL) {
 	return E_ALLOC;

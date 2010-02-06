@@ -32,7 +32,11 @@ void delete_gretl_R_files (void);
 
 int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname);
 
+int write_gretl_octave_file (const char *buf, gretlopt opt, const char **pfname);
+
 void delete_gretl_ox_file (void);
+
+void delete_gretl_octave_file (void);
 
 #ifdef USE_RLIB
 

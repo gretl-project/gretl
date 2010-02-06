@@ -336,6 +336,8 @@ static int script_type (const char *fname)
 	return EDIT_GP;
     } else if (ox_support && has_suffix(fname, ".ox")) {
 	return EDIT_OX;
+    } else if (has_suffix(fname, ".m")) {
+	return EDIT_OCTAVE;
     } else {
 	return 0;
     }
@@ -1312,6 +1314,7 @@ GtkActionEntry main_entries[] = {
     { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "RScript", NULL, N_("R script"), NULL, NULL, G_CALLBACK(new_script_callback) },
+    { "OctaveScript", NULL, N_("Octave script"), NULL, NULL, G_CALLBACK(new_script_callback) },
 #ifdef USE_OX
     { "OxScript", NULL, N_("Ox program"), NULL, NULL, G_CALLBACK(new_script_callback) },
 #endif

@@ -1186,6 +1186,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(SAVE_R_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_OX) {
 	    file_selector(SAVE_OX_CMDS, FSEL_DATA_VWIN, vwin);
+	} else if (vwin->role == EDIT_OCTAVE) {
+	    file_selector(SAVE_OCTAVE_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
 	    file_selector(SAVE_CONSOLE, FSEL_DATA_VWIN, vwin);
 	}	    
@@ -1459,6 +1461,8 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: edit R commands")); break;
     case EDIT_OX:
 	title = g_strdup(_("gretl: edit Ox program")); break;
+    case EDIT_OCTAVE:
+	title = g_strdup(_("gretl: edit Octave script")); break;
     case SCRIPT_OUT:
 	title = g_strdup(_("gretl: script output")); break;
     case VIEW_DATA:
@@ -3877,20 +3881,26 @@ static void run_R_sync (void)
     g_free(cmd);
 }
 
-void run_ox_script (gchar *buf)
+static void run_ox_or_octave (gchar *buf, int ox)
 {
     const char *fname;
     int err;
 
-    err = write_gretl_ox_file(buf, OPT_G, &fname);
+    if (ox) {
+	err = write_gretl_ox_file(buf, OPT_G, &fname);
+    } else {
+	err = write_gretl_octave_file(buf, OPT_G, &fname);
+    }
 
     if (err) {
 	gui_errmsg(err);
     } else {
+	const char *prog;
 	char *sout = NULL;
 	gchar *cmd;
 
-	cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
+	prog = (ox)? gretl_oxl_path() : gretl_octave_path();
+	cmd = g_strdup_printf("\"%s\" \"%s\"", prog, fname);
 	err = gretl_win32_grab_output(cmd, &sout);
 	g_free(cmd);
 
@@ -3906,6 +3916,16 @@ void run_ox_script (gchar *buf)
 	    }
 	}
     }
+}
+
+void run_ox_script (gchar *buf)
+{
+    run_ox_or_octave(buf, 1);
+}
+
+void run_octave_script (gchar *buf)
+{
+    run_ox_or_octave(buf, 0);
 }
 
 #else /* some non-Windows functions follow */
@@ -4086,6 +4106,26 @@ void run_ox_script (gchar *buf)
 	gchar *argv[3];
 
 	argv[0] = (gchar *) gretl_oxl_path();
+	argv[1] = (gchar *) fname;
+	argv[2] = NULL;
+
+	run_prog_sync(argv);
+    }
+}
+
+void run_octave_script (gchar *buf)
+{
+    const char *fname;
+    int err;
+
+    err = write_gretl_octave_file(buf, OPT_G, &fname);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	gchar *argv[3];
+
+	argv[0] = (gchar *) gretl_octave_path();
 	argv[1] = (gchar *) fname;
 	argv[2] = NULL;
 

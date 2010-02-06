@@ -213,6 +213,8 @@ void save_as_callback (GtkWidget *w, windata_t *vwin)
 	u = SAVE_R_CMDS;
     } else if (vwin->role == EDIT_OX) {
 	u = SAVE_OX_CMDS;
+    } else if (vwin->role == EDIT_OCTAVE) {
+	u = SAVE_OCTAVE_CMDS;
     } else if (vwin->role == VIEW_FILE) {
 	u = SAVE_TEXT;
     } else {

@@ -64,6 +64,7 @@ struct INTERNAL_PATHS {
     char rbinpath[MAXLEN];
     char rlibpath[MAXLEN];
     char oxlpath[MAXLEN];
+    char octpath[MAXLEN];
     char dbhost[32];
     char pngfont[128];
     unsigned char status;
@@ -1757,6 +1758,11 @@ const char *gretl_oxl_path (void)
 }
 #endif
 
+const char *gretl_octave_path (void)
+{
+    return paths.octpath;
+}
+
 const char *gretl_current_dir (void)
 {
     return current_dir;
@@ -2046,7 +2052,7 @@ static int maybe_transcribe_path (char *targ, char *src,
 
    gretldir
    gnuplot (but not on MS Windows)
-   tramo, x12a, rbinpath, rlibpath, oxlpath, 
+   tramo, x12a, rbinpath, rlibpath, oxlpath, octpath,
    ratsbase, dbhost
 
    * paths.workdir is updated via the separate working directory
@@ -2080,6 +2086,7 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     ndelta += maybe_transcribe_path(paths.tramo, cpaths->tramo, 0);
     ndelta += maybe_transcribe_path(paths.rbinpath, cpaths->rbinpath, 0);
     ndelta += maybe_transcribe_path(paths.oxlpath, cpaths->oxlpath, 0);
+    ndelta += maybe_transcribe_path(paths.octpath, cpaths->octpath, 0);
 
 #ifdef USE_RLIB
     if (maybe_transcribe_path(paths.rlibpath, cpaths->rlibpath, 0)) {
@@ -2144,6 +2151,8 @@ static void load_default_path (char *targ)
 #else
 	*paths.oxlpath = '\0';
 #endif
+    } else if (targ == paths.octpath) {
+	*paths.octpath = '\0'; /* FIXME */
     } else if (targ == paths.pngfont) {
 	strcpy(targ, "verdana 8");
     }
@@ -2217,6 +2226,13 @@ static void load_default_path (char *targ)
 #else /* USE_OX */
 	*paths.oxlpath = '\0';
 #endif
+    } else if (targ == paths.octpath) {
+#ifdef OSX_BUILD
+	/* FIXME -- what is a suitable default *? */
+	strcpy(paths.octpath, "/Applications/octave/bin/octave");
+#else
+	strcpy(paths.octpath, "octave");
+#endif	
     } else if (targ == paths.pngfont) {
 #ifdef OSX_BUILD
 	strcpy(targ, "Sans 9");
@@ -2281,6 +2297,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.rbinpath, cpaths->rbinpath, 0);
     path_init(paths.rlibpath, cpaths->rlibpath, 0);
     path_init(paths.oxlpath, cpaths->oxlpath, 0);
+    path_init(paths.octpath, cpaths->octpath, 0);
 
     /* graphing font */
     path_init(paths.pngfont, cpaths->pngfont, 0);
@@ -2671,6 +2688,8 @@ int cli_read_rc (void)
 		strncat(cpaths.rlibpath, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "ox")) {
 		strncat(cpaths.oxlpath, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "octave")) {
+		strncat(cpaths.octpath, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "Png_font")) {
 		strncat(cpaths.pngfont, val, 128 - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {

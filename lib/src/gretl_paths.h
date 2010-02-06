@@ -54,6 +54,7 @@ struct ConfigPaths_ {
     char rbinpath[MAXLEN];
     char rlibpath[MAXLEN];
     char oxlpath[MAXLEN];
+    char octpath[MAXLEN];
     char dbhost[32];
     char pngfont[128];
 };
@@ -161,6 +162,8 @@ const char *gretl_rlib_path (void);
 const char *gretl_png_font (void);
 
 const char *gretl_oxl_path (void);
+
+const char *gretl_octave_path (void);
 
 const char *gretl_current_dir (void);
 

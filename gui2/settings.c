@@ -220,6 +220,8 @@ RCVAR rc_vars[] = {
 #ifdef USE_OX
     { "ox", N_("Path to oxl executable"), NULL, paths.oxlpath, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+    { "octave", N_("Path to octave executable"), NULL, paths.octpath, 
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
     { "ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
       USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },

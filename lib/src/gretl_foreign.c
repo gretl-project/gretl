@@ -51,10 +51,12 @@ static gchar *gretl_Rprofile;
 static gchar *gretl_Rsrc;
 static gchar *gretl_Rout;
 static gchar *gretl_Oxprog;
+static gchar *gretl_octave_prog;
 
 enum {
     LANG_R = 1,
-    LANG_OX
+    LANG_OX,
+    LANG_OCTAVE
 };
 
 static void destroy_foreign (void)
@@ -79,6 +81,8 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 	pprintf(prn, "%s: not supported\n", lang);
 	err = E_DATA;
 #endif
+    } else if (g_ascii_strcasecmp(lang, "octave") == 0) {
+	foreign_lang = LANG_OCTAVE;	
     } else {
 	pprintf(prn, "%s: unknown language\n", lang);
 	err = E_DATA;
@@ -96,6 +100,17 @@ static const gchar *gretl_ox_filename (void)
     }
 
     return gretl_Oxprog;
+}
+
+static const gchar *gretl_octave_filename (void)
+{
+    if (gretl_octave_prog == NULL) {
+	const char *dotdir = gretl_dotdir();
+
+	gretl_octave_prog = g_strdup_printf("%sgretltmp.m", dotdir);
+    }
+
+    return gretl_octave_prog;
 }
 
 static void make_gretl_R_names (void)
@@ -146,12 +161,20 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-static int lib_run_ox_sync (gretlopt opt, PRN *prn)
+static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
-    const char *path = gretl_oxl_path();
-    const char *fname = gretl_ox_filename();
+    const char *path;
+    const char *fname;
     gchar *cmd, *sout = NULL;
     int err;
+
+    if (foreign_lang == LANG_OX) {
+	path = gretl_oxl_path();
+	fname = gretl_ox_filename();
+    } else {
+	path = gretl_octave_path();
+	fname = gretl_octave_filename();
+    }	
 
     cmd = g_strdup_printf("\"%s\" \"%s\"", path, fname);
     err = gretl_win32_grab_output(cmd, &sout);
@@ -228,13 +251,19 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     return lib_run_prog_sync(argv, opt, prn);
 }
 
-static int lib_run_ox_sync (gretlopt opt, PRN *prn)
+static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
     char *argv[3];
     int err;
 
-    argv[0] = (char *) gretl_oxl_path();
-    argv[1] = (char *) gretl_ox_filename();
+    if (foreign_lang == LANG_OX) {
+	argv[0] = (char *) gretl_oxl_path();
+	argv[1] = (char *) gretl_ox_filename();
+    } else {
+	argv[0] = (char *) gretl_octave_path();
+	argv[1] = (char *) gretl_octave_filename();
+    }
+
     argv[2] = NULL;
 
     err = lib_run_prog_sync(argv, opt, prn);
@@ -293,6 +322,59 @@ static int write_ox_io_file (void)
     return 0;
 }
 
+static int write_octave_io_file (void)
+{
+    static int written;
+
+    if (!written) {
+	const char *dotdir = gretl_dotdir();
+	gchar *fname;
+	FILE *fp;
+
+	fname = g_strdup_printf("%sgretl_io.m", dotdir);
+	fp = gretl_fopen(fname, "w");
+	g_free(fname);
+
+	if (fp == NULL) {
+	    return E_FOPEN;
+	} else {
+#ifdef G_OS_WIN32
+            gchar *dotcpy = g_strdup(dotdir);
+
+	    charsub(dotcpy, '\\', '/');
+	    fputs("function dotdir = gretl_dotdir()\n", fp);
+	    fprintf(fp, "  dotdir = \"%s\";\n", dotcpy);
+	    g_free(dotcpy);
+#else
+	    fputs("function dotdir = gretl_dotdir()\n", fp);
+	    fprintf(fp, "  dotdir = \"%s\";\n", dotdir);
+#endif	
+	    fputs("endfunction\n\n", fp);
+
+	    fputs("function gretl_export(X, str)\n", fp);
+            fputs("  dname = gretl_dotdir();\n", fp);
+	    fputs("  fd = fopen(strcat(mdame, str), \"w\");\n", fp);
+	    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
+	    fputs("  fprintf(fd, \"%.15g\\n\", X);\n", fp);
+	    fputs("  fclose(fd);\n", fp);
+	    fputs("endfunction\n\n", fp);  
+
+	    fputs("function A = gretl_loadmat(str)\n", fp);
+            fputs("  dname = gretl_dotdir();\n", fp);
+	    fputs("  fd = fopen(strcat(dname, str), \"r\");\n", fp);
+	    fputs("  [r,c] = fscanf(fd, \"%d %d\", \"C\");\n", fp);
+	    fputs("  A = reshape(fscanf(fd, \"%g\", r*c),c,r)';\n", fp);
+	    fputs("  fclose(fd);\n", fp);
+	    fputs("endfunction\n\n", fp);
+
+	    fclose(fp);
+	    written = 1;
+	}
+    }
+
+    return 0;
+}
+
 static void add_gretl_include (FILE *fp)
 {
     const char *dotdir = gretl_dotdir();
@@ -319,12 +401,8 @@ static void add_gretl_include (FILE *fp)
 int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 {
     const gchar *fname = gretl_ox_filename();
-    FILE *fp;
-    int err;
-
-    err = write_ox_io_file();
-
-    fp = gretl_fopen(fname, "w");
+    FILE *fp = gretl_fopen(fname, "w");
+    int err = write_ox_io_file();
 
     if (fp == NULL) {
 	return E_FOPEN;
@@ -350,6 +428,42 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 		if (!err && strstr(foreign_lines[i], "oxstd.h")) {
 		    add_gretl_include(fp);
 		}
+	    }
+	}
+	fclose(fp);
+	if (pfname != NULL) {
+	    *pfname = fname;
+	}
+    }
+
+    return 0;
+}
+
+int write_gretl_octave_file (const char *buf, gretlopt opt, const char **pfname)
+{
+    const gchar *fname = gretl_octave_filename();
+    FILE *fp = gretl_fopen(fname, "w");
+
+    write_octave_io_file();
+
+    if (fp == NULL) {
+	return E_FOPEN;
+    } else {
+	if (buf != NULL) {
+	    /* pass on the material supplied in the 'buf' argument */
+	    char line[1024];
+
+	    bufgets_init(buf);
+	    while (bufgets(line, sizeof line, buf)) {
+		fputs(line, fp);
+	    }
+	    bufgets_finalize(buf);
+	} else {
+	    /* put out the stored 'foreign' lines */
+	    int i;
+
+	    for (i=0; i<foreign_n_lines; i++) { 
+		fprintf(fp, "%s\n", foreign_lines[i]);
 	    }
 	}
 	fclose(fp);
@@ -640,6 +754,13 @@ void delete_gretl_ox_file (void)
 {
     if (gretl_Oxprog != NULL) {
 	gretl_remove(gretl_Oxprog);
+    }
+}
+
+void delete_gretl_octave_file (void)
+{
+    if (gretl_octave_prog != NULL) {
+	gretl_remove(gretl_octave_prog);
     }
 }
 
@@ -1324,8 +1445,15 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 	if (err) {
 	    delete_gretl_ox_file();
 	} else {
-	    err = lib_run_ox_sync(foreign_opt, prn);
+	    err = lib_run_other_sync(foreign_opt, prn);
 	}
+    } else if (foreign_lang == LANG_OCTAVE) {
+	err = write_gretl_octave_file(NULL, foreign_opt, NULL);
+	if (err) {
+	    delete_gretl_octave_file();
+	} else {
+	    err = lib_run_other_sync(foreign_opt, prn);
+	}	
     } else {
 	/* "can't happen" */
 	err = E_DATA;

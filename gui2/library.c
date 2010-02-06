@@ -6325,7 +6325,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 
     if (vwin->role == EDIT_GP || 
 	vwin->role == EDIT_R || 
-	vwin->role == EDIT_OX) {
+	vwin->role == EDIT_OX ||
+	vwin->role == EDIT_OCTAVE) {
 	buf = textview_get_text(vwin->text);
     } else if (vwin->role == EDIT_PKG_SAMPLE) {
 	buf = package_sample_get_script(vwin);
@@ -6351,6 +6352,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	run_R_script(buf);
     } else if (vwin->role == EDIT_OX) {
 	run_ox_script(buf);
+    } else if (vwin->role == EDIT_OCTAVE) {
+	run_octave_script(buf);
     } else {
 	run_native_script(vwin, buf, sel);
     }
@@ -6435,7 +6438,9 @@ void new_script_callback (GtkAction *action)
 	etype = EDIT_R;
     } else if (!strcmp(s, "OxScript")) {
 	etype = EDIT_OX;
-    } 
+    } else if (!strcmp(s, "OctaveScript")) {
+	etype = EDIT_OCTAVE;
+    }
 
     do_new_script(etype);
 }
