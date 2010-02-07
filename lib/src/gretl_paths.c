@@ -2146,11 +2146,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.rlibpath) {
 	R_path_from_registry(targ, RLIB);
     } else if (targ == paths.oxlpath) {
-#ifdef USE_OX
 	sprintf(targ, "%s\\OxMetrics5\\Ox\\bin\\oxl.exe", progfiles);
-#else
-	*paths.oxlpath = '\0';
-#endif
     } else if (targ == paths.octpath) {
 	*paths.octpath = '\0'; /* FIXME */
     } else if (targ == paths.pngfont) {
@@ -2228,8 +2224,8 @@ static void load_default_path (char *targ)
 #endif
     } else if (targ == paths.octpath) {
 #ifdef OSX_BUILD
-	/* FIXME -- what is a suitable default *? */
-	strcpy(paths.octpath, "/Applications/octave/bin/octave");
+	strcpy(paths.octpath, 
+	       "/Applications/Octave.app/Contents/Resources/bin/octave");
 #else
 	strcpy(paths.octpath, "octave");
 #endif	
