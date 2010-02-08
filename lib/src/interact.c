@@ -1819,7 +1819,7 @@ static int capture_param (const char *s, CMD *cmd, int *nf)
 	}
     } else {
 	if (cmd->ci == PRINT || cmd->ci == FUNCERR || 
-	    cmd->ci == DELEET) {
+	    cmd->ci == DELEET || cmd->ci == HELP) {
 	    /* grab the whole remainder of line */
 	    cmd_param_grab_string(cmd, s);
 	} else if (cmd->ci == QUANTREG) {
@@ -2760,6 +2760,94 @@ static int func_help_topics (const char *helpfile, PRN *prn)
     return 0;
 }
 
+static void output_help_line (const char *line, PRN *prn, int recode)
+{
+    if (recode > 0) {
+	recode_print_line(line, prn);
+    } else {
+	pputs(prn, line);
+    }
+}
+
+/* check in the CLI helpfile for a line of the form "  @s: ...", 
+   where @s has been recognized as a libset variable */
+
+static int got_setvar_line (const char *s, int n, char *line)
+{
+    if (!strncmp(line, "  ", 2) &&
+	!strncmp(line + 2, s, n) &&
+	line[2 + n] == ':') {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+#define HELPLEN 128
+
+/* special case: the user has done "help set @setvar" */	
+
+static int do_set_help (const char *setvar, FILE *fp, 
+			char *line, PRN *prn, 
+			int recode)
+{
+    char s[9];
+    int n = strlen(setvar);
+    int count = 0;
+
+    while (count < 2 && fgets(line, HELPLEN, fp) != NULL) {
+	if (*line != '#') {
+	    continue;
+	}
+	sscanf(line + 2, "%8s", s);
+	if (!strcmp(s, "set")) {
+	    while (count < 2 && fgets(line, HELPLEN, fp)) {
+		if (got_setvar_line(setvar, n, line)) {
+		    pputc(prn, '\n');
+		    output_help_line(line + 2, prn, recode);
+		    count++;
+		} else if (count > 0) {
+		    if (string_is_blank(line)) {
+			/* reached the end of the item */
+			pputc(prn, '\n');
+			count++;
+		    } else {
+			output_help_line(line + 2, prn, recode);
+		    }
+		} else if (*line == '#') {
+		    /* overshot: not found */
+		    count = 999;
+		}
+	    }
+	}
+    }
+
+    return (count > 0 && count < 999);
+}
+
+/* Is @s "set ", and if so, is @word the name of a variable that can be
+   set via the 'set' command?  We try looking it up in libset.c.
+   FIXME: there are some "special case" set variables that are not
+   found via the function is_libset_var() at present.
+*/
+
+static int is_set_item_help (char *s, char *word, PRN *prn)
+{
+    if (!strncmp(s, "set ", 4)) {
+	if (sscanf(s + 4, "%31s", word) == 1) {
+	    if (is_libset_var(word)) {
+		s[3] = '\0';
+		return 1;
+	    } else {
+		pprintf(prn, "'%s' is not a settable variable\n", word);
+		return -1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static int is_help_alias (char *s)
 {
     int ret = 0;
@@ -2794,12 +2882,13 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
     FILE *fp;
     int noword, funhelp = (opt & OPT_F);
     char word[9], needle[32]; 
-    char line[128];
+    char setvar[32], line[HELPLEN];
     int i, j, ok = 0;
 
     noword = (cmdword == NULL || *cmdword == '\0');
 
-    *needle = '\0';
+    *needle = *setvar = '\0';
+
     if (!noword) {
 	strncat(needle, cmdword, 31);
     }
@@ -2837,19 +2926,24 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
 	if (!ok) {
 	    ok = is_help_alias(needle);
 	}
+	if (!ok) {
+	    ok = is_set_item_help(needle, setvar, prn);
+	    if (ok < 0) {
+		/* unrecognized "help set foo" */
+		return 1;
+	    } 
+	}
     } 
 
     if (ok) {
 	strcpy(helpfile, helpfile_path(GRETL_CLI_HELPFILE));
+    } else if (genr_function_word(needle)) {
+	sprintf(helpfile, "%sgenrcli.hlp", gretl_home());
+    } else if (gretl_is_public_user_function(needle)) {
+	return user_function_help(needle, prn);
     } else {
-	if (genr_function_word(needle)) {
-	    sprintf(helpfile, "%sgenrcli.hlp", gretl_home());
-	} else if (gretl_is_public_user_function(needle)) {
-	    return user_function_help(needle, prn);
-	} else {
-	    pprintf(prn, _("\"%s\" is not a gretl command.\n"), needle);
-	    return 1;
-	}
+	pprintf(prn, _("\"%s\" is not a gretl command.\n"), needle);
+	return 1;
     }
 
     if ((fp = gretl_fopen(helpfile, "r")) == NULL) {
@@ -2859,6 +2953,15 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
 
     if (!gretl_in_gui_mode() && recode < 0) {
 	recode = maybe_need_recode();
+    }
+
+    if (*setvar != '\0') {
+	ok = do_set_help(setvar, fp, line, prn, recode);
+	if (!ok) {
+	    pprintf(prn, _("%s: sorry, no help available.\n"), cmdword);
+	}
+	fclose(fp);
+	return 0;
     }
 
     ok = 0;
@@ -2874,11 +2977,7 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
 		if (*line == '#') {
 		    break;
 		}
-		if (recode > 0) {
-		    recode_print_line(line, prn);
-		} else {
-		    pputs(prn, line);
-		}
+		output_help_line(line, prn, recode);
 	    }
 	    break;
 	}

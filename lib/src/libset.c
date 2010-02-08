@@ -1397,8 +1397,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     return 0;
 }
 
-static int 
-libset_query_settings (const char *s, PRN *prn)
+static int libset_query_settings (const char *s, PRN *prn)
 {
     int err = 0;
 
@@ -1443,11 +1442,20 @@ libset_query_settings (const char *s, PRN *prn)
     } else if (!strcmp(s, "shelldir")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
 		state->shelldir);
+    } else if (!strcmp(s, "stopwatch")) {
+	err = 0;
     } else {
 	err = 1;
     }
 
     return err;
+}
+
+int is_libset_var (const char *s)
+{
+    int err = libset_query_settings(s, NULL);
+
+    return (err == 0);
 }
 
 #define default_ok(s) (!strcmp(s, BFGS_TOLER) || \

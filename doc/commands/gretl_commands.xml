@@ -8419,9 +8419,9 @@
 	</li>
 	<li>	  
 	  <para><lit>initvals</lit>: a pre-specified matrix. Allows manual
-	    setting of the initial parameter estimates for ARMA
-	    estimation. For details see <guideref
-	      targ="arma-estimation"/>.
+	    setting of the initial parameter estimates for numerical
+	    optimization problems (such as ARMA estimation). For details see
+	    <guideref targ="arma-estimation"/>.
 	  </para>
 	</li>
 	<li>
