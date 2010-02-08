@@ -225,6 +225,12 @@ static const char *vecm_norm_strs[] = {
     NULL
 };
 
+static const char *normal_rand_strs[] = {
+    "ziggurat",
+    "box-muller",
+    NULL
+};
+
 static const char **libset_option_strings (const char *s)
 {
     if (!strcmp(s, GARCH_VCV)) {
@@ -237,6 +243,8 @@ static const char **libset_option_strings (const char *s)
 	return hc_version_strs;
     } else if (!strcmp(s, VECM_NORM)) {
 	return vecm_norm_strs;
+    } else if (!strcmp(s, NORMAL_RAND)) {
+	return normal_rand_strs;
     } else if (!strcmp(s, "csv_delim")) {
 	return csv_delim_args;
     } else {
@@ -283,6 +291,8 @@ static const char *libset_option_string (const char *s)
 	return hc_version_strs[state->ropts.hc_version];
     } else if (!strcmp(s, VECM_NORM)) {
 	return vecm_norm_strs[state->vecm_norm];
+    } else if (!strcmp(s, NORMAL_RAND)) {
+	return normal_rand_strs[gretl_rand_get_box_muller()];
     } else {
 	return "?";
     }
@@ -840,6 +850,13 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!strcmp(key, NORMAL_RAND)) {
+	for (i=0; normal_rand_strs[i] != NULL; i++) {
+	    if (!strcmp(val, normal_rand_strs[i])) {
+		gretl_rand_set_box_muller(i);
+		err = 0;
+	    }
+	}
     }
 
     if (err) {
@@ -1180,7 +1197,8 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, HAC_LAG) || \
 			 !strcmp(s, HAC_KERNEL) || \
                          !strcmp(s, HC_VERSION) || \
-			 !strcmp(s, VECM_NORM))
+			 !strcmp(s, VECM_NORM) || \
+			 !strcmp(s, NORMAL_RAND))
 
 const char *intvar_code_string (const char *s)
 {
@@ -1229,30 +1247,6 @@ static void libset_print_double (const char *s, PRN *prn,
     } else if (!na(x)) {
 	pprintf(prn, "set %s %.15g\n", s, x);
     }
-}
-
-static const char *normal_rand_string (void)
-{
-    if (gretl_rand_get_box_muller()) {
-	return "box-muller";
-    } else {
-	return "ziggurat";
-    }
-}
-
-static int set_normal_rand (const char *s)
-{
-    int err = E_PARSE;
-
-    if (!strcmp(s, "box-muller")) {
-	gretl_rand_set_box_muller(1);
-	err = 0;
-    } else if (!strcmp(s, "ziggurat")) {
-	gretl_rand_set_box_muller(0);
-	err = 0;
-    }    
-
-    return err;
 }
 
 static void libset_header (char *s, PRN *prn, gretlopt opt) 
@@ -1348,10 +1342,10 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     if (opt & OPT_D) {
 	pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
-	pprintf(prn, " normal_rand = %s\n", normal_rand_string());
+	pprintf(prn, " normal_rand = %s\n", libset_option_string(NORMAL_RAND));
     } else {
 	pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
-	pprintf(prn, "set normal_rand %s\n", normal_rand_string());
+	pprintf(prn, "set normal_rand %s\n", libset_option_string(NORMAL_RAND));
     }
 
     libset_header(N_("Robust estimation"), prn, opt);
@@ -1442,7 +1436,18 @@ static int libset_query_settings (const char *s, PRN *prn)
     } else if (!strcmp(s, "shelldir")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
 		state->shelldir);
+    } else if (!strcmp(s, "workdir")) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+		gretl_workdir());
+    } else if (!strcmp(s, "include_path")) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+		include_path);
+    } else if (!strcmp(s, "csv_na")) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+		state->csv_na);
     } else if (!strcmp(s, "stopwatch")) {
+	err = 0;
+    } else if (!strcmp(s, "bkbp_limits")) {
 	err = 0;
     } else {
 	err = 1;
@@ -1580,8 +1585,6 @@ int execute_set_line (const char *line, DATAINFO *pdinfo,
 		}
 		state->seed = k;
 	    }
-	} else if (!strcmp(setobj, "normal_rand")) {
-	    err = set_normal_rand(setarg);
 	} else if (!strcmp(setobj, HORIZON)) {
 	    /* horizon for VAR impulse responses */
 	    if (!strcmp(setarg, "auto")) {
