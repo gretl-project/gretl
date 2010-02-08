@@ -977,7 +977,6 @@ with_gtksourceview
 with_x_12_arima
 with_tramo_seats
 with_libR
-with_ox
 with_audio
 with_odbc
 enable_static
@@ -1679,7 +1678,6 @@ Optional Packages:
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
-  --with-ox              include Ox support [default=no]
   --with-audio           include audio graph support (experimental)
   --with-odbc            include ODBC support (experimental)
   --with-pic              try to use only PIC/non-PIC objects [default=use
@@ -2257,7 +2255,6 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_audio="no"
-have_ox="no"
 try_sourceview="yes"
 have_sourceview="no"
 bundled_sourceview="yes"
@@ -6609,22 +6606,6 @@ fi
 
 
 
-# Check whether --with-ox was given.
-if test "${with_ox+set}" = set; then
-  withval=$with_ox; if test "$withval" = "yes"
-then
-  have_ox=yes
-  cat >>confdefs.h <<\_ACEOF
-#define USE_OX 1
-_ACEOF
-
-fi
-else
-  have_ox=no
-fi
-
-
-
 # Check whether --with-audio was given.
 if test "${with_audio+set}" = set; then
   withval=$with_audio; if test "$withval" = "yes"
@@ -7956,13 +7937,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:7959: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:7940: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:7962: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:7943: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:7965: output\"" >&5)
+  (eval echo "\"\$as_me:7946: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -9167,7 +9148,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 9170 "configure"' > conftest.$ac_ext
+  echo '#line 9151 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -10500,11 +10481,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10503: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10484: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10507: \$? = $ac_status" >&5
+   echo "$as_me:10488: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -10839,11 +10820,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10842: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10823: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10846: \$? = $ac_status" >&5
+   echo "$as_me:10827: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -10944,11 +10925,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10947: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10928: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10951: \$? = $ac_status" >&5
+   echo "$as_me:10932: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10999,11 +10980,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11002: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10983: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11006: \$? = $ac_status" >&5
+   echo "$as_me:10987: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13799,7 +13780,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 13802 "configure"
+#line 13783 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13895,7 +13876,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 13898 "configure"
+#line 13879 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -24359,7 +24340,6 @@ Configuration:
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
-  Ox support:                             ${have_ox}
   Experimental audio support:             ${have_audio}
   Experimental ODBC support:              ${have_odbc}
   LAPACK libraries:

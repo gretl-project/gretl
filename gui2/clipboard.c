@@ -180,10 +180,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     gretl_clipboard_free();
 
-    if (fmt == GRETL_FORMAT_TXT) {
-	/* recode (only) if needed */
-	clipboard_buf = my_locale_from_utf8(buf);
-    } else if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
+    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
 	/* RTF: ensure that we're not in UTF-8 */
 	if (string_is_utf8((const unsigned char *) buf)) {
 	    gchar *trbuf = utf8_to_cp(buf);
@@ -202,7 +199,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	    clipboard_buf = gretl_strdup(buf);
 	}
     } else {
-	/* TeX, CSV */
+	/* plain text, TeX, CSV */
 	clipboard_buf = gretl_strdup(buf);
     }
 

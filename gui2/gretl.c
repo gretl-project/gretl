@@ -1315,9 +1315,7 @@ GtkActionEntry main_entries[] = {
     { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "RScript", NULL, N_("R script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "OctaveScript", NULL, N_("Octave script"), NULL, NULL, G_CALLBACK(new_script_callback) },
-#ifdef USE_OX
     { "OxScript", NULL, N_("Ox program"), NULL, NULL, G_CALLBACK(new_script_callback) },
-#endif
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
     { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_code_callback) },
@@ -1580,7 +1578,6 @@ static void add_conditional_items (GtkUIManager *ui)
 			  FALSE);
 #endif
 
-#ifdef USE_OX
     if (ox_support) {
 	gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
 			      "/menubar/File/ScriptFiles/NewScript/OxScript",
@@ -1589,7 +1586,6 @@ static void add_conditional_items (GtkUIManager *ui)
 			      GTK_UI_MANAGER_MENUITEM, 
 			      FALSE);
     }
-#endif
 }
 
 /* retrieve the XML description of the main window menus */

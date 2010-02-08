@@ -680,11 +680,9 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	    filesel_add_filter(filesel, _("GNU R files (*.R)"), "*.R");
 	    filesel_add_filter(filesel, _("gnuplot files (*.plt)"), "*.plt");
 	    filesel_add_filter(filesel, _("GNU Octave files (*.m)"), "*.m");
-#ifdef USE_OX
 	    if (ox_support) {
 		filesel_add_filter(filesel, _("Ox files (*.ox)"), "*.ox");
 	    }
-#endif
 	}
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);

@@ -230,10 +230,8 @@ void cli_read_registry (char *callname)
     /* path to R shared library */
     read_rc_string(fp[0], "Rlib", cpaths.rlibpath);
 
-#ifdef USE_OX
     /* path to oxl */
     read_rc_string(fp[0], "ox", cpaths.oxlpath);
-#endif
 
     /* remote database host */
     cli_read_gretl_var("dbhost", cpaths.dbhost, fp, HKEY_CURRENT_USER);

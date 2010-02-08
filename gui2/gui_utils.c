@@ -524,21 +524,6 @@ static int vwin_selection_present (gpointer p)
     return ret;
 }
 
-gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
-{
-    if (vwin_selection_present(vwin)) {
-	window_copy(vwin, GRETL_FORMAT_SELECTION);
-    } else if (vwin_is_editing(vwin)) {
-	/* FIXME: Should we force plain text copy in some other cases
-	   too? */
-	window_copy(vwin, GRETL_FORMAT_TXT);
-    } else {
-	copy_format_dialog(vwin, W_COPY);
-    } 
-    
-    return TRUE;
-}
-
 int vwin_is_editing (windata_t *vwin)
 {
     if (vwin != NULL && vwin->text != NULL) {
@@ -546,6 +531,19 @@ int vwin_is_editing (windata_t *vwin)
     } else {
 	return 0;
     }
+}
+
+gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin_selection_present(vwin)) {
+	window_copy(vwin, GRETL_FORMAT_SELECTION);
+    } else if (vwin_is_editing(vwin)) {
+	window_copy(vwin, GRETL_FORMAT_TXT);
+    } else {
+	copy_format_dialog(vwin, W_COPY);
+    } 
+    
+    return TRUE;
 }
 
 /* Signal attached to editor/viewer windows: note that @w is always
@@ -565,7 +563,12 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
-	    return vwin_copy_callback(NULL, vwin);
+	    if (vwin_is_editing(vwin)) {
+		/* let GTK handle this */
+		return FALSE;
+	    } else {
+		return vwin_copy_callback(NULL, vwin);
+	    }
 	} else if (editing) {
 	    /* note that the standard Ctrl-key sequences for editing
 	       are handled by GTK, so we only need to put our own

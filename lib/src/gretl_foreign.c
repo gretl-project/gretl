@@ -75,12 +75,7 @@ static int set_foreign_lang (const char *lang, PRN *prn)
     if (g_ascii_strcasecmp(lang, "R") == 0) {
 	foreign_lang = LANG_R;
     } else if (g_ascii_strcasecmp(lang, "ox") == 0) {
-#ifdef USE_OX
 	foreign_lang = LANG_OX;
-#else
-	pprintf(prn, "%s: not supported\n", lang);
-	err = E_DATA;
-#endif
     } else if (g_ascii_strcasecmp(lang, "octave") == 0) {
 	foreign_lang = LANG_OCTAVE;	
     } else {
@@ -171,12 +166,15 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     if (foreign_lang == LANG_OX) {
 	path = gretl_oxl_path();
 	fname = gretl_ox_filename();
-    } else {
+	cmd = g_strdup_printf("\"%s\" \"%s\"", path, fname);
+    } else if (foreign_lang == LANG_OCTAVE) {
 	path = gretl_octave_path();
 	fname = gretl_octave_filename();
-    }	
+	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
+    } else {
+	return 1;
+    }
 
-    cmd = g_strdup_printf("\"%s\" \"%s\"", path, fname);
     err = gretl_win32_grab_output(cmd, &sout);
 
     if (sout != NULL && *sout != '\0') {

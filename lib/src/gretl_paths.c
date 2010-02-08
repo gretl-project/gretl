@@ -1746,17 +1746,10 @@ const char *gretl_rlib_path (void)
     return paths.rlibpath;
 }
 
-#ifdef USE_OX
 const char *gretl_oxl_path (void)
 {
     return paths.oxlpath;
 }
-#else
-const char *gretl_oxl_path (void)
-{
-    return "unsupported";
-}
-#endif
 
 const char *gretl_octave_path (void)
 {
@@ -2148,7 +2141,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.oxlpath) {
 	sprintf(targ, "%s\\OxMetrics5\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {
-	*paths.octpath = '\0'; /* FIXME */
+	strcpy(targ, "C:\\Octave\\3.2.3_gcc-4.0.0\\bin\\octave.exe");
     } else if (targ == paths.pngfont) {
 	strcpy(targ, "verdana 8");
     }
@@ -2197,13 +2190,13 @@ static void load_default_path (char *targ)
 	strcpy(targ, "x12a");
 #else
 	*targ = '\0';
-#endif
+#endif /* HAVE_X12A */
     } else if (targ == paths.tramo) {
 #ifdef HAVE_TRAMO
 	strcpy(targ, "tramo");
 #else
 	*targ = '\0';
-#endif
+#endif /* HAVE_TRAMO */
     } else if (targ == paths.rbinpath) {
 	strcpy(paths.rbinpath, "R");
     } else if (targ == paths.rlibpath) {
@@ -2211,30 +2204,26 @@ static void load_default_path (char *targ)
 	strcpy(paths.rlibpath, RLIBPATH);
 #else
 	*paths.rlibpath = '\0';
-#endif
+#endif /* RLIBPATH */
     } else if (targ == paths.oxlpath) {
-#ifdef USE_OX
-# ifdef OSX_BUILD
+#ifdef OSX_BUILD
 	strcpy(paths.oxlpath, "/Applications/OxMetrics5/ox/bin/oxl");
-# else
+#else
 	strcpy(paths.oxlpath, "oxl");
-# endif
-#else /* USE_OX */
-	*paths.oxlpath = '\0';
-#endif
+#endif /* OSX_BUILD */
     } else if (targ == paths.octpath) {
 #ifdef OSX_BUILD
 	strcpy(paths.octpath, 
 	       "/Applications/Octave.app/Contents/Resources/bin/octave");
 #else
 	strcpy(paths.octpath, "octave");
-#endif	
+#endif /* OSX_BUILD */
     } else if (targ == paths.pngfont) {
 #ifdef OSX_BUILD
 	strcpy(targ, "Sans 9");
 #else
 	strcpy(targ, "Vera 9");
-#endif	
+#endif /* OSX_BUILD */	
     }
 }
 
