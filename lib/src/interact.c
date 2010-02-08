@@ -2835,7 +2835,10 @@ static int is_set_item_help (char *s, char *word, PRN *prn)
 {
     if (!strncmp(s, "set ", 4)) {
 	if (sscanf(s + 4, "%31s", word) == 1) {
-	    if (is_libset_var(word)) {
+	    if (!strcmp(word, "stopwatch")) {
+		strcpy(s, "$stopwatch");
+		*word = '\0';
+	    } else if (is_libset_var(word)) {
 		s[3] = '\0';
 		return 1;
 	    } else {
@@ -2881,7 +2884,7 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
     char helpfile[FILENAME_MAX];
     FILE *fp;
     int noword, funhelp = (opt & OPT_F);
-    char word[9], needle[32]; 
+    char word[12], needle[32]; 
     char setvar[32], line[HELPLEN];
     int i, j, ok = 0;
 
@@ -2969,7 +2972,7 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
 	if (*line != '#') {
 	    continue;
 	}
-	sscanf(line + 2, "%8s", word);
+	sscanf(line + 2, "%10s", word);
 	if (!strcmp(needle, word)) {
 	    ok = 1;
 	    pprintf(prn, "\n%s\n", word);
