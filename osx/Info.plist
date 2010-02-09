@@ -26,7 +26,6 @@
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>inp</string>
-				<string>gretl</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>script.icns</string>

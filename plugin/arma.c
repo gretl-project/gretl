@@ -38,9 +38,18 @@
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
 
+#include "arma_common.c"
+
 #define KALMAN_ALL 999
 
-#include "arma_common.c"
+#define KALMAN_ARMA_INITH 0  /* try initializing inverse Hessian */
+
+#if KALMAN_ARMA_INITH
+static void delete_arma_OPG_info (arma_info *ainfo);
+static int set_up_arma_OPG_info (arma_info *ainfo, 
+				 const double **Z,
+				 const DATAINFO *pdinfo);
+#endif
 
 struct bchecker {
     int qmax;
@@ -261,6 +270,28 @@ static void zero_derivs (arma_info *ainfo, double **de, int dlen)
     }
 }
 
+static int adjust_score_t1 (arma_info *ainfo, const double *y)
+{
+    int p, pmax = ainfo->p + ainfo->pd * ainfo->P;
+    int miss, t, t1 = ainfo->t1;
+
+    for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	miss = 0;
+	for (p=1; p<=pmax; p++) {
+	    if (t - p > 0 && na(y[t-p])) {
+		miss = 1;
+		t1++;
+		break;
+	    }
+	}
+	if (!miss) {
+	    break;
+	}
+    }
+
+    return t1;
+}
+
 static int arma_analytical_score (arma_info *ainfo,
 				  const double *y,
 				  const double **X,
@@ -282,12 +313,17 @@ static int arma_analytical_score (arma_info *ainfo,
     double **de_r = de_sm + ainfo->Q; 
     int dlen = 1 + ainfo->q + ainfo->pd * ainfo->Q;
     double x, Gsi;
-    int t, gt;
+    int t, gt, t1 = ainfo->t1;
     int i, j, k, p, s;
+    int err = 0;
 
     zero_derivs(ainfo, de, dlen);
 
-    for (t=ainfo->t1, gt=0; t<=ainfo->t2; t++, gt++) {
+    if (arma_exact_ml(ainfo)) {
+	t1 = adjust_score_t1(ainfo, y);
+    }
+
+    for (t=t1, gt=0; t<=ainfo->t2 && !err; t++, gt++) {
 
 	/* the constant term (de_0) */
 	if (ainfo->ifc) {
@@ -387,13 +423,18 @@ static int arma_analytical_score (arma_info *ainfo,
 	x = e[t] / s2; /* sqrt(s2)? does it matter? */
 	for (i=0; i<ainfo->nc; i++) {
 	    Gsi = -de[i][0] * x;
+	    if (xna(Gsi) || Gsi == -NADBL) {
+		fprintf(stderr, "arma score, bad value at t=%d, i=%d\n", t, i);
+		err = E_NAN;
+		break;
+	    }	    
 	    gretl_matrix_set(G, gt, i, Gsi);
 	}
 
 	push_derivs(ainfo, de, dlen);
     }
 
-    return 0;
+    return err;
 }
 
 static int conditional_arma_forecast_errors (arma_info *ainfo,
@@ -1352,14 +1393,20 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
     }
 }
 
-#define KALMAN_ARMA_INITH 0 /* try initializing inverse Hessian */
-#define INITH_USE_OPG 0    /* try using OPG for that purpose */
-
 #if KALMAN_ARMA_INITH
-# if INITH_USE_OPG
+
+# define INITH_USE_NUM_OPG 0  /* try using numerical OPG for that purpose */
+# define INITH_SCALE_I 0      /* fall back on scaled identity matrix */
+# define INITH_DEBUG 0
+
+# if INITH_USE_NUM_OPG
+
+/* this does not seem to work very well */
 
 static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
-					 kalman *K)
+					 kalman *K, arma_info *ainfo,
+					 const double **Z,
+					 const DATAINFO *pdinfo)
 {
     gretl_matrix *G, *H = NULL;
     int err = 0;
@@ -1391,10 +1438,111 @@ static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
     return H;
 }
 
-# else /* just use scaled identity matrix */
+# else /* !INITH_USE_NUM_OPG */
 
-static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
-					 kalman *K)
+/* this seems to work pretty nicely on some problems,
+   but needs more rigorous testing */
+
+static gretl_matrix *arma_CML_init_H (double *b, int k, int T,
+				      kalman *K, arma_info *ainfo,
+				      const double **Z, 
+				      const DATAINFO *pdinfo)
+{
+    gretl_matrix *H = NULL;
+    const double *y;
+    const double **X;
+    const double *phi;
+    const double *Phi;
+    const double *theta;
+    const double *Theta;
+    double **save_aux = NULL;
+    double ll, s2;
+    int save_n_aux = 0;
+    int t, s, err = 0;
+
+    ll = kalman_arma_ll(b, K);
+    if (na(ll)) {
+	fprintf(stderr, "arma_CML_init_H: failed on kalman_arma_ll\n");
+	return NULL;
+    }
+
+    s2 = kalman_get_arma_variance(K);
+
+    if (ainfo->aux != NULL) {
+	save_aux = ainfo->aux;
+	save_n_aux = ainfo->n_aux;
+	ainfo->aux = NULL;
+	ainfo->n_aux = 0;
+    }
+
+    err = set_up_arma_OPG_info(ainfo, Z, pdinfo);
+    if (err) {
+	fprintf(stderr, "arma_CML_init_H: failed on set_up_arma_OPG_info\n");
+	goto bailout;
+    }
+
+    if (!err) {
+	/* transcribe forecast errors */
+	for (t=ainfo->t1, s=0; t<=ainfo->t2; t++, s++) {
+	    ainfo->e[t] = E->val[s];
+	}
+    }
+
+    /* data blocks */
+    y = ainfo->Z[0];
+    X = ainfo->Z + 1;
+
+    /* coefficient blocks */
+    phi =       b + ainfo->ifc;
+    Phi =     phi + ainfo->np;
+    theta =   Phi + ainfo->P;
+    Theta = theta + ainfo->nq;
+
+    arma_analytical_score(ainfo, y, X,
+			  phi, Phi, theta, Theta,
+			  s2, ainfo->G);
+    
+    if (!err) {
+	H = gretl_matrix_alloc(k, k);
+	if (H == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+#if INTH_DEBUG
+	gretl_matrix_print(ainfo->G, "G, via CML score");
+#endif
+	gretl_matrix_multiply_mod(ainfo->G, GRETL_MOD_TRANSPOSE,
+				  ainfo->G, GRETL_MOD_NONE,
+				  H, GRETL_MOD_NONE);
+	err = gretl_invert_symmetric_matrix(H);
+	if (err) {
+	    fprintf(stderr, "arma_CML_init_H: H is not pd\n");
+	    gretl_matrix_free(H);
+	    H = NULL;
+	} else {
+#if INTH_DEBUG
+	    gretl_matrix_print(H, "Hinv, via CML score");
+#endif
+	}
+    }
+
+ bailout:
+
+    delete_arma_OPG_info(ainfo);
+
+    if (save_aux != NULL) {
+	ainfo->aux = save_aux;
+	ainfo->n_aux = save_n_aux;
+    }
+
+    return H;
+}
+
+# if INITH_SCALE_I
+
+static gretl_matrix *arma_init_H_scale_I (int k, int T)
 {
     gretl_matrix *H = gretl_identity_matrix_new(k);
 
@@ -1408,6 +1556,27 @@ static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 
 	gretl_matrix_divide_by_scalar(H, d);
     } 
+
+    return H;
+}
+
+# endif
+
+static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
+					 kalman *K, arma_info *ainfo,
+					 const double **Z,
+					 const DATAINFO *pdinfo)
+{
+    gretl_matrix *H = NULL;
+
+    if (ainfo->dX == NULL && ainfo->P == 0 && ainfo->Q == 0) {
+	/* use (CML) analytical score */
+	H = arma_CML_init_H(b, k, T, K, ainfo, Z, pdinfo);
+    } else {
+#if INITH_SCALE_I
+	H = arma_init_H_scale_I(k, T);
+#endif
+    }
 
     return H;
 }
@@ -1537,7 +1706,8 @@ static int kalman_arma (double *coeff,
 	BFGS_defaults(&maxit, &toler, ARMA);
 
 #if KALMAN_ARMA_INITH
-	A0 = kalman_arma_init_H(b, ainfo->nc, ainfo->T, K);
+	A0 = kalman_arma_init_H(b, ainfo->nc, ainfo->T, K,
+				ainfo, Z, pdinfo);
 #endif
 
 	err = BFGS_max(b, ainfo->nc, maxit, toler, 
@@ -1664,6 +1834,26 @@ static const double **make_arma_Z (arma_info *ainfo, const double **Z)
 
     return aZ;
 }
+
+#if KALMAN_ARMA_INITH
+
+static void delete_arma_OPG_info (arma_info *ainfo)
+{
+    free(ainfo->Z);
+    ainfo->Z = NULL;
+
+    gretl_matrix_free(ainfo->G);
+    ainfo->G = NULL;
+
+    free(ainfo->e);
+    ainfo->e = NULL;
+
+    doubles_array_free(ainfo->aux, ainfo->n_aux);
+    ainfo->aux = NULL;
+    ainfo->n_aux = 0;
+}
+
+#endif
 
 /* add extra OPG-related stuff to the arma info struct */
 
