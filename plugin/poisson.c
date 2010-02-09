@@ -225,7 +225,6 @@ static double *get_offset (MODEL *pmod, int offvar, double **Z,
 static int 
 do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    double **Z = *pZ;
     int origv = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
@@ -266,15 +265,15 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     }
 
     /* the original dependent variable */
-    y = Z[pmod->list[1]];
+    y = (*pZ)[pmod->list[1]];
 
     /* weighting variable (first newly added var) */
     local_list[1] = origv;
-    wgt = Z[origv];
+    wgt = (*pZ)[origv];
 
     /* dependent variable for GNR (second newly added var) */
     local_list[2] = origv + 1;
-    depvar = Z[origv + 1];
+    depvar = (*pZ)[origv + 1];
     
     for (i=3; i<=local_list[0]; i++) { 
 	/* original independent vars */
