@@ -6,7 +6,11 @@ icon_0 ICON "icons/icon0.ico"
 /* icon for data files */
 icon_1 ICON "icons/icon1.ico"
 
-/* icon for session files -- two-tone version of Gretel */
+/* icon for script files -- two-tone version of Gretel */
 icon_2 ICON "icons/icon2.ico"
+
+/* icon for session files -- alternate two-tone Gretel */
+icon_3 ICON "icons/icon3.ico"
+
 
 

@@ -72,10 +72,10 @@ void set_registry_entries (void)
     /* Establish file associations */
     reg_suffix(".gdt", "GretlDataFile", "application/x-gretldata", 
 	       "Gretl data file", 1);
-    reg_suffix(".gretl", "GretlSessionFile", "application/x-gretlsession", 
-	       "Gretl session file", 2);
     reg_suffix(".inp", "GretlScriptFile", "application/x-gretlscript", 
 	       "Gretl script file", 2);
+    reg_suffix(".gretl", "GretlSessionFile", "application/x-gretlsession", 
+	       "Gretl session file", 3);
 }
 
 void preamble (const char *s)
