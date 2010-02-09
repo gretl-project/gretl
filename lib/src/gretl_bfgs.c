@@ -513,8 +513,8 @@ static int broken_gradient (double *g, int n)
 */
 
 static void BFGS_get_user_values (double *b, int n, int *maxit,
-				  double *reltol, gretlopt opt,
-				  PRN *prn)
+				  double *reltol, double *gradmax,
+				  gretlopt opt, PRN *prn)
 {
     const gretl_matrix *uinit;
     int uilen, umaxit;
@@ -573,6 +573,10 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 	/* use the generic BFGS default */
 	*reltol = libset_get_double(BFGS_TOLER);
     }
+
+    /* and the maximum acceptable gradient norm */
+
+    *gradmax = libset_get_double(BFGS_MAXGRAD);
 }
 
 #define bfgs_print_iter(v,s,i) (v && (s == 1 || i % s == 0))
@@ -619,14 +623,14 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     double *g, *t, *X, *c;
     int verbskip, verbose = (opt & OPT_V);
     int fcount, gcount, ndelta = 0;
-    double sumgrad, gradnorm = 0.0;
+    double sumgrad, gradmax, gradnorm = 0.0;
     double fmax, f, f0, d = 0.0;
     double s, steplen = 0.0;
     double D1, D2;
     int i, j, ilast, iter;
     int err = 0;
 
-    BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
+    BFGS_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
 
     if (gradfunc == NULL) {
 	gradfunc = BFGS_numeric_gradient;
@@ -713,7 +717,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    }
 	    t[i] = s;
 	    sumgrad += s * g[i];
-	    gradnorm += g[i] * g[i];
+	    gradnorm += fabs(b[i] * g[i]);
 	}
 
 	gradnorm = sqrt(gradnorm / n);
@@ -854,9 +858,12 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     if (iter >= maxit) {
 	fprintf(stderr, _("stopped after %d iterations\n"), iter);
 	err = E_NOCONV;
-    } else if (gradnorm > GRAD_TOLER) {
-	gretl_warnmsg_sprintf("norm of gradient = %g", gradnorm);
-	/* err = E_NOCONV; */
+    } else if (gradnorm > gradmax || gradnorm > GRAD_TOLER) {
+	if (gradnorm > gradmax) {
+	    err = E_NOCONV;
+	} else {
+	    gretl_warnmsg_sprintf(_("norm of gradient = %g"), gradnorm);
+	}
     } else if (fmax < f0) {
 	/* FIXME this should never happen */
 	fprintf(stderr, "failed to match initial value of objective function:\n"
@@ -916,6 +923,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     char task[60];
     char csave[60];
     double f, pgtol;
+    double gradmax;
     double dsave[29];
     int isave[44];
     int lsave[4];
@@ -925,7 +933,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
     *fncount = *grcount = 0;    
 
-    BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
+    BFGS_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
 
     /*
       m: the number of corrections used in the limited memory matrix.

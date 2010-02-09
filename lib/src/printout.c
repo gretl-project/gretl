@@ -2708,7 +2708,7 @@ print_iter_info (int iter, double crit, int type, int k,
     pputs(prn, _("Gradients:  "));
     x = 0.0;
     for (i=0; i<k; i++) {
-	x += g[i] * g[i];
+	x += fabs(b[i] * g[i]);
 	print_iter_val(g[i], i, k, prn);
     }
     pprintf(prn, " (norm %.2e)\n\n", sqrt(x/k));

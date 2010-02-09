@@ -225,23 +225,20 @@ static double *get_offset (MODEL *pmod, int offvar, double **Z,
 static int 
 do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
+    double **Z = *pZ;
     int origv = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-    int i, t;
-
     int iter = 0;
     double crit = 1.0;
-
     double *offset = NULL;
     double offmean = NADBL;
-
     double *y;
     double *wgt;
     double *depvar;
-
     MODEL tmpmod;
     int *local_list = NULL;
+    int i, t;
 
     gretl_model_init(&tmpmod);
 
@@ -269,15 +266,15 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     }
 
     /* the original dependent variable */
-    y = (*pZ)[pmod->list[1]];
+    y = Z[pmod->list[1]];
 
     /* weighting variable (first newly added var) */
     local_list[1] = origv;
-    wgt = (*pZ)[origv];
+    wgt = Z[origv];
 
     /* dependent variable for GNR (second newly added var) */
     local_list[2] = origv + 1;
-    depvar = (*pZ)[origv + 1];
+    depvar = Z[origv + 1];
     
     for (i=3; i<=local_list[0]; i++) { 
 	/* original independent vars */

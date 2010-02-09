@@ -8266,8 +8266,8 @@
 	</li>
 	<li>
 	  <para><lit>csv_na</lit>: string to represent missing values when
-	    writing to file in CSV format.  Maximum 7 characters; the default
-	    is <lit>NA</lit>.
+	    writing data to file in CSV format.  Maximum 7 characters; the
+	    default is <lit>NA</lit>.
 	  </para>
 	</li>
 	<li>
@@ -8415,6 +8415,16 @@
 	    <lit>bfgs_toler</lit>.  The default value is the machine
 	    precision to the power 3/4; this value may be re-established
 	    by typing <lit>default</lit> in place of a numeric value.
+	  </para>
+	</li>
+	<li>	  
+	  <para><lit>bfgs_maxgrad</lit>: one floating point value. This is
+	    used in gretl's BFGS routine to check if the norm of the gradient
+	    is reasonably close to zero when the <lit>bfgs_toler</lit>
+	    criterion is met.  A warning is printed if the norm of the
+	    gradient exceeds 1; an error is flagged if the norm exceeds
+	    <lit>bfgs_maxgrad</lit>. At present the default is the 
+	    permissive value of 3.0.
 	  </para>
 	</li>
 	<li>	  

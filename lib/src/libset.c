@@ -87,6 +87,7 @@ struct set_vars_ {
     int vecm_norm;              /* VECM beta normalization */
     int bfgs_maxiter;           /* max iterations, BFGS */         
     double bfgs_toler;          /* convergence tolerance, BFGS */
+    double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
     int bfgs_verbskip;          /* BFGS: show one in n iterations  */
     int bhhh_maxiter;           /* max iterations, BHHH */          
     double bhhh_toler;          /* convergence tolerance, BHHH */
@@ -131,6 +132,7 @@ struct set_vars_ {
 			   !strcmp(s, BFGS_RSTEP))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
+			  !strcmp(s, BFGS_MAXGRAD) || \
 			  !strcmp(s, BHHH_TOLER) || \
 			  !strcmp(s, HP_LAMBDA) || \
 			  !strcmp(s, NLS_TOLER) || \
@@ -356,6 +358,7 @@ static void state_vars_copy (set_vars *sv)
     sv->vecm_norm = state->vecm_norm;
     sv->bfgs_maxiter = state->bfgs_maxiter;
     sv->bfgs_toler = state->bfgs_toler;
+    sv->bfgs_maxgrad = state->bfgs_maxgrad;
     sv->bfgs_verbskip = state->bfgs_verbskip;
     sv->bhhh_maxiter = state->bhhh_maxiter;
     sv->bhhh_toler = state->bhhh_toler;
@@ -393,6 +396,7 @@ static void state_vars_init (set_vars *sv)
 
     sv->bfgs_maxiter = -1;
     sv->bfgs_toler = NADBL;
+    sv->bfgs_maxgrad = 3.0;
     sv->bfgs_verbskip = 1;
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
@@ -1327,6 +1331,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     libset_print_int(BFGS_MAXITER, prn, opt);
     libset_print_double(BFGS_TOLER, prn, opt);
+    libset_print_double(BFGS_MAXGRAD, prn, opt);
     libset_print_int(BHHH_MAXITER, prn, opt);
     libset_print_double(BHHH_TOLER, prn, opt);
     libset_print_int(RQ_MAXITER, prn, opt);
@@ -1652,6 +1657,8 @@ double libset_get_double (const char *key)
 	} else {
 	    return state->bfgs_toler;
 	}
+    } else if (!strcmp(key, BFGS_MAXGRAD)) {
+	return state->bfgs_maxgrad;
     } else if (!strcmp(key, HP_LAMBDA)) {
 	return state->hp_lambda;
     } else {
@@ -1669,6 +1676,8 @@ double libset_get_user_tolerance (const char *key)
 	return state->bhhh_toler;
     } else if (!strcmp(key, BFGS_TOLER)) {
 	return state->bfgs_toler;
+    } else if (!strcmp(key, BFGS_MAXGRAD)) {
+	return state->bfgs_maxgrad;
     } else {
 	return NADBL;
     }
@@ -1695,6 +1704,8 @@ int libset_set_double (const char *key, double val)
 	state->bhhh_toler = val;
     } else if (!strcmp(key, BFGS_TOLER)) {
 	state->bfgs_toler = val;
+    } else if (!strcmp(key, BFGS_MAXGRAD)) {
+	state->bfgs_maxgrad = val;
     } else if (!strcmp(key, HP_LAMBDA)) {
 	state->hp_lambda = val;
     } else {
