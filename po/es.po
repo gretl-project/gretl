@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-25 14:45+0100\n"
+"PO-Revision-Date: 2010-02-09 15:28+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -9541,7 +9541,7 @@ msgstr "guardar el gráfico"
 
 #: gui2/graphics.c:421
 msgid "EPS file"
-msgstr "Ficehro EPS"
+msgstr "Fichero EPS"
 
 #: gui2/graphics.c:421
 msgid "PDF file"
