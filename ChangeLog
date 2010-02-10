@@ -9,6 +9,8 @@ version 1.8.8, in progress
 - Export of data to R, interactively: add a message
   confirming that the export worked
 - "foreign" code blocks: add support for GNU Octave
+- poisson regression: add overdispersion test and also
+  --robust option to get a QML covariance matrix
 - Fix bug: errors in Exponential Moving Average in GUI
 - Fix bug: non-ASCII characters not handled in function
   package upload to server
