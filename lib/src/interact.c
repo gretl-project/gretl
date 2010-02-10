@@ -4776,7 +4776,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    *models[0] = tobit_model(cmd->list, pZ, pdinfo,
 				     (cmd->opt & OPT_V)? prn : NULL);
 	} else if (cmd->ci == POISSON) {
-	    *models[0] = poisson_model(cmd->list, pZ, pdinfo,
+	    *models[0] = poisson_model(cmd->list, pZ, pdinfo, cmd->opt,
 				       (cmd->opt & OPT_V)? prn : NULL);
 	} else if (cmd->ci == HECKIT) {
 	    *models[0] = heckit_model(cmd->list, pZ, pdinfo, cmd->opt, 

@@ -17,8 +17,8 @@
  * 
  */
 
-
 #include "libgretl.h"
+#include "matrix_extra.h"
 
 #define PDEBUG 0
 #define PR2DEBUG 0
@@ -60,6 +60,130 @@ static int is_count_variable (const double *x, int t1, int t2)
     return ret;
 }
 
+/* sandwich of hessian and OPG */
+
+static int poisson_robust_vcv (MODEL *pmod, gretl_matrix *G)
+{
+    gretl_matrix *H = NULL;
+    gretl_matrix *GG = NULL;
+    gretl_matrix *V = NULL;
+    int k = G->cols;
+    int err = 0;
+
+    H = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+
+    if (!err) {
+	GG = gretl_matrix_alloc(k, k);
+	V = gretl_matrix_alloc(k, k);
+	if (GG == NULL || V == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+				  G, GRETL_MOD_NONE,
+				  GG, GRETL_MOD_NONE);    
+	/* form sandwich: V = H^{-1} GG' H^{-1} */
+	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
+				 GG, V, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, V);
+    }
+
+    if (!err) {
+	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+	pmod->opt |= OPT_R;
+    }
+
+    gretl_matrix_free(V);
+    gretl_matrix_free(GG);
+    gretl_matrix_free(H);
+
+    return err;
+} 
+
+/* Overdispersion test via augmented OPG regression: see
+   Davidson and McKinnon, ETM, section 11.5 */
+
+static int overdispersion_test (MODEL *pmod, const double **Z,
+				gretlopt opt)
+{
+    const double *mu = pmod->yhat;
+    const double *y = Z[pmod->list[1]];
+    gretl_matrix *u, *G, *b, *e;
+    double mt, mxt, zt;
+    int n = pmod->nobs;
+    int k = pmod->ncoeff;
+    int i, s, t, v;
+    int err = 0;
+
+    u = gretl_unit_matrix_new(n, 1);
+    G = gretl_matrix_alloc(n, k+1);
+    b = gretl_matrix_alloc(k+1, 1);
+    e = gretl_matrix_alloc(n, 1);
+
+    if (u == NULL || G == NULL || b == NULL || e == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* Construct gradient matrix, G, with an extra column
+       holding z_t = (y_t - exp(X_t\beta))^2 - y_t.  Under 
+       the null of no overdispersion, (n - SSR) from the
+       artificial regression follows \chi^2(1) asymptotically.
+    */
+
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(y[t]) || na(mu[t])) {
+	    continue;
+	}
+	mt = y[t] - mu[t];
+	for (i=0; i<k; i++) {
+	    v = pmod->list[i+2];
+	    mxt = mt * Z[v][t];
+	    gretl_matrix_set(G, s, i, mxt);
+	}
+	zt = mt * mt - y[t];
+	gretl_matrix_set(G, s, k, zt);
+	s++;
+    } 
+
+    if (opt & OPT_R) {
+	gretl_matrix_reuse(G, n, k);
+	err = poisson_robust_vcv(pmod, G);
+	gretl_matrix_reuse(G, n, k+1);
+    }
+
+    if (!err) {
+	err = gretl_matrix_ols(u, G, b, NULL, e, NULL);
+
+	if (!err) {
+	    double X2 = e->rows;
+
+	    for (i=0; i<e->rows; i++) {
+		X2 -= e->val[i] * e->val[i];
+	    }
+
+	    if (X2 > 0) {
+		gretl_model_set_double(pmod, "overdisp", X2);
+	    }
+	}
+    }  
+
+ bailout:
+
+    gretl_matrix_free(u);
+    gretl_matrix_free(G);
+    gretl_matrix_free(b);
+    gretl_matrix_free(e);
+
+    return err;
+}
+
 static double poisson_ll (const double *y, const double *mu, 
 			  int t1, int t2)
 {
@@ -76,7 +200,7 @@ static double poisson_ll (const double *y, const double *mu,
 	    loglik = NADBL;
 	    break;
 	}
-	llt = (-mu[t] + y[t] * log(mu[t]) - lytfact);
+	llt = -mu[t] + y[t] * log(mu[t]) - lytfact;
 	loglik += llt;
     }  
 
@@ -223,7 +347,8 @@ static double *get_offset (MODEL *pmod, int offvar, double **Z,
 }
 
 static int 
-do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, 
+	    gretlopt opt, PRN *prn)
 {
     int origv = pdinfo->v;
     int orig_t1 = pdinfo->t1;
@@ -353,6 +478,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     if (pmod->errcode == 0) {
 	transcribe_poisson_results(pmod, &tmpmod, y, iter, offvar, 
 				   offset, offmean);
+	overdispersion_test(pmod, (const double **) *pZ, opt);
     }
 
  bailout:
@@ -369,7 +495,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 int 
 poisson_estimate (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo,
-		  PRN *prn) 
+		  gretlopt opt, PRN *prn) 
 {
     int err = 0;
 
@@ -377,7 +503,7 @@ poisson_estimate (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo,
 	gretl_errmsg_set(_("poisson: the dependent variable must be count data"));
 	err = pmod->errcode = E_DATA;
     } else {
-	err = do_poisson(pmod, offvar, pZ, pdinfo, prn);
+	err = do_poisson(pmod, offvar, pZ, pdinfo, opt, prn);
     }
 
     return err;

@@ -1395,8 +1395,8 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
 
 #if KALMAN_ARMA_INITH
 
-# define INITH_USE_NUM_OPG 0  /* try using numerical OPG for that purpose */
-# define INITH_SCALE_I 0      /* fall back on scaled identity matrix */
+# define INITH_USE_NUM_OPG 1  /* try using numerical OPG for that purpose */
+# define INITH_SCALE_I 0      /* use scaled identity matrix */
 # define INITH_DEBUG 0
 
 # if INITH_USE_NUM_OPG
@@ -1569,14 +1569,14 @@ static gretl_matrix *kalman_arma_init_H (double *b, int k, int T,
 {
     gretl_matrix *H = NULL;
 
+#if INITH_SCALE_I
+    return arma_init_H_scale_I(k, T);
+#endif
+
     if (ainfo->dX == NULL && ainfo->P == 0 && ainfo->Q == 0) {
 	/* use (CML) analytical score */
 	H = arma_CML_init_H(b, k, T, K, ainfo, Z, pdinfo);
-    } else {
-#if INITH_SCALE_I
-	H = arma_init_H_scale_I(k, T);
-#endif
-    }
+    } 
 
     return H;
 }

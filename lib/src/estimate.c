@@ -4140,13 +4140,15 @@ static int get_offset_var (int *list)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn)
 {
     MODEL pmodel;
     void *handle;
     int *listcpy;
     int offvar;
-    int (* poisson_estimate) (MODEL *, int, double ***, DATAINFO *, PRN *);
+    int (* poisson_estimate) (MODEL *, int, double ***, DATAINFO *, 
+			      gretlopt, PRN *);
 
     gretl_error_clear();
 
@@ -4179,7 +4181,7 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	return pmodel;
     }
 
-    (*poisson_estimate) (&pmodel, offvar, pZ, pdinfo, prn);
+    (*poisson_estimate) (&pmodel, offvar, pZ, pdinfo, opt, prn);
 
     close_plugin(handle);
 

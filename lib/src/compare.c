@@ -775,7 +775,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	}
 	break;
     case POISSON:
-	rep = poisson_model(list, pZ, pdinfo, NULL);
+	rep = poisson_model(list, pZ, pdinfo, myopt, NULL);
 	break;
     case HECKIT:
 	rep = heckit_model(list, pZ, pdinfo, myopt, NULL);

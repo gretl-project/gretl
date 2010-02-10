@@ -6933,6 +6933,10 @@
       </arguments>
       <options>
         <option>
+          <flag>--robust</flag>
+          <effect>robust standard errors</effect>
+        </option>	
+        <option>
           <flag>--vcv</flag>
           <effect>print covariance matrix</effect>
         </option>
@@ -6948,9 +6952,10 @@
     </usage>
 
     <description>
-      <para>Estimates a poisson regression.  The dependent variable is
-	taken to represent the occurrence of events of some sort, and
-	must take on only non-negative integer values.
+      <para>
+	Estimates a poisson regression.  The dependent variable is taken to
+	represent the occurrence of events of some sort, and must take on only
+	non-negative integer values.
       </para>
 
       <para>If a discrete random variable <math>Y</math> follows
@@ -6973,17 +6978,34 @@
       <math>v</math> is a linear function of the independent
       variables.</para>
 
-      <para>Optionally, you may add an <quote>offset</quote> variable
-	to the specification.  This is a scale variable, the log of
-	which is added to the linear regression function (implicitly,
-	with a coefficient of 1.0).  This makes sense if you expect
-	the number of occurrences of the event in question to be
-	proportional, other things equal, to some known factor.  For
-	example, the number of traffic accidents might be supposed to
-	be proportional to traffic volume, other things equal, and in
-	that case traffic volume could be specified as an
-	<quote>offset</quote> in a Poisson model of the accident rate.
-	The offset variable must be strictly positive.  
+      <para>
+	Optionally, you may add an <quote>offset</quote> variable to the
+	specification.  This is a scale variable, the log of which is added to
+	the linear regression function (implicitly, with a coefficient of
+	1.0).  This makes sense if you expect the number of occurrences of the
+	event in question to be proportional, other things equal, to some
+	known factor.  For example, the number of traffic accidents might be
+	supposed to be proportional to traffic volume, other things equal, and
+	in that case traffic volume could be specified as an
+	<quote>offset</quote> in a Poisson model of the accident rate. The
+	offset variable must be strictly positive.  
+      </para>
+
+      <para context="cli">
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
+	then QML or Huber&ndash;White standard errors are calculated
+	instead. In this case the estimated covariance matrix is a
+	<quote>sandwich</quote> of the inverse of the estimated Hessian
+	and the outer product of the gradient.
+      </para>
+      <para context="gui">
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the "Robust standard errors" box is
+	checked, then QML or Huber&ndash;White standard errors are
+	calculated instead. In this case the estimated covariance matrix
+	is a <quote>sandwich</quote> of the inverse of the estimated
+	Hessian and the outer product of the gradient.
       </para>
 
     </description>

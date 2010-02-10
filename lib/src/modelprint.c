@@ -315,7 +315,8 @@ static void print_panel_AR_test (double z, int order, PRN *prn)
 enum {
     AB_SARGAN,
     AB_WALD,
-    J_TEST
+    J_TEST,
+    OVERDISP
 };
 
 static void 
@@ -324,12 +325,14 @@ print_model_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
     const char *strs[] = {
 	N_("Sargan over-identification test"),
 	N_("Wald (joint) test"),
-	N_("J test")
+	N_("J test"),
+	N_("Overdispersion test")
     };
     const char *texstrs[] = {
 	N_("Sargan test"),
 	N_("Wald (joint) test"),
-	N_("J test")
+	N_("J test"),
+	N_("Overdispersion test")
     };
     double pv;
     int df;
@@ -338,8 +341,12 @@ print_model_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 	df = gretl_model_get_int(pmod, "sargan_df");
     } else if (j == AB_WALD) {
 	df = gretl_model_get_int(pmod, "wald_df");
-    } else {
+    } else if (j == J_TEST) {
 	df = gretl_model_get_int(pmod, "J_df");
+    } else if (j == OVERDISP) {
+	df = 1;
+    } else {
+	return;
     }
 
     pv = chisq_cdf_comp(df, x);
@@ -442,6 +449,19 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
 	pputs(prn, "\\end{tabular}\n");
     } else {
 	gretl_prn_newline(prn);
+    }
+}
+
+static void print_count_stats (const MODEL *pmod, PRN *prn)
+{
+    double x = gretl_model_get_double(pmod, "overdisp");
+
+    if (!na(x)) {
+	ensure_vsep(prn);
+	print_model_chi2_test(pmod, x, OVERDISP, prn);
+	if (!tex_format(prn)) {
+	    gretl_prn_newline(prn);
+	}
     }
 }
 
@@ -2929,6 +2949,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	addconst_message(pmod, prn);
     } else if (pmod->ci == INTREG) {
 	print_intreg_info(pmod, prn);
+    } else if (pmod->ci == POISSON) {
+	print_count_stats(pmod, prn);
     }
 
     /* FIXME alternate R^2 measures (within, centered) */
