@@ -11,6 +11,7 @@ version 1.8.8, in progress
 - "foreign" code blocks: add support for GNU Octave
 - poisson regression: add overdispersion test and also
   --robust option to get a QML covariance matrix
+- Add new function, digamma()
 - Fix bug: errors in Exponential Moving Average in GUI
 - Fix bug: non-ASCII characters not handled in function
   package upload to server

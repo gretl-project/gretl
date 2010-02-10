@@ -24,6 +24,8 @@ double gamma_function (double x);
 
 double log_gamma_function (double x);
 
+double digamma_function (double x);
+
 double binomial_cdf (double p, int n, int k);
 
 double binomial_cdf_comp (double p, int n, int k);

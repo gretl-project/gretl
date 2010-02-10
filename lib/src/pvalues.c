@@ -63,6 +63,25 @@ double log_gamma_function (double x)
 
     return ret;
 }
+
+/**
+ * digamma_function:
+ * @x: argument.
+ *
+ * Returns: the digamma (or Psi) function of @x, or #NADBL on failure.
+ */
+
+double digamma_function (double x)
+{
+    double ret = psi(x);
+
+    if (get_cephes_errno()) {
+	fprintf(stderr, "digamma_function: arg = %g\n", x);
+	ret = NADBL;
+    }
+
+    return ret;
+}
  
 /**
  * binomial_cdf:

@@ -1396,6 +1396,17 @@
       </description>
     </function>
 
+    <function name="digamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns the digamma (or Psi) function of <argname>x</argname>. 
+	</para>
+      </description>
+    </function>
+
     <function name="dnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>

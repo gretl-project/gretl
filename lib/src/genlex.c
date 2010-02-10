@@ -199,6 +199,7 @@ struct str_table funcs[] = {
     { F_QNORM,    "qnorm" },
     { F_GAMMA,    "gammafun" },
     { F_LNGAMMA,  "lngamma" },
+    { F_DIGAMMA,  "digamma" },
     { F_RESAMPLE, "resample" },
     { F_PNOBS,    "pnobs" },     /* per-unit nobs in panels */
     { F_PMIN,     "pmin" },      /* panel min */

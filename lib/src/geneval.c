@@ -538,6 +538,8 @@ static void eval_warning (parser *p, int op, int errnum)
 	    w = "gammafun";
 	} else if (op == F_LNGAMMA) {
 	    w = "lgamma";
+	} else if (op == F_DIGAMMA) {
+	    w = "digamma";
 	}
 
 	if (errnum) {
@@ -2600,6 +2602,12 @@ static double real_apply_func (double x, int f, parser *p)
 	return y;
     case F_LNGAMMA:
 	y = log_gamma_function(x);
+	if (na(y)) {
+	    eval_warning(p, f, errno);
+	}
+	return y;
+    case F_DIGAMMA:
+	y = digamma_function(x);
 	if (na(y)) {
 	    eval_warning(p, f, errno);
 	}
@@ -6612,6 +6620,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LOGISTIC:
     case F_GAMMA:
     case F_LNGAMMA:
+    case F_DIGAMMA:
 	/* functions taking one argument, any type */
 	if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);

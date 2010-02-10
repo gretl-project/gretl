@@ -171,6 +171,7 @@ enum {
     F_QNORM,
     F_GAMMA,	
     F_LNGAMMA,
+    F_DIGAMMA,
     F_HPFILT,
     F_BKFILT,
     F_PNOBS,
