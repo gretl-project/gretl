@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-02-06 23:30+0800\n"
+"PO-Revision-Date: 2010-02-11 01:27+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -2483,9 +2483,8 @@ msgid "unit"
 msgstr "/新增變數/_Unit dummies"
 
 #: lib/src/genfuncs.c:1486
-#, fuzzy
 msgid "cross-sectional unit index"
-msgstr "橫斷面資料: frequency must be 1"
+msgstr "橫斷面單位指標 (unit index)"
 
 #: lib/src/genfuncs.c:1567
 #: lib/src/transforms.c:1668
@@ -3730,9 +3729,8 @@ msgstr ""
 #: lib/src/modelprint.c:2467
 #: lib/src/printout.c:1185
 #: gui2/library.c:5153
-#, fuzzy
 msgid "Standard error of the regression"
-msgstr "步驟 %d: 共整合迴歸\n"
+msgstr "Standard error of the regression"
 
 #: lib/src/gretl_restrict.c:1930
 #, fuzzy
@@ -4613,12 +4611,12 @@ msgstr ""
 #: lib/src/modelprint.c:564
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
+msgstr "除了常數項 (const) 之外, p-值 最大的變數代碼是 %d (變數 %s)"
 
 #: lib/src/modelprint.c:567
 #, c-format
 msgid "P-value was highest for variable %d (%s)"
-msgstr ""
+msgstr "P-值最大的變數代碼是 %d (變數名稱 %s)"
 
 #: lib/src/modelprint.c:598
 msgid "Auxiliary regression for non-linearity test (squared terms)"
@@ -5230,14 +5228,14 @@ msgid "%s, using %d observations"
 msgstr "增加樣本(_A)"
 
 #: lib/src/modelprint.c:1635
-#, fuzzy, c-format
+#, c-format
 msgid "Included %d cross-sectional units"
-msgstr "橫斷面資料: frequency must be 1"
+msgstr "包含 %d 橫斷面單位"
 
 #: lib/src/modelprint.c:1640
-#, fuzzy, c-format
+#, c-format
 msgid "Time-series length = %d"
-msgstr "時間序列圖(_T)"
+msgstr "時間序列長度 = %d"
 
 #: lib/src/modelprint.c:1642
 #, c-format
@@ -5269,9 +5267,8 @@ msgstr ""
 
 #: lib/src/modelprint.c:1785
 #: gui2/selector.c:3082
-#, fuzzy
 msgid "Selection variable"
-msgstr "新增指標變數(_I)"
+msgstr "變數選擇"
 
 #: lib/src/modelprint.c:1830
 msgid "Weight var is a dummy variable, effective obs ="
@@ -5623,7 +5620,7 @@ msgstr ""
 #: lib/src/system.c:3698
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
-msgstr "Convergence achieved after %d iterations\n"
+msgstr "在 %d 次反覆運 (iterations) 後, 已經滿足設定之收歛標準 (convergence achieved)\n"
 
 #: lib/src/modelprint.c:3931
 #, fuzzy
@@ -5819,9 +5816,9 @@ msgid "No valid loop condition was given."
 msgstr ""
 
 #: lib/src/monte_carlo.c:1193
-#, fuzzy, c-format
+#, c-format
 msgid "Reached maximum iterations, %d"
-msgstr "gretl: 最大概似法"
+msgstr "已達所設定之最多反覆計算次數, %d"
 
 #: lib/src/monte_carlo.c:1202
 #, c-format
@@ -6469,9 +6466,9 @@ msgid ""
 msgstr ""
 
 #: lib/src/printout.c:1179
-#, fuzzy, c-format
+#, c-format
 msgid "Model estimation range: %s - %s"
-msgstr "恢復為全樣本(_R)"
+msgstr "模型估計所用之樣本範圍: %s - %s"
 
 #: lib/src/printout.c:1195
 #, fuzzy
@@ -6544,9 +6541,8 @@ msgstr "示範資料檔(_S)..."
 
 #: lib/src/printout.c:2387
 #: gui2/guiprint.c:1277
-#, fuzzy
 msgid "Forecast evaluation statistics"
-msgstr "gretl: 組距-均數統計量 (range-mean statistics)"
+msgstr "預測評估統計量 (Forecast evaluation statistics)"
 
 #: lib/src/printout.c:2469
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
@@ -6870,16 +6866,14 @@ msgstr "資料型態"
 #: lib/src/subsample.c:2122
 #: lib/src/subsample.c:2144
 #: gui2/datawiz.c:1227
-#, fuzzy
 msgid "Number of cross-sectional units"
-msgstr "橫斷面資料: frequency must be 1"
+msgstr "橫斷面單位數"
 
 #: lib/src/subsample.c:2123
 #: lib/src/subsample.c:2145
 #: gui2/datawiz.c:1228
-#, fuzzy
 msgid "Number of time periods"
-msgstr "時間序列圖(_T)"
+msgstr "時間長度"
 
 #: lib/src/subsample.c:2125
 #: lib/src/subsample.c:2193
@@ -7577,12 +7571,12 @@ msgstr "OK, 繼續使用目前的資料檔\n"
 #: gui2/library.c:7640
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr ""
+msgstr "指令 '%s' 已被略過; 因為在系統方程式中不適用\n"
 
 #: cli/gretlcli.c:807
 #: gui2/library.c:7648
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
-msgstr ""
+msgstr "請輸入在迴圈 (loop) 之中要執行的指令, 否則請輸入 'endloop' 以跳出迴圈\n"
 
 #: cli/gretlcli.c:861
 #: gui2/library.c:5668
@@ -7601,7 +7595,7 @@ msgstr ""
 #: cli/gretlcli.c:912
 #: gui2/library.c:7829
 msgid "Data series length count missing or invalid\n"
-msgstr ""
+msgstr "資料長度不正確 (missing or invalid)\n"
 
 #: cli/gretlcli.c:931
 msgid "Done\n"
@@ -7660,7 +7654,7 @@ msgstr "有關 gretl"
 #: gui2/about.c:164
 #: gui2/about.c:166
 msgid "translator_credits"
-msgstr ""
+msgstr "translator_credits"
 
 #: gui2/about.c:175
 msgid "License"
@@ -7735,7 +7729,7 @@ msgstr "gnuplot 指令失敗"
 
 #: gui2/calculator.c:963
 msgid "Incomplete entry"
-msgstr ""
+msgstr "Incomplete entry"
 
 #: gui2/calculator.c:1017
 #: gui2/dialogs.c:888
@@ -8369,7 +8363,7 @@ msgid ""
 "Enter formula for new variable\n"
 "(or just a name, to enter data manually)"
 msgstr ""
-"請為此新變輸入公式, 例如 x1 = 10+0.4*y \n"
+"請為此新變輸入公式, 例如 x1 = 10+0.4*y, 或 scalar p =0.5, 或 matrix coef=$coeff \n"
 "(或者只輸入變數名稱, 稍候再手動輸入資料))"
 
 #: gui2/callbacks.c:543
@@ -8490,6 +8484,8 @@ msgid ""
 "# Record of session commands.  Please note that this will\n"
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
+"# 記綠指令分析檔,  如果此檔要被執行l\n"
+"# 可能需要再編輯修正\n"
 
 #: gui2/cmdstack.c:337
 msgid "The command log is empty"
@@ -8561,7 +8557,7 @@ msgstr "警告: 資料變數中有遺漏值之樣本"
 
 #: gui2/database.c:628
 msgid "Couldn't access binary datafile"
-msgstr ""
+msgstr "無法存取二進位 (binary) 型式之資料檔"
 
 #: gui2/database.c:679
 #: gui2/session.c:151
@@ -8709,7 +8705,7 @@ msgstr "gretl: 變數資訊"
 
 #: gui2/datafiles.c:681
 msgid "Failed to retrieve description of data"
-msgstr ""
+msgstr "無法取得資料說明"
 
 #: gui2/datafiles.c:752
 #, c-format
@@ -9125,6 +9121,8 @@ msgid ""
 "Panel data (%s)\n"
 "%d cross-sectional units observed over %d periods"
 msgstr ""
+"追踨資料 (Panel data) (%s)\n"
+"有 %d 個橫斷面資料 (cross-sectional units),  時間長度是 %d 期"
 
 #: gui2/datawiz.c:566
 #: gui2/datawiz.c:574
@@ -9149,7 +9147,7 @@ msgstr ""
 
 #: gui2/datawiz.c:921
 msgid "This dataset cannot be interpreted as a panel"
-msgstr ""
+msgstr "此資料檔無法被設定為追踨資料 (panel) 類型"
 
 #: gui2/datawiz.c:1025
 msgid "Unit or group index variable"
@@ -9165,7 +9163,7 @@ msgstr "移除遺漏值樣本 (purge missing observations)"
 
 #: gui2/datawiz.c:1410
 msgid "The data set contains no suitable index variables"
-msgstr ""
+msgstr "資料檔沒有適當的指標變數"
 
 #: gui2/datawiz.c:1585
 msgid "start entering data values"
@@ -9256,11 +9254,11 @@ msgstr "包含樣本觀察值欄 (column)"
 
 #: gui2/dialogs.c:688
 msgid "Tab separated"
-msgstr ""
+msgstr "用 tab 當區隔符號"
 
 #: gui2/dialogs.c:707
 msgid "Comma separated"
-msgstr ""
+msgstr "用逗號當區隔符號"
 
 #: gui2/dialogs.c:726
 msgid "plain text"
@@ -9334,24 +9332,23 @@ msgstr "gretl: open data"
 
 #: gui2/dialogs.c:1276
 msgid "BHHH maximizer"
-msgstr ""
+msgstr "BHHH 最大概似演算法"
 
 #: gui2/dialogs.c:1277
 msgid "BFGS maximizer"
-msgstr ""
+msgstr "BFGS 最大概似演算法"
 
 #: gui2/dialogs.c:1285
-#, fuzzy
 msgid "Maximum iterations:"
-msgstr "最大概似法(_M)"
+msgstr "最大反覆計算次數(max. interations):"
 
 #: gui2/dialogs.c:1296
 msgid "Convergence tolerance:"
-msgstr ""
+msgstr "收歛容許值 (Convergence tolerance):"
 
 #: gui2/dialogs.c:1319
 msgid "Use L-BFGS-B, memory size:"
-msgstr ""
+msgstr "使用 L-BFGS-B 演算法, 計憶體大小 (memory size):"
 
 #: gui2/dialogs.c:1580
 #, c-format
@@ -9392,7 +9389,7 @@ msgstr "設定子樣本範圍"
 
 #: gui2/dialogs.c:1936
 msgid "Enter boolean condition for selecting cases:"
-msgstr ""
+msgstr "請輸入樣本篩選條件:"
 
 #: gui2/dialogs.c:1943
 msgid "gretl: restrict sample"
@@ -9633,9 +9630,8 @@ msgid "Test against gamma distribution"
 msgstr "檢定是否服從 Gamma 分配"
 
 #: gui2/dialogs.c:3855
-#, fuzzy
 msgid "show plot"
-msgstr "頻率分配圖(_p)"
+msgstr "畫圖"
 
 #: gui2/dialogs.c:3901
 msgid "Use model names"
@@ -11417,11 +11413,11 @@ msgstr "工具變數法(_IV)"
 
 #: gui2/gretl.c:1482
 msgid "_Two-Stage Least Squares..."
-msgstr "兩階段最小平方法 (2SLS)(_T)..."
+msgstr "_TSLS 兩階段最小平方法..."
 
 #: gui2/gretl.c:1483
 msgid "_LIML..."
-msgstr "限制資訊最大概似法(_LIML)..."
+msgstr "_LIML 限制資訊最大概似法..."
 
 #: gui2/gretl.c:1484
 #: gui2/gretl.c:1530
@@ -11684,7 +11680,7 @@ msgstr ""
 
 #: gui2/gtkfontselhack.c:267
 msgid "Filter"
-msgstr ""
+msgstr "篩選器 (Filter)"
 
 #: gui2/gtkfontselhack.c:268
 msgid "The filter for acceptable fonts."
@@ -11819,7 +11815,7 @@ msgstr ""
 
 #: gui2/guiprint.c:1463
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr ""
+msgstr "Note: * 表示殘差超過 2.5 倍的標準誤 "
 
 #: gui2/guiprint.c:1541
 #, fuzzy, c-format
@@ -12471,6 +12467,11 @@ msgid ""
 "Do you want to restore the sample on which\n"
 "this model was estimated?"
 msgstr ""
+"此模型之子樣本和資料檔中之樣本不相符,\n"
+"選單中某些選項將無法選取.\n"
+"\n"
+"你想要將子樣本回復為\n"
+"原來模型的選擇範圍嗎?"
 
 #: gui2/gui_utils.c:3695
 #, fuzzy
@@ -12538,19 +12539,16 @@ msgid "Couldn't fork"
 msgstr "無法開啟指令檔 \"%s\"\n"
 
 #: gui2/helpfiles.c:69
-#, fuzzy
 msgid "Larger"
-msgstr "放大(_L)"
+msgstr "放大"
 
 #: gui2/helpfiles.c:71
-#, fuzzy
 msgid "Smaller"
-msgstr "縮小(_S)"
+msgstr "縮小"
 
 #: gui2/helpfiles.c:73
-#, fuzzy
 msgid "Show English help"
-msgstr "顯示迴歸估計結果"
+msgstr "顯示英文的說明"
 
 #: gui2/helpfiles.c:159
 msgid "Dataset"
@@ -12598,16 +12596,16 @@ msgstr "工具 (Utilities)"
 #: gui2/helpfiles.c:382
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
-msgstr ""
+msgstr "附屬函數 (Accessors)"
 
 #: gui2/helpfiles.c:384
 msgid "Mathematical"
-msgstr ""
+msgstr "數學 (Mathematical)"
 
 #: gui2/helpfiles.c:388
 #: doc/commands/matfuncs.c:56
 msgid "Filters"
-msgstr ""
+msgstr "濾波法 (Filters)"
 
 #: gui2/helpfiles.c:390
 #, fuzzy
@@ -12643,7 +12641,7 @@ msgstr "開啟資料檔(_O)"
 #: gui2/helpfiles.c:404
 #: doc/commands/matfuncs.c:59
 msgid "Strings"
-msgstr ""
+msgstr "字串 (Strings)"
 
 #: gui2/helpfiles.c:444
 #: gui2/textbuf.c:1390
@@ -12657,16 +12655,16 @@ msgstr "尋找:"
 
 #: gui2/helpfiles.c:913
 msgid "genrgui.hlp"
-msgstr ""
+msgstr "genrgui.hlp"
 
 #: gui2/helpfiles.c:1253
 msgid "Sorry, help not found"
-msgstr ""
+msgstr "抱歉, 找不到說明檔 (help not found)"
 
 #: gui2/helpfiles.c:1402
 #: gui2/helpfiles.c:1531
 msgid "Search wrapped"
-msgstr ""
+msgstr "搜尋已完成"
 
 #: gui2/helpfiles.c:1614
 msgid "gretl: find"
@@ -12824,7 +12822,7 @@ msgstr "無法認定之錯誤 (Unspecified error)"
 
 #: gui2/library.c:1279
 msgid "Sample now includes only complete observations"
-msgstr "已刪除遺漏值之觀察值, 資料目前皆為完整值樣本"
+msgstr "已排除遺漏值之觀察值, 資料目前皆為完整值樣本"
 
 #: gui2/library.c:1324
 msgid "Show count of missing values at each observation"
@@ -13021,7 +13019,7 @@ msgstr "變異數分析 (ANOVA)"
 
 #: gui2/library.c:3478
 msgid "Sorry, not implemented yet!"
-msgstr ""
+msgstr "抱歉, 尚未完成此功能!"
 
 #: gui2/library.c:3485
 msgid "gretl: GARCH"
@@ -13029,7 +13027,7 @@ msgstr "gretl: GARCH"
 
 #: gui2/library.c:3746
 msgid "Error saving model information"
-msgstr ""
+msgstr "儲存模型資訊時有錯誤"
 
 #: gui2/library.c:3947
 #, c-format
@@ -13068,7 +13066,7 @@ msgstr "值距介於 %g 到 %g"
 #: gui2/library.c:4235
 #, c-format
 msgid "%s (n = %d, %s)"
-msgstr ""
+msgstr "%s (n = %d, %s)"
 
 #: gui2/library.c:4239
 #: gui2/library.c:4293
@@ -13086,7 +13084,7 @@ msgstr "gretl: TRAMO 分析"
 
 #: gui2/library.c:4384
 msgid "gretl: X-12-ARIMA analysis"
-msgstr ""
+msgstr "gretl: X-12-ARIMA 分析法"
 
 #: gui2/library.c:4433
 msgid "gretl: range-mean statistics"
@@ -13137,19 +13135,21 @@ msgid ""
 "Data set is not recognized as a panel.\n"
 "Please use \"Sample/Set frequency, startobs\"."
 msgstr ""
+"資料檔無法被判定為「追踨資料」(panel)\n"
+"請先進行必要的設定, 例如請在主選單點選 \"樣本/設定子樣本範圍, 開始\" "
 
 #: gui2/library.c:4816
 msgid "Error generating time trend"
-msgstr ""
+msgstr "產生時間趨勢變數時有錯誤"
 
 #: gui2/library.c:4817
 msgid "Error generating index variable"
-msgstr ""
+msgstr "產生指標 (index) 變數時有錯誤"
 
 #: gui2/library.c:4853
 #, c-format
 msgid "Really delete the last %d observations?"
-msgstr ""
+msgstr "真的要刪除最後 %d 筆觀察值嗎?"
 
 #: gui2/library.c:4855
 msgid "gretl: drop observations"
@@ -13157,7 +13157,7 @@ msgstr "gretl: 減少資料樣本"
 
 #: gui2/library.c:4869
 msgid "There are no extra observations to drop"
-msgstr ""
+msgstr "沒有額外的樣本可刪除"
 
 #: gui2/library.c:4877
 msgid "Encode all values"
@@ -13274,7 +13274,7 @@ msgstr "你必需選擇 3 個變數"
 
 #: gui2/library.c:5965
 msgid "Couldn't find a usable terminal program"
-msgstr ""
+msgstr "找不到可用的終端機 (terminal program)"
 
 #: gui2/library.c:6012
 #: gui2/selector.c:3118
@@ -13377,11 +13377,11 @@ msgstr "資料已轉置"
 
 #: gui2/library.c:6549
 msgid "Ascending"
-msgstr ""
+msgstr "遞增"
 
 #: gui2/library.c:6550
 msgid "Descending"
-msgstr ""
+msgstr "遞減"
 
 #: gui2/library.c:6566
 #, fuzzy
@@ -13428,6 +13428,8 @@ msgid ""
 "\n"
 "Error executing script: halting\n"
 msgstr ""
+"\n"
+"指令執行有誤: 已中斷\n"
 
 #: gui2/library.c:7842
 #, fuzzy
@@ -13437,7 +13439,7 @@ msgstr "開指令檔(_S)"
 #: gui2/menustate.c:56
 #, c-format
 msgid "Failed to flip state of \"%s\"\n"
-msgstr ""
+msgstr "無法反轉 (flip) \"%s\" 的狀態\n"
 
 #: gui2/menustate.c:313
 #: gui2/menustate.c:357
@@ -13576,7 +13578,7 @@ msgstr "抱歉, ARMA 模型無法放在模型比較表 (model table) 中"
 
 #: gui2/model_table.c:210
 msgid "Can't add model to table -- this model has a different dependent variable"
-msgstr ""
+msgstr "無法將 model 加入模型資料表-- 此 model 的應變數 (dependent variable) 和表中的不一樣"
 
 #: gui2/model_table.c:217
 msgid "Model is already included in the table"
@@ -13709,7 +13711,7 @@ msgstr "對 logit 和 probit 模型而言, R{\\super 2} 係指 McFadden's pseudo
 
 #: gui2/model_table.c:1263
 msgid "No model is available"
-msgstr ""
+msgstr "無任何 model"
 
 #: gui2/objectsave.c:164
 #: gui2/objectsave.c:181
@@ -13724,7 +13726,7 @@ msgstr "變數值"
 
 #: gui2/obsbutton.c:233
 msgid "Reads the current value, or sets a new value"
-msgstr ""
+msgstr "讀取現有值, 或設定新值"
 
 #: gui2/selector.c:418
 #: gui2/toolbar.c:1003
@@ -13804,7 +13806,7 @@ msgstr "你必需選擇 1 個變數"
 
 #: gui2/selector.c:2598
 msgid "You must specify an upper bound variable"
-msgstr ""
+msgstr "你必須設定上限 (upper bound)"
 
 #: gui2/selector.c:2601
 #, fuzzy
@@ -15205,7 +15207,7 @@ msgstr "Gretl 函數參考說明 (Function Reference)"
 
 #: gui2/textbuf.c:1391
 msgid "Back"
-msgstr ""
+msgstr "回上一頁"
 
 #: gui2/textbuf.c:1806
 #, fuzzy
