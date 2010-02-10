@@ -8424,7 +8424,7 @@
 	    criterion is met.  A warning is printed if the norm of the
 	    gradient exceeds 1; an error is flagged if the norm exceeds
 	    <lit>bfgs_maxgrad</lit>. At present the default is the 
-	    permissive value of 3.0.
+	    permissive value of 5.0.
 	  </para>
 	</li>
 	<li>	  

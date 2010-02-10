@@ -396,7 +396,7 @@ static void state_vars_init (set_vars *sv)
 
     sv->bfgs_maxiter = -1;
     sv->bfgs_toler = NADBL;
-    sv->bfgs_maxgrad = 3.0;
+    sv->bfgs_maxgrad = 5.0;
     sv->bfgs_verbskip = 1;
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
