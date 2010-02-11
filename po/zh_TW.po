@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-02-11 01:27+0800\n"
+"PO-Revision-Date: 2010-02-12 01:48+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -638,18 +638,18 @@ msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
 msgstr ""
-"Quandt 結構轉變概似值比例檢定 (likelihood ratio test for structural break): 結構變轉變點未知,\n"
+"Quandt 結構轉變概似值比例檢定 (LR test for structural break): 結構變轉變點未知,\n"
 "樣本數前後各減去 15%"
 
 #: lib/src/compare.c:2324
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
-msgstr ""
+msgstr "最大值 F(%d, %d) = %g 出現在樣本位置 %s"
 
 #: lib/src/compare.c:2331
 #, c-format
 msgid "Significant at the %d percent level "
-msgstr ""
+msgstr "在 %d %% 水準下顯著拒絕虛無假設"
 
 #: lib/src/compare.c:2332
 #, c-format
@@ -663,7 +663,7 @@ msgstr ""
 
 #: lib/src/compare.c:2339
 msgid "Not significant at the 10 percent level "
-msgstr ""
+msgstr "在 10%% 的水準下不顯著"
 
 #: lib/src/compare.c:2340
 #, c-format
@@ -675,22 +675,24 @@ msgid ""
 "This statistic does not follow the standard F distribution;\n"
 "critical values are from Stock and Watson (2003)."
 msgstr ""
+"注意，此統計量並不服從標準的 F 分配;\n"
+"此處之臨界值取自於 Stock and Watson (2003)."
 
 #: lib/src/compare.c:2472
 msgid "Invalid sample split for Chow test"
-msgstr ""
+msgstr "無法執行 Chow 檢定 (invalid sample split)"
 
 #: lib/src/compare.c:2584
 #: lib/src/gretl_model.c:2873
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
-msgstr ""
+msgstr "Chow 結構轉變檢定, 依虛擬變數:  %s"
 
 #: lib/src/compare.c:2587
 #: lib/src/gretl_model.c:2870
 #, c-format
 msgid "Chow test for structural break at observation %s"
-msgstr ""
+msgstr "Chow 檢定, 結構轉變位置:  %s"
 
 #: lib/src/compare.c:2730
 #, fuzzy
@@ -1784,9 +1786,9 @@ msgstr ""
 
 #: lib/src/describe.c:4018
 #: lib/src/describe.c:4771
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using the observations %s - %s"
-msgstr "增加樣本(_A)"
+msgstr "%s, 使用中之子樣本範圍 %s - %s"
 
 #: lib/src/describe.c:4022
 #: lib/src/describe.c:4776
@@ -2881,7 +2883,7 @@ msgstr "從伺服器讀取(_s)"
 #: lib/src/graphing.c:3967
 #, c-format
 msgid "Quantile estimates with %g%% band"
-msgstr ""
+msgstr "分量迴歸估計值 with %g%% band"
 
 #: lib/src/graphing.c:3975
 #, c-format
@@ -3266,11 +3268,8 @@ msgid "Can't do this: some vars in original model have been redefined"
 msgstr ""
 
 #: lib/src/gretl_model.c:2861
-#, fuzzy
 msgid "Test for addition of variables"
-msgstr ""
-"\n"
-"DF 檢定 對變數 %s\n"
+msgstr "新增自變數檢定"
 
 #: lib/src/gretl_model.c:2862
 #: lib/src/gretl_model.c:2892
@@ -3763,7 +3762,7 @@ msgstr "變數"
 #: lib/src/gretl_restrict.c:2464
 #: gui2/library.c:1690
 msgid "Sum of coefficients"
-msgstr "迴歸係數加總之檢定"
+msgstr "迴歸係數和 =0 之檢定"
 
 #: lib/src/gretl_restrict.c:2467
 #: lib/src/gretl_restrict.c:2476
@@ -9415,7 +9414,7 @@ msgstr "輸入欲檢定之結構轉變點:"
 
 #: gui2/dialogs.c:2109
 msgid "Name of dummy variable to use:"
-msgstr ""
+msgstr "輸入分割子樣本之虛擬變數:"
 
 #: gui2/dialogs.c:2119
 msgid "gretl: Chow test"
@@ -11975,15 +11974,15 @@ msgstr "拔靴法 (_Bootstrap)..."
 
 #: gui2/gui_utils.c:218
 msgid "_Omit variables"
-msgstr "是否消去某些自變數檢定(_Omit variable) "
+msgstr "是否消去自變數檢定(_Omit variable) "
 
 #: gui2/gui_utils.c:219
 msgid "_Add variables"
-msgstr "是否新加入自變數檢定(_A)"
+msgstr "是否新增自變數檢定(_A)"
 
 #: gui2/gui_utils.c:220
 msgid "_Sum of coefficients"
-msgstr "迴歸係數加總之檢定(_S)"
+msgstr "迴歸係數和檢定(_S)"
 
 #: gui2/gui_utils.c:221
 msgid "_Linear restrictions"
@@ -11991,11 +11990,11 @@ msgstr "係數線性限制檢定(_L)"
 
 #: gui2/gui_utils.c:222
 msgid "Non-linearity (s_quares)"
-msgstr "非線性 LM 檢定 (加入平方項)"
+msgstr "非線性 LM 檢定 (加入平方項)(_q)"
 
 #: gui2/gui_utils.c:223
 msgid "Non-linearity (_logs)"
-msgstr "非線性 LM 檢定 (加入取自然對數項)(_L)"
+msgstr "非線性 LM 檢定 (加入取自然對數項)(_l)"
 
 #: gui2/gui_utils.c:224
 msgid "_Ramsey's RESET"
@@ -12037,15 +12036,15 @@ msgstr "A_RCH 異質變異檢定"
 
 #: gui2/gui_utils.c:233
 msgid "_QLR test"
-msgstr "Quandt 結構轉變檢定 (移動式 Chow 檢定)(_QLR test)"
+msgstr "_Quandt 結構轉變檢定 (移動式 Chow 檢定)(QLR test)"
 
 #: gui2/gui_utils.c:234
 msgid "_CUSUM test"
-msgstr "_CUSUM test"
+msgstr "_CUSUM 結構轉變檢定"
 
 #: gui2/gui_utils.c:235
 msgid "CUSUM_SQ test"
-msgstr "CUSUM_SQ test"
+msgstr "CUSUM_SQ 結構轉變檢定"
 
 #: gui2/gui_utils.c:236
 msgid "_Common factor"
@@ -12119,7 +12118,7 @@ msgstr "預測 (_F)"
 #: gui2/gui_utils.c:1077
 #: gui2/library.c:7503
 msgid "gretl: open data"
-msgstr "gretl: open data"
+msgstr "gretl: 開啟資料檔"
 
 #: gui2/gui_utils.c:805
 msgid ""
