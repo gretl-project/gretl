@@ -107,7 +107,7 @@ static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
 	/* initialize using Poisson estimates */
 	nbinfo->theta[i] = pmod->coeff[i];
     }
-    nbinfo->theta[k] = 1.0;
+    nbinfo->theta[k] = 1.0; /* FIXME initialization? */
 
     nbinfo->ll = NADBL;
     nbinfo->prn = (opt & OPT_V)? prn : NULL;
