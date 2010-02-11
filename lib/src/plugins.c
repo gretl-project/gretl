@@ -182,7 +182,7 @@ struct plugin_function plugin_functions[] = {
     { "arma_x12_model",    P_ARMA_X12 },
     { "tobit_estimate",    P_TOBIT },
     { "garch_model",       P_GARCH },
-    { "poisson_estimate",  P_POISSON },
+    { "count_data_estimate", P_POISSON },
     { "heckit_estimate",   P_HECKIT },
     { "interval_estimate", P_INTREG },
 

@@ -4147,8 +4147,9 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     void *handle;
     int *listcpy;
     int offvar;
-    int (* poisson_estimate) (MODEL *, int, double ***, DATAINFO *, 
-			      gretlopt, PRN *);
+    int (* count_data_estimate) (MODEL *, int, int,
+				 double ***, DATAINFO *, 
+				 gretlopt, PRN *);
 
     gretl_error_clear();
 
@@ -4174,14 +4175,15 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo,
         return pmodel;
     }
 
-    poisson_estimate = get_plugin_function("poisson_estimate", &handle);
+    count_data_estimate = get_plugin_function("count_data_estimate", 
+					      &handle);
 
-    if (poisson_estimate == NULL) {
+    if (count_data_estimate == NULL) {
 	pmodel.errcode = E_FOPEN;
 	return pmodel;
     }
 
-    (*poisson_estimate) (&pmodel, offvar, pZ, pdinfo, opt, prn);
+    (*count_data_estimate) (&pmodel, POISSON, offvar, pZ, pdinfo, opt, prn);
 
     close_plugin(handle);
 

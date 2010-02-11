@@ -203,6 +203,12 @@ void warnmsg (PRN *prn)
 {
     if (prn == NULL || gretl_warnnum == 0) return;
 
+    if (!gretl_warnings_on()) {
+	*gretl_warnmsg = '\0';
+	gretl_warnnum = 0;
+	return;
+    }
+
     if (*gretl_warnmsg != '\0') {
 	pprintf(prn, "%s: %s\n", _("Warning"), gretl_warnmsg);
 	*gretl_warnmsg = '\0';

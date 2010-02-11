@@ -17,8 +17,12 @@
  * 
  */
 
+/* models for count data */
+
 #include "libgretl.h"
 #include "matrix_extra.h"
+#include "libset.h"
+#include "bhhh_max.h"
 
 #define PDEBUG 0
 #define PR2DEBUG 0
@@ -26,38 +30,174 @@
 #define POISSON_TOL 1.0e-10 
 #define POISSON_MAX_ITER 100 
 
-/* check whether a series contains nothing but non-negative
-   integer values (some of which are > 1) */
+typedef struct negbin_info_ negbin_info;
 
-static int is_count_variable (const double *x, int t1, int t2)
+struct negbin_info_ {
+    int k;               /* length of parameter vector */
+    gretl_vector *y;     /* dependent variable */
+    gretl_matrix *X;     /* regressors */
+    gretl_matrix *theta; /* parameter vector */
+    gretl_matrix *mu;    /* exp(X\beta) */
+    gretl_matrix *llt;   /* per-observation likelihood */
+    gretl_matrix *G;     /* score matrix */
+    gretl_matrix *V;     /* covariance matrix */
+    PRN *prn;            /* verbose printer */
+};
+
+static void negbin_free (negbin_info *nbinfo)
 {
-    int t, xi;
-    int g1 = 0;
-    int ret = 1;
+    gretl_matrix_replace(&nbinfo->y, NULL);
+    gretl_matrix_replace(&nbinfo->X, NULL);
+    gretl_matrix_replace(&nbinfo->theta, NULL);
+    gretl_matrix_replace(&nbinfo->mu, NULL);
+    gretl_matrix_replace(&nbinfo->llt, NULL);
+    gretl_matrix_replace(&nbinfo->G, NULL);
+    gretl_matrix_replace(&nbinfo->V, NULL);
+}
 
-    for (t=t1; t<=t2; t++) {
-	if (na(x[t])) {
+static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
+			const double **Z, gretlopt opt, 
+			PRN *prn)
+{
+    int n = pmod->nobs;
+    int k = pmod->ncoeff + 1;
+    int i, s, t, v;
+
+    nbinfo->y = gretl_column_vector_alloc(n);
+    nbinfo->X = gretl_matrix_alloc(n, k);
+    nbinfo->theta = gretl_column_vector_alloc(k + 1);
+    nbinfo->mu = gretl_column_vector_alloc(n);
+    nbinfo->llt = gretl_column_vector_alloc(n);
+    nbinfo->G = gretl_matrix_alloc(n, k);
+    nbinfo->V= gretl_matrix_alloc(k, k);
+
+    if (nbinfo->y == NULL || nbinfo->X == NULL ||  
+	nbinfo->theta == NULL || nbinfo->mu == NULL ||
+	nbinfo->llt == NULL || nbinfo->G == NULL || 
+	nbinfo->V == NULL) {
+	negbin_free(nbinfo);
+	return E_ALLOC;
+    }
+
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->uhat[t])) {
 	    continue;
 	}
-	if (x[t] < 0.0) {
-	    ret = 0;
-	    break;
+	v = pmod->list[1];
+	nbinfo->y->val[s] = Z[v][t];
+	for (i=0; i<k; i++) {
+	    v = pmod->list[i+2];
+	    gretl_matrix_set(nbinfo->X, s, i, Z[v][t]);
 	}
-	xi = x[t];
-	if (x[t] != (double) xi) {
-	    ret = 0;
-	    break;
-	}
-	if (x[t] > 1.0) {
-	    g1 = 1;
-	}
+	s++;
     }
 
-    if (g1 == 0) {
-	ret = 0;
+    nbinfo->k = k;
+
+    for (i=0; i<k; i++) {
+	nbinfo->theta->val[i] = 0.01;
     }
 
-    return ret;
+    nbinfo->theta->val[k] = 1.0;
+
+    nbinfo->prn = (opt & OPT_V)? prn : NULL;
+
+    return 0;
+}
+
+static double negbin_ll (negbin_info *nbinfo, 
+			 gretl_matrix *beta, 
+			 int k, double alpha)
+{
+    double eps = 1.0e-9;
+    double *ll = nbinfo->llt->val;
+    double *mu = nbinfo->mu->val;
+    double *y = nbinfo->y->val;
+    int t, T = nbinfo->y->rows;
+    double psi, mpp;
+    double lltot = 0.0;
+
+    gretl_matrix_reuse(beta, k, 1);
+    gretl_matrix_multiply(nbinfo->X, beta, nbinfo->mu);
+    gretl_matrix_reuse(beta, k+1, 1);
+
+    for (t=0; t<T; t++) {
+	mu[t] = eps + exp(mu[t]);
+	psi = eps + mu[t] / alpha;
+	mpp = mu[t] + psi;
+	ll[t] = log_gamma_function(y[t] + psi) 
+	    - log_gamma_function(psi);
+	ll[t] -= log_gamma_function(y[t] + 1.0);
+	ll[t] += psi * log(psi / mpp);
+	ll[t] += y[t] * log(mu[t] / mpp);
+	lltot += ll[t];
+    }
+
+    return lltot;
+}
+
+static int negbin_score (void)
+{
+    /* to be written */
+    return 1;
+}
+
+static double negbin_callback (double *theta, 
+			       gretl_matrix *G, 
+			       void *data,
+			       int do_score,
+			       int *err)
+{
+    negbin_info *nbinfo = (negbin_info *) data;
+    int k = nbinfo->k;
+    gretl_matrix *beta = nbinfo->theta;
+    double alpha = beta->val[k];
+    double ll = NADBL;
+
+    *err = E_NOTIMP;
+
+    if (!*err) {
+	ll = negbin_ll(nbinfo, beta, k, alpha);
+    }
+
+    if (!*err && do_score) {
+	*err = negbin_score();
+    }
+
+    return ll;
+}
+
+static int do_negbin (MODEL *pmod, const double **Z, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
+{
+    negbin_info nbinfo;
+    double tol = libset_get_double(BHHH_TOLER);
+    int iters, err = 0;
+
+    err = negbin_init(&nbinfo, pmod, Z, opt, prn);
+
+    err = E_NOTIMP; /* till ready */
+
+    if (!err) {
+	gretlopt bhhh_opt = OPT_NONE;
+
+	if (opt & OPT_V) {
+	    bhhh_opt |= OPT_V;
+	}
+
+	err = bhhh_max(nbinfo.theta->val, nbinfo.k, nbinfo.G,
+		       negbin_callback, tol, &iters,
+		       &nbinfo, nbinfo.V, bhhh_opt, nbinfo.prn);
+    }
+
+    negbin_free(&nbinfo);
+
+    if (err && !pmod->errcode) {
+	pmod->errcode = err;
+    }
+    
+    return pmod->errcode;
 }
 
 /* sandwich of hessian and OPG */
@@ -493,17 +633,19 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo,
     return pmod->errcode;
 }
 
-int 
-poisson_estimate (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt, PRN *prn) 
+int count_data_estimate (MODEL *pmod, int ci, int offvar, 
+		     double ***pZ, DATAINFO *pdinfo,
+		     gretlopt opt, PRN *prn) 
 {
     int err = 0;
 
-    if (!is_count_variable((*pZ)[pmod->list[1]], pmod->t1, pmod->t2)) {
+    if (!gretl_iscount(pmod->t1, pmod->t2, (*pZ)[pmod->list[1]])) {
 	gretl_errmsg_set(_("poisson: the dependent variable must be count data"));
 	err = pmod->errcode = E_DATA;
-    } else {
+    } else if (ci == POISSON) {
 	err = do_poisson(pmod, offvar, pZ, pdinfo, opt, prn);
+    } else {
+	err = do_negbin(pmod, (const double **) *pZ, pdinfo, opt, prn);
     }
 
     return err;

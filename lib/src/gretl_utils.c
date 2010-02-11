@@ -146,7 +146,7 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
  * @t2: ending observation. 
  * @x: data series to examine.
  * 
- * Check whether variable @x has only 0 or 1 values over the
+ * Check whether series @x has only 0 or 1 values over the
  * given sample range (or possibly missing values).
  *
  * Returns: 0 if the variable is not a 0/1 dummy, otherwise the
@@ -183,7 +183,7 @@ int gretl_isdummy (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation. 
  * 
- * Check whether variable @x has only zero values over the
+ * Check whether series @x has only zero values over the
  * given sample range (or possibly missing values).
  *
  * Returns: 1 if the variable is all zeros, otherwise 0.
@@ -209,7 +209,7 @@ int gretl_iszero (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation. 
  * 
- * Check whether variable @x is constant over the
+ * Check whether series @x is constant over the
  * given sample range (aside from any missing values).
  *
  * Returns: 1 if the variable is constant, otherwise 0.
@@ -242,7 +242,7 @@ int gretl_isconst (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation. 
  * 
- * Check whether variable @x equals 1 over the
+ * Check whether series @x equals 1 over the
  * given sample range (aside from any missing values).
  *
  * Returns: 1 if so, otherwise 0.
@@ -268,8 +268,8 @@ int gretl_isunits (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation. 
  * 
- * Check whether variable @x contains only integer values over the
- * given sample range (aside from any missing values).
+ * Check whether series @x contains only integer values over
+ * the given sample range (aside from any missing values).
  *
  * Returns: 1 if so, otherwise 0.
  */
@@ -283,6 +283,50 @@ int gretl_isint (int t1, int t2, const double *x)
 	    ret = 0;
 	    break;
 	}
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_iscount:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ * 
+ * Check whether series @x contains nothing but non-negative
+ * integer values (some of which are > 1) over the 
+ * given sample range.
+ *
+ * Returns: 1 if so, otherwise 0.
+ */
+
+int gretl_iscount (int t1, int t2, const double *x)
+{
+    int t, xi;
+    int g1 = 0;
+    int ret = 1;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    continue;
+	}
+	if (x[t] < 0.0) {
+	    ret = 0;
+	    break;
+	}
+	xi = x[t];
+	if (x[t] != (double) xi) {
+	    ret = 0;
+	    break;
+	}
+	if (x[t] > 1.0) {
+	    g1 = 1;
+	}
+    }
+
+    if (g1 == 0) {
+	ret = 0;
     }
 
     return ret;

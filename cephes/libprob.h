@@ -126,14 +126,13 @@ double cephes_gamma (double x); /* cephes' gamma(), renamed */
 */
 double cephes_lgamma (double x); /* alias for cephes' lgam() */
 
-/*
-   Returns the current value of cephes_sgngam.
-*/
+/* Returns the current value of cephes_sgngam */
 int get_cephes_sgngam (void);
 
-/*
-  Evaluate roots of polynomial
-*/
+/* Returns the Psi (digamma) function of the argument */
+double psi (double x);
+
+/* Evaluate roots of polynomial */
 int polrt (double *xcof, double *cof, int m, cmplx *root);
 
 /* Accessor for cephes error code */
