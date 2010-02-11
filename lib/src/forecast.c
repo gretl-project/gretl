@@ -37,6 +37,7 @@
 
 #define FCAST_SPECIAL(c) (c == LOGIT || \
                           c == LOGISTIC || \
+			  c == NEGBIN || \
                           c == NLS || \
                           c == POISSON || \
                           c == PROBIT || \
@@ -1789,7 +1790,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 
 /* Calculates the transformation required to get from xb (= X*b) to
    the actual prediction for the dependent variable, for models of
-   type LOGISTIC, LOGIT, PROBIT, TOBIT and POISSON.
+   type LOGISTIC, LOGIT, PROBIT, TOBIT, POISSON and NEGBIN.
  */
 
 static double fcast_transform (double xb, const MODEL *pmod,  
@@ -1831,6 +1832,8 @@ static double fcast_transform (double xb, const MODEL *pmod,
 	} else {
 	    yf = exp(xb);
 	}
+    } else if (ci == NEGBIN) {
+	yf = exp(xb);
     }
 
     return yf;

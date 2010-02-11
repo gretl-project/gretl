@@ -94,6 +94,7 @@ typedef enum {
     MODPRINT,
     MODTEST,
     MPOLS,
+    NEGBIN,
     NLS,
     NORMTEST,
     NULLDATA,

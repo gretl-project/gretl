@@ -1158,36 +1158,19 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec,
 
 static int QML_vcv (nlspec *spec, gretl_matrix *V)
 {
-    gretl_matrix *Hinv = NULL;
     gretl_matrix *tmp = NULL;
     int k = V->rows;
-    double x;
-    int i, j;
     
-    Hinv = gretl_matrix_alloc(k, k);
     tmp = gretl_matrix_alloc(k, k);
-
-    if (Hinv == NULL || tmp == NULL) {
-	free(Hinv);
-	free(tmp);
+    if (tmp == NULL) {
 	return E_ALLOC;
     }
 
-    /* expand Hinv */
-    for (i=0; i<k; i++) {
-	for (j=0; j<=i; j++) {
-	    x = spec->hessvec[ijton(i, j, k)];
-	    gretl_matrix_set(Hinv, i, j, x);
-	    gretl_matrix_set(Hinv, j, i, x);
-	}
-    }
-	    
     /* form sandwich: V <- H^{-1} V H^{-1} */
     gretl_matrix_copy_values(tmp, V);
-    gretl_matrix_qform(Hinv, GRETL_MOD_NONE, tmp,
+    gretl_matrix_qform(spec->Hinv, GRETL_MOD_NONE, tmp,
 		       V, GRETL_MOD_NONE);
 
-    gretl_matrix_free(Hinv);
     gretl_matrix_free(tmp);
 
     return 0;
@@ -1287,7 +1270,7 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 			      G, GRETL_MOD_TRANSPOSE,
 			      V, GRETL_MOD_NONE);
 
-    if ((spec->opt & OPT_R) && spec->hessvec != NULL) {
+    if ((spec->opt & OPT_R) && spec->Hinv != NULL) {
 	/* robust option -> QML */
 	err = QML_vcv(spec, V);
 	*vcvopt = VCV_QML;
@@ -1312,23 +1295,12 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 
 static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 {
-    int i, k = spec->ncoeff;
     int vcvopt = VCV_OP;
-    double x;
     int err = 0;
 
-    if ((spec->opt & OPT_H) && spec->hessvec != NULL) {
-	/* vcv based on Hessian */
-	int n = (k * (k + 1)) / 2;
-
-	for (i=0; i<n; i++) {
-	    pmod->vcv[i] = spec->hessvec[i];
-	}
-	for (i=0; i<k; i++) {
-	    x = pmod->vcv[ijton(i, i, k)];
-	    pmod->sderr[i] = sqrt(x);
-	}
+    if ((spec->opt & OPT_H) && spec->Hinv != NULL) {
 	vcvopt = VCV_HESSIAN;
+	err = gretl_model_write_vcv(pmod, spec->Hinv);
     } else {
 	/* either OPG or QML */
 	err = mle_build_vcv(pmod, spec, &vcvopt);
@@ -1910,8 +1882,8 @@ static void clear_nlspec (nlspec *spec)
     free(spec->nlfunc);
     spec->nlfunc = NULL;
 
-    free(spec->hessvec);
-    spec->hessvec = NULL;
+    gretl_matrix_free(spec->Hinv);
+    spec->Hinv = NULL;
 
     spec->flags = 0;
     spec->opt = OPT_NONE;
@@ -2130,8 +2102,8 @@ static int mle_calculate (nlspec *s, PRN *prn)
 		       NULL, s->opt, s->prn);
 	if (!err && (s->opt & (OPT_H | OPT_R))) {
 	    /* doing Hessian or QML covariance matrix */
-	    s->hessvec = numerical_hessian(s->coeff, s->ncoeff, 
-					   get_mle_ll, s, &err);
+	    s->Hinv = numerical_hessian(s->coeff, s->ncoeff, 
+					get_mle_ll, s, &err);
 	}
     }
 
@@ -3008,7 +2980,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->ncoeff = 0;
     spec->nvec = 0;
 
-    spec->hessvec = NULL;
+    spec->Hinv = NULL;
 
     spec->ci = ci;
     spec->flags = 0;

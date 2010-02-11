@@ -131,6 +131,7 @@ typedef struct {
 
 /* Mechanism for error reporting.  See mtherr.c. */
 int mtherr (char *, int);
+int mtherr_with_arg (char *, int, double);
 
 /* includes shared private functions */
 #include "cephes.h"

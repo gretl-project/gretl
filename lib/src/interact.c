@@ -4762,6 +4762,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case LOGISTIC:
     case LOGIT:
     case POISSON:
+    case NEGBIN:
     case PROBIT:
     case QUANTREG:
     case TOBIT:
@@ -4775,12 +4776,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == TOBIT) {
 	    *models[0] = tobit_model(cmd->list, pZ, pdinfo,
 				     (cmd->opt & OPT_V)? prn : NULL);
-	} else if (cmd->ci == POISSON) {
-	    *models[0] = poisson_model(cmd->list, pZ, pdinfo, cmd->opt,
-				       (cmd->opt & OPT_V)? prn : NULL);
+	} else if (cmd->ci == POISSON || cmd->ci == NEGBIN) {
+	    *models[0] = count_model(cmd->list, cmd->ci, pZ, pdinfo, cmd->opt,
+				     (cmd->opt & OPT_V)? prn : NULL);
 	} else if (cmd->ci == HECKIT) {
 	    *models[0] = heckit_model(cmd->list, pZ, pdinfo, cmd->opt, 
-				     (cmd->opt & OPT_V)? prn : NULL);
+				      (cmd->opt & OPT_V)? prn : NULL);
 	} else if (cmd->ci == IVREG) {
 	    *models[0] = ivreg(cmd->list, pZ, pdinfo, cmd->opt);
 	} else if (cmd->ci == LAD) {

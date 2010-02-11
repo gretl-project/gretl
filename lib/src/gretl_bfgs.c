@@ -145,25 +145,26 @@ static void hess_b_adjust_ij (double *c, double *b, double *h, int n,
    Extrapolation.  It is derived from code in the gnu R package
    "numDeriv" by Paul Gilbert, which was in turn derived from C code
    by Xinqiao Liu.  Turned back into C and modified for gretl by
-   Allin Cottrell, June 2006.
+   Allin Cottrell, June 2006.  On successful completion, returns
+   the negative inverse of the Hessian.
 */
 
-double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func, 
-			   void *data, int *err)
+gretl_matrix *numerical_hessian (const double *b, int n, 
+				 BFGS_CRIT_FUNC func, 
+				 void *data, int *err)
 {
+    gretl_matrix *H = NULL;
     double Dx[RSTEPS];
     double Hx[RSTEPS];
     double *bcpy, *wspace;
     double *c, *h0, *h, *Hd, *D;
-    gretl_matrix *V = NULL;
-    double *vcv = NULL;
     /* numerical parameters */
     int r = RSTEPS;      /* number of Richardson steps */
     double eps = 1.0e-4;
     double d = 0.0001;
     double v = 2.0;      /* reduction factor for h */
     double f0, f1, f2;
-    double p4m;
+    double p4m, hij;
     int vn = (n * (n + 1)) / 2;
     int dn = vn + n;
     int i, j, k, m, u;
@@ -187,9 +188,8 @@ double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
     Hd = h + n;
     D = Hd + n; /* D is of length dn */
 
-    /* vech form of variance matrix */
-    V = gretl_column_vector_alloc(vn);
-    if (V == NULL) {
+    H = gretl_matrix_alloc(n, n);
+    if (H == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }	
@@ -287,20 +287,13 @@ double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
     u = n;
     for (i=0; i<n; i++) {
 	for (j=0; j<=i; j++) {
-	    k = ijton(i, j, n);
-	    V->val[k] = -D[u++];
+	    hij = -D[u++];
+	    gretl_matrix_set(H, i, j, hij);
+	    gretl_matrix_set(H, j, i, hij);
 	}
     }
 
-    *err = gretl_invert_packed_symmetric_matrix(V);
-    if (!*err) {
-	vcv = gretl_matrix_steal_data(V);
-    } else {
-	fprintf(stderr, "numerical hessian: failed to invert V\n");
-	gretl_packed_matrix_print(V, "V");
-    }
-
-    gretl_matrix_free(V);
+    *err = gretl_invert_symmetric_matrix(H);
 
  bailout:
 
@@ -311,7 +304,7 @@ double *numerical_hessian (const double *b, int n, BFGS_CRIT_FUNC func,
     free(wspace);
     free(bcpy);
 
-    return vcv;
+    return H;
 }
 
 #define ALT_OPG 0

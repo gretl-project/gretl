@@ -4128,22 +4128,25 @@ static int get_offset_var (int *list)
 }
 
 /**
- * poisson_model:
+ * count_model:
  * @list: dependent variable plus list of regressors.
+ * @ci: either #POISSON or #NEGBIN.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @opt: may include %OPT_R for rubust covariance matrix.
  * @prn: printing struct for iteration info (or %NULL is this is not
  * wanted).
  *
- * Estimate the Poisson regression model given in @list using ML.
+ * Estimate the count data model given in @list using ML.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		     gretlopt opt, PRN *prn)
+MODEL count_model (const int *list, int ci, 
+		   double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn)
 {
-    MODEL pmodel;
+    MODEL cmod;
     void *handle;
     int *listcpy;
     int offvar;
@@ -4153,43 +4156,50 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_error_clear();
 
-    gretl_model_init(&pmodel);
+    gretl_model_init(&cmod);
+
+    if (!gretl_iscount(pdinfo->t1, pdinfo->t2, (*pZ)[list[1]])) {
+	gretl_errmsg_sprintf(_("%s: the dependent variable must be count data"),
+			     gretl_command_word(ci));
+	cmod.errcode = E_DATA;
+	return cmod;
+    }
 
     listcpy = gretl_list_copy(list);
     if (listcpy == NULL) {
-	pmodel.errcode = E_ALLOC;
-        return pmodel;
+	cmod.errcode = E_ALLOC;
+        return cmod;
     }
 
     offvar = get_offset_var(listcpy);
 
     /* run an initial OLS to "set the model up" and check for errors.
-       the poisson_estimate_driver function will overwrite the
+       the count_data_estimate_driver function will overwrite the
        coefficients etc.
     */
 
-    pmodel = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
+    cmod = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
     free(listcpy);
 
-    if (pmodel.errcode) {
-        return pmodel;
+    if (cmod.errcode) {
+        return cmod;
     }
 
     count_data_estimate = get_plugin_function("count_data_estimate", 
 					      &handle);
 
     if (count_data_estimate == NULL) {
-	pmodel.errcode = E_FOPEN;
-	return pmodel;
+	cmod.errcode = E_FOPEN;
+	return cmod;
     }
 
-    (*count_data_estimate) (&pmodel, POISSON, offvar, pZ, pdinfo, opt, prn);
+    (*count_data_estimate) (&cmod, ci, offvar, pZ, pdinfo, opt, prn);
 
     close_plugin(handle);
 
-    set_model_id(&pmodel);
+    set_model_id(&cmod);
 
-    return pmodel;
+    return cmod;
 }
 
 /**

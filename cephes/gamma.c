@@ -201,7 +201,7 @@ double cephes_gamma (double x)
 	    p = floor(q);
 	    if (p == q) {
 	    gamnan:
-		mtherr("gamma", CEPHES_DOMAIN);
+		mtherr_with_arg("gamma", CEPHES_DOMAIN, x);
 		return NAN;
 	    }
 	    i = p;
@@ -325,7 +325,7 @@ double lgam (double x)
 	p = floor(q);
 	if (p == q) {
 	lgsing:
-	    mtherr("lgam", CEPHES_SING);
+	    mtherr_with_arg("lgam", CEPHES_SING, x);
 	    return INFINITY;
 	}
 	i = p;

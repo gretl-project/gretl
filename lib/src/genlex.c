@@ -56,6 +56,7 @@ struct str_table consts[] = {
     { CONST_PI,    "pi" },
     { CONST_NA,    "NA" },
     { CONST_WIN32, "WIN32" },
+    { CONST_EPS,   "macheps" },
     { 0,        NULL }
 };
 

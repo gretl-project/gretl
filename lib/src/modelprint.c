@@ -49,6 +49,8 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
                          !gretl_model_get_int(m, "ordered") && \
                          !gretl_model_get_int(m, "multinom"))
 
+#define count_model(m) (m->ci == POISSON || m->ci == NEGBIN)
+
 #define multinomial_model(m) (m->ci == LOGIT && gretl_model_get_int(m, "multinom"))
 
 #define logit_probit_model(m) (m->ci == LOGIT || m->ci == PROBIT) 
@@ -686,6 +688,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == TOBIT)  return N_("Tobit");
     else if (ci == HECKIT) return N_("Heckit");
     else if (ci == POISSON) return N_("Poisson");
+    else if (ci == NEGBIN) return N_("Negative Binomial");
     else if (ci == NLS) return N_("NLS");
     else if (ci == MLE) return N_("ML");
     else if (ci == GMM) return N_("GMM");
@@ -2630,7 +2633,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[5] = (tex)? N_("Centered $R^2$") : 
 	    N_("Centered R-squared");  /* 22: */
 	val[5] = gretl_model_get_double(pmod, "centered-R2");
-    } else if (pmod->ci == POISSON || binary_model(pmod)) {
+    } else if (count_model(pmod) || binary_model(pmod)) {
 	key[4] = (tex)? N_("McFadden $R^2$") : 
 	    N_("McFadden R-squared");  /* 22: McFadden's pseudo-R-squared */
     }
@@ -2963,9 +2966,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
-	pmod->ci != POISSON && pmod->ci != TOBIT && pmod->ci != LAD &&
-	pmod->ci != HECKIT && pmod->ci != ARBOND && pmod->ci != GARCH &&
-	!ordered_model(pmod) && !multinomial_model(pmod) && !pmod->aux) {
+	pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != HECKIT && 
+	pmod->ci != ARBOND && pmod->ci != GARCH &&
+	!ordered_model(pmod) && !multinomial_model(pmod) && 
+	!count_model(pmod) && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 

@@ -1043,21 +1043,15 @@ static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
    approximation to the Hessian
 */
 
-static void arma_hessian_vcv (MODEL *pmod, double *vcv, int k)
+static int arma_hessian_vcv (MODEL *pmod, gretl_matrix *Hinv)
 {
-    double x;
     int t, i = 0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	pmod->uhat[t] = gretl_vector_get(E, i++);
     }
 
-    pmod->vcv = vcv;
-
-    for (i=0; i<k; i++) {
-	x = vcv[ijton(i, i, k)];
-	pmod->sderr[i] = (na(x))? NADBL : sqrt(x);
-    }
+    return gretl_model_write_vcv(pmod, Hinv);
 }
 
 static const double *kalman_arma_llt_callback (const double *b, int i, 
@@ -1189,18 +1183,6 @@ static double kalman_arma_ll (const double *b, void *data)
     return ll;
 }
 
-static void maybe_rescale_hessian (int kopt, double *vcv, 
-				   int k, int T)
-{
-    if (kopt & KALMAN_AVG_LL) {
-	int i, k2 = k * (k + 1) / 2;
-
-	for (i=0; i<k2; i++) {
-	    vcv[i] /= T;
-	}
-    }
-}
-
 static int arima_ydiff_only (arma_info *ainfo)
 {
     if ((ainfo->d > 0 || ainfo->D > 0) &&
@@ -1282,16 +1264,21 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     }	
 
     if (do_hess) { 
-	double *vcv;
+	gretl_matrix *Hinv;
 
 	kalman_do_ma_check = 0;
-	vcv = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
+	Hinv = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
 	kalman_do_ma_check = 1;
 	if (!err) {
-	    maybe_rescale_hessian(kopt, vcv, k, ainfo->T);
-	    arma_hessian_vcv(pmod, vcv, k);
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+	    if (kopt & KALMAN_AVG_LL) {
+		gretl_matrix_divide_by_scalar(Hinv, ainfo->T);
+	    }
+	    err = arma_hessian_vcv(pmod, Hinv);
+	    if (!err) {
+		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+	    }
 	}
+	gretl_matrix_free(Hinv);
     }
 
     if (!err) {

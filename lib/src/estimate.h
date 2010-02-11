@@ -44,8 +44,9 @@ MODEL arma (const int *list, const char *pqspec,
 MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn);
 
-MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		     gretlopt opt, PRN *prn);
+MODEL count_model (const int *list, int ci,
+		   double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn);
 
 MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn);

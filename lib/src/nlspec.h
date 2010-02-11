@@ -65,8 +65,7 @@ struct _nlspec {
     double *fvec;       /* function vector */
     double *jac;        /* Jacobian array */
     double *coeff;      /* coefficient estimates */
-    double *hessvec;    /* vech representation of negative inverse of
-			   Hessian */
+    gretl_matrix *Hinv; /* negative inverse of Hessian */
     char **aux;         /* auxiliary commands */
     GENERATOR **genrs;  /* variable-generation pointers */
     double ***Z;        /* pointer to data array */

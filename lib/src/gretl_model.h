@@ -113,6 +113,7 @@ struct VCVInfo_ {
                           c == LOGIT || \
                           c == MLE || \
                           c == MPOLS || \
+			  c == NEGBIN || \
                           c == NLS || \
                           c == OLS || \
                           c == PANEL || \
@@ -134,6 +135,7 @@ struct VCVInfo_ {
                          c == HECKIT || \
                          c == LOGIT || \
                          c == MLE || \
+			 c == NEGBIN ||	\
                          c == POISSON || \
                          c == PROBIT || \
                          c == TOBIT)
@@ -156,6 +158,7 @@ struct VCVInfo_ {
                              c == IVREG || \
                              c == LOGIT || \
                              c == MLE || \
+			     c == NEGBIN || \
                              c == POISSON || \
                              c == PROBIT || \
                              c == TOBIT)

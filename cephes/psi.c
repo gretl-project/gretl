@@ -82,7 +82,7 @@ double psi (double x)
 	q = x;
 	p = floor(q);
 	if (p == q) {
-	    mtherr("psi", CEPHES_SING);
+	    mtherr_with_arg("psi", CEPHES_SING, x);
 	    return MAXNUM;
 	}
 	/* Remove the zeros of tan(PI x) by subtracting the nearest

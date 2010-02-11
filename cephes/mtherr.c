@@ -74,30 +74,40 @@ static const char *ermsg[] = {
     "unknown"
 };
 
-int mtherr (char *name, int code)
-{
-    /* Display string passed by calling program,
-     * which is supposed to be the name of the
-     * function in which the error occurred:
-     */
-    fprintf(stderr, "\n%s ", name);
+/* @name is supposed to be the name of the function in
+   which the error occurred; @code is an index into
+   the array of error messages above; @arg is the offending
+   argument, if @have_arg is non-zero, otherwise it is
+   ignored.
+*/
 
-    /* Display error message defined
-     * by the code argument.
-     */
+static int real_mtherr (char *name, int code, double arg,
+			int have_arg)
+{
+    fprintf(stderr, "%s ", name);
+
     if (code <= 0 || code > CEPHES_UNKNOWN)
 	code = CEPHES_UNKNOWN;
 
-    /* Set global error message number */
     cephes_errno = code;
 
-    /* Display error message defined
-     * by the code argument.
-     */
-    fprintf(stderr, "%s error\n", ermsg[code]);
+    if (have_arg) {
+	fprintf(stderr, "%s error (arg = %g)\n", ermsg[code], arg);
+    } else {
+	fprintf(stderr, "%s error\n", ermsg[code]);
+    }
 
-    /* Return to calling program */
     return 0;
+}
+
+int mtherr_with_arg (char *name, int code, double arg)
+{
+    return real_mtherr(name, code, arg, 1);
+}
+
+int mtherr (char *name, int code)
+{
+    return real_mtherr(name, code, 0, 0);
 }
 
 int get_cephes_errno (void)

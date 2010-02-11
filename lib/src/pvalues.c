@@ -38,7 +38,6 @@ double gamma_function (double x)
     double ret = cephes_gamma(x);
 
     if (get_cephes_errno()) {
-	fprintf(stderr, "gamma_function: arg = %g\n", x);
 	ret = NADBL;
     }
 
@@ -57,7 +56,6 @@ double log_gamma_function (double x)
     double ret = cephes_lgamma(x);
 
     if (get_cephes_errno()) {
-	fprintf(stderr, "log_gamma_function: arg = %g\n", x);
 	ret = NADBL;
     }
 
@@ -76,7 +74,6 @@ double digamma_function (double x)
     double ret = psi(x);
 
     if (get_cephes_errno()) {
-	fprintf(stderr, "digamma_function: arg = %g\n", x);
 	ret = NADBL;
     }
 
