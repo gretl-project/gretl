@@ -249,6 +249,28 @@ static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo)
     return err;
 }
 
+static int negbin_hessian_vcv (MODEL *pmod, negbin_info *nbinfo)
+{
+    gretl_matrix *H;
+    int nc = nbinfo->k + 1;
+    int err = 0;
+
+    H = numerical_hessian(nbinfo->theta, nc, negbin_ll, 
+			  nbinfo, &err);
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, H);
+	if (!err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+	    pmod->opt |= OPT_H;
+	}
+    }
+    
+    gretl_matrix_free(H);
+
+    return err;
+}
+
 static int 
 transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo, 
 			   const DATAINFO *pdinfo, int iters,
@@ -295,6 +317,8 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
     if (!err) {
 	if (opt & OPT_R) {
 	    err = negbin_robust_vcv(pmod, nbinfo);
+	} else if (opt & OPT_H) {
+	    err = negbin_hessian_vcv(pmod, nbinfo);
 	} else {
 	    err = gretl_model_write_vcv(pmod, nbinfo->V);
 	}

@@ -2083,24 +2083,26 @@ int get_obs_dialog (const char *title, const char *text,
     return ret;
 }
 
-static void configure_chow_dlg (GtkToggleButton *b, struct range_setting *rset)
-{
-    gboolean s = gtk_toggle_button_get_active(b);
-
-    gtk_widget_set_sensitive(rset->combo, s);
-    gtk_widget_set_sensitive(rset->startspin, !s);
-
-    if (!s) {
-	rset->t2 = 0;
-    }
-}
-
 static void chow_dumv_callback (GtkComboBox *box, int *dumv)
 {
     gchar *vname = gtk_combo_box_get_active_text(box);
 
     *dumv = series_index(datainfo, vname);
     g_free(vname);
+}
+
+static void configure_chow_dlg (GtkToggleButton *b, struct range_setting *rset)
+{
+    gboolean s = gtk_toggle_button_get_active(b);
+
+    gtk_widget_set_sensitive(rset->startspin, !s);
+
+    if (s) {
+	gtk_widget_set_sensitive(rset->combo, TRUE);
+	chow_dumv_callback(GTK_COMBO_BOX(rset->combo), rset->t2);
+    } else {
+	*rset->t2 = 0;
+    }
 }
 
 int chow_dialog (int tmin, int tmax, int *t, int *dumv)
