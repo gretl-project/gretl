@@ -1974,6 +1974,7 @@ int get_t_from_obs_string (const char *s, const double **Z,
 	    } 
 
 	    if (t > pdinfo->n) {
+		/* e.g. annual dates */
 		char try[16];
 
 		sprintf(try, "%d", t);

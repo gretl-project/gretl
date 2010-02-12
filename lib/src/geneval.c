@@ -6025,7 +6025,7 @@ static double *dvar_get_series (int i, parser *p)
     case R_INDEX:
 	x = malloc(p->dinfo->n * sizeof *x);
 	if (x != NULL) {
-	    int yr = annual_data(p->dinfo);
+	    int yr = annual_data(p->dinfo); /* FIXME? */
 
 	    for (t=0; t<p->dinfo->n; t++) {
 		x[t] = (yr)? p->dinfo->sd0 + t : t + 1;
