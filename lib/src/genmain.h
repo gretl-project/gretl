@@ -189,6 +189,8 @@ int function_lookup (const char *s);
 
 int const_lookup (const char *s);
 
+double get_const_by_name (const char *name);
+
 const char *gretl_function_complete (const char *s);
 
 void gretl_function_hash_cleanup (void);

@@ -162,6 +162,8 @@ int n_saved_scalars (void)
 
 int gretl_is_scalar (const char *name)
 {
+    int ret = 0;
+
 #if SDEBUG
     debug_print_scalars("gretl_is_scalar");
 #endif
@@ -170,7 +172,13 @@ int gretl_is_scalar (const char *name)
 	return 0;
     }
 
-    return (get_scalar_pointer(name, gretl_function_depth()) != NULL);
+    ret = (get_scalar_pointer(name, gretl_function_depth()) != NULL);
+
+    if (!ret) {
+	ret = const_lookup(name);
+    }
+
+    return ret;
 }
 
 int gretl_scalar_get_index (const char *name, int *err)
@@ -215,6 +223,7 @@ double gretl_scalar_get_value_by_index (int i)
 double gretl_scalar_get_value (const char *name)
 {
     gretl_scalar *s;
+    double ret = NADBL;
 
 #if SDEBUG
     debug_print_scalars("gretl_scalar_get_value");
@@ -222,7 +231,13 @@ double gretl_scalar_get_value (const char *name)
 
     s = get_scalar_pointer(name, gretl_function_depth());
 
-    return (s != NULL)? s->val : NADBL;
+    if (s != NULL) {
+	ret = s->val;
+    } else {
+	ret = get_const_by_name(name);
+    }
+
+    return ret;
 }
 
 void gretl_scalar_set_value (const char *name, double val)

@@ -791,6 +791,12 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("TSLS");
 	}
+    } else if (pmod->ci == NEGBIN) {
+	if (pmod->opt & OPT_M) {
+	    return N_("Negative Binomial 1");
+	} else {
+	    return N_("Negative Binomial");
+	}	
     } else {
 	return simple_estimator_string(pmod->ci, prn);
     }
@@ -1900,7 +1906,7 @@ static void model_format_start (PRN *prn)
 
 /* below: this is used when we're doing something other than a plain
    text print of a model. When using TeX, returns the number of
-   columsn in the table, otherwise just returns 0.
+   columns in the table, otherwise just returns 0.
 */
 
 static int alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
@@ -3995,6 +4001,10 @@ static int plain_print_coeffs (const MODEL *pmod,
     int ncols = 4;
     int i, j, k;
     int err = 0;
+
+    if (ASYMPTOTIC_MODEL(pmod->ci)) {
+	headings[2] = N_("z-stat");
+    } 
 
     if (pmod->ci == AR || pmod->ci == ARCH) {
 	k = 0;

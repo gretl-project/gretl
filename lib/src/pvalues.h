@@ -22,9 +22,9 @@
 
 double gamma_function (double x);
 
-double log_gamma_function (double x);
+double ln_gamma (double x);
 
-double digamma_function (double x);
+double digamma (double x);
 
 double binomial_cdf (double p, int n, int k);
 

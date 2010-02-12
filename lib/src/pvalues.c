@@ -45,13 +45,13 @@ double gamma_function (double x)
 }
 
 /**
- * log_gamma_function:
+ * ln_gamma:
  * @x: argument.
  *
  * Returns: the log gamma function of @x, or #NADBL on failure.
  */
 
-double log_gamma_function (double x)
+double ln_gamma (double x)
 {
     double ret = cephes_lgamma(x);
 
@@ -63,13 +63,13 @@ double log_gamma_function (double x)
 }
 
 /**
- * digamma_function:
+ * digamma:
  * @x: argument.
  *
  * Returns: the digamma (or Psi) function of @x, or #NADBL on failure.
  */
 
-double digamma_function (double x)
+double digamma (double x)
 {
     double ret = psi(x);
 
@@ -721,9 +721,9 @@ static double Binv (double p, double q)
     errno = 0;
 
     if (p > 0 && q > 0) {
-	double x1 = log_gamma_function(p + q);
-	double x2 = log_gamma_function(p);
-	double x3 = log_gamma_function(q);
+	double x1 = ln_gamma(p + q);
+	double x2 = ln_gamma(p);
+	double x3 = ln_gamma(q);
 
 	if (!na(x1) && !na(x2) && !na(x3)) {
 	    f = exp(x1 - x2 - x3);

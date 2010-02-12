@@ -363,8 +363,8 @@ static double garch_ll (fcpinfo *f)
 #if 0
     if (1) {
 	double v = 7;
-	double tll = log_gamma_function(0.5*(v+1)-1) - 0.5*log(M_PI*(v-2)) 
-	    - log_gamma_function(0.5*v-1);
+	double tll = ln_gamma(0.5*(v+1)-1) - 0.5*log(M_PI*(v-2)) 
+	    - ln_gamma(0.5*v-1);
 	
 	for (t=t1; t<=t2; t++) {
 	    hts = f->h[t] * scale2;

@@ -1108,6 +1108,24 @@ static NODE *eval_pdist (NODE *n, parser *p)
     return ret;
 }
 
+static double get_const_by_id (int id)
+{
+    if (id == CONST_PI) {
+	return M_PI;
+    } else if (id == CONST_EPS) {
+	/* IEEE 754 - 2008, double precision */
+	return pow(2.0, -53);
+    } else if (id == CONST_WIN32) {
+#ifdef WIN32
+	return 1;
+#else
+	return 0;
+#endif
+    } else {
+	return NADBL;
+    }
+}
+
 /* look up and return numerical values of symbolic constants */
 
 static NODE *retrieve_const (NODE *n, parser *p)
@@ -1115,28 +1133,15 @@ static NODE *retrieve_const (NODE *n, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	switch (n->v.idnum) {
-	case CONST_PI:
-	    ret->v.xval = M_PI;
-	    break;
-	case CONST_NA:
-	    ret->v.xval = NADBL;
-	    break;
-	case CONST_EPS:
-	    /* IEEE 754 - 2008, double precision */
-	    ret->v.xval = pow(2.0, -53);
-	    break;
-	case CONST_WIN32:
-#ifdef WIN32
-	    ret->v.xval = 1;
-#else
-	    ret->v.xval = 0;
-#endif
-	    break;
-	}
+	ret->v.xval = get_const_by_id(n->v.idnum);
     }
 
     return ret;
+}
+
+double get_const_by_name (const char *name)
+{
+    return get_const_by_id(const_lookup(name));
 }
 
 static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
@@ -2605,13 +2610,13 @@ static double real_apply_func (double x, int f, parser *p)
 	}	
 	return y;
     case F_LNGAMMA:
-	y = log_gamma_function(x);
+	y = ln_gamma(x);
 	if (na(y)) {
 	    eval_warning(p, f, errno);
 	}
 	return y;
     case F_DIGAMMA:
-	y = digamma_function(x);
+	y = digamma(x);
 	if (na(y)) {
 	    eval_warning(p, f, errno);
 	}

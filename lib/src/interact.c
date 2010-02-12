@@ -401,6 +401,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == IVREG || \
                          c == MPOLS || \
                          c == POISSON || \
+			 c == NEGBIN ||	\
                          c == PRINT || \
                          c == SCATTERS || \
                          c == VAR || \
@@ -3393,7 +3394,7 @@ static int effective_ci (const CMD *cmd)
                        c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
                        c == EQUATION || c == POISSON || c == XCORRGM || \
-                       c == HECKIT)
+                       c == HECKIT || c == NEGBIN)
 
 #define TESTLEN 62
 #define LINELEN 78
