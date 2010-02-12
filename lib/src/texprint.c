@@ -1330,7 +1330,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	return E_NOTIMP;
     }
 
-    if (pmod->ci == POISSON) {
+    if (COUNT_MODEL(pmod->ci)) {
 	offvar = gretl_model_get_int(pmod, "offset_var");
 	if (offvar > 0) {
 	    nc++;
@@ -1355,9 +1355,6 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     *tmp = '\0';
     if (pmod->depvar != NULL) {
 	tex_escape(tmp, pmod->depvar);
-    } else if (pmod->ci == POISSON) {
-	tex_escape(vname, pdinfo->varname[pmod->list[1]]);
-	sprintf(tmp, "log(%s)", vname);
     } else {
 	i = gretl_model_get_depvar(pmod);
 	tex_escape(tmp, pdinfo->varname[i]);

@@ -566,23 +566,19 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
     return cmp;
 }
 
-/* reconstitute full varlist for WLS, POISSON, AR and models */
+/* reconstitute full varlist for WLS, AR and count models */
 
 static int *
 full_model_list (const MODEL *pmod, const int *inlist)
 {
-    int i, len, pos = 0;
+    int i, len = 0, pos = 0;
     int *flist = NULL;
-
-    if (pmod->ci != WLS && pmod->ci != POISSON && pmod->ci != AR) {
-	return NULL;
-    }
 
     if (pmod->ci == WLS) { 
 	len = inlist[0] + 2;
-    } else if (pmod->ci == POISSON) {
+    } else if (COUNT_MODEL(pmod->ci)) {
 	len = inlist[0] + 3;
-    } else {
+    } else if (pmod->ci == AR) {
 	pos = pmod->arinfo->arlist[0] + 1;
 	len = pos + inlist[0] + 2;
     }
@@ -598,7 +594,7 @@ full_model_list (const MODEL *pmod, const int *inlist)
 	for (i=1; i<=inlist[0]; i++) {
 	    flist[i+1] = inlist[i];
 	}
-    } else if (pmod->ci == POISSON) {
+    } else if (COUNT_MODEL(pmod->ci)) {
 	int offvar = gretl_model_get_int(pmod, "offset_var");
 
 	flist[0] = len - 1;
@@ -658,6 +654,12 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
     return 0;
 }
 
+static int has_offset_var (const MODEL *pmod)
+{
+    return (COUNT_MODEL(pmod->ci) &&
+	    gretl_model_get_int(pmod, "offset_var") > 0);   
+}
+
 #define be_quiet(o) ((o & OPT_A) || (o & OPT_Q))
 
 #define SMPL_DEBUG 0
@@ -693,8 +695,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	    myopt |= OPT_P;
 	}
 	rho = estimate_rho(list, pZ, pdinfo, myopt, prn, &rep.errcode);
-    } else if (orig->ci == WLS || orig->ci == AR || 
-	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
+    } else if (orig->ci == WLS || orig->ci == AR || has_offset_var(orig)) {
 	int *full_list = full_model_list(orig, list);
 
 	free(list);

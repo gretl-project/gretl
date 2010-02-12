@@ -49,8 +49,6 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
                          !gretl_model_get_int(m, "ordered") && \
                          !gretl_model_get_int(m, "multinom"))
 
-#define count_model(m) (m->ci == POISSON || m->ci == NEGBIN)
-
 #define multinomial_model(m) (m->ci == LOGIT && gretl_model_get_int(m, "multinom"))
 
 #define logit_probit_model(m) (m->ci == LOGIT || m->ci == PROBIT) 
@@ -454,7 +452,7 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void print_count_stats (const MODEL *pmod, PRN *prn)
+static void print_overdisp_test (const MODEL *pmod, PRN *prn)
 {
     double x = gretl_model_get_double(pmod, "overdisp");
 
@@ -2639,7 +2637,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[5] = (tex)? N_("Centered $R^2$") : 
 	    N_("Centered R-squared");  /* 22: */
 	val[5] = gretl_model_get_double(pmod, "centered-R2");
-    } else if (count_model(pmod) || binary_model(pmod)) {
+    } else if (COUNT_MODEL(pmod->ci) || binary_model(pmod)) {
 	key[4] = (tex)? N_("McFadden $R^2$") : 
 	    N_("McFadden R-squared");  /* 22: McFadden's pseudo-R-squared */
     }
@@ -2959,7 +2957,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     } else if (pmod->ci == INTREG) {
 	print_intreg_info(pmod, prn);
     } else if (pmod->ci == POISSON) {
-	print_count_stats(pmod, prn);
+	print_overdisp_test(pmod, prn);
     }
 
     /* FIXME alternate R^2 measures (within, centered) */
@@ -2975,7 +2973,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != HECKIT && 
 	pmod->ci != ARBOND && pmod->ci != GARCH &&
 	!ordered_model(pmod) && !multinomial_model(pmod) && 
-	!count_model(pmod) && !pmod->aux) {
+	!COUNT_MODEL(pmod->ci) && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 
@@ -3924,10 +3922,10 @@ get_col_heading (const char **S, int j, int slopes,
 }
 
 static void 
-print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, 
-		      struct printval *val, int namelen, 
-		      int colsep, int w, int lmax,
-		      int addoff, PRN *prn)
+print_count_offset (const MODEL *pmod, const DATAINFO *pdinfo, 
+		    struct printval *val, int namelen, 
+		    int colsep, int w, int lmax,
+		    int addoff, PRN *prn)
 {
     int offvar = gretl_model_get_int(pmod, "offset_var");
 
@@ -4178,10 +4176,10 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     if (pmod->ci == AR) {
 	print_ar_sum(pmod, prn);
-    } else if (pmod->ci == POISSON) {
-	print_poisson_offset(pmod, pdinfo, &vals[0][0], namelen, 
-			     colsep, w[0], lmax[0], addoff[0],
-			     prn);
+    } else if (COUNT_MODEL(pmod->ci)) {
+	print_count_offset(pmod, pdinfo, &vals[0][0], namelen, 
+			   colsep, w[0], lmax[0], addoff[0],
+			   prn);
     }
 
  bailout:
@@ -4243,7 +4241,7 @@ static void alt_print_arch_terms (const MODEL *pmod, PRN *prn)
 }
 
 static void 
-alt_print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+alt_print_count_offset (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int offvar = gretl_model_get_int(pmod, "offset_var");
 
@@ -4325,8 +4323,8 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	alt_print_rho_terms(pmod, prn);
     } else if (pmod->ci == ARCH) {
 	alt_print_arch_terms(pmod, prn);
-    } else if (pmod->ci == POISSON) {
-	alt_print_poisson_offset(pmod, pdinfo, prn);
+    } else if (COUNT_MODEL(pmod->ci)) {
+	alt_print_count_offset(pmod, pdinfo, prn);
     }
 
     return gotnan;

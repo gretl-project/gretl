@@ -105,7 +105,8 @@ static gretl_matrix *make_score_matrix (gretl_matrix *L, int k, int *err)
  * @callback: pointer to function for calculating log-likelihood and
  * score.
  * @toler: tolerance for convergence.
- * @itcount: location to receive count of iterations.
+ * @fncount: location to receive count of function evaluations.
+ * @grcount: location to receive count of gradient evaluations.
  * @data: pointer to be passed to @loglik.
  * @V: matrix in which to store covariance, or %NULL.
  * @opt: can include %OPT_V for verbose output.
@@ -133,7 +134,8 @@ static gretl_matrix *make_score_matrix (gretl_matrix *L, int k, int *err)
 int bhhh_max (double *theta, int k, 
 	      gretl_matrix *M,
 	      BHHH_FUNC callback,
-	      double toler, int *itcount,
+	      double toler, 
+	      int *fncount, int *grcount,
 	      void *data, 
 	      gretl_matrix *V,
 	      gretlopt opt,
@@ -144,7 +146,9 @@ int bhhh_max (double *theta, int k,
     gretl_matrix *G = NULL;
     double *delta = NULL, *ctemp = NULL;
     double *grad;
-    int iter, itermax;
+    int itermax, iter = 0;
+    int fcount = 0;
+    int gcount = 0;
     double minstep = 1.0e-06;
     double crit = 1.0;
     double stepsize = 0.25;
@@ -185,7 +189,6 @@ int bhhh_max (double *theta, int k,
 	goto bailout;
     }
 
-    iter = 0;
     itermax = libset_get_int(BHHH_MAXITER);
     grad = g->val;
 
@@ -201,6 +204,9 @@ int bhhh_max (double *theta, int k,
 	} else {
 	    ll = callback(theta, G, data, 1, &err); 
 	}
+
+	fcount++;
+	gcount++;
 
 	if (err) {
 	    pputs(prn, "Error calculating log-likelihood\n");
@@ -229,6 +235,7 @@ int bhhh_max (double *theta, int k,
 	
 	/* see if we've gone up...  (0 means don't compute score) */
 	ll2 = callback(ctemp, G, data, 0, &err); 
+	fcount++;
 
 #if BHHH_DEBUG
 	fprintf(stderr, "bhhh loop: initial ll2 = %#.14g\n", ll2);
@@ -247,6 +254,7 @@ int bhhh_max (double *theta, int k,
 		ctemp[i] = theta[i] + delta[i];
 	    }
 	    ll2 = callback(ctemp, G, data, 0, &err);
+	    fcount++;
 #if BHHH_DEBUG
 	    fprintf(stderr, "bhhh loop: modified ll2 = %#.14g\n", ll2);
 #endif
@@ -273,7 +281,8 @@ int bhhh_max (double *theta, int k,
 	crit = ll2 - ll;  
     }
 
-    *itcount = iter;
+    *fncount = fcount;
+    *grcount = gcount;
 
     if (opt & OPT_V) {
 	print_iter_info(-1, ll, C_LOGLIK, k, theta, grad, 

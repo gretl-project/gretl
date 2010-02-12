@@ -422,7 +422,8 @@ static double gen_res (double yt, double ndxt, double sig)
 
 static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 			      double sigma, double ll, const double **X,
-			      gretl_matrix *VCV, double scale, int iters)
+			      gretl_matrix *VCV, double scale, 
+			      int fncount, int grcount)
 {
     int i, t, s, cenc = 0;
     const double *y = X[1];
@@ -490,7 +491,8 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     pmod->ci = TOBIT;
 
     gretl_model_set_int(pmod, "censobs", cenc);
-    gretl_model_set_int(pmod, "iters", iters);
+    gretl_model_set_int(pmod, "fncount", fncount);
+    gretl_model_set_int(pmod, "grcount", grcount);
 
     return 0;
 }
@@ -594,7 +596,7 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     err = BFGS_max(TC->theta, TC->k, maxit, toler, 
 		   &fncount, &grcount, t_loglik, C_LOGLIK,
-		   (1 ? t_score : NULL), TC, NULL, 
+		   t_score, TC, NULL, 
 		   (prn != NULL)? OPT_V : OPT_NONE, prn);
     if (err) {
 	goto bailout;
@@ -619,8 +621,9 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     }
 
     if (!err) {
-	write_tobit_stats(pmod, TC->theta, k-1, sigma, TC->ll, (const double **) X, 
-			  VCV, scale, fncount);
+	write_tobit_stats(pmod, TC->theta, k-1, sigma, TC->ll, 
+			  (const double **) X, VCV, scale, 
+			  fncount, grcount);
     }
 
     gretl_matrix_free(VCV);

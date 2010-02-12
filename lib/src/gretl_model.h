@@ -144,6 +144,8 @@ struct VCVInfo_ {
                    c == PROBIT || \
                    c == TOBIT)
 
+#define COUNT_MODEL(c) (c == POISSON || c == NEGBIN)
+
 #define LSQ_MODEL(c) (c == AR1 || \
                       c == HSK || \
                       c == OLS || \

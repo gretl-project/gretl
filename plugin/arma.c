@@ -1944,7 +1944,8 @@ static int bhhh_arma (double *theta,
 {
     gretlopt bhhh_opt = OPT_NONE;
     double tol = libset_get_double(BHHH_TOLER);
-    int iters, err = 0;
+    int fncount = 0, grcount = 0;
+    int err = 0;
 
     err = set_up_arma_OPG_info(ainfo, Z, pdinfo);
     if (err) {
@@ -1957,7 +1958,7 @@ static int bhhh_arma (double *theta,
     }
 
     err = bhhh_max(theta, ainfo->nc, ainfo->G,
-		   bhhh_arma_callback, tol, &iters,
+		   bhhh_arma_callback, tol, &fncount, &grcount,
 		   ainfo, ainfo->V, bhhh_opt, ainfo->prn);
     
     if (err) {
@@ -1968,7 +1969,8 @@ static int bhhh_arma (double *theta,
     }
 
     if (!err) {
-	gretl_model_set_int(pmod, "iters", iters);
+	gretl_model_set_int(pmod, "fncount", fncount);
+	gretl_model_set_int(pmod, "grcount", grcount);
 	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
 	arma_model_add_roots(pmod, ainfo, theta);
     }

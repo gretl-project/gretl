@@ -1822,7 +1822,7 @@ static double fcast_transform (double xb, const MODEL *pmod,
 	} else {
 	    yf = lmax / (1.0 + exp(-xb));
 	}
-    } else if (ci == POISSON) {
+    } else if (ci == POISSON || ci == NEGBIN) {
 	if (offset != NULL) {
 	    if (na(offset[t])) {
 		yf = NADBL;
@@ -1832,9 +1832,7 @@ static double fcast_transform (double xb, const MODEL *pmod,
 	} else {
 	    yf = exp(xb);
 	}
-    } else if (ci == NEGBIN) {
-	yf = exp(xb);
-    }
+    } 
 
     return yf;
 }
@@ -1927,8 +1925,8 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
     int k = pmod->ncoeff;
     int i, vi, t;
 
-    if (pmod->ci == POISSON) {
-	/* special for poisson "offset" variable */
+    if (COUNT_MODEL(pmod->ci)) {
+	/* special for "offset" variable */
 	int offnum = gretl_model_get_int(pmod, "offset_var");
 
 	if (offnum > 0) {

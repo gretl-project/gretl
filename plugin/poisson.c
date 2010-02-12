@@ -34,6 +34,8 @@
 #define POISSON_TOL 1.0e-10 
 #define POISSON_MAX_ITER 100 
 
+#define NEGBIN_USE_BFGS 1
+
 typedef struct negbin_info_ negbin_info;
 typedef struct offset_info_ offset_info;
 
@@ -131,13 +133,17 @@ static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
 	/* initialize using Poisson estimates */
 	nbinfo->theta[i] = pmod->coeff[i];
     }
-    nbinfo->theta[k] = 1.0; /* FIXME alpha initialization? */
+    nbinfo->theta[k] = 1.0; /* FIXME smart alpha initialization? */
 
     nbinfo->ll = NADBL;
     nbinfo->prn = (opt & OPT_V)? prn : NULL;
 
     return 0;
 }
+
+/* calculate negative binomial loglikelihood, and score if
+   wanted: supports NEGBIN1 and NEGBIN2
+*/
 
 static double negbin_callback (double *theta, 
 			       gretl_matrix *G, 
@@ -178,7 +184,7 @@ static double negbin_callback (double *theta,
 	    psi = eps + 1/alpha;
 	}
 	mpp = mu[t] + psi;
-	ll[t] = ln_gamma(y[t] + psi)- ln_gamma(psi);
+	ll[t] = ln_gamma(y[t] + psi) - ln_gamma(psi);
 	ll[t] -= ln_gamma(y[t] + 1.0);
 	ll[t] += psi * log(psi/mpp) + y[t] * log(mu[t]/mpp);
 	nbinfo->ll += ll[t];
@@ -226,12 +232,39 @@ static double negbin_callback (double *theta,
     return nbinfo->ll;
 }
 
-static double negbin_ll (const double *theta, void *data)
+/* glue needed when using BFGS or forming Hessian */
+
+static double negbin_loglik (const double *theta, void *data)
 {
     int err = 0;
 
     return negbin_callback((double *) theta, NULL, data, 0, &err);
 }
+
+/* glue needed when using BFGS */
+
+static int negbin_score (double *theta, double *g, int k, BFGS_CRIT_FUNC ll, 
+			 void *data)
+{
+    negbin_info *nbinfo = (negbin_info *) data;
+    int i, t, T = nbinfo->y->rows;
+    double gti;
+    int err = 0;
+
+    negbin_callback(theta, nbinfo->G, data, 1, &err);
+
+    for (i=0; i<k; i++) {
+	g[i] = 0.0;
+	for (t=0; t<T; t++) {
+	    gti = gretl_matrix_get(nbinfo->G, t, i);
+	    g[i] += gti;
+	}
+    }
+
+    return err;
+}
+
+/* QML sandwich VCV */
 
 static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo)
 {
@@ -240,7 +273,7 @@ static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo)
     int nc = nbinfo->k + 1;
     int err = 0;
 
-    H = numerical_hessian(nbinfo->theta, nc, negbin_ll, 
+    H = numerical_hessian(nbinfo->theta, nc, negbin_loglik, 
 			  nbinfo, &err);
 
     if (!err) {
@@ -279,14 +312,13 @@ static int negbin_hessian_vcv (MODEL *pmod, negbin_info *nbinfo)
     int nc = nbinfo->k + 1;
     int err = 0;
 
-    H = numerical_hessian(nbinfo->theta, nc, negbin_ll, 
+    H = numerical_hessian(nbinfo->theta, nc, negbin_loglik, 
 			  nbinfo, &err);
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, H);
 	if (!err) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
-	    pmod->opt |= OPT_H;
 	}
     }
     
@@ -298,14 +330,21 @@ static int negbin_hessian_vcv (MODEL *pmod, negbin_info *nbinfo)
 static int 
 transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo, 
 			   const double **Z, const DATAINFO *pdinfo, 
-			   int iters, gretlopt opt)
+			   offset_info *oinfo, int fncount, int grcount,
+			   gretlopt opt)
 {
     int nc = nbinfo->k + 1;
     int i, s, t, err = 0;
 
     pmod->ci = NEGBIN;
-    
-    gretl_model_set_int(pmod, "iters", iters);
+
+    gretl_model_set_int(pmod, "fncount", fncount);
+    gretl_model_set_int(pmod, "grcount", grcount);
+
+    if (oinfo != NULL) {
+	gretl_model_set_int(pmod, "offset_var", oinfo->vnum);
+    }
+
     pmod->ess = 0.0;
 
     s = 0;
@@ -341,11 +380,9 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
     if (!err) {
 	if (opt & OPT_R) {
 	    err = negbin_robust_vcv(pmod, nbinfo);
-	} else if (opt & OPT_H) {
-	    err = negbin_hessian_vcv(pmod, nbinfo);
 	} else {
-	    err = gretl_model_write_vcv(pmod, nbinfo->V);
-	}
+	    err = negbin_hessian_vcv(pmod, nbinfo);
+	} 
     }
 
     if (!err) {
@@ -354,7 +391,10 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
 	/* mask invalid statistics */
 	pmod->fstt = pmod->chisq = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
+	pmod->ess = NADBL;
+	pmod->sigma = NADBL;
 	if (opt & OPT_M) {
+	    /* NEGBIN1 */
 	    pmod->opt |= OPT_M;
 	}
     }
@@ -367,27 +407,43 @@ static int do_negbin (MODEL *pmod, offset_info *oinfo,
 		      gretlopt opt, PRN *prn)
 {
     negbin_info nbinfo;
-    double tol = libset_get_double(BHHH_TOLER);
-    int iters, err = 0;
+    gretlopt max_opt = OPT_NONE;
+    double toler;
+    int fncount = 0;
+    int grcount = 0;
+    int err = 0;
 
     err = negbin_init(&nbinfo, pmod, Z, oinfo, opt, prn);
+    if (err) {
+	goto bailout;
+    }
 
-    if (!err) {
-	gretlopt bhhh_opt = OPT_NONE;
+    if (opt & OPT_V) {
+	max_opt |= OPT_V;
+    }
 
-	if (opt & OPT_V) {
-	    bhhh_opt |= OPT_V;
-	}
-
+    if (getenv("NEGBIN_USE_BHHH")) {
+	toler = libset_get_double(BHHH_TOLER);
 	err = bhhh_max(nbinfo.theta, nbinfo.k + 1, nbinfo.G,
-		       negbin_callback, tol, &iters,
-		       &nbinfo, nbinfo.V, bhhh_opt, nbinfo.prn);
+		       negbin_callback, toler, &fncount, &grcount,
+		       &nbinfo, nbinfo.V, max_opt, nbinfo.prn);
+    } else {	
+	int maxit;
+
+	BFGS_defaults(&maxit, &toler, NEGBIN);
+
+	err = BFGS_max(nbinfo.theta, nbinfo.k + 1, maxit, toler, 
+		       &fncount, &grcount, negbin_loglik, C_LOGLIK,
+		       negbin_score, &nbinfo, NULL, max_opt, nbinfo.prn);
     }
 
     if (!err) {
 	err = transcribe_negbin_results(pmod, &nbinfo, Z, pdinfo, 
-					iters, opt);
+					oinfo, fncount, grcount, 
+					opt);
     }
+
+    bailout:
 
     negbin_free(&nbinfo);
 
@@ -793,8 +849,9 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
     return pmod->errcode;
 }
 
-/* check the offset series (if wanted) and retrieve its mean
-   if the series is OK */
+/* Check the offset series (if wanted) and retrieve its mean
+   if the series is OK.   
+*/
 
 static int get_offset_info (MODEL *pmod, offset_info *oinfo)
 {
@@ -847,6 +904,7 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
     } 
 
     if (ci == NEGBIN) {
+	/* use auxiliary poisson to initialize the estimates */
 	err = do_poisson(pmod, oinfo, pZ, pdinfo, OPT_A, NULL);
 	if (!err) {
 	    err = do_negbin(pmod, oinfo, (const double **) *pZ, 

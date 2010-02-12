@@ -135,6 +135,7 @@ struct _selector {
                          c == PANEL_WLS || \
                          c == PANEL_B || \
 			 c == POISSON || \
+                         c == NEGBIN || \
                          c == PROBIT || \
                          c == OPROBIT || \
 	                 c == QUANTREG || \
@@ -593,7 +594,7 @@ void selector_from_model (void *ptr, int ci)
 	    garch_q = pmod->list[2];
 	} else if (pmod->ci == HECKIT) {
 	    retrieve_heckit_info(pmod, &gotinst);
-	} else if (pmod->ci == POISSON) {
+	} else if (COUNT_MODEL(pmod->ci)) {
 	    offvar = gretl_model_get_int(pmod, "offset_var");
 	} else if (pmod->ci == IVREG) {
 	    free(instlist);
@@ -2562,6 +2563,7 @@ static void read_omit_cutoff (selector *sr)
 #define extra_widget_get_int(c) (c == HECKIT ||		\
                                  c == INTREG ||		\
                                  c == POISSON ||	\
+                                 c == NEGBIN ||         \
                                  c == WLS ||		\
                                  THREE_VARS_CODE(c))
 
@@ -2586,7 +2588,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	return;
     }
 
-    if (sr->ci == WLS || sr->ci == POISSON || 
+    if (sr->ci == WLS || sr->ci == POISSON || sr->ci == NEGBIN ||
 	sr->ci == AR || sr->ci == HECKIT ||
 	sr->ci == INTREG || THREE_VARS_CODE(sr->ci)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
@@ -2609,8 +2611,8 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	    } else if (THREE_VARS_CODE(sr->ci)) { 
 		warnbox(("You must select a Y-axis variable"));
 		sr->error = 1;
-	    } else if (sr->ci == POISSON) {
-		/* the 'extra' field is optional */
+	    } else if (COUNT_MODEL(sr->ci)) {
+		/* the 'extra' (offset) field is optional */
 		return;
 	    }
 	}
@@ -2637,7 +2639,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	sprintf(numstr, " %d ", k);
 	add_to_cmdlist(sr, numstr);
 	hivar = k;
-    } else if (sr->ci == POISSON) {
+    } else if (COUNT_MODEL(sr->ci)) {
 	sprintf(endbit, " ; %d", k);
 	offvar = k;
     } else if (sr->ci == HECKIT) {
@@ -3029,6 +3031,8 @@ static char *est_str (int cmdnum)
 	return N_("Logistic");
     case POISSON:
 	return N_("Poisson");
+    case NEGBIN:
+	return N_("Negative Binomial");
     case PANEL:
 	return N_("Panel model");
     case PANEL_WLS:
@@ -3083,6 +3087,7 @@ static char *extra_string (int ci)
     case WLS:
 	return N_("Weight variable");
     case POISSON:
+    case NEGBIN:
 	return N_("Offset variable");
     case HECKIT:
 	return N_("Selection variable");
@@ -3502,6 +3507,8 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
 	setvar = hivar;
     } else if (sr->ci == POISSON && offvar > 0 && offvar < datainfo->v) {
 	setvar = offvar;
+    } else if (sr->ci == NEGBIN && offvar > 0 && offvar < datainfo->v) {
+	setvar = offvar;
     }
 
     if (setvar > 0) {
@@ -3681,7 +3688,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	vbox_add_hsep(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->ci == WLS || sr->ci == INTREG || 
-	       sr->ci == POISSON || THREE_VARS_CODE(sr->ci)) {
+	       COUNT_MODEL(sr->ci) || THREE_VARS_CODE(sr->ci)) {
 	extra_var_box(sr, right_vbox);
     } else if (USE_ZLIST(sr->ci)) {
 	primary_rhs_varlist(sr, right_vbox);
@@ -3737,7 +3744,8 @@ static void selector_init (selector *sr, guint ci, const char *title,
 
     if (ci == ARMA) {
 	dlgy += 80;
-    } else if (ci == WLS || ci == INTREG || ci == POISSON || ci == AR) {
+    } else if (ci == WLS || ci == INTREG || ci == POISSON || 
+	       ci == NEGBIN || ci == AR) {
 	dlgy += 30;
     } else if (ci == HECKIT) {
 	dlgy += 80;
@@ -4234,7 +4242,8 @@ static GtkWidget *mpols_bits_selector (void)
 #define robust_conf(c) (c != LOGIT && c != PROBIT &&	\
                         c != OLOGIT && c != OPROBIT &&	\
                         c != QUANTREG && c != INTREG && \
-                        c != MLOGIT && c != POISSON)
+                        c != MLOGIT && c != POISSON && \
+	                c != NEGBIN)
 
 static void build_selector_switches (selector *sr) 
 {
@@ -4244,7 +4253,7 @@ static void build_selector_switches (selector *sr)
 	sr->ci == GARCH || sr->ci == IVREG || sr->ci == VAR || 
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == MLOGIT ||
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == POISSON ||
-	sr->ci == PANEL || sr->ci == QUANTREG) {
+	sr->ci == NEGBIN || sr->ci == PANEL || sr->ci == QUANTREG) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? */
@@ -5211,7 +5220,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
-	VEC_CODE(ci) || ci == POISSON || ci == ARBOND ||
+	VEC_CODE(ci) || COUNT_MODEL(ci) || ci == ARBOND ||
 	ci == QUANTREG || ci == INTREG || THREE_VARS_CODE(ci)) {
 	build_mid_section(sr, right_vbox);
     }

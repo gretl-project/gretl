@@ -5842,11 +5842,7 @@
       <options>
 	<option>
 	  <flag>--model1</flag>
-	  <effect>use NEGBIN1 rather than NEGBIN2</effect>
-	</option>
-	<option>
-	  <flag>--hessian</flag>
-	  <effect>base covariance matrix on the Hessian</effect>
+	  <effect>use NEGBIN1 model</effect>
 	</option>
 	<option>
 	  <flag>--robust</flag>
@@ -5865,20 +5861,25 @@
 
     <description>
       <para>
-	Estimates a Negative Binomial model.  The dependent variable is
-	taken to represent a count of the occurrence of events of some
-	sort, and must have only non-negative integer values.
+	Estimates a Negative Binomial model.  The dependent variable is taken
+	to represent a count of the occurrence of events of some sort, and
+	must have only non-negative integer values. By default the model
+	NEGBIN2 is used, in which the conditional variance of the count is
+	given by &mu;(1 + &alpha;&mu;), where &mu; denotes the conditional
+	mean.  But if the <lit>--model1</lit> option is given the conditional
+	variance is &mu;(1 + &alpha;).
       </para>
       <para>
-	By default, standard errors are computed using the outer product
-	of the gradient.  If the <lit>--hessian</lit> flag is given then a
-	numerical approximation to the Hessian is used; or if the
+	The optional <lit>offset</lit> series works in the same way as for the
+	<cmdref targ="poisson"/> command.  The Poisson model is a restricted
+	form of the Negative Binomial in which &alpha; = 0 by construction.
+      </para>
+      <para>
+	By default, standard errors are computed using a numerical
+	approximation to the Hessian at convergence.  If the
 	<lit>--robust</lit> option is given QML standard errors are
 	calculated, using a <quote>sandwich</quote> of the inverse of the
 	Hessian and the outer product of the gradient.
-      </para>
-      <para>
-	See also <cmdref targ="poisson"/>.
       </para>
     </description>
   </command>
