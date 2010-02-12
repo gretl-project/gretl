@@ -3904,48 +3904,91 @@ static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
     const double *x = l->v.xvec;
-    int k = (int) node_get_scalar(r, p);
-    int t, t1, t2;
+    double d = node_get_scalar(r, p);
+    double *ma = NULL;
+    int t, k = 0;
+
+    if (d < 1.0) {
+	/* exponential MA */
+	if (d < 0.0) {
+	    p->err = E_DATA;
+	    return NULL;
+	} else if (dataset_is_panel(p->dinfo)) {
+	    p->err = E_PDWRONG;
+	    return NULL;
+	}
+	k = -1;
+    } else {
+	/* regular MA */  
+	k = (int) d;
+	d = -1.0;
+    } 
 
     ret = aux_vec_node(p, p->dinfo->n);
     if (ret == NULL) {
 	return NULL;
     }
 
-    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+    ma = ret->v.xvec;
 
-    for (t=t1; t<=t2; t++) {
-	double xs, msum = 0.0;
+    if (d > 0) {
+	/* exponential MA */
+	double x0 = NADBL;
+
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    if (na(x0)) {
+		/* still need starting-point */
+		if (na(x[t])) {
+		    ma[t] = NADBL;
+		} else {
+		    ma[t] = x0 = x[t];
+		}
+	    } else {
+		/* EMA is underway */
+		if (na(x[t])) {
+		    p->err = E_MISSDATA;
+		} else {
+		    ma[t] = d * x[t] + (1-d) * ma[t-1];
+		}
+	    }
+	}
+    } else {
+	/* regular MA */
+	int t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+	int t2 = (autoreg(p))? p->obs : p->dinfo->t2;
 	int i, s;
 
-	for (i=0; i<k; i++) {
-	    s = t - i;
-	    if (p->dinfo->structure == STACKED_TIME_SERIES) {
-		if (s >= 0 && s < p->dinfo->n && 
-		    p->dinfo->paninfo->unit[s] != 
-		    p->dinfo->paninfo->unit[t]) {
-		    s = -1;
+	for (t=t1; t<=t2; t++) {
+	    double xs, msum = 0.0;
+
+	    for (i=0; i<k; i++) {
+		s = t - i;
+		if (p->dinfo->structure == STACKED_TIME_SERIES) {
+		    if (s >= 0 && s < p->dinfo->n && 
+			p->dinfo->paninfo->unit[s] != 
+			p->dinfo->paninfo->unit[t]) {
+			s = -1;
+		    }
+		}
+
+		if (s >= 0) {
+		    xs = x[s];
+		} else {
+		    xs = NADBL;
+		}
+
+		if (na(xs)) {
+		    msum = NADBL;
+		    break;
+		} else {
+		    msum += x[s];
 		}
 	    }
 
-	    if (s >= 0) {
-		xs = x[s];
-	    } else {
-		xs = NADBL;
-	    }
-
-	    if (na(xs)) {
-		msum = NADBL;
-		break;
-	    } else {
-		msum += x[s];
-	    }
+	    if (!na(msum)) {
+		ma[t] = (k > 0)? (msum / k) : msum;
+	    } 
 	}
-
-	if (!na(msum)) {
-	    ret->v.xvec[t] = msum / k;
-	} 
     }
 
     return ret;

@@ -3070,14 +3070,13 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Computes the <argname>p</argname>-term moving average for
-	  the series
+	  For <argname>p</argname> &gt; 1, computes the
+	  <argname>p</argname>-term moving average for the series
 	  <argname>x</argname>, that is the average of x(t) to x(t-p+1).
 	</para>
 	<para context="tex">
-	  Computes the <argname>p</argname>-term moving average for
-	  the series
-	  <argname>x</argname>, that is $y_t = \frac{1}{p}
+	  For $p&gt;1$, computes the <argname>p</argname>-term moving average for
+	  the series <argname>x</argname>, that is $y_t = \frac{1}{p}
 	  \sum_{i=0}^{p-1} x_{t-i}$.
 	</para>
 	<para>
@@ -3089,6 +3088,16 @@
 	    tmp = movavg(x,3)
 	    y = tmp(+1)
 	</code>
+	<para context="notex">
+	  If <argname>p</argname> is a positive fraction, computes the
+	  exponentially weighted moving average, m(t) = p*x(t) + (1-p)*m(t-1),
+	  with m(0) set to the first valid value of <argname>x</argname>.
+	</para>
+	<para context="tex">
+	  If $0 &lt; p &lt; 1$, computes the exponentially weighted
+	  moving average, $m_t = p x_t + (1-p)m_{t-1}$, with $m_0$ set to the
+	  first valid value of $x$.
+	</para>	
     </description>
     </function>
 
