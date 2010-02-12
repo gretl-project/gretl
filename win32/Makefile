@@ -355,7 +355,7 @@ plugins/fractals.dll: fractals.o dllinit.o
 
 plugins/poisson.dll: poisson.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lprob
 
 plugins/kernel.dll: kernel.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
