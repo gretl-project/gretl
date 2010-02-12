@@ -5837,6 +5837,7 @@
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
+	<argument separated="true" optional="true">offset</argument>
       </arguments>
       <options>
 	<option>
@@ -5866,9 +5867,8 @@
       <para>
 	Estimates a Negative Binomial model.  The dependent variable is
 	taken to represent a count of the occurrence of events of some
-	sort, and must take on only non-negative integer values.
+	sort, and must have only non-negative integer values.
       </para>
-
       <para>
 	By default, standard errors are computed using the outer product
 	of the gradient.  If the <lit>--hessian</lit> flag is given then a
@@ -5877,7 +5877,9 @@
 	calculated, using a <quote>sandwich</quote> of the inverse of the
 	Hessian and the outer product of the gradient.
       </para>
-
+      <para>
+	See also <cmdref targ="poisson"/>.
+      </para>
     </description>
   </command>
 
@@ -7058,7 +7060,9 @@
 	is a <quote>sandwich</quote> of the inverse of the estimated
 	Hessian and the outer product of the gradient.
       </para>
-
+      <para>
+	See also <cmdref targ="negbin"/>.
+      </para>
     </description>
 
     <gui-access>
