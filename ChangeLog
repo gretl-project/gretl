@@ -16,6 +16,8 @@ version 1.8.8, in progress
 - Add new function, digamma()
 - Add new built-in constant: "macheps" gets the
   machine precision
+- OS X package: add icons and associations for gretl data,
+  script and session files
 - Fix bug: errors in Exponential Moving Average in GUI
 - Fix bug: non-ASCII characters not handled in function
   package upload to server
