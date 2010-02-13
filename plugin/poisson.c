@@ -215,7 +215,12 @@ static double negbin_callback (double *theta,
 
 	    dl_dpsi = digamma(psi + y[t]) - digamma(psi) 
 		- log(1 + mu[t]/psi) + (mu[t]/mpp) - (y[t]/mpp);
-	    dl_da = dl_dpsi * dpsi_da * alpha;
+
+	    dl_da = dl_dpsi * dpsi_da;
+	    if (nbinfo->type == 2) {
+		dl_da *= alpha;
+	    }
+	    
 	    dl_dmu = y[t] * psi/mu[t] / mpp - (psi/mpp);
 
 	    for (i=0; i<k; i++) {
