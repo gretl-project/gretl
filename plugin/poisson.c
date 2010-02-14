@@ -163,6 +163,11 @@ static double negbin_callback (double *theta,
     int i, t, T = nbinfo->y->rows;
     int err = 0;
 
+    if (alpha<=0) {
+	*errp = E_NAN;
+	return NADBL;
+    }
+
     for (i=0; i<k; i++) {
 	nbinfo->beta->val[i] = theta[i];
     }
@@ -183,6 +188,7 @@ static double negbin_callback (double *theta,
 	} else {
 	    psi = eps + 1/alpha;
 	}
+
 	mpp = mu[t] + psi;
 	ll[t] = ln_gamma(y[t] + psi) - ln_gamma(psi);
 	ll[t] -= ln_gamma(y[t] + 1.0);
