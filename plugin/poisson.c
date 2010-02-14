@@ -159,7 +159,7 @@ static double negbin_callback (double *theta,
     double *ll = nbinfo->llt->val;
     double *mu = nbinfo->mu->val;
     double *y = nbinfo->y->val;
-    double psi, mpp;
+    double psi, mpp, rat;
     int i, t, T = nbinfo->y->rows;
     int err = 0;
 
@@ -186,7 +186,8 @@ static double negbin_callback (double *theta,
 	mpp = mu[t] + psi;
 	ll[t] = ln_gamma(y[t] + psi) - ln_gamma(psi);
 	ll[t] -= ln_gamma(y[t] + 1.0);
-	ll[t] += psi * log(psi/mpp) + y[t] * log(mu[t]/mpp);
+	rat = psi/mpp;
+	ll[t] += psi * log(rat) + y[t] * log(1-rat);
 	nbinfo->ll += ll[t];
     }
 
@@ -214,18 +215,14 @@ static double negbin_callback (double *theta,
 	    mpp = mu[t] + psi;
 
 	    dl_dpsi = digamma(psi + y[t]) - digamma(psi) 
-		- log(1 + mu[t]/psi) + (mu[t]/mpp) - (y[t]/mpp);
-
+		- log(1 + mu[t]/psi) - (y[t] - mu[t])/mpp;
 	    dl_da = dl_dpsi * dpsi_da;
-	    if (nbinfo->type == 2) {
-		dl_da *= alpha;
-	    }
-	    
-	    dl_dmu = y[t] * psi/mu[t] / mpp - (psi/mpp);
+
+	    dl_dmu = y[t]/mu[t] - (psi + y[t])/mpp;
 
 	    for (i=0; i<k; i++) {
 		dmu_dbi = mu[t] * gretl_matrix_get(X, t, i);
-		dl_dbi = dl_dpsi * dpsi_dmu * dmu_dbi + dl_dmu * dmu_dbi;
+		dl_dbi = (dl_dpsi * dpsi_dmu + dl_dmu) * dmu_dbi;
 		gretl_matrix_set(G, t, i, dl_dbi);
 	    }
 	    gretl_matrix_set(G, t, k, dl_da);
@@ -269,6 +266,104 @@ static int negbin_score (double *theta, double *g, int k, BFGS_CRIT_FUNC ll,
     return err;
 }
 
+static gretl_matrix *negbin_nhessian (double *theta, void *data, 
+				      BFGS_CRIT_FUNC ll, int *err)
+{
+    negbin_info *nbinfo = (negbin_info *) data;
+    gretl_matrix *H = NULL;
+    gretl_matrix *splus = NULL;
+    gretl_matrix *sminus = NULL;
+    double *coef;
+    double *g;
+    int nc = nbinfo->k + 1;
+    double x, eps = 1.0e-05;
+    int i, j;
+    
+    H      = gretl_matrix_alloc(nc, nc);
+    splus  = gretl_matrix_alloc(1, nc);
+    sminus = gretl_matrix_alloc(1, nc);
+    coef   = malloc(nc * sizeof *coef);
+    g      = malloc(nc * sizeof *g);
+
+    if (H == NULL || splus == NULL || sminus == NULL ||
+	coef == NULL || g == NULL) {
+	*err = E_ALLOC;
+	free(coef);
+	free(g);
+	goto bailout;
+    }
+
+    for (i=0; i<nc; i++) {
+	coef[i] = theta[i];
+    }
+
+    for (i=0; i<nc; i++) {
+	coef[i] += eps;
+	negbin_score(coef, g, nc, ll, nbinfo);
+	for (j=0; j<nc; j++) {
+	    gretl_vector_set(splus, j, g[j]);
+	}
+
+	coef[i] -= 2*eps;
+	negbin_score(coef, g, nc, ll, nbinfo);
+	for (j=0; j<nc; j++) {
+	    gretl_vector_set(sminus, j, g[j]);
+	}
+
+	coef[i] += eps;
+	for (j=0; j<nc; j++) {
+	    x = gretl_vector_get(splus, j);
+	    x -= gretl_vector_get(sminus, j);
+	    gretl_matrix_set(H, i, j, -x/(2*eps));
+	}
+    }
+
+    gretl_matrix_xtr_symmetric(H);
+    gretl_invert_symmetric_matrix(H);
+
+ bailout:
+
+    gretl_matrix_free(splus);
+    gretl_matrix_free(sminus);
+    free(coef);
+    free(g);
+
+    return H;
+}
+
+/* OPG vcv matrix */
+
+static int negbin_OPG_vcv (MODEL *pmod, negbin_info *nbinfo)
+{
+    gretl_matrix *GG = NULL;
+    int nc = nbinfo->k + 1;
+    int err = 0;
+
+    GG = gretl_matrix_alloc(nc, nc);
+    if (GG == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	gretl_matrix_multiply_mod(nbinfo->G, GRETL_MOD_TRANSPOSE,
+				  nbinfo->G, GRETL_MOD_NONE,
+				  nbinfo->V, GRETL_MOD_NONE);
+	/* invert */
+	err = gretl_invert_symmetric_matrix(nbinfo->V);
+    }
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, nbinfo->V);
+	if (!err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
+	}
+    }
+    
+    gretl_matrix_free(GG);
+
+    return err;
+}
+
 /* QML sandwich VCV */
 
 static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo)
@@ -278,8 +373,7 @@ static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo)
     int nc = nbinfo->k + 1;
     int err = 0;
 
-    H = numerical_hessian(nbinfo->theta, nc, negbin_loglik, 
-			  nbinfo, &err);
+    H = negbin_nhessian(nbinfo->theta, nbinfo, negbin_loglik, &err);
 
     if (!err) {
 	GG = gretl_matrix_alloc(nc, nc);
@@ -317,8 +411,7 @@ static int negbin_hessian_vcv (MODEL *pmod, negbin_info *nbinfo)
     int nc = nbinfo->k + 1;
     int err = 0;
 
-    H = numerical_hessian(nbinfo->theta, nc, negbin_loglik, 
-			  nbinfo, &err);
+    H = negbin_nhessian(nbinfo->theta, nbinfo, negbin_loglik, &err);
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, H);
@@ -385,6 +478,8 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
     if (!err) {
 	if (opt & OPT_R) {
 	    err = negbin_robust_vcv(pmod, nbinfo);
+	} else if (opt & OPT_G) {
+	    err = negbin_OPG_vcv(pmod, nbinfo);
 	} else {
 	    err = negbin_hessian_vcv(pmod, nbinfo);
 	} 
