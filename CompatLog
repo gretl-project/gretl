@@ -1,3 +1,16 @@
+version 1.8.8, in progress
+
+The internal variable "obs" used to get the year in the
+case of annual time series data, but a 1-based index in all
+other cases.  This has now been made consistent: it always
+gives the 1-based index.  Any scripts that rely on the old
+behavior with annual data can be fixed quite easily --
+substitute, e.g., "obsnum(1970)" for plain "1970" when you
+wish to compare a year against the obs series.  For example, 
+to create a dummy variable with value 1 in 1970 only:
+
+  series d70 = (obs=obsnum(1970))? 1 : 0
+
 01/24/2010 version 1.8.7
 
 The accessor $vcv is no longer available for VARs.  The

@@ -3418,6 +3418,9 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	} else if (f == F_OBSNUM) {
 	    int t = get_observation_number(s, p->dinfo);
 
+	    fprintf(stderr, "t = get_observation_number(%s) = %d\n",
+		    s, t);
+
 	    if (t > 0) {
 		ret->v.xval = t;
 	    }
@@ -6068,10 +6071,8 @@ static double *dvar_get_series (int i, parser *p)
     case R_INDEX:
 	x = malloc(p->dinfo->n * sizeof *x);
 	if (x != NULL) {
-	    int yr = annual_data(p->dinfo); /* FIXME? */
-
 	    for (t=0; t<p->dinfo->n; t++) {
-		x[t] = (yr)? p->dinfo->sd0 + t : t + 1;
+		x[t] = t + 1;
 	    }
 	} else {
 	    p->err = E_ALLOC;
