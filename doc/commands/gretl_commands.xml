@@ -5845,6 +5845,10 @@
 	  <effect>use NEGBIN1 model</effect>
 	</option>
 	<option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
+	</option>
+	<option>
 	  <flag>--robust</flag>
 	  <effect>QML covariance matrix</effect>
 	</option>
@@ -5876,10 +5880,12 @@
       </para>
       <para>
 	By default, standard errors are computed using a numerical
-	approximation to the Hessian at convergence.  If the
+	approximation to the Hessian at convergence.  But if the
+	<lit>--opg</lit> option is given the covariance matrix is based on
+	the Outer Product of the Gradient (OPG), or if the
 	<lit>--robust</lit> option is given QML standard errors are
 	calculated, using a <quote>sandwich</quote> of the inverse of the
-	Hessian and the outer product of the gradient.
+	Hessian and the OPG.
       </para>
     </description>
   </command>

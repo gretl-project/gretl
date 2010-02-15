@@ -163,7 +163,7 @@ static double negbin_callback (double *theta,
     int i, t, T = nbinfo->y->rows;
     int err = 0;
 
-    if (alpha<=0) {
+    if (alpha <= 0) {
 	*errp = E_NAN;
 	return NADBL;
     }
@@ -288,19 +288,15 @@ static gretl_matrix *negbin_nhessian (double *theta, void *data,
     H      = gretl_matrix_alloc(nc, nc);
     splus  = gretl_matrix_alloc(1, nc);
     sminus = gretl_matrix_alloc(1, nc);
-    coef   = malloc(nc * sizeof *coef);
+    coef   = copyvec(theta, nc);
     g      = malloc(nc * sizeof *g);
 
     if (H == NULL || splus == NULL || sminus == NULL ||
 	coef == NULL || g == NULL) {
 	*err = E_ALLOC;
-	free(coef);
-	free(g);
+	gretl_matrix_free(H);
+	H = NULL;
 	goto bailout;
-    }
-
-    for (i=0; i<nc; i++) {
-	coef[i] = theta[i];
     }
 
     for (i=0; i<nc; i++) {

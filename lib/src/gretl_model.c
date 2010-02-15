@@ -1510,14 +1510,6 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
-    } else if (pmod->ci == PANEL) {
-	nx = pmod->list[0] - 1;
-	list = gretl_list_new(nx);
-	if (list != NULL) {
-	    for (i=1; i<=list[0]; i++) {
-		list[i] = pmod->list[i + 1];
-	    }
-	}
     } else if (pmod->ci == ARBOND) {
 	int sep = 0;
 
@@ -1549,8 +1541,12 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     } else if (!NONLIST_MODEL(pmod->ci)) {
 	if (pmod->ci == HECKIT) {
 	    nx = gretl_model_get_int(pmod, "base-coeffs");
-	} else if (pmod->ci == LOGIT) {
-	    /* multinomial is special */
+	} else if (pmod->ci == LOGIT || 
+		   pmod->ci == NEGBIN ||
+		   pmod->ci == PANEL) {
+	    /* models in which the array of coefficients
+	       is (or may be) longer than the list of
+	       regressors */
 	    nx = pmod->list[0] - 1;
 	} else {
 	    nx = pmod->ncoeff;
