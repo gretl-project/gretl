@@ -265,7 +265,7 @@ static int want_radios (selector *sr)
     if (c == PANEL || c == SCATTERS || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN || c == PCA ||
-	c == QUANTREG) {
+	c == QUANTREG || c == NEGBIN) {
 	return 1;
     } else if (c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -4586,6 +4586,22 @@ static void build_scatters_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void build_negbin_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Model NegBin 2"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Model NegBin 1"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_M, 0);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
 static void auto_omit_restrict_callback (GtkWidget *w, selector *sr)
 {
     gboolean r = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
@@ -4893,6 +4909,8 @@ static void build_selector_radios (selector *sr)
 	build_pca_radios(sr);
     } else if (sr->ci == QUANTREG) {
 	build_quantreg_radios(sr);
+    } else if (sr->ci == NEGBIN) {
+	build_negbin_radios(sr);
     }
 }
 
