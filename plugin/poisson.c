@@ -300,10 +300,10 @@ static gretl_matrix *negbin_nhessian (double *theta, void *data,
 	goto bailout;
     }
 
+    nbinfo->flags = SCORE_UPDATE_MU;
+
     for (i=0; i<nc; i++) {
 	double theta0 = theta[i];
-
-	nbinfo->flags = (i < nbinfo->k)? SCORE_UPDATE_MU : 0;
 
 	theta[i] = theta0 + eps;
 	negbin_score(theta, g, nc, ll, nbinfo);
@@ -323,6 +323,8 @@ static gretl_matrix *negbin_nhessian (double *theta, void *data,
 	    gretl_matrix_set(H, i, j, x);
 	}
     }
+
+    nbinfo->flags = 0;
 
     gretl_matrix_xtr_symmetric(H);
     gretl_invert_symmetric_matrix(H);
