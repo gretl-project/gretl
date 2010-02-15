@@ -151,7 +151,6 @@ static double negbin_callback (double *theta,
 			       int do_score,
 			       int *errp)
 {
-    double eps = 1.111e-16;
     negbin_info *nbinfo = (negbin_info *) data;
     int k = nbinfo->k;
     gretl_matrix *X = nbinfo->X;
@@ -159,7 +158,7 @@ static double negbin_callback (double *theta,
     double *ll = nbinfo->llt->val;
     double *mu = nbinfo->mu->val;
     double *y = nbinfo->y->val;
-    double psi, mpp, rat;
+    double psi, mpp, rat, lgpsi, dgpsi;
     int i, t, T = nbinfo->y->rows;
     int err = 0;
 
@@ -173,26 +172,36 @@ static double negbin_callback (double *theta,
     }
 
     gretl_matrix_multiply(nbinfo->X, nbinfo->beta, nbinfo->mu);
-
     nbinfo->ll = 0.0;
-
     errno = 0;
 
+    if (nbinfo->type == 2) {
+	/* in NegBin II psi is the same for all obs, so it can 
+	   be dealt with outside the loop */
+	psi = 1/alpha;
+	lgpsi = ln_gamma(psi);
+    }
+
     for (t=0; t<T; t++) {
-	mu[t] = eps + exp(mu[t]);
+	mu[t] = exp(mu[t]);
+	if (mu[t] == 0) {
+	    errno = E_NAN;
+	    break;
+	}
+
 	if (nbinfo->offset != NULL) {
 	    mu[t] *= nbinfo->offset->val[t];
 	}
+
 	if (nbinfo->type == 1) {
-	    psi = eps + mu[t]/alpha;
-	} else {
-	    psi = eps + 1/alpha;
+	    psi = mu[t]/alpha;
+	    lgpsi = ln_gamma(psi);
 	}
 
 	mpp = mu[t] + psi;
-	ll[t] = ln_gamma(y[t] + psi) - ln_gamma(psi);
-	ll[t] -= ln_gamma(y[t] + 1.0);
 	rat = psi/mpp;
+
+	ll[t] = ln_gamma(y[t] + psi) - lgpsi - ln_gamma(y[t] + 1.0);
 	ll[t] += psi * log(rat) + y[t] * log(1-rat);
 	nbinfo->ll += ll[t];
     }
@@ -207,20 +216,26 @@ static double negbin_callback (double *theta,
 	double dl_dpsi, dl_dmu, dl_dbi, dl_da;
 	double a2 = alpha * alpha;
 
+	if (nbinfo->type == 1) {
+	    dpsi_dmu = 1/alpha;
+	} else {
+	    dpsi_dmu = 0;
+	    psi = 1/alpha;
+	    dgpsi = digamma(psi);
+	    dpsi_da = -1/a2;
+	}	    
+
 	for (t=0; t<T; t++) {
+
 	    if (nbinfo->type == 1) {
-		psi = eps + mu[t]/alpha;
-		dpsi_da = -eps - mu[t]/a2;
-		dpsi_dmu = eps + 1/alpha;
-	    } else {
-		psi = eps + 1/alpha;
-		dpsi_da = -eps - 1/a2;
-		dpsi_dmu = 0;
+		psi = mu[t]/alpha;
+		dgpsi = digamma(psi);
+		dpsi_da = -mu[t]/a2;
 	    }	    
 
 	    mpp = mu[t] + psi;
 
-	    dl_dpsi = digamma(psi + y[t]) - digamma(psi) 
+	    dl_dpsi = digamma(psi + y[t]) - dgpsi
 		- log(1 + mu[t]/psi) - (y[t] - mu[t])/mpp;
 	    dl_da = dl_dpsi * dpsi_da;
 
