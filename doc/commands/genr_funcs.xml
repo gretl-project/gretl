@@ -130,6 +130,17 @@
       </description>
     </function>
 
+    <function name="$error" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns the program's internal error code, which will be non-zero
+	  in case an error has occurred but has been <quote>caught</quote>.
+	  Note that using this accessor causes the internal error code
+	  to be reset to zero.
+	</para>
+      </description>
+    </function>
+
     <function name="$ess" section="access" output="scalar">
       <description>
 	<para>

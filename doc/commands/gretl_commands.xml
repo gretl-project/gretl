@@ -9116,7 +9116,7 @@
 
       <para>
 	The <lit>--contiguous</lit> form of <lit>smpl</lit> is intended for
-	use with the time series data.  The effect is to trim any observations
+	use with time series data.  The effect is to trim any observations
 	at the start and end of the current sample range that contain
 	missing values (either for the variables in <repl>varlist</repl>, or
 	for all data series if no <repl>varlist</repl> is given).  Then a
