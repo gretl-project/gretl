@@ -673,17 +673,21 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 				 gpointer p)
 {
     GdkModifierType mods = widget_get_pointer_mask(cview);
+    guint upkey = gdk_keyval_to_upper(key->keyval);
     GtkTextIter ins, end;
     GtkTextBuffer *buf;
     GtkTextMark *mark;
     gint ctrl = 0;
 
     if (mods & GDK_CONTROL_MASK) {
-	ctrl = 1;
-	if (key->keyval == GDK_c || key->keyval == GDK_x) {
+	if (key->keyval == GDK_Control_L || key->keyval == GDK_Control_R) {
+	    return FALSE;
+	} else if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
 	    return FALSE;
-	} 
+	} else {
+	    ctrl = 1;
+	}
     }
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
