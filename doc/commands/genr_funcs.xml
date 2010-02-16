@@ -2692,7 +2692,8 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the maxima of the columns of <argname>X</argname>.
+	  Returns a row vector containing the maxima of the columns of
+	  <argname>X</argname>. 
 	</para>
 	<para>
 	  <seelist>
@@ -2710,7 +2711,8 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the maxima of the rows of <argname>X</argname>. 
+	  Returns a column vector containing the maxima of the rows of
+	  <argname>X</argname>. 
 	</para>
 	<para>
 	  <seelist>
