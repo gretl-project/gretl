@@ -2350,9 +2350,9 @@ int gretl_lists_share_members (const int *list1, const int *list2)
  * @pdinfo: dataset information.
  * @nvars: location for return of number of elements in full list.
  *
- * Creates a newly allocated list including all variables in the
- * dataset that are not scalars, are not hidden variables, and
- * are accessible at the current level of function execution.
+ * Creates a newly allocated list including all series in the
+ * dataset that are not hidden variables, and are accessible
+ * at the current level of function execution.
  * The return value is %NULL in case either (a) allocation of
  * memory failed, or (b) the resulting list would be empty.
  * The caller can distinguish between these possibilities by

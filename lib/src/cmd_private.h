@@ -13,12 +13,14 @@ typedef enum {
     CMD_IGNORE  = 1 << 1, /* line should be ignored */
     CMD_NULLIST = 1 << 2, /* command has been given a null list on input */
     CMD_SUBST   = 1 << 3, /* string substitution has been done on command */
-    CMD_PROG    = 1 << 4  /* command is in context of progressive loop */
+    CMD_PROG    = 1 << 4, /* command is in context of progressive loop */
+    CMD_CATCH   = 1 << 5  /* error from command should be "caught" */
 } CmdFlags;
 
 #define cmd_nolist(c)    (c->flags & CMD_NOLIST)
 #define cmd_ignore(c)    (c->flags & CMD_IGNORE)
 #define cmd_subst(c)     (c->flags & CMD_SUBST)
+#define cmd_catch(c)     (c->flags & CMD_CATCH)
 
 struct CMD_ {
     char word[FN_NAMELEN];      /* command word */
@@ -73,6 +75,10 @@ EXEC_CALLBACK get_gui_callback (void);
 void gretl_exec_state_clear (ExecState *s);
 
 void gretl_exec_state_uncomment (ExecState *s);
+
+void gretl_exec_state_transcribe_flags (ExecState *s, CMD *cmd);
+
+int process_command_error (CMD *cmd, int err);
 
 int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 

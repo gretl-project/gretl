@@ -2730,6 +2730,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		    err = 0;
 		    continue;
 		}
+	    } else {
+		gretl_exec_state_transcribe_flags(s, cmd);
 	    }
 
 	    if (!subst && cmd_subst(cmd)) {
@@ -2838,7 +2840,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		}
 	    } else {
 		err = gretl_cmd_exec(s, pZ, pdinfo);
-		if (!err && block_model(cmd)) {
+		if (!err && !check_gretl_errno() && block_model(cmd)) {
 		    /* NLS, etc. */
 		    printmodel(s->models[0], pdinfo, cmd->opt, prn);
 		    set_as_last_model(s->models[0], GRETL_OBJ_EQN);
@@ -2918,7 +2920,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	set_loop_off();
     }
 
-    return (libset_get_bool(HALT_ON_ERR))? err : 0;
+    return process_command_error(cmd, err);
 }
 
 

@@ -4695,7 +4695,7 @@ static void func_exec_callback (ExecState *s, double ***pZ,
 	maybe_stack_var(s->var, s->cmd);
     } else if (ci == END && !strcmp(s->cmd->param, "restrict")) {
 	maybe_stack_var(s->var, s->cmd);
-    } else if (ci == GNUPLOT && (s->cmd->opt & OPT_D)) {
+    } else if (ci == GNUPLOT) {
 	/* we permit "reach-back" into the GUI here */
 	EXEC_CALLBACK gc = get_gui_callback();
 

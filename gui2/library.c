@@ -7645,8 +7645,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
         return 1;
     }
 
-    /* are we in a multi-line comment block? */
-    s->in_comment = (cmd_ignore(cmd))? 1 : 0;
+    gretl_exec_state_transcribe_flags(s, cmd);
 
     if (cmd->ci < 0) {
 	return 0; /* nothing there, or a comment */

@@ -1155,6 +1155,7 @@ make_restriction_mask (int mode, const char *s, const int *list,
     }
 
     /* construct subsample mask in one of several possible ways */
+
     if (mode == SUBSAMPLE_DROP_MISSING) {   
 	err = make_missing_mask(list, (const double **) *pZ, pdinfo, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
@@ -1168,8 +1169,8 @@ make_restriction_mask (int mode, const char *s, const int *list,
 	err = 1;
     }
 
-    /* exit now on unrecoverable error */
     if (err) {
+	/* exit now on unrecoverable error */
 	free(mask);
 	return err;
     }
@@ -1379,6 +1380,51 @@ static char *precompute_mask (const char *s, const char *oldmask,
     return mask;
 }
 
+/* Intended for time series data: trim any missing values
+   at the start and end of the current sample range, then
+   check the remaining range for missing values and flag
+   an error if any are found.
+*/
+
+static int set_contiguous_sample (const int *list,
+				  const double **Z,
+				  DATAINFO *pdinfo,
+				  gretlopt opt)
+{
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
+    int err = 0;
+
+    if (opt & OPT_P) {
+	/* can't combine this with the "replace" option */
+	return E_BADOPT;
+    }
+
+    if (list == NULL) {
+	int *biglist = NULL;
+	int nvars = 0;
+
+	biglist = full_var_list(pdinfo, &nvars);
+	if (nvars == 0) {
+	    ; /* no-op */
+	} else if (biglist == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = list_adjust_t1t2(biglist, Z, pdinfo);
+	    free(biglist);
+	}
+    } else {
+	err = list_adjust_t1t2(list, Z, pdinfo);
+    }
+
+    if (err) {
+	pdinfo->t1 = save_t1;
+	pdinfo->t2 = save_t2;
+    }
+
+    return err;
+}
+
 #if 1 /* let's be conservative here */
 
 # define restriction_uses_obs(s) (strstr(s, "obs") != NULL)
@@ -1442,8 +1488,8 @@ static int make_restriction_string (DATAINFO *pdinfo, char *old,
  * specified dummy variable (OPT_O); or masking with a specified
  * boolean condition (OPT_R); or selecting at random (OPT_N).
  *
- * In case OPT_M a @list of variables may be supplied; in cases
- * OPT_O, OPT_R and OPT_N, @line must contain specifics.
+ * In case OPT_M or OPT_C a @list of variables may be supplied; in 
+ * cases OPT_O, OPT_R and OPT_N, @line must contain specifics.
  *
  * In case OPT_P is included, the restriction will rePlace any
  * existing sample restriction, otherwise the resulting restriction
@@ -1483,11 +1529,17 @@ int restrict_sample (const char *line, const int *list,
 	line += strspn(line, " ");
     }
 
+    if (opt & OPT_C) {
+	return set_contiguous_sample(list, (const double **) *pZ,
+				     pdinfo, opt);
+    }	
+
     mode = get_restriction_mode(opt);
+
     if (mode == SUBSAMPLE_UNKNOWN) {
 	gretl_errmsg_set("Unrecognized sample command");
 	return 1;
-    }
+    } 
 
     if (!(opt & OPT_P)) {
 	/* not replacing but cumulating any existing restrictions */

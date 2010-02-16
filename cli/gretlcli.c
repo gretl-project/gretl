@@ -774,8 +774,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	return err;
     }
 
-    /* are we in a multi-line comment block? */
-    s->in_comment = (cmd_ignore(cmd))? 1 : 0;
+    gretl_exec_state_transcribe_flags(s, cmd);
 
     /* if in batch mode, echo comments from input */
     if (batch && cmd->ci == CMD_COMMENT && gretl_echo_on()) {

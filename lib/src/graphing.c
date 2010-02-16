@@ -1289,6 +1289,88 @@ static void print_set_output (const char *path, FILE *fp)
 #endif
 }
 
+static FILE *gp_set_up_batch (char *fname, PlotType ptype, 
+			      GptFlags flags, int *err)
+{
+    int ci = command_index_from_plot_type(ptype);
+    const char *optname = get_optval_string(ci, OPT_U);
+    int fmt = GP_TERM_NONE;
+    FILE *fp = NULL;
+
+    if (optname != NULL && *optname != '\0') {
+	/* user gave --output=<filename> */
+	if (!strcmp(optname, "display")) {
+	    /* switch to interactive mode */
+	    return NULL;
+	}
+	fmt = set_term_type_from_fname(optname);
+	if (fmt) {
+	    /* input needs processing */
+	    strcpy(gnuplot_outname, optname);
+	    gretl_maybe_prepend_dir(gnuplot_outname);
+	    make_temp_plot_name(fname);
+	} else {
+	    /* just passing commands through */
+	    strcpy(fname, optname);
+	    gretl_maybe_prepend_dir(fname);
+	    this_term_type = GP_TERM_PLT;
+	}
+    } else {
+	/* auto-constructed gnuplot commands filename */
+	sprintf(fname, "%sgpttmp%02d.plt", gretl_workdir(), 
+		++gretl_plot_count);
+	this_term_type = GP_TERM_PLT;
+    }
+
+    fp = gretl_fopen(fname, "w");
+    if (fp == NULL) {
+	*err = E_FOPEN;
+    } else {
+	set_gretl_plotfile(fname);
+	if (*gnuplot_outname != '\0') {
+	    /* write terminal/output lines */
+	    print_term_string(fmt, fp);
+	    print_set_output(gnuplot_outname, fp);
+	}
+    }
+
+    return fp;
+}
+
+static FILE *gp_set_up_interactive (char *fname, PlotType ptype, 
+				  GptFlags flags, int *err)
+{
+    int gui = gretl_in_gui_mode();
+    FILE *fp = NULL;
+
+    if (gui) {
+	/* the filename should be unique */
+	make_temp_plot_name(fname);
+    } else {
+	/* gretlcli: no need for uniqueness */
+	sprintf(fname, "%sgpttmp.plt", gretl_dotdir());
+    }
+
+    fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	*err = E_FOPEN;
+    } else {
+	set_gretl_plotfile(fname);
+	if (gui) {
+	    /* set up for PNG output */
+	    fprintf(fp, "%s\n", get_gretl_png_term_line(ptype, flags));
+	    print_set_output(NULL, fp);
+	}
+	write_plot_type_string(ptype, fp);
+	if (gnuplot_has_rgb()) {
+	    write_plot_line_styles(ptype, fp);
+	}
+    }
+
+    return fp;
+}
+
 /* Open stream into which gnuplot commands will be written.
 
    When GPT_BATCH is set, we're either just dumping a 
@@ -1311,6 +1393,7 @@ static void print_set_output (const char *path, FILE *fp)
 static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
 {
     char fname[FILENAME_MAX] = {0};
+    int batch = (flags & GPT_BATCH);
     FILE *fp = NULL;
 
     /* ensure we have 'gnuplot_path' in place (file-scope static var) */
@@ -1321,71 +1404,12 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
     this_term_type = GP_TERM_NONE;
     *gnuplot_outname = '\0';
 
-    if (flags & GPT_BATCH) {
-	int ci = command_index_from_plot_type(ptype);
-	const char *optname = get_optval_string(ci, OPT_U);
-	int fmt = GP_TERM_NONE;
+    if (batch) {
+	fp = gp_set_up_batch(fname, ptype, flags, err);
+    }
 
-	if (optname != NULL && *optname != '\0') {
-	    /* user gave --output=<filename> */
-	    fmt = set_term_type_from_fname(optname);
-	    if (fmt) {
-		/* input needs processing */
-		strcpy(gnuplot_outname, optname);
-		gretl_maybe_prepend_dir(gnuplot_outname);
-		make_temp_plot_name(fname);
-	    } else {
-		/* just passing commands through */
-		strcpy(fname, optname);
-		gretl_maybe_prepend_dir(fname);
-		this_term_type = GP_TERM_PLT;
-	    }
-	} else {
-	    /* auto-constructed gnuplot commands filename */
-	    sprintf(fname, "%sgpttmp%02d.plt", gretl_workdir(), 
-		    ++gretl_plot_count);
-	    this_term_type = GP_TERM_PLT;
-	}
-
-	fp = gretl_fopen(fname, "w");
-	if (fp == NULL) {
-	    *err = E_FOPEN;
-	} else {
-	    set_gretl_plotfile(fname);
-	    if (*gnuplot_outname != '\0') {
-		/* write terminal/output lines */
-		print_term_string(fmt, fp);
-		print_set_output(gnuplot_outname, fp);
-	    }
-	}
-    } else {
-	/* interactive */
-	int gui = gretl_in_gui_mode();
-
-	if (gui) {
-	    /* the filename should be unique */
-	    make_temp_plot_name(fname);
-	} else {
-	    /* gretlcli: no need for uniqueness */
-	    sprintf(fname, "%sgpttmp.plt", gretl_dotdir());
-	}
-
-	fp = gretl_fopen(fname, "w");
-
-	if (fp == NULL) {
-	    *err = E_FOPEN;
-	} else {
-	    set_gretl_plotfile(fname);
-	    if (gui) {
-		/* set up for PNG output */
-		fprintf(fp, "%s\n", get_gretl_png_term_line(ptype, flags));
-		print_set_output(NULL, fp);
-	    }
-	    write_plot_type_string(ptype, fp);
-	    if (gnuplot_has_rgb()) {
-		write_plot_line_styles(ptype, fp);
-	    }
-	}
+    if (!batch || (fp == NULL && !*err)) {
+	fp = gp_set_up_interactive(fname, ptype, flags, err);
     }
 
     if (fp == NULL && *fname) {
@@ -5268,7 +5292,6 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 {
     const char *inname = get_optval_string(GNUPLOT, OPT_D);
     FILE *fp, *fq;
-    int flags = 0;
     int err = 0;
 
     if (inname == NULL && *inname == '\0') {
@@ -5280,12 +5303,7 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 	return E_FOPEN;
     }
 
-    if (opt & OPT_U) {
-	/* specified output */
-	flags = GPT_BATCH;
-    }
-
-    fq = open_gp_stream(PLOT_USER, flags, &err);
+    fq = open_gp_stream(PLOT_USER, GPT_BATCH, &err);
 
     if (err) {
 	fclose(fp);

@@ -3280,20 +3280,16 @@
 	generate a dummy variable that has value 1 for observation 15, 0
 	otherwise.  You can also use this variable to pick out particular
 	observations by date or name.  For example, 
-        <lit>genr d = (obs&gt;1986:4)</lit>, 
-        <lit>genr d = (obs&gt;"2008/04/01")</lit>, or
+	<lit>genr d = (obs&gt;1986:4)</lit>, 
+	<lit>genr d = (obs&gt;"2008/04/01")</lit>, or
 	<lit>genr d = (obs="CA")</lit>.  If daily dates or observation labels
-	are used in this context, they must be enclosed in double quotes.
-	Quarterly and monthly dates (with a colon) may be used unquoted.
-      </para>
-
-      <para>
-	Please note: when using <lit>obs</lit> with annual time-series
-	data, the value corresponds to the year of the observation.
-	Therefore if you have annual data starting in 1970, the
-	observation for 1980 corresponds to <lit>obs=1980</lit>, and not
-	<lit>obs=10</lit>.  With quarterly or monthly data, on the other
-	hand, <lit>obs=10</lit> would correspond to the 10th observation.
+	are used in this context, they should be enclosed in double quotes.
+	Quarterly and monthly dates (with a colon) may be used unquoted. Note
+	that in the case of annual time series data, the year is not
+	distinguishable syntactically from a plain integer; therefore if you
+	wish to compare observations against <lit>obs</lit> by year you must
+	use the function <lit>obsnum</lit> to convert the year to a 1-based
+	index value, as in <lit>genr d = (obs&gt;obsnum(1986))</lit>.
       </para>
 
       <para>
@@ -3667,6 +3663,11 @@
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
         </option>
+        <option>
+	  <flag>--input</flag>
+	  <optparm>filename</optparm>
+	  <effect>take input from specified file</effect>
+        </option>
       </options>
       <examples>
         <example>gnuplot y1 y2 x</example>
@@ -3718,9 +3719,12 @@
 	extension of the file name, as follows: <lit>.eps</lit> results in the
 	production of an Encapulated PostScript (EPS) file; <lit>.pdf</lit>
 	produces PDF; <lit>.png</lit> produces PNG format, <lit>.emf</lit>
-	calls for EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an
-	Xfig file, and <lit>.svg</lit> for SVG (Scalable Vector Graphics).
-	If any other extension is given, a gnuplot command file is written.
+	calls for EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
+	file, and <lit>.svg</lit> for SVG (Scalable Vector Graphics). If the
+	dummy filename <quote><lit>display</lit></quote> is given then the
+	plot is shown on screen as in interactive mode. If a filename with any
+	extension other than those just mentioned is given, a gnuplot command
+	file is written.
       </para>
 
       <para>
@@ -9043,6 +9047,7 @@
 	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
 	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
 	<altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>varlist</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <lit>--contiguous [ </lit><repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
@@ -9110,6 +9115,16 @@
       </para>
 
       <para>
+	The <lit>--contiguous</lit> form of <lit>smpl</lit> is intended for
+	use with the time series data.  The effect is to trim any observations
+	at the start and end of the current sample range that contain
+	missing values (either for the variables in <repl>varlist</repl>, or
+	for all data series if no <repl>varlist</repl> is given).  Then a
+	check is performed to see if there are any missing values in the
+	remaining range; if so, an error is flagged.
+      </para>
+
+      <para>
 	With the <lit>--random</lit> flag, the specified number of cases are
 	selected from the full dataset at random.  If you wish to be able to
 	replicate this selection you should set the seed for the random number
@@ -9126,7 +9141,8 @@
 	baseline for any <lit>smpl</lit> command is the current sample. If you
 	wish the command to act so as to replace any existing restriction you
 	can add the option flag <lit>--replace</lit> to the end of the
-	command.
+	command. (But this option is not compatible with the
+	<lit>--contiguous</lit> option.)
       </para>
 
       <para>

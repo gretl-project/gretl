@@ -475,6 +475,16 @@ static void maybe_extract_savename (char *s, CMD *cmd)
     }
 }
 
+static void maybe_set_catch_flag (char *s, CMD *cmd)
+{
+    if (strncmp(s, "catch ", 6) == 0) {
+	cmd->flags |= CMD_CATCH;
+	shift_string_left(s, 6);
+    } else if (!cmd->context) {
+	cmd->flags &= ~CMD_CATCH;
+    }
+}
+
 /* grab a filename, possibly prepending userdir */
 
 static int filename_to_param (CMD *cmd, char *s, int *len,
@@ -2246,6 +2256,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
+    /* check for "catch" */
+    maybe_set_catch_flag(line, cmd);
+
     /* extract any options */
     cmd->opt = get_gretl_options(line, &cmd->err);
     if (cmd->err) {
@@ -2367,9 +2380,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    /* SMPL can take a list, but only in case of OPT_M
-       "--no-missing" */
-    if (cmd->ci == SMPL && !(cmd->opt & OPT_M)) {
+    /* SMPL can take a list, but only in case of OPT_M,
+       "--no-missing", or OPT_C, "--contiguous" */
+    if (cmd->ci == SMPL && !(cmd->opt & (OPT_M | OPT_C))) {
 	cmd_set_nolist(cmd);
 	return cmd->err;
     }	
@@ -5107,6 +5120,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
  bailout:
 
+    err = process_command_error(cmd, err);
+
     if (err) {
 	gretl_cmd_destroy_context(cmd);
 	if (!s->funcerr) {
@@ -5142,7 +5157,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
         return err;
     }
 
-    s->in_comment = cmd_ignore(s->cmd)? 1 : 0;
+    gretl_exec_state_transcribe_flags(s, s->cmd);
 
     if (s->cmd->ci < 0) {
 	return 0; /* nothing there, or a comment */
@@ -5244,6 +5259,10 @@ int get_command_index (char *line, CMD *cmd)
 
     if (filter_comments(line, cmd)) {
 	return 0;
+    }
+
+    if (!strncmp(line, "catch ", 6)) {
+	line += 6;
     }
 
     if (!get_command_word(line, &cnext, cmd)) {
@@ -5502,5 +5521,28 @@ void gretl_exec_state_uncomment (ExecState *s)
 {
     s->in_comment = 0;
     s->cmd->flags &= ~CMD_IGNORE;
+}
+
+void gretl_exec_state_transcribe_flags (ExecState *s, CMD *cmd)
+{
+    s->in_comment = (cmd_ignore(cmd))? 1 : 0;
+}
+
+int process_command_error (CMD *cmd, int err)
+{
+    int ret = err;
+
+    if (err) {
+	if (libset_get_bool(HALT_ON_ERR) == 0) {
+	    set_gretl_errno(err);
+	    ret = 0;
+	} else if (cmd->flags & CMD_CATCH) {
+	    set_gretl_errno(err);
+	    cmd->flags ^= CMD_CATCH;
+	    ret = 0;
+	}
+    }
+
+    return ret;
 }
 
