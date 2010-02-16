@@ -1310,7 +1310,7 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     rlist = *reglist;
     zlist = *instlist;
 
-    if (rlist[0] < 2 || zlist[0] < 1) {
+    if (rlist[0] < 2 || zlist == NULL || zlist[0] < 1) {
 	err = E_ARGS;
     } else {
 	for (i=1; i<=zlist[0]; i++) {
