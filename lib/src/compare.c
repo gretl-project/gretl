@@ -766,7 +766,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	rep = logit_probit(list, pZ, pdinfo, orig->ci, myopt, NULL);
 	break;
     case TOBIT:
-	rep = tobit_model(list, pZ, pdinfo, NULL);
+	rep = tobit_model(list, pZ, pdinfo, OPT_NONE, NULL);
 	break;
     case LAD:
 	if (gretl_model_get_int(orig, "rq")) {

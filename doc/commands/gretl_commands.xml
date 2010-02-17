@@ -1682,6 +1682,40 @@
 
   </command>
 
+  <command name="count-model" section="Estimation" context="gui"
+    label="Models for count data">
+
+    <description>
+      <para>
+	The dependent variable is taken to represent a count of the occurrence
+	of events of some sort, and must have only non-negative integer
+	values. By default the Poisson distribution is used, but the drop-down
+	selector gives the options of using the Negative Binomial
+	distribution. (The variant NegBin 2 is commonly used in econometrics,
+	but the lesser used NegBin 1 is also available.)
+      </para>
+      <para>
+	Optionally, you may add an <quote>offset</quote> variable to the
+	specification.  This is a scale variable, the log of which is added to
+	the linear regression function (implicitly, with a coefficient of
+	1.0).  This makes sense if you expect the number of occurrences of the
+	event in question to be proportional, other things equal, to some
+	known factor.  For example, the number of traffic accidents might be
+	supposed to be proportional to traffic volume, other things equal, and
+	in that case traffic volume could be specified as an
+	<quote>offset</quote> in a model of the accident rate. The
+	offset variable must be strictly positive.  
+      </para>
+      <para>
+	By default, standard errors are computed using a numerical
+	approximation to the Hessian at convergence.  But if the <quote>Robust
+	  standard errors</quote> box is checked then QML standard errors are
+	calculated, using a <quote>sandwich</quote> of the inverse of the
+	Hessian and the outer product of the gradient.
+      </para>
+    </description>
+  </command>
+
   <command name="criteria" section="Utilities" 
     label="Model selection criteria" context="cli">
 
@@ -5846,7 +5880,7 @@
       <options>
 	<option>
 	  <flag>--model1</flag>
-	  <effect>use NEGBIN1 model</effect>
+	  <effect>use NegBin 1 model</effect>
 	</option>
 	<option>
 	  <flag>--opg</flag>
@@ -5872,7 +5906,7 @@
 	Estimates a Negative Binomial model.  The dependent variable is taken
 	to represent a count of the occurrence of events of some sort, and
 	must have only non-negative integer values. By default the model
-	NEGBIN2 is used, in which the conditional variance of the count is
+	NegBin 2 is used, in which the conditional variance of the count is
 	given by &mu;(1 + &alpha;&mu;), where &mu; denotes the conditional
 	mean.  But if the <lit>--model1</lit> option is given the conditional
 	variance is &mu;(1 + &alpha;).
@@ -5892,6 +5926,10 @@
 	Hessian and the OPG.
       </para>
     </description>
+
+    <gui-access>
+      <menu-path>/Model/Nonlinear models/Count data...</menu-path>
+    </gui-access>
   </command>
 
   <command name="nls" section="Estimation"
@@ -7021,9 +7059,9 @@
 	represent the occurrence of events of some sort, and must take on only
 	non-negative integer values.
       </para>
-
-      <para>If a discrete random variable <math>Y</math> follows
-      the Poisson distribution, then
+      <para>
+	If a discrete random variable <math>Y</math> follows
+	the Poisson distribution, then
         <equation status="display" 
           tex="\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]"
           ascii="Pr(Y = y) = exp(-v) * v^y / y!"
@@ -7040,8 +7078,8 @@
           graphic="poisson2"/>
 	or in other words the log of
       <math>v</math> is a linear function of the independent
-      variables.</para>
-
+      variables.
+      </para>
       <para>
 	Optionally, you may add an <quote>offset</quote> variable to the
 	specification.  This is a scale variable, the log of which is added to
@@ -7054,8 +7092,7 @@
 	<quote>offset</quote> in a Poisson model of the accident rate. The
 	offset variable must be strictly positive.  
       </para>
-
-      <para context="cli">
+      <para>
 	By default, standard errors are computed using the negative
 	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
 	then QML or Huber&ndash;White standard errors are calculated
@@ -7063,21 +7100,13 @@
 	<quote>sandwich</quote> of the inverse of the estimated Hessian
 	and the outer product of the gradient.
       </para>
-      <para context="gui">
-	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the "Robust standard errors" box is
-	checked, then QML or Huber&ndash;White standard errors are
-	calculated instead. In this case the estimated covariance matrix
-	is a <quote>sandwich</quote> of the inverse of the estimated
-	Hessian and the outer product of the gradient.
-      </para>
       <para>
 	See also <cmdref targ="negbin"/>.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Poisson</menu-path>
+      <menu-path>/Model/Nonlinear models/Count data...</menu-path>
     </gui-access>
 
   </command>

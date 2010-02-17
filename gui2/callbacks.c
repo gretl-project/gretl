@@ -311,6 +311,8 @@ static int model_action_code (GtkAction *action)
 	    ci = IV_LIML;
 	else if (!strcmp(s, "iv-gmm"))
 	    ci = IV_GMM;
+	else if (!strcmp(s, "countmod"))
+	    ci = COUNTMOD;
     }
 
     return ci;

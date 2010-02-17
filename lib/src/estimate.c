@@ -4083,6 +4083,7 @@ MODEL arma (const int *list, const char *pqspec,
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
+ * @opt: may include %OPT_V for verbose operation.
  * @prn: printing struct for iteration info (or %NULL is this is not
  * wanted).
  *
@@ -4091,11 +4092,13 @@ MODEL arma (const int *list, const char *pqspec,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn)
 {
     MODEL tmod;
     void *handle;
-    MODEL (* tobit_estimate) (const int *, double ***, DATAINFO *, PRN *);
+    MODEL (* tobit_estimate) (const int *, double ***, DATAINFO *, 
+			      gretlopt, PRN *);
 
     gretl_error_clear();
 
@@ -4106,7 +4109,7 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	return tmod;
     }
 
-    tmod = (*tobit_estimate) (list, pZ, pdinfo, prn);
+    tmod = (*tobit_estimate) (list, pZ, pdinfo, opt, prn);
 
     close_plugin(handle);
     set_model_id(&tmod);

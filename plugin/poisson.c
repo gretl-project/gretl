@@ -979,6 +979,7 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
 			 gretlopt opt, PRN *prn) 
 {
     offset_info oinfo_t, *oinfo = NULL;
+    PRN *vprn = NULL;
     int err = 0;
 
     if (offvar > 0) {
@@ -994,15 +995,19 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
 	}
     } 
 
+    if (opt & OPT_V) {
+	vprn = prn;
+    }
+
     if (ci == NEGBIN) {
 	/* use auxiliary poisson to initialize the estimates */
 	err = do_poisson(pmod, oinfo, pZ, pdinfo, OPT_A, NULL);
 	if (!err) {
 	    err = do_negbin(pmod, oinfo, (const double **) *pZ, 
-			    pdinfo, opt, prn);
+			    pdinfo, opt, vprn);
 	}
     } else {
-	err = do_poisson(pmod, oinfo, pZ, pdinfo, opt, prn);
+	err = do_poisson(pmod, oinfo, pZ, pdinfo, opt, vprn);
     }
 
     return err;

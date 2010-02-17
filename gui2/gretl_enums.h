@@ -105,6 +105,7 @@ enum extra_cmds {
     IV_LIML,
     IV_GMM,
     BFGS_CONFIG,
+    COUNTMOD,
     GUI_CMD_MAX
 };
 

@@ -735,17 +735,22 @@ static int probit_init (const int *list, double ***pZ, DATAINFO *pdinfo,
 /* the driver function for the plugin */
 
 MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
-		      PRN *prn) 
+		      gretlopt opt, PRN *prn) 
 {
+    PRN *vprn = NULL;
     MODEL model;
     double *y;
     double scale = 1.0;
     int missvals = 0;
     int t;
 
+    if (opt & OPT_V) {
+	vprn = prn;
+    }
+
 #if 0
     /* initial probit (broken at present) */
-    probit_init(list, pZ, pdinfo, &model, prn);
+    probit_init(list, pZ, pdinfo, &model, vprn);
 #else
     /* run initial OLS */
     model = lsq(list, pZ, pdinfo, OLS, OPT_A);
@@ -771,15 +776,15 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
 #if TDEBUG
-    pprintf(prn, "tobit_estimate: initial OLS\n");
-    printmodel(&model, pdinfo, OPT_NONE, prn);
+    pprintf(vprn, "tobit_estimate: initial OLS\n");
+    printmodel(&model, pdinfo, OPT_NONE, vprn);
 #endif
 
     /* do the actual Tobit analysis */
     if (model.errcode == 0) {
 	clear_model_xpx(&model);
 	model.errcode = do_tobit(*pZ, pdinfo, &model, scale, 
-				 missvals, prn);
+				 missvals, vprn);
     }
 
     if (scale != 1.0) {

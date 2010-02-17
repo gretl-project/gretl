@@ -1320,10 +1320,15 @@ static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
 MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn) 
 {
+    PRN *vprn = NULL;
     h_container *HC = NULL;
     MODEL hm;
     int oldv = pdinfo->v;
     int err = 0;
+
+    if (opt & OPT_V) {
+	vprn = prn;
+    }
 
     gretl_model_init(&hm);
 
@@ -1344,7 +1349,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	err = heckit_2step_vcv(HC, &hm);
     } else {
 	/* use MLE */
-	err = heckit_ml(&hm, HC, prn);
+	err = heckit_ml(&hm, HC, vprn);
 	if (!err) {
 	    err = transcribe_ml_vcv(&hm, HC);
 	}

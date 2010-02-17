@@ -3408,21 +3408,19 @@ static int real_do_model (int action)
 	break;
 
     case TOBIT:
-	*pmod = tobit_model(libcmd.list, &Z, datainfo, 
-			    (libcmd.opt & OPT_V)? prn : NULL); 
+	*pmod = tobit_model(libcmd.list, &Z, datainfo, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case HECKIT:
-	*pmod = heckit_model(libcmd.list, &Z, datainfo, libcmd.opt, 
-			     (libcmd.opt & OPT_V)? prn : NULL); 
+	*pmod = heckit_model(libcmd.list, &Z, datainfo, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case POISSON:
     case NEGBIN:
 	*pmod = count_model(libcmd.list, action, &Z, datainfo, libcmd.opt,
-			    (libcmd.opt & OPT_V)? prn : NULL);
+			    prn);
 	err = model_output(pmod, prn);
 	break;
 
@@ -3507,7 +3505,7 @@ static int real_do_model (int action)
 
 int do_model (selector *sr) 
 {
-    gretlopt addopt = OPT_NONE;
+    gretlopt opt, addopt = OPT_NONE;
     char estimator[9];
     const char *buf;
     const char *flagstr;
@@ -3523,6 +3521,7 @@ int do_model (selector *sr)
     }
 
     ci = selector_code(sr);
+    opt = selector_get_opts(sr);
 
     /* In some cases, choices which are represented by option flags in
        gretl script are represented by ancillary "ci" values in the
@@ -3562,11 +3561,18 @@ int do_model (selector *sr)
 	    addopt = OPT_P;
 	}
 	ci = AR1;
+    } else if (ci == COUNTMOD) {
+	if (opt & (OPT_M | OPT_N)) {
+	    ci = NEGBIN;
+	    opt &= ~OPT_N;
+	} else {
+	    ci = POISSON;
+	}
     }
 	
     strcpy(estimator, gretl_command_word(ci));
 
-    libcmd.opt = selector_get_opts(sr) | addopt;
+    libcmd.opt = opt | addopt;
     flagstr = print_flags(libcmd.opt, ci);
     gretl_command_sprintf("%s %s%s", estimator, buf, flagstr);
 

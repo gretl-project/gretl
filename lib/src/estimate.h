@@ -42,7 +42,7 @@ MODEL arma (const int *list, const char *pqspec,
 	    gretlopt opt, PRN *prn);
 
 MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn);
+		   gretlopt opt, PRN *prn);
 
 MODEL count_model (const int *list, int ci,
 		   double ***pZ, DATAINFO *pdinfo, 
