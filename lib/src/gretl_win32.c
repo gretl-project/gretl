@@ -39,8 +39,7 @@ int read_reg_val (HKEY tree, const char *base,
 
     sprintf(regpath, "Software\\%s", base);
 
-    if (RegOpenKeyEx(
-                     tree,                        /* handle to open key */
+    if (RegOpenKeyEx(tree,                        /* handle to open key */
                      regpath,                     /* subkey name */
                      0,                           /* reserved */
                      KEY_READ,                    /* access mask */
@@ -50,12 +49,11 @@ int read_reg_val (HKEY tree, const char *base,
         return 1;
     }
 
-    if (RegQueryValueEx(
-			regkey,
+    if (RegQueryValueEx(regkey,
 			keyname,
 			NULL,
 			NULL,
-			keyval,
+			(LPBYTE) keyval,
 			&datalen
 			) != ERROR_SUCCESS) {
 	*keyval = '\0';

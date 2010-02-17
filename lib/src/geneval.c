@@ -901,6 +901,18 @@ static double node_get_scalar (NODE *n, parser *p)
     }
 }
 
+static int node_get_int (NODE *n, parser *p)
+{
+    double x = node_get_scalar(n, p);
+
+    if (p->err == 0 && (na(x) || fabs(x) > INT_MAX)) {
+	p->err = E_INVARG;
+	return -1;
+    } else {
+	return (int) x;
+    }
+}
+
 static NODE *DW_node (NODE *r, parser *p)
 {
     NODE *s, *e, *ret = NULL;
@@ -3418,9 +3430,6 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	} else if (f == F_OBSNUM) {
 	    int t = get_observation_number(s, p->dinfo);
 
-	    fprintf(stderr, "t = get_observation_number(%s) = %d\n",
-		    s, t);
-
 	    if (t > 0) {
 		ret->v.xval = t;
 	    }
@@ -3903,18 +3912,23 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *series_movavg (NODE *l, NODE *r, parser *p)
+static NODE *series_movavg (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret;
     const double *x = l->v.xvec;
-    double d = node_get_scalar(r, p);
-    double *ma = NULL;
-    int t, k = 0;
+    double d = node_get_scalar(m, p);
+    int ctrl = 0;
+    int k = 0;
+
+    if (p->err) {
+	/* from node_get_scalar */
+	return NULL;
+    }
 
     if (d < 1.0) {
 	/* exponential MA */
 	if (d < 0.0) {
-	    p->err = E_DATA;
+	    p->err = E_INVARG;
 	    return NULL;
 	} else if (dataset_is_panel(p->dinfo)) {
 	    p->err = E_PDWRONG;
@@ -3923,75 +3937,35 @@ static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 	k = -1;
     } else {
 	/* regular MA */  
+	if (d <= 0 || d > INT_MAX) {
+	    p->err = E_INVARG;
+	    return NULL;
+	}
 	k = (int) d;
 	d = -1.0;
     } 
+
+    if (r->t != EMPTY) {
+	/* optional control argument */
+	ctrl = node_get_int(r, p);
+	if (p->err) {
+	    return NULL;
+	}
+    } else if (d > 0) {
+	/* EMA default: initialize with one obs */
+	ctrl = 1;
+    }
 
     ret = aux_vec_node(p, p->dinfo->n);
     if (ret == NULL) {
 	return NULL;
     }
 
-    ma = ret->v.xvec;
-
     if (d > 0) {
-	/* exponential MA */
-	double x0 = NADBL;
-
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    if (na(x0)) {
-		/* still need starting-point */
-		if (na(x[t])) {
-		    ma[t] = NADBL;
-		} else {
-		    ma[t] = x0 = x[t];
-		}
-	    } else {
-		/* EMA is underway */
-		if (na(x[t])) {
-		    p->err = E_MISSDATA;
-		} else {
-		    ma[t] = d * x[t] + (1-d) * ma[t-1];
-		}
-	    }
-	}
+	p->err = exponential_movavg_series(x, ret->v.xvec, 
+					   p->dinfo, d, ctrl);
     } else {
-	/* regular MA */
-	int t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-	int t2 = (autoreg(p))? p->obs : p->dinfo->t2;
-	int i, s;
-
-	for (t=t1; t<=t2; t++) {
-	    double xs, msum = 0.0;
-
-	    for (i=0; i<k; i++) {
-		s = t - i;
-		if (p->dinfo->structure == STACKED_TIME_SERIES) {
-		    if (s >= 0 && s < p->dinfo->n && 
-			p->dinfo->paninfo->unit[s] != 
-			p->dinfo->paninfo->unit[t]) {
-			s = -1;
-		    }
-		}
-
-		if (s >= 0) {
-		    xs = x[s];
-		} else {
-		    xs = NADBL;
-		}
-
-		if (na(xs)) {
-		    msum = NADBL;
-		    break;
-		} else {
-		    msum += x[s];
-		}
-	    }
-
-	    if (!na(msum)) {
-		ma[t] = (k > 0)? (msum / k) : msum;
-	    } 
-	}
+	p->err = movavg_series(x, ret->v.xvec, p->dinfo, k, ctrl);
     }
 
     return ret;
@@ -6732,10 +6706,9 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = get_lag_list(l, r, p);
 	    break;
 	}
-	/* otherwise fall through */
+	/* note: otherwise fall through */
     case OBS:
-    case F_MOVAVG:
-    case F_LJUNGBOX:
+    case F_LJUNGBOX:	
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, 1, VEC, l, p);
@@ -6745,11 +6718,21 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_lag(l, r, p); 
 	} else if (t->t == OBS) {
 	    ret = series_obs(l, r, p); 
-	} else if (t->t == F_MOVAVG) {
-	    ret = series_movavg(l, r, p); 
 	} else if (t->t == F_LJUNGBOX) {
 	    ret = series_ljung_box(l, r, p); 
 	} 
+	break;
+    case F_MOVAVG:
+	/* series on left, plus one or two scalars */
+	if (l->t != VEC) {
+	    node_type_error(t->t, 1, VEC, l, p);
+	} else if (!scalar_node(m)) {
+	    node_type_error(t->t, 2, NUM, m, p);
+	} else if (!empty_or_num(r)) {
+	    node_type_error(t->t, 3, NUM, r, p);
+	} else {
+	    ret = series_movavg(l, m, r, p);
+	}
 	break;
     case MSL:
 	/* user matrix plus subspec */

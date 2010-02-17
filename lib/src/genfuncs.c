@@ -708,6 +708,147 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     return err;
 }
 
+/**
+ * exponential_movavg_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @pdinfo: data set information.
+ * @d: coefficient on lagged @x.
+ * @n: number of @x observations to average to give the
+ * initial @y value.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int exponential_movavg_series (const double *x, double *y, 
+			       const DATAINFO *pdinfo,
+			       double d, int n)
+{
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int t, T;
+
+    if (n < 0) {
+	return E_INVARG;
+    } else if (array_adjust_t1t2(x, &t1, &t2) != 0) {
+	return E_MISSDATA;
+    }
+
+    T = t2 - t1 + 1;
+    if (T < n) {
+	return E_TOOFEW;
+    }
+
+    if (n == 0) {
+	/* signal to use full sample mean */
+	n = T;
+    }
+    
+    if (n == 1) {
+	/* initialize on first observation */
+	y[t1] = x[t1];
+    } else {
+	/* initialize on mean of first n obs */
+	y[t1] = 0.0;
+	for (t=t1; t<t1+n; t++) {
+	    y[t1] += x[t];
+	}
+	y[t1] /= n;
+    }
+
+    for (t=t1+1; t<=t2; t++) {
+	y[t] = d * x[t] + (1-d) * y[t-1];
+    }
+
+    return 0;
+}
+
+/**
+ * movavg_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @pdinfo: data set information.
+ * @k: number of terms in MA.
+ * @center: if non-zero, produce centered MA.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
+		   int k, int center)
+{
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int k1 = k-1, k2 = 0;
+    int i, s, t, T;
+    int err = 0;
+
+    array_adjust_t1t2(x, &t1, &t2);
+    T = t2 - t1 + 1;
+    if (T < k) {
+	return E_TOOFEW;
+    }
+
+    if (center) {
+	k1 = k / 2;
+	k2 = (k % 2 == 0)? (k1 - 1) : k1;
+    }
+
+    t1 += k1;
+    t2 -= k2;
+
+    for (t=t1; t<=t2; t++) {
+	double xs, msum = 0.0;
+
+	for (i=-k1; i<=k2; i++) {
+	    s = t + i;
+	    fprintf(stderr, "MA: t=%d, using x[%d]\n", t, s);
+	    if (pdinfo->structure == STACKED_TIME_SERIES) {
+		if (pdinfo->paninfo->unit[s] != 
+		    pdinfo->paninfo->unit[t]) {
+		    s = -1;
+		}
+	    }
+
+	    if (s >= 0) {
+		xs = x[s];
+	    } else {
+		xs = NADBL;
+	    }
+
+	    if (na(xs)) {
+		msum = NADBL;
+		break;
+	    } else {
+		msum += x[s];
+	    }
+	}
+
+	if (!na(msum)) {
+	    y[t] = (k > 0)? (msum / k) : msum;
+	}
+    }
+
+    if (center && k % 2 == 0) {
+	/* centered, but wih even number of terms: FIXME */
+	double *tmp = malloc(T * sizeof *tmp);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (t=t1,s=0; t<=t2; t++,s++) {
+		tmp[s] = (y[t] + y[t-1]) / 2.0;
+	    }
+	    for (t=t1,s=0; t<=t2; t++,s++) {
+		y[t] = tmp[s];
+	    }
+	}	
+	free(tmp);
+    }
+
+    return err;
+}
+
 int seasonally_adjust_series (const double *x, double *y, 
 			      DATAINFO *pdinfo, int tramo)
 {

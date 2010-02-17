@@ -228,7 +228,7 @@ static int read_reg_val (HKEY tree, char *keyname, char *keyval)
                         keyname,
                         NULL,
                         NULL,
-                        keyval,
+                        (LPBYTE) keyval,
                         &datalen
                         ) != ERROR_SUCCESS) {
         error = 1;

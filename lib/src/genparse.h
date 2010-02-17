@@ -279,7 +279,6 @@ enum {
     F_CDIV,	  /* complex division */
     F_MXTAB,
     F_MWRITE,
-    F_MOVAVG,
     F_MRSEL,
     F_MCSEL,
     F_LLAG,
@@ -313,6 +312,7 @@ enum {
     F_STRNCMP,
     F_BESSEL,
     F_WEEKDAY,
+    F_MOVAVG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_MOLS,
     F_MPOLS,

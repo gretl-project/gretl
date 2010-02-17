@@ -1906,7 +1906,7 @@ static int get_network_settings (void)
    except that we'll respect the registry entry for gretldir.
 */
 
-static int win32_read_gretlrc (void) 
+static void win32_read_gretlrc (void) 
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
     int got_recent = 0;
@@ -1914,14 +1914,14 @@ static int win32_read_gretlrc (void)
 
     if (*rcfile == '\0') {
 	/* shouldn't happen */
-	return 1;
+	return;
     }
 
     fp = gretl_fopen(rcfile, "r");
 
     if (fp == NULL) {
 	/* not necessarily an error: may be starting from scratch */
-	return 1;
+	return;
     }
 
     while (fgets(line, sizeof line, fp) != NULL) {

@@ -197,7 +197,7 @@ int filename_to_win32 (char *targ, const char *src)
 
     *targ = '\0';
 
-    if (string_is_utf8(src)) {
+    if (string_is_utf8((const unsigned char *) src)) {
 	gchar *tr = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
 
 	if (gerr != NULL) {
@@ -308,7 +308,7 @@ static void try_to_get_windows_font (void)
 
 int use_wimp; /* note: published via gretlwin32.h */
 
-static int wimp_init (void)
+static void wimp_init (void)
 {
     char tmp[4] = {0};
 

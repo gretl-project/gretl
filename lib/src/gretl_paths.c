@@ -845,7 +845,7 @@ static void make_findname (char *targ, const char *src)
 {
     strcpy(targ, src);
 
-    if (string_is_utf8(targ)) {
+    if (string_is_utf8((const unsigned char *) targ)) {
 	gchar *tmp;
 	gsize sz;
 	

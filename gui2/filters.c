@@ -788,6 +788,8 @@ static int sma_special (const filter_info *finfo, double *fx,
 
 static int calculate_filter (filter_info *finfo)
 {
+    int save_t1 = datainfo->t1;
+    int save_t2 = datainfo->t2;
     const double *x = Z[finfo->vnum];
     double *fx = NULL;
     double *u = NULL;
@@ -813,50 +815,19 @@ static int calculate_filter (filter_info *finfo)
 	}
     }
 
+    datainfo->t1 = finfo->t1;
+    datainfo->t2 = finfo->t2;
+
     if (finfo->ftype == FILTER_SMA) {
 	/* simple moving average */
 	if (finfo->center && finfo->n % 2 == 0) {
 	    err = sma_special(finfo, fx, x);
 	} else {
-	    int offset = finfo->center ? finfo->n / 2 : 0;
-	    int i, k, t1, t2;
-
-	    t1 = finfo->center ? finfo->t1 + offset : finfo->t1 + finfo->n - 1;
-	    t2 = finfo->center ? finfo->t2 - offset : finfo->t2;
-
-	    for (t=t1; t<=t2; t++) {
-		fx[t] = 0.0;
-		for (i=0; i<finfo->n; i++) {
-		    k = i - offset;
-		    fx[t] += x[t-k];
-		}
-		fx[t] /= finfo->n;
-	    }
+	    movavg_series(x, fx, datainfo, finfo->n, finfo->center);
 	}
     } else if (finfo->ftype == FILTER_EMA) {
 	/* exponential moving average */
-	double a = finfo->lambda;
-	int mt2;
-
-	if (finfo->n == 0) {
-	    /* use all observations to calculate mean */
-	    mt2 = finfo->t2;
-	} else {
-	    /* use only the first finfo->n observations */
-	    mt2 = finfo->t1 + finfo->n - 1;
-	}
-
-	for (t=0; t<datainfo->n; t++) {
-	    if (t < finfo->t1 || t > finfo->t2) {
-		fx[t] = NADBL;
-	    } else if (t == finfo->t1) {
-		/* first filtered value = mean */
-		fx[t] = gretl_mean(finfo->t1, mt2, x);
-	    } else {
-		/* subsequent filtered values */
-		fx[t] = a * x[t] + (1-a) * fx[t-1];
-	    }
-	}
+	exponential_movavg_series(x, fx, datainfo, finfo->lambda, finfo->n);
     } else if (finfo->ftype == FILTER_HP) {
 	/* Hodrick-Prescott */
 	double lam0 = libset_get_double(HP_LAMBDA);
@@ -875,6 +846,9 @@ static int calculate_filter (filter_info *finfo)
 	/* fractional differencing */
 	err = fracdiff_series(x, fx, finfo->lambda, 1, -1, datainfo);
     }
+
+    datainfo->t1 = save_t1;
+    datainfo->t2 = save_t2;
 	
     if (!err && fx != NULL && u != NULL) {
 	for (t=0; t<datainfo->n; t++) {
