@@ -814,12 +814,21 @@
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="scalar" optional="true">f1</fnarg>
+	<fnarg type="scalar" optional="true">f2</fnarg>
+	<fnarg type="scalar" optional="true">k</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Extracts the cyclical component of series <argname>y</argname>
-	  via the Baxter&ndash;King bandpass filter, a two-sided symmetric
-	  filter. See <guideref targ="chap-genr"/> for details.
+	  Returns the result from application of the Baxter&ndash;King
+	  bandpass filter to the series <argname>y</argname>.  The optional
+	  parameters <argname>f1</argname> and <argname>f2</argname>
+	  represent, respectively, the lower and upper bounds of the range of
+	  frequencies to extract, while <argname>k</argname> is the
+	  approximation order to be used. If these arguments are not supplied
+	  then default values are used, and the defaults can be adjusted using
+	  the <cmdref targ="set"/> command. See <guideref
+	    targ="chap-genr"/> for details.
 	  <seelist>
 	    <fncref targ="hpfilt"/>
 	  </seelist>
@@ -1957,11 +1966,16 @@
     <function name="hpfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="scalar" optional="true">lambda</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the cycle from the Hodrick&ndash;Prescott filter applied
-	  to series <argname>y</argname>.  See <guideref
+	  Returns the cycle component from application of the
+	  Hodrick&ndash;Prescott filter to series <argname>y</argname>. If the
+	  smoothing parameter, <argname>lambda</argname>, is not supplied then
+	  a data-based default is used; the default can also be adjusted using
+	  the <cmdref targ="set"/> command. See
+	  <guideref
 	    targ="chap-genr"/> for details. 
 	  <seelist> 
 	    <fncref targ="bkfilt"/>

@@ -66,10 +66,10 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 		     int k);
 
 int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
-	       gretlopt opt);
+	       double lambda, gretlopt opt);
 
-int bkbp_filter (const double *y, double *bk, 
-		 const DATAINFO *pdinfo);
+int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo, 
+		 int bkl, int bku, int k);
 
 int dummy (double ***pZ, DATAINFO *pdinfo, int center);
 

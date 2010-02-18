@@ -4148,34 +4148,37 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
     if (ret != NULL) {
 	gretl_matrix *tmp = NULL;
+	double parm = NADBL;
 	const double *x;
 	double *y;
 
 	if (l->t == MAT) {
 	    cast_to_series(l, f, &tmp, p);
-	    if (p->err) {
-		return NULL;
-	    }
 	}
+
+	if (!p->err && r != NULL && r->t != EMPTY) {
+	    parm = node_get_scalar(r, p);
+	}
+
+	if (p->err) {
+	    return NULL;
+	}	
 
 	x = l->v.xvec;
 	y = ret->v.xvec;
 
 	switch (f) {
 	case F_HPFILT:
-	    p->err = hp_filter(x, y, p->dinfo, OPT_NONE);
-	    break;
-	case F_BKFILT:
-	    p->err = bkbp_filter(x, y, p->dinfo);
+	    p->err = hp_filter(x, y, p->dinfo, parm, OPT_NONE);
 	    break;
 	case F_FRACDIFF:
-	    p->err = fracdiff_series(x, y, r->v.xval, 1, (autoreg(p))? p->obs : -1, p->dinfo);
+	    p->err = fracdiff_series(x, y, parm, 1, (autoreg(p))? p->obs : -1, p->dinfo);
 	    break;
 	case F_FRACLAG:
-	    p->err = fracdiff_series(x, y, r->v.xval, 0, (autoreg(p))? p->obs : -1, p->dinfo);
+	    p->err = fracdiff_series(x, y, parm, 0, (autoreg(p))? p->obs : -1, p->dinfo);
 	    break;
 	case F_BOXCOX:
-	    p->err = boxcox_series(x, y, r->v.xval, p->dinfo);
+	    p->err = boxcox_series(x, y, parm, p->dinfo);
 	    break;
 	case F_DIFF:
 	case F_LDIFF:
@@ -4199,7 +4202,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	case F_RESAMPLE:
 	    if (r != NULL && r->t == NUM) {
-		p->err = block_resample_series(x, y, r->v.xval, p->dinfo); 
+		p->err = block_resample_series(x, y, parm, p->dinfo); 
 	    } else {
 		p->err = resample_series(x, y, p->dinfo); 
 	    }
@@ -5206,8 +5209,7 @@ static void n_args_error (int k, int n, const char *s, parser *p)
 {
     pprintf(p->prn, _("Number of arguments (%d) does not "
 		      "match the number of\nparameters for "
-		      "function %s (%d)"),
-	    k, s, n);
+		      "function %s (%d)"), k, s, n);
     p->err = E_ARGS;
 }
 
@@ -5219,7 +5221,46 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     NODE *ret = NULL;
     int i, k = n->v.bn.n_nodes;
 
-    if (t->t == F_FILTER) {
+    if (t->t == F_BKFILT) {
+	const double *x = NULL;
+	int bk[3] = {0};
+
+	if (k < 1 || k > 4) {
+	    n_args_error(k, 4, "bkfilt", p);
+	} 
+
+	/* evaluate the first (series) argument */
+	e = eval(n->v.bn.n[0], p);
+	if (!p->err && e->t != VEC) {
+	    node_type_error(t->t, 0, VEC, e, p);
+	}
+
+	if (!p->err) {
+	    x = e->v.xvec;
+	}
+
+	for (i=1; i<k && !p->err; i++) {
+	    e = n->v.bn.n[i];
+	    if (e->t == EMPTY) {
+		; /* NULL arguments are OK */
+	    } else {
+		e = eval(n->v.bn.n[i], p);
+		if (e == NULL) {
+		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+		} else {
+		    bk[i] = node_get_int(e, p);
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    ret = aux_vec_node(p, p->dinfo->n);
+	}
+
+	if (!p->err) {
+	    p->err = bkbp_filter(x, ret->v.xvec, p->dinfo, bk[0], bk[1], bk[2]);
+	} 
+    } else if (t->t == F_FILTER) {
 	const double *x = NULL;
 	gretl_matrix *C = NULL;
 	gretl_matrix *A = NULL;
@@ -6771,7 +6812,6 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_HPFILT:
-    case F_BKFILT:
     case F_FRACDIFF:
     case F_FRACLAG:
     case F_BOXCOX:
@@ -7082,6 +7122,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = eval_bessel_func(l, m, r, p);
 	}		
 	break;
+    case F_BKFILT:
     case F_MOLS:
     case F_MPOLS:
     case F_FILTER:	

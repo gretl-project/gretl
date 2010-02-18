@@ -1546,6 +1546,16 @@ static int parse_restriction_row (gretl_restriction *rset,
 	}
     }
 
+#if RDEBUG
+    fprintf(stderr, "restriction row: nterms = %d, rhs = %g\n", 
+	    row->nterms, row->rhs);
+#endif
+
+    if (!err && row->nterms == 0) {
+	gretl_errmsg_set(_("Invalid restriction"));
+	err = E_PARSE;
+    }
+
     return err;
 }
 

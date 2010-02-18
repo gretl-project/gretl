@@ -1072,23 +1072,24 @@ static double hp_lambda (const DATAINFO *pdinfo)
  * @x: array of original data.
  * @hp: array in which filtered series is computed.
  * @pdinfo: data set information.
+ * @lambda: smoothing parameter (or #NADBL to use the default
+ * value).
  * @opt: if %OPT_T, return the trend rather than the cycle.
  *
  * Calculates the "cycle" component of the time series in
  * array @x, using the Hodrick-Prescott filter.  Adapted from the 
- * original FORTRAN code by E. Prescott. Very few changes.
+ * original FORTRAN code by E. Prescott. 
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
 int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
-	       gretlopt opt)
+	       double lambda, gretlopt opt)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     double v00 = 1.0, v11 = 1.0, v01 = 0.0;
     double det, tmp0, tmp1;
     double e0, e1, b00, b01, b11;
-    double lambda;
     double **V = NULL;
     double m[2], tmp[2];
     int i, t, T, tb;
@@ -1110,7 +1111,9 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    lambda = hp_lambda(pdinfo);
+    if (na(lambda)) {
+	lambda = hp_lambda(pdinfo);
+    }
 
     V = doubles_array_new(4, T);
     if (V == NULL) {
@@ -1142,7 +1145,6 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 	v00 -= v00 * v00 / tmp0;
 	v11 -= v01 * v01 / tmp0;
 	v01 -= (tmp1 / tmp0) * v01;
-
     }
 
     m[0] = x[0];
@@ -1230,35 +1232,35 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 
 /**
  * bkbp_filter:
- * @y: array of original data.
+ * @x: array of original data.
  * @bk: array into which to write the filtered series.
  * @pdinfo: data set information.
+ * @bkl: lower frequency bound (or 0 for automatic).
+ * @bku: upper frequency bound (or 0 for automatic).
+ * @k: approximation order (or 0 for automatic).
  *
- * Calculates the Baxter & King bandpass filter.
+ * Calculates the Baxter and King bandpass filter.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
+int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
+		 int bkl, int bku, int k)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int bkl, bku;
-
     double omubar, omlbar;
     double avg_a;
     double *a;
+    int i, t, err = 0;
 
-    int i, k, t;
-    int err = 0;
+    if (bkl <= 0 || bku <= 0) {
+	/* get user settings if available (or the defaults) */
+	get_bkbp_periods(pdinfo, &bkl, &bku);
+    }
 
-    /*
-      periods[0] and periods[1]: threshold periodicities for business cycle
-      k: order of the approximation
-    */
-
-    /* get user settings if available (or the defaults) */
-    get_bkbp_periods(pdinfo, &bkl, &bku);
-    k = get_bkbp_k(pdinfo);
+    if (k <= 0) {
+	k = get_bkbp_k(pdinfo);
+    }
 
 #if BK_DEBUG
     fprintf(stderr, "lower limit = %d, upper limit = %d, \n", 
@@ -1270,7 +1272,7 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 	return 1;
     }
 
-    err = array_adjust_t1t2(y, &t1, &t2);
+    err = array_adjust_t1t2(x, &t1, &t2);
     if (err) {
 	return err;
     } 
@@ -1313,9 +1315,9 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 	if (t < t1 + k || t > t2 - k) {
 	    bk[t] = NADBL;
 	} else {
-	    bk[t] = a[0] * y[t];
+	    bk[t] = a[0] * x[t];
 	    for (i=1; i<=k; i++) {
-		bk[t] += a[i] * (y[t-i] + y[t+i]);
+		bk[t] += a[i] * (x[t-i] + x[t+i]);
 	    }
 	}
     }
@@ -1655,8 +1657,7 @@ int panel_unit_first_obs (int t, const DATAINFO *pdinfo)
 
 /* make special time variable for panel data */
 
-static void 
-make_panel_time_var (double *x, const DATAINFO *pdinfo)
+static void make_panel_time_var (double *x, const DATAINFO *pdinfo)
 {
     int t, xt = 0;
 

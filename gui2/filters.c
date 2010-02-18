@@ -24,6 +24,7 @@
 #include "filters.h"
 #include "libset.h"
 #include "plotspec.h"
+#include "cmdstack.h"
 
 enum {
     FILTER_SMA = 1,
@@ -61,8 +62,10 @@ struct filter_info_ {
     int bku;              /* Baxter-King upper value */
     gretlopt graph_opt;
     gretlopt save_opt;
-    char save1[VNAMELEN];
-    char save2[VNAMELEN];
+    char save_t[VNAMELEN];
+    char save_c[VNAMELEN];
+    char label_t[MAXLABEL];
+    char label_c[MAXLABEL];
     GtkWidget *dlg;
     GtkWidget *entry1;
     GtkWidget *entry2;
@@ -111,8 +114,10 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
 
     finfo->save_opt = FILTER_SAVE_NONE;
 
-    *finfo->save1 = 0;
-    *finfo->save2 = 0;
+    *finfo->save_t = 0;
+    *finfo->save_c = 0;
+    *finfo->label_t = 0;
+    *finfo->label_c = 0;
 
     finfo->dlg = NULL;
     finfo->entry1 = NULL;
@@ -142,7 +147,7 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
 
 static void filter_make_savename (filter_info *finfo, int i)
 {
-    char *targ = (i == 0)? finfo->save1 : finfo->save2;
+    char *targ = (i == 0)? finfo->save_t : finfo->save_c;
     int len;
 
     if (finfo->ftype == FILTER_SMA) {
@@ -163,42 +168,46 @@ static void filter_make_savename (filter_info *finfo, int i)
 
 static void filter_make_varlabel (filter_info *finfo, int v, int i)
 {
-    char *targ = VARLABEL(datainfo, v);
+    char *s = (i == FILTER_SAVE_TREND)? finfo->label_t : 
+	finfo->label_c;
 
     if (finfo->ftype == FILTER_SMA) {
 	if (i == FILTER_SAVE_TREND) {
 	    if (finfo->center) {
-		sprintf(targ, _("Centered %d-period moving average of %s"), 
+		sprintf(s, _("Centered %d-period moving average of %s"), 
 			finfo->k, finfo->vname);
 	    } else {
-		sprintf(targ, _("%d-period moving average of %s"), 
+		sprintf(s, _("%d-period moving average of %s"), 
 			finfo->k, finfo->vname);
 	    }
 	} else {
-	    sprintf(targ, _("Residual from %d-period MA of %s"), 
+	    sprintf(s, _("Residual from %d-period MA of %s"), 
 		    finfo->k, finfo->vname);
 	}
     } else if (finfo->ftype == FILTER_EMA) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(targ, _("Exponential moving average of %s (current weight %g)"),
+	    sprintf(s, _("Exponential moving average of %s (current weight %g)"),
 		    finfo->vname, finfo->lambda);
 	} else {
-	    sprintf(targ, _("Residual from EMA of %s (current weight %g)"),
+	    sprintf(s, _("Residual from EMA of %s (current weight %g)"),
 		    finfo->vname, finfo->lambda);
 	}	    
     } else if (finfo->ftype == FILTER_HP) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(targ, _("Filtered %s: Hodrick-Prescott trend (lambda = %g)"), 
+	    sprintf(s, _("Filtered %s: Hodrick-Prescott trend (lambda = %g)"), 
 		    finfo->vname, finfo->lambda);
 	} else {
-	    sprintf(targ, _("Filtered %s: Hodrick-Prescott cycle (lambda = %g)"), 
+	    sprintf(s, _("Filtered %s: Hodrick-Prescott cycle (lambda = %g)"), 
 		    finfo->vname, finfo->lambda);
 	}	    
     } else if (finfo->ftype == FILTER_BK) {
-	sprintf(targ, _("Filtered %s: Baxter-King cycle"), finfo->vname);
+	sprintf(s, _("Filtered %s: Baxter-King, frequency %d to %d"), 
+		finfo->vname, finfo->bkl, finfo->bku);
     } else if (finfo->ftype == FILTER_FD) {
-	sprintf(targ, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
+	sprintf(s, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
     }
+
+    strcpy(VARLABEL(datainfo, v), s);
 }
 
 static void check_bk_limits1 (GtkWidget *s1, GtkWidget *s2)
@@ -232,7 +241,7 @@ static void sma_center_callback (GtkWidget *w, int *c)
 
 static int varname_error (filter_info *finfo, int i) 
 {
-    const char *s = (i == 1)? finfo->save1 : finfo->save2;
+    const char *s = (i == 1)? finfo->save_t : finfo->save_c;
 
     if (*s == 0) {
 	errbox(_("Variable name is missing"));
@@ -240,7 +249,7 @@ static int varname_error (filter_info *finfo, int i)
     } else if (gui_validate_varname(s, GRETL_TYPE_SERIES)) {
 	return 1;
     } else if (i == 2 && (finfo->save_opt & FILTER_SAVE_TREND)) {
-	if (!strcmp(s, finfo->save1)) {
+	if (!strcmp(s, finfo->save_t)) {
 	    errbox(_("Conflicting variable names"));
 	    return 1;
 	}
@@ -252,14 +261,14 @@ static int varname_error (filter_info *finfo, int i)
 static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 {
     if (finfo->save_opt & FILTER_SAVE_TREND) {
-	strcpy(finfo->save1, gtk_entry_get_text(GTK_ENTRY(finfo->entry1)));
+	strcpy(finfo->save_t, gtk_entry_get_text(GTK_ENTRY(finfo->entry1)));
 	if (varname_error(finfo, 1)) {
 	    return;
 	}
     }
 
     if (finfo->save_opt & FILTER_SAVE_CYCLE) {
-	strcpy(finfo->save2, gtk_entry_get_text(GTK_ENTRY(finfo->entry2)));
+	strcpy(finfo->save_c, gtk_entry_get_text(GTK_ENTRY(finfo->entry2)));
 	if (varname_error(finfo, 2)) {
 	    return;
 	} 
@@ -273,7 +282,6 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 	    finfo->k = 0;
 	}
     }
-    
 
     gtk_widget_destroy(finfo->dlg);
 }
@@ -333,7 +341,7 @@ static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
 	gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN - 1);
 	gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN + 3);
 	filter_make_savename(finfo, i);
-	gtk_entry_set_text(GTK_ENTRY(w), (i == 0)? finfo->save1 : finfo->save2);
+	gtk_entry_set_text(GTK_ENTRY(w), (i == 0)? finfo->save_t : finfo->save_c);
 	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);	
 	gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, i, i+1);
 	if (i == 0) {
@@ -485,7 +493,6 @@ static int filter_dialog (filter_info *finfo)
 			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-
 	/* set calculation of initial EMA value */
 	ema_obs_radios(dlg, finfo);
     } else if (finfo->ftype == FILTER_HP) {
@@ -510,7 +517,6 @@ static int filter_dialog (filter_info *finfo)
 			 G_CALLBACK(set_int_from_spinner), &finfo->bkk);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-
 	/* set periods */
 	bkbp_frequencies_table(dlg, finfo);
     } else if (finfo->ftype == FILTER_FD) {
@@ -534,14 +540,14 @@ static int filter_dialog (filter_info *finfo)
 				  FILTER_GRAPH_CYCLE);
 	/* save to dataset? */
 	hbox = gtk_hbox_new(FALSE, 5);
-	w = gretl_option_check_button(_("Save cyclical series as"),
+	w = gretl_option_check_button(_("Save filtered series as"),
 				      &finfo->save_opt, FILTER_SAVE_CYCLE);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN - 1);
 	gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN + 3);
 	filter_make_savename(finfo, 1);
-	gtk_entry_set_text(GTK_ENTRY(w), finfo->save2);
+	gtk_entry_set_text(GTK_ENTRY(w), finfo->save_c);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	finfo->entry2 = w;
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -718,8 +724,8 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 static int save_filtered_var (filter_info *finfo, double *x, int i,
 			      int *saved)
 {
-    const char *vname = (i == FILTER_SAVE_TREND)? finfo->save1 :
-	finfo->save2;
+    const char *vname = (i == FILTER_SAVE_TREND)? finfo->save_t :
+	finfo->save_c;
     int v = series_index(datainfo, vname);
     int err = 0;
 
@@ -738,6 +744,66 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
     }
 
     return err;
+}
+
+static void record_filter_command (filter_info *finfo)
+{
+    int trend = finfo->save_opt & FILTER_SAVE_TREND;
+    int cycle = finfo->save_opt & FILTER_SAVE_CYCLE;
+    char *s, fcmd[1024];
+
+    if (finfo->ftype == FILTER_BK) {
+	sprintf(fcmd, "series %s = ", finfo->save_c);
+    } else if (finfo->ftype == FILTER_HP) {
+	if (trend) {
+	    sprintf(fcmd, "series %s = %s - ", finfo->save_t, finfo->vname);
+	} else if (cycle) {
+	    sprintf(fcmd, "series %s = ", finfo->save_c);
+	} 
+    } else if (trend) {
+	sprintf(fcmd, "series %s = ", finfo->save_t);
+    } else if (cycle) {
+	sprintf(fcmd, "series %s = %s - ", finfo->save_c, finfo->vname);
+    }
+
+    s = fcmd + strlen(fcmd);
+
+    gretl_push_c_numeric_locale();
+
+    if (finfo->ftype == FILTER_SMA) {
+	sprintf(s, "movavg(%s, %d, %d)\n", finfo->vname,
+		finfo->k, finfo->center);
+    } else if (finfo->ftype == FILTER_EMA) {
+	sprintf(s, "movavg(%s, %g, %d)\n", finfo->vname,
+		finfo->lambda, finfo->k);
+    } else if (finfo->ftype == FILTER_HP) {
+	sprintf(s, "hpfilt(%s, %g)\n", finfo->vname, finfo->lambda);
+    } else if (finfo->ftype == FILTER_BK) {
+	sprintf(s, "bkfilt(%s, %d, %d, %d)\n", finfo->vname,
+		finfo->bkl, finfo->bku, finfo->bkk);
+    } else if (finfo->ftype == FILTER_FD) {
+	sprintf(s, "fracdiff(%s, %g)\n", finfo->vname, finfo->lambda);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    if (trend) {
+	s = fcmd + strlen(fcmd);
+	sprintf(s, "setinfo %s -d \"%s\"\n", finfo->save_t, finfo->label_t);
+    } else if (cycle) {
+	s = fcmd + strlen(fcmd);
+	sprintf(s, "setinfo %s -d \"%s\"\n", finfo->save_c, finfo->label_c);
+    }	
+
+    if (trend && cycle) {
+	s = fcmd + strlen(fcmd);
+	sprintf(s, "series %s = %s - %s\n", finfo->save_c, finfo->vname, 
+		finfo->save_t);
+	s = fcmd + strlen(fcmd);
+	sprintf(s, "setinfo %s -d \"%s\"\n", finfo->save_c, finfo->label_c);
+    }
+
+    add_command_to_stack(fcmd);
 }
 
 static int calculate_filter (filter_info *finfo)
@@ -780,18 +846,10 @@ static int calculate_filter (filter_info *finfo)
 	exponential_movavg_series(x, fx, datainfo, finfo->lambda, finfo->k);
     } else if (finfo->ftype == FILTER_HP) {
 	/* Hodrick-Prescott */
-	double lam0 = libset_get_double(HP_LAMBDA);
-
-	libset_set_double(HP_LAMBDA, finfo->lambda);
-	err = hp_filter(x, fx, datainfo, OPT_T);
-	libset_set_double(HP_LAMBDA, lam0);
+	err = hp_filter(x, fx, datainfo, finfo->lambda, OPT_T);
     } else if (finfo->ftype == FILTER_BK) {
 	/* Baxter and King bandpass */
-	set_bkbp_k(finfo->bkk);
-	set_bkbp_periods(finfo->bkl, finfo->bku);
-	err = bkbp_filter(x, u, datainfo);
-	unset_bkbp_k();
-	unset_bkbp_periods();
+	err = bkbp_filter(x, u, datainfo, finfo->bkl, finfo->bku, finfo->bkk);
     } else if (finfo->ftype == FILTER_FD) {
 	/* fractional differencing */
 	err = fracdiff_series(x, fx, finfo->lambda, 1, -1, datainfo);
@@ -830,6 +888,10 @@ static int calculate_filter (filter_info *finfo)
     if (saved) {
 	populate_varlist();
 	mark_dataset_as_modified();
+    }
+
+    if (!err && finfo->save_opt) {
+	record_filter_command(finfo);
     }
 
     return err;
