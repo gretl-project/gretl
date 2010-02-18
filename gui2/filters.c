@@ -53,10 +53,10 @@ struct filter_info_ {
     const char *vname;    /* name of series */
     int t1;               /* starting observation */
     int t2;               /* ending observation */
-    int n;                /* no. of terms in MA, or no. of obs for mean */
+    int k;                /* no. of terms in MA, or no. of obs for mean */
     int center;           /* for simple MA: center or not */
     double lambda;        /* general purpose parameter */
-    int k;                /* Baxter-King parameter */
+    int bkk;              /* Baxter-King parameter */
     int bkl;              /* Baxter-King lower value */
     int bku;              /* Baxter-King upper value */
     gretlopt graph_opt;
@@ -66,7 +66,7 @@ struct filter_info_ {
     GtkWidget *dlg;
     GtkWidget *entry1;
     GtkWidget *entry2;
-    GtkWidget *nspin;
+    GtkWidget *kspin;
 };
 
 static const char *filter_get_title (int ftype)
@@ -96,10 +96,10 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->vname = datainfo->varname[v];
     finfo->t1 = t1;
     finfo->t2 = t2;
-    finfo->n = 0;
+    finfo->k = 0;
     finfo->center = 0;
     finfo->lambda = 0.0;
-    finfo->k = 0;
+    finfo->bkk = 0;
     finfo->bkl = 0;
     finfo->bku = 0;
 
@@ -117,20 +117,20 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->dlg = NULL;
     finfo->entry1 = NULL;
     finfo->entry2 = NULL;
-    finfo->nspin = NULL;
+    finfo->kspin = NULL;
 
     if (ftype == FILTER_SMA) {
-	finfo->center = 1;
-	finfo->n = (pd == 1 || pd == 10)? 3 : pd;
+	finfo->center = 0;
+	finfo->k = (pd == 1 || pd == 10)? 3 : pd;
     } else if (ftype == FILTER_EMA) {
-	finfo->lambda = 0.1;
+	finfo->lambda = 0.2;
     } else if (ftype == FILTER_HP) {
 	finfo->lambda = libset_get_double(HP_LAMBDA);
 	if (na(finfo->lambda)) {
 	    finfo->lambda = 100 * pd * pd;
 	}
     } else if (ftype == FILTER_BK) {
-	finfo->k = get_bkbp_k(datainfo);
+	finfo->bkk = get_bkbp_k(datainfo);
 	get_bkbp_periods(datainfo, &finfo->bkl, &finfo->bku);
 	if (finfo->bku <= finfo->bkl) {
 	    finfo->bku = finfo->bkl + 1;
@@ -169,14 +169,14 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
 	if (i == FILTER_SAVE_TREND) {
 	    if (finfo->center) {
 		sprintf(targ, _("Centered %d-period moving average of %s"), 
-			finfo->n, finfo->vname);
+			finfo->k, finfo->vname);
 	    } else {
 		sprintf(targ, _("%d-period moving average of %s"), 
-			finfo->n, finfo->vname);
+			finfo->k, finfo->vname);
 	    }
 	} else {
 	    sprintf(targ, _("Residual from %d-period MA of %s"), 
-		    finfo->n, finfo->vname);
+		    finfo->k, finfo->vname);
 	}
     } else if (finfo->ftype == FILTER_EMA) {
 	if (i == FILTER_SAVE_TREND) {
@@ -265,12 +265,12 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 	} 
     } 
 
-    if (finfo->nspin != NULL) {
-	if (GTK_WIDGET_SENSITIVE(finfo->nspin)) {
-	    finfo->n = (int) 
-		gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->nspin));
+    if (finfo->kspin != NULL) {
+	if (GTK_WIDGET_SENSITIVE(finfo->kspin)) {
+	    finfo->k = (int) 
+		gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->kspin));
 	} else {
-	    finfo->n = 0;
+	    finfo->k = 0;
 	}
     }
     
@@ -386,11 +386,11 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
-static void use_submean (GtkWidget *w, GtkWidget *s)
+static void toggle_use_submean (GtkWidget *w, GtkWidget *s)
 {
     gboolean t = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
-    gtk_widget_set_sensitive(s, t);
+    gtk_widget_set_sensitive(s, !t);
 }
 
 static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
@@ -410,20 +410,19 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
     gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
 
     /* default */
-    r1 = gtk_radio_button_new_with_label(NULL, _("the mean of the whole series"));
+    r1 = gtk_radio_button_new_with_label(NULL, _("the mean of the first n observations"));
     gtk_table_attach_defaults(GTK_TABLE(tab), r1, 0, 1, 0, 1);
+    w = gtk_spin_button_new_with_range(1, (finfo->t2 - finfo->t1 + 1) / 4, 1);
+    gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 0, 1);
+    finfo->kspin = w;
 
     /* alternate */
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r1));
-    r2 = gtk_radio_button_new_with_label(group, _("the mean of the first n observations"));
+    r2 = gtk_radio_button_new_with_label(group, _("the mean of the whole series"));
     gtk_table_attach_defaults(GTK_TABLE(tab), r2, 0, 1, 1, 2);
-    w = gtk_spin_button_new_with_range(1, (finfo->t2 - finfo->t1 + 1) / 4, 1);
-    gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 1, 2);
-    gtk_widget_set_sensitive(w, FALSE);
-    finfo->nspin = w;
 
     /* connect */
-    g_signal_connect(G_OBJECT(r2), "clicked", G_CALLBACK(use_submean), w);
+    g_signal_connect(G_OBJECT(r2), "clicked", G_CALLBACK(toggle_use_submean), w);
 
     /* pack everything */
     gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 10);  
@@ -450,7 +449,7 @@ static int filter_dialog (filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     if (finfo->ftype == FILTER_SMA) {
-	GtkWidget *nspin;
+	GtkWidget *kspin;
 	int T = finfo->t2 - finfo->t1 + 1;
 	int nmax = T / 2;
 
@@ -458,11 +457,11 @@ static int filter_dialog (filter_info *finfo)
 	hbox = gtk_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("Number of observations in average:"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	nspin = gtk_spin_button_new_with_range(2, (gdouble) nmax, 1);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(nspin), (gdouble) finfo->n);
-	g_signal_connect(G_OBJECT(nspin), "value-changed",
-			 G_CALLBACK(set_int_from_spinner), &finfo->n);
-	gtk_box_pack_start(GTK_BOX(hbox), nspin, TRUE, TRUE, 5);    
+	kspin = gtk_spin_button_new_with_range(2, (gdouble) nmax, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(kspin), (gdouble) finfo->k);
+	g_signal_connect(G_OBJECT(kspin), "value-changed",
+			 G_CALLBACK(set_int_from_spinner), &finfo->k);
+	gtk_box_pack_start(GTK_BOX(hbox), kspin, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
 	/* select centered or not */
@@ -501,14 +500,14 @@ static int filter_dialog (filter_info *finfo)
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_BK) {
-	/* set "k" */
+	/* set Baxter-King "k" */
 	hbox = gtk_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("k (higher values -> better approximation):"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	w = gtk_spin_button_new_with_range(1.0, 4 * finfo->k, 1);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->k);
+	w = gtk_spin_button_new_with_range(1.0, 4 * finfo->bkk, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->bkk);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(set_int_from_spinner), &finfo->k);
+			 G_CALLBACK(set_int_from_spinner), &finfo->bkk);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -741,51 +740,6 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
     return err;
 }
 
-/* centered MA for even number of terms in average */
-
-static int sma_special (const filter_info *finfo, double *fx,
-			const double *x)
-{
-    int offset = finfo->n / 2;
-    double *tmp;
-    int t, t1, t2;
-    int i, k, n;
-
-    t1 = finfo->t1 + offset;
-    t2 = finfo->t2 - offset + 1;
-
-    n = t2 - t1 + 1;
-
-    tmp = malloc(n * sizeof *tmp);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=t1; t<=t2; t++) {
-	fx[t] = 0.0;
-	for (i=0; i<finfo->n; i++) {
-	    k = i - offset + 1;
-	    fx[t] += x[t-k];
-	}
-	fx[t] /= finfo->n;
-    }
-
-    for (t=0; t<n; t++) {
-	tmp[t] = fx[t+t1];
-    }
-
-    for (t=t1; t<t2; t++) {
-	k = t - t1;
-	fx[t] = (tmp[k] + tmp[k+1]) / 2.0;
-    }
-
-    fx[t2] = NADBL;
-
-    free(tmp);
-
-    return 0;
-}
-
 static int calculate_filter (filter_info *finfo)
 {
     int save_t1 = datainfo->t1;
@@ -820,14 +774,10 @@ static int calculate_filter (filter_info *finfo)
 
     if (finfo->ftype == FILTER_SMA) {
 	/* simple moving average */
-	if (finfo->center && finfo->n % 2 == 0) {
-	    err = sma_special(finfo, fx, x);
-	} else {
-	    movavg_series(x, fx, datainfo, finfo->n, finfo->center);
-	}
+	movavg_series(x, fx, datainfo, finfo->k, finfo->center);
     } else if (finfo->ftype == FILTER_EMA) {
 	/* exponential moving average */
-	exponential_movavg_series(x, fx, datainfo, finfo->lambda, finfo->n);
+	exponential_movavg_series(x, fx, datainfo, finfo->lambda, finfo->k);
     } else if (finfo->ftype == FILTER_HP) {
 	/* Hodrick-Prescott */
 	double lam0 = libset_get_double(HP_LAMBDA);
@@ -837,7 +787,7 @@ static int calculate_filter (filter_info *finfo)
 	libset_set_double(HP_LAMBDA, lam0);
     } else if (finfo->ftype == FILTER_BK) {
 	/* Baxter and King bandpass */
-	set_bkbp_k(finfo->k);
+	set_bkbp_k(finfo->bkk);
 	set_bkbp_periods(finfo->bkl, finfo->bku);
 	err = bkbp_filter(x, u, datainfo);
 	unset_bkbp_k();

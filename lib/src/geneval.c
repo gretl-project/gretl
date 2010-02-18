@@ -921,12 +921,12 @@ static NODE *DW_node (NODE *r, parser *p)
     for (i=0; i<2 && !p->err; i++) {
 	s = r->v.bn.n[i+1];
 	if (s->t == NUM || scalar_matrix_node(s)) {
-	    parm[i] = node_get_scalar(s, p);
+	    parm[i] = node_get_int(s, p);
 	} else {
 	    e = eval(s, p);
 	    if (!p->err) {
 		if (e->t == NUM || scalar_matrix_node(e)) {
-		    parm[i] = node_get_scalar(e, p);
+		    parm[i] = node_get_int(e, p);
 		} else {
 		    p->err = E_INVARG;
 		}
@@ -935,7 +935,7 @@ static NODE *DW_node (NODE *r, parser *p)
     }
 
     if (!p->err && (parm[0] < 6 || parm[1] < 0)) {
-	p->err = E_DATA;
+	p->err = E_INVARG;
     }
 
     if (!p->err) {
@@ -966,12 +966,20 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 	for (i=0; i<4 && !p->err; i++) {
 	    s = r->v.bn.n[i];
 	    if (s->t == NUM || scalar_matrix_node(s)) {
-		x[i] = node_get_scalar(s, p);
+		if (i == 0) {
+		    x[i] = node_get_scalar(s, p);
+		} else {
+		    x[i] = node_get_int(s, p);
+		}
 	    } else {
 		e = eval(s, p);
 		if (!p->err) {
 		    if (e->t == NUM || scalar_matrix_node(e)) {
-			x[i] = node_get_scalar(e, p);
+			if (i == 0) {
+			    x[i] = node_get_scalar(e, p);
+			} else {
+			    x[i] = node_get_int(e, p);
+			}
 		    } else {
 			p->err = E_TYPES;
 		    }
@@ -1842,12 +1850,15 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
     if (starting(p)) {
 	gretl_matrix *m = l->v.m;
-	int k = node_get_scalar(r, p);
+	int k = node_get_int(r, p);
 
 	if (gretl_is_null_matrix(m)) {
-	    p->err = E_DATA;
+	    p->err = E_INVARG;
+	}
+
+	if (p->err) {
 	    return NULL;
-	}	
+	}
 
 	ret = aux_matrix_node(p);
 	if (ret == NULL) { 
@@ -2053,9 +2064,11 @@ static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const gretl_matrix *m = l->v.m;
-	int k = node_get_scalar(r, p);
+	int k = node_get_int(r, p);
 
-	ret->v.m = gretl_matrix_pca(m, k, &p->err);
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_pca(m, k, &p->err);
+	}
     }
 
     return ret;
@@ -2300,24 +2313,18 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
-static int ok_matrix_dim (double xr, double xc, int f)
+static int ok_matrix_dim (int r, int c, int f)
 {
-    double xm, imax = (double) INT_MAX;
-
-    xm = xr * xc;
-
     if (f == F_IMAT || f == F_ZEROS || f == F_ONES || f == F_MUNIF || \
 	f == F_MNORM) {
 	/* zero is OK for matrix creation functions, which then 
 	   return an empty matrix 
 	*/
-	return (xr >= 0 && xr <= imax && 
-		xc >= 0 && xc <= imax &&
-		xm >= 0 && xm <= imax);
+	return (r >= 0 && c >= 0);
     } else {
-	return (xr > 0 && xr <= imax && 
-		xc > 0 && xc <= imax &&
-		xm > 0 && xm <= imax);
+	double xm = (double) r * (double) c;
+
+	return (r > 0 && c > 0 && xm < INT_MAX);
     }
 }
 
@@ -2326,20 +2333,20 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	double xr = node_get_scalar(l, p);
-	double xc = (f == F_IMAT)? xr : node_get_scalar(r, p);
-	int rows, cols;
+	int cols, rows = node_get_int(l, p);
 
-	gretl_error_clear();
-
-	if (!ok_matrix_dim(xr, xc, f)) {
-	    p->err = E_DATA;
-	    matrix_error(p);
-	    return ret;
+	if (!p->err) {
+	    cols = (f == F_IMAT)? rows : node_get_int(r, p);
 	}
 
-	rows = xr;
-	cols = xc;
+	if (!p->err && !ok_matrix_dim(rows, cols, f)) {
+	    p->err = E_INVARG;
+	    matrix_error(p);
+	}
+
+	if (p->err) {
+	    return ret;
+	}
 
 	switch (f) {
 	case F_IMAT:
@@ -2783,8 +2790,10 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 	} else {
 	    switch (f) {
 	    case F_LLAG:
-		order = node_get_scalar(l, p);
-		p->err = list_laggenr(&list, order, p->Z, p->dinfo);
+		order = node_get_int(l, p);
+		if (!p->err) {
+		    p->err = list_laggenr(&list, order, p->Z, p->dinfo);
+		}
 		break;
 	    case F_ODEV:
 		p->err = list_orthdev(list, p->Z, p->dinfo);
@@ -3795,10 +3804,9 @@ series_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-/* 
-   functions taking a series and a scalar as arguments and returning 
+/* functions taking a series and a scalar as arguments and returning 
    a scalar
- */
+*/
 
 static NODE *
 series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
@@ -3868,17 +3876,14 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	double rx = node_get_scalar(r, p);
+	int t = node_get_int(r, p);
 	char word[16];
-	int t;
 
-	if (rx < 0 || rx > (double) INT_MAX) {
-	    ret->v.xval = NADBL;
+	if (p->err) {
 	    return ret;
 	}
 
 	/* convert to 0-based, and allow for dates */
-	t = (int) rx;
 	sprintf(word, "%d", t);
 	t = get_t_from_obs_string(word, (const double **) *p->Z, 
 				  p->dinfo);
@@ -3899,9 +3904,13 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const double *x = l->v.xvec;
-	int k = (int) node_get_scalar(r, p);
+	int k = node_get_int(r, p);
 	int t1 = p->dinfo->t1;
 	int t2 = p->dinfo->t2;
+
+	if (p->err) {
+	    return ret;
+	}
 
 	while (na(x[t1]) && t1 <= t2) t1++;
 	while (na(x[t2]) && t2 >= t1) t2--;
@@ -3973,12 +3982,15 @@ static NODE *series_movavg (NODE *l, NODE *m, NODE *r, parser *p)
 
 static NODE *series_lag (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret;
+    NODE *ret = NULL;
     const double *x = l->v.xvec;
-    int k = (int) -(node_get_scalar(r, p));
+    int k = -(node_get_int(r, p));
     int t1, t2;
 
-    ret = aux_vec_node(p, p->dinfo->n);
+    if (!p->err) {
+	ret = aux_vec_node(p, p->dinfo->n);
+    }
+
     if (ret == NULL) {
 	return NULL;
     }
@@ -4810,7 +4822,7 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     int k;
 
     /* ensure we've got an order */
-    k = (int) node_get_scalar(m, p);
+    k = node_get_int(m, p);
     if (p->err) {
 	return NULL;
     }

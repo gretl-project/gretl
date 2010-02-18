@@ -781,7 +781,6 @@ int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
     int t2 = pdinfo->t2;
     int k1 = k-1, k2 = 0;
     int i, s, t, T;
-    int err = 0;
 
     array_adjust_t1t2(x, &t1, &t2);
     T = t2 - t1 + 1;
@@ -802,7 +801,6 @@ int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
 
 	for (i=-k1; i<=k2; i++) {
 	    s = t + i;
-	    fprintf(stderr, "MA: t=%d, using x[%d]\n", t, s);
 	    if (pdinfo->structure == STACKED_TIME_SERIES) {
 		if (pdinfo->paninfo->unit[s] != 
 		    pdinfo->paninfo->unit[t]) {
@@ -830,23 +828,14 @@ int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
     }
 
     if (center && k % 2 == 0) {
-	/* centered, but wih even number of terms: FIXME */
-	double *tmp = malloc(T * sizeof *tmp);
-
-	if (tmp == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    for (t=t1,s=0; t<=t2; t++,s++) {
-		tmp[s] = (y[t] + y[t-1]) / 2.0;
-	    }
-	    for (t=t1,s=0; t<=t2; t++,s++) {
-		y[t] = tmp[s];
-	    }
-	}	
-	free(tmp);
+	/* centered, but wih even number of terms */
+	for (t=t1; t<t2; t++) {
+	    y[t] = (y[t] + y[t+1]) / 2.0;
+	}
+	y[t2] = NADBL;
     }
 
-    return err;
+    return 0;
 }
 
 int seasonally_adjust_series (const double *x, double *y, 
