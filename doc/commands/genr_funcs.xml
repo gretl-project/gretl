@@ -3080,36 +3080,46 @@
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar">p</fnarg>
+	<fnarg type="scalar" optional="true">control</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
-	  For <argname>p</argname> &gt; 1, computes the
-	  <argname>p</argname>-term moving average for the series
-	  <argname>x</argname>, that is the average of x(t) to x(t-p+1).
-	</para>
-	<para context="tex">
-	  For $p&gt;1$, computes the <argname>p</argname>-term moving average for
-	  the series <argname>x</argname>, that is $y_t = \frac{1}{p}
-	  \sum_{i=0}^{p-1} x_{t-i}$.
-	</para>
 	<para>
-	  Note that the result is not centered. If you want a centered
-	  moving average, you can use the lead operator on the
-	  returned series. Example:
+	  Depending on the value of the parameter <argname>p</argname>,
+	  returns either a simple or an exponentially weighted
+	  moving average of the input series <argname>x</argname>.
 	</para>
-	<code>
-	    tmp = movavg(x,3)
-	    y = tmp(+1)
-	</code>
 	<para context="notex">
-	  If <argname>p</argname> is a positive fraction, computes the
-	  exponentially weighted moving average, m(t) = p*x(t) + (1-p)*m(t-1),
-	  with m(0) set to the first valid value of <argname>x</argname>.
+	  If <argname>p</argname> &gt; 1, a simple <argname>p</argname>-term
+	  moving average is computed, that is, the arithmetic mean of x(t) to
+	  x(t-p+1). If a non-zero value is supplied for the optional
+	  <argname>control</argname> parameter the MA is centered,
+	  otherwise it is <quote>trailing</quote>.
 	</para>
 	<para context="tex">
-	  If $0 &lt; p &lt; 1$, computes the exponentially weighted
-	  moving average, $m_t = p x_t + (1-p)m_{t-1}$, with $m_0$ set to the
-	  first valid value of $x$.
+	  If $p&gt;1$, a simple <argname>p</argname>-term moving average is
+	  computed, that is, $\frac{1}{p} \sum_{i=0}^{p-1} x_{t-i}$. If a
+	  non-zero value is supplied for the optional
+	  <argname>control</argname> parameter the MA is centered, otherwise
+	  it is <quote>trailing</quote>.
+	</para>
+	<para context="notex">
+	  If <argname>p</argname> is a positive fraction, an exponential
+	  moving average is computed: y(t) = p*x(t) + (1-p)*y(t-1). By default
+	  the output series, y, is initialized using the first valid value of
+	  <argname>x</argname>, but the <argname>control</argname> parameter
+	  may be used to specify the number of initial observations that
+	  should be averaged to produce y(0).  A zero value for
+	  <argname>control</argname> indicates that all the observations
+	  should be used.
+	</para>
+	<para context="tex">
+	  If $0 &lt; p &lt; 1$, an exponential moving average is computed:
+	  $y_t = p x_t + (1-p)y_{t-1}$. By default the output series $y$ is
+	  initialized using the first valid value of $x$, but the
+	  <argname>control</argname> parameter may be used to specify the
+	  number of initial observations that should be averaged to produce
+	  $y_0$.  A zero value for <argname>control</argname> indicates that
+	  all the observations should be used.
 	</para>	
     </description>
     </function>

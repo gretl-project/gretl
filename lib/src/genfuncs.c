@@ -828,9 +828,13 @@ int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
     }
 
     if (center && k % 2 == 0) {
-	/* centered, but wih even number of terms */
+	/* centered, with even number of terms */
 	for (t=t1; t<t2; t++) {
-	    y[t] = (y[t] + y[t+1]) / 2.0;
+	    if (na(y[t]) || na(y[t+1])) {
+		y[t] = NADBL;
+	    } else {
+		y[t] = (y[t] + y[t+1]) / 2.0;
+	    }
 	}
 	y[t2] = NADBL;
     }

@@ -18,6 +18,8 @@
  */
 
 #include "libgretl.h"
+#include "gretl_scalar.h"
+
 #include <errno.h>
 
 /* model commands plus ADD and OMIT */
@@ -772,31 +774,16 @@ static int option_parm_status (int ci, gretlopt opt)
 }
 
 /* We got an "=val" parameter value in connection with a given option:
-   check this for validity.  Note that (at present), for almost all
-   options that accept but do not mandate a parameter value, the
-   parameter must be a numerical value.
+   check this for validity.
 */
 
 static int check_optval (int ci, gretlopt opt, int status, char *val)
 {
-    int err = 0;
-
-    if (status == NEEDS_PARM) {
-	err = push_optparm(ci, opt, val);
-    } else if (status == ACCEPTS_PARM) {
-	if (ci == FCAST && opt == OPT_G) {
-	    /* --plot=filename */
-	    err = push_optparm(ci, opt, val);
-	} else if (numeric_string(val)) {
-	    err = push_optparm(ci, opt, val);
-	} else {
-	    err = 1;
-	}
+    if (status == NEEDS_PARM || status == ACCEPTS_PARM) {
+	return push_optparm(ci, opt, val);
     } else {
-	err = 1;
+	return 1;
     }
-
-    return err;
 }
 
 /**
@@ -829,9 +816,17 @@ const char *get_optval_string (int ci, gretlopt opt)
 double get_optval_double (int ci, gretlopt opt)
 {
     optparm *op = matching_optparm(ci, opt);
+    double ret = NADBL;
 
-    return (op != NULL && op->val != NULL)? 
-	dot_atof(op->val) : NADBL;
+    if (op != NULL && op->val != NULL) {
+	if (numeric_string(op->val)) {
+	    ret = dot_atof(op->val);
+	} else {
+	    ret = gretl_scalar_get_value(op->val);
+	}
+    }
+
+    return ret;
 }
 
 /* called via GUI */
