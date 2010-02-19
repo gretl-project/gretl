@@ -1917,7 +1917,7 @@ static int alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
     int mp = 0, ret = 0;
 
     if (ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
-	tlabel = (tex_format(prn))? N_("$z$-stat") : N_("z-stat");
+	tlabel = (tex_format(prn))? N_("$z$") : N_("z");
     } else {
 	tlabel = (tex_format(prn))? N_("$t$-ratio") : N_("t-ratio");
     }
@@ -3685,7 +3685,7 @@ static int plain_print_aux_coeffs (const double *b,
     }
 
     if (ci == MODPRINT) {
-	headings[2] = N_("z-stat");
+	headings[2] = N_("z");
     }
 
     for (i=0; i<nc; i++) {
@@ -4001,7 +4001,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     int err = 0;
 
     if (ASYMPTOTIC_MODEL(pmod->ci)) {
-	headings[2] = N_("z-stat");
+	headings[2] = N_("z");
     } 
 
     if (pmod->ci == AR || pmod->ci == ARCH) {

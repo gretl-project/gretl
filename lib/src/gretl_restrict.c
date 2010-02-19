@@ -907,8 +907,33 @@ static int r_get_scalar (const char *s, double *x)
     return 0;
 }
 
+static int get_named_param (const char *s, MODEL *pmod,
+			    int *bnum) 
+{
+    if (NONLIST_MODEL(pmod->ci) && pmod->params != NULL) {
+	char test[VNAMELEN];
+	int i;
+
+	*test = '\0';
+	strncat(test, s, VNAMELEN - 1);
+	tailstrip(test);
+
+	for (i=0; i<pmod->nparams; i++) {
+	    if (!strcmp(test, pmod->params[i])) {
+		*bnum = i;
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 #define b_start(r,s) ((*s == 'b' || (r->vecm && *s == 'a')) && \
 		      (isdigit(*(s+1)) || *(s+1) == '['))
+
+#define could_be_param(r,s) (r->otype == GRETL_OBJ_EQN && \
+	                     !isdigit(*s))
 
 static int 
 parse_coeff_chunk (gretl_restriction *r, const char *s, double *x, 
@@ -916,6 +941,7 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 		   const DATAINFO *pdinfo)
 {
     const char *s0 = s;
+    int done = 0;
     int err = E_PARSE;
 
     *eq = 1;
@@ -927,6 +953,7 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 #endif
 
     if (b_start(r, s)) {
+	/* something like "b[" or "b2" */
 	*letter = *s;
 	s++;
 #if RDEBUG
@@ -934,7 +961,19 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 #endif
 	err = parse_b_bit(r, s, eq, bnum, pdinfo);
 	*x = 1.0;
-    } else if (r_get_scalar(s, x)) {
+	done = 1;
+    } else if (could_be_param(r, s)) {
+	/* e.g. "beta" for MLE or GMM */
+	done = get_named_param(s, r->obj, bnum);
+	if (done) {
+	    *letter = 'b';
+	    *x = 1.0;
+	    *eq = 0;
+	    err = 0;
+	}
+    }
+
+    if (!done && r_get_scalar(s, x)) {
 	s += strspn(s, " ");
 	s += strcspn(s, " *");
 	s += strspn(s, " *");
