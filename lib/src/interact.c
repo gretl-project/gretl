@@ -3565,6 +3565,19 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	return;
     }
 
+    /* in a progressive loop, do not apply the usual echo procedure
+       for commands whose list may pertain to a temporary loop-special
+       dataset */
+    if (gretl_looping_progressive()) {
+	if (cmd->ci == PRINT) {
+	    pprintf(prn, "? %s\n", line);
+	    return;
+	} else if (cmd->ci == STORE) {
+	    pprintf(prn, "? store %s%s\n", cmd->param, line);
+	    return;
+	}
+    }
+
     /* special case: "store" command: record as comment */
     if (recording && cmd->ci == STORE) {
 	pprintf(prn, "# store '%s'", cmd->param);

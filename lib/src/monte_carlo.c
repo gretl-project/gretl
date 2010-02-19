@@ -2668,7 +2668,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     indent0 = gretl_if_state_record();
 
-    set_loop_on(loop_is_quiet(loop)); /* libset.c */
+    set_loop_on(loop_is_quiet(loop), loop_is_progressive(loop));
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);

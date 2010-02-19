@@ -119,11 +119,12 @@ const gretl_matrix *get_init_vals (void);
 int n_init_vals (void);
 void free_init_vals (void);
 
-void set_loop_on (int quiet);
+void set_loop_on (int quiet, int progressive);
 void set_loop_off (void);
 int gretl_looping (void);
 int gretl_looping_currently (void);
 int gretl_looping_quietly (void);
+int gretl_looping_progressive (void);
 
 void gretl_set_batch_mode (int b);
 int gretl_in_batch_mode (void);

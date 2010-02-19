@@ -317,7 +317,8 @@
       <description>
 	<para>
 	  Returns the frequency or periodicity of the data (e.g. 4 for
-	  quarterly data).
+	  quarterly data).  In the case of panel data the value returned
+	  is the time-series length.
 	</para>
       </description>
     </function>
@@ -387,7 +388,7 @@
 	  Must follow a <lit>tsls</lit> command. Returns a <by r="1"
 	  c="3"/> vector, containing the value of the Sargan
 	  over-identification test statistic, the corresponding
-	  degrees of freedom and p-value, in this order.
+	  degrees of freedom and p-value, in that order.
 	</para>
       </description>
     </function>
@@ -483,7 +484,8 @@
     <function name="$T" section="access" output="scalar">
       <description>
 	<para>
-	  Number of observations used in estimating the last model.
+	  Returns the number of observations used in estimating the last
+	  model.
 	</para>
       </description>
     </function>
@@ -491,7 +493,7 @@
     <function name="$t1" section="access" output="scalar">
       <description>
 	<para>
-	  The 1-based index of the first observation in the currently
+	  Returns the 1-based index of the first observation in the currently
 	  selected sample.
 	</para>
       </description>
@@ -500,7 +502,7 @@
     <function name="$t2" section="access" output="scalar">
       <description>
 	<para>
-	  The 1-based index of the last observation in the currently
+	  Returns the 1-based index of the last observation in the currently
 	  selected sample.
 	</para>
       </description>
@@ -645,7 +647,7 @@
       </fnargs>
       <description>
 	<para>
-	  Absolute value.
+	  Returns the absolute value of <argname>x</argname>.
 	</para>
       </description>
     </function>
@@ -656,9 +658,9 @@
       </fnargs>
       <description>
 	<para>
-	  The arc cosine of <argname>x</argname>, that is, the value whose
-	  cosine is <argname>x</argname>.  The result is in radians; the input
-	  should be in the range &minus;1 to 1.
+	  Returns the arc cosine of <argname>x</argname>, that is, the value
+	  whose cosine is <argname>x</argname>.  The result is in radians; the
+	  input should be in the range &minus;1 to 1.
 	</para>
       </description>
     </function>
@@ -669,8 +671,8 @@
       </fnargs>
       <description>
 	<para>
-	  Inverse hyperbolic cosine of <argname>x</argname> (positive
-	  solution). <argname>x</argname> should be greater than 1;
+	  Returns the inverse hyperbolic cosine of <argname>x</argname>
+	  (positive solution). <argname>x</argname> should be greater than 1;
 	  otherwise, NA is returned.
 	  <seelist>
 	    <fncref targ="cosh"/>
@@ -685,9 +687,9 @@
       </fnargs>
       <description>
 	<para>
-	  The arc sine of <argname>x</argname>, that is, the value whose sine
-	  is <argname>x</argname>.  The result is in radians; the input should
-	  be in the range &minus;1 to 1.
+	  Returns the arc sine of <argname>x</argname>, that is, the value
+	  whose sine is <argname>x</argname>.  The result is in radians; the
+	  input should be in the range &minus;1 to 1.
 	</para>
       </description>
     </function>
@@ -698,7 +700,7 @@
       </fnargs>
       <description>
 	<para>
-	  Inverse hyperbolic sine of <argname>x</argname>.
+	  Returns the inverse hyperbolic sine of <argname>x</argname>.
 	  <seelist>
 	    <fncref targ="sinh"/>
 	  </seelist>
@@ -712,8 +714,8 @@
       </fnargs>
       <description>
 	<para>
-	  The arc tangent of <argname>x</argname>, that is, the value whose
-	  tangent is <argname>x</argname>.  The result is in radians.
+	  Returns the arc tangent of <argname>x</argname>, that is, the value
+	  whose tangent is <argname>x</argname>.  The result is in radians.
 	</para>
       </description>
     </function>
@@ -724,7 +726,7 @@
       </fnargs>
       <description>
 	<para>
-	  Inverse hyperbolic tangent of <argname>x</argname>.
+	  Returns the inverse hyperbolic tangent of <argname>x</argname>.
 	  <seelist>
 	    <fncref targ="tanh"/>
 	  </seelist>
@@ -1176,7 +1178,7 @@
       </fnargs>
       <description>
 	<para>
-	  Cosine.
+	  Returns the cosine of <argname>x</argname>.
 	</para>
       </description>
     </function>
@@ -1187,7 +1189,7 @@
       </fnargs>
       <description>
 	<para>
-	  Hyperbolic cosine.
+	  Returns the hyperbolic cosine of <argname>x</argname>.
 	</para>
 	<para context="tex">
 	  \[ \cosh x = \frac{e^x + e^{-x}}{2}  \]
@@ -1209,7 +1211,7 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the covariance between <argname>y1</argname> and
+	  Returns the covariance between <argname>y1</argname> and
 	  <argname>y2</argname>. 
 	  <seelist> 
 	    <fncref targ="corr"/> 
@@ -1605,8 +1607,9 @@
       </fnargs>
       <description>
 	<para>
-	  Exponential. Note: in case of matrices, the function acts element
-	  by element. For the matrix exponential function, see <fncref
+	  Returns <math>e</math><sup>x</sup>. Note that in case of matrices
+	  the function acts element by element. For the matrix exponential
+	  function, see <fncref
 	  targ="mexp"/>.
 	</para>
       </description>
@@ -2131,10 +2134,11 @@
       </fnargs>  
       <description>
 	<para>
-	  Truncates the fractional part of <argname>x</argname>. Note:
-	  <lit>int</lit> and <fncref targ="floor"/> differ in their effect
-	  for negative arguments: <lit>int(-3.5)</lit> gives &minus;3,
-	  while <lit>floor(-3.5)</lit> gives &minus;4. 
+	  Returns the integer part of <argname>x</argname>, truncating the
+	  fractional part. Note: <lit>int</lit> and <fncref targ="floor"/>
+	  differ in their effect for
+	  negative arguments: <lit>int(-3.5)</lit> gives &minus;3, while
+	  <lit>floor(-3.5)</lit> gives &minus;4. 
 	  <seelist> 
 	    <fncref targ="ceil"/>
 	  </seelist>
@@ -2593,7 +2597,7 @@
       </fnargs>
       <description>
 	<para>
-	  Log of the gamma function of <argname>x</argname>.
+	  Returns the log of the gamma function of <argname>x</argname>.
 	</para>
       </description>
     </function>
@@ -2604,9 +2608,9 @@
       </fnargs>
       <description>
 	<para>
-	  Natural logarithm; produces <lit>NA</lit> for non-positive
-	  values. Note: <lit>ln</lit> is an acceptable alias for
-	  <lit>log</lit>.
+	  Returns the natural logarithm of <argname>x</argname>; produces
+	  <lit>NA</lit> for non-positive values. Note: <lit>ln</lit> is an
+	  acceptable alias for <lit>log</lit>.
 	</para>
 	<para> 
 	  When a list is returned, the individual variables are
@@ -2625,8 +2629,8 @@
       </fnargs>
       <description>
 	<para>
-	  Base-10 logarithm; produces <lit>NA</lit> for non-positive
-	  values.
+	  Returns the base-10 logarithm of <argname>x</argname>; produces
+	  <lit>NA</lit> for non-positive values.
 	</para>
       </description>
     </function>
@@ -2637,8 +2641,8 @@
       </fnargs>
       <description>
 	<para>
-	  Base-2 logarithm; produces <lit>NA</lit> for non-positive
-	  values.
+	  Returns the base-2 logarithm of <argname>x</argname>; produces
+	  <lit>NA</lit> for non-positive values.
 	</para>
       </description>
     </function>
@@ -4493,7 +4497,7 @@
       </fnargs>       
       <description>
 	<para>
-	  Sine.  
+	  Returns the sine of <argname>x</argname>.
 	  <seelist>
 	    <fncref targ="cos"/>
 	    <fncref targ="tan"/>
@@ -4509,7 +4513,7 @@
       </fnargs>
       <description>
 	<para>
-	  Hyperbolic sine.
+	  Returns the hyperbolic sine of <argname>x</argname>.
 	</para>
 	<para context="tex">
 	  \[ \sinh x = \frac{e^x - e^{-x}}{2}  \]
@@ -4566,8 +4570,8 @@
       </fnargs>     
       <description>
 	<para>
-	  Square root of <argname>x</argname>; produces <lit>NA</lit> for
-	  negative values.
+	  Returns the positive square root of <argname>x</argname>; produces
+	  <lit>NA</lit> for negative values.
 	</para>
 	<para>
 	  Note that if the argument is a matrix the operation is performed
@@ -4601,8 +4605,8 @@
       </fnargs>  
       <description>
 	<para>
-	  Sum of squared deviations from the mean for the non-missing
-	  observations in series <argname>y</argname>.
+	  Returns the sum of squared deviations from the mean for the
+	  non-missing observations in series <argname>y</argname>.
 	  <seelist> 
 	    <fncref targ="var"/>
 	  </seelist>
@@ -4636,7 +4640,7 @@
 	  characters.  If <argname>n</argname> is omitted the comparison
 	  proceeds as far as possible.
 	</para>
-	<para> Note that is you just want to compare two strings for
+	<para> Note that if you just want to compare two strings for
 	  equality, that can be done without using a function, as in
 	  <lit>if (s1 == s2) ...</lit>
 	</para>
@@ -4664,7 +4668,7 @@
       </fnargs>      
       <description>
 	<para>
-	  Sum of the non-missing observations in series
+	  Returns the sum of the non-missing observations in series
 	  <argname>y</argname>.
 	</para>
       </description>
@@ -4755,7 +4759,7 @@
       </fnargs>
       <description>
 	<para>
-	  Tangent.
+	  Returns the tangent of <argname>x</argname>.
 	</para>
       </description>
     </function>
@@ -4766,7 +4770,7 @@
       </fnargs>
       <description>
 	<para>
-	  Hyperbolic tangent.
+	  Returns the hyperbolic tangent of <argname>x</argname>. 
 	</para>
 	<para context="tex">
 	  \[ \tanh x = \frac{e^{2x} - 1}{e^{2x} + 1}  \]
@@ -4831,9 +4835,8 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns the trace of the square matrix <argname>A</argname>,
-	  namely <equation status="inline" ascii="the sum of its
-	  diagonal elements" tex="$\sum_i A_{ii}$"/>.
+	  Returns the trace of the square matrix <argname>A</argname>, that
+	  is, the sum of its diagonal elements.
 	  <seelist> 
 	    <fncref targ="diag"/>
 	  </seelist>
@@ -4847,9 +4850,9 @@
       </fnargs>      
       <description>
 	<para>
-	  Matrix transposition. Note: this is rarely used; in order to get
-	  the transpose of a matrix, in most cases you can just use the
-	  prime operator: <lit>X'</lit>.
+	  Returns the transpose of <argname>X</argname>. Note: this is rarely
+	  used; in order to get the transpose of a matrix, in most cases you
+	  can just use the prime operator: <lit>X'</lit>.
 	</para>
       </description>
     </function>

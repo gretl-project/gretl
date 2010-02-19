@@ -57,7 +57,8 @@ enum {
     STATE_SKIP_MISSING    = 1 << 15, /* skip NAs when building matrix from series */
     STATE_LOOPING         = 1 << 16, /* loop is in progress at this level */
     STATE_LOOP_QUIET      = 1 << 17, /* loop commands should be quiet */
-    STATE_BFGS_RSTEP      = 1 << 18  /* use Ricardson method in BFGS numerical
+    STATE_LOOP_PROG       = 1 << 18, /* progressive loop is in progress */
+    STATE_BFGS_RSTEP      = 1 << 19  /* use Ricardson method in BFGS numerical
 					gradient */
 };    
 
@@ -2173,12 +2174,15 @@ void libset_cleanup (void)
 static int batch_mode;
 static int gui_mode;
 
-void set_loop_on (int quiet)
+void set_loop_on (int quiet, int progressive)
 {
     state->flags |= STATE_LOOPING;
     if (quiet) {
 	state->flags |= STATE_LOOP_QUIET;
     }
+    if (progressive) {
+	state->flags |= STATE_LOOP_PROG;
+    }    
 }
 
 void set_loop_off (void)
@@ -2195,6 +2199,15 @@ void set_loop_off (void)
 	    state->flags ^= STATE_LOOP_QUIET;
 	}
     }
+    
+    /* and similarly for progressiveness */
+    if (state->flags & STATE_LOOP_PROG) {
+	int i = n_states - 1;
+
+	if (i <= 0 || !(state_stack[i-1]->flags & STATE_LOOP_PROG)) {
+	    state->flags ^= STATE_LOOP_PROG;
+	}
+    }    
 }
 
 /* returns 1 if there's a loop going on anywhere in the "caller
@@ -2226,6 +2239,11 @@ int gretl_looping_currently (void)
 int gretl_looping_quietly (void)
 {
     return (state->flags & STATE_LOOP_QUIET)? 1 : 0;
+}
+
+int gretl_looping_progressive (void)
+{
+    return (state->flags & STATE_LOOP_PROG)? 1 : 0;
 }
 
 void gretl_set_batch_mode (int b)
