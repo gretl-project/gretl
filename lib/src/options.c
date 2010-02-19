@@ -22,6 +22,8 @@
 
 #include <errno.h>
 
+#define OPTDEBUG 0
+
 /* model commands plus ADD and OMIT */
 #define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
 
@@ -628,6 +630,10 @@ static int valid_long_opt (int ci, const char *lopt)
     int opt = OPT_NONE;
     int i;
 
+    if (*lopt == '\0') {
+	return 0;
+    }
+
     if (vcv_opt_ok(ci) && !strcmp(lopt, "vcv")) {
 	return OPT_O;
     }
@@ -664,8 +670,6 @@ static int valid_long_opt (int ci, const char *lopt)
    with command options, as in --opt=val.  
 */
 
-#define OPDEBUG 0
-
 typedef struct optparm_ optparm;
 
 struct optparm_ {
@@ -693,7 +697,7 @@ void clear_option_params (void)
 {
     int i;
 
-#if OPDEBUG 
+#if OPTDEBUG > 1
     fprintf(stderr, "clearing option params\n");
 #endif
 
@@ -743,7 +747,7 @@ static int push_optparm (int ci, gretlopt opt, char *val)
     op->val = val;
     n_parms = n;
 
-#if OPDEBUG 
+#if OPTDEBUG 
     fprintf(stderr, "push_optparm: val='%s', n_parms=%d\n",
 	    op->val, n_parms);
 #endif
@@ -918,6 +922,10 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
     while ((s = strstr(s, "--")) != NULL) {
 	match = 0;
 	*longopt = '\0';
+
+#if OPTDEBUG
+	fprintf(stderr, "get_long_opts: s = '%s'\n", s);
+#endif
 
 	if (maybe_opt_start(line, s)) {
 	    sscanf(s + 2, "%31[^ =]", longopt);
