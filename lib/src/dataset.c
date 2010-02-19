@@ -2329,8 +2329,10 @@ int dataset_stack_variables (const char *vname, const char *line,
     char format[16];
     char *p, *s = NULL, *scpy = NULL;
     int *vnum = NULL;
+    int *stacklist = NULL;
     double *bigx = NULL;
     int i, v1 = 0, v2 = 0, nv = 0;
+    int done = 0;
     int maxok, offset;
     int oldn, bign, genv;
     int err = 0;
@@ -2365,23 +2367,47 @@ int dataset_stack_variables (const char *vname, const char *line,
 
     genv = series_index(pdinfo, vname);
 
-    /* do we have a range of vars? */
-    sprintf(format, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
-    if (sscanf(s, format, vn1, vn2) == 2) {
-	if (isdigit(*vn1) && isdigit(*vn2)) {
-	    v1 = atoi(vn1);
-	    v2 = atoi(vn2);
-	} else {
-	    v1 = series_index(pdinfo, vn1);
-	    v2 = series_index(pdinfo, vn2);
-	}
-	if (v1 >= 0 && v2 > v1 && v2 < pdinfo->v) {
-	    nv = v2 - v1 + 1;
-	} else {
-	    fputs("stack vars: range is invalid\n", stderr);
+    /* do we have a named list? */
+    stacklist = get_list_by_name(s);
+    if (stacklist != NULL) {
+	nv = stacklist[0];
+	if (nv == 0) {
 	    err = E_DATA;
+	    goto bailout;
 	}
-    } else {
+	vnum = malloc(nv * sizeof *vnum);
+	if (vnum == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+	for (i=0; i<nv; i++) {
+	    vnum[i] = stacklist[i+1];
+	}
+	done = 1;
+    }
+
+    if (!done) {
+	/* do we have a range of vars? */
+	sprintf(format, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
+	if (sscanf(s, format, vn1, vn2) == 2) {
+	    if (isdigit(*vn1) && isdigit(*vn2)) {
+		v1 = atoi(vn1);
+		v2 = atoi(vn2);
+	    } else {
+		v1 = series_index(pdinfo, vn1);
+		v2 = series_index(pdinfo, vn2);
+	    }
+	    if (v1 >= 0 && v2 > v1 && v2 < pdinfo->v) {
+		nv = v2 - v1 + 1;
+	    } else {
+		fputs("stack vars: range is invalid\n", stderr);
+		err = E_DATA;
+	    }
+	    done = 1;
+	}
+    }
+
+    if (!done) {
 	/* or a comma-separated list of vars? */
 	char *p = s;
 
@@ -2416,30 +2442,27 @@ int dataset_stack_variables (const char *vname, const char *line,
 	}
     }
 
-    if (err) {
-	goto bailout;
+    if (!err) {
+	/* get offset specified by user? */
+	offset = get_optional_offset(scpy, (const double **) *pZ, 
+				     pdinfo, &err);
     }
 
-    /* get offset specified by user? */
-    offset = get_optional_offset(scpy, (const double **) *pZ, 
-				 pdinfo, &err);
-    if (err) {
-	goto bailout;
-    }
-
-    /* get length specified by user? */
-    maxok = get_optional_length(scpy, (const double **) *pZ, 
-				pdinfo, &err);
-    if (err) {
-	goto bailout;
+    if (!err) {
+	/* get length specified by user? */
+	maxok = get_optional_length(scpy, (const double **) *pZ, 
+				    pdinfo, &err);
     }
 
 #if PDEBUG
     fprintf(stderr, "offset = %d, maxok = %d\n", offset, maxok);
 #endif
 
-    if (offset + maxok > pdinfo->n) {
+    if (!err && offset + maxok > pdinfo->n) {
 	err = E_DATA;
+    }
+
+    if (err) {
 	goto bailout;
     }
 
@@ -2452,11 +2475,8 @@ int dataset_stack_variables (const char *vname, const char *line,
 	/* calculate required series length */	
 	maxok = 0;
 	for (i=0; i<nv; i++) {
-	    int j, ok;
-
-	    j = (vnum == NULL)? i + v1 : vnum[i];
-
-	    ok = pdinfo->n - missing_tail((*pZ)[j], pdinfo->n);
+	    int j = (vnum == NULL)? i + v1 : vnum[i];
+	    int ok = pdinfo->n - missing_tail((*pZ)[j], pdinfo->n);
 
 	    if (ok > maxok) {
 		maxok = ok;
@@ -2497,9 +2517,8 @@ int dataset_stack_variables (const char *vname, const char *line,
 
     /* construct stacked series */
     for (i=0; i<nv; i++) {
-	int j, t, bigt, tmax;
-
-	j = (vnum == NULL)? i + v1 : vnum[i];
+	int j = (vnum == NULL)? i + v1 : vnum[i];
+	int t, bigt, tmax;
 
 	if (maxok > 0) {
 	    bigt = maxok * i;
