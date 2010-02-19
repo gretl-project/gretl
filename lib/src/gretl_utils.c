@@ -108,36 +108,29 @@ int ijton (int i, int j, int nrows)
 }
 
 /**
- * ztox:
- * @i: index number of variable to extract.
- * @px: array into which to write the series.
- * @Z: data matrix.
+ * transcribe_array:
+ * @targ: arrat to which to write.
+ * @src: array from which to read.
  * @pdinfo: data information struct.
  * 
- * Pull one series from data matrix and put it into @px.
+ * Copy from @src to @targ, skipping any missing values,
+ * over the sample range defined in @pdinfo.
  *
- * Returns: the number of valid observations put into @px.
+ * Returns: the number of valid observations put into @targ.
  */
 
-int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo) 
+int transcribe_array (double *targ, const double *src, 
+		      const DATAINFO *pdinfo) 
 {
-    int t, m = 0;
-    double xx;
+    int t, n = 0;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xx = Z[i][t];
-	if (na(xx)) {
-	    continue;
+	if (!na(src[t])) {
+	    targ[n++] = src[t];
 	}
-	else px[m++] = xx;
     }
 
-    if (m == 0) {
-	fprintf(stderr, "\nztox: No valid observations for variable %s\n", 
-		pdinfo->varname[i]);
-    } 
-
-    return m;
+    return n;
 }
 
 /**

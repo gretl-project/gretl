@@ -4871,8 +4871,8 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }    
 
-    n1 = ztox(list[1], x, Z, pdinfo);
-    n2 = ztox(list[2], y, Z, pdinfo);
+    n1 = transcribe_array(x, Z[list[1]], pdinfo);
+    n2 = transcribe_array(y, Z[list[2]], pdinfo);
 
     if (n1 == 0 || n2 == 0) {
 	pputs(prn, _("Sample range has no valid observations."));
@@ -4957,8 +4957,8 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     if ((x = malloc(n * sizeof *x)) == NULL) return E_ALLOC;
     if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
 
-    n1 = ztox(list[1], x, Z, pdinfo);
-    n2 = ztox(list[2], y, Z, pdinfo);
+    n1 = transcribe_array(x, Z[list[1]], pdinfo);
+    n2 = transcribe_array(y, Z[list[2]], pdinfo);
 
     if (n1 == 0 || n2 == 0) {
 	pputs(prn, _("Sample range has no valid observations."));

@@ -115,6 +115,9 @@ double **data_array_from_model (const MODEL *pmod, double **Z,
 
 int ijton (int i, int j, int nrows);
 
+int transcribe_array (double *targ, const double *src, 
+		      const DATAINFO *pdinfo); 
+
 int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);
 
 double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);

@@ -332,7 +332,7 @@ static int ascii_plot (const int *list, const double **Z,
 
     if (list[0] == 1) {
 	/* only one variable is to be plotted */
-	n = ztox(vy, x, Z, pdinfo);
+	n = transcribe_array(x, Z[vy], pdinfo);
 	gretl_minmax(t1, t2, x, &xmin, &xmax);
 	xrange = xmax - xmin;
 	cntrline = (floatgt(xmax, 0) && floatlt(xmin, 0))? 1 : 0;

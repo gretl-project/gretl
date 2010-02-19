@@ -565,7 +565,7 @@ static int real_boxplots (int *list, char **bools,
 	BOXPLOT *plot = &grp->plots[i];
 	int vi = list[i+1];
 
-	n = ztox(vi, x, (const double **) *pZ, pdinfo);
+	n = transcribe_array(x, (*pZ)[vi], pdinfo);
 
 	if (n < 2) {
 	    gretl_list_delete_at_pos(list, i+1);

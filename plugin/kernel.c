@@ -19,19 +19,32 @@
 
 #include "libgretl.h"
 
-#undef KDEBUG
+#define KDEBUG 0
 
 /* For discussion of kernel density estimation see Davidson and
    MacKinnon, Econometric Theory and Methods, Section 15.5.
 */
+
+#define ROOT5  2.23606797749979     /* sqrt(5) */
+#define EPMULT 0.3354101966249685   /* 3 over (4 * sqrt(5)) */
 
 enum {
     GAUSSIAN_KERNEL,
     EPANECHNIKOV_KERNEL
 };
 
-#define ROOT5  2.23606797749979     /* sqrt(5) */
-#define EPMULT 0.3354101966249685   /* 3 over (4 * sqrt(5)) */
+typedef struct kernel_info_ kernel_info;
+
+struct kernel_info_ {
+    int type;    /* Gaussian or Epanechnikov */
+    double *x;   /* data array */
+    int n;       /* number of elements in x */
+    int kn;      /* number of points to use */
+    double h;    /* bandwidth */
+    double xmin;
+    double xmax;
+    double xstep;
+};
 
 static double ep_pdf (double z)
 {
@@ -42,17 +55,16 @@ static double ep_pdf (double z)
     }
 }
 
-static double
-kernel (const double *x, int n, double x0, double h, int ktype)
+static double kernel (kernel_info *kinfo, double x0)
 {
     double den = 0.0;
     int in_range = 0;
-    int t;
+    int i;
 
-    for (t=0; t<n; t++) {
-	double z = (x0 - x[t]) / h;
+    for (i=0; i<kinfo->n; i++) {
+	double z = (x0 - kinfo->x[i]) / kinfo->h;
 
-	if (ktype == GAUSSIAN_KERNEL) {
+	if (kinfo->type == GAUSSIAN_KERNEL) {
 	    den += normal_pdf(z);
 	} else {
 	    double dt = ep_pdf(z);
@@ -67,70 +79,33 @@ kernel (const double *x, int n, double x0, double h, int ktype)
 	}
     }
 
-    den /= h * n;
+    den /= kinfo->h * kinfo->n;
 
     return den;
 }
 
-static void get_xmin_xmax (const double *x, double s, int n,
-			   double *xmin, double *xmax)
-{
-    double xbar = gretl_mean(0, n - 1, x);
-    double xm4 = xbar - 4.0 * s;
-    double xp4 = xbar + 4.0 * s;
-
-    if (xp4 > x[n-1]) {
-	*xmax = xp4;
-    } else {
-	*xmax = x[n-1];
-    }
-    
-    if (xm4 < x[0]) {
-	*xmin = xm4;
-    } else {
-	*xmin = x[0];
-    }
-
-    if (*xmin < 0.0 && x[0] >= 0.0) {
-	/* if data are non-negative, don't set a negative min */
-	*xmin = x[0];
-    }
-}
-
-static int density_plot (const double *x, double s, double h, 
-			 int n, int kn, gretlopt opt,
-			 const char *vname)
+static int density_plot (kernel_info *kinfo, const char *vname)
 {
     FILE *fp;
     char tmp[128];
-    double xstep, xmin, xmax;
     double xt, xdt;
-    int ktype, t, err = 0;
+    int t, err = 0;
     
     fp = get_plot_input_stream(PLOT_KERNEL, &err);
     if (err) {
 	return err;
     }
 
-    if (opt & OPT_O) {
-	ktype = EPANECHNIKOV_KERNEL;
-    } else {
-	ktype = GAUSSIAN_KERNEL;
-    }
-
-    get_xmin_xmax(x, s, n, &xmin, &xmax);
-    xstep = (xmax - xmin) / kn;
-
     gretl_push_c_numeric_locale();
 
     fputs("set nokey\n", fp); 
-    fprintf(fp, "set xrange [%g:%g]\n", xmin, xmax);
+    fprintf(fp, "set xrange [%g:%g]\n", kinfo->xmin, kinfo->xmax);
 
     fputs("# literal lines = 2\n", fp);
     fprintf(fp, "set label \"%s\" at graph .65, graph .97\n",
-	    (ktype == GAUSSIAN_KERNEL)? _("Gaussian kernel") :
+	    (kinfo->type == GAUSSIAN_KERNEL)? _("Gaussian kernel") :
 	    _("Epanechnikov kernel"));
-    sprintf(tmp, _("bandwidth = %g"), h);
+    sprintf(tmp, _("bandwidth = %g"), kinfo->h);
     fprintf(fp, "set label \"%s\" at graph .65, graph .93\n", tmp);
 
     sprintf(tmp, _("Estimated density of %s"), vname);
@@ -138,11 +113,11 @@ static int density_plot (const double *x, double s, double h,
 
     fputs("plot \\\n'-' using 1:2 w lines\n", fp);
 
-    xt = xmin;
-    for (t=0; t<=kn; t++) {
-	xdt = kernel(x, n, xt, h, ktype);
+    xt = kinfo->xmin;
+    for (t=0; t<=kinfo->kn; t++) {
+	xdt = kernel(kinfo, xt);
 	fprintf(fp, "%g %g\n", xt, xdt);
-	xt += xstep;
+	xt += kinfo->xstep;
     }
     fputs("e\n", fp);
 
@@ -153,13 +128,65 @@ static int density_plot (const double *x, double s, double h,
     return 0;
 }
 
+static gretl_matrix *density_matrix (kernel_info *kinfo, 
+				     int *err)
+{
+    gretl_matrix *m;
+    double xt, xdt;
+    int t;
+
+    m = gretl_matrix_alloc(kinfo->kn + 1, 2);
+    if (m == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    xt = kinfo->xmin;
+    for (t=0; t<=kinfo->kn; t++) {
+	xdt = kernel(kinfo, xt);
+	gretl_matrix_set(m, t, 0, xt);
+	gretl_matrix_set(m, t, 1, xdt);
+	xt += kinfo->xstep;
+    }
+
+    return m;
+}
+
+static void kernel_xmin_xmax (kernel_info *kinfo, double s)
+
+{
+    double xbar = gretl_mean(0, kinfo->n - 1, kinfo->x);
+    double xm4 = xbar - 4.0 * s;
+    double xp4 = xbar + 4.0 * s;
+    const double *x = kinfo->x;
+    int n = kinfo->n;
+
+    if (xp4 > x[n-1]) {
+	kinfo->xmax = xp4;
+    } else {
+	kinfo->xmax = x[n-1];
+    }
+    
+    if (xm4 < x[0]) {
+	kinfo->xmin = xm4;
+    } else {
+	kinfo->xmin = x[0];
+    }
+
+    if (kinfo->xmin < 0.0 && x[0] >= 0.0) {
+	/* if data are non-negative, don't set a negative min */
+	kinfo->xmin = x[0];
+    }
+
+    kinfo->xstep = (kinfo->xmax - kinfo->xmin) / kinfo->kn;
+}
+
 static double quartiles (const double *x, int n,
 			 double *q1, double *q3)
 {
-    int n2;
+    int n2 = n / 2;
     double xx;
 
-    n2 = n / 2;
     xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
 
     if (q1 != NULL && q3 != NULL) {
@@ -175,117 +202,141 @@ static double quartiles (const double *x, int n,
     return xx;
 }
 
-
-static double 
-silverman_bandwidth (const double *x, double s, int n)
+static int kernel_kn (int nobs)
 {
-    double n5 = pow((double) n, -0.20);
-    double w, q1, q3, r;
+    if (nobs >= 200) {
+	return 200;
+    } else if (nobs >= 100) {
+	return 100;
+    } else {
+	return 50;
+    }
+}
 
-    quartiles(x, n, &q1, &q3);
+static void set_kernel_params (kernel_info *kinfo, 
+			       double bwscale,
+			       gretlopt opt)
+{
+    double s = gretl_stddev(0, kinfo->n - 1, kinfo->x);
+    double n5 = pow((double) kinfo->n, -0.20);
+    double w, q1, q3, r, bw;
+
+    quartiles(kinfo->x, kinfo->n, &q1, &q3);
     r = (q3 - q1) / 1.349;
 
-#ifdef KDEBUG
+#if KDEBUG
     fprintf(stderr, "Silverman bandwidth: s=%g, q1=%g, q3=%g, IQR=%g\n",
 	    s, q1, q3, q3 - q1);
 #endif
 
     w = (r < s)? r : s;
 
-    return 0.9 * w * n5;
-}
+    /* Silverman bandwidth times scale factor */
+    bw = 0.9 * w * n5;
+    kinfo->h = bwscale * bw;
 
-static int count_obs (const double *x, int n)
-{
-    int t, m = 0;
+    /* number of points to use */
+    kinfo->kn = kernel_kn(kinfo->n);
 
-    for (t=0; t<n; t++) {
-	if (!na(x[t])) m++;
-    }
+    /* range to use */
+    kernel_xmin_xmax(kinfo, s);
 
-    return m;
-}
-
-static int get_kn (int nobs)
-{
-    int kn;
-
-    if (nobs >= 200) {
-	kn = 200;
-    } else if (nobs >= 100) {
-	kn = 100;
-    } else {
-	kn = 50;
-    }
-
-    return kn;
+    kinfo->type = (opt & OPT_O)? EPANECHNIKOV_KERNEL :
+	GAUSSIAN_KERNEL;
 }
 
 #define MINOBS 30
 
-int 
-kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
-		double bwscale, gretlopt opt)
+static double *
+get_sorted_x (const double *y, const DATAINFO *pdinfo,
+	      int *pn, int *err)
 {
     int len = sample_size(pdinfo);
-    int nobs, kn;
-    double h, s;
-    double *x;
+    double *x = malloc(len * sizeof *x);
+    int n;
+
+    if (x == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    } 
+
+    n = transcribe_array(x, y, pdinfo);
+    if (n < MINOBS) {
+	*err = E_TOOFEW;
+	free(x);
+	return NULL;
+    } 
+
+    qsort(x, n, sizeof *x, gretl_compare_doubles);
+
+    *pn = n;
+    
+    return x;
+}
+
+int 
+kernel_density (const double *y, const DATAINFO *pdinfo,
+		double bwscale, const char *label,
+		gretlopt opt)
+{
+    kernel_info kinfo;
     int err = 0;
 
-    /* count the non-missing observations */
-    nobs = count_obs(Z[varnum] + pdinfo->t1, len);
-    if (nobs < MINOBS) {
-	return E_TOOFEW;
+    kinfo.x = get_sorted_x(y, pdinfo, &kinfo.n, &err);
+    if (err) {
+	return err;
     }
 
-    x = malloc(nobs * sizeof *x);
-    if (x == NULL) {
-	return E_ALLOC;
-    }
-    
-    /* grab and sort the specified series */
-    ztox(varnum, x, Z, pdinfo);
-    qsort(x, nobs, sizeof *x, gretl_compare_doubles);
+    set_kernel_params(&kinfo, bwscale, opt);
 
-    /* get standard deviation and bandwidth */
-    s = gretl_stddev(0, nobs - 1, x);
-    h = bwscale * silverman_bandwidth(x, s, nobs);
+    err = density_plot(&kinfo, label);
 
-    /* number of evenly spaced points to use */
-    kn = get_kn(nobs);
-
-#ifdef KDEBUG
-    fprintf(stderr, "kernel_density: nobs=%d, kn=%d, bandwidth=%g\n",
-	    nobs, kn, h);
-#endif
-
-    err = density_plot(x, s, h, nobs, kn, opt, pdinfo->varname[varnum]);
-
-    free(x);
+    free(kinfo.x);
 
     return err;
 }
-    
+
+gretl_matrix * 
+kernel_density_matrix (const double *y, const DATAINFO *pdinfo,
+		       double bwscale, gretlopt opt, int *err)
+{
+    gretl_matrix *m = NULL;
+    kernel_info kinfo;
+
+    kinfo.x = get_sorted_x(y, pdinfo, &kinfo.n, err);
+    if (*err) {
+	return NULL;
+    }
+
+    set_kernel_params(&kinfo, bwscale, opt);
+
+    m = density_matrix(&kinfo, err);
+
+    free(kinfo.x);
+
+    return m;
+}
+
 int 
 array_kernel_density (const double *x, int n, const char *label)
 {
-    double h, s, kn;
+    kernel_info kinfo;
     int err = 0;
 
     if (n < MINOBS) {
 	return E_TOOFEW;
     }
+    
+    kinfo.x = (double *) x;
+    kinfo.n = n;
 
-    /* get standard deviation and bandwidth */
-    s = gretl_stddev(0, n - 1, x);
-    h = silverman_bandwidth(x, s, n);
+    set_kernel_params(&kinfo, 1.0, OPT_NONE);
 
-    /* number of evenly spaced points to use */
-    kn = get_kn(n);
-
-    err = density_plot(x, s, h, n, kn, OPT_NONE, label);
+    err = density_plot(&kinfo, label);
 
     return err;
 }
+
+
+
 

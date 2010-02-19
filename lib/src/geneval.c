@@ -4905,6 +4905,30 @@ static const char *ptr_node_get_name (NODE *t, parser *p)
     return ret;
 }
 
+static gretl_matrix *get_density_matrix(const double *x, 
+					const DATAINFO *pdinfo, 
+					double bws, int ctrl,
+					int *err)
+{
+    gretl_matrix *(*kdfunc) (const double *, const DATAINFO *,
+			     double, gretlopt, int *);
+    void *handle;
+    gretl_matrix *m = NULL;
+    gretlopt opt;
+
+    kdfunc = get_plugin_function("kernel_density_matrix", &handle);
+    if (kdfunc == NULL) {
+	*err = E_FOPEN;
+	return NULL;
+    }
+
+    opt = (ctrl)? OPT_O : OPT_NONE; 
+    m = (*kdfunc)(x, pdinfo, bws, opt, err);
+    close_plugin(handle);
+
+    return m;
+}
+
 /* evaluate a built-in function that has three arguments */
 
 static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
@@ -4995,7 +5019,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    node_type_error(f, 0, NUM, l, p);
 	} else if (m->t != NUM) {
 	    node_type_error(f, 1, NUM, m, p);
-	} else if (m->t != NUM) {
+	} else if (r->t != NUM) {
 	    node_type_error(f, 2, NUM, r, p);
 	} else {
 	    ret = aux_scalar_node(p);
@@ -5006,6 +5030,21 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 		ret->v.xval = day_of_week(yr, mo, day, &p->err);
 	    }
+	}
+    } else if (f == F_KDENSITY) {
+	if (l->t != VEC) {
+	    node_type_error(f, 0, VEC, l, p);
+	} else if (m->t != NUM && m->t != EMPTY) {
+	    node_type_error(f, 1, NUM, m, p);
+	} else if (r->t != NUM && r->t != EMPTY) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else {
+	    const double *x = l->v.xvec;
+	    double bws = (m->t != EMPTY)? m->v.xval : 1.0;
+	    int ctrl = (r->t != EMPTY)? (int) r->v.xval : 0;
+
+	    A = get_density_matrix(x, p->dinfo, bws,
+				   ctrl, &p->err);
 	}
     }	
 
@@ -7102,6 +7141,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_REPLACE:
     case F_STRNCMP:
     case F_WEEKDAY:
+    case F_KDENSITY:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

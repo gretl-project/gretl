@@ -13,7 +13,9 @@ version 1.8.8, in progress
 - Export of data to R, interactively: add a message
   confirming that the export worked
 - "foreign" code blocks: add support for GNU Octave
-- Add new function, digamma()
+- Filter functions movavg, bkfilt and hpfilt: offer
+  greater control via additional optional arguments
+- Add new functions, digamma(), kdensity()
 - Add new built-in constant: "macheps" gets the
   machine precision
 - OS X package: add icons and associations for gretl data,

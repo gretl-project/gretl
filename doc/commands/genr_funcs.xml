@@ -2304,7 +2304,39 @@
 	  </seelist>
 	</para>
       </description>
-    </function>  
+    </function>
+
+    <function name="kdensity" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="scalar" optional="true">scale</fnarg>
+	<fnarg type="scalar" optional="true">control</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes a kernel density estimate for the series
+	  <argname>x</argname>. The returned matrix has two columns, the
+	  first holding a set of evenly spaced abscissae and the second
+	  the estimated density at each of these points.
+	</para>
+	<para>
+	  The optional <argname>scale</argname> parameter can be used to
+	  adjust the degree of smoothing relative to the default of 1.0
+	  (higher values produce a smoother result). The
+	  <argname>control</argname> parameter acts as a boolean: 0 (the
+	  default) means that the Gaussian kernel is used; a non-zero
+	  value switches to the Epanechnikov kernel.
+	</para>
+	<para>
+	  A plot of the results may be obtained using the <cmdref
+	  targ="gnuplot"/> command, as in
+	</para>
+	<code>
+	  matrix d = kdensity(x)
+	  gnuplot 2 1 --matrix=d --with-lines
+	</code>
+      </description>
+    </function>
 
     <function name="kfilter" section="filters" output="scalar">
       <fnargs>

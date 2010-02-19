@@ -2382,8 +2382,8 @@ void do_qqplot (void)
 void do_kernel (void)
 {
     void *handle;
-    int (*kernel_density) (int, const double **, const DATAINFO *,
-			   double, gretlopt);
+    int (*kernel_density) (const double *, const DATAINFO *,
+			   double, const char *, gretlopt);
     gretlopt opt = OPT_NONE;
     double bw = 1.0;
     int v = mdata_active_var();
@@ -2409,8 +2409,9 @@ void do_kernel (void)
 	return;
     }
 
-    err = (*kernel_density)(v, (const double **) Z, 
-			    datainfo, bw, opt);
+    err = (*kernel_density)(Z[v], datainfo, bw, 
+			    datainfo->varname[v],
+			    opt);
     close_plugin(handle);
 
     if (err) {

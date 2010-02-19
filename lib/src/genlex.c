@@ -340,6 +340,7 @@ struct str_table funcs[] = {
     { F_NPV,      "npv" },
     { F_LOGISTIC, "logistic" },
     { F_WEEKDAY,  "weekday" },
+    { F_KDENSITY, "kdensity" },
     { 0,          NULL }
 };
 
