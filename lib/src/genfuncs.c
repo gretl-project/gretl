@@ -1952,7 +1952,7 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (code == M_UHAT) {
 	sprintf(vname, "uhat%d", pmod->ID);
-	if (pmod->ci == GARCH && (pmod->opt & OPT_U)) {
+	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
 	    sprintf(vlabel, _("standardized residual from model %d"), pmod->ID);
 	} else {
 	    sprintf(vlabel, _("residual from model %d"), pmod->ID);
@@ -1969,7 +1969,7 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     } else if (code == M_UHAT2) { 
 	/* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
-	if (pmod->ci == GARCH && (pmod->opt & OPT_U)) {
+	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
 	    sprintf(vlabel, _("squared standardized residual from model %d"), pmod->ID);
 	} else {
 	    sprintf(vlabel, _("squared residual from model %d"), pmod->ID);

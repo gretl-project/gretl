@@ -2880,14 +2880,8 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 
     dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
 
-    if (!(opt & OPT_A)) {
-	if (nlmod.errcode) {
-	    if (opt & OPT_U) {
-		nlmod.opt |= OPT_U; /* continue on error */
-	    }
-	} else {
-	    set_model_id(&nlmod);
-	}
+    if (!(opt & OPT_A) && !nlmod.errcode) {
+	set_model_id(&nlmod);
     }
 
     return nlmod;

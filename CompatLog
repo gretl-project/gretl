@@ -1,5 +1,12 @@
 version 1.8.8, in progress
 
+The --continue option for the commands arma, garch, mle
+nls and gmm (which allowed continuation of script execution
+in face of an error) is now deprecated in favor of the
+new "catch" prefix, as in "catch arma 2 2 ; y".  For the
+present the --continue option remains an acceptable alias
+for the use of "catch".
+
 The internal variable "obs" used to get the year in the
 case of annual time series data, but a 1-based index in all
 other cases.  This has now been made consistent: it always

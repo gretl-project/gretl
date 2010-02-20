@@ -1932,6 +1932,19 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     return err;
 }  
 
+static void destroy_loop_stack (void)
+{
+    LOOPSET *parent, *loop = currloop;
+
+    while (loop != NULL) {
+	parent = loop->parent; 
+	gretl_loop_destroy(loop);
+	loop = parent;
+    }
+
+    compile_level = 0;
+}
+
 /**
  * gretl_loop_append_line:
  * @s: program execution state.
@@ -1962,7 +1975,14 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
 	    (void *) loop, s->line);
 #endif
 
+    if (!ok_in_loop(s->cmd->ci)) {
+	gretl_errmsg_set(_("Sorry, this command is not available in loop mode"));
+	destroy_loop_stack();
+	return E_NOTIMP;
+    }
+
     if (s->cmd->ci == LOOP) {
+	/* starting from scratch */
 	gretlopt opt = get_loop_opts(s, &err);
 	int nested = 0;
 
@@ -1985,6 +2005,7 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
 	    }
 	}
     } else if (s->cmd->ci == ENDLOOP) {
+	/* got to the end */
 	compile_level--;
 #if LOOP_DEBUG
 	fprintf(stderr, "got ENDLOOP, compile_level now %d\n",
@@ -2912,6 +2933,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     } 
 
     cmd->flags &= ~CMD_PROG;
+
+    fprintf(stderr, "monte_carlo: err = %d, loop->parent = %p\n",
+	    err, (void *) loop->parent);
 
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */

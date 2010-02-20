@@ -3996,11 +3996,6 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-#define numerical_error(e) (e == E_NOCONV || e == E_JACOBIAN || \
-                            e == E_NAN || e == E_SINGULAR || \
-			    e == E_NOTPD)
-#define allow_continue(m) (m->opt & OPT_U)
-
 /* Print a model that was just estimated, provided it's not carrying
    an error code, and provided we're not in looping mode, in which
    case the printing (or not) of models requires special handling.  In
@@ -4020,11 +4015,12 @@ static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 	    printmodel(pmod, pdinfo, s->cmd->opt, prn);
 	    s->pmod = pmod;
 	}
-    } else if (numerical_error(err) && allow_continue(pmod)) {
+    } else if (cmd_catch(s->cmd)) {
 	errmsg(err, prn);
 	set_gretl_errno(err);
+	s->cmd->flags ^= CMD_CATCH;
 	err = 0;
-    }
+    } 
 
     return err;
 }
@@ -4331,8 +4327,11 @@ static int param_to_order (const char *s)
     }
 }
 
-#define want_param_to_order(ci) (ci == CORRGM || ci == XCORRGM || \
-				 ci == PERGM || ci == LAGS)
+#define can_continue(c) (c == ARMA || c == GARCH || c == GMM || \
+                         c == MLE || c == NLS)
+
+#define want_param_to_order(c) (c == CORRGM || c == XCORRGM || \
+				c == PERGM || c == LAGS)
 
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
@@ -4365,6 +4364,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (err) {
 	goto bailout;
+    }
+
+    if (can_continue(cmd->ci) && (cmd->opt & OPT_U)) {
+	/* backward compat for old OPT_U mechanism */
+	cmd->flags |= CMD_CATCH;
+	cmd->opt &= !OPT_U;
     }
 
     if (cmd->ci == OLS && dataset_is_panel(pdinfo)) {
@@ -4471,12 +4476,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case FUNC:
 	err = gretl_start_compiling_function(line, prn);
 	break;
-
-#if 0
-    case LOOP:
-	err = gretl_loop_append_line(s, pZ, pdinfo);
-	break;
-#endif
 
     case GENR:
 	err = generate(line, pZ, pdinfo, cmd->opt, prn);
@@ -5175,10 +5174,6 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (s->cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(s->cmd->ci)) {
-            pputs(s->prn, _("Sorry, this command is not available in loop mode\n"));
-            return 1;
-        }
 	err = gretl_loop_append_line(s, pZ, pdinfo);
 	if (err) {
 	    errmsg(err, s->prn);
@@ -5543,10 +5538,15 @@ int process_command_error (CMD *cmd, int err)
     int ret = err;
 
     if (err) {
-	if (libset_get_bool(HALT_ON_ERR) == 0) {
+	if (gretl_compiling_function() ||
+	    gretl_compiling_loop()) {
+	    ; /* pass the error through */
+	} else if (libset_get_bool(HALT_ON_ERR) == 0) {
+	    /* global "continue on error" */
 	    set_gretl_errno(err);
 	    ret = 0;
 	} else if (cmd->flags & CMD_CATCH) {
+	    /* local "continue on error" */
 	    set_gretl_errno(err);
 	    cmd->flags ^= CMD_CATCH;
 	    ret = 0;

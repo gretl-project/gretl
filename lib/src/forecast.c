@@ -310,7 +310,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 
     if (LIMDEP(pmod->ci)) {
 	fr->sigma = NADBL;
-    } else if (pmod->ci == GARCH && (pmod->opt & OPT_U)) {
+    } else if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
 	fr->sigma = 1.0;
 	fr->std = 1;
     } else {

@@ -427,8 +427,9 @@ int check_gretl_warning (void)
 
 int gretl_error_is_fatal (void)
 {
-    if (gretl_compiling_function() ||
-	gretl_compiling_loop()) {
+    if (gretl_compiling_function()) {
+	return 1;
+    } else if (gretl_compiling_loop()) {
 	return 1;
     } else if (libset_get_bool(HALT_ON_ERR) == 0) {
 	return 0;
@@ -436,3 +437,14 @@ int gretl_error_is_fatal (void)
 	return gretl_in_batch_mode();
     }
 }
+
+#if 0 /* noy yet */
+int gretl_error_is_numerical (int err)
+{
+    return (err == E_NOCONV || 
+	    err == E_JACOBIAN ||	
+	    err == E_NAN || 
+	    err == E_SINGULAR ||
+	    err == E_NOTPD);
+}
+#endif

@@ -802,23 +802,17 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
    
     if (cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(cmd->ci)) {
-	    printf("> %s\n", line);
-	    pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
-	    err = E_NOTIMP;
-	} else {
-	    if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
-		eflag = gretl_compiling_loop()? CMD_STACKING : CMD_BATCH_MODE;
-		/* straight visual echo */
-		echo_cmd(cmd, pdinfo, line, eflag, prn);
-	    }
-	    err = gretl_loop_append_line(s, pZ, pdinfo);
-	    if (err) {
-		errmsg(err, prn);
-	    } else if (!batch && !runit) {
-		/* echo to record */
-		echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
-	    }
+	if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
+	    eflag = gretl_compiling_loop()? CMD_STACKING : CMD_BATCH_MODE;
+	    /* straight visual echo */
+	    echo_cmd(cmd, pdinfo, line, eflag, prn);
+	}
+	err = gretl_loop_append_line(s, pZ, pdinfo);
+	if (err) {
+	    errmsg(err, prn);
+	} else if (!batch && !runit) {
+	    /* echo to record */
+	    echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
 	}
 	return err;
     }

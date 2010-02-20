@@ -1081,16 +1081,34 @@
 
   <command name="break" section="Programming" 
     label="Break from loop" context="cli">
-
     <description>
-
-      <para>Break out of a loop.  This command can be used only within
-	a loop; it causes command execution to break out of the
-	current (innermost) loop.  See also <cmdref targ="loop"/>.
+      <para>
+	Break out of a loop.  This command can be used only within a loop; it
+	causes command execution to break out of the current (innermost) loop.
+	See also <cmdref targ="loop"/>.
       </para> 
-
     </description>
+  </command>
 
+  <command name="catch" section="Programming" 
+    label="Catch errors" context="cli">
+    <usage>
+      <syntax>
+        <lit>catch</lit> <repl>command</repl>
+      </syntax>
+    </usage>
+    <description>
+      <para>
+	This is not a command in its own right but can be used as a prefix to
+	most regular commands: the effect is to prevent termination of a
+	script if an error occurs in executing the command. If an error does
+	occur, this is registered in an internal error code which can be
+	accessed as <lit>$error</lit> (a zero value indicates success). The
+	value of <lit>$error</lit> should always be checked immediately after
+	using <lit>catch</lit>, and appropriate action taken if the command
+	failed.
+      </para> 
+    </description>
   </command>
 
   <command name="chow" section="Tests" label="Chow test">
@@ -3571,10 +3589,6 @@
 	  <effect>print details of iterations</effect>
 	</option>
 	<option>
-	  <flag>--continue</flag>
-	  <effect>continue on numerical errors</effect>
-	</option>
-	<option>
 	  <flag>--lbfgs</flag>
 	  <effect>use L-BFGS-B instead of regular BFGS</effect>
 	</option>
@@ -3617,17 +3631,6 @@
 	orthogonal to each of the instruments composing the columns of
 	<lit>W</lit>.
       </para>
-      <para context="cli">
-	In general if a gretl command fails to complete successfully,
-	execution of a script is halted.  However, if the
-	<lit>--continue</lit> option is given for this command, execution
-	continues provided that that error is <quote>numerical</quote> (&eg;
-	failure to converge, to the specified tolerance).  In this case the
-	internal variable <lit>$error</lit> is set to a non-zero value;
-	accessing this variable causes it to be cleared to zero. See the
-	<cmdref targ="set"/> command for related ways of controlling gretl's
-	behavior.
-      </para>      
 
     </description>
 
@@ -5387,10 +5390,6 @@
 	  <effect>print details of iterations</effect>
 	</option>
 	<option>
-	  <flag>--continue</flag>
-	  <effect>continue on numerical errors</effect>
-	</option>
-	<option>
 	  <flag>--no-gradient-check</flag>
 	  <effect>see below</effect>
 	</option>
@@ -5538,17 +5537,6 @@
 	<lit>--no-gradient-check</lit>.  Obviously, you should do
 	this only if you are quite confident that the gradient you
 	have specified is right.
-      </para>
-      <para>
-	In general if a gretl command fails to complete successfully,
-	execution of a script is halted.  However, if the
-	<lit>--continue</lit> option is given for this command, execution
-	continues provided that that error is <quote>numerical</quote> (&eg;
-	failure to converge, to the specified tolerance).  In this case the
-	internal variable <lit>$error</lit> is set to a non-zero value;
-	accessing this variable causes it to be cleared to zero. See the
-	<cmdref targ="set"/> command for related ways of controlling gretl's
-	behavior.
       </para>
 
     </description>
@@ -5957,10 +5945,6 @@
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
-	<option>
-	  <flag>--continue</flag>
-	  <effect>continue on numerical errors</effect>
-	</option>
       </options>
       <examples>
 	<demos>
@@ -6099,17 +6083,6 @@
 	estimation.
       </para>
 
-      <para>
-	In general if a gretl command fails to complete successfully,
-	execution of a script is halted.  However, if the
-	<lit>--continue</lit> option is given for this command, execution
-	continues provided that that error is <quote>numerical</quote> (&eg;
-	failure to converge, to the specified tolerance).  In this case the
-	internal variable <lit>$error</lit> is set to a non-zero value;
-	accessing this variable causes it to be cleared to zero. See the
-	<cmdref targ="set"/> command for related ways of controlling gretl's
-	behavior.
-      </para>
       <para>For further details on NLS estimation please see
 	<guideref targ="chap-nls"/>.
       </para>

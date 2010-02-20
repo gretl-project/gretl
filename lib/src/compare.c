@@ -719,8 +719,10 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	if (gretl_model_get_int(orig, "pooled")) {
 	    myopt |= OPT_P;
 	} else if (orig->opt & OPT_U) {
+	    /* random effects */
 	    myopt |= OPT_U;
 	} else if (orig->opt & OPT_W) {
+	    /* unit weights */
 	    myopt |= OPT_W;
 	    if (gretl_model_get_int(orig, "iters")) {
 		myopt |= OPT_I;

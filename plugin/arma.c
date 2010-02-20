@@ -2159,11 +2159,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 	armod.errcode = err;
     }
 
-    if (armod.errcode) {
-	if (opt & OPT_U) {
-	    armod.opt |= OPT_U; /* continue on error */
-	}
-    } else {
+    if (!armod.errcode) {
 	gretl_model_smpl_init(&armod, pdinfo);
     }
 

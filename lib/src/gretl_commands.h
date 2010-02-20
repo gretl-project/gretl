@@ -150,6 +150,7 @@ typedef enum {
     XTAB,
     FUNDEBUG,
     FUNCRET,
+    CATCH,
     NC
 } GretlCmdIndex;
 

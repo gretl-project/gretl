@@ -4236,6 +4236,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
     } else {
 	pmod->ci = gretl_command_number(buf);
     }
+
     free(buf);
 
     gretl_push_c_numeric_locale();
@@ -4325,6 +4326,12 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	}
 	pmod->params[np] = NULL;
 	pmod->nparams = np;
+    }
+
+    if (!*err && pmod->ci == GARCH && (pmod->opt & OPT_E)) {
+	/* compat for garch with standardized residuals */
+	pmod->opt &= ~OPT_E;
+	pmod->opt |= OPT_Z;
     }
 
     if (!*err && pmod->list != NULL) {

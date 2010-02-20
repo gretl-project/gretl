@@ -5242,7 +5242,7 @@ void resid_plot (GtkAction *action, gpointer p)
     int err = 0;
 
     /* special case: GARCH model (show fitted variance) */
-    if (pmod->ci == GARCH && !(pmod->opt & OPT_E) && xvar == 0) {
+    if (pmod->ci == GARCH && !(pmod->opt & OPT_Z) && xvar == 0) {
 	err = garch_resid_plot(pmod, datainfo);
 	if (err) {
 	    gui_errmsg(err);
@@ -5278,7 +5278,7 @@ void resid_plot (GtkAction *action, gpointer p)
 
     strcpy(pdinfo->varname[uhatno], _("residual"));
 
-    if (pmod->ci == GARCH && (pmod->opt & OPT_E)) {
+    if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
 	strcpy(DISPLAYNAME(pdinfo, uhatno), _("standardized residual"));
 	opt ^= OPT_R;
     } else {
@@ -7674,10 +7674,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(cmd->ci)) {
-            pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
-            return E_NOTIMP;
-        }
 	err = gretl_loop_append_line(s, pZ, pdinfo);
 	if (err) {
 	    errmsg(err, prn);

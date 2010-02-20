@@ -3,6 +3,8 @@ version 1.8.8, in progress
   models using the Negative Binomial distribution
 - poisson regression: add overdispersion test and also
   --robust option to get a QML covariance matrix
+- New command modifier, "catch" to catch errors and
+  permit contination of script execution
 - Enable full-text search of "online" help files
 - Enable help for specific "settable" variables, as in
   "help set lbfgs"

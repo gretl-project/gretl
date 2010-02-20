@@ -4032,7 +4032,6 @@ MODEL arma (const int *list, const char *pqspec,
     MODEL (*arma_x12_model) (const int *, const char *,
 			     const double **, const DATAINFO *, 
 			     int, gretlopt, PRN *);
-
     int plugerr = 0;
 
     gretl_model_init(&armod);
