@@ -2549,14 +2549,14 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     int new = (dbv == pdinfo->v);
 
     if (pdinfo->n == 0) {
-	/* if the frequency and length of the dataset are not defined yet,
-	   then initialize using sinfo */
+	/* if the length of the dataset is not defined yet,
+	   initialize using sinfo */
 	init_datainfo_from_sinfo(pdinfo, sinfo);
 	pdinfo->v = 0; /* trigger for creating data array below */
 	*newdata = 1;
 	if (pdinfo->pd != 1 || strcmp(pdinfo->stobs, "1")) { 
 	    pdinfo->structure = TIME_SERIES;
-	}	
+	}
     } else if (check_db_import(sinfo, pdinfo)) {
 	return 1;
     }

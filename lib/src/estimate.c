@@ -4204,6 +4204,58 @@ MODEL count_model (const int *list, int ci,
     return cmod;
 }
 
+MODEL duration_model (const int *list, const double **Z, 
+		      const DATAINFO *pdinfo, gretlopt opt, 
+		      PRN *prn)
+{
+    MODEL dmod;
+    void *handle;
+    int *listcpy;
+    int (* duation_estimate) (MODEL *, const double **, 
+			      const DATAINFO *, gretlopt, 
+			      PRN *);
+
+    gretl_error_clear();
+
+    gretl_model_init(&cmod);
+
+    /* FIXME check for all positive dependent var */
+
+    listcpy = gretl_list_copy(list);
+    if (listcpy == NULL) {
+	dmod.errcode = E_ALLOC;
+        return dmod;
+    }
+
+    /* run an initial OLS to "set the model up" and check for errors.
+       the duration_estimate_driver function will overwrite the
+       coefficients etc.
+    */
+
+    dmod = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
+    free(listcpy);
+
+    if (dmod.errcode) {
+        return dmod;
+    }
+
+    duration_estimate = get_plugin_function("duration_estimate", 
+					    &handle);
+
+    if (duration_estimate == NULL) {
+	cmod.errcode = E_FOPEN;
+	return cmod;
+    }
+
+    (*duration_estimate) (&dmod, pZ, pdinfo, opt, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&dmod);
+
+    return dmod;
+}
+
 /**
  * heckit_model:
  * @list: dependent variable plus list of regressors.

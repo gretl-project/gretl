@@ -64,7 +64,8 @@ enum {
     P_ODBC,
     P_QUANTREG,
     P_INTREG,
-    P_ANOVA
+    P_ANOVA,
+    P_DURATION
 } plugin_codes;
 
 struct plugin_info {
@@ -115,7 +116,8 @@ struct plugin_info plugins[] = {
     { P_ODBC,            "odbc_import" },
     { P_QUANTREG,        "quantreg" },
     { P_INTREG,          "interval" },
-    { P_ANOVA,           "anova" }
+    { P_ANOVA,           "anova" },
+    { P_DURATION,        "duration" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -221,6 +223,9 @@ struct plugin_function plugin_functions[] = {
 
     /* analysis of variance */
     { "gretl_anova", P_ANOVA},
+
+    /* duration models */
+    { "duration_estimate", P_DURATION},
 
     /* sentinel */
     { NULL, 0 }
