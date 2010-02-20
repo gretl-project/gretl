@@ -363,14 +363,14 @@ void add_sheets_list (GtkWidget *vbox, wbook *book)
 
     store = gtk_list_store_new(1, G_TYPE_STRING);
     view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
-    g_object_unref (G_OBJECT(store));
+    g_object_unref(G_OBJECT(store));
 
-    renderer = gtk_cell_renderer_text_new ();
-    g_object_set (renderer, "ypad", 0, NULL);
-    column = gtk_tree_view_column_new_with_attributes (NULL,
-                                                       renderer,
-                                                       "text", 
-                                                       0, NULL);
+    renderer = gtk_cell_renderer_text_new();
+    g_object_set(renderer, "ypad", 0, NULL);
+    column = gtk_tree_view_column_new_with_attributes(NULL,
+						      renderer,
+						      "text", 
+						      0, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);   
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
 
@@ -385,20 +385,20 @@ void add_sheets_list (GtkWidget *vbox, wbook *book)
     /* now set up the widgets */
 
     hsep = gtk_hseparator_new();
-    gtk_container_add(GTK_CONTAINER(vbox), hsep);
+    gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 5);
 
     label = gtk_label_new(_("Sheet to import:"));
-    gtk_container_add(GTK_CONTAINER(vbox), label);
+    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 5);
 
-    sw = gtk_scrolled_window_new (NULL, NULL);
+    sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_box_pack_start(GTK_BOX(vbox), sw, TRUE, TRUE, 5);
 
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
-                                    GTK_POLICY_AUTOMATIC,
-                                    GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
-                                         GTK_SHADOW_IN);
-    gtk_container_add (GTK_CONTAINER(sw), view); 
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+				   GTK_POLICY_AUTOMATIC,
+				   GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
+					GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(sw), view); 
 }
 
 static void make_wmenu_modal (GtkWidget *w, gpointer p)
@@ -431,7 +431,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* starting column spinner */
     tmp = gtk_label_new(_("column:"));
@@ -458,10 +458,10 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start(GTK_BOX(hbox), book->rowspin, FALSE, FALSE, 5);
 
     /* column label feedback */
-    hbox = gtk_hbox_new (FALSE, 5);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     label = gtk_label_new("(A)");
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     g_signal_connect(GTK_EDITABLE(book->colspin), "changed",
 		     G_CALLBACK(colspin_changed), label);
 
@@ -475,7 +475,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(debug_callback), 
 		     book);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 #endif
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(w));
