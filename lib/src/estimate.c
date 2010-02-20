@@ -4116,7 +4116,7 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     return tmod;
 }
 
-static int get_offset_var (int *list)
+static int get_trailing_var (int *list)
 {
     int l0 = list[0];
     int ret = 0;
@@ -4127,6 +4127,62 @@ static int get_offset_var (int *list)
     }
 
     return ret;
+}
+
+MODEL duration_model (const int *list, double ***pZ, 
+		      DATAINFO *pdinfo, gretlopt opt, 
+		      PRN *prn)
+{
+    MODEL dmod;
+    void *handle;
+    int *listcpy;
+    int censvar;
+    int (* duration_estimate) (MODEL *, int, const double **, 
+			       const DATAINFO *, gretlopt, 
+			       PRN *);
+
+    gretl_error_clear();
+
+    gretl_model_init(&dmod);
+
+    /* FIXME check for all positive dependent var */
+
+    listcpy = gretl_list_copy(list);
+    if (listcpy == NULL) {
+	dmod.errcode = E_ALLOC;
+        return dmod;
+    }
+
+    censvar = get_trailing_var(listcpy);
+
+    /* run an initial OLS to "set the model up" and check for errors.
+       the duration_estimate_driver function will overwrite the
+       coefficients etc.
+    */
+
+    dmod = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
+    free(listcpy);
+
+    if (dmod.errcode) {
+        return dmod;
+    }
+
+    duration_estimate = get_plugin_function("duration_estimate", 
+					    &handle);
+
+    if (duration_estimate == NULL) {
+	dmod.errcode = E_FOPEN;
+	return dmod;
+    }
+
+    (*duration_estimate) (&dmod, censvar, (const double **) *pZ, pdinfo, 
+			  opt, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&dmod);
+
+    return dmod;
 }
 
 /**
@@ -4156,6 +4212,11 @@ MODEL count_model (const int *list, int ci,
 				 double ***, DATAINFO *, 
 				 gretlopt, PRN *);
 
+    if (opt & OPT_D) {
+	/* just for testing */
+	return duration_model(list, pZ, pdinfo, opt, prn);
+    }
+
     gretl_error_clear();
 
     gretl_model_init(&cmod);
@@ -4173,7 +4234,7 @@ MODEL count_model (const int *list, int ci,
         return cmod;
     }
 
-    offvar = get_offset_var(listcpy);
+    offvar = get_trailing_var(listcpy);
 
     /* run an initial OLS to "set the model up" and check for errors.
        the count_data_estimate_driver function will overwrite the
@@ -4204,57 +4265,6 @@ MODEL count_model (const int *list, int ci,
     return cmod;
 }
 
-MODEL duration_model (const int *list, const double **Z, 
-		      const DATAINFO *pdinfo, gretlopt opt, 
-		      PRN *prn)
-{
-    MODEL dmod;
-    void *handle;
-    int *listcpy;
-    int (* duation_estimate) (MODEL *, const double **, 
-			      const DATAINFO *, gretlopt, 
-			      PRN *);
-
-    gretl_error_clear();
-
-    gretl_model_init(&cmod);
-
-    /* FIXME check for all positive dependent var */
-
-    listcpy = gretl_list_copy(list);
-    if (listcpy == NULL) {
-	dmod.errcode = E_ALLOC;
-        return dmod;
-    }
-
-    /* run an initial OLS to "set the model up" and check for errors.
-       the duration_estimate_driver function will overwrite the
-       coefficients etc.
-    */
-
-    dmod = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
-    free(listcpy);
-
-    if (dmod.errcode) {
-        return dmod;
-    }
-
-    duration_estimate = get_plugin_function("duration_estimate", 
-					    &handle);
-
-    if (duration_estimate == NULL) {
-	cmod.errcode = E_FOPEN;
-	return cmod;
-    }
-
-    (*duration_estimate) (&dmod, pZ, pdinfo, opt, prn);
-
-    close_plugin(handle);
-
-    set_model_id(&dmod);
-
-    return dmod;
-}
 
 /**
  * heckit_model:

@@ -43,6 +43,7 @@ struct duration_info_ {
     gretl_matrix *Xb;      /* X \times \beta */
     gretl_matrix *G;       /* score */
     gretl_matrix *V;       /* covariance matrix */
+    gretl_vector *cens;    /* censoring variable */
     PRN *prn;              /* verbose printer */
 };
 
@@ -50,11 +51,12 @@ static void duration_free (duration_info *dinfo)
 {
     gretl_matrix_block_destroy(dinfo->B);
     free(dinfo->theta);
+    gretl_matrix_free(dinfo->cens);
 }
 
 static int duration_init (duration_info *dinfo, MODEL *pmod,
-			  const double **Z, gretlopt opt, 
-			  PRN *prn)
+			  int censvar, const double **Z, 
+			  gretlopt opt, PRN *prn)
 {
     int n = pmod->nobs;
     int k = pmod->ncoeff;
@@ -63,10 +65,18 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
     dinfo->flags = 0;
 
     dinfo->B = NULL;
+    dinfo->cens = NULL;
 
     dinfo->theta = malloc((k + 1) * sizeof *dinfo->theta);
     if (dinfo->theta == NULL) {
 	return E_ALLOC;
+    }
+
+    if (censvar > 0) {
+	dinfo->cens = gretl_column_vector_alloc(n);
+	if (dinfo->cens == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     dinfo->B = gretl_matrix_block_new(&dinfo->y, n, 1,
@@ -88,6 +98,9 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 	}
 	v = pmod->list[1];
 	dinfo->y->val[s] = Z[v][t];
+	if (dinfo->cens != NULL) {
+	    dinfo->cens->val[s] = Z[censvar][t];
+	}
 	for (i=0; i<k; i++) {
 	    v = pmod->list[i+2];
 	    gretl_matrix_set(dinfo->X, s, i, Z[v][t]);
@@ -141,6 +154,8 @@ static double duration_loglik (const double *theta, void *data)
     errno = 0;
     lns = log(s);
 
+    /* FIXME censoring */
+
     for (t=0; t<dinfo->T; t++) {
 	zt = (y[t] - Xb[t]) / s;
 	ll[t] = zt - lns - exp(zt);
@@ -170,7 +185,9 @@ static int duration_score (double *theta, double *g, int nc, BFGS_CRIT_FUNC ll,
 
     for (i=0; i<nc; i++) {
 	g[i] = 0.0;
-    }    
+    }   
+
+    /* FIXME censoring */
 
     for (t=0; t<dinfo->T; t++) {
 	zt = (y[t] - Xb[t]) / s;
@@ -403,7 +420,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     if (!err) {
 	pmod->lnL = dinfo->ll;
 	mle_criteria(pmod, 0); 
-	/* mask invalid statistics */
+	/* mask invalid statistics (FIXME) */
 	pmod->fstt = pmod->chisq = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
 	pmod->ess = NADBL;
@@ -413,7 +430,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     return err;
 }
 
-int duration_estimate (MODEL *pmod, const double **Z, 
+int duration_estimate (MODEL *pmod, int censvar, const double **Z, 
 		       const DATAINFO *pdinfo, gretlopt opt, 
 		       PRN *prn)
 {
@@ -425,7 +442,7 @@ int duration_estimate (MODEL *pmod, const double **Z,
     int grcount = 0;
     int err = 0;
 
-    err = duration_init(&dinfo, pmod, Z, opt, prn);
+    err = duration_init(&dinfo, pmod, censvar, Z, opt, prn);
 
     if (!err) {
 	BFGS_defaults(&maxit, &toler, NEGBIN); /* FIXME */

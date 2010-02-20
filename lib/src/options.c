@@ -235,6 +235,7 @@ struct gretl_option gretl_opts[] = {
     { MPOLS,    OPT_O, "vcv", 0 },
     { MPOLS,    OPT_Q, "quiet", 0 },
     { MPOLS,    OPT_S, "simple-print", 0 },
+    { NEGBIN,   OPT_D, "duration", 0 }, /* just temporary! */
     { NEGBIN,   OPT_G, "opg", 0 },
     { NEGBIN,   OPT_M, "model1", 0 },
     { NEGBIN,   OPT_R, "robust", 0 },
