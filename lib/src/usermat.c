@@ -268,6 +268,14 @@ user_matrix *get_user_matrix_by_index (int idx)
     }
 }
 
+static void usermat_destroy_colnames (user_matrix *u)
+{
+    if (u->colnames != NULL && u->M != NULL) {
+	free_strings_array(u->colnames, u->M->cols);
+	u->colnames = NULL;
+    }
+}
+
 int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 {
     if (u == NULL) {
@@ -280,8 +288,7 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 		"matrix at %p\n", u->M, M);
 #endif
 	if (u->colnames != NULL && M->cols != u->M->cols) {
-	    free_strings_array(u->colnames, u->M->cols);
-	    u->colnames = NULL;
+	    usermat_destroy_colnames(u);
 	}
 	gretl_matrix_free(u->M);
 	u->M = M;
@@ -372,7 +379,7 @@ gretl_matrix *get_matrix_by_name (const char *name)
  * steal_matrix_by_name:
  * @name: name of the matrix.
  *
- * Looks up a user-defined matrix by namem and if found,
+ * Looks up a user-defined matrix by name and if found,
  * grabs the matrix, leaving the matrix pointer on the
  * named matrix as %NULL.
  *
@@ -387,10 +394,7 @@ gretl_matrix *steal_matrix_by_name (const char *name)
 	user_matrix *u = get_user_matrix_by_name(name);
 
 	if (u != NULL) {
-	    if (u->colnames != NULL) {
-		free_strings_array(u->colnames, u->M->cols);
-		u->colnames = NULL;
-	    }
+	    usermat_destroy_colnames(u);
 	    ret = u->M;
 	    u->M = NULL;
 	}
@@ -939,9 +943,7 @@ static void destroy_user_matrix (user_matrix *u)
 	    (void *) u->M);
 #endif
 
-    if (u->colnames != NULL) {
-	free_strings_array(u->colnames, u->M->cols);
-    }
+    usermat_destroy_colnames(u);
     gretl_matrix_free(u->M);
     free(u);
 
@@ -1138,10 +1140,7 @@ int umatrix_set_colnames_from_string (const gretl_matrix *M,
     n = M->cols;
 
     if (s == NULL || *s == '\0') {
-	if (u->colnames != NULL) {
-	    free_strings_array(u->colnames, n);
-	    u->colnames = NULL;
-	}
+	usermat_destroy_colnames(u);
     } else {
 	char **S;
 	int ns;
@@ -1153,9 +1152,7 @@ int umatrix_set_colnames_from_string (const gretl_matrix *M,
 	    err = E_NONCONF;
 	    free_strings_array(S, ns);
 	} else {
-	    if (u->colnames != NULL) {
-		free_strings_array(u->colnames, n);
-	    }
+	    usermat_destroy_colnames(u);
 	    u->colnames = S;
 	}
     }
@@ -1177,10 +1174,7 @@ int umatrix_set_colnames_from_list (const gretl_matrix *M,
     n = M->cols;
 
     if (list == NULL || list[0] == 0) {
-	if (u->colnames != NULL) {
-	    free_strings_array(u->colnames, n);
-	    u->colnames = NULL;
-	}
+	usermat_destroy_colnames(u);
     } else if (list[0] != n) {
 	err = E_NONCONF;
     } else {
@@ -1200,9 +1194,7 @@ int umatrix_set_colnames_from_list (const gretl_matrix *M,
 	if (err) {
 	    free_strings_array(S, n);
 	} else {
-	    if (u->colnames != NULL) {
-		free_strings_array(u->colnames, n);
-	    }
+	    usermat_destroy_colnames(u);
 	    u->colnames = S;
 	}
     }
