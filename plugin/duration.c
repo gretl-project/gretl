@@ -134,6 +134,8 @@ static void duration_update_Xb (duration_info *dinfo, const double *theta)
     gretl_matrix_multiply(dinfo->X, dinfo->beta, dinfo->Xb);
 }
 
+#define uncensored(d,t) (d->cens == NULL || d->cens->val[t] == 0)
+
 /* for the moment all we offer is Weibull */
 
 static double duration_loglik (const double *theta, void *data)
@@ -143,7 +145,7 @@ static double duration_loglik (const double *theta, void *data)
     double *ll = dinfo->llt->val;
     double *Xb = dinfo->Xb->val;
     double *y = dinfo->y->val;
-    double lns, zt;
+    double lns, wt;
     int t;
 
     if (s <= 0) {
@@ -156,11 +158,12 @@ static double duration_loglik (const double *theta, void *data)
     errno = 0;
     lns = log(s);
 
-    /* FIXME censoring, 1 - F() */
-
     for (t=0; t<dinfo->T; t++) {
-	zt = (y[t] - Xb[t]) / s;
-	ll[t] = zt - lns - exp(zt);
+	wt = (y[t] - Xb[t]) / s;
+	ll[t] = -exp(wt);
+	if (uncensored(dinfo, t)) {
+	    ll[t] += wt - lns;
+	} 
 	dinfo->ll += ll[t];
     }
 
@@ -178,7 +181,7 @@ static int duration_score (double *theta, double *g, int nc,
     const double *y = dinfo->y->val;
     const double *Xb = dinfo->Xb->val;
     double s = theta[dinfo->k];
-    double zt, wt, gti;
+    double wt, xti, gti;
     int i, t, err = 0;
 
     if (dinfo->flags == SCORE_UPDATE_XB) {
@@ -189,16 +192,20 @@ static int duration_score (double *theta, double *g, int nc,
 	g[i] = 0.0;
     }   
 
-    /* FIXME censoring */
-
     for (t=0; t<dinfo->T; t++) {
-	zt = (y[t] - Xb[t]) / s;
-	wt = -(1 - exp(zt)) / s;
+	wt = (y[t] - Xb[t]) / s;
 	for (i=0; i<nc; i++) {
 	    if (i < dinfo->k) {
-		gti = wt * gretl_matrix_get(dinfo->X, t, i);
+		xti = gretl_matrix_get(dinfo->X, t, i);
+		gti = -exp(wt) * (-xti/s);
+		if (uncensored(dinfo, t)) {
+		    gti += -xti/s;
+		}
 	    } else {
-		gti = (-zt - 1 + exp(zt) * zt) / s;
+		gti = -exp(wt) * (-wt/s);
+		if (uncensored(dinfo, t)) {
+		    gti += -wt/s - 1/s;
+		}
 	    }
 	    gretl_matrix_set(dinfo->G, t, i, gti);
 	    g[i] += gti;
@@ -449,6 +456,11 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
     int err = 0;
 
     err = duration_init(&dinfo, pmod, censvar, Z, opt, prn);
+
+    if (!err && censvar > 0) {
+	fprintf(stderr, "duration: using var %d (%s) for censoring info\n",
+		censvar, pdinfo->varname[censvar]);
+    }
 
     if (!err) {
 	BFGS_defaults(&maxit, &toler, NEGBIN); /* FIXME */
