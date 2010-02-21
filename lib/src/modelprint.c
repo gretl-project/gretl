@@ -795,6 +795,12 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Negative Binomial 1");
 	} else {
 	    return N_("Negative Binomial");
+	}
+    } else if (pmod->ci == DURATION) {
+	if (pmod->opt & OPT_E) {
+	    return N_("Duration (exponential)");
+	} else {
+	    return N_("Duration (Weibull)");
 	}	
     } else {
 	return simple_estimator_string(pmod->ci, prn);
@@ -2972,7 +2978,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
 	pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != HECKIT && 
-	pmod->ci != ARBOND && pmod->ci != GARCH &&
+	pmod->ci != ARBOND && pmod->ci != GARCH && pmod->ci != DURATION &&
 	!ordered_model(pmod) && !multinomial_model(pmod) && 
 	!COUNT_MODEL(pmod->ci) && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);

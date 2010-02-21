@@ -2934,9 +2934,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     cmd->flags &= ~CMD_PROG;
 
-    fprintf(stderr, "monte_carlo: err = %d, loop->parent = %p\n",
-	    err, (void *) loop->parent);
-
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */
 	gretl_loop_destroy(loop);

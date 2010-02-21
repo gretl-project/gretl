@@ -3009,48 +3009,6 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
     return 0;
 }
 
-static int parse_criteria (const char *line, PRN *prn)
-{
-    char essstr[32], Tstr[11], kstr[11];
-    double ess = NADBL;
-    int T = 0, k = 0;
-    int err = 0;
-    
-    if (sscanf(line, "%*s %31s %10s %10s", essstr, Tstr, kstr) != 3) {
-	err = E_PARSE;
-    }
-
-    if (!err) {
-	ess = gretl_double_from_string(essstr, &err);
-	if (!err && ess < 0) {
-	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "ess");
-	    err = E_DATA;
-	}
-    }
-
-    if (!err) {
-	T = gretl_int_from_string(Tstr, &err);
-	if (!err && T < 0) {
-	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "T");
-	    err = E_DATA;
-	}
-    }
-
-    if (!err) {
-	k = gretl_int_from_string(kstr, &err);
-	if (!err && k < 0) {
-	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "k");
-	    err = E_DATA;
-	}
-    }
-
-    if (!err) {
-	gretl_print_criteria(ess, T, k, prn);
-    }
-
-    return err;
-}
-
 /**
  * parseopt:
  * @pargc: pointer to count of arguments.

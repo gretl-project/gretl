@@ -69,6 +69,7 @@ static void negbin_free (negbin_info *nbinfo)
 {
     gretl_matrix_block_destroy(nbinfo->B);
     free(nbinfo->theta);
+    gretl_matrix_free(nbinfo->V);
     gretl_matrix_free(nbinfo->offset);
 }
 
@@ -78,6 +79,7 @@ static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
 {
     int n = pmod->nobs;
     int k = pmod->ncoeff;
+    int np = k + 1;
     int i, s, t, v;
 
     /* NegBin2 is the default */
@@ -85,10 +87,13 @@ static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
     nbinfo->flags = 0;
 
     nbinfo->B = NULL;
+    nbinfo->V = NULL;
     nbinfo->offset = NULL;
 
-    nbinfo->theta = malloc((k + 1) * sizeof *nbinfo->theta);
-    if (nbinfo->theta == NULL) {
+    nbinfo->theta = malloc(np * sizeof *nbinfo->theta);
+    nbinfo->V = gretl_matrix_alloc(np, np);
+    
+    if (nbinfo->theta == NULL || nbinfo->V == NULL) {
 	return E_ALLOC;
     }
 
@@ -104,8 +109,7 @@ static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
 				       &nbinfo->beta, k, 1,
 				       &nbinfo->mu, n, 1,
 				       &nbinfo->llt, n, 1,
-				       &nbinfo->G, n, k+1,
-				       &nbinfo->V, k+1, k+1,
+				       &nbinfo->G, n, np,
 				       NULL);
     if (nbinfo->B == NULL) {
 	return E_ALLOC;
@@ -282,19 +286,19 @@ static gretl_matrix *negbin_nhessian (double *theta, void *data,
     negbin_info *nbinfo = (negbin_info *) data;
     gretl_matrix *H = NULL;
     double *g, *splus, *sminus;
-    int nc = nbinfo->k + 1;
+    int np = nbinfo->k + 1;
     double x, eps = 1.0e-05;
     int i, j;
     
-    splus  = malloc(nc * sizeof *splus);
-    sminus = malloc(nc * sizeof *sminus);
-    g      = malloc(nc * sizeof *g);
+    splus  = malloc(np * sizeof *splus);
+    sminus = malloc(np * sizeof *sminus);
+    g      = malloc(np * sizeof *g);
     if (splus == NULL || sminus == NULL || g == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    H = gretl_matrix_alloc(nc, nc);
+    H = gretl_matrix_alloc(np, np);
     if (H == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -302,23 +306,23 @@ static gretl_matrix *negbin_nhessian (double *theta, void *data,
 
     nbinfo->flags = SCORE_UPDATE_MU;
 
-    for (i=0; i<nc; i++) {
+    for (i=0; i<np; i++) {
 	double theta0 = theta[i];
 
 	theta[i] = theta0 + eps;
-	negbin_score(theta, g, nc, ll, nbinfo);
-	for (j=0; j<nc; j++) {
+	negbin_score(theta, g, np, ll, nbinfo);
+	for (j=0; j<np; j++) {
 	    splus[j] = g[j];
 	}
 
 	theta[i] = theta0 - eps;
-	negbin_score(theta, g, nc, ll, nbinfo);
-	for (j=0; j<nc; j++) {
+	negbin_score(theta, g, np, ll, nbinfo);
+	for (j=0; j<np; j++) {
 	    sminus[j] = g[j];
 	}
 
 	theta[i] = theta0;
-	for (j=0; j<nc; j++) {
+	for (j=0; j<np; j++) {
 	    x = -(splus[j] - sminus[j]) / (2*eps);
 	    gretl_matrix_set(H, i, j, x);
 	}
@@ -343,10 +347,10 @@ static gretl_matrix *negbin_nhessian (double *theta, void *data,
 static int negbin_OPG_vcv (MODEL *pmod, negbin_info *nbinfo)
 {
     gretl_matrix *GG = NULL;
-    int nc = nbinfo->k + 1;
+    int np = nbinfo->k + 1;
     int err = 0;
 
-    GG = gretl_matrix_alloc(nc, nc);
+    GG = gretl_matrix_alloc(np, np);
     if (GG == NULL) {
 	err = E_ALLOC;
     }
@@ -355,16 +359,7 @@ static int negbin_OPG_vcv (MODEL *pmod, negbin_info *nbinfo)
 	gretl_matrix_multiply_mod(nbinfo->G, GRETL_MOD_TRANSPOSE,
 				  nbinfo->G, GRETL_MOD_NONE,
 				  nbinfo->V, GRETL_MOD_NONE);
-	/* invert */
 	err = gretl_invert_symmetric_matrix(nbinfo->V);
-    }
-
-    if (!err) {
-	err = gretl_model_write_vcv(pmod, nbinfo->V);
-	if (!err) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
-	    pmod->opt |= OPT_G;
-	}
     }
     
     gretl_matrix_free(GG);
@@ -378,10 +373,10 @@ static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo)
 {
     gretl_matrix *H = NULL;
     gretl_matrix *GG = NULL;
-    int nc = nbinfo->k + 1;
+    int np = nbinfo->k + 1;
     int err = 0;
 
-    GG = gretl_matrix_alloc(nc, nc);
+    GG = gretl_matrix_alloc(np, np);
     if (GG == NULL) {
 	return E_ALLOC;
     }
@@ -393,19 +388,10 @@ static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo)
     H = negbin_nhessian(nbinfo->theta, nbinfo, negbin_loglik, &err);
 
     if (!err) {
-	/* form sandwich */
 	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
 				 GG, nbinfo->V, GRETL_MOD_NONE);
     }	
 
-    if (!err) {
-	err = gretl_model_write_vcv(pmod, nbinfo->V);
-	if (!err) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
-	    pmod->opt |= OPT_R;
-	}
-    }
-    
     gretl_matrix_free(H);
     gretl_matrix_free(GG);
 
@@ -420,13 +406,8 @@ static int negbin_hessian_vcv (MODEL *pmod, negbin_info *nbinfo)
     H = negbin_nhessian(nbinfo->theta, nbinfo, negbin_loglik, &err);
 
     if (!err) {
-	err = gretl_model_write_vcv(pmod, H);
-	if (!err) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
-	}
+	gretl_matrix_replace(&nbinfo->V, H);
     }
-    
-    gretl_matrix_free(H);
 
     return err;
 }
@@ -449,14 +430,11 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
 	gretl_model_set_int(pmod, "offset_var", oinfo->vnum);
     }
 
-    pmod->ess = 0.0;
-
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->yhat[t])) {
 	    pmod->yhat[t] = nbinfo->mu->val[s];
 	    pmod->uhat[t] = nbinfo->y->val[s] - pmod->yhat[t];
-	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    s++;
 	}
     }
@@ -477,24 +455,32 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
     pmod->dfd -= 1;
     pmod->dfn += 1;
 
-    pmod->sigma = sqrt(pmod->ess / pmod->dfd);
-
     err = gretl_model_write_coeffs(pmod, nbinfo->theta, nc);
     
     if (!err) {
 	if (opt & OPT_R) {
+	    pmod->opt |= OPT_R;
 	    err = negbin_robust_vcv(pmod, nbinfo);
 	} else if (opt & OPT_G) {
+	    pmod->opt |= OPT_G;
 	    err = negbin_OPG_vcv(pmod, nbinfo);
 	} else {
 	    err = negbin_hessian_vcv(pmod, nbinfo);
 	} 
+
+	if (!err) {
+	    int vtype = (opt & OPT_G) ? VCV_OP :
+		(opt & OPT_R)? VCV_QML : VCV_HESSIAN;
+
+	    gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
+	    err = gretl_model_write_vcv(pmod, nbinfo->V);
+	}
     }
 
     if (!err) {
 	pmod->lnL = nbinfo->ll;
 	mle_criteria(pmod, 0); 
-	/* mask invalid statistics */
+	/* mask invalid statistics (FIXME chisq?) */
 	pmod->fstt = pmod->chisq = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
 	pmod->ess = NADBL;

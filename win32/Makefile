@@ -87,6 +87,7 @@ PLUGINSRC = \
 	range-mean.c \
 	fractals.c \
 	poisson.c \
+	duration.c \
 	stats_tables.c \
 	sysest.c \
 	fiml.c \
@@ -133,6 +134,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/range-mean.dll \
 	plugins/fractals.dll \
 	plugins/poisson.dll \
+	plugins/duration.dll \
 	plugins/lad.dll \
 	plugins/tramo-x12a.dll \
 	plugins/leverage.dll \
@@ -356,6 +358,10 @@ plugins/fractals.dll: fractals.o dllinit.o
 plugins/poisson.dll: poisson.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lprob
+
+plugins/duration.dll: duration.o dllinit.o 
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/kernel.dll: kernel.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

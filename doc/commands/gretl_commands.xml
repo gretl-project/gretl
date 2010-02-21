@@ -2416,6 +2416,57 @@
 
   </command>
 
+  <command name="duration" section="Estimation" label="Duration models" 
+    context="cli">
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+        <argument separated="true" optional="true">censvar</argument>
+      </arguments>
+      <options>
+        <option>
+          <flag>--exponential</flag>
+          <effect>use exponential distribution</effect>
+        </option>
+        <option>
+          <flag>--robust</flag>
+          <effect>robust standard errors</effect>
+        </option>	
+        <option>
+          <flag>--vcv</flag>
+          <effect>print covariance matrix</effect>
+        </option>
+        <option>
+          <flag>--verbose</flag>
+          <effect>print details of iterations</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>duration y 0 x1 x2</example>
+	<example>duration y 0 x1 x2 ; cens</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Estimates a duration model: the dependent variable (which must be
+	positive) represents the duration of some state of affairs, for 
+	example the length of spells of unemployment for a cross-section
+	of respondents. At present the only choices of distribution
+	are the Weibull (the default) or the exponential.
+      </para>
+      <para>
+	If some of the duration measurements are right-censored (&eg; an
+	individual's spell of unemployment has not come to an end within the
+	period of observation) then you should supply the trailing argument
+	<repl>censvar</repl>, a series in which non-zero values indicate
+	right-censored cases.
+      </para>
+    </description>
+
+  </command>  
+
   <command name="elif" section="Programming" label="Flow control" context="cli">
 
     <description><para>See <cmdref targ="if"/>.</para>

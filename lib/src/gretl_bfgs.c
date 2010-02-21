@@ -42,8 +42,8 @@ void BFGS_defaults (int *maxit, double *tol, int ci)
 	*maxit = 1000;
     }
 
-    if (ci == PROBIT || ci == INTREG || 
-	ci == ARMA || ci == NEGBIN) {
+    if (ci == PROBIT || ci == INTREG || ci == ARMA || 
+	ci == NEGBIN || ci == DURATION) {
 	if (na(*tol)) {
 	    *tol = 1.0e-12;
 	}
