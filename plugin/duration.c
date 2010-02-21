@@ -427,7 +427,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     }
 
     for (i=0; i<dinfo->k; i++) {
-	pmod->coeff[i] = -pmod->coeff[i];
+	pmod->coeff[i] = -pmod->coeff[i] / dinfo->theta[dinfo->k];
     }
 
     if (!err) {
