@@ -721,37 +721,6 @@ int ls_criteria (MODEL *pmod)
     return err;
 }
 
-/**
- * gretl_print_criteria:
- * @ess: error sum of squares.
- * @nobs: number of observations.
- * @ncoeff: number of parameters estimated.
- * @prn: printing struct.
- *
- * Prints the values of the model selection criteria AIC, 
- * BIC and HQC for the given parameters.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn)
-{
-    double ll, aic, bic, hqc;
-    int err;
-
-    err = gretl_calculate_criteria(ess, nobs, ncoeff, &ll, &aic, &bic, &hqc);
-
-    if (err) {
-	pputs(prn, _("Error calculating model selection criteria\n"));
-    } else {
-	pprintf(prn, _("Using ess = %g, %d observations, %d coefficients\n"), 
-		ess, nobs, ncoeff);
-	pprintf(prn, "\nAIC = %g\nBIC = %g\nHQC = %g\n\n", aic, bic, hqc);
-    }
-
-    return err;
-}
-
 static char *
 real_format_obs (char *obs, int maj, int min, int pd, char sep)
 {

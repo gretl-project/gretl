@@ -387,6 +387,10 @@ gretl_matrix *steal_matrix_by_name (const char *name)
 	user_matrix *u = get_user_matrix_by_name(name);
 
 	if (u != NULL) {
+	    if (u->colnames != NULL) {
+		free_strings_array(u->colnames, u->M->cols);
+		u->colnames = NULL;
+	    }
 	    ret = u->M;
 	    u->M = NULL;
 	}

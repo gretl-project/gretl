@@ -136,8 +136,6 @@ int gretl_calculate_criteria (double ess, int n, int k,
 			      double *ll, double *aic, double *bic, 
 			      double *hqc);
 
-int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn);
-
 int ls_criteria (MODEL *pmod);
 
 /* hypothesis tests mechanism */
