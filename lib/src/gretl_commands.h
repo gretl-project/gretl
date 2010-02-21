@@ -39,7 +39,6 @@ typedef enum {
     COINT2,
     CORR,     
     CORRGM,   
-    CRITERIA,
     CUSUM,
     DATA,
     DATAMOD,
@@ -48,6 +47,7 @@ typedef enum {
     DIFFTEST,
     DISCRETE,
     DUMMIFY,
+    DURATION,
     ELIF,
     ELSE,
     END,
@@ -169,7 +169,6 @@ typedef enum {
                         c == COINT2 || \
                         c == CORR || \
                         c == CORRGM || \
-                        c == CRITERIA || \
                         c == CUSUM || \
                         c == FCAST || \
                         c == FREQ || \

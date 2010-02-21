@@ -339,7 +339,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define NO_VARLIST(c) (c == APPEND || \
                        c == BREAK || \
                        c == CHOW || \
-	               c == CRITERIA || \
 	               c == CUSUM || \
                        c == DATA || \
                        c == END || \
@@ -402,6 +401,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == MPOLS || \
                          c == POISSON || \
 			 c == NEGBIN ||	\
+			 c == DURATION || \
                          c == PRINT || \
                          c == SCATTERS || \
                          c == VAR || \
@@ -3407,7 +3407,7 @@ static int effective_ci (const CMD *cmd)
                        c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
                        c == EQUATION || c == POISSON || c == XCORRGM || \
-                       c == HECKIT || c == NEGBIN)
+                       c == HECKIT || c == NEGBIN || c == DURATION)
 
 #define TESTLEN 62
 #define LINELEN 78
@@ -4485,10 +4485,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = do_pca(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;
 
-    case CRITERIA:
-	err = parse_criteria(line, prn);
-	break;
-
     case DATA:
 	err = db_get_series(line, pZ, pdinfo, cmd->opt, prn);
 	break;
@@ -4792,6 +4788,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case PROBIT:
     case QUANTREG:
     case TOBIT:
+    case DURATION:
 	clear_model(models[0]);
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
 	    *models[0] = logit_probit(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, prn);
@@ -4812,6 +4809,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == QUANTREG) {
 	    *models[0] = quantreg(cmd->param, cmd->list, pZ, pdinfo,
 				  cmd->opt, prn);
+	} else if (cmd->ci == DURATION) {
+	    *models[0] = duration_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == GARCH) {
 	    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == PANEL) {

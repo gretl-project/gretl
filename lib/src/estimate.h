@@ -44,6 +44,10 @@ MODEL arma (const int *list, const char *pqspec,
 MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn);
 
+MODEL duration_model (const int *list, double ***pZ, 
+		      DATAINFO *pdinfo, gretlopt opt, 
+		      PRN *prn);
+
 MODEL count_model (const int *list, int ci,
 		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn);

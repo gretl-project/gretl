@@ -781,7 +781,6 @@ static int snedecor_pdf_array (int v1, int v2, double *x, int n)
     return err;
 }
 
-
 static double snedecor_pdf (int m, int n, double x)
 {
     snedecor_pdf_array(m, n, &x, 1);
@@ -1433,7 +1432,7 @@ weibull_critval (double shape, double scale, double rtail)
  * the Weibull distribution with parameters @shape and @scale.
  */
 
-static double weibull_cdf (double shape, double scale, double x)
+double weibull_cdf (double shape, double scale, double x)
 {
     double ret = NADBL;
 

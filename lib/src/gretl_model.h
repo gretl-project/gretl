@@ -102,6 +102,7 @@ struct VCVInfo_ {
                           c == ARBOND || \
                           c == ARCH || \
                           c == ARMA || \
+			  c == DURATION || \
                           c == GARCH || \
                           c == GMM || \
 		          c == HECKIT || \
@@ -131,6 +132,7 @@ struct VCVInfo_ {
 #define SIMPLE_AR_MODEL(c) (c == AR || c == AR1)
 
 #define ML_ESTIMATOR(c) (c == ARMA || \
+			 c == DURATION || \
                          c == GARCH || \
                          c == HECKIT || \
                          c == LOGIT || \
@@ -153,6 +155,7 @@ struct VCVInfo_ {
 
 #define ASYMPTOTIC_MODEL(c) (c == ARBOND || \
                              c == ARMA || \
+			     c == DURATION || \
                              c == GARCH || \
                              c == GMM || \
                              c == HECKIT || \

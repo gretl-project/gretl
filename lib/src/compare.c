@@ -566,6 +566,17 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
     return cmp;
 }
 
+static int get_extra_var (const MODEL *pmod)
+{
+    if (COUNT_MODEL(pmod->ci)) {
+	return gretl_model_get_int(pmod, "offset_var");
+    } else if (pmod->ci == DURATION) {
+	return gretl_model_get_int(pmod, "cens_var");
+    } else {
+	return 0;
+    }
+}
+
 /* reconstitute full varlist for WLS, AR and count models */
 
 static int *
@@ -594,15 +605,15 @@ full_model_list (const MODEL *pmod, const int *inlist)
 	for (i=1; i<=inlist[0]; i++) {
 	    flist[i+1] = inlist[i];
 	}
-    } else if (COUNT_MODEL(pmod->ci)) {
-	int offvar = gretl_model_get_int(pmod, "offset_var");
+    } else if (COUNT_MODEL(pmod->ci) || pmod->ci == DURATION) {
+	int extra = get_extra_var(pmod);
 
 	flist[0] = len - 1;
 	for (i=1; i<=inlist[0]; i++) {
 	    flist[i] = inlist[i];
 	}
 	flist[flist[0] - 1] = LISTSEP;
-	flist[flist[0]] = offvar;
+	flist[flist[0]] = extra;
     } else if (pmod->ci == AR) {
 	flist[0] = len - 2;
 	for (i=1; i<pos; i++) {
@@ -654,12 +665,6 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
     return 0;
 }
 
-static int has_offset_var (const MODEL *pmod)
-{
-    return (COUNT_MODEL(pmod->ci) &&
-	    gretl_model_get_int(pmod, "offset_var") > 0);   
-}
-
 #define be_quiet(o) ((o & OPT_A) || (o & OPT_Q))
 
 #define SMPL_DEBUG 0
@@ -695,7 +700,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	    myopt |= OPT_P;
 	}
 	rho = estimate_rho(list, pZ, pdinfo, myopt, prn, &rep.errcode);
-    } else if (orig->ci == WLS || orig->ci == AR || has_offset_var(orig)) {
+    } else if (orig->ci == WLS || orig->ci == AR || get_extra_var(orig)) {
 	int *full_list = full_model_list(orig, list);
 
 	free(list);
@@ -780,6 +785,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     case POISSON:
     case NEGBIN:
 	rep = count_model(list, orig->ci, pZ, pdinfo, myopt, NULL);
+	break;
+    case DURATION:
+	rep = duration_model(list, pZ, pdinfo, myopt, NULL);
 	break;
     case HECKIT:
 	rep = heckit_model(list, pZ, pdinfo, myopt, NULL);

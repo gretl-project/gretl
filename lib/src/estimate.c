@@ -4129,6 +4129,20 @@ static int get_trailing_var (int *list)
     return ret;
 }
 
+/**
+ * duration_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: may include %OPT_R for robust covariance matrix.
+ * @prn: printing struct for iteration info (or %NULL is this is not
+ * wanted).
+ *
+ * Estimate the duration model given in @list using ML.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
 MODEL duration_model (const int *list, double ***pZ, 
 		      DATAINFO *pdinfo, gretlopt opt, 
 		      PRN *prn)
@@ -4191,7 +4205,7 @@ MODEL duration_model (const int *list, double ***pZ,
  * @ci: either #POISSON or #NEGBIN.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: may include %OPT_R for rubust covariance matrix.
+ * @opt: may include %OPT_R for robust covariance matrix.
  * @prn: printing struct for iteration info (or %NULL is this is not
  * wanted).
  *
@@ -4211,11 +4225,6 @@ MODEL count_model (const int *list, int ci,
     int (* count_data_estimate) (MODEL *, int, int,
 				 double ***, DATAINFO *, 
 				 gretlopt, PRN *);
-
-    if (opt & OPT_D) {
-	/* just for testing */
-	return duration_model(list, pZ, pdinfo, opt, prn);
-    }
 
     gretl_error_clear();
 

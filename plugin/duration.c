@@ -134,6 +134,8 @@ static void duration_update_Xb (duration_info *dinfo, const double *theta)
     gretl_matrix_multiply(dinfo->X, dinfo->beta, dinfo->Xb);
 }
 
+/* for the moment all we offer is Weibull */
+
 static double duration_loglik (const double *theta, void *data)
 {
     duration_info *dinfo = (duration_info *) data;
@@ -154,7 +156,7 @@ static double duration_loglik (const double *theta, void *data)
     errno = 0;
     lns = log(s);
 
-    /* FIXME censoring */
+    /* FIXME censoring, 1 - F() */
 
     for (t=0; t<dinfo->T; t++) {
 	zt = (y[t] - Xb[t]) / s;
@@ -169,8 +171,8 @@ static double duration_loglik (const double *theta, void *data)
     return dinfo->ll;
 }
 
-static int duration_score (double *theta, double *g, int nc, BFGS_CRIT_FUNC ll, 
-			   void *data)
+static int duration_score (double *theta, double *g, int nc, 
+			   BFGS_CRIT_FUNC ll, void *data)
 {
     duration_info *dinfo = (duration_info *) data;
     const double *y = dinfo->y->val;
@@ -196,7 +198,7 @@ static int duration_score (double *theta, double *g, int nc, BFGS_CRIT_FUNC ll,
 	    if (i < dinfo->k) {
 		gti = wt * gretl_matrix_get(dinfo->X, t, i);
 	    } else {
-		gti = -zt/s - 1/s + exp(zt) * zt/s;
+		gti = (-zt - 1 + exp(zt) * zt) / s;
 	    }
 	    gretl_matrix_set(dinfo->G, t, i, gti);
 	    g[i] += gti;
@@ -370,7 +372,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     int nc = dinfo->k + 1;
     int i, s, t, err = 0;
 
-    pmod->ci = NEGBIN; /* FIXME */
+    pmod->ci = DURATION;
 
     gretl_model_set_int(pmod, "fncount", fncount);
     gretl_model_set_int(pmod, "grcount", grcount);
@@ -396,7 +398,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 		v = pmod->list[i+2];
 		strcpy(pmod->params[i], pdinfo->varname[v]);
 	    }
-	    strcpy(pmod->params[nc-1], "lambda");
+	    strcpy(pmod->params[nc-1], "1/p");
 	}
     }
 
@@ -415,6 +417,10 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	} else {
 	    err = duration_hessian_vcv(pmod, dinfo);
 	} 
+    }
+
+    for (i=0; i<dinfo->k; i++) {
+	pmod->coeff[i] = -pmod->coeff[i];
     }
 
     if (!err) {

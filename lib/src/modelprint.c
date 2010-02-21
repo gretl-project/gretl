@@ -687,6 +687,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == HECKIT) return N_("Heckit");
     else if (ci == POISSON) return N_("Poisson");
     else if (ci == NEGBIN) return N_("Negative Binomial");
+    else if (ci == DURATION) return N_("Duration");
     else if (ci == NLS) return N_("NLS");
     else if (ci == MLE) return N_("ML");
     else if (ci == GMM) return N_("GMM");

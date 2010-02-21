@@ -4690,10 +4690,13 @@ int highest_numbered_var_in_model (const MODEL *pmod,
 	if (v > vmax) vmax = v;
 	v = gretl_model_get_int(pmod, "hivar");
 	if (v > vmax) vmax = v;
-    } else if (pmod->ci == POISSON) {
+    } else if (COUNT_MODEL(pmod->ci)) {
 	v = gretl_model_get_int(pmod, "offset_var");
 	if (v > vmax) vmax = v;
-    } 
+    } else if (pmod->ci == DURATION) {
+	v = gretl_model_get_int(pmod, "cens_var");
+	if (v > vmax) vmax = v;
+    }	
 
     return vmax;
 }
