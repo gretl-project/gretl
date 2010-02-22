@@ -1,3 +1,5 @@
+include criteria.gfn
+
 # PS12.1, to illustrate Example 12.1
 open data4-5 
 genr y = ln(wlfp/(100-wlfp))
@@ -12,6 +14,6 @@ genr wlfphat = 100*y1/(1+y1)
 genr error = wlfp - wlfphat
 # compute ESS and adjusted model selection criteria for logit model 
 genr ess = sum(error*error)
-criteria ess 50 6
+criteria(ess, 50, 6)
 # estimate linear model 
 ols wlfp 0 yf educ ue urb wh

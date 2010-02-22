@@ -1,3 +1,5 @@
+include criteria.gfn
+
 # PS11.1 for fitting time trends in calwage
 open data10-5.gdt
 genr time
@@ -28,7 +30,7 @@ ols calwage 0 yhata
 genr uhata = calwage - yhata
 genr mapea = mean(100*abs(uhata)/calwage)
 genr essa = sum(uhata*uhata)
-criteria essa 5 2
+criteria(essa, 5, 2)
 # reset sample range to beginning
 smpl 1960 1989
 # quadratic Model B
@@ -42,7 +44,7 @@ ols calwage 0 yhatb
 genr uhatb = calwage - yhatb
 genr mapeb = mean(100*abs(uhatb)/calwage)
 genr essb = sum(uhatb*uhatb)
-criteria essb 5 2
+criteria(essb, 5, 2)
 smpl 1960 1989
 # cubic Model C
 ar1 calwage 0 time tsq t3
@@ -55,7 +57,7 @@ ols calwage 0 yhatc
 genr uhatc = calwage - yhatc
 genr mapec = mean(100*abs(uhatc)/calwage)
 genr essc = sum(uhatc*uhatc)
-criteria essc 5 2
+criteria(essc, 5, 2)
 smpl 1960 1989
 # linear-log Model D
 ar1 calwage 0 l_time
@@ -68,7 +70,7 @@ ols calwage 0 yhatd
 genr uhatd = calwage - yhatd
 genr maped = mean(100*abs(uhatd)/calwage)
 genr essd = sum(uhatd*uhatd)
-criteria essd 5 2
+criteria(essd, 5, 2)
 smpl 1960 1989
 # reciprocal Model E
 ar1 calwage 0 invt
@@ -81,7 +83,7 @@ ols calwage 0 yhate
 genr uhate = calwage - yhate
 genr mapee = mean(100*abs(uhate)/calwage)
 genr esse = sum(uhate*uhate)
-criteria esse 5 2
+criteria(esse, 5, 2)
 smpl 1960 1989
 # log-linear Model F
 ar1 l_calwage 0 time
@@ -98,7 +100,7 @@ ols calwage 0 yhatf
 genr uhatf = calwage - yhatf
 genr mapef= mean(100*abs(uhatf)/calwage)
 genr essf = sum(uhatf*uhatf)
-criteria essf 5 2
+criteria(essf, 5, 2)
 smpl 1960 1989
 # double-log Model G
 ar1 l_calwage 0 l_time
@@ -114,8 +116,8 @@ smpl 1990 1994
 ols calwage 0 yhatg
 # compute prediction error, error sum of squares, and selection criteria
 genr uhatg = calwage - yhatg
-genr mapeg= mean(100*abs(uhatg)/calwage)
+genr mapeg = mean(100*abs(uhatg)/calwage)
 genr essg = sum(uhatg*uhatg)
-criteria essg 5 2
+criteria(essg, 5, 2)
 print -o calwage yhata yhatb yhatc yhatd yhate yhatf yhatg
 print mapea mapeb mapec maped mapee mapef mapeg

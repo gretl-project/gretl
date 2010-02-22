@@ -49,6 +49,10 @@ gretl_matrix *build_score_matrix (double *b, int k, int T,
 				  BFGS_LLT_FUNC lltfun,
 				  void *data, int *err);
 
+gretl_matrix *hessian_from_score (double *b, int n, 
+				  BFGS_GRAD_FUNC gradfun, 
+				  void *data, int *err);
+
 gretl_matrix *numerical_hessian (const double *b, int n, 
 				 BFGS_CRIT_FUNC func, 
 				 void *data, int *err);

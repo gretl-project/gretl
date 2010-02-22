@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gretl-functions>
+<gretl-function-package name="criteria" ID="1266796477" minver="1.8.6">
+<author>Allin Cottrell</author>
+<version>1.0</version>
+<date>2010-02-21</date>
+<description>Calculate model selection criteria</description>
+<help>
+Computes the Akaike Information Criterion (AIC), Schwarz's Bayesian
+Information Criterion (BIC) and the Hannan-Quinn criterion (HQC), 
+given ess (error sum of squares), the number of observations (n), 
+and the number of coefficients (k).
+
+The AIC is computed as in Akaike's original (1974) formulation, 
+namely AIC = -2L + 2k, where L denotes the maximized log-likelihood. 
+
+The BIC is computed as BIC = -2L + k log n.
+
+The HQC is computed as HQC = -2L + 2k log log n.
+
+A row vector containing the three criteria is available for
+assignment on return.
+</help>
+<gretl-function name="criteria" type="matrix" private="0">
+ <params count="3">
+  <param name="ess" type="scalar"/>
+  <param name="n" type="scalar"/>
+  <param name="k" type="scalar"/>
+ </params>
+<code>if (ess &lt;= 0 || k &lt; 1 || n &lt;= k)
+  funcerr &quot;We require ess &gt; 0, k &gt; 0 and n &gt; k&quot;
+endif
+matrix crit = zeros(1, 3)
+scalar logn = log(n)
+scalar llm = n * log(ess)
+llm += n * (log(2*pi) + 1 - logn)
+crit[1] = llm + 2*k
+crit[2] = llm + k*logn
+crit[3] = llm + 2*k*log(logn)
+printf &quot;Using ess = %g, %d observations, %d coefficients\n&quot;, ess, n, k
+printf &quot;\nAIC = %g\nBIC = %g\nHQC = %g\n\n&quot;, crit[1], crit[2], crit[3]
+return crit
+</code>
+</gretl-function>
+<sample-script>
+# Demonstrate that the criteria() function produces the
+# same results as gretl does for a given model.
+open data4-10
+ols 1 0 2 3 4
+matrix cr = criteria($ess, $T, $ncoeff)
+# printing cr is somewhat redundant, but this is just an
+# illustration
+print cr
+</sample-script>
+</gretl-function-package>
+</gretl-functions>

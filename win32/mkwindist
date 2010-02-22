@@ -202,8 +202,11 @@ for f in ${TOPDIR}/share/scripts/misc/ps_descriptions ; do
     add_file $f gretl/scripts/misc/`basename $f`
 done
 
-# function package DTD
+# function package DTD and sample(s)
 for f in ${TOPDIR}/share/functions/*.dtd ; do
+    add_file $f gretl/functions/`basename $f`
+done
+for f in ${TOPDIR}/share/functions/*.gfn ; do
     add_file $f gretl/functions/`basename $f`
 done
 

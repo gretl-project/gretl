@@ -1055,24 +1055,8 @@ static gretl_matrix *heckit_init_H (double *theta,
     double ll = h_loglik(theta, HC);
     int err = 0;
 
-    if (na(ll)) {
-	return NULL;
-    }
-
-    H = gretl_matrix_alloc(np, np);
-    if (H == NULL) {
-	return NULL;
-    }
-
-    gretl_matrix_multiply_mod(HC->score, GRETL_MOD_TRANSPOSE, 
-			      HC->score, GRETL_MOD_NONE, 
-			      H, GRETL_MOD_NONE);
-
-    err = gretl_invert_symmetric_matrix(H); 
-    if (err) {
-	fprintf(stderr, "heckit: init_H not pd\n");
-	gretl_matrix_free(H);
-	H = NULL;
+    if (!na(ll)) {
+	H = gretl_matrix_GG_inverse(HC->score, &err);
     }
 
     return H;

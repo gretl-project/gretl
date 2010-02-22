@@ -102,6 +102,84 @@ static double **triangular_array_new (int n)
     return m;
 }
 
+/* In case an analytical score function (@gradfun) is available,
+   construct a numerical approximation to the Hessian using that
+   function.  This is intended for building a covariance matrix at
+   convergence; note that it will be unlikely to work at an arbitrary
+   point in the parameter space.  Also note that the NULL pointer
+   passed to gradfun in the 4th argument corresponds to the
+   BFGS_CRIT_FUNC parameter, so this will fail horribly unless
+   @gradfun calculates the score independently of the
+   criterion function (and so does not use the 4th argument).
+*/
+
+gretl_matrix *hessian_from_score (double *b, int n, 
+				  BFGS_GRAD_FUNC gradfun, 
+				  void *data, int *err)
+{
+    gretl_matrix *H = NULL;
+    double *g, *splus, *sminus;
+    double x, eps = 1.0e-05;
+    int i, j;
+    
+    splus  = malloc(n * sizeof *splus);
+    sminus = malloc(n * sizeof *sminus);
+    g      = malloc(n * sizeof *g);
+
+    if (splus == NULL || sminus == NULL || g == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    H = gretl_matrix_alloc(n, n);
+    if (H == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<n; i++) {
+	double b0 = b[i];
+
+	b[i] = b0 + eps;
+	*err = gradfun(b, g, n, NULL, data);
+	if (*err) break;
+	for (j=0; j<n; j++) {
+	    splus[j] = g[j];
+	}
+
+	b[i] = b0 - eps;
+	*err = gradfun(b, g, n, NULL, data);
+	if (*err) break;
+	for (j=0; j<n; j++) {
+	    sminus[j] = g[j];
+	}
+
+	b[i] = b0;
+	for (j=0; j<n; j++) {
+	    x = -(splus[j] - sminus[j]) / (2*eps);
+	    gretl_matrix_set(H, i, j, x);
+	}
+    }
+
+    if (!*err) {
+	gretl_matrix_xtr_symmetric(H);
+	*err = gretl_invert_symmetric_matrix(H);
+    }
+
+ bailout:
+
+    if (*err) {
+	gretl_matrix_free(H);
+	H = NULL;
+    }
+
+    free(splus);
+    free(sminus);
+    free(g);
+
+    return H;
+}
+
 /* apparatus for constructing numerical approximation to
    the Hessian */
 

@@ -302,31 +302,15 @@ static int duration_score (double *theta, double *g, int np,
 static gretl_matrix *duration_init_H (duration_info *dinfo)
 {
     gretl_matrix *H = NULL;
-    int np = dinfo->npar;
     int err;
 
     dinfo->flags = DOING_HESSIAN;
-    err = duration_score(dinfo->theta, NULL, np, NULL, dinfo);
+    err = duration_score(dinfo->theta, NULL, dinfo->npar, 
+			 NULL, dinfo);
     dinfo->flags = 0;
 
-    if (err) {
-	return NULL;
-    }
-
-    H = gretl_matrix_alloc(np, np);
-    if (H == NULL) {
-	return NULL;
-    }
-
-    gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE, 
-			      dinfo->G, GRETL_MOD_NONE, 
-			      H, GRETL_MOD_NONE);
-
-    err = gretl_invert_symmetric_matrix(H); 
-    if (err) {
-	fprintf(stderr, "duration: init_H not pd\n");
-	gretl_matrix_free(H);
-	H = NULL;
+    if (!err) {
+	H = gretl_matrix_GG_inverse(dinfo->G, &err);
     }
 
     return H;
@@ -382,74 +366,14 @@ static int duration_vcv_transform (duration_info *dinfo)
 
 /* numerical Hessian using the analytical score */
 
-static gretl_matrix *duration_nhessian (double *theta, void *data, 
-					BFGS_CRIT_FUNC ll, int *err)
+static gretl_matrix *duration_nhessian (duration_info *dinfo, int *err)
 {
-    duration_info *dinfo = (duration_info *) data;
-    gretl_matrix *H = NULL;
-    double *g, *splus, *sminus;
-    double x, eps = 1.0e-05;
-    int np = dinfo->npar;
-    int i, j;
-    
-    splus  = malloc(np * sizeof *splus);
-    sminus = malloc(np * sizeof *sminus);
-    g      = malloc(np * sizeof *g);
-
-    if (splus == NULL || sminus == NULL || g == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    H = gretl_matrix_alloc(np, np);
-    if (H == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
+    gretl_matrix *H;
 
     dinfo->flags = DOING_HESSIAN;
-
-    for (i=0; i<np && !*err; i++) {
-	double theta0 = theta[i];
-
-	theta[i] = theta0 + eps;
-	*err += duration_score(theta, g, np, ll, dinfo);
-	for (j=0; j<np; j++) {
-	    splus[j] = g[j];
-	}
-
-	theta[i] = theta0 - eps;
-	*err += duration_score(theta, g, np, ll, dinfo);
-	for (j=0; j<np; j++) {
-	    sminus[j] = g[j];
-	}
-
-	theta[i] = theta0;
-	for (j=0; j<np; j++) {
-	    x = -(splus[j] - sminus[j]) / (2*eps);
-	    gretl_matrix_set(H, i, j, x);
-	}
-    }
-
-    dinfo->flags = 0;
-
-    if (*err) {
-	*err = E_NAN;
-    } else {
-	gretl_matrix_xtr_symmetric(H);
-	*err = gretl_invert_symmetric_matrix(H);
-    }
-
- bailout:
-
-    if (*err) {
-	gretl_matrix_free(H);
-	H = NULL;
-    }
-
-    free(splus);
-    free(sminus);
-    free(g);
+    H = hessian_from_score(dinfo->theta, dinfo->npar, duration_score, 
+			   dinfo, err);
+    dinfo->flags = DOING_HESSIAN;
 
     return H;
 }
@@ -495,7 +419,7 @@ static int duration_robust_vcv (MODEL *pmod, duration_info *dinfo)
 			      dinfo->G, GRETL_MOD_NONE,
 			      GG, GRETL_MOD_NONE);
 
-    H = duration_nhessian(dinfo->theta, dinfo, duration_loglik, &err);
+    H = duration_nhessian(dinfo, &err);
 
     if (!err) {
 	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
@@ -513,7 +437,7 @@ static int duration_hessian_vcv (MODEL *pmod, duration_info *dinfo)
     gretl_matrix *H;
     int err = 0;
 
-    H = duration_nhessian(dinfo->theta, dinfo, duration_loglik, &err);
+    H = duration_nhessian(dinfo, &err);
 
     if (!err) {
 	gretl_matrix_replace(&dinfo->V, H);

@@ -610,6 +610,8 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 				       int *errp);
 
+gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err);
+
 gretl_matrix **gretl_matrix_array_new (int n);
 
 gretl_matrix **

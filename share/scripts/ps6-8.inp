@@ -1,3 +1,5 @@
+include criteria.gfn 
+
 #  PS6.8 for Example 6.6 
 open data6-4
 logs WAGE  
@@ -17,10 +19,10 @@ genr what = exp(lwhat+(sgmasq/2))
 genr error = WAGE -what
 # compute new ess 
 genr ess = sum(error*error)
-# learn about the criteria command 
+# learn about the "criteria" function 
 help criteria
-# compute criteria statistics 
-criteria ess 49 3 
+# compute selection criteria
+criteria(ess, 49, 3)
 # compute correlation between observed WAGES and adjusted predictions 
 corr WAGE what 
 genr c1 = corr(WAGE,what)

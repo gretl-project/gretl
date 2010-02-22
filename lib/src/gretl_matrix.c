@@ -10873,6 +10873,45 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 }
 
 /**
+ * gretl_matrix_GG_inverse:
+ * @G: T x k source matrix.
+ * @err: location to receive error code.
+ *
+ * Multiples G' into G and inverts the result. A shortcut
+ * function intended for producing an approximation to
+ * the Hessian given a gradient matrix.
+ *
+ * Returns: the newly allocated k x k inverse on success, 
+ * or %NULL on error.
+ */
+
+gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
+{
+    gretl_matrix *H = NULL;
+    int k = G->cols;
+
+    H = gretl_matrix_alloc(k, k);
+    if (H == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE, 
+			      G, GRETL_MOD_NONE, 
+			      H, GRETL_MOD_NONE);
+
+    *err = gretl_invert_symmetric_matrix(H); 
+
+    if (*err) {
+	fprintf(stderr, "gretl_matrix_GG_inverse: H not pd\n");
+	gretl_matrix_free(H);
+	H = NULL;
+    }
+
+    return H;
+}
+
+/**
  * gretl_matrix_transcribe_obs_info:
  * @targ: target matrix.
  * @src: source matrix.
