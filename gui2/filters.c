@@ -591,10 +591,13 @@ static void print_gp_data (filter_info *finfo, const double *obs,
     int t;
 
     for (t=finfo->t1; t<=finfo->t2; t++) {
+	/* same print format as in function printvars() in 
+	   lib/src/graphing.c
+	*/
 	if (na(x[t])) {
-	    fprintf(fp, "%g ?\n", obs[t]);
+	    fprintf(fp, "%.10g ?\n", obs[t]);
 	} else {
-	    fprintf(fp, "%g %g\n", obs[t], x[t]);
+	    fprintf(fp, "%.10g %.10g\n", obs[t], x[t]);
 	}
     }
 }
