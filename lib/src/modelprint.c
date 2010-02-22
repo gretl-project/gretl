@@ -114,7 +114,7 @@ static void print_model_stats_table (const double *stats,
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
 	pputs(prn, "\\medskip\n\n");
-	pputs(prn, "\\begin{tabular}{lr@{.}l\n");
+	pputs(prn, "\\begin{tabular}{lr@{.}l}\n");
     }
 
     for (i=0; i<ns; i++) {
@@ -4870,7 +4870,10 @@ static int print_user_model (const gretl_matrix *cs,
     b = cs->val;
     se = b + ncoef;
 
-    pputc(prn, '\n');
+    if (plain_format(prn)) {
+	/* newline here is useless for TeX and makes RTF choke */
+	pputc(prn, '\n'); 
+    } 
 
     if (opt & OPT_C) {
 	gretl_print_set_format(prn, GRETL_FORMAT_CSV);
