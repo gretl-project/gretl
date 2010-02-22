@@ -799,6 +799,8 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
     } else if (pmod->ci == DURATION) {
 	if (pmod->opt & OPT_E) {
 	    return N_("Duration (exponential)");
+	} else if (pmod->opt & OPT_L) {
+	    return N_("Duration (log-logistic)");
 	} else {
 	    return N_("Duration (Weibull)");
 	}	

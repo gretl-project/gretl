@@ -29,7 +29,8 @@ typedef struct duration_info_ duration_info;
 
 enum {
     DUR_WEIBULL,
-    DUR_EXPON
+    DUR_EXPON,
+    DUR_LOGLOG
 };
 
 enum {
@@ -125,9 +126,15 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
     }
 
     if (opt & OPT_E) {
+	/* exponential */
 	dinfo->dist = DUR_EXPON;
 	np = dinfo->npar = k;
+    } else if (opt & OPT_L) {
+	/* log-logistic */
+	dinfo->dist = DUR_LOGLOG;
+	np = dinfo->npar = k + 1;
     } else {
+	/* Weibull */
 	dinfo->dist = DUR_WEIBULL;
 	np = dinfo->npar = k + 1;
     }
@@ -159,6 +166,8 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 	return E_ALLOC;
     }
 
+    /* transcribe data into matrix form */
+
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (na(pmod->uhat[t])) {
@@ -182,7 +191,7 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
     err = duration_estimates_init(dinfo);
 
     if (!err) {
-	if (dinfo->dist == DUR_WEIBULL) {
+	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_LOGLOG) {
 	    dinfo->theta[k] = 1.0;
 	}
 	dinfo->ll = NADBL;
@@ -196,6 +205,10 @@ static void duration_update_Xb (duration_info *dinfo, const double *theta)
 {
     int j;
 
+    if (theta == NULL) {
+	theta = dinfo->theta;
+    }
+
     for (j=0; j<dinfo->k; j++) {
 	dinfo->beta->val[j] = theta[j];
     }
@@ -205,6 +218,11 @@ static void duration_update_Xb (duration_info *dinfo, const double *theta)
 
 #define uncensored(d,i) (d->cens == NULL || d->cens->val[i] == 0)
 
+/* The approach taken here to the loglikelihood and score for duration
+   models is that of Kalbfleisch and Prentice: see their Statistical
+   Analysis of Failure Time Data, 2e (Wiley, 2002), pp. 68-70.
+*/
+
 static double duration_loglik (const double *theta, void *data)
 {
     duration_info *dinfo = (duration_info *) data;
@@ -212,9 +230,10 @@ static double duration_loglik (const double *theta, void *data)
     double *Xb = dinfo->Xb->val;
     double *logt = dinfo->logt->val;
     double wi, s = 1.0, lns = 0.0;
+    double l1ew = 0.0;
     int i;
 
-    if (dinfo->dist == DUR_WEIBULL) {
+    if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_LOGLOG) {
 	s = theta[dinfo->k];
 	if (s <= 0) {
 	    return NADBL;
@@ -229,9 +248,20 @@ static double duration_loglik (const double *theta, void *data)
 
     for (i=0; i<dinfo->n; i++) {
 	wi = (logt[i] - Xb[i]) / s;
-	ll[i] = -exp(wi);
+	/* survival */
+	if (dinfo->dist == DUR_LOGLOG) {
+	    l1ew = log(1 + exp(wi));
+	    ll[i] = -l1ew;
+	} else {
+	    ll[i] = -exp(wi);
+	}
 	if (uncensored(dinfo, i)) {
-	    ll[i] += wi - lns;
+	    /* hazard */
+	    if (dinfo->dist == DUR_LOGLOG) {
+		ll[i] += wi - l1ew - lns;
+	    } else {
+		ll[i] += wi - lns;
+	    }
 	} 
 	dinfo->ll += ll[i];
     }
@@ -249,14 +279,14 @@ static int duration_score (double *theta, double *g, int np,
     duration_info *dinfo = (duration_info *) data;
     const double *logt = dinfo->logt->val;
     const double *Xb = dinfo->Xb->val;
-    double wi, xij, gij, s = 1.0;
-    int i, j, err = 0;
+    double wi, ewi, ai, xij, gij, s = 1.0;
+    int i, j, di, err = 0;
 
     if (dinfo->flags == DOING_HESSIAN) {
 	duration_update_Xb(dinfo, theta);
     }
 
-    if (dinfo->dist == DUR_WEIBULL) {
+    if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_LOGLOG) {
 	s = theta[dinfo->k];
     } 
 
@@ -267,24 +297,24 @@ static int duration_score (double *theta, double *g, int np,
     }  
 
     for (i=0; i<dinfo->n; i++) {
+	di = uncensored(dinfo, i);
 	wi = (logt[i] - Xb[i]) / s;
+	ewi = exp(wi);
+	if (dinfo->dist == DUR_LOGLOG) {
+	    ai = -di + (1 + di) * ewi / (1 + ewi);
+	} else {
+	    ai = ewi - di;
+	}
 	for (j=0; j<np; j++) {
 	    if (j < dinfo->k) {
-		/* survival */
+		/* covariates */
 		xij = gretl_matrix_get(dinfo->X, i, j);
-		gij = -exp(wi) * (-xij/s);
-		if (uncensored(dinfo, i)) {
-		    /* hazard */
-		    gij += -xij/s;
-		}
+		gij = xij * ai;
 	    } else {
-		/* survival */
-		gij = -exp(wi) * (-wi/s);
-		if (uncensored(dinfo, i)) {
-		    /* hazard */
-		    gij += -wi/s - 1/s;
-		}
+		/* scale */
+		gij = wi * ai - di;
 	    }
+	    gij /= s;
 	    gretl_matrix_set(dinfo->G, i, j, gij);
 	    if (g != NULL) {
 		g[j] += gij;
@@ -382,24 +412,11 @@ static gretl_matrix *duration_nhessian (duration_info *dinfo, int *err)
 
 static int duration_OPG_vcv (MODEL *pmod, duration_info *dinfo)
 {
-    gretl_matrix *GG = NULL;
-    int err = 0;
+    gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
+			      dinfo->G, GRETL_MOD_NONE,
+			      dinfo->V, GRETL_MOD_NONE);
 
-    GG = gretl_matrix_alloc(dinfo->npar, dinfo->npar);
-    if (GG == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err) {
-	gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
-				  dinfo->G, GRETL_MOD_NONE,
-				  dinfo->V, GRETL_MOD_NONE);
-	err = gretl_invert_symmetric_matrix(dinfo->V);
-    }
-
-    gretl_matrix_free(GG);
-
-    return err;
+    return gretl_invert_symmetric_matrix(dinfo->V);
 }
 
 /* QML sandwich VCV */
@@ -446,21 +463,58 @@ static int duration_hessian_vcv (MODEL *pmod, duration_info *dinfo)
     return err;
 }
 
+static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
+				      const double **Z)
+{
+    const double *y = Z[pmod->list[1]];
+    double xij, Xbi, G = 1.0;
+    int np = dinfo->npar;
+    int i, j, t;
+
+    if (dinfo->dist == DUR_WEIBULL) {
+	G = gamma_function(1 + dinfo->theta[np-1]);
+    } else if (dinfo->dist == DUR_EXPON) {
+	G = gamma_function(2.0);
+    }    
+
+    /* FIXME below, I think we need generalized residuals */
+
+    i = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->yhat[t])) {
+	    continue;
+	}
+	Xbi = 0.0;
+	for (j=0; j<dinfo->k; j++) {
+	    xij = gretl_matrix_get(dinfo->X, i, j);
+	    Xbi += pmod->coeff[j] * xij;
+	}
+	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
+	    pmod->yhat[t] = exp(-Xbi) * G;
+	    pmod->uhat[t] = y[t] - pmod->yhat[t];
+	} else if (dinfo->dist == DUR_LOGLOG) {
+	    pmod->yhat[t] = exp(Xbi);
+	    pmod->uhat[t] = y[t] - pmod->yhat[t];
+	}
+	i++;
+    }
+}
+
 static int 
 transcribe_duration_results (MODEL *pmod, duration_info *dinfo, 
 			     const double **Z, const DATAINFO *pdinfo, 
 			     int fncount, int grcount,
 			     int censvar, gretlopt opt)
 {
-    const double *y = Z[pmod->list[1]];
-    double Et_mult = 1.0;
     int np = dinfo->npar;
-    int i, j, t, err = 0;
+    int j, v, err = 0;
 
     pmod->ci = DURATION;
 
     if (dinfo->dist == DUR_EXPON) {
 	pmod->opt |= OPT_E;
+    } else if (dinfo->dist == DUR_LOGLOG) {
+	pmod->opt |= OPT_L;
     }
 
     if (censvar > 0) {
@@ -470,39 +524,17 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     gretl_model_set_int(pmod, "fncount", fncount);
     gretl_model_set_int(pmod, "grcount", grcount);
 
-    if (dinfo->dist == DUR_WEIBULL) {
-	Et_mult = gamma_function(dinfo->theta[np-1] + 1);
-    } else if (dinfo->dist == DUR_EXPON) {
-	Et_mult = gamma_function(2.0);
-    }
-
-    i = 0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->yhat[t])) {
-	    if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_WEIBULL) {
-		pmod->yhat[t] = exp(dinfo->Xb->val[i]);
-		pmod->yhat[t] *= Et_mult;
-		/* FIXME generalized residual */
-		pmod->uhat[t] = y[t] - pmod->yhat[t];
-	    } else {
-		/* FIXME other distributions */
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
-	    }
-	    i++;
-	}
-    }
-
     if (!err) {
 	err = gretl_model_allocate_params(pmod, np);
 	if (!err) {
-	    int v;
-
 	    for (j=0; j<dinfo->k; j++) {
 		v = pmod->list[j+2];
 		strcpy(pmod->params[j], pdinfo->varname[v]);
 	    }
 	    if (dinfo->dist == DUR_WEIBULL) {
 		strcpy(pmod->params[np-1], "alpha");
+	    } else if (dinfo->dist == DUR_LOGLOG) {
+		strcpy(pmod->params[np-1], "gamma");
 	    }
 	}
     }
@@ -527,6 +559,8 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     if (!err && dinfo->dist == DUR_WEIBULL) {
 	err = duration_vcv_transform(dinfo);
 	pmod->coeff[dinfo->k] = 1 / dinfo->theta[dinfo->k];
+    } else if (dinfo->dist == DUR_LOGLOG) {
+	pmod->coeff[dinfo->k] = dinfo->theta[dinfo->k];
     }
 
     if (!err) {
@@ -539,14 +573,17 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	}
     }	
 
-    for (j=0; j<dinfo->k; j++) {
-	pmod->coeff[j] = -pmod->coeff[j];
-	if (dinfo->dist == DUR_WEIBULL) {
-	    pmod->coeff[j] /= dinfo->theta[dinfo->k];
+    if (dinfo->dist != DUR_LOGLOG) {
+	for (j=0; j<dinfo->k; j++) {
+	    pmod->coeff[j] = -pmod->coeff[j];
+	    if (dinfo->dist == DUR_WEIBULL) {
+		pmod->coeff[j] /= dinfo->theta[dinfo->k];
+	    }
 	}
     }
 
     if (!err) {
+	duration_set_predictions(pmod, dinfo, Z);
 	pmod->lnL = dinfo->ll;
 	mle_criteria(pmod, 0); 
 	/* mask invalid statistics (FIXME chisq?) */

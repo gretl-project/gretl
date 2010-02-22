@@ -318,25 +318,11 @@ static gretl_matrix *negbin_nhessian (negbin_info *nbinfo, int *err)
 
 static int negbin_OPG_vcv (MODEL *pmod, negbin_info *nbinfo)
 {
-    gretl_matrix *GG = NULL;
-    int np = nbinfo->k + 1;
-    int err = 0;
+    gretl_matrix_multiply_mod(nbinfo->G, GRETL_MOD_TRANSPOSE,
+			      nbinfo->G, GRETL_MOD_NONE,
+			      nbinfo->V, GRETL_MOD_NONE);
 
-    GG = gretl_matrix_alloc(np, np);
-    if (GG == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err) {
-	gretl_matrix_multiply_mod(nbinfo->G, GRETL_MOD_TRANSPOSE,
-				  nbinfo->G, GRETL_MOD_NONE,
-				  nbinfo->V, GRETL_MOD_NONE);
-	err = gretl_invert_symmetric_matrix(nbinfo->V);
-    }
-    
-    gretl_matrix_free(GG);
-
-    return err;
+    return gretl_invert_symmetric_matrix(nbinfo->V);
 }
 
 /* QML sandwich VCV */
