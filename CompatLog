@@ -1,11 +1,16 @@
 version 1.8.8, in progress
 
+The "criteria" command has been removed.  A small function
+package is available on the gretl server that replaces this
+command.
+
 The --continue option for the commands arma, garch, mle
 nls and gmm (which allowed continuation of script execution
 in face of an error) is now deprecated in favor of the
 new "catch" prefix, as in "catch arma 2 2 ; y".  For the
 present the --continue option remains an acceptable alias
-for the use of "catch".
+for the use of "catch", but this will be removed at some
+point.
 
 The internal variable "obs" used to get the year in the
 case of annual time series data, but a 1-based index in all

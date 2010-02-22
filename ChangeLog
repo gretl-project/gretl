@@ -27,7 +27,7 @@ version 1.8.8, in progress
   package upload to server
 - Fix bug: double normal cdf did not handle correctly some 
   corner cases
-- Fix bug 2944000
+- Fix bugs 2944000, 2956109
 - Fix font-encoding issues on MS Windows: session-names
   with non-ASCII characters were not appearing in the gretl
   title bar; and the encoding was getting broken between
