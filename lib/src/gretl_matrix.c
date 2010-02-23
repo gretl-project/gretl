@@ -6018,20 +6018,27 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     return err;
 }
 
-/* In the case of symmetric matrices, the lapack functions tend
-   to process only either the upper or lower triangle.  This
-   function "expands" the solution, reconstituting the matrix
-   as symmetric. 
-*/
+/**
+ * gretl_matrix_mirror:
+ * @m: matrix to expand.
+ * @uplo: 'L' or 'U'.
+ * 
+ * If @uplo = 'L', copy the lower triangle of @m into
+ * the upper triangle; or if @uplo = 'U' copy the upper
+ * triangle into the lower, in either case producing a
+ * symmetric result.
+ *
+ * Returns: 0 on success; non-zero error code if @m is
+ * not square.
+ */
 
-static int 
-gretl_symmetric_matrix_expand (gretl_matrix *m, char uplo)
+int gretl_matrix_mirror (gretl_matrix *m, char uplo)
 {
     int i, j, n;
     double x;
 
     if (m->cols != m->rows) {
-	fputs("gretl_symmetric_matrix_expand: input is not square\n",
+	fputs("gretl_matrix_mirror: input is not square\n",
 	      stderr);
 	return 1;
     }
@@ -6244,7 +6251,7 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
 	    fputs("dsytri: matrix is singular\n", stderr);
 	    err = E_SINGULAR;
 	} else {
-	    gretl_symmetric_matrix_expand(a, uplo);
+	    gretl_matrix_mirror(a, uplo);
 	}
     }
 
@@ -6320,7 +6327,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		    " dpotri failed with info = %d\n", (int) info);
 	} else {
-	    gretl_symmetric_matrix_expand(a, uplo);
+	    gretl_matrix_mirror(a, uplo);
 	}
     }
 
@@ -6370,7 +6377,7 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
 	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		    " dpotri failed with info = %d\n", (int) info);
 	} else {
-	    gretl_symmetric_matrix_expand(a, uplo);
+	    gretl_matrix_mirror(a, uplo);
 	}
     }
 
@@ -6453,7 +6460,7 @@ int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
 	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		" dpotri failed with info = %d\n", (int) info);
     } else {
-	gretl_symmetric_matrix_expand(targ, uplo);
+	gretl_matrix_mirror(targ, uplo);
     }
 
     return err;
@@ -6528,7 +6535,7 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
 	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		" dpotri failed with info = %d\n", (int) info);
     } else {
-	gretl_symmetric_matrix_expand(a, uplo);
+	gretl_matrix_mirror(a, uplo);
     }
 
     return err;
@@ -9142,7 +9149,7 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
 	char uplo = 'L';
 
 	dpotri_(&uplo, &ik, XTX->val, &ik, &info);
-	gretl_symmetric_matrix_expand(XTX, uplo);
+	gretl_matrix_mirror(XTX, uplo);
 	*XTXi = XTX;
     } else {
 	gretl_matrix_free(XTX);

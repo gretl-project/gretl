@@ -35,7 +35,7 @@ enum {
 };
 
 enum {
-    DOING_HESSIAN = 1
+    SCORE_UPDATE_XB = 1
 };
 
 struct duration_info_ {
@@ -135,15 +135,11 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 	dinfo->dist = DUR_LOGLOG;
 	np = dinfo->npar = k + 1;
     } else if (opt & OPT_Z) {
-#if 0 /* not ready */
 	/* log-normal */
 	dinfo->dist = DUR_LOGNORM;
 	np = dinfo->npar = k + 1;
-#else
-	return E_NOTIMP;
-#endif
     } else {
-	/* Weibull */
+	/* default: Weibull */
 	dinfo->dist = DUR_WEIBULL;
 	np = dinfo->npar = k + 1;
     }
@@ -175,7 +171,8 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 	return E_ALLOC;
     }
 
-    /* transcribe data into matrix form */
+    /* transcribe data into matrix form, taking the
+       log of the duration measurements */
 
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -232,8 +229,6 @@ static void duration_update_Xb (duration_info *dinfo, const double *theta)
    Analysis of Failure Time Data, 2e (Wiley, 2002), pp. 68-70.
 */
 
-/* lognormal is not right yet */
-
 static double duration_loglik (const double *theta, void *data)
 {
     duration_info *dinfo = (duration_info *) data;
@@ -268,11 +263,14 @@ static double duration_loglik (const double *theta, void *data)
 	    }
 	} else if (dinfo->dist == DUR_LOGNORM) {
 	    if (di) {
-		ll[i] = -lns - logt[i] + log(normal_pdf(wi));
+		/* density */
+		ll[i] = -lns + log_normal_pdf(wi);
 	    } else {
+		/* survivor */
 		ll[i] = log(normal_cdf(-wi));
 	    }
 	} else {
+	    /* Weibull, exponential */
 	    ll[i] = -exp(wi);
 	    if (di) {
 		ll[i] += wi - lns;
@@ -288,11 +286,11 @@ static double duration_loglik (const double *theta, void *data)
     return dinfo->ll;
 }
 
-static double norm_lambda (double z, double s, double lnt)
-{
-    double t = exp(lnt);
+/* normal hazard: ratio of density to survivor function */
 
-    return normal_pdf(z) / (s * t * normal_cdf(-z));
+static double normal_h (double w)
+{
+    return normal_pdf(w) / normal_cdf(-w);
 }
 
 static int duration_score (double *theta, double *g, int np, 
@@ -304,7 +302,7 @@ static int duration_score (double *theta, double *g, int np,
     double wi, ewi, ai, xij, gij, s = 1.0;
     int i, j, di, err = 0;
 
-    if (dinfo->flags == DOING_HESSIAN) {
+    if (dinfo->flags == SCORE_UPDATE_XB) {
 	duration_update_Xb(dinfo, theta);
     }
 
@@ -325,7 +323,7 @@ static int duration_score (double *theta, double *g, int np,
 	if (dinfo->dist == DUR_LOGLOG) {
 	    ai = -di + (1 + di) * ewi / (1 + ewi);
 	} else if (dinfo->dist == DUR_LOGNORM) {
-	    ai = di ? wi : norm_lambda(wi, s, logt[i]);
+	    ai = di ? wi : normal_h(wi);
 	} else {
 	    ai = ewi - di;
 	}
@@ -349,6 +347,88 @@ static int duration_score (double *theta, double *g, int np,
     return err;
 }
 
+#define matrix_plus(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
+
+/* Analytical Hessian: see Kalbfleisch and Prentice, 2002, pp. 69-70 */
+
+static gretl_matrix *duration_hessian (duration_info *dinfo, int *err)
+{
+    gretl_matrix *H;
+    int np = dinfo->npar;
+    const double *logt = dinfo->logt->val;
+    const double *Xb = dinfo->Xb->val;
+    double s, s2, Ai, wi, ewi, hwi;
+    double xij, xik, hjk;
+    int i, j, k, di;
+    
+    H = gretl_zero_matrix_new(np, np);
+    if (H == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (dinfo->dist == DUR_EXPON) {
+	s2 = s = 1;
+    } else {
+	s = dinfo->theta[np - 1];
+	s2 = s * s;
+    }
+
+    for (i=0; i<dinfo->n; i++) {
+	di = uncensored(dinfo, i);
+	wi = (logt[i] - Xb[i]) / s;
+	ewi = exp(wi);
+
+	if (dinfo->dist == DUR_LOGLOG) {
+	    Ai = (1 + di) * ewi / ((1 + ewi) * (1 + ewi));
+	} else if (dinfo->dist == DUR_LOGNORM) {
+	    if (di) {
+		Ai = 1;
+	    } else {
+		hwi = normal_h(wi);
+		Ai = hwi * (hwi - wi);
+	    }
+	} else {
+	    /* Weibull */
+	    Ai = ewi;
+	}
+
+	for (j=0; j<np; j++) {
+	    if (j < dinfo->k) {
+		/* covariate coeffs cross-block */
+		xij = gretl_matrix_get(dinfo->X, i, j);
+		for (k=0; k<=j; k++) {
+		    xik = gretl_matrix_get(dinfo->X, i, k);
+		    hjk = xij * xik * Ai / s2;
+		    matrix_plus(H, j, k, hjk);
+		}
+		if (dinfo->dist != DUR_EXPON) {
+		    /* coeff j and scale */
+		    hjk = xij * wi * Ai / s2;
+		    hjk += gretl_matrix_get(dinfo->G, i, j) / s;
+		    matrix_plus(H, np - 1, j, hjk);
+		}
+	    } else {
+		/* scale */
+		hjk = (wi * wi * Ai + di) / s2;
+		hjk += (2/s) * gretl_matrix_get(dinfo->G, i, j) / s;
+		matrix_plus(H, j, j, hjk);
+	    }
+	}
+    }
+
+    /* fill out upper triangle and invert */
+    gretl_matrix_mirror(H, 'L');
+    *err = gretl_invert_symmetric_matrix(H);
+
+    if (*err) {
+	gretl_matrix_free(H);
+	H = NULL;
+    }
+
+    return H;
+}
+
 /* calculate the OPG matrix at the starting point and use 
    its inverse (if any) as initial curvature matrix for BFGS
 */
@@ -358,7 +438,7 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
     gretl_matrix *H = NULL;
     int err;
 
-    dinfo->flags = DOING_HESSIAN;
+    dinfo->flags = SCORE_UPDATE_XB;
     err = duration_score(dinfo->theta, NULL, dinfo->npar, 
 			 NULL, dinfo);
     dinfo->flags = 0;
@@ -371,11 +451,11 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
 }
 
 /* Given the change of variables that we use for easy computation of
-   the Weibull/exponential loglikelihood and score, we need to use the
+   the Weibull loglikelihood and score, we need to use the
    appropriate Jacobian to get the covariance matrix right.  
 */
 
-static int duration_vcv_transform (duration_info *dinfo)
+static int weibull_vcv_transform (duration_info *dinfo)
 {
     gretl_matrix *J = NULL;
     gretl_matrix *JVJ = NULL;
@@ -418,20 +498,6 @@ static int duration_vcv_transform (duration_info *dinfo)
     return 0;
 }
 
-/* numerical Hessian using the analytical score */
-
-static gretl_matrix *duration_nhessian (duration_info *dinfo, int *err)
-{
-    gretl_matrix *H;
-
-    dinfo->flags = DOING_HESSIAN;
-    H = hessian_from_score(dinfo->theta, dinfo->npar, duration_score, 
-			   dinfo, err);
-    dinfo->flags = DOING_HESSIAN;
-
-    return H;
-}
-
 /* OPG vcv matrix */
 
 static int duration_OPG_vcv (MODEL *pmod, duration_info *dinfo)
@@ -460,7 +526,7 @@ static int duration_robust_vcv (MODEL *pmod, duration_info *dinfo)
 			      dinfo->G, GRETL_MOD_NONE,
 			      GG, GRETL_MOD_NONE);
 
-    H = duration_nhessian(dinfo, &err);
+    H = duration_hessian(dinfo, &err);
 
     if (!err) {
 	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
@@ -478,7 +544,7 @@ static int duration_hessian_vcv (MODEL *pmod, duration_info *dinfo)
     gretl_matrix *H;
     int err = 0;
 
-    H = duration_nhessian(dinfo, &err);
+    H = duration_hessian(dinfo, &err);
 
     if (!err) {
 	gretl_matrix_replace(&dinfo->V, H);
@@ -491,7 +557,7 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 				      const double **Z)
 {
     const double *y = Z[pmod->list[1]];
-    double xij, Xbi, G = 1.0;
+    double a, xij, Xbi, G = 1.0;
     int np = dinfo->npar;
     int i, j, t;
 
@@ -501,7 +567,7 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	G = gamma_function(2.0);
     }    
 
-    /* FIXME below, I think we need generalized residuals */
+    /* FIXME below, we need generalized residuals */
 
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -515,7 +581,13 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	}
 	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
 	    pmod->yhat[t] = exp(-Xbi) * G;
-	    pmod->uhat[t] = y[t] - pmod->yhat[t];
+	    if (dinfo->dist == DUR_WEIBULL) {
+		a = pmod->coeff[np - 1];
+		Xbi = dinfo->Xb->val[i];
+		pmod->uhat[t] = pow(exp(-Xbi), a);
+	    } else {
+		pmod->uhat[t] = exp(-Xbi);
+	    }
 	} else {
 	    pmod->yhat[t] = exp(Xbi);
 	    pmod->uhat[t] = y[t] - pmod->yhat[t];
@@ -585,7 +657,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     }
 
     if (!err && dinfo->dist == DUR_WEIBULL) {
-	err = duration_vcv_transform(dinfo);
+	err = weibull_vcv_transform(dinfo);
 	pmod->coeff[dinfo->k] = 1 / dinfo->theta[dinfo->k];
     } else if (dinfo->dist != DUR_EXPON) {
 	pmod->coeff[dinfo->k] = dinfo->theta[dinfo->k];

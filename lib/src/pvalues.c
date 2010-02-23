@@ -1049,7 +1049,7 @@ double normal_pdf (double x)
 
 double log_normal_pdf (double x)
 {
-    return (x * x) / 2 - LN_SQRT_2_PI;
+    return -0.5 * x * x - LN_SQRT_2_PI;
 }
 
 /**
