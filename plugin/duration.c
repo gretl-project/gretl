@@ -557,17 +557,29 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 				      const double **Z)
 {
     const double *y = Z[pmod->list[1]];
-    double a, xij, Xbi, G = 1.0;
+    const double *logt = dinfo->logt->val;
+    double xij, G = 1.0;
+    double Xbi, St;
     int np = dinfo->npar;
+    double s = 1.0;
     int i, j, t;
 
+    if (dinfo->dist != DUR_EXPON) {
+	s = dinfo->theta[np-1];
+    }
+
     if (dinfo->dist == DUR_WEIBULL) {
-	G = gamma_function(1 + dinfo->theta[np-1]);
+	G = gamma_function(1 + s);
     } else if (dinfo->dist == DUR_EXPON) {
 	G = gamma_function(2.0);
-    }    
+    }   
 
-    /* FIXME below, we need generalized residuals */
+    /* Below: WTF? I'm struggling to figure out the correct
+       expressions for the conditional mean durations (yhat)
+       and generalized residuals, which I gather are supposed
+       to be -log S(t, X, \theta). The material I've read on
+       this is very confusing 8-/.
+    */
 
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -582,15 +594,16 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
 	    pmod->yhat[t] = exp(-Xbi) * G;
 	    if (dinfo->dist == DUR_WEIBULL) {
-		a = pmod->coeff[np - 1];
-		Xbi = dinfo->Xb->val[i];
-		pmod->uhat[t] = pow(exp(-Xbi), a);
+		pmod->uhat[t] = pow(exp(Xbi) * y[t], 1/s);
 	    } else {
-		pmod->uhat[t] = exp(-Xbi);
+		pmod->uhat[t] = exp(Xbi) * y[t];
 	    }
-	} else {
+	} else if (dinfo->dist == DUR_LOGNORM) {
 	    pmod->yhat[t] = exp(Xbi);
-	    pmod->uhat[t] = y[t] - pmod->yhat[t];
+	    St = normal_cdf(-(logt[i] - Xbi) / s);
+	    pmod->uhat[t] = -log(St);
+	} else {
+	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
 	}
 	i++;
     }
