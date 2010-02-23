@@ -121,6 +121,7 @@ struct gretl_option gretl_opts[] = {
     { DUMMIFY,  OPT_L, "drop-last", 0 },
     { DURATION, OPT_E, "exponential", 0 },
     { DURATION, OPT_L, "loglogistic", 0 },
+    { DURATION, OPT_Z, "lognormal", 0 },
     { DURATION, OPT_G, "opg", 0 },
     { DURATION, OPT_R, "robust", 0 },
     { DURATION, OPT_V, "verbose", 0 },

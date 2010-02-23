@@ -30,7 +30,8 @@ typedef struct duration_info_ duration_info;
 enum {
     DUR_WEIBULL,
     DUR_EXPON,
-    DUR_LOGLOG
+    DUR_LOGLOG,
+    DUR_LOGNORM
 };
 
 enum {
@@ -133,6 +134,14 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 	/* log-logistic */
 	dinfo->dist = DUR_LOGLOG;
 	np = dinfo->npar = k + 1;
+    } else if (opt & OPT_Z) {
+#if 0 /* not ready */
+	/* log-normal */
+	dinfo->dist = DUR_LOGNORM;
+	np = dinfo->npar = k + 1;
+#else
+	return E_NOTIMP;
+#endif
     } else {
 	/* Weibull */
 	dinfo->dist = DUR_WEIBULL;
@@ -191,7 +200,7 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
     err = duration_estimates_init(dinfo);
 
     if (!err) {
-	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_LOGLOG) {
+	if (dinfo->dist != DUR_EXPON) {
 	    dinfo->theta[k] = 1.0;
 	}
 	dinfo->ll = NADBL;
@@ -223,6 +232,8 @@ static void duration_update_Xb (duration_info *dinfo, const double *theta)
    Analysis of Failure Time Data, 2e (Wiley, 2002), pp. 68-70.
 */
 
+/* lognormal is not right yet */
+
 static double duration_loglik (const double *theta, void *data)
 {
     duration_info *dinfo = (duration_info *) data;
@@ -231,9 +242,9 @@ static double duration_loglik (const double *theta, void *data)
     double *logt = dinfo->logt->val;
     double wi, s = 1.0, lns = 0.0;
     double l1ew = 0.0;
-    int i;
+    int i, di;
 
-    if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_LOGLOG) {
+    if (dinfo->dist != DUR_EXPON) {
 	s = theta[dinfo->k];
 	if (s <= 0) {
 	    return NADBL;
@@ -247,22 +258,26 @@ static double duration_loglik (const double *theta, void *data)
     errno = 0;
 
     for (i=0; i<dinfo->n; i++) {
+	di = uncensored(dinfo, i);
 	wi = (logt[i] - Xb[i]) / s;
-	/* survival */
 	if (dinfo->dist == DUR_LOGLOG) {
 	    l1ew = log(1 + exp(wi));
 	    ll[i] = -l1ew;
+	    if (di) {
+		ll[i] += wi - l1ew - lns;
+	    }
+	} else if (dinfo->dist == DUR_LOGNORM) {
+	    if (di) {
+		ll[i] = -lns - logt[i] + log(normal_pdf(wi));
+	    } else {
+		ll[i] = log(normal_cdf(-wi));
+	    }
 	} else {
 	    ll[i] = -exp(wi);
-	}
-	if (uncensored(dinfo, i)) {
-	    /* hazard */
-	    if (dinfo->dist == DUR_LOGLOG) {
-		ll[i] += wi - l1ew - lns;
-	    } else {
+	    if (di) {
 		ll[i] += wi - lns;
 	    }
-	} 
+	}	
 	dinfo->ll += ll[i];
     }
 
@@ -271,6 +286,13 @@ static double duration_loglik (const double *theta, void *data)
     }
 
     return dinfo->ll;
+}
+
+static double norm_lambda (double z, double s, double lnt)
+{
+    double t = exp(lnt);
+
+    return normal_pdf(z) / (s * t * normal_cdf(-z));
 }
 
 static int duration_score (double *theta, double *g, int np, 
@@ -286,7 +308,7 @@ static int duration_score (double *theta, double *g, int np,
 	duration_update_Xb(dinfo, theta);
     }
 
-    if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_LOGLOG) {
+    if (dinfo->dist != DUR_EXPON) {
 	s = theta[dinfo->k];
     } 
 
@@ -302,6 +324,8 @@ static int duration_score (double *theta, double *g, int np,
 	ewi = exp(wi);
 	if (dinfo->dist == DUR_LOGLOG) {
 	    ai = -di + (1 + di) * ewi / (1 + ewi);
+	} else if (dinfo->dist == DUR_LOGNORM) {
+	    ai = di ? wi : norm_lambda(wi, s, logt[i]);
 	} else {
 	    ai = ewi - di;
 	}
@@ -492,7 +516,7 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
 	    pmod->yhat[t] = exp(-Xbi) * G;
 	    pmod->uhat[t] = y[t] - pmod->yhat[t];
-	} else if (dinfo->dist == DUR_LOGLOG) {
+	} else {
 	    pmod->yhat[t] = exp(Xbi);
 	    pmod->uhat[t] = y[t] - pmod->yhat[t];
 	}
@@ -515,6 +539,8 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	pmod->opt |= OPT_E;
     } else if (dinfo->dist == DUR_LOGLOG) {
 	pmod->opt |= OPT_L;
+    } else if (dinfo->dist == DUR_LOGNORM) {
+	pmod->opt |= OPT_Z;
     }
 
     if (censvar > 0) {
@@ -535,6 +561,8 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 		strcpy(pmod->params[np-1], "alpha");
 	    } else if (dinfo->dist == DUR_LOGLOG) {
 		strcpy(pmod->params[np-1], "gamma");
+	    } else if (dinfo->dist == DUR_LOGNORM) {
+		strcpy(pmod->params[np-1], "sigma");
 	    }
 	}
     }
@@ -559,7 +587,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     if (!err && dinfo->dist == DUR_WEIBULL) {
 	err = duration_vcv_transform(dinfo);
 	pmod->coeff[dinfo->k] = 1 / dinfo->theta[dinfo->k];
-    } else if (dinfo->dist == DUR_LOGLOG) {
+    } else if (dinfo->dist != DUR_EXPON) {
 	pmod->coeff[dinfo->k] = dinfo->theta[dinfo->k];
     }
 
@@ -573,7 +601,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	}
     }	
 
-    if (dinfo->dist != DUR_LOGLOG) {
+    if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
 	for (j=0; j<dinfo->k; j++) {
 	    pmod->coeff[j] = -pmod->coeff[j];
 	    if (dinfo->dist == DUR_WEIBULL) {
