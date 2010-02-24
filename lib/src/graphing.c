@@ -1489,6 +1489,12 @@ int graph_written_to_file (void)
     return graph_file_written;
 }
 
+static void remove_old_png (char *buf)
+{
+    sprintf(buf, "%sgretltmp.png", gretl_dotdir());
+    remove(buf);
+}
+
 /**
  * gnuplot_make_graph:
  *
@@ -1504,7 +1510,7 @@ int graph_written_to_file (void)
 
 int gnuplot_make_graph (void)
 {
-    char plotcmd[MAXLEN];
+    char buf[MAXLEN];
     const char *fname = gretl_plotfile();
     int gui = gretl_in_gui_mode();
     int fmt, err = 0;
@@ -1524,36 +1530,38 @@ int gnuplot_make_graph (void)
 			       "on this system"));
 	    return E_EXTERNAL;
 	}
-    } else if (fmt == GP_TERM_NONE) {
-	/* GUI graph? */
-	if (gui && gnuplot_has_bbox()) {
+    } else if (fmt == GP_TERM_NONE && gui) {
+	if (gnuplot_has_bbox()) {
 	    do_plot_bounding_box();
 	}
+	/* ensure we don't get stale output */
+	remove_old_png(buf);
     }
 
 #ifdef WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
+    sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
+    err = winfork(buf, NULL, SW_SHOWMINIMIZED, 0);
 #else
     if (gui || fmt) {
-	sprintf(plotcmd, "%s \"%s\"", gretl_gnuplot_path(), fname);
+	sprintf(buf, "%s \"%s\"", gretl_gnuplot_path(), fname);
     } else {
 	/* gretlcli, interactive */
-	sprintf(plotcmd, "%s -persist \"%s\"", gretl_gnuplot_path(), fname);
+	sprintf(buf, "%s -persist \"%s\"", gretl_gnuplot_path(), fname);
     }
-    err = gretl_spawn(plotcmd);  
+    err = gretl_spawn(buf);  
 #endif
 
 #if GP_DEBUG
     fprintf(stderr, "gnuplot_make_graph:\n"
-	    " plotcmd='%s', err = %d\n", plotcmd, err);
+	    " command='%s', err = %d\n", buf, err);
 #endif
 
     if (fmt) {
-	/* remove the temporary input file? */
 	if (err) {
+	    /* leave the bad file for diagnostic purposes */
 	    fprintf(stderr, "err = %d: bad file is '%s'\n", err, fname);
 	} else {
+	    /* remove the temporary input file */
 	    remove(fname);
 	    set_gretl_plotfile(gnuplot_outname);
 	    graph_file_written = 1;
