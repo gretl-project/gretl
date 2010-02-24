@@ -2474,6 +2474,10 @@
       </para>
     </description>
 
+    <gui-access>
+      <menu-path>/Model/Nonlinear models/Duration data...</menu-path>
+    </gui-access>
+
   </command>  
 
   <command name="elif" section="Programming" label="Flow control" context="cli">

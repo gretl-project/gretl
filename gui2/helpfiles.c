@@ -1073,11 +1073,31 @@ void context_help (GtkWidget *widget, gpointer data)
     int role = GUI_HELP;
 
     idx = gui_ci_to_index(idx);
+
+    /* try for GUI help first */
     pos = help_pos_from_index(idx, role);
 
-    if (pos < 0 && translated_helpfile) {
+    if (pos <= 0 && translated_helpfile) {
+	/* English GUI help? */
 	role = GUI_HELP_EN;
 	pos = help_pos_from_index(idx, role);
+    }
+
+    if (pos <= 0) {
+	/* CLI help? */
+	role = CLI_HELP;
+	pos = help_pos_from_index(idx, role);
+    }
+
+    if (pos <= 0 && translated_helpfile) {
+	/* English CLI help? */
+	role = CLI_HELP_EN;
+	pos = help_pos_from_index(idx, role);
+    }
+
+    if (pos <= 0) {
+	warnbox(_("Sorry, no help is available"));
+	return;
     }
 
 #if HDEBUG
