@@ -251,6 +251,7 @@
 	<menuitem action="tobit"/>
 	<menuitem action="heckit"/>
 	<menuitem action="countmod"/>
+	<menuitem action="duration"/>
 	<menuitem action="logistic"/>
 	<menuitem action="nls"/>
 	<menuitem action="intreg"/>

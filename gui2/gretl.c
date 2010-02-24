@@ -1520,6 +1520,7 @@ GtkActionEntry main_entries[] = {
     { "tobit", NULL, N_("To_bit..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "heckit", NULL, N_("_Heckit..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "countmod", NULL, N_("_Count data..."), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "duration", NULL, N_("_Duration data..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "logistic", NULL, N_("Lo_gistic..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "nls", NULL, N_("_Nonlinear Least Squares..."), NULL, NULL, G_CALLBACK(gretl_callback) }, 
     { "intreg", NULL, N_("_Interval regression..."), NULL, NULL, G_CALLBACK(model_callback) }, 

@@ -2430,8 +2430,16 @@
           <effect>use exponential distribution</effect>
         </option>
         <option>
+          <flag>--loglogistic</flag>
+          <effect>use log-logistic distribution</effect>
+        </option>
+        <option>
+          <flag>--lognormal</flag>
+          <effect>use log-normal distribution</effect>
+        </option>
+        <option>
           <flag>--robust</flag>
-          <effect>robust standard errors</effect>
+          <effect>robust (QML) standard errors</effect>
         </option>	
         <option>
           <flag>--vcv</flag>
@@ -2453,8 +2461,9 @@
 	Estimates a duration model: the dependent variable (which must be
 	positive) represents the duration of some state of affairs, for 
 	example the length of spells of unemployment for a cross-section
-	of respondents. At present the only choices of distribution
-	are the Weibull (the default) or the exponential.
+	of respondents. By default the Weibull distribution is used but
+	the exponential, log-logistic and log-normal distributions are
+	also available.
       </para>
       <para>
 	If some of the duration measurements are right-censored (&eg; an

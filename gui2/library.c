@@ -3425,6 +3425,12 @@ static int real_do_model (int action)
 	err = model_output(pmod, prn);
 	break;
 
+    case DURATION:
+	*pmod = duration_model(libcmd.list, &Z, datainfo, libcmd.opt,
+			       prn);
+	err = model_output(pmod, prn);
+	break;
+
     case ARMA:
 	*pmod = arma(libcmd.list, libcmd.param,
 		     (const double **) Z, datainfo,

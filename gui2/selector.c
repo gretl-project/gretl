@@ -135,6 +135,7 @@ struct _selector {
                          c == PANEL_WLS || \
                          c == PANEL_B || \
 			 c == COUNTMOD || \
+			 c == DURATION || \
                          c == PROBIT || \
                          c == OPROBIT || \
 	                 c == QUANTREG || \
@@ -209,6 +210,7 @@ static int arma_hessian = 1;
 static int arima_xdiff = 1;
 static int selvar;
 static int offvar;
+static int censvar;
 static int jrank = 1;
 static int jcase = J_UNREST_CONST;
 static int verbose;
@@ -255,6 +257,7 @@ static int want_combo (selector *sr)
 	    sr->ci == COINT ||
 	    sr->ci == COINT2 ||
 	    sr->ci == COUNTMOD ||
+	    sr->ci == DURATION || 
 	    sr->ci == IV_GMM);
 }
 
@@ -369,6 +372,7 @@ void clear_selector (void)
     default_order = 0;
     selvar = 0;
     offvar = 0;
+    censvar = 0;
     wtvar = 0;
     vartrend = 0;
     varconst = 1;
@@ -604,6 +608,15 @@ void selector_from_model (void *ptr, int ci)
 	    }
 	    sel_ci = COUNTMOD;
 	    offvar = gretl_model_get_int(pmod, "offset_var");
+	} else if (pmod->ci == DURATION) {
+	    if (pmod->opt & OPT_E) {
+		model_opt |= OPT_E;
+	    } else if (pmod->opt & OPT_L) {
+		model_opt |= OPT_L;
+	    } else if (pmod->opt & OPT_Z) {
+		model_opt |= OPT_Z;
+	    } 
+	    censvar = gretl_model_get_int(pmod, "cens_var");
 	} else if (pmod->ci == IVREG) {
 	    free(instlist);
 	    instlist = gretl_model_get_secondary_list(pmod);
@@ -2571,6 +2584,7 @@ static void read_omit_cutoff (selector *sr)
 #define extra_widget_get_int(c) (c == HECKIT ||		\
                                  c == INTREG ||		\
                                  c == COUNTMOD ||	\
+				 c == DURATION ||	\
                                  c == WLS ||		\
                                  THREE_VARS_CODE(c))
 
@@ -2595,7 +2609,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	return;
     }
 
-    if (sr->ci == WLS || sr->ci == COUNTMOD ||
+    if (sr->ci == WLS || sr->ci == COUNTMOD || sr->ci == DURATION ||
 	sr->ci == AR || sr->ci == HECKIT ||
 	sr->ci == INTREG || THREE_VARS_CODE(sr->ci)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
@@ -2618,8 +2632,8 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	    } else if (THREE_VARS_CODE(sr->ci)) { 
 		warnbox(("You must select a Y-axis variable"));
 		sr->error = 1;
-	    } else if (sr->ci == COUNTMOD) {
-		/* the 'extra' (offset) field is optional */
+	    } else if (sr->ci == COUNTMOD || sr->ci == DURATION) {
+		/* empty 'extra' field is OK */
 		return;
 	    }
 	}
@@ -2649,6 +2663,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->ci == COUNTMOD) {
 	sprintf(endbit, " ; %d", k);
 	offvar = k;
+    } else if (sr->ci == DURATION) {
+	sprintf(endbit, " ; %d", k);
+	censvar = k;
     } else if (sr->ci == HECKIT) {
 	sprintf(endbit, " %d", k);
 	selvar = k;
@@ -3038,6 +3055,8 @@ static char *est_str (int cmdnum)
 	return N_("Logistic");
     case COUNTMOD:
 	return N_("Count data model");
+    case DURATION:
+	return N_("Duration model");
     case PANEL:
 	return N_("Panel model");
     case PANEL_WLS:
@@ -3093,6 +3112,8 @@ static char *extra_string (int ci)
 	return N_("Weight variable");
     case COUNTMOD:
 	return N_("Offset variable");
+    case DURATION:
+	return N_("Censoring variable");
     case HECKIT:
 	return N_("Selection variable");
     case AR:
@@ -3184,6 +3205,63 @@ static void build_count_data_popdown (selector *sr)
     } else if (model_opt & OPT_N) {
 	sr->opts |= OPT_N;
 	gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
+    } else {
+	gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    }
+}
+
+static gint set_duration_option (GtkComboBox *box, selector *sr)
+{
+    gint i = gtk_combo_box_get_active(box);
+
+    if (i == 0) {
+	/* Weibull */
+	sr->opts &= ~(OPT_E | OPT_L | OPT_Z);
+    } else if (i == 1) {
+	/* Exponential */
+	sr->opts &= ~(OPT_L | OPT_Z);
+	sr->opts |= OPT_E;
+    } else if (i == 2) {
+	/* Log-logistic */
+	sr->opts &= ~(OPT_E | OPT_Z);
+	sr->opts |= OPT_L;
+    } else {
+	/* Log-normal */
+	sr->opts &= ~(OPT_E | OPT_L);
+	sr->opts |= OPT_Z;
+    }	
+
+    return FALSE;
+}
+
+static void build_duration_popdown (selector *sr)
+{
+    GtkWidget *w = gtk_combo_box_new_text();
+    GtkWidget *hbox, *label;
+
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Weibull"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Exponential"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Log-logistic"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Log-normal"));
+
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
+		     G_CALLBACK(set_duration_option), sr);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_("Distribution:"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+
+    if (model_opt & OPT_E) {
+	sr->opts |= OPT_E;
+	gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
+    } else if (model_opt & OPT_L) {
+	sr->opts |= OPT_L;
+	gtk_combo_box_set_active(GTK_COMBO_BOX(w), 2);
+    } else if (model_opt & OPT_Z) {
+	sr->opts |= OPT_Z;
+	gtk_combo_box_set_active(GTK_COMBO_BOX(w), 3);
     } else {
 	gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
     }
@@ -3552,6 +3630,8 @@ static void third_var_box (selector *sr, GtkWidget *vbox)
 					      set_third_var_callback);
 }
 
+/* selector for auxiliary series of some kind */
+
 static void extra_var_box (selector *sr, GtkWidget *vbox)
 {
     int setvar = 0;
@@ -3568,7 +3648,9 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
 	setvar = hivar;
     } else if (sr->ci == COUNTMOD && offvar > 0 && offvar < datainfo->v) {
 	setvar = offvar;
-    } 
+    } else if (sr->ci == DURATION && censvar > 0 && censvar < datainfo->v) {
+	setvar = censvar;
+    }
 
     if (setvar > 0) {
 	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), datainfo->varname[setvar]);
@@ -3746,8 +3828,9 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	extra_var_box(sr, right_vbox);
 	vbox_add_hsep(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
-    } else if (sr->ci == WLS || sr->ci == INTREG || sr->ci == COUNTMOD 
-	       || THREE_VARS_CODE(sr->ci)) {
+    } else if (sr->ci == WLS || sr->ci == INTREG || 
+	       sr->ci == COUNTMOD || sr->ci == DURATION ||
+	       THREE_VARS_CODE(sr->ci)) {
 	extra_var_box(sr, right_vbox);
     } else if (USE_ZLIST(sr->ci)) {
 	primary_rhs_varlist(sr, right_vbox);
@@ -3804,7 +3887,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     if (ci == ARMA) {
 	dlgy += 80;
     } else if (ci == WLS || ci == INTREG || ci == COUNTMOD || 
-	       ci == AR) {
+	       ci == DURATION || ci == AR) {
 	dlgy += 30;
     } else if (ci == HECKIT) {
 	dlgy += 80;
@@ -4301,7 +4384,8 @@ static GtkWidget *mpols_bits_selector (void)
 #define robust_conf(c) (c != LOGIT && c != PROBIT &&	\
                         c != OLOGIT && c != OPROBIT &&	\
                         c != QUANTREG && c != INTREG && \
-                        c != MLOGIT && c != COUNTMOD)
+                        c != MLOGIT && c != COUNTMOD && \
+                        c != DURATION)
 
 static void build_selector_switches (selector *sr) 
 {
@@ -4311,7 +4395,7 @@ static void build_selector_switches (selector *sr)
 	sr->ci == GARCH || sr->ci == IVREG || sr->ci == VAR || 
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == MLOGIT ||
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == COUNTMOD ||
-	sr->ci == PANEL || sr->ci == QUANTREG) {
+	sr->ci == DURATION || sr->ci == PANEL || sr->ci == QUANTREG) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? */
@@ -4966,6 +5050,8 @@ static void build_selector_combo (selector *sr)
 	build_gmm_popdown(sr);
     } else if (sr->ci == COUNTMOD) {
 	build_count_data_popdown(sr);
+    } else if (sr->ci == DURATION) {
+	build_duration_popdown(sr);
     }
 }
 
@@ -5280,8 +5366,9 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
-	VEC_CODE(ci) || ci == COUNTMOD || ci == ARBOND ||
-	ci == QUANTREG || ci == INTREG || THREE_VARS_CODE(ci)) {
+	VEC_CODE(ci) || ci == COUNTMOD || ci == DURATION || 
+	ci == ARBOND || ci == QUANTREG || ci == INTREG || 
+	THREE_VARS_CODE(ci)) {
 	build_mid_section(sr, right_vbox);
     }
     
