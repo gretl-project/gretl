@@ -53,9 +53,11 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog);
 static void find_in_listbox (GtkWidget *button, GtkWidget *dialog);
 static void find_string_dialog (void (*findfunc)(), windata_t *vwin);
 static gboolean real_find_in_text (GtkTextView *view, const gchar *s, 
+				   gboolean sensitive,
 				   gboolean from_cursor, 
 				   gboolean search_all);
-static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, 
+static gboolean real_find_in_listbox (windata_t *vwin, const gchar *s, 
+				      gboolean sensitive,
 				      gboolean vnames);
 
 static GtkWidget *find_dialog = NULL;
@@ -851,11 +853,24 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
     return ok;
 }
 
+static int all_lower_case (const char *s)
+{
+    while (*s) {
+	if (tolower(*s) != *s) {
+	    return 0;
+	}
+	s++;
+    }
+
+    return 1;
+}
+
 /* respond to Enter key in the 'finder' entry */
 
 static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 {
     gboolean search_all = FALSE;
+    gboolean sensitive;
     gboolean found;
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
@@ -863,14 +878,17 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 	return;
     }
 
+    sensitive = !all_lower_case(needle);
+
     if (g_object_get_data(G_OBJECT(entry), "search-all")) {
 	search_all = TRUE;
     } 
 
     if (vwin->text != NULL) {
-	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE, search_all);
+	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, 
+				  sensitive, TRUE, search_all);
     } else {
-	found = real_find_in_listbox(vwin, needle, FALSE);
+	found = real_find_in_listbox(vwin, needle, sensitive, 0);
     }
 
     if (!found) {
@@ -904,7 +922,7 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     if (!found && search_all) {
 	if (maybe_switch_page(needle, vwin)) {
 	    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, 
-				      TRUE, TRUE);
+				      sensitive, TRUE, TRUE);
 	}
     }
 
@@ -1486,14 +1504,19 @@ static gint close_find_dialog (GtkWidget *widget, gpointer data)
 }
 
 static int string_match_pos (const char *haystack, const char *needle, 
-			     int start)
+			     gboolean sensitive, int start)
 {
     int hlen = strlen(haystack);
     int nlen = strlen(needle);
-    int pos;
+    int pos, found;
 
     for (pos = start; pos < hlen; pos++) {
-        if (strncmp(&haystack[pos], needle, nlen) == 0) { 
+	if (sensitive) {
+	    found = !strncmp(&haystack[pos], needle, nlen);
+	} else {
+	    found = !g_ascii_strncasecmp(&haystack[pos], needle, nlen);
+	}
+        if (found) { 
              return pos;
 	}
     }
@@ -1501,9 +1524,10 @@ static int string_match_pos (const char *haystack, const char *needle,
     return -1;
 }
 
-/* case-insensitive search in text buffer */
+/* search for string @s in text buffer associated with @view */
 
 static gboolean real_find_in_text (GtkTextView *view, const gchar *s, 
+				   gboolean sensitive,
 				   gboolean from_cursor,
 				   gboolean search_all)
 {
@@ -1548,8 +1572,10 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 
     while (!found) {
 	got = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
-	if (g_ascii_strcasecmp(got, s) == 0) {
-	    found = 1;
+	if (sensitive) {
+	    found = !strcmp(got, s);
+	} else {
+	    found = !g_ascii_strcasecmp(got, s);
 	}
 	g_free(got);
 	if (found || !gtk_text_iter_forward_char(&start) ||
@@ -1580,15 +1606,17 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 {
     windata_t *vwin = g_object_get_data(G_OBJECT(dialog), "windat");
-    gboolean found;
+    gboolean found, sensitive;
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
     if (needle == NULL || *needle == '\0') {
 	return;
     }
 
-    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), 
-			      needle, TRUE, FALSE);
+    sensitive = !all_lower_case(needle);
+
+    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle,
+			      sensitive, TRUE, FALSE);
 
     if (!found) {
 	notify_not_found(find_entry);
@@ -1597,23 +1625,22 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 
 static void 
 get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
-			 char *haystack, int vnames)
+			 char *haystack)
 {
-    gchar *tmp;
+    gchar *tmp = NULL;
 
     gtk_tree_model_get(mod, iter, col, &tmp, -1);
     if (tmp != NULL) {
 	strcpy(haystack, tmp);
-	if (!vnames) {
-	    lower(haystack);
-	}
 	g_free(tmp);
     } else {
 	*haystack = '\0';
     }
 }
 
-static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames)
+static gboolean real_find_in_listbox (windata_t *vwin, const gchar *s, 
+				      gboolean sensitive,
+				      gboolean vnames)
 {
     int minvar, wrapped = 0;
     char haystack[MAXLEN];
@@ -1634,10 +1661,6 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
 
     /* if searching in the main gretl window, start on line 1 */
     minvar = (vwin == mdata)? 1 : 0;
-
-    if (!vnames) {
-	lower(s);
-    }
 
     /* first try to get the current line plus one as starting point */
     sprintf(pstr, "%d", vwin->active_var);
@@ -1660,19 +1683,19 @@ static gboolean real_find_in_listbox (windata_t *vwin, gchar *s, gboolean vnames
 
     while (pos < 0) {
 	/* try looking in column 1 first */
-	get_tree_model_haystack(model, &iter, 1, haystack, vnames);
+	get_tree_model_haystack(model, &iter, 1, haystack);
 
-	pos = string_match_pos(haystack, needle, 0);
+	pos = string_match_pos(haystack, needle, sensitive, 0);
 
 	if (pos < 0 && !vnames) {
 	    if (vwin == mdata) {
 		/* then column 2 */
-		get_tree_model_haystack(model, &iter, 2, haystack, vnames);
+		get_tree_model_haystack(model, &iter, 2, haystack);
 	    } else {
 		/* then column 0 */
-		get_tree_model_haystack(model, &iter, 0, haystack, vnames);
+		get_tree_model_haystack(model, &iter, 0, haystack);
 	    }
-	    pos = string_match_pos(haystack, needle, 0);
+	    pos = string_match_pos(haystack, needle, sensitive, 0);
 	}
 
 	if (pos >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
@@ -1715,6 +1738,7 @@ static void find_in_listbox (GtkWidget *w, GtkWidget *dialog)
 {
     windata_t *vwin = g_object_get_data(G_OBJECT(dialog), "windat");
     gpointer vp;
+    gboolean sensitive;
     gboolean vnames = FALSE;
     gboolean found;
 
@@ -1728,13 +1752,19 @@ static void find_in_listbox (GtkWidget *w, GtkWidget *dialog)
 	return;
     }
 
+    sensitive = !all_lower_case(needle);
+
     /* are we confining the search to variable names? */
     vp = g_object_get_data(G_OBJECT(dialog), "vnames_only");
     if (vp != NULL) {
 	vnames = GPOINTER_TO_INT(vp);
+	if (vnames) {
+	    /* varname search is advertised as case-sensitive */
+	    sensitive = TRUE;
+	}
     }
 
-    found = real_find_in_listbox(vwin, needle, vnames);
+    found = real_find_in_listbox(vwin, needle, sensitive, vnames);
 
     if (!found) {
 	notify_not_found(find_entry);
