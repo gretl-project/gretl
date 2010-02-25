@@ -2838,7 +2838,8 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     int t1, t2, k = -1;
     int err;
 
-    if (pmod->ci == ARBOND || pmod->ci == HECKIT) {
+    if (pmod->ci == ARBOND || pmod->ci == HECKIT ||
+	pmod->ci == DURATION) {
 	/* FIXME */
 	return E_NOTIMP;
     }
@@ -2849,12 +2850,12 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	return E_DATA;
     }
 
-    /* OPT_I for integrate: reject for non-OLS, or if the dependent 
+    /* OPT_I for integrate: [reject for non-OLS?], or if the dependent 
        variable is not recognized as a first difference */
     if (opt & OPT_I) {
 	int dv = gretl_model_get_depvar(pmod);
 
-	if (pmod->ci != OLS || !is_standard_diff(dv, pdinfo, NULL)) {
+	if (!is_standard_diff(dv, pdinfo, NULL)) {
 	    return inapplicable_option_error(FCAST, OPT_I);
 	}
     }
