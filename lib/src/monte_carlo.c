@@ -1180,27 +1180,25 @@ start_new_loop (char *s, LOOPSET *inloop,
 #if LOOP_DEBUG
 # define MAX_FOR_TIMES  10
 #else
-# define MAX_FOR_TIMES  100000
+# define MAX_FOR_TIMES  500000
 #endif
 
 static int loop_count_too_high (LOOPSET *loop)
 {
-    static int max_iters = 0;
     int nt = loop->iter + 1;
 
     if (loop->type == FOR_LOOP) {
-	if (nt >= MAX_FOR_TIMES) {
+	if (nt > MAX_FOR_TIMES) {
 	    gretl_errmsg_sprintf(_("Reached maximum iterations, %d"),
 				 MAX_FOR_TIMES);
 	    loop->err = 1;
 	}
     } else {
-	if (max_iters == 0) {
-	    max_iters = libset_get_int(LOOP_MAXITER);
-	}
-	if (nt >= max_iters) {
-	    gretl_errmsg_sprintf(_("Warning: no convergence after %d iterations"),
-				 max_iters);
+	int maxit = libset_get_int(LOOP_MAXITER);
+
+	if (nt > maxit) {
+	    gretl_errmsg_sprintf(_("Reached maximum iterations, %d"),
+				 maxit);
 	    loop->err = 1;
 	}
     }
