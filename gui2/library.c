@@ -1428,6 +1428,83 @@ void markers_callback (void)
     }
 }
 
+void do_add_labels (const char *fname) 
+{
+    int err = add_var_labels_from_file(datainfo, fname);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	refresh_data();
+	mark_dataset_as_modified();
+    }
+}
+
+int do_save_labels (const char *fname)
+{
+    FILE *fp;
+    int i;
+
+    fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	file_write_errbox(fname);
+	return E_FOPEN;
+    }
+
+    for (i=1; i<datainfo->v; i++) {
+	fprintf(fp, "%s\n", VARLABEL(datainfo, i));
+    }
+
+    fclose(fp);
+
+    return 0;
+}
+
+static int have_var_labels (void)
+{
+    const char *label;
+    int i;
+
+    for (i=1; i<datainfo->v; i++) {
+	label = VARLABEL(datainfo, i);
+	if (*label != '\0') {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+void labels_callback (void) 
+{
+    if (have_var_labels()) {
+	/* we have (some) labels in place */
+	const char *opts[] = {
+	    N_("Export the labels to file"),
+	    N_("Remove the labels")
+	};
+	int resp;
+
+	resp = radio_dialog("gretl", _("The dataset has variable labels.\n"
+				"Would you like to:"),
+			    opts, 2, 0, 0);
+	if (resp == 0) {
+	    file_selector(SAVE_LABELS, FSEL_DATA_NONE, NULL);
+	} else if (resp == 1) {
+	    dataset_destroy_obs_markers(datainfo);
+	    mark_dataset_as_modified();
+	}
+    } else {
+	if (yes_no_dialog("gretl",
+			  _("The dataset has no variable labels.\n"
+			    "Add some from file now?"),
+			  0) == GRETL_YES) {
+	    file_selector(OPEN_LABELS, FSEL_DATA_NONE, NULL);
+	}
+    }
+}
+
 int out_of_sample_info (int add_ok, int *t2)
 {
     const char *can_add = 

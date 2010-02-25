@@ -139,6 +139,7 @@ enum file_ops {
     APPEND_JMULTI,   /* end of "data append" entries */
     OPEN_SESSION,
     OPEN_MARKERS,
+    OPEN_LABELS,
     OPEN_GFN,
     END_OPEN,        /* marker for end of file open section */
     SAVE_DATA,
@@ -169,6 +170,7 @@ enum file_ops {
     SAVE_FUNCTIONS_AS,
     SAVE_BOOT_DATA,
     SAVE_MARKERS,
+    SAVE_LABELS,
     EDIT_FUNCTIONS,
     SET_PROG,
     SET_DIR,

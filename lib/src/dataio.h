@@ -124,6 +124,8 @@ int import_other (const char *fname, int ftype,
 
 int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);
 
+int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname);
+
 GretlFileType detect_filetype (char *fname);
 
 gretlopt data_save_opt_from_suffix (const char *fname);

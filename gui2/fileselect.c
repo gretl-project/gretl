@@ -98,6 +98,7 @@ static struct extmap action_map[] = {
     { SAVE_OCTAVE_CMDS,  ".m" },    
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
+    { SAVE_LABELS,       ".txt" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
     { OPEN_OCTAVE,       ".m" },
@@ -485,6 +486,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	filesel_open_session(fname);
     } else if (action == OPEN_MARKERS) {
 	do_add_markers(fname);
+    } else if (action == OPEN_LABELS) {
+	do_add_labels(fname);
     } else if (action == OPEN_GFN) {
 	edit_function_package(fname);
     } else if (action == OPEN_RATS_DB) {
@@ -529,6 +532,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	bootstrap_save_callback(fname);
     } else if (action == SAVE_MARKERS) {
 	err = do_save_markers(fname);
+    } else if (action == SAVE_LABELS) {
+	err = do_save_labels(fname);
     } else if (action == SET_PROG || action == SET_DIR) {
 	set_path_callback(data, fname);
     } else if (action == SET_WDIR) {
@@ -653,7 +658,10 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	gtk_file_chooser_set_current_name(filesel, fname);
     } else if (action == SAVE_MARKERS) {
 	gtk_file_chooser_set_current_name(filesel, "markers.txt");
+    } else if (action == SAVE_LABELS) {
+	gtk_file_chooser_set_current_name(filesel, "labels.txt");
     }
+	
 }
 
 static void filesel_add_filter (GtkWidget *filesel,

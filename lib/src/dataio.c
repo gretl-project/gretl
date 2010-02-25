@@ -2399,7 +2399,7 @@ int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
     return err;
 }
 
-static int check_marker (char *src, int i)
+static int check_imported_string (char *src, int i, size_t len)
 {
     int err = 0;
 
@@ -2410,11 +2410,11 @@ static int check_marker (char *src, int i)
 	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
 
 	if (trstr == NULL) {
-	    gretl_errmsg_sprintf("Invalid characters in marker, line %d", i);
+	    gretl_errmsg_sprintf("Invalid characters in imported string, line %d", i);
 	    err = E_DATA;
 	} else {
 	    *src = '\0';
-	    strncat(src, trstr, OBSLEN - 1);
+	    strncat(src, trstr, len - 1);
 	    g_free(trstr);
 	}
     }
@@ -2465,7 +2465,7 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 	} else {
 	    g_strstrip(marker);
 	    strncat(S[t], marker, OBSLEN - 1);
-	    err = check_marker(S[t], t+1);
+	    err = check_imported_string(S[t], t+1, OBSLEN);
 	}
     }
 
@@ -2477,6 +2477,59 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 	} 
 	pdinfo->markers = REGULAR_MARKERS;
 	pdinfo->S = S;
+    }
+
+    return err;
+}
+
+/**
+ * add_var_labels_from_file:
+ * @pdinfo: data information struct.
+ * @fname: name of file containing labels.
+ * 
+ * Read descriptive variables for labels (strings of %MAXLABEL - 1 
+ * characters or less) from a file, and associate them with the 
+ * current data set.  The file should contain one label per line,
+ * with a number of lines equal to the number of variables in
+ * the current data set, excluding the constant.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname)
+{
+    FILE *fp;
+    char line[256], label[MAXLABEL];
+    char *targ;
+    int nlabels = 0;
+    int i, err = 0;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    for (i=1; i<pdinfo->v && !err; i++) {
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    break;
+	} else if (sscanf(line, "%127[^\n\r]", label) != 1) {
+	    continue;
+	} else {
+	    targ = VARLABEL(pdinfo, i);
+	    g_strstrip(label);
+	    strcpy(targ, label);
+	    err = check_imported_string(targ, i+1, MAXLABEL);
+	    if (err) {
+		*targ = '\0';
+	    } else {
+		nlabels++;
+	    }
+	}
+    }
+
+    if (!err && nlabels == 0) {
+	gretl_errmsg_set("No labels found");
+	err = E_DATA;
     }
 
     return err;

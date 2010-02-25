@@ -91,6 +91,12 @@ int do_save_markers (const char *fname);
 
 void markers_callback (void);
 
+void do_add_labels (const char *fname);
+
+int do_save_labels (const char *fname);
+
+void labels_callback (void);
+
 int dataset_is_restricted (void);
 
 int maybe_restore_full_data (int action);

@@ -15,6 +15,7 @@ version 1.8.8, in progress
 - Export of data to R, interactively: add a message
   confirming that the export worked
 - "foreign" code blocks: add support for GNU Octave
+- GUI: add export/import of variable labels
 - Filter functions movavg, bkfilt and hpfilt: offer
   greater control via additional optional arguments
 - Add new functions, digamma(), kdensity()

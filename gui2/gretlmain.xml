@@ -119,6 +119,7 @@
       <separator/>
       <menuitem action="DataInfo"/>
       <menuitem action="DataMarkers"/>
+      <menuitem action="VarLabels"/>
       <separator/>
       <menuitem action="DataStructure"/>
       <menuitem action="DataCompact"/>
