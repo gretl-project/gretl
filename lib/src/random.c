@@ -801,17 +801,23 @@ static double genpois (const double m)
  * Fill the selected range of array @a with pseudo-random drawings
  * from the Poisson distribution with a mean determined by 
  * @m, which can either be a pointer to a scalar, or an array
- * of length greater than or equal to @t2 + 1.  
+ * of length greater than or equal to @t2 + 1. 
+ *
+ * Returns: 0 on success, non-zero on error. 
  */
 
-void gretl_rand_poisson (double *a, int t1, int t2, const double *m,
-			 int vec) 
+int gretl_rand_poisson (double *a, int t1, int t2, const double *m,
+			int vec) 
 {
+    double mt;
     int t;
 
     for (t=t1; t<=t2; t++) {
-	a[t] = (vec)? genpois(m[t]) : genpois(*m);
+	mt = (vec)? m[t] : *m;
+	a[t] = (mt <= 0)? NADBL : genpois(mt);
     }
+
+    return 0;
 }
 
 /* f(x; k, \lambda) = (k/\lambda) (x/\lambda)^{k-1} e^{-(x/\lambda)^k} */

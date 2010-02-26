@@ -1777,15 +1777,15 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 'P') {
 	/* Poisson */
-	double m = p[0]; /* FIXME? */
+	double m = p[0];
 
 	if (serp1 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
 		m = serp1[t];
-		gretl_rand_poisson(x, t, t, &m, 0);
+		*err = gretl_rand_poisson(x, t, t, &m, 0);
 	    }
 	} else {
-	    gretl_rand_poisson(x, t1, t2, &m, 0);
+	    *err = gretl_rand_poisson(x, t1, t2, &m, 0);
 	}
     } else if (st == 'W') {
 	/* Weibull */ 
