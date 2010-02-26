@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-16 10:11-0500\n"
-"PO-Revision-Date: 2010-01-21 23:57-0300\n"
+"PO-Revision-Date: 2010-02-26 01:31-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -332,7 +332,7 @@ msgstr "encontrado campo inválido '%s'"
 
 #: lib/src/boxplots.c:1014
 msgid "boxplot file is corrupt"
-msgstr "o arquivo de gráfico caixa com bigodes está corrompido"
+msgstr "o arquivo do diagrama de caixa está corrompido"
 
 #: lib/src/compare.c:340
 msgid "omit"
@@ -742,7 +742,7 @@ msgstr "restrição de fator comum"
 
 #: lib/src/compare.c:3135
 msgid "This test is only relevant for pooled models\n"
-msgstr "Este teste só é relevante para modelos com dados em painel\n"
+msgstr "Este teste só é relevante para modelos agrupados\n"
 
 #: lib/src/compare.c:3140
 msgid "This test requires that the model contains a constant\n"
@@ -892,7 +892,7 @@ msgstr "   datas estão revertidas?\n"
 #: lib/src/csvdata.c:1024
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
-msgstr "   etiqueta da primeira linha \"%s\", última etiqueta \"%s\"\n"
+msgstr "   Etiqueta da primeira linha é \"%s\", e da última é \"%s\".\n"
 
 #: lib/src/csvdata.c:1041
 msgid "   label strings can't be consistent dates\n"
@@ -900,7 +900,7 @@ msgstr "   etiquetas não podem ser datas consistentes\n"
 
 #: lib/src/csvdata.c:1045
 msgid "trying to parse row labels as dates...\n"
-msgstr "tentando interpretar etiquetas de linhas como sendo datas...\n"
+msgstr "Tentando interpretar etiquetas de linhas como sendo datas...\n"
 
 #: lib/src/csvdata.c:1059
 msgid "   definitely not a four-digit year\n"
@@ -2844,7 +2844,7 @@ msgstr "Estimativas dos quantis com banda de %g%%"
 #: lib/src/graphing.c:3975
 #, c-format
 msgid "OLS estimate with %g%% band"
-msgstr "Estimativas por Mínimos Quadrados (OLS) com banda de %g%%"
+msgstr "Estimativas por MQO com banda de %g%%"
 
 #: lib/src/graphing.c:4039
 msgid "+- sqrt(h(t))"
@@ -2992,7 +2992,7 @@ msgstr "Comando com argumentos insuficientes"
 
 #: lib/src/gretl_errors.c:49
 msgid "This command is implemented only for OLS models"
-msgstr "Este comando está implementado apenas para modelos de Mínimos Quadrados (OLS)"
+msgstr "Este comando está implementado apenas para modelos MQO"
 
 #: lib/src/gretl_errors.c:50
 msgid "Invalid argument for function"
@@ -3319,7 +3319,7 @@ msgstr "Teste de Hausman"
 
 #: lib/src/gretl_model.c:2910
 msgid "OLS estimates are consistent"
-msgstr "as estimativas por Mínimos Quadrados (OLS) são consistentes"
+msgstr "as estimativas por MQO são consistentes"
 
 #: lib/src/gretl_model.c:2913
 msgid "GLS estimates are consistent"
@@ -3442,7 +3442,7 @@ msgid ""
 "is adequate, in favor of the fixed effects alternative.)\n"
 "\n"
 msgstr ""
-"(Um p-valor baixo contraria a hipótese nula de que o modelo Mínimos Quadrados (OLS) agrupado (pooled)\n"
+"(Um p-valor baixo contraria a hipótese nula de que o modelo MQO agrupado (pooled)\n"
 "é adequado, validando a hipótese alternativa da existência de efeitos fixos.)\n"
 "\n"
 
@@ -3496,7 +3496,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Médias do resíduos Mínimos Quadrados (OLS) agrupados (pooled) para unidades de seções-cruzadas:\n"
+"Médias do resíduos MQO agrupados (pooled) para unidades de seções-cruzadas:\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2454
@@ -3521,7 +3521,7 @@ msgid ""
 "is adequate, in favor of the random effects alternative.)\n"
 "\n"
 msgstr ""
-"(Um p-valor baixo contraria a hipótese nula de que o modelo Mínimos Quadrados (OLS) agrupado (pooled)\n"
+"(Um p-valor baixo contraria a hipótese nula de que o modelo MQO agrupado (pooled)\n"
 "é adequado, validando a hipótese alternativa da existência de efeitos aleatórios.)\n"
 "\n"
 
@@ -3795,7 +3795,7 @@ msgstr "A cadeia de caracteres '%s' foi apagada"
 #: lib/src/gretl_win32.c:608
 #: lib/src/interact.c:3105
 msgid "The shell command is not activated."
-msgstr "Os comandos de sistema não estão ativados."
+msgstr "Os comandos de sistema (\"shell\") não estão ativados."
 
 #: lib/src/gretl_string_table.c:924
 #: lib/src/gretl_string_table.c:926
@@ -4234,7 +4234,7 @@ msgstr "O dispositivo de saída já está redirecionado para '%s'\n"
 
 #: lib/src/interact.c:3755
 msgid "Now discarding output\n"
-msgstr "Agora omitindo saída\n"
+msgstr "Descartando saída agora\n"
 
 #: lib/src/interact.c:3771
 #, c-format
@@ -4606,7 +4606,7 @@ msgstr "Regressão aumentada para o teste de fator comum"
 #: lib/src/varprint.c:1037
 #: gui2/selector.c:2999
 msgid "OLS"
-msgstr "Mínimos Quadrados (OLS)"
+msgstr "MQO"
 
 #: lib/src/modelprint.c:658
 #: lib/src/modelprint.c:716
@@ -4636,7 +4636,7 @@ msgstr "LAD"
 
 #: lib/src/modelprint.c:663
 msgid "High-Precision OLS"
-msgstr "Mínimos Quadrados (OLS) de Alta-Precisão"
+msgstr "MQO de Alta-Precisão"
 
 #: lib/src/modelprint.c:664
 #: lib/src/modelprint.c:751
@@ -4742,7 +4742,7 @@ msgstr "ARMA"
 
 #: lib/src/modelprint.c:706
 msgid "Pooled OLS"
-msgstr "Mínimos Quadrados de amostragem (\"Pooled OLS\")"
+msgstr "MQO agrupado"
 
 #: lib/src/modelprint.c:709
 msgid "Fixed-effects"
@@ -4821,7 +4821,7 @@ msgstr "TSLS"
 
 #: lib/src/modelprint.c:818
 msgid "Critical values for TSLS bias relative to OLS:\n"
-msgstr "Valores críticos para viés TSLS em relação ao OLS:\n"
+msgstr "Valores críticos para viés TSLS em relação ao MQO:\n"
 
 #: lib/src/modelprint.c:821
 #, no-c-format
@@ -6804,31 +6804,31 @@ msgstr "FIML"
 
 #: lib/src/system.c:100
 msgid "Seemingly Unrelated Regressions"
-msgstr "Regressões Aparentemente Não Relacionadas (\"Seemingly Unrelated Regressions\")"
+msgstr "Regressões Aparentemente Não Relacionadas"
 
 #: lib/src/system.c:101
 msgid "Three-Stage Least Squares"
-msgstr "Mínimos Quadrados de Três Fases (\"Three-Stage Least Squares\")"
+msgstr "Mínimos Quadrados de Três Estágios"
 
 #: lib/src/system.c:102
 msgid "Full Information Maximum Likelihood"
-msgstr "Máxima Verossimilhança de Informação Completa (\"Full Information Maximum Likelihood\")"
+msgstr "Máxima Verossimilhança de Informação Completa"
 
 #: lib/src/system.c:103
 msgid "Limited Information Maximum Likelihood"
-msgstr "Máxima Verossimilhança de Informação Limitada (\"Limited Information Maximum Likelihood\")"
+msgstr "Máxima Verossimilhança de Informação Limitada"
 
 #: lib/src/system.c:104
 msgid "Ordinary Least Squares"
-msgstr "Mínimos Quadrados (\"Ordinary Least Squares\")"
+msgstr "Mínimos Quadrados Ordinários"
 
 #: lib/src/system.c:105
 msgid "Two-Stage Least Squares"
-msgstr "Mínimos Quadrados de Duas Fases (\"Two-Stage Least Squares\")"
+msgstr "Mínimos Quadrados de Dois Estágios"
 
 #: lib/src/system.c:106
 msgid "Weighted Least Squares"
-msgstr "Mínimos Quadrados Ponderados (\"Weighted Least Squares\")"
+msgstr "Mínimos Quadrados Ponderados"
 
 #: lib/src/system.c:110
 msgid "No system of equations has been defined"
@@ -7378,11 +7378,11 @@ msgstr ""
 "Pode-se fornecer um nome de um arquivo de dados na linha de comandos.\n"
 "Opções:\n"
 " -b ou --batch     Processar um arquivo de comandos e sair.\n"
-" -r ou --run       Executar um arquivo de comandos e passar o controle para a linha de comandos.\n"
-" -h ou --help      Mostrar esta informação e sair.\n"
+" -r ou --run         Executar um arquivo de comandos e passar o controle para a linha de comandos.\n"
+" -h ou --help       Mostrar esta informação e sair.\n"
 " -v ou --version   Mostrar informação sobre a versão e sair.\n"
 " -e ou --english   Forçar o uso do Inglês em vez da tradução.\n"
-" -q ou --quiet    Mostrar informações do programa com menos detalhamento.\n"
+" -q ou --quiet      Mostrar informações do programa com menos detalhamento.\n"
 "Exemplo de uso do modo 'batch':\n"
 " gretlcli -b meuarquivo.inp >meuarquivo.out\n"
 "Exemplo de uso do modo 'run':\n"
@@ -7514,7 +7514,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 22 de janeiro de 2010."
+"Tradução de 26 de fevereiro de 2010."
 
 #: gui2/about.c:175
 msgid "License"
@@ -8243,7 +8243,7 @@ msgstr "Insira valor para ser lido como \"valor ausente\":"
 
 #: gui2/callbacks.c:556
 msgid "gretl: boxplots"
-msgstr "gretl: gráficos caixa com bigodes"
+msgstr "gretl: diagramas de caixa"
 
 #: gui2/callbacks.c:557
 msgid "Specify variables to plot:"
@@ -9434,12 +9434,12 @@ msgstr "opções de estimação de densidade"
 #: gui2/dialogs.c:3358
 #: plugin/kernel.c:130
 msgid "Gaussian kernel"
-msgstr "Núcleo Gaussiano ('Gaussian kernel')"
+msgstr "Núcleo Gaussiano"
 
 #: gui2/dialogs.c:3368
 #: plugin/kernel.c:131
 msgid "Epanechnikov kernel"
-msgstr "Núcleo de Epanechnikov (\"Epanechnikov kernel\")"
+msgstr "Núcleo de Epanechnikov"
 
 #: gui2/dialogs.c:3383
 msgid "bandwidth adjustment factor:"
@@ -10079,7 +10079,7 @@ msgstr "raízes VAR"
 
 #: gui2/gpt_control.c:2960
 msgid "gretl: boxplot data"
-msgstr "gretl: gráficos caixa com bigodes"
+msgstr "gretl: dados do diagrama de caixa"
 
 #: gui2/gpt_control.c:3034
 #: gui2/gpt_control.c:3136
@@ -10161,7 +10161,7 @@ msgstr "Exibir PDF"
 #: gui2/gpt_control.c:3079
 #: gui2/gpt_control.c:3160
 msgid "OLS estimates"
-msgstr "Estimativas Mínimos Quadrados (OLS)"
+msgstr "Estimativas MQO"
 
 #: gui2/gpt_control.c:3083
 #: gui2/gpt_control.c:3161
@@ -10952,11 +10952,11 @@ msgstr "X-Y com _controles..."
 
 #: gui2/gretl.c:1393
 msgid "_Boxplots..."
-msgstr "Caixa com _bigodes..."
+msgstr "_Diagramas de caixa..."
 
 #: gui2/gretl.c:1394
 msgid "_Notched boxplots..."
-msgstr "Caixa com bigodes e _ntalhe..."
+msgstr "diagramas de caixa e_ntalhados..."
 
 #: gui2/gretl.c:1395
 msgid "_Q-Q plot..."
@@ -11212,7 +11212,7 @@ msgstr "_Modelo"
 
 #: gui2/gretl.c:1480
 msgid "_Ordinary Least Squares..."
-msgstr "Mínim_os Quadrados (OLS)..."
+msgstr "Mínim_os Quadrados Ordinários..."
 
 #: gui2/gretl.c:1481
 msgid "_Instrumental variables"
@@ -11245,7 +11245,7 @@ msgstr "H_eteroscedasticidade corrigida..."
 
 #: gui2/gretl.c:1489
 msgid "High _precision OLS..."
-msgstr "Mínimos quadrados com alta _precisão numérica..."
+msgstr "MQO com alta _precisão numérica..."
 
 #: gui2/gretl.c:1491
 msgid "ANOVA..."
@@ -11269,7 +11269,7 @@ msgstr "_Prais-Winsten..."
 
 #: gui2/gretl.c:1496
 msgid "_Autoregressive estimation..."
-msgstr "Estimação _auto-regressiva..."
+msgstr "Estimação _autorregressiva..."
 
 #: gui2/gretl.c:1497
 msgid "ARI_MA..."
@@ -11285,7 +11285,7 @@ msgstr "_GARCH..."
 
 #: gui2/gretl.c:1500
 msgid "_Vector Autoregression..."
-msgstr "Auto-regressão _vetorial..."
+msgstr "Autorregressão _vetorial..."
 
 #: gui2/gretl.c:1501
 msgid "VAR _lag selection..."
@@ -11371,7 +11371,7 @@ msgstr "Lo_gístico..."
 
 #: gui2/gretl.c:1523
 msgid "_Nonlinear Least Squares..."
-msgstr "Mínimos quadrados não-linear (NLS)..."
+msgstr "Mínimos Quadrados Não-Linear (NLS)..."
 
 #: gui2/gretl.c:1524
 msgid "_Interval regression..."
@@ -11673,12 +11673,12 @@ msgstr "_Salvar como..."
 #: gui2/gui_utils.c:186
 #: gui2/gui_utils.c:318
 msgid "Save to session as _icon"
-msgstr "Salvar para sessão como ícone (_i)"
+msgstr "Salvar para sessão como í_cone"
 
 #: gui2/gui_utils.c:187
 #: gui2/gui_utils.c:319
 msgid "Save as icon and cl_ose"
-msgstr "Salvar como ícone e sair (_x)"
+msgstr "Salvar c_omo ícone e sair"
 
 #: gui2/gui_utils.c:189
 #: gui2/gui_utils.c:321
@@ -12676,7 +12676,7 @@ msgstr "gretl: teste de omissão de Wald"
 #: gui2/library.c:1856
 #: gui2/library.c:3628
 msgid "gretl: vector autoregression"
-msgstr "gretl: auto-regressão vetorial"
+msgstr "gretl: autorregressão vetorial"
 
 #: gui2/library.c:2013
 msgid "gretl: LM test "
@@ -12743,7 +12743,7 @@ msgstr "Gráfico Q-Q Normal"
 
 #: gui2/library.c:2446
 msgid "This test only implemented for OLS models"
-msgstr "Este teste está implementado apenas para modelos Mínimos Quadrados (OLS)"
+msgstr "Este teste está implementado apenas para modelos MQO"
 
 #: gui2/library.c:2513
 msgid "gretl: Chow test output"
@@ -13230,7 +13230,7 @@ msgstr "Distribuição de frequência"
 #: gui2/menustate.c:400
 #: gui2/session.c:811
 msgid "Boxplot"
-msgstr "Caixa de bigodes"
+msgstr "Diagrama de caixa"
 
 #: gui2/menustate.c:325
 #: gui2/menustate.c:402
@@ -13637,7 +13637,7 @@ msgstr "Método generalizado dos momentos"
 
 #: gui2/selector.c:3043
 msgid "Autoregressive model"
-msgstr "Modelo auto-regressivo"
+msgstr "Modelo autorregressivo"
 
 #: gui2/selector.c:3053
 msgid "VAR lag selection"
@@ -13657,7 +13657,7 @@ msgstr "Cointegração"
 
 #: gui2/selector.c:3067
 msgid "Multiple precision OLS"
-msgstr "Mínimos quadrados de precisão múltipla"
+msgstr "MQO com precisão múltipla"
 
 #: gui2/selector.c:3078
 msgid "Weight variable"
@@ -14475,7 +14475,7 @@ msgstr "Navegador Web"
 
 #: gui2/settings.c:164
 msgid "Allow shell commands"
-msgstr "Permitir comandos shell"
+msgstr "Permitir comandos de sistema (\"shell\")l"
 
 #: gui2/settings.c:166
 msgid "Show icon view automatically"
@@ -15145,7 +15145,7 @@ msgstr "abrir o console gretl"
 
 #: gui2/toolbar.c:1038
 msgid "session icon view"
-msgstr "vista de sessão em ícones"
+msgstr "visualização da sessão em ícones"
 
 #: gui2/toolbar.c:1039
 msgid "function packages"
@@ -15165,7 +15165,7 @@ msgstr "gráfico X-Y"
 
 #: gui2/toolbar.c:1043
 msgid "OLS model"
-msgstr "modelo de Mínimos Quadrados (OLS)"
+msgstr "modelo MQO"
 
 #: gui2/toolbar.c:1044
 msgid "open dataset"
@@ -15512,7 +15512,7 @@ msgstr ""
 #: plugin/import_common.c:262
 #, c-format
 msgid "Sending debugging output to %s"
-msgstr "Enviando saída para despiste de erros para %s"
+msgstr "Enviando saída de depuração para %s"
 
 #: plugin/import_common.c:390
 msgid "Sheet to import:"
@@ -15536,7 +15536,7 @@ msgstr "linha:"
 
 #: plugin/import_common.c:474
 msgid "Produce debugging output"
-msgstr "Produzir saída para despiste de erros"
+msgstr "Produzir saída de depuração"
 
 #: plugin/interval.c:214
 #, c-format
@@ -15738,7 +15738,7 @@ msgstr "porta:"
 
 #: plugin/mailer.c:769
 msgid "POP server:"
-msgstr "Servidor (para receber) POP:"
+msgstr "Servidor (para recebimento) POP:"
 
 #: plugin/mailer.c:770
 msgid "Username:"
@@ -15746,7 +15746,7 @@ msgstr "Nome de Usuário:"
 
 #: plugin/mailer.c:771
 msgid "Password:"
-msgstr "Palavra-chave:"
+msgstr "Senha:"
 
 #: plugin/mailer.c:787
 msgid "gretl: POP info"
@@ -15777,7 +15777,7 @@ msgstr "Componentes com autovalores > média"
 
 #: plugin/pca.c:118
 msgid "All components"
-msgstr "Todas as componentes"
+msgstr "Todas os componentes"
 
 #: plugin/pca.c:177
 msgid "Principal Components Analysis"
@@ -15797,7 +15797,7 @@ msgstr "Componente  Autovalor   Proporção   Acumulada\n"
 
 #: plugin/pca.c:208
 msgid "Eigenvectors (component loadings)"
-msgstr "Autovetor (cargas das componentes)"
+msgstr "Autovetores (cargas dos componentes)"
 
 #: plugin/pca.c:330
 #, c-format
