@@ -93,6 +93,8 @@ double gretl_get_cdf_inverse (char st, double *p);
 double gretl_get_critval (char st, double *p);
 
 double *gretl_get_random_series (char st, const double *p,
+				 const double *serp1, 
+				 const double *serp2, 
 				 const DATAINFO *pdinfo,
 				 int *err);
 

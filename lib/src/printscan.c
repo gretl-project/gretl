@@ -367,8 +367,10 @@ get_printf_format_chunk (const char *s, int *fc,
     return chunk;
 }
 
-/* extract the next conversion spec from *pfmt, find and evaluate the
-   corresponding elements in *pargs, and print the result 
+/* Extract the next conversion spec from *pfmt, find and evaluate the
+   corresponding elements in *pargs, and print the result. Note
+   that @t should be negative (and therefore ignored) unless
+   we're doing the "genr markers" special thing.
 */
 
 static int print_arg (char **pfmt, char **pargs, 
@@ -452,8 +454,13 @@ static int print_arg (char **pfmt, char **pargs,
 	} else if ((m = get_matrix_by_name(arg)) != NULL) {
 	    ; /* printing a named matrix */
 	} else if ((v = current_series_index(pdinfo, arg)) >= 0) {
-	    /* printing a named series */
-	    series_v = v;
+	    /* printing a named series, unless t >= 0 */
+	    if (t < 0) {
+		series_v = v; 
+	    } else {
+		x = (*pZ)[v][t];
+		got_scalar = 1;
+	    }
 	} else {
 	    /* try treating as generated value */
 	    err = gen_arg_val(arg, pZ, pdinfo, &x, &m, &v, &got_scalar);
@@ -638,10 +645,6 @@ static int real_do_printf (const char *line, double ***pZ,
     gretl_error_clear();
 
     *targ = '\0';
-
-    if (t < 0) {
-	t = (pdinfo != NULL)? pdinfo->t1 : 0;
-    }
 
     err = split_printf_line(line, targ, &sp, &format, &args);
     if (err) {
@@ -1332,7 +1335,7 @@ int do_sscanf (const char *line, double ***pZ,
      genr markers = format, arg1,...
 
    We're assuming that we're just getting the part after
-   the equals sign here, in the variable s.
+   the equals sign here, in the variable @s.
 */
 
 int generate_obs_markers (const char *s, double ***pZ, DATAINFO *pdinfo)

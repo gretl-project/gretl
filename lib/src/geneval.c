@@ -651,45 +651,45 @@ static int dist_argc (char *s, int f)
     case 'u':
     case 'U':
 	s[0] = 'u';
-	/* only F_RANDGEN is supported */
+	/* uniform: only F_RANDGEN is supported */
 	return (f == F_RANDGEN)? 2 : 0;
     case '1':
     case 'z':
     case 'n':
     case 'N':
 	s[0] = 'z';
-	/* all functions supported */
+	/* normal: all functions supported */
 	return (f == F_RANDGEN)? 2 : 1;
     case '2':
     case 't':
 	s[0] = 't';
-	/* all functions supported */
+	/* Student t: all functions supported */
 	return (f == F_RANDGEN)? 1 : 2;
     case '3':
     case 'c':
     case 'x':
     case 'X':
 	s[0] = 'X';
-	/* all functions supported */
+	/* Chi-square: all functions supported */
 	return (f == F_RANDGEN)? 1 : 2;
     case '4':
     case 'f':
     case 'F':
 	s[0] = 'F';
-	/* all functions supported */
+	/* Snedecor: all functions supported */
 	return (f == F_RANDGEN)? 2 : 3;
     case '5':
     case 'g':
     case 'G':
 	s[0] = 'G';
-	/* partial support */
+	/* Gamma: partial support */
 	return (f == F_CRIT || f == F_INVCDF)? 0 : 
 	    (f == F_RANDGEN)? 2 : 3;
     case '6':
     case 'b':
     case 'B':
 	s[0] = 'B';
-	/* pdf not supported */
+	/* Binomial: pdf not supported */
 	if (f == F_PDF) return 0;
 	return (f == F_RANDGEN)? 2 : 3;
     case '7':
@@ -701,14 +701,14 @@ static int dist_argc (char *s, int f)
     case 'p':
     case 'P':
 	s[0] = 'P';
-	/* pdf not supported */
+	/* Poisson: pdf not supported */
 	if (f == F_PDF) return 0;
 	return (f == F_RANDGEN)? 1 : 2;
     case '9':
     case 'w':
     case 'W':
 	s[0] = 'W';
-	/* inverse cdf not supported */
+	/* Weibull: inverse cdf not supported */
 	return (f == F_INVCDF)? 0 : 
 	    (f == F_RANDGEN)? 2 : 3;
     case 'd':
@@ -1021,9 +1021,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	NODE *e, *s, *r = n->v.b1.b;
 	int i, k, argc, m = r->v.bn.n_nodes;
 	int rgen = (n->t == F_RANDGEN);
-	double *pvec = NULL, *bvec = NULL;
-	gretl_matrix *pmat = NULL, *bmat = NULL;
-	double parm[3];
+	double *vec1 = NULL, *vec2 = NULL;
+	gretl_matrix *mat1 = NULL, *mat2 = NULL;
+	double scalparm[3] = {0};
 	char d, *dist, code[2];
 
 	if (m < 2 || m > 4) {
@@ -1060,46 +1060,41 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 	for (i=0; i<argc && !p->err; i++) {
 	    s = r->v.bn.n[i+1];
-	    if (s->t == NUM || scalar_matrix_node(s)) {
-		parm[i] = node_get_scalar(s, p);
-	    } else if (i == k && !rgen && s->t == VEC && bmat == NULL) {
-		pvec = s->v.xvec;
-	    } else if (i == k && !rgen && s->t == MAT && bvec == NULL) {
-		pmat = s->v.m;
-	    } else if (i == k-1 && d == 'D' && s->t == VEC) {
-		bvec = s->v.xvec;
-	    } else if (i == k-1 && d == 'D' && s->t == MAT) {
-		bmat = s->v.m;
+	    e = eval(s, p);
+	    if (p->err) {
+		goto disterr;
+	    }	    
+
+	    if (e->t == NUM || scalar_matrix_node(e)) {
+		/* scalars always acceptable */
+		scalparm[i] = node_get_scalar(e, p);
+	    } else if (i == k && e->t == VEC && mat2 == NULL) {
+		/* series for the last arg */
+		vec1 = e->v.xvec;
+	    } else if (i == k && !rgen && e->t == MAT && vec2 == NULL) {
+		/* matrix for the last arg */
+		mat1 = e->v.m;
+	    } else if (i == k-1 && (d == 'D' || rgen) && e->t == VEC) {
+		/* series for penultimate arg */
+		vec2 = e->v.xvec;
+	    } else if (i == k-1 && d == 'D' && e->t == MAT) {
+		/* matrix for penultimate arg */
+		mat2 = e->v.m;
 	    } else {
-		e = eval(s, p);
-		if (p->err) {
-		    goto disterr;
-		}
-		if (e->t == NUM || scalar_matrix_node(e)) {
-		    parm[i] = node_get_scalar(e, p);
-		} else if (i == k && !rgen && e->t == VEC && bmat == NULL) {
-		    pvec = e->v.xvec;
-		} else if (i == k && !rgen && e->t == MAT && bvec == NULL) {
-		    pmat = e->v.m;
-		} else if (i == k-1 && d == 'D' && e->t == VEC) {
-		    bvec = e->v.xvec;
-		} else if (i == k-1 && d == 'D' && e->t == MAT) {
-		    bmat = e->v.m;
-		} else {
-		    p->err = E_INVARG;
-		    fprintf(stderr, "eval_pdist: arg %d, bad type %d\n", i+1, e->t);
-		    goto disterr;
-		}
-		if (!reusable(p)) {
-		    free_tree(s, p, "Pdist");
-		    r->v.bn.n[i+1] = NULL;
-		}		    
+		p->err = E_INVARG;
+		fprintf(stderr, "eval_pdist: arg %d, bad type %d\n", i+1, e->t);
+		goto disterr;
 	    }
+
+	    if (!reusable(p)) {
+		free_tree(s, p, "Pdist");
+		r->v.bn.n[i+1] = NULL;
+	    }		    
 	}
 
-	if (rgen || pvec != NULL || bvec != NULL) {
+	if (rgen || vec1 != NULL || vec2 != NULL) {
 	    ret = aux_vec_node(p, 0);
-	} else if (pmat != NULL || bmat != NULL) {
+	} else if (mat1 != NULL || mat2 != NULL) {
 	    ret = aux_matrix_node(p);
 	} else {
 	    ret = aux_scalar_node(p);
@@ -1110,14 +1105,14 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	}
 
 	if (rgen) {
-	    ret->v.xvec = gretl_get_random_series(d, parm, p->dinfo,
-						  &p->err);
-	} else if (pvec != NULL || bvec != NULL) {
-	    ret->v.xvec = series_pdist(n->t, d, parm, pvec, bvec, argc, p);
-	} else if (pmat != NULL || bmat != NULL) {
-	    ret->v.m = matrix_pdist(n->t, d, parm, pmat, bmat, argc, p);
+	    ret->v.xvec = gretl_get_random_series(d, scalparm, vec2, vec1, 
+						  p->dinfo, &p->err);
+	} else if (vec1 != NULL || vec2 != NULL) {
+	    ret->v.xvec = series_pdist(n->t, d, scalparm, vec1, vec2, argc, p);
+	} else if (mat1 != NULL || mat2 != NULL) {
+	    ret->v.m = matrix_pdist(n->t, d, scalparm, mat1, mat2, argc, p);
 	} else {
-	    ret->v.xval = scalar_pdist(n->t, d, parm, argc, p);
+	    ret->v.xval = scalar_pdist(n->t, d, scalparm, argc, p);
 	}
     } else {
 	ret = aux_any_node(p);

@@ -1666,10 +1666,14 @@ double gretl_get_pvalue (char st, const double *p)
 }
 
 double *gretl_get_random_series (char st, const double *p,
+				 const double *serp1, 
+				 const double *serp2,
 				 const DATAINFO *pdinfo,
 				 int *err)
 {
     double *x = malloc(pdinfo->n * sizeof *x);
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
     int t;
 
     if (x == NULL) {
@@ -1682,42 +1686,120 @@ double *gretl_get_random_series (char st, const double *p,
     }
 
     if (st == 'u') {
+	/* uniform */
 	double min = p[0], max = p[1];
 
-	*err = gretl_rand_uniform_minmax(x, pdinfo->t1, pdinfo->t2, min, max);
+	if (serp1 != NULL || serp2 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		if (serp1 != NULL) min = serp1[t];
+		if (serp2 != NULL) max = serp2[t];
+		*err = gretl_rand_uniform_minmax(x, t, t, min, max);
+	    }
+	} else {
+	    *err = gretl_rand_uniform_minmax(x, t1, t2, min, max);
+	}
     } else if (st == 'z') {
+	/* normal */
 	double mu = p[0], sd = p[1];
 
-	*err = gretl_rand_normal_full(x, pdinfo->t1, pdinfo->t2, mu, sd);
+	if (serp1 != NULL || serp2 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		if (serp1 != NULL) mu = serp1[t];
+		if (serp2 != NULL) sd = serp2[t];
+		*err = gretl_rand_normal_full(x, t, t, mu, sd);
+	    }
+	} else {
+	    *err = gretl_rand_normal_full(x, t1, t2, mu, sd);
+	}
     } else if (st == 't') {
+	/* Student's t */
 	int v = p[0];
 
-	*err = gretl_rand_student(x, pdinfo->t1, pdinfo->t2, v);
+	if (serp1 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		v = serp1[t];
+		*err = gretl_rand_student(x, t, t, v);
+	    }
+	} else {	
+	    *err = gretl_rand_student(x, t1, t2, v);
+	}
     } else if (st == 'X') {
+	/* chi-square */
 	int v = p[0];
 
-	*err = gretl_rand_chisq(x, pdinfo->t1, pdinfo->t2, v);
+	if (serp1 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		v = serp1[t];
+		*err = gretl_rand_chisq(x, t, t, v);
+	    }
+	} else {
+	    *err = gretl_rand_chisq(x, t1, t2, v);
+	}
     } else if (st == 'F') {
+	/* Snedecor F */
 	int v1 = p[0], v2 = p[1];
 
-	*err = gretl_rand_F(x, pdinfo->t1, pdinfo->t2, v1, v2);
+	if (serp1 != NULL || serp2 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		if (serp1 != NULL) v1 = serp1[t];
+		if (serp2 != NULL) v2 = serp2[t];
+		*err = gretl_rand_F(x, t, t, v1, v2);
+	    }
+	} else {
+	    *err = gretl_rand_F(x, t1, t2, v1, v2);
+	}
     } else if (st == 'G') {
+	/* gamma */
 	double shape = p[0], scale = p[1];
 
-	*err = gretl_rand_gamma(x, pdinfo->t1, pdinfo->t2, shape, scale);
+	if (serp1 != NULL || serp2 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		if (serp1 != NULL) shape = serp1[t];
+		if (serp2 != NULL) scale = serp2[t];
+		*err = gretl_rand_gamma(x, t, t, shape, scale);
+	    }
+	} else {
+	    *err = gretl_rand_gamma(x, t1, t2, shape, scale);
+	}
     } else if (st == 'B') {
+	/* binomial */
 	double pr = p[0];
 	int n = p[1];
 
-	*err = gretl_rand_binomial(x, pdinfo->t1, pdinfo->t2, n, pr);
+	if (serp1 != NULL || serp2 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		if (serp1 != NULL) pr = serp1[t];
+		if (serp2 != NULL) n = serp2[1];
+		*err = gretl_rand_binomial(x, t, t, n, pr);
+	    }
+	} else {
+	    *err = gretl_rand_binomial(x, t1, t2, n, pr);
+	}
     } else if (st == 'P') {
+	/* Poisson */
 	double m = p[0]; /* FIXME? */
 
-	gretl_rand_poisson(x, pdinfo->t1, pdinfo->t2, &m, 0);
+	if (serp1 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		m = serp1[t];
+		gretl_rand_poisson(x, t, t, &m, 0);
+	    }
+	} else {
+	    gretl_rand_poisson(x, t1, t2, &m, 0);
+	}
     } else if (st == 'W') {
+	/* Weibull */ 
 	double shape = p[0], scale = p[1];
 
-	*err = gretl_rand_weibull(x, pdinfo->t1, pdinfo->t2, shape, scale);
+	if (serp1 != NULL || serp2 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		if (serp1 != NULL) shape = serp1[t];
+		if (serp2 != NULL) scale = serp2[t];
+		*err = gretl_rand_weibull(x, t, t, shape, scale);
+	    }
+	} else {
+	    *err = gretl_rand_weibull(x, t1, t2, shape, scale);
+	}
     }	
 
     return x;
