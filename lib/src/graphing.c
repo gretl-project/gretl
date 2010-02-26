@@ -2621,6 +2621,11 @@ static void make_panel_unit_tics (const DATAINFO *pdinfo,
 
     ticskip = maxtics / ceil(ntics);
 
+    if (ticskip == 1 && ntics < maxtics) {
+	/* otherwise we'll get an incomplete scale */
+	ntics = maxtics;
+    }
+
     n = printed = 0;
     for (t=gi->t1; t<=gi->t2 && printed<ntics; t++) {
 	u = pdinfo->paninfo->unit[t];
