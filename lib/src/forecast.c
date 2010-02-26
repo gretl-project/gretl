@@ -2128,6 +2128,32 @@ static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
     return 0;
 }
 
+/* check we we really can do an integrated forecast */
+
+static int check_integrated_forecast_option (MODEL *pmod,
+					     DATAINFO *pdinfo,
+					     int *pyno)
+{
+    int err = 0;
+
+    if (pmod->ci != OLS) {
+	err = inapplicable_option_error(FCAST, OPT_I);
+    } else {
+	int yno = gretl_model_get_depvar(pmod);
+	int d, parent;
+	
+	d = is_standard_diff(yno, pdinfo, &parent);
+	if (!d) {
+	    err = inapplicable_option_error(FCAST, OPT_I);
+	} else if (pyno != NULL) {
+	    /* in caller, make yno = ID of level variable */
+	    *pyno = parent;
+	}
+    } 
+
+    return err;
+}
+
 /* driver for various functions that compute forecasts
    for different sorts of models */
 
@@ -2150,15 +2176,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     forecast_init(&fc);
 
     if (integrate) {
-	/* check we we really can do an integrated forecast */
-	int d, parent;
-
-	d = is_standard_diff(yno, pdinfo, &parent);
-	if (!d) {
-	    err = inapplicable_option_error(FCAST, OPT_I);
-	} else {
-	    /* 'yno' should refer to the level variable */
-	    yno = parent;
+	err = check_integrated_forecast_option(pmod, pdinfo, &yno);
+	if (!err) {
 	    err = revise_fr_start(fr, yno, (const double **) *pZ, pdinfo);
 	}
 	if (err) {
@@ -2850,13 +2869,12 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	return E_DATA;
     }
 
-    /* OPT_I for integrate: [reject for non-OLS?], or if the dependent 
+    /* OPT_I for integrate: reject for non-OLS, or if the dependent 
        variable is not recognized as a first difference */
     if (opt & OPT_I) {
-	int dv = gretl_model_get_depvar(pmod);
-
-	if (!is_standard_diff(dv, pdinfo, NULL)) {
-	    return inapplicable_option_error(FCAST, OPT_I);
+	err = check_integrated_forecast_option(pmod, pdinfo, NULL);
+	if (err) {
+	    return err;
 	}
     }
 
@@ -3291,7 +3309,7 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 
     dv = gretl_model_get_depvar(pmod);
 
-    if (is_standard_diff(dv, pdinfo, NULL)) {
+    if (pmod->ci == OLS && is_standard_diff(dv, pdinfo, NULL)) {
 	*flags |= FC_INTEGRATE_OK;
     }
 

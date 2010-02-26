@@ -2257,10 +2257,9 @@ static void toggle_opt_I (GtkToggleButton *b, gretlopt *optp)
     }
 }
 
-static GtkWidget *
-forecast_integrate_option (const MODEL *pmod,
-			   GtkWidget *vbox,
-			   gretlopt *optp)
+static GtkWidget *forecast_integrate_option (const MODEL *pmod,
+					     GtkWidget *vbox,
+					     gretlopt *optp)
 {
     GtkWidget *button = NULL;
 
