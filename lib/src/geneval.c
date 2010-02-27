@@ -1047,7 +1047,8 @@ static NODE *bvnorm_node (NODE *n, parser *p)
     NODE *e, *ret = NULL;
     double *avec = NULL, *bvec = NULL;
     gretl_matrix *amat = NULL, *bmat = NULL;
-    double rho, a, b, args[2];
+    double a, b, args[2];
+    double rho = NADBL;
     int i, mode = 0;
 
     for (i=0; i<3 && !p->err; i++) {
@@ -1210,7 +1211,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		}
 	    } else if (i == k && e->t == VEC) {
 		/* series in the last place */
-		if (!rgen) {
+		if (rgen) {
 		    parmvec[i-1] = e->v.xvec;
 		} else {
 		    argvec = e->v.xvec;
@@ -1254,7 +1255,8 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	}
 
 	if (rgen) {
-	    ret->v.xvec = gretl_get_random_series(d, parm, parmvec[0], parmvec[1], 
+	    ret->v.xvec = gretl_get_random_series(d, parm, 
+						  parmvec[0], parmvec[1], 
 						  p->dinfo, &p->err);
 	} else if (argvec != NULL) {
 	    ret->v.xvec = series_pdist(n->t, d, parm, np, argvec, p);

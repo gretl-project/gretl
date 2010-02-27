@@ -1843,6 +1843,9 @@ double *gretl_get_random_series (char st, const double *p,
 	/* Poisson */
 	double m = p[0];
 
+	fprintf(stderr, "Poisson: m=%g, serp1 = %p\n",
+		m, (void *) serp1);
+
 	if (serp1 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
 		m = serp1[t];

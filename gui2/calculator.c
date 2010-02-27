@@ -323,7 +323,7 @@ dist_xmin_xmax (int d, double *parm, double *xmin, double *xmax, int alt)
 
 static double dist_xmax (int d, double *parm)
 {
-    double arg;
+    double arg = NADBL;
     char st = 0;
 
     switch (d) {
@@ -1197,9 +1197,9 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 {
     dist_t **tabs = child->calcp;
     double c = NADBL;
-    double a, parm[4]; /* FIXME */
-    char st = 0;
+    double a, parm[2];
     int i, d, j = 0;
+    char st;
     PRN *prn;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
@@ -1219,13 +1219,6 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     a = getval(tabs[i]->entry[j], C_FRAC);
     if (na(a)) return;
 
-    /* FIXME : WTF with with NORMAL_DIST ? */
-
-    if (d == NORMAL_DIST) {
-	parm[3] = parm[0];
-	parm[0] = parm[2];
-    }
-
     st = dist_to_char(d);
 
     c = gretl_get_critval(st, parm, a);
@@ -1239,8 +1232,6 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     }  
 
     if (d == NORMAL_DIST) {
-	parm[2] = parm[0]; /* put alpha back */
-	parm[0] = parm[3]; /* put the mean back */
 	print_normal_critval(parm, a, c, prn);
     } else {
 	print_critval(st, parm, a, c, prn);
