@@ -1197,7 +1197,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 {
     dist_t **tabs = child->calcp;
     double c = NADBL;
-    double a, parm[4];
+    double a, parm[4]; /* FIXME */
     char st = 0;
     int i, d, j = 0;
     PRN *prn;

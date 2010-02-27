@@ -1021,6 +1021,27 @@ static NODE *eval_urcpval (NODE *n, parser *p)
     return ret;
 }
 
+static int get_matrix_size (gretl_matrix *a, gretl_matrix *b,
+			    int *r, int *c)
+{
+    int err = 0;
+
+    if (a != NULL) {
+	*r = a->rows;
+	*c = b->cols;
+	if (b != NULL && (b->rows != *r || b->cols != *c)) {
+	    err = E_NONCONF;
+	}
+    } else if (b != NULL) {
+	*r = b->rows;
+	*c = b->cols;
+    } else {
+	*r = *c = 0;
+    }
+
+    return err;
+}
+
 static NODE *bvnorm_node (NODE *n, parser *p)
 {
     NODE *e, *ret = NULL;
@@ -1078,29 +1099,42 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 
     if (!p->err) {
 	if (mode == 0) {
+	    /* a, b are both scalars */
 	    ret->v.xval = bvnorm_cdf(rho, args[0], args[1]);
 	} else if (mode == 1) {
+	    /* a and/or b are series */
 	    int t;
 
-	    for (t=0; t<p->dinfo->n; t++) {
+	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 		a = (avec != NULL)? avec[t] : args[0];
 		b = (bvec != NULL)? bvec[t] : args[1];
-		if (1) {
-		    ret->v.xvec[t] = bvnorm_cdf(rho, a, b);
-		} else {
+		if (na(a) || na(b)) {
 		    ret->v.xvec[t] = NADBL;
+		} else {
+		    ret->v.xvec[t] = bvnorm_cdf(rho, a, b);
 		}
 	    }
 	} else if (mode == 2) {
-	    /* FIXME */
-	    gretl_matrix *m;
-	    int i, n = 0;
+	    /* a and/or b are matrices : FIXME */
+	    gretl_matrix *m = NULL;
+	    int r, c;
 
-	    for (i=0; i<n; i++) {
-		a = (amat != NULL)? amat->val[i] : args[0];
-		b = (bmat != NULL)? bmat->val[i] : args[1];
-		m->val[i] = bvnorm_cdf(rho, a, b);
+	    p->err = get_matrix_size(amat, bmat, &r, &c);
+
+	    if (!p->err && r > 0 && c > 0) {
+		m = gretl_matrix_alloc(r, c);
 	    }
+
+	    if (m != NULL) {
+		int i, n = r * c;
+
+		for (i=0; i<n && !p->err; i++) {
+		    a = (amat != NULL)? amat->val[i] : args[0];
+		    b = (bmat != NULL)? bmat->val[i] : args[1];
+		    m->val[i] = bvnorm_cdf(rho, a, b);
+		}
+	    }
+	    ret->v.m = m;
 	}
     }
 
