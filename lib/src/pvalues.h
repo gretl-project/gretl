@@ -68,7 +68,7 @@ double student_critval (double df, double a);
 
 double log_normal_pdf (double x);
 
-double bvnorm_cdf (double a, double b, double rho);
+double bvnorm_cdf (double rho, double a, double b);
 
 double gamma_cdf_comp (double s1, double s2, double x, int control);
 
@@ -80,17 +80,17 @@ double cephes_gamma (double x);
 
 double cephes_lgamma (double x); 
 
-double gretl_get_pvalue (char st, const double *p);
+double gretl_get_pvalue (char st, const double *parm, double x);
 
-double gretl_get_pdf (char st, double *p);
+double gretl_get_pdf (char st, const double *parm, double x);
 
-int gretl_fill_pdf_array (char st, double *p, double *x, int n);
+int gretl_fill_pdf_array (char st, const double *parm, double *x, int n);
 
-double gretl_get_cdf (char st, double *p);
+double gretl_get_cdf (char st, const double *parm, double x);
 
-double gretl_get_cdf_inverse (char st, double *p);
+double gretl_get_cdf_inverse (char st, const double *parm, double a);
 
-double gretl_get_critval (char st, double *p);
+double gretl_get_critval (char st, const double *parm, double a);
 
 double *gretl_get_random_series (char st, const double *p,
 				 const double *serp1, 
@@ -102,9 +102,9 @@ int batch_pvalue (const char *str,
 		  double ***pZ, DATAINFO *pdinfo, 
 		  PRN *prn);
 
-void print_pvalue (char st, double *p, double pv, PRN *prn);
+void print_pvalue (char st, const double *p, double x, double pv, PRN *prn);
 
-void print_critval (char st, double *x, double c, PRN *prn);
+void print_critval (char st, const double *parm, double a, double c, PRN *prn);
 
 gretl_matrix *gretl_get_DW (int n, int k, int *err);
 

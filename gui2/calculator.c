@@ -266,36 +266,33 @@ enum {
 #define F_ALTBIN "bigbin(x,mu,s)=x<0?0.0/0.0:1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
 
 static void 
-dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax, int alt)
+dist_xmin_xmax (int d, double *parm, double *xmin, double *xmax, int alt)
 {
-    double x[3] = {0};
+    double arg;
     char st = 0;
 
-    x[0] = parms[0];
-
     if (d == NORMAL_DIST) {
-	*xmin = parms[0] - 4.5 * parms[1];
-	*xmax = parms[0] + 4.5 * parms[1];
+	*xmin = parm[0] - 4.5 * parm[1];
+	*xmax = parm[0] + 4.5 * parm[1];
     } else if (d == T_DIST) {
 	*xmin = -4.5;
 	*xmax = 4.5;
     } else if (d == CHISQ_DIST) {
 	st = 'X';
 	*xmin = 0;
-	x[1] = 0.005;
+	arg = 0.005;
     } else if (d == F_DIST) {
 	st = 'F';
 	*xmin = 0;
-	x[1] = parms[1];
-	if (parms[0] + parms[1] < 16) {
-	    x[2] = 0.009;
+	if (parm[0] + parm[1] < 16) {
+	    arg = 0.009;
 	} else {
-	    x[2] = 0.005;
+	    arg = 0.005;
 	}
     } else if (d == BINOMIAL_DIST) {
 	if (alt) {
-	    int n = parms[1];
-	    double p = parms[0];
+	    int n = parm[1];
+	    double p = parm[0];
 	    double m = n * p;
 	    double s = sqrt(m * (1 - p));
 
@@ -307,63 +304,56 @@ dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax, int alt)
 	} else {
 	    st = 'B';
 	    *xmin = 0;
-	    x[1] = parms[1];
-	    x[2] = 0.001;
+	    arg = 0.001;
 	}
     } else if (d == POISSON_DIST) {
 	st = 'P';
 	*xmin = 0;
-	x[1] = 0.0015;
+	arg = 0.0015;
     } else if (d == WEIBULL_DIST) {
 	st = 'W';
 	*xmin = 0;
-	x[1] = parms[1];
-	x[2] = 0.0004;
+	arg = 0.0004;
     }
 
     if (st) {
-	*xmax = gretl_get_critval(st, x);
+	*xmax = gretl_get_critval(st, parm, arg);
     }
 }
 
-static double dist_xmax (int d, double *parms)
+static double dist_xmax (int d, double *parm)
 {
-    double x[3] = {0};
+    double arg;
     char st = 0;
-
-    x[0] = parms[0];
 
     switch (d) {
     case CHISQ_DIST:
 	st = 'X';
-	x[1] = 0.005;
+	arg = 0.005;
 	break;
     case F_DIST:
 	st = 'F';
-	x[1] = parms[1];
-	if (parms[0] + parms[1] < 16) {
-	    x[2] = 0.009;
+	if (parm[0] + parm[1] < 16) {
+	    arg = 0.009;
 	} else {
-	    x[2] = 0.005;
+	    arg = 0.005;
 	}
 	break;
     case BINOMIAL_DIST:
 	st = 'B';
-	x[1] = parms[1];
-	x[2] = 0.001;
+	arg = 0.001;
 	break;
     case POISSON_DIST:
 	st = 'P';
-	x[1] = 0.0015;
+	arg = 0.0015;
 	break;
     case WEIBULL_DIST:
 	st = 'W';
-	x[1] = parms[1];
-	x[2] = 0.0004;
+	arg = 0.0004;
 	break;
     }
 
-    return gretl_get_critval(st, x);
+    return gretl_get_critval(st, parm, arg);
 }
 
 static int n_literal_lines (int d, int ptype)
@@ -1177,15 +1167,17 @@ get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
     return 0;
 }
 
-static void print_normal_critval (double *x, double c, PRN *prn)
+static void print_normal_critval (const double *parm, double a, 
+				  double c, PRN *prn)
 {
-    double a = x[2];
+    double mu = parm[0];
+    double s = parm[1];
 
-    if (x[0] == 0 && x[1] == 1) {
+    if (mu == 0 && s == 1) {
 	pprintf(prn, "%s", _("Standard normal distribution"));
     } else {
-	pprintf(prn, "N(%g, %g)", x[0], x[1] * x[1]);
-	c = c * x[1] + x[0];
+	pprintf(prn, "N(%g, %g)", mu, s * s);
+	c = c * s + mu;
     }
     
     pputs(prn, "\n ");
@@ -1205,7 +1197,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 {
     dist_t **tabs = child->calcp;
     double c = NADBL;
-    double x[4];
+    double a, parm[4];
     char st = 0;
     int i, d, j = 0;
     PRN *prn;
@@ -1219,22 +1211,24 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 	return;
     }
 
-    if (get_dist_entry_vector(child->code, tabs[i], d, x, &j)) {
+    if (get_dist_entry_vector(child->code, tabs[i], d, parm, &j)) {
 	return;
     }
 
     /* right-tail probability */
-    x[j] = getval(tabs[i]->entry[j], C_FRAC);
-    if (na(x[j])) return;
+    a = getval(tabs[i]->entry[j], C_FRAC);
+    if (na(a)) return;
+
+    /* FIXME : WTF with with NORMAL_DIST ? */
 
     if (d == NORMAL_DIST) {
-	x[3] = x[0];
-	x[0] = x[2];
+	parm[3] = parm[0];
+	parm[0] = parm[2];
     }
 
     st = dist_to_char(d);
 
-    c = gretl_get_critval(st, x);
+    c = gretl_get_critval(st, parm, a);
     if (na(c)) {
 	errbox(_("Failed to compute critical value"));
 	return;
@@ -1245,11 +1239,11 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     }  
 
     if (d == NORMAL_DIST) {
-	x[2] = x[0]; /* put alpha back */
-	x[0] = x[3]; /* put the mean back */
-	print_normal_critval(x, c, prn);
+	parm[2] = parm[0]; /* put alpha back */
+	parm[0] = parm[3]; /* put the mean back */
+	print_normal_critval(parm, a, c, prn);
     } else {
-	print_critval(st, x, c, prn);
+	print_critval(st, parm, a, c, prn);
     }
 
     view_buffer(prn, 60, 200, _("gretl: critical values"), 
@@ -1259,7 +1253,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 static void get_pvalue (GtkWidget *w, CalcChild *child)
 {
     dist_t **tabs = child->calcp;
-    double pv, x[3];
+    double pv, x = 0, parm[2];
     char st = 0;
     int i, d, j = 0;
     PRN *prn;
@@ -1267,7 +1261,7 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
     d = dist_from_page(child->code, i);
 
-    if (get_dist_entry_vector(child->code, tabs[i], d, x, &j)) {
+    if (get_dist_entry_vector(child->code, tabs[i], d, parm, &j)) {
 	return;
     }
 
@@ -1276,37 +1270,37 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
     switch (d) {
     case NORMAL_DIST:
     case T_DIST:
-	x[j] = getval(tabs[i]->entry[j], C_DBL);
-	if (na(x[j])) return;
+	x = getval(tabs[i]->entry[j], C_DBL);
+	if (na(x)) return;
 	break;
     case CHISQ_DIST:
     case F_DIST:
     case GAMMA_DIST:
     case WEIBULL_DIST:
-	x[j] = getval(tabs[i]->entry[j], C_POS_DBL);
-	if (na(x[j])) return;
+	x = getval(tabs[i]->entry[j], C_POS_DBL);
+	if (na(x)) return;
 	break;
     case BINOMIAL_DIST:
     case POISSON_DIST:
-	x[j] = getval(tabs[i]->entry[j], C_INT);
-	if (x[j] < 0) return;
+	x = getval(tabs[i]->entry[j], C_INT);
+	if (x < 0) return;
 	break;
     };
 
     st = dist_to_char(d);
 
     if (d == NORMAL_DIST) {
-	x[0] = (x[2] - x[0]) / x[1]; /* z-score */
+	parm[0] = (x - parm[0]) / parm[1]; /* z-score */
     }
 
     if (bufopen(&prn)) return;
 
-    pv = gretl_get_pvalue(st, x);
+    pv = gretl_get_pvalue(st, parm, x);
 
     if (na(pv)) {
 	errbox(_("Failed to compute p-value"));
     } else {
-	print_pvalue(st, x, pv, prn);
+	print_pvalue(st, parm, x, pv, prn);
 	view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
     }
 }

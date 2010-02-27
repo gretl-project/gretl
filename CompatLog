@@ -4,6 +4,9 @@ The "criteria" command has been removed.  A small function
 package is available on the gretl server that replaces this
 command.
 
+The function genpois() is now deprecated.  Please use
+randgen() with a first argument of 'P' instead.
+
 The --continue option for the commands arma, garch, mle
 nls and gmm (which allowed continuation of script execution
 in face of an error) is now deprecated in favor of the

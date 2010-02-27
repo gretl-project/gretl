@@ -641,82 +641,102 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 }
 
-static int dist_argc (char *s, int f)
+static int check_dist_count (char *s, int f, int *np, int *argc)
 {
+    int err = 0;
+
     if (strlen(s) > 1) {
-	return 0;
+	return E_INVARG;
     }
 
-    switch (s[0]) {
-    case 'u':
-    case 'U':
-	s[0] = 'u';
+    *np = *argc = 0;
+
+    if (*s == 'u' || *s == 'U') {
 	/* uniform: only F_RANDGEN is supported */
-	return (f == F_RANDGEN)? 2 : 0;
-    case '1':
-    case 'z':
-    case 'n':
-    case 'N':
-	s[0] = 'z';
+	if (f == F_RANDGEN) {
+	    *s = 'u';
+	    *np = 2; /* min, max */
+	} else {
+	    err = E_INVARG;
+	}
+    } else if (*s == '1' || *s == 'z' || *s == 'Z' ||
+	       *s == 'n' || *s == 'N') {
 	/* normal: all functions supported */
-	return (f == F_RANDGEN)? 2 : 1;
-    case '2':
-    case 't':
-	s[0] = 't';
+	*s = 'z';
+	if (f == F_RANDGEN) {
+	    *np = 2; /* mu, sigma */
+	} else {
+	    *np = 0; /* N(0,1) is assumed */
+	}
+    } else if (*s == '2' || *s == 't') {
 	/* Student t: all functions supported */
-	return (f == F_RANDGEN)? 1 : 2;
-    case '3':
-    case 'c':
-    case 'x':
-    case 'X':
-	s[0] = 'X';
-	/* Chi-square: all functions supported */
-	return (f == F_RANDGEN)? 1 : 2;
-    case '4':
-    case 'f':
-    case 'F':
-	s[0] = 'F';
+	*s = 't';
+	*np = 1; /* df */
+    } else if (*s == '3' || *s == 'c' || *s == 'x' || *s == 'X') {
+	/* chi-square: all functions supported */
+	*s = 'X';
+	*np = 1; /* df */
+    } else if (*s == '4' || *s == 'f' || *s == 'F') {
 	/* Snedecor: all functions supported */
-	return (f == F_RANDGEN)? 2 : 3;
-    case '5':
-    case 'g':
-    case 'G':
-	s[0] = 'G';
+	*s = 'F';
+	*np = 2; /* dfn, dfd */
+    } else if (*s == '5' || *s == 'g' || *s == 'G') {
 	/* Gamma: partial support */
-	return (f == F_CRIT || f == F_INVCDF)? 0 : 
-	    (f == F_RANDGEN)? 2 : 3;
-    case '6':
-    case 'b':
-    case 'B':
-	s[0] = 'B';
+	*s = 'G';
+	if (f == F_CRIT || f == F_INVCDF) {
+	    err = 1;
+	} else {
+	    *np = 2; /* shape, scale */
+	}
+    } else if (*s == '6' || *s == 'b' || *s == 'B') {
 	/* Binomial: pdf not supported */
-	if (f == F_PDF) return 0;
-	return (f == F_RANDGEN)? 2 : 3;
-    case '7':
-    case 'D':
-	s[0] = 'D';
-	/* only cdf is supported */
-	return (f == F_CDF)? 3 : 0;
-    case '8':
-    case 'p':
-    case 'P':
-	s[0] = 'P';
+	*s = 'B';
+	if (f == F_PDF) {
+	    err = E_INVARG;
+	} else {
+	    *np = 2; /* prob, trials */
+	}
+    } else if (*s == '7' || *s == 'D') {
+	/* bivariate normal: cdf only */
+	*s = 'D';
+	if (f == F_CDF) {
+	    *np = 1; /* rho */
+	    *argc = 2; /* note: special */
+	} else {
+	    err = E_INVARG;
+	}
+    } else if (*s == '8' || *s == 'p' || *s == 'P') {
 	/* Poisson: pdf not supported */
-	if (f == F_PDF) return 0;
-	return (f == F_RANDGEN)? 1 : 2;
-    case '9':
-    case 'w':
-    case 'W':
-	s[0] = 'W';
+	*s = 'P';
+	if (f == F_PDF) {
+	    err = E_INVARG;
+	} else {
+	    *np = 1;
+	}
+    } else if (*s == '9' || *s == 'w' || *s == 'W') {
 	/* Weibull: inverse cdf not supported */
-	return (f == F_INVCDF)? 0 : 
-	    (f == F_RANDGEN)? 2 : 3;
-    case 'd':
+	*s = 'W';
+	if (f == F_INVCDF) {
+	    err = E_INVARG;
+	} else {
+	    *np = 2; /* shape, scale */
+	}
+    } else if (*s == 'd') {
 	/* Durbin-Watson: only critical value */
-	return (f == F_CRIT)? 2 : 0;
+	if (f == F_CRIT) {
+	    *np = 2; /* n, k */
+	} else {
+	    err = E_INVARG;
+	}
+    } else {
+	err = E_INVARG;
     }
 
-    return 0;
+    if (!err && f != F_RANDGEN && *argc == 0) {
+	*argc = 1;
+    }
+
+    return err;
 }
 
 /* make a column vector containing the 1-based observation numbers
@@ -762,8 +782,8 @@ static NODE *make_series_mask (NODE *n, parser *p)
     return ret;
 }
 
-static double scalar_pdist (int t, char d, double *parm,
-			    int np, parser *p)
+static double scalar_pdist (int t, char d, const double *parm,
+			    int np, double arg, parser *p)
 {
     double x = NADBL;
     int i;
@@ -775,15 +795,15 @@ static double scalar_pdist (int t, char d, double *parm,
     }
 
     if (t == F_PVAL) {
-	x = gretl_get_pvalue(d, parm);
+	x = gretl_get_pvalue(d, parm, arg);
     } else if (t == F_PDF) {
-	x = gretl_get_pdf(d, parm);
+	x = gretl_get_pdf(d, parm, arg);
     } else if (t == F_CDF) {
-	x = gretl_get_cdf(d, parm);
+	x = gretl_get_cdf(d, parm, arg);
     } else if (t == F_INVCDF) {
-	x = gretl_get_cdf_inverse(d, parm);
+	x = gretl_get_cdf_inverse(d, parm, arg);
     } else if (t == F_CRIT) {
-	x = gretl_get_critval(d, parm);
+	x = gretl_get_critval(d, parm, arg);
     } else {
 	p->err = E_PARSE;
     }
@@ -791,12 +811,17 @@ static double scalar_pdist (int t, char d, double *parm,
     return x;
 }
 
-static double *series_pdist (int t, char d, double *parm,
-			     double *pvec, double *bvec,
-			     int np, parser *p)
+/* @parm contains an array of scalar parameters;
+   @argvec contains a series of argument values.
+*/
+
+static double *series_pdist (int f, char d, 
+			     double *parm, int np,
+			     const double *argvec,
+			     parser *p)
 {
     double *xvec;
-    int s;
+    int t;
 
     xvec = malloc(p->dinfo->n * sizeof *xvec);
     if (xvec == NULL) {
@@ -804,31 +829,24 @@ static double *series_pdist (int t, char d, double *parm,
 	return NULL;
     }
 
-    if (bvec == NULL && pvec != NULL && t == F_PDF) {
+    if (f == F_PDF) {
 	/* fast treatment, for pdf only at this point */
 	int n = sample_size(p->dinfo);
 
-	for (s=0; s<p->dinfo->n; s++) {
-	    if (s < p->dinfo->t1 || s > p->dinfo->t2) {
-		xvec[s] = NADBL;
-	    } else {
-		xvec[s] = pvec[s];
-	    }
+	for (t=0; t<p->dinfo->n; t++) {
+	    xvec[t] = (t < p->dinfo->t1 || t > p->dinfo->t2)? NADBL : 
+		argvec[t];
 	}
 	gretl_fill_pdf_array(d, parm, xvec + p->dinfo->t1, n);
     } else {
-	for (s=0; s<p->dinfo->n; s++) {
-	    if (s < p->dinfo->t1 || s > p->dinfo->t2 || 
-		(pvec != NULL && pvec[s] == NADBL)) {
-		xvec[s] = NADBL;
+	double arg;
+
+	for (t=0; t<p->dinfo->n; t++) {
+	    arg = argvec[t];
+	    if (t < p->dinfo->t1 || t > p->dinfo->t2 || na(arg)) {
+		xvec[t] = NADBL;
 	    } else {
-		if (pvec != NULL) {
-		    parm[np-1] = pvec[s];
-		}
-		if (bvec != NULL) {
-		    parm[np-2] = bvec[s];
-		}
-		xvec[s] = scalar_pdist(t, d, parm, np, p);
+		xvec[t] = scalar_pdist(f, d, parm, np, arg, p);
 	    }
 	}
     }
@@ -836,50 +854,43 @@ static double *series_pdist (int t, char d, double *parm,
     return xvec;
 }
 
-static gretl_matrix *matrix_pdist (int t, char d, double *parm,
-				   gretl_matrix *pmat, 
-				   gretl_matrix *bmat,
-				   int np, parser *p)
+/* @parm contains an array of zero to two scalar parameters;
+   @argmat contains an array of argument values.
+*/
+
+static gretl_matrix *matrix_pdist (int f, char d, 
+				   double *parm, int np,
+				   gretl_matrix *argmat, 
+				   parser *p)
 {
     gretl_matrix *m;
-    gretl_matrix *a;
     double x;
     int i, n;
 
-    if (pmat != NULL && bmat != NULL) {
-	if (pmat->rows != bmat->rows ||
-	    pmat->cols != bmat->cols) {
-	    p->err = E_NONCONF;
-	    return NULL;
-	}
+    if (gretl_is_null_matrix(argmat)) {
+	return gretl_null_matrix_new();
     }
 
-    a = (pmat != NULL)? pmat : bmat;
-
-    m = gretl_matrix_alloc(a->rows, a->cols);
+    m = gretl_matrix_alloc(argmat->rows, argmat->cols);
     if (m == NULL) {
 	p->err = E_ALLOC;
 	return NULL;
     }
 
-    n = a->rows * a->cols;
+    n = m->rows * m->cols;
 
-    for (i=0; i<n; i++) {
-	if (pmat != NULL) {
-	    parm[np-1] = pmat->val[i];
-	}
-	if (bmat != NULL) {
-	    parm[np-2] = bmat->val[i];
-	}
-	x = scalar_pdist(t, d, parm, np, p);
+    for (i=0; i<n && !p->err; i++) {
+	x = scalar_pdist(f, d, parm, np, argmat->val[i], p);
 	if (na(x)) {
 	    p->err = E_MISSDATA;
-	    gretl_matrix_free(m);
-	    m = NULL;
-	    break;
 	} else {
 	    m->val[i] = x;
 	}
+    }
+
+    if (p->err) {
+	gretl_matrix_free(m);
+	m = NULL;
     }
 
     return m;
@@ -1010,6 +1021,92 @@ static NODE *eval_urcpval (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *bvnorm_node (NODE *n, parser *p)
+{
+    NODE *e, *ret = NULL;
+    double *avec = NULL, *bvec = NULL;
+    gretl_matrix *amat = NULL, *bmat = NULL;
+    double rho, a, b, args[2];
+    int i, mode = 0;
+
+    for (i=0; i<3 && !p->err; i++) {
+	e = eval(n->v.bn.n[i], p);
+	if (p->err) {
+	    break;
+	} 
+	if (e->t == NUM || scalar_matrix_node(e)) {
+	    if (i == 0) {
+		rho = node_get_scalar(e, p);
+	    } else {
+		args[i-1] = node_get_scalar(e, p);
+	    }
+	} else if (i == 0) {
+	    if (e->t == VEC) {
+		avec = e->v.xvec;
+	    } else if (e->t == MAT) {
+		amat = e->v.m;
+	    }
+	} else if (i == 2) {
+	    if (e->t == VEC) {
+		bvec = e->v.xvec;
+	    } else if (e->t == MAT) {
+		bmat = e->v.m;
+	    }	    
+	} else {
+	    node_type_error(F_CDF, i, NUM, e, p);
+	}
+    }
+
+    if (!p->err) {
+	if ((avec != NULL && bmat != NULL) ||
+	    (bvec != NULL && amat != NULL)) {
+	    p->err = E_INVARG;
+	} else if (avec != NULL || bvec != NULL) {
+	    mode = 1;
+	} else if (amat != NULL || bmat != NULL) {
+	    mode = 2;
+	}
+    }
+
+    if (mode == 0) {
+	ret = aux_scalar_node(p);
+    } else if (mode == 1) {
+	ret = aux_vec_node(p, p->dinfo->n);
+    } else {
+	ret = aux_matrix_node(p);
+    }
+
+    if (!p->err) {
+	if (mode == 0) {
+	    ret->v.xval = bvnorm_cdf(rho, args[0], args[1]);
+	} else if (mode == 1) {
+	    int t;
+
+	    for (t=0; t<p->dinfo->n; t++) {
+		a = (avec != NULL)? avec[t] : args[0];
+		b = (bvec != NULL)? bvec[t] : args[1];
+		if (1) {
+		    ret->v.xvec[t] = bvnorm_cdf(rho, a, b);
+		} else {
+		    ret->v.xvec[t] = NADBL;
+		}
+	    }
+	} else if (mode == 2) {
+	    /* FIXME */
+	    gretl_matrix *m;
+	    int i, n = 0;
+
+	    for (i=0; i<n; i++) {
+		a = (amat != NULL)? amat->val[i] : args[0];
+		b = (bmat != NULL)? bmat->val[i] : args[1];
+		m->val[i] = bvnorm_cdf(rho, a, b);
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* return a node containing the evaluated result of a
    probability distribution function */
 
@@ -1019,11 +1116,14 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
     if (starting(p)) {
 	NODE *e, *s, *r = n->v.b1.b;
-	int i, k, argc, m = r->v.bn.n_nodes;
+	int i, k, m = r->v.bn.n_nodes;
 	int rgen = (n->t == F_RANDGEN);
-	double *vec1 = NULL, *vec2 = NULL;
-	gretl_matrix *mat1 = NULL, *mat2 = NULL;
-	double scalparm[3] = {0};
+	double parm[2] = {0};
+	double argval = NADBL;
+	double *parmvec[2] = { NULL };
+	double *argvec = NULL;
+	gretl_matrix *argmat = NULL;
+	int np, argc;
 	char d, *dist, code[2];
 
 	if (m < 2 || m > 4) {
@@ -1042,24 +1142,26 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    goto disterr;
 	}
 
-	argc = dist_argc(dist, n->t);
-
-	if (argc != m - 1) {
+	p->err = check_dist_count(dist, n->t, &np, &argc);
+	k = np + argc;
+	if (!p->err && k != m - 1) {
 	    p->err = E_INVARG;
+	}
+	if (p->err) {
 	    goto disterr;
 	}
 
 	d = dist[0];
-
-	/* special case, Durbin-Watson */
 	if (d == 'd') {
+	    /* special: Durbin-Watson */
 	    return DW_node(r, p);
+	} else if (d == 'D') {
+	    /* special: bivariate normal */
+	    return bvnorm_node(n, p);
 	}
 
-	k = argc - 1;
-
-	for (i=0; i<argc && !p->err; i++) {
-	    s = r->v.bn.n[i+1];
+	for (i=1; i<=k && !p->err; i++) {
+	    s = r->v.bn.n[i];
 	    e = eval(s, p);
 	    if (p->err) {
 		goto disterr;
@@ -1067,19 +1169,32 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 	    if (e->t == NUM || scalar_matrix_node(e)) {
 		/* scalars always acceptable */
-		scalparm[i] = node_get_scalar(e, p);
-	    } else if (i == k && e->t == VEC && mat2 == NULL) {
-		/* series for the last arg */
-		vec1 = e->v.xvec;
-	    } else if (i == k && !rgen && e->t == MAT && vec2 == NULL) {
-		/* matrix for the last arg */
-		mat1 = e->v.m;
-	    } else if (i == k-1 && (d == 'D' || rgen) && e->t == VEC) {
-		/* series for penultimate arg */
-		vec2 = e->v.xvec;
-	    } else if (i == k-1 && d == 'D' && e->t == MAT) {
-		/* matrix for penultimate arg */
-		mat2 = e->v.m;
+		if (i == k && argc > 0) {
+		    argval = node_get_scalar(e, p);
+		} else {
+		    parm[i-1] = node_get_scalar(e, p);
+		}
+	    } else if (i == k && e->t == VEC) {
+		/* series in the last place */
+		if (!rgen) {
+		    parmvec[i-1] = e->v.xvec;
+		} else {
+		    argvec = e->v.xvec;
+		} 
+	    } else if (i == k && e->t == MAT) {
+		/* matrix in the last place */
+		if (rgen) {
+		    node_type_error(n->t, i, NUM, e, p);
+		} else {
+		    argmat = e->v.m;
+		}
+	    } else if (e->t == VEC) {
+		/* series param for randgen */
+		if (rgen) {
+		    parmvec[i-1] = e->v.xvec;
+		} else {
+		    node_type_error(n->t, i, NUM, e, p);
+		}
 	    } else {
 		p->err = E_INVARG;
 		fprintf(stderr, "eval_pdist: arg %d, bad type %d\n", i+1, e->t);
@@ -1088,13 +1203,13 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 	    if (!reusable(p)) {
 		free_tree(s, p, "Pdist");
-		r->v.bn.n[i+1] = NULL;
+		r->v.bn.n[i] = NULL;
 	    }		    
 	}
 
-	if (rgen || vec1 != NULL || vec2 != NULL) {
+	if (rgen || argvec != NULL) {
 	    ret = aux_vec_node(p, 0);
-	} else if (mat1 != NULL || mat2 != NULL) {
+	} else if (argmat != NULL) {
 	    ret = aux_matrix_node(p);
 	} else {
 	    ret = aux_scalar_node(p);
@@ -1105,14 +1220,14 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	}
 
 	if (rgen) {
-	    ret->v.xvec = gretl_get_random_series(d, scalparm, vec2, vec1, 
+	    ret->v.xvec = gretl_get_random_series(d, parm, parmvec[0], parmvec[1], 
 						  p->dinfo, &p->err);
-	} else if (vec1 != NULL || vec2 != NULL) {
-	    ret->v.xvec = series_pdist(n->t, d, scalparm, vec1, vec2, argc, p);
-	} else if (mat1 != NULL || mat2 != NULL) {
-	    ret->v.m = matrix_pdist(n->t, d, scalparm, mat1, mat2, argc, p);
+	} else if (argvec != NULL) {
+	    ret->v.xvec = series_pdist(n->t, d, parm, np, argvec, p);
+	} else if (argmat != NULL) {
+	    ret->v.m = matrix_pdist(n->t, d, parm, np, argmat, p);
 	} else {
-	    ret->v.xval = scalar_pdist(n->t, d, scalparm, argc, p);
+	    ret->v.xval = scalar_pdist(n->t, d, parm, np, argval, p);
 	}
     } else {
 	ret = aux_any_node(p);

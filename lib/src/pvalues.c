@@ -133,15 +133,15 @@ double binomial_cdf_comp (double p, int n, int k)
 /*  
     gives the event probability p such that the sum of the terms 0
     through k of the Binomial probability density, for n trials, is
-    equal to the given cumulative probability y.
+    equal to the given cumulative probability a.
 */
 
-static double binomial_cdf_inverse (double y, int n, int k)
+static double binomial_cdf_inverse (int n, int k, double a)
 {
     double p = NADBL;
 
-    if (y >= 0 && n >= 0 && k >= 0) {
-	p = bdtri(k, n, y);
+    if (a >= 0 && n >= 0 && k >= 0) {
+	p = bdtri(k, n, a);
 	if (get_cephes_errno()) {
 	    p = NADBL;
 	}
@@ -1054,26 +1054,27 @@ double log_normal_pdf (double x)
 
 /**
  * bvnorm_cdf:
- * @a: input value.
- * @b: input value.
- * @rho: input value, correlation coefficient.
+ * @rho: correlation coefficient.
+ * @a: abscissa value, first Gaussian r.v.
+ * @b: abscissa value, second Gaussian r.v.
  *
  * Ripped and adapted from Gnumeric, with a bug corrected for the case
  * (a * b < 0) && (rho < 0).
  *
- * Returns: for (x,y) a bivariate standard Normal rv with correlation
- * coefficient rho, the joint probability that (x < a) && (y < b), or
+ * Returns: for (x, y) a bivariate standard Normal rv with correlation
+ * coefficient @rho, the joint probability that (x < @a) and (y < @b), or
  * #NADBL on failure.
  */
 
-double bvnorm_cdf (double a, double b, double rho)
+double bvnorm_cdf (double rho, double a, double b)
 {
     static const double x[] = {0.24840615, 0.39233107, 0.21141819, 
 			       0.03324666, 0.00082485334};
     static const double y[] = {0.10024215, 0.48281397, 1.0609498, 
 			       1.7797294, 2.6697604};
-
     double ret = NADBL;
+    double a1, b1, den;
+    int i, j;
 
     if (fabs(rho) > 1) {
 	return NADBL;
@@ -1097,8 +1098,7 @@ double bvnorm_cdf (double a, double b, double rho)
 	return ret;
     }
     
-    double a1, b1, den = sqrt(2.0 * (1 - rho * rho));
-    int i, j;
+    den = sqrt(2.0 * (1 - rho * rho));
 
     a1 = a / den;
     b1 = b / den;
@@ -1117,11 +1117,11 @@ double bvnorm_cdf (double a, double b, double rho)
 	}
 	ret = (sqrt(1 - (rho * rho)) / M_PI * sum);
     } else if (a <= 0 && b >= 0 && rho > 0) {
-	ret = normal_cdf(a) - bvnorm_cdf(a, -b, -rho);
+	ret = normal_cdf(a) - bvnorm_cdf(-rho, a, -b);
     } else if (a >= 0 && b <= 0 && rho > 0) {
-	ret = normal_cdf(b) - bvnorm_cdf(-a, b, -rho);
+	ret = normal_cdf(b) - bvnorm_cdf(-rho, -a, b);
     } else if (a >= 0 && b >= 0 && rho < 0) {
-	ret = normal_cdf(a) + normal_cdf(b) - 1 + bvnorm_cdf(-a, -b, rho);
+	ret = normal_cdf(a) + normal_cdf(b) - 1 + bvnorm_cdf(rho, -a, -b);
     } else if ((a * b * rho) > 0) {
 	int sgna = (a < 0)? -1 : 1;
 	int sgnb = (b < 0)? -1 : 1;
@@ -1132,7 +1132,7 @@ double bvnorm_cdf (double a, double b, double rho)
 	rho2 = (rho * b - a) * sgnb / tmp;
 	delta = (sgna * sgnb && (rho > 0))? 0 : 0.5;
 
-	ret = (bvnorm_cdf(a, 0, rho1) + bvnorm_cdf(b, 0, rho2) - delta);
+	ret = (bvnorm_cdf(rho1, a, 0) + bvnorm_cdf(rho2, b, 0) - delta);
     }    
 
     return ret;
@@ -1464,42 +1464,31 @@ static double weibull_cdf_comp (double shape, double scale, double x)
 
 /* order in x: [params], alpha, critval */
 
-void print_critval (char st, double *x, double c, PRN *prn)
+void print_critval (char st, const double *parm, double a, double c, PRN *prn)
 {
-    int apos = 0;
-    double a;
-
     switch (st) {
     case 'z':
 	pprintf(prn, "%s", _("Standard normal distribution"));
 	break;
     case 't':
-	pprintf(prn, "t(%g)", x[0]);
-	apos = 1;
+	pprintf(prn, "t(%g)", parm[0]);
 	break;
     case 'X':
-	pprintf(prn, _("Chi-square(%g)"), x[0]);
-	apos = 1;
+	pprintf(prn, _("Chi-square(%g)"), parm[0]);
 	break;
     case 'F':
-	pprintf(prn, "F(%g, %g)", x[0], x[1]);
-	apos = 2;
+	pprintf(prn, "F(%g, %g)", parm[0], parm[1]);
 	break;
     case 'B':
-	pprintf(prn, "Binomial (P = %g, %g trials)", x[0], x[1]);
-	apos = 2;
+	pprintf(prn, "Binomial (P = %g, %g trials)", parm[0], parm[1]);
 	break;
     case 'P':
-	pprintf(prn, "Poisson (mean = %g)", x[0]);
-	apos = 1;
+	pprintf(prn, "Poisson (mean = %g)", parm[0]);
 	break;
     case 'W':
-	pprintf(prn, "Weibull (shape = %g, scale = %g)", x[0], x[1]);
-	apos = 2;
+	pprintf(prn, "Weibull (shape = %g, scale = %g)", parm[0], parm[1]);
 	break;
     }
-
-    a = x[apos];
 
     pputs(prn, "\n ");
     pprintf(prn, _("right-tail probability = %g"), a);
@@ -1516,153 +1505,228 @@ void print_critval (char st, double *x, double c, PRN *prn)
 
 static double dparm[3];
 
-static void dparm_set (const double *p)
+static void dparm_set (const double *p, double x)
 {
-    int i;
-
-    for (i=0; i<3; i++) {
-	dparm[i] = p[i];
-    }
+    dparm[0] = p[0];
+    dparm[1] = p[1];
+    dparm[2] = x;
 }
 
-double gretl_get_cdf_inverse (char st, double *p)
+/**
+ * gretl_get_cdf_inverse:
+ * @st: distribution code.
+ * @parm: array holding from zero to two parameter values, 
+ * depending on the distribution.
+ * @a: probability value.
+ *
+ * Returns: the argument, y, for which the area under the PDF
+ * specified by @st and @parm, integrated from its minimum to y,
+ * is equal to @a, or #NADBL on failure.
+ */
+
+double gretl_get_cdf_inverse (char st, const double *parm, double a)
 {
     double x = NADBL;
 
     if (st == 'z') {
-	x = normal_cdf_inverse(p[0]);
+	x = normal_cdf_inverse(a);
     } else if (st == 't') {
-	x = student_cdf_inverse(p[0], p[1]);
+	x = student_cdf_inverse(parm[0], a);
     } else if (st == 'X') {
-	x = chisq_cdf_inverse((int) p[0], p[1]);
+	x = chisq_cdf_inverse((int) parm[0], a);
     } else if (st == 'F') {
-	x = snedecor_cdf_inverse((int) p[0], (int) p[1], p[2]);
+	x = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
     } else if (st == 'B') {
-	x = binomial_cdf_inverse((int) p[0], (int) p[1], p[2]);
+	x = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
     } else if (st == 'P') {
-	x = poisson_cdf_inverse((int) p[0], p[1]);
+	x = poisson_cdf_inverse((int) parm[0], a);
     } 
 
     return x;
 }
 
-double gretl_get_critval (char st, double *p)
+/**
+ * gretl_get_critval:
+ * @st: distribution code.
+ * @parm: array holding from zero to two parameter values, 
+ * depending on the distribution.
+ * @a: right-tail probability.
+ *
+ * Returns: the abcsissa value for the distribution specified
+ * by @st and @parm, such that P(X >= x) = @a, or #NADBL on 
+ * failure.
+ */
+
+double gretl_get_critval (char st, const double *parm, double a)
 {
     double x = NADBL;
 
     if (st == 'z') {
-	x = normal_critval(p[0]);
+	x = normal_critval(a);
     } else if (st == 't') {
-	x = student_critval(p[0], p[1]);
+	x = student_critval(parm[0], a);
     } else if (st == 'X') {	
-	x = chisq_critval((int) p[0], p[1]);
+	x = chisq_critval((int) parm[0], a);
     } else if (st == 'F') {
-	x = snedecor_critval((int) p[0], (int) p[1], p[2]);
+	x = snedecor_critval((int) parm[0], (int) parm[1], a);
     } else if (st == 'B') {
-	x = binomial_critval(p[0], (int) p[1], p[2]);
+	x = binomial_critval(parm[0], (int) parm[1], a);
     } else if (st == 'P') {
-	x = poisson_critval(p[0], p[1]);
+	x = poisson_critval(parm[0], a);
     } else if (st == 'W') {
-	x = weibull_critval(p[0], p[1], p[2]);
+	x = weibull_critval(parm[0], parm[1], a);
     } 
 
     return x;
 }
 
-double gretl_get_cdf (char st, double *p)
+/**
+ * gretl_get_cdf:
+ * @st: distribution code.
+ * @parm: array holding from zero to two parameter values, 
+ * depending on the distribution.
+ * @x: abscissa value.
+ *
+ * Evaluates the CDF for the distribution specified by
+ * @st (and @parm, if applicable) at @x. 
+ *
+ * Returns: the CDF value, or #NADBL on error.
+ */
+
+double gretl_get_cdf (char st, const double *parm, double x)
 {
-    double x = NADBL;
+    double y = NADBL;
 
     if (st == 'z') {
-	x = normal_cdf(p[0]);
+	y = normal_cdf(x);
     } else if (st == 't') {
-	x = student_cdf((int) p[0], p[1]);
+	y = student_cdf((int) parm[0], x);
     } else if (st == 'X') {
-	x = chisq_cdf((int) p[0], p[1]);
+	y = chisq_cdf((int) parm[0], x);
     } else if (st == 'F') {
-	x = snedecor_cdf((int) p[0], (int) p[1], p[2]);
+	y = snedecor_cdf((int) parm[0], (int) parm[1], x);
     } else if (st == 'G') {
-	x = gamma_cdf(p[0], p[1], p[2], 1);
+	y = gamma_cdf(parm[0], parm[1], x, 1);
     } else if (st == 'B') {
-	x = binomial_cdf(p[0], (int) p[1], (int) p[2]);
+	y = binomial_cdf(parm[0], (int) parm[1], (int) x);
     } else if (st == 'D') {
-	x = bvnorm_cdf(p[1], p[2], p[0]);
+	/* FIXME */
+	y = bvnorm_cdf(parm[0], parm[1], parm[2]);
     } else if (st == 'P') {
-	x = poisson_cdf(p[0], (int) p[1]);
+	y = poisson_cdf(parm[0], (int) x);
     } else if (st == 'W') {
-	x = weibull_cdf(p[0], p[1], p[2]);
+	y = weibull_cdf(parm[0], parm[1], x);
     }
 
-    return x;
+    return y;
 }
 
-double gretl_get_pdf (char st, double *p)
+/**
+ * gretl_get_pdf:
+ * @st: distribution code.
+ * @parm: array holding from zero to two parameter values, 
+ * depending on the distribution.
+ * @x: abscissa value.
+ *
+ * Evaluates the PDF for the distribution specified by
+ * @st (and @parm, if applicable) at @x. 
+ *
+ * Returns: the PDF value, or #NADBL on error.
+ */
+
+double gretl_get_pdf (char st, const double *parm, double x)
 {
-    double x = NADBL;
+    double y = NADBL;
 
     if (st == 'z') {
-	x = normal_pdf(p[0]);
+	y = normal_pdf(x);
     } else if (st == 't') {
-	x = student_pdf(p[0], p[1]);
+	y = student_pdf(parm[0], x);
     } else if (st == 'X') {
-	x = chisq_pdf((int) p[0], p[1]);
+	y = chisq_pdf((int) parm[0], x);
     } else if (st == 'F') {
-	x = snedecor_pdf((int) p[0], (int) p[1], p[2]);
+	y = snedecor_pdf((int) parm[0], (int) parm[1], x);
     } else if (st == 'G') {
-	x = gamma_pdf(p[0], p[1], p[2]);
+	y = gamma_pdf(parm[0], parm[1], x);
     } else if (st == 'W') {
-	x = weibull_pdf(p[0], p[1], p[2]);
+	y = weibull_pdf(parm[0], parm[1], x);
     }
 
-    return x;
+    return y;
 }
 
-int gretl_fill_pdf_array (char st, double *p, double *x, int n)
+/**
+ * gretl_fill_pdf_array:
+ * @st: distribution code.
+ * @parm: array holding from zero to two parameter values,
+ * depending on the distribution.
+ * @x: see below.
+ * @n: number of elements in @x.
+ *
+ * On input, @x contains an array of abscissae at which the
+ * PDF specified by @st and @parm should be evaluated.  On
+ * output it contains the corresponding PDF values.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_fill_pdf_array (char st, const double *parm, double *x, int n)
 {
     int err = E_DATA;
 
     if (st == 'z') {
 	err = normal_pdf_array(x, n);
     } else if (st == 't') {
-	err = student_pdf_array(p[0], x, n);
+	err = student_pdf_array(parm[0], x, n);
     } else if (st == 'X') {
-	err = chisq_pdf_array(p[0], x, n);
+	err = chisq_pdf_array(parm[0], x, n);
     } else if (st == 'F') {
-	err = snedecor_pdf_array((int) p[0], (int) p[1], x, n);
+	err = snedecor_pdf_array((int) parm[0], (int) parm[1], x, n);
     } else if (st == 'G') {
-	err = gamma_pdf_array(p[0], p[1], x, n); 
+	err = gamma_pdf_array(parm[0], parm[1], x, n); 
     } else if (st == 'W') {
-	err = weibull_pdf_array(p[0], p[1], x, n);
+	err = weibull_pdf_array(parm[0], parm[1], x, n);
     }
 
     return err;
 }
 
-double gretl_get_pvalue (char st, const double *p)
+/**
+ * gretl_get_pvalue:
+ * @st: distribution code.
+ * @parm: array holding from zero to two parameter values, 
+ * depending on the distribution.
+ * @x: abscissa value.
+ *
+ * Returns: the integral of the PDF specified by @st and
+ * @parm from @x to infinity.
+ */
+
+double gretl_get_pvalue (char st, const double *parm, double x)
 {
-    double x = NADBL;
+    double y = NADBL;
 
     if (st == 'z') {
-	x = normal_cdf_comp(p[0]);
+	y = normal_cdf_comp(x);
     } else if (st == 't') {
-	x = student_cdf_comp((int) p[0], p[1]);
+	y = student_cdf_comp((int) parm[0], x);
     } else if (st == 'X') {
-	x = chisq_cdf_comp((int) p[0], p[1]);
+	y = chisq_cdf_comp((int) parm[0], x);
     } else if (st == 'F') {
-	x = snedecor_cdf_comp((int) p[0], (int) p[1], p[2]);
+	y = snedecor_cdf_comp((int) parm[0], (int) parm[1], x);
     } else if (st == 'G') {
-	x = gamma_cdf_comp(p[0], p[1], p[2], 1);
+	y = gamma_cdf_comp(parm[0], parm[1], x, 1);
     } else if (st == 'B') {
-	x = binomial_cdf_comp(p[0], (int) p[1], (int) p[2]);
+	y = binomial_cdf_comp(parm[0], (int) parm[1], x);
     } else if (st == 'P') {
-	x = poisson_cdf_comp(p[0], (int) p[1]);
+	y = poisson_cdf_comp(parm[0], x);
     } else if (st == 'W') {
-	x = weibull_cdf_comp(p[0], p[1], p[2]);
+	y = weibull_cdf_comp(parm[0], parm[1], x);
     }
 
-    dparm_set(p);
+    dparm_set(parm, x);
 
-    return x;
+    return y;
 }
 
 double *gretl_get_random_series (char st, const double *p,
@@ -1826,7 +1890,8 @@ print_pv_string (double x, double p, PRN *prn)
     return 0;
 }
 
-void print_pvalue (char st, double *p, double pv, PRN *prn)
+void print_pvalue (char st, const double *parm, double x,
+		   double pv, PRN *prn)
 {
     double pc;
     int err;
@@ -1838,13 +1903,13 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'N':
     case '1':
 	pprintf(prn, "%s: ", _("Standard normal"));
-	err = print_pv_string(p[0], pv, prn);
+	err = print_pv_string(x, pv, prn);
 	if (err) return;
 	if (pv < 0.5) {
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pv, 1 - 2 * pv);
 	} else {
-	    pc = normal_cdf(p[0]);
+	    pc = normal_cdf(x);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pc, 1 - 2 * pc);
@@ -1853,14 +1918,14 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 
     case 't':
     case '2':
-	pprintf(prn, "t(%d): ", (int) p[0]);
-	err = print_pv_string(p[1], pv, prn);
+	pprintf(prn, "t(%d): ", (int) parm[0]);
+	err = print_pv_string(x, pv, prn);
 	if (err) return;
 	if (pv < 0.5) {
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pv, 1 - 2 * pv);
 	} else {
-	    pc = student_cdf((int) p[0], p[1]);
+	    pc = student_cdf((int) parm[0], x);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pc, 1 - 2 * pc);
@@ -1871,20 +1936,20 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'x':
     case 'c':
     case '3':
-	pprintf(prn, "%s(%d): ", _("Chi-square"), (int) p[0]);
-	err = print_pv_string(p[1], pv, prn);
+	pprintf(prn, "%s(%d): ", _("Chi-square"), (int) parm[0]);
+	err = print_pv_string(x, pv, prn);
 	if (err) return;
-	pc = chisq_cdf(p[0], p[1]);
+	pc = chisq_cdf(parm[0], x);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
     case 'F':
     case 'f':
     case '4':
-	pprintf(prn, "F(%d, %d): ", (int) p[0], (int) p[1]);
-	err = print_pv_string(p[2], pv, prn);
+	pprintf(prn, "F(%d, %d): ", (int) parm[0], (int) parm[1]);
+	err = print_pv_string(x, pv, prn);
 	if (err) return;
-	pc = snedecor_cdf((int) p[0], (int) p[1], p[2]);
+	pc = snedecor_cdf((int) parm[0], (int) parm[1], x);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
@@ -1893,8 +1958,9 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case '5':
 	pprintf(prn, _("Gamma (shape %g, scale %g, mean %g, variance %g):"
 		       "\n area to the right of %g = %g\n"), 
-		p[0], p[1], p[0] * p[1], p[0] * p[1] * p[1],
-		p[2], pv);
+		parm[0], parm[1], parm[0] * parm[1], 
+		parm[0] * parm[1] * parm[1],
+		x, pv);
 	break;
 
     case 'B':
@@ -1902,30 +1968,30 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case '6':
 	pprintf(prn, _("Binomial (p = %g, n = %d):"
 		       "\n Prob(x > %d) = %g\n"), 
-		p[0], (int) p[1], (int) p[2], pv);
-	pc = binomial_cdf(p[0], p[1], p[2]);
-	if (p[2] > 0) {
-	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[2], pc);
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[2],
-		    pc - binomial_cdf(p[0], p[1], p[2] - 1));
+		parm[0], (int) parm[1], (int) x, pv);
+	pc = binomial_cdf(parm[0], parm[1], x);
+	if (x > 0) {
+	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) x, pc);
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x,
+		    pc - binomial_cdf(parm[0], parm[1], x - 1));
 	} else {
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[2], pc);
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc);
 	}
 	break;
 
     case 'p':
     case 'P':
     case '8':
-	pprintf(prn, _("Poisson (mean = %g): "), p[0]);
-	err = print_pv_string(p[1], pv, prn);
+	pprintf(prn, _("Poisson (mean = %g): "), parm[0]);
+	err = print_pv_string(x, pv, prn);
 	if (err) return;
-	pc = poisson_cdf(p[0], (int) p[1]);
-	if (p[1] > 0) {
-	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[1], pc);
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1],
-		    poisson_pmf(p[0], p[1]));
+	pc = poisson_cdf(parm[0], (int) x);
+	if (x > 0) {
+	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) x, pc);
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x,
+		    poisson_pmf(parm[0], x));
 	} else {
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1], pc);
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc);
 	}
 	break;	
 
@@ -1933,10 +1999,10 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'W':
     case '9':
 	pprintf(prn, _("Weibull (shape = %g, scale = %g): "), 
-		p[0], p[1]);
-	err = print_pv_string(p[2], pv, prn);
+		parm[0], parm[1]);
+	err = print_pv_string(x, pv, prn);
 	if (err) return;
-	pc = weibull_cdf(p[0], p[1], p[2]);
+	pc = weibull_cdf(parm[0], parm[1], x);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
@@ -1971,7 +2037,7 @@ int batch_pvalue (const char *str,
 		  double ***pZ, DATAINFO *pdinfo, 
 		  PRN *prn)
 {
-    double x = NADBL;
+    double pv = NADBL;
     char line[MAXLEN];
     char **S;
     char st;
@@ -2004,11 +2070,11 @@ int batch_pvalue (const char *str,
     free_strings_array(S, n);
 
     if (!err) {
-	x = generate_scalar(line, pZ, pdinfo, &err);
+	pv = generate_scalar(line, pZ, pdinfo, &err);
     }
 
     if (!err) {
-	print_pvalue(st, dparm, x, prn);
+	print_pvalue(st, dparm, dparm[2], pv, prn);
     }
 
     return err;

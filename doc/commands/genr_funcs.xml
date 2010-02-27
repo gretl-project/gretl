@@ -892,8 +892,8 @@
 	  tex="$P(X \le x)$"/>, where the distribution <math>X</math> is
 	  determined by the character <argname>c</argname>. Between the
 	  arguments <argname>c</argname> and <argname>x</argname>, zero or
-	  more additional arguments are required to specify the parameters
-	  of the distribution, as follows.
+	  more additional scalar arguments are required to specify the
+	  parameters of the distribution, as follows.
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -1236,11 +1236,11 @@
 	<para>
 	  Critical value calculator. Returns <math>x</math> such that
 	  <equation status="inline" ascii="P(X &gt; x) = p"  
-	  tex="$P(X &gt; x) = p$"/>, where the distribution <math>X</math>
-	  is determined by the character <argname>c</argname>. Between the
+	  tex="$P(X &gt; x) = p$"/>, where the distribution <math>X</math> is
+	  determined by the character <argname>c</argname>. Between the
 	  arguments <argname>c</argname> and <argname>p</argname>, zero or
-	  more additional arguments are required to specify the parameters
-	  of the distribution, as follows.
+	  more additional scalar arguments are required to specify the
+	  parameters of the distribution, as follows.
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -1873,36 +1873,6 @@
       </description>
     </function>
 
-    <function name="genpois" section="probdist" output="series">
-      <fnargs>
-	<fnarg type="scalar-or-series">&mu;</fnarg>
-      </fnargs>
-      <description>
-	<para context="notex">
-	  Generates a series of Poisson pseudo-random variates. If &mu; is
-	  a scalar, all the elements are drawn from the same distribution;
-	  if &mu; is a series, the appropriate value &mu;<sub>t</sub> is
-	  used at each observation.
-	</para>
-	<para context="tex">
-	  Generates a series of Poisson pseudo-random variates. If &mu; is
-	  a scalar, all the elements are drawn from the same distribution
-	  \[ P(x_t = a) = e^{-\mu} \frac{\mu^{a}}{a!} \] 
-	  Otherwise, if &mu; is a series, the above becomes 
-	  \[ P(x_t = a) = e^{-\mu_t} \frac{\mu_t^{a}}{a!} \]
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="randgen"/>
-	    <fncref targ="normal"/> 
-	    <fncref targ="uniform"/>
-	    <fncref targ="mnormal"/>
-	    <fncref targ="muniform"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="getenv" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -2183,11 +2153,11 @@
 	  Inverse cumulative distribution function calculator. Returns
 	  <math>x</math> such that
 	  <equation status="inline" ascii="P(X &lt; x) = p"  
-	  tex="$P(X \le x) = p$"/>, where the distribution <math>X</math>
-	  is determined by the character <argname>c</argname>; Between the
+	  tex="$P(X \le x) = p$"/>, where the distribution <math>X</math> is
+	  determined by the character <argname>c</argname>; Between the
 	  arguments <argname>c</argname> and <argname>p</argname>, zero or
-	  more additional arguments are required to specify the parameters
-	  of the distribution, as follows.
+	  more additional scalar arguments are required to specify the
+	  parameters of the distribution, as follows.
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -3414,7 +3384,6 @@
 	<para>
 	  <seelist>
 	    <fncref targ="randgen"/>
-	    <fncref targ="genpois"/>
 	    <fncref targ="mnormal"/>
 	    <fncref targ="muniform"/>
 	  </seelist>
@@ -3656,7 +3625,7 @@
 	  Probability density function calculator. Returns the density at
 	  <argname>x</argname> of the distribution identified by the code
 	  <argname>c</argname>.  See <fncref targ="cdf"/> for details of the
-	  required arguments.  The distributions supported by the
+	  required (scalar) arguments.  The distributions supported by the
 	  <lit>pdf</lit> function are the normal, Student's <math>t</math>,
 	  chi-square, <math>F</math>, Gamma and Weibull.
 	</para>
@@ -4094,23 +4063,35 @@
     <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
+	<fnarg type="scalar-or-series">a</fnarg>
+	<fnarg type="scalar-or-series">b</fnarg>
       </fnargs>
       <examples>
 	<example>series x = randgen(u, 0, 100)</example>
 	<example>series t14 = randgen(t, 14)</example>
 	<example>series y = randgen(B, 0.6, 30)</example>
 	<example>series g = randgen(G, 1, 1)</example>
+	<example>series P = randgen(P, mu)</example>
       </examples>
       <description>
 	<para>
 	  All-purpose random number generator. The parameter
 	  <argname>c</argname> is a character, which specifies from which
-	  distribution the pseudo-random numbers should be drawn;
-	  <argname>a</argname> and, in some cases, <argname>b</argname>
-	  gauge the shape of the distribution.
+	  distribution the pseudo-random numbers should be drawn. The
+	  arguments <argname>a</argname> and (in some cases)
+	  <argname>b</argname> provide the parameters of the selected
+	  distribution. If these are given as scalars the output series is
+	  identically distributed; if a series is given for
+	  <argname>a</argname> or <argname>b</argname> the distribution is
+	  conditional on the parameter value at each observation.
 	</para>
+	<para>
+	  Specifics are given below: the character codes for each
+	  distribution are shown in parentheses, followed by the
+	  interpretation of the argument <argname>a</argname> and,
+	  where applicable, <argname>b</argname>.
+	</para>
+	  
 	<ilist context="notex">
 	  <li>
 	    <para>
@@ -4178,7 +4159,6 @@
 	  <seelist>
 	    <fncref targ="normal"/>
 	    <fncref targ="uniform"/> 
-	    <fncref targ="genpois"/>
 	  </seelist>
 	</para>
       </description>
@@ -4896,7 +4876,6 @@
 	  <seelist>
 	    <fncref targ="randgen"/>
 	    <fncref targ="normal"/>
-	    <fncref targ="genpois"/>
 	    <fncref targ="mnormal"/>
 	    <fncref targ="muniform"/>
 	  </seelist>
