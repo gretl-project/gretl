@@ -647,8 +647,10 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	    St = normal_cdf(-(logt[i] - Xbi) / s);
 	    pmod->uhat[t] = -log(St);
 	} else {
-	    /* FIXME logligistic case */
-	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
+	    /* FIXME loglogistic case */
+	    pmod->yhat[t] = NADBL;
+	    St = 1.0 / (1 + pow(Xbi * y[t], 1/s));
+	    pmod->uhat[t] = -log(St);
 	}
 	i++;
     }
