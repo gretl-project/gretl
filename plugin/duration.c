@@ -623,6 +623,7 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
     /* Below: I'm trying to figure out the correct expressions for the
        conditional mean durations (yhat) and generalized residuals,
        which I gather are supposed to be -log S(t, X, \theta).
+       FIXME!
     */
 
     i = 0;
@@ -646,9 +647,8 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	    pmod->yhat[t] = exp(Xbi);
 	    St = normal_cdf(-(logt[i] - Xbi) / s);
 	    pmod->uhat[t] = -log(St);
-	} else {
-	    /* FIXME loglogistic case */
-	    pmod->yhat[t] = NADBL;
+	} else if (dinfo->dist == DUR_LOGLOG) {
+	    pmod->yhat[t] = exp(Xbi);
 	    St = 1.0 / (1 + pow(Xbi * y[t], 1/s));
 	    pmod->uhat[t] = -log(St);
 	}
