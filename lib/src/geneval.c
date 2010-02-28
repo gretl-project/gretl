@@ -811,6 +811,22 @@ static double scalar_pdist (int t, char d, const double *parm,
     return x;
 }
 
+static double *full_length_NA_vec (parser *p)
+{
+    double *x = malloc(p->dinfo->n * sizeof *x);
+    int t;
+
+    if (x == NULL) {
+	p->err = E_ALLOC;
+    } else {
+	for (t=0; t<p->dinfo->n; t++) {
+	    x[t] = NADBL;
+	}
+    }
+
+    return x;
+}
+
 /* @parm contains an array of scalar parameters;
    @argvec contains a series of argument values.
 */
@@ -823,9 +839,8 @@ static double *series_pdist (int f, char d,
     double *xvec;
     int t;
 
-    xvec = malloc(p->dinfo->n * sizeof *xvec);
+    xvec = full_length_NA_vec(p);
     if (xvec == NULL) {
-	p->err = E_ALLOC;
 	return NULL;
     }
 
@@ -833,21 +848,14 @@ static double *series_pdist (int f, char d,
 	/* fast treatment, for pdf only at this point */
 	int n = sample_size(p->dinfo);
 
-	for (t=0; t<p->dinfo->n; t++) {
-	    xvec[t] = (t < p->dinfo->t1 || t > p->dinfo->t2)? NADBL : 
-		argvec[t];
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    xvec[t] = argvec[t];
 	}
 	gretl_fill_pdf_array(d, parm, xvec + p->dinfo->t1, n);
     } else {
-	double arg;
-
-	for (t=0; t<p->dinfo->n; t++) {
-	    arg = argvec[t];
-	    if (t < p->dinfo->t1 || t > p->dinfo->t2 || na(arg)) {
-		xvec[t] = NADBL;
-	    } else {
-		xvec[t] = scalar_pdist(f, d, parm, np, arg, p);
-	    }
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    xvec[t] = scalar_pdist(f, d, parm, np, 
+				   argvec[t], p);
 	}
     }
 

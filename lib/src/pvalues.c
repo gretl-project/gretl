@@ -1503,13 +1503,46 @@ void print_critval (char st, const double *parm, double a, double c, PRN *prn)
     pputc(prn, '\n');    
 }
 
-static double dparm[3];
+/* This apparatus is for use with the "batch p-value" 
+   routine: it remembers the parameters (p) and
+   argument (x) from the last internal p-value 
+   assessment.
+*/
 
-static void dparm_set (const double *p, double x)
+static double pvargs[3];
+
+static void remember_pvalue_args (const double *p, double x)
 {
-    dparm[0] = p[0];
-    dparm[1] = p[1];
-    dparm[2] = x;
+    pvargs[0] = p[0];
+    pvargs[1] = p[1];
+    pvargs[2] = x;
+}
+
+/* end remember parameters */
+
+static int pdist_check_input (char st, const double *parm,
+			      double x)
+{
+    int i, np = 1;
+
+    if (na(x)) {
+	return E_MISSDATA;
+    }
+
+    if (st == 'z') {
+	np = 0;
+    } else if (st == 'F' || st == 'G' ||
+	       st == 'B' || st == 'W') {
+	np = 2;
+    }
+
+    for (i=0; i<np; i++) {
+	if (na(parm[i])) {
+	    return E_MISSDATA;
+	}
+    }
+
+    return 0;
 }
 
 /**
@@ -1524,25 +1557,30 @@ static void dparm_set (const double *p, double x)
  * is equal to @a, or #NADBL on failure.
  */
 
-double gretl_get_cdf_inverse (char st, const double *parm, double a)
+double gretl_get_cdf_inverse (char st, const double *parm, 
+			      double a)
 {
-    double x = NADBL;
+    double y = NADBL;
+
+    if (pdist_check_input(st, parm, a) == E_MISSDATA) {
+	return y;
+    }
 
     if (st == 'z') {
-	x = normal_cdf_inverse(a);
+	y = normal_cdf_inverse(a);
     } else if (st == 't') {
-	x = student_cdf_inverse(parm[0], a);
+	y = student_cdf_inverse(parm[0], a);
     } else if (st == 'X') {
-	x = chisq_cdf_inverse((int) parm[0], a);
+	y = chisq_cdf_inverse((int) parm[0], a);
     } else if (st == 'F') {
-	x = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
+	y = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
     } else if (st == 'B') {
-	x = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
+	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
     } else if (st == 'P') {
-	x = poisson_cdf_inverse((int) parm[0], a);
+	y = poisson_cdf_inverse((int) parm[0], a);
     } 
 
-    return x;
+    return y;
 }
 
 /**
@@ -1552,7 +1590,7 @@ double gretl_get_cdf_inverse (char st, const double *parm, double a)
  * depending on the distribution.
  * @a: right-tail probability.
  *
- * Returns: the abcsissa value for the distribution specified
+ * Returns: the abcsissa value x for the distribution specified
  * by @st and @parm, such that P(X >= x) = @a, or #NADBL on 
  * failure.
  */
@@ -1560,6 +1598,10 @@ double gretl_get_cdf_inverse (char st, const double *parm, double a)
 double gretl_get_critval (char st, const double *parm, double a)
 {
     double x = NADBL;
+
+    if (pdist_check_input(st, parm, a) == E_MISSDATA) {
+	return x;
+    }
 
     if (st == 'z') {
 	x = normal_critval(a);
@@ -1588,7 +1630,7 @@ double gretl_get_critval (char st, const double *parm, double a)
  * @x: abscissa value.
  *
  * Evaluates the CDF for the distribution specified by
- * @st (and @parm, if applicable) at @x. 
+ * @st and @parm applicable at @x. 
  *
  * Returns: the CDF value, or #NADBL on error.
  */
@@ -1596,6 +1638,10 @@ double gretl_get_critval (char st, const double *parm, double a)
 double gretl_get_cdf (char st, const double *parm, double x)
 {
     double y = NADBL;
+
+    if (pdist_check_input(st, parm, x) == E_MISSDATA) {
+	return y;
+    }    
 
     if (st == 'z') {
 	y = normal_cdf(x);
@@ -1609,9 +1655,6 @@ double gretl_get_cdf (char st, const double *parm, double x)
 	y = gamma_cdf(parm[0], parm[1], x, 1);
     } else if (st == 'B') {
 	y = binomial_cdf(parm[0], (int) parm[1], (int) x);
-    } else if (st == 'D') {
-	/* FIXME */
-	y = bvnorm_cdf(parm[0], parm[1], parm[2]);
     } else if (st == 'P') {
 	y = poisson_cdf(parm[0], (int) x);
     } else if (st == 'W') {
@@ -1629,7 +1672,7 @@ double gretl_get_cdf (char st, const double *parm, double x)
  * @x: abscissa value.
  *
  * Evaluates the PDF for the distribution specified by
- * @st (and @parm, if applicable) at @x. 
+ * @st and @parm at @x. 
  *
  * Returns: the PDF value, or #NADBL on error.
  */
@@ -1637,6 +1680,10 @@ double gretl_get_cdf (char st, const double *parm, double x)
 double gretl_get_pdf (char st, const double *parm, double x)
 {
     double y = NADBL;
+
+    if (pdist_check_input(st, parm, x) == E_MISSDATA) {
+	return y;
+    } 
 
     if (st == 'z') {
 	y = normal_pdf(x);
@@ -1670,9 +1717,14 @@ double gretl_get_pdf (char st, const double *parm, double x)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_fill_pdf_array (char st, const double *parm, double *x, int n)
+int gretl_fill_pdf_array (char st, const double *parm, 
+			  double *x, int n)
 {
     int err = E_DATA;
+
+    if (pdist_check_input(st, parm, 0) == E_MISSDATA) {
+	return E_MISSDATA;
+    } 
 
     if (st == 'z') {
 	err = normal_pdf_array(x, n);
@@ -1699,12 +1751,16 @@ int gretl_fill_pdf_array (char st, const double *parm, double *x, int n)
  * @x: abscissa value.
  *
  * Returns: the integral of the PDF specified by @st and
- * @parm from @x to infinity.
+ * @parm from @x to infinity, or #NADBL on error.
  */
 
 double gretl_get_pvalue (char st, const double *parm, double x)
 {
     double y = NADBL;
+
+    if (pdist_check_input(st, parm, x) == E_MISSDATA) {
+	return y;
+    } 
 
     if (st == 'z') {
 	y = normal_cdf_comp(x);
@@ -1724,10 +1780,33 @@ double gretl_get_pvalue (char st, const double *parm, double x)
 	y = weibull_cdf_comp(parm[0], parm[1], x);
     }
 
-    dparm_set(parm, x);
+    remember_pvalue_args(parm, x);
 
     return y;
 }
+
+/**
+ * gretl_get_random_series:
+ * @st: distribution code.
+ * @parm: array holding either one or two scalar 
+ * parameter values, depending on the distribution.
+ * @serp1: series containing values for first param,
+ * or %NULL.
+ * @serp2: series containing values for second param,
+ * or %NULL.
+ * @pdinfo: dataset information.
+ * @err: location to receive error code.
+ *
+ * Produces a random series conforming to the distribution
+ * given by @st, which may require specification of either
+ * one or two parameters. These parameters are either
+ * given as (scalar) elements of @parm, or they may vary
+ * by observation, in which case they are given as the
+ * elements of @serp1 or @serp2.
+ *
+ * Returns: the array of pseudo-random values, or %NULL
+ * on error.
+ */
 
 double *gretl_get_random_series (char st, const double *p,
 				 const double *serp1, 
@@ -1842,9 +1921,6 @@ double *gretl_get_random_series (char st, const double *p,
     } else if (st == 'P') {
 	/* Poisson */
 	double m = p[0];
-
-	fprintf(stderr, "Poisson: m=%g, serp1 = %p\n",
-		m, (void *) serp1);
 
 	if (serp1 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -2077,7 +2153,7 @@ int batch_pvalue (const char *str,
     }
 
     if (!err) {
-	print_pvalue(st, dparm, dparm[2], pv, prn);
+	print_pvalue(st, pvargs, pvargs[2], pv, prn);
     }
 
     return err;
