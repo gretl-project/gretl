@@ -6298,6 +6298,18 @@ static double *dvar_get_series (int i, parser *p)
 	    p->err = E_ALLOC;
 	}
 	break;
+    case R_T:
+	x = malloc(p->dinfo->n * sizeof *x);
+	if (x != NULL) {
+	    int ann = annual_data(p->dinfo);
+
+	    for (t=0; t<p->dinfo->n; t++) {
+		x[t] = (ann)? p->dinfo->sd0 + t : t + 1;
+	    }
+	} else {
+	    p->err = E_ALLOC;
+	}
+	break;
     case R_PUNIT:
 	if (p->dinfo->paninfo != NULL) {
 	    x = malloc(p->dinfo->n * sizeof *x);
