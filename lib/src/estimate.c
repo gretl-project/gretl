@@ -4156,10 +4156,12 @@ MODEL duration_model (const int *list, double ***pZ,
 			       PRN *);
 
     gretl_error_clear();
-
     gretl_model_init(&dmod);
 
-    /* FIXME check for all positive dependent var */
+    if (!gretl_list_const_pos(list, 2, (const double **) *pZ, pdinfo)) {
+	dmod.errcode = E_NOCONST;
+	return dmod;
+    }
 
     listcpy = gretl_list_copy(list);
     if (listcpy == NULL) {

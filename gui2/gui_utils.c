@@ -223,7 +223,7 @@ static GtkActionEntry model_test_items[] = {
     { "modtest:l", NULL, N_("Non-linearity (_logs)"), NULL, NULL, G_CALLBACK(do_modtest) },
     { "reset", NULL, N_("_Ramsey's RESET"), NULL, NULL, G_CALLBACK(do_reset) },
     { "Hsk", NULL, N_("_Heteroskedasticity"), NULL, NULL, NULL },    
-    { "testuhat", NULL, N_("_Normality of residual"), NULL, NULL, G_CALLBACK(do_resid_freq) },
+    { "modtest:n", NULL, N_("_Normality of residual"), NULL, NULL, G_CALLBACK(do_resid_freq) },
     { "leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
     { "chow", NULL, N_("_Chow test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },    
     { "vif", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
@@ -2662,7 +2662,7 @@ static const gchar *model_ui =
     "   <menuitem action='reset'/>"
     "   <separator/>"
     "   <menu action='Hsk'/>"
-    "   <menuitem action='testuhat'/>"
+    "   <menuitem action='modtest:n'/>"
     "   <menuitem action='leverage'/>"
     "   <menuitem action='vif'/>"
     "   <menuitem action='chow'/>"
@@ -3207,7 +3207,7 @@ static int sys_test_code (GtkAction *action)
 	return SYS_AUTOCORR_TEST;
     } else if (!strcmp(s, "ARCH")) {
 	return SYS_ARCH_TEST;
-    } else if (!strcmp(s, "testuhat")) {
+    } else if (!strcmp(s, "normtest")) {
 	return SYS_NORMALITY_TEST;
     } else if (!strcmp(s, "restrict")) {
 	return SYS_RESTRICT;
@@ -3274,7 +3274,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 	}
     } else if (code == SYS_NORMALITY_TEST) {
 	title = g_strdup_printf("gretl: %s", _("Test for normality of residual"));
-	cstr = g_strdup("testuhat");
+	cstr = g_strdup("normtest");
 	if (var != NULL) {
 	    err = gretl_VAR_normality_test(var, prn);
 	} else {
@@ -3394,7 +3394,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     }
 
     /* multivariate normality test */
-    item.name = "testuhat";
+    item.name = "normtest";
     item.label = N_("_Normality of residuals");
     vwin_menu_add_item(vwin, tests, &item);
 

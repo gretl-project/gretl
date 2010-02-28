@@ -594,7 +594,7 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo)
 		       duration_score, dinfo, NULL, OPT_NONE, NULL);
     }
 
-    if (!err) {
+    if (!err && llu > dinfo->ll) {
 	pmod->chisq = 2 * (llu - dinfo->ll);
     }
 }
