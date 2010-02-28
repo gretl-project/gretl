@@ -1543,6 +1543,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 	    nx = gretl_model_get_int(pmod, "base-coeffs");
 	} else if (pmod->ci == LOGIT || 
 		   pmod->ci == NEGBIN ||
+		   pmod->ci == DURATION ||
 		   pmod->ci == PANEL) {
 	    /* models in which the array of coefficients
 	       is (or may be) longer than the list of

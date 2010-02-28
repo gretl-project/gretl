@@ -35,7 +35,8 @@ enum {
 };
 
 enum {
-    SCORE_UPDATE_XB = 1
+    DUR_UPDATE_XB  = 1 << 0,
+    DUR_CONST_ONLY = 1 << 1
 };
 
 struct duration_info_ {
@@ -86,24 +87,35 @@ static int duration_nonpositive (const MODEL *pmod, const double **Z)
 
 static int duration_estimates_init (duration_info *dinfo)
 {
-    gretl_matrix *b;
-    int j, err = 0;
+    int err = 0;
 
-    b = gretl_matrix_alloc(dinfo->k, 1);
-    if (b == NULL) {
-	return E_ALLOC;
-    }
+    if (dinfo->flags & DUR_CONST_ONLY) {
+	double b0 = gretl_vector_mean(dinfo->logt);
+	
+	dinfo->theta[0] = b0;
+    } else {
+	gretl_matrix *b = gretl_matrix_alloc(dinfo->k, 1);
+	int j;
 
-    err = gretl_matrix_ols(dinfo->logt, dinfo->X, b, 
-			   NULL, NULL, NULL);
-
-    if (!err) {
-	for (j=0; j<dinfo->k; j++) {
-	    dinfo->theta[j] = b->val[j];
+	if (b == NULL) {
+	    return E_ALLOC;
 	}
+
+	err = gretl_matrix_ols(dinfo->logt, dinfo->X, b, 
+			       NULL, NULL, NULL);
+
+	if (!err) {
+	    for (j=0; j<dinfo->k; j++) {
+		dinfo->theta[j] = b->val[j];
+	    }
+	}
+
+	gretl_matrix_free(b);
     }
 
-    gretl_matrix_free(b);
+    if (dinfo->dist != DUR_EXPON) {
+	dinfo->theta[dinfo->k] = 1.0;
+    }
 
     return err;
 }
@@ -197,9 +209,6 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
     err = duration_estimates_init(dinfo);
 
     if (!err) {
-	if (dinfo->dist != DUR_EXPON) {
-	    dinfo->theta[k] = 1.0;
-	}
 	dinfo->ll = NADBL;
 	dinfo->prn = (opt & OPT_V)? prn : NULL;
     }
@@ -302,7 +311,7 @@ static int duration_score (double *theta, double *g, int np,
     double wi, ewi, ai, xij, gij, s = 1.0;
     int i, j, di, err = 0;
 
-    if (dinfo->flags == SCORE_UPDATE_XB) {
+    if (dinfo->flags == DUR_UPDATE_XB) {
 	duration_update_Xb(dinfo, theta);
     }
 
@@ -438,7 +447,7 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
     gretl_matrix *H = NULL;
     int err;
 
-    dinfo->flags = SCORE_UPDATE_XB;
+    dinfo->flags = DUR_UPDATE_XB;
     err = duration_score(dinfo->theta, NULL, dinfo->npar, 
 			 NULL, dinfo);
     dinfo->flags = 0;
@@ -553,6 +562,43 @@ static int duration_hessian_vcv (MODEL *pmod, duration_info *dinfo)
     return err;
 }
 
+/* This is the last thing we do, after transcribing the 
+   MLE results to pmod, so we don't have to worry about 
+   saving and then restoring all the original values
+   attached to dinfo, which we will shortly destroy.
+*/
+
+static void
+duration_overall_LR_test (MODEL *pmod, duration_info *dinfo)
+{
+    double llu = dinfo->ll;
+    int err = 0;
+
+    dinfo->k = 1;
+    dinfo->npar = 1 + (dinfo->dist != DUR_EXPON);
+
+    gretl_matrix_reuse(dinfo->X, -1, dinfo->k);
+    gretl_matrix_reuse(dinfo->G, -1, dinfo->npar);
+    gretl_matrix_reuse(dinfo->beta, dinfo->k, 1);
+
+    dinfo->flags |= DUR_CONST_ONLY;
+    err = duration_estimates_init(dinfo);
+
+    if (!err) {
+	int maxit, fncount = 0, grcount = 0;
+	double toler;
+
+	BFGS_defaults(&maxit, &toler, DURATION); 
+	err = BFGS_max(dinfo->theta, dinfo->npar, maxit, toler, 
+		       &fncount, &grcount, duration_loglik, C_LOGLIK,
+		       duration_score, dinfo, NULL, OPT_NONE, NULL);
+    }
+
+    if (!err) {
+	pmod->chisq = 2 * (llu - dinfo->ll);
+    }
+}
+
 static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 				      const double **Z)
 {
@@ -574,11 +620,9 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	G = gamma_function(2.0);
     }   
 
-    /* Below: WTF? I'm struggling to figure out the correct
-       expressions for the conditional mean durations (yhat)
-       and generalized residuals, which I gather are supposed
-       to be -log S(t, X, \theta). The material I've read on
-       this is very confusing 8-/.
+    /* Below: I'm trying to figure out the correct expressions for the
+       conditional mean durations (yhat) and generalized residuals,
+       which I gather are supposed to be -log S(t, X, \theta).
     */
 
     i = 0;
@@ -603,6 +647,7 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	    St = normal_cdf(-(logt[i] - Xbi) / s);
 	    pmod->uhat[t] = -log(St);
 	} else {
+	    /* FIXME logligistic case */
 	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
 	}
 	i++;
@@ -652,8 +697,10 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	}
     }
 
+#if 0
     pmod->dfd -= (dinfo->npar - dinfo->k);
     pmod->dfn += (dinfo->npar - dinfo->k);
+#endif
 
     err = gretl_model_write_coeffs(pmod, dinfo->theta, np);
     
@@ -699,11 +746,13 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	duration_set_predictions(pmod, dinfo, Z);
 	pmod->lnL = dinfo->ll;
 	mle_criteria(pmod, 0); 
-	/* mask invalid statistics (FIXME chisq?) */
+	/* mask invalid statistics */
 	pmod->fstt = pmod->chisq = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
 	pmod->ess = NADBL;
 	pmod->sigma = NADBL;
+	/* but add overall LR test if possible */
+	duration_overall_LR_test(pmod, dinfo);
     }
 
     return err;
@@ -760,5 +809,3 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
     
     return pmod->errcode;
 }
-
-
