@@ -29,7 +29,7 @@
 
 #define VPARM_DEBUG 0
 
-#define VPARM_MAX 8            /* max number of variance parameters */
+#define PQ_MAX 7               /* max sum of GARCH p and q */
 #define GARCH_PARAM_MAX 0.999
 
 static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
@@ -638,8 +638,8 @@ static int *get_garch_list (const int *list, const double **Z,
     }
 
     /* rule out excessive total GARCH-iness */
-    if (p + q >= VPARM_MAX) {
-	gretl_errmsg_sprintf(_("GARCH: p + q must be less than %d"), VPARM_MAX);
+    if (p + q > PQ_MAX) {
+	gretl_errmsg_sprintf(_("GARCH: p + q must not exceed %d"), PQ_MAX);
 	*err = E_DATA;
 	return NULL;
     }
@@ -891,7 +891,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL model;
     int *list = NULL;
-    double vparm[VPARM_MAX] = {0};
+    double vparm[PQ_MAX+1] = {0};
     double LMF = NADBL;
     double pvF = NADBL;
     double llr = NADBL;

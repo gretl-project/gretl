@@ -74,7 +74,7 @@ static int duration_nonpositive (const MODEL *pmod, const double **Z)
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t]) && y[t] <= 0) {
-	    gretl_errmsg_set("durations must be positive");
+	    gretl_errmsg_set(_("Durations must be positive"));
 	    return 1;
 	}
     }
@@ -83,16 +83,16 @@ static int duration_nonpositive (const MODEL *pmod, const double **Z)
 }
 
 /* initialize using OLS regression of the log of duration
-   on the covariates */
+   on the covariates (or a simpler variant if we're 
+   estimating the constant-only model)
+*/
 
 static int duration_estimates_init (duration_info *dinfo)
 {
     int err = 0;
 
     if (dinfo->flags & DUR_CONST_ONLY) {
-	double b0 = gretl_vector_mean(dinfo->logt);
-	
-	dinfo->theta[0] = b0;
+	dinfo->theta[0] = gretl_vector_mean(dinfo->logt);
     } else {
 	gretl_matrix *b = gretl_matrix_alloc(dinfo->k, 1);
 	int j;
@@ -587,6 +587,8 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo)
     if (!err) {
 	int maxit, fncount = 0, grcount = 0;
 	double toler;
+
+	/* estimate constant-only model */
 
 	BFGS_defaults(&maxit, &toler, DURATION); 
 	err = BFGS_max(dinfo->theta, dinfo->npar, maxit, toler, 

@@ -1034,6 +1034,9 @@ static int get_matrix_size (gretl_matrix *a, gretl_matrix *b,
 {
     int err = 0;
 
+    /* if both matrices are present, they must be the
+       same size */
+
     if (a != NULL) {
 	*r = a->rows;
 	*c = b->cols;
@@ -1052,61 +1055,64 @@ static int get_matrix_size (gretl_matrix *a, gretl_matrix *b,
 
 static NODE *bvnorm_node (NODE *n, parser *p)
 {
-    NODE *e, *ret = NULL;
-    double *avec = NULL, *bvec = NULL;
-    gretl_matrix *amat = NULL, *bmat = NULL;
-    double a, b, args[2];
-    double rho = NADBL;
-    int i, mode = 0;
+    NODE *ret = NULL;
 
-    for (i=0; i<3 && !p->err; i++) {
-	e = eval(n->v.bn.n[i], p);
-	if (p->err) {
-	    break;
-	} 
-	if (e->t == NUM || scalar_matrix_node(e)) {
-	    if (i == 0) {
-		rho = node_get_scalar(e, p);
+    if (starting(p)) {
+	double *avec = NULL, *bvec = NULL;
+	gretl_matrix *amat = NULL, *bmat = NULL;
+	double a, b, args[2];
+	double rho = NADBL;
+	NODE *e;
+	int i, mode = 0;
+
+	for (i=0; i<3 && !p->err; i++) {
+	    e = eval(n->v.bn.n[i+1], p);
+	    if (p->err) {
+		break;
+	    } 
+	    if (e->t == NUM || scalar_matrix_node(e)) {
+		if (i == 0) {
+		    rho = node_get_scalar(e, p);
+		} else {
+		    args[i-1] = node_get_scalar(e, p);
+		}
+	    } else if (i == 1) {
+		if (e->t == VEC) {
+		    avec = e->v.xvec;
+		} else if (e->t == MAT) {
+		    amat = e->v.m;
+		}
+	    } else if (i == 2) {
+		if (e->t == VEC) {
+		    bvec = e->v.xvec;
+		} else if (e->t == MAT) {
+		    bmat = e->v.m;
+		}	    
 	    } else {
-		args[i-1] = node_get_scalar(e, p);
+		node_type_error(F_CDF, i+1, NUM, e, p);
 	    }
-	} else if (i == 0) {
-	    if (e->t == VEC) {
-		avec = e->v.xvec;
-	    } else if (e->t == MAT) {
-		amat = e->v.m;
+	}
+
+	if (!p->err) {
+	    if ((avec != NULL && bmat != NULL) ||
+		(bvec != NULL && amat != NULL)) {
+		p->err = E_INVARG;
+	    } else if (avec != NULL || bvec != NULL) {
+		mode = 1;
+		ret = aux_vec_node(p, p->dinfo->n);
+	    } else if (amat != NULL || bmat != NULL) {
+		mode = 2;
+		ret = aux_matrix_node(p);
+	    } else {
+		mode = 0;
+		ret = aux_scalar_node(p);
 	    }
-	} else if (i == 2) {
-	    if (e->t == VEC) {
-		bvec = e->v.xvec;
-	    } else if (e->t == MAT) {
-		bmat = e->v.m;
-	    }	    
-	} else {
-	    node_type_error(F_CDF, i, NUM, e, p);
 	}
-    }
 
-    if (!p->err) {
-	if ((avec != NULL && bmat != NULL) ||
-	    (bvec != NULL && amat != NULL)) {
-	    p->err = E_INVARG;
-	} else if (avec != NULL || bvec != NULL) {
-	    mode = 1;
-	} else if (amat != NULL || bmat != NULL) {
-	    mode = 2;
+	if (p->err) {
+	    return ret;
 	}
-    }
 
-    if (mode == 0) {
-	ret = aux_scalar_node(p);
-    } else if (mode == 1) {
-	ret = aux_vec_node(p, p->dinfo->n);
-    } else {
-	ret = aux_matrix_node(p);
-    }
-
-    if (!p->err) {
 	if (mode == 0) {
 	    /* a, b are both scalars */
 	    ret->v.xval = bvnorm_cdf(rho, args[0], args[1]);
@@ -1124,7 +1130,7 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 		}
 	    }
 	} else if (mode == 2) {
-	    /* a and/or b are matrices : FIXME */
+	    /* a and/or b are matrices */
 	    gretl_matrix *m = NULL;
 	    int r, c;
 
@@ -1141,10 +1147,21 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 		    a = (amat != NULL)? amat->val[i] : args[0];
 		    b = (bmat != NULL)? bmat->val[i] : args[1];
 		    m->val[i] = bvnorm_cdf(rho, a, b);
+		    if (na(m->val[i])) {
+			/* matrix: change NAs to NaNs */
+			m->val[i] = 0.0/0.0;
+		    } 
 		}
 	    }
+
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }
+
 	    ret->v.m = m;
 	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -1200,7 +1217,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    return DW_node(r, p);
 	} else if (d == 'D') {
 	    /* special: bivariate normal */
-	    return bvnorm_node(n, p);
+	    return bvnorm_node(r, p);
 	}
 
 	for (i=1; i<=k && !p->err; i++) {
@@ -1232,7 +1249,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		    argmat = e->v.m;
 		}
 	    } else if (e->t == VEC) {
-		/* series param for randgen */
+		/* series param for randgen? */
 		if (rgen) {
 		    parmvec[i-1] = e->v.xvec;
 		} else {
