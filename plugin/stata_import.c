@@ -893,6 +893,7 @@ int dta_get_data (const char *fname,
 
     newinfo->v = nvar + 1;
     newinfo->n = nobs;
+    dataset_obs_info_default(newinfo);
 
     err = start_new_Z(&newZ, newinfo, 0);
     if (err) {

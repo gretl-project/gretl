@@ -459,54 +459,6 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
     return H;
 }
 
-/* Given the change of variables that we use for easy computation of
-   the Weibull loglikelihood and score, we need to use the
-   appropriate Jacobian to get the covariance matrix right.  
-*/
-
-static int weibull_vcv_transform (duration_info *dinfo)
-{
-    gretl_matrix *J = NULL;
-    gretl_matrix *JVJ = NULL;
-    const double *theta = dinfo->theta;
-    double s2, s = theta[dinfo->k];
-    double a = 1/s;
-    int np = dinfo->npar;
-    int i, k = np - 1;
-    int err = 0;
-
-    J = gretl_zero_matrix_new(np, np);
-    JVJ = gretl_matrix_alloc(np, np);
-
-    if (J == NULL || JVJ == NULL) {
-	return E_ALLOC;
-    }
-
-    s2 = s * s;
-
-    for (i=0; i<np; i++) {
-	if (i < np - 1) {
-	    gretl_matrix_set(J, i, i, a);
-	    gretl_matrix_set(J, i, k, -theta[i] / s2);
-	} else {
-	    gretl_matrix_set(J, i, k, -1 / s2);
-	}
-    }
-
-    gretl_matrix_qform(J, GRETL_MOD_NONE, dinfo->V, 
-		       JVJ, GRETL_MOD_NONE);
-
-    if (!err) {
-	gretl_matrix_replace(&dinfo->V, JVJ);
-	JVJ = NULL;
-    }
-
-    gretl_matrix_free(J);
-    gretl_matrix_free(JVJ);
-
-    return 0;
-}
-
 /* OPG vcv matrix */
 
 static int duration_OPG_vcv (MODEL *pmod, duration_info *dinfo)
@@ -606,26 +558,29 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 {
     const double *y = Z[pmod->list[1]];
     const double *logt = dinfo->logt->val;
-    double Xbi, St, G = 1.0;
-    int np = dinfo->npar;
-    double s = 1.0;
-    double xij;
-    int i, j, t;
+    double St, G = 1.0;
+    double s = 1.0, p = 1.0;
+    double wi, Xbi, expXbi;
+    int i, t;
 
     if (dinfo->dist != DUR_EXPON) {
-	s = dinfo->theta[np-1];
+	/* scale factor */
+	s = dinfo->theta[dinfo->npar-1];
+	p = 1/s;
     }
 
     if (dinfo->dist == DUR_WEIBULL) {
+	/* agrees with Stata; R's survreg has this wrong */
 	G = gamma_function(1 + s);
     } else if (dinfo->dist == DUR_EXPON) {
 	G = gamma_function(2.0);
     }   
 
-    /* Below: I'm trying to figure out the correct expressions for the
-       conditional mean durations (yhat) and generalized residuals,
-       which I gather are supposed to be -log S(t, X, \theta).
-       FIXME!
+    /* Below: we write into pmod->yhat E[t | X, theta] -- or
+       in the case of the loglogistic and lognormal models,
+       exp(E[log t | X, theta]).  And we write into pmod->uhat
+       Cox-Snell generalized residuals, namely the integrated
+       hazard function, which equals -log S(t).
     */
 
     i = 0;
@@ -633,35 +588,25 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	if (na(pmod->yhat[t])) {
 	    continue;
 	}
-	Xbi = 0.0;
-	for (j=0; j<dinfo->k; j++) {
-	    xij = gretl_matrix_get(dinfo->X, i, j);
-	    Xbi += pmod->coeff[j] * xij;
-	}
+
+	Xbi = dinfo->Xb->val[i];
+	expXbi = exp(Xbi);
+	wi = (logt[i] - Xbi) / s;
+
 	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
-	    pmod->yhat[t] = exp(-Xbi) * G;
-	    /* below: agrees with Stata, but is it right? */
-	    pmod->yhat[t] = exp(dinfo->Xb->val[i]) * G;
-	    if (dinfo->dist == DUR_WEIBULL) {
-		/* pmod->uhat[t] = pow(exp(Xbi) * y[t], 1/s); */
-		/* below: agrees with Stata, but is it right? */
-		pmod->uhat[t] = pow(exp(-dinfo->Xb->val[i]) * y[t], 1/s);
-	    } else {
-		pmod->uhat[t] = exp(Xbi) * y[t];
-	    }
+	    pmod->yhat[t] = expXbi * G;
+	    St = exp(-exp(wi));
 	} else if (dinfo->dist == DUR_LOGNORM) {
-	    /* prediction agrees with R's "survival" package */
-	    pmod->yhat[t] = exp(Xbi);
-	    St = normal_cdf(-(logt[i] - Xbi) / s);
-	    /* residual agrees with Stata's Cox-Snell residuals */
-	    pmod->uhat[t] = -log(St);
+	    pmod->yhat[t] = expXbi;
+	    St = normal_cdf(-wi);
 	} else if (dinfo->dist == DUR_LOGLOG) {
-	    /* prediction agrees with R's "survival" package */
-	    pmod->yhat[t] = exp(Xbi);
-	    /* residual agrees with Stata's Cox-Snell residuals */
-	    St = 1.0 / (1 + pow(y[t] / exp(Xbi), 1/s));
-	    pmod->uhat[t] = -log(St);
+	    pmod->yhat[t] = expXbi;
+	    St = 1.0 / (1 + pow(y[t] / expXbi, p));
 	}
+
+	/* generalized (Cox-Snell) residual */
+	pmod->uhat[t] = -log(St);
+
 	i++;
     }
 }
@@ -699,20 +644,11 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 		v = pmod->list[j+2];
 		strcpy(pmod->params[j], pdinfo->varname[v]);
 	    }
-	    if (dinfo->dist == DUR_WEIBULL) {
-		strcpy(pmod->params[np-1], "alpha");
-	    } else if (dinfo->dist == DUR_LOGLOG) {
-		strcpy(pmod->params[np-1], "gamma");
-	    } else if (dinfo->dist == DUR_LOGNORM) {
-		strcpy(pmod->params[np-1], "sigma");
-	    }
+	    if (dinfo->dist != DUR_EXPON) {
+		strcpy(pmod->params[np-1], "scale");
+	    } 
 	}
     }
-
-#if 0
-    pmod->dfd -= (dinfo->npar - dinfo->k);
-    pmod->dfn += (dinfo->npar - dinfo->k);
-#endif
 
     err = gretl_model_write_coeffs(pmod, dinfo->theta, np);
     
@@ -728,13 +664,6 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	} 
     }
 
-    if (!err && dinfo->dist == DUR_WEIBULL) {
-	err = weibull_vcv_transform(dinfo);
-	pmod->coeff[dinfo->k] = 1 / dinfo->theta[dinfo->k];
-    } else if (dinfo->dist != DUR_EXPON) {
-	pmod->coeff[dinfo->k] = dinfo->theta[dinfo->k];
-    }
-
     if (!err) {
 	err = gretl_model_write_vcv(pmod, dinfo->V);
 	if (!err) {
@@ -744,15 +673,6 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	    gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
 	}
     }	
-
-    if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
-	for (j=0; j<dinfo->k; j++) {
-	    pmod->coeff[j] = -pmod->coeff[j];
-	    if (dinfo->dist == DUR_WEIBULL) {
-		pmod->coeff[j] /= dinfo->theta[dinfo->k];
-	    }
-	}
-    }
 
     if (!err) {
 	duration_set_predictions(pmod, dinfo, Z);

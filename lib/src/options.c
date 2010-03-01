@@ -125,6 +125,7 @@ struct gretl_option gretl_opts[] = {
     { DURATION, OPT_G, "opg", 0 },
     { DURATION, OPT_R, "robust", 0 },
     { DURATION, OPT_V, "verbose", 0 },
+    { DURATION, OPT_Q, "quiet", 0 },
     { EQNPRINT, OPT_O, "complete", 0 },
     { EQNPRINT, OPT_T, "t-ratios", 0 },
     { TABPRINT, OPT_O, "complete", 0 },
