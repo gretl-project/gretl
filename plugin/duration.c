@@ -640,18 +640,26 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	}
 	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
 	    pmod->yhat[t] = exp(-Xbi) * G;
+	    /* below: agrees with Stata, but is it right? */
+	    pmod->yhat[t] = exp(dinfo->Xb->val[i]) * G;
 	    if (dinfo->dist == DUR_WEIBULL) {
-		pmod->uhat[t] = pow(exp(Xbi) * y[t], 1/s);
+		/* pmod->uhat[t] = pow(exp(Xbi) * y[t], 1/s); */
+		/* below: agrees with Stata, but is it right? */
+		pmod->uhat[t] = pow(exp(-dinfo->Xb->val[i]) * y[t], 1/s);
 	    } else {
 		pmod->uhat[t] = exp(Xbi) * y[t];
 	    }
 	} else if (dinfo->dist == DUR_LOGNORM) {
+	    /* prediction agrees with R's "survival" package */
 	    pmod->yhat[t] = exp(Xbi);
 	    St = normal_cdf(-(logt[i] - Xbi) / s);
+	    /* residual agrees with Stata's Cox-Snell residuals */
 	    pmod->uhat[t] = -log(St);
 	} else if (dinfo->dist == DUR_LOGLOG) {
+	    /* prediction agrees with R's "survival" package */
 	    pmod->yhat[t] = exp(Xbi);
-	    St = 1.0 / (1 + pow(Xbi * y[t], 1/s));
+	    /* residual agrees with Stata's Cox-Snell residuals */
+	    St = 1.0 / (1 + pow(y[t] / exp(Xbi), 1/s));
 	    pmod->uhat[t] = -log(St);
 	}
 	i++;
