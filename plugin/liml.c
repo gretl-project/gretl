@@ -371,8 +371,8 @@ static int liml_do_equation (equation_system *sys, int eq,
  bailout:
 
     free(reglist);
-
     gretl_matrix_block_destroy(B);
+    gretl_matrix_free(lambda);
 
     if (freelists) {
 	free(list);

@@ -358,23 +358,33 @@ static int duration_score (double *theta, double *g, int np,
 
 #define matrix_plus(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
 
-/* Analytical Hessian: see Kalbfleisch and Prentice, 2002, pp. 69-70 */
+/* Analytical Hessian: see Kalbfleisch and Prentice, 2002, pp. 69-70.
+   We're actually constructing the inverse of the Hessian here,
+   to serve as covariance matrix -- unless (experimental)
+   the argument @theta is non-NULL, in which case we return just
+   the regular Hessian, for use in newton_raphson_max().
+*/
 
-static gretl_matrix *duration_hessian (duration_info *dinfo, int *err)
+static int duration_hessian (double *theta, 
+			     gretl_matrix *H,
+			     void *data)
 {
-    gretl_matrix *H;
-    int np = dinfo->npar;
+    duration_info *dinfo = (duration_info *) data;
     const double *logt = dinfo->logt->val;
     const double *Xb = dinfo->Xb->val;
     double s, s2, Ai, wi, ewi, hwi;
+    int np = dinfo->npar;
     double xij, xik, hjk;
     int i, j, k, di;
-    
-    H = gretl_zero_matrix_new(np, np);
-    if (H == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+    int err = 0;
+
+    if (theta != NULL) {
+	/* Newton-Raphson */
+	duration_update_Xb(dinfo, theta);
+	duration_score(theta, NULL, np, NULL, dinfo);
     }
+
+    gretl_matrix_zero(H);
 
     if (dinfo->dist == DUR_EXPON) {
 	s2 = s = 1;
@@ -426,16 +436,17 @@ static gretl_matrix *duration_hessian (duration_info *dinfo, int *err)
 	}
     }
 
-    /* fill out upper triangle and invert */
+    /* fill out upper triangle */
     gretl_matrix_mirror(H, 'L');
-    *err = gretl_invert_symmetric_matrix(H);
 
-    if (*err) {
-	gretl_matrix_free(H);
-	H = NULL;
+    if (theta == NULL) {
+	/* and invert, for VCV */
+	err = gretl_invert_symmetric_matrix(H);
+    } else {
+	gretl_matrix_multiply_by_scalar(H, -1);
     }
 
-    return H;
+    return err;
 }
 
 /* calculate the OPG matrix at the starting point and use 
@@ -461,7 +472,7 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
 
 /* OPG vcv matrix */
 
-static int duration_OPG_vcv (MODEL *pmod, duration_info *dinfo)
+static int duration_OPG_vcv (duration_info *dinfo)
 {
     gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
 			      dinfo->G, GRETL_MOD_NONE,
@@ -472,7 +483,7 @@ static int duration_OPG_vcv (MODEL *pmod, duration_info *dinfo)
 
 /* QML sandwich VCV */
 
-static int duration_robust_vcv (MODEL *pmod, duration_info *dinfo)
+static int duration_robust_vcv (duration_info *dinfo)
 {
     gretl_matrix *H = NULL;
     gretl_matrix *GG = NULL;
@@ -483,33 +494,25 @@ static int duration_robust_vcv (MODEL *pmod, duration_info *dinfo)
 	return E_ALLOC;
     }
 
+    H = gretl_matrix_alloc(dinfo->npar, dinfo->npar);
+    if (H == NULL) {
+	gretl_matrix_free(GG);
+	return E_ALLOC;
+    }   
+
     gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
 			      dinfo->G, GRETL_MOD_NONE,
 			      GG, GRETL_MOD_NONE);
 
-    H = duration_hessian(dinfo, &err);
+    err = duration_hessian(NULL, H, dinfo);
 
     if (!err) {
 	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
 				 GG, dinfo->V, GRETL_MOD_NONE);
     }	
 
-    gretl_matrix_free(H);
     gretl_matrix_free(GG);
-
-    return err;
-}
-
-static int duration_hessian_vcv (MODEL *pmod, duration_info *dinfo)
-{
-    gretl_matrix *H;
-    int err = 0;
-
-    H = duration_hessian(dinfo, &err);
-
-    if (!err) {
-	gretl_matrix_replace(&dinfo->V, H);
-    }
+    gretl_matrix_free(H);
 
     return err;
 }
@@ -655,12 +658,12 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     if (!err) {
 	if (opt & OPT_R) {
 	    pmod->opt |= OPT_R;
-	    err = duration_robust_vcv(pmod, dinfo);
+	    err = duration_robust_vcv(dinfo);
 	} else if (opt & OPT_G) {
 	    pmod->opt |= OPT_G;
-	    err = duration_OPG_vcv(pmod, dinfo);
+	    err = duration_OPG_vcv(dinfo);
 	} else {
-	    err = duration_hessian_vcv(pmod, dinfo);
+	    err = duration_hessian(NULL, dinfo->V, dinfo);
 	} 
     }
 
@@ -690,12 +693,13 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     return err;
 }
 
+#define USENR 0
+
 int duration_estimate (MODEL *pmod, int censvar, const double **Z, 
 		       const DATAINFO *pdinfo, gretlopt opt, 
 		       PRN *prn)
 {
     gretlopt max_opt = (opt & OPT_V)? OPT_V : OPT_NONE;
-    gretl_matrix *H = NULL;
     duration_info dinfo;
     double toler;
     int maxit;
@@ -712,20 +716,31 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
     }
 #endif
 
+#if USENR
     if (!err) {
-	/* to initialize BFGS curvature */
-	H = duration_init_H(&dinfo);
+	/* experimental! */
+	BFGS_defaults(&maxit, &toler, DURATION); 
+	err = newton_raphson_max(dinfo.theta, dinfo.npar, 
+				 maxit, toler, 1.0e-6,
+				 &fncount, C_LOGLIK,
+				 duration_loglik, duration_score,
+				 duration_hessian,
+				 &dinfo, max_opt, 
+				 dinfo.prn);
     }
-
+#else
     if (!err) {
+	/* initialize BFGS curvature */
+	gretl_matrix *H = duration_init_H(&dinfo);
+
 	BFGS_defaults(&maxit, &toler, DURATION); 
 	err = BFGS_max(dinfo.theta, dinfo.npar, maxit, toler, 
 		       &fncount, &grcount, duration_loglik, C_LOGLIK,
 		       duration_score, &dinfo, H, max_opt, 
 		       dinfo.prn);
+	gretl_matrix_free(H);
     }
-
-    gretl_matrix_free(H);	
+#endif	
 
     if (!err) {
 	err = transcribe_duration_results(pmod, &dinfo, Z, pdinfo, 
