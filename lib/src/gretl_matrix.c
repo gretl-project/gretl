@@ -2979,6 +2979,11 @@ static int overdet_solve (gretl_matrix *a, gretl_matrix *b,
     double *work;
     int err = 0;
 
+    if (is_block_matrix(b)) {
+	matrix_block_error("overdet solve");
+	return E_DATA;
+    }
+
     work = lapack_malloc(sizeof *work);
     if (work == NULL) {
 	return E_ALLOC;
@@ -6986,6 +6991,63 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     }
 
     return evals;
+}
+
+static double get_extreme_eigenvalue (gretl_matrix *m, int getmax)
+{
+    double ret = 0.0/0.0;
+    gretl_matrix *v;
+    int err = 0;
+
+    v = gretl_symmetric_matrix_eigenvals(m, 0, &err);
+
+    if (!err) {
+	int i, n = gretl_vector_get_length(v);
+
+	ret = v->val[0];
+	for (i=1; i<n; i++) {
+	    if (getmax) {
+		if (v->val[i] > ret) {
+		    ret = v->val[i];
+		}
+	    } else if (v->val[i] < ret) {
+		ret = v->val[i];
+	    }
+	}
+    }
+
+    if (err == 0 || err == 1) {
+	/* reconstitute full matrix */
+	gretl_matrix_mirror(m, 'L');
+    }
+    
+    return ret;
+}
+
+/**
+ * gretl_symm_matrix_lambda_min:
+ * @m: n x n matrix to operate on.
+ * 
+ * Returns: the minimum eigenvalue of the real symmetric matrix @m,
+ * or %NaN on error.
+ */
+
+double gretl_symm_matrix_lambda_min (const gretl_matrix *m)
+{
+    return get_extreme_eigenvalue((gretl_matrix *) m, 0);
+}
+
+/**
+ * gretl_symm_matrix_lambda_max:
+ * @m: n x n matrix to operate on.
+ * 
+ * Returns: the maximum eigenvalue of the real symmetric matrix @m,
+ * or %NaN on error.
+ */
+
+double gretl_symm_matrix_lambda_max (const gretl_matrix *m)
+{
+    return get_extreme_eigenvalue((gretl_matrix *) m, 1);
 }
 
 static int gensymm_conformable (const gretl_matrix *A,
