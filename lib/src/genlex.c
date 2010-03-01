@@ -877,10 +877,10 @@ static void look_up_word (const char *s, parser *p)
 		    p->idstr = gretl_strdup(s);
 		} else if (!strcmp(s, "t")) {
 		    /* if "t" has not been otherwise defined, treat it
-		       as time-series index series 
+		       as an alias for "obs"
 		    */
 		    p->sym = DVAR;
-		    p->idnum = R_T;
+		    p->idnum = R_INDEX;
 		} else if (maybe_get_R_function(s)) {
 		    /* note: all "native" types take precedence over this */
 		    p->sym = RFUN;
