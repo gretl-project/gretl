@@ -469,7 +469,8 @@ static int weibull_vcv_transform (duration_info *dinfo)
     gretl_matrix *J = NULL;
     gretl_matrix *JVJ = NULL;
     const double *theta = dinfo->theta;
-    double a, s2, s = theta[dinfo->k];
+    double s2, s = theta[dinfo->k];
+    double a = 1/s;
     int np = dinfo->npar;
     int i, k = np - 1;
     int err = 0;
@@ -481,7 +482,6 @@ static int weibull_vcv_transform (duration_info *dinfo)
 	return E_ALLOC;
     }
 
-    a = 1/s;
     s2 = s * s;
 
     for (i=0; i<np; i++) {
@@ -606,10 +606,10 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 {
     const double *y = Z[pmod->list[1]];
     const double *logt = dinfo->logt->val;
-    double xij, G = 1.0;
-    double Xbi, St;
+    double Xbi, St, G = 1.0;
     int np = dinfo->npar;
     double s = 1.0;
+    double xij;
     int i, j, t;
 
     if (dinfo->dist != DUR_EXPON) {
