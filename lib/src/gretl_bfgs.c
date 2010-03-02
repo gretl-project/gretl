@@ -1610,8 +1610,6 @@ static void copy_to (double *targ, const double *src, int n)
     }
 }
 
-/* write @src + @step * @a into @targ */
-
 static void copy_plus (double *targ, const double *src, 
 		       double step, const double *a, int n)
 {
@@ -1660,6 +1658,12 @@ enum {
    the particular application.  For example if the full gradient
    matrix, G, is available one might substitute (GG')^{-1}, hence
    falling back on BHHH temporarily.
+
+   Note that unlike maxNR, there is no provision here for automatic
+   substitution of numerical routines for gradfunc or hessfunc if
+   these functions are not provided. My guess is that that without
+   analytical functions Newton-Raphson is bound to perform worse than
+   BFGS.
 */
 
 int newton_raphson_max (double *b, int n, int maxit, 
@@ -1672,7 +1676,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 			PRN *prn)
 {
     int verbose = (opt & OPT_V);
-    double stepmin = 1e-6;
+    double stepmin = 1.0e-6;
     gretl_matrix_block *B;
     gretl_matrix *H0, *H1;
     gretl_matrix *g0, *g1;
@@ -1738,8 +1742,8 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    break;
 	}
 
+	/* apply quadratic approximation */
 	gretl_matrix_multiply(H0, g0, a);
-
 	copy_plus(b1, b0, steplen, a->val, n);
 	f1 = cfunc(b1, data);
 
@@ -1762,7 +1766,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	}	
 
 	err = hessfunc(b1, H1, data);
-	if (err || broken_matrix(g1)) {
+	if (err || broken_matrix(H1)) {
 	    err = (err == 0)? E_NAN : err;
 	    break;
 	}	
@@ -1788,7 +1792,6 @@ int newton_raphson_max (double *b, int n, int maxit,
 
     if (!err) {
 	copy_to(b, b1, n);
-#if 0
 	if (status == GRADTOL_MET) {
 	    fprintf(stderr, "Gradient close to zero; may be a solution.\n");
 	} else if (status == CRITTOL_MET) {
@@ -1798,7 +1801,6 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    fprintf(stderr, "Couldn't increase criterion; "
 		    "may be near a solution?\n");
 	}
-#endif
     }
 
     free(b0);
