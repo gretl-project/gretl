@@ -1,6 +1,14 @@
 \chapter{Discrete and censored dependent variables}
 \label{chap:discr-models}
 
+This chapter deals with models for dependent variables that are
+discrete or censored or otherwise limited (as in event counts or
+durations, which must be positive) and that therefore call for
+estimation methods other than the classical linear model. We discuss
+several estimators (mostly based on the Maximum Likelihood principle),
+adding some details and examples to complement the material on
+these methods in the \emph{Gretl Command Reference}.
+
 \section{Logit and probit models}
 \label{sec:logit-probit}
 
@@ -745,11 +753,221 @@ heckit lww X ; LFP Z --two-step
 \end{scode}
 \end{script}
 
-% \section{Count data}
-% \label{sec:poisson}
+\section{Count data}
+\label{sec:count}
 
-% also include example script for negative binomial (done in Verbeek
-% example files).
+To be written.
+
+\section{Duration models}
+\label{sec:duration}
+
+In some contexts we wish to apply econometric methods to measurements
+of the duration of certain states. Classic examples include the
+following:
+\begin{itemize}
+\item From enginering, the ``time to failure'' of electronic or
+  mechanical components: how long do, say, computer hard drives
+  last until they malfunction?
+\item From the medical realm: how does a new treatment affect the
+  time from diagnosis of a certain condition to exit from that
+  condition (where ``exit'' might mean death or full recovery)?
+\item From economics: the duration of strikes, or of spells of
+  unemployment.
+\end{itemize}
+
+In each case we may be interested in how the durations are
+distributed, and how they are affected by relevant covariates.  There
+are several approaches to this problem; the one we discuss here ---
+which is currently the only one supported by \app{gretl} --- is
+estimation of a parametric model by means of Maximum Likelihood.  In
+this approach we hypothesize that the durations follow some definite
+probability law and we seek to estimate the parameters of that law,
+factoring in the influence of covariates. 
+
+We may express the density (PDF) of the durations by
+\[
+f(t, X, \theta)
+\]
+where $t$ is the length of time in the state in question, $X$ is a
+matrix of covariates, and $\theta$ is a vector of parameters.
+The likelihood for a sample of $n$ observations indexed by $i$ is then
+\[
+L = \prod_{i=1}^n f(t_i, x_i, \theta)
+\]
+and the log-likelihood is
+\begin{equation}
+\label{eq:surv-density}
+\ell = \sum_{i=1}^n \log f(t_i, x_i, \theta)
+\end{equation}
+
+Rather than working with the density directly, however, it is standard
+practice (both for ease of computation and for the purpose of
+interpretation) to factor $f(\cdot)$ into two components, namely a
+\emph{hazard function}, $h$, and a \emph{survivor function}, $S$.  The
+survivor function gives the probability that a state lasts at least as
+long as $t$; it is therefore $1 - F(t, X, \theta)$ where $F$ is the
+CDF corresponding to the density $f(\cdot)$. The hazard function
+answers this question: given that a state has persisted as long as
+$t$, what is the probability that it ends within a short increment of
+time beyond $t$ --- that is, it ends between $t$ and $t + \Delta$?
+(The hazard is in fact the limit as $\Delta$ goes to zero.)  The
+relationship between these functions is simply
+\begin{equation}
+\label{eq:surv-decomp}
+f(t, X, \theta) = h(t, X, \theta) \cdot S(t, X, \theta)
+\end{equation}
+(See, for example, Davidson and MacKinnon, 2008, section 11.8.)
+
+One point of interest is the shape of the hazard function, in
+particular its dependence (or not) on time since the state began.  If
+$h$ does not depend on $t$ we say the process in question exhibits
+\emph{duration independence}: the probability of exiting the state at
+any given moment neither increases nor decreases based simply on how
+long the state has persisted to date. The alternatives are positive
+duration dependence (the likelihood of exiting the state rises, the
+longer the state has persisted) or negative duration dependence (exit
+becomes less likely, the longer it has persisted).  Finally, the
+behavior of the hazard with respect to time need not be monotone, for
+example it may start high, fall at first, then rise again.  This last
+case might be applicable to computer drive failures: an initial
+relatively high failure rate, as defective drives are weeded out, is
+followed by a period of low failure probability, until eventually the
+failure rate turns upward due to wear on the mechanism.
+
+Since durations are inherently positive the probability distribution
+used in modeling must respect this requirement, giving a density of
+zero for $t \leq 0$.  Four common candidates are the exponential,
+Weibull, log-logistic and log-normal, the Weibull being perhaps the
+most common choice. The table below displays the PDF and the hazard
+function for each of these distributions as they are usually
+parameterized, written as functions of $t$ alone. ($\phi$ and $\Phi$
+denote, respectively, the Gaussian PDF and CDF.)
+
+\begin{center}
+\setlength\tabcolsep{1.5em}
+\begin{tabular}{lll}
+ & PDF, $f(t)$ & hazard, $h(t)$ \\ [1ex]
+Exponential & $\displaystyle 
+\gamma \exp\,(-\gamma t)$ &$\displaystyle
+\gamma$ \\ [1ex]
+Weibull & $\displaystyle
+\alpha\gamma^{\alpha}t^{\alpha-1}\exp\left[-(\gamma t)^\alpha\right]$ 
+& $\displaystyle \alpha\gamma^{\alpha}t^{\alpha-1}$ \\ [1ex]
+Log-logistic & $\displaystyle \gamma\alpha
+\frac{(\gamma t)^{\alpha-1}}
+{\left[1 + (\gamma t)^\alpha\right]^2}$ 
+& $\displaystyle \gamma\alpha
+\frac{(\gamma t)^{\alpha-1}}
+{\left[1 + (\gamma t)^\alpha\right]}$ \\ [2.5ex]
+Log-normal & $\displaystyle
+\frac{1}{\sigma t} \phi\left[(\log t - \mu)/\sigma \right]$ 
+& $\displaystyle
+\frac{1}{\sigma t} \frac{\phi\left[(\log t - \mu)/\sigma \right]}
+{\Phi\left[-(\log t - \mu)/\sigma \right]}$
+\end{tabular}
+\end{center}
+
+As the table shows, the hazard is constant for the exponential
+distribution.  For the Weibull, the hazard is monotone increasing in
+$t$ if $\alpha > 1$, or monotone decreasing for $\alpha < 1$. (If
+$\alpha = 1$ the Weibull collapses to the exponential.)  The
+log-logistic and log-normal distributions allow the hazard to vary
+with $t$ in a non-monotonic fashion.
+
+Covariates are brought into the picture by allowing them to govern one
+of the parameters of the density, so that the durations are not
+identically distributed across cases.  For example, when using the
+log-normal distribution it is natural to make $\mu$, the expected
+value of $\log t$, depend on the covariates, $X$.  This is typically
+done via a linear index function: $\mu = X\beta = \beta_1 x_1 +
+\beta_2 x_2 + \cdots + \beta_k x_k$.
+
+Note that the expressions for the log-normal density and hazard
+contain the term $(\log t - \mu)/\sigma$.  Replacing $\mu$ with
+$X\beta$ this becomes $(\log t - X\beta)/\sigma$.  It turns out that
+this constitutes a useful simplifying change of variables for all of
+the distributions discussed here. As in Kalbfleisch and Prentice
+(2002), we define
+\[
+w_i \equiv (\log t_i - X_i\beta)/\sigma
+\]
+The interpretation of the scale factor, $\sigma$, in this expression
+depends on the distribution. For the log-normal, $\sigma$ represents
+the standard deviation of $\log t$; for the Weibull and the
+log-logistic it corresponds to $1/\alpha$; and for the exponential it
+is fixed at unity. For distributions other than the log-normal,
+$X\beta$ corresponds to $-\log \gamma$, or $\gamma = \exp(-X\beta)$.
+
+With this change of variables, the density and survivor functions may
+be written compactly as follows.
+
+\begin{center}
+\setlength\tabcolsep{1.5em}
+\begin{tabular}{lll}
+ & Density, $f(w_i)$ & Survivor, $S(w_i)$ \\ [4pt]
+Exponential & 
+$\exp\left(w_i - e^{w_i}\right)$ & $\exp(-e^{w_i})$
+\\ [4pt]
+Weibull & 
+$\exp\left(w_i - e^{w_i}\right)$ & $\exp(-e^{w_i})$
+\\ [4pt]
+Log-logistic & 
+$e^{w_i} \left(1 + e^{w_i}\right)^{-2}$ 
+& $\left(1 + e^{w_i}\right)^{-1}$ \\ [1ex]
+Log-normal & $\phi(w_i)$ & $\Phi(-w_i)$
+\end{tabular}
+\end{center}
+
+In light of the above we may think of the generic parameter vector
+$\theta$, as in $f(t, X, \theta)$, as composed of the coefficients on
+the covariates, $\beta$, plus (in all cases apart from the exponential)
+the additional parameter $\sigma$.
+
+A complication in estimation of $\theta$ is posed by ``incomplete
+spells''. That is, in some cases the state in question may not have
+ended at the time the observation is made (e.g.\ some workers remain
+unemployed, some components have not yet failed).  If we use $t_i$ to
+denote the time from entering the state to either (a) exiting the
+state or (b) the observation window closing, whichever comes first,
+then all we know of the ``right-censored'' cases (b) is that the
+duration was at least as long as $t_i$. This can be handled by
+rewriting the the log-likelihood (compare \ref{eq:surv-density}) as
+\begin{equation}
+\label{eq:surv-loglik}
+\ell_i = \sum_{i=1}^n \delta_i\log S\left(w_i\right)
++ \left(1-\delta_i\right) 
+\left[-\log\sigma + \log f\left(w_i\right)\right]
+\end{equation}
+where $\delta_i$ equals 1 for censored cases (incomplete spells), and
+0 for complete observations. The rationale for this is that the
+log-density equals the sum of the log hazard and the log survivor
+function (see equation~\ref{eq:surv-decomp}), but for the incomplete
+spells only the survivor function applies. So in
+(\ref{eq:surv-loglik}) we are adding up the log survivor function
+alone for the incomplete cases, plus the full log density for the
+completed cases.
+
+\subsection{Implementation in \app{gretl}}
+
+The \texttt{duration} command accepts a list of series on the usual
+pattern: dependent variable followed by covariates. If right-censoring
+is present in the data this should be represented by a dummy variable
+corresponding to $\delta_i$ above, separated from the covariates by
+a semicolon. For example,
+\begin{code}
+duration durat 0 X ; cens
+\end{code}
+where \texttt{durat} measures durations, \texttt{0} represents the
+constant (which is required for such models), \texttt{X} is a named
+list of regressors, and \texttt{cens} is the censoring dummy.
+
+By default the Weibull distribution is used; you can substitute any of
+the other three distributions discussed here by appending one of the
+option flags \verb|--exponential|, \verb|--loglogistic| or 
+\verb|--lognormal|.
+
+FIXME more wanted here, plus a full example.
+
 
 %%% Local Variables: 
 %%% mode: latex
