@@ -24,6 +24,7 @@
 #include <errno.h>
 
 #define DDEBUG 0
+#define USENR /* use Newton-Raphson rather then BFGS */
 
 typedef struct duration_info_ duration_info;
 
@@ -359,10 +360,10 @@ static int duration_score (double *theta, double *g, int np,
 #define matrix_plus(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
 
 /* Analytical Hessian: see Kalbfleisch and Prentice, 2002, pp. 69-70.
-   We're actually constructing the inverse of the Hessian here,
-   to serve as covariance matrix -- unless (experimental)
-   the argument @theta is non-NULL, in which case we return just
-   the regular Hessian, for use in newton_raphson_max().
+   We're actually constructing the inverse of the Hessian here.
+   If @theta is non-NULL, that means that we're being called
+   from newton_raphson_max() or similar, and may not yet be at
+   convergence.
 */
 
 static int duration_hessian (double *theta, 
@@ -436,18 +437,22 @@ static int duration_hessian (double *theta,
 	}
     }
 
-    /* fill out upper triangle */
+    /* fill out upper triangle and invert */
     gretl_matrix_mirror(H, 'L');
+    err = gretl_invert_symmetric_matrix(H);
 
-    if (theta == NULL) {
-	/* and invert, for VCV */
+    if (err && theta != NULL) {
+	/* Newton-Raphson : fall back on BHHH */
+	gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
+				  dinfo->G, GRETL_MOD_NONE,
+				  H, GRETL_MOD_NONE);
 	err = gretl_invert_symmetric_matrix(H);
-    } else {
-	gretl_matrix_multiply_by_scalar(H, -1);
     }
 
     return err;
 }
+
+#ifndef USENR
 
 /* calculate the OPG matrix at the starting point and use 
    its inverse (if any) as initial curvature matrix for BFGS
@@ -469,6 +474,8 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
 
     return H;
 }
+
+#endif
 
 /* OPG vcv matrix */
 
@@ -573,7 +580,7 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
     }
 
     if (dinfo->dist == DUR_WEIBULL) {
-	/* agrees with Stata; R's survreg has this wrong */
+	/* agrees with Stata; R's "survreg" has this wrong? */
 	G = gamma_function(1 + s);
     } else if (dinfo->dist == DUR_EXPON) {
 	G = gamma_function(2.0);
@@ -602,7 +609,8 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	} else if (dinfo->dist == DUR_LOGNORM) {
 	    pmod->yhat[t] = expXbi;
 	    St = normal_cdf(-wi);
-	} else if (dinfo->dist == DUR_LOGLOG) {
+	} else {
+	    /* log-logistic */
 	    pmod->yhat[t] = expXbi;
 	    St = 1.0 / (1 + pow(y[t] / expXbi, p));
 	}
@@ -637,8 +645,12 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	gretl_model_set_int(pmod, "cens_var", censvar);
     }
 
+#ifdef USENR
+    gretl_model_set_int(pmod, "iters", fncount);
+#else
     gretl_model_set_int(pmod, "fncount", fncount);
     gretl_model_set_int(pmod, "grcount", grcount);
+#endif
 
     if (!err) {
 	err = gretl_model_allocate_params(pmod, np);
@@ -693,8 +705,6 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     return err;
 }
 
-#define USENR 0
-
 int duration_estimate (MODEL *pmod, int censvar, const double **Z, 
 		       const DATAINFO *pdinfo, gretlopt opt, 
 		       PRN *prn)
@@ -716,9 +726,9 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
     }
 #endif
 
-#if USENR
+#ifdef USENR
     if (!err) {
-	/* experimental! */
+	/* experimental */
 	BFGS_defaults(&maxit, &toler, DURATION); 
 	err = newton_raphson_max(dinfo.theta, dinfo.npar, 
 				 maxit, toler, 1.0e-6,

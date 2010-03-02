@@ -1600,17 +1600,6 @@ static int broken_matrix (const gretl_matrix *m)
     return 0;
 }
 
-static void adjust_diagonal (gretl_matrix *m, double adj)
-{
-    double x;
-    int i;
-
-    for (i=0; i<m->rows; i++) {
-	x = gretl_matrix_get(m, i, i);
-	gretl_matrix_set(m, i, i, x - adj);
-    }
-}
-
 static void copy_to (double *targ, const double *src, int n)
 {
     int i;
@@ -1620,13 +1609,13 @@ static void copy_to (double *targ, const double *src, int n)
     }
 }
 
-static void copy_minus (double *targ, const double *src, 
-			double step, const double *a, int n)
+static void copy_plus (double *targ, const double *src, 
+		       double step, const double *a, int n)
 {
     int i;
 
     for (i=0; i<n; i++) {
-	targ[i] = src[i] - step * a[i];
+	targ[i] = src[i] + step * a[i];
     }
 }
 
@@ -1654,30 +1643,28 @@ int newton_raphson_max (double *b, int n, int maxit,
 			BFGS_CRIT_FUNC cfunc,
 			BFGS_GRAD_FUNC gradfunc, 
 			HESS_FUNC hessfunc,
-			void *data, gretlopt opt, PRN *prn)
+			void *data, gretlopt opt, 
+			PRN *prn)
 {
-    double lamtol = 1e-6;
+    int verbose = (opt & OPT_V);
     double stepmin = 1e-6;
     gretl_matrix_block *B;
-    gretl_matrix *H, *H0, *H1;
+    gretl_matrix *H0, *H1;
     gretl_matrix *g0, *g1;
     gretl_matrix *a;
     double *b0, *b1;
-    double em, step;
     double f0, f1;
-    int rank, status = 0;
+    double steplen = 1.0;
+    int status = 0;
     int iter = 0;
     int err = 0;
-
-    crittol = 1.0e-8;
 
     b0 = malloc(2 * n * sizeof *b0);
     if (b0 == NULL) {
 	return E_ALLOC;
     }
     
-    B = gretl_matrix_block_new(&H, n, n,
-			       &H0, n, n,
+    B = gretl_matrix_block_new(&H0, n, n,
 			       &H1, n, n,
 			       &g0, n, 1,
 			       &g1, n, 1,
@@ -1695,24 +1682,27 @@ int newton_raphson_max (double *b, int n, int maxit,
     if (na(f1)) {
 	gretl_errmsg_set(_("initial value of objective function is not finite"));
 	err = E_NAN;
-	goto bailout;
     }
 
-    gradfunc(b, g1->val, n, cfunc, data);
-    if (broken_matrix(g1)) {
-	err = E_NAN;
-	goto bailout;
+    if (!err) {
+	err = gradfunc(b, g1->val, n, cfunc, data);
+	if (!err && broken_matrix(g1)) {
+	    fprintf(stderr, "NA in gradient\n");
+	    err = E_NAN;
+	}
     }
 
-    hessfunc(b, H1, data);
-    if (broken_matrix(H)) {
-	err = E_NAN;
-	goto bailout;
+    if (!err) {
+	err = hessfunc(b, H1, data);
+	if (!err && broken_matrix(H1)) {
+	    fprintf(stderr, "NA in Hessian\n");
+	    err = E_NAN;
+	}
     }
 
     while (status == 0 && !err) {
 	iter++;
-	step = 1.0;
+	steplen = 1.0;
 	f0 = f1;
 
 	copy_to(b0, b1, n);
@@ -1721,58 +1711,47 @@ int newton_raphson_max (double *b, int n, int maxit,
 	if (broken_matrix(g0)) {
 	    fprintf(stderr, "NA in gradient\n");
 	    err = E_NAN;
-	    goto bailout;
+	    break;
 	}
 
 	gretl_matrix_copy_values(H0, H1);
 	if (broken_matrix(H0)) {
 	    fprintf(stderr, "NA in Hessian\n");
 	    err = E_NAN;
-	    goto bailout;
+	    break;
 	}
 
-	gretl_matrix_copy_values(H, H0);
+	gretl_matrix_multiply(H0, g0, a);
 
-	while (1) {
-	    /* ensure Hessian is useable */
-	    em = gretl_symm_matrix_lambda_max(H);
-	    rank = gretl_check_QR_rank(H, &err, NULL);
-	    if (rank < n || (em >= -lamtol)) {
-#if 1
-		fprintf(stderr, "iter %d: H: adjusting diagonal (em=%g, rank=%d)\n", 
-			iter, em, rank);
-#endif
-		adjust_diagonal(H, abs(em) + lamtol);
-	    } else {
-		break;
-	    }
-	}
-
-	gretl_matrix_copy_values(a, g0);
-	err = gretl_LU_solve(H, a); /* FIXME use QR? */
-
-	copy_minus(b1, b0, step, a->val, n);
+	copy_plus(b1, b0, steplen, a->val, n);
 	f1 = cfunc(b1, data);
 
-	while (na(f1) || ((f1 < f0) && (step > stepmin))) {
+	while (na(f1) || ((f1 < f0) && (steplen > stepmin))) {
 	    /* try smaller step */
-	    step /= 2.0;
-	    copy_minus(b1, b0, step, a->val, n);
+	    steplen /= 2.0;
+	    copy_plus(b1, b0, steplen, a->val, n);
 	    f1 = cfunc(b1, data);
 	}
 
-	print_iter_info(iter, f1, crittype, n, b1, g1->val, step, prn);
+	if (verbose) {
+	    print_iter_info(iter, f1, crittype, n, b1, g1->val, 
+			    steplen, prn);
+	}
 
-	gradfunc(b1, g1->val, n, cfunc, data);
-	if (broken_matrix(g1)) {
-	    err = E_NAN;
-	    goto bailout;
+	err = gradfunc(b1, g1->val, n, cfunc, data);
+	if (err || broken_matrix(g1)) {
+	    err = (err == 0)? E_NAN : err;
+	    break;
 	}	
 
-	hessfunc(b1, H1, data);
+	err = hessfunc(b1, H1, data);
+	if (err || broken_matrix(g1)) {
+	    err = (err == 0)? E_NAN : err;
+	    break;
+	}	
 
-	if (step < stepmin) {
-	    err = STEPMIN_MET;
+	if (steplen < stepmin) {
+	    status = STEPMIN_MET;
 	} else if (iter > maxit) {
 	    err = E_NOCONV;
 	} else if (sqrt(scalar_xpx(g1)) < gradtol) {
@@ -1782,7 +1761,11 @@ int newton_raphson_max (double *b, int n, int maxit,
 	}
     }
 
- bailout:
+    if (verbose) {
+	print_iter_info(-1, f1, crittype, n, b1, g1->val, 
+			steplen, prn);
+	pputc(prn, '\n');
+    }
 
     *itercount = iter;
 
@@ -1794,8 +1777,8 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    fprintf(stderr, "Successive criterion values within tolerance; "
 		    "may be a solution.\n");
 	} else if (status == STEPMIN_MET) {
-	    fprintf(stderr, "Could not increase criterion; "
-		    "may be near a solution.\n");
+	    fprintf(stderr, "Couldn't increase criterion; "
+		    "may be near a solution?\n");
 	}
     }
 
