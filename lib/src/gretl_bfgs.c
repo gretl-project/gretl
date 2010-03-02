@@ -1585,14 +1585,8 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     return J;
 }
 
-/* Below: experimental Newton-Raphson code -- loosely
-   based on R's maxNR(), except that here the "hessfunc"
-   should provide the negative inverse of the Hessian,
-   or some suitable substitute if need be. But after
-   trying this on duration models it seems significantly
-   slower than BFGS.  If we don't find a good use for
-   this code before long, it's due for the scrap heap.
-*/
+/* Below: experimental Newton-Raphson code, starting with a few
+   auxiliary functions */
 
 static int broken_matrix (const gretl_matrix *m)
 {
@@ -1615,6 +1609,8 @@ static void copy_to (double *targ, const double *src, int n)
 	targ[i] = src[i];
     }
 }
+
+/* write @src + @step * @a into @targ */
 
 static void copy_plus (double *targ, const double *src, 
 		       double step, const double *a, int n)
@@ -1643,6 +1639,28 @@ enum {
     CRITTOL_MET = 1 << 1,
     STEPMIN_MET = 1 << 2
 };
+
+/* Newton-Raphson maximizer, loosely based on R's maxNR(). 
+
+   The functions cfunc (computes the criterion, usually a
+   loglikelihood) and gradfunc (score, provides an updated
+   estimate of the gradient in its second argument) are just as in
+   BFGS_max above.
+
+   The precise working of the function hessfunc is debatable.  As
+   things stand below, this function should write into its second
+   argument the negative inverse of the Hessian (or some variant
+   thereof).  This pushes onto hessfunc the problem of what to do if
+   the observed Hessian is not negative definite.  
+
+   The alternative would be to get hessfunc to provide the Hessian
+   itself, negative definite or not, and for newton_raphson_max to
+   take on the task of fixing it up if need be (which is what R's
+   maxNR does). But it seemed to me that the best fix might depend on
+   the particular application.  For example if the full gradient
+   matrix, G, is available one might substitute (GG')^{-1}, hence
+   falling back on BHHH temporarily.
+*/
 
 int newton_raphson_max (double *b, int n, int maxit, 
 			double crittol, double gradtol, 
@@ -1687,24 +1705,16 @@ int newton_raphson_max (double *b, int n, int maxit,
 
     f1 = cfunc(b1, data);
     if (na(f1)) {
-	gretl_errmsg_set(_("initial value of objective function is not finite"));
+	gretl_errmsg_set(_("Initial value of objective function is not finite"));
 	err = E_NAN;
     }
 
     if (!err) {
 	err = gradfunc(b, g1->val, n, cfunc, data);
-	if (!err && broken_matrix(g1)) {
-	    fprintf(stderr, "NA in gradient\n");
-	    err = E_NAN;
-	}
     }
 
     if (!err) {
 	err = hessfunc(b, H1, data);
-	if (!err && broken_matrix(H1)) {
-	    fprintf(stderr, "NA in Hessian\n");
-	    err = E_NAN;
-	}
     }
 
     while (status == 0 && !err) {
