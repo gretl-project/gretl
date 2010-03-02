@@ -1585,7 +1585,14 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     return J;
 }
 
-/* below: experimental Newton-Raphson code */
+/* Below: experimental Newton-Raphson code -- loosely
+   based on R's maxNR(), except that here the "hessfunc"
+   should provide the negative inverse of the Hessian,
+   or some suitable substitute if need be. But after
+   trying this on duration models it seems significantly
+   slower than BFGS.  If we don't find a good use for
+   this code before long, it's due for the scrap heap.
+*/
 
 static int broken_matrix (const gretl_matrix *m)
 {
@@ -1771,6 +1778,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 
     if (!err) {
 	copy_to(b, b1, n);
+#if 0
 	if (status == GRADTOL_MET) {
 	    fprintf(stderr, "Gradient close to zero; may be a solution.\n");
 	} else if (status == CRITTOL_MET) {
@@ -1780,6 +1788,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    fprintf(stderr, "Couldn't increase criterion; "
 		    "may be near a solution?\n");
 	}
+#endif
     }
 
     free(b0);
