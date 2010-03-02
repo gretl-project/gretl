@@ -359,7 +359,7 @@ static int duration_score (double *theta, double *g, int np,
 #define matrix_plus(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
 
 /* Analytical Hessian: see Kalbfleisch and Prentice, 2002, pp. 69-70.
-   We're actually constructing the inverse of the Hessian here.
+   We're actually constructing the negative inverse of the Hessian here.
 */
 
 static int duration_hessian (double *theta, 
