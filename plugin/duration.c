@@ -24,7 +24,7 @@
 #include <errno.h>
 
 #define DDEBUG 0
-#define USENR /* use Newton-Raphson rather then BFGS */
+#define USENR /* use Newton-Raphson rather than BFGS? */
 
 typedef struct duration_info_ duration_info;
 
