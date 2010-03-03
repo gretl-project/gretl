@@ -131,6 +131,7 @@ plugin/arma_init.c
 plugin/arma_x12.c
 plugin/audio.c
 plugin/audioprint.c
+plugin/duration.c
 plugin/eviews_import.c
 plugin/excel_import.c
 plugin/fcp.c
