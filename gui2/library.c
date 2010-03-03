@@ -4402,6 +4402,28 @@ void do_freq_dist (void)
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
+/* tramo "LINUXST" from BDE outputs ISO-8859-1 
+   http://www.bde.es/servicio/software/linuxste.htm
+*/
+
+static gchar *maybe_fix_tramo_output (gchar *buf)
+{
+    gchar *ret = buf;
+
+    if (!g_utf8_validate(buf, -1, NULL)) {
+	gsize wrote;
+
+	ret = g_convert(buf, -1, "UTF-8", "ISO-8859-1",
+			NULL, &wrote, NULL);
+	if (ret == NULL) {
+	    errbox("Couldn't read TRAMO output");
+	} 
+	g_free(buf);
+    } 
+
+    return ret;
+}
+
 void do_tramo_x12a (GtkAction *action, gpointer p)
 {
     /* save options between invocations */
@@ -4470,6 +4492,14 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	if (ferr) {
 	    remove(fname);
 	    return;
+	}
+
+	if (tramo) {
+	    databuf = maybe_fix_tramo_output(databuf);
+	    if (databuf == NULL) {
+		remove(fname);
+		return;
+	    } 
 	}
 
 	prn = gretl_print_new_with_buffer(databuf);
