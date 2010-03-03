@@ -329,8 +329,10 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const double **Z)
     if (mod == LAGS && auto_restr(v)) {
 	int trend = (v->jinfo->code == J_REST_TREND);
 
+	fprintf(stderr, "auto_restr: setting v->Y(t, %d)\n", k);
+
 	for (t=0; t<v->T; t++) {
-	    gretl_matrix_set(v->Y, t, k, (trend)? v->t1 + t : 1);
+	    gretl_matrix_set(v->Y, t, k, (trend)? (v->t1 + t) : 1);
 	}
 	k++;
     }
@@ -599,6 +601,7 @@ static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
     }    
 
     v->Y = gretl_matrix_alloc(v->T, n);
+    fprintf(stderr, "Allocated v->Y with %d cols\n", n);
     v->E = gretl_matrix_alloc(v->T, v->neqns);
     if (v->Y == NULL || v->E == NULL) {
 	return E_ALLOC;

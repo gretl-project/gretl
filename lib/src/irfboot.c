@@ -715,8 +715,9 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
     vbak->Y = gretl_matrix_copy(v->Y);
     vbak->X = gretl_matrix_copy(v->X);
     vbak->B = gretl_matrix_copy(v->B);
-    vbak->E = gretl_matrix_copy(v->E);
+    vbak->XTX = gretl_matrix_copy(v->XTX);
     vbak->A = gretl_matrix_copy(v->A);
+    vbak->E = gretl_matrix_copy(v->E);
     vbak->C = gretl_matrix_copy(v->C);
     vbak->S = gretl_matrix_copy(v->S);
 
@@ -769,16 +770,18 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
     gretl_matrix_free(v->Y);
     gretl_matrix_free(v->X);
     gretl_matrix_free(v->B);
-    gretl_matrix_free(v->E);
+    gretl_matrix_free(v->XTX);
     gretl_matrix_free(v->A);
+    gretl_matrix_free(v->E);
     gretl_matrix_free(v->C);
     gretl_matrix_free(v->S);
 
     v->Y = vbak->Y;
     v->X = vbak->X;
     v->B = vbak->B;
-    v->E = vbak->E;
+    v->XTX = vbak->XTX;
     v->A = vbak->A;
+    v->E = vbak->E;
     v->C = vbak->C;
     v->S = vbak->S;
 
