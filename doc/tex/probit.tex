@@ -803,20 +803,21 @@ and the log-likelihood is
 Rather than working with the density directly, however, it is standard
 practice (both for ease of computation and for the purpose of
 interpretation) to factor $f(\cdot)$ into two components, namely a
-\emph{hazard function}, $h$, and a \emph{survivor function}, $S$.  The
-survivor function gives the probability that a state lasts at least as
-long as $t$; it is therefore $1 - F(t, X, \theta)$ where $F$ is the
-CDF corresponding to the density $f(\cdot)$. The hazard function
-answers this question: given that a state has persisted as long as
-$t$, what is the probability that it ends within a short increment of
-time beyond $t$ --- that is, it ends between $t$ and $t + \Delta$?
-(The hazard is in fact the limit as $\Delta$ goes to zero.)  The
-relationship between these functions is simply
+\emph{hazard function}, $\lambda$, and a \emph{survivor function},
+$S$.  The survivor function gives the probability that a state lasts
+at least as long as $t$; it is therefore $1 - F(t, X, \theta)$ where
+$F$ is the CDF corresponding to the density $f(\cdot)$. The hazard
+function addresses this question: given that a state has persisted as
+long as $t$, what is the likelihood that it ends within a short
+increment of time beyond $t$ --- that is, it ends between $t$ and $t +
+\Delta$?  Taking the limit as $\Delta$ goes to zero, we end up with
+the ratio of the density to the survivor function:
 \begin{equation}
 \label{eq:surv-decomp}
-f(t, X, \theta) = h(t, X, \theta) \cdot S(t, X, \theta)
+\lambda(t, X, \theta) = \frac{f(t, X, \theta)}{S(t, X, \theta)}
 \end{equation}
-(See, for example, Davidson and MacKinnon, 2004, section 11.8.)
+or in other words $f(t, X, \theta) = \lambda(t, X, \theta) \cdot S(t,
+X, \theta)$.
 
 One point of interest is the shape of the hazard function, in
 particular its dependence (or not) on time since the state began.  If
@@ -846,7 +847,7 @@ denote, respectively, the Gaussian PDF and CDF.)
 \begin{center}
 \setlength\tabcolsep{1.5em}
 \begin{tabular}{lll}
- & PDF, $f(t)$ & hazard, $h(t)$ \\ [1ex]
+ & PDF, $f(t)$ & hazard, $\lambda(t)$ \\ [1ex]
 Exponential & $\displaystyle 
 \gamma \exp\,(-\gamma t)$ &$\displaystyle
 \gamma$ \\ [1ex]
@@ -879,8 +880,7 @@ of the parameters of the density, so that the durations are not
 identically distributed across cases.  For example, when using the
 log-normal distribution it is natural to make $\mu$, the expected
 value of $\log t$, depend on the covariates, $X$.  This is typically
-done via a linear index function: $\mu = X\beta = \beta_1 x_1 +
-\beta_2 x_2 + \cdots + \beta_k x_k$.
+done via a linear index function: $\mu = X\beta$.
 
 Note that the expressions for the log-normal density and hazard
 contain the term $(\log t - \mu)/\sigma$.  Replacing $\mu$ with
@@ -889,14 +889,15 @@ this constitutes a useful simplifying change of variables for all of
 the distributions discussed here. As in Kalbfleisch and Prentice
 (2002), we define
 \[
-w_i \equiv (\log t_i - X_i\beta)/\sigma
+w_i \equiv (\log t_i - x_i\beta)/\sigma
 \]
 The interpretation of the scale factor, $\sigma$, in this expression
 depends on the distribution. For the log-normal, $\sigma$ represents
 the standard deviation of $\log t$; for the Weibull and the
 log-logistic it corresponds to $1/\alpha$; and for the exponential it
 is fixed at unity. For distributions other than the log-normal,
-$X\beta$ corresponds to $-\log \gamma$, or $\gamma = \exp(-X\beta)$.
+$X\beta$ corresponds to $-\log \gamma$, or in other words $\gamma =
+\exp(-X\beta)$.
 
 With this change of variables, the density and survivor functions may
 be written compactly as follows.
