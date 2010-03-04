@@ -4122,6 +4122,12 @@ static int plain_print_coeffs (const MODEL *pmod,
 		/* don't show 'slope' for constant */
 		vals[i][j].s[0] = '\0';
 		vals[i][j].lw = vals[i][j].rw = 0;
+	    } else if (pmod->ci == DURATION && j > 1 && 
+		       !strcmp(names[i], "sigma")) {
+		/* suppress result for H0: sigma = 0 */
+		vals[i][j].x = NADBL;
+		vals[i][j].s[0] = '\0';
+		vals[i][j].lw = vals[i][j].rw = 0;
 	    } else {
 		gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s, prn);
 		get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);

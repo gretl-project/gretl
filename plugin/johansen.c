@@ -168,8 +168,9 @@ const char *beta_vname (const GRETL_VAR *v,
     } else if (v->rlist != NULL) {
 	int k = i - v->ylist[0] - auto_restr(v) + 1;
 
+#if 0
 	fprintf(stderr, "beta_vname: i=%d, k=%d\n", i, k);
-
+#endif
 	return pdinfo->varname[v->rlist[k]];
     } 
 

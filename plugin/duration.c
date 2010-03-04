@@ -634,7 +634,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 		strcpy(pmod->params[j], pdinfo->varname[v]);
 	    }
 	    if (dinfo->dist != DUR_EXPON) {
-		strcpy(pmod->params[np-1], "scale");
+		strcpy(pmod->params[np-1], "sigma");
 	    } 
 	}
     }
