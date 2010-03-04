@@ -2629,12 +2629,12 @@ static void corrgm_min_max (const double *acf, const double *pacf,
 {
     int k;
 
-    /* the range should comfortably include the plus/minus bands, but
-       should not go outside (-1.1, 1.1) */
+    /* the range should include the plus/minus bands, but
+       should not go outside (-1, 1) */
     *ymax = pm * 1.2;
-    if (*ymax > 1.1) *ymax = 1.1;
+    if (*ymax > 1) *ymax = 1;
     *ymin = -pm * 1.2;
-    if (*ymin < -1.1) *ymin = -1.1;
+    if (*ymin < -1) *ymin = -1;
 
     /* adjust based on min and max of ACF, PACF */
     for (k=0; k<m; k++) {
@@ -2650,14 +2650,14 @@ static void corrgm_min_max (const double *acf, const double *pacf,
 	}
     }
 
-    if (*ymax > 0.75) {
-	*ymax = 1.1;
+    if (*ymax > 0.5) {
+	*ymax = 1;
     } else {
 	*ymax *= 1.2;
     }
 
-    if (*ymin < -0.75) {
-	*ymin = -1.1;
+    if (*ymin < -0.5) {
+	*ymin = -1;
     } else {
 	*ymin *= 1.2;
     }
@@ -2696,11 +2696,8 @@ static int corrgram_graph (const char *vname, const double *acf, int m,
     fputs("set xzeroaxis\n", fp);
     print_keypos_string(GP_KEY_RIGHT_TOP, fp);
     fprintf(fp, "set xlabel '%s'\n", _("lag"));
-#if 1
+
     fprintf(fp, "set yrange [%.2f:%.2f]\n", ymin, ymax);
-#else
-    fputs("set yrange [-1.1:1.1]\n", fp);
-#endif
 
     /* upper plot: Autocorrelation Function or ACF */
     if (pacf != NULL) {
@@ -2797,11 +2794,12 @@ static int corrgm_ascii_plot (const char *vname,
 int corrgram (int varno, int order, int nparam, const double **Z, 
 	      DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
+    const double z[] = {1.65, 1.96, 2.58};
     double ybar, box, pm[3];
     double *acf = NULL;
     double *pacf = NULL;
     const char *vname;
-    int k, m, T, dfQ;
+    int i, k, m, T, dfQ;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2] = { 1, varno };
     int err = 0, pacf_err = 0;
@@ -2874,9 +2872,12 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     }
 
     /* for confidence bands */
-    pm[0] = 1.65 / sqrt((double) T);
-    pm[1] = 1.96 / sqrt((double) T);
-    pm[2] = 2.58 / sqrt((double) T);
+    for (i=0; i<3; i++) {
+	pm[i] = z[i] / sqrt((double) T);
+	if (pm[i] > 0.5) {
+	    pm[i] = 0.5;
+	}
+    }
 
     /* generate (and if not in batch mode) plot partial 
        autocorrelation function */
