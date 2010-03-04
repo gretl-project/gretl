@@ -65,7 +65,6 @@ typedef enum {
     GENR,  
     GMM,
     GNUPLOT, 
-    GRAPH,
     GRAPHPG,
     HAUSMAN,
     HECKIT,
@@ -172,7 +171,6 @@ typedef enum {
                         c == CUSUM || \
                         c == FCAST || \
                         c == FREQ || \
-                        c == GRAPH || \
                         c == HAUSMAN || \
                         c == KPSS || \
                         c == LEVERAGE || \

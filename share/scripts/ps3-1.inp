@@ -1,6 +1,6 @@
 # PS3.1, for various examples in Chapter 3
 open data3-1 
-graph 1 2 
+textplot 1 2 
 # learn about the ols command 	  
 help ols 
 # estimate model; --vcv is to get covariance 
@@ -35,7 +35,7 @@ genr Fc = RSS*(n-2)/ESS
 # print F-statistic 			  
 print Fc
 # graph price and phat1 against sqft - connect x to get approximate line 
-graph price phat1 sqft 
+textplot price phat1 sqft 
 # Reproduce predicted averages in Table 3.1 using only 3 decimals 
 genr phat3 = 52.351+(0.139*sqft)
 print -o price phat3 

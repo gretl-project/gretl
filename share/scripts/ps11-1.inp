@@ -13,7 +13,7 @@ genr invt = 1/time
 genr l_time = log(time)
 # generate log of calwage
 logs calwage 
-graph calwage time
+textplot calwage time
 # set sample range to 1960-1989 and save 1990-1994 for predictions
 smpl 1960 1989
 # Note that the OLS estimates exhibit serial correlation

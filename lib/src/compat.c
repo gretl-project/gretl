@@ -310,19 +310,21 @@ static int ascii_plot (const int *list, const double **Z,
     int i, nc2, vy, vz, cntrline;
     int ix = 0, iy = 0, iz = 0, n = 0;
     int ncols = 70;
-    int ls, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
     char word[32], px[132];
     char s1[10], s2[10];
     double xmin, xmax, xrange, ymin, ymax, yrange, xymin, xymax; 
     double xyrange, xx, yy;
     double *x, *y;
+    int ls, t;
 
-    x = malloc(pdinfo->n * sizeof *x);
-    y = malloc(pdinfo->n * sizeof *y);
-
-    if (x == NULL || y == NULL) {
+    x = malloc(2 * pdinfo->n * sizeof *x);
+    if (x == NULL) {
 	return E_ALLOC;
     }
+
+    y = x + pdinfo->n;
 
     pputc(prn, '\n');
 
@@ -384,7 +386,6 @@ static int ascii_plot (const int *list, const double **Z,
 	pputs(prn, "\n\n");
 
 	free(x);
-	free(y);
 
 	return 0;
     }
@@ -507,62 +508,33 @@ static int ascii_plot (const int *list, const double **Z,
     pputs(prn, "\n\n");
 
     free(x);
-    free(y);
 
     return 0;
 }
 
-/**
- * ascii_graph:
- * @list: contains ID numbers of variables to graph.
- * @Z: data matrix.
- * @pdinfo: data information struct.
- * @opt: if includes OPT_O, use 40 rows, otherwise use 20 rows;
- * if includes OPT_T do a time-series plot.
- * @prn: gretl printing struct.
- *
- * Graph (using ascii graphics) one variable against another, as given
- * in @list: by default, the first variable will appear on the y-axis, 
- * the second on the x-axis.  But if @opt contains %OPT_T the listed
- * variables will be plotted against time (or by observation).
- *
- * Returns: 0 on successful completion, error code on error.
- */
-
-int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn)
+static int 
+ascii_scatter (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	       gretlopt opt, PRN *prn)
 {
     int T = sample_size(pdinfo);
     int vx, vy1, vy2 = -1;
     double *x = NULL;
-    double *y1 = NULL;
-    double *y2 = NULL;
+    double *y1, *y2;
     int err = 0;
 
-    if (opt & OPT_T) {
-	return ascii_plot(list, Z, pdinfo, opt, prn);
-    }
-
-    if (list[0] < 2) {
-	return E_ARGS; 
-    }
-
-    x = malloc(T * sizeof *x);
-    y1 = malloc(T * sizeof *y1);
-
-    if (x == NULL || y1 == NULL) {
-	free(x);
-	free(y1);
-	return E_ALLOC;    
-    }
-
     if (list[0] > 2) {
-	y2 = malloc(T * sizeof *y2);
-	if (y2 == NULL) {
-	    free(x);
-	    free(y1);
-	    return E_ALLOC;    
-	}
+	x = malloc(3 * T * sizeof *x);
+    } else {
+	x = malloc(2 * T * sizeof *x);
+    }
+
+    if (x == NULL) {
+	return E_ALLOC;
+    }
+
+    y1 = x + T;
+    if (list[0] > 2) {
+	y2 = y1 + T;
     }
 
     vy1 = list[1];
@@ -578,16 +550,47 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     pputc(prn, '\n');
-
     err = graphyzx(y1, y2, x, T, pdinfo->varname[vy1], 
 		   (vy2 < 0)? NULL : pdinfo->varname[vy2], 
 		   pdinfo->varname[vx], opt, prn);
-
     pputc(prn, '\n');
 
     free(x); 
-    free(y1); 
-    free(y2);
 
     return err;
+}
+
+/**
+ * textplot:
+ * @list: list of series to plot.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * @opt: see below.
+ * @prn: gretl printing struct.
+ *
+ * Produces, using ascii graphics, either a scatter plot of
+ * the first k-1 series in @list against the kth, or (if @opt
+ * includes %OPT_S) a time-series plot (or more generally
+ * a plot by observation).
+ *
+ * In the case of a scatter plot, %OPT_T (tall) can be used to
+ * request the use of 40 rows rather than the default of 20.
+ * In the case of a plot by observation %OPT_O (one-scale) 
+ * can be used to force the use of a single scale (otherwise
+ * the series may be scaled to fit).
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int textplot (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn)
+{
+    if (opt & OPT_S) {
+	/* time series */
+	return ascii_plot(list, Z, pdinfo, opt, prn);
+    } else if (list[0] < 2) {
+	return E_ARGS; 
+    } else {
+	return ascii_scatter(list, Z, pdinfo, opt, prn);
+    }
 }

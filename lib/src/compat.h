@@ -24,7 +24,7 @@ int graphyx (const double *y, const double *x, int n,
 	     const char *yname, const char *xname, 
 	     PRN *prn);
 
-int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn);
+int textplot (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn);
 
 #endif /* COMPAT_H */

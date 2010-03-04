@@ -11,7 +11,7 @@ genr b3 = $coeff(sq_OUTPUT)
 genr b4 = $coeff(INPCOST)
 # generate estimated averages to graph the average cost function
 genr time
-genr x=40 +(time*5)
+genr x = 40 + (time*5)
 genr INPCOST1 = 80
 genr INPCOST2 = 115
 genr INPCOST3 = 150

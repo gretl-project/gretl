@@ -3,4 +3,4 @@ open data6-2
 square effort 
 ols catch effort sq_effort
 genr yhat1 = catch-$uhat
-graph yhat1 effort 
+textplot yhat1 effort 

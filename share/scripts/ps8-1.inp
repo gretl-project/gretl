@@ -2,7 +2,7 @@
 open data3-11
 genr LNSALARY=ln(SALARY)
 # Figure 8.2 and Example 8.1 
-graph LNSALARY YEARS 
+textplot LNSALARY YEARS 
 genr YRS2 = YEARS*YEARS
 # estimate basic log quadratic model for Example 8.2 
 ols LNSALARY const YEARS YRS2 
@@ -11,5 +11,5 @@ genr usq=$uhat*$uhat
 # genr predicted LNSALARY as actual minus residual stored as uhat 
 genr yhat1=LNSALARY-$uhat
 # graph estimated residual variance against YEARS and yhat 
-graph usq YEARS 
-graph usq yhat1 
+textplot usq YEARS 
+textplot usq yhat1 

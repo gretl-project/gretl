@@ -1,6 +1,6 @@
 # PS3.3, for Annotated output in Table 3.3, Section 3.7 
 open data3-2
-graph exphlth income  
+textplot exphlth income  
 ols exphlth const income  
 # copy residuals from uhat to ut 
 genr ut=$uhat

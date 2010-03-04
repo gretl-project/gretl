@@ -3,4 +3,4 @@ open data4-7
 ols chd 0 cig edfat spirits beer
 genr time
 genr ut=$uhat
-graph ut time
+textplot ut time

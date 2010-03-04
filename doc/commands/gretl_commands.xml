@@ -3868,34 +3868,6 @@
 
   </command>
 
-  <command name="graph" section="Graphs" 
-    label="Create ASCII graph" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>yvars</argument>
-        <argument>xvar</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--tall</flag>
-	  <effect>use 40 rows</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	ASCII graphics.  The <repl>yvars</repl> (which may be given by
-	name or number) are  graphed against <repl>xvar</repl> using
-	ASCII symbols. The <lit>--tall</lit> flag will produce a graph
-	with 40 rows and 60 columns. Without it, the graph will be 20
-	by 60 (for screen output).  See also <cmdref targ="gnuplot"/>.
-      </para>
-    </description>
-
-  </command>
-
   <command name="graphing" section="Graphs" context="gui"
     label="Graphing">
 
@@ -7148,33 +7120,6 @@
 
   </command>
 
-  <command name="plot" section="Graphs" 
-    label="ASCII plot" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>varlist</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--one-scale</flag>
-	  <effect>force a single scale</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Plots the values for specified variables, for the range of
-	observations currently in effect, using ASCII symbols.  Each
-	line stands for an observation and the values are plotted
-	horizontally.  By default the variables are scaled
-	appropriately.  See also <cmdref targ="gnuplot"/>.
-      </para>
-    </description>
-
-  </command>
-
   <command name="print" section="Printing" 
     label="Print data or strings" context="cli">
 
@@ -9864,6 +9809,53 @@
     </gui-access>
 
   </command>
+
+  <command name="textplot" section="Graphs" 
+    label="ASCII plot" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>plot by observation</effect>
+        </option>
+        <option>
+	  <flag>--one-scale</flag>
+	  <effect>force a single scale</effect>
+        </option>
+        <option>
+	  <flag>--tall</flag>
+	  <effect>use 40 rows</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Quick and simple ASCII graphics.  Without the <lit>--time-series</lit>
+	flag, <repl>varlist</repl> must contain at least two series, the last
+	of which is taken as the variable for the <math>x</math> axis, and a
+	scatter plot is produced. In this case the <lit>--tall</lit> option
+	may be used to produce a graph in which the <math>y</math> axis is
+	represented by 40 rows of characters (the default is 20 rows).
+      </para>
+      <para>
+	With the <lit>--time-series</lit>, a plot by observation is produced.
+	In this case the option <lit>--one-scale</lit> may be used to force
+	the use of a single scale; otherwise if <repl>varlist</repl> contains
+	more than one series the data may be scaled. Each line represents an
+	observation, with the data values plotted horizontally.  
+      </para>
+      <para>
+	See also <cmdref targ="gnuplot"/>.
+      </para>
+    </description>
+
+  </command>
+
 
   <command name="tobit" section="Estimation" label="Tobit model">
 

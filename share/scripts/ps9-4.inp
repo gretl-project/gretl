@@ -2,7 +2,7 @@
 open data6-6
 genr time 
 # graph farmpop against year 
-graph farmpop year 
+textplot farmpop year 
 # linear time trend 
 ols farmpop 0 time 
 # generate square of time 

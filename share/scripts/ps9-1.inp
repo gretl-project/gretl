@@ -6,4 +6,4 @@ ols farmpop const time
 genr ut=$uhat
 genr ut1=ut(-1)
 corr ut ut1 
-graph ut time
+textplot ut time

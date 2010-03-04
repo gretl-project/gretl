@@ -252,6 +252,11 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "testuhat")) {
 	cmd->ci = MODTEST;
 	cmd->opt |= OPT_N;
+    } else if (!strcmp(s, "graph")) {
+	cmd->ci = PLOT;
+    } else if (!strcmp(s, "plot")) {
+	cmd->ci = PLOT;
+	cmd->opt = OPT_S;
     } else if (!strcmp(s, "list")) {
 	char lname[VNAMELEN];
 
@@ -4506,12 +4511,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
 	break;
 
-    case GRAPH:
-	err = ascii_graph(cmd->list, Z, pdinfo, cmd->opt, prn);
-	break;
-
     case PLOT:
-	err = ascii_graph(cmd->list, Z, pdinfo, (cmd->opt | OPT_T), prn);
+	err = textplot(cmd->list, Z, pdinfo, cmd->opt, prn);
 	break;
 
     case RMPLOT:

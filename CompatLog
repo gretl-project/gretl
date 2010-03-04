@@ -4,6 +4,10 @@ The "criteria" command has been removed.  A small function
 package is available on the gretl server that replaces this
 command.
 
+The commands "graph" and "plot" have been consolidated as
+options to the new command "textplot"; but the old commands
+are retained as aliases for the present.
+
 The function genpois() is now deprecated.  Please use
 randgen() with a first argument of 'P' instead.
 
