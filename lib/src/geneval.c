@@ -4405,7 +4405,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
    could be extended
 */
 
-static NODE *do_pergm (NODE *l, NODE *r, parser *p)
+static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
@@ -7061,7 +7061,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* series or vector argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    if (t->t == F_PERGM) {
-		ret = do_pergm(l, r, p);
+		ret = pergm_node(l, r, p);
 	    } else if (t->t == F_VALUES) {
 		ret = vector_values(l, p);
 	    } else if (t->t == F_IRR) {

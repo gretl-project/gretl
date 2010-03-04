@@ -4686,7 +4686,7 @@ static void
 real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 {
     PRN *prn;
-    char title[64];
+    const gchar *title = N_("gretl: periodogram");
     int T = sample_size(pdinfo);
     const char *opts[] = {
 	N_("log scale"),
@@ -4697,13 +4697,18 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
     gretlopt opt = (bartlett)? OPT_O : OPT_NONE;
     int err;
 
-    strcpy(title, _("gretl: periodogram"));
+    if (bartlett) {
+	width = auto_spectrum_order(T, opt);
+	err = checks_dialog(_(title), NULL, 
+			    opts, 1, active, 0, NULL,
+			    &width, _("Bandwidth:"),
+			    2, T / 2, PERGM);
+    } else {
+	err = checks_dialog(_(title), NULL, 
+			    opts, 1, active, 0, NULL,
+			    NULL, NULL, 0, 0, 0);
+    }
 
-    width = auto_spectrum_order(T, opt);
-
-    err = checks_dialog(title, NULL, opts, 1, active, 0, NULL,
-			&width, _("Bandwidth:"),
-			2, T / 2, PERGM);
     if (err < 0) {
 	return;
     }   
@@ -4738,7 +4743,7 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 
     register_graph(NULL);
 
-    view_buffer(prn, 60, 400, title, PERGM, NULL);
+    view_buffer(prn, 60, 400, _(title), PERGM, NULL);
 }
 
 void do_pergm (GtkAction *action)
