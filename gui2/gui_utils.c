@@ -3038,7 +3038,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int horizon, bootstrap;
     gint shock, targ;
-    double alpha = 0.05;
+    double alpha = 0.10;
     const double **vZ = NULL;
     int err;
 
