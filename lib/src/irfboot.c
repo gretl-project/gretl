@@ -700,6 +700,7 @@ static int irf_boot_quantiles (irfboot *b, gretl_matrix *R, double alpha)
 
 static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
 {
+    
     GRETL_VAR *vbak;
     int err = 0;
 
@@ -712,9 +713,37 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
 
     clear_gretl_matrix_err();
 
-    vbak->Y = gretl_matrix_copy(v->Y);
+    /* Note: v->k is a record of the column size at
+       which v->Y and v->B were originally allocated;
+       see VAR_add_basic_matrices(). This may be greater
+       than the current cols setting.
+    */
+
+    if (v->k > v->Y->cols) {
+	int save_k = v->Y->cols;
+
+	/* re-expand these matrices */
+	gretl_matrix_reuse(v->Y, -1, v->k);
+	gretl_matrix_reuse(v->B, -1, v->k);
+
+	/* and copy at full size */
+	vbak->Y = gretl_matrix_copy(v->Y);
+	vbak->B = gretl_matrix_copy(v->B);
+
+	/* then shrink back to incoming size */
+	if (vbak->Y != NULL && vbak->B != NULL) {
+	    gretl_matrix_reuse(vbak->Y, -1, save_k);
+	    gretl_matrix_reuse(vbak->B, -1, save_k);
+	}
+	
+	gretl_matrix_reuse(v->Y, -1, save_k);
+	gretl_matrix_reuse(v->B, -1, save_k);
+    } else {
+	vbak->Y = gretl_matrix_copy(v->Y);
+	vbak->B = gretl_matrix_copy(v->B);
+    }
+
     vbak->X = gretl_matrix_copy(v->X);
-    vbak->B = gretl_matrix_copy(v->B);
     vbak->XTX = gretl_matrix_copy(v->XTX);
     vbak->A = gretl_matrix_copy(v->A);
     vbak->E = gretl_matrix_copy(v->E);

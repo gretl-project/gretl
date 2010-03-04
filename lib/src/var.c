@@ -181,6 +181,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->detflags = 0;
     var->robust = 0;
     var->LBs = 0;
+    var->k = 0;
 
     var->lags = NULL;
     var->ylist = NULL;
@@ -328,8 +329,6 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const double **Z)
 
     if (mod == LAGS && auto_restr(v)) {
 	int trend = (v->jinfo->code == J_REST_TREND);
-
-	fprintf(stderr, "auto_restr: setting v->Y(t, %d)\n", k);
 
 	for (t=0; t<v->T; t++) {
 	    gretl_matrix_set(v->Y, t, k, (trend)? (v->t1 + t) : 1);
@@ -588,28 +587,30 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
 
 static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
 {
-    int n = v->neqns;
+    int k = v->neqns;
 
     if (v->ci == VECM && (opt & (OPT_A | OPT_R))) {
 	/* allow for restricted const/trend */
-	n++;
+	k++;
     }
 
     /* restricted exog vars? */
     if (v->rlist != NULL) {
-	n += v->rlist[0];
+	k += v->rlist[0];
     }    
 
-    v->Y = gretl_matrix_alloc(v->T, n);
-    fprintf(stderr, "Allocated v->Y with %d cols\n", n);
+    v->Y = gretl_matrix_alloc(v->T, k);
     v->E = gretl_matrix_alloc(v->T, v->neqns);
     if (v->Y == NULL || v->E == NULL) {
 	return E_ALLOC;
-    }  
+    } 
+    
+    /* record max. cols of Y matrix */
+    v->k = k;
 
     if (v->ncoeff > 0) {
 	v->X = gretl_matrix_alloc(v->T, v->ncoeff);
-	v->B = gretl_matrix_alloc(v->ncoeff, n);
+	v->B = gretl_matrix_alloc(v->ncoeff, k);
 	if (v->X == NULL || v->B == NULL) { 
 	    return E_ALLOC;
 	}  
@@ -765,7 +766,7 @@ void gretl_VAR_free (GRETL_VAR *var)
 {
     if (var == NULL) return;
 
-#if 0
+#if VDEBUG
     fprintf(stderr, "gretl_VAR_free: var = %p, refcount = %d\n",
 	    (void *) var, var->refcount);
 #endif
@@ -806,7 +807,7 @@ void gretl_VAR_free (GRETL_VAR *var)
 
     free(var);
 
-#if 0
+#if VDEBUG
     fprintf(stderr, "gretl_VAR_free: done\n");
     fflush(stderr);
 #endif
@@ -2502,11 +2503,6 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
     gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
     gretl_matrix_divide_by_scalar(jvar->jinfo->S11, jvar->T);
     gretl_matrix_divide_by_scalar(jvar->jinfo->S01, jvar->T);
-
-#if 0
-    gretl_matrix_SVD_johansen_solve(jvar->jinfo->R0, jvar->jinfo->R1,
-				    XX, XX, XX);
-#endif
 
 #if VDEBUG
     fprintf(stderr, "johansen_stage_1: returning err = %d\n", err);
