@@ -519,7 +519,7 @@ ascii_scatter (const int *list, const double **Z, const DATAINFO *pdinfo,
     int T = sample_size(pdinfo);
     int vx, vy1, vy2 = -1;
     double *x = NULL;
-    double *y1, *y2;
+    double *y1, *y2 = NULL;
     int err = 0;
 
     if (list[0] > 2) {

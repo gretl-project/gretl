@@ -599,7 +599,7 @@ const int *gretl_VAR_get_exo_list (const GRETL_VAR *var)
 
 static int *build_VAR_list (const GRETL_VAR *var, int *exolist, int *err)
 {
-    return list_composite(var->ylist, exolist, var->rlist);
+    return VAR_list_composite(var->ylist, exolist, var->rlist);
 }
 
 static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,

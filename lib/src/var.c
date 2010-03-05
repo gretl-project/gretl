@@ -368,6 +368,10 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 {
     int err = 0;
 
+#if VDEBUG
+    printlist(list, "VAR_make_lists: incoming list");
+#endif
+
     if (gretl_list_has_separator(list)) {
 	err = gretl_list_split_on_separator(list, &v->ylist, &v->xlist);
     } else {
@@ -597,7 +601,7 @@ static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
     /* restricted exog vars? */
     if (v->rlist != NULL) {
 	k += v->rlist[0];
-    }    
+    } 
 
     v->Y = gretl_matrix_alloc(v->T, k);
     v->E = gretl_matrix_alloc(v->T, v->neqns);
@@ -2355,7 +2359,7 @@ johansen_estimate_complete (GRETL_VAR *jvar,
 	err = (* jfun) (jvar, rset, Z, pdinfo, prn);
 	close_plugin(handle);
     }
-    
+
     return err;
 }
 
@@ -2677,7 +2681,7 @@ johansen_wrapper (int code, int order, int rank,
 			 opt, err);
     if (jvar == NULL) {
 	return NULL;
-    }    
+    } 
 
     if (jvar != NULL && !jvar->err) {
 	*err = jvar->err = johansen_driver(jvar, rset, Z, pdinfo, opt, prn);
@@ -2798,14 +2802,23 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     return jvar;
 }
 
-int *list_composite (const int *list1, const int *list2,
-		     const int *list3)
+int *VAR_list_composite (const int *ylist, const int *xlist,
+			 const int *rlist)
 {
     int *big = NULL;
-    int i, k, n = list1[0];
+    int i, k, n = ylist[0];
 
-    if (list2 != NULL && list2[0] > 0) n += list2[0] + 1;
-    if (list3 != NULL && list3[0] > 0) n += list3[0] + 1;
+    if (xlist != NULL && xlist[0] > 0) {
+	n += xlist[0] + 1;
+    }
+
+    if (rlist != NULL && rlist[0] > 0) {
+	n += rlist[0] + 1;
+	if (xlist == NULL || xlist[0] == 0) {
+	    /* extra separator needed */
+	    n++;
+	}
+    }
 
     big = gretl_list_new(n);
     if (big == NULL) {
@@ -2814,21 +2827,25 @@ int *list_composite (const int *list1, const int *list2,
 
     k = 1;
 
-    for (i=1; i<=list1[0]; i++) {
-	big[k++] = list1[i];
+    for (i=1; i<=ylist[0]; i++) {
+	big[k++] = ylist[i];
     }
 
-    if (list2 != NULL && list2[0] > 0) {
+    if (xlist != NULL && xlist[0] > 0) {
 	big[k++] = LISTSEP;
-	for (i=1; i<=list2[0]; i++) {
-	    big[k++] = list2[i];
+	for (i=1; i<=xlist[0]; i++) {
+	    big[k++] = xlist[i];
 	}
-    }
+    } 
 
-    if (list3 != NULL && list3[0] > 0) {
+    if (rlist != NULL && rlist[0] > 0) {
+	if (xlist == NULL || xlist[0] == 0) {
+	    /* placeholder for empty xlist */
+	    big[k++] = LISTSEP;
+	}
 	big[k++] = LISTSEP;
-	for (i=1; i<=list3[0]; i++) {
-	    big[k++] = list3[i];
+	for (i=1; i<=rlist[0]; i++) {
+	    big[k++] = rlist[i];
 	}
     }
 
@@ -2842,7 +2859,8 @@ static int *rebuild_full_VAR_list (const GRETL_VAR *var, int *err)
     if (var->xlist == NULL && var->rlist == NULL) {
 	list = gretl_list_copy(var->ylist);
     } else {
-	list = list_composite(var->ylist, var->xlist, var->rlist);
+	list = VAR_list_composite(var->ylist, var->xlist, 
+				  var->rlist);
     } 
 
     return list;

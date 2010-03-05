@@ -585,6 +585,10 @@ static int vecm_form_matrices (gretl_restriction *rset)
 	err = check_R_matrix(rset->Ra);
     }
 
+#if RDEBUG
+    fprintf(stderr, "vecm_form_matrices: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -2231,7 +2235,7 @@ gretl_restricted_vecm (gretl_restriction *rset,
     GRETL_VAR *jvar = NULL;
 
 #if RDEBUG
-    fprintf(stderr, "gretl_restricted_vecm()\n");
+    fprintf(stderr, "gretl_restricted_vecm: starting\n");
 #endif
 
     if (rset == NULL || rset->otype != GRETL_OBJ_VAR) {
@@ -2383,7 +2387,7 @@ gretl_restriction_finalize (gretl_restriction *rset,
     int err = 0;
 
 #if RDEBUG
-    fprintf(stderr, "gretl_restriction_finalize()\n");
+    fprintf(stderr, "gretl_restriction_finalize: starting\n");
 #endif
 
     if (rset == NULL) {

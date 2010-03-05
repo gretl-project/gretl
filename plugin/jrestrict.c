@@ -165,7 +165,8 @@ static int make_moment_matrices (Jwrap *J, const GRETL_VAR *jvar)
     }
 
     if (!err) {
-	/* allocate beta, alpha, etc. while we're at it */
+	/* allocate beta, alpha, etc. while we're at it:
+	   but are these sizes always right? */
 	J->beta = gretl_zero_matrix_new(J->p1, J->r);
 	J->alpha = gretl_zero_matrix_new(J->p, J->r);
 	J->Pi = gretl_matrix_alloc(J->p, J->p1);
@@ -1727,18 +1728,23 @@ static int check_jacobian (Jwrap *J)
     /* form beta and alpha, based on randomized theta */
 
     if (J->H != NULL) {
-	gretl_matrix *phi = gretl_column_vector_alloc(J->H->cols);
+	gretl_matrix *phi;
 
+	if (J->H->rows != J->p1 * J->r) {
+	    fprintf(stderr, "?? matrices wrongly sized in check_jacobian\n");
+	    return E_NONCONF;
+	} 
+
+	phi = gretl_column_vector_alloc(J->H->cols);
 	if (phi == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
+	    return E_ALLOC;
 	}
 
 	gretl_matrix_random_fill(phi, D_NORMAL);
 	gretl_matrix_reuse(J->beta, J->p1 * J->r, 1);
-	gretl_matrix_multiply(J->H, phi, J->beta);
-	if (J->h != NULL) {
-	    gretl_matrix_add_to(J->beta, J->h);
+	err = gretl_matrix_multiply(J->H, phi, J->beta);
+	if (!err && J->h != NULL) {
+	    err = gretl_matrix_add_to(J->beta, J->h);
 	}
 	gretl_matrix_reuse(J->beta, J->p1, J->r);
 	gretl_matrix_free(phi);
@@ -1746,7 +1752,7 @@ static int check_jacobian (Jwrap *J)
 	gretl_matrix_random_fill(J->beta, D_NORMAL);
     }
 
-    if (J->G != NULL) {
+    if (!err && J->G != NULL) {
 	gretl_matrix *psi = gretl_column_vector_alloc(J->G->cols);
 	gretl_matrix *avec = gretl_column_vector_alloc(J->p * J->r);
 
@@ -1760,7 +1766,7 @@ static int check_jacobian (Jwrap *J)
 	unvec_transpose(J->alpha, avec);
 	gretl_matrix_free(psi);
 	gretl_matrix_free(avec);
-    } else {	
+    } else if (!err) {	
 	J_compute_alpha(J);
     }
 
@@ -1807,6 +1813,10 @@ static int check_jacobian (Jwrap *J)
     gretl_matrix_free(R);
     gretl_matrix_free(Jac);
 
+#if JDEBUG
+    fprintf(stderr, "check_jacobian: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -1818,6 +1828,10 @@ static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
     int err = 0;
 
     err = check_jacobian(J);
+
+#if JDEBUG
+    fprintf(stderr, "vecm_id_check: check_jacobian ret'd %d\n", err);
+#endif
 
     if (!err) {
 	pprintf(prn, _("Rank of Jacobian = %d, number of free "
@@ -1835,7 +1849,7 @@ static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 	pprintf(prn, _("Based on Jacobian, df = %d\n"), J->df);
 
 #if JDEBUG
-	pprintf(prn, "Jacobian: got df = %d\n", J->df);
+	fprintf(stderr, "Jacobian: got df = %d\n", J->df);
 #endif
 
 	/* system was subject to a prior restriction? */

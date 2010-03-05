@@ -81,8 +81,8 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
 
 int gretl_VECM_id (GRETL_VAR *vecm);
 
-int *list_composite (const int *list1, const int *list2,
-		     const int *list3);
+int *VAR_list_composite (const int *ylist, const int *xlist,
+			 const int *rlist);
 
 #endif /* JOHANSEN_H_ */
 

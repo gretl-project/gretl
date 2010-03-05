@@ -4118,9 +4118,10 @@ static void check_for_named_object_save (ExecState *s)
     }
 }
 
-static void callback_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+static void callback_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
+			   int err)
 {
-    if (s->callback != NULL) {
+    if (!err && s->callback != NULL) {
 	s->callback(s, pZ, pdinfo);
     }
     s->flags &= ~CALLBACK_EXEC;
@@ -5082,7 +5083,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (callback_scheduled(s)) {
-	callback_exec(s, pZ, pdinfo);
+	callback_exec(s, pZ, pdinfo, err);
     }
 
  bailout:

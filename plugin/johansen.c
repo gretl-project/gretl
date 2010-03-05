@@ -1203,7 +1203,6 @@ static int beta_variance (GRETL_VAR *vecm)
 
 #if JDEBUG
     gretl_matrix_print(vecm->jinfo->S11, "full S11");
-    gretl_matrix_print(H, "H");
     gretl_matrix_print(HSH, "H'*S11*H");
 #endif
 
@@ -1673,6 +1672,11 @@ static int j_general_restrict (GRETL_VAR *jvar,
 
     err = general_vecm_analysis(jvar, rset, pdinfo, prn);
 
+#if JDEBUG
+    fprintf(stderr, "j_general_restrict: general_vecm_analysis, err = %d\n",
+	    err);
+#endif
+
     if (!err) {
 	int flags = (acols > 0)? NET_OUT_ALPHA : 0;
 
@@ -1684,7 +1688,7 @@ static int j_general_restrict (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	/* FIXME 'k' for AIC etc. */
+	/* FIXME 'k' for AIC etc? */
 	err = vecm_ll_stats(jvar);
     }
 
@@ -1713,6 +1717,10 @@ static int j_general_restrict (GRETL_VAR *jvar,
 	    err = E_ALLOC;
 	}
     }
+
+#if JDEBUG
+    fprintf(stderr, "j_general_restrict: returning %d\n", err);
+#endif
 
     return err;
 }
@@ -1870,7 +1878,7 @@ est_simple_beta_restr (GRETL_VAR *jvar,
 		       const gretl_restriction *rset,
 		       const double **Z, const DATAINFO *pdinfo)
 {
-    const gretl_matrix *R;
+    const gretl_matrix *R = NULL;
     gretl_matrix *H = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *S00 = NULL;
@@ -2025,6 +2033,10 @@ static int j_estimate_general (GRETL_VAR *jvar,
 	err = j_general_restrict(jvar, rset, Z, pdinfo, prn);
     }
 
+#if JDEBUG
+    fprintf(stderr, "j_estimate_general: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -2056,8 +2068,6 @@ int johansen_estimate (GRETL_VAR *jvar,
    generate the VAR representation.
 */
 
-/* FIXME case of restricted beta and/or alpha */
-
 int 
 johansen_boot_round (GRETL_VAR *jvar, const double **Z, 
 		     const DATAINFO *pdinfo)
@@ -2069,6 +2079,12 @@ johansen_boot_round (GRETL_VAR *jvar, const double **Z,
 #if JDEBUG
     fprintf(stderr, "\n*** starting johansen_bootstrap_round()\n\n");
 #endif
+
+    if (jvar->jinfo->R != NULL || jvar->jinfo->q != NULL ||
+	jvar->jinfo->Ra != NULL || jvar->jinfo->qa != NULL) {
+	fprintf(stderr, "FIXME IRFs for restricted VECMs\n");
+	return E_NOTIMP;
+    }
 
     /* FIXME: OK to use jvar->jinfo->S00, or not? */
 
