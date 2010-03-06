@@ -565,23 +565,26 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 
 #define HTDBG 0
 
+/* Hausman test via the regression method */
+
 static int 
 tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 		   double ***pZ, DATAINFO *pdinfo)
 {
-    double RRSS;
-    int t, df, err = 0;
-
     MODEL hmod;
-    int *HT_list0 = NULL;
-    int *HT_list1 = NULL;
+    double URSS;
+    int *HT_list = NULL;
+    int t, df, nobs1;
+    int nv = pdinfo->v;
+    int ku = 0;
+    int err = 0;
 
 #if HTDBG
     PRN *dbgprn = NULL;
     dbgprn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 #endif
 
-    HT_list0 = gretl_list_add(reglist, hatlist, &err);
+    HT_list = gretl_list_add(reglist, hatlist, &err);
     if (err) {
 	if (err == E_NOADD) {
 	    /* more of a no-op than an error */
@@ -589,57 +592,61 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	} else {
 	    fprintf(stderr, "tsls_hausman_test: gretl_list_add: err = %d\n", err);
 	}
-	goto bailout;
+	return err;
     } 
 
-    hmod = lsq(HT_list0, pZ, pdinfo, OLS, OPT_A);
-    if (hmod.errcode) {
-	fprintf(stderr, "tsls_hausman_test: hmod.errcode (R) = %d\n", hmod.errcode);
-	err = hmod.errcode;
-	goto bailout;
-    } 
-
-    double URSS = hmod.ess;
-    int nobs1 = hmod.nobs;
-
-    int nv = pdinfo->v;
-    err = dataset_add_series(1, pZ, pdinfo);
-    if (err) {
-	goto bailout;
-    } else {
-	for (t=hmod.t1; t<=hmod.t2; t++) {
-	    (*pZ)[nv][t] = hmod.yhat[t];
-	}
-    }
-
-    clear_model(&hmod);
-
-    HT_list1 = gretl_list_copy(reglist);
-    HT_list1[1] = nv;
-
-    hmod = lsq(HT_list1, pZ, pdinfo, OLS, OPT_A);
-#if HTDBG
-    printmodel(&hmod, pdinfo, OPT_NONE, dbgprn);
-    pprintf(dbgprn, "smpl1 = %d, smpl2 = %d\n", nobs1, hmod.nobs);
-    pprintf(dbgprn, "k1 = %d, k2 = %d\n", hmod.list[0], HT_list0[0]);
-#endif
-
+    /* estimate the unrestricted model */
+    hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A);
     if (hmod.errcode) {
 	fprintf(stderr, "tsls_hausman_test: hmod.errcode (U) = %d\n", hmod.errcode);
 	err = hmod.errcode;
 	goto bailout;
-    } else if ((df = HT_list0[0] - hmod.list[0]) > 0) {
+    } 
+
+    URSS = hmod.ess;
+    nobs1 = hmod.nobs;
+    ku = hmod.ncoeff;
+
+    /* add residual from unrestricted model to dataset  */
+    err = dataset_add_series(1, pZ, pdinfo);
+    if (err) {
+	goto bailout;
+    } 
+
+    for (t=hmod.t1; t<=hmod.t2; t++) {
+	(*pZ)[nv][t] = hmod.yhat[t];
+    }
+
+    clear_model(&hmod);
+
+    free(HT_list);
+    HT_list = gretl_list_copy(reglist);
+    HT_list[1] = nv;
+
+    /* regress the U residual on the included regressors */
+    hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A);
+
+#if HTDBG
+    printmodel(&hmod, pdinfo, OPT_NONE, dbgprn);
+    pprintf(dbgprn, "smpl1 = %d, smpl2 = %d\n", nobs1, hmod.nobs);
+    pprintf(dbgprn, "k1 = %d, k2 = %d\n", hmod.ncoeff, ku);
+#endif
+
+    if (hmod.errcode) {
+	fprintf(stderr, "tsls_hausman_test: hmod.errcode (D) = %d\n", hmod.errcode);
+	err = hmod.errcode;
+    } else if ((df = ku - hmod.ncoeff) > 0) {
 	/* Degrees of freedom for the Hausman test need not be equal to the
 	   number of added regressors, since some of them may not really be 
 	   endogenous.
 	*/
-
 	double DRSS = hmod.ess;
+	double HTest = (DRSS/URSS) * hmod.nobs;
+	ModelTest *test = model_test_new(GRETL_TEST_IV_HAUSMAN);
+
 #if HTDBG
 	pprintf(dbgprn, "(RRSS - URSS) = %g, URSS = %g\n", DRSS, URSS);
 #endif
-	double HTest = (DRSS/URSS) * hmod.nobs;
-	ModelTest *test = model_test_new(GRETL_TEST_IV_HAUSMAN);
 
 	if (test != NULL) {
 	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
@@ -656,10 +663,9 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     gretl_print_destroy(dbgprn);
 #endif
 
-    dataset_drop_last_variables(1, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - nv, pZ, pdinfo);
     clear_model(&hmod);
-    free(HT_list0);
-    free(HT_list1);
+    free(HT_list);
 
     return err;
 }
