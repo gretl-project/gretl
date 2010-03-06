@@ -834,7 +834,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     if (spec->flags & GPT_YZEROAXIS) {
 	fputs("set yzeroaxis\n", fp);
-    }    
+    } 
+
+    if (spec->flags & GPT_GRID) {
+	fputs("set grid\n", fp);
+    }     
 
     if (spec->flags & GPT_PARAMETRIC) {
 	fputs("set parametric\n", fp);

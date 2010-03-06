@@ -1640,6 +1640,9 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "yzeroaxis")) {
 	spec->flags |= GPT_YZEROAXIS;
 	return 0;
+    } else if (!strcmp(key, "grid")) {
+	spec->flags |= GPT_GRID;
+	return 0;
     } else if (!strcmp(key, "noxtics")) {
 	strcpy(spec->xtics, "none");
 	return 0;

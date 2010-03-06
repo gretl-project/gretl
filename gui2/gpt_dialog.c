@@ -92,6 +92,7 @@ struct plot_editor_ {
     GtkWidget *keycombo;
     GtkWidget *fitcombo;
     GtkWidget *border_check;
+    GtkWidget *grid_check;
     GtkWidget *y2_check;
     GtkWidget *ttfcombo;
     GtkWidget *ttfspin;
@@ -869,6 +870,14 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     } 
 
+    if (!err && ed->grid_check != NULL) {
+	if (button_is_active(ed->grid_check)) {
+	    spec->flags |= GPT_GRID;
+	} else {
+	    spec->flags &= ~GPT_GRID;
+	}
+    }
+
     if (!err) {
 	if (ed->fontname != NULL) {
 	    set_gretl_png_font(ed->fontname);
@@ -1504,6 +1513,18 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	g_signal_connect(G_OBJECT(ed->y2_check), "clicked", 
 			 G_CALLBACK(toggle_axis_selection), ed);
 	gtk_widget_show(ed->y2_check);
+    }
+
+    if (1) {
+	/* FIXME does this need to be conditional? */
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	ed->grid_check = gtk_check_button_new_with_label(_("Show grid"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  ed->grid_check, 0, TAB_MAIN_COLS, 
+				  rows-1, rows);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->grid_check),
+				     spec->flags & GPT_GRID);
+	gtk_widget_show(ed->grid_check);
     }
 
     if (show_aa_check < 0) {
@@ -2917,6 +2938,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->keycombo = NULL;
     ed->fitcombo = NULL;
     ed->border_check = NULL;
+    ed->grid_check = NULL;
     ed->y2_check = NULL;
     ed->ttfcombo = NULL;
     ed->ttfspin = NULL;
