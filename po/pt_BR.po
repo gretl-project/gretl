@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-02 22:44-0500\n"
-"PO-Revision-Date: 2010-03-05 00:25-0300\n"
+"PO-Revision-Date: 2010-03-06 00:21-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -892,15 +892,15 @@ msgstr "   datas estão revertidas?\n"
 #: lib/src/csvdata.c:1024
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
-msgstr "   Etiqueta da primeira linha é \"%s\" e da última é \"%s\".\n"
+msgstr "   Rótulo da primeira linha é \"%s\" e da última é \"%s\".\n"
 
 #: lib/src/csvdata.c:1041
 msgid "   label strings can't be consistent dates\n"
-msgstr "   etiquetas não podem ser datas consistentes\n"
+msgstr "   rótulos não podem ser datas consistentes\n"
 
 #: lib/src/csvdata.c:1045
 msgid "trying to parse row labels as dates...\n"
-msgstr "Tentando interpretar etiquetas de linhas como sendo datas...\n"
+msgstr "Tentando interpretar os rótulos das linhas como sendo datas...\n"
 
 #: lib/src/csvdata.c:1059
 msgid "   definitely not a four-digit year\n"
@@ -928,7 +928,7 @@ msgstr "   primeiro campo: '%s'\n"
 
 #: lib/src/csvdata.c:1276
 msgid "   seems to be observation label\n"
-msgstr "   aparenta ser etiqueta de observação\n"
+msgstr "   aparenta ser rótulo de observação\n"
 
 #: lib/src/csvdata.c:1288
 #, c-format
@@ -998,7 +998,7 @@ msgstr "aviso: truncando dados na linha %d, coluna %d\n"
 
 #: lib/src/csvdata.c:1867
 msgid "scanning for row labels and data...\n"
-msgstr "procurando etiquetas de linhas e dados...\n"
+msgstr "procurando rótulos de linhas e dados...\n"
 
 #: lib/src/csvdata.c:1886
 #: lib/src/csvdata.c:1889
@@ -1054,7 +1054,7 @@ msgid ""
 "taking date information from row labels\n"
 "\n"
 msgstr ""
-"obtendo informação de datas a partir das etiquetas das linhas\n"
+"obtendo informação de datas a partir dos rótulos das linhas\n"
 "\n"
 
 #: lib/src/csvdata.c:2117
@@ -1225,17 +1225,17 @@ msgstr "Escrita do cabeçalho do arquivo falhou"
 
 #: lib/src/dataio.c:1312
 msgid "Write of labels file failed"
-msgstr "Escrita da etiqueta dos arquivos falhou"
+msgstr "Escrita dos rótulos do arquivo falhou"
 
 #: lib/src/dataio.c:1583
 #, c-format
 msgid "Bad data label in %s"
-msgstr "Má etiqueta de dados em %s"
+msgstr "Rótulo de dados com problema em %s"
 
 #: lib/src/dataio.c:1596
 #, c-format
 msgid "extraneous label for var '%s'\n"
-msgstr "etiqueta estranha para a variável '%s'\n"
+msgstr "rótulo estranho para a variável '%s'\n"
 
 #: lib/src/dataio.c:1813
 #, c-format
@@ -4027,7 +4027,7 @@ msgstr "Falha no processamento do número de observações"
 
 #: lib/src/gretl_xml.c:2000
 msgid "labels attribute for observations must be 'true' or 'false'"
-msgstr "etiquetas de atributos para as observações devem ser 'true' ou 'false'"
+msgstr "rótulos de atributos para as observações devem ser 'true' ou 'false'"
 
 #: lib/src/gretl_xml.c:2045
 msgid "Got no observations\n"
@@ -4201,7 +4201,7 @@ msgid ""
 "Valid gretl commands are:\n"
 msgstr ""
 "\n"
-"Os comandos gretl possíveis são:\n"
+"Comandos válidos do gretl são:\n"
 
 #: lib/src/interact.c:2929
 msgid ""
@@ -4243,7 +4243,7 @@ msgstr "Não estão definidas séries\n"
 
 #: lib/src/interact.c:3800
 msgid "Listing labels for variables:\n"
-msgstr "Listando as etiquetas das variáveis:\n"
+msgstr "Listando rótulos das variáveis:\n"
 
 #: lib/src/interact.c:3845
 msgid "Output is not currently diverted to file\n"
@@ -7556,7 +7556,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de março de 2010."
+"Tradução de 6 de março de 2010."
 
 #: gui2/about.c:175
 msgid "License"
@@ -9379,19 +9379,19 @@ msgstr "selecionar variável"
 
 #: gui2/dialogs.c:2849
 msgid "Week starts on Monday"
-msgstr "Semana inicia na Segunda-Feira"
+msgstr "Semana inicia na segunda-feira"
 
 #: gui2/dialogs.c:2860
 msgid "Week starts on Sunday"
-msgstr "Semana inicia no Domingo"
+msgstr "Semana inicia no domingo"
 
 #: gui2/dialogs.c:2900
 msgid "Compact by averaging"
-msgstr "Compactar por média (averaging)"
+msgstr "Compactar por média"
 
 #: gui2/dialogs.c:2901
 msgid "Compact by summing"
-msgstr "Compactar por soma (summing)"
+msgstr "Compactar por soma"
 
 #: gui2/dialogs.c:2902
 msgid "Use end-of-period values"
@@ -9399,7 +9399,7 @@ msgstr "Usar valores de fim-de-período"
 
 #: gui2/dialogs.c:2903
 msgid "Use start-of-period values"
-msgstr "Usar valores de inicio-de-período"
+msgstr "Usar valores de início-de-período"
 
 #: gui2/dialogs.c:2921
 msgid "Default method:"
@@ -10170,12 +10170,12 @@ msgstr "Ajuda"
 #: gui2/gpt_control.c:3074
 #: gui2/gpt_control.c:3172
 msgid "Freeze data labels"
-msgstr "Fixar etiquetas dos dados"
+msgstr "Fixar rótulos dos dados"
 
 #: gui2/gpt_control.c:3077
 #: gui2/gpt_control.c:3174
 msgid "Clear data labels"
-msgstr "Apagar etiquetas dos dados"
+msgstr "Apagar rótulos dos dados"
 
 #: gui2/gpt_control.c:3079
 #: gui2/gpt_control.c:3173
@@ -10929,7 +10929,7 @@ msgstr "Marcadores de _observações..."
 
 #: gui2/gretl.c:1374
 msgid "_Variable labels..."
-msgstr "Etiquetas de _variáveis"
+msgstr "Rótulos de _variáveis"
 
 #: gui2/gretl.c:1375
 msgid "Dataset _structure..."
@@ -12719,18 +12719,18 @@ msgstr ""
 
 #: gui2/library.c:1484
 msgid "Export the labels to file"
-msgstr "Exportar etiquetas para o arquivo"
+msgstr "Exportar rótulos para o arquivo"
 
 #: gui2/library.c:1485
 msgid "Remove the labels"
-msgstr "Remover etiquetas"
+msgstr "Remover rótulos"
 
 #: gui2/library.c:1489
 msgid ""
 "The dataset has variable labels.\n"
 "Would you like to:"
 msgstr ""
-"O conjunto de dados não contém etiquetas.\n"
+"O conjunto de dados possui rótulos de variáveis.\n"
 "Gostaria de:"
 
 #: gui2/library.c:1500
@@ -12738,7 +12738,7 @@ msgid ""
 "The dataset has no variable labels.\n"
 "Add some from file now?"
 msgstr ""
-"O conjunto de dados não possui etiquetas.\n"
+"O conjunto de dados não possui rótulos.\n"
 "Adicionar algum a partir de um arquivo agora?"
 
 #: gui2/library.c:1511
@@ -14618,7 +14618,7 @@ msgstr "Navegador Web"
 
 #: gui2/settings.c:164
 msgid "Allow shell commands"
-msgstr "Permitir comandos de sistema (\"shell\")l"
+msgstr "Permitir comandos de sistema (\"shell\")"
 
 #: gui2/settings.c:166
 msgid "Show icon view automatically"
@@ -14816,7 +14816,7 @@ msgstr "Diretório de trabalho..."
 
 #: gui2/settings.c:1602
 msgid "This change will take effect when you restart gretl"
-msgstr "Esta alteração terá efeito após reiniciar o gretl"
+msgstr "É necessário reiniciar o gretl para que esta alteração tenha efeito"
 
 #: gui2/settings.c:2134
 msgid "Font for gretl output windows"
@@ -14824,7 +14824,7 @@ msgstr "Fonte para a saída nas janelas do gretl"
 
 #: gui2/settings.c:2138
 msgid "Font for menus and labels"
-msgstr "Fonte para menus e etiquetas"
+msgstr "Fonte para menus e rótulos"
 
 #: gui2/settings.c:2304
 msgid "Working directory:"
