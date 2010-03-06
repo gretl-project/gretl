@@ -607,7 +607,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     nobs1 = hmod.nobs;
     ku = hmod.ncoeff;
 
-    /* add residual from unrestricted model to dataset  */
+    /* add fitted values from unrestricted model to dataset  */
     err = dataset_add_series(1, pZ, pdinfo);
     if (err) {
 	goto bailout;
@@ -623,7 +623,9 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     HT_list = gretl_list_copy(reglist);
     HT_list[1] = nv;
 
-    /* regress the U residual on the included regressors */
+    /* regress the U fitted values on the regressors of the restricted 
+     model (so the sum of squares equals RRSS-URSS)
+    */
     hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A);
 
 #if HTDBG
