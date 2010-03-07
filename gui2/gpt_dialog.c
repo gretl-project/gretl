@@ -905,6 +905,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
 #if 0 /* just testing for now */
     if (1) {
+	/* will be @gretldir/data/nber.txt */
 	plotspec_add_dates_info(spec, "/home/cottrell/stats/work/nber.txt");
     }
 #endif

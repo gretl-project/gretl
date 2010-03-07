@@ -57,6 +57,7 @@ install_datafiles:
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data ; done
 	$(INSTALL_DATA) $(sharesrc)/data/descriptions $(DESTDIR)$(gretldir)/data 
 	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(DESTDIR)$(gretldir)/data 
+	$(INSTALL_DATA) $(sharesrc)/data/nber.txt $(DESTDIR)$(gretldir)/data
 	for f in $(sharesrc)/data/greene/* ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/greene ; done
 	for f in $(sharesrc)/data/misc/* ; do \
