@@ -20,6 +20,19 @@
 #include "libgretl.h"
 #include "plotspec.h"
 
+struct dates_info_ {
+    int n;
+    double **dx;
+};
+
+/* for handling "recession bars" and similar */
+static int n_cycles (double t1, double t2, dates_info *dinfo);
+static void print_cycles_header (int nc, FILE *fp);
+static void print_cycles (double t1, double t2,
+			  double ymin, double ymax,
+			  dates_info *dinfo,
+			  FILE *fp);
+
 GPT_SPEC *plotspec_new (void)
 {
     GPT_SPEC *spec;
@@ -74,6 +87,7 @@ GPT_SPEC *plotspec_new (void)
     spec->n_markers = 0;
     spec->labeled = NULL;
     spec->ptr = NULL;
+    spec->dinfo = NULL;
     spec->reglist = NULL;
     spec->nobs = 0;
     spec->okobs = 0;
@@ -86,6 +100,14 @@ GPT_SPEC *plotspec_new (void)
     spec->termtype = GP_TERM_NONE;
 
     return spec;
+}
+
+static void dates_info_free (dates_info *dinfo)
+{
+    if (dinfo != NULL) {
+	doubles_array_free(dinfo->dx, dinfo->n);
+	free(dinfo);
+    }
 }
 
 void plotspec_destroy (GPT_SPEC *spec)
@@ -122,11 +144,27 @@ void plotspec_destroy (GPT_SPEC *spec)
 	free(spec->labeled);
     }
 
+    if (spec->dinfo != NULL) {
+	dates_info_free(spec->dinfo);
+    }
+
     gretl_matrix_free(spec->b_ols);
     gretl_matrix_free(spec->b_quad);
     gretl_matrix_free(spec->b_inv);
 
     free(spec);
+}
+
+static void plotspec_get_xt1_xt2 (const GPT_SPEC *spec, 
+				  double *xt1,
+				  double *xt2)
+{
+    if (spec->data != NULL) {
+	double *x = spec->data;
+    
+	*xt1 = x[0];
+	*xt2 = x[spec->nobs - 1];
+    }
 }
 
 static gp_style_spec style_specs[] = {
@@ -783,10 +821,11 @@ static int print_point_type (GPT_LINE *line)
 
 int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 {
-    int i, k, t;
+    int i, k, t, nc = 0;
     int png = get_png_output(spec);
     int mono = (spec->flags & GPT_MONO);
     int started_data_lines = 0;
+    double xt1 = 0, xt2 = 0;
     double et, yt;
     double *x[5];
     int skipline = -1;
@@ -956,6 +995,14 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     gretl_push_c_numeric_locale();
 
+    if (spec->dinfo != NULL) {
+	plotspec_get_xt1_xt2(spec, &xt1, &xt2);
+	nc = n_cycles(xt1, xt2, spec->dinfo);
+	if (nc > 0) {
+	    print_cycles_header(nc, fp);
+	}
+    }
+
     for (i=0; i<spec->n_lines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 
@@ -1039,6 +1086,12 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     /* supply the data to gnuplot inline */
 
+    if (spec->dinfo != NULL && nc > 0) {
+	double ymin = 4.0, ymax = 22.0; /* FIXME ymin, ymax */
+
+	print_cycles(xt1, xt2, ymin, ymax, spec->dinfo, fp);
+    }
+
     for (i=0; i<spec->n_lines; i++) { 
 	int j, ncols = spec->lines[i].ncols;
 
@@ -1098,7 +1151,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 		    fputs("? ", fp);
 		    miss = 1;
 		} else {
-		    fprintf(fp, "%.10g ",  x[j][t]);
+		    fprintf(fp, "%.10g ", x[j][t]);
 		}
 	    }
 
@@ -1362,3 +1415,209 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 
     return err;
 }
+
+static dates_info *dates_info_new (int n)
+{
+    dates_info *dinfo = malloc(sizeof *dinfo);
+
+    if (dinfo != NULL) {
+	dinfo->dx = doubles_array_new(n, 2);
+	if (dinfo->dx == NULL) {
+	    free(dinfo);
+	    dinfo = NULL;
+	} else {
+	    dinfo->n = n;
+	}
+    }
+
+    return dinfo;
+}
+
+static dates_info *parse_dates_file (const char *fname, 
+				     int *err)
+{
+    FILE *fp;
+    dates_info *dinfo = NULL;
+    char line[128];
+    char d1[16], d2[16];
+    int gotcolon = 0;
+    int gotother = 0;
+    int n = 0;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	*err = E_FOPEN;
+	return NULL;
+    }
+
+    while (fgets(line, sizeof line, fp)) {
+	if (*line == '#') {
+	    continue;
+	}
+	if (sscanf(line, "%15s %15s", d1, d2) != 2) {
+	    break;
+	}
+	if (strchr(d1, ':') || strchr(d2, ':')) {
+	    gotcolon = 1;
+	}
+	if (strchr(d1, '/') || strchr(d2, '/') ||
+	    strchr(d1, '-') || strchr(d2, '-')) {
+	    gotother = 1;
+	}
+	n++;
+    }
+
+    if (n == 0 || !gotcolon || gotother) {
+	/* FIXME relax this */
+	*err = E_DATA;
+    } else if (n == 0 || (gotcolon && gotother)) {
+	fprintf(stderr, "malformed dates file\n");
+	*err = E_DATA;
+    } else {
+	fprintf(stderr, "parse_dates_file: got %d pairs\n", n);
+	dinfo = dates_info_new(n);
+	if (dinfo == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err == 0) {
+	double x0, x1;
+	int di[4], nf0, nf1;
+	int i = 0;
+
+	rewind(fp);
+
+	while (fgets(line, sizeof line, fp) && !*err) {
+	    if (*line == '#') {
+		continue;
+	    }
+	    if (sscanf(line, "%15s %15s", d1, d2) != 2) {
+		break;
+	    }
+	    if (gotcolon) {
+		nf0 = sscanf(d1, "%d:%d", &di[0], &di[1]);
+		nf1 = sscanf(d2, "%d:%d", &di[2], &di[3]);
+	    }
+	    if (nf0 != 2 || nf1 != 2) {
+		*err = E_DATA;
+	    } else {
+		x0 = di[0] + (di[1] - 1.0) / 12;
+		x1 = di[2] + (di[3] - 1.0) / 12;
+#if 0
+		fprintf(stderr, "%.4f %.4f\n", x0, x1);
+#endif
+		dinfo->dx[i][0] = x0;
+		dinfo->dx[i][1] = x1;
+		i++;
+	    }
+	}
+    }
+
+    fclose(fp);
+
+    return dinfo;
+}
+
+static void print_cycles (double t1, double t2,
+			  double ymin, double ymax,
+			  dates_info *dinfo,
+			  FILE *fp)
+{
+    double **ptdates = dinfo->dx;
+    int i, started, stopped;
+
+    for (i=0; i<dinfo->n; i++) {
+	if (ptdates[i][1] < t1) {
+	    continue;
+	}
+	if (ptdates[i][0] > t2) {
+	    break;
+	}
+	started = stopped = 0;
+	if (ptdates[i][0] >= t1) {
+	    /* peak is in range */
+	    fprintf(fp, "%.3f %g %g\n", ptdates[i][0],
+		    ymin, ymax);
+	    started = 1;
+	}
+	if (ptdates[i][1] <= t2) {
+	    /* trough is in range */
+	    if (!started) {
+		/* but the peak was not */
+		fprintf(fp, "%.3f %g %g\n", t1, ymin, ymax);
+	    }
+	    fprintf(fp, "%.3f %g %g\n", ptdates[i][1],
+		    ymin, ymax);
+	    fputs("e\n", fp);
+	    stopped = 1;
+	}
+	if (started && !stopped) {
+	    /* truncated */
+	    fprintf(fp, "%.3f %g %g\n", t2, ymin, ymax);
+	    fputs("e\n", fp);
+	}
+    }
+}
+
+static void print_cycles_header (int nc, FILE *fp)
+{
+    int i;
+
+    for (i=0; i<nc; i++) {
+	fputs("'-' using 1:2:3 notitle lt 6 w filledcurve , \\\n", fp);
+    }
+}
+
+static int n_cycles (double t1, double t2, dates_info *dinfo)
+{
+    double **ptdates = dinfo->dx;
+    int i, nr = 0;
+
+    for (i=0; i<dinfo->n; i++) {
+	if (ptdates[i][1] < t1) {
+	    continue;
+	} else if (ptdates[i][0] > t2) {
+	    break;
+	} else if (ptdates[i][0] >= t1 || ptdates[i][1] <= t2) {
+	    nr++;
+	}
+    }    
+
+    return nr;
+}
+
+int plotspec_add_dates_info (GPT_SPEC *spec, const char *fname)
+{
+    dates_info *dinfo = NULL;
+    int err = 0;
+
+    dinfo = parse_dates_file(fname, &err);
+
+    if (!err) {
+	double t1 = 0, t2 = 0;
+	int nc;
+
+	plotspec_get_xt1_xt2(spec, &t1, &t2);
+	nc = n_cycles(t1, t2, dinfo);
+
+	fprintf(stderr, "cycles: t1=%g, t2=%g, nc=%d\n",
+		t1, t2, nc);
+
+	if (nc > 0) {
+	    spec->dinfo = dinfo;
+	    fprintf(stderr, "spec->dinfo = %p\n", (void *) spec->dinfo);
+	} else {
+	    dates_info_free(dinfo);
+	}
+    }
+
+    return err;
+}
+
+void plotspec_remove_dates_info (GPT_SPEC *spec)
+{
+    dates_info_free(spec->dinfo);
+    spec->dinfo = NULL;
+}
+

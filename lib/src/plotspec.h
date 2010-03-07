@@ -62,6 +62,8 @@ struct gp_style_spec_ {
     const char *str;
 };
 
+typedef struct dates_info_ dates_info;
+
 typedef enum {
     GP_LINE_USER    = 1 << 0,
     GP_LINE_BOXDATA = 1 << 1
@@ -140,6 +142,7 @@ typedef struct {
     gretl_matrix *b_inv;       /* coeffs for inverse fit */
     char *labeled;             /* for GUI use */
     void *ptr;                 /* for GUI use */
+    dates_info *dinfo;         /* for GUI use */
 } GPT_SPEC;
 
 GPT_SPEC *plotspec_new (void);
@@ -187,5 +190,9 @@ void print_keypos_string (int t, FILE *fp);
 void set_plotfit_line (char *title, char *formula,
 		       FitType f, const double *b, 
 		       double x0, double pd);
+
+int plotspec_add_dates_info (GPT_SPEC *spec, const char *fname);
+
+void plotspec_remove_dates_info (GPT_SPEC *spec);
 
 #endif /* PLOTSPEC_H */
