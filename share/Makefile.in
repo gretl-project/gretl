@@ -57,7 +57,7 @@ install_datafiles:
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data ; done
 	$(INSTALL_DATA) $(sharesrc)/data/descriptions $(DESTDIR)$(gretldir)/data 
 	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(DESTDIR)$(gretldir)/data 
-	$(INSTALL_DATA) $(sharesrc)/data/nber.txt $(DESTDIR)$(gretldir)/data
+	$(INSTALL_DATA) $(sharesrc)/data/plotbars/nber.txt $(DESTDIR)$(gretldir)/data/plotbars
 	for f in $(sharesrc)/data/greene/* ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/greene ; done
 	for f in $(sharesrc)/data/misc/* ; do \
@@ -103,6 +103,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/greene
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/misc
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/nist
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/plotbars
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db

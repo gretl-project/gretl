@@ -50,11 +50,11 @@ double plot_get_xmin (png_plot *plot);
 
 double plot_get_ymin (png_plot *plot);
 
-void plot_get_coordinates (png_plot *plot,
-			   double *xmin,
-			   double *xmax,
-			   double *ymin,
-			   double *ymax);
+int plot_get_coordinates (png_plot *plot,
+			  double *xmin,
+			  double *xmax,
+			  double *ymin,
+			  double *ymax);
 
 GPT_SPEC *plot_get_spec (png_plot *plot);
 

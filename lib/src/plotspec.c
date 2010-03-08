@@ -20,19 +20,19 @@
 #include "libgretl.h"
 #include "plotspec.h"
 
-struct dates_info_ {
-    int n;
-    double t1;
-    double t2;
-    double ymin;
-    double ymax;
-    double **dx;
+struct plotbars_ {
+    int n;         /* number of available start-stop "bar" pairs */
+    double t1;     /* current min. value on time axis */   
+    double t2;     /* current max. value on time axis */  
+    double ymin;   /* current min. value on y axis */  
+    double ymax;   /* current max. value on y axis */  
+    double **dx;   /* start-stop time pairs */
 };
 
-/* for handling "recession bars" and similar */
-static int n_cycles (double t1, double t2, dates_info *dinfo);
-static void print_cycles_header (int nc, FILE *fp);
-static void print_cycles (dates_info *dinfo, FILE *fp);
+/* for handling "recession bars" or similar */
+static int n_bars_shown (double xmin, double xmax, plotbars *bars);
+static void print_bars_header (int n, FILE *fp);
+static void print_plotbars (plotbars *bars, FILE *fp);
 
 GPT_SPEC *plotspec_new (void)
 {
@@ -88,7 +88,7 @@ GPT_SPEC *plotspec_new (void)
     spec->n_markers = 0;
     spec->labeled = NULL;
     spec->ptr = NULL;
-    spec->dinfo = NULL;
+    spec->bars = NULL;
     spec->reglist = NULL;
     spec->nobs = 0;
     spec->okobs = 0;
@@ -104,11 +104,11 @@ GPT_SPEC *plotspec_new (void)
     return spec;
 }
 
-static void dates_info_free (dates_info *dinfo)
+static void plotbars_free (plotbars *bars)
 {
-    if (dinfo != NULL) {
-	doubles_array_free(dinfo->dx, dinfo->n);
-	free(dinfo);
+    if (bars != NULL) {
+	doubles_array_free(bars->dx, bars->n);
+	free(bars);
     }
 }
 
@@ -146,8 +146,8 @@ void plotspec_destroy (GPT_SPEC *spec)
 	free(spec->labeled);
     }
 
-    if (spec->dinfo != NULL) {
-	dates_info_free(spec->dinfo);
+    if (spec->bars != NULL) {
+	plotbars_free(spec->bars);
     }
 
     gretl_matrix_free(spec->b_ols);
@@ -965,9 +965,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	print_auto_fit_string(spec->fit, fp);
     }
 
-    if (spec->dinfo != NULL) {
+    if (spec->bars != NULL) {
 	plotspec_get_xt1_xt2(spec, &xt1, &xt2);
-	spec->nbars = n_cycles(xt1, xt2, spec->dinfo);
+	spec->nbars = n_bars_shown(xt1, xt2, spec->bars);
 	if (spec->nbars > 0) {
 	    fprintf(fp, "# n_bars = %d\n", spec->nbars);
 	}
@@ -1010,7 +1010,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     gretl_push_c_numeric_locale();
 
     if (spec->nbars > 0) {
-	print_cycles_header(spec->nbars, fp);
+	print_bars_header(spec->nbars, fp);
     }
 
     for (i=0; i<spec->n_lines; i++) {
@@ -1098,8 +1098,8 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     /* supply the data to gnuplot inline */
 
-    if (spec->dinfo != NULL && spec->nbars > 0) {
-	print_cycles(spec->dinfo, fp);
+    if (spec->bars != NULL && spec->nbars > 0) {
+	print_plotbars(spec->bars, fp);
     }
 
     for (i=0; i<spec->n_lines; i++) { 
@@ -1426,30 +1426,45 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     return err;
 }
 
-static dates_info *dates_info_new (int n)
+static plotbars *plotbars_new (int n)
 {
-    dates_info *dinfo = malloc(sizeof *dinfo);
+    plotbars *bars = malloc(sizeof *bars);
 
-    if (dinfo != NULL) {
-	dinfo->dx = doubles_array_new(n, 2);
-	if (dinfo->dx == NULL) {
-	    free(dinfo);
-	    dinfo = NULL;
+    if (bars != NULL) {
+	bars->dx = doubles_array_new(n, 2);
+	if (bars->dx == NULL) {
+	    free(bars);
+	    bars = NULL;
 	} else {
-	    dinfo->n = n;
-	    dinfo->t1 = dinfo->t2 = 0;
-	    dinfo->ymin = dinfo->ymax = 0;
+	    bars->n = n;
+	    bars->t1 = bars->t2 = 0;
+	    bars->ymin = bars->ymax = 0;
 	}
     }
 
-    return dinfo;
+    return bars;
 }
 
-static dates_info *parse_dates_file (const char *fname, 
-				     int *err)
+/* Read and check a plain text "plotbars" file.  Such a file may
+   contain comment lines starting with '#'; other than comments, each
+   line should contain a pair of space-separated date strings in gretl
+   monthly date format (YYYY:MM).  These strings represent,
+   respectively, the start and end of an episode of some kind
+   (paradigm case: peak and trough of business cycle).  Each pair may
+   be used to draw a vertical bar on a time-series plot. The file can
+   contain any number of such pairs.  An example is provided in
+   <prefix>/share/data/plotbars/nber.txt.
+
+   The dates are converted internally into the format, year plus
+   decimal fraction of year, and are usable when plotting
+   annual, quarterly or monthly time series.
+*/
+
+static plotbars *parse_bars_file (const char *fname, 
+				  int *err)
 {
     FILE *fp;
-    dates_info *dinfo = NULL;
+    plotbars *bars = NULL;
     char line[128];
     char d1[16], d2[16];
     int gotcolon = 0;
@@ -1461,6 +1476,8 @@ static dates_info *parse_dates_file (const char *fname,
 	*err = E_FOPEN;
 	return NULL;
     }
+
+    /* first count the data lines */
 
     while (fgets(line, sizeof line, fp)) {
 	if (*line == '#') {
@@ -1479,16 +1496,18 @@ static dates_info *parse_dates_file (const char *fname,
 	n++;
     }
 
+    /* initial check and allocation */
+
     if (n == 0 || !gotcolon || gotother) {
-	/* FIXME relax this */
+	/* FIXME relax this? */
 	*err = E_DATA;
     } else if (n == 0 || (gotcolon && gotother)) {
 	fprintf(stderr, "malformed dates file\n");
 	*err = E_DATA;
     } else {
 	fprintf(stderr, "parse_dates_file: got %d pairs\n", n);
-	dinfo = dates_info_new(n);
-	if (dinfo == NULL) {
+	bars = plotbars_new(n);
+	if (bars == NULL) {
 	    *err = E_ALLOC;
 	}
     }
@@ -1499,6 +1518,8 @@ static dates_info *parse_dates_file (const char *fname,
 	int i = 0;
 
 	rewind(fp);
+
+	/* now read, check, convert and record the date pairs */
 
 	while (fgets(line, sizeof line, fp) && !*err) {
 	    if (*line == '#') {
@@ -1523,8 +1544,8 @@ static dates_info *parse_dates_file (const char *fname,
 		if (x1 < x0) {
 		    *err = E_DATA;
 		} else {
-		    dinfo->dx[i][0] = x0;
-		    dinfo->dx[i][1] = x1;
+		    bars->dx[i][0] = x0;
+		    bars->dx[i][1] = x1;
 		    i++;
 		}
 	    }
@@ -1533,161 +1554,191 @@ static dates_info *parse_dates_file (const char *fname,
 
     fclose(fp);
 
-    if (*err && dinfo != NULL) {
-	dates_info_free(dinfo);
-	dinfo = NULL;
+    if (*err && bars != NULL) {
+	plotbars_free(bars);
+	bars = NULL;
     }
 
-    return dinfo;
+    return bars;
 }
 
-static void print_cycles (dates_info *dinfo, FILE *fp)
+/* output data representing vertical shaded bars: each
+   bar is represented by a pair of rows */
+
+static void print_plotbars (plotbars *bars, FILE *fp)
 {
-    double **ptdates = dinfo->dx;
+    double **dx = bars->dx;
     int i, started, stopped;
 
-    for (i=0; i<dinfo->n; i++) {
-	if (ptdates[i][1] < dinfo->t1) {
+    for (i=0; i<bars->n; i++) {
+	if (dx[i][1] < bars->t1) {
 	    continue;
 	}
-	if (ptdates[i][0] > dinfo->t2) {
+	if (dx[i][0] > bars->t2) {
 	    break;
 	}
 	started = stopped = 0;
-	if (ptdates[i][0] >= dinfo->t1) {
-	    /* peak is in range */
-	    fprintf(fp, "%.3f %g %g\n", ptdates[i][0],
-		    dinfo->ymin, dinfo->ymax);
+	if (dx[i][0] >= bars->t1) {
+	    /* start is in range */
+	    fprintf(fp, "%.3f %g %g\n", dx[i][0],
+		    bars->ymin, bars->ymax);
 	    started = 1;
 	}
-	if (ptdates[i][1] <= dinfo->t2) {
-	    /* trough is in range */
+	if (dx[i][1] <= bars->t2) {
+	    /* stop is in range */
 	    if (!started) {
-		/* but the peak was not */
-		fprintf(fp, "%.3f %g %g\n", dinfo->t1, 
-			dinfo->ymin, dinfo->ymax);
+		/* but the start was not */
+		fprintf(fp, "%.3f %g %g\n", bars->t1, 
+			bars->ymin, bars->ymax);
 	    }
-	    fprintf(fp, "%.3f %g %g\n", ptdates[i][1],
-		    dinfo->ymin, dinfo->ymax);
+	    fprintf(fp, "%.3f %g %g\n", dx[i][1],
+		    bars->ymin, bars->ymax);
 	    fputs("e\n", fp);
 	    stopped = 1;
 	}
 	if (started && !stopped) {
 	    /* truncated */
-	    fprintf(fp, "%.3f %g %g\n", dinfo->t2, 
-		    dinfo->ymin, dinfo->ymax);
+	    fprintf(fp, "%.3f %g %g\n", bars->t2, 
+		    bars->ymin, bars->ymax);
 	    fputs("e\n", fp);
 	}
     }
 }
 
-static void print_cycles_header (int nc, FILE *fp)
+/* output special plot lines for creating vertical shaded bars
+   in a time-series graph: the corresponding data will take
+   the form x:ymin:ymax */
+
+static void print_bars_header (int n, FILE *fp)
 {
     int i;
 
-    for (i=0; i<nc; i++) {
+    for (i=0; i<n; i++) {
 	fputs("'-' using 1:2:3 notitle lt 10 w filledcurve , \\\n", fp);
     }
 }
 
-static int n_cycles (double t1, double t2, dates_info *dinfo)
-{
-    double **ptdates = dinfo->dx;
-    int i, nc = 0;
+/* given the info in @bars, calculate how many of its start-stop
+   pairs fall (at least partially) within the current x-axis
+   range */
 
-    for (i=0; i<dinfo->n; i++) {
-	if (ptdates[i][1] < t1) {
+static int n_bars_shown (double xmin, double xmax, plotbars *bars)
+{
+    double **dx = bars->dx;
+    int i, n = 0;
+
+    for (i=0; i<bars->n; i++) {
+	if (dx[i][1] < xmin) {
 	    continue;
-	} else if (ptdates[i][0] > t2) {
+	} else if (dx[i][0] > xmax) {
 	    break;
-	} else if (ptdates[i][0] >= t1 || ptdates[i][1] <= t2) {
-	    nc++;
+	} else if (dx[i][0] >= xmin || dx[i][1] <= xmax) {
+	    n++;
 	}
     } 
 
-    dinfo->t1 = t1;
-    dinfo->t2 = t2;
+    bars->t1 = xmin;
+    bars->t2 = xmax;
 
-    return nc;
+    return n;
 }
 
-int plotspec_add_dates_info (GPT_SPEC *spec, 
-			     double xmin, double xmax,
-			     double ymin, double ymax,
-			     const char *fname)
+/* Given the limits of the data area of a plot, @xmin et al,
+   and the name of a plain text file containing "bars"
+   information in the form of a set of start-stop pairs,
+   try attaching this information to @spec. We fail if
+   there's something wrong with the info in the file, or
+   if none of the bars defined therein would be visible
+   in the current range, @xmin to @xmax.
+*/
+
+int plotspec_add_bars_info (GPT_SPEC *spec, 
+			    double xmin, double xmax,
+			    double ymin, double ymax,
+			    const char *fname)
 {
-    dates_info *dinfo = NULL;
+    plotbars *bars = NULL;
     int err = 0;
 
-    if (spec->dinfo != NULL) {
-	/* clear out stale info */
-	dates_info_free(dinfo);
-	spec->dinfo = NULL;
+    if (spec->bars != NULL) {
+	/* clear out any stale info */
+	plotbars_free(bars);
+	spec->bars = NULL;
 	spec->nbars = 0;
     }
 
-    dinfo = parse_dates_file(fname, &err);
+    bars = parse_bars_file(fname, &err);
 
     if (!err) {
-	int nc;
+	int n = n_bars_shown(xmin, xmax, bars);
 
-	nc = n_cycles(xmin, xmax, dinfo);
+#if 0
+	fprintf(stderr, "bars: xmin=%g, xmax=%g, n_shown=%d\n",
+		xmin, xmax, n);
+#endif
 
-	fprintf(stderr, "cycles: t1=%g, t2=%g, nc=%d\n",
-		xmin, xmax, nc);
-
-	if (nc > 0) {
-	    spec->dinfo = dinfo;
-	    dinfo->ymin = ymin;
-	    dinfo->ymax = ymax;
-	    spec->nbars = nc;
+	if (n > 0) {
+	    spec->bars = bars;
+	    bars->ymin = ymin;
+	    bars->ymax = ymax;
+	    spec->nbars = n;
 	} else {
-	    dates_info_free(dinfo);
+	    plotbars_free(bars);
 	}
     }
 
     return err;
 }
 
-int plotspec_allocate_dates_info (GPT_SPEC *spec)
+/* the following is a public interface because it's also
+   used when reconstituting @spec from a gnuplot command
+   file.
+*/
+
+int plotspec_allocate_bars (GPT_SPEC *spec)
 { 
     int err = 0;
 
-    spec->dinfo = dates_info_new(spec->nbars);
-    if (spec->dinfo == NULL) {
+    spec->bars = plotbars_new(spec->nbars);
+    if (spec->bars == NULL) {
 	err = E_ALLOC;
     }  
 
     return err;
 }
 
+/* for use when reconstituting @spec from a gnuplot
+   command file: set the start/stop values for a
+   particular bar @i.
+*/
+
 int plotspec_set_bar_info (GPT_SPEC *spec, int i,
 			   double t1, double t2)
 { 
-    if (i < spec->dinfo->n) {
-	spec->dinfo->dx[i][0] = t1;
-	spec->dinfo->dx[i][1] = t2; 
+    if (i < spec->bars->n) {
+	spec->bars->dx[i][0] = t1;
+	spec->bars->dx[i][1] = t2; 
 	return 0;
     } else {
 	return E_DATA;
     }
 }
 
-void plotspec_bars_set_coords (GPT_SPEC *spec, 
+void plotspec_set_bars_limits (GPT_SPEC *spec, 
 			       double t1, double t2,
 			       double ymin, double ymax)
 {
-    if (spec->dinfo != NULL) {
-	spec->dinfo->t1 = t1;
-	spec->dinfo->t2 = t2;
-	spec->dinfo->ymin = ymin;
-	spec->dinfo->ymax = ymax;
+    if (spec->bars != NULL) {
+	spec->bars->t1 = t1;
+	spec->bars->t2 = t2;
+	spec->bars->ymin = ymin;
+	spec->bars->ymax = ymax;
     }
 }
 
-void plotspec_remove_dates_info (GPT_SPEC *spec)
+void plotspec_remove_bars (GPT_SPEC *spec)
 {
-    dates_info_free(spec->dinfo);
-    spec->dinfo = NULL;
+    plotbars_free(spec->bars);
+    spec->bars = NULL;
     spec->nbars = 0;
 }

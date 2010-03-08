@@ -221,13 +221,25 @@ double plot_get_ymin (png_plot *plot)
     return (plot != NULL)? plot->ymin : -1;
 }
 
-void plot_get_coordinates (png_plot *plot,
-			   double *xmin,
-			   double *xmax,
-			   double *ymin,
-			   double *ymax)
+/* Provide the data coordinates for a gretl/gnuplot
+   graph, if they are all positive, otherwise return 
+   non-zero.
+*/
+
+int plot_get_coordinates (png_plot *plot,
+			  double *xmin,
+			  double *xmax,
+			  double *ymin,
+			  double *ymax)
 {
-    if (plot != NULL) {
+    int err = E_DATA;
+
+    if (plot == NULL) {
+	return err;
+    }
+
+    if (plot->xmin > 0 && plot->xmax > 0 &&
+	plot->ymin > 0 && plot->ymax > 0) {
 	if (xmin != NULL) {
 	    *xmin = plot->xmin;
 	}
@@ -240,7 +252,10 @@ void plot_get_coordinates (png_plot *plot,
 	if (ymax != NULL) {
 	    *ymax = plot->ymax;
 	}
+	err = 0;
     }
+
+    return err;
 }
 
 void set_plot_has_y2_axis (png_plot *plot, gboolean s)
@@ -1338,6 +1353,8 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 
     gretl_push_c_numeric_locale();
 
+    /* first handle "shaded bars" info, if present */
+
     for (i=0; i<spec->nbars && !err; i++) {
 	double y1, y2, dx[2];
 
@@ -1363,6 +1380,8 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 	    err = 1;
 	}
     }
+
+    /* then get the regular plot data */
 
     for (i=0; i<spec->n_lines && !err; i++) {
 	int ncols = spec->lines[i].ncols;
@@ -1780,8 +1799,9 @@ static int plotspec_allocate_markers (GPT_SPEC *spec)
 }
 
 /* Determine the number of data points in a plot.  While we're at it,
-   determine the type of plot, and check whether there are any
-   data-point markers along with the data.
+   determine the type of plot, check whether there are any
+   data-point markers along with the data, and see if there are
+   are definitions of time-series vertical bars.
 */
 
 static int get_plot_nobs (const char *buf, PlotType *ptype, 
@@ -2098,7 +2118,7 @@ plot_get_data_and_markers (GPT_SPEC *spec, const char *buf,
 
     /* and time-series bars, if any */
     if (!err && spec->nbars > 0) {
-	err = plotspec_allocate_dates_info(spec);
+	err = plotspec_allocate_bars(spec);
     }
 
     /* read the data (and perhaps markers) from the plot file */
@@ -4225,7 +4245,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	    if (range_err) {
 		plot->spec->nbars = 0;
 	    } else {
-		plotspec_bars_set_coords(plot->spec, 
+		plotspec_set_bars_limits(plot->spec, 
 					 plot->xmin, plot->xmax,
 					 plot->ymin, plot->ymax);
 	    }

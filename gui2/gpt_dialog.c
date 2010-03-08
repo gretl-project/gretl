@@ -740,6 +740,31 @@ static void set_graph_font_from_widgets (plot_editor *ed)
     g_free(tmp);
 }
 
+/* FIXME make the "cycles" or "bars" file selectable */
+
+static void try_adding_plotbars (GPT_SPEC *spec)
+{
+    png_plot *plot = (png_plot *) spec->ptr;
+    double xmin = -1, xmax = -1;
+    double ymin = -1, ymax = -1;
+    gchar *fname;
+    int err;
+
+    err = plot_get_coordinates(plot, &xmin, &xmax, &ymin, &ymax);
+
+    if (!err) {
+	fname = g_strdup_printf("%sdata%cplotbars%cnber.txt",
+				gretl_home(), SLASH, SLASH); 
+	err = plotspec_add_bars_info(spec, xmin, xmax,
+				     ymin, ymax, fname);
+	g_free(fname);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    }
+}
+
 /* Respond to "OK" or "Apply", or to hitting the Enter key in
    some parts of the plot editor dialog */
 
@@ -896,26 +921,9 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     if (!err && ed->bars_check != NULL) {
 	if (button_is_active(ed->bars_check)) {
-	    png_plot *plot = (png_plot *) spec->ptr;
-	    double xmin = -1, xmax = -1;
-	    double ymin = -1, ymax = -1;
-	    gchar *fname;
-
-	    plot_get_coordinates(plot, &xmin, &xmax, 
-			     &ymin, &ymax);
-
-	    /* FIXME make the "cycles" or "bars" file
-	       selectable */
-
-	    if (xmin > 0 && xmax > 0 && ymin > 0 && ymax > 0) {
-		fname = g_strdup_printf("%sdata%cnber.txt",
-				    gretl_home(), SLASH); 
-		plotspec_add_dates_info(spec, xmin, xmax,
-					ymin, ymax, fname);
-		g_free(fname);
-	    }
+	    try_adding_plotbars(spec);
 	} else {
-	    plotspec_remove_dates_info(spec);
+	    plotspec_remove_bars(spec);
 	}
     }
 
