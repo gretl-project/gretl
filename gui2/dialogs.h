@@ -133,7 +133,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     int dyn, gretlopt *optp,
 		     double *conf, MODEL *pmod);
 
-void dialog_add_confidence_selector (GtkWidget *dlg, double *conf);
+void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
+				     gretlopt *gopt);
 
 int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,

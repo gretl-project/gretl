@@ -220,13 +220,15 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
 				 double alpha,
 				 const double **Z,
-				 const DATAINFO *pdinfo);
+				 const DATAINFO *pdinfo,
+				 gretlopt opt);
 
 int 
 gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 			     double alpha,
 			     const double **Z,
-			     const DATAINFO *pdinfo);
+			     const DATAINFO *pdinfo,
+			     gretlopt opt);
 
 int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo);
 

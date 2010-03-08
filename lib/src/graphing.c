@@ -4388,10 +4388,12 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
 				 double alpha,
 				 const double **Z,
-				 const DATAINFO *pdinfo)
+				 const DATAINFO *pdinfo,
+				 gretlopt opt)
 {
     FILE *fp = NULL;
     int confint = 0;
+    int use_fill = !(opt & OPT_E);
     int vtarg, vshock;
     gretl_matrix *resp;
     char title[128];
@@ -4424,6 +4426,10 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	fputs("# impulse response plot\n", fp);
     }
 
+    if (use_fill) {
+	fputs("set style line 10 lc rgb \"#dddddd\"\n", fp);
+    }
+
     if (confint) {
 	fputs("set key left top\n", fp);
 	sprintf(title, _("response of %s to a shock in %s, "
@@ -4443,22 +4449,38 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	double ql = alpha / 2;
 	double qh = 1.0 - ql;
 
-	fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines, \\\n", 
+	fputs("plot \\\n", fp);
+	if (use_fill) {
+	    sprintf(title, _("%g percent confidence band"), 100 * (1 - alpha));
+	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 10, \\\n", title);
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1\n", _("point estimate"));
+	} else {
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n", 
 		_("point estimate"));
-	sprintf(title, _("%g and %g quantiles"), ql, qh);
-	fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n", title);
+	    sprintf(title, _("%g and %g quantiles"), ql, qh);
+	    fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n", title);
+	}
     } else {
 	fputs("plot \\\n'-' using 1:2 w lines\n", fp);
     }
 
     gretl_push_c_numeric_locale();
 
+    if (confint && use_fill) {
+	for (t=0; t<periods; t++) {
+	    fprintf(fp, "%d %.10g %.10g\n", t+1, 
+		    gretl_matrix_get(resp, t, 1),
+		    gretl_matrix_get(resp, t, 2));
+	}
+	fputs("e\n", fp);
+    }
+
     for (t=0; t<periods; t++) {
 	fprintf(fp, "%d %.10g\n", t+1, gretl_matrix_get(resp, t, 0));
     }
     fputs("e\n", fp);
 
-    if (confint) {
+    if (confint && !use_fill) {
 	for (t=0; t<periods; t++) {
 	    fprintf(fp, "%d %.10g %.10g %.10g\n", t+1, 
 		    gretl_matrix_get(resp, t, 0),
@@ -4480,10 +4502,12 @@ int
 gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 			     double alpha,
 			     const double **Z,
-			     const DATAINFO *pdinfo)
+			     const DATAINFO *pdinfo,
+			     gretlopt opt)
 {
     FILE *fp = NULL;
     int confint = 0;
+    int use_fill = !(opt & OPT_E);
     int vtarg, vshock;
     gretl_matrix *resp;
     char title[128];
@@ -4520,6 +4544,10 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     fprintf(fp, "set xlabel '%s'\n", _("periods"));
     fputs("set xzeroaxis\n", fp);
 
+    if (use_fill) {
+	fputs("set style line 10 lc rgb \"#dddddd\"\n", fp);
+    }
+
     gretl_push_c_numeric_locale();
 
     fprintf(fp, "set size %g,%g\n", plot_fraction, plot_fraction);
@@ -4541,19 +4569,33 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	    sprintf(title, "%s -> %s", pdinfo->varname[vshock], pdinfo->varname[vtarg]);
 	    fprintf(fp, "set title '%s'\n", title);
 
-	    if (confint) {
-		fputs("plot \\\n'-' using 1:2 notitle w lines, \\\n", fp); 
+	    fputs("plot \\\n", fp);
+
+	    if (confint && use_fill) {
+		fputs("'-' using 1:2:3 notitle w filledcurve lt 10, \\\n", fp);
+		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
+	    } else if (confint) {
+		fputs("'-' using 1:2 notitle w lines, \\\n", fp); 
 		fputs("'-' using 1:2:3:4 notitle w errorbars\n", fp);
 	    } else {
-		fputs("plot \\\n'-' using 1:2 w lines\n", fp);
+		fputs("'-' using 1:2 notitle w lines\n", fp);
 	    }
+
+	    if (confint && use_fill) {
+		for (t=0; t<periods; t++) {
+		    fprintf(fp, "%d %.10g %.10g\n", t+1, 
+			    gretl_matrix_get(resp, t, 1),
+			    gretl_matrix_get(resp, t, 2));
+		}
+		fputs("e\n", fp);
+	    }		
 
 	    for (t=0; t<periods; t++) {
 		fprintf(fp, "%d %.10g\n", t+1, gretl_matrix_get(resp, t, 0));
 	    }
 	    fputs("e\n", fp);
 
-	    if (confint) {
+	    if (confint && !use_fill) {
 		for (t=0; t<periods; t++) {
 		    fprintf(fp, "%d %.10g %.10g %.10g\n", t+1, 
 			    gretl_matrix_get(resp, t, 0),

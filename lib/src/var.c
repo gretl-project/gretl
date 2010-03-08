@@ -2997,8 +2997,8 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 		      const double **Z, const DATAINFO *pdinfo)
 {
     int targ = -1, shock = 1;
-    int h = 0, boot = 0;
-    double alpha = 0.05; /* FIXME */
+    int h = 20, boot = 0;
+    double alpha = 0.10;
     int err = 0;
     char *s;
 
@@ -3015,27 +3015,33 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
     s = strstr(line, "--horizon=");
     if (s != NULL) {
 	h = atoi(s + 10);
-    } else {
-	h = 20;
-    }
+    } 
+
+    s = strstr(line, "--alpha=");
+    if (s != NULL) {
+	alpha = dot_atof(s + 8);
+    } 
 
     if (strstr(line, "--bootstrap") != NULL) {
 	boot = 1;
     }
 
 #if 0
-    fprintf(stderr, "targ=%d, shock=%d, h=%d, boot=%d\n", 
-	    targ, shock, h, boot);
+    fprintf(stderr, "targ=%d, shock=%d, h=%d, alpha=%g, boot=%d\n", 
+	    targ, shock, h, alpha, boot);
 #endif
-
-    if (targ >= 0 && shock >= 0 && h > 0) {
-        if (boot) {
-	    err = gretl_VAR_plot_impulse_response(var, targ, shock, h,
-						  alpha, Z, pdinfo);
-	} else {
-	    err = gretl_VAR_plot_impulse_response(var, targ, shock, h, 
-						  0, NULL, pdinfo);
-	}
+    
+    if (targ < 0 || shock < 0 || h <= 0 || 
+	alpha < .01 || alpha > 0.5) {
+	err = E_INVARG;
+    } else if (boot) {
+	err = gretl_VAR_plot_impulse_response(var, targ, shock, h,
+					      alpha, Z, pdinfo,
+					      OPT_NONE);
+    } else {
+	err = gretl_VAR_plot_impulse_response(var, targ, shock, h, 
+					      0, NULL, pdinfo,
+					      OPT_NONE);
     }
 
     return err;

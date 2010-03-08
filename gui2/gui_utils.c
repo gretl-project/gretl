@@ -2975,7 +2975,7 @@ static void add_x12_output_menu_item (windata_t *vwin)
 
 static int 
 impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
-			double *alpha)
+			double *alpha, gretlopt *gopt)
 {
     gchar *title;
     int h = default_VAR_horizon(datainfo);
@@ -2994,10 +2994,8 @@ impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
     dlg = build_checks_dialog(title, NULL,
-			      impulse_opts, 
-			      1, 
-			      active,
-			      0, NULL,
+			      impulse_opts, 1, active, /* check */
+			      0, NULL, /* no radios */
 			      &h, _("forecast horizon (periods):"),
 			      2, datainfo->n / 2, IRF_BOOT,
 			      &resp);
@@ -3008,7 +3006,7 @@ impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
 	return -1;
     }
 
-    dialog_add_confidence_selector(dlg, &conf);
+    dialog_add_confidence_selector(dlg, &conf, gopt);
     gtk_widget_show_all(dlg);
 
     if (resp < 0) {
@@ -3039,12 +3037,16 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     int horizon, bootstrap;
     gint shock, targ;
     static double alpha = 0.10;
+    static gretlopt gopt = OPT_NONE;
     const double **vZ = NULL;
-    int err;
+    int resp, err;
 
     impulse_params_from_action(action, &targ, &shock);
 
-    if (impulse_response_setup(var, &horizon, &bootstrap, &alpha) < 0) {
+    resp = impulse_response_setup(var, &horizon, &bootstrap, &alpha, &gopt);
+
+    if (resp < 0) {
+	/* canceled */
 	return;
     }
 
@@ -3053,7 +3055,8 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     }
 
     err = gretl_VAR_plot_impulse_response(var, targ, shock, horizon,
-					  alpha, vZ, datainfo);
+					  alpha, vZ, datainfo,
+					  gopt);
 
     if (err) {
 	gui_errmsg(err);
@@ -3066,12 +3069,16 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-    int horizon, bootstrap;
-    double alpha = 0.05;
     const double **vZ = NULL;
-    int err;
+    int horizon, bootstrap;
+    static double alpha = 0.10;
+    static gretlopt gopt = OPT_NONE;
+    int resp, err;
 
-    if (impulse_response_setup(var, &horizon, &bootstrap, &alpha) < 0) {
+    resp = impulse_response_setup(var, &horizon, &bootstrap, &alpha, &gopt);
+
+    if (resp < 0) {
+	/* canceled */
 	return;
     }
 
@@ -3079,7 +3086,8 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 	vZ = (const double **) Z;
     }    
 
-    err = gretl_VAR_plot_multiple_irf(var, horizon, alpha, vZ, datainfo);
+    err = gretl_VAR_plot_multiple_irf(var, horizon, alpha, vZ, datainfo,
+				      gopt);
 
     if (err) {
 	gui_errmsg(err);

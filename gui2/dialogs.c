@@ -2230,13 +2230,51 @@ static void toggle_activate_fitvals (GtkAdjustment *adj, GtkWidget *w)
     gtk_widget_set_sensitive(w, gtk_adjustment_get_value(adj) > 0);
 }
 
-void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
+static void toggle_graph_opt (GtkToggleButton *b, gretlopt *gopt)
 {
-    GtkWidget *spin, *vbox, *hbox, *lbl, *cb;
+    if (button_is_active(b)) {
+	*gopt |= OPT_E; /* error bars */
+    } else {
+	*gopt &= ~OPT_E;
+    }
+}
+
+void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
+				     gretlopt *gopt)
+{
+    GtkWidget *spin, *lbl, *cb;
+    GtkWidget *vbox, *hbox;
+    GtkWidget *hbox1 = NULL, *hbox2 = NULL;
     GtkObject *adj;
 
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    if (gopt != NULL) {
+	GSList *group;
+	GtkWidget *r1, *r2;
+
+	r1 = gtk_radio_button_new_with_label(NULL, _("error bars"));
+	hbox1 = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox1), r1, FALSE, FALSE, 5);
+	gtk_box_pack_end(GTK_BOX(vbox), hbox1, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(r1), "toggled",
+			 G_CALLBACK(toggle_graph_opt), gopt); 
+	
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r1));
+	r2 = gtk_radio_button_new_with_label(group, _("shaded area"));
+	hbox2 = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox2), r2, FALSE, FALSE, 5);
+	gtk_box_pack_end(GTK_BOX(vbox), hbox2, FALSE, FALSE, 0);
+
+	if (*gopt & OPT_E) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(r1), TRUE);
+	} else {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(r2), TRUE);
+	}
+    }
+
     lbl = gtk_label_new("1 - α =");
-    adj = gtk_adjustment_new(*conf, 0.70, 0.99, 0.01, 0.1, 0);
+    adj = gtk_adjustment_new(*conf, 0.60, 0.99, 0.01, 0.1, 0);
     spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
     g_signal_connect(GTK_SPIN_BUTTON(spin), "value-changed",
 		     G_CALLBACK(set_double_from_spinner), conf);
@@ -2244,7 +2282,6 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     gtk_box_pack_end(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     cb = g_object_get_data(G_OBJECT(dlg), "checkbox");
@@ -2253,6 +2290,12 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf)
 
 	gtk_widget_set_sensitive(hbox, ok);
 	sensitize_conditional_on(hbox, cb);
+	if (hbox1 != NULL && hbox2 != NULL) {
+	    gtk_widget_set_sensitive(hbox1, ok);
+	    sensitize_conditional_on(hbox1, cb);
+	    gtk_widget_set_sensitive(hbox2, ok);
+	    sensitize_conditional_on(hbox2, cb);
+	}	    
     }    
 }
 
@@ -2517,7 +2560,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
 	if (conf != NULL) {
-	    dialog_add_confidence_selector(rset->dlg, conf);
+	    dialog_add_confidence_selector(rset->dlg, conf, NULL);
 	}
     }
 
