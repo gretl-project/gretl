@@ -157,7 +157,7 @@ typedef enum {
                             (c) == AR1 || (c) == CORR || (c) == HSK || \
                             (c) == LOGIT || (c) == PROBIT || \
                             (c) == SPEARMAN || (c) == OLS || \
-                            (c) == IVREG || (c) == VAR || (c) == WLS || \
+                            (c) == IVREG || (c) == WLS || \
 			    (c) == XTAB)
 
 #define TEXTSAVE_OK(c) (c == ADD || \
