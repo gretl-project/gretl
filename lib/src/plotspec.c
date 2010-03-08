@@ -1456,7 +1456,7 @@ static plotbars *plotbars_new (int n)
    <prefix>/share/data/plotbars/nber.txt.
 
    The dates are converted internally into the format, year plus
-   decimal fraction of year, and are usable when plotting
+   decimal fraction of year, and may be used when plotting
    annual, quarterly or monthly time series.
 */
 
@@ -1502,10 +1502,8 @@ static plotbars *parse_bars_file (const char *fname,
 	/* FIXME relax this? */
 	*err = E_DATA;
     } else if (n == 0 || (gotcolon && gotother)) {
-	fprintf(stderr, "malformed dates file\n");
 	*err = E_DATA;
     } else {
-	fprintf(stderr, "parse_dates_file: got %d pairs\n", n);
 	bars = plotbars_new(n);
 	if (bars == NULL) {
 	    *err = E_ALLOC;
@@ -1553,6 +1551,10 @@ static plotbars *parse_bars_file (const char *fname,
     }
 
     fclose(fp);
+
+    if (*err == E_DATA) {
+	gretl_errmsg_set(_("Dates file does not conform to the specification"));
+    }
 
     if (*err && bars != NULL) {
 	plotbars_free(bars);

@@ -1,7 +1,10 @@
-# NBER business cycles peaks and troughs, from 1923;
-# see http://www.nber.org/cycles.html 
-# The end of the last recession is in fact undetermined
-# as of 2010-03-06
+# NBER business cycles peaks and troughs from 1923
+# (see http://www.nber.org/cycles.html ).  Note that the 
+# end of the last recession is in fact undetermined
+# as of 2010-03-08.
+# Format: each non-comment line must contain two space-
+# separated dates in the format YYYY:MM.  These represent
+# the start and end of "episodes" of some sort.
 1923:05 1924:07
 1926:10 1927:11
 1929:08 1933:03

@@ -24,4 +24,6 @@ GtkWidget *plot_add_editor (png_plot *plot);
 
 void pdf_font_selector (GtkButton *button, gpointer p);
 
+void set_plotbars_filename (const char *fname, gpointer data);
+
 #endif /* GPT_DIALOG_H */

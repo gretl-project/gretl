@@ -77,9 +77,24 @@ static void gretl_dialog_keep_above (GtkWidget *w)
     gtk_window_set_keep_above(GTK_WINDOW(w), TRUE);    
 }
 
+void gretl_dialog_add_message (GtkWidget *dlg, const char *msg)
+{
+    GtkWidget *hbox, *vbox;
+    GtkWidget *label;
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    label = gtk_label_new(msg);
+    gtk_widget_show(label);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 12);
+    gtk_widget_show(hbox);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 12);
+}
+
 gint yes_no_dialog (const char *title, const char *msg, int cancel)
 {
-    GtkWidget *dlg, *label, *vbox, *hbox;
+    GtkWidget *dlg;
     int ret = GTK_RESPONSE_HELP;
 
     if (title == NULL) {
@@ -102,14 +117,7 @@ gint yes_no_dialog (const char *title, const char *msg, int cancel)
 			      GTK_RESPONSE_REJECT);
     }
 
-    hbox = gtk_hbox_new(FALSE, 0);
-    label = gtk_label_new(msg);
-    gtk_widget_show(label);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 12);
-    gtk_widget_show(hbox);
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 12);
+    gretl_dialog_add_message(dlg, msg);
 
     gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
     gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);  

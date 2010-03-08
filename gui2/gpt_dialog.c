@@ -74,6 +74,7 @@ struct plot_editor_ {
     GtkWidget *notebook;
     GPT_SPEC *spec;
     gchar *fontname;
+    gchar *barsfile;
 
     GtkWidget **linetitle;
     GtkWidget **lineformula;
@@ -98,6 +99,7 @@ struct plot_editor_ {
     GtkWidget *ttfcombo;
     GtkWidget *ttfspin;
     GtkWidget *fontcheck;
+    GtkWidget *barscombo;
 
     int gui_nlines;
     int gui_nlabels;
@@ -740,9 +742,13 @@ static void set_graph_font_from_widgets (plot_editor *ed)
     g_free(tmp);
 }
 
-/* FIXME make the "cycles" or "bars" file selectable */
+static gchar *default_bars_file (void)
+{
+    return g_strdup_printf("%sdata%cplotbars%cnber.txt",
+			   gretl_home(), SLASH, SLASH);
+}
 
-static void try_adding_plotbars (GPT_SPEC *spec)
+static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
 {
     png_plot *plot = (png_plot *) spec->ptr;
     double xmin = -1, xmax = -1;
@@ -753,15 +759,22 @@ static void try_adding_plotbars (GPT_SPEC *spec)
     err = plot_get_coordinates(plot, &xmin, &xmax, &ymin, &ymax);
 
     if (!err) {
-	fname = g_strdup_printf("%sdata%cplotbars%cnber.txt",
-				gretl_home(), SLASH, SLASH); 
-	err = plotspec_add_bars_info(spec, xmin, xmax,
-				     ymin, ymax, fname);
-	g_free(fname);
+	if (gtk_combo_box_get_active(GTK_COMBO_BOX(ed->barscombo)) == 1
+	    && ed->barsfile != NULL) {
+	    err = plotspec_add_bars_info(spec, xmin, xmax,
+					 ymin, ymax, ed->barsfile);
+	} else {
+	    fname = default_bars_file();
+	    err = plotspec_add_bars_info(spec, xmin, xmax,
+					 ymin, ymax, fname);
+	    g_free(fname);
+	}
     }
 
     if (err) {
 	gui_errmsg(err);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->bars_check),
+				     FALSE);
     }
 }
 
@@ -921,7 +934,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     if (!err && ed->bars_check != NULL) {
 	if (button_is_active(ed->bars_check)) {
-	    try_adding_plotbars(spec);
+	    try_adding_plotbars(spec, ed);
 	} else {
 	    plotspec_remove_bars(spec);
 	}
@@ -1311,6 +1324,99 @@ static void add_color_selector (int i, GtkWidget *tbl, int cols,
     }
 }
 
+static void combo_set_ignore_changed (GtkComboBox *box, gboolean s)
+{
+    if (s) {
+	g_object_set_data(G_OBJECT(box), "ignore-changed", 
+			  GINT_TO_POINTER(1));
+    } else {
+	g_object_set_data(G_OBJECT(box), "ignore-changed", 
+			  NULL);
+    }
+}
+
+void set_plotbars_filename (const char *fname, gpointer data) 
+{
+    plot_editor *ed = (plot_editor *) data;
+    GtkComboBox *box = GTK_COMBO_BOX(ed->barscombo);
+
+    /* we should respond to the changed signal only when it
+       has been emitted by the user making a new selection,
+       otherwise we get into a loop
+    */
+    combo_set_ignore_changed(box, TRUE);
+
+    if (fname == NULL) {
+	/* canceled or error */
+	if (ed->barsfile == NULL) {
+	    gtk_combo_box_set_active(box, 0);
+	}
+    } else {
+	/* completed selection */
+	const char *p = strrchr(fname, SLASH);
+	const char *show;
+
+	show = (p != NULL)? (p+1) : fname;
+	g_free(ed->barsfile);
+	ed->barsfile = g_strdup(fname);
+	gtk_combo_box_remove_text(box, 1);
+	gtk_combo_box_append_text(box, show);
+	gtk_combo_box_append_text(box, _("other..."));
+	gtk_combo_box_set_active(box, 1);
+    }
+}
+
+static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
+{
+    int i = gtk_combo_box_get_active(box);
+
+    if (g_object_get_data(G_OBJECT(box), "ignore-changed")) {
+	combo_set_ignore_changed(box, FALSE);
+	return;
+    }
+
+    if (i == 0) {
+	; /* the default: no-op */
+    } else if (i == 1 && ed->barsfile != NULL) {
+	; /* selecting previously defined own file: no-op */
+    } else {
+	/* exploring... */
+	const char *msg = N_("To add your own \"bars\" to a plot, you must supply\n"
+			     "the name of a plain text file contains pairs of dates.");
+	GtkWidget *dlg;
+	gint ret;
+
+	dlg = gtk_dialog_new_with_buttons("gretl",
+					  GTK_WINDOW(ed->dialog),
+					  GTK_DIALOG_MODAL | 
+					  GTK_DIALOG_DESTROY_WITH_PARENT,
+					  GTK_STOCK_OPEN, 1,
+					  _("See example"), 2,
+					  GTK_STOCK_CANCEL, 3,
+					  NULL);
+
+	gretl_dialog_add_message(dlg, msg);
+	gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
+	gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);  
+	ret = gtk_dialog_run(GTK_DIALOG(dlg));
+	gtk_widget_destroy(dlg);
+
+	if (ret != 1) {
+	    gtk_combo_box_set_active(box, 0);
+	}
+
+	if (ret == 1) {
+	    file_selector_with_parent(OPEN_BARS, FSEL_DATA_MISC, 
+				      ed, ed->dialog);
+	} else if (ret == 2) {
+	    gchar *fname = default_bars_file();
+
+	    view_file(fname, 0, 0, 60, 420, VIEW_FILE);
+	    g_free(fname);
+	}
+    }
+} 
+
 /* PNG anti-aliasing switch */
 
 static void set_aa_status (GtkWidget *w, int *ok)
@@ -1497,8 +1603,8 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
     gtk_combo_box_set_active(GTK_COMBO_BOX(ed->keycombo), kactive);
     gtk_widget_show(ed->keycombo);
 
-    /* choice of fitted line type, if appropriate */
     if (spec->fit != PLOT_FIT_NA) {
+	/* give choice of fitted line type, if applicable */
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 
 	label = gtk_label_new(_("fitted line"));
@@ -1535,19 +1641,8 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	gtk_widget_show(ed->fitcombo);
     } 
 
-    /* give option of removing/adding top & right border? */
-    if (!(spec->flags & GPT_Y2AXIS)) { 
-	if (spec->border == GP_BORDER_DEFAULT || spec->border == 3) {
-	    table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	    ed->border_check = gtk_check_button_new_with_label(_("Show full border"));
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      ed->border_check, 0, TAB_MAIN_COLS, 
-				      rows-1, rows);
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->border_check),
-					 spec->border == GP_BORDER_DEFAULT);
-	    gtk_widget_show(ed->border_check);
-	}
-    } else {
+    if (spec->flags & GPT_Y2AXIS) { 
+	/* give option of forcing a single y-axis */
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	ed->y2_check = gtk_check_button_new_with_label(_("Use only one y axis"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1558,7 +1653,19 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	g_signal_connect(G_OBJECT(ed->y2_check), "clicked", 
 			 G_CALLBACK(toggle_axis_selection), ed);
 	gtk_widget_show(ed->y2_check);
-    }
+    } else {	
+	/* give option of removing/adding top & right border */
+	if (spec->border == GP_BORDER_DEFAULT || spec->border == 3) {
+	    table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	    ed->border_check = gtk_check_button_new_with_label(_("Show full border"));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      ed->border_check, 0, TAB_MAIN_COLS, 
+				      rows-1, rows);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->border_check),
+					 spec->border == GP_BORDER_DEFAULT);
+	    gtk_widget_show(ed->border_check);
+	}
+    } 
 
     if (1) {
 	/* FIXME does this need to be conditional? */
@@ -1576,8 +1683,8 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	show_aa_check = (gnuplot_png_terminal() == GP_PNG_GD2);
     }
 
-    /* give option of suppressing anti-aliasing for PNGs */
     if (show_aa_check) {
+	/* give option of suppressing anti-aliasing for PNGs */
 	GtkWidget *aa_check;
 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
@@ -1592,20 +1699,35 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	gtk_widget_show(aa_check);
     }
 
-    /* displaying "recession bars" */
     if (show_bars_check(spec)) {
+	/* option to display NBER "recession bars" or similar */
+	GtkWidget *combo;
+
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	ed->bars_check = gtk_check_button_new_with_label("Show NBER recessions");
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  ed->bars_check, 0, TAB_MAIN_COLS, 
-				  rows-1, rows);
+	ed->bars_check = gtk_check_button_new_with_label(_("Show bars"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->bars_check),
 				     spec->nbars > 0);
-	gtk_widget_show(ed->bars_check);	
+	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->bars_check,
+				  0, 1, rows-1, rows);
+	gtk_widget_show(ed->bars_check);
+
+	ed->barscombo = combo = gtk_combo_box_new_text();
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("NBER recessions"));
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("other..."));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+	gtk_widget_set_sensitive(combo, spec->nbars > 0);
+	g_signal_connect(G_OBJECT(combo), "changed", 
+			 G_CALLBACK(plot_bars_changed),
+			 ed);	
+	gtk_table_attach(GTK_TABLE(tbl), combo,
+			 1, 2, rows-1, rows,
+			 GTK_FILL, 0, 0, 0);
+	gtk_widget_show(combo);
+	sensitize_conditional_on(combo, ed->bars_check);
     }
 
-    /* setting of graph font, if gnuplot uses freetype */
     if (pngcairo || gnuplot_has_ttf(0)) {
+	/* setting of graph font, if gnuplot supports freetype */
 	GtkWidget *hsep, *b;
 
 	/* first a separator */
@@ -1641,6 +1763,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
     } 
 
     if (gnuplot_png_terminal() != GP_PNG_OLD && frequency_plot_code(spec->code)) {
+	/* give option of setting fill color */
 	GtkWidget *hsep = gtk_hseparator_new();
 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
@@ -2839,7 +2962,8 @@ static void plot_editor_destroy (plot_editor *ed)
 	ed->spec->n_labels = ed->old_n_labels;
     }  
 
-    free(ed->fontname);
+    g_free(ed->fontname);
+    g_free(ed->barsfile);
 
     free(ed->linetitle);
     free(ed->lineformula);
@@ -2972,6 +3096,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
 
     ed->spec = spec;
     ed->fontname = NULL;
+    ed->barsfile = NULL;
 
     ed->dialog = NULL;
 
@@ -3001,6 +3126,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->ttfcombo = NULL;
     ed->ttfspin = NULL;
     ed->fontcheck = NULL;
+    ed->barscombo = NULL;
 
     ed->gui_nlines = ed->gui_nlabels = 0;
 

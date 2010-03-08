@@ -140,6 +140,7 @@ enum file_ops {
     OPEN_SESSION,
     OPEN_MARKERS,
     OPEN_LABELS,
+    OPEN_BARS,
     OPEN_GFN,
     END_OPEN,        /* marker for end of file open section */
     SAVE_DATA,

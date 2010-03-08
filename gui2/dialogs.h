@@ -50,6 +50,8 @@ void file_write_errbox (const char *fname);
 
 gint yes_no_dialog (const char *title, const char *msg, int cancel);
 
+void gretl_dialog_add_message (GtkWidget *dlg, const char *msg);
+
 int make_default_storelist (void);
 
 gboolean exit_check (void);

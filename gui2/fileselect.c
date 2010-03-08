@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "gpt_control.h"
+#include "gpt_dialog.h"
 #include "session.h"
 #include "textbuf.h"
 #include "textutil.h"
@@ -132,6 +133,7 @@ static struct extmap action_map[] = {
     { OPEN_RATS_DB,      ".rat" },
     { OPEN_PCGIVE_DB,    ".bn7" },
     { OPEN_GFN,          ".gfn" },
+    { OPEN_BARS,         ".txt" },
     { FILE_OP_MAX,       NULL }
 };
 
@@ -440,10 +442,14 @@ static void bootstrap_save_callback (const char *fname)
     } 
 }
 
-static void maybe_set_fsel_status (FselDataSrc src, gpointer p, int val)
+static void maybe_set_fsel_status (int action, FselDataSrc src, 
+				   gpointer p, int val)
 {
     if (src == FSEL_DATA_STATUS && p != NULL) {
 	* (int *) p = val;
+    } else if (action == OPEN_BARS && val) {
+	/* error or cancel */
+	set_plotbars_filename(NULL, p);
     }
 }
 
@@ -463,7 +469,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 
 	if (fp == NULL) {
 	    file_read_errbox(fname);
-	    maybe_set_fsel_status(src, data, E_FOPEN);
+	    maybe_set_fsel_status(action, src, data, E_FOPEN);
 	    return;
 	} else {
 	    fclose(fp);
@@ -488,6 +494,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	do_add_markers(fname);
     } else if (action == OPEN_LABELS) {
 	do_add_labels(fname);
+    } else if (action == OPEN_BARS) {
+	set_plotbars_filename(fname, data);
     } else if (action == OPEN_GFN) {
 	edit_function_package(fname);
     } else if (action == OPEN_RATS_DB) {
@@ -548,7 +556,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	save_editable_content(action, fname, vwin);
     }
 
-    maybe_set_fsel_status(src, data, err);
+    maybe_set_fsel_status(action, src, data, err);
 }
 
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
@@ -787,7 +795,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	    g_free(fname);
 	}
     } else {
-	maybe_set_fsel_status(src, data, GRETL_CANCEL);
+	maybe_set_fsel_status(action, src, data, GRETL_CANCEL);
     }
 
     if (filesel != NULL) {
