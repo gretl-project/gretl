@@ -357,15 +357,22 @@ static int style_from_line_number (GPT_SPEC *spec, int i,
 static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 {
     GtkWidget *image, *button;
-    int dotted = 0;
-    int j = style_from_line_number(spec, i, &dotted);
+    int dotted = 0, shade = 0;
+    int j;
 
-    if (j < 0) {
-	/* shouldn't happen */
-	return NULL;
+    if (spec->lines[i].type == 10) {
+	/* special: shade fill */
+	shade = 1;
+    } else {
+	j = style_from_line_number(spec, i, &dotted);
+	if (j < 0) {
+	    return NULL;
+	}
     }
 
-    if (spec->lines[j].rgb[0] != '\0') {
+    if (shade) {
+	image = get_image_for_color(get_graph_color(SHADECOLOR));
+    } else if (spec->lines[j].rgb[0] != '\0') {
 	gretlRGB color;
 
 	gretl_rgb_get(&color, spec->lines[j].rgb); 
@@ -387,7 +394,7 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 			 GINT_TO_POINTER(j));
     }
 
-    if (dotted) {
+    if (dotted || shade) {
 	gtk_widget_set_sensitive(button, FALSE);
     }
 
@@ -480,7 +487,7 @@ static void combo_to_gp_style (GtkWidget *w, int *sty)
     s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(w));
 
     if (s != NULL && *s != '\0') {
-	*sty = gp_style_from_translation(s);
+	*sty = gp_style_index_from_display_name(s);
     }
 
     g_free(s);
@@ -798,7 +805,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     if (ed->keycombo != NULL) {
         s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->keycombo));
-	spec->keyspec = gp_keypos_from_translation(s);
+	spec->keyspec = gp_keypos_from_display_name(s);
 	g_free(s);
     }
 
@@ -1590,13 +1597,13 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      ed->keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
     for (i=0; ; i++) {
-	gp_style_spec *kp = get_keypos_spec(i);
+	gp_key_spec *kp = get_keypos_spec(i);
 
 	if (kp == NULL) {
 	    break;
 	}
 	gtk_combo_box_append_text(GTK_COMBO_BOX(ed->keycombo), _(kp->str));
-	if (kp->sty == spec->keyspec) {
+	if (kp->id == spec->keyspec) {
 	    kactive = i;
 	}
     }
@@ -2221,7 +2228,7 @@ static void flip_pointsel (GtkWidget *box, GtkWidget *targ)
 {
     GtkWidget *label = g_object_get_data(G_OBJECT(targ), "label");
     gchar *s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(box));
-    int hp = has_point(gp_style_from_translation(s));
+    int hp = has_point(gp_style_index_from_display_name(s));
 
     gtk_widget_set_sensitive(targ, hp);
     gtk_widget_set_sensitive(label, hp);
@@ -2267,7 +2274,7 @@ static int gp_style_index (int sty, GList *list)
 
     while (mylist != NULL) {
 	spec = (gp_style_spec *) mylist->data;
-	if (sty == spec->sty) {
+	if (sty == spec->id) {
 	    return i;
 	}
 	i++;
@@ -2284,7 +2291,7 @@ void set_combo_box_strings_from_stylist (GtkComboBox *box, GList *list)
 
     while (mylist != NULL) {
 	spec = (gp_style_spec *) mylist->data;
-	gtk_combo_box_append_text(box, _(spec->str));
+	gtk_combo_box_append_text(box, _(spec->trname));
 	mylist = mylist->next;
     }
 }
@@ -2438,7 +2445,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	   with the others */
 	if (line->style == GP_STYLE_ERRORBARS && !gnuplot_has_style_fill()) {
 	    set_combo_box_default_text(GTK_COMBO_BOX(ed->stylecombo[i]), 
-				       _(gp_line_style_string(line->style)));
+				       _(gp_line_style_display_name(line->style)));
 	    gtk_widget_set_sensitive(ed->stylecombo[i], FALSE);
 	} else if (line->style == GP_STYLE_ERRORBARS ||
 		   line->style == GP_STYLE_FILLEDCURVE) {

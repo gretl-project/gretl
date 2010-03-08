@@ -63,8 +63,9 @@ struct gretlRGB_ {
 };
 
 #define MAXTITLE 128
-#define N_GP_COLORS 7
-#define BOXCOLOR (N_GP_COLORS - 1)
+#define N_GP_COLORS 8
+#define BOXCOLOR (N_GP_COLORS - 2)
+#define SHADECOLOR (N_GP_COLORS - 1)
 
 typedef enum {
     PLOT_REGULAR = 0,

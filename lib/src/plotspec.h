@@ -58,7 +58,15 @@ typedef enum {
 typedef struct gp_style_spec_ gp_style_spec;
 
 struct gp_style_spec_ {
-    int sty;
+    int id;
+    const char *name;
+    const char *trname;
+};
+
+typedef struct gp_key_spec_ gp_key_spec;
+
+struct gp_key_spec_ {
+    int id;
     const char *str;
 };
 
@@ -172,19 +180,19 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f);
 
 void print_auto_fit_string (FitType fit, FILE *fp);
 
-const char *gp_line_style_string (int t);
+const char *gp_line_style_display_name (int t);
 
-int gp_style_from_string (const char *s);
+int gp_style_index_from_name (const char *s);
 
-int gp_style_from_translation (const char *s);
+int gp_style_index_from_display_name (const char *s);
 
 gp_style_spec *get_style_spec (int t);
 
-int gp_keypos_from_string (const char *s);
+int gp_keypos_from_name (const char *s);
 
-int gp_keypos_from_translation (const char *s);
+int gp_keypos_from_display_name (const char *s);
 
-gp_style_spec *get_keypos_spec (int t);
+gp_key_spec *get_keypos_spec (int t);
 
 void print_keypos_string (int t, FILE *fp);
 

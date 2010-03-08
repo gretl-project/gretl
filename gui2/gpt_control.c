@@ -1762,7 +1762,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "y2label")) {
 	strcpy(spec->titles[3], val);
     } else if (!strcmp(key, "key")) {
-	spec->keyspec = gp_keypos_from_string(val);
+	spec->keyspec = gp_keypos_from_name(val);
     } else if (!strcmp(key, "xtics")) { 
 	safecpy(spec->xtics, val, sizeof(spec->xtics) - 1);
     } else if (!strcmp(key, "mxtics")) { 
@@ -2022,7 +2022,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 
     if ((p = strstr(s, " w "))) {
 	sscanf(p + 3, "%15[^, ]", tmp);
-	line->style = gp_style_from_string(tmp);
+	line->style = gp_style_index_from_name(tmp);
     } 
 
     if ((p = strstr(s, " lt "))) {

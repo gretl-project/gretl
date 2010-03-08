@@ -692,7 +692,8 @@ static const gretlRGB default_color[N_GP_COLORS] = {
     { 0xbf, 0x25, 0xb2 },
     { 0x8f, 0xaa, 0xb3 },
     { 0xff, 0xa5, 0x00 },
-    { 0x5f, 0x6b, 0x84 }  /* color for box fill */
+    { 0x5f, 0x6b, 0x84 },  /* box fill */
+    { 0xdd, 0xdd, 0xdd },  /* shade fill */    
 };
 
 static gretlRGB user_color[N_GP_COLORS] = {
@@ -702,7 +703,8 @@ static gretlRGB user_color[N_GP_COLORS] = {
     { 0xbf, 0x25, 0xb2 },
     { 0x8f, 0xaa, 0xb3 },
     { 0xff, 0xa5, 0x00 },
-    { 0x5f, 0x6b, 0x84 }
+    { 0x5f, 0x6b, 0x84 },
+    { 0xdd, 0xdd, 0xdd }    
 };
 
 static void print_rgb_x (char *s, gretlRGB color)
@@ -787,7 +789,9 @@ void set_graph_palette_from_string (int i, const char *s)
 
 void graph_palette_reset (int i)
 {
-    if (i == BOXCOLOR) {
+    if (i == SHADECOLOR) {
+	user_color[SHADECOLOR] = default_color[SHADECOLOR];
+    } else if (i == BOXCOLOR) {
 	user_color[BOXCOLOR] = default_color[BOXCOLOR];
     } else {
 	for (i=0; i<BOXCOLOR; i++) {
@@ -895,7 +899,7 @@ write_old_gnuplot_font_string (char *fstr, PlotType ptype)
 
 #endif
 
-/* we need this only if we don't have per-line rgb
+/* we need this only if we _don't_ have per-line rgb
    settings, which are in gnuplot 4.2 and higher */
 
 static char *make_png_colorspec (char *targ, int ptype)
@@ -944,6 +948,8 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
 	}
+	print_rgb_hash(cstr, &user_color[SHADECOLOR]);
+	fprintf(fp, "set style line 10 lc rgb \"%s\"\n", cstr);
     }
 
     fputs("set style increment user\n", fp);
@@ -4426,10 +4432,6 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	fputs("# impulse response plot\n", fp);
     }
 
-    if (use_fill) {
-	fputs("set style line 10 lc rgb \"#dddddd\"\n", fp);
-    }
-
     if (confint) {
 	fputs("set key left top\n", fp);
 	sprintf(title, _("response of %s to a shock in %s, "
@@ -4543,10 +4545,6 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     fputs("set multiplot\n", fp);
     fprintf(fp, "set xlabel '%s'\n", _("periods"));
     fputs("set xzeroaxis\n", fp);
-
-    if (use_fill) {
-	fputs("set style line 10 lc rgb \"#dddddd\"\n", fp);
-    }
 
     gretl_push_c_numeric_locale();
 

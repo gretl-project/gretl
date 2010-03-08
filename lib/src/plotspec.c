@@ -170,39 +170,52 @@ static void plotspec_get_xt1_xt2 (const GPT_SPEC *spec,
 }
 
 static gp_style_spec style_specs[] = {
-    { GP_STYLE_LINES,        N_("lines") },
-    { GP_STYLE_POINTS,       N_("points") },
-    { GP_STYLE_LINESPOINTS,  N_("linespoints") },
-    { GP_STYLE_IMPULSES,     N_("impulses") },
-    { GP_STYLE_DOTS,         N_("dots") },
-    { GP_STYLE_STEPS,        N_("steps") },
-    { GP_STYLE_BOXES,        N_("boxes") },
-    { GP_STYLE_ERRORBARS,    N_("error bars") },
-    { GP_STYLE_FILLEDCURVE,  N_("filled curve") },
-    { GP_STYLE_CANDLESTICKS, N_("candlesticks") },
-    { 0,                     NULL }
+    { GP_STYLE_LINES,        "lines",        N_("lines") },
+    { GP_STYLE_POINTS,       "points",       N_("points") },
+    { GP_STYLE_LINESPOINTS,  "linespoints",  N_("lines/points") },
+    { GP_STYLE_IMPULSES,     "impulses",     N_("impulses") },
+    { GP_STYLE_DOTS,         "dots",         N_("dots") },
+    { GP_STYLE_STEPS,        "steps",        N_("steps") },
+    { GP_STYLE_BOXES,        "boxes",        N_("boxes") },
+    { GP_STYLE_ERRORBARS,    "errorbars",     N_("error bars") },
+    { GP_STYLE_FILLEDCURVE,  "filledcurve",  N_("filled curve") },
+    { GP_STYLE_CANDLESTICKS, "candlesticks", N_("candlesticks") },
+    { 0, NULL, NULL }
 };
 
-const char *gp_line_style_string (int t)
+const char *gp_line_style_display_name (int t)
 {
     int i;
 
-    for (i=0; style_specs[i].sty != 0; i++) {
-	if (t == style_specs[i].sty) {
-	    return style_specs[i].str;
+    for (i=0; style_specs[i].id != 0; i++) {
+	if (t == style_specs[i].id) {
+	    return style_specs[i].trname;
 	}
     }
 
     return N_("lines");
 }
 
-int gp_style_from_string (const char *s)
+static const char *gp_line_style_name (int t)
 {
     int i;
 
-    for (i=0; style_specs[i].sty != 0; i++) {
-	if (!strcmp(s, style_specs[i].str)) {
-	    return style_specs[i].sty;
+    for (i=0; style_specs[i].id != 0; i++) {
+	if (t == style_specs[i].id) {
+	    return style_specs[i].name;
+	}
+    }
+
+    return "lines";
+}
+
+int gp_style_index_from_name (const char *s)
+{
+    int i;
+
+    for (i=0; style_specs[i].id != 0; i++) {
+	if (!strcmp(s, style_specs[i].name)) {
+	    return style_specs[i].id;
 	}
     }
 
@@ -216,19 +229,19 @@ int gp_style_from_string (const char *s)
 	return GP_STYLE_LINESPOINTS;
     } else if (!strcmp(s, "i")) {
 	return GP_STYLE_IMPULSES;
-    }
+    } 
 
     /* fallback */
     return GP_STYLE_LINES;
 }
 
-int gp_style_from_translation (const char *s)
+int gp_style_index_from_display_name (const char *s)
 {
     int i;
 
-    for (i=0; style_specs[i].sty != 0; i++) {
-	if (!strcmp(s, _(style_specs[i].str))) {
-	    return style_specs[i].sty;
+    for (i=0; style_specs[i].id != 0; i++) {
+	if (!strcmp(s, _(style_specs[i].trname))) {
+	    return style_specs[i].id;
 	}
     }
 
@@ -239,8 +252,8 @@ gp_style_spec *get_style_spec (int t)
 {
     int i;
 
-    for (i=0; style_specs[i].sty != 0; i++) {
-	if (t == style_specs[i].sty) {
+    for (i=0; style_specs[i].id != 0; i++) {
+	if (t == style_specs[i].id) {
 	    return &style_specs[i];
 	}
     }
@@ -248,7 +261,7 @@ gp_style_spec *get_style_spec (int t)
     return NULL;
 }
 
-static gp_style_spec key_specs[] = {
+static gp_key_spec key_specs[] = {
     { GP_KEY_LEFT_TOP,     N_("left top") },
     { GP_KEY_RIGHT_TOP,    N_("right top") },
     { GP_KEY_LEFT_BOTTOM,  N_("left bottom") },
@@ -263,7 +276,7 @@ static const char *gp_keypos_string (int t)
     int i;
 
     for (i=0; key_specs[i].str != NULL; i++) {
-	if (t == key_specs[i].sty) {
+	if (t == key_specs[i].id) {
 	    return key_specs[i].str;
 	}
     }
@@ -282,38 +295,38 @@ void print_keypos_string (int t, FILE *fp)
     }
 }
 
-int gp_keypos_from_string (const char *s)
+int gp_keypos_from_name (const char *s)
 {
     int i;
 
-    for (i=0; key_specs[i].sty >= 0; i++) {
+    for (i=0; key_specs[i].id >= 0; i++) {
 	if (!strcmp(s, key_specs[i].str)) {
-	    return key_specs[i].sty;
+	    return key_specs[i].id;
 	}
     }
 
     return GP_KEY_NONE;
 }
 
-int gp_keypos_from_translation (const char *s)
+int gp_keypos_from_display_name (const char *s)
 {
     int i;
 
-    for (i=0; key_specs[i].sty >= 0; i++) {
+    for (i=0; key_specs[i].id >= 0; i++) {
 	if (!strcmp(s, _(key_specs[i].str))) {
-	    return key_specs[i].sty;
+	    return key_specs[i].id;
 	}
     }
 
     return GP_KEY_NONE;
 }
 
-gp_style_spec *get_keypos_spec (int t)
+gp_key_spec *get_keypos_spec (int t)
 {
     int i;
 
-    for (i=0; key_specs[i].sty >= 0; i++) {
-	if (t == key_specs[i].sty) {
+    for (i=0; key_specs[i].id >= 0; i++) {
+	if (t == key_specs[i].id) {
 	    return &key_specs[i];
 	}
     }
@@ -807,7 +820,10 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
     }
 
     if (spec->nbars > 0) {
-	fputs("set style line 10 lc rgb \"#dddddd\"\n", fp);
+	const gretlRGB *color = get_graph_color(SHADECOLOR);
+
+	print_rgb_hash(cstr, color);
+	fprintf(fp, "set style line 10 lc rgb \"%s\"\n", cstr);
     }
 
     fputs("set style increment user\n", fp);
@@ -985,7 +1001,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	}
     } else if (spec->code == PLOT_FORECAST) {
 	fputs("set style fill solid 0.4\n", fp);
-    }
+    } 
 
     if (spec->flags & GPT_PRINT_MARKERS) {
 	print_data_labels(spec, fp);
@@ -1067,7 +1083,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	fprintf(fp, "w %s", gp_line_style_string(line->style));
+	fprintf(fp, "w %s", gp_line_style_name(line->style));
 
 	if (line->type != LT_AUTO) {
 	    fprintf(fp, " lt %d", line->type);
