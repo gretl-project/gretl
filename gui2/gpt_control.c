@@ -221,6 +221,28 @@ double plot_get_ymin (png_plot *plot)
     return (plot != NULL)? plot->ymin : -1;
 }
 
+void plot_get_coordinates (png_plot *plot,
+			   double *xmin,
+			   double *xmax,
+			   double *ymin,
+			   double *ymax)
+{
+    if (plot != NULL) {
+	if (xmin != NULL) {
+	    *xmin = plot->xmin;
+	}
+	if (xmax != NULL) {
+	    *xmax = plot->xmax;
+	}
+	if (ymin != NULL) {
+	    *ymin = plot->ymin;
+	}
+	if (ymax != NULL) {
+	    *ymax = plot->ymax;
+	}
+    }
+}
+
 void set_plot_has_y2_axis (png_plot *plot, gboolean s)
 {
     if (s == TRUE) {
@@ -1305,7 +1327,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 			 const char *buf)
 {
     char s[MAXLEN];
-    char *got;
+    char *got = NULL;
     double *x[5] = { NULL };
     char test[5][32];
     int started_data_lines = 0;
@@ -1315,6 +1337,32 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
     spec->okobs = spec->nobs;
 
     gretl_push_c_numeric_locale();
+
+    for (i=0; i<spec->nbars && !err; i++) {
+	double y1, y2, dx[2];
+
+	/* start date */
+	got = bufgets(s, sizeof s, buf);
+	if (got == NULL ||
+	    sscanf(s, "%lf %lf %lf", &dx[0], &y1, &y2) != 3) {
+	    err = 1;
+	    break;
+	}
+	/* stop date */
+	got = bufgets(s, sizeof s, buf);
+	if (got == NULL ||
+	    sscanf(s, "%lf %lf %lf", &dx[1], &y1, &y2) != 3) {
+	    err = 1;
+	    break;
+	}
+	/* trailing 'e' */
+	got = bufgets(s, sizeof s, buf);
+	if (got) {
+	    plotspec_set_bar_info(spec, i, dx[0], dx[1]);
+	} else {
+	    err = 1;
+	}
+    }
 
     for (i=0; i<spec->n_lines && !err; i++) {
 	int ncols = spec->lines[i].ncols;
@@ -1718,7 +1766,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 
 /* allocate markers for identifying particular data points */
 
-static int allocate_plotspec_markers (GPT_SPEC *spec)
+static int plotspec_allocate_markers (GPT_SPEC *spec)
 {
     spec->markers = strings_array_new_with_length(spec->nobs,
 						  OBSLEN);
@@ -1736,9 +1784,11 @@ static int allocate_plotspec_markers (GPT_SPEC *spec)
    data-point markers along with the data.
 */
 
-static int get_plot_nobs (const char *buf, PlotType *ptype, int *do_markers)
+static int get_plot_nobs (const char *buf, PlotType *ptype, 
+			  int *do_markers, int *nbars)
 {
     int n = 0, started = -1;
+    int startmin = 1;
     char line[MAXLEN], test[9];
     char *p;
 
@@ -1752,6 +1802,11 @@ static int get_plot_nobs (const char *buf, PlotType *ptype, int *do_markers)
 	    *ptype = plot_type_from_string(line);
 	}
 
+	if (sscanf(line, "# n_bars = %d", nbars) == 1) {
+	    startmin += *nbars;
+	    continue;
+	}
+
 	if (!strncmp(line, "plot", 4)) {
 	    started = 0;
 	}
@@ -1761,7 +1816,14 @@ static int get_plot_nobs (const char *buf, PlotType *ptype, int *do_markers)
 	    continue;
 	}
 
-	if (started == 1) {
+	if (started > 0 && started < startmin) {
+	    if (*line == 'e') {
+		started++;
+		continue;
+	    }
+	}
+
+	if (started == startmin) {
 	    if (*do_markers == 0 && (p = strchr(line, '#')) != NULL) {
 		if (sscanf(p + 1, "%8s", test) == 1) {
 		    *do_markers = 1;
@@ -2026,21 +2088,25 @@ plot_get_data_and_markers (GPT_SPEC *spec, const char *buf,
     /* allocate for the plot data... */
     spec->data = mymalloc(spec->nobs * datacols * sizeof *spec->data);
     if (spec->data == NULL) {
-	err = 1;
+	err = E_ALLOC;
     }
 
     /* and markers if any */
     if (!err && do_markers) {
-	if (allocate_plotspec_markers(spec)) {
-	    free(spec->data);
-	    spec->data = NULL;
-	    err = 1;
-	}
+	err = plotspec_allocate_markers(spec);
     }
 
-    /* Read the data (and perhaps markers) from the plot file */
+    /* and time-series bars, if any */
+    if (!err && spec->nbars > 0) {
+	err = plotspec_allocate_dates_info(spec);
+    }
+
+    /* read the data (and perhaps markers) from the plot file */
     if (!err) {
 	err = get_gpt_data(spec, do_markers, buf);
+    } else {
+	free(spec->data);
+	spec->data = NULL;
     }
 
 #if GPDEBUG
@@ -2196,8 +2262,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     bufgets_init(buf);
 
-    /* get the number of data-points, plot type, and check for markers */
-    spec->nobs = get_plot_nobs(buf, &spec->code, &do_markers);
+    /* get the number of data-points, plot type, and check for 
+       observation markers and time-series bars */
+    spec->nobs = get_plot_nobs(buf, &spec->code, &do_markers,
+			       &spec->nbars);
+
     if (spec->nobs == 0 && plot_needs_obs(spec->code)) {
 	/* failed reading plot data */
 #if GPDEBUG
@@ -2266,7 +2335,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 		reglist[1] = v;
 	    }
 	    continue;
-	}
+	} 
 	
 	if (sscanf(gpline, "# literal lines = %d", &spec->n_literal)) {
 	    spec->literal = strings_array_new(spec->n_literal);
@@ -2335,6 +2404,13 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	fprintf(stderr, "bad gnuplot line: '%s'\n", gpline);
 	err = 1;
 	goto bailout;
+    }
+
+    /* if there are any time-series bars, skip past them */
+    for (i=0; i<spec->nbars; i++) {
+	if ((got = bufgets(gpline, MAXLEN - 1, buf)) == NULL) {
+	    err = E_DATA;
+	}
     }
 
     done = 0;
@@ -4143,7 +4219,17 @@ static int gnuplot_show_png (const char *fname, const char *name,
     }
 
     if (!plot->err) {
-	get_plot_ranges(plot);
+	int range_err = get_plot_ranges(plot);
+
+	if (plot->spec->nbars > 0) {
+	    if (range_err) {
+		plot->spec->nbars = 0;
+	    } else {
+		plotspec_bars_set_coords(plot->spec, 
+					 plot->xmin, plot->xmax,
+					 plot->ymin, plot->ymax);
+	    }
+	}
     }
 
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);

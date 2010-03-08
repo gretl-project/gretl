@@ -112,6 +112,7 @@ typedef struct {
     int nobs;                  /* number of observations */
     int okobs;                 /* number of fully valid observations */
     int pd;                    /* frequency (time series data) */
+    int nbars;                 /* number of time-series shaded bars */
     char xvarname[MAXDISP];    /* name of x variable */
     char yvarname[MAXDISP];    /* name of y variable */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
@@ -165,7 +166,7 @@ int plotspec_delete_label (GPT_SPEC *spec, int i);
 
 GPT_LABEL *plotspec_clone_labels (GPT_SPEC *spec, int *err);
 
-int plotspec_print (const GPT_SPEC *spec, FILE *fp);
+int plotspec_print (GPT_SPEC *spec, FILE *fp);
 
 int plotspec_add_fit (GPT_SPEC *spec, FitType f);
 
@@ -191,7 +192,19 @@ void set_plotfit_line (char *title, char *formula,
 		       FitType f, const double *b, 
 		       double x0, double pd);
 
-int plotspec_add_dates_info (GPT_SPEC *spec, const char *fname);
+int plotspec_add_dates_info (GPT_SPEC *spec, 
+			     double xmin, double xmax,
+			     double ymin, double ymax,
+			     const char *fname);
+
+int plotspec_allocate_dates_info (GPT_SPEC *spec);
+
+int plotspec_set_bar_info (GPT_SPEC *spec, int i,
+			   double t1, double t2);
+
+void plotspec_bars_set_coords (GPT_SPEC *spec, 
+			       double t1, double t2,
+			       double ymin, double ymax);
 
 void plotspec_remove_dates_info (GPT_SPEC *spec);
 

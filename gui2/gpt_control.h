@@ -50,6 +50,12 @@ double plot_get_xmin (png_plot *plot);
 
 double plot_get_ymin (png_plot *plot);
 
+void plot_get_coordinates (png_plot *plot,
+			   double *xmin,
+			   double *xmax,
+			   double *ymin,
+			   double *ymax);
+
 GPT_SPEC *plot_get_spec (png_plot *plot);
 
 void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2);

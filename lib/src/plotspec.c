@@ -22,16 +22,17 @@
 
 struct dates_info_ {
     int n;
+    double t1;
+    double t2;
+    double ymin;
+    double ymax;
     double **dx;
 };
 
 /* for handling "recession bars" and similar */
 static int n_cycles (double t1, double t2, dates_info *dinfo);
 static void print_cycles_header (int nc, FILE *fp);
-static void print_cycles (double t1, double t2,
-			  double ymin, double ymax,
-			  dates_info *dinfo,
-			  FILE *fp);
+static void print_cycles (dates_info *dinfo, FILE *fp);
 
 GPT_SPEC *plotspec_new (void)
 {
@@ -92,6 +93,7 @@ GPT_SPEC *plotspec_new (void)
     spec->nobs = 0;
     spec->okobs = 0;
     spec->pd = 0;
+    spec->nbars = 0;
     spec->boxwidth = 0;
     spec->samples = 0;
     spec->border = GP_BORDER_DEFAULT;
@@ -175,9 +177,9 @@ static gp_style_spec style_specs[] = {
     { GP_STYLE_DOTS,         N_("dots") },
     { GP_STYLE_STEPS,        N_("steps") },
     { GP_STYLE_BOXES,        N_("boxes") },
-    { GP_STYLE_ERRORBARS,    "errorbars" },
-    { GP_STYLE_FILLEDCURVE,  "filledcurve" },
-    { GP_STYLE_CANDLESTICKS, "candlesticks" },
+    { GP_STYLE_ERRORBARS,    N_("error bars") },
+    { GP_STYLE_FILLEDCURVE,  N_("filled curve") },
+    { GP_STYLE_CANDLESTICKS, N_("candlesticks") },
     { 0,                     NULL }
 };
 
@@ -804,6 +806,10 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 	}
     }
 
+    if (spec->nbars > 0) {
+	fputs("set style line 10 lc rgb \"#dddddd\"\n", fp);
+    }
+
     fputs("set style increment user\n", fp);
 }
 
@@ -819,9 +825,9 @@ static int print_point_type (GPT_LINE *line)
                      s->fit == PLOT_FIT_INVERSE || \
                      s->fit == PLOT_FIT_LOESS)
 
-int plotspec_print (const GPT_SPEC *spec, FILE *fp)
+int plotspec_print (GPT_SPEC *spec, FILE *fp)
 {
-    int i, k, t, nc = 0;
+    int i, k, t;
     int png = get_png_output(spec);
     int mono = (spec->flags & GPT_MONO);
     int started_data_lines = 0;
@@ -959,6 +965,14 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	print_auto_fit_string(spec->fit, fp);
     }
 
+    if (spec->dinfo != NULL) {
+	plotspec_get_xt1_xt2(spec, &xt1, &xt2);
+	spec->nbars = n_cycles(xt1, xt2, spec->dinfo);
+	if (spec->nbars > 0) {
+	    fprintf(fp, "# n_bars = %d\n", spec->nbars);
+	}
+    }
+
     print_user_lines_info(spec, fp);
 
     if ((spec->code == PLOT_FREQ_SIMPLE ||
@@ -995,12 +1009,8 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     gretl_push_c_numeric_locale();
 
-    if (spec->dinfo != NULL) {
-	plotspec_get_xt1_xt2(spec, &xt1, &xt2);
-	nc = n_cycles(xt1, xt2, spec->dinfo);
-	if (nc > 0) {
-	    print_cycles_header(nc, fp);
-	}
+    if (spec->nbars > 0) {
+	print_cycles_header(spec->nbars, fp);
     }
 
     for (i=0; i<spec->n_lines; i++) {
@@ -1061,6 +1071,8 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
 	if (line->type != LT_AUTO) {
 	    fprintf(fp, " lt %d", line->type);
+	} else if (spec->nbars > 0) {
+	    fprintf(fp, " lt %d", i + 1);
 	}
 
 	if (print_point_type(line)) {
@@ -1086,10 +1098,8 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     /* supply the data to gnuplot inline */
 
-    if (spec->dinfo != NULL && nc > 0) {
-	double ymin = 4.0, ymax = 22.0; /* FIXME ymin, ymax */
-
-	print_cycles(xt1, xt2, ymin, ymax, spec->dinfo, fp);
+    if (spec->dinfo != NULL && spec->nbars > 0) {
+	print_cycles(spec->dinfo, fp);
     }
 
     for (i=0; i<spec->n_lines; i++) { 
@@ -1427,6 +1437,8 @@ static dates_info *dates_info_new (int n)
 	    dinfo = NULL;
 	} else {
 	    dinfo->n = n;
+	    dinfo->t1 = dinfo->t2 = 0;
+	    dinfo->ymin = dinfo->ymax = 0;
 	}
     }
 
@@ -1495,6 +1507,7 @@ static dates_info *parse_dates_file (const char *fname,
 	    if (sscanf(line, "%15s %15s", d1, d2) != 2) {
 		break;
 	    }
+	    nf0 = nf1 = 0;
 	    if (gotcolon) {
 		nf0 = sscanf(d1, "%d:%d", &di[0], &di[1]);
 		nf1 = sscanf(d2, "%d:%d", &di[2], &di[3]);
@@ -1507,54 +1520,62 @@ static dates_info *parse_dates_file (const char *fname,
 #if 0
 		fprintf(stderr, "%.4f %.4f\n", x0, x1);
 #endif
-		dinfo->dx[i][0] = x0;
-		dinfo->dx[i][1] = x1;
-		i++;
+		if (x1 < x0) {
+		    *err = E_DATA;
+		} else {
+		    dinfo->dx[i][0] = x0;
+		    dinfo->dx[i][1] = x1;
+		    i++;
+		}
 	    }
 	}
     }
 
     fclose(fp);
 
+    if (*err && dinfo != NULL) {
+	dates_info_free(dinfo);
+	dinfo = NULL;
+    }
+
     return dinfo;
 }
 
-static void print_cycles (double t1, double t2,
-			  double ymin, double ymax,
-			  dates_info *dinfo,
-			  FILE *fp)
+static void print_cycles (dates_info *dinfo, FILE *fp)
 {
     double **ptdates = dinfo->dx;
     int i, started, stopped;
 
     for (i=0; i<dinfo->n; i++) {
-	if (ptdates[i][1] < t1) {
+	if (ptdates[i][1] < dinfo->t1) {
 	    continue;
 	}
-	if (ptdates[i][0] > t2) {
+	if (ptdates[i][0] > dinfo->t2) {
 	    break;
 	}
 	started = stopped = 0;
-	if (ptdates[i][0] >= t1) {
+	if (ptdates[i][0] >= dinfo->t1) {
 	    /* peak is in range */
 	    fprintf(fp, "%.3f %g %g\n", ptdates[i][0],
-		    ymin, ymax);
+		    dinfo->ymin, dinfo->ymax);
 	    started = 1;
 	}
-	if (ptdates[i][1] <= t2) {
+	if (ptdates[i][1] <= dinfo->t2) {
 	    /* trough is in range */
 	    if (!started) {
 		/* but the peak was not */
-		fprintf(fp, "%.3f %g %g\n", t1, ymin, ymax);
+		fprintf(fp, "%.3f %g %g\n", dinfo->t1, 
+			dinfo->ymin, dinfo->ymax);
 	    }
 	    fprintf(fp, "%.3f %g %g\n", ptdates[i][1],
-		    ymin, ymax);
+		    dinfo->ymin, dinfo->ymax);
 	    fputs("e\n", fp);
 	    stopped = 1;
 	}
 	if (started && !stopped) {
 	    /* truncated */
-	    fprintf(fp, "%.3f %g %g\n", t2, ymin, ymax);
+	    fprintf(fp, "%.3f %g %g\n", dinfo->t2, 
+		    dinfo->ymin, dinfo->ymax);
 	    fputs("e\n", fp);
 	}
     }
@@ -1565,14 +1586,14 @@ static void print_cycles_header (int nc, FILE *fp)
     int i;
 
     for (i=0; i<nc; i++) {
-	fputs("'-' using 1:2:3 notitle lt 6 w filledcurve , \\\n", fp);
+	fputs("'-' using 1:2:3 notitle lt 10 w filledcurve , \\\n", fp);
     }
 }
 
 static int n_cycles (double t1, double t2, dates_info *dinfo)
 {
     double **ptdates = dinfo->dx;
-    int i, nr = 0;
+    int i, nc = 0;
 
     for (i=0; i<dinfo->n; i++) {
 	if (ptdates[i][1] < t1) {
@@ -1580,33 +1601,46 @@ static int n_cycles (double t1, double t2, dates_info *dinfo)
 	} else if (ptdates[i][0] > t2) {
 	    break;
 	} else if (ptdates[i][0] >= t1 || ptdates[i][1] <= t2) {
-	    nr++;
+	    nc++;
 	}
-    }    
+    } 
 
-    return nr;
+    dinfo->t1 = t1;
+    dinfo->t2 = t2;
+
+    return nc;
 }
 
-int plotspec_add_dates_info (GPT_SPEC *spec, const char *fname)
+int plotspec_add_dates_info (GPT_SPEC *spec, 
+			     double xmin, double xmax,
+			     double ymin, double ymax,
+			     const char *fname)
 {
     dates_info *dinfo = NULL;
     int err = 0;
 
+    if (spec->dinfo != NULL) {
+	/* clear out stale info */
+	dates_info_free(dinfo);
+	spec->dinfo = NULL;
+	spec->nbars = 0;
+    }
+
     dinfo = parse_dates_file(fname, &err);
 
     if (!err) {
-	double t1 = 0, t2 = 0;
 	int nc;
 
-	plotspec_get_xt1_xt2(spec, &t1, &t2);
-	nc = n_cycles(t1, t2, dinfo);
+	nc = n_cycles(xmin, xmax, dinfo);
 
 	fprintf(stderr, "cycles: t1=%g, t2=%g, nc=%d\n",
-		t1, t2, nc);
+		xmin, xmax, nc);
 
 	if (nc > 0) {
 	    spec->dinfo = dinfo;
-	    fprintf(stderr, "spec->dinfo = %p\n", (void *) spec->dinfo);
+	    dinfo->ymin = ymin;
+	    dinfo->ymax = ymax;
+	    spec->nbars = nc;
 	} else {
 	    dates_info_free(dinfo);
 	}
@@ -1615,9 +1649,45 @@ int plotspec_add_dates_info (GPT_SPEC *spec, const char *fname)
     return err;
 }
 
+int plotspec_allocate_dates_info (GPT_SPEC *spec)
+{ 
+    int err = 0;
+
+    spec->dinfo = dates_info_new(spec->nbars);
+    if (spec->dinfo == NULL) {
+	err = E_ALLOC;
+    }  
+
+    return err;
+}
+
+int plotspec_set_bar_info (GPT_SPEC *spec, int i,
+			   double t1, double t2)
+{ 
+    if (i < spec->dinfo->n) {
+	spec->dinfo->dx[i][0] = t1;
+	spec->dinfo->dx[i][1] = t2; 
+	return 0;
+    } else {
+	return E_DATA;
+    }
+}
+
+void plotspec_bars_set_coords (GPT_SPEC *spec, 
+			       double t1, double t2,
+			       double ymin, double ymax)
+{
+    if (spec->dinfo != NULL) {
+	spec->dinfo->t1 = t1;
+	spec->dinfo->t2 = t2;
+	spec->dinfo->ymin = ymin;
+	spec->dinfo->ymax = ymax;
+    }
+}
+
 void plotspec_remove_dates_info (GPT_SPEC *spec)
 {
     dates_info_free(spec->dinfo);
     spec->dinfo = NULL;
+    spec->nbars = 0;
 }
-

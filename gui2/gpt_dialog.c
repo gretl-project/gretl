@@ -94,6 +94,7 @@ struct plot_editor_ {
     GtkWidget *border_check;
     GtkWidget *grid_check;
     GtkWidget *y2_check;
+    GtkWidget *bars_check;
     GtkWidget *ttfcombo;
     GtkWidget *ttfspin;
     GtkWidget *fontcheck;
@@ -893,6 +894,31 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	fittype_from_combo(GTK_COMBO_BOX(ed->fitcombo), spec);
     }
 
+    if (!err && ed->bars_check != NULL) {
+	if (button_is_active(ed->bars_check)) {
+	    png_plot *plot = (png_plot *) spec->ptr;
+	    double xmin = -1, xmax = -1;
+	    double ymin = -1, ymax = -1;
+	    gchar *fname;
+
+	    plot_get_coordinates(plot, &xmin, &xmax, 
+			     &ymin, &ymax);
+
+	    /* FIXME make the "cycles" or "bars" file
+	       selectable */
+
+	    if (xmin > 0 && xmax > 0 && ymin > 0 && ymax > 0) {
+		fname = g_strdup_printf("%sdata%cnber.txt",
+				    gretl_home(), SLASH); 
+		plotspec_add_dates_info(spec, xmin, xmax,
+					ymin, ymax, fname);
+		g_free(fname);
+	    }
+	} else {
+	    plotspec_remove_dates_info(spec);
+	}
+    }
+
     if (!err) {
 	png_plot *plot = (png_plot *) spec->ptr;
 
@@ -902,13 +928,6 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    mark_session_changed();
 	}
     }
-
-#if 0 /* just testing for now */
-    if (1) {
-	/* will be @gretldir/data/nber.txt */
-	plotspec_add_dates_info(spec, "/home/cottrell/stats/work/nber.txt");
-    }
-#endif
 
     plot_editor_sync(ed);
 }
@@ -1386,6 +1405,17 @@ static void add_gd_font_selector (plot_editor *ed, GtkWidget *tbl, int *rows)
     gtk_widget_show(ed->ttfspin);
 }
 
+static int show_bars_check (GPT_SPEC *spec)
+{
+    if (!(spec->flags & GPT_TS)) {
+	return 0;
+    }
+
+    return (spec->pd == 1 || 
+	    spec->pd == 4 || 
+	    spec->pd == 12);
+}
+
 static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec) 
 {
     static int aa_ok = 1;
@@ -1552,6 +1582,18 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	g_signal_connect(G_OBJECT(aa_check), "clicked", 
 			 G_CALLBACK(set_aa_status), &aa_ok);
 	gtk_widget_show(aa_check);
+    }
+
+    /* displaying "recession bars" */
+    if (show_bars_check(spec)) {
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	ed->bars_check = gtk_check_button_new_with_label("Show NBER recessions");
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  ed->bars_check, 0, TAB_MAIN_COLS, 
+				  rows-1, rows);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->bars_check),
+				     spec->nbars > 0);
+	gtk_widget_show(ed->bars_check);	
     }
 
     /* setting of graph font, if gnuplot uses freetype */
@@ -2947,6 +2989,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->border_check = NULL;
     ed->grid_check = NULL;
     ed->y2_check = NULL;
+    ed->bars_check = NULL;
     ed->ttfcombo = NULL;
     ed->ttfspin = NULL;
     ed->fontcheck = NULL;
