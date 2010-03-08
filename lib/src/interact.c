@@ -2662,7 +2662,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (cmd->ci == GNUPLOT && cmd->list[0] < 2) {
-	if (cmd->opt & (OPT_T|OPT_X)) {
+	if (cmd->opt & (OPT_T | OPT_X)) {
 	    cmd->err = (cmd->list[0] == 0)? E_ARGS : cmd->err;
 	} else if (!(cmd->opt & OPT_D)) {
 	    cmd->err = E_ARGS;
