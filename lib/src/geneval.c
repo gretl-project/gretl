@@ -8664,8 +8664,10 @@ static void assign_to_matrix (parser *p)
     } else {
 	/* replace the old matrix with result */
 	m = grab_or_copy_matrix_result(p);
-	p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
-	p->lh.m0 = NULL; /* invalidate pointer */
+	if (!p->err) {
+	    p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
+	    p->lh.m0 = NULL; /* invalidate pointer */
+	}
     }
 
     p->lh.m1 = m;
@@ -8857,7 +8859,8 @@ static int gen_check_return_type (parser *p)
     }
 
     if ((p->dinfo == NULL || p->dinfo->n == 0) && 
-	r->t != MAT && r->t != NUM && r->t != STR) {
+	r->t != MAT && r->t != NUM && 
+	r->t != STR && r->t != EMPTY) {
 	no_data_error(p);
 	return p->err;
     }
