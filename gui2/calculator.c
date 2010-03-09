@@ -1256,7 +1256,7 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 	return;
     }
 
-    /* value for which to get p-value */
+    /* x-value for which to get p-value */
 
     switch (d) {
     case NORMAL_DIST:
@@ -1281,7 +1281,8 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
     st = dist_to_char(d);
 
     if (d == NORMAL_DIST) {
-	x = (x - parm[0]) / parm[1]; /* z-score */
+	/* transform to z-score */
+	x = (x - parm[0]) / parm[1];
     }
 
     if (bufopen(&prn)) return;

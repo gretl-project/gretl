@@ -1719,6 +1719,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	/* option to display NBER "recession bars" or similar */
 	GtkWidget *combo;
 
+	/* check button */
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	ed->bars_check = gtk_check_button_new_with_label(_("Show bars"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->bars_check),
@@ -1727,6 +1728,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 				  0, 1, rows-1, rows);
 	gtk_widget_show(ed->bars_check);
 
+	/* plus combo selector */
 	ed->barscombo = combo = gtk_combo_box_new_text();
 	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("NBER recessions"));
 	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("other..."));

@@ -1456,6 +1456,11 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     return err;
 }
 
+/* next: apparatus for producing shaded bars in time-series
+   plots */
+
+#define BDEBUG 0
+
 static plotbars *plotbars_new (int n)
 {
     plotbars *bars = malloc(sizeof *bars);
@@ -1506,6 +1511,10 @@ static plotbars *parse_bars_file (const char *fname,
 	*err = E_FOPEN;
 	return NULL;
     }
+
+#if BDEBUG > 1
+    fprintf(stderr, "parse_bars_file: '%s'\n", fname);
+#endif
 
     /* first count the data lines */
 
@@ -1566,7 +1575,7 @@ static plotbars *parse_bars_file (const char *fname,
 	    } else {
 		x0 = di[0] + (di[1] - 1.0) / 12;
 		x1 = di[2] + (di[3] - 1.0) / 12;
-#if 0
+#if BDEBUG > 1
 		fprintf(stderr, "%.4f %.4f\n", x0, x1);
 #endif
 		if (x1 < x0) {
@@ -1600,7 +1609,15 @@ static plotbars *parse_bars_file (const char *fname,
 static void print_plotbars (plotbars *bars, FILE *fp)
 {
     double **dx = bars->dx;
+    double y0 = bars->ymin;
+    double y1 = bars->ymax;
+    double adj = .002 * (y1 - y0);
     int i, started, stopped;
+
+    /* try to prevent the addition of bars to the plot
+       from causing the y-range to expand */
+    y0 += adj;
+    y1 -= adj;
 
     for (i=0; i<bars->n; i++) {
 	if (dx[i][1] < bars->t1) {
@@ -1612,26 +1629,22 @@ static void print_plotbars (plotbars *bars, FILE *fp)
 	started = stopped = 0;
 	if (dx[i][0] >= bars->t1) {
 	    /* start is in range */
-	    fprintf(fp, "%.3f %g %g\n", dx[i][0],
-		    bars->ymin, bars->ymax);
+	    fprintf(fp, "%.3f %.10g %.10g\n", dx[i][0], y0, y1);
 	    started = 1;
 	}
 	if (dx[i][1] <= bars->t2) {
 	    /* stop is in range */
 	    if (!started) {
 		/* but the start was not */
-		fprintf(fp, "%.3f %g %g\n", bars->t1, 
-			bars->ymin, bars->ymax);
+		fprintf(fp, "%.3f %.10g %.10g\n", bars->t1, y0, y1);
 	    }
-	    fprintf(fp, "%.3f %g %g\n", dx[i][1],
-		    bars->ymin, bars->ymax);
+	    fprintf(fp, "%.3f %.10g %.10g\n", dx[i][1], y0, y1);
 	    fputs("e\n", fp);
 	    stopped = 1;
 	}
 	if (started && !stopped) {
 	    /* truncated */
-	    fprintf(fp, "%.3f %g %g\n", bars->t2, 
-		    bars->ymin, bars->ymax);
+	    fprintf(fp, "%.3f %.10g %.10g\n", bars->t2, y0, y1);
 	    fputs("e\n", fp);
 	}
     }
@@ -1673,6 +1686,10 @@ static int n_bars_shown (double xmin, double xmax, plotbars *bars)
     bars->t1 = xmin;
     bars->t2 = xmax;
 
+#if BDEBUG
+    fprintf(stderr, "n_bars_shown: n = %d\n", n);
+#endif
+
     return n;
 }
 
@@ -1705,11 +1722,11 @@ int plotspec_add_bars_info (GPT_SPEC *spec,
     if (!err) {
 	int n = n_bars_shown(xmin, xmax, bars);
 
-#if 0
-	fprintf(stderr, "bars: xmin=%g, xmax=%g, n_shown=%d\n",
-		xmin, xmax, n);
+#if BDEBUG
+	fprintf(stderr, "plotspec_add_bars_info:\n"
+		" xmin=%g, xmax=%g, n=%d, ymin=%g, ymax=%g\n",
+		xmin, xmax, n, ymin, ymax);
 #endif
-
 	if (n > 0) {
 	    spec->bars = bars;
 	    bars->ymin = ymin;

@@ -239,7 +239,7 @@ int plot_get_coordinates (png_plot *plot,
     }
 
     if (plot->xmin > 0 && plot->xmax > 0 &&
-	plot->ymin > 0 && plot->ymax > 0) {
+	plot->ymax > plot->ymin) {
 	if (xmin != NULL) {
 	    *xmin = plot->xmin;
 	}
@@ -248,9 +248,11 @@ int plot_get_coordinates (png_plot *plot,
 	}
 	if (ymin != NULL) {
 	    *ymin = plot->ymin;
+	    fprintf(stderr, "gpt_control.c: ymin=%g\n", plot->ymin);
 	}
 	if (ymax != NULL) {
 	    *ymax = plot->ymax;
+	    fprintf(stderr, "gpt_control.c: ymax=%g\n", plot->ymax);
 	}
 	err = 0;
     }
@@ -4509,9 +4511,8 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
 
 static int get_png_bounds_info (png_bounds *bounds)
 {
-    char bbname[MAXLEN];
     FILE *fp;
-    char line[128];
+    char bbname[MAXLEN], line[128];
     int plot_ret = -1, data_ret = -1;
     int ret = GRETL_PNG_OK;
 
