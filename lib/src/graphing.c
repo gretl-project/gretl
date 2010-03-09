@@ -4214,6 +4214,25 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
     return gnuplot_make_graph();
 }
 
+static int data_straddle_zero (const gretl_matrix *m)
+{
+    int t, lt0 = 0, gt0 = 0;
+
+    for (t=0; t<m->rows; t++) {
+	if (gretl_matrix_get(m, t, 1) < 0) {
+	    lt0 = 1;
+	}
+	if (gretl_matrix_get(m, t, 2) > 0) {
+	    gt0 = 1;
+	}	
+	if (lt0 && gt0) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
@@ -4281,6 +4300,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	    sprintf(title, _("%g percent confidence band"), 100 * (1 - alpha));
 	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt %d, \\\n", 
 		    title, SHADECOLOR + 1);
+	    if (data_straddle_zero(resp)) {
+		fputs("0 notitle w lines lt 0, \\\n", fp);
+	    }
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1\n", _("point estimate"));
 	} else {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n", 
