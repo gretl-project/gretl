@@ -1281,7 +1281,7 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
     st = dist_to_char(d);
 
     if (d == NORMAL_DIST) {
-	parm[0] = (x - parm[0]) / parm[1]; /* z-score */
+	x = (x - parm[0]) / parm[1]; /* z-score */
     }
 
     if (bufopen(&prn)) return;
@@ -3059,7 +3059,7 @@ static void real_stats_calculator (int code, gpointer data)
     add_window_list_item(child->dlg, STAT_TABLE);
 }
 
-/* for gnuplot: convert '^' to '**' for exonentiation */
+/* for gnuplot: convert '^' to '**' for exponentiation */
 
 static gchar *formula_mod (const gchar *s)
 {
