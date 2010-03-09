@@ -50,9 +50,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define if zlib is available */
 #undef HAVE_ZLIB
 
-/* Is gnuplot available? */
-#undef HAVE_GNUPLOT
-
 /* Is LaTeX available? */
 #undef HAVE_LATEX
 

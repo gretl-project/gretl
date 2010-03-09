@@ -335,7 +335,6 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 {
     int latin = 0;
     int pdfterm = 0;
-    int recolor = 0;
     char *fname;
     FILE *fp, *fq;
     int err = 0;
@@ -396,11 +395,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     fprintf(fq, "set output '%s'\n", fname);
 
-    if (!gpage.mono && !gnuplot_has_rgb()) {
-	recolor = 1;
-    }
-
-    filter_gnuplot_file(gpage.term, latin, gpage.mono, recolor, fp, fq);
+    filter_gnuplot_file(gpage.term, latin, gpage.mono, fp, fq);
 
     fclose(fp);
     fclose(fq);

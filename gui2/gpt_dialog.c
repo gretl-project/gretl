@@ -2458,12 +2458,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	/* the errorbars and filledcurves styles are not exchangeable
 	   with the others */
-	if (line->style == GP_STYLE_ERRORBARS && !gnuplot_has_style_fill()) {
-	    set_combo_box_default_text(GTK_COMBO_BOX(ed->stylecombo[i]), 
-				       _(gp_line_style_display_name(line->style)));
-	    gtk_widget_set_sensitive(ed->stylecombo[i], FALSE);
-	} else if (line->style == GP_STYLE_ERRORBARS ||
-		   line->style == GP_STYLE_FILLEDCURVE) {
+	if (line->style == GP_STYLE_ERRORBARS || 
+	    line->style == GP_STYLE_FILLEDCURVE) {
 	    GList *altsty = NULL;
 
 	    altsty = add_style_spec(altsty, GP_STYLE_ERRORBARS); 

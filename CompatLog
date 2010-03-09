@@ -1,5 +1,9 @@
 version 1.8.8, in progress
 
+Gretl now requires gnuplot version 4.2.0 or higher for
+graphing.  Since version 4.2 was released in March 2007,
+hopefully this should not be too onerous.
+
 The "criteria" command has been removed.  A small function
 package is available on the gretl server that replaces this
 command.

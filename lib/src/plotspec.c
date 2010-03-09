@@ -581,10 +581,9 @@ print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "at %g,%g %s%s\n", 
+    fprintf(fp, "at %g,%g %s front\n", 
 	    lbl->pos[0], lbl->pos[1],
-	    gp_justification_string(lbl->just),
-	    gnuplot_label_front_string());
+	    gp_justification_string(lbl->just));
 
     gretl_pop_c_numeric_locale();
 
@@ -877,7 +876,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	}
     }
 
-    if (!mono && gnuplot_has_rgb()) {
+    if (!mono) {
 	write_styles_from_plotspec(spec, fp);
     }
 
@@ -1007,7 +1006,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     if ((spec->code == PLOT_FREQ_SIMPLE ||
 	 spec->code == PLOT_FREQ_NORMAL ||
-	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
+	 spec->code == PLOT_FREQ_GAMMA)) {
 	if (mono) {
 	    fputs("set style fill solid 0.3\n", fp);
 	} else {

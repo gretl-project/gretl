@@ -379,33 +379,9 @@ int gnuplot_png_terminal (void)
     return GP_PNG_CAIRO;
 }
    
-int gnuplot_has_style_fill (void)
-{
-    /* ... and that it does style fill */
-    return 1;
-}
-
-int gnuplot_uses_datafile_missing (void)
-{
-    /* yup */
-    return 1;
-}
-
-const char *gnuplot_label_front_string (void)
-{
-    /* ... and that it handles "front" for labels */
-    return " front";
-}
-
 int gnuplot_has_latin5 (void)
 {
     /* ... and that it supports ISO-8859-9 */
-    return 1;
-}
-
-int gnuplot_has_cp1250 (void)
-{
-    /* ... and that it supports CP1250 */
     return 1;
 }
 
@@ -413,12 +389,6 @@ int gnuplot_has_cp1254 (void)
 {
     /* ... and that it doesn't support CP1254 */
     return 0;
-}
-
-int gnuplot_has_rgb (void)
-{
-    /* ... and that it supports rgb line-color specs */
-    return 1;
 }
 
 int gnuplot_has_bbox (void)
@@ -430,18 +400,6 @@ int gnuplot_has_bbox (void)
 int gnuplot_has_utf8 (void)
 {
     /* ... and that it supports "set encoding utf8" */
-    return 1;
-}
-
-static int gnuplot_has_size (void)
-{
-    /* ... and that it supports the size argument to set term */
-    return 1;
-}
-
-static int gnuplot_has_decimalsign (void)
-{
-    /* ... and that it supports the decimalsign setter */
     return 1;
 }
 
@@ -469,31 +427,11 @@ int gnuplot_has_ttf (int reset)
     return !err;
 }
 
-static int gnuplot_has_size (void)
-{
-    static int err = -1; 
-    
-    if (err == -1) {
-	err = gnuplot_test_command("set term png size 640,480");
-    }
-
-    return !err;
-}
-
-static int gnuplot_has_decimalsign (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set decimalsign ','");
-    }
-
-    return !err;
-}
-
 int gnuplot_has_latin5 (void)
 {
     static int err = -1; 
+
+    /* not OK in gnuplot 4.2.0 */
 
     if (err == -1) {
 	err = gnuplot_test_command("set encoding iso_8859_9");
@@ -502,20 +440,11 @@ int gnuplot_has_latin5 (void)
     return !err;
 }
 
-int gnuplot_has_cp1250 (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set encoding cp1250");
-    }
-
-    return !err;
-}
-
 int gnuplot_has_cp1254 (void)
 {
     static int err = -1; 
+
+    /* not OK in gnuplot 4.2.0 */
 
     if (err == -1) {
 	err = gnuplot_test_command("set encoding cp1254");
@@ -600,6 +529,8 @@ int gnuplot_has_bbox (void)
 {
     static int err = -1;
 
+    /* not OK in gnuplot 4.2.0 */
+
     if (err == -1) {
 	err = gnuplot_test_command("set term png ; "
 				   "set output '/dev/null' ; "
@@ -613,59 +544,13 @@ int gnuplot_has_utf8 (void)
 {
     static int err = -1;
 
+    /* not OK in gnuplot 4.2.0 */
+
     if (err == -1) {
 	err = gnuplot_test_command("set encoding utf8");
     }
 
     return !err;    
-}
-
-int gnuplot_has_style_fill (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set style fill solid");
-    }
-
-    return !err;
-}
-
-int gnuplot_uses_datafile_missing (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set datafile missing \"?\"");
-    }
-
-    return !err;
-}
-
-int gnuplot_has_rgb (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set style line 2 lc rgb \"#0000ff\"");
-    }
-
-    return !err;
-}
-
-const char *gnuplot_label_front_string (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set label 'foo' at 0,0 front");
-    }
-
-    if (err) {
-	return "";
-    } else {
-	return " front";
-    }
 }
 
 #endif /* !WIN32 */
@@ -678,12 +563,6 @@ void gnuplot_png_set_use_aa (int s)
 }
 
 /* apparatus for handling plot colors */
-
-enum {
-    OLD_PNG_COLOR,  /* plain old "color" option */
-    GD_PNG_COLOR,   /* pre-4.2.0 libgd-based PNG color spec */
-    RGB_LINE_COLOR  /* per-line rgb settings */
-};
 
 static const gretlRGB default_color[N_GP_COLORS] = {
     { 0xff, 0x00, 0x00 },
@@ -706,11 +585,6 @@ static gretlRGB user_color[N_GP_COLORS] = {
     { 0x5f, 0x6b, 0x84 },
     { 0xdd, 0xdd, 0xdd }    
 };
-
-static void print_rgb_x (char *s, gretlRGB color)
-{
-    sprintf(s, "x%02x%02x%02x", color.r, color.g, color.b);
-}
 
 void print_rgb_hash (char *s, const gretlRGB *color)
 {
@@ -899,34 +773,7 @@ write_old_gnuplot_font_string (char *fstr, PlotType ptype)
 
 #endif
 
-/* we need this only if we _don't_ have per-line rgb
-   settings, which are in gnuplot 4.2 and higher */
-
-static char *make_png_colorspec (char *targ, int ptype)
-{
-    char cstr[8];
-    int i;
-
-    /* background etc. */
-    strcpy(targ, " xffffff x000000 x202020");
-
-    if (frequency_plot_code(ptype)) {
-	strcat(targ, " ");
-	print_rgb_x(cstr, user_color[BOXCOLOR]);
-	strcat(targ, cstr);
-	strcat(targ, " x000000");
-    } else {
-	for (i=0; i<BOXCOLOR; i++) {
-	    strcat(targ, " ");
-	    print_rgb_x(cstr, user_color[i]);
-	    strcat(targ, cstr);
-	}
-    }
-
-    return targ;
-}
-
-/* we use this mechanism with gnuplot 4.2 and higher */
+/* requires gnuplot 4.2 or higher */
 
 void write_plot_line_styles (int ptype, FILE *fp)
 {
@@ -955,8 +802,6 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
     fputs("set style increment user\n", fp);
 }
-
-/* end colors apparatus */
 
 /* Get gnuplot to print the dimensions of a PNG plot, in terms
    of both pixels and data bounds, if gnuplot supports this.
@@ -1001,29 +846,17 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     char truecolor_string[12] = {0};
     char font_string[128];
     char size_string[16];
-    char color_string[64];
-    int gpcolors, gpttf = 1, gpsize = 1;
-    int pngterm = 0;
+    int gpttf, pngterm = 0;
 
     *font_string = 0;
     *size_string = 0;
-    *color_string = 0;
 
     pngterm = gnuplot_png_terminal();
 
 #ifdef WIN32
-    gpcolors = RGB_LINE_COLOR;
+    gpttf = 1;
 #else
-    if (gnuplot_has_rgb()) {
-	gpcolors = RGB_LINE_COLOR;
-    } else if (pngterm == GP_PNG_OLD) {
-	gpcolors = OLD_PNG_COLOR;
-    } else {
-	gpcolors = GD_PNG_COLOR;
-    }
-
     gpttf = gnuplot_has_ttf(0);
-    gpsize = gnuplot_has_size();
 #endif
 
     if (pngterm == GP_PNG_GD2 && gnuplot_png_use_aa) {
@@ -1041,24 +874,12 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     }
 #endif
 
-    /* plot color setup */
-    if (gpcolors == GD_PNG_COLOR) {
-	make_png_colorspec(color_string, ptype);
-    } else if (gpcolors == OLD_PNG_COLOR) {
-	strcpy(color_string, " color");
-    } else {
-	/* handled via styles */
-	*color_string = '\0';
-    }
-
-    if (gpsize) {
-	if (flags & GPT_LETTERBOX) {
-	    strcpy(size_string, " size 680,400");
-	} else if (ptype == PLOT_VAR_ROOTS) {
-	    strcpy(size_string, " size 480,480");
-	} else if (ptype == PLOT_QQ) {
-	    strcpy(size_string, " size 480,480");
-	}
+    if (flags & GPT_LETTERBOX) {
+	strcpy(size_string, " size 680,400");
+    } else if (ptype == PLOT_VAR_ROOTS) {
+	strcpy(size_string, " size 480,480");
+    } else if (ptype == PLOT_QQ) {
+	strcpy(size_string, " size 480,480");
     }
 
     if (pngterm == GP_PNG_CAIRO) {
@@ -1066,9 +887,8 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 		font_string, size_string);
 	strcat(png_term_line, "\nset encoding utf8"); /* FIXME? */
     } else {
-	sprintf(png_term_line, "set term png%s%s%s%s",
-		truecolor_string, font_string, size_string, 
-		color_string);
+	sprintf(png_term_line, "set term png%s%s%s",
+		truecolor_string, font_string, size_string); 
     }
 
 #if GP_DEBUG
@@ -1169,7 +989,7 @@ int write_plot_type_string (PlotType ptype, FILE *fp)
 	}
     }
 
-    if (get_local_decpoint() == ',' && gnuplot_has_decimalsign()) {
+    if (get_local_decpoint() == ',') {
 	fputs("set decimalsign ','\n", fp);
     }
 
@@ -1202,7 +1022,7 @@ static void print_term_string (int tt, FILE *fp)
 
     if (tstr != NULL) {
 	fprintf(fp, "%s\n", tstr);
-	if (tt != GP_TERM_EPS && gnuplot_has_rgb()) {
+	if (tt != GP_TERM_EPS) {
 	    write_plot_line_styles(PLOT_REGULAR, fp);
 	}
     }
@@ -1345,7 +1165,7 @@ static FILE *gp_set_up_batch (char *fname, PlotType ptype,
 }
 
 static FILE *gp_set_up_interactive (char *fname, PlotType ptype, 
-				  GptFlags flags, int *err)
+				    GptFlags flags, int *err)
 {
     int gui = gretl_in_gui_mode();
     FILE *fp = NULL;
@@ -1370,13 +1190,30 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 	    print_set_output(NULL, fp);
 	}
 	write_plot_type_string(ptype, fp);
-	if (gnuplot_has_rgb()) {
-	    write_plot_line_styles(ptype, fp);
-	}
+	write_plot_line_styles(ptype, fp);
     }
 
     return fp;
 }
+
+#ifndef WIN32
+
+static int gnuplot_too_old (void)
+{
+    static int gperr = -1;
+
+    if (gperr < 0) {
+	gperr = gnuplot_test_command("set style line 2 lc rgb \"#0000ff\"");
+    }
+
+    if (gperr) {
+	gretl_errmsg_set("Gnuplot is too old: must be >= version 4.2.0");
+    }
+
+    return gperr;
+}
+
+#endif
 
 /* Open stream into which gnuplot commands will be written.
 
@@ -1407,6 +1244,13 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
     if (*gnuplot_path == '\0') {
 	strcpy(gnuplot_path, gretl_gnuplot_path());
     }
+
+#ifndef WIN32
+    if (gnuplot_too_old()) {
+	*err = E_EXTERNAL;
+	return NULL;
+    }
+#endif
 
     this_term_type = GP_TERM_NONE;
     *gnuplot_outname = '\0';
@@ -1891,9 +1735,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 	return err;
     }
 
-    if (gnuplot_has_size()) {
-	gi->flags |= GPT_LETTERBOX;
-    }
+    gi->flags |= GPT_LETTERBOX;
 
     fp = open_gp_stream(PLOT_REGULAR, gi->flags, &err);
     if (err) {
@@ -2516,11 +2358,7 @@ static int maybe_add_plotx (gnuplot_info *gi,
 
 void gnuplot_missval_string (FILE *fp)
 {
-    if (gnuplot_uses_datafile_missing()) {
-	fputs("set datafile missing \"?\"\n", fp);
-    } else {
-	fputs("set missing \"?\"\n", fp);
-    }
+    fputs("set datafile missing \"?\"\n", fp);
 }
 
 static void graph_month_name (char *mname, int m)
@@ -2704,12 +2542,8 @@ static void make_time_tics (gnuplot_info *gi,
 	pprintf(prn, "# multiple timeseries %d\n", pdinfo->pd);
     } else {
 	pprintf(prn, "# timeseries %d", pdinfo->pd);
-	if (gnuplot_has_size()) {
-	    gi->flags |= GPT_LETTERBOX;
-	    pputs(prn, " (letterbox)\n");
-	} else {
-	    pputc(prn, '\n');
-	}
+	gi->flags |= GPT_LETTERBOX;
+	pputs(prn, " (letterbox)\n");
     } 
 
     if (pdinfo->pd == 4 && (gi->t2 - gi->t1) / 4 < 8) {
@@ -3444,11 +3278,9 @@ int gnuplot_3d (int *list, const char *literal,
 
     gretl_push_c_numeric_locale();
 
-    if (gnuplot_has_rgb()) {
-	/* try to ensure we don't get "invisible" green datapoints */
-	fprintf(fq, "set style line 2 lc rgb \"#0000ff\"\n");
-	addstyle = 1;
-    }    
+    /* try to ensure we don't get "invisible" green datapoints */
+    fprintf(fq, "set style line 2 lc rgb \"#0000ff\"\n");
+    addstyle = 1;
     
     print_axis_label('x', var_get_graph_name(pdinfo, list[2]), fq);
     print_axis_label('y', var_get_graph_name(pdinfo, list[1]), fq);
@@ -3657,13 +3489,12 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    }
 
 	    if (!na(freq->test)) {
-		fprintf(fp, "set label \"%s:\" at graph .03, graph .97%s\n",
-			_("Test statistic for normality"),
-			gnuplot_label_front_string());
+		fprintf(fp, "set label \"%s:\" at graph .03, graph .97 front\n",
+			_("Test statistic for normality"));
 		print_freq_test_label(label, _("Chi-squared(2) = %.3f pvalue = %.5f"), 
 				      freq->test, chisq_cdf_comp(2, freq->test));
-		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
-			label, gnuplot_label_front_string());
+		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n", 
+			label);
 	    }	
 	} else if (dist == D_GAMMA) {
 	    double var = freq->sdx * freq->sdx;
@@ -3680,13 +3511,12 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    plotmax = freq->xbar + 4.0 * freq->sdx;
 
 	    if (!na(freq->test)) {
-		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
-			_("Test statistic for gamma"),
-			gnuplot_label_front_string());
+		fprintf(fp, "set label '%s:' at graph .03, graph .97 front\n",
+			_("Test statistic for gamma"));
 		print_freq_test_label(label, _("z = %.3f pvalue = %.5f"), 
 				      freq->test, normal_pvalue_2(freq->test));
-		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
-			label, gnuplot_label_front_string());
+		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n", 
+			label);
 	    }	
 	}
 
@@ -3726,9 +3556,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
     /* plot instructions */
     if (use_boxes) {
-	if (gnuplot_has_style_fill()) {
-	    fputs("set style fill solid 0.6\n", fp);
-	}
+	fputs("set style fill solid 0.6\n", fp);
 	strcpy(withstr, "w boxes");
     } else {
 	strcpy(withstr, "w impulses linewidth 3");
@@ -3900,11 +3728,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     }
 
     if (do_errs && !use_fill && !use_lines && n > 150) {
-	if (gnuplot_has_style_fill()) {
-	    use_fill = 1;
-	} else {
-	    use_lines = 1;
-	}
+	use_fill = 1;
     }
 
     if (use_fill) {

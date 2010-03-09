@@ -148,8 +148,6 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color);
 
 const char *gp_justification_string (int j);
 
-const char *gnuplot_label_front_string (void);
-
 int split_graph_fontspec (const char *s, char *name, int *psz);
 
 void gnuplot_missval_string (FILE *fp);
@@ -255,21 +253,13 @@ int gnuplot_pdf_terminal (void);
 
 int gnuplot_png_terminal (void);
 
-int gnuplot_has_rgb (void);
-
-int gnuplot_has_style_fill (void);
-
 int gnuplot_has_latin5 (void);
-
-int gnuplot_has_cp1250 (void);
 
 int gnuplot_has_cp1254 (void);
 
 int gnuplot_has_bbox (void);
 
 int gnuplot_has_utf8 (void);
-
-int gnuplot_uses_datafile_missing (void);
 
 void set_graph_palette (int i, gretlRGB color);
 

@@ -248,11 +248,9 @@ int plot_get_coordinates (png_plot *plot,
 	}
 	if (ymin != NULL) {
 	    *ymin = plot->ymin;
-	    fprintf(stderr, "gpt_control.c: ymin=%g\n", plot->ymin);
 	}
 	if (ymax != NULL) {
 	    *ymax = plot->ymax;
-	    fprintf(stderr, "gpt_control.c: ymax=%g\n", plot->ymax);
 	}
 	err = 0;
     }
@@ -605,52 +603,6 @@ static char *gp_contd_string (char *s)
     return p;
 }
 
-static char *get_insert_point (char *s, char *p)
-{
-    if (p == NULL) {
-	p = s + strlen(s) - 1;
-    }
-
-    if (p - s > 0 && *(p-1) == ' ') {
-	p--;
-    }
-
-    return p;
-}
-
-/* old gnuplot: can't do "rgb" line spec; we'll do what we can,
-   namely switch line type 2 for 3
-*/
-
-static void maybe_recolor_line (char *s, int lnum)
-{
-    const gretlRGB *color = get_graph_color(lnum - 1);
-
-    if (color != NULL) {
-	char *contd = gp_contd_string(s);
-	char cstr[8];
-
-	print_rgb_hash(cstr, color);
-
-#if GPDEBUG
-	fprintf(stderr, "lnum=%d, cstr='%s'\n", lnum, cstr);
-	fprintf(stderr, "s='%s'\n", s);
-#endif
-    
-	if (lnum == 2 && strcmp(cstr, "#00ff00") && !strstr(s, " lt ")) {
-	    char *p = get_insert_point(s, contd);
-
-	    *p = '\0';
-	    strcpy(p, " lt 3");
-	    if (contd != NULL) {
-		strcat(s, ", \\\n");
-	    } else {
-		strcat(s, "\n");
-	    }
-	} 
-    } 
-}
-
 static void dataline_check (char *s, int *d)
 {
     if (!strncmp(s, "plot \\", 6)) {
@@ -737,12 +689,11 @@ static int term_uses_utf8 (int ttype)
 
 #define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
 
-void filter_gnuplot_file (int ttype, int latin, int mono, int recolor, 
+void filter_gnuplot_file (int ttype, int latin, int mono, 
 			  FILE *fpin, FILE *fpout)
 {
     char pline[512];
     int dataline = -1;
-    int lnum = -1;
     int err = 0;
 
     while (fgets(pline, sizeof pline, fpin)) {
@@ -762,17 +713,6 @@ void filter_gnuplot_file (int ttype, int latin, int mono, int recolor,
 	    } else if (strstr(pline, "set style fill solid")) {
 		fputs("set style fill solid 0.3\n", fpout);
 		continue;
-	    }
-	}
-
-	if (recolor) {
-	    if (!strncmp(pline, "plot ", 5)) {
-		lnum = 0;
-	    } else if (lnum >= 0) {
-		lnum++;
-	    }
-	    if (lnum > 0 && dataline <= 0) {
-		maybe_recolor_line(pline, lnum);
 	    }
 	}
 
@@ -796,7 +736,7 @@ void filter_gnuplot_file (int ttype, int latin, int mono, int recolor,
 static void maybe_print_gp_encoding (int ttype, int latin, FILE *fp)
 {
     if (ttype == GP_TERM_EMF) {
-	if (latin == 2 && gnuplot_has_cp1250()) {
+	if (latin == 2) {
 	    fputs("set encoding cp1250\n", fp);
 	} else if (latin == 9 && gnuplot_has_cp1254()) {
 	    fputs("set encoding cp1254\n", fp);
@@ -826,7 +766,6 @@ static int revise_plot_file (GPT_SPEC *spec,
     int mono = (spec->flags & GPT_MONO);
     int ttype = spec->termtype;
     int latin = 0;
-    int recolor = 0;
     int err = 0;
 
     fpin = gretl_fopen(spec->fname, "r");
@@ -859,12 +798,7 @@ static int revise_plot_file (GPT_SPEC *spec,
 	fprintf(fpout, "set output '%s'\n", outtarg);
     }	
 
-    if (!mono && (ttype == GP_TERM_EPS || ttype == GP_TERM_PDF)
-	&& !gnuplot_has_rgb()) {
-	recolor = 1;
-    }
-
-    filter_gnuplot_file(ttype, latin, mono, recolor, fpin, fpout);
+    filter_gnuplot_file(ttype, latin, mono, fpin, fpout);
 
     fclose(fpin);
     fclose(fpout);

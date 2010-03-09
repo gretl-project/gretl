@@ -257,7 +257,7 @@ int maybe_rewrite_gp_file (const char *fname)
     FILE *fin, *fout;
     gchar *trbuf, *modname = NULL;
     char line[512];
-    int newmiss, modified = 0;
+    int modified = 0;
     int recoded = 0;
     int err = 0;
 
@@ -275,16 +275,11 @@ int maybe_rewrite_gp_file (const char *fname)
 	return 1;
     }
 
-    newmiss = gnuplot_uses_datafile_missing();
-
     while (fgets(line, sizeof line, fin)) {
 	int modline = 0;
 	
-	if (newmiss && !strncmp(line, "set missing", 11)) {
+	if (!strncmp(line, "set missing", 11)) {
 	    fputs("set datafile missing \"?\"\n", fout);
-	    modline = 1;
-	} else if (!newmiss && !strncmp(line, "set datafile miss", 17)) {
-	    fputs("set missing \"?\"\n", fout);
 	    modline = 1;
 	} else if (!strncmp(line, "# set term", 10)) {
 	    /* skip it */

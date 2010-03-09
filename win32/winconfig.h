@@ -26,12 +26,6 @@
 /* Define if zlib is available */
 #define HAVE_ZLIB 1
 
-/* Is gnuplot available? */
-#define HAVE_GNUPLOT 1
-
-/* Use gnuplot PNG output? */
-#define GNUPLOT_PNG 1
-
 /* Is LaTeX available? */
 #define HAVE_LATEX 1
 

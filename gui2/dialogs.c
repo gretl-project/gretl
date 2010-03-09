@@ -2538,12 +2538,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	static combo_opts ci_opts;
 	int deflt;
 
-	if (gnuplot_has_style_fill()) {
-	    deflt = (*optp & OPT_L)? 1 : (*optp & OPT_F)? 2 : 0;
-	} else {
-	    strs[2] = NULL;
-	    deflt = (*optp & OPT_L)? 1 : 0;
-	}
+	deflt = (*optp & OPT_L)? 1 : (*optp & OPT_F)? 2 : 0;
 
 	ci_opts.strs = strs;
 	ci_opts.vals = opts;
