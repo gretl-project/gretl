@@ -82,6 +82,7 @@ struct plot_editor_ {
     GtkWidget **yaxiscombo;
     GtkWidget **linescale;
     GtkWidget **linewidth;
+    GtkWidget **colorsel;
 
     GtkWidget *fitformula;
     GtkWidget *fitlegend;
@@ -351,17 +352,20 @@ static int style_from_line_number (GPT_SPEC *spec, int i,
 	j = LT_AUTO;
     }
 
+    if (j >= spec->n_lines) {
+	/* don't go out of bounds */
+	j = -1;
+    }
+
     return j;
 }
 
 static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 {
     GtkWidget *image, *button;
-    int dotted = 0, shade = 0;
-    int j;
+    int j = 0, dotted = 0, shade = 0;
 
-    if (spec->lines[i].type == 10) {
-	/* special: shade fill */
+    if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
 	shade = 1;
     } else {
 	j = style_from_line_number(spec, i, &dotted);
@@ -394,29 +398,32 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 			 GINT_TO_POINTER(j));
     }
 
-    if (dotted || shade) {
+    if (dotted) {
 	gtk_widget_set_sensitive(button, FALSE);
     }
 
     return button;
 }
 
-static void maybe_apply_line_color (GtkWidget *w, GPT_SPEC *spec,
-				    int i)
+static void apply_line_color (GtkWidget *cb, GPT_SPEC *spec,
+			      int i)
 {
     gretlRGB *rgb = NULL;
-    GtkWidget *cb;
-    int j;
-
-    cb = g_object_get_data(G_OBJECT(w), "colorsel");
-
+ 
     if (cb != NULL && GTK_WIDGET_SENSITIVE(cb)) {
 	rgb = g_object_get_data(G_OBJECT(cb), "rgb");
     }
 
     if (rgb != NULL) {
-	j = style_from_line_number(spec, i, NULL);
-	print_rgb_hash(spec->lines[j].rgb, rgb);
+	if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
+	    set_graph_palette(SHADECOLOR, *rgb);
+	} else {
+	    int j = style_from_line_number(spec, i, NULL);
+
+	    if (j >= 0) {
+		print_rgb_hash(spec->lines[j].rgb, rgb);
+	    }
+	}
     }
 }
 
@@ -889,7 +896,9 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	if (ed->linewidth[i] != NULL) {
 	    line->width = 
 		gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->linewidth[i]));
-	    maybe_apply_line_color(ed->linewidth[i], spec, i);
+	}
+	if (ed->colorsel[i] != NULL) {
+	    apply_line_color(ed->colorsel[i], spec, i);
 	}
     }
 
@@ -2296,6 +2305,8 @@ void set_combo_box_strings_from_stylist (GtkComboBox *box, GList *list)
     }
 }
 
+#define IRF_plot(c) (c == PLOT_IRFBOOT || c == PLOT_MULTI_IRF)
+
 static GList *add_style_spec (GList *list, int t)
 {
     return g_list_append(list, get_style_spec(t));
@@ -2366,6 +2377,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     for (i=0; i<ed->gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 	int label_done = 0;
+
+	hbox = NULL;
 
 	if (line_is_formula(line)) {
 	    tbl_len++;
@@ -2479,6 +2492,12 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 			     G_CALLBACK(flip_pointsel), ptsel);
 	} 
 
+	if (IRF_plot(spec->code) && (line->style == GP_STYLE_FILLEDCURVE ||
+				     line->style == GP_STYLE_ERRORBARS)) {
+	    /* styles not exchangeable in this context */
+	    gtk_widget_set_sensitive(ed->stylecombo[i], FALSE);
+	}
+
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(hbox);	
 
@@ -2527,13 +2546,18 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
 				      line->width);
 	}
-	g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate", 
-			 G_CALLBACK(apply_gpt_changes), 
-			 ed);
 	gtk_box_pack_start(GTK_BOX(hbox), ed->linewidth[i], FALSE, FALSE, 0);
 	gtk_widget_show(ed->linewidth[i]);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
 				  tbl_len-1, tbl_len);
+	if (spec->lines[i].style != GP_STYLE_FILLEDCURVE) {
+	    g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate", 
+			     G_CALLBACK(apply_gpt_changes), 
+			     ed);
+	} else {
+	    gtk_widget_set_sensitive(ed->linewidth[i], FALSE);
+	}
+
 	/* line color adjustment */
 	if (i < 6 && !frequency_plot_code(spec->code)) {
 	    button = line_color_button(spec, i);
@@ -2545,6 +2569,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 		g_object_set_data(G_OBJECT(ed->linewidth[i]), "colorsel",
 				  button);
 		gtk_widget_show_all(button);
+		ed->colorsel[i] = button;
 	    }
 	} else {
 	    label = NULL;
@@ -2567,7 +2592,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_box_pack_start(GTK_BOX(hbox), dotcombo, FALSE, FALSE, 5);
 	}
 
-	gtk_widget_show(hbox);
+	if (hbox != NULL) {
+	    gtk_widget_show(hbox);
+	}
 
 	/* separator */
 	tbl_len++;
@@ -2978,6 +3005,7 @@ static void plot_editor_destroy (plot_editor *ed)
     free(ed->yaxiscombo);
     free(ed->linescale);
     free(ed->linewidth);
+    free(ed->colorsel);
 
     free(ed->labeltext);
     free(ed->labelpos);
@@ -3032,6 +3060,7 @@ static int add_line_widget (plot_editor *ed)
     ed->yaxiscombo  = widget_array_expand(&ed->yaxiscombo, n, &err);
     ed->linescale   = widget_array_expand(&ed->linescale, n, &err);
     ed->linewidth   = widget_array_expand(&ed->linewidth, n, &err);
+    ed->colorsel    = widget_array_expand(&ed->linewidth, n, &err);
     
     if (!err) {
 	ed->gui_nlines = n;
@@ -3051,6 +3080,7 @@ static int allocate_line_widgets (plot_editor *ed, int n)
 	ed->yaxiscombo  = widget_array_new(n, &err);
 	ed->linescale   = widget_array_new(n, &err);
 	ed->linewidth   = widget_array_new(n, &err);
+	ed->colorsel    = widget_array_new(n, &err);
 	if (!err) {
 	    ed->gui_nlines = n;
 	}

@@ -177,7 +177,7 @@ static gp_style_spec style_specs[] = {
     { GP_STYLE_DOTS,         "dots",         N_("dots") },
     { GP_STYLE_STEPS,        "steps",        N_("steps") },
     { GP_STYLE_BOXES,        "boxes",        N_("boxes") },
-    { GP_STYLE_ERRORBARS,    "errorbars",     N_("error bars") },
+    { GP_STYLE_ERRORBARS,    "errorbars",    N_("error bars") },
     { GP_STYLE_FILLEDCURVE,  "filledcurve",  N_("filled curve") },
     { GP_STYLE_CANDLESTICKS, "candlesticks", N_("candlesticks") },
     { 0, NULL, NULL }
@@ -797,6 +797,19 @@ static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
     }
 }
 
+static int any_filledcurve (const GPT_SPEC *spec)
+{
+    int i;
+
+    for (i=0; i<spec->n_lines; i++) {
+	if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 {
     char cstr[8];
@@ -819,11 +832,12 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 	}
     }
 
-    if (spec->nbars > 0) {
+    if (spec->nbars > 0 || any_filledcurve(spec)) {
 	const gretlRGB *color = get_graph_color(SHADECOLOR);
 
 	print_rgb_hash(cstr, color);
-	fprintf(fp, "set style line 10 lc rgb \"%s\"\n", cstr);
+	fprintf(fp, "set style line %d lc rgb \"%s\"\n", 
+		SHADECOLOR + 1, cstr);
     }
 
     fputs("set style increment user\n", fp);
@@ -1632,7 +1646,8 @@ static void print_bars_header (int n, FILE *fp)
     int i;
 
     for (i=0; i<n; i++) {
-	fputs("'-' using 1:2:3 notitle lt 10 w filledcurve , \\\n", fp);
+	fprintf(fp, "'-' using 1:2:3 notitle lt %d w filledcurve , \\\n", 
+		SHADECOLOR + 1);
     }
 }
 

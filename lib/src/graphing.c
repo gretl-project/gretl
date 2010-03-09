@@ -949,7 +949,8 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
 	}
 	print_rgb_hash(cstr, &user_color[SHADECOLOR]);
-	fprintf(fp, "set style line 10 lc rgb \"%s\"\n", cstr);
+	fprintf(fp, "set style line %d lc rgb \"%s\"\n", 
+		SHADECOLOR + 1, cstr);
     }
 
     fputs("set style increment user\n", fp);
@@ -4454,7 +4455,8 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	fputs("plot \\\n", fp);
 	if (use_fill) {
 	    sprintf(title, _("%g percent confidence band"), 100 * (1 - alpha));
-	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 10, \\\n", title);
+	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt %d, \\\n", 
+		    title, SHADECOLOR + 1);
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1\n", _("point estimate"));
 	} else {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n", 
@@ -4570,7 +4572,8 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	    fputs("plot \\\n", fp);
 
 	    if (confint && use_fill) {
-		fputs("'-' using 1:2:3 notitle w filledcurve lt 10, \\\n", fp);
+		fprintf(fp, "'-' using 1:2:3 notitle w filledcurve lt %d, \\\n", 
+			SHADECOLOR + 1);
 		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
 	    } else if (confint) {
 		fputs("'-' using 1:2 notitle w lines, \\\n", fp); 

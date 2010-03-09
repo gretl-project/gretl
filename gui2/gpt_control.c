@@ -170,7 +170,7 @@ struct linestyle_ {
     int type;
 };
 
-#define MAX_STYLES 6
+#define MAX_STYLES N_GP_COLORS
 
 static int get_png_bounds_info (png_bounds *bounds);
 
@@ -1665,13 +1665,13 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     if (!strncmp(s, "set style line", 14)) {
 	/* e.g. set style line 1 lc rgb "#ff0000 lt 6" */
 	int n, idx = 0, lt = LT_AUTO;
-	char rgb[8];
+	char rgb[8] = {0};
 
 	n = sscanf(s + 14, " %d lc rgb \"%7s\" lt %d", &idx, rgb, &lt);
 	if (n >= 2 && idx > 0 && idx <= MAX_STYLES) {
 	    strcpy(styles[idx-1].rgb, rgb);
 	    styles[idx-1].type = (n == 3)? lt : LT_AUTO;
-	}	    
+	}
 	return 0;
     }
 
@@ -2250,7 +2250,6 @@ static void linestyle_init (linestyle *ls)
 static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 {
     linestyle styles[MAX_STYLES];
-    int i, done;
     int do_markers = 0;
     int datacols = 0;
     int reglist[4] = {0};
@@ -2258,6 +2257,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     char gpline[MAXLEN];
     gchar *buf = NULL;
     char *got = NULL;
+    int i, done;
     int err = 0;
 
 #if GPDEBUG
@@ -2459,7 +2459,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	goto bailout;
     }
 
-    /* determine total number of required data columns, etc. */
+    /* determine total number of required data columns, etc.,
+       and transcribe styles info into lines for use in the
+       GUI editor */
+
     for (i=0; i<spec->n_lines; i++) {
 	if (uservec != NULL && in_gretl_list(uservec, i)) {
 	    spec->lines[i].flags |= GP_LINE_USER;
@@ -2467,7 +2470,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	if (i < MAX_STYLES) {
 	    strcpy(spec->lines[i].rgb, styles[i].rgb);
 	}
-	if (spec->lines[i].ncols == 0) {
+ 	if (spec->lines[i].ncols == 0) {
 	    continue;
 	}
 	if (datacols == 0) {
