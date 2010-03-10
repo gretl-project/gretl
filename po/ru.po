@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-10 08:34-0500\n"
+"PO-Revision-Date: 2010-03-10 17:22+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:245
 msgid "lagged differences"
@@ -1484,7 +1484,7 @@ msgstr "Локальная оценка Уиттла (Whittle)"
 
 #: lib/src/describe.c:3705
 msgid "quarters"
-msgstr "кварталы"
+msgstr "Кварталы"
 
 #: lib/src/describe.c:3707
 msgid "months"
@@ -1501,7 +1501,7 @@ msgstr "Периоды"
 
 #: lib/src/describe.c:3724
 msgid "scaled frequency"
-msgstr "масштабированная частота"
+msgstr "Масштабированная частота"
 
 #: lib/src/describe.c:3731
 msgid "Residual spectrum"
@@ -2007,7 +2007,7 @@ msgstr ""
 "Задайте меньшую выборку."
 
 #: lib/src/estimate.c:4236
-#, fuzzy, c-format
+#, c-format
 msgid "%s: the dependent variable must be count data"
 msgstr "Модель Пуассона: зависимая переменная должна быть счетной"
 
@@ -2547,9 +2547,9 @@ msgid "response of %s to a shock in %s"
 msgstr "Отклик %s на шок в %s"
 
 #: lib/src/graphing.c:4300
-#, fuzzy, c-format
+#, c-format
 msgid "%g percent confidence band"
-msgstr "С %g-процентными доверительными интервалами"
+msgstr ""
 
 #: lib/src/graphing.c:4306 lib/src/graphing.c:4309
 msgid "point estimate"
@@ -2610,9 +2610,9 @@ msgid "stopped after %d iterations\n"
 msgstr "выполнено %d итераций\n"
 
 #: lib/src/gretl_bfgs.c:937
-#, fuzzy, c-format
+#, c-format
 msgid "norm of gradient = %g"
-msgstr "Оценок градиента: %d\n"
+msgstr ""
 
 #: lib/src/gretl_bfgs.c:1432 lib/src/modelprint.c:2823
 #, c-format
@@ -2625,9 +2625,8 @@ msgid "Evaluations of gradient: %d\n"
 msgstr "Оценок градиента: %d\n"
 
 #: lib/src/gretl_bfgs.c:1712
-#, fuzzy
 msgid "Initial value of objective function is not finite"
-msgstr "BFGS: начальное значение целевой функции не является конечным"
+msgstr ""
 
 #: lib/src/gretl_errors.c:38
 msgid "Data error"
@@ -2806,19 +2805,16 @@ msgid "Insufficient observations for this operation"
 msgstr "Незначимые наблюдения для данной операции"
 
 #: lib/src/gretl_errors.c:91
-#, fuzzy
 msgid "gradient is not close to zero"
-msgstr "Градиенты на последней итерации"
+msgstr "Градиенты не стремятся к нулю"
 
 #: lib/src/gretl_errors.c:92
-#, fuzzy
 msgid "generated missing values"
-msgstr "%d пропущенных значений"
+msgstr "Генерированные пропущенные значения"
 
 #: lib/src/gretl_errors.c:93
-#, fuzzy
 msgid "generated non-finite values"
-msgstr "Предсказанные значения"
+msgstr "Генерированные конечные значения"
 
 #: lib/src/gretl_errors.c:213 lib/src/gretl_errors.c:218
 msgid "Warning"
@@ -3363,9 +3359,8 @@ msgid "Coefficient number (%d) out of range for equation %d"
 msgstr "Номер коэффициента (%d) для уравнения %d выходит за допустимые границы"
 
 #: lib/src/gretl_restrict.c:1598
-#, fuzzy
 msgid "Invalid restriction"
-msgstr "Неверное объявление"
+msgstr "Неверное ограничение"
 
 #: lib/src/gretl_restrict.c:1662
 #, c-format
@@ -4255,9 +4250,8 @@ msgid "Negative Binomial"
 msgstr ""
 
 #: lib/src/modelprint.c:690
-#, fuzzy
 msgid "Duration"
-msgstr "Уравнение"
+msgstr ""
 
 #: lib/src/modelprint.c:691
 msgid "NLS"
@@ -4404,9 +4398,8 @@ msgid "Negative Binomial 1"
 msgstr ""
 
 #: lib/src/modelprint.c:801
-#, fuzzy
 msgid "Duration (exponential)"
-msgstr "Экспонента Хёрста (Hurst)"
+msgstr ""
 
 #: lib/src/modelprint.c:803
 msgid "Duration (log-logistic)"
@@ -4733,12 +4726,12 @@ msgstr "Длина временного ряда: минимум %d, макси�
 #: lib/src/modelprint.c:1709
 #, c-format
 msgid "scaled %s (Koenker robust variant)"
-msgstr "масштабированное %s (робастный вариант Коенкера (Koenker))"
+msgstr "Масштабированное %s (робастный вариант Коенкера (Koenker))"
 
 #: lib/src/modelprint.c:1711
 #, c-format
 msgid "scaled %s"
-msgstr "масштабированное %s"
+msgstr "Масштабированное %s"
 
 #: lib/src/modelprint.c:1792
 msgid "Allowing for groupwise heteroskedasticity"
@@ -5196,9 +5189,8 @@ msgid "Reached maximum iterations, %d"
 msgstr "Достигнут максимум итераций, %d"
 
 #: lib/src/monte_carlo.c:1977
-#, fuzzy
 msgid "Sorry, this command is not available in loop mode"
-msgstr "Эта команда недоступна в цикле\n"
+msgstr "Извините, эта команда недоступна в цикле."
 
 #: lib/src/monte_carlo.c:2129
 #, c-format
@@ -5583,9 +5575,8 @@ msgid "points"
 msgstr "Маркеры"
 
 #: lib/src/plotspec.c:175
-#, fuzzy
 msgid "lines/points"
-msgstr "Линии с маркерами"
+msgstr "Линии/точки"
 
 #: lib/src/plotspec.c:176
 msgid "impulses"
@@ -5640,9 +5631,8 @@ msgid "center"
 msgstr "По центру"
 
 #: lib/src/plotspec.c:1594
-#, fuzzy
 msgid "Dates file does not conform to the specification"
-msgstr "Типа данных не соответствуют операции"
+msgstr ""
 
 #: lib/src/plugins.c:275 lib/src/plugins.c:314
 #, c-format
@@ -8789,9 +8779,8 @@ msgid "gnuplot files (*.plt)"
 msgstr "файлы gnuplot (*.plt)"
 
 #: gui2/fileselect.c:698
-#, fuzzy
 msgid "GNU Octave files (*.m)"
-msgstr "Файлы GNU R (*.R)"
+msgstr "Файлы Octave (*.m)"
 
 #: gui2/fileselect.c:700
 msgid "Ox files (*.ox)"
@@ -8854,9 +8843,9 @@ msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
 msgstr "Сглаженный ряд %s: цикл Годрика-Прескотта (лямбда = %g)"
 
 #: gui2/filters.c:204
-#, fuzzy, c-format
+#, c-format
 msgid "Filtered %s: Baxter-King, frequency %d to %d"
-msgstr "Сглаженный ряд %s: цикл Бакстера-Кинга"
+msgstr "Фильтрованный ряд %s: цикл Бакстера-Кинга, частота от %d до %d"
 
 #: gui2/filters.c:247
 msgid "Variable name is missing"
@@ -8931,9 +8920,8 @@ msgid "Graph filtered series"
 msgstr "График сглаженного ряда"
 
 #: gui2/filters.c:543
-#, fuzzy
 msgid "Save filtered series as"
-msgstr "Сохранить сглаженный ряд как"
+msgstr "Сохранить фильтрованный ряд как"
 
 #: gui2/filters.c:556
 msgid "Graph differenced series"
@@ -9109,9 +9097,8 @@ msgid "Upload package to server on save"
 msgstr "Выгрузить пакет на сервер при выходе"
 
 #: gui2/fnsave.c:1159
-#, fuzzy
 msgid "Validate"
-msgstr "Дисперсия"
+msgstr "Проверить"
 
 #: gui2/fnsave.c:1209
 msgid "gretl: upload"
@@ -9347,9 +9334,8 @@ msgid "Reset to default"
 msgstr "По умолчанию"
 
 #: gui2/gpt_dialog.c:1394 gui2/gpt_dialog.c:1748
-#, fuzzy
 msgid "other..."
-msgstr "Обзор..."
+msgstr "другое..."
 
 #: gui2/gpt_dialog.c:1414
 msgid ""
@@ -9358,9 +9344,8 @@ msgid ""
 msgstr ""
 
 #: gui2/gpt_dialog.c:1424
-#, fuzzy
 msgid "See example"
-msgstr "_Выборка"
+msgstr "См. пример"
 
 #: gui2/gpt_dialog.c:1514 gui2/gpt_dialog.c:1516
 msgid "None"
@@ -9391,23 +9376,20 @@ msgid "Show full border"
 msgstr "Показывать все границы"
 
 #: gui2/gpt_dialog.c:1703
-#, fuzzy
 msgid "Show grid"
-msgstr "Показать ранги переменных"
+msgstr "Показать сетку"
 
 #: gui2/gpt_dialog.c:1721
 msgid "Allow anti-aliasing of lines"
-msgstr "Сглаживать линии"
+msgstr "Разрешить сглаживание линий"
 
 #: gui2/gpt_dialog.c:1738
-#, fuzzy
 msgid "Show bars"
-msgstr "Подробный отчет"
+msgstr ""
 
 #: gui2/gpt_dialog.c:1747
-#, fuzzy
 msgid "NBER recessions"
-msgstr "Регрессия  "
+msgstr "NBER регрессии"
 
 #: gui2/gpt_dialog.c:1790 gui2/selector.c:3443
 msgid "Set as default"
@@ -9428,7 +9410,7 @@ msgstr "Удалить"
 
 #: gui2/gpt_dialog.c:2134
 msgid "quartiles"
-msgstr "кварталы"
+msgstr "Кварталы"
 
 #: gui2/gpt_dialog.c:2140
 msgid "lower bound"
@@ -9793,20 +9775,19 @@ msgstr "_Новый скрипт"
 
 #: gui2/gretl.c:1314
 msgid "gretl script"
-msgstr "Скрипт для gretl (*.inp)"
+msgstr "Скрипт для gretl"
 
 #: gui2/gretl.c:1315
 msgid "gnuplot script"
-msgstr "Скрипт для gnuplot (*.plt)"
+msgstr "Скрипт для gnuplot"
 
 #: gui2/gretl.c:1316
 msgid "R script"
 msgstr "Скрипт для R"
 
 #: gui2/gretl.c:1317
-#, fuzzy
 msgid "Octave script"
-msgstr "Сохранить как скрипт"
+msgstr "Скрипт для Octave"
 
 #: gui2/gretl.c:1318 gui2/gretl.c:1586
 msgid "Ox program"
@@ -9977,9 +9958,8 @@ msgid "_Observation markers..."
 msgstr "_Маркеры для наблюдений..."
 
 #: gui2/gretl.c:1374
-#, fuzzy
 msgid "_Variable labels..."
-msgstr "Название переменной"
+msgstr "_Метки для переменных..."
 
 #: gui2/gretl.c:1375
 msgid "Dataset _structure..."
@@ -10459,14 +10439,12 @@ msgid "_Heckit..."
 msgstr "Модель Хекмана (_Heckit)..."
 
 #: gui2/gretl.c:1523
-#, fuzzy
 msgid "_Count data..."
 msgstr "_Сортировать данные..."
 
 #: gui2/gretl.c:1524
-#, fuzzy
 msgid "_Duration data..."
-msgstr "_Сортировать данные..."
+msgstr ""
 
 #: gui2/gretl.c:1525
 msgid "Lo_gistic..."
@@ -11066,9 +11044,8 @@ msgid "gretl: edit Ox program"
 msgstr "gretl: правка Ox программы"
 
 #: gui2/gui_utils.c:1468
-#, fuzzy
 msgid "gretl: edit Octave script"
-msgstr "gretl: редактирование матрицы"
+msgstr "gretl: редактировать скрипт для Octave"
 
 #: gui2/gui_utils.c:1470 gui2/gui_utils.c:3924 gui2/gui_utils.c:4086
 msgid "gretl: script output"
@@ -11480,14 +11457,12 @@ msgid "Search wrapped"
 msgstr "Поиск с начала"
 
 #: gui2/helpfiles.c:949
-#, fuzzy
 msgid "this page"
-msgstr "Графики"
+msgstr "Текущую страницу"
 
 #: gui2/helpfiles.c:950
-#, fuzzy
 msgid "all pages"
-msgstr "Полный диапазон"
+msgstr "Все страницы"
 
 #: gui2/helpfiles.c:989 gui2/textutil.c:81
 msgid "Find:"
@@ -11498,9 +11473,8 @@ msgid "genrgui.hlp"
 msgstr "genrgui.hlp"
 
 #: gui2/helpfiles.c:1117
-#, fuzzy
 msgid "Sorry, no help is available"
-msgstr "%s: справка не доступна.\n"
+msgstr "Извините, справка не доступна."
 
 #: gui2/helpfiles.c:1443
 msgid "Sorry, help not found"
@@ -11681,14 +11655,12 @@ msgid ""
 msgstr ""
 
 #: gui2/library.c:1484
-#, fuzzy
 msgid "Export the labels to file"
-msgstr "Экспортировать маркеры в файл"
+msgstr "Экспортировать метки в файл"
 
 #: gui2/library.c:1485
-#, fuzzy
 msgid "Remove the labels"
-msgstr "Удалить маркеры"
+msgstr "Удалить метки"
 
 #: gui2/library.c:1489
 msgid ""
@@ -12613,14 +12585,12 @@ msgid "Heteroskedasticity corrected"
 msgstr "С поправкой на гетероскедастичность"
 
 #: gui2/selector.c:3057
-#, fuzzy
 msgid "Count data model"
-msgstr "Невозможно отформатировать модель\n"
+msgstr ""
 
 #: gui2/selector.c:3059
-#, fuzzy
 msgid "Duration model"
-msgstr "Панельная модель"
+msgstr ""
 
 #: gui2/selector.c:3061
 msgid "Panel model"
@@ -12687,9 +12657,8 @@ msgid "Offset variable"
 msgstr "Переменная для смещения (offset)"
 
 #: gui2/selector.c:3116
-#, fuzzy
 msgid "Censoring variable"
-msgstr "Переменная отклика (response)"
+msgstr "Цензурированная переменная"
 
 #: gui2/selector.c:3120
 msgid "List of AR lags"
@@ -12728,28 +12697,24 @@ msgid "NegBin 1"
 msgstr ""
 
 #: gui2/selector.c:3197 gui2/selector.c:3251
-#, fuzzy
 msgid "Distribution:"
-msgstr "_Графики распределений"
+msgstr "Распределения:"
 
 #: gui2/selector.c:3242
-#, fuzzy
 msgid "Weibull"
 msgstr "Вейбулла"
 
 #: gui2/selector.c:3243
 msgid "Exponential"
-msgstr ""
+msgstr "Экспоненциальное"
 
 #: gui2/selector.c:3244
-#, fuzzy
 msgid "Log-logistic"
-msgstr "Логистическая"
+msgstr "Лог-логистическое"
 
 #: gui2/selector.c:3245
-#, fuzzy
 msgid "Log-normal"
-msgstr "Нормальное"
+msgstr "Лог-нормальное"
 
 #: gui2/selector.c:3324
 msgid "Choose"
@@ -13569,9 +13534,8 @@ msgid "Path to oxl executable"
 msgstr "Путь к oxl программе"
 
 #: gui2/settings.c:220
-#, fuzzy
 msgid "Path to octave executable"
-msgstr "Путь к oxl программе"
+msgstr "Путь к Octave"
 
 #: gui2/settings.c:222
 msgid "RATS data directory"
@@ -14320,9 +14284,8 @@ msgid "Failed to execute x12arima"
 msgstr "Ошибка запуска x12arima"
 
 #: plugin/duration.c:77
-#, fuzzy
 msgid "Durations must be positive"
-msgstr "Уравнение идентифицируемо"
+msgstr "Длительность должна быть положительным числом"
 
 #: plugin/eviews_import.c:238
 msgid "No variables were read\n"
@@ -14399,7 +14362,7 @@ msgstr "Градиенты на последней итерации"
 
 #: plugin/fractals.c:41
 msgid "Rescaled-range plot for"
-msgstr ""
+msgstr "Масштабированный график разброса для"
 
 #: plugin/fractals.c:42
 msgid "log(sample size)"
@@ -14463,9 +14426,9 @@ msgid "GARCH: p > 0 and q = 0: the model is unidentified"
 msgstr "GARCH: p > 0 и q = 0: модель неидентифицируема"
 
 #: plugin/garch.c:642
-#, fuzzy, c-format
+#, c-format
 msgid "GARCH: p + q must not exceed %d"
-msgstr "GARCH: сумма p + q должна быть меньше 6"
+msgstr "GARCH: сумма p + q не должна превышать %d"
 
 #: plugin/gnumeric_import.c:294
 #, c-format
