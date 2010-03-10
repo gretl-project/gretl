@@ -4116,6 +4116,11 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     return tmod;
 }
 
+/* run several checks on the data supplied for a duration
+   model, before invoking the duration plugin to complete
+   the business
+*/
+
 static int duration_precheck (const int *list, double ***pZ,
 			      DATAINFO *pdinfo, MODEL *pmod,
 			      int *pcensvar)
@@ -4165,7 +4170,7 @@ static int duration_precheck (const int *list, double ***pZ,
 	if (olslist != NULL) {
 	    *pmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
 	    if (!pmod->errcode) {
-		/* remove ref to censoring var */
+		/* remove reference to censoring var */
 		pmod->list[0] -= 1;
 		pmod->ncoeff -= 1;
 		pmod->dfn -= 1;
@@ -4177,6 +4182,17 @@ static int duration_precheck (const int *list, double ***pZ,
 	}
 	err = pmod->errcode;
 	*pcensvar = censvar;
+    }
+
+    if (!err) {
+	int t, yno = pmod->list[1];
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t]) && (*pZ)[yno][t] <= 0) {
+		gretl_errmsg_set(_("Durations must be positive"));
+		err = E_DATA;
+	    }
+	}
     }
 
     return err;

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-10 17:22+0200\n"
+"PO-Revision-Date: 2010-03-10 17:54-0500\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -2009,7 +2009,7 @@ msgstr ""
 #: lib/src/estimate.c:4236
 #, c-format
 msgid "%s: the dependent variable must be count data"
-msgstr "Модель Пуассона: зависимая переменная должна быть счетной"
+msgstr "%s: зависимая переменная должна быть счетной"
 
 #: lib/src/flow_control.c:68
 msgid "error evaluating 'if'"

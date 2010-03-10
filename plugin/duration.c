@@ -66,21 +66,6 @@ static void duration_free (duration_info *dinfo)
     gretl_matrix_free(dinfo->V);
 }
 
-static int duration_nonpositive (const MODEL *pmod, const double **Z)
-{
-    const double *y = Z[pmod->list[1]];
-    int t;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->uhat[t]) && y[t] <= 0) {
-	    gretl_errmsg_set(_("Durations must be positive"));
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 /* initialize using OLS regression of the log of duration
    on the covariates (or a simpler variant if we're 
    estimating the constant-only model)
@@ -131,10 +116,6 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
     dinfo->B = NULL;
     dinfo->theta = NULL;
     dinfo->V = NULL;
-
-    if (duration_nonpositive(pmod, Z)) {
-	return E_DATA;
-    }
 
     if (opt & OPT_E) {
 	/* exponential */
