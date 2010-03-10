@@ -2411,6 +2411,30 @@ static int x_sectional_extremum (int f, double *x, const int *list,
     return err;
 }
 
+static int x_sectional_sum (double *x, const int *list, 
+			    const double **Z, 
+			    const DATAINFO *pdinfo)
+{
+    double xit, xx;
+    int i, t, err = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xx = 0.0;
+	for (i=1; i<=list[0]; i++) {
+	    xit = Z[list[i]][t];
+	    if (na(xit)) { 
+		xx = NADBL;
+		break;
+	    } else {
+		xx += xit;
+	    }
+	}
+	x[t] = xx;
+    }
+
+    return err;
+}
+
 int cross_sectional_stat (double *x, const int *list, 
 			  const double **Z, 
 			  const DATAINFO *pdinfo,
@@ -2424,6 +2448,8 @@ int cross_sectional_stat (double *x, const int *list,
 	return x_sectional_wtd_stddev(x, list, NULL, Z, pdinfo);
     } else if (f == F_MIN || f == F_MAX) {
 	return x_sectional_extremum(f, x, list, NULL, Z, pdinfo);
+    } else if (f == F_SUM) {
+	return x_sectional_sum(x, list, Z, pdinfo);
     } else {
 	return E_DATA;
     }

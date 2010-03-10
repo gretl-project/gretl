@@ -4642,15 +4642,21 @@
       </description>
     </function>
 
-    <function name="sum" section="stats" output="scalar">
+    <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>      
       <description>
 	<para>
-	  Returns the sum of the non-missing observations in series
-	  <argname>y</argname>.
+	  If <argname>x</argname> is a series, returns the (scalar) sum of the
+	  non-missing observations in <argname>x</argname>.
 	</para>
+	<para>
+	  If <argname>x</argname> is a list, returns a series <math>y</math>
+	  such that <math>y</math><sub>t</sub> is the sum of the values of the
+	  variables in the list at observation <math>t</math>, or
+	  <lit>NA</lit> if there are any missing values at <math>t</math>.
+	</para>	
       </description>
     </function>
 
