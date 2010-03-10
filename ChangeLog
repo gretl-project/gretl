@@ -38,7 +38,7 @@ version 1.8.8, in progress
   title bar; and the encoding was getting broken between
   copy and paste, e.g. in script windows
 - Fix bug in Hausman test after tsls: ensure the sample size 
-  is consisten
+  is consistent
 - Graphing via gnuplot: require version >= 4.2.0
 
 01/24/2010 version 1.8.7
