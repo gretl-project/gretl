@@ -3906,7 +3906,6 @@ static void run_ox_or_octave (gchar *buf, int ox)
     if (err) {
 	gui_errmsg(err);
     } else {
-	const char *prog;
 	char *sout = NULL;
 	gchar *cmd;
 
