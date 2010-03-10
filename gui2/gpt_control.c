@@ -232,27 +232,18 @@ int plot_get_coordinates (png_plot *plot,
 			  double *ymin,
 			  double *ymax)
 {
-    int err = E_DATA;
+    int err = 0;
 
-    if (plot == NULL) {
-	return err;
-    }
-
-    if (plot->xmin > 0 && plot->xmax > 0 &&
+    if (plot != NULL && plot->xmin > 0 && 
+	plot->xmax > plot->xmin &&
 	plot->ymax > plot->ymin) {
-	if (xmin != NULL) {
-	    *xmin = plot->xmin;
-	}
-	if (xmax != NULL) {
-	    *xmax = plot->xmax;
-	}
-	if (ymin != NULL) {
-	    *ymin = plot->ymin;
-	}
-	if (ymax != NULL) {
-	    *ymax = plot->ymax;
-	}
-	err = 0;
+	*xmin = plot->xmin;
+	*xmax = plot->xmax;
+	*ymin = plot->ymin;
+	*ymax = plot->ymax;
+    } else {
+	err = E_DATA;
+	gretl_errmsg_set("Couldn't get plot coordinates");
     }
 
     return err;

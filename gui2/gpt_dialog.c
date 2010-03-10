@@ -773,6 +773,18 @@ static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
     err = plot_get_coordinates(plot, &xmin, &xmax, &ymin, &ymax);
 
     if (!err) {
+	if (!button_is_active(ed->axis_range[1].isauto)) {
+	    /* we have a manual y-axis setting that may override the
+	       current (ymin, ymax) as read from the plot */
+	    ymin = spec->range[1][0];
+	    ymax = spec->range[1][1];
+	} else {
+	    /* freeze the current (ymin, ymax) so that the addition
+	       of bars doesn't disturb the range */
+	    spec->range[1][0] = ymin;
+	    spec->range[1][1] = ymax;
+	}
+
 	if (gtk_combo_box_get_active(GTK_COMBO_BOX(ed->barscombo)) == 1
 	    && ed->barsfile != NULL) {
 	    err = plotspec_add_bars_info(spec, xmin, xmax,
@@ -861,15 +873,17 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     }
 
     for (i=0; i<ed->gui_nlines && !err; i++) {
+	GtkWidget *combo = ed->stylecombo[i];
+
 	line = &spec->lines[i];
-	if (ed->stylecombo[i] != NULL) {
+	if (combo != NULL && GTK_WIDGET_IS_SENSITIVE(combo)) {
 	    int oldalt = 0;
 
 	    if (line->style == GP_STYLE_FILLEDCURVE ||
 		line->style == GP_STYLE_ERRORBARS) {
 		oldalt = line->style;
 	    }
-	    combo_to_gp_style(ed->stylecombo[i], &line->style);
+	    combo_to_gp_style(combo, &line->style);
 	    if (oldalt == GP_STYLE_FILLEDCURVE &&
 		line->style == GP_STYLE_ERRORBARS) {
 		spec->flags |= GPT_ERR_SWITCH;
@@ -879,7 +893,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 		spec->flags |= GPT_FILL_SWITCH;
 		spec->flags &= ~GPT_ERR_SWITCH;
 	    }
-	    maybe_set_point_type(line, ed->stylecombo[i], i);
+	    maybe_set_point_type(line, combo, i);
 	}
 	if (ed->linetitle[i] != NULL) {
 	    entry_to_gp_string(ed->linetitle[i], line->title, 
@@ -1397,8 +1411,8 @@ static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
 	; /* selecting previously defined own file: no-op */
     } else {
 	/* exploring... */
-	const char *msg = N_("To add your own \"bars\" to a plot, you must supply\n"
-			     "the name of a plain text file contains pairs of dates.");
+	const char *msg = N_("To add your own \"bars\" to a plot, you must supply the\n"
+			     "name of a plain text file containing pairs of dates.");
 	GtkWidget *dlg;
 	gint ret;
 

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-03-09 16:48-0500\n"
+"POT-Creation-Date: 2010-03-10 09:11-0500\n"
 "PO-Revision-Date: 2010-03-07 01:15+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -239,19 +239,19 @@ msgstr "Gini 係數(_G)"
 msgid "bootstrap test"
 msgstr "常態性檢定(_N)"
 
-#: lib/src/boxplots.c:160 gui2/gpt_control.c:3145 gui2/gpt_control.c:3222
+#: lib/src/boxplots.c:160 gui2/gpt_control.c:3136 gui2/gpt_control.c:3213
 msgid "Numerical summary"
 msgstr "敘述統計"
 
 #: lib/src/boxplots.c:163 lib/src/gmm.c:1499 gui2/calculator.c:1967
-#: gui2/calculator.c:1992 gui2/calculator.c:2590 gui2/gpt_dialog.c:2124
+#: gui2/calculator.c:1992 gui2/calculator.c:2590 gui2/gpt_dialog.c:2138
 #: plugin/anova.c:193 plugin/anova.c:202 plugin/range-mean.c:69
 #: plugin/range-mean.c:160
 msgid "mean"
 msgstr "mean"
 
 #: lib/src/boxplots.c:164 lib/src/boxplots.c:167 lib/src/boxplots.c:179
-#: gui2/gpt_dialog.c:2122
+#: gui2/gpt_dialog.c:2136
 #, fuzzy
 msgid "median"
 msgstr "中位數"
@@ -1103,7 +1103,7 @@ msgstr ""
 #: lib/src/dataio.c:1869 lib/src/dataio.c:1948 lib/src/gretl_xml.c:2340
 #, c-format
 msgid ""
-"periodicity: %d, maxobs: %d,\n"
+"periodicity: %d, maxobs: %d\n"
 "observations range: %s-%s\n"
 msgstr ""
 
@@ -2433,12 +2433,12 @@ msgid "time series by group"
 msgstr "time series by group"
 
 #: lib/src/graphing.c:2850 lib/src/plotspec.c:568 lib/src/plotspec.c:1092
-#: gui2/gpt_dialog.c:830 gui2/gpt_dialog.c:1224 gui2/gpt_dialog.c:2528
+#: gui2/gpt_dialog.c:842 gui2/gpt_dialog.c:1238 gui2/gpt_dialog.c:2542
 msgid "right"
 msgstr "右"
 
 #: lib/src/graphing.c:2850 lib/src/plotspec.c:564 lib/src/plotspec.c:570
-#: lib/src/plotspec.c:1090 gui2/gpt_dialog.c:1219 gui2/gpt_dialog.c:2527
+#: lib/src/plotspec.c:1090 gui2/gpt_dialog.c:1233 gui2/gpt_dialog.c:2541
 msgid "left"
 msgstr "左"
 
@@ -7006,7 +7006,7 @@ msgstr "weibull 分配"
 msgid "Standard errors"
 msgstr "標準誤"
 
-#: gui2/calculator.c:600 gui2/calculator.c:690 gui2/gpt_control.c:1110
+#: gui2/calculator.c:600 gui2/calculator.c:690 gui2/gpt_control.c:1101
 msgid "gnuplot command failed"
 msgstr "gnuplot 指令失敗"
 
@@ -7260,11 +7260,11 @@ msgstr "weibull 分配"
 msgid " DW "
 msgstr " DW "
 
-#: gui2/calculator.c:1961 gui2/gpt_dialog.c:2857
+#: gui2/calculator.c:1961 gui2/gpt_dialog.c:2871
 msgid "minimum"
 msgstr "最小值"
 
-#: gui2/calculator.c:1963 gui2/gpt_dialog.c:2874
+#: gui2/calculator.c:1963 gui2/gpt_dialog.c:2888
 msgid "maximum"
 msgstr "最大值"
 
@@ -7284,7 +7284,7 @@ msgstr "自由度(分母)"
 msgid "shape"
 msgstr "shape 形狀參數"
 
-#: gui2/calculator.c:1985 gui2/gpt_dialog.c:2506
+#: gui2/calculator.c:1985 gui2/gpt_dialog.c:2520
 msgid "scale"
 msgstr "scale 尺度參數"
 
@@ -7513,7 +7513,7 @@ msgstr "沒有適合的資料"
 msgid "gretl: plot a curve"
 msgstr "gretl: 畫曲線圖"
 
-#: gui2/calculator.c:3180 gui2/gpt_dialog.c:1841 gui2/gpt_dialog.c:2392
+#: gui2/calculator.c:3180 gui2/gpt_dialog.c:1855 gui2/gpt_dialog.c:2406
 msgid "formula"
 msgstr "輸入變數或公式"
 
@@ -7815,8 +7815,8 @@ msgstr "顯示變數值"
 msgid "Add to dataset"
 msgstr "新增至資料檔中"
 
-#: gui2/database.c:715 gui2/datafiles.c:1213 gui2/gpt_control.c:3149
-#: gui2/gpt_control.c:3225 gui2/gpt_control.c:3230 gui2/helpfiles.c:79
+#: gui2/database.c:715 gui2/datafiles.c:1213 gui2/gpt_control.c:3140
+#: gui2/gpt_control.c:3216 gui2/gpt_control.c:3221 gui2/helpfiles.c:79
 #: gui2/ssheet.c:125 gui2/toolbar.c:640
 msgid "Close"
 msgstr "關閉"
@@ -7936,8 +7936,8 @@ msgstr "說明資訊"
 msgid "Open"
 msgstr "開啟"
 
-#: gui2/datafiles.c:1076 gui2/datafiles.c:1203 gui2/gpt_control.c:3147
-#: gui2/gpt_control.c:3223 gui2/session.c:185 gui2/session.c:192
+#: gui2/datafiles.c:1076 gui2/datafiles.c:1203 gui2/gpt_control.c:3138
+#: gui2/gpt_control.c:3214 gui2/session.c:185 gui2/session.c:192
 #: gui2/session.c:202 gui2/session.c:2747 gui2/session.c:2763
 #: gui2/session.c:2778
 msgid "Edit"
@@ -9295,140 +9295,140 @@ msgstr ""
 "目前在本機電腦上並沒有發現任何自訂函數套件\n"
 "你想要自行撰寫一個函數套件嗎?"
 
-#: gui2/gpt_control.c:283
+#: gui2/gpt_control.c:274
 msgid " Click to set label position"
 msgstr ""
 
-#: gui2/gpt_control.c:1203
+#: gui2/gpt_control.c:1194
 msgid "Gnuplot error creating graph"
 msgstr "Gnuplot 繪圖發生錯誤"
 
-#: gui2/gpt_control.c:1615 gui2/gpt_control.c:1672 gui2/gpt_control.c:1678
-#: gui2/gpt_control.c:1684 gui2/gpt_control.c:2359
+#: gui2/gpt_control.c:1606 gui2/gpt_control.c:1663 gui2/gpt_control.c:1669
+#: gui2/gpt_control.c:1675 gui2/gpt_control.c:2350
 msgid "Failed to parse gnuplot file"
 msgstr "無法剖析 (parse) gnuplot 檔"
 
-#: gui2/gpt_control.c:2304
+#: gui2/gpt_control.c:2295
 msgid "Plot file is corrupted"
 msgstr "Plot 圖檔毀損"
 
-#: gui2/gpt_control.c:2871
+#: gui2/gpt_control.c:2862
 msgid "Couldn't access graph info"
 msgstr "無法存取繪圖資訊"
 
-#: gui2/gpt_control.c:2928 gui2/gpt_control.c:3165 gui2/graphics.c:261
+#: gui2/gpt_control.c:2919 gui2/gpt_control.c:3156 gui2/graphics.c:261
 #: gui2/graph_page.c:608
 msgid "monochrome"
 msgstr "黑白"
 
-#: gui2/gpt_control.c:2932 gui2/gpt_control.c:3198 gui2/gpt_control.c:3204
+#: gui2/gpt_control.c:2923 gui2/gpt_control.c:3189 gui2/gpt_control.c:3195
 msgid "Save as Windows metafile (EMF)..."
 msgstr "另存為 Windows metafile (EMF) 檔..."
 
-#: gui2/gpt_control.c:2938 gui2/gpt_control.c:3207 gui2/menustate.c:340
+#: gui2/gpt_control.c:2929 gui2/gpt_control.c:3198 gui2/menustate.c:340
 #: gui2/menustate.c:376 gui2/menustate.c:405 gui2/menustate.c:449
 msgid "Copy to clipboard"
 msgstr "複製至記憶體中"
 
-#: gui2/gpt_control.c:2940 gui2/gpt_control.c:3217
+#: gui2/gpt_control.c:2931 gui2/gpt_control.c:3208
 msgid "Print"
 msgstr "列印"
 
-#: gui2/gpt_control.c:2961
+#: gui2/gpt_control.c:2952
 msgid "VAR roots (real, imaginary, modulus, frequency)"
 msgstr ""
 
-#: gui2/gpt_control.c:2998
+#: gui2/gpt_control.c:2989
 #, fuzzy
 msgid "VAR roots"
 msgstr "向量自我迴歸之殘差"
 
-#: gui2/gpt_control.c:3020
+#: gui2/gpt_control.c:3011
 msgid "gretl: boxplot data"
 msgstr "gretl: 箱形圖資料"
 
-#: gui2/gpt_control.c:3094 gui2/gpt_control.c:3196
+#: gui2/gpt_control.c:3085 gui2/gpt_control.c:3187
 msgid "Add another curve..."
 msgstr "新增曲線..."
 
-#: gui2/gpt_control.c:3096 gui2/gpt_control.c:3200
+#: gui2/gpt_control.c:3087 gui2/gpt_control.c:3191
 msgid "Save as PNG..."
 msgstr "另存為 PNG 檔..."
 
-#: gui2/gpt_control.c:3100 gui2/gpt_control.c:3202
+#: gui2/gpt_control.c:3091 gui2/gpt_control.c:3193
 msgid "Save as PDF..."
 msgstr "另存為 PDF 檔..."
 
-#: gui2/gpt_control.c:3103 gui2/gpt_control.c:3201
+#: gui2/gpt_control.c:3094 gui2/gpt_control.c:3192
 msgid "Save as postscript (EPS)..."
 msgstr "另存為 postscript (EPS) 檔..."
 
-#: gui2/gpt_control.c:3106 gui2/gpt_control.c:3209 gui2/toolbar.c:191
+#: gui2/gpt_control.c:3097 gui2/gpt_control.c:3200 gui2/toolbar.c:191
 msgid "Save to session as icon"
 msgstr "存入分析檔中為圖示 (icon)"
 
-#: gui2/gpt_control.c:3108 gui2/gpt_control.c:3110 gui2/gpt_control.c:3224
+#: gui2/gpt_control.c:3099 gui2/gpt_control.c:3101 gui2/gpt_control.c:3215
 #: gui2/session.c:161 gui2/session.c:168 gui2/session.c:2846
 #: gui2/toolbar.c:637 gui2/toolbar.c:638
 msgid "Help"
 msgstr "說明"
 
-#: gui2/gpt_control.c:3112 gui2/gpt_control.c:3210
+#: gui2/gpt_control.c:3103 gui2/gpt_control.c:3201
 #, fuzzy
 msgid "Freeze data labels"
 msgstr "另存新檔(_a)"
 
-#: gui2/gpt_control.c:3115 gui2/gpt_control.c:3212
+#: gui2/gpt_control.c:3106 gui2/gpt_control.c:3203
 msgid "Clear data labels"
 msgstr "清除所有資料標籤"
 
-#: gui2/gpt_control.c:3117 gui2/gpt_control.c:3211
+#: gui2/gpt_control.c:3108 gui2/gpt_control.c:3202
 msgid "All data labels"
 msgstr "顯示所有資料標籤"
 
-#: gui2/gpt_control.c:3119 gui2/gpt_control.c:3213
+#: gui2/gpt_control.c:3110 gui2/gpt_control.c:3204
 msgid "Zoom..."
 msgstr "放大 (選擇一區域)..."
 
-#: gui2/gpt_control.c:3127
+#: gui2/gpt_control.c:3118
 msgid " Drag to define zoom rectangle"
 msgstr " Drag to define zoom rectangle"
 
-#: gui2/gpt_control.c:3129 gui2/gpt_control.c:3229
+#: gui2/gpt_control.c:3120 gui2/gpt_control.c:3220
 msgid "Restore full view"
 msgstr "恢復為全貌檢示"
 
-#: gui2/gpt_control.c:3133 gui2/gpt_control.c:3215 gui2/toolbar.c:613
+#: gui2/gpt_control.c:3124 gui2/gpt_control.c:3206 gui2/toolbar.c:613
 msgid "Print..."
 msgstr "列印..."
 
-#: gui2/gpt_control.c:3137 gui2/gpt_control.c:3219
+#: gui2/gpt_control.c:3128 gui2/gpt_control.c:3210
 msgid "Display PDF"
 msgstr "顯示 PDF 檔"
 
-#: gui2/gpt_control.c:3139 gui2/gpt_control.c:3220
+#: gui2/gpt_control.c:3130 gui2/gpt_control.c:3211
 msgid "OLS estimates"
 msgstr ""
 
-#: gui2/gpt_control.c:3143 gui2/gpt_control.c:3221
+#: gui2/gpt_control.c:3134 gui2/gpt_control.c:3212
 #, fuzzy
 msgid "Numerical values"
 msgstr "顯示變數值(_D)"
 
-#: gui2/gpt_control.c:3164 gui2/gpt_dialog.c:2563 gui2/graphics.c:257
+#: gui2/gpt_control.c:3155 gui2/gpt_dialog.c:2577 gui2/graphics.c:257
 #: gui2/graph_page.c:607
 msgid "color"
 msgstr "彩色"
 
-#: gui2/gpt_control.c:3659
+#: gui2/gpt_control.c:3650
 msgid "Malformed PNG file for graph"
 msgstr "PNG 圖檔有問題"
 
-#: gui2/gpt_control.c:4202
+#: gui2/gpt_control.c:4193
 msgid "gretl: graph"
 msgstr "gretl: 繪圖"
 
-#: gui2/gpt_control.c:4275
+#: gui2/gpt_control.c:4266
 msgid " Click on graph for pop-up menu"
 msgstr " 在圖上按滑鼠鍵會出現選單"
 
@@ -9462,208 +9462,208 @@ msgstr "選擇顏色"
 msgid "Invalid label position, must be X Y"
 msgstr "資料標籤位置錯誤, 必須為 X Y"
 
-#: gui2/gpt_dialog.c:1046 gui2/gpt_dialog.c:1075 gui2/gpt_dialog.c:1759
+#: gui2/gpt_dialog.c:1060 gui2/gpt_dialog.c:1089 gui2/gpt_dialog.c:1773
 #: gui2/graphics.c:432
 #, c-format
 msgid "font: %s"
 msgstr "目前選定之字形 (建議選 NSimSun 支援中文顯示): %s"
 
-#: gui2/gpt_dialog.c:1108
+#: gui2/gpt_dialog.c:1122
 msgid "Font for graphs"
 msgstr "圖之字形"
 
-#: gui2/gpt_dialog.c:1309
+#: gui2/gpt_dialog.c:1323
 msgid "Fill color"
 msgstr "選擇顏色"
 
-#: gui2/gpt_dialog.c:1311
+#: gui2/gpt_dialog.c:1325
 #, c-format
 msgid "Color %d"
 msgstr "第 %d 條線顏色: "
 
-#: gui2/gpt_dialog.c:1331
+#: gui2/gpt_dialog.c:1345
 msgid "Reset to default"
 msgstr "回復為預設值"
 
-#: gui2/gpt_dialog.c:1380 gui2/gpt_dialog.c:1734
+#: gui2/gpt_dialog.c:1394 gui2/gpt_dialog.c:1748
 #, fuzzy
 msgid "other..."
 msgstr "其它 (Other)"
 
-#: gui2/gpt_dialog.c:1400
+#: gui2/gpt_dialog.c:1414
 msgid ""
-"To add your own \"bars\" to a plot, you must supply\n"
-"the name of a plain text file contains pairs of dates."
+"To add your own \"bars\" to a plot, you must supply the\n"
+"name of a plain text file containing pairs of dates."
 msgstr ""
 
-#: gui2/gpt_dialog.c:1410
+#: gui2/gpt_dialog.c:1424
 #, fuzzy
 msgid "See example"
 msgstr "樣本(_S)"
 
-#: gui2/gpt_dialog.c:1500 gui2/gpt_dialog.c:1502
+#: gui2/gpt_dialog.c:1514 gui2/gpt_dialog.c:1516
 msgid "None"
 msgstr "無 (None)"
 
-#: gui2/gpt_dialog.c:1507
+#: gui2/gpt_dialog.c:1521
 msgid "TrueType font"
 msgstr "TrueType 字形"
 
-#: gui2/gpt_dialog.c:1562
+#: gui2/gpt_dialog.c:1576
 msgid "Main"
 msgstr "主圖設定"
 
-#: gui2/gpt_dialog.c:1600
+#: gui2/gpt_dialog.c:1614
 msgid "key position"
 msgstr "圖例位置"
 
-#: gui2/gpt_dialog.c:1626
+#: gui2/gpt_dialog.c:1640
 #, fuzzy
 msgid "fitted line"
 msgstr " %s 的實際值 及 預測值"
 
-#: gui2/gpt_dialog.c:1663
+#: gui2/gpt_dialog.c:1677
 msgid "Use only one y axis"
 msgstr "只使用一個 y 軸"
 
-#: gui2/gpt_dialog.c:1676
+#: gui2/gpt_dialog.c:1690
 msgid "Show full border"
 msgstr "顯示完整圖外方框"
 
-#: gui2/gpt_dialog.c:1689
+#: gui2/gpt_dialog.c:1703
 #, fuzzy
 msgid "Show grid"
 msgstr "顯示排序之等級"
 
-#: gui2/gpt_dialog.c:1707
+#: gui2/gpt_dialog.c:1721
 msgid "Allow anti-aliasing of lines"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1724
+#: gui2/gpt_dialog.c:1738
 #, fuzzy
 msgid "Show bars"
 msgstr "顯示細節"
 
-#: gui2/gpt_dialog.c:1733
+#: gui2/gpt_dialog.c:1747
 #, fuzzy
 msgid "NBER recessions"
 msgstr "分量迴歸(_Q)"
 
-#: gui2/gpt_dialog.c:1776 gui2/selector.c:3443
+#: gui2/gpt_dialog.c:1790 gui2/selector.c:3443
 msgid "Set as default"
 msgstr "設定為預設 (default)"
 
-#: gui2/gpt_dialog.c:1834 gui2/gpt_dialog.c:2131
+#: gui2/gpt_dialog.c:1848 gui2/gpt_dialog.c:2145
 #, c-format
 msgid "line %d: "
 msgstr "行數 %d: "
 
-#: gui2/gpt_dialog.c:1983
+#: gui2/gpt_dialog.c:1997
 msgid "No formula was given"
 msgstr "未給定算式"
 
-#: gui2/gpt_dialog.c:2103 gui2/selector.c:3710
+#: gui2/gpt_dialog.c:2117 gui2/selector.c:3710
 msgid "Remove"
 msgstr "移除"
 
-#: gui2/gpt_dialog.c:2120
+#: gui2/gpt_dialog.c:2134
 msgid "quartiles"
 msgstr ""
 
-#: gui2/gpt_dialog.c:2126
+#: gui2/gpt_dialog.c:2140
 msgid "lower bound"
 msgstr ""
 
-#: gui2/gpt_dialog.c:2128
+#: gui2/gpt_dialog.c:2142
 msgid "upper bound"
 msgstr ""
 
-#: gui2/gpt_dialog.c:2147
+#: gui2/gpt_dialog.c:2161
 #, c-format
 msgid "label %d: "
 msgstr "標籤 (label)l %d: "
 
-#: gui2/gpt_dialog.c:2356
+#: gui2/gpt_dialog.c:2370
 msgid "Lines"
 msgstr "線條 Lines"
 
-#: gui2/gpt_dialog.c:2423
+#: gui2/gpt_dialog.c:2437
 msgid "legend"
 msgstr "圖例文字:"
 
-#: gui2/gpt_dialog.c:2449
+#: gui2/gpt_dialog.c:2463
 msgid "type"
 msgstr "型態:"
 
-#: gui2/gpt_dialog.c:2481
+#: gui2/gpt_dialog.c:2495
 msgid "point"
 msgstr "點的樣式:"
 
-#: gui2/gpt_dialog.c:2522
+#: gui2/gpt_dialog.c:2536
 msgid "y axis"
 msgstr "y 軸: "
 
-#: gui2/gpt_dialog.c:2539
+#: gui2/gpt_dialog.c:2553
 msgid "line width"
 msgstr "線寬: "
 
-#: gui2/gpt_dialog.c:2611
+#: gui2/gpt_dialog.c:2625
 msgid "Add line..."
 msgstr "新增一條線..."
 
-#: gui2/gpt_dialog.c:2647
+#: gui2/gpt_dialog.c:2661
 msgid "Labels"
 msgstr "資料標籤"
 
-#: gui2/gpt_dialog.c:2678
+#: gui2/gpt_dialog.c:2692
 msgid "text"
 msgstr "文字:"
 
-#: gui2/gpt_dialog.c:2695
+#: gui2/gpt_dialog.c:2709
 msgid "position (X Y)"
 msgstr "位置 (X Y)"
 
-#: gui2/gpt_dialog.c:2732
+#: gui2/gpt_dialog.c:2746
 msgid "justification"
 msgstr "文字對齊:"
 
-#: gui2/gpt_dialog.c:2762 gui2/ssheet.c:123
+#: gui2/gpt_dialog.c:2776 gui2/ssheet.c:123
 msgid "Add..."
 msgstr "新增..."
 
-#: gui2/gpt_dialog.c:2782
+#: gui2/gpt_dialog.c:2796
 msgid "X-axis"
 msgstr "X-軸"
 
-#: gui2/gpt_dialog.c:2784
+#: gui2/gpt_dialog.c:2798
 msgid "Y-axis"
 msgstr "Y-軸"
 
-#: gui2/gpt_dialog.c:2786
+#: gui2/gpt_dialog.c:2800
 msgid "Y2-axis"
 msgstr "Y2-右軸"
 
-#: gui2/gpt_dialog.c:2834
+#: gui2/gpt_dialog.c:2848
 msgid "auto axis range"
 msgstr "自動刻度設定"
 
-#: gui2/gpt_dialog.c:2847
+#: gui2/gpt_dialog.c:2861
 msgid "manual range:"
 msgstr "手動刻度設定"
 
-#: gui2/gpt_dialog.c:2922
+#: gui2/gpt_dialog.c:2936
 msgid "linear scale"
 msgstr "線性刻度"
 
-#: gui2/gpt_dialog.c:2930
+#: gui2/gpt_dialog.c:2944
 msgid "logarithmic scale, base:"
 msgstr "對數刻度, 底數為:"
 
-#: gui2/gpt_dialog.c:2966
+#: gui2/gpt_dialog.c:2980
 msgid "Palette"
 msgstr "色盤"
 
-#: gui2/gpt_dialog.c:2969
+#: gui2/gpt_dialog.c:2983
 msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
@@ -9671,15 +9671,15 @@ msgstr ""
 "各線條將依序使用以下顏色\n"
 "除非有特別設定\n"
 
-#: gui2/gpt_dialog.c:3184
+#: gui2/gpt_dialog.c:3198
 msgid "Title of plot"
 msgstr "圖標題"
 
-#: gui2/gpt_dialog.c:3185
+#: gui2/gpt_dialog.c:3199
 msgid "Title for axis"
 msgstr "軸之變數名稱"
 
-#: gui2/gpt_dialog.c:3210
+#: gui2/gpt_dialog.c:3224
 msgid "gretl plot controls"
 msgstr "gretl 繪圖設定"
 
