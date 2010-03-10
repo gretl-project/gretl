@@ -283,7 +283,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	}	
 	m->rows = va_arg(ap, int);
 	m->cols = va_arg(ap, int);
-	if (m->rows <= 0 || m->cols <= 0) {
+	if (m->rows < 0 || m->cols < 0) {
 	    err = 1;
 	    break;
 	}
@@ -292,24 +292,24 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 
     va_end(ap);
 
-    if (!err) {
+    if (!err && vsize > 0) {
 	/* allocate combined data block */
 	B->val = malloc(vsize * sizeof *B->val);
 	if (B->val == NULL) {
 	    err = 1;
 	}
     }
-	
-    if (!err) {
+
+    if (err) {
+	gretl_matrix_block_destroy(B);
+	B = NULL;
+    } else {
 	B->matrix[0]->val = B->val;
 	for (i=1; i<B->n; i++) {
 	    m = B->matrix[i-1];
 	    B->matrix[i]->val = m->val + (m->rows * m->cols);
 	}
-    } else {
-	gretl_matrix_block_destroy(B);
-	B = NULL;
-    }
+    } 
 
     return B;
 }

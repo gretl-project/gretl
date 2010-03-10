@@ -50,12 +50,12 @@ struct duration_info_ {
     gretl_matrix_block *B; /* workspace */
     gretl_vector *logt;    /* log of dependent variable (duration) */
     gretl_matrix *X;       /* covariates */
+    gretl_vector *cens;    /* censoring variable (if needed) */
     gretl_matrix *beta;    /* coeffs on covariates */
     gretl_matrix *llt;     /* per-observation likelihood */
     gretl_matrix *Xb;      /* X \times \beta */
     gretl_matrix *G;       /* score */
     gretl_matrix *V;       /* covariance matrix */
-    gretl_vector *cens;    /* censoring variable (if needed) */
     PRN *prn;              /* verbose printer */
 };
 
@@ -64,7 +64,6 @@ static void duration_free (duration_info *dinfo)
     gretl_matrix_block_destroy(dinfo->B);
     free(dinfo->theta);
     gretl_matrix_free(dinfo->V);
-    gretl_matrix_free(dinfo->cens);
 }
 
 static int duration_nonpositive (const MODEL *pmod, const double **Z)
@@ -124,14 +123,13 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 			  int censvar, const double **Z, 
 			  gretlopt opt, PRN *prn)
 {
-    int n = pmod->nobs;
+    int cn, n = pmod->nobs;
     int np, k = pmod->ncoeff;
     int i, j, t, v;
     int err = 0;
 
     dinfo->B = NULL;
     dinfo->theta = NULL;
-    dinfo->cens = NULL;
     dinfo->V = NULL;
 
     if (duration_nonpositive(pmod, Z)) {
@@ -165,15 +163,11 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 	return E_ALLOC;
     }
 
-    if (censvar > 0) {
-	dinfo->cens = gretl_column_vector_alloc(n);
-	if (dinfo->cens == NULL) {
-	    return E_ALLOC;
-	}
-    }
+    cn = (censvar > 0)? n : 0;
 
     dinfo->B = gretl_matrix_block_new(&dinfo->logt, n, 1,
 				      &dinfo->X, n, k,
+				      &dinfo->cens, cn, 1,
 				      &dinfo->beta, k, 1,
 				      &dinfo->Xb, n, 1,
 				      &dinfo->llt, n, 1,
@@ -181,6 +175,11 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 				      NULL);
     if (dinfo->B == NULL) {
 	return E_ALLOC;
+    }
+
+    if (cn == 0) {
+	/* mask unused zero-size part of matrix block */
+	dinfo->cens = NULL;
     }
 
     /* transcribe data into matrix form, taking the

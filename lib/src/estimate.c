@@ -4116,17 +4116,70 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     return tmod;
 }
 
-static int get_trailing_var (int *list)
+static int duration_precheck (const int *list, double ***pZ,
+			      DATAINFO *pdinfo, MODEL *pmod,
+			      int *pcensvar)
 {
+    const double **Z = (const double **) *pZ;
+    int *olslist = NULL;
+    int seppos, censvar = 0;
     int l0 = list[0];
-    int ret = 0;
+    int err = 0;
 
-    if (list[l0 - 1] == LISTSEP) {
-	ret = list[l0];
-	list[0] -= 2;
+    /* such models must contain a constant */
+    if (!gretl_list_const_pos(list, 2, Z, pdinfo)) {
+	return E_NOCONST;
     }
 
-    return ret;
+    /* if there's a separator, it must be in second-last place */
+    seppos = gretl_list_separator_position(list);
+    if (seppos > 0 && seppos != l0 - 1) {
+	return E_PARSE;
+    }
+
+    if (seppos) {
+	/* the censoring variable, if present, must be a dummy */
+	censvar = list[l0];
+	if (!gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[censvar])) {
+	    gretl_errmsg_sprintf(_("The variable '%s' is not a 0/1 variable."),
+				 pdinfo->varname[censvar]);
+	    err = E_DATA;
+	} else {
+	    olslist = gretl_list_copy(list);
+	    if (olslist == NULL) {
+		err = E_ALLOC;
+	    } else {
+		/* include the censoring dummy. to ensure the
+		   sample is right */
+		olslist[l0 - 1] = censvar;
+		olslist[0] -= 1;
+	    }
+	}
+    }
+
+    if (!err) {
+	/* run an initial OLS to "set the model up" and check for errors;
+	   the duration_estimate_driver function will overwrite the
+	   coefficients etc.
+	*/	
+	if (olslist != NULL) {
+	    *pmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
+	    if (!pmod->errcode) {
+		/* remove ref to censoring var */
+		pmod->list[0] -= 1;
+		pmod->ncoeff -= 1;
+		pmod->dfn -= 1;
+		pmod->dfd += 1;
+	    }
+	    free(olslist);
+	} else {
+	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	}
+	err = pmod->errcode;
+	*pcensvar = censvar;
+    }
+
+    return err;
 }
 
 /**
@@ -4149,8 +4202,7 @@ MODEL duration_model (const int *list, double ***pZ,
 {
     MODEL dmod;
     void *handle;
-    int *listcpy;
-    int censvar;
+    int censvar = 0;
     int (* duration_estimate) (MODEL *, int, const double **, 
 			       const DATAINFO *, gretlopt, 
 			       PRN *);
@@ -4158,27 +4210,8 @@ MODEL duration_model (const int *list, double ***pZ,
     gretl_error_clear();
     gretl_model_init(&dmod);
 
-    if (!gretl_list_const_pos(list, 2, (const double **) *pZ, pdinfo)) {
-	dmod.errcode = E_NOCONST;
-	return dmod;
-    }
-
-    listcpy = gretl_list_copy(list);
-    if (listcpy == NULL) {
-	dmod.errcode = E_ALLOC;
-        return dmod;
-    }
-
-    censvar = get_trailing_var(listcpy);
-
-    /* run an initial OLS to "set the model up" and check for errors.
-       the duration_estimate_driver function will overwrite the
-       coefficients etc.
-    */
-
-    dmod = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
-    free(listcpy);
-
+    dmod.errcode = duration_precheck(list, pZ, pdinfo, &dmod,
+				     &censvar);
     if (dmod.errcode) {
         return dmod;
     }
@@ -4199,6 +4232,19 @@ MODEL duration_model (const int *list, double ***pZ,
     set_model_id(&dmod);
 
     return dmod;
+}
+
+static int get_trailing_var (int *list)
+{
+    int l0 = list[0];
+    int ret = 0;
+
+    if (list[l0 - 1] == LISTSEP) {
+	ret = list[l0];
+	list[0] -= 2;
+    }
+
+    return ret;
 }
 
 /**
