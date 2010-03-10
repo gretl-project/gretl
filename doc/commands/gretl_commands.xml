@@ -2944,10 +2944,12 @@
 	  foreign</lit>; at this point the stacked commands are executed.
       </para>
       <para>
-	At present two <quote>foreign</quote> programs supported in this way,
-	GNU R (<lit>foreign language=R</lit>) and Jurgen Doornik's Ox
-	(<lit>foreign language=Ox</lit>). Note that the <lit>--send-data</lit>
-	is not available in connection with Ox.
+	At present three <quote>foreign</quote> programs supported in this
+	way, GNU R (<lit>foreign language=R</lit>), Jurgen Doornik's Ox
+	(<lit>foreign language=Ox</lit>) and GNU Octave (<lit>foreign
+	  language=Octave</lit>). Tha language names are recognized on a
+	case-insensitive basis.  Note that the <lit>--send-data</lit> is only
+	available in connection with R.
       </para>
       <para>
 	See <guideref targ="chap:gretlR"/> for details and examples.

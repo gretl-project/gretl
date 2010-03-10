@@ -3910,8 +3910,12 @@ static void run_ox_or_octave (gchar *buf, int ox)
 	char *sout = NULL;
 	gchar *cmd;
 
-	prog = (ox)? gretl_oxl_path() : gretl_octave_path();
-	cmd = g_strdup_printf("\"%s\" \"%s\"", prog, fname);
+	if (ox) {
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
+	} else {
+	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
+	}
+
 	err = gretl_win32_grab_output(cmd, &sout);
 	g_free(cmd);
 
@@ -4134,11 +4138,12 @@ void run_octave_script (gchar *buf)
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *argv[3];
+	gchar *argv[4];
 
 	argv[0] = (gchar *) gretl_octave_path();
-	argv[1] = (gchar *) fname;
-	argv[2] = NULL;
+	argv[1] = (gchar *) "-q";
+	argv[2] = (gchar *) fname;
+	argv[3] = NULL;
 
 	run_prog_sync(argv);
     }

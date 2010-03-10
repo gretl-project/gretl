@@ -44,6 +44,7 @@ TEXSRC = cli.tex \
 	odbc.tex \
 	gretlR.tex \
 	gretlOx.tex \
+	gretlOctave.tex \
 	df.tex
 
 STYSRC = $(docsrc)/gretl.sty.in
