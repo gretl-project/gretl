@@ -2337,7 +2337,7 @@ static void record_transform_info (double **Z, DATAINFO *pdinfo, double version)
 static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
 {
     pprintf(prn, M_("\nRead datafile %s\n"), fname);
-    pprintf(prn, M_("periodicity: %d, maxobs: %d,\n"
+    pprintf(prn, M_("periodicity: %d, maxobs: %d\n"
 		    "observations range: %s-%s\n"), 
 	    (custom_time_series(pdinfo))? 1 : pdinfo->pd, 
 	    pdinfo->n, pdinfo->stobs, pdinfo->endobs);

@@ -1866,7 +1866,7 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
     if (err) goto bailout;
 
     /* print out basic info from the files read */
-    pprintf(prn, I_("periodicity: %d, maxobs: %d,\n"
+    pprintf(prn, I_("periodicity: %d, maxobs: %d\n"
 	   "observations range: %s-%s\n"), tmpdinfo->pd, tmpdinfo->n,
 	   tmpdinfo->stobs, tmpdinfo->endobs);
 
@@ -1945,7 +1945,7 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* print out basic info */
-    pprintf(prn, M_("periodicity: %d, maxobs: %d,\n"
+    pprintf(prn, M_("periodicity: %d, maxobs: %d\n"
 	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
