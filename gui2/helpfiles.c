@@ -59,6 +59,7 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 static gboolean real_find_in_listbox (windata_t *vwin, const gchar *s, 
 				      gboolean sensitive,
 				      gboolean vnames);
+static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin);
 
 static GtkWidget *find_dialog = NULL;
 static GtkWidget *find_entry;
@@ -773,6 +774,15 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *key,
 		gtk_editable_set_position(GTK_EDITABLE(entry), -1);
 	    }
 
+	    return TRUE;
+	}
+    } else if (key->keyval == GDK_g) {
+	/* Ctrl-G: repeat search */
+	GdkModifierType mods = 
+	    widget_get_pointer_mask(GTK_WIDGET(entry));
+
+	if (mods & GDK_CONTROL_MASK) {
+	    vwin_finder_callback(entry, vwin);
 	    return TRUE;
 	}
     }
