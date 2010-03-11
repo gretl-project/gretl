@@ -2438,9 +2438,13 @@
           <effect>use log-normal distribution</effect>
         </option>
         <option>
+          <flag>--medians</flag>
+          <effect>fitted values are medians</effect>
+        </option>
+        <option>
           <flag>--robust</flag>
           <effect>robust (QML) standard errors</effect>
-        </option>	
+        </option>
         <option>
           <flag>--vcv</flag>
           <effect>print covariance matrix</effect>
@@ -2471,6 +2475,12 @@
 	period of observation) then you should supply the trailing argument
 	<repl>censvar</repl>, a series in which non-zero values indicate
 	right-censored cases.
+      </para>
+      <para>
+	By default the fitted values obtained via the accessor
+	<lit>$yhat</lit> are the conditional means of the durations, but if
+	the <lit>--medians</lit> option is given then <lit>$yhat</lit>
+	provides the conditional medians instead.
       </para>
     </description>
 
@@ -2945,11 +2955,11 @@
       </para>
       <para>
 	At present three <quote>foreign</quote> programs supported in this
-	way, GNU R (<lit>foreign language=R</lit>), Jurgen Doornik's Ox
-	(<lit>foreign language=Ox</lit>) and GNU Octave (<lit>foreign
-	  language=Octave</lit>). Tha language names are recognized on a
-	case-insensitive basis.  Note that the <lit>--send-data</lit> is only
-	available in connection with R.
+	way, GNU R (<lit>language=R</lit>), Jurgen Doornik's Ox
+	(<lit>language=Ox</lit>) and GNU Octave (<lit>language=Octave</lit>).
+	(Language names are recognized on a case-insensitive basis.)  Note
+	that the <lit>--send-data</lit> is only available in connection with
+	R.
       </para>
       <para>
 	See <guideref targ="chap:gretlR"/> for details and examples.

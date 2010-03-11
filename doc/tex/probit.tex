@@ -801,8 +801,7 @@ and the log-likelihood is
 \end{equation}
 
 Rather than working with the density directly, however, it is standard
-practice (both for ease of computation and for the purpose of
-interpretation) to factor $f(\cdot)$ into two components, namely a
+practice to factor $f(\cdot)$ into two components, namely a
 \emph{hazard function}, $\lambda$, and a \emph{survivor function},
 $S$.  The survivor function gives the probability that a state lasts
 at least as long as $t$; it is therefore $1 - F(t, X, \theta)$ where
@@ -828,12 +827,8 @@ long the state has persisted to date. The alternatives are positive
 duration dependence (the likelihood of exiting the state rises, the
 longer the state has persisted) or negative duration dependence (exit
 becomes less likely, the longer it has persisted).  Finally, the
-behavior of the hazard with respect to time need not be monotone, for
-example it may start high, fall at first, then rise again.  This last
-case might be applicable to computer drive failures: an initial
-relatively high failure rate, as defective drives are weeded out, is
-followed by a period of low failure probability, until eventually the
-failure rate turns upward due to wear on the mechanism.
+behavior of the hazard with respect to time need not be monotonic;
+some parameterizations allow for this possibility and some do not.
 
 Since durations are inherently positive the probability distribution
 used in modeling must respect this requirement, giving a density of
@@ -900,15 +895,13 @@ $X\beta$ corresponds to $-\log \gamma$, or in other words $\gamma =
 \exp(-X\beta)$.
 
 With this change of variables, the density and survivor functions may
-be written compactly as follows.
+be written compactly as follows (the exponential is the same as the
+Weibull).
 
 \begin{center}
 \setlength\tabcolsep{1.5em}
 \begin{tabular}{lll}
  & Density, $f(w_i)$ & Survivor, $S(w_i)$ \\ [4pt]
-Exponential & 
-$\exp\left(w_i - e^{w_i}\right)$ & $\exp(-e^{w_i})$
-\\ [4pt]
 Weibull & 
 $\exp\left(w_i - e^{w_i}\right)$ & $\exp(-e^{w_i})$
 \\ [4pt]
@@ -943,12 +936,12 @@ where $\delta_i$ equals 1 for censored cases (incomplete spells), and
 0 for complete observations. The rationale for this is that the
 log-density equals the sum of the log hazard and the log survivor
 function (see equation~\ref{eq:surv-decomp}), but for the incomplete
-spells only the survivor function applies. So in
+spells only the survivor function contributes to the likelihood. So in
 (\ref{eq:surv-loglik}) we are adding up the log survivor function
 alone for the incomplete cases, plus the full log density for the
 completed cases.
 
-\subsection{Implementation in \app{gretl}}
+\subsection{Implementation in \app{gretl} and illustration}
 
 The \texttt{duration} command accepts a list of series on the usual
 pattern: dependent variable followed by covariates. If right-censoring
@@ -967,7 +960,58 @@ the other three distributions discussed here by appending one of the
 option flags \verb|--exponential|, \verb|--loglogistic| or 
 \verb|--lognormal|.
 
-FIXME more wanted here, plus a full example.
+Interpreting the coefficients in a duration model requires some care,
+and we will work through an illustrative case. The example comes from
+Wooldridge (2002a), and it concerns recidivism rates.  The data
+(filename \texttt{recid.gdt}) pertain to a sample of 1,445 convicts
+released from prison between July 1, 1977 and June 30, 1978. The
+dependent variable is the time until they return to prison. The
+information was gathered retrospectively by looking at records in
+April 1984; the maximum possible length of observation is therefore 81
+months.  Right-censoring is rather important: as of April 1984 about
+62 percent had not returned to prison.  The dataset contains several
+covariates, which are described in the data file; here we will focus on
+interpretation of the \texttt{married} variable, a dummy which equals
+1 if the respondent was married when imprisoned.
+
+Example~\ref{ex:duration1} shows the \app{gretl} commands for
+a Weibull model along with 
+
+\begin{script}[htbp]
+  \caption{Weibull model for recidivism data}
+Input:
+\begin{scodebit}
+open recid.gdt
+list X = workprg priors tserved felon alcohol drugs \
+ black married educ age
+duration durat 0 X ; cens
+\end{scodebit}
+Partial output:
+\begin{scodebit}
+Model 1: Duration (Weibull), using observations 1-1445
+Dependent variable: durat
+Standard errors based on Hessian
+
+             coefficient   std. error      z      p-value 
+  --------------------------------------------------------
+  const       4.22167      0.341311      12.37    3.85e-35 ***
+  workprg    -0.112785     0.112535      -1.002   0.3162  
+  priors     -0.110176     0.0170675     -6.455   1.08e-10 ***
+  tserved    -0.0168297    0.00213029    -7.900   2.78e-15 ***
+  felon       0.371623     0.131995       2.815   0.0049   ***
+  alcohol    -0.555132     0.132243      -4.198   2.69e-05 ***
+  drugs      -0.349265     0.121880      -2.866   0.0042   ***
+  black      -0.563016     0.110817      -5.081   3.76e-07 ***
+  married     0.188104     0.135752       1.386   0.1659  
+  educ        0.0289111    0.0241153      1.199   0.2306  
+  age         0.00462188   0.000664820    6.952   3.60e-12 ***
+  sigma       1.24090      0.0482896                      
+
+Chi-square(10)       165.4772   p-value              2.39e-30
+Log-likelihood      -1633.032   Akaike criterion     3290.065
+\end{scodebit}
+\label{ex:duration1}
+\end{script}
 
 
 %%% Local Variables: 
