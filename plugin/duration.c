@@ -521,35 +521,60 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo)
     }
 }
 
+/* 
+   Produce something to fill $yhat and $uhat for a duration model.
+
+   For $yhat we produce by default the conditional expectation E[t |
+   X, theta].  This carries the complication that the expected value
+   may be undefined for the log-logistic distribution. Alternatively,
+   if @opt includes OPT_M, we produce the conditional median, which is
+   always defined.
+
+   For $uhat we write Cox-Snell generalized residuals, namely the
+   integrated hazard function, which equals -log S(t).
+*/
+
 static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
-				      const double **Z)
+				      const double **Z, gretlopt opt)
 {
     const double *y = Z[pmod->list[1]];
     const double *logt = dinfo->logt->val;
+    int medians = (opt & OPT_M);
     double St, G = 1.0;
     double s = 1.0, p = 1.0;
+    double s22 = 0.0;
+    double pi_alpha = NADBL;
     double wi, Xbi, expXbi;
     int i, t;
 
     if (dinfo->dist != DUR_EXPON) {
 	/* scale factor */
 	s = dinfo->theta[dinfo->npar-1];
-	p = 1/s;
+	p = 1 / s;
     }
+
+    /* observation-invariant auxiliary quantities */
 
     if (dinfo->dist == DUR_WEIBULL) {
 	/* agrees with Stata; R's "survreg" has this wrong? */
-	G = gamma_function(1 + s);
+	if (medians) {
+	    G = pow(log(2.0), s);
+	} else {
+	    G = gamma_function(1 + s);
+	}
     } else if (dinfo->dist == DUR_EXPON) {
-	G = gamma_function(2.0);
-    }   
-
-    /* Below: we write into pmod->yhat E[t | X, theta] -- or
-       in the case of the loglogistic and lognormal models,
-       exp(E[log t | X, theta]).  And we write into pmod->uhat
-       Cox-Snell generalized residuals, namely the integrated
-       hazard function, which equals -log S(t).
-    */
+	if (medians) {
+	    G = log(2.0);
+	} else {
+	    G = gamma_function(2.0);
+	}
+    } else if (dinfo->dist == DUR_LOGNORM) {
+	s22 = s * s / 2;
+    } else if (dinfo->dist == DUR_LOGLOG) {
+	if (!medians && s < 1) {
+	    pi_alpha = M_PI * s / sin(M_PI * s);
+	}
+    }
 
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -558,18 +583,29 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	}
 
 	Xbi = dinfo->Xb->val[i];
-	expXbi = exp(Xbi);
 	wi = (logt[i] - Xbi) / s;
+	expXbi = exp(Xbi);
 
 	if (dinfo->dist == DUR_WEIBULL || dinfo->dist == DUR_EXPON) {
 	    pmod->yhat[t] = expXbi * G;
 	    St = exp(-exp(wi));
 	} else if (dinfo->dist == DUR_LOGNORM) {
-	    pmod->yhat[t] = expXbi;
+	    if (medians) {
+		pmod->yhat[t] = expXbi;
+	    } else {
+		pmod->yhat[t] = exp(Xbi + s22);
+	    }
 	    St = normal_cdf(-wi);
 	} else {
 	    /* log-logistic */
-	    pmod->yhat[t] = expXbi;
+	    if (medians) {
+		pmod->yhat[t] = expXbi;
+	    } else if (s < 1) {
+		pmod->yhat[t] = expXbi * pi_alpha;
+	    } else {
+		/* the expectation is undefined */
+		pmod->yhat[t] = NADBL;
+	    }
 	    St = 1.0 / (1 + pow(y[t] / expXbi, p));
 	}
 
@@ -577,6 +613,10 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	pmod->uhat[t] = -log(St);
 
 	i++;
+    }
+
+    if (medians) {
+	pmod->opt |= OPT_M;
     }
 }
 
@@ -644,7 +684,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     }	
 
     if (!err) {
-	duration_set_predictions(pmod, dinfo, Z);
+	duration_set_predictions(pmod, dinfo, Z, opt);
 	pmod->lnL = dinfo->ll;
 	mle_criteria(pmod, 0); 
 	/* mask invalid statistics */

@@ -1244,8 +1244,6 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
 	int nunits = count_panel_units(mask, pdinfo);
 	int ok = 0, npad = 0;
 
-	fprintf(stderr, "count_panel_units: got %d (subinfo->n = %d)\n", nunits, subinfo->n);
-
 	if (nunits > 1 && subinfo->n > nunits) {
 	    if (opt & OPT_B) {
 		/* only add padding rows if this was requested */
