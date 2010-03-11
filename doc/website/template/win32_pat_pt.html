@@ -1,182 +1,156 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
 <html>
-<head>
-  <title>gretl per Windows</title>
-  <link rel="STYLESHEET" type="text/css" href="../css-gretl.html">
+<head><title>gretl for Windows</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
 </head>
+
 <body>
-<p>[<a href="../gretl_portugues.html">página
-principal</a>]</p>
+
+<p>[<a href="http://gretl.sourceforge.net/gretl_portugues.html">página principal do gretl</a>]</p>
+
 <center>
 <h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
 <h2>Versão MS Windows</h2>
 </center>
+
 <h2>Download</h2>
-<p>O Gretl para Windows está na forma de um ficheiro de
-auto-instalação,
-<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
-(SHORTDATE, cerca de 9MB). Basta fazer o download e executá-lo e
-responder ao local da instalação, (o valor predefinido é
-<kbd>c:\userdata\gretl</kbd>). O programa está testado em&nbsp; Windows
-98 e
-Windows XP; pelo aquilo que sei, deverá funcionar bem em todas as
-versões do Windows que sucederam ao Windows 95.</p>
-<p>A ligação atrás apresentada é para a versão oficial mais recente.
-Outra possibilidade é fazer o download da versão actual ("snapshot") do
-gretl a partir da Wake Forest University:
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/gretl_install.exe">gretl_install.exe</a>.
-Esta versão deverá estar mais actualizada: por vezes terá correcções de
-erros, e noutras vezes poderá ter erros recentemente introduzidos!
-Traduções noutras línguas que não o Inglês, é de esperar que não
-estejam completas.</p>
-<p>Extras opcionais que pode querer instalar:</p>
+
+<p>O Gretl para Windows é fornecido na forma de um ficheiro/arquivo de auto-instalação,
+<a
+href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
+(SHORTDATE, cerca de 9MB). Basta fazer o download e executá-lo: o instalador perguntará
+qual o local para instalação do programa (a localização padrão é
+<kbd>c:\Arquivo de programas\gretl</kbd>).  O programa tem sido testado majoritariamente
+no Windows XP; porém deverá funcionar corretamente em todas as versões NT do Windows 
+(isto é, NT4, 2000, XP ou Vista; mas não no Win9X ou Windows ME).</p>
+
+<p>O link acima corresponde à versão oficial mais recente.  Outra possibilidade é fazer
+o download da imagem mais recente ("snapshot") do Gretl:
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install.exe/download">gretl_install.exe</a>.
+Ao optar por instalar o "snapshot", você terá, possivelmente, uma versão mais actualizada
+do Gretl. Esta versão conterá algumas resoluções de bugs, porém, dado seu caráter experimental,
+o "snapshot" poderá introduzir novos bugs. Além disso, traduções para idiomas diferentes do
+Inglês poderão estar incompletos.  Para saber quais novidades foram introduzidas no "snapshot",
+consulte o <a href="../ChangeLog.html">Registro de alterações</a> (no link "em progresso").</p>
+
+<p>Se desejar executar o Gretl em versões mais antigas do Windows você pode
+usar a 
+<a href="http://sourceforge.net/projects/gretl/files/gretl/gretl-1.6.5.exe/download">versão 1.6.5</a> 
+do programa (requer Windows 98 ou superior).</p>
+
+<p>Extras opcionais que você pode querer instalar:</p>
+
 <center>
-<table cellpadding="4">
-  <tbody>
-    <tr>
-      <td>
-      <p>X-12-ARIMA (ajustamento com sazonalidade, modelos ARIMA)</p>
-      </td>
-      <td>
-      <p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a></p>
-      </td>
-    </tr>
-    <tr>
-      <td>
-      <p>TRAMO/SEATS (ajustamento com sazonalidade, modelos ARIMA)</p>
-      </td>
-      <td>
-      <p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a></p>
-      </td>
-    </tr>
-    <tr>
-      <td>
-      <p>Conjuntos de Dados para <a
- href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
-Econometrics</i></a> de Wooldridge</p>
-      </td>
-      <td>
-      <p><a
- href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a></p>
-      </td>
-    </tr>
-    <tr>
-      <td>
-      <p>Conjuntos de Dados para <a
- href="http://www.mhhe.com/economics/gujarati4/"><i>Basic Econometrics</i></a>
-de Gujarati</p>
-      </td>
-      <td>
-      <p><a
- href="http://ricardo.ecn.wfu.edu/pub/gretl/gujarati_data.exe">gujarati_data.exe</a></p>
-      </td>
-    </tr>
-    <tr>
-      <td>
-      <p>Conjuntos de Dados e script para <a
- href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction to
-Econometrics</i></a> de Stock e Watson.</p>
-      </td>
-      <td>
-      <p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.exe">stock_watson.exe</a></p>
-      </td>
-    </tr>
-    <tr>
-      <td>
-      <p>Conjuntos de Dados para <a
- href="http://www.econ.queensu.ca/ETM/"><i>Econometric Theory and
-Methods</i></a> de Davidson e MacKinnon</p>
-      </td>
-      <td>
-      <p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a></p>
-      </td>
-    </tr>
-  </tbody>
+<table cellpadding="4"><tbody>
+
+<tr>
+<td><p>X-12-ARIMA (ajuste sazonal, modelos ARIMA)</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/addons/x12a_install.exe/download">x12a_install.exe</a></p></td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS (ajuste sazonal, modelos ARIMA)</p></td>
+<td><p><a 
+href="http://sourceforge.net/projects/gretl/files/addons/ts_install.exe/download">ts_install.exe</a></p></td>
+</tr>
+
+<tr>
+ <td><p>Conjunto de dados para
+  <a href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
+  Econometrics</i></a> de Wooldridge</p>
+ </td>
+ <td><p><a 
+   href="http://sourceforge.net/projects/gretl/files/datafiles/wooldridge_data.exe/download">wooldridge_data.exe</a></p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Conjunto de dados para
+  <a href="http://www.mhhe.com/economics/gujarati4/"><i>Basic Econometrics</i></a> de Gujarati</p>
+ </td>
+ <td><p><a 
+   href="http://sourceforge.net/projects/gretl/files/datafiles/gujarati_data.exe/download">gujarati_data.exe</a></p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Conjunto de dados e scripts para
+  <a href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction to Econometrics</i></a> de Stock e Watson.</p>
+ </td>
+ <td><p><a 
+   href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson.exe/download">stock_watson.exe</a>,
+   <a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson_2.exe/download">stock_watson_2.exe</a>,
+   </p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Conjunto de dados para 
+  <a href="http://www.econ.queensu.ca/ETM/"><i>Econometric Theory and Methods</i></a> de Davidson e MacKinnon</p> 
+ </td>
+ <td><p><a 
+  href="http://sourceforge.net/projects/gretl/files/datafiles/ETM_data.exe/download">ETM_data.exe</a></p>
+ </td>
+</tr></tbody>
 </table>
 </center>
-<p>Todos os ficheiros acima são de auto-instalação. O gretl tem que ser
-instalado antes de instalar pacotes extras.</p>
-<p>O manual completo está disponível separadamente em formato PDF: <a
- href="http://gretl.sourceforge.net/manual.pdf">manual.pdf</a>. Está em
-tamanho de papel E.U.A.; também há uma versão em tamanho A4: <a
- href="http://gretl.sourceforge.net/manual-a4.pdf">manual-a4.pdf</a>.
-Se não tem o software para
-visionar ficheiros PDF, pode fazer o download a partir do <a
- href="http://www.adobe.com/products/acrobat/readstep2.html">sítio
-de Internet da Adobe</a>.</p>
-<p>Os executáveis foram criados em compilação cruzada (cross-compiled)
-em GNU/Linux usando <a href="http://www.mingw.org/">mingw32</a> e <a
- href="http://www.gimp.org/%7Etml/gimp/win32/downloads.html">gtk para
-win32</a> de Tor Lillqvist. O programa livre de instalação é de <a
- href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
-<h2>Suporte para várias línguas</h2>
-<p>Para além do Inglês, gretl está em Francês, Italiano, Espanhol,
-Alemão, Polaco e Português. Normalmente não deve ser necessário fazer nada em
-especial para o programa aparecer na Língua local: o programa vem com
-os conjuntos completos das traduções, e elas devem ser activadas
-automaticamente, baseadas na Língua activa no computador. No entanto,
-em certas circunstâncias, deverá ser necessário ajustar a sua Língua
-para obter o efeito desejado. A definição da Língua do utilizador pode
-ser feita no Painel de Controle do Windows. Se não conseguir fazer isso
-funcionar, eis uma lista de verificações que pode seguir:</p>
-<ul>
-  <li>
-    <p>Abrir uma janela de comandos do Windows (por vezes erradamente
-chamada de&nbsp; "Janela de MS/DOS").</p>
-  </li>
-  <li>
-    <p>Mudar para a directoria (<kbd>cd</kbd>) onde o gretl está
-instalado.
-Por exemplo, escrever</p>
-    <pre>cd c:\programmi\gretl<br></pre>
-    <p>e premir Enter.</p>
-    <p></p>
-  </li>
-  <li>
-    <p>Escrever "<kbd>set LANG=</kbd>" seguido pelo código de duas
-letras da sua Língua. Por exemplo, para a Língua portuguesa:</p>
-    <pre>set LANG=pt<br></pre>
-    <p>e premir Enter. (Francês é <kbd>fr</kbd>, Italiano é <kbd>it</kbd>,
-Espanhol é <kbd>es</kbd>, Alemão é <kbd>de</kbd>,&nbsp; e Polaco é <span
- style="font-family: monospace;">pl</span><kbd></kbd><kbd></kbd>) </p>
-  </li>
-  <li>
-    <p>De seguida iniciar o gretl a partir da linha de comandos,
-escrevendo<br>
-    </p>
-    <pre>gretlw32.exe<br></pre>
-    <p>e premindo Enter.</p>
-  </li>
-</ul>
-<p>Gretl deverá aparecer na Língua seleccionada, se suportada. Se deste
-modo não for possível colocar o gretl a funcionar na Língua correcta,
-deve ser possível corrigir esta situação indo ao Painel de Controle do
-Windows e escolhendo lá a Língua correcta.
-</p>
-<h2>Actualizar gretl</h2>
-<p>Antes de actualizar uma instalação do gretl, convirá primeiro
-desinstalá-la executando para isso o programa <kbd>unins000.exe</kbd>,
-que se encontra na pasta principal do programa gretl.&nbsp; Isto
-assegurará que não haverá comportamentos estranhos devidos a DLLs
-"velhos" ou valores desadequados no registo do Windows. Atenção:
-desinstalar o programa não irá afectar nenhuns ficheiros que o
-utilizador tenha criado na pasta <kbd>gretl/user</kbd>, mas irá apagar
-as customizações que tenham sido feitas usando o menu "Preferências",
-portanto estas terão que ser redefinidas quando se iniciar a nova
-versão do programa.</p>
-<h2>Executar gretl numa rede</h2>
-<p>Existe uma página de conselhos (em Inglês) <a
- href="http://gretl.sourceforge.net/win32/gretl_network.html">nesta
-ligação</a> para quem pretender configurar o gretl para Windows de modo
-a executar em rede, como por exemplo num laboratório de informática.</p>
-<h2>Compilar gretl para Windows</h2>
-<p>Para para compilar o gretl para Windows, fazer o download do pacote
+
+<p>Todos os ficheiros/arquivos acima são de auto-instalação.  O Gretl deve ser
+instalado antes dos pacotes extras.</p>
+
+<p>Os executáveis foram compilados no GNU/Linux utilizando o <a
+href="http://www.mingw.org/">mingw32</a> e o <a
+href="http://www.gtk.org/download-windows.html">GTK para
+Windows</a> (obrigado Tor Lillqvist!). O instalador é uma cortesia de <a
+href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+
+<h2>Suporte a várias idiomas</h2>
+
+<p>Além do Inglês, o Gretl está disponível em Francês, Italiano, Espanhol,
+Alemão, Basco, Português, Polaco/Polonês, Turco e Russo.  Normalmente não
+será necessário fazer nada em especial para que o Gretl seja exibido no
+idioma local: o programa vem com os conjuntos completos das traduções, que
+devem ser activadas automaticamente com base no idioma em uso no computador.
+No entanto, em certas circunstâncias, deverá ser necessário ajustar a sua
+língua para obter o efeito desejado. Isto pode ser feito no Painel de
+Controle do Windows.</p>
+
+<h2>Actualizando o Gretl</h2>
+
+<p>Antes de actualizar uma instalação do Gretl, recomenda-se primeiro
+desinstalá-lo executando o programa <kbd>unins000.exe</kbd>, que se
+encontra na pasta principal do Gretl. Isto assegurará que não haverá
+comportamentos estranhos devidos a DLLs "velhos" ou valores inadequados
+no registo do Windows.  Note que ao executar o desinstalador o programa
+não irá afectar ficheiros/arquivos criados na pasta <kbd>gretl/user</kbd>,
+mas irá apagar as customizações que tenham sido feitas usando o menu
+"Preferências", portanto estas terão que ser redefinidas quando se iniciar
+a nova versão do programa.</p>
+
+<h2>Executando o Gretl numa rede</h2>
+
+<p>Existe uma página de conselhos (em Inglês) <a href="./gretl_network.html">
+neste link</a> para quem pretender configurar o Gretl para Windows de modo
+a executá-lo em rede, como por exemplo num laboratório de informática.</p>
+
+<h2>Compilando o Gretl para Windows</h2>
+
+<p>Para compilar o Gretl para Windows, faça o download do pacote
 de código fonte do gretl (ver <a
  href="http://sourceforge.net/projects/gretl/">aqui</a> a versão mais
-recente) e dar uma olhadela na directoria&nbsp; <kbd>win32</kbd>. O
-Makefile para a versão Windows foi escrito na realidade para compilação
-cruzada do gretl em Linux mas não deverá ser muito difícil de alterar
-para o uso em Windows, em particular se se estiver a usar o compilador
-mingw32.</p>
+recente) e veja a/o directoria/diretório <kbd>win32</kbd>. Você encontrará
+o "Makefile" para a versão Windows, que na realidade foi escrito para
+compilação cruzada do Gretl em Linux, mas não deverá ser muito difícil
+alterá-lo para o uso em Windows, particularmente o compilador mingw32
+estiver sendo utilizado.</p>
+
 </body>
 </html>
+
+
+
+
