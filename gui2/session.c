@@ -2145,7 +2145,7 @@ static void maybe_delete_session_object (gui_obj *obj)
 
 static gui_obj *get_gui_obj_by_data (void *targ)
 {
-    GList *mylist = iconlist;
+    GList *mylist = g_list_first(iconlist);
     gui_obj *obj = NULL;
 
     while (mylist != NULL) {

@@ -3412,7 +3412,8 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 	    if (zlist != NULL) {
 		gretl_list_append_term(&zlist, v);
 	    }
-	    fprintf(stderr, "Deleting var %d at list pos %d: all zero\n", v, i);
+	    fprintf(stderr, "Deleting var %d (%s) at list pos %d: all zero\n", 
+		    v, pdinfo->varname[v], i);
 	    gretl_list_delete_at_pos(pmod->list, i);
 	}
     }
