@@ -794,11 +794,6 @@ The likelihood for a sample of $n$ observations indexed by $i$ is then
 \[
 L = \prod_{i=1}^n f(t_i, x_i, \theta)
 \]
-and the log-likelihood is
-\begin{equation}
-\label{eq:surv-density}
-\ell = \sum_{i=1}^n \log f(t_i, x_i, \theta)
-\end{equation}
 
 Rather than working with the density directly, however, it is standard
 practice to factor $f(\cdot)$ into two components, namely a
@@ -815,8 +810,13 @@ the ratio of the density to the survivor function:
 \label{eq:surv-decomp}
 \lambda(t, X, \theta) = \frac{f(t, X, \theta)}{S(t, X, \theta)}
 \end{equation}
-or in other words $f(t, X, \theta) = \lambda(t, X, \theta) \cdot S(t,
-X, \theta)$.
+so the log-likelihood can be written as
+\begin{equation}
+\label{eq:surv-loglik}
+\ell = \sum_{i=1}^n \log f(t_i, x_i, \theta) = 
+\sum_{i=1}^n \log \lambda(t_i, x_i, \theta) + 
+\log S(t_i, x_i, \theta)
+\end{equation}
 
 One point of interest is the shape of the hazard function, in
 particular its dependence (or not) on time since the state began.  If
@@ -925,9 +925,9 @@ denote the time from entering the state to either (a) exiting the
 state or (b) the observation window closing, whichever comes first,
 then all we know of the ``right-censored'' cases (b) is that the
 duration was at least as long as $t_i$. This can be handled by
-rewriting the the log-likelihood (compare \ref{eq:surv-density}) as
+rewriting the the log-likelihood (compare \ref{eq:surv-loglik}) as
 \begin{equation}
-\label{eq:surv-loglik}
+\label{eq:surv-loglik2}
 \ell_i = \sum_{i=1}^n \delta_i\log S\left(w_i\right)
 + \left(1-\delta_i\right) 
 \left[-\log\sigma + \log f\left(w_i\right)\right]
@@ -935,11 +935,10 @@ rewriting the the log-likelihood (compare \ref{eq:surv-density}) as
 where $\delta_i$ equals 1 for censored cases (incomplete spells), and
 0 for complete observations. The rationale for this is that the
 log-density equals the sum of the log hazard and the log survivor
-function (see equation~\ref{eq:surv-decomp}), but for the incomplete
-spells only the survivor function contributes to the likelihood. So in
-(\ref{eq:surv-loglik}) we are adding up the log survivor function
-alone for the incomplete cases, plus the full log density for the
-completed cases.
+function, but for the incomplete spells only the survivor function
+contributes to the likelihood. So in (\ref{eq:surv-loglik2}) we are
+adding up the log survivor function alone for the incomplete cases,
+plus the full log density for the completed cases.
 
 \subsection{Implementation in \app{gretl} and illustration}
 
@@ -963,7 +962,7 @@ option flags \verb|--exponential|, \verb|--loglogistic| or
 Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
 Wooldridge (2002a, section 20.3), and it concerns criminal
-recidivism.\footnote{Germán Rodríguez of Princetion University has a
+recidivism.\footnote{Germán Rodríguez of Princeton University has a
   page disussing this example and displaying estimates from
   \app{Stata} at \url{http://data.princeton.edu/pop509a/recid1.html}.}
 The data (filename \texttt{recid.gdt}) pertain to a sample of 1,445
@@ -984,8 +983,8 @@ factor, $\sigma$. The estimate is 1.241 with a standard error of
 confident that $\alpha$ is less than 1, so recidivism displays
 negative duration dependence.  This makes sense: it is plausible that
 if a past offender manages to stay out of trouble for an extended
-period his risk of engaging in crime again diminishes. The exponential
-model would therefore not be appropriate in this case.
+period his risk of engaging in crime again diminishes. (The
+exponential model would therefore not be appropriate in this case.)
 
 \begin{script}[htbp]
   \caption{Weibull model for recidivism data}
@@ -1161,8 +1160,8 @@ gnuplot 2 3 1 --with-lines --supp --matrix=mat_n --output=lognorm.plt
 One point to watch out for with the Weibull duration model is that the
 estimates may be represented in various different ways.  The
 representation given by \app{gretl} is sometimes called the
-\textit{accelerated failure-time metric} (AFT). An alternative that
-one sometimes sees is the \textit{log relative-hazard metric}; in fact
+\textit{accelerated failure-time} (AFT) metric. An alternative that
+one sometimes sees is the \textit{log relative-hazard} metric; in fact
 this is the metric used in Wooldridge's presentation of the recidivism
 example.  To get from AFT estimates to log relative-hazard form it is
 necessary to multiply the coefficients by $-\sigma^{-1}$. For example,
