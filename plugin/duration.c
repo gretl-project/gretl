@@ -637,6 +637,8 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	pmod->opt |= OPT_L;
     } else if (dinfo->dist == DUR_LOGNORM) {
 	pmod->opt |= OPT_Z;
+    } else {
+	pmod->opt |= OPT_W;
     }
 
     if (censvar > 0) {
@@ -658,6 +660,12 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	    } 
 	}
     }
+
+    if (dinfo->dist == DUR_EXPON) {
+	pmod->sigma = 1.0;
+    } else {
+	pmod->sigma = dinfo->theta[np-1];
+    } 
 
     err = gretl_model_write_coeffs(pmod, dinfo->theta, np);
     
@@ -691,7 +699,6 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	pmod->fstt = pmod->chisq = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
 	pmod->ess = NADBL;
-	pmod->sigma = NADBL;
 	/* but add overall LR test if possible */
 	duration_overall_LR_test(pmod, dinfo);
     }

@@ -465,6 +465,20 @@ static void print_overdisp_test (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_duration_alpha (const MODEL *pmod, PRN *prn)
+{
+    if ((pmod->opt & OPT_W) && plain_format(prn)) {
+	double a = 1.0 / pmod->coeff[pmod->ncoeff - 1];
+	double sa = a * a * pmod->sderr[pmod->ncoeff - 1];
+
+	ensure_vsep(prn);
+	pprintf(prn, "1/sigma = %g (%g)\n", a, sa);
+	if (!tex_format(prn)) {
+	    gretl_prn_newline(prn);
+	}	
+    }
+}
+
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
 {
     if (gretl_model_get_int(pmod, "nonunique")) {
@@ -2969,6 +2983,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_intreg_info(pmod, prn);
     } else if (pmod->ci == POISSON) {
 	print_overdisp_test(pmod, prn);
+    } else if (pmod->ci == DURATION) {
+	print_duration_alpha(pmod, prn);
     }
 
     /* FIXME alternate R^2 measures (within, centered) */

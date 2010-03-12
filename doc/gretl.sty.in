@@ -65,9 +65,14 @@
 %%                                         \thechapter. #1}{}}
 %% \renewcommand{\sectionmark}[1]{\markright{#1}}
 
-\def\floatpagefraction{.8}
+%% floats
+%% \def\floatpagefraction{.85}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
 
-%% add script as float (Example)
+
+%% add script as float ("Example")
 \newcounter{script}[chapter]
 \renewcommand \thescript
      {\ifnum \c@chapter>\z@ \thechapter.\fi \@arabic\c@script}

@@ -572,7 +572,7 @@ additional regressors (see the \texttt{pvalue} command in the
 \GCR). An example is contained in the sample script \texttt{wtp.inp},
 provided with the \app{gretl} distribution.
 
-\begin{script}[htbp]
+\begin{script}[ht]
   \caption{Interval model on artificial data}
   \label{ex:interval}
 Input:
@@ -962,28 +962,30 @@ option flags \verb|--exponential|, \verb|--loglogistic| or
 
 Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
-Wooldridge (2002a), and it concerns recidivism rates.  The data
-(filename \texttt{recid.gdt}) pertain to a sample of 1,445 convicts
-released from prison between July 1, 1977 and June 30, 1978. The
-dependent variable is the time in months until they return to
-prison. The information was gathered retrospectively by looking at
-records in April 1984; the maximum possible length of observation is
-therefore 81 months.  Right-censoring is important: as of April 1984
-about 62 percent had not returned to prison.  The dataset contains
-several covariates, which are described in the data file; we will
-focus below on interpretation of the \texttt{married} variable, a
+Wooldridge (2002a, section 20.3), and it concerns criminal
+recidivism.\footnote{Germán Rodríguez of Princetion University has a
+  page disussing this example and displaying estimates from
+  \app{Stata} at \url{http://data.princeton.edu/pop509a/recid1.html}.}
+The data (filename \texttt{recid.gdt}) pertain to a sample of 1,445
+convicts released from prison between July 1, 1977 and June 30,
+1978. The dependent variable is the time in months until they are
+again arrested. The information was gathered retrospectively by
+examining records in April 1984; the maximum possible length of
+observation is 81 months.  Right-censoring is important: when the date
+were compiled about 62 percent had not been arrested.  The dataset
+contains several covariates, which are described in the data file; we
+will focus below on interpretation of the \texttt{married} variable, a
 dummy which equals 1 if the respondent was married when imprisoned.
 
 Example~\ref{ex:duration1} shows the \app{gretl} commands for a
 Weibull model along with most of the output.  Consider first the scale
 factor, $\sigma$. The estimate is 1.241 with a standard error of
-0.048.  Recall that $\sigma$ corresponds to $1/\alpha$; we can
-therefore be confident that $\alpha$ is less than 1, so that
-recidivism displays negative duration dependence.  This makes sense:
-it is plausible that if a past offender manages to stay out of trouble
-for an extended period his risk of engaging in crime again
-diminishes. The exponential model would therefore not be appropriate
-in this case.
+0.048.  Recall that $\sigma$ corresponds to $1/\alpha$; we can be
+confident that $\alpha$ is less than 1, so recidivism displays
+negative duration dependence.  This makes sense: it is plausible that
+if a past offender manages to stay out of trouble for an extended
+period his risk of engaging in crime again diminishes. The exponential
+model would therefore not be appropriate in this case.
 
 \begin{script}[htbp]
   \caption{Weibull model for recidivism data}
@@ -1047,12 +1049,175 @@ On a priori grounds, however, we may doubt the monotonic decline in
 hazard that is simplied by the Weibull specification. Even if a person
 is liable to return to crime, it seems relatively unlikely that he
 would do so straight out of prison. Turning to the data, we find that
-the 5th percentile for \texttt{durat} is 6 months. Perhaps the
-log-normal specification, which would allow the hazard to rise and
-then fall, might be more appropriate.  Using the \texttt{duration}
-command again with the same covariates but the \verb|--lognormal|
-flag, we get a log-likelihood of $-1597$ as against $-1633$ for the
-Weibull, confirming that the log-normal gives a better fit.
+the 5th percentile for \texttt{durat} is 6 months. The log-normal
+specification, which allows the hazard to rise and then fall, may be
+more appropriate.  Using the \texttt{duration} command again with the
+same covariates but the \verb|--lognormal| flag, we get a
+log-likelihood of $-1597$ as against $-1633$ for the Weibull,
+confirming that the log-normal gives a better fit.
+
+Let us now focus on the \texttt{married} coefficient, which is
+positive in both specifications but larger and more sharply estimated
+in the log-normal variant. The first thing is to get the
+interpretation of the sign right.  Recall that $X\beta$ enters
+negatively into the intermediate variable $w$. The Weibull hazard is 
+$\lambda(w_i) = e^{w_i}$, so being married reduces the hazard of
+re-offending, or in other words lengthens the expected duration out of
+prison.  The same qualititive interpretation applies for the
+log-normal.  
+
+To get a better sense of the married effect, it is useful to show its
+impact on the hazard across time. We can do this by plotting the
+hazard for two values of the index function $X\beta$: in each case the
+values of all the covariates other than \texttt{married} are set to
+their means (or some chosen values) while \texttt{married} is set
+first to 0 then to 1. Example~\ref{ex:hazard-plots} provides a script
+that does this, and the resulting plots are shown in
+Figure~\ref{fig:hazard-plots}. Note that when computing the hazards we
+need to multiply by the Jacobian of the transformation from $t_i$ to
+$w_i = \log (t_i - x_i\beta)/\sigma$, namely $1/t$.  Note also that
+the estimate of $\sigma$ is available via the accessior \verb|$sigma|,
+but it is also present as the last element in the coefficient vector
+obtained via \verb|$coeff|.
+
+A further difference between the Weibull and log-normal specifications
+is illustrated in the plots. The Weibull is an instance of a
+\emph{proportional hazards} model. This means for any sets of values
+of the covariates, $x_i$ and $x_j$, the ratio of the associated
+hazards is invariant with respect to duration. In this example the
+Weibull hazard for unmarried individuals is always 1.1637 times that
+for married. In the log-normal variant, on the other hand, this ratio
+gradually declines from 1.6703 at one month to 1.1766 at 100 months.
+
+
+\begin{script}[htbp]
+  \caption{Create plots showing conditional hazards}
+\begin{scode}
+open recid.gdt -q
+
+# leave 'married' separate for analysis
+list X = workprg priors tserved felon alcohol drugs \
+ black educ age
+
+# Weibull variant
+duration durat 0 X married ; cens
+# coefficients on all Xs apart from married
+matrix beta_w = $coeff[1:$ncoeff-2]
+# married coefficient
+scalar mc_w = $coeff[$ncoeff-1]
+scalar s_w = $sigma
+
+# Log-normal variant
+duration durat 0 X married ; cens --lognormal
+matrix beta_n = $coeff[1:$ncoeff-2]
+scalar mc_n = $coeff[$ncoeff-1]
+scalar s_n = $sigma
+
+list allX = 0 X
+# evaluate X\beta at means of all variables except marriage
+scalar Xb_w = meanc({allX}) * beta_w
+scalar Xb_n = meanc({allX}) * beta_n
+
+# construct two plot matrices
+matrix mat_w = zeros(100, 3)
+matrix mat_n = zeros(100, 3)
+
+loop t=1..100 -q
+  # first column, duration
+  mat_w[t, 1] = t
+  mat_n[t, 1] = t
+  wi_w = (log(t) - Xb_w)/s_w
+  wi_n = (log(t) - Xb_n)/s_n
+  # second col: hazard with married = 0
+  mat_w[t, 2] = (1/t) * exp(wi_w)
+  mat_n[t, 2] = (1/t) * pdf(z, wi_n) / cdf(z, -wi_n)
+  wi_w = (log(t) - (Xb_w + mc_w))/s_w
+  wi_n = (log(t) - (Xb_n + mc_n))/s_n
+  # third col: hazard with married = 1
+  mat_w[t, 3] = (1/t) * exp(wi_w)
+  mat_n[t, 3] = (1/t) * pdf(z, wi_n) / cdf(z, -wi_n)
+endloop
+
+colnames(mat_w, "months unmarried married")
+colnames(mat_n, "months unmarried married")
+
+gnuplot 2 3 1 --with-lines --supp --matrix=mat_w --output=weibull.plt
+gnuplot 2 3 1 --with-lines --supp --matrix=mat_n --output=lognorm.plt
+\end{scode}
+\label{ex:hazard-plots}
+\end{script}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[scale=0.85]{figures/weibull}
+\includegraphics[scale=0.85]{figures/lognorm}
+\caption{Recidivism hazard estimates for married and unmarried
+  ex-convicts}
+\label{fig:hazard-plots}
+\end{figure}
+
+\subsection{Alternative representations of the Weibull model}
+
+One point to watch out for with the Weibull duration model is that the
+estimates may be represented in various different ways.  The
+representation given by \app{gretl} is sometimes called the
+\textit{accelerated failure-time metric} (AFT). An alternative that
+one sometimes sees is the \textit{log relative-hazard metric}; in fact
+this is the metric used in Wooldridge's presentation of the recidivism
+example.  To get from AFT estimates to log relative-hazard form it is
+necessary to multiply the coefficients by $-\sigma^{-1}$. For example,
+the \texttt{married} coefficient in the Weibull specification as shown
+here is 0.188104 and $\hat{\sigma}$ is 1.24090, so the alternative
+value is $-0.152$, which is what Wooldridge shows (2002a, Table 20.1).
+
+\subsection{Fitted values and residuals}
+
+By default, \app{gretl} computes fitted values (accessible via
+\dollar{yhat}) as the conditional mean of duration.  The formulae
+are shown below (where $\Gamma$ denotes the gamma function, and the
+exponential variant is just Weibull with $\sigma = 1$).
+
+\begin{center}
+\setlength\tabcolsep{1em}
+\begin{tabular}{ccc}
+Weibull & Log-logistic & Log-normal \\ [4pt]
+$\exp(X\beta)\Gamma(1 + \sigma)$ &
+$\displaystyle \exp(X\beta)\frac{\pi \sigma}{\sin(\pi \sigma)}$ &
+$\exp(X\beta + \sigma^2/2)$
+\end{tabular}
+\end{center}
+
+The expression given for the log-logistic mean, however, is valid only
+for $\sigma < 1$; otherwise the expectation is undefined, a point that
+is not noted in all software.\footnote{The \texttt{predict} adjunct to
+  the \texttt{streg} command in \app{Stata} 10, for example, gaily
+  produces large negative values for the log-logistic mean in duration
+  models with $\sigma > 1$.}
+
+Alternatively, if given the \verb|--medians| option, \app{gretl}'s
+\texttt{duration} command will produce conditional medians as the
+content of \dollar{yhat}.  These are as follows:
+
+\begin{center}
+\setlength\tabcolsep{1em}
+\begin{tabular}{ccc}
+Weibull & Log-logistic & Log-normal \\ [4pt]
+$\exp(X\beta)(\log 2)^\sigma$ &
+$\exp(X\beta)$ &
+$\exp(X\beta)$
+\end{tabular}
+\end{center}
+
+The values we give for the accessor \dollar{uhat} are generalized
+(Cox--Snell) residuals, computed as the integrated hazard function,
+which equals the negative of the log of the survivor function:
+\[
+\hat{u}_i = \Lambda(t_i, x_i, \theta) = -\log S(t_i, x_i, \theta)
+\]
+
+  
+
+
 
 
 
