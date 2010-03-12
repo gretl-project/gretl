@@ -512,6 +512,7 @@ static int write_data_for_R (const double **Z,
 			     FILE *fp)
 {
     gchar *Rdata, *Rline;
+    int ts = dataset_is_time_series(pdinfo);
     int err;
 
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
@@ -528,7 +529,7 @@ static int write_data_for_R (const double **Z,
     fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
     g_free(Rdata);
 
-    if (dataset_is_time_series(pdinfo)) {
+    if (ts) {
 	char *p, datestr[OBSLEN];
 	int subper = 1;
 	    
@@ -544,9 +545,13 @@ static int write_data_for_R (const double **Z,
 	fputs("attach(gretldata)\n", fp);
     }
 
-    if (!err && (opt & OPT_I)) {
-	/* interactive: let the user see that this worked */
-	fputs("gretlmsg <- \"current data loaded as \\\"gretldata\\\"\\n\"\n", fp);
+    if (!err) {
+	/* let the user see that this worked */
+	if (ts) {
+	    fputs("gretlmsg <- \"current data loaded as ts object \\\"gretldata\\\"\\n\"\n", fp);
+	} else {
+	    fputs("gretlmsg <- \"current data loaded as data frame \\\"gretldata\\\"\\n\"\n", fp);
+	}
 	fputs("cat(gretlmsg)\n", fp);
     }
 
@@ -576,6 +581,8 @@ static void write_R_export_func (FILE *fp)
     fputs("    write(dim(x), fname)\n", fp);
     fputs("    write(t(x), file=fname, ncolumns=ncol(x), append=TRUE)\n", fp);
     fputs("  }\n", fp);
+    fputs("  gretlmsg <- paste(\"wrote\", fname, \"\\n\")\n", fp);
+    fputs("  cat(gretlmsg)\n", fp);
     fputs("}\n", fp);
 }
 

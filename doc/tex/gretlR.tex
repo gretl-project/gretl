@@ -111,18 +111,14 @@ installed and working on your system and that \app{gretl} knows where
 it is. The relevant settings can be found by selecting the ``Tools,
 Preferences, General'' menu entry, under the ``Programs'' tab.
 
-Assuming \app{R} was launched successfully, you will notice that two
-commands have been executed automatically:
-\begin{code}
-  gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
-  attach(gretldata)
-\end{code}
-These commands have the effect of loading our dataset into the \app{R}
-workspace in the form of a \emph{data frame} (one of several forms in
-which \app{R} can store data). Use of a data frame enables the
-subsequent \texttt{attach()} command, which sets things up so that the
-variable names defined in the \app{gretl} workspace are available as
-valid identifiers within \app{R}.
+Assuming \app{R} was launched successfully, you will see notification
+that the data from gretl are available.  In the background,
+\app{gretl} has arranged for two \app{R} commands to be executed, one
+to load the \app{gretl} dataset in the form of a \emph{data frame}
+(one of several forms in which \app{R} can store data) and one to
+\emph{attach} the data so that the variable names defined in the
+\app{gretl} workspace are available as valid identifiers within
+\app{R}.
 
 In order to replicate \app{gretl}'s OLS estimation, go into the \app{R}
 window and type at the prompt
@@ -193,22 +189,14 @@ Akaike information criterion & -483.39
 \end{table}
 
 If we now open an \app{R} session as described in the previous
-subsection, the data-passing mechanism is slightly different.  The
-\app{R} commands that read the data from \app{gretl} are in this case
-\begin{code}
-# load data from gretl
-gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
-gretldata <- ts(gretldata, start=c(1949, 1), frequency = 12)
-\end{code}
-
-Since our data were defined in \app{gretl} as time series, we use an
-\app{R} \emph{time-series} object (\emph{ts} for short) for the
-transfer.  In this way we can retain in \app{R} useful information
-such as the periodicity of the data and the sample limits.  The
-downside is that the names of individual series, as defined in
-\app{gretl}, are not valid identifiers. In order to extract the
-variable \texttt{lg}, one needs to use the syntax
-\verb|lg <- gretldata[, "lg"]|.
+subsection, the data-passing mechanism is slightly different.  Since
+our data were defined in \app{gretl} as time series, we use an \app{R}
+\emph{time-series} object (\emph{ts} for short) for the transfer.  In
+this way we can retain in \app{R} useful information such as the
+periodicity of the data and the sample limits.  The downside is that
+the names of individual series, as defined in \app{gretl}, are not
+valid identifiers. In order to extract the variable \texttt{lg}, one
+needs to use the syntax \verb|lg <- gretldata[, "lg"]|.
 
 ARIMA estimation can be carried out by issuing the following two
 \app{R} commands:
@@ -412,41 +400,18 @@ gretl.export(vars)
 \end{code}
 %$
 
-In this case, running the above in \app{R} produces nothing more that
-the echoing of commands:
+Running this script via \app{gretl} produces minimal output:
 \begin{code}
-> # load data from gretl
-> gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
-
-> gretldata <- ts(gretldata, start=c(1949, 1), frequency = 12)
-
-> # load script from gretl
-> # extract the log series 
-> y <- gretldata[, "lg"]
-
-> # estimate the model
-> strmod <- StructTS(y)
-
-> # save the fitted components (smoothed)
-> compon <- as.ts(tsSmooth(strmod))
-
-> # save the estimated variances
-> vars <- as.matrix(strmod$coef)
-
-> # export into gretl's temp dir
-> gretl.export(compon)
-
-> gretl.export(vars)
+current data loaded as ts object "gretldata"
+wrote /home/cottrell/.gretl/compon.csv 
+wrote /home/cottrell/.gretl/vars.mat 
 \end{code}
-%$
-
-However, we see from the output that the two \texttt{gretl.export()}
-commands ran without errors. Hence, we are ready to pull the results
-back into \app{gretl} by executing the following commands, either from
-the console or by creating a small script:\footnote{This example will
-  work on Linux and presumably on OSX without modifications. On the
-  Windows platform, you may have to substitute the ``\texttt{/}''
-  character with ``$\backslash$''.}
+However, we are now able to pull the results back into \app{gretl} by
+executing the following commands, either from the console or by
+creating a small script:\footnote{This example will work on Linux and
+  presumably on OSX without modifications. On the Windows platform,
+  you may have to substitute the ``\texttt{/}'' character with
+  ``$\backslash$''.}
 \begin{code}
 append @dotdir/compon.csv
 vars = mread("@dotdir/vars.mat")
