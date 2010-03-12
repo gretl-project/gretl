@@ -468,8 +468,13 @@ static void gretl_loop_destroy (LOOPSET *loop)
 {
     int i;
 
+    if (loop == NULL) {
+	return;
+    }
+
     for (i=0; i<loop->n_children; i++) {
 	gretl_loop_destroy(loop->children[i]);
+	loop->children[i] = NULL;
     }
 
     controller_free(&loop->init);
@@ -1932,13 +1937,15 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 
 static void destroy_loop_stack (void)
 {
-    LOOPSET *parent, *loop = currloop;
+    LOOPSET *loop = currloop;
 
-    while (loop != NULL) {
-	parent = loop->parent; 
-	gretl_loop_destroy(loop);
-	loop = parent;
+    /* find the origin of the stack */
+    while (loop->parent != NULL) {
+	loop = loop->parent;
     }
+
+    /* and destroy recursively */
+    gretl_loop_destroy(loop);
 
     compile_level = 0;
 }
