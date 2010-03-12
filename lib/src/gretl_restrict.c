@@ -751,16 +751,22 @@ bnum_from_name (gretl_restriction *r, const DATAINFO *pdinfo,
    variable.  This function is actually fed the string in question at
    an offset of 1 beyond the "[".  We skip any white space in the 
    string.
+
+   Such terms may be preceded by a multiplier, but they should not
+   be followed by anything, so we flag an error if the closing "]"
+   is not the end of the string.
 */
 
 static int pick_apart (gretl_restriction *r, const char *s, 
 		       int *eq, int *bnum,
 		       const DATAINFO *pdinfo)
 {
+    const char *junk;
     char s1[16] = {0};
     char s2[16] = {0};
     char *targ = s1;
     int i, j, k;
+    int err = 0;
 
 #if RDEBUG
     fprintf(stderr, "pick_apart: looking at '%s'\n", s);
@@ -770,6 +776,13 @@ static int pick_apart (gretl_restriction *r, const char *s,
 
     k = haschar(']', s);
     if (k <= 0 || k > 30) {
+	return E_PARSE;
+    }
+    
+    junk = s + k + 1;
+    while (isspace(*junk)) junk++;
+    if (*junk != '\0') {
+	fprintf(stderr, "Got trailing junk '%s'\n", junk);
 	return E_PARSE;
     }
 
@@ -794,7 +807,7 @@ static int pick_apart (gretl_restriction *r, const char *s,
 	/* got a comma separator: [eqn,bnum] */
 	*eq = positive_int_from_string(s1);
 	if (*eq <= 0) {
-	    return E_PARSE;
+	    err = E_PARSE;
 	}
 	if (isdigit(*s2)) {
 	    *bnum = positive_int_from_string(s2);
@@ -811,7 +824,7 @@ static int pick_apart (gretl_restriction *r, const char *s,
 	}	    
     }
 
-    return 0;
+    return err;
 }
 
 static int bbit_trailing_garbage (const char *s)
@@ -857,7 +870,7 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
     }
 
     if (*bnum < 1) {
-	if (!gretl_errmsg_is_set()) {
+	if (!gretl_errmsg_is_set() && *bnum >= 0) {
 	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
 				 *bnum);
 	}
@@ -873,7 +886,7 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 	} else if (r->otype != GRETL_OBJ_VAR) {
 	    err = E_PARSE;
 	}
-    } else if (*eq < 1) {
+    } else if (*eq < 1 && *eq >= 0) {
 	gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
 			     *eq);
 	err = 1;
