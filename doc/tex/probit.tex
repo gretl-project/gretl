@@ -965,17 +965,25 @@ and we will work through an illustrative case. The example comes from
 Wooldridge (2002a), and it concerns recidivism rates.  The data
 (filename \texttt{recid.gdt}) pertain to a sample of 1,445 convicts
 released from prison between July 1, 1977 and June 30, 1978. The
-dependent variable is the time until they return to prison. The
-information was gathered retrospectively by looking at records in
-April 1984; the maximum possible length of observation is therefore 81
-months.  Right-censoring is rather important: as of April 1984 about
-62 percent had not returned to prison.  The dataset contains several
-covariates, which are described in the data file; here we will focus on
-interpretation of the \texttt{married} variable, a dummy which equals
-1 if the respondent was married when imprisoned.
+dependent variable is the time in months until they return to
+prison. The information was gathered retrospectively by looking at
+records in April 1984; the maximum possible length of observation is
+therefore 81 months.  Right-censoring is important: as of April 1984
+about 62 percent had not returned to prison.  The dataset contains
+several covariates, which are described in the data file; we will
+focus below on interpretation of the \texttt{married} variable, a
+dummy which equals 1 if the respondent was married when imprisoned.
 
-Example~\ref{ex:duration1} shows the \app{gretl} commands for
-a Weibull model along with 
+Example~\ref{ex:duration1} shows the \app{gretl} commands for a
+Weibull model along with most of the output.  Consider first the scale
+factor, $\sigma$. The estimate is 1.241 with a standard error of
+0.048.  Recall that $\sigma$ corresponds to $1/\alpha$; we can
+therefore be confident that $\alpha$ is less than 1, so that
+recidivism displays negative duration dependence.  This makes sense:
+it is plausible that if a past offender manages to stay out of trouble
+for an extended period his risk of engaging in crime again
+diminishes. The exponential model would therefore not be appropriate
+in this case.
 
 \begin{script}[htbp]
   \caption{Weibull model for recidivism data}
@@ -985,12 +993,12 @@ open recid.gdt
 list X = workprg priors tserved felon alcohol drugs \
  black married educ age
 duration durat 0 X ; cens
+duration durat 0 X ; cens --lognormal
 \end{scodebit}
 Partial output:
 \begin{scodebit}
 Model 1: Duration (Weibull), using observations 1-1445
 Dependent variable: durat
-Standard errors based on Hessian
 
              coefficient   std. error      z      p-value 
   --------------------------------------------------------
@@ -1009,9 +1017,45 @@ Standard errors based on Hessian
 
 Chi-square(10)       165.4772   p-value              2.39e-30
 Log-likelihood      -1633.032   Akaike criterion     3290.065
+
+Model 2: Duration (log-normal), using observations 1-1445
+Dependent variable: durat
+
+             coefficient   std. error       z      p-value 
+  ---------------------------------------------------------
+  const       4.09939      0.347535      11.80     4.11e-32 ***
+  workprg    -0.0625693    0.120037      -0.5213   0.6022  
+  priors     -0.137253     0.0214587     -6.396    1.59e-10 ***
+  tserved    -0.0193306    0.00297792    -6.491    8.51e-11 ***
+  felon       0.443995     0.145087       3.060    0.0022   ***
+  alcohol    -0.634909     0.144217      -4.402    1.07e-05 ***
+  drugs      -0.298159     0.132736      -2.246    0.0247   **
+  black      -0.542719     0.117443      -4.621    3.82e-06 ***
+  married     0.340682     0.139843       2.436    0.0148   **
+  educ        0.0229194    0.0253974      0.9024   0.3668  
+  age         0.00391028   0.000606205    6.450    1.12e-10 ***
+  sigma       1.81047      0.0623022                       
+
+Chi-square(10)       166.7361   p-value              1.31e-30
+Log-likelihood      -1597.059   Akaike criterion     3218.118
+
 \end{scodebit}
 \label{ex:duration1}
 \end{script}
+
+On a priori grounds, however, we may doubt the monotonic decline in
+hazard that is simplied by the Weibull specification. Even if a person
+is liable to return to crime, it seems relatively unlikely that he
+would do so straight out of prison. Turning to the data, we find that
+the 5th percentile for \texttt{durat} is 6 months. Perhaps the
+log-normal specification, which would allow the hazard to rise and
+then fall, might be more appropriate.  Using the \texttt{duration}
+command again with the same covariates but the \verb|--lognormal|
+flag, we get a log-likelihood of $-1597$ as against $-1633$ for the
+Weibull, confirming that the log-normal gives a better fit.
+
+
+
 
 
 %%% Local Variables: 
