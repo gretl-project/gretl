@@ -4267,14 +4267,14 @@ enum {
 /* Deal with a list that exists at the level of a user-defined
    function whose execution is now terminating.  Note that this list
    may be the direct return value of the function, or it may have been
-   given to the function as an argument.  This is flagged in the
-   @status argument.  
+   given to the function as an argument.  This is flagged by
+   @status.  
 */
 
 static int unlocalize_list (const char *lname, int status,
 			    double **Z, DATAINFO *pdinfo)
 {
-    const int *list = get_list_by_name(lname);
+    int *list = get_list_by_name(lname);
     int d = gretl_function_depth();
     int upd = d - 1;
     int i, vi;
@@ -4289,12 +4289,15 @@ static int unlocalize_list (const char *lname, int status,
 	return E_DATA;
     }
 
-    /* Note, AC, 2009-04-04.  The following is tricky, but I think it
-       _may_ now be right. If the list we're looking at was given as a
-       function argument we simply shunt all its members to the prior
-       STACK_LEVEL.  But if the list is the direct return value from
-       the function, we need to overwrite any variables at caller
-       level that have been redefined within the function.
+    /* 
+       If the list we're looking at was given as a function argument
+       we simply shunt all its members to the prior STACK_LEVEL.  But
+       if the list is the direct return value from the function, we
+       need to overwrite any variables at caller level that have been
+       redefined within the function.  If any series have been
+       redefined in that way we also need to adjust the list itself,
+       replacing the ID numbers of local variables with the
+       caller-level IDs.
     */
 
     if (status == LIST_DIRECT_RETURN) {
@@ -4315,9 +4318,12 @@ static int unlocalize_list (const char *lname, int status,
 		    }
 		}
 		if (overwrite) {
+		    /* replace data */
 		    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 			Z[j][t] = Z[vi][t];
 		    }
+		    /* replace ID number in list */
+		    list[i] = j;
 		} else {
 		    STACK_LEVEL(pdinfo, vi) = upd;
 		}
