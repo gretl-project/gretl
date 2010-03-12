@@ -4296,8 +4296,10 @@ static NODE *do_irr (NODE *l, parser *p)
 
 #define tramo_string(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
 
-/* Functions taking a series as argument and returning a series:
-   note that the 'r' node may contain an auxiliary parameter.
+/* Functions taking a series as argument and returning a series.
+   Note that the 'r' node may contain an auxiliary parameter;
+   in that case the aux value should be a scalar, unless 
+   we're doing F_DESEAS, in which case it should be a string.
 */
 
 static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
@@ -4307,13 +4309,17 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     if (f == F_SDIFF && !dataset_is_seasonal(p->dinfo)) {
 	p->err = E_PDWRONG;
 	return NULL;
-    } else if (f == F_DESEAS && !empty_or_str(r)) {
-	node_type_error(f, 2, STR, r, p);
-	return NULL;
-    } else if (f != F_DESEAS && !empty_or_num(r)) {
+    }
+
+    if (f == F_DESEAS) {
+	if (!empty_or_str(r)) {
+	    node_type_error(f, 2, STR, r, p);
+	    return NULL;
+	}
+    } else if (!empty_or_num(r)) {
 	node_type_error(f, 2, NUM, r, p);
 	return NULL;
-    } 
+    }
 
     ret = aux_vec_node(p, p->dinfo->n);
 
@@ -4327,7 +4333,8 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    cast_to_series(l, f, &tmp, p);
 	}
 
-	if (!p->err && r != NULL && r->t != EMPTY) {
+	if (!p->err && f != F_DESEAS && 
+	    r != NULL && r->t != EMPTY) {
 	    parm = node_get_scalar(r, p);
 	}
 
