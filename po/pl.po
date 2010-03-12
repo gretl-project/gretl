@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.8.6cvs
+# Polish translation for gretl-1.8.7cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2010
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2010
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-10 08:33-0500\n"
+"PO-Revision-Date: 2010-03-12 07:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -557,12 +557,12 @@ msgstr "Obserwacja"
 #: lib/src/compare.c:2748
 #, no-c-format
 msgid "CUSUMSQ plot with 95% confidence band"
-msgstr "Wykres CUSUMSQ z 95% przedziałem ufnosci"
+msgstr "Wykres CUSUMSQ z 95% przedziałem ufności"
 
 #: lib/src/compare.c:2756
 #, no-c-format
 msgid "CUSUM plot with 95% confidence band"
-msgstr "Wykres CUSUM z 95% przedziałem ufnosci"
+msgstr "Wykres CUSUM z 95% przedziałem ufności"
 
 #: lib/src/compare.c:2791
 #, c-format
@@ -1998,10 +1998,9 @@ msgstr ""
 "Proszę wybrać mniejszy zakres próby."
 
 #: lib/src/estimate.c:4236
-#, fuzzy, c-format
+#, c-format
 msgid "%s: the dependent variable must be count data"
-msgstr ""
-"Poisson: zmienna zależna musi być licznikiem zdarzeń (liczby naturalne)"
+msgstr "%s: zmienna zależna musi być licznikiem zdarzeń (liczba naturalna)"
 
 #: lib/src/flow_control.c:68
 msgid "error evaluating 'if'"
@@ -2538,9 +2537,9 @@ msgid "response of %s to a shock in %s"
 msgstr "odpowiedz %s na impuls z %s"
 
 #: lib/src/graphing.c:4300
-#, fuzzy, c-format
+#, c-format
 msgid "%g percent confidence band"
-msgstr "z %g procentowy przedział ufności"
+msgstr "%g procentowy przedział ufności"
 
 #: lib/src/graphing.c:4306 lib/src/graphing.c:4309
 msgid "point estimate"
@@ -2601,9 +2600,9 @@ msgid "stopped after %d iterations\n"
 msgstr "Zbieżność osiągnięta po %d iteracjach\n"
 
 #: lib/src/gretl_bfgs.c:937
-#, fuzzy, c-format
+#, c-format
 msgid "norm of gradient = %g"
-msgstr "Oceny grafientu: %d\n"
+msgstr "Ocena grafientu = %g"
 
 #: lib/src/gretl_bfgs.c:1432 lib/src/modelprint.c:2823
 #, c-format
@@ -2613,12 +2612,11 @@ msgstr "Oceny funkcji: %d\n"
 #: lib/src/gretl_bfgs.c:1433 lib/src/modelprint.c:2824
 #, c-format
 msgid "Evaluations of gradient: %d\n"
-msgstr "Oceny grafientu: %d\n"
+msgstr "Ocena grafientu: %d\n"
 
 #: lib/src/gretl_bfgs.c:1712
-#, fuzzy
 msgid "Initial value of objective function is not finite"
-msgstr "BFGS: wartość początkowa dla nieskończonej funkcji"
+msgstr "Wartość początkowa dla nieskończonej funkcji"
 
 #: lib/src/gretl_errors.c:38
 msgid "Data error"
@@ -2797,19 +2795,16 @@ msgid "Insufficient observations for this operation"
 msgstr "Niewystarczająca liczba obserwacji dla tej operacji"
 
 #: lib/src/gretl_errors.c:91
-#, fuzzy
 msgid "gradient is not close to zero"
-msgstr "Gradient dla ostatniej iteracji"
+msgstr "gradient is not close to zero"
 
 #: lib/src/gretl_errors.c:92
-#, fuzzy
 msgid "generated missing values"
-msgstr "%d brakujących danych"
+msgstr "wygenerowano brakujące dane"
 
 #: lib/src/gretl_errors.c:93
-#, fuzzy
 msgid "generated non-finite values"
-msgstr "wartości predyktora"
+msgstr "wygenerowano nieskończone wartoci"
 
 #: lib/src/gretl_errors.c:213 lib/src/gretl_errors.c:218
 msgid "Warning"
@@ -3358,9 +3353,8 @@ msgid "Coefficient number (%d) out of range for equation %d"
 msgstr "Numer współczynnika (%d) jest poza zakresem równania %d"
 
 #: lib/src/gretl_restrict.c:1598
-#, fuzzy
 msgid "Invalid restriction"
-msgstr "Błąd w deklaracji"
+msgstr "Błąd w restrykcjach"
 
 #: lib/src/gretl_restrict.c:1662
 #, c-format
@@ -4254,12 +4248,11 @@ msgstr "Poissona"
 
 #: lib/src/modelprint.c:689 lib/src/modelprint.c:797
 msgid "Negative Binomial"
-msgstr ""
+msgstr "Negative Binomial"
 
 #: lib/src/modelprint.c:690
-#, fuzzy
 msgid "Duration"
-msgstr "Równanie"
+msgstr "Duration"
 
 #: lib/src/modelprint.c:691
 msgid "NLS"
@@ -4403,24 +4396,23 @@ msgstr "2MNK"
 
 #: lib/src/modelprint.c:795
 msgid "Negative Binomial 1"
-msgstr ""
+msgstr "Negative Binomial 1"
 
 #: lib/src/modelprint.c:801
-#, fuzzy
 msgid "Duration (exponential)"
-msgstr "Wykładnik Hursta"
+msgstr "Duration (wykładniczy)"
 
 #: lib/src/modelprint.c:803
 msgid "Duration (log-logistic)"
-msgstr ""
+msgstr "Duration (log-logistyczny)"
 
 #: lib/src/modelprint.c:805
 msgid "Duration (log-normal)"
-msgstr ""
+msgstr "Duration (log-normalny)"
 
 #: lib/src/modelprint.c:807
 msgid "Duration (Weibull)"
-msgstr ""
+msgstr "Duration (Weibull)"
 
 #: lib/src/modelprint.c:856
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -5195,9 +5187,8 @@ msgid "Reached maximum iterations, %d"
 msgstr "Zakres maksymalnej liczby iteracji, %d"
 
 #: lib/src/monte_carlo.c:1977
-#, fuzzy
 msgid "Sorry, this command is not available in loop mode"
-msgstr "Polecenie niedostępne w module pętli\n"
+msgstr "Sorry, polecenie niedostępne w module pętli"
 
 #: lib/src/monte_carlo.c:2129
 #, c-format
@@ -5584,9 +5575,8 @@ msgid "points"
 msgstr "punkty"
 
 #: lib/src/plotspec.c:175
-#, fuzzy
 msgid "lines/points"
-msgstr "linie punkty"
+msgstr "linie/punkty"
 
 #: lib/src/plotspec.c:176
 msgid "impulses"
@@ -5610,11 +5600,11 @@ msgstr "słupki zakresu"
 
 #: lib/src/plotspec.c:181
 msgid "filled curve"
-msgstr ""
+msgstr "linia wyrównana"
 
 #: lib/src/plotspec.c:182
 msgid "candlesticks"
-msgstr ""
+msgstr "świece"
 
 #: lib/src/plotspec.c:265
 msgid "left top"
@@ -5641,9 +5631,8 @@ msgid "center"
 msgstr "pośrodku"
 
 #: lib/src/plotspec.c:1594
-#, fuzzy
 msgid "Dates file does not conform to the specification"
-msgstr "Typy danych nie są zgodne dla tej operacji"
+msgstr "Typy danych nie są zgodne dla tej specyfikacji"
 
 #: lib/src/plugins.c:275 lib/src/plugins.c:314
 #, c-format
@@ -8828,9 +8817,8 @@ msgid "gnuplot files (*.plt)"
 msgstr "pliki gnuplot (*.plt)"
 
 #: gui2/fileselect.c:698
-#, fuzzy
 msgid "GNU Octave files (*.m)"
-msgstr "pliki programu GNU R (*.R)"
+msgstr "pliki programu GNU Octave (*.m)"
 
 #: gui2/fileselect.c:700
 msgid "Ox files (*.ox)"
@@ -8892,9 +8880,9 @@ msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
 msgstr "Przefiltrowany %s: cykl Hodricka-Prescotta (lambda = %g)"
 
 #: gui2/filters.c:204
-#, fuzzy, c-format
+#, c-format
 msgid "Filtered %s: Baxter-King, frequency %d to %d"
-msgstr "Przefiltrowany %s: cykl Baxtera-Kinga"
+msgstr "Przefiltrowany %s: cykl Baxtera-Kinga, częstość od %d do %d"
 
 #: gui2/filters.c:247
 msgid "Variable name is missing"
@@ -8969,9 +8957,8 @@ msgid "Graph filtered series"
 msgstr "Wykres cyklicznego-przefiltrowanego szeregu"
 
 #: gui2/filters.c:543
-#, fuzzy
 msgid "Save filtered series as"
-msgstr "Zapisz wyrównany  szereg  jako"
+msgstr "Zapisz przefiltrowany  szereg  jako"
 
 #: gui2/filters.c:556
 msgid "Graph differenced series"
@@ -9146,9 +9133,8 @@ msgid "Upload package to server on save"
 msgstr "Zapisz zmiany pakietu funkcji na serwerze"
 
 #: gui2/fnsave.c:1159
-#, fuzzy
 msgid "Validate"
-msgstr "Wariancja"
+msgstr "Zatwierdzone"
 
 #: gui2/fnsave.c:1209
 msgid "gretl: upload"
@@ -9391,20 +9377,20 @@ msgid "Reset to default"
 msgstr "Ustawienia domyślne"
 
 #: gui2/gpt_dialog.c:1394 gui2/gpt_dialog.c:1748
-#, fuzzy
 msgid "other..."
-msgstr "Więcej..."
+msgstr "Inne..."
 
 #: gui2/gpt_dialog.c:1414
 msgid ""
 "To add your own \"bars\" to a plot, you must supply the\n"
 "name of a plain text file containing pairs of dates."
 msgstr ""
+"To add your own \"bars\" to a plot, you must supply the\n"
+"name of a plain text file containing pairs of dates."
 
 #: gui2/gpt_dialog.c:1424
-#, fuzzy
 msgid "See example"
-msgstr "P_róba"
+msgstr "Patrz przykład"
 
 #: gui2/gpt_dialog.c:1514 gui2/gpt_dialog.c:1516
 msgid "None"
@@ -9435,23 +9421,20 @@ msgid "Show full border"
 msgstr "Pokaż pełną ramkę"
 
 #: gui2/gpt_dialog.c:1703
-#, fuzzy
 msgid "Show grid"
-msgstr "Pełne wyniki rankingu"
+msgstr "Pokaż siatkę"
 
 #: gui2/gpt_dialog.c:1721
 msgid "Allow anti-aliasing of lines"
 msgstr "Allow anti-aliasing of lines"
 
 #: gui2/gpt_dialog.c:1738
-#, fuzzy
 msgid "Show bars"
-msgstr "Pełne wyniki"
+msgstr "Pokaż słupki"
 
 #: gui2/gpt_dialog.c:1747
-#, fuzzy
 msgid "NBER recessions"
-msgstr "Regresja"
+msgstr "NBER recessions"
 
 #: gui2/gpt_dialog.c:1790 gui2/selector.c:3443
 msgid "Set as default"
@@ -9807,7 +9790,7 @@ msgstr "GNU _R..."
 
 #: gui2/gretl.c:1304 gui2/gretl.c:1330
 msgid "_PcGive..."
-msgstr "_PcGive..."
+msgstr "bazy danych - pliki _PcGive..."
 
 #: gui2/gretl.c:1306 gui2/toolbar.c:624
 msgid "Send To..."
@@ -9850,9 +9833,8 @@ msgid "R script"
 msgstr "skrypty R"
 
 #: gui2/gretl.c:1317
-#, fuzzy
 msgid "Octave script"
-msgstr "Zapisz jako polecenia skryptowe"
+msgstr "skrypy Octave"
 
 #: gui2/gretl.c:1318 gui2/gretl.c:1586
 msgid "Ox program"
@@ -10023,9 +10005,8 @@ msgid "_Observation markers..."
 msgstr "_Dodaj opisy przypadków (obserwacji)..."
 
 #: gui2/gretl.c:1374
-#, fuzzy
 msgid "_Variable labels..."
-msgstr " Nazwa zmiennej"
+msgstr "_Opisy zmiennych..."
 
 #: gui2/gretl.c:1375
 msgid "Dataset _structure..."
@@ -10505,14 +10486,12 @@ msgid "_Heckit..."
 msgstr "Modele z selekcją próby (_heckit)..."
 
 #: gui2/gretl.c:1523
-#, fuzzy
 msgid "_Count data..."
-msgstr "_Sortowanie danych przekrojowych..."
+msgstr "Model danych licznikowych (_Count)..."
 
 #: gui2/gretl.c:1524
-#, fuzzy
 msgid "_Duration data..."
-msgstr "_Sortowanie danych przekrojowych..."
+msgstr "Model czasów trawania (_Duration)..."
 
 #: gui2/gretl.c:1525
 msgid "Lo_gistic..."
@@ -11118,9 +11097,8 @@ msgid "gretl: edit Ox program"
 msgstr "gretl: edycja skryptu Ox"
 
 #: gui2/gui_utils.c:1468
-#, fuzzy
 msgid "gretl: edit Octave script"
-msgstr "gretl: edycja macierzy"
+msgstr "gretl: edycja skryptu Octave"
 
 #: gui2/gui_utils.c:1470 gui2/gui_utils.c:3924 gui2/gui_utils.c:4086
 msgid "gretl: script output"
@@ -11537,14 +11515,12 @@ msgid "Search wrapped"
 msgstr "Wyniki przeszukania zachodzą na siebie"
 
 #: gui2/helpfiles.c:949
-#, fuzzy
 msgid "this page"
-msgstr "Tabela wykres"
+msgstr "na tej stronie"
 
 #: gui2/helpfiles.c:950
-#, fuzzy
 msgid "all pages"
-msgstr "Pełny zakres danych"
+msgstr "na wszystkich stronach"
 
 #: gui2/helpfiles.c:989 gui2/textutil.c:81
 msgid "Find:"
@@ -11555,9 +11531,8 @@ msgid "genrgui.hlp"
 msgstr "genrgui.hlp"
 
 #: gui2/helpfiles.c:1117
-#, fuzzy
 msgid "Sorry, no help is available"
-msgstr "%s: sorry, brak pomocy.\n"
+msgstr "Sorry, pomoc jest niedostępna"
 
 #: gui2/helpfiles.c:1443
 msgid "Sorry, help not found"
@@ -11730,7 +11705,7 @@ msgid ""
 "The dataset has observation markers.\n"
 "Would you like to:"
 msgstr ""
-"Zbiór danych zawiera opisu przypadków (obserwacji).\n"
+"Zbiór danych zawiera opis przypadków (obserwacji).\n"
 "Co chcesz wykonać:"
 
 #: gui2/library.c:1423
@@ -11742,32 +11717,28 @@ msgstr ""
 "Czy chcesz wczytać plik z opisami przypadków (obserwacji) teraz?"
 
 #: gui2/library.c:1484
-#, fuzzy
 msgid "Export the labels to file"
-msgstr "Eksport opisów przypadków (obserwacji) do pliku"
+msgstr "Eksport opisów zmiennych do pliku"
 
 #: gui2/library.c:1485
-#, fuzzy
 msgid "Remove the labels"
-msgstr "Usunięcie opisów przypadków (obserwacji)"
+msgstr "Usunięcie opisów zmiennych"
 
 #: gui2/library.c:1489
-#, fuzzy
 msgid ""
 "The dataset has variable labels.\n"
 "Would you like to:"
 msgstr ""
-"Zbiór danych zawiera opisu przypadków (obserwacji).\n"
+"Zbiór danych zawiera opis zmiennych.\n"
 "Co chcesz wykonać:"
 
 #: gui2/library.c:1500
-#, fuzzy
 msgid ""
 "The dataset has no variable labels.\n"
 "Add some from file now?"
 msgstr ""
-"Zbiór danych nie zawiera opisu przypadków (obserwacji).\n"
-"Czy chcesz wczytać plik z opisami przypadków (obserwacji) teraz?"
+"Zbiór danych nie zawiera opisu zmiennych.\n"
+"Czy chcesz wczytać plik z opisami zmiennych teraz?"
 
 #: gui2/library.c:1511
 msgid ""
@@ -12681,14 +12652,12 @@ msgid "Heteroskedasticity corrected"
 msgstr "Korekta heteroskedastyczności"
 
 #: gui2/selector.c:3057
-#, fuzzy
 msgid "Count data model"
-msgstr "Niewłaściwy format modelu\n"
+msgstr "Model danych licznikowych"
 
 #: gui2/selector.c:3059
-#, fuzzy
 msgid "Duration model"
-msgstr "Model panelowy"
+msgstr "Model czasów trawania"
 
 #: gui2/selector.c:3061
 msgid "Panel model"
@@ -12755,9 +12724,8 @@ msgid "Offset variable"
 msgstr "Zmiena - Offset"
 
 #: gui2/selector.c:3116
-#, fuzzy
 msgid "Censoring variable"
-msgstr "Zmienna - odpowiedź"
+msgstr "Zmienna - cenzorowana"
 
 #: gui2/selector.c:3120
 msgid "List of AR lags"
@@ -12789,35 +12757,31 @@ msgstr "Zmienne dla osi X"
 
 #: gui2/selector.c:3190
 msgid "NegBin 2"
-msgstr ""
+msgstr "NegBin 2"
 
 #: gui2/selector.c:3191
 msgid "NegBin 1"
-msgstr ""
+msgstr "NegBin 1"
 
 #: gui2/selector.c:3197 gui2/selector.c:3251
-#, fuzzy
 msgid "Distribution:"
-msgstr "_Wykresy rozkładów"
+msgstr "Rozkłady:"
 
 #: gui2/selector.c:3242
-#, fuzzy
 msgid "Weibull"
 msgstr "weibull"
 
 #: gui2/selector.c:3243
 msgid "Exponential"
-msgstr ""
+msgstr "Wykładniczy"
 
 #: gui2/selector.c:3244
-#, fuzzy
 msgid "Log-logistic"
-msgstr "Logistic"
+msgstr "Log-Logistyczny"
 
 #: gui2/selector.c:3245
-#, fuzzy
 msgid "Log-normal"
-msgstr "normalny"
+msgstr "Log-normalny"
 
 #: gui2/selector.c:3324
 msgid "Choose"
@@ -13622,24 +13586,23 @@ msgstr "Kalkulator"
 
 #: gui2/settings.c:207
 msgid "Path to x12arima"
-msgstr "Program x12arima"
+msgstr "Program X12-ARIMA"
 
 #: gui2/settings.c:211
 msgid "Path to tramo"
-msgstr "Program tramo"
+msgstr "Program TRAMO"
 
 #: gui2/settings.c:215
 msgid "Path to R library"
-msgstr "Katalog R - library"
+msgstr "Program R"
 
 #: gui2/settings.c:218
 msgid "Path to oxl executable"
-msgstr "Katalog oxl executable"
+msgstr "Program OX"
 
 #: gui2/settings.c:220
-#, fuzzy
 msgid "Path to octave executable"
-msgstr "Katalog oxl executable"
+msgstr "Program OCTAVE"
 
 #: gui2/settings.c:222
 msgid "RATS data directory"
@@ -14392,9 +14355,8 @@ msgid "Failed to execute x12arima"
 msgstr "Błąd wykonania w poleceniu X12-ARIMA"
 
 #: plugin/duration.c:77
-#, fuzzy
 msgid "Durations must be positive"
-msgstr "Równanie jest tożsamościowe"
+msgstr "Czasy trwania muszą być dodatnie"
 
 #: plugin/eviews_import.c:238
 msgid "No variables were read\n"
@@ -14537,9 +14499,9 @@ msgid "GARCH: p > 0 and q = 0: the model is unidentified"
 msgstr "GARCH: jeli p>0 oraz q=0, to model jest źle okrelony"
 
 #: plugin/garch.c:642
-#, fuzzy, c-format
+#, c-format
 msgid "GARCH: p + q must not exceed %d"
-msgstr "GARCH: p+q musi być mniejsze od 6"
+msgstr "GARCH: p+q musi być mniejsze od %d"
 
 #: plugin/gnumeric_import.c:294
 #, c-format
@@ -15191,36 +15153,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "missing values were generated"
-#~ msgstr "puste obserwacje zostały wygenerowane"
-
-#~ msgid "non-finite values were generated"
-#~ msgstr "nie określone wartości zostały wygenerowane"
-
-#~ msgid "Error calculating model selection criteria\n"
-#~ msgstr "Błąd w obliczeniach kryteriów selekcji modelu\n"
-
-#~ msgid "Using ess = %g, %d observations, %d coefficients\n"
-#~ msgstr "Wykorzystano ess = %g, %d obserwacji, %d parametrów\n"
-
-#~ msgid "%s: negative value is out of bounds.\n"
-#~ msgstr "%s: ujemna wartość jest poza dopuszczalną granicą.\n"
-
-#~ msgid "$z$-stat"
-#~ msgstr "Statystyka $z$"
-
-#~ msgid "z-stat"
-#~ msgstr "Statystyka z"
-
-#~ msgid "Warning: no convergence after %d iterations"
-#~ msgstr "Uwaga: brak zbieżności po %d iteracjach"
-
-#~ msgid "Save cyclical series as"
-#~ msgstr "Zapisz cykliczny szereg jako"
-
-#~ msgid "gretl: function call"
-#~ msgstr "gretl: wywołanie funkcji"
-
-#~ msgid "Poi_sson..."
-#~ msgstr "Model Poi_ssona..."
