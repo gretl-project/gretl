@@ -1162,17 +1162,27 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
+    int ret, wnum;
+
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
-	return LBFGS_max(b, n, maxit, reltol,
-			 fncount, grcount, cfunc, 
-			 crittype, gradfunc, data, 
-			 opt, prn);
+	ret = LBFGS_max(b, n, maxit, reltol,
+			fncount, grcount, cfunc, 
+			crittype, gradfunc, data, 
+			opt, prn);
     } else {
-	return BFGS_orig(b, n, maxit, reltol,
-			 fncount, grcount, cfunc, 
-			 crittype, gradfunc, data, 
-			 A0, opt, prn);
+	ret = BFGS_orig(b, n, maxit, reltol,
+			fncount, grcount, cfunc, 
+			crittype, gradfunc, data, 
+			A0, opt, prn);
     }
+
+    wnum = check_gretl_warning();
+    if (wnum != W_GRADIENT) {
+	/* suppress expected numerical warnings */
+	set_gretl_warning(0);
+    }
+
+    return ret;
 }
 
 /* user-level access to BFGS and fdjac */

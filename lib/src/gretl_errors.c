@@ -438,13 +438,3 @@ int gretl_error_is_fatal (void)
     }
 }
 
-#if 0 /* noy yet */
-int gretl_error_is_numerical (int err)
-{
-    return (err == E_NOCONV || 
-	    err == E_JACOBIAN ||	
-	    err == E_NAN || 
-	    err == E_SINGULAR ||
-	    err == E_NOTPD);
-}
-#endif

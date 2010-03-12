@@ -247,6 +247,8 @@ static gboolean session_view_click (GtkWidget *widget,
 				    GdkEventButton *event,
 				    gpointer data);
 static int real_delete_model_from_session (SESSION_MODEL *model);
+static int session_model_replace_model (SESSION_MODEL *targ,
+					void *ptr, GretlObjType type);
 static void make_short_label_string (char *targ, const char *src);
 static gui_obj *get_gui_obj_by_data (void *finddata);
 static void add_user_matrix_callback (void);
@@ -917,27 +919,38 @@ static void delete_icon_for_data (void *data)
 int maybe_add_model_to_session (void *ptr, GretlObjType type,
 				const char *name)
 {
-    SESSION_MODEL *oldmod;
+    SESSION_MODEL *oldmod = NULL;
+    int ret = 0;
 
     if (get_session_model_by_data(ptr)) {
 	/* model already present */
 	return 0;
     }
 
-    /* check to see if there's already a (different) model with the
-       same name: if so, delete it
-    */
     if (name == NULL) {
+	/* ensure we have a model name */
 	name = gretl_object_get_name(ptr, type);
+    }    
+
+    /* check to see if there's already a (different) model with the
+       same name: if so, delete or replace it
+    */
+    if (*name != '\0') {
+	oldmod = get_session_model_by_name(name); 
     }
-    oldmod = get_session_model_by_name(name); 
 
     if (oldmod != NULL) {
-	delete_icon_for_data(oldmod);
-	real_delete_model_from_session(oldmod);
+	if (iconlist != NULL) {
+	    ret = session_model_replace_model(oldmod, ptr, type);
+	} else {
+	    real_delete_model_from_session(oldmod);
+	    ret = real_add_model_to_session(ptr, name, type);
+	}
+    } else {
+	ret = real_add_model_to_session(ptr, name, type);
     }
 
-    return real_add_model_to_session(ptr, name, type);
+    return ret;
 }
 
 static int model_type_from_vwin (windata_t *vwin)
@@ -2013,6 +2026,35 @@ static int real_delete_model_from_session (SESSION_MODEL *model)
     }
 
     session.nmodels = nm;
+    mark_session_changed();
+
+    return 0;
+}
+
+static int session_model_replace_model (SESSION_MODEL *targ,
+					void *ptr, GretlObjType type)
+{
+    GtkWidget *w = match_window_by_data(targ->ptr);
+    char *name = g_strdup(targ->name);
+
+    if (w != NULL) {
+	gtk_widget_destroy(w);
+    }
+
+    /* note: targ->name is just a pointer to the model's
+       name, which is convenient in some contexts but
+       which means we have to be careful here, saving
+       a copy of the original then reattaching to the
+       replacement model
+    */
+
+    gretl_object_remove_from_stack(targ->ptr, targ->type);
+    gretl_stack_object_as(ptr, type, name);
+    targ->ptr = ptr;
+    targ->type = type;
+    targ->name = gretl_object_get_name(ptr, type);
+    g_free(name);
+
     mark_session_changed();
 
     return 0;
