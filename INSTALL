@@ -14,5 +14,6 @@ Gretl uses GNU autoconf.  Here's the quick way to get going:
 
 * On systems where GNU make is not the default you may need to use the
   "--with-gmake" option to ./configure.
-
-See also http://gretl.sourceforge.net 
+  
+See the Gretl User's Guide, Appendix C ("Building gretl") for further 
+details [ http://gretl.sourceforge.net/#man ]

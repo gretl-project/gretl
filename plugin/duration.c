@@ -424,13 +424,14 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
     int err;
 
     dinfo->flags = DUR_UPDATE_XB;
-    err = duration_score(dinfo->theta, NULL, dinfo->npar, 
-			 NULL, dinfo);
-    dinfo->flags = 0;
 
+    err = duration_score(dinfo->theta, NULL, dinfo->npar, 
+			     NULL, dinfo);
     if (!err) {
 	H = gretl_matrix_GG_inverse(dinfo->G, &err);
     }
+
+    dinfo->flags = 0;
 
     return H;
 }
