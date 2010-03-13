@@ -1,6 +1,6 @@
 %define name	gretl
 %define ver @VERSION@
-%define rel     1rh73
+%define rel     1
 %define prefix /usr
 
 Summary: econometrics package
@@ -15,16 +15,12 @@ Packager: Allin Cottrell <cottrell@wfu.edu>
 URL: http://gretl.sourceforge.net/
 Vendor: Allin Cottrell <cottrell@wfu.edu>
 Docdir: %{prefix}/share/doc
-Requires: gtk+ >= 1.2.3
+Requires: gtk+ >= 2.4.0
 
 %description
 
-gretl is a free econometrics package. It comprises a shared library,
-a command-line client and a gui client that uses GTK.  gretl offers
-several least-squares based estimators.  Besides reading data files
-in its own format it also reads RATS 4 databases.  It has a built-in
-spreadsheet for editing data, and uses gnuplot for graphing.  It can
-output regression results in LaTeX format.
+gretl is a free econometrics package, comprising comprises a shared library,
+a command-line client and a gui client that uses GTK.
 
 %prep
 %setup -q
