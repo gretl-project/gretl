@@ -91,7 +91,7 @@ dist:
 distclean: clean
 	make -C win32 clean
 	rm -f config.log config.cache config.status config.h gretl.pc
-	rm -f gretl_sh gretl-config libtool Makefile
+	rm -f gretl_sh libtool Makefile
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d distclean; done
 
 check:
