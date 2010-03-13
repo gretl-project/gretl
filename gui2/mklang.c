@@ -47,12 +47,10 @@ static int mklang_strcmp (const void *a, const void *b)
     int na = strlen(*sa);
     int nb = strlen(*sb);
     int n = (na > nb) ? nb : na;
-    int cmp;
-
-    cmp = strncmp(*sa, *sb, n);
+    int cmp = strncmp(*sa, *sb, n);
 
     if (cmp == 0) {
-	return nb - na;
+	cmp = nb - na;
     }
 
     return cmp;
