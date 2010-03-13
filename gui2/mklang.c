@@ -15,6 +15,10 @@ const char *special_keyword[] = {
     "liml",
     "fiml",
     "sur",
+    "params",    
+    "deriv",
+    "orthog",
+    "weights",
     NULL
 };
 
@@ -29,6 +33,73 @@ const char *gretl_data_types[] = {
     "void",
     NULL
 };
+
+/* Similar to strcmp, except that in case two strings match
+   to the length of the shorter one, we order the longer
+   one first. This is needed to avoid the shorter string
+   "masking" the longer one when doing syntax highlighting.
+*/
+
+static int mklang_strcmp (const void *a, const void *b)
+{
+    const char **sa = (const char **) a;
+    const char **sb = (const char **) b;
+    int na = strlen(*sa);
+    int nb = strlen(*sb);
+    int n = (na > nb) ? nb : na;
+    int cmp;
+
+    cmp = strncmp(*sa, *sb, n);
+
+    if (cmp == 0) {
+	return nb - na;
+    }
+
+    return cmp;
+}
+
+char **make_var_name_list (int *pn)
+{
+    char **S;
+    const char *s;
+    int n1, n2, n, m;
+    int i;
+
+    n1 = model_var_count();
+    n2 = data_var_count();
+    n = n1 + n2;
+
+    S = strings_array_new(n);
+    if (S == NULL) {
+	return NULL;
+    }
+
+    m = 0;
+
+    for (i=0; i<n1; i++) {
+	s = model_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;
+	S[m++] = gretl_strdup(s);
+    }
+
+    for (i=0; i<n2; i++) {
+	s = data_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;
+	S[m++] = gretl_strdup(s);
+    }    
+
+    qsort(S, m, sizeof *S, mklang_strcmp);
+
+    *pn = n;
+
+    return S;
+}
 
 void output_emacs_block (void)
 {
@@ -100,36 +171,20 @@ void output_emacs_block (void)
 
     /* internal "dollar" variables */
     fputs("(defvar gretl-internal-vars\n '(", stdout);
-    /* model variables */
-    n = model_var_count();
-    for (i=0; i<n; i++) {
-	s = model_var_name(i);
-	if (s == NULL) {
-	    continue;
+
+    strs = make_var_name_list(&n);
+    if (strs != NULL) {
+	for (i=0; i<n; i++) {
+	    printf("\"%s\"", strs[i]);
+	    if ((i+1) % 7 == 0) {
+		fputs("\n   ", stdout);
+	    } else {
+		putchar(' ');
+	    }	    
 	}
-	if (*s == '$') s++;
-	printf("\"%s\"", s + 1);
-	if ((i+1) % 8 == 0) {
-	    fputs("\n   ", stdout);
-	} else {
-	    putchar(' ');
-	}
+	free_strings_array(strs, n);
     }
-    /* dataset variables */
-    n = data_var_count();
-    for (i=0; i<n; i++) {
-	s = data_var_name(i);
-	if (s == NULL) {
-	    continue;
-	}
-	if (*s == '$') s++;
-	printf("\"%s\"", s);
-	if ((i+1) % 8 == 0) {
-	    fputs("\n   ", stdout);
-	} else {
-	    putchar(' ');
-	}
-    }
+
     puts(")\n  \"Model- and dataset-related variables.\")\n");    
 }
 
@@ -230,24 +285,15 @@ void output_lang2_file (void)
     puts(" <context id=\"internalvars\" style-ref=\"data-type\">");
     puts("  <prefix>\\$</prefix>");
     puts("  <suffix></suffix>");
-    n = model_var_count();
-    for (i=0; i<n; i++) {
-	s = model_var_name(i);
-	if (s == NULL) {
-	    continue;
+
+    strs = make_var_name_list(&n);
+    if (strs != NULL) {
+	for (i=0; i<n; i++) {
+	   printf("  <keyword>%s</keyword>\n", strs[i]); 
 	}
-	if (*s == '$') s++;
-	printf("  <keyword>%s</keyword>\n", s);
+	free_strings_array(strs, n);
     }
-    n = data_var_count();
-    for (i=0; i<n; i++) {
-	s = data_var_name(i);
-	if (s == NULL) {
-	    continue;
-	}
-	if (*s == '$') s++;	
-	printf("  <keyword>%s</keyword>\n", s);
-    }
+
     puts(" </context>");	
     
     puts(" <context id=\"gretl\">");
@@ -338,24 +384,12 @@ void output_lang1_file (void)
     puts(" match-empty-string-at-beginning = \"FALSE\" match-empty-string-at-end = \"FALSE\"");
     puts(" beginning-regex=\"\\$\">");
 
-    n = model_var_count();
-    for (i=0; i<n; i++) {
-	s = model_var_name(i);
-	if (s == NULL) {
-	    continue;
+    strs = make_var_name_list(&n);
+    if (strs != NULL) {
+	for (i=0; i<n; i++) {
+	   printf(" <keyword>%s</keyword>\n", strs[i]); 
 	}
-	if (*s == '$') s++;
-	printf(" <keyword>%s</keyword>\n", s);
-    }
-
-    n = data_var_count();
-    for (i=0; i<n; i++) {
-	s = data_var_name(i);
-	if (s == NULL) {
-	    continue;
-	}
-	if (*s == '$') s++;	
-	printf(" <keyword>%s</keyword>\n", s);
+	free_strings_array(strs, n);
     }
 	
     puts("</keyword-list>\n");
