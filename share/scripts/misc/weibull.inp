@@ -1,10 +1,12 @@
 # Estimate Weibull duration model on Kennan strike data
-# Compare W. Greene, "Econometric Analysis", 5e, Chapter 22
+# Compare W. Greene, "Econometric Analysis", 5e, Chapter 22.
+# We first use the mle command, then compare the built-in
+# "duration" command.
 
 open kennan
 
 # Initial OLS to get starting values for the coefficients
-ols log(Ti) 0 Prod
+ols log(Ti) 0 Prod --quiet
 scalar b0 = $coeff(0)
 scalar b1 = $coeff(Prod)
 scalar s = 1
@@ -18,10 +20,14 @@ mle loglik = Z - log(s) - exp(Z)
   series Xb = b0 + b1*Prod
   series Z = (l_Ti - Xb) / s
   series W = -(1 - exp(Z)) / s
-  deriv s = -Z/s - 1/s + exp(Z) * Z/s
   deriv b0 = W
   deriv b1 = Prod * W
-end mle
+  deriv s = -Z/s - 1/s + exp(Z) * Z/s
+end mle --hessian
 
-printf "lambda = %g\n", 1/s
+printf "p = %g\n", 1/s
+
+# compare the built-in command
+duration Ti 0 Prod
+
 
