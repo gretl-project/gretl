@@ -805,7 +805,8 @@ function addresses this question: given that a state has persisted as
 long as $t$, what is the likelihood that it ends within a short
 increment of time beyond $t$ --- that is, it ends between $t$ and $t +
 \Delta$?  Taking the limit as $\Delta$ goes to zero, we end up with
-the ratio of the density to the survivor function:
+the ratio of the density to the survivor function:\footnote{For a
+  fuller discussion see, for example, Davidson and MacKinnon (2004).}
 \begin{equation}
 \label{eq:surv-decomp}
 \lambda(t, X, \theta) = \frac{f(t, X, \theta)}{S(t, X, \theta)}
@@ -979,12 +980,14 @@ dummy which equals 1 if the respondent was married when imprisoned.
 Example~\ref{ex:duration1} shows the \app{gretl} commands for a
 Weibull model along with most of the output.  Consider first the scale
 factor, $\sigma$. The estimate is 1.241 with a standard error of
-0.048.  Recall that $\sigma$ corresponds to $1/\alpha$; we can be
-confident that $\alpha$ is less than 1, so recidivism displays
-negative duration dependence.  This makes sense: it is plausible that
-if a past offender manages to stay out of trouble for an extended
-period his risk of engaging in crime again diminishes. (The
-exponential model would therefore not be appropriate in this case.)
+0.048.  (We don't print a $z$ score and $p$-value for this term since
+$H_0: \sigma = 0$ is not of interest.)  Recall that $\sigma$
+corresponds to $1/\alpha$; we can be confident that $\alpha$ is less
+than 1, so recidivism displays negative duration dependence.  This
+makes sense: it is plausible that if a past offender manages to stay
+out of trouble for an extended period his risk of engaging in crime
+again diminishes. (The exponential model would therefore not be
+appropriate in this case.)
 
 \begin{script}[htbp]
   \caption{Weibull model for recidivism data}
@@ -1047,12 +1050,12 @@ Log-likelihood      -1597.059   Akaike criterion     3218.118
 On a priori grounds, however, we may doubt the monotonic decline in
 hazard that is simplied by the Weibull specification. Even if a person
 is liable to return to crime, it seems relatively unlikely that he
-would do so straight out of prison. Turning to the data, we find that
-the 5th percentile for \texttt{durat} is 6 months. The log-normal
-specification, which allows the hazard to rise and then fall, may be
-more appropriate.  Using the \texttt{duration} command again with the
-same covariates but the \verb|--lognormal| flag, we get a
-log-likelihood of $-1597$ as against $-1633$ for the Weibull,
+would do so straight out of prison. In the data, we find that only 2.6
+percent of those followed were rearrested within 3 months. The
+log-normal specification, which allows the hazard to rise and then
+fall, may be more appropriate.  Using the \texttt{duration} command
+again with the same covariates but the \verb|--lognormal| flag, we get
+a log-likelihood of $-1597$ as against $-1633$ for the Weibull,
 confirming that the log-normal gives a better fit.
 
 Let us now focus on the \texttt{married} coefficient, which is
@@ -1081,8 +1084,8 @@ obtained via \verb|$coeff|.
 
 A further difference between the Weibull and log-normal specifications
 is illustrated in the plots. The Weibull is an instance of a
-\emph{proportional hazards} model. This means for any sets of values
-of the covariates, $x_i$ and $x_j$, the ratio of the associated
+\emph{proportional hazard} model. This means that for any sets of
+values of the covariates, $x_i$ and $x_j$, the ratio of the associated
 hazards is invariant with respect to duration. In this example the
 Weibull hazard for unmarried individuals is always 1.1637 times that
 for married. In the log-normal variant, on the other hand, this ratio
@@ -1158,14 +1161,14 @@ gnuplot 2 3 1 --with-lines --supp --matrix=mat_n --output=lognorm.plt
 \subsection{Alternative representations of the Weibull model}
 
 One point to watch out for with the Weibull duration model is that the
-estimates may be represented in various different ways.  The
-representation given by \app{gretl} is sometimes called the
-\textit{accelerated failure-time} (AFT) metric. An alternative that
-one sometimes sees is the \textit{log relative-hazard} metric; in fact
-this is the metric used in Wooldridge's presentation of the recidivism
-example.  To get from AFT estimates to log relative-hazard form it is
-necessary to multiply the coefficients by $-\sigma^{-1}$. For example,
-the \texttt{married} coefficient in the Weibull specification as shown
+estimates may be represented in different ways.  The representation
+given by \app{gretl} is sometimes called the \textit{accelerated
+  failure-time} (AFT) metric. An alternative that one sometimes sees
+is the \textit{log relative-hazard} metric; in fact this is the metric
+used in Wooldridge's presentation of the recidivism example.  To get
+from AFT estimates to log relative-hazard form it is necessary to
+multiply the coefficients by $-\sigma^{-1}$. For example, the
+\texttt{married} coefficient in the Weibull specification as shown
 here is 0.188104 and $\hat{\sigma}$ is 1.24090, so the alternative
 value is $-0.152$, which is what Wooldridge shows (2002a, Table 20.1).
 
@@ -1195,17 +1198,9 @@ is not noted in all software.\footnote{The \texttt{predict} adjunct to
 
 Alternatively, if given the \verb|--medians| option, \app{gretl}'s
 \texttt{duration} command will produce conditional medians as the
-content of \dollar{yhat}.  These are as follows:
-
-\begin{center}
-\setlength\tabcolsep{1em}
-\begin{tabular}{ccc}
-Weibull & Log-logistic & Log-normal \\ [4pt]
-$\exp(X\beta)(\log 2)^\sigma$ &
-$\exp(X\beta)$ &
-$\exp(X\beta)$
-\end{tabular}
-\end{center}
+content of \dollar{yhat}.  For the Weibull the median
+is $\exp(X\beta)(\log 2)^\sigma$; for the log-logistic and log-normal
+it is just $\exp(X\beta)$.
 
 The values we give for the accessor \dollar{uhat} are generalized
 (Cox--Snell) residuals, computed as the integrated hazard function,
@@ -1213,14 +1208,10 @@ which equals the negative of the log of the survivor function:
 \[
 \hat{u}_i = \Lambda(t_i, x_i, \theta) = -\log S(t_i, x_i, \theta)
 \]
-
-  
-
-
-
-
-
-
+Under the null of correct specification of the model these generalized
+residuals should follow the unit exponential distribution, which has
+mean and variance both equal to 1 and density $e^{-1}$. See Cameron
+and Trivedi (2005) for further discussion.
 
 %%% Local Variables: 
 %%% mode: latex

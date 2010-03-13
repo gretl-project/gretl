@@ -2482,6 +2482,9 @@
 	the <lit>--medians</lit> option is given then <lit>$yhat</lit>
 	provides the conditional medians instead.
       </para>
+      <para>
+	Please see <guideref targ="chap:discr-models"/> for details.
+      </para>
     </description>
 
     <gui-access>
