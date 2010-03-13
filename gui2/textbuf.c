@@ -1641,22 +1641,15 @@ static int spaces_to_tab_stop (const char *s, int targ)
     return ret;
 }
 
-static void get_cmdword (const char *s, char *word)
+static void textbuf_get_cmdword (const char *s, char *word)
 {
+    if (!strncmp(s, "catch ", 6)) {
+	s += 6;
+    }
+
     if (sscanf(s, "%*s <- %8s", word) != 1) {
 	sscanf(s, "%8s", word);
     }
-#if 0
-    if (*word == '\0') {
-	int i;
-
-	fprintf(stderr, "get_cmdword: s = '%s'\n", s);
-	for (i=0; i<strlen(s); i++) {
-	    fprintf(stderr, "s[%d] = %d (%c)\n",
-		    i, (int) s[i], s[i]);
-	}
-    }
-#endif
 }
 
 #define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
@@ -1734,7 +1727,7 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 	ins = line + strspn(line, " \t");
 	if (!incomment) {
 	    *word = '\0';
-	    get_cmdword(ins, word);
+	    textbuf_get_cmdword(ins, word);
 	    adjust_indent(word, &this_indent, &next_indent);
 	}
 	nsp = this_indent * tabwidth;

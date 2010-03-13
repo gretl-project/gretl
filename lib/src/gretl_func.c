@@ -1487,6 +1487,11 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
     int ti = *next_indent;
     int ni = *next_indent;
 
+    if (!strncmp(s, "catch ", 6)) {
+	s += 6;
+	s += strspn(s, " ");
+    }
+
     if (wordmatch(s, "loop")) {
 	ni++;
     } else if (wordmatch(s, "if")) {
