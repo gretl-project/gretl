@@ -24,7 +24,7 @@
 typedef struct parm_ parm;
 typedef struct ocset_ ocset;
 
-struct _nlspec {
+struct nlspec_ {
     int ci;             /* NLS, MLE or GMM */
     int generr;         /* error from genr */
     int flags;          /* numeric or analytic derivatives, etc. */
@@ -32,13 +32,12 @@ struct _nlspec {
 			   can also include OPT_H (Hessian) or OPT_R (QML)
 			   to control the estimator of the variance matrix;
 			   can also include OPT_N to force use of 
-			   numerical derivatives, OPT_U to specify
-			   continuation on error.
+			   numerical derivatives.
 			*/
     int dv;             /* ID number of dependent variable (NLS) */
-    int lhtype;         /* type of the LHS variable (series or matrix) */
+    int lhtype;         /* type of the LHS variable */
     char lhname[VNAMELEN]; /* name of LHS var in criterion function */
-    int lhv;            /* ID number of LHS variable in function being
+    int lhv;            /* ID number of LHS series in function being
 			   minimized or maximized... */
     gretl_matrix *lvec; /* or LHS vector */
     char *nlfunc;       /* string representation of function,

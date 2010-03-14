@@ -164,6 +164,20 @@ static int nls_dynamic_check (nlspec *s, char *formula)
     return err;
 }
 
+static int scalar_acceptable (nlspec *s, int i, const char *dername)
+{
+    if (i < s->naux) {
+	/* auxiliary variable */
+	return 1;
+    } else if (i == s->naux) {
+	/* criterion value */
+	return s->ci == MLE;
+    } else {
+	/* i > s->naux: derivative */
+	return dername != NULL && gretl_is_scalar(dername);
+    }
+}
+
 /* we "compile" the required equations first, so we can subsequently
    execute the compiled versions for maximum efficiency 
 */
@@ -201,6 +215,7 @@ static int nls_genr_setup (nlspec *s)
 
     for (i=0; i<ngen && !err; i++) {
 	char *dname = NULL;
+	int gentype = 0;
 
 	if (i < s->naux) {
 	    /* auxiliary variables */
@@ -262,12 +277,19 @@ static int nls_genr_setup (nlspec *s)
 	    /* not a series, not a matrix: should be scalar */
 	    if (genr_is_print(genrs[i])) {
 		continue;
-	    } else if (i >= s->naux && (dname == NULL || !gretl_is_scalar(dname))) {
+	    }
+	    gentype = genr_get_output_type(genrs[i]);
+	    if (gentype != GRETL_TYPE_DOUBLE) {
+		err = E_TYPES;
+		break;
+	    } else if (scalar_acceptable(s, i, dname)) {
+		; /* OK */
+	    } else {
 		gretl_errmsg_sprintf(_("The formula '%s'\n produced a scalar result"), 
 				     formula);
 		err = E_TYPES;
 		break;
-	    }
+	    } 
 	}
 
 	if (i == s->naux) {
@@ -278,6 +300,8 @@ static int nls_genr_setup (nlspec *s)
 	    } else if (v > 0) {
 		s->lhv = v;
 		s->lhtype = GRETL_TYPE_SERIES;
+	    } else if (gentype == GRETL_TYPE_DOUBLE) {
+		s->lhtype = GRETL_TYPE_DOUBLE;
 	    } else {
 		err = E_TYPES;
 	    }
@@ -749,8 +773,8 @@ static int nl_missval_check (nlspec *s, const DATAINFO *pdinfo)
 	return err;
     }
 
-    if (s->lvec != NULL) {
-	/* vector result */
+    if (s->lvec != NULL || s->lhtype == GRETL_TYPE_DOUBLE) {
+	/* not a series result */
 	goto nl_miss_exit;
     }
 
@@ -828,6 +852,11 @@ static double get_mle_ll (const double *b, void *p)
     err = nl_calculate_fvec(s);
     if (err) {
 	return NADBL;
+    }
+
+    if (s->lhtype == GRETL_TYPE_DOUBLE) {
+	s->crit = gretl_scalar_get_value(s->lhname);
+	return s->crit;
     }
 
     s->crit = 0.0;
@@ -1753,8 +1782,7 @@ static int nl_model_allocate (MODEL *pmod, nlspec *spec)
 */
 
 static int make_nl_model (MODEL *pmod, nlspec *spec, 
-			  const DATAINFO *pdinfo,
-			  gretlopt opt)
+			  const DATAINFO *pdinfo)
 {
     nl_model_allocate(pmod, spec);
     if (pmod->errcode) {
@@ -1782,7 +1810,7 @@ static int make_nl_model (MODEL *pmod, nlspec *spec,
 
     add_coeffs_to_model(pmod, spec->coeff);
 
-    if (!(opt & OPT_G)) {
+    if (!(spec->opt & OPT_G)) {
 	/* not IVREG via GMM */
 	pmod->errcode = add_param_names_to_model(pmod, spec, pdinfo);
     }
@@ -1982,21 +2010,16 @@ static int check_derivatives (integer m, integer n, double *x,
     int T = spec->nobs * spec->ncoeff;
 #endif
     integer mode, iflag;
-    doublereal *xp = NULL;
-    doublereal *err = NULL;
-    doublereal *fvecp = NULL;
+    doublereal *xp, *xerr, *fvecp;
     int i, badcount = 0, zerocount = 0;
 
-    xp = malloc(n * sizeof *xp);
-    err = malloc(m * sizeof *err);
-    fvecp = malloc(m * sizeof *fvecp);
-
-    if (xp == NULL || err == NULL || fvecp == NULL) {
-	free(err);
-	free(xp);
-	free(fvecp);
-	return 1;
+    xp = malloc((n + m + m) * sizeof *xp);
+    if (xp == NULL) {
+	return E_ALLOC;
     }
+    
+    xerr = xp + n;
+    fvecp = xerr + m;
 
 #if NLS_DEBUG > 1
     fprintf(stderr, "\nchkder, starting: m=%d, n=%d, ldjac=%d\n",
@@ -2012,7 +2035,7 @@ static int check_derivatives (integer m, integer n, double *x,
     /* mode 1: x contains the point of evaluation of the function; on
        output xp is set to a neighboring point. */
     mode = 1;
-    chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, err);
+    chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, xerr);
 
     /* calculate gradient */
     iflag = 2;
@@ -2033,25 +2056,25 @@ static int check_derivatives (integer m, integer n, double *x,
 
     /* mode 2: on input, fvec must contain the functions, the rows of
        fjac must contain the gradients evaluated at x, and fvecp must
-       contain the functions evaluated at xp.  On output, err contains
+       contain the functions evaluated at xp.  On output, xerr contains
        measures of correctness of the respective gradients.
     */
     mode = 2;
-    chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, err);
+    chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, xerr);
 
 #if NLS_DEBUG > 1
     fprintf(stderr, "\nchkder, done mode 2:\n");
     for (i=0; i<m; i++) {
-	fprintf(stderr, "%d: fvec = %.14g, fvecp = %.14g, err = %g\n", i, 
-		fvec[i], fvecp[i], err[i]);
+	fprintf(stderr, "%d: fvec = %.14g, fvecp = %.14g, xerr = %g\n", i, 
+		fvec[i], fvecp[i], xerr[i]);
     }
 #endif
 
-    /* examine "err" vector */
+    /* examine "xerr" vector */
     for (i=0; i<m; i++) {
-	if (err[i] == 0.0) {
+	if (xerr[i] == 0.0) {
 	    zerocount++;
-	} else if (err[i] < 0.35) {
+	} else if (xerr[i] < 0.35) {
 	    badcount++;
 	}
     }
@@ -2067,9 +2090,8 @@ static int check_derivatives (integer m, integer n, double *x,
     }
 
  chkderiv_abort:
+
     free(xp);
-    free(err);
-    free(fvecp);
 
     return (zerocount > m / 4);
 }
@@ -2635,16 +2657,39 @@ double get_default_nls_toler (void)
 
 static int check_spec_requirements (nlspec *spec)
 {
+    int err = 0;
+
     if (spec->nparam < 1) {
 	gretl_errmsg_set(_("No parameters have been specified"));
-	return 1;
+	err = 1;
+    } if (spec->ci == GMM) {
+	err = check_gmm_requirements(spec);
+    } 
+
+    return err;
+}
+
+static int mle_scalar_check (nlspec *spec)
+{
+    int err = 0;
+
+    if (spec->lhtype == GRETL_TYPE_DOUBLE) {
+	if (numeric_mode(spec)) {
+	    /* can't do OPG, so can't do QMLE for variance */
+	    if (spec->opt & OPT_R) {
+		gretl_errmsg_set("Scalar loglikelihood: can't do QML");
+		err = E_BADOPT;
+	    } else {
+		/* ensure that we use the Hessian */
+		spec->opt |= OPT_H;
+	    }
+	} else {
+	    /* analytic mode: don't try to check gradient */
+	    spec->opt |= OPT_G;
+	}
     }
 
-    if (spec->ci == GMM) {
-	return check_gmm_requirements(spec);
-    }
-
-    return 0;
+    return err;
 }
 
 /* remedial treatment for an NLS model estimated using
@@ -2744,7 +2789,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     spec->dinfo = pdinfo;
     spec->prn = prn;
 
-    if (opt & OPT_N) {
+    if (spec->opt & OPT_N) {
 	/* ignore any analytical derivs */
 	set_numeric_mode(spec);
     }
@@ -2765,6 +2810,10 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	err = gmm_missval_check_etc(spec);
     } else {
 	err = nl_missval_check(spec, pdinfo);
+    }
+
+    if (!err && spec->ci == MLE) {
+	err = mle_scalar_check(spec);
     }
 
     if (err) {
@@ -2799,7 +2848,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	spec->tol = libset_get_double(NLS_TOLER);
     }
 
-    if (!(opt & OPT_Q)) {
+    if (!(spec->opt & OPT_Q)) {
 	pputs(prn, (numeric_mode(spec))?
 	      _("Using numerical derivatives\n") :
 	      _("Using analytical derivatives\n"));
@@ -2823,7 +2872,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!(opt & OPT_Q)) {
+    if (!(spec->opt & OPT_Q)) {
 	pprintf(prn, _("Tolerance = %g\n"), spec->tol);
     }
 
@@ -2840,7 +2889,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else {
 	    /* MLE, GMM */
-	    make_nl_model(&nlmod, spec, pdinfo, opt);
+	    make_nl_model(&nlmod, spec, pdinfo);
 	}
     } else if (nlmod.errcode == 0) { 
 	/* error code missing: supply one */

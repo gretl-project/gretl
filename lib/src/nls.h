@@ -26,7 +26,7 @@ enum {
     C_OTHER
 };
 
-typedef struct _nlspec nlspec;
+typedef struct nlspec_ nlspec;
 
 nlspec *nlspec_new (int ci, const DATAINFO *pdinfo);
 
