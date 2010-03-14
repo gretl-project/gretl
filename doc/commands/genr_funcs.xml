@@ -828,9 +828,8 @@
 	  represent, respectively, the lower and upper bounds of the range of
 	  frequencies to extract, while <argname>k</argname> is the
 	  approximation order to be used. If these arguments are not supplied
-	  then default values are used, and the defaults can be adjusted using
-	  the <cmdref targ="set"/> command. See <guideref
-	    targ="chap-genr"/> for details.
+	  then the following default values are used: <argname>f1</argname> =
+	  8, <argname>f1</argname> = 32, <argname>k</argname> = 8.
 	  <seelist>
 	    <fncref targ="hpfilt"/>
 	  </seelist>
@@ -1946,12 +1945,10 @@
 	  Returns the cycle component from application of the
 	  Hodrick&ndash;Prescott filter to series <argname>y</argname>. If the
 	  smoothing parameter, <argname>lambda</argname>, is not supplied then
-	  a data-based default is used; the default can also be adjusted using
-	  the <cmdref targ="set"/> command. See
-	  <guideref
-	    targ="chap-genr"/> for details. 
-	  <seelist> 
-	    <fncref targ="bkfilt"/>
+	  a data-based default is used, namely 100 times the square of the
+	  periodicity (100 for annual data, 1600 for quarterly data, and so
+	  on).  
+	  <seelist> <fncref targ="bkfilt"/>
 	  </seelist>
 	</para>
       </description>

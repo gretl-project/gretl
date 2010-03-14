@@ -8712,35 +8712,6 @@
 	</li> </ilist>
 
       <para>
-	<emphasis>Filtering</emphasis>
-      </para>
-
-      <ilist>
-	<li>
-	  <para><lit>hp_lambda</lit>: <lit>auto</lit> (the default), or a
-	    numerical value.  Sets the smoothing parameter for the
-	    Hodrick&ndash;Prescott filter (see the <lit>hpfilt</lit> function
-	    under the <lit>genr</lit> command).  The default is to use 100 times
-	    the square of the periodicity, which gives 100 for annual data, 1600
-	    for quarterly data, and so on.</para>
-	</li>
-	<li>
-	  <para><lit>bkbp_limits</lit>: two integers, the second greater
-	    than the first (the defaults are 8 and 32).  Sets the
-	    frequency bounds for the Baxter&ndash;King bandpass filter
-	    (see the <lit>bkfilt</lit> function under the <lit>genr</lit>
-	    command).
-	  </para>
-	</li>
-	<li>
-	  <para><lit>bkbp_k</lit>: one integer (the default is 8).  Sets
-	    the approximation order for the Baxter&ndash;King bandpass
-	    filter.
-	  </para>
-	</li>
-      </ilist>
-
-      <para>
 	<emphasis>Time series</emphasis>
       </para>
 
