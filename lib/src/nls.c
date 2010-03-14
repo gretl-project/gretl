@@ -274,17 +274,15 @@ static int nls_genr_setup (nlspec *s)
 	m = genr_get_output_matrix(genrs[i]);
 
 	if (v == 0 && m == NULL) {
-	    /* not a series, not a matrix: should be scalar */
 	    if (genr_is_print(genrs[i])) {
 		continue;
 	    }
+	    /* not a series, not a matrix: should be scalar */
 	    gentype = genr_get_output_type(genrs[i]);
 	    if (gentype != GRETL_TYPE_DOUBLE) {
 		err = E_TYPES;
 		break;
-	    } else if (scalar_acceptable(s, i, dname)) {
-		; /* OK */
-	    } else {
+	    } else if (!scalar_acceptable(s, i, dname)) {
 		gretl_errmsg_sprintf(_("The formula '%s'\n produced a scalar result"), 
 				     formula);
 		err = E_TYPES;
