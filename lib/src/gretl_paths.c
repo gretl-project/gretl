@@ -1306,7 +1306,8 @@ static int substitute_homedir (char *fname)
  * @line: command line (e.g. "open foo").
  * @fname: filename to be filled out.
  * @opt: if includes %OPT_W, treat as web filename and don't
- * try to add path, if %OPT_S, treat as a script.
+ * try to add path; if %OPT_S, treat as a script; if %OPT_I
+ * we're responding to the "include" command.
  * 
  * Elementary path-searching: try adding various paths to the given
  * @fname and see if it can be opened.
@@ -1316,7 +1317,7 @@ static int substitute_homedir (char *fname)
 
 int getopenfile (const char *line, char *fname, gretlopt opt)
 {
-    int script = (opt & OPT_S)? 1 : 0;
+    int script = (opt & (OPT_S | OPT_I))? 1 : 0;
     char *fullname;
 
     /* skip past command word */
@@ -1348,7 +1349,7 @@ int getopenfile (const char *line, char *fname, gretlopt opt)
     /* try a basic path search on this filename */
     fullname = addpath(fname, script);
 
-    if (fullname != NULL && script) {
+    if (fullname != NULL && (opt & OPT_S)) {
 	int spos = slashpos(fname);
 
 	if (spos) {

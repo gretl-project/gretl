@@ -1,7 +1,7 @@
 This directory contains some scripts for creating gretl databases
-out of economic data that are freely available over the web, from
-economagic.com and nber.org.  See the subdirectories economagic and
-nber for details.
+out of economic data that are freely available from nber.org, and
+also apparatus for installing a gretl-mode file for editing gretl
+scripts in emacs.
 
 Allin Cottrell
 cottrell@wfu.edu

@@ -784,12 +784,9 @@ this approach we hypothesize that the durations follow some definite
 probability law and we seek to estimate the parameters of that law,
 factoring in the influence of covariates. 
 
-We may express the density (PDF) of the durations by
-\[
-f(t, X, \theta)
-\]
-where $t$ is the length of time in the state in question, $X$ is a
-matrix of covariates, and $\theta$ is a vector of parameters.
+We may express the density (PDF) of the durations as $f(t, X,
+\theta)$, where $t$ is the length of time in the state in question,
+$X$ is a matrix of covariates, and $\theta$ is a vector of parameters.
 The likelihood for a sample of $n$ observations indexed by $i$ is then
 \[
 L = \prod_{i=1}^n f(t_i, x_i, \theta)
@@ -836,7 +833,7 @@ used in modeling must respect this requirement, giving a density of
 zero for $t \leq 0$.  Four common candidates are the exponential,
 Weibull, log-logistic and log-normal, the Weibull being perhaps the
 most common choice. The table below displays the PDF and the hazard
-function for each of these distributions as they are usually
+function for each of these distributions as they are commonly
 parameterized, written as functions of $t$ alone. ($\phi$ and $\Phi$
 denote, respectively, the Gaussian PDF and CDF.)
 

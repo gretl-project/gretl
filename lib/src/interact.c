@@ -4983,7 +4983,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case RUN:
     case INCLUDE:
-	err = getopenfile(line, runfile, OPT_S);
+	if (cmd->ci == RUN) {
+	    err = getopenfile(line, runfile, OPT_S);
+	} else {
+	    err = getopenfile(line, runfile, OPT_I);
+	}
 	if (err) { 
 	    break;
 	} 

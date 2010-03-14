@@ -921,7 +921,11 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case RUN:
     case INCLUDE:
-	err = getopenfile(line, runfile, OPT_S);
+	if (cmd->ci == INCLUDE) {
+	    err = getopenfile(line, runfile, OPT_I);
+	} else {
+	    err = getopenfile(line, runfile, OPT_S);
+	}
 	if (err) { 
 	    pputs(prn, _("Command is malformed\n"));
 	    break;
