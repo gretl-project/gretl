@@ -1693,15 +1693,21 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 
 int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
 {
-    int k = V->rows;
-    int n = (k * k + k) / 2; 
-    int i, j, idx;
+    int i, j, k, n, idx;
     double x, *tmp;
     int err = 0;
+
+    if (gretl_is_null_matrix(V)) {
+	return 0; /* no-op */
+    }
+
+    k = V->rows;
 
     if (V->cols != k) {
 	return E_NONCONF;
     }
+
+    n = (k * k + k) / 2; 
 
     /* reallocate vcv in case it's wrongly sized */
     tmp = realloc(pmod->vcv, n * sizeof *pmod->vcv);

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-12 07:00-0500\n"
+"PO-Revision-Date: 2010-03-14 20:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4105,7 +4105,7 @@ msgstr "Test J"
 
 #: lib/src/modelprint.c:329 lib/src/modelprint.c:335
 msgid "Overdispersion test"
-msgstr ""
+msgstr "Test 'nadmiernego rozproszenia'"
 
 #: lib/src/modelprint.c:332
 msgid "Sargan test"
@@ -4248,7 +4248,7 @@ msgstr "Poissona"
 
 #: lib/src/modelprint.c:689 lib/src/modelprint.c:797
 msgid "Negative Binomial"
-msgstr "Negative Binomial"
+msgstr "Ujemna Dwumianowa"
 
 #: lib/src/modelprint.c:690
 msgid "Duration"
@@ -4753,12 +4753,12 @@ msgstr "Zmienna wagowa jest zmienną 0-1, efektywnych obserwacji jest"
 
 #: lib/src/modelprint.c:1931
 msgid "$z$"
-msgstr ""
+msgstr "$z$"
 
 #: lib/src/modelprint.c:1931 lib/src/modelprint.c:3699
 #: lib/src/modelprint.c:4015
 msgid "z"
-msgstr ""
+msgstr "z"
 
 #: lib/src/modelprint.c:1933
 msgid "$t$-ratio"
@@ -9167,7 +9167,7 @@ msgstr ""
 #: gui2/fnsave.c:1343
 #, c-format
 msgid "%s: validated against DTD OK"
-msgstr ""
+msgstr "%s: poprawność w stosunku do DTD OK"
 
 #: gui2/fnsave.c:1452
 msgid ""
@@ -9175,7 +9175,7 @@ msgid ""
 "must be less than 32 characters in length, must include only\n"
 "ASCII letters, numbers and '_', and must end with \".gfn\""
 msgstr ""
-"Błędna nazwa pakietu funkcji: nazwa musi rozpoczynać sięod litery, długość "
+"Błędna nazwa pakietu funkcji: nazwa musi rozpoczynać się od litery, długość "
 "do 32 znaków, może zawierać tylkoznaki ASCII, cyfry i '_' oraz kończyć się "
 "nazwą \".gfn\""
 
@@ -10459,7 +10459,7 @@ msgstr "_Nieliniowe modele"
 
 #: gui2/gretl.c:1514
 msgid "_Logit"
-msgstr "Modele _Logitowe"
+msgstr "Model _Logitowy"
 
 #: gui2/gretl.c:1515 gui2/gretl.c:1519
 msgid "_Binary..."
@@ -10475,19 +10475,19 @@ msgstr "_Multinomial..."
 
 #: gui2/gretl.c:1518
 msgid "_Probit"
-msgstr "Modele _Probitowe"
+msgstr "Model _Probitowy"
 
 #: gui2/gretl.c:1521
 msgid "To_bit..."
-msgstr "Modele _Tobitowe..."
+msgstr "Model _Tobitowy..."
 
 #: gui2/gretl.c:1522
 msgid "_Heckit..."
-msgstr "Modele z selekcją próby (_heckit)..."
+msgstr "Model z selekcją próby (_heckit)..."
 
 #: gui2/gretl.c:1523
 msgid "_Count data..."
-msgstr "Model danych licznikowych (_Count)..."
+msgstr "Model zmiennej licznikowej (_Count)..."
 
 #: gui2/gretl.c:1524
 msgid "_Duration data..."

@@ -1327,7 +1327,13 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
     int vcvopt = VCV_OP;
     int err = 0;
 
-    if ((spec->opt & OPT_H) && spec->Hinv != NULL) {
+    if (spec->opt & OPT_A) {
+	int i;
+
+	for (i=0; i<pmod->ncoeff; i++) {
+	    pmod->sderr[i] = NADBL;
+	}
+    } else if (spec->opt & OPT_H) {
 	vcvopt = VCV_HESSIAN;
 	err = gretl_model_write_vcv(pmod, spec->Hinv);
     } else {
@@ -1335,7 +1341,7 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 	err = mle_build_vcv(pmod, spec, &vcvopt);
     }
 
-    if (!err) {
+    if (!err && pmod->vcv != NULL) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, vcvopt);
     }    
 
@@ -1762,13 +1768,25 @@ static int nl_model_allocate (MODEL *pmod, nlspec *spec)
     int k = spec->ncoeff;
     int nvc = (k * k + k) / 2;
 
+    pmod->vcv = NULL;
+
     pmod->coeff = malloc(k * sizeof *pmod->coeff);
     pmod->sderr = malloc(k * sizeof *pmod->sderr);
-    pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
 
-    if (pmod->coeff == NULL || pmod->sderr == NULL || pmod->vcv == NULL) {
+    if (pmod->coeff == NULL || pmod->sderr == NULL) {
 	pmod->errcode = E_ALLOC;
-    } else {
+	return pmod->errcode;
+    }
+
+    if (!(spec->opt & OPT_A)) {
+	/* not an auxiliary model */
+	pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
+	if (pmod->vcv == NULL) {
+	    pmod->errcode = E_ALLOC;
+	}
+    }
+
+    if (pmod->errcode == 0) {
 	pmod->ncoeff = k;
     }
 
@@ -1810,8 +1828,9 @@ static int make_nl_model (MODEL *pmod, nlspec *spec,
 
     add_coeffs_to_model(pmod, spec->coeff);
 
-    if (!(spec->opt & OPT_G)) {
-	/* not IVREG via GMM */
+    if (spec->ci == GMM && (spec->opt & OPT_G)) {
+	; /* IVREG via GMM */
+    } else {
 	pmod->errcode = add_param_names_to_model(pmod, spec, pdinfo);
     }
 
@@ -2001,14 +2020,17 @@ static int nls_calc (integer *m, integer *n, double *x, double *fvec,
 /* in case the user supplied analytical derivatives for the
    parameters, check them for sanity */
 
-static int check_derivatives (integer m, integer n, double *x,
-			      double *fvec, double *jac,
-			      integer ldjac, PRN *prn,
-			      nlspec *spec)
+static int check_derivatives (nlspec *spec, PRN *prn)
 {
 #if NLS_DEBUG > 1
     int T = spec->nobs * spec->ncoeff;
 #endif
+    double *x = spec->coeff;
+    double *fvec = spec->fvec;
+    double *jac = spec->jac;
+    integer m = spec->nobs;
+    integer n = spec->ncoeff;
+    integer ldjac = m;
     integer mode, iflag;
     doublereal *xp, *xerr, *fvecp;
     int i, badcount = 0, zerocount = 0;
@@ -2103,13 +2125,8 @@ static int mle_calculate (nlspec *s, PRN *prn)
     int err = 0;
 
     if (analytic_mode(s)) {
-	integer m = s->nobs;
-	integer n = s->ncoeff;
-	integer ldjac = m; 
-
 	if (!(s->opt & OPT_G)) {
-	    err = check_derivatives(m, n, s->coeff, s->fvec, 
-				    s->jac, ldjac, prn, s);
+	    err = check_derivatives(s, prn);
 	}
     }
 
@@ -2137,16 +2154,14 @@ static int mle_calculate (nlspec *s, PRN *prn)
 
 static int lm_calculate (nlspec *spec, PRN *prn)
 {
-    integer info, lwa;
-    integer m, n, ldjac;
+    integer m = spec->nobs;
+    integer n = spec->ncoeff;
+    integer lwa = 5 * n + m; /* work array size */
+    integer ldjac = m;       /* leading dimension of jac array */
+    integer info = 0;
     integer *ipvt;
     doublereal *wa;
     int err = 0;
-
-    m = spec->nobs;    /* number of observations */
-    n = spec->ncoeff;  /* number of coefficients */
-    lwa = 5 * n + m;   /* work array size */
-    ldjac = m;         /* leading dimension of jac array */
 
     wa = malloc(lwa * sizeof *wa);
     ipvt = malloc(n * sizeof *ipvt);
@@ -2156,8 +2171,7 @@ static int lm_calculate (nlspec *spec, PRN *prn)
 	goto nls_cleanup;
     }
 
-    err = check_derivatives(m, n, spec->coeff, spec->fvec, spec->jac, 
-			    ldjac, prn, spec);
+    err = check_derivatives(spec, prn);
     if (err) {
 	goto nls_cleanup; 
     }
@@ -2232,8 +2246,12 @@ nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
 
 static int lm_approximate (nlspec *spec, PRN *prn)
 {
-    integer info, m, n, ldjac;
-    integer maxfev, mode = 1, nprint = 0, nfev = 0;
+    integer m = spec->nobs;
+    integer n = spec->ncoeff;
+    integer ldjac = m;
+    integer info = 0;
+    integer maxfev = 200 * (n + 1); /* max iterations */
+    integer mode = 1, nprint = 0, nfev = 0;
     integer iflag = 0;
     integer *ipvt;
     doublereal gtol = 0.0;
@@ -2242,12 +2260,6 @@ static int lm_approximate (nlspec *spec, PRN *prn)
     doublereal *wa1, *wa2, *wa3, *wa4;
     int err = 0;
     
-    m = spec->nobs;              /* number of observations */
-    n = spec->ncoeff;            /* number of parameters */
-    ldjac = m;                   /* leading dimension of jac array */
-
-    maxfev = 200 * (n + 1);      /* max iterations */
-
     dspace = malloc((5 * n + m) * sizeof *dspace);
     ipvt = malloc(n * sizeof *ipvt);
 
@@ -2679,7 +2691,7 @@ static int mle_scalar_check (nlspec *spec)
 	    if (spec->opt & OPT_R) {
 		gretl_errmsg_set("Scalar loglikelihood: can't do QML");
 		err = E_BADOPT;
-	    } else {
+	    } else if (!(spec->opt & OPT_A)) {
 		/* ensure that we use the Hessian */
 		spec->opt |= OPT_H;
 	    }
@@ -2821,23 +2833,28 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* allocate arrays to be passed to minpack */
-    spec->fvec = malloc(spec->nobs * sizeof *spec->fvec);
-    spec->jac = malloc(spec->nobs * spec->ncoeff * sizeof *spec->jac);
-
-    if (spec->fvec == NULL || spec->jac == NULL) {
-	nlmod.errcode = E_ALLOC;
-	goto bailout;
-    }
-
-    if (spec->lvec != NULL) {
-	for (t=0; t<spec->nobs; t++) {
-	    spec->fvec[t] = spec->lvec->val[t];
-	}
+    if (spec->ci == GRETL_TYPE_DOUBLE) {
+	spec->fvec = NULL;
+	spec->jac = NULL;
     } else {
-	i = 0;
-	for (t=spec->t1; t<=spec->t2; t++) {
-	    spec->fvec[i++] = (*spec->Z)[spec->lhv][t];
+	/* allocate auxiliary arrays */
+	spec->fvec = malloc(spec->nobs * sizeof *spec->fvec);
+	spec->jac = malloc(spec->nobs * spec->ncoeff * sizeof *spec->jac);
+
+	if (spec->fvec == NULL || spec->jac == NULL) {
+	    nlmod.errcode = E_ALLOC;
+	    goto bailout;
+	}
+
+	if (spec->lvec != NULL) {
+	    for (t=0; t<spec->nobs; t++) {
+		spec->fvec[t] = spec->lvec->val[t];
+	    }
+	} else {
+	    i = 0;
+	    for (t=spec->t1; t<=spec->t2; t++) {
+		spec->fvec[i++] = (*spec->Z)[spec->lhv][t];
+	    }
 	}
     }
 
