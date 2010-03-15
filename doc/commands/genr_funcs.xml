@@ -19,7 +19,8 @@
       <description>
 	<para>
 	  Returns the Akaike Information Criterion for the last estimated
-	  model, if available.
+	  model, if available. See <guidref targ="select-criteria"/> for
+	  details of the calculation.
 	</para>
       </description>
     </function>
@@ -28,7 +29,8 @@
       <description>
 	<para>
 	  Returns Schwarz's Bayesian Information Criterion for the last
-	  estimated model, if available.
+	  estimated model, if available. See <guidref targ="select-criteria"/>
+	  for details of the calculation.
 	</para>
       </description>
     </function>
@@ -193,7 +195,8 @@
       <description>
 	<para>
 	  Returns the Hannan-Quinn Information Criterion for the last
-	  estimated model, if available.
+	  estimated model, if available.  See <guidref
+	  targ="select-criteria"/> for details of the calculation.
 	</para>
       </description>
     </function>
