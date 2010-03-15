@@ -935,6 +935,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    err = E_NOCONV;
 	} else {
 	    gretl_warnmsg_sprintf(_("norm of gradient = %g"), gradnorm);
+	    set_gretl_warning(W_GRADIENT);
 	}
     } else if (fmax < f0) {
 	/* FIXME this should never happen */

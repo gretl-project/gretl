@@ -290,6 +290,8 @@ AC_C_BIGENDIAN
 AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
 AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
 
+AC_C_OPENMP
+
 dnl try to build mailer plugin?
 AC_CHECK_HEADERS(netdb.h sys/socket.h,
 	build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),

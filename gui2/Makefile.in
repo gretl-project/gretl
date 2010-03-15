@@ -7,6 +7,7 @@ bindir = @bindir@
 libdir = @libdir@
 CC = @CC@
 CFLAGS = @CFLAGS@
+OPENMP_CFLAGS = @OPENMP_CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
@@ -182,8 +183,8 @@ all: $(PROG) $(GRETL_LANG)
 
 $(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKSOURCEVIEW_LITE) 
 	$(LDECHO)
-	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LDFLAGS) $(OBJS) $(HACK_OBJ) \
-	$(LIBS) $(INETLIB) $(CARBONLIB)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(OPENMP_CFLAGS) -o $@ $(LDFLAGS) $(OBJS) \
+	$(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 	$(AMP)$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<

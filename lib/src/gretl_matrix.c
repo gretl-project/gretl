@@ -30,6 +30,10 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
+#ifdef _OPENMP
+# include <omp.h>
+#endif
+
 #ifdef HAVE_LAPACK_3_2
 # define USE_JACOBI 0 /* not just yet */
 #else
@@ -3538,6 +3542,7 @@ gretl_blas_dsyrk (const gretl_matrix *a, int atr,
     dsyrk_(&uplo, &tr, &n, &k, &alpha, a->val, &lda,
 	   &beta, c->val, &n);
 
+#pragma omp parallel for private(i, j, x)
     for (i=0; i<n; i++) {
 	for (j=i+1; j<n; j++) {
 	    x = gretl_matrix_get(c, i, j);
@@ -3593,6 +3598,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     }
 
     if (atr) {
+#pragma omp parallel for private(i, j, k, idx1, idx2, x)
 	for (i=0; i<nc; i++) {
 	    for (j=i; j<nc; j++) {
 		idx1 = i * a->rows;
@@ -3605,6 +3611,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	    }
 	} 
     } else {
+#pragma omp parallel for private(i, j, k, idx1, idx2, x)
 	for (i=0; i<nc; i++) {
 	    for (j=i; j<nc; j++) {
 		idx1 = i;
@@ -3750,6 +3757,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     if (!btr) {
 	if (!atr) {
 	    /* C := alpha*A*B + beta*C */
+#pragma omp parallel for private(j, i, l, x)
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
 		    for (i=0; i<m; i++) {
@@ -3767,6 +3775,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	    }
 	} else {
 	    /* C := alpha*A'*B + beta*C */
+#pragma omp parallel for private(j, i, l, x)
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
 		    x = 0.0;
@@ -3784,6 +3793,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     } else {
 	if (!atr) {
 	    /* C := alpha*A*B' + beta*C */
+#pragma omp parallel for private(j, i, l, x)
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
 		    for (i=0; i<m; i++) {
@@ -3801,6 +3811,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	    }
 	} else {
 	    /* C := alpha*A'*B' + beta*C */
+#pragma omp parallel for private(j, i, l, x)
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
 		    x = 0.0;

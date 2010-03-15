@@ -15,6 +15,7 @@ localedir = $(datadir)/locale
 have_readline = @have_readline@
 READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
+OPENMP_CFLAGS = @OPENMP_CFLAGS@
 
 quiet_build = @quiet_build@
 
@@ -64,8 +65,8 @@ LIBTOOL = ../libtool
 
 $(CLI): .deps $(OBJS)
 	$(LDECHO)
-	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LDFLAGS) $(OBJS) $(GRETLLIB) \
-	$(READLINE_LIBS)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(OPENMP_CFLAGS) -o $@ $(LDFLAGS) $(OBJS) \
+	$(GRETLLIB) $(READLINE_LIBS)
 
 .deps:
 	$(AMP)mkdir $@
