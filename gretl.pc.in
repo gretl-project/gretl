@@ -2,10 +2,11 @@ prefix=@prefix@
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
+ompopt=@OPENMP_CFLAGS@
 
 Name: gretl
 Description: Econometrics library (and program)
 Version: @LIBVERSION@
 Requires: libxml-2.0
-Libs: -L${libdir} -lgretl-1.0
+Libs: ${ompopt} -L${libdir} -lgretl-1.0
 Cflags: -I${includedir}

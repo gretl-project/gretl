@@ -15,7 +15,8 @@ localedir = $(datadir)/locale
 have_readline = @have_readline@
 READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
-OPENMP_CFLAGS = @OPENMP_CFLAGS@
+
+OMP_OPT = @OPENMP_CFLAGS@
 
 quiet_build = @quiet_build@
 
@@ -33,9 +34,9 @@ ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
-  CCV = $(CC) > /dev/null
+  CCV = $(CC) $(OMP_OPT) > /dev/null
 else
-  CCV = $(CC)
+  CCV = $(CC) $(OMP_OPT)
 endif
 
 GRETLLIB = ../lib/libgretl-1.0.la
@@ -65,7 +66,7 @@ LIBTOOL = ../libtool
 
 $(CLI): .deps $(OBJS)
 	$(LDECHO)
-	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(OPENMP_CFLAGS) -o $@ $(LDFLAGS) $(OBJS) \
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LDFLAGS) $(OBJS) \
 	$(GRETLLIB) $(READLINE_LIBS)
 
 .deps:

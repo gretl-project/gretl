@@ -18,9 +18,10 @@ GMP_LIBS = @GMP_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
 FFTW_CFLAGS = @FFTW_CFLAGS@
 FFTW_LIBS = @FFTW_LIBS@
-OPENMP_CFLAGS = @OPENMP_CFLAGS@
 RLIB_CFLAGS = @RLIB_CFLAGS@
 DARWIN_RPATH = @DARWIN_RPATH@
+
+OMP_OPT = @OPENMP_CFLAGS@
 
 CURRENT=@LIBGRETL_CURRENT@
 REVISION=@LIBGRETL_REVISION@
@@ -49,9 +50,9 @@ ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
-  CCV = $(CC) > /dev/null
+  CCV = $(CC) $(OMP_OPT) > /dev/null
 else
-  CCV = $(CC)
+  CCV = $(CC) $(OMP_OPT)
 endif
 
 # Installation directories
@@ -236,7 +237,7 @@ AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)
 LIBTOOL = ../libtool
 
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
-	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(OPENMP_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H
+	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H
 
 COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
 
