@@ -1560,11 +1560,33 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     return err;
 }
 
-/* internal execution timer: on Windows use use GetTickCount,
-   else use times() if available, otherwise fall back on clock() 
+/* internal execution timer: on OpenMP use omp_get_wtime(), else
+   onWindows use use GetTickCount, else use times() if available,
+   otherwise fall back on clock()
 */ 
 
-#ifdef WIN32
+#if defined(_OPENMP)
+
+#include <omp.h>
+
+static double tim0;
+
+static void gretl_stopwatch_init (void)
+{
+    tim0 = omp_get_wtime();
+}
+
+double gretl_stopwatch (void)
+{
+    double tim1 = omp_get_wtime();
+    double x = tim1 - tim0;
+
+    tim0 = tim1;
+
+    return x;
+} 
+
+#elif defined(WIN32)
 
 #include <windows.h>
 
@@ -1586,7 +1608,7 @@ double gretl_stopwatch (void)
     return x;
 } 
 
-#else /* !WIN32 */
+#else /* !OPENMP, !WIN32 */
 
 static clock_t tim0;
 
@@ -1630,7 +1652,7 @@ double gretl_stopwatch (void)
     return x;
 } 
 
-#endif /* WIN32 or not */
+#endif /* stopwatch variants */
 
 /* library init and cleanup functions */
 
