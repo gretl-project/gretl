@@ -949,6 +949,12 @@ static void VAR_print_LB_stat (const GRETL_VAR *var, PRN *prn)
     }
 }
 
+static int Ivals_ok (const GRETL_VAR *var)
+{
+    return var->Ivals != NULL && !na(var->Ivals[0])
+	&& !na(var->Ivals[1]) && !na(var->Ivals[2]);
+}
+
 /**
  * gretl_VAR_print:
  * @var: pointer to VAR struct.
@@ -1203,16 +1209,18 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    pprintf(prn, "  %s: %s\n", _("Alternative hypothesis"), h1str);
 	    pprintf(prn, "  %s: %s(%d) = %g [%.4f]\n", _("Likelihood ratio test"), 
 		    _("Chi-square"), df, var->LR, pv);
-	    /* Info criteria comparison */
-	    pprintf(prn, "\n  %s:\n", _("Comparison of information criteria"));
-	    pputs(prn, "  ");
-	    pprintf(prn, _("Lag order %*d"), ordlen, var->order);
-	    pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n", 
-		    var->AIC, var->BIC, var->HQC);
-	    pputs(prn, "  ");
-	    pprintf(prn, _("Lag order %*d"), ordlen, var->order - 1);
-	    pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n", 
-		    var->Ivals[0], var->Ivals[1], var->Ivals[2]);
+	    if (Ivals_ok(var)) {
+		/* Info criteria comparison */
+		pprintf(prn, "\n  %s:\n", _("Comparison of information criteria"));
+		pputs(prn, "  ");
+		pprintf(prn, _("Lag order %*d"), ordlen, var->order);
+		pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n", 
+			var->AIC, var->BIC, var->HQC);
+		pputs(prn, "  ");
+		pprintf(prn, _("Lag order %*d"), ordlen, var->order - 1);
+		pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n", 
+			var->Ivals[0], var->Ivals[1], var->Ivals[2]);
+	    }
 	}
     }
 

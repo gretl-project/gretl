@@ -881,22 +881,23 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 	    for (i=0; i<n && !*err && *s; i++) {
 		while (isspace(*s)) s++;
 		x = strtod(s, &test);
-		if (errno) {
-		    fprintf(stderr, "strtod failed on '%s'\n", s);
-		    perror(NULL);
-		    *err = E_DATA;
-		} else if (!strncmp(test, "NA", 2)) {
+		if (!strncmp(test, "NA", 2)) {
 		    x = NADBL;
 		    s = test + 2;
-		} else if (*test != '\0' && !isspace(*test)) {
-		    *err = E_DATA;
 		} else {
 		    s = test;
+		    if (*s != '\0' && !isspace(*s)) {
+			*err = E_DATA;
+		    } else if (errno) {
+			perror(NULL);
+			x = (x == 0.0)? 0.0 : NADBL;
+			errno = 0;
+		    }
 		}
 		xvals[i] = x;
 		nread++;
 	    }
-	} if (type == GRETL_TYPE_INT_ARRAY) {
+	} else if (type == GRETL_TYPE_INT_ARRAY) {
 	    long kl;
 
 	    for (i=0; i<n && !*err && *s; i++) {
