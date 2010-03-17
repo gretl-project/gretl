@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-10 08:31-0500\n"
+"PO-Revision-Date: 2010-03-17 10:06+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -2534,10 +2534,9 @@ msgstr "respuesta de %s a un shock en %s, con intervalo de confianza bootstrap"
 msgid "response of %s to a shock in %s"
 msgstr "respuesta de %s a un shock en %s"
 
-#: lib/src/graphing.c:4300
-#, fuzzy, c-format
+#: lib/src/graphing.c:4300, c-format
 msgid "%g percent confidence band"
-msgstr "Con intervalos de confianza del %g por ciento"
+msgstr "Banda de confianza del %g por ciento"
 
 #: lib/src/graphing.c:4306 lib/src/graphing.c:4309
 msgid "point estimate"
@@ -5614,9 +5613,8 @@ msgid "points"
 msgstr "marcas"
 
 #: lib/src/plotspec.c:175
-#, fuzzy
 msgid "lines/points"
-msgstr "líneas y puntos"
+msgstr "líneas/puntos"
 
 #: lib/src/plotspec.c:176
 msgid "impulses"
@@ -5640,11 +5638,11 @@ msgstr "barras de error"
 
 #: lib/src/plotspec.c:181
 msgid "filled curve"
-msgstr ""
+msgstr "curva rellena"
 
 #: lib/src/plotspec.c:182
 msgid "candlesticks"
-msgstr ""
+msgstr "gráfico de velas"
 
 #: lib/src/plotspec.c:265
 msgid "left top"
@@ -5671,11 +5669,8 @@ msgid "center"
 msgstr "centro"
 
 #: lib/src/plotspec.c:1594
-#, fuzzy
 msgid "Dates file does not conform to the specification"
-msgstr ""
-"Los tipos de datos no tienen la estructura adecuada para poder\n"
-"realizar la operación"
+msgstr "El fichero de fechas no está de acuerdo con la especificación"
 
 #: lib/src/plugins.c:275 lib/src/plugins.c:314
 #, c-format
@@ -9425,20 +9420,20 @@ msgid "Reset to default"
 msgstr "Reestablecer opciones por defecto"
 
 #: gui2/gpt_dialog.c:1394 gui2/gpt_dialog.c:1748
-#, fuzzy
 msgid "other..."
-msgstr "Más..."
+msgstr "otro..."
 
 #: gui2/gpt_dialog.c:1414
 msgid ""
 "To add your own \"bars\" to a plot, you must supply the\n"
 "name of a plain text file containing pairs of dates."
 msgstr ""
+"Para añadir sus propias \"barras\" a un gráfico, debe proporcionar\n"
+"el nombre de un fichero de texto plano que contenga los pares de fechas."
 
 #: gui2/gpt_dialog.c:1424
-#, fuzzy
 msgid "See example"
-msgstr "_Muestra"
+msgstr "Ver ejemplo"
 
 #: gui2/gpt_dialog.c:1514 gui2/gpt_dialog.c:1516
 msgid "None"
@@ -9469,23 +9464,20 @@ msgid "Show full border"
 msgstr "Mostrar el borde completo"
 
 #: gui2/gpt_dialog.c:1703
-#, fuzzy
 msgid "Show grid"
-msgstr "Mostrar los rankings"
+msgstr "Mostrar la rejilla"
 
 #: gui2/gpt_dialog.c:1721
 msgid "Allow anti-aliasing of lines"
 msgstr "Permitir el anti-solapamiento de las líneas (anti-aliasing)"
 
 #: gui2/gpt_dialog.c:1738
-#, fuzzy
 msgid "Show bars"
-msgstr "Mostrar los detalles"
+msgstr "Mostrar barras"
 
 #: gui2/gpt_dialog.c:1747
-#, fuzzy
 msgid "NBER recessions"
-msgstr "Regresión"
+msgstr "Recesiones del NBER"
 
 #: gui2/gpt_dialog.c:1790 gui2/selector.c:3443
 msgid "Set as default"
