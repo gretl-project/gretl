@@ -623,6 +623,15 @@ static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
     return 0;
 }
 
+static void set_to_NA (double *x, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	x[i] = NADBL;
+    }
+}
+
 /* main function for constructing a new VAR struct, which
    may be used for estimating a VAR, a VECM, or various
    auxiliary tasks */
@@ -707,6 +716,8 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
 	var->Fvals = malloc(m * sizeof *var->Fvals);
 	if (var->Fvals == NULL) {
 	    err = 1;
+	} else {
+	    set_to_NA(var->Fvals, m);
 	}
     }
 
@@ -714,6 +725,8 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
 	var->Ivals = malloc(N_IVALS * sizeof *var->Ivals);
 	if (var->Ivals == NULL) {
 	    err = 1;
+	} else {
+	    set_to_NA(var->Ivals, N_IVALS);
 	}
     }
 
