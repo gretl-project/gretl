@@ -1436,37 +1436,60 @@ static int restriction_uses_obs (const char *s)
 
 #endif
 
+/* Make a string representing the sample restriction. This is
+   for reporting purposes. Note that in some cases the
+   incoming @restr string may be NULL, for instance if the
+   no-missing option is chosen via the gretl GUI.
+*/
+
 static int make_restriction_string (DATAINFO *pdinfo, char *old, 
 				    const char *restr, int mode)
 {
-    int err = 0;
+    char *s = NULL;
+    int n = 0, err = 0;
 
     if (pdinfo->restriction != NULL) {
 	free(pdinfo->restriction);
 	pdinfo->restriction = NULL;
     }
 
-    if (mode == SUBSAMPLE_RANDOM) {
-	pdinfo->restriction = gretl_strdup("random");
-    } else {
-	if (old != NULL) {
-	    char *s = malloc(strlen(old) + strlen(restr) + 5);
+    if (old != NULL) {
+	n = strlen(old);
+    }
 
-	    if (s != NULL) {
-		sprintf(s, "%s && %s", old, restr);
-		pdinfo->restriction = s;
-	    }
-	} else {	    
-	    pdinfo->restriction = gretl_strdup(restr);
+    if (mode == SUBSAMPLE_RANDOM) {
+	n += strlen("random");
+    } else if (mode == SUBSAMPLE_DROP_MISSING) {
+	n += strlen("no-missing");
+    } else if (restr != NULL) {
+	n += strlen(restr);
+    }
+
+    if (n > 0) {
+	s = malloc(n + 5);
+	if (s == NULL) {
+	    err = E_ALLOC;
 	} 
+    }
+
+    if (s != NULL) {
+	*s = '\0';
+	if (old != NULL) {
+	    strcpy(s, old);
+	    strcat(s, " && ");
+	}
+	if (mode == SUBSAMPLE_RANDOM) {
+	    strcat(s, "random");
+	} else if (mode == SUBSAMPLE_DROP_MISSING) {
+	    strcat(s, "no-missing");
+	} else if (restr != NULL) {
+	    strcat(s, restr);
+	}
+	pdinfo->restriction = s;
     }
 
     if (old != NULL) {
 	free(old);
-    }
-
-    if (pdinfo->restriction == NULL) {
-	err = E_ALLOC;
     }
 
     return err;

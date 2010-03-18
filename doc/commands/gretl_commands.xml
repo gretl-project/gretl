@@ -9123,10 +9123,9 @@
 
       <para>
 	With the <lit>--random</lit> flag, the specified number of cases are
-	selected from the full dataset at random.  If you wish to be able to
+	selected from the current dataset at random.  If you wish to be able to
 	replicate this selection you should set the seed for the random number
-	generator first (see the
-	<cmdref targ="set"/> command).
+	generator first (see the <cmdref targ="set"/> command).
       </para>
 
       <para>
