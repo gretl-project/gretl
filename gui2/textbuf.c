@@ -72,26 +72,26 @@ void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 
 void cursor_to_top (windata_t *vwin)
 {
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)); 
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
     GtkTextIter start;
     GtkTextMark *mark;
 
     gtk_text_buffer_get_start_iter(buf, &start);
     gtk_text_buffer_place_cursor(buf, &start);
     mark = gtk_text_buffer_create_mark(buf, NULL, &start, FALSE);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text), 
-				 mark, 0.0, FALSE, 0, 0);
+    gtk_text_view_scroll_to_mark(view, mark, 0.0, FALSE, 0, 0);
 }
 
 void cursor_to_mark (windata_t *vwin, GtkTextMark *mark)
 {
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)); 
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
     GtkTextIter iter;
 
     gtk_text_buffer_get_iter_at_mark(buf, &iter, mark);
     gtk_text_buffer_place_cursor(buf, &iter);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text), 
-				 mark, 0.0, TRUE, 0, 0.1);
+    gtk_text_view_scroll_to_mark(view, mark, 0.0, TRUE, 0, 0.1);
 }
 
 static void get_char_width_and_height (GtkWidget *widget,
@@ -329,6 +329,7 @@ static void strip_CRLF (char *s)
 static int source_buffer_load_file (GtkSourceBuffer *sbuf, 
 				    int role, FILE *fp)
 {
+    GtkTextBuffer *tbuf = GTK_TEXT_BUFFER(sbuf);
     char fline[MAXSTR];
     gchar *chunk = NULL;
     GtkTextIter iter;
@@ -336,8 +337,8 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
 
     gtk_source_buffer_begin_not_undoable_action(sbuf);
 
-    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", -1);
-    gtk_text_buffer_get_iter_at_offset(GTK_TEXT_BUFFER(sbuf), &iter, 0);
+    gtk_text_buffer_set_text(tbuf, "", -1);
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
     memset(fline, 0, sizeof fline);
 
@@ -358,7 +359,7 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
 
 	strip_CRLF(chunk);
 
-	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, chunk, -1);
+	gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
 	memset(fline, 0, sizeof fline);
 
 	if (chunk != fline) {
@@ -368,38 +369,39 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
     }
 
     gtk_source_buffer_end_not_undoable_action(sbuf);
-    gtk_text_buffer_set_modified(GTK_TEXT_BUFFER(sbuf), FALSE);
+    gtk_text_buffer_set_modified(tbuf, FALSE);
 
     /* move cursor to the beginning */
-    gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sbuf), &iter);
-    gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(sbuf), &iter);
+    gtk_text_buffer_get_start_iter(tbuf, &iter);
+    gtk_text_buffer_place_cursor(tbuf, &iter);
 
     return 0;
 }
 
 static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
 {
+    GtkTextBuffer *tbuf = GTK_TEXT_BUFFER(sbuf);
     char line[MAXLINE];
     GtkTextIter iter;   
 
     gtk_source_buffer_begin_not_undoable_action(sbuf);
-    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", -1);
-    gtk_text_buffer_get_iter_at_offset(GTK_TEXT_BUFFER(sbuf), &iter, 0);
+    gtk_text_buffer_set_text(tbuf, "", -1);
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf)) {
-	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, line, -1);
+	gtk_text_buffer_insert(tbuf, &iter, line, -1);
     }
 
     bufgets_finalize(buf);
 
     gtk_source_buffer_end_not_undoable_action(sbuf);
-    gtk_text_buffer_set_modified(GTK_TEXT_BUFFER(sbuf), FALSE);
+    gtk_text_buffer_set_modified(tbuf, FALSE);
 
     /* move cursor to the beginning */
-    gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sbuf), &iter);
-    gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(sbuf), &iter);
+    gtk_text_buffer_get_start_iter(tbuf, &iter);
+    gtk_text_buffer_place_cursor(tbuf, &iter);
 
     return 0;
 }
@@ -585,6 +587,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     GtkSourceLanguagesManager *lm = gtk_source_languages_manager_new();
 #endif
     GtkSourceBuffer *sbuf;
+    GtkTextView *view;
     int cw;
     
     sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
@@ -602,9 +605,11 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     vwin->text = gtk_source_view_new_with_buffer(sbuf);
     vwin->sbuf = sbuf;
 
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vwin->text), GTK_WRAP_NONE);
-    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(vwin->text), 4);
-    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vwin->text), 4);
+    view = GTK_TEXT_VIEW(vwin->text);
+
+    gtk_text_view_set_wrap_mode(view, GTK_WRAP_NONE);
+    gtk_text_view_set_left_margin(view, 4);
+    gtk_text_view_set_right_margin(view, 4);
 
     gtk_widget_modify_font(GTK_WIDGET(vwin->text), fixed_font);
 
@@ -615,8 +620,8 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     set_source_tabs(vwin->text, cw);
 
     gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize); 
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->text), editable);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), editable);
+    gtk_text_view_set_editable(view, editable);
+    gtk_text_view_set_cursor_visible(view, editable);
 
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
@@ -1101,10 +1106,11 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
 
 /* Help links can be activated by clicking */
 
-static gboolean cmdref_event_after (GtkWidget *tview, GdkEvent *ev,
+static gboolean cmdref_event_after (GtkWidget *w, GdkEvent *ev,
 				    gpointer p)
 {
     GtkTextIter start, end, iter;
+    GtkTextView *view;
     GtkTextBuffer *buffer;
     GdkEventButton *event;
     gint x, y;
@@ -1115,23 +1121,24 @@ static gboolean cmdref_event_after (GtkWidget *tview, GdkEvent *ev,
 
     event = (GdkEventButton *) ev;
 
-    if (event->button != 1)
+    if (event->button != 1) {
 	return FALSE;
+    }
 
-    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tview));
+    view = GTK_TEXT_VIEW(w);
+    buffer = gtk_text_view_get_buffer(view);
 
     /* don't follow a link if the user has selected something */
     gtk_text_buffer_get_selection_bounds(buffer, &start, &end);
     if (gtk_text_iter_get_offset(&start) != gtk_text_iter_get_offset(&end))
 	return FALSE;
 
-    gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
-					  GTK_TEXT_WINDOW_WIDGET,
+    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
 					  event->x, event->y, &x, &y);
 
-    gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(tview), &iter, x, y);
+    gtk_text_view_get_iter_at_location(view, &iter, x, y);
 
-    follow_if_link(tview, &iter, p);
+    follow_if_link(w, &iter, p);
 
     return FALSE;
 }
@@ -1140,7 +1147,7 @@ static GdkCursor *hand_cursor = NULL;
 static GdkCursor *regular_cursor = NULL;
 
 static void
-set_cursor_if_appropriate (GtkTextView *tview, gint x, gint y)
+set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
 {
     static gboolean hovering_over_link = FALSE;
     GSList *tags = NULL, *tagp = NULL;
@@ -1148,8 +1155,8 @@ set_cursor_if_appropriate (GtkTextView *tview, gint x, gint y)
     GtkTextIter iter;
     gboolean hovering = FALSE;
 
-    tbuf = gtk_text_view_get_buffer(tview);
-    gtk_text_view_get_iter_at_location(tview, &iter, x, y);
+    tbuf = gtk_text_view_get_buffer(view);
+    gtk_text_view_get_iter_at_location(view, &iter, x, y);
   
     tags = gtk_text_iter_get_tags(&iter);
 
@@ -1168,10 +1175,10 @@ set_cursor_if_appropriate (GtkTextView *tview, gint x, gint y)
 	hovering_over_link = hovering;
 
 	if (hovering_over_link) {
-	    gdk_window_set_cursor(gtk_text_view_get_window(tview, GTK_TEXT_WINDOW_TEXT), 
+	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT), 
 				  hand_cursor);
 	} else {
-	    gdk_window_set_cursor(gtk_text_view_get_window(tview, GTK_TEXT_WINDOW_TEXT), 
+	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT), 
 				  regular_cursor);
 	}
     }
@@ -1182,29 +1189,29 @@ set_cursor_if_appropriate (GtkTextView *tview, gint x, gint y)
 }
 
 static gboolean 
-cmdref_motion_notify (GtkWidget *tview, GdkEventMotion *event)
+cmdref_motion_notify (GtkWidget *w, GdkEventMotion *event)
 {
+    GtkTextView *view = GTK_TEXT_VIEW(w);
     gint x, y;
 
-    gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
-					  GTK_TEXT_WINDOW_WIDGET,
+    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
 					  event->x, event->y, &x, &y);
-    set_cursor_if_appropriate(GTK_TEXT_VIEW(tview), x, y);
-    widget_get_pointer_mask(tview);
+    set_cursor_if_appropriate(view, x, y);
+    widget_get_pointer_mask(w);
 
     return FALSE;
 }
 
 static gboolean
-cmdref_visibility_notify (GtkWidget *tview,  GdkEventVisibility *e)
+cmdref_visibility_notify (GtkWidget *w,  GdkEventVisibility *e)
 {
+    GtkTextView *view = GTK_TEXT_VIEW(w);
     gint wx, wy, bx, by;
 
-    widget_get_pointer_info(tview, &wx, &wy, NULL);
-    gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
-					  GTK_TEXT_WINDOW_WIDGET,
+    widget_get_pointer_info(w, &wx, &wy, NULL);
+    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
 					  wx, wy, &bx, &by);
-    set_cursor_if_appropriate(GTK_TEXT_VIEW(tview), bx, by);
+    set_cursor_if_appropriate(view, bx, by);
 
     return FALSE;
 }

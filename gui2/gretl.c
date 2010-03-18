@@ -924,6 +924,8 @@ void populate_varlist (void)
 {
     static gint check_connected;
     static gint click_connected;
+    GtkTreeView *view;
+    GtkTreeModel *model;
     GtkTreeStore *store;
     GtkTreeSelection *select;
     GtkTreeIter iter;    
@@ -931,16 +933,18 @@ void populate_varlist (void)
     int pos = 0;
     int i;
 
-    store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
+    view = GTK_TREE_VIEW(mdata->listbox);
+    model = gtk_tree_view_get_model(view);
+    store = GTK_TREE_STORE(model);
 
     if (store != NULL) {
 	/* record line position? */
-	pos = get_line_pos(GTK_TREE_MODEL(store));
+	pos = get_line_pos(model);
     }
     
     gtk_tree_store_clear(store);
 
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    gtk_tree_model_get_iter_first(model, &iter);
 
     for (i=0; i<datainfo->v; i++) {
 	int pv = 0;
@@ -977,12 +981,12 @@ void populate_varlist (void)
 	}
     } 
 
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    gtk_tree_model_get_iter_first(model, &iter);
 
     if (pos == 0) {
 	/* no saved position */
 	pos = 1;
-	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	gtk_tree_model_iter_next(model, &iter);
     } else {	
 	/* try to return to previous position */
 	GtkTreeIter last;
@@ -990,7 +994,7 @@ void populate_varlist (void)
 	i = 1;
 	while (1) {
 	    last = iter;
-	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
+	    if (!gtk_tree_model_iter_next(model, &iter)) {
 		/* reached the end! */
 		iter = last;
 		break;
@@ -1004,7 +1008,7 @@ void populate_varlist (void)
     } 
 
     mdata->active_var = pos;
-    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
+    select = gtk_tree_view_get_selection(view);
     gtk_tree_selection_select_iter(select, &iter);
 
     if (datainfo->v > 1) {
@@ -1012,7 +1016,7 @@ void populate_varlist (void)
 
 	sprintf(id, "%d", pos);
 	path = gtk_tree_path_new_from_string(id);
-	gtk_tree_view_set_cursor(GTK_TREE_VIEW(mdata->listbox), path, NULL, FALSE);
+	gtk_tree_view_set_cursor(view, path, NULL, FALSE);
 	gtk_tree_path_free(path);
     }
 
@@ -1042,21 +1046,26 @@ void populate_varlist (void)
 void mdata_select_last_var (void)
 {
     GtkTreeIter iter, last;
+    GtkTreeView *view;
+    GtkTreeModel *model;
     GtkTreeStore *store;
     GtkTreeSelection *select;
 
-    store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    view = GTK_TREE_VIEW(mdata->listbox);
+    model = gtk_tree_view_get_model(view);
+    store = GTK_TREE_STORE(model);
+
+    gtk_tree_model_get_iter_first(model, &iter);
 
     while (1) {
 	last = iter;
-	if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
+	if (!gtk_tree_model_iter_next(model, &iter)) {
 	    iter = last;
 	    break;
 	}
     }
 
-    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
+    select = gtk_tree_view_get_selection(view);
     gtk_tree_selection_unselect_all(select);
     gtk_tree_selection_select_iter(select, &iter);
 }
