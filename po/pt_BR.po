@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-10 23:15-0300\n"
+"PO-Revision-Date: 2010-03-17 23:04-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -114,7 +114,7 @@ msgstr "hipótese nula de raiz unitária: a = 1"
 
 #: lib/src/adf_kpss.c:327
 msgid "plus seasonal dummies"
-msgstr "variáveis dummy de sazonalidade aditiva"
+msgstr "dummies de sazonalidade aditiva"
 
 #: lib/src/adf_kpss.c:332
 #: gui2/cmdstack.c:300
@@ -4290,7 +4290,7 @@ msgstr "Não existe informação sobre os dados.\n"
 
 #: lib/src/interact.c:4415
 msgid "You can't end a loop here, you haven't started one\n"
-msgstr "Não pode terminar um ciclo aqui, não iniciou nenhum\n"
+msgstr "Não pode terminar um ciclo aqui, nenhum foi iniciado\n"
 
 #: lib/src/interact.c:4522
 msgid "This command requires one variable.\n"
@@ -7580,7 +7580,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 10 de março de 2010."
+"Tradução de 17 de março de 2010."
 
 #: gui2/about.c:175
 msgid "License"
@@ -10792,24 +10792,24 @@ msgstr "_Novo arquivo de comandos"
 
 #: gui2/gretl.c:1314
 msgid "gretl script"
-msgstr "comandos gretl"
+msgstr "Comandos gretl"
 
 #: gui2/gretl.c:1315
 msgid "gnuplot script"
-msgstr "comandos gnuplot"
+msgstr "Comandos Gnuplot"
 
 #: gui2/gretl.c:1316
 msgid "R script"
-msgstr "comandos R"
+msgstr "Comandos R"
 
 #: gui2/gretl.c:1317
 msgid "Octave script"
-msgstr "Sequência de comandos Octave"
+msgstr "Comandos Octave"
 
 #: gui2/gretl.c:1318
 #: gui2/gretl.c:1586
 msgid "Ox program"
-msgstr "programa Ox"
+msgstr "Programa Ox"
 
 #: gui2/gretl.c:1320
 msgid "_Session files"
@@ -11148,7 +11148,7 @@ msgstr "_Tendência temporal"
 
 #: gui2/gretl.c:1422
 msgid "_Random variable..."
-msgstr "Va_riável aleatória"
+msgstr "Va_riável aleatória..."
 
 #: gui2/gretl.c:1423
 msgid "_Periodic dummies"
