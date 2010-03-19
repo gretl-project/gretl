@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-19 10:51+0200\n"
+"PO-Revision-Date: 2010-03-19 12:43+0200\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -1122,7 +1122,7 @@ msgid ""
 "First char of varname ('%c') is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Değişken ismi ('%c') ilk harfi hatalı\n"
+"Değişken adının ilk harfi ('%c') hatalı\n"
 "(bir harf ile başlamalıdır)"
 
 #: lib/src/dataio.c:397
@@ -1140,7 +1140,7 @@ msgid ""
 "First char of varname (0x%x) is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Değişken ismi (0x%x) ilk harfi hatalı\n"
+"Değişken adının ilk harfi (0x%x) hatalı\n"
 "(bir harf ile başlamalıdır)"
 
 #: lib/src/dataio.c:407
@@ -5705,7 +5705,7 @@ msgstr "Bağlanım"
 #: plugin/anova.c:127
 #: plugin/anova.c:129
 msgid "Residual"
-msgstr "Kalıntı"
+msgstr "Kalıntılar"
 
 #: lib/src/modelprint.c:4814
 #: lib/src/modelprint.c:4816
@@ -12412,7 +12412,7 @@ msgid ""
 "First char of name ('%c') is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Ad ismi ('%c') ilk harfi hatalı\n"
+"Adın ilk harfi ('%c') hatalı\n"
 "(bir harf ile başlamalıdır)"
 
 #: gui2/gui_utils.c:3773
@@ -12421,7 +12421,7 @@ msgid ""
 "Name contains an illegal char (in place %d)\n"
 "Use only unaccented letters, digits and underscore"
 msgstr ""
-"Ad, geçersiz bir simge (%d. sırada) içeriyor.\n"
+"Ad, geçersiz bir simge (%d. harf) içeriyor.\n"
 "Yalnızca vurgusuz harf, rakam veya altçizgi kullanınız"
 
 #: gui2/gui_utils.c:4016
