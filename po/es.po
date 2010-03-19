@@ -2534,7 +2534,8 @@ msgstr "respuesta de %s a un shock en %s, con intervalo de confianza bootstrap"
 msgid "response of %s to a shock in %s"
 msgstr "respuesta de %s a un shock en %s"
 
-#: lib/src/graphing.c:4300, c-format
+#: lib/src/graphing.c:4300
+#, c-format
 msgid "%g percent confidence band"
 msgstr "Banda de confianza del %g por ciento"
 
