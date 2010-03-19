@@ -593,9 +593,11 @@ static void dot_callback (GtkComboBox *box, GPT_SPEC *spec)
 
     /* the color selector is effective only for solid lines */
     w = g_object_get_data(G_OBJECT(box), "colorsel");
-    gtk_widget_set_sensitive(w, solid);
-    w = g_object_get_data(G_OBJECT(box), "color-label");
-    gtk_widget_set_sensitive(w, solid);
+    if (w != NULL) {
+	gtk_widget_set_sensitive(w, solid);
+	w = g_object_get_data(G_OBJECT(box), "color-label");
+	gtk_widget_set_sensitive(w, solid);
+    }
 }
 
 /* take a double (which might be NA) and format it for
@@ -2333,9 +2335,10 @@ static GList *add_style_spec (GList *list, int t)
 static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 {
     GtkWidget *notebook = ed->notebook;
+    GtkWidget *color_label = NULL;
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox, *sep;
-    GtkWidget *button, *page;
+    GtkWidget *page;
     int i, tbl_len, tbl_num, tbl_col;
     GList *stylist = NULL;
     int axis_chooser;
@@ -2572,24 +2575,22 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	/* line color adjustment */
 	if (i < 6 && !frequency_plot_code(spec->code)) {
-	    button = line_color_button(spec, i);
-	    if (button != NULL) {
-		label = gtk_label_new(_("color"));
-		gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-		gtk_widget_show(label);
-		gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-		g_object_set_data(G_OBJECT(ed->linewidth[i]), "colorsel",
-				  button);
-		gtk_widget_show_all(button);
-		ed->colorsel[i] = button;
+	    ed->colorsel[i] = line_color_button(spec, i);
+	    if (ed->colorsel[i] != NULL) {
+		color_label = gtk_label_new(_("color"));
+		gtk_box_pack_start(GTK_BOX(hbox), color_label, FALSE, FALSE, 0);
+		gtk_widget_show(color_label);
+		gtk_box_pack_start(GTK_BOX(hbox), ed->colorsel[i], 
+				   FALSE, FALSE, 0);
+		gtk_widget_show_all(ed->colorsel[i]);
 	    }
 	} else {
-	    label = NULL;
-	    button = NULL;
+	    ed->colorsel[i] = NULL;
+	    color_label = NULL;
 	}
 
 	if (line->flags & GP_LINE_USER) {
-	    /* dotted option */
+	    /* offer dotted option */
 	    GtkWidget *dotcombo = dash_types_combo();
 	    int dotted = (line->type == 0);
 
@@ -2597,10 +2598,12 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				     dotted ? 1 : 0);
 	    gtk_widget_show(dotcombo);
 	    widget_set_int(dotcombo, "linenum", i);
-	    g_object_set_data(G_OBJECT(dotcombo), "colorsel", button);
-	    g_object_set_data(G_OBJECT(dotcombo), "color-label", label);
-	    g_signal_connect(G_OBJECT(dotcombo), "changed", 
-			     G_CALLBACK(dot_callback), spec);
+	    if (ed->colorsel[i] != NULL) {
+		g_object_set_data(G_OBJECT(dotcombo), "colorsel", ed->colorsel[i]);
+		g_object_set_data(G_OBJECT(dotcombo), "color-label", color_label);
+		g_signal_connect(G_OBJECT(dotcombo), "changed", 
+				 G_CALLBACK(dot_callback), spec);
+	    }
 	    gtk_box_pack_start(GTK_BOX(hbox), dotcombo, FALSE, FALSE, 5);
 	}
 
@@ -2620,15 +2623,17 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     if ((spec->code == PLOT_REGULAR || spec->code == PLOT_CURVE)
 	&& spec->n_lines < 8) {
 	/* button for adding a line (formula) */
+	GtkWidget *add_button;
+
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	button = gtk_button_new_with_label(_("Add line..."));
-	g_signal_connect(G_OBJECT(button), "clicked", 
+	add_button = gtk_button_new_with_label(_("Add line..."));
+	g_signal_connect(G_OBJECT(add_button), "clicked", 
 			 G_CALLBACK(add_line_callback), 
 			 ed);
-	gtk_widget_show(button);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 
-				  tbl_len-1, tbl_len);
+	gtk_widget_show(add_button);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), add_button, 
+				  0, 1, tbl_len-1, tbl_len);
     }
 
     g_list_free(stylist);
@@ -3072,7 +3077,7 @@ static int add_line_widget (plot_editor *ed)
     ed->yaxiscombo  = widget_array_expand(&ed->yaxiscombo, n, &err);
     ed->linescale   = widget_array_expand(&ed->linescale, n, &err);
     ed->linewidth   = widget_array_expand(&ed->linewidth, n, &err);
-    ed->colorsel    = widget_array_expand(&ed->linewidth, n, &err);
+    ed->colorsel    = widget_array_expand(&ed->colorsel, n, &err);
     
     if (!err) {
 	ed->gui_nlines = n;
@@ -3155,6 +3160,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->yaxiscombo = NULL;
     ed->linescale = NULL;
     ed->linewidth = NULL;
+    ed->colorsel = NULL;
 
     ed->labeltext = NULL;
     ed->labelpos = NULL;
