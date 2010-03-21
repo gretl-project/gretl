@@ -1660,7 +1660,7 @@ static int ggz_extract (char *ggzname)
 	goto bailout;
     } 
 
-    memset(gzbuf, GRETL_BUFSIZE, 0);
+    memset(gzbuf, 0, GRETL_BUFSIZE);
     gzread(fgz, gzbuf, INFOLEN);
 
     if (parse_db_header(gzbuf, &idxlen, &datalen, &cblen)) {
