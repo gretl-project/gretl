@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.8.6\n"
+"Project-Id-Version: gretl-1.8.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-14 20:00-0500\n"
+"PO-Revision-Date: 2010-03-22 00:10-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4364,15 +4364,15 @@ msgstr "1-step GMM"
 
 #: lib/src/modelprint.c:763 gui2/selector.c:3043
 msgid "Ordered Logit"
-msgstr "Ordered Logit"
+msgstr "Uporządkowany Logit"
 
 #: lib/src/modelprint.c:765 gui2/selector.c:3045
 msgid "Multinomial Logit"
-msgstr "Multinomial Logit"
+msgstr "Wielomianowy Logit"
 
 #: lib/src/modelprint.c:771 gui2/selector.c:3049
 msgid "Ordered Probit"
-msgstr "Ordered Probit"
+msgstr "Uporządkowany Probit"
 
 #: lib/src/modelprint.c:777
 msgid "Two-step Heckit"
@@ -4396,7 +4396,7 @@ msgstr "2MNK"
 
 #: lib/src/modelprint.c:795
 msgid "Negative Binomial 1"
-msgstr "Negative Binomial 1"
+msgstr "Ujemny Dwumianowy 1"
 
 #: lib/src/modelprint.c:801
 msgid "Duration (exponential)"
@@ -10463,15 +10463,15 @@ msgstr "Model _Logitowy"
 
 #: gui2/gretl.c:1515 gui2/gretl.c:1519
 msgid "_Binary..."
-msgstr "_Binary..."
+msgstr "_dwumianowy..."
 
 #: gui2/gretl.c:1516 gui2/gretl.c:1520
 msgid "_Ordered..."
-msgstr "_Ordered..."
+msgstr "_uporządkowany..."
 
 #: gui2/gretl.c:1517
 msgid "_Multinomial..."
-msgstr "_Multinomial..."
+msgstr "_wielomianowy..."
 
 #: gui2/gretl.c:1518
 msgid "_Probit"
@@ -10487,11 +10487,11 @@ msgstr "Model z selekcją próby (_heckit)..."
 
 #: gui2/gretl.c:1523
 msgid "_Count data..."
-msgstr "Model zmiennej licznikowej (_Count)..."
+msgstr "Model zmiennej licznikowej (_Count data)..."
 
 #: gui2/gretl.c:1524
 msgid "_Duration data..."
-msgstr "Model czasów trawania (_Duration)..."
+msgstr "Model czasów trawania (_Duration data)..."
 
 #: gui2/gretl.c:1525
 msgid "Lo_gistic..."
