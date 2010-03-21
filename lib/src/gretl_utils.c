@@ -1560,8 +1560,8 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     return err;
 }
 
-/* internal execution timer: on OpenMP use omp_get_wtime(), else
-   onWindows use use GetTickCount, else use times() if available,
+/* internal execution timer: on OpenMP use omp_get_wtime(); else
+   on Windows use use GetTickCount; else use times() if available,
    otherwise fall back on clock()
 */ 
 

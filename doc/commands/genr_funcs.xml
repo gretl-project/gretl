@@ -890,7 +890,7 @@
       <description>
 	<para>
 	  Cumulative distribution function calculator. Returns 
-	  <equation status="inline" ascii="P(X &lt; x)"  
+	  <equation status="inline" ascii="P(X &le; x)"  
 	  tex="$P(X \le x)$"/>, where the distribution <math>X</math> is
 	  determined by the character <argname>c</argname>. Between the
 	  arguments <argname>c</argname> and <argname>x</argname>, zero or
@@ -2152,7 +2152,7 @@
 	<para>
 	  Inverse cumulative distribution function calculator. Returns
 	  <math>x</math> such that
-	  <equation status="inline" ascii="P(X &lt; x) = p"  
+	  <equation status="inline" ascii="P(X &le; x) = p"  
 	  tex="$P(X \le x) = p$"/>, where the distribution <math>X</math> is
 	  determined by the character <argname>c</argname>; Between the
 	  arguments <argname>c</argname> and <argname>p</argname>, zero or

@@ -63,6 +63,10 @@ static void utf_replace (unsigned char *s)
 	    /* &minus; */
 	    s[0] = '-';
 	    memmove(s + 1, s + 3, mvsize(s, 3));
+	} else if (s[0] == 0xe2 && s[1] == 0x89 && s[2] == 0xa4) {
+	    s[0] = '<';
+	    s[1] = '=';
+	    memmove(s + 2, s + 3, mvsize(s, 3));
 	} else if (s[0] == 0xce && s[1] == 0x93) {
 	    /* &Gamma */
 	    memmove(s + 5, s + 2, mvsize(s, 2));
@@ -117,7 +121,7 @@ static void utf_replace (unsigned char *s)
 	    s[2] = 'e';
 	    s[3] = 'g';
 	    s[4] = 'a';
-	}
+	} 
 	s++;
     }
 }
