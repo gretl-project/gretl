@@ -2863,6 +2863,11 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	return E_NOTIMP;
     }
 
+    if (pmod->ci == PANEL && !(pmod->opt & OPT_P)) { 
+	/* FIXME */
+	return E_NOTIMP;
+    }
+
     /* Reject in case model was estimated using repacked daily
        data: this case should be handled more elegantly */
     if (gretl_model_get_int(pmod, "daily_repack")) {

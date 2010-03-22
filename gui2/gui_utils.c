@@ -2148,7 +2148,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ui, "/menubar/Analysis/ConfEllipse", FALSE);
     }
 
-    if (pmod->ci == ARBOND) {
+    if (pmod->ci == ARBOND || (pmod->ci == PANEL && !(pmod->opt & OPT_P))) {
 	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
     } else if (pmod->ci == GARCH) {
 	flip(vwin->ui, "/menubar/Tests/Hsk", FALSE);
