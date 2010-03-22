@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-10 17:54-0500\n"
+"PO-Revision-Date: 2010-03-18 00:12+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -712,7 +712,7 @@ msgstr "Возможно ежемесячные данные\n"
 
 #: lib/src/csvdata.c:439
 msgid "Probably weekly data\n"
-msgstr ""
+msgstr "Возможно еженедельные данные\n"
 
 #: lib/src/csvdata.c:442
 #, c-format
@@ -4755,12 +4755,12 @@ msgstr "Весовая переменная является фиктивной,
 
 #: lib/src/modelprint.c:1931
 msgid "$z$"
-msgstr ""
+msgstr "$z$"
 
 #: lib/src/modelprint.c:1931 lib/src/modelprint.c:3699
 #: lib/src/modelprint.c:4015
 msgid "z"
-msgstr ""
+msgstr "z"
 
 #: lib/src/modelprint.c:1933
 msgid "$t$-ratio"
@@ -5600,11 +5600,11 @@ msgstr "Столбцы ошибок"
 
 #: lib/src/plotspec.c:181
 msgid "filled curve"
-msgstr ""
+msgstr "заливка"
 
 #: lib/src/plotspec.c:182
 msgid "candlesticks"
-msgstr ""
+msgstr "свечи"
 
 #: lib/src/plotspec.c:265
 msgid "left top"
@@ -13471,7 +13471,7 @@ msgstr "Запрос на сохранение сессии"
 
 #: gui2/settings.c:170
 msgid "Enable Ox support"
-msgstr ""
+msgstr "Поддержка Ox"
 
 #: gui2/settings.c:172
 msgid "Set working directory from shell"
@@ -14366,7 +14366,7 @@ msgstr "Масштабированный график разброса для"
 
 #: plugin/fractals.c:42
 msgid "log(sample size)"
-msgstr ""
+msgstr "log(размер выборки)"
 
 #: plugin/fractals.c:43 plugin/fractals.c:123
 msgid "log(RS)"
