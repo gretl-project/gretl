@@ -332,8 +332,8 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
 static int resize_panel_info (DATAINFO *pdinfo, int n)
 {
     PANINFO *pan = pdinfo->paninfo;
-    int *unit;
-    int *period;
+    int *unit, *period;
+    int err = 0;
 
     unit = realloc(pan->unit, n * sizeof *unit);
     if (unit == NULL) {
@@ -352,11 +352,16 @@ static int resize_panel_info (DATAINFO *pdinfo, int n)
 	int i, t, j = pdinfo->paninfo->nunits;
 	int s = pdinfo->n;
 
-	for (i=0; i<uadd; i++) {
-	    for (t=0; t<pdinfo->pd; t++) {
-		pan->unit[s + i] = j;
-		pan->period[s + i] = t;
-		s++;
+	for (i=0; i<uadd && !err; i++) {
+	    for (t=0; t<pdinfo->pd && !err; t++) {
+		if (s+i >= n) {
+		    err = E_DATA;
+		    fprintf(stderr, "panel info out of bounds\n");
+		} else {
+		    pan->unit[s+i] = j;
+		    pan->period[s+i] = t;
+		    s++;
+		}
 	    }
 	    j++;
 	}
@@ -364,7 +369,7 @@ static int resize_panel_info (DATAINFO *pdinfo, int n)
 
     pdinfo->paninfo->nunits = n / pdinfo->pd;
 
-    return 0;
+    return err;
 }
 
 /**
@@ -1037,6 +1042,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     double *x;
     int oldn = pdinfo->n;
     int i, t, bign;
+    int err = 0;
 
     if (newobs <= 0) {
 	return 0;
@@ -1073,8 +1079,9 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (pdinfo->paninfo != NULL) {
-	if (resize_panel_info(pdinfo, bign)) {
-	    return E_ALLOC;
+	err = resize_panel_info(pdinfo, bign);
+	if (err) {
+	    return err;
 	}
     }
     
@@ -1092,7 +1099,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     /* does daily data need special handling? */
     ntodate(pdinfo->endobs, bign - 1, pdinfo);
 
-    return 0;
+    return err;
 }
 
 /**
