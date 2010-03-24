@@ -10,10 +10,13 @@ GMP_LIBS = @GMP_LIBS@
 FLIB = @FLIB@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
+OMP_OPT = @OPENMP_CFLAGS@
 
 ifeq ($(CC),)
   CC = gcc
 endif
+
+CCO = $(CC) $(OMP_OPT)
 
 LIBGRETL = ../lib/libgretl-1.0.la
 RAND_LIBS = $(LIBGRETL)
@@ -35,10 +38,10 @@ override CFLAGS += -I$(libsrc) $(DEFINES)
 all: nistcheck
 
 nistcheck: nistcheck.o $(LIBGRETL)
-	../libtool --mode=link $(CC) -o $@ $< $(LIBGRETL) $(XML_LIBS)
+	../libtool --mode=link $(CCO) -o $@ $< $(LIBGRETL) $(XML_LIBS)
 
 nistcheck.o: nistcheck.c
-	$(CC) $(CFLAGS) $(XML_CFLAGS) -c $<
+	$(CCO) $(CFLAGS) $(XML_CFLAGS) -c $<
 
 randcheck: diehard mtrand
 	if [ `pwd` != "$(topsrc)/tests" ] ; then \
