@@ -1,129 +1,55 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html>
-<head>
-  <title>gretl</title>
-  <link rel="STYLESHEET" type="text/css" href="css-gretl.html">
-  <meta name="description"
- content="p&aacute;gina de gretl, the Gnu Regression, Econometrics and Time-series Library">
-  <meta name="keywords"
- content="econometria, software livre, GNU, estat&iacute;stica, an&aacute;lise estat&iacute;stica, linux, win32, open source, programa econometria gr&aacute;tis, s&eacute;ries temporais">
-  <meta name="generator" content="GNU Emacs">
-  <meta http-equiv="Content-Type"
- content="text/html; charset=iso-8859-1">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd"> 
+
+<head><title>gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
+<META name="description" 
+      content="página de gretl, the Gnu Regression, Econometrics 
+               and Time-series Library">
+<META name="keywords" 
+      content="econometria, software livre, GNU, estatística, análise estatística,
+               linux, win32, open source, programa econométrico grátis">
+<META name="generator" content="GNU Emacs">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <!-- Traduzido por Hélio Guilherme em 2005 - helio.guilherme(at)bluebottle.com -->
+<!-- Tradução atualizada por Henrique Andrade em 2010 - henrique.coelho@gmail.com -->
 </head>
 <body>
-<br>
+
 <table>
-  <tbody>
-    <tr>
-      <td valign="top" width="30%">
-      <table style="width: 138px; height: 1143px;" border="0"
- cellpadding="0" cellspacing="8">
-        <tbody>
-          <tr>
-            <td><img alt="gretl image" src="./images/gretl-image.png"
- style="width: 86px; height: 102px;"></td>
-          </tr>
-          <tr>
-            <td>&nbsp;</td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a href="#dl">Download</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/win32/index_pt.html">gretl para
-Windows</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/osx_pt.html">gretl para Mac OS X</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/gretl_data_pt.html">Dados para gretl</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a href="#man">Manual do gretl</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a href="#use">Utiliza o gretl?</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a href="#contrib">Contribuir para
-gretl</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/tour/index.html">comunidade do
-gretl</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/x12a/x12a.html">gretl e X-12-ARIMA</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/tramo/tramo-seats.html">gretl e
-TRAMO/SEATS</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/gretl_and_R_pt.html">gretl e GNU R</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/shots/shots.html">Mais imagens
-capturadas de gretl<br>
-            </a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/nist/index.html">Exactid&atilde;o
-num&eacute;rica</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://sourceforge.net/projects/gretl/">P&aacute;gina do
-projecto em
-SourceForge</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/ChangeLog.html">Registo de
-altera&ccedil;&otilde;es</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a href="#cvs">C&oacute;digo fonte
-mais recente via CVS</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/API/">Documentos sobre a API
-libgretl</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a
- href="http://gretl.sourceforge.net/lists_pt.html">Lista de
-Distribui&ccedil;&atilde;o (Mailing list)</a></td>
-          </tr>
-          <tr>
-            <td class="menu-item"><a href="#ack">Agradecimentos</a></td>
-          </tr>
-          <tr>
-            <td>&nbsp;</td>
-          </tr>
-          <tr>
-            <td class="menu-item"><i>Vers&atilde;o mais recente: <a
- href="http://sourceforge.net/project/showfiles.php?group_id=36234&amp;package_id=28605">VERSION</a><br>
-SHORTDATE</i></td>
-          </tr>
-          <tr>
-            <td>&nbsp;</td>
-          </tr>
-          <tr>
-            <td><a href="http://gretl.sourceforge.net/gretl_screen.html"><img
+  <tr>
+    <td width="30%" valign="top">
+	<table border=0 cellspacing=8 cellpadding=0>
+	  <tr><td><img alt="gretl image" src="./images/gretl-image.png"></td></tr>
+	  <tr><td>&nbsp;</td></tr>
+	  <tr><td class="menu-item"><a href="#dl">Download</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/win32/index_pt.html">Gretl para Windows</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/osx_pt.html">Gretl para Mac OS X</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/gretl_data_pt.html">Dados para gretl</a></td></tr>
+      <tr><td class="menu-item"><a href="#man">Manual do Gretl</a></td></tr>
+      <tr><td class="menu-item"><a href="#use">Utiliza o Gretl?</a></td></tr>
+      <tr><td class="menu-item"><a href="#contrib">Contribuir para o Gretl</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/tour/index.html">Comunidade Gretl</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/x12a/x12a.html">Gretl e X-12-ARIMA</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/tramo/tramo-seats.html">Gretl e TRAMO/SEATS</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/gretl_and_R_pt.html">Gretl e GNU R</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/shots/shots.html">Mais capturas de tela</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/nist/index.html">Precisão numérica</a></td></tr>
+      <tr><td class="menu-item"><a href="http://sourceforge.net/projects/gretl/">Página do projecto em SourceForge</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/ChangeLog.html">Registo de alterações</a></td></tr>
+      <tr><td class="menu-item"><a href="#cvs">Código fonte mais recente via CVS</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/API/">Documentos da API libgretl</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretl.sourceforge.net/lists_pt.html">Lista de Discussão</a></td></tr>
+      <tr><td class="menu-item"><a href="http://gretlwiki.econ.univpm.it/wiki/index.php">Gretl wiki</a></td></tr>
+	  <tr><td class="menu-item"><a href="#ack">Agradecimentos</a></td></tr>
+      <tr><td>&nbsp;</td></tr>
+      <tr><td class="menu-item"><i>Versão mais recente:
+<a href="http://sourceforge.net/project/showfiles.php?group_id=36234&amp;package_id=28605">VERSION</a><br>SHORTDATE</i></td></tr>
+
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+  <td><a href="http://gretl.sourceforge.net/gretl_screen.html"><img
  src="./images/gretl_thumb.png" alt="Aspecto do programa - clica para aumentar"
  style="border: 0px solid ; width: 154px; height: 130px;"></a></td>
           </tr>
@@ -131,7 +57,7 @@ SHORTDATE</i></td>
             <td>&nbsp;</td>
           </tr>
 <tr>
-  <td class="menu-item"><i>Gretl est&aacute; hospedado em</i></td></tr>
+  <td class="menu-item"><i>Gretl está hospedado em</i></td></tr>
   <tr><td><a href="http://sourceforge.net">
 <IMG src="http://sourceforge.net/sflogo.php?group_id=36234&amp;type=2"
       width="125" height="37" border="0" alt="Logo di SourceForge"></a></td></tr>
@@ -170,7 +96,10 @@ SHORTDATE</i></td>
         </tbody>
       </table>
       </td>
-<!-- begin right-hand-column --> <td width="70%">
+
+<!-- begin right-hand-column -->
+
+<td width="70%">
 
  <center>
   <p class="menu-item">
@@ -178,170 +107,152 @@ SHORTDATE</i></td>
    <a href="./gretl_espanol.html">Español</a> &nbsp;
    <a href="./gretl_italiano.html">Italiano</a> &nbsp;
    <a href="./gretl_turkish.html">Türkçe</a> &nbsp;
-   <a href="http://www.kufel.torun.pl/">S&iacute;tio em Polaco</a>
+   <a href="http://www.kufel.torun.pl/">Sítio em Polaco</a>
   </p>
  </center>
 
  <p>&nbsp;</p>
 
-      <center>
-      <h1>Gnu Regression, Econometrics and Time-series Library</h1>
-      </center>
-      <center> <img alt="logo do gretl" src="./images/gretl-text.png"
- style="width: 119px; height: 67px;"> </center>
-      <p>&Eacute; um pacote de software multi-plataforma para
-an&aacute;lise econom&eacute;trica, escrito em linguagem C. &Eacute;
-software livre e de c&oacute;digo aberto. Pode ser&nbsp;
-redistribu&iacute;do e/ou modificado de acordo com os termos da
-Licen&ccedil;a
-P&uacute;blica Geral (<a href="http://www.gnu.org/copyleft/gpl.html">GPL</a>)
-publicada pela <a href="http://www.gnu.org/">Free Software Foundation</a>.</p>
-      <h2><a name="feat">Caracter&iacute;sticas</a></h2>
-      <ul>
-        <li>
-          <p class="in-list">Interface f&aacute;cil e intuitivo (agora
-tamb&eacute;m em Franc&ecirc;s, Italiano, Espanhol, Portugu&ecirc;s,
-Polaco
-e
-Alem&atilde;o, al&eacute;m do Ingl&ecirc;s)</p>
-        </li>
-        <li>
-          <p class="in-list">Uma ampla variedade de estimadores
-baseados em m&iacute;nimos quadrados, incluindo m&iacute;nimos
-quadrados de duas fases e m&iacute;nimos quadrados n&atilde;o-lineares</p>
-        </li>
-        <li>
-          <p class="in-list">Comandos simples para iniciar coisas como
-sejam, o teste de Dickey-Fuller,
-teste de Chow para a estabilidade estrutural, Autoregress&otilde;es
-Vectoriais, estima&ccedil;&atilde;o ARMA</p>
-        </li>
-        <li>
-          <p class="in-list">As sa&iacute;das dos modelos s&atilde;o
-export&aacute;veis para ficheiros LaTex, em tabelas ou como
-equa&ccedil;&otilde;es. <br>
-          </p>
-        </li>
-        <li>
-          <p class="in-list">Linguagem de script integrada: entrar
-comandos via o interface gr&aacute;fico ou ficheiro de comandos.</p>
-        </li>
-        <li>
-          <p class="in-list">Estrutura de ciclos (loop) de comandos
-para simula&ccedil;&otilde;es Monte
-Carlo e para procedimentos iterados de estima&ccedil;&atilde;o</p>
-        </li>
-        <li>
-          <p class="in-list">Controlo em interface gr&aacute;fico para
-afina&ccedil;&atilde;o de par&acirc;metros dos gr&aacute;ficos Gnuplot</p>
-        </li>
-        <li>
-          <p class="in-list">Compat&iacute;vel com <a
- href="http://gretl.sourceforge.net/gretl_and_R_pt.html">GNU R</a> para
-an&aacute;lises estat&iacute;sticas mais avan&ccedil;adas<br>
-          </p>
-        </li>
-      </ul>
-      <h2><a name="formats">Formato de Dados<br>
-      </a></h2>
-      <p>L&ecirc; ficheiros no formato pr&oacute;prio XML, ficheiros
-csv (valores separados por v&iacute;rgulas), folhas de c&aacute;lculo
-Excel e Gnumeric, ficheiros BOX1, bases de dados em formato
-pr&oacute;prio bin&aacute;rio (que permitem guardar frequ&ecirc;ncias
-de dados e dimens&otilde;es das s&eacute;ries) e base de dados RATS 4.
-Inclui uma base de dados de macroeconomia dos E.U.A., como exemplo.
-Veja tamb&eacute;m a&nbsp; <a
- href="http://gretl.sourceforge.net/gretl_data_pt.html">p&aacute;gina
-de dados do gretl</a>. </p>
-      <h2><a name="dl">Download</a></h2>
-      <table cellpadding="2">
-        <tbody>
-          <tr>
-            <td>
-            <p class="in-cell">O c&oacute;digo fonte mais recente<br>
-            </p>
-            </td>
-            <td>
-            <p class="in-cell"><a
- href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.tar.bz2">gretl-VERSION.tar.bz2</a>
-(cerca de 4Mb)</p>
-            </td>
-          </tr>
-          <tr>
-            <td>
-            <p class="in-cell">Pacote gen&eacute;rico RPM dos
-execut&aacute;veis, para os sistemas Linux modernos<br>
-            </p>
-            </td>
-            <td>
-            <p class="in-cell"><a
- href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-1gtk2.i586.rpm">gretl-VERSION-1gtk2.i586.rpm</a></p>
-            </td>
-          </tr>
-          <tr>
-            <td>
-            <p class="in-cell">Pacote <a href="http://www.debian.org/">Debian
-GNU/Linux</a>, mantido por Dirk Eddelbuettel</p>
-            </td>
-            <td>
-            <p class="in-cell"><a
- href="http://packages.debian.org/gretl">packages.debian.org</a>; ver
-tamb&eacute;m em <a href="http://packages.qa.debian.org/g/gretl.html">packages.qa.debian.org</a></p>
-            </td>
-          </tr>
-          <tr>
-            <td><br>
-            </td>
-            <td><br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p>Se vai compilar a partir do c&oacute;digo fonte, ou instalar a
-partir de bin&aacute;rios pr&eacute;-compilados, pode estar interessado
-em verificar <a href="http://gretl.sourceforge.net/depend_pt.html">as
-depend&ecirc;ncias de gretl</a>.</p>
-      <p>Uma vers&atilde;o de gretl para MS Windows est&aacute; <a
- href="http://gretl.sourceforge.net/win32/index_pt.html">aqui</a>, e o
-gretl para Mac OS X <a href="http://gretl.sourceforge.net/osx_pt.html">aqui</a>.</p>
-      <p>Os programas para an&aacute;lise de s&eacute;ries temporais
-X-12-ARIMA e TRAMO/SEATS est&atilde;o dispon&iacute;veis numa forma
-adequada para usar com o gretl em Linux, como abaixo:</p>
+    <center>
+     <h1>Gnu Regression, Econometrics and Time-series Library</h1>
+    </center>
+    
+    <center>
+    <img alt="logo do gretl" src="./images/gretl-text.png" style="width: 119px; height: 67px;">
+    </center>
+ 
+<p>É um pacote de software multi-plataforma para análise econométrica,
+escrito em linguagem C. É software livre e de código aberto. Pode ser
+redistribuído e/ou modificado de acordo com os termos da Licença Pública
+Geral (<a href="http://www.gnu.org/copyleft/gpl.html">GPL</a>) publicada
+pela <a href="http://www.gnu.org/">Free Software Foundation</a>.</p>
+
+<h2><a name="feat">Características</a></h2>
+
+<ul>
+
+<li><p class="in-list">Interface fácil e intuitivo (agora também
+  em Francês, Italiano, Espanhol, Polaco/Polonês, Alemão, Basco, Português,
+  Russo, Turco e Tcheco, além do Inglês)</p></li>
+
+<li><p class="in-list">Uma ampla variedade de estimadores: mínimos quadrados, máxima
+verossimilhnça, GMM; métodos de equações únicas e sistemas de equações</p></li>
+
+<li><p class="in-list">Métodos de séries temporais: ARMA, GARCH, VARs e VECMs, 
+testes de raiz unitária e cointegração, etc.</p></li>
+
+<li><p class="in-list">Variáveis dependentes limitadas: logit, probit, tobit,
+intervalo de regressão, modelos para dados de contagem e duração, etc.</p></li> 
+
+<li><p class="in-list">As saídas dos modelos são exportáveis para ficheiros/arquivos
+LaTex, em tabelas ou como equações</p></li>
+
+<li><p class="in-list">Linguagem de script integrada: entrar comandos via o interface
+gráfico ou ficheiro/arquivo de comandos</p></li>
+
+<li><p class="in-list">Estrutura de ciclos (loop) de comandos
+para simulações Monte Carlo e para procedimentos iterados de estimação/p></li>
+
+<li><p class="in-list">Controlo em interface gráfico para
+afinação de parâmetros dos gráficos Gnuplot</p></li>
+
+<li><p class="in-list">Compatível com <a href="./gretl_and_R.html">GNU R</a>,
+<a href="http://www.gnu.org/software/octave">GNU Octave</a> e
+<a href="http://www.doornik.com">Ox</a> para análises estatísticas mais avançadas</p></li>
+
+</ul>
+
+<h2><a name="formats">Formato de Dados</a></h2>
+
+<p>Os formatos suportados incluem: formato próprio XML; Valores Separados
+por Vírgulas; planilhas Excel, Gnumeric e Open Document; arquivos <tt>.dta</tt>
+do Stata; arquivos <tt>.sav</tt> do SPSS; workfiles do EViews; arquivos de
+dados do JMulTi; bases de dados em formato próprio binário (que permitem
+guardar diferentes frequências de dados e tamanhos de séries), base de dados
+RATS 4 e PC-Give. Inclui uma base de dados de macroeconomia dos E.U.A., como
+exemplo. Veja também a <a href="http://gretl.sourceforge.net/gretl_data_pt.html">
+página de dados do Gretl</a>.
+</p>
+
+<h2><a name="dl">Download</a></h2>
 
 <TABLE cellpadding="2">
 <TR>
-<TD><p class="in-cell">Binário RPM do X-12-ARIMA</p></TD>
+<TD><p class="in-cell">Código fonte mais recente</p></TD>
+<TD><p class="in-cell"><a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.tar.bz2">gretl-VERSION.tar.bz2</a>
+(cerca de 4Mb)</p></TD>
+</TR>
+<TR>
+<TD><p class="in-cell">Pacote genérico RPM para os sistemas Linux modernos</p></TD> 
+<TD><p class="in-cell"><a 
+href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-1gtk2.i586.rpm">gretl-VERSION-1gtk2.i586.rpm</a></p>
+</TD>
+</TR>
+<TR>
+<TD><p class="in-cell">Pacote RPM para sistemas Linux (construído sobre o RHEL 4)</p></TD> 
+<TD><p class="in-cell"><a 
+href="http://gretl.ecn.wfu.edu/pub/gretl/gretl-VERSION-1RHEL.i586.rpm">gretl-VERSION-1RHEL.i586.rpm</a></p>
+</TD>
+</TR>
+<TR>
+<TD><p class="in-cell">Pacote <a href="http://www.debian.org">Debian GNU/Linux</a>,
+mantido por Dirk Eddelbuettel</p></TD>
+<TD><p class="in-cell"><a href="http://packages.debian.org/gretl">packages.debian.org</a>; veja também
+<a href="http://packages.qa.debian.org/g/gretl.html">packages.qa.debian.org</a></p></TD>
+</TR>
+<TR>
+<TD><p class="in-cell">Pacotes openSUSE, mantidos por Hélio Guilherme</p></TD>
+<TD><p class="in-cell"><a href="http://software.opensuse.org/search?q=gretl">software.opensuse.org</a>
+</p></TD>
+</TR>
+<TR><TD></TD><TD></TD></TR>
+</TABLE>
+
+
+<p>Se vai compilar a partir do código fonte, ou instalar a partir de binários pré-compilados, pode
+estar interessado em verificar <a href="http://gretl.sourceforge.net/depend_pt.html">as
+dependências de Gretl</a>.</p>
+
+<p>Uma versão de Gretl para MS Windows está; <a href="http://gretl.sourceforge.net/win32/index_pt.html">aqui</a>,
+e o Gretl para Mac OS X <a href="http://gretl.sourceforge.net/osx_pt.html">aqui</a>.</p>
+
+<p>Os programas para análise de séries temporais X-12-ARIMA e TRAMO/SEATS estão disponíveis numa forma
+adequada para usar com o Gretl em Linux, como abaixo:</p>
+
+<TABLE cellpadding="2">
+<TR>
+<TD><p class="in-cell">Binário RPM para o X-12-ARIMA</p></TD>
 <TD><p class="in-cell"><a
 href="http://sourceforge.net/projects/gretl/files/addons/x12a-0.3-2.i586.rpm/download">x12a-0.3-2.i586.rpm</a></p>
 </TD>
 </TR>
 <TR>
-<TD><p class="in-cell">Binário "tarball" do X-12-ARIMA</p></TD>
+<TD><p class="in-cell">Binário "tarball" para o X-12-ARIMA</p></TD>
 <TD><p class="in-cell"><a
 href="http://sourceforge.net/projects/gretl/files/addons/x12arima-linux.tar.gz/download">x12arima-linux.tar.gz</a></p>
 </TD>
 </TR>
 <TR>
-<TD><p class="in-cell">Pacote Debian do X-12-ARIMA</p></TD>
+<TD><p class="in-cell">Pacote Debian para o X-12-ARIMA</p></TD>
 <TD>
 <p class="in-cell">
 <a href="http://sourceforge.net/projects/gretl/files/addons/x12a_0.3-3_i386.deb/download">x12a_0.3-3_i386.deb</a>
 </p></TD>
 </TR>
 <TR>
-<TD><p class="in-cell">Binário RPM do TRAMO/SEATS</p></TD>
+<TD><p class="in-cell">Binário RPM para o TRAMO/SEATS</p></TD>
 <TD><p class="in-cell"><a
 href="http://sourceforge.net/projects/gretl/files/addons/tramo-seats-98-2.i586.rpm/download">tramo-seats-98-2.i586.rpm</a></p>
 </TD>
 </TR>
 <TR>
-<TD><p class="in-cell">Binário "tarball" do TRAMO/SEATS</p></TD>
+<TD><p class="in-cell">Binário "tarball" para o TRAMO/SEATS</p></TD>
 <TD><p class="in-cell"><a
 href="http://sourceforge.net/projects/gretl/files/addons/tramo-seats-linux.tar.gz/download">tramo-seats-linux.tar.gz</a></p>
 </TD>
 </TR>
 <TR>
-<TD><p class="in-cell">Pacote Debian do TRAMO/SEATS</p></TD>
+<TD><p class="in-cell">Pacote Debian para o TRAMO/SEATS</p></TD>
 <TD>
 <p class="in-cell">
 <a href="http://sourceforge.net/projects/gretl/files/addons/tramo-seats_98-2_i386.deb/download">tramo-seats_98-2_i386.deb</a></p>
@@ -362,62 +273,50 @@ como instalar o Gnuplot 4.5 no Linux, consulte o seguinte <a href="./gnuplot_for
 
 <h2><a name="man">Manual</a></h2>
       
-      <p>O manual completo est&aacute; dispon&iacute;vel em formato PDF
-(cerca de 1,6Mb e 100 p&aacute;ginas), em tamanho&nbsp; de papel E.U.A (<a
- href="http://gretl.sourceforge.net/manual.pdf">manual.pdf</a>) ou
-tamanho A4 (<a href="http://gretl.sourceforge.net/manual-a4.pdf">manual-a4.pdf</a>).
-Tamb&eacute;m est&aacute; dispon&iacute;vel uma tradu&ccedil;&atilde;o
-em Italiano do manual (<a
- href="http://gretl.sourceforge.net/manual_it.pdf">manual_it.pdf</a>),
-gra&ccedil;as a Cristian Rigamonti. Se n&atilde;o tem o software para
-visionar ficheiros PDF, pode fazer o download a partir do <a
- href="http://www.adobe.com/products/acrobat/readstep2.html">s&iacute;tio
-de Internet da Adobe</a>.</p>
+<p>O manual do Gretl é composto por dois arquivos PDF, um <i>Guia do Usuário</i>
+e um <i>Manual de Comandos</i>. Versões em Inglês destes manuais (no formato
+Carta US) estão incluídas no pacote fonte e nos binários do Gretl. Outras versões
+-- em Inglês (papel A4), Italiano e Espanhol -- serão acessados pelo Gretl na
+Internet sob demanda. Os manuais também podem ser encontrados 
+<a href="http://sourceforge.net/projects/gretl/files/manual/">aqui</a>.</p>
 
-<h2><a name="use">Utiliza o gretl?</a></h2>
+<p>Se não tem o software para visionar ficheiros PDF, pode fazer o download a partir
+do <a href="http://www.adobe.com/products/acrobat/readstep2.html">sítio de Internet
+da Adobe</a>.</p>
+
+<h2><a name="use">Utiliza o Gretl?</a></h2>
       
-      <p>Se &eacute; utilizador do gretl (em particular se usa o
-programa no seu trabalho ou no ensino) , envie-me um <a
- href="mailto:cottrell@wfu.edu">email</a>. Quantas mais pessoas acharem
-o programa &uacute;til, melhor poderei justificar o meu tempo
-despendido na melhoria dele. Agrade&ccedil;o &agrave;s muitas pessoas
-que j&aacute; me disseram que acham o programa gretl &uacute;til.</p>
+<p>Se é utilizador do Gretl (em particular se usa o programa no seu trabalho ou no
+ensino), envie-me um <a href="mailto:cottrell@wfu.edu">email</a>. Quantas mais
+pessoas acharem o programa útil, melhor poderei justificar o meu tempo despendido
+na melhoria dele. Agradeço às muitas pessoas que já me disseram que acham o
+programa Gretl útil.</p>
 
-<h2><a name="contrib">Contribuir para o gretl</a></h2>
+<h2><a name="contrib">Contribuir para o Gretl</a></h2>
 
-      <p> <a name="contrib">Tem ideias ou c&oacute;digo com que
-gostaria de contribuir para o gretl? Se sim, n&oacute;s
-gostar&iacute;amos de
-conhecer as suas propostas. O &uacute;nico requisito para que o
-c&oacute;digo possa ser contribu&iacute;do para o gretl, &eacute; de
-que
-voc&ecirc; tem que aceitar que ele fique dispon&iacute;vel de
-acordo com&nbsp; </a><a href="http://www.gnu.org/copyleft/gpl.html">Licen&ccedil;a
-P&uacute;blica Geral GNU</a> (GPL), isto &eacute;, deve aceitar que o
-c&oacute;digo fonte fique livremente dispon&iacute;vel. </p>
-      <p>Como foi dito anteriormente, gretl &eacute; (na maior parte)
-escrito em linguagem C, a linguagem mais comum no mundo do software
-livre e de c&oacute;digo aberto. No entanto, nem toda a gente
-est&aacute; &agrave; vontade em escrever em C. Como tal, isto
-n&atilde;o deve ser uma barreira para o contributo de c&oacute;digo ou
-algoritmos. Se puder entregar um algoritmo bem especificado para
-resolver alguma tarefa interessante em econometria, n&oacute;s
-poderemos ou interligar-lo no gretl ou reescrever-lo em C sem grandes
-dificuldades. Por exemplo, o c&oacute;digo pode ser fornecido em
-Fortran, C++, c&oacute;digo escrito em linguagem matricial de alto
-n&iacute;vel, como sejam Ox, Gauss,
-Octave,
-Matlab ou R; ou ainda em pseudo-c&oacute;digo, isto &eacute;, um
-algoritmo descrito rigorosamente, passo a passo, mas sem ser numa
-linguagem de programa&ccedil;&atilde;o espec&iacute;fica. </p>
+<p> <a name="contrib">Tem ideias ou código com que gostaria de contribuir para o Gretl?
+Se sim, nós gostaríamos de conhecer as suas propostas. O único requisito para que o
+código possa ser contribuído para o Gretl, é de que você tem que aceitar que ele fique
+disponível de acordo com </a><a href="http://www.gnu.org/copyleft/gpl.html">Licença
+Pública Geral GNU</a> (GPL), isto é, deve aceitar que o código fonte fique livremente
+disponível.</p>
 
-<h2><a name="cvs">Acesso e navega&ccedil;&atilde;o no CVS</a></h2>
+<p>Como foi dito anteriormente, Gretl é (na maior parte) escrito em linguagem C, a
+linguagem mais comum no mundo do software livre e de código aberto. No entanto, nem toda
+a gente está à vontade em escrever em C. Como tal, isto não deve ser uma barreira para o
+contributo de código ou algoritmos. Se puder entregar um algoritmo bem especificado para
+resolver alguma tarefa interessante em econometria, nós poderemos ou interligar-lo no
+Gretl ou reescrever-lo em C sem grandes dificuldades. Por exemplo, o código pode ser
+fornecido em Fortran, C++, código escrito em linguagem matricial de alto nível, como
+sejam Ox, Gauss, Octave, Matlab ou R; ou ainda em pseudo-código, isto é, um algoritmo
+descrito rigorosamente, passo a passo, mas sem ser numa linguagem de programação
+específica.</p>
 
-      <p>Para aceder ao c&oacute;digo fonte mais recente do gretl
-via CVS, ver a&nbsp; <a href="http://sourceforge.net/projects/gretl/">p&aacute;gina
-do projecto gretl</a> em SourceForge. &Eacute; poss&iacute;vel navegar
-na estrutura CVS do gretl <a
- href="http://gretl.cvs.sourceforge.net/gretl">aqui</a>.</p>
+<h2><a name="cvs">Acesso e navegação no CVS</a></h2>
+
+<p>Para aceder ao código fonte mais recente do Gretl via CVS, ver
+<a href="http://sourceforge.net/projects/gretl/">página do projecto Gretl</a> em
+SourceForge. É possível navegar na estrutura CVS do Gretl <a href="http://gretl.cvs.sourceforge.net/gretl">aqui</a>.</p>
  
 <h2><a name="ack">Agradecimentos</a></h2>
 
@@ -444,21 +343,21 @@ tradução do Gretl.
 </p>
 
 <p>Obrigado a William Greene, autor de <a
-href="http://www.pearsonhighered.com/educator/product/Econometric-Analysis/9780135132456.page"><i>Econometric
+href="http://pages.stern.nyu.edu/~wgreene/Text/econometricanalysis.htm"><i>Econometric
 Analysis</i></a>, pela sua permissão de incluir no Gretl alguns conjuntos
 de dados relativos a exemplos interessantes contidos no seu livro.</p>
 
 <p>Obrigado a todas as boas pessoas em comp.lang.c e gtk-app-devel-list@gnome.org
 por me terem orientado em várias questões. Obrigado a Richard Stallman da Free
 Software Foundation por todo o seu trabalho no desenvolvimento e promoção do
-software livre, e mais especificamente, por concordar em "adoptar" gretl como
+software livre, e mais especificamente, por concordar em "adoptar" Gretl como
 sendo um programa GNU.</p>
 
 
 <hr noshade>
       <address>
       <p>Allin Cottrell, Wake Forest University</p>
-      <p>&Uacute;ltima modifica&ccedil;&atilde;o: LONGDATE</p>
+      <p>&Uacute;ltima modificação: LONGDATE</p>
       </address>
       </td>
     </tr>
