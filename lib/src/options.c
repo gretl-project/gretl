@@ -574,6 +574,7 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     return 0;
 }
 
+/* kludge: get rid of the following! */
 #define cant_introduce_opt(c) (c== '=' || c == '+' || c == '-')
 
 /* See if at point @p (at which we've found '-') in string @s we
