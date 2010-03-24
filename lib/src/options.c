@@ -574,6 +574,8 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     return 0;
 }
 
+#define cant_introduce_opt(c) (c== '=' || c == '+' || c == '-')
+
 /* See if at point @p (at which we've found '-') in string @s we
    might be at the start of an option flag: the previous character
    must be a space, and we must not be inside a quoted string.
@@ -585,6 +587,10 @@ static int maybe_opt_start (char *s, char *p)
     int quoted = 0;
 
     if (n > 0 && !isspace(*(p-1))) {
+	return 0;
+    }
+
+    if (n > 1 && cant_introduce_opt(*(p-2))) {
 	return 0;
     }
 
@@ -1099,6 +1105,10 @@ gretlopt get_gretl_options (char *line, int *err)
     } else {
 	ci = gretl_command_number(cmdword);
     }
+
+#if OPTDEBUG
+    fprintf(stderr, "get gretl_options: '%s' -> ci = %d\n", cmdword, ci);
+#endif
 
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
