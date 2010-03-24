@@ -3520,6 +3520,8 @@ static int USE_BLAS (int n, int m, int k)
     return 0;
 }
 
+#define OPENP_MIN 64
+
 static int 
 gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 		  gretl_matrix *c, GretlMatrixMod cmod)
@@ -3543,7 +3545,7 @@ gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 	   &beta, c->val, &n);
 
 #ifdef _OPENMP
-#pragma omp parallel for private(i, j, x)
+#pragma omp parallel for if(n*n>OPENP_MIN) private(i, j, x)
 #endif
     for (i=0; i<n; i++) {
 	for (j=i+1; j<n; j++) {
@@ -3601,7 +3603,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 
     if (atr) {
 #ifdef _OPENMP
-#pragma omp parallel for private(i, j, k, idx1, idx2, x)
+#pragma omp parallel for if (nc*nc>OPENP_MIN) private(i, j, k, idx1, idx2, x)
 #endif
 	for (i=0; i<nc; i++) {
 	    for (j=i; j<nc; j++) {
@@ -3616,7 +3618,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	} 
     } else {
 #ifdef _OPENMP
-#pragma omp parallel for private(i, j, k, idx1, idx2, x)
+#pragma omp parallel for if (nc*nc>OPENP_MIN) private(i, j, k, idx1, idx2, x)
 #endif
 	for (i=0; i<nc; i++) {
 	    for (j=i; j<nc; j++) {
@@ -3764,7 +3766,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	if (!atr) {
 	    /* C := alpha*A*B + beta*C */
 #ifdef _OPENMP
-#pragma omp parallel for private(j, i, l, x)
+#pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x) 
 #endif
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
@@ -3784,7 +3786,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	} else {
 	    /* C := alpha*A'*B + beta*C */
 #ifdef _OPENMP
-#pragma omp parallel for private(j, i, l, x)
+#pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
@@ -3804,7 +3806,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	if (!atr) {
 	    /* C := alpha*A*B' + beta*C */
 #ifdef _OPENMP
-#pragma omp parallel for private(j, i, l, x)
+#pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
@@ -3824,7 +3826,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	} else {
 	    /* C := alpha*A'*B' + beta*C */
 #ifdef _OPENMP
-#pragma omp parallel for private(j, i, l, x)
+#pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
