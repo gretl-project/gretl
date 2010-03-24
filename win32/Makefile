@@ -16,7 +16,7 @@ imports = ./import-libs
 host_builddir = $(topsrc)/build
 
 # tools
-CC = $(MGW_PREFIX)gcc -Wall -O2 -mms-bitfields -DWIN32
+CC = $(MGW_PREFIX)gcc -Wall -O2 -mms-bitfields -DWIN32 -fopenmp
 AS = $(MGW_PREFIX)as
 DLLWRAP = $(MGW_PREFIX)dllwrap
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s

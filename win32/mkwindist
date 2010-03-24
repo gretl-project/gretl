@@ -18,11 +18,13 @@ if [ "$BUILDTYPE" = "cross" ] ; then
   WINFILES=/home/cottrell/stats/esl/win32
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
+  SYSBIN=/opt/cross-tools/mingw32/bin
   INNO_CMD="wine c:/innodir/ISCC.exe"
 else
   WINFILES=/mingw/winbuild
   HLPDIR=${WINFILES}/help
   DOCDIR=${WINFILES}/doc
+  SYSBIN=c:/mingw/bin
   # C:/Program Files/Inno Setup 5/ISCC.exe
   INNO_CMD="c:/progra~1/innose~1/iscc.exe"
 fi
@@ -105,6 +107,10 @@ for f in \
 do
     add_file ${WINFILES}/misc-dll/$f gretl/$f
 done
+
+# system DLLs for threads/openmp
+add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
+add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 
 # GTK/pango dependencies
 for f in \
