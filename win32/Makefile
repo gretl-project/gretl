@@ -15,8 +15,8 @@ guidir = $(topsrc)/gui2
 imports = ./import-libs
 host_builddir = $(topsrc)/build
 
-# tools
-CC = $(MGW_PREFIX)gcc -Wall -O2 -mms-bitfields -DWIN32 -fopenmp
+# tools (can add -fopenmp to CC if wanted)
+CC = $(MGW_PREFIX)gcc -Wall -O2 -mms-bitfields -DWIN32
 AS = $(MGW_PREFIX)as
 DLLWRAP = $(MGW_PREFIX)dllwrap
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s

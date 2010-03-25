@@ -108,9 +108,9 @@ do
     add_file ${WINFILES}/misc-dll/$f gretl/$f
 done
 
-# system DLLs for threads/openmp
-add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
-add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
+# system DLLs for threads/openmp, if required
+# add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
+# add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 
 # GTK/pango dependencies
 for f in \
