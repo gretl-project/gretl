@@ -4327,6 +4327,9 @@ static int unlocalize_list (const char *lname, int status,
 		    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 			Z[j][t] = Z[vi][t];
 		    }
+		    /* replace variable info */
+		    strcpy(VARLABEL(pdinfo, j), VARLABEL(pdinfo, vi));
+		    strcpy(DISPLAYNAME(pdinfo, j), DISPLAYNAME(pdinfo, vi));
 		    /* replace ID number in list */
 		    list[i] = j;
 		} else {

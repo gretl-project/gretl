@@ -364,7 +364,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == INCLUDE || \
     	               c == INFO || \
                        c == KALMAN || \
- 	               c == LABELS || \
                        c == LEVERAGE || \
                        c == LOOP || \
                        c == MLE || \
@@ -428,6 +427,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \
                                   c == DIFF || \
                                   c == LDIFF || \
+                                  c == LABELS || \
                                   c == LAGS || \
                                   c == LOGS || \
                                   c == PCA || \
@@ -3792,10 +3792,10 @@ static int set_var_info (const char *line, gretlopt opt,
     return 0;
 }
 
-static void showlabels (const DATAINFO *pdinfo, PRN *prn)
+static void showlabels (const int *list, const DATAINFO *pdinfo, PRN *prn)
 {
     const char *label;
-    int i;
+    int i, v;
 
     if (pdinfo->v == 0) {
 	pprintf(prn, _("No series are defined\n"));
@@ -3804,10 +3804,13 @@ static void showlabels (const DATAINFO *pdinfo, PRN *prn)
 
     pprintf(prn, _("Listing labels for variables:\n"));
 
-    for (i=0; i<pdinfo->v; i++) {
-	label = VARLABEL(pdinfo, i);
-	if (strlen(label) > 2) {
-	    pprintf(prn, " %s: %s\n", pdinfo->varname[i], label);
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (v >= 0 && v < pdinfo->v) {
+	    label = VARLABEL(pdinfo, v);
+	    if (*label != '\0') {
+		pprintf(prn, " %s: %s\n", pdinfo->varname[v], label);
+	    }
 	}
     }
 }
@@ -4562,7 +4565,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
         break;
 
     case LABELS:
-	showlabels(pdinfo, prn);
+	showlabels(cmd->list, pdinfo, prn);
 	break;
 
     case VARLIST:
