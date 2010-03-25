@@ -574,9 +574,6 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     return 0;
 }
 
-/* kludge: get rid of the following! */
-#define cant_introduce_opt(c) (c== '=' || c == '+' || c == '-')
-
 /* See if at point @p (at which we've found '-') in string @s we
    might be at the start of an option flag: the previous character
    must be a space, and we must not be inside a quoted string.
@@ -588,10 +585,6 @@ static int maybe_opt_start (char *s, char *p)
     int quoted = 0;
 
     if (n > 0 && !isspace(*(p-1))) {
-	return 0;
-    }
-
-    if (n > 1 && cant_introduce_opt(*(p-2))) {
 	return 0;
     }
 
@@ -1076,9 +1069,9 @@ static int end_block_ci (const char *s)
 gretlopt get_gretl_options (char *line, int *err)
 {
     gretlopt oflags = 0L;
-    int n = strlen(line);
     gretlopt opt;
     char cmdword[9] = {0};
+    int endblock = 0;
     int ci, myerr = 0;
 
     gretl_error_clear();
@@ -1087,13 +1080,14 @@ gretlopt get_gretl_options (char *line, int *err)
 	*err = 0;
     }
 
-    if (n < 2 || *line == '#') {
+    if (strlen(line) < 2 || *line == '#') {
 	return oflags;
     }
 
     get_cmdword(line, cmdword);
 
     if (!strcmp(cmdword, "end")) {
+	endblock = 1;
 	ci = end_block_ci(line);
     } else if (ar1_alias(cmdword)) {
 	ci = AR1;
@@ -1114,6 +1108,8 @@ gretlopt get_gretl_options (char *line, int *err)
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
     if (ci == 0 || ci == GENR || ci == PRINTF) {
+	return oflags;
+    } else if (!endblock && (ci == GMM || ci == MLE || ci == NLS)) {
 	return oflags;
     }
 

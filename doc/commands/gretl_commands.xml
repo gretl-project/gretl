@@ -3680,10 +3680,11 @@
 	Performs Generalized Method of Moments (GMM) estimation using the
 	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm. You must
 	specify one or more commands for updating the relevant quantities
-	(tyically, GMM residuals), one or more sets of orthogonality
+	(typically GMM residuals), one or more sets of orthogonality
 	conditions, an initial matrix of weights, and a listing of the
 	parameters to be estimated, all enclosed between the tags
-	<lit>gmm</lit> and <lit>end gmm</lit>.
+	<lit>gmm</lit> and <lit>end gmm</lit>. Any options should be
+	appended to the <lit>end gmm</lit> line.
       </para>
       <para>
 	Please see <guideref targ="chap:gmm"/> for details on this command.
@@ -5458,24 +5459,29 @@
 
     <description context="gui">
 
-      <para>Performs Maximum Likelihood (ML) estimation using the BFGS
+      <para>
+	Performs Maximum Likelihood (ML) estimation using the BFGS
 	(Broyden, Fletcher, Goldfarb, Shanno) algorithm. You must
 	specify the log-likelihood function; it is recommended that you
 	also supply expressions for the derivatives of this function
-	with respect to each of the parameters if possible.</para>
+	with respect to each of the parameters if possible.
+      </para>
 
-      <para>Simple example: Suppose we have a series <lit>X</lit> with values 0
+      <para>
+	Simple example: Suppose we have a series <lit>X</lit> with values 0
 	or 1 and we wish to obtain the maximum likelihood estimate of the
 	probability, <lit>p</lit>, that <lit>X</lit> = 1.  (In this simple case
 	we can guess in advance that the ML estimate of <lit>p</lit> will simply
 	equal the proportion of Xs equal to 1 in the sample.)
       </para>
 
-      <para>The parameter <lit>p</lit> must first be added to the dataset and
+      <para>
+	The parameter <lit>p</lit> must first be added to the dataset and
 	given an initial value.  This can be done using the genr command or via
 	menu choices.  Appropriate <quote>genr</quote> lines may be typed into
 	the MLE specification window prior to the specification of the
-	log-likelihood function.</para>
+	log-likelihood function.
+      </para>
 
       <para>In the MLE window we type the following
 	lines:</para>
@@ -5522,7 +5528,8 @@
 	are not supplied, a numerical approximation is computed.
       </para>
 
-      <para>Simple example: Suppose we have a series <lit>X</lit> with
+      <para>
+	Simple example: Suppose we have a series <lit>X</lit> with
 	values 0 or 1 and we wish to obtain the maximum likelihood
 	estimate of the probability, <lit>p</lit>, that <lit>X</lit> = 1.
 	(In this simple case we can guess in advance that the ML estimate
@@ -5530,7 +5537,8 @@
 	in the sample.)
       </para>
 
-      <para>The parameter <lit>p</lit> must first be added to the dataset and
+      <para>
+	The parameter <lit>p</lit> must first be added to the dataset and
 	given an initial value.  This can be done using the genr
 	command.  For example, <lit>genr p = 0.5</lit>.
       </para>
@@ -6006,7 +6014,8 @@
 
     <description context="gui">
 
-      <para>Performs Nonlinear Least Squares (NLS) estimation using a
+      <para>
+	Performs Nonlinear Least Squares (NLS) estimation using a
 	modified version of the Levenberg&ndash;Marquardt algorithm. You
 	must supply a function specification; it is recommended but not
 	required that you also supply expressions for the derivatives of
@@ -6131,7 +6140,7 @@
       </code>
       <para>
 	Line 10, <cmd>end nls</cmd>, completes the command and calls for
-	estimation.
+	estimation. Any options should be appended to this line.
       </para>
 
       <para>For further details on NLS estimation please see
