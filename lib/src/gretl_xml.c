@@ -1401,6 +1401,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
     long sz = 0L;
     int T = X->rows;
     int k = X->cols;
+    int in_c_locale = 0;
     int i, t, err = 0;
 
     fz = gretl_gzopen(fname, "wb");
@@ -1442,6 +1443,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
     free(xmlbuf);
 
     gretl_push_c_numeric_locale();
+    in_c_locale = 1;
 
     gzprintf(fz, "<variables count=\"%d\">\n", k);
 
@@ -1472,7 +1474,9 @@ int gretl_write_matrix_as_gdt (const char *fname,
 
  cleanup: 
 
-    gretl_pop_c_numeric_locale();
+    if (in_c_locale) {
+	gretl_pop_c_numeric_locale();
+    }
 
     if (sz) {
 	(*show_progress)(0, T, SP_FINISH);
@@ -1518,6 +1522,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     int (*show_progress) (long, long, int) = NULL;
     long sz = 0L;
     int i, t, v, nvars;
+    int in_c_locale = 0;
     int uerr = 0;
     int err = 0;
 
@@ -1625,6 +1630,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     gretl_push_c_numeric_locale();
+    in_c_locale = 1;
 
     /* then listing of variable names and labels */
     if (gz) {
@@ -1776,7 +1782,9 @@ int gretl_write_gdt (const char *fname, const int *list,
 
  cleanup: 
 
-    gretl_pop_c_numeric_locale();
+    if (in_c_locale) {
+	gretl_pop_c_numeric_locale();
+    }
 
     if (sz) {
 	(*show_progress)(0, pdinfo->t2 - pdinfo->t1 + 1, SP_FINISH);
@@ -2381,6 +2389,7 @@ int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo,
     int caldata = 0;
     double gdtversion = 1.0;
     long fsz, progress = 0L;
+    int in_c_locale = 0;
 
     gretl_error_clear();
 
@@ -2444,13 +2453,13 @@ int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo,
     }   
 
     gretl_push_c_numeric_locale();
+    in_c_locale = 1;
 
     strcpy(tmpdinfo->stobs, "1");
     caldata = dataset_is_daily(tmpdinfo) || dataset_is_weekly(tmpdinfo);
 
     err = xml_get_startobs(cur, &tmpdinfo->sd0, tmpdinfo->stobs, caldata);
     if (err) {
-	gretl_pop_c_numeric_locale();
 	goto bailout;
     }     
 
@@ -2459,7 +2468,6 @@ int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo,
 
     err = xml_get_endobs(cur, tmpdinfo->endobs, caldata);
     if (err) {
-	gretl_pop_c_numeric_locale();
 	goto bailout;
     }     
 
@@ -2499,29 +2507,26 @@ int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo,
     fprintf(stderr, "done walking XML tree...\n");
 #endif
 
-    gretl_pop_c_numeric_locale();
-
-    if (err) {
-	goto bailout;
-    }
-
-    if (!gotvars) {
+    if (!err && !gotvars) {
 	gretl_errmsg_set(_("Variables information is missing"));
 	err = 1;
-	goto bailout;
     }
 
-    if (!gotobs) {
+    if (!err && !gotobs) {
 	gretl_errmsg_set(_("No observations were found"));
 	err = 1;
-	goto bailout;
     }
 
-    data_read_message(fname, tmpdinfo, prn);
-
-    err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, opt, prn);
+    if (!err) {
+	data_read_message(fname, tmpdinfo, prn);
+	err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, opt, prn);
+    }
 
  bailout:
+
+    if (in_c_locale) {
+	gretl_pop_c_numeric_locale();
+    }
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);

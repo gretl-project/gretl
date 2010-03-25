@@ -3729,8 +3729,6 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     fprintf(fp, "<sample t1=\"%d\" t2=\"%d\"/>\n",
 	    pmod->smpl.t1, pmod->smpl.t2);
 
-    gretl_push_c_numeric_locale();
-
     gretl_xml_put_double_array("coeff", pmod->coeff, k, fp);
     gretl_xml_put_double_array("sderr", pmod->sderr, k, fp);
 
