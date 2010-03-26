@@ -7384,24 +7384,25 @@ static char *gui_get_input_line (char *line, FILE *fp,
 				 const char *buf,
 				 int *err)
 {
-    char *s;
+    char *got;
     int n;
 
     *line = '\0';
 
     if (fp != NULL) {
-	s = fgets(line, MAXLINE, fp);
+	got = fgets(line, MAXLINE, fp);
     } else {
-	s = bufgets(line, MAXLINE, buf);
+	got = bufgets(line, MAXLINE, buf);
     }
 
-    n = strlen(line);
-
-    if (n > MAXLINE - 2  && line[n-1] != '\n') {
-	*err = E_TOOLONG;
+    if (got != NULL) {
+	n = strlen(line);
+	if (n > MAXLINE - 2  && line[n-1] != '\n') {
+	    *err = E_TOOLONG;
+	}
     }
 
-    return s;
+    return got;
 }
 
 /* run commands from runfile or buf, output to prn */

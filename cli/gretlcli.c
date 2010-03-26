@@ -117,10 +117,17 @@ static void noalloc (void)
 
 static int file_get_line (char *line, CMD *cmd)
 {
+    char *got;
     int len;
 
     clear(line, MAXLINE);
-    fgets(line, MAXLINE, fb);
+    
+    got = fgets(line, MAXLINE, fb);
+    if (got == NULL) {
+	/* no more input */
+	cmd->ci = QUIT;
+	return 0;
+    }
 
     len = strlen(line);
 
@@ -257,6 +264,7 @@ static int cli_get_input_line (ExecState *s)
     if (runit || batch) {
 	/* reading from script file */
 	err = file_get_line(s->line, s->cmd);
+	fprintf(stderr, "file_get_line\n");
     } else {
 	/* interactive use */
 	err = get_interactive_line(s);
