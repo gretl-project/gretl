@@ -748,6 +748,27 @@ struct bracket_scan {
     char *chrs;
 };
 
+static int bscan_escape (char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=0; i<n; i++) {
+	if (s[i] == '\\' && (i == 0 || s[i-1] != '\\')) {
+	    if (s[i+1] == 'n') {
+		s[i] = '\n';
+		shift_string_left(s + i + 1, 1);
+		i++;
+	    } else if (s[i+1] == 't') {
+		s[i] = '\t';
+		shift_string_left(s + i + 1, 1);
+		i++;
+	    }		
+	}
+    }
+
+    return 0;
+}
+
 static int 
 parse_bracket_scanner (const char **pfmt, struct bracket_scan *bscan)
 {
@@ -785,6 +806,8 @@ parse_bracket_scanner (const char **pfmt, struct bracket_scan *bscan)
     if (bscan->chrs == NULL) {
 	return E_ALLOC;
     }
+
+    bscan_escape(bscan->chrs);
 
 #if PSDEBUG
     fprintf(stderr, "bracket_scan: reverse = %d, chars = '%s'\n",
@@ -880,6 +903,12 @@ scan_string (const char *targ, char **psrc, int width,
     } else {	    
 	n = strcspn(*psrc, " \t\n");
     }
+
+#if PSDEBUG
+    fprintf(stderr, "scan_string: *psrc='%s', n=%d\n", *psrc, n);
+    int m = strcspn(*psrc, "\n");
+    fprintf(stderr, "m=%d (chrs='%s')\n", m, bscan->chrs);
+#endif
 
     if (width != WIDTH_UNSPEC && n > width) {
 	n = width;
@@ -1092,6 +1121,9 @@ static int scan_arg (char **psrc, char **pfmt, char **pargs,
     /* do the actual scanning */
 
     if (!err && fc == 's') {
+#if PSDEBUG
+	fprintf(stderr, "calling scan_string\n");
+#endif
 	err = scan_string(targ, psrc, wid, &bscan, ns);
     } else if (!err && fc == 'm') {
 	err = scan_matrix(targ, psrc, wid, ns);

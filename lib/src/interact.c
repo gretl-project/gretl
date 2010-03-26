@@ -3765,10 +3765,22 @@ static int set_var_info (const char *line, gretlopt opt,
     /* skip varname, but not following space */
     line += strcspn(line, " ");
 
-    v = series_index(pdinfo, vname);
-    if (v == pdinfo->v) {
-	gretl_errmsg_sprintf(_("Unknown variable '%s'"), vname);
-	return E_UNKVAR;
+    if (gretl_is_scalar(vname)) {
+	v = gretl_scalar_get_value(vname);
+	if (v < 0 || v >= pdinfo->v) {
+	    return E_UNKVAR;
+	}
+    } else if (integer_string(vname)) {
+	v = atoi(vname);
+	if (v < 0 || v >= pdinfo->v) {
+	    return E_UNKVAR;
+	}	
+    } else {
+	v = series_index(pdinfo, vname);
+	if (v < 0 || v >= pdinfo->v) {
+	    gretl_errmsg_sprintf(_("Unknown variable '%s'"), vname);
+	    return E_UNKVAR;
+	}
     }
 
     if (opt & OPT_D) {

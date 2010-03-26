@@ -8731,18 +8731,18 @@
 
     <usage>
       <arguments>
-        <argument>varname</argument>
+        <argument>series</argument>
         <argument flag="-d ">description</argument>
         <argument flag="-n ">displayname</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--discrete</flag>
-	  <effect>mark variable as discrete</effect>
+	  <effect>mark series as discrete</effect>
 	</option>
 	<option>
 	  <flag>--continuous</flag>
-	  <effect>mark variable as continuous</effect>
+	  <effect>mark series as continuous</effect>
 	</option>
       </options>
       <examples>
@@ -8753,7 +8753,8 @@
 
     <description context="cli">
       <para>
-	Sets up to three attributes of the named variable, as follows.
+	Sets up to three attributes of <repl>series</repl>, given by name
+	or ID number, as follows.
       </para>
 
       <para>
@@ -8775,7 +8776,7 @@
 	If one or other of the <lit>--discrete</lit> or
 	<lit>--continuous</lit> option flags is given, the variable's
 	numerical character is set accordingly.  The default is to treat
-	all variables as continuous; setting a variable as discrete
+	all series as continuous; setting a series as discrete
 	affects the way the variable is handled in frequency plots.
       </para>
 
@@ -8786,7 +8787,7 @@
       <para>
 	In this dialog box you can:</para>
 
-      <para>* Rename a variable.</para>
+      <para>* Rename a (series) variable.</para>
 
       <para>* Add or edit a description of the variable: this appears
 	next to the variable name in the gretl main window.</para>
@@ -8808,9 +8809,6 @@
       <para>* Mark a variable as discrete (for series with integer values
 	only).  This affects the way the variable is handled when you ask
 	for a frequency plot.
-      </para>
-
-      <para>* (For a scalar variable) set the value of the variable.
       </para>
 
     </description>
