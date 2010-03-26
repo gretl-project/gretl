@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-19 12:43+0200\n"
+"PO-Revision-Date: 2010-03-26 16:13+0200\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -3299,7 +3299,7 @@ msgstr "QOO (QLR)yapısal kırılma sınaması"
 
 #: lib/src/gretl_model.c:2879
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
-msgstr "Kümeli farklıserpilimsellik için olabilirlik oranı sınaması"
+msgstr "Kümeye-göre farklıserpilimsellik için olabilirlik oranı sınaması"
 
 #: lib/src/gretl_model.c:2880
 msgid "the units have a common error variance"
@@ -3591,7 +3591,7 @@ msgstr "yineleme"
 
 #: lib/src/gretl_panel.c:3655
 msgid "groupwise heteroskedasticity"
-msgstr "kümeli farklıserpilimsellik"
+msgstr "kümeye-göre farklıserpilimsellik"
 
 #: lib/src/gretl_panel.c:4143
 #, c-format
@@ -4617,7 +4617,7 @@ msgstr "RESET belirtim sınaması için yan bağlanım"
 
 #: lib/src/modelprint.c:657
 msgid "Groupwise heteroskedasticity"
-msgstr "kümeli farklıserpilimsellik"
+msgstr "kümeye-göre farklıserpilimsellik"
 
 #: lib/src/modelprint.c:659
 msgid "Augmented regression for common factor test"
@@ -5218,7 +5218,7 @@ msgstr "ölçekli %s"
 
 #: lib/src/modelprint.c:1792
 msgid "Allowing for groupwise heteroskedasticity"
-msgstr "Kümeli farklıserpilimsellik göz önüne alındı"
+msgstr "Kümeye-göre farklıserpilimsellik göz önüne alındı"
 
 #: lib/src/modelprint.c:1794
 msgid "Weights based on per-unit error variances"
@@ -11969,7 +11969,7 @@ msgstr "White sınaması (yalnız kareler)"
 
 #: gui2/gui_utils.c:249
 msgid "_groupwise"
-msgstr "_kümeli"
+msgstr "_kümeye-göre"
 
 #: gui2/gui_utils.c:253
 msgid "Pesaran-Taylor test"
@@ -12832,7 +12832,7 @@ msgstr "(farklıserpilimsellik)"
 
 #: gui2/library.c:2132
 msgid "gretl: groupwise heteroskedasticity"
-msgstr "gretl: kümeli farklıserpilimsellik"
+msgstr "gretl: kümeye-göre farklıserpilimsellik"
 
 #: gui2/library.c:2148
 msgid "(non-linearity)"
@@ -13759,7 +13759,7 @@ msgstr "Panel modeli"
 
 #: gui2/selector.c:3063
 msgid "Groupwise WLS"
-msgstr "Kümeli AEK (groupwise WLS)"
+msgstr "Kümeye-göre AEK (groupwise WLS)"
 
 #: gui2/selector.c:3065
 msgid "Between-groups model"
