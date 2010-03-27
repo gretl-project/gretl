@@ -9,6 +9,7 @@ version 1.8.8, in progress
   permit contination of script execution
 - Consolidate commands: the old "graph" and "plot"
   commands (ASCII graphics) are unified in "textplot"
+- New matrix function "selcols"
 - Enable full-text search of "online" help files
 - Enable help for specific "settable" variables, as in
   "help set lbfgs"

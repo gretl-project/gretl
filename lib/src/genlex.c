@@ -297,6 +297,7 @@ struct str_table funcs[] = {
     { F_MWRITE,   "mwrite" },
     { F_MCSEL,    "selifc" },
     { F_MRSEL,    "selifr" },
+    { F_COLSOF,   "selcols" },
     { F_POLROOTS, "polroots" },
     { F_DUMIFY,   "dummify" },
     { F_WMEAN,    "wmean" },
