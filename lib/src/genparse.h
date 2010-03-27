@@ -280,7 +280,6 @@ enum {
     F_MWRITE,
     F_MRSEL,
     F_MCSEL,
-    F_COLSOF,
     F_LLAG,
     F_WMEAN,
     F_WVAR,

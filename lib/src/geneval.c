@@ -1660,9 +1660,6 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case F_MLAG:
 	C = gretl_matrix_lag(A, B, 0);
 	break;
-    case F_COLSOF:
-	C = gretl_matrix_columns(A, B, err);
-	break;
     default:
 	*err = E_TYPES;
 	break;
@@ -6862,7 +6859,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MRSEL:
     case F_MCSEL:
     case F_MLAG:
-    case F_COLSOF:
 	/* matrix-only binary operators (but promote scalars) */
 	if ((l->t == MAT || l->t == NUM) && 
 	    (r->t == MAT || r->t == NUM)) {

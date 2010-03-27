@@ -4395,29 +4395,6 @@
       </description>
     </function>
 
-    <function name="selcols" section="matshape" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">A</fnarg>
-	<fnarg type="rvec">b</fnarg>
-      </fnargs>   
-      <description>
-	<para>
-	  Constructs a new matrix from the columns of <argname>A</argname>
-	  as selected by <argname>b</argname>, all of whose elements
-	  should be integers in the range 1 to the number of columns in
-	  <argname>A</argname>. The columns of <argname>A</argname> can
-	  thereby be reordered; individual columns may be skipped or
-	  repeated in the output.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="selifr"/>
-	    <fncref targ="selifc"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="selifc" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
