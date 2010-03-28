@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-03-13 00:38+0800\n"
+"PO-Revision-Date: 2010-03-28 17:47+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -5250,7 +5250,7 @@ msgstr "增加樣本(_A)"
 #: lib/src/modelprint.c:1673
 #, c-format
 msgid "Included %d cross-sectional units"
-msgstr "包含 %d 橫斷面單位"
+msgstr "橫斷面單位數 = %d "
 
 #: lib/src/modelprint.c:1678
 #, c-format
