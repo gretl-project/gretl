@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-03-28 17:47+0800\n"
+"PO-Revision-Date: 2010-03-29 01:31+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -7678,7 +7678,7 @@ msgstr "translator_credits"
 
 #: gui2/about.c:175
 msgid "License"
-msgstr "版樣聲明 (license)"
+msgstr "版樣權明 (license)"
 
 #: gui2/calculator.c:181
 #, fuzzy
@@ -9780,7 +9780,7 @@ msgstr "用拔靴法 (bootstrap) "
 
 #: gui2/dlgutils.c:932
 msgid "Show full restricted estimates"
-msgstr ""
+msgstr "顯示完整的受限模型估計內容"
 
 #: gui2/dlgutils.c:1067
 #: gui2/selector.c:3293
@@ -9839,15 +9839,15 @@ msgstr "簡單移動平均法"
 
 #: gui2/filters.c:80
 msgid "Exponential moving average"
-msgstr ""
+msgstr "指數平滑法"
 
 #: gui2/filters.c:82
 msgid "Hodrick-Prescott filter"
-msgstr ""
+msgstr "Hodrick-Prescott 法"
 
 #: gui2/filters.c:84
 msgid "Baxter-King Band-pass filter"
-msgstr ""
+msgstr "Baxter-King Band-pass 法"
 
 #: gui2/filters.c:86
 msgid "Fractional difference"
@@ -9969,9 +9969,8 @@ msgid "Graph filtered series"
 msgstr "畫濾波法 (filtered) 後之時間序列圖"
 
 #: gui2/filters.c:543
-#, fuzzy
 msgid "Save filtered series as"
-msgstr "儲存分析檔(_a)"
+msgstr "儲存濾波法處理後之變數為"
 
 #: gui2/filters.c:556
 msgid "Graph differenced series"
