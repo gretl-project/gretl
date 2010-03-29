@@ -4235,8 +4235,9 @@ static int data_straddle_zero (const gretl_matrix *m)
 
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
-				 int targ, int shock, int periods,
-				 double alpha,
+				 int targ, int shock, 
+				 const gretl_matrix *ord,
+				 int periods, double alpha,
 				 const double **Z,
 				 const DATAINFO *pdinfo,
 				 gretlopt opt)
@@ -4253,8 +4254,8 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	return E_DATA;
     }
 
-    resp = gretl_VAR_get_impulse_response(var, targ, shock, periods,
-					  alpha, Z, pdinfo);
+    resp = gretl_VAR_get_impulse_response(var, targ, shock, ord, 
+					  periods, alpha, Z, pdinfo);
     if (resp == NULL) {
 	return E_ALLOC;
     }
@@ -4370,7 +4371,8 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 
     gp_small_font_size = (n == 4)? 6 : 0;
 
-    resp = gretl_VAR_get_impulse_response(var, 1, 1, periods, alpha, Z, pdinfo);
+    resp = gretl_VAR_get_impulse_response(var, 1, 1, NULL, periods, alpha, 
+					  Z, pdinfo);
     if (resp == NULL) {
 	return E_ALLOC;
     }
@@ -4406,7 +4408,8 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	for (j=0; j<n; j++) {
 
 	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
-	    resp = gretl_VAR_get_impulse_response(var, i, j, periods, alpha, Z, pdinfo);
+	    resp = gretl_VAR_get_impulse_response(var, i, j, NULL, periods, alpha, 
+						  Z, pdinfo);
 	    if (resp == NULL) {
 		return E_ALLOC;
 	    }

@@ -1432,15 +1432,57 @@ int default_VAR_horizon (const DATAINFO *pdinfo)
     return h;
 }
 
+static gretl_matrix *reorder_responses (GRETL_VAR *var, const gretl_matrix *ord,
+					int *err)
+{
+    gretl_matrix *S, *C;
+    int i, j, r, c;
+    double x;
+
+    S = gretl_matrix_copy(var->S);
+    C = gretl_matrix_copy(var->C);
+
+    if (S == NULL || C == NULL) {
+	gretl_matrix_free(S);
+	gretl_matrix_free(C);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<var->neqns; i++) {
+	r = ord->val[i];
+	for (j=0; j<var->neqns; j++) {
+	    c = ord->val[j];
+	    x = gretl_matrix_get(var->S, r, c);
+	    gretl_matrix_set(S, i, j, x);
+	}
+    }
+
+    gretl_matrix_cholesky_decomp(S);
+
+    for (i=0; i<var->neqns; i++) {
+	r = ord->val[i];
+	for (j=0; j<var->neqns; j++) {
+	    c = ord->val[j];
+	    x = gretl_matrix_get(S, i, j);
+	    gretl_matrix_set(C, r, c, x);
+	}
+    }
+
+    return C;
+}
+
 static gretl_matrix *
 gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
-			       int periods) 
+			       const gretl_matrix *ord, int periods) 
 {
     int rows = var->neqns * effective_order(var);
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
+    gretl_matrix *C = NULL;
     double rt;
+    int reorder = 0;
     int t, err = 0;
 
     if (shock >= var->neqns) {
@@ -1458,28 +1500,38 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 	return NULL;
     }
 
+    if (ord != NULL) {
+	C = reorder_responses(var, ord, &err);
+	if (err) {
+	    return NULL;
+	}
+	reorder = 1;
+    } else {	
+	C = var->C;
+    }
+
     resp = gretl_matrix_alloc(periods, 1);
     if (resp == NULL) {
-	return NULL;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     rtmp = gretl_matrix_alloc(rows, var->neqns);
     if (rtmp == NULL) {
-	gretl_matrix_free(resp);
-	return NULL;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     ctmp = gretl_matrix_alloc(rows, var->neqns);
     if (ctmp == NULL) {
-	free(resp);
-	gretl_matrix_free(rtmp);
-	return NULL;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     for (t=0; t<periods && !err; t++) {
 	if (t == 0) {
 	    /* initial estimated responses */
-	    err = gretl_matrix_copy_values(rtmp, var->C);
+	    err = gretl_matrix_copy_values(rtmp, C);
 	} else {
 	    /* calculate further estimated responses */
 	    err = gretl_matrix_multiply(var->A, rtmp, ctmp);
@@ -1492,8 +1544,19 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 	}
     }
 
+ bailout:
+
     gretl_matrix_free(rtmp);
     gretl_matrix_free(ctmp);
+
+    if (reorder) {
+	gretl_matrix_free(C);
+    }
+
+    if (err && resp != NULL) {
+	gretl_matrix_free(resp);
+	resp = NULL;
+    }
 
     return resp;    
 }
@@ -1503,6 +1566,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
  * @var: pointer to VAR struct.
  * @targ: index of the target or response variable.
  * @shock: index of the source or shock variable.
+ * @ord: vector holding order for Cholesky decomposition, or %NULL.
  * @periods: number of periods over which to compute the response.
  * @alpha: determines confidence level for bootstrap interval.
  * @Z: data array (or %NULL).
@@ -1530,7 +1594,9 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 
 gretl_matrix *
 gretl_VAR_get_impulse_response (GRETL_VAR *var, 
-				int targ, int shock, int periods,
+				int targ, int shock, 
+				const gretl_matrix *ord,
+				int periods,
 				double alpha,
 				const double **Z,
 				const DATAINFO *pdinfo)
@@ -1540,7 +1606,7 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
     gretl_matrix *ret = NULL;
     int i;
 
-    point = gretl_VAR_get_point_responses(var, targ, shock, periods);
+    point = gretl_VAR_get_point_responses(var, targ, shock, ord, periods);
 
     if (Z == NULL) {
 	/* no data matrix provided: just return point estimate */
@@ -3048,12 +3114,12 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 	alpha < .01 || alpha > 0.5) {
 	err = E_INVARG;
     } else if (boot) {
-	err = gretl_VAR_plot_impulse_response(var, targ, shock, h,
-					      alpha, Z, pdinfo,
+	err = gretl_VAR_plot_impulse_response(var, targ, shock, NULL,
+					      h, alpha, Z, pdinfo,
 					      OPT_NONE);
     } else {
-	err = gretl_VAR_plot_impulse_response(var, targ, shock, h, 
-					      0, NULL, pdinfo,
+	err = gretl_VAR_plot_impulse_response(var, targ, shock, NULL, 
+					      h, 0, NULL, pdinfo,
 					      OPT_NONE);
     }
 

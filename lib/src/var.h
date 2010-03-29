@@ -132,6 +132,7 @@ int default_VAR_horizon (const DATAINFO *pdinfo);
 gretl_matrix *
 gretl_VAR_get_impulse_response (GRETL_VAR *var, 
 				int targ, int shock,
+				const gretl_matrix *ord,
 				int periods,
 				double alpha,
 				const double **Z,

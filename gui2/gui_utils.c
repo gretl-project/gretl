@@ -2973,9 +2973,162 @@ static void add_x12_output_menu_item (windata_t *vwin)
     vwin_menu_add_item(vwin, mpath, &entry);
 }
 
+#include "up_down.h"
+
+static GtkWidget *up_down_button (int up)
+{
+    GdkPixbuf *pbuf;
+    GtkWidget *img, *w;
+
+    if (up) {
+	pbuf = gdk_pixbuf_new_from_inline(-1, up_pixbuf, FALSE, NULL);
+    } else {
+	pbuf = gdk_pixbuf_new_from_inline(-1, down_pixbuf, FALSE, NULL);
+    }
+
+    img = gtk_image_new_from_pixbuf(pbuf);
+    w = gtk_button_new();
+    gtk_container_add(GTK_CONTAINER(w), img);
+    g_object_unref(pbuf);
+
+    return w;
+}
+
+static void set_order_vec (GtkWidget *view)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gretl_matrix *m;
+    int v, i = 0;
+
+    m = g_object_get_data(G_OBJECT(view), "ordvec");
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(view));
+
+    gtk_tree_model_get_iter_first(model, &iter);
+    gtk_tree_model_get(model, &iter, 1, &v, -1);
+    m->val[0] = v;
+
+    while (gtk_tree_model_iter_next(model, &iter)) {
+	gtk_tree_model_get(model, &iter, 1, &v, -1);
+	m->val[++i] = v;
+    }
+}
+
+static void shift_var_up (GtkButton *b, GtkWidget *view)
+{
+    GtkTreeSelection *selection;
+    GtkTreeModel *model;
+    GtkTreeIter seliter, previter;
+    GtkTreePath *path;
+
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+    gtk_tree_selection_get_selected(selection, &model, &seliter); 
+    path = gtk_tree_model_get_path(model, &seliter);
+    if (gtk_tree_path_prev(path)) {
+	gtk_tree_model_get_iter(model, &previter, path);
+	gtk_list_store_swap(GTK_LIST_STORE(model), &seliter, &previter);
+	set_order_vec(view);
+    }
+    gtk_tree_path_free(path);
+}
+
+static void shift_var_down (GtkButton *b, GtkWidget *view)
+{
+    GtkTreeSelection *selection;
+    GtkTreeModel *model;
+    GtkTreeIter seliter, nextiter;
+
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+    gtk_tree_selection_get_selected(selection, &model, &seliter); 
+    nextiter = seliter;
+    if (gtk_tree_model_iter_next(model, &nextiter)) {
+	gtk_list_store_swap(GTK_LIST_STORE(model), &seliter, &nextiter);
+	set_order_vec(view);
+    }
+}
+
+static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
+				       gretl_matrix *ordvec)
+{
+    GtkWidget *b1, *b2;
+    GtkWidget *vbox, *hbox;
+    GtkWidget *bbox, *scroller;
+    GtkTreeViewColumn *column;
+    GtkCellRenderer *renderer;
+    GtkTreeSelection *select;
+    GtkListStore *store;
+    GtkWidget *view, *lbl;
+    GtkTreeIter iter;
+    const char *vname;
+    int i, j, v;
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    lbl = gtk_label_new(_("Cholesky ordering:"));
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
+    view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    g_object_set_data(G_OBJECT(view), "ordvec", ordvec);
+    
+    renderer = gtk_cell_renderer_text_new();
+    column = gtk_tree_view_column_new_with_attributes(NULL,
+						      renderer,
+						      "text", 0,
+						      NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);	
+
+    gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
+    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(view), FALSE);
+
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    for (i=0; i<var->neqns; i++) {
+	j = gretl_vector_get(ordvec, i);
+	v = var->ylist[j+1];
+	vname = datainfo->varname[v];
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 0, vname,
+			   1, j, -1);
+    }
+
+    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+    gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    gtk_tree_selection_select_iter(select, &iter);
+
+    gtk_widget_set_size_request(view, 120 * gui_scale, -1);
+
+    scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (scroller),
+					GTK_SHADOW_IN);    
+    gtk_container_add(GTK_CONTAINER(scroller), view);
+
+    bbox = gtk_vbox_new(FALSE, 5);
+    b1 = up_down_button(1);
+    b2 = up_down_button(0);
+    gtk_box_pack_start(GTK_BOX(bbox), b1, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(bbox), b2, FALSE, FALSE, 5);
+    g_signal_connect(G_OBJECT(b1), "clicked",
+		     G_CALLBACK(shift_var_up), view);
+    g_signal_connect(G_OBJECT(b2), "clicked",
+		     G_CALLBACK(shift_var_down), view);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), scroller, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), bbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    g_object_unref(G_OBJECT(store));
+}
+
 static int 
-impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
-			double *alpha, gretlopt *gopt)
+impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon, 
+			int *bootstrap, double *alpha, gretlopt *gopt)
 {
     gchar *title;
     int h = default_VAR_horizon(datainfo);
@@ -3007,6 +3160,11 @@ impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap,
     }
 
     dialog_add_confidence_selector(dlg, &conf, gopt);
+
+    if (ordvec != NULL) {
+	dialog_add_order_selector(dlg, var, ordvec);
+    }
+
     gtk_widget_show_all(dlg);
 
     if (resp < 0) {
@@ -3030,12 +3188,48 @@ static void impulse_params_from_action (GtkAction *action,
     sscanf(s, "Imp:%d:%d", targ, shock);
 }
 
+static int ordvec_default (gretl_matrix *v)
+{
+    int i, n = gretl_vector_get_length(v);
+
+    for (i=0; i<n; i++) {
+	if (v->val[i] != i) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static gretl_matrix *IRF_order_vector (GRETL_VAR *var,
+				       gretl_matrix *v)
+{
+    if (gretl_vector_get_length(v) != var->neqns) {
+	gretl_matrix_free(v);
+	v = NULL;
+	if (var->neqns > 1) {
+	    int i;
+
+	    v = gretl_vector_alloc(var->neqns);
+	    if (v != NULL) {
+		for (i=0; i<var->neqns; i++) {
+		    v->val[i] = i;
+		}
+	    
+	    }
+	}
+    }
+
+    return v;
+}
+
 static void impulse_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int horizon, bootstrap;
     gint shock, targ;
+    static gretl_matrix *ordvec = NULL;
     static double alpha = 0.10;
     static gretlopt gopt = OPT_NONE;
     const double **vZ = NULL;
@@ -3043,10 +3237,18 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
 
     impulse_params_from_action(action, &targ, &shock);
 
-    resp = impulse_response_setup(var, &horizon, &bootstrap, &alpha, &gopt);
+    if (0) {
+	/* not ready yet */
+	ordvec = IRF_order_vector(var, ordvec);
+    }
+
+    resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap, 
+				  &alpha, &gopt);
 
     if (resp < 0) {
 	/* canceled */
+	gretl_matrix_free(ordvec);
+	ordvec = NULL;
 	return;
     }
 
@@ -3054,8 +3256,14 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
 	vZ = (const double **) Z;
     }
 
-    err = gretl_VAR_plot_impulse_response(var, targ, shock, horizon,
-					  alpha, vZ, datainfo,
+    if (ordvec != NULL && ordvec_default(ordvec)) {
+	gretl_matrix_free(ordvec);
+	ordvec = NULL;
+    }
+
+    err = gretl_VAR_plot_impulse_response(var, targ, shock, 
+					  ordvec, horizon, alpha, 
+					  vZ, datainfo,
 					  gopt);
 
     if (err) {
@@ -3075,7 +3283,8 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     static gretlopt gopt = OPT_NONE;
     int resp, err;
 
-    resp = impulse_response_setup(var, &horizon, &bootstrap, &alpha, &gopt);
+    resp = impulse_response_setup(var, NULL, &horizon, &bootstrap, 
+				  &alpha, &gopt);
 
     if (resp < 0) {
 	/* canceled */

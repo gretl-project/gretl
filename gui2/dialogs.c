@@ -2249,30 +2249,6 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
-    if (gopt != NULL) {
-	GSList *group;
-	GtkWidget *r1, *r2;
-
-	r1 = gtk_radio_button_new_with_label(NULL, _("error bars"));
-	hbox1 = gtk_hbox_new(FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox1), r1, FALSE, FALSE, 5);
-	gtk_box_pack_end(GTK_BOX(vbox), hbox1, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(r1), "toggled",
-			 G_CALLBACK(toggle_graph_opt), gopt); 
-	
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r1));
-	r2 = gtk_radio_button_new_with_label(group, _("shaded area"));
-	hbox2 = gtk_hbox_new(FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox2), r2, FALSE, FALSE, 5);
-	gtk_box_pack_end(GTK_BOX(vbox), hbox2, FALSE, FALSE, 0);
-
-	if (*gopt & OPT_E) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(r1), TRUE);
-	} else {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(r2), TRUE);
-	}
-    }
-
     lbl = gtk_label_new("1 - α =");
     adj = gtk_adjustment_new(*conf, 0.60, 0.99, 0.01, 0.1, 0);
     spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
@@ -2282,7 +2258,31 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
-    gtk_box_pack_end(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    if (gopt != NULL) {
+	GSList *group;
+	GtkWidget *r1, *r2;
+
+	r1 = gtk_radio_button_new_with_label(NULL, _("shaded area"));
+	hbox1 = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox1), r1, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox1, FALSE, FALSE, 0);
+
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r1));
+	r2 = gtk_radio_button_new_with_label(NULL, _("error bars"));
+	hbox2 = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox2), r2, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox2, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(r2), "toggled",
+			 G_CALLBACK(toggle_graph_opt), gopt); 
+	
+	if (*gopt & OPT_E) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(r2), TRUE);
+	} else {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(r1), TRUE);
+	}
+    }
 
     cb = g_object_get_data(G_OBJECT(dlg), "checkbox");
     if (cb != NULL) {
