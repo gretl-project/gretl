@@ -7540,7 +7540,8 @@ static int execute_script (const char *runfile, const char *buf,
 	exec_err = gretl_if_state_check(indent0);
     }
 
-    if (exec_err) {
+    if (state.in_comment || (state.cmd->flags & CMD_IGNORE)) {
+	warnbox(_("Unterminated comment in script"));
 	gretl_exec_state_uncomment(&state);
     }
 
