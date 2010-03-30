@@ -4134,7 +4134,7 @@ static void check_for_named_object_save (ExecState *s)
 	int ci = s->cmd->ci;
 
 	if (ci == MLE || ci == NLS || ci == GMM) {
-	    /* attach the callback to the corresponding 'end'
+	    /* attach the save callback to the corresponding 'end'
 	       statement */
 	    if (s->callback != NULL) {
 		s->flags |= CALLBACK_ATEND;

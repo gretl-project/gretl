@@ -2909,7 +2909,7 @@ static void add_x12_output_menu_item (windata_t *vwin)
     vwin_menu_add_item(vwin, mpath, &entry);
 }
 
-#include "up_down.h"
+#include "up_down.h" /* arrows for buttons below */
 
 static GtkWidget *up_down_button (int up)
 {

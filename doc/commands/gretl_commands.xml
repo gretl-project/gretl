@@ -4580,7 +4580,7 @@
   </command>
 
   <command name="irfboot" section="Graphs" context="gui"
-    label="Impulse response bootstrap">
+    label="Impulse response plots">
 
     <description>
       <para>
@@ -4600,7 +4600,7 @@
 	Cholesky decomposition of the cross-equation covariance matrix.
 	The default is given by the order in which the variables are
 	entered into the model specification, but the up and down arrows
-	can be used to promote or demote the selected variable.
+	can be used to promote or demote a selected variable.
       </para>
     </description>
 
