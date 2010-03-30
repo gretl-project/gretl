@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 09:11-0500\n"
-"PO-Revision-Date: 2010-03-26 16:13+0200\n"
+"PO-Revision-Date: 2010-03-30 12:04+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -482,7 +482,7 @@ msgstr "doğrusal-dışılık"
 #: lib/src/compare.c:1262
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr "Sırayla eleme (iki-taraflı alfa = %.2f kullanılarak)"
+msgstr "Sırayla eleme (iki-yanlı alfa = %.2f kullanılarak)"
 
 #: lib/src/compare.c:1268
 #, c-format
@@ -10485,8 +10485,8 @@ msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
 msgstr ""
-"Çizite-özel seçimler tarafından geçersiz\n"
-"kılınmadıkça, aşağıdaki renkler kullanılacaktır\n"
+"Çizite-özel seçimlerce geçersiz kılınmadıkça\n"
+"aşağıdaki renkler kullanılacaktır\n"
 
 #: gui2/gpt_dialog.c:3198
 msgid "Title of plot"
@@ -14117,7 +14117,7 @@ msgid ""
 "using two-sided p-value:"
 msgstr ""
 "Değişkenlerin sırayla elenmesi\n"
-"(iki-taraflı p-değeri kullanılarak):"
+"(iki-yanlı p-değeri kullanılarak):"
 
 #: gui2/selector.c:4804
 msgid "Test only selected variables"
